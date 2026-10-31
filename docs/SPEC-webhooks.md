@@ -220,3 +220,15 @@ tâche `pg_cron`, puis retirer la migration ; aucune donnée existante n'est mod
    montre l'échec, l'administrateur décide (§5.2).
 5. **L'historique des remises est gardé 30 jours** (§4.2).
 6. **Un récepteur local** entre dans la pile de développement pour les preuves et le seed (§8).
+
+## 12. Précisions d'exécution (`CRM-073` T1, migration `0139`)
+
+Écrites au fil de l'implémentation, sans changer ce que le §11 a validé :
+- une remise d'un webhook **désactivé** reste en attente sans être prise ; elle part si le webhook est réactivé ;
+- `contact.updated` porte `changed`, la liste des champs changés (`full_name`, `email`, `phone`, `role_title`,
+  `organization_id`), **sans recopier** ceux que la charge utile ne porte pas : un téléphone changé se dit, il ne sort pas ;
+- renvoyer une remise encore en attente est refusé (`P0001 delivery_pending`), comme vers un webhook désactivé
+  (`P0001 webhook_disabled`) ; un webhook ou une remise que l'appelant ne lit pas est introuvable (`P0002`) ;
+- la prise d'une remise compte l'essai et la réserve quinze minutes : une fonction edge interrompue en cours de passage ne
+  la perd pas, elle la reprend à l'échéance ;
+- les événements d'affaire `card.trashed` et `card.restored` ne désignent aucun rattachement : `data` porte l'affaire seule.

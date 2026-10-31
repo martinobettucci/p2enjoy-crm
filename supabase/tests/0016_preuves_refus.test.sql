@@ -1,3 +1,5 @@
+-- @verifies CRM-073 (docs/BACKLOG.md) — tranche T1 : le recensement des politiques révisé (décision 51), +2 des webhooks
+--           (docs/SPEC-webhooks.md §4)
 -- @verifies CRM-071 (docs/BACKLOG.md) — tranche T1 : le recensement des politiques révisé (décision 51), +4 de `saved_views`
 -- @verifies CRM-069 (docs/BACKLOG.md) tranches T1 et T4 — révision d'un garde-fou de compte (docs/SPEC-etiquettes-digest.md §2, §5), décision 51
 -- @verifies CRM-068 (docs/BACKLOG.md) tranche T1 — révision d'un garde-fou de compte (docs/SPEC-checklists.md §3), décision 51
@@ -232,8 +234,13 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	183,
-	'CENT QUATRE-VINGT-TROIS politiques dans `public`, et pas une de plus — 179 avant `CRM-071` tranche T1, plus les QUATRE '
+	185,
+	'CENT QUATRE-VINGT-CINQ politiques dans `public`, et pas une de plus — 183 avant `CRM-073` tranche T1, plus les DEUX '
+	'des webhooks sortants (docs/SPEC-webhooks.md §4) : `webhook_endpoints`, lue et écrite par l''administrateur de '
+	'l''espace seul — la création passant par `create_webhook_endpoint`, aucun privilège `INSERT` n''est accordé —, et '
+	'`webhook_deliveries`, lue par lui seul. AUCUNE ÉCRITURE DE REMISE, et c''est un refus double : ni politique ni '
+	'privilège — les déclencheurs inscrivent, la clé de service rend les résultats. Avant elles : 183, soit 179 avant '
+	'`CRM-071` tranche T1, plus les QUATRE '
 	'des vues sauvegardées (docs/SPEC-vues-import-export.md §2.3) : la lecture de sa vue privée et des vues de l''espace '
 	'sur un channel qu''on lit, la création d''une vue privée pour soi ou d''une vue de l''espace par un administrateur, '
 	'leur modification et leur suppression bornées de même ; la publication n''est permise qu''à un administrateur sur sa '

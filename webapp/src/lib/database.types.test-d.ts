@@ -1,3 +1,4 @@
+// @verifies CRM-073 (docs/BACKLOG.md) — tranche T1 : les deux tables et les cinq fonctions des webhooks aux témoins (docs/SPEC-webhooks.md §4)
 // @verifies CRM-071 (docs/BACKLOG.md) — tranche T6 : `import_cards` au témoin des fonctions (docs/SPEC-vues-import-export.md §6.3 bis)
 // @verifies CRM-071 (docs/BACKLOG.md) — tranche T4 : `export_cards` et `export_contacts` au témoin des fonctions
 // @verifies CRM-071 (docs/BACKLOG.md) — tranche T1 : `saved_views` au témoin des tables (docs/SPEC-vues-import-export.md §2)
@@ -131,11 +132,18 @@ type Expect<T extends true> = T
 // `field_values` est un `Json` dont chaque clé doit répondre à une question NON archivée du workflow et chaque valeur passer
 // la règle d'une valeur d'affaire (`app.card_templates_valider`, `22023 template_field_unknown`, `invalid_field_value`) ;
 // `id` et `created_by` sont fermés au client par privilège de colonne ; aucune suppression n'est ouverte.
+// `webhook_endpoints` et `webhook_deliveries`, LIVRÉES PAR `CRM-073` T1 (migration `0139`) : les webhooks sortants. CE QUI
+// ÉCHAPPE AU GÉNÉRATEUR : `events` est un `string[]` borné à la liste fermée du §3 de `docs/SPEC-webhooks.md`, sans doublon,
+// sans événement de contact quand `channel_id` est posé (`23514`) ; `url` exige `https://` ; aucune insertion n'est ouverte
+// au client — la création passe par `create_webhook_endpoint` — et `webhook_deliveries` ne s'écrit que par la base et la
+// clé de service.
 type _tables = Expect<
   Equal<
     keyof Database['public']['Tables'],
     | 'budget_occurrences'
     | 'budgets'
+    | 'webhook_endpoints'
+    | 'webhook_deliveries'
     // `0063` de `CRM-064` tranche 1 ajoute `card_comment_mentions`, ET LE TÉMOIN L'A VU CETTE
     // FOIS-CI. C'est la première fois de la série : les trois occurrences ci-dessous ont toutes
     // pour cause une migration livrée sans que `scripts/generate-types.sh` soit rejoué, au motif
@@ -1142,6 +1150,10 @@ type _vueDerivationColonnes = Expect<
 // AU GÉNÉRATEUR : `p_rows` est un `Json` libre — clés `title`, `step`, `owner`, `amount`, `currency`, `probability`,
 // `next_action`, `next_action_at`, `contact_email`, toutes en texte ; `code` est un dictionnaire fermé (§6.3 bis) ; un channel
 // illisible rend `P0002 channel_not_found`, un channel fermé `P0001 channel_closed`. Le compte s'accroît de un.
+// `0139` de `CRM-073` TRANCHE T1 ajoute les webhooks sortants (docs/SPEC-webhooks.md §4, §5) : `create_webhook_endpoint`
+// (administrateur, `42501 forbidden`, rend le secret une seule fois), `rotate_webhook_secret` et `redeliver_webhook`
+// (`P0002` pour qui ne lit pas le webhook, `P0001 delivery_pending`, `webhook_disabled`), puis `claim_webhook_deliveries`
+// et `record_webhook_attempt`, réservées à la clé de service. Le compte s'accroît de cinq.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1219,6 +1231,11 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'export_contacts'
     | 'import_contacts'
     | 'import_cards'
+    | 'create_webhook_endpoint'
+    | 'rotate_webhook_secret'
+    | 'redeliver_webhook'
+    | 'claim_webhook_deliveries'
+    | 'record_webhook_attempt'
     | 'anonymize_contact'
     | 'trash_retention_days'
     | 'trash_blocking_costs'

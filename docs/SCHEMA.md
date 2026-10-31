@@ -2435,6 +2435,30 @@ rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur
 channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
 `0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
 déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0139` — les webhooks sortants en base (`CRM-073` T1, décision 784 ; livrée en développement le 2026-10-31)
+
+`docs/SPEC-webhooks.md` §3, §4, §5.2, §5.3. **`public.webhook_endpoints`** (`id`, `workspace_id`, `name` ≤ 80, `url`
+`https://` ≤ 2 048, `events text[]` — liste fermée des neuf événements, sans doublon, jamais vide, sans événement de contact
+quand `channel_id` est posé —, `channel_id` facultatif (clé composite vers `channels`, cascade), `secret_id` vers
+`vault.secrets`, `enabled`, `created_by`, `created_at`, `updated_at`). **`public.webhook_deliveries`** (`event`,
+`event_id`, `payload` figé, `status` `pending`/`delivered`/`failed`, `attempts` 0 à 5, `next_attempt_at` non nul si et
+seulement si `pending`, `last_status_code`, `last_error` parmi `timeout`, `connection_refused`, `address_forbidden`,
+`tls_error`, `dns_error`, `network_error`, `last_attempt_at`, `redelivery_of`). RLS : l'administrateur de l'espace lit et
+écrit les webhooks — sans privilège `INSERT`, la création passant par la fonction — et lit les remises ; aucune écriture de
+remise ouverte au client. **Déclencheurs** (définisseurs) : `card_events_webhooks` (après insertion dans `card_events`,
+six types retenus) et `contacts_webhooks` (création, changement de nom, email, téléphone, fonction ou organisation,
+anonymisation, suppression d'un contact non anonymisé) inscrivent une remise par webhook actif concerné, filtre de channel
+compris ; le contenu suit le §5.1 (`app.webhook_card_data`, `app.webhook_step_ref`, `app.webhook_person_ref`).
+**Fonctions** : `create_webhook_endpoint(…)` (administrateur, rend `id` et le secret `whsec_…` une seule fois),
+`rotate_webhook_secret(uuid)`, `redeliver_webhook(uuid)` — exécutables par `authenticated` —, `claim_webhook_deliveries(
+integer)` et `record_webhook_attempt(uuid, integer, text)` — par `service_role` seul ; la prise compte l'essai et réserve la
+remise quinze minutes, le résultat suit les délais 1 min, 5 min, 30 min, 2 h et clôt au cinquième échec. **Purge** :
+`app.purge_webhook_deliveries()`, tâche `pg_cron` `p2enjoy-webhooks-purge` (`41 3 * * *`), remises closes de plus de
+30 jours. Le journal gagne le type d'entité `webhook` (déclencheur `app.audit_configuration`, l'adresse et le secret
+seulement nommés). **Retrait** : désactiver la tâche, retirer les deux déclencheurs, les fonctions et les deux tables (leurs
+secrets retirés de Vault), rendre au type d'entité du journal sa liste de la `0136` ; aucune donnée existante n'est
+modifiée.
+
 ### Migration `0138` — l'import des affaires (`CRM-071` T6, décision 778 ; livrée en développement le 2026-10-30)
 
 `docs/SPEC-vues-import-export.md` §6.3, §6.3 bis. **`public.import_cards(p_channel uuid, p_rows jsonb, p_dry_run boolean

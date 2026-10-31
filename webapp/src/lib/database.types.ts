@@ -3579,6 +3579,136 @@ export type Database = {
           },
         ]
       }
+      webhook_deliveries: {
+        Row: {
+          attempts: number
+          created_at: string
+          endpoint_id: string
+          event: string
+          event_id: string
+          id: string
+          last_attempt_at: string | null
+          last_error: string | null
+          last_status_code: number | null
+          next_attempt_at: string | null
+          payload: Json
+          redelivery_of: string | null
+          status: string
+          workspace_id: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          endpoint_id: string
+          event: string
+          event_id: string
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          last_status_code?: number | null
+          next_attempt_at?: string | null
+          payload: Json
+          redelivery_of?: string | null
+          status?: string
+          workspace_id: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          endpoint_id?: string
+          event?: string
+          event_id?: string
+          id?: string
+          last_attempt_at?: string | null
+          last_error?: string | null
+          last_status_code?: number | null
+          next_attempt_at?: string | null
+          payload?: Json
+          redelivery_of?: string | null
+          status?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_deliveries_endpoint_fk"
+            columns: ["endpoint_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "webhook_endpoints"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "webhook_deliveries_redelivery_of_fkey"
+            columns: ["redelivery_of"]
+            isOneToOne: false
+            referencedRelation: "webhook_deliveries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webhook_endpoints: {
+        Row: {
+          channel_id: string | null
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          events: string[]
+          id: string
+          name: string
+          secret_id: string
+          updated_at: string
+          url: string
+          workspace_id: string
+        }
+        Insert: {
+          channel_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          events: string[]
+          id?: string
+          name: string
+          secret_id: string
+          updated_at?: string
+          url: string
+          workspace_id: string
+        }
+        Update: {
+          channel_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          events?: string[]
+          id?: string
+          name?: string
+          secret_id?: string
+          updated_at?: string
+          url?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_endpoints_channel_fk"
+            columns: ["channel_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "webhook_endpoints_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webhook_endpoints_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workflow_nodes_catalog: {
         Row: {
           archived_at: string | null
@@ -4281,6 +4411,17 @@ export type Database = {
         Args: { p_id: string; p_type: string }
         Returns: string
       }
+      claim_webhook_deliveries: {
+        Args: { p_limit?: number }
+        Returns: {
+          attempt: number
+          delivery_id: string
+          event: string
+          payload: Json
+          secret: string
+          url: string
+        }[]
+      }
       classer_message_automatiquement: {
         Args: {
           p_in_reply_to?: string
@@ -4304,6 +4445,20 @@ export type Database = {
       copy_workflow_to_track: {
         Args: { new_name?: string; track_id: string; workflow_id: string }
         Returns: string
+      }
+      create_webhook_endpoint: {
+        Args: {
+          p_channel?: string
+          p_enabled?: boolean
+          p_events: string[]
+          p_name: string
+          p_url: string
+          p_workspace: string
+        }
+        Returns: {
+          id: string
+          secret: string
+        }[]
       }
       creer_affaire: {
         Args: { p_channel: string; p_template?: string; p_titre: string }
@@ -4920,6 +5075,11 @@ export type Database = {
           workspace_id: string
         }[]
       }
+      record_webhook_attempt: {
+        Args: { p_delivery: string; p_error?: string; p_status_code: number }
+        Returns: string
+      }
+      redeliver_webhook: { Args: { p_delivery: string }; Returns: string }
       reel_saisissable: {
         Args: { ligne: Database["public"]["Tables"]["card_costs"]["Row"] }
         Returns: boolean
@@ -5016,6 +5176,7 @@ export type Database = {
         }
         Returns: Json
       }
+      rotate_webhook_secret: { Args: { p_endpoint: string }; Returns: string }
       save_card_as_template: {
         Args: { p_name: string; p_placement: string }
         Returns: string

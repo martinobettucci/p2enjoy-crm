@@ -12666,10 +12666,19 @@ messages d'un contact anonymisé restent intacts).
 `contact.deleted`, aucune désactivation automatique, historique de 30 jours, récepteur local de développement.
 Connecteur MCP : **non**, aux deux questions (décision 779) — aucune famille nouvelle.*
 
-- [ ] **T1 — en base** (§3, §4, §6) : migration — `webhook_endpoints`, `webhook_deliveries`, secret dans Vault,
+- [x] **T1 — en base** (§3, §4, §6) : migration — `webhook_endpoints`, `webhook_deliveries`, secret dans Vault,
       `create_webhook_endpoint`, `rotate_webhook_secret`, `redeliver_webhook`, déclencheurs des neuf événements et filtre
       de channel, purge à 30 jours, type d'entité `webhook` du journal ; pgTAP ; API aux jetons réels ; types régénérés ;
       `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md`.
+      *Livrée en développement le 2026-10-31* — migration `0139` ; pgTAP `0129` 30/30 (dont un défaut trouvé et corrigé
+      avant le commit : la liste des champs changés d'un contact lisait ses libellés comme des tableaux) ; recensement des
+      politiques révisé à 185 (`0016` n° 23) ; suite pgTAP 119 fichiers, 4 573 assertions, sans anomalie ; API
+      `e2e/api/webhooks.spec.ts` 2/2 aux jetons réels, sur une affaire jetable ; types régénérés, témoins révisés,
+      typecheck vert ; compteurs du harnais révisés (119 fichiers SQL, 1 284 scénarios d'API).
+      *Précisions d'exécution, sans changer la spécification* : une remise d'un webhook désactivé reste en attente sans
+      être prise ; `contact.updated` nomme dans `changed` les champs changés sans recopier ceux que la charge utile ne porte
+      pas (téléphone, fonction) ; renvoyer une remise en attente ou vers un webhook désactivé est refusé (`delivery_pending`,
+      `webhook_disabled`). Les phrases du journal pour le type `webhook` arrivent avec l'écran (T3).
 - [ ] **T2 — la remise** (§2, §5, §6, §8) : fonction edge `webhooks` (signature HMAC-SHA256 horodatée, cinq essais à
       1 min, 5 min, 30 min, 2 h, refus des adresses internes), tâche `pg_cron` par `pg_net`, récepteur local
       `webhook-sink` ; variables `WEBHOOKS_DISPATCH_SECRET`, `WEBHOOKS_ALLOWED_HOSTS` ; unitaires Deno ; intégration

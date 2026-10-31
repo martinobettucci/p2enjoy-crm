@@ -13,6 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-073` — webhooks sortants signés (T1)
+
+- **Migration `0139`, les webhooks en base** (T1) : les webhooks d'un espace, réservés à son administrateur, et leurs
+  remises ; neuf événements d'affaires et de contacts, un filtre facultatif par channel ; le secret de signature rangé dans
+  Vault et rendu une seule fois ; les remises inscrites dans la transaction du changement, prises et closes par la clé de
+  service, renvoyables ; purge quotidienne des remises closes de plus de 30 jours ; la configuration au journal. Rien de
+  visible tant que la remise (T2) et l'écran (T3) ne sont pas livrés.
+
 ### `CRM-071` — vues sauvegardées, import et export CSV (T1 à T6)
 
 - **Migration `0135`, les vues sauvegardées en base** (T1) : une vue de la vue liste d'un channel, privée ou publiée pour

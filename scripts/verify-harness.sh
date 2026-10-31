@@ -636,7 +636,8 @@ PORT_RAPPORT=9323
 # COMPTÉE.
 # **+1 par `CRM-071` T6, 2026-10-30** : `supabase/tests/0128_import_affaires.test.sql`, fichier NEUF. 117 + 1 = 118,
 # COMPTÉE.
-FICHIERS_SQL_ATTENDUS=118
+# **+1 par `CRM-073` T1, 2026-10-31** : `supabase/tests/0129_webhooks.test.sql`, fichier NEUF. 118 + 1 = 119, COMPTÉE.
+FICHIERS_SQL_ATTENDUS=119
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -1237,7 +1238,10 @@ ASSERTIONS_ATTENDUES=4543
 # **+2 par `CRM-071` T6, 2026-10-30** : `e2e/api/import-affaires.spec.ts`, fichier NEUF — la simulation sans trace, l'import
 # confirmé (étape, fil « par import », journal) ; la lectrice refusée, le channel inconnu, l'anonyme. 1280 + 2 = 1282,
 # COMPTÉE.
-SCENARIOS_API=1282
+# **+2 par `CRM-073` T1, 2026-10-31** : `e2e/api/webhooks.spec.ts`, fichier NEUF — la création par l'administratrice et son
+# secret rendu une fois, une remise inscrite par un vrai geste, le renvoi ; les refus du membre, de la lectrice, de
+# l'anonyme, et la prise réservée à la clé de service. 1282 + 2 = 1284, COMPTÉE (`--list`, « Total: 1284 tests »).
+SCENARIOS_API=1284
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
