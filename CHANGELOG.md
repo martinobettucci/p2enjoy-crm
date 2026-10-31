@@ -13,13 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-073` — webhooks sortants signés (T1)
+### `CRM-073` — webhooks sortants signés (T1, T2)
 
 - **Migration `0139`, les webhooks en base** (T1) : les webhooks d'un espace, réservés à son administrateur, et leurs
   remises ; neuf événements d'affaires et de contacts, un filtre facultatif par channel ; le secret de signature rangé dans
   Vault et rendu une seule fois ; les remises inscrites dans la transaction du changement, prises et closes par la clé de
   service, renvoyables ; purge quotidienne des remises closes de plus de 30 jours ; la configuration au journal. Rien de
   visible tant que la remise (T2) et l'écran (T3) ne sont pas livrés.
+- **La remise** (T2) : la fonction edge `webhooks` remet chaque événement dans la minute, signé en HMAC-SHA256 horodaté
+  (`X-P2Enjoy-Signature`), refuse toute adresse interne, réessaie à 1 min, 5 min, 30 min et 2 h ; migration `0140`, la
+  tâche `pg_cron` qui la réveille par `pg_net` avec un secret d'appel rangé dans Vault ; aucune variable d'environnement
+  nouvelle. En développement, le récepteur local `webhook-sink` reçoit les remises en HTTPS.
 
 ### `CRM-071` — vues sauvegardées, import et export CSV (T1 à T6)
 

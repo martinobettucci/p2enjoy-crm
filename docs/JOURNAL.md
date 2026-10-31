@@ -37158,3 +37158,23 @@ récepteur local (`webhook-sink`) entre dans la pile de développement. Le déco
 écran) est accepté. **Connecteur MCP : non**, réponse déjà donnée aux deux questions (décision 779).
 
 **Conséquences** : la section `CRM-073` du backlog porte les tranches ; T1 (en base) commence après ce commit.
+
+### `CRM-073` T2 : la remise des webhooks — deux précisions d'exécution (2026-10-31)
+
+**Problème 1 — le secret d'appel.** La spécification nommait une variable `WEBHOOKS_DISPATCH_SECRET`, comparée par la
+fonction. **Observation** : la tâche `pg_cron` qui appelle la fonction vit dans la base et ne lit aucune variable
+d'environnement ; la variable aurait dû être recopiée à l'identique dans la base et dans le conteneur, en développement et
+en production. **Décision d'exécution** (sans changer un point validé) : la migration `0140` tire le secret au hasard dans
+Vault ; la fonction le fait vérifier par `verify_webhook_dispatch`, sous la clé de service. Conséquence : aucune variable
+nouvelle en staging ni en production (`docs/SPEC-webhooks.md` §13, qui révise le §2 et le §9).
+
+**Problème 2 — le TLS du récepteur local.** **Observation**, par une sonde jetable retirée aussitôt : le runtime des
+fonctions (compatible Deno 2.1.4) offre `Deno.resolveDns` et `Deno.createHttpClient`, mais interdit toute lecture de
+fichier à un worker (« blocklisted »). **Décision** : le récepteur produit son autorité au démarrage et la sert en clair
+sur le réseau interne ; la fonction la lit à `WEBHOOKS_DEV_CA_URL`, variable de développement seulement. La remise au
+récepteur passe par un vrai TLS ; en production, les autorités publiques du runtime.
+
+**Vérifications** : unitaires 77/77 ; pgTAP `0130` 7/7 ; API de bout en bout 2/2 par la vraie tâche de la minute
+(signature recalculée par une autre implémentation, échec, délai, adresse interne, renvoi, `401` sans secret) ; un essai à
+la main avant la preuve (remise `delivered` en 200, journal de la fonction sans adresse ni corps). **Limite nommée** : la
+résolution vérifiée puis refaite par `fetch` laisse une fenêtre de « DNS rebinding ».

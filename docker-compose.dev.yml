@@ -6,6 +6,8 @@
 #       le Keycloak de développement est la seule identité (docs/JOURNAL.md décision 589)
 # @spec CRM-097 (docs/BACKLOG.md), docs/SPEC-ia.md §11.6 — le simulateur Ollama, instrumentation du seul
 #       développement, et `IA_SIMULATEUR_HOST`, que la production ne pose jamais
+# @spec CRM-073 (docs/BACKLOG.md), docs/SPEC-webhooks.md §8, §12 — tranche T2 : le récepteur local des webhooks
+#       (`webhook-sink`) et les deux variables de développement de la fonction `webhooks`
 # @spec docs/DAT.md §3.6 (composants de développement uniquement), §9 (déploiement)
 # @spec README.md §6 (lancement en développement)
 #
@@ -393,6 +395,22 @@ services:
       retries: 10
       start_period: 5s
 
+  # @spec CRM-073 (docs/BACKLOG.md) — tranche T2 : le récepteur local des webhooks (docs/SPEC-webhooks.md §8, §12). Il
+  # produit son autorité et son certificat `webhook-sink` à chaque démarrage, n'écoute que le réseau interne et ne
+  # publie aucun port : les preuves le lisent par `docker exec`.
+  webhook-sink:
+    image: python:3.13.13-slim-bookworm
+    restart: unless-stopped
+    command: ["python", "-u", "/recepteur/serveur.py"]
+    volumes:
+      - ./supabase/docker/webhook-sink:/recepteur:ro,z
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/sante', timeout=2)"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
   # `IA_SIMULATEUR_HOST` n'existe QUE dans cet overlay : en production, la fonction `ia` ignore l'en-tête
   # du simulateur (docs/SPEC-ia.md §11.6).
   #
@@ -402,8 +420,14 @@ services:
     environment:
       IA_SIMULATEUR_HOST: http://ollama-simule:11434
       CRM_SUPERADMINS_INITIAUX: ${CRM_SUPERADMINS_INITIAUX:-plateforme@${MAIL_DEV_PERSONAL_DOMAIN}}
+      # `CRM-073` : le récepteur local est le seul hôte interne qu'une remise puisse joindre, et la fonction lit son
+      # autorité chez lui — la production ne pose aucune des deux (docs/SPEC-webhooks.md §6, §12).
+      WEBHOOKS_ALLOWED_HOSTS: webhook-sink
+      WEBHOOKS_DEV_CA_URL: http://webhook-sink:8080/ca.pem
     depends_on:
       ollama-simule:
+        condition: service_healthy
+      webhook-sink:
         condition: service_healthy
 
   # @spec CRM-102 (docs/BACKLOG.md) — tranche T3 : le connecteur MCP, toujours actif en développement

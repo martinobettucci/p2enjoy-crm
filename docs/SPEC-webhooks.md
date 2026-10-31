@@ -29,9 +29,10 @@ Trois pièces, chacune à sa place dans l'architecture existante (`docs/DAT.md`,
    prochain essai. Elle ne décide de rien : ni qui reçoit, ni quoi. La signature et l'envoi HTTP sortant vivent là, hors
    de la base, comme le prévoyait la décision 260.
 3. **`pg_cron` cadence.** Une tâche, chaque minute, réveille la fonction par `pg_net` sur le réseau interne de la pile
-   (`http://functions:9000/webhooks/remettre`, jamais par Kong). L'appel porte un secret partagé
-   (`WEBHOOKS_DISPATCH_SECRET`) que la fonction compare avant toute lecture ; sans lui, `401`. Un événement part donc
-   **dans la minute** ; aucun ordre n'est garanti entre deux remises.
+   (`http://functions:9000/webhooks/remettre`, jamais par Kong). L'appel porte un secret d'appel, tiré au hasard par la
+   migration et rangé dans Vault (§12), que la fonction fait vérifier par la base avant toute lecture ; sans lui, `401`.
+   La tâche n'appelle la fonction que si une remise est due. Un événement part donc **dans la minute** ; aucun ordre
+   n'est garanti entre deux remises.
 
 ## 3. Les événements
 
@@ -197,8 +198,9 @@ et d'absence de données traités ; captures aux quatre paliers ; manuel, chapit
 ## 9. Déploiement
 
 Migration (tables, fonctions, déclencheurs, tâches `pg_cron`, type d'entité du journal) ; fonction edge `webhooks` ;
-variables `WEBHOOKS_DISPATCH_SECRET` (obligatoire en staging et en production) et `WEBHOOKS_ALLOWED_HOSTS` (développement
-seulement) documentées dans `.env.example` et le README ; `docs/PROD_MIGRATIONS.md`. Retour arrière : désactiver la
+**aucune variable nouvelle en staging ni en production** — le secret d'appel vit dans Vault (§12) ; deux variables de
+développement, `WEBHOOKS_ALLOWED_HOSTS` et `WEBHOOKS_DEV_CA_URL`, posées par `docker-compose.dev.yml` seul et documentées
+au README ; `docs/PROD_MIGRATIONS.md`. Retour arrière : désactiver la
 tâche `pg_cron`, puis retirer la migration ; aucune donnée existante n'est modifiée.
 
 ## 10. Tranches
@@ -232,3 +234,20 @@ tâche `pg_cron`, puis retirer la migration ; aucune donnée existante n'est mod
 - la prise d'une remise compte l'essai et la réserve quinze minutes : une fonction edge interrompue en cours de passage ne
   la perd pas, elle la reprend à l'échéance ;
 - les événements d'affaire `card.trashed` et `card.restored` ne désignent aucun rattachement : `data` porte l'affaire seule.
+
+## 13. Précisions d'exécution (`CRM-073` T2, migration `0140`, fonction `webhooks`)
+
+- **Le secret d'appel vit dans Vault, et non dans l'environnement** (révise la première rédaction du §2 et du §9, qui
+  nommait `WEBHOOKS_DISPATCH_SECRET`) : la tâche `pg_cron` ne lit aucune variable d'environnement, et une variable aurait
+  dû être recopiée à l'identique dans la base et dans le conteneur. La migration tire le secret au hasard
+  (`p2enjoy-webhooks-dispatch`) ; la fonction le présente à `verify_webhook_dispatch`, réservée à la clé de service. Il
+  n'existe donc aucune variable nouvelle en staging ni en production.
+- **L'autorité du récepteur local** : le runtime des fonctions interdit toute lecture de fichier à un worker ; le
+  récepteur sert donc son autorité en clair sur le réseau interne (`GET /ca.pem`), et la fonction la lit à
+  `WEBHOOKS_DEV_CA_URL` pour bâtir un client qui la reconnaît (`Deno.createHttpClient`). La remise au récepteur passe
+  ainsi par un vrai TLS. Sans cette variable — en production —, la fonction emploie les autorités publiques du runtime.
+- **La borne du worker** est de 30 s (`main/environnement.ts`) : les remises d'un passage partent en parallèle, chacune
+  bornée à 10 s.
+- **Limite connue** : le nom est résolu avant l'essai, puis résolu de nouveau par `fetch` ; un nom dont la résolution
+  changerait entre les deux (« DNS rebinding ») pourrait viser une adresse interne. Le runtime ne permet pas d'imposer
+  l'adresse vérifiée à `fetch` ; la limite est nommée ici.

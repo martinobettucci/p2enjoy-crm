@@ -5,6 +5,8 @@
 //           de 150 s ne s'étend à aucune autre fonction (docs/SPEC-ia.md §11.1, §11.6)
 // @verifies CRM-101 (docs/BACKLOG.md) — tranche T2 : la liste d'amorçage n'atteint que `session`
 //           (docs/SPEC-plateforme.md §3)
+// @verifies CRM-073 (docs/BACKLOG.md) — tranche T2 : les deux variables de développement des webhooks n'atteignent que
+//           `webhooks`, et sa borne de 30 s ne s'étend à aucune autre fonction (docs/SPEC-webhooks.md §5.2, §6, §12)
 
 import { describe, expect, it } from 'vitest'
 import { DELAI_COMMUN_MS, ENVIRONNEMENT_COMMUN, ENVIRONNEMENT_PROPRE, delaiDe, environnementDe } from './environnement.ts'
@@ -24,6 +26,8 @@ const CONTENEUR: Record<string, string> = {
 	OLLAMA_CONTEXT_LENGTH: '36864',
 	IA_SIMULATEUR_HOST: 'http://ollama-simule:11434',
 	CRM_SUPERADMINS_INITIAUX: 'plateforme@p2enjoy.test',
+	WEBHOOKS_ALLOWED_HOSTS: 'webhook-sink',
+	WEBHOOKS_DEV_CA_URL: 'http://webhook-sink:8080/ca.pem',
 }
 const lire = (nom: string) => CONTENEUR[nom]
 const noms = (valeurs: [string, string][]) => valeurs.map(([nom]) => nom).sort()
@@ -56,8 +60,10 @@ describe('environnementDe', () => {
 
 	// RÉVISÉ PAR `CRM-097` T1, non relâché : la liste reste NOMMÉE. `ia` y entre pour la clé du serveur
 	// LLM (docs/SPEC-ia.md §11.6) ; toute autre entrée fait rougir ce test et doit se justifier.
-	it('seules `session` et `ia` ont un environnement propre', () => {
-		expect(Object.keys(ENVIRONNEMENT_PROPRE).sort()).toEqual(['ia', 'session'])
+	// RÉVISÉ PAR `CRM-073` T2, non relâché : `webhooks` y entre pour ses deux variables de développement
+	// (docs/SPEC-webhooks.md §6, §12).
+	it('seules `session`, `ia` et `webhooks` ont un environnement propre', () => {
+		expect(Object.keys(ENVIRONNEMENT_PROPRE).sort()).toEqual(['ia', 'session', 'webhooks'])
 	})
 })
 
@@ -80,5 +86,21 @@ describe('la fonction `ia` (CRM-097)', () => {
 		for (const fonction of ['session', 'example', 'toString', '__proto__', 'constructor']) {
 			expect(delaiDe(fonction), fonction).toBe(DELAI_COMMUN_MS)
 		}
+	})
+})
+
+describe('la fonction `webhooks` (CRM-073)', () => {
+	it('reçoit le commun et ses deux variables de développement — ni clé de session ni clé du serveur LLM', () => {
+		expect(noms(environnementDe('webhooks', lire))).toEqual(
+			['SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_URL', 'WEBHOOKS_ALLOWED_HOSTS', 'WEBHOOKS_DEV_CA_URL'],
+		)
+	})
+
+	it('ses variables n’atteignent aucune autre fonction ; sa borne de 30 s non plus', () => {
+		for (const fonction of ['session', 'ia', 'example', '__proto__']) {
+			expect(noms(environnementDe(fonction, lire)), fonction).not.toContain('WEBHOOKS_ALLOWED_HOSTS')
+		}
+		expect(delaiDe('webhooks')).toBe(30_000)
+		expect(delaiDe('example')).toBe(DELAI_COMMUN_MS)
 	})
 })

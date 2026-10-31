@@ -7,6 +7,8 @@
 //       simulateur de développement, elle seule, et une borne de 150 s (docs/SPEC-ia.md §11.1, §11.6)
 // @spec CRM-101 (docs/BACKLOG.md) — tranche T2 : `session` reçoit aussi `CRM_SUPERADMINS_INITIAUX`, la liste de
 //       l'amorçage unique (docs/SPEC-plateforme.md §3, décision 627)
+// @spec CRM-073 (docs/BACKLOG.md) — tranche T2 : `webhooks` reçoit les hôtes autorisés et l'adresse de l'autorité du
+//       récepteur local — deux variables de développement —, et une borne de 30 s (docs/SPEC-webhooks.md §5.2, §6, §12)
 //
 // Module pur. Le conteneur `functions` reçoit `JWT_SECRET` depuis `CRM-092`, parce que l'échangeur
 // doit signer le jeton interne que PostgREST, Realtime et Storage acceptent. Le service principal ne
@@ -26,6 +28,9 @@ export const ENVIRONNEMENT_PROPRE: Readonly<Record<string, readonly string[]>> =
 	// `CRM-097` : la clé du serveur LLM n'atteint que l'assistant ; `IA_SIMULATEUR_HOST` n'existe qu'en
 	// développement (docs/SPEC-ia.md §11.6).
 	ia: ['OLLAMA_HOST', 'OLLAMA_API_KEY', 'OLLAMA_MODEL', 'OLLAMA_CONTEXT_LENGTH', 'IA_SIMULATEUR_HOST'],
+	// `CRM-073` : les deux variables n'existent qu'en développement, pour joindre le récepteur local
+	// (docs/SPEC-webhooks.md §6, §12) ; la production ne les pose pas.
+	webhooks: ['WEBHOOKS_ALLOWED_HOSTS', 'WEBHOOKS_DEV_CA_URL'],
 }
 
 /** La borne commune d'un worker : une fonction courte. */
@@ -37,6 +42,8 @@ export const DELAI_COMMUN_MS = 10_000
  */
 export const DELAI_PROPRE: Readonly<Record<string, number>> = {
 	ia: 150_000,
+	// `CRM-073` : un passage remet jusqu'à 50 remises en parallèle, chacune bornée à 10 s, puis rend leurs résultats.
+	webhooks: 30_000,
 }
 
 export function delaiDe(fonction: string): number {

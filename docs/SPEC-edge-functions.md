@@ -82,6 +82,12 @@ après cette réponse n'émet jamais son appel. Une fonction longue doit donc vi
 `ia` répond par un flux NDJSON qui bat toutes les 15 s, sous le délai de lecture de Kong
 (`docs/SPEC-ia.md` §11.1). La politique `oneshot` n'est pas rouverte : ses motifs (décision 286) tiennent.
 
+**Révisé par `CRM-073` T2.** La fonction `webhooks` remet les webhooks sortants (`docs/SPEC-webhooks.md` §2, §5). Elle
+reçoit, elle seule, `WEBHOOKS_ALLOWED_HOSTS` et `WEBHOOKS_DEV_CA_URL`, que seul `docker-compose.dev.yml` pose (le récepteur
+local `webhook-sink`), et une borne de 30 s. Elle est appelée par `pg_cron` sur le réseau interne
+(`http://functions:9000/webhooks/remettre`), jamais par un client : derrière Kong, sans le secret d'appel de la base, elle
+rend `401`.
+
 ### 2 bis. Aucune fonction ne rend `204` (INC-292, décision 686)
 
 Sous `oneshot`, le runtime 1.74.2 perd par intermittence la réponse `204` d'un worker : le serveur de base rend `503`

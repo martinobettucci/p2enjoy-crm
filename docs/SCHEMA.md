@@ -2435,6 +2435,15 @@ rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur
 channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
 `0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
 déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0140` — la cadence de la remise des webhooks (`CRM-073` T2 ; livrée en développement le 2026-10-31)
+
+`docs/SPEC-webhooks.md` §2, §13. Un secret d'appel tiré au hasard dans Vault (`p2enjoy-webhooks-dispatch`, créé s'il
+manque) ; **`public.verify_webhook_dispatch(p_secret text) returns boolean`** (définisseur, `service_role` seul), que la
+fonction edge `webhooks` appelle avant toute lecture ; **`app.webhooks_reveiller()`** (définisseur, aucun client) qui, si
+une remise d'un webhook actif est due, appelle la fonction par `net.http_post` sur `http://functions:9000/webhooks/remettre`
+avec le secret ; la tâche `pg_cron` **`p2enjoy-webhooks-remise`** (`* * * * *`). **Retrait** : désactiver la tâche, retirer
+les deux fonctions et le secret ; aucune donnée existante n'est touchée.
+
 ### Migration `0139` — les webhooks sortants en base (`CRM-073` T1, décision 784 ; livrée en développement le 2026-10-31)
 
 `docs/SPEC-webhooks.md` §3, §4, §5.2, §5.3. **`public.webhook_endpoints`** (`id`, `workspace_id`, `name` ≤ 80, `url`

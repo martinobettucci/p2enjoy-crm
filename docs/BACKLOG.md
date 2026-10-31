@@ -12679,10 +12679,17 @@ Connecteur MCP : **non**, aux deux questions (décision 779) — aucune famille 
       être prise ; `contact.updated` nomme dans `changed` les champs changés sans recopier ceux que la charge utile ne porte
       pas (téléphone, fonction) ; renvoyer une remise en attente ou vers un webhook désactivé est refusé (`delivery_pending`,
       `webhook_disabled`). Les phrases du journal pour le type `webhook` arrivent avec l'écran (T3).
-- [ ] **T2 — la remise** (§2, §5, §6, §8) : fonction edge `webhooks` (signature HMAC-SHA256 horodatée, cinq essais à
+- [x] **T2 — la remise** (§2, §5, §6, §8) : fonction edge `webhooks` (signature HMAC-SHA256 horodatée, cinq essais à
       1 min, 5 min, 30 min, 2 h, refus des adresses internes), tâche `pg_cron` par `pg_net`, récepteur local
-      `webhook-sink` ; variables `WEBHOOKS_DISPATCH_SECRET`, `WEBHOOKS_ALLOWED_HOSTS` ; unitaires Deno ; intégration
-      jusqu'au récepteur ; contrat de déploiement.
+      `webhook-sink` ; unitaires ; intégration jusqu'au récepteur ; contrat de déploiement.
+      *Livrée en développement le 2026-10-31* — migration `0140` (secret d'appel dans Vault, `verify_webhook_dispatch`,
+      `app.webhooks_reveiller`, tâche `p2enjoy-webhooks-remise`) ; `supabase/functions/webhooks/` ; `webhook-sink` dans
+      `docker-compose.dev.yml` ; borne de 30 s et deux variables de développement au routeur. **Aucune variable
+      d'environnement nouvelle** : le secret d'appel vit dans Vault (`docs/SPEC-webhooks.md` §13, révise le §2 et le §9).
+      Preuves : unitaires de la fonction et du routeur 77/77 ; pgTAP `0130` 7/7 ; API de bout en bout
+      `e2e/api/webhooks-remise.spec.ts` 2/2 — par la vraie tâche de la minute, jusqu'au récepteur en HTTPS : signature
+      recalculée, échec et prochain essai à une minute, délai dépassé, adresse de la pile refusée, renvoi, appel sans secret
+      refusé derrière Kong ; compteurs du harnais (120 fichiers SQL, 1 286 scénarios d'API).
 - [ ] **T3 — l'écran** (§7, §8) : `docs/DESIGN_SYSTEM.md` avant le code, Réglages ▸ Webhooks ; seed par la vraie chaîne ;
       unitaires ; E2E ; captures aux quatre paliers ; manuel, chapitre « Webhooks ».
 - [ ] **Livraison en production**, sur instruction du responsable.

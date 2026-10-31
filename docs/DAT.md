@@ -763,6 +763,28 @@ Caddy.
 - **Dépendance** : l'analyse du Markdown, à la construction seulement, est inscrite au §15 quand elle est ajoutée, après
   la mesure du `CLAUDE.md` §19.
 
+### 3.7 quinquies Webhooks sortants — fonction `webhooks` (`CRM-073` ; T1 et T2 livrées en développement le 2026-10-31)
+
+`docs/SPEC-webhooks.md`. **La base décide, la fonction remet, `pg_cron` cadence** :
+- **la base** (migration `0139`) inscrit, par deux déclencheurs (`card_events`, `contacts`), une remise par webhook actif
+  concerné, dans la transaction du changement ; elle garde le secret de signature de chaque webhook dans Vault, décide de
+  l'état et du prochain essai (`record_webhook_attempt`, délais 1 min, 5 min, 30 min, 2 h, cinq essais), et purge chaque
+  nuit les remises closes de plus de 30 jours ;
+- **la fonction edge `webhooks`** (`supabase/functions/webhooks/`) prend jusqu'à 50 remises dues
+  (`claim_webhook_deliveries`, verrou `skip locked`, essai compté et réservé quinze minutes), refuse un hôte interne après
+  résolution du nom, signe en HMAC-SHA256 horodaté et remet en parallèle, chaque essai borné à 10 s, redirections non
+  suivies ; elle ne lit la base que par PostgREST sous la clé de service, et son journal ne porte que des comptes ;
+- **`pg_cron`** (migration `0140`) réveille la fonction chaque minute par `pg_net`, sur le réseau interne
+  (`http://functions:9000/webhooks/remettre`), seulement si une remise est due ; l'appel porte un secret tiré au hasard
+  dans Vault, que la fonction fait vérifier par `verify_webhook_dispatch` — sans lui, `401`, y compris derrière Kong.
+
+**Développement** : le récepteur local `webhook-sink` (`docker-compose.dev.yml` seul, aucun port publié) produit son
+autorité à chaque démarrage, reçoit en HTTPS, répond un code choisi par le chemin et rend les requêtes gardées ; la
+fonction lit son autorité à `WEBHOOKS_DEV_CA_URL` (un worker ne lit aucun fichier) et ne joint cet hôte privé que parce que
+`WEBHOOKS_ALLOWED_HOSTS` le nomme. **Compromis connus** : aucun ordre garanti entre deux remises ; une latence d'une minute
+au plus ; la résolution vérifiée puis refaite par `fetch` laisse une fenêtre de « DNS rebinding » (`docs/SPEC-webhooks.md`
+§13).
+
 ### 3.8 Contraintes d'exécution de l'hôte
 
 Realtime élève son nombre de descripteurs de fichiers au démarrage. Le besoin est
