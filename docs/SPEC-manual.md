@@ -470,8 +470,33 @@ est autorisée en début de chapitre. »
 | « Rouvrir le budget » | `la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre` | même état que « Bloqué » |
 | « Compte sans nom » | `les-membres-de-votre-espace-qui-y-travaille-avec-quel-role` | un membre dont le compte n'a pas de nom ; chaque compte du seed en porte un |
 | « En suspens » | `les-membres-de-votre-espace-qui-y-travaille-avec-quel-role` | l'attente d'un espace qui n'a pas encore d'administrateur ; l'espace du seed en a un |
+| « par défaut » | `les-budgets-d-un-track` | cité comme une propriété (la devise proposée par défaut), non comme un texte de l'écran |
+| « … » | `les-budgets-d-un-track` | points de suspension d'une phrase du manuel, pas un libellé |
+| « Cette valeur a été refusée : vérifiez le nom et la devise. » | `les-budgets-d-un-track` | refus du serveur à une valeur mal formée ; le formulaire la refuse avant l'envoi, seul un appel direct au serveur la produit |
+| « Accès refusé » | `les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense` | la lecture refusée des coûts d'un track : la lectrice du seed, ouvrant « Conseil & IA », ne l'obtient pas, et aucun autre profil du seed ne la produit |
+| « Sans occurrence » | `le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne` | une dépense d'un budget récurrent rattachée à aucune occurrence ; le seed n'en a pas |
+| « Aucune dépense sur cette occurrence. » | `le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne` | une occurrence ouverte sans dépense ; chaque occurrence du seed en porte |
+| « Auteur inconnu » | `le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne` | une dépense dont l'auteur a été supprimé ; chaque dépense du seed a le sien |
+| « Aucun espace de travail » | `les-couts-de-tout-l-espace-de-travail-un-cumul-par-track` | une session sans espace est renvoyée à la page de connexion (« Accès en attente ») : l'écran ne peut pas l'afficher |
+| « Vous ne pouvez pas modifier cette affaire. » | `l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite` | une ligne d'une affaire que la personne lit sans pouvoir l'écrire ; les rôles du seed lisent tout ou n'écrivent rien sur ce track |
+| « Enregistrement… » | `l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite` | état transitoire de quelques millisecondes pendant l'envoi ; l'image montre « Enregistré », qui lui succède |
+| « Sans libellé » | `l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite` | un réel de coût saisi sans libellé ; chaque réel de coût du seed a le sien (la mention est montrée sur une recette, chapitre 29) |
+| « Ligne soldée — décochez « Soldé » pour la modifier. » | `l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite` | une ligne de coût soldée dans une fiche ; le seed n'en solde aucune |
+| « Soldé » pour la modifier. » | `l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite` | fragment de la ligne précédente, découpé par les guillemets imbriqués |
+| « non valorisé » | `le-temps-passe-et-le-cout-du-personnel` | du temps saisi par une personne sans coût défini ; Farida Nowak, seule sans coût, ne saisit pas de temps dans le seed |
+| « Votre temps » | `le-temps-passe-et-le-cout-du-personnel` | la portée du coût du personnel pour un membre : l'écran des coûts de « Studio web » ouvert par Driss Lemoine ne l'a pas affichée |
+| « Réel » | `les-recettes-d-une-affaire-et-sa-rentabilite` | MONTRÉ, sur les images `recettes` et `reel-d-une-recette` : l'en-tête porte sa devise, « Réel (EUR) » |
+| « sans affaire » | `l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires` | mot d'une phrase du manuel, pas un libellé |
+| « Montant » | `l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires` | MONTRÉ, sur l'image `entonnoir` : l'en-tête porte sa devise, « Montant (EUR) » |
+| « personne n'a dit ce que vaut cette affaire » | `l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires` | phrase du manuel, pas un libellé |
+| « Aucun espace de travail » | `l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires` | une session sans espace est renvoyée à la page de connexion (« Accès en attente ») : l'écran ne peut pas l'afficher |
+| « Jamais connecté » | `la-plateforme-espaces-membres-et-superadministrateurs` | un compte admis qui n'a jamais appelé le connecteur ; au moment des images, chaque compte du seed l'a fait |
+| « Entrées plus anciennes » | `la-plateforme-espaces-membres-et-superadministrateurs` | le journal de la plateforme du seed tient sur une page de cinquante entrées |
+| « Journaux purgés » | `la-plateforme-espaces-membres-et-superadministrateurs` | geste de l'effacement de nuit des entrées de plus d'un an ; le seed n'en a pas d'aussi anciennes |
+| « Jamais connecté » | `le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant` | même motif qu'au chapitre 32 |
+| « Entrées plus anciennes » | `le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant` | le journal des appels du seed tient sur une page |
 
-*Lignes proposées par l'agent avec `CRM-117` T4.1 (2026-10-28), T4.2a et T4.2b (2026-10-30), T4.3 (2026-10-31, « par défaut » des modèles et « Retirer » d'un palier), T4.4 (2026-10-31, les onze suivantes), soumises au responsable.*
+*Lignes proposées par l'agent avec `CRM-117` T4.1 (2026-10-28), T4.2a et T4.2b (2026-10-30), T4.3 (2026-10-31, « par défaut » des modèles et « Retirer » d'un palier), T4.4 (2026-10-31, les onze suivantes), T4.5 (2026-10-31, les vingt-cinq dernières), soumises au responsable.*
 
 ### 11.4 Le contrat technique des images
 

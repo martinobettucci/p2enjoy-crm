@@ -50,6 +50,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-previsionnel-pondere-et-le-taux-de-conversion/pilotage.jpg",
+			"alt": "L'écran Pilotage : le prévisionnel pondéré et le taux de conversion au-dessus des entonnoirs",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "le-previsionnel-pondere",
@@ -59,6 +66,27 @@
 					"text": "31.1 Le prévisionnel pondéré"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-previsionnel-pondere-et-le-taux-de-conversion/pondere.jpg",
+			"alt": "Le prévisionnel pondéré, une valeur par devise",
+			"width": 974,
+			"height": 273
+		},
+		{
+			"type": "image",
+			"src": "le-previsionnel-pondere-et-le-taux-de-conversion/genre.jpg",
+			"alt": "La colonne « Genre » de l'entonnoir : « Livré » est « Gagné »",
+			"width": 990,
+			"height": 274
+		},
+		{
+			"type": "image",
+			"src": "le-previsionnel-pondere-et-le-taux-de-conversion/aucune-affaire-ouverte.jpg",
+			"alt": "« Aucune affaire ouverte à ce jour. », dans une portée dont les affaires sont toutes décidées",
+			"width": 487,
+			"height": 80
 		},
 		{
 			"type": "paragraph",
@@ -202,6 +230,20 @@
 					"text": "31.2 Le taux de conversion des affaires décidées"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-previsionnel-pondere-et-le-taux-de-conversion/taux.jpg",
+			"alt": "Le taux de conversion des affaires décidées : « 7 gagnées sur 8 décidées »",
+			"width": 487,
+			"height": 112
+		},
+		{
+			"type": "image",
+			"src": "le-previsionnel-pondere-et-le-taux-de-conversion/aucune-affaire-decidee.jpg",
+			"alt": "« Aucune affaire décidée à ce jour. », dans une portée où rien n'est encore décidé",
+			"width": 487,
+			"height": 80
 		},
 		{
 			"type": "paragraph",

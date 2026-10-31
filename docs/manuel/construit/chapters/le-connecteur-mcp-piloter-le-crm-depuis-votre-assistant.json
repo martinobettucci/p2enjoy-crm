@@ -38,6 +38,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/connecteur.jpg",
+			"alt": "La plateforme, onglet « Connecteur MCP » : les comptes venus au connecteur, l'accord des droits, le journal des appels",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "ce-que-l-assistant-a-le-droit-de-faire",
@@ -47,6 +54,13 @@
 					"text": "33.1 Ce que l'assistant a le droit de faire"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/familles-et-actions.jpg",
+			"alt": "La grille des droits du connecteur : les dix familles en lignes, les quatre actions en colonnes",
+			"width": 1192,
+			"height": 889
 		},
 		{
 			"type": "paragraph",
@@ -472,6 +486,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/page-d-accueil.jpg",
+			"alt": "La page d'accueil du connecteur : « Copier l'adresse du connecteur », les étapes, et « Ouvrir la plateforme du CRM »",
+			"width": 312,
+			"height": 445
+		},
+		{
 			"type": "list",
 			"ordered": true,
 			"start": 1,
@@ -628,6 +649,55 @@
 					"text": "33.3 Accorder des droits du connecteur"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/comptes.jpg",
+			"alt": "Les comptes venus au connecteur, dont un « Sans profil dans le CRM »",
+			"width": 1192,
+			"height": 380
+		},
+		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/accorder.jpg",
+			"alt": "« Accorder des droits à un utilisateur » : la recherche parmi tous les utilisateurs du CRM",
+			"width": 444,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/fiche.jpg",
+			"alt": "La fiche de Farida Nowak : sa dernière activité au connecteur, et l'espace choisi avec son rôle",
+			"width": 444,
+			"height": 205
+		},
+		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/modifications.jpg",
+			"alt": "« Enregistrer les droits » et « Annuler les modifications », tant qu'une modification n'est pas enregistrée",
+			"width": 1192,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/droits-enregistres.jpg",
+			"alt": "« Droits enregistrés. »",
+			"width": 169,
+			"height": 69
+		},
+		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/droits-du-connecteur.jpg",
+			"alt": "La ligne de Farida Nowak dans l'onglet « Utilisateurs », et son lien « Droits du connecteur »",
+			"width": 1192,
+			"height": 78
+		},
+		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/grille.jpg",
+			"alt": "La grille des droits : « Toute la famille » sous chaque famille, « Toute l'action » sous chaque action",
+			"width": 1192,
+			"height": 889
 		},
 		{
 			"type": "paragraph",
@@ -982,6 +1052,41 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/journal-des-appels.jpg",
+			"alt": "Le journal des appels : le filtre des issues, et un appel « Réussi »",
+			"width": 1192,
+			"height": 165
+		},
+		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/issue-matrice.jpg",
+			"alt": "Le filtre du journal des appels, sur « Refusé par la matrice »",
+			"width": 307,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/issue-crm.jpg",
+			"alt": "Le filtre, sur « Refusé par le CRM »",
+			"width": 307,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/issue-erreur.jpg",
+			"alt": "Le filtre, sur « Erreur »",
+			"width": 307,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/issue-volumineuse.jpg",
+			"alt": "Le filtre, sur « Réponse trop volumineuse »",
+			"width": 307,
+			"height": 73
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -1013,6 +1118,20 @@
 					"text": "33.5 Ce que l'assistant sait faire"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/familles.jpg",
+			"alt": "Les familles de la grille, chacune avec ce qu'elle couvre",
+			"width": 1192,
+			"height": 889
+		},
+		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/nouvelle-affaire.jpg",
+			"alt": "Le bouton « Nouvelle affaire » d'un tableau, que l'assistant remplace par son outil de création",
+			"width": 200,
+			"height": 72
 		},
 		{
 			"type": "paragraph",

@@ -51,6 +51,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-temps-passe-et-le-cout-du-personnel/temps.jpg",
+			"alt": "L'écran Temps : la semaine en cours, une ligne par track, channel ou affaire",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "saisir-sa-semaine",
@@ -60,6 +67,41 @@
 					"text": "28.1 Saisir sa semaine"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-temps-passe-et-le-cout-du-personnel/semaine.jpg",
+			"alt": "La semaine : les jours en colonnes, les quarts saisis, la case « En heures » de chaque jour",
+			"width": 1190,
+			"height": 791
+		},
+		{
+			"type": "image",
+			"src": "le-temps-passe-et-le-cout-du-personnel/cette-semaine.jpg",
+			"alt": "Les boutons « Semaine précédente » et « Semaine suivante »",
+			"width": 754,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "le-temps-passe-et-le-cout-du-personnel/revenir-a-cette-semaine.jpg",
+			"alt": "Le bouton « Cette semaine », qui ramène à la semaine en cours",
+			"width": 158,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "le-temps-passe-et-le-cout-du-personnel/ajouter-une-affaire.jpg",
+			"alt": "La liste « Ajouter une affaire », sous la grille de la semaine",
+			"width": 512,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "le-temps-passe-et-le-cout-du-personnel/journee-trop-longue.jpg",
+			"alt": "Le refus d'un quart de plus sur un jour déjà plein : « Cette valeur dépasserait la journée de 7 heures. »",
+			"width": 161,
+			"height": 82
 		},
 		{
 			"type": "paragraph",
@@ -223,6 +265,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-temps-passe-et-le-cout-du-personnel/saisir-pour.jpg",
+			"alt": "La liste « Saisir pour », réglée sur « Moi-même »",
+			"width": 166,
+			"height": 73
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -254,6 +303,20 @@
 					"text": "28.4 Le rapport mensuel"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-temps-passe-et-le-cout-du-personnel/rapport-mensuel.jpg",
+			"alt": "Le rapport mensuel : le mois, la personne, le temps et le coût par track",
+			"width": 1192,
+			"height": 225
+		},
+		{
+			"type": "image",
+			"src": "le-temps-passe-et-le-cout-du-personnel/toute-l-equipe.jpg",
+			"alt": "Le rapport mensuel de « Toute l'équipe »",
+			"width": 1192,
+			"height": 305
 		},
 		{
 			"type": "paragraph",
@@ -348,6 +411,34 @@
 					"text": "28.5 Régler le coût du personnel"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-temps-passe-et-le-cout-du-personnel/cout-du-personnel.jpg",
+			"alt": "Réglages ▸ Coût du personnel : le coût d'un quart de journée de chaque personne, ses versions",
+			"width": 992,
+			"height": 437
+		},
+		{
+			"type": "image",
+			"src": "le-temps-passe-et-le-cout-du-personnel/nouvelle-version.jpg",
+			"alt": "Une nouvelle version du coût du personnel : « Coût par quart » et « Enregistrer la version »",
+			"width": 507,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "le-temps-passe-et-le-cout-du-personnel/calcul.jpg",
+			"alt": "« Calculer depuis le coût mensuel » : le calcul du coût par quart, et « Utiliser ce coût »",
+			"width": 934,
+			"height": 259
+		},
+		{
+			"type": "image",
+			"src": "le-temps-passe-et-le-cout-du-personnel/calculer.jpg",
+			"alt": "Le champ « Coût par quart » et le bouton « Calculer depuis le coût mensuel »",
+			"width": 266,
+			"height": 149
 		},
 		{
 			"type": "paragraph",
@@ -519,6 +610,20 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-temps-passe-et-le-cout-du-personnel/personnel-du-track.jpg",
+			"alt": "Le bloc « Coût du personnel » sous les coûts d'un track",
+			"width": 991,
+			"height": 160
+		},
+		{
+			"type": "image",
+			"src": "le-temps-passe-et-le-cout-du-personnel/temps-de-l-affaire.jpg",
+			"alt": "Le bloc « Temps passé » d'une affaire : « Le temps de toute l'équipe », puis votre semaine",
+			"width": 650,
+			"height": 499
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -579,6 +684,20 @@
 					"text": "28.7 Saisir son temps depuis la fiche d'une affaire"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-temps-passe-et-le-cout-du-personnel/temps-dans-la-fiche.jpg",
+			"alt": "Le bloc Temps passé d'une affaire : le temps de l'équipe, son coût, et votre semaine",
+			"width": 650,
+			"height": 482
+		},
+		{
+			"type": "image",
+			"src": "le-temps-passe-et-le-cout-du-personnel/cette-semaine-dans-la-fiche.jpg",
+			"alt": "Le bouton « Cette semaine » du bloc de la fiche",
+			"width": 137,
+			"height": 73
 		},
 		{
 			"type": "paragraph",

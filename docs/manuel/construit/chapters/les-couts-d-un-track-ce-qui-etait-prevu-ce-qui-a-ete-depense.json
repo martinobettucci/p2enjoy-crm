@@ -34,6 +34,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense/couts-du-track.jpg",
+			"alt": "L'écran Coûts du track « Studio web » : le graphique prévu et réel par budget, le tableau, le coût du personnel",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -229,6 +236,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense/phrase.jpg",
+			"alt": "La phrase sous le graphique : les lignes sans coût réel saisi, et leur prévisionnel",
+			"width": 992,
+			"height": 53
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -343,6 +357,27 @@
 					"text": "24.3 Les états que vous pouvez rencontrer"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense/track-introuvable.jpg",
+			"alt": "« Track introuvable », pour une adresse qui ne mène à aucun track",
+			"width": 174,
+			"height": 52
+		},
+		{
+			"type": "image",
+			"src": "les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense/aucun-budget.jpg",
+			"alt": "Un track sans budget : « Aucun budget sur ce track »",
+			"width": 548,
+			"height": 258
+		},
+		{
+			"type": "image",
+			"src": "les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense/aucune-depense.jpg",
+			"alt": "Un budget sans dépense : « Aucune dépense rattachée. »",
+			"width": 992,
+			"height": 53
 		},
 		{
 			"type": "table",
@@ -477,6 +512,13 @@
 					"text": "24.4 Ce que cet écran ne fait pas"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense/onglet-couts.jpg",
+			"alt": "L'onglet « Coûts » d'un track",
+			"width": 121,
+			"height": 72
 		},
 		{
 			"type": "list",

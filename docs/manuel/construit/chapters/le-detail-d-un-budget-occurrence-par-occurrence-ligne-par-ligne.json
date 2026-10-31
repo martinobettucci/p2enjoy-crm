@@ -50,6 +50,20 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne/detail.jpg",
+			"alt": "Le détail du budget récurrent « Publicité 2026 » : ses lignes, filtrables par occurrence",
+			"width": 1440,
+			"height": 900
+		},
+		{
+			"type": "image",
+			"src": "le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne/budget-recurrent.jpg",
+			"alt": "Le détail du budget récurrent « Publicité 2026 » : ses lignes, leur occurrence, leur estimé et leur réel",
+			"width": 992,
+			"height": 608
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -191,6 +205,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne/filtrer.jpg",
+			"alt": "La liste « Filtrer par occurrence », réglée sur « Toutes les occurrences »",
+			"width": 352,
+			"height": 73
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -298,6 +319,34 @@
 					"text": "25.3 Les états que vous pouvez rencontrer"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne/budget-introuvable.jpg",
+			"alt": "« Budget introuvable » et le lien « Revenir aux coûts du track »",
+			"width": 250,
+			"height": 163
+		},
+		{
+			"type": "image",
+			"src": "le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne/auteur.jpg",
+			"alt": "La colonne « Auteur » d'une ligne de dépense",
+			"width": 992,
+			"height": 365
+		},
+		{
+			"type": "image",
+			"src": "le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne/budget-cloture.jpg",
+			"alt": "Le bandeau « Budget clôturé — ses lignes restent lisibles et leur coût réel saisissable. »",
+			"width": 505,
+			"height": 61
+		},
+		{
+			"type": "image",
+			"src": "le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne/aucune-depense.jpg",
+			"alt": "Le détail d'un budget sans dépense : « Aucune dépense rattachée. »",
+			"width": 992,
+			"height": 53
 		},
 		{
 			"type": "table",

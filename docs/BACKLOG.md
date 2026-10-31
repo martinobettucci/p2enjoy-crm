@@ -17439,7 +17439,7 @@ responsable** : traitée juste après `CRM-116`.*
             faux pour cette tranche. La publication a échoué (API injoignable) : la pile de développement avait été
             arrêtée par le responsable, qui a demandé de ne pas la relancer. Le bucket porte le manuel de T3.4a ; la
             prochaine publication (seed ou `scripts/manuel/publier.sh`) le mettra à jour.
-- [ ] **T4 — les images**, par les mêmes groupes : l'aide `illustrer`, les scénarios `e2e/manuel/`, le manifeste, les
+- [x] **T4 — les images**, par les mêmes groupes : l'aide `illustrer`, les scénarios `e2e/manuel/`, le manifeste, les
       images placées et observées ; la preuve « un élément cité, une image » et la table des exceptions (§11.3) soumise
       au responsable. Contrat technique : `docs/SPEC-manual.md` §11.4 (mesure : environ 620 libellés cités, dans 157
       sections).
@@ -17517,8 +17517,15 @@ responsable** : traitée juste après `CRM-116`.*
             l'espace gardant un administrateur), l'IA par le simulateur. Onze exceptions de plus au §11.3, soumises au
             responsable (29 en tout). Les exemples du §22.2 suivent le journal réel. INC-323 consignée : l'import de
             contacts paraît au journal sans geste ni détail.
-      - [@] **T4.5 — le pilotage, la plateforme et le connecteur** : chapitres 23 à 33. Scénarios des chapitres 23 à
-            33 écrits (30 à 33 le 2026-10-31), jamais passés.
+      - [x] **T4.5 — le pilotage, la plateforme et le connecteur** : chapitres 23 à 33, le 2026-10-31. **127 images**
+            produites par `e2e/manuel/23-26`, `27-29`, `30-31`, `32-33` et `23-33-complements` (36 scénarios verts) sur la
+            pile et le seed, observées et placées ; `verify-manual` 166 contrôles sans anomalie, **les 34 chapitres
+            illustrés** (479 images). États absents du seed posés puis retirés par la clé de service : un track et un
+            budget sans dépense, un channel vide, un channel d'une seule affaire livrée, deux espaces vides ; « Atelier
+            Lumière » naît et est supprimé par la plateforme elle-même. Vingt-cinq exceptions de plus au §11.3, soumises au
+            responsable (54 en tout), dont « Aucun espace de travail » : une session sans espace est renvoyée à la
+            connexion (« Accès en attente »), l'état n'est pas atteignable. Un réel de 12 € laissé par un premier passage
+            (nettoyage sur une table mal nommée) a été retiré.
 - [ ] **T5 — la campagne finale** : toutes les preuves de la partie II §16, captures de l'aide aux quatre paliers,
       toutes les images du manuel reprises par le projet `manuel` dans le navigateur en français (`docs/SPEC-manual.md`
       §11.4 ; les chapitres illustrés avant le 2026-10-31 montrent encore « Choose File » et « mm/dd/yyyy »),

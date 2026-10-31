@@ -23,6 +23,27 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-recettes-d-une-affaire-et-sa-rentabilite/recettes.jpg",
+			"alt": "Le bloc Recettes d'une affaire : les lots, leur prévu et leur réel, « Nouvelle ligne de recette »",
+			"width": 650,
+			"height": 325
+		},
+		{
+			"type": "image",
+			"src": "les-recettes-d-une-affaire-et-sa-rentabilite/reel-d-une-recette.jpg",
+			"alt": "Une ligne de recette dépliée : ses réels, la case « Soldé »",
+			"width": 650,
+			"height": 539
+		},
+		{
+			"type": "image",
+			"src": "les-recettes-d-une-affaire-et-sa-rentabilite/couts-de-l-affaire.jpg",
+			"alt": "Le titre du bloc « Coûts » de la fiche",
+			"width": 650,
+			"height": 37
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -124,6 +145,27 @@
 					"text": "29.2 La rentabilité d'une affaire"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-recettes-d-une-affaire-et-sa-rentabilite/rentabilite-de-l-affaire.jpg",
+			"alt": "Le bloc Rentabilité d'une affaire : recettes, coûts, personnel et marge, prévus et réels",
+			"width": 650,
+			"height": 384
+		},
+		{
+			"type": "image",
+			"src": "les-recettes-d-une-affaire-et-sa-rentabilite/temps-passe.jpg",
+			"alt": "Le titre du bloc « Temps passé » de la fiche",
+			"width": 616,
+			"height": 53
+		},
+		{
+			"type": "image",
+			"src": "les-recettes-d-une-affaire-et-sa-rentabilite/plusieurs-devises.jpg",
+			"alt": "Une ligne de l'écran Rentabilité : « Non calculable — plusieurs devises »",
+			"width": 1158,
+			"height": 73
 		},
 		{
 			"type": "paragraph",
@@ -244,6 +286,27 @@
 					"text": "29.3 L'écran « Rentabilité »"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-recettes-d-une-affaire-et-sa-rentabilite/tableau.jpg",
+			"alt": "L'écran Rentabilité : un tableau par devise, par track, channel et affaire",
+			"width": 1160,
+			"height": 1080
+		},
+		{
+			"type": "image",
+			"src": "les-recettes-d-une-affaire-et-sa-rentabilite/barre-laterale.jpg",
+			"alt": "L'entrée « Rentabilité » de la barre latérale, après « Pilotage »",
+			"width": 251,
+			"height": 116
+		},
+		{
+			"type": "image",
+			"src": "les-recettes-d-une-affaire-et-sa-rentabilite/reserve-aux-administrateurs.jpg",
+			"alt": "L'écran Rentabilité ouvert par une lectrice : « Réservé aux administrateurs »",
+			"width": 548,
+			"height": 235
 		},
 		{
 			"type": "paragraph",
@@ -405,6 +468,20 @@
 					"text": "29.4 L'onglet « À saisir »"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-recettes-d-une-affaire-et-sa-rentabilite/colonnes.jpg",
+			"alt": "Les colonnes « Une recette de plus » et « Soldé » de l'onglet « À saisir » de la rentabilité",
+			"width": 307,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "les-recettes-d-une-affaire-et-sa-rentabilite/onglet-a-saisir.jpg",
+			"alt": "L'onglet « À saisir » de l'écran Rentabilité",
+			"width": 139,
+			"height": 73
 		},
 		{
 			"type": "paragraph",

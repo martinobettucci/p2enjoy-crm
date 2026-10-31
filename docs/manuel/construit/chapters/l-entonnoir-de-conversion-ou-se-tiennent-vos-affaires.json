@@ -34,6 +34,20 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/pilotage.jpg",
+			"alt": "L'écran Pilotage : la portée, le prévisionnel pondéré et le taux de conversion, puis un entonnoir par devise",
+			"width": 1440,
+			"height": 900
+		},
+		{
+			"type": "image",
+			"src": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/barre-laterale.jpg",
+			"alt": "L'entrée « Pilotage » de la barre latérale, entre « Coûts » et « Rentabilité »",
+			"width": 251,
+			"height": 160
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -78,6 +92,20 @@
 					"text": "30.1 Choisir la portée : tout l'espace, un track, un channel"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/portee.jpg",
+			"alt": "La liste « Portée », réglée sur « Studio web — tout le track »",
+			"width": 452,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/portee-sans-affaire.jpg",
+			"alt": "Un channel sans affaire : « Aucune affaire active dans cette portée », la portée restant choisie",
+			"width": 770,
+			"height": 209
 		},
 		{
 			"type": "paragraph",
@@ -347,6 +375,20 @@
 					"text": "30.2 Ce que l'écran montre"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/entonnoir.jpg",
+			"alt": "L'entonnoir en EUR : une ligne par étape, son genre, ses affaires, leur montant et leur pondéré",
+			"width": 990,
+			"height": 314
+		},
+		{
+			"type": "image",
+			"src": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/etapes-sans-affaire.jpg",
+			"alt": "La phrase qui nomme les étapes sans affaire active",
+			"width": 992,
+			"height": 53
 		},
 		{
 			"type": "paragraph",
@@ -652,6 +694,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/genre.jpg",
+			"alt": "La colonne « Genre » : « Ouvert », « Gagné » pour Livré, « Perdu »",
+			"width": 990,
+			"height": 274
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -834,6 +883,13 @@
 					"text": "30.4 La probabilité d'une affaire : trois niveaux, et le plus précis gagne"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/affaires-et-montants.jpg",
+			"alt": "Les colonnes « Affaires », « Montant » et « Pondéré »",
+			"width": 990,
+			"height": 154
 		},
 		{
 			"type": "paragraph",
@@ -1086,6 +1142,20 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/portee-de-tout-l-espace.jpg",
+			"alt": "La phrase sous les tableaux, pour tout l'espace de travail",
+			"width": 992,
+			"height": 57
+		},
+		{
+			"type": "image",
+			"src": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/portee-d-un-track.jpg",
+			"alt": "La même phrase, qui nomme le track choisi",
+			"width": 992,
+			"height": 73
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -1301,6 +1371,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/deux-devises.jpg",
+			"alt": "Deux tableaux, « Entonnoir en CHF » et « Entonnoir en EUR »",
+			"width": 992,
+			"height": 227
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -1367,6 +1444,27 @@
 					"text": "30.7 Ce que l'écran écrit quand il n'y a rien à montrer"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/aucune-affaire-active.jpg",
+			"alt": "« Aucune affaire active », dans un espace où rien n'est lisible",
+			"width": 548,
+			"height": 258
+		},
+		{
+			"type": "image",
+			"src": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/lecture-refusee.jpg",
+			"alt": "« Lecture refusée »",
+			"width": 548,
+			"height": 235
+		},
+		{
+			"type": "image",
+			"src": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/lecture-impossible.jpg",
+			"alt": "« L'entonnoir n'a pas pu être lu », et le bouton « Réessayer »",
+			"width": 496,
+			"height": 264
 		},
 		{
 			"type": "table",

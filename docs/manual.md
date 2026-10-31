@@ -4741,6 +4741,24 @@ les élargir.
 « Coûts » de sa fiche, et les écrans de coûts comparent, budget par budget, ce qui était prévu à ce qui
 a été dépensé ([chapitre 24](#les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense)).
 
+![Le bloc Budgets du track « Studio web » dans l'arborescence : nom, devise, enveloppe, récurrence, occurrences ouvertes, état](manuel/images/les-budgets-d-un-track/budgets-du-track.jpg)
+
+![« Afficher les budgets clôturés » coché : le budget « Salon du web 2025 » paraît, marqué « Clôturé »](manuel/images/les-budgets-d-un-track/budgets-clotures.jpg)
+
+![Le bouton « Nouveau budget »](manuel/images/les-budgets-d-un-track/bouton-nouveau-budget.jpg)
+
+![Le formulaire « Nouveau budget » : nom, devise, enveloppe, seuil d'ancienneté, budget récurrent](manuel/images/les-budgets-d-un-track/nouveau-budget.jpg)
+
+![La confirmation de clôture d'un budget, qui dit ce qu'il reste à saisir](manuel/images/les-budgets-d-un-track/cloturer.jpg)
+
+![L'entrée « Arborescence : tracks et channels » de l'index des réglages, où vivent les budgets](manuel/images/les-budgets-d-un-track/reglages.jpg)
+
+![Les onglets « Coûts » et « À saisir » de l'écran des coûts d'un track](manuel/images/les-budgets-d-un-track/onglets-des-couts.jpg)
+
+![Le refus du serveur : « Ce budget porte des occurrences : supprimez-les avant de le rendre non récurrent. »](manuel/images/les-budgets-d-un-track/refus-non-recurrent.jpg)
+
+![Le refus du serveur : « Seul un administrateur de cet espace de travail peut gérer les budgets. »](manuel/images/les-budgets-d-un-track/refus-role.jpg)
+
 **Où.** Barre latérale ▸ **Réglages** ▸ « Arborescence : tracks et channels ». Dépliez un track avec
 le chevron : sous ses channels paraît le bloc **« Budgets »**.
 
@@ -4807,6 +4825,14 @@ restent ouverts.
 | « Rien n'a été modifié… » | Vos droits sur ce budget ont changé depuis l'ouverture de l'écran, ou il a disparu |
 
 ### 23.1 Les occurrences d'un budget récurrent
+
+![Un budget récurrent et le nombre de ses occurrences ouvertes](manuel/images/les-budgets-d-un-track/occurrences.jpg)
+
+![Le bloc « Budgets » et sa colonne « Occurrences ouvertes »](manuel/images/les-budgets-d-un-track/colonne-occurrences.jpg)
+
+![Les occurrences du budget « Publicité 2026 » : ouvertes et clôturées, avec leurs commandes](manuel/images/les-budgets-d-un-track/occurrences-du-budget.jpg)
+
+![L'onglet « À saisir » de l'écran des coûts, où se renseignent les réels des occurrences](manuel/images/les-budgets-d-un-track/onglet-a-saisir.jpg)
 
 **Où.** Sous un track déplié, dans le tableau « Budgets ». Un budget déclaré **récurrent** affiche
 dans la colonne « Occurrences ouvertes » un nombre **cliquable** : il déplie la liste de ses
@@ -4875,6 +4901,8 @@ Ces absences sont voulues, et non des oublis :
 **Où.** Ouvrez un track, puis l'entrée **« Coûts »** de la barre d'onglets, à droite des channels et
 séparée d'eux par un filet. L'adresse est partageable et rechargeable.
 
+![L'écran Coûts du track « Studio web » : le graphique prévu et réel par budget, le tableau, le coût du personnel](manuel/images/les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense/couts-du-track.jpg)
+
 **L'entrée est là même si le track n'a aucun channel.** Un track porte ses budgets indépendamment de
 ses channels ; ne pas encore avoir ouvert de channel n'empêche pas d'avoir engagé des dépenses.
 
@@ -4899,6 +4927,8 @@ d'arriver ensuite. Il sort simplement de la comparaison des budgets en cours.
 
 ### 24.1 La phrase sous le graphique, et pourquoi elle compte
 
+![La phrase sous le graphique : les lignes sans coût réel saisi, et leur prévisionnel](manuel/images/les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense/phrase.jpg)
+
 Quand des coûts réels manquent, l'écran écrit sous le graphique :
 
 > « 1 ligne(s) sans coût réel saisi, pour 100 € de prévisionnel. »
@@ -4920,6 +4950,12 @@ la même devise — le cas courant — vous ne voyez rien de cette mécanique.
 
 ### 24.3 Les états que vous pouvez rencontrer
 
+![« Track introuvable », pour une adresse qui ne mène à aucun track](manuel/images/les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense/track-introuvable.jpg)
+
+![Un track sans budget : « Aucun budget sur ce track »](manuel/images/les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense/aucun-budget.jpg)
+
+![Un budget sans dépense : « Aucune dépense rattachée. »](manuel/images/les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense/aucune-depense.jpg)
+
 | Ce que vous voyez | Ce que cela veut dire |
 |---|---|
 | « Aucun budget sur ce track » | Aucun budget **ouvert** que vous ayez le droit de lire. Un administrateur en crée depuis « Réglages ▸ Arborescence » |
@@ -4933,6 +4969,8 @@ reviendrait à vous apprendre l'existence de ce qu'il cache. Votre total peut do
 que celui d'un collègue, et c'est le comportement voulu.
 
 ### 24.4 Ce que cet écran ne fait pas
+
+![L'onglet « Coûts » d'un track](manuel/images/les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense/onglet-couts.jpg)
 
 - **On n'y saisit rien.** Les lignes de coût d'une affaire se créent et se modifient depuis la fiche
   de l'affaire, section « Coûts ». Les budgets s'administrent depuis « Réglages ▸ Arborescence ».
@@ -4956,6 +4994,10 @@ Le **cumul de l'espace de travail** a son propre écran ([chapitre 26](#les-cout
 le tableau sous le graphique. L'adresse est partageable et rechargeable ; elle désigne le budget par
 son identifiant, et non par son nom — deux budgets peuvent porter le même nom dès que l'un est clos.
 
+![Le détail du budget récurrent « Publicité 2026 » : ses lignes, filtrables par occurrence](manuel/images/le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne/detail.jpg)
+
+![Le détail du budget récurrent « Publicité 2026 » : ses lignes, leur occurrence, leur estimé et leur réel](manuel/images/le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne/budget-recurrent.jpg)
+
 **Ce que l'écran montre, de haut en bas :**
 
 1. **La devise du budget et son enveloppe**, quand une enveloppe a été décidée. Si aucune ne l'a été,
@@ -4977,6 +5019,8 @@ purement descriptive : elle ne refuse aucune ligne de coût.
 
 ### 25.1 Filtrer par occurrence
 
+![La liste « Filtrer par occurrence », réglée sur « Toutes les occurrences »](manuel/images/le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne/filtrer.jpg)
+
 Dès que le budget porte des occurrences, un sélecteur **« Filtrer par occurrence »** apparaît
 au-dessus de la liste. Il ne retient que **la liste** : le graphique reste celui du budget entier,
 sans quoi vous perdriez la comparaison entre occurrences, qui est ce que cet écran sert à voir.
@@ -4993,6 +5037,14 @@ dépensé » : un zéro affiché ferait passer une saisie en retard pour une éc
 lignes est donné une seule fois, par la phrase sous le graphique.
 
 ### 25.3 Les états que vous pouvez rencontrer
+
+![« Budget introuvable » et le lien « Revenir aux coûts du track »](manuel/images/le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne/budget-introuvable.jpg)
+
+![La colonne « Auteur » d'une ligne de dépense](manuel/images/le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne/auteur.jpg)
+
+![Le bandeau « Budget clôturé — ses lignes restent lisibles et leur coût réel saisissable. »](manuel/images/le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne/budget-cloture.jpg)
+
+![Le détail d'un budget sans dépense : « Aucune dépense rattachée. »](manuel/images/le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne/aucune-depense.jpg)
 
 | Ce que vous voyez | Ce que cela veut dire |
 |---|---|
@@ -5018,6 +5070,10 @@ vous venez, et là où les autres budgets sont listés.
 
 **Où.** Barre latérale ▸ **« Coûts »**, entre « Objectifs » et « Pilotage ». L'adresse de la page est partageable et
 rechargeable.
+
+![L'écran Coûts de tout l'espace : un graphique et un tableau par devise, un cumul par track](manuel/images/les-couts-de-tout-l-espace-de-travail-un-cumul-par-track/cumul.jpg)
+
+![L'entrée « Coûts » de la barre latérale, entre « Objectifs » et « Pilotage »](manuel/images/les-couts-de-tout-l-espace-de-travail-un-cumul-par-track/barre-laterale.jpg)
 
 **Qui.** Tout membre de l'espace de travail. Ce que l'écran montre dépend de ce que vous avez le
 droit de lire — voir le [§26.3](#votre-total-est-le-votre-et-il-peut-differer-de-celui-d-un-collegue), qui est la partie la plus importante de cette page.
@@ -5049,6 +5105,10 @@ la barre latérale. Si un budget y est resté ouvert, il se lit depuis l'écran 
 dont l'adresse continue de répondre.
 
 ### 26.2 Les devises ne se mélangent jamais
+
+![Le titre « Coûts en EUR »](manuel/images/les-couts-de-tout-l-espace-de-travail-un-cumul-par-track/couts-en-eur.jpg)
+
+![Le titre « Coûts en CHF »](manuel/images/les-couts-de-tout-l-espace-de-travail-un-cumul-par-track/couts-en-chf.jpg)
 
 Si les budgets que vous lisez sont libellés dans **plusieurs devises**, l'écran rend **un graphique
 par devise**, chacun avec son **titre** — « Coûts en EUR », « Coûts en CHF » — et son propre total.
@@ -5083,6 +5143,10 @@ mais « ai-je le droit de lire ce track ? ».
 
 ### 26.4 Ce que l'écran écrit quand il n'y a rien à montrer
 
+![Les coûts de tout l'espace vus par une lectrice : seuls les tracks qu'elle lit](manuel/images/les-couts-de-tout-l-espace-de-travail-un-cumul-par-track/lectrice.jpg)
+
+![Un espace sans budget : « Aucun budget ouvert »](manuel/images/les-couts-de-tout-l-espace-de-travail-un-cumul-par-track/aucun-budget-ouvert.jpg)
+
 | Ce que vous lisez | Ce que cela veut dire |
 |---|---|
 | « n ligne(s) sans coût réel saisi, pour m € de prévisionnel. » | Des dépenses ont été engagées sans que leur coût réel ait encore été saisi. La barre du réel est donc plus basse que la réalité |
@@ -5112,6 +5176,8 @@ en attente de **tous les tracks que vous lisez**, et non celles d'un seul. Tout 
 `?onglet=saisir` : elle se partage et se recharge, et le bouton « précédent » du navigateur revient
 à l'onglet d'avant.
 
+![L'onglet « À saisir » du track « Studio web » : les lignes de coût sans réel, de la plus ancienne à la plus récente](manuel/images/l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/a-saisir.jpg)
+
 **À quoi il sert.** Le graphique dit **combien** de coûts réels manquent ; il ne permettait pas de
 les saisir. Il fallait ouvrir une affaire après l'autre. Cet onglet est la surface de **saisie en
 série** : une ligne par coût en attente, un champ par ligne, et le clavier pour aller de l'une à
@@ -5132,6 +5198,12 @@ de **changer le rattachement** d'une ligne.
 
 ### 27.1 Saisir, au clavier
 
+![Une ligne de l'onglet : le budget, l'occurrence, l'affaire, le prévisionnel, le champ « Un réel de plus » et « Soldé »](manuel/images/l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/une-ligne.jpg)
+
+![Le champ du libellé d'un réel, avec son exemple « Facture n° 42 »](manuel/images/l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/libelle.jpg)
+
+![Une ligne après la saisie d'un réel : la marque « Enregistré »](manuel/images/l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/enregistre.jpg)
+
 - **Tapez le montant dans le champ « Un réel de plus », puis `Entrée`.** Le réel s'ajoute à la
   ligne immédiatement — il n'y a **aucun bouton d'enregistrement** —, « Déjà saisi » montre la
   nouvelle somme, le champ se vide pour le réel suivant, et le curseur passe au champ de la **ligne
@@ -5151,6 +5223,8 @@ de **changer le rattachement** d'une ligne.
 
 ### 27.2 Ce que vous ne pouvez pas modifier reste visible
 
+![La phrase de l'onglet pour un membre qui ne peut rien y modifier](manuel/images/l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/lecture-seule.jpg)
+
 Une ligne que vous pouvez **lire** mais pas **écrire** est rendue comme les autres, avec son champ
 **désactivé** et la phrase « Vous ne pouvez pas modifier cette affaire. » sous lui. Elle n'est
 **jamais masquée** : une table qui cacherait des lignes se lirait comme complète alors qu'elle ne
@@ -5165,6 +5239,12 @@ ouvrent l'écriture channel par channel, et un rôle ne dirait pas la vérité.
 
 ### 27.3 Ce que l'écran écrit quand quelque chose ne va pas
 
+![Une saisie refusée : « Ce montant n'est pas un nombre. »](manuel/images/l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/pas-un-nombre.jpg)
+
+![La marque « Enregistré »](manuel/images/l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/enregistre-la-marque.jpg)
+
+![Un track dont aucune ligne n'attend de réel : « Tous les coûts réels sont saisis »](manuel/images/l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/tout-est-saisi.jpg)
+
 | Ce que vous lisez sous le champ | Ce que cela veut dire |
 |---|---|
 | « Enregistrement… » | L'envoi est en cours |
@@ -5175,6 +5255,8 @@ ouvrent l'écriture channel par channel, et un rôle ne dirait pas la vérité.
 | « Tous les coûts réels sont saisis » | Il n'y a rien à saisir dans cette portée. C'est une bonne nouvelle, pas un écran en panne |
 
 ### 27.4 Le compteur de l'onglet
+
+![Le compteur de l'onglet « À saisir »](manuel/images/l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/compteur.jpg)
 
 Le badge porte le nombre de lignes **que la table liste** — les lignes non soldées que vous lisez,
 budgets clôturés compris, y compris celles que vous ne pouvez pas modifier.
@@ -5200,6 +5282,8 @@ C'est la même règle que celle du cumul du workspace ([§26.3](#votre-total-est
 
 ### 27.5 Ce que cet onglet ne fait pas
 
+![L'onglet « Coûts » d'un track](manuel/images/l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/onglet-couts.jpg)
+
 - **Il ne crée aucune ligne de coût** : une dépense se crée depuis la fiche de son affaire, section
   « Coûts ».
 - **Il ajoute des réels et solde des lignes** — il ne modifie ni la nature, ni le budget, ni
@@ -5209,6 +5293,8 @@ C'est la même règle que celle du cumul du workspace ([§26.3](#votre-total-est
 - **Aucun import de fichier, aucun rapprochement automatique avec une facture.**
 
 ### 27.6 Les réels d'une ligne, dans la fiche d'une affaire
+
+![Le bloc Coûts d'une affaire, une ligne dépliée : ses réels, « Soldé », et « Ajouter le réel »](manuel/images/l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/reels-d-une-ligne.jpg)
 
 Dans la section « Coûts » d'une fiche, la colonne « Réel » d'une ligne est la **somme de ses réels**,
 et le formulaire d'une ligne ne porte plus de réel : il en règle la nature, le budget, l'occurrence
@@ -5229,7 +5315,19 @@ Un budget clôturé n'empêche rien de tout cela : on clôt une campagne, puis l
 L'écran **« Temps »**, dans la barre latérale, a deux onglets : **« Saisie »**, où chacun note le temps qu'il a passé,
 et **« Rapport mensuel »**, où ce temps est valorisé par le coût du personnel.
 
+![L'écran Temps : la semaine en cours, une ligne par track, channel ou affaire](manuel/images/le-temps-passe-et-le-cout-du-personnel/temps.jpg)
+
 ### 28.1 Saisir sa semaine
+
+![La semaine : les jours en colonnes, les quarts saisis, la case « En heures » de chaque jour](manuel/images/le-temps-passe-et-le-cout-du-personnel/semaine.jpg)
+
+![Les boutons « Semaine précédente » et « Semaine suivante »](manuel/images/le-temps-passe-et-le-cout-du-personnel/cette-semaine.jpg)
+
+![Le bouton « Cette semaine », qui ramène à la semaine en cours](manuel/images/le-temps-passe-et-le-cout-du-personnel/revenir-a-cette-semaine.jpg)
+
+![La liste « Ajouter une affaire », sous la grille de la semaine](manuel/images/le-temps-passe-et-le-cout-du-personnel/ajouter-une-affaire.jpg)
+
+![Le refus d'un quart de plus sur un jour déjà plein : « Cette valeur dépasserait la journée de 7 heures. »](manuel/images/le-temps-passe-et-le-cout-du-personnel/journee-trop-longue.jpg)
 
 La matrice montre une semaine, du lundi au dimanche. Ses lignes sont les tracks que vous lisez, chacun suivi de ses
 channels, et sous eux les affaires qui portent déjà du temps — celles de la semaine affichée et de la précédente sont
@@ -5256,11 +5354,17 @@ heures, au quart d'heure — « 1,5 » pour une heure et demie, « 0,25 » pour 
 
 ### 28.3 Saisir pour quelqu'un d'autre
 
+![La liste « Saisir pour », réglée sur « Moi-même »](manuel/images/le-temps-passe-et-le-cout-du-personnel/saisir-pour.jpg)
+
 Un administrateur dispose de **« Saisir pour »** : il choisit une personne, et un bandeau rappelle « Vous saisissez le
 temps de… ». Le produit garde la trace de qui a saisi. Un membre ne saisit que son propre temps, et seulement sur ce
 qu'il peut lire.
 
 ### 28.4 Le rapport mensuel
+
+![Le rapport mensuel : le mois, la personne, le temps et le coût par track](manuel/images/le-temps-passe-et-le-cout-du-personnel/rapport-mensuel.jpg)
+
+![Le rapport mensuel de « Toute l'équipe »](manuel/images/le-temps-passe-et-le-cout-du-personnel/toute-l-equipe.jpg)
 
 Choisissez un mois : le rapport liste chaque track, channel et affaire où du temps a été passé, avec ce temps et son
 coût. Le coût est celui de la personne **le jour où le temps a été passé** : une augmentation ne change pas le coût des
@@ -5271,6 +5375,14 @@ Un membre ne voit que **son** temps et **son** coût. Un administrateur choisit 
 qui rend une section par personne.
 
 ### 28.5 Régler le coût du personnel
+
+![Réglages ▸ Coût du personnel : le coût d'un quart de journée de chaque personne, ses versions](manuel/images/le-temps-passe-et-le-cout-du-personnel/cout-du-personnel.jpg)
+
+![Une nouvelle version du coût du personnel : « Coût par quart » et « Enregistrer la version »](manuel/images/le-temps-passe-et-le-cout-du-personnel/nouvelle-version.jpg)
+
+![« Calculer depuis le coût mensuel » : le calcul du coût par quart, et « Utiliser ce coût »](manuel/images/le-temps-passe-et-le-cout-du-personnel/calcul.jpg)
+
+![Le champ « Coût par quart » et le bouton « Calculer depuis le coût mensuel »](manuel/images/le-temps-passe-et-le-cout-du-personnel/calculer.jpg)
 
 Dans **Réglages ▸ « Coût du personnel »**, réservé aux administrateurs — pour les autres, l'entrée des
 réglages est un texte grisé ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)) —, chaque personne a sa carte : son coût en
@@ -5296,12 +5408,20 @@ et les charges ne sont conservés nulle part.
 
 ### 28.6 Le coût du personnel à côté des coûts
 
+![Le bloc « Coût du personnel » sous les coûts d'un track](manuel/images/le-temps-passe-et-le-cout-du-personnel/personnel-du-track.jpg)
+
+![Le bloc « Temps passé » d'une affaire : « Le temps de toute l'équipe », puis votre semaine](manuel/images/le-temps-passe-et-le-cout-du-personnel/temps-de-l-affaire.jpg)
+
 Sur l'écran de coûts d'un track ([chapitre 24](#les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense)), sous l'histogramme, **« Coût du personnel »** donne le temps et
 son coût du mois choisi, channel par channel. Dans la fiche d'une affaire, **« Temps passé »** donne le temps passé
 depuis le premier jour et son coût. Ces chiffres ne se mêlent ni aux budgets ni aux lignes de coût. Ils disent leur
 portée : « Votre temps » pour un membre, « Le temps de toute l’équipe » pour un administrateur.
 
 ### 28.7 Saisir son temps depuis la fiche d'une affaire
+
+![Le bloc Temps passé d'une affaire : le temps de l'équipe, son coût, et votre semaine](manuel/images/le-temps-passe-et-le-cout-du-personnel/temps-dans-la-fiche.jpg)
+
+![Le bouton « Cette semaine » du bloc de la fiche](manuel/images/le-temps-passe-et-le-cout-du-personnel/cette-semaine-dans-la-fiche.jpg)
 
 Sous le résumé « Temps passé », **« Votre semaine »** montre la ligne de l'affaire, du lundi au
 dimanche : les mêmes cases que l'écran « Temps », au quart de journée ou, en cochant la case sous un jour, au quart
@@ -5328,6 +5448,12 @@ de rentabilité rapproche les trois : recettes, coûts et coût du personnel.
 
 ### 29.1 Saisir les recettes dans la fiche
 
+![Le bloc Recettes d'une affaire : les lots, leur prévu et leur réel, « Nouvelle ligne de recette »](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/recettes.jpg)
+
+![Une ligne de recette dépliée : ses réels, la case « Soldé »](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/reel-d-une-recette.jpg)
+
+![Le titre du bloc « Coûts » de la fiche](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/couts-de-l-affaire.jpg)
+
 Dans la fiche d'une affaire, le bloc **« Recettes »** vient avant « Coûts ». **« Nouvelle ligne de recette »** ajoute une
 ligne : sa nature — « Acompte », « Solde », « Lot 1 » — et sa recette prévue. Les montants sont dans la devise de
 l'affaire, rappelée dans l'en-tête des colonnes.
@@ -5342,6 +5468,12 @@ ne change plus.
 
 ### 29.2 La rentabilité d'une affaire
 
+![Le bloc Rentabilité d'une affaire : recettes, coûts, personnel et marge, prévus et réels](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/rentabilite-de-l-affaire.jpg)
+
+![Le titre du bloc « Temps passé » de la fiche](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/temps-passe.jpg)
+
+![Une ligne de l'écran Rentabilité : « Non calculable — plusieurs devises »](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/plusieurs-devises.jpg)
+
 Pour un administrateur de l'espace, le bloc **« Rentabilité »** suit « Temps passé » : recettes, coûts, coût du
 personnel et marge, en **prévu** et en **réel**, et le taux de marge réelle. La marge est **recettes − coûts −
 personnel**. Une marge négative est écrite avec son signe, sur fond rouge. La mention **« partielle »** dit qu'il manque
@@ -5351,6 +5483,12 @@ La marge prévue soustrait le temps **déjà passé** : le CRM ne prévoit pas l
 dans plusieurs devises a une marge **« Non calculable — plusieurs devises »** : le CRM ne convertit pas les devises.
 
 ### 29.3 L'écran « Rentabilité »
+
+![L'écran Rentabilité : un tableau par devise, par track, channel et affaire](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/tableau.jpg)
+
+![L'entrée « Rentabilité » de la barre latérale, après « Pilotage »](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/barre-laterale.jpg)
+
+![L'écran Rentabilité ouvert par une lectrice : « Réservé aux administrateurs »](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/reserve-aux-administrateurs.jpg)
 
 Barre latérale ▸ **« Rentabilité »**, après « Pilotage ». L'onglet **« Vue d'ensemble »** rend un tableau par devise :
 chaque track, ses channels et leurs affaires, avec un sous-total à chaque niveau et le total. Les filtres :
@@ -5364,6 +5502,10 @@ Seuls les **administrateurs** de l'espace lisent ce rapport : il soustrait le co
 seuls eux peuvent lire. Un autre membre lit « Réservé aux administrateurs » et un lien vers l'onglet « À saisir ».
 
 ### 29.4 L'onglet « À saisir »
+
+![Les colonnes « Une recette de plus » et « Soldé » de l'onglet « À saisir » de la rentabilité](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/colonnes.jpg)
+
+![L'onglet « À saisir » de l'écran Rentabilité](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/onglet-a-saisir.jpg)
 
 Il liste les lignes de recette **non soldées**, de la plus ancienne à la plus récente, pour tout membre. Tapez un montant
 dans **« Une recette de plus »** : `Entrée` l'enregistre, à la date du jour, et passe à la ligne suivante. Saisir 0
@@ -5380,10 +5522,18 @@ recette entre plusieurs affaires, aucun export.
 **Où.** Barre latérale ▸ **« Pilotage »**, entre « Coûts » et « Rentabilité ». L'adresse de la page est partageable et
 rechargeable.
 
+![L'écran Pilotage : la portée, le prévisionnel pondéré et le taux de conversion, puis un entonnoir par devise](manuel/images/l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/pilotage.jpg)
+
+![L'entrée « Pilotage » de la barre latérale, entre « Coûts » et « Rentabilité »](manuel/images/l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/barre-laterale.jpg)
+
 **Qui.** Tout membre de l'espace de travail. Ce que l'écran montre dépend de ce que vous avez le
 droit de lire — voir le [§30.5](#vos-nombres-sont-les-votres-et-ils-peuvent-differer-de-ceux-d-un-collegue), qui est la partie la plus importante de cette page.
 
 ### 30.1 Choisir la portée : tout l'espace, un track, un channel
+
+![La liste « Portée », réglée sur « Studio web — tout le track »](manuel/images/l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/portee.jpg)
+
+![Un channel sans affaire : « Aucune affaire active dans cette portée », la portée restant choisie](manuel/images/l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/portee-sans-affaire.jpg)
 
 En **tête** de l'écran, au-dessus des deux nombres, un champ **« Portée »** choisit ce que tout le
 reste de la page mesure : **tout l'espace de travail** — le défaut —, **un track entier**, ou **un
@@ -5415,6 +5565,10 @@ plus : il n'y a rien d'actif à y mesurer.
 
 ### 30.2 Ce que l'écran montre
 
+![L'entonnoir en EUR : une ligne par étape, son genre, ses affaires, leur montant et leur pondéré](manuel/images/l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/entonnoir.jpg)
+
+![La phrase qui nomme les étapes sans affaire active](manuel/images/l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/etapes-sans-affaire.jpg)
+
 Un **tableau par devise**, une **ligne par étape** de vos workflows, dans **l'ordre du catalogue** —
 celui-là même que suivent les colonnes de vos boards. Chaque ligne porte :
 
@@ -5441,6 +5595,8 @@ mettre une.
 
 ### 30.3 Quelles affaires y entrent, et lesquelles n'y entrent pas
 
+![La colonne « Genre » : « Ouvert », « Gagné » pour Livré, « Perdu »](manuel/images/l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/genre.jpg)
+
 **Y entrent** toutes vos affaires **actives** — celles qui ne sont ni archivées, ni à la corbeille.
 Cela comprend :
 
@@ -5455,6 +5611,8 @@ gagnée puis archivée ne compte donc ni dans l'entonnoir, ni dans le taux de co
 [§31.2](#le-taux-de-conversion-des-affaires-decidees).
 
 ### 30.4 La probabilité d'une affaire : trois niveaux, et le plus précis gagne
+
+![Les colonnes « Affaires », « Montant » et « Pondéré »](manuel/images/l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/affaires-et-montants.jpg)
 
 Le montant **pondéré** est le montant de l'affaire multiplié par sa probabilité. Cette probabilité
 se résout à trois niveaux, du plus précis au plus général :
@@ -5477,6 +5635,10 @@ elles, un prévisionnel bas se lirait comme un portefeuille **pauvre** au lieu d
 **mal renseigné**.
 
 ### 30.5 Vos nombres sont les vôtres, et ils peuvent différer de ceux d'un collègue
+
+![La phrase sous les tableaux, pour tout l'espace de travail](manuel/images/l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/portee-de-tout-l-espace.jpg)
+
+![La même phrase, qui nomme le track choisi](manuel/images/l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/portee-d-un-track.jpg)
 
 **C'est la règle la plus importante de cet écran**, et c'est exactement celle du cumul des coûts
 ([§26.3](#votre-total-est-le-votre-et-il-peut-differer-de-celui-d-un-collegue)). L'entonnoir est calculé **à partir de ce que vos droits vous laissent lire**, jamais
@@ -5505,6 +5667,8 @@ droits, jamais à leur place.
 
 ### 30.6 Les devises ne se mélangent jamais
 
+![Deux tableaux, « Entonnoir en CHF » et « Entonnoir en EUR »](manuel/images/l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/deux-devises.jpg)
+
 Si vos affaires sont libellées dans **plusieurs devises**, l'écran rend **un tableau par devise**,
 chacun avec son **titre** — « Entonnoir en EUR », « Entonnoir en CHF ». Si tout est libellé dans une
 seule devise — le cas courant —, vous ne voyez pas ce titre ; les en-têtes des deux colonnes de
@@ -5515,6 +5679,12 @@ demanderait un taux de change que le produit ne connaît pas, et le nombre obten
 comme un chiffre d'affaires.
 
 ### 30.7 Ce que l'écran écrit quand il n'y a rien à montrer
+
+![« Aucune affaire active », dans un espace où rien n'est lisible](manuel/images/l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/aucune-affaire-active.jpg)
+
+![« Lecture refusée »](manuel/images/l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/lecture-refusee.jpg)
+
+![« L'entonnoir n'a pas pu être lu », et le bouton « Réessayer »](manuel/images/l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires/lecture-impossible.jpg)
 
 | Ce que vous lisez | Ce que cela veut dire |
 |---|---|
@@ -5539,7 +5709,15 @@ comme un chiffre d'affaires.
 **Où.** En **tête** de l'écran « Pilotage » ([§30](#l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires)), au-dessus des tableaux : deux nombres, et
 c'est la lecture que la plupart des visites viennent chercher.
 
+![L'écran Pilotage : le prévisionnel pondéré et le taux de conversion au-dessus des entonnoirs](manuel/images/le-previsionnel-pondere-et-le-taux-de-conversion/pilotage.jpg)
+
 ### 31.1 Le prévisionnel pondéré
+
+![Le prévisionnel pondéré, une valeur par devise](manuel/images/le-previsionnel-pondere-et-le-taux-de-conversion/pondere.jpg)
+
+![La colonne « Genre » de l'entonnoir : « Livré » est « Gagné »](manuel/images/le-previsionnel-pondere-et-le-taux-de-conversion/genre.jpg)
+
+![« Aucune affaire ouverte à ce jour. », dans une portée dont les affaires sont toutes décidées](manuel/images/le-previsionnel-pondere-et-le-taux-de-conversion/aucune-affaire-ouverte.jpg)
 
 C'est la somme des montants de vos affaires **ouvertes**, chacune multipliée par sa probabilité
 ([§30.4](#la-probabilite-d-une-affaire-trois-niveaux-et-le-plus-precis-gagne)), **par devise**.
@@ -5556,6 +5734,10 @@ une prévision nulle au lieu d'une absence de prévision.
 qu'un zéro.
 
 ### 31.2 Le taux de conversion des affaires décidées
+
+![Le taux de conversion des affaires décidées : « 7 gagnées sur 8 décidées »](manuel/images/le-previsionnel-pondere-et-le-taux-de-conversion/taux.jpg)
+
+![« Aucune affaire décidée à ce jour. », dans une portée où rien n'est encore décidé](manuel/images/le-previsionnel-pondere-et-le-taux-de-conversion/aucune-affaire-decidee.jpg)
 
 **Son nom entier compte, et l'écran ne l'abrège jamais.** Ce nombre est la part **gagnée** parmi les
 affaires qui se tiennent **actuellement** à une étape terminale :
@@ -5595,6 +5777,8 @@ Cet écran donne donc le prévisionnel **seul** : il ne le compare à aucun obje
 La **plateforme** est l'étage au-dessus des espaces de travail. On y crée un espace, on y désigne qui en est membre et
 avec quel rôle, et on y inscrit les personnes attendues. Elle est réservée aux **superadministrateurs**.
 
+![La plateforme, onglet « Espaces » : les espaces de travail, leur identifiant court, leur domaine entrant et leurs membres](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/plateforme.jpg)
+
 ### 32.1 Qui est superadministrateur
 
 Deux sortes de personnes le sont :
@@ -5613,12 +5797,24 @@ membre de cet espace, et ce geste est inscrit au journal.
 
 ### 32.2 Ouvrir la plateforme
 
+![L'entrée « Plateforme » de la barre latérale, après « Réglages »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/entree.jpg)
+
+![Les onglets « Espaces », « Utilisateurs », « Superadministrateurs » et « Journal »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/onglets.jpg)
+
+![La plateforme ouverte sans le drapeau : « Accès réservé »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/acces-reserve.jpg)
+
 Un superadministrateur voit l'entrée **« Plateforme »** en bas de la barre latérale, après « Réglages ». Personne
 d'autre ne la voit. Une adresse de la plateforme ouverte sans le drapeau affiche **« Accès réservé »**.
 
 La plateforme a quatre onglets : **« Espaces »**, **« Utilisateurs »**, **« Superadministrateurs »** et **« Journal »**.
 
 ### 32.3 Créer un espace
+
+![Le bouton « Nouvel espace »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/nouvel-espace.jpg)
+
+![Le formulaire « Créer un espace » : « Nom », « Identifiant court », « Domaine entrant (facultatif) »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/formulaire.jpg)
+
+![Un espace neuf dans la liste : « Aucun administrateur »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/aucun-administrateur.jpg)
 
 Dans l'onglet « Espaces », **« Nouvel espace »** ouvre un formulaire à trois champs :
 
@@ -5633,6 +5829,10 @@ administrateur trouvera le guide de démarrage, qui pose le workflow de départ 
 
 ### 32.4 Les membres d'un espace
 
+![Les « Membres » de l'espace P2Enjoy SAS, leur rôle et la commande « Retirer »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/membres.jpg)
+
+![« Ajouter un membre » : la recherche d'une personne par son nom, puis son rôle](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/ajouter-un-membre.jpg)
+
 La fiche d'un espace liste ses **« Membres »**. Le rôle d'un membre se change dans sa ligne, et s'enregistre dès qu'on
 le choisit.
 
@@ -5645,6 +5845,10 @@ le choisit.
 dernier administrateur ne se retire ni ne se rétrograde. Le refus le dit, et indique quoi faire.
 
 ### 32.5 Les attentes
+
+![Les attentes de l'espace : « Dernière tentative », « Refusée le … : compte LeLabs pas encore vérifié »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/attentes.jpg)
+
+![Un espace sans administrateur : une attente de lecteur marquée « En suspens »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/en-suspens.jpg)
 
 Une personne qui ne s'est jamais connectée n'a pas encore de nom dans le CRM. On l'**attend** à son adresse :
 **« Inscrire une attente »**, avec l'adresse et le rôle. Elle devient membre à sa première connexion LeLabs, si son
@@ -5664,6 +5868,12 @@ laisse jamais de trace, et réinscrire une attente efface la sienne.
 
 ### 32.6 Modifier ou supprimer un espace
 
+![La commande « Modifier » de la fiche d'un espace](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/modifier.jpg)
+
+![La confirmation de suppression : l'identifiant court saisi, et « Supprimer définitivement »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/supprimer.jpg)
+
+![Le bouton « Supprimer l'espace », en bas de la fiche d'un espace](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/supprimer-l-espace.jpg)
+
 **« Modifier »** change le nom et le domaine entrant d'un espace. Son identifiant court ne change pas.
 
 **« Supprimer l’espace »**, en bas de la fiche, ouvre une confirmation.
@@ -5674,6 +5884,12 @@ laisse jamais de trace, et réinscrire une attente efface la sienne.
 - **Ce qui ne se rattrape pas :** la suppression est définitive. Seule la restauration d'une sauvegarde la défait.
 
 ### 32.7 Les utilisateurs
+
+![L'onglet « Utilisateurs » : « Rechercher un utilisateur », leurs espaces, la pilule « Superadministrateur », « Droits du connecteur »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/utilisateurs.jpg)
+
+![Une personne sans espace : « Aucun espace »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/aucun-espace.jpg)
+
+![Le champ « Rechercher un utilisateur »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/rechercher.jpg)
 
 L'onglet **« Utilisateurs »** liste toutes les personnes admises au moins une fois dans le CRM. Pour chacune, il
 affiche :
@@ -5693,6 +5909,10 @@ le drapeau, passez par l'onglet « Superadministrateurs » ([§32.8](#les-supera
 ne le connaît que par la connexion.
 
 ### 32.8 Les superadministrateurs et le journal
+
+![L'onglet « Superadministrateurs » : le drapeau d'amorçage, « Retirer », « Accorder le drapeau »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/superadministrateurs.jpg)
+
+![Le journal de la plateforme : la date, l'acteur, le geste et son détail](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/journal.jpg)
 
 L'onglet **« Superadministrateurs »** liste les drapeaux posés dans le CRM.
 
@@ -5726,7 +5946,11 @@ ne peut modifier ni supprimer une entrée de ces journaux ([chapitre 22](#le-jou
 Le **connecteur MCP** relie votre assistant — Claude, ChatGPT, ou tout client MCP — au CRM. L'assistant agit **en votre
 nom** : il voit et modifie exactement ce que vous pourriez voir et modifier dans le CRM, jamais davantage.
 
+![La plateforme, onglet « Connecteur MCP » : les comptes venus au connecteur, l'accord des droits, le journal des appels](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/connecteur.jpg)
+
 ### 33.1 Ce que l'assistant a le droit de faire
+
+![La grille des droits du connecteur : les dix familles en lignes, les quatre actions en colonnes](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/familles-et-actions.jpg)
 
 Deux règles se cumulent :
 
@@ -5762,6 +5986,8 @@ corbeille.
 
 ### 33.2 Ajouter le connecteur à votre assistant
 
+![La page d'accueil du connecteur : « Copier l'adresse du connecteur », les étapes, et « Ouvrir la plateforme du CRM »](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/page-d-accueil.jpg)
+
 1. Ouvrez la **page d'accueil du connecteur**, et cliquez sur **« Copier l'adresse du connecteur »**.
 2. Dans votre assistant, ajoutez un **connecteur personnalisé** avec cette adresse.
 3. Sur la page de consentement, autorisez l'accès. Cochez **« Stay signed in »** pour rester connecté entre deux pauses.
@@ -5773,6 +5999,20 @@ de vous en accorder, puis relancez la connexion.
 La page d'accueil porte aussi **« Ouvrir la plateforme du CRM »**, qui mène à l'administration décrite ci-dessous.
 
 ### 33.3 Accorder des droits du connecteur
+
+![Les comptes venus au connecteur, dont un « Sans profil dans le CRM »](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/comptes.jpg)
+
+![« Accorder des droits à un utilisateur » : la recherche parmi tous les utilisateurs du CRM](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/accorder.jpg)
+
+![La fiche de Farida Nowak : sa dernière activité au connecteur, et l'espace choisi avec son rôle](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/fiche.jpg)
+
+![« Enregistrer les droits » et « Annuler les modifications », tant qu'une modification n'est pas enregistrée](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/modifications.jpg)
+
+![« Droits enregistrés. »](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/droits-enregistres.jpg)
+
+![La ligne de Farida Nowak dans l'onglet « Utilisateurs », et son lien « Droits du connecteur »](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/droits-du-connecteur.jpg)
+
+![La grille des droits : « Toute la famille » sous chaque famille, « Toute l'action » sous chaque action](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/grille.jpg)
 
 Dans la plateforme ([chapitre 32](#la-plateforme-espaces-membres-et-superadministrateurs)), l'onglet **« Connecteur MCP »** réunit trois blocs.
 
@@ -5802,12 +6042,26 @@ Pour un superadministrateur, la grille reste visible mais ne se modifie pas, pui
 
 ### 33.4 Le journal des appels
 
+![Le journal des appels : le filtre des issues, et un appel « Réussi »](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/journal-des-appels.jpg)
+
+![Le filtre du journal des appels, sur « Refusé par la matrice »](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/issue-matrice.jpg)
+
+![Le filtre, sur « Refusé par le CRM »](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/issue-crm.jpg)
+
+![Le filtre, sur « Erreur »](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/issue-erreur.jpg)
+
+![Le filtre, sur « Réponse trop volumineuse »](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/issue-volumineuse.jpg)
+
 Chaque appel de l'assistant est inscrit, sans son contenu : la date, le compte, l'outil appelé, l'espace et l'issue —
 « Réussi », « Refusé par la matrice », « Refusé par le CRM », « Erreur » ou « Réponse trop volumineuse ». Un filtre
 retient une seule issue, et **« Entrées plus anciennes »** remonte le temps. La fiche d'un utilisateur montre ses
 propres appels.
 
 ### 33.5 Ce que l'assistant sait faire
+
+![Les familles de la grille, chacune avec ce qu'elle couvre](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/familles.jpg)
+
+![Le bouton « Nouvelle affaire » d'un tableau, que l'assistant remplace par son outil de création](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/nouvelle-affaire.jpg)
 
 L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'apparaît pas dans sa liste.
 

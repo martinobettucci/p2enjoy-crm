@@ -37400,3 +37400,29 @@ elle-même (`docs/SPEC-pieces-jointes.md` §6, précisions au §15 ; `docs/SPEC-
 
 **Vérifications** : pytest du connecteur 287 passés ; intégration 76/76.
 
+
+### `CRM-117` T4.5, clôture : le pilotage, la plateforme et le connecteur illustrés, chapitres 23 à 33 (2026-10-31)
+
+**Problème** : illustrer les onze derniers chapitres ; les scénarios 23 à 29, écrits le 2026-10-27, n'avaient jamais été
+joués, 30 à 33 restaient à écrire. **Observations et décisions d'exécution** :
+
+- **Les états absents du seed sont posés puis retirés** par la clé de service, jamais laissés : un track et un budget
+  sans dépense (« Aucun budget sur ce track », « Aucune dépense rattachée. », « Tous les coûts réels sont saisis »), un
+  channel vide (« Aucune affaire active dans cette portée »), un channel d'une seule affaire livrée (« Aucune affaire
+  ouverte à ce jour. »), deux espaces vides. L'espace « Atelier Lumière » naît et meurt par la plateforme elle-même,
+  ce qui montre aussi « En suspens » et la suppression.
+- **« Aucun espace de travail » n'est pas atteignable** : une personne admise dont l'espace disparaît est renvoyée à la
+  page de connexion (« Accès en attente ») ; l'état des écrans Pilotage et Coûts ne paraît donc pas. Consigné en
+  exception plutôt que simulé.
+- **Les lectures en échec** de l'entonnoir (« Lecture refusée », « L'entonnoir n'a pas pu être lu ») sont obtenues en
+  rendant à la page un 403 puis un 500 pour la seule requête de l'entonnoir : l'écran réel traite une réponse réelle.
+- **Un réel de 12 €** saisi pour montrer « Enregistré » est resté en base après un premier passage dont le nettoyage
+  visait une table mal nommée (`cost_actuals` au lieu de `card_cost_actuals`) ; il a été retiré, nommément.
+- **Vingt-cinq exceptions** au §11.3, soumises au responsable : états absents du seed (dépense sans occurrence ou sans
+  auteur, ligne soldée, temps non valorisé, compte jamais connecté, journaux d'une seule page, purge de nuit),
+  phrases du manuel prises pour des libellés, en-têtes qui portent leur devise (« Montant (EUR) », « Réel (EUR) »),
+  l'état transitoire « Enregistrement… ».
+
+**Vérifications** : 36 scénarios verts ; images observées sur planches (une reprise : le rapport de l'équipe photographié
+pendant son chargement) ; `manuel:construire` 34 chapitres sans avertissement ; `verify-manual` 166 contrôles sans
+anomalie ; base relue (rôles, espaces, tracks, réels de coût : état du seed).

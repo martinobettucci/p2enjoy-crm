@@ -34,6 +34,20 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-couts-de-tout-l-espace-de-travail-un-cumul-par-track/cumul.jpg",
+			"alt": "L'écran Coûts de tout l'espace : un graphique et un tableau par devise, un cumul par track",
+			"width": 1440,
+			"height": 900
+		},
+		{
+			"type": "image",
+			"src": "les-couts-de-tout-l-espace-de-travail-un-cumul-par-track/barre-laterale.jpg",
+			"alt": "L'entrée « Coûts » de la barre latérale, entre « Objectifs » et « Pilotage »",
+			"width": 251,
+			"height": 160
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -329,6 +343,20 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-couts-de-tout-l-espace-de-travail-un-cumul-par-track/couts-en-eur.jpg",
+			"alt": "Le titre « Coûts en EUR »",
+			"width": 992,
+			"height": 53
+		},
+		{
+			"type": "image",
+			"src": "les-couts-de-tout-l-espace-de-travail-un-cumul-par-track/couts-en-chf.jpg",
+			"alt": "Le titre « Coûts en CHF »",
+			"width": 992,
+			"height": 53
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -544,6 +572,20 @@
 					"text": "26.4 Ce que l'écran écrit quand il n'y a rien à montrer"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-couts-de-tout-l-espace-de-travail-un-cumul-par-track/lectrice.jpg",
+			"alt": "Les coûts de tout l'espace vus par une lectrice : seuls les tracks qu'elle lit",
+			"width": 1208,
+			"height": 1314
+		},
+		{
+			"type": "image",
+			"src": "les-couts-de-tout-l-espace-de-travail-un-cumul-par-track/aucun-budget-ouvert.jpg",
+			"alt": "Un espace sans budget : « Aucun budget ouvert »",
+			"width": 548,
+			"height": 258
 		},
 		{
 			"type": "table",

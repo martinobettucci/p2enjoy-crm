@@ -115,6 +115,17 @@ CHAPITRES_ILLUSTRES=(
 	la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre
 	les-membres-de-votre-espace-qui-y-travaille-avec-quel-role
 	le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace
+	les-budgets-d-un-track
+	les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense
+	le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne
+	les-couts-de-tout-l-espace-de-travail-un-cumul-par-track
+	l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite
+	le-temps-passe-et-le-cout-du-personnel
+	les-recettes-d-une-affaire-et-sa-rentabilite
+	l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires
+	le-previsionnel-pondere-et-le-taux-de-conversion
+	la-plateforme-espaces-membres-et-superadministrateurs
+	le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant
 	# `CRM-073` T3 (décision 785) : le chapitre 34 naît illustré.
 	les-webhooks-prevenir-vos-autres-outils
 )

@@ -74,6 +74,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/a-saisir.jpg",
+			"alt": "L'onglet « À saisir » du track « Studio web » : les lignes de coût sans réel, de la plus ancienne à la plus récente",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -334,6 +341,27 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/une-ligne.jpg",
+			"alt": "Une ligne de l'onglet : le budget, l'occurrence, l'affaire, le prévisionnel, le champ « Un réel de plus » et « Soldé »",
+			"width": 1192,
+			"height": 89
+		},
+		{
+			"type": "image",
+			"src": "l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/libelle.jpg",
+			"alt": "Le champ du libellé d'un réel, avec son exemple « Facture n° 42 »",
+			"width": 182,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/enregistre.jpg",
+			"alt": "Une ligne après la saisie d'un réel : la marque « Enregistré »",
+			"width": 1192,
+			"height": 109
+		},
+		{
 			"type": "list",
 			"ordered": false,
 			"start": null,
@@ -540,6 +568,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/lecture-seule.jpg",
+			"alt": "La phrase de l'onglet pour un membre qui ne peut rien y modifier",
+			"width": 1192,
+			"height": 53
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -654,6 +689,27 @@
 					"text": "27.3 Ce que l'écran écrit quand quelque chose ne va pas"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/pas-un-nombre.jpg",
+			"alt": "Une saisie refusée : « Ce montant n'est pas un nombre. »",
+			"width": 1192,
+			"height": 109
+		},
+		{
+			"type": "image",
+			"src": "l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/enregistre-la-marque.jpg",
+			"alt": "La marque « Enregistré »",
+			"width": 176,
+			"height": 53
+		},
+		{
+			"type": "image",
+			"src": "l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/tout-est-saisi.jpg",
+			"alt": "Un track dont aucune ligne n'attend de réel : « Tous les coûts réels sont saisis »",
+			"width": 548,
+			"height": 258
 		},
 		{
 			"type": "table",
@@ -781,6 +837,13 @@
 					"text": "27.4 Le compteur de l'onglet"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/compteur.jpg",
+			"alt": "Le compteur de l'onglet « À saisir »",
+			"width": 139,
+			"height": 72
 		},
 		{
 			"type": "paragraph",
@@ -927,6 +990,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/onglet-couts.jpg",
+			"alt": "L'onglet « Coûts » d'un track",
+			"width": 121,
+			"height": 72
+		},
+		{
 			"type": "list",
 			"ordered": false,
 			"start": null,
@@ -1036,6 +1106,13 @@
 					"text": "27.6 Les réels d'une ligne, dans la fiche d'une affaire"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite/reels-d-une-ligne.jpg",
+			"alt": "Le bloc Coûts d'une affaire, une ligne dépliée : ses réels, « Soldé », et « Ajouter le réel »",
+			"width": 650,
+			"height": 569
 		},
 		{
 			"type": "paragraph",

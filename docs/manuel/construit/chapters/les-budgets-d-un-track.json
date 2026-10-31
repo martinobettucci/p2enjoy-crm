@@ -50,6 +50,69 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-budgets-d-un-track/budgets-du-track.jpg",
+			"alt": "Le bloc Budgets du track « Studio web » dans l'arborescence : nom, devise, enveloppe, récurrence, occurrences ouvertes, état",
+			"width": 1130,
+			"height": 113
+		},
+		{
+			"type": "image",
+			"src": "les-budgets-d-un-track/budgets-clotures.jpg",
+			"alt": "« Afficher les budgets clôturés » coché : le budget « Salon du web 2025 » paraît, marqué « Clôturé »",
+			"width": 1130,
+			"height": 194
+		},
+		{
+			"type": "image",
+			"src": "les-budgets-d-un-track/bouton-nouveau-budget.jpg",
+			"alt": "Le bouton « Nouveau budget »",
+			"width": 1130,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "les-budgets-d-un-track/nouveau-budget.jpg",
+			"alt": "Le formulaire « Nouveau budget » : nom, devise, enveloppe, seuil d'ancienneté, budget récurrent",
+			"width": 1130,
+			"height": 555
+		},
+		{
+			"type": "image",
+			"src": "les-budgets-d-un-track/cloturer.jpg",
+			"alt": "La confirmation de clôture d'un budget, qui dit ce qu'il reste à saisir",
+			"width": 650,
+			"height": 215
+		},
+		{
+			"type": "image",
+			"src": "les-budgets-d-un-track/reglages.jpg",
+			"alt": "L'entrée « Arborescence : tracks et channels » de l'index des réglages, où vivent les budgets",
+			"width": 545,
+			"height": 125
+		},
+		{
+			"type": "image",
+			"src": "les-budgets-d-un-track/onglets-des-couts.jpg",
+			"alt": "Les onglets « Coûts » et « À saisir » de l'écran des coûts d'un track",
+			"width": 572,
+			"height": 129
+		},
+		{
+			"type": "image",
+			"src": "les-budgets-d-un-track/refus-non-recurrent.jpg",
+			"alt": "Le refus du serveur : « Ce budget porte des occurrences : supprimez-les avant de le rendre non récurrent. »",
+			"width": 1130,
+			"height": 620
+		},
+		{
+			"type": "image",
+			"src": "les-budgets-d-un-track/refus-role.jpg",
+			"alt": "Le refus du serveur : « Seul un administrateur de cet espace de travail peut gérer les budgets. »",
+			"width": 1130,
+			"height": 620
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -923,6 +986,34 @@
 					"text": "23.1 Les occurrences d'un budget récurrent"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-budgets-d-un-track/occurrences.jpg",
+			"alt": "Un budget récurrent et le nombre de ses occurrences ouvertes",
+			"width": 1130,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "les-budgets-d-un-track/colonne-occurrences.jpg",
+			"alt": "Le bloc « Budgets » et sa colonne « Occurrences ouvertes »",
+			"width": 785,
+			"height": 113
+		},
+		{
+			"type": "image",
+			"src": "les-budgets-d-un-track/occurrences-du-budget.jpg",
+			"alt": "Les occurrences du budget « Publicité 2026 » : ouvertes et clôturées, avec leurs commandes",
+			"width": 1130,
+			"height": 235
+		},
+		{
+			"type": "image",
+			"src": "les-budgets-d-un-track/onglet-a-saisir.jpg",
+			"alt": "L'onglet « À saisir » de l'écran des coûts, où se renseignent les réels des occurrences",
+			"width": 139,
+			"height": 72
 		},
 		{
 			"type": "paragraph",
