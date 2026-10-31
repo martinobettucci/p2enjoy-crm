@@ -889,7 +889,9 @@ if docker compose version >/dev/null 2>&1; then
 	}
 	degrader_allume "connecteur allumé sans limite mémoire" 'import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace("  mcp:\n    mem_limit: 256m","  mcp:\n",1); open(p,"w").write(s)'
 	# CRM-102 T6 : sans SITE_URL, le connecteur refuserait de démarrer en production (docs/SPEC-mcp.md §10).
-	degrader_allume "SITE_URL retirée du connecteur" 'import sys; p=sys.argv[1]; s=open(p).read(); t=s.replace("      SITE_URL: ${SITE_URL}\n","",1); assert t != s; open(p,"w").write(t)' docker-compose.yml
+	# RÉVISÉ par INC-328 : depuis `CRM-069` T4, `mail-sync` reçoit aussi SITE_URL, plus haut dans le fichier ; la ligne
+	# retirée est celle du bloc `mcp`, cherchée à partir de lui — la première du fichier laissait le connecteur intact.
+	degrader_allume "SITE_URL retirée du connecteur" 'import sys; p=sys.argv[1]; s=open(p).read(); i=s.index("  mcp:\n"); t=s[:i]+s[i:].replace("      SITE_URL: ${SITE_URL}\n","",1); assert t != s; open(p,"w").write(t)' docker-compose.yml
 else
 	skip "docker compose indisponible : dégradations d'assemblage non exécutées"
 fi

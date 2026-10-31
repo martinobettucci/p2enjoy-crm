@@ -8282,3 +8282,11 @@ et l'archivage d'un envoi la pose (0106). La colonne est donc incomplète sur le
 aussi la colonne, et qu'une migration rattrape les pièces existantes — ou retirer la colonne, que plus rien ne lit ; à
 arbitrer. Connecteur MCP : sans objet (il lit par le message).
 
+### INC-328 — La dégradation « SITE_URL retirée du connecteur » de `verify-spark.sh` ne retirait plus rien au connecteur
+
+*Constaté le 2026-11-01, en rejouant `scripts/verify-spark.sh` pour INC-327.* Le contrôle retirait la **première**
+ligne `SITE_URL: ${SITE_URL}` de `docker-compose.yml`. Depuis `CRM-069` T4 (`ea8872c5`), `mail-sync` reçoit aussi
+`SITE_URL`, et son bloc précède celui de `mcp`. La dégradation amputait donc `mail-sync`, laissait le connecteur intact,
+et le contrôle rougissait (« dégradation non détectée ») sans qu'aucun défaut ne soit présent. **Corrigé** : la ligne est
+cherchée à partir du bloc `mcp` (garde révisée, décision 51). `verify-spark.sh` passe à 112/112. Connecteur MCP : sans
+objet.
