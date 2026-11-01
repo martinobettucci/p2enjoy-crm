@@ -9,6 +9,8 @@
 //
 // Aucune réponse n'est substituée : les noms viennent des lectures réelles du seed, sous la RLS du compte connecté.
 // Le repli est atteint par `Tab` et ouvert par `Entrée` : un focus posé par script ne prouverait rien du clavier.
+// @verifies INC-332 (docs/INCONSISTENCY_REPORT.md) — sous `md`, une seule ligne de commandes, le nom de la session en `sr-only`
+//           (docs/DESIGN_SYSTEM.md §12.2)
 
 import type { Locator } from '@playwright/test'
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
@@ -252,7 +254,14 @@ test.describe('paliers responsive (§7, §12.2)', () => {
 			const identite = page.getByTestId('identite-session')
 			await expect(identite).toContainText('Camille Aubert')
 			const nom = await identite.getByText('Camille Aubert', { exact: true }).boundingBox()
-			if (palier.largeur >= 1024 && palier.largeur < 1280) {
+			if (palier.largeur < 768) {
+				// INC-332 : sous `md`, le nom cède aussi — l'icône « Aide » (`CRM-117`) faisait passer la cloche et l'identité sur
+				// une deuxième ligne de commandes à 390 px, contre la décision 641 (une seule ligne de commandes, le fil dessous).
+				expect(nom?.width ?? 0, 'le nom est en sr-only sous md').toBeLessThanOrEqual(1)
+				const tiroir = await page.getByTestId('ouvrir-tiroir').boundingBox()
+				const fin = await page.getByTestId('entete-fin').boundingBox()
+				expect(Math.abs((fin?.y ?? 0) - (tiroir?.y ?? 999)), 'les commandes tiennent sur une seule ligne').toBeLessThanOrEqual(8)
+			} else if (palier.largeur >= 1024 && palier.largeur < 1280) {
 				expect(nom?.width ?? 0, 'le nom est en sr-only entre lg et xl').toBeLessThanOrEqual(1)
 			} else if (palier.largeur >= 1280) {
 				expect(nom?.width ?? 0, 'le nom est rendu à partir de xl').toBeGreaterThan(40)

@@ -13,6 +13,11 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### INC-332 — à 390 px, l'en-tête garde une seule ligne de commandes
+
+- Sous 768 px, le nom de la personne connectée passe en lecture d'écran seule, et l'avatar reste. L'icône « Aide » faisait
+  passer la cloche et l'identité sur une deuxième ligne de commandes.
+
 ### `CRM-122` — les captures versionnées ne changent plus qu'à la demande (outillage de test)
 
 - `npm run e2e:ui` écrit ses captures dans `e2e/output/<unité>/` et ne les recopie dans `docs/captures/` que pour

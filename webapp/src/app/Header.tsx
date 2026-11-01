@@ -15,6 +15,8 @@
 //       absorbe le contexte d'espace de fin de ligne (docs/SPEC-webapp.md §5.1 bis ; docs/DESIGN_SYSTEM.md §5.62, §12.2)
 // @spec CRM-110 — INC-293, décision 679 (option b du responsable) : entre `lg` et `xl`, le nom de la session passe en
 //       `sr-only` pour que le titre de route tienne (docs/DESIGN_SYSTEM.md §12.2, §12.3, §5.12)
+// @spec INC-332 (docs/INCONSISTENCY_REPORT.md) — sous `md` aussi, le nom passe en `sr-only` : une seule ligne de commandes
+//       avec l'icône « Aide » (docs/DESIGN_SYSTEM.md §12.2, décision 641)
 // @spec CRM-117 (docs/BACKLOG.md) tranche T2 — l'icône « Aide » et son panneau, avant la cloche (docs/DESIGN_SYSTEM.md
 //       §5.69 ; docs/SPEC-manual.md §13.2 ; décision 740)
 //
@@ -184,9 +186,12 @@ function ControleSession() {
 				// §12.2) : sur une seule ligne, le fil, le champ de recherche, la cloche et l'identité laissaient 105 px au
 				// titre long d'une affaire à 1152 px. Le nom passe en `sr-only` — masqué, jamais retiré (§12.3) —, l'avatar
 				// reste, et l'adresse reste en infobulle sur l'identité entière.
+				// SOUS `md`, LE NOM CÈDE AUSSI (INC-332, même règle) : avec l'icône « Aide » (`CRM-117`), la ligne de commandes
+				// demandait 416 px pour 358 à 390 px, et la cloche et l'identité passaient sur une deuxième ligne, contre la
+				// décision 641. Rendu seulement de `md` à `lg`, puis à partir de `xl`.
 				<div data-testid="identite-session" className="flex items-center gap-2 min-w-0" title={email}>
 					<Avatar profil={profil} taille={32} decoratif />
-					<span className="max-w-[96px] md:max-w-[var(--size-placeholder)] truncate text-sm text-text-2 lg:sr-only xl:not-sr-only">
+					<span className="sr-only md:not-sr-only md:max-w-[var(--size-placeholder)] truncate text-sm text-text-2 lg:sr-only xl:not-sr-only">
 						{profil.full_name}
 					</span>
 				</div>

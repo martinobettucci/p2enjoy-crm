@@ -8400,3 +8400,24 @@ masquer). **Issue proposée** : que le seed rende ces trois états à chaque pas
 les remises des webhooks semés, le corps du commentaire), comme il le fait pour l'inbox ; ou que ces scénarios
 construisent eux-mêmes l'état qu'ils lisent. Une base reconstruite les fait passer en attendant. Connecteur MCP : sans
 objet.
+
+**Diagnostic corrigé le 2026-11-01** : les trois échouent **aussi sur une base reconstruite à neuf**, dans la campagne de
+renouvellement de `CRM-122` T3. La cause n'est donc pas le rejeu du seed : ce sont les scénarios **antérieurs de la même
+campagne**, qui importent, émettent des événements ou modifient le commentaire avant que ces trois-là ne lisent. Par
+exemple, les imports de l'interface passent avant le journal d'audit. L'issue reste la même : que chacun construise ou
+rende l'état qu'il lit.
+
+### INC-332 — À 390 px, l'icône « Aide » faisait passer la cloche et l'identité sur une deuxième ligne de commandes
+
+*Constaté le 2026-11-01 en observant la campagne de renouvellement de `CRM-122` T3 (`docs/captures/CRM-100/nouveau-channel-
+editeur-bandeau-sm-390.jpg`, et 39 captures à 390 px décalées de 44 px).* Sous 1024 px, la décision 641 pose **une seule
+ligne de commandes** (le tiroir, la recherche, la cloche, l'identité), puis le fil en dessous. `CRM-117` a ajouté
+l'icône « Aide » à cette ligne. À 390 px, elle demandait alors 416 px pour 358, et l'aide, la cloche et l'identité
+passaient sur une deuxième ligne, soit trois lignes d'en-tête. Aucune preuve ne mesurait le nombre de lignes : le
+palier 390 de `e2e/ui/fil-ariane.spec.ts` vérifiait le titre et l'absence de défilement, pas la ligne.
+
+**Corrigé** par la règle de la décision 679 (`docs/DESIGN_SYSTEM.md` §12.2) : quand la ligne manque de place, l'occupant
+qui cède est un de ceux que l'écran porte ailleurs. Sous `md`, le nom de la session passe en `sr-only` : masqué,
+toujours annoncé, l'avatar reste et l'adresse reste en infobulle. **Preuve** : le palier 390 de
+`e2e/ui/fil-ariane.spec.ts` exige le nom en `sr-only` et la fin de ligne au niveau du tiroir. Rouge avant la
+correction, vert après ; `fil-ariane`, `identites` et `connexion` 32/32 ; capture observée. Connecteur MCP : sans objet.

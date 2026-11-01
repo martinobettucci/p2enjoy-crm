@@ -3070,6 +3070,13 @@ le fil a sa propre ligne et le nom reste. **Écarté** : abaisser le seuil de la
 illisible. C'est la règle de ce paragraphe, appliquée à un nouvel occupant : quand la ligne manque de place, l'occupant
 qui cède est un de ceux que l'écran porte ailleurs — ici l'avatar, et l'adresse en infobulle.
 
+**RÉVISION DU 2026-11-01 — INC-332. SOUS `md` AUSSI, LE NOM DE LA SESSION CÈDE.** L'icône « Aide » (`CRM-117`, §5.69)
+a rejoint la ligne de commandes. À 390 px, celle-ci demandait alors 416 px pour 358, et l'aide, la cloche et l'identité
+passaient sur une deuxième ligne, contre la décision 641 (une seule ligne de commandes, le fil dessous). Même règle,
+même occupant : le nom passe en `sr-only` sous `md` (§12.3), l'avatar reste et l'adresse reste en infobulle. Le nom
+n'est donc rendu que de `md` à `lg`, puis à partir de `xl`. La preuve du palier 390 mesure désormais la ligne, et plus
+seulement le titre.
+
 ### 12.3 Libellés masqués visuellement, jamais retirés — `CRM-007`
 
 Au palier « colonne d'icônes » (1024–1279 px) et lorsque la barre est repliée, les libellés de
