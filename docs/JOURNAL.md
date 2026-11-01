@@ -37982,3 +37982,50 @@ signature est rendue à part, sans substitution ; un palier non enregistré n'es
 **Conséquences.** `docs/SPEC-modeles-emails.md` §14. Unité `CRM-125` au backlog, en trois tranches : la base, l'écran,
 la livraison. `docs/SCHEMA.md`, `docs/DAT.md`, `docs/DESIGN_SYSTEM.md`, le manuel, le changelog et
 `docs/PROD_MIGRATIONS.md` suivent avec le code.
+
+### décision 810 — `CRM-126` : la rentabilité rend une balance par devise dans un seul tableau, et « non calculable » disparaît
+
+*2026-11-01, session interactive, demande et arbitrage du responsable.* **Demande**, sur une capture de l'écran
+« Rentabilité » de production : « tu peux m'expliquer le "non calculable" ? », puis « il faut donc afficher les budgets
+dans l'ensemble des devises : on aura donc une balance EUR et USD si la vue actuelle comporte ces deux devises ».
+
+**Observations.** Une seule affaire, « Vidéo 5min Tripo AI », libellée en USD et dont le temps est valorisé en EUR, rendait
+« Non calculable — plusieurs devises » sur sa ligne, puis — par la règle des sous-totaux de `webapp/src/lib/rentabilite.ts`
+(« un sous-total n'est calculable que si aucune de ses affaires ne mêle plusieurs devises ») — sur son channel, son
+track et le **total des deux tableaux**, alors que « Refonte image public », seule et en EUR, avait sa marge. Une affaire
+à plusieurs devises retirait ainsi la marge de tout ce qui la contenait. Le jeu de démonstration porte déjà ce cas :
+`…0c7` « Formation Data & IA », en CHF, a une ligne de coût sur le budget EUR « Prospection sortante »
+(`docs/SPEC-seed.md` §21.1).
+
+**Options soumises**, puis reformulées sur la réponse du responsable : un tableau par devise où une affaire mixte rend
+une marge par tableau, avec ou sans marque ; **refusé** (« pas un tableau par devise mais les deux devises dans
+l'entrée pour le tableau existant »).
+
+**Décisions** :
+- **Un seul tableau**, quelle que soit la composition en devises. Chaque cellule de montant — montant de l'affaire,
+  recettes, coûts, personnel, marge — rend **une valeur par devise** où quelque chose est connu, **une ligne par
+  devise**, empilées dans la cellule, dans l'ordre alphabétique des codes ; chaque valeur porte son **code devise**. Les
+  en-têtes de colonne ne nomment plus de devise. Forme retenue sur maquette, contre « sur une ligne, séparées par · ».
+- **La marge se calcule devise par devise, toujours** : recettes − coûts − personnel dans chaque devise ; « non
+  calculable — plusieurs devises » disparaît. Les sous-totaux et le total donnent leur **balance par devise**. Les
+  devises ne s'additionnent toujours pas entre elles, et aucune conversion n'est faite.
+- **Le taux de marge est vide** pour une affaire qui mêle plusieurs devises **et** pour tout sous-total ou total qui en
+  contient une : marge et recettes y vivraient dans des devises différentes (des recettes en USD et des coûts en EUR
+  rendraient 100 % en USD). Sur les autres lignes, le taux se calcule par devise, une valeur par devise comme les
+  montants.
+- **Le bloc « Rentabilité » de la fiche suit la même règle** : un seul tableau, une marge par devise, cellules empilées.
+- **Connecteur MCP** (les deux questions de `CLAUDE.md`) : **oui**, `crm_profitability_report` rend la même règle — une
+  marge par devise, le taux vide quand l'affaire mêle plusieurs devises, une balance par devise dans ses totaux —, dans
+  la **famille existante `recettes`, action `consulter`** : aucune famille ni case nouvelle, aucune migration.
+
+Précisions posées en écrivant la spécification [choix de rédaction] : la marque « partielle » reste une par ligne,
+après la dernière marge — ses causes sont des comptes de lignes et de minutes, qui traversent les devises comme les
+mentions sous le tableau ; une affaire n'apparaît plus qu'une fois ; son montant est rendu dans sa propre devise, même
+si aucune autre grandeur n'y est connue ; le code devise occupe son propre élément (`docs/DESIGN_SYSTEM.md` §5.48) ; la
+fonction `public.rentabilite_affaires` ne change pas — elle rend déjà une ligne par affaire et par devise, la règle
+d'affichage reste dans la webapp et dans le connecteur (`docs/SPEC-recettes.md` §5).
+
+**Conséquences.** Unité `CRM-126` au backlog. `docs/SPEC-recettes.md` §4.4, §6.2, §6.3, §7 et §11,
+`docs/DESIGN_SYSTEM.md` §5.60 et `docs/SPEC-seed.md` §21.1 révisés dans ce changement ; le code, les cas partagés
+`mcp/tests/rentabilite_cas.json`, le manuel (chapitre 29) et ses captures, le changelog suivent avec la tranche T2.
+Aucune migration : `docs/PROD_MIGRATIONS.md` ne recevra que le redéploiement de la webapp et du service `mcp`.

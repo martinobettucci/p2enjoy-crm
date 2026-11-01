@@ -18009,3 +18009,32 @@ Question du connecteur : sans objet (décision 809).
 - [ ] **T3 — l'écran** : bouton par palier, aperçu de la séquence, unitaires, E2E, captures, `docs/DESIGN_SYSTEM.md`,
       manuel, changelog.
 - [ ] **T4 — livraison en production et constat** : migration appliquée, un aperçu constaté.
+
+## Demande du 2026-11-01 — une balance par devise dans la rentabilité (décision 810)
+
+### CRM-126 — La rentabilité rend une balance par devise dans un seul tableau, et « non calculable » disparaît `[~]`
+Demande et arbitrage du responsable du 2026-11-01 (décision 810).
+
+**Spécification** : `docs/SPEC-recettes.md` §4.1, §4.4, §6.2, §6.3, §7 et §11 (révision `CRM-126`) ;
+`docs/DESIGN_SYSTEM.md` §5.60 ; `docs/SPEC-seed.md` §21.1 (`…0c7`, l'affaire à plusieurs devises du jeu).
+
+**DoD** :
+- la règle en fonction pure (`webapp/src/lib/rentabilite.ts`) : marge par devise toujours calculée, taux vide sur une
+  ligne qui mêle plusieurs devises, arborescence en un seul tableau aux balances par devise ; unitaires, dont les cas
+  partagés `mcp/tests/rentabilite_cas.json` ;
+- l'écran « Rentabilité » et le bloc « Rentabilité » de la fiche : cellules empilées par devise, code en élément propre,
+  en-têtes sans devise ; unitaires de composant ;
+- le connecteur : `crm_profitability_report` (famille `recettes`, action `consulter`) — marge par devise,
+  `multi_currency`, marge des totaux ; pytest unitaires et intégration contre la vraie base ;
+- E2E sur la pile réelle et le seed : `…0c7` sur une seule ligne, balance CHF et EUR, taux vide, sous-totaux en
+  balance ; la fiche de `…0c7` ; quatre paliers sans défilement de la page ; captures observées ;
+- manuel (chapitre 29) et ses captures ; changelog ; `docs/PROD_MIGRATIONS.md` (redéploiement de la webapp et du service
+  `mcp`, aucune migration).
+
+Question du connecteur : **oui**, famille existante `recettes`, action `consulter` ; aucune famille, case ni migration
+nouvelle (décision 810).
+
+- [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-01 : décision 810,
+      `docs/SPEC-recettes.md` (révision `CRM-126`), `docs/DESIGN_SYSTEM.md` §5.60, `docs/SPEC-seed.md` §21.1.
+- [ ] **T2 — règle, écrans, connecteur et preuves** : tout le reste de la DoD hors production.
+- [ ] **T3 — livraison en production et constat** : webapp et service `mcp` redéployés, une affaire mixte constatée.

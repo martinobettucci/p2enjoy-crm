@@ -3,6 +3,8 @@
 *Écrite le 2026-10-23, avant tout code, sur les arbitrages du responsable consignés en décision 632
 (`docs/JOURNAL.md`). Unité de backlog : `CRM-108` (`docs/BACKLOG.md`). Règles visuelles : `docs/DESIGN_SYSTEM.md`
 §5.60. Schéma : `docs/SCHEMA.md`, « Migration `0095` ». Connecteur : `docs/SPEC-mcp.md` §6.1 et §9.2.*
+*Révisée le 2026-11-01 par `CRM-126` (décision 810) : une balance par devise dans un seul tableau (§4.4, §6.2, §6.3,
+§7, §11).*
 
 Les choix que la décision 632 ne tranche pas et que cette spécification arrête sont marqués **[choix de rédaction]** :
 ils se contestent comme une décision, pas comme un détail.
@@ -123,7 +125,7 @@ Pour une affaire et **une devise** :
 | personnel | coût valorisé du temps passé sur l'affaire (`public.temps_valorise`, `docs/SPEC-temps.md` §4), dans la devise de la version de coût |
 | **marge réelle** | recettes réelles − coûts réels − personnel |
 | **marge prévue** | recettes prévues − coûts prévus − personnel [choix de rédaction, §4.2] |
-| **taux de marge** | marge réelle ÷ recettes réelles, en pourcentage à une décimale ; **vide** si les recettes réelles sont nulles, inconnues ou égales à zéro |
+| **taux de marge** | marge réelle ÷ recettes réelles, en pourcentage à une décimale ; **vide** si les recettes réelles sont nulles, inconnues ou égales à zéro, et — *révision `CRM-126`* — si la ligne mêle plusieurs devises (§4.4) |
 
 ### 4.2 La marge prévue soustrait le personnel déjà valorisé [choix de rédaction]
 
@@ -147,13 +149,25 @@ accessible de la marque (§6.3). Sans cette marque, un réel bas se lirait comme
 succès, alors qu'il ne s'agit que de saisies en retard — la principale façon dont un tel écran ment
 (`docs/SPEC-costs.md` §4.4).
 
-### 4.4 Les devises ne s'additionnent jamais
+### 4.4 Les devises ne s'additionnent jamais : une balance par devise
 
-Les montants se rendent **par devise**. Une affaire dont recettes, coûts et personnel vivent dans **une seule** devise
-— le cas attendu — rend une ligne. Une affaire qui en mêle plusieurs rend **ses montants par devise**, et sa marge est
-« **non calculable — plusieurs devises** » : une marge calculée devise par devise serait fausse (une affaire facturée
-en CHF dont les coûts sont en EUR paraîtrait rentable en CHF et déficitaire en EUR). Aucune conversion de devise
-(§9).
+**Révisé par `CRM-126`** (décision 810, 2026-11-01). La première rédaction rendait la marge d'une affaire à plusieurs
+devises « non calculable — plusieurs devises », et tout sous-total qui la contenait de même : une seule affaire mixte
+retirait la marge de son channel, de son track et du total. Le responsable a retenu une **balance par devise**.
+
+- **Les montants se rendent par devise**, et deux devises ne s'additionnent jamais : aucune conversion, aucun taux de
+  change (§9).
+- **La marge se calcule dans chaque devise, toujours** : recettes − coûts − personnel de cette devise, selon §4.1. Une
+  affaire facturée en CHF dont les coûts sont en EUR a donc une marge positive en CHF et négative en EUR — deux
+  faits, lus ensemble, et non un chiffre unique. Un sous-total ou un total rend de même **une balance par devise**.
+- **Une ligne « mêle plusieurs devises »** quand c'est une affaire dont `rentabilite_affaires` rend plus d'une devise, ou
+  un regroupement (channel, track, total) qui contient au moins une telle affaire. Un regroupement d'affaires mono-devise
+  en devises différentes — une affaire en EUR, une autre en CHF — ne mêle rien : chacune de ses balances est exacte.
+- **Le taux de marge est vide sur une ligne qui mêle plusieurs devises** : sa marge et ses recettes vivraient dans des
+  devises différentes, et des recettes en USD contre des coûts en EUR rendraient 100 % en USD. Ailleurs, il se calcule
+  dans chaque devise.
+- **La marque « partielle » reste une par ligne** [choix de rédaction] : ses causes sont des comptes de lignes et de
+  minutes, qui traversent les devises comme les mentions sous le tableau (§6.3).
 
 ### 4.5 La période
 
@@ -212,8 +226,9 @@ rentabilité à montrer, et la lister ajouterait des lignes vides par centaines]
   administrateur lit tout de son espace, et c'est pour cela que la garde suffit.
 - **La marge, le taux et le caractère partiel ne sont pas calculés en base** [choix de rédaction] : la fonction rend
   des sommes et des comptes, la webapp et le connecteur appliquent §4 par une fonction pure, prouvée par les mêmes cas
-  des deux côtés (§11). Calculer la marge en SQL figerait dans la base une règle de présentation — « non calculable »,
-  « partielle » — qui se lit mieux là où elle se montre.
+  des deux côtés (§11). Calculer la marge en SQL figerait dans la base une règle de présentation — la balance par
+  devise, le taux vide d'une ligne mixte, « partielle » — qui se lit mieux là où elle se montre. *`CRM-126` l'a
+  vérifié* : la révision du §4.4 ne touche pas la fonction.
 
 ## 6. Écrans
 
@@ -250,7 +265,11 @@ Après le bloc « Temps passé ». Il lit `rentabilite_affaires(p_card => …)`,
 
 - recettes, coûts, personnel et marge, en **prévu** et en **réel**, dans une liste de définitions (`dl`) ;
 - le taux de marge réelle ; la marque « partielle » et sa raison (§4.3) ;
-- « non calculable — plusieurs devises » et les montants par devise quand c'est le cas (§4.4) ;
+- **un seul tableau, une valeur par devise dans chaque cellule** (§4.4, *révision `CRM-126`*) : sur une affaire à plusieurs
+  devises, chaque cellule rend une ligne par devise où la grandeur est connue, ordre alphabétique des codes, chaque
+  valeur suivie de son code ; les en-têtes « Prévu » et « Réel » ne nomment plus de devise ; le taux n'est pas rendu
+  quand l'affaire mêle plusieurs devises. La première rédaction rendait un tableau par devise et « non calculable —
+  plusieurs devises » ;
 - un lien « Ouvrir dans Rentabilité » vers l'écran, filtré sur rien de plus.
 
 **Précision de T3 (2026-10-23), défaut trouvé par les campagnes E2E d'autres unités** : un refus `42501` ATTENDU laisse
@@ -277,8 +296,13 @@ rattachement vient avec le contrat de `rentabilite_affaires` (une tranche ultér
 - **Les filtres**, en tête : la période (deux champs `date`, « Du » et « Au », facultatifs), l'état (« Toutes »,
   « Gagnées », « En cours », « Perdues ») et la vue (**« Réel »** / **« Prévu »**, deux liens : deux vues nommées, pas une
   option — `docs/DESIGN_SYSTEM.md` §5.36).
-- **Un tableau par devise** — titre de devise rendu seulement s'il y en a plusieurs, et la devise nommée dans les
-  en-têtes de montant dans tous les cas (`docs/DESIGN_SYSTEM.md` §5.48).
+- **Un seul tableau, une valeur par devise dans chaque cellule** — *révisé par `CRM-126`* (décision 810 ; la première
+  rédaction rendait un tableau par devise, titré s'il y en avait plusieurs). Chaque cellule de montant — montant de
+  l'affaire, recettes, coûts, personnel, marge — rend **une ligne par devise** où la grandeur est connue, empilées,
+  dans l'ordre alphabétique des codes ; chaque valeur porte son **code devise**, en élément propre
+  (`docs/DESIGN_SYSTEM.md` §5.48, §5.60). Les en-têtes de colonne ne nomment plus de devise : la devise est dite à côté
+  de chaque montant, sans condition. Le taux suit la même forme, une valeur par devise, vide sur une ligne qui mêle
+  plusieurs devises (§4.4).
 - **Les lignes** : track, puis ses channels, puis leurs affaires, en arborescence (les retraits du rapport mensuel,
   `docs/DESIGN_SYSTEM.md` §5.54) ; chaque track et chaque channel porte son **sous-total**, et le tableau son **total**.
 - **Les colonnes** de la vue « Réel » : Affaire (lien vers la fiche), État (mot : « Gagnée », « En cours », « Perdue »,
@@ -289,8 +313,10 @@ rattachement vient avec le contrat de `rentabilite_affaires` (une tranche ultér
 - **Les mentions** sous les tableaux : lignes de recette sans réel, lignes de coût sans réel, temps non valorisé
   (comptes non nuls seulement) ; la phrase de la marge prévue (§4.2) ; avec une période, « Les prévus portent sur toute
   l'affaire » ; la **portée** : « Toutes les affaires de l'espace que vous administrez, corbeille exclue ».
-- **Une affaire mêlant plusieurs devises** paraît dans le tableau de chacune, sa marge dite « non calculable — plusieurs
-  devises » dans chacun.
+- **Une affaire mêlant plusieurs devises** paraît **une fois**, ses cellules portant une valeur par devise, sa marge
+  une balance par devise, son taux vide ; ses sous-totaux et le total portent de même une balance par devise et un
+  taux vide (§4.4). Son montant est rendu dans sa devise, même si aucune autre grandeur n'y est connue.
+  *Révisé par `CRM-126`* : la première rédaction la rendait dans le tableau de chaque devise, marge « non calculable ».
 
 **Pour un non-administrateur**, la base répond `42501` : l'onglet rend l'état « Réservé aux administrateurs » du §5.8, qui
 dit pourquoi — la marge soustrait le coût de toute l'équipe — et renvoie à l'onglet « À saisir », qu'il peut employer.
@@ -349,6 +375,11 @@ décision 632, arbitrages 5 et 6.
   `workspace:workspace` pour « à saisir » et le rapport.
 - **`crm_profitability_report`** porte en cases `aussi` **`budgets:consulter`** et **`temps:consulter`** : il révèle des
   coûts et le coût du personnel, que ces deux familles gardent.
+- **Révisé par `CRM-126`** (décision 810 ; même famille `recettes`, même action `consulter`, aucune case nouvelle) : le
+  rapport applique la balance par devise du §4.4. Chaque rang (une affaire × une devise) porte sa marge, toujours
+  calculée ; son taux est vide quand l'affaire mêle plusieurs devises, ce que dit le champ **`multi_currency`**, qui
+  remplace `calculable` ; `actual_totals_by_currency` gagne la marge, **`margin`**, de chaque devise. Une note le dit au
+  modèle : les marges de deux devises ne s'additionnent pas.
 - **Aucun chemin parallèle** : les mêmes tables et la même fonction que la webapp ; la marge appliquée par une fonction
   Python qui suit §4, prouvée par les mêmes cas que la fonction de la webapp.
 - **Refus traduits** : `42501` de `rentabilite_reservee` dit au modèle que le rapport est réservé aux administrateurs de
@@ -358,7 +389,8 @@ décision 632, arbitrages 5 et 6.
 
 Section du seed et contrat : `docs/SPEC-seed.md` §21. Les lignes et leurs réels sont créés par la vraie API, sous le
 jeton d'un profil qui écrit l'affaire, pour que la rentabilité montre : une affaire **gagnée et rentable**, une affaire
-**déficitaire et partielle**, une ligne **soldée à zéro**, une affaire en **CHF**, une affaire **sans recette** dont le
+**déficitaire et partielle**, une ligne **soldée à zéro**, une affaire en **CHF** dont un coût est en EUR — une
+balance par devise, *`CRM-126`* —, une affaire **sans recette** dont le
 temps est **non valorisé**, et des lignes non soldées pour l'onglet « À saisir ».
 
 ## 9. Ce qui n'est pas au périmètre
@@ -400,6 +432,11 @@ temps est **non valorisé**, et des lignes non soldées pour l'onglet « À sais
 - **Connecteur** (pytest) : déclarations valides (genres, cases `aussi`) ; contre la vraie base, pour **chaque** outil :
   succès, refus par la matrice, refus par le CRM malgré la matrice ouverte, journal écrit ; la marge Python sur les
   mêmes cas que la webapp.
+- **Révision `CRM-126`** : les cas partagés (`mcp/tests/rentabilite_cas.json`) prouvent la marge d'une affaire à
+  plusieurs devises dans chaque devise et son taux vide ; les unitaires de la webapp, l'arborescence en un seul tableau,
+  les balances par devise des sous-totaux et du total, le taux vide d'un regroupement qui contient une affaire mixte et le taux
+  rendu d'un regroupement de deux affaires mono-devise ; le connecteur, `multi_currency` et la marge des totaux contre la
+  vraie base ; l'E2E, `…0c7` « Formation Data & IA » sur une ligne, sa balance CHF et EUR, et la fiche.
 - **E2E** (Playwright) : une ligne et deux réels saisis puis soldés depuis la fiche, à la souris et au clavier, relus en
   base ; la saisie en série au clavier ; le rapport de l'administratrice, ses filtres et ses deux vues ; le membre qui
   lit « Réservé aux administrateurs » et saisit dans « À saisir » ; un outil du connecteur dont l'effet se voit dans la

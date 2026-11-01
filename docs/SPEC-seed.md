@@ -2350,7 +2350,7 @@ T5.*
 | `…0cd` « Socle analytique — Vertuo » | gagnée (`livre`), active — la seule affaire gagnée active du jeu | « Acompte 30 % » 63 000 → 63 000, **soldée** ; « Solde » 147 000 → 100 000, ouverte | **rentable** : aucune ligne de coût, aucun temps ; marge réelle 163 000, taux 100,0 % |
 | `…0c4` « Refonte intranet Ville de Lyon » | en cours | « Lot 1 — conception » 20 000 → 4 000 ; « Lot 2 — réalisation » 52 000, **aucun réel** | **déficitaire et partielle** : ses coûts « Publicité » (sans réel) et « Production » (375), et les 2 quarts par jour de Driss |
 | `…0cc` « Portail adhérents — MGEN Loire » | en cours | « Frais de mise en service » 1 500, **soldée sans réel** | une recette réelle à **0** — « finalement rien encaissé » — à côté de « Achat d'espace » (880) |
-| `…0c7` « Formation Data & IA — promo 2026 » | en cours | « Convention » 28 000 CHF → 14 000 CHF | un **tableau CHF** sur l'écran « Rentabilité » |
+| `…0c7` « Formation Data & IA — promo 2026 » | en cours | « Convention » 28 000 CHF → 14 000 CHF | des montants en **CHF** sur l'écran « Rentabilité » ; avec sa ligne de coût « Prospection terrain » sur le budget EUR « Prospection sortante » (§18), c'est **l'affaire à plusieurs devises** du jeu : une balance CHF et une balance EUR sur une seule ligne, taux vide (`CRM-126`, décision 810) |
 | `…0cb` « Assistant IA support — Nordis » | en cours | **aucune** | paraît par le seul temps de Farida, **non valorisé** : marge partielle, mention « temps non valorisé » |
 
 Les réels portent des dates **antérieures** au jour d'exécution, réparties sur les deux derniers mois, pour qu'une

@@ -6050,7 +6050,9 @@ n'est pas connu. Seuls les écarts et ce qui est propre au rapport sont écrits.
   sans condition.
 - **LE BLOC « Rentabilité » DE LA FICHE VIENT APRÈS « Temps passé »**, en carte bordée comme lui (§5.54). Un petit
   tableau du §5.9 : quatre lignes — Recettes, Coûts, Personnel, Marge, en `th scope="row"` — et deux colonnes de valeurs,
-  « Prévu (EUR) » et « Réel (EUR) », la devise dans l'en-tête ; le taux de marge réelle dessous, en 13 px
+  « Prévu » et « Réel », **chaque valeur suivie de son code devise** (*révisé par `CRM-126`* : la devise était dans
+  l'en-tête, « Prévu (EUR) », et une affaire à plusieurs devises rendait un tableau par devise ; voir « UNE VALEUR PAR
+  DEVISE » plus bas) ; le taux de marge réelle dessous, en 13 px
   `--color-text-2`, puis la phrase de la marge prévue. *Révisé à l'écriture du code (T3)* : la première rédaction
   voulait une `dl` ; mais prévu et réel se COMPARENT ligne à ligne, ce qui est le critère du tableau (§5.19), et une
   `dl` à deux valeurs par terme n'a pas de forme native. Les valeurs sont des données
@@ -6068,9 +6070,20 @@ n'est pas connu. Seuls les écarts et ce qui est propre au rapport sont écrits.
   (§5.6), précédée du **point** neutre du §5.6 et d'aucune icône : `CircleDashed`, l'icône de l'attente, est réservée
   par le §5.12 à un seul objet (§9). Ce qui manque est une saisie à venir, pas une faute. Son **nom accessible dit pourquoi**, par clé et avec ses comptes : « Marge partielle :
   1 ligne de coût sans réel, 2 h non valorisées ». Elle n'est jamais une teinte seule.
-- **« NON CALCULABLE — PLUSIEURS DEVISES » EST UN TEXTE**, en 13 px `--color-text-2` à la place de la marge — jamais une
-  cellule vide (qui dirait « rien ») ni un tiret (§5.9). C'est un fait de la ligne à nommer, comme « Auteur inconnu »
-  (§5.16).
+- **UNE VALEUR PAR DEVISE, EMPILÉES DANS LA CELLULE** — *révisé par `CRM-126`* (décision 810,
+  `docs/SPEC-recettes.md` §4.4) : « Non calculable — plusieurs devises », un texte qui remplaçait la marge, et le
+  tableau par devise disparaissent. Le rapport et le bloc de la fiche sont **un seul tableau**. Chaque cellule de
+  montant — montant de l'affaire, recettes, coûts, personnel, marge, et le taux — rend **une ligne par devise** où la
+  grandeur est connue, dans l'ordre alphabétique des codes, alignées à droite (`flex flex-col items-end`) ; une cellule
+  sans aucune valeur reste vide, comme avant. **Chaque valeur porte son code devise dans son propre élément** — la règle
+  du §5.48, remède du défaut « Discussion1 » du §5.11 —, en 13 px `--color-text-2` après le nombre, la forme que
+  l'onglet « À saisir » du même écran donne déjà au prévu, pour que l'œil lise d'abord le chiffre ; la cellule reste en `tabular-nums` et les codes, de trois lettres, alignent les
+  nombres entre eux. Les **en-têtes de colonne ne nomment plus de devise** : la règle générale du §5.48 (« ce qu'un
+  titre conditionnel qualifie doit être nommé ailleurs ») est tenue au plus près, à côté de chaque montant, sans
+  condition. **Une marge négative porte sa pastille de danger valeur par valeur** — une balance CHF positive et une
+  balance EUR négative se lisent l'une sans teinte, l'autre teintée. **La pilule « partielle » reste une par ligne**,
+  après la dernière balance. **Le taux d'une ligne qui mêle plusieurs devises est une cellule vide**, sans mot : le
+  tableau ne dit pas « non calculable », il dit des balances, et un taux n'en est pas une.
 - **L'ÉCRAN « Rentabilité » EST UNE ENTRÉE DE BARRE LATÉRALE, ICÔNE `Scale`, APRÈS « Pilotage » ET AVANT « Temps »**
   (`docs/SPEC-recettes.md` §6.0). `Scale` ne sert aucun autre objet (§9) : une balance dit ce qu'on met en regard —
   ce qui rentre et ce qui sort —, là où `ChartColumn` dit deux séries comparées (§5.33) et `Gauge` l'instrument qui mesure
@@ -6092,7 +6105,8 @@ n'est pas connu. Seuls les écarts et ce qui est propre au rapport sont écrits.
 - **LES TABLEAUX DU RAPPORT ET DE « À saisir » REPOSENT SUR UNE SURFACE BORDÉE** — `--color-surface`, bordure
   `--color-border`, `--radius-lg`, comme les tableaux du pilotage (§5.48). *Ajouté en regardant la capture (T5)* : posés
   à même le fond, la première colonne collante portait seule le fond blanc, et chaque ligne se lisait en deux teintes.
-  (`table-fixed`) pour que les tableaux de plusieurs devises s'alignent (§5.54). Aucune colonne n'est triable : l'ordre
+  (`table-fixed`), qui alignaient les tableaux de plusieurs devises (§5.54) et tiennent depuis `CRM-126` les colonnes
+  d'un tableau unique dont les cellules s'empilent. Aucune colonne n'est triable : l'ordre
   est celui de l'arborescence, track puis channel, comme partout ailleurs (§5.48 bis).
 - **L'ÉTAT D'UNE AFFAIRE EST UN MOT** — « Gagnée », « En cours », « Perdue » — accordé à « affaire », et non les mots
   « Gagné » / « Ouvert » / « Perdu » des nœuds (§5.18, §5.48) : là le mot qualifie un **nœud**, ici une **affaire**. Une
