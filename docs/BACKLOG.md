@@ -17986,7 +17986,8 @@ Question du connecteur : sans objet (décision 806).
 
 - [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-01 : décision 806,
       `docs/SPEC-modeles-emails.md` §9.5, `docs/DESIGN_SYSTEM.md` §5.39.
-- [ ] **T2 — écran et preuves** : fonction pure, écran, unitaires, E2E, captures, manuel, changelog.
+- [@] **T2 — écran et preuves** : fonction pure, écran, unitaires, E2E, captures, manuel, changelog.
+      *Prise en charge : session interactive 2026-11-01 14:58 UTC depuis 2026-11-01 14:58 UTC — état avant : [ ]*
 
 ## Demande du 2026-11-01 — l'aperçu des paliers d'une séquence (décision 809)
 
