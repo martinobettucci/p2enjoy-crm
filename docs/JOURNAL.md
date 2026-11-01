@@ -37915,3 +37915,10 @@ seize preuves comptent les rattachements.
 
 **Conséquences.** Unité `CRM-124` au backlog. `docs/SPEC-modeles-emails.md` §9.5 et `docs/DESIGN_SYSTEM.md` §5.39
 révisés dans ce changement ; le manuel, le changelog et les preuves suivent avec le code.
+
+### Deux choix du responsable : INC-332 avec le prochain lot, puis `CRM-112` (2026-11-01, décision 808)
+
+**Décision 808, du responsable, en séance** : la correction d'INC-332 (à 390 px, l'en-tête garde une seule ligne de
+commandes), une reconstruction de la webapp seule, part **avec le prochain lot**, et non seule ; elle est inscrite au
+contrat de déploiement. Ensuite vient **`CRM-112`**, les champs personnalisés communs de portée espace, en commençant par
+T1 (`docs/SPEC-champs-communs.md`).
