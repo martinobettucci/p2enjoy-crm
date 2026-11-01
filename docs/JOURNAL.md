@@ -37673,3 +37673,20 @@ attend le constat en production.
 
 **Décision 800, du responsable, en séance** (« Sans objet pour le MCP ») : `CRM-122` est de l'outillage de test, sans
 équivalent dans le connecteur MCP. Aucune famille, aucune action ; la question ne se repose pas.
+
+### `CRM-122` T1 : deux demandes explicites, un tri par écart de pixels (2026-11-01)
+
+**Constat** : `capturer()` recopie chaque capture dans `docs/captures/` à chaque passage. `e2e/output/` est plat, si
+bien que deux unités au même nom de capture s'y écrasent.
+
+**Choix de l'agent, écrits pour relecture** (`docs/SPEC-captures.md`) :
+- deux variables, `CAPTURES_UNITES` (liste d'unités) et `CAPTURES_RENOUVELLEMENT=1`. Sans elles, rien n'est recopié ;
+  une valeur hors forme fait échouer le scénario ;
+- `e2e/output/<unité>/` par unité ;
+- un rapport qui décode les images par le Chromium de Playwright, sans dépendance nouvelle. Il retient la part des
+  pixels dont un canal diffère de plus de 24, et une image est *changée* à partir de 0,2 %. En dessous, c'est du bruit :
+  l'image est rendue à sa version committée ;
+- une campagne de renouvellement avant chaque livraison, inscrite au contrat.
+
+**Écarté** : Pillow, installé sur le poste mais non déclaré par le dépôt ; `pixelmatch` et `jpeg-js`, deux dépendances
+de plus pour ce que Chromium fait déjà.

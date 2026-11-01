@@ -17842,9 +17842,10 @@ déploiement) ; (3) tests unitaires de l'aide (sans demande, unité nommée, ren
 spécification écrite et committée avant le code. Question du connecteur : sans objet, outillage de test (confirmé par le responsable
 le 2026-11-01, décision 800).
 
-- [@] **T1 — spécification** : la forme des deux demandes, le rapport de tri et son seuil, la place du renouvellement
-      dans la préparation d'une livraison.
-      *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 12:13 UTC — état avant : [ ]*
+- [x] **T1 — spécification** : la forme des deux demandes, le rapport de tri et son seuil, la place du renouvellement
+      dans la préparation d'une livraison. **Écrite le 2026-11-01** : `docs/SPEC-captures.md` — `CAPTURES_UNITES`,
+      `CAPTURES_RENOUVELLEMENT=1`, `e2e/output/<unité>/`, le rapport par le Chromium de Playwright (canal > 24, *changée*
+      dès 0,2 %, le bruit rendu), une campagne avant chaque livraison.
 - [ ] **T2 — l'aide, le tri, leurs tests, la documentation**, et une campagne ordinaire complète constatée propre.
 - [ ] **T3 — premier renouvellement**, avant la livraison du lot 0106 à 0140 (décision 786). La campagne finale de
       `CRM-117` (T5) s'est close le 2026-10-31 sans lui, T1 et T2 n'étant pas faites : elle a renouvelé les seules images
