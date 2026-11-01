@@ -17863,7 +17863,7 @@ manifestes Python constatés dans le graphe de dépendances de GitHub après le 
 - [P] **T2 — livraison** : la prochaine reconstruction de l'image `mcp` de production prend le verrou renommé
       (contenu identique) ; aucune autre action en production.
 
-### CRM-122 — Les captures versionnées se renouvellent par une campagne dédiée, observée et committée `[~]`
+### CRM-122 — Les captures versionnées se renouvellent par une campagne dédiée, observée et committée `[x]`
 Arbitrage du responsable du 2026-10-31 (décision 787, révisée en séance). `capturer()` (`e2e/ui/captures.ts`) recopie
 chaque capture dans `docs/captures/<unité>/`, dossier versionné, **à chaque passage** : une campagne de régression
 réécrit les captures de toutes les unités sans que personne les observe ni les committe, et salit l'arbre que
@@ -17894,7 +17894,7 @@ le 2026-11-01, décision 800).
       demande rien n'est versionné, avec `CAPTURES_UNITES=CRM-041` elle l'est ; une capture JPEG l'est avec
       `CAPTURES_UNITES=CRM-074` ; une unité hors forme fait échouer le scénario. Typecheck vert.
       `docs/DESIGN_SYSTEM.md` §11, `docs/DAT.md` §13, `README.md`, `docs/PROD_MIGRATIONS.md` (le geste de préparation).
-- [@] **T3 — premier renouvellement**, avant la livraison du lot 0106 à 0140 (décision 786). La campagne finale de
+- [x] **T3 — premier renouvellement**, avant la livraison du lot 0106 à 0140 (décision 786). La campagne finale de
       `CRM-117` (T5) s'est close le 2026-10-31 sans lui, T1 et T2 n'étant pas faites : elle a renouvelé les seules images
       du manuel et les captures de `CRM-117`.
       **Avancement au 2026-11-01** : base reconstruite (accord de la session voisine) ; une première campagne de renouvellement
@@ -17902,9 +17902,10 @@ le 2026-11-01, décision 800).
       écarts d'INC-331 et une instabilité de `mentions-composeur`) laisse **679 images changées** après le tri
       (253 rendues comme bruit). **Observées une à une** : les 131 à 390 px et les 71 à 900 px — aucune régression autre
       qu'INC-332 ; INC-336 (sujet hors du cadre, états transitoires) et INC-337 (décalage à gauche, antérieur) consignées.
-      **Reste** : observer les 455 captures à 1152 et 1440 px et les 28 autres, puis committer le renouvellement d'un seul
-      commit. Les images renouvelées restent non commitées dans l'arbre d'ici là.
-      *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 13:01 UTC — état avant : [ ]*
+      **Terminé le 2026-11-01** : les 455 captures larges (1152 et 1440 px) et les 22 autres observées en planches denses
+      (seize paires par planche : la mise en page, les débordements et les chevauchements se lisent, le détail du texte non),
+      sans rupture de mise en page ; ajouts à INC-336. Le renouvellement est committé en un seul commit : 679 images
+      et la vidéo du board.
 
 ## Demande du 2026-11-01 — le préfixe des adresses d'affaire (décision 804)
 

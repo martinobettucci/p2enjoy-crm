@@ -8487,7 +8487,11 @@ d'étiquette, l'export et l'import : le sujet est sorti du cadre.
   `CRM-081/filtre-sommeil-liste` ; à 900 px : `CRM-043/panneau`, `CRM-044/fil`.
 - **État transitoire saisi** : `CRM-077/corbeille-md-900` (« En cours de mesure » au lieu de ce que l'objet retient) ;
   `CRM-081/groupement-fil-md-900` et `CRM-060/carnet-creation-md-900`, le tiroir en cours de fermeture, déjà dans les
-  versions committées.
+  versions committées ; à l'inverse, `CRM-007/etat-chargement-1440` et `CRM-020/tracks-chargement-1440` devaient montrer
+  l'état de chargement, et montrent la page déjà chargée.
+- **À vérifier** : sur plusieurs fiches d'affaire capturées en défilement profond à 1440 px
+  (`CRM-108/fiche-recette-par-le-connecteur`, `CRM-067/activites-lectrice`, `CRM-060/contacts-affaire-vide`), la colonne
+  de droite, celle du fil, est vide là où la version committée montrait le fil.
 
 **Aucune régression du produit** : le produit rend ce qu'il doit. Mais ces images ne prouvent plus ce qu'elles
 nommaient (`CLAUDE.md` §16). **Issue proposée** : que chaque scénario amène son sujet dans le cadre (`scrollIntoViewIfNeeded`
