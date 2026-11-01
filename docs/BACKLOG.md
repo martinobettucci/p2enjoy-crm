@@ -6968,11 +6968,12 @@ classement manuel ; si `CRM-060` n'est pas livré, règle 3 désactivée et docu
 règles vivent en base et non dans le service, ce qui est le choix d'architecture du produit depuis
 `CRM-010`. L'unité reste `[~]` pour les deux écarts ci-dessus.
 
-- [ ] **Tranche INC-326 — le classement automatique écrit `mail_attachments.card_id`** (décision 795) : les règles 1 et 2
+- [@] **Tranche INC-326 — le classement automatique écrit `mail_attachments.card_id`** (décision 795) : les règles 1 et 2
       de la relève posent aussi la colonne sur les pièces du message classé, comme le classement manuel et le
       déclassement (0109) ; une migration rattrape les pièces existantes d'un message classé. pgTAP (classement à la
       relève, rattrapage), API, unitaires du fil qui peuvent revenir à la colonne ; `docs/SCHEMA.md`, contrat de
       déploiement. Connecteur MCP : sans objet.
+      *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 01:23 UTC — état avant : [ ]*
 
 ### CRM-056 — Dossiers IMAP imbriqués `[x]`
 Création, assainissement, renommage, labels Gmail, `mail_folder_map`.
