@@ -313,6 +313,9 @@ const ENTETE = 'sticky top-0 bg-bg text-sm text-text-2 font-medium h-[var(--size
 // Une cellule de montant prend la hauteur de ses devises empilées, 40 px restant son minimum (§5.60, écart au §5.9).
 const CELLULE = 'h-[var(--size-target)] px-3 py-1 text-right'
 
+// Les largeurs fixes laissent aux quatre colonnes de montant la place d'un « 210 000,00 EUR » à 1440 px : depuis que chaque
+// valeur porte son code (CRM-126), Affaire, État et Marge sont resserrées, et le tableau défile dans son conteneur
+// en deçà de 60rem (constaté sur la capture du 2026-11-01).
 function TableauRentabilite({ rapport, vue }: { readonly rapport: Rapport; readonly vue: VueRentabilite }) {
 	const reel = vue === 'reel'
 	return (
@@ -320,17 +323,17 @@ function TableauRentabilite({ rapport, vue }: { readonly rapport: Rapport; reado
 			{/* Une surface bordée, comme les tableaux du pilotage (§5.48) : les cellules collantes portent le même fond que la
 			    ligne, et la ligne ne se lit plus en deux teintes (constaté sur la capture du 2026-10-23). */}
 			<div className="overflow-x-auto indique-debordement-x [contain:paint] rounded-lg border border-border bg-surface">
-				<table className="w-full min-w-[56rem] table-fixed border-collapse">
+				<table className="w-full min-w-[60rem] table-fixed border-collapse">
 					<thead>
 						<tr className="border-b border-border">
-							<th scope="col" className={`${ENTETE} sticky left-0 z-10 w-[28ch] text-left`}>{t('rentab.column.card')}</th>
-							<th scope="col" className={`${ENTETE} w-[14ch] text-left`}>{t('rentab.column.state')}</th>
+							<th scope="col" className={`${ENTETE} sticky left-0 z-10 w-[24ch] text-left`}>{t('rentab.column.card')}</th>
+							<th scope="col" className={`${ENTETE} w-[11ch] text-left`}>{t('rentab.column.state')}</th>
 							<th scope="col" className={`${ENTETE} text-right`}>{t('rentab.column.amount')}</th>
 							<th scope="col" className={`${ENTETE} text-right`}>{t(reel ? 'rentab.column.revenues' : 'rentab.column.revenues.prevu')}</th>
 							<th scope="col" className={`${ENTETE} text-right`}>{t(reel ? 'rentab.column.costs' : 'rentab.column.costs.prevu')}</th>
 							<th scope="col" className={`${ENTETE} text-right`}>{t('rentab.column.staff')}</th>
-							<th scope="col" className={`${ENTETE} w-[22ch] text-right`}>{t(reel ? 'rentab.column.margin' : 'rentab.column.margin.prevu')}</th>
-							{reel ? <th scope="col" className={`${ENTETE} w-[12ch] text-right`}>{t('rentab.column.rate')}</th> : null}
+							<th scope="col" className={`${ENTETE} w-[18ch] text-right`}>{t(reel ? 'rentab.column.margin' : 'rentab.column.margin.prevu')}</th>
+							{reel ? <th scope="col" className={`${ENTETE} w-[10ch] text-right`}>{t('rentab.column.rate')}</th> : null}
 						</tr>
 					</thead>
 					<tbody>

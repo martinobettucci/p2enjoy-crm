@@ -2,6 +2,7 @@
 //       passé et le coût du personnel, les recettes et la rentabilité
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitres 27, 28, 29 ; docs/SPEC-costs.md (les coûts réels,
 //       l'onglet « À saisir »), docs/SPEC-temps.md (la saisie, le rapport, le coût du personnel), docs/SPEC-recettes.md
+// @spec CRM-126 (docs/BACKLOG.md) — tranche T2 : l'image « tableau » montre le tableau unique en balance par devise
 //
 // Les écrans sont lus sur le seed — le track « Studio web », l'affaire « Refonte intranet Ville de Lyon », la semaine et
 // le mois que le seed remplit. Rien n'est saisi : les formulaires sont ouverts puis refermés, et une valeur hors borne
@@ -86,7 +87,8 @@ test('le temps : la semaine, le rapport, le coût du personnel', async ({ page }
 test('l’écran « Rentabilité »', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
 	await page.goto('/rentabilite')
-	const tableau = page.getByRole('region', { name: 'Rentabilité en EUR' })
+	// Un seul tableau, une balance par devise (CRM-126, docs/SPEC-recettes.md §6.3 révisé).
+	const tableau = page.getByRole('region', { name: 'Rentabilité des affaires, une balance par devise' })
 	await expect(tableau).toBeVisible()
 	await page.setViewportSize({ width: 1440, height: 1400 })
 	await illustrer(page, { chapitre: RECETTES, section: 'l-ecran-rentabilite', nom: 'tableau', cibles: [page.getByTestId('onglet-rentab-ensemble'), tableau] })

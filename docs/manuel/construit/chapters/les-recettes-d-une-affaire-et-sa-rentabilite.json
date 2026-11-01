@@ -163,9 +163,9 @@
 		{
 			"type": "image",
 			"src": "les-recettes-d-une-affaire-et-sa-rentabilite/plusieurs-devises.jpg",
-			"alt": "Une ligne de l'écran Rentabilité : une affaire en deux devises, une balance CHF et une balance EUR",
+			"alt": "Une ligne de l'écran Rentabilité, vue « Prévu » : une affaire en deux devises, une balance CHF et une balance EUR",
 			"width": 1158,
-			"height": 73
+			"height": 92
 		},
 		{
 			"type": "paragraph",
@@ -327,7 +327,7 @@
 			"src": "les-recettes-d-une-affaire-et-sa-rentabilite/tableau.jpg",
 			"alt": "L'écran Rentabilité : un seul tableau, par track, channel et affaire, chaque montant suivi de sa devise",
 			"width": 1160,
-			"height": 1080
+			"height": 928
 		},
 		{
 			"type": "image",

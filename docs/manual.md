@@ -5500,7 +5500,7 @@ ne change plus.
 
 ![Le titre du bloc « Temps passé » de la fiche](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/temps-passe.jpg)
 
-![Une ligne de l'écran Rentabilité : une affaire en deux devises, une balance CHF et une balance EUR](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/plusieurs-devises.jpg)
+![Une ligne de l'écran Rentabilité, vue « Prévu » : une affaire en deux devises, une balance CHF et une balance EUR](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/plusieurs-devises.jpg)
 
 Pour un administrateur de l'espace, le bloc **« Rentabilité »** suit « Temps passé » : recettes, coûts, coût du
 personnel et marge, en **prévu** et en **réel**, et le taux de marge réelle. La marge est **recettes − coûts −

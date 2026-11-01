@@ -38082,3 +38082,21 @@ par la reconstruction qui suit. **Ce que la sortie gardée a montré aussitôt**
 lectrice ni le business developer) et avant les channels et workflows ajoutés depuis, un jeton expiré au terme d'une
 longue course, et `verify-migrations.sh` qui trouve la 106 non rejouable sur l'état qu'elle produit et les 125 et 132 sans
 la seconde garde d'INC-239. Consignés : **INC-339**. INC-304 est close.
+
+### `CRM-126` T2 — ce que les captures ont montré (2026-11-01, décision 810)
+
+*Session interactive, pile de développement partagée prise à son tour.* **Observations.** Le premier rendu à 1440 px
+faisait toucher « 210 000,00 EUR » de la colonne « Montant de l'affaire » et la recette voisine : chaque valeur portant
+désormais son code, les colonnes fixes héritées (`Affaire` 28ch, `État` 14ch, `Marge` 22ch) ne laissaient plus assez aux
+quatre colonnes de montant. Porter la largeur minimale du tableau à 68rem coupait la marge hors du conteneur à 1440 px ;
+réduire le taux à 9ch faisait déborder « 100,0 % ». **Décision** : `Affaire` 24ch, `État` 11ch, `Marge` 18ch, `Taux`
+10ch, largeur minimale 60rem — le tableau tient à 1152 et 1440 px, et défile dans son conteneur en deçà, page fixe.
+L'image « plusieurs-devises » du manuel est prise en vue « Prévu » : en « Réel », le coût EUR de `…0c7` n'a pas de réel
+et seule la balance CHF paraissait, ce qui ne montrait pas ce que la phrase décrit. Le spec `27-29` cherchait la région
+« Rentabilité en EUR », nom de l'ancien tableau par devise : il cherche le nouveau.
+
+**Vérifications** : Vitest (rentabilite 23, recettes 14, i18n), pytest unitaires (291) et intégration recettes contre la
+vraie base après reconstruction du conteneur `mcp` (9), E2E `e2e/ui/rentabilite.spec.ts` (5), specs du manuel 23-33 et
+27-29 (chapitre 29), typecheck, build, classes CSS (seul `alert`, faux positif antérieur de `ReglagesWebhooks.tsx`).
+Captures observées : `docs/captures/CRM-126/` et les quatre paliers de `e2e/output/CRM-108/`. Reste la livraison
+(`docs/PROD_MIGRATIONS.md` §2.27) et le constat du responsable : `CRM-126` passe `[P]`.

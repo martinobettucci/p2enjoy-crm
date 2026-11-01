@@ -297,6 +297,9 @@ test('les recettes et la rentabilité : le réel d’une recette, l’écran, l�
 	const nav = page.getByRole('navigation', { name: 'Navigation principale' })
 	await illustrer(page, { chapitre: RECETTES, section: 'l-ecran-rentabilite', nom: 'barre-laterale', cibles: [nav.getByRole('link', { name: 'Pilotage' }), nav.getByRole('link', { name: 'Rentabilité' })] })
 	// L'affaire à plusieurs devises du seed (…0c7, docs/SPEC-seed.md §21.1) : une balance par devise sur une ligne (CRM-126).
+	// En vue « Prévu », où son coût en EUR est connu : en « Réel », ce coût n'a pas encore de réel et seule la balance CHF paraît.
+	await page.goto('/rentabilite?vue=prevu')
+	await expect(page.getByTestId('rentab-ligne-affaire').first()).toBeVisible()
 	const plusieurs = page.locator('[data-testid="rentab-ligne-affaire"][data-card="5eed0000-0000-4000-8000-0000000000c7"]')
 	await si(plusieurs, () => illustrer(page, { chapitre: RECETTES, section: 'la-rentabilite-d-une-affaire', nom: 'plusieurs-devises', cibles: [plusieurs] }))
 	const onglet = page.getByRole('tab', { name: /À saisir/ }).or(page.getByRole('link', { name: /À saisir/ })).first()

@@ -18030,7 +18030,7 @@ Question du connecteur : sans objet (décision 809).
 
 ## Demande du 2026-11-01 — une balance par devise dans la rentabilité (décision 810)
 
-### CRM-126 — La rentabilité rend une balance par devise dans un seul tableau, et « non calculable » disparaît `[~]`
+### CRM-126 — La rentabilité rend une balance par devise dans un seul tableau, et « non calculable » disparaît `[P]`
 Demande et arbitrage du responsable du 2026-11-01 (décision 810).
 
 **Spécification** : `docs/SPEC-recettes.md` §4.1, §4.4, §6.2, §6.3, §7 et §11 (révision `CRM-126`) ;
@@ -18054,6 +18054,9 @@ nouvelle (décision 810).
 
 - [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-01 : décision 810,
       `docs/SPEC-recettes.md` (révision `CRM-126`), `docs/DESIGN_SYSTEM.md` §5.60, `docs/SPEC-seed.md` §21.1.
-- [@] **T2 — règle, écrans, connecteur et preuves** : tout le reste de la DoD hors production.
-      *Prise en charge : session interactive 2026-11-01 15:06 UTC depuis 2026-11-01 15:06 UTC — état avant : [ ]*
-- [ ] **T3 — livraison en production et constat** : webapp et service `mcp` redéployés, une affaire mixte constatée.
+- [x] **T2 — règle, écrans, connecteur et preuves**, vérifiée le 2026-11-01 : unitaires Vitest (rentabilite 23,
+      recettes 14) et pytest (291, dont les 9 cas partagés) ; intégration du connecteur contre la vraie base
+      (`test_integration_recettes.py`, 9) ; E2E `e2e/ui/rentabilite.spec.ts` (5) et images du manuel (chapitre 29) ;
+      captures `docs/captures/CRM-126/` observées, quatre paliers ; typecheck et build.
+- [P] **T3 — livraison en production et constat** : webapp et service `mcp` redéployés, une affaire mixte constatée
+      (`docs/PROD_MIGRATIONS.md` §2.27).
