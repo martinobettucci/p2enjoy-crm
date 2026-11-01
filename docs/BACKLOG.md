@@ -17593,6 +17593,10 @@ responsable** : traitée juste après `CRM-116`.*
       rejoué sans retrait, bucket `manual` privé à 518 objets relu en base. **Reste le constat du responsable** : l'icône
       « Aide » connecté mène au chapitre de l'écran, `/aide` montre le sommaire et les images, déconnecté `/aide` mène
       à la connexion.
+- [@] **Tranche INC-330 — le manifeste des images du manuel ne retient aucun secret** : `e2e/manuel/illustrer.ts`
+      recopiait le contenu des champs, dont le secret de signature d'un webhook de développement (alertes 1 et 2 du
+      secret scanning de GitHub, commits `ae9d20f6` et `f60aaf87`).
+      *Prise en charge : session interactive d2434ada depuis 2026-11-01 12:20 UTC — état avant : [ ]*
 
 ### CRM-118 — Connecteur MCP : la famille `workflows` `[P]`
 *Développement terminé et prouvé le 2026-10-27 (T1.b, T2.a à T2.e, les checklists d'étape) ; reste T3 — livrer les
