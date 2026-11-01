@@ -1075,7 +1075,7 @@ vérification visuelle** : l'unité ne livre aucun écran.
   certificat du proxy suivie d'un `npm ci` précédé d'un `npm config set cafile` (INC-032, INC-042),
   et l'arborescence de compatibilité des navigateurs Playwright (INC-036, **septième** occurrence).
 
-### CRM-014 — Harnais de preuves d'autorisation `[~]`
+### CRM-014 — Harnais de preuves d'autorisation `[x]`
 Projet Playwright `api` exécutant les douze scénarios de refus avec les jetons réels de chaque
 profil.
 **DoD** : les 12 scénarios verts ; le harnais échoue si une politique est retirée (vérifié en
@@ -1167,7 +1167,7 @@ retirant temporairement une politique).
       §10, `docs/DAT.md` §7, `README.md` §7, `CHANGELOG.md`, `docs/JOURNAL.md` (décisions 146
       à 152), `docs/INCONSISTENCY_REPORT.md` (INC-057 et INC-058 ouvertes) mis à jour dans le même
       changement.
-- [~] **~~QUATRE PREUVES SUR DOUZE RESTENT HORS D'ATTEINTE.~~ RÉVISÉ le 2026-08-18 : LES QUATRE
+- [x] **~~QUATRE PREUVES SUR DOUZE RESTENT HORS D'ATTEINTE.~~ RÉVISÉ le 2026-08-18 : LES QUATRE
       OBJETS EXISTENT, ET TROIS ASSERTIONS SUR QUATRE ONT TENU LEUR PROMESSE.** n° 6 a été retournée
       à la livraison de `mail_inbound_accounts` par `CRM-052`, n° 7 à celle de
       `mail_outbound_identities` par `CRM-053`, n° 9 à celle de `mail_attachments` par `CRM-054` —
@@ -1187,7 +1187,9 @@ retirant temporairement une politique).
       « PREUVE N° 12 — emprunter l'identité sortante d'autrui est REFUSÉ › 403 et
       `identity_not_available` : la signature est réelle, le refus aussi ». La douzième preuve
       n'est plus une absence figée : c'est un refus mesuré.
-- [~] **La preuve n° 8 est À MOITIÉ ACQUISE, et l'inventaire le dit désormais.** `card_events`
+- [x] **La preuve n° 8 est ACQUISE en entier depuis `CRM-072` T1** (révisé le 2026-11-01) : `e2e/api/preuves-refus.spec.ts`,
+      « PREUVE N° 8 — insertion directe dans `audit_log`, refusée », verte dans la campagne API complète du 2026-11-01
+      (1286/1288, les deux écarts étrangers). *Historique* : **La preuve n° 8 était À MOITIÉ ACQUISE, et l'inventaire le disait.** `card_events`
       existe depuis `CRM-044` : son refus est **mesuré** — `403`, `42501`, `service_role` compris —
       et non plus attendu. `audit_log` reste due par `CRM-072`. L'inventaire du fichier consolidé
       la comptait encore parmi les cinq non satisfaisables : **il masquait une preuve réellement
@@ -7197,7 +7199,7 @@ Ce qui est **déjà tranché**, et ne le sera pas pendant l'implémentation :
 - **Le seed enverra deux vrais messages** puis déclenchera une vraie relève : un écran vide ne
   démontre rien, et une trace fabriquée est interdite (CLAUDE.md §8).
 
-### CRM-058 — Composition et réponse `[~]`
+### CRM-058 — Composition et réponse `[P]`
 ***Connecteur (décision 708, M2 B)** : la copie cachée seule, dans `crm_mail_send` (famille `messagerie`) ; aucune pièce jointe par le connecteur. Prête à spécifier.*
 ***Arbitré le 2026-10-25 (décision 707, option B)** : les **pièces jointes à l'envoi** et la **copie cachée** sont à livrer, en une tranche à spécifier — les deux questions du connecteur MCP d'abord.*
 ***Reste réel au 2026-10-25 (décision 705)** : la reprise et le recul sont livrés par `CRM-059` (`[x]`) et les signatures par `CRM-063` (`[x]`) ; restent les **pièces jointes à l'envoi** et la **copie cachée**, qu'aucune spécification ne porte — **choix de produit du responsable** (les livrer, ou les déclarer hors périmètre).*
@@ -7237,8 +7239,8 @@ quota et refus testés.
 - [x] **Parcours d'écran** : `e2e/ui/envoi.spec.ts`, **4 scénarios**, deux captures observées.
 - [x] **Quatre témoins figés retournés** : trois annonçaient « `mail_sent` reste refusé », le
       quatrième exigeait que l'énumération soit étendue dans la même migration que son écriture.
-- [ ] **Aucun backoff, aucune reprise** : un échec est `failed` et le dit. `CRM-059`.
-- [ ] **Aucune pièce jointe à l'envoi**, aucune signature, aucune copie cachée — absences figées. — *Les signatures sont livrées par `CRM-063` ; pièces jointes et copie cachée portées par la **tranche 2** ci-dessous (décision 707).*
+- [x] **~~Aucun backoff, aucune reprise~~** : levée par `CRM-059` (`[x]`) — reprise et délai après une panne (`reprogrammer_envoi`). *Révisé le 2026-11-01.*
+- [x] **~~Aucune pièce jointe à l'envoi, aucune signature, aucune copie cachée~~** — absences levées : signatures par `CRM-063` (`[x]`), pièces jointes et copie cachée par la tranche 2 (livrée le 2026-11-01). *Révisé le 2026-11-01.* — *Les signatures sont livrées par `CRM-063` ; pièces jointes et copie cachée portées par la **tranche 2** ci-dessous (décision 707).*
 - [x] **~~Harnais dédié `scripts/verify-mail-envoi.sh` : dû avant le passage à `[x]`.~~ LIVRÉ**,
       et cette ligne était **PÉRIMÉE** — constaté par mesure le 2026-08-20 : le fichier existe,
       porte ses `@verifies CRM-058` et rejoue les cinq preuves de l'unité avec quatre dégradations.
@@ -16834,7 +16836,7 @@ non. Aucune migration, aucune règle d'accès, aucune requête nouvelle.*
 
 ## Constat du 2026-10-23 — décision 646
 
-### CRM-113 — Le générateur de workflow connaît les champs natifs de l'affaire et réutilise le catalogue sous un libellé surchargé `[~]`
+### CRM-113 — Le générateur de workflow connaît les champs natifs de l'affaire et réutilise le catalogue sous un libellé surchargé `[P]`
 ***Reste réel au 2026-10-25 (décision 705)** : la **relecture par le responsable** des choix de forme marqués au `docs/SPEC-ia.md` §14 (T3), puis la livraison de T4 sur son instruction ; la campagne d'interface du 2026-10-25 ne rougit sur aucune spec de l'unité.*
 *Créée le 2026-10-23 — décision 646, constat et arbitrages du responsable : le générateur proposait un champ
 « montant » que l'affaire porte déjà, et déclarait des nœuds nouveaux au lieu de viser le nœud du catalogue sous un
@@ -16864,7 +16866,7 @@ libellé surchargé ; « Utiliser le nœud du catalogue » perdait le nom de l'�
       développement le 2026-10-24** : `consignes.test.ts` (neuf), `proposition.test.ts`, `configuration.test.ts` et
       `handler.test.ts` révisés avec motif ; le scénario `catalogue` rend exactement ses deux défauts en requête directe.
       Le contrôle facultatif contre le modèle réel n'a **pas** été mené : aucune campagne n'appelle le serveur réel.
-- [~] **T3** — écran : `docs/DESIGN_SYSTEM.md` §5.52 révisé avant le code ; libellé et probabilité d'étape éditables,
+- [x] **T3** — écran : `docs/DESIGN_SYSTEM.md` §5.52 révisé avant le code ; libellé et probabilité d'étape éditables,
       bouton qui garde le nom, différentiel, traductions ; unitaires, E2E à la souris et au clavier, captures aux
       quatre paliers, `docs/manual.md`, seed, `CHANGELOG.md`. **Implémentée et vérifiée en développement le
       2026-10-24.**
@@ -16878,13 +16880,13 @@ libellé surchargé ; « Utiliser le nœud du catalogue » perdait le nom de l'�
         mail (44) et pytest (246) verts ; interface 884/925, les 41 échecs rejoués seuls donnent 59 passés et 5
         échecs, tous étrangers à l'unité ou préexistants, lignes de base établies (INC-292, INC-236, INC-293, et un
         scénario clavier instable de `mentions-composeur.spec.ts`).
-      - **Reste `[~]`** : les choix de forme marqués au `docs/SPEC-ia.md` §14 attendent la relecture du responsable ;
+      - **Relecture faite** (décision 809, 2026-11-01). *Historique* : les choix de forme marqués au `docs/SPEC-ia.md` §14 attendaient la relecture du responsable ;
         une campagne d'interface verte d'un bout à l'autre attend la correction d'INC-292.
       - *INC-292 réduite le 2026-10-25* (décision 686) : aucune fonction edge ne rend plus `204` ; campagne d'interface
         **921 passés, 6 échecs** (contre 41), aucun dans les specs de l'unité. **Reste** pour une campagne verte : le
         résidu d'INC-292 (une réponse `200` de `session` perdue par le runtime, 1 sur 3000) et INC-299 (`502` de
         PostgREST) — tous deux hors de l'unité, issues proposées au registre.
-- [~] **T4** — *migrations 102 et 103 appliquées et webapp de `main` livrée le 2026-10-26, par la fenêtre des migrations
+- [P] **T4** — *migrations 102 et 103 appliquées et webapp de `main` livrée le 2026-10-26, par la fenêtre des migrations
       102 à 105 (décision 718, révision `8934079d`) ; restent la relecture de T3 et le constat.* Livraison, sur instruction du responsable : migration en fenêtre, fonction `ia` redéployée, webapp
       reconstruite ; constat. **Le responsable s'en charge** (décision 679) ; elle attend T5.
 - [x] **T5** — révision de la décision 679 (arbitrages du responsable du 2026-10-24), avant toute livraison : les clés
