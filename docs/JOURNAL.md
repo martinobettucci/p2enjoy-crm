@@ -37633,3 +37633,21 @@ rattrapage ne touche aucune ligne, et le retour arrière propre est le retrait d
 
 **La 142 livrée (2026-11-01, décision 796)** : la fenêtre est passée en révision `98a6a032`. Relus en lecture seule :
 142 lignes au registre, le déclencheur présent, l'invariant à `0` ; `verifier.sh` est à 33/34.
+
+### `CRM-120` T1 : l'inventaire, la forme mesurée, et le statut de `outbox_not_reschedulable` (2026-11-01, décision 797)
+
+**Observations, mesurées sur la pile de développement (PostgREST 14.12)** :
+- Vingt-huit fonctions lèvent `P0002` (`pg_proc`, définitions en vigueur). Aucune ne capture ce SQLSTATE.
+- Trois sondes, appelées puis retirées : `P0002` rend 500 ; `PT404` rend 404 avec le code `PT404` ; la forme `PGRST`
+  rend 404 avec le corps inchangé, code `P0002` et message.
+- La forme `PT404` existe déjà pour deux fonctions de l'assistant IA (2026-10-02).
+
+**Décision d'exécution (agent, sur la décision 762)** : la forme `PGRST`, levée par une seule fonction,
+`app.raise_http_error(statut, message)`. Le code `P0002` et le message restent ceux que les clients lisent déjà, et
+seul le statut change.
+
+**Décision 797, du responsable, en séance** (« 409, conflit d'état ») : `outbox_not_reschedulable` rend **409**, et non
+404. L'envoi existe, mais son état interdit de le reprogrammer.
+
+**Conséquences** : `docs/SPEC-refus-404.md` ; T2 (migration, pgTAP) et T3 (preuves API, connecteur, documentation)
+suivent.

@@ -17759,7 +17759,7 @@ nouvelle (écart assumé, décision 757) ; question du connecteur sans objet.
 - [x] **T4 — clôture** : synchronisation (aucun commit distant depuis T3), `CHANGELOG.md`. Rien à livrer en
       production : l'unité n'ajoute que des preuves.
 
-### CRM-120 — Les refus « introuvable » rendent HTTP 404, et non 500 `[ ]`
+### CRM-120 — Les refus « introuvable » rendent HTTP 404, et non 500 `[~]`
 Arbitrage du responsable du 2026-10-27 (décision 762). La base lève `P0002` pour une trentaine de refus « introuvable »,
 que PostgREST rend en **500**, lu comme une panne en supervision et comme une erreur générique par le connecteur MCP
 (qui ne traduit un refus que sous 500). Ils passent à **404**, message inchangé.
@@ -17769,10 +17769,12 @@ jetons ; lectures du code `P0002` de la webapp adaptées, tests unitaires vus ro
 ces refus (pytest) ; dictionnaires de refus et `docs/SPEC-plateforme.md` §6.1 révisés ; contrat de déploiement ;
 campagnes. Question du connecteur : aucune fonctionnalité nouvelle (décision 762).
 
-- [@] **T1 — mesure et forme** : inventaire exact (fonctions, codes, appelants, preuves qui affirment 500) ; la forme
+- [x] **T1 — mesure et forme** : inventaire exact (fonctions, codes, appelants, preuves qui affirment 500) ; la forme
       `raise sqlstate 'PGRST'` prouvée sur la pile, ou une autre forme si elle n'est pas portée ; le statut de
-      `outbox_not_reschedulable` tranché ; spécification écrite et committée avant le code.
-      *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 02:53 UTC — état avant : [ ]*
+      `outbox_not_reschedulable` tranché ; spécification écrite et committée avant le code. **Fait le 2026-11-01** :
+      `docs/SPEC-refus-404.md` — 28 fonctions relevées en base, aucune capture de `P0002` ; trois sondes sur PostgREST
+      14.12 (`P0002` 500, `PT404` 404 au code changé, `PGRST` 404 au corps inchangé) ; forme `PGRST` par
+      `app.raise_http_error` ; `outbox_not_reschedulable` en 409 (décision 797).
 - [ ] **T2 — migration et preuves en base** : réécriture des fonctions, pgTAP, harnais.
 - [ ] **T3 — clients et preuves** : webapp (`creer-affaire.ts`, `rgpd.ts`, dictionnaires), connecteur, preuves API
       et E2E, documentation.
