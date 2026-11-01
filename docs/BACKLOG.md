@@ -17897,6 +17897,13 @@ le 2026-11-01, décision 800).
 - [@] **T3 — premier renouvellement**, avant la livraison du lot 0106 à 0140 (décision 786). La campagne finale de
       `CRM-117` (T5) s'est close le 2026-10-31 sans lui, T1 et T2 n'étant pas faites : elle a renouvelé les seules images
       du manuel et les captures de `CRM-117`.
+      **Avancement au 2026-11-01** : base reconstruite (accord de la session voisine) ; une première campagne de renouvellement
+      a révélé INC-332 (en-tête de trois lignes à 390 px), corrigé et poussé ; la seconde campagne (1033/1037, les
+      écarts d'INC-331 et une instabilité de `mentions-composeur`) laisse **679 images changées** après le tri
+      (253 rendues comme bruit). **Observées une à une** : les 131 à 390 px et les 71 à 900 px — aucune régression autre
+      qu'INC-332 ; INC-336 (sujet hors du cadre, états transitoires) et INC-337 (décalage à gauche, antérieur) consignées.
+      **Reste** : observer les 455 captures à 1152 et 1440 px et les 28 autres, puis committer le renouvellement d'un seul
+      commit. Les images renouvelées restent non commitées dans l'arbre d'ici là.
       *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 13:01 UTC — état avant : [ ]*
 
 ## Demande du 2026-11-01 — le préfixe des adresses d'affaire (décision 804)

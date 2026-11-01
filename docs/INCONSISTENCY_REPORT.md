@@ -8475,3 +8475,33 @@ personnelle, et « quelque chose ne tourne pas rond ».* Mesuré sur le code et 
 l'envoi comme à l'armement. Les cadences déjà armées avec elle sont fermées par la migration. L'envoi présélectionne le
 défaut de la personne, et les réglages nomment le propriétaire. Le correctif est inscrit au backlog. **Ouverte** jusqu'à
 sa livraison.
+
+### INC-336 — Des captures versionnées ne montrent plus leur sujet, ou saisissent un état transitoire
+
+*Constaté le 2026-11-01 en observant le premier renouvellement de `CRM-122` T3 (les 202 captures changées à 390 et 900 px,
+observées une à une).* Les scénarios capturent la fenêtre sans amener le sujet dans le cadre. Depuis, la fiche d'une
+affaire a gagné « Santé de l'affaire », « Étiquettes » et « Enregistrer comme modèle », et la vue liste ses filtres
+d'étiquette, l'export et l'import : le sujet est sorti du cadre.
+- **Sujet hors du cadre**, à 390 px : `CRM-022/identites-fiche`, `CRM-037/formulaire`, `CRM-042/liste-donnees-longues` et
+  `liste`, `CRM-043/commentaire-long` et `panneau`, `CRM-044/fil`, `CRM-071/import-affaires-lectrice`,
+  `CRM-081/filtre-sommeil-liste` ; à 900 px : `CRM-043/panneau`, `CRM-044/fil`.
+- **État transitoire saisi** : `CRM-077/corbeille-md-900` (« En cours de mesure » au lieu de ce que l'objet retient) ;
+  `CRM-081/groupement-fil-md-900` et `CRM-060/carnet-creation-md-900`, le tiroir en cours de fermeture, déjà dans les
+  versions committées.
+
+**Aucune régression du produit** : le produit rend ce qu'il doit. Mais ces images ne prouvent plus ce qu'elles
+nommaient (`CLAUDE.md` §16). **Issue proposée** : que chaque scénario amène son sujet dans le cadre (`scrollIntoViewIfNeeded`
+sur l'élément nommé) et attende la fin de l'état transitoire (le tiroir fermé, la mesure rendue) avant `capturer`, puis
+que ces captures soient renouvelées par `CAPTURES_UNITES`. Connecteur MCP : sans objet.
+
+### INC-337 — À 390 et 900 px, plusieurs pages se capturent décalées vers la gauche, leur texte coupé au bord
+
+*Constaté le 2026-11-01 par la même observation, identique dans les versions committées, donc antérieur.* Sur la fiche
+d'un contact (« onction », « irecteur achats »), l'inbox, le catalogue de nœuds, les modèles d'emails, la corbeille et le
+tableau des coûts, le contenu commence quelques pixels hors de la fenêtre. La même page n'est pas coupée dans une autre
+capture (`CRM-060/fiche-contact-role-390`). Le décalage suit donc un défilement horizontal, sans doute provoqué en
+amenant dans la vue l'élément d'un tableau plus large que la fenêtre. Les preuves de palier exigent une page sans
+défilement horizontal, mais ne le mesurent pas au moment de ces captures. **À investiguer** : le défilement de la page ou du
+`main` au moment de la capture, et le conteneur qui devrait le porter (`docs/DESIGN_SYSTEM.md` §7, §12.6). Connecteur MCP :
+sans objet.
+
