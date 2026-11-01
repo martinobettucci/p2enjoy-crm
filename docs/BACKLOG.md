@@ -16880,7 +16880,7 @@ libellé surchargé ; « Utiliser le nœud du catalogue » perdait le nom de l'�
         mail (44) et pytest (246) verts ; interface 884/925, les 41 échecs rejoués seuls donnent 59 passés et 5
         échecs, tous étrangers à l'unité ou préexistants, lignes de base établies (INC-292, INC-236, INC-293, et un
         scénario clavier instable de `mentions-composeur.spec.ts`).
-      - **Relecture faite** (décision 809, 2026-11-01). *Historique* : les choix de forme marqués au `docs/SPEC-ia.md` §14 attendaient la relecture du responsable ;
+      - **Relecture faite** (décision 811, 2026-11-01). *Historique* : les choix de forme marqués au `docs/SPEC-ia.md` §14 attendaient la relecture du responsable ;
         une campagne d'interface verte d'un bout à l'autre attend la correction d'INC-292.
       - *INC-292 réduite le 2026-10-25* (décision 686) : aucune fonction edge ne rend plus `204` ; campagne d'interface
         **921 passés, 6 échecs** (contre 41), aucun dans les specs de l'unité. **Reste** pour une campagne verte : le

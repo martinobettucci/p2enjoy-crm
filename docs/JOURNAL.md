@@ -38030,9 +38030,9 @@ d'affichage reste dans la webapp et dans le connecteur (`docs/SPEC-recettes.md` 
 `mcp/tests/rentabilite_cas.json`, le manuel (chapitre 29) et ses captures, le changelog suivent avec la tranche T2.
 Aucune migration : `docs/PROD_MIGRATIONS.md` ne recevra que le redéploiement de la webapp et du service `mcp`.
 
-### `CRM-113` : la relecture du §14 tenue pour faite (2026-11-01, décision 809)
+### `CRM-113` : la relecture du §14 tenue pour faite (2026-11-01, décision 811)
 
-**Décision 809, du responsable, en séance** (« Oui, relecture faite ») : les choix de forme de `docs/SPEC-ia.md` §14, que
+**Décision 811, du responsable, en séance** (« Oui, relecture faite ») : les choix de forme de `docs/SPEC-ia.md` §14, que
 T3 laissait à relire, sont ceux que T5 a révisés sur les arbitrages du 2026-10-24 (les clés `label` et `probability`, la
 comparaison sans la casse) ; la relecture est faite. T3 passe `[x]` ; T4, livrée le 2026-10-26 (migrations 102 et 103),
 et l'unité passent `[P]` : il ne reste que le constat en production.
