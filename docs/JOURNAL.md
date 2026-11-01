@@ -37741,3 +37741,24 @@ sortie des sous-harnais de `verify-droits-fins.sh`. **Pourquoi une bibliothèque
 relevé et la comparaison sont les mêmes partout, et une empreinte calculée de dix façons ne serait comparable à rien.
 **Coordination** : T1 ter.2 et la preuve de T1 ter.1 reconstruisent la base partagée ; elles se jouent dans une fenêtre
 convenue avec les sessions actives.
+
+### INC-333 : le mois du rapport de temps se choisit par des flèches, sur les deux écrans (2026-11-01, décision 801)
+
+**Problème** : le responsable ne peut pas choisir le mois du rapport de temps. **Observation** : le poste ouvre la
+webapp dans Firefox 157, qui rend `input type="month"` en champ texte (`input.type === "text"`, mesuré). Le champ du
+rapport est contrôlé par l'adresse, et `lireMois` rejette chaque frappe partielle, si bien que le champ revient au mois
+du jour à chaque touche. Le bloc « Coût du personnel » de l'écran de coûts d'un track porte le même contrôle. Dans
+Chromium, la frappe dans les segments aboutit (reproduit : `03` donne `?mois=2026-03`), et les E2E, qui remplissent le
+champ par programme, restaient vertes.
+
+**Solutions envisagées**, soumises au responsable : (a) les flèches du patron de la semaine, et le mois du bloc du
+track dans l'adresse ; (b) deux listes natives, mois et année ; (c) les deux.
+
+**Décision 801, du responsable, en séance** (« Flèches + adresse ») : (a). « Mois précédent » (`ChevronLeft`), le mois
+en clair (« Mars 2027 »), « Mois suivant » (`ChevronRight`), et « Ce mois-ci » hors du mois du jour. C'est un seul
+composant pour les deux écrans. Le bloc du track lit et écrit `?mois=AAAA-MM`, le mois du jour restant le défaut jamais
+écrit. **Écarté** : garder le champ natif en lui ajoutant un brouillon local, car Firefox resterait sans calendrier ni
+forme indiquée.
+
+**Conséquences** : `docs/DESIGN_SYSTEM.md` §5.54, `docs/SPEC-temps.md` §7.3 et §7.5 et le manuel §28.4 sont révisés.
+Un mois lointain demande plusieurs gestes, mais l'adresse y mène directement. Connecteur MCP : sans objet.

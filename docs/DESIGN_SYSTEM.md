@@ -5453,9 +5453,22 @@ collante à gauche (la cible), montants et durées alignés à droite, chiffres 
 **Les colonnes sont fixes** (`table-fixed`, « Temps » 14 caractères, « Coût » 28) : les sections de « Toute l'équipe »
 s'alignent d'un tableau à l'autre — chaque tableau calculait ses largeurs, et les colonnes dansaient (capture du
 2026-10-11). Une part non valorisée à côté d'un montant se dit « dont 1 h non valorisé ».
-Une saisie non valorisée porte la pilule neutre « non valorisé » (§5.6) à la place du montant — jamais « 0 € ». Le
-sélecteur de mois est un `input type="month"`. Pour un administrateur, un `select` « Personne » propose chacun et
+Une saisie non valorisée porte la pilule neutre « non valorisé » (§5.6) à la place du montant — jamais « 0 € ». ~~Le
+sélecteur de mois est un `input type="month"`.~~ Pour un administrateur, un `select` « Personne » propose chacun et
 « Toute l'équipe » ; « Toute l'équipe » rend une section par personne, titre `h3`.
+
+**La navigation de mois** — *révisé le 2026-11-01 (INC-333, décision 801)*. Firefox ne connaît pas `input type="month"` :
+il en fait un champ texte, sans calendrier ni forme indiquée, que l'adresse écrasait à chaque frappe. Le mois se choisit
+désormais comme la semaine de la matrice : « Mois précédent » (`ChevronLeft`), le mois en clair avec sa majuscule
+(« Mars 2027 »), « Mois suivant » (`ChevronRight`), puis « Ce mois-ci », en lien d'action `--color-brand`, rendu hors du
+mois du jour. Les deux boutons ont la forme de ceux de la semaine : secondaire bordé, `--size-target`, icône 16 px
+`aria-hidden`. Le composant est unique, `NavigationMois`, et sert le rapport comme la série « Personnel » du track.
+- **Dans le rapport, le mois est le titre `h2`** de ce qui suit, et les sections de « Toute l'équipe » restent en `h3`
+  sous lui. Dans le bloc du track, qui a déjà son titre « Coût du personnel », le mois est un texte de même graisse.
+- **« Ce mois-ci » disparaît sous le doigt**, et le focus passe au libellé du mois (`tabIndex=-1`), qui nomme le mois
+  retrouvé (§5.13).
+- **Le mois vit dans l'adresse sur les deux écrans** (`?mois=AAAA-MM`), et le mois du jour n'y est jamais écrit.
+- La navigation et le `select` « Personne » partagent une ligne qui se replie ; aucune ligne ne déborde la page (§7).
 
 **Réglages ▸ « Coût du personnel »** (`/reglages/cout-personnel`, entrée de l'index des réglages avant la corbeille ;
 un membre y lit « Réservé aux administrateurs »). Une carte par personne — membre de l'espace, ou personne y ayant déjà

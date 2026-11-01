@@ -155,7 +155,9 @@ lui-même par défaut.
 
 ### 7.3 Le rapport mensuel
 
-Un sélecteur de mois (`?mois=AAAA-MM`, le mois du jour par défaut). Pour un membre : **son** mois — une ligne par cible (track › channel › affaire), le temps en jours
+Une navigation de mois (`?mois=AAAA-MM`, le mois du jour par défaut) : « Mois précédent », « Mois suivant », « Ce
+mois-ci » — *révisé le 2026-11-01 (INC-333, décision 801)* : le champ `type="month"` ne se saisissait pas dans Firefox.
+Pour un membre : **son** mois — une ligne par cible (track › channel › affaire), le temps en jours
 et en heures, le montant par devise, et les totaux. Pour un administrateur : en plus, une personne ou **« Toute
 l'équipe »**, avec un tableau par personne. Une saisie non valorisée est comptée en temps et dite « non valorisée ».
 
@@ -194,7 +196,9 @@ depuis le coût mensuel ». Les points 1 à 3 sont les arbitrages du responsable
 ### 7.5 La série « Personnel » — à côté des coûts existants (point 8)
 
 Sur l'**écran de coûts d'un track** : un bloc « Coût du personnel » — temps et montant du track, par channel, sur la
-période choisie (mois par défaut). Dans la **fiche d'une affaire** : un bloc « Temps passé » — temps et montant. Les deux
+période choisie (mois par défaut). *Depuis le 2026-11-01 (INC-333, décision 801)*, le mois se choisit par la navigation
+de mois du rapport (§7.3) et vit dans l'adresse de l'onglet « Vue d'ensemble » (`?mois=AAAA-MM`, le mois du jour jamais
+écrit). Dans la **fiche d'une affaire** : un bloc « Temps passé » — temps et montant. Les deux
 ne se mêlent ni aux budgets, ni aux lignes de coût, ni à l'histogramme. **Leur portée est écrite** : un membre n'y lit
 que **son** temps (§5.1), et le bloc le dit — « votre temps » ; un administrateur lit celui de toute l'équipe.
 Depuis `CRM-106`, le bloc « Temps passé » porte aussi la **saisie** de son temps sur l'affaire (§7.6).

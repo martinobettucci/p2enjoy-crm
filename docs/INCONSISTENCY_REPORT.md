@@ -8421,3 +8421,24 @@ qui cède est un de ceux que l'écran porte ailleurs. Sous `md`, le nom de la se
 toujours annoncé, l'avatar reste et l'adresse reste en infobulle. **Preuve** : le palier 390 de
 `e2e/ui/fil-ariane.spec.ts` exige le nom en `sr-only` et la fin de ligne au niveau du tiroir. Rouge avant la
 correction, vert après ; `fil-ariane`, `identites` et `connexion` 32/32 ; capture observée. Connecteur MCP : sans objet.
+
+### INC-333 — Dans Firefox, le mois du rapport de temps ne se choisit pas
+
+*Signalé par le responsable le 2026-11-01 : « impossible de choisir le mois du rapport de temps du personnel ».*
+Le rapport mensuel de l'écran « Temps » (`docs/SPEC-temps.md` §7.3) et le bloc « Coût du personnel » de l'écran de
+coûts d'un track (§7.5) choisissent leur mois par un `input type="month"` (`docs/DESIGN_SYSTEM.md` §5.54). **Firefox ne
+connaît pas ce type** : il rend un champ texte, sans calendrier ni indication de forme. Mesuré sur le Firefox 157 du
+poste : `input.type` vaut `"text"`.
+- **Dans le rapport**, le champ est contrôlé par l'adresse. Chaque frappe partielle (« 2 », « 20 », « 202 ») écrit
+  `?mois=2`, que `lireMois` rejette ; le champ revient aussitôt au mois du jour. Aucune saisie n'aboutit.
+- **Dans le bloc du track**, chaque frappe partielle part en lecture avec un mois mal formé.
+
+Dans Chromium, le contrôle natif fonctionne. Les preuves E2E, qui ne tournent que dans Chromium, le remplissaient par
+`fill('2099-03')` : elles ne pouvaient pas voir le défaut.
+
+**Corrigé** (décision 801, choix du responsable) : le patron de la navigation de semaine du même écran, « Mois
+précédent », le mois en clair, « Mois suivant », « Ce mois-ci ». Le composant est partagé par les deux écrans. Le
+bloc du track porte désormais son mois dans l'adresse (`?mois=AAAA-MM`), comme le rapport : sans cela, aucun mois
+lointain ne s'atteindrait, et le rechargement le perdait. Les spécifications sont révisées dans le même changement
+(`docs/SPEC-temps.md` §7.3 et §7.5, `docs/DESIGN_SYSTEM.md` §5.54). Connecteur MCP : sans objet, puisque
+`crm_time_report` prend déjà sa période en paramètre.
