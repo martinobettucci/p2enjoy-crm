@@ -13,7 +13,10 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### `CRM-121` — Dependabot surveille aussi les dépendances Python (outillage du dépôt)
+
+- `.github/dependabot.yml` déclare npm à la racine et pip pour `mcp/` et `mail-sync/`. Les verrous de `mcp/` sont
+  renommés `requirements.txt` et `requirements-dev.txt`, au contenu identique : l'image `mcp` installe les mêmes paquets.
 
 ## [Publié]
 

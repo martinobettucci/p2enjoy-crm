@@ -1,0 +1,19 @@
+# @spec CRM-121 (docs/BACKLOG.md) — Dependabot surveille npm et les dépendances Python
+# @spec docs/JOURNAL.md décision 763 ; docs/DAT.md (dépendances)
+#
+# Trois manifestes : npm à la racine (webapp, outillage, E2E), et les verrous pip des deux services Python. Les noms
+# `requirements.txt` et `requirements-dev.txt` sont ceux que Dependabot lit.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: pip
+    directory: /mcp
+    schedule:
+      interval: weekly
+  - package-ecosystem: pip
+    directory: /mail-sync
+    schedule:
+      interval: weekly

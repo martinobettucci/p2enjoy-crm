@@ -1536,3 +1536,9 @@ livraison contre une cellule simulée, avec leurs dégradations.
 | ClamAV | Analyse antivirale | Base de signatures à rafraîchir |
 | Serveur Ollama de LeLabs (`gemma4:e2b`) | Génération des suggestions de l'assistant IA (`CRM-097`) | Service externe opéré par LeLabs ; clé liée à une plage d'adresses ; borne de 120 s, aucune nouvelle tentative automatique, mode dégradé ; simulateur local pour les tests (`docs/SPEC-ia.md`) |
 | Caddy | TLS et service des fichiers statiques | Production uniquement |
+
+**Surveillance des dépendances (`CRM-121`, décision 763).** `.github/dependabot.yml` déclare trois manifestes à GitHub,
+chacun relu chaque semaine : npm à la racine (`package.json`, `package-lock.json`), et pip pour `mcp/` et `mail-sync/`
+(`requirements.txt`, `requirements-dev.txt`, toutes les lignes épinglées). Les verrous de `mcp/` s'appelaient
+`requirements*.lock`, un nom que Dependabot ne lit pas : seul npm était surveillé, et les CVE Python n'étaient vues que
+par un `pip-audit` lancé à la main. `scripts/verify-dependabot.sh` garde la configuration et les noms.

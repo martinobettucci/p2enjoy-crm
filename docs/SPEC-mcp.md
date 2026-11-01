@@ -42,7 +42,7 @@ connecteur restreint en plus ce que l'assistant peut faire en son nom. Il en dé
 ### 2.1 Le service `mcp`
 
 Le service est écrit en Python 3.13 avec FastMCP (`4.0.11`, SDK MCP `2.3.0`, versions épinglées dans
-`mcp/requirements.lock`, comme dans Evoliz), sous Uvicorn, avec `httpx`.
+`mcp/requirements.txt` — `requirements.lock` dans Evoliz et ici jusqu'à `CRM-121`, décision 763), sous Uvicorn, avec `httpx`.
 
 | Module | Rôle | Origine |
 |---|---|---|

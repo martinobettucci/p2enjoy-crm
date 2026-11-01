@@ -17786,8 +17786,13 @@ renommés en `requirements.txt` et `requirements-dev.txt`, avec toutes les réf�
 manifestes Python constatés dans le graphe de dépendances de GitHub après le push. Question du connecteur : sans objet
 (décision 763).
 
-- [@] **T1 — configuration et renommage**, avec les preuves ci-dessus.
-      *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 02:48 UTC — état avant : [ ]*
+- [~] **T1 — configuration et renommage**, avec les preuves ci-dessus. **Fait le 2026-11-01** : `.github/dependabot.yml`
+      (npm `/`, pip `/mcp` et `/mail-sync`, chaque semaine) ; `git mv` des deux verrous de `mcp/` ; `Dockerfile`,
+      `pyproject.toml`, `docs/SPEC-mcp.md` et les en-têtes suivent. **Preuves** : `pip freeze` des cibles `production`
+      (69 paquets) et `dev` (73) identique avant et après le renommage ; pytest de l'image `dev` 287 passés, 76 ignorés
+      (intégration, comme toujours) ; `scripts/verify-dependabot.sh` 7/7, rouge sur un export de `HEAD` avant la tranche
+      (3 anomalies). **Reste** : constater les manifestes Python dans le graphe de dépendances de GitHub après le push
+      (dépôt public, lisible par l'API sans jeton).
 - [ ] **T2 — livraison** : la prochaine reconstruction de l'image `mcp` de production prend le verrou renommé
       (contenu identique) ; aucune autre action en production.
 

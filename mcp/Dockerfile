@@ -1,5 +1,6 @@
 # @spec CRM-102 (docs/BACKLOG.md) — tranches T2 et T3 : l'image du connecteur MCP
 # @spec docs/SPEC-mcp.md §2 (un service de la pile), §11 (`/sante`) ; docs/DAT.md §3.7 ter ;
+# @spec CRM-121 (docs/BACKLOG.md) — les verrous portent les noms que Dependabot lit (décision 763)
 #       modèle : le Dockerfile du connecteur Evoliz (p2enjoy-evoliz, révision 80a3e27), sans l'étape d'interface
 #
 # Aucune variable de l'application n'est déclarée ici (ENV) : elle reçoit sa configuration de l'environnement
@@ -26,10 +27,10 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
 WORKDIR /app
-COPY requirements.lock ./
+COPY requirements.txt ./
 RUN --mount=type=secret,id=pip_ca,required=false \
     sh -eu -c 'if [ -s /run/secrets/pip_ca ]; then echo "pip_ca: actif"; export PIP_CERT=/run/secrets/pip_ca; else echo "pip_ca: inactif"; fi; \
-    pip install --root-user-action=ignore --no-deps -r requirements.lock'
+    pip install --root-user-action=ignore --no-deps -r requirements.txt'
 
 COPY pyproject.toml ./
 COPY crm_mcp/ ./crm_mcp/
@@ -40,10 +41,10 @@ RUN --mount=type=secret,id=pip_ca,required=false \
 # --------------------------------------------------------------------------
 FROM base AS dev
 
-COPY requirements-dev.lock ./
+COPY requirements-dev.txt ./
 RUN --mount=type=secret,id=pip_ca,required=false \
     sh -eu -c 'if [ -s /run/secrets/pip_ca ]; then export PIP_CERT=/run/secrets/pip_ca; fi; \
-    pip install --root-user-action=ignore -r requirements-dev.lock'
+    pip install --root-user-action=ignore -r requirements-dev.txt'
 COPY tests/ ./tests/
 CMD ["python", "-m", "pytest", "-q"]
 
