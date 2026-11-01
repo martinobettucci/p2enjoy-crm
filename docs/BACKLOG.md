@@ -17825,7 +17825,7 @@ manifestes Python constatés dans le graphe de dépendances de GitHub après le 
 - [P] **T2 — livraison** : la prochaine reconstruction de l'image `mcp` de production prend le verrou renommé
       (contenu identique) ; aucune autre action en production.
 
-### CRM-122 — Les captures versionnées se renouvellent par une campagne dédiée, observée et committée `[ ]`
+### CRM-122 — Les captures versionnées se renouvellent par une campagne dédiée, observée et committée `[~]`
 Arbitrage du responsable du 2026-10-31 (décision 787, révisée en séance). `capturer()` (`e2e/ui/captures.ts`) recopie
 chaque capture dans `docs/captures/<unité>/`, dossier versionné, **à chaque passage** : une campagne de régression
 réécrit les captures de toutes les unités sans que personne les observe ni les committe, et salit l'arbre que
@@ -17842,8 +17842,9 @@ déploiement) ; (3) tests unitaires de l'aide (sans demande, unité nommée, ren
 spécification écrite et committée avant le code. Question du connecteur : sans objet, outillage de test (confirmé par le responsable
 le 2026-11-01, décision 800).
 
-- [ ] **T1 — spécification** : la forme des deux demandes, le rapport de tri et son seuil, la place du renouvellement
+- [@] **T1 — spécification** : la forme des deux demandes, le rapport de tri et son seuil, la place du renouvellement
       dans la préparation d'une livraison.
+      *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 12:13 UTC — état avant : [ ]*
 - [ ] **T2 — l'aide, le tri, leurs tests, la documentation**, et une campagne ordinaire complète constatée propre.
 - [ ] **T3 — premier renouvellement**, avant la livraison du lot 0106 à 0140 (décision 786). La campagne finale de
       `CRM-117` (T5) s'est close le 2026-10-31 sans lui, T1 et T2 n'étant pas faites : elle a renouvelé les seules images
