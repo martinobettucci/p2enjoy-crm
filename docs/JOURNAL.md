@@ -37658,3 +37658,8 @@ suivent.
 maintenant, par `livrer.sh -- --migrate --instantane-verifie`. Elle ne touche aucune donnée : elle redéfinit vingt-huit
 fonctions, et le corps des réponses reste le même. Son retour arrière est de rejouer les définitions précédentes
 (`docs/SCHEMA.md`, « Migration `0143` »).
+
+**La 143 livrée (2026-11-01, décision 798)** : révision `c7dd1e57` ; 143 lignes au registre ; plus aucune levée `P0002` ;
+un refus réel de `record_attachment_text` rend 404 avec son corps inchangé ; `verifier.sh` est à 33/34. La vérification
+prévue au contrat (`mcp_compte`) était fausse, puisque sa garde de superadministrateur passe avant : corrigée.
+`CRM-120` passe `[P]`.

@@ -13,19 +13,29 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-120` — les refus « introuvable » rendent 404, et non 500
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-01 — migration 143 (`CRM-120`, décision 798) et verrous de `mcp/` renommés
+
+Cellule Spark `crm`, révision `c7dd1e57` : `scripts/spark/livrer.sh -- --migrate --instantane-verifie`. **Vérifié, en
+lecture seule** : registre à 143 lignes, plus aucune levée `P0002`, un refus « introuvable » réel en 404 au corps
+inchangé ; `verifier.sh` 33/34. Les verrous renommés de `CRM-121` sont dans l'archive livrée ; l'image `mcp` les prendra
+à sa prochaine reconstruction (contenu identique).
+
+#### `CRM-120` — les refus « introuvable » rendent 404, et non 500
 
 - **Migration `0143`** : vingt-huit fonctions lèvent leurs refus « introuvable » par `app.raise_http_error`. PostgREST
   les rend en **404**, et en 409 pour un envoi qui n'est plus reprogrammable. Le corps garde le code `P0002` et le
   message : la webapp classe comme avant. La supervision ne lit plus ces refus comme des pannes, et le connecteur MCP
   les traduit en refus nommés au lieu d'une erreur générique.
 
-### `CRM-121` — Dependabot surveille aussi les dépendances Python (outillage du dépôt)
+#### `CRM-121` — Dependabot surveille aussi les dépendances Python (outillage du dépôt)
 
 - `.github/dependabot.yml` déclare npm à la racine et pip pour `mcp/` et `mail-sync/`. Les verrous de `mcp/` sont
   renommés `requirements.txt` et `requirements-dev.txt`, au contenu identique : l'image `mcp` installe les mêmes paquets.
 
-## [Publié]
 
 ### Déployé en production, 2026-11-01 — migration 142 (INC-326, décision 796)
 

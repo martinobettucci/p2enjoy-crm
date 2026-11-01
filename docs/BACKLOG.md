@@ -17759,7 +17759,7 @@ nouvelle (écart assumé, décision 757) ; question du connecteur sans objet.
 - [x] **T4 — clôture** : synchronisation (aucun commit distant depuis T3), `CHANGELOG.md`. Rien à livrer en
       production : l'unité n'ajoute que des preuves.
 
-### CRM-120 — Les refus « introuvable » rendent HTTP 404, et non 500 `[~]`
+### CRM-120 — Les refus « introuvable » rendent HTTP 404, et non 500 `[P]`
 Arbitrage du responsable du 2026-10-27 (décision 762). La base lève `P0002` pour une trentaine de refus « introuvable »,
 que PostgREST rend en **500**, lu comme une panne en supervision et comme une erreur générique par le connecteur MCP
 (qui ne traduit un refus que sous 500). Ils passent à **404**, message inchangé.
@@ -17785,8 +17785,9 @@ campagnes. Question du connecteur : aucune fonctionnalité nouvelle (décision 7
       (`connecteur-administration`, `defaut-archivage-workflow`, `import-affaires`, `export-csv`, `webhooks`), 21/21 ;
       pytest du connecteur : un 404 et un 409 au corps réel deviennent des refus nommés, le même corps en 500 restait
       générique (36/36) ; `docs/SPEC-plateforme.md` §6.1, `docs/SPEC-workflow-engine.md`, `docs/SPEC-refus-404.md` §4.
-- [@] **T4 — livraison en production et constat.** Ordonnée par la décision 798.
-      *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 — état avant : [ ]*
+- [P] **T4 — livraison en production et constat.** Ordonnée par la décision 798. **Livrée le 2026-11-01** (révision
+      `c7dd1e57`) : registre à 143, aucune levée `P0002`, un refus réel en 404 au corps inchangé, `verifier.sh` 33/34.
+      Reste le constat du responsable : un refus « introuvable » traduit par un assistant connecté.
 
 ### CRM-121 — Dependabot surveille les dépendances Python `[P]`
 Arbitrage du responsable du 2026-10-27 (décision 763). GitHub n'alerte que sur npm : aucun `.github/dependabot.yml`, et
