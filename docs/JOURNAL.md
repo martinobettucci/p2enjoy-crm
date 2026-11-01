@@ -37690,3 +37690,29 @@ bien que deux unités au même nom de capture s'y écrasent.
 
 **Écarté** : Pillow, installé sur le poste mais non déclaré par le dépôt ; `pixelmatch` et `jpeg-js`, deux dépendances
 de plus pour ce que Chromium fait déjà.
+
+### INC-330 : deux alertes de secret scanning sur le manifeste du manuel, un faux positif Stripe (2026-11-01)
+
+**Problème** : le 2026-10-31, GitHub a signalé deux fois un secret de signature de webhook Stripe dans
+`docs/manuel/images/manifeste.json`, aux commits `ae9d20f6` et `f60aaf87`.
+
+**Observations** :
+- la valeur a la forme `whsec_` suivi de 64 chiffres hexadécimaux. C'est le secret que `create_webhook_endpoint` (`0139`)
+  rend à la création d'un webhook du CRM, pas une clé Stripe ; le CRM n'emploie pas Stripe ;
+- `illustrer` relève le `value` des champs visibles (§11.4), donc aussi celui du champ « Secret de signature » de
+  l'image `secret-de-signature` ;
+- il y a deux valeurs, une par campagne (`CRM-073` T3, puis `CRM-117` T5). Le manifeste courant porte la seconde,
+  seul libellé de forme secrète de ses 479 entrées ;
+- aucune des deux n'est plus dans le Vault de développement (empreintes SHA-256 comparées en base) ; le webhook,
+  pointé sur `compta.example`, n'existe plus ; la production ne les a jamais vues.
+
+**Décision (choix de l'agent)** : le filtre se place dans `fusionnerManifeste`, seul chemin d'écriture du manifeste, et
+non dans le collecteur de la page. Ainsi aucun scénario, présent ou futur, ne peut le contourner, et toute écriture
+purge les anciennes entrées. Il reconnaît trois formes : `whsec_`, un JWT et une suite d'au moins 32 chiffres
+hexadécimaux. Le contrôle 5 de la preuve du manuel relit le manifeste et ne nomme que l'image et la forme, jamais la
+valeur. **Écarté** : marquer le champ du secret dans la webapp pour que le collecteur l'ignore. Le motif reposerait
+sur chaque écran, et un oubli recommencerait la fuite. **L'image** reste telle quelle, car elle montre ce que décrit le
+chapitre, et le secret qu'elle porte est détruit avec la base de développement.
+
+**Conséquences** : rien à révoquer. La fermeture des deux alertes et le sort de l'historique public sont soumis au
+responsable (INC-330).

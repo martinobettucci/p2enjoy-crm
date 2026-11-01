@@ -513,6 +513,14 @@ sections).*
 - **Les libellés relevés** sont les textes que la page rend dans le rectangle — nœuds de texte visibles, `aria-label`,
   `placeholder` et `value` des champs —, normalisés (apostrophe droite, espaces réduits). Ils sont **lus dans la page**,
   jamais déclarés par le scénario : c'est ce qui rend la preuve « un élément cité, une image » opposable.
+- **Le manifeste ne retient aucun secret** (*choix de l'agent, 2026-11-01, INC-330*). Un libellé relevé qui a la forme
+  d'un secret n'est jamais inscrit : un secret de signature de webhook (`whsec_…`), un JWT, une suite d'au moins
+  32 chiffres hexadécimaux. Le filtre est dans `fusionnerManifeste`, le seul chemin d'écriture du manifeste. Il
+  s'applique à toutes les entrées, anciennes comme nouvelles, si bien que toute écriture purge aussi le reste du manifeste.
+  Un secret n'est jamais un libellé du catalogue : aucun élément cité n'y perd sa preuve. La preuve du §16 (contrôle 5)
+  relit le manifeste et refuse un tel libellé, sans jamais en écrire la valeur. L'**image** du secret de signature montre,
+  elle, un secret produit par la base de développement pour un webhook pointé sur un domaine réservé (`.example`),
+  détruit à la reconstruction de la base. Elle reste, parce que c'est ce que le chapitre décrit.
 - **Un élément cité** est un texte entre guillemets français, dans une section, qui est une valeur de
   `webapp/src/i18n/fr.ts` ; une valeur à paramètres (`{nom}`) se compare comme un motif. Il est **illustré** quand il
   figure, à la normalisation près, dans les libellés d'une image de **la même section** — ou de l'introduction de son

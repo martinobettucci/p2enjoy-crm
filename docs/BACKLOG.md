@@ -17595,7 +17595,11 @@ responsable** : traitée juste après `CRM-116`.*
       à la connexion.
 - [@] **Tranche INC-330 — le manifeste des images du manuel ne retient aucun secret** : `e2e/manuel/illustrer.ts`
       recopiait le contenu des champs, dont le secret de signature d'un webhook de développement (alertes 1 et 2 du
-      secret scanning de GitHub, commits `ae9d20f6` et `f60aaf87`).
+      secret scanning de GitHub, commits `ae9d20f6` et `f60aaf87`). Spécification : `docs/SPEC-manual.md` §11.4 (« Le
+      manifeste ne retient aucun secret »), §16 (contrôle 5) ; `docs/INCONSISTENCY_REPORT.md` INC-330. Livrables :
+      filtre dans `fusionnerManifeste` (`scripts/manuel/images.mjs`) et ses unitaires, contrôle 5 de
+      `scripts/verify-manual.sh` étendu au manifeste avec sa contre-épreuve, manifeste purgé, scénario
+      `e2e/manuel/34-webhooks` rejoué. Connecteur MCP : sans objet (outillage du manuel).
       *Prise en charge : session interactive d2434ada depuis 2026-11-01 12:20 UTC — état avant : [ ]*
 
 ### CRM-118 — Connecteur MCP : la famille `workflows` `[P]`

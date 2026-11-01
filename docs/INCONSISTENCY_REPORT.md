@@ -8350,3 +8350,33 @@ images dérivées. **Preuve** : `scripts/verify-spark.sh`, d'abord rouge (4 anom
 l'empreinte du développement ; aucune de ses 693 entrées de couche ne dépasse 64534 ; elle tient en une couche, avec la
 configuration de la source ; `minio` et `mc` répondent ; le serveur démarre en `0:0` et se dit prêt, et le bucket se crée
 deux fois ; la livraison simulée compare aussi cette image à celle de la cellule.
+
+### INC-330 — Le manifeste des images du manuel recopie le secret de signature d'un webhook de développement
+
+*Constaté le 2026-11-01, sur deux alertes du secret scanning de GitHub (dépôt public), envoyées le 2026-10-31. L'alerte 1
+porte sur le commit `ae9d20f6` (`CRM-073` T3), l'alerte 2 sur le commit `f60aaf87` (`CRM-117` T5).* GitHub classe la valeur
+comme un secret de signature de webhook Stripe. Ce n'en est pas un. C'est le secret que le **module webhooks du CRM**
+génère (`create_webhook_endpoint`, migration `0139` : `whsec_` suivi de 32 octets aléatoires en hexadécimal, la forme
+qu'emploie aussi Stripe). La base de développement l'a produit quand le scénario `e2e/manuel/34-webhooks` a créé le
+webhook « tst-crm073 Comptabilité », pointé sur `https://compta.example/webhooks/crm`, un domaine réservé.
+`e2e/manuel/illustrer.ts` relève le contenu des champs visibles, et le champ du secret en faisait partie : le manifeste
+`docs/manuel/images/manifeste.json` l'a retenu parmi les libellés de l'image `secret-de-signature`.
+
+**Mesuré** : les deux commits portent deux valeurs distinctes, une par campagne. Le manifeste courant ne porte que la
+seconde, et c'est le seul libellé de forme secrète parmi ses 479 entrées. Aucune des deux n'existe plus dans le Vault de
+la base de développement (comparaison par empreinte SHA-256, sans lire la valeur), et le webhook n'y existe plus.
+Aucune n'a été produite par la production, où chaque secret est tiré au hasard par la base de production elle-même.
+Aucun compte Stripe n'est en jeu : le CRM n'emploie pas Stripe. **Rien n'est donc à révoquer ni à faire tourner.**
+
+**Corrigé dans le dépôt** (choix de l'agent, `docs/SPEC-manual.md` §11.4) : `fusionnerManifeste` n'inscrit aucun libellé
+de forme secrète, le manifeste est purgé, et le contrôle 5 de `scripts/verify-manual.sh` relit le manifeste.
+
+**Reste à l'arbitrage du responsable** :
+1. **Les deux alertes GitHub.** Issue proposée : les fermer avec la raison « faux positif ». Ce n'est pas un secret
+   Stripe, et le secret de webhook du CRM qu'elles désignent est détruit. C'est un geste dans l'interface de GitHub, sur le
+   compte du responsable.
+2. **L'historique public** garde les deux valeurs (`ae9d20f6`, `f60aaf87`). Issue proposée : ne pas le réécrire. Ce sont
+   des secrets de développement détruits, et une réécriture de `main` casserait le travail de toutes les sessions qui y
+   poussent (`CLAUDE.md` §13 : seulement sur instruction explicite).
+
+Connecteur MCP : sans objet.
