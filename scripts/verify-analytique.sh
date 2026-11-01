@@ -10,6 +10,8 @@
 # @verifies docs/SPEC-test-harness.md §7.2 (un harnais dégrade réellement et constate la restauration)
 # @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
 #           (docs/SPEC-rattachements.md §3.2, §5)
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T1 ter.3, INC-304 : la garde d'empreinte (docs/SPEC-test-harness.md §3.8) ;
+#           l'entonnoir se dégrade depuis sa définition en base (§3.7)
 #
 # Le script ne démarre ni n'arrête la pile. Il exige la base locale de développement migrée et
 # seedée. Il rejoue les preuves des deux tranches, puis DÉGRADE RÉELLEMENT le produit — une
@@ -71,10 +73,7 @@ nettoyer() {
 	trap - EXIT
 	set +e
 	if [ "$restauration_due" = true ]; then
-		if ! psql_db -f - < "$MIGRATION" >/dev/null 2>&1; then
-			printf 'ERREUR : la restauration de secours de %s a échoué.\n' "$MIGRATION" >&2
-			statut=1
-		fi
+		degradations_restaurer
 	fi
 	if [ "$surcharge_seed_due" = true ]; then
 		if ! psql_db -c "update public.card_placements set probability_override = $SEED_PROBA_CARD where card_id = '$SEED_CARD';" >/dev/null 2>&1; then
@@ -88,10 +87,16 @@ nettoyer() {
 			statut=1
 		fi
 	fi
-	rm -rf -- "$TRAVAIL"
+	# `CRM-111` T1 ter.3 (INC-304, décision 701) : la structure de public et app est-elle celle d'ouverture ? Sinon,
+	# la base est reconstruite (docs/SPEC-test-harness.md §3.8).
+	empreinte_garantir || statut=1
+	rm -rf -- "$TRAVAIL" "${DEGRADATIONS_DOSSIER:-}"
 	exit "$statut"
 }
 trap nettoyer EXIT
+# shellcheck source=scripts/lib/empreinte.sh
+source scripts/lib/empreinte.sh
+empreinte_relever
 
 ok()   { controles=$((controles + 1)); printf '  \033[32mOK\033[0m    %s\n' "$1"; }
 fail() { controles=$((controles + 1)); anomalies=$((anomalies + 1)); printf '  \033[31mECHEC\033[0m %s\n' "$1"; }
@@ -113,30 +118,28 @@ suite_unitaire_verte() {
 	npx vitest run --config webapp/vitest.config.ts "$SUITE_TS" >"$TRAVAIL/unit.log" 2>&1
 }
 
-# Remplace un motif dans une copie de la migration, puis l'applique. Le motif est comparé AVANT et
-# APRÈS : une substitution qui ne substituerait rien laisserait la preuve verte et le harnais
-# conclurait à tort à la complaisance — défaut trouvé à `CRM-061` (décision 503), il ne se refait pas.
+# DÉGRADER SANS REJOUER LA 73 — `CRM-111` T1 ter.3, INC-304 (docs/SPEC-test-harness.md §3.7). Ce harnais dégradait une
+# copie de la 73 et restaurait en la rejouant ; or la 109 a réécrit `public.entonnoir_conversion` pour lire le
+# rattachement, et la 73 lit des colonnes que la 134 retire de `cards`. MESURÉ le 2026-11-01 : la copie dégradée ne
+# s'appliquait plus, et comme son code de retour n'était pas lu, la suite restait verte et le harnais accusait à tort sa
+# propre preuve d'être complaisante. La fonction se dégrade désormais depuis sa définition EN BASE, le fragment exigé
+# une fois exactement, l'application vérifiée, et se restaure par `degradations_restaurer`.
+# shellcheck source=scripts/lib/degradation.sh
+source scripts/lib/degradation.sh
+FONCTION_ENTONNOIR='public.entonnoir_conversion()'
+
 degrader_sql() {
 	local avant=$1 apres=$2 nom=$3
-	python3 - "$MIGRATION" "$TRAVAIL/degrade.sql" "$avant" "$apres" <<-'PY'
-		import io, sys
-		source, cible, avant, apres = sys.argv[1:5]
-		texte = io.open(source, encoding='utf-8').read()
-		if texte.count(avant) != 1:
-		    sys.exit(f"motif absent ou ambigu ({texte.count(avant)} occurrence(s))")
-		io.open(cible, 'w', encoding='utf-8').write(texte.replace(avant, apres))
-	PY
-	if ! cmp -s "$MIGRATION" "$TRAVAIL/degrade.sql"; then
-		restauration_due=true
-		psql_db -f - < "$TRAVAIL/degrade.sql" >/dev/null 2>&1
+	restauration_due=true
+	if degradation_fonction "$FONCTION_ENTONNOIR" "$avant" "$apres"; then
 		return 0
 	fi
-	fail "dégradation « $nom » IMPOSSIBLE : la substitution n'a rien changé"
+	fail "dégradation « $nom » NON CONCLUANTE : fragment absent ou ambigu, ou définition dégradée refusée"
 	return 1
 }
 
 restaurer_sql() {
-	psql_db -f - < "$MIGRATION" >/dev/null 2>&1
+	degradations_restaurer
 	restauration_due=false
 }
 
@@ -343,8 +346,8 @@ echo "5. Dégradations réelles de la fonction — la suite doit rougir sur chac
 # les conserve — `'…''''…'` les fait DISPARAÎTRE par concaténation de chaînes vides, et le motif
 # devient introuvable. Défaut mesuré à la première exécution de ce harnais, le 2026-08-30.
 eprouver_degradation_sql "security definer au lieu d'invoker" \
-	$'set search_path to \'\'\nas $$' \
-	$'security definer\nset search_path to \'\'\nas $$'
+	$' SET search_path TO \'\'\nAS $function$' \
+	$' SECURITY DEFINER\n SET search_path TO \'\'\nAS $function$'
 
 # D-B — le `coalesce` de la probabilité réordonné : le nœud l'emporterait sur l'affaire, c'est-à-dire
 # l'inverse de « le plus spécifique gagne » (§3).
@@ -353,23 +356,23 @@ eprouver_degradation_sql "security definer au lieu d'invoker" \
 # suite resterait verte à juste titre. Le harnais aurait alors crié « COMPLAISANT » contre une
 # preuve qui ne l'est pas. Défaut mesuré à la première exécution de ce harnais, le 2026-08-30.
 eprouver_degradation_sql "coalesce de la probabilité réordonné" \
-	'	           c.amount * coalesce(c.probability_override,
+	'	           pl.amount * coalesce(pl.probability_override,
 	                               s.probability_override,
 	                               n.default_probability) / 100.0' \
-	'	           c.amount * coalesce(n.default_probability,
+	'	           pl.amount * coalesce(n.default_probability,
 	                               s.probability_override,
-	                               c.probability_override) / 100.0'
+	                               pl.probability_override) / 100.0'
 
 # D-C — l'exclusion des affaires archivées retirée : le total passerait de 39 à 40 (§4).
 eprouver_degradation_sql "exclusion des affaires archivées retirée" \
-	'	 where c.archived_at is null
+	'	 where pl.archived_at is null
 	   and c.deleted_at is null' \
 	'	 where c.deleted_at is null'
 
 # D-D — le compteur des affaires sans montant éteint. L'écran ne pourrait plus écrire la mention que
 # le §7.3 lui impose, et un prévisionnel bas se lirait comme un portefeuille pauvre.
 eprouver_degradation_sql "compteur des affaires sans montant éteint" \
-	'	       count(*) filter (where c.amount is null)::integer,' \
+	'	       count(*) filter (where pl.amount is null)::integer,' \
 	'	       0::integer,'
 
 # =================================================================================================

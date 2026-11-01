@@ -7850,7 +7850,11 @@ jette la sortie de ses onze sous-harnais (`>/dev/null 2>&1`) ; son « ECHEC veri
 cause, qu'il a fallu reproduire. **Comportement laissé inchangé.** **Issue proposée** (`docs/CloudWorker.md` §4.1 bis) :
 chaque harnais qui rejoue un fichier de migration compare l'empreinte `pg_dump -s` avant et après lui et reconstruit si
 elle diffère (`docs/SPEC-test-harness.md` §3.6) ; `verify-droits-fins.sh` garde la sortie de chaque sous-harnais dans un
-fichier et en cite la fin sur un échec, comme `reconstruire_base_dev` depuis INC-298. **Statut : ouverte.**
+fichier et en cite la fin sur un échec, comme `reconstruire_base_dev` depuis INC-298. **Statut : close le 2026-11-01**
+(`CRM-111` T1 ter) : la garde d'empreinte (`docs/SPEC-test-harness.md` §3.8) est posée dans les dix harnais et dans
+`verify-droits-fins.sh` ; trois résidus mesurés et corrigés (`notifications`, `sequences-relance`, `mentions`) ; les
+rejeux de migrations anciennes sont remplacés par des dégradations depuis la base (§3.7). Journal : « `CRM-111` T1 ter
+— la mesure et les corrections ».
 **Arbitrée le 2026-10-25 (décision 701)** : l'issue proposée est retenue ; portée par `CRM-111` T1 ter.
 **Un treizième harnais, mesuré le même jour** (session de `CRM-115` T2) : `scripts/verify-plateforme.sh` §5 rejoue
 `0089_plateforme.sql` seule pour la dégrader. Ce rejeu **échoue** sur la base actuelle — « cannot change return type
@@ -8524,3 +8528,24 @@ cible 5/6 est livrée et sa garde retournée (`CRM-072` T1, migration `0115`).
 cible 3/6 en la reportant sur le secret des webhooks, en prouvant qu'aucun client ne lit `vault.secrets` et que
 `secret_id` ne s'écrit que par la fonction ; l'assertion d'absence d'`api_tokens` serait gardée comme témoin d'une unité
 future ; (b) la garder telle quelle, en corrigeant seulement la référence à `CRM-073`. Connecteur MCP : sans objet.
+
+### INC-339 — Les sous-harnais de `verify-droits-fins.sh` rendent des rouges antérieurs, que la sortie jetée cachait
+
+*Relevé le 2026-11-01 par la session de `CRM-111` T1 ter.4, à la première course où `verify-droits-fins.sh` garde la
+sortie de ses onze sous-harnais.* **Constats**, tous antérieurs à T1 ter et étrangers à lui :
+1. **Comptes d'avant la dixième tranche de `CRM-077`** (`docs/SPEC-corbeille.md` §8.4 : une ligne en corbeille n'est
+   lisible que par l'administratrice et l'auteur du retrait). `legacy-2023` est en corbeille dans le seed : la lectrice
+   lit 4 tracks, le business developer 4/8/43 au lieu de 5/9/44. Rougissent : `verify-droits-fins.sh` §4 et §7,
+   `verify-authz.sh`, `verify-tracks.sh` ligne d.
+2. **Comptes figés avant des ajouts du seed** : `verify-channels.sh` (9 channels, 8 attendus), `verify-catalogue.sh` et
+   `verify-workflows.sh` (4 déclencheurs du catalogue, 3 attendus ; 2 workflows globaux, 1 attendu — le workflow
+   « checklists » de `CRM-068`).
+3. **`verify-copie-workflow.sh`** : « après restauration, le business developer obtient encore 401 » — lecture non
+   vérifiée : un jeton de 300 s expiré au terme d'une course longue.
+4. **`verify-migrations.sh`** : la `0106` ne se rejoue pas sur l'état qu'elle produit (« function queue_outbound_email
+   already exists with same argument types ») ; la `0125` et la `0132` convergent un vocabulaire sans la seconde garde
+   (INC-239).
+5. `verify-stack.sh` rend une anomalie, dont la cause est dans son journal.
+**Comportement laissé inchangé**, aucune preuve assouplie. **Issue proposée** : réviser chaque compte sur la règle qui
+l'a changé (décision 51), rendre la `0106` rejouable, poser la seconde garde dans la `0125` et la `0132`, et faire
+renouveler le jeton de `verify-copie-workflow.sh` avant sa restauration. **Statut : ouverte.**

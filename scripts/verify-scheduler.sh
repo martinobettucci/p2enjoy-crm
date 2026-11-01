@@ -2,6 +2,7 @@
 # @verifies CRM-017 (docs/BACKLOG.md) — ordonnancement durable par PostgreSQL
 # @verifies docs/SPEC-scheduler.md §3 (job), §4 (sécurité), §5 (convergence), §6 (preuves)
 # @verifies docs/DAT.md §3.3, §12 ; docs/PROD_MIGRATIONS.md §3
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T1 ter.3, INC-304 : la garde d'empreinte (docs/SPEC-test-harness.md §3.8)
 #
 # Le script ne démarre ni n'arrête la pile. Il exige la base locale de développement migrée,
 # exécute la preuve pgTAP, dégrade réellement le job, rejoue la migration puis attend le passage
@@ -34,10 +35,16 @@ cleanup() {
 			status=1
 		fi
 	fi
+	# `CRM-111` T1 ter.3 (INC-304, décision 701) : la structure de public et app est-elle celle d'ouverture ? Sinon,
+	# la base est reconstruite (docs/SPEC-test-harness.md §3.8).
+	empreinte_garantir || status=1
 	rm -rf -- "$WORK"
 	exit "$status"
 }
 trap cleanup EXIT
+# shellcheck source=scripts/lib/empreinte.sh
+source scripts/lib/empreinte.sh
+empreinte_relever
 
 ok()   { checks=$((checks + 1)); printf '  \033[32mOK\033[0m    %s\n' "$1"; }
 fail() { checks=$((checks + 1)); failures=$((failures + 1)); printf '  \033[31mECHEC\033[0m %s\n' "$1"; }

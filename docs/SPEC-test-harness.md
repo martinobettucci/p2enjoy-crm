@@ -319,7 +319,30 @@ dégrader ou pour restaurer. Appliqué par T2.3.3 à `verify-move-card.sh`, `ver
 `verify-transition-required-fields.sh`, `verify-colonnes-protegees.sh` et `verify-copie-workflow.sh` ; par T2.3.4 à
 `verify-move-card-to-channel.sh` et `verify-timeline.sh`, qui restauraient en rejouant les migrations 16, 17 et 20 — la 17
 rejouée supprimait `move_card_to_channel` par rattachement, de mêmes types d'arguments, pour remettre la forme par
-affaire ; par T2.3.5 à `verify-armement-sequences.sh`, qui dégradait en rejouant la `0060` entière ; par T2.3.7 à `verify-change-channel-workflow.sh`, dont la section 2 rejoue la `0020` — son sujet — privée de `change_channel_workflow`. `migration_sans_fonction` saute désormais les chaînes SQL : un `comment on function … is '…; …'` portait un point-virgule dans son texte et survivait au retrait. Un objet **isolé** — un index, un déclencheur — peut aussi se restaurer depuis sa définition lue en base (`pg_get_indexdef`, `pg_get_triggerdef`), à l'octet près et constaté, quand rien d'autre n'a été touché. Les autres harnais d'INC-304 sont l'objet de `CRM-111` T1 ter.
+affaire ; par T2.3.5 à `verify-armement-sequences.sh`, qui dégradait en rejouant la `0060` entière ; par T2.3.7 à `verify-change-channel-workflow.sh`, dont la section 2 rejoue la `0020` — son sujet — privée de `change_channel_workflow`. `migration_sans_fonction` saute désormais les chaînes SQL : un `comment on function … is '…; …'` portait un point-virgule dans son texte et survivait au retrait. Un objet **isolé** — un index, un déclencheur — peut aussi se restaurer depuis sa définition lue en base (`pg_get_indexdef`, `pg_get_triggerdef`), à l'octet près et constaté, quand rien d'autre n'a été touché. Par T1 ter (INC-304, close) à `verify-analytique.sh`, `verify-mentions.sh`, `verify-notifications.sh`, `verify-sequences-relance.sh` et `verify-signature-identite.sh` — une contrainte, une politique, un privilège ou la publication s'y dégradent par l'instruction seule et se restaurent depuis leur définition relue en base —, à `verify-rendu-modeles-emails.sh` (une source composée sur la dernière autorité du rendu) et à `verify-droits-fins.sh`, dont la chaîne de rejeux est retirée ; tous portent la garde du §3.8.
+
+### 3.8 La garde d'empreinte (`CRM-111` T1 ter, INC-304, décision 701)
+
+*Écrite le 2026-11-01, avant le code.* Le §3.7 dit comment un harnais **ne doit plus** ramener une fonction en arrière ;
+rien ne mesurait encore s'il le faisait quand même. **La garde.** Tout harnais qui injecte un fichier de migration dans
+`psql` pose `scripts/lib/empreinte.sh` : `empreinte_relever` à l'ouverture, avant son premier rejeu ;
+`empreinte_garantir` à la sortie, dans son `trap`, après sa propre restauration. L'empreinte est le texte de
+`pg_dump --schema-only` des schémas `public` et `app`, **sans les lignes `\restrict` et `\unrestrict`** — mesuré : elles
+portent une clé tirée au hasard à chaque appel depuis PostgreSQL 17.6, et deux relevés bruts de la même base diffèrent.
+Si l'empreinte de sortie diffère de celle d'ouverture, la garde **le dit** sur la sortie d'erreur, garde les deux relevés
+et leur différentiel pour le diagnostic, et **reconstruit** la base (§3.6) ; sinon elle se tait et retire ses relevés.
+Une écriture de données ne change pas l'empreinte ; une fonction réappliquée à l'identique non plus.
+
+**Ce que la garde ne remplace pas.** Elle répare après coup ; elle ne rend pas juste un harnais qui dégrade la mauvaise
+définition. Un harnais dont l'empreinte diffère à la sortie est **corrigé** selon le §3.7 — dégrader depuis la base, ou
+depuis une source composée sur la dernière autorité de la fonction —, la garde restant posée.
+
+**Prouvé par `scripts/verify-empreinte.sh`** : deux `pg_dump` bruts diffèrent et deux relevés filtrés sont égaux ; une
+mise à jour de ligne ne fait rien reconstruire ; une fonction redéfinie change l'empreinte, et sa définition d'origine
+réappliquée la rétablit ; une table sentinelle posée entre les deux relevés fait reconstruire, la garde le dit et nomme la
+sentinelle dans son différentiel, et l'empreinte de sortie redevient celle d'ouverture.
+
+**Connecteur MCP : sans objet** (décision 701) — outillage de développement.
 
 ## 4. Projets Playwright
 

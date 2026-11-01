@@ -17015,27 +17015,32 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       reconstruite, mutation tuée ; `verify-droits-fins.sh --rapide` rejoué jusqu'au bout **39/39, aucune anomalie**
       (06:42–08:08 UTC). La série complète des `verify-*.sh` n'est la Definition of Done d'aucune unité
       (`docs/CloudWorker.md` §2.1 *ter*, décision 553) ; les autres harnais qui rejouent une migration sont INC-304.
-- [@] **T1 ter — INC-304, arbitrée le 2026-10-25 (décision 701)** : chaque harnais qui rejoue un fichier de migration
+- [x] **T1 ter — INC-304, arbitrée le 2026-10-25 (décision 701)** : chaque harnais qui rejoue un fichier de migration
       compare l'empreinte `pg_dump -s` de `public` et `app` avant et après lui, et reconstruit si elle diffère
       (`docs/SPEC-test-harness.md` §3.6) ; `verify-droits-fins.sh` garde la sortie de chaque sous-harnais et en cite la
       fin sur un échec. Les douze harnais d'INC-304 d'abord mesurés, puis corrigés là où ils laissent un résidu.
-      *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-11-01 11:20 UTC — état avant : [ ]*
       **Découpage, arrêté le 2026-11-01 (journal, entrée « `CRM-111` T1 ter — le découpage »)** :
-      - [ ] **T1 ter.1 — la garde d'empreinte** : `scripts/lib/empreinte.sh` — `empreinte_relever` lit l'empreinte
+      - [x] **T1 ter.1 — la garde d'empreinte** : `scripts/lib/empreinte.sh` — `empreinte_relever` lit l'empreinte
         `pg_dump -s` de `public` et `app` à l'ouverture, `empreinte_garantir` la relit à la sortie et reconstruit
         (`reconstruire_base_dev`) si elle diffère, en le disant. Preuve de non-complaisance : une fonction redéfinie entre
         les deux relevés est détectée et effacée par la reconstruction ; deux relevés sans écriture sont égaux.
-      - [ ] **T1 ter.2 — mesurer** les dix harnais restants d'INC-304 (`analytique`, `mentions`, `modeles-emails`,
+      - [x] **T1 ter.2 — mesurer** les dix harnais restants d'INC-304 (`analytique`, `mentions`, `modeles-emails`,
         `modeles-emails-ecran`, `notifications`, `rendu-modeles-emails`, `scheduler`, `sequences-ecran`,
         `sequences-relance`, `signature-identite`) sur une base reconstruite : empreinte avant et après chacun, verdict
         au journal. `armement-sequences` et `valeurs-champs` sont déjà conformes au §3.7 (T2.3.5, T2.3.3).
-      - [ ] **T1 ter.3 — corriger** : chacun pose la garde ; celui qui laisse un résidu, ou dont la migration ne se
+      - [x] **T1 ter.3 — corriger** : chacun pose la garde ; celui qui laisse un résidu, ou dont la migration ne se
         rejoue plus seule, dégrade et restaure depuis la base (`docs/SPEC-test-harness.md` §3.7) ou depuis une source
         composée sur la dernière autorité, comme `rendu-modeles-emails` (T2.4.5).
-      - [ ] **T1 ter.4 — `verify-droits-fins.sh`** garde la sortie de chaque sous-harnais dans un fichier et en cite la
+      - [x] **T1 ter.4 — `verify-droits-fins.sh`** garde la sortie de chaque sous-harnais dans un fichier et en cite la
         fin sur un échec.
       Documents : `docs/SPEC-test-harness.md` §3.6 et §3.7, INC-304 close, journal. Connecteur MCP : sans objet
       (décision 701, outillage de développement).
+      *Fait le 2026-11-01 (journal, « `CRM-111` T1 ter — la mesure et les corrections »)* : `verify-empreinte.sh` 12/12 ;
+      la garde posée dans les dix harnais et dans `verify-droits-fins.sh` ; trois résidus trouvés et corrigés
+      (`notifications` effaçait le consentement de la 67, `sequences-relance` ramenait deux clés d'avant la 85, `mentions`
+      un ordre de droits), et trois harnais qui ne dégradaient plus rien (`analytique`, `signature-identite`, `mentions`,
+      dont les rejeux échouaient depuis la 134) ; tous rendent l'empreinte d'ouverture. Rouges étrangers consignés :
+      INC-339.
 - [ ] **T2 — bascule, découpée en quatre étapes vertes (décision 705, option B)** ; chaque étape poussée laisse `main` vert, et
       aucune fonction n'expose jamais deux contrats à la fois (décision 661, tenue fonction par fonction) :
       - [x] **T2.1 — la table et la reprise** : `card_placements` (§3.1), une ligne par affaire reprise de `cards`,

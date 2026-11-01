@@ -10,6 +10,7 @@
 # @verifies CRM-111 T2.4.5 (docs/BACKLOG.md), INC-304 — les dégradations partent de la dernière autorité du rendu, la 0109
 #           (docs/SPEC-test-harness.md §3.7 ; docs/SPEC-rattachements.md §3.2)
 #           (docs/SPEC-rattachements.md §3.2, §5)
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T1 ter.3, INC-304 : la garde d'empreinte (docs/SPEC-test-harness.md §3.8)
 #
 # Le script ne démarre ni n'arrête la pile. Il exige la base locale de développement migrée et
 # seedée. Il rejoue les preuves de la sous-tranche, puis DÉGRADE RÉELLEMENT la migration — une
@@ -96,10 +97,16 @@ nettoyer() {
 			statut=1
 		fi
 	fi
+	# `CRM-111` T1 ter.3 (INC-304, décision 701) : la structure de public et app est-elle celle d'ouverture ? Sinon,
+	# la base est reconstruite (docs/SPEC-test-harness.md §3.8).
+	empreinte_garantir || statut=1
 	rm -rf -- "$TRAVAIL"
 	exit "$statut"
 }
 trap nettoyer EXIT
+# shellcheck source=scripts/lib/empreinte.sh
+source scripts/lib/empreinte.sh
+empreinte_relever
 
 ok()   { controles=$((controles + 1)); printf '  \033[32mOK\033[0m    %s\n' "$1"; }
 fail() { controles=$((controles + 1)); anomalies=$((anomalies + 1)); printf '  \033[31mECHEC\033[0m %s\n' "$1"; }

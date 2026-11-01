@@ -8,6 +8,8 @@
 # @verifies docs/SPEC-modeles-emails.md §2.2 (le `on delete restrict` annoncé quatre tranches avant)
 # @verifies docs/SCHEMA.md §7 ; docs/PROD_MIGRATIONS.md migration 59
 # @verifies docs/SPEC-test-harness.md §7.2 (un harnais dégrade réellement et constate la restauration)
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T1 ter.3, INC-304 : la garde d'empreinte (docs/SPEC-test-harness.md §3.8) ;
+#           dégradations de structure depuis leurs définitions en base, plus aucun rejeu de la 59 (§3.7)
 #
 # Le script ne démarre ni n'arrête la pile. Il exige la base locale de développement migrée et
 # seedée. Il rejoue les preuves de la sous-tranche, puis DÉGRADE RÉELLEMENT la migration — une
@@ -65,15 +67,18 @@ nettoyer() {
 	trap - EXIT
 	set +e
 	if [ "$restauration_due" = true ]; then
-		if ! psql_db -f - < "$MIGRATION" >/dev/null 2>&1; then
-			printf 'ERREUR : la restauration de secours de %s a échoué.\n' "$MIGRATION" >&2
-			statut=1
-		fi
+		restaurer || statut=1
 	fi
+	# `CRM-111` T1 ter.3 (INC-304, décision 701) : la structure de public et app est-elle celle d'ouverture ? Sinon,
+	# la base est reconstruite (docs/SPEC-test-harness.md §3.8).
+	empreinte_garantir || statut=1
 	rm -rf -- "$TRAVAIL"
 	exit "$statut"
 }
 trap nettoyer EXIT
+# shellcheck source=scripts/lib/empreinte.sh
+source scripts/lib/empreinte.sh
+empreinte_relever
 
 ok()   { controles=$((controles + 1)); printf '  \033[32mOK\033[0m    %s\n' "$1"; }
 fail() { controles=$((controles + 1)); anomalies=$((anomalies + 1)); printf '  \033[31mECHEC\033[0m %s\n' "$1"; }
@@ -87,53 +92,71 @@ suite_sql_verte() {
 		&& grep -q 'aucune anomalie' "$TRAVAIL/tap.log"
 }
 
-# Substitue dans une COPIE de la migration, puis l'applique. L'échec du substituteur ET celui de
-# l'application sont TESTÉS : ce sont les deux défauts que les harnais jumeaux ont trouvés dans leur
-# propre code (§2.11 et §8.9 bis) — une substitution qui ne substitue rien, ou un SQL dégradé qui ne
-# compile pas, laissent la base INCHANGÉE et le harnais conclut « COMPLAISANT » sans rien avoir
-# dégradé. Le remède est repris ici tel quel plutôt que redécouvert.
-degrader() {
-	local avant=$1 apres=$2 nom=$3
-	rm -f -- "$TRAVAIL/degrade.sql"
-	if ! python3 - "$MIGRATION" "$TRAVAIL/degrade.sql" "$avant" "$apres" <<-'PY'
-		import io, sys
-		source, cible, avant, apres = sys.argv[1:5]
-		texte = io.open(source, encoding='utf-8').read()
-		if texte.count(avant) != 1:
-		    sys.exit(f"motif absent ou ambigu ({texte.count(avant)} occurrence(s))")
-		io.open(cible, 'w', encoding='utf-8').write(texte.replace(avant, apres))
-	PY
-	then
-		fail "dégradation « $nom » IMPOSSIBLE : motif absent ou ambigu dans $MIGRATION"
-		return 1
+# DÉGRADER SANS REJOUER LA 59 — `CRM-111` T1 ter.3, INC-304 (docs/SPEC-test-harness.md §3.7). Ce harnais dégradait une copie
+# de la 59 et restaurait en la rejouant. Or la 85 a reposé les deux clés vers le modèle (`on delete no action deferrable`)
+# pour la suppression d'un espace : MESURÉ le 2026-11-01 par la garde d'empreinte, chaque passage les ramenait à leur
+# forme d'avant la 85 (`on delete restrict`). Toutes les règles éprouvées ici sont de STRUCTURE : une contrainte se
+# dégrade par `drop` puis `add`, et se restaure depuis sa définition relue en base avant sa première dégradation ; la
+# politique, par `alter policy`, restaurée de même ; le privilège, par l'instruction et son inverse.
+CONTRAINTES_ORIGINES=()
+INSERTION_ORIGINE=''
+
+# $1 nom, $2 table, $3 contrainte, $4 définition dégradée.
+eprouver_contrainte() {
+	local nom=$1 table=$2 contrainte=$3 degradee=$4 origine
+	origine=$(psql_db -c "select pg_get_constraintdef(oid) from pg_constraint
+		where conrelid = 'public.$table'::regclass and conname = '$contrainte';")
+	if [ -z "$origine" ]; then
+		fail "dégradation « $nom » NON CONCLUANTE : la contrainte $contrainte est introuvable"
+		return 0
 	fi
-	if cmp -s "$MIGRATION" "$TRAVAIL/degrade.sql"; then
-		fail "dégradation « $nom » IMPOSSIBLE : la substitution n'a rien changé"
-		return 1
-	fi
+	CONTRAINTES_ORIGINES+=("$table|$contrainte|$origine")
 	restauration_due=true
-	if ! psql_db -f - < "$TRAVAIL/degrade.sql" >"$TRAVAIL/degrade.log" 2>&1; then
-		fail "dégradation « $nom » IMPOSSIBLE : le SQL dégradé ne s'applique pas — $(tail -n 1 "$TRAVAIL/degrade.log")"
+	if ! psql_db -v ON_ERROR_STOP=1 -c "alter table public.$table drop constraint $contrainte, add constraint $contrainte $degradee;" \
+		>"$TRAVAIL/degrade.log" 2>&1; then
+		fail "dégradation « $nom » NON APPLIQUÉE : psql l'a refusée — $(tail -n 1 "$TRAVAIL/degrade.log")"
 		restaurer
-		return 1
+		return 0
 	fi
-	return 0
+	juger "$nom"
+}
+
+# $1 nom, $2 SQL de dégradation.
+eprouver_sql() {
+	local nom=$1 sql=$2
+	restauration_due=true
+	if ! psql_db -v ON_ERROR_STOP=1 -c "$sql" >"$TRAVAIL/degrade.log" 2>&1; then
+		fail "dégradation « $nom » NON APPLIQUÉE : psql l'a refusée — $(tail -n 1 "$TRAVAIL/degrade.log")"
+		restaurer
+		return 0
+	fi
+	juger "$nom"
+}
+
+juger() {
+	if suite_sql_verte; then
+		fail "COMPLAISANT — « $1 » retirée, la suite pgTAP reste VERTE"
+	else
+		ok "dégradation « $1 » : la suite pgTAP rougit, comme elle doit"
+	fi
+	restaurer
 }
 
 restaurer() {
-	psql_db -f - < "$MIGRATION" >/dev/null 2>&1
-	restauration_due=false
-}
-
-eprouver_degradation() {
-	local nom=$1 avant=$2 apres=$3
-	degrader "$avant" "$apres" "$nom" || return 0
-	if suite_sql_verte; then
-		fail "COMPLAISANT — « $nom » retirée, la suite pgTAP reste VERTE"
-	else
-		ok "dégradation « $nom » : la suite pgTAP rougit, comme elle doit"
+	local statut=0 ligne table contrainte origine
+	for ligne in "${CONTRAINTES_ORIGINES[@]}"; do
+		IFS='|' read -r table contrainte origine <<<"$ligne"
+		psql_db -v ON_ERROR_STOP=1 -c "alter table public.$table drop constraint if exists $contrainte,
+			add constraint $contrainte $origine;" >/dev/null 2>&1 || statut=1
+	done
+	CONTRAINTES_ORIGINES=()
+	if [ -n "$INSERTION_ORIGINE" ]; then
+		psql_db -v ON_ERROR_STOP=1 -c "alter policy mail_sequence_steps_insertion_membre_ecrivant on public.mail_sequence_steps
+			with check ($INSERTION_ORIGINE);" >/dev/null 2>&1 || statut=1
 	fi
-	restaurer
+	psql_db -c "revoke insert, update, delete on public.mail_sequences from anon;" >/dev/null 2>&1 || statut=1
+	restauration_due=false
+	return "$statut"
 }
 
 echo
@@ -185,19 +208,16 @@ echo "2. LE REJEU DE LA MIGRATION — le contrôle propre à cette sous-tranche"
 # dépendent. Un `cascade` les emporterait silencieusement. La forme conditionnelle est la seule qui
 # converge, et seul un rejeu RÉPÉTÉ la vérifie.
 
-if psql_db -f - < "$MIGRATION" >"$TRAVAIL/rejeu1.log" 2>&1 \
-	&& psql_db -f - < "$MIGRATION" >"$TRAVAIL/rejeu2.log" 2>&1 \
-	&& psql_db -f - < "$MIGRATION" >"$TRAVAIL/rejeu3.log" 2>&1; then
-	ok "la migration 59 se rejoue TROIS fois de suite : ses contraintes référencées convergent"
-else
-	fail "la migration 59 n'est pas idempotente : $(tail -n 1 "$TRAVAIL/rejeu3.log")"
-fi
+# RÉVISÉ PAR `CRM-111` T1 ter.3 (INC-304, décision 51). Ce contrôle rejouait la 59 trois fois sur la base à jour ; il
+# ramenait ainsi les deux clés vers le modèle à leur forme d'avant la 85. Que chaque fichier se rejoue sur l'état qu'il
+# produit est prouvé par `scripts/verify-migrations.sh`, sur une base neuve (docs/SPEC-test-harness.md §3.6). Le sujet
+# propre de la sous-tranche — les deux clés composites, qu'un `cascade` aurait emportées — est constaté en base.
 
-# LES DEUX CLÉS COMPOSITES ONT SURVÉCU AUX REJEUX. Si un `drop … cascade` s'était glissé quelque
-# part, elles auraient disparu sans bruit et le cloisonnement serait devenu faux.
+# LES DEUX CLÉS COMPOSITES SONT LÀ. Si un `drop … cascade` s'était glissé quelque part, elles auraient disparu sans
+# bruit et le cloisonnement serait devenu faux.
 for contrainte in mail_sequence_steps_sequence_workspace_fkey mail_sequence_steps_template_workspace_fkey; do
 	if [ "$(psql_db -c "select count(*) from pg_constraint where conrelid='public.mail_sequence_steps'::regclass and conname='$contrainte';")" = 1 ]; then
-		ok "après les trois rejeux, $contrainte est toujours là"
+		ok "$contrainte est là : le cloisonnement du palier est tenu"
 	else
 		fail "$contrainte a DISPARU : un cascade l'a emportée, le cloisonnement n'est plus tenu"
 	fi
@@ -396,47 +416,48 @@ echo "8. DÉGRADATIONS RÉELLES — la suite pgTAP doit rougir pour chacune"
 # Une dégradation par RÈGLE que la migration porte. Un harnais dont les dégradations ne mordent pas
 # certifie une suite qui ne prouve rien (`docs/SPEC-test-harness.md` §7.2).
 
-eprouver_degradation "la borne du délai" \
-	'check (delai_jours between 1 and 365)' \
+eprouver_contrainte "la borne du délai" mail_sequence_steps mail_sequence_steps_delai_borne \
 	'check (delai_jours between 0 and 100000)'
 
-eprouver_degradation "la borne de la position" \
-	'check (position between 1 and 50)' \
+eprouver_contrainte "la borne de la position" mail_sequence_steps mail_sequence_steps_position_borne \
 	'check (position between 0 and 100000)'
 
-# CETTE DÉGRADATION A TROUVÉ UN DÉFAUT DE LA MIGRATION, ET NON L'INVERSE. Écrite d'abord contre la
-# clé étrangère déclarée EN LIGNE dans le `create table if not exists`, elle laissait la suite pgTAP
-# VERTE : un `create table if not exists` est un no-op sur une table existante, si bien que la règle
-# en ligne n'est jamais reposée — donc jamais réparée non plus, sur aucune base déjà migrée. Les
-# trois clés du palier sont désormais posées par `alter table`, et la dégradation MORD.
-eprouver_degradation "le on delete restrict du modèle" \
-	'	foreign key (template_id) references public.mail_templates (id) on delete restrict;' \
-	'	foreign key (template_id) references public.mail_templates (id) on delete cascade;'
+# CETTE DÉGRADATION A TROUVÉ UN DÉFAUT DE LA MIGRATION, ET NON L'INVERSE (la clé déclarée en ligne dans un `create table
+# if not exists` n'était jamais reposée). `CRM-111` T1 ter.3 : la 85 a depuis remplacé `on delete restrict` par `no
+# action deferrable` ; la règle éprouvée reste la même — un modèle employé par un palier ne s'efface pas en cascade.
+# LA RÈGLE EST TENUE PAR DEUX CLÉS, la simple et la composite vers le modèle : MESURÉ le 2026-11-01, n'en desserrer qu'une
+# laisse l'autre refuser la suppression (`23503`), et la suite pgTAP reste verte à juste titre. Les deux passent ensemble
+# en cascade, après que leurs définitions d'origine ont été relues.
+for contrainte in mail_sequence_steps_template_id_fkey mail_sequence_steps_template_workspace_fkey; do
+	CONTRAINTES_ORIGINES+=("mail_sequence_steps|$contrainte|$(psql_db -c "select pg_get_constraintdef(oid) from pg_constraint
+		where conrelid = 'public.mail_sequence_steps'::regclass and conname = '$contrainte';")")
+done
+eprouver_sql "le refus d'effacer en cascade le modèle d'un palier" \
+	'alter table public.mail_sequence_steps
+		drop constraint mail_sequence_steps_template_id_fkey,
+		add constraint mail_sequence_steps_template_id_fkey
+			foreign key (template_id) references public.mail_templates (id) on delete cascade,
+		drop constraint mail_sequence_steps_template_workspace_fkey,
+		add constraint mail_sequence_steps_template_workspace_fkey
+			foreign key (template_id, workspace_id) references public.mail_templates (id, workspace_id) on delete cascade;'
 
-eprouver_degradation "le caractère deferrable de la position" \
-	'	unique (sequence_id, position) deferrable initially immediate;' \
-	'	unique (sequence_id, position);'
+eprouver_contrainte "le caractère deferrable de la position" mail_sequence_steps mail_sequence_steps_sequence_position_key \
+	'unique (sequence_id, position)'
 
-eprouver_degradation "la clé composite vers le modèle" \
-	'	foreign key (template_id, workspace_id)
-	references public.mail_templates (id, workspace_id) on delete restrict;' \
-	'	foreign key (template_id) references public.mail_templates (id) on delete restrict;'
+eprouver_contrainte "la clé composite vers le modèle" mail_sequence_steps mail_sequence_steps_template_workspace_fkey \
+	'foreign key (template_id) references public.mail_templates (id) deferrable'
 
-eprouver_degradation "la politique d'insertion des paliers" \
-	"	with check (app.workspace_role(workspace_id) in ('admin', 'business_developer'));
+INSERTION_ORIGINE=$(psql_db -c "select pg_get_expr(polwithcheck, polrelid) from pg_policy
+	where polrelid = 'public.mail_sequence_steps'::regclass and polname = 'mail_sequence_steps_insertion_membre_ecrivant';")
+if [ -n "$INSERTION_ORIGINE" ]; then
+	eprouver_sql "la politique d'insertion des paliers" \
+		'alter policy mail_sequence_steps_insertion_membre_ecrivant on public.mail_sequence_steps with check (true);'
+else
+	fail "la politique mail_sequence_steps_insertion_membre_ecrivant est introuvable : dégradation non concluante"
+fi
 
-drop policy if exists mail_sequence_steps_maj_membre_ecrivant" \
-	"	with check (true);
-
-drop policy if exists mail_sequence_steps_maj_membre_ecrivant"
-
-eprouver_degradation "le privilège refermé sur anon" \
-	'revoke all on public.mail_sequences from anon, authenticated;
-grant select                 on public.mail_sequences to anon, authenticated;
-grant insert, update, delete on public.mail_sequences to authenticated;' \
-	'revoke all on public.mail_sequences from anon, authenticated;
-grant select                 on public.mail_sequences to anon, authenticated;
-grant insert, update, delete on public.mail_sequences to authenticated, anon;'
+eprouver_sql "le privilège refermé sur anon" \
+	'grant insert, update, delete on public.mail_sequences to anon;'
 
 # =================================================================================================
 echo

@@ -6,6 +6,7 @@
 #           dictionnaire fermé des refus), §9.9 (contrat d'API), §9.10 (les preuves exigées)
 # @verifies docs/DESIGN_SYSTEM.md §5.39 (cette surface) ; docs/PROD_MIGRATIONS.md §3 (migration 57)
 # @verifies docs/SPEC-test-harness.md §7.2 (un harnais dégrade réellement et constate la restauration)
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T1 ter.3, INC-304 : la garde d'empreinte (docs/SPEC-test-harness.md §3.8)
 #
 # Le script ne démarre ni n'arrête la pile. Il exige la base locale de développement migrée et
 # seedée. Il rejoue les preuves de la sous-tranche, puis DÉGRADE RÉELLEMENT — la migration du
@@ -81,10 +82,16 @@ nettoyer() {
 	if [ "$restauration_module_due" = true ] && [ -f "$TRAVAIL/module.origine" ]; then
 		cp "$TRAVAIL/module.origine" "$MODULE"
 	fi
+	# `CRM-111` T1 ter.3 (INC-304, décision 701) : la structure de public et app est-elle celle d'ouverture ? Sinon,
+	# la base est reconstruite (docs/SPEC-test-harness.md §3.8).
+	empreinte_garantir || statut=1
 	rm -rf -- "$TRAVAIL"
 	exit "$statut"
 }
 trap nettoyer EXIT
+# shellcheck source=scripts/lib/empreinte.sh
+source scripts/lib/empreinte.sh
+empreinte_relever
 
 ok()   { controles=$((controles + 1)); printf '  \033[32mOK\033[0m    %s\n' "$1"; }
 fail() { controles=$((controles + 1)); anomalies=$((anomalies + 1)); printf '  \033[31mECHEC\033[0m %s\n' "$1"; }

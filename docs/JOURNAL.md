@@ -38047,3 +38047,38 @@ l'état de `HEAD`, puis la seule modification non commitée de la session (la li
 possible** : une modification non indexée d'une autre session dans ces deux fichiers avant 16:30. Les sessions actives ont
 été prévenues (45, d9, 51, 6f, b5) ; 45 a confirmé n'avoir rien perdu. **Règle retenue** : lire un fichier entier avant
 de l'ouvrir en écriture, jamais dans la même expression.
+
+### `CRM-111` T1 ter — la mesure et les corrections (2026-11-01)
+
+*2026-11-01, session interactive, dans une file de la pile convenue avec les sessions actives.* **La garde** :
+`scripts/lib/empreinte.sh`, prouvée par `verify-empreinte.sh` (12/12) — dont la mesure qui l'a imposée : sans écarter
+les lignes `\restrict`, deux `pg_dump` de la même base diffèrent depuis PostgreSQL 17.6.
+
+**La mesure des dix harnais**, chacun portant la garde, sur une base reconstruite. Sept rendent l'empreinte d'ouverture.
+**Trois laissaient un résidu**, que la garde a vu et réparé par reconstruction :
+- `verify-notifications.sh` rejouait la 64 et la 65 : la politique `notifications_lecture` revenait à sa forme d'avant
+  la 67, **sans le consentement du destinataire** (9 lignes) — une notification refusée redevenait lisible pour tout ce
+  qui suivait ;
+- `verify-sequences-relance.sh` rejouait la 59 : deux clés vers le modèle revenaient de `deferrable` (la 85) à
+  `on delete restrict` (4 lignes) ;
+- `verify-mentions.sh` rejouait la 63 : `app.workspace_role_pour` perdait la branche de l'administrateur LeLabs (la 79,
+  16 lignes) ; une fois converti, il ne restait qu'un ordre de droits changé par sa restauration (2 lignes), rétabli.
+
+**Et des dégradations qui ne dégradaient plus rien** : depuis la 134, la 63, la 73 et la 58 ne se rejouent plus sur la
+base courante. `verify-mentions.sh` et `verify-signature-identite.sh` le disaient (« NON APPLIQUÉE ») ;
+`verify-analytique.sh`, qui ne lisait pas le code de retour de `psql`, accusait sa propre suite pgTAP d'être
+complaisante. **Correction** (§3.7) : une fonction se dégrade depuis sa définition en base (`degradation_fonction`) ; une
+contrainte, une politique, un privilège ou la publication, par l'instruction seule, et se restaurent depuis leur
+définition relue en base ; plus aucun de ces harnais ne rejoue une migration. Deux révisions en chemin, motivées en
+place : `verify-sequences-relance.sh` desserre **ensemble** les deux clés vers le modèle — n'en desserrer qu'une laisse
+l'autre refuser la suppression, et la suite reste verte à juste titre ; `verify-signature-identite.sh` constate le
+renommage de la colonne au lieu de rejouer la 23, la 33 et la 58, dont l'idempotence est la preuve de
+`verify-migrations.sh`.
+
+**`verify-droits-fins.sh`** (T1 ter.4) garde la sortie de ses onze sous-harnais et en cite la fin ; sa chaîne de rejeux
+0010 → 0034 → 0063 est retirée (la 63 ne se rejoue plus, la 134 est l'autorité de deux politiques), la base étant rendue
+par la reconstruction qui suit. **Ce que la sortie gardée a montré aussitôt** : des rouges antérieurs à T1 ter et
+étrangers à lui — des comptes figés avant la dixième tranche de `CRM-077` (une ligne en corbeille n'est plus lue par la
+lectrice ni le business developer) et avant les channels et workflows ajoutés depuis, un jeton expiré au terme d'une
+longue course, et `verify-migrations.sh` qui trouve la 106 non rejouable sur l'état qu'elle produit et les 125 et 132 sans
+la seconde garde d'INC-239. Consignés : **INC-339**. INC-304 est close.

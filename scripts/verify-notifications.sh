@@ -9,6 +9,8 @@
 # @verifies docs/SCHEMA.md §8 ; docs/PROD_MIGRATIONS.md §3 (migration 64)
 # @verifies docs/SPEC-test-harness.md §7.2 (un harnais dégrade réellement et constate la restauration)
 # @verifies CLAUDE.md §10 (une règle d'accès se prouve hors interface)
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T1 ter.3, INC-304 : la garde d'empreinte (docs/SPEC-test-harness.md §3.8) ;
+#           dégradations depuis la base, plus aucun rejeu des 64 et 65 (§3.7) ; la lecture garde le consentement de la 67
 #
 # Le script ne démarre ni n'arrête la pile. Il exige la base locale de développement migrée et
 # seedée. Il rejoue les preuves de la tranche, puis DÉGRADE RÉELLEMENT la migration — une
@@ -42,7 +44,6 @@ MIGRATION=supabase/migrations/0064_notifications.sql
 # LA PUBLICATION VIT DANS SA PROPRE MIGRATION depuis la sous-tranche 3a : `0064` crée la table,
 # `0065` la publie. Restaurer exige donc de rejouer LES DEUX — rejouer `0064` seule laisserait la
 # table dépubliée, c'est-à-dire le produit CASSÉ, la cloche cessant de se mettre à jour.
-MIGRATION_TEMPS_REEL=supabase/migrations/0065_notifications_temps_reel.sql
 SUITE_SQL=supabase/tests/0062_notifications.test.sql
 SUITE_API=e2e/api/notifications.spec.ts
 SPEC=docs/SPEC-notifications.md
@@ -66,26 +67,18 @@ nettoyer() {
 	trap - EXIT
 	set +e
 	if [ "$restauration_due" = true ]; then
-		if ! psql_db -f - < "$MIGRATION" >/dev/null 2>&1; then
-			printf 'ERREUR : la restauration de secours de %s a échoué.\n' "$MIGRATION" >&2
-			statut=1
-		fi
-		# RÉVISÉ PAR LA SOUS-TRANCHE 3a, ET C'ÉTAIT UN NETTOYAGE DEVENU DESTRUCTEUR. Cette ligne
-		# RETIRAIT la table de la publication, parce que la dégradation d'alors consistait à l'y
-		# ajouter. Depuis la migration `0065`, la table EST publiée : la retirer laisserait le
-		# produit cassé — la cloche cesserait de se mettre à jour sans qu'aucun écran ne le dise.
-		# Le nettoyage rejoue donc la migration de publication, comme il rejoue déjà celle de la
-		# table.
-		psql_db -f - < "$MIGRATION_TEMPS_REEL" >/dev/null 2>&1
-		psql_db -c "delete from public.notifications
-		             where payload->>'comment_id' is null
-		                or payload->>'comment_id' not in ('$COMMENTAIRE_D1', '$COMMENTAIRE_D2');" \
-			>/dev/null 2>&1
+		restaurer || statut=1
 	fi
-	rm -rf -- "$TRAVAIL"
+	# `CRM-111` T1 ter.3 (INC-304, décision 701) : la structure de public et app est-elle celle d'ouverture ? Sinon,
+	# la base est reconstruite (docs/SPEC-test-harness.md §3.8).
+	empreinte_garantir || statut=1
+	rm -rf -- "$TRAVAIL" "${DEGRADATIONS_DOSSIER:-}"
 	exit "$statut"
 }
 trap nettoyer EXIT
+# shellcheck source=scripts/lib/empreinte.sh
+source scripts/lib/empreinte.sh
+empreinte_relever
 
 ok()   { controles=$((controles + 1)); printf '  \033[32mOK\033[0m    %s\n' "$1"; }
 fail() { controles=$((controles + 1)); anomalies=$((anomalies + 1)); printf '  \033[31mECHEC\033[0m %s\n' "$1"; }
@@ -111,46 +104,61 @@ suite_sql_verte() {
 		&& grep -q 'aucune anomalie' "$TRAVAIL/tap.log"
 }
 
-# Remplace un motif dans une copie de la migration, puis l'applique. Le motif est comparé AVANT et
-# APRÈS, et l'APPLICATION est vérifiée — leçon de la décision 503 poussée d'un cran par la
-# tranche 1 : une migration dégradée que `psql` refuse laisse le produit INTACT, la suite reste
-# verte, et le harnais accuse à tort sa propre preuve d'être complaisante. Un faux verdict de
-# complaisance est plus dangereux qu'un vrai, puisqu'il invite à affaiblir une preuve saine.
+# DÉGRADER SANS REJOUER LA 64 NI LA 65 — `CRM-111` T1 ter.3, INC-304 (docs/SPEC-test-harness.md §3.7). Ce harnais dégradait
+# une copie de la 64 et restaurait en rejouant la 64 puis la 65. Or la 67 a repris la politique `notifications_lecture`
+# pour y ajouter le CONSENTEMENT du destinataire (`app.notification_consentie`) : MESURÉ le 2026-11-01 par la garde
+# d'empreinte, chaque passage ramenait la politique à sa forme d'avant la 67 — une notification refusée par son
+# destinataire redevenait lisible pour tout ce qui suivait. Désormais, une FONCTION se dégrade depuis sa définition en
+# base (`degradation_fonction`) ; un PRIVILÈGE et la PUBLICATION, par l'instruction seule ; la POLITIQUE, par `alter
+# policy`, et se restaure depuis sa définition relue en base à l'ouverture (`LECTURE_ORIGINE`), commentaire compris.
+# shellcheck source=scripts/lib/degradation.sh
+source scripts/lib/degradation.sh
+LECTURE_ORIGINE=''
+
+# Dégrade une fonction : $1 nom, $2 signature, $3 fragment d'origine, $4 remplacement.
 degrader() {
-	local avant=$1 apres=$2 nom=$3
-	python3 - "$MIGRATION" "$TRAVAIL/degrade.sql" "$avant" "$apres" <<-'PY'
-		import io, sys
-		source, cible, avant, apres = sys.argv[1:5]
-		texte = io.open(source, encoding='utf-8').read()
-		if texte.count(avant) != 1:
-		    sys.exit(f"motif absent ou ambigu ({texte.count(avant)} occurrence(s))")
-		io.open(cible, 'w', encoding='utf-8').write(texte.replace(avant, apres))
-	PY
-	if ! cmp -s "$MIGRATION" "$TRAVAIL/degrade.sql"; then
-		restauration_due=true
-		if ! psql_db -f - < "$TRAVAIL/degrade.sql" >"$TRAVAIL/degrade.log" 2>&1; then
-			fail "dégradation « $nom » NON APPLIQUÉE : psql l'a refusée — $(tail -n 1 "$TRAVAIL/degrade.log")"
-			restaurer
-			return 1
-		fi
-		return 0
+	local nom=$1 signature=$2 avant=$3 apres=$4
+	restauration_due=true
+	if ! degradation_fonction "$signature" "$avant" "$apres"; then
+		fail "dégradation « $nom » NON CONCLUANTE : fragment absent ou ambigu dans $signature, ou définition dégradée refusée"
+		restaurer
+		return 1
 	fi
-	fail "dégradation « $nom » IMPOSSIBLE : la substitution n'a rien changé"
-	return 1
+	return 0
 }
 
+# Applique une instruction de dégradation qui n'est pas un corps de fonction : $1 nom, $2 SQL.
+degrader_sql() {
+	local nom=$1 sql=$2
+	restauration_due=true
+	if ! psql_db -v ON_ERROR_STOP=1 -c "$sql" >"$TRAVAIL/degrade.log" 2>&1; then
+		fail "dégradation « $nom » NON APPLIQUÉE : psql l'a refusée — $(tail -n 1 "$TRAVAIL/degrade.log")"
+		restaurer
+		return 1
+	fi
+	return 0
+}
+
+# L'état livré, réécrit instruction par instruction : les définitions d'origine des fonctions, les privilèges que la 64
+# pose, la publication que la 65 pose, la politique de lecture telle que la base la portait à l'ouverture.
 restaurer() {
-	psql_db -f - < "$MIGRATION" >/dev/null 2>&1
-	# LA PUBLICATION VIT DANS SA PROPRE MIGRATION, ET IL FAUT LA REJOUER AUSSI (sous-tranche 3a).
-	# Ce bloc RETIRAIT la table de la publication jusqu'au 2026-08-26, la dégradation d'alors
-	# consistant à l'y ajouter ; le sens s'est inversé avec la règle. Rejouer `0064` seule
-	# laisserait la table dépubliée après la dégradation D-G — le harnais sortirait en laissant le
-	# produit cassé, ce qui est exactement le défaut de la décision 108, dans l'autre sens.
-	psql_db -f - < "$MIGRATION_TEMPS_REEL" >/dev/null 2>&1 || true
-	# ELLE NE SAIT PAS DÉFAIRE UNE PRODUCTION NON PLUS, et c'est propre à CETTE tranche : les
-	# dégradations D-A et D-B font NAÎTRE des notifications que la suite pgTAP compte ensuite. Une
-	# ligne surnuméraire laissée ici ferait rougir l'assertion 41 sur un état que plus rien ne
-	# produit — même famille de défaut que le tampon de `docker logs` de la décision 471.
+	local statut=0
+	degradations_restaurer
+	psql_db -v ON_ERROR_STOP=1 -c "revoke insert on public.notifications from authenticated;
+		revoke update on public.notifications from authenticated;
+		grant update (read_at) on public.notifications to authenticated;" >/dev/null 2>&1 || statut=1
+	if [ "$(psql_db -c "select count(*) from pg_publication_tables where pubname = 'supabase_realtime'
+		and schemaname = 'public' and tablename = 'notifications';")" = 0 ]; then
+		psql_db -c "alter publication supabase_realtime add table public.notifications;" >/dev/null 2>&1 || statut=1
+	fi
+	if [ -n "$LECTURE_ORIGINE" ]; then
+		psql_db -v ON_ERROR_STOP=1 -c "alter policy notifications_lecture on public.notifications using ($LECTURE_ORIGINE);" \
+			>/dev/null 2>&1 || statut=1
+	fi
+	# LA RESTAURATION NE SAIT PAS DÉFAIRE UNE PRODUCTION, et c'est propre à CETTE tranche : les dégradations D-A et D-B
+	# font NAÎTRE des notifications que la suite pgTAP compte ensuite. Une ligne surnuméraire laissée ici ferait rougir
+	# l'assertion 41 sur un état que plus rien ne produit — même famille de défaut que le tampon de `docker logs` de la
+	# décision 471.
 	psql_db -c "delete from public.notifications
 	             where payload->>'comment_id' is null
 	                or payload->>'comment_id' not in ('$COMMENTAIRE_D1', '$COMMENTAIRE_D2');" \
@@ -161,6 +169,7 @@ restaurer() {
 	psql_db -c "update public.notifications set read_at = null where read_at is not null;" \
 		>/dev/null 2>&1 || true
 	restauration_due=false
+	return "$statut"
 }
 
 # Pose une mention par le propriétaire, ce qui DÉCLENCHE la production, puis rend l'état.
@@ -173,13 +182,24 @@ provoquer() {
 }
 
 eprouver_degradation() {
-	local nom=$1 avant=$2 apres=$3 mentionne=${4:-}
-	degrader "$avant" "$apres" "$nom" || return 0
+	local nom=$1 signature=$2 avant=$3 apres=$4 mentionne=${5:-}
+	degrader "$nom" "$signature" "$avant" "$apres" || return 0
 	# Certaines dégradations ne se voient QUE si une production a lieu derrière elles : une règle
 	# de trigger affaiblie ne laisse aucune trace tant que le trigger ne s'exécute pas.
 	if [ -n "$mentionne" ]; then
 		provoquer "$mentionne"
 	fi
+	if suite_sql_verte; then
+		fail "COMPLAISANT — « $nom » retirée, la suite pgTAP reste VERTE"
+	else
+		ok "dégradation « $nom » : la suite pgTAP rougit, comme elle doit"
+	fi
+	restaurer
+}
+
+eprouver_sql() {
+	local nom=$1 sql=$2
+	degrader_sql "$nom" "$sql" || return 0
 	if suite_sql_verte; then
 		fail "COMPLAISANT — « $nom » retirée, la suite pgTAP reste VERTE"
 	else
@@ -389,7 +409,7 @@ echo "7. Dégradations : chaque règle retirée doit faire ROUGIR la preuve"
 # le monde, y compris pour l'auteur lui-même. La table, ses clés, ses politiques, ses privilèges et
 # le trigger SURVIVENT TOUS ; seule la règle du §14.3 tombe. Une suite qui resterait verte
 # prouverait qu'elle ne mesure que la forme du modèle.
-eprouver_degradation "la discrimination de l'auto-mention (§14.3)" \
+eprouver_degradation "la discrimination de l'auto-mention (§14.3)" 'app.notifications_apres_mention()' \
 	'	if v_auteur is not null and v_auteur = new.profile_id then
 		return null;
 	end if;' \
@@ -402,7 +422,7 @@ eprouver_degradation "la discrimination de l'auto-mention (§14.3)" \
 # §14.3 NOMME : par la vraie route, les deux coïncident, et rien ne se verrait. Sous le
 # propriétaire — où `auth.uid()` est NUL, comme sous la clé de service qu'empruntent le seed et les
 # harnais —, la discrimination cesse d'opérer et l'auto-mention produit.
-eprouver_degradation "la comparaison sur \`author_id\` plutôt que sur \`auth.uid()\` (§14.3)" \
+eprouver_degradation "la comparaison sur \`author_id\` plutôt que sur \`auth.uid()\` (§14.3)" 'app.notifications_apres_mention()' \
 	'	if v_auteur is not null and v_auteur = new.profile_id then' \
 	'	if (select auth.uid()) is not null and (select auth.uid()) = new.profile_id then' \
 	"$PROFIL_ADMIN"
@@ -410,7 +430,7 @@ eprouver_degradation "la comparaison sur \`author_id\` plutôt que sur \`auth.ui
 # D-C — la charge utile porte le CORPS du commentaire. Le §13.4 le refuse sur une mesure : une
 # mention survit à la pierre tombale de son commentaire, dont le corps est vidé, si bien qu'un
 # instantané survivrait à son propre effacement.
-eprouver_degradation "la charge utile qui ne porte AUCUN contenu (§13.4)" \
+eprouver_degradation "la charge utile qui ne porte AUCUN contenu (§13.4)" 'app.notifications_apres_mention()' \
 	"		jsonb_build_object('comment_id', new.comment_id, 'author_id', v_auteur)," \
 	"		jsonb_build_object('comment_id', new.comment_id, 'author_id', v_auteur,
 		                   'body', (select cc.body from public.card_comments cc
@@ -419,7 +439,7 @@ eprouver_degradation "la charge utile qui ne porte AUCUN contenu (§13.4)" \
 
 # D-D — la date de lecture redevient celle que le client envoie. Le §15.1 l'interdit : une date
 # antidatée fausserait l'ordre de lecture et le compteur de non-lues.
-eprouver_degradation "la date de lecture imposée par la base (§15.1)" \
+eprouver_degradation "la date de lecture imposée par la base (§15.1)" 'app.notifications_avant_maj()' \
 	'	if new.read_at is not null then
 		new.read_at := now();
 	end if;' \
@@ -429,15 +449,13 @@ eprouver_degradation "la date de lecture imposée par la base (§15.1)" \
 
 # D-E — le privilège `INSERT` est rendu à `authenticated`. Le refus cesse d'être double, et un
 # client pourrait s'écrire des messages — ou en écrire à quelqu'un d'autre (§15.3).
-eprouver_degradation "le refus double de l'insertion (§15.3)" \
-	'grant select           on public.notifications to authenticated;' \
-	'grant select, insert   on public.notifications to authenticated;'
+eprouver_sql "le refus double de l'insertion (§15.3)" \
+	'grant insert on public.notifications to authenticated;'
 
 # D-F — le privilège de colonne devient un privilège de table. `type`, `payload` et `recipient_id`
 # deviennent modifiables par leur destinataire (§15.2).
-eprouver_degradation "la mise à jour bornée à la seule colonne \`read_at\` (§15.2)" \
-	'grant update (read_at) on public.notifications to authenticated;' \
-	'grant update           on public.notifications to authenticated;'
+eprouver_sql "la mise à jour bornée à la seule colonne \`read_at\` (§15.2)" \
+	'grant update on public.notifications to authenticated;'
 
 # D-G — la table CESSE d'être publiée au temps réel. La cloche de la sous-tranche 3a continue de
 # lire à l'ouverture, mais cesse de se mettre à jour toute seule, et RIEN à l'écran ne le dit
@@ -452,22 +470,23 @@ eprouver_degradation "la mise à jour bornée à la seule colonne \`read_at\` (�
 # tranche 1 a mesuré qu'un SQL portant des apostrophes est doublé par son passage en argument
 # shell, si bien que `psql` refuse le fichier, que le produit reste intact et que le harnais
 # accuse à tort sa propre preuve d'être complaisante.
-eprouver_degradation "la publication au temps réel (§25.1)" \
-	"alter table public.notifications enable row level security;" \
-	"alter table public.notifications enable row level security;
-alter publication supabase_realtime drop table public.notifications;"
+eprouver_sql "la publication au temps réel (§25.1)" \
+	'alter publication supabase_realtime drop table public.notifications;'
 
 # D-H — la seconde condition de la politique de lecture disparaît. Le refus « ce n'est pas ta
 # boîte » tient encore ; ce qui tombe est le RATTRAPAGE du §14.4 — la seule raison pour laquelle
 # conserver une notification dont la mention a été retirée reste sûr.
-eprouver_degradation "la délégation à \`app.can_read_card\` dans la lecture (§16.1)" \
-	'	using (
-		recipient_id = (select auth.uid())
-		and (subject_card_id is null or app.can_read_card(subject_card_id))
-	);' \
-	'	using (
-		recipient_id = (select auth.uid())
-	);'
+# `CRM-111` T1 ter.3 : la politique est celle de la 67, qui y ajoute le consentement du destinataire ; seule la
+# délégation à `app.can_read_card` est retirée, le consentement et le refus « ce n'est pas ta boîte » restent.
+LECTURE_ORIGINE=$(psql_db -c "select pg_get_expr(polqual, polrelid) from pg_policy
+	where polrelid = 'public.notifications'::regclass and polname = 'notifications_lecture';")
+if [ -n "$LECTURE_ORIGINE" ]; then
+	eprouver_sql "la délégation à \`app.can_read_card\` dans la lecture (§16.1)" \
+		'alter policy notifications_lecture on public.notifications
+			using ((recipient_id = (select auth.uid())) and app.notification_consentie(recipient_id, type));'
+else
+	fail "la politique notifications_lecture est introuvable : la dégradation D-H n'est pas concluante"
+fi
 
 # =================================================================================================
 echo "8. La restauration est CONSTATÉE, jamais supposée"

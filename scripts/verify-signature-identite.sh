@@ -7,6 +7,8 @@
 # @verifies docs/SCHEMA.md §7 ; docs/PROD_MIGRATIONS.md §3 (migration 58)
 # @verifies docs/INCONSISTENCY_REPORT.md INC-215 (la colonne morte, CLOSE par cette tranche)
 # @verifies docs/SPEC-test-harness.md §7.2 (un harnais dégrade réellement et constate la restauration)
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T1 ter.3, INC-304 : la garde d'empreinte (docs/SPEC-test-harness.md §3.8) ;
+#           dégradations depuis les définitions en base, plus aucun rejeu des 23, 33 et 58 (§3.7)
 #
 # Le script ne démarre ni n'arrête la pile. Il exige la base locale de développement migrée et
 # seedée. Il rejoue les preuves de la tranche, puis DÉGRADE RÉELLEMENT la migration — une
@@ -59,15 +61,18 @@ nettoyer() {
 	trap - EXIT
 	set +e
 	if [ "$restauration_due" = true ]; then
-		if ! psql_db -f - < "$MIGRATION" >/dev/null 2>&1; then
-			printf 'ERREUR : la restauration de secours de %s a échoué.\n' "$MIGRATION" >&2
-			statut=1
-		fi
+		restaurer || statut=1
 	fi
-	rm -rf -- "$TRAVAIL"
+	# `CRM-111` T1 ter.3 (INC-304, décision 701) : la structure de public et app est-elle celle d'ouverture ? Sinon,
+	# la base est reconstruite (docs/SPEC-test-harness.md §3.8).
+	empreinte_garantir || statut=1
+	rm -rf -- "$TRAVAIL" "${DEGRADATIONS_DOSSIER:-}"
 	exit "$statut"
 }
 trap nettoyer EXIT
+# shellcheck source=scripts/lib/empreinte.sh
+source scripts/lib/empreinte.sh
+empreinte_relever
 
 ok()   { controles=$((controles + 1)); printf '  \033[32mOK\033[0m    %s\n' "$1"; }
 fail() { controles=$((controles + 1)); anomalies=$((anomalies + 1)); printf '  \033[31mECHEC\033[0m %s\n' "$1"; }
@@ -81,40 +86,24 @@ suite_sql_verte() {
 		&& grep -q 'aucune anomalie' "$TRAVAIL/tap.log"
 }
 
-# Substitue dans une COPIE de la migration, puis l'applique. La copie précédente est DÉTRUITE
-# d'abord, et l'échec du substituteur est TESTÉ : c'est le défaut que le harnais jumeau a trouvé
-# dans son propre code le 2026-08-25 (§2.11) — `degrader` appelée dans un `||` suspend `set -e`,
-# si bien qu'un motif ambigu laissait réappliquer la dégradation PRÉCÉDENTE en annonçant la
-# nouvelle comme mordante. Le remède est repris ici tel quel plutôt que redécouvert.
+# DÉGRADER SANS REJOUER LA 58 — `CRM-111` T1 ter.3, INC-304 (docs/SPEC-test-harness.md §3.7). Ce harnais dégradait une copie
+# de la 58 et restaurait en la rejouant, après la 23 et la 33. Or la 58 n'est plus l'autorité de tout ce qu'elle définit :
+# `queue_outbound_email` a été redéfinie par la 60, la 106 et la 109, et la signature du corps mis en file vit depuis la 60
+# dans `app.mail_outbox_inserer` ; la 23 rejouée ramenait `mail_outbound_identity_record_check`, reprise par la 143, à sa
+# forme d'origine. Désormais, une FONCTION se dégrade depuis sa définition EN BASE (`degradation_fonction`, le fragment
+# exigé une fois exactement, l'application vérifiée) et se restaure par `degradations_restaurer` ; la BORNE, une
+# contrainte, se dégrade par l'instruction seule et se restaure depuis sa définition relue en base à l'ouverture.
+# shellcheck source=scripts/lib/degradation.sh
+source scripts/lib/degradation.sh
+BORNE=mail_outbound_identities_signature_borne
+BORNE_ORIGINE=''
+
+# Dégrade une fonction : $1 nom, $2 signature, $3 fragment d'origine, $4 remplacement.
 degrader() {
-	local avant=$1 apres=$2 nom=$3
-	rm -f -- "$TRAVAIL/degrade.sql"
-	if ! python3 - "$MIGRATION" "$TRAVAIL/degrade.sql" "$avant" "$apres" <<-'PY'
-		import io, sys
-		source, cible, avant, apres = sys.argv[1:5]
-		texte = io.open(source, encoding='utf-8').read()
-		if texte.count(avant) != 1:
-		    sys.exit(f"motif absent ou ambigu ({texte.count(avant)} occurrence(s))")
-		io.open(cible, 'w', encoding='utf-8').write(texte.replace(avant, apres))
-	PY
-	then
-		fail "dégradation « $nom » IMPOSSIBLE : motif absent ou ambigu dans $MIGRATION"
-		return 1
-	fi
-	if cmp -s "$MIGRATION" "$TRAVAIL/degrade.sql"; then
-		fail "dégradation « $nom » IMPOSSIBLE : la substitution n'a rien changé"
-		return 1
-	fi
-	# LA DÉGRADATION DOIT S'APPLIQUER, ET C'EST UN DÉFAUT TROUVÉ PAR CE HARNAIS DANS CE HARNAIS,
-	# le 2026-08-25. Une dégradation dont le SQL ne compile pas — un `trou[1]` posé sur un `text`,
-	# par exemple — laisse la base INCHANGÉE : la suite pgTAP reste alors verte, et le harnais
-	# conclut « COMPLAISANT » alors que rien n'a été dégradé. C'est la même famille de mensonge
-	# tranquille que le §2.11 a corrigée sur le substituteur, sous une forme nouvelle — là c'était
-	# la SUBSTITUTION qui échouait sans arrêter, ici c'est l'APPLICATION. Le code de retour de
-	# `psql` est donc TESTÉ, et un échec est nommé « IMPOSSIBLE » plutôt que compté pour une preuve.
+	local nom=$1 signature=$2 avant=$3 apres=$4
 	restauration_due=true
-	if ! psql_db -f - < "$TRAVAIL/degrade.sql" >"$TRAVAIL/degrade.log" 2>&1; then
-		fail "dégradation « $nom » IMPOSSIBLE : le SQL dégradé ne s'applique pas — $(tail -n 1 "$TRAVAIL/degrade.log")"
+	if ! degradation_fonction "$signature" "$avant" "$apres"; then
+		fail "dégradation « $nom » NON CONCLUANTE : fragment absent ou ambigu dans $signature, ou définition dégradée refusée"
 		restaurer
 		return 1
 	fi
@@ -122,14 +111,19 @@ degrader() {
 }
 
 restaurer() {
-	psql_db -f - < "$MIGRATION" >/dev/null 2>&1
+	local statut=0
+	degradations_restaurer
+	if [ -n "$BORNE_ORIGINE" ]; then
+		psql_db -v ON_ERROR_STOP=1 -c "alter table public.mail_outbound_identities drop constraint if exists $BORNE;
+			alter table public.mail_outbound_identities add constraint $BORNE $BORNE_ORIGINE;" >/dev/null 2>&1 || statut=1
+	fi
 	restauration_due=false
+	return "$statut"
 }
 
-
 eprouver_degradation() {
-	local nom=$1 avant=$2 apres=$3
-	degrader "$avant" "$apres" "$nom" || return 0
+	local nom=$1 signature=$2 avant=$3 apres=$4
+	degrader "$nom" "$signature" "$avant" "$apres" || return 0
 	if suite_sql_verte; then
 		fail "COMPLAISANT — « $nom » retirée, la suite pgTAP reste VERTE"
 	else
@@ -188,23 +182,16 @@ echo "2. LE RENOMMAGE N'A PAS CASSÉ LE REJEU — le contrôle propre à cette t
 # l'ancien nom, et la panne ne se voit qu'au DEUXIÈME démarrage suivant — c'est-à-dire chez le
 # prochain contributeur, jamais chez celui qui a écrit le renommage.
 
-if psql_db -f - < supabase/migrations/0023_identites_sortantes_smtp.sql >"$TRAVAIL/rejeu23.log" 2>&1; then
-	ok "la migration 23 se rejoue après le renommage — son grant de colonne ne nomme plus la signature"
+# RÉVISÉ PAR `CRM-111` T1 ter.3 (INC-304, décision 51). Cette section rejouait la 23, la 33 et la 58 sur la base à jour.
+# Sa prémisse — « le runner rejoue tout le répertoire à chaque démarrage » — est fausse depuis le registre des migrations
+# (`CRM-096`) : un fichier ne s'applique qu'une fois. Que chaque fichier se rejoue sur l'état qu'il produit est prouvé par
+# `scripts/verify-migrations.sh`, sur une base neuve (docs/SPEC-test-harness.md §3.6) ; les rejouer ici ramenait des
+# fonctions qu'une migration postérieure a redéfinies. Le sujet propre de la tranche, le renommage, est constaté en base.
+if [ "$(psql_db -c "select count(*) filter (where column_name = 'signature_text') || ':' || count(*) filter (where column_name = 'signature_html')
+	from information_schema.columns where table_schema = 'public' and table_name = 'mail_outbound_identities';")" = "1:0" ]; then
+	ok "la colonne est renommée : signature_text existe, signature_html n'existe plus"
 else
-	fail "la migration 23 NE SE REJOUE PLUS : $(tail -n 1 "$TRAVAIL/rejeu23.log")"
-fi
-
-if psql_db -f - < supabase/migrations/0033_quota_par_defaut.sql >"$TRAVAIL/rejeu33.log" 2>&1; then
-	ok "la migration 33 se rejoue — elle RETIRE la fonction avant de la reposer"
-else
-	fail "la migration 33 NE SE REJOUE PLUS : $(tail -n 1 "$TRAVAIL/rejeu33.log")"
-fi
-
-if psql_db -f - < "$MIGRATION" >"$TRAVAIL/rejeu58.log" 2>&1 \
-	&& psql_db -f - < "$MIGRATION" >>"$TRAVAIL/rejeu58.log" 2>&1; then
-	ok "la migration 58 est rejouable DEUX fois de suite : le renommage est gardé, la borne converge"
-else
-	fail "la migration 58 n'est pas idempotente : $(tail -n 1 "$TRAVAIL/rejeu58.log")"
+	fail "le renommage de signature_html en signature_text n'est pas celui que la 58 pose"
 fi
 
 # APRÈS CES REJEUX, la fonction doit porter le NOUVEAU nom de paramètre. Si l'une des deux
@@ -338,22 +325,23 @@ echo "7. DÉGRADATIONS RÉELLES — la suite doit savoir rougir"
 # D-A — le séparateur perd son espace de fin. C'est la dégradation la plus importante du harnais :
 # l'espace est invisible à la relecture, et sans elle les clients de messagerie cessent de replier
 # la signature. Si la suite restait verte, plus rien ne tiendrait ce caractère.
-eprouver_degradation "le séparateur perd son espace de fin (RFC 3676)" \
+eprouver_degradation "le séparateur perd son espace de fin (RFC 3676)" 'app.mail_corps_signe(text,text)' \
 	"E'\\n\\n--' || E' ' || E'\\n'" \
 	"E'\\n\\n--' || E'' || E'\\n'"
 
 # D-B — la signature blanche cesse d'être traitée comme absente : un séparateur suivi de rien.
-eprouver_degradation "une signature blanche produit un séparateur suivi de rien" \
+eprouver_degradation "une signature blanche produit un séparateur suivi de rien" 'app.mail_corps_signe(text,text)' \
 	"when app.btrim_blancs(p_signature) = '' then p_corps" \
 	"when false then p_corps"
 
 # D-C — les blancs de fin du corps ne sont plus retirés.
-eprouver_degradation "les blancs de fin du corps ne sont plus retirés" \
+eprouver_degradation "les blancs de fin du corps ne sont plus retirés" 'app.mail_corps_signe(text,text)' \
 	"else app.btrim_blancs(p_corps) || E'\\n\\n--'" \
 	"else p_corps || E'\\n\\n--'"
 
 # D-D — l'effacement redevient impossible : le `coalesce` d'avant la tranche.
 eprouver_degradation "l'effacement redevient impossible (le coalesce d'avant)" \
+	'public.upsert_mail_outbound_identity(uuid,text,text,integer,text,text,text,text,uuid,text,text,boolean,integer)' \
 	"signature_text = case
 		                          when p_signature_text is null then i.signature_text
 		                          else v_signature
@@ -362,12 +350,16 @@ eprouver_degradation "l'effacement redevient impossible (le coalesce d'avant)" \
 
 # D-E — le septième refus disparaît : un message ne portant que sa signature partirait.
 eprouver_degradation "le refus body_required disparaît" \
+	'public.queue_outbound_email(uuid,uuid,text[],text,text,text[],uuid,text[],jsonb)' \
 	"raise exception 'body_required' using errcode = '23514';" \
 	"perform 1;"
 
 # D-F — la garde cesse de signer : `mail_outbox` porterait le corps écrit, et non celui qui part.
+# `CRM-111` T1 ter.3 : la signature du corps se fait depuis la 60 dans `app.mail_outbox_inserer`, l'insertion unique
+# de la file, que `queue_outbound_email` appelle.
 eprouver_degradation "la garde cesse de signer le corps mis en file" \
-	"app.mail_corps_signe(p_body_text, v_identite.signature_text)," \
+	'app.mail_outbox_inserer(uuid,uuid,uuid,uuid,text[],text[],text,text,text,uuid)' \
+	"app.mail_corps_signe(p_body_text, p_signature)," \
 	"p_body_text,"
 
 # D-G — la borne est DESSERRÉE. Elle ne portait pas au premier essai, et c'est ce harnais qui l'a
@@ -375,9 +367,22 @@ eprouver_degradation "la garde cesse de signer le corps mis en file" \
 # ne pouvait la changer — la convergence ramenait la borne à deux mille, la suite pgTAP restait
 # verte, et le verdict « COMPLAISANT » accusait la suite d'un défaut qui était celui de la
 # dégradation. La migration écrit désormais la borne UNE fois, et un seul point suffit.
-eprouver_degradation "la borne de la signature est desserrée" \
-	"v_borne constant integer := 2000;" \
-	"v_borne constant integer := 200000;"
+# `CRM-111` T1 ter.3 : la borne est une CONTRAINTE ; elle se desserre par l'instruction, et se restaure depuis sa
+# définition relue en base (`BORNE_ORIGINE`).
+BORNE_ORIGINE=$(psql_db -c "select pg_get_constraintdef(oid) from pg_constraint
+	where conrelid = 'public.mail_outbound_identities'::regclass and conname = '$BORNE';")
+restauration_due=true
+if [ -n "$BORNE_ORIGINE" ] && psql_db -v ON_ERROR_STOP=1 -c "alter table public.mail_outbound_identities drop constraint $BORNE;
+	alter table public.mail_outbound_identities add constraint $BORNE check (char_length(signature_text) <= 200000);" >/dev/null 2>&1; then
+	if suite_sql_verte; then
+		fail "COMPLAISANT — « la borne de la signature est desserrée » retirée, la suite pgTAP reste VERTE"
+	else
+		ok "dégradation « la borne de la signature est desserrée » : la suite pgTAP rougit, comme elle doit"
+	fi
+else
+	fail "dégradation « la borne de la signature est desserrée » NON APPLIQUÉE"
+fi
+restaurer
 
 # =================================================================================================
 echo
@@ -385,9 +390,6 @@ echo "8. La restauration est CONSTATÉE, octet à octet, et la base avec elle"
 # =================================================================================================
 
 restaurer
-psql_db -f - < supabase/migrations/0023_identites_sortantes_smtp.sql >/dev/null 2>&1
-psql_db -f - < supabase/migrations/0033_quota_par_defaut.sql >/dev/null 2>&1
-psql_db -f - < "$MIGRATION" >/dev/null 2>&1
 
 if cmp -s "$MIGRATION" "$TRAVAIL/migration.origine"; then
 	ok "le fichier de migration est restauré à l'octet près"

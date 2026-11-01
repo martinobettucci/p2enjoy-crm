@@ -6,6 +6,7 @@
 # @verifies docs/SCHEMA.md §5 ; docs/PROD_MIGRATIONS.md §3 (migration 63)
 # @verifies docs/SPEC-test-harness.md §7.2 (un harnais dégrade réellement et constate la restauration)
 # @verifies CLAUDE.md §10 (une règle d'accès se prouve hors interface)
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T1 ter.3, INC-304 : la garde d'empreinte (docs/SPEC-test-harness.md §3.8)
 #
 # Le script ne démarre ni n'arrête la pile. Il exige la base locale de développement migrée et
 # seedée. Il rejoue les preuves de l'unité, puis DÉGRADE RÉELLEMENT la migration — une dégradation
@@ -54,18 +55,18 @@ nettoyer() {
 	trap - EXIT
 	set +e
 	if [ "$restauration_due" = true ]; then
-		if ! psql_db -f - < "$MIGRATION" >/dev/null 2>&1; then
-			printf 'ERREUR : la restauration de secours de %s a échoué.\n' "$MIGRATION" >&2
-			statut=1
-		fi
-		# Même motif que dans `restaurer` : la migration ne retire pas la table de la publication.
-		psql_db -c "alter publication supabase_realtime drop table public.card_comment_mentions;" \
-			>/dev/null 2>&1
+		restaurer || statut=1
 	fi
-	rm -rf -- "$TRAVAIL"
+	# `CRM-111` T1 ter.3 (INC-304, décision 701) : la structure de public et app est-elle celle d'ouverture ? Sinon,
+	# la base est reconstruite (docs/SPEC-test-harness.md §3.8).
+	empreinte_garantir || statut=1
+	rm -rf -- "$TRAVAIL" "${DEGRADATIONS_DOSSIER:-}"
 	exit "$statut"
 }
 trap nettoyer EXIT
+# shellcheck source=scripts/lib/empreinte.sh
+source scripts/lib/empreinte.sh
+empreinte_relever
 
 ok()   { controles=$((controles + 1)); printf '  \033[32mOK\033[0m    %s\n' "$1"; }
 fail() { controles=$((controles + 1)); anomalies=$((anomalies + 1)); printf '  \033[31mECHEC\033[0m %s\n' "$1"; }
@@ -91,48 +92,68 @@ suite_sql_verte() {
 		&& grep -q 'aucune anomalie' "$TRAVAIL/tap.log"
 }
 
-# Remplace un motif dans une copie de la migration, puis l'applique. Le motif est comparé AVANT et
-# APRÈS : une substitution qui ne substituerait rien laisserait la suite verte et le harnais
-# conclurait à tort à la complaisance — c'est le défaut trouvé à `CRM-061` (décision 503), et il ne
-# se refait pas.
+# DÉGRADER SANS REJOUER LA 63 — `CRM-111` T1 ter.3, INC-304 (docs/SPEC-test-harness.md §3.7). Ce harnais dégradait une copie
+# de la 63 et restaurait en la rejouant. Or la 63 n'est plus l'autorité des fonctions qu'elle définit : la 79 a repris
+# `app.workspace_role_pour` (la branche de l'administrateur LeLabs), la 109 et la 134 `app.can_read_card_pour`. MESURÉ le
+# 2026-11-01 par la garde d'empreinte : le rejeu ramenait `workspace_role_pour` à sa forme d'origine (16 lignes), et
+# depuis la 134 il échoue en cours de fichier (« column c.channel_id does not exist »), ses dégradations refusées.
+# Désormais, une FONCTION se dégrade depuis sa définition en base (`degradation_fonction`) et se restaure par
+# `degradations_restaurer` ; un PRIVILÈGE ou la PUBLICATION se dégradent par l'instruction seule, et `restaurer` écrit
+# l'instruction inverse. Le motif est toujours exigé une fois exactement, et l'application toujours vérifiée.
+# shellcheck source=scripts/lib/degradation.sh
+source scripts/lib/degradation.sh
+FONCTION_MENTION='app.card_comment_mentions_avant_insertion()'
+
+# Dégrade le corps de la fonction de mention : $1 fragment d'origine, $2 remplacement, $3 nom.
 degrader() {
 	local avant=$1 apres=$2 nom=$3
-	python3 - "$MIGRATION" "$TRAVAIL/degrade.sql" "$avant" "$apres" <<-'PY'
-		import io, sys
-		source, cible, avant, apres = sys.argv[1:5]
-		texte = io.open(source, encoding='utf-8').read()
-		if texte.count(avant) != 1:
-		    sys.exit(f"motif absent ou ambigu ({texte.count(avant)} occurrence(s))")
-		io.open(cible, 'w', encoding='utf-8').write(texte.replace(avant, apres))
-	PY
-	if ! cmp -s "$MIGRATION" "$TRAVAIL/degrade.sql"; then
-		restauration_due=true
-		# L'APPLICATION EST VÉRIFIÉE, ET C'EST LA LEÇON DE LA DÉCISION 503 POUSSÉE D'UN CRAN.
-		# Elle exigeait que la SUBSTITUTION change quelque chose ; il faut aussi que l'APPLICATION
-		# réussisse. Une migration dégradée que `psql` refuse laisse le produit INTACT, la suite
-		# reste verte, et le harnais conclut à tort à la complaisance — verdict d'autant plus
-		# dangereux qu'il accuse une preuve saine. MESURÉ le 2026-08-26 sur deux dégradations de ce
-		# fichier même.
-		if ! psql_db -f - < "$TRAVAIL/degrade.sql" >"$TRAVAIL/degrade.log" 2>&1; then
-			fail "dégradation « $nom » NON APPLIQUÉE : psql l'a refusée — $(tail -n 1 "$TRAVAIL/degrade.log")"
-			restaurer
-			return 1
-		fi
-		return 0
+	restauration_due=true
+	if ! degradation_fonction "$FONCTION_MENTION" "$avant" "$apres"; then
+		fail "dégradation « $nom » NON CONCLUANTE : fragment absent ou ambigu, ou définition dégradée refusée"
+		restaurer
+		return 1
 	fi
-	fail "dégradation « $nom » IMPOSSIBLE : la substitution n'a rien changé"
-	return 1
+	return 0
 }
 
+# Applique une instruction de dégradation qui n'est pas un corps de fonction : $1 SQL, $2 nom.
+degrader_sql() {
+	local sql=$1 nom=$2
+	restauration_due=true
+	if ! psql_db -v ON_ERROR_STOP=1 -c "$sql" >"$TRAVAIL/degrade.log" 2>&1; then
+		fail "dégradation « $nom » NON APPLIQUÉE : psql l'a refusée — $(tail -n 1 "$TRAVAIL/degrade.log")"
+		restaurer
+		return 1
+	fi
+	return 0
+}
+
+# L'état livré, réécrit instruction par instruction : la définition d'origine de la fonction, puis les privilèges et la
+# publication tels que la 63 les pose et que nulle migration postérieure n'a changés.
 restaurer() {
-	psql_db -f - < "$MIGRATION" >/dev/null 2>&1
-	# LA MIGRATION PROPRE NE SAIT PAS EXPRIMER UNE ABSENCE : elle n'ajoute pas la table à la
-	# publication, mais elle ne l'en retire pas non plus. Rejouer la migration ne défait donc PAS la
-	# dégradation D-F, et le harnais sortirait en laissant le produit publié — exactement le défaut
-	# de la décision 108. La restauration est donc explicite sur ce point.
-	psql_db -c "alter publication supabase_realtime drop table public.card_comment_mentions;" \
-		>/dev/null 2>&1 || true
+	local statut=0
+	degradations_restaurer
+	# Les deux droits d'exécution sont retirés puis rendus DANS L'ORDRE D'ORIGINE (authenticated, puis service_role) :
+	# un `grant` ajoute en fin de liste, et la garde d'empreinte voyait sinon un ordre changé (mesuré le 2026-11-01).
+	psql_db -v ON_ERROR_STOP=1 -c "revoke update on public.card_comment_mentions from authenticated;
+		revoke execute on function app.can_read_card_pour(uuid, uuid) from authenticated, service_role;
+		grant execute on function app.can_read_card_pour(uuid, uuid) to authenticated;
+		grant execute on function app.can_read_card_pour(uuid, uuid) to service_role;" >/dev/null 2>&1 || statut=1
+	# La table n'est jamais publiée au temps réel (§7.3) : la retirer de la publication si une dégradation l'y a mise.
+	psql_db -c "alter publication supabase_realtime drop table public.card_comment_mentions;" >/dev/null 2>&1 || true
 	restauration_due=false
+	return "$statut"
+}
+
+eprouver_sql() {
+	local nom=$1 sql=$2
+	degrader_sql "$sql" "$nom" || return 0
+	if suite_sql_verte; then
+		fail "COMPLAISANT — « $nom » retirée, la suite pgTAP reste VERTE"
+	else
+		ok "dégradation « $nom » : la suite pgTAP rougit, comme elle doit"
+	fi
+	restaurer
 }
 
 eprouver_degradation() {
@@ -386,9 +407,8 @@ eprouver_degradation "\`created_at\` posé par le trigger (§4.1)" \
 
 # D-E — le privilège `UPDATE` est rendu à `authenticated`. Le refus cesse d'être double, et une
 # mention pourrait changer de destinataire (§7.1).
-eprouver_degradation "le refus double de la mise à jour (§7.1)" \
-	'grant select, insert, delete on public.card_comment_mentions to authenticated;' \
-	'grant select, insert, delete, update on public.card_comment_mentions to authenticated;'
+eprouver_sql "le refus double de la mise à jour (§7.1)" \
+	'grant update on public.card_comment_mentions to authenticated;'
 
 # D-F — la table est publiée au temps réel. Une surface d'autorisation sans preuve (§7.3).
 #
@@ -398,17 +418,14 @@ eprouver_degradation "le refus double de la mise à jour (§7.1)" \
 # elles se sont retrouvées DOUBLÉES. `psql` refusait le fichier, la migration restait intacte, la
 # suite restait verte, et le harnais accusait à tort sa propre preuve d'être complaisante. C'est ce
 # faux verdict qui a fait ajouter le contrôle d'application de `degrader`.
-eprouver_degradation "l'absence de publication au temps réel (§7.3)" \
-	"alter table public.card_comment_mentions enable row level security;" \
-	"alter table public.card_comment_mentions enable row level security;
-alter publication supabase_realtime add table public.card_comment_mentions;"
+eprouver_sql "l'absence de publication au temps réel (§7.3)" \
+	'alter publication supabase_realtime add table public.card_comment_mentions;'
 
 # D-G — le privilège d'exécution est retiré à `authenticated`. C'est LE DÉFAUT QUE LA MESURE A
 # TROUVÉ (décision 522), rejoué ici : la suite pgTAP le voit désormais, là où elle serait restée
 # verte avant que l'assertion 26 n'existe.
-eprouver_degradation "le privilège d'exécution de \`can_read_card_pour\` (décision 522)" \
-	'grant execute on function app.can_read_card_pour(uuid, uuid) to authenticated, service_role;' \
-	'grant execute on function app.can_read_card_pour(uuid, uuid) to service_role;'
+eprouver_sql "le privilège d'exécution de \`can_read_card_pour\` (décision 522)" \
+	'revoke execute on function app.can_read_card_pour(uuid, uuid) from authenticated;'
 
 # =================================================================================================
 echo "10. La restauration est CONSTATÉE, jamais supposée"
