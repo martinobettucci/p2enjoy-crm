@@ -18025,7 +18025,7 @@ Question du connecteur : sans objet (décision 806).
 
 ## Demande du 2026-11-01 — l'aperçu des paliers d'une séquence (décision 809)
 
-### CRM-125 — Le composer des séquences prévisualise chaque palier, et la séquence entière, sur un jeu d'exemple `[~]`
+### CRM-125 — Le composer des séquences prévisualise chaque palier, et la séquence entière, sur un jeu d'exemple `[P]`
 Demande et arbitrage du responsable du 2026-11-01 (décision 809).
 
 **Spécification** : `docs/SPEC-modeles-emails.md` §14.
@@ -18038,19 +18038,23 @@ Question du connecteur : sans objet (décision 809).
 
 - [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-01 : décision 809,
       `docs/SPEC-modeles-emails.md` §14.
-- [@] **T2 — la base** : migration de `public.render_mail_template_sample`, pgTAP, harnais API, `docs/SCHEMA.md`,
-      `docs/DAT.md`, `docs/PROD_MIGRATIONS.md`.
-      *Prise en charge : session interactive 2026-11-01 14:58 UTC depuis 2026-11-01 18:44 UTC — T2 attend son créneau sur la pile partagée, après 51 ; état avant : [ ]*
-- [@] **T3 — l'écran** : bouton par palier, aperçu de la séquence, unitaires, E2E, captures, `docs/DESIGN_SYSTEM.md`,
-      manuel, changelog.
-      *Prise en charge : session interactive 2026-11-01 14:58 UTC depuis 2026-11-01 18:44 UTC — état avant : [ ]*
-      **Avancement du 2026-11-01** : `rendreApercuExemple`, `delaisCumules`, `modelesDistincts` et leurs unitaires ;
-      `ApercuModeleExemple.tsx` (rendu partagé par modèle, bloc, mention, aperçu de la séquence) et la fiche des
-      paliers ; 5 unitaires d'écran (`ReglagesSequencesRelance.test.tsx`) ; types et témoin des fonctions complétés à
-      la main, à régénérer avec T2 ; `docs/DESIGN_SYSTEM.md` §5.41 révisé ; suite unitaire 5166/5166, typecheck vert.
-      **Reste** : la fonction en base (T2) ; tant qu'elle manque, l'aperçu rend son état d'erreur. Puis
-      `e2e/ui/sequences-apercu.spec.ts` (écrite, à jouer), les captures, le manuel et le changelog.
-- [ ] **T4 — livraison en production et constat** : migration appliquée, un aperçu constaté.
+- [x] **T2 — la base** : migration de `public.render_mail_template_sample`, pgTAP, harnais API, `docs/SCHEMA.md`,
+      `docs/DAT.md`, `docs/PROD_MIGRATIONS.md`. **Fait le 2026-11-01**, dans le créneau convenu entre sessions :
+      `supabase/migrations/0145_apercu_modele_jeu_exemple.sql`, appliquée par le runner (inscrite au registre) ;
+      `supabase/tests/0135_apercu_modele_jeu_exemple.test.sql` **26/26** (forme, douze valeurs, identité par défaut,
+      unique, plusieurs sans défaut, aucune, jamais l'identité de service, signature non substituée, zéro ligne, `anon`
+      refusé) ; `e2e/api/apercu-modeles-emails.spec.ts` **3/3** aux vrais jetons ; `npm run types:check` vert, octet à
+      octet ; `docs/SCHEMA.md` « Migration `0145` », `docs/DAT.md`, `docs/PROD_MIGRATIONS.md` §3 ligne 145.
+- [x] **T3 — l'écran** : bouton par palier, aperçu de la séquence, unitaires, E2E, captures, `docs/DESIGN_SYSTEM.md`,
+      manuel, changelog. **Fait le 2026-11-01** : l'écran et ses unitaires (avancement `e9c3a4bd`) ;
+      `e2e/ui/sequences-apercu.spec.ts` **9/9** (un palier, un seul déplié, la séquence et ses délais cumulés J+3, J+10,
+      J+24, deux appels pour deux modèles, Driss et sa signature, la mention de l'expéditeur fictif telle que la base la
+      rend, le clavier, quatre paliers sans débordement) ; `e2e/ui/reglages-sequences-relance.spec.ts` 10/10 sans
+      régression ; captures `docs/captures/CRM-125/` observées ; manuel §16.3 (et §16.7 corrigé) ; changelog.
+      **Mesure** : la lectrice n'ouvre pas la fiche (« Modifier » éteint, `CRM-093`), donc pas l'aperçu ; le §14.5 de
+      la spécification, qui disait le contraire, est corrigé ; la fonction lui reste lisible (preuve API).
+- [P] **T4 — livraison en production et constat** : migration `0145` appliquée par la fenêtre (§3), webapp de `main` ;
+      constat du responsable : un aperçu de palier et l'aperçu de la séquence.
 
 ## Demande du 2026-11-01 — une balance par devise dans la rentabilité (décision 810)
 

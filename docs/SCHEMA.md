@@ -2438,6 +2438,16 @@ rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur
 channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
 `0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
 déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0145` — l'aperçu d'un modèle sur un jeu d'exemple (`CRM-125` T2, décision 809 ; livrée en développement le 2026-11-01)
+
+`docs/SPEC-modeles-emails.md` §14.2 à §14.4. **`public.render_mail_template_sample(p_template_id uuid)`** — `stable`,
+`security invoker`, `search_path` vide ; exécutable par `authenticated` et `service_role`, jamais par `anon`. Elle rend
+`subject`, `body_text`, `signature_text` et `identity_is_sample`, substitués par `app.mail_template_substituer` (`0056`) :
+les variables `card.*` et `contact.*` prennent le jeu d'exemple fixe du §14.3, les variables `identity.*` l'identité de
+l'appelant — son défaut, à défaut son unique identité, jamais l'identité de service —, sinon des valeurs d'exemple
+(`identity_is_sample` vrai). La signature est rendue telle quelle. Un modèle illisible rend zéro ligne. **Aucune table,
+aucune donnée.** **Retrait** : `drop function public.render_mail_template_sample(uuid)`.
+
 ### Migration `0144` — le préfixe des adresses d'affaire, réglé par espace (`CRM-123` T2, décision 804 ; livrée en développement le 2026-11-01)
 
 `docs/SPEC-cards.md` §3.6. **`public.workspaces.card_address_prefix`** (`text`, non nul, `'c-'` par défaut ; `check`

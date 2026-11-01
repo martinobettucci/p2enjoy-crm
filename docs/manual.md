@@ -3506,7 +3506,29 @@ qui n'a pas eu lieu.
 **« Retirer » ne demande aucune confirmation**, et c'est voulu : retirer un palier ne détruit aucun
 texte. Le modèle reste, la séquence reste, et reposer le palier est un formulaire de deux champs.
 
-### 16.3 Supprimer une séquence
+### 16.3 Prévisualiser les paliers sur des données d'exemple
+
+Pour lire ce qu'une cadence enverra sans quitter la fiche, deux boutons :
+
+- **« Aperçu »**, sur la ligne d'un palier, déplie sous elle l'**objet** et le **corps** de son modèle, suivis de votre
+  signature. Un second clic replie. Un seul palier est déplié à la fois ;
+- **« Prévisualiser la séquence »**, à droite du titre « Paliers », montre tous les paliers l'un sous l'autre, chacun
+  titré par son rang et ses deux délais : « Palier 2 · J+7 — J+10 depuis l'armement ». « Fermer l'aperçu » le referme.
+
+**LES DONNÉES SONT FICTIVES**, et l'écran le dit au-dessus de chaque aperçu : « Aperçu avec des données d'exemple :
+M. Dupont, ENTREPRISE INC, Projet exemple. » L'affaire et le contact sont toujours les mêmes, avec un montant de
+12500.00 EUR et une prochaine action datée. Aucune variable ne reste vide. Pour voir un modèle appliqué à une **vraie**
+affaire, et repérer ses trous, prévisualisez-le depuis l'écran des modèles
+([chapitre 14.2](#previsualiser-un-modele-sur-une-affaire-reelle)).
+
+**L'EXPÉDITEUR, LUI, EST LE VÔTRE** : votre identité d'envoi par défaut, ou à défaut votre unique identité, avec sa
+signature. Si vous n'en avez aucune, ou plusieurs sans défaut, l'expéditeur est fictif et l'écran l'écrit : « Vous
+n'avez pas d'identité d'envoi par défaut : l'expéditeur est fictif. »
+
+**Rien n'est calculé avant votre clic**, et un modèle employé par deux paliers n'est rendu qu'une fois. Si le rendu
+échoue, « Réessayer » le redemande ; un modèle devenu illisible est signalé en une phrase.
+
+### 16.4 Supprimer une séquence
 
 Le bouton vit **dans la fiche**, jamais sur la ligne de la liste : un geste destructeur ne se
 déclenche pas depuis une liste qu'on parcourt. La confirmation **nomme la séquence** et dit combien
@@ -3519,7 +3541,7 @@ réessayez.
 **Un modèle employé par une séquence ne peut pas être supprimé non plus** ([chapitre 14](#ecrire-des-modeles-d-emails-et-les-previsualiser)) : retirez-le
 d'abord des paliers qui l'emploient.
 
-### 16.4 Armer une relance sur une affaire
+### 16.5 Armer une relance sur une affaire
 
 Ouvrez la fiche de l'affaire, descendez jusqu'au bloc **« Relance automatique »**. Deux choix : la
 **séquence**, et l'**adresse d'expédition** depuis laquelle les messages partiront. Aucun des deux
@@ -3543,7 +3565,7 @@ cadence — « Aucun palier envoyé pour l'instant », puis « Palier 2 envoyé 
 **« Interrompre la relance »** ferme la cadence. Le bloc revient alors à son geste, et il ne
 l'annonce qu'après avoir **vérifié** que la relance est bien close.
 
-### 16.5 Ce qui arrête une relance, sans que vous ayez rien à faire
+### 16.6 Ce qui arrête une relance, sans que vous ayez rien à faire
 
 Quatre choses la terminent, et trois d'entre elles ne vous demandent aucun geste :
 
@@ -3555,13 +3577,14 @@ Quatre choses la terminent, et trois d'entre elles ne vous demandent aucun geste
 3. **le dernier palier est parti** : la cadence est épuisée ;
 4. **vous l'interrompez** depuis le bloc.
 
-### 16.6 Ce qui n'est pas offert
+### 16.7 Ce qui n'est pas offert
 
 - **Aucune date de prochain envoi n'est affichée.** La cadence **glisse** sur les envois réels : un
   palier parti avec un jour de retard décale tous les suivants d'autant. Une date annoncée serait
   fausse au premier décalage, et le produit préfère ne rien dire plutôt que dire faux.
-- **Aucune prévisualisation d'une séquence entière.** Prévisualisez ses modèles un par un depuis
-  l'écran des modèles ([chapitre 14.2](#previsualiser-un-modele-sur-une-affaire-reelle)).
+- **Aucune prévisualisation d'une séquence sur une vraie affaire.** L'aperçu de la fiche emploie des données d'exemple
+  ([section 16.3](#previsualiser-les-paliers-sur-des-donnees-d-exemple)) ; pour une affaire réelle, prévisualisez les
+  modèles un par un depuis l'écran des modèles ([chapitre 14.2](#previsualiser-un-modele-sur-une-affaire-reelle)).
 - **Aucune trace dans l'historique de l'affaire.** L'armement et l'interruption n'y écrivent rien.
 - **Les relances passées ne sont pas listées.** Le bloc porte un geste, pas une histoire.
 - **Aucun réordonnancement à la souris par glisser-déposer.** Les deux flèches font le même travail,

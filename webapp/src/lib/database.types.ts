@@ -5133,9 +5133,7 @@ export type Database = {
         Returns: boolean
       }
       render_mail_template_sample: {
-        Args: {
-          p_template_id: string
-        }
+        Args: { p_template_id: string }
         Returns: {
           body_text: string
           identity_is_sample: boolean

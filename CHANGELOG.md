@@ -13,6 +13,13 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-125` — le composer des séquences prévisualise chaque palier, et la séquence entière
+
+- Dans la fiche d'une séquence, un bouton « Aperçu » par palier et « Prévisualiser la séquence » montrent l'objet, le
+  corps et la signature sur des données d'exemple (M. Dupont, ENTREPRISE INC, Projet exemple), avec les délais cumulés
+  depuis l'armement. L'expéditeur est l'identité d'envoi de la personne, ou un expéditeur fictif signalé.
+- Migration `0145` : la fonction `public.render_mail_template_sample`, sans table ni donnée.
+
 ### `CRM-013` — les colonnes protégées sont closes ; les jetons d'API sont abandonnés (INC-338, décision 779)
 
 - La cible `api_tokens.token_hash` n'attend plus de table : la décision 779 a abandonné les jetons d'API au profit du

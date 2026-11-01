@@ -488,11 +488,188 @@
 		{
 			"type": "heading",
 			"level": 3,
+			"anchor": "previsualiser-les-paliers-sur-des-donnees-d-exemple",
+			"content": [
+				{
+					"type": "text",
+					"text": "16.3 Prévisualiser les paliers sur des données d'exemple"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Pour lire ce qu'une cadence enverra sans quitter la fiche, deux boutons :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Aperçu »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", sur la ligne d'un palier, déplie sous elle l'"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "objet"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "corps"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " de son modèle, suivis de votre\nsignature. Un second clic replie. Un seul palier est déplié à la fois ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Prévisualiser la séquence »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", à droite du titre « Paliers », montre tous les paliers l'un sous l'autre, chacun\ntitré par son rang et ses deux délais : « Palier 2 · J+7 — J+10 depuis l'armement ». « Fermer l'aperçu » le referme."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "LES DONNÉES SONT FICTIVES"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et l'écran le dit au-dessus de chaque aperçu : « Aperçu avec des données d'exemple :\nM. Dupont, ENTREPRISE INC, Projet exemple. » L'affaire et le contact sont toujours les mêmes, avec un montant de\n12500.00 EUR et une prochaine action datée. Aucune variable ne reste vide. Pour voir un modèle appliqué à une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "vraie"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\naffaire, et repérer ses trous, prévisualisez-le depuis l'écran des modèles\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "ecrire-des-modeles-d-emails-et-les-previsualiser",
+						"anchor": "previsualiser-un-modele-sur-une-affaire-reelle"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 14.2"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'EXPÉDITEUR, LUI, EST LE VÔTRE"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : votre identité d'envoi par défaut, ou à défaut votre unique identité, avec sa\nsignature. Si vous n'en avez aucune, ou plusieurs sans défaut, l'expéditeur est fictif et l'écran l'écrit : « Vous\nn'avez pas d'identité d'envoi par défaut : l'expéditeur est fictif. »"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Rien n'est calculé avant votre clic"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et un modèle employé par deux paliers n'est rendu qu'une fois. Si le rendu\néchoue, « Réessayer » le redemande ; un modèle devenu illisible est signalé en une phrase."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
 			"anchor": "supprimer-une-sequence",
 			"content": [
 				{
 					"type": "text",
-					"text": "16.3 Supprimer une séquence"
+					"text": "16.4 Supprimer une séquence"
 				}
 			]
 		},
@@ -590,7 +767,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "16.4 Armer une relance sur une affaire"
+					"text": "16.5 Armer une relance sur une affaire"
 				}
 			]
 		},
@@ -764,7 +941,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "16.5 Ce qui arrête une relance, sans que vous ayez rien à faire"
+					"text": "16.6 Ce qui arrête une relance, sans que vous ayez rien à faire"
 				}
 			]
 		},
@@ -871,7 +1048,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "16.6 Ce qui n'est pas offert"
+					"text": "16.7 Ce qui n'est pas offert"
 				}
 			]
 		},
@@ -922,13 +1099,30 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "Aucune prévisualisation d'une séquence entière."
+										"text": "Aucune prévisualisation d'une séquence sur une vraie affaire."
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " Prévisualisez ses modèles un par un depuis\nl'écran des modèles ("
+								"text": " L'aperçu de la fiche emploie des données d'exemple\n("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "enchainer-des-relances-les-sequences",
+									"anchor": "previsualiser-les-paliers-sur-des-donnees-d-exemple"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 16.3"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ") ; pour une affaire réelle, prévisualisez les\nmodèles un par un depuis l'écran des modèles ("
 							},
 							{
 								"type": "link",

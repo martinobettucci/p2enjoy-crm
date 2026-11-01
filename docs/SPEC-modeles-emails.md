@@ -2482,7 +2482,10 @@ automatiques (décision 805).
 - **États** (`docs/DESIGN_SYSTEM.md` §5.8) : chargement dans le bloc déplié ; erreur traduite, avec « Réessayer » ;
   zéro ligne rendu par « Ce modèle n'est plus lisible. » ; une séquence sans palier n'offre pas « Prévisualiser la
   séquence ».
-- **La lectrice voit les deux boutons** : c'est une lecture (§9.4).
+- **La lectrice n'atteint pas l'aperçu à l'écran**, et c'est une mesure (`CRM-125` T3) : l'aperçu vit dans la fiche
+  d'une séquence, que « Modifier », éteint pour elle (`CRM-093`), n'ouvre pas. La première écriture de ce point, « la
+  lectrice voit les deux boutons », supposait une fiche ouverte en lecture qui n'existe pas. La fonction lui reste
+  lisible : `e2e/api/apercu-modeles-emails.spec.ts` le prouve aux vrais jetons.
 - Clavier : les boutons sont des `button` ; le bloc déplié suit sa ligne dans l'ordre du focus ; `aria-expanded` sur le
   bouton du palier.
 

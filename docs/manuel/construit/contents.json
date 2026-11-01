@@ -490,20 +490,24 @@
 					"title": "16.2 Changer l'ordre des paliers"
 				},
 				{
+					"anchor": "previsualiser-les-paliers-sur-des-donnees-d-exemple",
+					"title": "16.3 Prévisualiser les paliers sur des données d'exemple"
+				},
+				{
 					"anchor": "supprimer-une-sequence",
-					"title": "16.3 Supprimer une séquence"
+					"title": "16.4 Supprimer une séquence"
 				},
 				{
 					"anchor": "armer-une-relance-sur-une-affaire",
-					"title": "16.4 Armer une relance sur une affaire"
+					"title": "16.5 Armer une relance sur une affaire"
 				},
 				{
 					"anchor": "ce-qui-arrete-une-relance-sans-que-vous-ayez-rien-a-faire",
-					"title": "16.5 Ce qui arrête une relance, sans que vous ayez rien à faire"
+					"title": "16.6 Ce qui arrête une relance, sans que vous ayez rien à faire"
 				},
 				{
 					"anchor": "ce-qui-n-est-pas-offert",
-					"title": "16.6 Ce qui n'est pas offert"
+					"title": "16.7 Ce qui n'est pas offert"
 				}
 			]
 		},
