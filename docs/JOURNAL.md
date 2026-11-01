@@ -37722,3 +37722,22 @@ manifeste d'avant, puis 167 contrôles sans anomalie, contre-épreuve conforme ;
 (1/1) sur le serveur de la campagne `CRM-122` T2, avec son accord, ses sorties Playwright hors de `e2e/`. Le rejeu a
 réécrit les deux images du secret avec une nouvelle valeur aléatoire, aussitôt détruite avec le webhook. Elles sont
 rendues à leur version committée, pour ne pas inscrire une valeur de plus dans l'historique public.
+
+### `CRM-111` T1 ter — le découpage (2026-11-01)
+
+*2026-11-01, session interactive.* **Problème** : INC-304 — des harnais rejouent un fichier de migration ancien sur une
+base à jour, et réécrivent ce qu'une migration postérieure a redéfini ; nul ne mesure ce qu'ils laissent. **Arbitrage**
+(décision 701) : chaque harnais qui rejoue un fichier compare l'empreinte `pg_dump -s` de `public` et `app` avant et
+après lui, et reconstruit si elle diffère ; `verify-droits-fins.sh` garde la sortie de ses sous-harnais.
+
+**Inventaire du jour** : 28 harnais injectent un fichier de migration dans `psql`. Des douze qu'INC-304 nommait non
+mesurés, deux sont déjà conformes au §3.7 — `armement-sequences` (T2.3.5) et `valeurs-champs` (T2.3.3) — et un a été
+corrigé pendant T2.4.5, `rendu-modeles-emails` (source composée sur la dernière autorité du rendu). Les seize autres
+reconstruisent déjà après leur rejeu, ou rejouent la migration qui est encore l'autorité de leur sujet.
+
+**Découpage** (backlog) : T1 ter.1 la garde d'empreinte, en bibliothèque, avec sa preuve de non-complaisance ; T1 ter.2
+la mesure des dix harnais restants sur une base reconstruite ; T1 ter.3 la correction, harnais par harnais ; T1 ter.4 la
+sortie des sous-harnais de `verify-droits-fins.sh`. **Pourquoi une bibliothèque plutôt qu'une garde par harnais** : le
+relevé et la comparaison sont les mêmes partout, et une empreinte calculée de dix façons ne serait comparable à rien.
+**Coordination** : T1 ter.2 et la preuve de T1 ter.1 reconstruisent la base partagée ; elles se jouent dans une fenêtre
+convenue avec les sessions actives.
