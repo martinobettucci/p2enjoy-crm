@@ -38036,3 +38036,14 @@ Aucune migration : `docs/PROD_MIGRATIONS.md` ne recevra que le redéploiement de
 T3 laissait à relire, sont ceux que T5 a révisés sur les arbitrages du 2026-10-24 (les clés `label` et `probability`, la
 comparaison sans la casse) ; la relecture est faite. T3 passe `[x]` ; T4, livrée le 2026-10-26 (migrations 102 et 103),
 et l'unité passent `[P]` : il ne reste que le constat en production.
+
+### Incident : deux copies de travail vidées par un script de la session `p2enjoy-crm-18` (2026-11-01)
+
+**Fait** : entre 16:20 et 16:30 environ, en renumérotant la décision 811, un script Python a écrit
+`open(p, 'w').write(fix(open(p).read()))` sur `docs/JOURNAL.md` et `docs/BACKLOG.md`. L'ouverture en écriture tronque le
+fichier **avant** sa lecture : les deux copies de travail sont devenues vides. **Ni l'historique ni l'index n'ont été
+touchés** : les commits venaient de contenus calculés depuis `HEAD`. **Réparé** : les deux fichiers ont été remis à
+l'état de `HEAD`, puis la seule modification non commitée de la session (la ligne de `CRM-013`) a été refaite. **Perte
+possible** : une modification non indexée d'une autre session dans ces deux fichiers avant 16:30. Les sessions actives ont
+été prévenues (45, d9, 51, 6f, b5) ; 45 a confirmé n'avoir rien perdu. **Règle retenue** : lire un fichier entier avant
+de l'ouvrir en écriture, jamais dans la même expression.
