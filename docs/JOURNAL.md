@@ -37916,6 +37916,34 @@ seize preuves comptent les rattachements.
 **Conséquences.** Unité `CRM-124` au backlog. `docs/SPEC-modeles-emails.md` §9.5 et `docs/DESIGN_SYSTEM.md` §5.39
 révisés dans ce changement ; le manuel, le changelog et les preuves suivent avec le code.
 
+### décision 807 — correction en production : le coût du personnel de Thomas et de Mathis prend effet au 2026-09-01
+
+*2026-11-01, session interactive, instruction explicite du responsable.* **Demande** : « en prod, corrige la date de mise
+en route du coût du personnel : Thomas et Mathis, leur taux doit commencer au 1er septembre ».
+
+**Observations, en lecture seule.** Dans l'espace `crm`, chacun ne porte qu'**une** version de `couts_personnel`, sa
+première : Thomas Choplain-Thirouard, 21,54 EUR par quart, effet au 2026-10-01 ; Mathis Marsault, 5,99 EUR par quart,
+effet au 2026-10-26. Les deux sont **en vigueur** : le déclencheur `couts_personnel_immuable` refuse toute mise à jour et
+`couts_personnel_avant_suppression` toute suppression (`docs/SPEC-temps.md` §3.1). L'application n'offre donc aucun geste
+pour corriger la date d'une première version une fois entrée en vigueur. Impact mesuré : Mathis avait 840 minutes
+saisies entre le 2026-09-04 et le 2026-10-20, **non valorisées** faute de version applicable (§4) ; les saisies de
+Thomas commencent au 2026-10-19, déjà valorisées.
+
+**Décision.** Correction de donnée, et non de règle : seule `date_effet` des deux lignes change, en `2026-09-01` ; le
+coût, la devise, l'auteur et la date de création restent. Une première version peut porter toute date (§3.1) : l'état
+obtenu est celui qu'une saisie correcte aurait produit. La règle d'immuabilité n'est pas modifiée.
+
+**Gestes.** Les deux lignes ont été exportées en CSV hors du dépôt avant l'écriture. La simulation, dans une transaction
+annulée, a rendu `UPDATE 2` et aucune saisie non valorisée par `public.temps_valorise` sur septembre et octobre. Puis
+la même transaction, cette fois validée, sous `postgres` dans `p2enjoy-db` : `set local session_replication_role =
+replica` — qui ne suspend les déclencheurs que pour cette transaction —, puis `update public.couts_personnel set
+date_effet = '2026-09-01'` restreint aux deux identifiants `6b427d91-…` et `a6ddc0bd-…`.
+
+**Vérifications.** Relecture après validation : Thomas et Mathis à 2026-09-01, la version de Martino Bettucci
+inchangée (2026-10-01) ; les trois déclencheurs toujours actifs (`O`). Sur septembre et octobre, Mathis : 840 minutes,
+47,93 EUR ; Thomas : 3 330 minutes, 683,16 EUR ; aucune saisie non valorisée. **Retour arrière** : la même transaction
+avec les dates d'avant (2026-10-01 pour Thomas, 2026-10-26 pour Mathis).
+
 ### Deux choix du responsable : INC-332 avec le prochain lot, puis `CRM-112` (2026-11-01, décision 808)
 
 **Décision 808, du responsable, en séance** : la correction d'INC-332 (à 390 px, l'en-tête garde une seule ligne de

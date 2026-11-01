@@ -2020,6 +2020,19 @@ publique sert le module d'objectifs de ce build (`200`). La baseline reste **81*
   documentation seule (`88caf34f`), sans code livrable.
 - **Reste** : le constat du responsable, un assistant connecté qui lit ou compose un canevas.
 
+### 2026-11-01 — correction de donnée : le coût du personnel de Thomas et de Mathis au 2026-09-01 (décision 807)
+
+- **Instruction** : « en prod, corrige la date de mise en route du coût du personnel : Thomas et Mathis, leur taux doit
+  commencer au 1er septembre ».
+- **Geste** : aucune livraison. Dans `p2enjoy-db`, sous `postgres`, une transaction avec `set local
+  session_replication_role = replica`, qui suspend `couts_personnel_immuable` pour elle seule, puis `date_effet` des deux
+  premières versions passée à `2026-09-01` (Thomas : avant 2026-10-01 ; Mathis : avant 2026-10-26). Lignes exportées
+  en CSV avant l'écriture, simulation annulée au préalable.
+- **Constat, en lecture seule** : les deux versions sont au 2026-09-01, et les trois déclencheurs de la table sont
+  actifs ; plus aucune saisie non valorisée sur septembre ni sur octobre.
+- **Retour arrière** : la même transaction, avec les dates d'avant.
+- **Reste** : relire « Temps ▸ Rapport mensuel » de septembre pour Mathis, qui doit afficher un montant.
+
 ### 2026-11-01 — migration 143 (`CRM-120`)
 
 - **Instruction** : « Oui, sans nouvel instantané » (décision 798).
