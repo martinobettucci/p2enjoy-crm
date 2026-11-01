@@ -8509,3 +8509,18 @@ défilement horizontal, mais ne le mesurent pas au moment de ces captures. **À 
 `main` au moment de la capture, et le conteneur qui devrait le porter (`docs/DESIGN_SYSTEM.md` §7, §12.6). Connecteur MCP :
 sans objet.
 
+
+### INC-338 — La cible 3/6 de `CRM-013` attend `api_tokens.token_hash` de `CRM-073`, qui a livré des webhooks sans jeton d'API
+
+*Constaté le 2026-11-01 en relisant les entrées ouvertes de `CRM-013`.* La garde des colonnes protégées compte six cibles.
+La cible 3/6 est figée par `supabase/tests/0015_colonnes_protegees.test.sql` (`hasnt_table('public', 'api_tokens', …
+attend CRM-073)`) et par `scripts/verify-colonnes-protegees.sh`. Or `CRM-073` est devenue « Webhooks sortants signés »,
+et elle est livrée sans aucune table `api_tokens`. Son secret vit dans Vault : `webhook_endpoints.secret_id` n'est qu'une
+référence, et le secret n'est lisible par aucun client (migration `0139`, `app.webhook_nouveau_secret`). Aucune unité du
+backlog ne prévoit plus de jetons d'API. Par ailleurs, l'entrée de `CRM-013` dit encore `audit_log` « due », alors que la
+cible 5/6 est livrée et sa garde retournée (`CRM-072` T1, migration `0115`).
+
+**Laissé en l'état** : changer une cible de la garde est un arbitrage (`CLAUDE.md` §5). **Issues possibles** : (a) clore la
+cible 3/6 en la reportant sur le secret des webhooks, en prouvant qu'aucun client ne lit `vault.secrets` et que
+`secret_id` ne s'écrit que par la fonction ; l'assertion d'absence d'`api_tokens` serait gardée comme témoin d'une unité
+future ; (b) la garder telle quelle, en corrigeant seulement la référence à `CRM-073`. Connecteur MCP : sans objet.
