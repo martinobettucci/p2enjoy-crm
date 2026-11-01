@@ -7,6 +7,7 @@
 // @verifies CLAUDE.md §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : ces scénarios se
 //           connectent, aucune page n'étant rendue sans session (docs/JOURNAL.md décision 601)
+// @verifies CRM-122 (docs/BACKLOG.md) — tranche T2 : la vidéo est déposée sous la règle des captures (docs/SPEC-captures.md §2)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : le board désigne le rattachement de l'affaire dans `move_card`
 //           (docs/SPEC-rattachements.md §5)
 //
@@ -35,9 +36,9 @@ import {
 	type Page,
 	type Route,
 } from './fixtures'
-import { copyFileSync, mkdirSync, readdirSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { PALIERS, capturer } from './captures'
+import { readdirSync } from 'node:fs'
+import { join } from 'node:path'
+import { PALIERS, capturer, deposerVideo } from './captures'
 
 // RÉVISÉ PAR `CRM-092` T9 (docs/SPEC-session-sso.md §8.7, décision 601) : sans session, aucune page de
 // l'application n'est rendue. Ces scénarios, écrits pour un visiteur anonyme à réponses substituées, se
@@ -736,8 +737,8 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7)', () => {
  *
  * Elle est **enregistrée délibérément**, et non récupérée d'un échec : la configuration du harnais
  * conserve les vidéos `retain-on-failure`, ce qui n'en produit aucune quand tout va bien. Le
- * contexte est donc créé ici avec `recordVideo`, et le fichier est copié dans
- * `docs/captures/CRM-041/` — la même destination que les captures.
+ * contexte est donc créé ici avec `recordVideo`, et le fichier est déposé par `deposerVideo`, sous la règle des
+ * captures : `e2e/output/CRM-041/`, et `docs/captures/CRM-041/` sur demande seulement (`CRM-122`, docs/SPEC-captures.md).
  *
  * Le geste est joué **pas à pas** à la souris, et non par `dragTo` : mesuré, `dragTo` saute d'un
  * point à l'autre et la vidéo ne montrerait rien du déplacement (décision 170).
@@ -781,8 +782,6 @@ test.describe('vidéo du glisser-déposer', () => {
 
 		const enregistre = readdirSync(dossier).find((nom) => nom.endsWith('.webm'))
 		expect(enregistre, 'une vidéo .webm a bien été enregistrée').toBeDefined()
-		const destination = join(dirname(dirname(import.meta.dirname)), 'docs', 'captures', 'CRM-041')
-		mkdirSync(destination, { recursive: true })
-		copyFileSync(join(dossier, enregistre ?? ''), join(destination, 'glisser-deposer.webm'))
+		deposerVideo(join(dossier, enregistre ?? ''), 'glisser-deposer', 'CRM-041')
 	})
 })

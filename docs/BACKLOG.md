@@ -17861,8 +17861,16 @@ le 2026-11-01, décision 800).
       dans la préparation d'une livraison. **Écrite le 2026-11-01** : `docs/SPEC-captures.md` — `CAPTURES_UNITES`,
       `CAPTURES_RENOUVELLEMENT=1`, `e2e/output/<unité>/`, le rapport par le Chromium de Playwright (canal > 24, *changée*
       dès 0,2 %, le bruit rendu), une campagne avant chaque livraison.
-- [@] **T2 — l'aide, le tri, leurs tests, la documentation**, et une campagne ordinaire complète constatée propre.
-      *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 12:14 UTC — état avant : [ ]*
+- [x] **T2 — l'aide, le tri, leurs tests, la documentation**, et une campagne ordinaire complète constatée propre.
+      **Fait le 2026-11-01** : `scripts/captures/captures.mjs` (`destinationsCapture`, `ecartPixels`, `classer`) et ses
+      9 tests unitaires, rouges d'abord ; `capturer()` et `deposerVideo()` (`e2e/ui/captures.ts`), sortie par unité ;
+      `npm run captures:rapport` (`scripts/captures/rapport.mjs`), essayé sur une recompression (bruit, 0,04 %, rendue),
+      un rectangle de 0,5 % (changée, 0,53 %) et une image ajoutée. **Campagne d'interface complète sans demande**
+      (1033/1037, les écarts consignés par INC-331, sans lien) : **une seule** image versionnée réécrite, la vidéo du
+      board, copiée hors de `capturer()`. Elle est désormais déposée par `deposerVideo`, et le rejeu le prouve : sans
+      demande rien n'est versionné, avec `CAPTURES_UNITES=CRM-041` elle l'est ; une capture JPEG l'est avec
+      `CAPTURES_UNITES=CRM-074` ; une unité hors forme fait échouer le scénario. Typecheck vert.
+      `docs/DESIGN_SYSTEM.md` §11, `docs/DAT.md` §13, `README.md`, `docs/PROD_MIGRATIONS.md` (le geste de préparation).
 - [ ] **T3 — premier renouvellement**, avant la livraison du lot 0106 à 0140 (décision 786). La campagne finale de
       `CRM-117` (T5) s'est close le 2026-10-31 sans lui, T1 et T2 n'étant pas faites : elle a renouvelé les seules images
       du manuel et les captures de `CRM-117`.

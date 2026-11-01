@@ -1450,6 +1450,10 @@ Voir `README.md` §5. Résumé : `./runDev.sh`, `./runProd.sh`, `./resetMe.sh`,
 commandes de test livrées par `CRM-008` — `npm run test:sql`, `test:unit`, `e2e:api`, `e2e:ui`,
 `e2e:report` (`README.md` §7, `docs/SPEC-test-harness.md` §9) — auxquelles `CRM-050` ajoute
 `npm run e2e:mail`, projet Playwright qui ne parle qu'aux serveurs de messagerie.
+**Captures (`CRM-122`, `docs/SPEC-captures.md`)** : `e2e:ui` écrit ses captures dans `e2e/output/<unité>/` et ne les
+recopie dans `docs/captures/` que sur demande — `CAPTURES_UNITES=<unité>[,<unité>…]` pour l'unité qui livre,
+`CAPTURES_RENOUVELLEMENT=1` pour un renouvellement, que trie `npm run captures:rapport` (rapport dans
+`e2e/output/captures-rapport.md`, le bruit rendu à sa version committée).
 Le harnais consolidé valide avant toute mutation un couple Node Linux conforme à `.nvmrc` ; si le
 `PATH` hérité de WSL ne présente que `npm.exe`, il sélectionne une installation NVM locale sans
 modifier le shell parent, ou refuse l'exécution avec une consigne explicite (décision 278).

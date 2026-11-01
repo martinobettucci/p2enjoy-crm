@@ -13,6 +13,12 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-122` — les captures versionnées ne changent plus qu'à la demande (outillage de test)
+
+- `npm run e2e:ui` écrit ses captures dans `e2e/output/<unité>/` et ne les recopie dans `docs/captures/` que pour
+  l'unité nommée par `CAPTURES_UNITES`, ou pour toutes avec `CAPTURES_RENOUVELLEMENT=1`. La vidéo du board suit la même
+  règle. `npm run captures:rapport` trie un renouvellement par écart de pixels et rend le bruit à sa version committée.
+
 #### INC-330 — le manifeste des images du manuel ne retient plus aucun secret
 
 - `fusionnerManifeste` (`scripts/manuel/images.mjs`) écarte tout libellé relevé qui a la forme d'un secret : un secret

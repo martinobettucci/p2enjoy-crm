@@ -10,6 +10,7 @@
   "scripts": {
     "types:generate": "scripts/generate-types.sh",
     "types:check": "scripts/generate-types.sh --check",
+    "captures:rapport": "node scripts/captures/rapport.mjs",
     "manuel:construire": "node scripts/manuel/construire.mjs",
     "manuel:verifier": "node scripts/manuel/construire.mjs --verifier",
     "manuel:liens": "node scripts/manuel/renumeroter.mjs",

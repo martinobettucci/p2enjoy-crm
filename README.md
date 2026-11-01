@@ -515,6 +515,9 @@ npm run test:unit          # Vitest, 564 tests            — aucune pile requis
 npm run test:sql           # pgTAP, 1698 assertions       — pile démarrée
 npm run e2e:api            # Playwright — contrats API et refus, hors interface  (pile + seed)
 npm run e2e:ui             # Playwright — parcours utilisateur et captures       (pile)
+CAPTURES_UNITES=CRM-122 npm run e2e:ui -- <spec>   # recopie dans docs/captures/ les captures de l'unité qui livre
+CAPTURES_RENOUVELLEMENT=1 npm run e2e:ui           # renouvellement de toutes les captures versionnées…
+npm run captures:rapport   # …trié par écart de pixels, le bruit rendu (docs/SPEC-captures.md)
 npm run e2e:mail           # Playwright — IMAP, SMTP, ClamAV et Roundcube réels  (pile)
 npm run e2e:report         # sert le dernier rapport HTML sur http://localhost:9323
 pytest mail-sync/tests     # pytest, 40 tests du service mail-sync — aucune pile requise

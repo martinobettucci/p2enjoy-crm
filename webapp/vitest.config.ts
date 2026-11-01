@@ -34,6 +34,7 @@ export default defineConfig({
 			// `CRM-117` : la construction du manuel est un module Node pur, éprouvé à côté de son script
 			// (docs/SPEC-manual.md §15).
 			'../scripts/manuel/**/*.test.ts',
+			'../scripts/captures/**/*.test.ts',
 			// Le rapporteur ci-dessous vit à côté de cette configuration, hors de `src/` : c'est un
 			// outil Node, que la compilation de l'application refuserait (`node:fs`).
 			'vitest.rapporteur-echecs.test.ts',

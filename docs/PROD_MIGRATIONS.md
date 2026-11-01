@@ -22,6 +22,11 @@ la confirmation que l'instantané de VM est pris — « oui » demandé au termi
 fois en fin de passage réussi. La voie manuelle du §3.3 reste utile pour appliquer une migration
 isolée hors fenêtre.
 
+**Préparation de toute livraison : le renouvellement des captures (`CRM-122`, `docs/SPEC-captures.md` §4).** Avant
+chaque livraison en production, une campagne de renouvellement est jouée (`CAPTURES_RENOUVELLEMENT=1 npm run e2e:ui`,
+puis `npm run captures:rapport`) ; les images changées sont observées une à une et le tout est committé en un seul commit,
+avant `scripts/spark/livrer.sh`, qui exige un arbre propre.
+
 ---
 
 ## 1. Baseline de production

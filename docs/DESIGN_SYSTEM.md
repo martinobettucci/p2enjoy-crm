@@ -2976,8 +2976,14 @@ donc proscrite pour accommoder le contrôle**, ce qui était la contrepartie de 
   définir des styles de base ; les composants métier les composent.
 - Chaque composant partagé porte un commentaire `@spec` citant ce document et son unité de
   backlog.
-- **Captures de référence** : `e2e/output/*.jpg` et vidéos `.webm`, produites depuis
+- **Captures de référence** : `e2e/output/<unité>/*.jpg` et vidéos `.webm`, produites depuis
   l'application réellement exécutée et observées à chaque livraison touchant l'interface.
+- **Captures versionnées** (`docs/captures/<unité>/`, `CRM-122`, `docs/SPEC-captures.md`) : elles ne
+  sont recopiées que sur demande. `CAPTURES_UNITES=<unité>` pour l'unité qui livre, et qui committe
+  ses captures avec son code ; `CAPTURES_RENOUVELLEMENT=1` pour la campagne de renouvellement, triée
+  par `npm run captures:rapport` (une image est *changée* à partir de 0,2 % de pixels différents, le
+  bruit est rendu à sa version committée), observée image par image, et committée en un seul commit
+  avant chaque livraison en production. Une campagne ordinaire ne touche aucune capture versionnée.
 
 ## 12. Écarts propres au projet
 

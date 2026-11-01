@@ -8382,3 +8382,21 @@ navigateur, le scénario relève le champ du secret, et le manifeste ne le retie
    poussent (`CLAUDE.md` §13 : seulement sur instruction explicite).
 
 Connecteur MCP : sans objet.
+
+### INC-331 — Trois scénarios d'interface supposent un état de base que le rejeu du seed et les campagnes déplacent
+
+*Constaté le 2026-11-01 par la campagne d'interface complète de `CRM-122` T2 (1033/1037), puis en rejouant seuls les
+quatre échecs : trois échouent encore, le quatrième (`activites.spec.ts:283`, palier `sm-390`) passe.* La base de
+développement venait de recevoir un rejeu du seed, le matin même : sa section « aujourd'hui » de Ma journée était
+périmée. Elle avait aussi traversé une campagne API complète.
+- `e2e/ui/journal-audit.spec.ts:71` attend **une** entrée « Imports » ; il en lit **4**. L'import du seed est journalisé
+  à chaque passage du seed : le seed n'est pas idempotent pour le journal d'audit.
+- `e2e/ui/webhooks.spec.ts:24` attend « Aucune remise » sur le second webhook semé ; il lit « Remise réussie ». Des
+  gestes du seed rejoué ou des campagnes ont émis des événements que ce webhook écoute.
+- `e2e/ui/commentaires-gestes.spec.ts:140` attend un commentaire semé jamais modifié ; il ne l'est plus.
+
+**Aucun lien avec `CRM-122`**, qui ne change que la copie des captures. **Laissé en l'état** (`CLAUDE.md` §18 : ne pas
+masquer). **Issue proposée** : que le seed rende ces trois états à chaque passage (une seule entrée d'import au journal,
+les remises des webhooks semés, le corps du commentaire), comme il le fait pour l'inbox ; ou que ces scénarios
+construisent eux-mêmes l'état qu'ils lisent. Une base reconstruite les fait passer en attendant. Connecteur MCP : sans
+objet.
