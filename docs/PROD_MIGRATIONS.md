@@ -1,6 +1,6 @@
 # Contrat de déploiement — P2Enjoy CRM
 
-*Session de livraison : p2enjoy-crm-d8 depuis 2026-11-01 19:30 UTC — lot : tout `main` après la migration de `CRM-125` T2 (décision 812) — `0144` et migration de `CRM-125` T2 ; webapps de `CRM-123`, `CRM-124`, `CRM-125`, `CRM-126`, INC-332 et INC-333 ; image `mcp` (`CRM-126`). Règle : `CLAUDE.md` §12, décision 813.*
+*Session de livraison : p2enjoy-crm-18 depuis 2026-11-01 19:36 UTC — désignée par le responsable, reprend l'annonce de p2enjoy-crm-d8 (19:30 UTC) — lot : tout `main` après la migration de `CRM-125` T2 (décision 812) — `0144` et migration de `CRM-125` T2 ; webapps de `CRM-123`, `CRM-124`, `CRM-125`, `CRM-126`, INC-332 et INC-333 ; image `mcp` (`CRM-126`). Règle : `CLAUDE.md` §12, décision 813.*
 
 **Le lot annoncé, tel que les sessions l'ont signalé le 2026-11-01** (à relire au moment de livrer) :
 
