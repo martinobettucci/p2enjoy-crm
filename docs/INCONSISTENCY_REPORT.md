@@ -8285,6 +8285,12 @@ arbitrer. Connecteur MCP : sans objet (il lit par le message).
 **Arbitrée le 2026-11-01, décision 795** : écrire et rattraper — le classement automatique écrit la colonne, une
 migration rattrape l'existant (tranche `CRM-055` INC-326).
 
+**Diagnostic corrigé le 2026-11-01**, en préparant la tranche : le classement automatique recopie déjà l'affaire sur les
+pièces (0109, `classer_message_automatiquement`). Mais `mail-sync` classe le message (`ingestion.py`) **avant** d'inscrire
+ses pièces, si bien qu'il n'y en a encore aucune à recopier. La correction se place donc à l'insertion de la pièce,
+qui hérite de l'affaire de son message ; c'est l'intention de la décision 795, la colonne exacte. Spécification :
+`docs/SCHEMA.md`, « Migration `0142` ».
+
 ### INC-327 — `scripts/manuel/publier.sh --spark` ne s'exécute pas dans la cellule : il exige `jq` et ne fusionne pas les fichiers injectés
 
 *Constaté le 2026-11-01, à la fenêtre de la décision 792 (`CRM-117` T6).* Joué dans la cellule après la livraison, le

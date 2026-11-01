@@ -37609,3 +37609,16 @@ renuméroté en 64532 dans une étape Alpine épinglée, une couche) ; `verify-s
 Livrée par `livrer.sh --sans-lancer` : l'image s'est chargée dans la cellule sans l'erreur d'extraction. `minio` et
 `minio-createbucket` ont été recréés seuls ; un objet existant se relit à l'identique, et `verifier.sh` est à 33/34. Les
 §2.18, §2.21 et §2.22 sont donc accomplis. `CRM-090` revient `[P]` : le constat du responsable reste à faire.
+
+### INC-326 : la cause est l'ordre de la relève ; la spécification de la migration `0142` (2026-11-01)
+
+**Observation** : `classer_message_automatiquement` (0109) recopie bien l'affaire sur les pièces du message. Mais
+`mail-sync` appelle le classement avant d'inscrire les pièces (`ingestion.py` : classement, puis `enregistrer_piece`
+pour chacune). Le diagnostic d'INC-326, « seul le classement manuel réécrit la colonne », était donc faux sur la cause,
+juste sur l'effet.
+
+**Solutions envisagées** : (1) inverser l'ordre dans `mail-sync`, mais la base resterait exposée à tout autre auteur
+d'insertion ; (2) un déclencheur avant insertion, qui fait hériter la pièce de l'affaire de son message. **Retenue :
+(2)**. L'invariant vit en base, où vivent toutes les règles de classement (`CRM-010`), et le service ne change pas. C'est
+la décision 795, « écrire et rattraper », appliquée au bon endroit. Spécification : `docs/SCHEMA.md`, « Migration
+`0142` ».

@@ -2435,6 +2435,20 @@ rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur
 channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
 `0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
 déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0142` — une pièce jointe hérite de l'affaire de son message (INC-326, décision 795)
+
+**Spécifiée le 2026-11-01.** `public.mail_attachments.card_id` recopie, pour un accès direct, l'affaire du message
+(`mail_messages.card_id`). Le classement manuel, le déclassement et le classement automatique réécrivent les pièces
+présentes au moment du geste (0070, 0109). Or la relève de `mail-sync` classe le message **avant** d'en inscrire les
+pièces : une pièce reçue naissait donc sans affaire (mesuré sur le seed : cinq pièces d'un courrier classé par la règle 1).
+**Déclencheur** `mail_attachments_card_from_message` (avant insertion, fonction `app.mail_attachments_card_from_message()`,
+`search_path` vide) : une pièce insérée **sans** `card_id` prend celui de son message ; une pièce insérée avec un `card_id`
+(l'archive d'un envoi, 0106) le garde. **Rattrapage** : toute pièce dont `card_id` est nul et dont le message est classé
+prend l'affaire du message, et rien d'autre ne change. **Invariant prouvé** : après la migration, aucune pièce ne diffère
+de son message sur `card_id`. **Aucune politique, aucun privilège** : la lecture d'une pièce suit toujours son message (0024,
+0029). Connecteur MCP : sans objet. **Retrait** : retirer le déclencheur et sa fonction ; les valeurs rattrapées sont
+exactes et restent.
+
 ### Migration `0141` — le texte extrait des pièces jointes (`CRM-074` T1, décisions 788 et 789 ; livrée en développement le 2026-10-31)
 
 `docs/SPEC-pieces-jointes.md` §3, §7. Cinq colonnes sur **`public.mail_attachments`** : `text_status` (`null`, `pending`,
