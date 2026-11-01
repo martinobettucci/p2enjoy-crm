@@ -4,11 +4,14 @@
 //       §5.27 (confirmation sur une ligne à elle), §5.28 (un seul bloc ouvert), §5.40 (commande montée et désactivée),
 //       §5.41 (retrait sans confirmation de ce qu'un formulaire repose), §5.7 ter (le rôle écrit au choix)
 // @spec CLAUDE.md §10 — aucun droit calculé : chaque geste est envoyé, et son refus traduit
+// @spec CRM-123 tranche T3 — docs/SPEC-cards.md §3.6 (points 5, 7, 8 et 9) : le préfixe des adresses d'affaire dans
+//       « Modifier », et la section « Adresses des affaires » qui régénère ; docs/DESIGN_SYSTEM.md §5.56 (adresses des
+//       affaires), §5.40 (commande montée et désactivée pendant sa confirmation) ; docs/JOURNAL.md décision 804
 //
 // LA FICHE EST RELUE APRÈS CHAQUE ÉCRITURE, JAMAIS COMPLÉTÉE LOCALEMENT (§5.21), et la relecture garde à l'écran ce
 // qu'elle relit (§5.29 tranche 2 c) : le squelette n'appartient qu'au premier chargement.
 
-import { PencilLine, Trash2, TriangleAlert, UserPlus } from 'lucide-react'
+import { PencilLine, RefreshCw, Trash2, TriangleAlert, UserPlus } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { Button } from '../components/ui/Button'
@@ -19,12 +22,14 @@ import type { ErreurDonnees } from '../lib/async'
 import {
 	attenteEnSuspens,
 	confirmationSuppressionValide,
+	exempleAdresse,
 	inviter,
 	lireAttentes,
 	lireEspaces,
 	lireMembres,
 	modifierEspace,
 	poserMembre,
+	regenererAdresses,
 	retirerAttente,
 	retirerMembre,
 	supprimerEspace,
@@ -37,7 +42,7 @@ import {
 } from '../lib/plateforme'
 import type { ClientCrm } from '../lib/supabase'
 import { CHEMIN_PLATEFORME_ESPACES } from './chemins'
-import { CLES_APPARTENANCES, CLES_ATTENTES, compter, texteRefus } from './presentation-plateforme'
+import { CLES_AFFAIRES_ADRESSES, CLES_APPARTENANCES, CLES_ATTENTES, compter, texteRefus } from './presentation-plateforme'
 import { RecherchePersonne } from './RecherchePersonne'
 import { BlocAttentes } from './BlocAttentes'
 import {
@@ -69,6 +74,7 @@ type Ouverture =
 	| { readonly type: 'ajouter-membre' }
 	| { readonly type: 'retirer-membre'; readonly idUtilisateur: string }
 	| { readonly type: 'inviter' }
+	| { readonly type: 'regenerer' }
 	| { readonly type: 'supprimer' }
 	| null
 
@@ -93,6 +99,7 @@ export function PlateformeEspace({ client }: { readonly client: ClientCrm }) {
 	const [messageMembres, setMessageMembres] = useState<Message>(null)
 	const [messageAttentes, setMessageAttentes] = useState<Message>(null)
 	const [messageIdentite, setMessageIdentite] = useState<Message>(null)
+	const [messageAdresses, setMessageAdresses] = useState<Message>(null)
 
 	useEffect(() => {
 		let vivant = true
@@ -137,6 +144,7 @@ export function PlateformeEspace({ client }: { readonly client: ClientCrm }) {
 		setMessageMembres(null)
 		setMessageAttentes(null)
 		setMessageIdentite(null)
+		setMessageAdresses(null)
 	}
 
 	return (
@@ -153,6 +161,19 @@ export function PlateformeEspace({ client }: { readonly client: ClientCrm }) {
 					relire()
 				}}
 				message={messageIdentite}
+			/>
+			<AdressesAffaires
+				client={client}
+				espace={espace}
+				ouvert={ouverture?.type === 'regenerer'}
+				onOuvrir={() => ouvrir({ type: 'regenerer' })}
+				onFermer={() => setOuverture(null)}
+				onRegenere={(nombre) => {
+					setOuverture(null)
+					setMessageAdresses({ ton: 'succes', texte: t('platform.adresses.regenerees', { affaires: compter(nombre, CLES_AFFAIRES_ADRESSES) }) })
+					relire()
+				}}
+				message={messageAdresses}
 			/>
 			<Membres
 				client={client}
@@ -276,6 +297,7 @@ function FormulaireIdentite({
 }) {
 	const [nom, setNom] = useState(espace.nom)
 	const [domaine, setDomaine] = useState(espace.domaineEntrant ?? '')
+	const [prefixe, setPrefixe] = useState(espace.prefixeAdresses)
 	const [envoi, setEnvoi] = useState(false)
 	const [refus, setRefus] = useState<RefusPlateforme | null>(null)
 	const premier = useRef<HTMLInputElement>(null)
@@ -285,7 +307,7 @@ function FormulaireIdentite({
 		evenement.preventDefault()
 		setEnvoi(true)
 		setRefus(null)
-		const issue = await modifierEspace(client, espace.id, nom, domaine)
+		const issue = await modifierEspace(client, espace.id, nom, domaine, prefixe)
 		setEnvoi(false)
 		if (issue.statut === 'refus') setRefus(issue.refus)
 		else onModifie()
@@ -311,6 +333,21 @@ function FormulaireIdentite({
 					className={`${CLASSES_CHAMP} font-mono`}
 				/>
 			</Champ>
+			{/* Aucune garde de saisie : la base normalise et juge le préfixe, l'écran traduit son refus (§5.3 ter). */}
+			<Champ id="identite-prefixe" libelle={t('platform.espaces.champ.prefixe')} aide={t('platform.espaces.champ.prefixe.aide')}>
+				<input
+					id="identite-prefixe"
+					value={prefixe}
+					onChange={(e) => setPrefixe(e.target.value)}
+					aria-describedby="identite-prefixe-aide identite-prefixe-exemple"
+					autoComplete="off"
+					spellCheck={false}
+					className={`${CLASSES_CHAMP} font-mono`}
+				/>
+			</Champ>
+			<p id="identite-prefixe-exemple" data-testid="exemple-adresse" className="text-sm text-text-2 break-all">
+				{t('platform.espace.prefixe.exemple', { adresse: exempleAdresse(prefixe, domaine) })}
+			</p>
 			{/* Une valeur qui ne se modifie plus se rend en PHRASE, jamais en champ désactivé (§5.15). */}
 			<p className="text-sm text-text-2">{t('platform.espace.slugFixe', { slug: espace.slug })}</p>
 			{refus !== null && (
@@ -325,6 +362,133 @@ function FormulaireIdentite({
 				<Button onClick={onFermer}>{t('platform.annuler')}</Button>
 			</div>
 		</form>
+	)
+}
+
+// --- Adresses des affaires (`CRM-123`) ------------------------------------------------------------------------------
+
+/**
+ * Le préfixe courant, l'exemple d'adresse, et le décompte que la base rend des affaires hors préfixe. Régénérer n'est
+ * offert que si ce décompte est non nul (§5.21) ; la confirmation vit dans le flux et dit ce que le geste coûte (§3.6
+ * point 8). La commande reste montée et désactivée pendant sa confirmation, comme la suppression de l'espace (§5.40).
+ */
+function AdressesAffaires({
+	client,
+	espace,
+	ouvert,
+	onOuvrir,
+	onFermer,
+	onRegenere,
+	message,
+}: {
+	readonly client: ClientCrm
+	readonly espace: EspacePlateforme
+	readonly ouvert: boolean
+	readonly onOuvrir: () => void
+	readonly onFermer: () => void
+	readonly onRegenere: (nombre: number) => void
+	readonly message: Message
+}) {
+	const commande = useRef<HTMLButtonElement>(null)
+	const titre = useRef<HTMLHeadingElement>(null)
+	const [envoi, setEnvoi] = useState(false)
+	const [refus, setRefus] = useState<RefusPlateforme | null>(null)
+	const rendreFocus = useRef(false)
+	useEffect(() => {
+		if (!ouvert && rendreFocus.current) {
+			rendreFocus.current = false
+			commande.current?.focus()
+		}
+	}, [ouvert])
+
+	const annuler = () => {
+		setRefus(null)
+		rendreFocus.current = true
+		onFermer()
+	}
+
+	const regenerer = async () => {
+		setEnvoi(true)
+		setRefus(null)
+		const issue = await regenererAdresses(client, espace.id)
+		setEnvoi(false)
+		if (issue.statut === 'refus') {
+			setRefus(issue.refus)
+			return
+		}
+		onRegenere(issue.valeur)
+		// La commande disparaît avec le décompte : le focus va au titre de la section, jamais au document (§5.13).
+		titre.current?.focus()
+	}
+
+	const nombre = espace.adressesARegenerer
+	const prefixe = espace.prefixeAdresses
+	return (
+		<section aria-labelledby="titre-adresses" className="flex flex-col gap-4" data-testid="adresses-affaires">
+			<h2 id="titre-adresses" ref={titre} tabIndex={-1} className="text-h3">
+				{t('platform.adresses.titre')}
+			</h2>
+			<dl className="grid gap-x-6 gap-y-2 md:grid-cols-2">
+				<div className="flex flex-col">
+					<dt className="text-sm text-text-2">{t('platform.espace.prefixe')}</dt>
+					<dd>
+						<code data-testid="prefixe-adresses">{prefixe}</code>
+					</dd>
+				</div>
+				<div className="flex flex-col">
+					<dt className="text-sm text-text-2">{t('platform.adresses.exemple')}</dt>
+					<dd className="break-all">
+						<code>{exempleAdresse(prefixe, espace.domaineEntrant ?? '')}</code>
+					</dd>
+				</div>
+			</dl>
+			{nombre === 0 ? (
+				<p className="text-sm text-text-2" data-testid="adresses-a-jour">
+					{t('platform.adresses.aJour', { prefixe })}
+				</p>
+			) : (
+				<>
+					<p role="status" data-testid="adresses-a-regenerer" className="flex items-start gap-2 rounded-sm bg-accent-soft text-accent-on-soft px-3 py-2 text-sm">
+						<TriangleAlert aria-hidden="true" size={16} className="shrink-0 mt-[2px]" />
+						{nombre === 1 ? t('platform.adresses.aRegenerer.un', { prefixe }) : t('platform.adresses.aRegenerer.plusieurs', { n: String(nombre), prefixe })}
+					</p>
+					<div>
+						<Button ref={commande} taille="compacte" disabled={ouvert} onClick={onOuvrir} data-testid="regenerer-adresses">
+							<RefreshCw aria-hidden="true" size={16} />
+							{t('platform.adresses.regenerer')}
+						</Button>
+					</div>
+				</>
+			)}
+			{ouvert && nombre > 0 && (
+				<div
+					role="group"
+					aria-labelledby="question-regeneration"
+					onKeyDown={(e) => e.key === 'Escape' && annuler()}
+					data-testid="confirmation-regeneration"
+					className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4"
+				>
+					<p id="question-regeneration" className="font-medium">
+						{nombre === 1 ? t('platform.adresses.question.un') : t('platform.adresses.question.plusieurs', { n: String(nombre) })}
+					</p>
+					<p className="text-sm text-text-2">{t('platform.adresses.effet', { prefixe })}</p>
+					<p className="text-sm text-text-2">{t('platform.adresses.consequence')}</p>
+					{refus !== null && (
+						<p role="alert" className="rounded-sm bg-danger-soft text-danger-on-soft px-3 py-2 text-sm">
+							{texteRefus(refus)}
+						</p>
+					)}
+					<div className="flex flex-wrap gap-2">
+						{/* Destructif : le geste rompt les adresses que les correspondants connaissent (§5.79, même motif). */}
+						<Button variante="destructif" autoFocus disabled={envoi} onClick={() => void regenerer()}>
+							{envoi ? t('platform.envoi') : t('platform.adresses.confirmer')}
+						</Button>
+						<Button onClick={annuler}>{t('platform.annuler')}</Button>
+					</div>
+				</div>
+			)}
+			<BlocMessage message={message} testId="message-adresses" />
+		</section>
 	)
 }
 

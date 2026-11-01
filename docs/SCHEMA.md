@@ -68,6 +68,7 @@ Cloisonnement de premier niveau.
 | `name` | `text` | non nul |
 | `slug` | `text` | unique, non nul |
 | `inbound_domain` | `text` | domaine des adresses de card, ex. `crm.p2enjoy.studio` |
+| `card_address_prefix` | `text` | non nul, défaut `'c-'` ; `check` : 1 à 24 caractères parmi `a-z 0-9 . _ + -`, commence par une lettre ou un chiffre, sans `..` — préfixe des adresses d'affaire, `CRM-123` (`docs/SPEC-cards.md` §3.6), migration `0144` |
 | `settings` | `jsonb` | défaut `'{}'` |
 | `created_at`, `updated_at` | `timestamptz` | |
 
@@ -617,7 +618,7 @@ jour par `app.can_write_card` ; insertion par un membre de l'espace, sous l'inva
 
 `email_local_part` est généré par trigger sous la forme `c-<8 caractères base32>`, non devinable
 afin qu'une adresse divulguée ne permette pas d'énumérer les autres cards. L'adresse complète
-est `email_local_part || '@' || workspaces.inbound_domain`. **Révisé par `CRM-123`, spécifié et non encore livré**
+est `email_local_part || '@' || workspaces.inbound_domain`. **Révisé par `CRM-123`, migration `0144`**
 (décision 804, `docs/SPEC-cards.md` §3.6) : le préfixe `c-` devient `workspaces.card_address_prefix`, `'c-'` par défaut,
 et `platform_regenerate_card_addresses` réécrit les adresses hors du préfixe courant.
 
@@ -2437,6 +2438,27 @@ rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur
 channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
 `0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
 déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0144` — le préfixe des adresses d'affaire, réglé par espace (`CRM-123` T2, décision 804 ; livrée en développement le 2026-11-01)
+
+`docs/SPEC-cards.md` §3.6. **`public.workspaces.card_address_prefix`** (`text`, non nul, `'c-'` par défaut ; `check`
+`workspaces_card_address_prefix_check` : 1 à 24 caractères parmi `a-z 0-9 . _ + -`, commençant par une lettre ou un
+chiffre, sans `..`). Les espaces existants reçoivent `c-` : **aucune adresse ne change à la migration**.
+**`app.card_address_prefix_normalize(text)`** (immuable) réduit en minuscules, retire les blancs et lève `22023`
+`invalid_card_address_prefix` ; **`app.card_address_has_prefix(text, text)`** (immuable) reconnaît une partie locale faite
+EXACTEMENT du préfixe et des huit caractères du jeton ; **`app.card_address_draw(text)`** (`SECURITY DEFINER`) est le tirage
+de `0011`, au préfixe donné. Le trigger `cards_generer_email_local_part` lit le préfixe de l'espace de la nouvelle affaire.
+**`cards_email_local_part_check`** devient `^[a-z0-9][a-z0-9._+-]{0,23}[0-9abcdefghjkmnpqrstvwxyz]{8}$`. Le `check` de
+`plateforme_journal.geste` admet `card_addresses_regenerated`. **`plateforme_modifier_espace`** passe à quatre arguments
+(`p_card_address_prefix text default null`, l'ancienne signature retirée) ; **`plateforme_espaces`** est recréée avec
+`card_address_prefix` et `card_addresses_to_regenerate` ; **`public.platform_regenerate_card_addresses(uuid)`**
+(`SECURITY DEFINER`, superadministrateur seul, exécutable par `authenticated` et `service_role`) réécrit les affaires hors
+du préfixe courant et rend leur nombre. Le déclencheur `workspaces_audit` suit la nouvelle colonne. Le classement et le
+`Reply-To` ne changent pas : ils composent l'adresse stockée. **Retrait** : rejouer les définitions de `0089`
+(`plateforme_espaces`, `plateforme_modifier_espace` à trois arguments) et de `0011` (trigger, contrainte de la card), le
+`check` du journal de `0115`, puis retirer les trois fonctions d'appui, la fonction de régénération et la colonne —
+**après** avoir ramené au préfixe `c-` toute adresse régénérée, faute de quoi la contrainte de `0011` refuse sa
+réapplication.
+
 ### Migration `0143` — les refus « introuvable » rendent HTTP 404 (`CRM-120` T2, décisions 762 et 797 ; livrée en développement le 2026-11-01)
 
 `docs/SPEC-refus-404.md`. **`app.raise_http_error(p_status integer, p_message text)`** (`search_path` vide ; exécutable

@@ -17918,7 +17918,7 @@ le 2026-11-01, décision 800).
 
 ## Demande du 2026-11-01 — le préfixe des adresses d'affaire (décision 804)
 
-### CRM-123 — Régler par espace le préfixe des adresses d'affaire, et régénérer les adresses existantes `[~]`
+### CRM-123 — Régler par espace le préfixe des adresses d'affaire, et régénérer les adresses existantes `[P]`
 Demande et arbitrage du responsable du 2026-11-01 (décision 804).
 
 **Problème.** Le préfixe `c-` est codé en dur. Une messagerie qui ne délègue qu'un motif d'alias (`app-*`) sur son
@@ -17942,13 +17942,22 @@ Question du connecteur : sans objet (décision 804).
 
 - [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-01 : `docs/SPEC-cards.md` §3.6, renvois de
       `docs/SCHEMA.md` §5, `docs/SPEC-mail-subsystem.md` §3 et `docs/SPEC-plateforme.md` §7.3.
-- [@] **T2 — base** : migration, pgTAP, harnais, preuves existantes révisées.
-      *Prise en charge : session interactive 2026-11-01 14:36 UTC depuis 2026-11-01 14:36 UTC — état avant : [ ]*
-- [@] **T3 — écran et preuves de bout en bout** : fiche de l'espace, unitaires, E2E de l'écran et E2E mail, captures,
-      manuel, seed, changelog, contrat de déploiement.
-      *Prise en charge : session interactive 2026-11-01 14:36 UTC depuis 2026-11-01 14:36 UTC — état avant : [ ]*
-- [ ] **T4 — livraison en production et constat** : alias `app-*` en place, préfixe réglé, régénération, un message
-      reçu à une adresse `app-…` et classé.
+- [x] **T2 — base** : migration, pgTAP, harnais, preuves existantes révisées. **Fait le 2026-11-01** : migration `0144`
+      appliquée par le vrai runner (registre à 144, passage suivant : 0 à appliquer), rejouée sur son état sans écart
+      d'empreinte (dix catégories) ; pgTAP `0134` 45/45 et suite entière 124 fichiers verte, la `0001` révisée (la
+      colonne rejoint `workspaces`, décision 51) ; types régénérés et témoin des fonctions révisé ;
+      `scripts/verify-prefixe-adresses.sh` 29/29, ses trois dégradations rouges et la restauration constatée ;
+      `scripts/verify-plateforme.sh` 34/34, sa dégradation de `plateforme_espaces` prise dans `0144` et — défaut antérieur
+      trouvé en le rejouant — celle de `plateforme_poser_superadmin` dans `0143`, qui l'avait redéfinie.
+- [x] **T3 — écran et preuves de bout en bout** : fiche de l'espace, unitaires, E2E de l'écran et E2E mail, captures,
+      manuel, seed, changelog, contrat de déploiement. **Fait le 2026-11-01** : unitaires 5166/5166 (dont 28 de l'écran et
+      26 de la bibliothèque) ; API `e2e/api/prefixe-adresses.spec.ts` 2/2 aux vrais jetons (lectrice, administratrice
+      d'espace et anonyme refusés ; parcours du superadministrateur) ; interface `e2e/ui/prefixe-adresses.spec.ts` 2/2,
+      captures `docs/captures/CRM-123/` observées aux quatre paliers ; mail : un message réellement envoyé à une adresse
+      `app-…` régénérée est classé dans son affaire, l'espace seedé rendu à l'identique ; manuel §9.2 et §32.6 avec trois
+      images, `scripts/verify-manual.sh` 167/167 ; `docs/PROD_MIGRATIONS.md` §2.2 et §2.29.
+- [P] **T4 — livraison en production et constat** : alias `app-*` en place, préfixe réglé, régénération, un message
+      reçu à une adresse `app-…` et classé (`docs/PROD_MIGRATIONS.md` §2.29).
 
 ## Correctif arbitré le 2026-11-01 — INC-335 (décision 805)
 

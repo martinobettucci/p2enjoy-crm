@@ -499,7 +499,53 @@
 				},
 				{
 					"type": "text",
-					"text": ". Elle est tirée au hasard sur un espace d'environ mille milliards de possibilités :\nune adresse divulguée ne permet donc pas de deviner celles des autres affaires."
+					"text": ". Elle est tirée au hasard sur un espace d'environ mille milliards de possibilités :\nune adresse divulguée ne permet donc pas de deviner celles des autres affaires. Le début de l'adresse, "
+				},
+				{
+					"type": "code",
+					"text": "c-"
+				},
+				{
+					"type": "text",
+					"text": ", est le\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "préfixe"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de votre espace : un superadministrateur peut le régler pour suivre votre serveur de messagerie — "
+				},
+				{
+					"type": "code",
+					"text": "app-"
+				},
+				{
+					"type": "text",
+					"text": "\npar exemple ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "la-plateforme-espaces-membres-et-superadministrateurs",
+						"anchor": "modifier-ou-supprimer-un-espace"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§32.6"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		},
@@ -526,7 +572,20 @@
 				},
 				{
 					"type": "text",
-					"text": " Le produit refuse toute tentative de réécrire\nl'adresse d'une affaire, y compris à un administrateur, et y compris si l'on s'adresse directement\nà l'API sans passer par l'écran. Sans ce refus, il suffirait de remplacer une adresse tirée au\nhasard par une adresse triviale pour que n'importe qui puisse écrire à l'affaire. L'adresse se\n"
+					"text": " Le produit refuse toute tentative de réécrire\nl'adresse d'une affaire, y compris à un administrateur, et y compris si l'on s'adresse directement\nà l'API sans passer par l'écran. Sans ce refus, il suffirait de remplacer une adresse tirée au\nhasard par une adresse triviale pour que n'importe qui puisse écrire à l'affaire. Seule la\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "régénération des adresses"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " d'un espace, par un superadministrateur, en tire de nouvelles, au hasard elles aussi. L'adresse se\n"
 				},
 				{
 					"type": "strong",

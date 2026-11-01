@@ -4274,6 +4274,7 @@ export type Database = {
       }
       workspaces: {
         Row: {
+          card_address_prefix: string
           created_at: string
           id: string
           inbound_domain: string | null
@@ -4283,6 +4284,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          card_address_prefix?: string
           created_at?: string
           id?: string
           inbound_domain?: string | null
@@ -4292,6 +4294,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          card_address_prefix?: string
           created_at?: string
           id?: string
           inbound_domain?: string | null
@@ -4947,6 +4950,8 @@ export type Database = {
         Returns: {
           administrateurs: number
           attentes: number
+          card_address_prefix: string
+          card_addresses_to_regenerate: number
           cree_le: string
           domaine_entrant: string
           id: string
@@ -4981,7 +4986,12 @@ export type Database = {
         }[]
       }
       plateforme_modifier_espace: {
-        Args: { p_domaine_entrant: string; p_id: string; p_nom: string }
+        Args: {
+          p_card_address_prefix?: string
+          p_domaine_entrant: string
+          p_id: string
+          p_nom: string
+        }
         Returns: undefined
       }
       plateforme_poser_membre: {
@@ -5033,6 +5043,10 @@ export type Database = {
           nom: string
           superadmin: boolean
         }[]
+      }
+      platform_regenerate_card_addresses: {
+        Args: { p_workspace_id: string }
+        Returns: number
       }
       previsualiser_exigence: {
         Args: {

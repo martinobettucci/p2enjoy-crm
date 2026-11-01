@@ -9,9 +9,12 @@
 // @verifies CRM-114 T4 — docs/SPEC-organisations.md §5 (la famille `organizations`, envoyée entre `contacts` et `budgets`)
 // @verifies CRM-118 T2.a — docs/SPEC-mcp.md §9.2 undecies (la famille `workflows`, envoyée entre `structure` et `affaires`)
 // @verifies CRM-109 (docs/BACKLOG.md) — tranche T3 : `lireAttentes` lit la trace du dernier refus (docs/SPEC-refus-admission.md §3)
+// @verifies CRM-123 (docs/BACKLOG.md) — tranche T3 : le préfixe et le décompte lus, le préfixe envoyé tel que saisi, la
+//           régénération et son nombre, l'exemple d'adresse, le refus `invalid_card_address_prefix` et le geste
+//           `card_addresses_regenerated` (docs/SPEC-cards.md §3.6 points 2, 5, 7 et 9 ; docs/DESIGN_SYSTEM.md §5.56)
 
 import { describe, expect, it } from 'vitest'
-import { CLES_APPARTENANCES, compter, detailJournal, libelleActeur, libelleGeste, texteRefus } from '../app/presentation-plateforme'
+import { CLES_AFFAIRES_ADRESSES, CLES_APPARTENANCES, compter, detailJournal, libelleActeur, libelleGeste, texteRefus } from '../app/presentation-plateforme'
 import {
 	PAGE_JOURNAL,
 	attenteEnSuspens,
@@ -19,10 +22,13 @@ import {
 	confirmationSuppressionValide,
 	creerEspace,
 	curseurSuivant,
+	exempleAdresse,
 	lireAttentes,
 	lireEspaces,
 	lireEstSuperadmin,
 	lireUtilisateurs,
+	modifierEspace,
+	regenererAdresses,
 	lireComptesMcp,
 	lireFicheMcp,
 	lireJournalMcp,
@@ -107,15 +113,51 @@ describe('appels', () => {
 	it('lit les espaces et rend un domaine absent comme `null`, jamais une chaîne vide', async () => {
 		const etat = await lireEspaces(
 			client(() => ({
-				data: [{ id: 'w1', nom: 'Atelier', slug: 'atelier', domaine_entrant: null, membres: 0, administrateurs: 0, attentes: 1 }],
+				data: [
+					{
+						id: 'w1', nom: 'Atelier', slug: 'atelier', domaine_entrant: null, membres: 0, administrateurs: 0, attentes: 1,
+						card_address_prefix: 'app-', card_addresses_to_regenerate: 12,
+					},
+				],
 				error: null,
 				status: 200,
 			})),
 		)
 		expect(etat).toEqual({
 			statut: 'pret',
-			donnees: [{ id: 'w1', nom: 'Atelier', slug: 'atelier', domaineEntrant: null, membres: 0, administrateurs: 0, attentes: 1 }],
+			donnees: [
+				{
+					id: 'w1', nom: 'Atelier', slug: 'atelier', domaineEntrant: null, membres: 0, administrateurs: 0, attentes: 1,
+					prefixeAdresses: 'app-', adressesARegenerer: 12,
+				},
+			],
 		})
+	})
+
+	// `CRM-123` (docs/SPEC-cards.md §3.6 points 2, 5 et 7).
+	it('envoie le préfixe tel que saisi — la base le normalise et le juge — et traduit son refus', async () => {
+		const appels: Appel[] = []
+		const issue = await modifierEspace(
+			client(() => ({ data: null, error: { message: 'invalid_card_address_prefix' }, status: 400 }), appels),
+			'w1',
+			'Atelier',
+			'',
+			' APP* ',
+		)
+		expect(appels).toEqual([
+			{ nom: 'plateforme_modifier_espace', args: { p_id: 'w1', p_nom: 'Atelier', p_domaine_entrant: null, p_card_address_prefix: ' APP* ' } },
+		])
+		expect(issue).toEqual({ statut: 'refus', refus: 'invalid_card_address_prefix' })
+		expect(texteRefus('invalid_card_address_prefix')).toContain('minuscules')
+	})
+
+	it('régénère par la fonction de la base et rend le nombre d\'affaires réécrites', async () => {
+		const appels: Appel[] = []
+		expect(await regenererAdresses(client(() => ({ data: 12, error: null, status: 200 }), appels), 'w1')).toEqual({ statut: 'ok', valeur: 12 })
+		expect(appels).toEqual([{ nom: 'platform_regenerate_card_addresses', args: { p_workspace_id: 'w1' } }])
+		expect(
+			await regenererAdresses(client(() => ({ data: null, error: { message: 'reserve_aux_superadministrateurs' }, status: 403 })), 'w1'),
+		).toEqual({ statut: 'refus', refus: 'reserve_aux_superadministrateurs' })
 	})
 
 	// `CRM-109` T3 (docs/SPEC-refus-admission.md §3, §5) : `plateforme_attentes` rend la trace du dernier refus.
@@ -307,5 +349,22 @@ describe('le connecteur MCP (CRM-103 T2)', () => {
 		expect(curseurSuivantMcp(etat.statut === 'pret' ? etat.donnees : [])).toBe(null)
 		const pleine = Array.from({ length: 50 }, (_, i) => ({ id: 100 - i, nom: '', outil: '', espaceNom: null, issue: null, dureeMs: 0, creeLe: '' }))
 		expect(curseurSuivantMcp(pleine)).toBe(51)
+	})
+})
+
+// `CRM-123` (docs/SPEC-cards.md §3.6 point 9 ; docs/DESIGN_SYSTEM.md §5.56) : l'exemple d'adresse et le journal.
+describe('adresses des affaires', () => {
+	it('compose l\'exemple comme la base rangera le préfixe, avec le domaine quand il y en a un', () => {
+		expect(exempleAdresse(' APP- ', 'Exemple.FR ')).toBe('app-xxxxxxxx@exemple.fr')
+		expect(exempleAdresse('c-', '')).toBe('c-xxxxxxxx')
+		expect(exempleAdresse('crm+', 'p2enjoy.fr')).toBe('crm+xxxxxxxx@p2enjoy.fr')
+	})
+
+	it('nomme le geste de régénération et accorde son détail par clé', () => {
+		expect(libelleGeste('card_addresses_regenerated')).toBe('Adresses d’affaire régénérées')
+		expect(detailJournal(entree('card_addresses_regenerated', { card_address_prefix: 'app-', count: 12 }))).toBe('12 adresses au préfixe «\u00a0app-\u00a0»')
+		expect(detailJournal(entree('card_addresses_regenerated', { card_address_prefix: 'app-', count: 1 }))).toBe('1 adresse au préfixe «\u00a0app-\u00a0»')
+		expect(compter(1, CLES_AFFAIRES_ADRESSES)).toBe('une affaire')
+		expect(compter(3, CLES_AFFAIRES_ADRESSES)).toBe('3 affaires')
 	})
 })

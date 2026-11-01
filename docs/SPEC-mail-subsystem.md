@@ -73,8 +73,8 @@ Sa perte rend les secrets définitivement indéchiffrables — voir `docs/DAT.md
 ## 3. Adresse d'une card
 
 `email_local_part` est généré à la création sous la forme `c-<8 caractères base32>` et unique
-globalement. L'adresse complète est `<email_local_part>@<workspace.inbound_domain>`. **`CRM-123`, spécifié et non
-encore livré** (décision 804, `docs/SPEC-cards.md` §3.6) : le préfixe se règle par espace, pour suivre un motif d'alias
+globalement. L'adresse complète est `<email_local_part>@<workspace.inbound_domain>`. **`CRM-123`, livré en développement le
+2026-11-01** (décision 804, `docs/SPEC-cards.md` §3.6) : le préfixe se règle par espace, pour suivre un motif d'alias
 du serveur (`app-*`) quand le domaine n'est pas réservé au CRM. Une régénération explicite l'applique aux affaires
 existantes.
 

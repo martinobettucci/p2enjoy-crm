@@ -45,6 +45,16 @@ d'exécuter le code attendu.
 - Sous 768 px, le nom de la personne connectée passe en lecture d'écran seule, et l'avatar reste. L'icône « Aide » faisait
   passer la cloche et l'identité sur une deuxième ligne de commandes.
 
+### `CRM-123` — le préfixe des adresses d'affaire se règle par espace, et une régénération l'applique
+
+- Sur la fiche d'un espace (Plateforme), « Modifier » règle le **préfixe des adresses d'affaire** — `app-` par exemple —,
+  pour suivre l'alias que le serveur de messagerie remet au CRM. Le préfixe `c-` était fixe : une messagerie qui ne
+  délègue qu'un motif d'alias sur son domaine ne remettait rien aux affaires.
+- La section « Adresses des affaires » dit combien d'affaires ont une adresse hors du préfixe courant, et **« Régénérer
+  les adresses »** leur en tire de nouvelles, après une confirmation qui dit ce que le geste coûte. Réservé aux
+  superadministrateurs, refusé en base à tout autre.
+- Migration `0144` : aucune adresse ne change à son application (`docs/PROD_MIGRATIONS.md` §2.29).
+
 ### `CRM-122` — les captures versionnées ne changent plus qu'à la demande (outillage de test)
 
 - `npm run e2e:ui` écrit ses captures dans `e2e/output/<unité>/` et ne les recopie dans `docs/captures/` que pour

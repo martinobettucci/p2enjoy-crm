@@ -9,6 +9,8 @@
 // connecteur accordé à Farida Nowak le temps d'une image lui est retiré par la même grille. L'épilogue retire l'espace
 // par la clé de service si le test s'est arrêté avant.
 
+// @spec CRM-123 (docs/BACKLOG.md) — tranche T3 : les images du préfixe des adresses d'affaire et de la régénération
+//       (docs/manual.md §32.6 ; docs/SPEC-cards.md §3.6 point 9 ; docs/DESIGN_SYSTEM.md §5.56)
 import { expect, test } from '@playwright/test'
 import { ORIGINE_MCP } from '../mcp/client'
 import { illustrer } from './illustrer'
@@ -68,7 +70,7 @@ test('la plateforme ouverte par une administratrice d’espace', async ({ page }
 	await illustrer(page, { chapitre: PLATEFORME, section: P.ouvrir, nom: 'acces-reserve', cibles: [refus] })
 })
 
-test('un espace créé, une attente en suspens, puis l’espace supprimé', async ({ page }) => {
+test('un espace créé, une attente en suspens, puis l’espace supprimé', async ({ page, request }) => {
 	await connecterAvecLeLabs(page, SABINE)
 	await page.goto('/plateforme/espaces')
 	const nouvel = page.getByRole('button', { name: 'Nouvel espace' })
@@ -99,6 +101,26 @@ test('un espace créé, une attente en suspens, puis l’espace supprimé', asyn
 	await ligne.getByRole('link').first().click()
 	await expect(page).toHaveURL(new RegExp(`/plateforme/espaces/${SLUG}$`, 'u'))
 	await illustrer(page, { chapitre: PLATEFORME, section: P.supprimer, nom: 'modifier', cibles: [page.getByRole('button', { name: /^Modifier/ }).first()] })
+
+	// `CRM-123` : deux affaires posées par la clé de service, puis le préfixe réglé à l'écran et la régénération confirmée.
+	const [espace] = await lireService<{ id: string }[]>(request, `workspaces?slug=eq.${SLUG}&select=id`)
+	await service(request, 'post', 'cards', [
+		{ workspace_id: espace!.id, title: 'Atelier Lumière — vitrine' },
+		{ workspace_id: espace!.id, title: 'Atelier Lumière — catalogue' },
+	])
+	await page.reload()
+	await page.getByRole('button', { name: /^Modifier/ }).first().click()
+	const identite = page.getByTestId('formulaire-identite')
+	await identite.getByLabel('Préfixe des adresses d’affaire').fill('app-')
+	await illustrer(page, { chapitre: PLATEFORME, section: P.supprimer, nom: 'prefixe', cibles: [identite.locator('label[for="identite-prefixe"]'), identite.getByLabel('Préfixe des adresses d’affaire'), identite.getByTestId('exemple-adresse')] })
+	await identite.getByRole('button', { name: 'Enregistrer' }).click()
+	const adresses = page.getByTestId('adresses-affaires')
+	await expect(adresses.getByTestId('adresses-a-regenerer')).toBeVisible()
+	await illustrer(page, { chapitre: PLATEFORME, section: P.supprimer, nom: 'adresses-a-regenerer', cibles: [adresses.getByRole('heading', { name: 'Adresses des affaires' }), adresses.getByTestId('adresses-a-regenerer'), adresses.getByRole('button', { name: 'Régénérer les adresses' })] })
+	await adresses.getByRole('button', { name: 'Régénérer les adresses' }).click()
+	await illustrer(page, { chapitre: PLATEFORME, section: P.supprimer, nom: 'regenerer', cibles: [page.getByTestId('confirmation-regeneration')] })
+	await page.getByTestId('confirmation-regeneration').getByRole('button', { name: 'Régénérer', exact: true }).click()
+	await expect(page.getByTestId('message-adresses')).toContainText('Adresses régénérées')
 	await page.getByTestId('supprimer-espace').click()
 	await page.getByLabel(/Saisissez/u).fill(SLUG)
 	const confirmer = page.getByRole('button', { name: 'Supprimer définitivement' })
@@ -116,6 +138,9 @@ test('la fiche de l’espace du seed : membres, ajout, attentes', async ({ page 
 	await page.getByTestId('ajouter-membre').click()
 	const formMembre = page.getByTestId('formulaire-membre')
 	await formMembre.getByLabel('Personne', { exact: true }).fill('Sa')
+	// `CRM-123` : la section « Adresses des affaires » allonge la fiche ; un défilement minimal posait le bas du formulaire
+	// au bord exact de la fenêtre, et l'arrondi le jugeait débordant. Le formulaire est amené au centre.
+	await formMembre.evaluate((element) => element.scrollIntoView({ block: 'center' }))
 	await illustrer(page, { chapitre: PLATEFORME, section: P.membres, nom: 'ajouter-un-membre', cibles: [formMembre] })
 	await page.keyboard.press('Escape')
 	const attentes = page.getByTestId('ligne-attente').first()

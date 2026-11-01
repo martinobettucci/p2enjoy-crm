@@ -161,6 +161,8 @@ suffit pas »). La lecture passe par `plateforme_superadmins()` et l'écriture p
 - appartenances : `membre_pose`, `membre_retire` ;
 - attentes : `attente_inscrite`, `attente_retiree` ;
 - connecteur : `mcp_droits_poses` (`docs/SPEC-mcp.md` §8).
+- adresses d'affaire : `card_addresses_regenerated`, cible `{card_address_prefix, count}` — `CRM-123`, migration `0144`
+  (`docs/SPEC-cards.md` §3.6 point 7). *La purge `logs_purged` de `CRM-072` figure aussi dans le `check`.*
 
 **Règles de la table :** ajout seul. Même fermeture que `superadmins` ; la lecture passe par
 `plateforme_journal_liste()`. Rien ne la purge dans cette unité. La rétention fait partie de
@@ -211,14 +213,16 @@ code `P0002` et le message ; en base, le refus se lit `SQLSTATE = 'PGRST'`. Avan
 | `23505` | `identifiant_pris` | slug déjà employé |
 | `23514` | `last_workspace_admin` | l'invariant existant (`0021`), **remonté tel quel** |
 | `P0001` | `dernier_superadministrateur` | retrait de la dernière ligne de `superadmins` |
+| `22023` | `invalid_card_address_prefix` | préfixe d'adresse d'affaire hors forme — `CRM-123`, `docs/SPEC-cards.md` §3.6 point 2 |
 
 ### 6.2 Espaces
 
 | Fonction | Effet |
 |---|---|
-| `plateforme_espaces() returns table(id, nom, slug, domaine_entrant, membres, administrateurs, attentes, cree_le)` | **Tous** les espaces, triés par nom puis par slug, avec leurs compteurs |
+| `plateforme_espaces() returns table(id, nom, slug, domaine_entrant, membres, administrateurs, attentes, cree_le, card_address_prefix, card_addresses_to_regenerate)` | **Tous** les espaces, triés par nom puis par slug, avec leurs compteurs. *Depuis `CRM-123`* : le préfixe des adresses d'affaire et le nombre d'affaires hors de ce préfixe |
+| `platform_regenerate_card_addresses(p_workspace_id uuid) returns integer` | `CRM-123`, migration `0144` : tire une nouvelle adresse au préfixe courant pour chaque affaire de l'espace qui ne le porte pas, corbeille comprise ; rend leur nombre. Journal : `card_addresses_regenerated`, seulement si une adresse a changé (`docs/SPEC-cards.md` §3.6 point 7) |
 | `plateforme_creer_espace(p_nom text, p_slug text, p_domaine_entrant text default null) returns uuid` | Crée l'espace, `settings = '{}'`. **Aucun membre ni workflow** : le premier administrateur, inscrit ensuite (§6.3, §6.4), est accueilli par le guide de démarrage (`CRM-094`), qui pose le workflow de départ. Journal : `espace_cree` |
-| `plateforme_modifier_espace(p_id uuid, p_nom text, p_domaine_entrant text) returns void` | Renomme l'espace, ou change ou retire son domaine entrant. **Le slug ne se modifie pas** : il nomme les dossiers IMAP et les adresses d'amorçage. C'est le même motif que `docs/SPEC-administration-arborescence.md` §5.3. Journal : `espace_modifie`, avant et après |
+| `plateforme_modifier_espace(p_id uuid, p_nom text, p_domaine_entrant text, p_card_address_prefix text default null) returns void` | Renomme l'espace, ou change ou retire son domaine entrant. **Le slug ne se modifie pas** : il nomme les dossiers IMAP et les adresses d'amorçage. C'est le même motif que `docs/SPEC-administration-arborescence.md` §5.3. Journal : `espace_modifie`, avant et après. *Depuis `CRM-123` (migration `0144`)* : règle aussi le préfixe des adresses d'affaire — `null` le laisse tel quel —, et le journal porte le préfixe avant et après |
 | `plateforme_supprimer_espace(p_id uuid, p_slug_confirme text) returns void` | Exige `p_slug_confirme = slug`, puis supprime l'espace. La cascade et l'ajournement des contraintes viennent de `0085` (décision 619). Journal : `espace_supprime` avec nom, slug et compteurs. **Irréversible** : seule la restauration d'une sauvegarde le défait (`CRM-080`), et l'écran le dit (§7.4) |
 
 ### 6.3 Appartenances
@@ -295,7 +299,7 @@ CRM ne le connaissant que par leur jeton (§10). Une phrase sous le titre le dit
 - **En-tête :** le nom et le slug, puis « Modifier » (nom et domaine entrant, formulaire **dans le
   flux** — le design system n'admet aucune modale, §5.13) et « Supprimer l'espace » (zone de danger,
   en bas de fiche).
-- **`CRM-123`, spécifié et non encore livré** (décision 804, `docs/SPEC-cards.md` §3.6 points 5, 7 et 9) :
+- **`CRM-123`** (décision 804, `docs/SPEC-cards.md` §3.6 points 5, 7 et 9 ; forme au `docs/DESIGN_SYSTEM.md` §5.56) :
   - « Modifier » reçoit le préfixe des adresses d'affaire, passé par `plateforme_modifier_espace(…,
     p_card_address_prefix)` ;
   - une section « Adresses des affaires » donne le décompte des affaires hors du préfixe courant ;

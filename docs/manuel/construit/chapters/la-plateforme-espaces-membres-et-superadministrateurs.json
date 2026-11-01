@@ -794,6 +794,27 @@
 			"height": 72
 		},
 		{
+			"type": "image",
+			"src": "la-plateforme-espaces-membres-et-superadministrateurs/prefixe.jpg",
+			"alt": "Le champ « Préfixe des adresses d’affaire » du formulaire « Modifier », et l'exemple d'adresse sous lui",
+			"width": 1158,
+			"height": 177
+		},
+		{
+			"type": "image",
+			"src": "la-plateforme-espaces-membres-et-superadministrateurs/adresses-a-regenerer.jpg",
+			"alt": "La section « Adresses des affaires » : le nombre d'affaires hors du préfixe, et « Régénérer les adresses »",
+			"width": 1192,
+			"height": 221
+		},
+		{
+			"type": "image",
+			"src": "la-plateforme-espaces-membres-et-superadministrateurs/regenerer.jpg",
+			"alt": "La confirmation de la régénération : ce que le geste coûte, puis « Régénérer »",
+			"width": 1192,
+			"height": 226
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -807,8 +828,189 @@
 				},
 				{
 					"type": "text",
-					"text": " change le nom et le domaine entrant d'un espace. Son identifiant court ne change pas."
+					"text": " change le nom, le domaine entrant et le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Préfixe des adresses d’affaire »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " d'un espace. Son\nidentifiant court ne change pas."
 				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les adresses des affaires."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une affaire reçoit une adresse faite du préfixe de son espace, de huit caractères tirés\nau hasard, puis du domaine entrant : "
+				},
+				{
+					"type": "code",
+					"text": "app-3p55qdgw@votre-domaine.fr"
+				},
+				{
+					"type": "text",
+					"text": ". Le préfixe vaut "
+				},
+				{
+					"type": "code",
+					"text": "c-"
+				},
+				{
+					"type": "text",
+					"text": " par défaut. Réglez-le sur le\nmotif que votre serveur de messagerie remet au CRM — un alias "
+				},
+				{
+					"type": "code",
+					"text": "app-*"
+				},
+				{
+					"type": "text",
+					"text": " vers la boîte système, par exemple —, sans quoi\nles messages envoyés aux affaires n'arrivent nulle part."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Le préfixe"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " s'écrit en minuscules, chiffres, points, tirets, « + » ou « _ », de 1 à 24 caractères, et commence par\nune lettre ou un chiffre. Sous le champ, l'"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "exemple"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " montre la forme qu'aura une adresse."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Changer le préfixe ne vaut que pour les affaires créées ensuite."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " La section "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Adresses des affaires »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " de la\nfiche dit combien d'affaires ont encore une adresse à l'ancien préfixe."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Régénérer les adresses »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " leur en donne une nouvelle, au préfixe courant — affaires en corbeille comprises. Une\nconfirmation dit ce que cela coûte : un message écrit à une "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "ancienne"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " adresse ne sera plus rangé dans l'affaire.\nLes réponses aux messages déjà rangés le seront encore, tant que votre serveur remet l'ancien motif au CRM : gardez\ndonc l'ancien alias le temps que les échanges en cours se terminent. Les messages déjà rangés ne changent pas\nd'affaire. Une affaire qui porte déjà le préfixe courant garde son adresse."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Dans l'ordre :"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " créez l'alias du nouveau préfixe sur votre serveur, réglez le préfixe, puis régénérez."
+							}
+						]
+					}
+				]
 			]
 		},
 		{
@@ -1505,6 +1707,26 @@
 										"text": "Changer l'identifiant court d'un espace."
 									}
 								]
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Choisir l'adresse d'une affaire en particulier"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : elle est toujours tirée au hasard, après le préfixe."
 							}
 						]
 					}

@@ -1,3 +1,4 @@
+// @verifies CRM-123 (docs/BACKLOG.md) — tranche T2 : `platform_regenerate_card_addresses` au témoin des fonctions (docs/SPEC-cards.md §3.6 point 7)
 // @verifies CRM-073 (docs/BACKLOG.md) — tranche T1 : les deux tables et les cinq fonctions des webhooks aux témoins (docs/SPEC-webhooks.md §4)
 // @verifies CRM-071 (docs/BACKLOG.md) — tranche T6 : `import_cards` au témoin des fonctions (docs/SPEC-vues-import-export.md §6.3 bis)
 // @verifies CRM-071 (docs/BACKLOG.md) — tranche T4 : `export_cards` et `export_contacts` au témoin des fonctions
@@ -1159,7 +1160,9 @@ type _vueDerivationColonnes = Expect<
 // `CRM-074` TRANCHE T1 ajoute `claim_attachment_texts` et `record_attachment_text`, réservées à la clé de service
 // (docs/SPEC-pieces-jointes.md §3). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `p_status` est une liste fermée — `extracted`, `empty`,
 // `unsupported`, `failed`, `retry` (`22023 invalid_text_status`) —, une pièce non prise rend `P0002 attachment_not_found`.
-// Le compte s'accroît de trois.
+// Le compte s'accroît de trois. `0144` de `CRM-123` TRANCHE T2 ajoute `platform_regenerate_card_addresses` (superadministrateur
+// seul, `42501 reserve_aux_superadministrateurs`) et recrée `plateforme_espaces` et `plateforme_modifier_espace` sous leur nom
+// (docs/SPEC-cards.md §3.6). Le compte s'accroît de un.
 // La migration de `CRM-125` TRANCHE T2 ajoute `render_mail_template_sample` — l'aperçu d'un modèle sur un jeu d'exemple
 // (docs/SPEC-modeles-emails.md §14.2). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `signature_text` est nulle quand l'identité n'a pas
 // de signature, ou qu'il n'y a pas d'identité ; un modèle illisible rend zéro ligne. Le compte s'accroît de un.
@@ -1249,6 +1252,7 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'verify_webhook_dispatch'
     | 'claim_attachment_texts'
     | 'record_attachment_text'
+    | 'platform_regenerate_card_addresses'
     | 'anonymize_contact'
     | 'trash_retention_days'
     | 'trash_blocking_costs'

@@ -5858,6 +5858,39 @@ focus entrant dans le premier champ et rendu à la commande qui l'a ouvert (diff
   `ShieldCheck`, `ShieldPlus`, `ShieldMinus`, `UserPlus`, `UserMinus`, `MailPlus`, `MailMinus`. L'onglet
   « Utilisateurs » (T6) n'en ajoute aucune : `Search` est reprise de la palette (§5.46), pour le même geste.
 
+- **LES ADRESSES DES AFFAIRES — `CRM-123`, écrit le 2026-11-01 avec le code, après relecture intégrale de ce document**
+  (décision 804, `docs/SPEC-cards.md` §3.6 points 5, 7, 8 et 9).
+  - **« Modifier » porte un troisième champ, « Préfixe des adresses d'affaire »**, en donnée technique (`font-mono`),
+    après le domaine entrant, sous la même commande d'enregistrement unique (§5.34). Son texte d'aide dit ce que la base
+    fera : le préfixe suit le motif d'alias du serveur et ne vaut que pour les affaires créées ensuite. **Une ligne
+    d'exemple suit le champ**, en 13 px `--color-text-2` — « Exemple : app-xxxxxxxx@p2enjoy.fr » — et se recompose à
+    chaque frappe, en minuscules comme la base rangera la saisie. Le champ la cite par `aria-describedby`, avec son
+    aide. **Aucune garde de saisie** (§5.3 ter) : un préfixe hors forme est envoyé, et son refus traduit sous les champs
+    dit la forme attendue.
+  - **UNE SECTION « Adresses des affaires » SUIT L'IDENTITÉ**, avant les membres : `h2` en `--text-h3`, puis une `dl`
+    (§5.20) — « Préfixe des adresses d'affaire » et « Forme d'une adresse », toutes deux en `code`. C'est une section et
+    non une ligne de l'identité, parce qu'elle porte un geste qui n'est pas « Modifier ».
+  - **Le décompte des affaires hors préfixe est une phrase, jamais un chiffre nu** (§5.36). À zéro, une phrase en 13 px
+    `--color-text-2` dit que toutes les affaires suivent le préfixe, **sans commande** : un geste sans objet ne se rend
+    pas (§5.21). Non nul, c'est le bandeau `role="status"` `--color-accent-soft` / `--color-accent-on-soft`, icône
+    `TriangleAlert`, de « Aucun administrateur » : un travail à faire, pas une panne. Le compte s'accorde par clé (§10).
+  - **« Régénérer les adresses »**, secondaire compacte, icône Lucide **`RefreshCw`**, sous le bandeau. Elle reste
+    montée et devient désactivée pendant sa confirmation (§5.40). **`RefreshCw` et non `RotateCw`** : celle-ci porte
+    « Régénérer le secret » d'un webhook (§5.79), un autre objet, et le §9 interdit qu'une icône serve deux objets.
+  - **LA CONFIRMATION VIT DANS LE FLUX, SOUS LA COMMANDE** (§5.13), et dit ce que le geste coûte, en trois phrases : la
+    question avec le nombre d'affaires ; l'effet — une nouvelle adresse au préfixe, corbeille comprise, aucun message
+    déplacé ; la conséquence — un message écrit à une ancienne adresse ne sera plus classé, et l'ancien alias est à
+    garder le temps que les échanges se terminent. **Son bouton est destructif** : comme « Régénérer le secret »
+    (§5.79), le geste rompt ce que des tiers connaissent. `Échap` et « Annuler » la referment et rendent le focus à la
+    commande. Le refus se lit dans la confirmation, `role="alert"`, qui reste ouverte.
+  - **LE SUCCÈS** relit la fiche, s'annonce sous la section en `role="status"` — « Adresses régénérées : 12
+    affaires. » — et porte le focus au **titre de la section** (`tabIndex=-1`) : la commande disparaît avec le
+    décompte, et le focus ne reste jamais sur un élément qui disparaît (§5.13).
+  - **Un seul bloc ouvert sur la fiche** (§5.28) : la confirmation compte parmi eux.
+  - **LE JOURNAL APPREND UN GESTE**, `card_addresses_regenerated` : « Adresses d'affaire régénérées », détail par clé
+    « 12 adresses au préfixe « app- » ».
+  - **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `RefreshCw`.**
+
 ### 5.57 Les pages du connecteur MCP — `CRM-102`
 
 *Écrit le 2026-10-20, avec la tranche T3, après relecture intégrale de ce document.* Le connecteur (`mcp/`) est un service

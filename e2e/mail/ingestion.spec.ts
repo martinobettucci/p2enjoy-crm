@@ -8,6 +8,8 @@
 //           (docs/SPEC-rattachements.md §3.2, §5)
 // @verifies CRM-055 (docs/BACKLOG.md) — tranche INC-326 : la pièce d'un courrier classé à la relève porte l'affaire de son
 //           message (docs/SCHEMA.md « Migration `0142` », décision 795)
+// @verifies CRM-123 (docs/BACKLOG.md) — tranche T3 : un message réellement envoyé à une adresse régénérée au préfixe
+//           `app-` est classé dans son affaire (docs/SPEC-cards.md §3.6 points 7, 8 et 11 ; décision 804)
 //
 // RIEN N'EST SIMULÉ : un message est réellement soumis en SMTP authentifié — le chemin d'un
 // message légitime remis par un serveur (§15.4) —, relevé par le service depuis le vrai IMAP,
@@ -21,7 +23,7 @@ import { conteneur } from '../conteneur'
 import { execFileSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
 import { lireEnv, urlApi } from '../env'
-import { enTetesService } from '../api/jetons'
+import { enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { instantaneDesBoites, rendreLesBoites, type Boite } from './menage'
 
 const CONTENEUR = conteneur('mail-sync')
@@ -375,5 +377,85 @@ except urllib.error.HTTPError as e:
 			{ JETON },
 		)
 		expect(Number(inconnu.trim())).toBe(404)
+	})
+
+	// CRM-123 — LE PRÉFIXE RÉGLÉ ET LES ADRESSES RÉGÉNÉRÉES PAR LES VRAIES FONCTIONS, AU VRAI JETON DE LA SUPERADMINISTRATRICE,
+	// puis un message RÉELLEMENT envoyé à une adresse `app-…` : le catch-all de Stalwart le remet à la boîte système, la
+	// relève le classe par la règle 1, sans aucun changement du classement (docs/SPEC-cards.md §3.6 point 8).
+	// L'ESPACE SEEDÉ EST RENDU TEL QU'IL A ÉTÉ TROUVÉ : son préfixe et l'adresse de CHACUNE de ses affaires, relus avant et
+	// réécrits après par la clé de service, puis constatés.
+	test('un email adressé à une adresse régénérée au préfixe « app- » est classé dans son affaire', async ({ request }) => {
+		test.setTimeout(300_000)
+		const ESPACE = '5eed0000-0000-4000-8000-000000000001'
+		const identifiant = `prefixe-${Date.now()}`
+		const debut = new Date().toISOString()
+		const dossiersAvant = await instantaneDesBoites([BOITE_SYSTEME])
+		const espaceAvant = (await (
+			await request.get(`${URL_API}/rest/v1/workspaces?id=eq.${ESPACE}&select=name,inbound_domain,card_address_prefix`, { headers: enTetesService() })
+		).json()) as { name: string; inbound_domain: string; card_address_prefix: string }[]
+		const adressesAvant = (await (
+			await request.get(`${URL_API}/rest/v1/cards?workspace_id=eq.${ESPACE}&select=id,email_local_part&order=id`, { headers: enTetesService() })
+		).json()) as { id: string; email_local_part: string }[]
+		expect(adressesAvant.length).toBeGreaterThan(0)
+		const [compte] = (await (
+			await request.get(`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&select=id`, { headers: enTetesService() })
+		).json()) as { id: string }[]
+		const sabine = { ...enTetesAuthentifies(await jetonDe('plateforme@p2enjoy.test')), 'Content-Type': 'application/json' }
+
+		try {
+			const regle = await request.post(`${URL_API}/rest/v1/rpc/plateforme_modifier_espace`, {
+				headers: sabine,
+				data: { p_id: ESPACE, p_nom: espaceAvant[0]!.name, p_domaine_entrant: espaceAvant[0]!.inbound_domain, p_card_address_prefix: 'app-' },
+			})
+			expect(regle.status(), 'la superadministratrice règle le préfixe').toBe(204)
+			const regeneration = await request.post(`${URL_API}/rest/v1/rpc/platform_regenerate_card_addresses`, {
+				headers: sabine,
+				data: { p_workspace_id: ESPACE },
+			})
+			expect(regeneration.status()).toBe(200)
+			expect(await regeneration.json(), 'toutes les affaires du seed sont réécrites').toBe(adressesAvant.length)
+
+			const [carte] = (await (
+				await request.get(
+					`${URL_API}/rest/v1/cards?workspace_id=eq.${ESPACE}&select=id,email_local_part,card_placements!card_placements_card_fk!inner(archived_at)&card_placements.archived_at=is.null&deleted_at=is.null&limit=1`,
+					{ headers: enTetesService() },
+				)
+			).json()) as { id: string; email_local_part: string }[]
+			expect(carte!.email_local_part).toMatch(/^app-[0-9abcdefghjkmnpqrstvwxyz]{8}$/u)
+
+			envoyerA(identifiant, `${carte!.email_local_part}@crm.p2enjoy.test`)
+			relever(compte!.id)
+
+			const [message] = (await (
+				await request.get(
+					`${URL_API}/rest/v1/mail_messages?rfc822_message_id=eq.${encodeURIComponent(`<${identifiant}@p2enjoy.test>`)}&select=classification,card_id`,
+					{ headers: enTetesService() },
+				)
+			).json()) as { classification: string; card_id: string }[]
+			expect(message, 'le message adressé à la nouvelle adresse est ingéré').toBeDefined()
+			expect(message?.classification).toBe('auto')
+			expect(message?.card_id).toBe(carte!.id)
+		} finally {
+			await rendreLesBoites(request, { boites: [BOITE_SYSTEME], motif: identifiant, avant: dossiersAvant, debut })
+			await request.delete(`${URL_API}/rest/v1/mail_messages?rfc822_message_id=eq.${encodeURIComponent(`<${identifiant}@p2enjoy.test>`)}`, {
+				headers: enTetesService(),
+			})
+			// Rendre l'espace : le préfixe, puis l'adresse de chaque affaire, par la clé de service — qui garde l'écriture de la
+			// colonne (docs/SPEC-permissions-rls.md §4.4.3).
+			await request.patch(`${URL_API}/rest/v1/workspaces?id=eq.${ESPACE}`, {
+				headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+				data: { card_address_prefix: espaceAvant[0]!.card_address_prefix },
+			})
+			for (const { id, email_local_part } of adressesAvant) {
+				await request.patch(`${URL_API}/rest/v1/cards?id=eq.${id}`, {
+					headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+					data: { email_local_part },
+				})
+			}
+			const rendues = (await (
+				await request.get(`${URL_API}/rest/v1/cards?workspace_id=eq.${ESPACE}&select=id,email_local_part&order=id`, { headers: enTetesService() })
+			).json()) as unknown[]
+			expect(rendues, 'chaque affaire du seed retrouve son adresse').toEqual(adressesAvant)
+		}
 	})
 })

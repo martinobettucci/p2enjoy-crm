@@ -6,6 +6,8 @@
 //       la portée de « Contacts » devient « Contacts du carnet »)
 // @spec CRM-072 tranche T2 — docs/DESIGN_SYSTEM.md §5.66 (le geste `logs_purged`, « Journaux purgés », et son détail
 //       accordé par clé) ; docs/SPEC-audit.md §6.1
+// @spec CRM-123 tranche T3 — docs/DESIGN_SYSTEM.md §5.56 (adresses des affaires : le refus du préfixe, le geste
+//       `card_addresses_regenerated` et son détail accordé par clé) ; docs/SPEC-cards.md §3.6
 // @spec docs/DESIGN_SYSTEM.md §5.56 (dictionnaire fermé des refus, geste du journal en MOT, détail composé par clé),
 //       §10 (aucune phrase par concaténation) ; docs/SPEC-plateforme.md §5.2 (gestes), §6.1 (refus)
 //
@@ -30,6 +32,7 @@ const CLES_REFUS: Readonly<Record<RefusPlateforme, CleTraduction>> = {
 	dernier_superadministrateur: 'platform.refus.dernierSuperadmin',
 	droit_invalide: 'platform.refus.droit',
 	issue_invalide: 'platform.refus.issue',
+	invalid_card_address_prefix: 'platform.refus.prefixeAdresses',
 	network: 'platform.refus.reseau',
 	unknown: 'platform.refus.inconnu',
 }
@@ -72,6 +75,7 @@ const CLES_GESTE: Readonly<Record<GesteJournal, CleTraduction>> = {
 	attente_retiree: 'platform.journal.geste.attente_retiree',
 	mcp_droits_poses: 'platform.journal.geste.mcp_droits_poses',
 	logs_purged: 'platform.journal.geste.logs_purged',
+	card_addresses_regenerated: 'platform.journal.geste.card_addresses_regenerated',
 }
 
 /** Le geste en MOT ; un geste inconnu laisse la cellule vide (§5.56). */
@@ -147,6 +151,11 @@ export function detailJournal(entree: EntreeJournal): string {
 				plateforme: compter(typeof c['platform'] === 'number' ? c['platform'] : 0, CLES_ENTREES),
 				connecteur: compter(typeof c['connector'] === 'number' ? c['connector'] : 0, CLES_ENTREES),
 			})
+		case 'card_addresses_regenerated':
+			return t('platform.journal.detail.adressesRegenerees', {
+				adresses: compter(typeof c['count'] === 'number' ? c['count'] : 0, CLES_ADRESSES),
+				prefixe: chaine(c['card_address_prefix']),
+			})
 		case null:
 			return ''
 	}
@@ -167,6 +176,20 @@ export function compter(n: number, cles: { readonly zero: CleTraduction; readonl
 	if (n === 1) return t(cles.un)
 	return t(cles.plusieurs, { n: String(n) })
 }
+
+/** Un compte d'adresses d'affaire, accordé par clé (`CRM-123`, §10). */
+export const CLES_ADRESSES = {
+	zero: 'platform.compte.adresses.zero',
+	un: 'platform.compte.adresses.un',
+	plusieurs: 'platform.compte.adresses.plusieurs',
+} as const satisfies Record<'zero' | 'un' | 'plusieurs', CleTraduction>
+
+/** Un compte d'affaires, accordé par clé (`CRM-123`, §10). */
+export const CLES_AFFAIRES_ADRESSES = {
+	zero: 'platform.compte.affaires.zero',
+	un: 'platform.compte.affaires.un',
+	plusieurs: 'platform.compte.affaires.plusieurs',
+} as const satisfies Record<'zero' | 'un' | 'plusieurs', CleTraduction>
 
 export const CLES_APPARTENANCES = {
 	zero: 'platform.compte.appartenances.zero',

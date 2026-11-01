@@ -2,6 +2,8 @@
 # @spec CRM-005 (docs/BACKLOG.md) — seed socle : comptes, espace de travail, rôles
 # @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §11 — tranche T4 : aucun compte n'est plus
 #       créé ; les attentes de l'espace sont consommées par la vraie connexion LeLabs
+# @spec CRM-123 (docs/BACKLOG.md), docs/SPEC-cards.md §3.6 point 11 — l'espace seedé écrit explicitement le préfixe
+#       d'adresse « c- », que de nombreuses preuves supposent ; un préfixe modifié se démontre dans l'E2E de la plateforme
 # @spec CRM-020 (docs/BACKLOG.md) — tracks de démonstration, dont un archivé
 # @spec CRM-021 (docs/BACKLOG.md) — channels de démonstration, dont un archivé
 # @spec CRM-030 (docs/BACKLOG.md) — catalogue de nœuds de démonstration, dont un archivé
@@ -907,7 +909,7 @@ code=$(api POST /rest/v1/workspaces \
 	-H 'Prefer: return=representation,resolution=merge-duplicates' \
 	-d "$(jq -nc --arg id "$WS_ID" --arg name "$WS_NAME" --arg slug "$WS_SLUG" \
 	              --arg domaine "$WS_DOMAIN" \
-	     '{id: $id, name: $name, slug: $slug, inbound_domain: $domaine, settings: {}}')")
+	     '{id: $id, name: $name, slug: $slug, inbound_domain: $domaine, card_address_prefix: "c-", settings: {}}')")
 attendu "$code" "création de l'espace de travail $WS_SLUG" 200 201
 info "$WS_NAME ($WS_SLUG) — $WS_ID"
 

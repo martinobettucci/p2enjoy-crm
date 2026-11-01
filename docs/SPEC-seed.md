@@ -43,6 +43,7 @@ reste hors de portée.
 | `name` | `P2Enjoy SAS` |
 | `slug` | `p2enjoy` |
 | `inbound_domain` | `crm.p2enjoy.test` |
+| `card_address_prefix` | `c-` — écrit explicitement depuis `CRM-123` (`docs/SPEC-cards.md` §3.6 point 11) : de nombreuses preuves supposent la forme `c-` ; un préfixe modifié et la régénération se démontrent dans l'E2E de la plateforme, qui rend l'espace tel qu'il l'a trouvé |
 | `settings` | `{}` |
 
 Un seul workspace, conformément à `CRM-005`. Le second workspace, nécessaire à la preuve de refus

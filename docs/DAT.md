@@ -912,6 +912,14 @@ sequenceDiagram
 Le dédoublonnage par `Message-ID` est indispensable : un même message peut arriver à la fois
 dans la boîte système et dans la boîte personnelle mirroir d'un utilisateur.
 
+**L'adresse d'une card et le serveur de messagerie — `CRM-123`** (`docs/SPEC-cards.md` §3.6, décision 804). Une adresse
+est `<préfixe><jeton>@<inbound_domain>` : le préfixe est `workspaces.card_address_prefix` (`c-` par défaut), le jeton
+huit caractères base32 tirés au hasard. Le CRM n'expose aucun serveur SMTP entrant : c'est le serveur de messagerie qui
+remet ces adresses à la boîte système, soit par un **catch-all** sur un domaine réservé, soit par un **alias** `<préfixe>*`
+sur un domaine existant. Le préfixe se règle donc sur ce que le serveur remet, et une régénération réécrit les adresses
+déjà tirées. Le classement et le `Reply-To` composent l'adresse **stockée** : ils ne reconnaissent aucun motif, et le
+préfixe ne les touche pas.
+
 ### 4.4 Envoi d'un email
 
 L'interface n'envoie jamais directement. Elle appelle `queue_outbound_email(...)`, qui insère

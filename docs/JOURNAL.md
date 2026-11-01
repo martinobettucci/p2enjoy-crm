@@ -38100,3 +38100,29 @@ vraie base après reconstruction du conteneur `mcp` (9), E2E `e2e/ui/rentabilite
 27-29 (chapitre 29), typecheck, build, classes CSS (seul `alert`, faux positif antérieur de `ReglagesWebhooks.tsx`).
 Captures observées : `docs/captures/CRM-126/` et les quatre paliers de `e2e/output/CRM-108/`. Reste la livraison
 (`docs/PROD_MIGRATIONS.md` §2.27) et le constat du responsable : `CRM-126` passe `[P]`.
+
+### 2026-11-01 — `CRM-123` T2 et T3 : mise en œuvre du préfixe des adresses d'affaire (décision 804)
+
+**Ce qui est fait.** La migration `0144` (`docs/SCHEMA.md` « Migration `0144` »), la fiche d'un espace de la plateforme
+(`docs/DESIGN_SYSTEM.md` §5.56, « Les adresses des affaires ») et leurs preuves : pgTAP `0134`, API aux vrais jetons,
+interface aux quatre paliers, un message réellement envoyé à une adresse `app-…` puis classé, et le harnais
+`scripts/verify-prefixe-adresses.sh`.
+
+**Observations, et ce qu'elles ont changé.**
+- **Aucune garde de saisie du préfixe à l'écran** : la première rédaction de la spécification prévoyait un « contrôle de
+  forme côté écran », que le design system interdit (§5.3 ter). La forme est jugée par la base seule, et l'écran traduit
+  son refus. `docs/SPEC-cards.md` §3.6 point 11 est précisé.
+- **Le focus après une régénération** : la commande disparaît avec le décompte ; le focus va au titre de la section.
+- **Un rejeu sans effet ne journalise rien** (§3.6 point 7, précisé) : une régénération qui ne réécrit aucune adresse
+  n'est pas un geste à tracer.
+- **Défaut antérieur trouvé en rejouant `scripts/verify-plateforme.sh`** : `0143` (`CRM-120`) a redéfini
+  `plateforme_poser_superadmin`, mais le harnais en restaurait le bloc depuis `0089`. Il défaisait donc `0143` en base,
+  et son empreinte le dénonçait. Le bloc se prend désormais dans `0143`, et la définition de `0143` a été rétablie en
+  base de développement. `plateforme_espaces`, recréée par `0144`, se prend dans `0144`.
+- **`scripts/verify-migrations.sh`** rend trois anomalies sans lien avec `0144` : le rejeu de la `0106` et la seconde garde
+  de la `0125` et de la `0132` (INC-239), toutes déjà consignées. Comme son rejeu s'arrête à la `0106`, la `0144` a été
+  rejouée à part sur son état, sans écart d'empreinte.
+- **Numéros pris sur une pile partagée par six sessions** : la `0144` a été disputée deux fois (`CRM-112`, INC-335) et
+  réglée entre sessions selon `CLAUDE.md` §5. Le seed modifié, laissé dans le checkout pendant que la migration en était
+  sortie, a cassé une reconstruction de la session de `CRM-111` : tout le code exécutable de l'unité a ensuite été tenu
+  hors du checkout jusqu'à sa fenêtre.

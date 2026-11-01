@@ -11,6 +11,9 @@
 //           l'adresse, « pas membre », matrice à enregistrement unique, sélecteur verrouillé tant qu'une saisie n'est pas
 //           enregistrée, « Toute la famille », superadministrateur qui franchit la matrice, compte sans profil sans
 //           matrice, introuvable) ; le lien « Droits du connecteur » de l'onglet « Utilisateurs »
+// @verifies CRM-123 (docs/BACKLOG.md) — tranche T3 : docs/SPEC-cards.md §3.6 points 5, 7, 8 et 9 ; docs/DESIGN_SYSTEM.md
+//           §5.56 (adresses des affaires : préfixe et exemple, « Modifier » qui envoie le préfixe, refus traduit, décompte,
+//           régénération confirmée dans le flux qui nomme ses conséquences, `Échap`, succès annoncé et focus au titre)
 
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -199,6 +202,95 @@ describe('fiche d’un espace (§5.56)', () => {
 		rendre('espace', '/plateforme/espaces/inconnu', fiche())
 		expect(await screen.findByText('Espace introuvable')).toBeTruthy()
 		expect(screen.getByRole('link', { name: 'Revenir aux espaces' })).toBeTruthy()
+	})
+})
+
+describe('adresses des affaires (§5.56, CRM-123)', () => {
+	const ESPACE_APP = { ...ESPACE_ATELIER, domaine_entrant: 'p2enjoy.fr', card_address_prefix: 'app-', card_addresses_to_regenerate: 12 }
+	const fiche = (extra: Readonly<Record<string, Gestionnaire>> = {}, espace: Record<string, unknown> = ESPACE_APP, appels: string[] = []) =>
+		client({ ...SUPERADMIN, plateforme_espaces: () => ok([espace]), plateforme_membres: () => ok([DRISS]), plateforme_attentes: () => ok([]), ...extra }, appels)
+
+	it('montre le préfixe, la forme d’une adresse et le décompte des affaires hors préfixe', async () => {
+		rendre('espace', '/plateforme/espaces/atelier', fiche())
+		const section = await screen.findByTestId('adresses-affaires')
+		expect(within(section).getByTestId('prefixe-adresses').textContent).toBe('app-')
+		expect(within(section).getByText('app-xxxxxxxx@p2enjoy.fr')).toBeTruthy()
+		expect(within(section).getByTestId('adresses-a-regenerer').textContent).toContain('12 affaires ont une adresse hors du préfixe')
+		expect(within(section).getByRole('button', { name: 'Régénérer les adresses' })).toBeTruthy()
+	})
+
+	it('à jour, la section le dit et n’offre aucune régénération', async () => {
+		rendre('espace', '/plateforme/espaces/atelier', fiche({}, { ...ESPACE_APP, card_addresses_to_regenerate: 0 }))
+		const section = await screen.findByTestId('adresses-affaires')
+		expect(within(section).getByTestId('adresses-a-jour').textContent).toContain('Toutes les affaires')
+		expect(within(section).queryByRole('button', { name: 'Régénérer les adresses' })).toBeNull()
+	})
+
+	it('« Modifier » envoie le préfixe saisi, montre l’exemple pendant la frappe, et traduit le refus en gardant la saisie', async () => {
+		const utilisateur = userEvent.setup()
+		const recus: Record<string, unknown>[] = []
+		rendre(
+			'espace',
+			'/plateforme/espaces/atelier',
+			fiche({ plateforme_modifier_espace: (args) => (recus.push(args), refus('invalid_card_address_prefix')) }),
+		)
+		await utilisateur.click(await screen.findByRole('button', { name: /^Modifier l’espace/ }))
+		const champ = screen.getByLabelText('Préfixe des adresses d’affaire') as HTMLInputElement
+		expect(champ.value).toBe('app-')
+		await utilisateur.clear(champ)
+		await utilisateur.type(champ, 'CRM*')
+		expect(screen.getByTestId('exemple-adresse').textContent).toBe('Exemple : crm*xxxxxxxx@p2enjoy.fr')
+		await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer' }))
+		expect((await screen.findByRole('alert')).textContent).toContain('minuscules')
+		expect(recus[0]?.['p_card_address_prefix']).toBe('CRM*')
+		expect(champ.value).toBe('CRM*')
+	})
+
+	it('la régénération se confirme dans le flux, dit ses conséquences, et `Échap` rend le focus à la commande', async () => {
+		const utilisateur = userEvent.setup()
+		const appels: string[] = []
+		rendre('espace', '/plateforme/espaces/atelier', fiche({}, ESPACE_APP, appels))
+		const commande = await screen.findByRole('button', { name: 'Régénérer les adresses' })
+		await utilisateur.click(commande)
+		const confirmation = screen.getByTestId('confirmation-regeneration')
+		expect(within(confirmation).getByText('Régénérer les adresses de 12 affaires ?')).toBeTruthy()
+		expect(confirmation.textContent).toContain('ne sera plus classé')
+		expect(confirmation.textContent).toContain('gardez l’ancien alias')
+		expect((commande as HTMLButtonElement).disabled).toBe(true)
+		await utilisateur.keyboard('{Escape}')
+		expect(screen.queryByTestId('confirmation-regeneration')).toBeNull()
+		await waitFor(() => expect(document.activeElement).toBe(commande))
+		expect(appels).not.toContain('platform_regenerate_card_addresses')
+	})
+
+	it('un succès annonce le nombre réécrit, relit la fiche et porte le focus au titre ; un refus se lit dans la confirmation', async () => {
+		const utilisateur = userEvent.setup()
+		let regenere = false
+		rendre(
+			'espace',
+			'/plateforme/espaces/atelier',
+			client({
+				...SUPERADMIN,
+				plateforme_espaces: () => ok([{ ...ESPACE_APP, card_addresses_to_regenerate: regenere ? 0 : 12 }]),
+				plateforme_membres: () => ok([DRISS]),
+				plateforme_attentes: () => ok([]),
+				platform_regenerate_card_addresses: () => ((regenere = true), ok(12)),
+			}),
+		)
+		await utilisateur.click(await screen.findByRole('button', { name: 'Régénérer les adresses' }))
+		await utilisateur.click(screen.getByRole('button', { name: 'Régénérer' }))
+		expect((await screen.findByTestId('message-adresses')).textContent).toBe('Adresses régénérées : 12 affaires.')
+		await screen.findByTestId('adresses-a-jour')
+		expect(document.activeElement?.id).toBe('titre-adresses')
+	})
+
+	it('le refus de la base se lit dans la confirmation, qui reste ouverte', async () => {
+		const utilisateur = userEvent.setup()
+		rendre('espace', '/plateforme/espaces/atelier', fiche({ platform_regenerate_card_addresses: () => refus('reserve_aux_superadministrateurs', 403) }))
+		await utilisateur.click(await screen.findByRole('button', { name: 'Régénérer les adresses' }))
+		await utilisateur.click(screen.getByRole('button', { name: 'Régénérer' }))
+		const confirmation = screen.getByTestId('confirmation-regeneration')
+		expect((await within(confirmation).findByRole('alert')).textContent).toContain('réservé aux superadministrateurs')
 	})
 })
 

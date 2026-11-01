@@ -2,6 +2,8 @@
 # @verifies CRM-101 (docs/BACKLOG.md) — tranche T4 : le harnais de la plateforme
 # @verifies docs/SPEC-plateforme.md §2 à §9 ; docs/SCHEMA.md §1 bis ; docs/DESIGN_SYSTEM.md §5.56 ;
 #           docs/SPEC-seed.md §19 ; CLAUDE.md §10 (refus prouvés hors interface), §15, §18 (preuves non complaisantes)
+# @verifies CRM-123 (docs/BACKLOG.md) — tranche T2 : `plateforme_espaces` est désormais définie par `0144`
+#           (docs/SPEC-cards.md §3.6 point 7) ; sa dégradation extrait son bloc de cette migration
 #
 # Rejoue les preuves de la plateforme sur la pile de développement, puis DÉGRADE réellement la base et exige que les
 # preuves rougissent, avant de la restaurer et de CONSTATER la restauration par une empreinte du catalogue.
@@ -130,19 +132,26 @@ TRAVAIL=$(mktemp -d)
 # seul sur une base reconstruite. Les trois fonctions dégradées ne sont définies QUE par `0089` : la dégradation
 # extrait le seul bloc `create or replace function` qui porte le motif, et la restauration réapplique ce même bloc,
 # chacune avec arrêt à la première erreur. Le `trap` restaure les trois blocs, jamais la migration entière.
+# RÉVISÉ PAR `CRM-123` (2026-11-01). `0144` recrée `plateforme_espaces` avec deux colonnes de plus : son bloc se prend
+# désormais dans `0144` — le bloc de `0089` ne se rejoue plus sur le type élargi. MESURÉ le même jour : `0143` (`CRM-120`)
+# a redéfini `plateforme_poser_superadmin` (son refus 404) ; restauré depuis `0089`, le bloc défaisait `0143`, et
+# l'empreinte le dénonçait. Son bloc se prend donc dans `0143`. Seul l'amorçage reste défini par `0089` seule.
 appliquer_strict() { psql_base -q -v ON_ERROR_STOP=1 --single-transaction <"$1" >/dev/null 2>&1; }
 bloc_de_fonction() {
-	# $1 : motif ; $2 : fichier où écrire le bloc d'origine qui le porte.
-	python3 - "$MIGRATION" "$1" "$2" <<'PY'
+	# $1 : motif ; $2 : fichier où écrire le bloc d'origine qui le porte ; $3 : la migration qui le définit.
+	python3 - "${3:-$MIGRATION}" "$1" "$2" <<'PY'
 import sys
 source, motif, cible = sys.argv[1:4]
 texte = open(source, encoding='utf-8').read()
 if texte.count(motif) != 1:
     sys.exit(f"motif introuvable ou ambigu : {motif[:60]}")
 position = texte.index(motif)
-debut = texte.rfind('create or replace function', 0, position)
-fin = texte.index('\n$$;\n', position) + len('\n$$;\n')
-open(cible, 'w', encoding='utf-8').write(texte[debut:fin])
+# Deux formes : celle des migrations écrites à la main (`create or replace function … $$;`) et celle que rend
+# `pg_get_functiondef`, recopiée par `0143` (`CREATE OR REPLACE FUNCTION … $function$\n;`).
+debut = texte.lower().rfind('create or replace function', 0, position)
+fins = [texte.find(marque, position) for marque in ('\n$$;\n', '\n$function$\n;\n')]
+fin_brute, marque = min((f, m) for f, m in zip(fins, ('\n$$;\n', '\n$function$\n;\n')) if f != -1)
+open(cible, 'w', encoding='utf-8').write(texte[debut:fin_brute + len(marque)])
 PY
 }
 BLOCS_ORIGINE=()
@@ -150,8 +159,8 @@ restaurer_blocs() { local bloc; for bloc in "${BLOCS_ORIGINE[@]}"; do appliquer_
 trap 'restaurer_blocs; rm -rf "$TRAVAIL"' EXIT
 
 degrader() {
-	local nom=$1 avant=$2 apres=$3 origine="$TRAVAIL/origine-$((${#BLOCS_ORIGINE[@]} + 1)).sql"
-	if ! bloc_de_fonction "$avant" "$origine"; then
+	local nom=$1 avant=$2 apres=$3 source=${4:-$MIGRATION} origine="$TRAVAIL/origine-$((${#BLOCS_ORIGINE[@]} + 1)).sql"
+	if ! bloc_de_fonction "$avant" "$origine" "$source"; then
 		fail "$nom : le motif ne désigne pas un seul bloc de fonction — contrôle non concluant"
 		return
 	fi
@@ -170,9 +179,11 @@ PY
 	appliquer_strict "$origine" || fail "$nom : le bloc d'origine ne se réapplique pas"
 }
 
-degrader 'garde levée sur plateforme_espaces' $'begin\n\tperform app.exiger_superadmin();\n\treturn query\n\tselect w.id, w.name' $'begin\n\treturn query\n\tselect w.id, w.name'
+degrader 'garde levée sur plateforme_espaces' $'begin\n\tperform app.exiger_superadmin();\n\treturn query\n\tselect w.id, w.name' $'begin\n\treturn query\n\tselect w.id, w.name' \
+	supabase/migrations/0144_prefixe_adresses_affaires.sql
 degrader 'amorçage sans contrôle de table vide' $'\tif exists (select 1 from public.superadmins) then\n\t\treturn false;\n\tend if;\n' ''
-degrader 'dernier superadministrateur retirable' $'\t\tif (select pg_catalog.count(*) from public.superadmins) <= 1 then' $'\t\tif false then'
+degrader 'dernier superadministrateur retirable' $'\t\tif (select pg_catalog.count(*) from public.superadmins) <= 1 then' $'\t\tif false then' \
+	supabase/migrations/0143_refus_404.sql
 
 APRES=$(empreinte)
 [ "$AVANT" = "$APRES" ] && ok "restauration constatée : empreinte du catalogue identique ($APRES)" || fail 'la restauration n’a pas rendu le catalogue d’avant'

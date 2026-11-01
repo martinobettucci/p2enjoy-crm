@@ -11,6 +11,9 @@
 // @spec CRM-118 tranche T2.a — docs/SPEC-mcp.md §9.2 undecies, §6.1 (la dixième famille, `workflows`, après `structure`) ;
 //       décisions 752, 754 et 756
 // @spec CRM-109 tranche T3 — docs/SPEC-refus-admission.md §3, §5 : `plateforme_attentes` rend la trace du dernier refus
+// @spec CRM-123 tranche T3 — docs/SPEC-cards.md §3.6 (points 5, 7 et 9) : le préfixe des adresses d'affaire, le décompte
+//       des affaires hors préfixe, la régénération, le refus `invalid_card_address_prefix` et le geste
+//       `card_addresses_regenerated` ; docs/SPEC-plateforme.md §6.2 ; docs/JOURNAL.md décision 804
 //
 // Toutes les lectures et écritures passent par les fonctions `public.plateforme_*`, gardées en base par
 // `app.exiger_superadmin()`. L'écran n'en déduit rien : il envoie, et traduit ce que la base rend. Un refus est
@@ -46,6 +49,8 @@ export const CODES_REFUS_PLATEFORME = [
 	// `CRM-103` (docs/SPEC-mcp.md §8.2) : une matrice hors des familles et actions fermées, une issue inconnue.
 	'droit_invalide',
 	'issue_invalide',
+	// `CRM-123` (docs/SPEC-cards.md §3.6 point 2) : un préfixe d'adresse d'affaire hors forme.
+	'invalid_card_address_prefix',
 ] as const
 export type CodeRefusPlateforme = (typeof CODES_REFUS_PLATEFORME)[number]
 
@@ -150,6 +155,10 @@ export type EspacePlateforme = {
 	readonly membres: number
 	readonly administrateurs: number
 	readonly attentes: number
+	/** Le préfixe des adresses d'affaire de l'espace (`CRM-123`), « c- » par défaut. */
+	readonly prefixeAdresses: string
+	/** Le nombre d'affaires dont l'adresse ne porte pas le préfixe courant : celles qu'une régénération réécrirait. */
+	readonly adressesARegenerer: number
 }
 
 export async function lireEspaces(client: ClientCrm): Promise<EtatAsync<readonly EspacePlateforme[]>> {
@@ -162,6 +171,8 @@ export async function lireEspaces(client: ClientCrm): Promise<EtatAsync<readonly
 			membres: entier(ligne['membres']),
 			administrateurs: entier(ligne['administrateurs']),
 			attentes: entier(ligne['attentes']),
+			prefixeAdresses: texte(ligne['card_address_prefix']),
+			adressesARegenerer: entier(ligne['card_addresses_to_regenerate']),
 		})),
 	)
 }
@@ -175,12 +186,33 @@ export async function creerEspace(client: ClientCrm, nom: string, slug: string, 
 	return issue.statut === 'ok' ? { statut: 'ok', valeur: typeof issue.valeur === 'string' ? issue.valeur : null } : issue
 }
 
-export async function modifierEspace(client: ClientCrm, id: string, nom: string, domaine: string): Promise<Issue<unknown>> {
+/**
+ * Le préfixe est envoyé tel que saisi : la base le normalise et le juge (docs/SPEC-cards.md §3.6 point 2), l'écran ne
+ * double aucune contrainte (`docs/DESIGN_SYSTEM.md` §5.3 ter).
+ */
+export async function modifierEspace(client: ClientCrm, id: string, nom: string, domaine: string, prefixe: string): Promise<Issue<unknown>> {
 	return await ecrire(client, 'plateforme_modifier_espace', {
 		p_id: id,
 		p_nom: nom,
 		p_domaine_entrant: domaine.trim() === '' ? null : domaine,
+		p_card_address_prefix: prefixe,
 	})
+}
+
+/** Régénère les adresses hors du préfixe courant (§3.6 point 7) ; rend le nombre d'affaires réécrites. */
+export async function regenererAdresses(client: ClientCrm, id: string): Promise<Issue<number>> {
+	const issue = await ecrire(client, 'platform_regenerate_card_addresses', { p_workspace_id: id })
+	return issue.statut === 'ok' ? { statut: 'ok', valeur: entier(issue.valeur) } : issue
+}
+
+/**
+ * L'exemple d'adresse montré sous le champ du préfixe : le préfixe tel que la base le rangera — minuscules, sans blancs —,
+ * huit « x » à la place du jeton, puis le domaine quand il y en a un. Une aide de lecture, jamais une garde.
+ */
+export function exempleAdresse(prefixe: string, domaine: string): string {
+	const local = `${prefixe.trim().toLowerCase()}xxxxxxxx`
+	const hote = domaine.trim().toLowerCase()
+	return hote === '' ? local : `${local}@${hote}`
 }
 
 export async function supprimerEspace(client: ClientCrm, id: string, slugConfirme: string): Promise<Issue<unknown>> {
@@ -370,6 +402,8 @@ export const GESTES_JOURNAL = [
 	'mcp_droits_poses',
 	// `CRM-072` T1 (migration 115) : la purge d'un an des journaux de la plateforme et du connecteur (docs/SPEC-audit.md §6).
 	'logs_purged',
+	// `CRM-123` (migration 0144) : la régénération des adresses d'affaire d'un espace (docs/SPEC-cards.md §3.6 point 7).
+	'card_addresses_regenerated',
 ] as const
 export type GesteJournal = (typeof GESTES_JOURNAL)[number]
 

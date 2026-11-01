@@ -12206,6 +12206,53 @@
 				"Vers 7 h : vos actions en retard ou dues aujourd'hui, vos mentions non lues, vos affaires figées. Rien n'est envoyé les jours où il n'y a rien.",
 				"on"
 			]
+		},
+		{
+			"fichier": "la-plateforme-espaces-membres-et-superadministrateurs/adresses-a-regenerer.jpg",
+			"largeur": 1192,
+			"hauteur": 221,
+			"chapitre": "la-plateforme-espaces-membres-et-superadministrateurs",
+			"section": "modifier-ou-supprimer-un-espace",
+			"pleinePage": false,
+			"libelles": [
+				"2 affaires ont une adresse hors du préfixe « app- » : elles ne le suivront qu'après régénération.",
+				"Adresses des affaires",
+				"Forme d'une adresse",
+				"Préfixe des adresses d'affaire",
+				"Régénérer les adresses",
+				"app-",
+				"app-xxxxxxxx@crm.atelier-lumiere.test"
+			]
+		},
+		{
+			"fichier": "la-plateforme-espaces-membres-et-superadministrateurs/prefixe.jpg",
+			"largeur": 1158,
+			"hauteur": 177,
+			"chapitre": "la-plateforme-espaces-membres-et-superadministrateurs",
+			"section": "modifier-ou-supprimer-un-espace",
+			"pleinePage": false,
+			"libelles": [
+				"Exemple : app-xxxxxxxx@crm.atelier-lumiere.test",
+				"Il précède les huit caractères aléatoires de chaque adresse et suit le motif d'alias de votre serveur de messagerie, app-* par exemple. Il ne vaut que pour les affaires créées ensuite : les autres se régénèrent sur la fiche.",
+				"Préfixe des adresses d'affaire",
+				"app-"
+			]
+		},
+		{
+			"fichier": "la-plateforme-espaces-membres-et-superadministrateurs/regenerer.jpg",
+			"largeur": 1192,
+			"hauteur": 226,
+			"chapitre": "la-plateforme-espaces-membres-et-superadministrateurs",
+			"section": "modifier-ou-supprimer-un-espace",
+			"pleinePage": false,
+			"libelles": [
+				"Annuler",
+				"Chacune reçoit une nouvelle adresse au préfixe « app- », y compris les affaires en corbeille. Les messages déjà classés ne changent pas d'affaire.",
+				"Régénérer",
+				"Régénérer les adresses de 2 affaires ?",
+				"Régénérer les adresses de 2 affaires ? Chacune reçoit une nouvelle adresse au préfixe « app- », y compris les affaires en corbeille. Les messages déjà classés ne changent pas d'affaire. Un message écrit à une ancienne adresse ne sera plus classé. Les réponses aux messages déjà classés le seront encore tant que votre serveur remet l'ancien motif à la boîte système : gardez l'ancien alias le temps que les échanges en cours se terminent. Régénérer Annuler",
+				"Un message écrit à une ancienne adresse ne sera plus classé. Les réponses aux messages déjà classés le seront encore tant que votre serveur remet l'ancien motif à la boîte système : gardez l'ancien alias le temps que les échanges en cours se terminent."
+			]
 		}
 	]
 }

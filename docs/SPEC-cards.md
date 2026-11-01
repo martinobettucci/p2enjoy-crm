@@ -371,7 +371,7 @@ réservée au superadministrateur (`42501` `reserve_aux_superadministrateurs`, `
 - Les affaires archivées et en corbeille sont comprises : restaurée, une affaire doit recevoir à l'adresse du motif
   courant.
 - Elle rend le nombre d'affaires réécrites et journalise `card_addresses_regenerated` (espace, préfixe, nombre) dans
-  `plateforme_journal`.
+  `plateforme_journal`. Un rejeu qui ne réécrit rien rend `0` et ne journalise rien : il n'y a pas de geste à tracer.
 - **Une affaire qui porte déjà le préfixe courant garde son adresse.** C'est le choix fait en écrivant cette
   spécification : le responsable a demandé de régénérer « toutes les affaires », et c'est bien le cas de toutes celles
   qui ne suivent pas le motif. Retirer à nouveau une adresse déjà conforme romprait ses fils sans rien rapporter, et le
@@ -390,9 +390,10 @@ réservée au superadministrateur (`42501` `reserve_aux_superadministrateurs`, `
 - Aucun message déjà classé ne change d'affaire. Le classement reste une recherche exacte de l'adresse
   (`app.card_par_adresse`) et ne reconnaît aucun motif : il n'y a rien à y changer.
 
-**9. L'écran** (`docs/SPEC-plateforme.md` §7.3).
+**9. L'écran** (`docs/SPEC-plateforme.md` §7.3, forme au `docs/DESIGN_SYSTEM.md` §5.56, « Les adresses des affaires »).
 - Le formulaire « Modifier » de la fiche d'un espace reçoit le champ « Préfixe des adresses d'affaire », avec un
-  exemple calculé sous le champ : `app-xxxxxxxx@<domaine>`.
+  exemple calculé sous le champ : `app-xxxxxxxx@<domaine>`. **Aucune garde de saisie** : le préfixe part tel que saisi,
+  et la base le normalise et le juge (`docs/DESIGN_SYSTEM.md` §5.3 ter).
 - Une section « Adresses des affaires » montre le préfixe courant, puis le nombre d'affaires hors du préfixe
   courant.
 - Lorsque ce nombre est non nul, elle propose « Régénérer les adresses ». La confirmation se fait **dans le flux**,
@@ -419,7 +420,9 @@ famille ni case de la matrice n'est ajoutée (décision 804).
   - le refus d'un administrateur d'espace non superadministrateur, pour le réglage comme pour la régénération ;
   - un message réellement envoyé à une adresse `app-…` régénérée, ingéré et classé dans l'affaire.
 - **E2E de l'écran** : réglage, exemple, décompte, confirmation, relecture.
-- **Unitaires de la webapp** : contrôle de forme côté écran et composition de l'exemple.
+- **Unitaires de la webapp** : composition de l'exemple, préfixe envoyé tel que saisi, refus traduit, régénération et
+  son nombre, confirmation et focus. *Précisé à l'écriture du code* : la première rédaction disait « contrôle de forme
+  côté écran », que le design system interdit (§5.3 ter) ; la forme est jugée par la base seule.
 - **Contrat de déploiement.** `docs/PROD_MIGRATIONS.md` §2.2 admet les deux montages : un domaine réservé avec son
   catch-all, ou un motif d'alias `<préfixe>*` sur un domaine existant vers la boîte système. Il dit aussi l'ordre des
   gestes : créer l'alias du nouveau préfixe **avant** de régénérer, et garder l'ancien alias.

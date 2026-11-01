@@ -1193,7 +1193,9 @@ colorié.
 
 Chaque affaire reçoit à sa création une **adresse email qui lui est propre**, de la forme
 `c-3p55qdgw@…`. Elle est tirée au hasard sur un espace d'environ mille milliards de possibilités :
-une adresse divulguée ne permet donc pas de deviner celles des autres affaires.
+une adresse divulguée ne permet donc pas de deviner celles des autres affaires. Le début de l'adresse, `c-`, est le
+**préfixe** de votre espace : un superadministrateur peut le régler pour suivre votre serveur de messagerie — `app-`
+par exemple ([§32.6](#modifier-ou-supprimer-un-espace)).
 
 Vous ne la choisissez pas, et une valeur que vous fourniriez serait ignorée — c'est ce qui garantit
 qu'aucune adresse ne soit devinable. Elle servira, à partir du chapitre sur la messagerie, à
@@ -1202,7 +1204,8 @@ rattacher automatiquement à l'affaire tout message qui lui est envoyé.
 **Elle ne se modifie pas non plus après coup.** Le produit refuse toute tentative de réécrire
 l'adresse d'une affaire, y compris à un administrateur, et y compris si l'on s'adresse directement
 à l'API sans passer par l'écran. Sans ce refus, il suffirait de remplacer une adresse tirée au
-hasard par une adresse triviale pour que n'importe qui puisse écrire à l'affaire. L'adresse se
+hasard par une adresse triviale pour que n'importe qui puisse écrire à l'affaire. Seule la
+**régénération des adresses** d'un espace, par un superadministrateur, en tire de nouvelles, au hasard elles aussi. L'adresse se
 **lit**, en revanche, par toute personne qui peut consulter l'affaire : c'est une identité, pas un
 mot de passe.
 
@@ -5910,7 +5913,30 @@ laisse jamais de trace, et réinscrire une attente efface la sienne.
 
 ![Le bouton « Supprimer l'espace », en bas de la fiche d'un espace](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/supprimer-l-espace.jpg)
 
-**« Modifier »** change le nom et le domaine entrant d'un espace. Son identifiant court ne change pas.
+![Le champ « Préfixe des adresses d’affaire » du formulaire « Modifier », et l'exemple d'adresse sous lui](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/prefixe.jpg)
+
+![La section « Adresses des affaires » : le nombre d'affaires hors du préfixe, et « Régénérer les adresses »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/adresses-a-regenerer.jpg)
+
+![La confirmation de la régénération : ce que le geste coûte, puis « Régénérer »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/regenerer.jpg)
+
+**« Modifier »** change le nom, le domaine entrant et le **« Préfixe des adresses d’affaire »** d'un espace. Son
+identifiant court ne change pas.
+
+**Les adresses des affaires.** Une affaire reçoit une adresse faite du préfixe de son espace, de huit caractères tirés
+au hasard, puis du domaine entrant : `app-3p55qdgw@votre-domaine.fr`. Le préfixe vaut `c-` par défaut. Réglez-le sur le
+motif que votre serveur de messagerie remet au CRM — un alias `app-*` vers la boîte système, par exemple —, sans quoi
+les messages envoyés aux affaires n'arrivent nulle part.
+
+- **Le préfixe** s'écrit en minuscules, chiffres, points, tirets, « + » ou « _ », de 1 à 24 caractères, et commence par
+  une lettre ou un chiffre. Sous le champ, l'**exemple** montre la forme qu'aura une adresse.
+- **Changer le préfixe ne vaut que pour les affaires créées ensuite.** La section **« Adresses des affaires »** de la
+  fiche dit combien d'affaires ont encore une adresse à l'ancien préfixe.
+- **« Régénérer les adresses »** leur en donne une nouvelle, au préfixe courant — affaires en corbeille comprises. Une
+  confirmation dit ce que cela coûte : un message écrit à une **ancienne** adresse ne sera plus rangé dans l'affaire.
+  Les réponses aux messages déjà rangés le seront encore, tant que votre serveur remet l'ancien motif au CRM : gardez
+  donc l'ancien alias le temps que les échanges en cours se terminent. Les messages déjà rangés ne changent pas
+  d'affaire. Une affaire qui porte déjà le préfixe courant garde son adresse.
+- **Dans l'ordre :** créez l'alias du nouveau préfixe sur votre serveur, réglez le préfixe, puis régénérez.
 
 **« Supprimer l’espace »**, en bas de la fiche, ouvre une confirmation.
 
@@ -5975,6 +6001,7 @@ ne peut modifier ni supprimer une entrée de ces journaux ([chapitre 22](#le-jou
 - **Gérer ses propres membres en tant qu'administrateur d'espace**, sans être superadministrateur : c'est l'écran
   « Réglages ▸ Membres » ([chapitre 21](#les-membres-de-votre-espace-qui-y-travaille-avec-quel-role)), avec les attentes et les droits fins par track et par channel.
 - **Changer l'identifiant court d'un espace.**
+- **Choisir l'adresse d'une affaire en particulier** : elle est toujours tirée au hasard, après le préfixe.
 - **Annuler une suppression.**
 
 ## 33. Le connecteur MCP : piloter le CRM depuis votre assistant

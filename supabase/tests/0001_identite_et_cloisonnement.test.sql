@@ -1,3 +1,5 @@
+-- @verifies CRM-123 (docs/BACKLOG.md) — tranche T2 : `workspaces.card_address_prefix` rejoint les colonnes (docs/SCHEMA.md §1,
+--           docs/SPEC-cards.md §3.6 point 1 ; assertion 8 RÉVISÉE, décision 51)
 -- @verifies CRM-003 (docs/BACKLOG.md) — migrations d'amorçage : identité et cloisonnement
 -- @verifies CRM-022 (docs/BACKLOG.md) — politiques d'identité qui ferment le refus transitoire
 -- @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.2 — `profiles.id` est le `sub`
@@ -50,9 +52,10 @@ select columns_are(
 	'`profiles` porte exactement les colonnes de docs/SCHEMA.md §1'
 );
 
+-- RÉVISÉE PAR `CRM-123` (migration `0144`) : le préfixe des adresses d'affaire est une colonne de l'espace.
 select columns_are(
 	'public', 'workspaces',
-	array['id', 'name', 'slug', 'inbound_domain', 'settings', 'created_at', 'updated_at'],
+	array['id', 'name', 'slug', 'inbound_domain', 'card_address_prefix', 'settings', 'created_at', 'updated_at'],
 	'`workspaces` porte exactement les colonnes de docs/SCHEMA.md §1'
 );
 
