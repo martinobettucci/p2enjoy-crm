@@ -404,7 +404,9 @@ déclencheur n'est jamais suspendu.
   `inbox_arborescence` ne range plus les affaires sous leurs channels ; deux affaires de même titre restent
   distinguées par la règle de nommage en vigueur, à relire en T6.
 - **Une cadence de relance s'inscrit à un rattachement** (décision 657, arbitrage 2). `card_sequence_enrollments` reçoit
-  le rattachement ; `armer_sequence_relance` prend son responsable comme expéditeur par défaut (forme non arrêtée : INC-315), et
+  le rattachement ; son responsable est l'expéditeur par défaut **à l'écran** : le bloc d'armement présélectionne l'identité d'envoi de la
+  personne qui arme quand elle est ce responsable, sinon rien ; `armer_sequence_relance` exige toujours l'identité, et la
+  règle d'emprunt reste entière ; le connecteur garde une identité explicite (décision 803, INC-315), et
   `app.executer_sequences_relance` lit son `entered_step_at`. Une affaire peut avoir une cadence par rattachement.
 - **Les variables des modèles d'email viennent du rattachement d'où l'on écrit** (décision 657, arbitrage 3).
   `app.mail_template_variables` et `rendre_modele_email` reçoivent le rattachement : le bloc depuis lequel l'email est
@@ -565,7 +567,7 @@ rattachement** : l'index `card_sequence_enrollments_active_unique` garde son nom
 et non plus par l'affaire. Ces deux distinctions ne s'éprouvent qu'à deux rattachements, donc après T2.4 et T3 : le miroir
 de la bascule recopie l'ancienneté de l'affaire sur tous ses rattachements. La fiche passe le rattachement au bloc
 d'armement ; l'inscription en cours se lit toujours par l'affaire, jusqu'aux écrans de T5. **L'expéditeur par défaut** que
-le §7 annonce n'a pas de forme arrêtée et n'est pas livré : INC-315, arbitrage demandé.
+le §7 annonce est **une présélection de l'écran** (décision 803, INC-315) : à livrer par T2.3.5.
 
 **T2.3.6, livrée en développement le 2026-10-26** (migration `0121`) : les valeurs de bloc appartiennent au
 rattachement (§3.3). `placement_id` est `NOT NULL` ; la clé primaire est `(placement_id, field_id)` ; la charnière du

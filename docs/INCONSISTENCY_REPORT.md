@@ -8076,8 +8076,9 @@ l'appelant : « son responsable comme expéditeur » n'est donc pas toujours emp
 l'écran, présélectionner l'identité du responsable quand l'appelant l'est, sinon rien ; (2) en base, `p_identity_id`
 facultatif, l'identité du responsable par défaut, refusée par (e) si l'appelant ne peut pas l'emprunter ; (3) l'identité
 du responsable reste celle des envois, l'armement ne choisissant plus d'identité — ce qui contredit le refus (e).
-**Comportement laissé inchangé** : T2.3.5 livre la signature par rattachement, l'identité reste exigée. **Arbitrage
-demandé au responsable.** **Statut : ouverte.**
+**Comportement laissé inchangé** : T2.3.5 livre la signature par rattachement, l'identité reste exigée. **Arbitrée le
+2026-11-01 (décision 803)** : lecture (1) — la fiche présélectionne l'identité du responsable quand c'est lui qui arme,
+sinon rien ; la base et le connecteur ne changent pas. Portée par `CRM-111` T2.3.5. **Statut : arbitrée, à livrer.**
 
 ### INC-316 — La purge de la corbeille rencontre un budget « indestructible » partagé avec un autre track
 
@@ -8442,3 +8443,13 @@ bloc du track porte désormais son mois dans l'adresse (`?mois=AAAA-MM`), comme 
 lointain ne s'atteindrait, et le rechargement le perdait. Les spécifications sont révisées dans le même changement
 (`docs/SPEC-temps.md` §7.3 et §7.5, `docs/DESIGN_SYSTEM.md` §5.54). Connecteur MCP : sans objet, puisque
 `crm_time_report` prend déjà sa période en paramètre.
+
+### INC-334 — Le contrôle des classes prend une chaîne de comparaison pour une classe
+
+*Constaté le 2026-11-01 pendant INC-333, sans lien avec lui.* `scripts/lib/classes-css.mjs` lit les chaînes d'une
+expression `className`. Dans `webapp/src/app/ReglagesWebhooks.tsx`, `className={message.role === 'alert' ? … : …}`
+lui fait lire `alert` comme une classe, qu'il déclare « absente du CSS produit ». Rejoué sur l'arbre de `HEAD`
+(`6f8e8997`), le contrôle rend la même anomalie : l'étape 4 de `scripts/verify-webapp.sh` échoue depuis `CRM-073` T3.
+Aucun rendu n'est faux, et le défaut ne touche que la preuve. **Non corrigé** : il sort de la tâche. Deux remèdes
+possibles, à arbitrer : que le contrôle ne retienne que les branches d'un ternaire, ou que la comparaison sorte de
+l'attribut.

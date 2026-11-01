@@ -15828,6 +15828,10 @@ track, channel et affaire, avec un rapport mensuel. Spécifié avant le code : `
       contrôles sans anomalie, registre à 87 lignes relu (empreinte égale au dépôt), refus anonyme `401`
       (`docs/PROD_MIGRATIONS.md` §2.11, §8). **Reste le constat du responsable** : une version de coût, une journée
       saisie, le rapport relu.
+      *INC-333, 2026-11-01 (décision 801)* : dans Firefox, le mois du rapport ne se choisissait pas. Il se choisit
+      désormais par « Mois précédent » / « Mois suivant » / « Ce mois-ci », sur le rapport et sur la série du track,
+      dont le mois passe dans l'adresse. Corrigé et vérifié en développement, en attente de livraison. Le constat
+      s'étend au mois choisi dans Firefox (`docs/PROD_MIGRATIONS.md` §2.11).
 
 ### CRM-099 — Plusieurs coûts réels par ligne de coût, jusqu'à ce qu'on la solde `[P]`
 *Créée le 2026-10-11 — décision 622, arbitrages du responsable. Une ligne de coût n'acceptait qu'un réel et quittait
@@ -17101,7 +17105,9 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           juge l'inéligibilité par rattachement ; fiche, specs d'API et d'interface, pgTAP `0058` (49) et `0098`, types ;
           `verify-armement-sequences.sh` ne rejoue plus la `0060`. L'expéditeur par défaut du §7 : INC-315, non livré.
           pgTAP 103 fichiers sans anomalie, unitaires 4504/4504, API 73/73, interface verte (53 scénarios rouges d'un
-          défaut de la fiche, corrigé et rejoués), `verify-armement-sequences.sh` 53/53. **Reste** : l'arbitrage d'INC-315.
+          défaut de la fiche, corrigé et rejoués), `verify-armement-sequences.sh` 53/53. **Reste** : la présélection de l'expéditeur, arbitrée par la décision 803
+          (INC-315) — la fiche présélectionne l'identité d'envoi de la personne qui arme quand elle est le responsable du
+          rattachement ; base et connecteur inchangés ; unitaire, E2E, manuel.
         - [x] **T2.3.6 — les valeurs de bloc** : clé `(placement_id, field_id)`, `NOT NULL`, écriture de la webapp par
           rattachement. *Livrée en développement le 2026-10-26* — migration `0121` : charnière du workflow par le
           rattachement, politiques par le rattachement (lecture sous la forme optimisée), prévisualisation de l'exigence ;

@@ -37781,3 +37781,22 @@ rattachements, un track purgé — et constatent que l'affaire et son autre ratt
 budget du track bloque, et qu'une affaire dont tous les rattachements sont dans le track est détruite.
 `docs/SPEC-corbeille.md` §9.1 et `docs/SPEC-rattachements.md` §3.2 le disent. **Connecteur MCP** : sans objet propre —
 la purge n'est pas un outil du connecteur.
+
+### décision 803 — INC-315 : l'expéditeur par défaut d'une cadence est une présélection de l'écran
+
+*2026-11-01, session interactive, arbitrage du responsable (option recommandée).* **Question** (INC-315) : la décision 657
+et `docs/SPEC-rattachements.md` §7 disent qu'une cadence s'arme sur un rattachement « qui donne son responsable comme
+expéditeur par défaut » ; or une identité ne s'emprunte que par son propriétaire, ou l'identité de service par un
+administrateur (`docs/SPEC-modeles-emails.md` §12.4, refus e), et le responsable n'est pas toujours celui qui arme.
+**Options** : présélection à l'écran ; défaut en base (`p_identity_id` facultatif) ; retrait de la phrase.
+
+**Décision : la présélection à l'écran.** Quand la personne qui arme est le **responsable du rattachement**, le bloc
+d'armement de la fiche **présélectionne son identité d'envoi** ; sinon la liste reste vide et elle choisit. **La base ne
+change pas** : `armer_sequence_relance(p_placement, …)` exige toujours `p_identity_id`, et la règle d'emprunt (e) reste
+entière. **Connecteur MCP** (les deux questions de `CLAUDE.md`) : la fonctionnalité n'y change pas — l'outil d'armement
+garde une identité **explicite** ; aucune famille ni case nouvelle.
+
+**Conséquences.** T2.3.5 livre la présélection dans la webapp, avec son unitaire et son E2E (responsable qui arme :
+identité présélectionnée ; autre membre : liste vide), puis passe `[x]` en développement ; INC-315 est close par cette
+livraison. `docs/SPEC-rattachements.md` §7 et §14, `docs/DESIGN_SYSTEM.md` si l'état présélectionné l'exige, le manuel
+du bloc d'armement.
