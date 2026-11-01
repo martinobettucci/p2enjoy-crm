@@ -2437,7 +2437,7 @@ channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suit
 déclencheur, sa fonction et `set_default_workflow`.
 ### Migration `0142` — une pièce jointe hérite de l'affaire de son message (INC-326, décision 795)
 
-**Spécifiée le 2026-11-01.** `public.mail_attachments.card_id` recopie, pour un accès direct, l'affaire du message
+**Spécifiée et livrée en développement le 2026-11-01.** `public.mail_attachments.card_id` recopie, pour un accès direct, l'affaire du message
 (`mail_messages.card_id`). Le classement manuel, le déclassement et le classement automatique réécrivent les pièces
 présentes au moment du geste (0070, 0109). Or la relève de `mail-sync` classe le message **avant** d'en inscrire les
 pièces : une pièce reçue naissait donc sans affaire (mesuré sur le seed : cinq pièces d'un courrier classé par la règle 1).

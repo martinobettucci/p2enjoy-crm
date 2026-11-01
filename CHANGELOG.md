@@ -13,7 +13,11 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### INC-326 — une pièce jointe reçue porte l'affaire de son courrier
+
+- **Migration `0142`** : une pièce inscrite sans affaire prend celle de son message, et les pièces existantes d'un
+  courrier classé sont rattrapées. La relève classait le message avant d'en inscrire les pièces, qui naissaient sans
+  affaire. Rien ne change à l'écran : le fil lit les pièces par leurs messages.
 
 ## [Publié]
 

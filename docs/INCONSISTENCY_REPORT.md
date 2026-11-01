@@ -8291,6 +8291,11 @@ ses pièces, si bien qu'il n'y en a encore aucune à recopier. La correction se 
 qui hérite de l'affaire de son message ; c'est l'intention de la décision 795, la colonne exacte. Spécification :
 `docs/SCHEMA.md`, « Migration `0142` ».
 
+**Corrigée en développement le 2026-11-01** : migration `0142`. **Preuves** : pgTAP `0132`, d'abord rouge (4 sur 7),
+puis 7/7, rattrapage de 11 pièces de la base de développement compris ; `e2e/mail/ingestion.spec.ts` (une pièce
+réellement relevée sur un courrier classé par la règle 1 porte son affaire), rouge sans le déclencheur, vert avec ;
+`npm run test:sql` 122 fichiers, 4610 assertions.
+
 ### INC-327 — `scripts/manuel/publier.sh --spark` ne s'exécute pas dans la cellule : il exige `jq` et ne fusionne pas les fichiers injectés
 
 *Constaté le 2026-11-01, à la fenêtre de la décision 792 (`CRM-117` T6).* Joué dans la cellule après la livraison, le

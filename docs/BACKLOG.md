@@ -6829,7 +6829,7 @@ reste `[~]` pour les écarts ci-dessus, tous nommés et tous portés par une uni
   suivante devrait défaire serait pire que l'absence, et une assertion le fige.
 - **Aucune purge** : un message ingéré reste, et sa suppression relève d'une unité RGPD.
 
-### CRM-055 — Classement assisté `[~]`
+### CRM-055 — Classement assisté `[P]`
 *Soldée `[x]` le 2026-10-25 (décision 705, remise du backlog à l'état réel) : tous ses points sont cochés, tranche 2 (déclassement) comprise — fonction, pgTAP, API aux jetons réels, surface, E2E, captures, harnais, documentation ; les écarts que son texte invoquait sont livrés.*
 Les quatre règles, dont la suggestion non classante.
 **DoD** : pytest par règle ; E2E de classement manuel ; si `CRM-060` n'est pas livré, règle 3
@@ -6968,12 +6968,15 @@ classement manuel ; si `CRM-060` n'est pas livré, règle 3 désactivée et docu
 règles vivent en base et non dans le service, ce qui est le choix d'architecture du produit depuis
 `CRM-010`. L'unité reste `[~]` pour les deux écarts ci-dessus.
 
-- [@] **Tranche INC-326 — le classement automatique écrit `mail_attachments.card_id`** (décision 795) : les règles 1 et 2
+- [P] **Tranche INC-326 — le classement automatique écrit `mail_attachments.card_id`** (décision 795) : les règles 1 et 2
       de la relève posent aussi la colonne sur les pièces du message classé, comme le classement manuel et le
       déclassement (0109) ; une migration rattrape les pièces existantes d'un message classé. pgTAP (classement à la
       relève, rattrapage), API, unitaires du fil qui peuvent revenir à la colonne ; `docs/SCHEMA.md`, contrat de
       déploiement. Connecteur MCP : sans objet.
-      *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 01:23 UTC — état avant : [ ]*
+      **Fait le 2026-11-01** : migration `0142` (déclencheur avant insertion — la relève classe le message AVANT d'inscrire
+      ses pièces, cause corrigée d'INC-326 — et rattrapage) ; pgTAP `0132` rouge puis 7/7 ; `e2e/mail/ingestion.spec.ts`
+      +1, rouge sans le déclencheur et vert avec ; suite SQL 122/4610 ; harnais (122 fichiers, 4610 assertions, 49 mail).
+      Le fil continue de lire par les messages. Reste la livraison de la 142 (contrat §3) et son constat.
 
 ### CRM-056 — Dossiers IMAP imbriqués `[x]`
 Création, assainissement, renommage, labels Gmail, `mail_folder_map`.

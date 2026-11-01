@@ -101,8 +101,8 @@ export async function lireTextePiece(client: ClientCrm | null, idPiece: string):
  * Les pièces des courriers d'une affaire, par message, pour son fil (§5.1, décision 789) — une seule lecture, filtrée sur
  * les MESSAGES de l'affaire, sous la RLS de la pièce. Une panne rend une carte vide : le fil reste, sans ses pièces.
  *
- * PAR LES MESSAGES ET NON PAR `mail_attachments.card_id` : mesuré sur le seed, une pièce reçue garde `card_id` nul quand son
- * message est classé par la règle 1 (INC-326) ; seul le message dit où il est rangé.
+ * PAR LES MESSAGES : le fil est fait de messages, et c'est le message qui dit où il est rangé. `mail_attachments.card_id`
+ * est exact depuis la migration `0142` (INC-326, décision 795), mais le fil n'en dépend pas.
  */
 export async function lirePiecesDesMessages(
 	client: ClientCrm | null,

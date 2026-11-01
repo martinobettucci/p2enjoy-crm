@@ -6,6 +6,8 @@
 // @verifies docs/JOURNAL.md décision 320 ; CLAUDE.md §8 (aucune trace fabriquée)
 // @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
 //           (docs/SPEC-rattachements.md §3.2, §5)
+// @verifies CRM-055 (docs/BACKLOG.md) — tranche INC-326 : la pièce d'un courrier classé à la relève porte l'affaire de son
+//           message (docs/SCHEMA.md « Migration `0142` », décision 795)
 //
 // RIEN N'EST SIMULÉ : un message est réellement soumis en SMTP authentifié — le chemin d'un
 // message légitime remis par un serveur (§15.4) —, relevé par le service depuis le vrai IMAP,
@@ -58,8 +60,8 @@ function python(source: string, variables: Record<string, string> = {}): string 
 	return docker(...arguments_)
 }
 
-/** Soumet un message à une adresse choisie — `CRM-055` en a besoin pour viser une card. */
-function envoyerA(identifiant: string, destinataire: string): void {
+/** Soumet un message à une adresse choisie — `CRM-055` en a besoin pour viser une card ; une pièce texte sur demande. */
+function envoyerA(identifiant: string, destinataire: string, avecPiece = false): void {
 	python(
 		`
 import os, smtplib
@@ -71,13 +73,15 @@ msg['To'] = os.environ['DEST']
 msg['Subject'] = 'Classement ' + os.environ['ID']
 msg['Message-ID'] = '<' + os.environ['ID'] + '@p2enjoy.test>'
 msg.set_content('Message adressé à une card.')
+if os.environ['PIECE'] == 'oui':
+    msg.add_attachment(b'Note jointe au courrier.', maintype='text', subtype='plain', filename='note-inc326.txt')
 s = smtplib.SMTP('stalwart', 587, timeout=30)
 s.ehlo()
 s.login('admin@p2enjoy.test', 'SeedDev2026Local')
 s.send_message(msg)
 s.quit()
 `,
-		{ ID: identifiant, DEST: destinataire },
+		{ ID: identifiant, DEST: destinataire, PIECE: avecPiece ? 'oui' : 'non' },
 	)
 }
 
@@ -300,6 +304,44 @@ test.describe('ingestion — un email réellement envoyé, relevé et analysé',
 			// L'événement de timeline reste : `card_events` n'accorde aucune écriture, à personne
 			// (`CRM-044`), et l'historique d'une card ne se corrige pas. Prétendre l'effacer
 			// aurait produit un refus silencieux.
+		}
+	})
+
+	// INC-326 : la relève classe le message AVANT d'en inscrire les pièces ; la pièce hérite donc de l'affaire à son
+	// insertion (migration `0142`). Jugé sur l'état, comme le classement : la veille peut faire la relève à sa place.
+	test('la pièce d’un courrier classé à la relève porte l’affaire de son message', async ({ request }) => {
+		test.setTimeout(300_000)
+		const identifiant = `piece-auto-${Date.now()}`
+		const debut = new Date().toISOString()
+		const dossiersAvant = await instantaneDesBoites([BOITE_SYSTEME])
+		const cartes = await request.get(
+			`${URL_API}/rest/v1/cards?select=id,email_local_part,card_placements!card_placements_card_fk!inner(archived_at)&card_placements.archived_at=is.null&deleted_at=is.null&limit=1`,
+			{ headers: enTetesService() },
+		)
+		const [carte] = (await cartes.json()) as { id: string; email_local_part: string }[]
+		const compteReponse = await request.get(`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&select=id`, {
+			headers: enTetesService(),
+		})
+		const [compte] = (await compteReponse.json()) as { id: string }[]
+
+		try {
+			envoyerA(identifiant, `${carte!.email_local_part}@crm.p2enjoy.test`, true)
+			relever(compte!.id)
+
+			const messages = await request.get(
+				`${URL_API}/rest/v1/mail_messages?rfc822_message_id=eq.${encodeURIComponent(`<${identifiant}@p2enjoy.test>`)}&select=id,card_id,classification`,
+				{ headers: enTetesService() },
+			)
+			const [message] = (await messages.json()) as { id: string; card_id: string; classification: string }[]
+			expect(message?.classification).toBe('auto')
+			expect(message?.card_id).toBe(carte!.id)
+			const pieces = await request.get(
+				`${URL_API}/rest/v1/mail_attachments?message_id=eq.${message!.id}&select=filename,card_id`,
+				{ headers: enTetesService() },
+			)
+			expect(await pieces.json()).toEqual([{ filename: 'note-inc326.txt', card_id: carte!.id }])
+		} finally {
+			await rendreLesBoites(request, { boites: [BOITE_SYSTEME], motif: identifiant, avant: dossiersAvant, debut })
 		}
 	})
 
