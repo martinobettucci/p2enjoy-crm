@@ -17871,6 +17871,7 @@ le 2026-11-01, décision 800).
       demande rien n'est versionné, avec `CAPTURES_UNITES=CRM-041` elle l'est ; une capture JPEG l'est avec
       `CAPTURES_UNITES=CRM-074` ; une unité hors forme fait échouer le scénario. Typecheck vert.
       `docs/DESIGN_SYSTEM.md` §11, `docs/DAT.md` §13, `README.md`, `docs/PROD_MIGRATIONS.md` (le geste de préparation).
-- [ ] **T3 — premier renouvellement**, avant la livraison du lot 0106 à 0140 (décision 786). La campagne finale de
+- [@] **T3 — premier renouvellement**, avant la livraison du lot 0106 à 0140 (décision 786). La campagne finale de
       `CRM-117` (T5) s'est close le 2026-10-31 sans lui, T1 et T2 n'étant pas faites : elle a renouvelé les seules images
       du manuel et les captures de `CRM-117`.
+      *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 13:01 UTC — état avant : [ ]*
