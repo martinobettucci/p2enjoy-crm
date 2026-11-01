@@ -673,6 +673,13 @@ migration** : `public.rentabilite_affaires` ne change pas. La webapp de `main`, 
 
 **Retour arrière** : relivrer la webapp et l'image `mcp` précédentes ; aucune donnée n'est touchée.
 
+### 2.28 `CRM-124`, décision 806 — la prévisualisation d'un modèle présélectionne l'unique contact rattaché (AVEC LE PROCHAIN LOT)
+
+`docs/SPEC-modeles-emails.md` §9.5 (révision `CRM-124`). **Webapp seule : aucune migration, aucune image, aucune
+variable.** Part avec le prochain lot. Le constat : Réglages ▸ Modèles d'emails ▸ « Prévisualiser », choisir une affaire
+qui n'a qu'un contact rattaché ; le champ « Contact » le montre aussitôt. Une affaire à plusieurs contacts, ou sans
+contact, laisse « Aucun contact ». **Retour arrière** : relivrer la révision précédente de la webapp.
+
 ## 3. Migrations en attente
 
 **Aucune migration en attente depuis le 2026-11-01** : la 143 est appliquée (§8, « 2026-11-01 — migration 143 ») ; le

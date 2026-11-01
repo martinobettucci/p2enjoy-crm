@@ -17975,7 +17975,7 @@ action `ajouter`, sans case nouvelle.*
 
 ## Demande du 2026-11-01 — le contact présélectionné de la prévisualisation d'un modèle (décision 806)
 
-### CRM-124 — La prévisualisation d'un modèle présélectionne l'unique contact rattaché à l'affaire choisie `[~]`
+### CRM-124 — La prévisualisation d'un modèle présélectionne l'unique contact rattaché à l'affaire choisie `[P]`
 Demande et arbitrage du responsable du 2026-11-01 (décision 806).
 
 **Spécification** : `docs/SPEC-modeles-emails.md` §9.5 (révision `CRM-124`) ; `docs/DESIGN_SYSTEM.md` §5.39.
@@ -17994,18 +17994,18 @@ Question du connecteur : sans objet (décision 806).
 
 - [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-01 : décision 806,
       `docs/SPEC-modeles-emails.md` §9.5, `docs/DESIGN_SYSTEM.md` §5.39.
-- [~] **T2 — écran et preuves** : fonction pure, écran, unitaires, E2E, captures, manuel, changelog.
+- [x] **T2 — écran et preuves** : fonction pure, écran, unitaires, E2E, captures, manuel, changelog.
       **Fait le 2026-11-01** : `contactApresChoixAffaire` (`webapp/src/lib/modeles-emails.ts`) et 7 unitaires ;
       l'écran lit `lireContactsDeLAffaire` au choix de l'affaire, et écarte une réponse périmée ; 5 unitaires de
       composant (`ReglagesModelesEmails.test.tsx`), dont 4 rouges sur l'ancien code ; typecheck vert ; suite unitaire
-      5135/5136, l'échec (`PanneauChangementWorkflow`) vert seul, sans lien. E2E
-      `e2e/ui/modeles-emails-contact-preselectionne.spec.ts` sur la pile partagée : **7/8 verts** (Sogexia →
-      Léo Marchand et rendu substitué, affaire sans rattachement, deux rattachements temporaires, choix manuel, quatre
-      paliers sans débordement). Captures `docs/captures/CRM-124/` observées. Manuel §14.2, changelog.
-      **Reste** : le scénario de la lectrice était faux (mesuré, elle ne lit pas Sogexia, et ne lit qu'un rattachement,
-      Lyon — Sophie Dupont). Il est corrigé mais **pas encore rejoué** : la pile partagée est sous un ordre convenu
-      entre sessions. Il faut aussi rejouer `e2e/ui/reglages-modeles-emails.spec.ts`, dont le parcours choisit
-      Sogexia puis Léo, compatible mais non rejoué.
+      5135/5136, l'échec (`PanneauChangementWorkflow`) vert seul, sans lien. E2E sur la pile partagée, rejoués dans
+      le créneau convenu entre sessions : **18/18** — `e2e/ui/modeles-emails-contact-preselectionne.spec.ts` (8 : Sogexia
+      → Léo Marchand et rendu substitué, affaire sans rattachement, deux rattachements temporaires retirés, choix
+      manuel, la lectrice qui ne lit que Lyon → Sophie Dupont et pas Sogexia, quatre paliers sans débordement) et
+      `e2e/ui/reglages-modeles-emails.spec.ts` (10, sans régression). Captures `docs/captures/CRM-124/` observées.
+      Manuel §14.2, changelog, contrat de déploiement §2.28.
+- [P] **T3 — livraison** : la webapp part avec le prochain lot (`docs/PROD_MIGRATIONS.md` §2.28) ; constat du
+      responsable.
 
 ## Demande du 2026-11-01 — l'aperçu des paliers d'une séquence (décision 809)
 
