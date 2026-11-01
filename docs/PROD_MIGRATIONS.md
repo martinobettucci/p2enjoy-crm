@@ -2,6 +2,21 @@
 
 *Session de livraison : p2enjoy-crm-d8 depuis 2026-11-01 19:30 UTC — lot : tout `main` après la migration de `CRM-125` T2 (décision 812) — `0144` et migration de `CRM-125` T2 ; webapps de `CRM-123`, `CRM-124`, `CRM-125`, `CRM-126`, INC-332 et INC-333 ; image `mcp` (`CRM-126`). Règle : `CLAUDE.md` §12, décision 813.*
 
+**Le lot annoncé, tel que les sessions l'ont signalé le 2026-11-01** (à relire au moment de livrer) :
+
+- **Attend** : la migration de `CRM-125` T2 (`public.render_mail_template_sample`), sans laquelle le bouton « Aperçu » des
+  séquences, déjà dans `main`, échoue (décision 812).
+- **Migrations** : la `0144` (`CRM-123`, gestes au §2.29), puis celle de `CRM-125` T2. Instantané existant, fenêtre en
+  `--instantane-verifie` (décision 812). La `0134` est déjà appliquée (fenêtre 106 à 141 du 2026-11-01).
+- **Webapp et images** : la webapp de `main` (`CRM-123`, `CRM-124`, `CRM-125`, `CRM-126`, INC-332, INC-333), l'image
+  `mcp` (`CRM-126`, §2.27).
+- **Hors du lot sauf décision au moment de livrer** : INC-335 et sa `0146` (geste préalable des administrateurs, §2.26) —
+  sa session prévient avant de pousser son code ; `CRM-111` T3, sans consommateur, inclusion sans risque si elle est
+  poussée avant.
+- **Après la fenêtre** : vérifications du §5, celles du §2.29 et du §2.27, puis les gestes du responsable — pour
+  `CRM-123`, l'alias `app-*` chez l'hébergeur **avant** toute régénération. Après son constat, la session de livraison
+  écrit le changelog `[Publié]`, la baseline et le backlog des unités livrées.
+
 Ce document décrit **ce qu'un humain doit appliquer** pour déployer ou mettre à jour la
 production. Il ne dérive jamais de l'état réel du projet : toute modification du schéma, des
 services déployés ou des variables d'environnement le met à jour **dans le même changement**.
