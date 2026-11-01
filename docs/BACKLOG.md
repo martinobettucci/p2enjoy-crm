@@ -17769,9 +17769,10 @@ jetons ; lectures du code `P0002` de la webapp adaptées, tests unitaires vus ro
 ces refus (pytest) ; dictionnaires de refus et `docs/SPEC-plateforme.md` §6.1 révisés ; contrat de déploiement ;
 campagnes. Question du connecteur : aucune fonctionnalité nouvelle (décision 762).
 
-- [ ] **T1 — mesure et forme** : inventaire exact (fonctions, codes, appelants, preuves qui affirment 500) ; la forme
+- [@] **T1 — mesure et forme** : inventaire exact (fonctions, codes, appelants, preuves qui affirment 500) ; la forme
       `raise sqlstate 'PGRST'` prouvée sur la pile, ou une autre forme si elle n'est pas portée ; le statut de
       `outbox_not_reschedulable` tranché ; spécification écrite et committée avant le code.
+      *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 02:53 UTC — état avant : [ ]*
 - [ ] **T2 — migration et preuves en base** : réécriture des fonctions, pgTAP, harnais.
 - [ ] **T3 — clients et preuves** : webapp (`creer-affaire.ts`, `rgpd.ts`, dictionnaires), connecteur, preuves API
       et E2E, documentation.
