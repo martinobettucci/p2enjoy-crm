@@ -63,12 +63,15 @@ services:
 
   # --- Stockage objet interne ------------------------------------------------------------------
 
-  # Chainguard, épinglé par empreinte, la MÊME que le développement (décision 681, INC-290) : `quay.io` ne sert
-  # plus MinIO. En `root`, comme l'image de `quay.io` qu'elle remplace : le volume `minio-data` lui appartient, et
-  # aucune donnée n'a à changer de propriétaire. La cellule est rootless : ce `root` n'a aucun privilège sur l'hôte.
+  # L'image de Chainguard épinglée par le développement (décision 681, INC-290 : `quay.io` ne sert plus MinIO), DÉRIVÉE
+  # pour la cellule (INC-329, décision 794) : celle-ci ne sait pas extraire son `nonroot` à l'UID 65532. Construite et
+  # transférée par `scripts/spark/livrer.sh`, jamais tirée (`supabase/docker/minio-spark/Dockerfile`). En `root`, comme
+  # l'image de `quay.io` qu'elle remplace : le volume `minio-data` lui appartient, et aucune donnée n'a à changer de
+  # propriétaire. La cellule est rootless : ce `root` n'a aucun privilège sur l'hôte.
   minio:
     container_name: p2enjoy-minio
-    image: cgr.dev/chainguard/minio@sha256:73297936408b731668ca0e835ac9add1a35cb6026a125c2f0cd476d9ef48222c
+    image: p2enjoy/minio-spark:RELEASE.2026-10-23T20-06-51Z
+    pull_policy: never
     user: "0:0"
     restart: always
     mem_limit: 448m
@@ -89,7 +92,8 @@ services:
   # serveur.
   minio-createbucket:
     container_name: p2enjoy-minio-createbucket
-    image: cgr.dev/chainguard/minio@sha256:73297936408b731668ca0e835ac9add1a35cb6026a125c2f0cd476d9ef48222c
+    image: p2enjoy/minio-spark:RELEASE.2026-10-23T20-06-51Z
+    pull_policy: never
     user: "0:0"
     restart: "no"
     mem_limit: 64m

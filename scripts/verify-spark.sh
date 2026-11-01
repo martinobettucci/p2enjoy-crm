@@ -6,6 +6,8 @@
 # @verifies CRM-097 (docs/BACKLOG.md) tranche T4 — docs/SPEC-deploiement-spark.md §4.3 et §4.4 (`--assistant-ia`)
 # @verifies docs/JOURNAL.md décisions 567, 570, 571, 575 et 577 (image Realtime dérivée)
 # @verifies docs/JOURNAL.md décision 681, INC-290 — MinIO depuis Chainguard épinglé par empreinte, en root, pour les deux services
+# @verifies CRM-090 (docs/BACKLOG.md) — INC-329, décision 794 : la cellule emploie une image MinIO DÉRIVÉE de l'image épinglée
+#           du développement, aux identifiants dans la plage de la cellule, jamais tirée (docs/SPEC-deploiement-spark.md §3.5)
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §12 — tranche T6 : ni GoTrue ni SMTP dans
 #           les propositions ; `--demandes-seules` pour une cellule en service (décisions 589 et 590) ;
 #           T7 (décision 591) : Kong et Caddy portent leur label de révision (`crm-115` pour Kong depuis CRM-115 T2) ; valeurs de la
@@ -254,10 +256,12 @@ if sans_limite:
     e.append(f"services sans limite mémoire : {sans_limite}")
 if s.get("kong", {}).get("environment", {}).get("KONG_NGINX_WORKER_PROCESSES") != "1":
     e.append("Kong sans KONG_NGINX_WORKER_PROCESSES=1")
-# Décision 681 : Chainguard, épinglé par empreinte, la même image pour le serveur et la création du bucket, en root.
+# Décision 681 : la même image pour le serveur et la création du bucket, en root. RÉVISÉ par INC-329 (décision 794) : la
+# cellule ne sait pas extraire celle de Chainguard (UID 65532) ; elle emploie une image DÉRIVÉE, jamais tirée.
 for nom in ("minio", "minio-createbucket"):
-    if not s.get(nom, {}).get("image", "").startswith("cgr.dev/chainguard/minio@sha256:"):
-        e.append(f"{nom} : image hors cgr.dev/chainguard/minio épinglée par empreinte")
+    image_m, tirage_m = s.get(nom, {}).get("image"), s.get(nom, {}).get("pull_policy")
+    if image_m != "p2enjoy/minio-spark:RELEASE.2026-10-23T20-06-51Z" or tirage_m != "never":
+        e.append(f"{nom} : image {image_m}, pull_policy {tirage_m} ; attendu : image MinIO dérivée, jamais tirée")
     if s.get(nom, {}).get("user") != "0:0":
         e.append(f"{nom} : utilisateur autre que 0:0 (le volume minio-data appartient à root)")
 rt = s.get("realtime", {})
@@ -433,6 +437,78 @@ PY
 	fi
 else
 	skip "démon Docker indisponible : image Realtime dérivée non inspectée"
+fi
+
+# L'image MinIO dérivée (INC-329, décision 794) : sa source est l'image épinglée du développement, et son étiquette la même
+# dans l'overlay et dans livrer.sh. Construite comme livrer.sh la construit, elle n'a aucune entrée de couche hors de la
+# plage, garde la configuration d'exécution de sa source à l'identifiant près, et ses deux binaires répondent.
+source_minio_dev=$(sed -n 's/^    image: \(cgr\.dev\/chainguard\/minio@sha256:[0-9a-f]*\)$/\1/p' docker-compose.dev.yml | sort -u)
+source_minio_derivee=$(sed -n 's/^FROM \(cgr\.dev\/chainguard\/minio@sha256:[0-9a-f]*\) AS source$/\1/p' supabase/docker/minio-spark/Dockerfile)
+etiquette_minio_livrer=$(sed -n 's/^IMAGE_MINIO_SPARK=//p' scripts/spark/livrer.sh)
+etiquettes_minio_overlay=$(sed -n '/^  minio\(-createbucket\)\?:/,/^  [a-z]/s/^    image: //p' docker-compose.spark.yml | sort -u)
+[ -n "$source_minio_dev" ] && [ "$source_minio_dev" = "$source_minio_derivee" ] \
+	&& ok "l'image MinIO dérivée part de l'image épinglée du développement" \
+	|| fail "image MinIO : développement « $source_minio_dev », image dérivée « $source_minio_derivee »"
+[ -n "$etiquette_minio_livrer" ] && [ "$etiquettes_minio_overlay" = "$etiquette_minio_livrer" ] \
+	&& ok "même étiquette MinIO dérivée pour les deux services de l'overlay et dans livrer.sh ($etiquette_minio_livrer)" \
+	|| fail "étiquette MinIO dérivée : overlay « $(printf '%s' "$etiquettes_minio_overlay" | tr '\n' ' ') », livrer.sh « $etiquette_minio_livrer »"
+if docker info >/dev/null 2>&1; then
+	if docker build -q -t "$etiquette_minio_livrer" supabase/docker/minio-spark >"$WORK/minio-build.out" 2>&1; then
+		docker save "$etiquette_minio_livrer" > "$WORK/minio.tar"
+		releve=$(python3 - "$WORK/minio.tar" "$BORNE_UID_CELLULE" <<'PY'
+import json, sys, tarfile
+borne = int(sys.argv[2])
+entrees, hors, couches, nonroot = 0, [], 0, "absent"
+with tarfile.open(sys.argv[1]) as image:
+    for chemin in json.load(image.extractfile("manifest.json"))[0]["Layers"]:
+        couches += 1
+        with tarfile.open(fileobj=image.extractfile(chemin)) as couche:
+            for m in couche:
+                entrees += 1
+                if m.name == "home/nonroot":
+                    nonroot = f"{m.uid}:{m.gid}"
+                if m.uid > borne or m.gid > borne:
+                    hors.append(f"{m.name}={m.uid}:{m.gid}")
+print(entrees, len(hors), couches, nonroot, " ".join(hors[:3]))
+PY
+)
+		read -r entrees hors couches nonroot exemples <<< "$releve"
+		[ "${entrees:-0}" -gt 0 ] && [ "$hors" = 0 ] \
+			&& ok "image MinIO dérivée : $entrees entrées de couche, aucune au-delà de l'UID/GID $BORNE_UID_CELLULE" \
+			|| fail "image MinIO dérivée : ${hors:-?} entrée(s) hors de la plage de la cellule — $exemples"
+		[ "$couches" = 1 ] && ok "image MinIO dérivée en une seule couche, la forme qu'un docker load de la cellule accepte" \
+			|| fail "image MinIO dérivée en $couches couches"
+		# Un répertoire de travail vide vaut « / » à l'exécution ; l'étape `scratch` l'écrit « / ».
+		config_minio() { docker image inspect --format '{{json .Config.Entrypoint}} {{json .Config.Cmd}} {{json .Config.WorkingDir}} {{json .Config.Env}}' "$1" | sed 's| "" | "/" |'; }
+		[ "$(config_minio "$etiquette_minio_livrer")" = "$(config_minio "$source_minio_derivee")" ] \
+			&& ok "configuration d'exécution identique à l'image de Chainguard" \
+			|| fail "configuration d'exécution : dérivée « $(config_minio "$etiquette_minio_livrer") », source « $(config_minio "$source_minio_derivee") »"
+		[ "$nonroot" = 64532:64532 ] && ok "/home/nonroot renuméroté de 65532 en 64532" || fail "/home/nonroot : $nonroot"
+		docker run --rm --user 0:0 --entrypoint /bin/sh "$etiquette_minio_livrer" -c 'minio --version && mc --version' >/dev/null 2>&1 \
+			&& ok "minio et mc répondent dans l'image dérivée" || fail "image MinIO dérivée : minio ou mc ne répond pas"
+		# Le serveur tel que la cellule le lance — `0:0`, `server /data` —, prêt selon son propre contrôle de santé, puis le
+		# geste de `minio-createbucket` par `mc`, rejoué pour prouver qu'il est idempotent.
+		nom_minio="verify-spark-minio-$(gen_hex 4)"
+		secret_minio=$(gen_hex 16)
+		if docker run -d --name "$nom_minio" --user 0:0 -e MINIO_ROOT_USER=verifyspark -e MINIO_ROOT_PASSWORD="$secret_minio" \
+			"$etiquette_minio_livrer" server /data >/dev/null 2>&1; then
+			pret=0
+			for _ in $(seq 60); do docker exec "$nom_minio" mc ready local >/dev/null 2>&1 && { pret=1; break; }; sleep 0.5; done
+			geste='mc alias set p2enjoy http://127.0.0.1:9000 verifyspark "$1" >/dev/null && mc mb --ignore-existing p2enjoy/verify >/dev/null'
+			[ "$pret" = 1 ] && docker exec "$nom_minio" /bin/sh -ec "$geste" sh "$secret_minio" \
+				&& docker exec "$nom_minio" /bin/sh -ec "$geste" sh "$secret_minio" \
+				&& ok "le serveur de l'image dérivée démarre en 0:0, se dit prêt, et le bucket se crée deux fois sans erreur" \
+				|| fail "serveur de l'image dérivée : prêt=$pret, ou création du bucket en échec"
+		else
+			fail "le serveur de l'image dérivée ne démarre pas"
+		fi
+		docker rm -f "$nom_minio" >/dev/null 2>&1
+		rm -f "$WORK/minio.tar"
+	else
+		fail "construction de l'image MinIO dérivée : $(tail -n 1 "$WORK/minio-build.out")"
+	fi
+else
+	skip "démon Docker indisponible : image MinIO dérivée non inspectée"
 fi
 
 # --- 5. proposer.sh ----------------------------------------------------------------------------------
@@ -807,6 +883,9 @@ if out=$(livrer); then
 		&& grep -q "^VITE_SSO_CLIENT_ID=lelabs-crm-serveur$" "$L/build.env" \
 		&& ok "le build a reçu les variables publiques relues dans la cellule" || fail "variables du build : $(tr '\n' ' ' < "$L/build.env")"
 	grep -q 'JWT_SECRET\|SERVICE_ROLE_KEY' "$L/build.env" && fail "un secret a atteint le build" || ok "aucun secret dans le build"
+	grep -q "docker image inspect .*$etiquette_minio_livrer" "$L/ssh.log" \
+		&& ok "la livraison compare aussi l'image MinIO dérivée à celle de la cellule (INC-329)" \
+		|| fail "la livraison ignore l'image MinIO dérivée"
 else
 	fail "première livraison refusée : $(printf '%s' "$out" | tail -n 3 | tr '\n' ' ')"
 fi

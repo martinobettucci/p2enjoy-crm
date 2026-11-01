@@ -8331,3 +8331,11 @@ plage, et une preuve qui l'inspecte (`verify-spark.sh` §4) ; ou (b) élargir la
 geste du propriétaire de l'hôte. Connecteur MCP : sans objet.
 
 **Arbitrée le 2026-11-01, décision 794** : (a), l'image dérivée (tranche `CRM-090`, INC-290 / INC-329).
+
+**Corrigée en développement le 2026-11-01** : `supabase/docker/minio-spark/Dockerfile` renumérote `nonroot` en 64532 sur
+une copie de la racine (étape Alpine épinglée), puis recopie en une seule couche ; l'overlay emploie
+`p2enjoy/minio-spark:RELEASE.2026-10-23T20-06-51Z` en `pull_policy: never` ; `livrer.sh` construit et transfère les deux
+images dérivées. **Preuve** : `scripts/verify-spark.sh`, d'abord rouge (4 anomalies), puis 121/121. L'image part de
+l'empreinte du développement ; aucune de ses 693 entrées de couche ne dépasse 64534 ; elle tient en une couche, avec la
+configuration de la source ; `minio` et `mc` répondent ; le serveur démarre en `0:0` et se dit prêt, et le bucket se crée
+deux fois ; la livraison simulée compare aussi cette image à celle de la cellule.

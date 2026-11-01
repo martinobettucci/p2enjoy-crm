@@ -13,7 +13,11 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### INC-329 — une image MinIO dérivée pour la cellule de production
+
+- La cellule emploie une image MinIO dérivée de celle de Chainguard (`p2enjoy/minio-spark`), dont le compte `nonroot`
+  est renuméroté dans la plage d'identifiants qu'elle sait représenter ; `scripts/spark/livrer.sh` la construit et la
+  transfère, comme celle de Realtime. Sans changement en développement.
 
 ## [Publié]
 

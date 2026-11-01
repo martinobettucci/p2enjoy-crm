@@ -114,6 +114,17 @@ supérieur à 64534 n'y est pas extractible. `supabase/realtime:v2.102.3` en por
 - Une montée de version de Realtime dans l'assemblage commun impose la même montée dans la
   dérivée ; `scripts/verify-spark.sh` rougit sinon.
 
+**MinIO, de même (INC-329, décision 794).** L'image de Chainguard qu'épingle le développement
+(décision 681) attribue `/home/nonroot` à `nonroot` (65532), et son tirage échoue dans la cellule
+(mesuré le 2026-11-01). Elle n'a ni `find` ni `sed` :
+`supabase/docker/minio-spark/Dockerfile` renumérote donc `nonroot` en **64532** sur une copie de sa
+racine, dans une étape utilitaire Alpine épinglée, puis recopie le résultat en **une seule couche**
+avec la configuration d'exécution de la source. Les deux services, `minio` et `minio-createbucket`,
+emploient l'étiquette `p2enjoy/minio-spark:RELEASE.2026-10-23T20-06-51Z` en `pull_policy: never`.
+`scripts/spark/livrer.sh` la construit et la transfère comme celle de Realtime. Le
+`scripts/verify-spark.sh` §4 prouve son point de départ, l'empreinte de `docker-compose.dev.yml`, et
+l'absence de tout identifiant hors de la plage ; il démarre aussi le serveur et crée un bucket.
+
 ## 4. Les variables
 
 ### 4.1 D'où elles viennent

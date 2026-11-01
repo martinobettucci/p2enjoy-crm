@@ -527,7 +527,9 @@ changent rien), ou être retirées par les `drop function` de leurs lignes au §
 ### 2.18 INC-290 — MinIO depuis Chainguard dans la cellule (BLOQUÉE par INC-329 : ordonnée le 2026-11-01 par la décision 793, l'image ne s'extrait pas sous la plage d'UID du démon rootless de la cellule ; `minio` reste sur `quay.io`, sain)
 
 `docker-compose.spark.yml` remplace `quay.io/minio/minio` et `quay.io/minio/mc`, que `quay.io` ne sert plus (`401`), par
-**une seule image** : `cgr.dev/chainguard/minio@sha256:73297936408b731668ca0e835ac9add1a35cb6026a125c2f0cd476d9ef48222c` (décision 681). Les deux services tournent en `user: "0:0"`, comme l'image de `quay.io` : le
+**une seule image** : `cgr.dev/chainguard/minio@sha256:73297936408b731668ca0e835ac9add1a35cb6026a125c2f0cd476d9ef48222c` (décision 681),
+**dérivée pour la cellule** depuis INC-329 (décision 794) : `p2enjoy/minio-spark:RELEASE.2026-10-23T20-06-51Z`, `nonroot`
+renuméroté de 65532 en 64532, construite sur le poste et transférée par `scripts/spark/livrer.sh`, jamais tirée. Les deux services tournent en `user: "0:0"`, comme l'image de `quay.io` : le
 volume `minio-data` garde son propriétaire, **aucun geste sur les données**. Aucune migration, aucune variable, aucun
 secret nouveau. Le serveur passe de la publication du 2025-04-22 à `RELEASE.2026-10-23T20-06-51Z`. Mesuré en
 développement sur une copie d'un volume écrit par la version d'avril 2025 : le serveur démarre et les objets se
@@ -536,7 +538,7 @@ relisent à l'identique (taille et ETag).
 | # | Geste | Qui | Commande ou lieu |
 |---|---|---|---|
 | 1 | Prendre l'**instantané de VM** et le faire confirmer par le responsable, comme pour toute fenêtre (en-tête de ce document) : il couvre le volume `minio-data` | propriétaire de la cellule | console de l'hébergeur |
-| 2 | Livrer `main` : le fichier Compose porte la nouvelle image ; `./runProd.sh --spark` la tire et recrée `minio`, puis rejoue `minio-createbucket` (`--ignore-existing`) | poste, par les IP | `scripts/spark/livrer.sh`, puis `./runProd.sh --spark` |
+| 2 | Livrer `main` : `livrer.sh` construit l'image dérivée et la charge dans la cellule ; `./runProd.sh --spark` recrée `minio`, puis rejoue `minio-createbucket` (`--ignore-existing`) | poste, par les IP | `scripts/spark/livrer.sh`, qui lance `./runProd.sh --spark` |
 | 3 | Vérifier en lecture seule : `minio` sain, `minio-createbucket` terminé en `0`, et une pièce jointe ancienne se télécharge depuis l'application | poste, lecture seule ; le responsable | `scripts/spark/verifier.sh`, puis l'application |
 
 **Retour arrière** : remettre les deux lignes `image:` précédentes. **Limite** : `quay.io` ne servant plus ces images,

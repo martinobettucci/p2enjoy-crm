@@ -18,8 +18,8 @@
 #   5. extrait `git archive HEAD` par-dessus /srv/crm, remplace le CONTENU de webapp/dist (Caddy
 #      en monte le répertoire : le remplacer par un autre laisserait Caddy sur l'ancien), et écrit
 #      REVISION ;
-#   6. construit l'image Realtime dérivée et la charge dans la cellule si son identifiant y diffère
-#      (décision 571 : l'image d'origine n'y est pas extractible) ;
+#   6. construit les images Realtime et MinIO dérivées et charge chacune dans la cellule si son contenu y
+#      diffère (décision 571 et INC-329 : les images d'origine n'y sont pas extractibles) ;
 #   7. lance `./runProd.sh --spark` dans la cellule, avec les options passées après `--`.
 #
 # La cellule est jointe par ses adresses IP, JAMAIS par un alias (décision 603) : elles sont passées
@@ -157,10 +157,10 @@ git -C "$REPO_ROOT" archive --format=tar HEAD | distant "tar -x -C '$SPARK_REPER
 printf '%s\n' "$REVISION" | distant "cat > '$SPARK_REPERTOIRE/REVISION'"
 info "REVISION = $REVISION"
 
-# --- 6. Image Realtime dérivée ------------------------------------------------------------------------
+# --- 6. Images dérivées ------------------------------------------------------------------------------
 #
-# @spec docs/SPEC-deploiement-spark.md §3.5, docs/JOURNAL.md décisions 571 et 577
-# L'étiquette est celle que `docker-compose.spark.yml` déclare avec `pull_policy: never` ;
+# @spec docs/SPEC-deploiement-spark.md §3.5, docs/JOURNAL.md décisions 571, 577 et 794 (INC-329)
+# Les étiquettes sont celles que `docker-compose.spark.yml` déclare avec `pull_policy: never` ;
 # `scripts/verify-spark.sh` prouve que les deux ne divergent pas.
 #
 # La comparaison porte sur le CONTENU — couches et configuration d'exécution —, jamais sur
@@ -168,19 +168,26 @@ info "REVISION = $REVISION"
 # les métadonnées de construction y entrant (décision 577). Le contenu, lui, survit à `docker load`.
 
 IMAGE_REALTIME_SPARK=p2enjoy/realtime-spark:v2.102.3
+IMAGE_MINIO_SPARK=p2enjoy/minio-spark:RELEASE.2026-10-23T20-06-51Z
 CONTENU_IMAGE='{{json .RootFS.Layers}} {{json .Config}}'
-if [ "$ARCHIVE_SEULE" = 0 ]; then
-	say "Image Realtime dérivée"
-	docker build -q -t "$IMAGE_REALTIME_SPARK" "$REPO_ROOT/supabase/docker/realtime-spark" >/dev/null
-	id_local=$(docker image inspect --format '{{.Id}}' "$IMAGE_REALTIME_SPARK")
-	contenu_local=$(docker image inspect --format "$CONTENU_IMAGE" "$IMAGE_REALTIME_SPARK")
-	contenu_cellule=$(distant "docker image inspect --format '$CONTENU_IMAGE' '$IMAGE_REALTIME_SPARK' 2>/dev/null" || true)
+#   image_derivee <libellé> <étiquette> <contexte de construction>
+image_derivee() {
+	local libelle=$1 etiquette=$2 contexte=$3 id_local contenu_local contenu_cellule
+	say "Image $libelle dérivée"
+	docker build -q -t "$etiquette" "$contexte" >/dev/null
+	id_local=$(docker image inspect --format '{{.Id}}' "$etiquette")
+	contenu_local=$(docker image inspect --format "$CONTENU_IMAGE" "$etiquette")
+	contenu_cellule=$(distant "docker image inspect --format '$CONTENU_IMAGE' '$etiquette' 2>/dev/null" || true)
 	if [ "$contenu_local" = "$contenu_cellule" ]; then
 		info "déjà présente dans la cellule, contenu identique."
 	else
-		info "transfert de $IMAGE_REALTIME_SPARK ($id_local)"
-		docker save "$IMAGE_REALTIME_SPARK" | gzip -1 | distant "gunzip | docker load >/dev/null"
+		info "transfert de $etiquette ($id_local)"
+		docker save "$etiquette" | gzip -1 | distant "gunzip | docker load >/dev/null"
 	fi
+}
+if [ "$ARCHIVE_SEULE" = 0 ]; then
+	image_derivee Realtime "$IMAGE_REALTIME_SPARK" "$REPO_ROOT/supabase/docker/realtime-spark"
+	image_derivee MinIO "$IMAGE_MINIO_SPARK" "$REPO_ROOT/supabase/docker/minio-spark"
 fi
 
 # --- 7. Lancement ----------------------------------------------------------------------------------------

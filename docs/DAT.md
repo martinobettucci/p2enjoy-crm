@@ -623,7 +623,7 @@ impose de rejouer `scripts/verify-stack.sh` et de mettre à jour `docs/PROD_MIGR
 | `kong` | `kong/kong:3.9.1` | dev, prod |
 | `studio` | `supabase/studio:2026.07.07-sha-a6a04f2` | dev |
 | `meta` | `supabase/postgres-meta:v0.96.6` | dev |
-| `minio` | **`cgr.dev/chainguard/minio@sha256:73297936408b731668ca0e835ac9add1a35cb6026a125c2f0cd476d9ef48222c`** (relevée le 2026-10-24, `RELEASE.2026-10-23T20-06-51Z`), en `user: "0:0"` (INC-290, décision 681) | dev ; cellule Spark |
+| `minio` | **`cgr.dev/chainguard/minio@sha256:73297936408b731668ca0e835ac9add1a35cb6026a125c2f0cd476d9ef48222c`** (relevée le 2026-10-24, `RELEASE.2026-10-23T20-06-51Z`), en `user: "0:0"` (INC-290, décision 681) | dev ; dans la cellule Spark, image **dérivée** `p2enjoy/minio-spark:RELEASE.2026-10-23T20-06-51Z`, construite sur le poste (INC-329, décision 794) |
 | `minio-createbucket` | **la même image** que `minio` : elle porte `mc` et `/bin/sh` (décision 681) | dev ; cellule Spark |
 | `keycloak` | `quay.io/keycloak/keycloak:26.7.3` | dev — la version du SSO réel (`CRM-091`) |
 | `stalwart` | `stalwartlabs/stalwart:v0.13.4` | dev |
@@ -636,8 +636,11 @@ impose de rejouer `scripts/verify-stack.sh` et de mettre à jour `docs/PROD_MIGR
 **L'image MinIO : Chainguard, épinglée par empreinte (INC-290, décision 681).** Depuis le 2026-10-24, `quay.io` refuse
 le tirage anonyme des dépôts MinIO (`401`), et MinIO n'est plus maintenu ni distribué en binaires par son éditeur.
 `cgr.dev/chainguard/minio` est reconstruit en continu depuis les sources et se tire sans authentification. Le
-développement et la cellule tirent **la même empreinte**. Une montée de version est un commit qui change l'empreinte
-dans les deux fichiers Compose et rejoue les preuves du stockage ; on ne suit jamais `latest`. Les deux services
+développement tire cette empreinte ; la cellule emploie une image **dérivée** de la même empreinte, `nonroot` y étant
+renuméroté de 65532 en 64532, car la cellule ne représente aucun UID supérieur à 64534 (INC-329, décision 794 ;
+`docs/SPEC-deploiement-spark.md` §3.5). Une montée de version est un commit qui change l'empreinte dans
+`docker-compose.dev.yml` et dans `supabase/docker/minio-spark/Dockerfile`, puis rejoue les preuves du stockage et
+`scripts/verify-spark.sh` ; on ne suit jamais `latest`. Les deux services
 tournent en `root` (`user: "0:0"`) : l'image tourne par défaut en `65532`, mais le volume existant appartient à `root`.
 Garder `root` évite tout geste sur les données de production. Dans la cellule rootless, ce `root` n'a aucun privilège
 sur l'hôte. **Compromis connu** : l'amont MinIO est abandonné, et Chainguard reconstruit un code que plus personne ne
