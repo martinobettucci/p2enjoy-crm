@@ -17258,8 +17258,9 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       `0097`, `0019` et `0116` révisées (décision 51) ; API `rattacher-retirer.spec.ts` 6/6 aux jetons réels ; pgTAP
       126 fichiers sans anomalie, API 1296/1299 (manuel ×2 : le bucket non republié ; `webhooks-remise` : instable sous
       charge), unitaires 5166/5166, typecheck propre. Aucun écran ni outil ne l'emploie encore (T7, T9).
-- [ ] **T4 — lectures à plusieurs rattachements** (§6, §9) : entonnoir, affaires figées et relances, Ma journée,
+- [@] **T4 — lectures à plusieurs rattachements** (§6, §9) : entonnoir, affaires figées et relances, Ma journée,
       recherche, temps valorisé ; pgTAP et API.
+      *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-11-01 20:35 UTC — état avant : [ ]*
 - [ ] **T5 — rentabilité ventilée** (§6) : une ligne par rattachement × devise, colonne `shared`, total compté une fois ;
       écran ; `docs/SPEC-recettes.md` §5 et outil `crm_profitability_report`.
 - [ ] **T6 — messagerie** (§7, décision 657) : dossier `CRM/Affaires/<affaire>` et déplacement des dossiers existants
