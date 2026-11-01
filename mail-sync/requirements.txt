@@ -4,7 +4,7 @@
 #       entre dans l'image AVEC son premier consommateur, et pas avant : c'est le test de
 #       connexion réel du §13.5. Aucun client HTTP n'est ajouté — `urllib` de la bibliothèque
 #       standard couvre les deux appels PostgREST du service (CLAUDE.md §19).
-fastapi==0.139.2
+fastapi==0.162.0
 IMAPClient==3.1.0
 # @spec CRM-074 (docs/BACKLOG.md) — tranche T2 : `pypdf`, le texte des PDF (docs/SPEC-pieces-jointes.md §4.2) — pure Python,
 #       BSD-3, sans dépendance sous Python 3.13, aucune vulnérabilité connue pour 6.21.4 (OSV, 2026-10-31) ; les avis
