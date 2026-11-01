@@ -703,6 +703,23 @@ devine jamais. L'écran ne devine pas davantage, et **ne présélectionne rien**
   désignée, et cette affaire-là, MESURÉ, serait « Assistant IA support — Nordis » simplement parce
   qu'elle vient en tête de tri. L'option vide est ici l'aveu qu'aucun choix n'est fait, et le bloc
   de rendu porte alors l'état vide du §9.6.
+> **RÉVISÉ PAR `CRM-124`, 2026-11-01 (décision 806) — le contact se présélectionne quand l'affaire
+> n'en désigne qu'un.** « L'écran ne présélectionne rien » reste vrai de l'affaire et de l'identité.
+> Pour le contact :
+> - au choix d'une affaire, l'écran lit ses rattachements (`card_contacts`, sous sa RLS) ; quand
+>   ils désignent **exactement un** contact, celui-ci est présélectionné. Aucun ou plusieurs : rien
+>   n'est présélectionné — choisir entre plusieurs serait deviner ;
+> - **un choix manuel n'est jamais écrasé** : le contact n'est remplacé que s'il est vide ou s'il
+>   est encore la présélection de l'affaire précédente ; une présélection que la nouvelle affaire
+>   ne justifie plus est retirée (retour à « Aucun contact ») ;
+> - un échec de lecture des rattachements ne présélectionne rien et ne bloque rien ; une réponse
+>   arrivée après un nouveau changement d'affaire est ignorée ;
+> - le rendu ne devine toujours rien (§8.5) : la présélection est une commodité de l'écran, et la
+>   base reçoit l'identifiant affiché, que la personne peut changer avant de rendre ;
+> - la liste porte toujours **tous** les contacts lisibles (point suivant), la présélection n'en
+>   retire aucun ;
+> - connecteur MCP : sans objet, il n'expose pas la prévisualisation (décision 806).
+
 - **Le contact — facultatif, option vide « Aucun contact », et la liste porte TOUS les contacts que
   l'appelant lit**, jamais les seuls contacts rattachés à l'affaire choisie. **MESURÉ** :
   `card_contacts` ne porte que **2 lignes pour 41 affaires**. Un sélecteur restreint au rattachement

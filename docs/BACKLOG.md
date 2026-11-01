@@ -17962,3 +17962,26 @@ action `ajouter`, sans case nouvelle.*
       manuel, changelog.
 - [ ] **T3 — le connecteur** : dans `crm_mail_send`, l'identité de service est retirée des identités empruntables, et
       une `from_address` absente vaut le défaut de la personne. Livrables : unitaires et intégration MCP.
+
+## Demande du 2026-11-01 — le contact présélectionné de la prévisualisation d'un modèle (décision 806)
+
+### CRM-124 — La prévisualisation d'un modèle présélectionne l'unique contact rattaché à l'affaire choisie `[~]`
+Demande et arbitrage du responsable du 2026-11-01 (décision 806).
+
+**Spécification** : `docs/SPEC-modeles-emails.md` §9.5 (révision `CRM-124`) ; `docs/DESIGN_SYSTEM.md` §5.39.
+
+**DoD** :
+- la règle de présélection en fonction pure, avec ses unitaires (un rattaché, aucun, plusieurs, choix manuel conservé,
+  présélection précédente remplacée ou retirée) ;
+- l'écran `ReglagesModelesEmails` qui lit les rattachements au choix de l'affaire, ignore une réponse périmée, et ses
+  unitaires de composant (dont l'échec de lecture) ;
+- E2E sur la pile réelle et le seed : Sogexia présélectionne Léo Marchand ; une affaire sans rattachement laisse le
+  contact vide ; une affaire à deux rattachements temporaires (API réelle, retirés en fin de test) n'en présélectionne
+  aucun ; un choix manuel survit au changement d'affaire ; la lectrice obtient la même présélection (lecture sous RLS) ;
+- captures observées ; manuel (chapitre des modèles) ; changelog. Aucune migration, aucun contrat de déploiement.
+
+Question du connecteur : sans objet (décision 806).
+
+- [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-01 : décision 806,
+      `docs/SPEC-modeles-emails.md` §9.5, `docs/DESIGN_SYSTEM.md` §5.39.
+- [ ] **T2 — écran et preuves** : fonction pure, écran, unitaires, E2E, captures, manuel, changelog.

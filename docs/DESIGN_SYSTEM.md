@@ -4022,6 +4022,10 @@ porteur du geste, sélecteur jamais restreint selon le rôle, borne de liste à 
   la cible est la clé de l'objet configuré, ici c'est un **choix de simulation** que personne n'a
   encore fait, et présélectionner la première affaire du tri ferait rendre un texte au sujet d'une
   affaire que le rédacteur n'a pas désignée.
+  **Révisé par `CRM-124` (décision 806)** : une fois l'affaire choisie, le contact se présélectionne
+  quand elle n'a **qu'un** contact rattaché ; aucun ou plusieurs, il reste vide. La présélection ne
+  remplace jamais un choix manuel (`docs/SPEC-modeles-emails.md` §9.5). Elle n'a pas de marque
+  visuelle propre : le sélecteur montre une valeur, que la personne change comme toute autre.
 
 - **LE RENDU EST UN GESTE EXPLICITE, jamais un effet de frappe** : la fonction lit six tables sous
   RLS, et rendre à chaque changement de sélecteur ferait trois appels pour un seul choix. Le bouton

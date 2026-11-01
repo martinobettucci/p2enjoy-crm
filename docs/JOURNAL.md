@@ -37880,3 +37880,38 @@ révisées dans ce changement : `docs/SPEC-mail-subsystem.md` §14.2, §19.4, §
 `docs/SPEC-mcp.md` §9.2 decies. `docs/DESIGN_SYSTEM.md` §5.35, le manuel, le contrat de déploiement et le changelog
 suivent avec le code. Les preuves qui envoyaient ou armaient avec l'identité de service en administratrice (pgTAP,
 harnais, E2E) sont révisées : elles prouvent désormais le refus.
+
+### décision 806 — `CRM-124` : la prévisualisation d'un modèle présélectionne l'unique contact rattaché à l'affaire choisie
+
+*2026-11-01, session interactive, demande et arbitrage du responsable (options recommandées).* **Demande** : « au preview
+du modèle email, au choix de l'affaire, choisir le contact par défaut de l'affaire ».
+
+**Observations.** Le modèle de données ne connaît **aucun** « contact par défaut » d'une affaire : `card_contacts` ne
+porte qu'un `role` libre (`docs/SCHEMA.md` §6), et « Contact principal » n'est qu'un champ de formulaire du seed
+(`contact-principal`), qu'aucun workflow n'est tenu de porter. `docs/SPEC-modeles-emails.md` §9.5 et
+`docs/DESIGN_SYSTEM.md` §5.39 interdisaient toute présélection dans la prévisualisation. L'écran sait déjà lire les
+rattachements d'une affaire (`lireContactsDeLAffaire`, sous la RLS de `card_contacts`). Le seed porte deux affaires à
+un seul contact rattaché (`…c2` Sogexia — Léo Marchand ; `…c4` — Dupont), les autres n'en portent aucun.
+
+**Options soumises** : unique contact rattaché ; premier contact rattaché ; valeur du champ `contact-principal` ;
+marqueur nouveau en base (migration).
+
+**Décisions**, en trois questions :
+- **Le contact par défaut est l'unique contact rattaché** : quand `card_contacts` porte **exactement un** contact pour
+  l'affaire choisie, il est présélectionné. Aucun ou plusieurs : rien n'est présélectionné, le choix reste manuel —
+  choisir entre plusieurs serait deviner. Aucune migration.
+- **Un choix manuel n'est jamais écrasé** : au changement d'affaire, le contact n'est remplacé que s'il est vide ou s'il
+  est encore la présélection précédente. Une présélection précédente que la nouvelle affaire ne justifie plus est
+  retirée.
+- **Connecteur MCP** (les deux questions de `CLAUDE.md`) : **non, sans objet**. Le connecteur n'expose pas la
+  prévisualisation, et un assistant passe ses identifiants explicitement. Aucune famille ni case nouvelle.
+
+Précisions posées en écrivant la spécification : la présélection reste une **commodité de l'écran** — le rendu ne
+devine toujours rien (`docs/SPEC-modeles-emails.md` §8.5), la base reçoit l'identifiant choisi ; un échec de lecture
+des rattachements ne bloque rien et ne présélectionne rien ; une réponse arrivée après un nouveau changement d'affaire
+est ignorée ; l'affaire et l'identité ne présélectionnent toujours rien. Le cas « plusieurs contacts » est prouvé en
+E2E par deux rattachements temporaires posés par l'API réelle puis retirés, plutôt qu'en élargissant le seed, dont
+seize preuves comptent les rattachements.
+
+**Conséquences.** Unité `CRM-124` au backlog. `docs/SPEC-modeles-emails.md` §9.5 et `docs/DESIGN_SYSTEM.md` §5.39
+révisés dans ce changement ; le manuel, le changelog et les preuves suivent avec le code.
