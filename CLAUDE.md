@@ -587,6 +587,27 @@ Il doit contenir selon le projet :
 
 Toute modification portant sur le schéma, les fonctions backend, les services déployés ou les variables d'environnement doit mettre à jour ce document dans le même changement.
 
+Une seule session livre en production (consigne du responsable, 2026-11-01, décision 813)
+
+Plusieurs sessions travaillent sur la même branche (§5, « Prise en charge »), et une livraison emporte toute la branche :
+deux sessions qui livrent chacune leur unité livrent en réalité le même lot, l'une sans savoir ce que l'autre y a mis.
+
+- À tout instant, **une seule session est la session de livraison**. Elle seule ouvre une fenêtre de maintenance, lance
+  une livraison, applique une migration de production ou écrit en production. Aucune autre ne livre.
+- **Elle s'annonce** par une ligne en tête du contrat de déploiement (`docs/PROD_MIGRATIONS.md`) :
+  « *Session de livraison : <nom de la session> depuis <AAAA-MM-JJ HH:MM UTC> — lot : <unités>* ». Cette ligne est
+  committée seule et poussée immédiatement : le push est le verrou, comme pour une prise du backlog. Elle prévient aussi
+  les sessions actives par message.
+- **Les autres sessions communiquent avec elle** : elles lui signalent ce que le lot doit contenir ou attendre (migration
+  non écrite, écran qui dépend d'une migration, geste préalable du responsable), et ne poussent rien qui change le lot
+  annoncé sans l'en avoir prévenue.
+- **Une instruction de livrer reçue par une autre session** est transmise à la session de livraison, et le responsable en
+  est informé. S'il n'y a pas de session de livraison, la session qui reçoit l'instruction s'annonce avant tout geste.
+- **Elle libère le verrou** en retirant la ligne dans le commit qui consigne la livraison (baseline, changelog,
+  backlog), ou dans un commit dédié si elle y renonce. Une annonce sans commit de sa session depuis 6 heures est expirée,
+  et sa reprise le dit.
+- Le responsable désigne la session de livraison lorsqu'il le précise ; sinon, c'est la première qui s'annonce.
+
 Lorsqu'un déploiement est confirmé :
 
 - déplacer les opérations réalisées dans la baseline ;

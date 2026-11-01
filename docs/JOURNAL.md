@@ -38143,3 +38143,22 @@ le filet, la fenêtre passe `--instantane-verifie` (comme les migrations 142 et 
 **Conséquences.** `CRM-123` reste `[P]`. La session qui pousse la migration de `CRM-125` T2 prévient la session qui livre ;
 la fenêtre suit la procédure du `docs/PROD_MIGRATIONS.md` §3.1 et les gestes du §2.29 — l'alias `app-*` créé par le
 responsable avant toute régénération.
+
+### décision 813 — une seule session livre en production, s'annonce, et les autres communiquent avec elle
+
+*2026-11-01, session interactive, consigne du responsable.* **Problème** : le même jour, deux sessions ont reçu
+l'instruction de livrer (`CRM-123`, puis `CRM-126`), alors que `scripts/spark/livrer.sh` livre tout `main`. Chacune
+aurait livré le même lot sans connaître ce que l'autre y avait mis, dont l'écran de `CRM-125` T3, qui dépend d'une
+migration pas encore écrite (décision 812). La coordination s'est faite par messages, sans règle écrite. **Consigne** :
+« une seule session est autorisée à livrer en production et les autres communiquent avec cette session (qui s'annonce
+aussi) ».
+
+**Décision**, écrite dans `CLAUDE.md` §12 (« Une seule session livre en production ») : une seule session de livraison à
+la fois ; elle s'annonce par une ligne en tête de `docs/PROD_MIGRATIONS.md`, committée seule et poussée (le push est le
+verrou, comme une prise du backlog, §5), et par message aux sessions actives ; les autres lui signalent ce que le lot
+doit contenir ou attendre ; une instruction de livrer reçue ailleurs lui est transmise ; elle libère le verrou au commit
+qui consigne la livraison ; une annonce sans commit depuis 6 heures est expirée. Les modalités (ligne d'annonce,
+expiration à 6 heures) reprennent celles de la prise d'une tâche [choix de rédaction].
+
+**Conséquences.** Le lot de la décision 812 — la `0144`, la migration de `CRM-125` T2, les webapps de `CRM-123`, `CRM-124`,
+`CRM-125`, `CRM-126`, INC-332 et INC-333 — sera livré par une seule session, annoncée selon cette règle.
