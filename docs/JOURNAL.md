@@ -37622,3 +37622,11 @@ d'insertion ; (2) un déclencheur avant insertion, qui fait hériter la pièce d
 (2)**. L'invariant vit en base, où vivent toutes les règles de classement (`CRM-010`), et le service ne change pas. C'est
 la décision 795, « écrire et rattraper », appliquée au bon endroit. Spécification : `docs/SCHEMA.md`, « Migration
 `0142` ».
+
+### Livraison de la 142, sans nouvel instantané (2026-11-01, décision 796)
+
+**Décision 796, du responsable, en séance** : « Oui, sans nouvel instantané ». La migration `0142` (INC-326) part
+maintenant, par `livrer.sh -- --migrate --instantane-verifie`. `--instantane-verifie` s'appuie sur l'instantané du
+2026-10-31 au matin, qui reste le filet de la journée. La production a `mail_attachments` vide (relevé du jour) : le
+rattrapage ne touche aucune ligne, et le retour arrière propre est le retrait du déclencheur et de sa fonction
+(`docs/SCHEMA.md`, « Migration `0142` »), sans recourir à l'instantané.
