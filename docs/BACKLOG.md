@@ -7281,8 +7281,10 @@ quota et refus testés.
       révisée le 2026-10-26 (`e2e/api/ingestion.spec.ts`, deux objets déposés, le témoin sain listé par l'administratrice,
       la pièce infectée par personne, rien pour l'anonyme ni la lectrice) ; spec 4/4, le seul rouge des campagnes API
       levé ; `docs/SPEC-mail-subsystem.md` §15.5 renvoie au §18.5. Produit inchangé.
-- [ ] **Livraison** en production, sur instruction du responsable, avec la 108 de `CRM-111` T2.1 (elle ne part jamais
+- [P] **Livraison** en production, sur instruction du responsable, avec la 108 de `CRM-111` T2.1 (elle ne part jamais
       avant la 106 et la 107). — *Pas maintenant (décision 722) : aucune fenêtre décidée.*
+      **Livrée le 2026-11-01** par la fenêtre des migrations 106 à 141 (décision 792, révision `6e7d6266` ; `docs/PROD_MIGRATIONS.md` §8) ;
+      reste le constat du responsable.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « E2E `mail` d'aller-retour
 complet ; en-têtes de threading vérifiés sur le message reçu ; quota et refus testés ». **Les trois
@@ -10741,12 +10743,14 @@ rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
       - [x] **Seed** (`docs/SPEC-seed.md` §24) : trois paliers vérifiés pour les deux scores.
       - [x] **Manuel** §4.1 et chapitre 11, `docs/SCHEMA.md`, `docs/SPEC-mcp.md`, `docs/PROD_MIGRATIONS.md`, `CHANGELOG.md` ;
             transport vers `card_placements` inscrit à `CRM-111` T2.4.
-      - [ ] **Livraison** en production, sur instruction du responsable (la 113 part avec ou après les 106 à 112).
+      - [P] **Livraison** en production, sur instruction du responsable (la 113 part avec ou après les 106 à 112).
             *Vérifiée intégralement en développement le 2026-10-26, base au repos et après synchronisation avec `CRM-111`
             T2.3.2 : pgTAP 100 fichiers et 4163 assertions sans anomalie, unitaires 4422/4422, typecheck et build verts, API
             `scores-sante` 5/5, interface `scores-sante` 3/3, pytest du connecteur 206 réussis (49 sautés, intégration
             jouée par `verify-mcp.sh` 88/88) ; compteurs de `scripts/verify-harness.sh` portés à 100, 4163, 1213 et 943.
             Geste : `docs/PROD_MIGRATIONS.md` §3.2, ligne 113.*
+            **Livrée le 2026-11-01** par la fenêtre des migrations 106 à 141 (décision 792, révision `6e7d6266` ; `docs/PROD_MIGRATIONS.md` §8) ;
+            reste le constat du responsable.
 
 *Limites nommées dès l'ouverture, non masquées* — `docs/SPEC-analytique.md` §11 :
 
@@ -12714,8 +12718,10 @@ Connecteur MCP : **non**, aux deux questions (décision 779) — aucune famille 
       rejoué seul, 6/6 — instable de `CRM-118`) ; E2E `e2e/ui/webhooks.spec.ts` 8/8, captures `docs/captures/CRM-073/`
       observées ; scénario du manuel 5/5 ; `verify-manual` 166 contrôles sans anomalie ; journal d'audit et RGPD rejoués
       verts avec le nouveau seed (API 8/8, interface 14/14) ; compteur du harnais (1 029 scénarios d'interface).
-- [ ] **Livraison en production**, sur instruction du responsable — **dans le lot unique des migrations `0106` à `0140`**
+- [P] **Livraison en production**, sur instruction du responsable — **dans le lot unique des migrations `0106` à `0140`**
       (décision 786), après la fin de `CRM-117` (décision 783) ; `docs/PROD_MIGRATIONS.md` §3.
+      **Livrée le 2026-11-01** par la fenêtre des migrations 106 à 141 (décision 792, révision `6e7d6266` ; `docs/PROD_MIGRATIONS.md` §8) ;
+      reste le constat du responsable.
 
 ### CRM-074 — Aperçu des pièces jointes et extraction de texte `[P]`
 
@@ -12772,7 +12778,9 @@ binaire**, pour que l'agent la lise à sa façon.
       pièce saine posée sur un vrai message, la pièce infectée est refusée, la lectrice reçoit le refus uniforme ; INC-319 (consignée en doublon INC-324)
       (la preuve OAuth dépendait de l'ordre des fichiers) corrigée en chemin. *Reste à T3* : la mention de l'outil au
       chapitre du connecteur dans le manuel. *Précisions d'exécution* : `docs/SPEC-pieces-jointes.md` §15.
-- [ ] **Livraison en production**, sur instruction du responsable.
+- [P] **Livraison en production**, sur instruction du responsable.
+      **Livrée le 2026-11-01** par la fenêtre des migrations 106 à 141 (décision 792, révision `6e7d6266` ; `docs/PROD_MIGRATIONS.md` §8) ;
+      reste le constat du responsable.
 
 ### CRM-075 — Administration des tracks et des channels `[x]`
 *Créée le 2026-08-11 par arbitrage du responsable — INC-086, option 2, `docs/JOURNAL.md` décision
@@ -16480,12 +16488,14 @@ existent, aucune n'est lue par les écrans qui montrent ces objets. Choix de for
       captures observées (pilule à 1440 et en colonne d'icônes à 1152, onglet au survol et au clavier, carte, ligne
       longue aux quatre paliers). Le typecheck garde un rouge étranger à l'unité (`database.types.test-d.ts`, fonctions
       des migrations 0092-0093 en cours).
-- [ ] **T3 — livraison** : reconstruction de la webapp en production, constat sur un track décrit
+- [P] **T3 — livraison** : reconstruction de la webapp en production, constat sur un track décrit
       (`docs/PROD_MIGRATIONS.md`). Aucune migration, aucune fonction, aucune variable.
       **Relevé le 2026-10-23** : la webapp de `main` porte aussi des unités qui lisent les migrations 91 à 94, non
       appliquées en production ; `CRM-105` part avec la prochaine livraison de `main` et sa fenêtre de migrations
       (`docs/PROD_MIGRATIONS.md` §2.15), sur instruction du responsable. Après synchronisation, le 2026-10-23 : les tests
       unitaires de l'unité rejoués, **331/331** ; les preuves E2E restent à rejouer sur la pile relancée.
+      **Livrée le 2026-11-01** par la fenêtre des migrations 106 à 141 (décision 792, révision `6e7d6266` ; `docs/PROD_MIGRATIONS.md` §8) ;
+      reste le constat du responsable.
 
 ### CRM-106 — Saisir son temps depuis la fiche d'une affaire `[P]`
 *Créée le 2026-10-23 — demande du responsable : « on doit pouvoir saisir ses heures depuis la fiche de l'affaire
@@ -17218,8 +17228,10 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
 - [ ] **T8 — seed et E2E** (§12, §13) : les cinq situations du §12 par les vraies fonctions ; campagne E2E complète.
 - [ ] **T9 — connecteur MCP** (§11) : `crm_card_attach`, `crm_card_placement_update`, `crm_card_placement_archive`,
       outils existants sur le rattachement ; refusés par la matrice puis par le CRM ; `docs/SPEC-mcp.md` §9.2.
-- [ ] **Livraison en production**, sur instruction du responsable : sauvegarde, migration en fenêtre, `mail-sync`,
+- [P] **Livraison en production**, sur instruction du responsable : sauvegarde, migration en fenêtre, `mail-sync`,
       webapp et connecteur redéployés ensemble ; constat ; `CHANGELOG.md`.
+      **Livrée le 2026-11-01** par la fenêtre des migrations 106 à 141 (décision 792, révision `6e7d6266` ; `docs/PROD_MIGRATIONS.md` §8) ;
+      reste le constat du responsable.
 
 ### CRM-112 — Champs personnalisés communs de portée espace `[ ]`
 *Réservée le 2026-10-24 — décision 642, arbitrage 4 ; ordre fixé par la décision 645 : après `CRM-111`. Arbitrée le
@@ -17370,7 +17382,9 @@ décision 729) : une couleur propre au channel, des pastilles nommées, pas de c
       *Fait le 2026-10-26* : `e2e/ui/couleurs.spec.ts` **9/9** ; dix captures observées, dont le défaut de 390 px
       corrigé ; manuel 3.2 ter, 5.1, 5.2 ; campagnes pgTAP, API et interface des écrans touchés (`docs/JOURNAL.md`
       « `CRM-116` T2 à T4 »).
-- [ ] **T5 — livraison** : migration en fenêtre et reconstruction de la webapp, sur instruction du responsable.
+- [P] **T5 — livraison** : migration en fenêtre et reconstruction de la webapp, sur instruction du responsable.
+      **Livrée le 2026-11-01** par la fenêtre des migrations 106 à 141 (décision 792, révision `6e7d6266` ; `docs/PROD_MIGRATIONS.md` §8) ;
+      reste le constat du responsable.
 ### CRM-117 — Rendre le manuel utilisateur joignable depuis la webapp `[P]`
 *Développement terminé et prouvé le 2026-10-31 (T1 à T5) ; reste T6 — livrer les migrations `0126` et `0127`, la webapp
 et la publication du manuel, par la session de livraison, avec le lot 0106 à 0140 (`docs/PROD_MIGRATIONS.md` §3), puis
@@ -17734,7 +17748,9 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
         toutes lettres — **4/4**, capture observée.
       - Phrase de l'onglet, manuel 11.1 et 11.5 et chapitre construit, DAT, design system, SPEC-mcp, CHANGELOG.
       - **Reste `[P]`** : la livraison, avec T2.a à T2.c, et le constat du responsable.
-- [ ] **T3 — livraison**, sur instruction du responsable.
+- [P] **T3 — livraison**, sur instruction du responsable.
+      **Livrée le 2026-11-01** par la fenêtre des migrations 106 à 141 (décision 792, révision `6e7d6266` ; `docs/PROD_MIGRATIONS.md` §8) ;
+      reste le constat du responsable.
 
 ### CRM-119 — Preuves croisées des droits fins : de l'écran « Membres » à l'écran du membre, et à travers le connecteur MCP `[x]`
 Demandée par le responsable le 2026-10-26 (décision 757). Spécification : `docs/SPEC-permissions-rls.md` §7.5. Aucun code
