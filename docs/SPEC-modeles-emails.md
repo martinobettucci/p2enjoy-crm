@@ -2386,3 +2386,118 @@ mesurant, et en refermant dans un `finally`, patron d'`e2e/api/envoi.spec.ts` et
    entier que le design system ne porte pas.
 6. **Aucune duplication de séquence**, aucun archivage, aucune corbeille : `mail_sequences` ne porte
    aucune de ces colonnes (§11.3), et les poser serait une migration hors périmètre.
+
+## 14. `CRM-125` — l'aperçu des paliers d'une séquence, sur un jeu d'exemple
+
+Écrite le 2026-11-01, **avant la première ligne de code**, sur demande et arbitrage du responsable (décision 809).
+
+**Problème.** Le composer des séquences (§13.6) liste les paliers par leur délai et le nom de leur modèle. Pour voir
+le texte qu'un palier enverra, il faut quitter l'écran, ouvrir le modèle dans les réglages et le prévisualiser sur une
+affaire réelle (§9.5). Le composer n'a aucun moyen de montrer la séquence telle qu'un destinataire la lira.
+
+### 14.1 Les quatre décisions
+
+| # | Question | Décision |
+|---|---|---|
+| 1 | Où l'aperçu est-il calculé ? | **En base**, par une RPC nouvelle qui emploie `app.mail_template_substituer` (§8.2) : l'aperçu ne peut pas diverger de ce qui partira |
+| 2 | D'où viennent les valeurs ? | Les variables `card.*` et `contact.*` d'un **jeu d'exemple fixe** (§14.3) ; les variables `identity.*`, et la signature, de **l'identité d'envoi de la personne** qui regarde (§14.4) |
+| 3 | Quelle forme ? | **Les deux** : un bouton « Aperçu » par palier, et un aperçu de toute la séquence (§14.5) |
+| 4 | Connecteur MCP ? | **Sans objet** : aide visuelle du composer ; le connecteur n'expose ni la prévisualisation ni l'édition des séquences. Aucune famille ni case nouvelle |
+
+### 14.2 `public.render_mail_template_sample`
+
+Nom anglais (décision 658, `docs/DAT.md` §12 bis). Migration au prochain numéro libre, prise après synchronisation.
+
+```
+public.render_mail_template_sample(
+    p_template_id uuid
+) returns table (
+    subject            text,
+    body_text          text,
+    signature_text     text,
+    identity_is_sample boolean
+)
+```
+
+- **`stable`, `security invoker`**, comme `rendre_modele_email` (§8.3) : la RLS de `mail_templates` et de
+  `mail_outbound_identities` s'applique telle quelle. **Zéro ligne** quand le modèle n'est pas lisible : un identifiant
+  inconnu et un identifiant masqué rendent la même chose.
+- **Aucune affaire, aucun contact** n'est lu : le jeu du §14.3 tient lieu des deux.
+- `grant execute` à `authenticated` et `service_role`, jamais à `anon` (§8.7).
+- Pas de `variables_nulles` : le jeu d'exemple remplit les douze variables, et une identité sans `from_name` reçoit la
+  valeur d'exemple de ce seul champ (§14.4). L'aperçu ne porte donc aucun trou ; la recherche des trous sur une
+  affaire réelle reste le rôle du §9.5.
+- `signature_text` est rendu **à part, tel quel** : une signature ne se substitue pas (§10.8), et son ajout au corps
+  appartient à l'expédition. L'écran l'affiche sous le corps, après le séparateur `-- ` du §10.
+
+### 14.3 Le jeu d'exemple
+
+Fixe, écrit **une seule fois**, dans la fonction. Les valeurs non textuelles suivent le formatage du §8.6.
+
+| Variable | Valeur d'exemple |
+|---|---|
+| `card.title` | `Projet exemple` |
+| `card.channel` | `Prospection` |
+| `card.step` | `Proposition envoyée` |
+| `card.amount` | `12500.00` |
+| `card.currency` | `EUR` |
+| `card.next_action` | `Rappeler pour validation` |
+| `card.next_action_at` | `15/01/2027 10:00` |
+| `contact.full_name` | `M. Dupont` |
+| `contact.email` | `m.dupont@entreprise.example` |
+| `contact.organization` | `ENTREPRISE INC` |
+| `identity.from_name` | `Votre nom` — seulement sans identité, ou quand celle-ci n'a pas de `from_name` |
+| `identity.from_address` | `vous@entreprise.example` — seulement sans identité |
+
+- Le domaine `.example` est réservé (RFC 2606) : aucune adresse d'exemple n'appartient à quelqu'un.
+- **Limite nommée** : le jeu est en français. Une séquence rédigée en anglais (« EN · … ») est rendue avec ces mêmes
+  valeurs, qui restent lisibles comme des données d'exemple.
+
+### 14.4 L'identité de la personne qui regarde
+
+La même règle que la présélection de l'envoi (décision 805) : **l'identité par défaut de la personne** ; à défaut, son
+**unique** identité ; sinon aucune. L'identité de service n'en fait jamais partie : elle ne sert qu'aux envois
+automatiques (décision 805).
+
+- Avec une identité : `identity.from_address` et `identity.from_name` en viennent, `signature_text` est sa signature
+  (nulle si elle n'en a pas), et `identity_is_sample` vaut `false`.
+- Sans identité, ou avec plusieurs sans défaut : les deux valeurs d'exemple du §14.3, `signature_text` nul,
+  `identity_is_sample` vaut `true`. L'écran le dit en une phrase (§14.5).
+
+### 14.5 L'écran — dans la fiche d'une séquence (§13.6)
+
+- **Un bouton « Aperçu » par ligne de palier**, icône `Eye` de Lucide, placé avant les flèches de déplacement, nommé
+  « Aperçu du palier N » pour les lecteurs d'écran. Il déplie sous la ligne l'objet, le corps (`white-space:
+  pre-wrap`, §9.6) et la signature. Un second clic le replie. **Un seul palier est déplié à la fois.**
+- **Un bouton « Prévisualiser la séquence »** dans l'en-tête de la zone « Paliers ». Il ouvre un panneau qui montre tous
+  les paliers dans l'ordre, chacun titré par son rang, son délai relatif et son délai **cumulé depuis l'armement**
+  (« Palier 2 · J+6 — J+10 depuis l'armement »), puis son objet, son corps et sa signature. Un bouton « Fermer » le
+  referme.
+- **Le rendu est un geste explicite** (§9.5) : rien n'est appelé avant le clic. Un appel par modèle distinct ; deux
+  paliers du même modèle partagent le même rendu.
+- **Une mention permanente** au-dessus de tout aperçu : « Aperçu avec des données d'exemple : M. Dupont,
+  ENTREPRISE INC, Projet exemple. » Un aperçu ne doit pas pouvoir se lire comme un vrai message. Quand
+  `identity_is_sample` est vrai, une seconde phrase : « Vous n'avez pas d'identité d'envoi par défaut : l'expéditeur
+  est fictif. »
+- **États** (`docs/DESIGN_SYSTEM.md` §5.8) : chargement dans le bloc déplié ; erreur traduite, avec « Réessayer » ;
+  zéro ligne rendu par « Ce modèle n'est plus lisible. » ; une séquence sans palier n'offre pas « Prévisualiser la
+  séquence ».
+- **La lectrice voit les deux boutons** : c'est une lecture (§9.4).
+- Clavier : les boutons sont des `button` ; le bloc déplié suit sa ligne dans l'ordre du focus ; `aria-expanded` sur le
+  bouton du palier.
+
+### 14.6 Preuves exigées
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | les douze valeurs du jeu ; identité par défaut, unique, plusieurs sans défaut, aucune ; identité de service jamais prise ; `from_name` nul remplacé ; signature rendue telle quelle, variables comprises ; zéro ligne pour un modèle illisible ; `anon` refusé |
+| API | harnais aux vrais jetons : administratrice et lectrice rendent le même modèle ; un modèle d'un autre espace rend zéro ligne |
+| Unitaires webapp | délai cumulé ; un appel par modèle distinct ; un seul palier déplié ; mention d'identité fictive ; états |
+| E2E | sur la pile et le seed : aperçu d'un palier, aperçu de la séquence, délais cumulés, mention visible, parcours clavier, lectrice ; console vierge |
+| Visuel | captures observées aux paliers d'écran, dont le corps long |
+
+### 14.7 Ce que `CRM-125` ne fait pas
+
+- Pas d'aperçu d'un palier **non enregistré** : l'aperçu rend le modèle tel qu'il est stocké.
+- Pas de jeu d'exemple réglable par espace ; pas de jeu par langue.
+- Pas d'outil dans le connecteur MCP (décision 809).

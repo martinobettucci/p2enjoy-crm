@@ -37922,3 +37922,35 @@ révisés dans ce changement ; le manuel, le changelog et les preuves suivent av
 commandes), une reconstruction de la webapp seule, part **avec le prochain lot**, et non seule ; elle est inscrite au
 contrat de déploiement. Ensuite vient **`CRM-112`**, les champs personnalisés communs de portée espace, en commençant par
 T1 (`docs/SPEC-champs-communs.md`).
+
+### décision 809 — `CRM-125` : le composer des séquences prévisualise chaque palier, et la séquence entière, sur un jeu d'exemple
+
+*2026-11-01, session interactive, demande et arbitrage du responsable.* **Demande** : « dans le composer des séquences,
+un bouton "preview" avec des données bidons "M. Dupont, ENTREPRISE INC, …" pour prévisualiser chaque étape de la
+séquence ».
+
+**Observations.** Le composer (`docs/SPEC-modeles-emails.md` §13.6) n'affiche d'un palier que son délai et le nom de son
+modèle. La seule prévisualisation, `rendre_modele_email`, exige une affaire réelle (§8.5). La substitution vit en base
+dans `app.mail_template_substituer`, partagée par le rendu et par l'exécution des cadences (`0109`). Le rendu ne
+compose pas la signature, que l'expédition ajoute (§10.8).
+
+**Décisions**, en quatre questions :
+- **Moteur : en base.** Une RPC nouvelle, `public.render_mail_template_sample` (nom anglais, décision 658), rend un
+  modèle avec le moteur partagé. L'aperçu ne peut donc pas diverger de ce qui partira. Les autres options étaient une
+  substitution dans l'écran, qui aurait fait un second moteur.
+- **Données : un jeu fictif, plus l'identité de la personne.** Les variables `card.*` et `contact.*` viennent d'un jeu
+  fixe (« M. Dupont », « ENTREPRISE INC », « Projet exemple »…). Les variables `identity.*` et la signature viennent de
+  l'identité d'envoi de la personne qui regarde, selon la règle de la décision 805 : son défaut, à défaut son unique
+  identité, sinon des valeurs fictives que l'écran signale. Les autres options étaient un jeu entièrement fixe, ou un jeu
+  réglable par espace.
+- **Forme : les deux.** Un bouton « Aperçu » par palier, et un aperçu de toute la séquence, avec les délais cumulés
+  depuis l'armement.
+- **Connecteur MCP** (les deux questions de `CLAUDE.md`) : **non, sans objet**. Aucune famille ni case nouvelle.
+
+Précisions posées en écrivant la spécification : le jeu d'exemple est écrit une seule fois, dans la fonction ; ses
+adresses sont en `.example` (RFC 2606) ; une mention permanente « données d'exemple » accompagne tout aperçu ; la
+signature est rendue à part, sans substitution ; un palier non enregistré n'est pas prévisualisé.
+
+**Conséquences.** `docs/SPEC-modeles-emails.md` §14. Unité `CRM-125` au backlog, en trois tranches : la base, l'écran,
+la livraison. `docs/SCHEMA.md`, `docs/DAT.md`, `docs/DESIGN_SYSTEM.md`, le manuel, le changelog et
+`docs/PROD_MIGRATIONS.md` suivent avec le code.

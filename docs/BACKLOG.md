@@ -17988,10 +17988,10 @@ Question du connecteur : sans objet (décision 806).
       `docs/SPEC-modeles-emails.md` §9.5, `docs/DESIGN_SYSTEM.md` §5.39.
 - [ ] **T2 — écran et preuves** : fonction pure, écran, unitaires, E2E, captures, manuel, changelog.
 
-## Demande du 2026-11-01 — l'aperçu des paliers d'une séquence (décision 808)
+## Demande du 2026-11-01 — l'aperçu des paliers d'une séquence (décision 809)
 
 ### CRM-125 — Le composer des séquences prévisualise chaque palier, et la séquence entière, sur un jeu d'exemple `[~]`
-Demande et arbitrage du responsable du 2026-11-01 (décision 808).
+Demande et arbitrage du responsable du 2026-11-01 (décision 809).
 
 **Spécification** : `docs/SPEC-modeles-emails.md` §14.
 
@@ -17999,9 +17999,9 @@ Demande et arbitrage du responsable du 2026-11-01 (décision 808).
 `docs/SCHEMA.md`, `docs/DAT.md`, `docs/DESIGN_SYSTEM.md` (composant de l'aperçu), manuel (chapitre des séquences),
 changelog, `docs/PROD_MIGRATIONS.md` (migration, vérification, retour arrière).
 
-Question du connecteur : sans objet (décision 808).
+Question du connecteur : sans objet (décision 809).
 
-- [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-01 : décision 808,
+- [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-01 : décision 809,
       `docs/SPEC-modeles-emails.md` §14.
 - [ ] **T2 — la base** : migration de `public.render_mail_template_sample`, pgTAP, harnais API, `docs/SCHEMA.md`,
       `docs/DAT.md`, `docs/PROD_MIGRATIONS.md`.
