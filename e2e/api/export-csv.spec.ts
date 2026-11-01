@@ -1,3 +1,4 @@
+// @verifies CRM-120 (docs/BACKLOG.md) — tranche T3 : un refus « introuvable » rend 404 (docs/SPEC-refus-404.md §4)
 // @verifies CRM-071 (docs/BACKLOG.md) — tranche T4 : l'export CSV hors interface, avec les vrais jetons
 // @verifies docs/SPEC-vues-import-export.md §5.2 (sous la RLS de la personne, journalisé, refus nommés) ; docs/SPEC-audit.md
 //           §4.5 ; CLAUDE.md §10 (refus par requête directe)
@@ -41,7 +42,8 @@ test.describe('l’export CSV — hors interface (docs/SPEC-vues-import-export.m
 	test('les refus : un channel illisible, des filtres hors forme, l’anonyme', async ({ request }) => {
 		const farida = await jetonDe('viewer@p2enjoy.test')
 		const ferme = await request.post(rpc('export_cards'), { headers: json(farida), data: { p_channel: GRANDS_COMPTES } })
-		expect(ferme.ok()).toBe(false)
+		// Introuvable, 404 depuis `CRM-120` (docs/SPEC-refus-404.md) — et jamais « interdit », qui dirait qu'il existe.
+		expect(ferme.status()).toBe(404)
 		expect(((await ferme.json()) as { message: string }).message).toBe('channel_not_found')
 
 		const driss = await jetonDe('bizdev@p2enjoy.test')

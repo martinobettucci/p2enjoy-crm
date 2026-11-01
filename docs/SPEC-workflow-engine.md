@@ -5349,7 +5349,7 @@ l'administrateur) s'applique à ses deux écritures. `search_path` vide ; `EXECU
 | # | Vérification | Refus | `SQLSTATE` |
 |---|---|---|---|
 | 1 | l'appelant est authentifié | `authentification requise` | `42501` |
-| 2 | le workflow est lisible par l'appelant | `workflow introuvable` | `P0002` |
+| 2 | le workflow est lisible par l'appelant | `workflow introuvable` | `P0002` (HTTP 404, `CRM-120`) |
 | 3 | l'appelant administre son espace | `reserve aux administrateurs` | `42501` |
 | 4 | le workflow n'est pas archivé | `workflow archive` | `P0001` |
 | 5 | le workflow est de portée `global` — *choix de l'agent* : le défaut sert tout l'espace, un workflow propre à un track ne le peut pas | `workflow non global` | `P0001` |

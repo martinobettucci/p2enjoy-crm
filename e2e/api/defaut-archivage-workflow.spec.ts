@@ -1,3 +1,4 @@
+// @verifies CRM-120 (docs/BACKLOG.md) — tranche T3 : un refus « introuvable » rend 404 (docs/SPEC-refus-404.md §4)
 // @verifies CRM-118 (docs/BACKLOG.md) — tranche T1.b : `set_default_workflow` et la garde d'archivage d'un workflow, par
 //           requête directe aux vrais jetons, hors interface
 // @verifies docs/SPEC-workflow-engine.md §7 quinquies.1 (l'ordre des refus, le défaut global seulement, l'atomicité ; la
@@ -106,6 +107,8 @@ test.describe('D — set_default_workflow', () => {
 		expect(duTrack.statut).toBe(400)
 		expect(duTrack.corps).toMatchObject({ code: 'P0001', message: 'workflow non global' })
 		const inconnu = await definir(request, admin, '00000000-0000-4000-8000-000000000000')
+		// 404 et non 500 depuis `CRM-120` (docs/SPEC-refus-404.md) ; le corps garde le code et le message.
+		expect(inconnu.statut).toBe(404)
 		expect(inconnu.corps).toMatchObject({ code: 'P0002', message: 'workflow introuvable' })
 		expect((await lire(request, DEFAUT_SEED)).is_default).toBe(true)
 	})

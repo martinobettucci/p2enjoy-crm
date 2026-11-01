@@ -1,3 +1,4 @@
+// @verifies CRM-120 (docs/BACKLOG.md) — tranche T3 : un refus « introuvable » rend 404 (docs/SPEC-refus-404.md §4)
 // @verifies CRM-071 (docs/BACKLOG.md) — tranche T6 : l'import des affaires hors interface, avec les vrais jetons
 // @verifies docs/SPEC-vues-import-export.md §6.3, §6.3 bis (simulation sans trace, étape posée directement, fil « par
 //           import », doublon de titre, refus de qui n'écrit pas le channel, journal de l'import confirmé) ; CLAUDE.md §10
@@ -71,8 +72,8 @@ test.describe('l’import des affaires — hors interface (docs/SPEC-vues-import
 			headers: json(farida),
 			data: { p_channel: '5eed0000-0000-4000-8000-0000000e7299', p_rows: [], p_dry_run: true },
 		})
-		// Le refus se lit à son message, comme celui de l'export (`e2e/api/export-csv.spec.ts`) : PostgREST rend `P0002` en 500.
-		expect(inconnu.ok()).toBe(false)
+		// Le refus se lit à son message, comme celui de l'export (`e2e/api/export-csv.spec.ts`) ; 404 depuis `CRM-120`.
+		expect(inconnu.status()).toBe(404)
 		expect(((await inconnu.json()) as { message: string }).message).toBe('channel_not_found')
 		const anonyme = await request.post(rpc, {
 			headers: { ...enTetesAnonymes(), 'Content-Type': 'application/json' },

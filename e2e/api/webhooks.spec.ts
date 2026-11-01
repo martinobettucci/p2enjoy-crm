@@ -1,3 +1,4 @@
+// @verifies CRM-120 (docs/BACKLOG.md) — tranche T3 : un refus « introuvable » rend 404 (docs/SPEC-refus-404.md §4)
 // @verifies CRM-073 (docs/BACKLOG.md) — tranche T1 : les webhooks sortants hors interface, avec les vrais jetons — la
 //           création par l'administratrice et son secret rendu une fois, l'inscription d'une remise par un vrai geste,
 //           le renvoi, et les refus du membre, de la lectrice et de l'anonyme
@@ -129,7 +130,7 @@ test.describe('les webhooks sortants — hors interface (docs/SPEC-webhooks.md �
 		expect(await intacte.json()).toEqual([{ url: 'https://recepteur.example/crm' }])
 
 		const rotation = await request.post(`${RPC}/rotate_webhook_secret`, { headers: json(enTetesAuthentifies(driss)), data: { p_endpoint: cree!.id } })
-		expect(rotation.ok()).toBe(false)
+		expect(rotation.status(), 'introuvable : 404 depuis CRM-120').toBe(404)
 		expect(((await rotation.json()) as { message: string }).message).toBe('webhook_not_found')
 
 		const anonyme = await request.post(`${RPC}/create_webhook_endpoint`, { headers: json(enTetesAnonymes()), data: NOUVEAU })

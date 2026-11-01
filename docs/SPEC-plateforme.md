@@ -194,11 +194,14 @@ la règle d'accès, et la suite pgTAP la prouve fonction par fonction.
 
 ### 6.1 Dictionnaire des refus
 
+*Révisé par `CRM-120` (décision 762, `docs/SPEC-refus-404.md`) : un refus « introuvable » rend **HTTP 404**. Le corps garde le
+code `P0002` et le message ; en base, le refus se lit `SQLSTATE = 'PGRST'`. Avant, PostgREST rendait 500.*
+
 | SQLSTATE | Message | Cause |
 |---|---|---|
 | `42501` | `reserve_aux_superadministrateurs` | l'appelant n'est pas superadministrateur, anonyme compris |
-| `P0002` | `espace_introuvable` | l'espace n'existe pas |
-| `P0002` | `profil_introuvable` | la personne visée n'a pas de profil |
+| `P0002` (HTTP 404) | `espace_introuvable` | l'espace n'existe pas |
+| `P0002` (HTTP 404) | `profil_introuvable` | la personne visée n'a pas de profil |
 | `22023` | `nom_invalide` | nom vide après `btrim`, ou plus de 120 caractères |
 | `22023` | `identifiant_invalide` | slug hors de `^[a-z0-9]+(-[a-z0-9]+)*$`, ou hors de 2 à 63 caractères (la règle de `amorcer-espace.sh`, rendue exacte) |
 | `22023` | `domaine_invalide` | domaine entrant non vide qui n'est pas un nom de domaine en minuscules |

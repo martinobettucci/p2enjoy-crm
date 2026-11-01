@@ -1,4 +1,5 @@
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T2 : preuves unitaires de la politique, par un vrai client MCP en mémoire
+# @verifies CRM-120 (docs/BACKLOG.md) — tranche T3 : un refus « introuvable » en 404 est traduit (docs/SPEC-refus-404.md §4)
 # @verifies CRM-102 T2 — docs/SPEC-mcp.md §5 (le jeton interne porte l'appel jusqu'au CRM et ne lui survit pas), §6.2
 #           (visibilité par la matrice ; espace lu sous le jeton de la personne ; `mcp_autorise` pour l'action et chaque
 #           case `aussi` ; refus uniforme ; refus nommé sur un espace donné ; outil caché = outil inconnu ; superadmin
@@ -353,3 +354,15 @@ def test_traduction_des_refus():
     generique = traduire_refus(Reponse(400, {"message": "duplicate key value violates unique constraint \"x\""}), "card", "c")
     assert str(generique) == "Le CRM n'a pas pu traiter la demande (HTTP 400)." and not isinstance(generique, RefusCrm)
     assert str(traduire_refus(Reponse(500, {"message": "boom"}), "card", "c")) == "Le CRM n'a pas pu traiter la demande (HTTP 500)."
+
+
+def test_un_refus_introuvable_en_404_est_traduit():
+    """CRM-120 (docs/SPEC-refus-404.md §4) : le corps exact que la base rend désormais — 404, code `P0002`, message
+    symbolique — devient un refus nommé ; le même corps en 500, ce que la base rendait avant, restait générique."""
+    corps = {"code": "P0002", "details": None, "hint": None, "message": "message_not_found"}
+    refus = traduire_refus(Reponse(404, corps), "message", "m1")
+    assert isinstance(refus, RefusCrm) and str(refus) == "Refusé par le CRM : message_not_found."
+    conflit = traduire_refus(Reponse(409, {**corps, "message": "outbox_not_reschedulable"}), "outbox", "o1")
+    assert isinstance(conflit, RefusCrm) and str(conflit) == "Refusé par le CRM : outbox_not_reschedulable."
+    avant = traduire_refus(Reponse(500, corps), "message", "m1")
+    assert not isinstance(avant, RefusCrm)

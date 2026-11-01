@@ -1,5 +1,6 @@
 // @verifies CRM-103 (docs/BACKLOG.md) — tranche T3 : les quatre fonctions d'administration du connecteur, aux VRAIS
 //           jetons, en requête directe — `mcp_comptes_liste`, `mcp_compte`, `mcp_poser_droits`, `mcp_journal_liste`
+// @verifies CRM-120 (docs/BACKLOG.md) — tranche T3 : les refus « introuvable » rendent 404 (docs/SPEC-refus-404.md §4)
 // @verifies docs/SPEC-mcp.md §8.2 (contrat exact : garde en premier, fiche d'un profil, refus `profil_introuvable`,
 //           `espace_introuvable`, `droit_invalide`, `issue_invalide`, remplacement, doublons confondus, ordre du §6.1,
 //           remplacement à l'identique sans journal, avant et après au journal, curseur exclusif, borne 200), §8 (D9 : un
@@ -27,11 +28,11 @@ const INCONNU = '00000000-0000-4000-8000-0000000000ff'
 type Reponse = { statut: number; texte: string; corps: unknown }
 
 /**
- * Le statut HTTP que PostgREST donne à `P0002` : la famille `P0` hors `P0001` lui vaut 500. Le contrat fixe le SQLSTATE et
- * le MESSAGE (docs/SPEC-plateforme.md §6.1), que la webapp classe (`classerRefus`) ; le statut est constaté, pas choisi —
- * les refus `espace_introuvable` de `CRM-101` rendent le même.
+ * Le statut HTTP d'un refus « introuvable » : **404** depuis `CRM-120` (docs/SPEC-refus-404.md, décision 762). La base le
+ * lève par `app.raise_http_error`, et le corps garde le code `P0002` et le MESSAGE (docs/SPEC-plateforme.md §6.1), que la
+ * webapp classe (`classerRefus`). Avant `CRM-120`, PostgREST rendait 500 pour `P0002`.
  */
-const STATUT_P0002 = 500
+const STATUT_P0002 = 404
 type LigneDroit = { sub: string; workspace_id: string; famille: string; action: string; accorde_par: string | null; accorde_le: string }
 type Fiche = {
 	sub: string

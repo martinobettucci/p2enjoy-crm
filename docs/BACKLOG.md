@@ -17779,8 +17779,12 @@ campagnes. Question du connecteur : aucune fonctionnalité nouvelle (décision 7
       migration `0143` (`app.raise_http_error`, 28 fonctions relues dans `pg_proc` et redéfinies hormis leurs 30 levées) ;
       pgTAP `0133` rouge puis 9/9 ; vingt assertions de treize suites révisées en `PGRST` (décision 51) ; suite SQL
       123 fichiers / 4619 assertions ; harnais.
-- [ ] **T3 — clients et preuves** : webapp (`creer-affaire.ts`, `rgpd.ts`, dictionnaires), connecteur, preuves API
-      et E2E, documentation.
+- [x] **T3 — clients et preuves** : webapp (`creer-affaire.ts`, `rgpd.ts`, dictionnaires), connecteur, preuves API
+      et E2E, documentation. **Fait le 2026-11-01** : la webapp ne change pas (le corps garde le code `P0002`, que ses
+      quatre lecteurs classent ; aucune lecture d'un statut 500) ; cinq preuves API aux vrais jetons affirment 404
+      (`connecteur-administration`, `defaut-archivage-workflow`, `import-affaires`, `export-csv`, `webhooks`), 21/21 ;
+      pytest du connecteur : un 404 et un 409 au corps réel deviennent des refus nommés, le même corps en 500 restait
+      générique (36/36) ; `docs/SPEC-plateforme.md` §6.1, `docs/SPEC-workflow-engine.md`, `docs/SPEC-refus-404.md` §4.
 - [ ] **T4 — livraison en production et constat.**
 
 ### CRM-121 — Dependabot surveille les dépendances Python `[P]`
