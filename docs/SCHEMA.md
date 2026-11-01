@@ -2435,6 +2435,16 @@ rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur
 channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
 `0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
 déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0143` — les refus « introuvable » rendent HTTP 404 (`CRM-120` T2, décisions 762 et 797 ; livrée en développement le 2026-11-01)
+
+`docs/SPEC-refus-404.md`. **`app.raise_http_error(p_status integer, p_message text)`** (`search_path` vide ; exécutable
+par `authenticated` et `service_role` seuls) lève `sqlstate 'PGRST'` : message `{"code": "P0002", "message": …}`, détail
+`{"status": …, "headers": {}}`. PostgREST rend ce statut avec le corps d'avant (code `P0002`, message). **Vingt-huit
+fonctions** de `public` et d'`app` sont redéfinies à l'identique, hormis leurs trente levées de `P0002`, qui passent par
+elle : 404 partout, 409 pour `outbox_not_reschedulable` (`reprogrammer_envoi`). Propriétaires et privilèges inchangés
+(`create or replace`). **Aucune donnée.** **Retrait** : rejouer les définitions précédentes des vingt-huit fonctions
+(leurs dernières migrations), puis retirer la fonction.
+
 ### Migration `0142` — une pièce jointe hérite de l'affaire de son message (INC-326, décision 795)
 
 **Spécifiée et livrée en développement le 2026-11-01.** `public.mail_attachments.card_id` recopie, pour un accès direct, l'affaire du message

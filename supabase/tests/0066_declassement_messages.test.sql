@@ -122,8 +122,8 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');  -- Camille, ad
 
 select throws_ok(
 	'select public.unclassify_message(''00000000-0000-4000-8000-000000000000'')',
-	'P0002',
-	'message_not_found',
+	'PGRST',
+	'{"code": "P0002", "message": "message_not_found"}',
 	'7 — LIGNE b : un message inconnu se dit inconnu, et non « interdit »');
 
 -- LIGNE e, PREMIER SENS : l'appelant qui VOIT le message et le trouve déjà non classé obtient

@@ -85,7 +85,7 @@ select is((select family || '|' || action || '|' || (details -> 'filters' ->> 's
 
 select pg_temp.endosser(:farida);
 select throws_ok($$ select * from public.export_cards('5eed0000-0000-4000-8000-000000000032') $$,
-	'P0002', 'channel_not_found', '11 — la lectrice fermée sur « Conseil & IA » : le channel est introuvable pour elle');
+	'PGRST', '{"code": "P0002", "message": "channel_not_found"}', '11 — la lectrice fermée sur « Conseil & IA » : le channel est introuvable pour elle');
 select pg_temp.redevenir_proprietaire();
 select is((select count(*)::int from public.audit_log where entity_type = 'card_list' and actor_id = :farida), 0,
 	'12 — et rien n''est journalisé pour un export refusé');
@@ -98,7 +98,7 @@ select pg_temp.endosser(:driss);
 select is((select count(*)::int from public.export_contacts(:ws)),
 	(select count(*)::int from public.contacts where workspace_id = :ws), '13 — le carnet entier de l''espace');
 select throws_ok($$ select * from public.export_contacts('5eed0000-0000-4000-8000-0000000e7299') $$,
-	'P0002', 'workspace_not_found', '14 — un espace dont on n''est pas membre n''existe pas');
+	'PGRST', '{"code": "P0002", "message": "workspace_not_found"}', '14 — un espace dont on n''est pas membre n''existe pas');
 select pg_temp.redevenir_proprietaire();
 select is((select (details ->> 'count')::int from public.audit_log where entity_type = 'contact_list' and actor_id = :driss
             order by id desc limit 1),

@@ -368,13 +368,13 @@ select ok(
 	(select not (f ->> 'avec_profil')::boolean and f ->> 'email' = 'sans-profil@exemple.test'
 	   from (select public.mcp_compte('a0940000-0000-4000-8000-000000000002') as f) x),
 	'la fiche d''un compte du connecteur sans profil le dit');
-select throws_ok($$select public.mcp_compte('00000000-0000-4000-8000-0000000000ff')$$, 'P0002', 'profil_introuvable',
+select throws_ok($$select public.mcp_compte('00000000-0000-4000-8000-0000000000ff')$$, 'PGRST', '{"code": "P0002", "message": "profil_introuvable"}',
 	'ni profil ni compte du connecteur : la fiche est introuvable');
 
 select throws_ok(
 	$$select public.mcp_poser_droits('a0940000-0000-4000-8000-000000000002', '5eed0000-0000-4000-8000-000000000001',
 	  '[["affaires", "consulter"]]')$$,
-	'P0002', 'profil_introuvable', 'un compte sans profil ne reçoit pas de matrice : un droit serait sans effet (D9)');
+	'PGRST', '{"code": "P0002", "message": "profil_introuvable"}', 'un compte sans profil ne reçoit pas de matrice : un droit serait sans effet (D9)');
 select lives_ok(
 	$$select public.mcp_poser_droits('a0940000-0000-4000-8000-000000000001', '5eed0000-0000-4000-8000-000000000001',
 	  '[["affaires", "consulter"], ["structure", "consulter"], ["affaires", "consulter"]]')$$,
@@ -431,7 +431,7 @@ select throws_ok($$select public.mcp_poser_droits('a0940000-0000-4000-8000-00000
 select throws_ok($$select public.mcp_poser_droits('a0940000-0000-4000-8000-000000000001', '5eed0000-0000-4000-8000-000000000001',
 	'{"affaires": "consulter"}')$$, '22023', 'droit_invalide', 'une matrice qui n''est pas un tableau est refusée');
 select throws_ok($$select public.mcp_poser_droits('a0940000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-0000000000fe',
-	'[]')$$, 'P0002', 'espace_introuvable', 'un espace inconnu est refusé');
+	'[]')$$, 'PGRST', '{"code": "P0002", "message": "espace_introuvable"}', 'un espace inconnu est refusé');
 
 select is(
 	(select nom || '|' || outil from public.mcp_journal_liste('5eed0000-0000-4000-8000-000000000012', 'ok')

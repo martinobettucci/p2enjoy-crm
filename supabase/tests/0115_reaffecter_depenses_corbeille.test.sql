@@ -101,8 +101,8 @@ select throws_ok($$ select * from public.trash_blocking_costs('c3160000-0000-400
 	'reserved_to_admins', '3 — un business developer : réservé aux administrateurs');
 select pg_temp.redevenir_proprietaire();
 select pg_temp.endosser(:sabine);
-select throws_ok($$ select * from public.trash_blocking_costs('c3160000-0000-4000-8000-0000000000a2') $$, 'P0002',
-	'track_not_found', '4 — hors de l''espace : introuvable, sans dire qu''il existe');
+select throws_ok($$ select * from public.trash_blocking_costs('c3160000-0000-4000-8000-0000000000a2') $$, 'PGRST',
+	'{"code": "P0002", "message": "track_not_found"}', '4 — hors de l''espace : introuvable, sans dire qu''il existe');
 select pg_temp.redevenir_proprietaire();
 
 select pg_temp.endosser(:camille);
@@ -118,7 +118,7 @@ select is((select count(*)::int from public.trash_blocking_costs('c3160000-0000-
 -- =============================================================================================
 
 select throws_ok($$ select public.reassign_trashed_track_cost('c3160000-0000-4000-8000-00000000ffff',
-	'c3160000-0000-4000-8000-0000000000d3') $$, 'P0002', 'cost_not_found', '7 — une ligne inconnue : introuvable');
+	'c3160000-0000-4000-8000-0000000000d3') $$, 'PGRST', '{"code": "P0002", "message": "cost_not_found"}', '7 — une ligne inconnue : introuvable');
 select pg_temp.redevenir_proprietaire();
 select pg_temp.endosser(:driss);
 select throws_ok($$ select public.reassign_trashed_track_cost('c3160000-0000-4000-8000-0000000000e1',

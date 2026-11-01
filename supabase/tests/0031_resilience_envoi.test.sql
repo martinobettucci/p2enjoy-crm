@@ -96,8 +96,8 @@ update public.mail_outbox set status = 'sent'
 select throws_ok(
 	format($$ select public.reprogrammer_envoi(%L::uuid, 'timeout', 60) $$,
 		(select valeur from pg_temp_ref where nom = 'file')),
-	'P0002',
-	'outbox_not_reschedulable',
+	'PGRST',
+	'{"code": "P0002", "message": "outbox_not_reschedulable"}',
 	'10 — un envoi déjà `sent` ne se reprogramme pas : ce serait l''envoyer deux fois');
 
 -- =============================================================================================

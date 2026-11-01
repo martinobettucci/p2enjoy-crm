@@ -135,7 +135,7 @@ select is((select extracted_text || '|' || text_truncated::text from public.mail
 set local role service_role;
 select throws_ok(
 	$$ select public.record_attachment_text((select id from pg_temp.ids where nom = 'pdf_sain'), 'extracted', 'encore') $$,
-	'P0002', null, '16 — une pièce déjà rendue ne se réécrit pas');
+	'PGRST', null, '16 — une pièce déjà rendue ne se réécrit pas');
 select throws_ok(
 	$$ select public.record_attachment_text((select id from pg_temp.ids where nom = 'pdf_attente'), 'parfait') $$,
 	'22023', null, '17 — un statut de résultat inconnu est refusé');

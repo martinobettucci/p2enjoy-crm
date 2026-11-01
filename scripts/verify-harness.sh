@@ -643,7 +643,8 @@ PORT_RAPPORT=9323
 # 121, COMPTÉE.
 # **+1 par la tranche INC-326 de `CRM-055`, 2026-11-01** : `supabase/tests/0132_heritage_affaire_pieces.test.sql`, fichier
 # NEUF. 121 + 1 = 122, COMPTÉE.
-FICHIERS_SQL_ATTENDUS=122
+# **+1 par `CRM-120` T2, 2026-11-01** : `supabase/tests/0133_refus_404.test.sql`, fichier NEUF. 122 + 1 = 123, COMPTÉE.
+FICHIERS_SQL_ATTENDUS=123
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -816,7 +817,10 @@ FICHIERS_SQL_ATTENDUS=122
 # relevé le compteur de fichiers sans celui-ci. 4543 + 60 = 4603. **+7 par la tranche INC-326 de `CRM-055`** (`0132` :
 # héritage à l'insertion, message non classé, affaire posée gardée, rattrapage, invariant). 4603 + 7 = 4610, COMPTÉE —
 # « 122 fichiers, 4610 assertions, aucune anomalie ».
-ASSERTIONS_ATTENDUES=4610
+# **+9 par `CRM-120` T2** (`0133` : la fonction, sa forme, ses privilèges, plus aucun `errcode = 'P0002'`, 27 fois 404, 409
+# seul, deux refus réels, un message à espace) ; vingt assertions de treize suites révisées (`PGRST` et le message JSON,
+# décision 51), sans changer leur nombre. 4610 + 9 = 4619, COMPTÉE — « 123 fichiers, 4619 assertions, aucune anomalie ».
+ASSERTIONS_ATTENDUES=4619
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS

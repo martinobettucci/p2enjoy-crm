@@ -264,7 +264,7 @@ select is((select nom || '|' || slug || '|' || coalesce(domaine_entrant, 'null')
 	        where id = (select id from espace_suite)),
 	'Espace renommé|suite-0084|null', 'le slug ne change pas');
 select throws_ok($$select public.plateforme_modifier_espace('00000000-0000-4000-8000-0000000000ff', 'X', null)$$,
-	'P0002', 'espace_introuvable', 'un espace inexistant est introuvable');
+	'PGRST', '{"code": "P0002", "message": "espace_introuvable"}', 'un espace inexistant est introuvable');
 
 -- Appartenances
 select throws_ok($$select public.plateforme_poser_membre((select id from espace_suite),
@@ -273,7 +273,7 @@ select throws_ok($$select public.plateforme_poser_membre((select id from espace_
 select throws_ok($$select public.plateforme_poser_membre((select id from espace_suite),
 	'5eed0000-0000-4000-8000-000000000012', 'owner')$$, '22023', 'role_invalide', 'un rôle hors liste est refusé');
 select throws_ok($$select public.plateforme_poser_membre((select id from espace_suite),
-	'00000000-0000-4000-8000-0000000000ff', 'admin')$$, 'P0002', 'profil_introuvable',
+	'00000000-0000-4000-8000-0000000000ff', 'admin')$$, 'PGRST', '{"code": "P0002", "message": "profil_introuvable"}',
 	'une personne sans profil ne devient pas membre');
 select lives_ok($$select public.plateforme_poser_membre((select id from espace_suite),
 	'5eed0000-0000-4000-8000-000000000012', 'admin')$$, 'Driss devient administrateur du nouvel espace');

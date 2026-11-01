@@ -132,7 +132,7 @@ select throws_ok($$ select public.creer_affaire('5eed0000-0000-4000-8000-0000000
 	'22023', 'template_workflow_mismatch', '17 — un modèle d''un autre workflow que celui du channel est refusé');
 select throws_ok($$ select public.creer_affaire('5eed0000-0000-4000-8000-000000000036', 'ZZ archivé',
 	(select valeur from pg_temp.ctx where cle = 'archive')) $$,
-	'P0002', 'template_not_found', '18 — un modèle archivé n''est plus proposé');
+	'PGRST', '{"code": "P0002", "message": "template_not_found"}', '18 — un modèle archivé n''est plus proposé');
 select lives_ok($$ select public.creer_affaire('5eed0000-0000-4000-8000-000000000036', 'ZZ sans modèle') $$,
 	'19 — l''appel à deux arguments garde sa forme');
 

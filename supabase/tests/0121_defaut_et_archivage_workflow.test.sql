@@ -55,7 +55,7 @@ select pg_temp.redevenir_proprietaire();
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 select throws_ok($$select public.set_default_workflow('00000000-0000-4000-8000-000000000000')$$,
-	'P0002', 'workflow introuvable', '4 — un workflow inconnu est introuvable');
+	'PGRST', '{"code": "P0002", "message": "workflow introuvable"}', '4 — un workflow inconnu est introuvable');
 select throws_ok($$select public.set_default_workflow('11810000-0000-4000-8000-000000000003')$$,
 	'P0001', 'workflow non global', '5 — un workflow propre à un track ne devient pas le défaut');
 select is((public.set_default_workflow('11810000-0000-4000-8000-000000000001')).is_default, true,

@@ -134,7 +134,7 @@ select is((select outcome || ':' || code from public.import_cards('5eed0000-0000
              '[{"title": "ZZ Farida Essai"}]', false)),
 	'refused:forbidden', '15 — la lectrice : chaque ligne est refusée, et rien n''est écrit');
 select throws_ok($$ select * from public.import_cards('5eed0000-0000-4000-8000-0000000e7299', '[]', true) $$,
-	'P0002', 'channel_not_found', '16 — un channel illisible ou inexistant n''existe pas');
+	'PGRST', '{"code": "P0002", "message": "channel_not_found"}', '16 — un channel illisible ou inexistant n''existe pas');
 select throws_ok($$ select * from public.import_cards('5eed0000-0000-4000-8000-000000000034',
 	(select jsonb_agg(jsonb_build_object('title', 'ZZ ' || g)) from generate_series(1, 1001) g), true) $$,
 	'22023', 'import_too_large', '17 — au-delà de 1 000 lignes, l''appel est refusé');

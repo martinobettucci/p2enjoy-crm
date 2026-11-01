@@ -69,12 +69,12 @@ select throws_ok($$ select public.anonymize_contact('a0d17000-0000-4000-8000-000
 select pg_temp.redevenir_proprietaire();
 
 select pg_temp.endosser(:sabine);
-select throws_ok($$ select public.export_contact('a0d17000-0000-4000-8000-0000000000c1') $$, 'P0002', 'contact_not_found',
+select throws_ok($$ select public.export_contact('a0d17000-0000-4000-8000-0000000000c1') $$, 'PGRST', '{"code": "P0002", "message": "contact_not_found"}',
 	'6 — hors de l''espace : introuvable, sans dire qu''il existe');
 select pg_temp.redevenir_proprietaire();
 
 select pg_temp.endosser(:camille);
-select throws_ok($$ select public.export_contact('a0d17000-0000-4000-8000-00000000ffff') $$, 'P0002', 'contact_not_found',
+select throws_ok($$ select public.export_contact('a0d17000-0000-4000-8000-00000000ffff') $$, 'PGRST', '{"code": "P0002", "message": "contact_not_found"}',
 	'7 — un identifiant inconnu : introuvable');
 
 -- =============================================================================================

@@ -114,7 +114,7 @@ select is((select outcome || ':' || code from public.import_contacts('5eed0000-0
              '[{"full_name": "ZZ Farida Essai"}]', false)),
 	'refused:forbidden', '12 — la lectrice : chaque ligne est refusée par la RLS');
 select throws_ok($$ select * from public.import_contacts('5eed0000-0000-4000-8000-0000000e7299', '[]', true) $$,
-	'P0002', 'workspace_not_found', '13 — un espace dont on n''est pas membre n''existe pas');
+	'PGRST', '{"code": "P0002", "message": "workspace_not_found"}', '13 — un espace dont on n''est pas membre n''existe pas');
 select throws_ok($$ select * from public.import_contacts('5eed0000-0000-4000-8000-000000000001',
 	(select jsonb_agg(jsonb_build_object('full_name', 'ZZ ' || g)) from generate_series(1, 1001) g), true) $$,
 	'22023', 'import_too_large', '14 — au-delà de 1 000 lignes, l''appel est refusé');

@@ -17775,8 +17775,10 @@ campagnes. Question du connecteur : aucune fonctionnalité nouvelle (décision 7
       `docs/SPEC-refus-404.md` — 28 fonctions relevées en base, aucune capture de `P0002` ; trois sondes sur PostgREST
       14.12 (`P0002` 500, `PT404` 404 au code changé, `PGRST` 404 au corps inchangé) ; forme `PGRST` par
       `app.raise_http_error` ; `outbox_not_reschedulable` en 409 (décision 797).
-- [@] **T2 — migration et preuves en base** : réécriture des fonctions, pgTAP, harnais.
-      *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 08:02 UTC — état avant : [ ]*
+- [x] **T2 — migration et preuves en base** : réécriture des fonctions, pgTAP, harnais. **Fait le 2026-11-01** :
+      migration `0143` (`app.raise_http_error`, 28 fonctions relues dans `pg_proc` et redéfinies hormis leurs 30 levées) ;
+      pgTAP `0133` rouge puis 9/9 ; vingt assertions de treize suites révisées en `PGRST` (décision 51) ; suite SQL
+      123 fichiers / 4619 assertions ; harnais.
 - [ ] **T3 — clients et preuves** : webapp (`creer-affaire.ts`, `rgpd.ts`, dictionnaires), connecteur, preuves API
       et E2E, documentation.
 - [ ] **T4 — livraison en production et constat.**

@@ -29,10 +29,13 @@ change le code rendu : elle reste en place pour ces deux-là, qui rendent déjà
 **Une seule fonction lève**, pour que la forme ne soit écrite qu'une fois :
 
 ```sql
-app.raise_http_error(p_status integer, p_message text)  -- returns void, search_path vide, aucun privilège client
+app.raise_http_error(p_status integer, p_message text)  -- returns void, search_path vide
 ```
 
-Elle lève `sqlstate 'PGRST'` avec le message `jsonb_build_object('code', 'P0002', 'message', p_message)::text` et le
+Sept des fonctions de l'inventaire s'exécutent avec les droits de l'appelant (`creer_affaire`, les imports et exports CSV,
+`save_card_as_template`, `set_default_workflow`) : `app.raise_http_error` est donc exécutable par `authenticated` et
+`service_role`, et par eux seuls (retirée de `public`, donc d'`anon`). Le schéma `app` n'est pas exposé par l'API : elle ne
+se joint qu'à travers les fonctions qui l'appellent. Elle lève `sqlstate 'PGRST'` avec le message `jsonb_build_object('code', 'P0002', 'message', p_message)::text` et le
 détail `jsonb_build_object('status', p_status, 'headers', '{}'::jsonb)::text`. Le code reste `P0002` pour chaque statut,
 409 compris : seul le statut change, jamais ce que les clients lisent. Dans une fonction SQL, le refus se lit désormais
 `SQLSTATE = 'PGRST'`, avec pour `SQLERRM` le texte JSON. **Aucune fonction ne capture `P0002`** (mesuré : ni
@@ -50,7 +53,7 @@ vigueur, et non dans les migrations, qui en portent d'anciennes) :
 | `app.plateforme_espace_existe` | `espace_introuvable` | 404 |
 | `app.trash_track_guard` | `track_not_found` | 404 |
 | `public.classer_message_automatiquement`, `classify_message`, `unclassify_message` | `message_not_found` | 404 |
-| `public.creer_affaire` | `template_not_found` | 404 |
+| `public.creer_affaire` | `channel introuvable`, `template_not_found` | 404 |
 | `public.export_cards`, `public.import_cards` | `channel_not_found` | 404 |
 | `public.export_contacts`, `public.import_contacts` | `workspace_not_found` | 404 |
 | `public.mail_inbound_account_record_check` | `account_not_found` | 404 |
@@ -65,9 +68,10 @@ vigueur, et non dans les migrations, qui en portent d'anciennes) :
 | `public.set_default_workflow` | `workflow introuvable` | 404 |
 | `public.reprogrammer_envoi` | `outbox_not_reschedulable` | **409** (décision 797) |
 
-Vingt-huit fonctions. Trois autres mentionnent `P0002` en commentaire seulement (`accepter_suggestion_ia`,
+Vingt-huit fonctions et trente levées, toutes de la même forme
+(`raise exception '<message>' using errcode = 'P0002';`). Trois autres mentionnent `P0002` en commentaire seulement (`accepter_suggestion_ia`,
 `app.suggestions_ia_revisions_avant_creation`, `snooze_thread`) et ne changent pas. **Les messages ne changent pas**, pas
-même celui de `set_default_workflow`, qui contient une espace : le connecteur ne le traduit donc pas, comme aujourd'hui.
+même ceux de `set_default_workflow` et le premier de `creer_affaire`, qui contiennent une espace : le connecteur ne le traduit donc pas, comme aujourd'hui.
 
 **`outbox_not_reschedulable` rend 409** (décision 797). L'envoi existe, mais son état, ni `queued` ni `sending`,
 interdit de le reprogrammer : c'est un conflit d'état, pas une absence. Seul `mail-sync` l'appelle, et toute erreur
@@ -85,6 +89,9 @@ l'arrête de la même façon.
   (pytest : un `404` à message symbolique devient un refus nommé). La webapp garde ses lectures du code `P0002`, que le
   corps porte toujours ; ses tests unitaires le prouvent. `docs/SPEC-plateforme.md` §6.1 et les dictionnaires de refus
   nomment le statut.
+- **Les autres spécifications** : là où elles nomment un refus `P0002` (webhooks, import et export, connecteur), le code
+  est celui que le corps porte, et le statut est 404 ; les dictionnaires de `docs/SPEC-plateforme.md` §6.1 et de
+  `docs/SPEC-workflow-engine.md` le disent dans leur colonne.
 - **Livraison (T4)** : une migration, sans image ni webapp obligatoire ; contrat de déploiement.
 
 ## 5. Connecteur MCP

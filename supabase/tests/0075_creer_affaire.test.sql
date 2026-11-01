@@ -157,7 +157,7 @@ reset role;
 select pg_temp.endosser(pg_temp.id('ETR'));
 select throws_ok(
 	$$ select public.creer_affaire(pg_temp.id('C'), 'Refusée') $$,
-	'P0002', 'channel introuvable',
+	'PGRST', '{"code": "P0002", "message": "channel introuvable"}',
 	'12 — sans appartenance, le channel est introuvable : rien n''est divulgué');
 reset role;
 
@@ -168,8 +168,8 @@ reset role;
 select pg_temp.endosser(pg_temp.id('ADM'));
 select throws_ok(
 	$$ select public.creer_affaire('0c950000-0000-4000-8000-0000000000ff', 'Nulle part') $$,
-	'P0002', 'channel introuvable',
-	'13 — un channel inconnu : P0002');
+	'PGRST', '{"code": "P0002", "message": "channel introuvable"}',
+	'13 — un channel inconnu : introuvable, 404 (CRM-120)');
 select throws_ok(
 	$$ select public.creer_affaire(pg_temp.id('CA'), 'Trop tard') $$,
 	'P0001', 'channel ferme',

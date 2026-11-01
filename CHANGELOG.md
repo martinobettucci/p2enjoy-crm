@@ -13,6 +13,13 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-120` — les refus « introuvable » rendent 404, et non 500
+
+- **Migration `0143`** : vingt-huit fonctions lèvent leurs refus « introuvable » par `app.raise_http_error`. PostgREST
+  les rend en **404**, et en 409 pour un envoi qui n'est plus reprogrammable. Le corps garde le code `P0002` et le
+  message : la webapp classe comme avant. La supervision ne lit plus ces refus comme des pannes, et le connecteur MCP
+  les traduit en refus nommés au lieu d'une erreur générique.
+
 ### `CRM-121` — Dependabot surveille aussi les dépendances Python (outillage du dépôt)
 
 - `.github/dependabot.yml` déclare npm à la racine et pip pour `mcp/` et `mail-sync/`. Les verrous de `mcp/` sont
