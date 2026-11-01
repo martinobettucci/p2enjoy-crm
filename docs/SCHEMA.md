@@ -670,7 +670,7 @@ d'administration sont exemptées (décision 770).
 | `card_placements_channel_fk` | `(channel_id, workspace_id) → channels (id, workspace_id)`, `on delete cascade` |
 | `card_placements_channel_workflow_fk` | `(channel_id, workflow_id) → channels (id, workflow_id)`, **`deferrable initially immediate`** : `change_channel_workflow` change le workflow du channel avant celui des rattachements, et la diffère en la nommant (depuis la migration `0134`, elle seule : la clé de `cards` a disparu avec ses colonnes) |
 | `card_placements_step_fk` | `(current_step_id, workflow_id) → workflow_steps (id, workflow_id)` |
-| uniques | `(card_id, channel_id)`, `(id, workflow_id)`, `(id, card_id)` ; **`card_placements_one_per_card_idx` sur `card_id`** tant que dure la transition — `CRM-111` T3 le retire |
+| uniques | `(card_id, channel_id)`, `(id, workflow_id)`, `(id, card_id)` ; `card_placements_one_per_card_idx`, qui tenait un rattachement par affaire pendant la transition, est **retiré par la migration `0148`** (`CRM-111` T3) : une affaire peut être rattachée à plusieurs channels, un par channel |
 | index | `(channel_id, current_step_id, position)`, `(workspace_id, next_action_at)`, `(owner_id)` |
 
 **Lecture** (T2.1, migration `0108`) : `card_placements_select`, sous la forme optimisée de la décision 667 —
@@ -2438,6 +2438,26 @@ rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur
 channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
 `0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
 déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0148` — rattacher et retirer (`CRM-111` T3, décisions 643, 658, 661 et 802 ; livrée en développement le 2026-11-01)
+
+`docs/SPEC-rattachements.md` §3.1, §4, §5. **Retiré** : `card_placements_one_per_card_idx`, qui tenait un rattachement
+par affaire pendant la transition ; une affaire peut désormais être rattachée à plusieurs channels, **un par channel**
+(`card_placements_card_channel_key`, inchangée). **Vocabulaire du fil** : `attached` et `detached` s'ajoutent à
+`card_events_type_check`, les valeurs de `CRM-068` et `CRM-069` conservées, et à `card_events_placement_by_type`, qui exige
+le rattachement des événements de rattachement. **Réécrit** :
+`app.card_placements_evenement_creation`, depuis sa définition de la `0138` — le premier rattachement écrit `created`
+(marqué `source: import` par l'import, `CRM-071` T6), un suivant écrit `attached`, désigné par `placement_id`. **Nouveaux** : `public.attach_card(p_card, p_channel)` — `security definer`, rend le rattachement ;
+étape initiale, bloc vide ; un rattachement archivé au même channel est désarchivé tel quel ; refus `card_not_found`,
+`forbidden` (42501, l'affaire non écrite), `channel_not_found`, `channel_closed`, `forbidden` (le channel non écrit),
+`already_attached`. `public.detach_card(p_placement, discard_field_values)` — `security definer` ; administrateur de
+l'espace ; écrit `detached` puis retire le rattachement, ses valeurs de bloc, ses points de checklist et son inscription
+de cadence (`on delete cascade`) ; refus `card_not_found`, `forbidden`, `last_placement`, `field_values_would_be_lost`.
+Exécutables par `authenticated` et `service_role`, pas par `anon`. **La purge** reste celle de la `0134` : une affaire
+rattachée hors des channels purgés survit, réduite (décision 802). **Retrait** : `drop function public.detach_card(uuid,
+boolean); drop function public.attach_card(uuid, uuid);`, la définition d'`app.card_placements_evenement_creation` de la
+`0134`, le vocabulaire sans les deux valeurs (après avoir vérifié qu'aucun événement ne les porte), et l'index, **qui ne se
+repose que si aucune affaire n'a plus d'un rattachement**.
+
 ### Migration `0145` — l'aperçu d'un modèle sur un jeu d'exemple (`CRM-125` T2, décision 809 ; livrée en développement le 2026-11-01)
 
 `docs/SPEC-modeles-emails.md` §14.2 à §14.4. **`public.render_mail_template_sample(p_template_id uuid)`** — `stable`,

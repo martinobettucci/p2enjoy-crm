@@ -243,6 +243,9 @@ select ok(
 -- RÉVISÉE LE 2026-10-28 PAR `CRM-069` TRANCHE T1 — DIXIÈME ÉVOLUTION. `label_added` et `label_removed` portent
 -- l'énumération à VINGT-TROIS (docs/SPEC-etiquettes-digest.md §2.2), dans la migration qui les écrit, en queue. Aucune
 -- valeur retirée.
+--
+-- RÉVISÉE LE 2026-11-01 PAR `CRM-111` TRANCHE T3 — ONZIÈME ÉVOLUTION. `attached` et `detached` portent l'énumération à
+-- VINGT-CINQ (docs/SPEC-rattachements.md §5), dans la migration qui les écrit (0148), en queue. Aucune valeur retirée.
 
 select is(
 	(select pg_get_constraintdef(c.oid) from pg_constraint c
@@ -254,10 +257,10 @@ select is(
 	'''snoozed''::text, ''woken''::text, '
 	'''stalled''::text, ''contact_linked''::text, ''contact_unlinked''::text, '
 	'''contact_role_changed''::text, ''checklist_checked''::text, ''checklist_unchecked''::text, '
-	'''label_added''::text, ''label_removed''::text])))',
-	'Le `CHECK` compte VINGT-TROIS valeurs : `CRM-069` tranche T1 ajoute la pose et le retrait d''une étiquette sans '
-	'retirer aucune des vingt et une précédentes. Le garde-fou historique ÉVOLUE avec '
-	'le vocabulaire au lieu de figer un état périmé — et c''est la DIXIÈME fois qu''il le fait');
+	'''label_added''::text, ''label_removed''::text, ''attached''::text, ''detached''::text])))',
+	'Le `CHECK` compte VINGT-CINQ valeurs : `CRM-111` tranche T3 ajoute le rattachement et le retrait d''une affaire sans '
+	'retirer aucune des vingt-trois précédentes. Le garde-fou historique ÉVOLUE avec '
+	'le vocabulaire au lieu de figer un état périmé — et c''est la ONZIÈME fois qu''il le fait');
 
 -- LE MÉCANISME A JOUÉ UNE FOIS DE PLUS. `CRM-058` a étendu l'énumération dans la même migration
 -- que son écriture, exactement comme l'assertion le lui demandait. Elle est donc RETOURNÉE : le
@@ -817,11 +820,10 @@ select has_function('public', 'change_channel_workflow', array['uuid', 'uuid', '
 -- =============================================================================================
 -- 10. L'affaire déjà rattachée au channel cible — `CRM-111` T2.3.4, décision 731
 -- =============================================================================================
--- docs/SPEC-rattachements.md §5 : « refusé si l'affaire est déjà rattachée au channel cible ». Tant que `attach_card`
--- n'existe pas (T3), une affaire n'a qu'un rattachement, et l'index `card_placements_one_per_card_idx` de la migration 0108
--- le tient. La suite le retire DANS SA TRANSACTION ANNULÉE — l'état que T3 rendra licite — et pose le second rattachement
--- sous le propriétaire, EN DERNIER, parce qu'il change la lecture d'`app.card_first_placement` pour ce qui suivrait.
-drop index public.card_placements_one_per_card_idx;
+-- docs/SPEC-rattachements.md §5 : « refusé si l'affaire est déjà rattachée au channel cible ». RÉVISÉ PAR `CRM-111` T3
+-- (décision 51) : l'index `card_placements_one_per_card_idx` qui tenait un rattachement par affaire est retiré par la
+-- migration de T3, et la suite n'a plus à le retirer elle-même. Le second rattachement est posé sous le propriétaire, EN
+-- DERNIER, parce qu'il change la lecture d'`app.card_first_placement` pour ce qui suivrait.
 
 select lives_ok(
 	$$insert into public.card_placements (workspace_id, card_id, channel_id, workflow_id, current_step_id, position)

@@ -7,8 +7,9 @@
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.3 : la clé de service insère pour le seed, ne retire rien, et
 //           n'écrit pas ce que la base tient seule (docs/SPEC-rattachements.md §12, décision 746)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : les colonnes ont QUITTÉ l'affaire (migration 0134) ; il n'y a
-//           plus de miroir à éprouver, mais une affaire lue a exactement un rattachement lisible tant que
-//           `card_placements_one_per_card_idx` tient (T3), et une requête qui nomme une colonne retirée est refusée
+//           plus de miroir à éprouver, mais une affaire du seed a exactement un rattachement lisible — le seed n'en pose
+//           qu'un par affaire jusqu'à T8, l'index qui l'imposait étant retiré par T3 —, et une requête qui nomme une
+//           colonne retirée est refusée
 //           (docs/SPEC-rattachements.md §3.1, §3.2)
 //
 // Tout part du SEED : chaque appelant voit exactement un rattachement par affaire qu'il lit, égal à elle ; la lectrice ne

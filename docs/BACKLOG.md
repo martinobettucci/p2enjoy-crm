@@ -17245,13 +17245,19 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       seed, scripts, pgTAP, API, E2E). Preuve : aucun changement visible, toute la suite existante verte, aucune
       ancienne signature au catalogue ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md` (retour arrière
       possible tant que chaque affaire n'a qu'un rattachement).
-- [@] **T3 — rattacher et retirer** (§4, §5) *(préalable tranché : décision 802 — une affaire rattachée aussi hors d'un track purgé survit, réduite ; le prédicat de purge reste celui de la `0134`, et les preuves de T3 posent le cas)* : `attach_card` à l'étape initiale, `detach_card` réservé à
+- [x] **T3 — rattacher et retirer** (§4, §5) *(préalable tranché : décision 802 — une affaire rattachée aussi hors d'un track purgé survit, réduite ; le prédicat de purge reste celui de la `0134`, et les preuves de T3 posent le cas)* : `attach_card` à l'étape initiale, `detach_card` réservé à
       l'administrateur et refusé sur le dernier rattachement ; événements `attached` et `detached` ; pgTAP ; API aux
       jetons réels (la lectrice ne voit pas un rattachement illisible ; un membre qui écrit un seul channel modifie la
       partie commune mais pas le bloc de l'autre ; un non-administrateur ne retire pas).
       *Question posée et tranchée le 2026-11-01 (décision 802)* : l'affaire survit, réduite à ses autres rattachements ;
       le prédicat de purge et de dépense bloquante reste celui de la `0134`.
-      *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-11-01 18:52 UTC — état avant : [ ]*
+      *Livrée en développement le 2026-11-01 (journal, « `CRM-111` T3 — rattacher et retirer »)* : migration `0148` —
+      `attach_card` (étape initiale, désarchivage tel quel, six refus ordonnés), `detach_card` (administrateur, jamais le
+      dernier, perte des valeurs consentie), `attached` et `detached` au fil et à `card_events_placement_by_type`, l'index
+      d'un rattachement par affaire retiré, la marque `source: import` de la création conservée ; pgTAP `0138` 31/31 ;
+      `0097`, `0019` et `0116` révisées (décision 51) ; API `rattacher-retirer.spec.ts` 6/6 aux jetons réels ; pgTAP
+      126 fichiers sans anomalie, API 1296/1299 (manuel ×2 : le bucket non republié ; `webhooks-remise` : instable sous
+      charge), unitaires 5166/5166, typecheck propre. Aucun écran ni outil ne l'emploie encore (T7, T9).
 - [ ] **T4 — lectures à plusieurs rattachements** (§6, §9) : entonnoir, affaires figées et relances, Ma journée,
       recherche, temps valorisé ; pgTAP et API.
 - [ ] **T5 — rentabilité ventilée** (§6) : une ligne par rattachement × devise, colonne `shared`, total compté une fois ;
@@ -17268,6 +17274,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       webapp et connecteur redéployés ensemble ; constat ; `CHANGELOG.md`.
       **Livrée le 2026-11-01** par la fenêtre des migrations 106 à 141 (décision 792, révision `6e7d6266` ; `docs/PROD_MIGRATIONS.md` §8) ;
       reste le constat du responsable.
+      **T3** (migration `0148`) reste à livrer, avec la prochaine fenêtre : sans consommateur, sans geste préalable.
 
 ### CRM-112 — Champs personnalisés communs de portée espace `[~]`
 *Réservée le 2026-10-24 — décision 642, arbitrage 4 ; ordre fixé par la décision 645 : après `CRM-111`. Arbitrée le

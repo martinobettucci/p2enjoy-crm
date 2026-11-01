@@ -1166,6 +1166,10 @@ type _vueDerivationColonnes = Expect<
 // La migration de `CRM-125` TRANCHE T2 ajoute `render_mail_template_sample` — l'aperçu d'un modèle sur un jeu d'exemple
 // (docs/SPEC-modeles-emails.md §14.2). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `signature_text` est nulle quand l'identité n'a pas
 // de signature, ou qu'il n'y a pas d'identité ; un modèle illisible rend zéro ligne. Le compte s'accroît de un.
+// `0148` de `CRM-111` TRANCHE T3 ajoute `attach_card` (rend le rattachement) et `detach_card` (rend `undefined`) —
+// docs/SPEC-rattachements.md §5. CE QUI ÉCHAPPE AU GÉNÉRATEUR : leurs refus nommés, `card_not_found`, `channel_not_found`,
+// `channel_closed`, `already_attached`, `last_placement`, `field_values_would_be_lost`, et `42501 forbidden`. Le compte
+// s'accroît de deux.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1206,6 +1210,8 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'ecriture_permise'
     | 'unclassify_message'
     | 'armer_sequence_relance'
+    | 'attach_card'
+    | 'detach_card'
     | 'cards_figees'
     | 'mentionnables'
     | 'recherche_globale'

@@ -464,6 +464,11 @@ changelog.*
   refus de plus). **`mail-sync`** joint les pièces, archive avant d'envoyer, efface les dépôts abandonnés après 24 heures.
 - **Le seed** fait partir un message réel avec copie cachée et pièce jointe depuis « Refonte du monitoring — Vertuo ».
 
+- **`CRM-111` T3 — rattacher et retirer** (migration `0148`) : une affaire peut être rattachée à plusieurs channels, un
+  par channel. `attach_card` la rattache à l'étape initiale (ou désarchive son rattachement au channel), `detach_card`
+  retire un rattachement — réservé à l'administrateur, jamais le dernier, la perte des réponses du formulaire consentie.
+  Le fil dit « rattachée » et « retirée ». Une affaire rattachée hors d'un track purgé survit à la purge (décision 802).
+  **Aucun écran ne les emploie encore** (T7), ni le connecteur (T9).
 - **`CRM-111` T2.4.5 — le retrait : l'affaire ne porte plus son channel, son étape ni ses montants** (migration `0134`,
   décisions 768 et 770). Les treize colonnes de rattachement quittent `cards`, avec les deux miroirs : le rattachement est
   désormais le seul endroit où vivent le channel, le workflow, l'étape, le rang, le responsable, le montant, la

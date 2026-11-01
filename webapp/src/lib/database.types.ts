@@ -4374,6 +4374,36 @@ export type Database = {
         }
         Returns: string
       }
+      attach_card: {
+        Args: { p_card: string; p_channel: string }
+        Returns: {
+          amount: number | null
+          archived_at: string | null
+          card_id: string
+          channel_id: string
+          created_at: string
+          created_by: string | null
+          current_step_id: string
+          entered_step_at: string
+          health_score: number | null
+          id: string
+          next_action: string | null
+          next_action_at: string | null
+          owner_id: string | null
+          position: number
+          probability_override: number | null
+          snoozed_until: string | null
+          updated_at: string
+          workflow_id: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "card_placements"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       cards_figees: {
         Args: never
         Returns: {
@@ -4516,6 +4546,10 @@ export type Database = {
         Returns: {
           name: string
         }[]
+      }
+      detach_card: {
+        Args: { discard_field_values?: boolean; p_placement: string }
+        Returns: undefined
       }
       dossiers_a_renommer: {
         Args: { p_account_id: string }

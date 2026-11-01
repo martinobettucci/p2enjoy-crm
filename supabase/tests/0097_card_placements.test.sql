@@ -62,9 +62,10 @@ select columns_are('public', 'card_placements',
 	'les colonnes du rattachement sont exactement celles du §3.1');
 select col_is_unique('public', 'card_placements', array['card_id', 'channel_id'],
 	'une affaire n''est rattachée qu''une fois à un channel');
-select ok(exists (select 1 from pg_index i where i.indexrelid = 'public.card_placements_one_per_card_idx'::regclass
-                                              and i.indisunique),
-	'pendant la transition, un rattachement au plus par affaire : le miroir n''a jamais à choisir');
+-- RÉVISÉE PAR `CRM-111` T3 (décision 51) : l'index d'un rattachement par affaire tenait la transition ; la migration de
+-- T3 le retire, une affaire pouvant être rattachée à plusieurs channels — un par channel, par la clé ci-dessus.
+select ok(to_regclass('public.card_placements_one_per_card_idx') is null,
+	'depuis T3, plusieurs rattachements par affaire : l''index de la transition est retiré');
 select is(
 	(select array_agg(conname::text order by conname) from pg_constraint
 	  where conrelid = 'public.card_placements'::regclass and contype = 'f'),

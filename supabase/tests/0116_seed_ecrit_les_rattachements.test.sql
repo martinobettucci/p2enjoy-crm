@@ -51,8 +51,9 @@ select ok(not has_table_privilege('anon', 'public.card_placements', 'INSERT'),
 -- 3. Le geste réel, sous le rôle `service_role`
 -- =============================================================================================
 
--- Le rattachement de l'affaire `…c1` est lu, puis retiré en propriétaire : pendant la bascule, l'index
--- `card_placements_one_per_card_idx` n'en admet qu'un, et le seed en posera un seul par affaire.
+-- Le rattachement de l'affaire `…c1` est lu, puis retiré en propriétaire : la clé de service le repose ensuite, au même
+-- channel, et la clé `(card_id, channel_id)` n'en admet qu'un par channel. (`CRM-111` T3 a retiré l'index d'un
+-- rattachement par affaire ; le seed n'en pose toujours qu'un, jusqu'à T8.)
 select workspace_id as ws, channel_id as ch, workflow_id as wf, current_step_id as etape, position as rang
 	from public.card_placements where card_id = '5eed0000-0000-4000-8000-0000000000c1' \gset
 delete from public.card_placements where card_id = '5eed0000-0000-4000-8000-0000000000c1';

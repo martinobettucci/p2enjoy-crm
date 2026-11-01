@@ -38162,3 +38162,32 @@ expiration à 6 heures) reprennent celles de la prise d'une tâche [choix de ré
 
 **Conséquences.** Le lot de la décision 812 — la `0144`, la migration de `CRM-125` T2, les webapps de `CRM-123`, `CRM-124`,
 `CRM-125`, `CRM-126`, INC-332 et INC-333 — sera livré par une seule session, annoncée selon cette règle.
+
+### `CRM-111` T3 — rattacher et retirer (2026-11-01)
+
+*2026-11-01, session interactive, dans la fenêtre de pile que le responsable a fait passer avant les autres.*
+**Livré** : la migration `0148`. `attach_card(p_card, p_channel)` rattache à l'étape initiale, bloc vide ; si l'affaire
+a un rattachement archivé à ce channel, il est désarchivé tel quel ; six refus ordonnés, aucun ne révélant ce que
+l'appelant ne lit pas. `detach_card(p_placement, discard_field_values)` est réservé à l'administrateur, jamais sur le
+dernier rattachement, la perte des valeurs consentie ; il écrit `detached` avant le retrait. Une purge qui emporte des
+rattachements avec leur channel (décision 802) n'est pas un retrait, et n'écrit pas `detached` : l'affaire réduite ne
+garde pas de trace de ce rattachement dans son fil — point laissé à T7, qui dira si la fiche doit le nommer.
+L'index `card_placements_one_per_card_idx` est retiré.
+
+**Deux défauts trouvés par la pgTAP, avant le commit.** (1) `card_events_placement_by_type`, posée par la 109 et la 125,
+lie le type d'un événement à la présence de son rattachement : `attached` y est entré dans le même changement. (2) La
+première écriture de `app.card_placements_evenement_creation` partait de sa définition de la 134 ; la 138 (`CRM-071`
+T6) l'avait redéfinie pour marquer `source: import` une création importée, et la pgTAP `0128` l'a vu. La réécriture
+part désormais de la définition en base — la règle même de `docs/SPEC-test-harness.md` §3.7, cette fois pour une
+migration.
+
+**Numéro.** La 146 et la 147 étaient visées par deux sessions (`CRM-112`, INC-335) sans fichier poussé ; la 148 prise,
+elles se décalent au-delà, le contrôle d'ordre du registre refusant en production un fichier qui précède le dernier
+inscrit (accord des deux sessions).
+
+**Vérifications.** pgTAP `0138` 31/31 ; `0097`, `0019` et `0116` révisées par la décision 51 (l'index retiré, le
+vocabulaire à vingt-cinq valeurs) ; pgTAP entière 126 fichiers sans anomalie ; API `rattacher-retirer.spec.ts` 6/6 aux
+jetons réels (la lectrice ne voit pas le rattachement d'un channel fermé ; le business developer écrit la partie
+commune et pas le bloc d'un channel qu'il lit seulement ; un non-administrateur ne retire pas) ; suite d'API
+1296/1299 — trois rouges étrangers, deux du manuel (bucket non republié), un instable sous charge ; unitaires
+5166/5166 ; typecheck propre, le témoin des fonctions révisé.

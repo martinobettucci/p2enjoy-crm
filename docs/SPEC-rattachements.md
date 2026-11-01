@@ -596,7 +596,7 @@ existante reste verte. Les fonctionnalités nouvelles s'y ajoutent ensuite, tran
 |---|---|
 | T1 | **Mesures, sans code livré** : la liste exacte des fonctions, déclencheurs, politiques et appelants touchés ; le coût de la nouvelle RLS (`EXPLAIN ANALYZE` du board et de la liste sur le seed, sur une copie jetable) |
 | T2 | **Bascule, en un seul changement** : migration (table, reprise des données, `card_field_values`, `card_events`, `card_sequence_enrollments`, invariants, politiques, retrait des colonnes de `cards`) ; réécriture de toutes les fonctions du §2 et remplacement des signatures du §5 ; types régénérés ; **tous** les appelants — webapp, connecteur, seed, scripts, pgTAP, API, E2E. Une affaire, un rattachement : aucun changement visible, toute la suite existante verte |
-| T3 | Rattacher et retirer : `attach_card`, `detach_card`, `attached` et `detached` ; droits prouvés par l'API avec les jetons réels |
+| T3 | Rattacher et retirer : `attach_card`, `detach_card`, `attached` et `detached` ; droits prouvés par l'API avec les jetons réels. **Livrée en développement le 2026-11-01** (migration `0148`) : l'index d'un rattachement par affaire retiré, `card_events_placement_by_type` reçoit les deux valeurs, la création importée garde sa marque ; la purge reste celle de la `0134` (décision 802) |
 | T4 | Lectures à plusieurs rattachements : entonnoir, figées et relances, Ma journée, recherche, temps valorisé |
 | T5 | Rentabilité ventilée : fonction, écran, outil `crm_profitability_report` |
 | T6 | Messagerie : dossier `CRM/Affaires/<affaire>` et déplacement des dossiers existants par `mail-sync`, cadences et variables par rattachement (décision 657) |

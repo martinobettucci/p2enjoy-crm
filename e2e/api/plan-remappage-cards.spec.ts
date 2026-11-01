@@ -278,8 +278,8 @@ test.describe('N1 — le plan nominal, et l’exhaustivité (lignes a, b)', () =
 		// l'administratrice en voyait moins, le plan serait partiel et le dirait prêt quand même.
 		// L'administratrice porte pourtant un droit fin `none` sur un track du seed — c'est la règle
 		// 2 d'`app.resolve_access` qui la protège, et c'est elle que cette ligne éprouve.
-		// `CRM-111` T2.4.5 : le workflow est celui du rattachement ; le plan en compte un par affaire tant que
-		// `card_placements_one_per_card_idx` tient (T3).
+		// `CRM-111` T2.4.5 : le workflow est celui du rattachement, et le plan compte des rattachements ; le seed n'en pose
+		// qu'un par affaire (`CRM-111` T8 en posera davantage, et ce compte avec eux).
 		const total = await request.get(`/rest/v1/card_placements?workflow_id=eq.${WORKFLOW_SEED}&select=id`, {
 			headers: { ...enTetesService(), Prefer: 'count=exact' },
 		})

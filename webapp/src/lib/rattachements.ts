@@ -2,8 +2,8 @@
 // @spec docs/SPEC-rattachements.md §3.1 (la table), §5 (les signatures par rattachement), §14 (le découpage) ;
 //       docs/JOURNAL.md décisions 661, 705
 //
-// Pendant la bascule, une affaire n'a qu'UN rattachement (index `card_placements_one_per_card_idx`), et les écrans qui
-// lisent une affaire lisent aussi le sien, par le plongement `card_placements!card_placements_card_fk(id, created_at)`,
+// Une affaire peut avoir plusieurs rattachements depuis `CRM-111` T3 ; les écrans qui lisent une affaire lisent son
+// PLUS ANCIEN, la « forme d'avant », par le plongement `card_placements!card_placements_card_fk(id, created_at)`,
 // écrit EN CLAIR dans chaque liste de colonnes : une concaténation ferait perdre à `supabase-js` l'inférence de la
 // réponse (mesuré, `formulaire.ts`). La clé est nommée, ce qui fige le contrat au lieu de laisser PostgREST la déduire.
 // Ce module dit lequel employer ; T7 donnera à la fiche ses blocs par rattachement, et ce choix disparaîtra avec eux.
