@@ -17925,8 +17925,10 @@ Question du connecteur : sans objet (décision 804).
 
 - [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-01 : `docs/SPEC-cards.md` §3.6, renvois de
       `docs/SCHEMA.md` §5, `docs/SPEC-mail-subsystem.md` §3 et `docs/SPEC-plateforme.md` §7.3.
-- [ ] **T2 — base** : migration, pgTAP, harnais, preuves existantes révisées.
-- [ ] **T3 — écran et preuves de bout en bout** : fiche de l'espace, unitaires, E2E de l'écran et E2E mail, captures,
+- [@] **T2 — base** : migration, pgTAP, harnais, preuves existantes révisées.
+      *Prise en charge : session interactive 2026-11-01 14:36 UTC depuis 2026-11-01 14:36 UTC — état avant : [ ]*
+- [@] **T3 — écran et preuves de bout en bout** : fiche de l'espace, unitaires, E2E de l'écran et E2E mail, captures,
       manuel, seed, changelog, contrat de déploiement.
+      *Prise en charge : session interactive 2026-11-01 14:36 UTC depuis 2026-11-01 14:36 UTC — état avant : [ ]*
 - [ ] **T4 — livraison en production et constat** : alias `app-*` en place, préfixe réglé, régénération, un message
       reçu à une adresse `app-…` et classé.
