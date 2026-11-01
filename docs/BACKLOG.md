@@ -17107,14 +17107,16 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           anomalie, API 72/72, connecteur (unitaires, intégration réelle, interface 8/8) ; `verify-move-card-to-channel.sh`
           56/56 ; `verify-timeline.sh` 76/79, ses trois rouges étrangers à la tranche (`ingestion.spec.ts:91`, un défaut
           de T2.3.5 corrigé, le seed de reconstruction d'INC-312).
-        - [~] **T2.3.5 — les cadences** : `armer_sequence_relance(p_placement, …)`. *Livrée en développement le
+        - [x] **T2.3.5 — les cadences** : `armer_sequence_relance(p_placement, …)`. *Livrée en développement le
           2026-10-26* — migration `0119` ; une cadence active par rattachement (index sur `placement_id`) ; l'exécuteur
           juge l'inéligibilité par rattachement ; fiche, specs d'API et d'interface, pgTAP `0058` (49) et `0098`, types ;
           `verify-armement-sequences.sh` ne rejoue plus la `0060`. L'expéditeur par défaut du §7 : INC-315, non livré.
           pgTAP 103 fichiers sans anomalie, unitaires 4504/4504, API 73/73, interface verte (53 scénarios rouges d'un
-          défaut de la fiche, corrigé et rejoués), `verify-armement-sequences.sh` 53/53. **Reste** : la présélection de l'expéditeur, arbitrée par la décision 803
-          (INC-315) — la fiche présélectionne l'identité d'envoi de la personne qui arme quand elle est le responsable du
-          rattachement ; base et connecteur inchangés ; unitaire, E2E, manuel.
+          défaut de la fiche, corrigé et rejoués), `verify-armement-sequences.sh` 53/53. **La présélection de l'expéditeur** (décision 803, INC-315) est
+          **transférée à INC-335 T2** par la décision 805, qui la précise : le bloc d'armement présélectionne l'identité
+          par défaut de la personne qui arme — à défaut son unique identité — quand elle est le responsable du
+          rattachement, et reste vide sinon. Elle se livre avec la présélection du formulaire d'envoi, sur le même
+          composant (`BlocSequenceCard.tsx`) ; T2.3.5 n'a plus rien à livrer (2026-11-01).
         - [x] **T2.3.6 — les valeurs de bloc** : clé `(placement_id, field_id)`, `NOT NULL`, écriture de la webapp par
           rattachement. *Livrée en développement le 2026-10-26* — migration `0121` : charnière du workflow par le
           rattachement, politiques par le rattachement (lecture sous la forme optimisée), prévisualisation de l'exigence ;
