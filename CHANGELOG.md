@@ -13,13 +13,21 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### INC-326 — une pièce jointe reçue porte l'affaire de son courrier
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-01 — migration 142 (INC-326, décision 796)
+
+Cellule Spark `crm`, révision `98a6a032` : `scripts/spark/livrer.sh -- --migrate --instantane-verifie`. **Vérifié, en
+lecture seule** : registre à 142 lignes, déclencheur présent, aucune pièce qui diffère de son message ; `verifier.sh` 33/34.
+
+#### INC-326 — une pièce jointe reçue porte l'affaire de son courrier
 
 - **Migration `0142`** : une pièce inscrite sans affaire prend celle de son message, et les pièces existantes d'un
   courrier classé sont rattrapées. La relève classait le message avant d'en inscrire les pièces, qui naissaient sans
   affaire. Rien ne change à l'écran : le fil lit les pièces par leurs messages.
 
-## [Publié]
 
 ### Déployé en production, 2026-11-01 — MinIO, Kong, Caddy et Realtime (décisions 793 et 794)
 

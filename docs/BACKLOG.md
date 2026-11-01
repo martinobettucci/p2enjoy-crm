@@ -6976,7 +6976,9 @@ règles vivent en base et non dans le service, ce qui est le choix d'architectur
       **Fait le 2026-11-01** : migration `0142` (déclencheur avant insertion — la relève classe le message AVANT d'inscrire
       ses pièces, cause corrigée d'INC-326 — et rattrapage) ; pgTAP `0132` rouge puis 7/7 ; `e2e/mail/ingestion.spec.ts`
       +1, rouge sans le déclencheur et vert avec ; suite SQL 122/4610 ; harnais (122 fichiers, 4610 assertions, 49 mail).
-      Le fil continue de lire par les messages. Reste la livraison de la 142 (contrat §3) et son constat.
+      Le fil continue de lire par les messages. **Livrée le 2026-11-01** (décision 796, révision `98a6a032`) : registre à
+      142, déclencheur présent, invariant à `0` relu en lecture seule. Reste le constat du responsable : la première
+      pièce reçue sur un courrier classé porte son affaire.
 
 ### CRM-056 — Dossiers IMAP imbriqués `[x]`
 Création, assainissement, renommage, labels Gmail, `mail_folder_map`.

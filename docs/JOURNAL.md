@@ -37630,3 +37630,6 @@ maintenant, par `livrer.sh -- --migrate --instantane-verifie`. `--instantane-ver
 2026-10-31 au matin, qui reste le filet de la journée. La production a `mail_attachments` vide (relevé du jour) : le
 rattrapage ne touche aucune ligne, et le retour arrière propre est le retrait du déclencheur et de sa fonction
 (`docs/SCHEMA.md`, « Migration `0142` »), sans recourir à l'instantané.
+
+**La 142 livrée (2026-11-01, décision 796)** : la fenêtre est passée en révision `98a6a032`. Relus en lecture seule :
+142 lignes au registre, le déclencheur présent, l'invariant à `0` ; `verifier.sh` est à 33/34.
