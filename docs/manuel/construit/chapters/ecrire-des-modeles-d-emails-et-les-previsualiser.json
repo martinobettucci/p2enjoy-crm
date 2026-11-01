@@ -428,7 +428,20 @@
 							},
 							{
 								"type": "text",
-								"text": " les contacts que vous pouvez lire, et pas\nseulement ceux qui sont rattachés à l'affaire choisie ;"
+								"text": " les contacts que vous pouvez lire, et pas\nseulement ceux qui sont rattachés à l'affaire choisie. "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Quand l'affaire choisie n'a qu'un seul\ncontact rattaché, il est choisi pour vous"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ; si elle en a plusieurs, ou aucun, le champ reste sur\n« Aucun contact », car le produit ne devine pas lequel vous visez. Un contact que vous avez choisi\nvous-même n'est jamais remplacé quand vous changez d'affaire ;"
 							}
 						]
 					}

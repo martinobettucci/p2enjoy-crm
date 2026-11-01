@@ -13,6 +13,12 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-124` — la prévisualisation d'un modèle choisit le contact de l'affaire quand elle n'en a qu'un
+
+- Dans « Réglages ▸ Modèles d'emails », la prévisualisation présélectionne le contact quand l'affaire choisie en a
+  **un seul** rattaché. Aucun ou plusieurs : le champ reste sur « Aucun contact ». Un contact choisi à la main n'est
+  jamais remplacé au changement d'affaire. Aucune migration.
+
 ### INC-333 — le mois du rapport de temps se choisit dans tous les navigateurs
 
 - Le rapport mensuel de l'écran « Temps » et le bloc « Coût du personnel » des coûts d'un track choisissent leur mois

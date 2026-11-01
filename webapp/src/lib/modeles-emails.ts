@@ -8,6 +8,8 @@
 //       4c : la migration 0059 a posé le `on delete restrict` que le §9.7 annonçait absent)
 // @spec docs/DESIGN_SYSTEM.md §5.39 (la surface) ; docs/SPEC-permissions-rls.md §7 (le refus est
 //       zéro ligne, jamais une erreur)
+// @spec CRM-124 (docs/BACKLOG.md) T2 — `contactApresChoixAffaire`, le contact présélectionné de la
+//       prévisualisation (docs/SPEC-modeles-emails.md §9.5, révision `CRM-124`, décision 806)
 //
 // CE MODULE N'OUVRE AUCUNE POLITIQUE ET N'AJOUTE AUCUNE RÈGLE. Il lit `mail_templates` sous la RLS
 // de la migration `0055`, y écrit par les routes REST de cette même table — il n'existe aucune RPC
@@ -489,4 +491,41 @@ export function libelleContactPrevisualisation(contact: {
 }): string {
 	const adresse = contact.email?.trim() ?? ''
 	return adresse === '' ? contact.full_name : `${contact.full_name} — ${adresse}`
+}
+
+/**
+ * Le contact que la prévisualisation affiche après le choix d'une affaire — `CRM-124`.
+ *
+ * @spec CRM-124 (docs/BACKLOG.md) T2 ; docs/SPEC-modeles-emails.md §9.5 (révision `CRM-124`,
+ *       décision 806) ; docs/DESIGN_SYSTEM.md §5.39
+ *
+ * Le contact par défaut d'une affaire est son UNIQUE contact rattaché : aucun ou plusieurs, il n'y
+ * en a pas — choisir entre plusieurs serait deviner. UN CHOIX MANUEL N'EST JAMAIS ÉCRASÉ : le
+ * contact courant n'est remplacé que s'il est vide ou s'il est encore la présélection précédente,
+ * auquel cas une affaire qui n'en justifie aucune le ramène à « Aucun contact ».
+ *
+ * `rattaches` vaut `null` quand la lecture des rattachements a échoué : comme une affaire sans
+ * rattachement, rien n'est présélectionné — et une présélection héritée de l'affaire précédente est
+ * retirée, l'affaire choisie ne la justifiant pas.
+ *
+ * LE CONTACT PAR DÉFAUT N'EST RETENU QUE S'IL EST PROPOSÉ par le sélecteur (`idsProposes`) : sinon
+ * le sélecteur afficherait « Aucun contact » pendant que le rendu recevrait un identifiant, et la
+ * base doit recevoir l'identifiant affiché (§9.5).
+ */
+export function contactApresChoixAffaire({
+	rattaches,
+	idsProposes,
+	idContactCourant,
+	idPreselectionPrecedente,
+}: {
+	readonly rattaches: readonly { readonly contactId: string }[] | null
+	readonly idsProposes: ReadonlySet<string>
+	readonly idContactCourant: string
+	readonly idPreselectionPrecedente: string
+}): { readonly idContact: string; readonly idPreselection: string } {
+	const libre = idContactCourant === '' || idContactCourant === idPreselectionPrecedente
+	if (!libre) return { idContact: idContactCourant, idPreselection: '' }
+	const unique = rattaches !== null && rattaches.length === 1 ? (rattaches[0]?.contactId ?? '') : ''
+	const parDefaut = idsProposes.has(unique) ? unique : ''
+	return { idContact: parDefaut, idPreselection: parDefaut }
 }

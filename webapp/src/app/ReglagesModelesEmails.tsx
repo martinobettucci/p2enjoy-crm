@@ -11,6 +11,9 @@
 // @spec docs/DESIGN_SYSTEM.md §5.39 (cette surface, en écarts du §5.34), §5.8 (états
 //       systématiques), §5.18 (la liste plate), §5.23 (formulaire replié, dans le flux), §5.29
 //       (le patron de suppression confirmée)
+// @spec CRM-124 (docs/BACKLOG.md) T2 — la prévisualisation présélectionne l'unique contact rattaché à
+//       l'affaire choisie, sans jamais écraser un choix manuel (docs/SPEC-modeles-emails.md §9.5,
+//       révision `CRM-124`, décision 806 ; docs/DESIGN_SYSTEM.md §5.39)
 // @spec docs/BACKLOG.md « Correctifs arbitrés », INC-231 ; docs/JOURNAL.md décisions 592 et 594 —
 //       classes absentes du CSS produit remplacées (docs/DESIGN_SYSTEM.md §11, §5.29)
 //
@@ -29,6 +32,7 @@ import { t } from '../i18n'
 import type { CleTraduction } from '../i18n'
 import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
 import {
+	contactApresChoixAffaire,
 	enregistrerModeleEmail,
 	insererTrou,
 	libelleContactPrevisualisation,
@@ -44,7 +48,7 @@ import {
 	type RenduModeleEmail,
 	type SaisieModeleEmail,
 } from '../lib/modeles-emails'
-import { lireContactsDuCarnet, type ContactDuCarnet } from '../lib/contacts'
+import { lireContactsDeLAffaire, lireContactsDuCarnet, type ContactDuCarnet } from '../lib/contacts'
 import { lireIdentitesSortantes, type IdentiteSortante } from '../lib/mail-identites'
 import { lireWorkspaces } from '../lib/workspaces'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
@@ -780,9 +784,10 @@ function ConfirmationSuppression({
 /**
  * La prévisualisation d'un modèle sur une affaire réelle — §9.5, §9.6.
  *
- * AUCUN DES TROIS SÉLECTEURS NE PRÉSÉLECTIONNE, y compris celui de l'affaire, qui est pourtant
+ * NI L'AFFAIRE NI L'IDENTITÉ NE SE PRÉSÉLECTIONNENT, y compris l'affaire, qui est pourtant
  * obligatoire : présélectionner la première affaire du tri ferait rendre un texte au sujet d'une
- * affaire que le rédacteur n'a pas désignée.
+ * affaire que le rédacteur n'a pas désignée. LE CONTACT, LUI, SUIT L'AFFAIRE CHOISIE (`CRM-124`) :
+ * quand elle n'a qu'un contact rattaché, il est présélectionné, sans jamais écraser un choix manuel.
  */
 function Previsualisation({
 	client,
@@ -802,6 +807,39 @@ function Previsualisation({
 	const [rendu, setRendu] = useState<EtatAsync<RenduModeleEmail | null> | null>(null)
 	const [enVol, setEnVol] = useState(false)
 	const premier = useRef<HTMLSelectElement | null>(null)
+	// LA RÈGLE LIT LE CONTACT COURANT AU RETOUR DE LA LECTURE, et non à son départ : un choix manuel
+	// fait pendant le vol doit être respecté. D'où ces deux miroirs, et le rang qui écarte une réponse
+	// arrivée après un nouveau changement d'affaire.
+	const contactCourant = useRef('')
+	const preselection = useRef('')
+	const demandeRattaches = useRef(0)
+	const idsContacts = useRef<ReadonlySet<string>>(new Set())
+
+	const changerContact = useCallback((id: string) => {
+		contactCourant.current = id
+		setIdContact(id)
+	}, [])
+
+	const choisirAffaire = useCallback(
+		(id: string) => {
+			setIdAffaire(id)
+			const rang = ++demandeRattaches.current
+			void (async () => {
+				const lus = id === '' ? null : await lireContactsDeLAffaire(client, id)
+				if (rang !== demandeRattaches.current) return
+				const rattaches = id === '' ? [] : lus?.statut === 'pret' ? lus.donnees : null
+				const suite = contactApresChoixAffaire({
+					rattaches,
+					idsProposes: idsContacts.current,
+					idContactCourant: contactCourant.current,
+					idPreselectionPrecedente: preselection.current,
+				})
+				preselection.current = suite.idPreselection
+				changerContact(suite.idContact)
+			})()
+		},
+		[changerContact, client],
+	)
 
 	useEffect(() => {
 		premier.current?.focus()
@@ -821,7 +859,10 @@ function Previsualisation({
 			// voit — le sélecteur n'offre que son option vide —, et c'est plus honnête qu'un état
 			// d'erreur qui masquerait les deux autres.
 			if (lesAffaires.statut === 'pret') setAffaires(lesAffaires.donnees)
-			if (lesContacts.statut === 'pret') setContacts(lesContacts.donnees)
+			if (lesContacts.statut === 'pret') {
+				idsContacts.current = new Set(lesContacts.donnees.map((contact) => contact.id))
+				setContacts(lesContacts.donnees)
+			}
 			if (lesIdentites.statut === 'pret') setIdentites(lesIdentites.donnees)
 		})()
 		return () => {
@@ -859,7 +900,7 @@ function Previsualisation({
 						ref={premier}
 						data-testid="champ-affaire-previsualisation"
 						value={idAffaire}
-						onChange={(evenement) => setIdAffaire(evenement.target.value)}
+						onChange={(evenement) => choisirAffaire(evenement.target.value)}
 						className={CLASSES_CHAMP}
 					>
 						{/* L'OPTION VIDE EST L'AVEU QU'AUCUN CHOIX N'EST FAIT (§9.5). C'est l'écart
@@ -878,11 +919,12 @@ function Previsualisation({
 					{t('admin.mailTemplates.previewPane.contact')}
 					{/* LA LISTE PORTE TOUS LES CONTACTS LISIBLES, jamais les seuls contacts rattachés à
 					    l'affaire : MESURÉ, `card_contacts` ne porte que 2 lignes pour 41 affaires, si
-					    bien qu'un sélecteur restreint serait vide sur 39 affaires sur 41 (§9.5). */}
+					    bien qu'un sélecteur restreint serait vide sur 39 affaires sur 41 (§9.5). Le
+					    rattachement ne sert qu'à présélectionner, quand il est unique (`CRM-124`). */}
 					<select
 						data-testid="champ-contact-previsualisation"
 						value={idContact}
-						onChange={(evenement) => setIdContact(evenement.target.value)}
+						onChange={(evenement) => changerContact(evenement.target.value)}
 						className={CLASSES_CHAMP}
 					>
 						<option value="">{t('admin.mailTemplates.previewPane.contact.none')}</option>

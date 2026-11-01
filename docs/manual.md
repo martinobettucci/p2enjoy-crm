@@ -3311,7 +3311,10 @@ Les autres refus sont dits de la même façon : un nom de plus de 120 caractère
 - **l'affaire** — obligatoire. Aucune n'est choisie d'avance : le produit ne devine pas de quelle
   affaire vous voulez parler ;
 - **le contact** — facultatif. La liste porte **tous** les contacts que vous pouvez lire, et pas
-  seulement ceux qui sont rattachés à l'affaire choisie ;
+  seulement ceux qui sont rattachés à l'affaire choisie. **Quand l'affaire choisie n'a qu'un seul
+  contact rattaché, il est choisi pour vous** ; si elle en a plusieurs, ou aucun, le champ reste sur
+  « Aucun contact », car le produit ne devine pas lequel vous visez. Un contact que vous avez choisi
+  vous-même n'est jamais remplacé quand vous changez d'affaire ;
 - **l'identité d'expédition** — facultative. Aucune n'est choisie d'avance non plus : plusieurs
   identités peuvent être « par défaut », chacune pour une personne, et le produit ne tranche pas à
   votre place.

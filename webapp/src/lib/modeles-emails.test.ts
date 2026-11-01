@@ -5,6 +5,8 @@
 //           (dictionnaire fermé des refus et repli nommé)
 // @verifies docs/SPEC-modeles-emails.md §2.5 (ce que la base refuse), §2.7 (contrat d'API mesuré)
 // @verifies docs/SPEC-permissions-rls.md §7 (le refus est zéro ligne, jamais une erreur)
+// @verifies CRM-124 (docs/BACKLOG.md) T2 — docs/SPEC-modeles-emails.md §9.5 (révision `CRM-124`,
+//           décision 806) : le contact présélectionné après le choix d'une affaire
 //
 // CE FICHIER ÉPROUVE LA REQUÊTE RÉELLEMENT ÉMISE, et pas seulement la valeur rendue. Trois
 // exigences sont portées par l'appel lui-même et qu'aucune assertion sur le résultat
@@ -19,6 +21,7 @@ import { describe, expect, it } from 'vitest'
 import {
 	classerEcritureModele,
 	COLONNES_AFFAIRE_PREVISUALISATION,
+	contactApresChoixAffaire,
 	COLONNES_MODELE_EMAIL,
 	corpsEcritureModele,
 	enregistrerModeleEmail,
@@ -521,5 +524,99 @@ describe('les libellés des sélecteurs — §9.5', () => {
 		expect(libelleContactPrevisualisation({ full_name: 'Léo Marchand', email: '   ' })).toBe(
 			'Léo Marchand',
 		)
+	})
+})
+
+describe('contactApresChoixAffaire — CRM-124, §9.5', () => {
+	const LEO = '5eed0000-0000-4000-8000-000000000091'
+	const DUPONT = '5eed0000-0000-4000-8000-000000000092'
+	const AUTRE = '5eed0000-0000-4000-8000-000000000093'
+	const PROPOSES = new Set([LEO, DUPONT, AUTRE])
+
+	it('présélectionne l’unique contact rattaché quand le contact est vide', () => {
+		expect(
+			contactApresChoixAffaire({
+				rattaches: [{ contactId: LEO }],
+				idsProposes: PROPOSES,
+				idContactCourant: '',
+				idPreselectionPrecedente: '',
+			}),
+		).toEqual({ idContact: LEO, idPreselection: LEO })
+	})
+
+	// CHOISIR ENTRE PLUSIEURS SERAIT DEVINER : ni le premier du tri, ni aucun autre.
+	it('ne présélectionne rien quand l’affaire porte plusieurs contacts, ou aucun', () => {
+		for (const rattaches of [[{ contactId: LEO }, { contactId: DUPONT }], []]) {
+			expect(
+				contactApresChoixAffaire({
+					rattaches,
+					idsProposes: PROPOSES,
+					idContactCourant: '',
+					idPreselectionPrecedente: '',
+				}),
+			).toEqual({ idContact: '', idPreselection: '' })
+		}
+	})
+
+	it('remplace la présélection précédente par celle de la nouvelle affaire', () => {
+		expect(
+			contactApresChoixAffaire({
+				rattaches: [{ contactId: DUPONT }],
+				idsProposes: PROPOSES,
+				idContactCourant: LEO,
+				idPreselectionPrecedente: LEO,
+			}),
+		).toEqual({ idContact: DUPONT, idPreselection: DUPONT })
+	})
+
+	// UNE PRÉSÉLECTION QUE LA NOUVELLE AFFAIRE NE JUSTIFIE PLUS EST RETIRÉE : la laisser ferait
+	// rendre le texte d'une affaire avec le contact d'une autre, sans que personne l'ait choisi.
+	it('retire la présélection précédente quand la nouvelle affaire n’en justifie aucune', () => {
+		expect(
+			contactApresChoixAffaire({
+				rattaches: [{ contactId: LEO }, { contactId: DUPONT }],
+				idsProposes: PROPOSES,
+				idContactCourant: LEO,
+				idPreselectionPrecedente: LEO,
+			}),
+		).toEqual({ idContact: '', idPreselection: '' })
+	})
+
+	it('ne remplace jamais un choix manuel', () => {
+		for (const rattaches of [[{ contactId: DUPONT }], [], null]) {
+			expect(
+				contactApresChoixAffaire({
+					rattaches,
+					idsProposes: PROPOSES,
+					idContactCourant: AUTRE,
+					idPreselectionPrecedente: LEO,
+				}),
+			).toEqual({ idContact: AUTRE, idPreselection: '' })
+		}
+	})
+
+	// UN ÉCHEC DE LECTURE NE PRÉSÉLECTIONNE RIEN, et ne laisse pas la présélection d'une autre affaire.
+	it('traite un échec de lecture comme une affaire sans rattachement', () => {
+		expect(
+			contactApresChoixAffaire({
+				rattaches: null,
+				idsProposes: PROPOSES,
+				idContactCourant: LEO,
+				idPreselectionPrecedente: LEO,
+			}),
+		).toEqual({ idContact: '', idPreselection: '' })
+	})
+
+	// LA BASE REÇOIT L'IDENTIFIANT AFFICHÉ : un contact absent du sélecteur n'est pas présélectionné,
+	// sinon le sélecteur montrerait « Aucun contact » et le rendu en recevrait un.
+	it('ne présélectionne pas un contact que le sélecteur ne propose pas', () => {
+		expect(
+			contactApresChoixAffaire({
+				rattaches: [{ contactId: LEO }],
+				idsProposes: new Set<string>(),
+				idContactCourant: '',
+				idPreselectionPrecedente: '',
+			}),
+		).toEqual({ idContact: '', idPreselection: '' })
 	})
 })

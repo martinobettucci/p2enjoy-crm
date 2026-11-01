@@ -17986,8 +17986,18 @@ Question du connecteur : sans objet (décision 806).
 
 - [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-01 : décision 806,
       `docs/SPEC-modeles-emails.md` §9.5, `docs/DESIGN_SYSTEM.md` §5.39.
-- [@] **T2 — écran et preuves** : fonction pure, écran, unitaires, E2E, captures, manuel, changelog.
-      *Prise en charge : session interactive 2026-11-01 14:58 UTC depuis 2026-11-01 14:58 UTC — état avant : [ ]*
+- [~] **T2 — écran et preuves** : fonction pure, écran, unitaires, E2E, captures, manuel, changelog.
+      **Fait le 2026-11-01** : `contactApresChoixAffaire` (`webapp/src/lib/modeles-emails.ts`) et 7 unitaires ;
+      l'écran lit `lireContactsDeLAffaire` au choix de l'affaire, et écarte une réponse périmée ; 5 unitaires de
+      composant (`ReglagesModelesEmails.test.tsx`), dont 4 rouges sur l'ancien code ; typecheck vert ; suite unitaire
+      5135/5136, l'échec (`PanneauChangementWorkflow`) vert seul, sans lien. E2E
+      `e2e/ui/modeles-emails-contact-preselectionne.spec.ts` sur la pile partagée : **7/8 verts** (Sogexia →
+      Léo Marchand et rendu substitué, affaire sans rattachement, deux rattachements temporaires, choix manuel, quatre
+      paliers sans débordement). Captures `docs/captures/CRM-124/` observées. Manuel §14.2, changelog.
+      **Reste** : le scénario de la lectrice était faux (mesuré, elle ne lit pas Sogexia, et ne lit qu'un rattachement,
+      Lyon — Sophie Dupont). Il est corrigé mais **pas encore rejoué** : la pile partagée est sous un ordre convenu
+      entre sessions. Il faut aussi rejouer `e2e/ui/reglages-modeles-emails.spec.ts`, dont le parcours choisit
+      Sogexia puis Léo, compatible mais non rejoué.
 
 ## Demande du 2026-11-01 — l'aperçu des paliers d'une séquence (décision 809)
 
