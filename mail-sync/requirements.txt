@@ -10,7 +10,7 @@ IMAPClient==3.1.0
 #       BSD-3, sans dépendance sous Python 3.13, aucune vulnérabilité connue pour 6.21.4 (OSV, 2026-10-31) ; les avis
 #       anciens (temps et mémoire sur PDF malformé) sont la raison du processus enfant borné (§4.3).
 pypdf==6.21.4
-pydantic-settings==2.14.2
+pydantic-settings==2.16.2
 starlette==1.3.1
 # @spec docs/JOURNAL.md décision 704 (INC-309) — `anyio`, dépendance de `starlette`, épinglée comme elle : non figée, elle
 #       montait à 4.15.1, qui déprécie l'alias `anyio.abc.BlockingPortal` qu'emploie `starlette` 1.3.1 ; la suite rendait
