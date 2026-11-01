@@ -17786,7 +17786,8 @@ renommés en `requirements.txt` et `requirements-dev.txt`, avec toutes les réf�
 manifestes Python constatés dans le graphe de dépendances de GitHub après le push. Question du connecteur : sans objet
 (décision 763).
 
-- [ ] **T1 — configuration et renommage**, avec les preuves ci-dessus.
+- [@] **T1 — configuration et renommage**, avec les preuves ci-dessus.
+      *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 02:48 UTC — état avant : [ ]*
 - [ ] **T2 — livraison** : la prochaine reconstruction de l'image `mcp` de production prend le verrou renommé
       (contenu identique) ; aucune autre action en production.
 
