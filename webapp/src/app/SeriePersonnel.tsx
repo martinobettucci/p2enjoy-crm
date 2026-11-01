@@ -5,6 +5,9 @@
 //       portée en 13 px `--color-text-2` au-dessus du chiffre), §5.9 ; décision 621, point 8
 // @spec CRM-106 (docs/BACKLOG.md) — tranche T2 : le bloc « Temps passé » porte la bande de la semaine et relit son résumé
 //       après chaque enregistrement ; docs/SPEC-temps.md §7.6 (points 7 et 8) ; docs/DESIGN_SYSTEM.md §5.54 bis
+// @spec docs/INCONSISTENCY_REPORT.md INC-333, décision 801 — le mois du bloc du track se choisit par la navigation
+//       partagée (`NavigationMois`) et vit dans l'adresse (`?mois=AAAA-MM`) ; docs/SPEC-temps.md §7.5 ;
+//       docs/DESIGN_SYSTEM.md §5.54 (navigation de mois)
 //
 // LA PORTÉE EST ÉCRITE, ET C'EST LA RÈGLE DU §4.5 DES COÛTS : un total qui ne dit pas ce qu'il compte se lit comme celui
 // de l'équipe. Elle suit le rôle que la base rend ; le périmètre lui-même est tenu par la RLS de `saisies_temps`.
@@ -28,7 +31,8 @@ import type { ClientCrm } from '../lib/supabase'
 import { enJours, jourLocal } from '../lib/temps'
 import { BandeTempsCard } from './BandeTempsCard'
 import { useContexteEspace } from './ContexteEspace'
-import { CelluleCout, libelleMois } from './RapportTemps'
+import { NavigationMois, libelleMois, useMoisDeLAdresse } from './NavigationMois'
+import { CelluleCout } from './RapportTemps'
 import { formaterDuree } from './SaisieTemps'
 
 function Portee() {
@@ -52,7 +56,7 @@ export function SeriePersonnelTrack({
 	readonly idTrack: string
 	readonly aujourdhui?: string
 }) {
-	const [mois, setMois] = useState(aujourdhui.slice(0, 7))
+	const { mois, moisCourant, allerA } = useMoisDeLAdresse(aujourdhui)
 	const [etat, setEtat] = useState<EtatAsync<DonneesTrack>>(enChargement)
 	const idTitre = useId()
 
@@ -83,16 +87,7 @@ export function SeriePersonnelTrack({
 					</h2>
 					<Portee />
 				</div>
-				<label className="flex flex-col gap-1 text-sm text-text-2">
-					{t('time.report.month')}
-					<input
-						type="month"
-						value={mois}
-						onChange={(e) => setMois(e.target.value === '' ? aujourdhui.slice(0, 7) : e.target.value)}
-						data-testid="personnel-mois"
-						className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3 text-text"
-					/>
-				</label>
+				<NavigationMois mois={mois} moisCourant={moisCourant} allerA={allerA} titre={false} testId="personnel-mois" />
 			</div>
 			{etat.statut === 'chargement' ? (
 				<SkeletonListe lignes={3} libelle={t('state.loading.aria')} />

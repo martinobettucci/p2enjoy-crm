@@ -341,6 +341,12 @@ Edge nouvelle. La livraison emporte aussi la webapp de `CRM-100` (§2.10), déj�
 **Retour arrière** : par l'instantané si la fenêtre échoue (§6) ; après la fenêtre, par la ligne 87 du §3.2. La webapp
 précédente ignore les deux tables : revenir à elle seule ne casse rien.
 
+**INC-333, le mois du rapport (2026-11-01, décision 801) — webapp seule, en attente de la prochaine livraison.** La
+navigation de mois remplace le champ `type="month"` du rapport et du bloc « Coût du personnel » d'un track. Aucune
+migration, aucune variable, aucun service. **Le geste 4 s'y étend** : dans **Firefox**, ouvrir « Temps ▸ Rapport
+mensuel », passer au mois précédent, recharger la page (le mois reste), puis revenir par « Ce mois-ci ». Faire de même
+sur le bloc « Coût du personnel » de l'écran de coûts d'un track. Retour arrière : la webapp précédente seule.
+
 ### 2.12 `CRM-099` — plusieurs coûts réels par ligne de coût, jusqu'à « Soldé » (GESTES 1 À 4 EXÉCUTÉS le 2026-10-11 ; geste 5 à constater par le responsable)
 
 `docs/SPEC-costs.md` §2.3 bis, `docs/DESIGN_SYSTEM.md` §5.31 bis ; décision 622. **Une migration, la 88**, qui

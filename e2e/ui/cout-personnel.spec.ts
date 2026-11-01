@@ -4,6 +4,9 @@
 //           §5.1 (un membre ne lit que son temps), §7.3 (rapport mensuel ; « Toute l'équipe »), §7.4 (Réglages ▸ « Coût
 //           du personnel » : version programmée, historique, retrait confirmé), §7.5 (série « Personnel » du track et
 //           de l'affaire, portée écrite) ; docs/DESIGN_SYSTEM.md §5.54 ; CLAUDE.md §15, §16
+// @verifies docs/INCONSISTENCY_REPORT.md INC-333, décision 801 — le mois du rapport et de la série du track se choisit
+//           par « Mois précédent » / « Mois suivant » / « Ce mois-ci » et vit dans l'adresse (docs/SPEC-temps.md §7.3,
+//           §7.5 ; docs/DESIGN_SYSTEM.md §5.54, navigation de mois)
 //
 // UNE VERSION EN VIGUEUR NE SE RETIRE JAMAIS, même par la clé de service (déclencheur de `0087`). Toutes les versions
 // posées ici prennent donc effet dans un futur LOINTAIN (2099) — une date proche finirait par entrer en vigueur et ne
@@ -84,6 +87,57 @@ test('le rapport mensuel d’un membre : son temps seul, valorisé par la versio
 	await capturer(page, 'temps-rapport-membre-xl-1440', UNITE)
 })
 
+test('le mois du rapport se choisit par la navigation, sans champ à saisir, et vit dans l’adresse (INC-333)', async ({ page, request }) => {
+	await poserLeMois(request)
+	await connecterAvecLeLabs(page, BIZDEV)
+	await page.goto('/temps?onglet=rapport&mois=2099-04')
+	const rapport = page.getByTestId('temps-rapport')
+	// Nom EXACT : le titre de l'état vide, « Aucun temps saisi en avril 2099 », le contient aussi.
+	await expect(rapport.getByRole('heading', { level: 2, name: 'Avril 2099', exact: true })).toBeVisible()
+	await expect(rapport.getByText('Aucun temps saisi en avril 2099')).toBeVisible()
+	// Le défaut : Firefox rendait `type="month"` en champ texte que l'adresse écrasait à chaque frappe.
+	await expect(rapport.locator('input')).toHaveCount(0)
+
+	await rapport.getByRole('button', { name: 'Mois précédent' }).click()
+	await expect(page).toHaveURL(/[?&]mois=2099-03(&|$)/)
+	await expect(page).toHaveURL(/[?&]onglet=rapport(&|$)/)
+	await expect(page.getByTestId('temps-rapport-mois')).toHaveText('Mars 2099')
+	await expect(page.getByTestId('temps-rapport-ligne')).toHaveCount(3)
+	await expect(page.getByTestId('temps-rapport-total')).toHaveText('6 h 15')
+	await capturer(page, 'temps-rapport-navigation-mois-xl-1440', UNITE)
+
+	// Le mois survit au rechargement : il est dans l'adresse.
+	await page.reload()
+	await expect(page.getByTestId('temps-rapport-mois')).toHaveText('Mars 2099')
+
+	// « Mois suivant » ne bouge pas sous le pointeur d'un mois à l'autre.
+	const suivant = rapport.getByRole('button', { name: 'Mois suivant' })
+	const avant = await suivant.boundingBox()
+	await suivant.click()
+	await expect(page.getByTestId('temps-rapport-mois')).toHaveText('Avril 2099')
+	expect((await suivant.boundingBox())?.x).toBe(avant?.x)
+
+	// « Ce mois-ci » ramène au mois du jour, que l'adresse ne porte pas, et rend le focus au titre du mois.
+	await rapport.getByRole('button', { name: 'Ce mois-ci' }).click()
+	await expect(page).not.toHaveURL(/[?&]mois=/)
+	await expect(rapport.getByRole('button', { name: 'Ce mois-ci' })).toHaveCount(0)
+	await expect(page.getByTestId('temps-rapport-mois')).toBeFocused()
+
+	// Palier 390 : la navigation se replie, aucune cible ne sort de l'écran, la page ne défile pas.
+	await page.goto('/temps?onglet=rapport&mois=2099-03')
+	await page.setViewportSize({ width: 390, height: 844 })
+	await expect(page.getByTestId('temps-rapport-ligne')).toHaveCount(3)
+	for (const nom of ['Mois précédent', 'Mois suivant', 'Ce mois-ci']) {
+		const cadre = await rapport.getByRole('button', { name: nom }).boundingBox()
+		expect(cadre, nom).not.toBeNull()
+		expect(cadre!.x, nom).toBeGreaterThanOrEqual(0)
+		expect(cadre!.x + cadre!.width, nom).toBeLessThanOrEqual(390)
+		expect(cadre!.height, nom).toBeGreaterThanOrEqual(40)
+	}
+	expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+	await capturer(page, 'temps-rapport-navigation-mois-sm-390', UNITE)
+})
+
 test('un administrateur lit toute l’équipe : une section par personne, et le temps sans version dit « non valorisé »', async ({ page, request }) => {
 	await poserLeMois(request)
 	await connecterAvecLeLabs(page, ADMIN)
@@ -102,11 +156,15 @@ test('un administrateur lit toute l’équipe : une section par personne, et le 
 test('la série « Personnel » du track, par channel, et le temps passé dans la fiche d’une affaire', async ({ page, request }) => {
 	await poserLeMois(request)
 	await connecterAvecLeLabs(page, BIZDEV)
-	await page.goto('/tracks/studio-web/couts')
+	await page.goto('/tracks/studio-web/couts?mois=2099-04')
 	const serie = page.getByTestId('personnel-track')
 	await expect(serie).toBeVisible()
 	await expect(serie.getByTestId('personnel-portee')).toHaveText('Votre temps')
-	await serie.getByTestId('personnel-mois').fill('2099-03')
+	// INC-333 : le mois du bloc se choisit par la navigation, et vit dans l'adresse.
+	await expect(serie.getByTestId('personnel-mois')).toHaveText('Avril 2099')
+	await serie.getByRole('button', { name: 'Mois précédent' }).click()
+	await expect(page).toHaveURL(/[?&]mois=2099-03(&|$)/)
+	await expect(serie.getByTestId('personnel-mois')).toHaveText('Mars 2099')
 	const lignes = serie.getByTestId('personnel-ligne')
 	await expect(lignes).toHaveCount(2)
 	await expect(lignes.nth(0)).toContainText('Le track lui-même')

@@ -5469,6 +5469,8 @@ mois du jour. Les deux boutons ont la forme de ceux de la semaine : secondaire b
 `aria-hidden`. Le composant est unique, `NavigationMois`, et sert le rapport comme la série « Personnel » du track.
 - **Dans le rapport, le mois est le titre `h2`** de ce qui suit, et les sections de « Toute l'équipe » restent en `h3`
   sous lui. Dans le bloc du track, qui a déjà son titre « Coût du personnel », le mois est un texte de même graisse.
+- **Le libellé a la largeur du mois le plus long**, `min-w-[15ch]`, et il est centré. *Vu sur la capture* : sans cela,
+  « Mois suivant » se déplaçait sous le pointeur de « Mai » à « Septembre », pendant des clics répétés.
 - **« Ce mois-ci » disparaît sous le doigt**, et le focus passe au libellé du mois (`tabIndex=-1`), qui nomme le mois
   retrouvé (§5.13).
 - **Le mois vit dans l'adresse sur les deux écrans** (`?mois=AAAA-MM`), et le mois du jour n'y est jamais écrit.

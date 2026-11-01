@@ -297,8 +297,9 @@ describe('ContenuCoutsTrack — les états du §4.7 et du §5.8', () => {
 		)
 		await screen.findByText('Accès refusé')
 		// Un refus est définitif là où une panne de transport se retente : aucune reprise n'est
-		// offerte (docs/DESIGN_SYSTEM.md §5.8).
-		expect(screen.queryByRole('button')).toBeNull()
+		// offerte (docs/DESIGN_SYSTEM.md §5.8). Le bloc du personnel, toujours rendu, porte sa navigation de mois (INC-333) :
+		// c'est la reprise qui est absente, pas tout bouton.
+		expect(screen.queryByRole('button', { name: 'Réessayer' })).toBeNull()
 	})
 
 	it('rend l’erreur AVEC sa reprise sur un échec de transport', async () => {
@@ -315,7 +316,7 @@ describe('ContenuCoutsTrack — les états du §4.7 et du §5.8', () => {
 				/>
 			</MemoryRouter>,
 		)
-		const reprise = await screen.findByRole('button')
+		const reprise = await screen.findByRole('button', { name: 'Réessayer' })
 		reprise.click()
 		// La reprise RELIT réellement : elle ne se contente pas de masquer l'erreur.
 		expect(await screen.findByRole('row', { name: /Publicité/ })).toBeTruthy()

@@ -323,7 +323,46 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Choisissez un mois : le rapport liste chaque track, channel et affaire où du temps a été passé, avec ce temps et son\ncoût. Le coût est celui de la personne "
+					"text": "Le rapport s'ouvre sur le mois en cours. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Mois précédent »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Mois suivant »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " changent de mois, et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Ce\nmois-ci »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " y ramène. Le mois choisi reste dans l'adresse de l'écran : un rechargement ou un lien partagé le\nconservent. Le rapport liste chaque track, channel et affaire où du temps a été passé, avec ce temps et son\ncoût. Le coût est celui de la personne "
 				},
 				{
 					"type": "strong",
@@ -657,7 +696,7 @@
 				},
 				{
 					"type": "text",
-					"text": " donne le temps et\nson coût du mois choisi, channel par channel. Dans la fiche d'une affaire, "
+					"text": " donne le temps et\nson coût du mois choisi, channel par channel. Le mois se choisit comme dans le rapport mensuel, par « Mois précédent »,\n« Mois suivant » et « Ce mois-ci », et il reste dans l'adresse de l'écran. Dans la fiche d'une affaire, "
 				},
 				{
 					"type": "strong",

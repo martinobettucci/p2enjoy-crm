@@ -1,13 +1,15 @@
 // @spec CRM-098 (docs/BACKLOG.md) — tranche T3 : l'onglet « Rapport mensuel » de l'écran « Temps », et les montants
 //       du coût du personnel
 // @spec docs/SPEC-temps.md §4 (« non valorisé », jamais zéro ; une devise par montant), §5.1 (un membre ne lit que son
-//       temps ; un administrateur, celui de chacun), §7.3 (sélecteur de mois ; « Toute l'équipe » ; une ligne par cible ;
-//       totaux) ; docs/DESIGN_SYSTEM.md §5.54 (rapport : tableau du §5.9, retraits, pilule « non valorisé »), §5.6, §5.8
+//       temps ; un administrateur, celui de chacun), §7.3 (navigation de mois ; « Toute l'équipe » ; une ligne par
+//       cible ; totaux) ; docs/DESIGN_SYSTEM.md §5.54 (rapport : tableau du §5.9, retraits, pilule « non valorisé » ;
+//       navigation de mois), §5.6, §5.8
+// @spec docs/INCONSISTENCY_REPORT.md INC-333, décision 801 — le mois se choisit par la navigation partagée
+//       (`NavigationMois`), titre `h2` du rapport ; docs/manual.md §28.4
 //
 // La base valorise et filtre : l'écran nomme, regroupe et affiche.
 
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { EtatErreur, EtatVide } from '../components/ui/States'
 import { t } from '../i18n'
@@ -26,20 +28,12 @@ import {
 } from '../lib/rapport-temps'
 import type { ClientCrm } from '../lib/supabase'
 import { enHeures, enJours } from '../lib/temps'
+import { NavigationMois, libelleMois, useMoisDeLAdresse } from './NavigationMois'
 import { formaterDuree } from './SaisieTemps'
 
-/** Le paramètre d'adresse du mois du rapport, `AAAA-MM`. Absent ou invalide, c'est le mois du jour. */
-export const CLE_URL_MOIS = 'mois' as const
 const EQUIPE = 'equipe' as const
 
-export function lireMois(valeur: string | null, aujourdhui: string): string {
-	return valeur !== null && /^\d{4}-(0[1-9]|1[0-2])$/.test(valeur) ? valeur : aujourdhui.slice(0, 7)
-}
-
-const FORMAT_MOIS = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' })
 const FORMAT_MONTANT = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-
-export const libelleMois = (mois: string) => FORMAT_MOIS.format(new Date(`${mois}-01T00:00:00Z`))
 
 /** Les montants d'un cumul, une devise par montant, sans jamais les additionner entre elles (§4). */
 export function montantsEnMots(cumul: Cumul): readonly string[] {
@@ -80,8 +74,7 @@ export type ProprietesRapportTemps = {
 type Donnees = { readonly sections: readonly SectionRapport[]; readonly noms: Noms }
 
 export function RapportTemps({ client, idWorkspace, idUtilisateur, estAdmin, aujourdhui }: ProprietesRapportTemps) {
-	const [parametres, setParametres] = useSearchParams()
-	const mois = lireMois(parametres.get(CLE_URL_MOIS), aujourdhui)
+	const { mois, moisCourant, allerA } = useMoisDeLAdresse(aujourdhui)
 	const [personne, setPersonne] = useState<string>(idUtilisateur)
 	const [membres, setMembres] = useState<readonly MembreAffectable[]>([])
 	const [etat, setEtat] = useState<EtatAsync<Donnees>>(enChargement)
@@ -118,26 +111,10 @@ export function RapportTemps({ client, idWorkspace, idUtilisateur, estAdmin, auj
 		}
 	}, [client, mois, personne, tentative])
 
-	const changerMois = (valeur: string) => {
-		const suivants = new URLSearchParams(parametres)
-		if (valeur === '' || valeur === aujourdhui.slice(0, 7)) suivants.delete(CLE_URL_MOIS)
-		else suivants.set(CLE_URL_MOIS, valeur)
-		setParametres(suivants)
-	}
-
 	return (
 		<div className="flex flex-col gap-4" data-testid="temps-rapport">
 			<div className="flex flex-wrap items-end gap-4">
-				<label className="flex flex-col gap-1 text-sm text-text-2">
-					{t('time.report.month')}
-					<input
-						type="month"
-						value={mois}
-						onChange={(e) => changerMois(e.target.value)}
-						data-testid="temps-rapport-mois"
-						className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3 text-text"
-					/>
-				</label>
+				<NavigationMois mois={mois} moisCourant={moisCourant} allerA={allerA} titre testId="temps-rapport-mois" />
 				{estAdmin ? (
 					<label className="flex flex-col gap-1 text-sm text-text-2">
 						{t('time.report.person')}

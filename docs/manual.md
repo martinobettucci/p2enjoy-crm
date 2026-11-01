@@ -5388,7 +5388,9 @@ qu'il peut lire.
 
 ![Le rapport mensuel de « Toute l'équipe »](manuel/images/le-temps-passe-et-le-cout-du-personnel/toute-l-equipe.jpg)
 
-Choisissez un mois : le rapport liste chaque track, channel et affaire où du temps a été passé, avec ce temps et son
+Le rapport s'ouvre sur le mois en cours. **« Mois précédent »** et **« Mois suivant »** changent de mois, et **« Ce
+mois-ci »** y ramène. Le mois choisi reste dans l'adresse de l'écran : un rechargement ou un lien partagé le
+conservent. Le rapport liste chaque track, channel et affaire où du temps a été passé, avec ce temps et son
 coût. Le coût est celui de la personne **le jour où le temps a été passé** : une augmentation ne change pas le coût des
 semaines d'avant. Les montants restent séparés par devise. Le temps d'une personne qui n'a pas encore de coût est
 compté, et dit **« non valorisé »** — jamais zéro.
@@ -5435,7 +5437,8 @@ et les charges ne sont conservés nulle part.
 ![Le bloc « Temps passé » d'une affaire : « Le temps de toute l'équipe », puis votre semaine](manuel/images/le-temps-passe-et-le-cout-du-personnel/temps-de-l-affaire.jpg)
 
 Sur l'écran de coûts d'un track ([chapitre 24](#les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense)), sous l'histogramme, **« Coût du personnel »** donne le temps et
-son coût du mois choisi, channel par channel. Dans la fiche d'une affaire, **« Temps passé »** donne le temps passé
+son coût du mois choisi, channel par channel. Le mois se choisit comme dans le rapport mensuel, par « Mois précédent »,
+« Mois suivant » et « Ce mois-ci », et il reste dans l'adresse de l'écran. Dans la fiche d'une affaire, **« Temps passé »** donne le temps passé
 depuis le premier jour et son coût. Ces chiffres ne se mêlent ni aux budgets ni aux lignes de coût. Ils disent leur
 portée : « Votre temps » pour un membre, « Le temps de toute l’équipe » pour un administrateur.
 

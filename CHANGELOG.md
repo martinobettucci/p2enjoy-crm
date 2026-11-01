@@ -13,6 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### INC-333 — le mois du rapport de temps se choisit dans tous les navigateurs
+
+- Le rapport mensuel de l'écran « Temps » et le bloc « Coût du personnel » des coûts d'un track choisissent leur mois
+  par « Mois précédent », « Mois suivant » et « Ce mois-ci ». Dans Firefox, le champ de mois ne se saisissait pas : le
+  navigateur le rendait en champ texte, et l'écran le ramenait au mois du jour à chaque frappe.
+- Le mois du bloc du track vit désormais dans l'adresse (`?mois=AAAA-MM`), comme celui du rapport. Il survit au
+  rechargement.
+
 ### INC-332 — à 390 px, l'en-tête garde une seule ligne de commandes
 
 - Sous 768 px, le nom de la personne connectée passe en lecture d'écran seule, et l'avatar reste. L'icône « Aide » faisait

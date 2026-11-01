@@ -8,7 +8,7 @@ import { cleanup, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FournisseurEspace } from './ContexteEspace'
-import { CelluleCout, RapportTemps, lireMois, montantsEnMots } from './RapportTemps'
+import { CelluleCout, RapportTemps, montantsEnMots } from './RapportTemps'
 import { ReglagesCoutPersonnel } from './ReglagesCoutPersonnel'
 import { BlocTempsCard } from './SeriePersonnel'
 import type { ClientCrm } from '../lib/supabase'
@@ -50,11 +50,6 @@ describe('les montants', () => {
 		render(<CelluleCout cumul={{ minutes: 165, montants: { EUR: 120 }, minutesNonValorisees: 60 }} />)
 		expect(screen.getByTestId('temps-non-valorise').textContent).toBe('dont 1 h non valorisé')
 	})
-	it('le mois de l’adresse, ou celui du jour', () => {
-		expect(lireMois('2027-03', '2026-10-11')).toBe('2027-03')
-		expect(lireMois('2027-13', '2026-10-11')).toBe('2026-10')
-		expect(lireMois(null, '2026-10-11')).toBe('2026-10')
-	})
 })
 
 describe('le rapport mensuel', () => {
@@ -72,6 +67,9 @@ describe('le rapport mensuel', () => {
 		expect(rangees.map((r) => within(r).getByRole('rowheader').textContent)).toEqual(['Studio web', 'Refonte de site'])
 		expect(screen.getByTestId('temps-rapport-total').textContent).toBe('2 h 45')
 		expect(screen.queryByTestId('temps-rapport-personne')).toBeNull()
+		// INC-333 : le mois est le titre du rapport, choisi par la navigation, jamais par un champ.
+		expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Mars 2027')
+		expect(document.querySelector('input[type="month"]')).toBeNull()
 	})
 	it('un mois sans temps le dit, en nommant le mois', async () => {
 		render(
