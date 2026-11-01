@@ -37663,3 +37663,13 @@ fonctions, et le corps des réponses reste le même. Son retour arrière est de 
 un refus réel de `record_attachment_text` rend 404 avec son corps inchangé ; `verifier.sh` est à 33/34. La vérification
 prévue au contrat (`mcp_compte`) était fausse, puisque sa garde de superadministrateur passe avant : corrigée.
 `CRM-120` passe `[P]`.
+
+### Deux arbitrages : la spécification de `CRM-105` validée ; `CRM-122` sans connecteur (2026-11-01, décisions 799 et 800)
+
+**Décision 799, du responsable, en séance** (« Validée telle quelle ») : la spécification de `CRM-105` T1 est validée.
+Elle couvre `docs/DESIGN_SYSTEM.md` §5.58 (l'infobulle de description, au survol et au focus clavier, fermeture selon le
+WCAG 1.4.13, rien au toucher) et les chapitres cités. T1 passe `[x]`, et l'unité `[P]` : livrée le 2026-11-01, elle
+attend le constat en production.
+
+**Décision 800, du responsable, en séance** (« Sans objet pour le MCP ») : `CRM-122` est de l'outillage de test, sans
+équivalent dans le connecteur MCP. Aucune famille, aucune action ; la question ne se repose pas.

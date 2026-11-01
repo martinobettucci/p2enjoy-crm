@@ -16461,14 +16461,14 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
 
 ## Demande du 2026-10-21 — décision 629
 
-### CRM-105 — La description d'un track, d'un channel et d'une affaire en infobulle sur l'élément qui la porte `[~]`
+### CRM-105 — La description d'un track, d'un channel et d'une affaire en infobulle sur l'élément qui la porte `[P]`
 ***Reste réel au 2026-10-25 (décision 705)** : la **validation par le responsable** de la spécification de T1 (`docs/DESIGN_SYSTEM.md` §5.58 et les chapitres cités), puis la livraison de T3 en production et son constat.*
 *Créée le 2026-10-21 — demande du responsable : « les tracks, les channels et les affaires ont un champ description qui
 devrait afficher une tooltip au survol de la souris sur l'élément correspondant en UI ». Mesuré : les trois colonnes
 existent, aucune n'est lue par les écrans qui montrent ces objets. Choix de forme de l'agent, écrits pour relecture
 (`docs/JOURNAL.md` décision 629).*
 
-- [~] **T1 — spécification, écrite avant le code** : `docs/DESIGN_SYSTEM.md` §5.58 (le composant, ses quatre
+- [x] **T1 — spécification, écrite avant le code** (validée le 2026-11-01, décision 799) : `docs/DESIGN_SYSTEM.md` §5.58 (le composant, ses quatre
       emplacements, ouverture au survol et au focus clavier, fermeture selon le WCAG 1.4.13, rendu à la racine du
       document, cadre borné à la fenêtre, `aria-describedby`, limite au toucher) ; `docs/SPEC-tracks.md` §7,
       `docs/SPEC-channels.md` §5, `docs/SPEC-workflow-engine.md` §7.2, `docs/SPEC-cards.md` §12.3 (la colonne rejoint
