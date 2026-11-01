@@ -8529,6 +8529,11 @@ cible 3/6 en la reportant sur le secret des webhooks, en prouvant qu'aucun clien
 `secret_id` ne s'écrit que par la fonction ; l'assertion d'absence d'`api_tokens` serait gardée comme témoin d'une unité
 future ; (b) la garder telle quelle, en corrigeant seulement la référence à `CRM-073`. Connecteur MCP : sans objet.
 
+**Résolue le 2026-11-01 par la décision 779**, rappelée par le responsable (« On avait pas dit que l'on supprimait le
+API en faveur du MCP ? ») : les jetons d'API sont abandonnés, et la cible 3/6 l'est avec eux. L'assertion de
+`0015_colonnes_protegees.test.sql` et le contrôle de `verify-colonnes-protegees.sh` sont **révisés**, pas retirés : l'absence
+d'`api_tokens` est le témoin de la décision. Les deux restent à rejouer sur la pile.
+
 ### INC-339 — Les sous-harnais de `verify-droits-fins.sh` rendent des rouges antérieurs, que la sortie jetée cachait
 
 *Relevé le 2026-11-01 par la session de `CRM-111` T1 ter.4, à la première course où `verify-droits-fins.sh` garde la

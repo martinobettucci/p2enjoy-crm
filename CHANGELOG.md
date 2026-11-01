@@ -13,6 +13,13 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-013` — les colonnes protégées sont closes ; les jetons d'API sont abandonnés (INC-338, décision 779)
+
+- La cible `api_tokens.token_hash` n'attend plus de table : la décision 779 a abandonné les jetons d'API au profit du
+  connecteur MCP. L'assertion pgTAP `0015` et le contrôle de `scripts/verify-colonnes-protegees.sh` sont **révisés** en
+  témoins de cette décision : ils rougiraient si une table `api_tokens` naissait sans arbitrage. Aucun changement de
+  schéma ni d'interface.
+
 ### `CRM-126` — la rentabilité donne une balance par devise, dans un seul tableau
 
 - L'écran « Rentabilité » ne rend plus un tableau par devise mais **un seul tableau**. Chaque case donne une valeur par

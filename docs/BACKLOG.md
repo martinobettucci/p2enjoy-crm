@@ -876,7 +876,7 @@ politique de lecture des tracks, migration `0034` —, et INC-075 se ferme avec 
   prédisaient : démon Docker lancé à la main (`dockerd --host=…`), image `webapp` construite avec
   le certificat du proxy (INC-032, INC-042), et `npm ci` précédé d'un `npm config set cafile`.
 
-### CRM-013 — Colonnes protégées `[~]`
+### CRM-013 — Colonnes protégées `[x]`
 `REVOKE` sur `secret_id`, `token_hash` ; `current_step_id` et `email_local_part` non modifiables
 directement ; `card_events` et `audit_log` en écriture par trigger uniquement.
 **DoD** : preuves de refus n° 5, 6 et 8 ; test explicite qu'une lecture refusée retourne **zéro
@@ -1028,11 +1028,16 @@ ligne** et non une erreur ambiguë.
   - [x] **Livraison de la migration 104**, sur instruction du responsable (`docs/PROD_MIGRATIONS.md` §3) ; aucun service à
         redéployer. — *Livrée le 2026-10-26 par la fenêtre des migrations 102 à 105 (décisions 717 et 718, révision
         `8934079d`) ; constaté en lecture seule : `created_at` fermé à l'insertion, `label` ouvert.*
-- [ ] **DEUX CIBLES RESTENT DUES, ET LEURS TABLES N'EXISTENT TOUJOURS PAS** :
-      `api_tokens.token_hash` (`CRM-073`) et `audit_log` (`CRM-072`). La preuve de refus n° 8 reste
-      donc incomplète pour `audit_log`. Chaque absence est figée par une assertion pgTAP **et** par
-      un contrôle du harnais, qui deviendront rouges à la naissance de la table et désigneront alors
-      le `REVOKE` à écrire. **Bloqué par une dépendance, pas par un défaut de l'unité.**
+- [x] **~~DEUX CIBLES RESTENT DUES, ET LEURS TABLES N'EXISTENT TOUJOURS PAS~~ — RÉVISÉ le 2026-11-01 (INC-338)** : `audit_log`
+      (cible 5/6) est **livrée et fermée** par `CRM-072` T1, sa garde retournée ; `api_tokens.token_hash` (cible 3/6) est
+      **abandonnée** par la décision 779 — les jetons d'API cèdent la place au connecteur MCP. L'assertion pgTAP `0015` et le
+      contrôle de `scripts/verify-colonnes-protegees.sh` sont **révisés** en témoins de cette décision. **Reste** : les
+      rejouer sur la pile, puis l'unité passe `[x]`. — *Rejoué le 2026-11-01 : pgTAP `0015` verte, et
+      `scripts/verify-colonnes-protegees.sh` donne 58/60, avec toutes les sections 1 à 7 bis vertes (`api_tokens absente,
+      comme le veut la décision 779`). Les deux rouges de la section 8 sont **hors de l'unité**, et mesurés.
+      `types:check` : les types versionnés décrivent déjà `render_mail_template_sample`, que la migration de `CRM-125` T2
+      n'a pas encore créée (décision 812). `e2e:api` : 1289/1290, `webhooks-remise` dépasse son attente de la tâche de la
+      minute sous la charge de la suite entière, et passe seul (2/2).*
 - [x] **`card_events` est livrée et protégée depuis `CRM-044`** : aucun privilège d'écriture pour
       `anon`, `authenticated` ou `service_role`, alimentation uniquement par les triggers privés.
       La suite pgTAP et `scripts/verify-colonnes-protegees.sh` mesurent désormais cet état au lieu

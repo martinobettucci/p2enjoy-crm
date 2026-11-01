@@ -332,8 +332,11 @@ select is(
 	'CIBLE 2/6 LIVRÉE : `mail_outbound_identities.secret_id` n''accorde AUCUN privilège à '
 	'`authenticated`. La preuve de refus n° 6 est acquise sur ses DEUX tables');
 
+-- CIBLE 3/6 ABANDONNÉE PAR LA DÉCISION 779 (INC-338), ET L'ASSERTION EST RÉVISÉE — pas retirée (décision 51). `CRM-073`
+-- a livré des webhooks sans jeton d'API : l'accès programmatique au CRM est le connecteur MCP. L'absence de la table
+-- n'attend plus personne : elle est le témoin de cette décision, et rougirait si une table de jetons naissait sans elle.
 select hasnt_table('public', 'api_tokens',
-	'CIBLE 3/6 NON LIVRÉE : `api_tokens.token_hash` attend `CRM-073`');
+	'CIBLE 3/6 ABANDONNÉE (décision 779) : aucune table `api_tokens` — l''accès programmatique est le connecteur MCP');
 
 -- CIBLE 4/6 LIVRÉE PAR `CRM-044`, ET L'ASSERTION EST RETOURNÉE (décision 51). La preuve de refus
 -- n° 8 est désormais satisfaisable pour MOITIÉ, et le refus y est plus fort qu'une colonne

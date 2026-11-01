@@ -41,7 +41,7 @@
 # écran, et la webapp reste un appelant **anonyme** faute d'écran de connexion (INC-021). Un
 # privilège de colonne est par construction invisible à un anonyme, qui ne voit déjà aucune card.
 #
-# La preuve de refus n° 6 reste bloquée par les tables mail et `api_tokens` absentes. La n° 8 est
+# La preuve de refus n° 6 reste bloquée par les tables mail et `api_tokens` absentes (`api_tokens` abandonnée par la décision 779, INC-338). La n° 8 est
 # désormais satisfaite pour `card_events`, livrée par CRM-044 sans aucun privilège d'écriture ;
 # `audit_log`, livrée par CRM-072 T1, la complète. La section 7 mesure chacun de ces états au lieu de les supposer.
 #
@@ -558,12 +558,13 @@ else
 	fail "audit_log : $ecritures_audit_log privilège(s) d'écriture accordé(s) à un rôle applicatif"
 fi
 
-# La table qui n'existe toujours pas garde son témoin d'absence, inchangé.
+# RÉVISÉ PAR INC-338 (décision 779) : les jetons d'API sont abandonnés, l'accès programmatique est le connecteur MCP. Le
+# témoin d'absence est gardé : une table de jetons qui naîtrait le ferait contre cette décision.
 for table in api_tokens; do
 	if [ "$(psql_db -c "select to_regclass('public.$table') is null;")" = "t" ]; then
-		ok "$table absente : sa protection reste due — CETTE LIGNE DOIT DEVENIR ROUGE quand la table naîtra"
+		ok "$table absente, comme le veut la décision 779 (jetons d'API abandonnés au profit du connecteur MCP)"
 	else
-		fail "$table EXISTE désormais : la protection de colonne de CRM-013 doit être écrite"
+		fail "$table EXISTE : la décision 779 l'a abandonnée — un arbitrage, ou la protection de colonne de CRM-013, est dû"
 	fi
 done
 
