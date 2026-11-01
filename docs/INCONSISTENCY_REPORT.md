@@ -8453,3 +8453,25 @@ lui fait lire `alert` comme une classe, qu'il déclare « absente du CSS produit
 Aucun rendu n'est faux, et le défaut ne touche que la preuve. **Non corrigé** : il sort de la tâche. Deux remèdes
 possibles, à arbitrer : que le contrôle ne retienne que les branches d'un ternaire, ou que la comparaison sorte de
 l'attribut.
+
+### INC-335 — L'identité « par défaut » n'est lue par aucun envoi, et l'identité de service se mêle à celles de la personne
+
+*Signalé par le responsable le 2026-11-01 : il a pu mettre « par défaut » une adresse système et aussi une adresse
+personnelle, et « quelque chose ne tourne pas rond ».* Mesuré sur le code et sur la base de développement :
+- **La base tient son invariant.** Il y a un défaut par propriétaire et un pour le service (`0023`, index uniques
+  partiels et trigger de rabattement) ; aucun doublon en base. Les deux défauts vus appartiennent à deux propriétaires
+  différents.
+- **Mais le défaut d'une personne n'est lu par aucun envoi.** Le formulaire d'envoi (`FormulaireEnvoi.tsx`) présélectionne
+  la première identité triée par libellé (`lireIdentitesDisponibles`, `envoi.ts`), sans lire `is_default`. Le bloc
+  d'armement d'une cadence (`BlocSequenceCard.tsx`) fait de même, et `crm_mail_send` refuse sans adresse dès qu'il y en
+  a plusieurs. Le choix que les réglages offrent (`docs/SPEC-mail-subsystem.md` §22.1) n'a donc aucun effet.
+- **Un administrateur voit l'identité de service parmi les siennes**, à l'envoi comme à l'armement, car la règle
+  d'emprunt de `queue_outbound_email` et d'`armer_sequence_relance` la lui ouvre. Selon les libellés, elle peut être
+  présélectionnée pour ses propres messages.
+- **L'écran des réglages ne nomme pas le propriétaire** d'une identité. Sa case « Identité par défaut pour cet
+  expéditeur » dit « expéditeur » là où la règle porte sur le propriétaire.
+
+**Arbitré** (décision 805) : l'identité de service ne sert plus qu'aux envois automatiques, et la base la refuse à
+l'envoi comme à l'armement. Les cadences déjà armées avec elle sont fermées par la migration. L'envoi présélectionne le
+défaut de la personne, et les réglages nomment le propriétaire. Le correctif est inscrit au backlog. **Ouverte** jusqu'à
+sa livraison.

@@ -966,6 +966,12 @@ autres au lieu de refuser : choisir une nouvelle identité par défaut est un ge
 obliger l'utilisateur à décocher l'ancienne d'abord ferait porter à l'écran une mécanique que la
 base sait tenir. L'identité de service — `owner_id IS NULL` — suit la même règle, séparément.
 
+**Ce que « par défaut » veut dire** (décision 805, INC-335). Le défaut d'une **personne** est l'identité que l'écran
+d'envoi présélectionne (§19.4) et que le connecteur prend quand aucune adresse n'est donnée (`docs/SPEC-mcp.md`
+§9.2 decies). Le défaut du **service** est l'identité des envois automatiques, le digest quotidien
+(`app.envoyer_digests`). Les deux ne se concurrencent jamais : **l'identité de service ne s'emprunte plus**, ni pour
+un envoi, ni pour une cadence, administrateur compris (§19.4).
+
 **`from_address` n'a aucune raison de correspondre au compte entrant.** C'est le cas d'usage du
 §2.2, et le seed le démontre : Driss reçoit sur `bizdev@p2enjoy.test` et expédie depuis
 `contact@p2enjoy.test`. Aucune contrainte ne les lie.
@@ -1790,7 +1796,7 @@ Elle refuse, dans cet ordre, et chaque refus porte son code :
 |---|---|---|
 | `not_authenticated` | `42501` | aucune session |
 | `forbidden` | `42501` | pas de droit d'**écriture** sur la card : envoyer au nom d'une affaire, c'est y ajouter du contenu |
-| `identity_not_available` | `42501` | l'identité n'existe pas, n'est pas celle de l'appelant, ou n'est pas l'identité de service d'un workspace dont il est administrateur. **Mesuré** : `P0002`, d'abord retenu, est traduit par PostgREST en **500** — un refus d'autorisation ne doit pas se présenter comme une panne de serveur |
+| `identity_not_available` | `42501` | l'identité n'existe pas, ou n'est pas celle de l'appelant. **L'identité de service n'est empruntable par personne**, administrateur compris, depuis la décision 805 (INC-335) : elle ne sert qu'aux envois automatiques (§14.2). **Mesuré** : `P0002`, d'abord retenu, est traduit par PostgREST en **500** — un refus d'autorisation ne doit pas se présenter comme une panne de serveur |
 | `card_not_available` | `23514` | card archivée, en corbeille, ou d'un autre workspace que l'identité |
 | `recipient_required` | `23514` | aucun destinataire : un message sans destinataire n'est pas un message |
 | `quota_exceeded` | `23505` | le quota journalier de l'identité est atteint |
@@ -2627,7 +2633,8 @@ Livré :
   membre, l'identité de service pour qui la base l'accepte ;
 - l'**adresse d'expédition** et le **nom d'expéditeur**, qui sont les deux seules données de cette
   table qu'un destinataire verra (§14.2) ;
-- le **choix de l'identité par défaut**, dont le déplacement est tenu par la base (§14.2) ;
+- le **choix de l'identité par défaut**, dont le déplacement est tenu par la base (§14.2), et que l'envoi
+  présélectionne depuis la décision 805 (§22.14) ;
 - le **remplacement du mot de passe**, jamais son affichage (§2.3) ;
 - la traduction des refus par un **dictionnaire fermé**, jamais le texte du serveur (§21.7).
 
@@ -2950,3 +2957,21 @@ navigateur. Elle ne saute **aucun** contrôle de base : une pile est requise dan
 - **Changer l'adresse d'expédition déclare une seconde identité** (§22.4) : c'est le comportement de
   la base, il est nommé à l'écran, et il n'est ni contrarié ni masqué.
 - **`INC-193` reste ouverte**, comme au §21.12.
+
+### 22.14 Le propriétaire est nommé, et la case dit ce qu'elle règle — INC-335 (décision 805)
+
+*Signalé par le responsable le 2026-11-01.* L'administratrice lit toutes les identités de l'espace (§22.3) : celle du
+service et celles de chaque personne. Chacune peut porter son défaut (§14.2), si bien que la liste montrait **plusieurs
+pastilles « Par défaut »** sans dire à qui chacune appartient. La case « Identité par défaut pour cet expéditeur »
+disait « expéditeur » là où la règle porte sur le **propriétaire**. Et ce défaut n'était lu par aucun envoi.
+
+- **Chaque ligne nomme son propriétaire** : « Service » pour l'identité sans propriétaire, le nom de la personne sinon.
+  Une pastille « Par défaut » se lit donc avec son propriétaire.
+- **La case dit ce qu'elle règle**, selon l'identité visée par le formulaire : « Identité par défaut de cette personne »,
+  ou « Identité par défaut des envois automatiques » pour l'identité de service.
+- **Le défaut d'une personne est présélectionné** à l'envoi (§19.4) et, dans le cas de la décision 803, à l'armement
+  d'une cadence. À défaut, l'unique identité de la personne si elle n'en a qu'une, sinon rien.
+- **L'identité de service n'est plus proposée** ni à l'envoi, ni à l'armement : la base la refuse
+  (`identity_not_available`, §19.4), et l'écran cesse de proposer un geste voué au refus.
+
+Connecteur MCP : `docs/SPEC-mcp.md` §9.2 decies, famille `messagerie`, action `ajouter`.

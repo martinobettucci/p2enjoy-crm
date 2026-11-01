@@ -1567,7 +1567,7 @@ ce que cette ligne disait déjà.
 | `last_position` | `integer` | oui | position du **dernier palier expédié**. `null` = aucun encore |
 | `last_sent_at` | `timestamptz` | oui | instant de cette mise en file. **Ancre du palier suivant** (§12.5) |
 | `status` | `text` | non | `active` ou `closed`. Deux valeurs, et le §12.7 dit pourquoi il n'y en a pas trois |
-| `closed_reason` | `text` | oui | `reply`, `card_ineligible`, `manual`, `exhausted` — les **quatre** fins du §12.7. Non nul si et seulement si `status = 'closed'` |
+| `closed_reason` | `text` | oui | `reply`, `card_ineligible`, `manual`, `exhausted`, `identity_withdrawn` — les **cinq** fins du §12.7. Non nul si et seulement si `status = 'closed'` |
 | `closed_at` | `timestamptz` | oui | non nul si et seulement si `status = 'closed'` |
 | `created_at` | `timestamptz` | non | `now()` |
 | `updated_at` | `timestamptz` | non | `now()`, tenu par `app.set_updated_at()` |
@@ -1608,7 +1608,7 @@ public.armer_sequence_relance(p_card_id uuid, p_sequence_id uuid, p_identity_id 
 | b | `app.can_write_card` faux | `42501` `forbidden` | Relancer au nom d'une affaire, c'est y ajouter du contenu : même exigence qu'au §19.4 de `docs/SPEC-mail-subsystem.md` |
 | c | La séquence n'existe pas, ou n'est pas dans le workspace de la card | `23514` `sequence_not_available` | |
 | d | La séquence ne porte **aucun palier** | `23514` `sequence_empty` | Une cadence vide n'enverrait jamais rien, et l'inscription serait un objet mort |
-| e | L'identité n'est pas empruntable par l'appelant | `42501` `identity_not_available` | Règle reprise **telle quelle** de `queue_outbound_email` : la sienne, ou celle de service s'il est administrateur |
+| e | L'identité n'est pas empruntable par l'appelant | `42501` `identity_not_available` | Règle reprise **telle quelle** de `queue_outbound_email` : la sienne, et elle seule. L'identité de service ne l'est plus, administrateur compris (décision 805, INC-335) |
 | f | La card n'est pas figée au sens de `public.cards_figees()` | `23514` `card_not_stalled` | §12.2 |
 | g | L'adresse de réponse de la card **ne se compose pas** | `23514` `card_not_available` | Reprise de `queue_outbound_email` : une relance dont la réponse ne reviendrait nulle part est pire qu'un refus. **Ce qui la fait tomber est mesuré au §12.4 bis, et ce n'est pas `email_local_part`** |
 | h | Une inscription **active** existe déjà sur cette card | `23505` `enrollment_exists` | L'index unique partiel du §12.3, opposé **avant** l'insertion pour que le refus porte un nom |
@@ -1719,7 +1719,7 @@ l'idempotence de `CRM-062` est lue et non stockée (§9.4). Un trigger ferait de
 chemin chaud, tenu par `mail-sync` — le porteur d'une règle de relance, et une panne de l'un
 deviendrait une panne de l'autre.
 
-### 12.7 LES QUATRE FINS, et pourquoi `status` ne porte que deux valeurs
+### 12.7 LES CINQ FINS, et pourquoi `status` ne porte que deux valeurs
 
 | `closed_reason` | Ce qui l'a produite |
 |---|---|
@@ -1727,6 +1727,7 @@ deviendrait une panne de l'autre.
 | `card_ineligible` | L'affaire n'est plus rendue par `public.cards_figees()` |
 | `manual` | `public.interrompre_sequence_relance` |
 | `exhausted` | Le dernier palier de la séquence a été mis en file |
+| `identity_withdrawn` | La migration de la décision 805 (INC-335) : l'inscription était armée avec l'identité de service, qui n'est plus empruntable. Aucun autre chemin ne l'écrit. Ce n'est pas `manual`, qui affirmerait un geste humain qui n'a pas eu lieu |
 
 **`card_ineligible` couvre QUATRE interruptions par UN prédicat, et aucune n'est réécrite ici.** Le
 §7.3 en nommait quatre — déplacement d'étape, sommeil, archivage, geste explicite — et les trois

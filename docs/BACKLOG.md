@@ -17932,3 +17932,26 @@ Question du connecteur : sans objet (décision 804).
       *Prise en charge : session interactive 2026-11-01 14:36 UTC depuis 2026-11-01 14:36 UTC — état avant : [ ]*
 - [ ] **T4 — livraison en production et constat** : alias `app-*` en place, préfixe réglé, régénération, un message
       reçu à une adresse `app-…` et classé.
+
+## Correctif arbitré le 2026-11-01 — INC-335 (décision 805)
+
+*L'identité « par défaut » n'était lue par aucun envoi, et l'identité de service se mêlait à celles de la personne.
+Spécification : décision 805 ; `docs/SPEC-mail-subsystem.md` §14.2, §19.4, §22.14 ; `docs/SPEC-modeles-emails.md`
+§12.4, §12.7 ; `docs/SPEC-rattachements.md` §7 ; `docs/SPEC-mcp.md` §9.2 decies. Connecteur MCP : famille `messagerie`,
+action `ajouter`, sans case nouvelle.*
+
+- [@] **T1 — la base** : migration au prochain numéro libre. La règle d'emprunt de `queue_outbound_email` et
+      d'`armer_sequence_relance` est réduite à « la sienne ». Le motif `identity_withdrawn` est ajouté à
+      `card_sequence_enrollments_motif_borne`, et les cadences actives armées avec l'identité de service sont fermées
+      sous ce motif. Livrables : pgTAP (refus de l'administratrice sur l'identité de service, fermeture des cadences) ;
+      seed (identité personnelle de Camille, et l'envoi de démonstration avec elle) ; harnais et E2E API qui envoyaient
+      avec l'identité de service, révisés en preuves du refus ; contrat de déploiement (requête de comptage, retour
+      arrière).
+      *Prise en charge : session interactive 2026-11-01 14:39 UTC depuis 2026-11-01 14:39 UTC — état avant : [ ]*
+- [ ] **T2 — l'écran** : `lireIdentitesDisponibles` réduite aux identités de la personne, avec `is_default`.
+      Présélection du défaut dans le formulaire d'envoi et, dans le cas de la décision 803, dans le bloc d'armement. Le
+      propriétaire est nommé sur chaque ligne des réglages, et le libellé de la case dépend de l'identité ; la fiche
+      nomme le motif `identity_withdrawn`. Livrables : unitaires, E2E, captures observées, `docs/DESIGN_SYSTEM.md` §5.35,
+      manuel, changelog.
+- [ ] **T3 — le connecteur** : dans `crm_mail_send`, l'identité de service est retirée des identités empruntables, et
+      une `from_address` absente vaut le défaut de la personne. Livrables : unitaires et intégration MCP.

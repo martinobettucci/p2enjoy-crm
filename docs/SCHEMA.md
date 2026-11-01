@@ -1074,7 +1074,7 @@ qu'une réponse arrive » —, et la mesure du §12.1 n'a fait que confirmer ce 
 | `armed_at` | `timestamptz` | ancre du **premier palier** ET borne de la détection de réponse |
 | `last_position`, `last_sent_at` | `integer`, `timestamptz` | dernier palier expédié et son instant. **Nuls ensemble ou renseignés ensemble** (`card_sequence_enrollments_progression_coherente`) : une position sans son instant ne saurait pas quand le palier suivant est dû |
 | `status` | `text` | `active` ou `closed`, et **il n'y a pas de troisième valeur** — `closed_reason` dit pourquoi |
-| `closed_reason` | `text` | `reply`, `card_ineligible`, `manual`, `exhausted` — les quatre fins du §12.7 |
+| `closed_reason` | `text` | `reply`, `card_ineligible`, `manual`, `exhausted`, `identity_withdrawn` — les cinq fins du §12.7 ; la cinquième n'est écrite que par la migration de la décision 805 (INC-335) |
 | `closed_at` | `timestamptz` | non nul **si et seulement si** `status = 'closed'` (`card_sequence_enrollments_fermeture_coherente`) |
 
 **Aucune colonne `next_due_at`** : l'échéance se **dérive** de `last_sent_at` (ou d'`armed_at`) et du

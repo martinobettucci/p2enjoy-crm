@@ -37835,3 +37835,48 @@ Deux précisions sont posées en écrivant la spécification et soumises au resp
 - Le contrat de déploiement sera révisé avec la migration. Il admettra le montage par alias et l'ordre des gestes :
   alias du nouveau préfixe avant la régénération, ancien alias conservé.
 - **Contournement immédiat, sans code** : ajouter l'alias `c-*` vers la boîte système.
+
+### décision 805 — INC-335 : l'identité de service ne sert qu'aux envois automatiques, et le défaut d'une personne se présélectionne
+
+*2026-11-01, session interactive, arbitrage du responsable.* **Problème** : INC-335. Le responsable a pu mettre
+« par défaut » une adresse système et une adresse personnelle. La base est juste : un défaut par propriétaire, un pour
+le service. Mais aucun envoi ne lit le défaut d'une personne, l'identité de service se mêle aux siennes chez un
+administrateur, et les réglages ne disent pas à qui appartient une identité.
+
+**Observations.** `lireIdentitesDisponibles` trie par libellé, et le formulaire prend la première. Le bloc d'armement
+emploie la même liste. `crm_mail_send` exige une adresse dès qu'il y en a plusieurs (décision 684). La règle d'emprunt
+(`queue_outbound_email`, dernière version en `0109` ; `armer_sequence_relance`, en `0119`) ouvre l'identité de service
+aux administrateurs. Le seed envoie un message de démonstration avec elle, en tant que Camille.
+
+**Décisions**, en six questions :
+- **Envoi et cadences : l'identité de service est exclue.** Elle ne sert plus qu'aux envois automatiques, le digest
+  quotidien. La règle d'emprunt des deux fonctions devient « la sienne, et elle seule ». L'identité de service y rend
+  `identity_not_available`, administrateur compris. La règle est appliquée en base (`CLAUDE.md` §10) par une migration
+  au prochain numéro libre ; l'écran cesse seulement de la proposer.
+- **Présélection.** Le formulaire d'envoi présélectionne l'identité **par défaut** de la personne ; à défaut, son unique
+  identité si elle n'en a qu'une ; sinon rien. Le bloc d'armement applique la même règle dans le cas de la décision 803,
+  quand la personne qui arme est le responsable du rattachement, et reste vide sinon. La décision 803 est précisée, non
+  remplacée.
+- **Cadences déjà armées avec l'identité de service : fermées par la migration.** Elles reçoivent un cinquième motif de
+  fermeture, `identity_withdrawn` (nom anglais, décision 658). Le motif n'est pas `manual`, qui affirmerait un geste
+  humain qui n'a pas eu lieu (`CLAUDE.md` §8). Le contrat de déploiement donne la requête qui les compte avant la
+  migration. La fiche nomme ce motif.
+- **Réglages.** Chaque ligne nomme son propriétaire : « Service », ou le nom de la personne. La case devient « Identité
+  par défaut de cette personne » ou « Identité par défaut des envois automatiques », selon l'identité visée.
+- **Connecteur MCP** (les deux questions de `CLAUDE.md`) : **oui**, dans la famille existante **`messagerie`**, action
+  `ajouter` (`crm_mail_send`). Aucune famille ni case nouvelle. Sans `from_address`, l'outil prend l'identité par
+  défaut de la personne, à défaut l'unique ; avec plusieurs identités sans défaut, le refus qui nomme les adresses
+  demeure. L'identité de service n'y est plus empruntable. La règle « aucun choix implicite parmi plusieurs » de la
+  décision 684 est révisée : le défaut est un choix explicite de la personne, fait dans les réglages. L'outil
+  d'armement garde son identité explicite (décision 803).
+- **Seed.** L'envoi de démonstration ne part plus de l'identité de service. **Camille reçoit une identité
+  personnelle**, déclarée par le véritable chemin (`upsert_mail_outbound_identity`), et envoie avec elle. Les réglages
+  de l'administratrice montrent alors trois lignes, trois propriétaires et trois défauts : le cas même d'INC-335, devenu
+  lisible.
+
+**Conséquences.** Correctif inscrit au backlog en trois tranches : la base, l'écran, le connecteur. Spécifications
+révisées dans ce changement : `docs/SPEC-mail-subsystem.md` §14.2, §19.4, §22.1 et §22.14 ;
+`docs/SPEC-modeles-emails.md` §12.4 et §12.7 ; `docs/SCHEMA.md` ; `docs/SPEC-rattachements.md` §7 ;
+`docs/SPEC-mcp.md` §9.2 decies. `docs/DESIGN_SYSTEM.md` §5.35, le manuel, le contrat de déploiement et le changelog
+suivent avec le code. Les preuves qui envoyaient ou armaient avec l'identité de service en administratrice (pgTAP,
+harnais, E2E) sont révisées : elles prouvent désormais le refus.

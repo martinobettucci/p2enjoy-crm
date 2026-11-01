@@ -405,7 +405,8 @@ déclencheur n'est jamais suspendu.
   distinguées par la règle de nommage en vigueur, à relire en T6.
 - **Une cadence de relance s'inscrit à un rattachement** (décision 657, arbitrage 2). `card_sequence_enrollments` reçoit
   le rattachement ; son responsable est l'expéditeur par défaut **à l'écran** : le bloc d'armement présélectionne l'identité d'envoi de la
-  personne qui arme quand elle est ce responsable, sinon rien ; `armer_sequence_relance` exige toujours l'identité, et la
+  personne qui arme quand elle est ce responsable, sinon rien — son identité **par défaut**, à défaut l'unique, et jamais
+  l'identité de service, qui ne s'emprunte plus (décision 805, INC-335) ; `armer_sequence_relance` exige toujours l'identité, et la
   règle d'emprunt reste entière ; le connecteur garde une identité explicite (décision 803, INC-315), et
   `app.executer_sequences_relance` lit son `entered_step_at`. Une affaire peut avoir une cadence par rattachement.
 - **Les variables des modèles d'email viennent du rattachement d'où l'on écrit** (décision 657, arbitrage 3).

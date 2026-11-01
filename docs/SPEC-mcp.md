@@ -923,10 +923,13 @@ ci-dessus est inchangée :
   `from_address` et `in_reply_to_message_id`, ces deux derniers facultatifs. Il appelle `queue_outbound_email` avec
   `p_cc`, que la fonction accepte déjà — le même appel que l'écran, un paramètre de plus que son formulaire.
   - **L'identité d'expédition** est cherchée dans `mail_outbound_identities` de l'espace de l'affaire, parmi celles que
-    la personne peut emprunter — la sienne, ou celle du service (sans propriétaire), que la RLS ne montre qu'aux
-    administrateurs : le filtre de `lireIdentitesDisponibles`. L'adresse se compare sans la casse. **Absente**, elle vaut
-    l'unique identité possible ; s'il y en a plusieurs, l'appel est refusé en nommant les adresses possibles, et s'il n'y
-    en a aucune, en le disant. Aucun choix implicite parmi plusieurs.
+    la personne peut emprunter — **les siennes, et elles seules** : l'identité de service ne s'emprunte plus, même par
+    un administrateur (décision 805, INC-335) ; c'est le filtre de `lireIdentitesDisponibles`. L'adresse se compare
+    sans la casse. **Absente**, elle vaut l'identité **par défaut** de la personne, à défaut l'unique identité possible ;
+    s'il y en a plusieurs sans défaut, l'appel est refusé en nommant les adresses possibles, et s'il n'y en a aucune, en
+    le disant. *Révision de la décision 684 par la décision 805* : le défaut n'est pas un choix implicite, c'est le
+    choix explicite de la personne, fait dans les réglages. Famille `messagerie`, action `ajouter` : aucune famille ni
+    case nouvelle.
   - **Une réponse** désigne un message **classé dans cette affaire** : un message lisible d'une autre affaire, ou non
     classé, est refusé (`reply_outside_card`) avant l'appel — la fonction ne le vérifie pas, l'écran ne le propose pas.
     En réponse, `subject` est facultatif et vaut l'objet du message préfixé une seule fois (`objetDeReponse`).
