@@ -660,6 +660,19 @@ Sous `md`, le nom de la session passe en `sr-only` (`webapp/src/app/Header.tsx`,
 seule : aucune migration, aucune image, aucune variable.** Part avec le prochain lot (décision 808) ; le constat : à
 390 px, la cloche et l'avatar tiennent sur la ligne du tiroir. **Retour arrière** : relivrer la révision précédente.
 
+### 2.27 `CRM-126`, décision 810 — la rentabilité en balance par devise (EN ATTENTE de la prochaine livraison)
+
+`docs/SPEC-recettes.md` §4.4, §6.2, §6.3 et §7 (révision `CRM-126`) ; `docs/DESIGN_SYSTEM.md` §5.60. **Aucune
+migration** : `public.rentabilite_affaires` ne change pas. La webapp de `main`, et l'image `mcp` (outil
+`crm_profitability_report`). Aucune variable, aucun secret.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer la webapp et reconstruire l'image `mcp` | fenêtre (§3.1), ou `scripts/spark/livrer.sh` sans `--migrate` | rien de propre |
+| 2 | Constater | responsable | Rentabilité ▸ « Vue d'ensemble » : un seul tableau ; « Vidéo 5min Tripo AI » (USD et EUR) sur une ligne, une valeur par devise dans chaque case, son taux vide ; « Non calculable — plusieurs devises » n'apparaît nulle part ; le total donne une balance EUR et une balance USD. Puis la fiche de cette affaire, bloc « Rentabilité » : un seul tableau, une marge par devise |
+
+**Retour arrière** : relivrer la webapp et l'image `mcp` précédentes ; aucune donnée n'est touchée.
+
 ## 3. Migrations en attente
 
 **Aucune migration en attente depuis le 2026-11-01** : la 143 est appliquée (§8, « 2026-11-01 — migration 143 ») ; le

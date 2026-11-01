@@ -3,6 +3,9 @@
 //       prévu et réel, taux, « non calculable », lien vers l'écran ; ABSENT quand la base refuse en `42501`)
 // @spec docs/DESIGN_SYSTEM.md §5.60 (après « Temps passé », carte bordée, `dl`, marge négative en pastille de danger,
 //       pilule neutre « partielle » au nom accessible complet, lien « Ouvrir dans Rentabilité » icône `Scale`), §8, §10
+// @spec CRM-126 (docs/BACKLOG.md) — tranche T2 : docs/SPEC-recettes.md §4.4 et §6.2 révisés (décision 810) — un seul
+//       tableau, une valeur par devise empilée dans chaque cellule, le code devise en élément propre, le taux absent sur
+//       une affaire à plusieurs devises ; docs/DESIGN_SYSTEM.md §5.60 (« UNE VALEUR PAR DEVISE », écart au §5.9)
 //
 // LA CAPACITÉ D'ADMINISTRER L'ESPACE EST LUE D'ABORD (`workspaces.administration_permise`, `CRM-093`), et la fonction
 // n'est appelée que si la base la PERMET : un refus `42501` attendu laisserait une erreur réseau 403 dans la console de
@@ -17,10 +20,11 @@ import { SkeletonListe } from '../components/ui/Skeleton'
 import { t, type CleTraduction } from '../i18n'
 import { enChargement, type EtatAsync } from '../lib/async'
 import {
-	calculerRentabilite,
+	calculerLigne,
 	type CausesPartielle,
 	type LigneRentabilite,
 	type Rentabilite,
+	type RentabiliteLigne,
 } from '../lib/rentabilite'
 import { lireRentabilite } from '../lib/rentabilite-lecture'
 import { lireCapacitesEspace } from '../lib/capacites'
@@ -51,29 +55,81 @@ export function dureeEnClair(minutes: number): string {
 	return m === 0 ? t('rentab.duration.hours', { h: String(h) }) : t('rentab.duration.hoursMinutes', { h: String(h), m: String(m).padStart(2, '0') })
 }
 
-/** Une marge : son signe, la pastille de danger sur la seule valeur négative, ou « non calculable » en texte. */
-export function Marge({ r }: { readonly r: Rentabilite }) {
-	if (!r.calculable) {
-		return (
-			<span data-testid="rentab-non-calculable" className="text-sm text-text-2">
-				{t('rentab.margin.notComputable')}
-			</span>
-		)
-	}
-	if (r.marge === null) return null
-	const negative = r.marge < 0
+/** Une valeur suivie de son code devise, dans son propre élément (§5.48, §5.60). */
+export type ValeurDevise = { readonly devise: string; readonly valeur: number }
+
+/** Les valeurs connues d'une grandeur, une par devise, dans l'ordre des balances. */
+export const valeursDe = (r: RentabiliteLigne, grandeur: (x: Rentabilite) => number | null): readonly ValeurDevise[] =>
+	r.parDevise.flatMap((b) => {
+		const valeur = grandeur(b.rentabilite)
+		return valeur === null ? [] : [{ devise: b.devise, valeur }]
+	})
+
+function Code({ devise }: { readonly devise: string }) {
+	return <span className="text-sm text-text-2">{devise}</span>
+}
+
+/** Une valeur par devise, empilées dans la cellule (§5.60, écart au §5.9) ; rien quand aucune n'est connue. */
+export function ParDevise({ valeurs }: { readonly valeurs: readonly ValeurDevise[] }) {
+	if (valeurs.length === 0) return null
 	return (
-		<span className="inline-flex flex-wrap items-center gap-2">
-			<span
-				data-testid="rentab-marge"
-				data-negative={negative ? 'oui' : 'non'}
-				className={
-					negative
-						? 'inline-flex items-center rounded-full bg-danger-soft px-2 text-danger-on-soft tabular-nums'
-						: 'tabular-nums'
-				}
-			>
-				{montantEnClair(r.marge)}
+		<span className="inline-flex flex-col items-end gap-1">
+			{valeurs.map((v) => (
+				<span key={v.devise} data-testid="rentab-valeur" data-devise={v.devise} className="inline-flex items-baseline gap-1 whitespace-nowrap">
+					<span className="tabular-nums">{montantEnClair(v.valeur)}</span>
+					<Code devise={v.devise} />
+				</span>
+			))}
+		</span>
+	)
+}
+
+/** Les taux connus d'une ligne ; le code n'est dit que si la ligne a plusieurs devises (§5.60). */
+export function Taux({ r }: { readonly r: RentabiliteLigne }) {
+	const taux = valeursDe(r, (x) => x.taux)
+	if (taux.length === 0) return null
+	return (
+		<span className="inline-flex flex-col items-end gap-1">
+			{taux.map((v) => (
+				<span key={v.devise} data-testid="rentab-taux-devise" data-devise={v.devise} className="inline-flex items-baseline gap-1 whitespace-nowrap">
+					<span className="tabular-nums">{`${FORMAT_TAUX.format(v.valeur)} %`}</span>
+					{r.parDevise.length > 1 ? <Code devise={v.devise} /> : null}
+				</span>
+			))}
+		</span>
+	)
+}
+
+/**
+ * Les marges d'une ligne, une balance par devise : son signe, la pastille de danger sur chaque valeur négative seule, puis
+ * la pilule « partielle », une par ligne (§4.4, §5.60).
+ */
+export function Marge({ r }: { readonly r: RentabiliteLigne }) {
+	const marges = valeursDe(r, (x) => x.marge)
+	if (marges.length === 0) return null
+	return (
+		<span className="inline-flex flex-wrap items-center justify-end gap-2">
+			<span className="inline-flex flex-col items-end gap-1">
+				{marges.map((m) => {
+					const negative = m.valeur < 0
+					return (
+						<span key={m.devise} className="inline-flex items-baseline gap-1 whitespace-nowrap">
+							<span
+								data-testid="rentab-marge"
+								data-devise={m.devise}
+								data-negative={negative ? 'oui' : 'non'}
+								className={
+									negative
+										? 'inline-flex items-center rounded-full bg-danger-soft px-2 text-danger-on-soft tabular-nums'
+										: 'tabular-nums'
+								}
+							>
+								{montantEnClair(m.valeur)}
+							</span>
+							<Code devise={m.devise} />
+						</span>
+					)
+				})}
 			</span>
 			{r.partielle === null ? null : <PilulePartielle causes={r.partielle} />}
 		</span>
@@ -175,68 +231,70 @@ function Contenu({ lignes }: { readonly lignes: readonly LigneRentabilite[] }) {
 			</p>
 		)
 	}
-	const calculable = lignes.length <= 1
+	// Une ligne de la fonction par devise : un seul tableau, une balance par devise (§4.4, révision CRM-126).
+	const montants = new Map(lignes.map((l) => [l.devise, l]))
+	const plusieursDevises = montants.size > 1
+	const reel = calculerLigne(montants, 'reel', plusieursDevises)
+	const prevu = calculerLigne(montants, 'prevu', plusieursDevises)
+	const taux = valeursDe(reel, (x) => x.taux)
 	return (
 		<div className="flex flex-col gap-4">
-			{lignes.map((l) => {
-				const reel = calculerRentabilite(l, 'reel', calculable)
-				const prevu = calculerRentabilite(l, 'prevu', calculable)
-				const valeur = (v: number | null) => (v === null ? '' : montantEnClair(v))
-				return (
-					<div key={l.devise} className="flex flex-col gap-2">
-						{lignes.length > 1 ? <h3 className="text-sm font-medium">{l.devise}</h3> : null}
-						<table className="w-full border-collapse text-sm">
-							<caption className="sr-only">{t('rentab.card.caption', { devise: l.devise })}</caption>
-							<thead>
-								<tr className="border-b border-border text-text-2">
-									<th scope="col" className="h-[var(--size-target)] px-2 text-left font-medium">
-										<span className="sr-only">{t('rentab.card.quantity')}</span>
-									</th>
-									<th scope="col" className="h-[var(--size-target)] px-2 text-right font-medium">
-										{t('rentab.view.prevu.devise', { devise: l.devise })}
-									</th>
-									<th scope="col" className="h-[var(--size-target)] px-2 text-right font-medium">
-										{t('rentab.view.reel.devise', { devise: l.devise })}
-									</th>
-								</tr>
-							</thead>
-							<tbody>
-								{(
-									[
-										['rentab.column.revenues', prevu.recettes, reel.recettes],
-										['rentab.column.costs', prevu.couts, reel.couts],
-										['rentab.column.staff', prevu.personnel, reel.personnel],
-									] as const
-								).map(([cle, p, r]) => (
-									<tr key={cle} className="border-b border-border">
-										<th scope="row" className="h-[var(--size-target)] px-2 text-left font-normal">
-											{t(cle)}
-										</th>
-										<td className="px-2 text-right tabular-nums">{valeur(p)}</td>
-										<td className="px-2 text-right tabular-nums">{valeur(r)}</td>
-									</tr>
-								))}
-								<tr>
-									<th scope="row" className="h-[var(--size-target)] px-2 text-left font-medium">
-										{t('rentab.column.margin')}
-									</th>
-									<td className="px-2 text-right">
-										<Marge r={prevu} />
-									</td>
-									<td className="px-2 text-right">
-										<Marge r={reel} />
-									</td>
-								</tr>
-							</tbody>
-						</table>
-						{reel.taux !== null ? (
-							<p data-testid="rentab-taux" className="text-sm text-text-2">
-								{t('rentab.card.rate', { taux: FORMAT_TAUX.format(reel.taux) })}
-							</p>
-						) : null}
-					</div>
-				)
-			})}
+			<div className="flex flex-col gap-2">
+				<table className="w-full border-collapse text-sm">
+					<caption className="sr-only">{t('rentab.card.caption')}</caption>
+					<thead>
+						<tr className="border-b border-border text-text-2">
+							<th scope="col" className="h-[var(--size-target)] px-2 text-left font-medium">
+								<span className="sr-only">{t('rentab.card.quantity')}</span>
+							</th>
+							<th scope="col" className="h-[var(--size-target)] px-2 text-right font-medium">
+								{t('rentab.view.prevu')}
+							</th>
+							<th scope="col" className="h-[var(--size-target)] px-2 text-right font-medium">
+								{t('rentab.view.reel')}
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						{(
+							[
+								['rentab.column.revenues', (x: Rentabilite) => x.recettes],
+								['rentab.column.costs', (x: Rentabilite) => x.couts],
+								['rentab.column.staff', (x: Rentabilite) => x.personnel],
+							] as const
+						).map(([cle, grandeur]) => (
+							<tr key={cle} className="border-b border-border">
+								<th scope="row" className="h-[var(--size-target)] px-2 text-left font-normal">
+									{t(cle)}
+								</th>
+								<td className="px-2 py-1 text-right">
+									<ParDevise valeurs={valeursDe(prevu, grandeur)} />
+								</td>
+								<td className="px-2 py-1 text-right">
+									<ParDevise valeurs={valeursDe(reel, grandeur)} />
+								</td>
+							</tr>
+						))}
+						<tr>
+							<th scope="row" className="h-[var(--size-target)] px-2 text-left font-medium">
+								{t('rentab.column.margin')}
+							</th>
+							<td className="px-2 py-1 text-right">
+								<Marge r={prevu} />
+							</td>
+							<td className="px-2 py-1 text-right">
+								<Marge r={reel} />
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				{/* Le taux d'une affaire à plusieurs devises n'est pas rendu (§4.4) : `calculerLigne` le laisse vide. */}
+				{taux.length === 1 ? (
+					<p data-testid="rentab-taux" className="text-sm text-text-2">
+						{t('rentab.card.rate', { taux: FORMAT_TAUX.format(taux[0]!.valeur) })}
+					</p>
+				) : null}
+			</div>
 			<p className="text-sm text-text-2">{t('rentab.note.prevu')}</p>
 		</div>
 	)

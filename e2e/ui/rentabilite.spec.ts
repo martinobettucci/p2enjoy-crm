@@ -6,6 +6,9 @@
 // @verifies docs/SPEC-recettes.md §7 et §11 (« un outil du connecteur dont l'effet se voit dans la fiche ») ; docs/SPEC-mcp.md
 //           §3.1 (un vrai client MCP, connecté dans le navigateur), §9.1 (aucun chemin parallèle : la fiche lit ce que
 //           l'outil a écrit) ; docs/SPEC-seed.md §21.4 (la matrice de démonstration du business developer)
+// @verifies CRM-126 (docs/BACKLOG.md) — tranche T2 : docs/SPEC-recettes.md §4.4, §6.2 et §6.3 révisés (décision 810) — un
+//           seul tableau, …0c7 « Formation Data & IA » (CHF et EUR, docs/SPEC-seed.md §21.1) sur une ligne, une balance
+//           par devise, taux vide, sous-totaux et total en balance par devise ; la fiche de …0c7 ; docs/DESIGN_SYSTEM.md §5.60
 // @verifies CLAUDE.md §16 (captures aux quatre paliers, page jamais défilante horizontalement)
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
@@ -19,6 +22,7 @@ const BIZDEV = 'bizdev@p2enjoy.test'
 const FICHE = '/tracks/studio-web/refonte/cards/5eed0000-0000-4000-8000-0000000000c4'
 const CARD = '5eed0000-0000-4000-8000-0000000000c4'
 const NATURE = 'Ligne E2E rentabilité'
+const FORMATION = '5eed0000-0000-4000-8000-0000000000c7'
 
 async function sansDefilementHorizontal(page: Page): Promise<void> {
 	const debord = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
@@ -70,7 +74,7 @@ test('le commercial saisit une ligne de recette et deux réels depuis la fiche, 
 	expect(lu!.settled_at).not.toBeNull()
 })
 
-test('l’administratrice lit la rentabilité dans la fiche et dans l’écran, par devise, en vues Réel et Prévu', async ({ page }) => {
+test('l’administratrice lit la rentabilité dans la fiche et dans l’écran, en balance par devise, en vues Réel et Prévu', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
 	await page.goto(FICHE)
 	const bloc = page.getByTestId('bloc-rentabilite-card')
@@ -81,15 +85,32 @@ test('l’administratrice lit la rentabilité dans la fiche et dans l’écran, 
 
 	await page.getByRole('link', { name: 'Ouvrir dans Rentabilité' }).click()
 	await expect(page).toHaveURL(/\/rentabilite$/)
-	const tableaux = page.getByTestId('rentab-tableau')
-	await expect(tableaux).toHaveCount(2)
-	await expect(tableaux.first()).toHaveAttribute('data-devise', 'CHF')
+	// Un seul tableau (CRM-126) : …0c7, en CHF avec un coût en EUR, y paraît une fois, une balance par devise.
+	await expect(page.getByTestId('rentab-tableau')).toHaveCount(1)
 	await expect(page.getByTestId('rentab-ligne-affaire').filter({ hasText: 'Socle analytique' })).toBeVisible()
+	const formation = page.locator(`[data-testid="rentab-ligne-affaire"][data-card="${FORMATION}"]`)
+	await expect(formation).toHaveCount(1)
+	await expect(formation.getByTestId('rentab-marge').first()).toHaveAttribute('data-devise', 'CHF')
+	await expect(formation.getByTestId('rentab-taux-devise')).toHaveCount(0)
+	await expect(page.getByText('Non calculable — plusieurs devises')).toHaveCount(0)
+	const total = page.getByTestId('rentab-total')
+	await expect(total.getByTestId('rentab-marge')).toHaveCount(2)
+	await expect(total.getByTestId('rentab-marge').nth(0)).toHaveAttribute('data-devise', 'CHF')
+	await expect(total.getByTestId('rentab-marge').nth(1)).toHaveAttribute('data-devise', 'EUR')
+	await expect(total.getByTestId('rentab-taux-devise')).toHaveCount(0)
 	await capturer(page, 'rentabilite-reel-xl-1440', UNITE)
+	await formation.scrollIntoViewIfNeeded()
+	await capturer(page, 'rentabilite-balance-par-devise-1440', 'CRM-126')
 
 	await page.getByTestId('rentab-vue-prevu').click()
 	await expect(page).toHaveURL(/vue=prevu/)
 	await expect(page.getByText('La marge prévue soustrait le temps déjà passé')).toBeVisible()
+	// En prévu, …0c7 balance ses 28 000 CHF prévus contre ses 800 EUR de coût prévu, sans les additionner.
+	const prevues = formation.getByTestId('rentab-marge')
+	await expect(prevues).toHaveCount(2)
+	await expect(prevues.nth(1)).toHaveAttribute('data-devise', 'EUR')
+	await expect(prevues.nth(1)).toHaveAttribute('data-negative', 'oui')
+	await capturer(page, 'rentabilite-prevu-balance-par-devise-1440', 'CRM-126')
 	await page.getByLabel('État').selectOption('gagnees')
 	await expect(page.getByTestId('rentab-ligne-affaire')).toHaveCount(1)
 	// La capture attend la fin de la transition de l'onglet quitté (150 ms) : sinon elle le montre encore souligné.
@@ -103,6 +124,19 @@ test('l’administratrice lit la rentabilité dans la fiche et dans l’écran, 
 		await sansDefilementHorizontal(page)
 		await capturer(page, `rentabilite-${palier.nom}`, UNITE)
 	}
+})
+
+test('la fiche d’une affaire à plusieurs devises rend un seul tableau, une marge par devise, et aucun taux', async ({ page }) => {
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto(`/tracks/formation/inter-entreprises/cards/${FORMATION}`)
+	const bloc = page.getByTestId('bloc-rentabilite-card')
+	await expect(bloc.getByTestId('rentab-marge').first()).toBeVisible()
+	await expect(bloc.getByRole('table')).toHaveCount(1)
+	const devises = await bloc.getByTestId('rentab-marge').evaluateAll((m) => m.map((x) => (x as HTMLElement).dataset.devise))
+	expect(new Set(devises)).toEqual(new Set(['CHF', 'EUR']))
+	await expect(bloc.getByTestId('rentab-taux')).toHaveCount(0)
+	await bloc.scrollIntoViewIfNeeded()
+	await capturer(page, 'fiche-rentabilite-plusieurs-devises-1440', 'CRM-126')
 })
 
 test('le commercial lit « Réservé aux administrateurs » et saisit à la suite dans « À saisir », au clavier', async ({ page }) => {

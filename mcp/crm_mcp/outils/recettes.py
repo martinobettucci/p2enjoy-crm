@@ -3,6 +3,8 @@
 #       appliquée par `crm_mcp/rentabilite.py`), §5 (`rentabilite_affaires`, réservée aux administrateurs), §6.4 (« à
 #       saisir »), §7 (catalogue, ancres, cases `aussi`, aucun outil de suppression) ; docs/SPEC-mcp.md §9.1 (déclaration,
 #       `readOnlyHint`, aucun chemin parallèle), §9.3 (JSON structuré, `limit` ≤ 100, refus traduits)
+# @spec CRM-126 (docs/BACKLOG.md) — tranche T2 : `crm_profitability_report` en balance par devise — docs/SPEC-recettes.md
+#       §4.4 et §7 révisés (décision 810) : `multi_currency`, marge toujours calculée, `margin` des totaux par devise
 """Recettes d'une affaire et rentabilité, sous l'identité de la personne.
 
 Les mêmes tables et la même fonction que la webapp (`card_revenues`, `card_revenue_actuals`, `rentabilite_affaires`) ;
@@ -205,10 +207,12 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         rangs = []
         totaux: dict[str, dict[str, float]] = {}
         for l in lignes:
-            calculable = len(devises[str(l["card_id"])]) <= 1
+            # Une balance par devise (§4.4, révision CRM-126) : la marge se calcule toujours, le taux d'une affaire mixte
+            # reste vide.
+            mixte = len(devises[str(l["card_id"])]) > 1
             m = _montants(l)
-            reel = calculer_rentabilite(m, "reel", calculable)
-            prevu = calculer_rentabilite(m, "prevu", calculable)
+            reel = calculer_rentabilite(m, "reel", mixte)
+            prevu = calculer_rentabilite(m, "prevu", mixte)
             rangs.append(
                 {
                     "card_id": l["card_id"],
@@ -217,18 +221,22 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
                     "state": l["node_kind"],
                     "archived": l.get("archivee") is True,
                     "currency": l["currency"],
+                    "multi_currency": mixte,
                     "actual": reel,
                     "planned": prevu,
                 }
             )
-            t = totaux.setdefault(str(l["currency"]), {"revenues": 0.0, "costs": 0.0, "staff": 0.0})
+            t = totaux.setdefault(str(l["currency"]), {"revenues": 0.0, "costs": 0.0, "staff": 0.0, "margin": 0.0})
             t["revenues"] = au_centime(t["revenues"] + (reel["recettes"] or 0))
             t["costs"] = au_centime(t["costs"] + (reel["couts"] or 0))
             t["staff"] = au_centime(t["staff"] + (reel["personnel"] or 0))
+            t["margin"] = au_centime(t["revenues"] - t["costs"] - t["staff"])
         return {
             "generated_at": datetime.now(UTC).isoformat(),
             "notes": [
-                "Currencies are never added together: one row per affaire and currency.",
+                "Currencies are never added together: one row per affaire and currency, and each currency has its own "
+                "margin (a balance per currency); never add margins of two currencies.",
+                "`multi_currency` marks an affaire whose amounts span several currencies: its margin rate is left empty.",
                 "margin = revenues − costs − staff cost; `partielle` lists what is still unknown.",
                 "The planned margin subtracts the staff time already spent: the CRM does not forecast time.",
                 "With a period, actuals and time are filtered by date; planned amounts cover the whole affaire.",

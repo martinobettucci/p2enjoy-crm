@@ -13,6 +13,19 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-126` — la rentabilité donne une balance par devise, dans un seul tableau
+
+- L'écran « Rentabilité » ne rend plus un tableau par devise mais **un seul tableau**. Chaque case donne une valeur par
+  devise, l'une sous l'autre, suivie de son code : le total montre une balance EUR et une balance CHF (ou USD), jamais
+  leur somme. Les en-têtes de colonne ne nomment plus la devise.
+- « Non calculable — plusieurs devises » disparaît. Une affaire dont les montants sont dans plusieurs devises a une
+  marge dans chacune, et ne retire plus la marge de son channel, de son track et du total. Son taux de marge reste
+  vide, comme celui des sous-totaux qui la contiennent.
+- Le bloc « Rentabilité » de la fiche d'une affaire suit la même règle.
+- Connecteur MCP : `crm_profitability_report` rend la marge de chaque devise, `multi_currency` à la place de
+  `calculable`, et la marge des totaux par devise (`margin`). Aucune migration ; la webapp et le service `mcp` sont à
+  redéployer.
+
 ### `CRM-124` — la prévisualisation d'un modèle choisit le contact de l'affaire quand elle n'en a qu'un
 
 - Dans « Réglages ▸ Modèles d'emails », la prévisualisation présélectionne le contact quand l'affaire choisie en a

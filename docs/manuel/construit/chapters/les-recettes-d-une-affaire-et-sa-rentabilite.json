@@ -163,7 +163,7 @@
 		{
 			"type": "image",
 			"src": "les-recettes-d-une-affaire-et-sa-rentabilite/plusieurs-devises.jpg",
-			"alt": "Une ligne de l'écran Rentabilité : « Non calculable — plusieurs devises »",
+			"alt": "Une ligne de l'écran Rentabilité : une affaire en deux devises, une balance CHF et une balance EUR",
 			"width": 1158,
 			"height": 73
 		},
@@ -259,20 +259,55 @@
 				},
 				{
 					"type": "text",
-					"text": " : le CRM ne prévoit pas le temps. Une affaire dont les montants sont\ndans plusieurs devises a une marge "
+					"text": " : le CRM ne prévoit pas le temps."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chaque montant est suivi de sa devise. Une affaire dont les montants sont dans "
 				},
 				{
 					"type": "strong",
 					"content": [
 						{
 							"type": "text",
-							"text": "« Non calculable — plusieurs devises »"
+							"text": "plusieurs devises"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " : le CRM ne convertit pas les devises."
+					"text": " — facturée en CHF,\navec un coût payé en EUR, par exemple — a "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "une marge par devise"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", l'une sous l'autre dans la même case : ce qu'elle\nrapporte en CHF, ce qu'elle coûte en EUR. Le CRM ne convertit pas les devises et ne les additionne jamais : lisez les\ndeux balances ensemble. Son "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "taux de marge n'est pas affiché"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", puisqu'il comparerait des montants de devises\ndifférentes."
 				}
 			]
 		},
@@ -290,7 +325,7 @@
 		{
 			"type": "image",
 			"src": "les-recettes-d-une-affaire-et-sa-rentabilite/tableau.jpg",
-			"alt": "L'écran Rentabilité : un tableau par devise, par track, channel et affaire",
+			"alt": "L'écran Rentabilité : un seul tableau, par track, channel et affaire, chaque montant suivi de sa devise",
 			"width": 1160,
 			"height": 1080
 		},
@@ -339,7 +374,46 @@
 				},
 				{
 					"type": "text",
-					"text": " rend un tableau par devise :\nchaque track, ses channels et leurs affaires, avec un sous-total à chaque niveau et le total. Les filtres :"
+					"text": " rend un seul tableau :\nchaque track, ses channels et leurs affaires, avec un sous-total à chaque niveau et le total. Quand plusieurs devises\nsont en jeu, chaque case donne "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "une valeur par devise"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", l'une sous l'autre : le total montre ainsi une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "balance\nEUR"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "balance CHF"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", jamais leur somme. Un sous-total qui contient une affaire en plusieurs devises n'affiche\npas de taux de marge. Les filtres :"
 				}
 			]
 		},

@@ -4,6 +4,9 @@
 //       channel › affaire, sous-totaux et total, mentions, portée ; « Réservé aux administrateurs » sur `42501`), §6.5
 // @spec docs/DESIGN_SYSTEM.md §5.60 (filtres en tête, paire de liens « Réel » / « Prévu », arborescence du §5.54,
 //       sous-totaux en `font-medium`, devise nommée dans les en-têtes, mentions du §5.30), §5.31 (onglets), §5.8, §7, §8
+// @spec CRM-126 (docs/BACKLOG.md) — tranche T2 : docs/SPEC-recettes.md §4.4 et §6.3 révisés (décision 810) — UN seul
+//       tableau, une valeur par devise empilée dans chaque cellule, sous-totaux et total en balance par devise, taux vide
+//       sur une ligne qui mêle plusieurs devises ; docs/DESIGN_SYSTEM.md §5.60 (« UNE VALEUR PAR DEVISE », écart au §5.9)
 //
 // Deux lectures sous le jeton de l'appelant : les sommes (`rentabilite_affaires`) puis les noms. La règle est dans
 // `lib/rentabilite.ts`. Un changement de période ou d'état relit ; un changement de vue ne relit rien.
@@ -23,15 +26,15 @@ import {
 	type EtatRapport,
 	type LigneRentabilite,
 	type Noms,
-	type Rentabilite as R,
-	type TableauDevise,
+	type Rapport,
+	type RentabiliteLigne as R,
 	type VueRentabilite,
 } from '../lib/rentabilite'
 import { lireNomsRentabilite, lireRentabilite } from '../lib/rentabilite-lecture'
 import { lireRecettesASaisir, type RecetteASaisir } from '../lib/card-revenues'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { CLASSES_ACTIF, CLASSES_INACTIF, CLASSES_ONGLET } from './OngletsCouts'
-import { dureeEnClair, Marge, montantEnClair } from './BlocRentabiliteCard'
+import { dureeEnClair, Marge, ParDevise, Taux, valeursDe } from './BlocRentabiliteCard'
 import { RecettesASaisir } from './RecettesASaisir'
 import { CHEMIN_RENTABILITE } from './chemins'
 import { useContexteEspace } from './ContexteEspace'
@@ -279,15 +282,13 @@ function VueEnsemble({
 
 			{lecture.statut === 'chargement' || rapport === null ? (
 				<SkeletonListe lignes={6} libelle={t('state.loading.aria')} />
-			) : rapport.tableaux.length === 0 ? (
+			) : rapport.tracks.length === 0 ? (
 				<p data-testid="rentab-vide" className="text-text-2">
 					{du !== null || au !== null || etat !== 'toutes' ? t('rentab.empty.filtered') : t('rentab.empty')}
 				</p>
 			) : (
 				<div aria-busy={lecture.cle !== cle} className="flex flex-col gap-6">
-					{rapport.tableaux.map((tab) => (
-						<TableauRentabilite key={tab.devise} tableau={tab} vue={vue} titre={rapport.tableaux.length > 1} />
-					))}
+					<TableauRentabilite rapport={rapport} vue={vue} />
 					<div className="flex flex-col gap-1 text-sm text-text-2" data-testid="rentab-mentions">
 						{rapport.mentions.recettesSansReel > 0 ? (
 							<p>{t(rapport.mentions.recettesSansReel === 1 ? 'rentab.mention.revenues.one' : 'rentab.mention.revenues.many', { n: String(rapport.mentions.recettesSansReel) })}</p>
@@ -309,14 +310,13 @@ function VueEnsemble({
 }
 
 const ENTETE = 'sticky top-0 bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3'
-const CELLULE = 'h-[var(--size-target)] px-3 text-right tabular-nums whitespace-nowrap'
+// Une cellule de montant prend la hauteur de ses devises empilées, 40 px restant son minimum (§5.60, écart au §5.9).
+const CELLULE = 'h-[var(--size-target)] px-3 py-1 text-right'
 
-function TableauRentabilite({ tableau, vue, titre }: { readonly tableau: TableauDevise; readonly vue: VueRentabilite; readonly titre: boolean }) {
-	const d = tableau.devise
+function TableauRentabilite({ rapport, vue }: { readonly rapport: Rapport; readonly vue: VueRentabilite }) {
 	const reel = vue === 'reel'
 	return (
-		<section aria-label={t('rentab.table.aria', { devise: d })} data-testid="rentab-tableau" data-devise={d} className="flex flex-col gap-2 min-w-0">
-			{titre ? <h2 className="text-h2 font-bold">{d}</h2> : null}
+		<section aria-label={t('rentab.table.aria')} data-testid="rentab-tableau" className="flex flex-col gap-2 min-w-0">
 			{/* Une surface bordée, comme les tableaux du pilotage (§5.48) : les cellules collantes portent le même fond que la
 			    ligne, et la ligne ne se lit plus en deux teintes (constaté sur la capture du 2026-10-23). */}
 			<div className="overflow-x-auto indique-debordement-x [contain:paint] rounded-lg border border-border bg-surface">
@@ -325,16 +325,16 @@ function TableauRentabilite({ tableau, vue, titre }: { readonly tableau: Tableau
 						<tr className="border-b border-border">
 							<th scope="col" className={`${ENTETE} sticky left-0 z-10 w-[28ch] text-left`}>{t('rentab.column.card')}</th>
 							<th scope="col" className={`${ENTETE} w-[14ch] text-left`}>{t('rentab.column.state')}</th>
-							<th scope="col" className={`${ENTETE} text-right`}>{t('rentab.column.amount', { devise: d })}</th>
-							<th scope="col" className={`${ENTETE} text-right`}>{t(reel ? 'rentab.column.revenues.devise' : 'rentab.column.revenues.prevu', { devise: d })}</th>
-							<th scope="col" className={`${ENTETE} text-right`}>{t(reel ? 'rentab.column.costs.devise' : 'rentab.column.costs.prevu', { devise: d })}</th>
-							<th scope="col" className={`${ENTETE} text-right`}>{t('rentab.column.staff.devise', { devise: d })}</th>
-							<th scope="col" className={`${ENTETE} w-[22ch] text-right`}>{t(reel ? 'rentab.column.margin.devise' : 'rentab.column.margin.prevu', { devise: d })}</th>
-							{reel ? <th scope="col" className={`${ENTETE} w-[10ch] text-right`}>{t('rentab.column.rate')}</th> : null}
+							<th scope="col" className={`${ENTETE} text-right`}>{t('rentab.column.amount')}</th>
+							<th scope="col" className={`${ENTETE} text-right`}>{t(reel ? 'rentab.column.revenues' : 'rentab.column.revenues.prevu')}</th>
+							<th scope="col" className={`${ENTETE} text-right`}>{t(reel ? 'rentab.column.costs' : 'rentab.column.costs.prevu')}</th>
+							<th scope="col" className={`${ENTETE} text-right`}>{t('rentab.column.staff')}</th>
+							<th scope="col" className={`${ENTETE} w-[22ch] text-right`}>{t(reel ? 'rentab.column.margin' : 'rentab.column.margin.prevu')}</th>
+							{reel ? <th scope="col" className={`${ENTETE} w-[12ch] text-right`}>{t('rentab.column.rate')}</th> : null}
 						</tr>
 					</thead>
 					<tbody>
-						{tableau.tracks.map((tr) => (
+						{rapport.tracks.map((tr) => (
 							<GroupeTrack key={tr.trackId} nom={tr.nom} sousTotal={tr.sousTotal} reel={reel}>
 								{tr.channels.map((ch) => (
 									<GroupeChannel key={ch.channelId} nom={ch.nom} sousTotal={ch.sousTotal} reel={reel}>
@@ -347,7 +347,7 @@ function TableauRentabilite({ tableau, vue, titre }: { readonly tableau: Tableau
 						))}
 					</tbody>
 					<tfoot>
-						<LigneMontants titre={t('rentab.total')} r={tableau.total} reel={reel} classe="border-t border-border font-medium" retrait="" />
+						<LigneMontants titre={t('rentab.total')} r={rapport.total} reel={reel} classe="border-t border-border font-medium" retrait="" />
 					</tfoot>
 				</table>
 			</div>
@@ -373,6 +373,31 @@ function GroupeChannel({ nom, sousTotal, reel, children }: { readonly nom: strin
 	)
 }
 
+/** Recettes, coûts, personnel, marge et taux d'une ligne, une valeur par devise (§6.3). */
+function CellulesMontants({ r, reel }: { readonly r: R; readonly reel: boolean }) {
+	return (
+		<>
+			<td className={CELLULE}>
+				<ParDevise valeurs={valeursDe(r, (x) => x.recettes)} />
+			</td>
+			<td className={CELLULE}>
+				<ParDevise valeurs={valeursDe(r, (x) => x.couts)} />
+			</td>
+			<td className={CELLULE}>
+				<ParDevise valeurs={valeursDe(r, (x) => x.personnel)} />
+			</td>
+			<td className={CELLULE}>
+				<Marge r={r} />
+			</td>
+			{reel ? (
+				<td className={CELLULE}>
+					<Taux r={r} />
+				</td>
+			) : null}
+		</>
+	)
+}
+
 function LigneMontants({
 	titre,
 	r,
@@ -388,27 +413,18 @@ function LigneMontants({
 	readonly retrait: string
 	readonly sousTotal?: boolean
 }) {
-	const v = (x: number | null) => (x === null ? '' : montantEnClair(x))
 	return (
-		<tr className={classe}>
+		<tr className={classe} data-testid={sousTotal ? 'rentab-sous-total' : 'rentab-total'}>
 			<th scope="row" colSpan={3} className={`sticky left-0 bg-surface h-[var(--size-target)] text-left ${retrait}`}>
 				{sousTotal ? <span className="sr-only">{t('rentab.subtotal')} </span> : null}
 				{titre}
 			</th>
-			<td className={CELLULE}>{v(r.recettes)}</td>
-			<td className={CELLULE}>{v(r.couts)}</td>
-			<td className={CELLULE}>{v(r.personnel)}</td>
-			<td className={CELLULE}>
-				<Marge r={r} />
-			</td>
-			{reel ? <td className={CELLULE}>{r.taux === null ? '' : `${r.taux.toLocaleString('fr-FR', { minimumFractionDigits: 1 })} %`}</td> : null}
+			<CellulesMontants r={r} reel={reel} />
 		</tr>
 	)
 }
 
 function LigneAffaire({ a, reel, slugTrack, slugChannel }: { readonly a: AffaireDuRapport; readonly reel: boolean; readonly slugTrack: string; readonly slugChannel: string }) {
-	const v = (x: number | null) => (x === null ? '' : montantEnClair(x))
-	const r = a.rentabilite
 	const adresse = slugTrack !== '' && slugChannel !== '' ? `/tracks/${slugTrack}/${slugChannel}/cards/${a.cardId}` : null
 	return (
 		<tr data-testid="rentab-ligne-affaire" data-card={a.cardId} className="border-b border-border hover:bg-hover">
@@ -425,15 +441,10 @@ function LigneAffaire({ a, reel, slugTrack, slugChannel }: { readonly a: Affaire
 					{a.archivee ? <span className="rounded-full bg-accent-soft px-2 text-xs text-accent-on-soft">{t('rentab.archived')}</span> : null}
 				</span>
 			</td>
-			<td className={CELLULE}>{v(a.montant)}</td>
-			<td className={CELLULE}>{v(r.recettes)}</td>
-			<td className={CELLULE}>{v(r.couts)}</td>
-			<td className={CELLULE}>{v(r.personnel)}</td>
 			<td className={CELLULE}>
-				<Marge r={r} />
+				<ParDevise valeurs={a.montant === null ? [] : [a.montant]} />
 			</td>
-			{reel ? <td className={CELLULE}>{r.taux === null ? '' : `${r.taux.toLocaleString('fr-FR', { minimumFractionDigits: 1 })} %`}</td> : null}
+			<CellulesMontants r={a.rentabilite} reel={reel} />
 		</tr>
 	)
 }
-

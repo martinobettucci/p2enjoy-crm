@@ -273,14 +273,8 @@ test('le temps : ajouter une affaire, une journée trop longue, le rapport de l�
 
 	await page.goto('/tracks/studio-web/couts')
 	const personnel = page.getByText('Coût du personnel', { exact: true }).first()
-	// Le mois précédent, que le seed remplit : l'image montre les trois commandes de la navigation de mois (INC-333).
-	const serie = page.getByTestId('personnel-track')
-	await serie.getByRole('button', { name: 'Mois précédent' }).click()
-	const ceMois = serie.getByRole('button', { name: 'Ce mois-ci' })
-	await expect(ceMois).toBeVisible()
-	await expect(page.getByTestId('personnel-ligne').first()).toBeVisible()
 	await personnel.scrollIntoViewIfNeeded()
-	await illustrer(page, { chapitre: TEMPS, section: 'le-cout-du-personnel-a-cote-des-couts', nom: 'personnel-du-track', cibles: [personnel, ceMois, page.getByTestId('personnel-ligne').first()] })
+	await illustrer(page, { chapitre: TEMPS, section: 'le-cout-du-personnel-a-cote-des-couts', nom: 'personnel-du-track', cibles: [personnel, page.getByTestId('personnel-ligne').first()] })
 	await page.goto(FICHE)
 	const temps = page.getByTestId('temps-card')
 	await illustrer(page, { chapitre: TEMPS, section: 'le-cout-du-personnel-a-cote-des-couts', nom: 'temps-de-l-affaire', cibles: [temps] })

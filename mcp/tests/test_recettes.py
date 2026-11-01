@@ -3,6 +3,8 @@
 #           du rapport ; aucun outil de suppression), §5 (refus `rentabilite_reservee` traduit), §2.3 (« ligne soldee »
 #           traduit ; zéro ligne touchée = refus) ; docs/SPEC-mcp.md §6.2 (visibilité par la matrice, refus uniforme),
 #           §9.1 (déclarations vérifiées au démarrage), §9.3
+# @verifies CRM-126 (docs/BACKLOG.md) — tranche T2 : docs/SPEC-recettes.md §4.4 et §7 révisés (décision 810) — le rapport
+#           rend une marge par devise, `multi_currency` et le taux vide d'une affaire mixte, la marge des totaux par devise
 """Le CRM simulé étend celui de `conftest.py` avec les tables des recettes et la fonction de rentabilité ; la RLS y est
 réduite à « l'espace est lisible », la matrice est celle du simulateur partagé."""
 
@@ -211,6 +213,31 @@ async def test_le_rapport_applique_la_regle_partagee_et_garde_l_espace_demande(m
         "recettesSansReel": 1, "coutsSansReel": 1, "minutesNonValorisees": 0
     }
     assert rapport["rows"][0]["planned"]["marge"] == 66750
+    assert rapport["rows"][0]["multi_currency"] is False
+    assert rapport["rows"][0]["actual"]["taux"] == -29.4
+
+
+async def test_le_rapport_rend_une_balance_par_devise_pour_une_affaire_mixte(monde: Monde) -> None:
+    monde.ouvrir(("recettes", "consulter"), ("budgets", "consulter"), ("temps", "consulter"))
+    vide = {
+        "workspace_id": ESPACE_A, "track_id": "t", "channel_id": "h", "card_id": CARD_A, "node_kind": "open",
+        "archivee": False, "recettes_prevues": None, "recettes_reelles": None, "lignes_recette": 0,
+        "lignes_recette_sans_reel": 0, "couts_prevus": None, "couts_reels": None, "lignes_cout": 0,
+        "lignes_cout_sans_reel": 0, "personnel": None, "minutes": 0, "minutes_non_valorisees": 0,
+    }
+    chf = {**vide, "currency": "CHF", "recettes_prevues": 28000, "recettes_reelles": 14000, "lignes_recette": 1}
+    eur = {**vide, "currency": "EUR", "couts_prevus": 800, "couts_reels": 300, "lignes_cout": 1}
+    monde.simule.rapport = (200, [chf, eur])
+    rapport = await monde.appel("crm_profitability_report", {"workspace": "atelier"})
+    rangs = {r["currency"]: r for r in rapport["rows"]}
+    assert rangs["CHF"]["multi_currency"] is True and rangs["EUR"]["multi_currency"] is True
+    assert rangs["CHF"]["actual"]["marge"] == 14000 and rangs["CHF"]["actual"]["taux"] is None
+    assert rangs["EUR"]["actual"]["marge"] == -300 and rangs["EUR"]["planned"]["marge"] == -800
+    assert "calculable" not in rangs["CHF"]["actual"]
+    assert rapport["actual_totals_by_currency"] == {
+        "CHF": {"revenues": 14000, "costs": 0, "staff": 0, "margin": 14000},
+        "EUR": {"revenues": 0, "costs": 300, "staff": 0, "margin": -300},
+    }
 
 
 async def test_un_patch_ou_un_delete_sans_filtre_est_refuse_avant_tout_envoi(monde: Monde) -> None:

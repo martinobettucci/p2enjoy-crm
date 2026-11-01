@@ -1,10 +1,13 @@
 // @verifies CRM-108 (docs/BACKLOG.md) — tranche T3 : le bloc « Recettes », le bloc « Rentabilité », l'onglet « À saisir »
 //           et l'écran « Rentabilité »
 // @verifies docs/SPEC-recettes.md §2.3 (« nul n'est pas zéro » : un tiret, jamais 0,00), §6.1 (lignes, pied, mention des
-//           réels manquants, création, sans-effet dit), §6.2 (bloc ABSENT sur `42501`, « non calculable »), §6.3 (refus
-//           « Réservé aux administrateurs » et lien vers « À saisir » ; tableaux par devise ; vue « Prévu »), §6.4
+//           réels manquants, création, sans-effet dit), §6.2 (bloc ABSENT sur `42501`), §6.3 (refus
+//           « Réservé aux administrateurs » et lien vers « À saisir » ; vue « Prévu »), §6.4
 //           (Entrée enregistre et passe à la ligne suivante ; ligne non saisissable désactivée avec motif ; vide sain) ;
-//           docs/DESIGN_SYSTEM.md §5.60 (devise dans les en-têtes ; marge négative en pastille ; pilule « partielle »)
+//           docs/DESIGN_SYSTEM.md §5.60 (marge négative en pastille ; pilule « partielle »)
+// @verifies CRM-126 (docs/BACKLOG.md) — tranche T2 : docs/SPEC-recettes.md §4.4, §6.2 et §6.3 révisés (décision 810) — un
+//           seul tableau, une balance par devise empilée dans la cellule, code devise en élément propre, taux vide sur
+//           une ligne qui mêle plusieurs devises ; docs/DESIGN_SYSTEM.md §5.60 (« UNE VALEUR PAR DEVISE »)
 // @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — les noms de la rentabilité se lisent sur les rattachements (docs/SPEC-rattachements.md §5)
 
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
@@ -153,14 +156,32 @@ describe('le bloc « Rentabilité » de la fiche', () => {
 		expect(screen.getByTestId('rentab-taux').textContent).toContain('-29,4')
 	})
 
-	it('dit « non calculable » une affaire à plusieurs devises', async () => {
-		const { client } = clientFactice({ lectures: { workspaces: [{ administration_permise: true, edition_permise: true }] }, rpc: { data: [LIGNE_RENTAB, { ...LIGNE_RENTAB, currency: 'CHF' }], error: null, status: 200 } })
+	it('rend UN tableau, une balance par devise dans chaque cellule, et aucun taux pour une affaire à plusieurs devises', async () => {
+		const chf = { ...LIGNE_RENTAB, currency: 'CHF', recettes_prevues: 28000, recettes_reelles: 14000, lignes_recette: 1, lignes_recette_sans_reel: 0, couts_prevus: null, couts_reels: null, lignes_cout: 0, lignes_cout_sans_reel: 0, personnel: null, minutes: 0 }
+		const { client } = clientFactice({ lectures: { workspaces: [{ administration_permise: true, edition_permise: true }] }, rpc: { data: [LIGNE_RENTAB, chf], error: null, status: 200 } })
 		render(
 			<MemoryRouter>
 				<BlocRentabiliteCard client={client} idCard="c1" idWorkspace="w" />
 			</MemoryRouter>,
 		)
-		expect((await screen.findAllByTestId('rentab-non-calculable')).length).toBeGreaterThan(0)
+		const bloc = await screen.findByTestId('bloc-rentabilite-card')
+		await within(bloc).findAllByTestId('rentab-marge')
+		expect(within(bloc).getAllByRole('table')).toHaveLength(1)
+		expect(within(bloc).getByRole('columnheader', { name: fr['rentab.view.reel'] })).toBeTruthy()
+		// Réel : 14 000 CHF de marge, et −1 175 EUR ; prévu : 28 000 CHF et 72 000 − 450 − 4 800 EUR.
+		const marges = within(bloc).getAllByTestId('rentab-marge').map((m) => [m.dataset.devise, m.textContent?.replace(/\s/gu, ''), m.dataset.negative])
+		expect(marges).toEqual([
+			['CHF', '28000,00', 'non'],
+			['EUR', '66750,00', 'non'],
+			['CHF', '14000,00', 'non'],
+			['EUR', '-1175,00', 'oui'],
+		])
+		const recettes = within(bloc).getByRole('row', { name: /^Recettes/u })
+		expect(within(recettes).getAllByTestId('rentab-valeur').map((v) => v.textContent?.replace(/\s/gu, ''))).toEqual([
+			'28000,00CHF', '72000,00EUR', '14000,00CHF', '4000,00EUR',
+		])
+		expect(within(bloc).queryByTestId('rentab-taux')).toBeNull()
+		expect(within(bloc).queryByText('Non calculable — plusieurs devises')).toBeNull()
 	})
 })
 
@@ -242,7 +263,7 @@ describe('l’écran « Rentabilité »', () => {
 		expect([...rpcs, ...refusee.rpcs]).toEqual([])
 	})
 
-	it('rend un tableau par devise, la devise nommée dans les en-têtes, et retire le taux en vue « Prévu »', async () => {
+	it('rend UN tableau aux en-têtes sans devise, une balance par devise au total, et retire le taux en vue « Prévu »', async () => {
 		const { client } = clientFactice({
 			rpc: { data: [LIGNE_RENTAB, { ...LIGNE_RENTAB, card_id: 'c2', currency: 'CHF' }], error: null, status: 200 },
 			lectures: {
@@ -258,9 +279,47 @@ describe('l’écran « Rentabilité »', () => {
 			</MemoryRouter>,
 		)
 		const tableaux = await screen.findAllByTestId('rentab-tableau')
-		expect(tableaux.map((t) => t.dataset.devise)).toEqual(['CHF', 'EUR'])
-		expect(within(tableaux[1]!).getByRole('columnheader', { name: 'Marge prévue (EUR)' })).toBeTruthy()
-		expect(within(tableaux[1]!).queryByRole('columnheader', { name: fr['rentab.column.rate'] })).toBeNull()
+		expect(tableaux).toHaveLength(1)
+		const tableau = tableaux[0]!
+		expect(within(tableau).getByRole('columnheader', { name: fr['rentab.column.margin.prevu'] })).toBeTruthy()
+		expect(within(tableau).queryByRole('columnheader', { name: fr['rentab.column.rate'] })).toBeNull()
+		// Deux affaires mono-devise, dans deux devises : une ligne chacune, et un total qui les balance sans les additionner.
+		expect(within(tableau).getAllByTestId('rentab-ligne-affaire')).toHaveLength(2)
+		const total = within(tableau).getByTestId('rentab-total')
+		expect(within(total).getAllByTestId('rentab-marge').map((m) => m.dataset.devise)).toEqual(['CHF', 'EUR'])
+		const formation = within(tableau).getAllByTestId('rentab-ligne-affaire').find((l) => l.dataset.card === 'c2')!
+		expect(within(formation).getAllByTestId('rentab-valeur')[0]?.textContent?.replace(/\s/gu, '')).toBe('28000,00CHF')
 		expect(screen.getByText(fr['rentab.note.prevu'])).toBeTruthy()
+	})
+
+	it('rend une affaire à plusieurs devises sur UNE ligne, ses balances empilées, et vide le taux de sa ligne et de ses sous-totaux', async () => {
+		const chf = { ...LIGNE_RENTAB, currency: 'CHF', recettes_prevues: 28000, recettes_reelles: 14000, lignes_recette: 1, lignes_recette_sans_reel: 0, couts_prevus: null, couts_reels: null, lignes_cout: 0, lignes_cout_sans_reel: 0, personnel: null, minutes: 0 }
+		const { client } = clientFactice({
+			rpc: { data: [LIGNE_RENTAB, chf], error: null, status: 200 },
+			lectures: {
+				cards: [
+					{ id: 'c1', title: 'Refonte', currency: 'EUR', card_placements: [{ id: 'r1', created_at: '2026-01-01T00:00:00Z', amount: 72000, channels: { id: 'h', name: 'Refonte', slug: 'refonte', position: 1, tracks: { id: 't', name: 'Studio web', slug: 'studio-web', position: 1 } } }] },
+				],
+			},
+		})
+		render(
+			<MemoryRouter initialEntries={['/rentabilite']}>
+				<Rentabilite client={client} administration="permise" />
+			</MemoryRouter>,
+		)
+		const lignes = await screen.findAllByTestId('rentab-ligne-affaire')
+		expect(lignes).toHaveLength(1)
+		const ligne = lignes[0]!
+		expect(within(ligne).getAllByTestId('rentab-marge').map((m) => [m.dataset.devise, m.textContent?.replace(/\s/gu, '')])).toEqual([
+			['CHF', '14000,00'],
+			['EUR', '-1175,00'],
+		])
+		expect(within(ligne).queryByTestId('rentab-taux-devise')).toBeNull()
+		for (const sousTotal of screen.getAllByTestId('rentab-sous-total')) {
+			expect(within(sousTotal).getAllByTestId('rentab-marge')).toHaveLength(2)
+			expect(within(sousTotal).queryByTestId('rentab-taux-devise')).toBeNull()
+		}
+		expect(within(screen.getByTestId('rentab-total')).getAllByTestId('rentab-marge')).toHaveLength(2)
+		expect(screen.queryByText('Non calculable — plusieurs devises')).toBeNull()
 	})
 })

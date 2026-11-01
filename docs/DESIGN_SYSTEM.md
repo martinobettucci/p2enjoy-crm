@@ -6084,6 +6084,14 @@ n'est pas connu. Seuls les écarts et ce qui est propre au rapport sont écrits.
   balance EUR négative se lisent l'une sans teinte, l'autre teintée. **La pilule « partielle » reste une par ligne**,
   après la dernière balance. **Le taux d'une ligne qui mêle plusieurs devises est une cellule vide**, sans mot : le
   tableau ne dit pas « non calculable », il dit des balances, et un taux n'en est pas une.
+  **C'EST UN ÉCART AU §5.9** (« une seule ligne de texte par cellule »), voulu par le responsable sur maquette contre
+  la forme « sur une ligne, séparées par · » : une affaire ou un regroupement à plusieurs devises occupe autant de
+  lignes de texte que de devises, et la ligne du tableau grandit d'autant — une cellule de tableau prend la hauteur de
+  son contenu, `--size-target` restant son minimum, avec 4 px de marge verticale pour que deux valeurs ne se touchent
+  pas. Sur une seule devise, le cas attendu, la ligne garde sa hauteur de 40 px. Le taux ne porte son code que si la
+  ligne a plusieurs devises : « 100,0 % EUR » seul dirait une précision qui n'en est pas une. Les
+  balances juxtaposées élargiraient chaque colonne de montant et briseraient l'alignement des nombres, qui est la raison
+  même de la colonne (§5.9).
 - **L'ÉCRAN « Rentabilité » EST UNE ENTRÉE DE BARRE LATÉRALE, ICÔNE `Scale`, APRÈS « Pilotage » ET AVANT « Temps »**
   (`docs/SPEC-recettes.md` §6.0). `Scale` ne sert aucun autre objet (§9) : une balance dit ce qu'on met en regard —
   ce qui rentre et ce qui sort —, là où `ChartColumn` dit deux séries comparées (§5.33) et `Gauge` l'instrument qui mesure

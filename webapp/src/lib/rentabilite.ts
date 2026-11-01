@@ -1,9 +1,11 @@
 // @spec CRM-108 (docs/BACKLOG.md) — tranche T3 : la règle de rentabilité, appliquée aux sommes que la base rend
+// @spec CRM-126 (docs/BACKLOG.md) — tranche T2 : une balance par devise dans un seul tableau (décision 810)
 // @spec docs/SPEC-recettes.md §4.1 (les grandeurs : marge réelle, marge prévue, taux), §4.2 (la marge prévue soustrait le
-//       personnel déjà valorisé), §4.3 (la marge partielle et ses trois causes), §4.4 (les devises ne s'additionnent
-//       jamais : une affaire à plusieurs devises a une marge « non calculable »), §4.6 (le filtre d'état), §5 (les
-//       colonnes de `public.rentabilite_affaires`), §6.3 (l'arborescence track › channel › affaire, ses sous-totaux)
-// @spec docs/DESIGN_SYSTEM.md §5.60 (sous-totaux de track et de channel, total du tableau, un tableau par devise)
+//       personnel déjà valorisé), §4.3 (la marge partielle et ses trois causes), §4.4 (révision CRM-126 : les devises ne
+//       s'additionnent jamais, la marge se calcule dans chaque devise, le taux est vide sur une ligne qui en mêle
+//       plusieurs), §4.6 (le filtre d'état), §5 (les colonnes de `public.rentabilite_affaires`), §6.3 (un seul tableau,
+//       l'arborescence track › channel › affaire, ses sous-totaux et son total en balance par devise)
+// @spec docs/DESIGN_SYSTEM.md §5.60 (sous-totaux de track et de channel, total du tableau, une valeur par devise)
 //
 // MODULE SANS RENDU ET SANS REQUÊTE. La base rend des sommes et des comptes (§5) ; ce module en tire la marge, le taux et
 // le caractère partiel, et range les affaires. Le connecteur applique la même règle en Python
@@ -116,15 +118,18 @@ export type CausesPartielle = {
 	readonly minutesNonValorisees: number
 }
 
+/** La rentabilité dans UNE devise. */
 export type Rentabilite = {
 	readonly recettes: number | null
 	readonly couts: number | null
 	readonly personnel: number | null
-	/** `null` si rien n'est connu, ou si l'affaire mêle plusieurs devises (`calculable` faux). */
+	/** `null` si rien n'est connu dans cette devise. */
 	readonly marge: number | null
-	/** En pourcentage à une décimale, vue « Réel » seulement ; `null` si les recettes réelles sont nulles ou inconnues. */
+	/**
+	 * En pourcentage à une décimale, vue « Réel » seulement ; `null` si les recettes réelles sont nulles ou inconnues, ou
+	 * si la ligne mêle plusieurs devises — sa marge et ses recettes vivraient alors dans des devises différentes (§4.4).
+	 */
 	readonly taux: number | null
-	readonly calculable: boolean
 	/** `null` si la marge n'est pas partielle. */
 	readonly partielle: CausesPartielle | null
 }
@@ -135,21 +140,20 @@ export const auCentime = (x: number): number => Math.round(x * 100) / 100
 /**
  * La rentabilité d'une affaire ou d'un regroupement, dans une devise et une vue.
  *
- * - **marge** = recettes − coûts − personnel, chacun compté s'il est connu (§4.1) ; la vue « Prévu » soustrait le
- *   personnel DÉJÀ valorisé, le produit ne prévoyant pas le temps (§4.2) ;
- * - **taux** = marge réelle ÷ recettes réelles (§4.1) ;
+ * - **marge** = recettes − coûts − personnel, chacun compté s'il est connu (§4.1), dans cette devise seule, toujours
+ *   (§4.4) ; la vue « Prévu » soustrait le personnel DÉJÀ valorisé, le produit ne prévoyant pas le temps (§4.2) ;
+ * - **taux** = marge réelle ÷ recettes réelles (§4.1), vide si `plusieursDevises` (§4.4) ;
  * - **partielle** : en vue « Réel », une ligne de recette ou de coût ouverte sans réel, ou du temps non valorisé ; en vue
  *   « Prévu », seul le temps non valorisé manque — les prévus sont toujours connus (§4.3).
  */
-export function calculerRentabilite(m: Montants, vue: VueRentabilite, calculable: boolean): Rentabilite {
+export function calculerRentabilite(m: Montants, vue: VueRentabilite, plusieursDevises: boolean): Rentabilite {
 	const recettes = vue === 'reel' ? m.recettesReelles : m.recettesPrevues
 	const couts = vue === 'reel' ? m.coutsReels : m.coutsPrevus
 	const personnel = m.personnel
 	const rienDeConnu = recettes === null && couts === null && personnel === null
-	const marge =
-		!calculable || rienDeConnu ? null : auCentime((recettes ?? 0) - (couts ?? 0) - (personnel ?? 0))
+	const marge = rienDeConnu ? null : auCentime((recettes ?? 0) - (couts ?? 0) - (personnel ?? 0))
 	const taux =
-		vue === 'reel' && marge !== null && recettes !== null && recettes !== 0
+		vue === 'reel' && !plusieursDevises && marge !== null && recettes !== null && recettes !== 0
 			? Math.round((marge / recettes) * 1000) / 10
 			: null
 	const causes: CausesPartielle = {
@@ -159,7 +163,45 @@ export function calculerRentabilite(m: Montants, vue: VueRentabilite, calculable
 	}
 	const partielle =
 		causes.recettesSansReel > 0 || causes.coutsSansReel > 0 || causes.minutesNonValorisees > 0 ? causes : null
-	return { recettes, couts, personnel, marge, taux, calculable, partielle }
+	return { recettes, couts, personnel, marge, taux, partielle }
+}
+
+/** Une devise et la rentabilité qui y est connue. */
+export type BalanceDevise = { readonly devise: string; readonly rentabilite: Rentabilite }
+
+/** La rentabilité d'une ligne du rapport — affaire, channel, track ou total —, en balance par devise (§4.4). */
+export type RentabiliteLigne = {
+	/** Une entrée par devise présente, dans l'ordre alphabétique des codes. */
+	readonly parDevise: readonly BalanceDevise[]
+	/** Vrai si la ligne est, ou contient, une affaire dont la base rend plusieurs devises : son taux est alors vide. */
+	readonly plusieursDevises: boolean
+	/** Les causes de toutes les devises : des comptes de lignes et de minutes, qui traversent les devises (§4.4). */
+	readonly partielle: CausesPartielle | null
+}
+
+/** Les montants d'une affaire ou d'un regroupement, par devise. */
+export type MontantsParDevise = ReadonlyMap<string, Montants>
+
+/** La balance par devise d'une ligne, dans une vue. */
+export function calculerLigne(montants: MontantsParDevise, vue: VueRentabilite, plusieursDevises: boolean): RentabiliteLigne {
+	const devises = [...montants.keys()].sort()
+	return {
+		parDevise: devises.map((devise) => ({
+			devise,
+			rentabilite: calculerRentabilite(montants.get(devise) ?? MONTANTS_VIDES, vue, plusieursDevises),
+		})),
+		plusieursDevises,
+		partielle: calculerRentabilite(sommerMontants([...montants.values()]), vue, plusieursDevises).partielle,
+	}
+}
+
+/** Somme devise par devise : deux devises ne s'additionnent jamais (§4.4). */
+export function sommerParDevise(liste: readonly MontantsParDevise[]): MontantsParDevise {
+	const somme = new Map<string, Montants>()
+	for (const m of liste) {
+		for (const [devise, montants] of m) somme.set(devise, sommerMontants([somme.get(devise) ?? MONTANTS_VIDES, montants]))
+	}
+	return somme
 }
 
 /** La somme de deux valeurs possiblement inconnues : inconnue seulement si les deux le sont. */
@@ -237,12 +279,10 @@ export type AffaireDuRapport = {
 	readonly titre: string
 	readonly genre: GenreAffaire
 	readonly archivee: boolean
-	/** Le montant de l'affaire, pour comparaison (§2.1) ; seulement dans le tableau de SA devise. */
-	readonly montant: number | null
-	readonly montants: Montants
-	readonly rentabilite: Rentabilite
-	/** Les autres devises de l'affaire, quand elle en mêle plusieurs (§4.4). */
-	readonly autresDevises: readonly string[]
+	/** Le montant de l'affaire, pour comparaison (§2.1), dans SA devise. */
+	readonly montant: { readonly valeur: number; readonly devise: string } | null
+	readonly montants: MontantsParDevise
+	readonly rentabilite: RentabiliteLigne
 }
 
 export type ChannelDuRapport = {
@@ -250,7 +290,7 @@ export type ChannelDuRapport = {
 	readonly nom: string
 	readonly slug: string
 	readonly affaires: readonly AffaireDuRapport[]
-	readonly sousTotal: Rentabilite
+	readonly sousTotal: RentabiliteLigne
 }
 
 export type TrackDuRapport = {
@@ -258,18 +298,13 @@ export type TrackDuRapport = {
 	readonly nom: string
 	readonly slug: string
 	readonly channels: readonly ChannelDuRapport[]
-	readonly sousTotal: Rentabilite
-}
-
-export type TableauDevise = {
-	readonly devise: string
-	readonly tracks: readonly TrackDuRapport[]
-	readonly total: Rentabilite
+	readonly sousTotal: RentabiliteLigne
 }
 
 export type Rapport = {
-	readonly tableaux: readonly TableauDevise[]
-	/** Les mentions sous les tableaux (§6.3), toutes devises confondues : ce sont des lignes et des minutes, pas de l'argent. */
+	readonly tracks: readonly TrackDuRapport[]
+	readonly total: RentabiliteLigne
+	/** Les mentions sous le tableau (§6.3), toutes devises confondues : ce sont des lignes et des minutes, pas de l'argent. */
 	readonly mentions: CausesPartielle
 	readonly affaires: number
 }
@@ -277,12 +312,19 @@ export type Rapport = {
 const parRang = <T extends { readonly nom: string; readonly position: number }>(a: T, b: T): number =>
 	a.position - b.position || a.nom.localeCompare(b.nom, 'fr')
 
+/** La ligne d'un regroupement : ses balances par devise, mixte dès qu'une de ses affaires l'est (§4.4). */
+const regrouper = (affaires: readonly AffaireDuRapport[], vue: VueRentabilite): RentabiliteLigne =>
+	calculerLigne(
+		sommerParDevise(affaires.map((a) => a.montants)),
+		vue,
+		affaires.some((a) => a.rentabilite.plusieursDevises),
+	)
+
 /**
- * Range les lignes en un tableau par devise, chacun en track › channel › affaire avec ses sous-totaux.
+ * Range les lignes en UN tableau, track › channel › affaire, avec ses sous-totaux et son total en balance par devise.
  *
- * - Les devises suivent l'ordre alphabétique, EUR et CHF ne se mêlant jamais (§4.4).
- * - Un sous-total n'est **calculable** que si aucune de ses affaires ne mêle plusieurs devises : la somme de ses
- *   montants reste juste, mais une marge qui inclurait la moitié d'une affaire facturée ailleurs serait fausse.
+ * - Une affaire paraît une fois, ses montants rangés par devise ; elle « mêle plusieurs devises » quand la base en rend
+ *   plus d'une pour elle, et tout regroupement qui la contient aussi : leur taux est vide (§4.4).
  * - Un track ou un channel que la seconde lecture n'a pas nommé garde sa place, sous un nom vide, plutôt que de
  *   retrancher ses affaires du total (`docs/DESIGN_SYSTEM.md` §5.37).
  */
@@ -293,92 +335,74 @@ export function construireRapport(
 	noms: Noms,
 ): Rapport {
 	const lignes = retenirEtat(toutes, etat)
-	const devisesDeLAffaire = new Map<string, Set<string>>()
+	// Une affaire par chemin : la base rend une ligne par affaire et par devise, toutes sous le même chemin.
+	const parAffaire = new Map<string, LigneRentabilite[]>()
 	for (const l of lignes) {
-		const s = devisesDeLAffaire.get(l.cardId) ?? new Set<string>()
-		s.add(l.devise)
-		devisesDeLAffaire.set(l.cardId, s)
+		const cle = `${l.trackId}|${l.channelId}|${l.cardId}`
+		parAffaire.set(cle, [...(parAffaire.get(cle) ?? []), l])
 	}
-	const calculable = (cardId: string): boolean => (devisesDeLAffaire.get(cardId)?.size ?? 0) <= 1
-
-	const devises = [...new Set(lignes.map((l) => l.devise))].sort()
-	const tableaux = devises.map((devise): TableauDevise => {
-		const deLaDevise = lignes.filter((l) => l.devise === devise)
-		const trackIds = [...new Set(deLaDevise.map((l) => l.trackId))]
-		const tracks = trackIds
-			.map((trackId) => {
-				const nommeT = noms.tracks.get(trackId)
-				const duTrack = deLaDevise.filter((l) => l.trackId === trackId)
-				const channels = [...new Set(duTrack.map((l) => l.channelId))]
-					.map((channelId) => {
-						const nommeC = noms.channels.get(channelId)
-						const affaires = duTrack
-							.filter((l) => l.channelId === channelId)
-							.map((l): AffaireDuRapport => {
-								const a = noms.affaires.get(l.cardId)
-								return {
-									cardId: l.cardId,
-									titre: a?.titre ?? '',
-									genre: l.genre,
-									archivee: l.archivee,
-									montant: a !== undefined && a.devise === devise ? a.montant : null,
-									montants: l,
-									rentabilite: calculerRentabilite(l, vue, calculable(l.cardId)),
-									autresDevises: [...(devisesDeLAffaire.get(l.cardId) ?? [])].filter((d) => d !== devise).sort(),
-								}
-							})
-							.sort((x, y) => x.titre.localeCompare(y.titre, 'fr'))
-						return {
-							channelId,
-							nom: nommeC?.nom ?? '',
-							slug: nommeC?.slug ?? '',
-							position: nommeC?.position ?? Number.MAX_SAFE_INTEGER,
-							affaires,
-							sousTotal: calculerRentabilite(
-								sommerMontants(affaires.map((a) => a.montants)),
-								vue,
-								affaires.every((a) => a.rentabilite.calculable),
-							),
-						}
-					})
-					.sort(parRang)
-					.map(({ position: _p, ...c }): ChannelDuRapport => c)
-				const toutesAffaires = channels.flatMap((c) => c.affaires)
-				return {
-					trackId,
-					nom: nommeT?.nom ?? '',
-					slug: nommeT?.slug ?? '',
-					position: nommeT?.position ?? Number.MAX_SAFE_INTEGER,
-					channels,
-					sousTotal: calculerRentabilite(
-						sommerMontants(toutesAffaires.map((a) => a.montants)),
-						vue,
-						toutesAffaires.every((a) => a.rentabilite.calculable),
-					),
-				}
-			})
-			.sort(parRang)
-			.map(({ position: _p, ...t }): TrackDuRapport => t)
-		const toutesAffaires = tracks.flatMap((t) => t.channels.flatMap((c) => c.affaires))
+	const affaires = [...parAffaire.values()].map((ls) => {
+		const l = ls[0]!
+		const a = noms.affaires.get(l.cardId)
+		const montants: MontantsParDevise = new Map(ls.map((x) => [x.devise, x]))
 		return {
-			devise,
-			tracks,
-			total: calculerRentabilite(
-				sommerMontants(toutesAffaires.map((a) => a.montants)),
-				vue,
-				toutesAffaires.every((a) => a.rentabilite.calculable),
-			),
+			trackId: l.trackId,
+			channelId: l.channelId,
+			affaire: {
+				cardId: l.cardId,
+				titre: a?.titre ?? '',
+				genre: l.genre,
+				archivee: l.archivee,
+				montant: a !== undefined && a.montant !== null ? { valeur: a.montant, devise: a.devise } : null,
+				montants,
+				rentabilite: calculerLigne(montants, vue, montants.size > 1),
+			} satisfies AffaireDuRapport,
 		}
 	})
 
+	const tracks = [...new Set(affaires.map((x) => x.trackId))]
+		.map((trackId) => {
+			const nommeT = noms.tracks.get(trackId)
+			const duTrack = affaires.filter((x) => x.trackId === trackId)
+			const channels = [...new Set(duTrack.map((x) => x.channelId))]
+				.map((channelId) => {
+					const nommeC = noms.channels.get(channelId)
+					const duChannel = duTrack
+						.filter((x) => x.channelId === channelId)
+						.map((x) => x.affaire)
+						.sort((x, y) => x.titre.localeCompare(y.titre, 'fr'))
+					return {
+						channelId,
+						nom: nommeC?.nom ?? '',
+						slug: nommeC?.slug ?? '',
+						position: nommeC?.position ?? Number.MAX_SAFE_INTEGER,
+						affaires: duChannel,
+						sousTotal: regrouper(duChannel, vue),
+					}
+				})
+				.sort(parRang)
+				.map(({ position: _p, ...c }): ChannelDuRapport => c)
+			return {
+				trackId,
+				nom: nommeT?.nom ?? '',
+				slug: nommeT?.slug ?? '',
+				position: nommeT?.position ?? Number.MAX_SAFE_INTEGER,
+				channels,
+				sousTotal: regrouper(channels.flatMap((c) => c.affaires), vue),
+			}
+		})
+		.sort(parRang)
+		.map(({ position: _p, ...t }): TrackDuRapport => t)
+
 	const somme = sommerMontants(lignes)
 	return {
-		tableaux,
+		tracks,
+		total: regrouper(affaires.map((x) => x.affaire), vue),
 		mentions: {
 			recettesSansReel: somme.lignesRecetteSansReel,
 			coutsSansReel: somme.lignesCoutSansReel,
 			minutesNonValorisees: somme.minutesNonValorisees,
 		},
-		affaires: devisesDeLAffaire.size,
+		affaires: new Set(lignes.map((l) => l.cardId)).size,
 	}
 }

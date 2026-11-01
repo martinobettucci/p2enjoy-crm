@@ -3,6 +3,8 @@
 # @verifies docs/SPEC-recettes.md §7 (visibilité par la matrice de démonstration du seed §21.4 ; succès ; refus par la
 #           matrice ; refus par le CRM malgré la matrice ouverte — rapport `rentabilite_reservee`, lectrice qui écrit ;
 #           journal écrit) ; docs/SPEC-mcp.md §6.2, §7.1, §13 (preuves par outil)
+# @verifies CRM-126 (docs/BACKLOG.md) — tranche T2 : docs/SPEC-recettes.md §4.4 et §7 révisés (décision 810) — la balance
+#           par devise de …0c7, l'affaire à plusieurs devises du seed (docs/SPEC-seed.md §21.1)
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
 Le business developer porte la matrice du seed §21.4 — `recettes` consulter et ajouter, `budgets` et `temps` consulter.
@@ -24,6 +26,7 @@ from .test_integration_oauth import ESPACE_SEEDE, EXPLOITANTE, FARIDA, MCP, _jet
 
 DRISS = ("bizdev", "5eed0000-0000-4000-8000-000000000012")
 CARTE = "5eed0000-0000-4000-8000-0000000000c4"
+FORMATION = "5eed0000-0000-4000-8000-0000000000c7"  # l'affaire à plusieurs devises du seed (§21.1, CRM-126)
 NATURE = "Ligne MCP intégration"
 LIGNE_SEEDEE = "5eed0000-0000-4000-8000-0000000000f3"  # « Lot 1 — conception », ouverte, un réel (seed §21)
 INCONNUE = "5eed0000-0000-4000-8000-00000000ffff"
@@ -108,6 +111,21 @@ async def test_le_rapport_rendu_a_qui_administre_l_espace():
         rapport = (await client.call_tool("crm_profitability_report", {"workspace": "p2enjoy", "state": "won"})).structured_content
     assert rapport["total"] >= 1
     assert all(r["state"] == "won" for r in rapport["rows"])
+
+
+async def test_le_rapport_rend_la_balance_par_devise_de_l_affaire_mixte_du_seed():
+    # …0c7 « Formation Data & IA » : recettes en CHF, une ligne de coût sur un budget en EUR (docs/SPEC-seed.md §21.1).
+    async with Client(f"{MCP}/mcp", auth=await _jeton(EXPLOITANTE)) as client:
+        rapport = (
+            await client.call_tool("crm_profitability_report", {"workspace": "p2enjoy", "limit": 100})
+        ).structured_content
+    rangs = {r["currency"]: r for r in rapport["rows"] if r["card_id"] == FORMATION}
+    assert set(rangs) == {"CHF", "EUR"}
+    assert all(r["multi_currency"] is True for r in rangs.values())
+    assert rangs["CHF"]["actual"]["marge"] == 14000 and rangs["CHF"]["actual"]["taux"] is None
+    assert rangs["EUR"]["planned"]["couts"] == 800 and rangs["EUR"]["planned"]["marge"] <= -800
+    assert set(rapport["actual_totals_by_currency"]) >= {"CHF", "EUR"}
+    assert all("margin" in t for t in rapport["actual_totals_by_currency"].values())
 
 
 async def test_la_lectrice_qui_ajoute_est_refusee_par_le_crm():

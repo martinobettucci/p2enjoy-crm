@@ -1,6 +1,8 @@
 // @verifies CRM-108 (docs/BACKLOG.md) — tranche T3 : la règle de rentabilité et l'arborescence du rapport
-// @verifies docs/SPEC-recettes.md §4.1 à §4.4 (marge réelle et prévue, taux, partielle, plusieurs devises), §4.6 (filtre
-//           d'état), §5 (lecture des colonnes de la fonction), §6.3 (track › channel › affaire, sous-totaux, un tableau par
+// @verifies CRM-126 (docs/BACKLOG.md) — tranche T2 : la balance par devise dans un seul tableau (décision 810)
+// @verifies docs/SPEC-recettes.md §4.1 à §4.4 (marge réelle et prévue, taux, partielle ; révision CRM-126 : marge dans
+//           chaque devise, taux vide sur une ligne qui mêle plusieurs devises), §4.6 (filtre d'état), §5 (lecture des
+//           colonnes de la fonction), §6.3 (un seul tableau, track › channel › affaire, sous-totaux et total en balance par
 //           devise) ; docs/DESIGN_SYSTEM.md §5.60
 //
 // Les cas de la règle sont lus dans `mcp/tests/rentabilite_cas.json`, que le connecteur rejoue aussi : une divergence
@@ -25,7 +27,7 @@ type Cas = {
 	readonly nom: string
 	readonly montants: Montants
 	readonly vue: VueRentabilite
-	readonly calculable: boolean
+	readonly plusieursDevises: boolean
 	readonly attendu: Record<string, unknown>
 }
 
@@ -34,12 +36,12 @@ const CAS: readonly Cas[] = JSON.parse(
 ).cas
 
 describe('calculerRentabilite — les cas partagés avec le connecteur', () => {
-	it('lit au moins les sept cas de la règle', () => {
-		expect(CAS.length).toBeGreaterThanOrEqual(7)
+	it('lit au moins les neuf cas de la règle', () => {
+		expect(CAS.length).toBeGreaterThanOrEqual(9)
 	})
 	for (const cas of CAS) {
 		it(cas.nom, () => {
-			const r = calculerRentabilite(cas.montants, cas.vue, cas.calculable)
+			const r = calculerRentabilite(cas.montants, cas.vue, cas.plusieursDevises)
 			expect({
 				recettes: r.recettes,
 				couts: r.couts,
@@ -48,7 +50,6 @@ describe('calculerRentabilite — les cas partagés avec le connecteur', () => {
 				taux: r.taux,
 				partielle: r.partielle,
 			}).toEqual(cas.attendu)
-			expect(r.calculable).toBe(cas.calculable)
 		})
 	}
 })
@@ -127,45 +128,80 @@ describe('construireRapport', () => {
 		ligne({ cardId: 'a4', trackId: 't2', channelId: 'c3', devise: 'EUR', personnel: 300 }),
 	]
 
-	it('rend un tableau par devise, sans jamais additionner deux devises', () => {
+	const balances = (r: { readonly parDevise: readonly { devise: string; rentabilite: { marge: number | null } }[] }) =>
+		Object.fromEntries(r.parDevise.map((b) => [b.devise, b.rentabilite.marge]))
+
+	it('rend UN tableau dont le total porte une balance par devise, sans jamais additionner deux devises', () => {
 		const r = construireRapport(lignes, 'toutes', 'reel', NOMS)
-		expect(r.tableaux.map((t) => t.devise)).toEqual(['CHF', 'EUR'])
-		expect(r.tableaux[0]?.total.recettes).toBe(14000)
+		expect(r.tracks).toHaveLength(2)
+		expect(balances(r.total)).toEqual({ CHF: 14000, EUR: 4000 - 375 - 4800 + (0 - 880) + 163000 - 300 })
+		expect(r.total.parDevise.map((b) => b.devise)).toEqual(['CHF', 'EUR'])
+		expect(r.total.parDevise[0]?.rentabilite.recettes).toBe(14000)
 	})
 
 	it('range les tracks et les channels par position, et porte un sous-total à chaque niveau', () => {
-		const eur = construireRapport(lignes, 'toutes', 'reel', NOMS).tableaux[1]
-		expect(eur?.tracks.map((t) => t.nom)).toEqual(['Conseil & IA', 'Studio web'])
-		const studio = eur?.tracks[1]
+		const r = construireRapport(lignes, 'toutes', 'reel', NOMS)
+		expect(r.tracks.map((t) => t.nom)).toEqual(['Conseil & IA', 'Studio web'])
+		const studio = r.tracks[1]
 		expect(studio?.channels.map((c) => c.nom)).toEqual(['Refonte', 'Maintenance'])
-		expect(studio?.sousTotal.marge).toBe(4000 - 375 - 4800 + (0 - 880))
+		expect(balances(studio!.sousTotal)).toEqual({ EUR: 4000 - 375 - 4800 + (0 - 880) })
 		expect(studio?.sousTotal.partielle).toEqual({ recettesSansReel: 0, coutsSansReel: 1, minutesNonValorisees: 0 })
+		expect(studio?.sousTotal.plusieursDevises).toBe(false)
 	})
 
-	it('dit « non calculable » une affaire à plusieurs devises, et le sous-total qui la contient', () => {
+	it('rend une affaire à plusieurs devises UNE fois, une balance par devise, son taux vide', () => {
 		const r = construireRapport(lignes, 'toutes', 'reel', NOMS)
-		const conseilEur = r.tableaux[1]?.tracks[0]
-		const formation = conseilEur?.channels[0]?.affaires.find((a) => a.cardId === 'a4')
-		expect(formation?.rentabilite.calculable).toBe(false)
-		expect(formation?.rentabilite.marge).toBe(null)
-		expect(formation?.autresDevises).toEqual(['CHF'])
-		expect(conseilEur?.sousTotal.calculable).toBe(false)
-		expect(r.tableaux[1]?.total.marge).toBe(null)
+		const conseil = r.tracks[0]
+		const formations = conseil?.channels[0]?.affaires.filter((a) => a.cardId === 'a4')
+		expect(formations).toHaveLength(1)
+		const formation = formations![0]!
+		expect(formation.rentabilite.plusieursDevises).toBe(true)
+		expect(balances(formation.rentabilite)).toEqual({ CHF: 14000, EUR: -300 })
+		expect(formation.rentabilite.parDevise.every((b) => b.rentabilite.taux === null)).toBe(true)
 	})
 
-	it('ne montre le montant d’une affaire que dans le tableau de SA devise', () => {
+	it('vide le taux de tout regroupement qui contient une affaire mixte, et seulement de ceux-là', () => {
 		const r = construireRapport(lignes, 'toutes', 'reel', NOMS)
-		const dansEur = r.tableaux[1]?.tracks[0]?.channels[0]?.affaires.find((a) => a.cardId === 'a4')
-		const dansChf = r.tableaux[0]?.tracks[0]?.channels[0]?.affaires.find((a) => a.cardId === 'a4')
-		expect(dansEur?.montant).toBe(null)
-		expect(dansChf?.montant).toBe(28000)
+		expect(r.tracks[0]?.sousTotal.plusieursDevises).toBe(true)
+		expect(r.tracks[0]?.sousTotal.parDevise.every((b) => b.rentabilite.taux === null)).toBe(true)
+		expect(r.total.plusieursDevises).toBe(true)
+		// Le track « Studio web » ne contient que des affaires en EUR : son taux se calcule.
+		expect(r.tracks[1]?.sousTotal.parDevise[0]?.rentabilite.taux).toBe(Math.round(((4000 - 375 - 4800 - 880) / 4000) * 1000) / 10)
+	})
+
+	it('calcule le taux de chaque devise d’un regroupement d’affaires mono-devise en devises différentes', () => {
+		const r = construireRapport(
+			[
+				ligne({ cardId: 'a1', recettesReelles: 1000, coutsReels: 250 }),
+				ligne({ cardId: 'a4', devise: 'CHF', recettesReelles: 2000, coutsReels: 1000 }),
+			],
+			'toutes',
+			'reel',
+			NOMS,
+		)
+		expect(r.total.plusieursDevises).toBe(false)
+		expect(r.total.parDevise.map((b) => [b.devise, b.rentabilite.taux])).toEqual([
+			['CHF', 50],
+			['EUR', 75],
+		])
+	})
+
+	it('rend le montant d’une affaire dans sa devise, même quand la base ne rend aucune ligne dans celle-ci', () => {
+		const r = construireRapport([ligne({ cardId: 'a4', devise: 'EUR', personnel: 300 })], 'toutes', 'reel', NOMS)
+		expect(r.tracks[0]?.channels[0]?.affaires[0]?.montant).toEqual({ valeur: 28000, devise: 'CHF' })
+	})
+
+	it('balance la vue « Prévu » devise par devise', () => {
+		const r = construireRapport(lignes, 'toutes', 'prevu', NOMS)
+		const formation = r.tracks[0]?.channels[0]?.affaires.find((a) => a.cardId === 'a4')
+		expect(balances(formation!.rentabilite)).toEqual({ CHF: null, EUR: -300 })
 	})
 
 	it('filtre par état : seules les affaires gagnées', () => {
 		const r = construireRapport(lignes, 'gagnees', 'reel', NOMS)
 		expect(r.affaires).toBe(1)
-		expect(r.tableaux).toHaveLength(1)
-		expect(r.tableaux[0]?.tracks[0]?.channels[0]?.affaires[0]?.archivee).toBe(true)
+		expect(r.tracks).toHaveLength(1)
+		expect(r.tracks[0]?.channels[0]?.affaires[0]?.archivee).toBe(true)
 	})
 
 	it('compte les mentions toutes devises confondues', () => {
@@ -176,7 +212,7 @@ describe('construireRapport', () => {
 
 	it('garde la place d’un track que la seconde lecture n’a pas nommé', () => {
 		const r = construireRapport([ligne({ trackId: 'inconnu', channelId: 'c9' })], 'toutes', 'reel', NOMS)
-		expect(r.tableaux[0]?.tracks[0]?.nom).toBe('')
+		expect(r.tracks[0]?.nom).toBe('')
 		expect(r.affaires).toBe(1)
 	})
 })

@@ -5500,26 +5500,34 @@ ne change plus.
 
 ![Le titre du bloc « Temps passé » de la fiche](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/temps-passe.jpg)
 
-![Une ligne de l'écran Rentabilité : « Non calculable — plusieurs devises »](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/plusieurs-devises.jpg)
+![Une ligne de l'écran Rentabilité : une affaire en deux devises, une balance CHF et une balance EUR](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/plusieurs-devises.jpg)
 
 Pour un administrateur de l'espace, le bloc **« Rentabilité »** suit « Temps passé » : recettes, coûts, coût du
 personnel et marge, en **prévu** et en **réel**, et le taux de marge réelle. La marge est **recettes − coûts −
 personnel**. Une marge négative est écrite avec son signe, sur fond rouge. La mention **« partielle »** dit qu'il manque
 encore quelque chose — une recette ou un coût sans réel, du temps sans coût défini ; survolez-la pour savoir quoi.
 
-La marge prévue soustrait le temps **déjà passé** : le CRM ne prévoit pas le temps. Une affaire dont les montants sont
-dans plusieurs devises a une marge **« Non calculable — plusieurs devises »** : le CRM ne convertit pas les devises.
+La marge prévue soustrait le temps **déjà passé** : le CRM ne prévoit pas le temps.
+
+Chaque montant est suivi de sa devise. Une affaire dont les montants sont dans **plusieurs devises** — facturée en CHF,
+avec un coût payé en EUR, par exemple — a **une marge par devise**, l'une sous l'autre dans la même case : ce qu'elle
+rapporte en CHF, ce qu'elle coûte en EUR. Le CRM ne convertit pas les devises et ne les additionne jamais : lisez les
+deux balances ensemble. Son **taux de marge n'est pas affiché**, puisqu'il comparerait des montants de devises
+différentes.
 
 ### 29.3 L'écran « Rentabilité »
 
-![L'écran Rentabilité : un tableau par devise, par track, channel et affaire](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/tableau.jpg)
+![L'écran Rentabilité : un seul tableau, par track, channel et affaire, chaque montant suivi de sa devise](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/tableau.jpg)
 
 ![L'entrée « Rentabilité » de la barre latérale, après « Pilotage »](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/barre-laterale.jpg)
 
 ![L'écran Rentabilité ouvert par une lectrice : « Réservé aux administrateurs »](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/reserve-aux-administrateurs.jpg)
 
-Barre latérale ▸ **« Rentabilité »**, après « Pilotage ». L'onglet **« Vue d'ensemble »** rend un tableau par devise :
-chaque track, ses channels et leurs affaires, avec un sous-total à chaque niveau et le total. Les filtres :
+Barre latérale ▸ **« Rentabilité »**, après « Pilotage ». L'onglet **« Vue d'ensemble »** rend un seul tableau :
+chaque track, ses channels et leurs affaires, avec un sous-total à chaque niveau et le total. Quand plusieurs devises
+sont en jeu, chaque case donne **une valeur par devise**, l'une sous l'autre : le total montre ainsi une **balance
+EUR** et une **balance CHF**, jamais leur somme. Un sous-total qui contient une affaire en plusieurs devises n'affiche
+pas de taux de marge. Les filtres :
 
 - **« Du »** et **« Au »** retiennent les recettes réelles, les coûts réels et le temps par leur date ; les montants
   prévus portent toujours sur toute l'affaire ;
