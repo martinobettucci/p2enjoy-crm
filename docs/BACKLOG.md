@@ -17839,8 +17839,8 @@ changées par écart de pixels ; celles qui changent visiblement sont observées
 le tout est committé en un seul commit ; elle est jouée au moins avant chaque livraison en production (contrat de
 déploiement) ; (3) tests unitaires de l'aide (sans demande, unité nommée, renouvellement) et du tri ;
 `docs/DESIGN_SYSTEM.md` §11, `docs/DAT.md` (commandes de test), README et `docs/PROD_MIGRATIONS.md` révisés ;
-spécification écrite et committée avant le code. Question du connecteur : sans objet, outillage de test (proposé, à
-confirmer par le responsable).
+spécification écrite et committée avant le code. Question du connecteur : sans objet, outillage de test (confirmé par le responsable
+le 2026-11-01, décision 800).
 
 - [ ] **T1 — spécification** : la forme des deux demandes, le rapport de tri et son seuil, la place du renouvellement
       dans la préparation d'une livraison.
