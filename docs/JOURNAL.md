@@ -37762,3 +37762,22 @@ forme indiquée.
 
 **Conséquences** : `docs/DESIGN_SYSTEM.md` §5.54, `docs/SPEC-temps.md` §7.3 et §7.5 et le manuel §28.4 sont révisés.
 Un mois lointain demande plusieurs gestes, mais l'adresse y mène directement. Connecteur MCP : sans objet.
+
+### décision 802 — `CRM-111` T3 : une affaire rattachée aussi hors du track purgé survit, réduite à ses autres rattachements
+
+*2026-11-01, session interactive, arbitrage du responsable (option recommandée, « Elle survit, réduite »).* **Question**,
+posée avant T3 comme le prévoyait la décision 768 (point 5) : une affaire est rattachée à un channel A du track X et à
+un channel B d'un autre track ; X est purgé de la corbeille. Que devient l'affaire ? **Options** : elle survit, réduite ;
+elle est détruite partout ; la purge est refusée tant qu'elle est rattachée ailleurs.
+
+**Décision.** **Elle survit, réduite.** Seul son rattachement à A est détruit, avec le channel ; l'affaire vit dans B, avec
+ses commentaires, contacts, mails, coûts et recettes. Le prédicat partagé de la migration `0134` reste tel quel :
+`app.cartes_detruites_avec_channels` — une affaire est détruite avec un ensemble de channels lorsque **tous** ses
+rattachements y sont — et `app.affaire_detruite_avec_track`. Une dépense de l'affaire sur un budget de X **bloque** la
+purge, comme aujourd'hui (`docs/SPEC-corbeille.md` §9.1, INC-316) : elle se réaffecte avant.
+
+**Conséquences.** T3 n'a pas à changer la purge ; ses preuves (pgTAP et API) posent le cas — une affaire à deux
+rattachements, un track purgé — et constatent que l'affaire et son autre rattachement survivent, que sa dépense sur un
+budget du track bloque, et qu'une affaire dont tous les rattachements sont dans le track est détruite.
+`docs/SPEC-corbeille.md` §9.1 et `docs/SPEC-rattachements.md` §3.2 le disent. **Connecteur MCP** : sans objet propre —
+la purge n'est pas un outil du connecteur.

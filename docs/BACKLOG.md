@@ -17225,7 +17225,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       seed, scripts, pgTAP, API, E2E). Preuve : aucun changement visible, toute la suite existante verte, aucune
       ancienne signature au catalogue ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md` (retour arrière
       possible tant que chaque affaire n'a qu'un rattachement).
-- [ ] **T3 — rattacher et retirer** (§4, §5) : `attach_card` à l'étape initiale, `detach_card` réservé à
+- [ ] **T3 — rattacher et retirer** (§4, §5) *(préalable tranché : décision 802 — une affaire rattachée aussi hors d'un track purgé survit, réduite ; le prédicat de purge reste celui de la `0134`, et les preuves de T3 posent le cas)* : `attach_card` à l'étape initiale, `detach_card` réservé à
       l'administrateur et refusé sur le dernier rattachement ; événements `attached` et `detached` ; pgTAP ; API aux
       jetons réels (la lectrice ne voit pas un rattachement illisible ; un membre qui écrit un seul channel modifie la
       partie commune mais pas le bloc de l'autre ; un non-administrateur ne retire pas).

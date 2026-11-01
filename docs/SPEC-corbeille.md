@@ -906,8 +906,9 @@ définition suit exactement la purge (§8.3), qui détruit les affaires des chan
 dépense bloquante partagent un seul prédicat, `app.cartes_detruites_avec_channels(uuid[])` — une affaire est détruite avec
 un ensemble de channels lorsque **tous** ses rattachements y sont —, et `app.affaire_detruite_avec_track(card, track)`, qui
 l'applique aux channels d'un track. Tant qu'une affaire n'a qu'un rattachement, la règle rend exactement celle d'avant. Le
-cas d'une affaire rattachée aussi hors du track ne se présente qu'avec `CRM-111` T3 ; il est soumis au responsable avant
-T3, et ne changera que ce prédicat.
+cas d'une affaire rattachée aussi hors du track ne se présente qu'avec `CRM-111` T3. **Tranché (décision 802)** : elle
+**survit, réduite** — seul son rattachement au track purgé est détruit, avec le channel ; le prédicat reste tel quel, et
+une dépense de l'affaire sur un budget du track bloque la purge comme les autres.
 
 `public.trash_blocking_costs(p_track uuid)` les rend : identifiant de la ligne, libellé, estimé, réel, soldée ou non,
 l'affaire (identifiant, titre), le budget et l'occurrence actuels (identifiant, nom, clôturé ou non). `SECURITY

@@ -280,7 +280,8 @@ la purge passent au rattachement (décisions 768 et 770 ; `docs/SCHEMA.md` « Mi
 
 **Une affaire archivée** est une affaire dont **tous** les rattachements sont archivés (décision 639). La corbeille reste
 un geste de l'affaire entière : `deleted_at` est sur `cards`, et une affaire à la corbeille disparaît de tous ses
-channels.
+channels. **La purge d'un track ou d'un channel** détruit l'affaire seulement si **tous** ses rattachements y sont ; une affaire
+rattachée aussi ailleurs **survit, réduite** à ses autres rattachements (décision 802 ; `docs/SPEC-corbeille.md` §9.1).
 
 **[proposition] Les colonnes sont retirées de `cards`, pas conservées en miroir.** Une copie synchronisée par
 déclencheur serait une seconde vérité, qui mentirait dès qu'une affaire a deux rattachements.
