@@ -680,7 +680,7 @@ variable.** Part avec le prochain lot. Le constat : Réglages ▸ Modèles d'ema
 qui n'a qu'un contact rattaché ; le champ « Contact » le montre aussitôt. Une affaire à plusieurs contacts, ou sans
 contact, laisse « Aucun contact ». **Retour arrière** : relivrer la révision précédente de la webapp.
 
-### 2.29 `CRM-123`, décision 804 — le préfixe des adresses d'affaire, et la régénération (EN ATTENTE de la prochaine livraison)
+### 2.29 `CRM-123`, décision 804 — le préfixe des adresses d'affaire, et la régénération (EN ATTENTE : livrée avec la migration de `CRM-125` T2, tout `main` d'un seul lot, sans nouvel instantané — décision 812)
 
 `docs/SPEC-cards.md` §3.6 ; `docs/DESIGN_SYSTEM.md` §5.56. **Une migration, la 144** (sa ligne au §3.2), et la webapp de
 `main`. Aucune variable, aucun secret, aucune image : `mail-sync` et le connecteur ne changent pas.

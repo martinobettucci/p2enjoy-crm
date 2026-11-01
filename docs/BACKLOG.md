@@ -17958,6 +17958,8 @@ Question du connecteur : sans objet (décision 804).
       images, `scripts/verify-manual.sh` 167/167 ; `docs/PROD_MIGRATIONS.md` §2.2 et §2.29.
 - [P] **T4 — livraison en production et constat** : alias `app-*` en place, préfixe réglé, régénération, un message
       reçu à une adresse `app-…` et classé (`docs/PROD_MIGRATIONS.md` §2.29).
+      *Ordonnée par la décision 812 : elle attend la migration de `CRM-125` T2, puis part avec tout `main` d'un seul
+      lot, sans nouvel instantané.*
 
 ## Correctif arbitré le 2026-11-01 — INC-335 (décision 805)
 

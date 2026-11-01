@@ -38126,3 +38126,20 @@ interface aux quatre paliers, un message réellement envoyé à une adresse `app
   réglée entre sessions selon `CLAUDE.md` §5. Le seed modifié, laissé dans le checkout pendant que la migration en était
   sortie, a cassé une reconstruction de la session de `CRM-111` : tout le code exécutable de l'unité a ensuite été tenu
   hors du checkout jusqu'à sa fenêtre.
+
+### décision 812 — `CRM-123` T4 : la livraison attend la migration de `CRM-125` T2, puis part avec tout `main`, sans nouvel instantané
+
+*2026-11-01, session interactive, arbitrage du responsable.* **Question** : le responsable a demandé de livrer `CRM-123` en
+production. `scripts/spark/livrer.sh` livre tout `main`. Or `main` porte l'écran de `CRM-125` T3 (« Aperçu » d'un palier,
+« Prévisualiser la séquence »), qui appelle `public.render_mail_template_sample`, dont la migration (`CRM-125` T2) n'est
+pas encore écrite : livré ainsi, le bouton échouerait en production à chaque clic. **Options** : attendre la migration
+de `CRM-125` T2 et livrer un seul lot ; livrer `main` tel quel ; n'appliquer que la `0144`, la webapp précédente restant
+compatible mais sans l'écran du préfixe.
+
+**Décision : attendre `CRM-125` T2, puis livrer tout `main` d'un seul lot** — la `0144`, la migration de `CRM-125` T2 et
+les webapps de `CRM-123`, `CRM-124`, `CRM-126`, INC-332 et INC-333. **Sans nouvel instantané** : l'instantané existant est
+le filet, la fenêtre passe `--instantane-verifie` (comme les migrations 142 et 143).
+
+**Conséquences.** `CRM-123` reste `[P]`. La session qui pousse la migration de `CRM-125` T2 prévient la session qui livre ;
+la fenêtre suit la procédure du `docs/PROD_MIGRATIONS.md` §3.1 et les gestes du §2.29 — l'alias `app-*` créé par le
+responsable avant toute régénération.
