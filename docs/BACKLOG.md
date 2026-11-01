@@ -15172,10 +15172,11 @@ décrit la baseline réelle.
       une qui rougissait avant la correction.
 - [~] **MinIO depuis Chainguard, développement et cellule (INC-290, décision 681)** :
       *Ramenée `[~]` le 2026-11-01 (décision 697) : défaut constaté en production, INC-329 — l'image de Chainguard porte un fichier à l'UID 65532, que le démon rootless de la cellule (plage de 64534) ne peut pas extraire ; `minio` reste sur `quay.io`. Arbitrée par la décision 794 : image dérivée (décision 571).*
-      - [ ] **INC-329 — l'image MinIO dérivée** (décision 794) : construite sur le poste depuis l'image épinglée de
+      - [@] **INC-329 — l'image MinIO dérivée** (décision 794) : construite sur le poste depuis l'image épinglée de
         Chainguard, UID et GID ramenés dans la plage de la cellule ; chargée par `livrer.sh` si son identifiant y diffère ;
         `docker-compose.spark.yml` l'emploie pour `minio` et `minio-createbucket` ; `verify-spark.sh` §4 la construit et
         prouve qu'aucun fichier n'y sort de la plage ; contrat §2.18 révisé. Puis, sur instruction, le §2.18 rejoué.
+        *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 01:05 UTC — état avant : [ ]*
       *Reclassée `[P]` le 2026-10-25 (décision 705, décision 697) : implémentée et vérifiée en développement, il ne reste que la livraison et le constat du responsable en production.*
       `cgr.dev/chainguard/minio` épinglé par empreinte, une seule image pour `minio` et `minio-createbucket`, en
       `user: "0:0"` (aucune donnée de production à changer de propriétaire) ; Dockerfile `bitnamilegacy` retiré ;
