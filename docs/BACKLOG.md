@@ -17009,10 +17009,11 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       reconstruite, mutation tuée ; `verify-droits-fins.sh --rapide` rejoué jusqu'au bout **39/39, aucune anomalie**
       (06:42–08:08 UTC). La série complète des `verify-*.sh` n'est la Definition of Done d'aucune unité
       (`docs/CloudWorker.md` §2.1 *ter*, décision 553) ; les autres harnais qui rejouent une migration sont INC-304.
-- [ ] **T1 ter — INC-304, arbitrée le 2026-10-25 (décision 701)** : chaque harnais qui rejoue un fichier de migration
+- [@] **T1 ter — INC-304, arbitrée le 2026-10-25 (décision 701)** : chaque harnais qui rejoue un fichier de migration
       compare l'empreinte `pg_dump -s` de `public` et `app` avant et après lui, et reconstruit si elle diffère
       (`docs/SPEC-test-harness.md` §3.6) ; `verify-droits-fins.sh` garde la sortie de chaque sous-harnais et en cite la
       fin sur un échec. Les douze harnais d'INC-304 d'abord mesurés, puis corrigés là où ils laissent un résidu.
+      *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-11-01 11:20 UTC — état avant : [ ]*
 - [ ] **T2 — bascule, découpée en quatre étapes vertes (décision 705, option B)** ; chaque étape poussée laisse `main` vert, et
       aucune fonction n'expose jamais deux contrats à la fois (décision 661, tenue fonction par fonction) :
       - [x] **T2.1 — la table et la reprise** : `card_placements` (§3.1), une ligne par affaire reprise de `cards`,
