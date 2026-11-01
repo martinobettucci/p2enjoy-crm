@@ -17240,14 +17240,13 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       seed, scripts, pgTAP, API, E2E). Preuve : aucun changement visible, toute la suite existante verte, aucune
       ancienne signature au catalogue ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md` (retour arrière
       possible tant que chaque affaire n'a qu'un rattachement).
-- [ ] **T3 — rattacher et retirer** (§4, §5) *(préalable tranché : décision 802 — une affaire rattachée aussi hors d'un track purgé survit, réduite ; le prédicat de purge reste celui de la `0134`, et les preuves de T3 posent le cas)* : `attach_card` à l'étape initiale, `detach_card` réservé à
+- [@] **T3 — rattacher et retirer** (§4, §5) *(préalable tranché : décision 802 — une affaire rattachée aussi hors d'un track purgé survit, réduite ; le prédicat de purge reste celui de la `0134`, et les preuves de T3 posent le cas)* : `attach_card` à l'étape initiale, `detach_card` réservé à
       l'administrateur et refusé sur le dernier rattachement ; événements `attached` et `detached` ; pgTAP ; API aux
       jetons réels (la lectrice ne voit pas un rattachement illisible ; un membre qui écrit un seul channel modifie la
       partie commune mais pas le bloc de l'autre ; un non-administrateur ne retire pas).
-      *Question à poser au responsable avant le code de T3* : la purge d'un track qui porte l'un des rattachements d'une
-      affaire rattachée aussi ailleurs détruit-elle l'affaire, ou ne retire-t-elle que ses rattachements du track ? La
-      réponse fixe aussi le prédicat « dépense bloquante » de `CRM-077` (`docs/SPEC-corbeille.md` §9.1, pgTAP `0115`),
-      qui doit rester celui de la purge.
+      *Question posée et tranchée le 2026-11-01 (décision 802)* : l'affaire survit, réduite à ses autres rattachements ;
+      le prédicat de purge et de dépense bloquante reste celui de la `0134`.
+      *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-11-01 18:52 UTC — état avant : [ ]*
 - [ ] **T4 — lectures à plusieurs rattachements** (§6, §9) : entonnoir, affaires figées et relances, Ma journée,
       recherche, temps valorisé ; pgTAP et API.
 - [ ] **T5 — rentabilité ventilée** (§6) : une ligne par rattachement × devise, colonne `shared`, total compté une fois ;
