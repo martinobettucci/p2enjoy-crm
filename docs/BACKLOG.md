@@ -6829,7 +6829,7 @@ reste `[~]` pour les écarts ci-dessus, tous nommés et tous portés par une uni
   suivante devrait défaire serait pire que l'absence, et une assertion le fige.
 - **Aucune purge** : un message ingéré reste, et sa suppression relève d'une unité RGPD.
 
-### CRM-055 — Classement assisté `[x]`
+### CRM-055 — Classement assisté `[~]`
 *Soldée `[x]` le 2026-10-25 (décision 705, remise du backlog à l'état réel) : tous ses points sont cochés, tranche 2 (déclassement) comprise — fonction, pgTAP, API aux jetons réels, surface, E2E, captures, harnais, documentation ; les écarts que son texte invoquait sont livrés.*
 Les quatre règles, dont la suggestion non classante.
 **DoD** : pytest par règle ; E2E de classement manuel ; si `CRM-060` n'est pas livré, règle 3
@@ -6967,6 +6967,12 @@ classement manuel ; si `CRM-060` n'est pas livré, règle 3 désactivée et docu
 **Les trois sont tenues** — la preuve « par règle » vit en pgTAP plutôt qu'en pytest, parce que les
 règles vivent en base et non dans le service, ce qui est le choix d'architecture du produit depuis
 `CRM-010`. L'unité reste `[~]` pour les deux écarts ci-dessus.
+
+- [ ] **Tranche INC-326 — le classement automatique écrit `mail_attachments.card_id`** (décision 795) : les règles 1 et 2
+      de la relève posent aussi la colonne sur les pièces du message classé, comme le classement manuel et le
+      déclassement (0109) ; une migration rattrape les pièces existantes d'un message classé. pgTAP (classement à la
+      relève, rattrapage), API, unitaires du fil qui peuvent revenir à la colonne ; `docs/SCHEMA.md`, contrat de
+      déploiement. Connecteur MCP : sans objet.
 
 ### CRM-056 — Dossiers IMAP imbriqués `[x]`
 Création, assainissement, renommage, labels Gmail, `mail_folder_map`.
@@ -15096,7 +15102,7 @@ harnais propre à cette unité.
 `docs/PROD-SERVER.md` et intègre en prod le SSO `docs/SSO.md` » — `docs/JOURNAL.md` décisions 567 à
 569. Les deux unités se livrent dans cet ordre : le SSO de production suppose une production.*
 
-### CRM-090 — Production sur la cellule Spark « crm » `[P]`
+### CRM-090 — Production sur la cellule Spark « crm » `[~]`
 *Créée le 2026-09-23 — décision 567. Motif : la production n'a jamais été déployée, et sa cible réelle
 contredit l'assemblage de production sur cinq points mesurés — ports, TLS, stockage, variables,
 mémoire.*
@@ -15165,7 +15171,11 @@ décrit la baseline réelle.
       changeait à chaque construction. Harnais porté à **78 vérifications, aucune anomalie**, dont
       une qui rougissait avant la correction.
 - [~] **MinIO depuis Chainguard, développement et cellule (INC-290, décision 681)** :
-      *Ramenée `[~]` le 2026-11-01 (décision 697) : défaut constaté en production, INC-329 — l'image de Chainguard porte un fichier à l'UID 65532, que le démon rootless de la cellule (plage de 64534) ne peut pas extraire ; `minio` reste sur `quay.io`. Issue à arbitrer : image dérivée (décision 571) ou plage élargie.*
+      *Ramenée `[~]` le 2026-11-01 (décision 697) : défaut constaté en production, INC-329 — l'image de Chainguard porte un fichier à l'UID 65532, que le démon rootless de la cellule (plage de 64534) ne peut pas extraire ; `minio` reste sur `quay.io`. Arbitrée par la décision 794 : image dérivée (décision 571).*
+      - [ ] **INC-329 — l'image MinIO dérivée** (décision 794) : construite sur le poste depuis l'image épinglée de
+        Chainguard, UID et GID ramenés dans la plage de la cellule ; chargée par `livrer.sh` si son identifiant y diffère ;
+        `docker-compose.spark.yml` l'emploie pour `minio` et `minio-createbucket` ; `verify-spark.sh` §4 la construit et
+        prouve qu'aucun fichier n'y sort de la plage ; contrat §2.18 révisé. Puis, sur instruction, le §2.18 rejoué.
       *Reclassée `[P]` le 2026-10-25 (décision 705, décision 697) : implémentée et vérifiée en développement, il ne reste que la livraison et le constat du responsable en production.*
       `cgr.dev/chainguard/minio` épinglé par empreinte, une seule image pour `minio` et `minio-createbucket`, en
       `user: "0:0"` (aucune donnée de production à changer de propriétaire) ; Dockerfile `bitnamilegacy` retiré ;

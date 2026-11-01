@@ -37589,3 +37589,17 @@ INC-329, la contrainte de la décision 571 retrouvée. La production est relue i
 pas de MinIO, sont appliqués par `compose_prod up -d --no-deps --wait realtime kong caddy`, puis vérifiés (contrat, §8).
 Le §2.18 est bloqué, et l'entrée INC-290 du backlog ramenée `[~]` avec le défaut nommé. L'issue d'INC-329 (image dérivée
 ou plage élargie) revient au responsable.
+
+### Deux arbitrages : INC-329 et INC-326 (2026-11-01, décisions 794 et 795)
+
+**Décision 794, du responsable, en séance** (« Image dérivée ») : INC-329 se résout comme Realtime (décision 571). Une
+image MinIO **dérivée** de `cgr.dev/chainguard/minio@sha256:7329…` est construite sur le poste qui livre, avec ses
+identifiants ramenés dans la plage de la cellule. `livrer.sh` la charge dans la cellule si son identifiant y diffère, et
+`verify-spark.sh` la construit et l'inspecte : aucun UID ni GID hors de la plage. Le §2.18 sera rejoué avec elle, sur
+instruction. Connecteur MCP : sans objet (aucune fonctionnalité). Tranche de backlog : `CRM-090`, INC-290 / INC-329.
+
+**Décision 795, du responsable, en séance** (« Écrire et rattraper ») : INC-326 se résout en rendant la colonne exacte.
+Le classement automatique (règles 1 et 2, à la relève) écrit aussi `mail_attachments.card_id` des pièces du message
+classé, comme le font déjà le classement manuel et le déclassement (0109). Une migration rattrape les pièces existantes
+dont le message est classé. Connecteur MCP : sans objet (il lit par le message ; aucune case ni outil). Tranche de
+backlog : `CRM-055`, INC-326.

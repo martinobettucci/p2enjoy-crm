@@ -8282,6 +8282,9 @@ et l'archivage d'un envoi la pose (0106). La colonne est donc incomplète sur le
 aussi la colonne, et qu'une migration rattrape les pièces existantes — ou retirer la colonne, que plus rien ne lit ; à
 arbitrer. Connecteur MCP : sans objet (il lit par le message).
 
+**Arbitrée le 2026-11-01, décision 795** : écrire et rattraper — le classement automatique écrit la colonne, une
+migration rattrape l'existant (tranche `CRM-055` INC-326).
+
 ### INC-327 — `scripts/manuel/publier.sh --spark` ne s'exécute pas dans la cellule : il exige `jq` et ne fusionne pas les fichiers injectés
 
 *Constaté le 2026-11-01, à la fenêtre de la décision 792 (`CRM-117` T6).* Joué dans la cellule après la livraison, le
@@ -8326,3 +8329,5 @@ ciblée de `realtime`, `kong` et `caddy`. **Issue proposée**, à arbitrer par l
 construite sur le poste et chargée dans la cellule comme celle de Realtime (décision 571), avec ses UID ramenés dans la
 plage, et une preuve qui l'inspecte (`verify-spark.sh` §4) ; ou (b) élargir la plage subordonnée de la cellule, un
 geste du propriétaire de l'hôte. Connecteur MCP : sans objet.
+
+**Arbitrée le 2026-11-01, décision 794** : (a), l'image dérivée (tranche `CRM-090`, INC-290 / INC-329).
