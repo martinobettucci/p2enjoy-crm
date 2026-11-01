@@ -18022,10 +18022,12 @@ Question du connecteur : sans objet (décision 809).
 
 - [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-01 : décision 809,
       `docs/SPEC-modeles-emails.md` §14.
-- [ ] **T2 — la base** : migration de `public.render_mail_template_sample`, pgTAP, harnais API, `docs/SCHEMA.md`,
+- [@] **T2 — la base** : migration de `public.render_mail_template_sample`, pgTAP, harnais API, `docs/SCHEMA.md`,
       `docs/DAT.md`, `docs/PROD_MIGRATIONS.md`.
-- [ ] **T3 — l'écran** : bouton par palier, aperçu de la séquence, unitaires, E2E, captures, `docs/DESIGN_SYSTEM.md`,
+      *Prise en charge : session interactive 2026-11-01 14:58 UTC depuis 2026-11-01 18:44 UTC — T2 attend son créneau sur la pile partagée, après 51 ; état avant : [ ]*
+- [@] **T3 — l'écran** : bouton par palier, aperçu de la séquence, unitaires, E2E, captures, `docs/DESIGN_SYSTEM.md`,
       manuel, changelog.
+      *Prise en charge : session interactive 2026-11-01 14:58 UTC depuis 2026-11-01 18:44 UTC — état avant : [ ]*
 - [ ] **T4 — livraison en production et constat** : migration appliquée, un aperçu constaté.
 
 ## Demande du 2026-11-01 — une balance par devise dans la rentabilité (décision 810)
