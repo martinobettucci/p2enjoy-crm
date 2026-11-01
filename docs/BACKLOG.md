@@ -17785,7 +17785,8 @@ campagnes. Question du connecteur : aucune fonctionnalité nouvelle (décision 7
       (`connecteur-administration`, `defaut-archivage-workflow`, `import-affaires`, `export-csv`, `webhooks`), 21/21 ;
       pytest du connecteur : un 404 et un 409 au corps réel deviennent des refus nommés, le même corps en 500 restait
       générique (36/36) ; `docs/SPEC-plateforme.md` §6.1, `docs/SPEC-workflow-engine.md`, `docs/SPEC-refus-404.md` §4.
-- [ ] **T4 — livraison en production et constat.**
+- [@] **T4 — livraison en production et constat.** Ordonnée par la décision 798.
+      *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 — état avant : [ ]*
 
 ### CRM-121 — Dependabot surveille les dépendances Python `[P]`
 Arbitrage du responsable du 2026-10-27 (décision 763). GitHub n'alerte que sur npm : aucun `.github/dependabot.yml`, et

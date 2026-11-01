@@ -37651,3 +37651,10 @@ seul le statut change.
 
 **Conséquences** : `docs/SPEC-refus-404.md` ; T2 (migration, pgTAP) et T3 (preuves API, connecteur, documentation)
 suivent.
+
+### Livraison de la 143, sans nouvel instantané (2026-11-01, décision 798)
+
+**Décision 798, du responsable, en séance** : « Oui, sans nouvel instantané ». La migration `0143` (`CRM-120`) part
+maintenant, par `livrer.sh -- --migrate --instantane-verifie`. Elle ne touche aucune donnée : elle redéfinit vingt-huit
+fonctions, et le corps des réponses reste le même. Son retour arrière est de rejouer les définitions précédentes
+(`docs/SCHEMA.md`, « Migration `0143` »).
