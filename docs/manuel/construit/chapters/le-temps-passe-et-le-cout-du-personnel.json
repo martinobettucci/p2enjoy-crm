@@ -316,7 +316,7 @@
 			"src": "le-temps-passe-et-le-cout-du-personnel/toute-l-equipe.jpg",
 			"alt": "Le rapport mensuel de « Toute l'équipe »",
 			"width": 1192,
-			"height": 305
+			"height": 315
 		},
 		{
 			"type": "paragraph",
@@ -652,7 +652,7 @@
 			"type": "image",
 			"src": "le-temps-passe-et-le-cout-du-personnel/personnel-du-track.jpg",
 			"alt": "Le bloc « Coût du personnel » sous les coûts d'un track",
-			"width": 991,
+			"width": 992,
 			"height": 160
 		},
 		{

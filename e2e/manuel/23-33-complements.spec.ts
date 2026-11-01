@@ -2,6 +2,8 @@
 //       états vides, les commandes photographiées avant leur clic, les issues du journal des appels
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitres 23 à 33 ; docs/SPEC-costs.md, docs/SPEC-temps.md,
 //       docs/SPEC-recettes.md, docs/SPEC-plateforme.md §7, docs/SPEC-mcp.md §9
+// @spec CRM-126 (docs/BACKLOG.md) — tranche T2 : l'image « plusieurs-devises » montre la balance par devise de …0c7
+//       (docs/SPEC-recettes.md §4.4 et §6.3 révisés)
 //
 // Rien du seed ne change. Ce que l'écran écrit est défait : le réel saisi pour montrer « Enregistré » est retiré par la
 // clé de service, avec le track et l'espace posés pour montrer un écran vide. Les refus du serveur sont obtenus par un
@@ -271,8 +273,14 @@ test('le temps : ajouter une affaire, une journée trop longue, le rapport de l�
 
 	await page.goto('/tracks/studio-web/couts')
 	const personnel = page.getByText('Coût du personnel', { exact: true }).first()
+	// Le mois précédent, que le seed remplit : l'image montre les trois commandes de la navigation de mois (INC-333).
+	const serie = page.getByTestId('personnel-track')
+	await serie.getByRole('button', { name: 'Mois précédent' }).click()
+	const ceMois = serie.getByRole('button', { name: 'Ce mois-ci' })
+	await expect(ceMois).toBeVisible()
+	await expect(page.getByTestId('personnel-ligne').first()).toBeVisible()
 	await personnel.scrollIntoViewIfNeeded()
-	await illustrer(page, { chapitre: TEMPS, section: 'le-cout-du-personnel-a-cote-des-couts', nom: 'personnel-du-track', cibles: [personnel, page.getByTestId('personnel-ligne').first()] })
+	await illustrer(page, { chapitre: TEMPS, section: 'le-cout-du-personnel-a-cote-des-couts', nom: 'personnel-du-track', cibles: [personnel, ceMois, page.getByTestId('personnel-ligne').first()] })
 	await page.goto(FICHE)
 	const temps = page.getByTestId('temps-card')
 	await illustrer(page, { chapitre: TEMPS, section: 'le-cout-du-personnel-a-cote-des-couts', nom: 'temps-de-l-affaire', cibles: [temps] })
@@ -294,8 +302,9 @@ test('les recettes et la rentabilité : le réel d’une recette, l’écran, l�
 	await page.goto('/rentabilite')
 	const nav = page.getByRole('navigation', { name: 'Navigation principale' })
 	await illustrer(page, { chapitre: RECETTES, section: 'l-ecran-rentabilite', nom: 'barre-laterale', cibles: [nav.getByRole('link', { name: 'Pilotage' }), nav.getByRole('link', { name: 'Rentabilité' })] })
-	const plusieurs = page.getByText('Non calculable — plusieurs devises').first()
-	await si(plusieurs, () => illustrer(page, { chapitre: RECETTES, section: 'la-rentabilite-d-une-affaire', nom: 'plusieurs-devises', cibles: [plusieurs.locator('xpath=ancestor::tr[1]')] }))
+	// L'affaire à plusieurs devises du seed (…0c7, docs/SPEC-seed.md §21.1) : une balance par devise sur une ligne (CRM-126).
+	const plusieurs = page.locator('[data-testid="rentab-ligne-affaire"][data-card="5eed0000-0000-4000-8000-0000000000c7"]')
+	await si(plusieurs, () => illustrer(page, { chapitre: RECETTES, section: 'la-rentabilite-d-une-affaire', nom: 'plusieurs-devises', cibles: [plusieurs] }))
 	const onglet = page.getByRole('tab', { name: /À saisir/ }).or(page.getByRole('link', { name: /À saisir/ })).first()
 	await illustrer(page, { chapitre: RECETTES, section: 'l-onglet-a-saisir', nom: 'onglet-a-saisir', cibles: [onglet] })
 	await onglet.click()
