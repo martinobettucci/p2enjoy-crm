@@ -18036,5 +18036,6 @@ nouvelle (décision 810).
 
 - [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-01 : décision 810,
       `docs/SPEC-recettes.md` (révision `CRM-126`), `docs/DESIGN_SYSTEM.md` §5.60, `docs/SPEC-seed.md` §21.1.
-- [ ] **T2 — règle, écrans, connecteur et preuves** : tout le reste de la DoD hors production.
+- [@] **T2 — règle, écrans, connecteur et preuves** : tout le reste de la DoD hors production.
+      *Prise en charge : session interactive 2026-11-01 15:06 UTC depuis 2026-11-01 15:06 UTC — état avant : [ ]*
 - [ ] **T3 — livraison en production et constat** : webapp et service `mcp` redéployés, une affaire mixte constatée.
