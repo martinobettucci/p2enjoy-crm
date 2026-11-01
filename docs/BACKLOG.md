@@ -15102,7 +15102,7 @@ harnais propre à cette unité.
 `docs/PROD-SERVER.md` et intègre en prod le SSO `docs/SSO.md` » — `docs/JOURNAL.md` décisions 567 à
 569. Les deux unités se livrent dans cet ordre : le SSO de production suppose une production.*
 
-### CRM-090 — Production sur la cellule Spark « crm » `[~]`
+### CRM-090 — Production sur la cellule Spark « crm » `[P]`
 *Créée le 2026-09-23 — décision 567. Motif : la production n'a jamais été déployée, et sa cible réelle
 contredit l'assemblage de production sur cinq points mesurés — ports, TLS, stockage, variables,
 mémoire.*
@@ -15170,13 +15170,17 @@ décrit la baseline réelle.
 - [x] **Image Realtime transférée seulement si son contenu change** (décision 577) : l'identifiant
       changeait à chaque construction. Harnais porté à **78 vérifications, aucune anomalie**, dont
       une qui rougissait avant la correction.
-- [~] **MinIO depuis Chainguard, développement et cellule (INC-290, décision 681)** :
+- [P] **MinIO depuis Chainguard, développement et cellule (INC-290, décision 681)** :
+      *Livrée le 2026-11-01 avec l'image dérivée d'INC-329 (décisions 793 et 794) : `minio` sain sur `p2enjoy/minio-spark`, `minio-createbucket` terminé en `0`, un objet existant relu à l'identique ; reste le constat du responsable — une pièce jointe se télécharge depuis l'application.*
       *Ramenée `[~]` le 2026-11-01 (décision 697) : défaut constaté en production, INC-329 — l'image de Chainguard porte un fichier à l'UID 65532, que le démon rootless de la cellule (plage de 64534) ne peut pas extraire ; `minio` reste sur `quay.io`. Arbitrée par la décision 794 : image dérivée (décision 571).*
-      - [@] **INC-329 — l'image MinIO dérivée** (décision 794) : construite sur le poste depuis l'image épinglée de
-        Chainguard, UID et GID ramenés dans la plage de la cellule ; chargée par `livrer.sh` si son identifiant y diffère ;
+      - [P] **INC-329 — l'image MinIO dérivée** (décision 794) : construite sur le poste depuis l'image épinglée de
+        Chainguard, UID et GID ramenés dans la plage de la cellule ; chargée par `livrer.sh` si son contenu y diffère ;
         `docker-compose.spark.yml` l'emploie pour `minio` et `minio-createbucket` ; `verify-spark.sh` §4 la construit et
-        prouve qu'aucun fichier n'y sort de la plage ; contrat §2.18 révisé. Puis, sur instruction, le §2.18 rejoué.
-        *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 01:05 UTC — état avant : [ ]*
+        prouve qu'aucun fichier n'y sort de la plage ; contrat §2.18 révisé. **Fait** (`a2bf617c`) : `verify-spark.sh`
+        rouge avant (4 anomalies), 121/121 après ; `verify-noms-conteneurs.sh` 12/12. **Livré le 2026-11-01** (décision
+        793) : l'image chargée dans la cellule sans erreur d'extraction, `minio` recréé et sain en
+        `RELEASE.2026-10-23T20-06-51Z`, `minio-createbucket` en `0`, `contents.json` du manuel relu à l'identique (200,
+        30 495 octets) ; `verifier.sh` 33/34 (le compteur antérieur de `rest`). Reste le constat du responsable.
       *Reclassée `[P]` le 2026-10-25 (décision 705, décision 697) : implémentée et vérifiée en développement, il ne reste que la livraison et le constat du responsable en production.*
       `cgr.dev/chainguard/minio` épinglé par empreinte, une seule image pour `minio` et `minio-createbucket`, en
       `user: "0:0"` (aucune donnée de production à changer de propriétaire) ; Dockerfile `bitnamilegacy` retiré ;

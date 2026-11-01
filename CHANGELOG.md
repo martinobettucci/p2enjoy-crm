@@ -13,13 +13,23 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### INC-329 — une image MinIO dérivée pour la cellule de production
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-01 — MinIO, Kong, Caddy et Realtime (décisions 793 et 794)
+
+Cellule Spark `crm`, révision `a2bf617c`. Kong, Caddy et Realtime recréés (contrat de déploiement §2.21, §2.22) ; MinIO
+sur l'image dérivée (§2.18) après INC-329. **Vérifié, en lecture seule** : délai amont de Kong à 3 s, révisions
+`crm-115` et `crm-001`, alias de Realtime résolu ; `minio` sain en `RELEASE.2026-10-23T20-06-51Z`, bucket recréé sans
+erreur, un objet existant relu à l'identique ; `verifier.sh` 33/34. **Non constaté** : le temps réel à travers Kong, une
+journée sans `502`, une pièce jointe téléchargée depuis l'application.
+
+#### INC-329 — une image MinIO dérivée pour la cellule de production
 
 - La cellule emploie une image MinIO dérivée de celle de Chainguard (`p2enjoy/minio-spark`), dont le compte `nonroot`
   est renuméroté dans la plage d'identifiants qu'elle sait représenter ; `scripts/spark/livrer.sh` la construit et la
   transfère, comme celle de Realtime. Sans changement en développement.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-01 — migrations 106 à 141, la webapp de `main`, les images `mcp` et `mail-sync`, le manuel
 

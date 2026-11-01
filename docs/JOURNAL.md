@@ -37603,3 +37603,9 @@ Le classement automatique (règles 1 et 2, à la relève) écrit aussi `mail_att
 classé, comme le font déjà le classement manuel et le déclassement (0109). Une migration rattrape les pièces existantes
 dont le message est classé. Connecteur MCP : sans objet (il lit par le message ; aucune case ni outil). Tranche de
 backlog : `CRM-055`, INC-326.
+
+**INC-329 corrigée et livrée (2026-11-01, décisions 793 et 794)** : `supabase/docker/minio-spark/Dockerfile` (`nonroot`
+renuméroté en 64532 dans une étape Alpine épinglée, une couche) ; `verify-spark.sh` rouge puis 121/121 ; `a2bf617c`.
+Livrée par `livrer.sh --sans-lancer` : l'image s'est chargée dans la cellule sans l'erreur d'extraction. `minio` et
+`minio-createbucket` ont été recréés seuls ; un objet existant se relit à l'identique, et `verifier.sh` est à 33/34. Les
+§2.18, §2.21 et §2.22 sont donc accomplis. `CRM-090` revient `[P]` : le constat du responsable reste à faire.
