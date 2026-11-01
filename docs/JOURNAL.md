@@ -37716,3 +37716,9 @@ chapitre, et le secret qu'elle porte est détruit avec la base de développement
 
 **Conséquences** : rien à révoquer. La fermeture des deux alertes et le sort de l'historique public sont soumis au
 responsable (INC-330).
+
+**Vérifications (2026-11-01)** : unitaires de `scripts/manuel`, 3 rouges puis 44/44 ; `verify-manual` rouge sur le
+manifeste d'avant, puis 167 contrôles sans anomalie, contre-épreuve conforme ; scénario « le secret de signature » rejoué
+(1/1) sur le serveur de la campagne `CRM-122` T2, avec son accord, ses sorties Playwright hors de `e2e/`. Le rejeu a
+réécrit les deux images du secret avec une nouvelle valeur aléatoire, aussitôt détruite avec le webhook. Elles sont
+rendues à leur version committée, pour ne pas inscrire une valeur de plus dans l'historique public.

@@ -11254,8 +11254,7 @@
 				"Copiez ce secret maintenant",
 				"Copiez ce secret maintenant C'est le secret de signature du webhook « tst-crm073 Comptabilité ». Il ne sera plus affiché : l'outil qui reçoit s'en sert pour vérifier la signature.",
 				"J'ai copié le secret",
-				"Secret de signature",
-				"whsec_f98b8b5fb789449baec4195684d5ac21e7055e991d143c9cbec1a83181876d1f"
+				"Secret de signature"
 			]
 		},
 		{

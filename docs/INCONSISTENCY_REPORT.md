@@ -8369,7 +8369,9 @@ Aucune n'a été produite par la production, où chaque secret est tiré au hasa
 Aucun compte Stripe n'est en jeu : le CRM n'emploie pas Stripe. **Rien n'est donc à révoquer ni à faire tourner.**
 
 **Corrigé dans le dépôt** (choix de l'agent, `docs/SPEC-manual.md` §11.4) : `fusionnerManifeste` n'inscrit aucun libellé
-de forme secrète, le manifeste est purgé, et le contrôle 5 de `scripts/verify-manual.sh` relit le manifeste.
+de forme secrète, le manifeste est purgé, et le contrôle 5 de `scripts/verify-manual.sh` relit le manifeste. Prouvé le
+2026-11-01. Les unitaires et la preuve du manuel sont rouges avant la correction et verts après. Rejoué dans le
+navigateur, le scénario relève le champ du secret, et le manifeste ne le retient pas (tranche close, `docs/BACKLOG.md`).
 
 **Reste à l'arbitrage du responsable** :
 1. **Les deux alertes GitHub.** Issue proposée : les fermer avec la raison « faux positif ». Ce n'est pas un secret

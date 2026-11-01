@@ -1,6 +1,8 @@
 // @verifies CRM-117 (docs/BACKLOG.md) — tranche T4.0 : la découpe, le manifeste et la preuve « un élément cité, une image »
 // @verifies docs/SPEC-manual.md §11.1 (strict minimum, pleine page en tête de chapitre), §11.2 (orpheline, absente,
 //           élément cité sans image), §11.3 (les exceptions), §11.4 (le contrat technique)
+// @verifies INC-330 (docs/BACKLOG.md, tranche de CRM-117) — docs/SPEC-manual.md §11.4 (le manifeste ne retient aucun
+//           secret), §16 (contrôle 5)
 //
 // Le module est pur : chaque cas lui donne un manuel, un manifeste ou un catalogue, et lit ce qu'il rend.
 
@@ -9,10 +11,12 @@ import {
 	cadrer,
 	controlerIllustration,
 	controlerImages,
+	controlerSecretsManifeste,
 	elementsCites,
 	exceptionsDeLaSpecification,
 	fusionnerManifeste,
 	normaliserLibelle,
+	ressembleAUnSecret,
 	valeursInterface,
 	type EntreeManifeste,
 } from './images.mjs'
@@ -81,6 +85,34 @@ describe('fusionnerManifeste (§11.4)', () => {
 		const apres = fusionnerManifeste(avant, [image('naviguer/b.jpg', 'les-onglets', ['Fermer l’aide', '  Fermer   l’aide ', ''])])
 		expect(apres.images.map((i) => i.fichier)).toEqual(['naviguer/a.jpg', 'naviguer/b.jpg'])
 		expect(apres.images[1]).toMatchObject({ section: 'les-onglets', libelles: ["Fermer l'aide"] })
+	})
+})
+
+// Des valeurs de forme secrète, composées à l'exécution : aucune n'est écrite en toutes lettres dans le dépôt.
+const WEBHOOK = `whsec_${'3f'.repeat(32)}`
+const JWT = `eyJ${'a'.repeat(20)}.${'b'.repeat(20)}.${'c'.repeat(20)}`
+const HEXA = '0123456789abcdef'.repeat(2)
+
+describe('le manifeste ne retient aucun secret (§11.4, INC-330)', () => {
+	it('reconnaît un secret de webhook, un JWT, 32 chiffres hexadécimaux, et laisse les libellés', () => {
+		for (const secret of [WEBHOOK, JWT, HEXA, `Secret : ${WEBHOOK}`]) expect(ressembleAUnSecret(secret), secret.slice(0, 6)).toBe(true)
+		for (const libelle of ['Secret de signature', 'whsec_', 'Copier le secret', '0123456789abcdef', '1f0c6a2e-9b1d-4c3a-8e2f-5d6b7a8c9d0e'])
+			expect(ressembleAUnSecret(libelle), libelle).toBe(false)
+	})
+
+	it('fusionnerManifeste n’inscrit aucun libellé de forme secrète, et purge les entrées déjà là', () => {
+		const avant = { images: [image('naviguer/ancienne.jpg', null, ['Secret de signature', WEBHOOK])] }
+		const apres = fusionnerManifeste(avant, [image('naviguer/neuve.jpg', 'les-onglets', ['Copier le secret', WEBHOOK, JWT, HEXA])])
+		expect(apres.images.map((i) => i.libelles)).toEqual([['Secret de signature'], ['Copier le secret']])
+	})
+
+	it('controlerSecretsManifeste nomme l’image et la forme, jamais la valeur', () => {
+		const anomalies = controlerSecretsManifeste({ images: [image('naviguer/a.jpg', null, ['Copier le secret', WEBHOOK]), image('naviguer/b.jpg', null, ['ok'])] })
+		expect(anomalies).toHaveLength(1)
+		expect(anomalies[0]).toContain('naviguer/a.jpg')
+		expect(anomalies[0]).toContain('secret de webhook')
+		expect(anomalies[0]).not.toContain(WEBHOOK)
+		expect(controlerSecretsManifeste({ images: [image('naviguer/b.jpg', null, ['ok'])] })).toEqual([])
 	})
 })
 

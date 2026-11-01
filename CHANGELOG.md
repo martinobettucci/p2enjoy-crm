@@ -13,7 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+#### INC-330 — le manifeste des images du manuel ne retient plus aucun secret
+
+- `fusionnerManifeste` (`scripts/manuel/images.mjs`) écarte tout libellé relevé qui a la forme d'un secret : un secret
+  de webhook `whsec_…`, un JWT, une suite d'au moins 32 chiffres hexadécimaux. Il purge aussi les entrées déjà inscrites.
+  Le manifeste ne retenait qu'un seul libellé de cette forme, le secret de signature d'un webhook de la base de
+  développement, montré par l'image `secret-de-signature`. Il en est retiré.
+- La preuve du manuel (`scripts/verify-manual.sh`, contrôle 5) relit le manifeste. Elle nomme l'image et la forme, jamais
+  la valeur. Sa contre-épreuve y pose un secret factice, composé à l'exécution.
+- Origine : deux alertes du secret scanning de GitHub, le 2026-10-31. GitHub y voyait une clé Stripe ; c'est en
+  réalité le secret d'un webhook du CRM, pointé sur un domaine réservé et détruit depuis. Rien n'est à révoquer.
+- Aucun geste de déploiement : le manifeste n'est pas publié.
 
 ## [Publié]
 

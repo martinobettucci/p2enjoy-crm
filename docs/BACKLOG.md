@@ -17593,14 +17593,21 @@ responsable** : traitée juste après `CRM-116`.*
       rejoué sans retrait, bucket `manual` privé à 518 objets relu en base. **Reste le constat du responsable** : l'icône
       « Aide » connecté mène au chapitre de l'écran, `/aide` montre le sommaire et les images, déconnecté `/aide` mène
       à la connexion.
-- [@] **Tranche INC-330 — le manifeste des images du manuel ne retient aucun secret** : `e2e/manuel/illustrer.ts`
+- [x] **Tranche INC-330 — le manifeste des images du manuel ne retient aucun secret** : `e2e/manuel/illustrer.ts`
       recopiait le contenu des champs, dont le secret de signature d'un webhook de développement (alertes 1 et 2 du
       secret scanning de GitHub, commits `ae9d20f6` et `f60aaf87`). Spécification : `docs/SPEC-manual.md` §11.4 (« Le
       manifeste ne retient aucun secret »), §16 (contrôle 5) ; `docs/INCONSISTENCY_REPORT.md` INC-330. Livrables :
       filtre dans `fusionnerManifeste` (`scripts/manuel/images.mjs`) et ses unitaires, contrôle 5 de
       `scripts/verify-manual.sh` étendu au manifeste avec sa contre-épreuve, manifeste purgé, scénario
-      `e2e/manuel/34-webhooks` rejoué. Connecteur MCP : sans objet (outillage du manuel).
-      *Prise en charge : session interactive d2434ada depuis 2026-11-01 12:20 UTC — état avant : [ ]*
+      `e2e/manuel/34-webhooks` rejoué. Connecteur MCP : sans objet (outillage du manuel). **Close le 2026-11-01** :
+      unitaires `scripts/manuel` rouges (3) avant le filtre, puis 44/44 ; `verify-manual` rouge sur le manifeste d'avant
+      (une anomalie, qui nomme l'image et non la valeur), puis 167 contrôles sans anomalie ; contre-épreuve : les huit
+      familles mordent, la 5 sur un secret factice au manifeste ; `tsc` des outils sans erreur ; scénario « le secret de
+      signature » rejoué dans le navigateur (1/1, sur le serveur de la campagne `CRM-122` T2) : le champ relevé est
+      écarté, ses six autres libellés restent, le webhook et son secret au Vault sont retirés. Les deux images
+      réécrites par le rejeu ne diffèrent que par la valeur aléatoire du secret : elles sont rendues à leur version
+      committée, ce qui évite d'inscrire une valeur de plus dans l'historique. La fermeture des deux alertes GitHub et le sort
+      de l'historique attendent le responsable (INC-330).
 
 ### CRM-118 — Connecteur MCP : la famille `workflows` `[P]`
 *Développement terminé et prouvé le 2026-10-27 (T1.b, T2.a à T2.e, les checklists d'étape) ; reste T3 — livrer les

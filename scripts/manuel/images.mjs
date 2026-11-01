@@ -38,7 +38,35 @@ export function cadrer(cibles, page, marge = MARGE) {
 	}
 }
 
-/** Le manifeste après l'inscription d'entrées : une entrée remplace celle du même fichier ; l'ordre est celui des fichiers. */
+// @spec INC-330 (docs/BACKLOG.md, tranche de CRM-117) — docs/SPEC-manual.md §11.4 (le manifeste ne retient aucun
+//       secret), §16 (contrôle 5)
+/** Les formes qu'un secret prend dans une page du CRM : celle de `create_webhook_endpoint` (`0139`), un JWT, une suite
+ * hexadécimale tirée au hasard. Un libellé du catalogue n'a aucune de ces formes. */
+export const FORMES_SECRETES = [
+	{ nom: 'secret de webhook', motif: /whsec_[0-9A-Za-z]{16,}/ },
+	{ nom: 'JWT', motif: /eyJ[\w-]{10,}\.[\w-]{10,}/ },
+	{ nom: 'suite hexadécimale', motif: /[0-9a-fA-F]{32,}/ },
+]
+
+/** La forme secrète que porte un texte, ou `null`. */
+function formeSecrete(texte) {
+	return FORMES_SECRETES.find(({ motif }) => motif.test(String(texte)))?.nom ?? null
+}
+
+/** Vrai si le texte a la forme d'un secret : il n'entre jamais au manifeste. */
+export function ressembleAUnSecret(texte) {
+	return formeSecrete(texte) !== null
+}
+
+/** Les libellés de forme secrète restés au manifeste : l'image et la forme, jamais la valeur. */
+export function controlerSecretsManifeste(manifeste) {
+	return (manifeste?.images ?? []).flatMap((image) =>
+		image.libelles.map(formeSecrete).filter((forme) => forme !== null).map((forme) => `secret : l'image ${image.fichier} retient un libellé de forme « ${forme} »`),
+	)
+}
+
+/** Le manifeste après l'inscription d'entrées : une entrée remplace celle du même fichier ; l'ordre est celui des fichiers.
+ * Aucun libellé de forme secrète n'y reste, ni dans les entrées inscrites ni dans celles déjà là (INC-330). */
 export function fusionnerManifeste(manifeste, entrees) {
 	const parFichier = new Map((manifeste?.images ?? []).map((image) => [image.fichier, image]))
 	for (const entree of entrees) {
@@ -47,7 +75,11 @@ export function fusionnerManifeste(manifeste, entrees) {
 			libelles: [...new Set(entree.libelles.map(normaliserLibelle).filter((l) => l !== ''))].sort(),
 		})
 	}
-	return { images: [...parFichier.values()].sort((a, b) => a.fichier.localeCompare(b.fichier)) }
+	return {
+		images: [...parFichier.values()]
+			.map((image) => ({ ...image, libelles: image.libelles.filter((l) => !ressembleAUnSecret(l)) }))
+			.sort((a, b) => a.fichier.localeCompare(b.fichier)),
+	}
 }
 
 /**

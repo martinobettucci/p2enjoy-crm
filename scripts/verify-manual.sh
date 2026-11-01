@@ -5,6 +5,8 @@
 #           volume, aucun secret), §10 bis (le plan, les chapitres réécrits à mesure), §12 (la correspondance entre
 #           unités et chapitres), §15 (le manuel construit est à jour), §16 (la preuve du manuel et sa contre-épreuve)
 # @verifies CLAUDE.md §7 (documentation utilisateur : compréhensible sans le code, sans secret ni adresse interne)
+# @verifies INC-330 (docs/BACKLOG.md, tranche de CRM-117) — docs/SPEC-manual.md §11.4 : le manifeste des images ne
+#           retient aucun libellé de forme secrète (contrôle 5 et sa contre-épreuve)
 # @verifies CRM-047 (docs/BACKLOG.md) — l'origine de ce harnais et de ses contrôles des libellés et des volumes
 # @verifies CRM-097 (docs/BACKLOG.md) tranche T2.d — les libellés du parcours de l'assistant IA (docs/SPEC-ia.md §12.5)
 # @verifies CRM-097 tranche T3.d — les libellés du parcours « Suggérer » (docs/SPEC-ia.md §13.6, chapitre 18.3)
@@ -29,7 +31,8 @@
 #      mention du seed, du jeu de démonstration ou du développement (§10, point 2) ;
 #   3. chaque libellé du parcours cité par le manuel existe LITTÉRALEMENT dans `webapp/src/i18n/fr.ts` ;
 #   4. aucun volume du jeu de démonstration n'est recopié (§10, point 4) ;
-#   5. le manuel ne porte aucune valeur de variable d'environnement, aucune clé, aucun jeton ;
+#   5. le manuel ne porte aucune valeur de variable d'environnement, aucune clé, aucun jeton, et le manifeste de ses
+#      images aucun libellé de forme secrète (§11.4, INC-330) ;
 #   6. chaque chapitre et chaque section de la table du §12 existe dans le manuel construit ;
 #   7. le numéro écrit dans le texte d'un lien interne est celui que porte le titre visé (§10 bis) ;
 #   8. dans les chapitres illustrés, chaque image citée est au manifeste et sur le disque, rangée là où elle paraît, et
@@ -378,17 +381,30 @@ controler_volumes() {
 }
 
 controler_secrets() {
-	local fichier=$1
-	titre "5. Le manuel ne porte aucun secret (CLAUDE.md §7)"
-	local trouve=0 motif
-	# Un JWT, une clé de service, un mot de passe recopié : les trois formes qu'un secret prend dans ce dépôt.
-	for motif in 'eyJ[A-Za-z0-9_-]\{10,\}\.' 'SERVICE_ROLE_KEY[[:space:]]*=[[:space:]]*[^[:space:]]' 'ANON_KEY[[:space:]]*=[[:space:]]*[^[:space:]]' 'POSTGRES_PASSWORD[[:space:]]*=[[:space:]]*[^[:space:]]'; do
+	local fichier=$1 manifeste=${2:-$MANIFESTE}
+	titre "5. Le manuel et le manifeste de ses images ne portent aucun secret (CLAUDE.md §7, docs/SPEC-manual.md §11.4)"
+	local trouve=0 motif ligne
+	# Un JWT, une clé de service, un mot de passe recopié, un secret de webhook : les formes qu'un secret prend dans ce dépôt.
+	for motif in 'eyJ[A-Za-z0-9_-]\{10,\}\.' 'whsec_[0-9A-Za-z]\{16,\}' 'SERVICE_ROLE_KEY[[:space:]]*=[[:space:]]*[^[:space:]]' 'ANON_KEY[[:space:]]*=[[:space:]]*[^[:space:]]' 'POSTGRES_PASSWORD[[:space:]]*=[[:space:]]*[^[:space:]]'; do
 		if grep -q "$motif" "$fichier"; then
 			trouve=1
 			fail "secret : le manuel contient une valeur correspondant à « $motif »"
 		fi
 	done
-	if [ "$trouve" -eq 0 ]; then ok "aucune valeur de secret dans le manuel"; fi
+	# Le manifeste relève le contenu des champs (§11.4) : un secret affiché par une page n'y entre jamais (INC-330). Le
+	# module nomme l'image et la forme, jamais la valeur.
+	while IFS= read -r ligne; do
+		[ -z "$ligne" ] && continue
+		trouve=1
+		fail "$ligne"
+	done < <(node --input-type=module - "$manifeste" <<'JS'
+import { existsSync, readFileSync } from 'node:fs'
+import { controlerSecretsManifeste } from './scripts/manuel/images.mjs'
+const [manifeste] = process.argv.slice(2)
+for (const a of controlerSecretsManifeste(existsSync(manifeste) ? JSON.parse(readFileSync(manifeste, 'utf8')) : { images: [] })) console.log(a)
+JS
+)
+	if [ "$trouve" -eq 0 ]; then ok "aucune valeur de secret dans le manuel ni dans le manifeste"; fi
 }
 
 # La table du §12 : « | `CRM-0NN` | identifiant-du-chapitre | identifiant-de-section ou — | ».
@@ -520,7 +536,7 @@ executer_tous() {
 #   2. un chapitre réécrit qui cite une unité, un fichier, une variable et le seed ;
 #   3. le libellé faux, remis (« Affaire introuvable ») ;
 #   4. un volume recopié dans un chapitre ;
-#   5. une clé recopiée ;
+#   5. une clé recopiée dans le manuel, et un secret de webhook au manifeste (deux anomalies) ;
 #   6. une ligne du §12 qui désigne une section disparue ;
 #   7. un lien dont le numéro écrit n'est pas celui de sa cible ;
 #   8. une image citée absente du manifeste et du disque, et une image orpheline du manifeste ;
@@ -544,7 +560,9 @@ if [ "$CONTRE_EPREUVE" = true ]; then
 		printf '![Une image absente](manuel/images/un-chapitre-degrade/absente.jpg)\n'
 	} > "$COPIE"
 	MANIFESTE_COPIE="$TEMPORAIRE/manifeste.json"
-	printf '{"images":[{"fichier":"un-chapitre-degrade/orpheline.jpg","largeur":10,"hauteur":10,"chapitre":"un-chapitre-degrade","section":null,"pleinePage":false,"libelles":[]}]}\n' > "$MANIFESTE_COPIE"
+	# Le secret de webhook est composé ici, à l'exécution : aucune valeur de cette forme n'est écrite dans le dépôt.
+	SECRET_FACTICE="whsec_$(printf '3f%.0s' $(seq 32))"
+	printf '{"images":[{"fichier":"un-chapitre-degrade/orpheline.jpg","largeur":10,"hauteur":10,"chapitre":"un-chapitre-degrade","section":null,"pleinePage":false,"libelles":["%s"]}]}\n' "$SECRET_FACTICE" > "$MANIFESTE_COPIE"
 	awk '
 		/^## 12\. / { dans = 1 }
 		dans && /^\| Unité \|/ { print; getline; print; print "| `CRM-998` | le-carnet-de-contacts | une-section-disparue |"; next }
@@ -560,7 +578,7 @@ if [ "$CONTRE_EPREUVE" = true ]; then
 	failures=0
 	[ "$(compter controler_volumes "$COPIE")" -ge 1 ] || manquantes+=("4 (volumes)")
 	failures=0
-	[ "$(compter controler_secrets "$COPIE")" -ge 1 ] || manquantes+=("5 (secrets)")
+	[ "$(compter controler_secrets "$COPIE" "$MANIFESTE_COPIE")" -ge 2 ] || manquantes+=("5 (secrets)")
 	failures=0
 	[ "$(compter controler_correspondance "$SPEC_COPIE" "$CONSTRUIT/contents.json")" -ge 1 ] || manquantes+=("6 (table du §12)")
 	failures=0

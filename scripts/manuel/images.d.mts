@@ -1,5 +1,6 @@
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.0 : le contrat des images du manuel, pour les appelants typés
 // @spec docs/SPEC-manual.md §11.4 (le manifeste, la découpe, l'élément cité)
+// @spec INC-330 (docs/BACKLOG.md, tranche de CRM-117) — docs/SPEC-manual.md §11.4 (le manifeste ne retient aucun secret)
 
 export type Rectangle = { readonly x: number; readonly y: number; readonly width: number; readonly height: number }
 
@@ -20,6 +21,9 @@ export type ValeursInterface = { readonly exactes: ReadonlySet<string>; readonly
 export const MARGE: number
 export function normaliserLibelle(texte: string): string
 export function cadrer(cibles: readonly Rectangle[], page: { readonly largeur: number; readonly hauteur: number }, marge?: number): Rectangle
+export const FORMES_SECRETES: ReadonlyArray<{ readonly nom: string; readonly motif: RegExp }>
+export function ressembleAUnSecret(texte: string): boolean
+export function controlerSecretsManifeste(manifeste: Manifeste | null | undefined): string[]
 export function fusionnerManifeste(manifeste: Manifeste | null | undefined, entrees: readonly EntreeManifeste[]): Manifeste
 export function valeursInterface(sourceFr: string): ValeursInterface
 export function elementsCites(source: string, valeurs: ValeursInterface): Map<string, Set<string>>
