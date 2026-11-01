@@ -4187,6 +4187,25 @@ sont écrits ci-dessous, et chacun a sa cause.
   entière, au §5.18 sa liste plate, au §5.5 ses variantes, au §5.29 son patron de suppression
   confirmée et au §9 ses flèches Lucide.
 
+- **Révisé par `CRM-125` (décision 809) — l'aperçu des paliers, sur un jeu d'exemple**
+  (`docs/SPEC-modeles-emails.md` §14.5). La ligne d'une **séquence** garde sa seule commande « Modifier » ; l'aperçu vit
+  dans la **fiche**, là où sont les paliers.
+  - **Un bouton « Aperçu » par ligne de palier**, icône `Eye` et libellé, avant les flèches, `aria-label` « Aperçu du
+    palier N », `aria-expanded` et `aria-controls`. Il déplie le rendu **dans le même `li`**, sous la ligne : le bloc
+    appartient au palier, et l'ordre du focus le rencontre juste après le bouton. **Un seul palier déplié à la fois** ;
+    un second clic replie.
+  - **« Prévisualiser la séquence »**, bouton secondaire à droite du titre « Paliers », absent quand la séquence n'a
+    aucun palier. Il ouvre, sous la liste et dans le flux — aucune modale —, un panneau fond `--color-bg` qui reprend
+    chaque palier dans l'ordre, titré « Palier N · J+délai — J+cumul depuis l'armement » en `tabular-nums`. « Fermer
+    l'aperçu » rend le focus au bouton qui l'a ouvert.
+  - **Le rendu est le bloc du §5.39** — objet, corps en `pre-wrap` —, suivi de la signature après `-- ` : l'aperçu montre
+    le message tel qu'il partira. **Une mention permanente en second ton**, `role="note"`, le précède : « Aperçu avec
+    des données d'exemple : … ». Un aperçu ne doit pas pouvoir se lire comme un vrai message. Une seconde phrase dit
+    l'expéditeur fictif quand la personne n'a pas d'identité d'envoi par défaut.
+  - **États** (§5.8) : squelette pendant le rendu ; erreur `role="alert"` avec « Réessayer » ; un modèle devenu illisible
+    rend une phrase, jamais un bloc vide.
+  - **Aucune couleur ni aucun jeton nouveau.** `Eye` est déjà l'icône de « Prévisualiser » au §5.39.
+
 ### 5.42 Armer une relance depuis l'affaire — `CRM-063`
 
 Le geste qui applique une cadence à une affaire. Il vit dans la **colonne gauche de la fiche

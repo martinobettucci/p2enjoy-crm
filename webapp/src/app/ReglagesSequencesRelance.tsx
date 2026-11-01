@@ -8,6 +8,8 @@
 // @spec docs/DESIGN_SYSTEM.md §5.41 (cette surface, en écarts du §5.39), §5.8 (états
 //       systématiques), §5.18 (la liste plate), §5.23 (fiche repliée, dans le flux), §5.29 (le
 //       patron de suppression confirmée), §5.5 (variantes), §9 (icônes Lucide)
+// @spec CRM-125 (docs/BACKLOG.md) T3 — l'aperçu de chaque palier et de la séquence entière sur le jeu d'exemple
+//       (docs/SPEC-modeles-emails.md §14.5, décision 809 ; docs/DESIGN_SYSTEM.md §5.41, révision `CRM-125`)
 //
 // UN ÉCRAN QUI LIT ET QUI ÉCRIT, ET QUI N'OUVRE AUCUNE POLITIQUE. La lecture et l'écriture passent
 // par les routes REST de `mail_sequences` et `mail_sequence_steps` sous la RLS de la migration
@@ -24,7 +26,7 @@
 // d'avance montrerait un ordre que la base n'a pas.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowDown, ArrowUp, PencilLine, Plus, Trash2, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, Eye, PencilLine, Plus, Trash2, X } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { EtatErreur, EtatVide } from '../components/ui/States'
 import { LiveRegion } from '../components/ui/LiveRegion'
@@ -36,6 +38,7 @@ import {
 	enregistrerSequence,
 	libellePalier,
 	lirePaliers,
+	modelesDistincts,
 	lireSequences,
 	ordreApresDeplacement,
 	rangSuivant,
@@ -51,6 +54,13 @@ import { lireModelesEmails, type ModeleEmail } from '../lib/modeles-emails'
 import { lireWorkspaces } from '../lib/workspaces'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useContexteEspace } from './ContexteEspace'
+import {
+	ApercuModeleExemple,
+	ApercuSequence,
+	MentionDonneesExemple,
+	identiteFictive,
+	useApercusExemple,
+} from './ApercuModeleExemple'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { motifVisible, proprietesCommande, type ProprietesCommande } from '../lib/capacites'
 
@@ -672,6 +682,12 @@ function ZonePaliers({
 	const [idModele, setIdModele] = useState('')
 	const [delai, setDelai] = useState('')
 	const courant = useRef(0)
+	// L'APERÇU (§14.5) : un seul palier déplié à la fois, et l'aperçu de la séquence à part. Le rendu est partagé par
+	// modèle, et n'est demandé qu'au clic.
+	const { apercus, demander } = useApercusExemple(client)
+	const [palierDeplie, setPalierDeplie] = useState<string | null>(null)
+	const [sequenceOuverte, setSequenceOuverte] = useState(false)
+	const commandeApercuSequence = useRef<HTMLButtonElement | null>(null)
 
 	useEffect(() => {
 		const rang = ++courant.current
@@ -760,9 +776,46 @@ function ZonePaliers({
 
 	const listeModeles = modeles.statut === 'pret' ? modeles.donnees : []
 
+	const basculerApercu = useCallback(
+		(palier: PalierSequence) => {
+			if (palierDeplie === palier.id) {
+				setPalierDeplie(null)
+				return
+			}
+			setPalierDeplie(palier.id)
+			demander(palier.template_id)
+		},
+		[demander, palierDeplie],
+	)
+
+	const ouvrirApercuSequence = useCallback(() => {
+		setSequenceOuverte(true)
+		for (const idModele of modelesDistincts(paliers)) demander(idModele)
+	}, [demander, paliers])
+
+	const fermerApercuSequence = useCallback(() => {
+		setSequenceOuverte(false)
+		commandeApercuSequence.current?.focus()
+	}, [])
+
 	return (
 		<div className="flex flex-col gap-3 border-t border-border pt-4">
-			<h3 className="text-h3">{t('admin.sequences.steps.title')}</h3>
+			<div className="flex flex-wrap items-center justify-between gap-2">
+				<h3 className="text-h3">{t('admin.sequences.steps.title')}</h3>
+				{/* UNE SÉQUENCE SANS PALIER N'OFFRE PAS L'APERÇU (§14.5) : il n'y aurait rien à montrer. */}
+				{paliers.length > 0 && (
+					<Button
+						ref={commandeApercuSequence}
+						variante="secondaire"
+						data-testid="apercu-sequence-ouvrir"
+						aria-expanded={sequenceOuverte}
+						onClick={ouvrirApercuSequence}
+					>
+						<Eye aria-hidden="true" className="size-4" />
+						{t('admin.sequences.preview.sequence')}
+					</Button>
+				)}
+			</div>
 			<p className="text-sm text-text-2 max-w-[72ch]">{t('admin.sequences.steps.help')}</p>
 
 			{etat.statut === 'chargement' && <SkeletonListe lignes={2} libelle={t('state.loading.aria')} />}
@@ -790,8 +843,11 @@ function ZonePaliers({
 							data-testid="ligne-palier"
 							data-palier={palier.id}
 							data-position={palier.position}
-							className="flex flex-wrap md:flex-nowrap items-center gap-2 md:gap-3 px-3 py-2 md:py-0 md:min-h-[var(--size-target)] border-b border-border last:border-b-0 hover:bg-hover"
+							className="flex flex-col border-b border-border last:border-b-0"
 						>
+						{/* LE BLOC DÉPLIÉ SUIT SA LIGNE DANS LE MÊME `li` (§14.5) : il appartient au palier, et l'ordre du
+						    focus le rencontre juste après le bouton qui l'a ouvert. */}
+						<div className="flex flex-wrap md:flex-nowrap items-center gap-2 md:gap-3 px-3 py-2 md:py-0 md:min-h-[var(--size-target)] hover:bg-hover">
 							{/* LE RANG EST EN TÊTE, EN `tabular-nums` — comme le retard du §5.37. C'est lui
 							    qui range cette liste, et une colonne de nombres alignés se lit d'un regard. */}
 							<span
@@ -807,6 +863,18 @@ function ZonePaliers({
 							>
 								{libellePalier(palier)}
 							</span>
+							<button
+								type="button"
+								data-testid="apercu-palier"
+								aria-expanded={palierDeplie === palier.id}
+								aria-controls={`apercu-palier-${palier.id}`}
+								aria-label={t('admin.sequences.preview.step.aria', { rang: String(palier.position) })}
+								onClick={() => basculerApercu(palier)}
+								className="inline-flex items-center justify-center gap-2 shrink-0 min-h-[var(--size-target)] px-3 rounded-sm border border-border bg-surface text-sm hover:bg-hover"
+							>
+								<Eye aria-hidden="true" className="size-4" />
+								{t('admin.sequences.preview.step')}
+							</button>
 							{/* « Monter » SUR LE PREMIER ET « Descendre » SUR LE DERNIER SONT MONTÉS ET
 							    DÉSACTIVÉS (§5.41). Ce n'est PAS un droit calculé : c'est un geste sans objet
 							    sur cet élément-là. Leur `aria-label` NOMME le palier — deux flèches
@@ -848,9 +916,29 @@ function ZonePaliers({
 							>
 								<X aria-hidden="true" className="size-4" />
 							</button>
+						</div>
+						{palierDeplie === palier.id && (
+							<div id={`apercu-palier-${palier.id}`} data-testid="apercu-palier-bloc" className="flex flex-col gap-2 px-3 pb-3">
+								<MentionDonneesExemple fictive={identiteFictive(apercus)} />
+								<ApercuModeleExemple
+									etat={apercus.get(palier.template_id)}
+									onReprise={() => demander(palier.template_id, true)}
+									testId="apercu-palier-rendu"
+								/>
+							</div>
+						)}
 						</li>
 					))}
 				</ul>
+			)}
+
+			{sequenceOuverte && paliers.length > 0 && (
+				<ApercuSequence
+					paliers={paliers}
+					apercus={apercus}
+					onReprise={(idModele) => demander(idModele, true)}
+					onFermer={fermerApercuSequence}
+				/>
 			)}
 
 			{refus !== null && (

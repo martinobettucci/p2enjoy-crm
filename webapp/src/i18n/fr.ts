@@ -3941,6 +3941,20 @@ export const fr = {
 		'Aucun palier n’a été ajouté. Vos droits ont peut-être changé depuis l’ouverture : rechargez l’onglet.',
 	'admin.sequences.steps.remove.refusal.zeroLigne':
 		'Aucun palier n’a été retiré. Vos droits ont peut-être changé depuis l’ouverture : rechargez l’onglet.',
+	// L'aperçu des paliers sur un jeu d'exemple — `CRM-125`, docs/SPEC-modeles-emails.md §14.5.
+	'admin.sequences.preview.step': 'Aperçu',
+	'admin.sequences.preview.step.aria': 'Aperçu du palier {rang}',
+	'admin.sequences.preview.sequence': 'Prévisualiser la séquence',
+	'admin.sequences.preview.title': 'Aperçu de la séquence',
+	'admin.sequences.preview.close': 'Fermer l’aperçu',
+	'admin.sequences.preview.stepTitle': 'Palier {rang} · J+{delai} — J+{cumul} depuis l’armement',
+	'admin.sequences.preview.notice':
+		'Aperçu avec des données d’exemple : M. Dupont, ENTREPRISE INC, Projet exemple.',
+	'admin.sequences.preview.identitySample':
+		'Vous n’avez pas d’identité d’envoi par défaut : l’expéditeur est fictif.',
+	'admin.sequences.preview.unreadable': 'Ce modèle n’est plus lisible.',
+	'admin.sequences.preview.error': 'L’aperçu n’a pas pu être rendu.',
+	'admin.sequences.preview.retry': 'Réessayer',
 	// La suppression — §13.6. La confirmation NOMME la séquence, ANNONCE la cascade comptée depuis
 	// la donnée déjà lue, et dit la règle qu'elle ne peut pas promettre — sans chiffre.
 	'admin.sequences.delete': 'Supprimer cette séquence',

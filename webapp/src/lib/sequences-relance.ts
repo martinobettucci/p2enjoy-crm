@@ -8,6 +8,8 @@
 //       tables), §12.11 (contrat d'API de l'armement), §13.3 (la RPC de réordonnancement),
 //       §13.10 (son contrat d'API)
 // @spec docs/DESIGN_SYSTEM.md §5.41 (l'écran des séquences), §5.42 (le bloc d'armement)
+// @spec CRM-125 (docs/BACKLOG.md) T3 — `delaisCumules`, `modelesDistincts` : l'aperçu des paliers
+//       (docs/SPEC-modeles-emails.md §14.5, décision 809)
 // @spec docs/SPEC-permissions-rls.md §7 (le refus est ZÉRO LIGNE, jamais une erreur)
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T2.3.5 : l'armement désigne le RATTACHEMENT de l'affaire
 //       (docs/SPEC-rattachements.md §5, §7)
@@ -762,4 +764,31 @@ export function libellePalier(palier: PalierSequence): string {
 	return palier.modele === null
 		? `J+${palier.delai_jours}`
 		: `J+${palier.delai_jours} · ${palier.modele}`
+}
+
+/**
+ * Le délai d'un palier compté depuis l'armement — la somme des délais relatifs jusqu'à lui inclus.
+ *
+ * @spec CRM-125 (docs/BACKLOG.md) T3 ; docs/SPEC-modeles-emails.md §14.5 (« Palier 2 · J+6 — J+10 depuis
+ *       l'armement ») ; §12.5 (le délai est relatif au palier précédent, le premier à l'armement)
+ *
+ * Les paliers sont pris dans l'ordre de leur `position`, celui de la liste lue.
+ */
+export function delaisCumules(paliers: readonly Pick<PalierSequence, 'id' | 'delai_jours'>[]): ReadonlyMap<string, number> {
+	const cumuls = new Map<string, number>()
+	let total = 0
+	for (const palier of paliers) {
+		total += palier.delai_jours
+		cumuls.set(palier.id, total)
+	}
+	return cumuls
+}
+
+/**
+ * Les modèles distincts d'une liste de paliers, dans l'ordre de première apparition : un appel par modèle (§14.5).
+ *
+ * @spec CRM-125 (docs/BACKLOG.md) T3 ; docs/SPEC-modeles-emails.md §14.5
+ */
+export function modelesDistincts(paliers: readonly Pick<PalierSequence, 'template_id'>[]): readonly string[] {
+	return [...new Set(paliers.map((palier) => palier.template_id))]
 }

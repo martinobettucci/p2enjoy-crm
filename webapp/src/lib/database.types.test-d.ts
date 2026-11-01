@@ -1160,6 +1160,9 @@ type _vueDerivationColonnes = Expect<
 // (docs/SPEC-pieces-jointes.md §3). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `p_status` est une liste fermée — `extracted`, `empty`,
 // `unsupported`, `failed`, `retry` (`22023 invalid_text_status`) —, une pièce non prise rend `P0002 attachment_not_found`.
 // Le compte s'accroît de trois.
+// La migration de `CRM-125` TRANCHE T2 ajoute `render_mail_template_sample` — l'aperçu d'un modèle sur un jeu d'exemple
+// (docs/SPEC-modeles-emails.md §14.2). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `signature_text` est nulle quand l'identité n'a pas
+// de signature, ou qu'il n'y a pas d'identité ; un modèle illisible rend zéro ligne. Le compte s'accroît de un.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1207,6 +1210,7 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'interrompre_sequence_relance'
     | 'reordonner_paliers_sequence'
     | 'mail_template_variables'
+    | 'render_mail_template_sample'
     | 'rendre_modele_email'
     | 'reel_saisissable'
     | 'recette_saisissable'

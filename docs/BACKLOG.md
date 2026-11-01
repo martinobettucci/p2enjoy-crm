@@ -18028,6 +18028,12 @@ Question du connecteur : sans objet (décision 809).
 - [@] **T3 — l'écran** : bouton par palier, aperçu de la séquence, unitaires, E2E, captures, `docs/DESIGN_SYSTEM.md`,
       manuel, changelog.
       *Prise en charge : session interactive 2026-11-01 14:58 UTC depuis 2026-11-01 18:44 UTC — état avant : [ ]*
+      **Avancement du 2026-11-01** : `rendreApercuExemple`, `delaisCumules`, `modelesDistincts` et leurs unitaires ;
+      `ApercuModeleExemple.tsx` (rendu partagé par modèle, bloc, mention, aperçu de la séquence) et la fiche des
+      paliers ; 5 unitaires d'écran (`ReglagesSequencesRelance.test.tsx`) ; types et témoin des fonctions complétés à
+      la main, à régénérer avec T2 ; `docs/DESIGN_SYSTEM.md` §5.41 révisé ; suite unitaire 5166/5166, typecheck vert.
+      **Reste** : la fonction en base (T2) ; tant qu'elle manque, l'aperçu rend son état d'erreur. Puis
+      `e2e/ui/sequences-apercu.spec.ts` (écrite, à jouer), les captures, le manuel et le changelog.
 - [ ] **T4 — livraison en production et constat** : migration appliquée, un aperçu constaté.
 
 ## Demande du 2026-11-01 — une balance par devise dans la rentabilité (décision 810)

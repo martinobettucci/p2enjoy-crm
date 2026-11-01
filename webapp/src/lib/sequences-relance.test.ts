@@ -8,6 +8,8 @@
 //           (les contrats d'API mesurés dont ce fichier reprend les messages)
 // @verifies docs/SPEC-permissions-rls.md §7 (le refus est zéro ligne, jamais une erreur)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.5 : l'armement envoie le rattachement (docs/SPEC-rattachements.md §5)
+// @verifies CRM-125 (docs/BACKLOG.md) T3 — docs/SPEC-modeles-emails.md §14.5 : le délai cumulé depuis l'armement, et un
+//           appel par modèle distinct
 //
 // CE FICHIER ÉPROUVE LA REQUÊTE RÉELLEMENT ÉMISE, et pas seulement la valeur rendue. Quatre
 // exigences sont portées par l'appel lui-même et qu'aucune assertion sur le résultat
@@ -32,12 +34,14 @@ import {
 	compterPaliers,
 	corpsEcriturePalier,
 	corpsEcritureSequence,
+	delaisCumules,
 	enregistrerSequence,
 	interrompreSequence,
 	libellePalier,
 	lireInscriptionActive,
 	lirePaliers,
 	lireSequences,
+	modelesDistincts,
 	ordreApresDeplacement,
 	rangSuivant,
 	reordonnerPaliers,
@@ -695,5 +699,22 @@ describe('le libellé d’un palier — §13.6', () => {
 		expect(
 			libellePalier({ id: PALIER_1, position: 1, delai_jours: 3, template_id: 'm', modele: null }),
 		).toBe('J+3')
+	})
+})
+
+describe('l’aperçu des paliers — CRM-125, §14.5', () => {
+	const palier = (id: string, delai_jours: number, template_id: string) => ({ id, delai_jours, template_id })
+
+	it('cumule les délais relatifs dans l’ordre des paliers', () => {
+		const cumuls = delaisCumules([palier('p1', 4, 'm1'), palier('p2', 6, 'm2'), palier('p3', 0, 'm1')])
+		expect([...cumuls.entries()]).toEqual([['p1', 4], ['p2', 10], ['p3', 10]])
+	})
+
+	it('une séquence sans palier ne cumule rien', () => {
+		expect(delaisCumules([]).size).toBe(0)
+	})
+
+	it('rend chaque modèle une seule fois, dans l’ordre de première apparition', () => {
+		expect(modelesDistincts([palier('p1', 4, 'm2'), palier('p2', 6, 'm1'), palier('p3', 3, 'm2')])).toEqual(['m2', 'm1'])
 	})
 })

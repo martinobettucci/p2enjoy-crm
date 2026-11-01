@@ -7,6 +7,8 @@
 // @verifies docs/SPEC-permissions-rls.md §7 (le refus est zéro ligne, jamais une erreur)
 // @verifies CRM-124 (docs/BACKLOG.md) T2 — docs/SPEC-modeles-emails.md §9.5 (révision `CRM-124`,
 //           décision 806) : le contact présélectionné après le choix d'une affaire
+// @verifies CRM-125 (docs/BACKLOG.md) T3 — docs/SPEC-modeles-emails.md §14.2 : l'appel de l'aperçu sur le jeu
+//           d'exemple, zéro ligne rendu `null`, l'erreur classée
 //
 // CE FICHIER ÉPROUVE LA REQUÊTE RÉELLEMENT ÉMISE, et pas seulement la valeur rendue. Trois
 // exigences sont portées par l'appel lui-même et qu'aucune assertion sur le résultat
@@ -30,6 +32,7 @@ import {
 	libelleIdentitePrevisualisation,
 	lireModelesEmails,
 	lireVariablesModele,
+	rendreApercuExemple,
 	rendreModeleEmail,
 	supprimerModeleEmail,
 	trouDe,
@@ -618,5 +621,38 @@ describe('contactApresChoixAffaire — CRM-124, §9.5', () => {
 				idPreselectionPrecedente: '',
 			}),
 		).toEqual({ idContact: '', idPreselection: '' })
+	})
+})
+
+describe('rendreApercuExemple — CRM-125, §14.2', () => {
+	function client(reponse: { data: unknown; error: unknown; status: number }) {
+		const appels: { nom: string; args: unknown }[] = []
+		const faux = {
+			rpc: (nom: string, args: unknown) => {
+				appels.push({ nom, args })
+				return Promise.resolve(reponse)
+			},
+		} as unknown as ClientCrm
+		return { faux, appels }
+	}
+
+	it('appelle la fonction avec le seul modèle, et rend la ligne', async () => {
+		const ligne = { subject: 'Objet', body_text: 'Corps', signature_text: 'Sig', identity_is_sample: false }
+		const { faux, appels } = client({ data: [ligne], error: null, status: 200 })
+		expect(await rendreApercuExemple(faux, MODELE)).toEqual({ statut: 'pret', donnees: ligne })
+		expect(appels).toEqual([{ nom: 'render_mail_template_sample', args: { p_template_id: MODELE } }])
+	})
+
+	it('zéro ligne n’est pas une erreur : le modèle n’est plus lisible', async () => {
+		const { faux } = client({ data: [], error: null, status: 200 })
+		expect(await rendreApercuExemple(faux, MODELE)).toEqual({ statut: 'pret', donnees: null })
+	})
+
+	it('une signature absente vaut null, et un refus est classé', async () => {
+		const { faux } = client({ data: [{ subject: 'O', body_text: 'C', identity_is_sample: true }], error: null, status: 200 })
+		const rendu = await rendreApercuExemple(faux, MODELE)
+		expect(rendu.statut === 'pret' && rendu.donnees?.signature_text).toBeNull()
+		const enPanne = client({ data: null, error: { message: 'boom' }, status: 500 })
+		expect((await rendreApercuExemple(enPanne.faux, MODELE)).statut).toBe('erreur')
 	})
 })

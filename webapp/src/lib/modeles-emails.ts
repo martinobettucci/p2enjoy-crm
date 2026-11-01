@@ -10,6 +10,8 @@
 //       zéro ligne, jamais une erreur)
 // @spec CRM-124 (docs/BACKLOG.md) T2 — `contactApresChoixAffaire`, le contact présélectionné de la
 //       prévisualisation (docs/SPEC-modeles-emails.md §9.5, révision `CRM-124`, décision 806)
+// @spec CRM-125 (docs/BACKLOG.md) T3 — `rendreApercuExemple`, l'aperçu sur le jeu d'exemple
+//       (docs/SPEC-modeles-emails.md §14.2, §14.5, décision 809)
 //
 // CE MODULE N'OUVRE AUCUNE POLITIQUE ET N'AJOUTE AUCUNE RÈGLE. Il lit `mail_templates` sous la RLS
 // de la migration `0055`, y écrit par les routes REST de cette même table — il n'existe aucune RPC
@@ -528,4 +530,52 @@ export function contactApresChoixAffaire({
 	const unique = rattaches !== null && rattaches.length === 1 ? (rattaches[0]?.contactId ?? '') : ''
 	const parDefaut = idsProposes.has(unique) ? unique : ''
 	return { idContact: parDefaut, idPreselection: parDefaut }
+}
+
+// ---------------------------------------------------------------------------------------------
+// L'aperçu sur un jeu d'exemple — `CRM-125`, §14
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Un aperçu rendu par `public.render_mail_template_sample` (§14.2).
+ *
+ * @spec CRM-125 (docs/BACKLOG.md) T3 ; docs/SPEC-modeles-emails.md §14.2, §14.4
+ */
+export type ApercuExemple = {
+	readonly subject: string
+	readonly body_text: string
+	/** Rendue telle quelle, jamais substituée (§10.8) ; `null` sans signature. */
+	readonly signature_text: string | null
+	/** Vrai quand l'expéditeur est fictif : la personne n'a ni identité par défaut, ni identité unique (§14.4). */
+	readonly identity_is_sample: boolean
+}
+
+/**
+ * Rend un modèle sur le jeu d'exemple du §14.3.
+ *
+ * @spec CRM-125 (docs/BACKLOG.md) T3 ; docs/SPEC-modeles-emails.md §14.2, §14.5
+ *
+ * `null` SIGNIFIE ZÉRO LIGNE : le modèle n'est pas lisible, et l'écran dit « Ce modèle n'est plus lisible. » —
+ * jamais une erreur, comme `rendreModeleEmail`.
+ */
+export async function rendreApercuExemple(
+	client: ClientCrm,
+	idModele: string,
+): Promise<EtatAsync<ApercuExemple | null>> {
+	try {
+		const reponse = await client.rpc('render_mail_template_sample', { p_template_id: idModele })
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		const premiere = ((reponse.data ?? []) as readonly ApercuExemple[])[0]
+		if (premiere === undefined) return pret(null)
+		return pret({
+			subject: premiere.subject,
+			body_text: premiere.body_text,
+			signature_text: premiere.signature_text ?? null,
+			identity_is_sample: premiere.identity_is_sample === true,
+		})
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
 }

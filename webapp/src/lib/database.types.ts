@@ -5118,6 +5118,17 @@ export type Database = {
         Args: { ligne: Database["public"]["Tables"]["card_costs"]["Row"] }
         Returns: boolean
       }
+      render_mail_template_sample: {
+        Args: {
+          p_template_id: string
+        }
+        Returns: {
+          body_text: string
+          identity_is_sample: boolean
+          signature_text: string
+          subject: string
+        }[]
+      }
       rendre_modele_email: {
         Args: {
           p_card_id: string
