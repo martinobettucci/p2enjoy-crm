@@ -654,6 +654,12 @@ contenu identique : le `pip freeze` de l'image est le même avant et après (69 
 variable, aucun secret, aucun comportement changé.** Aucun geste propre : la prochaine reconstruction explicite de
 l'image `mcp` (§4) prend le nouveau nom. **Retour arrière** : sans objet.
 
+### 2.25 INC-332, décision 808 — à 390 px, l'en-tête garde une seule ligne de commandes (AVEC LE PROCHAIN LOT)
+
+Sous `md`, le nom de la session passe en `sr-only` (`webapp/src/app/Header.tsx`, `docs/DESIGN_SYSTEM.md` §12.2). **Webapp
+seule : aucune migration, aucune image, aucune variable.** Part avec le prochain lot (décision 808) ; le constat : à
+390 px, la cloche et l'avatar tiennent sur la ligne du tiroir. **Retour arrière** : relivrer la révision précédente.
+
 ## 3. Migrations en attente
 
 **Aucune migration en attente depuis le 2026-11-01** : la 143 est appliquée (§8, « 2026-11-01 — migration 143 ») ; le

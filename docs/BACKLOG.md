@@ -17256,7 +17256,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       **Livrée le 2026-11-01** par la fenêtre des migrations 106 à 141 (décision 792, révision `6e7d6266` ; `docs/PROD_MIGRATIONS.md` §8) ;
       reste le constat du responsable.
 
-### CRM-112 — Champs personnalisés communs de portée espace `[ ]`
+### CRM-112 — Champs personnalisés communs de portée espace `[~]`
 *Réservée le 2026-10-24 — décision 642, arbitrage 4 ; ordre fixé par la décision 645 : après `CRM-111`. Arbitrée le
 2026-10-24 (décision 664). Spécification : `docs/SPEC-champs-communs.md`.* Un administrateur définit des champs au
 niveau de l'espace ; ils paraissent dans la partie commune de toute affaire, servent d'exigence de transition, de
@@ -17266,8 +17266,9 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
 
 - [x] **Spécification**, validée le 2026-10-24 (décision 665) : `docs/SPEC-champs-communs.md` §1 à §16. Le code
       attend la tranche T2 de `CRM-111`.
-- [ ] **T1** — mesures (coût du filtre et de l'index de recherche) ; migration : deux tables, politiques,
+- [@] **T1** — mesures (coût du filtre et de l'index de recherche) ; migration : deux tables, politiques,
       `app.validate_field_value` partagée ; pgTAP ; API aux jetons réels ; `docs/SCHEMA.md` ; contrat de déploiement.
+      *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 14:56 UTC — état avant : [ ]*
 - [ ] **T2** — exigence par une transition (`common_field_id`), sixième vérification de `move_card`, versions et
       copies, refus `common_field_in_use` et `common_field_archived` ; pgTAP ; API.
 - [ ] **T3** — écrans : Réglages ▸ « Champs de l'affaire », exigence dans l'éditeur de workflow, partie commune de la
@@ -17986,3 +17987,24 @@ Question du connecteur : sans objet (décision 806).
 - [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-01 : décision 806,
       `docs/SPEC-modeles-emails.md` §9.5, `docs/DESIGN_SYSTEM.md` §5.39.
 - [ ] **T2 — écran et preuves** : fonction pure, écran, unitaires, E2E, captures, manuel, changelog.
+
+## Demande du 2026-11-01 — l'aperçu des paliers d'une séquence (décision 808)
+
+### CRM-125 — Le composer des séquences prévisualise chaque palier, et la séquence entière, sur un jeu d'exemple `[~]`
+Demande et arbitrage du responsable du 2026-11-01 (décision 808).
+
+**Spécification** : `docs/SPEC-modeles-emails.md` §14.
+
+**DoD** : les preuves du §14.6 (pgTAP, harnais API aux vrais jetons, unitaires, E2E, captures observées) ; build ;
+`docs/SCHEMA.md`, `docs/DAT.md`, `docs/DESIGN_SYSTEM.md` (composant de l'aperçu), manuel (chapitre des séquences),
+changelog, `docs/PROD_MIGRATIONS.md` (migration, vérification, retour arrière).
+
+Question du connecteur : sans objet (décision 808).
+
+- [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-01 : décision 808,
+      `docs/SPEC-modeles-emails.md` §14.
+- [ ] **T2 — la base** : migration de `public.render_mail_template_sample`, pgTAP, harnais API, `docs/SCHEMA.md`,
+      `docs/DAT.md`, `docs/PROD_MIGRATIONS.md`.
+- [ ] **T3 — l'écran** : bouton par palier, aperçu de la séquence, unitaires, E2E, captures, `docs/DESIGN_SYSTEM.md`,
+      manuel, changelog.
+- [ ] **T4 — livraison en production et constat** : migration appliquée, un aperçu constaté.
