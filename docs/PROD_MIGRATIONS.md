@@ -524,6 +524,13 @@ de `main`, sur l'instruction du responsable et après la confirmation de l'insta
 **Retour arrière** : la révision précédente de la webapp ; les colonnes peuvent rester en place (sans lecteur, elles ne
 changent rien), ou être retirées par les `drop function` de leurs lignes au §3.2.
 
+### 2.24 `CRM-121`, décision 763 — les verrous de `mcp/` renommés (À LA PROCHAINE RECONSTRUCTION de l'image `mcp`)
+
+`mcp/requirements.lock` et `mcp/requirements-dev.lock` deviennent `requirements.txt` et `requirements-dev.txt`, au
+contenu identique : le `pip freeze` de l'image est le même avant et après (69 paquets). **Aucune migration, aucune
+variable, aucun secret, aucun comportement changé.** Aucun geste propre : la prochaine reconstruction explicite de
+l'image `mcp` (§4) prend le nouveau nom. **Retour arrière** : sans objet.
+
 ### 2.18 INC-290 — MinIO depuis Chainguard dans la cellule (gestes 1 à 3 accomplis le 2026-11-01, décisions 793 et 794 : image dérivée d'INC-329, `minio` sain, `minio-createbucket` en `0`, un objet existant relu à l'identique ; le constat applicatif du responsable reste à faire ; images de `quay.io` gardées en cache)
 
 `docker-compose.spark.yml` remplace `quay.io/minio/minio` et `quay.io/minio/mc`, que `quay.io` ne sert plus (`401`), par

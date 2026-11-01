@@ -17777,7 +17777,7 @@ campagnes. Question du connecteur : aucune fonctionnalité nouvelle (décision 7
       et E2E, documentation.
 - [ ] **T4 — livraison en production et constat.**
 
-### CRM-121 — Dependabot surveille les dépendances Python `[ ]`
+### CRM-121 — Dependabot surveille les dépendances Python `[P]`
 Arbitrage du responsable du 2026-10-27 (décision 763). GitHub n'alerte que sur npm : aucun `.github/dependabot.yml`, et
 `mcp/requirements*.lock` porte un nom que Dependabot ne lit pas.
 **DoD** : `.github/dependabot.yml` (npm à la racine, pip pour `mcp/` et `mail-sync/`) ; les deux verrous de `mcp/`
@@ -17786,14 +17786,15 @@ renommés en `requirements.txt` et `requirements-dev.txt`, avec toutes les réf�
 manifestes Python constatés dans le graphe de dépendances de GitHub après le push. Question du connecteur : sans objet
 (décision 763).
 
-- [~] **T1 — configuration et renommage**, avec les preuves ci-dessus. **Fait le 2026-11-01** : `.github/dependabot.yml`
+- [x] **T1 — configuration et renommage**, avec les preuves ci-dessus. **Fait le 2026-11-01** : `.github/dependabot.yml`
       (npm `/`, pip `/mcp` et `/mail-sync`, chaque semaine) ; `git mv` des deux verrous de `mcp/` ; `Dockerfile`,
       `pyproject.toml`, `docs/SPEC-mcp.md` et les en-têtes suivent. **Preuves** : `pip freeze` des cibles `production`
       (69 paquets) et `dev` (73) identique avant et après le renommage ; pytest de l'image `dev` 287 passés, 76 ignorés
       (intégration, comme toujours) ; `scripts/verify-dependabot.sh` 7/7, rouge sur un export de `HEAD` avant la tranche
-      (3 anomalies). **Reste** : constater les manifestes Python dans le graphe de dépendances de GitHub après le push
-      (dépôt public, lisible par l'API sans jeton).
-- [ ] **T2 — livraison** : la prochaine reconstruction de l'image `mcp` de production prend le verrou renommé
+      (3 anomalies). **Graphe de GitHub constaté après le push** (`41d35542`), par l'API publique
+      `dependency-graph/sbom` : 90 paquets PyPI, dont `fastmcp` et `authlib` (verrou de `mcp/`), `pypdf` et `fastapi`
+      (`mail-sync/`).
+- [P] **T2 — livraison** : la prochaine reconstruction de l'image `mcp` de production prend le verrou renommé
       (contenu identique) ; aucune autre action en production.
 
 ### CRM-122 — Les captures versionnées se renouvellent par une campagne dédiée, observée et committée `[ ]`
