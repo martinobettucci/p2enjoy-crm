@@ -1,5 +1,7 @@
 # Contrat de déploiement — P2Enjoy CRM
 
+*Session de livraison : p2enjoy-crm-d8 depuis 2026-11-01 19:30 UTC — lot : tout `main` après la migration de `CRM-125` T2 (décision 812) — `0144` et migration de `CRM-125` T2 ; webapps de `CRM-123`, `CRM-124`, `CRM-125`, `CRM-126`, INC-332 et INC-333 ; image `mcp` (`CRM-126`). Règle : `CLAUDE.md` §12, décision 813.*
+
 Ce document décrit **ce qu'un humain doit appliquer** pour déployer ou mettre à jour la
 production. Il ne dérive jamais de l'état réel du projet : toute modification du schéma, des
 services déployés ou des variables d'environnement le met à jour **dans le même changement**.
