@@ -617,7 +617,9 @@ jour par `app.can_write_card` ; insertion par un membre de l'espace, sous l'inva
 
 `email_local_part` est généré par trigger sous la forme `c-<8 caractères base32>`, non devinable
 afin qu'une adresse divulguée ne permette pas d'énumérer les autres cards. L'adresse complète
-est `email_local_part || '@' || workspaces.inbound_domain`.
+est `email_local_part || '@' || workspaces.inbound_domain`. **Révisé par `CRM-123`, spécifié et non encore livré**
+(décision 804, `docs/SPEC-cards.md` §3.6) : le préfixe `c-` devient `workspaces.card_address_prefix`, `'c-'` par défaut,
+et `platform_regenerate_card_addresses` réécrit les adresses hors du préfixe courant.
 
 **La colonne n'est pas modifiable par un client depuis `CRM-013`** : `authenticated` n'a plus le
 privilège `UPDATE` dessus (`docs/SPEC-permissions-rls.md` §4.4). Sans ce retrait, la

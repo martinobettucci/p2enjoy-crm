@@ -17898,3 +17898,35 @@ le 2026-11-01, décision 800).
       `CRM-117` (T5) s'est close le 2026-10-31 sans lui, T1 et T2 n'étant pas faites : elle a renouvelé les seules images
       du manuel et les captures de `CRM-117`.
       *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 13:01 UTC — état avant : [ ]*
+
+## Demande du 2026-11-01 — le préfixe des adresses d'affaire (décision 804)
+
+### CRM-123 — Régler par espace le préfixe des adresses d'affaire, et régénérer les adresses existantes `[~]`
+Demande et arbitrage du responsable du 2026-11-01 (décision 804).
+
+**Problème.** Le préfixe `c-` est codé en dur. Une messagerie qui ne délègue qu'un motif d'alias (`app-*`) sur son
+domaine ne remet donc rien au CRM.
+
+**Spécification** : `docs/SPEC-cards.md` §3.6.
+
+**DoD** :
+- migration : colonne `workspaces.card_address_prefix` (`'c-'` par défaut, forme contrôlée), trigger qui la lit par
+  `app.card_address_draw`, contrainte de card élargie, `plateforme_modifier_espace` étendue,
+  `platform_regenerate_card_addresses`, décompte `card_addresses_to_regenerate`, journal ;
+- pgTAP et preuves API aux vrais jetons, dont le refus hors superadministrateur et un message réellement envoyé à une
+  adresse régénérée puis classé ;
+- l'écran de la fiche d'un espace, ses unitaires et son E2E ;
+- les captures observées ;
+- les preuves existantes qui figent la forme `c-` révisées ;
+- seed, manuel, `docs/DESIGN_SYSTEM.md` si besoin, `docs/DAT.md`, changelog et `docs/PROD_MIGRATIONS.md` §2.2 (montage
+  par alias et ordre des gestes).
+
+Question du connecteur : sans objet (décision 804).
+
+- [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-01 : `docs/SPEC-cards.md` §3.6, renvois de
+      `docs/SCHEMA.md` §5, `docs/SPEC-mail-subsystem.md` §3 et `docs/SPEC-plateforme.md` §7.3.
+- [ ] **T2 — base** : migration, pgTAP, harnais, preuves existantes révisées.
+- [ ] **T3 — écran et preuves de bout en bout** : fiche de l'espace, unitaires, E2E de l'écran et E2E mail, captures,
+      manuel, seed, changelog, contrat de déploiement.
+- [ ] **T4 — livraison en production et constat** : alias `app-*` en place, préfixe réglé, régénération, un message
+      reçu à une adresse `app-…` et classé.

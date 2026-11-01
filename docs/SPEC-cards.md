@@ -329,6 +329,101 @@ n'est pas stockée : `inbound_domain` peut changer, et une adresse dénormalisé
 sans que rien ne le signale. Sa composition appartient à la messagerie (`CRM-054`), qui est le seul
 consommateur.
 
+### 3.6 Le préfixe des adresses se règle par espace, et une régénération l'applique à l'existant — `CRM-123`
+
+*Demande et arbitrage du responsable du 2026-11-01 (`docs/JOURNAL.md`, décision 804).*
+
+**Le constat.** Le préfixe `c-` était codé en dur, dans le trigger et dans la contrainte `CHECK` de `0011`. Le contrat
+de production (`docs/PROD_MIGRATIONS.md` §2.2) supposait un **domaine réservé** aux affaires, avec une boîte catch-all
+qui reçoit tout ce domaine. Or une messagerie existante ne délègue souvent qu'un **motif d'alias** sur son domaine
+principal, par exemple `app-*` vers la boîte système. Les adresses `c-…` ne sont alors remises à personne, et aucun
+réglage ne permettait de suivre le motif du serveur.
+
+**Ce qui se règle : le préfixe seul.** L'adresse devient `<préfixe><8 caractères base32>@<inbound_domain>`. Le jeton
+garde la forme, l'alphabet et la non-devinabilité des §3.2 et §3.3. Le préfixe ne remplace que `c-`.
+
+1. **Colonne** `public.workspaces.card_address_prefix text not null default 'c-'`. Les espaces existants gardent donc
+   `c-`, et leurs adresses ne changent pas à la migration.
+2. **Forme du préfixe.** Il est réduit en minuscules et débarrassé de ses blancs avant contrôle. Il doit comporter 1 à
+   24 caractères parmi `a-z`, `0-9`, `.`, `_`, `+` et `-`, commencer par une lettre ou un chiffre, et ne pas contenir
+   `..`. La partie locale fait donc 32 caractères au plus, sous la limite de 64 de la RFC 5321. Le `+` couvre les
+   serveurs qui livrent `boite+…` sans alias. Refus : `22023` `invalid_card_address_prefix`, posé par une contrainte
+   `CHECK` sur la colonne et par la fonction d'écriture.
+3. **Génération.** `app.cards_generer_email_local_part()` lit le préfixe de l'espace de la nouvelle affaire, à la
+   place de la constante `'c-'`. La boucle de dix tirages et l'index unique global ne changent pas (§3.3).
+4. **Contrainte de la card.** `cards_email_local_part_check` devient
+   `^[a-z0-9][a-z0-9._+-]{0,23}[0-9abcdefghjkmnpqrstvwxyz]{8}$`. Toutes les adresses `c-…` existantes y satisfont.
+5. **Qui règle.** Le préfixe se règle là où se règle déjà le domaine entrant : `plateforme_modifier_espace` reçoit
+   `p_card_address_prefix text default null` (`null` laisse le préfixe tel quel), réservé au superadministrateur
+   (`docs/SPEC-plateforme.md` §6.2). Le journal `espace_modifie` porte le préfixe avant et après. La journalisation de
+   configuration (`0115`) suit la nouvelle colonne.
+6. **Changer le préfixe n'a d'effet que sur les nouvelles affaires.** Les adresses existantes ne bougent pas tant que
+   personne ne les régénère (point 7). Le correspondant d'une affaire ne perd donc pas sa réponse en cours au simple
+   enregistrement du formulaire.
+
+**7. La régénération est un geste explicite.** La fonction est
+`public.platform_regenerate_card_addresses(p_workspace_id uuid) returns integer`. Elle est `SECURITY DEFINER` et
+réservée au superadministrateur (`42501` `reserve_aux_superadministrateurs`, `P0002` `espace_introuvable` en 404).
+
+- Elle tire une **nouvelle** partie locale au préfixe courant pour chaque affaire de l'espace **dont l'adresse ne
+  porte pas déjà ce préfixe**. Elle passe par le même tirage que le trigger, factorisé en
+  `app.card_address_draw(p_prefix text)`.
+- Les affaires archivées et en corbeille sont comprises : restaurée, une affaire doit recevoir à l'adresse du motif
+  courant.
+- Elle rend le nombre d'affaires réécrites et journalise `card_addresses_regenerated` (espace, préfixe, nombre) dans
+  `plateforme_journal`.
+- **Une affaire qui porte déjà le préfixe courant garde son adresse.** C'est le choix fait en écrivant cette
+  spécification : le responsable a demandé de régénérer « toutes les affaires », et c'est bien le cas de toutes celles
+  qui ne suivent pas le motif. Retirer à nouveau une adresse déjà conforme romprait ses fils sans rien rapporter, et le
+  geste devient ainsi rejouable sans dommage.
+- `plateforme_espaces()` et la fiche reçoivent le décompte `card_addresses_to_regenerate` : le nombre d'affaires de
+  l'espace hors du préfixe courant.
+
+**8. Ce que la régénération coûte, et ce que l'écran en dit.**
+- Un correspondant qui écrit à l'**ancienne** adresse n'est plus classé par la règle 1
+  (`docs/SPEC-mail-subsystem.md` §16.2).
+- Une **réponse** à un message déjà classé l'est encore par la règle 2 (`In-Reply-To` / `References`), à condition
+  que le serveur la remette toujours à la boîte système. Garder l'alias de l'ancien préfixe le temps que les échanges
+  en cours se terminent est donc **recommandé**, et l'écran le dit.
+- Les envois **en file** prennent la nouvelle adresse : le `Reply-To` est recomposé au moment de l'envoi
+  (`claim_outbound`, `0106`), il n'est pas stocké.
+- Aucun message déjà classé ne change d'affaire. Le classement reste une recherche exacte de l'adresse
+  (`app.card_par_adresse`) et ne reconnaît aucun motif : il n'y a rien à y changer.
+
+**9. L'écran** (`docs/SPEC-plateforme.md` §7.3).
+- Le formulaire « Modifier » de la fiche d'un espace reçoit le champ « Préfixe des adresses d'affaire », avec un
+  exemple calculé sous le champ : `app-xxxxxxxx@<domaine>`.
+- Une section « Adresses des affaires » montre le préfixe courant, puis le nombre d'affaires hors du préfixe
+  courant.
+- Lorsque ce nombre est non nul, elle propose « Régénérer les adresses ». La confirmation se fait **dans le flux**,
+  sans modale (`docs/DESIGN_SYSTEM.md` §5.13). Elle nomme le nombre d'affaires et les conséquences du point 8, puis
+  relit l'état.
+- Le champ et la section suivent les règles du design system pour les états de chargement, d'erreur et de succès.
+
+**10. Connecteur MCP** (les deux questions de `CLAUDE.md`). Le réglage et la régénération **n'entrent pas** dans le
+connecteur. Ce sont des gestes d'infrastructure du superadministrateur, pas des actions confiées à un assistant. Aucune
+famille ni case de la matrice n'est ajoutée (décision 804).
+
+**11. Seed et preuves.**
+- L'espace seedé garde `c-`, que de nombreuses preuves supposent (§3.2). Le seed l'écrit explicitement.
+- Le préfixe modifié et la régénération se démontrent dans l'E2E de la plateforme, qui rend l'espace tel qu'il l'a
+  trouvé, sur le modèle de `docs/SPEC-plateforme.md` §8.
+- **pgTAP** :
+  - le préfixe lu à la génération ;
+  - la forme refusée, sous ses cas limites : vide, 25 caractères, majuscule normalisée, `..`, caractère interdit ;
+  - la contrainte de card élargie ;
+  - la régénération limitée aux affaires hors préfixe, archivées et en corbeille comprises ;
+  - le rejeu sans effet ;
+  - le journal.
+- **API**, aux vrais jetons :
+  - le refus d'un administrateur d'espace non superadministrateur, pour le réglage comme pour la régénération ;
+  - un message réellement envoyé à une adresse `app-…` régénérée, ingéré et classé dans l'affaire.
+- **E2E de l'écran** : réglage, exemple, décompte, confirmation, relecture.
+- **Unitaires de la webapp** : contrôle de forme côté écran et composition de l'exemple.
+- **Contrat de déploiement.** `docs/PROD_MIGRATIONS.md` §2.2 admet les deux montages : un domaine réservé avec son
+  catch-all, ou un motif d'alias `<préfixe>*` sur un domaine existant vers la boîte système. Il dit aussi l'ordre des
+  gestes : créer l'alias du nouveau préfixe **avant** de régénérer, et garder l'ancien alias.
+
 ## 4. Cycle de vie
 
 | État | `archived_at` | `deleted_at` | Visible dans |

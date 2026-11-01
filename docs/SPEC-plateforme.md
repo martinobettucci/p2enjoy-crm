@@ -295,6 +295,12 @@ CRM ne le connaissant que par leur jeton (§10). Une phrase sous le titre le dit
 - **En-tête :** le nom et le slug, puis « Modifier » (nom et domaine entrant, formulaire **dans le
   flux** — le design system n'admet aucune modale, §5.13) et « Supprimer l'espace » (zone de danger,
   en bas de fiche).
+- **`CRM-123`, spécifié et non encore livré** (décision 804, `docs/SPEC-cards.md` §3.6 points 5, 7 et 9) :
+  - « Modifier » reçoit le préfixe des adresses d'affaire, passé par `plateforme_modifier_espace(…,
+    p_card_address_prefix)` ;
+  - une section « Adresses des affaires » donne le décompte des affaires hors du préfixe courant ;
+  - lorsque ce décompte est non nul, elle offre « Régénérer les adresses »
+    (`platform_regenerate_card_addresses`), avec confirmation dans le flux.
 - **Section Membres :**
   - un tableau (nom, rôle, superadministrateur, depuis) ;
   - un sélecteur de rôle par ligne, qui écrit à la sélection puis relit l'état ;

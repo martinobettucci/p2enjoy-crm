@@ -37800,3 +37800,38 @@ garde une identité **explicite** ; aucune famille ni case nouvelle.
 identité présélectionnée ; autre membre : liste vide), puis passe `[x]` en développement ; INC-315 est close par cette
 livraison. `docs/SPEC-rattachements.md` §7 et §14, `docs/DESIGN_SYSTEM.md` si l'état présélectionné l'exige, le manuel
 du bloc d'armement.
+
+### décision 804 — `CRM-123` : le préfixe des adresses d'affaire se règle par espace, et une régénération l'applique
+
+*2026-11-01, session interactive, demande et arbitrage du responsable.*
+
+**Problème.** En production, le responsable a ouvert sur sa messagerie globale un alias générique `app-*` vers la boîte
+système. Mais le CRM génère des adresses `c-xxxxxxxx`, avec un préfixe codé en dur dans le trigger et dans la
+contrainte `CHECK` de `0011`. Aucun réglage ne permet de suivre le motif du serveur. Le contrat de déploiement
+(`docs/PROD_MIGRATIONS.md` §2.2) supposait un domaine réservé, avec son catch-all. Les adresses ne sont donc remises à
+personne.
+
+**Observation.** Le classement (`app.card_par_adresse`) et le `Reply-To` (`claim_outbound`) composent l'adresse
+**stockée**, sans reconnaître de motif. Changer ce que le trigger écrit suffit donc à la réception et aux réponses. Une
+vingtaine de preuves vérifient en revanche la forme `c-` et devront suivre.
+
+**Décision**, en quatre questions :
+- **Portée** : par espace. Après modification, un bouton régénère les adresses des affaires de l'espace.
+- **Forme** : le préfixe seul, suivi du jeton de 8 caractères base32, inchangé.
+- **Existant** : régénéré, par ce geste explicite.
+- **Connecteur MCP** : non. Aucune famille ni case nouvelle.
+
+Deux précisions sont posées en écrivant la spécification et soumises au responsable :
+- **Seules les affaires hors du préfixe courant sont régénérées.** Retirer à nouveau une adresse déjà conforme romprait
+  ses fils sans rien rapporter, et le geste devient rejouable.
+- **Le réglage et le bouton sont réservés au superadministrateur**, sur la fiche de l'espace, là où se règle déjà le
+  domaine entrant.
+
+**Conséquences.**
+- La spécification est `docs/SPEC-cards.md` §3.6.
+- Elle est reprise par renvoi dans `docs/SCHEMA.md` §5, `docs/SPEC-mail-subsystem.md` §3 et
+  `docs/SPEC-plateforme.md` §7.3.
+- L'unité `CRM-123` est inscrite au backlog.
+- Le contrat de déploiement sera révisé avec la migration. Il admettra le montage par alias et l'ordre des gestes :
+  alias du nouveau préfixe avant la régénération, ancien alias conservé.
+- **Contournement immédiat, sans code** : ajouter l'alias `c-*` vers la boîte système.
