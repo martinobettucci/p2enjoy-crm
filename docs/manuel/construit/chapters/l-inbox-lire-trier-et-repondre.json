@@ -1791,7 +1791,24 @@
 							},
 							{
 								"type": "text",
-								"text": " dans « Expédier depuis » : celle que vous avez cochée « Identité par\ndéfaut de cette personne » dans « Réglages ▸ Identités d'expédition ». Si vous n'avez qu'une adresse, c'est elle. Si\nvous en avez plusieurs et qu'aucune n'est par défaut, le champ affiche « Choisir une adresse »."
+								"text": " dans le champ de l'adresse d'expédition : celle que vous avez\ncochée comme identité par défaut dans les réglages des identités d'expédition ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "les-boites-de-reception-et-les-adresses-d-expedition",
+									"anchor": "les-adresses-d-expedition"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 11.2"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ").\nSi vous n'avez qu'une adresse, c'est elle. Si vous en avez plusieurs et qu'aucune n'est par défaut, le champ reste à\nchoisir."
 							}
 						]
 					}

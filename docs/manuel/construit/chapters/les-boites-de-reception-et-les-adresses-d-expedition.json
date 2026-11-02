@@ -931,13 +931,13 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "La case « par défaut » dit ce qu'elle règle."
+										"text": "La case de l'identité par défaut dit ce qu'elle règle."
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " Sur l'adresse d'une personne, c'est « Identité par défaut de cette\npersonne » : l'adresse choisie d'avance quand cette personne écrit. Sur l'adresse de service, c'est « Identité par\ndéfaut des envois automatiques ». La case est cochée d'avance sur une déclaration, parce que c'est ce que le produit\nferait de toute façon. La décocher n'est utile que si vous en avez déjà une."
+								"text": " Sur l'adresse d'une personne, elle désigne l'adresse\nchoisie d'avance quand cette personne écrit. Sur l'adresse de service, elle désigne l'adresse des envois\nautomatiques. La case est cochée d'avance sur une déclaration, parce que c'est ce que le produit ferait de toute\nfaçon. La décocher n'est utile que si vous en avez déjà une."
 							}
 						]
 					}
