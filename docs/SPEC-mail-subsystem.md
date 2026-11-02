@@ -3016,7 +3016,8 @@ Livré :
 
 Une fonction `public.mail_inbound_account_record_sync(p_account_id uuid) returns timestamptz`, `SECURITY DEFINER`,
 `search_path = ''`, pose `last_sync_at = now()` et rend la valeur posée. Elle refuse un compte inconnu par
-`account_not_found` (`P0002`). Son exécution est **révoquée à `public`, `anon` et `authenticated`** et accordée au seul
+`account_not_found`, levé par `app.raise_http_error(404, …)` : `CRM-120` a banni l'`errcode` `P0002`
+(`docs/SPEC-refus-404.md` §2). Son exécution est **révoquée à `public`, `anon` et `authenticated`** et accordée au seul
 `service_role`, comme `mail_inbound_account_record_check` (§13.5). La colonne reste fermée en écriture à
 `authenticated`. C'est l'horloge de la base qui date la relève, pas celle du conteneur.
 
@@ -3043,7 +3044,7 @@ Une fonction `public.authorize_mail_connection_test(p_target text, p_id uuid) re
 |---|---|---|
 | Appelant sans session | `not_authenticated` | `42501` |
 | `p_target` hors de `inbound`, `outbound` | `invalid_target` | `22023` |
-| Ligne absente, **ou** l'appelant n'a pas le droit de l'écrire | `not_found` | `P0002` |
+| Ligne absente, **ou** l'appelant n'a pas le droit de l'écrire | `not_found` | `app.raise_http_error(404, …)` (`CRM-120`) |
 | La ligne est `disabled`, une décision d'exploitation (§13.2) qu'un test écraserait par `ok` ou `error` | `disabled` | `55000` |
 | Le dernier test de cette ligne date de moins de 30 secondes | `too_soon` | `P0001` |
 
