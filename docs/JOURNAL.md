@@ -38191,3 +38191,26 @@ jetons réels (la lectrice ne voit pas le rattachement d'un channel fermé ; le 
 commune et pas le bloc d'un channel qu'il lit seulement ; un non-administrateur ne retire pas) ; suite d'API
 1296/1299 — trois rouges étrangers, deux du manuel (bucket non republié), un instable sous charge ; unitaires
 5166/5166 ; typecheck propre, le témoin des fonctions révisé.
+
+### décision 814 — `CRM-111` T4 : la recherche et le temps valorisé à plusieurs rattachements, et leur connecteur
+
+*2026-11-01, session interactive, réponses du responsable (les trois options recommandées).* **Questions** : deux points
+du §6 et du §9 de `docs/SPEC-rattachements.md` restaient marqués « [proposition] », et T4 change le contrat de deux
+fonctions que le connecteur emploie ; les deux questions de `CLAUDE.md` sont posées pour elles.
+
+**Inventaire préalable, sur la base de développement** : `entonnoir_conversion`, `cards_figees` (et
+`app.relancer_cards_figees`, qui la lit) et Ma journée (la webapp et `crm_card_mine`, filtrées sur
+`card_placements.owner_id`) lisent déjà chaque rattachement ; `recherche_globale` et `temps_valorise` ne lisent que le
+plus ancien, par un `lateral … limit 1`.
+
+**Décisions.**
+1. **Recherche** : une ligne par affaire ; elle nomme ses rattachements lisibles, et le lien mène au premier d'entre eux
+   dans l'ordre des tracks et des channels.
+2. **Temps valorisé** : la ventilation par channel montre l'affaire dans chaque channel rattaché lisible, avec une
+   colonne `shared` ; le total ne compte une saisie qu'une fois.
+3. **Connecteur MCP** : oui, dans les familles existantes — `crm_search` (`structure` ▸ `consulter`) et
+   `crm_time_report` (`temps` ▸ `consulter`) — sans famille ni case nouvelle.
+
+**Conséquences.** T4 change les contrats de `recherche_globale` et de `temps_valorise`, avec leurs consommateurs : la
+webapp (`recherche.ts`, `rapport-temps.ts`) et les deux outils. `docs/SPEC-rattachements.md` §6, §9 et §11 le disent ;
+`docs/SPEC-recherche.md` et `docs/SPEC-temps.md` le diront avec le code.

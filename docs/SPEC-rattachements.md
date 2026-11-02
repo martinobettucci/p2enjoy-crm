@@ -391,7 +391,10 @@ déclencheur n'est jamais suspendu.
   l'écran ne les compte **qu'une fois**. Le filtre d'état s'applique à l'état du rattachement. Le contrat d'API change :
   `docs/SPEC-recettes.md` §5 et l'outil `crm_profitability_report` sont mis à jour dans la même tranche.
 - **Temps valorisé** (`temps_valorise`) : les saisies restent attachées à l'affaire. La ventilation par channel montre
-  l'affaire dans chaque channel rattaché, marquée partagée, comme la rentabilité **[proposition]**.
+  l'affaire dans **chaque channel rattaché lisible**, avec une colonne `shared` (vrai quand l'affaire a plusieurs
+  rattachements lisibles), et le total ne compte une saisie **qu'une fois**, comme la rentabilité (décision 814). Le
+  contrat de `temps_valorise` change : `docs/SPEC-temps.md` et l'outil `crm_time_report` sont mis à jour dans la même
+  tranche.
 
 ## 7. Messagerie
 
@@ -437,7 +440,9 @@ déclencheur n'est jamais suspendu.
 ## 9. Recherche
 
 `recherche_globale` rend **une ligne par affaire**. Elle nomme les rattachements lisibles, et le lien mène au premier
-d'entre eux dans l'ordre des tracks et des channels **[proposition]**.
+d'entre eux dans l'ordre des tracks et des channels (décision 814) — et non plus au plus ancien rattachement, la « forme
+d'avant » de la bascule. Le contrat change : `docs/SPEC-recherche.md` et l'outil `crm_search` sont mis à jour dans la
+même tranche.
 
 ## 10. Migration et reprise
 
@@ -468,6 +473,10 @@ matrice ; d'ici là, c'est `affaires`.
 | `supprimer` | `crm_card_placement_archive` — **archiver** un rattachement ; **aucun outil de retrait** : c'est un geste d'administrateur dans la webapp (décision 643) |
 
 **Famille `recettes`** : `crm_profitability_report` suit le nouveau contrat de `rentabilite_affaires` (§6).
+
+**Familles `structure` et `temps`** (décision 814, les deux questions de `CLAUDE.md` posées pour T4) : `crm_search`
+(`structure` ▸ `consulter`) rend les rattachements lisibles d'une affaire et le lien du §9 ; `crm_time_report`
+(`temps` ▸ `consulter`) rend la ventilation partagée du §6. Aucune famille ni case nouvelle.
 
 ## 12. Seed
 

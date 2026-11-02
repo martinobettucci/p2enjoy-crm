@@ -17260,6 +17260,11 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       charge), unitaires 5166/5166, typecheck propre. Aucun écran ni outil ne l'emploie encore (T7, T9).
 - [@] **T4 — lectures à plusieurs rattachements** (§6, §9) : entonnoir, affaires figées et relances, Ma journée,
       recherche, temps valorisé ; pgTAP et API.
+      *Arbitré le 2026-11-01 (décision 814)* : la recherche nomme les rattachements lisibles et mène au premier dans
+      l'ordre des tracks et des channels ; le temps valorisé montre l'affaire dans chaque channel rattaché lisible,
+      marquée `shared`, la saisie comptée une fois ; `crm_search` (`structure`) et `crm_time_report` (`temps`) suivent,
+      sans famille ni case nouvelle. Les trois autres lectures (entonnoir, figées et relances, Ma journée) lisent déjà
+      chaque rattachement : T4 le prouve à deux rattachements.
       *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-11-01 20:35 UTC — état avant : [ ]*
 - [ ] **T5 — rentabilité ventilée** (§6) : une ligne par rattachement × devise, colonne `shared`, total compté une fois ;
       écran ; `docs/SPEC-recettes.md` §5 et outil `crm_profitability_report`.
