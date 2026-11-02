@@ -274,6 +274,11 @@ services:
       OLLAMA_API_KEY: ${OLLAMA_API_KEY:-}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma4:e2b}
       OLLAMA_CONTEXT_LENGTH: ${OLLAMA_CONTEXT_LENGTH:-36864}
+      # @spec CRM-127 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §23.4 — le relais du test de connexion joint
+      # `mail-sync` sur le réseau Compose avec son jeton interne. Le service principal ne les remet QU'AU worker
+      # `mail-connection-test` (`main/environnement.ts`).
+      MAIL_SYNC_URL: http://mail-sync:8080
+      MAIL_SYNC_INTERNAL_TOKEN: ${MAIL_SYNC_INTERNAL_TOKEN}
 
   # --- Passerelle ----------------------------------------------------------------------------
   # Kong expose REST, Storage, Realtime et les fonctions edge sur un port unique

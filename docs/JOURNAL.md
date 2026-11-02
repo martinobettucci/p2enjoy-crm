@@ -38425,3 +38425,27 @@ montre pas, §5.33). **Les données des preuves** : pas de seed à deux rattache
 manuel posent un rattachement par `attach_card` et une saisie par l'API, comme d'autres scénarios du manuel, puis les
 retirent. **MCP** : `crm_time_report` rend déjà `shared` (décision 814, T4.1) ; aucune question nouvelle.
 
+### `CRM-127` T2 et T3 — la relève datée et la fonction edge, prouvées sur la pile (suite de la décision 816)
+
+*2026-11-02, session interactive (p2enjoy-crm-25).* **Numérotation** : la migration prend la **151**. La 150 est
+`CRM-111` T4.1, échangée à sa demande pour qu'il pousse le premier. Une première version de ce fichier, non suivie dans
+l'arbre partagé, a été appliquée à la base de dev par un runner d'une autre session pendant sa campagne. Elle levait `P0002`
+par `errcode`, ce que `CRM-120` a banni, et la suite pgTAP 0133 a rougi. Les deux refus « introuvable » passent désormais
+par `app.raise_http_error(404, …)`.
+
+**Défaut trouvé par la suite pgTAP 0139, avant tout commit** : dans `authorize_mail_connection_test`, la condition
+`not (admin or v_owner_id = v_appelant)` vaut `NULL` sur une ligne sans propriétaire (boîte système, identité de
+service), et un `if` sur `NULL` ne refuse pas. Un simple membre testait donc la boîte système (assertions 16 et 18).
+Corrigé par `v_owner_id is not null and …`, commenté en place.
+
+**Vérifié sur la pile reconstruite** : migration 151 appliquée par le vrai runner, seed rejoué ; pgTAP complet 128
+fichiers, 4 775 assertions, aucune anomalie (le compte figé de l'assertion 5 de 0133 révisé de 27 à 29, en le disant) ;
+pytest `mail-sync` 291 dans un conteneur jetable (l'hôte n'a pas `python3-venv`), dont 3 des 5 tests neufs rouges sans le
+correctif ; une relève réelle par `/poll` date `last_sync_at` à l'horloge de la base, `status` restant `pending`, et la
+veille avait daté les trois boîtes juste après la reconstruction ; unitaires de la fonction edge et de l'environnement
+par fonction (70 avec la bibliothèque webapp) ; API `e2e/api/tester-connexion.spec.ts` **7/7** contre la vraie passerelle
+et de vraies sessions IMAP et SMTP, le seed rendu intact.
+
+**Non fait** : `scripts/verify-mail-inbound.sh` n'a pas été rejoué en entier. Sa nouvelle section, une relève réelle
+datée, a été exécutée à la main, avec les mêmes commandes. L'écran (T4) reste à faire.
+

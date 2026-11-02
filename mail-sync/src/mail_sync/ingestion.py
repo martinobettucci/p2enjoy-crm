@@ -7,6 +7,8 @@
 #       §15.5 (ordre dépôt → analyse, chemin sans nom de fichier)
 # @spec docs/JOURNAL.md décision 320
 # @spec INC-266 (docs/INCONSISTENCY_REPORT.md, décision 619) — deux relèves d'un même compte ne se chevauchent pas
+# @spec CRM-127 (docs/BACKLOG.md) — tranche T2 : la relève allée au bout écrit `last_sync_at` (docs/SPEC-mail-subsystem.md
+#       §23.2, INC-340, décision 816)
 #
 # CE MODULE ORCHESTRE, IL NE DÉCIDE PAS. L'analyse MIME vit dans `mime_analyse`, l'antivirus dans
 # `antivirus`, l'accès à la base dans `postgrest` : ce fichier enchaîne, et c'est tout. La
@@ -482,6 +484,11 @@ def _relever_compte(
     # avancer le plancher, et le tour suivant reprend où celui-ci s'était arrêté.
     if progression_modifiee:
         client_base.enregistrer_progression(compte.account_id, sync_state)
+
+    # `CRM-127` (§23.2) : la relève est allée au bout, elle se date. Même place que la progression, pour la même raison :
+    # une relève qui lève n'arrive pas ici. Un échec de cette écriture n'est pas avalé — il remonte comme une panne de la
+    # relève, que la veille journalise et que `/poll` rend en `502` ; la relève suivante, idempotente, réessaie.
+    client_base.record_sync(compte.account_id)
 
     return ResultatReleve(
         dossiers=len(dossiers),

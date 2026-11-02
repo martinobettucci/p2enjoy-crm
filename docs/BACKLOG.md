@@ -18171,8 +18171,8 @@ nouvelle (décision 810).
 Demande et arbitrage du responsable du 2026-11-02 (décision 816), qui arbitre INC-340.
 
 **Spécification** : `docs/SPEC-mail-subsystem.md` §23 ; `docs/SPEC-edge-functions.md` (la fonction
-`mail-connection-test`, à écrire avec T3) ; `docs/DESIGN_SYSTEM.md` §5.81 (à écrire avec T4) ; `docs/SCHEMA.md` (migration
-`0150`).
+`mail-connection-test`, §10) ; `docs/DESIGN_SYSTEM.md` §5.81 (à écrire avec T4) ; `docs/SCHEMA.md` (migration
+`0151`).
 
 **DoD** :
 - la relève réussie écrit `last_sync_at` par `mail_inbound_account_record_sync`, réservée à `service_role` ; pytest ;
@@ -18183,16 +18183,19 @@ Demande et arbitrage du responsable du 2026-11-02 (décision 816), qui arbitre I
   à elle seule ; unitaires Deno ; API Playwright sur la pile réelle (`404`, `401`, `429`, succès écrit en base) ;
 - les deux écrans de réglages : « Tester la connexion » par ligne, vol, verdict et refus traduits, liste relue, incident
   d'une ligne en erreur, `pending` lu « Non testée » ; Vitest ; E2E UI ; captures 1440, 900, 390 observées ;
-- manuel, changelog, `docs/PROD_MIGRATIONS.md` (migration `0150`, fonctions edge, `mail-sync`, webapp, variable
+- manuel, changelog, `docs/PROD_MIGRATIONS.md` (migration `0151`, fonctions edge, `mail-sync`, webapp, variable
   `MAIL_SYNC_URL` du service `functions`), README et DAT.
 
 Question du connecteur : **non** (décision 816).
 
 - [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-02 : décision 816,
       `docs/SPEC-mail-subsystem.md` §23, INC-340 arbitrée.
-- [ ] **T2 — base et `mail-sync`** : migration `0150`, `last_sync_at` écrite par la relève, garde de droit ; pgTAP,
-      pytest, harnais.
-- [ ] **T3 — fonction edge `mail-connection-test`** ; Deno, API.
+- [~] **T2 — base et `mail-sync`** : migration **`0151`** (la `0150` est `CRM-111` T4.1), `last_sync_at` écrite par la
+      relève, garde de droit. Vérifié le 2026-11-02 sur une base reconstruite : pgTAP complet (128 fichiers), pytest (291),
+      une relève réelle datée. **Reste** : rejouer `scripts/verify-mail-inbound.sh` en entier, et l'E2E de l'écran d'état
+      avec T4.
+- [x] **T3 — fonction edge `mail-connection-test`**, vérifiée le 2026-11-02 : unitaires (gestionnaire, dépendances,
+      environnement par fonction) ; API `e2e/api/tester-connexion.spec.ts` 7/7 sur la pile réelle.
 - [ ] **T4 — écrans, design system, manuel, E2E et captures.**
 - [ ] **T5 — livraison en production et constat** : une boîte testée depuis l'écran, et sa date de relève visible sur
       l'écran d'état.

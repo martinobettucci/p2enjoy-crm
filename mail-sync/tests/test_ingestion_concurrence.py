@@ -1,6 +1,7 @@
 # @verifies CRM-069 (docs/BACKLOG.md) — tranche T6 : la base factice rend les adresses de service (aucune), la relève inchangée
 # @verifies INC-266 (docs/INCONSISTENCY_REPORT.md, décision 619) — deux relèves d'un même compte ne se chevauchent pas
 # @verifies docs/SPEC-mail-subsystem.md §4.5 (le renommage précède la relève, sur une liste relue à chaque tour)
+# @verifies CRM-127 (docs/BACKLOG.md) — tranche T2 : le double de la base accepte `record_sync` (docs/SPEC-mail-subsystem.md §23.2)
 #
 # LE DÉFAUT, MESURÉ LE 2026-10-02 : pendant une campagne `e2e:mail`, `mail-sync` a écrit `folder_rename_refused`,
 # précédé de « [NONEXISTENT] Mailbox 'CRM/Conseil & IA (renommé …)' not found ». La veille (un fil de fond) et la
@@ -115,6 +116,10 @@ class Base:
 
     def enregistrer_progression(self, _account_id, _sync_state):
         return None
+
+    def record_sync(self, _account_id):
+        # `CRM-127` (§23.2) : la relève allée au bout se date ; le double l'accepte sans rien vérifier ici.
+        return "2026-11-02T00:00:00+00:00"
 
     def messages_a_ranger(self, _account_id):
         return []

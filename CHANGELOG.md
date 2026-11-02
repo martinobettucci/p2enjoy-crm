@@ -13,7 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+- **`CRM-127` T2 et T3 — la relève date `last_sync_at`, et le test de connexion d'un compte de messagerie passe par une
+  fonction edge** (décision 816, INC-340 ; `docs/SPEC-mail-subsystem.md` §23). Migration `0151` :
+  `mail_inbound_account_record_sync`, réservée à `service_role`, que `mail-sync` appelle à la fin de chaque relève allée
+  au bout ; `authorize_mail_connection_test`, qui accorde le test au seul droit d'écrire la ligne, rend le même `404` pour
+  une ligne absente ou interdite, refuse une ligne désactivée et un second test sous 30 s. Nouvelle fonction edge
+  `mail-connection-test` : la base décide avec le jeton de l'appelant, puis la fonction relaie vers `mail-sync` avec son
+  jeton interne, remis à elle seule. Défaut trouvé par la suite pgTAP avant tout commit : sur une ligne sans propriétaire,
+  la comparaison au propriétaire valait `NULL` et le refus ne se déclenchait pas. L'écran d'état affichera la vraie date
+  de dernière relève. Le bouton des écrans de réglages reste à livrer (T4). **À livrer ensemble** : migration `0151`, image
+  `mail-sync`, service `functions` (`docs/PROD_MIGRATIONS.md` §3).
 
 ## [Publié]
 

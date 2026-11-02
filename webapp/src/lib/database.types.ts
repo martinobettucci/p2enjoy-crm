@@ -4404,6 +4404,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      authorize_mail_connection_test: {
+        Args: { p_id: string; p_target: string }
+        Returns: undefined
+      }
       cards_figees: {
         Args: never
         Returns: {
@@ -4744,6 +4748,10 @@ export type Database = {
       }
       mail_inbound_account_record_check: {
         Args: { p_account_id: string; p_error?: string; p_status: string }
+        Returns: string
+      }
+      mail_inbound_account_record_sync: {
+        Args: { p_account_id: string }
         Returns: string
       }
       mail_outbound_identity_credentials: {

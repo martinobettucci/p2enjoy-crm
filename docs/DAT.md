@@ -768,6 +768,16 @@ Caddy.
 - **Dépendance** : l'analyse du Markdown, à la construction seulement, est inscrite au §15 quand elle est ajoutée, après
   la mesure du `CLAUDE.md` §19.
 
+### 3.7 quater bis Test de connexion d'un compte de messagerie — fonction `mail-connection-test` (`CRM-127` ; T2 et T3 livrées en développement le 2026-11-02)
+
+Le navigateur ne joint jamais `mail-sync`, dont l'API interne exige un jeton qui ne doit pas être publié. La fonction edge
+`mail-connection-test` fait décider le droit par la base **avec le jeton de l'appelant** (`authorize_mail_connection_test` :
+droit d'écrire la ligne, `404` sans divulgation, `disabled`, 30 s entre deux tests), puis relaie vers
+`POST /internal/v1/{inbound-accounts|outbound-identities}/{id}/test` avec `MAIL_SYNC_INTERNAL_TOKEN`, remis à ce seul
+worker. `mail-sync` ouvre la vraie session IMAP ou SMTP et écrit lui-même le verdict en base. Compromis : un saut réseau
+de plus, contre aucun secret dans le navigateur et une règle d'accès tenue en base (`CLAUDE.md` §10). Spécification :
+`docs/SPEC-mail-subsystem.md` §23.
+
 ### 3.7 quinquies Webhooks sortants — fonction `webhooks` (`CRM-073` ; T1 et T2 livrées en développement le 2026-10-31)
 
 `docs/SPEC-webhooks.md`. **La base décide, la fonction remet, `pg_cron` cadence** :

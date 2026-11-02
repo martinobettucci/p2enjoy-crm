@@ -8,6 +8,8 @@
 # @verifies docs/SCHEMA.md §12 ; docs/SPEC-seed.md §2.17
 # @verifies docs/JOURNAL.md décision 316 ; CLAUDE.md §8 (aucune trace fabriquée), §10 (la règle
 #           est appliquée côté backend et prouvée hors interface)
+# @verifies CRM-127 (docs/BACKLOG.md) — tranche T2 : la relève réelle date `last_sync_at` (docs/SPEC-mail-subsystem.md
+#           §23.2, INC-340, décision 816)
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais prouve.
@@ -281,13 +283,30 @@ fi
 # mesurée par la session `CRM-088` désigne la moitié exacte à retourner, et les deux moitiés se
 # séparent ici.
 #
-# MOITIÉ 1 — `last_sync_at` reste nulle, et l'assertion RESTE une absence figée, délibérément :
-# aucune unité ne remplit encore cette colonne. Elle rougira le jour où l'une le fera, et désignera
-# alors le contrôle à écrire. C'est le mécanisme de la décision 51, et il n'a pas encore joué ici.
-if [ "$(psql_db -c "select count(*) from public.mail_inbound_accounts where last_sync_at is not null")" = 0 ]; then
-	ok "\`last_sync_at\` reste nulle partout : aucune unité ne la remplit encore — absence FIGÉE, qui rougira le jour venu"
+# MOITIÉ 1 — RETOURNÉE PAR `CRM-127` T2 (docs/SPEC-mail-subsystem.md §23.2, INC-340, décision 816). L'absence figée
+# a rempli son office : elle désignait le contrôle à écrire le jour où une unité daterait la relève. C'est fait, et
+# la preuve est faite par une VRAIE relève : la route interne `/poll` est appelée depuis le conteneur du service,
+# sur la boîte système du seed, et `last_sync_at` doit en sortir postérieure au début du contrôle, posée par
+# l'horloge de la base. Une valeur ancienne, ou posée par un scénario E2E, ne suffit pas.
+debut_releve=$(psql_db -c "select now()")
+boite_systeme=$(psql_db -c "select id from public.mail_inbound_accounts where owner_id is null limit 1")
+if [ -z "$boite_systeme" ]; then
+	fail "aucune boîte système dans le seed : la relève datée ne peut pas être prouvée"
+elif docker exec "$(conteneur mail-sync)" python -c "
+import os, sys, urllib.request
+requete = urllib.request.Request(
+    'http://127.0.0.1:8080/internal/v1/inbound-accounts/$boite_systeme/poll', method='POST',
+    headers={'Authorization': 'Bearer ' + os.environ['MAIL_SYNC_INTERNAL_TOKEN']})
+sys.exit(0 if urllib.request.urlopen(requete, timeout=90).status == 200 else 1)
+" >"$TRAVAIL/releve-datee.log" 2>&1; then
+	if [ "$(psql_db -c "select count(*) from public.mail_inbound_accounts
+		where id = '$boite_systeme' and last_sync_at >= '$debut_releve'::timestamptz")" = 1 ]; then
+		ok "une relève réelle de la boîte système date \`last_sync_at\` à l'horloge de la base (§23.2)"
+	else
+		fail "la relève réelle a abouti, mais \`last_sync_at\` n'a pas été datée : INC-340 est revenue"
+	fi
 else
-	fail "\`last_sync_at\` est renseignée : une unité a livré son écriture, ce contrôle doit être retourné en preuve de cette écriture"
+	fail_journal "la relève réelle de la boîte système a échoué : rien n'est prouvé sur \`last_sync_at\`" "$TRAVAIL/releve-datee.log"
 fi
 
 # MOITIÉ 2 — `sync_state` est écrite par la relève réelle de `CRM-054`, et l'absence ne se fige plus.

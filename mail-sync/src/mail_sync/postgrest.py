@@ -10,6 +10,8 @@
 # @spec CRM-111 T2.4.2 (docs/BACKLOG.md) — le channel d'une card se lit sur son plus ancien rattachement (docs/SPEC-rattachements.md §7)
 # @spec CRM-074 (docs/BACKLOG.md) — tranche T2 : la prise et le résultat des extractions de texte, la lecture d'une pièce reçue
 #       (docs/SPEC-pieces-jointes.md §3, §4.1)
+# @spec CRM-127 (docs/BACKLOG.md) — tranche T2 : la relève réussie écrit `last_sync_at` (docs/SPEC-mail-subsystem.md §23.2,
+#       INC-340, décision 816)
 #
 # POURQUOI `urllib` ET NON UN CLIENT HTTP DE PLUS.
 #
@@ -561,6 +563,15 @@ class PostgrestClient:
             "mail_inbound_account_record_check",
             {"p_account_id": account_id, "p_status": status, "p_error": error},
         )
+
+    def record_sync(self, account_id: str) -> str:
+        """Date une relève allée au bout — `CRM-127`, §23.2. Rend l'horodatage posé par la base.
+
+        Distincte de `record_check` : « quand ai-je relevé » n'est pas « quand la connexion a-t-elle été
+        éprouvée » (§13.2), et `status` reste le constat du seul test.
+        """
+
+        return self._rpc("mail_inbound_account_record_sync", {"p_account_id": account_id})
 
     # --- Envoi sortant — `CRM-058` ------------------------------------------------------------
 

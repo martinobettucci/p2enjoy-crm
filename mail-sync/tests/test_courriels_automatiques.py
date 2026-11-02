@@ -2,6 +2,7 @@
 #           automatique, la relève écarte un courriel automatique de l'identité de service et garde tout le reste
 # @verifies docs/SPEC-etiquettes-digest.md §5.3 bis (en-tête et identité de service, en conjonction) ; INC-321 ;
 #           docs/JOURNAL.md décision 780
+# @verifies CRM-127 (docs/BACKLOG.md) — tranche T2 : le double de la base accepte `record_sync` (docs/SPEC-mail-subsystem.md §23.2)
 
 from __future__ import annotations
 
@@ -105,6 +106,10 @@ class BaseFactice:
 
     def enregistrer_progression(self, _account_id, sync_state):
         self.progressions.append(sync_state)
+
+    def record_sync(self, _account_id):
+        # `CRM-127` (§23.2) : la relève allée au bout se date ; le double l'accepte sans rien vérifier ici.
+        return "2026-11-02T00:00:00+00:00"
 
     def enregistrer_message(self, *, workspace_id, analyse):
         self.enregistres.append(analyse.rfc822_message_id)

@@ -9,6 +9,8 @@
 //       l'amorçage unique (docs/SPEC-plateforme.md §3, décision 627)
 // @spec CRM-073 (docs/BACKLOG.md) — tranche T2 : `webhooks` reçoit les hôtes autorisés et l'adresse de l'autorité du
 //       récepteur local — deux variables de développement —, et une borne de 30 s (docs/SPEC-webhooks.md §5.2, §6, §12)
+// @spec CRM-127 (docs/BACKLOG.md) — tranche T3 : `mail-connection-test` reçoit, elle seule, l'adresse de `mail-sync` et son
+//       jeton interne, et une borne de 45 s (docs/SPEC-mail-subsystem.md §23.4)
 //
 // Module pur. Le conteneur `functions` reçoit `JWT_SECRET` depuis `CRM-092`, parce que l'échangeur
 // doit signer le jeton interne que PostgREST, Realtime et Storage acceptent. Le service principal ne
@@ -31,6 +33,9 @@ export const ENVIRONNEMENT_PROPRE: Readonly<Record<string, readonly string[]>> =
 	// `CRM-073` : les deux variables n'existent qu'en développement, pour joindre le récepteur local
 	// (docs/SPEC-webhooks.md §6, §12) ; la production ne les pose pas.
 	webhooks: ['WEBHOOKS_ALLOWED_HOSTS', 'WEBHOOKS_DEV_CA_URL'],
+	// `CRM-127` : le jeton interne de `mail-sync` n'atteint que le relais du test de connexion, jamais un navigateur ni une
+	// autre fonction (docs/SPEC-mail-subsystem.md §23.4).
+	'mail-connection-test': ['MAIL_SYNC_URL', 'MAIL_SYNC_INTERNAL_TOKEN'],
 }
 
 /** La borne commune d'un worker : une fonction courte. */
@@ -44,6 +49,8 @@ export const DELAI_PROPRE: Readonly<Record<string, number>> = {
 	ia: 150_000,
 	// `CRM-073` : un passage remet jusqu'à 50 remises en parallèle, chacune bornée à 10 s, puis rend leurs résultats.
 	webhooks: 30_000,
+	// `CRM-127` : le relais vers `mail-sync` est borné à 40 s, le test SMTP en prenant jusqu'à 30 (§23.4).
+	'mail-connection-test': 45_000,
 }
 
 export function delaiDe(fonction: string): number {

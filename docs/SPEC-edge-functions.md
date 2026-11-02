@@ -47,7 +47,7 @@ la définition différente et recrée Kong pendant le `./runDev.sh` normal, sans
 | Point d'entrée | `start --policy oneshot --main-service /home/deno/functions/main` |
 | Sources | `./supabase/functions:/home/deno/functions:ro` |
 | Redémarrage | `unless-stopped` dans le commun, `always` en production |
-| Limite d'un worker | 128 Mio et 10 secondes de temps mur ; **150 secondes pour `ia`** seule (`CRM-097`, `DELAI_PROPRE`) |
+| Limite d'un worker | 128 Mio et 10 secondes de temps mur ; **150 secondes pour `ia`** seule (`CRM-097`, `DELAI_PROPRE`) ; 30 secondes pour `webhooks` (`CRM-073`) ; **45 secondes pour `mail-connection-test`** (`CRM-127`, §10) |
 
 La politique `oneshot` est une exigence observée, pas un réglage décoratif. Avec la politique par
 défaut `per_worker`, l'appel réel réussit mais le runtime 1.74.2 écrit ensuite
@@ -259,3 +259,14 @@ Après `./resetMe.sh --yes`, la seule pile recréée par les commandes document�
 La suite UI entière ne produit aucun `warning`, `console.error` ou `pageerror`. Le service Edge ne
 produit aucune ligne contenant `warning`, `error`, `panic`, `early termination` ou `wall clock`,
 y compris après la fenêtre différée. Le seed et les captures versionnées restent identiques.
+
+## 10. Fonction `mail-connection-test` — `CRM-127`
+
+Le contrat est dans `docs/SPEC-mail-subsystem.md` §23.4 ; ce chapitre ne dit que sa place dans le runtime.
+`POST /functions/v1/mail-connection-test`, derrière la clé publique et le jeton de l'appelant. **Environnement propre** :
+`MAIL_SYNC_URL` et `MAIL_SYNC_INTERNAL_TOKEN`, que le service principal ne remet qu'à ce worker
+(`main/environnement.ts`, prouvé par `environnement.test.ts`). **Borne propre** : 45 secondes (`DELAI_PROPRE`), pour un
+relais de 40 secondes vers `mail-sync`. La fonction n'emploie jamais la clé de service : le droit est décidé par la base
+avec le jeton de l'appelant (`authorize_mail_connection_test`), et le verdict est écrit en base par `mail-sync`.
+Preuves : unitaires `supabase/functions/mail-connection-test/*.test.ts`, API `e2e/api/tester-connexion.spec.ts`.
+

@@ -7,6 +7,8 @@
 //           (docs/SPEC-plateforme.md §3)
 // @verifies CRM-073 (docs/BACKLOG.md) — tranche T2 : les deux variables de développement des webhooks n'atteignent que
 //           `webhooks`, et sa borne de 30 s ne s'étend à aucune autre fonction (docs/SPEC-webhooks.md §5.2, §6, §12)
+// @verifies CRM-127 (docs/BACKLOG.md) — tranche T3 : l'adresse et le jeton interne de `mail-sync` n'atteignent que
+//           `mail-connection-test`, et sa borne de 45 s ne s'étend à aucune autre fonction (docs/SPEC-mail-subsystem.md §23.4)
 
 import { describe, expect, it } from 'vitest'
 import { DELAI_COMMUN_MS, ENVIRONNEMENT_COMMUN, ENVIRONNEMENT_PROPRE, delaiDe, environnementDe } from './environnement.ts'
@@ -28,6 +30,8 @@ const CONTENEUR: Record<string, string> = {
 	CRM_SUPERADMINS_INITIAUX: 'plateforme@p2enjoy.test',
 	WEBHOOKS_ALLOWED_HOSTS: 'webhook-sink',
 	WEBHOOKS_DEV_CA_URL: 'http://webhook-sink:8080/ca.pem',
+	MAIL_SYNC_URL: 'http://mail-sync:8080',
+	MAIL_SYNC_INTERNAL_TOKEN: 'jeton-interne-jamais-ailleurs',
 }
 const lire = (nom: string) => CONTENEUR[nom]
 const noms = (valeurs: [string, string][]) => valeurs.map(([nom]) => nom).sort()
@@ -62,8 +66,10 @@ describe('environnementDe', () => {
 	// LLM (docs/SPEC-ia.md §11.6) ; toute autre entrée fait rougir ce test et doit se justifier.
 	// RÉVISÉ PAR `CRM-073` T2, non relâché : `webhooks` y entre pour ses deux variables de développement
 	// (docs/SPEC-webhooks.md §6, §12).
-	it('seules `session`, `ia` et `webhooks` ont un environnement propre', () => {
-		expect(Object.keys(ENVIRONNEMENT_PROPRE).sort()).toEqual(['ia', 'session', 'webhooks'])
+	// RÉVISÉ PAR `CRM-127` T3, non relâché : `mail-connection-test` y entre pour l'adresse et le jeton interne de
+	// `mail-sync` (docs/SPEC-mail-subsystem.md §23.4).
+	it('seules `session`, `ia`, `webhooks` et `mail-connection-test` ont un environnement propre', () => {
+		expect(Object.keys(ENVIRONNEMENT_PROPRE).sort()).toEqual(['ia', 'mail-connection-test', 'session', 'webhooks'])
 	})
 })
 
@@ -101,6 +107,22 @@ describe('la fonction `webhooks` (CRM-073)', () => {
 			expect(noms(environnementDe(fonction, lire)), fonction).not.toContain('WEBHOOKS_ALLOWED_HOSTS')
 		}
 		expect(delaiDe('webhooks')).toBe(30_000)
+		expect(delaiDe('example')).toBe(DELAI_COMMUN_MS)
+	})
+})
+
+describe('la fonction `mail-connection-test` (CRM-127)', () => {
+	it('reçoit le commun, l’adresse et le jeton interne de `mail-sync` — ni clé de session ni clé du serveur LLM', () => {
+		expect(noms(environnementDe('mail-connection-test', lire))).toEqual(
+			['MAIL_SYNC_INTERNAL_TOKEN', 'MAIL_SYNC_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_URL'],
+		)
+	})
+
+	it('le jeton interne de `mail-sync` n’atteint aucune autre fonction ; sa borne de 45 s non plus', () => {
+		for (const fonction of ['session', 'ia', 'webhooks', 'example', 'une-fonction-future', '__proto__']) {
+			expect(noms(environnementDe(fonction, lire)), fonction).not.toContain('MAIL_SYNC_INTERNAL_TOKEN')
+		}
+		expect(delaiDe('mail-connection-test')).toBe(45_000)
 		expect(delaiDe('example')).toBe(DELAI_COMMUN_MS)
 	})
 })

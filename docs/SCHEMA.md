@@ -2450,6 +2450,21 @@ rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur
 channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
 `0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
 déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0151` — la relève date `last_sync_at`, et le droit de tester une connexion (`CRM-127` T2, décision 816 ; livrée en développement le 2026-11-02)
+
+`docs/SPEC-mail-subsystem.md` §23.2, §23.3 ; INC-340. Deux fonctions ; **aucune table, aucune colonne, aucune donnée.**
+**`public.mail_inbound_account_record_sync(uuid) returns timestamptz`**, `security definer`, exécutable par le seul
+`service_role` : pose `last_sync_at = now()` sur le compte relevé et rend la valeur ; un compte inconnu est refusé par
+`app.raise_http_error(404, 'account_not_found')` (`CRM-120`). `mail-sync` l'appelle à la fin de chaque relève allée au bout.
+**`public.authorize_mail_connection_test(text, uuid) returns void`**, `security definer`, exécutable par `authenticated`
+et `service_role`, jamais `anon` : décide si l'appelant peut tester la connexion d'un compte entrant (`inbound`) ou d'une
+identité sortante (`outbound`). Le droit est celui d'écrire la ligne (administrateur de son espace, ou son propriétaire) ;
+une ligne absente ou interdite rend le même `404 not_found` ; `invalid_target` (`22023`), `disabled` (`55000`) et
+`too_soon` sous 30 s (`P0001`). Elle n'écrit rien. **Retrait** : `drop function public.authorize_mail_connection_test(text,
+uuid)` et `drop function public.mail_inbound_account_record_sync(uuid)`, **avec l'image `mail-sync` et la fonction edge
+d'avant** : l'image de `main` appelle `mail_inbound_account_record_sync` à chaque relève, et chaque relève échouerait sans
+elle.
+
 ### Migration `0150` — les lectures à plusieurs rattachements (`CRM-111` T4.1, décision 814 ; livrée en développement le 2026-11-02)
 
 `docs/SPEC-rattachements.md` §5, §6, §9 ; `docs/SPEC-recherche.md` §6.4 ; `docs/SPEC-temps.md` §6.2 ;

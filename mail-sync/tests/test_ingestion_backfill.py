@@ -4,6 +4,7 @@
 #           (le courant d'abord), §20.6 bis.4 (premier contact), §20.6 bis.2 (la progression n'est
 #           écrite qu'après un rapatriement réel)
 # @verifies docs/JOURNAL.md décision 342
+# @verifies CRM-127 (docs/BACKLOG.md) — tranche T2 : le double de la base accepte `record_sync` (docs/SPEC-mail-subsystem.md §23.2)
 #
 # CE FICHIER EST LE PREMIER TEST UNITAIRE DE `relever_compte`, qui n'était jusqu'ici prouvée que
 # par l'E2E. Il n'exerce PAS le traitement d'un message — ingestion, dédoublonnage, classement,
@@ -72,6 +73,10 @@ class BaseFactice:
 
     def enregistrer_progression(self, _account_id, sync_state):
         self.progressions_ecrites.append(sync_state)
+
+    def record_sync(self, _account_id):
+        # `CRM-127` (§23.2) : la relève allée au bout se date ; le double l'accepte sans rien vérifier ici.
+        return "2026-11-02T00:00:00+00:00"
 
     def dossiers_a_renommer(self, _account_id):
         return []
