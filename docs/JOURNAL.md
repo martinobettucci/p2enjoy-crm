@@ -38330,3 +38330,11 @@ le rejeu de la migration dans une transaction annulée ; `verify-signature-ident
 touchés ; connecteur MCP, unitaires 293 et intégration 20/20 ; Vitest 5194/5194 ; types et build verts ; manuel
 reconstruit ; captures observées. **Écart de procédure** : `docs/DESIGN_SYSTEM.md` n'a pas été relu en entier (7 288
 lignes), seulement ses §5.4 sexies, §5.35 et §5.42, que le changement touche.
+
+### Le geste préalable d'INC-335 est fait : la fenêtre peut s'ouvrir (2026-11-02, suite des décisions 815 et 817)
+
+*Session de livraison p2enjoy-crm-3a, réponse du responsable à `AskUserQuestion`.* La décision 817 subordonnait la fenêtre
+à la confirmation du geste préalable du `docs/PROD_MIGRATIONS.md` §2.26. **Réponse : « Done, deliver ».** Deux gestes
+sont faits en production : les cadences actives armées avec l'identité de service sont relevées (geste 1), et chaque
+administrateur qui envoyait avec elle a déclaré sa propre identité (geste 2). La fenêtre suit la campagne de
+renouvellement des captures (`docs/SPEC-captures.md` §4), lancée sur une base reconstruite depuis `main`.
