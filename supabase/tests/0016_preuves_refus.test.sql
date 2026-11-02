@@ -1,3 +1,5 @@
+-- @verifies CRM-112 (docs/BACKLOG.md) — tranche T1 : le recensement des politiques révisé (décision 51), +6 des champs
+--           communs (docs/SPEC-champs-communs.md §4)
 -- @verifies CRM-073 (docs/BACKLOG.md) — tranche T1 : le recensement des politiques révisé (décision 51), +2 des webhooks
 --           (docs/SPEC-webhooks.md §4)
 -- @verifies CRM-071 (docs/BACKLOG.md) — tranche T1 : le recensement des politiques révisé (décision 51), +4 de `saved_views`
@@ -234,8 +236,12 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	185,
-	'CENT QUATRE-VINGT-CINQ politiques dans `public`, et pas une de plus — 183 avant `CRM-073` tranche T1, plus les DEUX '
+	191,
+	'CENT QUATRE-VINGT-ONZE politiques dans `public`, et pas une de plus — 185 avant `CRM-112` tranche T1, plus les SIX '
+	'des champs communs (docs/SPEC-champs-communs.md §4) : la lecture des définitions par tout membre de l''espace, leur '
+	'création et leur modification par l''administrateur seul ; la lecture d''une valeur par qui lit son affaire, son '
+	'écriture et sa modification par qui écrit son affaire. AUCUNE SUPPRESSION, ni politique ni privilège. Avant elles : '
+	'185, soit 183 avant `CRM-073` tranche T1, plus les DEUX '
 	'des webhooks sortants (docs/SPEC-webhooks.md §4) : `webhook_endpoints`, lue et écrite par l''administrateur de '
 	'l''espace seul — la création passant par `create_webhook_endpoint`, aucun privilège `INSERT` n''est accordé —, et '
 	'`webhook_deliveries`, lue par lui seul. AUCUNE ÉCRITURE DE REMISE, et c''est un refus double : ni politique ni '
