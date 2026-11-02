@@ -3044,6 +3044,7 @@ Une fonction `public.authorize_mail_connection_test(p_target text, p_id uuid) re
 | Appelant sans session | `not_authenticated` | `42501` |
 | `p_target` hors de `inbound`, `outbound` | `invalid_target` | `22023` |
 | Ligne absente, **ou** l'appelant n'a pas le droit de l'écrire | `not_found` | `P0002` |
+| La ligne est `disabled`, une décision d'exploitation (§13.2) qu'un test écraserait par `ok` ou `error` | `disabled` | `55000` |
 | Le dernier test de cette ligne date de moins de 30 secondes | `too_soon` | `P0001` |
 
 **Le droit est exactement celui de l'écriture**, relu sur la ligne : l'administrateur de l'espace de la ligne
@@ -3068,7 +3069,8 @@ du serveur qu'aucun client n'écrit. **Limite nommée** : deux appels simultané
 2. **Session.** Sans `Authorization: Bearer`, `401 unauthorized`.
 3. **Droit.** `authorize_mail_connection_test` est appelée par PostgREST **avec le jeton de l'appelant**. Ses refus
    deviennent : `not_authenticated` → `401 unauthorized`, `invalid_target` → `400 invalid_request`, `not_found` →
-   `404 not_found`, `too_soon` → `429 too_soon`. Toute autre réponse de la base → `502 service_unavailable`.
+   `404 not_found`, `disabled` → `409 disabled`, `too_soon` → `429 too_soon`. Toute autre réponse de la base →
+   `502 service_unavailable`.
 4. **Relais.** `POST {MAIL_SYNC_URL}/internal/v1/inbound-accounts/{id}/test` ou
    `.../outbound-identities/{id}/test` (§13.5, §14.4), avec `Authorization: Bearer {MAIL_SYNC_INTERNAL_TOKEN}`,
    borné à 40 secondes : le test SMTP en prend jusqu'à 30 (§14.5). Les réponses du service deviennent : `200` →
@@ -3097,7 +3099,8 @@ désactivée avec le même motif quand la base refuse l'administration, puisque 
   Un code inconnu donne « Échec : cause non reconnue », jamais le code brut.
 - **Les refus** s'écrivent au même endroit : `429` « Un test vient d'avoir lieu sur cette ligne. Réessayez dans
   quelques secondes. » ; `404` « Cette ligne n'est plus disponible pour vous. » ; `409` « Aucun mot de passe n'est
-  enregistré : configurez-le avant de tester. » ; `401` le message de session expirée de l'écran ; `502` ou réseau
+  enregistré : configurez-le avant de tester. » ; `409 disabled` « Cette ligne est désactivée : elle ne se teste
+  pas. » ; `401` le message de session expirée de l'écran ; `502` ou réseau
   « Le service de messagerie n'a pas répondu : rien n'a été testé. »
 - **Une ligne en erreur montre son incident** à côté de la pilule « En erreur », en texte du même dictionnaire :
   sans lui, l'écran disait qu'une boîte échoue sans dire pourquoi.
@@ -3118,8 +3121,8 @@ Les scénarios qui le font remettent la ligne dans son état d'origine.
 
 | Niveau | Preuve |
 |---|---|
-| pgTAP | `authorize_mail_connection_test` : administrateur sur la boîte système et sur la boîte d'un membre ; membre sur la sienne ; membre refusé `not_found` sur la boîte système, sur celle d'un collègue et sur un identifiant inconnu ; `too_soon` sous 30 s ; `invalid_target` ; exécution refusée à `anon`. Même matrice sur les identités. `mail_inbound_account_record_sync` : refusée à `authenticated`, pose `now()` pour `service_role`, `account_not_found` sur un inconnu |
-| pytest | `relever_compte` appelle l'écriture après la progression ; ne l'appelle pas quand la session IMAP échoue ; un échec de l'écriture remonte |
+| pgTAP | `authorize_mail_connection_test` : administrateur sur la boîte système et sur la boîte d'un membre ; membre sur la sienne ; membre refusé `not_found` sur la boîte système, sur celle d'un collègue et sur un identifiant inconnu ; `disabled` ; `too_soon` sous 30 s ; `invalid_target` ; exécution refusée à `anon`. Même matrice sur les identités. `mail_inbound_account_record_sync` : refusée à `authenticated`, pose `now()` pour `service_role`, `account_not_found` sur un inconnu |
+| pytest | `relever_compte` date une relève allée au bout, sans message nouveau comme avec un dossier absent ; ne la date pas quand la session IMAP échoue ; un échec de l'écriture remonte. L'ordre progression puis datation, qui suppose un message réellement traité, est prouvé par l'E2E `mail` (`sync_state` et `last_sync_at` relus après une relève réelle) |
 | Deno | le gestionnaire : chaque code de la table du §23.4, le jeton interne jamais dans la réponse ni le journal ; `environnement.test.ts` : seul `mail-connection-test` reçoit `MAIL_SYNC_INTERNAL_TOKEN` |
 | Vitest | la traduction d'une réponse en issue d'écran ; la commande, son vol, sa désactivation par capacité, le verdict et les refus |
 | API (Playwright) | sur la pile réelle, sans l'interface : un membre sur la boîte d'un collègue → `404` ; sans session → `401` ; deux tests rapprochés → `429` ; un test réussi écrit `last_checked_at` en base |
