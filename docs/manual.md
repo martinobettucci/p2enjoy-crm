@@ -2889,10 +2889,10 @@ de la messagerie » : on reçoit avant d'expédier, et on configure avant de sup
   nouvelle adresse fait de votre enregistrement une déclaration, et non une correction.
 - **Le nom d'expéditeur se vide en effaçant le champ**, contrairement au mot de passe : un champ
   vide y est une valeur, et non une absence de changement.
-- **La case « par défaut » dit ce qu'elle règle.** Sur l'adresse d'une personne, c'est « Identité par défaut de cette
-  personne » : l'adresse choisie d'avance quand cette personne écrit. Sur l'adresse de service, c'est « Identité par
-  défaut des envois automatiques ». La case est cochée d'avance sur une déclaration, parce que c'est ce que le produit
-  ferait de toute façon. La décocher n'est utile que si vous en avez déjà une.
+- **La case de l'identité par défaut dit ce qu'elle règle.** Sur l'adresse d'une personne, elle désigne l'adresse
+  choisie d'avance quand cette personne écrit. Sur l'adresse de service, elle désigne l'adresse des envois
+  automatiques. La case est cochée d'avance sur une déclaration, parce que c'est ce que le produit ferait de toute
+  façon. La décocher n'est utile que si vous en avez déjà une.
 - **Ce que l'écran n'offre pas**, et c'est écrit plutôt que suggéré : aucun bouton *Tester la
   connexion* — l'essai est fait par le service de messagerie, et son résultat s'affiche dans l'état
   de l'identité ; aucune **suppression** ; aucun réglage du **plafond quotidien** d'envois (voir plus bas). La
@@ -3164,9 +3164,10 @@ choisis, voyez les séquences ([chapitre 16](#enchainer-des-relances-les-sequenc
 d'expédition, un ou plusieurs destinataires — séparés par une virgule ou un point-virgule —, un
 objet et un message, puis « Mettre en file ».
 
-- **Votre adresse par défaut est choisie d'avance** dans « Expédier depuis » : celle que vous avez cochée « Identité par
-  défaut de cette personne » dans « Réglages ▸ Identités d'expédition ». Si vous n'avez qu'une adresse, c'est elle. Si
-  vous en avez plusieurs et qu'aucune n'est par défaut, le champ affiche « Choisir une adresse ».
+- **Votre adresse par défaut est choisie d'avance** dans le champ de l'adresse d'expédition : celle que vous avez
+  cochée comme identité par défaut dans les réglages des identités d'expédition ([chapitre 11.2](#les-adresses-d-expedition)).
+  Si vous n'avez qu'une adresse, c'est elle. Si vous en avez plusieurs et qu'aucune n'est par défaut, le champ reste à
+  choisir.
 - **Seules vos propres adresses sont proposées.** L'adresse de service de l'espace de travail ne sert qu'aux envois
   automatiques, comme le récapitulatif quotidien : personne ne l'emprunte pour écrire, même une administratrice ou un
   administrateur. Si vous n'avez aucune adresse à vous, le formulaire vous dit où en déclarer une.
@@ -3542,8 +3543,8 @@ affaire, et repérer ses trous, prévisualisez-le depuis l'écran des modèles
 ([chapitre 14.2](#previsualiser-un-modele-sur-une-affaire-reelle)).
 
 **L'EXPÉDITEUR, LUI, EST LE VÔTRE** : votre identité d'envoi par défaut, ou à défaut votre unique identité, avec sa
-signature. Si vous n'en avez aucune, ou plusieurs sans défaut, l'expéditeur est fictif et l'écran l'écrit : « Vous
-n'avez pas d'identité d'envoi par défaut : l'expéditeur est fictif. »
+signature. Si vous n'en avez aucune, ou plusieurs sans défaut, l'expéditeur est fictif, et l'écran le dit au-dessus de
+l'aperçu.
 
 **Rien n'est calculé avant votre clic**, et un modèle employé par deux paliers n'est rendu qu'une fois. Si le rendu
 échoue, « Réessayer » le redemande ; un modèle devenu illisible est signalé en une phrase.
