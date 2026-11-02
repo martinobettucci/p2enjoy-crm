@@ -1789,8 +1789,10 @@ poser_card_globale() {
 	       archived_at: $archive, deleted_at: $corbeille}')
 
 	# `CRM-111` T2.4.5 : l'affaire, puis son rattachement (décisions 746 et 770). La clé de service pose l'une puis
-	# l'autre ; le rattachement converge par l'index « un rattachement par affaire » (`on_conflict=card_id`), qui tient
-	# pendant la bascule.
+	# l'autre. RÉVISÉ PAR `CRM-111` T3 (migration 0148, qui retire l'index « un rattachement par affaire ») : le
+	# rattachement converge sur la clé `(card_id, channel_id)`. LIMITE NOMMÉE : la clé de service ne retire aucun
+	# rattachement (décision 746) ; une preuve qui laisserait une affaire du seed rattachée ailleurs lui ferait gagner un
+	# second rattachement au rejeu — d'où les affaires jetables des preuves de `CRM-111` T3.
 	local charge_affaire charge_rattachement adresse
 	charge_affaire=$(jq -c '{id, workspace_id, title, description, currency, created_by, deleted_at}' <<< "$charge")
 	charge_rattachement=$(jq -c '{card_id: .id, workspace_id, channel_id, workflow_id, current_step_id, owner_id,
@@ -1800,7 +1802,7 @@ poser_card_globale() {
 		-d "$charge_affaire")
 	attendu "$code" "création de la card ${titre:0:28}" 200 201
 	adresse=$(jq -r '.[0].email_local_part // "?"' "$CORPS")
-	code=$(api POST "/rest/v1/card_placements?on_conflict=card_id" \
+	code=$(api POST "/rest/v1/card_placements?on_conflict=card_id,channel_id" \
 		-H 'Prefer: return=minimal,resolution=merge-duplicates' \
 		-d "$charge_rattachement")
 	attendu "$code" "rattachement de la card ${titre:0:28}" 200 201
@@ -1889,8 +1891,10 @@ for ligne in "${CARDS_DERIVE[@]}"; do
 	       archived_at: null, deleted_at: null}')
 
 	# `CRM-111` T2.4.5 : l'affaire, puis son rattachement (décisions 746 et 770). La clé de service pose l'une puis
-	# l'autre ; le rattachement converge par l'index « un rattachement par affaire » (`on_conflict=card_id`), qui tient
-	# pendant la bascule.
+	# l'autre. RÉVISÉ PAR `CRM-111` T3 (migration 0148, qui retire l'index « un rattachement par affaire ») : le
+	# rattachement converge sur la clé `(card_id, channel_id)`. LIMITE NOMMÉE : la clé de service ne retire aucun
+	# rattachement (décision 746) ; une preuve qui laisserait une affaire du seed rattachée ailleurs lui ferait gagner un
+	# second rattachement au rejeu — d'où les affaires jetables des preuves de `CRM-111` T3.
 	charge_affaire=$(jq -c '{id, workspace_id, title, description, currency, created_by, deleted_at}' <<< "$charge")
 	charge_rattachement=$(jq -c '{card_id: .id, workspace_id, channel_id, workflow_id, current_step_id, owner_id,
 	                              amount, position, next_action, next_action_at, archived_at, created_by}' <<< "$charge")
@@ -1899,7 +1903,7 @@ for ligne in "${CARDS_DERIVE[@]}"; do
 		-d "$charge_affaire")
 	attendu "$code" "création de la card ${titre:0:28}" 200 201
 	adresse=$(jq -r '.[0].email_local_part // "?"' "$CORPS")
-	code=$(api POST "/rest/v1/card_placements?on_conflict=card_id" \
+	code=$(api POST "/rest/v1/card_placements?on_conflict=card_id,channel_id" \
 		-H 'Prefer: return=minimal,resolution=merge-duplicates' \
 		-d "$charge_rattachement")
 	attendu "$code" "rattachement de la card ${titre:0:28}" 200 201

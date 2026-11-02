@@ -38236,3 +38236,17 @@ plus ancien. Le type de retour ne change pas : le sous-titre devient la liste de
 premier dans l'ordre des tracks puis des channels. **Inventaire du temps** : `temps_valorise` (`security invoker`) range
 une saisie d'affaire sous le channel du plus ancien rattachement ; le type de retour gagne `shared`, ce qui impose de
 recréer la fonction.
+
+### `CRM-111` T3, correctif : le seed convergeait sur un index que la 0148 retire (2026-11-02)
+
+*2026-11-02, signalé par la session de livraison (p2enjoy-crm-64).* **Défaut** : la reconstruction de la base de
+développement échouait au seed, section « 8 ter. Cards » — `400`, `42P10` « there is no unique or exclusion constraint
+matching the ON CONFLICT specification ». `supabase/seed/apply-seed.sh` posait les rattachements par
+`card_placements?on_conflict=card_id`, sur l'index « un rattachement par affaire » que la `0148` retire. **Cause** : T3
+avait appliqué la `0148` sur une base déjà semée, et n'avait pas reconstruit ensuite ; aucune preuve de T3 ne rejouait le
+seed. La production n'est pas touchée : aucun code de l'application, du connecteur ni des fonctions n'emploie cette clé.
+**Correction** : le seed converge sur la clé qui reste, `(card_id, channel_id)`. Un retrait préalable des rattachements
+posés ailleurs a été écarté : la clé de service ne retire rien (décision 746, prouvé par `rattachements-miroir`), et la
+limite est écrite en place. **Vérifié sur une base reconstruite** : reconstruction code 0 ; pgTAP `0138` et `0116`
+41 assertions ; `rattacher-retirer` et `rattachements-miroir` 24/24 ; `verify-seed.sh` 52 contrôles, aucune anomalie.
+**Leçon** : une migration qui retire un index ou une contrainte se prouve sur une base RECONSTRUITE, seed compris.
