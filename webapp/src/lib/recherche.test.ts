@@ -7,7 +7,8 @@
 // @verifies docs/SPEC-recherche.md §11 M14 (la RPC ne rend aucune adresse), M15 (l'embarquement
 //           est NOMMÉ), M18 (le générateur déclare non nul ce qui est nullable), §14.2 (la borne)
 // @verifies docs/DESIGN_SYSTEM.md §5.46 (la ligne sans destination reste rendue)
-// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — l'adresse d'une affaire se lit sur son plus ancien rattachement (docs/SPEC-rattachements.md §5)
+// @verifies CRM-111 T4.1 (docs/BACKLOG.md) — l'adresse d'une affaire mène à son premier rattachement dans l'ordre des
+//           tracks puis des channels, celui que le sous-titre nomme en tête (docs/SPEC-rattachements.md §9, décision 814)
 //
 // Ces tests portent sur la LOGIQUE, sans navigateur : c'est ce que la séparation du module rend
 // possible (§10.2). La pile réelle est éprouvée par `e2e/api/recherche-palette.spec.ts`, et la
@@ -147,6 +148,51 @@ describe('les résolutions d’adresse (§13.1, M15)', () => {
 		// `CRM-111` T2.4.1 : par le rattachement, dont la relation vers `channels` est nommée elle aussi.
 		expect(cards[0]?.colonnes).toContain('channels!card_placements_channel_fk')
 		expect(commentaires[0]?.colonnes).toBe(COLONNES_ADRESSE_COMMENTAIRE)
+	})
+
+	it('CRM-111 : une affaire à plusieurs rattachements mène au premier dans l’ordre des tracks puis des channels', async () => {
+		const channel = (slug: string, position: number, track: { slug: string; position: number } | null) => ({
+			slug,
+			name: slug,
+			position,
+			tracks: track === null ? null : { ...track, name: track.slug },
+		})
+		const { client } = clientDouble({
+			lignes: [ligne({ objet: 'affaire', id: 'a-1' }), ligne({ objet: 'commentaire', id: 'k-1' })],
+			// L'ordre rendu par PostgREST n'est pas celui du lien : le track de position 1 passe avant celui de position 2,
+			// et, dans un même track, le channel de position 0 avant celui de position 3.
+			cards: [
+				{
+					id: 'a-1',
+					card_placements: [
+						{ id: 'r1', channels: channel('ventes', 0, { slug: 'commercial', position: 2 }) },
+						{ id: 'r2', channels: channel('production', 3, { slug: 'studio', position: 1 }) },
+						{ id: 'r3', channels: channel('maintenance', 0, { slug: 'studio', position: 1 }) },
+						{ id: 'r4', channels: null },
+					],
+				},
+			],
+			commentaires: [
+				{
+					id: 'k-1',
+					card_id: 'a-1',
+					cards: {
+						id: 'a-1',
+						card_placements: [
+							{ id: 'r1', channels: channel('ventes', 0, { slug: 'commercial', position: 2 }) },
+							{ id: 'r9', channels: channel('orphelin', 0, null) },
+							{ id: 'r3', channels: channel('maintenance', 0, { slug: 'studio', position: 1 }) },
+						],
+					},
+				},
+			],
+		})
+		const etat = await rechercher(client, 'refonte')
+		if (etat.statut !== 'pret') throw new Error('état inattendu')
+		expect(etat.donnees.resultats.map((r) => r.adresse)).toEqual([
+			'/tracks/studio/maintenance/cards/a-1',
+			'/tracks/studio/maintenance/cards/a-1',
+		])
 	})
 
 	it('un ÉCHEC de résolution ne fait pas échouer la recherche : la ligne reste, sans lien', async () => {

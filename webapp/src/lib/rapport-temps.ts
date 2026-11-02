@@ -3,6 +3,8 @@
 //       pas), §6.2 (`public.temps_valorise` : une ligne par personne × cible × devise, chemin complet), §7.3 (le rapport
 //       mensuel : une ligne par cible, totaux, une section par personne pour « Toute l'équipe »), §7.5 (la série
 //       « Personnel » du track par channel, et de l'affaire) ; docs/DESIGN_SYSTEM.md §5.54
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T4.1 : une saisie d'affaire paraît sous chaque rattachement lisible
+//       (`shared`), et un total ne la compte qu'une fois ; docs/SPEC-rattachements.md §6 ; docs/JOURNAL.md décision 814
 //
 // La base calcule et filtre (RLS, versions lisibles) ; ce module regroupe ce qu'elle rend. Aucun montant n'est déduit,
 // aucun `null` n'est changé en zéro.
@@ -13,7 +15,8 @@ import type { ClientCrm } from './supabase'
 /**
  * Une ligne de `temps_valorise`. Les types générés la disent entièrement non nulle, ce que la fonction ne garantit
  * pas : le chemin d'une saisie directe sur un track n'a ni channel ni affaire, et un montant sans version lisible est
- * `null`, sa devise aussi.
+ * `null`, sa devise aussi. Une saisie posée sur une affaire rattachée à plusieurs channels lisibles paraît sous chacun,
+ * `shared` vrai (`CRM-111`).
  */
 export type LigneValorisee = {
 	readonly profile_id: string
@@ -23,6 +26,7 @@ export type LigneValorisee = {
 	readonly minutes: number
 	readonly montant: number | null
 	readonly devise: string | null
+	readonly shared: boolean
 }
 
 export type Filtre = { readonly profil?: string; readonly track?: string; readonly affaire?: string }
@@ -79,6 +83,24 @@ export function cumuler(lignes: readonly Pick<LigneValorisee, 'minutes' | 'monta
 
 const arrondi = (montant: number) => Math.round(montant * 100) / 100
 
+/**
+ * Les lignes d'un TOTAL : une saisie partagée n'y compte qu'une fois (`CRM-111`, SPEC-rattachements §6). Ses lignes sous
+ * chaque channel portent les mêmes minutes et le même montant — la base les rend d'une même somme par personne, affaire
+ * et devise —, la première est gardée. Une ligne par cible, elle, garde son temps entier : c'est le temps de la cible.
+ */
+export function uneFoisChacune<L extends Pick<LigneValorisee, 'profile_id' | 'card_id' | 'devise' | 'shared'>>(
+	lignes: readonly L[],
+): readonly L[] {
+	const vues = new Set<string>()
+	return lignes.filter((ligne) => {
+		if (!ligne.shared) return true
+		const cle = `${ligne.profile_id}/${ligne.card_id ?? '-'}/${ligne.devise ?? '-'}`
+		if (vues.has(cle)) return false
+		vues.add(cle)
+		return true
+	})
+}
+
 /** Une cible du rapport : son chemin, et le cumul de son temps DIRECT (ses enfants ont leurs propres lignes). */
 export type LigneRapport = {
 	readonly cle: string
@@ -132,7 +154,7 @@ export function composerRapport(
 			}
 			return 0
 		})
-		return { profil, lignes: rapport, total: cumuler(siennes) }
+		return { profil, lignes: rapport, total: cumuler(uneFoisChacune(siennes)) }
 	})
 }
 

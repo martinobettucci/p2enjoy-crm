@@ -494,7 +494,7 @@ serveur à chaque frappe serait un défaut visible.
 
 | `objet` | `titre` | `sous_titre` |
 |---|---|---|
-| `affaire` | `cards.title` | le nom du channel, `null` si l'appelant ne le lit pas |
+| `affaire` | `cards.title` | les noms des channels rattachés que l'appelant lit, séparés par « , », dans l'ordre des tracks puis des channels (`CRM-111` T4.1, décision 814) ; `null` s'il n'en lit aucun |
 | `contact` | `contacts.full_name` | le nom de l'organisation rattachée, sinon `contacts.email`, sinon `null` |
 | `organisation` | `organizations.name` | `organizations.domain` |
 | `commentaire` | le titre de l'affaire commentée, `null` si elle n'est pas lisible | le nom de l'auteur, `null` s'il n'est pas lisible |
@@ -900,6 +900,12 @@ départage. Une session qui retirerait le rang « puisqu'il y a un délai » rou
 | `contact` | `cheminContact(id)` | l'`id` rendu par la RPC **suffit** |
 | `organisation` | `cheminOrganisation(id)` | l'`id` rendu par la RPC **suffit** |
 | `message` | `/inbox?message=<id>` | l'`id` rendu par la RPC **suffit** — voir §13.5 |
+
+**Une affaire à plusieurs rattachements mène au PREMIER que l'appelant lit, dans l'ordre des tracks puis des
+channels** (`CRM-111` T4.1, décision 814) : position puis nom du track, position puis nom du channel, l'identifiant du
+rattachement en dernier — l'ordre même où `recherche_globale` nomme les channels du sous-titre, si bien que le lien mène
+au premier nommé (`premierDansLOrdreDesTracks`, `webapp/src/lib/rattachements.ts`). Un commentaire suit la même règle.
+La recherche cherche aussi dans les prochaines actions de tous les rattachements lisibles.
 
 **Un commentaire mène à son affaire, jamais à lui-même** : aucune adresse du produit ne désigne un
 commentaire, et le fil de l'affaire est l'endroit où il se lit (§5.10, §5.11 du design system). La

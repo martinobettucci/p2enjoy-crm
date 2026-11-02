@@ -5357,6 +5357,7 @@ export type Database = {
           minutes: number
           montant: number
           profile_id: string
+          shared: boolean
           track_id: string
         }[]
       }

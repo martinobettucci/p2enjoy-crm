@@ -2,7 +2,8 @@
 // @spec docs/SPEC-recherche.md §13.1 (une lecture, puis au plus deux résolutions),
 //       §11 M15 (l'embarquement est ambigu, la relation est NOMMÉE), §14.2 (la borne d'affichage)
 // @spec docs/SPEC-types.md §4
-// @spec CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : l'adresse d'une affaire passe par son plus ancien rattachement
+// @spec CRM-111 (docs/BACKLOG.md) — tranches T2.4.1 et T4.1 : l'adresse d'une affaire passe par son premier rattachement dans
+//       l'ordre des tracks puis des channels (décision 814, docs/SPEC-rattachements.md §9)
 //
 // CE MODULE N'IMPORTE RIEN, ET C'EST TOUT SON OBJET.
 //
@@ -63,11 +64,12 @@ export const PARAMETRE_MESSAGE = 'message'
  * deux changerait. Une requête ne rapporte que ce qui manque.
  */
 //
-// `CRM-111` T2.4.1 : le channel est celui du PLUS ANCIEN rattachement de l'affaire, plongé par la clé du rattachement ;
-// `card_placements` porte lui aussi deux clés vers `channels`, et la relation reste donc NOMMÉE
-// (`card_placements_channel_fk`). La résolution ramène la ligne à sa forme d'avant (`channelDuPremierRattachement`).
+// `CRM-111` T2.4.1 : le channel est lu par la clé du rattachement ; `card_placements` porte lui aussi deux clés vers
+// `channels`, et la relation reste donc NOMMÉE (`card_placements_channel_fk`). `CRM-111` T4.1 (décision 814) : le lien
+// mène au PREMIER rattachement dans l'ordre des tracks puis des channels — celui que le sous-titre nomme en tête —, d'où
+// les noms et positions demandés (`premierDansLOrdreDesTracks`).
 export const COLONNES_ADRESSE_AFFAIRE =
-	'id, card_placements!card_placements_card_fk(id, created_at, channels!card_placements_channel_fk(slug, tracks(slug)))'
+	'id, card_placements!card_placements_card_fk(id, channels!card_placements_channel_fk(slug, name, position, tracks(slug, name, position)))'
 
 /**
  * Colonnes de la résolution d'adresse d'un COMMENTAIRE — l'étape 3 du §13.1.
@@ -79,4 +81,4 @@ export const COLONNES_ADRESSE_AFFAIRE =
  * même façon mais qu'on ne confond pas dans la donnée.
  */
 export const COLONNES_ADRESSE_COMMENTAIRE =
-	'id, card_id, cards(id, card_placements!card_placements_card_fk(id, created_at, channels!card_placements_channel_fk(slug, tracks(slug))))'
+	'id, card_id, cards(id, card_placements!card_placements_card_fk(id, channels!card_placements_channel_fk(slug, name, position, tracks(slug, name, position))))'

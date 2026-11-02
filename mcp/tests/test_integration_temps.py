@@ -3,6 +3,8 @@
 # @verifies docs/SPEC-mcp.md §13 (par outil : succès, refus par la matrice, refus par le CRM malgré la matrice ouverte,
 #           journal écrit), §9.2 octies ; docs/SPEC-temps.md (plafond journalier, saisie permise à soi ou à
 #           l'administrateur)
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T4.1 : `crm_time_report` rend `shared` sur la vraie base (une affaire à un
+#           seul rattachement : non partagée) ; docs/SPEC-rattachements.md §6
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
 LE JOUR DE PREUVE EST EN 2030 : le seed ne pose du temps que sur des jours passés (`docs/SPEC-seed.md` §17.1), si bien
@@ -51,6 +53,7 @@ async def test_poser_lire_et_vider_une_case_et_les_refus_du_crm():
             ]
             rapport = await appeler("crm_time_report", {"workspace": "p2enjoy", "date_from": JOUR, "date_to": JOUR})
             assert rapport["total_minutes"] == 300
+            assert [r["shared"] for r in rapport["rows"]] == [False]  # CRM-111 T4.1 : un rattachement, non partagée
 
             with pytest.raises(ToolError, match="daily_limit"):
                 await client.call_tool("crm_time_entry_set", {"workspace": "p2enjoy", "day": JOUR, "minutes": 180,

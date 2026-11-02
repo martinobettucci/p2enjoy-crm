@@ -23,6 +23,8 @@
 //           témoins (docs/SPEC-temps.md §3, §6.2 ; décision 621)
 // @verifies CRM-099 (docs/BACKLOG.md) tranche T1 — `card_cost_actuals` au témoin des tables (docs/SPEC-costs.md
 //           §2.3 bis ; décision 622)
+// @verifies CRM-111 (docs/BACKLOG.md) tranche T4.1 — `temps_valorise` rend `shared` (docs/SPEC-rattachements.md §6,
+//           docs/SPEC-temps.md §6.2 ; décision 814)
 //
 // Test **unitaire** du contrat de types. Il ne s'exécute pas : il se compile. Chaque assertion
 // ci-dessous est une contrainte que `tsc --noEmit` vérifie, et qui fait échouer la compilation
@@ -645,6 +647,12 @@ type _valeurNullable = Expect<Equal<Tables<'card_field_values'>['value'], Json |
 
 // `CRM-111` T2.3.6 : une valeur appartient TOUJOURS à un rattachement (docs/SPEC-rattachements.md §3.3).
 type _valeurDuRattachement = Expect<Equal<Tables<'card_field_values'>['placement_id'], string>>
+
+// `CRM-111` T4.1 : une ligne de `temps_valorise` dit si la saisie est PARTAGÉE entre plusieurs channels rattachés
+// lisibles — c'est ce qui permet à un total de ne la compter qu'une fois (`uneFoisChacune`, `rapport-temps.ts`).
+type _tempsValorisePorteLePartage = Expect<
+  Equal<Database['public']['Functions']['temps_valorise']['Returns'][number]['shared'], boolean>
+>
 
 // Les deux clés étrangères COMPOSITES sont visibles dans les types : c'est ce qui rend structurelle
 // la garantie « une valeur ne répond pas à la question d'un autre workflow » (§6.3, décision 124).
@@ -1564,6 +1572,7 @@ export type AssertionsDuContratDeTypes = [
   _retourChangementPorteLAffaire,
   _signatureArmement,
   _valeurDuRattachement,
+  _tempsValorisePorteLePartage,
   _signatureChangementWorkflowChannel,
   _retourChangementWorkflowEstUnLot,
   _retourChangementWorkflowPorteLEtape,

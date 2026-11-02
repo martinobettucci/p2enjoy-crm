@@ -1,9 +1,11 @@
 // @verifies CRM-098 (docs/BACKLOG.md) — tranche T3 : le rapport mensuel et la série « Personnel », sans rendu
 // @verifies docs/SPEC-temps.md §4 (« non valorisé », jamais zéro ; devises séparées), §6.2 (lignes par personne × cible
 //           × devise), §7.3 (une section par personne, une ligne par cible dans l'ordre du chemin), §7.5 (par channel)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T4.1 : une saisie partagée paraît sous chaque channel et un total ne la
+//           compte qu'une fois ; docs/SPEC-rattachements.md §6 ; décision 814
 
 import { describe, expect, it } from 'vitest'
-import { bornesDuMois, composerRapport, cumuler, idsANommer, parChannel, type LigneValorisee } from './rapport-temps'
+import { bornesDuMois, composerRapport, cumuler, idsANommer, parChannel, uneFoisChacune, type LigneValorisee } from './rapport-temps'
 
 const l = (partiel: Partial<LigneValorisee>): LigneValorisee => ({
 	profile_id: 'p1',
@@ -13,6 +15,7 @@ const l = (partiel: Partial<LigneValorisee>): LigneValorisee => ({
 	minutes: 105,
 	montant: 120,
 	devise: 'EUR',
+	shared: false,
 	...partiel,
 })
 
@@ -71,6 +74,37 @@ describe('composer le rapport', () => {
 		expect(p1.lignes.find((x) => x.card_id === 'a2')?.cumul).toEqual({ minutes: 270, montants: { EUR: 240 }, minutesNonValorisees: 60 })
 		expect(p1.total.minutes).toBe(105 + 270 + 105 + 105)
 		expect(rapport[1]!.total).toEqual({ minutes: 105, montants: {}, minutesNonValorisees: 105 })
+	})
+})
+
+describe('une saisie partagée entre plusieurs channels (CRM-111)', () => {
+	// L'affaire a1 est rattachée à c1 (track t1) et à c2 (track t2) : la base rend sa saisie sous chacun, `shared` vrai.
+	const partagees = [
+		l({ track_id: 't1', channel_id: 'c1', card_id: 'a1', shared: true }),
+		l({ track_id: 't2', channel_id: 'c2', card_id: 'a1', shared: true }),
+		l({ track_id: 't1', channel_id: 'c1', card_id: 'a1', montant: null, devise: null, minutes: 30, shared: true }),
+		l({ track_id: 't2', channel_id: 'c2', card_id: 'a1', montant: null, devise: null, minutes: 30, shared: true }),
+	]
+
+	it('uneFoisChacune garde une ligne par personne, affaire et devise, et rien d’autre n’est retiré', () => {
+		const autres = [l({ track_id: 't1', channel_id: 'c1', card_id: 'a2' }), l({ track_id: 't1', channel_id: 'c1', card_id: 'a2' })]
+		expect(uneFoisChacune([...partagees, ...autres])).toEqual([partagees[0], partagees[2], ...autres])
+		const deux = [l({ card_id: 'a1', shared: true }), l({ profile_id: 'p2', card_id: 'a1', shared: true })]
+		expect(uneFoisChacune(deux)).toEqual(deux)
+		expect(uneFoisChacune([])).toEqual([])
+	})
+
+	it('le rapport la montre sous chaque cible, et son total ne la compte qu’une fois', () => {
+		const [p1] = composerRapport(partagees, nom)
+		expect(p1!.lignes.map((x) => x.cle)).toEqual(['t2/c2/a1', 't1/c1/a1'])
+		for (const ligne of p1!.lignes) expect(ligne.cumul).toEqual({ minutes: 135, montants: { EUR: 120 }, minutesNonValorisees: 30 })
+		expect(p1!.total).toEqual({ minutes: 135, montants: { EUR: 120 }, minutesNonValorisees: 30 })
+	})
+
+	it('la série du track la compte sous chaque channel ; le total, une fois', () => {
+		const duTrack = [l({ channel_id: 'c1', card_id: 'a1', shared: true }), l({ channel_id: 'c3', card_id: 'a1', shared: true })]
+		expect(parChannel(duTrack).map((s) => s.cumul.minutes)).toEqual([105, 105])
+		expect(cumuler(uneFoisChacune(duTrack)).minutes).toBe(105)
 	})
 })
 

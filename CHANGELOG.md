@@ -501,6 +501,14 @@ changelog.*
   refus de plus). **`mail-sync`** joint les pièces, archive avant d'envoyer, efface les dépôts abandonnés après 24 heures.
 - **Le seed** fait partir un message réel avec copie cachée et pièce jointe depuis « Refonte du monitoring — Vertuo ».
 
+- **`CRM-111` T4.1 — la recherche, le temps et la relance à plusieurs rattachements** (migration `0150`) : une
+  affaire trouvée par la recherche est nommée par tous les channels où elle est rattachée et que l'on lit, dans l'ordre
+  des tracks puis des channels, et son lien mène au premier ; elle se trouve aussi par la prochaine action de chacun. Le
+  temps saisi sur une affaire paraît sous chacun de ses channels, marqué partagé, et les totaux du rapport, de la série
+  « Personnel », de la fiche, de la rentabilité et de `crm_time_report` ne le comptent qu'une fois. La relance d'une
+  affaire figée désigne le rattachement figé. Tant qu'aucune affaire n'a plus d'un rattachement, rien ne change à
+  l'écran ; la marque « partagée » du rapport vient avec T4.2.
+
 - **`CRM-111` T3 — rattacher et retirer** (migration `0148`) : une affaire peut être rattachée à plusieurs channels, un
   par channel. `attach_card` la rattache à l'étape initiale (ou désarchive son rattachement au channel), `detach_card`
   retire un rattachement — réservé à l'administrateur, jamais le dernier, la perte des réponses du formulaire consentie.

@@ -401,15 +401,21 @@ un fait de l'horloge, pas un geste d'utilisateur.
 Une card figée depuis six semaines ne doit pas recevoir quarante-deux événements. L'ancrage est
 **l'entrée dans l'étape** : *au plus un `stalled` par entrée dans une étape*.
 
+**Depuis `CRM-111` T4.1 (migration `0150`), l'ancre est le RATTACHEMENT** : `public.cards_figees()` rend une ligne
+par rattachement figé, et le `stalled` désigne ce rattachement (`placement_id`, retrouvé par `(card_id, channel_id)`,
+`docs/SPEC-rattachements.md` §5). La relance de la `0054` ne gardait que l'affaire : son `stalled` se posait sur le plus
+ancien rattachement, et un second rattachement figé après la relance du premier n'en recevait aucune. Pour une affaire à
+un rattachement, rien ne change.
+
 Le prédicat, écrit une fois :
 
 ```sql
 not exists (
   select 1
     from public.card_events e
-   where e.card_id    = f.card_id
-     and e.type       = 'stalled'
-     and e.created_at >= f.entered_step_at
+   where e.placement_id = pl.id          -- le rattachement figé
+     and e.type         = 'stalled'
+     and e.created_at  >= f.entered_step_at
 )
 ```
 

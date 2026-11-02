@@ -2450,6 +2450,21 @@ rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur
 channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
 `0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
 déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0150` — les lectures à plusieurs rattachements (`CRM-111` T4.1, décision 814 ; livrée en développement le 2026-11-02)
+
+`docs/SPEC-rattachements.md` §5, §6, §9 ; `docs/SPEC-recherche.md` §6.4 ; `docs/SPEC-temps.md` §6.2 ;
+`docs/SPEC-relances.md` §9.4. Quatre fonctions réécrites depuis leur dernière autorité, seules les lignes de rattachement
+changeant ; **aucune table, aucune donnée.** **`public.recherche_globale`** (type de retour inchangé) : le `sous_titre`
+d'une affaire nomme les channels rattachés lisibles, dans l'ordre des tracks puis des channels (positions, puis noms en
+`fr-FR-x-icu`, puis l'identifiant du rattachement), et la recherche porte sur toutes leurs prochaines actions.
+**`public.temps_valorise`** **supprimée puis recréée** : elle gagne `shared boolean` ; une saisie posée sur une affaire
+paraît sous chaque channel rattaché lisible, `shared` vrai s'il y en a plusieurs ; `security invoker`, ses droits
+reposés (`authenticated`, `service_role`, jamais `anon`). **`public.rentabilite_affaires`** : son temps ne compte qu'une
+ligne par personne, affaire et devise. **`app.relancer_cards_figees`** : le `stalled` désigne le rattachement figé, et
+l'idempotence s'ancre sur lui. **Retrait** : les définitions de la `0109` pour les trois lectures (`drop function
+public.temps_valorise(date, date, uuid, uuid, uuid)` d'abord, puis sa définition à sept colonnes et ses droits) et de la
+`0054` pour la relance, **avec la webapp et l'image `mcp` d'avant**, qui ne lisent pas `shared`.
+
 ### Migration `0148` — rattacher et retirer (`CRM-111` T3, décisions 643, 658, 661 et 802 ; livrée en développement le 2026-11-01)
 
 `docs/SPEC-rattachements.md` §3.1, §4, §5. **Retiré** : `card_placements_one_per_card_idx`, qui tenait un rattachement

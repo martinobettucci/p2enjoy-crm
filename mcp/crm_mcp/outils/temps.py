@@ -2,6 +2,8 @@
 # @spec docs/SPEC-mcp.md §9.2 octies (la liste fixée, la personne nommée faute d'ancre « profil », 0 qui vide la case
 #       sous `modifier`, les refus nommés), §9.1 (les lectures et écritures de la webapp : `saisie-temps.ts`,
 #       `rapport-temps.ts`), §9.3 ; docs/SPEC-temps.md (la grille, le plafond journalier, `temps_valorise`)
+# @spec CRM-111 (docs/BACKLOG.md) — tranche T4.1 : `crm_time_report` rend `shared`, et ses totaux ne comptent qu'une fois
+#       une saisie partagée entre plusieurs channels (docs/SPEC-rattachements.md §6, §11 ; décision 814)
 """Le temps passé, sous l'identité de la personne : lire ses saisies et le rapport valorisé, poser une case.
 
 Les mêmes tables et la même fonction que la webapp (`saisies_temps`, `temps_valorise`) ; la base tient l'unicité de la
@@ -47,6 +49,22 @@ def _refus(reponse: Reponse, genre: str, valeur: Any) -> ToolError:
             "a target that person can read."
         )
     return traduire_refus(reponse, genre, valeur)
+
+
+def une_fois_chacune(lignes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Les lignes d'un TOTAL : une saisie d'affaire partagée paraît sous chaque channel rattaché lisible (`shared`), avec
+    les mêmes minutes et le même montant ; elle n'y compte qu'une fois par personne, affaire et devise, comme dans le
+    rapport de la webapp (`uneFoisChacune`, `rapport-temps.ts`)."""
+    vues: set[tuple[Any, Any, Any]] = set()
+    gardees = []
+    for l in lignes:
+        if l.get("shared"):
+            cle = (l.get("profile_id"), l.get("card_id"), l.get("devise"))
+            if cle in vues:
+                continue
+            vues.add(cle)
+        gardees.append(l)
+    return gardees
 
 
 def periode(debut: str, fin: str) -> tuple[str, str]:
@@ -178,7 +196,8 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         lignes = [l for l in reponse.corps if l.get("track_id") in de_l_espace]
         totaux: dict[str, float] = {}
         non_valorisees = 0
-        for l in lignes:
+        comptees = une_fois_chacune(lignes)
+        for l in comptees:
             if l.get("montant") is None:
                 non_valorisees += int(l["minutes"])
             else:
@@ -189,8 +208,10 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             "notes": [
                 "Amounts are never added across currencies.",
                 "Minutes without a staff cost rate are counted apart (unvalued_minutes), never as zero.",
+                "An entry on an affaire attached to several channels appears under each (shared: true), and the totals "
+                "count it once.",
             ],
-            "total_minutes": sum(int(l["minutes"]) for l in lignes),
+            "total_minutes": sum(int(l["minutes"]) for l in comptees),
             "unvalued_minutes": non_valorisees,
             "amounts_by_currency": totaux,
             "rows": [
@@ -202,6 +223,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
                     "minutes": int(l["minutes"]),
                     "amount": None if l.get("montant") is None else float(l["montant"]),
                     "currency": l.get("devise"),
+                    "shared": bool(l.get("shared")),
                 }
                 for l in lignes
             ],
@@ -216,8 +238,9 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         titre="Valued time report (temps valorisé)",
         description=(
             "Time spent over a period of at most 93 days, by person and target, with its staff cost where a rate exists "
-            "— the monthly report of the web app, within what the CRM lets you read. Optional filters: a named member, "
-            "a track, an affaire."
+            "— the monthly report of the web app, within what the CRM lets you read. An entry on an affaire attached to "
+            "several channels appears under each, marked shared, and is counted once in the totals. Optional filters: a "
+            "named member, a track, an affaire."
         ),
     )
 

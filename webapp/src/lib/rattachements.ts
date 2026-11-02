@@ -1,6 +1,8 @@
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T2.3 : les gestes désignent le rattachement, et l'écran doit donc le connaître
 // @spec docs/SPEC-rattachements.md §3.1 (la table), §5 (les signatures par rattachement), §14 (le découpage) ;
 //       docs/JOURNAL.md décisions 661, 705
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T4.1 : `premierDansLOrdreDesTracks`, le lien d'une affaire trouvée ;
+//       docs/SPEC-rattachements.md §9 ; docs/SPEC-recherche.md ; décision 814
 //
 // Une affaire peut avoir plusieurs rattachements depuis `CRM-111` T3 ; les écrans qui lisent une affaire lisent son
 // PLUS ANCIEN, la « forme d'avant », par le plongement `card_placements!card_placements_card_fk(id, created_at)`,
@@ -113,4 +115,36 @@ export function premierRattachement<R extends { readonly id: string; readonly cr
 		}
 	}
 	return retenu
+}
+
+/** Le channel d'un rattachement tel que la recherche le plonge : de quoi le ranger, et son track s'il est lisible. */
+type ChannelRangeable = {
+	readonly position: number
+	readonly name: string
+	readonly tracks: { readonly position: number; readonly name: string } | null
+}
+
+/**
+ * Le PREMIER rattachement dans l'ordre des tracks puis des channels (`CRM-111` T4.1, décision 814) : celui que
+ * `recherche_globale` nomme en tête de son sous-titre, et où mène le lien d'une affaire trouvée. Le même ordre que la
+ * base — position puis nom du track, position puis nom du channel, l'identifiant du rattachement départageant le reste ;
+ * un track illisible se range en dernier, comme `null` en tête d'un tri croissant de PostgreSQL. `null` sur une liste
+ * vide, ou quand aucun channel n'est rendu.
+ */
+export function premierDansLOrdreDesTracks<R extends { readonly id: string; readonly channels: ChannelRangeable | null }>(
+	liste: readonly R[],
+): R | null {
+	const situes = liste.filter((r): r is R & { readonly channels: ChannelRangeable } => r.channels !== null)
+	const cle = (r: (typeof situes)[number]) =>
+		[r.channels.tracks === null ? 1 : 0, r.channels.tracks?.position ?? 0, r.channels.tracks?.name ?? '', r.channels.position, r.channels.name, r.id] as const
+	const comparer = (a: (typeof situes)[number], b: (typeof situes)[number]) => {
+		const [ka, kb] = [cle(a), cle(b)]
+		for (let i = 0; i < ka.length; i++) {
+			const [va, vb] = [ka[i]!, kb[i]!]
+			const ordre = typeof va === 'number' ? va - (vb as number) : i === 5 ? (va < vb ? -1 : va > vb ? 1 : 0) : va.localeCompare(vb as string, 'fr')
+			if (ordre !== 0) return ordre
+		}
+		return 0
+	}
+	return [...situes].sort(comparer)[0] ?? null
 }

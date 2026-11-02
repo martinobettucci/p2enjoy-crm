@@ -17275,7 +17275,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       chaque rattachement : T4 le prouve à deux rattachements.
       *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-11-02 16:36 UTC — renouvelée après l'interruption de la veille (première prise : 2026-11-01 20:35 UTC) — état avant : [ ]*
       **Découpage, arrêté le 2026-11-02 (journal, « `CRM-111` T4 — le découpage »)** :
-      - [ ] **T4.1 — la base et ses consommateurs** : une migration au premier numéro libre (au-delà de la 148) —
+      - [x] **T4.1 — la base et ses consommateurs** : une migration au premier numéro libre (au-delà de la 148) —
         `recherche_globale` compose le sous-titre d'une affaire des channels rattachés lisibles, dans l'ordre des tracks
         puis des channels, et cherche dans toutes leurs prochaines actions ; `temps_valorise` rend une ligne par
         channel rattaché lisible pour une saisie posée sur l'affaire, avec la colonne `shared`. La webapp mène le lien
@@ -17284,6 +17284,17 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         L'entonnoir, les affaires figées et leur relance, et Ma journée, qui lisent déjà chaque rattachement, sont
         prouvés à deux rattachements. Livrables : pgTAP, unitaires (webapp et connecteur), API aux jetons réels,
         `docs/SPEC-recherche.md`, `docs/SPEC-temps.md`, SCHEMA, contrat de déploiement.
+        *Constat de la preuve (2026-11-02)* : la relance des affaires figées ne lisait PAS chaque rattachement — son
+        `stalled` se posait sur le plus ancien, et son idempotence se lisait par affaire ; corrigée dans la même migration
+        (`docs/SPEC-relances.md` §9.4, `docs/SPEC-rattachements.md` §5).
+        *Livrée en développement le 2026-11-02 (journal, « `CRM-111` T4.1 — la recherche, le temps et la relance à
+        plusieurs rattachements »)* : migration `0150` (`recherche_globale`, `temps_valorise` recréée avec `shared`,
+        `rentabilite_affaires`, `app.relancer_cards_figees`) ; webapp (`uneFoisChacune`, `premierDansLOrdreDesTracks`) ;
+        `crm_time_report`. Preuves sur une base reconstruite : pgTAP `0140` 23 assertions (la relance de la `0054`
+        dégradée en place : 3 en échec), toutes les suites 127 fichiers et 4748 assertions ; unitaires webapp 5184 ;
+        typecheck et témoin de types ; API `lectures-plusieurs-rattachements` 6/6 et douze specs voisines 110/110 ;
+        connecteur 294 unitaires et `verify-mcp --rapide` 108 contrôles. Production : la `0150` avec la webapp et l'image
+        `mcp` de `main` (`docs/PROD_MIGRATIONS.md` §3).
       - [ ] **T4.2 — l'écran** : la marque « partagée » dans le rapport de temps (`docs/DESIGN_SYSTEM.md` avant le
         code), E2E, captures observées, manuel.
 - [ ] **T5 — rentabilité ventilée** (§6) : une ligne par rattachement × devise, colonne `shared`, total compté une fois ;

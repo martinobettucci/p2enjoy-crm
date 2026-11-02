@@ -121,9 +121,16 @@ une ligne.
 
 `stable`, `security invoker`. Une ligne par personne × cible sur la période : `profile_id`, `track_id`, `channel_id`,
 `card_id` — **chemin complet** : une saisie sur une affaire rend aussi son channel et son track —, `minutes`, `montant`
-(`null` si non valorisé **ou** si l'appelant ne lit pas la version), `devise`. Filtres facultatifs : une personne, un
-track (ses saisies directes, celles de ses channels et de leurs affaires), une affaire. Elle sert le rapport mensuel et
-la série « Personnel ».
+(`null` si non valorisé **ou** si l'appelant ne lit pas la version), `devise`, `shared`. Filtres facultatifs : une
+personne, un track (ses saisies directes, celles de ses channels et de leurs affaires), une affaire. Elle sert le rapport
+mensuel et la série « Personnel ».
+
+**Une affaire à plusieurs rattachements** (`CRM-111` T4.1, décision 814, `docs/SPEC-rattachements.md` §6) : une saisie
+posée sur l'affaire paraît sous **chaque** channel rattaché que l'appelant lit, avec le même temps et le même montant, et
+`shared` vaut `true` quand il y en a plus d'un. Une ligne par cible garde donc son temps entier ; un **total**, lui, ne
+compte une saisie partagée qu'**une fois** — le rapport mensuel, la série « Personnel » d'un track et le temps passé
+d'une affaire dans la webapp (`uneFoisChacune`), `crm_time_report` dans le connecteur, et `rentabilite_affaires`. Un
+rattachement que l'appelant ne lit pas ne paraît pas, et sa saisie n'est alors pas marquée partagée : rien ne le trahit.
 
 ### 6.3 Le mode d'une journée
 

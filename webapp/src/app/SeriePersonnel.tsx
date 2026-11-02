@@ -8,6 +8,8 @@
 // @spec docs/INCONSISTENCY_REPORT.md INC-333, décision 801 — le mois du bloc du track se choisit par la navigation
 //       partagée (`NavigationMois`) et vit dans l'adresse (`?mois=AAAA-MM`) ; docs/SPEC-temps.md §7.5 ;
 //       docs/DESIGN_SYSTEM.md §5.54 (navigation de mois)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T4.1 : le total du track et le cumul de l'affaire ne comptent qu'une fois une
+//       saisie partagée entre plusieurs channels (`uneFoisChacune`) ; docs/SPEC-rattachements.md §6 ; décision 814
 //
 // LA PORTÉE EST ÉCRITE, ET C'EST LA RÈGLE DU §4.5 DES COÛTS : un total qui ne dit pas ce qu'il compte se lit comme celui
 // de l'équipe. Elle suit le rôle que la base rend ; le périmètre lui-même est tenu par la RLS de `saisies_temps`.
@@ -24,6 +26,7 @@ import {
 	lireNoms,
 	lireTempsValorise,
 	parChannel,
+	uneFoisChacune,
 	type Cumul,
 	type Noms,
 } from '../lib/rapport-temps'
@@ -71,7 +74,7 @@ export function SeriePersonnelTrack({
 			const noms = await lireNoms(client, { ...idsANommer(lignes.donnees), cards: [], profils: [] })
 			if (!courant) return
 			if (noms.statut !== 'pret') return setEtat(noms)
-			setEtat({ statut: 'pret', donnees: { series: parChannel(lignes.donnees), total: cumuler(lignes.donnees), noms: noms.donnees } })
+			setEtat({ statut: 'pret', donnees: { series: parChannel(lignes.donnees), total: cumuler(uneFoisChacune(lignes.donnees)), noms: noms.donnees } })
 		})()
 		return () => {
 			courant = false
@@ -185,7 +188,7 @@ export function BlocTempsCard({
 		if (lecture === 0) setEtat(enChargement)
 		void lireTempsValorise(client, TOUTE_LA_DUREE.debut, TOUTE_LA_DUREE.fin, { affaire: idCard }).then((lignes) => {
 			if (!courant) return
-			setEtat(lignes.statut === 'pret' ? { statut: 'pret', donnees: cumuler(lignes.donnees) } : lignes)
+			setEtat(lignes.statut === 'pret' ? { statut: 'pret', donnees: cumuler(uneFoisChacune(lignes.donnees)) } : lignes)
 		})
 		return () => {
 			courant = false

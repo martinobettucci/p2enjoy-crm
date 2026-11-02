@@ -1,6 +1,8 @@
 # @verifies CRM-104 (docs/BACKLOG.md) — tranche T5 : les trois outils de la famille `temps`, devant un CRM simulé
 # @verifies docs/SPEC-mcp.md §9.2 octies (liste, personne nommée, période bornée, une seule cible, 0 qui vide la case,
 #           rapport ramené aux tracks de l'espace sans mélange de devises, refus nommés), §9.3 ; docs/SPEC-temps.md
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T4.1 : `crm_time_report` rend `shared` et ne compte qu'une fois une saisie
+#           partagée (docs/SPEC-rattachements.md §6, §11 ; décision 814)
 """Le CRM simulé rend deux membres, une saisie existante et un rapport qui déborde sur un autre espace ; la vraie base est
 éprouvée par `tests/test_integration_temps.py`."""
 
@@ -39,6 +41,7 @@ class CrmTemps(CrmSimule):
         self.lectures: list[tuple[str, dict[str, str]]] = []
         self.rpcs: list[dict[str, Any]] = []
         self.forcee: tuple[int, Any] | None = None
+        self.rapport: list[dict[str, Any]] | None = None
 
     async def table_temps(self, requete: Request) -> Response:
         nom = requete.path_params["table"]
@@ -76,6 +79,8 @@ class CrmTemps(CrmSimule):
         if requete.path_params["fonction"] != "temps_valorise":
             return await self.rpc(requete)
         self.rpcs.append(await requete.json())
+        if self.rapport is not None:
+            return JSONResponse(self.rapport)
         return JSONResponse([
             {"profile_id": "sujet-thomas", "track_id": TRACK_A, "channel_id": None, "card_id": CARTE, "minutes": 105,
              "montant": 87.505, "devise": "EUR"},
@@ -167,6 +172,27 @@ async def test_le_rapport_reste_dans_l_espace_et_ne_melange_pas_les_devises(mond
     assert rapport["total_minutes"] == 180 and rapport["unvalued_minutes"] == 60
     assert rapport["amounts_by_currency"] == {"EUR": 87.51, "CHF": 20}
     assert all(r["track_id"] == TRACK_A for r in rapport["rows"])
+
+
+async def test_une_saisie_partagee_parait_sous_chaque_channel_et_compte_une_fois(monde: Monde) -> None:
+    # La saisie de Thomas sur l'affaire rattachée à deux channels du track A : la base la rend sous chacun, `shared`.
+    partagee = {"profile_id": "sujet-thomas", "track_id": TRACK_A, "card_id": CARTE, "minutes": 105, "montant": 87.5,
+                "devise": "EUR", "shared": True}
+    monde.simule.rapport = [
+        {**partagee, "channel_id": "ch-ventes"},
+        {**partagee, "channel_id": "ch-production"},
+        {**partagee, "channel_id": "ch-ventes", "minutes": 30, "montant": None, "devise": None},
+        {**partagee, "channel_id": "ch-production", "minutes": 30, "montant": None, "devise": None},
+        {"profile_id": LINA, "track_id": TRACK_A, "channel_id": "ch-ventes", "card_id": None, "minutes": 15,
+         "montant": 20, "devise": "EUR", "shared": False},
+    ]
+    rapport = await monde.appel("crm_time_report", {"workspace": "atelier", "date_from": "2026-10-01", "date_to": "2026-10-31"})
+    assert [(r["channel_id"], r["shared"]) for r in rapport["rows"]] == [
+        ("ch-ventes", True), ("ch-production", True), ("ch-ventes", True), ("ch-production", True), ("ch-ventes", False)
+    ]
+    assert rapport["total_minutes"] == 105 + 30 + 15 and rapport["unvalued_minutes"] == 30
+    assert rapport["amounts_by_currency"] == {"EUR": 107.5}
+    assert temps.une_fois_chacune([]) == []
 
 
 async def test_poser_cree_remplace_ou_vide_la_case(monde: Monde) -> None:

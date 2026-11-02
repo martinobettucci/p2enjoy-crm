@@ -38372,3 +38372,41 @@ livraison est libéré dans ce commit.
 **Écart de procédure, relevé** : le commit `7b581c39` a emporté `e2e/ui/connecteur-messagerie.spec.ts`, un fichier
 d'INC-335 qui n'était pas à cette session. Sa session l'a jugé cohérent avec sa tranche T3. Leçon : choisir les fichiers à
 committer un par un, jamais par motif de répertoire.
+
+### `CRM-111` T4.1 — la recherche, le temps et la relance à plusieurs rattachements (2026-11-02)
+
+*2026-11-02, session interactive (4891a451), après la livraison du lot des décisions 812, 815 et 817.* **Problème** : la
+décision 814 change le contrat de `recherche_globale` et de `temps_valorise` ; les totaux de la webapp et de
+`crm_time_report` doivent suivre dans la même tranche, sans quoi une saisie partagée serait comptée deux fois.
+
+**Choix** :
+- **L'ordre** des channels d'une affaire, dans le sous-titre et pour le lien, est celui des tracks puis des channels :
+  positions, puis noms comparés en `fr-FR-x-icu` (la collation de l'ordre de la recherche, §6.6), puis l'identifiant du
+  rattachement, pour un ordre total. La webapp range de même (`premierDansLOrdreDesTracks`), si bien que le lien mène au
+  premier channel nommé.
+- **`temps_valorise`** est supprimée puis recréée (un type de retour ne se change pas en place) ; `rentabilite_affaires`,
+  qui l'appelle depuis un corps plpgsql, n'en dépend pas pour PostgreSQL et est réécrite dans la même migration.
+- **Compter une fois** : les lignes d'une même saisie partagée portent la même somme par personne, affaire et devise. La
+  webapp (`uneFoisChacune`), le connecteur (`une_fois_chacune`) et la rentabilité (`distinct on`) gardent la première.
+
+**Observation** : la proposition de découpage tenait que les affaires figées et leur relance « lisent déjà chaque
+rattachement ». Vrai pour `cards_figees`, faux pour `app.relancer_cards_figees` : elle écrivait son `stalled` sans
+rattachement, et `app.card_events_fill_placement` le posait sur le plus ancien ; son idempotence se lisait par affaire,
+si bien qu'un second rattachement figé après la relance du premier n'en recevait aucune. **Décision** : la corriger dans
+la même migration — `docs/SPEC-rattachements.md` §5 dit déjà qu'un événement de rattachement désigne son rattachement ;
+c'est l'application de la spécification, non une règle nouvelle. Le `stalled` désigne le rattachement figé (retrouvé
+par `(card_id, channel_id)`) et l'idempotence s'ancre sur lui ; une affaire à un rattachement ne voit aucun changement.
+
+**Numérotation** : la `0150`, échangée avec `CRM-127` (session 25), qui prend la `0151` — elle passera après sur la pile
+et poussera après, et le registre refuse un fichier non inscrit rangé avant la dernière inscrite. Le fichier de 25 avait
+été inscrit sous le nom `0150` pendant une campagne : la base a été reconstruite avant la preuve.
+
+**Vérifications** (base reconstruite, seed compris) : pgTAP `0140` 23 assertions — avec la relance dégradée en place à
+la forme de la `0054` (le rattachement omis), 3 assertions échouent, puis la définition est restaurée ; toutes les
+suites pgTAP, 127 fichiers et 4748 assertions ; unitaires de la webapp 5184, typecheck et témoin de types (`shared`) ;
+API `lectures-plusieurs-rattachements` 6/6 et douze specs voisines (recherche, temps, recettes, relances, Ma journée,
+rattachements) 110/110 ; connecteur 294 unitaires et `verify-mcp --rapide` 108 contrôles, le service `mcp` reconstruit.
+
+**Conséquences** : rien ne change à l'écran tant qu'aucune affaire n'a plus d'un rattachement ; la marque « partagée »
+du rapport est T4.2, le seed à deux rattachements est T8.
+
