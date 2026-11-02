@@ -17265,7 +17265,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       marquée `shared`, la saisie comptée une fois ; `crm_search` (`structure`) et `crm_time_report` (`temps`) suivent,
       sans famille ni case nouvelle. Les trois autres lectures (entonnoir, figées et relances, Ma journée) lisent déjà
       chaque rattachement : T4 le prouve à deux rattachements.
-      *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-11-01 20:35 UTC — état avant : [ ]*
+      *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-11-02 16:36 UTC — renouvelée après l'interruption de la veille (première prise : 2026-11-01 20:35 UTC) — état avant : [ ]*
 - [ ] **T5 — rentabilité ventilée** (§6) : une ligne par rattachement × devise, colonne `shared`, total compté une fois ;
       écran ; `docs/SPEC-recettes.md` §5 et outil `crm_profitability_report`.
 - [ ] **T6 — messagerie** (§7, décision 657) : dossier `CRM/Affaires/<affaire>` et déplacement des dossiers existants
