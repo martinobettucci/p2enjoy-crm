@@ -8535,6 +8535,11 @@ non tranchée ici.
 l'application, centré, au lieu de celui des tracks dans la barre latérale. Le scénario attend désormais le squelette
 *dans* la barre latérale, et sera rejoué au prochain créneau sur la pile.
 
+**Close le 2026-11-02.** La campagne de renouvellement d'avant livraison a capturé `CRM-020/tracks-chargement` avec la
+coquille et ses trois squelettes de tracks dans la barre latérale. Les dix-sept images nommées par cette entrée montrent
+désormais leur sujet ou l'état qu'elles nomment. La question du fil non collant reste ouverte pour
+`docs/DESIGN_SYSTEM.md`.
+
 ### INC-337 — À 390 et 900 px, plusieurs pages se capturent décalées vers la gauche, leur texte coupé au bord
 
 *Constaté le 2026-11-01 par la même observation, identique dans les versions committées, donc antérieur.* Sur la fiche
