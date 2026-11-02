@@ -38410,3 +38410,18 @@ rattachements) 110/110 ; connecteur 294 unitaires et `verify-mcp --rapide` 108 c
 **Conséquences** : rien ne change à l'écran tant qu'aucune affaire n'a plus d'un rattachement ; la marque « partagée »
 du rapport est T4.2, le seed à deux rattachements est T8.
 
+### `CRM-111` T4.2 — la forme de la marque « partagée », avant le code (2026-11-02)
+
+*2026-11-02, session interactive (4891a451), après lecture intégrale de `docs/DESIGN_SYSTEM.md`.* **Problème** : depuis
+T4.1, une saisie sur une affaire rattachée à plusieurs channels paraît sous chacun dans le rapport mensuel, et le total
+ne la compte qu'une fois ; sans marque, deux lignes identiques se lisent comme un doublon, et le total comme une erreur.
+**Forme retenue** (`docs/DESIGN_SYSTEM.md` §5.54) : la pilule neutre « partagée », forme exacte de « partielle » (§5.60)
+— point neutre, aucune icône, nom accessible par clé qui dit pourquoi — sur la seule ligne d'affaire partagée ; une
+mention de 13 px sous le tableau d'une section qui en porte une (graduation du §5.30) ; la même mention sous la série
+« Personnel » du track, dont le total diverge de la somme de ses channels ; rien dans « Temps passé » de la fiche, qui
+n'a qu'un cumul. **Écarté** : une icône (le §5.60 réserve la forme à point) ; nommer les autres channels (la base ne
+marque partagée qu'une saisie dont la personne lit au moins deux rattachements, et l'écran ne nomme pas ce qu'il ne
+montre pas, §5.33). **Les données des preuves** : pas de seed à deux rattachements avant T8 ; l'E2E et le scénario du
+manuel posent un rattachement par `attach_card` et une saisie par l'API, comme d'autres scénarios du manuel, puis les
+retirent. **MCP** : `crm_time_report` rend déjà `shared` (décision 814, T4.1) ; aucune question nouvelle.
+

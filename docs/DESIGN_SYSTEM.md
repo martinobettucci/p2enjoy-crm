@@ -5538,6 +5538,29 @@ chacun saisit son temps (`docs/SPEC-temps.md` §5.2).
 **Paliers.** Sous 768 px, la matrice garde sa première colonne collante et défile horizontalement dans son conteneur
 (`overflow-x-auto`, jamais la page) ; les onglets et la navigation de semaine passent sur deux lignes.
 
+**La saisie partagée** — *écrit le 2026-11-02, avant le code de `CRM-111` T4.2, après relecture intégrale de ce document
+(décision 814, `docs/SPEC-rattachements.md` §6, `docs/SPEC-temps.md` §6.2).* Une affaire rattachée à plusieurs channels
+que la personne lit paraît sous **chacun** dans le rapport, avec le même temps et le même coût ; le total ne compte la
+saisie qu'une fois. Sans marque, deux lignes identiques se liraient comme un doublon, et un total plus petit que la somme
+de ses lignes comme une erreur de calcul.
+- **LA LIGNE D'UNE AFFAIRE PARTAGÉE PORTE LA PILULE NEUTRE « partagée »**, après le nom de l'affaire dans son `th` : la
+  forme exacte de « partielle » (§5.60) — `--color-hover` / `--color-text-2`, `rounded-full`, `--text-xs`, le **point**
+  neutre du §5.6 et **aucune icône** —, `whitespace-nowrap`, le nom gardant sa place à gauche (`inline-flex`, `gap-2`).
+  Une ligne non partagée n'en porte aucune (§5.35). **Son nom accessible dit pourquoi**, par clé — « Saisie partagée :
+  cette affaire est rattachée à plusieurs channels ; son temps paraît sous chacun et ne compte qu'une fois dans le
+  total » —, porté par `role="img"`, `aria-label` et `title`, le mot visible `aria-hidden` (§5.60). Elle ne nomme **ni
+  le nombre ni les autres channels** : un rattachement que la personne ne lit pas n'est jamais rendu partagé par la base,
+  et l'écran ne nomme jamais ce qu'il ne montre pas (§5.33).
+- **SOUS LE TABLEAU D'UNE SECTION QUI EN PORTE UNE, UNE MENTION** en 13 px `--color-text-2`, la graduation des mentions
+  du §5.30 et du §5.48 : « Une saisie sur une affaire rattachée à plusieurs channels paraît sous chacun ; le total ne la
+  compte qu'une fois. » Elle n'est rendue que si la section porte au moins une ligne partagée (§5.48) — sur « Toute
+  l'équipe », section par section.
+- **LA SÉRIE « Personnel » DU TRACK PORTE LA MÊME MENTION** sous ses tableaux quand une saisie du mois y est partagée entre
+  deux de ses channels : elle ne liste pas les affaires, et c'est son total qui diverge de la somme de ses channels. **Le
+  bloc « Temps passé » de la fiche n'en porte aucune** : il ne rend qu'un cumul, déjà compté une fois.
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : la pilule emprunte au §5.60 sa forme et sa mécanique, la
+  mention au §5.30 sa graduation.
+
 ### 5.54 bis La bande de la semaine dans la fiche d'une affaire — `CRM-106`
 
 Spécifiée avant code, `docs/SPEC-temps.md` §7.6 (décision 630).

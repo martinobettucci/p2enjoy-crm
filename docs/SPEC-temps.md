@@ -167,6 +167,9 @@ mois-ci » — *révisé le 2026-11-01 (INC-333, décision 801)* : le champ `typ
 Pour un membre : **son** mois — une ligne par cible (track › channel › affaire), le temps en jours
 et en heures, le montant par devise, et les totaux. Pour un administrateur : en plus, une personne ou **« Toute
 l'équipe »**, avec un tableau par personne. Une saisie non valorisée est comptée en temps et dite « non valorisée ».
+*Depuis `CRM-111` T4.2 (décision 814)* : une saisie sur une affaire rattachée à plusieurs channels lisibles paraît sous
+chacun (§6.2), sa ligne marquée **« partagée »**, et le total ne la compte qu'une fois ; une mention sous le tableau le
+dit dès qu'une ligne est partagée (`docs/DESIGN_SYSTEM.md` §5.54, « La saisie partagée »).
 
 ### 7.4 Réglages ▸ « Coût du personnel » — administrateurs
 
@@ -208,6 +211,9 @@ de mois du rapport (§7.3) et vit dans l'adresse de l'onglet « Vue d'ensemble �
 écrit). Dans la **fiche d'une affaire** : un bloc « Temps passé » — temps et montant. Les deux
 ne se mêlent ni aux budgets, ni aux lignes de coût, ni à l'histogramme. **Leur portée est écrite** : un membre n'y lit
 que **son** temps (§5.1), et le bloc le dit — « votre temps » ; un administrateur lit celui de toute l'équipe.
+*Depuis `CRM-111` T4.2* : une saisie partagée entre deux channels du track compte sous chacun, une fois au total, et le
+bloc du track le dit par la même mention que le rapport (§7.3) ; le bloc « Temps passé » de la fiche n'a qu'un cumul,
+compté une fois.
 Depuis `CRM-106`, le bloc « Temps passé » porte aussi la **saisie** de son temps sur l'affaire (§7.6).
 
 ### 7.6 Saisir son temps depuis la fiche d'une affaire — `CRM-106` (décision 630)

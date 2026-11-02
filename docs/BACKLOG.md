@@ -17295,8 +17295,14 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         typecheck et témoin de types ; API `lectures-plusieurs-rattachements` 6/6 et douze specs voisines 110/110 ;
         connecteur 294 unitaires et `verify-mcp --rapide` 108 contrôles. Production : la `0150` avec la webapp et l'image
         `mcp` de `main` (`docs/PROD_MIGRATIONS.md` §3).
-      - [ ] **T4.2 — l'écran** : la marque « partagée » dans le rapport de temps (`docs/DESIGN_SYSTEM.md` avant le
+      - [@] **T4.2 — l'écran** : la marque « partagée » dans le rapport de temps (`docs/DESIGN_SYSTEM.md` avant le
         code), E2E, captures observées, manuel.
+        *Forme arrêtée le 2026-11-02, avant le code (`docs/DESIGN_SYSTEM.md` §5.54, « La saisie partagée » ;
+        `docs/SPEC-temps.md` §7.3, §7.5)* : pilule neutre « partagée » sur la ligne d'affaire, forme de « partielle »
+        (§5.60) ; mention sous le tableau d'une section qui en porte une, et sous la série « Personnel » du track ; rien
+        dans « Temps passé » de la fiche. Connecteur : `crm_time_report` rend déjà `shared` (T4.1), aucune autre
+        question MCP. Les données d'une preuve et des images du manuel se posent par la vraie API (`attach_card`, une
+        saisie) et se retirent ensuite : le seed à deux rattachements est T8.
 - [ ] **T5 — rentabilité ventilée** (§6) : une ligne par rattachement × devise, colonne `shared`, total compté une fois ;
       écran ; `docs/SPEC-recettes.md` §5 et outil `crm_profitability_report`.
 - [ ] **T6 — messagerie** (§7, décision 657) : dossier `CRM/Affaires/<affaire>` et déplacement des dossiers existants
