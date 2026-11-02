@@ -17338,8 +17338,9 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
         recherche prend 1,8 s sous RLS (index inemployé) contre 9,4 ms en interrogeant l'index puis en appliquant les
         droits. La forme de l'index de T6 est proposée, à arbitrer ;
       - `docs/SCHEMA.md` « Migration `0152` », contrat de déploiement (§3, ligne 152).
-- [ ] **T2** — exigence par une transition (`common_field_id`), sixième vérification de `move_card`, versions et
+- [@] **T2** — exigence par une transition (`common_field_id`), sixième vérification de `move_card`, versions et
       copies, refus `common_field_in_use` et `common_field_archived` ; pgTAP ; API.
+      *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-3a) depuis 2026-11-02 22:28 UTC — état avant : [ ]*
 - [ ] **T3** — écrans : Réglages ▸ « Champs de l'affaire », exigence dans l'éditeur de workflow, partie commune de la
       fiche, timeline ; `docs/DESIGN_SYSTEM.md` avant le code ; unitaires.
 - [ ] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; unitaires ; API.
