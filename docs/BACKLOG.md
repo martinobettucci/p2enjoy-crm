@@ -17323,8 +17323,11 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         `0142` 10 assertions, `0140` et `0087` ajustées, toutes les suites 130 fichiers et 4803 assertions ; unitaires
         webapp 5246 et témoin de types ; API 11/11 ; connecteur `verify-mcp --rapide` 108 contrôles ; E2E « Rentabilité »
         5/5. Production : la `0153` avec la webapp et l'image `mcp` de `main` (`docs/PROD_MIGRATIONS.md` §3).
-      - [ ] **T5.2 — l'écran** : la marque « partagée » d'une ligne d'affaire de « Rentabilité » et la mention sous le
+      - [@] **T5.2 — l'écran** : la marque « partagée » d'une ligne d'affaire de « Rentabilité » et la mention sous le
         tableau (`docs/DESIGN_SYSTEM.md` avant le code, forme du §5.54), E2E, captures observées, manuel.
+        *Forme arrêtée le 2026-11-03, avant le code (`docs/DESIGN_SYSTEM.md` §5.60, « Une affaire partagée »)* : la
+        pilule du §5.54 réemployée, sans chemin (la ligne de channel situe l'affaire) ; une mention sous le tableau ;
+        rien dans le bloc de la fiche. Connecteur : `shared` rendu depuis T5.1, aucune question MCP nouvelle.
 - [ ] **T6 — messagerie** (§7, décision 657) : dossier `CRM/Affaires/<affaire>` et déplacement des dossiers existants
       par `mail-sync` ; cadences et variables des modèles par rattachement ; preuves IMAP réelles.
 - [ ] **T7 — webapp** (§8) : fiche à partie commune et blocs, pastille « aussi rattachée à », rattacher, archiver,

@@ -314,6 +314,8 @@ rattachement vient avec le contrat de `rentabilite_affaires` (une tranche ultér
   *Depuis `CRM-111` T5.1* : une affaire partagée paraît sous chacun de ses channels, avec l'état et le montant de ce
   rattachement ; elle compte dans le sous-total de chacun de ses channels, mais **une fois** dans le sous-total d'un
   track qui la porte deux fois, dans le total et dans les mentions. Le filtre d'état porte sur l'état du rattachement.
+  *Depuis `CRM-111` T5.2* : sa ligne porte la marque « partagée », et une mention sous le tableau dit qu'elle ne compte
+  qu'une fois (`docs/DESIGN_SYSTEM.md` §5.60).
 - **Les colonnes** de la vue « Réel » : Affaire (lien vers la fiche), État (mot : « Gagnée », « En cours », « Perdue »,
   avec « Archivée » le cas échéant), Montant de l'affaire, Recettes, Coûts, Personnel, Marge, Taux. La vue « Prévu »
   remplace Recettes, Coûts et Marge par leurs prévus et retire le Taux.

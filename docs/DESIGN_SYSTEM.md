@@ -6243,6 +6243,19 @@ n'est pas connu. Seuls les écarts et ce qui est propre au rapport sont écrits.
   « Lignes de recette d'une affaire et leurs réels ; rapport de rentabilité, réservé aux administrateurs ». Aucune autre
   forme ne change.
 - **Aucune couleur, aucun jeton nouveau.** Une icône Lucide nouvelle, `Scale`, qui ne sert aucun autre objet (§9).
+- **UNE AFFAIRE PARTAGÉE ENTRE PLUSIEURS CHANNELS** — *écrit le 2026-11-03, avant le code de `CRM-111` T5.2, sur la forme
+  du §5.54 (« La saisie partagée »)*. Elle paraît sous chacun de ses channels, avec l'état et le montant de ce
+  rattachement, ses recettes, coûts et personnel rappelés ; le sous-total d'un track qui la porte deux fois et le total
+  ne la comptent qu'une fois (`docs/SPEC-recettes.md` §6.3).
+  - **Sa ligne porte la pilule neutre « partagée »** après le titre de l'affaire — la pilule du §5.54, réemployée sans
+    copie (`PilulePartagee`) : même point, aucune icône, nom accessible qui dit pourquoi, par clé : « Affaire partagée :
+    elle est rattachée à plusieurs channels ; ses recettes, coûts et personnel paraissent sous chacun et ne comptent
+    qu'une fois dans le total ». **Aucun chemin n'est ajouté** : ici la ligne d'affaire est toujours rendue sous la ligne
+    de son channel, qui la situe — l'écart avec le §5.54, où le rapport n'a pas de ligne de channel sans temps direct.
+  - **Une mention suit les autres sous le tableau**, dans leur graduation (13 px `--color-text-2`, §5.30), rendue
+    seulement quand une ligne est partagée : « Une affaire rattachée à plusieurs channels paraît sous chacun ; le
+    sous-total d'un track et le total ne comptent ses montants qu'une fois. »
+  - **Le bloc « Rentabilité » de la fiche n'en porte aucune** : il rend une affaire, ses montants une fois.
 
 ### 5.61 Réglages ▸ Membres, et le tableau des membres partagé avec la plateforme — `CRM-070`
 
