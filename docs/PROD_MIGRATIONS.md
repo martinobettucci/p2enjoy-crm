@@ -1,6 +1,6 @@
 # Contrat de déploiement — P2Enjoy CRM
 
-*Session de livraison : p2enjoy-crm-64 depuis 2026-11-02 16:35 UTC — la session p2enjoy-crm-18, désignée par le responsable, rouverte sous un nouveau nom ; reprend son annonce, expirée faute de commit depuis plus de 6 heures — lot : tout `main` — `0144` (`CRM-123`), `0145` (`CRM-125` T2), `0148` (`CRM-111` T3) ; webapps de `CRM-111` T3, `CRM-123`, `CRM-124`, `CRM-125`, `CRM-126`, INC-332 et INC-333 ; image `mcp` (`CRM-126`). Règle : `CLAUDE.md` §12, décision 813.*
+*Session de livraison : p2enjoy-crm-3a depuis 2026-11-02 18:22 UTC — la session p2enjoy-crm-18 puis 64, désignée par le responsable, rouverte sous un nouveau nom après le redémarrage de la machine — lot : tout `main` — `0144` (`CRM-123`), `0145` (`CRM-125` T2), `0148` (`CRM-111` T3), `0149` (INC-335, décision 817 : geste préalable du §2.26 à confirmer par le responsable) ; webapps de `CRM-111` T3, `CRM-123`, `CRM-124`, `CRM-125`, `CRM-126`, INC-332, INC-333 et INC-335 ; image `mcp` (`CRM-126`, INC-335). Fenêtre autorisée sans nouvel instantané (décision 815). Règle : `CLAUDE.md` §12, décision 813.*
 
 **Le lot annoncé, tel que les sessions l'ont signalé** (2026-11-01, mis à jour le 2026-11-02 ; à relire au moment de livrer) :
 
