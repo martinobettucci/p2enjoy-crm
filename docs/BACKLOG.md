@@ -17909,6 +17909,7 @@ manifestes Python constatés dans le graphe de dépendances de GitHub après le 
       (`mail-sync/`).
 - [P] **T2 — livraison** : la prochaine reconstruction de l'image `mcp` de production prend le verrou renommé
       (contenu identique) ; aucune autre action en production.
+      *Faite le 2026-11-02 : l'image `mcp` de production a été reconstruite depuis la révision `9e64cb73`, qui porte les verrous renommés.*
 
 ### CRM-122 — Les captures versionnées se renouvellent par une campagne dédiée, observée et committée `[x]`
 Arbitrage du responsable du 2026-10-31 (décision 787, révisée en séance). `capturer()` (`e2e/ui/captures.ts`) recopie
@@ -17998,6 +17999,7 @@ Question du connecteur : sans objet (décision 804).
       reçu à une adresse `app-…` et classé (`docs/PROD_MIGRATIONS.md` §2.29).
       *Ordonnée par la décision 812 : elle attend la migration de `CRM-125` T2, puis part avec tout `main` d'un seul
       lot, sans nouvel instantané.*
+      *Livré le 2026-11-02 (révision `9e64cb73`, migration 144 relue : préfixe `c-`, aucune adresse hors forme). Reste le geste du responsable : l'alias `app-*` chez l'hébergeur avant toute régénération, puis le constat.*
 
 ## Correctif arbitré le 2026-11-01 — INC-335 (décision 805)
 
@@ -18035,6 +18037,7 @@ action `ajouter`, sans case nouvelle.*
       développement le 2026-11-02* : pytest 293 (3 nouveaux, rouges sur l'ancien code) ; intégration OAuth et messagerie
       20/20 contre la vraie base ; E2E `connecteur-messagerie` (l'administratrice envoie sans adresse : `admin@`). **Reste** :
       l'image `mcp` livrée et son constat.
+      *INC-335 livré le 2026-11-02 (révision `9e64cb73`, migration 149, webapp et image `mcp`). Relu en lecture seule : aucune cadence active sur l'identité de service. Reste le constat du responsable (§2.26, geste 5).*
 
 ## Demande du 2026-11-01 — le contact présélectionné de la prévisualisation d'un modèle (décision 806)
 
@@ -18069,6 +18072,7 @@ Question du connecteur : sans objet (décision 806).
       Manuel §14.2, changelog, contrat de déploiement §2.28.
 - [P] **T3 — livraison** : la webapp part avec le prochain lot (`docs/PROD_MIGRATIONS.md` §2.28) ; constat du
       responsable.
+      *Livré le 2026-11-02 (révision `9e64cb73`). Reste le constat du responsable (§2.28).*
 
 ## Demande du 2026-11-01 — l'aperçu des paliers d'une séquence (décision 809)
 
@@ -18107,6 +18111,7 @@ Question du connecteur : sans objet (décision 809).
       renouvelée (les boutons « Aperçu ») ; chapitre 14-16 5/5 ; `verify-manual` **167/167**.
 - [P] **T4 — livraison en production et constat** : migration `0145` appliquée par la fenêtre (§3), webapp de `main` ;
       constat du responsable : un aperçu de palier et l'aperçu de la séquence.
+      *Livré le 2026-11-02 (révision `9e64cb73`, migration 145 relue : `render_mail_template_sample` présente). Reste le constat du responsable : un aperçu de palier et « Prévisualiser la séquence ».*
 
 ## Demande du 2026-11-01 — une balance par devise dans la rentabilité (décision 810)
 
@@ -18140,6 +18145,7 @@ nouvelle (décision 810).
       captures `docs/captures/CRM-126/` observées, quatre paliers ; typecheck et build.
 - [P] **T3 — livraison en production et constat** : webapp et service `mcp` redéployés, une affaire mixte constatée
       (`docs/PROD_MIGRATIONS.md` §2.27).
+      *Livré le 2026-11-02 (révision `9e64cb73`, image `mcp` reconstruite, saine). Reste le constat du responsable (§2.27).*
 
 ## Demande du 2026-11-02 — tester un compte de messagerie, et savoir si la boîte est relevée (décision 816, INC-340)
 

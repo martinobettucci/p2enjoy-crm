@@ -38338,3 +38338,37 @@ lignes), seulement ses §5.4 sexies, §5.35 et §5.42, que le changement touche.
 sont faits en production : les cadences actives armées avec l'identité de service sont relevées (geste 1), et chaque
 administrateur qui envoyait avec elle a déclaré sa propre identité (geste 2). La fenêtre suit la campagne de
 renouvellement des captures (`docs/SPEC-captures.md` §4), lancée sur une base reconstruite depuis `main`.
+
+### La fenêtre du lot des décisions 812, 815 et 817 exécutée (2026-11-02)
+
+*Session de livraison p2enjoy-crm-3a.*
+
+**Préparation.**
+- **L'arbre rendu propre par ses sessions.** `CRM-111` T4.1 et `CRM-127` ont rangé leurs fichiers hors du dépôt.
+  INC-335 est poussé (décision 817), et le responsable a confirmé son geste préalable (§2.26).
+- **La campagne de renouvellement des captures** (`9e64cb73`, `docs/SPEC-captures.md` §4) : base reconstruite depuis
+  `main`, 1048/1057. Les 9 échecs sont des effets d'ordre de campagne : 7 passent seuls, et `premier-lancement` et
+  `webhooks` passent sur base reconstruite (12/12).
+- **Dans le même mouvement** : les images du manuel d'INC-333 (`696110f5`) et de `CRM-125` (`adb8bc30`), avec
+  `verify-manual` à 167/167, et INC-336 close.
+
+**Fenêtre**, faite le 2026-11-02 :
+- `livrer.sh -- --migrate --instantane-verifie`, révision `9e64cb73`, migrations 0144, 0145, 0148 et 0149 appliquées par
+  le runner ;
+- l'image `mcp` reconstruite dans la cellule, saine ;
+- le manuel publié (525 fichiers, deux passes convergentes).
+
+**Vérifications, en lecture seule** :
+- registre à 147 lignes ;
+- préfixe `c-`, aucune adresse d'affaire hors forme ;
+- aucune cadence active sur l'identité de service ; aucune n'a été fermée (`identity_withdrawn` à 0) ;
+- `render_mail_template_sample`, `attach_card` et `detach_card` présentes ;
+- `verifier.sh` 33/34 : le compteur de redémarrages de `rest`, antérieur à la fenêtre.
+
+**Restent au responsable** : les constats de `CRM-123`, `CRM-124`, `CRM-125`, `CRM-126`, INC-332, INC-333 et INC-335 (§2.25
+à §2.29). Pour `CRM-123`, l'alias `app-*` est à créer chez l'hébergeur **avant** toute régénération. Le verrou de
+livraison est libéré dans ce commit.
+
+**Écart de procédure, relevé** : le commit `7b581c39` a emporté `e2e/ui/connecteur-messagerie.spec.ts`, un fichier
+d'INC-335 qui n'était pas à cette session. Sa session l'a jugé cohérent avec sa tranche T3. Leçon : choisir les fichiers à
+committer un par un, jamais par motif de répertoire.

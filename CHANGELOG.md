@@ -13,7 +13,25 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### INC-335 — l'identité de service ne sert qu'aux envois automatiques, et l'envoi prend votre adresse par défaut
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-02 — migrations 144, 145, 148 et 149, la webapp de `main`, l'image `mcp`, le manuel
+
+Cellule Spark `crm`, révision `9e64cb73` : `scripts/spark/livrer.sh -- --migrate --instantane-verifie`, sur l'instantané
+existant (décision 815), après la campagne de renouvellement des captures (`9e64cb73`) et la confirmation du geste
+préalable d'INC-335 (§2.26, décision 817). L'image `mcp` est reconstruite dans la cellule, et le manuel publié (525
+fichiers, deux passes). **Vérifié, en lecture seule** :
+- registre à 147 lignes, dont 0144, 0145, 0148 et 0149 ;
+- préfixe `c-` pour l'espace, aucune adresse d'affaire hors forme ;
+- aucune cadence active sur l'identité de service ;
+- `render_mail_template_sample`, `attach_card` et `detach_card` présentes ;
+- `verifier.sh` 33/34 (le compteur de redémarrages de `rest`, antérieur).
+
+Restent les constats du responsable et, pour `CRM-123`, l'alias `app-*` chez l'hébergeur avant toute régénération.
+
+#### INC-335 — l'identité de service ne sert qu'aux envois automatiques, et l'envoi prend votre adresse par défaut
 
 - **L'adresse « par défaut » sert enfin à quelque chose.** Le formulaire « Écrire un message » choisit d'avance votre
   identité par défaut. Sans défaut, il prend votre unique identité ; avec plusieurs identités sans défaut, il affiche
@@ -34,21 +52,21 @@ d'exécuter le code attendu.
   de démonstration.
 - À livrer : la migration `0149`, la webapp et l'image `mcp`, après le geste préalable des administrateurs.
 
-### `CRM-125` — le composer des séquences prévisualise chaque palier, et la séquence entière
+#### `CRM-125` — le composer des séquences prévisualise chaque palier, et la séquence entière
 
 - Dans la fiche d'une séquence, un bouton « Aperçu » par palier et « Prévisualiser la séquence » montrent l'objet, le
   corps et la signature sur des données d'exemple (M. Dupont, ENTREPRISE INC, Projet exemple), avec les délais cumulés
   depuis l'armement. L'expéditeur est l'identité d'envoi de la personne, ou un expéditeur fictif signalé.
 - Migration `0145` : la fonction `public.render_mail_template_sample`, sans table ni donnée.
 
-### `CRM-013` — les colonnes protégées sont closes ; les jetons d'API sont abandonnés (INC-338, décision 779)
+#### `CRM-013` — les colonnes protégées sont closes ; les jetons d'API sont abandonnés (INC-338, décision 779)
 
 - La cible `api_tokens.token_hash` n'attend plus de table : la décision 779 a abandonné les jetons d'API au profit du
   connecteur MCP. L'assertion pgTAP `0015` et le contrôle de `scripts/verify-colonnes-protegees.sh` sont **révisés** en
   témoins de cette décision : ils rougiraient si une table `api_tokens` naissait sans arbitrage. Aucun changement de
   schéma ni d'interface.
 
-### `CRM-126` — la rentabilité donne une balance par devise, dans un seul tableau
+#### `CRM-126` — la rentabilité donne une balance par devise, dans un seul tableau
 
 - L'écran « Rentabilité » ne rend plus un tableau par devise mais **un seul tableau**. Chaque case donne une valeur par
   devise, l'une sous l'autre, suivie de son code : le total montre une balance EUR et une balance CHF (ou USD), jamais
@@ -61,13 +79,13 @@ d'exécuter le code attendu.
   `calculable`, et la marge des totaux par devise (`margin`). Aucune migration ; la webapp et le service `mcp` sont à
   redéployer.
 
-### `CRM-124` — la prévisualisation d'un modèle choisit le contact de l'affaire quand elle n'en a qu'un
+#### `CRM-124` — la prévisualisation d'un modèle choisit le contact de l'affaire quand elle n'en a qu'un
 
 - Dans « Réglages ▸ Modèles d'emails », la prévisualisation présélectionne le contact quand l'affaire choisie en a
   **un seul** rattaché. Aucun ou plusieurs : le champ reste sur « Aucun contact ». Un contact choisi à la main n'est
   jamais remplacé au changement d'affaire. Aucune migration.
 
-### INC-333 — le mois du rapport de temps se choisit dans tous les navigateurs
+#### INC-333 — le mois du rapport de temps se choisit dans tous les navigateurs
 
 - Le rapport mensuel de l'écran « Temps » et le bloc « Coût du personnel » des coûts d'un track choisissent leur mois
   par « Mois précédent », « Mois suivant » et « Ce mois-ci ». Dans Firefox, le champ de mois ne se saisissait pas : le
@@ -75,12 +93,12 @@ d'exécuter le code attendu.
 - Le mois du bloc du track vit désormais dans l'adresse (`?mois=AAAA-MM`), comme celui du rapport. Il survit au
   rechargement.
 
-### INC-332 — à 390 px, l'en-tête garde une seule ligne de commandes
+#### INC-332 — à 390 px, l'en-tête garde une seule ligne de commandes
 
 - Sous 768 px, le nom de la personne connectée passe en lecture d'écran seule, et l'avatar reste. L'icône « Aide » faisait
   passer la cloche et l'identité sur une deuxième ligne de commandes.
 
-### `CRM-123` — le préfixe des adresses d'affaire se règle par espace, et une régénération l'applique
+#### `CRM-123` — le préfixe des adresses d'affaire se règle par espace, et une régénération l'applique
 
 - Sur la fiche d'un espace (Plateforme), « Modifier » règle le **préfixe des adresses d'affaire** — `app-` par exemple —,
   pour suivre l'alias que le serveur de messagerie remet au CRM. Le préfixe `c-` était fixe : une messagerie qui ne
@@ -90,7 +108,7 @@ d'exécuter le code attendu.
   superadministrateurs, refusé en base à tout autre.
 - Migration `0144` : aucune adresse ne change à son application (`docs/PROD_MIGRATIONS.md` §2.29).
 
-### `CRM-122` — les captures versionnées ne changent plus qu'à la demande (outillage de test)
+#### `CRM-122` — les captures versionnées ne changent plus qu'à la demande (outillage de test)
 
 - `npm run e2e:ui` écrit ses captures dans `e2e/output/<unité>/` et ne les recopie dans `docs/captures/` que pour
   l'unité nommée par `CAPTURES_UNITES`, ou pour toutes avec `CAPTURES_RENOUVELLEMENT=1`. La vidéo du board suit la même
@@ -107,8 +125,6 @@ d'exécuter le code attendu.
 - Origine : deux alertes du secret scanning de GitHub, le 2026-10-31. GitHub y voyait une clé Stripe ; c'est en
   réalité le secret d'un webhook du CRM, pointé sur un domaine réservé et détruit depuis. Rien n'est à révoquer.
 - Aucun geste de déploiement : le manifeste n'est pas publié.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-01 — migration 143 (`CRM-120`, décision 798) et verrous de `mcp/` renommés
 
