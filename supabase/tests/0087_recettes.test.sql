@@ -4,6 +4,7 @@
 --           (la période filtre les réels), §4.6 (corbeille exclue, archivée présente), §5 (`rentabilite_affaires`),
 --           §6.4 (`recette_saisissable`), §7 (famille `recettes`) ; docs/SCHEMA.md §9 sexies ; docs/SPEC-mcp.md §6.3,
 --           §8.2 ; CLAUDE.md §10
+-- @verifies CRM-111 T5.1 (docs/BACKLOG.md) — la rentabilité rend `shared` (migration `0153`, docs/SPEC-recettes.md §5)
 -- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
 --           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
@@ -214,7 +215,8 @@ create temporary table rentab_tout (
 	workspace_id uuid, track_id uuid, channel_id uuid, card_id uuid, node_kind text, archivee boolean, currency text,
 	recettes_prevues numeric, recettes_reelles numeric, lignes_recette integer, lignes_recette_sans_reel integer,
 	couts_prevus numeric, couts_reels numeric, lignes_cout integer, lignes_cout_sans_reel integer,
-	personnel numeric, minutes bigint, minutes_non_valorisees bigint) on commit drop;
+	personnel numeric, minutes bigint, minutes_non_valorisees bigint,
+	shared boolean) on commit drop;  -- `CRM-111` T5.1 : la colonne `shared` de la `0153`
 create temporary table rentab_mars (like rentab_tout) on commit drop;
 create temporary table attendu_c4 (couts_prevus numeric, couts_sans_reel integer, personnel numeric) on commit drop;
 grant all on rentab_tout, rentab_mars, attendu_c4 to authenticated;

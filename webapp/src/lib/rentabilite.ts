@@ -6,6 +6,9 @@
 //       plusieurs), §4.6 (le filtre d'état), §5 (les colonnes de `public.rentabilite_affaires`), §6.3 (un seul tableau,
 //       l'arborescence track › channel › affaire, ses sous-totaux et son total en balance par devise)
 // @spec docs/DESIGN_SYSTEM.md §5.60 (sous-totaux de track et de channel, total du tableau, une valeur par devise)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T5.1 : une ligne par RATTACHEMENT × devise, `shared` ; un sous-total de
+//       channel compte l'affaire sous chacun de ses channels, un sous-total de track et le total ne la comptent qu'une
+//       fois ; le montant et l'état sont ceux du rattachement (docs/SPEC-rattachements.md §6, décision 643)
 //
 // MODULE SANS RENDU ET SANS REQUÊTE. La base rend des sommes et des comptes (§5) ; ce module en tire la marge, le taux et
 // le caractère partiel, et range les affaires. Le connecteur applique la même règle en Python
@@ -18,7 +21,7 @@
 /** Le genre du nœud de l'étape courante (`workflow_nodes_catalog.kind`). */
 export type GenreAffaire = 'open' | 'won' | 'lost'
 
-/** Une ligne de `public.rentabilite_affaires` : une affaire × une devise (§5). */
+/** Une ligne de `public.rentabilite_affaires` : un rattachement × une devise (§5, `CRM-111` T5.1). */
 export type LigneRentabilite = {
 	readonly workspaceId: string
 	readonly trackId: string
@@ -38,6 +41,8 @@ export type LigneRentabilite = {
 	readonly personnel: number | null
 	readonly minutes: number
 	readonly minutesNonValorisees: number
+	/** `CRM-111` T5.1 : l'affaire a plusieurs rattachements lisibles ; ses sommes sont rappelées sur chacun. */
+	readonly partagee: boolean
 }
 
 const nombreOuNul = (v: unknown): number | null => {
@@ -83,6 +88,7 @@ export function lireLignesRentabilite(brutes: readonly Record<string, unknown>[]
 			personnel: nombreOuNul(b.personnel),
 			minutes: entier(b.minutes),
 			minutesNonValorisees: entier(b.minutes_non_valorisees),
+			partagee: b.shared === true,
 		})
 	}
 	return { lignes, ecartees }
@@ -271,7 +277,11 @@ export const retenirEtat = (lignes: readonly LigneRentabilite[], etat: EtatRappo
 export type Noms = {
 	readonly tracks: ReadonlyMap<string, { readonly nom: string; readonly position: number; readonly slug: string }>
 	readonly channels: ReadonlyMap<string, { readonly nom: string; readonly position: number; readonly slug: string }>
-	readonly affaires: ReadonlyMap<string, { readonly titre: string; readonly montant: number | null; readonly devise: string }>
+	/** `CRM-111` T5.1 : le montant de chaque rattachement de l'affaire, par channel (§6 : le montant du rattachement). */
+	readonly affaires: ReadonlyMap<
+		string,
+		{ readonly titre: string; readonly montants: ReadonlyMap<string, number | null>; readonly devise: string }
+	>
 }
 
 export type AffaireDuRapport = {
@@ -279,7 +289,9 @@ export type AffaireDuRapport = {
 	readonly titre: string
 	readonly genre: GenreAffaire
 	readonly archivee: boolean
-	/** Le montant de l'affaire, pour comparaison (§2.1), dans SA devise. */
+	/** `CRM-111` T5.1 : l'affaire paraît aussi sous un autre channel ; un sous-total de track et le total la comptent une fois. */
+	readonly partagee: boolean
+	/** Le montant du rattachement, pour comparaison (§2.1), dans la devise de l'affaire. */
 	readonly montant: { readonly valeur: number; readonly devise: string } | null
 	readonly montants: MontantsParDevise
 	readonly rentabilite: RentabiliteLigne
@@ -313,12 +325,17 @@ const parRang = <T extends { readonly nom: string; readonly position: number }>(
 	a.position - b.position || a.nom.localeCompare(b.nom, 'fr')
 
 /** La ligne d'un regroupement : ses balances par devise, mixte dès qu'une de ses affaires l'est (§4.4). */
-const regrouper = (affaires: readonly AffaireDuRapport[], vue: VueRentabilite): RentabiliteLigne =>
-	calculerLigne(
+const regrouper = (toutes: readonly AffaireDuRapport[], vue: VueRentabilite): RentabiliteLigne => {
+	// `CRM-111` T5.1 : une affaire partagée paraît sous chacun de ses channels ; un regroupement qui la porte deux fois — un
+	// track, le tableau — ne la compte qu'une fois. Ses sommes sont les mêmes sur chaque ligne : la première suffit.
+	const vues = new Set<string>()
+	const affaires = toutes.filter((a) => (vues.has(a.cardId) ? false : (vues.add(a.cardId), true)))
+	return calculerLigne(
 		sommerParDevise(affaires.map((a) => a.montants)),
 		vue,
 		affaires.some((a) => a.rentabilite.plusieursDevises),
 	)
+}
 
 /**
  * Range les lignes en UN tableau, track › channel › affaire, avec ses sous-totaux et son total en balance par devise.
@@ -353,7 +370,11 @@ export function construireRapport(
 				titre: a?.titre ?? '',
 				genre: l.genre,
 				archivee: l.archivee,
-				montant: a !== undefined && a.montant !== null ? { valeur: a.montant, devise: a.devise } : null,
+				partagee: l.partagee,
+				montant: (() => {
+					const valeur = a?.montants.get(l.channelId) ?? null
+					return a !== undefined && valeur !== null ? { valeur, devise: a.devise } : null
+				})(),
 				montants,
 				rentabilite: calculerLigne(montants, vue, montants.size > 1),
 			} satisfies AffaireDuRapport,
@@ -394,7 +415,14 @@ export function construireRapport(
 		.sort(parRang)
 		.map(({ position: _p, ...t }): TrackDuRapport => t)
 
-	const somme = sommerMontants(lignes)
+	// Les mentions comptent des lignes de recette et de coût, et des minutes : une affaire partagée une fois (`CRM-111`).
+	const vues = new Set<string>()
+	const somme = sommerMontants(
+		lignes.filter((l) => {
+			const cle = `${l.cardId}|${l.devise}`
+			return vues.has(cle) ? false : (vues.add(cle), true)
+		}),
+	)
 	return {
 		tracks,
 		total: regrouper(affaires.map((x) => x.affaire), vue),

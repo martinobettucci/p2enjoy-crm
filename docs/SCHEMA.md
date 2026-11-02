@@ -2481,6 +2481,17 @@ uuid)` et `drop function public.mail_inbound_account_record_sync(uuid)`, **avec 
 d'avant** : l'image de `main` appelle `mail_inbound_account_record_sync` à chaque relève, et chaque relève échouerait sans
 elle.
 
+### Migration `0153` — la rentabilité par rattachement (`CRM-111` T5.1, décision 643 ; livrée en développement le 2026-11-03)
+
+`docs/SPEC-rattachements.md` §6 ; `docs/SPEC-recettes.md` §5. **`public.rentabilite_affaires` supprimée puis recréée**
+depuis sa définition de la `0150`, avec une colonne de plus, `shared boolean` : une ligne par **rattachement lisible ×
+devise** — le chemin, l'état (`node_kind`) et l'archivage du rattachement —, les recettes, coûts, personnel et temps de
+l'affaire calculés une fois (`cartes`) et rappelés sur chaque ligne ; `shared` vrai quand l'affaire a plusieurs
+rattachements lisibles. `security invoker`, la garde `42501 rentabilite_reservee` inchangée ; droits reposés
+(`authenticated`, `service_role`, jamais `anon`). **Aucune table, aucune donnée.** **Retrait** : `drop function
+public.rentabilite_affaires(date, date, uuid)`, puis sa définition de la `0150` et ses droits, **avec la webapp et l'image
+`mcp` d'avant**.
+
 ### Migration `0150` — les lectures à plusieurs rattachements (`CRM-111` T4.1, décision 814 ; livrée en développement le 2026-11-02)
 
 `docs/SPEC-rattachements.md` §5, §6, §9 ; `docs/SPEC-recherche.md` §6.4 ; `docs/SPEC-temps.md` §6.2 ;

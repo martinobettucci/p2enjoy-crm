@@ -144,7 +144,9 @@ select is((select array_agg(t.channel_id::text || ':' || t.shared::text)
 select pg_temp.proprietaire();
 select sum(minutes)::int as minutes_du_jour from public.saisies_temps where card_id = :'c4' and jour = :'jour_admin' \gset
 select pg_temp.endosser(:'admin');
-select is((select sum(r.minutes)::int from public.rentabilite_affaires(:'jour_admin', :'jour_admin', :'c4') r),
+-- `CRM-111` T5.1 : une ligne par rattachement, les sommes rappelées ; sous UN channel, la saisie compte une fois.
+select is((select sum(r.minutes)::int from public.rentabilite_affaires(:'jour_admin', :'jour_admin', :'c4') r
+            where r.channel_id = :'refonte'),
           :'minutes_du_jour'::int,
 	'la rentabilité de …0c4 compte chaque saisie UNE fois, non une fois par rattachement');
 

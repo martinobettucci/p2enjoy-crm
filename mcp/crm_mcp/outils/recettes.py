@@ -5,6 +5,8 @@
 #       `readOnlyHint`, aucun chemin parallèle), §9.3 (JSON structuré, `limit` ≤ 100, refus traduits)
 # @spec CRM-126 (docs/BACKLOG.md) — tranche T2 : `crm_profitability_report` en balance par devise — docs/SPEC-recettes.md
 #       §4.4 et §7 révisés (décision 810) : `multi_currency`, marge toujours calculée, `margin` des totaux par devise
+# @spec CRM-111 (docs/BACKLOG.md) — tranche T5.1 : `crm_profitability_report` rend une ligne par rattachement × devise,
+#       `shared`, et ses totaux comptent une affaire partagée une fois (docs/SPEC-rattachements.md §6, §11 ; décision 643)
 """Recettes d'une affaire et rentabilité, sous l'identité de la personne.
 
 Les mêmes tables et la même fonction que la webapp (`card_revenues`, `card_revenue_actuals`, `rentabilite_affaires`) ;
@@ -206,6 +208,9 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             devises.setdefault(str(l["card_id"]), set()).add(str(l["currency"]))
         rangs = []
         totaux: dict[str, dict[str, float]] = {}
+        # `CRM-111` T5.1 : une affaire partagée rend une ligne par rattachement, ses sommes rappelées sur chacune ; les
+        # totaux ne la comptent qu'une fois par devise.
+        comptees: set[tuple[str, str]] = set()
         for l in lignes:
             # Une balance par devise (§4.4, révision CRM-126) : la marge se calcule toujours, le taux d'une affaire mixte
             # reste vide.
@@ -222,10 +227,15 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
                     "archived": l.get("archivee") is True,
                     "currency": l["currency"],
                     "multi_currency": mixte,
+                    "shared": l.get("shared") is True,
                     "actual": reel,
                     "planned": prevu,
                 }
             )
+            cle = (str(l["card_id"]), str(l["currency"]))
+            if cle in comptees:
+                continue
+            comptees.add(cle)
             t = totaux.setdefault(str(l["currency"]), {"revenues": 0.0, "costs": 0.0, "staff": 0.0, "margin": 0.0})
             t["revenues"] = au_centime(t["revenues"] + (reel["recettes"] or 0))
             t["costs"] = au_centime(t["costs"] + (reel["couts"] or 0))
@@ -240,6 +250,8 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
                 "margin = revenues − costs − staff cost; `partielle` lists what is still unknown.",
                 "The planned margin subtracts the staff time already spent: the CRM does not forecast time.",
                 "With a period, actuals and time are filtered by date; planned amounts cover the whole affaire.",
+                "An affaire attached to several channels has one row per channel (its state is that channel's); its "
+                "revenues, costs and staff cost are repeated on each (`shared`: true) and counted once in the totals.",
             ],
             "total": len(rangs),
             "offset": offset,
@@ -258,9 +270,10 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         ),
         titre="Profitability report (rentabilité)",
         description=(
-            "Profitability of the workspace's affaires (FR: rentabilité): revenues, costs and staff cost per affaire and "
-            "currency, actual and planned margins, margin rate, and whether a margin is partial. Reserved by the CRM to "
-            "workspace administrators."
+            "Profitability of the workspace's affaires (FR: rentabilité): revenues, costs and staff cost per affaire, "
+            "channel and currency, actual and planned margins, margin rate, and whether a margin is partial. An affaire "
+            "attached to several channels appears under each, marked shared, counted once in the totals. Reserved by the "
+            "CRM to workspace administrators."
         ),
     )
 

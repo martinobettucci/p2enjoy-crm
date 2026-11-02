@@ -3,6 +3,8 @@
 //           par code), §5 (`rentabilite_affaires` : période et affaire passées seulement si données ; refus 42501 →
 //           `forbidden`), §6.1, §6.4 (lignes non soldées hors corbeille ; recette réelle relue après l'ajout)
 // @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — les noms de la rentabilité se lisent sur les rattachements (docs/SPEC-rattachements.md §5)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T5.1 : le montant comparé est celui de chaque rattachement, par channel
+//           (docs/SPEC-rattachements.md §6, décision 643)
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -135,7 +137,7 @@ describe('la lecture de la rentabilité', () => {
 		expect(lu.statut === 'erreur' && lu.erreur.nature).toBe('forbidden')
 	})
 
-	it('nomme les channels de TOUS les rattachements, et prend le montant du plus ancien (CRM-111 T2.4.1)', async () => {
+	it('nomme les channels de TOUS les rattachements, et garde le montant de CHACUN, par channel (CRM-111 T2.4.1, T5.1)', async () => {
 		const channel = (id: string, position: number) => ({
 			id,
 			name: `Channel ${id}`,
@@ -159,7 +161,14 @@ describe('la lecture de la rentabilité', () => {
 		const etat = await lireNomsRentabilite(client, ['c1'])
 		expect(etat.statut).toBe('pret')
 		if (etat.statut !== 'pret') return
-		expect(etat.donnees.affaires.get('c1')).toEqual({ titre: 'Refonte', montant: 4000, devise: 'EUR' })
+		expect(etat.donnees.affaires.get('c1')).toEqual({
+			titre: 'Refonte',
+			montants: new Map([
+				['ch2', 900],
+				['ch1', 4000],
+			]),
+			devise: 'EUR',
+		})
 		expect([...etat.donnees.channels.keys()].sort()).toEqual(['ch1', 'ch2'])
 		expect(etat.donnees.tracks.get('t1')?.nom).toBe('Studio')
 	})

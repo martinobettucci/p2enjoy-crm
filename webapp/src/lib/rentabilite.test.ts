@@ -4,6 +4,9 @@
 //           chaque devise, taux vide sur une ligne qui mêle plusieurs devises), §4.6 (filtre d'état), §5 (lecture des
 //           colonnes de la fonction), §6.3 (un seul tableau, track › channel › affaire, sous-totaux et total en balance par
 //           devise) ; docs/DESIGN_SYSTEM.md §5.60
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T5.1 : une ligne par rattachement, `shared` ; une affaire partagée comptée
+//           sous chaque channel, une fois au sous-total d'un track qui la porte deux fois et au total ; le montant et
+//           l'état du rattachement (docs/SPEC-rattachements.md §6, décision 643)
 //
 // Les cas de la règle sont lus dans `mcp/tests/rentabilite_cas.json`, que le connecteur rejoue aussi : une divergence
 // entre les deux implémentations fait rougir l'une des deux suites.
@@ -73,8 +76,12 @@ const ligne = (surcharge: Partial<LigneRentabilite>): LigneRentabilite => ({
 	personnel: null,
 	minutes: 0,
 	minutesNonValorisees: 0,
+	partagee: false,
 	...surcharge,
 })
+
+/** Le même montant sous chacun des channels du jeu : le montant est désormais celui du rattachement (`CRM-111` T5.1). */
+const partout = (v: number) => new Map(['c1', 'c2', 'c3'].map((c) => [c, v] as const))
 
 const NOMS: Noms = {
 	tracks: new Map([
@@ -87,10 +94,10 @@ const NOMS: Noms = {
 		['c3', { nom: 'Grands comptes', position: 1, slug: 'grands-comptes' }],
 	]),
 	affaires: new Map([
-		['a1', { titre: 'Refonte intranet', montant: 72000, devise: 'EUR' }],
-		['a2', { titre: 'Portail adhérents', montant: 64000, devise: 'EUR' }],
-		['a3', { titre: 'Socle analytique', montant: 210000, devise: 'EUR' }],
-		['a4', { titre: 'Formation', montant: 28000, devise: 'CHF' }],
+		['a1', { titre: 'Refonte intranet', montants: partout(72000), devise: 'EUR' }],
+		['a2', { titre: 'Portail adhérents', montants: partout(64000), devise: 'EUR' }],
+		['a3', { titre: 'Socle analytique', montants: partout(210000), devise: 'EUR' }],
+		['a4', { titre: 'Formation', montants: partout(28000), devise: 'CHF' }],
 	]),
 }
 
@@ -226,3 +233,46 @@ describe('lireEtatRapport et lireVueRapport', () => {
 		expect(lireVueRapport('x')).toBe('reel')
 	})
 })
+
+describe('une affaire partagée entre plusieurs channels (CRM-111 T5.1)', () => {
+	const balances = (r: { readonly parDevise: readonly { devise: string; rentabilite: { marge: number | null } }[] }) =>
+		Object.fromEntries(r.parDevise.map((b) => [b.devise, b.rentabilite.marge]))
+	// a1 sous c1 et c2 (track t1) et sous c3 (track t2) : la base rappelle ses sommes sur chaque ligne, `shared` vrai.
+	const sommes = { recettesReelles: 1000, lignesRecette: 1, coutsReels: 200, lignesCout: 1, lignesCoutSansReel: 1, partagee: true }
+	const lignes = [
+		ligne({ ...sommes, trackId: 't1', channelId: 'c1', genre: 'open' }),
+		ligne({ ...sommes, trackId: 't1', channelId: 'c2', genre: 'won' }),
+		ligne({ ...sommes, trackId: 't2', channelId: 'c3', genre: 'open' }),
+	]
+	const noms: Noms = {
+		...NOMS,
+		affaires: new Map([['a1', { titre: 'Refonte intranet', montants: new Map([['c1', 1000], ['c2', 4000], ['c3', null]]), devise: 'EUR' }]]),
+	}
+
+	it('compte l’affaire sous chaque channel, une fois au sous-total du track qui la porte deux fois, une fois au total', () => {
+		const r = construireRapport(lignes, 'toutes', 'reel', noms)
+		const studio = r.tracks.find((t) => t.trackId === 't1')!
+		expect(studio.channels.map((c) => balances(c.sousTotal))).toEqual([{ EUR: 800 }, { EUR: 800 }])
+		expect(balances(studio.sousTotal)).toEqual({ EUR: 800 })
+		expect(balances(r.total)).toEqual({ EUR: 800 })
+		expect(r.affaires).toBe(1)
+		expect(r.mentions).toEqual({ recettesSansReel: 0, coutsSansReel: 1, minutesNonValorisees: 0 })
+	})
+
+	it('chaque ligne porte l’état, le montant et la marque de SON rattachement', () => {
+		const r = construireRapport(lignes, 'toutes', 'reel', noms)
+		const toutes = r.tracks.flatMap((t) => t.channels.flatMap((c) => c.affaires.map((a) => [c.channelId, a] as const)))
+		expect(toutes.map(([c, a]) => [c, a.genre, a.montant?.valeur ?? null, a.partagee])).toEqual([
+			['c3', 'open', null, true],
+			['c1', 'open', 1000, true],
+			['c2', 'won', 4000, true],
+		])
+	})
+
+	it('le filtre d’état porte sur l’état du rattachement', () => {
+		const r = construireRapport(lignes, 'gagnees', 'reel', noms)
+		expect(r.tracks.flatMap((t) => t.channels.map((c) => c.channelId))).toEqual(['c2'])
+		expect(balances(r.total)).toEqual({ EUR: 800 })
+	})
+})
+

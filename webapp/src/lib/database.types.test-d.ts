@@ -25,6 +25,8 @@
 //           §2.3 bis ; décision 622)
 // @verifies CRM-111 (docs/BACKLOG.md) tranche T4.1 — `temps_valorise` rend `shared` (docs/SPEC-rattachements.md §6,
 //           docs/SPEC-temps.md §6.2 ; décision 814)
+// @verifies CRM-111 (docs/BACKLOG.md) tranche T5.1 — `rentabilite_affaires` rend `shared` (docs/SPEC-recettes.md §5 ;
+//           décision 643)
 //
 // Test **unitaire** du contrat de types. Il ne s'exécute pas : il se compile. Chaque assertion
 // ci-dessous est une contrainte que `tsc --noEmit` vérifie, et qui fait échouer la compilation
@@ -658,6 +660,11 @@ type _valeurDuRattachement = Expect<Equal<Tables<'card_field_values'>['placement
 // lisibles — c'est ce qui permet à un total de ne la compter qu'une fois (`uneFoisChacune`, `rapport-temps.ts`).
 type _tempsValorisePorteLePartage = Expect<
   Equal<Database['public']['Functions']['temps_valorise']['Returns'][number]['shared'], boolean>
+>
+// `CRM-111` T5.1 : une ligne de `rentabilite_affaires` dit si l'affaire est partagée entre plusieurs rattachements — un
+// total ne compte alors ses sommes qu'une fois (`construireRapport`, `crm_profitability_report`).
+type _rentabilitePorteLePartage = Expect<
+  Equal<Database['public']['Functions']['rentabilite_affaires']['Returns'][number]['shared'], boolean>
 >
 
 // Les deux clés étrangères COMPOSITES sont visibles dans les types : c'est ce qui rend structurelle
@@ -1586,6 +1593,7 @@ export type AssertionsDuContratDeTypes = [
   _signatureArmement,
   _valeurDuRattachement,
   _tempsValorisePorteLePartage,
+  _rentabilitePorteLePartage,
   _signatureChangementWorkflowChannel,
   _retourChangementWorkflowEstUnLot,
   _retourChangementWorkflowPorteLEtape,

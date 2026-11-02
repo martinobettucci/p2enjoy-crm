@@ -5,6 +5,8 @@
 #           §9.1 (déclarations vérifiées au démarrage), §9.3
 # @verifies CRM-126 (docs/BACKLOG.md) — tranche T2 : docs/SPEC-recettes.md §4.4 et §7 révisés (décision 810) — le rapport
 #           rend une marge par devise, `multi_currency` et le taux vide d'une affaire mixte, la marge des totaux par devise
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T5.1 : une ligne par rattachement, `shared`, l'état du rattachement, et
+#           des totaux qui comptent une affaire partagée une fois (docs/SPEC-rattachements.md §6, §11 ; décision 643)
 """Le CRM simulé étend celui de `conftest.py` avec les tables des recettes et la fonction de rentabilité ; la RLS y est
 réduite à « l'espace est lisible », la matrice est celle du simulateur partagé."""
 
@@ -238,6 +240,24 @@ async def test_le_rapport_rend_une_balance_par_devise_pour_une_affaire_mixte(mon
         "CHF": {"revenues": 14000, "costs": 0, "staff": 0, "margin": 14000},
         "EUR": {"revenues": 0, "costs": 300, "staff": 0, "margin": -300},
     }
+
+
+async def test_une_affaire_partagee_rend_une_ligne_par_channel_et_compte_une_fois(monde: Monde) -> None:
+    monde.ouvrir(("recettes", "consulter"), ("budgets", "consulter"), ("temps", "consulter"))
+    ligne = {
+        "workspace_id": ESPACE_A, "track_id": "t", "channel_id": "h", "card_id": CARD_A, "node_kind": "open",
+        "archivee": False, "currency": "EUR", "recettes_prevues": 1000, "recettes_reelles": 1000, "lignes_recette": 1,
+        "lignes_recette_sans_reel": 0, "couts_prevus": 200, "couts_reels": 200, "lignes_cout": 1,
+        "lignes_cout_sans_reel": 0, "personnel": 100, "minutes": 105, "minutes_non_valorisees": 0, "shared": True,
+    }
+    # La même affaire sous deux channels : gagnée dans l'un, en cours dans l'autre.
+    monde.simule.rapport = (200, [ligne, {**ligne, "channel_id": "k", "node_kind": "won"}])
+    rapport = await monde.appel("crm_profitability_report", {"workspace": "atelier"})
+    assert [(r["channel_id"], r["state"], r["shared"]) for r in rapport["rows"]] == [("h", "open", True), ("k", "won", True)]
+    assert rapport["actual_totals_by_currency"] == {"EUR": {"revenues": 1000, "costs": 200, "staff": 100, "margin": 700}}
+    # Le filtre d'état porte sur l'état du rattachement.
+    gagnees = await monde.appel("crm_profitability_report", {"workspace": "atelier", "state": "won"})
+    assert [r["channel_id"] for r in gagnees["rows"]] == ["k"]
 
 
 async def test_un_patch_ou_un_delete_sans_filtre_est_refuse_avant_tout_envoi(monde: Monde) -> None:

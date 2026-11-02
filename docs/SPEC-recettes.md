@@ -199,7 +199,12 @@ rentabilité à montrer, et la lister ajouterait des lignes vides par centaines]
 `stable`, **`security invoker`**, `search_path` vide, `EXECUTE` à `authenticated` et `service_role`, **révoqué nommément à
 `public` et `anon`** (la forme de `public.entonnoir_conversion`, `docs/SPEC-analytique.md` §5.3 et §5.4).
 
-**Ce qu'elle rend** : une ligne par **affaire × devise**, pour les affaires du §4.6 :
+**Ce qu'elle rend** : une ligne par **affaire × devise**, pour les affaires du §4.6 — *révisé par `CRM-111` T5.1
+(migration `0153`, `docs/SPEC-rattachements.md` §6, décision 643)* : une ligne par **rattachement lisible × devise**. Le
+chemin, `node_kind` et `archivee` sont ceux du rattachement ; les recettes, les coûts, le personnel et le temps sont ceux
+de **l'affaire**, rappelés sur chacune de ses lignes et jamais multipliés ; la colonne **`shared`** vaut vrai quand
+l'affaire a plusieurs rattachements lisibles. Un total — un sous-total de track qui porte l'affaire deux fois, le total
+de l'écran, les totaux du connecteur — ne la compte **qu'une fois** :
 
 | Colonne | Contenu |
 |---|---|
@@ -212,6 +217,7 @@ rentabilité à montrer, et la lister ajouterait des lignes vides par centaines]
 | `couts_prevus`, `couts_reels` | §4.1, mêmes règles |
 | `lignes_cout`, `lignes_cout_sans_reel` | idem pour les coûts |
 | `personnel` | §4.1, nul si rien n'est valorisé dans cette devise |
+| `shared` | `CRM-111` T5.1 : l'affaire a plusieurs rattachements lisibles ; ses sommes sont rappelées sur chacun |
 | `minutes`, `minutes_non_valorisees` | le temps passé et sa part non valorisée ; le temps **non valorisé** (sans version de coût, donc sans devise) se range sous la **devise de l'affaire**, sans montant — *précision de T2* : une ligne de devise nulle laissait l'écran sans tableau où ranger une affaire qui n'a que cela |
 
 - **Sommes arrondies une seule fois**, au centime, comme l'entonnoir.
@@ -305,6 +311,9 @@ rattachement vient avec le contrat de `rentabilite_affaires` (une tranche ultér
   plusieurs devises (§4.4).
 - **Les lignes** : track, puis ses channels, puis leurs affaires, en arborescence (les retraits du rapport mensuel,
   `docs/DESIGN_SYSTEM.md` §5.54) ; chaque track et chaque channel porte son **sous-total**, et le tableau son **total**.
+  *Depuis `CRM-111` T5.1* : une affaire partagée paraît sous chacun de ses channels, avec l'état et le montant de ce
+  rattachement ; elle compte dans le sous-total de chacun de ses channels, mais **une fois** dans le sous-total d'un
+  track qui la porte deux fois, dans le total et dans les mentions. Le filtre d'état porte sur l'état du rattachement.
 - **Les colonnes** de la vue « Réel » : Affaire (lien vers la fiche), État (mot : « Gagnée », « En cours », « Perdue »,
   avec « Archivée » le cas échéant), Montant de l'affaire, Recettes, Coûts, Personnel, Marge, Taux. La vue « Prévu »
   remplace Recettes, Coûts et Marge par leurs prévus et retire le Taux.
@@ -375,6 +384,8 @@ décision 632, arbitrages 5 et 6.
   `workspace:workspace` pour « à saisir » et le rapport.
 - **`crm_profitability_report`** porte en cases `aussi` **`budgets:consulter`** et **`temps:consulter`** : il révèle des
   coûts et le coût du personnel, que ces deux familles gardent.
+- **`crm_profitability_report` rend une ligne par rattachement × devise** — *`CRM-111` T5.1* — avec `shared` ; ses
+  totaux par devise comptent une affaire partagée une fois (`docs/SPEC-rattachements.md` §6, §11).
 - **Révisé par `CRM-126`** (décision 810 ; même famille `recettes`, même action `consulter`, aucune case nouvelle) : le
   rapport applique la balance par devise du §4.4. Chaque rang (une affaire × une devise) porte sa marge, toujours
   calculée ; son taux est vide quand l'affaire mêle plusieurs devises, ce que dit le champ **`multi_currency`**, qui

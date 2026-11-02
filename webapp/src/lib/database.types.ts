@@ -5333,6 +5333,7 @@ export type Database = {
           personnel: number
           recettes_prevues: number
           recettes_reelles: number
+          shared: boolean
           track_id: string
           workspace_id: string
         }[]

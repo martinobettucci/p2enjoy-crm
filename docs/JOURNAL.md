@@ -38513,3 +38513,17 @@ deux de ses channels, et le **total**, ne la comptent qu'une fois — la règle 
 (`uneFoisChacune`). Le bloc « Rentabilité » de la fiche lit une affaire : ses lignes par rattachement s'y ramènent à
 une par devise.
 
+### `CRM-111` T5.1 — la rentabilité par rattachement (2026-11-03)
+
+*2026-11-03, session interactive (4891a451).* **Fait** : migration `0153` — `rentabilite_affaires` recréée avec `shared`,
+une ligne par rattachement lisible × devise ; les sommes de l'affaire sont calculées une fois (CTE `cartes`) et rappelées
+sur chaque ligne, jamais multipliées par la jointure des rattachements. La webapp compte l'affaire partagée sous chacun de
+ses channels, une fois au sous-total d'un track qui la porte deux fois, au total et dans les mentions ; le montant comparé
+est celui du rattachement (`Noms.affaires.montants`, par channel). Le bloc de la fiche se ramène de lui-même à une valeur
+par devise (`Map` par devise). `crm_profitability_report` rend `shared` et compte une fois par affaire et devise.
+**Conséquences sur des preuves existantes** : la `0140` et le spec API de T4.1 additionnaient les lignes de la
+rentabilité — elles portent désormais sur un channel ; la `0087` relevait les lignes dans une table aux colonnes fixes,
+qui gagne `shared`. **Numéro** : la `0153`, prise sans fichier concurrent (3a annonçait une migration pour `CRM-112` T2.a,
+sans numéro ; prévenu). **Vérifications** : pgTAP `0142` 10, toutes les suites 130 fichiers et 4803 assertions ;
+unitaires 5246 ; API 11/11 ; `verify-mcp --rapide` 108 contrôles ; E2E « Rentabilité » 5/5.
+

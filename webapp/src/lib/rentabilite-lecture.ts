@@ -1,15 +1,14 @@
 // @spec CRM-108 (docs/BACKLOG.md) — tranche T3 : ce que l'écran « Rentabilité » et le bloc de la fiche lisent
 // @spec docs/SPEC-recettes.md §5 (`public.rentabilite_affaires` : période, `p_card`, refus `42501` à qui n'administre pas),
 //       §6.2 (le bloc de la fiche : absent sur `42501`), §6.3 (l'écran : la seconde lecture qui nomme et range)
-// @spec CRM-111 T2.4.1 (docs/BACKLOG.md) — la seconde lecture nomme les channels des RATTACHEMENTS, et le montant est
-//       celui du plus ancien (docs/SPEC-rattachements.md §5 et §6)
+// @spec CRM-111 T2.4.1 (docs/BACKLOG.md) — la seconde lecture nomme les channels des RATTACHEMENTS (docs/SPEC-rattachements.md
+//       §5 et §6) ; CRM-111 T5.1 : le montant est celui de CHAQUE rattachement, par channel (§6, décision 643)
 //
 // Deux lectures, toutes deux sous la RLS de l'appelant : la fonction rend des SOMMES par affaire × devise ; la seconde
 // lecture rend les NOMS (affaires, channels, tracks) et leur rang. La règle (marge, taux, partielle) est dans
 // `rentabilite.ts`, sans requête.
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
-import { premierRattachement } from './rattachements'
 import { lireLignesRentabilite, type LigneRentabilite, type Noms } from './rentabilite'
 import type { ClientCrm } from './supabase'
 
@@ -63,14 +62,14 @@ export const TAILLE_LOT_NOMS = 100
  * affaires, aucune lecture d'arborescence entière. Une affaire que la lecture ne rend pas reste dans le rapport sous un
  * titre vide : la masquer retrancherait ses montants du total (`docs/DESIGN_SYSTEM.md` §5.37).
  *
- * `CRM-111` T2.4.1 : les channels sont ceux des RATTACHEMENTS — tous nommés, la fonction rendant le channel de chacun —,
- * et le montant de l'affaire est celui du plus ancien, la forme d'avant ; la ligne par rattachement vient avec le
- * contrat de `rentabilite_affaires` (docs/SPEC-rattachements.md §6).
+ * `CRM-111` T2.4.1 : les channels sont ceux des RATTACHEMENTS — tous nommés, la fonction rendant le channel de chacun.
+ * `CRM-111` T5.1 : la fonction rend une ligne par rattachement, et le montant comparé est celui de ce rattachement, rangé
+ * par channel (un rattachement par channel, `card_placements_card_channel_key`).
  */
 export async function lireNomsRentabilite(client: ClientCrm, idsCards: readonly string[]): Promise<EtatAsync<Noms>> {
 	const tracks = new Map<string, { nom: string; position: number; slug: string }>()
 	const channels = new Map<string, { nom: string; position: number; slug: string }>()
-	const affaires = new Map<string, { titre: string; montant: number | null; devise: string }>()
+	const affaires = new Map<string, { titre: string; montants: Map<string, number | null>; devise: string }>()
 	try {
 		for (let i = 0; i < idsCards.length; i += TAILLE_LOT_NOMS) {
 			const lot = idsCards.slice(i, i + TAILLE_LOT_NOMS)
@@ -82,10 +81,11 @@ export async function lireNomsRentabilite(client: ClientCrm, idsCards: readonly 
 				.in('id', lot)
 			if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
 			for (const a of reponse.data as unknown as readonly AffaireNommee[]) {
-				const montant = premierRattachement(a.card_placements)?.amount ?? null
-				affaires.set(a.id, { titre: a.title, montant, devise: a.currency })
-				for (const { channels: c } of a.card_placements) {
+				const montants = new Map<string, number | null>()
+				affaires.set(a.id, { titre: a.title, montants, devise: a.currency })
+				for (const { channels: c, amount } of a.card_placements) {
 					if (c === null) continue
+					montants.set(c.id, amount)
 					channels.set(c.id, { nom: c.name, position: c.position, slug: c.slug })
 					if (c.tracks !== null) tracks.set(c.tracks.id, { nom: c.tracks.name, position: c.tracks.position, slug: c.tracks.slug })
 				}

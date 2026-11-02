@@ -1,7 +1,7 @@
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T4.1 : la recherche et le temps valorisé à plusieurs rattachements, par
 //           l'API, avec les jetons réels du seed
 // @verifies docs/SPEC-rattachements.md §6 (le temps sous chaque channel rattaché lisible, `shared`, compté une fois par
-//           la rentabilité), §9 (la recherche nomme les rattachements lisibles, dans l'ordre des tracks puis des
+//           la rentabilité ; CRM-111 T5.1 : la rentabilité par rattachement, ses sommes rappelées sur chacun), §9 (la recherche nomme les rattachements lisibles, dans l'ordre des tracks puis des
 //           channels) ; docs/SPEC-recherche.md ; docs/SPEC-temps.md §6.2 ; docs/JOURNAL.md décision 814 ;
 //           docs/SPEC-test-harness.md §4.3 (projet `api`) ; CLAUDE.md §10 (règle d'accès prouvée hors interface)
 //
@@ -122,8 +122,13 @@ test.describe('CRM-111 T4.1 — la recherche et le temps à plusieurs rattacheme
 			data: { p_debut: JOUR, p_fin: JOUR, p_card: AFFAIRE },
 		})
 		expect(reponse.status(), await reponse.text()).toBe(200)
-		const lignes = (await reponse.json()) as { minutes: number }[]
-		expect(lignes.reduce((total, l) => total + l.minutes, 0)).toBe(60 + 30)
+		// `CRM-111` T5.1 : une ligne par rattachement, les sommes de l'affaire rappelées sur chacune, `shared` vrai.
+		const lignes = (await reponse.json()) as { channel_id: string; currency: string; minutes: number; shared: boolean }[]
+		expect([...new Set(lignes.map((l) => l.channel_id))].sort()).toEqual([GRANDS_COMPTES, REFONTE].sort())
+		expect(lignes.every((l) => l.shared)).toBe(true)
+		const parChannel = (c: string) => lignes.filter((l) => l.channel_id === c).reduce((total, l) => total + l.minutes, 0)
+		expect(parChannel(REFONTE)).toBe(60 + 30)
+		expect(parChannel(GRANDS_COMPTES)).toBe(60 + 30)
 	})
 
 	test('l’anonyme ne lit pas le temps valorisé', async ({ request }) => {

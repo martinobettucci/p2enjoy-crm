@@ -17311,13 +17311,18 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       écran ; `docs/SPEC-recettes.md` §5 et outil `crm_profitability_report`.
       *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable, session 4891a451) depuis 2026-11-02 22:35 UTC — état avant : [ ]*
       **Découpage, arrêté le 2026-11-02 (journal, « `CRM-111` T5 — le découpage »)** :
-      - [ ] **T5.1 — la base et ses consommateurs** : une migration au premier numéro libre — `rentabilite_affaires` rend
+      - [x] **T5.1 — la base et ses consommateurs** : une migration au premier numéro libre — `rentabilite_affaires` rend
         une ligne par **rattachement lisible × devise**, l'état (`node_kind`), l'archivage et le chemin du rattachement,
         les recettes, coûts et personnel de l'affaire rappelés sur chaque ligne avec la colonne `shared` ; le filtre
         d'état s'applique à l'état du rattachement. La webapp (`rentabilite.ts`) compte une affaire partagée **une fois**
         dans un sous-total de track qui la porte deux fois et dans le total, et le bloc de la fiche la ramène à une
         affaire ; `crm_profitability_report` rend `shared` et en fait autant. Livrables : pgTAP, unitaires (webapp et
         connecteur), API aux jetons réels, `docs/SPEC-recettes.md` §5 et §6, SCHEMA, contrat de déploiement.
+        *Livrée en développement le 2026-11-03 (journal, « `CRM-111` T5.1 — la rentabilité par rattachement »)* :
+        migration `0153` ; webapp (`construireRapport`, montant par rattachement) ; `crm_profitability_report`. pgTAP
+        `0142` 10 assertions, `0140` et `0087` ajustées, toutes les suites 130 fichiers et 4803 assertions ; unitaires
+        webapp 5246 et témoin de types ; API 11/11 ; connecteur `verify-mcp --rapide` 108 contrôles ; E2E « Rentabilité »
+        5/5. Production : la `0153` avec la webapp et l'image `mcp` de `main` (`docs/PROD_MIGRATIONS.md` §3).
       - [ ] **T5.2 — l'écran** : la marque « partagée » d'une ligne d'affaire de « Rentabilité » et la mention sous le
         tableau (`docs/DESIGN_SYSTEM.md` avant le code, forme du §5.54), E2E, captures observées, manuel.
 - [ ] **T6 — messagerie** (§7, décision 657) : dossier `CRM/Affaires/<affaire>` et déplacement des dossiers existants

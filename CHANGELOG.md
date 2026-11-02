@@ -519,6 +519,12 @@ changelog.*
   refus de plus). **`mail-sync`** joint les pièces, archive avant d'envoyer, efface les dépôts abandonnés après 24 heures.
 - **Le seed** fait partir un message réel avec copie cachée et pièce jointe depuis « Refonte du monitoring — Vertuo ».
 
+- **`CRM-111` T5.1 — la rentabilité par rattachement** (migration `0153`) : une affaire rattachée à plusieurs channels
+  paraît sous chacun dans « Rentabilité », avec l'état et le montant de ce rattachement ; ses recettes, coûts et
+  personnel y sont rappelés, et le sous-total d'un track qui la porte deux fois, le total, les mentions et
+  `crm_profitability_report` ne la comptent qu'une fois. Le filtre d'état porte sur l'état du rattachement. Tant
+  qu'aucune affaire n'a plus d'un rattachement, rien ne change à l'écran ; la marque « partagée » vient avec T5.2.
+
 - **`CRM-111` T4.2 — la marque « partagée » du rapport de temps** : une affaire rattachée à plusieurs channels paraît
   sous chacun dans le rapport mensuel, sa ligne marquée « partagée », et une phrase sous le tableau dit que le total ne
   compte sa saisie qu'une fois ; le bloc « Coût du personnel » d'un track le dit aussi quand l'affaire est rattachée à
