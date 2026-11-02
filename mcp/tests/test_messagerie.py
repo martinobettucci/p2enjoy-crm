@@ -2,6 +2,9 @@
 # @verifies docs/SPEC-mcp.md §9.2 decies (liste, ancre `message`, corps affichable et HTML réduit, nombre de pièces
 #           jointes, identité désignée par son adresse sans choix implicite, réponse limitée à l'affaire, refus nommés,
 #           `destructiveHint` et case `aussi` de l'envoi), §9.3 ; webapp/src/lib/inbox.ts (`reduireHtmlEnTexte`)
+# @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T3) — l'identité de service n'est jamais empruntée ;
+#           sans adresse, l'identité par défaut de la personne, à défaut l'unique ; plusieurs sans défaut : refus nommé
+#           (docs/SPEC-mcp.md §9.2 decies, révision de la décision 684)
 # @verifies CRM-057 (docs/BACKLOG.md) — tranche 2 : `read` dans les deux lectures, demandé avec la ligne, sans marquer ;
 #           docs/SPEC-mail-subsystem.md §18 bis.5 ; décision 708 (M1 B)
 # @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : `bcc` transmis à la file, rendu, jamais une pièce jointe ;
@@ -264,21 +267,46 @@ async def test_l_envoi_passe_par_la_file_avec_l_identite_designee(monde: Monde) 
     assert lecture["workspace_id"] == f"eq.{ESPACE_A}"
 
 
-async def test_plusieurs_identites_exigent_une_adresse_jamais_un_choix_implicite(monde: Monde) -> None:
-    monde.simule.identites.append({"id": "id-service", "workspace_id": ESPACE_A, "label": "Service",
-                                   "from_address": "contact@atelier.test", "owner_id": None})
-    with pytest.raises(ToolError, match="give from_address, one of: Thomas@Atelier.test, contact@atelier.test"):
+async def test_plusieurs_identites_sans_defaut_exigent_une_adresse(monde: Monde) -> None:
+    monde.simule.identites.append({"id": "id-thomas-2", "workspace_id": ESPACE_A, "label": "Thomas bis",
+                                   "from_address": "devis@atelier.test", "owner_id": "sujet-thomas"})
+    with pytest.raises(ToolError, match="none is your default; give from_address, one of: Thomas@Atelier.test, devis@atelier.test"):
         await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b"})
     assert monde.simule.envois == []
     await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
-                                        "from_address": "CONTACT@atelier.test"})
-    assert monde.simule.envois[-1]["p_identity_id"] == "id-service"
+                                        "from_address": "DEVIS@atelier.test"})
+    assert monde.simule.envois[-1]["p_identity_id"] == "id-thomas-2"
     with pytest.raises(ToolError, match="Unknown sending address 'sabine@atelier.test'"):
         await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
                                             "from_address": "sabine@atelier.test"})
     monde.simule.identites = [i for i in monde.simule.identites if i["owner_id"] == "sujet-sabine"]
     with pytest.raises(ToolError, match="no_sending_identity"):
         await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b"})
+
+
+async def test_sans_adresse_l_identite_par_defaut_de_la_personne(monde: Monde) -> None:
+    # Décision 805 : le défaut est le choix explicite de la personne, fait dans les réglages ; il n'est pas le premier
+    # par libellé (« Thomas » précède « Thomas bis »).
+    monde.simule.identites.append({"id": "id-thomas-2", "workspace_id": ESPACE_A, "label": "Thomas bis",
+                                   "from_address": "devis@atelier.test", "owner_id": "sujet-thomas", "is_default": True})
+    rendu = await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b"})
+    assert monde.simule.envois[-1]["p_identity_id"] == "id-thomas-2"
+    assert rendu["from_address"] == "devis@atelier.test"
+    lecture = next(p for n, p in monde.simule.lectures if n == "mail_outbound_identities")
+    assert "is_default" in lecture["select"].split(",")
+
+
+async def test_l_identite_de_service_n_est_jamais_empruntee(monde: Monde) -> None:
+    # Décision 805 : même par défaut pour le service, même désignée par son adresse, elle n'est pas proposée — la garde la
+    # refuserait (`identity_not_available`), et l'outil ne tente pas un envoi voué au refus.
+    monde.simule.identites.append({"id": "id-service", "workspace_id": ESPACE_A, "label": "Service",
+                                   "from_address": "contact@atelier.test", "owner_id": None, "is_default": True})
+    await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b"})
+    assert monde.simule.envois[-1]["p_identity_id"] == "id-thomas"
+    with pytest.raises(ToolError, match="Unknown sending address 'contact@atelier.test'; give one of: Thomas@Atelier.test"):
+        await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
+                                            "from_address": "contact@atelier.test"})
+    assert len(monde.simule.envois) == 1
 
 
 async def test_une_reponse_vise_un_message_de_l_affaire_et_prefixe_l_objet(monde: Monde) -> None:

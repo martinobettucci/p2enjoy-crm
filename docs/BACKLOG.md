@@ -18006,22 +18006,35 @@ Spécification : décision 805 ; `docs/SPEC-mail-subsystem.md` §14.2, §19.4, �
 §12.4, §12.7 ; `docs/SPEC-rattachements.md` §7 ; `docs/SPEC-mcp.md` §9.2 decies. Connecteur MCP : famille `messagerie`,
 action `ajouter`, sans case nouvelle.*
 
-- [@] **T1 — la base** : migration au prochain numéro libre. La règle d'emprunt de `queue_outbound_email` et
+- [P] **T1 — la base** : migration `0149`. La règle d'emprunt de `queue_outbound_email` et
       d'`armer_sequence_relance` est réduite à « la sienne ». Le motif `identity_withdrawn` est ajouté à
       `card_sequence_enrollments_motif_borne`, et les cadences actives armées avec l'identité de service sont fermées
       sous ce motif. Livrables : pgTAP (refus de l'administratrice sur l'identité de service, fermeture des cadences) ;
       seed (identité personnelle de Camille, et l'envoi de démonstration avec elle) ; harnais et E2E API qui envoyaient
       avec l'identité de service, révisés en preuves du refus ; contrat de déploiement (requête de comptage, retour
-      arrière).
-      *Prise en charge : session interactive 2026-11-02 16:36 UTC depuis 2026-11-02 16:36 UTC — état avant : [ ] ;
-      reprise de sa propre prise du 2026-11-01 14:39 UTC, expirée par l'attente de la pile partagée*
-- [ ] **T2 — l'écran** : `lireIdentitesDisponibles` réduite aux identités de la personne, avec `is_default`.
+      arrière). *Livrée en développement le 2026-11-02* — base reconstruite à neuf, la `0149` appliquée par le runner,
+      seed rejoué (trois identités, l'envoi de démonstration part réellement de `admin@`) ; pgTAP `0030` (22), `0058`
+      (52), `0096` et toute la suite hors le test non suivi de `CRM-127` (`0133_refus_404` rougie par deux fonctions de
+      `CRM-127` posées dans la base partagée, étrangères) ; `verify-identite-service.sh` 9/9, dont le rejeu de la
+      migration dans une transaction annulée (fermeture sous `identity_withdrawn`, témoin intact, idempotence) ;
+      `verify-signature-identite.sh` 31/31 ; `verify-mail-outbound.sh` vert sur ses contrôles d'identités ; E2E API 1300/1301
+      (`webhooks-remise`, délai sous charge, vert seul) ; E2E mail 50/50 (aller-retour SMTP réel depuis `admin@`). **Reste** :
+      la livraison (lot de la décision 812, décision 817) et le constat du §2.26 du contrat de déploiement.
+- [P] **T2 — l'écran** : `lireIdentitesDisponibles` réduite aux identités de la personne, avec `is_default`.
       Présélection du défaut dans le formulaire d'envoi et, dans le cas de la décision 803, dans le bloc d'armement. Le
-      propriétaire est nommé sur chaque ligne des réglages, et le libellé de la case dépend de l'identité ; la fiche
-      nomme le motif `identity_withdrawn`. Livrables : unitaires, E2E, captures observées, `docs/DESIGN_SYSTEM.md` §5.35,
-      manuel, changelog.
-- [ ] **T3 — le connecteur** : dans `crm_mail_send`, l'identité de service est retirée des identités empruntables, et
-      une `from_address` absente vaut le défaut de la personne. Livrables : unitaires et intégration MCP.
+      propriétaire est nommé sur chaque ligne des réglages, et le libellé de la case dépend de l'identité. Aucun écran ne
+      lit `closed_reason` : le motif `identity_withdrawn` reste en base (précision du journal, décision 805). Livrables : unitaires, E2E, captures observées, `docs/DESIGN_SYSTEM.md` §5.35,
+      manuel, changelog. *Livrée en développement le 2026-11-02*, avec la présélection du bloc d'armement transférée
+      de `CRM-111` T2.3.5 (décision 803) : unitaires Vitest 5194/5194 (12 nouveaux, rouges sur l'ancien code) ; types et
+      build verts ; E2E UI des réglages, de l'envoi, des pièces jointes et de l'armement 24/24 (responsable : son
+      identité présélectionnée ; autre personne : vide ; identité de service jamais proposée) ; manuel 11, 12 et 14-16
+      rejoués ; captures observées (liste des adresses avec propriétaires, case « Identité par défaut de cette
+      personne », bloc d'armement présélectionné, formulaire d'envoi à 390 px). **Reste** : la livraison et son constat.
+- [P] **T3 — le connecteur** : dans `crm_mail_send`, l'identité de service est retirée des identités empruntables, et
+      une `from_address` absente vaut le défaut de la personne. Livrables : unitaires et intégration MCP. *Livrée en
+      développement le 2026-11-02* : pytest 293 (3 nouveaux, rouges sur l'ancien code) ; intégration OAuth et messagerie
+      20/20 contre la vraie base ; E2E `connecteur-messagerie` (l'administratrice envoie sans adresse : `admin@`). **Reste** :
+      l'image `mcp` livrée et son constat.
 
 ## Demande du 2026-11-01 — le contact présélectionné de la prévisualisation d'un modèle (décision 806)
 

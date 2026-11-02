@@ -12,6 +12,9 @@
 # @spec CRM-074 (docs/BACKLOG.md) — tranche T4 : les pièces jointes listées dans les deux lectures, et
 #       `crm_mail_attachment_get`, qui rend la pièce elle-même en binaire (décisions 788 et 789 ; docs/SPEC-pieces-jointes.md
 #       §6, qui révise la ligne « ni lues ni envoyées » de docs/SPEC-mcp.md §9.2 decies : elles se lisent, l'envoi reste exclu)
+# @spec INC-335 (docs/BACKLOG.md, correctif de la décision 805, T3) — `crm_mail_send` n'emprunte que les identités de la
+#       personne, jamais celle du service ; sans `from_address`, il prend son identité par défaut, à défaut l'unique —
+#       docs/SPEC-mcp.md §9.2 decies (famille `messagerie`, action `ajouter`) ; docs/SPEC-mail-subsystem.md §14.2, §19.4
 """La messagerie d'une affaire, sous l'identité de la personne : lire son fil, lire un message, envoyer un email.
 
 Les mêmes tables et la même fonction que l'écran : `mail_messages`, `mail_outbound_identities`, et
@@ -143,22 +146,26 @@ def message_lu(m: dict[str, Any]) -> dict[str, Any]:
 
 
 def identites_empruntables(lignes: list[dict[str, Any]], sujet: str) -> list[dict[str, Any]]:
-    """Celles que la personne peut EMPLOYER, plus étroites que celles qu'elle LIT : la sienne, ou celle du service, que
-    la RLS ne montre qu'aux administrateurs (`lireIdentitesDisponibles`). Le filtre est une aide ; la garde de la
-    fonction reste la règle."""
-    return [i for i in lignes if i.get("owner_id") is None or i.get("owner_id") == sujet]
+    """Celles que la personne peut EMPLOYER, plus étroites que celles qu'elle LIT : les siennes, et elles seules
+    (`lireIdentitesDisponibles`). L'identité de service ne sert qu'aux envois automatiques, et la garde la refuse à tous,
+    administrateur compris (décision 805, INC-335). Le filtre est une aide ; la garde de la fonction reste la règle."""
+    return [i for i in lignes if i.get("owner_id") == sujet]
 
 
 def choisir_identite(possibles: list[dict[str, Any]], adresse: str | None) -> dict[str, Any]:
-    """L'identité désignée par son adresse, sans la casse ; l'unique possible si aucune n'est donnée. Jamais un choix
-    implicite parmi plusieurs (décision 684)."""
+    """L'identité désignée par son adresse, sans la casse. Sans adresse : l'identité PAR DÉFAUT de la personne, choisie
+    par elle dans les réglages, à défaut l'unique possible (décision 805, qui révise la décision 684 : le défaut n'est
+    pas un choix implicite). Plusieurs sans défaut : refus qui nomme les adresses."""
     adresses = ", ".join(sorted(i["from_address"] for i in possibles))
     if not possibles:
         raise RefusCrm("Refusé par le CRM : no_sending_identity — no sending identity is available to you in this workspace.")
     if adresse is None:
+        par_defaut = [i for i in possibles if i.get("is_default") is True]
+        if len(par_defaut) == 1:
+            return par_defaut[0]
         if len(possibles) == 1:
             return possibles[0]
-        raise ToolError(f"Several sending identities are available; give from_address, one of: {adresses}.")
+        raise ToolError(f"Several sending identities are available and none is your default; give from_address, one of: {adresses}.")
     voulue = adresse.strip().lower()
     for identite in possibles:
         if identite["from_address"].lower() == voulue:
@@ -333,7 +340,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             Field(max_length=DESTINATAIRES_MAX, description="Blind copy addresses: delivered, never shown to recipients"),
         ] = None,
         from_address: Annotated[
-            str | None, Field(description="Sending address; optional when only one identity is available to you")
+            str | None, Field(description="Sending address; defaults to your default sending identity")
         ] = None,
         in_reply_to_message_id: Annotated[
             str | None, Field(description="An email of this affaire you are replying to")
@@ -365,7 +372,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             await crm.lire(
                 appel.jeton,
                 "mail_outbound_identities",
-                {"workspace_id": f"eq.{appel.espace}", "select": "id,label,from_address,owner_id", "order": "label.asc"},
+                {"workspace_id": f"eq.{appel.espace}", "select": "id,label,from_address,owner_id,is_default", "order": "label.asc"},
             ),
             "card",
             card_id,
@@ -410,8 +417,8 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         description=(
             "Sends an email from an affaire (card) through the CRM's sending queue, with the identity's signature; it "
             "then appears in the affaire's thread. IRREVERSIBLE: the email leaves the CRM — confirm recipients, subject "
-            "and text with the person before calling. from_address picks the sending identity (yours, or the "
-            "workspace's service identity if you administer it); in_reply_to_message_id replies to an email of this "
+            "and text with the person before calling. from_address picks one of YOUR sending identities; without it, your "
+            "default identity is used. The workspace's service identity is never used; in_reply_to_message_id replies to an email of this "
             "affaire; bcc adds blind copies, delivered but never shown to the other recipients. No attachments."
         ),
         destructif=True,

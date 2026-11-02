@@ -8483,8 +8483,9 @@ personnelle, et « quelque chose ne tourne pas rond ».* Mesuré sur le code et 
 
 **Arbitré** (décision 805) : l'identité de service ne sert plus qu'aux envois automatiques, et la base la refuse à
 l'envoi comme à l'armement. Les cadences déjà armées avec elle sont fermées par la migration. L'envoi présélectionne le
-défaut de la personne, et les réglages nomment le propriétaire. Le correctif est inscrit au backlog. **Ouverte** jusqu'à
-sa livraison.
+défaut de la personne, et les réglages nomment le propriétaire. Le correctif est inscrit au backlog. **Corrigée en
+développement le 2026-11-02** (T1 à T3, migration `0149`) ; close au constat en production (lot de la décision 812,
+décision 817).
 
 ### INC-336 — Des captures versionnées ne montrent plus leur sujet, ou saisissent un état transitoire
 
