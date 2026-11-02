@@ -7316,7 +7316,11 @@ Ce qui est **déjà mesuré**, et ne sera pas redécouvert pendant l'implémenta
 - **Le backoff n'appartient pas à cette unité** : `CRM-059` le revendique. Un échec passe `failed`
   et le dit.
 
-### CRM-059 — Backfill, résilience, supervision `[x]`
+### CRM-059 — Backfill, résilience, supervision `[~]`
+> **REPASSÉE `[~]` LE 2026-11-02 (décision 816, INC-340)** : le §20.7 promet `last_sync_at` « écrit par la relève
+> elle-même », et aucun code ne l'écrit. L'écart est porté par `CRM-127` T2 ; l'unité revient à son état à sa
+> livraison.
+>
 > **RÉTROGRADÉE DE `[x]` À `[~]` LE 2026-08-12, SUR PREUVE ROUGE.** Le scénario
 > `e2e/mail/backfill.spec.ts` — « un premier contact ne descend jamais l'historique, même déjà
 > présent et autorisé » — **échoue** : les trois archives de 90 jours descendent dès la première
@@ -18128,3 +18132,31 @@ nouvelle (décision 810).
 
 ### CRM-127 — « Tester la connexion » sur les comptes entrants et les identités sortantes, et la relève écrit `last_sync_at` `[@]`
 *Prise en charge : session interactive 2026-11-01 16:00 UTC depuis 2026-11-02 17:31 UTC — état avant : [ ]*
+Demande et arbitrage du responsable du 2026-11-02 (décision 816), qui arbitre INC-340.
+
+**Spécification** : `docs/SPEC-mail-subsystem.md` §23 ; `docs/SPEC-edge-functions.md` (la fonction
+`mail-connection-test`, à écrire avec T3) ; `docs/DESIGN_SYSTEM.md` §5.81 (à écrire avec T4) ; `docs/SCHEMA.md` (migration
+`0150`).
+
+**DoD** :
+- la relève réussie écrit `last_sync_at` par `mail_inbound_account_record_sync`, réservée à `service_role` ; pytest ;
+  pgTAP ; `verify-mail-inbound.sh` §4 retourné en preuve ; E2E `mail` : l'écran d'état montre la date ;
+- `authorize_mail_connection_test` : le droit d'écriture de la ligne, `not_found` sans divulgation, garde de 30 s ;
+  pgTAP sur la matrice entière ;
+- la fonction edge `mail-connection-test` : forme, session, droit par la base, relais borné à 40 s, jeton interne remis
+  à elle seule ; unitaires Deno ; API Playwright sur la pile réelle (`404`, `401`, `429`, succès écrit en base) ;
+- les deux écrans de réglages : « Tester la connexion » par ligne, vol, verdict et refus traduits, liste relue, incident
+  d'une ligne en erreur, `pending` lu « Non testée » ; Vitest ; E2E UI ; captures 1440, 900, 390 observées ;
+- manuel, changelog, `docs/PROD_MIGRATIONS.md` (migration `0150`, fonctions edge, `mail-sync`, webapp, variable
+  `MAIL_SYNC_URL` du service `functions`), README et DAT.
+
+Question du connecteur : **non** (décision 816).
+
+- [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-02 : décision 816,
+      `docs/SPEC-mail-subsystem.md` §23, INC-340 arbitrée.
+- [ ] **T2 — base et `mail-sync`** : migration `0150`, `last_sync_at` écrite par la relève, garde de droit ; pgTAP,
+      pytest, harnais.
+- [ ] **T3 — fonction edge `mail-connection-test`** ; Deno, API.
+- [ ] **T4 — écrans, design system, manuel, E2E et captures.**
+- [ ] **T5 — livraison en production et constat** : une boîte testée depuis l'écran, et sa date de relève visible sur
+      l'écran d'état.

@@ -38271,3 +38271,38 @@ sale, et la campagne de captures d'avant livraison construirait la webapp avec c
 
 **Conséquences** : le lot ne change pas. Toute unité poussée avant la fenêtre y entre si sa session prévient la session
 de livraison (`CLAUDE.md` §12).
+
+### décision 816 — tester la connexion d'un compte de messagerie depuis les réglages, et la relève écrit `last_sync_at` (`CRM-127`, INC-340)
+
+*2026-11-02, session interactive (p2enjoy-crm-25), arbitrage du responsable.* **Problème** : le responsable demande
+comment tester un compte sortant, et veut « au minimum un bouton pour tester une configuration email (in et out) ». En
+production, la messagerie entrante est affichée « En attente » depuis des heures.
+
+**Observations**, en lisant le code sans l'exécuter :
+- « En attente » est `status = 'pending'`. Seule la route interne de test de connexion de `mail-sync` le fait évoluer
+  (§13.5, §14.4). Or les écrans de réglages ne la déclenchent pas : les §21.1 et §22.1 l'ont écartée, parce que le jeton
+  interne ne peut pas aller dans le navigateur. Une boîte créée depuis l'écran reste donc « En attente » indéfiniment,
+  que la relève marche ou non. La veille, elle, relève tous les comptes munis d'un secret, sans regarder `status`.
+- `last_sync_at` n'est écrite par **aucun** code (INC-340), alors que le §20.7 la dit « écrite par la relève
+  elle-même ». L'écran d'état montrera donc « Jamais relevée » pour toute boîte, et rien dans l'interface ne permet
+  aujourd'hui de savoir si la production reçoit.
+
+**Décisions du responsable** (questions posées le 2026-11-02) :
+1. **La relève réussie écrit `last_sync_at`**, par une fonction réservée à `service_role`. Le contrôle de
+   `verify-mail-inbound.sh` qui figeait l'absence est retourné en preuve. `CRM-059` repasse `[~]` jusqu'à la livraison.
+2. **Connecteur MCP : non.** Le test est un geste d'écran, sans outil, famille ni case nouvelle.
+3. **Une seule unité porte les deux** : `CRM-127`.
+
+**Choix de conception de la session**, écrits dans `docs/SPEC-mail-subsystem.md` §23 :
+- une fonction edge `mail-connection-test`, qui fait vérifier le droit par la base **avec le jeton de l'appelant**
+  (`authorize_mail_connection_test`), puis relaie vers `mail-sync` avec le jeton interne. Ce jeton n'est remis qu'à ce
+  worker. C'est la voie que les §21.1 et §22.1 désignaient ;
+- le droit de tester est celui d'écrire la ligne ; un refus et une ligne absente rendent le même `404` ;
+- une garde de 30 secondes entre deux tests d'une même ligne, parce que chaque test est une vraie authentification
+  et qu'un fournisseur peut verrouiller un compte après des échecs répétés ;
+- `pending` se lit « Non testée » sur les deux écrans de réglages, et une ligne en erreur montre son incident.
+
+**Découpage** : T1 spécification (ce commit) ; T2 base et `mail-sync` (migration `0150`, `last_sync_at`, garde de
+droit) ; T3 fonction edge ; T4 écrans, `docs/DESIGN_SYSTEM.md` §5.81, manuel, E2E et captures ; T5 livraison et
+constat en production (`[P]`). Numéros de migration convenus entre sessions : `0149` INC-335, `0150` `CRM-127`, `0151`
+`CRM-111` T4.1.

@@ -2159,7 +2159,7 @@ montré est donc **lu**, jamais supposé :
 
 | Fait montré | D'où il vient |
 |---|---|
-| Dernière relève réussie | `last_sync_at`, écrit par la relève elle-même |
+| Dernière relève réussie | `last_sync_at`, écrit par la relève elle-même — **promesse non tenue jusqu'à `CRM-127`** (INC-340, §23.2) |
 | Dernier incident | `status` et `last_error` — un **code**, jamais le texte du serveur (§13.7) |
 | Messages en attente d'envoi | comptés dans `mail_outbox`, statut `queued` ou `sending` |
 | Envois en échec définitif | comptés dans `mail_outbox`, statut `failed` |
@@ -2362,6 +2362,8 @@ Livré :
   seule voie correcte serait une fonction edge relayant le geste sous une autorisation propre —
   surface qu'aucune unité n'a spécifiée. L'écran **affiche donc l'état écrit par le service**
   (`status`), et le geste reste celui de l'exploitant par l'API interne, comme au §13.1.
+  **LEVÉ PAR `CRM-127`** (§23, décision 816) : la fonction edge `mail-connection-test` relaie le geste sous le droit
+  d'écriture de la ligne, et le bouton est sur chaque ligne.
 - **les trois paramètres d'ingestion** — `watch_folders`, `folder_style`, `backfill_months`. Ils
   appartiennent à `CRM-054` et `CRM-056`, non à la connexion d'une boîte. MESURÉ, l'écran ne les
   **écrase jamais** : `upsert_mail_inbound_account` applique `coalesce(p_x, a.x)` sur les trois, si
@@ -2604,8 +2606,8 @@ navigateur. Elle ne saute **aucun** contrôle de base : une pile est requise dan
 
 ### 21.12 Limites nommées
 
-- **Aucun test de connexion depuis l'écran** (§21.1) : l'état affiché est celui que le service a
-  écrit, et rien dans l'interface ne le rafraîchit.
+- ~~**Aucun test de connexion depuis l'écran** (§21.1) : l'état affiché est celui que le service a
+  écrit, et rien dans l'interface ne le rafraîchit.~~ Levée par `CRM-127` (§23).
 - **Aucune suppression** (§21.1).
 - **Les trois paramètres d'ingestion ne sont pas éditables** (§21.1), et ne sont jamais écrasés.
 - **Aucune identité sortante** (§21.1) : `CRM-053` garde son écart, inchangé.
@@ -2644,6 +2646,7 @@ Livré :
   interne `POST /internal/v1/outbound-identities/{id}/test` (§14.4), protégée par le jeton d'API
   interne du service (§12.3), qu'un navigateur ne peut pas porter sans le publier. L'écran
   **affiche l'état écrit par le service** (`status`), et le geste reste celui de l'exploitant.
+  **LEVÉ PAR `CRM-127`** (§23, décision 816).
 - **le quota journalier** — `daily_quota`. Il appartient à `CRM-058`, qui le consomme (§19.4), et sa
   sémantique à trois valeurs — `NULL` aucun plafond, `0` interdiction explicite, `n` plafond — a été
   posée par la migration `0030` puis corrigée par la `0033` après un défaut réel (décision 347).
@@ -2951,7 +2954,7 @@ navigateur. Elle ne saute **aucun** contrôle de base : une pile est requise dan
 
 ### 22.13 Limites nommées
 
-- **Aucun test de connexion depuis l'écran** (§22.1).
+- ~~**Aucun test de connexion depuis l'écran** (§22.1).~~ Levée par `CRM-127` (§23).
 - **Aucune suppression** (§22.1).
 - **Ni quota, ni signature** (§22.1) : jamais envoyés, jamais écrasés.
 - **Changer l'adresse d'expédition déclare une seconde identité** (§22.4) : c'est le comportement de
@@ -2975,3 +2978,158 @@ disait « expéditeur » là où la règle porte sur le **propriétaire**. Et ce
   (`identity_not_available`, §19.4), et l'écran cesse de proposer un geste voué au refus.
 
 Connecteur MCP : `docs/SPEC-mcp.md` §9.2 decies, famille `messagerie`, action `ajouter`.
+
+---
+
+## 23. Tester la connexion depuis les réglages, et la relève écrit `last_sync_at` — `CRM-127`
+
+*Écrit avant le code, `docs/JOURNAL.md` décision 816, qui arbitre INC-340. Demande du responsable du 2026-11-02 :
+« comment tester un compte sortant ? il faudrait au minimum un bouton pour tester une configuration email (in et out) »,
+et, en production, une messagerie entrante affichée « En attente » depuis des heures.*
+
+### 23.1 Ce que l'unité livre, et ce qu'elle ne livre pas
+
+Livré :
+
+- **la relève réussie écrit `last_sync_at`** (§23.2), ce que le §20.7 promettait et qu'aucun code ne faisait (INC-340) ;
+- **le bouton « Tester la connexion »** sur chaque ligne de `/reglages/comptes-mail` (§21) et de
+  `/reglages/identites-mail` (§22). Il lève l'écart que les §21.1 et §22.1 nommaient, par la voie qu'ils désignaient :
+  une fonction edge qui vérifie le droit de l'appelant, puis relaie le geste vers `mail-sync` avec le jeton interne,
+  que le navigateur ne voit jamais (§23.3, §23.4) ;
+- **le libellé de `pending` devient « Non testée »** sur les deux écrans de réglages (§23.5). « En attente » se lisait
+  comme une file d'attente ou une relève en suspens, alors que la valeur dit seulement qu'aucun test n'a eu lieu
+  depuis la création ou la dernière modification (§13.2, §14.2). C'est ce libellé qui a fait croire au responsable
+  que la réception était bloquée.
+
+**Connecteur MCP : non.** Le test reste un geste d'écran ; aucun outil, aucune famille ni case nouvelle (décision 816).
+
+**Non livré, et nommé :**
+
+- **une relève qui échoue n'écrit ni `status` ni `last_error`.** Ces deux colonnes restent le constat du seul test de
+  connexion (§13.2). Une relève en échec se voit à `last_sync_at` qui vieillit sur l'écran d'état (§20.7), et dans le
+  journal du service (`veille_compte_echoue`).
+- **aucun test automatique à l'enregistrement.** Enregistrer remet `status` à `pending` (§21, §22) ; le test reste un
+  geste explicite.
+- **aucun test depuis l'écran d'état** (§20.11), qui lit et n'agit pas.
+
+### 23.2 La relève réussie écrit `last_sync_at`
+
+Une fonction `public.mail_inbound_account_record_sync(p_account_id uuid) returns timestamptz`, `SECURITY DEFINER`,
+`search_path = ''`, pose `last_sync_at = now()` et rend la valeur posée. Elle refuse un compte inconnu par
+`account_not_found` (`P0002`). Son exécution est **révoquée à `public`, `anon` et `authenticated`** et accordée au seul
+`service_role`, comme `mail_inbound_account_record_check` (§13.5). La colonne reste fermée en écriture à
+`authenticated`. C'est l'horloge de la base qui date la relève, pas celle du conteneur.
+
+**« Réussie » veut dire que `relever_compte` est allée au bout** : la session IMAP s'est ouverte, chaque dossier
+surveillé a été parcouru ou écarté parce qu'absent (§15.4), et la progression a été enregistrée. L'écriture vient
+**après** `enregistrer_progression`, hors de la session IMAP, au même endroit et pour la même raison qu'elle : une
+relève qui lève une exception n'écrit rien. Les deux chemins de relève, la veille (§20.10) et la route interne
+`/poll` (§15), passent par `relever_compte` : un seul point d'écriture les couvre tous les deux.
+
+**Un échec de cette écriture n'est pas avalé.** Il remonte comme une panne de la relève : la veille le journalise
+(`veille_compte_echoue`, §20.10.3) et la route `/poll` rend `502`. Les messages déjà ingérés restent acquis, et la
+relève suivante, idempotente (§4.2), réessaie l'écriture.
+
+`scripts/verify-mail-inbound.sh` §4, qui figeait l'absence (« MOITIÉ 1 »), est **retourné en preuve** : après une
+relève réelle, `last_sync_at` est renseignée et postérieure au début de la preuve.
+
+### 23.3 Le droit de tester est décidé par la base
+
+Une fonction `public.authorize_mail_connection_test(p_target text, p_id uuid) returns void`, `SECURITY DEFINER`,
+`search_path = ''`, exécutable par `authenticated` seul (révoquée à `public` et `anon`). La fonction edge l'appelle
+**avec le jeton de l'appelant**, avant tout appel à `mail-sync`. Elle refuse :
+
+| Cas | Refus | Code |
+|---|---|---|
+| Appelant sans session | `not_authenticated` | `42501` |
+| `p_target` hors de `inbound`, `outbound` | `invalid_target` | `22023` |
+| Ligne absente, **ou** l'appelant n'a pas le droit de l'écrire | `not_found` | `P0002` |
+| Le dernier test de cette ligne date de moins de 30 secondes | `too_soon` | `P0001` |
+
+**Le droit est exactement celui de l'écriture**, relu sur la ligne : l'administrateur de l'espace de la ligne
+(`app.is_workspace_admin`), ou son propriétaire (`owner_id = auth.uid()`). Une ligne sans propriétaire (boîte système,
+identité de service) n'est donc testable que par un administrateur. C'est la règle de `upsert_mail_inbound_account` et
+de `upsert_mail_outbound_identity` (§13.3, §14.3), et elle coïncide avec la lecture (§13.4) : qui voit la ligne sur
+l'écran peut la tester. **Un refus de droit et une ligne absente rendent le même `not_found`**, pour ne pas révéler
+l'existence de la boîte d'un collègue (preuve de refus n° 7).
+
+**Pourquoi 30 secondes.** Chaque test est une véritable authentification sur le serveur distant, et un fournisseur
+peut verrouiller un compte après des échecs répétés. Le bouton est désactivé pendant le vol (§23.5), mais rien
+n'empêche de recliquer ensuite, ni d'appeler la fonction en boucle. La borne se lit sur `last_checked_at`, un constat
+du serveur qu'aucun client n'écrit. **Limite nommée** : deux appels simultanés passent tous deux la garde, puisque
+`last_checked_at` n'est écrite qu'à la fin du test. La borne vise la répétition, pas la concurrence.
+
+### 23.4 La fonction edge `mail-connection-test`
+
+`POST /functions/v1/mail-connection-test`, corps JSON `{"target": "inbound" | "outbound", "id": "<uuid>"}`.
+
+1. **Forme de la requête.** Une autre méthode rend `405` ; un corps illisible, un `target` inconnu ou un `id` qui n'est
+   pas un UUID rend `400 invalid_request`, avant tout appel.
+2. **Session.** Sans `Authorization: Bearer`, `401 unauthorized`.
+3. **Droit.** `authorize_mail_connection_test` est appelée par PostgREST **avec le jeton de l'appelant**. Ses refus
+   deviennent : `not_authenticated` → `401 unauthorized`, `invalid_target` → `400 invalid_request`, `not_found` →
+   `404 not_found`, `too_soon` → `429 too_soon`. Toute autre réponse de la base → `502 service_unavailable`.
+4. **Relais.** `POST {MAIL_SYNC_URL}/internal/v1/inbound-accounts/{id}/test` ou
+   `.../outbound-identities/{id}/test` (§13.5, §14.4), avec `Authorization: Bearer {MAIL_SYNC_INTERNAL_TOKEN}`,
+   borné à 40 secondes : le test SMTP en prend jusqu'à 30 (§14.5). Les réponses du service deviennent : `200` →
+   `200 {"status", "error", "checked_at"}`, recopiés du verdict, qui est celui que le service a écrit en base ;
+   `404` → `404 not_found` ; `409` (secret absent) → `409 secret_missing` ; tout le reste, délai dépassé et service
+   injoignable compris → `502 service_unavailable`.
+5. **Journal.** Une ligne par appel : `fonction`, `target`, statut HTTP rendu, `duree_ms`. Jamais le jeton, ni
+   l'hôte, ni l'identifiant de connexion.
+
+**Environnement propre** (`docs/SPEC-edge-functions.md` §2) : `MAIL_SYNC_URL` et `MAIL_SYNC_INTERNAL_TOKEN` sont remis à
+ce seul worker par `main/environnement.ts`, comme `JWT_SECRET` à `session` ; aucune autre fonction ne voit le jeton
+interne. La borne du worker est de **45 secondes** (`DELAI_PROPRE`), pour couvrir le relais de 40 secondes.
+`MAIL_SYNC_URL` vaut `http://mail-sync:8080` sur le réseau Compose ; `mail-sync` n'a toujours aucun port publié.
+
+### 23.5 L'écran
+
+Sur chaque ligne des deux listes (§21, §22) : une commande discrète **« Tester la connexion »**, icône Lucide `PlugZap`,
+placée avant « Configurer ». Elle reprend les propriétés de commande de la ligne (`capaciteDeBoiteMail`, `CRM-093`) :
+désactivée avec le même motif quand la base refuse l'administration, puisque le droit de tester est celui d'écrire.
+
+- **Pendant le vol**, la commande est désactivée et porte « Test en cours… ». Les autres lignes restent utilisables.
+- **Au retour**, la liste est **relue** depuis la base : la pilule montre ce que le service a écrit, jamais une
+  valeur déduite de la réponse (§20.7).
+- **Le verdict s'écrit sous la ligne**, dans une région `role="status"` : « Connexion réussie. » ou
+  « Échec : {incident} », avec l'incident tiré du dictionnaire fermé des six codes (§13.7, `admin.mail.incident.*`).
+  Un code inconnu donne « Échec : cause non reconnue », jamais le code brut.
+- **Les refus** s'écrivent au même endroit : `429` « Un test vient d'avoir lieu sur cette ligne. Réessayez dans
+  quelques secondes. » ; `404` « Cette ligne n'est plus disponible pour vous. » ; `409` « Aucun mot de passe n'est
+  enregistré : configurez-le avant de tester. » ; `401` le message de session expirée de l'écran ; `502` ou réseau
+  « Le service de messagerie n'a pas répondu : rien n'a été testé. »
+- **Une ligne en erreur montre son incident** à côté de la pilule « En erreur », en texte du même dictionnaire :
+  sans lui, l'écran disait qu'une boîte échoue sans dire pourquoi.
+- **`pending` se lit « Non testée »** sur les deux écrans de réglages. L'écran d'état (§20.11) n'affiche pas `status`
+  en pilule et n'est pas touché.
+
+Les règles visuelles seront écrites au `docs/DESIGN_SYSTEM.md` §5.81 avec l'écran (tranche T4), après la lecture intégrale
+du design system qu'exige `CLAUDE.md` §4.
+
+### 23.6 Seed
+
+**Inchangé, et c'est suffisant.** Les boîtes et identités du seed pointent vers le Stalwart de développement (§11) :
+un test y réussit. L'échec se reproduit par le véritable parcours, sans trace fabriquée (`CLAUDE.md` §8) : changer le
+mot de passe d'une ligne par le formulaire, tester (`auth_failed`), puis remettre le bon mot de passe et retester.
+Les scénarios qui le font remettent la ligne dans son état d'origine.
+
+### 23.7 Preuves exigées
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | `authorize_mail_connection_test` : administrateur sur la boîte système et sur la boîte d'un membre ; membre sur la sienne ; membre refusé `not_found` sur la boîte système, sur celle d'un collègue et sur un identifiant inconnu ; `too_soon` sous 30 s ; `invalid_target` ; exécution refusée à `anon`. Même matrice sur les identités. `mail_inbound_account_record_sync` : refusée à `authenticated`, pose `now()` pour `service_role`, `account_not_found` sur un inconnu |
+| pytest | `relever_compte` appelle l'écriture après la progression ; ne l'appelle pas quand la session IMAP échoue ; un échec de l'écriture remonte |
+| Deno | le gestionnaire : chaque code de la table du §23.4, le jeton interne jamais dans la réponse ni le journal ; `environnement.test.ts` : seul `mail-connection-test` reçoit `MAIL_SYNC_INTERNAL_TOKEN` |
+| Vitest | la traduction d'une réponse en issue d'écran ; la commande, son vol, sa désactivation par capacité, le verdict et les refus |
+| API (Playwright) | sur la pile réelle, sans l'interface : un membre sur la boîte d'un collègue → `404` ; sans session → `401` ; deux tests rapprochés → `429` ; un test réussi écrit `last_checked_at` en base |
+| E2E `mail` | une relève réelle (`/poll`) renseigne `last_sync_at`, et l'écran d'état montre sa date au lieu de « Jamais relevée » |
+| E2E UI | administratrice : test de la boîte système → « Connectée » relue en base ; membre : test de sa boîte et de son identité ; échec `auth_failed` par un mauvais mot de passe, puis remise en état ; captures 1440, 900 et 390 observées |
+| Harnais | `scripts/verify-mail-inbound.sh` §4 retourné (§23.2) |
+
+### 23.8 Limites nommées
+
+- La garde de 30 secondes ne protège pas contre deux appels simultanés (§23.3).
+- Le résultat d'un test n'est pas annoncé aux autres personnes qui ont l'écran ouvert : elles le verront à leur
+  prochain chargement.
+- Une relève en échec n'a toujours pas de pilule propre (§23.1) : seule la date de `last_sync_at` le dit.
