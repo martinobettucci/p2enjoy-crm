@@ -17341,6 +17341,19 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
 - [@] **T2** — exigence par une transition (`common_field_id`), sixième vérification de `move_card`, versions et
       copies, refus `common_field_in_use` et `common_field_archived` ; pgTAP ; API.
       *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-3a) depuis 2026-11-02 22:28 UTC — état avant : [ ]*
+      **Découpage** (2026-11-02, mesuré sur les migrations qui lisent `workflow_transition_required_fields`) :
+      - [ ] **T2.a — la base de l'exigence** : `workflow_transition_required_fields` reçoit `common_field_id` et
+            `workspace_id`, le second rempli depuis le workflow ; `CHECK` « l'un ou l'autre » ; unicité par transition et
+            par champ désigné ; clé composite vers `card_common_fields` par `workspace_id` ; refus `common_field_in_use`
+            à l'archivage d'un champ exigé (§6, les modèles d'email suivent en T5) ; pgTAP.
+      - [ ] **T2.b — la sixième vérification de `move_card`** (0128) : l'union des champs de workflow, lus sur le
+            rattachement, et des champs communs, lus sur l'affaire ; `missing_required_fields` nomme les deux ; pgTAP ;
+            API aux vrais jetons.
+      - [ ] **T2.c — versions et copies** : photographie par identifiant et clé (0039, 0122) ; comparaison (0040,
+            0043) ; restauration (0042, 0086, 0122), refusée par `common_field_archived` ; copie vers un track (0019) ;
+            journal d'audit (0115) ; pgTAP ; API.
+      - [ ] **T2.d — l'assistant IA** (0102, 0103) : une proposition vise un champ commun existant par sa clé, sans en
+            créer ; pgTAP ; API.
 - [ ] **T3** — écrans : Réglages ▸ « Champs de l'affaire », exigence dans l'éditeur de workflow, partie commune de la
       fiche, timeline ; `docs/DESIGN_SYSTEM.md` avant le code ; unitaires.
 - [ ] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; unitaires ; API.
