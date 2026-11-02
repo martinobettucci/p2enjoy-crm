@@ -728,15 +728,15 @@ désigne le rattachement figé. **Avec la webapp et l'image `mcp` de `main`, dan
 et ne comptent une saisie partagée qu'une fois ; tant qu'aucune affaire n'a plus d'un rattachement, rien ne change à
 l'écran. Appliquée en développement le 2026-11-02.
 
-**La 149 aussi, DANS LE LOT** (INC-335, décisions 805 et 817 ; sa ligne au §3.2, ses gestes au §2.26, dont le geste
+*Avant elle* — **aucune migration en attente du 2026-11-02 jusqu'à la 150** : la fenêtre du 2026-11-02 (révision `9e64cb73`, décisions 815 et 817) a appliqué la 144, la 145, la 148 et la 149 ; le registre de production compte **147** lignes (§1). *Historique de l'attente* — **la 149, dans ce lot** (INC-335, décisions 805 et 817 ; sa ligne au §3.2, ses gestes au §2.26, dont le geste
 préalable des administrateurs), **après la 148**. Elle redéfinit `queue_outbound_email` et `armer_sequence_relance` (l'identité de service ne s'emprunte plus) et
 ferme les cadences armées avec elle. Appliquée en développement le 2026-11-02.
 
-**La 148 aussi** (`CRM-111` T3 — rattacher et retirer ; sa ligne au §3.2), **après la 134**. Elle ajoute deux fonctions
+**La 148, dans ce lot** (`CRM-111` T3 — rattacher et retirer ; sa ligne au §3.2), **après la 134**. Elle ajoute deux fonctions
 et retire l'index d'un rattachement par affaire ; aucune donnée ne change. Seul le connecteur MCP (`CRM-111` T9) et la
 fiche (T7) les emploieront : livrée seule, elle n'est appelée par rien. Appliquée en développement le 2026-11-01. **Les numéros 146 et 147 ne sont pas employés** : le contrôle d'ordre du registre (`docs/DAT.md` §3.2 bis) refuserait un fichier inscrit après la 148 qui la précède ; les sessions qui les visaient prennent le premier numéro libre au-delà.
 
-**Une migration en attente : la 144** (`CRM-123` T2, décision 804 ; sa ligne au §3.2, ses gestes au §2.29). Une colonne
+**La 144, dans ce lot, avec la 145** (`CRM-123` T2 ; `CRM-125` T2 pour la 145, décision 804 ; sa ligne au §3.2, ses gestes au §2.29). Une colonne
 de `workspaces` à `'c-'` par défaut, des fonctions réécrites, aucune donnée existante changée ; la webapp de `main` porte
 le réglage et la régénération. Appliquée en développement le 2026-11-01.
 
