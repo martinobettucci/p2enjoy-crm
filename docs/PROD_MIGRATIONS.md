@@ -2,20 +2,23 @@
 
 *Session de livraison : p2enjoy-crm-64 depuis 2026-11-02 16:35 UTC — la session p2enjoy-crm-18, désignée par le responsable, rouverte sous un nouveau nom ; reprend son annonce, expirée faute de commit depuis plus de 6 heures — lot : tout `main` — `0144` (`CRM-123`), `0145` (`CRM-125` T2), `0148` (`CRM-111` T3) ; webapps de `CRM-111` T3, `CRM-123`, `CRM-124`, `CRM-125`, `CRM-126`, INC-332 et INC-333 ; image `mcp` (`CRM-126`). Règle : `CLAUDE.md` §12, décision 813.*
 
-**Le lot annoncé, tel que les sessions l'ont signalé le 2026-11-01** (à relire au moment de livrer) :
+**Le lot annoncé, tel que les sessions l'ont signalé** (2026-11-01, mis à jour le 2026-11-02 ; à relire au moment de livrer) :
 
-- **Attend** : la migration de `CRM-125` T2 (`public.render_mail_template_sample`), sans laquelle le bouton « Aperçu » des
-  séquences, déjà dans `main`, échoue (décision 812).
-- **Migrations** : la `0144` (`CRM-123`, gestes au §2.29), puis celle de `CRM-125` T2. Instantané existant, fenêtre en
-  `--instantane-verifie` (décision 812). La `0134` est déjà appliquée (fenêtre 106 à 141 du 2026-11-01).
-- **Webapp et images** : la webapp de `main` (`CRM-123`, `CRM-124`, `CRM-125`, `CRM-126`, INC-332, INC-333), l'image
-  `mcp` (`CRM-126`, §2.27).
-- **Hors du lot sauf décision au moment de livrer** : INC-335 et sa `0146` (geste préalable des administrateurs, §2.26) —
-  sa session prévient avant de pousser son code ; `CRM-111` T3, sans consommateur, inclusion sans risque si elle est
-  poussée avant.
-- **Après la fenêtre** : vérifications du §5, celles du §2.29 et du §2.27, puis les gestes du responsable — pour
-  `CRM-123`, l'alias `app-*` chez l'hébergeur **avant** toute régénération. Après son constat, la session de livraison
-  écrit le changelog `[Publié]`, la baseline et le backlog des unités livrées.
+- **N'attend plus** `CRM-125` T2 : sa migration est la `0145`, poussée le 2026-11-01 (`9c814daa`). **Attend** la
+  correction du seed de développement par `CRM-111` T3 (sa `0148` retire l'unicité `card_id` que le seed employait :
+  la reconstruction échoue, la production n'est pas touchée), et le commit des fichiers du manuel d'INC-333.
+- **Migrations** : la `0144` (`CRM-123`, gestes au §2.29), la `0145` (`CRM-125` T2, ligne 145 du §3), la `0148`
+  (`CRM-111` T3, sans consommateur dans le lot). Instantané existant, fenêtre en `--instantane-verifie` (décision 812).
+  **Numérotation** : la `0148` étant appliquée, toute migration non poussée prend un numéro **supérieur à 0148**, après
+  synchronisation (le registre refuse un fichier non inscrit qui précède le dernier inscrit, §3.1).
+- **Webapp et images** : la webapp de `main` (`CRM-111` T3, `CRM-123`, `CRM-124`, `CRM-125`, `CRM-126`, INC-332, INC-333),
+  l'image `mcp` (`CRM-126`, §2.27).
+- **Hors du lot sauf décision au moment de livrer** : INC-335 et sa migration (numéro supérieur à 0148 ; geste préalable
+  des administrateurs, §2.26) — sa session prévient avant de pousser son code ; `CRM-111` T4 et `CRM-112` T1, en cours.
+- **Après la fenêtre** : vérifications du §5, celles du §2.27, du §2.28 et du §2.29, puis les gestes du responsable —
+  pour `CRM-123`, l'alias `app-*` chez l'hébergeur **avant** toute régénération ; pour `CRM-125`, l'aperçu d'un palier et
+  « Prévisualiser la séquence » (Réglages ▸ Séquences ▸ « Relance en trois temps »). Après son constat, la session de
+  livraison écrit le changelog `[Publié]`, la baseline et le backlog des unités livrées.
 
 Ce document décrit **ce qu'un humain doit appliquer** pour déployer ou mettre à jour la
 production. Il ne dérive jamais de l'état réel du projet : toute modification du schéma, des
