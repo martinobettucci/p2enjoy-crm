@@ -17306,7 +17306,7 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       attend la tranche T2 de `CRM-111`.
 - [@] **T1** — mesures (coût du filtre et de l'index de recherche) ; migration : deux tables, politiques,
       `app.validate_field_value` partagée ; pgTAP ; API aux jetons réels ; `docs/SCHEMA.md` ; contrat de déploiement.
-      *Prise en charge : session interactive 4522fa9c depuis 2026-11-01 14:56 UTC — état avant : [ ]*
+      *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-64) depuis 2026-11-02 16:42 UTC — reprise de sa propre prise du 2026-11-01 14:56 UTC, après l'arrêt des sessions ; état avant : [ ]*
 - [ ] **T2** — exigence par une transition (`common_field_id`), sixième vérification de `move_card`, versions et
       copies, refus `common_field_in_use` et `common_field_archived` ; pgTAP ; API.
 - [ ] **T3** — écrans : Réglages ▸ « Champs de l'affaire », exigence dans l'éditeur de workflow, partie commune de la
