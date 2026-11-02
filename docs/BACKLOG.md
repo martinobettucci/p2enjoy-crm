@@ -18123,3 +18123,8 @@ nouvelle (décision 810).
       captures `docs/captures/CRM-126/` observées, quatre paliers ; typecheck et build.
 - [P] **T3 — livraison en production et constat** : webapp et service `mcp` redéployés, une affaire mixte constatée
       (`docs/PROD_MIGRATIONS.md` §2.27).
+
+## Demande du 2026-11-02 — tester un compte de messagerie, et savoir si la boîte est relevée (décision 816, INC-340)
+
+### CRM-127 — « Tester la connexion » sur les comptes entrants et les identités sortantes, et la relève écrit `last_sync_at` `[@]`
+*Prise en charge : session interactive 2026-11-01 16:00 UTC depuis 2026-11-02 17:31 UTC — état avant : [ ]*
