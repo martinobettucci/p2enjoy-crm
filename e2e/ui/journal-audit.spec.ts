@@ -1,3 +1,4 @@
+// @verifies INC-331 (docs/INCONSISTENCY_REPORT.md) — le scénario rend ou désigne l'état qu'il lit, quel que soit l'ordre de la campagne
 // @verifies CRM-072 (docs/BACKLOG.md) — tranche T2 : Réglages ▸ Journal d'audit sur la pile réelle, par rôle
 // @verifies docs/SPEC-audit.md §3.2 (seuls les administrateurs lisent), §4.1 (un geste de droits journalisé avec son
 //           acteur), §8 (l'écran, ses filtres dans l'adresse) ; docs/DESIGN_SYSTEM.md §5.66 (entrée d'index, tableau, filtres,
@@ -73,9 +74,14 @@ test.describe('l’administratrice — Camille Aubert', () => {
 		await expect(page.getByTestId('ligne-audit').first()).toBeVisible()
 		await page.getByLabel('Famille').selectOption({ label: 'Imports' })
 		await expect(page).toHaveURL(/\?famille=import$/)
-		const ligne = page.getByTestId('ligne-audit').filter({ hasText: 'Contacts importés' })
-		await expect(ligne).toHaveCount(1)
-		await expect(ligne).toContainText('Créées\u00a0: 8 · ignorées\u00a0: 1 · refusées\u00a0: 1 · organisations créées\u00a0: 4')
+		// INC-331 : les imports de l'interface, joués avant ce scénario dans une campagne, ajoutent leurs propres lignes, et
+		// chaque passage du seed la sienne. La preuve cherche donc l'import du SEED par ses comptes exacts, au lieu de
+		// compter toutes les lignes « Contacts importés ».
+		const ligne = page
+			.getByTestId('ligne-audit')
+			.filter({ hasText: 'Contacts importés' })
+			.filter({ hasText: 'Créées\u00a0: 8 · ignorées\u00a0: 1 · refusées\u00a0: 1 · organisations créées\u00a0: 4' })
+		await expect(ligne.first()).toBeVisible()
 		await capturer(page, 'journal-filtre-imports-1440', UNITE)
 	})
 

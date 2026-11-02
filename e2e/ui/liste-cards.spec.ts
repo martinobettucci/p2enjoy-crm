@@ -748,6 +748,8 @@ test.describe('les données longues et la seconde page, contre la pile réelle',
 			() => document.documentElement.scrollWidth - document.documentElement.clientWidth,
 		)
 		expect(debordement).toBeLessThanOrEqual(0)
+		// INC-336 : le sujet est amené dans le cadre avant la capture — la fiche a grandi, et il en sortait.
+		await page.getByTestId('tableau-liste').scrollIntoViewIfNeeded()
 		await capturer(page, 'liste-donnees-longues-390', 'CRM-042')
 	})
 

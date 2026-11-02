@@ -1,3 +1,4 @@
+// @verifies INC-331 (docs/INCONSISTENCY_REPORT.md) — le scénario rend ou désigne l'état qu'il lit, quel que soit l'ordre de la campagne
 // @verifies CRM-073 (docs/BACKLOG.md) — tranche T3 : Réglages ▸ Webhooks sur la vraie pile — la liste semée et ses états,
 //           l'historique et le renvoi, la création (événements de contact éteints sous un channel, le secret montré une
 //           fois), la modification, la régénération confirmée, la suppression ; l'écran refusé à la lectrice ; les paliers
@@ -22,6 +23,15 @@ test.afterEach(async ({ request }) => {
 })
 
 test('Camille lit les webhooks semés, leur historique, et renvoie une remise', async ({ page, request }) => {
+	// INC-331 : « Automate Refonte » écoute le channel « Refonte de site », que d'autres scénarios de la campagne font
+	// bouger. Le seed ne lui donne aucune remise (docs/SPEC-seed.md) : cet état est RENDU avant d'être lu, par la clé de
+	// service, au lieu de dépendre de l'ordre de la campagne.
+	const automate = await request.get(rest(`webhook_endpoints?name=eq.${encodeURIComponent('Automate Refonte')}&select=id`), {
+		headers: enTetesService(),
+	})
+	const [{ id: idAutomate } = { id: '' }] = (await automate.json()) as { id: string }[]
+	expect(idAutomate, 'le seed porte « Automate Refonte »').not.toBe('')
+	await request.delete(rest(`webhook_deliveries?endpoint_id=eq.${idAutomate}`), { headers: enTetesService() })
 	await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
 	await page.goto(ECRAN)
 	const lignes = page.getByTestId('ligne-webhook')

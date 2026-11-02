@@ -422,6 +422,8 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7, CLAUDE.md §16)', 
 				() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
 			)
 			expect(debordement).toBe(false)
+			// INC-336 : le sujet est amené dans le cadre avant la capture — la fiche a grandi, et il en sortait.
+			await page.getByTestId('pastille-sommeil').scrollIntoViewIfNeeded()
 			await capturer(page, `filtre-sommeil-liste-${palier.nom}`, UNITE)
 		}
 	})

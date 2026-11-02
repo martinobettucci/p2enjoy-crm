@@ -637,6 +637,8 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7)', () => {
 				false,
 			)
 
+			// INC-336 : le sujet est amené dans le cadre avant la capture — la fiche a grandi, et il en sortait.
+			await page.getByTestId('formulaire-card').scrollIntoViewIfNeeded()
 			await capturer(page, `formulaire-${palier.nom}`, 'CRM-037')
 		})
 	}

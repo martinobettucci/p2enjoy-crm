@@ -400,6 +400,8 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7)', () => {
 			)
 			expect(debordement, 'la page ne défile jamais horizontalement').toBeLessThanOrEqual(0)
 
+			// INC-336 : le sujet est amené dans le cadre avant la capture — la fiche a grandi, et il en sortait.
+			await fil(page).getByRole('article').first().scrollIntoViewIfNeeded()
 			await capturer(page, `panneau-${palier.nom}`, 'CRM-043')
 		})
 	}
@@ -421,6 +423,8 @@ test.describe('données longues (docs/DESIGN_SYSTEM.md §5.10)', () => {
 			() => document.documentElement.scrollWidth - document.documentElement.clientWidth,
 		)
 		expect(debordement, 'un mot sans espace ne pousse pas la page').toBeLessThanOrEqual(0)
+		// INC-336 : le sujet est amené dans le cadre avant la capture — la fiche a grandi, et il en sortait.
+		await fil(page).getByRole('article').first().scrollIntoViewIfNeeded()
 		await capturer(page, 'commentaire-long-390', 'CRM-043')
 	})
 })

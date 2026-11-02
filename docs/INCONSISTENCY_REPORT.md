@@ -8412,6 +8412,12 @@ campagne**, qui importent, émettent des événements ou modifient le commentair
 exemple, les imports de l'interface passent avant le journal d'audit. L'issue reste la même : que chacun construise ou
 rende l'état qu'il lit.
 
+**Deux des trois corrigés le 2026-11-02** (scénarios seuls, produit inchangé). `e2e/ui/journal-audit.spec.ts` cherche
+l'import **du seed** par ses comptes exacts au lieu de compter toutes les lignes « Contacts importés ».
+`e2e/ui/webhooks.spec.ts` **rend** l'état qu'il lit : les remises d'« Automate Refonte » sont retirées par la clé de
+service avant la lecture. Les sept fichiers touchés passent 116/116 sur base reconstruite. **Reste** le troisième
+(`commentaires-gestes`), qui demande à être rejoué dans l'ordre d'une campagne complète pour être constaté.
+
 ### INC-332 — À 390 px, l'icône « Aide » faisait passer la cloche et l'identité sur une deuxième ligne de commandes
 
 *Constaté le 2026-11-01 en observant la campagne de renouvellement de `CRM-122` T3 (`docs/captures/CRM-100/nouveau-channel-
@@ -8501,6 +8507,13 @@ d'étiquette, l'export et l'import : le sujet est sorti du cadre.
 nommaient (`CLAUDE.md` §16). **Issue proposée** : que chaque scénario amène son sujet dans le cadre (`scrollIntoViewIfNeeded`
 sur l'élément nommé) et attende la fin de l'état transitoire (le tiroir fermé, la mesure rendue) avant `capturer`, puis
 que ces captures soient renouvelées par `CAPTURES_UNITES`. Connecteur MCP : sans objet.
+
+**Corrigé en partie le 2026-11-02.** Le sujet est amené dans le cadre avant `capturer` dans `formulaire`, `commentaires`
+(deux scénarios), `timeline`, `liste-cards` et `filtre-sommeil`. Les captures de `CRM-037`, `CRM-042`, `CRM-043`,
+`CRM-044` et `CRM-081` sont renouvelées par `CAPTURES_UNITES` : 102/102. Le rapport donne 21 images changées, toutes
+observées (le sujet est dans le cadre à 390, 900, 1152 et 1440 px ; les écarts de 1 % sont des horodatages), et
+25 images de bruit rendues. **Restent** les images de `CRM-007`, `CRM-020`, `CRM-022`, `CRM-060`, `CRM-067`, `CRM-071`,
+`CRM-077` et `CRM-108`, dont les scénarios ne sont pas encore repris.
 
 ### INC-337 — À 390 et 900 px, plusieurs pages se capturent décalées vers la gauche, leur texte coupé au bord
 

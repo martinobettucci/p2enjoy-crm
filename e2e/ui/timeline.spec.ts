@@ -401,6 +401,8 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7)', () => {
 			)
 			expect(debordement, 'la page ne défile jamais horizontalement').toBeLessThanOrEqual(0)
 
+			// INC-336 : le sujet est amené dans le cadre avant la capture — la fiche a grandi, et il en sortait.
+			await fil(page).getByRole('listitem').first().scrollIntoViewIfNeeded()
 			await capturer(page, `fil-${palier.nom}`, 'CRM-044')
 		})
 	}
