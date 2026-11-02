@@ -38500,3 +38500,16 @@ voisins 19/20 — l'échec est INC-287 (`temps-fiche-affaire`, flèches après s
 `main` sans les changements de T4.2** (1 échec sur 4) ; image du manuel `rapport-partage` observée ; `verify-manual` :
 aucune anomalie de cette unité — les six qui restent sont des textes d'INC-335, signalés à sa session.
 
+### `CRM-111` T5 — le découpage (2026-11-02)
+
+*2026-11-02, session interactive (4891a451).* **Le fond est tranché** (`docs/SPEC-rattachements.md` §6, décision 643,
+arbitrage 1) : une ligne par rattachement × devise, l'état et le montant du rattachement, les coûts, recettes et
+personnel de l'affaire rappelés avec `shared`, comptés une fois au total ; le connecteur suit le contrat dans la famille
+`recettes` (§11) — aucune question MCP nouvelle. **Découpage** (backlog) : T5.1 la base et ses consommateurs, sur le
+patron de T4.1 — les consommateurs vont avec la base pour que `main` ne passe jamais par un total qui compterait deux
+fois une affaire partagée ; T5.2 l'écran, sur le patron de T4.2. **Ce que T5.1 doit tenir, et que T4.1 a appris** : un
+sous-total de **channel** compte l'affaire sous chacun de ses channels ; un sous-total de **track** qui la porte sous
+deux de ses channels, et le **total**, ne la comptent qu'une fois — la règle de la série « Personnel » du track
+(`uneFoisChacune`). Le bloc « Rentabilité » de la fiche lit une affaire : ses lignes par rattachement s'y ramènent à
+une par devise.
+

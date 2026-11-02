@@ -17310,6 +17310,16 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
 - [@] **T5 — rentabilité ventilée** (§6) : une ligne par rattachement × devise, colonne `shared`, total compté une fois ;
       écran ; `docs/SPEC-recettes.md` §5 et outil `crm_profitability_report`.
       *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable, session 4891a451) depuis 2026-11-02 22:35 UTC — état avant : [ ]*
+      **Découpage, arrêté le 2026-11-02 (journal, « `CRM-111` T5 — le découpage »)** :
+      - [ ] **T5.1 — la base et ses consommateurs** : une migration au premier numéro libre — `rentabilite_affaires` rend
+        une ligne par **rattachement lisible × devise**, l'état (`node_kind`), l'archivage et le chemin du rattachement,
+        les recettes, coûts et personnel de l'affaire rappelés sur chaque ligne avec la colonne `shared` ; le filtre
+        d'état s'applique à l'état du rattachement. La webapp (`rentabilite.ts`) compte une affaire partagée **une fois**
+        dans un sous-total de track qui la porte deux fois et dans le total, et le bloc de la fiche la ramène à une
+        affaire ; `crm_profitability_report` rend `shared` et en fait autant. Livrables : pgTAP, unitaires (webapp et
+        connecteur), API aux jetons réels, `docs/SPEC-recettes.md` §5 et §6, SCHEMA, contrat de déploiement.
+      - [ ] **T5.2 — l'écran** : la marque « partagée » d'une ligne d'affaire de « Rentabilité » et la mention sous le
+        tableau (`docs/DESIGN_SYSTEM.md` avant le code, forme du §5.54), E2E, captures observées, manuel.
 - [ ] **T6 — messagerie** (§7, décision 657) : dossier `CRM/Affaires/<affaire>` et déplacement des dossiers existants
       par `mail-sync` ; cadences et variables des modèles par rattachement ; preuves IMAP réelles.
 - [ ] **T7 — webapp** (§8) : fiche à partie commune et blocs, pastille « aussi rattachée à », rattacher, archiver,
