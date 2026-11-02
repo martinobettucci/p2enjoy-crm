@@ -17993,7 +17993,8 @@ action `ajouter`, sans case nouvelle.*
       seed (identité personnelle de Camille, et l'envoi de démonstration avec elle) ; harnais et E2E API qui envoyaient
       avec l'identité de service, révisés en preuves du refus ; contrat de déploiement (requête de comptage, retour
       arrière).
-      *Prise en charge : session interactive 2026-11-01 14:39 UTC depuis 2026-11-01 14:39 UTC — état avant : [ ]*
+      *Prise en charge : session interactive 2026-11-02 16:36 UTC depuis 2026-11-02 16:36 UTC — état avant : [ ] ;
+      reprise de sa propre prise du 2026-11-01 14:39 UTC, expirée par l'attente de la pile partagée*
 - [ ] **T2 — l'écran** : `lireIdentitesDisponibles` réduite aux identités de la personne, avec `is_default`.
       Présélection du défaut dans le formulaire d'envoi et, dans le cas de la décision 803, dans le bloc d'armement. Le
       propriétaire est nommé sur chaque ligne des réglages, et le libellé de la case dépend de l'identité ; la fiche
