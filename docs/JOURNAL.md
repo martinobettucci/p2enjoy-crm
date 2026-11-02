@@ -38449,3 +38449,33 @@ et de vraies sessions IMAP et SMTP, le seed rendu intact.
 **Non fait** : `scripts/verify-mail-inbound.sh` n'a pas été rejoué en entier. Sa nouvelle section, une relève réelle
 datée, a été exécutée à la main, avec les mêmes commandes. L'écran (T4) reste à faire.
 
+
+### `CRM-112` T1 : les champs communs en base, et ce que les mesures disent du filtre et de la recherche (2026-11-02)
+
+**Fait.** Migration `0152`, renumérotée trois fois pendant que d'autres sessions prenaient 0144 à 0151.
+- Deux tables, leurs clés composites par `workspace_id`, six politiques et des privilèges de colonne.
+- `app.validate_field_value(type, options, clé, valeur, espace)`, extraite d'`app.valider_valeur_champ`, qui délègue
+  désormais sans changer de signature.
+- Preuves : pgTAP `0141` 18/18, sans résidu ; API 2/2 aux vrais jetons ; types régénérés.
+
+Les brouillons, perdus deux fois avec le scratchpad au redémarrage de la machine, ont été reconstitués depuis la
+transcription. Une version antérieure de la pgTAP en est revenue, avec des `INSERT` en sous-requête que PostgreSQL
+refuse ; ils sont réécrits en CTE. Le harnais API choisissait une affaire que la lectrice ne lit pas : il prend désormais
+l'intersection de ce que Driss et Farida lisent.
+
+**Mesures**, sous le rôle réel de Driss, dans une transaction annulée :
+- **Filtre « contient » de la liste** : 11 ms sans le filtre, 40 ms avec, sur le seed ; 20 ms à 4 400 valeurs. Le coût
+  vient de la politique de lecture des valeurs, évaluée ligne à ligne.
+- **Recherche plein texte des valeurs** : 1,8 s sous RLS, et l'index GIN d'expression n'est pas employé, faute
+  d'opérateur `leakproof`. Le même index répond en 0,03 ms sans RLS. Interroger l'index d'abord, puis appliquer
+  `app.can_read_card` aux seules lignes trouvées, prend 9,4 ms.
+
+**Conséquence, en proposition à arbitrer avant T6** (spécification §10) :
+- un index propre, une colonne `tsvector` tenue par déclencheur, parce qu'un libellé de choix exige de lire la définition ;
+- une lecture `security definer` qui applique les droits aux seules affaires trouvées.
+
+Pour T4 (spécification §8), la vérification de la valeur ne doit pas réévaluer les droits ligne à ligne.
+
+**Écart constaté hors de l'unité** : `npm run typecheck` est rouge sur `main`. Le témoin
+`database.types.test-d.ts` ne liste pas les deux fonctions publiques de la `0151` (`CRM-127`). Sa session est prévenue ;
+le bloc des tables, lui, est tenu par ce commit.

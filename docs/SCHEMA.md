@@ -2450,6 +2450,22 @@ rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur
 channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
 `0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
 déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0152` — les champs communs de portée espace, en base (`CRM-112` T1 ; décisions 642, 658, 664 et 665 ; livrée en développement le 2026-11-02)
+
+`docs/SPEC-champs-communs.md` §3, §4. **`public.card_common_fields`** (`id`, `workspace_id`, `key` — forme
+`^[a-z0-9]+(-[a-z0-9]+)*$`, unique par espace, archivés compris, **non modifiable** —, `label`, `type` — les quinze types de
+`form_fields` —, `options` — mêmes contraintes —, `help_text`, `is_listed`, `position` attribuée en fin de liste,
+`archived_at`, dates) ; `UNIQUE (id, workspace_id)`. **`public.card_common_field_values`** (`card_id`, `field_id`,
+`workspace_id`, `value`, `updated_by` posé par la base, dates) ; clé primaire `(card_id, field_id)` ; **deux clés
+composites par `workspace_id`**, vers `cards` et vers `card_common_fields` : une valeur ne répond qu'à un champ de l'espace de
+son affaire. **`app.validate_field_value(type, options, clé, valeur, espace)`** : la validation par type, extraite
+d'`app.valider_valeur_champ`, qui garde sa signature et délègue ; la clé est un paramètre de plus que la proposition du
+§3.3, car chaque refus la nomme. **Politiques** : `card_common_fields_select_member`, `card_common_fields_insert_admin`,
+`card_common_fields_update_admin`, `card_common_field_values_select` (`app.can_read_card`), `card_common_field_values_insert`
+et `card_common_field_values_update` (`app.can_write_card`). **Privilèges** : aucune suppression ; ni la clé ni le type ne se
+modifient. **Retrait** : retirer les deux tables et `app.validate_field_value`, en reposant le corps
+d'`app.valider_valeur_champ` de la migration `0131`.
+
 ### Migration `0151` — la relève date `last_sync_at`, et le droit de tester une connexion (`CRM-127` T2, décision 816 ; livrée en développement le 2026-11-02)
 
 `docs/SPEC-mail-subsystem.md` §23.2, §23.3 ; INC-340. Deux fonctions ; **aucune table, aucune colonne, aucune donnée.**

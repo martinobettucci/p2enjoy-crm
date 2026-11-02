@@ -13,6 +13,15 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-112` T1 — les champs communs de portée espace, en base (migration 152)
+
+- Deux tables, `card_common_fields` (les définitions, propres à l'espace) et `card_common_field_values` (une valeur par
+  affaire et par champ), avec leurs politiques. Un administrateur définit les champs, la lectrice lit sans écrire, et un
+  membre qui écrit l'affaire écrit sa valeur.
+- La validation par type est partagée par les champs de workflow et les champs communs (`app.validate_field_value`).
+- Aucun écran ne les montre encore (T3). Les mesures du filtre et de la recherche sont au §8 et au §10 de
+  `docs/SPEC-champs-communs.md`.
+
 - **`CRM-127` T2 et T3 — la relève date `last_sync_at`, et le test de connexion d'un compte de messagerie passe par une
   fonction edge** (décision 816, INC-340 ; `docs/SPEC-mail-subsystem.md` §23). Migration `0151` :
   `mail_inbound_account_record_sync`, réservée à `service_role`, que `mail-sync` appelle à la fin de chaque relève allée

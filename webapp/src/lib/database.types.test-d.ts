@@ -157,6 +157,12 @@ type _tables = Expect<
     // client n'écrit ni `checked_at`, ni `checked_by`, ni `placement_id` (privilèges de colonne) ; un point d'étape ne se
     // renomme ni ne se retire (`step_item_locked`) ; une exigence ne vise que l'étape de départ de sa transition.
     | 'card_checklist_items'
+    // `0152` de `CRM-112` TRANCHE T1 ajoute `card_common_fields` et `card_common_field_values` (docs/SPEC-champs-communs.md
+    // §3, §4). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `key` et `type` d'une définition ne se réécrivent pas, et rien ne se supprime
+    // (privilèges de colonne) ; `position` et `updated_by` sont posés par la base ; une valeur passe la règle de son type
+    // (`invalid_field_value`) et n'appartient qu'à un champ de l'espace de son affaire (clés composites par `workspace_id`).
+    | 'card_common_field_values'
+    | 'card_common_fields'
     | 'card_templates'
     // `0132` de `CRM-069` TRANCHE T1 ajoute `labels` et `card_labels` (docs/SPEC-etiquettes-digest.md §2). CE QUI ÉCHAPPE
     // AU GÉNÉRATEUR : `card_labels.Insert` expose `workspace_id` et `created_by`, que la base pose (privilèges de colonne,
@@ -1178,6 +1184,11 @@ type _vueDerivationColonnes = Expect<
 // docs/SPEC-rattachements.md §5. CE QUI ÉCHAPPE AU GÉNÉRATEUR : leurs refus nommés, `card_not_found`, `channel_not_found`,
 // `channel_closed`, `already_attached`, `last_placement`, `field_values_would_be_lost`, et `42501 forbidden`. Le compte
 // s'accroît de deux.
+// `0151` de `CRM-127` TRANCHE T2 ajoute `mail_inbound_account_record_sync` (rend l'horodatage posé par la base, réservée à la
+// clé de service) et `authorize_mail_connection_test` (rend `undefined`) — docs/SPEC-mail-subsystem.md §23.2, §23.3. CE QUI
+// ÉCHAPPE AU GÉNÉRATEUR : `p_target` est une liste fermée — `inbound`, `outbound` (`22023 invalid_target`) — ; ses refus
+// nommés, `not_authenticated`, `not_found` (404, sans divulgation), `disabled` et `too_soon` (30 s) ; `account_not_found`
+// pour la première. Le compte s'accroît de deux.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1248,6 +1259,8 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'mail_folder_map_reparenter'
     | 'mail_inbound_account_credentials'
     | 'mail_inbound_account_record_check'
+    | 'mail_inbound_account_record_sync'
+    | 'authorize_mail_connection_test'
     | 'marquer_message_range'
     | 'mark_messages_read'
     | 'depots_envoi_abandonnes'

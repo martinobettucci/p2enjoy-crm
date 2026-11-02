@@ -508,6 +508,111 @@ export type Database = {
           },
         ]
       }
+      card_common_field_values: {
+        Row: {
+          card_id: string
+          created_at: string
+          field_id: string
+          updated_at: string
+          updated_by: string | null
+          value: Json | null
+          workspace_id: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          field_id: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json | null
+          workspace_id: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          field_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_common_field_values_card_fkey"
+            columns: ["card_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "card_common_field_values_field_fkey"
+            columns: ["field_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "card_common_fields"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "card_common_field_values_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      card_common_fields: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          help_text: string | null
+          id: string
+          is_listed: boolean
+          key: string
+          label: string
+          options: Json
+          position: number
+          type: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          help_text?: string | null
+          id?: string
+          is_listed?: boolean
+          key: string
+          label: string
+          options?: Json
+          position: number
+          type: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          help_text?: string | null
+          id?: string
+          is_listed?: boolean
+          key?: string
+          label?: string
+          options?: Json
+          position?: number
+          type?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_common_fields_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_contacts: {
         Row: {
           card_id: string

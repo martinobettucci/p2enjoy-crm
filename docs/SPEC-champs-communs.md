@@ -181,6 +181,16 @@ garde : désarchiver les rend.
 - **Le filtre s'applique au serveur**, dans la même requête paginée que les filtres existants (`docs/SPEC-cards.md`
   §12.5 et §12.6), par une jointure sur `card_common_field_values`. Le total et la pagination restent exacts. Le coût est
   mesuré en T1 sur le seed.
+- **Mesuré en T1, le 2026-11-02**, sous le rôle réel de Driss (RLS comprise), dans une transaction annulée :
+  - **sur le seed** (44 affaires, une valeur par affaire), la liste du canal le plus peuplé passe de 11 ms à **40 ms** avec
+    le filtre « contient ». Le surcoût est la politique de lecture de `card_common_field_values`
+    (`app.can_read_card`), évaluée sur chaque valeur du champ : 25 ms pour 44 lignes ;
+  - **à 4 400 valeurs** (100 champs × 44 affaires), le filtre reste à **20 ms**, car l'index `field_id` restreint d'abord
+    aux 44 valeurs du champ.
+
+  **Conséquence pour T4** : le coût croît avec le nombre d'affaires qui portent le champ, à raison d'environ 0,5 ms
+  chacune. Le placement est déjà lu sous sa RLS ; T4 doit donc vérifier la valeur sans réévaluer les droits ligne à ligne
+  **[proposition]**.
 - **L'état de la vue** (filtres actifs) suit la règle existante de la liste, sans stockage nouveau.
 
 ## 9. Modèles d'email (décision 664, complément 2)
@@ -207,6 +217,19 @@ garde : désarchiver les rend.
 - Les **droits** sont ceux de l'affaire : `recherche_globale` reste `security invoker`, et la RLS de
   `card_common_field_values` fait le reste (`docs/SPEC-recherche.md`). La forme de l'index (colonne générée sur `cards`
   ou index propre) est mesurée en T1.
+- **Mesuré en T1, le 2026-11-02**, à 4 400 valeurs :
+  - **sous la RLS**, la recherche plein texte (`to_tsvector('app.francais_sans_accent', value #>> '{}') @@ …`) prend
+    **1,8 s**, avec ou sans index GIN d'expression. L'opérateur n'étant pas `leakproof`, le planificateur évalue
+    `app.can_read_card` sur chaque ligne avant d'employer l'index ;
+  - **sans RLS**, le même index répond en **0,03 ms** ;
+  - **en employant d'abord l'index, puis en appliquant les droits aux seules lignes trouvées**, la recherche prend
+    **9,4 ms**.
+
+  **Forme retenue pour T6 [proposition, à arbitrer]** : un index propre sur `card_common_field_values`, une colonne
+  `tsvector` tenue par déclencheur, car le libellé d'un choix ne s'obtient qu'en lisant les options de la définition et
+  aucune expression d'index ne peut joindre. La lecture passe par une fonction `security definer` qui interroge l'index puis
+  applique `app.can_read_card` aux seules affaires trouvées, et ne rend jamais un identifiant illisible.
+  `recherche_globale` reste `security invoker`.
 
 ## 11. Connecteur MCP (décisions 642 et 664, arbitrage 3)
 

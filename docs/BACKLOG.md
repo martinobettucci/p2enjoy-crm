@@ -17329,9 +17329,15 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
 
 - [x] **Spécification**, validée le 2026-10-24 (décision 665) : `docs/SPEC-champs-communs.md` §1 à §16. Le code
       attend la tranche T2 de `CRM-111`.
-- [@] **T1** — mesures (coût du filtre et de l'index de recherche) ; migration : deux tables, politiques,
+- [x] **T1** — mesures (coût du filtre et de l'index de recherche) ; migration : deux tables, politiques,
       `app.validate_field_value` partagée ; pgTAP ; API aux jetons réels ; `docs/SCHEMA.md` ; contrat de déploiement.
-      *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-64) depuis 2026-11-02 16:42 UTC — reprise de sa propre prise du 2026-11-01 14:56 UTC, après l'arrêt des sessions ; état avant : [ ]*
+      *Faite le 2026-11-02*, migration `0152` appliquée en développement :
+      - pgTAP `0141` **18/18**, sans résidu ; `e2e/api/champs-communs.spec.ts` **2/2** aux vrais jetons ; types régénérés,
+        `types:check` vert ;
+      - mesures au §8 et au §10 de la spécification : le filtre coûte 40 ms sur le seed et 20 ms à 4 400 valeurs ; la
+        recherche prend 1,8 s sous RLS (index inemployé) contre 9,4 ms en interrogeant l'index puis en appliquant les
+        droits. La forme de l'index de T6 est proposée, à arbitrer ;
+      - `docs/SCHEMA.md` « Migration `0152` », contrat de déploiement (§3, ligne 152).
 - [ ] **T2** — exigence par une transition (`common_field_id`), sixième vérification de `move_card`, versions et
       copies, refus `common_field_in_use` et `common_field_archived` ; pgTAP ; API.
 - [ ] **T3** — écrans : Réglages ▸ « Champs de l'affaire », exigence dans l'éditeur de workflow, partie commune de la
