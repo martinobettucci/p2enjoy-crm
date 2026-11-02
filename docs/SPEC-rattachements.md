@@ -474,9 +474,10 @@ matrice ; d'ici là, c'est `affaires`.
 
 **Famille `recettes`** : `crm_profitability_report` suit le nouveau contrat de `rentabilite_affaires` (§6).
 
-**Familles `structure` et `temps`** (décision 814, les deux questions de `CLAUDE.md` posées pour T4) : `crm_search`
-(`structure` ▸ `consulter`) rend les rattachements lisibles d'une affaire et le lien du §9 ; `crm_time_report`
-(`temps` ▸ `consulter`) rend la ventilation partagée du §6. Aucune famille ni case nouvelle.
+**Familles `reference` et `temps`** (décision 814, les deux questions de `CLAUDE.md` posées pour T4) : `crm_search`
+(`reference` ▸ `consulter`, sa déclaration réelle — la question la disait `structure`, à tort) rend les rattachements
+lisibles d'une affaire par son `subtitle`, que `recherche_globale` compose ; `crm_time_report` (`temps` ▸ `consulter`)
+rend la ventilation partagée du §6 et ne compte une saisie partagée qu'une fois. Aucune famille ni case nouvelle.
 
 ## 12. Seed
 

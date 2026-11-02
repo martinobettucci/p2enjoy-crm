@@ -38214,3 +38214,25 @@ plus ancien, par un `lateral … limit 1`.
 **Conséquences.** T4 change les contrats de `recherche_globale` et de `temps_valorise`, avec leurs consommateurs : la
 webapp (`recherche.ts`, `rapport-temps.ts`) et les deux outils. `docs/SPEC-rattachements.md` §6, §9 et §11 le disent ;
 `docs/SPEC-recherche.md` et `docs/SPEC-temps.md` le diront avec le code.
+
+### `CRM-111` T4 — le découpage (2026-11-02)
+
+*2026-11-02, session interactive, reprise après l'interruption de la veille.* **Problème** : la décision 814 change le
+contrat de deux fonctions, et la ventilation partagée du temps valorisé doit se voir à l'écran — travail d'interface que
+l'entrée de T4 (« pgTAP et API ») ne nommait pas. **Découpage** (backlog) : T4.1 la base et ses consommateurs, sans
+changement visible hors du sous-titre d'une affaire trouvée ; T4.2 la marque « partagée » du rapport, avec le design
+system, les captures et le manuel. **Pourquoi les consommateurs vont avec la base** : une saisie partagée rendue sur
+chaque rattachement serait comptée deux fois par les totaux actuels du rapport et de `crm_time_report` ; les livrer
+séparément ferait passer `main` par un état faux, même invisible tant que le seed ne pose qu'un rattachement par affaire.
+
+**Précision de la décision 814** : `crm_search` est déclaré dans la famille `reference` (`mcp/crm_mcp/outils/structure.py`),
+non `structure` comme la question le disait ; la réponse du responsable — une famille existante, aucune case nouvelle —
+tient telle quelle. **Ce que `crm_search` reçoit sans changer de code** : son `subtitle` est le `sous_titre` de
+`recherche_globale`, qui nommera les rattachements lisibles.
+
+**Inventaire de la recherche** : `recherche_globale` (`security invoker`) rend `sous_titre` = le channel du plus ancien
+rattachement lisible ; la webapp compose le lien depuis un plongement `card_placements` de l'affaire et le mène à ce même
+plus ancien. Le type de retour ne change pas : le sous-titre devient la liste des channels lisibles, et le lien, le
+premier dans l'ordre des tracks puis des channels. **Inventaire du temps** : `temps_valorise` (`security invoker`) range
+une saisie d'affaire sous le channel du plus ancien rattachement ; le type de retour gagne `shared`, ce qui impose de
+recréer la fonction.

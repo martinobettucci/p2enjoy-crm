@@ -17266,6 +17266,18 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       sans famille ni case nouvelle. Les trois autres lectures (entonnoir, figées et relances, Ma journée) lisent déjà
       chaque rattachement : T4 le prouve à deux rattachements.
       *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-11-02 16:36 UTC — renouvelée après l'interruption de la veille (première prise : 2026-11-01 20:35 UTC) — état avant : [ ]*
+      **Découpage, arrêté le 2026-11-02 (journal, « `CRM-111` T4 — le découpage »)** :
+      - [ ] **T4.1 — la base et ses consommateurs** : une migration au premier numéro libre (au-delà de la 148) —
+        `recherche_globale` compose le sous-titre d'une affaire des channels rattachés lisibles, dans l'ordre des tracks
+        puis des channels, et cherche dans toutes leurs prochaines actions ; `temps_valorise` rend une ligne par
+        channel rattaché lisible pour une saisie posée sur l'affaire, avec la colonne `shared`. La webapp mène le lien
+        d'une affaire trouvée au premier rattachement dans cet ordre (`recherche.ts`) et ne compte une saisie partagée
+        qu'une fois dans les totaux du rapport (`rapport-temps.ts`) ; `crm_time_report` rend `shared` et en fait autant.
+        L'entonnoir, les affaires figées et leur relance, et Ma journée, qui lisent déjà chaque rattachement, sont
+        prouvés à deux rattachements. Livrables : pgTAP, unitaires (webapp et connecteur), API aux jetons réels,
+        `docs/SPEC-recherche.md`, `docs/SPEC-temps.md`, SCHEMA, contrat de déploiement.
+      - [ ] **T4.2 — l'écran** : la marque « partagée » dans le rapport de temps (`docs/DESIGN_SYSTEM.md` avant le
+        code), E2E, captures observées, manuel.
 - [ ] **T5 — rentabilité ventilée** (§6) : une ligne par rattachement × devise, colonne `shared`, total compté une fois ;
       écran ; `docs/SPEC-recettes.md` §5 et outil `crm_profitability_report`.
 - [ ] **T6 — messagerie** (§7, décision 657) : dossier `CRM/Affaires/<affaire>` et déplacement des dossiers existants
