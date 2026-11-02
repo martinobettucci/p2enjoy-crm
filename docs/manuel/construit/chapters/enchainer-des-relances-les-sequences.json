@@ -579,6 +579,27 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "enchainer-des-relances-les-sequences/apercu-d-un-palier.jpg",
+			"alt": "« Aperçu » sur la ligne d'un palier : l'objet et le corps de son modèle, sur les données d'exemple",
+			"width": 889,
+			"height": 456
+		},
+		{
+			"type": "image",
+			"src": "enchainer-des-relances-les-sequences/previsualiser-la-sequence.jpg",
+			"alt": "Le titre « Paliers » et le bouton « Prévisualiser la séquence »",
+			"width": 891,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "enchainer-des-relances-les-sequences/apercu-de-la-sequence.jpg",
+			"alt": "L'aperçu de la séquence : chaque palier, son rang et ses deux délais, puis « Fermer l'aperçu »",
+			"width": 891,
+			"height": 1251
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -661,6 +682,13 @@
 					"text": ", et un modèle employé par deux paliers n'est rendu qu'une fois. Si le rendu\néchoue, « Réessayer » le redemande ; un modèle devenu illisible est signalé en une phrase."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "enchainer-des-relances-les-sequences/apercu-en-echec.jpg",
+			"alt": "Un aperçu qui n'a pas pu être rendu, et « Réessayer »",
+			"width": 865,
+			"height": 73
 		},
 		{
 			"type": "heading",

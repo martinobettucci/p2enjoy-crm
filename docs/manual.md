@@ -3515,6 +3515,12 @@ Pour lire ce qu'une cadence enverra sans quitter la fiche, deux boutons :
 - **« Prévisualiser la séquence »**, à droite du titre « Paliers », montre tous les paliers l'un sous l'autre, chacun
   titré par son rang et ses deux délais : « Palier 2 · J+7 — J+10 depuis l'armement ». « Fermer l'aperçu » le referme.
 
+![« Aperçu » sur la ligne d'un palier : l'objet et le corps de son modèle, sur les données d'exemple](manuel/images/enchainer-des-relances-les-sequences/apercu-d-un-palier.jpg)
+
+![Le titre « Paliers » et le bouton « Prévisualiser la séquence »](manuel/images/enchainer-des-relances-les-sequences/previsualiser-la-sequence.jpg)
+
+![L'aperçu de la séquence : chaque palier, son rang et ses deux délais, puis « Fermer l'aperçu »](manuel/images/enchainer-des-relances-les-sequences/apercu-de-la-sequence.jpg)
+
 **LES DONNÉES SONT FICTIVES**, et l'écran le dit au-dessus de chaque aperçu : « Aperçu avec des données d'exemple :
 M. Dupont, ENTREPRISE INC, Projet exemple. » L'affaire et le contact sont toujours les mêmes, avec un montant de
 12500.00 EUR et une prochaine action datée. Aucune variable ne reste vide. Pour voir un modèle appliqué à une **vraie**
@@ -3527,6 +3533,8 @@ n'avez pas d'identité d'envoi par défaut : l'expéditeur est fictif. »
 
 **Rien n'est calculé avant votre clic**, et un modèle employé par deux paliers n'est rendu qu'une fois. Si le rendu
 échoue, « Réessayer » le redemande ; un modèle devenu illisible est signalé en une phrase.
+
+![Un aperçu qui n'a pas pu être rendu, et « Réessayer »](manuel/images/enchainer-des-relances-les-sequences/apercu-en-echec.jpg)
 
 ### 16.4 Supprimer une séquence
 

@@ -2264,6 +2264,72 @@
 			]
 		},
 		{
+			"fichier": "enchainer-des-relances-les-sequences/apercu-d-un-palier.jpg",
+			"largeur": 889,
+			"hauteur": 456,
+			"chapitre": "enchainer-des-relances-les-sequences",
+			"section": "previsualiser-les-paliers-sur-des-donnees-d-exemple",
+			"pleinePage": false,
+			"libelles": [
+				"1",
+				"1 J+3 · Relance sans réponse Aperçu Aperçu avec des données d'exemple : M. Dupont, ENTREPRISE INC, Projet exemple. Vous n'avez pas d'identité d'envoi par défaut : l'expéditeur est fictif. Objet Où en est Projet exemple ? Corps Bonjour M. Dupont, je me permets de revenir vers vous au sujet de Projet exemple (12500.00 EUR), actuellement à l'étape « Proposition envoyée ». Avez-vous pu avancer de votre côté ? Bien à vous, Votre nom",
+				"Aperçu",
+				"Aperçu avec des données d'exemple : M. Dupont, ENTREPRISE INC, Projet exemple.",
+				"Aperçu avec des données d'exemple : M. Dupont, ENTREPRISE INC, Projet exemple. Vous n'avez pas d'identité d'envoi par défaut : l'expéditeur est fictif.",
+				"Aperçu du palier 1",
+				"Bonjour M. Dupont, je me permets de revenir vers vous au sujet de Projet exemple (12500.00 EUR), actuellement à l'étape « Proposition envoyée ». Avez-vous pu avancer de votre côté ? Bien à vous, Votre nom",
+				"Corps",
+				"Descendre le palier J+3 · Relance sans réponse",
+				"J+3 · Relance sans réponse",
+				"Monter le palier J+3 · Relance sans réponse",
+				"Objet",
+				"Où en est Projet exemple ?",
+				"Retirer le palier J+3 · Relance sans réponse",
+				"Vous n'avez pas d'identité d'envoi par défaut : l'expéditeur est fictif."
+			]
+		},
+		{
+			"fichier": "enchainer-des-relances-les-sequences/apercu-de-la-sequence.jpg",
+			"largeur": 891,
+			"hauteur": 1251,
+			"chapitre": "enchainer-des-relances-les-sequences",
+			"section": "previsualiser-les-paliers-sur-des-donnees-d-exemple",
+			"pleinePage": false,
+			"libelles": [
+				"Aperçu avec des données d'exemple : M. Dupont, ENTREPRISE INC, Projet exemple.",
+				"Aperçu avec des données d'exemple : M. Dupont, ENTREPRISE INC, Projet exemple. Vous n'avez pas d'identité d'envoi par défaut : l'expéditeur est fictif.",
+				"Aperçu de la séquence",
+				"Aperçu de la séquence Aperçu avec des données d'exemple : M. Dupont, ENTREPRISE INC, Projet exemple. Vous n'avez pas d'identité d'envoi par défaut : l'expéditeur est fictif. Palier 1 · J+3 — J+3 depuis l'armement Objet Où en est Projet exemple ? Corps Bonjour M. Dupont, je me permets de revenir vers vous au sujet de Projet exemple (12500.00 EUR), actuellement à l'étape « Proposition envoyée ». Avez-vous pu avancer de votre côté ? Bien à vous, Votre nom Palier 2 · J+7 — J+10 depuis l'armement Objet Prise de contact Corps Bonjour M. Dupont, nous accompagnons ENTREPRISE INC sur des sujets proches de Prospection. Seriez-vous disponible pour en échanger ? Bien à vous, Votre nom vous@entreprise.example Palier 3 · J+14 — J+24 depuis l'armement Objet Où en est Projet exemple ? Corps Bonjour M. Dupont, je me permets de revenir vers vous au sujet de Projet exemple (12500.00 EUR), actuellement à l'étape « Proposition envoyée ». Avez-vous pu avancer de votre côté ? Bien à vous, Votre nom Fermer l'aperçu",
+				"Bonjour M. Dupont, je me permets de revenir vers vous au sujet de Projet exemple (12500.00 EUR), actuellement à l'étape « Proposition envoyée ». Avez-vous pu avancer de votre côté ? Bien à vous, Votre nom",
+				"Bonjour M. Dupont, nous accompagnons ENTREPRISE INC sur des sujets proches de Prospection. Seriez-vous disponible pour en échanger ? Bien à vous, Votre nom vous@entreprise.example",
+				"Corps",
+				"Fermer l'aperçu",
+				"Objet",
+				"Où en est Projet exemple ?",
+				"Palier 1 · J+3 — J+3 depuis l'armement",
+				"Palier 1 · J+3 — J+3 depuis l'armement Objet Où en est Projet exemple ? Corps Bonjour M. Dupont, je me permets de revenir vers vous au sujet de Projet exemple (12500.00 EUR), actuellement à l'étape « Proposition envoyée ». Avez-vous pu avancer de votre côté ? Bien à vous, Votre nom",
+				"Palier 2 · J+7 — J+10 depuis l'armement",
+				"Palier 2 · J+7 — J+10 depuis l'armement Objet Prise de contact Corps Bonjour M. Dupont, nous accompagnons ENTREPRISE INC sur des sujets proches de Prospection. Seriez-vous disponible pour en échanger ? Bien à vous, Votre nom vous@entreprise.example",
+				"Palier 3 · J+14 — J+24 depuis l'armement",
+				"Palier 3 · J+14 — J+24 depuis l'armement Objet Où en est Projet exemple ? Corps Bonjour M. Dupont, je me permets de revenir vers vous au sujet de Projet exemple (12500.00 EUR), actuellement à l'étape « Proposition envoyée ». Avez-vous pu avancer de votre côté ? Bien à vous, Votre nom",
+				"Prise de contact",
+				"Vous n'avez pas d'identité d'envoi par défaut : l'expéditeur est fictif."
+			]
+		},
+		{
+			"fichier": "enchainer-des-relances-les-sequences/apercu-en-echec.jpg",
+			"largeur": 865,
+			"hauteur": 73,
+			"chapitre": "enchainer-des-relances-les-sequences",
+			"section": "previsualiser-les-paliers-sur-des-donnees-d-exemple",
+			"pleinePage": false,
+			"libelles": [
+				"L'aperçu n'a pas pu être rendu.",
+				"L'aperçu n'a pas pu être rendu. Réessayer",
+				"Réessayer"
+			]
+		},
+		{
 			"fichier": "enchainer-des-relances-les-sequences/armer.jpg",
 			"largeur": 650,
 			"hauteur": 376,
@@ -2305,11 +2371,15 @@
 			"pleinePage": false,
 			"libelles": [
 				"1",
-				"1 J+3 · Relance sans réponse",
+				"1 J+3 · Relance sans réponse Aperçu",
 				"2",
-				"2 J+7 · Prise de contact",
+				"2 J+7 · Prise de contact Aperçu",
 				"3",
-				"3 J+14 · Relance sans réponse",
+				"3 J+14 · Relance sans réponse Aperçu",
+				"Aperçu",
+				"Aperçu du palier 1",
+				"Aperçu du palier 2",
+				"Aperçu du palier 3",
 				"Descendre le palier J+14 · Relance sans réponse",
 				"Descendre le palier J+3 · Relance sans réponse",
 				"Descendre le palier J+7 · Prise de contact",
@@ -2322,6 +2392,18 @@
 				"Retirer le palier J+14 · Relance sans réponse",
 				"Retirer le palier J+3 · Relance sans réponse",
 				"Retirer le palier J+7 · Prise de contact"
+			]
+		},
+		{
+			"fichier": "enchainer-des-relances-les-sequences/previsualiser-la-sequence.jpg",
+			"largeur": 891,
+			"hauteur": 73,
+			"chapitre": "enchainer-des-relances-les-sequences",
+			"section": "previsualiser-les-paliers-sur-des-donnees-d-exemple",
+			"pleinePage": false,
+			"libelles": [
+				"Paliers",
+				"Prévisualiser la séquence"
 			]
 		},
 		{

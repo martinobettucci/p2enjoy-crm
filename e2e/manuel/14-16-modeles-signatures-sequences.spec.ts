@@ -96,6 +96,48 @@ test('les séquences : la liste, une nouvelle, les paliers', async ({ page }) =>
 	await illustrer(page, { chapitre: SEQUENCES, section: 'changer-l-ordre-des-paliers', nom: 'paliers', cibles: [fiche.getByTestId('ligne-palier').first(), fiche.getByTestId('ligne-palier').last()] })
 })
 
+// @spec CRM-125 (docs/BACKLOG.md) — tranche T3 : les images du §16.3, l'aperçu des paliers sur le jeu d'exemple
+//       (docs/SPEC-modeles-emails.md §14.5 ; docs/manual.md §16.3)
+// L'administratrice du seed n'a aucune identité d'envoi : la mention de l'expéditeur fictif est donc à l'écran. L'échec du
+// rendu est simulé sur la seule route de la fonction, comme au chapitre 18 : rien n'est écrit.
+test('les séquences : l’aperçu d’un palier, de la séquence entière, et son échec', async ({ page }) => {
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto('/reglages/sequences-relance')
+	await page.getByTestId('ligne-sequence').filter({ hasText: 'Relance en trois temps' }).getByTestId('modifier-sequence').click()
+	const fiche = page.getByTestId('fiche-sequence')
+	const lignes = fiche.getByTestId('ligne-palier')
+	await expect(lignes).toHaveCount(3)
+	// Les aperçus dépassent la fenêtre de 900 px : elle est agrandie le temps de ces images (comme au chapitre 14).
+	await page.setViewportSize({ width: 1440, height: 1600 })
+
+	await lignes.nth(0).getByTestId('apercu-palier').click()
+	const bloc = lignes.nth(0).getByTestId('apercu-palier-bloc')
+	await expect(bloc.getByTestId('mention-donnees-exemple')).toBeVisible()
+	await expect(bloc.getByTestId('apercu-palier-rendu-objet')).toBeVisible()
+	await illustrer(page, { chapitre: SEQUENCES, section: 'previsualiser-les-paliers-sur-des-donnees-d-exemple', nom: 'apercu-d-un-palier', cibles: [lignes.nth(0).getByTestId('apercu-palier'), bloc] })
+	await lignes.nth(0).getByTestId('apercu-palier').click()
+
+	const ouvrir = fiche.getByTestId('apercu-sequence-ouvrir')
+	await illustrer(page, { chapitre: SEQUENCES, section: 'previsualiser-les-paliers-sur-des-donnees-d-exemple', nom: 'previsualiser-la-sequence', cibles: [fiche.getByRole('heading', { name: 'Paliers' }), ouvrir] })
+	await ouvrir.click()
+	const panneau = page.getByTestId('apercu-sequence')
+	await expect(panneau.getByTestId('apercu-sequence-rendu')).toHaveCount(3)
+	await illustrer(page, { chapitre: SEQUENCES, section: 'previsualiser-les-paliers-sur-des-donnees-d-exemple', nom: 'apercu-de-la-sequence', cibles: [panneau] })
+	await panneau.getByTestId('fermer-apercu-sequence').click()
+
+	// L'aperçu déjà rendu est gardé : la fiche est rouverte pour que le clic redemande, et échoue.
+	await page.route('**/rest/v1/rpc/render_mail_template_sample', (route) => route.fulfill({ status: 500, contentType: 'application/json', body: '{"message":"erreur simulée"}' }))
+	await page.reload()
+	await page.getByTestId('ligne-sequence').filter({ hasText: 'Relance en trois temps' }).getByTestId('modifier-sequence').click()
+	await expect(lignes).toHaveCount(3)
+	await lignes.nth(0).getByTestId('apercu-palier').click()
+	const reessayer = page.getByRole('button', { name: 'Réessayer' }).first()
+	await expect(reessayer).toBeVisible()
+	await illustrer(page, { chapitre: SEQUENCES, section: 'previsualiser-les-paliers-sur-des-donnees-d-exemple', nom: 'apercu-en-echec', cibles: [reessayer.locator('xpath=ancestor::*[@role="alert"][1]')] })
+	await page.unrouteAll({ behavior: 'wait' })
+	await page.setViewportSize({ width: 1440, height: 900 })
+})
+
 test('armer puis interrompre une relance sur une affaire figée', async ({ page, request }) => {
 	// Armer n'écrit rien dans le fil (migration 0119) ; un tic du planificateur entre l'armement et l'interruption
 	// mettrait pourtant un premier palier en file : il est retiré avec l'inscription.

@@ -18083,6 +18083,11 @@ Question du connecteur : sans objet (décision 809).
       régression ; captures `docs/captures/CRM-125/` observées ; manuel §16.3 (et §16.7 corrigé) ; changelog.
       **Mesure** : la lectrice n'ouvre pas la fiche (« Modifier » éteint, `CRM-093`), donc pas l'aperçu ; le §14.5 de
       la spécification, qui disait le contraire, est corrigé ; la fonction lui reste lisible (preuve API).
+      *Complété le 2026-11-02 par la session de livraison* : le §16.3 du manuel citait l'aperçu sans aucune image, et
+      `scripts/verify-manual.sh` était rouge (166/174, huit « élément cité sans image »). Quatre images ajoutées par
+      `e2e/manuel/14-16-modeles-signatures-sequences.spec.ts` (un palier déplié, « Paliers » et « Prévisualiser la
+      séquence », la séquence entière, l'échec et « Réessayer », simulé sur la seule route de la fonction) ; « paliers »
+      renouvelée (les boutons « Aperçu ») ; chapitre 14-16 5/5 ; `verify-manual` **167/167**.
 - [P] **T4 — livraison en production et constat** : migration `0145` appliquée par la fenêtre (§3), webapp de `main` ;
       constat du responsable : un aperçu de palier et l'aperçu de la séquence.
 
