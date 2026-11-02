@@ -17332,8 +17332,9 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         et la mention ; unitaires 617 (rentabilité, écran du temps, i18n) ; E2E `rentabilite-partage` et voisins 9/9 ;
         capture `rentabilite-partage-xl-1440` observée ; manuel §29.3 et image `affaire-partagee` ; `verify-manual`
         167 contrôles, aucune anomalie. Production : la webapp de `main`, avec la `0153`.
-- [ ] **T6 — messagerie** (§7, décision 657) : dossier `CRM/Affaires/<affaire>` et déplacement des dossiers existants
+- [@] **T6 — messagerie** (§7, décision 657) : dossier `CRM/Affaires/<affaire>` et déplacement des dossiers existants
       par `mail-sync` ; cadences et variables des modèles par rattachement ; preuves IMAP réelles.
+      *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable, session 4891a451) depuis 2026-11-02 22:58 UTC — état avant : [ ]*
 - [ ] **T7 — webapp** (§8) : fiche à partie commune et blocs, pastille « aussi rattachée à », rattacher, archiver,
       retirer avec confirmation ; `docs/DESIGN_SYSTEM.md` avant le code ; unitaires ; captures aux quatre paliers ;
       `docs/manual.md`, chapitre « Rattacher une affaire à plusieurs channels ».
