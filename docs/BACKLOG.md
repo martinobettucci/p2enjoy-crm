@@ -17307,9 +17307,8 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         des deux tableaux — deux défauts trouvés en regardant les captures ; unitaires (rapport, écran, i18n) ; E2E
         `temps-partage` 3/3 ; captures `docs/captures/CRM-111/` observées à 1440 et 390 ; manuel §28.4 et son image
         `rapport-partage` ; `verify-manual` sans anomalie de cette unité. Production : la webapp de `main`, avec la `0150`.
-- [@] **T5 — rentabilité ventilée** (§6) : une ligne par rattachement × devise, colonne `shared`, total compté une fois ;
+- [x] **T5 — rentabilité ventilée** (§6) : une ligne par rattachement × devise, colonne `shared`, total compté une fois ;
       écran ; `docs/SPEC-recettes.md` §5 et outil `crm_profitability_report`.
-      *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable, session 4891a451) depuis 2026-11-02 22:35 UTC — état avant : [ ]*
       **Découpage, arrêté le 2026-11-02 (journal, « `CRM-111` T5 — le découpage »)** :
       - [x] **T5.1 — la base et ses consommateurs** : une migration au premier numéro libre — `rentabilite_affaires` rend
         une ligne par **rattachement lisible × devise**, l'état (`node_kind`), l'archivage et le chemin du rattachement,
@@ -17323,11 +17322,16 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         `0142` 10 assertions, `0140` et `0087` ajustées, toutes les suites 130 fichiers et 4803 assertions ; unitaires
         webapp 5246 et témoin de types ; API 11/11 ; connecteur `verify-mcp --rapide` 108 contrôles ; E2E « Rentabilité »
         5/5. Production : la `0153` avec la webapp et l'image `mcp` de `main` (`docs/PROD_MIGRATIONS.md` §3).
-      - [@] **T5.2 — l'écran** : la marque « partagée » d'une ligne d'affaire de « Rentabilité » et la mention sous le
+      - [x] **T5.2 — l'écran** : la marque « partagée » d'une ligne d'affaire de « Rentabilité » et la mention sous le
         tableau (`docs/DESIGN_SYSTEM.md` avant le code, forme du §5.54), E2E, captures observées, manuel.
         *Forme arrêtée le 2026-11-03, avant le code (`docs/DESIGN_SYSTEM.md` §5.60, « Une affaire partagée »)* : la
         pilule du §5.54 réemployée, sans chemin (la ligne de channel situe l'affaire) ; une mention sous le tableau ;
         rien dans le bloc de la fiche. Connecteur : `shared` rendu depuis T5.1, aucune question MCP nouvelle.
+        *Livrée en développement le 2026-11-03 (journal, « `CRM-111` T5.2 — la marque « partagée » de Rentabilité »)* :
+        la pilule dans la cellule « État » — d'abord après le titre, qu'elle tronquait jusqu'à « Port… » sur la capture —
+        et la mention ; unitaires 617 (rentabilité, écran du temps, i18n) ; E2E `rentabilite-partage` et voisins 9/9 ;
+        capture `rentabilite-partage-xl-1440` observée ; manuel §29.3 et image `affaire-partagee` ; `verify-manual`
+        167 contrôles, aucune anomalie. Production : la webapp de `main`, avec la `0153`.
 - [ ] **T6 — messagerie** (§7, décision 657) : dossier `CRM/Affaires/<affaire>` et déplacement des dossiers existants
       par `mail-sync` ; cadences et variables des modèles par rattachement ; preuves IMAP réelles.
 - [ ] **T7 — webapp** (§8) : fiche à partie commune et blocs, pastille « aussi rattachée à », rattacher, archiver,

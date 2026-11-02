@@ -3,6 +3,9 @@
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitres 27, 28, 29 ; docs/SPEC-costs.md (les coûts réels,
 //       l'onglet « À saisir »), docs/SPEC-temps.md (la saisie, le rapport, le coût du personnel), docs/SPEC-recettes.md
 // @spec CRM-126 (docs/BACKLOG.md) — tranche T2 : l'image « tableau » montre le tableau unique en balance par devise
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T5.2 : l'image « affaire-partagee » montre une affaire partagée dans
+//       « Rentabilité » (docs/manual.md §29.3 ; docs/DESIGN_SYSTEM.md §5.60, « Une affaire partagée »), posée et retirée
+//       par la vraie API comme celle du temps.
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T4.2 : l'image « rapport-partage » montre une saisie partagée entre deux
 //       channels (docs/manual.md §28.4 ; docs/DESIGN_SYSTEM.md §5.54, « La saisie partagée »). Le seed n'a pas encore
 //       d'affaire à deux rattachements (T8) : le scénario en pose une jetable par la vraie API, puis la retire.
@@ -121,6 +124,40 @@ test('le rapport : une saisie sur une affaire rattachée à deux channels', asyn
 		await illustrer(page, { chapitre: TEMPS, section: 'le-rapport-mensuel', nom: 'rapport-partage', cibles: [section] })
 	} finally {
 		await request.delete(rest(`saisies_temps?card_id=eq.${affaire}`), { headers: enTetesService() })
+		await request.delete(rest(`cards?id=eq.${affaire}`), { headers: enTetesService() })
+	}
+})
+
+test('« Rentabilité » : une affaire rattachée à deux channels', async ({ page, request }) => {
+	const affaire = '5eed0000-0000-4000-8000-00000000f112'
+	await poserAffaire(request, {
+		id: affaire,
+		titre: 'Portail partagé des adhérents',
+		channel: '5eed0000-0000-4000-8000-000000000034',
+		workflow: WORKFLOW_GLOBAL,
+		etape: '5eed0000-0000-4000-8000-000000000061',
+	})
+	try {
+		await service(request, 'post', 'card_revenues', [{ card_id: affaire, label: 'Acompte', estimated_amount: 12000 }])
+		const rattache = await request.post(rest('rpc/attach_card'), {
+			headers: enTetesAuthentifies(await jetonDe(ADMIN)),
+			data: { p_card: affaire, p_channel: '5eed0000-0000-4000-8000-000000000035' },
+		})
+		expect(rattache.status(), await rattache.text()).toBe(200)
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto('/rentabilite?vue=prevu')
+		const lignes = page.locator(`[data-testid="rentab-ligne-affaire"][data-card="${affaire}"]`)
+		await expect(lignes).toHaveCount(2)
+		await expect(page.getByTestId('rentab-partagee-mention')).toBeVisible()
+		// Le track « Studio web » — sa ligne de sous-total, ses deux channels et l'affaire sous chacun.
+		const studio = page.getByRole('row').filter({ has: page.getByRole('rowheader', { name: 'Sous-total Studio web' }) })
+		await illustrer(page, {
+			chapitre: RECETTES,
+			section: 'l-ecran-rentabilite',
+			nom: 'affaire-partagee',
+			cibles: [studio, lignes.first(), lignes.last()],
+		})
+	} finally {
 		await request.delete(rest(`cards?id=eq.${affaire}`), { headers: enTetesService() })
 	}
 })

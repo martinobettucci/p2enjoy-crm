@@ -4788,6 +4788,11 @@ export const fr = {
 	'rentab.column.margin.prevu': 'Marge prévue',
 	'rentab.column.rate': 'Taux',
 	'rentab.partial': 'partielle',
+	// `CRM-111` T5.2 (docs/DESIGN_SYSTEM.md §5.60, « Une affaire partagée ») : la raison de la pilule et la mention.
+	'rentab.shared.aria':
+		'Affaire partagée : elle est rattachée à plusieurs channels ; ses recettes, coûts et personnel paraissent sous chacun et ne comptent qu’une fois dans le total',
+	'rentab.mention.shared':
+		'Une affaire rattachée à plusieurs channels paraît sous chacun ; le sous-total d’un track et le total ne comptent ses montants qu’une fois.',
 	'rentab.partial.aria': 'Marge partielle : {raisons}',
 	'rentab.partial.revenues.one': '1 ligne de recette sans réel',
 	'rentab.partial.revenues.many': '{n} lignes de recette sans réel',

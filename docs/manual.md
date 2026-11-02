@@ -5593,6 +5593,13 @@ pas de taux de marge. Les filtres :
 - **« État »** : toutes les affaires, les gagnées, les en cours ou les perdues ;
 - **« Réel »** et **« Prévu »** changent de vue.
 
+![Une affaire rattachée à deux channels : sa ligne sous chacun, marquée « partagée », et le sous-total du track qui la compte une fois](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/affaire-partagee.jpg)
+
+**Une affaire rattachée à plusieurs channels** apparaît sous **chacun**, avec l'état et le montant de ce rattachement ;
+sa ligne porte la marque **« partagée »** dans la colonne de l'état. Ses recettes, ses coûts et son personnel sont
+rappelés sur chaque ligne, mais ne comptent qu'une fois dans le sous-total d'un track qui la porte deux fois et dans le
+total ; une phrase sous le tableau le rappelle. Le filtre **« État »** retient chaque rattachement selon son propre état.
+
 Seuls les **administrateurs** de l'espace lisent ce rapport : il soustrait le coût du temps de toute l'équipe, que
 seuls eux peuvent lire. Un autre membre lit « Réservé aux administrateurs » et un lien vers l'onglet « À saisir ».
 

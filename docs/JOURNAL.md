@@ -38527,3 +38527,15 @@ qui gagne `shared`. **Numéro** : la `0153`, prise sans fichier concurrent (3a a
 sans numéro ; prévenu). **Vérifications** : pgTAP `0142` 10, toutes les suites 130 fichiers et 4803 assertions ;
 unitaires 5246 ; API 11/11 ; `verify-mcp --rapide` 108 contrôles ; E2E « Rentabilité » 5/5.
 
+### `CRM-111` T5.2 — la marque « partagée » de Rentabilité (2026-11-03)
+
+*2026-11-03, session interactive (4891a451).* **Fait** : la pilule du §5.54 réemployée (`PilulePartagee`, avec sa
+propre raison) sur la ligne d'une affaire partagée de « Rentabilité », et une mention sous le tableau ; rien dans le
+bloc de la fiche, qui rend une affaire. **Défaut trouvé en regardant la capture** (`CLAUDE.md` §16) : posée après le
+titre, dans la première colonne collante et étroite, la pilule tronquait le titre jusqu'à « Port… » ; elle vit
+désormais dans la cellule « État », après « Archivée », place d'un état de la ligne (`docs/DESIGN_SYSTEM.md` §5.60
+révisé dans le même changement). **Scénario du manuel** : la ligne du track commence par un texte masqué (« Sous-total
+Studio web ») ; ciblée par son texte visible, elle n'était jamais trouvée, le scénario expirait, et l'affaire jetable
+restait en base — retirée à la main par la clé de service, puis ciblée par son en-tête accessible. **Vérifications** :
+unitaires 617 ; E2E 9/9 ; capture observée ; `verify-manual` 167 contrôles, aucune anomalie. **T5 est close.**
+

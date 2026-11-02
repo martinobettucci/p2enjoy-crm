@@ -257,6 +257,8 @@ describe('une affaire partagée entre plusieurs channels (CRM-111 T5.1)', () => 
 		expect(balances(r.total)).toEqual({ EUR: 800 })
 		expect(r.affaires).toBe(1)
 		expect(r.mentions).toEqual({ recettesSansReel: 0, coutsSansReel: 1, minutesNonValorisees: 0 })
+		expect(r.partagee, 'T5.2 : le rapport dit qu’une ligne est partagée').toBe(true)
+		expect(construireRapport([ligne({})], 'toutes', 'reel', NOMS).partagee).toBe(false)
 	})
 
 	it('chaque ligne porte l’état, le montant et la marque de SON rattachement', () => {

@@ -7,6 +7,8 @@
 // @spec CRM-126 (docs/BACKLOG.md) — tranche T2 : docs/SPEC-recettes.md §4.4 et §6.3 révisés (décision 810) — UN seul
 //       tableau, une valeur par devise empilée dans chaque cellule, sous-totaux et total en balance par devise, taux vide
 //       sur une ligne qui mêle plusieurs devises ; docs/DESIGN_SYSTEM.md §5.60 (« UNE VALEUR PAR DEVISE », écart au §5.9)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T5.2 : la pilule « partagée » d'une ligne d'affaire et la mention sous le
+//       tableau ; docs/DESIGN_SYSTEM.md §5.60 (« Une affaire partagée »), §5.54 ; docs/SPEC-recettes.md §6.3
 //
 // Deux lectures sous le jeton de l'appelant : les sommes (`rentabilite_affaires`) puis les noms. La règle est dans
 // `lib/rentabilite.ts`. Un changement de période ou d'état relit ; un changement de vue ne relit rien.
@@ -36,6 +38,7 @@ import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { CLASSES_ACTIF, CLASSES_INACTIF, CLASSES_ONGLET } from './OngletsCouts'
 import { dureeEnClair, Marge, ParDevise, Taux, valeursDe } from './BlocRentabiliteCard'
 import { RecettesASaisir } from './RecettesASaisir'
+import { PilulePartagee } from './RapportTemps'
 import { CHEMIN_RENTABILITE } from './chemins'
 import { useContexteEspace } from './ContexteEspace'
 import type { Capacite } from '../lib/capacites'
@@ -299,6 +302,7 @@ function VueEnsemble({
 						{rapport.mentions.minutesNonValorisees > 0 ? (
 							<p>{t('rentab.mention.time', { duree: dureeEnClair(rapport.mentions.minutesNonValorisees) })}</p>
 						) : null}
+						{rapport.partagee ? <p data-testid="rentab-partagee-mention">{t('rentab.mention.shared')}</p> : null}
 						{vue === 'prevu' ? <p>{t('rentab.note.prevu')}</p> : null}
 						{du !== null || au !== null ? <p>{t('rentab.note.period')}</p> : null}
 						<p>{t('rentab.scope')}</p>
@@ -442,6 +446,9 @@ function LigneAffaire({ a, reel, slugTrack, slugChannel }: { readonly a: Affaire
 				<span className="inline-flex flex-wrap items-center gap-1">
 					{t(CLES_GENRE[a.genre])}
 					{a.archivee ? <span className="rounded-full bg-accent-soft px-2 text-xs text-accent-on-soft">{t('rentab.archived')}</span> : null}
+					{/* `CRM-111` T5.2 : dans la cellule « État », comme « Archivée » — dans la première colonne, elle tronquait
+					    le titre jusqu'à le rendre illisible (vu sur la capture, §5.60). */}
+					{a.partagee ? <PilulePartagee raison={t('rentab.shared.aria')} /> : null}
 				</span>
 			</td>
 			<td className={CELLULE}>

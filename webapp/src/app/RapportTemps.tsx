@@ -69,8 +69,9 @@ export function CelluleCout({ cumul }: { readonly cumul: Cumul }) {
  * La marque d'une ligne d'affaire partagée (§5.54) : la forme exacte de « partielle » (§5.60) — point neutre, aucune
  * icône —, son nom accessible disant pourquoi. Elle ne nomme ni le nombre ni les autres channels (§5.33).
  */
-export function PilulePartagee() {
-	const nom = t('time.report.shared.aria')
+export function PilulePartagee({ raison }: { readonly raison?: string } = {}) {
+	// `CRM-111` T5.2 : « Rentabilité » réemploie la pilule avec sa propre raison (docs/DESIGN_SYSTEM.md §5.60).
+	const nom = raison ?? t('time.report.shared.aria')
 	return (
 		<span
 			role="img"

@@ -6247,8 +6247,11 @@ n'est pas connu. Seuls les écarts et ce qui est propre au rapport sont écrits.
   du §5.54 (« La saisie partagée »)*. Elle paraît sous chacun de ses channels, avec l'état et le montant de ce
   rattachement, ses recettes, coûts et personnel rappelés ; le sous-total d'un track qui la porte deux fois et le total
   ne la comptent qu'une fois (`docs/SPEC-recettes.md` §6.3).
-  - **Sa ligne porte la pilule neutre « partagée »** après le titre de l'affaire — la pilule du §5.54, réemployée sans
-    copie (`PilulePartagee`) : même point, aucune icône, nom accessible qui dit pourquoi, par clé : « Affaire partagée :
+  - **Sa ligne porte la pilule neutre « partagée » dans la cellule « État »**, après l'état et « Archivée » — la pilule du
+    §5.54, réemployée sans copie (`PilulePartagee`). *Écrit d'abord « après le titre » ; défaut trouvé en regardant la
+    capture de T5.2* (`docs/captures/CRM-111/rentabilite-partage-xl-1440.jpg`) : la première colonne, collante et
+    étroite, tronquait le titre jusqu'à « Port… », et le lien ne nommait plus l'affaire (§5.46). La cellule « État »
+    porte déjà la pilule « Archivée » : c'est la place d'un état de la ligne. Même forme : même point, aucune icône, nom accessible qui dit pourquoi, par clé : « Affaire partagée :
     elle est rattachée à plusieurs channels ; ses recettes, coûts et personnel paraissent sous chacun et ne comptent
     qu'une fois dans le total ». **Aucun chemin n'est ajouté** : ici la ligne d'affaire est toujours rendue sous la ligne
     de son channel, qui la situe — l'écart avec le §5.54, où le rapport n'a pas de ligne de channel sans temps direct.

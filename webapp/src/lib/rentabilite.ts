@@ -319,6 +319,8 @@ export type Rapport = {
 	/** Les mentions sous le tableau (§6.3), toutes devises confondues : ce sont des lignes et des minutes, pas de l'argent. */
 	readonly mentions: CausesPartielle
 	readonly affaires: number
+	/** `CRM-111` T5.2 : une ligne au moins est partagée ; la mention sous le tableau le dit (§5.60). */
+	readonly partagee: boolean
 }
 
 const parRang = <T extends { readonly nom: string; readonly position: number }>(a: T, b: T): number =>
@@ -432,5 +434,6 @@ export function construireRapport(
 			minutesNonValorisees: somme.minutesNonValorisees,
 		},
 		affaires: new Set(lignes.map((l) => l.cardId)).size,
+		partagee: lignes.some((l) => l.partagee),
 	}
 }

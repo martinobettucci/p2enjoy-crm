@@ -511,6 +511,70 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-recettes-d-une-affaire-et-sa-rentabilite/affaire-partagee.jpg",
+			"alt": "Une affaire rattachée à deux channels : sa ligne sous chacun, marquée « partagée », et le sous-total du track qui la compte une fois",
+			"width": 1158,
+			"height": 320
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une affaire rattachée à plusieurs channels"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " apparaît sous "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "chacun"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", avec l'état et le montant de ce rattachement ;\nsa ligne porte la marque "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« partagée »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " dans la colonne de l'état. Ses recettes, ses coûts et son personnel sont\nrappelés sur chaque ligne, mais ne comptent qu'une fois dans le sous-total d'un track qui la porte deux fois et dans le\ntotal ; une phrase sous le tableau le rappelle. Le filtre "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« État »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " retient chaque rattachement selon son propre état."
+				}
+			]
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
