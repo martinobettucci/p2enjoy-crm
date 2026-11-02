@@ -5451,6 +5451,14 @@ compté, et dit **« non valorisé »** — jamais zéro.
 Un membre ne voit que **son** temps et **son** coût. Un administrateur choisit une personne, ou **« Toute l’équipe »**,
 qui rend une section par personne.
 
+![Une saisie sur une affaire rattachée à deux channels : la ligne de chacun, marquée « partagée », et le total qui la compte une fois](manuel/images/le-temps-passe-et-le-cout-du-personnel/rapport-partage.jpg)
+
+**Une affaire rattachée à plusieurs channels** apparaît sous **chacun** des channels que vous lisez, avec le même
+temps et le même coût : chaque ligne nomme son track et son channel, et porte la marque **« partagée »**. Le temps n'est pas compté deux fois : le total ne
+le compte qu'une fois, et une phrase sous le tableau le rappelle. Le coût du personnel d'un track
+([section 28.6](#le-cout-du-personnel-a-cote-des-couts)) fait de même quand l'affaire est rattachée à deux de ses
+channels.
+
 ### 28.5 Régler le coût du personnel
 
 ![Réglages ▸ Coût du personnel : le coût d'un quart de journée de chaque personne, ses versions](manuel/images/le-temps-passe-et-le-cout-du-personnel/cout-du-personnel.jpg)

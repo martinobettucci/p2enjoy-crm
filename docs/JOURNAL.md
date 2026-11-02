@@ -38479,3 +38479,24 @@ Pour T4 (spécification §8), la vérification de la valeur ne doit pas rééval
 **Écart constaté hors de l'unité** : `npm run typecheck` est rouge sur `main`. Le témoin
 `database.types.test-d.ts` ne liste pas les deux fonctions publiques de la `0151` (`CRM-127`). Sa session est prévenue ;
 le bloc des tables, lui, est tenu par ce commit.
+
+### `CRM-111` T4.2 — la marque « partagée », livrée (2026-11-02)
+
+*2026-11-02, session interactive (4891a451).* **Fait** : la pilule « partagée » sur la ligne d'affaire du rapport, la
+mention sous le tableau d'une section qui en porte une et sous la série « Personnel » du track — elle n'y paraît que si
+une saisie compte réellement sous deux channels DU TRACK (`uneFoisChacune` plus court que les lignes) : partagée avec un
+autre track, elle ne paraît qu'une fois ici et le total ne diverge pas.
+
+**Deux défauts trouvés en regardant les captures** (`CLAUDE.md` §16), corrigés et écrits au design system §5.54 :
+1. à 1440 px, les deux lignes de l'affaire se suivaient identiques — le rapport ne rend un track ou un channel que s'il
+   porte du temps direct ; chaque ligne partagée nomme désormais son chemin « Track › Channel », en second ton ;
+2. à 390 px, le chemin chevauchait la colonne « Temps » : en `table-fixed` pleine largeur, les colonnes de 14 et 28
+   caractères écrasaient la première ; le tableau du rapport et celui de la série gardent 40 rem au moins et défilent dans
+   leur conteneur. Le scénario de 390 px se prend désormais à l'ouverture de l'écran (redimensionnée sur place, la
+   coquille gardait le tiroir ouvert sur la capture).
+
+**Vérifications** : unitaires de la webapp 5243 puis l'écran et l'i18n 591 ; E2E `temps-partage` 3/3 ; les E2E du temps
+voisins 19/20 — l'échec est INC-287 (`temps-fiche-affaire`, flèches après saisie, une fois sur trois), **reproduit sur
+`main` sans les changements de T4.2** (1 échec sur 4) ; image du manuel `rapport-partage` observée ; `verify-manual` :
+aucune anomalie de cette unité — les six qui restent sont des textes d'INC-335, signalés à sa session.
+

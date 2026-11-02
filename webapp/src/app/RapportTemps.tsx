@@ -6,6 +6,8 @@
 //       navigation de mois), §5.6, §5.8
 // @spec docs/INCONSISTENCY_REPORT.md INC-333, décision 801 — le mois se choisit par la navigation partagée
 //       (`NavigationMois`), titre `h2` du rapport ; docs/manual.md §28.4
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T4.2 : la pilule « partagée » d'une ligne d'affaire et la mention sous le
+//       tableau ; docs/DESIGN_SYSTEM.md §5.54 (« La saisie partagée »), §5.60 ; docs/SPEC-temps.md §7.3 ; manual.md §28.4
 //
 // La base valorise et filtre : l'écran nomme, regroupe et affiche.
 
@@ -60,6 +62,35 @@ export function CelluleCout({ cumul }: { readonly cumul: Cumul }) {
 				</span>
 			) : null}
 		</span>
+	)
+}
+
+/**
+ * La marque d'une ligne d'affaire partagée (§5.54) : la forme exacte de « partielle » (§5.60) — point neutre, aucune
+ * icône —, son nom accessible disant pourquoi. Elle ne nomme ni le nombre ni les autres channels (§5.33).
+ */
+export function PilulePartagee() {
+	const nom = t('time.report.shared.aria')
+	return (
+		<span
+			role="img"
+			aria-label={nom}
+			title={nom}
+			className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-hover px-2 text-xs text-text-2"
+			data-testid="temps-partagee"
+		>
+			<span aria-hidden="true" className="inline-block size-2 rounded-full bg-text-3" />
+			<span aria-hidden="true">{t('time.report.shared')}</span>
+		</span>
+	)
+}
+
+/** La mention sous un tableau dont le total compte une fois ce que plusieurs lignes montrent (§5.54, §5.30). */
+export function MentionPartagee() {
+	return (
+		<p className="text-sm text-text-2" data-testid="temps-partagee-mention">
+			{t('time.report.shared.note')}
+		</p>
 	)
 }
 
@@ -156,6 +187,7 @@ export function RapportTemps({ client, idWorkspace, idUtilisateur, estAdmin, auj
 							<h3 className="text-h3">{etat.donnees.noms.profils.get(section.profil) ?? t('time.report.unnamedPerson')}</h3>
 						) : null}
 						<TableauRapport section={section} noms={etat.donnees.noms} />
+						{section.partagee ? <MentionPartagee /> : null}
 					</section>
 				))
 			)}
@@ -171,10 +203,20 @@ function libelleLigne(ligne: LigneRapport, noms: Noms): string {
 	return (id === null ? undefined : carte.get(id)) ?? t('time.report.unnamed')
 }
 
+/**
+ * Le chemin d'une ligne d'affaire partagée (§5.54) : ses lignes sous chaque channel portent le même nom, et le rapport
+ * ne rend un track ou un channel que s'il porte du temps direct — sans ce chemin, deux lignes identiques se suivent.
+ */
+function cheminLigne(ligne: LigneRapport, noms: Noms): string {
+	const nom = (carte: ReadonlyMap<string, string>, id: string | null) =>
+		(id === null ? undefined : carte.get(id)) ?? t('time.report.unnamed')
+	return t('time.report.shared.path', { track: nom(noms.tracks, ligne.track_id), channel: nom(noms.channels, ligne.channel_id) })
+}
+
 function TableauRapport({ section, noms }: { readonly section: SectionRapport; readonly noms: Noms }) {
 	return (
 		<div className="overflow-x-auto rounded-lg border border-border indique-debordement-x">
-			<table className="w-full table-fixed border-collapse text-sm">
+			<table className="w-full min-w-[40rem] table-fixed border-collapse text-sm">
 						{/* Colonnes FIXES : les sections de « Toute l'équipe » s'alignent d'un tableau à l'autre (constaté sur la
 						    capture : chaque tableau calculait ses propres largeurs). */}
 						<colgroup>
@@ -199,7 +241,17 @@ function TableauRapport({ section, noms }: { readonly section: SectionRapport; r
 					{section.lignes.map((ligne) => (
 						<tr key={ligne.cle} className="border-b border-border" data-testid="temps-rapport-ligne">
 							<th scope="row" className={`py-2 pr-3 text-left font-normal ${RETRAITS[ligne.niveau]}`}>
-								{libelleLigne(ligne, noms)}
+								{ligne.partagee ? (
+									<span className="inline-flex flex-wrap items-center gap-2">
+										<span>{libelleLigne(ligne, noms)}</span>
+										<span className="text-sm text-text-2" data-testid="temps-partagee-chemin">
+											{cheminLigne(ligne, noms)}
+										</span>
+										<PilulePartagee />
+									</span>
+								) : (
+									libelleLigne(ligne, noms)
+								)}
 							</th>
 							<td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{formaterDuree(enJours(ligne.cumul.minutes))}</td>
 							<td className="px-3 py-2 text-right tabular-nums">

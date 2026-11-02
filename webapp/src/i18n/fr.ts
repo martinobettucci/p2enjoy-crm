@@ -4388,6 +4388,12 @@ export const fr = {
 	'time.report.time': 'Temps',
 	'time.report.cost': 'Coût',
 	'time.report.total': 'Total',
+	// `CRM-111` T4.2 (docs/DESIGN_SYSTEM.md §5.54, « La saisie partagée ») : la marque et la mention d'une saisie partagée.
+	'time.report.shared': 'partagée',
+	'time.report.shared.path': '{track} › {channel}',
+	'time.report.shared.aria':
+		'Saisie partagée : cette affaire est rattachée à plusieurs channels ; son temps paraît sous chacun et ne compte qu’une fois dans le total',
+	'time.report.shared.note': 'Une saisie sur une affaire rattachée à plusieurs channels paraît sous chacun ; le total ne la compte qu’une fois.',
 	// `CRM-098` T3 — Réglages ▸ « Coût du personnel » (docs/SPEC-temps.md §7.4).
 	'admin.settings.index.staffCost': 'Coût du personnel',
 	'admin.settings.index.staffCost.body': 'Le coût d’un quart de journée de chacun, versionné par date d’effet, qui valorise le temps saisi.',

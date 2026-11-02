@@ -17266,14 +17266,13 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       `0097`, `0019` et `0116` révisées (décision 51) ; API `rattacher-retirer.spec.ts` 6/6 aux jetons réels ; pgTAP
       126 fichiers sans anomalie, API 1296/1299 (manuel ×2 : le bucket non republié ; `webhooks-remise` : instable sous
       charge), unitaires 5166/5166, typecheck propre. Aucun écran ni outil ne l'emploie encore (T7, T9).
-- [@] **T4 — lectures à plusieurs rattachements** (§6, §9) : entonnoir, affaires figées et relances, Ma journée,
+- [x] **T4 — lectures à plusieurs rattachements** (§6, §9) : entonnoir, affaires figées et relances, Ma journée,
       recherche, temps valorisé ; pgTAP et API.
       *Arbitré le 2026-11-01 (décision 814)* : la recherche nomme les rattachements lisibles et mène au premier dans
       l'ordre des tracks et des channels ; le temps valorisé montre l'affaire dans chaque channel rattaché lisible,
       marquée `shared`, la saisie comptée une fois ; `crm_search` (`structure`) et `crm_time_report` (`temps`) suivent,
       sans famille ni case nouvelle. Les trois autres lectures (entonnoir, figées et relances, Ma journée) lisent déjà
       chaque rattachement : T4 le prouve à deux rattachements.
-      *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-11-02 16:36 UTC — renouvelée après l'interruption de la veille (première prise : 2026-11-01 20:35 UTC) — état avant : [ ]*
       **Découpage, arrêté le 2026-11-02 (journal, « `CRM-111` T4 — le découpage »)** :
       - [x] **T4.1 — la base et ses consommateurs** : une migration au premier numéro libre (au-delà de la 148) —
         `recherche_globale` compose le sous-titre d'une affaire des channels rattachés lisibles, dans l'ordre des tracks
@@ -17295,7 +17294,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         typecheck et témoin de types ; API `lectures-plusieurs-rattachements` 6/6 et douze specs voisines 110/110 ;
         connecteur 294 unitaires et `verify-mcp --rapide` 108 contrôles. Production : la `0150` avec la webapp et l'image
         `mcp` de `main` (`docs/PROD_MIGRATIONS.md` §3).
-      - [@] **T4.2 — l'écran** : la marque « partagée » dans le rapport de temps (`docs/DESIGN_SYSTEM.md` avant le
+      - [x] **T4.2 — l'écran** : la marque « partagée » dans le rapport de temps (`docs/DESIGN_SYSTEM.md` avant le
         code), E2E, captures observées, manuel.
         *Forme arrêtée le 2026-11-02, avant le code (`docs/DESIGN_SYSTEM.md` §5.54, « La saisie partagée » ;
         `docs/SPEC-temps.md` §7.3, §7.5)* : pilule neutre « partagée » sur la ligne d'affaire, forme de « partielle »
@@ -17303,6 +17302,11 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         dans « Temps passé » de la fiche. Connecteur : `crm_time_report` rend déjà `shared` (T4.1), aucune autre
         question MCP. Les données d'une preuve et des images du manuel se posent par la vraie API (`attach_card`, une
         saisie) et se retirent ensuite : le seed à deux rattachements est T8.
+        *Livrée en développement le 2026-11-02 (journal, « `CRM-111` T4.2 — la marque « partagée », livrée »)* : pilule et
+        mention (`PilulePartagee`, `MentionPartagee`), chemin « Track › Channel » sur une ligne partagée et largeur minimale
+        des deux tableaux — deux défauts trouvés en regardant les captures ; unitaires (rapport, écran, i18n) ; E2E
+        `temps-partage` 3/3 ; captures `docs/captures/CRM-111/` observées à 1440 et 390 ; manuel §28.4 et son image
+        `rapport-partage` ; `verify-manual` sans anomalie de cette unité. Production : la webapp de `main`, avec la `0150`.
 - [ ] **T5 — rentabilité ventilée** (§6) : une ligne par rattachement × devise, colonne `shared`, total compté une fois ;
       écran ; `docs/SPEC-recettes.md` §5 et outil `crm_profitability_report`.
 - [ ] **T6 — messagerie** (§7, décision 657) : dossier `CRM/Affaires/<affaire>` et déplacement des dossiers existants

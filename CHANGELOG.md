@@ -519,6 +519,11 @@ changelog.*
   refus de plus). **`mail-sync`** joint les pièces, archive avant d'envoyer, efface les dépôts abandonnés après 24 heures.
 - **Le seed** fait partir un message réel avec copie cachée et pièce jointe depuis « Refonte du monitoring — Vertuo ».
 
+- **`CRM-111` T4.2 — la marque « partagée » du rapport de temps** : une affaire rattachée à plusieurs channels paraît
+  sous chacun dans le rapport mensuel, sa ligne marquée « partagée », et une phrase sous le tableau dit que le total ne
+  compte sa saisie qu'une fois ; le bloc « Coût du personnel » d'un track le dit aussi quand l'affaire est rattachée à
+  deux de ses channels. Webapp seule, avec la migration `0150` de T4.1 ; manuel §28.4.
+
 - **`CRM-111` T4.1 — la recherche, le temps et la relance à plusieurs rattachements** (migration `0150`) : une
   affaire trouvée par la recherche est nommée par tous les channels où elle est rattachée et que l'on lit, dans l'ordre
   des tracks puis des channels, et son lien mène au premier ; elle se trouve aussi par la prochaine action de chacun. Le

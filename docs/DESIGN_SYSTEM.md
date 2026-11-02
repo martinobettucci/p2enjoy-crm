@@ -5551,6 +5551,18 @@ de ses lignes comme une erreur de calcul.
   total » —, porté par `role="img"`, `aria-label` et `title`, le mot visible `aria-hidden` (§5.60). Elle ne nomme **ni
   le nombre ni les autres channels** : un rattachement que la personne ne lit pas n'est jamais rendu partagé par la base,
   et l'écran ne nomme jamais ce qu'il ne montre pas (§5.33).
+- **LA LIGNE PARTAGÉE NOMME SON CHEMIN, « Track › Channel », en `--text-sm` `--color-text-2`, entre le nom de l'affaire
+  et la pilule.** *Défaut trouvé en regardant la capture de T4.2* (`CLAUDE.md` §16,
+  `docs/captures/CRM-111/temps-rapport-partage-xl-1440.jpg`) : le rapport ne rend la ligne d'un track ou d'un channel que
+  s'il porte du temps direct, si bien que les deux lignes de l'affaire se suivaient, identiques, sans rien qui dise de
+  quel channel chacune relève. Le chemin est une **donnée** (§10), composé par une clé, jamais une pilule de couleur :
+  il qualifie la ligne, il ne la classe pas. Une ligne non partagée ne le porte pas — son nom suffit.
+- **LE TABLEAU DU RAPPORT ET CELUI DE LA SÉRIE GARDENT UNE LARGEUR MINIMALE DE 40 rem ET DÉFILENT DANS LEUR CONTENEUR**
+  sous ce seuil (`.indique-debordement-x`, §12.6), comme la matrice (§5.54, Paliers). *Défaut trouvé en regardant la
+  capture à 390 px de T4.2* : en `table-fixed` pleine largeur, les colonnes « Temps » (14 caractères) et « Coût » (28)
+  laissaient à la première quelques dizaines de pixels, et le chemin d'une ligne partagée débordait sur le temps. Le
+  défaut existait sans elle — l'en-tête « Track, channel ou affaire » s'y lisait sur quatre lignes —, la marque l'a rendu
+  illisible. La page ne défile jamais horizontalement (§7).
 - **SOUS LE TABLEAU D'UNE SECTION QUI EN PORTE UNE, UNE MENTION** en 13 px `--color-text-2`, la graduation des mentions
   du §5.30 et du §5.48 : « Une saisie sur une affaire rattachée à plusieurs channels paraît sous chacun ; le total ne la
   compte qu'une fois. » Elle n'est rendue que si la section porte au moins une ligne partagée (§5.48) — sur « Toute

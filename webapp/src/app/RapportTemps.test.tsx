@@ -3,6 +3,8 @@
 // @verifies docs/SPEC-temps.md §4 (« non valorisé », jamais zéro ; une devise par montant), §7.3 (rapport ; « Toute
 //           l'équipe » réservé aux administrateurs), §7.4 (réglages ; refus pour un membre), §7.5 (portée écrite) ;
 //           docs/DESIGN_SYSTEM.md §5.54
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T4.2 : la pilule « partagée » et sa mention, dans le rapport et sous la
+//           série du track ; docs/DESIGN_SYSTEM.md §5.54 (« La saisie partagée »), §5.60 ; docs/SPEC-temps.md §7.3, §7.5
 
 import { cleanup, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
@@ -10,7 +12,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FournisseurEspace } from './ContexteEspace'
 import { CelluleCout, RapportTemps, montantsEnMots } from './RapportTemps'
 import { ReglagesCoutPersonnel } from './ReglagesCoutPersonnel'
-import { BlocTempsCard } from './SeriePersonnel'
+import { BlocTempsCard, SeriePersonnelTrack } from './SeriePersonnel'
 import type { ClientCrm } from '../lib/supabase'
 
 afterEach(cleanup)
@@ -78,6 +80,83 @@ describe('le rapport mensuel', () => {
 			</MemoryRouter>,
 		)
 		expect(await screen.findByText('Aucun temps saisi en mars 2027')).toBeTruthy()
+	})
+})
+
+describe('une saisie partagée entre plusieurs channels (CRM-111 T4.2)', () => {
+	const PARTAGE = 'Saisie partagée : cette affaire est rattachée à plusieurs channels ; son temps paraît sous chacun et ne compte qu’une fois dans le total'
+	const NOMS_PARTAGE = {
+		tracks: [{ id: 't1', nom: 'Studio web' }, { id: 't2', nom: 'Conseil & IA' }],
+		channels: [{ id: 'c1', nom: 'Refonte de site' }, { id: 'c2', nom: 'Grands comptes' }, { id: 'c3', nom: 'Maintenance' }],
+		cards: [{ id: 'a1', nom: 'Refonte du portail' }, { id: 'a2', nom: 'Audit' }],
+		profiles: [{ id: 'p1', nom: 'Driss Lemoine' }],
+	}
+	const saisie = (track: string, channel: string, card: string, shared: boolean) => ({
+		profile_id: 'p1', track_id: track, channel_id: channel, card_id: card, minutes: 105, montant: 120, devise: 'EUR', shared,
+	})
+
+	it('la ligne de l’affaire porte « partagée » sous chaque channel, le total la compte une fois, et la mention le dit', async () => {
+		render(
+			<MemoryRouter initialEntries={['/temps?onglet=rapport&mois=2027-03']}>
+				<RapportTemps
+					client={clientFactice([saisie('t1', 'c1', 'a1', true), saisie('t2', 'c2', 'a1', true), saisie('t1', 'c1', 'a2', false)], NOMS_PARTAGE)}
+					idWorkspace="w"
+					idUtilisateur="p1"
+					estAdmin={false}
+					aujourdhui="2026-10-11"
+				/>
+			</MemoryRouter>,
+		)
+		const rangees = await screen.findAllByTestId('temps-rapport-ligne')
+		const partagees = rangees.filter((r) => within(r).queryByTestId('temps-partagee') !== null)
+		expect(partagees).toHaveLength(2)
+		expect(screen.getAllByRole('img', { name: PARTAGE })).toHaveLength(2)
+		// Deux lignes de même nom : le chemin de chacune dit de quel channel elle relève.
+		expect(screen.getAllByTestId('temps-partagee-chemin').map((c) => c.textContent)).toEqual([
+			'Conseil & IA › Grands comptes',
+			'Studio web › Refonte de site',
+		])
+		const audit = rangees.find((r) => within(r).getByRole('rowheader').textContent === 'Audit')
+		expect(audit && within(audit).queryByTestId('temps-partagee'), 'une affaire non partagée ne porte rien').toBeNull()
+		// Deux saisies de 1 h 45 : la partagée une fois, l'autre une fois.
+		expect(screen.getByTestId('temps-rapport-total').textContent).toBe('3 h 30')
+		expect(screen.getByTestId('temps-partagee-mention').textContent).toBe(
+			'Une saisie sur une affaire rattachée à plusieurs channels paraît sous chacun ; le total ne la compte qu’une fois.',
+		)
+	})
+
+	it('sans saisie partagée, ni pilule ni mention', async () => {
+		render(
+			<MemoryRouter initialEntries={['/temps?onglet=rapport&mois=2027-03']}>
+				<RapportTemps client={clientFactice([saisie('t1', 'c1', 'a2', false)], NOMS_PARTAGE)} idWorkspace="w" idUtilisateur="p1" estAdmin={false} aujourdhui="2026-10-11" />
+			</MemoryRouter>,
+		)
+		await screen.findAllByTestId('temps-rapport-ligne')
+		expect(screen.queryByTestId('temps-partagee')).toBeNull()
+		expect(screen.queryByTestId('temps-partagee-mention')).toBeNull()
+	})
+
+	it('la série du track : la mention quand la saisie paraît sous deux de SES channels, rien quand l’autre est ailleurs', async () => {
+		const deuxChannels = [saisie('t1', 'c1', 'a1', true), saisie('t1', 'c3', 'a1', true)]
+		render(
+			<MemoryRouter initialEntries={['/tracks/studio-web/couts?mois=2027-03']}>
+				<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: true }}>
+					<SeriePersonnelTrack client={clientFactice(deuxChannels, NOMS_PARTAGE)} idTrack="t1" aujourdhui="2026-10-11" />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+		expect((await screen.findByTestId('personnel-total')).textContent).toBe('1 h 45')
+		expect(screen.getByTestId('temps-partagee-mention')).toBeTruthy()
+		cleanup()
+		render(
+			<MemoryRouter initialEntries={['/tracks/studio-web/couts?mois=2027-03']}>
+				<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: true }}>
+					<SeriePersonnelTrack client={clientFactice([saisie('t1', 'c1', 'a1', true)], NOMS_PARTAGE)} idTrack="t1" aujourdhui="2026-10-11" />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+		expect((await screen.findByTestId('personnel-total')).textContent).toBe('1 h 45')
+		expect(screen.queryByTestId('temps-partagee-mention'), 'le total du track ne diverge pas : rien n’est dit').toBeNull()
 	})
 })
 

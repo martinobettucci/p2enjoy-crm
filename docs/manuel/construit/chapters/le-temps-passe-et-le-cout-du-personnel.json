@@ -441,6 +441,74 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-temps-passe-et-le-cout-du-personnel/rapport-partage.jpg",
+			"alt": "Une saisie sur une affaire rattachée à deux channels : la ligne de chacun, marquée « partagée », et le total qui la compte une fois",
+			"width": 1192,
+			"height": 210
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une affaire rattachée à plusieurs channels"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " apparaît sous "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "chacun"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " des channels que vous lisez, avec le même\ntemps et le même coût : chaque ligne nomme son track et son channel, et porte la marque "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« partagée »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Le temps n'est pas compté deux fois : le total ne\nle compte qu'une fois, et une phrase sous le tableau le rappelle. Le coût du personnel d'un track\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-temps-passe-et-le-cout-du-personnel",
+						"anchor": "le-cout-du-personnel-a-cote-des-couts"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 28.6"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") fait de même quand l'affaire est rattachée à deux de ses\nchannels."
+				}
+			]
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "regler-le-cout-du-personnel",

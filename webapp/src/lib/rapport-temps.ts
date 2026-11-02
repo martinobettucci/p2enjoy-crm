@@ -5,6 +5,8 @@
 //       « Personnel » du track par channel, et de l'affaire) ; docs/DESIGN_SYSTEM.md §5.54
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T4.1 : une saisie d'affaire paraît sous chaque rattachement lisible
 //       (`shared`), et un total ne la compte qu'une fois ; docs/SPEC-rattachements.md §6 ; docs/JOURNAL.md décision 814
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T4.2 : la ligne et la section disent qu'elles portent une saisie partagée
+//       (`partagee`) ; docs/DESIGN_SYSTEM.md §5.54 (« La saisie partagée ») ; docs/SPEC-temps.md §7.3
 //
 // La base calcule et filtre (RLS, versions lisibles) ; ce module regroupe ce qu'elle rend. Aucun montant n'est déduit,
 // aucun `null` n'est changé en zéro.
@@ -109,9 +111,17 @@ export type LigneRapport = {
 	readonly card_id: string | null
 	readonly niveau: 0 | 1 | 2
 	readonly cumul: Cumul
+	/** `CRM-111` T4.2 : la cible est une affaire dont la saisie paraît aussi sous un autre channel (§5.54). */
+	readonly partagee: boolean
 }
 
-export type SectionRapport = { readonly profil: string; readonly lignes: readonly LigneRapport[]; readonly total: Cumul }
+export type SectionRapport = {
+	readonly profil: string
+	readonly lignes: readonly LigneRapport[]
+	readonly total: Cumul
+	/** Au moins une ligne partagée : le total est plus petit que la somme des lignes, et l'écran le dit. */
+	readonly partagee: boolean
+}
 
 const cleChemin = (l: Pick<LigneValorisee, 'track_id' | 'channel_id' | 'card_id'>) =>
 	`${l.track_id ?? '-'}/${l.channel_id ?? '-'}/${l.card_id ?? '-'}`
@@ -139,6 +149,7 @@ export function composerRapport(
 				card_id: premiere.card_id,
 				niveau: premiere.card_id !== null ? 2 : premiere.channel_id !== null ? 1 : 0,
 				cumul: cumuler(groupe),
+				partagee: groupe.some((l) => l.shared),
 			}
 		})
 		const tri = (l: LigneRapport) => [
@@ -154,7 +165,7 @@ export function composerRapport(
 			}
 			return 0
 		})
-		return { profil, lignes: rapport, total: cumuler(uneFoisChacune(siennes)) }
+		return { profil, lignes: rapport, total: cumuler(uneFoisChacune(siennes)), partagee: rapport.some((l) => l.partagee) }
 	})
 }
 

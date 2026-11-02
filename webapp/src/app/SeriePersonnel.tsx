@@ -10,6 +10,8 @@
 //       docs/DESIGN_SYSTEM.md §5.54 (navigation de mois)
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T4.1 : le total du track et le cumul de l'affaire ne comptent qu'une fois une
 //       saisie partagée entre plusieurs channels (`uneFoisChacune`) ; docs/SPEC-rattachements.md §6 ; décision 814
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T4.2 : la mention d'une saisie partagée sous la série du track ;
+//       docs/DESIGN_SYSTEM.md §5.54 (« La saisie partagée ») ; docs/SPEC-temps.md §7.5
 //
 // LA PORTÉE EST ÉCRITE, ET C'EST LA RÈGLE DU §4.5 DES COÛTS : un total qui ne dit pas ce qu'il compte se lit comme celui
 // de l'équipe. Elle suit le rôle que la base rend ; le périmètre lui-même est tenu par la RLS de `saisies_temps`.
@@ -35,7 +37,7 @@ import { enJours, jourLocal } from '../lib/temps'
 import { BandeTempsCard } from './BandeTempsCard'
 import { useContexteEspace } from './ContexteEspace'
 import { NavigationMois, libelleMois, useMoisDeLAdresse } from './NavigationMois'
-import { CelluleCout } from './RapportTemps'
+import { CelluleCout, MentionPartagee } from './RapportTemps'
 import { formaterDuree } from './SaisieTemps'
 
 function Portee() {
@@ -47,7 +49,16 @@ function Portee() {
 	)
 }
 
-type DonneesTrack = { readonly series: ReturnType<typeof parChannel>; readonly total: Cumul; readonly noms: Noms }
+type DonneesTrack = {
+	readonly series: ReturnType<typeof parChannel>
+	readonly total: Cumul
+	readonly noms: Noms
+	/**
+	 * `CRM-111` T4.2 : une saisie du mois paraît sous deux channels DU TRACK, et le total ne la compte qu'une fois. Une
+	 * saisie partagée avec le channel d'un autre track ne paraît qu'une fois ici : le total ne diverge pas, rien n'est dit.
+	 */
+	readonly partagee: boolean
+}
 
 /** Sur l'écran de coûts du track : le coût du personnel du mois choisi, par channel (§7.5). */
 export function SeriePersonnelTrack({
@@ -74,7 +85,7 @@ export function SeriePersonnelTrack({
 			const noms = await lireNoms(client, { ...idsANommer(lignes.donnees), cards: [], profils: [] })
 			if (!courant) return
 			if (noms.statut !== 'pret') return setEtat(noms)
-			setEtat({ statut: 'pret', donnees: { series: parChannel(lignes.donnees), total: cumuler(uneFoisChacune(lignes.donnees)), noms: noms.donnees } })
+			setEtat({ statut: 'pret', donnees: { series: parChannel(lignes.donnees), total: cumuler(uneFoisChacune(lignes.donnees)), noms: noms.donnees, partagee: uneFoisChacune(lignes.donnees).length < lignes.donnees.length } })
 		})()
 		return () => {
 			courant = false
@@ -102,7 +113,7 @@ export function SeriePersonnelTrack({
 				<p className="text-sm text-text-2">{t('personnel.track.empty', { mois: libelleMois(mois) })}</p>
 			) : (
 				<div className="overflow-x-auto rounded-lg border border-border indique-debordement-x">
-					<table className="w-full table-fixed border-collapse text-sm">
+					<table className="w-full min-w-[40rem] table-fixed border-collapse text-sm">
 						{/* Colonnes FIXES : les sections de « Toute l'équipe » s'alignent d'un tableau à l'autre (constaté sur la
 						    capture : chaque tableau calculait ses propres largeurs). */}
 						<colgroup>
@@ -154,6 +165,7 @@ export function SeriePersonnelTrack({
 					</table>
 				</div>
 			)}
+			{etat.statut === 'pret' && etat.donnees.series.length > 0 && etat.donnees.partagee ? <MentionPartagee /> : null}
 		</section>
 	)
 }

@@ -8485,6 +8485,30 @@
 			]
 		},
 		{
+			"fichier": "le-temps-passe-et-le-cout-du-personnel/rapport-partage.jpg",
+			"largeur": 1192,
+			"hauteur": 210,
+			"chapitre": "le-temps-passe-et-le-cout-du-personnel",
+			"section": "le-rapport-mensuel",
+			"pleinePage": false,
+			"libelles": [
+				"280,00 EUR",
+				"3 h 30",
+				"Conseil & IA › Grands comptes",
+				"Coût",
+				"Portail partagé des adhérents",
+				"Portail partagé des adhérents Conseil & IA › Grands comptes partagée",
+				"Portail partagé des adhérents Studio web › Refonte de site partagée",
+				"Saisie partagée : cette affaire est rattachée à plusieurs channels ; son temps paraît sous chacun et ne compte qu'une fois dans le total",
+				"Studio web › Refonte de site",
+				"Temps",
+				"Total",
+				"Track, channel ou affaire",
+				"Une saisie sur une affaire rattachée à plusieurs channels paraît sous chacun ; le total ne la compte qu'une fois.",
+				"partagée"
+			]
+		},
+		{
 			"fichier": "le-temps-passe-et-le-cout-du-personnel/revenir-a-cette-semaine.jpg",
 			"largeur": 158,
 			"hauteur": 73,

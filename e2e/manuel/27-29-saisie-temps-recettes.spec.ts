@@ -3,6 +3,9 @@
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitres 27, 28, 29 ; docs/SPEC-costs.md (les coûts réels,
 //       l'onglet « À saisir »), docs/SPEC-temps.md (la saisie, le rapport, le coût du personnel), docs/SPEC-recettes.md
 // @spec CRM-126 (docs/BACKLOG.md) — tranche T2 : l'image « tableau » montre le tableau unique en balance par devise
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T4.2 : l'image « rapport-partage » montre une saisie partagée entre deux
+//       channels (docs/manual.md §28.4 ; docs/DESIGN_SYSTEM.md §5.54, « La saisie partagée »). Le seed n'a pas encore
+//       d'affaire à deux rattachements (T8) : le scénario en pose une jetable par la vraie API, puis la retire.
 //
 // Les écrans sont lus sur le seed — le track « Studio web », l'affaire « Refonte intranet Ville de Lyon », la semaine et
 // le mois que le seed remplit. Rien n'est saisi : les formulaires sont ouverts puis refermés, et une valeur hors borne
@@ -10,7 +13,8 @@
 
 import { expect, test } from '@playwright/test'
 import { illustrer } from './illustrer'
-import { ADMIN, VIEWER, connecterAvecLeLabs } from './outils'
+import { ADMIN, CHANNEL_GRANDS_COMPTES, VIEWER, WORKFLOW_GLOBAL, WORKSPACE_SEED, connecterAvecLeLabs, poserAffaire, rest, service } from './outils'
+import { enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 
 const A_SAISIR = 'l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite'
 const TEMPS = 'le-temps-passe-et-le-cout-du-personnel'
@@ -86,6 +90,39 @@ test('le temps : la semaine, le rapport, le coût du personnel', async ({ page }
 	await page.goto('/tracks/studio-web/couts')
 	const personnel = page.getByTestId('personnel-track').or(page.getByTestId('personnel-portee')).first()
 	if ((await personnel.count()) > 0) await illustrer(page, { chapitre: TEMPS, section: 'le-cout-du-personnel-a-cote-des-couts', nom: 'cout-a-cote-des-couts', cibles: [personnel] })
+})
+
+test('le rapport : une saisie sur une affaire rattachée à deux channels', async ({ page, request }) => {
+	const affaire = '5eed0000-0000-4000-8000-00000000f111'
+	const camille = '5eed0000-0000-4000-8000-000000000011'
+	// « Refonte de site », à l'étape initiale de son workflow, puis rattachée à « Grands comptes » par l'administratrice.
+	await poserAffaire(request, {
+		id: affaire,
+		titre: 'Portail partagé des adhérents',
+		channel: '5eed0000-0000-4000-8000-000000000034',
+		workflow: WORKFLOW_GLOBAL,
+		etape: '5eed0000-0000-4000-8000-000000000061',
+	})
+	try {
+		const rattache = await request.post(rest('rpc/attach_card'), {
+			headers: enTetesAuthentifies(await jetonDe(ADMIN)),
+			data: { p_card: affaire, p_channel: CHANNEL_GRANDS_COMPTES },
+		})
+		expect(rattache.status(), await rattache.text()).toBe(200)
+		await service(request, 'post', 'saisies_temps', [
+			{ workspace_id: WORKSPACE_SEED, profile_id: camille, jour: '2099-05-04', minutes: 210, card_id: affaire },
+		])
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto('/temps?onglet=rapport&mois=2099-05')
+		const section = page.getByTestId('temps-rapport-section')
+		await expect(section.getByTestId('temps-partagee')).toHaveCount(2)
+		await expect(section.getByTestId('temps-partagee-mention')).toBeVisible()
+		// La section seule — le tableau et sa mention —, sans le titre du mois, que les données de preuve placent en 2099.
+		await illustrer(page, { chapitre: TEMPS, section: 'le-rapport-mensuel', nom: 'rapport-partage', cibles: [section] })
+	} finally {
+		await request.delete(rest(`saisies_temps?card_id=eq.${affaire}`), { headers: enTetesService() })
+		await request.delete(rest(`cards?id=eq.${affaire}`), { headers: enTetesService() })
+	}
 })
 
 test('l’écran « Rentabilité »', async ({ page }) => {
