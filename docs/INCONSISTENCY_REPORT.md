@@ -8554,3 +8554,29 @@ sortie de ses onze sous-harnais.* **Constats**, tous antérieurs à T1 ter et é
 **Comportement laissé inchangé**, aucune preuve assouplie. **Issue proposée** : réviser chaque compte sur la règle qui
 l'a changé (décision 51), rendre la `0106` rejouable, poser la seconde garde dans la `0125` et la `0132`, et faire
 renouveler le jeton de `verify-copie-workflow.sh` avant sa restauration. **Statut : ouverte.**
+
+### INC-340 — `last_sync_at` n'est écrite par aucune relève, alors que l'écran d'état de `CRM-059` la donne pour « écrite par la relève elle-même »
+
+*Relevé le 2026-11-02, en lisant le code sans l'exécuter, en réponse au responsable : en production, la messagerie
+entrante est affichée « En attente » depuis des heures.* **Constats** :
+1. **Aucun écrivain.** Dans `mail-sync/src` et `supabase/migrations`, `mail_inbound_accounts.last_sync_at` n'est que
+   **lue** : pour trier les comptes de la veille (`postgrest.py`, `lire_comptes_a_veiller`, `order=last_sync_at.asc.nullsfirst`)
+   et pour l'écran d'état (`0031`, `mail-etat.ts`). `enregistrer_progression` n'écrit que `sync_state`, délibérément.
+   Les seules écritures du dépôt sont des `PATCH` de scénarios E2E (`e2e/ui/etat-messagerie.spec.ts`,
+   `e2e/manuel/11-boites-identites.spec.ts`, `e2e/manuel/13-etat-messagerie.spec.ts`), qui posent la valeur à la main.
+2. **La spécification promet le contraire.** `docs/SPEC-mail-subsystem.md` §20.7 : « Dernière relève réussie —
+   `last_sync_at`, écrit par la relève elle-même ». `CRM-059` est `[x]`. L'écran d'état affichera donc « Jamais relevée »
+   pour toute boîte, qu'elle soit relevée ou non. La veille, elle, trie toujours sur une colonne nulle partout.
+3. **Déjà vu, jamais porté.** INC-191 (précision `CRM-088`) a mesuré `last_sync_at` nulle sur les trois boîtes après une
+   relève réelle, et l'a dite « qu'aucune unité ne remplit encore ». `scripts/verify-mail-inbound.sh` §4 la fige comme
+   absence. Aucune unité du backlog ne la prend.
+4. **« En attente » n'est pas un état de réception.** Le libellé est `status = 'pending'`, que seule la route interne de
+   test de connexion fait évoluer (§13.5, §14.4). L'écran des réglages ne la déclenche pas (§21.1, §22.1). Une boîte créée
+   depuis l'écran reste donc « En attente » indéfiniment, que la relève fonctionne ou non, et rien de ce que montre
+   l'interface ne permet aujourd'hui de savoir si la production reçoit.
+
+**Comportement laissé inchangé.** **Issue proposée** : que la relève réussie écrive `last_sync_at` (par une fonction
+réservée à `service_role`, la colonne restant fermée à `authenticated`) ; que l'absence figée de
+`verify-mail-inbound.sh` soit retournée en preuve de cette écriture ; et que `CRM-059` repasse `[~]` jusque-là.
+L'arbitrage revient au responsable, avec la question du bouton « Tester la connexion » (entrant et sortant) qu'il a
+demandé le même jour et les deux questions du connecteur MCP. **Statut : ouverte.**
