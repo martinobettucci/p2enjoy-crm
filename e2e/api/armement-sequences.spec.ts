@@ -2,13 +2,16 @@
 //           TRANCHE 4, SOUS-TRANCHE 4b : l'armement et l'exécution
 // @verifies docs/SPEC-modeles-emails.md §12.11 (les dix-sept lignes du contrat d'API),
 //           §12.4 (les huit refus de l'armement), §12.4 bis (ce qui fait tomber le refus g),
-//           §12.7 (les quatre fins), §12.10 (autorisations), §12.12 (le seed n'arme rien)
+//           §12.7 (les cinq fins), §12.10 (autorisations), §12.12 (le seed n'arme rien)
 // @verifies docs/SPEC-permissions-rls.md §7 (le refus est ZÉRO LIGNE, jamais une erreur)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.5 : l'armement désigne le rattachement de l'affaire ; les scénarios
 //           nomment l'affaire, `corpsParRattachement` transmet son rattachement (docs/SPEC-rattachements.md §5, §7)
 // @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
 //           (docs/SPEC-rattachements.md §3.2, §5)
+// @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — l'administratrice arme avec SA identité, et
+//           l'identité de service rend `403 / identity_not_available` (docs/SPEC-modeles-emails.md §12.4 refus e ;
+//           docs/SPEC-seed.md §2.18)
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. `supabase/tests/0058_armement_sequences.test.sql`
 // prouve la règle EN BASE, sous des rôles endossés. Rien n'y garantit que la pile la rende par la
@@ -90,8 +93,10 @@ type Inscription = {
 let jetonAdmin: string
 let jetonBizdev: string
 let jetonViewer: string
-/** L'identité de SERVICE — sans propriétaire —, que seuls les administrateurs empruntent. */
+/** L'identité de SERVICE — sans propriétaire —, que personne n'emprunte plus (décision 805) : support du refus (e). */
 let identiteService: string
+/** L'identité de Camille, avec laquelle l'administratrice arme. */
+let identiteCamille: string
 /** L'identité de Driss, que l'administratrice ne peut PAS emprunter — support du refus (e). */
 let identiteDriss: string
 
@@ -109,10 +114,13 @@ test.beforeAll(async ({ request }) => {
 	expect(reponse.status(), 'lecture des identités sortantes').toBe(200)
 	const identites = (await reponse.json()) as { id: string; owner_id: string | null }[]
 	const service = identites.find((i) => i.owner_id === null)
-	const personnelle = identites.find((i) => i.owner_id !== null)
+	const camille = identites.find((i) => i.owner_id === '5eed0000-0000-4000-8000-000000000011')
+	const personnelle = identites.find((i) => i.owner_id === '5eed0000-0000-4000-8000-000000000012')
 	expect(service, "l'identité de SERVICE du seed").toBeDefined()
+	expect(camille, "l'identité PERSONNELLE de Camille").toBeDefined()
 	expect(personnelle, "l'identité PERSONNELLE de Driss").toBeDefined()
 	identiteService = service!.id
+	identiteCamille = camille!.id
 	identiteDriss = personnelle!.id
 })
 
@@ -164,7 +172,7 @@ async function avecInscription(
 		headers: enTetesAuthentifies(jetonAdmin),
 		data: await corpsParRattachement(
 			requete,
-			{ p_card_id: cardId, p_sequence_id: SEQUENCE_SEED, p_identity_id: identiteService },
+			{ p_card_id: cardId, p_sequence_id: SEQUENCE_SEED, p_identity_id: identiteCamille },
 			'p_card_id',
 		),
 	})
@@ -228,7 +236,7 @@ test.describe("l'armement des séquences, par la vraie route (docs/SPEC-modeles-
 				workspace_id: WORKSPACE,
 				card_id: CARD_FIGEE,
 				sequence_id: SEQUENCE_SEED,
-				identity_id: identiteService,
+				identity_id: identiteCamille,
 			},
 		})
 		// `403` ET NON `401`, ET C'EST MESURÉ : PostgREST rend `401` à un appelant ANONYME — il n'a
@@ -276,7 +284,7 @@ test.describe("l'armement des séquences, par la vraie route (docs/SPEC-modeles-
 				data: await corpsParRattachement(request, {
 					p_card_id: CARD_FIGEE,
 					p_sequence_id: SEQUENCE_SEED,
-					p_identity_id: identiteService,
+					p_identity_id: identiteCamille,
 				}, 'p_card_id'),
 			})
 			expect(second.status(), 'un SECOND armement sur la même affaire').toBe(409)
@@ -318,7 +326,7 @@ test.describe("l'armement des séquences, par la vraie route (docs/SPEC-modeles-
 			data: await corpsParRattachement(request, {
 				p_card_id: nonFigee!.id,
 				p_sequence_id: SEQUENCE_SEED,
-				p_identity_id: identiteService,
+				p_identity_id: identiteCamille,
 			}, 'p_card_id'),
 		})
 		expect(reponse.status()).toBe(400)
@@ -329,8 +337,7 @@ test.describe("l'armement des séquences, par la vraie route (docs/SPEC-modeles-
 		request,
 	}) => {
 		// L'administratrice tente d'emprunter l'identité PERSONNELLE de Driss. La règle est celle de
-		// `queue_outbound_email`, reprise telle quelle : la sienne, ou celle de service si elle est
-		// administratrice — jamais celle d'un tiers.
+		// `queue_outbound_email`, reprise telle quelle : la sienne, et elle seule (décision 805).
 		const reponse = await request.post(RPC_ARMER, {
 			headers: enTetesAuthentifies(jetonAdmin),
 			data: await corpsParRattachement(request, {
@@ -343,13 +350,28 @@ test.describe("l'armement des séquences, par la vraie route (docs/SPEC-modeles-
 		expect((await reponse.json()).message).toBe('identity_not_available')
 	})
 
+	test('10 bis — armer avec l’identité de SERVICE rend `403 / identity_not_available`', async ({ request }) => {
+		// L'IDENTITÉ DE SERVICE NE SERT QU'AUX ENVOIS AUTOMATIQUES (décision 805, INC-335) : l'administratrice, qui l'armait,
+		// est refusée. Le témoin est le scénario 7, où elle arme la même affaire avec SA identité.
+		const reponse = await request.post(RPC_ARMER, {
+			headers: enTetesAuthentifies(jetonAdmin),
+			data: await corpsParRattachement(request, {
+				p_card_id: CARD_FIGEE,
+				p_sequence_id: SEQUENCE_SEED,
+				p_identity_id: identiteService,
+			}, 'p_card_id'),
+		})
+		expect(reponse.status()).toBe(403)
+		expect((await reponse.json()).message).toBe('identity_not_available')
+	})
+
 	test('11 — le `viewer` n’arme pas une affaire qu’il ne peut pas écrire', async ({ request }) => {
 		const reponse = await request.post(RPC_ARMER, {
 			headers: enTetesAuthentifies(jetonViewer),
 			data: await corpsParRattachement(request, {
 				p_card_id: CARD_FERMEE_AU_VIEWER,
 				p_sequence_id: SEQUENCE_SEED,
-				p_identity_id: identiteService,
+				p_identity_id: identiteCamille,
 			}, 'p_card_id'),
 		})
 		expect(reponse.status()).toBe(403)
@@ -367,7 +389,7 @@ test.describe("l'armement des séquences, par la vraie route (docs/SPEC-modeles-
 			data: await corpsParRattachement(request, {
 				p_card_id: CARD_FIGEE,
 				p_sequence_id: SEQUENCE_SEED,
-				p_identity_id: identiteService,
+				p_identity_id: identiteCamille,
 			}, 'p_card_id'),
 		})
 		// MESURÉ, et le §12.4 de la spécification le dit : le refus `not_authenticated` NE protège
@@ -388,7 +410,7 @@ test.describe("l'armement des séquences, par la vraie route (docs/SPEC-modeles-
 			data: await corpsParRattachement(request, {
 				p_card_id: CARD_FIGEE_AUTRE,
 				p_sequence_id: SEQUENCE_SEED,
-				p_identity_id: identiteService,
+				p_identity_id: identiteCamille,
 			}, 'p_card_id'),
 		})
 		expect(armement.status()).toBe(200)
@@ -532,9 +554,8 @@ test.describe("l'armement des séquences, par la vraie route (docs/SPEC-modeles-
 			headers: enTetesAuthentifies(jetonBizdev),
 		})
 		const visibles = (await identites.json()) as { id: string; owner_id: string | null }[]
-		// Le `business_developer` du seed n'est pas administrateur : il n'emprunte donc PAS
-		// l'identité de service, et n'en possède aucune en propre. C'est un ÉCART du jeu de
-		// démonstration, pas du produit, et il est constaté plutôt que contourné.
+		// Le `business_developer` du seed n'emprunte pas l'identité de service — personne ne l'emprunte depuis la
+		// décision 805. Il ne lit que ce que la RLS lui ouvre.
 		expect(
 			visibles.length,
 			'le seed montre des identités au `business_developer` — sinon ce scénario ne mesure rien',

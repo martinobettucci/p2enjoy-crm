@@ -3,6 +3,8 @@
 //           10 Mo, bucket privé vérifié en base), §19 bis.3 (les trois refus, taille et type lus dans `storage.objects`,
 //           les politiques de stockage) ; docs/SPEC-permissions-rls.md §5 (Storage) ; CLAUDE.md §10 ;
 //           docs/JOURNAL.md décisions 719 et 720
+// @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — Camille envoie avec SA identité, celle de
+//           service ne s'empruntant plus (docs/SPEC-mail-subsystem.md §19.4 ; docs/SPEC-seed.md §2.18)
 //
 // TOUT SE MESURE AVEC LES VRAIS JETONS de Camille (admin) et de Driss (business developer), par la vraie API de stockage
 // puis la vraie RPC. Rien n'est envoyé : la file n'est vidée que par le worker, que ce fichier ne déclenche pas. Chaque
@@ -36,13 +38,14 @@ async function deposer(
 	})
 }
 
-async function identiteDeService(request: APIRequestContext): Promise<string> {
+/** L'identité personnelle de Camille : l'identité de service ne s'emprunte plus (décision 805). */
+async function identiteDeCamille(request: APIRequestContext): Promise<string> {
 	const reponse = await request.get(
-		`${URL_API}/rest/v1/mail_outbound_identities?select=id&owner_id=is.null&limit=1`,
+		`${URL_API}/rest/v1/mail_outbound_identities?select=id&owner_id=eq.${CAMILLE}`,
 		{ headers: enTetesService() },
 	)
 	const [ligne] = (await reponse.json()) as { id: string }[]
-	expect(ligne, 'l’identité de service du seed est introuvable').toBeDefined()
+	expect(ligne, 'l’identité de Camille est introuvable dans le seed').toBeDefined()
 	return ligne!.id
 }
 
@@ -63,7 +66,7 @@ test.describe.serial('copie cachée et pièces jointes à l’envoi — hors int
 	test.beforeAll(async ({ request }) => {
 		camille = await jetonDe('admin@p2enjoy.test')
 		driss = await jetonDe('bizdev@p2enjoy.test')
-		identite = await identiteDeService(request)
+		identite = await identiteDeCamille(request)
 	})
 
 	test.afterAll(async ({ request }) => {

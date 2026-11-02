@@ -1028,6 +1028,7 @@ Deux identités, et la seconde est **le cas d'usage du §2.2** :
 |---|---|---|---|
 | Identité de service | `NULL` | `systeme@crm.p2enjoy.test` | oui, pour le service |
 | Envoi de Driss Lemoine | Driss | `contact@p2enjoy.test` | oui, pour lui |
+| Envoi de Camille Aubert | Camille | `admin@p2enjoy.test` | oui, pour elle — **ajoutée par la décision 805** (INC-335) : l'identité de service ne s'emprunte plus, et l'envoi de démonstration de l'administratrice part de la sienne (`docs/SPEC-seed.md` §2.18) |
 
 Driss **reçoit** sur `bizdev@p2enjoy.test` et **expédie** depuis `contact@p2enjoy.test` : entrant et
 sortant divergent, comme le §2.2 l'annonce depuis le socle documentaire, et le seed le démontre au
@@ -2897,7 +2898,8 @@ Les quatre du §5.8, plus les deux du §21.8 :
 par le véritable chemin d'écriture — celui que cet écran appelle. L'écran a donc de quoi montrer ses
 trois lectures dès le premier `apply-seed.sh` :
 
-- l'administratrice y voit **deux** lignes, l'identité de service comprise ;
+- l'administratrice y voit **deux** lignes, l'identité de service comprise — **trois depuis la décision 805**, la
+  sienne s'y ajoutant, chacune avec son propriétaire et son défaut (§22.14) ;
 - Driss y voit **la sienne**, et le formulaire préremplí de ses valeurs — dont l'adresse
   `contact@p2enjoy.test`, qui diverge de sa boîte entrante `bizdev@p2enjoy.test` : le cas d'usage du
   §2.2, visible à l'écran pour la première fois ;

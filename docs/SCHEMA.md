@@ -2008,6 +2008,18 @@ n'est écrite que par la fonction, avec la clé de service. Les révisions sont 
 aucun client ne les supprime, mais la cascade d'une suggestion ou d'un espace les emporte. Aucune donnée
 personnelle par conception : une proposition est une structure de configuration.
 
+### Migration `0149` — l'identité de service ne s'emprunte plus (INC-335, décision 805 ; livrée en développement le 2026-11-02)
+
+`docs/SPEC-mail-subsystem.md` §14.2 et §19.4 ; `docs/SPEC-modeles-emails.md` §12.4 et §12.7. **`queue_outbound_email`**
+(définition de `0109`) et **`armer_sequence_relance`** (définition de `0119`) sont redéfinies à l'identique, hormis leur
+règle d'emprunt : « la sienne, et elle seule ». L'identité de service y rend `identity_not_available` (`42501`),
+administrateur compris ; elle ne sert plus qu'aux envois automatiques (`app.envoyer_digests`, inchangée).
+**`card_sequence_enrollments_motif_borne`** admet une cinquième fin, `identity_withdrawn`. **Données** : les inscriptions
+actives armées avec une identité de service sont fermées sous ce motif, `closed_at = now()` ; aucune autre ligne ne
+change. Idempotente. **Retrait** : rejouer les deux fonctions de `0109` et de `0119`. Les inscriptions fermées ne se
+rouvrent pas (§12.7 de `docs/SPEC-modeles-emails.md`) : on les réarme. La contrainte élargie peut rester ; la resserrer
+exige qu'aucune ligne ne porte `identity_withdrawn`.
+
 ### Migration `0084` — l'acceptation et le contrôle en base (`CRM-097` T2, écrite le 2026-10-02 avant le code)
 
 `docs/SPEC-ia.md` §12, décision 618. Aucune table ne naît ; trois objets changent ou s'ajoutent :

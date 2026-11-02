@@ -3,6 +3,8 @@
 //           §7 (la file ne perd pas) ; docs/JOURNAL.md décision 331
 // @verifies INC-271 (docs/INCONSISTENCY_REPORT.md, décision 624) — la boîte destinataire est rendue dans l'état trouvé,
 //           copie rangée par la veille et dossiers nés compris
+// @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — l'administratrice envoie avec SA identité,
+//           l'identité de service ne s'empruntant plus (docs/SPEC-mail-subsystem.md §19.4 ; docs/SPEC-seed.md §2.18)
 //
 // LA COUPURE EST RÉELLE, PAS SIMULÉE PAR UNE SUBSTITUTION : l'identité est momentanément pointée
 // vers un port fermé, et le worker se heurte à un vrai refus de connexion. Ce que le scénario
@@ -32,6 +34,8 @@ const DESTINATAIRE = 'bizdev@p2enjoy.test'
 const MDP = lireEnv('STALWART_MAILBOX_PASSWORD')
 /** La boîte destinataire, que la veille relève et où elle RANGE une copie sous `CRM/…` (INC-271). */
 const BOITES: readonly Boite[] = [{ adresse: DESTINATAIRE, motDePasse: MDP }]
+/** Camille, l'administratrice du seed, qui envoie avec SA identité (décision 805). */
+const CAMILLE = '5eed0000-0000-4000-8000-000000000011'
 /** Port fermé sur l'hôte `stalwart` : la connexion est refusée immédiatement, sans attente. */
 const PORT_FERME = 1
 
@@ -95,11 +99,12 @@ test.describe('résilience de l’envoi — une coupure ne perd rien', () => {
 
 		try {
 			const identites = await request.get(
-				`${URL_API}/rest/v1/mail_outbound_identities?select=id,smtp_port&owner_id=is.null&limit=1`,
+				`${URL_API}/rest/v1/mail_outbound_identities?select=id,smtp_port&owner_id=eq.${CAMILLE}`,
 				{ headers: enTetesService() },
 			)
+			// L'IDENTITÉ DE CAMILLE, non celle du service : celle-ci ne s'emprunte plus (décision 805).
 			const [service] = (await identites.json()) as { id: string; smtp_port: number }[]
-			expect(service, 'l’identité de service du seed est introuvable').toBeDefined()
+			expect(service, 'l’identité de Camille est introuvable dans le seed').toBeDefined()
 			identite = service!.id
 			portOrigine = service!.smtp_port
 
@@ -210,7 +215,7 @@ test.describe('résilience de l’envoi — une coupure ne perd rien', () => {
 
 		try {
 			const identites = await request.get(
-				`${URL_API}/rest/v1/mail_outbound_identities?select=id&owner_id=is.null&limit=1`,
+				`${URL_API}/rest/v1/mail_outbound_identities?select=id&owner_id=eq.${CAMILLE}`,
 				{ headers: enTetesService() },
 			)
 			const [service] = (await identites.json()) as { id: string }[]

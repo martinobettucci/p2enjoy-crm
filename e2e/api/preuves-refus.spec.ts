@@ -605,7 +605,8 @@ test.describe('PREUVES N° 6 et N° 7 — le compte mail d’un autre, et son se
 			'/rest/v1/mail_outbound_identities?select=id',
 			enTetesService(),
 		)
-		expect(toutes).toHaveLength(2)
+		// TROIS depuis la décision 805 (INC-335) : le service, Driss et Camille (docs/SPEC-seed.md §2.18).
+		expect(toutes).toHaveLength(3)
 	})
 })
 
@@ -631,7 +632,7 @@ test.describe('PREUVE N° 12 — emprunter l’identité sortante d’autrui est
 		request,
 	}) => {
 		// L'identité de SERVICE du workspace : elle n'appartient à personne (`owner_id is null`) et
-		// n'est donc disponible à aucun membre ordinaire. Relue en base plutôt que devinée.
+		// ne s'emprunte plus du tout, administrateur compris (décision 805, INC-335). Relue en base plutôt que devinée.
 		const identites = await request.get(
 			'/rest/v1/mail_outbound_identities?select=id&owner_id=is.null&limit=1',
 			{ headers: enTetesService() },

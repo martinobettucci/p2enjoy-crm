@@ -37860,7 +37860,9 @@ aux administrateurs. Le seed envoie un message de démonstration avec elle, en t
 - **Cadences déjà armées avec l'identité de service : fermées par la migration.** Elles reçoivent un cinquième motif de
   fermeture, `identity_withdrawn` (nom anglais, décision 658). Le motif n'est pas `manual`, qui affirmerait un geste
   humain qui n'a pas eu lieu (`CLAUDE.md` §8). Le contrat de déploiement donne la requête qui les compte avant la
-  migration. La fiche nomme ce motif.
+  migration. *Précision écrite avec le code* : la fiche ne montre que la cadence **active**, et aucun écran ne lit
+  `closed_reason`. Une cadence fermée n'y paraît donc plus, et le motif reste une donnée en base. La requête du contrat
+  de déploiement nomme les affaires à réarmer.
 - **Réglages.** Chaque ligne nomme son propriétaire : « Service », ou le nom de la personne. La case devient « Identité
   par défaut de cette personne » ou « Identité par défaut des envois automatiques », selon l'identité visée.
 - **Connecteur MCP** (les deux questions de `CLAUDE.md`) : **oui**, dans la famille existante **`messagerie`**, action
@@ -38306,3 +38308,25 @@ production, la messagerie entrante est affichée « En attente » depuis des heu
 droit) ; T3 fonction edge ; T4 écrans, `docs/DESIGN_SYSTEM.md` §5.81, manuel, E2E et captures ; T5 livraison et
 constat en production (`[P]`). Numéros de migration convenus entre sessions : `0149` INC-335, `0150` `CRM-127`, `0151`
 `CRM-111` T4.1.
+
+### décision 817 — INC-335 entre dans le lot de la décision 812
+
+*2026-11-02, session interactive, décision du responsable.* **Question** : INC-335 est implémenté et vérifié en
+développement (T1 à T3, migration `0149`). La session de livraison s'apprête à livrer « tout `main` » (décision 812). Le
+pousser maintenant le fait entrer dans ce lot, avec un geste préalable : chaque administrateur qui envoyait avec
+l'identité de service déclare d'abord sa propre identité. **Options** : le garder hors du lot, rangé hors du dépôt, pour
+le lot suivant ; ou le pousser dans ce lot.
+
+**Décision : dans le lot.** La session de livraison est prévenue avant le push (`CLAUDE.md` §12). Elle met à jour son
+annonce et ne lance la fenêtre qu'après la confirmation du responsable sur le geste préalable du §2.26 : les
+administrateurs ont leur identité, et les cadences armées avec l'identité de service sont relevées.
+
+**Vérifications réalisées avant le push** (2026-11-02, sur la pile partagée, base reconstruite à neuf) : la `0149`
+appliquée par le runner, le seed rejoué (trois identités, l'envoi de démonstration parti réellement de `admin@`) ;
+pgTAP `0030`, `0058`, `0096` et la suite entière, hors le test non suivi de `CRM-127` (une assertion de `0133` rougie par
+deux fonctions de `CRM-127` posées dans la base partagée, étrangères à INC-335) ; `verify-identite-service.sh` 9/9, dont
+le rejeu de la migration dans une transaction annulée ; `verify-signature-identite.sh` 31/31 ; E2E API 1300/1301
+(l'échec, `webhooks-remise`, est un délai sous charge, vert seul) ; E2E mail 50/50 ; E2E UI 24/24 sur les écrans
+touchés ; connecteur MCP, unitaires 293 et intégration 20/20 ; Vitest 5194/5194 ; types et build verts ; manuel
+reconstruit ; captures observées. **Écart de procédure** : `docs/DESIGN_SYSTEM.md` n'a pas été relu en entier (7 288
+lignes), seulement ses §5.4 sexies, §5.35 et §5.42, que le changement touche.

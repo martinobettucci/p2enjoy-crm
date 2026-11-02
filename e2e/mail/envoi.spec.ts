@@ -4,6 +4,9 @@
 // @verifies docs/JOURNAL.md décision 330 ; CLAUDE.md §8 (aucune trace fabriquée)
 // @verifies INC-271 (docs/INCONSISTENCY_REPORT.md, décision 624) — le scénario rend les deux boîtes dans l'état où il
 //           les a trouvées, copie rangée par la veille et dossiers nés comprise
+// @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — l'administratrice envoie avec SA identité,
+//           `admin@p2enjoy.test`, l'identité de service ne s'empruntant plus (docs/SPEC-mail-subsystem.md §19.4 ;
+//           docs/SPEC-seed.md §2.18)
 //
 // CE QUE CE FICHIER PROUVE, ET QU'AUCUN AUTRE NE PEUT PROUVER : le tour complet. Le produit met un
 // message en file par sa VRAIE garde, son worker le SOUMET réellement en SMTP authentifié, le
@@ -170,19 +173,20 @@ test.describe('envoi sortant — l’aller-retour complet', () => {
 			//    convient pas, et c'est mesuré : `auth.uid()` y est nul, la garde rend
 			//    `not_authenticated`, et c'est exactement ce qu'on attend d'elle — un envoi part
 			//    toujours au nom de quelqu'un.
+			//    L'IDENTITÉ DE CAMILLE, non celle du service : celle-ci ne s'emprunte plus (décision 805).
 			const identite = await request.get(
-				`${URL_API}/rest/v1/mail_outbound_identities?select=id&owner_id=is.null&limit=1`,
+				`${URL_API}/rest/v1/mail_outbound_identities?select=id&owner_id=eq.5eed0000-0000-4000-8000-000000000011`,
 				{ headers: enTetesService() },
 			)
-			const [service] = (await identite.json()) as { id: string }[]
-			expect(service, 'l’identité de service du seed est introuvable').toBeDefined()
+			const [camille] = (await identite.json()) as { id: string }[]
+			expect(camille, 'l’identité de Camille est introuvable dans le seed').toBeDefined()
 
 			const session = enTetesAuthentifies(await jetonDe('admin@p2enjoy.test'))
 			const miseEnFile = await request.post(`${URL_API}/rest/v1/rpc/queue_outbound_email`, {
 				headers: { ...session, 'Content-Type': 'application/json' },
 				data: {
 					p_card_id: CARD,
-					p_identity_id: service!.id,
+					p_identity_id: camille!.id,
 					p_to: [DESTINATAIRE],
 					p_subject: marqueur,
 					p_body_text: 'Bonjour,\n\nVoici notre proposition.',
@@ -198,7 +202,7 @@ test.describe('envoi sortant — l’aller-retour complet', () => {
 			// 3. LE DESTINATAIRE A REÇU — dans sa vraie boîte, pas dans une table.
 			const entetes = entetesRecus(marqueur)
 			expect(entetes['Subject']).toContain(marqueur)
-			expect(entetes['From']).toBe('systeme@crm.p2enjoy.test')
+			expect(entetes['From']).toBe('admin@p2enjoy.test')
 			// LE `Reply-To` PORTE L'ADRESSE DE LA CARD : c'est lui qui ramènera la réponse.
 			expect(entetes['Reply-To']).toMatch(/^c-[a-z0-9]{8}@crm\.p2enjoy\.test$/)
 			expect(entetes['Message-ID']).toBeDefined()

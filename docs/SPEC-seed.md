@@ -813,20 +813,24 @@ proscrit.
 
 ### 2.18 Identités sortantes SMTP — ajoutées par `CRM-053`
 
-Deux identités, et la seconde est **le cas d'usage que le §2.2 du sous-système promettait depuis le
+Trois identités, et la deuxième est **le cas d'usage que le §2.2 du sous-système promettait depuis le
 socle documentaire** :
 
 | `label` | `owner_id` | `from_address` | Par défaut |
 |---|---|---|---|
 | Identité de service | `NULL` | `systeme@crm.p2enjoy.test` | oui |
 | Envoi de Driss Lemoine | Driss | `contact@p2enjoy.test` | oui |
+| Envoi de Camille Aubert | Camille | `admin@p2enjoy.test` | oui |
 
 **Driss reçoit sur `bizdev@p2enjoy.test` et expédie depuis `contact@p2enjoy.test`.** Entrant et
 sortant divergent : le seed le **démontre** au lieu de le décrire, et c'est précisément ce que la
 Definition of Done de `CRM-053` réclame.
 
-**Camille n'a pas d'identité sortante**, et c'est utile aux preuves : elle donne une
-administratrice sans identité, donc un cas de lecture vide qui n'est pas un refus.
+**Camille a son identité depuis la décision 805** (INC-335). L'identité de service ne s'emprunte plus, même par une
+administratrice, et l'envoi de démonstration du compte administrateur part donc de la sienne. Elle expédie depuis sa
+boîte entrante, `admin@p2enjoy.test`, seule adresse de son principal. Ses réglages montrent trois identités, trois
+propriétaires, trois défauts : le cas même d'INC-335. Le cas de lecture vide qui n'est pas un refus reste celui de
+Farida (`docs/SPEC-mail-subsystem.md` §22.11).
 
 Posées par le véritable chemin d'écriture, comme au §2.17, avec la même convergence : un rejeu met
 à jour sans dupliquer et ne réécrit pas le secret lorsqu'aucun mot de passe n'est transmis. Leur

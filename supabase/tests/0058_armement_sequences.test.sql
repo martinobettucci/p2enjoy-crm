@@ -7,12 +7,16 @@
 --           §12.3 (`card_sequence_enrollments` — colonnes, contraintes, clés étrangères),
 --           §12.4 (les huit refus de l'armement), §12.4 bis (ce qui fait tomber le refus g),
 --           §12.5 (quand un palier est dû), §12.6 (ce qu'une réponse produit et son ancre),
---           §12.7 (les quatre fins), §12.8 (`app.mail_outbox_inserer`), §12.9 (le job),
+--           §12.7 (les cinq fins), §12.8 (`app.mail_outbox_inserer`), §12.9 (le job),
 --           §12.10 (autorisations)
 -- @verifies docs/SPEC-relances.md §2.4 (les trois exclusions de `cards_figees`), §9.5 (l'acteur nul)
 -- @verifies docs/SCHEMA.md §7 (`card_sequence_enrollments`)
 -- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
 --           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
+-- @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — l'identité de service ne s'arme plus,
+--           administratrice comprise ; la cinquième fin `identity_withdrawn` ; aucune cadence active ne la porte
+--           (docs/SPEC-modeles-emails.md §12.4 refus e, §12.7 ; docs/SCHEMA.md) ; l'administratrice arme avec SA
+--           identité (docs/SPEC-seed.md §2.18)
 --
 -- CE QUE CETTE SUITE PROUVE, ET DANS QUEL ORDRE.
 --
@@ -46,7 +50,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(49);
+select plan(52);
 
 create or replace function pg_temp.endosser(utilisateur uuid)
 returns void language plpgsql as $$
@@ -199,6 +203,11 @@ select ok(
 -- l'assertion (a) mesurerait alors le privilège de table au lieu du premier refus.
 select set_config('tests.identite_service',
 	(select id::text from public.mail_outbound_identities where owner_id is null), false);
+-- L'IDENTITÉ DE CAMILLE, capturée de même : depuis la décision 805 (INC-335), c'est avec elle que l'administratrice arme,
+-- l'identité de service ne s'empruntant plus.
+select set_config('tests.identite_camille',
+	(select id::text from public.mail_outbound_identities where owner_id = '5eed0000-0000-4000-8000-000000000011'),
+	false);
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
@@ -247,12 +256,24 @@ select throws_ok(
 	'identity_not_available',
 	'18. REFUS (e) — une identité inconnue est refusée');
 
+-- (e) encore — L'IDENTITÉ DE SERVICE NE S'ARME PLUS (décision 805, INC-335), administratrice comprise : elle ne sert
+-- qu'aux envois automatiques. Le témoin est l'assertion 21, où la même administratrice arme la même affaire avec SA
+-- identité.
+select throws_ok(
+	$$ select public.armer_sequence_relance(
+	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000c4'),
+	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
+	     current_setting('tests.identite_service')::uuid) $$,
+	'42501',
+	'identity_not_available',
+	'18 bis. REFUS (e) — une administratrice n''arme plus avec l''identité de service (décision 805)');
+
 -- (c) `sequence_not_available` — la séquence doit exister dans le workspace de l'identité
 select throws_ok(
 	$$ select public.armer_sequence_relance(
 	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000c4'),
 	     '00000000-0000-4000-8000-000000000000'::uuid,
-	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
+	     current_setting('tests.identite_camille')::uuid) $$,
 	'23514',
 	'sequence_not_available',
 	'19. REFUS (c) — une séquence inconnue est refusée');
@@ -262,7 +283,7 @@ select throws_ok(
 	$$ select public.armer_sequence_relance(
 	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000c4'),
 	     'd0000000-0000-4000-8000-0000000000b2'::uuid,
-	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
+	     current_setting('tests.identite_camille')::uuid) $$,
 	'23514',
 	'sequence_empty',
 	'20. REFUS (d) — une cadence VIDE est refusée : l''inscription serait un objet mort');
@@ -273,7 +294,7 @@ select lives_ok(
 	$$ select public.armer_sequence_relance(
 	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000c4'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
-	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
+	     current_setting('tests.identite_camille')::uuid) $$,
 	'21. TÉMOIN de (d) — la MÊME affaire, avec une cadence GARNIE : l''armement passe');
 
 select is(
@@ -287,7 +308,7 @@ select throws_ok(
 	$$ select public.armer_sequence_relance(
 	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000c4'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
-	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
+	     current_setting('tests.identite_camille')::uuid) $$,
 	'23505',
 	'enrollment_exists',
 	'22. REFUS (h) — une SECONDE inscription active sur la même affaire est refusée (§12.2)');
@@ -298,7 +319,7 @@ select lives_ok(
 	$$ select public.armer_sequence_relance(
 	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000cf'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
-	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
+	     current_setting('tests.identite_camille')::uuid) $$,
 	'23. TÉMOIN de (h) — une AUTRE affaire figée s''arme : l''unicité est par affaire');
 
 select pg_temp.redevenir_proprietaire();
@@ -317,7 +338,7 @@ select throws_ok(
 	$$ select public.armer_sequence_relance(
 	     app.card_first_placement('5eed0000-0000-4000-8000-00000000d010'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
-	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
+	     current_setting('tests.identite_camille')::uuid) $$,
 	'23514',
 	'card_not_stalled',
 	'25. REFUS (f) — une affaire NON figée est refusée (§12.2)');
@@ -330,7 +351,7 @@ select lives_ok(
 	$$ select public.armer_sequence_relance(
 	     app.card_first_placement('5eed0000-0000-4000-8000-00000000d010'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
-	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
+	     current_setting('tests.identite_camille')::uuid) $$,
 	'26. TÉMOIN de (f) — la MÊME affaire, vieillie de 90 jours, s''arme : le refus tenait au gel');
 
 -- (g) `card_not_available` — et ce qui le fait tomber est MESURÉ au §12.4 bis : ce n'est PAS
@@ -345,7 +366,7 @@ select throws_ok(
 	$$ select public.armer_sequence_relance(
 	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000c3'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
-	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
+	     current_setting('tests.identite_camille')::uuid) $$,
 	'23514',
 	'card_not_available',
 	'27. REFUS (g) — l''adresse de réponse ne se compose pas : `inbound_domain` nul (§12.4 bis)');
@@ -359,7 +380,7 @@ select lives_ok(
 	$$ select public.armer_sequence_relance(
 	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000c3'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
-	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
+	     current_setting('tests.identite_camille')::uuid) $$,
 	'28. TÉMOIN de (g) — le domaine rétabli, la MÊME affaire s''arme');
 
 -- (b) `forbidden` — le droit d'ÉCRITURE sur l'affaire est exigé. Le `viewer` du seed est fermé sur
@@ -370,7 +391,7 @@ select throws_ok(
 	$$ select public.armer_sequence_relance(
 	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000c4'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
-	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
+	     current_setting('tests.identite_camille')::uuid) $$,
 	'42501',
 	'forbidden',
 	'29. REFUS (b) — sans droit d''écriture sur l''affaire, l''armement est refusé');
@@ -425,7 +446,7 @@ select lives_ok(
 	$$ select public.armer_sequence_relance(
 	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000cf'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
-	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
+	     current_setting('tests.identite_camille')::uuid) $$,
 	'34. Après fermeture, la MÊME affaire se réarme — une NOUVELLE inscription, jamais la même');
 
 -- Introuvable et interdite rendent le MÊME refus : les distinguer dirait à qui n'a pas le droit de
@@ -551,7 +572,7 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 select lives_ok(
 	$$ select public.queue_outbound_email(
 	     '5eed0000-0000-4000-8000-0000000000cf'::uuid,
-	     (select id from public.mail_outbound_identities where owner_id is null),
+	     current_setting('tests.identite_camille')::uuid,
 	     array['destinataire@exemple.test'], 'Objet humain', 'Corps humain.') $$,
 	'46. La porte HUMAINE met toujours en file — ses sept refus sont intacts après extraction');
 
@@ -561,6 +582,26 @@ select is(
 	'47. Et SON message porte l''appelant — la nullité du job n''est donc pas un défaut de colonne');
 
 select pg_temp.redevenir_proprietaire();
+
+-- =============================================================================================
+-- La cinquième fin — décision 805, INC-335 (docs/SPEC-modeles-emails.md §12.7)
+-- =============================================================================================
+
+select ok(
+	(select pg_get_constraintdef(oid) from pg_constraint
+	  where conrelid = 'public.card_sequence_enrollments'::regclass
+	    and conname = 'card_sequence_enrollments_motif_borne') like '%identity_withdrawn%',
+	'48 bis. La contrainte des motifs connaît la cinquième fin, `identity_withdrawn`');
+
+-- L'INVARIANT QUE LA MIGRATION ÉTABLIT, ET QUE L'ARMEMENT GARDE : aucune cadence active ne porte l'identité de
+-- service. Le témoin est l'assertion 21 : des cadences actives existent bien, armées avec une identité personnelle.
+select is(
+	(select count(*)::integer
+	   from public.card_sequence_enrollments e
+	   join public.mail_outbound_identities i on i.id = e.identity_id
+	  where e.status = 'active' and i.owner_id is null),
+	0,
+	'48 ter. Aucune cadence active ne porte l''identité de service (décision 805)');
 
 -- =============================================================================================
 -- Toutes les écritures de cette suite vivent dans la transaction, que le `rollback` défait.

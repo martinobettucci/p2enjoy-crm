@@ -8,6 +8,8 @@
 # @verifies docs/SCHEMA.md §12 ; docs/SPEC-seed.md §2.17
 # @verifies docs/JOURNAL.md décision 316 ; CLAUDE.md §8 (aucune trace fabriquée), §10 (la règle
 #           est appliquée côté backend et prouvée hors interface)
+# @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — le seed porte trois identités, dont celle de
+#           Camille, chacune avec son défaut (docs/SPEC-mail-subsystem.md §14.6 ; docs/SPEC-seed.md §2.18)
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais prouve.
@@ -260,10 +262,10 @@ if [ -n "$MOT_DE_PASSE_SEED" ]; then
 	nb_dechiffre=$(psql_db -c "select count(*) from vault.decrypted_secrets s
 		join public.mail_outbound_identities a on a.secret_id = s.id
 		where s.decrypted_secret = '$MOT_DE_PASSE_SEED'")
-	if [ "$nb_dechiffre" = 2 ]; then
-		ok "les deux secrets se déchiffrent correctement pour qui en a le droit"
+	if [ "$nb_dechiffre" = 3 ]; then
+		ok "les trois secrets se déchiffrent correctement pour qui en a le droit (décision 805 : Camille a le sien)"
 	else
-		fail "secrets déchiffrables : $nb_dechiffre au lieu de 2"
+		fail "secrets déchiffrables : $nb_dechiffre au lieu de 3"
 	fi
 else
 	fail "STALWART_MAILBOX_PASSWORD absente de .env : le contrôle du chiffrement est impossible"
@@ -275,10 +277,10 @@ titre "4. Le seed et sa convergence"
 
 nb_comptes=$(psql_db -c "select count(*) from public.mail_outbound_identities")
 nb_service=$(psql_db -c "select count(*) from public.mail_outbound_identities where owner_id is null")
-if [ "$nb_comptes" = 2 ] && [ "$nb_service" = 1 ]; then
-	ok "deux identités seedées, dont exactement une de service — §14.6"
+if [ "$nb_comptes" = 3 ] && [ "$nb_service" = 1 ]; then
+	ok "trois identités seedées, dont exactement une de service — §14.6, décision 805"
 else
-	fail "identités seedées : $nb_comptes dont $nb_service de service — attendu 2 et 1"
+	fail "identités seedées : $nb_comptes dont $nb_service de service — attendu 3 et 1"
 fi
 
 # LE CAS D'USAGE DU §2.2, MESURÉ SUR LE SEED : entrant et sortant divergent.
@@ -293,21 +295,21 @@ fi
 
 # Un seul défaut par personne, et jamais zéro : c'est l'invariant du §14.2.
 if [ "$(psql_db -c "select count(*) from public.mail_outbound_identities
-	where owner_id is not null and is_default")" = 1 ] \
+	where owner_id is not null and is_default")" = 2 ] \
 	&& [ "$(psql_db -c "select count(*) from public.mail_outbound_identities
 	where owner_id is null and is_default")" = 1 ]; then
-	ok "une identité par défaut pour Driss, une pour le service — et pas zéro"
+	ok "une identité par défaut pour Driss, une pour Camille, une pour le service — et pas zéro"
 else
 	fail "l'invariant d'identité par défaut du §14.2 n'est pas tenu"
 fi
 
-# Camille n'a AUCUNE identité sortante, et c'est ce qui donne aux preuves une administratrice qui
-# lit tout sans rien posséder.
+# Camille a UNE identité à elle depuis la décision 805 (INC-335) : l'identité de service ne s'emprunte plus, et
+# l'administratrice envoie avec la sienne. Elle en lit trois et n'en possède qu'une : lire n'est toujours pas posséder.
 if [ "$(psql_db -c "select count(*) from public.mail_outbound_identities
-	where owner_id = '5eed0000-0000-4000-8000-000000000011'")" = 0 ]; then
-	ok "l'administratrice n'a aucune identité à elle : lire n'est pas posséder"
+	where owner_id = '5eed0000-0000-4000-8000-000000000011'")" = 1 ]; then
+	ok "l'administratrice possède une identité, la sienne, et en lit trois : lire n'est pas posséder"
 else
-	fail "une identité a été créée pour l'administratrice — §14.6 dit le contraire"
+	fail "l'administratrice ne possède pas exactement une identité — §14.6, décision 805"
 fi
 
 # AUCUN QUOTA N'EST APPLIQUÉ : `CRM-058` seule livrera l'envoi et son décompte. Une valeur non
@@ -322,10 +324,10 @@ if [ "$RAPIDE" = false ]; then
 	if "$SEED" >"$TRAVAIL/seed.log" 2>&1; then
 		nb_apres=$(psql_db -c "select count(*) from public.mail_outbound_identities")
 		nb_defauts=$(psql_db -c "select count(*) from public.mail_outbound_identities where is_default")
-		if [ "$nb_apres" = 2 ] && [ "$nb_defauts" = 2 ]; then
+		if [ "$nb_apres" = 3 ] && [ "$nb_defauts" = 3 ]; then
 			ok "le seed CONVERGE : un rejeu ne duplique rien et ne perd aucun défaut"
 		else
-			fail "après rejeu du seed : $nb_apres identités et $nb_defauts défauts — attendu 2 et 2"
+			fail "après rejeu du seed : $nb_apres identités et $nb_defauts défauts — attendu 3 et 3"
 		fi
 	else
 		fail_journal "le rejeu du seed ÉCHOUE" "$TRAVAIL/seed.log"

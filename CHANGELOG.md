@@ -13,6 +13,27 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### INC-335 — l'identité de service ne sert qu'aux envois automatiques, et l'envoi prend votre adresse par défaut
+
+- **L'adresse « par défaut » sert enfin à quelque chose.** Le formulaire « Écrire un message » choisit d'avance votre
+  identité par défaut. Sans défaut, il prend votre unique identité ; avec plusieurs identités sans défaut, il affiche
+  « Choisir une adresse ». Auparavant, il prenait la première adresse par ordre alphabétique.
+- **Le bloc d'armement d'une relance** présélectionne de même votre identité par défaut quand vous êtes le responsable
+  du rattachement (décision 803) ; sinon, vous choisissez.
+- **L'identité de service de l'espace ne s'emprunte plus**, ni pour envoyer ni pour armer une relance, même par une
+  administratrice ou un administrateur. Elle ne sert qu'aux envois automatiques, comme le récapitulatif quotidien. La
+  base la refuse (`identity_not_available`, migration `0149`), et l'écran ne la propose plus.
+- **Les relances déjà armées avec l'identité de service sont fermées** par la migration, sous un nouveau motif,
+  `identity_withdrawn`. Elles sont à réarmer avec une identité personnelle (contrat de déploiement).
+- **Réglages ▸ Identités d'expédition nomme le propriétaire** de chaque adresse : « Service », ou le nom de la personne.
+  Plusieurs pastilles « Par défaut » ne s'y contredisent plus, puisque chacune appartient à quelqu'un d'autre. La case
+  devient « Identité par défaut de cette personne », ou « … des envois automatiques » pour l'identité de service.
+- Connecteur MCP : `crm_mail_send` n'emprunte plus l'identité de service, et prend votre identité par défaut quand
+  `from_address` est absente (décision 805, qui révise la décision 684).
+- Seed : Camille, l'administratrice, a désormais sa propre identité (`admin@p2enjoy.test`), avec laquelle part l'envoi
+  de démonstration.
+- À livrer : la migration `0149`, la webapp et l'image `mcp`, après le geste préalable des administrateurs.
+
 ### `CRM-125` — le composer des séquences prévisualise chaque palier, et la séquence entière
 
 - Dans la fiche d'une séquence, un bouton « Aperçu » par palier et « Prévisualiser la séquence » montrent l'objet, le

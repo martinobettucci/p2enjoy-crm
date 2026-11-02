@@ -1,6 +1,8 @@
 // @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : l'aller réel d'un message avec copie cachée et pièces jointes
 // @verifies docs/SPEC-mail-subsystem.md §19 bis.2 (points 1, 2, 6 et 7), §19 bis.4, §19 bis.7 (ligne « E2E mail ») ;
 //           docs/JOURNAL.md décisions 719 et 720 ; CLAUDE.md §8 (aucune trace fabriquée)
+// @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — Camille envoie avec SA identité, celle de
+//           service ne s'empruntant plus (docs/SPEC-mail-subsystem.md §19.4 ; docs/SPEC-seed.md §2.18)
 //
 // RIEN N'EST SIMULÉ : les fichiers sont déposés par la vraie API de stockage avec la vraie session de Camille, mis en
 // file par la vraie garde, soumis par le vrai worker, et lus dans les vraies boîtes. Ce que ce fichier prouve, et
@@ -126,10 +128,12 @@ test.describe('envoi sortant — copie cachée et pièces jointes (§19 bis)', (
 
 			// 2. LA MISE EN FILE PAR LA VRAIE GARDE.
 			const identite = await request.get(
-				`${URL_API}/rest/v1/mail_outbound_identities?select=id&owner_id=is.null&limit=1`,
+				`${URL_API}/rest/v1/mail_outbound_identities?select=id&owner_id=eq.5eed0000-0000-4000-8000-000000000011`,
 				{ headers: enTetesService() },
 			)
+			// L'IDENTITÉ DE CAMILLE, non celle du service : celle-ci ne s'emprunte plus (décision 805).
 			const [service] = (await identite.json()) as { id: string }[]
+			expect(service, 'l’identité de Camille est introuvable dans le seed').toBeDefined()
 			const miseEnFile = await request.post(`${URL_API}/rest/v1/rpc/queue_outbound_email`, {
 				headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
 				data: {

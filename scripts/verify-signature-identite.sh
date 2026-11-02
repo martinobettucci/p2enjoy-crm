@@ -9,6 +9,8 @@
 # @verifies docs/SPEC-test-harness.md §7.2 (un harnais dégrade réellement et constate la restauration)
 # @verifies CRM-111 (docs/BACKLOG.md) — tranche T1 ter.3, INC-304 : la garde d'empreinte (docs/SPEC-test-harness.md §3.8) ;
 #           dégradations depuis les définitions en base, plus aucun rejeu des 23, 33 et 58 (§3.7)
+# @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — le seed porte trois identités, dont une seule
+#           signe (docs/SPEC-seed.md §2.18)
 #
 # Le script ne démarre ni n'arrête la pile. Il exige la base locale de développement migrée et
 # seedée. Il rejoue les preuves de la tranche, puis DÉGRADE RÉELLEMENT la migration — une
@@ -44,7 +46,8 @@ SPEC=docs/SPEC-modeles-emails.md
 # REST, et son identifiant est tiré au hasard à chaque application.
 ADRESSE_DRISS='contact@p2enjoy.test'
 SIGNATURE_DU_SEED='Driss Lemoine — Business developer'
-IDENTITES_DU_SEED=2
+# TROIS depuis la décision 805 (INC-335) : Camille a son identité, qui ne signe pas (docs/SPEC-seed.md §2.18).
+IDENTITES_DU_SEED=3
 SIGNATURES_DU_SEED=1
 BORNE_SIGNATURE=2000
 

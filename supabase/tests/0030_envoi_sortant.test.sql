@@ -5,6 +5,9 @@
 -- @verifies docs/SPEC-permissions-rls.md §4 ; docs/JOURNAL.md décision 330
 -- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
 --           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
+-- @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — l'identité de service ne s'emprunte plus,
+--           administratrice comprise (docs/SPEC-mail-subsystem.md §14.2, §19.4) ; le chemin nominal de
+--           l'administratrice passe par SA identité (docs/SPEC-seed.md §2.18)
 --
 -- LA GARDE EST ÉPROUVÉE PAR SES REFUS, un par un et dans l'ordre où elle les oppose : un refus qui
 -- surviendrait pour la mauvaise raison — la card avant l'identité, par exemple — renseignerait
@@ -14,7 +17,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(21);
+select plan(22);
 
 create or replace function pg_temp.endosser(utilisateur uuid)
 returns void language plpgsql as $$
@@ -40,15 +43,18 @@ select 'identite_service', id::text from public.mail_outbound_identities where o
 insert into pg_temp_ref
 select 'identite_driss', id::text from public.mail_outbound_identities
  where owner_id = '5eed0000-0000-4000-8000-000000000012';
+insert into pg_temp_ref
+select 'identite_camille', id::text from public.mail_outbound_identities
+ where owner_id = '5eed0000-0000-4000-8000-000000000011';
 insert into pg_temp_ref values ('card', '5eed0000-0000-4000-8000-0000000000c1');
 insert into pg_temp_ref
 select 'card_archivee', card_id::text from public.card_placements where archived_at is not null limit 1;
 
 -- TÉMOIN : sans lui, « la garde refuse » serait vrai aussi si les objets manquaient.
 select is(
-	(select count(*) from pg_temp_ref where nom in ('identite_service', 'identite_driss', 'card')),
-	3::bigint,
-	'1 — TÉMOIN : les deux identités et la card du seed existent');
+	(select count(*) from pg_temp_ref where nom in ('identite_service', 'identite_driss', 'identite_camille', 'card')),
+	4::bigint,
+	'1 — TÉMOIN : les trois identités et la card du seed existent');
 
 -- =============================================================================================
 -- 1. Ce que la migration a posé
@@ -108,7 +114,7 @@ select is(
 select throws_ok(
 	format($$ select public.queue_outbound_email(%L::uuid, %L::uuid, array['a@b.test']) $$,
 		(select valeur from pg_temp_ref where nom = 'card'),
-		(select valeur from pg_temp_ref where nom = 'identite_service')),
+		(select valeur from pg_temp_ref where nom = 'identite_camille')),
 	'42501',
 	'not_authenticated',
 	'11 — sans session, la garde refuse : un envoi part toujours au nom de quelqu''un');
@@ -118,7 +124,7 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013');  -- Farida, vie
 select throws_ok(
 	format($$ select public.queue_outbound_email(%L::uuid, %L::uuid, array['a@b.test']) $$,
 		(select valeur from pg_temp_ref where nom = 'card'),
-		(select valeur from pg_temp_ref where nom = 'identite_service')),
+		(select valeur from pg_temp_ref where nom = 'identite_camille')),
 	'42501',
 	'forbidden',
 	'12 — le viewer n''envoie pas : écrire au nom d''une affaire, c''est y ajouter du contenu');
@@ -147,10 +153,20 @@ select throws_ok(
 	'identity_not_available',
 	'14 — même une administratrice n''emprunte pas l''identité PERSONNELLE d''un collègue');
 
+-- L'IDENTITÉ DE SERVICE NE SERT QU'AUX ENVOIS AUTOMATIQUES (décision 805, INC-335) : l'administratrice, qui l'empruntait
+-- jusqu'ici, est refusée comme Driss l'est au 13. Elle écrit sur cette card : le refus porte sur l'identité.
+select throws_ok(
+	format($$ select public.queue_outbound_email(%L::uuid, %L::uuid, array['a@b.test']) $$,
+		(select valeur from pg_temp_ref where nom = 'card'),
+		(select valeur from pg_temp_ref where nom = 'identite_service')),
+	'42501',
+	'identity_not_available',
+	'14 bis — une administratrice n''emprunte plus l''identité de service (décision 805)');
+
 select throws_ok(
 	format($$ select public.queue_outbound_email(%L::uuid, %L::uuid, array['a@b.test']) $$,
 		(select valeur from pg_temp_ref where nom = 'card_archivee'),
-		(select valeur from pg_temp_ref where nom = 'identite_service')),
+		(select valeur from pg_temp_ref where nom = 'identite_camille')),
 	'23514',
 	'card_not_available',
 	'15 — une affaire archivée n''envoie pas : elle ne recevrait pas la réponse');
@@ -158,7 +174,7 @@ select throws_ok(
 select throws_ok(
 	format($$ select public.queue_outbound_email(%L::uuid, %L::uuid, array[]::text[]) $$,
 		(select valeur from pg_temp_ref where nom = 'card'),
-		(select valeur from pg_temp_ref where nom = 'identite_service')),
+		(select valeur from pg_temp_ref where nom = 'identite_camille')),
 	'23514',
 	'recipient_required',
 	'16 — un message sans destinataire n''est pas un message');
@@ -170,7 +186,7 @@ select throws_ok(
 select pg_temp.redevenir_proprietaire();
 
 update public.mail_outbound_identities set daily_quota = 0
- where id = (select valeur::uuid from pg_temp_ref where nom = 'identite_service');
+ where id = (select valeur::uuid from pg_temp_ref where nom = 'identite_camille');
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
@@ -189,25 +205,25 @@ select throws_ok(
 	format($$ select public.queue_outbound_email(%L::uuid, %L::uuid, array['a@b.test'],
 	                                             'Objet 0030', 'Corps non vide.') $$,
 		(select valeur from pg_temp_ref where nom = 'card'),
-		(select valeur from pg_temp_ref where nom = 'identite_service')),
+		(select valeur from pg_temp_ref where nom = 'identite_camille')),
 	'23505',
 	'quota_exceeded',
 	'17 — un quota de zéro refuse, et le dit');
 
 select pg_temp.redevenir_proprietaire();
 update public.mail_outbound_identities set daily_quota = null
- where id = (select valeur::uuid from pg_temp_ref where nom = 'identite_service');
+ where id = (select valeur::uuid from pg_temp_ref where nom = 'identite_camille');
 -- LE RELEVÉ D'AVANT LA SONDE : le seed fait partir un envoi le jour où il est rejoué (docs/SPEC-seed.md §2.19 ter), et
 -- un compte absolu dépendrait de l'heure du dernier seed.
 insert into pg_temp_ref
-select 'envois_avant', app.envois_du_jour((select valeur::uuid from pg_temp_ref where nom = 'identite_service'))::text;
+select 'envois_avant', app.envois_du_jour((select valeur::uuid from pg_temp_ref where nom = 'identite_camille'))::text;
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select isnt(
 	public.queue_outbound_email(
 		(select valeur::uuid from pg_temp_ref where nom = 'card'),
-		(select valeur::uuid from pg_temp_ref where nom = 'identite_service'),
+		(select valeur::uuid from pg_temp_ref where nom = 'identite_camille'),
 		array['client@exterieur.test'],
 		'Sonde pgTAP',
 		'Corps de sonde.'),
@@ -219,15 +235,15 @@ select pg_temp.redevenir_proprietaire();
 -- LE QUOTA COMPTE LES LIGNES EN VOL AUTANT QUE PARTIES : compter les seuls `sent` laisserait
 -- mettre en file mille messages qui partiraient tous.
 select is(
-	app.envois_du_jour((select valeur::uuid from pg_temp_ref where nom = 'identite_service')),
+	app.envois_du_jour((select valeur::uuid from pg_temp_ref where nom = 'identite_camille')),
 	(select valeur::int + 1 from pg_temp_ref where nom = 'envois_avant'),
 	'19 — une ligne `queued` compte déjà dans le quota du jour');
 
 update public.mail_outbox set status = 'failed'
- where identity_id = (select valeur::uuid from pg_temp_ref where nom = 'identite_service');
+ where identity_id = (select valeur::uuid from pg_temp_ref where nom = 'identite_camille');
 
 select is(
-	app.envois_du_jour((select valeur::uuid from pg_temp_ref where nom = 'identite_service')),
+	app.envois_du_jour((select valeur::uuid from pg_temp_ref where nom = 'identite_camille')),
 	0,
 	'20 — un envoi `failed` ne consomme plus le quota : il n''est jamais parti');
 

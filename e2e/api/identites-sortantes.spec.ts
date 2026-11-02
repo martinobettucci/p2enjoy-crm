@@ -6,6 +6,8 @@
 //           défaut), §14.3 (qui lit quoi), §14.4 (la voie de sortie du secret)
 // @verifies docs/SPEC-permissions-rls.md §7, secondes moitiés des refus n° 6 et n° 7
 // @verifies docs/JOURNAL.md décision 318 ; CLAUDE.md §10
+// @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — le seed porte trois identités ; l'administratrice
+//           les lit toutes et n'en possède qu'une, la sienne (docs/SPEC-mail-subsystem.md §14.6 ; docs/SPEC-seed.md §2.18)
 //
 // Le seed est rendu intact : le seul scénario qui écrit remet la valeur d'origine dans son
 // `finally`, par le même chemin d'écriture (leçon d'INC-061).
@@ -70,7 +72,7 @@ test.describe('identités sortantes — ce que la pile consent', () => {
 			`${URL_API}/rest/v1/mail_outbound_identities?select=id`,
 			{ headers: enTetesService() },
 		)
-		expect((await toutes.json()) as unknown[]).toHaveLength(2)
+		expect((await toutes.json()) as unknown[]).toHaveLength(3)
 	})
 
 	test('REFUS N° 6, seconde moitié : `secret_id` est illisible sur une ligne que l’on voit', async ({
@@ -92,15 +94,17 @@ test.describe('identités sortantes — ce que la pile consent', () => {
 		expect(await refuse.text()).toContain('42501')
 	})
 
-	test('l’administratrice voit les deux, et n’en possède aucune', async ({ request }) => {
+	// TROIS DEPUIS LA DÉCISION 805 : Camille a la sienne, l'identité de service ne s'empruntant plus. Elle lit les trois et
+	// n'en possède qu'une — lire n'est toujours pas posséder.
+	test('l’administratrice voit les trois, et n’en possède qu’une, la sienne', async ({ request }) => {
 		const jeton = await jetonDe('admin@p2enjoy.test')
 		const lues = await request.get(
 			`${URL_API}/rest/v1/mail_outbound_identities?select=id,owner_id,from_address,smtp_username,is_default,status`,
 			{ headers: enTetesAuthentifies(jeton) },
 		)
 		const lignes = (await lues.json()) as Identite[]
-		expect(lignes).toHaveLength(2)
-		expect(lignes.filter((ligne) => ligne.owner_id === CAMILLE)).toHaveLength(0)
+		expect(lignes).toHaveLength(3)
+		expect(lignes.filter((ligne) => ligne.owner_id === CAMILLE)).toHaveLength(1)
 	})
 
 	test('REFUS N° 11 : un anonyme ne lit rien', async ({ request }) => {

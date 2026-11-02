@@ -2,6 +2,9 @@
 // @verifies docs/SPEC-mail-subsystem.md §19.4 (les six refus, le quota), §19.7 (preuves exigées)
 // @verifies docs/SPEC-permissions-rls.md §7 ; CLAUDE.md §10
 // @verifies docs/JOURNAL.md décision 330
+// @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — l'identité de service ne s'emprunte plus,
+//           administratrice comprise ; l'administratrice envoie avec SA identité (docs/SPEC-mail-subsystem.md §14.2,
+//           §19.4 ; docs/SPEC-seed.md §2.18)
 //
 // TOUT SE MESURE HORS INTERFACE, avec de vrais jetons obtenus par la route de connexion : une
 // règle d'accès vérifiée depuis l'écran ne prouve que l'écran. Le scénario retire ce qu'il crée.
@@ -22,6 +25,19 @@ async function identiteDeService(
 	)
 	const [ligne] = (await reponse.json()) as { id: string }[]
 	expect(ligne, 'l’identité de service du seed est introuvable').toBeDefined()
+	return ligne!.id
+}
+
+/** L'identité personnelle de Camille, l'administratrice du seed — celle avec laquelle elle envoie (décision 805). */
+async function identiteDeCamille(
+	request: import('@playwright/test').APIRequestContext,
+): Promise<string> {
+	const reponse = await request.get(
+		`${URL_API}/rest/v1/mail_outbound_identities?select=id&owner_id=eq.5eed0000-0000-4000-8000-000000000011`,
+		{ headers: enTetesService() },
+	)
+	const [ligne] = (await reponse.json()) as { id: string }[]
+	expect(ligne, 'l’identité de Camille est introuvable dans le seed').toBeDefined()
 	return ligne!.id
 }
 
@@ -92,11 +108,30 @@ test.describe('file d’envoi — ce que la pile refuse', () => {
 		expect(((await refus.json()) as Reponse).message).toBe('identity_not_available')
 	})
 
+	// L'IDENTITÉ DE SERVICE NE SERT QU'AUX ENVOIS AUTOMATIQUES (décision 805, INC-335) : l'administratrice, qui
+	// l'empruntait, est refusée comme le membre l'est ci-dessus. Le témoin est le scénario « ce que la pile consent » :
+	// la même administratrice, sur la même affaire, envoie avec SA identité.
+	test('une administratrice n’emprunte plus l’identité de SERVICE', async ({ request }) => {
+		const refus = await mettreEnFile(
+			request,
+			enTetesAuthentifies(await jetonDe('admin@p2enjoy.test')),
+			{
+				p_card_id: CARD,
+				p_identity_id: await identiteDeService(request),
+				p_to: ['client@exterieur.test'],
+				p_subject: 'Refusé : identité de service',
+				p_body_text: 'Corps.',
+			},
+		)
+		expect(refus.status()).toBe(403)
+		expect(((await refus.json()) as Reponse).message).toBe('identity_not_available')
+	})
+
 	test('un message sans destinataire est refusé', async ({ request }) => {
 		const refus = await mettreEnFile(
 			request,
 			enTetesAuthentifies(await jetonDe('admin@p2enjoy.test')),
-			{ p_card_id: CARD, p_identity_id: await identiteDeService(request), p_to: [] },
+			{ p_card_id: CARD, p_identity_id: await identiteDeCamille(request), p_to: [] },
 		)
 		expect(refus.status()).toBe(400)
 		expect(((await refus.json()) as Reponse).message).toBe('recipient_required')
@@ -104,7 +139,7 @@ test.describe('file d’envoi — ce que la pile refuse', () => {
 
 	// LE QUOTA EST DÉGRADÉ PUIS RESTAURÉ : le seed ne garde aucune trace du passage.
 	test('le quota journalier refuse, et le refus est nommé', async ({ request }) => {
-		const identite = await identiteDeService(request)
+		const identite = await identiteDeCamille(request)
 		try {
 			const bride = await request.patch(
 				`${URL_API}/rest/v1/mail_outbound_identities?id=eq.${identite}`,
@@ -162,7 +197,7 @@ test.describe('file d’envoi — ce que la pile refuse', () => {
 
 test.describe('file d’envoi — ce que la pile consent', () => {
 	test('une administratrice met en file, et la ligne porte son auteur', async ({ request }) => {
-		const identite = await identiteDeService(request)
+		const identite = await identiteDeCamille(request)
 		let file: string | undefined
 		try {
 			const miseEnFile = await mettreEnFile(

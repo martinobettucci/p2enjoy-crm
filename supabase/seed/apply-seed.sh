@@ -47,6 +47,9 @@
 #       docs/DESIGN_SYSTEM.md §5.58 (décision 629)
 # @spec CRM-111 T2.4.3 (docs/BACKLOG.md) — les lectures et mises à jour de rattachement passent par card_placements,
 #       sous la clé de service (décision 746, migration 124) ; docs/SPEC-rattachements.md §12
+# @spec INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — Camille reçoit une identité personnelle, et
+#       l'envoi de démonstration part d'elle : l'identité de service ne s'emprunte plus ; docs/SPEC-seed.md §2.18,
+#       docs/SPEC-mail-subsystem.md §14.2 et §22.14
 #
 # Applique le seed socle sur la pile de développement en cours d'exécution.
 #
@@ -2543,8 +2546,11 @@ info "Comptes entrants : $comptes_entrants, dont la boîte système — secrets 
 # depuis contact@. Entrant et sortant divergent — c'est ce que la Definition of Done de `CRM-053`
 # réclame, et le seed le DÉMONTRE au lieu de le décrire.
 #
-# Camille n'a pas d'identité sortante, et c'est utile aux preuves : une administratrice sans
-# identité donne un cas de lecture vide qui n'est pas un refus.
+# CAMILLE A SON IDENTITÉ, DEPUIS LA DÉCISION 805 (INC-335) : l'identité de service ne s'emprunte plus, même par une
+# administratrice, et l'envoi de démonstration part donc de la sienne. Elle expédie depuis sa boîte entrante, `admin@`,
+# seule adresse de son principal (docs/SPEC-mail-subsystem.md §19.1). Ses réglages montrent alors trois identités, trois
+# propriétaires, trois défauts : le cas même d'INC-335, devenu lisible. Le cas de lecture vide qui n'est pas un refus
+# reste celui de Farida (§22.11).
 #
 # Le statut reste `pending` : aucune session SMTP n'est ouverte ici (même règle qu'au §2.17).
 
@@ -2560,6 +2566,7 @@ info "Comptes entrants : $comptes_entrants, dont la boîte système — secrets 
 IDENTITES_SORTANTES=(
 	"Identité de service||systeme@$INBOUND_DOMAIN|systeme@$INBOUND_DOMAIN|"
 	"Envoi de Driss Lemoine|5eed0000-0000-4000-8000-000000000012|bizdev@$PERSONAL_DOMAIN|contact@$PERSONAL_DOMAIN|Driss Lemoine — Business developer\\nP2Enjoy SAS"
+	"Envoi de Camille Aubert|5eed0000-0000-4000-8000-000000000011|admin@$PERSONAL_DOMAIN|admin@$PERSONAL_DOMAIN|"
 )
 
 for entree in "${IDENTITES_SORTANTES[@]}"; do
@@ -2601,7 +2608,7 @@ identites_sortantes=$(curl -s "$API/rest/v1/mail_outbound_identities?select=id" 
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 [ "$identites_sortantes" = "${#IDENTITES_SORTANTES[@]}" ] || die "identités sortantes :
         $identites_sortantes lignes au lieu de ${#IDENTITES_SORTANTES[@]} — le rejeu a dupliqué."
-info "Identités sortantes : $identites_sortantes ; Driss reçoit sur bizdev@ et expédie depuis contact@"
+info "Identités sortantes : $identites_sortantes ; Driss reçoit sur bizdev@ et expédie depuis contact@ ; Camille expédie depuis admin@"
 info "Signatures : une identité signe (Driss, deux lignes), l'identité de service ne signe pas"
 
 # --- 8 octies bis. L'ancienneté dans l'étape est RAFRAÎCHIE — CLAUDE.md §8 -------------------
@@ -3103,11 +3110,12 @@ if [ "$deja_envoye" = 0 ]; then
 		| curl -s -o "$CORPS" -w '%{http_code}' -X POST "$API/storage/v1/object/mail-outbound-attachments/$chemin_piece" \
 			-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_ADMIN" -H 'Content-Type: text/plain' --data-binary @-)
 	attendu "$code" "dépôt de la pièce jointe de démonstration" 200
-	identite_service=$(curl -s "$API/rest/v1/mail_outbound_identities?select=id&owner_id=is.null&limit=1" \
+	# L'IDENTITÉ DE CAMILLE, non celle du service : la base refuse désormais celle-ci à toute personne (décision 805).
+	identite_camille=$(curl -s "$API/rest/v1/mail_outbound_identities?select=id&owner_id=eq.5eed0000-0000-4000-8000-000000000011&is_default=is.true" \
 		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].id // empty')
-	[ -n "$identite_service" ] || die "l'identité de service est introuvable : l'envoi de démonstration ne peut pas partir."
+	[ -n "$identite_camille" ] || die "l'identité de Camille est introuvable : l'envoi de démonstration ne peut pas partir."
 	code=$(api_admin POST /rest/v1/rpc/queue_outbound_email -d "$(jq -n \
-		--arg card "$CARD_ENVOI_SEED" --arg id "$identite_service" --arg objet "$OBJET_ENVOI_SEED" \
+		--arg card "$CARD_ENVOI_SEED" --arg id "$identite_camille" --arg objet "$OBJET_ENVOI_SEED" \
 		--arg cci "$CORRESPONDANT" --arg piece "$chemin_piece" \
 		'{p_card_id: $card, p_identity_id: $id, p_to: ["bizdev@p2enjoy.test"], p_subject: $objet,
 		  p_body_text: "Bonjour,\n\nVous trouverez notre proposition jointe.", p_bcc: [$cci], p_attachments: [$piece]}')")

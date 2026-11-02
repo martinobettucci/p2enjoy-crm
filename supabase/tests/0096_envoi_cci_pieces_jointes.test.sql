@@ -2,6 +2,8 @@
 -- @verifies docs/SPEC-mail-subsystem.md §19 bis.2 (Cci, 10 fichiers et 10 Mo, bucket privé vérifié en base, archive),
 --           §19 bis.3 (colonnes, bucket, prédicats, les trois refus, taille et type lus dans `storage.objects`, la
 --           liste des dépôts abandonnés) ; docs/SCHEMA.md « Migrations `0106` et `0107` » ; décisions 719 et 720
+-- @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — l'administratrice envoie avec SA identité
+--           (docs/SPEC-mail-subsystem.md §19.4 ; docs/SPEC-seed.md §2.18)
 --
 -- LES OBJETS DE STOCKAGE SONT POSÉS DANS LA TRANSACTION, comme `storage` les écrirait — `owner`, `metadata.size`,
 -- `metadata.mimetype` —, et disparaissent au `rollback`. Ils ne démontrent rien du produit : ils éprouvent la garde. Le
@@ -32,7 +34,8 @@ $$;
 create temporary table pg_temp_ref (nom text primary key, valeur text);
 grant all on pg_temp_ref to authenticated, service_role;
 insert into pg_temp_ref
-select 'identite', id::text from public.mail_outbound_identities where owner_id is null limit 1;
+-- L'IDENTITÉ DE CAMILLE, non celle du service : celle-ci ne s'emprunte plus (décision 805, INC-335).
+select 'identite', id::text from public.mail_outbound_identities where owner_id = '5eed0000-0000-4000-8000-000000000011';
 
 -- Deux objets de Camille dans son dossier, un de Driss dans le sien, deux gros objets de Camille.
 insert into storage.objects (bucket_id, name, owner, metadata) values
