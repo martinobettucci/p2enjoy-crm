@@ -146,8 +146,10 @@ test.describe('configuration des identités sortantes (docs/SPEC-mail-subsystem.
 		await expect(page.getByTestId('connexion-identite').first()).toHaveText('stalwart:587')
 		// Les deux identités du seed n'ont jamais été éprouvées : elles sont « En attente ».
 		await expect(page.getByText('En attente').first()).toBeVisible()
-		// Les deux sont par défaut, chacune pour son propriétaire — l'index unique est PARTIEL.
-		await expect(page.getByText('Par défaut')).toHaveCount(2)
+		// Les trois sont par défaut, chacune pour son propriétaire — l'index unique est PARTIEL. C'est le cas même
+		// d'INC-335 : chaque ligne nomme désormais à qui elle appartient (décision 805, §22.14).
+		await expect(page.getByText('Par défaut')).toHaveCount(3)
+		await expect(page.getByTestId('proprietaire-identite')).toHaveText(['Camille Aubert', 'Driss Lemoine', 'Service'])
 
 		// Le formulaire est REPLIÉ par défaut (§5.35, §5.23).
 		await expect(page.getByTestId('formulaire-identite-mail')).toHaveCount(0)

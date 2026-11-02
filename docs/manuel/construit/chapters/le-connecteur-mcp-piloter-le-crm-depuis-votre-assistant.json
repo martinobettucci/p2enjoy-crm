@@ -3357,7 +3357,7 @@
 							},
 							{
 								"type": "text",
-								"text": " identité d'expédition, ou avec celle du service si vous\nadministrez l'espace ; si vous en avez plusieurs, il vous demande laquelle — il ne choisit jamais à votre place.\nL'envoi exige aussi la case « Affaires — Consulter », et le droit d'écrire sur l'affaire. Le quota journalier de\nl'identité s'applique comme à l'écran."
+								"text": " identité d'expédition, jamais avec celle du service. Si\nvous ne lui dites pas laquelle, il prend votre adresse par défaut ; si vous en avez plusieurs sans adresse par défaut,\nil vous demande laquelle.\nL'envoi exige aussi la case « Affaires — Consulter », et le droit d'écrire sur l'affaire. Le quota journalier de\nl'identité s'applique comme à l'écran."
 							}
 						]
 					}

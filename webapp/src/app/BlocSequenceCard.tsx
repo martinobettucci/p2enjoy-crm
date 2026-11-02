@@ -9,6 +9,9 @@
 //       (variantes), §5.8 (états systématiques), §9 (icônes Lucide)
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T2.3.5 : l'armement désigne le rattachement de l'affaire, que la fiche lui
 //       passe (docs/SPEC-rattachements.md §5, §7) ; l'inscription en cours se lit toujours par l'affaire
+// @spec INC-335 (docs/BACKLOG.md, correctif de la décision 805, T2) — l'identité de service n'est plus proposée ; le
+//       responsable du rattachement qui arme voit son identité par défaut présélectionnée (décision 803, transférée à
+//       INC-335 T2) — docs/SPEC-rattachements.md §7, docs/SPEC-mail-subsystem.md §22.14
 //
 // LE BLOC EST TOUJOURS RENDU, ET SA COMMANDE N'EST JAMAIS ÉTEINTE — ni selon le rôle, ni selon
 // l'état de l'affaire (§5.3, §5.13, §5.21, §5.27, sans exception).
@@ -29,7 +32,7 @@ import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import { t, type CleTraduction } from '../i18n'
 import { enChargement, type EtatAsync } from '../lib/async'
-import { lireIdentitesDisponibles, type IdentiteEnvoi } from '../lib/envoi'
+import { identiteArmementAPreselectionner, lireIdentitesDisponibles, type IdentiteEnvoi } from '../lib/envoi'
 import {
 	armerSequence,
 	interrompreSequence,
@@ -78,10 +81,20 @@ export type ProprietesBlocSequenceCard = {
 	 * rendu — comme l'en-tête pour le sommeil. Le bloc s'affiche sans en avoir besoin.
 	 */
 	readonly rattachements: RattachementsLus
+	/**
+	 * Le responsable du rattachement armé (le plus ancien), ou `null` s'il n'en a pas ou qu'il ne se lit pas. Il ne sert
+	 * qu'à la présélection de la décision 803 : la base, elle, n'en tire aucun droit (`armer_sequence_relance`, refus e).
+	 */
+	readonly idResponsable?: string | null
 	readonly client?: ClientCrm | null
 }
 
-export function BlocSequenceCard({ idCard, rattachements, client = clientCrm }: ProprietesBlocSequenceCard) {
+export function BlocSequenceCard({
+	idCard,
+	rattachements,
+	idResponsable = null,
+	client = clientCrm,
+}: ProprietesBlocSequenceCard) {
 	const droit = useRefus()
 	const [inscription, setInscription] = useState<EtatAsync<InscriptionSequence | null>>(enChargement)
 	const [sequences, setSequences] = useState<readonly SequenceRelance[]>([])
@@ -144,12 +157,17 @@ export function BlocSequenceCard({ idCard, rattachements, client = clientCrm }: 
 			// collègues —, et `armer_sequence_relance` reprend telle quelle la règle d'emprunt de
 			// `queue_outbound_email`. Deux filtres pour une même règle divergeraient.
 			const disponibles = await lireIdentitesDisponibles(client, idUtilisateur)
-			if (vivant) setIdentites(disponibles)
+			if (!vivant) return
+			setIdentites(disponibles)
+			// LE RESPONSABLE QUI ARME VOIT SON IDENTITÉ PAR DÉFAUT PRÉSÉLECTIONNÉE (décisions 803 et 805) ; une autre
+			// personne choisit. Un choix déjà fait n'est jamais écrasé.
+			const presselection = identiteArmementAPreselectionner(disponibles, idUtilisateur, idResponsable)
+			setIdIdentite((precedent) => (precedent === '' ? presselection : precedent))
 		})()
 		return () => {
 			vivant = false
 		}
-	}, [client, idUtilisateur])
+	}, [client, idUtilisateur, idResponsable])
 
 	const recharger = useCallback(() => setTentative((precedente) => precedente + 1), [])
 

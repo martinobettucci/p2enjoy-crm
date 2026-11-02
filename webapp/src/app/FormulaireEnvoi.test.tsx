@@ -1,6 +1,8 @@
 // @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : « Ajouter Cci », « Joindre des fichiers », le dépôt immédiat, le
 //           retrait, les plafonds qui éteignent l'envoi avec leur motif, l'annulation qui retire les dépôts
 // @verifies docs/SPEC-mail-subsystem.md §19 bis.2, §19 bis.5 ; docs/DESIGN_SYSTEM.md §5.4 sexies ; décisions 719 et 720
+// @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T2) — l'adresse présélectionnée est l'identité par
+//           défaut de la personne ; l'identité de service n'est pas proposée (docs/SPEC-mail-subsystem.md §19.4, §22.14)
 //
 // LE VRAI COMPOSANT, AVEC UN CLIENT FACTICE qui journalise ce que l'écran demande au stockage et à la file. Le parcours
 // réel — dépôt par l'API de stockage, mise en file, remise — est prouvé par `e2e/ui/envoi-pieces-jointes.spec.ts`.
@@ -9,7 +11,14 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const injecte: { appels: Array<[string, ...unknown[]]> } = { appels: [] }
+const injecte: { appels: Array<[string, ...unknown[]]>; identites: unknown[] } = { appels: [], identites: [] }
+
+/** Les identités du seed vues par une administratrice : le service, et deux des siennes, la seconde par défaut. */
+const IDENTITES_ADMINISTRATRICE = [
+	{ id: 'id-service', label: 'Identité de service', from_address: 'systeme@crm.p2enjoy.test', owner_id: null, is_default: true },
+	{ id: 'id-1', label: 'Envoi A', from_address: 'a@p2enjoy.test', owner_id: 'personne-1', is_default: false },
+	{ id: 'id-2', label: 'Envoi B', from_address: 'admin@p2enjoy.test', owner_id: 'personne-1', is_default: true },
+]
 
 const client = {
 	from: (table: string) => ({
@@ -19,9 +28,7 @@ const client = {
 			}),
 			order: () =>
 				Promise.resolve({
-					data: table === 'mail_outbound_identities'
-						? [{ id: 'id-1', label: 'Service', from_address: 'contact@p2enjoy.test', owner_id: null }]
-						: [],
+					data: table === 'mail_outbound_identities' ? injecte.identites : [],
 					error: null,
 				}),
 		}),
@@ -56,6 +63,7 @@ const { FormulaireEnvoi } = await import('./FormulaireEnvoi')
 
 beforeEach(() => {
 	injecte.appels = []
+	injecte.identites = IDENTITES_ADMINISTRATRICE
 })
 afterEach(cleanup)
 
@@ -124,5 +132,42 @@ describe('FormulaireEnvoi — copie cachée et pièces jointes (§19 bis)', () =
 		)
 		await userEvent.click(screen.getByRole('button', { name: 'Annuler' }))
 		expect(injecte.appels.filter(([genre]) => genre === 'remove')).toHaveLength(2)
+	})
+})
+
+describe('FormulaireEnvoi — l’adresse présélectionnée (décision 805, INC-335)', () => {
+	it('présélectionne l’identité PAR DÉFAUT de la personne, et ne propose pas celle du service', async () => {
+		await ouvrir()
+		const selecteur = screen.getByRole('combobox') as HTMLSelectElement
+		expect(selecteur.value).toBe('id-2')
+		const options = Array.from(selecteur.options).map((option) => option.value)
+		expect(options).toEqual(['id-1', 'id-2'])
+		expect(screen.queryByText(/systeme@crm\.p2enjoy\.test/)).toBeNull()
+
+		await userEvent.type(screen.getByLabelText('Message'), 'Bonjour')
+		await userEvent.click(screen.getByTestId('envoi-valider'))
+		await waitFor(() => expect(injecte.appels.some(([genre]) => genre === 'rpc')).toBe(true))
+		const [, , args] = injecte.appels.find(([genre]) => genre === 'rpc') as [string, string, Record<string, unknown>]
+		expect(args.p_identity_id).toBe('id-2')
+	})
+
+	it('sans défaut et avec plusieurs identités, ne présélectionne rien et le montre', async () => {
+		injecte.identites = IDENTITES_ADMINISTRATRICE.map((identite) => ({ ...identite, is_default: false }))
+		await ouvrir()
+		const selecteur = screen.getByRole('combobox') as HTMLSelectElement
+		expect(selecteur.value).toBe('')
+		expect(selecteur.options[0]?.textContent).toBe('Choisir une adresse')
+	})
+
+	it('sans aucune identité à soi, dit où en déclarer une — l’identité de service ne la remplace pas', async () => {
+		injecte.identites = [IDENTITES_ADMINISTRATRICE[0]]
+		render(<FormulaireEnvoi idCard="card-1" destinataire="client@exemple.fr" objet="Devis" />)
+		await userEvent.click(screen.getByTestId('envoi-ouvrir'))
+		expect(
+			await screen.findByText(
+				"Aucune adresse d'expédition ne vous est attribuée : déclarez la vôtre dans Réglages ▸ Identités d'expédition.",
+			),
+		).toBeTruthy()
+		expect(screen.queryByRole('combobox')).toBeNull()
 	})
 })

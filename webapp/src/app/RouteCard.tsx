@@ -393,6 +393,7 @@ function ContenuCard({
 				<BlocSequenceCard
 					idCard={etat.donnees.card.id}
 					rattachements={etat.donnees.card}
+					idResponsable={etat.donnees.card.profiles?.id ?? null}
 				/>
 				{/* LE GESTE EST EN BAS DE LA COLONNE GAUCHE (docs/DESIGN_SYSTEM.md §5.3) : la colonne
 				    droite RACONTE ce qui est arrivé à l'affaire, et un geste qui agit n'appartient pas

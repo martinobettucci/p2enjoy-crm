@@ -583,7 +583,7 @@
 			"src": "enchainer-des-relances-les-sequences/apercu-d-un-palier.jpg",
 			"alt": "« Aperçu » sur la ligne d'un palier : l'objet et le corps de son modèle, sur les données d'exemple",
 			"width": 889,
-			"height": 456
+			"height": 432
 		},
 		{
 			"type": "image",
@@ -597,7 +597,7 @@
 			"src": "enchainer-des-relances-les-sequences/apercu-de-la-sequence.jpg",
 			"alt": "L'aperçu de la séquence : chaque palier, son rang et ses deux délais, puis « Fermer l'aperçu »",
 			"width": 891,
-			"height": 1251
+			"height": 1227
 		},
 		{
 			"type": "paragraph",
@@ -843,7 +843,20 @@
 				},
 				{
 					"type": "text",
-					"text": " depuis laquelle les messages partiront. Aucun des deux\nn'est présélectionné — le produit ne choisit pas à votre place l'adresse qui signera vos relances."
+					"text": " depuis laquelle les messages partiront. La séquence n'est jamais choisie\nd'avance. L'adresse l'est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "si vous êtes le responsable de l'affaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : c'est alors votre adresse par défaut, ou votre\nunique adresse. Sinon, vous la choisissez. Seules vos propres adresses sont proposées : l'adresse de service ne signe\npas de relance."
 				}
 			]
 		},

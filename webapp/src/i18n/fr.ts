@@ -305,7 +305,9 @@ export const fr = {
 	'envoi.open': 'Écrire un message',
 	'envoi.reply': 'Répondre',
 	'envoi.identity': 'Expédier depuis',
-	'envoi.identity.empty': "Aucune adresse d'expédition ne vous est attribuée.",
+	'envoi.identity.empty':
+		"Aucune adresse d'expédition ne vous est attribuée : déclarez la vôtre dans Réglages ▸ Identités d'expédition.",
+	'envoi.identity.choose': 'Choisir une adresse',
 	'envoi.to': 'Destinataires',
 	'envoi.to.placeholder': 'adresse@exemple.fr, autre@exemple.fr',
 	'envoi.subject': 'Objet',
@@ -2991,7 +2993,11 @@ export const fr = {
 	'admin.mailIdentities.field.port': 'Port',
 	'admin.mailIdentities.field.security': 'Sécurité',
 	'admin.mailIdentities.field.username': 'Identifiant',
-	'admin.mailIdentities.field.default': 'Identité par défaut pour cet expéditeur',
+	'admin.mailIdentities.field.default.person': 'Identité par défaut de cette personne',
+	'admin.mailIdentities.field.default.service': 'Identité par défaut des envois automatiques',
+	'admin.mailIdentities.owner.service': 'Service',
+	'admin.mailIdentities.owner.unknown': 'Propriétaire non lisible',
+	'admin.mailIdentities.owner.aria': 'Propriétaire : {proprietaire}',
 	'admin.mailIdentities.field.password': 'Mot de passe',
 	'admin.mailIdentities.field.password.help':
 		"Laissé vide, le mot de passe enregistré est conservé. Il n'est jamais affiché.",

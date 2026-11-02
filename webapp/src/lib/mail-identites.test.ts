@@ -4,6 +4,8 @@
 //           deux règles opposées), §22.6 (un mot de passe vide est OMIS), §22.7 (les réponses
 //           mesurées), §22.8 (dictionnaire fermé des refus et repli nommé)
 // @verifies docs/SPEC-permissions-rls.md §7, preuve de refus n° 6 (`secret_id` jamais demandée)
+// @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T2) — le propriétaire est lu avec l'identité
+//           (docs/SPEC-mail-subsystem.md §22.14)
 //
 // CE FICHIER ÉPROUVE LA REQUÊTE RÉELLEMENT ÉMISE, et pas seulement la valeur rendue : « le mot de
 // passe vide est omis », « le nom d'expéditeur vide est ENVOYÉ » et « `secret_id` n'est jamais
@@ -64,10 +66,12 @@ const IDENTITE: IdentiteSortante = {
 	status: 'pending',
 	last_error: null,
 	last_checked_at: null,
+	proprietaire: { full_name: 'Driss Lemoine' },
 }
 
 const IDENTITE_SERVICE: IdentiteSortante = {
 	...IDENTITE,
+	proprietaire: null,
 	id: 'bbbb0000-0000-4000-8000-000000000002',
 	label: 'Identité de service',
 	owner_id: null,
@@ -161,6 +165,14 @@ describe('lecture des identités sortantes — §22.3', () => {
 		]) {
 			expect(COLONNES_IDENTITE_SORTANTE).toContain(colonne)
 		}
+	})
+
+	// INC-335 (décision 805) : le propriétaire est lu PAR LA CLÉ ÉTRANGÈRE nommée, sous la RLS des profils — l'écran le
+	// nomme sur chaque ligne (§22.14).
+	it('lit le nom du propriétaire par la clé étrangère `owner_id`, sous le nom `proprietaire`', () => {
+		expect(COLONNES_IDENTITE_SORTANTE).toContain(
+			'proprietaire:profiles!mail_outbound_identities_owner_id_fkey(full_name)',
+		)
 	})
 
 	it('rend un état d’erreur classé, jamais une liste vide, quand la requête échoue', async () => {

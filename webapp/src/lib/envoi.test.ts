@@ -3,6 +3,10 @@
 // @verifies docs/SPEC-mail-subsystem.md §19 bis.2 (points 1, 4 et 5), §19 bis.3 (les trois refus) ;
 //           docs/DESIGN_SYSTEM.md §5.4 sexies ; docs/JOURNAL.md décisions 719 et 720
 // @verifies CRM-058 (docs/BACKLOG.md) — le classement des refus de la file (§19.4), jusqu'ici sans test unitaire dédié
+// @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T2) — les identités empruntables sont les siennes, et
+//           elles seules ; la présélection prend son défaut, à défaut l'unique, sinon rien (docs/SPEC-mail-subsystem.md
+//           §14.2, §19.4, §22.14) ; au bloc d'armement, pour le seul responsable du rattachement (décision 803,
+//           docs/SPEC-rattachements.md §7)
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -13,6 +17,9 @@ import {
 	classerRefusEnvoi,
 	depassementPlafond,
 	deposerPiece,
+	identiteAPreselectionner,
+	identiteArmementAPreselectionner,
+	lireIdentitesDisponibles,
 	mettreEnFile,
 	nomDeDepot,
 	retirerPiece,
@@ -146,5 +153,67 @@ describe('la mise en file et le dépôt', () => {
 		const { client, appels } = espion()
 		await retirerPiece(client, 'e1/p1/r1/note.txt')
 		expect(appels.remove).toEqual([BUCKET_PIECES, ['e1/p1/r1/note.txt']])
+	})
+})
+
+describe('les identités qu’on peut employer, et celle qu’on présélectionne (décision 805, INC-335)', () => {
+	const MOI = 'personne-1'
+	const lignes = [
+		{ id: 'service', label: 'Identité de service', from_address: 'systeme@crm.test', owner_id: null, is_default: true },
+		{ id: 'collegue', label: 'Envoi de Driss', from_address: 'contact@p2enjoy.test', owner_id: 'personne-2', is_default: true },
+		{ id: 'mienne-a', label: 'Envoi A', from_address: 'a@p2enjoy.test', owner_id: MOI, is_default: false },
+		{ id: 'mienne-b', label: 'Envoi B', from_address: 'b@p2enjoy.test', owner_id: MOI, is_default: true },
+	]
+	const lecteur = (data: unknown, error: { message: string } | null = null) =>
+		({ from: () => ({ select: () => ({ order: () => Promise.resolve({ data, error }) }) }) }) as unknown as ClientCrm
+
+	it('ne garde que SES identités : ni celle du service, ni celle d’un collègue que la RLS montre à une administratrice', async () => {
+		const lues = await lireIdentitesDisponibles(lecteur(lignes), MOI)
+		expect(lues.map((identite) => identite.id)).toEqual(['mienne-a', 'mienne-b'])
+		expect(lues.find((identite) => identite.id === 'mienne-b')?.parDefaut).toBe(true)
+		expect(lues.find((identite) => identite.id === 'mienne-a')?.parDefaut).toBe(false)
+	})
+
+	it('ne propose rien sans session, ni sur une lecture refusée', async () => {
+		expect(await lireIdentitesDisponibles(lecteur(lignes), null)).toEqual([])
+		expect(await lireIdentitesDisponibles(lecteur(null, { message: 'refus' }), MOI)).toEqual([])
+		expect(await lireIdentitesDisponibles(null, MOI)).toEqual([])
+	})
+
+	it('présélectionne le défaut de la personne, même s’il n’est pas le premier par libellé', () => {
+		const identites = [
+			{ id: 'a', libelle: 'A', adresse: 'a@x.test', parDefaut: false },
+			{ id: 'b', libelle: 'B', adresse: 'b@x.test', parDefaut: true },
+		]
+		expect(identiteAPreselectionner(identites)).toBe('b')
+	})
+
+	it('à défaut de défaut, l’unique identité ; avec plusieurs sans défaut, ou aucune, rien', () => {
+		expect(identiteAPreselectionner([{ id: 'seule', libelle: 'S', adresse: 's@x.test', parDefaut: false }])).toBe('seule')
+		expect(
+			identiteAPreselectionner([
+				{ id: 'a', libelle: 'A', adresse: 'a@x.test', parDefaut: false },
+				{ id: 'b', libelle: 'B', adresse: 'b@x.test', parDefaut: false },
+			]),
+		).toBe('')
+		expect(identiteAPreselectionner([])).toBe('')
+	})
+})
+
+describe('l’identité que le bloc d’armement présélectionne (décisions 803 et 805)', () => {
+	const identites = [
+		{ id: 'a', libelle: 'A', adresse: 'a@x.test', parDefaut: false },
+		{ id: 'b', libelle: 'B', adresse: 'b@x.test', parDefaut: true },
+	]
+
+	it('la personne qui arme est le responsable du rattachement : son identité par défaut', () => {
+		expect(identiteArmementAPreselectionner(identites, 'moi', 'moi')).toBe('b')
+		expect(identiteArmementAPreselectionner([identites[0]!], 'moi', 'moi')).toBe('a')
+	})
+
+	it('une autre personne, ou un responsable inconnu, ou aucune session : rien', () => {
+		expect(identiteArmementAPreselectionner(identites, 'moi', 'autre')).toBe('')
+		expect(identiteArmementAPreselectionner(identites, 'moi', null)).toBe('')
+		expect(identiteArmementAPreselectionner(identites, null, null)).toBe('')
 	})
 })

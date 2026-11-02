@@ -7,6 +7,9 @@
 // @spec CRM-058 (docs/BACKLOG.md) — tranche 2 : « Ajouter Cci », « Joindre des fichiers », le dépôt immédiat, le retrait,
 //       les plafonds écrits, les refus nommés — docs/SPEC-mail-subsystem.md §19 bis.2, §19 bis.5 ;
 //       docs/DESIGN_SYSTEM.md §5.4 sexies ; décisions 719 et 720
+// @spec INC-335 (docs/BACKLOG.md, correctif de la décision 805, T2) — l'adresse présélectionnée est l'identité par défaut
+//       de la personne, à défaut son unique identité, sinon aucune ; l'identité de service n'est plus proposée —
+//       docs/SPEC-mail-subsystem.md §19.4, §22.14
 //
 // UN SEUL COMPOSANT POUR LES DEUX ORIGINES, et c'est le §19.6 qui l'exige : « le même chemin de
 // code, seule la card sélectionnée diffère ». Deux formulaires jumeaux auraient divergé au premier
@@ -26,6 +29,7 @@ import {
 	decouperDestinataires,
 	depassementPlafond,
 	deposerPiece,
+	identiteAPreselectionner,
 	lireIdentitesDisponibles,
 	mettreEnFile,
 	retirerPiece,
@@ -170,7 +174,8 @@ export function FormulaireEnvoi({
 			const lues = await lireIdentitesDisponibles(clientCrm, idUtilisateur)
 			if (!vivant) return
 			setIdentites(lues)
-			setIdentite((precedent) => (precedent === '' ? (lues[0]?.id ?? '') : precedent))
+			// LE DÉFAUT DE LA PERSONNE, non la première identité venue (décision 805, INC-335).
+			setIdentite((precedent) => (precedent === '' ? identiteAPreselectionner(lues) : precedent))
 		})()
 		return () => {
 			vivant = false
@@ -297,6 +302,9 @@ export function FormulaireEnvoi({
 					onChange={(evenement) => setIdentite(evenement.target.value)}
 					className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-2 focus-visible:outline-2 focus-visible:outline-brand"
 				>
+					{/* SANS DÉFAUT NI IDENTITÉ UNIQUE, RIEN N'EST PRÉSÉLECTIONNÉ (décision 805) : l'option vide le montre, au lieu
+					    d'un sélecteur qui afficherait la première adresse sans l'avoir choisie. */}
+					{identite === '' && <option value="">{t('envoi.identity.choose')}</option>}
 					{identites.map((candidate) => (
 						<option key={candidate.id} value={candidate.id}>
 							{candidate.libelle} — {candidate.adresse}

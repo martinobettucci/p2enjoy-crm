@@ -7,6 +7,8 @@
 //       champ, et le seul écart au §5.35)
 // @spec docs/DESIGN_SYSTEM.md §5.35 (la surface) ; docs/SPEC-permissions-rls.md §7 (refus n° 6)
 // @spec docs/INCONSISTENCY_REPORT.md INC-193 (le corps d'un refus divulgue `secret_id`)
+// @spec INC-335 (docs/BACKLOG.md, correctif de la décision 805, T2) — le PROPRIÉTAIRE de chaque identité est lu avec
+//       elle, pour que l'écran le nomme — docs/SPEC-mail-subsystem.md §22.14 ; docs/DESIGN_SYSTEM.md §5.35
 //
 // CE MODULE N'OUVRE AUCUNE POLITIQUE NOUVELLE et n'ajoute aucune fonction : il lit
 // `mail_outbound_identities` sous la RLS posée par `CRM-053` (migration 0023) et écrit par
@@ -27,7 +29,16 @@ import type { ClientCrm } from './supabase'
 // ---------------------------------------------------------------------------------------------
 
 /** Une identité sortante telle que l'écran de configuration a besoin de la connaître — §22.3. */
-export type IdentiteSortante = Pick<
+export type IdentiteSortante = IdentiteSortanteLue & {
+	/**
+	 * Le profil du propriétaire, lu par la clé étrangère `owner_id` sous la RLS des profils (profil d'une personne qui
+	 * partage l'espace). `null` pour l'identité de service, qui n'a pas de propriétaire — et, par prudence, pour un profil
+	 * que la RLS ne rendrait pas. L'écran nomme alors la personne sans inventer de nom (§22.14).
+	 */
+	readonly proprietaire: { readonly full_name: string } | null
+}
+
+type IdentiteSortanteLue = Pick<
 	Database['public']['Tables']['mail_outbound_identities']['Row'],
 	| 'id'
 	| 'label'
@@ -66,12 +77,19 @@ const COLONNES_IDENTITE = 'id, label, owner_id' as const
 const COLONNES_CONNEXION = 'smtp_host, smtp_port, smtp_security, smtp_username' as const
 const COLONNES_EXPEDITION = 'from_address, from_name, signature_text, is_default' as const
 const COLONNES_ETAT = 'status, last_error, last_checked_at' as const
+/**
+ * LE PROPRIÉTAIRE EST NOMMÉ PAR SA CLÉ ÉTRANGÈRE (décision 805, INC-335) : la liste d'une administratrice porte
+ * l'identité du service et celles de chaque personne, chacune avec son défaut, et une pastille « Par défaut » ne se lit
+ * qu'avec son propriétaire (§22.14). Une lecture par la contrainte nommée, non par la table : PostgREST le demande dès
+ * que deux chemins mènent aux profils.
+ */
+const COLONNES_PROPRIETAIRE = 'proprietaire:profiles!mail_outbound_identities_owner_id_fkey(full_name)' as const
 
 // LA COMPOSITION EST UN GABARIT `as const`, ET NON UNE CONCATÉNATION : `supabase-js` type la
 // réponse à partir du **littéral** passé à `select`, et un `'a' + 'b'` élargit le type à `string`,
 // ce qui ferait retomber la ligne rendue sur `GenericStringError`. Même raison qu'au module jumeau.
 export const COLONNES_IDENTITE_SORTANTE =
-	`${COLONNES_IDENTITE}, ${COLONNES_CONNEXION}, ${COLONNES_EXPEDITION}, ${COLONNES_ETAT}` as const
+	`${COLONNES_IDENTITE}, ${COLONNES_CONNEXION}, ${COLONNES_EXPEDITION}, ${COLONNES_ETAT}, ${COLONNES_PROPRIETAIRE}` as const
 
 /**
  * Une identité porte-t-elle une signature ? — `CRM-063` §10.6.

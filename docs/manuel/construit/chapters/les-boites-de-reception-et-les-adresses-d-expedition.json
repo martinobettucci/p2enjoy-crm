@@ -685,7 +685,7 @@
 			"src": "les-boites-de-reception-et-les-adresses-d-expedition/liste-des-adresses.jpg",
 			"alt": "La liste des adresses d'expédition : chaque adresse, ses pastilles « Par défaut » et « Signature », son serveur et « Configurer »",
 			"width": 925,
-			"height": 188
+			"height": 325
 		},
 		{
 			"type": "list",
@@ -736,6 +736,39 @@
 							{
 								"type": "text",
 								"text": " La liste propose celles que vous voyez, plus deux\nentrées pour en déclarer une nouvelle : la vôtre, ou celle de service de l'espace de travail."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Chaque ligne nomme son propriétaire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : « Service » pour l'adresse de l'espace de travail, ou le nom de la\npersonne. Une administratrice ou un administrateur voit les adresses de tout l'espace, et chacune peut être « Par\ndéfaut » : "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "il y a une adresse par défaut par personne, et une pour le service"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Plusieurs pastilles « Par défaut »\ndans la liste ne se contredisent donc pas, puisque chacune appartient à quelqu'un d'autre."
 							}
 						]
 					}
@@ -898,13 +931,13 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "La case « Identité par défaut pour cet expéditeur » est cochée d'avance sur une déclaration"
+										"text": "La case « par défaut » dit ce qu'elle règle."
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": ", parce que c'est ce\nque le produit ferait de toute façon. La décocher n'est utile que si vous en avez déjà une."
+								"text": " Sur l'adresse d'une personne, c'est « Identité par défaut de cette\npersonne » : l'adresse choisie d'avance quand cette personne écrit. Sur l'adresse de service, c'est « Identité par\ndéfaut des envois automatiques ». La case est cochée d'avance sur une déclaration, parce que c'est ce que le produit\nferait de toute façon. La décocher n'est utile que si vous en avez déjà une."
 							}
 						]
 					}
@@ -1002,7 +1035,7 @@
 		{
 			"type": "image",
 			"src": "les-boites-de-reception-et-les-adresses-d-expedition/configurer-une-adresse.jpg",
-			"alt": "Le formulaire d'une adresse d'expédition, avec la case « Identité par défaut pour cet expéditeur » cochée",
+			"alt": "Le formulaire d'une adresse d'expédition, avec la case « Identité par défaut de cette personne » cochée",
 			"width": 925,
 			"height": 703
 		},
@@ -1057,7 +1090,7 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "Une adresse est « celle par défaut », et il y en a toujours exactement une."
+							"text": "Une adresse est « celle par défaut », et chaque personne en a exactement une, comme le service."
 						}
 					]
 				},
@@ -1076,7 +1109,7 @@
 				},
 				{
 					"type": "text",
-					"text": " la marque : l'ancienne la perd au même instant. Vous\nn'avez jamais à la retirer d'abord, et il n'existe aucun moment où vous n'auriez plus d'adresse par\ndéfaut."
+					"text": " la marque : votre ancienne la perd au même instant. Vous\nn'avez jamais à la retirer d'abord, et il n'existe aucun moment où vous n'auriez plus d'adresse par\ndéfaut. Votre adresse par défaut est celle que le formulaire d'envoi choisit d'avance ; celle du service est l'adresse\ndes envois automatiques."
 				}
 			]
 		},

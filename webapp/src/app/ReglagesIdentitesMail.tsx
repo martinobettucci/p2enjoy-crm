@@ -13,6 +13,8 @@
 // @spec CRM-093 (docs/BACKLOG.md) — tranche T4 : la boîte système et celles des autres s'éteignent avec leur motif
 //       quand la base refuse l'administration de l'espace ; la sienne reste toujours offerte (famille P) ;
 //       docs/SPEC-droits-interface.md §4, §5 (« Comptes entrants, identités mail ») ; docs/DESIGN_SYSTEM.md §5.59
+// @spec INC-335 (docs/BACKLOG.md, correctif de la décision 805, T2) — chaque ligne nomme son propriétaire, et la case dit
+//       ce qu'elle règle — docs/SPEC-mail-subsystem.md §22.14 ; docs/DESIGN_SYSTEM.md §5.35
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { PencilLine, Plus } from 'lucide-react'
@@ -425,6 +427,12 @@ export function ReglagesIdentitesMail({
 	)
 }
 
+/** Le propriétaire d'une identité, tel que la ligne le nomme : « Service », ou le nom de la personne (§22.14). */
+export function proprietaireLisible(identite: IdentiteSortante): string {
+	if (identite.owner_id === null) return t('admin.mailIdentities.owner.service')
+	return identite.proprietaire?.full_name ?? t('admin.mailIdentities.owner.unknown')
+}
+
 /**
  * Une ligne de la liste plate du §5.35.
  *
@@ -443,6 +451,7 @@ function LigneIdentite({
 	readonly onConfigurer: (depuis: HTMLButtonElement | null) => void
 }) {
 	const expediteur = expediteurLisible(identite)
+	const proprietaire = proprietaireLisible(identite)
 	return (
 		<li
 			data-testid="ligne-identite-mail"
@@ -457,6 +466,16 @@ function LigneIdentite({
 				title={expediteur}
 			>
 				{expediteur}
+			</span>
+			{/* LE PROPRIÉTAIRE SUIT L'ADRESSE, AVANT LA PILULE (décision 805, INC-335) : une administratrice lit le service et
+			    chaque personne, chacun avec son défaut, et « Par défaut » ne se lit qu'avec son propriétaire (§22.14). */}
+			<span
+				data-testid="proprietaire-identite"
+				className="text-sm text-text-2 truncate max-w-[24ch]"
+				title={proprietaire}
+				aria-label={t('admin.mailIdentities.owner.aria', { proprietaire })}
+			>
+				{proprietaire}
 			</span>
 			{/* L'identité par défaut porte sa pilule ; les autres n'en portent AUCUNE — une pilule
 			    « Secondaire » dirait ce que son absence dit déjà (§5.35). */}
@@ -734,7 +753,11 @@ function FormulaireIdentite({
 					}
 					className="size-4"
 				/>
-				{t('admin.mailIdentities.field.default')}
+				{/* LA CASE DIT CE QU'ELLE RÈGLE (décision 805) : le défaut d'une personne est l'adresse que son envoi
+				    présélectionne ; celui du service, l'adresse des envois automatiques (§14.2). */}
+				{saisie.idProprietaire === null
+					? t('admin.mailIdentities.field.default.service')
+					: t('admin.mailIdentities.field.default.person')}
 			</label>
 
 			{refus !== null && (

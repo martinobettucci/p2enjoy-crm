@@ -748,6 +748,10 @@ n'est ajouté.*
 - **Le total et le plafond sont écrits sous la liste** — « 2 fichiers, 3,4 Mo sur 10 Mo » — et le bouton d'envoi s'éteint
   avec son motif quand un plafond est dépassé ou qu'un dépôt est en cours ; la base refuse de toute façon.
 - **Le message archivé** affiche « Cci : … » sous « Copie », et ses pièces comme celles d'un message reçu (§5.4).
+- **Le sélecteur « Expédier depuis » présélectionne l'identité par défaut de la personne** (INC-335, décision 805), à
+  défaut son unique identité. Sinon, sa première option est « Choisir une adresse » : un sélecteur sans option vide
+  afficherait la première adresse sans l'avoir choisie. L'identité de service n'y figure jamais. Sans identité à soi, le
+  formulaire dit où en déclarer une, sans sélecteur.
 
 ### 5.5 Boutons
 
@@ -3729,6 +3733,18 @@ porteur du geste. Seuls les **écarts** sont écrits ci-dessous, et chacun a sa 
   que sur une signature **réelle** — une signature entièrement blanche n'en allume aucune, la garde
   rendant alors le corps inchangé : l'écran dit exactement ce que la base fera.
 
+- **LA LIGNE NOMME SON PROPRIÉTAIRE, JUSTE APRÈS L'EXPÉDITEUR ET AVANT LA PILULE « PAR DÉFAUT »** (INC-335, décision
+  805). Une administratrice lit l'identité du service et celles de chaque personne, et chacune peut porter son défaut :
+  sans le propriétaire, la liste montrait plusieurs « Par défaut » qui semblaient se contredire. Le propriétaire est
+  du **texte secondaire** (`text-sm`, `--color-text-2`), jamais une pilule : c'est une donnée, ni un choix ni un
+  constat. Il vaut « Service » pour l'identité sans propriétaire, le nom de la personne sinon, et « Propriétaire non
+  lisible » si le profil ne se lit pas, jamais un identifiant. Sa largeur est bornée (`24ch`, troncature avec `title`),
+  et son `aria-label` dit « Propriétaire : … ».
+
+- **LA CASE « PAR DÉFAUT » DIT CE QU'ELLE RÈGLE, SELON L'IDENTITÉ VISÉE** (INC-335, décision 805) : « Identité par
+  défaut de cette personne », ou « Identité par défaut des envois automatiques » pour l'identité de service. L'ancien
+  « pour cet expéditeur » désignait l'adresse là où la règle porte sur le propriétaire.
+
 - **LE SÉLECTEUR NOMME UNE IDENTITÉ PAR SON LIBELLÉ SUIVI DE SON ADRESSE**, et non par son seul
   libellé comme au §5.34. Deux identités d'une même personne peuvent porter le même libellé ; les
   distinguer par la donnée qui est leur clé vaut mieux que d'ajouter un rang ou un identifiant, que
@@ -4225,7 +4241,10 @@ contacts.
 
 - **LES DEUX SÉLECTEURS OUVRENT SUR UNE OPTION VIDE**, séquence et adresse expéditrice, et aucun ne
   présélectionne : c'est la règle du §5.39, et le motif y est le même — le workspace porte deux
-  identités également légitimes.
+  identités également légitimes. **Une exception, pour l'adresse** (décision 803, précisée par la décision 805) : quand
+  la personne qui arme est le **responsable du rattachement**, l'adresse s'ouvre sur son identité par défaut, à défaut
+  sur son unique identité. L'option vide reste en tête, et le choix se défait. Le sélecteur ne propose que les
+  identités de la personne : celle du service ne signe pas de relance.
 
 - **L'IDENTITÉ EST NOMMÉE `libellé — adresse`**, forme du §5.35, et la liste proposée est celle que
   l'envoi propose déjà : une seule règle d'emprunt, écrite une seule fois.

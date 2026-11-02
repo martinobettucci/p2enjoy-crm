@@ -9,6 +9,9 @@
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.5 : l'écran arme le rattachement de l'affaire, et le refus d'une
 //           cadence déjà armée reste traduit (docs/SPEC-rattachements.md §5, §7)
+// @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T2) — la présélection de la décision 803 : le
+//           responsable du rattachement voit son identité par défaut, une autre personne un sélecteur vide ; l'identité de
+//           service n'est jamais proposée (docs/SPEC-rattachements.md §7 ; docs/DESIGN_SYSTEM.md §5.42)
 //
 // TOUTE INSCRIPTION ARMÉE EST REFERMÉE, ET C'EST UNE EXIGENCE DE SÛRETÉ, pas de style. Le §12.12
 // l'écrit : une inscription active est exécutée par le job DIX SECONDES après le démarrage de la
@@ -32,6 +35,8 @@ import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-063'
 const ADMIN = 'admin@p2enjoy.test'
+/** Driss, responsable du rattachement de l'affaire figée du seed : la présélection de la décision 803 le concerne. */
+const RESPONSABLE = 'bizdev@p2enjoy.test'
 
 /**
  * « Refonte intranet Ville de Lyon » — une affaire FIGÉE au sens de `public.cards_figees()`.
@@ -136,13 +141,35 @@ test.describe('armer une relance depuis l’affaire (docs/SPEC-modeles-emails.md
 		)
 		await expect(bloc.getByTestId('sequence-active')).toHaveCount(0)
 
-		// LES DEUX SÉLECTEURS OUVRENT SUR UNE OPTION VIDE (§5.42) : rien n'est présélectionné.
+		// LES DEUX SÉLECTEURS OUVRENT SUR UNE OPTION VIDE (§5.42) : l'administratrice n'est pas la responsable du
+		// rattachement (Driss l'est), si bien que l'adresse n'est pas présélectionnée (décision 803).
 		await expect(bloc.getByTestId('champ-sequence')).toHaveValue('')
 		await expect(bloc.getByTestId('champ-identite-sequence')).toHaveValue('')
+		// L'IDENTITÉ DE SERVICE N'EST PAS PROPOSÉE (décision 805) : seule la sienne l'est, après l'option vide.
+		await expect(bloc.getByTestId('champ-identite-sequence').locator('option')).toHaveText([
+			/.*/,
+			'Envoi de Camille Aubert — admin@p2enjoy.test',
+		])
 		// LA COMMANDE N'EST JAMAIS ÉTEINTE (§5.3 ter, §5.42).
 		await expect(bloc.getByTestId('armer-sequence')).toBeEnabled()
 
 		await capturer(page, 'armement-geste-1440', UNITE)
+	})
+
+	test('le responsable du rattachement voit son identité par défaut présélectionnée (décisions 803 et 805)', async ({
+		page,
+	}) => {
+		await connecter(page, RESPONSABLE)
+		await page.goto(AFFAIRE_FIGEE.adresse)
+		const bloc = page.getByTestId('bloc-sequence-card')
+		await expect(bloc.getByTestId('sequence-vide')).toBeVisible()
+		// DRISS EST LE RESPONSABLE DU RATTACHEMENT : son identité par défaut est choisie d'avance ; la séquence, jamais.
+		const identite = bloc.getByTestId('champ-identite-sequence')
+		await expect(identite.locator('option:checked')).toHaveText('Envoi de Driss Lemoine — contact@p2enjoy.test')
+		await expect(bloc.getByTestId('champ-sequence')).toHaveValue('')
+		// LE BLOC EST PLUS BAS QUE LA PREMIÈRE VUE : il est amené à l'écran, sans quoi la capture ne montrerait pas le sélecteur.
+		await bloc.scrollIntoViewIfNeeded()
+		await capturer(page, 'armement-presselection-responsable-1440', UNITE)
 	})
 
 	test('l’administratrice arme une relance, et le bloc rend alors L’ÉTAT de la cadence', async ({
@@ -240,10 +267,11 @@ test.describe('armer une relance depuis l’affaire (docs/SPEC-modeles-emails.md
 			`${URL_API}/rest/v1/mail_outbound_identities?select=id,owner_id`,
 			{ headers: enTetesAuthentifies(jeton) },
 		)
+		// L'IDENTITÉ DE CAMILLE, non celle du service : celle-ci ne s'arme plus (décision 805, INC-335).
 		const service = ((await identites.json()) as { id: string; owner_id: string | null }[]).find(
-			(ligne) => ligne.owner_id === null,
+			(ligne) => ligne.owner_id === '5eed0000-0000-4000-8000-000000000011',
 		)
-		expect(service, 'l’identité de service du seed').toBeDefined()
+		expect(service, 'l’identité de Camille dans le seed').toBeDefined()
 
 		await page.goto(AFFAIRE_FIGEE.adresse)
 		const bloc = page.getByTestId('bloc-sequence-card')

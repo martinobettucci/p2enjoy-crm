@@ -1772,6 +1772,53 @@
 			]
 		},
 		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Votre adresse par défaut est choisie d'avance"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " dans « Expédier depuis » : celle que vous avez cochée « Identité par\ndéfaut de cette personne » dans « Réglages ▸ Identités d'expédition ». Si vous n'avez qu'une adresse, c'est elle. Si\nvous en avez plusieurs et qu'aucune n'est par défaut, le champ affiche « Choisir une adresse »."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Seules vos propres adresses sont proposées."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " L'adresse de service de l'espace de travail ne sert qu'aux envois\nautomatiques, comme le récapitulatif quotidien : personne ne l'emprunte pour écrire, même une administratrice ou un\nadministrateur. Si vous n'avez aucune adresse à vous, le formulaire vous dit où en déclarer une."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
 			"type": "image",
 			"src": "l-inbox-lire-trier-et-repondre/ecrire-un-message.jpg",
 			"alt": "Le bouton « Écrire un message » de la fiche d'une affaire",

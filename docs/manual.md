@@ -2869,6 +2869,10 @@ de la messagerie » : on reçoit avant d'expédier, et on configure avant de sup
   deux identités, et non leur libellé, qui peut être le même.
 - **Choisissez d'abord l'identité visée.** La liste propose celles que vous voyez, plus deux
   entrées pour en déclarer une nouvelle : la vôtre, ou celle de service de l'espace de travail.
+- **Chaque ligne nomme son propriétaire** : « Service » pour l'adresse de l'espace de travail, ou le nom de la
+  personne. Une administratrice ou un administrateur voit les adresses de tout l'espace, et chacune peut être « Par
+  défaut » : **il y a une adresse par défaut par personne, et une pour le service**. Plusieurs pastilles « Par défaut »
+  dans la liste ne se contredisent donc pas, puisque chacune appartient à quelqu'un d'autre.
 - **L'identité de service et celle d'un collègue sont réservées à une administratrice ou un
   administrateur.** L'entrée reste proposée à tout le monde ; si vous n'administrez pas l'espace,
   « Configurer » et « Enregistrer » sont grisés sur ces identités, et un bandeau en tête de l'écran
@@ -2885,14 +2889,16 @@ de la messagerie » : on reçoit avant d'expédier, et on configure avant de sup
   nouvelle adresse fait de votre enregistrement une déclaration, et non une correction.
 - **Le nom d'expéditeur se vide en effaçant le champ**, contrairement au mot de passe : un champ
   vide y est une valeur, et non une absence de changement.
-- **La case « Identité par défaut pour cet expéditeur » est cochée d'avance sur une déclaration**, parce que c'est ce
-  que le produit ferait de toute façon. La décocher n'est utile que si vous en avez déjà une.
+- **La case « par défaut » dit ce qu'elle règle.** Sur l'adresse d'une personne, c'est « Identité par défaut de cette
+  personne » : l'adresse choisie d'avance quand cette personne écrit. Sur l'adresse de service, c'est « Identité par
+  défaut des envois automatiques ». La case est cochée d'avance sur une déclaration, parce que c'est ce que le produit
+  ferait de toute façon. La décocher n'est utile que si vous en avez déjà une.
 - **Ce que l'écran n'offre pas**, et c'est écrit plutôt que suggéré : aucun bouton *Tester la
   connexion* — l'essai est fait par le service de messagerie, et son résultat s'affiche dans l'état
   de l'identité ; aucune **suppression** ; aucun réglage du **plafond quotidien** d'envois (voir plus bas). La
   **signature**, elle, se règle sur ce même écran ([chapitre 15](#signer-les-messages-expedies-depuis-une-identite)).
 
-![Le formulaire d'une adresse d'expédition, avec la case « Identité par défaut pour cet expéditeur » cochée](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/configurer-une-adresse.jpg)
+![Le formulaire d'une adresse d'expédition, avec la case « Identité par défaut de cette personne » cochée](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/configurer-une-adresse.jpg)
 
 Le reste du chapitre décrit ce que le produit garantit une fois l'adresse déclarée.
 
@@ -2902,10 +2908,11 @@ d'expédition porte son serveur d'envoi, son
 identifiant, son mot de passe — chiffré comme celui d'une boîte de réception —, un nom affiché et
 une signature.
 
-**Une adresse est « celle par défaut », et il y en a toujours exactement une.** En déclarer une
-nouvelle comme adresse par défaut **déplace** la marque : l'ancienne la perd au même instant. Vous
+**Une adresse est « celle par défaut », et chaque personne en a exactement une, comme le service.** En déclarer une
+nouvelle comme adresse par défaut **déplace** la marque : votre ancienne la perd au même instant. Vous
 n'avez jamais à la retirer d'abord, et il n'existe aucun moment où vous n'auriez plus d'adresse par
-défaut.
+défaut. Votre adresse par défaut est celle que le formulaire d'envoi choisit d'avance ; celle du service est l'adresse
+des envois automatiques.
 
 **L'adresse d'expédition est vérifiée à l'enregistrement.** C'est la seule donnée de cette
 configuration que vos destinataires verront ; une chaîne qui n'est pas une adresse est refusée tout
@@ -3157,6 +3164,13 @@ choisis, voyez les séquences ([chapitre 16](#enchainer-des-relances-les-sequenc
 d'expédition, un ou plusieurs destinataires — séparés par une virgule ou un point-virgule —, un
 objet et un message, puis « Mettre en file ».
 
+- **Votre adresse par défaut est choisie d'avance** dans « Expédier depuis » : celle que vous avez cochée « Identité par
+  défaut de cette personne » dans « Réglages ▸ Identités d'expédition ». Si vous n'avez qu'une adresse, c'est elle. Si
+  vous en avez plusieurs et qu'aucune n'est par défaut, le champ affiche « Choisir une adresse ».
+- **Seules vos propres adresses sont proposées.** L'adresse de service de l'espace de travail ne sert qu'aux envois
+  automatiques, comme le récapitulatif quotidien : personne ne l'emprunte pour écrire, même une administratrice ou un
+  administrateur. Si vous n'avez aucune adresse à vous, le formulaire vous dit où en déclarer une.
+
 ![Le bouton « Écrire un message » de la fiche d'une affaire](manuel/images/l-inbox-lire-trier-et-repondre/ecrire-un-message.jpg)
 
 **Une copie cachée.** Sous les destinataires, le lien « **Ajouter Cci** » ouvre le champ « Copie cachée (Cci) ». Ces
@@ -3319,7 +3333,7 @@ Les autres refus sont dits de la même façon : un nom de plus de 120 caractère
   « Aucun contact », car le produit ne devine pas lequel vous visez. Un contact que vous avez choisi
   vous-même n'est jamais remplacé quand vous changez d'affaire ;
 - **l'identité d'expédition** — facultative. Aucune n'est choisie d'avance non plus : plusieurs
-  identités peuvent être « par défaut », chacune pour une personne, et le produit ne tranche pas à
+  identités peuvent être « par défaut », chacune pour une personne ou pour le service, et le produit ne tranche pas à
   votre place.
 
 « Prévisualiser » affiche alors l'**objet** et le **corps** exactement tels qu'ils partiront, retours
@@ -3552,8 +3566,10 @@ d'abord des paliers qui l'emploient.
 ### 16.5 Armer une relance sur une affaire
 
 Ouvrez la fiche de l'affaire, descendez jusqu'au bloc **« Relance automatique »**. Deux choix : la
-**séquence**, et l'**adresse d'expédition** depuis laquelle les messages partiront. Aucun des deux
-n'est présélectionné — le produit ne choisit pas à votre place l'adresse qui signera vos relances.
+**séquence**, et l'**adresse d'expédition** depuis laquelle les messages partiront. La séquence n'est jamais choisie
+d'avance. L'adresse l'est **si vous êtes le responsable de l'affaire** : c'est alors votre adresse par défaut, ou votre
+unique adresse. Sinon, vous la choisissez. Seules vos propres adresses sont proposées : l'adresse de service ne signe
+pas de relance.
 
 ![Le bloc « Relance automatique » rempli : la séquence, l'adresse d'expédition, et « Armer la relance »](manuel/images/enchainer-des-relances-les-sequences/armer.jpg)
 
@@ -6348,8 +6364,9 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     **copie cachée** ; il ne joint **aucun fichier**.
 
   **Un envoi est irréversible** : l'outil l'annonce, et l'assistant vous demande de confirmer les destinataires,
-  l'objet et le texte avant d'envoyer. Il envoie avec **votre** identité d'expédition, ou avec celle du service si vous
-  administrez l'espace ; si vous en avez plusieurs, il vous demande laquelle — il ne choisit jamais à votre place.
+  l'objet et le texte avant d'envoyer. Il envoie avec **votre** identité d'expédition, jamais avec celle du service. Si
+  vous ne lui dites pas laquelle, il prend votre adresse par défaut ; si vous en avez plusieurs sans adresse par défaut,
+  il vous demande laquelle.
   L'envoi exige aussi la case « Affaires — Consulter », et le droit d'écrire sur l'affaire. Le quota journalier de
   l'identité s'applique comme à l'écran.
 

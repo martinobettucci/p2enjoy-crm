@@ -5,6 +5,9 @@
 // @spec CRM-058 (docs/BACKLOG.md) — tranche 2 : la copie cachée, les pièces déposées puis citées par la file, les
 //       plafonds, les refus nommés — docs/SPEC-mail-subsystem.md §19 bis.2, §19 bis.3, §19 bis.5 ;
 //       docs/DESIGN_SYSTEM.md §5.4 sexies ; décisions 719 et 720
+// @spec INC-335 (docs/BACKLOG.md, correctif de la décision 805, T2) — les identités empruntables sont les siennes, et
+//       elles seules ; la présélection prend son identité par défaut — docs/SPEC-mail-subsystem.md §14.2, §19.4, §22.14 ;
+//       au bloc d'armement, seulement pour le responsable du rattachement — décision 803, docs/SPEC-rattachements.md §7
 //
 // L'INTERFACE N'OUVRE JAMAIS DE CONNEXION SMTP (§5) : elle met en file, et le worker envoie. Ce
 // module ne fait donc qu'appeler la garde et classer ses refus — six, dont chacun demande à
@@ -17,6 +20,8 @@ export type IdentiteEnvoi = {
 	readonly id: string
 	readonly libelle: string
 	readonly adresse: string
+	/** L'identité par défaut de la personne, choisie dans les réglages (§14.2) : celle que l'envoi présélectionne. */
+	readonly parDefaut: boolean
 }
 
 /**
@@ -28,6 +33,10 @@ export type IdentiteEnvoi = {
  * remettrait à elle proposerait donc à une administratrice d'expédier au nom d'un collègue, et la
  * garde refuserait au premier envoi (`identity_not_available`). Proposer une action qui échouera
  * est pire que ne pas la proposer.
+ *
+ * LES SIENNES, ET ELLES SEULES, depuis la décision 805 (INC-335) : l'identité de SERVICE ne sert plus qu'aux envois
+ * automatiques, et la garde la refuse à tous, administrateur compris. Elle sortait auparavant de ce filtre pour les
+ * administrateurs, et pouvait même être présélectionnée pour leurs propres messages.
  *
  * LE FILTRE EST UNE AIDE D'INTERFACE, JAMAIS LA RÈGLE (`CLAUDE.md` §10) : la règle reste dans la
  * garde, qui refuse de toute façon. C'est pourquoi il est écrit ici, en clair, plutôt que caché
@@ -41,22 +50,45 @@ export async function lireIdentitesDisponibles(
 	try {
 		const reponse = await client
 			.from('mail_outbound_identities')
-			.select('id, label, from_address, owner_id')
+			.select('id, label, from_address, owner_id, is_default')
 			.order('label')
 		if (reponse.error !== null) return []
 		return reponse.data
-			// L'identité de SERVICE — sans propriétaire — appartient au workspace : la garde ne
-			// l'ouvre qu'aux administrateurs, et un membre qui la choisirait serait refusé. La lui
-			// proposer reste néanmoins juste : la RLS ne la lui montre que s'il l'administre.
-			.filter((ligne) => ligne.owner_id === null || ligne.owner_id === idUtilisateur)
+			.filter((ligne) => idUtilisateur !== null && ligne.owner_id === idUtilisateur)
 			.map((ligne) => ({
 				id: ligne.id,
 				libelle: ligne.label,
 				adresse: ligne.from_address,
+				parDefaut: ligne.is_default,
 			}))
 	} catch {
 		return []
 	}
+}
+
+/**
+ * L'identité que l'envoi présélectionne — décision 805 (§19.4, §22.14) : celle que la personne a choisie par défaut dans
+ * ses réglages ; à défaut, son unique identité ; sinon aucune (`''`), et elle choisit. Jamais la première venue d'un tri
+ * par libellé, qui pouvait désigner une identité que personne n'avait choisie.
+ */
+export function identiteAPreselectionner(identites: readonly IdentiteEnvoi[]): string {
+	const parDefaut = identites.find((identite) => identite.parDefaut)
+	if (parDefaut !== undefined) return parDefaut.id
+	return identites.length === 1 ? identites[0]!.id : ''
+}
+
+/**
+ * L'identité que le bloc d'armement d'une cadence présélectionne — décision 803 (INC-315), précisée par la décision 805 :
+ * quand la personne qui arme est le RESPONSABLE du rattachement armé, la même règle que l'envoi (son identité par défaut,
+ * à défaut l'unique) ; sinon rien, et elle choisit. Un responsable inconnu (`null`) ne présélectionne rien.
+ */
+export function identiteArmementAPreselectionner(
+	identites: readonly IdentiteEnvoi[],
+	idUtilisateur: string | null,
+	idResponsable: string | null,
+): string {
+	if (idUtilisateur === null || idResponsable === null || idUtilisateur !== idResponsable) return ''
+	return identiteAPreselectionner(identites)
 }
 
 export type NatureRefusEnvoi =

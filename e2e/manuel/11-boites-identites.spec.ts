@@ -2,6 +2,8 @@
 //       d'expédition »
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitre 11 ; docs/SPEC-mail-subsystem.md (les comptes
 //       entrants, les identités d'expédition, le plafond du jour)
+// @spec INC-335 (docs/BACKLOG.md, correctif de la décision 805, T2) — la case « par défaut » dit ce qu'elle règle, et
+//       chaque ligne nomme son propriétaire (docs/SPEC-mail-subsystem.md §22.14 ; docs/manual.md §11.2)
 //
 // Les boîtes et les identités sont celles du seed. Deux états sont posés par la clé de service et rendus tels qu'ils
 // ont été lus : une boîte « Connectée », et le plafond du jour d'une adresse d'expédition ramené à zéro le temps d'un
@@ -56,7 +58,8 @@ test('les adresses d’expédition : la liste et la configuration', async ({ pag
 	await illustrer(page, { chapitre: CHAPITRE, section: ADRESSES, nom: 'liste-des-adresses', cibles: [liste] })
 	await page.getByTestId('configurer-identite').first().click()
 	const formulaire = page.getByTestId('formulaire-identite-mail')
-	await expect(formulaire.getByLabel('Identité par défaut pour cet expéditeur')).toBeVisible()
+	// LA CASE DIT CE QU'ELLE RÈGLE (décision 805, INC-335) : la première ligne est l'identité de Camille, une personne.
+	await expect(formulaire.getByLabel('Identité par défaut de cette personne')).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: ADRESSES, nom: 'configurer-une-adresse', cibles: [formulaire] })
 })
 

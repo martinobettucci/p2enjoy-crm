@@ -11,6 +11,8 @@
 // @verifies CRM-093 (docs/BACKLOG.md) — tranche T4 : la boîte système et celles des autres s'éteignent avec leur motif
 //           quand la base refuse l'administration ; la sienne reste offerte (famille P) ; docs/SPEC-droits-interface.md
 //           §4, §5 (« Comptes entrants, identités mail ») ; docs/DESIGN_SYSTEM.md §5.59
+// @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T2) — chaque ligne nomme son propriétaire, et la case
+//           dit ce qu'elle règle selon l'identité visée (docs/SPEC-mail-subsystem.md §22.14 ; docs/DESIGN_SYSTEM.md §5.35)
 
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -44,6 +46,7 @@ const IDENTITES = [
 		status: 'pending',
 		last_error: null,
 		last_checked_at: null,
+		proprietaire: { full_name: 'Driss Lemoine' },
 	},
 	{
 		id: 'i-2',
@@ -59,6 +62,7 @@ const IDENTITES = [
 		status: 'error',
 		last_error: 'auth_failed',
 		last_checked_at: '2026-08-21T02:00:00Z',
+		proprietaire: null,
 	},
 ]
 
@@ -144,6 +148,31 @@ describe('ReglagesIdentitesMail — la liste', () => {
 
 		await screen.findByTestId('liste-identites-mail')
 		expect(screen.getAllByText('Par défaut')).toHaveLength(1)
+	})
+
+	// INC-335 (décision 805) : une administratrice lit le service et chaque personne, chacun avec son défaut. La pilule ne
+	// se lit qu'avec son propriétaire, que chaque ligne nomme (§22.14).
+	it('nomme le propriétaire de chaque ligne : « Service », ou le nom de la personne', async () => {
+		monter(client({
+			identites: {
+				data: [
+					{ ...IDENTITES[0]! },
+					{ ...IDENTITES[1]!, is_default: true },
+					{ ...IDENTITES[0]!, id: 'i-3', owner_id: CAMILLE, from_address: 'admin@p2enjoy.test', proprietaire: { full_name: 'Camille Aubert' } },
+					{ ...IDENTITES[0]!, id: 'i-4', owner_id: 'inconnu', from_address: 'x@p2enjoy.test', is_default: false, proprietaire: null },
+				],
+				error: null,
+				status: 200,
+			},
+		}))
+
+		await screen.findByTestId('liste-identites-mail')
+		const proprietaires = screen.getAllByTestId('proprietaire-identite').map((element) => element.textContent)
+		expect(proprietaires).toEqual(['Driss Lemoine', 'Service', 'Camille Aubert', 'Propriétaire non lisible'])
+		expect(screen.getAllByText('Par défaut')).toHaveLength(3)
+		const ligneService = screen.getAllByTestId('ligne-identite-mail')[1]!
+		expect(ligneService.textContent).toContain('Service')
+		expect(ligneService.textContent).toContain('Par défaut')
 	})
 
 	// Un cinquième état serait un défaut de la contrainte : la pilule est ABSENTE, jamais remplie
@@ -277,6 +306,27 @@ describe('ReglagesIdentitesMail — le formulaire', () => {
 		expect(
 			(screen.getByTestId('champ-par-defaut') as HTMLInputElement).checked,
 		).toBe(true)
+	})
+
+	// INC-335 (décision 805) : « pour cet expéditeur » disait l'adresse là où la règle porte sur le PROPRIÉTAIRE. La case
+	// dit désormais ce qu'elle règle : le défaut d'une personne, ou celui des envois automatiques du service (§22.14).
+	it('dit ce que règle la case : le défaut de la personne, ou celui des envois automatiques', async () => {
+		monter(client())
+
+		await screen.findByTestId('liste-identites-mail')
+		await userEvent.click(screen.getByTestId('ouvrir-identite'))
+		expect(await screen.findByText('Identité par défaut de cette personne')).toBeTruthy()
+
+		await userEvent.selectOptions(screen.getByTestId('champ-identite-visee'), 'i-2')
+		expect(await screen.findByText('Identité par défaut des envois automatiques')).toBeTruthy()
+		expect(screen.queryByText('Identité par défaut de cette personne')).toBeNull()
+
+		await userEvent.selectOptions(screen.getByTestId('champ-identite-visee'), 'nouvelle-service')
+		expect(await screen.findByText('Identité par défaut des envois automatiques')).toBeTruthy()
+
+		await userEvent.selectOptions(screen.getByTestId('champ-identite-visee'), 'i-1')
+		expect(await screen.findByText('Identité par défaut de cette personne')).toBeTruthy()
+		expect(screen.queryByText(/pour cet expéditeur/)).toBeNull()
 	})
 
 	// L'AVERTISSEMENT DIT UN COMPORTEMENT MESURÉ DE LA BASE, et il ne paraît que là où il est vrai :
