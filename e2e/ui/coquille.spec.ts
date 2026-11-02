@@ -333,15 +333,23 @@ test.describe('navigation au clavier (docs/DESIGN_SYSTEM.md §8)', () => {
 test.describe('états provoqués sur le réseau (docs/DESIGN_SYSTEM.md §5.8)', () => {
 	test('le chargement montre des squelettes, jamais un spinner plein écran', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
-		// Retard réel de la réponse : l'état de chargement dure assez pour être observé.
+		// La réponse est RETENUE jusqu'après la capture (INC-336) : un retard fixe pouvait s'écouler avant elle sous la
+		// charge d'une campagne, et l'image montrait la page déjà chargée. Le plafond de 10 s ne sert qu'à ne jamais
+		// bloquer le scénario.
+		let liberer: () => void = () => {}
+		const retenue = new Promise<void>((resoudre) => {
+			liberer = resoudre
+			setTimeout(resoudre, 10_000)
+		})
 		await page.route(ROUTE_WORKSPACES, async (route) => {
-			await new Promise((resoudre) => setTimeout(resoudre, 2500))
+			await retenue
 			await route.continue()
 		})
 		await page.goto('/')
 
 		await expect(page.getByTestId('squelette').first()).toBeVisible()
 		await capturer(page, 'etat-chargement-1440')
+		liberer()
 		await expect(page.getByTestId('workspace-courant')).toBeVisible({ timeout: 10_000 })
 	})
 

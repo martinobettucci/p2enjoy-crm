@@ -100,5 +100,7 @@ test('Camille parcourt le board, la liste et la fiche avec toutes les identités
 		() => document.documentElement.scrollWidth - document.documentElement.clientWidth,
 	)
 	expect(debordement, 'la fiche d’identité mobile ne défile pas horizontalement').toBeLessThanOrEqual(0)
+	// INC-336 : le sujet est amené dans le cadre avant la capture — `End` laisse le commentaire sous le champ de saisie.
+	await page.getByTestId('commentaire').first().scrollIntoViewIfNeeded()
 	await capturer(page, 'identites-fiche-390', 'CRM-022')
 })

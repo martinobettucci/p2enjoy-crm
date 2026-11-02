@@ -148,6 +148,11 @@ test.describe('Création d’un contact depuis le carnet — CRM-060 §14', () =
 		await page.getByTestId('ouvrir-creation-contact').click()
 		for (const palier of PALIERS) {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			// INC-336 : sous 1024 px, la barre latérale devient un tiroir qui se referme par une transition ; la capture
+			// attend sa position finale au lieu de figer le tiroir en cours de fermeture.
+			if (palier.largeur < 1024) {
+				await expect.poll(async () => (await page.getByTestId('barre-laterale').boundingBox())?.x ?? 0).toBeLessThan(-200)
+			}
 			await capturer(page, `carnet-creation-${palier.nom}`, UNITE)
 		}
 	})

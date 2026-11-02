@@ -297,6 +297,9 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7)', () => {
 			)
 			expect(debordePage, 'la page ne défile pas horizontalement').toBe(false)
 
+			// INC-336 : la capture attend la fin de la mesure de ce que chaque objet retient, au lieu de figer « En cours
+			// de mesure ».
+			await expect(page.getByTestId('tableau-corbeille').getByText('En cours de mesure')).toHaveCount(0)
 			await capturer(page, `corbeille-${palier.nom}`, UNITE)
 		})
 	}

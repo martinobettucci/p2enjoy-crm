@@ -6,6 +6,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.35 (cette surface), §7 (paliers) ; CLAUDE.md §16
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — l'administratrice lit trois identités, la
+//           sienne comprise (docs/SPEC-mail-subsystem.md §22.11 ; docs/SPEC-seed.md §2.18)
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, et l'écran est atteint depuis l'index des réglages, jamais par une
@@ -133,7 +135,8 @@ test.describe('configuration des identités sortantes (docs/SPEC-mail-subsystem.
 		await expect(page).toHaveURL(/\/reglages\/identites-mail$/)
 		await expect(page.getByRole('heading', { name: 'Identités d’expédition' })).toBeVisible()
 
-		await expect(page.getByTestId('ligne-identite-mail')).toHaveCount(2)
+		// TROIS LIGNES depuis la décision 805 : le service, Driss, et Camille elle-même (§22.11).
+		await expect(page.getByTestId('ligne-identite-mail')).toHaveCount(3)
 		// L'ADRESSE EST EN TÊTE (§5.35), et le cas d'usage du §2.2 est enfin VISIBLE : Driss
 		// expédie depuis `contact@`, alors qu'il reçoit sur `bizdev@`.
 		await expect(

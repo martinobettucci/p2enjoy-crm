@@ -3,10 +3,12 @@
 //           crm_card_mail_list puis crm_mail_send, par la file de l'écran) ; docs/SPEC-mail-subsystem.md §5 (le worker
 //           soumet réellement) ; INC-271 (les boîtes rendues dans l'état trouvé) ; CLAUDE.md §8 (aucune trace
 //           fabriquée), §16 (captures)
+// @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T3) — sans adresse, le connecteur prend l'identité
+//           PAR DÉFAUT de l'administratrice, jamais celle du service (docs/SPEC-mcp.md §9.2 decies)
 //
 // Un VRAI client MCP, au nom de l'administratrice, lit le fil de « Refonte du site vitrine » puis y envoie un email ;
-// l'identité est celle du service, la seule qu'elle puisse emprunter — celle de Driss, que Stalwart refuse en
-// expéditeur, ne passerait pas le worker (INC-087). La file est vidée par la route interne de `mail-sync`, le vrai
+// l'identité est la SIENNE, par défaut (décision 805) : celle du service ne s'emprunte plus, et celle de Driss, que
+// Stalwart refuse en expéditeur pour elle, ne passerait pas le worker (INC-087). La file est vidée par la route interne de `mail-sync`, le vrai
 // chemin ; le fil de l'affaire, dans la webapp, nomme alors le message envoyé. Le ménage retire l'envoi, le message et
 // sa copie des deux boîtes, et les cases posées. L'événement `mail_sent` de la timeline, lui, reste : `card_events`
 // n'accorde d'écriture à personne (`CRM-044`), comme pour `e2e/mail/envoi.spec.ts`.
@@ -129,7 +131,7 @@ test('un email envoyé par le connecteur paraît dans le fil de l’affaire', as
 		expect(envoi.isError ?? false, JSON.stringify(envoi)).toBe(false)
 		const rendu = envoi.structuredContent as { outbox_id: string; status: string; from_address: string }
 		idEnvoi = rendu.outbox_id
-		expect([rendu.status, rendu.from_address]).toEqual(['queued', 'systeme@crm.p2enjoy.test'])
+		expect([rendu.status, rendu.from_address]).toEqual(['queued', 'admin@p2enjoy.test'])
 
 		// LE WORKER SOUMET RÉELLEMENT : la ligne passe à `sent` et le message sortant est inscrit au fil.
 		const passe = viderLaFile()

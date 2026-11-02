@@ -242,6 +242,11 @@ test.describe('CRM-081 tranche 2 f — le groupement des messages en fils', () =
 				() => document.documentElement.scrollWidth > document.documentElement.clientWidth,
 			)
 			expect(debordement, `débordement horizontal au palier ${palier.nom}`).toBe(false)
+			// INC-336 : sous 1024 px, la barre latérale devient un tiroir qui se referme par une transition ; la capture
+			// attend sa position finale au lieu de figer le tiroir en cours de fermeture.
+			if (palier.largeur < 1024) {
+				await expect.poll(async () => (await page.getByTestId('barre-laterale').boundingBox())?.x ?? 0).toBeLessThan(-200)
+			}
 			await capturer(page, `groupement-fil-${palier.nom}`, UNITE)
 		}
 	})

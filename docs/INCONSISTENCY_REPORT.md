@@ -8515,6 +8515,25 @@ observées (le sujet est dans le cadre à 390, 900, 1152 et 1440 px ; les écart
 25 images de bruit rendues. **Restent** les images de `CRM-007`, `CRM-020`, `CRM-022`, `CRM-060`, `CRM-067`, `CRM-071`,
 `CRM-077` et `CRM-108`, dont les scénarios ne sont pas encore repris.
 
+**Repris le 2026-11-02 (suite).**
+- **Sujet dans le cadre** : `identites` amène le commentaire dans le cadre à 390 px.
+- **Fin de l'état transitoire attendue** :
+  - `corbeille` attend la fin de « En cours de mesure » ;
+  - `groupement-fils` et `carnet-creation` attendent, sous 1024 px, que le tiroir de la barre latérale soit refermé ;
+  - `coquille` **retient** sa réponse jusqu'après la capture, au lieu d'un retard fixe de 2,5 s.
+
+Mesures : 88/88 et 32 images changées, observées. Pour `CRM-007/etat-chargement`, la capture est égale à sa version
+committée : les squelettes sont à l'écran.
+
+**« À vérifier », vérifié** : `CRM-060`, `CRM-067` et `CRM-108` montrent bien leur sujet (contacts, activités, recettes).
+La colonne de droite y est vide parce que le fil, plus court que la colonne principale et non collant, s'est arrêté
+avant elle. Ce n'est pas un défaut de capture. Rendre le fil collant serait une décision de `docs/DESIGN_SYSTEM.md`,
+non tranchée ici.
+
+**Reste** : `CRM-020/tracks-chargement`. Retenue, la réponse fait capturer le squelette du **démarrage** de
+l'application, centré, au lieu de celui des tracks dans la barre latérale. Le scénario attend désormais le squelette
+*dans* la barre latérale, et sera rejoué au prochain créneau sur la pile.
+
 ### INC-337 — À 390 et 900 px, plusieurs pages se capturent décalées vers la gauche, leur texte coupé au bord
 
 *Constaté le 2026-11-01 par la même observation, identique dans les versions committées, donc antérieur.* Sur la fiche
@@ -8593,3 +8612,7 @@ réservée à `service_role`, la colonne restant fermée à `authenticated`) ; q
 `verify-mail-inbound.sh` soit retournée en preuve de cette écriture ; et que `CRM-059` repasse `[~]` jusque-là.
 L'arbitrage revient au responsable, avec la question du bouton « Tester la connexion » (entrant et sortant) qu'il a
 demandé le même jour et les deux questions du connecteur MCP. **Statut : ouverte.**
+
+**Arbitrée le 2026-11-02 (décision 816)** : le correctif proposé est retenu, et porté par `CRM-127` avec le bouton
+« Tester la connexion » (`docs/SPEC-mail-subsystem.md` §23). Connecteur MCP : non. `CRM-059` repasse `[~]`. **Ouverte**
+jusqu'à la livraison de `CRM-127` T2.
