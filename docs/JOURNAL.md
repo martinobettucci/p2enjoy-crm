@@ -38250,3 +38250,24 @@ posés ailleurs a été écarté : la clé de service ne retire rien (décision 
 limite est écrite en place. **Vérifié sur une base reconstruite** : reconstruction code 0 ; pgTAP `0138` et `0116`
 41 assertions ; `rattacher-retirer` et `rattachements-miroir` 24/24 ; `verify-seed.sh` 52 contrôles, aucune anomalie.
 **Leçon** : une migration qui retire un index ou une contrainte se prouve sur une base RECONSTRUITE, seed compris.
+
+### décision 815 — la fenêtre du lot de la décision 812 est autorisée, sans nouvel instantané ; elle attend le travail de `CRM-111` T4.1
+
+*2026-11-02, session de livraison (p2enjoy-crm-64, aujourd'hui p2enjoy-crm-3a), arbitrage du responsable.* **État** : le lot
+est prêt sur `main`. Il porte les migrations `0144` (`CRM-123`), `0145` (`CRM-125` T2) et `0148` (`CRM-111` T3), et les
+webapps de `CRM-111` T3, `CRM-123`, `CRM-124`, `CRM-125`, `CRM-126`, INC-332 et INC-333. Le seed de développement a été
+corrigé (`754cc81a`), les images du manuel complétées (INC-333 `696110f5`, `CRM-125` `adb8bc30`) et `verify-manual` donne
+167/167. Mais l'arbre garde quatre fichiers non commités de `CRM-111` T4.1 (`SeriePersonnel.tsx`, `rapport-temps.ts` et
+son test, `rattachements.ts`), dont la session s'est arrêtée au redémarrage de la machine. Or `livrer.sh` refuse un arbre
+sale, et la campagne de captures d'avant livraison construirait la webapp avec ce code inachevé.
+
+**Décisions** :
+1. **Ces fichiers attendent leur session.** Le responsable la rouvrira, et elle commitera ou rangera elle-même son
+   travail. La session de livraison n'y touche pas.
+2. **La fenêtre est autorisée sans nouvel instantané** (`--instantane-verifie`, comme pour les migrations 142 et 143).
+   Elle se tient dès que l'arbre est propre : la campagne de renouvellement des captures (`docs/SPEC-captures.md` §4),
+   puis `livrer.sh --migrate`, les vérifications du §5, du §2.27, du §2.28 et du §2.29, et la publication du manuel. Les
+   gestes du responsable viennent ensuite, dont l'alias `app-*` chez l'hébergeur **avant** toute régénération.
+
+**Conséquences** : le lot ne change pas. Toute unité poussée avant la fenêtre y entre si sa session prévient la session
+de livraison (`CLAUDE.md` §12).
