@@ -17307,8 +17307,9 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         des deux tableaux — deux défauts trouvés en regardant les captures ; unitaires (rapport, écran, i18n) ; E2E
         `temps-partage` 3/3 ; captures `docs/captures/CRM-111/` observées à 1440 et 390 ; manuel §28.4 et son image
         `rapport-partage` ; `verify-manual` sans anomalie de cette unité. Production : la webapp de `main`, avec la `0150`.
-- [ ] **T5 — rentabilité ventilée** (§6) : une ligne par rattachement × devise, colonne `shared`, total compté une fois ;
+- [@] **T5 — rentabilité ventilée** (§6) : une ligne par rattachement × devise, colonne `shared`, total compté une fois ;
       écran ; `docs/SPEC-recettes.md` §5 et outil `crm_profitability_report`.
+      *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable, session 4891a451) depuis 2026-11-02 22:35 UTC — état avant : [ ]*
 - [ ] **T6 — messagerie** (§7, décision 657) : dossier `CRM/Affaires/<affaire>` et déplacement des dossiers existants
       par `mail-sync` ; cadences et variables des modèles par rattachement ; preuves IMAP réelles.
 - [ ] **T7 — webapp** (§8) : fiche à partie commune et blocs, pastille « aussi rattachée à », rattacher, archiver,
