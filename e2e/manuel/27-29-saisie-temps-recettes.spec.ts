@@ -74,6 +74,10 @@ test('le temps : la semaine, le rapport, le coût du personnel', async ({ page }
 	await page.goto('/temps?onglet=rapport')
 	const rapport = page.getByTestId('temps-rapport')
 	await expect(rapport).toBeVisible()
+	// Le mois précédent, que le seed remplit : l'image montre aussi « Ce mois-ci », rendu hors du mois du jour (INC-333).
+	await rapport.getByRole('button', { name: 'Mois précédent' }).click()
+	await expect(rapport.getByRole('button', { name: 'Ce mois-ci' })).toBeVisible()
+	await expect(rapport.getByText('Chargement en cours')).toHaveCount(0)
 	await illustrer(page, { chapitre: TEMPS, section: 'le-rapport-mensuel', nom: 'rapport-mensuel', cibles: [rapport] })
 	await page.goto('/reglages/cout-personnel')
 	const cout = page.getByTestId('cout-personnel')

@@ -15839,6 +15839,10 @@ track, channel et affaire, avec un rapport mensuel. Spécifié avant le code : `
       désormais par « Mois précédent » / « Mois suivant » / « Ce mois-ci », sur le rapport et sur la série du track,
       dont le mois passe dans l'adresse. Corrigé et vérifié en développement, en attente de livraison. Le constat
       s'étend au mois choisi dans Firefox (`docs/PROD_MIGRATIONS.md` §2.11).
+      *Images du manuel renouvelées le 2026-11-02* : les trois écrans montrent la navigation de mois (« Mois précédent »,
+      « Ce mois-ci »), sur le mois précédent que le seed remplit ; le scénario du temps ouvre la semaine précédente pour
+      trouver un jour plein (le seed ne saisit que les jours passés : un lundi, la semaine du jour est vide).
+      `e2e/manuel/23-33` et `27-29` 17/17 sur base reconstruite ; images triées par écart, le bruit rendu.
 
 ### CRM-099 — Plusieurs coûts réels par ligne de coût, jusqu'à ce qu'on la solde `[P]`
 *Créée le 2026-10-11 — décision 622, arbitrages du responsable. Une ligne de coût n'acceptait qu'un réel et quittait

@@ -79,7 +79,7 @@
 			"type": "image",
 			"src": "le-temps-passe-et-le-cout-du-personnel/cette-semaine.jpg",
 			"alt": "Les boutons « Semaine précédente » et « Semaine suivante »",
-			"width": 754,
+			"width": 679,
 			"height": 73
 		},
 		{
@@ -652,7 +652,7 @@
 			"type": "image",
 			"src": "le-temps-passe-et-le-cout-du-personnel/personnel-du-track.jpg",
 			"alt": "Le bloc « Coût du personnel » sous les coûts d'un track",
-			"width": 991,
+			"width": 992,
 			"height": 160
 		},
 		{

@@ -241,7 +241,10 @@ test('le temps : ajouter une affaire, une journée trop longue, le rapport de l�
 	// La semaine se relit après « Cette semaine » : la liste est reprise par `illustrer`, qui retente une cible détachée.
 	await expect(ajouter).toBeVisible()
 	await illustrer(page, { chapitre: TEMPS, section: 'saisir-sa-semaine', nom: 'ajouter-une-affaire', cibles: [ajouter] })
-	// Un jour déjà plein (4 quarts, soit 7 heures) : un quart de plus sur une autre ligne est refusé par le serveur.
+	// Un jour déjà plein (4 quarts, soit 7 heures) : un quart de plus sur une autre ligne est refusé par le serveur. Le seed
+	// ne saisit que les jours passés : un lundi, la semaine du jour est vide ; la semaine précédente a toujours ses jours pleins.
+	await page.getByRole('button', { name: 'Semaine précédente' }).click()
+	await expect(page.getByRole('button', { name: 'Cette semaine' })).toBeVisible()
 	const plein = page.getByTestId('temps-matrice').locator('input:not([type=checkbox])').filter({ has: page.locator('xpath=self::*[@value="4"]') }).first()
 	const jour = ((await plein.getAttribute('aria-label')) ?? '').split(', ').slice(1).join(', ')
 	const cellule = page.getByLabel(`Formation, ${jour}`, { exact: true })
@@ -256,6 +259,9 @@ test('le temps : ajouter une affaire, une journée trop longue, le rapport de l�
 	const personne = page.getByTestId('temps-rapport-personne')
 	await personne.selectOption({ label: 'Toute l’équipe' }).catch(() => personne.selectOption({ index: 1 }))
 	const rapport = page.getByTestId('temps-rapport')
+	// Le mois précédent, que le seed remplit : en début de mois, le mois du jour n'a encore aucun temps (INC-333).
+	await rapport.getByRole('button', { name: 'Mois précédent' }).click()
+	await expect(rapport.getByRole('button', { name: 'Ce mois-ci' })).toBeVisible()
 	await expect(rapport.getByText('Chargement en cours')).toHaveCount(0)
 	await illustrer(page, { chapitre: TEMPS, section: 'le-rapport-mensuel', nom: 'toute-l-equipe', cibles: [personne, rapport] })
 
@@ -273,8 +279,14 @@ test('le temps : ajouter une affaire, une journée trop longue, le rapport de l�
 
 	await page.goto('/tracks/studio-web/couts')
 	const personnel = page.getByText('Coût du personnel', { exact: true }).first()
+	// Le mois précédent, que le seed remplit : l'image montre les trois commandes de la navigation de mois (INC-333).
+	const serie = page.getByTestId('personnel-track')
+	await serie.getByRole('button', { name: 'Mois précédent' }).click()
+	const ceMois = serie.getByRole('button', { name: 'Ce mois-ci' })
+	await expect(ceMois).toBeVisible()
+	await expect(page.getByTestId('personnel-ligne').first()).toBeVisible()
 	await personnel.scrollIntoViewIfNeeded()
-	await illustrer(page, { chapitre: TEMPS, section: 'le-cout-du-personnel-a-cote-des-couts', nom: 'personnel-du-track', cibles: [personnel, page.getByTestId('personnel-ligne').first()] })
+	await illustrer(page, { chapitre: TEMPS, section: 'le-cout-du-personnel-a-cote-des-couts', nom: 'personnel-du-track', cibles: [personnel, ceMois, page.getByTestId('personnel-ligne').first()] })
 	await page.goto(FICHE)
 	const temps = page.getByTestId('temps-card')
 	await illustrer(page, { chapitre: TEMPS, section: 'le-cout-du-personnel-a-cote-des-couts', nom: 'temps-de-l-affaire', cibles: [temps] })
