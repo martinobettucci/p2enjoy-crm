@@ -4057,6 +4057,14 @@ porteur du geste, sélecteur jamais restreint selon le rôle, borne de liste à 
   quand elle n'a **qu'un** contact rattaché ; aucun ou plusieurs, il reste vide. La présélection ne
   remplace jamais un choix manuel (`docs/SPEC-modeles-emails.md` §9.5). Elle n'a pas de marque
   visuelle propre : le sélecteur montre une valeur, que la personne change comme toute autre.
+  **Révisé par `CRM-111` T6.2 (décision 821)** : une affaire rattachée à **plusieurs** channels fait
+  paraître, après le sélecteur de l'affaire, un sélecteur « Rattachement » — le même `select` que les
+  trois autres (§5.7), dans la même rangée qui passe à la ligne. Chaque option nomme son chemin
+  « Track › Channel », forme du §5.54. **Il n'a pas d'option vide et ouvre sur le plus ancien
+  rattachement** : c'est ce que la base rend sans rattachement désigné, si bien que la valeur montrée
+  dit toujours vrai, et une option « aucun » annoncerait un rendu qui n'existe pas. Un seul
+  rattachement, ou une lecture en échec : le sélecteur n'existe pas — il n'y aurait rien à choisir. Il
+  n'a ni couleur, ni pilule, ni icône (`docs/SPEC-modeles-emails.md` §15.4).
 
 - **LE RENDU EST UN GESTE EXPLICITE, jamais un effet de frappe** : la fonction lit six tables sous
   RLS, et rendre à chaque changement de sélecteur ferait trois appels pour un seul choix. Le bouton

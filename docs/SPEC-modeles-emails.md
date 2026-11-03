@@ -2504,3 +2504,85 @@ automatiques (décision 805).
 - Pas d'aperçu d'un palier **non enregistré** : l'aperçu rend le modèle tel qu'il est stocké.
 - Pas de jeu d'exemple réglable par espace ; pas de jeu par langue.
 - Pas d'outil dans le connecteur MCP (décision 809).
+
+## 15. `CRM-111` T6.2 — le rendu par rattachement
+
+Écrite le 2026-11-03, **avant la première ligne de code** (décisions 657, arbitrage 3, et 821 ;
+`docs/SPEC-rattachements.md` §7). Une affaire peut être rattachée à plusieurs channels
+(`card_placements`) ; chaque rattachement porte son étape, son montant et sa prochaine action. Jusqu'ici
+`rendre_modele_email` lisait **le plus ancien** rattachement (migration `0109`), quel que soit celui
+d'où l'on écrit.
+
+### 15.1 Les trois décisions
+
+| # | Question | Décision |
+|---|---|---|
+| 1 | Qui rend un modèle ? | **Les relances automatiques** et **la prévisualisation** des réglages (§9.5), et elles seules. Ni le formulaire d'envoi de la webapp ni `crm_mail_send` n'emploient de modèle (décision 821) |
+| 2 | Quel rattachement ? | Celui que l'appelant désigne : la relance, celui de **son inscription** (`card_sequence_enrollments.placement_id`, migration `0119`) ; la prévisualisation, celui que la personne choisit. **À défaut, le plus ancien** que l'appelant lit, comme avant |
+| 3 | Connecteur MCP ? | **Sans changement** : aucun outil ne rend de modèle ; `crm_mail_send` reste un envoi libre rattaché à son affaire par `card_id`. Le paramètre `placement_id` que la décision 818 lui donnait est retiré (décision 821). Aucune famille ni case nouvelle |
+
+### 15.2 Le contrat révisé de `public.rendre_modele_email`
+
+```
+public.rendre_modele_email(
+    p_template_id  uuid,
+    p_card_id      uuid,
+    p_contact_id   uuid default null,
+    p_identity_id  uuid default null,
+    p_placement_id uuid default null
+) returns table (subject text, body_text text, variables_nulles text[])
+```
+
+- **La forme à quatre paramètres est supprimée, non surchargée** (patron de la décision 661) : deux
+  formes dont l'une prolonge l'autre par un défaut rendraient tout appel à quatre arguments ambigu. Les
+  appels existants, à quatre arguments ou nommés, désignent la nouvelle forme sans changer.
+- `p_placement_id` **nul** : le plus ancien rattachement lisible de l'affaire (`created_at`, puis `id`),
+  exactement le comportement de la `0109`.
+- `p_placement_id` **renseigné** : ce rattachement-là, **s'il appartient à l'affaire et que l'appelant le
+  lit**. Sinon, **zéro ligne** — un rattachement d'une autre affaire, inconnu ou masqué rend la même chose
+  qu'une affaire illisible (§8.3), et rien n'est divulgué.
+- Les variables qu'il fournit : `card.amount`, `card.next_action`, `card.next_action_at`, `card.step`,
+  `card.channel`. `card.title` et `card.currency` restent ceux de l'affaire (`docs/SPEC-rattachements.md`
+  §4).
+- Volatilité, `security invoker`, privilèges : inchangés (§8.3, §8.7) — `authenticated` et
+  `service_role`, jamais `anon`.
+
+### 15.3 La relance rend avec le rattachement de son inscription
+
+`app.executer_sequences_relance` passe `v_inscription.placement_id` à `rendre_modele_email`. Sa
+définition est reprise de la base, cet appel seul changé. Le rattachement d'une inscription active existe
+toujours au rendu : l'étape 1 du même passage ferme la cadence d'un rattachement qui n'est plus figé ou
+qui a disparu. **Une relance ne passe par aucune relecture** (décision 821, règle du responsable) : rien
+ne change à son expédition.
+
+### 15.4 La prévisualisation choisit le rattachement
+
+- Au choix d'une affaire, l'écran lit ses rattachements (`card_placements`, sous leur RLS), du plus
+  ancien au plus récent, avec leur track et leur channel.
+- **Un seul rattachement lisible, ou aucun** : aucun sélecteur nouveau ; l'écran n'envoie pas de
+  rattachement, et la fonction rend celui qu'elle trouve.
+- **Deux ou plus** : un quatrième sélecteur, « Rattachement », paraît après celui de l'affaire. Chaque
+  option nomme son chemin « Track › Channel » (`docs/DESIGN_SYSTEM.md` §5.54). **Il n'a pas d'option
+  vide, et ouvre sur le plus ancien** : c'est ce que la fonction rendrait sans rattachement, si bien que
+  l'option affichée dit toujours vrai — une option « aucun » annoncerait un rendu sans rattachement qui
+  n'existe pas. L'écran envoie l'identifiant affiché.
+- Un changement d'affaire relit ses rattachements et rouvre sur son plus ancien ; une réponse arrivée
+  après un nouveau changement d'affaire est ignorée ; un échec de lecture n'affiche pas le sélecteur et
+  ne bloque rien (la fonction rend alors le plus ancien), comme pour les contacts (§9.5, décision 806).
+- Le rendu reste un geste explicite ; rien d'autre ne change dans l'écran.
+
+### 15.5 Preuves exigées
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | sans rattachement désigné : le plus ancien ; rattachement désigné : son étape, son channel, son montant, sa prochaine action ; rattachement d'une autre affaire : zéro ligne ; rattachement d'un channel que l'appelant ne lit pas : zéro ligne ; la forme à quatre paramètres n'existe plus ; `anon` refusé ; une relance armée sur le second rattachement rend son channel et son étape |
+| API | aux vrais jetons : l'administratrice rend les deux rattachements d'une affaire partagée ; un rattachement d'une autre affaire rend `[]` ; la lectrice, sur un rattachement d'un track fermé, rend `[]` |
+| Unitaires webapp | l'identifiant envoyé ; le sélecteur absent à un rattachement, présent à deux, ouvert sur le plus ancien ; changement d'affaire ; réponse tardive ignorée ; échec de lecture |
+| E2E | sur la pile et le seed : une affaire partagée jetable, la prévisualisation rend le channel choisi ; une affaire à un seul rattachement n'offre pas le sélecteur ; console vierge |
+| Visuel | captures observées aux paliers d'écran |
+
+### 15.6 Ce que T6.2 ne fait pas
+
+- La relecture des envois du connecteur (règle du responsable) : **INC-341**, unité à part.
+- Pas de rattachement dans le formulaire d'envoi de la webapp : il n'emploie pas de modèle.
+- `app.mail_template_variables()` ne change pas : la liste des variables ne dépend d'aucun rattachement.

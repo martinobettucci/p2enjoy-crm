@@ -17359,7 +17359,8 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         rattachement ; les relances automatiques le rendent avec le rattachement de leur inscription
         (`app.executer_sequences_relance`) ; l'aperçu de Réglages ▸ Modèles d'emails laisse choisir le rattachement d'une
         affaire qui en a plusieurs. `crm_mail_send` ne change pas (mail libre, sans modèle). Livrables : migration,
-        pgTAP, API, unitaires et E2E de l'aperçu, `docs/SPEC-modeles-emails.md`, SCHEMA, contrat de déploiement.
+        pgTAP, API, unitaires et E2E de l'aperçu, `docs/SPEC-modeles-emails.md` §15 (spécifiée le 2026-11-03, avant le
+        code), `docs/DESIGN_SYSTEM.md` §5.39, SCHEMA, contrat de déploiement, manuel chapitre 15.
 - [ ] **T7 — webapp** (§8) : fiche à partie commune et blocs, pastille « aussi rattachée à », rattacher, archiver,
       retirer avec confirmation ; `docs/DESIGN_SYSTEM.md` avant le code ; unitaires ; captures aux quatre paliers ;
       `docs/manual.md`, chapitre « Rattacher une affaire à plusieurs channels ».
