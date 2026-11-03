@@ -404,8 +404,10 @@ déclencheur n'est jamais suspendu.
   aujourd'hui `CRM/<track>/<channel>/<affaire>`, et ce dossier existe réellement sur le serveur IMAP. Il devient
   `CRM/Affaires/<affaire>` pour **toutes** les affaires, quel que soit leur nombre de rattachements. Conséquences : les
   dossiers existants sont **déplacés** sur le serveur IMAP par `mail-sync`, qui est le seul à écrire dans la boîte ;
-  `inbox_arborescence` ne range plus les affaires sous leurs channels ; deux affaires de même titre restent
-  distinguées par la règle de nommage en vigueur, à relire en T6.
+  `inbox_arborescence` ne range plus les affaires sous leurs channels. **Le nom du dossier** (décision 818,
+  arbitrage 1) : le titre assaini de l'affaire suivi des **8 premiers caractères de son identifiant**, entre parenthèses
+  — `CRM/Affaires/Refonte intranet (5eed0000)` —, toujours, et non un suffixe en cas de doublon : deux affaires de même
+  titre ont deux dossiers, et le nom ne change que si le titre change (renommage que `mail-sync` sait déjà faire).
 - **Une cadence de relance s'inscrit à un rattachement** (décision 657, arbitrage 2). `card_sequence_enrollments` reçoit
   le rattachement ; son responsable est l'expéditeur par défaut **à l'écran** : le bloc d'armement présélectionne l'identité d'envoi de la
   personne qui arme quand elle est ce responsable, sinon rien — son identité **par défaut**, à défaut l'unique, et jamais
@@ -414,7 +416,10 @@ déclencheur n'est jamais suspendu.
   `app.executer_sequences_relance` lit son `entered_step_at`. Une affaire peut avoir une cadence par rattachement.
 - **Les variables des modèles d'email viennent du rattachement d'où l'on écrit** (décision 657, arbitrage 3).
   `app.mail_template_variables` et `rendre_modele_email` reçoivent le rattachement : le bloc depuis lequel l'email est
-  rédigé dans la webapp, ou le rattachement désigné par un envoi MCP (`crm_mail_send`).
+  rédigé dans la webapp, ou le rattachement désigné par un envoi MCP (`crm_mail_send`). **Côté connecteur** (décision
+  818, arbitrage 2, les deux questions de `CLAUDE.md` posées pour T6) : `crm_mail_send` gagne un paramètre facultatif
+  `placement_id`, le rattachement d'où l'on écrit, le plus ancien à défaut ; famille `messagerie` existante, même
+  action, aucune case nouvelle.
 
 ## 8. Écrans
 

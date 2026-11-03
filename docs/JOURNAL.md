@@ -38539,3 +38539,20 @@ Studio web ») ; ciblée par son texte visible, elle n'était jamais trouvée, l
 restait en base — retirée à la main par la clé de service, puis ciblée par son en-tête accessible. **Vérifications** :
 unitaires 617 ; E2E 9/9 ; capture observée ; `verify-manual` 167 contrôles, aucune anomalie. **T5 est close.**
 
+### décision 818 — `CRM-111` T6 : le nom du dossier `CRM/Affaires/…`, et le rattachement dans `crm_mail_send`
+
+*2026-11-03, session interactive (4891a451), réponses du responsable à `AskUserQuestion`.* **Problème** : la décision
+657 sort le dossier IMAP d'une affaire de l'arborescence (`CRM/Affaires/<affaire>`), et `docs/SPEC-rattachements.md` §7
+renvoyait à T6 la règle qui distingue deux affaires de même titre — avant, track et channel les séparaient. Et la
+règle de `CLAUDE.md` demande, pour la modification de l'envoi, si le connecteur la porte et dans quelle famille.
+**Arbitrages**, conformes à la recommandation :
+1. **Le nom du dossier** est le titre assaini suivi des **8 premiers caractères de l'identifiant** de l'affaire,
+   entre parenthèses, toujours. Écartés : un suffixe « (2) » en cas de doublon (il dépend de l'ordre de création et
+   change quand l'autre affaire disparaît) ; l'adresse de l'affaire (elle change à la régénération du préfixe,
+   `CRM-123`, qui renommerait tous les dossiers).
+2. **`crm_mail_send` gagne `placement_id`**, facultatif — le rattachement d'où l'on écrit, le plus ancien à défaut —,
+   dans la famille `messagerie` existante, même action, aucune case nouvelle.
+**Découpage** (backlog) : T6.1 le dossier hors de l'arborescence (base, `mail-sync`, inbox, preuves IMAP réelles), T6.2
+les variables par rattachement (base, formulaire d'envoi, connecteur). Les cadences s'inscrivent déjà à un
+rattachement depuis la `0119` (T2) : rien à refaire. **Persisté** : `docs/SPEC-rattachements.md` §7, backlog, ce journal.
+

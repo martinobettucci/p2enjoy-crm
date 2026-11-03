@@ -17335,6 +17335,18 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
 - [@] **T6 — messagerie** (§7, décision 657) : dossier `CRM/Affaires/<affaire>` et déplacement des dossiers existants
       par `mail-sync` ; cadences et variables des modèles par rattachement ; preuves IMAP réelles.
       *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable, session 4891a451) depuis 2026-11-02 22:58 UTC — état avant : [ ]*
+      *Arbitré le 2026-11-03 (décision 818)* : le dossier se nomme `CRM/Affaires/<titre> (<8 premiers caractères de
+      l'identifiant>)` ; `crm_mail_send` gagne `placement_id`, facultatif, dans la famille `messagerie`.
+      **Découpage, arrêté le 2026-11-03 (journal, décision 818)** :
+      - [ ] **T6.1 — le dossier hors de l'arborescence** : `chemin_dossier_card` rend le nouveau chemin ; `mail-sync`
+        déplace les dossiers existants et y place les nouveaux messages ; `inbox_arborescence` ne range plus les
+        affaires sous leurs channels, et l'arborescence de l'inbox suit (`docs/DESIGN_SYSTEM.md` §5.4 avant le code).
+        Livrables : migration, pgTAP, pytest de `mail-sync`, preuves IMAP réelles (`scripts/verify-mail-inbound.sh`),
+        unitaires et E2E de l'inbox, captures, manuel, `docs/SPEC-mail-subsystem.md`, SCHEMA, contrat de déploiement.
+      - [ ] **T6.2 — les variables par rattachement** : `app.mail_template_variables` et `rendre_modele_email` reçoivent
+        le rattachement d'où l'on écrit ; le formulaire d'envoi de la webapp le passe ; `crm_mail_send` gagne
+        `placement_id`. Livrables : migration, pgTAP, API, unitaires webapp et connecteur, `docs/SPEC-modeles-emails.md`,
+        `docs/SPEC-mcp.md`, SCHEMA, contrat de déploiement.
 - [ ] **T7 — webapp** (§8) : fiche à partie commune et blocs, pastille « aussi rattachée à », rattacher, archiver,
       retirer avec confirmation ; `docs/DESIGN_SYSTEM.md` avant le code ; unitaires ; captures aux quatre paliers ;
       `docs/manual.md`, chapitre « Rattacher une affaire à plusieurs channels ».
