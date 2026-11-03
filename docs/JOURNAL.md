@@ -38817,3 +38817,17 @@ rend le document tel quel, collection nouvelle comprise.
 
 **Vérifications prévues** : pgTAP (la comparaison avant/après, la copie, l'aperçu, le refus de la lectrice) ; API aux vrais
 jetons ; unitaires de l'éditeur et de la comparaison ; E2E ; captures ; manuel §18.9 et §18.16.
+
+### décision 828 — livrer la migration 161 et la webapp de `main`, sans instantané
+
+*2026-11-03, session 4522fa9c (p2enjoy-crm-3a), arbitrage du responsable (`AskUserQuestion`).*
+
+**Question.** `CRM-112` T2.c.2 et T3.b sont faites et vérifiées (13cd61e2) ; la production est à `e44d04aa` (registre à
+158, dernière 0160). Ouvrir une fenêtre maintenant ?
+
+**Décision : oui, sans instantané** — comme la décision 815 l'avait fait pour un lot sans donnée. Le lot : la migration
+`0161` (fonctions seules, aucune table, aucune donnée) et la webapp de `main`. Rien d'autre n'a changé depuis
+`e44d04aa` que de la documentation. La session 3a s'annonce session de livraison (`CLAUDE.md` §12, décision 813).
+
+**Conséquences** : fenêtre avec migration ; vérifications en lecture seule : registre à 159 lignes terminé par la 161,
+`preview_common_field_requirement` présente, `verifier.sh` ; consignation (baseline, changelog, backlog, INC-344).
