@@ -8711,3 +8711,24 @@ d'observabilité (`CLAUDE.md` §20), et dépasse la livraison en cours.
 **Correction proposée** : admettre `account_id` et `panne` dans `SAFE_FIELDS` — un identifiant et un nom de classe
 d'exception, ni secret ni donnée personnelle —, avec un test du formateur qui lise la ligne d'un échec de veille ; puis
 reconstruire l'image `mail-sync`.
+
+### INC-344 — `compare_workflow_versions` ignore les champs communs exigés : « différentes », et rien de listé
+
+*Relevé le 2026-11-03 par la session 3a en préparant `CRM-112` T2.c.2 ; livré en production avec la migration 157 le même
+jour (décision 827) ; correction : `CRM-112` T2.c.2, migration `0161`.*
+
+**Le constat, mesuré** (transaction annulée sur la pile de développement). Depuis la `0157`, la composition photographiée
+d'une version porte `required_common_fields` quand le workflow exige un champ commun, et l'empreinte en dépend. Mais
+`compare_workflow_versions` ne compare que six collections, dont celle-ci est absente : deux versions qui ne diffèrent
+que par une exigence de champ commun rendent `identical: false` avec un résumé `0 / 0 / 0`. L'invariant que la fonction
+écrit elle-même — « deux empreintes égales imposent six collections vides, et deux empreintes différentes imposent au
+moins un écart » — est faux. `compare_workflow_with_source` ne voit pas non plus une exigence retirée d'une copie.
+
+**Portée en production.** Le cas ne naît que d'une exigence de champ commun : après la livraison du 2026-11-03, seule
+l'acceptation d'une suggestion de l'assistant qui en porte une (`0160`) peut la poser ; l'éditeur ne l'offre qu'avec
+`CRM-112` T3.b.
+
+**Correction** : la collection `required_common_fields` dans les deux comparaisons et dans le document naturalisé
+(`app.workflow_composition_naturel`), identité `(transition_id, common_field_id)` pour les versions et `(from_node_id,
+to_node_id, common_field_key)` pour la copie ; la liste fermée de la webapp et son titre. Migration `0161`, avec T3.b.
+

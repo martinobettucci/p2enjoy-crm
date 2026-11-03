@@ -7626,3 +7626,33 @@ ligne d'un champ, son formulaire de déclaration et d'édition, l'éditeur de ch
 - **SOUS `md`**, la ligne se replie — libellé et pilules, puis les commandes —, cibles conservées ; les champs du
   formulaire prennent toute la largeur. `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : tout vient de l'éditeur de workflows (§5.15).
+
+### 5.87 Exiger un champ commun dans l'éditeur de workflows — `CRM-112` T3.b
+
+*Écrit le 2026-11-03, avant le code, après relecture intégrale de ce document le même jour.* Ce que l'éditeur lit, écrit et
+refuse est spécifié par `docs/SPEC-champs-communs.md` §5 et §7 ; ces règles ne disent que de quoi il a l'air. **Tout ce que
+le §5.15 pose pour le bloc des exigences vaut sans être répété** : une liste par transition, une seule liste de choix,
+« Ne plus exiger » et sa confirmation dans le flux, la phrase qui renvoie à la grille, l'aperçu des effets sous le choix.
+
+- **LE CHOIX « Champ » OFFRE LES DEUX SORTES DE CHAMPS, EN DEUX `optgroup` TRADUITS** — « Champs du workflow », puis
+  « Champs de l'affaire », le nom de l'écran du §5.86. C'est le « marqués comme tels » de la spécification : le groupe dit
+  d'où vient le champ, sans pilule ni couleur dans une liste native (§5.22). Un groupe vide n'est pas rendu. N'y sont
+  offerts que les champs **non archivés** et **pas encore exigés** par la transition (§5.21).
+- **UNE EXIGENCE COMMUNE EST UNE LIGNE D'EXIGENCE**, dans la forme exacte de celles du workflow — libellé, clé en `code`,
+  mot d'origine, « Ne plus exiger » —, **suivie de la pilule neutre « Champ de l'affaire »** (§5.6) : la même transition
+  peut exiger les deux sortes, et la ligne doit dire laquelle sans attendre qu'on ouvre le choix. Les lignes communes
+  viennent après celles du workflow, dans l'ordre de la partie commune (`position`).
+- **« Ne plus exiger » ouvre la même confirmation** que pour un champ du workflow ; son texte nomme le champ et la
+  transition.
+- **L'APERÇU DES EFFETS SUIT LE CHAMP CHOISI, COMMUN COMPRIS** (§7 bis.13.4) : « à l'entrée », le nombre d'affaires dont
+  un rattachement non archivé est à l'étape de départ et dont la valeur commune est vide — mesuré par la base. Rien n'est
+  compté « sur place » : une exigence de transition ne porte sur aucune étape.
+- **LE BLOC NE SE TAIT PLUS QUAND LE WORKFLOW N'A AUCUN CHAMP ACTIF** : la phrase qui le disait n'est rendue que si
+  l'espace n'a, en plus, aucun champ commun actif. Un workflow sans formulaire peut exiger un champ de l'affaire.
+- **Un champ commun archivé n'apparaît jamais comme exigé** : la base refuse d'archiver un champ exigé (§5.86), le cas ne
+  peut donc pas naître, et l'écran ne le prévoit pas.
+- **LA COMPARAISON DE VERSIONS ET CELLE D'UNE COPIE AVEC SA SOURCE** (§5.15, `CollectionsComparees`) gagnent la collection
+  « Champs communs exigés », après « Champs exigés », dans la même forme ; un élément se nomme par la clé du champ quand le
+  document la porte, par ses identifiants sinon (§7 ter.14.6).
+- **Les commandes suivent la capacité d'administrer l'espace** (§5.59). **Aucune couleur, aucun jeton, aucune icône
+  nouvelle.**

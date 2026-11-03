@@ -38798,3 +38798,22 @@ comportement changé). **Changelog** : les entrées `CRM-111` T4.1 à T9 avaient
 publiée du 2026-11-01 ; elles rejoignent l'entrée datée du 2026-11-03, avec `CRM-112` et `CRM-127`. **Conséquences** :
 le verrou de livraison est levé par le commit qui consigne la fenêtre ; restent les constats du responsable
 (`docs/PROD_MIGRATIONS.md` §8), puis INC-341, prioritaire.
+
+### `CRM-112` T3.b et T2.c.2 — ce qui est écrit avant le code (2026-11-03)
+
+*Session 4522fa9c (p2enjoy-crm-3a), après la fenêtre de livraison de la décision 827 et la relecture intégrale de
+`docs/DESIGN_SYSTEM.md`.*
+
+**Problème.** L'éditeur de workflows ne sait pas exiger un champ commun, et les deux comparaisons de versions ignorent la
+collection `required_common_fields` que la `0157` photographie. **Observation** (transaction annulée sur la pile de
+développement) : deux versions qui ne diffèrent que par une exigence commune rendent `identical: false` et un résumé nul —
+INC-344, livrée en production avec la `0157`, sans effet tant qu'aucune exigence commune n'existe.
+
+**Décisions (précisions de la décision 664, sans arbitrage nouveau).** Une migration, `0161` : la collection dans les deux
+comparaisons et le document naturalisé ; `public.preview_common_field_requirement`, pour que l'aperçu des effets — règle
+existante de l'éditeur (§7 bis.13) — vaille aussi pour un champ commun. L'écran : `docs/DESIGN_SYSTEM.md` §5.87. Le
+connecteur MCP n'est pas concerné : exiger est une définition (décision 664), et la comparaison de versions qu'il expose
+rend le document tel quel, collection nouvelle comprise.
+
+**Vérifications prévues** : pgTAP (la comparaison avant/après, la copie, l'aperçu, le refus de la lectrice) ; API aux vrais
+jetons ; unitaires de l'éditeur et de la comparaison ; E2E ; captures ; manuel §18.9 et §18.16.

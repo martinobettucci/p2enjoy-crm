@@ -146,6 +146,11 @@ création. Une **transition** peut en revanche l'exiger : « pour passer en Sign
   - **Les comparaisons de versions** (`compare_workflow_versions`, `compare_workflow_with_source`) n'en parlent pas
     encore : la webapp les lit par une liste fermée de collections, et la collection nouvelle arrive avec son écran (T2.c.2,
     avec T3).
+    *Précisé le 2026-11-03, avant le code de T2.c.2 (INC-344, migration `0161`)* : la collection `required_common_fields`
+    entre dans les deux comparaisons, identité `(transition_id, common_field_id)` pour deux versions et `(from_node_id,
+    to_node_id, common_field_key)` pour une copie et sa source ; le document naturalisé la porte toujours, vide s'il le
+    faut. Sans elle, deux versions qui ne diffèrent que par une exigence commune rendaient `identical: false` et un résumé
+    nul.
 - **Copies vers un track** (`copy_workflow_to_track`) : une copie reste dans l'espace, donc elle garde l'exigence telle
   quelle.
 - **Assistant IA** (`CRM-097`) : une proposition peut viser un champ commun existant comme exigence, par sa clé ; elle
@@ -174,6 +179,14 @@ garde : désarchiver les rend.
   vient après « Workflows ».
 - **L'éditeur de workflow** : parmi les champs qu'une transition peut exiger, les champs communs de l'espace, marqués
   comme tels.
+  *Précisé le 2026-11-03, avant le code de T3.b (`docs/DESIGN_SYSTEM.md` §5.87)* : l'aperçu des effets d'une exigence
+  (`docs/SPEC-workflow-engine.md` §7 bis.13) vaut aussi pour un champ commun, par une fonction propre,
+  `public.preview_common_field_requirement(p_common_field_id, p_transition_id) returns table (at_entry bigint)` — `security
+  invoker`, la lecture de l'appelant fait foi : le nombre d'affaires distinctes dont un rattachement non archivé est à
+  l'étape de départ de la transition et dont la valeur commune est vide (`app.valeur_de_champ_est_vide`), `0` pour un
+  champ archivé ou inconnu. Écrire et retirer l'exigence passent par PostgREST sur
+  `workflow_transition_required_common_fields`, sous ses politiques (`0155`). **Connecteur MCP : non** — exiger un champ
+  est une définition (décision 664).
 - **La fiche** : les champs communs non archivés paraissent dans la partie commune, sous les champs natifs, dans
   l'ordre de `position`. Ils sont éditables par qui écrit l'affaire, sinon en lecture seule. Un champ archivé qui porte
   une valeur reste lisible, marqué archivé ; un champ archivé vide disparaît **[proposition]**. Un champ exigé par une
