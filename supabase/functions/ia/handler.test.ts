@@ -100,6 +100,7 @@ function banc(options: {
 		lireSuggestion: async () => options.lue ?? null,
 		lireDerniereRevision: async () => options.derniere ?? null,
 		lireCatalogue: async () => [{ cle: 'relance', libelle: 'Relance', nature: 'open', probabilite: 20 }],
+		lireChampsCommuns: async () => [{ cle: 'siret', libelle: 'SIRET', type: 'text' }],
 		lireComposition: async (jeton, workflowId) => (
 			b.ordre.push(`composition:${workflowId}:${jeton}`), options.composition === undefined ? VIVANTE : options.composition
 		),

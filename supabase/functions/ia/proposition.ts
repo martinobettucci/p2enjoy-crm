@@ -3,6 +3,8 @@
 // @spec CRM-113 (docs/BACKLOG.md) — tranche T2 : `label` et `probability` d'une étape, exigés par le schéma, `null`
 //       permis, gardés par la mise en forme (docs/SPEC-ia.md §14.3, §14.6 ; décisions 646 et 677) ; tranche T5 :
 //       les clés passent à l'anglais (décision 679)
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T2.d.1 : `exigences_communes`, facultative, mise en forme comme `exigences`
+//       (docs/SPEC-ia.md §6.1, décision 825 ; docs/SPEC-champs-communs.md §5)
 // @spec docs/SPEC-ia.md §2 (la sortie du modèle n'est jamais crue), §6 (clés normalisées par le produit),
 //       §6.1 (le format), §11.5 ; §12.1 (la base, seule juge des défauts — la fonction ne vérifie plus que la
 //       forme) ; docs/SCHEMA.md §3 et §4 (types de champ) ; docs/JOURNAL.md décisions 617 et 618
@@ -42,6 +44,8 @@ export type Proposition = {
 	champs: Champ[]
 	regles: Regle[]
 	exigences: Exigence[]
+	/** Facultative (décision 825) : les champs COMMUNS existants que des transitions exigent, par leur clé. */
+	exigences_communes?: Exigence[]
 	/** Facultative : une modification seulement. */
 	remappages?: Remappage[]
 }
@@ -133,6 +137,15 @@ export const SCHEMA_WORKFLOW = {
 				properties: { de: { type: 'string' }, vers: { type: 'string' }, champ: { type: 'string' } },
 			},
 		},
+		// Facultative, donc hors de `required` (décision 825) : une proposition sans champ commun exigé n'a pas à la porter.
+		exigences_communes: {
+			type: 'array',
+			items: {
+				type: 'object',
+				required: ['de', 'vers', 'champ'],
+				properties: { de: { type: 'string' }, vers: { type: 'string' }, champ: { type: 'string' } },
+			},
+		},
 	},
 } as const
 
@@ -180,7 +193,10 @@ export function mettreEnForme(sortie: unknown): MiseEnForme {
 	if (!estObjet(sortie)) return { ok: false }
 	const listes = ['noeuds', 'etapes', 'transitions', 'champs', 'regles', 'exigences'] as const
 	if (!estObjet(sortie.workflow) || listes.some((l) => !Array.isArray(sortie[l]))) return { ok: false }
-	const total = listes.reduce((n, l) => n + (sortie[l] as unknown[]).length, 0)
+	// `exigences_communes` : absente, elle le reste ; présente, un tableau d'objets — sinon la sortie n'a pas la forme.
+	const communes = sortie.exigences_communes
+	if (communes !== undefined && (!Array.isArray(communes) || !communes.every(estObjet))) return { ok: false }
+	const total = listes.reduce((n, l) => n + (sortie[l] as unknown[]).length, 0) + (communes?.length ?? 0)
 	if (total > ELEMENTS_MAX) return { ok: false }
 	const brut = (l: (typeof listes)[number]) => (sortie[l] as unknown[]).filter(estObjet)
 	if (listes.some((l) => brut(l).length !== (sortie[l] as unknown[]).length)) return { ok: false }
@@ -236,6 +252,15 @@ export function mettreEnForme(sortie: unknown): MiseEnForme {
 			vers: cle(x.vers),
 			champ: cle(x.champ),
 		})),
+		...(communes === undefined
+			? {}
+			: {
+					exigences_communes: (communes as Record<string, unknown>[]).map((x) => ({
+						de: cle(x.de),
+						vers: cle(x.vers),
+						champ: cle(x.champ),
+					})),
+				}),
 		...(remappages === undefined
 			? {}
 			: { remappages: (remappages as Record<string, unknown>[]).map((r) => ({ de: cle(r.de), vers: cle(r.vers) })) }),

@@ -1,3 +1,5 @@
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T2.d.1 : les champs communs non archivés de l'espace, lus sous la RLS de
+//       l'appelant et envoyés au modèle avec le catalogue (docs/SPEC-ia.md §6.1, décision 825)
 // @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : la fonction edge `ia`
 // @spec docs/SPEC-ia.md §4 (architecture, concurrence, mode dégradé), §11.1 (la génération vit dans sa
 //       requête : flux NDJSON, battement, issue en base — `oneshot` retire le worker après sa réponse),
@@ -21,6 +23,7 @@ import {
 	messagesDeRevue,
 	PORTEES_DE_MODIFICATION,
 	type ContexteDeModification,
+	type ChampCommun,
 	type NoeudDuCatalogue,
 	type PorteeDeModification,
 } from './consignes.ts'
@@ -70,6 +73,8 @@ export type DependancesIa = {
 	/** La dernière révision lisible, et les défauts que la base y a écrits. */
 	lireDerniereRevision(jeton: string, id: string): Promise<{ readonly proposition: unknown; readonly defauts: Defaut[] } | null>
 	lireCatalogue(jeton: string, workspaceId: string): Promise<NoeudDuCatalogue[]>
+	/** Avec le jeton de l'appelant : les champs communs NON archivés de l'espace (`CRM-112` T2.d.1, décision 825). */
+	lireChampsCommuns(jeton: string, workspaceId: string): Promise<ChampCommun[]>
 	/** Avec le jeton de l'appelant : la composition vivante au format d'une proposition, `null` si illisible. */
 	lireComposition(jeton: string, workflowId: string): Promise<unknown | null>
 	/** Avec le jeton de l'appelant : le nombre d'affaires par clé d'étape. */
@@ -203,11 +208,12 @@ async function mener(
 	cible: Cible,
 	suggestion: Suggestion,
 	consigne: string,
-	messagesSelon: (catalogue: readonly NoeudDuCatalogue[]) => readonly Message[],
+	messagesSelon: (catalogue: readonly NoeudDuCatalogue[], champsCommuns: readonly ChampCommun[]) => readonly Message[],
 ): Promise<Response> {
 	const catalogue = await d.lireCatalogue(jeton, suggestion.workspace_id)
+	const champsCommuns = await d.lireChampsCommuns(jeton, suggestion.workspace_id)
 	return flux(d, { suggestion_id: suggestion.id }, () =>
-		generation(d, cible, suggestion, consigne, messagesSelon(catalogue)).catch(async () => {
+		generation(d, cible, suggestion, consigne, messagesSelon(catalogue, champsCommuns)).catch(async () => {
 			await d.ecrireEchec(suggestion.id, 'serveur_injoignable')
 			d.journaliser({ evenement: 'generation_echouee', code: 'erreur_interne' })
 			return { issue: 'echec', echec: 'serveur_injoignable' } as const
@@ -273,8 +279,8 @@ export async function traiterIa(requete: Request, d: DependancesIa): Promise<Res
 		}
 		const contexte = modifier ? await contexteDe(d, jeton, creation.suggestion, composition) : null
 		d.journaliser({ evenement: 'generation_lancee', route: 'suggestions', portee, simulee: cible.simulee })
-		return await mener(d, jeton, cible, creation.suggestion, demande, (catalogue) =>
-			messagesDePremiereGeneration(demande, catalogue, contexte),
+		return await mener(d, jeton, cible, creation.suggestion, demande, (catalogue, champsCommuns) =>
+			messagesDePremiereGeneration(demande, catalogue, contexte, champsCommuns),
 		)
 	}
 
@@ -313,14 +319,15 @@ export async function traiterIa(requete: Request, d: DependancesIa): Promise<Res
 			contexte = await contexteDe(d, jeton, verrouillee, composition)
 		}
 		d.journaliser({ evenement: 'generation_lancee', route: 'revue', portee: verrouillee.portee, simulee: cible.simulee })
-		return await mener(d, jeton, cible, verrouillee, consigne ?? verrouillee.demande, (catalogue) =>
+		return await mener(d, jeton, cible, verrouillee, consigne ?? verrouillee.demande, (catalogue, champsCommuns) =>
 			derniere === null
 				? messagesDePremiereGeneration(
 						consigne === null ? verrouillee.demande : `${verrouillee.demande}\n\n${consigne}`,
 						catalogue,
 						contexte,
+						champsCommuns,
 					)
-				: messagesDeRevue(verrouillee.demande, derniere.proposition, derniere.defauts, consigne ?? '', catalogue, contexte),
+				: messagesDeRevue(verrouillee.demande, derniere.proposition, derniere.defauts, consigne ?? '', catalogue, contexte, champsCommuns),
 		)
 	}
 

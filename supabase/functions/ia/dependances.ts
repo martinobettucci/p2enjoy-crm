@@ -1,3 +1,5 @@
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T2.d.1 : les champs communs non archivés de l'espace, lus sous la RLS de
+//       l'appelant et envoyés au modèle avec le catalogue (docs/SPEC-ia.md §6.1, décision 825)
 // @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : les dépendances réelles de la fonction `ia`
 // @spec docs/SPEC-ia.md §11.2 (le jeton de l'appelant pour décider, la clé de service pour écrire la fin
 //       d'une génération sur la suggestion autorisée), §11.4 (verrou, échec) ; docs/JOURNAL.md décision 617
@@ -116,6 +118,19 @@ export function creerDependances(
 				libelle: n.label,
 				nature: n.kind,
 				probabilite: n.default_probability === null ? null : Number(n.default_probability),
+			}))
+		},
+
+		// `CRM-112` T2.d.1 (décision 825) : les champs communs non archivés de l'espace, lus sous la RLS de l'appelant.
+		async lireChampsCommuns(jeton, workspaceId) {
+			const reponse = await requete(
+				rest(`card_common_fields?workspace_id=eq.${workspaceId}&archived_at=is.null&select=key,label,type&order=position`),
+				{ headers: commeAppelant(jeton), signal: signal() },
+			)
+			return (await lignes<{ key: string; label: string; type: string }>(reponse)).map((c) => ({
+				cle: c.key,
+				libelle: c.label,
+				type: c.type,
 			}))
 		},
 

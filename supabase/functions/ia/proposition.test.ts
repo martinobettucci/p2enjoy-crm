@@ -6,6 +6,8 @@
 // @verifies CRM-113 (docs/BACKLOG.md) tranche T2 — docs/SPEC-ia.md §14.3 (`label` et `probability` d'une étape),
 //           §14.6 (le schéma les exige, `null` permis ; la mise en forme les garde, toute autre forme est une réponse
 //           invalide) ; décisions 646 et 677 ; tranche T5 : les clés anglaises (décision 679)
+// @verifies CRM-112 (docs/BACKLOG.md) tranche T2.d.1 — docs/SPEC-ia.md §6.1 : `exigences_communes`, facultative, mise en
+//           forme comme `exigences` ; absente, elle le reste (décision 825)
 //
 // Les défauts — le SENS d'une proposition — sont prouvés en base, code par code, par
 // `supabase/tests/0078_accepter_suggestion_ia.test.sql`. Ce fichier prouve ce qui reste à la fonction : refuser
@@ -186,5 +188,36 @@ describe('CRM-113 T2 — le libellé et la probabilité d’une étape (docs/SPE
 		const forme = mettreEnForme(avecEtapes([{ noeud: 'prospection', initiale: true, label: null, probability: 140 }]))
 		if (!forme.ok) throw new Error('forme refusée')
 		expect(forme.proposition.etapes[0]?.probability).toBe(140)
+	})
+})
+
+describe('CRM-112 T2.d.1 — les exigences de champ commun (docs/SPEC-ia.md §6.1, décision 825)', () => {
+	it('le schéma les décrit, sans les exiger : une proposition sans champ commun exigé n’a pas à les porter', () => {
+		expect(SCHEMA_WORKFLOW.properties).toHaveProperty('exigences_communes')
+		expect(SCHEMA_WORKFLOW.required).not.toContain('exigences_communes')
+	})
+
+	it('absentes, elles le restent : rien n’est inventé', () => {
+		const forme = mettreEnForme(copie())
+		if (!forme.ok) throw new Error('forme refusée')
+		expect(forme.proposition).not.toHaveProperty('exigences_communes')
+	})
+
+	it('présentes, leurs clés sont normalisées comme celles des exigences', () => {
+		const forme = mettreEnForme({ ...copie(), exigences_communes: [{ de: 'C_Maquette_Proposition', vers: 'F_Gagne', champ: ' SIRET ' }] })
+		if (!forme.ok) throw new Error('forme refusée')
+		expect(forme.proposition.exigences_communes).toEqual([{ de: 'c-maquette-proposition', vers: 'f-gagne', champ: 'siret' }])
+	})
+
+	it('une liste qui n’est pas un tableau d’objets n’a pas la forme', () => {
+		expect(mettreEnForme({ ...copie(), exigences_communes: 'siret' }).ok).toBe(false)
+		expect(mettreEnForme({ ...copie(), exigences_communes: ['siret'] }).ok).toBe(false)
+	})
+
+	it('elles comptent dans le plafond d’éléments', () => {
+		const base = copie()
+		const deja = ['noeuds', 'etapes', 'transitions', 'champs', 'regles', 'exigences'].reduce((n, l) => n + (base[l as keyof Brute] as unknown[]).length, 0)
+		const trop = Array.from({ length: ELEMENTS_MAX - deja + 1 }, () => ({ de: 'a', vers: 'b', champ: 'c' }))
+		expect(mettreEnForme({ ...base, exigences_communes: trop }).ok).toBe(false)
 	})
 })

@@ -4,6 +4,8 @@
 //           règles ajoutées, le catalogue `- cle — libelle (nature, 30 %)`), §3 (rien d'une affaire n'est envoyé) ;
 //           docs/JOURNAL.md décisions 646 et 677 ; tranche T5 : la consigne nomme les clés `label` et `probability`
 //           de l'étape (décision 679)
+// @verifies CRM-112 (docs/BACKLOG.md) tranche T2.d.1 — docs/SPEC-ia.md §6.1 : la règle des « exigences_communes » et la
+//           liste des champs communs de l'espace envoyées au modèle (décision 825)
 //
 // Module pur : les messages se lisent tels qu'ils partiraient au modèle.
 
@@ -62,5 +64,25 @@ describe('le catalogue envoyé, avec la probabilité par défaut de chaque nœud
 
 	it('un catalogue vide se dit tel', () => {
 		expect(systeme([])).toContain('Le catalogue de nœuds de l’espace est vide.')
+	})
+})
+
+describe('CRM-112 T2.d.1 — les champs communs envoyés au modèle (docs/SPEC-ia.md §6.1, décision 825)', () => {
+	const CHAMPS = [{ cle: 'siret', libelle: 'SIRET', type: 'text' }]
+
+	it('une ligne par champ commun : clé, libellé et type, à la première génération comme à la revue', () => {
+		const premiere = messagesDePremiereGeneration('Un cycle', CATALOGUE, null, CHAMPS)[0]?.content ?? ''
+		const revue = messagesDeRevue('Un cycle', {}, [], 'Corrige', CATALOGUE, null, CHAMPS)[0]?.content ?? ''
+		for (const texte of [premiere, revue]) expect(texte).toContain('- siret — SIRET (text)')
+	})
+
+	it('la règle : exiger par la clé, ne jamais déclarer un champ commun, laisser la liste vide sinon', () => {
+		const texte = systeme()
+		expect(texte).toContain('« exigences_communes »')
+		expect(texte).toContain('ne déclare jamais un champ commun dans « champs »')
+	})
+
+	it('sans champ commun, le modèle l’apprend et laisse la liste vide', () => {
+		expect(systeme()).toContain('L’espace n’a aucun champ commun : « exigences_communes » reste vide.')
 	})
 })

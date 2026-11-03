@@ -17495,8 +17495,16 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
             avant toute livraison). *Faite le 2026-11-03*, migration `0159` : test rouge avant le correctif (l'exigence
             retirée), vert après ; pgTAP `0148` **4/4** ; suite **136 fichiers, 4 854 assertions** ; les 5 specs API de
             l'assistant **21/21**.
-      - [ ] **T2.d — l'assistant IA** (0102, 0103) : une proposition vise un champ commun existant par sa clé, sans en
-            créer ; pgTAP ; API.
+      - [~] **T2.d — l'assistant IA** : une proposition exige un champ commun existant par sa clé, dans
+            `exigences_communes` (décision 825), sans en créer. Découpé :
+            - [x] **T2.d.1 — la fonction edge** : la forme (`proposition.ts`), les consignes et la liste des champs
+                  communs envoyée au modèle (`consignes.ts`), leur lecture sous la RLS (`dependances.ts`, `handler.ts`).
+                  *Faite le 2026-11-03* : Vitest de la fonction **107/107**, `typecheck` vert.
+            - [ ] **T2.d.2 — la base** : les trois codes de défaut (`docs/SPEC-ia.md` §12.1), les exigences vivantes
+                  rendues par `public.proposition_du_workflow`, le document cible et le générateur qui les reprennent de
+                  la proposition ; pgTAP ; API de l'assistant.
+            - [ ] **T2.d.3 — le panneau de suggestion** : les exigences communes affichées et retirables ; unitaires ;
+                  E2E.
 - [ ] **T3** — écrans : Réglages ▸ « Champs de l'affaire », exigence dans l'éditeur de workflow, partie commune de la
       fiche, timeline ; `docs/DESIGN_SYSTEM.md` avant le code ; unitaires.
 - [ ] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; unitaires ; API.

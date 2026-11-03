@@ -5,6 +5,8 @@
 //       qui nomment les champs natifs de l'affaire ; le catalogue envoyé avec la probabilité par défaut de chaque nœud
 //       (docs/SPEC-ia.md §14.5, §14.6 ; docs/JOURNAL.md décisions 646 et 677) ; tranche T5 : les clés `label` et
 //       `probability` de l'étape (décision 679)
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T2.d.1 : la règle des « exigences_communes » et la liste des champs communs
+//       de l'espace, envoyées au modèle (docs/SPEC-ia.md §6.1, décision 825 ; docs/SPEC-champs-communs.md §5)
 // @spec docs/SPEC-ia.md §2 (rectifier : la dernière révision et la consigne), §3 (« ce qui est envoyé au
 //       modèle » : jamais une affaire, un contact, un message ni une donnée personnelle ; pour un remappage, le
 //       NOMBRE d'affaires par étape), §6.1 (le format) ; docs/JOURNAL.md décision 617
@@ -14,6 +16,9 @@
 
 import type { Message } from './ollama.ts'
 import type { Defaut } from './proposition.ts'
+
+/** Un champ commun de l'espace, que le modèle peut exiger par sa clé sans le déclarer (décision 825). */
+export type ChampCommun = { readonly cle: string; readonly libelle: string; readonly type: string }
 
 export type NoeudDuCatalogue = {
 	readonly cle: string
@@ -78,7 +83,10 @@ Règles :
 - toute affaire porte déjà, sans champ à déclarer :
 ${INFORMATIONS_NATIVES.map((information) => `  - ${information} ;`).join('\n')}
   ne déclare jamais de champ pour ces informations ;
-  une règle ou une exigence ne vise qu'un champ déclaré, et un champ natif ne s'exige pas ici.`
+  une règle ou une exigence ne vise qu'un champ déclaré, et un champ natif ne s'exige pas ici ;
+- les « exigences_communes » disent quel champ COMMUN de l'espace doit être rempli pour franchir une transition :
+  « champ » est la clé d'un champ commun listé plus bas ; ne déclare jamais un champ commun dans « champs », et
+  laisse « exigences_communes » vide quand aucun ne convient.`
 
 const REGLES_DE_MODIFICATION = `Tu fais évoluer un workflow EXISTANT, décrit plus bas. Rends la composition cible ENTIÈRE, jamais une liste de différences :
 - garde la clé de chaque étape (son nœud), de chaque transition (son couple « de » → « vers ») et de chaque champ
@@ -104,10 +112,27 @@ function catalogueEnTexte(catalogue: readonly NoeudDuCatalogue[]): string {
 	].join('\n')
 }
 
-function systeme(catalogue: readonly NoeudDuCatalogue[], contexte: ContexteDeModification | null): Message {
+function champsCommunsEnTexte(champs: readonly ChampCommun[]): string {
+	if (champs.length === 0) return 'L’espace n’a aucun champ commun : « exigences_communes » reste vide.'
+	return [
+		'Champs communs de l’espace (une transition peut les exiger dans « exigences_communes », par leur clé) :',
+		...champs.map((c) => `- ${c.cle} — ${c.libelle} (${c.type})`),
+	].join('\n')
+}
+
+function systeme(
+	catalogue: readonly NoeudDuCatalogue[],
+	contexte: ContexteDeModification | null,
+	champsCommuns: readonly ChampCommun[],
+): Message {
 	return {
 		role: 'system',
-		content: [REGLES, ...(contexte === null ? [] : [REGLES_DE_MODIFICATION]), catalogueEnTexte(catalogue)].join('\n\n'),
+		content: [
+			REGLES,
+			...(contexte === null ? [] : [REGLES_DE_MODIFICATION]),
+			catalogueEnTexte(catalogue),
+			champsCommunsEnTexte(champsCommuns),
+		].join('\n\n'),
 	}
 }
 
@@ -138,8 +163,9 @@ export function messagesDePremiereGeneration(
 	demande: string,
 	catalogue: readonly NoeudDuCatalogue[],
 	contexte: ContexteDeModification | null = null,
+	champsCommuns: readonly ChampCommun[] = [],
 ): Message[] {
-	return [systeme(catalogue, contexte), ...contexteEnMessages(contexte), { role: 'user', content: demande }]
+	return [systeme(catalogue, contexte, champsCommuns), ...contexteEnMessages(contexte), { role: 'user', content: demande }]
 }
 
 /**
@@ -155,9 +181,10 @@ export function messagesDeRevue(
 	consigne: string,
 	catalogue: readonly NoeudDuCatalogue[],
 	contexte: ContexteDeModification | null = null,
+	champsCommuns: readonly ChampCommun[] = [],
 ): Message[] {
 	return [
-		systeme(catalogue, contexte),
+		systeme(catalogue, contexte, champsCommuns),
 		...contexteEnMessages(contexte),
 		{ role: 'user', content: demande },
 		{
