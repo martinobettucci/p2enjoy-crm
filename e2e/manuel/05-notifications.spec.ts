@@ -77,7 +77,7 @@ test('« Mentionner », sous le fil d’une affaire', async ({ page }) => {
 	await illustrer(page, { chapitre: CHAPITRE, section: 'mentionner-quelqu-un-dans-un-commentaire', nom: 'mentionner', cibles: [commande, personne.locator('xpath=ancestor::*[self::fieldset or self::ul][1]')] })
 })
 
-test('choisir ce que vous recevez', async ({ page }) => {
+test('choisir ce que vous recevez', async ({ page, request }) => {
 	await connecterAvecLeLabs(page, BIZDEV)
 	await page.goto('/reglages/notifications')
 	const laCase = page.getByRole('checkbox', { name: /Recevoir les mentions/ })
@@ -96,5 +96,9 @@ test('choisir ce que vous recevez', async ({ page }) => {
 	} finally {
 		await laCase.click()
 		await expect(laCase).toBeChecked()
+		// *Révisé par la campagne de livraison du 2026-11-03 (INC-342)* : recocher écrit une préférence `in_app = true`, que le
+		// seed ne porte pas ; elle faisait rougir `supabase/tests/0064_preferences_notifications.test.sql`. La clé de service
+		// rend l'état du seed — aucune ligne.
+		await service(request, 'delete', 'notification_preferences?profile_id=eq.5eed0000-0000-4000-8000-000000000012&type=eq.mention')
 	}
 })

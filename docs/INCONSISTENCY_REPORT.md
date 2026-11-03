@@ -8702,7 +8702,8 @@ campagne de constat.
 - la cause de `inbox-lecture.spec.ts:106` est nommée : `e2e/ui/pieces-jointes.spec.ts` ouvre `<seed-pieces-jointes@…>`
   sous Camille, ce qui le marque lu, et ne rend pas la lecture ; toute campagne qui joue `ui` avant `api` la fait rougir ;
 - `supabase/tests/0064_preferences_notifications.test.sql` rougit sur une préférence `mention` de Driss laissée par une
-  preuve (les deux preuves de préférences rangent pourtant après elles ; la ligne datait de 18:09 UTC) — retirée à la main ;
+  preuve — **cause trouvée et corrigée le même jour** : `e2e/manuel/05-notifications.spec.ts` décoche puis recoche la case,
+  ce qui écrit `in_app = true`, une ligne que le seed ne porte pas ; le scénario la retire désormais par la clé de service ;
 - `e2e/manuel/13-etat-messagerie.spec.ts:19` (« Jamais relevée ») et `e2e/manuel/34-webhooks.spec.ts:108` (l'historique ne
   tient plus dans la fenêtre) ont la même cause que leurs sœurs de `e2e/ui` ; les images du manuel régénérées sur la base
   accumulée faisaient rougir sa garde (journal d'audit, « Aucune remise ») : elles n'ont pas été reprises.
