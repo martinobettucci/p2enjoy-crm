@@ -128,9 +128,21 @@ fixé par la tranche T1 (§11.5), versionné (`version: 1`).
   "transitions": [ { "de": cle, "vers": cle, "libelle": texte, "commentaire_requis": booléen } ],
   "champs":      [ { "cle", "libelle", "type", "choix": [texte] | null, "devise": "EUR" | null, "aide": texte | null } ],
   "regles":      [ { "champ": cle, "etape": cle, "visibilite": "hidden" | "visible" | "required" } ],
-  "exigences":   [ { "de": cle, "vers": cle, "champ": cle } ]
+  "exigences":   [ { "de": cle, "vers": cle, "champ": cle } ],
+  "exigences_communes": [ { "de": cle, "vers": cle, "champ": cle } ]
 }
 ```
+
+> **Ajouté par `CRM-112` T2.d, le 2026-11-03 (décision 825).**
+> - `exigences_communes` est **facultative**. Une proposition qui ne la porte pas n'exige aucun champ commun, et une
+>   révision antérieure reste lisible telle quelle.
+> - `champ` y nomme un **champ commun existant** de l'espace, non archivé, par sa clé. L'assistant **n'en crée jamais** :
+>   les champs communs se définissent dans Réglages (`docs/SPEC-champs-communs.md` §5, §7).
+> - Les consignes du modèle reçoivent la liste des champs communs de l'espace (clé, libellé, type).
+> - `public.proposition_du_workflow` rend les exigences vivantes dans cette liste ; à l'acceptation, le document cible
+>   les reprend de la proposition, et non plus du workflow vivant (la reprise de la `0159` cède la place).
+> - Les codes `exigence_commune_transition_absente`, `exigence_champ_commun_absent` et `exigence_commune_en_double`
+>   s'ajoutent au §12.1. Les codes de `exigences` sont inchangés.
 
 - **Une étape est désignée par la clé de son nœud** : un nœud n'apparaît qu'une fois par workflow
   (`docs/SCHEMA.md`, unicité `(workflow_id, node_id)`). `noeuds` porte les nœuds que la proposition
@@ -337,6 +349,9 @@ les rend :
 | `exigence_transition_absente` | `de`, `vers` | une exigence vise une transition absente |
 | `exigence_champ_absent` | `cle` | une exigence vise un champ absent |
 | `exigence_en_double` | `de`, `vers`, `champ` | deux exigences identiques |
+| `exigence_commune_transition_absente` | `de`, `vers` | une exigence de champ commun vise une transition absente (`CRM-112` T2.d, décision 825) |
+| `exigence_champ_commun_absent` | `cle` | une exigence de champ commun vise une clé qui n'est pas un champ commun **non archivé** de l'espace (décision 825) |
+| `exigence_commune_en_double` | `de`, `vers`, `champ` | deux exigences de champ commun identiques (décision 825) |
 
 `choix` et `devise` ne sont lus que pour les types qui les emploient ; les textes sont pris sans leurs espaces
 de bord, et une `aide` blanche vaut l'absence d'aide. Ce sont les seules mises en forme, et elles sont écrites

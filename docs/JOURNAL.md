@@ -38696,3 +38696,25 @@ fil —, et le §10 bis de `docs/SPEC-manual.md` range par sujet sans renumérot
 images des gestes passent de la section 9.6 à la 9.17 ; la 9.6 renvoie à la 9.17 ; `docs/SPEC-manual.md` §12 porte la
 ligne de `CRM-111`. **Vérification** : `verify-manual` 168 contrôles, aucune anomalie.
 
+
+### décision 825 — `CRM-112` T2.d : une proposition de l'assistant exige un champ commun par une liste distincte
+
+*2026-11-03, session 4522fa9c (p2enjoy-crm-3a), arbitrage du responsable (`AskUserQuestion`).*
+
+**Question.** Comment une proposition de l'assistant dit-elle qu'une transition exige un champ commun existant ? Le
+format `version: 1` porte `exigences: [{de, vers, champ}]`, où `champ` est une clé parmi les champs de la proposition.
+
+**Options** :
+- une liste distincte, `exigences_communes`, avec ses propres codes de défaut ;
+- un drapeau `commun: true` sur une entrée d'`exigences`, que chaque lecteur d'`exigences` doit alors apprendre.
+
+**Décision : la liste distincte**, `exigences_communes: [{de, vers, champ}]`, facultative. `champ` nomme un champ commun
+existant et non archivé de l'espace. Trois codes s'ajoutent : `exigence_commune_transition_absente`,
+`exigence_champ_commun_absent` et `exigence_commune_en_double`. Spécification : `docs/SPEC-ia.md` §6.1 et §12.1,
+`docs/SPEC-champs-communs.md` §5.
+
+**Conséquences pour le code.** Dans l'ordre :
+1. les consignes et la forme côté fonction edge (`supabase/functions/ia`) ;
+2. le contrôle en base ;
+3. `public.proposition_du_workflow` et `app.document_cible_ia` ;
+4. le panneau de suggestion de la webapp.

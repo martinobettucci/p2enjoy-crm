@@ -150,6 +150,7 @@ création. Une **transition** peut en revanche l'exiger : « pour passer en Sign
   quelle.
 - **Assistant IA** (`CRM-097`) : une proposition peut viser un champ commun existant comme exigence, par sa clé ; elle
   ne peut pas en créer un (§11).
+  **Format arrêté par la décision 825** : une liste distincte, `exigences_communes` (`docs/SPEC-ia.md` §6.1).
 
 ## 6. Archiver un champ commun employé — refusé et nommé (décision 664, complément 1)
 
