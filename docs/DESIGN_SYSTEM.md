@@ -558,6 +558,21 @@ proposée par le classement assisté, toujours présentée **comme une suggestio
 - **Les quatre états du §5.8 sont traités** : chargement, erreur avec reprise, absence de message,
   et absence de sélection — ce dernier étant l'état normal à l'arrivée sur l'écran, pas un vide.
 
+**Les affaires hors de l'arborescence — `CRM-111` T6.1** (*écrit le 2026-11-03, avant le code ; décisions 657 et 818,
+`docs/SPEC-rattachements.md` §7*). Le dossier IMAP d'une affaire quitte `CRM/<track>/<channel>/` pour
+`CRM/Affaires/<titre> (<identifiant court>)`, et l'inbox suit : une affaire rattachée à plusieurs channels n'a qu'un
+dossier, qu'aucun channel ne range seul.
+- **LE PREMIER PANNEAU PORTE DEUX ENTRÉES DE TÊTE** : « Non classés », inchangé, puis **« Affaires »**, un nœud dépliable
+  du patron existant (`BoutonDossier`, `aria-expanded`, déplié par défaut), son compte et sa pastille de non-lus
+  cumulant ceux de ses affaires. Les tracks et les channels n'y paraissent plus : ils ne contiennent plus de dossier.
+- **SOUS « Affaires », UNE LIGNE PAR AFFAIRE**, au retrait du premier niveau, dans l'ordre du titre puis de
+  l'identifiant (l'ordre vient de la base, comme avant) : le titre, le compte, la pastille des non-lus — la ligne
+  d'avant, sans changement de forme. L'identifiant court du dossier IMAP **ne paraît pas** : c'est un nom de dossier de
+  serveur, pas un nom d'écran ; deux affaires de même titre se distinguent par leur compte et par la fiche que la
+  pilule du message ouvert désigne (§5.4).
+- **L'état vide** « aucune affaire avec des messages » remplace celui des tracks, au même endroit et sans action.
+- **Aucune couleur, aucun jeton, aucune icône nouvelle.**
+
 ### 5.4 bis Le FIL dans l'inbox — `CRM-081`
 
 Ce que le groupement énumère, désigne et compte est spécifié dans `docs/SPEC-cards.md` §16.16 ; les

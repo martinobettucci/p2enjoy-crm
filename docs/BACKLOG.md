@@ -17338,11 +17338,16 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       *Arbitré le 2026-11-03 (décision 818)* : le dossier se nomme `CRM/Affaires/<titre> (<8 premiers caractères de
       l'identifiant>)` ; `crm_mail_send` gagne `placement_id`, facultatif, dans la famille `messagerie`.
       **Découpage, arrêté le 2026-11-03 (journal, décision 818)** :
-      - [ ] **T6.1 — le dossier hors de l'arborescence** : `chemin_dossier_card` rend le nouveau chemin ; `mail-sync`
+      - [@] **T6.1 — le dossier hors de l'arborescence** : `chemin_dossier_card` rend le nouveau chemin ; `mail-sync`
         déplace les dossiers existants et y place les nouveaux messages ; `inbox_arborescence` ne range plus les
         affaires sous leurs channels, et l'arborescence de l'inbox suit (`docs/DESIGN_SYSTEM.md` §5.4 avant le code).
         Livrables : migration, pgTAP, pytest de `mail-sync`, preuves IMAP réelles (`scripts/verify-mail-inbound.sh`),
         unitaires et E2E de l'inbox, captures, manuel, `docs/SPEC-mail-subsystem.md`, SCHEMA, contrat de déploiement.
+        *Forme de l'inbox arrêtée le 2026-11-03, avant le code (`docs/DESIGN_SYSTEM.md` §5.4, « Les affaires hors de
+        l'arborescence »)* : « Non classés », puis le nœud « Affaires » et une ligne par affaire, sans track ni channel.
+        *Piège relevé avant le code* : `mail-sync` inscrit le track et le channel comme parents du dossier d'une affaire
+        (`parents_de_card`) ; ils ne le contiennent plus, et un renommage refusé arrête la boucle des renommages — il
+        cesse de les inscrire.
       - [ ] **T6.2 — les variables par rattachement** : `app.mail_template_variables` et `rendre_modele_email` reçoivent
         le rattachement d'où l'on écrit ; le formulaire d'envoi de la webapp le passe ; `crm_mail_send` gagne
         `placement_id`. Livrables : migration, pgTAP, API, unitaires webapp et connecteur, `docs/SPEC-modeles-emails.md`,
