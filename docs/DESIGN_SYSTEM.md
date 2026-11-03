@@ -7730,12 +7730,14 @@ ce qu'on ne le croie jamais envoyé.
     ce qui a été préparé. Une copie cachée prévue ouvre d'emblée le champ « Cci ».
   - **L'identité est celle que le mail préparé propose** si elle est encore parmi les siennes ; sinon la présélection du
     §5.4 sexies, et le sélecteur le montre.
-  - **« Envoyer » reste le bouton primaire** et passe par la même mise en file ; **« Écarter » est un bouton secondaire**,
-    icône `Trash2`, posé après « Envoyer » — le geste qui retire vient après celui qui engage (§5.52). Il ouvre une
+  - **« Mettre en file » reste le bouton primaire** et passe par la même mise en file ; **« Écarter » est un bouton
+    secondaire**, icône `Trash2`, posé après lui — le geste qui retire vient après celui qui engage (§5.52). *Précisé à
+    l'écriture du code : « Annuler » n'est pas rendu, la relecture se quitte par la liste ; sous `lg`, le retour dit
+    « Retour aux mails préparés ».* Il ouvre une
     confirmation dans le flux, sous les boutons (§5.13) : « Écarter ce mail préparé ? Il ne sera jamais envoyé. », bouton
     destructif « Écarter le mail », « Annuler » ; le focus y entre et revient à « Écarter » à l'annulation.
   - **Pendant un geste, toutes les commandes du formulaire sont inactives** (§5.52) ; le bouton appuyé porte `aria-busy` et
-    dit « Envoi… » ou « Écart… ».
+    dit « Mise en file… » ou « Écart… ».
   - **Les issues** : envoyé, la ligne quitte la liste, la relecture se referme sur l'état « absence de sélection » (§5.4), et
     la région vivante dit « Message mis en file d'envoi » — jamais « envoyé » : le worker n'a pas encore parlé (§5.4
     sexies) ; écarté, de même, « Mail préparé écarté ». Le focus va à l'entrée « Mails préparés » si elle reste, sinon au

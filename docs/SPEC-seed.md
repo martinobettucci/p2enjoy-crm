@@ -2848,3 +2848,30 @@ lectrice et le board de « Grands comptes », qui rend la billetterie et non l'i
 
 Les preuves qui comptent les affaires d'un channel du seed sont révisées dans le même changement (§12 de la
 spécification, campagne E2E de T8) : une carte de plus dans « Grands comptes », « Refonte de site » et « Maintenance ».
+
+## 37. Les mails préparés — `CRM-128` T5 (`docs/SPEC-mails-prepares.md` §7, décision 829)
+
+*Écrit le 2026-11-03 avec la section du seed.* Section « 8 duotricies. Mails préparés » de `supabase/seed/apply-seed.sh`.
+
+**Ce qui est posé.** Pour Camille (administratrice), par la vraie fonction `prepare_email`, sous un jeton aux
+revendications du connecteur — `iss = p2enjoy-crm/mcp`, `canal = mcp`, signé par `JWT_SECRET` comme
+`mcp/crm_mcp/jeton_interne.py` le frappe — : la base inscrit donc l'origine `mcp`, comme pour un mail préparé par un
+assistant.
+
+| Objet | Affaire | Particularité | État |
+|---|---|---|---|
+| « Billetterie : proposition de calendrier » | « Plateforme de billetterie — Musée des Confluences » | une copie | en attente |
+| « Re: Demande de devis — refonte » | « Refonte du site vitrine » | réponse au message « Demande de devis — refonte » | en attente |
+| « Relance trop tôt » | « Refonte du site vitrine » | écarté par `discard_email_draft` | écarté |
+
+**Rien n'est mis en file** : aucun de ces mails n'atteint `mail_outbox`. Driss et Farida n'en ont aucun.
+
+**Idempotence.** Un mail de même objet sur la même affaire n'est pas repréparé ; l'écart n'est rejoué que sur un mail
+encore en attente.
+
+**Vérification, dans la section même.** Sous la clé de service : exactement deux mails en attente d'origine `mcp` et un
+écarté pour Camille ; sous le jeton de Farida : aucun mail préparé lisible.
+
+**Ce que le jeu démontre** : l'entrée « Mails préparés » de l'inbox de Camille avec son compte, la mention « Préparé par
+l'assistant », la relecture avec une copie, une réponse, et l'encadré de la fiche de « Refonte du site vitrine »
+(`docs/DESIGN_SYSTEM.md` §5.90, manuel §12.4).

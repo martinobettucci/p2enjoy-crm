@@ -46,6 +46,13 @@ d'exécuter le code attendu.
 - **T3 (image `mcp`)** : `crm_mail_send` est retiré. `crm_mail_prepare` prépare un email et rend le lien de relecture ;
   `crm_mail_draft_list` liste vos mails préparés en attente ; `crm_mail_draft_discard` en écarte un. Famille
   « Messagerie », aucune case nouvelle. Manuel §33.1 et §33.5.
+- **T4 (webapp)** : dans l'inbox, l'entrée « Mails préparés » paraît en tête dès qu'un mail vous attend ; elle mène à
+  la liste, du plus ancien au plus récent, puis à la relecture : un bandeau rappelle que le mail n'est pas envoyé, et le
+  formulaire d'envoi habituel s'ouvre prérempli (adresse proposée, destinataires, copie, copie cachée, objet, message).
+  « Mettre en file » envoie ce qui a été relu ; « Écarter » demande une confirmation. Le lien de l'assistant
+  (`/inbox?brouillon=…`) ouvre la relecture. Sur la fiche, un encadré « Mail préparé, à relire » mène au même endroit.
+  L'onglet « Connecteur MCP » dit que préparer compte comme « ajouter ». Manuel §12.4, avec trois images.
+- **T5 (seed)** : deux mails préparés en attente pour Camille, comme un assistant les aurait préparés, et un écarté.
 - **À livrer ensemble** : la migration `0162`, l'image `mcp` et la webapp de T4 (l'écran de relecture). Sans l'écran,
   un mail préparé ne peut pas être envoyé.
 

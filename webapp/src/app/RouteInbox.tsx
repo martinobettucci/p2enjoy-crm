@@ -1,4 +1,7 @@
 // @spec CRM-057 (docs/BACKLOG.md) — inbox globale : trois panneaux, arborescence, non classés
+// @spec CRM-128 (docs/BACKLOG.md) — tranche T4 : l'entrée de tête « Mails préparés », leur liste du plus ancien au plus
+//       récent, la relecture dans le formulaire d'envoi prérempli, l'adresse `?brouillon=<id>` lue au montage et retirée
+//       — docs/SPEC-mails-prepares.md §6.1 ; docs/DESIGN_SYSTEM.md §5.90 ; décision 829
 // @spec docs/SPEC-mail-subsystem.md §18.3 (les trois panneaux), §18.4 (jamais le HTML d'un
 //       expéditeur), §18.5 (la pièce jointe saine), §18.1 (les compteurs sont ceux de l'appelant)
 // @spec docs/DESIGN_SYSTEM.md §5.4 (inbox), §5.8 (états systématiques), §7 (responsive), §10
@@ -45,7 +48,20 @@
 //       sans track ni channel (docs/DESIGN_SYSTEM.md §5.4 ; docs/SPEC-rattachements.md §7, décisions 657 et 818)
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { CheckCheck, ChevronDown, ChevronRight, Inbox, Mail, MailOpen, MailX, Moon, Sparkles, Sun } from 'lucide-react'
+import {
+	CheckCheck,
+	ChevronDown,
+	ChevronRight,
+	Inbox,
+	Mail,
+	MailCheck,
+	MailOpen,
+	MailX,
+	Moon,
+	Sparkles,
+	Sun,
+	TriangleAlert,
+} from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
@@ -104,6 +120,7 @@ import { composerFils, filDuMessage, grouperEnFils } from '../lib/fil-inbox'
 // ce qui le rend atteignable depuis n'importe où (décision 177).
 import { PARAMETRE_MESSAGE } from '../lib/colonnes-recherche'
 import { objetDeReponse } from '../lib/envoi'
+import { PARAMETRE_BROUILLON, lireMailsPrepares, type MailPrepare } from '../lib/mails-prepares'
 import { clientCrm } from '../lib/supabase'
 import { FormulaireEnvoi } from './FormulaireEnvoi'
 import { ListePiecesJointes } from './PiecesJointes'
@@ -296,6 +313,220 @@ function BoutonDossier({
 	)
 }
 
+/**
+ * L'entrée de tête « Mails préparés » (§5.90) : le patron de `BoutonDossier` — compte en `--color-text-3` et pastille du
+ * §5.43 qui porte le même nombre, puisque tout mail préparé attend un geste —, précédé de `MailCheck`. Le nom accessible
+ * dit le compte entier.
+ */
+function EntreeMailsPrepares({
+	nombre,
+	choisi,
+	onChoisir,
+	refBouton,
+}: {
+	readonly nombre: number
+	readonly choisi: boolean
+	readonly onChoisir: () => void
+	readonly refBouton: React.RefObject<HTMLButtonElement | null>
+}) {
+	const pastille = textePastille(nombre)
+	return (
+		<button
+			ref={refBouton}
+			type="button"
+			aria-current={choisi ? 'true' : undefined}
+			aria-label={
+				nombre === 1
+					? t('mailsPrepares.entree.aria.one')
+					: t('mailsPrepares.entree.aria.many', { n: String(nombre) })
+			}
+			onClick={onChoisir}
+			data-testid="inbox-mails-prepares"
+			className={[
+				'w-full min-w-0 flex items-center justify-between gap-2 text-left font-medium',
+				'min-h-[var(--size-target)] pl-3 pr-3 py-1',
+				'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand',
+				choisi ? 'bg-brand-soft text-brand' : 'text-ink hover:bg-hover',
+			].join(' ')}
+		>
+			<span className="flex items-center gap-2 min-w-0">
+				<MailCheck aria-hidden="true" size={16} className="shrink-0" />
+				<span className="truncate min-w-0">{t('mailsPrepares.entree')}</span>
+			</span>
+			<span aria-hidden="true" className="shrink-0 flex items-center gap-2">
+				{pastille === null ? null : (
+					<span className="min-w-4 px-1 rounded-full bg-brand text-white text-xs tabular-nums leading-tight text-center font-normal">
+						{pastille}
+					</span>
+				)}
+				<span className="text-sm text-text-3 tabular-nums font-normal">{nombre}</span>
+			</span>
+		</button>
+	)
+}
+
+/** La liste des mails préparés (§5.90) : une file de travail, du plus ancien au plus récent. */
+function PanneauListePrepares({
+	etat,
+	idOuvert,
+	onOuvrir,
+	onRetour,
+	onReprise,
+	visible,
+	refVide,
+}: {
+	readonly etat: EtatAsync<readonly MailPrepare[]>
+	readonly idOuvert: string | null
+	readonly onOuvrir: (id: string) => void
+	readonly onRetour: () => void
+	readonly onReprise: () => void
+	readonly visible: boolean
+	readonly refVide: React.RefObject<HTMLDivElement | null>
+}) {
+	return (
+		<Panneau
+			id="prepares"
+			titre={t('mailsPrepares.entree')}
+			visible={visible}
+			classe="lg:w-[var(--size-inbox-list)] lg:shrink-0 lg:border-r lg:border-border w-full"
+			entete={
+				<Button variante="discret" taille="compacte" className="lg:hidden" onClick={onRetour}>
+					{t('inbox.back.folders')}
+				</Button>
+			}
+		>
+			{etat.statut === 'chargement' ? <SkeletonListe lignes={3} libelle={t('state.loading.aria')} /> : null}
+			{etat.statut === 'erreur' ? <EchecChargement erreur={etat.erreur} onReprise={onReprise} /> : null}
+			{etat.statut === 'pret' && etat.donnees.length === 0 ? (
+				// LA CIBLE DU FOCUS QUAND LE DERNIER MAIL PART (§5.13) : l'entrée de tête a disparu avec lui.
+				<div ref={refVide} tabIndex={-1} className="focus-visible:outline-2 focus-visible:outline-brand">
+					<EtatVide titre={t('mailsPrepares.liste.vide')} corps="" />
+				</div>
+			) : null}
+			{etat.statut === 'pret' && etat.donnees.length > 0 ? (
+				<ul data-testid="inbox-liste-prepares">
+					{etat.donnees.map((mail) => (
+						<li key={mail.id} className="border-b border-border">
+							<button
+								type="button"
+								aria-current={mail.id === idOuvert ? 'true' : undefined}
+								onClick={() => onOuvrir(mail.id)}
+								data-testid="inbox-mail-prepare"
+								data-mail={mail.id}
+								className={[
+									'w-full text-left flex flex-col gap-1 px-3 py-2 min-h-[var(--size-target)]',
+									'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand',
+									mail.id === idOuvert ? 'bg-brand-soft' : 'hover:bg-hover',
+								].join(' ')}
+							>
+								<span className="text-sm text-text-2 break-words">{mail.destinataires.join(', ')}</span>
+								<span className="font-medium break-words">{mail.objet}</span>
+								{mail.titreCard === null ? null : (
+									<span className="text-sm text-text-2 break-words">{mail.titreCard}</span>
+								)}
+								<span className="flex flex-wrap items-center gap-2">
+									<span className="inline-flex items-center gap-1 rounded-full bg-hover px-2 text-xs text-text-2">
+										<Sparkles aria-hidden="true" size={12} />
+										{mail.origine === 'mcp' ? t('mailsPrepares.origine.mcp') : t('mailsPrepares.origine.web')}
+									</span>
+									<span className="font-mono text-xs text-text-3 tabular-nums">
+										{new Date(mail.creeLe).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
+									</span>
+								</span>
+							</button>
+						</li>
+					))}
+				</ul>
+			) : null}
+		</Panneau>
+	)
+}
+
+/** La relecture d'un mail préparé (§5.90) : le bandeau « pas envoyé », l'affaire, puis le formulaire d'envoi prérempli. */
+function PanneauRelecture({
+	etat,
+	idOuvert,
+	onRetour,
+	onEnvoye,
+	onEcarte,
+	onPlusEnAttente,
+	visible,
+}: {
+	readonly etat: EtatAsync<readonly MailPrepare[]>
+	readonly idOuvert: string | null
+	readonly onRetour: () => void
+	readonly onEnvoye: () => void
+	readonly onEcarte: () => void
+	readonly onPlusEnAttente: () => void
+	readonly visible: boolean
+}) {
+	const mail = etat.statut === 'pret' ? (etat.donnees.find((candidat) => candidat.id === idOuvert) ?? null) : null
+	const idCardMail = mail?.idCard ?? null
+	const [cheminCard, setCheminCard] = useState<{ readonly titre: string; readonly adresse: string } | null>(null)
+	useEffect(() => {
+		setCheminCard(null)
+		if (idCardMail === null) return
+		let vivant = true
+		void lireCheminCard(clientCrm, idCardMail).then((lu) => {
+			if (vivant) setCheminCard(lu)
+		})
+		return () => {
+			vivant = false
+		}
+	}, [idCardMail])
+	return (
+		<Panneau
+			id="relecture"
+			titre={t('mailsPrepares.relecture.titre')}
+			visible={visible}
+			classe="flex-1 w-full min-w-0"
+			entete={
+				<Button variante="discret" taille="compacte" className="lg:hidden" onClick={onRetour}>
+					{t('mailsPrepares.retour')}
+				</Button>
+			}
+		>
+			{etat.statut === 'chargement' ? <SkeletonListe lignes={3} libelle={t('state.loading.aria')} /> : null}
+			{etat.statut === 'pret' && idOuvert === null ? (
+				<EtatVide titre={t('mailsPrepares.relecture.aucun.titre')} corps={t('mailsPrepares.relecture.aucun.corps')} />
+			) : null}
+			{etat.statut === 'pret' && idOuvert !== null && mail === null ? (
+				// ABSENT, ÉCARTÉ, ENVOYÉ OU À AUTRUI : UNE SEULE PHRASE (§5.90) — rien ne distingue l'absent de l'interdit.
+				<div data-testid="inbox-relecture-plus-en-attente">
+					<EtatVide titre={t('mailsPrepares.refus.plusEnAttente.titre')} corps="" />
+				</div>
+			) : null}
+			{mail === null ? null : (
+				<article className="flex flex-col gap-4 p-4" data-testid="inbox-relecture">
+					<p role="note" className="flex items-start gap-2 rounded-sm bg-accent-soft p-3 text-sm text-accent-on-soft">
+						<TriangleAlert aria-hidden="true" size={16} className="shrink-0 mt-[2px]" />
+						{t('mailsPrepares.relecture.consigne')}
+					</p>
+					{cheminCard === null ? null : (
+						<p>
+							<Link
+								to={cheminCard.adresse}
+								data-testid="inbox-relecture-card"
+								className="inline-flex items-center min-h-[var(--size-target)] rounded-sm bg-brand-soft px-2 text-brand focus-visible:outline-2 focus-visible:outline-brand"
+							>
+								{cheminCard.titre}
+							</Link>
+						</p>
+					)}
+					<FormulaireEnvoi
+						key={mail.id}
+						idCard={mail.idCard}
+						mailPrepare={mail}
+						onEnvoye={onEnvoye}
+						onEcarte={onEcarte}
+						onPlusEnAttente={onPlusEnAttente}
+					/>
+				</article>
+			)}
+		</Panneau>
+	)
+}
+
 /** `CRM-111` T6.1 : la clé de dépliage du nœud « Affaires », distincte de tout identifiant d'affaire. */
 const NOEUD_AFFAIRES = 'affaires'
 
@@ -305,12 +536,20 @@ function PanneauDossiers({
 	onChoisir,
 	onReprise,
 	visible,
+	mailsPrepares,
+	preparesChoisis,
+	onChoisirPrepares,
+	refEntreePrepares,
 }: {
 	readonly etat: EtatAsync<ArbreInbox>
 	readonly selection: Selection | null
 	readonly onChoisir: (choix: Selection) => void
 	readonly onReprise: () => void
 	readonly visible: boolean
+	readonly mailsPrepares: EtatAsync<readonly MailPrepare[]>
+	readonly preparesChoisis: boolean
+	readonly onChoisirPrepares: () => void
+	readonly refEntreePrepares: React.RefObject<HTMLButtonElement | null>
 }) {
 	const [replies, setReplies] = useState<ReadonlySet<string>>(new Set())
 	const basculer = useCallback((cle: string) => {
@@ -336,6 +575,18 @@ function PanneauDossiers({
 			{etat.statut === 'pret' ? (
 				<nav aria-label={t('inbox.folders.aria')}>
 					<ul>
+						{/* `CRM-128` T4 (§5.90) : « Mails préparés » ouvre la tête, AVANT « Non classés », et n'existe que si la
+						    personne en a en attente — absente pendant la lecture et sur son échec, jamais devinée (§5.31). */}
+						{mailsPrepares.statut === 'pret' && mailsPrepares.donnees.length > 0 ? (
+							<li>
+								<EntreeMailsPrepares
+									nombre={mailsPrepares.donnees.length}
+									choisi={preparesChoisis}
+									onChoisir={onChoisirPrepares}
+									refBouton={refEntreePrepares}
+								/>
+							</li>
+						) : null}
 						{/* « Non classés » reste affiché MÊME À ZÉRO : c'est l'entrée du travail de tri,
 						    et sa disparition ferait croire à une panne (§18.3). */}
 						<li>
@@ -344,7 +595,7 @@ function PanneauDossiers({
 								nombre={etat.donnees.nonClasses}
 								nonLus={etat.donnees.nonClassesNonLus}
 								profondeur={0}
-								choisi={selection?.genre === 'non-classes'}
+								choisi={!preparesChoisis && selection?.genre === 'non-classes'}
 								onChoisir={() => onChoisir({ genre: 'non-classes' })}
 							/>
 						</li>
@@ -1561,6 +1812,19 @@ export function RouteInbox() {
 	const [idOuvert, setIdOuvert] = useState<string | null>(null)
 	const [etage, setEtage] = useState<Etage>('dossiers')
 	const [annonce, setAnnonce] = useState('')
+	// `CRM-128` T4 (§5.90) : la vue « Mails préparés » remplace les deux panneaux de messages quand son entrée est choisie.
+	const [preparesChoisis, setPreparesChoisis] = useState(false)
+	const [idPrepare, setIdPrepare] = useState<string | null>(null)
+	const [mailsPrepares, setMailsPrepares] = useState<EtatAsync<readonly MailPrepare[]>>({ statut: 'chargement' })
+	const [focusApresGeste, setFocusApresGeste] = useState(false)
+	const refEntreePrepares = useRef<HTMLButtonElement | null>(null)
+	const refVidePrepares = useRef<HTMLDivElement | null>(null)
+	const relirePrepares = useCallback(() => {
+		void lireMailsPrepares(clientCrm).then(setMailsPrepares)
+	}, [])
+	useEffect(() => {
+		relirePrepares()
+	}, [relirePrepares])
 	// LES DEUX ÉCHECS DE MARQUAGE SONT LUS LÀ OÙ LE GESTE A ÉTÉ FAIT (§18 bis.4) : la liste pour « Tout marquer comme
 	// lu », le panneau de lecture pour l'ouverture et la bascule.
 	const [erreurLectureListe, setErreurLectureListe] = useState<ErreurDonnees | null>(null)
@@ -1591,6 +1855,24 @@ export function RouteInbox() {
 	// retirait le paramètre et n'ouvrait jamais le message. La dépendance stable supprime la cause
 	// au lieu d'ajouter une garde de plus.
 	const [demandeInitiale] = useState(() => parametresUrl.get(PARAMETRE_MESSAGE))
+	// `CRM-128` T4 : `brouillon` est une destination, comme `message` — le lien que donne l'assistant (§5.90).
+	const [brouillonDemande] = useState(() => parametresUrl.get(PARAMETRE_BROUILLON))
+	useEffect(() => {
+		if (brouillonDemande === null || brouillonDemande === '') return
+		setParametresUrl(
+			(precedents) => {
+				const suivants = new URLSearchParams(precedents)
+				suivants.delete(PARAMETRE_BROUILLON)
+				return suivants
+			},
+			{ replace: true },
+		)
+		setPreparesChoisis(true)
+		setSelection(null)
+		setIdPrepare(brouillonDemande)
+		// SOUS 1024 PX, ON ARRIVE SUR LA RELECTURE : le lien désigne un mail précis.
+		setEtage('message')
+	}, [brouillonDemande, setParametresUrl])
 
 	// LE MODE D'AFFICHAGE ENTRE DANS L'ADRESSE — §16.17.1, tranche 3, arbitrage du 2026-08-29.
 	//
@@ -1708,8 +1990,36 @@ export function RouteInbox() {
 		[fils],
 	)
 
+	const choisirPrepares = useCallback(() => {
+		setPreparesChoisis(true)
+		setSelection(null)
+		setIdOuvert(null)
+		setIdPrepare(null)
+		setEtage('liste')
+	}, [])
+
+	// APRÈS UN ENVOI OU UN ÉCART, LA LISTE EST RELUE, LA RELECTURE SE REFERME, ET LE FOCUS VA À L'ENTRÉE si elle reste,
+	// sinon à l'état vide de la liste (§5.13 : jamais sur un élément qui disparaît).
+	const apresGestePrepare = useCallback(
+		(texte: string) => {
+			setAnnonce(texte)
+			setIdPrepare(null)
+			setFocusApresGeste(true)
+			relirePrepares()
+		},
+		[relirePrepares],
+	)
+	useEffect(() => {
+		if (!focusApresGeste || mailsPrepares.statut !== 'pret') return
+		setFocusApresGeste(false)
+		if (mailsPrepares.donnees.length > 0) refEntreePrepares.current?.focus()
+		else refVidePrepares.current?.focus()
+	}, [focusApresGeste, mailsPrepares])
+
 	const choisirDossier = useCallback(
 		(choix: Selection) => {
+			setPreparesChoisis(false)
+			setIdPrepare(null)
 			setSelection((precedent) => (MEME_SELECTION(precedent, choix) ? precedent : choix))
 			setIdOuvert(null)
 			setEtage('liste')
@@ -1814,7 +2124,37 @@ export function RouteInbox() {
 					onChoisir={choisirDossier}
 					onReprise={arbre.reprendre}
 					visible={etage === 'dossiers'}
+					mailsPrepares={mailsPrepares}
+					preparesChoisis={preparesChoisis}
+					onChoisirPrepares={choisirPrepares}
+					refEntreePrepares={refEntreePrepares}
 				/>
+				{preparesChoisis ? (
+					<>
+						<PanneauListePrepares
+							etat={mailsPrepares}
+							idOuvert={idPrepare}
+							onOuvrir={(id) => {
+								setIdPrepare(id)
+								setEtage('message')
+							}}
+							onRetour={() => setEtage('dossiers')}
+							onReprise={relirePrepares}
+							visible={etage === 'liste'}
+							refVide={refVidePrepares}
+						/>
+						<PanneauRelecture
+							etat={mailsPrepares}
+							idOuvert={idPrepare}
+							onRetour={() => setEtage('liste')}
+							onEnvoye={() => apresGestePrepare(t('envoi.file'))}
+							onEcarte={() => apresGestePrepare(t('mailsPrepares.ecarte'))}
+							onPlusEnAttente={relirePrepares}
+							visible={etage === 'message'}
+						/>
+					</>
+				) : (
+					<>
 				<PanneauListe
 					etat={liste.etat}
 					selection={selection}
@@ -1846,6 +2186,8 @@ export function RouteInbox() {
 					onBasculerLecture={basculerLecture}
 					erreurMarquage={erreurLectureMessage}
 				/>
+					</>
+				)}
 			</div>
 			<LiveRegion libelle={t('route.inbox.title')} message={annonce} />
 		</div>

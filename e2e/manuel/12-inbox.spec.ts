@@ -3,6 +3,9 @@
 //       pièces jointes), §20 (l'inbox, le classement, la suggestion, le sommeil des fils)
 // @spec CRM-074 (docs/BACKLOG.md) — tranche T3 : les images de l'aperçu d'une pièce jointe (docs/DESIGN_SYSTEM.md §5.80,
 //       docs/SPEC-pieces-jointes.md §5, docs/SPEC-seed.md §35)
+// @spec CRM-128 (docs/BACKLOG.md) — tranches T4 et T5 : les images de la section 12.4 — l'entrée et la liste, la relecture
+//       d'un mail préparé, l'encadré de la fiche — sur les mails du seed (docs/DESIGN_SYSTEM.md §5.90 ;
+//       docs/SPEC-mails-prepares.md §6 ; docs/SPEC-seed.md §37)
 //
 // Les messages sont ceux du seed : « Candidature spontanée » (non classé), « Demande de devis — refonte » et sa réponse
 // (classés dans « Refonte du site vitrine »), « Point d'avancement — migration ERP » (suggéré). Rien n'est classé, retiré,
@@ -184,4 +187,35 @@ test('écrire depuis une affaire : la copie cachée, les pièces jointes', async
 				data: { prefixes: aRetirer },
 			})
 	}
+})
+
+// `CRM-128` T4 et T5 : les mails préparés du seed (docs/SPEC-seed.md §37), préparés comme le connecteur les prépare ; rien
+// n'est mis en file ni écarté — l'image montre la relecture, pas son issue.
+test('relire un mail préparé : l’entrée, la liste, la relecture, puis l’encadré de la fiche', async ({ page }) => {
+	const SECTION = 'relire-et-envoyer-un-mail-prepare-par-l-assistant'
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto('/inbox')
+	const entree = dossiers(page).getByTestId('inbox-mails-prepares')
+	await entree.click()
+	const ligne = page.getByTestId('inbox-mail-prepare').filter({ hasText: 'Billetterie : proposition de calendrier' })
+	await expect(ligne).toContainText('Préparé par l’assistant')
+	await illustrer(page, { chapitre: CHAPITRE, section: SECTION, nom: 'mails-prepares', cibles: [entree, ligne] })
+	await ligne.click()
+	const relecture = page.getByTestId('inbox-relecture')
+	await expect(relecture.getByLabel('Objet')).toHaveValue('Billetterie : proposition de calendrier')
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: SECTION,
+		nom: 'relire-un-mail-prepare',
+		cibles: [relecture.getByRole('note'), page.getByTestId('envoi-valider'), page.getByTestId('mail-prepare-ecarter')],
+	})
+	await page.goto('/tracks/conseil-ia/grands-comptes/cards/5eed0000-0000-4000-8000-0000000000c1')
+	const encadre = page.getByTestId('fiche-mail-prepare').filter({ hasText: 'Re: Demande de devis — refonte' })
+	await expect(encadre).toBeVisible()
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: SECTION,
+		nom: 'mail-prepare-sur-la-fiche',
+		cibles: [encadre, page.getByTestId('envoi-ouvrir')],
+	})
 })

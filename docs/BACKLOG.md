@@ -18530,9 +18530,16 @@ inbox et fiche).
       `queue_outbound_email`, `send_email_draft` et `armer_sequence_relance` par PostgREST, trois `403 review_required`,
       rien d'écrit ; un mail préparé invisible et inécartable par une autre personne. Manuel §33.1 et §33.5 ; DAT §3.7 ter.
       **En développement, jusqu'à T4, un mail préparé ne peut pas encore être envoyé** : l'écran de relecture manque.
-- [ ] **T4 — webapp** : `docs/DESIGN_SYSTEM.md` d'abord (§5.90, écrit le 2026-11-03 avant le code) ; l'entrée « Mails préparés » de l'inbox, la relecture dans le
+- [x] **T4 — webapp**, vérifiée le 2026-11-03 : `docs/DESIGN_SYSTEM.md` d'abord (§5.90, écrit le 2026-11-03 avant le code) ; l'entrée « Mails préparés » de l'inbox, la relecture dans le
       formulaire d'envoi, « Écarter », l'adresse `/inbox?brouillon=<id>`, l'encadré de la fiche, la phrase de l'onglet
       « Connecteur MCP » ; unitaires, API, E2E, captures aux quatre paliers ; manuel (inbox, fiche).
-- [ ] **T5 — seed** (`docs/SPEC-seed.md`) et sa vérification.
+      Unitaires 663 dans le périmètre (bibliothèque 10, formulaire en relecture 4 — dont le retour du focus sur
+      « Écarter », défaut trouvé par la preuve : le bouton désactivé refusait le focus —, i18n, inbox, fiche) ; API 4/4
+      (préparer sans file, mettre en file une fois, le 404 commun à autrui et à l'absent, la lectrice refusée, aucune
+      écriture directe) ; E2E 5/5 (entrée, relecture, contenu relu constaté en base, écart au clavier, adresse
+      `?brouillon=`, autrui, fiche, 390 px) ; captures 1440 et 390 observées ; manuel §12.4 et deux images.
+- [x] **T5 — seed**, vérifié le 2026-11-03 : `docs/SPEC-seed.md` §37 — deux mails en attente pour Camille et un écarté,
+      préparés par `prepare_email` sous un jeton aux revendications du connecteur (origine `mcp`), vérifiés dans la section
+      même ; seed rejoué sur la pile de dev (code 0) ; images du manuel §12.4 prises sur ces mails.
 - [ ] **T6 — livraison en production**, sur instruction du responsable : migration, image `mcp` et webapp dans la même
       fenêtre ; constat.

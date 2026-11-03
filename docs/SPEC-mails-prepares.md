@@ -214,7 +214,8 @@ déjà armée, y compris par l'écran au nom d'une personne qui emploie aussi le
   titre de l'affaire, « Préparé par l'assistant » (ou « Préparé dans le CRM » pour `origin = web`), et la date.
 - **La relecture** (troisième panneau) : le **formulaire d'envoi habituel** de l'affaire, prérempli avec le mail préparé
   — identité, destinataires, copie, copie cachée, objet, corps, réponse ; on peut tout modifier et joindre des fichiers.
-  Deux commandes : **« Envoyer »**, qui appelle `send_email_draft` avec le contenu du formulaire, et **« Écarter »**, qui
+  Deux commandes : **« Mettre en file »** — le bouton du formulaire d'envoi, *nommé ainsi à l'écriture du code* —, qui
+  appelle `send_email_draft` avec le contenu du formulaire, et **« Écarter »**, qui
   appelle `discard_email_draft` après une confirmation. Après l'un ou l'autre, la ligne quitte la liste et l'annonce le
   dit (« Message envoyé », « Mail préparé écarté »).
 - **L'adresse** `/inbox?brouillon=<id>` ouvre directement la relecture : c'est le lien que rend `crm_mail_prepare`. Un

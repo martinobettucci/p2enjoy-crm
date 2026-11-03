@@ -3564,7 +3564,24 @@
 							},
 							{
 								"type": "text",
-								"text": " le relisiez, le modifiiez si\nbesoin et l'envoyiez vous-même : l'assistant vous donne le lien qui l'ouvre. Rien ne permet de le faire partir\nautrement, pas même en contournant l'assistant : le CRM refuse tout envoi venant du connecteur. Personne d'autre que\nvous ne voit vos mails préparés. Le mail proposera "
+								"text": " le relisiez, le modifiiez si\nbesoin et l'envoyiez vous-même : l'assistant vous donne le lien qui l'ouvre\n("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-inbox-lire-trier-et-repondre",
+									"anchor": "relire-et-envoyer-un-mail-prepare-par-l-assistant"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 12.4"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "). Rien ne permet de le faire partir\nautrement, pas même en contournant l'assistant : le CRM refuse tout envoi venant du connecteur. Personne d'autre que\nvous ne voit vos mails préparés. Le mail proposera "
 							},
 							{
 								"type": "strong",

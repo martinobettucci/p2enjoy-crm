@@ -1,4 +1,6 @@
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — la fiche lit la capacité d'écrire sur l'affaire et la FOURNIT à ses blocs ;
+// @spec CRM-128 (docs/BACKLOG.md) — tranche T4 : l'encadré des mails préparés au-dessus du formulaire d'envoi
+//       (docs/SPEC-mails-prepares.md §6.2 ; docs/DESIGN_SYSTEM.md §5.90)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : une étiquette posée ou retirée depuis l'en-tête fait relire le fil — docs/DESIGN_SYSTEM.md §5.73
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T3.d : le fil nomme une valeur commune (libellés des champs communs) — docs/DESIGN_SYSTEM.md §5.89
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T3.c : le bloc « Champs de l'affaire » après « Rattachements » — docs/DESIGN_SYSTEM.md §5.88
@@ -115,6 +117,7 @@ import { BlocTempsCard } from './SeriePersonnel'
 import { BlocSequenceCard } from './BlocSequenceCard'
 import { EnTeteCard } from './EnTeteCard'
 import { FormulaireCard } from './FormulaireCard'
+import { EncadresMailsPrepares } from './EncadresMailsPrepares'
 import { FormulaireEnvoi } from './FormulaireEnvoi'
 import { PanneauTimeline } from './PanneauTimeline'
 import { CHEMIN_CORBEILLE } from './routes'
@@ -472,6 +475,8 @@ function ContenuCard({
 				{/* ÉCRIRE DEPUIS LA CARD EMPRUNTE LE MÊME CHEMIN QUE DEPUIS L'INBOX (§19.6) : même
 				    composant, même garde. Le formulaire est posé AVANT le fil, là où l'on écrit —
 				    la mémoire de l'affaire se lit en dessous, comme les commentaires. */}
+				{/* `CRM-128` T4 (§5.90) : les mails préparés de la personne pour cette affaire, juste au-dessus du formulaire. */}
+				<EncadresMailsPrepares idCard={etat.donnees.card.id} />
 				<FormulaireEnvoi idCard={etat.donnees.card.id} />
 				<PanneauTimeline
 				client={clientCrm}

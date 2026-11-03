@@ -3,6 +3,9 @@
 // @verifies docs/SPEC-mail-subsystem.md §19 bis.2, §19 bis.5 ; docs/DESIGN_SYSTEM.md §5.4 sexies ; décisions 719 et 720
 // @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T2) — l'adresse présélectionnée est l'identité par
 //           défaut de la personne ; l'identité de service n'est pas proposée (docs/SPEC-mail-subsystem.md §19.4, §22.14)
+// @verifies CRM-128 (docs/BACKLOG.md) — tranche T4 : la relecture d'un mail préparé — ouverte et préremplie, identité
+//           proposée, copie et Cci, mise en file par `send_email_draft`, « Écarter » et sa confirmation
+//           (docs/SPEC-mails-prepares.md §6.1 ; docs/DESIGN_SYSTEM.md §5.90)
 //
 // LE VRAI COMPOSANT, AVEC UN CLIENT FACTICE qui journalise ce que l'écran demande au stockage et à la file. Le parcours
 // réel — dépôt par l'API de stockage, mise en file, remise — est prouvé par `e2e/ui/envoi-pieces-jointes.spec.ts`.
@@ -169,5 +172,85 @@ describe('FormulaireEnvoi — l’adresse présélectionnée (décision 805, INC
 			),
 		).toBeTruthy()
 		expect(screen.queryByRole('combobox')).toBeNull()
+	})
+})
+
+// `CRM-128` T4 — la relecture d'un mail préparé (docs/SPEC-mails-prepares.md §6.1 ; docs/DESIGN_SYSTEM.md §5.90).
+const valeur = (element: HTMLElement): string => (element as HTMLInputElement).value
+
+describe('FormulaireEnvoi — la relecture d’un mail préparé', () => {
+	const MAIL = {
+		id: 'mail-1',
+		idCard: 'card-1',
+		titreCard: 'Refonte',
+		idIdentite: 'id-1',
+		repondA: 'msg-1',
+		destinataires: ['client@exemple.fr', 'autre@exemple.fr'],
+		copies: ['copie@exemple.fr'],
+		copiesCachees: ['direction@exemple.fr'],
+		objet: 'Proposition',
+		corps: 'Bonjour, voici notre proposition.',
+		origine: 'mcp' as const,
+		creeLe: '2026-11-03T10:00:00Z',
+	}
+
+	it('s’ouvre d’emblée, prérempli, l’identité PROPOSÉE retenue plutôt que le défaut, la copie et la Cci rendues', async () => {
+		render(<FormulaireEnvoi idCard="card-1" mailPrepare={MAIL} />)
+		await waitFor(() => expect(valeur(screen.getByRole('combobox'))).toBe('id-1'))
+		expect(screen.queryByTestId('envoi-ouvrir')).toBeNull()
+		expect(valeur(screen.getByLabelText('Destinataires'))).toBe('client@exemple.fr, autre@exemple.fr')
+		expect(valeur(screen.getByLabelText('Copie'))).toBe('copie@exemple.fr')
+		expect(valeur(screen.getByLabelText('Copie cachée (Cci)'))).toBe('direction@exemple.fr')
+		expect(valeur(screen.getByLabelText('Objet'))).toBe('Proposition')
+		expect(valeur(screen.getByLabelText('Message'))).toBe('Bonjour, voici notre proposition.')
+		// La relecture ne vole pas le focus vers la Cci.
+		expect(document.activeElement).not.toBe(screen.getByLabelText('Copie cachée (Cci)'))
+		expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull()
+	})
+
+	it('met en file par `send_email_draft` avec le contenu RELU, jamais par `queue_outbound_email`', async () => {
+		const envoye = vi.fn()
+		render(<FormulaireEnvoi idCard="card-1" mailPrepare={MAIL} onEnvoye={envoye} />)
+		await waitFor(() => expect(valeur(screen.getByRole('combobox'))).toBe('id-1'))
+		await userEvent.clear(screen.getByLabelText('Message'))
+		await userEvent.type(screen.getByLabelText('Message'), 'Corps relu')
+		await userEvent.click(screen.getByTestId('envoi-valider'))
+		await waitFor(() => expect(envoye).toHaveBeenCalled())
+		expect(injecte.appels).toEqual([
+			[
+				'rpc',
+				'send_email_draft',
+				{
+					p_draft_id: 'mail-1',
+					p_identity_id: 'id-1',
+					p_to: ['client@exemple.fr', 'autre@exemple.fr'],
+					p_subject: 'Proposition',
+					p_body_text: 'Corps relu',
+					p_cc: ['copie@exemple.fr'],
+					p_bcc: ['direction@exemple.fr'],
+					p_attachments: [],
+				},
+			],
+		])
+	})
+
+	it('« Écarter » demande une confirmation dans le flux, qui prend le focus, et Échap la referme en rendant le focus', async () => {
+		const ecarte = vi.fn()
+		render(<FormulaireEnvoi idCard="card-1" mailPrepare={MAIL} onEcarte={ecarte} />)
+		await screen.findByRole('combobox')
+		await userEvent.click(screen.getByTestId('mail-prepare-ecarter'))
+		expect(document.activeElement).toBe(screen.getByTestId('mail-prepare-ecarter-confirmer'))
+		await userEvent.keyboard('{Escape}')
+		expect(screen.queryByTestId('mail-prepare-confirmation-ecart')).toBeNull()
+		expect(document.activeElement).toBe(screen.getByTestId('mail-prepare-ecarter'))
+		await userEvent.click(screen.getByTestId('mail-prepare-ecarter'))
+		await userEvent.click(screen.getByTestId('mail-prepare-ecarter-confirmer'))
+		await waitFor(() => expect(ecarte).toHaveBeenCalled())
+		expect(injecte.appels).toEqual([['rpc', 'discard_email_draft', { p_draft_id: 'mail-1' }]])
+	})
+
+	it('sans identité proposée encore à soi, retombe sur la présélection du défaut', async () => {
+		render(<FormulaireEnvoi idCard="card-1" mailPrepare={{ ...MAIL, idIdentite: 'id-service' }} />)
+		await waitFor(() => expect(valeur(screen.getByRole('combobox'))).toBe('id-2'))
 	})
 })

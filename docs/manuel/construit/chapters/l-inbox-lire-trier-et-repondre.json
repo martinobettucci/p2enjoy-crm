@@ -347,7 +347,7 @@
 			"src": "l-inbox-lire-trier-et-repondre/dossiers.jpg",
 			"alt": "L'entrée Inbox de la barre latérale et le dossier « Non classés », en tête des dossiers",
 			"width": 543,
-			"height": 112
+			"height": 152
 		},
 		{
 			"type": "paragraph",
@@ -2306,6 +2306,271 @@
 				{
 					"type": "text",
 					"text": " dans l'affaire : un fichier se prend sur votre\nordinateur. Un message qui échoue à partir est marqué en échec et le dit."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "relire-et-envoyer-un-mail-prepare-par-l-assistant",
+			"content": [
+				{
+					"type": "text",
+					"text": "12.4 Relire et envoyer un mail préparé par l'assistant"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Depuis l'inbox, ou depuis la fiche d'une affaire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un assistant relié au CRM par le connecteur\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 33"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") peut "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "préparer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " un email pour vous. Il ne\nl'envoie jamais : le mail attend que "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "vous"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " le relisiez, le modifiiez si besoin et le mettiez en file vous-même.\nPersonne d'autre que vous ne voit vos mails préparés."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Dans l'inbox, l'entrée « Mails préparés »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " paraît en tête des dossiers, avant « Non classés », dès qu'un mail vous\nattend ; le nombre dit combien. Elle disparaît quand il n'en reste aucun. Choisissez-la : la liste montre vos mails\npréparés, le plus ancien d'abord, avec leurs destinataires, leur objet, leur affaire et la mention « Préparé par\nl'assistant »."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/mails-prepares.jpg",
+			"alt": "L'entrée « Mails préparés » de l'inbox et un mail « Préparé par l'assistant » dans la liste",
+			"width": 655,
+			"height": 143
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Choisir un mail ouvre sa relecture"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : un bandeau rappelle que le mail n'est pas envoyé, puis le formulaire d'envoi\nhabituel s'ouvre, déjà rempli — l'adresse d'expédition que l'assistant a proposée (si elle est toujours à vous, sinon\nvotre adresse par défaut), les destinataires, la copie s'il en a prévu une (un champ « Copie » paraît alors), la copie\ncachée, l'objet et le message. Tout se modifie, et vous pouvez joindre des fichiers. Le lien de l'affaire, au-dessus,\nouvre sa fiche."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/relire-un-mail-prepare.jpg",
+			"alt": "La relecture d'un mail préparé : le bandeau « Ce mail n'est pas envoyé », le formulaire rempli, « Mettre en file » et « Écarter »",
+			"width": 536,
+			"height": 749
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Mettre en file »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " envoie ce que vous avez sous les yeux, exactement comme un message écrit depuis l'affaire :\nil paraît ensuite dans son fil. Le mail quitte la liste."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Écarter »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " demande une confirmation : un mail écarté ne partira jamais. Il quitte la liste."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Ce mail préparé n'est plus en attente »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : il a déjà été mis en file ou écarté — par vous, dans un autre onglet,\nou par l'assistant à votre demande."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le lien que donne l'assistant"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ouvre directement cette relecture."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Sur la fiche d'une affaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", un encadré « Mail préparé, à relire » paraît au-dessus du bouton « Écrire un message »\npour chaque mail que l'assistant vous a préparé sur cette affaire ; « Relire et envoyer » ouvre la relecture."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/mail-prepare-sur-la-fiche.jpg",
+			"alt": "L'encadré « Mail préparé, à relire » de la fiche d'une affaire et son lien « Relire et envoyer »",
+			"width": 519,
+			"height": 230
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les relances automatiques ne passent pas par là"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : une séquence armée depuis la fiche envoie ses paliers seule, comme\navant ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "enchainer-des-relances-les-sequences"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 16"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		}

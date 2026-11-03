@@ -27,6 +27,8 @@
 //           docs/SPEC-temps.md §6.2 ; décision 814)
 // @verifies CRM-111 (docs/BACKLOG.md) tranche T5.1 — `rentabilite_affaires` rend `shared` (docs/SPEC-recettes.md §5 ;
 //           décision 643)
+// @verifies CRM-128 (docs/BACKLOG.md) tranche T2 — `mail_drafts`, `prepare_email`, `send_email_draft`, `discard_email_draft`
+//           (docs/SPEC-mails-prepares.md §3)
 //
 // Test **unitaire** du contrat de types. Il ne s'exécute pas : il se compile. Chaque assertion
 // ci-dessous est une contrainte que `tsc --noEmit` vérifie, et qui fait échouer la compilation
@@ -142,9 +144,13 @@ type Expect<T extends true> = T
 // sans événement de contact quand `channel_id` est posé (`23514`) ; `url` exige `https://` ; aucune insertion n'est ouverte
 // au client — la création passe par `create_webhook_endpoint` — et `webhook_deliveries` ne s'écrit que par la base et la
 // clé de service.
+// `mail_drafts`, LIVRÉE PAR `CRM-128` T2 (migration `0162`) : les mails préparés. CE QUI ÉCHAPPE AU GÉNÉRATEUR : la RLS
+// ne rend que ceux de la personne ; `authenticated` n'a que `SELECT` — toute écriture passe par `prepare_email`,
+// `send_email_draft` et `discard_email_draft` (docs/SPEC-mails-prepares.md §3).
 type _tables = Expect<
   Equal<
     keyof Database['public']['Tables'],
+    | 'mail_drafts'
     | 'budget_occurrences'
     | 'budgets'
     | 'webhook_endpoints'
@@ -1203,9 +1209,16 @@ type _vueDerivationColonnes = Expect<
 // `0161` de `CRM-112` TRANCHE T3.b ajoute `preview_common_field_requirement` — l'aperçu des effets d'une exigence de champ
 // commun (docs/SPEC-champs-communs.md §7). CE QUI ÉCHAPPE AU GÉNÉRATEUR : elle rend toujours UNE ligne, `0` pour un champ
 // archivé ou inconnu ; aucun refus nommé. Le compte s'accroît de un.
+// `0162` de `CRM-128` TRANCHE T2 ajoute `prepare_email`, `send_email_draft` et `discard_email_draft` — les mails préparés
+// (docs/SPEC-mails-prepares.md §3.3 à §3.5). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `send_email_draft` refuse le jeton du connecteur
+// (`review_required`, `42501`) ; `draft_not_found` en 404, `draft_not_pending`, `draft_limit_reached` (200). Le compte
+// s'accroît de trois.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'prepare_email'
+    | 'send_email_draft'
+    | 'discard_email_draft'
     | 'preview_common_field_requirement'
     | 'acces_effectif_membre'
     | 'inscrire_attente'

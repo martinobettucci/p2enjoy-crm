@@ -10,6 +10,10 @@
 // @spec INC-335 (docs/BACKLOG.md, correctif de la décision 805, T2) — l'adresse présélectionnée est l'identité par défaut
 //       de la personne, à défaut son unique identité, sinon aucune ; l'identité de service n'est plus proposée —
 //       docs/SPEC-mail-subsystem.md §19.4, §22.14
+// @spec CRM-128 (docs/BACKLOG.md) — tranche T4 : la relecture d'un mail préparé est CE formulaire, ouvert d'emblée et
+//       prérempli — identité proposée, destinataires, copie (champ « Copie » quand il y en a une), copie cachée, objet,
+//       corps, réponse —, « Mettre en file » par `send_email_draft` avec le contenu relu, « Écarter » et sa confirmation
+//       dans le flux — docs/SPEC-mails-prepares.md §6.1 ; docs/DESIGN_SYSTEM.md §5.90 ; décision 829
 //
 // UN SEUL COMPOSANT POUR LES DEUX ORIGINES, et c'est le §19.6 qui l'exige : « le même chemin de
 // code, seule la card sélectionnée diffère ». Deux formulaires jumeaux auraient divergé au premier
@@ -19,7 +23,7 @@
 // », jamais « votre message est arrivé » — le worker n'a pas encore parlé.
 
 import { useCallback, useEffect, useRef, useState, type DragEvent, type FormEvent } from 'react'
-import { Paperclip, X } from 'lucide-react'
+import { Paperclip, Trash2, X } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { t, type CleTraduction } from '../i18n'
 import {
@@ -37,6 +41,7 @@ import {
 	type IdentiteEnvoi,
 	type NatureRefusEnvoi,
 } from '../lib/envoi'
+import { ecarterMailPrepare, envoyerMailPrepare, type MailPrepare, type RefusMailPrepare } from '../lib/mails-prepares'
 import { clientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
 import { useRefus } from '../components/ui/RefusCommandes'
@@ -70,24 +75,46 @@ export type ProprietesFormulaireEnvoi = {
 	/** Message auquel on répond : il porte le fil, et le worker en tirera `In-Reply-To`. */
 	readonly repondA?: string
 	readonly onEnvoye?: () => void
+	/** `CRM-128` T4 : la relecture d'un mail préparé — le formulaire s'ouvre prérempli et envoie par `send_email_draft`. */
+	readonly mailPrepare?: MailPrepare
+	/** Le mail préparé a été écarté. */
+	readonly onEcarte?: () => void
+	/** Le mail préparé n'est plus en attente (envoyé ou écarté ailleurs) : l'écran relit sa liste. */
+	readonly onPlusEnAttente?: () => void
+}
+
+/** Le texte d'un refus de la relecture : celui de l'envoi, ou la phrase des mails qui ne sont plus en attente. */
+function texteRefusMailPrepare(refus: RefusMailPrepare): string {
+	return refus.nature === 'plus_en_attente' ? t('mailsPrepares.refus.plusEnAttente') : t(LIBELLE_REFUS[refus.nature])
 }
 
 export function FormulaireEnvoi({
 	idCard,
 	destinataire = '',
 	objet = '',
-	repondA,
+	repondA: repondAPropre,
 	onEnvoye,
+	mailPrepare,
+	onEcarte,
+	onPlusEnAttente,
 }: ProprietesFormulaireEnvoi) {
 	const droit = useRefus()
-	const [ouvert, setOuvert] = useState(false)
+	// LA RELECTURE S'OUVRE D'EMBLÉE ET PRÉREMPLIE (§5.90) : c'est le mail que l'assistant a préparé, et rien ne doit en
+	// être tu — la copie qu'il prévoit a son champ, la copie cachée ouvre le sien.
+	const repondA = mailPrepare === undefined ? repondAPropre : (mailPrepare.repondA ?? undefined)
+	const [ouvert, setOuvert] = useState(mailPrepare !== undefined)
 	const [identites, setIdentites] = useState<readonly IdentiteEnvoi[]>([])
 	const [identite, setIdentite] = useState('')
-	const [a, setA] = useState(destinataire)
-	const [sujet, setSujet] = useState(objet)
-	const [corps, setCorps] = useState('')
-	const [cciVisible, setCciVisible] = useState(false)
-	const [cci, setCci] = useState('')
+	const [a, setA] = useState(mailPrepare === undefined ? destinataire : mailPrepare.destinataires.join(', '))
+	const [copie, setCopie] = useState(mailPrepare?.copies.join(', ') ?? '')
+	const [sujet, setSujet] = useState(mailPrepare === undefined ? objet : mailPrepare.objet)
+	const [corps, setCorps] = useState(mailPrepare?.corps ?? '')
+	const [cciVisible, setCciVisible] = useState((mailPrepare?.copiesCachees.length ?? 0) > 0)
+	const [cci, setCci] = useState(mailPrepare?.copiesCachees.join(', ') ?? '')
+	const [confirmationEcart, setConfirmationEcart] = useState(false)
+	const [ecart, setEcart] = useState(false)
+	const commandeEcart = useRef<HTMLButtonElement | null>(null)
+	const boutonConfirmationEcart = useRef<HTMLButtonElement | null>(null)
 	const [pieces, setPieces] = useState<readonly PieceJointe[]>([])
 	const [survol, setSurvol] = useState(false)
 	const [idEspace, setIdEspace] = useState<string | null>(null)
@@ -120,8 +147,13 @@ export function FormulaireEnvoi({
 	}, [idCard, ouvert])
 
 	useEffect(() => {
-		if (cciVisible) champCci.current?.focus()
-	}, [cciVisible])
+		// Ouvert par « Ajouter Cci », le champ prend le focus ; ouvert d'emblée par un mail préparé, il ne le vole pas.
+		if (cciVisible && mailPrepare === undefined) champCci.current?.focus()
+	}, [cciVisible, mailPrepare])
+
+	useEffect(() => {
+		if (confirmationEcart) boutonConfirmationEcart.current?.focus()
+	}, [confirmationEcart])
 
 	const joindre = useCallback(
 		(fichiers: readonly File[]) => {
@@ -174,13 +206,15 @@ export function FormulaireEnvoi({
 			const lues = await lireIdentitesDisponibles(clientCrm, idUtilisateur)
 			if (!vivant) return
 			setIdentites(lues)
-			// LE DÉFAUT DE LA PERSONNE, non la première identité venue (décision 805, INC-335).
-			setIdentite((precedent) => (precedent === '' ? identiteAPreselectionner(lues) : precedent))
+			// LE DÉFAUT DE LA PERSONNE, non la première identité venue (décision 805, INC-335). Un mail préparé propose la
+			// sienne : elle est prise si elle est encore parmi celles de la personne (§5.90).
+			const proposee = lues.find((candidate) => candidate.id === mailPrepare?.idIdentite)?.id
+			setIdentite((precedent) => (precedent === '' ? (proposee ?? identiteAPreselectionner(lues)) : precedent))
 		})()
 		return () => {
 			vivant = false
 		}
-	}, [idUtilisateur, ouvert])
+	}, [idUtilisateur, ouvert, mailPrepare?.idIdentite])
 
 	// LE FOCUS SUIT L'OUVERTURE : sans cela, le clavier resterait sur un bouton qui vient de
 	// disparaître et repartirait du début du document (docs/DESIGN_SYSTEM.md §10).
@@ -200,6 +234,31 @@ export function FormulaireEnvoi({
 				return
 			}
 			setEnvoi(true)
+			const piecesPretes = pieces.flatMap((piece) =>
+				piece.etat === 'pret' && piece.chemin !== null ? [piece.chemin] : [],
+			)
+			if (mailPrepare !== undefined) {
+				// CE QUI PART EST CE QUI A ÉTÉ RELU : le contenu du formulaire, l'affaire et la réponse du mail préparé (§3.4).
+				const refusPrepare = await envoyerMailPrepare(clientCrm, mailPrepare.id, {
+					idIdentite: identite,
+					destinataires,
+					objet: sujet,
+					corps,
+					copies: decouperDestinataires(copie),
+					copiesCachees: decouperDestinataires(cci),
+					pieces: piecesPretes,
+				})
+				setEnvoi(false)
+				if (refusPrepare !== null) {
+					setRefus(texteRefusMailPrepare(refusPrepare))
+					if (refusPrepare.nature === 'plus_en_attente') onPlusEnAttente?.()
+					return
+				}
+				setRefus(null)
+				setAnnonce(t('envoi.file'))
+				onEnvoye?.()
+				return
+			}
 			const echec = await mettreEnFile(clientCrm, {
 				idCard,
 				idIdentite: identite,
@@ -208,7 +267,7 @@ export function FormulaireEnvoi({
 				corps,
 				...(repondA === undefined ? {} : { repondA }),
 				copiesCachees: decouperDestinataires(cci),
-				pieces: pieces.flatMap((piece) => (piece.etat === 'pret' && piece.chemin !== null ? [piece.chemin] : [])),
+				pieces: piecesPretes,
 			})
 			setEnvoi(false)
 			if (echec !== null) {
@@ -229,8 +288,39 @@ export function FormulaireEnvoi({
 			setAnnonce(t('envoi.file'))
 			onEnvoye?.()
 		},
-		[a, cci, corps, idCard, identite, onEnvoye, pieces, repondA, sujet],
+		[a, cci, copie, corps, idCard, identite, mailPrepare, onEnvoye, onPlusEnAttente, pieces, repondA, sujet],
 	)
+
+	const ecarter = useCallback(async () => {
+		if (mailPrepare === undefined) return
+		setEcart(true)
+		const refusEcart = await ecarterMailPrepare(clientCrm, mailPrepare.id)
+		setEcart(false)
+		if (refusEcart !== null) {
+			setRefus(texteRefusMailPrepare(refusEcart))
+			setConfirmationEcart(false)
+			if (refusEcart.nature === 'plus_en_attente') onPlusEnAttente?.()
+			return
+		}
+		onEcarte?.()
+	}, [mailPrepare, onEcarte, onPlusEnAttente])
+
+	// LE FOCUS REVIENT À « ÉCARTER » APRÈS LE RENDU QUI LA RÉACTIVE (§5.29, §5.52) : désactivée pendant la question, elle
+	// refuserait le focus si on le lui rendait dans le gestionnaire. Un drapeau, puis un effet ; aucune temporisation.
+	const [rendreFocusEcart, setRendreFocusEcart] = useState(false)
+	const annulerEcart = useCallback(() => {
+		setConfirmationEcart(false)
+		setRendreFocusEcart(true)
+	}, [])
+	useEffect(() => {
+		if (confirmationEcart || !rendreFocusEcart) return
+		setRendreFocusEcart(false)
+		commandeEcart.current?.focus()
+	}, [confirmationEcart, rendreFocusEcart])
+
+	// PENDANT UN GESTE, TOUTES LES COMMANDES DU FORMULAIRE SONT INACTIVES (§5.52, §5.90) : deux gestes simultanés sur un
+	// même mail préparé ne diraient pas lequel l'a emporté.
+	const gesteEnVol = envoi || ecart
 
 	const plafond = depassementPlafond(pieces.map((piece) => piece.taille))
 	const depotEnCours = pieces.some((piece) => piece.etat === 'depot')
@@ -324,6 +414,24 @@ export function FormulaireEnvoi({
 				placeholder={t('envoi.to.placeholder')}
 				className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-2 focus-visible:outline-2 focus-visible:outline-brand"
 			/>
+
+			{/* LA COPIE QU'UN MAIL PRÉPARÉ PRÉVOIT A SON CHAMP (§5.90) : le formulaire n'en porte pas d'ordinaire (§5.4 sexies),
+			    mais la taire enverrait autre chose que ce qui a été préparé. */}
+			{mailPrepare !== undefined && mailPrepare.copies.length > 0 ? (
+				<>
+					<label htmlFor="envoi-copie" className="text-sm text-text-2">
+						{t('mailsPrepares.copie')}
+					</label>
+					<input
+						id="envoi-copie"
+						type="text"
+						value={copie}
+						onChange={(evenement) => setCopie(evenement.target.value)}
+						placeholder={t('envoi.to.placeholder')}
+						className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-2 focus-visible:outline-2 focus-visible:outline-brand"
+					/>
+				</>
+			) : null}
 
 			{/* LA COPIE CACHÉE SE RÉVÈLE PAR UN LIEN DISCRET, et ne se replie plus une fois ouverte (§5.4 sexies) : un geste
 			    rare ne doit pas alourdir chaque envoi. */}
@@ -461,12 +569,12 @@ export function FormulaireEnvoi({
 				</p>
 			)}
 
-			<div className="flex gap-2">
+			<div className="flex flex-wrap gap-2">
 				<Button
 					{...droit}
 					variante="primaire"
 					type="submit"
-					disabled={droit.disabled === true || envoi || motifBlocage !== null}
+					disabled={droit.disabled === true || gesteEnVol || motifBlocage !== null}
 					// LE MOTIF DE REFUS DE LA FICHE (§5.59) EST GARDÉ, et celui du blocage s'y ajoute : écraser le premier
 					// laisserait un bouton éteint sans dire pourquoi.
 					aria-describedby={
@@ -478,10 +586,51 @@ export function FormulaireEnvoi({
 				>
 					{envoi ? t('envoi.sending') : t('envoi.submit')}
 				</Button>
-				<Button variante="secondaire" onClick={annuler}>
-					{t('envoi.cancel')}
-				</Button>
+				{mailPrepare === undefined ? (
+					<Button variante="secondaire" onClick={annuler}>
+						{t('envoi.cancel')}
+					</Button>
+				) : (
+					// « ÉCARTER » VIENT APRÈS LA MISE EN FILE, le geste qui retire après celui qui engage (§5.52) ; il reste offert
+					// quand la base refuse d'écrire l'affaire : écarter son propre brouillon n'écrit rien sur elle (§5.90).
+					<Button
+						ref={commandeEcart}
+						variante="secondaire"
+						onClick={() => setConfirmationEcart(true)}
+						disabled={gesteEnVol || confirmationEcart}
+						data-testid="mail-prepare-ecarter"
+					>
+						<Trash2 aria-hidden="true" size={16} />
+						{t('mailsPrepares.ecarter')}
+					</Button>
+				)}
 			</div>
+			{mailPrepare !== undefined && confirmationEcart ? (
+				<div
+					className="flex flex-col gap-2 rounded-sm border border-border bg-surface p-3"
+					data-testid="mail-prepare-confirmation-ecart"
+					onKeyDown={(evenement) => {
+						if (evenement.key === 'Escape') annulerEcart()
+					}}
+				>
+					<p className="text-sm">{t('mailsPrepares.ecarter.question')}</p>
+					<div className="flex flex-wrap gap-2">
+						<Button
+							ref={boutonConfirmationEcart}
+							variante="destructif"
+							onClick={() => void ecarter()}
+							aria-busy={ecart || undefined}
+							disabled={envoi}
+							data-testid="mail-prepare-ecarter-confirmer"
+						>
+							{ecart ? t('mailsPrepares.ecarter.enCours') : t('mailsPrepares.ecarter.confirmer')}
+						</Button>
+						<Button variante="secondaire" onClick={annulerEcart} disabled={gesteEnVol}>
+							{t('envoi.cancel')}
+						</Button>
+					</div>
+				</div>
+			) : null}
 			{/* L'ADRESSE DE RETOUR EST DITE, parce qu'elle n'est pas celle de l'expéditeur : les
 			    réponses reviendront dans l'affaire, et l'utilisateur doit le savoir (§5). */}
 			<p className="text-sm text-text-3">{t('envoi.replyto.hint')}</p>

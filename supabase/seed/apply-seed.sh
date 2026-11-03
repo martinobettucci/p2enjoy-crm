@@ -5619,6 +5619,77 @@ attendu "$code" "lecture de la billetterie par la lectrice" 200
 	|| die "la lectrice doit lire la billetterie par « Refonte de site » seulement (§36.1, situation 5) : $(head -c 200 "$CORPS")"
 info "Rattachements multiples : la billetterie dans deux tracks, l'infogérance active, archivée et en sommeil — CRM-111, docs/SPEC-seed.md §36"
 
+say "8 duotricies. Mails préparés"
+# @spec CRM-128 (docs/BACKLOG.md) — tranche T5 : deux mails préparés EN ATTENTE pour Camille, préparés comme le connecteur
+#       les prépare, et un troisième écarté — docs/SPEC-seed.md §37 ; docs/SPEC-mails-prepares.md §7 ; décision 829
+#
+# LE JETON EST CELUI DU CONNECTEUR, PAR SES REVENDICATIONS : `iss = p2enjoy-crm/mcp` et `canal = mcp`, signé par
+# `JWT_SECRET`, exactement comme `mcp/crm_mcp/jeton_interne.py` le frappe — la base inscrit donc l'origine `mcp`. Les
+# mails passent par la vraie fonction, `prepare_email`, et l'écart par `discard_email_draft`. Rien n'est mis en file.
+# IDEMPOTENT : un mail de même objet, en attente ou écarté, n'est pas repréparé.
+mp_b64url() { openssl base64 -A | tr '+/' '-_' | tr -d '='; }
+mp_jeton_connecteur() { # $1 = sujet
+	local maintenant entete charge signature
+	maintenant=$(date +%s)
+	entete=$(printf '{"alg":"HS256","typ":"JWT"}' | mp_b64url)
+	charge=$(printf '{"iss":"p2enjoy-crm/mcp","sub":"%s","role":"authenticated","aud":"authenticated","iat":%d,"exp":%d,"canal":"mcp"}' \
+		"$1" "$maintenant" "$((maintenant + 300))" | mp_b64url)
+	signature=$(printf '%s.%s' "$entete" "$charge" \
+		| openssl dgst -sha256 -hmac "$(env_get "$ENV_FILE" JWT_SECRET)" -binary | mp_b64url)
+	printf '%s.%s.%s' "$entete" "$charge" "$signature"
+}
+JETON_CONNECTEUR_MP=$(mp_jeton_connecteur "$RM_CAMILLE")
+MP_AFFAIRE_DEVIS='5eed0000-0000-4000-8000-0000000000c1'
+code=$(api GET "/rest/v1/mail_messages?select=id&card_id=eq.$MP_AFFAIRE_DEVIS&subject=eq.$(jq -rn --arg s 'Demande de devis — refonte' '$s|@uri')&limit=1")
+attendu "$code" "lecture du message auquel le mail préparé répond" 200
+MP_MESSAGE=$(jq -r '.[0].id // empty' "$CORPS")
+[ -n "$MP_MESSAGE" ] || die "le message « Demande de devis — refonte » manque à « Refonte du site vitrine » (§37)."
+
+mp_preparer() { # $1 = affaire, $2 = objet, $3 = corps, $4 = réponse (facultative), $5 = copie (facultative)
+	code=$(api GET "/rest/v1/mail_drafts?select=id&card_id=eq.$1&subject=eq.$(jq -rn --arg s "$2" '$s|@uri')")
+	attendu "$code" "lecture du mail préparé « $2 »" 200
+	MP_ID=$(jq -r '.[0].id // empty' "$CORPS")
+	[ -n "$MP_ID" ] && return 0
+	local corps
+	corps=$(jq -n --arg a "$1" --arg o "$2" --arg c "$3" --arg r "${4:-}" --arg cc "${5:-}" '
+		{p_card_id: $a, p_to: ["dsi@sogexia.example"], p_subject: $o, p_body_text: $c}
+		+ (if $r == "" then {} else {p_in_reply_to_message_id: $r} end)
+		+ (if $cc == "" then {} else {p_cc: [$cc]} end)')
+	code=$(api_jeton "$JETON_CONNECTEUR_MP" POST /rest/v1/rpc/prepare_email -d "$corps")
+	attendu "$code" "préparation du mail « $2 » sous le jeton du connecteur" 200
+	MP_ID=$(jq -r '.' "$CORPS")
+}
+mp_preparer "$RM_ID_BILLETTERIE" 'Billetterie : proposition de calendrier' \
+	"Bonjour,
+
+Voici le calendrier que nous proposons pour la plateforme de billetterie : cadrage en décembre, mise en ligne avant la saison.
+
+Camille Aubert" '' 'achats@sogexia.example'
+mp_preparer "$MP_AFFAIRE_DEVIS" 'Re: Demande de devis — refonte' \
+	"Bonjour,
+
+Merci pour votre demande : notre devis suit sous huit jours.
+
+Camille Aubert" "$MP_MESSAGE"
+mp_preparer "$MP_AFFAIRE_DEVIS" 'Relance trop tôt' "Bonjour, avez-vous pu lire notre proposition ?"
+code=$(api GET "/rest/v1/mail_drafts?select=status&id=eq.$MP_ID")
+attendu "$code" "état du mail préparé à écarter" 200
+if [ "$(jq -r '.[0].status' "$CORPS")" = "pending" ]; then
+	code=$(api_jeton "$JETON_ADMIN_RM" POST /rest/v1/rpc/discard_email_draft -d "$(jq -n --arg i "$MP_ID" '{p_draft_id: $i}')")
+	attendu "$code" "écart du mail préparé « Relance trop tôt »" 204
+fi
+
+# Vérifier (§37) : deux en attente d'origine `mcp` pour Camille, un écarté, aucun envoi en file pour ces trois-là.
+code=$(api GET "/rest/v1/mail_drafts?select=subject,status,origin,created_by&created_by=eq.$RM_CAMILLE&order=subject")
+attendu "$code" "relecture des mails préparés" 200
+mp_etat=$(jq -r '[.[] | .status + ":" + .origin] | sort | join(" ")' "$CORPS")
+[ "$mp_etat" = "discarded:mcp pending:mcp pending:mcp" ] \
+	|| die "les mails préparés ne sont pas ceux du §37 de docs/SPEC-seed.md : $mp_etat"
+code=$(api_jeton "$JETON_VIEWER_RM" GET "/rest/v1/mail_drafts?select=id")
+attendu "$code" "lecture des mails préparés par la lectrice" 200
+[ "$(jq 'length' "$CORPS")" = "0" ] || die "la lectrice ne doit lire aucun mail préparé de Camille (§37)."
+info "Mails préparés : deux en attente de la relecture de Camille, préparés comme le connecteur, un écarté — CRM-128, docs/SPEC-seed.md §37"
+
 # --- Le journal d'audit couvre ses familles — CRM-072 T1, docs/SPEC-seed.md §25 ------------------------------------------
 # @spec CRM-072 (docs/BACKLOG.md) — tranche T1 ; docs/SPEC-audit.md §4, §10 ; docs/JOURNAL.md décisions 725 et 726
 # VÉRIFIÉ, JAMAIS FABRIQUÉ : `audit_log` n'a aucun chemin d'écriture cliente, et le seed n'y écrit rien. Il se remplit

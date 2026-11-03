@@ -2194,6 +2194,112 @@ export type Database = {
           },
         ]
       }
+      mail_drafts: {
+        Row: {
+          bcc_addrs: string[]
+          body_text: string
+          card_id: string
+          cc_addrs: string[]
+          created_at: string
+          created_by: string
+          discarded_at: string | null
+          id: string
+          identity_id: string | null
+          in_reply_to_message_id: string | null
+          origin: string
+          outbox_id: string | null
+          sent_at: string | null
+          status: string
+          subject: string
+          to_addrs: string[]
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          bcc_addrs?: string[]
+          body_text: string
+          card_id: string
+          cc_addrs?: string[]
+          created_at?: string
+          created_by: string
+          discarded_at?: string | null
+          id?: string
+          identity_id?: string | null
+          in_reply_to_message_id?: string | null
+          origin: string
+          outbox_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          to_addrs: string[]
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          bcc_addrs?: string[]
+          body_text?: string
+          card_id?: string
+          cc_addrs?: string[]
+          created_at?: string
+          created_by?: string
+          discarded_at?: string | null
+          id?: string
+          identity_id?: string | null
+          in_reply_to_message_id?: string | null
+          origin?: string
+          outbox_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          to_addrs?: string[]
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_drafts_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_drafts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_drafts_identity_id_fkey"
+            columns: ["identity_id"]
+            isOneToOne: false
+            referencedRelation: "mail_outbound_identities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_drafts_in_reply_to_message_id_fkey"
+            columns: ["in_reply_to_message_id"]
+            isOneToOne: false
+            referencedRelation: "mail_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_drafts_outbox_id_fkey"
+            columns: ["outbox_id"]
+            isOneToOne: false
+            referencedRelation: "mail_outbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_drafts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mail_folder_map: {
         Row: {
           account_id: string
@@ -4696,6 +4802,7 @@ export type Database = {
         Args: { discard_field_values?: boolean; p_placement: string }
         Returns: undefined
       }
+      discard_email_draft: { Args: { p_draft_id: string }; Returns: undefined }
       dossiers_a_renommer: {
         Args: { p_account_id: string }
         Returns: {
@@ -5231,6 +5338,19 @@ export type Database = {
         Args: { p_workspace_id: string }
         Returns: number
       }
+      prepare_email: {
+        Args: {
+          p_bcc?: string[]
+          p_body_text: string
+          p_card_id: string
+          p_cc?: string[]
+          p_identity_id?: string
+          p_in_reply_to_message_id?: string
+          p_subject?: string
+          p_to: string[]
+        }
+        Returns: string
+      }
       preview_common_field_requirement: {
         Args: { p_common_field_id: string; p_transition_id: string }
         Returns: {
@@ -5427,6 +5547,19 @@ export type Database = {
       rotate_webhook_secret: { Args: { p_endpoint: string }; Returns: string }
       save_card_as_template: {
         Args: { p_name: string; p_placement: string }
+        Returns: string
+      }
+      send_email_draft: {
+        Args: {
+          p_attachments?: Json
+          p_bcc?: string[]
+          p_body_text: string
+          p_cc?: string[]
+          p_draft_id: string
+          p_identity_id: string
+          p_subject?: string
+          p_to: string[]
+        }
         Returns: string
       }
       set_default_workflow: {

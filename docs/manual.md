@@ -3309,6 +3309,44 @@ le produit ne prétend pas que votre message est arrivé.
 **Ce qui n'est pas encore là.** Joindre une pièce **déjà reçue** dans l'affaire : un fichier se prend sur votre
 ordinateur. Un message qui échoue à partir est marqué en échec et le dit.
 
+### 12.4 Relire et envoyer un mail préparé par l'assistant
+
+*Depuis l'inbox, ou depuis la fiche d'une affaire.* Un assistant relié au CRM par le connecteur
+([chapitre 33](#le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant)) peut **préparer** un email pour vous. Il ne
+l'envoie jamais : le mail attend que **vous** le relisiez, le modifiiez si besoin et le mettiez en file vous-même.
+Personne d'autre que vous ne voit vos mails préparés.
+
+**Dans l'inbox, l'entrée « Mails préparés »** paraît en tête des dossiers, avant « Non classés », dès qu'un mail vous
+attend ; le nombre dit combien. Elle disparaît quand il n'en reste aucun. Choisissez-la : la liste montre vos mails
+préparés, le plus ancien d'abord, avec leurs destinataires, leur objet, leur affaire et la mention « Préparé par
+l'assistant ».
+
+![L'entrée « Mails préparés » de l'inbox et un mail « Préparé par l'assistant » dans la liste](manuel/images/l-inbox-lire-trier-et-repondre/mails-prepares.jpg)
+
+**Choisir un mail ouvre sa relecture** : un bandeau rappelle que le mail n'est pas envoyé, puis le formulaire d'envoi
+habituel s'ouvre, déjà rempli — l'adresse d'expédition que l'assistant a proposée (si elle est toujours à vous, sinon
+votre adresse par défaut), les destinataires, la copie s'il en a prévu une (un champ « Copie » paraît alors), la copie
+cachée, l'objet et le message. Tout se modifie, et vous pouvez joindre des fichiers. Le lien de l'affaire, au-dessus,
+ouvre sa fiche.
+
+![La relecture d'un mail préparé : le bandeau « Ce mail n'est pas envoyé », le formulaire rempli, « Mettre en file » et « Écarter »](manuel/images/l-inbox-lire-trier-et-repondre/relire-un-mail-prepare.jpg)
+
+- **« Mettre en file »** envoie ce que vous avez sous les yeux, exactement comme un message écrit depuis l'affaire :
+  il paraît ensuite dans son fil. Le mail quitte la liste.
+- **« Écarter »** demande une confirmation : un mail écarté ne partira jamais. Il quitte la liste.
+- **« Ce mail préparé n'est plus en attente »** : il a déjà été mis en file ou écarté — par vous, dans un autre onglet,
+  ou par l'assistant à votre demande.
+
+**Le lien que donne l'assistant** ouvre directement cette relecture.
+
+**Sur la fiche d'une affaire**, un encadré « Mail préparé, à relire » paraît au-dessus du bouton « Écrire un message »
+pour chaque mail que l'assistant vous a préparé sur cette affaire ; « Relire et envoyer » ouvre la relecture.
+
+![L'encadré « Mail préparé, à relire » de la fiche d'une affaire et son lien « Relire et envoyer »](manuel/images/l-inbox-lire-trier-et-repondre/mail-prepare-sur-la-fiche.jpg)
+
+**Les relances automatiques ne passent pas par là** : une séquence armée depuis la fiche envoie ses paliers seule, comme
+avant ([chapitre 16](#enchainer-des-relances-les-sequences)).
+
 ## 13. Consulter l'état de la messagerie
 
 **Où.** Barre latérale ▸ **Réglages** ▸ « État de la messagerie ».
@@ -6528,7 +6566,8 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   - *Supprimer* : **écarter** un de vos mails préparés ; il ne partira jamais.
 
   **L'assistant n'envoie jamais rien.** Un mail préparé attend dans le CRM que **vous** le relisiez, le modifiiez si
-  besoin et l'envoyiez vous-même : l'assistant vous donne le lien qui l'ouvre. Rien ne permet de le faire partir
+  besoin et l'envoyiez vous-même : l'assistant vous donne le lien qui l'ouvre
+  ([chapitre 12.4](#relire-et-envoyer-un-mail-prepare-par-l-assistant)). Rien ne permet de le faire partir
   autrement, pas même en contournant l'assistant : le CRM refuse tout envoi venant du connecteur. Personne d'autre que
   vous ne voit vos mails préparés. Le mail proposera **votre** identité d'expédition, jamais celle du service ; si vous
   ne dites pas laquelle, votre adresse par défaut ; si vous en avez plusieurs sans adresse par défaut, l'assistant vous
