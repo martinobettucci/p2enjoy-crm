@@ -1,3 +1,4 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes mesurés sur le seed enrichi (docs/SPEC-seed.md §36)
 // @verifies INC-257 (docs/INCONSISTENCY_REPORT.md) — B5 ligne f mesurée sans dépendre du jour
 // @verifies CRM-041 (docs/BACKLOG.md) — les quatre lectures du board, hors interface
 // @verifies CRM-022 (docs/BACKLOG.md) — l'identité du responsable embarquée dans chaque card
@@ -37,6 +38,7 @@ const TRACK_CONSEIL_IA = '5eed0000-0000-4000-8000-000000000021'
 const ETAPE_PROSPECTION = '5eed0000-0000-4000-8000-000000000061'
 const ETAPE_RELANCE = '5eed0000-0000-4000-8000-000000000062'
 /** Ajoutée par `CRM-046` : `…0cd` occupe « Livré », dont la seule card était archivée. */
+const ETAPE_NEGOCIATION = '5eed0000-0000-4000-8000-000000000063'
 const ETAPE_LIVRE = '5eed0000-0000-4000-8000-000000000066'
 const CARD_ARCHIVEE = '5eed0000-0000-4000-8000-0000000000c8'
 const CARD_CORBEILLE = '5eed0000-0000-4000-8000-0000000000c9'
@@ -257,11 +259,13 @@ test.describe('B3 — la lecture des cards rend le contenu des colonnes (§7.2, 
 	// RÉVISÉ PAR `CRM-046` (décision 51) : `grands-comptes` portait TROIS cards actives, il en porte
 	// QUATRE — `…0cd` y occupe l'étape « Livré », dont la seule card était archivée, donc invisible
 	// de tout écran (docs/SPEC-seed.md §9.3).
-	test('les quatre cards actives de `grands-comptes`, et elles seules', async ({ request }) => {
+	// RÉVISÉ PAR `CRM-111` T8 (décision 51, `docs/SPEC-seed.md` §36) : SIX — la billetterie et l'infogérance, dont le
+	// rattachement dort ici ; le sommeil n'est pas un filtre de cette lecture, le board le retire à part (§16.12.3).
+	test('les six rattachements actifs de `grands-comptes`, et eux seuls', async ({ request }) => {
 		const reponse = await request.get(requeteCards, { headers: enTetesAuthentifies(jetonAdmin) })
 		expect(reponse.status()).toBe(200)
 		const cards = await cartes(reponse)
-		expect(cards).toHaveLength(4)
+		expect(cards).toHaveLength(6)
 	})
 
 	// Les deux exclusions sont CÔTÉ SERVEUR : c'est la définition d'« active » de
@@ -274,25 +278,26 @@ test.describe('B3 — la lecture des cards rend le contenu des colonnes (§7.2, 
 		expect(ids).not.toContain(CARD_ARCHIVEE)
 		expect(ids).not.toContain(CARD_CORBEILLE)
 
-		// Contre-épreuve : sans les filtres, la même requête en rend SIX — quatre actives, plus
+		// Contre-épreuve : sans les filtres, la même requête en rend HUIT — six actifs, plus
 		// l'archivée et celle en corbeille. L'exclusion est donc bien l'effet des filtres, et non
 		// celui d'une politique qui masquerait ces deux lignes.
 		const sansFiltres = await request.get(
 			`${RATTACHEMENTS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
-		expect((await sansFiltres.json()) as { id: string }[]).toHaveLength(6)
+		expect((await sansFiltres.json()) as { id: string }[]).toHaveLength(8)
 	})
 
 	// MESURÉ, ET RÉVISÉ PAR `CRM-046` : `grands-comptes` n'occupait que DEUX étapes sur sept, il en
 	// occupe TROIS. Quatre colonnes vides restent la situation normale d'un channel — « aucun écran
 	// vide » (docs/SPEC-seed.md §9.1) porte sur le CHANNEL, jamais sur chacune de ses colonnes —, et
 	// c'est ce que la composition partant des étapes doit produire.
-	test('les cards n’occupent que trois des sept étapes du workflow', async ({ request }) => {
+	// RÉVISÉ PAR `CRM-111` T8 : QUATRE — la vente de la billetterie occupe « Négociation » (`docs/SPEC-seed.md` §36).
+	test('les cards n’occupent que quatre des sept étapes du workflow', async ({ request }) => {
 		const reponse = await request.get(requeteCards, { headers: enTetesAuthentifies(jetonAdmin) })
 		const cards = await cartes(reponse)
 		const etapes = new Set(cards.map((card) => card.current_step_id))
-		expect([...etapes].sort()).toEqual([ETAPE_PROSPECTION, ETAPE_RELANCE, ETAPE_LIVRE].sort())
+		expect([...etapes].sort()).toEqual([ETAPE_PROSPECTION, ETAPE_RELANCE, ETAPE_NEGOCIATION, ETAPE_LIVRE].sort())
 	})
 
 	test('l’ordre est celui des colonnes : position, puis titre', async ({ request }) => {

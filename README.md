@@ -223,6 +223,7 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `supabase/seed/apply-seed.sh` | Applique le seed socle **et le jeu de démonstration** sur la pile de développement | **disponible** |
 | `scripts/verify-seed-demo.sh` | Rejoue les preuves du jeu de démonstration : étapes peuplées, workflow dérivé exercé, aucun channel actif vide, convergence | **disponible** |
 | `scripts/verify-seed-demo.sh --empreinte` | N'affiche que l'empreinte de reproductibilité du seed, et sort | **disponible** |
+| `scripts/verify-seed-rattachements.sh` | Relit les affaires rattachées à plusieurs channels du seed sous les jetons des trois profils, sans rien réécrire (`docs/SPEC-seed.md` §36) | **disponible** |
 | `scripts/verify-manual.sh` | Rejoue les preuves du manuel public : manuel construit à jour, aucune référence interne dans les chapitres réécrits, libellés réels, aucun volume recopié, aucun secret, table des chapitres de `docs/SPEC-manual.md` §12 ; ne lit pas la base | **disponible** |
 | `E2E_PROJETS=manuel npx playwright test -c e2e/playwright.config.ts --project=manuel` | Produit les images du manuel et leur manifeste (`docs/manuel/images/`), sur la pile de développement et le seed ; ce projet ne prouve rien lui-même — la preuve est `scripts/verify-manual.sh` | **disponible** (scénarios écrits avec T4.1 à T4.5) |
 | `scripts/verify-manual.sh --contre-epreuve` | Dégrade une **copie** du manuel et de la table du §12, et exige que **chaque** famille de contrôles morde ; ne touche jamais au dépôt | **disponible** |

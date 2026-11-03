@@ -2813,16 +2813,18 @@ fonctions**. Deux affaires les portent toutes ; elles ajoutent **une** carte vis
 Les cinq situations du §12 : (1) la billetterie, deux channels de deux tracks, deux responsables, deux montants, deux
 étapes ; (2) l'infogérance, un rattachement archivé et un actif ; (3) l'infogérance, un rattachement en sommeil et un
 actif ; (4) la billetterie, deux rattachements du **même** workflow global, avec des valeurs de bloc différentes —
-`source` vaut « Salon » sur la vente et « Recommandation » sur la production ; (5) la lectrice, fermée à « Grands
+`source` vaut « Salon » sur la vente et « Recommandation » sur la production, et la vente porte son budget, 48 000, que
+la transition Relance → Négociation exige ; (5) la lectrice, fermée à « Grands
 comptes », lit la billetterie par « Refonte de site » seulement : une partie commune, un bloc, et rien qui révèle l'autre.
 
 ### 36.2 Le vrai chemin
 
-- **Création** : `creer_affaire(p_channel, p_titre)`, sous le jeton de Camille (la billetterie, dans « Grands comptes ») et
-  de Driss (l'infogérance, dans « Maintenance ») — l'étape initiale, le rattachement et l'événement `created`.
+- **Création** : `creer_affaire(p_channel, p_titre)`, sous le jeton de Camille, l'administratrice — Driss ne fait que
+  **lire** « Maintenance » (droit fin du §2.11) ; il est responsable, non auteur — : l'étape initiale, le rattachement et
+  l'événement `created`.
 - **Rattacher** : `attach_card(p_card, p_channel)`, sous le jeton de Camille — l'événement `attached`.
-- **Faire avancer** : `move_card(p_placement, to_step_id)`, transition déclarée par transition déclarée, sous le jeton du
-  responsable du rattachement.
+- **Faire avancer** : `move_card(p_placement, to_step_id)`, transition déclarée par transition déclarée, sous le jeton de
+  Camille.
 - **Responsable, montant, prochaine action** : la mise à jour du rattachement par l'API REST, sous le jeton de Camille —
   le chemin de l'en-tête de la fiche.
 - **Valeurs de bloc** : l'écriture de `card_field_values` sur le rattachement (`on_conflict=placement_id,field_id`) — le
@@ -2839,6 +2841,10 @@ cause sinon : les cinq rattachements, leurs étapes, responsables, montants et �
 lectrice qui lit un seul rattachement de la billetterie.
 
 ### 36.4 Ce que les preuves en attendent
+
+`scripts/verify-seed-rattachements.sh` relit les cinq situations **hors interface**, sous les vrais jetons de Camille, de
+Driss et de Farida, sans rien réécrire : onze contrôles, dont le masquage du rattachement de « Grands comptes » pour la
+lectrice et le board de « Grands comptes », qui rend la billetterie et non l'infogérance endormie.
 
 Les preuves qui comptent les affaires d'un channel du seed sont révisées dans le même changement (§12 de la
 spécification, campagne E2E de T8) : une carte de plus dans « Grands comptes », « Refonte de site » et « Maintenance ».

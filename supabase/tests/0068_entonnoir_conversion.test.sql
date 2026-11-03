@@ -1,3 +1,5 @@
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes révisés sur le seed enrichi
+--           (docs/SPEC-seed.md §36, décision 51)
 -- @verifies CRM-066 (docs/BACKLOG.md) — analytique de conversion et prévisionnel pondéré,
 --            TRANCHE 2 a : l'agrégat descend en base
 -- @verifies docs/SPEC-analytique.md §3 (probabilité effective à trois niveaux, absence assumée),
@@ -161,10 +163,12 @@ select pg_temp.endosser(pg_temp.camille());
 
 -- RÉVISÉE PAR `CRM-068` T3a (décision 51) : le channel « Checklists » du seed (`docs/SPEC-seed.md` §28, décision 755)
 -- porte trois affaires de plus. Le compte suit le contrat du seed ; l'objet de l'assertion ne bouge pas.
+-- RÉVISÉE PAR `CRM-111` T8 (décision 51) : les quatre rattachements actifs du §36 de `docs/SPEC-seed.md` — 46 pour
+-- l'administratrice et le business developer, 40 pour la lectrice, qui ne lit pas ceux de « Grands comptes ».
 select is(
 	(select sum(e.affaires)::integer from public.entonnoir_conversion() e),
-	42,
-	'CRM-066 : Camille, administratrice, totalise 42 affaires actives — un droit fin `none` sur '
+	46,
+	'CRM-066 : Camille, administratrice, totalise 46 affaires actives — un droit fin `none` sur '
 	'`conseil-ia` ne restreint JAMAIS un administrateur de workspace');
 
 select pg_temp.redevenir_proprietaire();
@@ -172,23 +176,23 @@ select pg_temp.endosser(pg_temp.driss());
 
 select is(
 	(select sum(e.affaires)::integer from public.entonnoir_conversion() e),
-	42,
-	'CRM-066 : Driss, business developer, totalise lui aussi 42 affaires');
+	46,
+	'CRM-066 : Driss, business developer, totalise lui aussi 46 affaires');
 
 select pg_temp.redevenir_proprietaire();
 select pg_temp.endosser(pg_temp.farida());
 
 select is(
 	(select sum(e.affaires)::integer from public.entonnoir_conversion() e),
-	38,
-	'CRM-066 : Farida, lectrice, totalise 38 affaires — QUATRE de moins. C''EST LA PREUVE que '
-	'l''agrégat s''exécute sous l''identité de l''appelant : en `definer` elle en verrait 42');
+	40,
+	'CRM-066 : Farida, lectrice, totalise 40 affaires — SIX de moins. C''EST LA PREUVE que '
+	'l''agrégat s''exécute sous l''identité de l''appelant : en `definer` elle en verrait 46');
 
 select is(
 	(select count(*)::integer from public.entonnoir_conversion() e
 	  where e.channel_id = pg_temp.ch_grands_comptes()),
 	0,
-	'CRM-066 : et les quatre manquantes sont celles de `grands-comptes`, dont AUCUNE ligne ne lui '
+	'CRM-066 : et les six manquantes sont celles de `grands-comptes`, dont AUCUNE ligne ne lui '
 	'est rendue — son track lui est fermé');
 
 select is(
@@ -209,9 +213,11 @@ select pg_temp.endosser(pg_temp.camille());
 select is(
 	(select e.affaires from public.entonnoir_conversion() e
 	  where e.channel_id = pg_temp.ch_grands_comptes() and e.node_key = 'prospection'),
-	1,
+	2,
+	-- RÉVISÉ PAR `CRM-111` T8 (décision 51) : le rattachement endormi de l'infogérance (§36) y est aussi ; le sommeil
+	-- compte (section 4, l'inclusion).
 	'CRM-066 : la card EN CORBEILLE (« Saisie erronée ») n''est pas comptée — `grands-comptes` en '
-	'porte deux au nœud `prospection`, dont une supprimée');
+	'porte trois au nœud `prospection`, dont une supprimée');
 
 select is(
 	(select e.affaires from public.entonnoir_conversion() e
@@ -357,8 +363,9 @@ select is(
 select is(
 	(select sum(e.montant_pondere) from public.entonnoir_conversion() e
 	  where e.node_key = 'negociation'),
-	230752.50::numeric,
-	'CRM-066 : le nœud entier rend 230 752,50 — et non 183 425,00, qui serait le total si le '
+	-- RÉVISÉ PAR `CRM-111` T8 : + 31 200, la vente de la billetterie (48 000 × 65 %, docs/SPEC-seed.md §36).
+	261952.50::numeric,
+	'CRM-066 : le nœud entier rend 261 952,50 — et non le total qu''il vaudrait si le '
 	'catalogue l''emportait partout. Un seul nombre, qui tombe dès qu''un niveau de la résolution '
 	'cesse d''être lu');
 

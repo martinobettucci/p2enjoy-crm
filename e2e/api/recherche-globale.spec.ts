@@ -1,3 +1,4 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes mesurés sur le seed enrichi (docs/SPEC-seed.md §36)
 // @verifies CRM-065 (docs/BACKLOG.md) — recherche globale, TRANCHE 1, hors interface
 // @verifies docs/SPEC-recherche.md §6.1 (la signature et les sept colonnes), §6.2 (le terme
 //           devient une requête), §6.3 (`stable` donc joignable en GET, et les privilèges),
@@ -190,11 +191,13 @@ test.describe('CRM-065 tranche 1 — la recherche globale, hors interface', () =
 			expect(await refus.json()).toEqual([])
 		}
 
-		// ET LA FONCTION N'EST PAS MUETTE POUR AUTANT : le même jeton trouve les cinq lignes que la
+		// ET LA FONCTION N'EST PAS MUETTE POUR AUTANT : le même jeton trouve les six lignes que la
 		// lectrice a le droit de lire. Sans cette contre-épreuve, les trois refus ci-dessus
-		// seraient également verts sur une fonction cassée.
+		// seraient également verts sur une fonction cassée. RÉVISÉ PAR `CRM-111` T8 : la sixième est l'infogérance du
+		// §36, dont la prochaine action — « Valider le périmètre des astreintes » — porte le terme, et qu'elle lit par
+		// « Maintenance ».
 		const contreEpreuve = await chercher(request, enTetesAuthentifies(jetonViewer), 'astreint')
-		expect(((await contreEpreuve.json()) as Ligne[]).length).toBe(5)
+		expect(((await contreEpreuve.json()) as Ligne[]).length).toBe(6)
 	})
 
 	/**
@@ -269,8 +272,9 @@ test.describe('CRM-065 tranche 1 — la recherche globale, hors interface', () =
 	 * l'éprouver ici demanderait d'écrire soixante lignes dans le seed.
 	 */
 	test('h — la borne demandée s’applique sous le plafond du serveur', async ({ request }) => {
+		// RÉVISÉ PAR `CRM-111` T8 : six, l'infogérance du §36 comprise (sa prochaine action porte le terme).
 		const complet = await chercher(request, enTetesAuthentifies(jetonAdmin), 'astreint', 20)
-		expect(((await complet.json()) as Ligne[]).length).toBe(5)
+		expect(((await complet.json()) as Ligne[]).length).toBe(6)
 
 		const borne = await chercher(request, enTetesAuthentifies(jetonAdmin), 'astreint', 2)
 		expect(((await borne.json()) as Ligne[]).length).toBe(2)

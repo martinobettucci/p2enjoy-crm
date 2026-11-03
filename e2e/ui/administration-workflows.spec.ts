@@ -1,3 +1,4 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes mesurés sur le seed enrichi (docs/SPEC-seed.md §36)
 // @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, parcours d'interface
 // @verifies docs/SPEC-workflow-engine.md §7 bis.2 (adresse depuis l'index des réglages),
 //           §7 bis.9 (les arêtes : déclaration, modification, retrait sur la vraie base, refus
@@ -1526,7 +1527,9 @@ test.describe('la prévisualisation des effets sur la vraie base (§7 bis.13)', 
 			// cards de volume vivent sur des étapes d'où partent des arêtes vers `Perdu`. Le
 			// compte suit la donnée, la propriété — deux nombres annoncés, non un seul — est
 			// intacte.
-			await expect(effets).toContainText('30 affaires ne pourront plus entrer')
+			// TRENTE-QUATRE DEPUIS `CRM-111` T8 (docs/SPEC-seed.md §36) : les quatre rattachements actifs de la billetterie
+			// et de l'infogérance peuvent entrer en `Perdu`.
+			await expect(effets).toContainText('34 affaires ne pourront plus entrer')
 
 			// RIEN N'EST ÉCRIT tant que la confirmation n'est pas acceptée : c'est la propriété que
 			// l'écran seul ne prouverait pas, et la base la tranche.
@@ -1584,7 +1587,8 @@ test.describe('la prévisualisation des effets sur la vraie base (§7 bis.13)', 
 			// La phrase d'une TRANSITION parle du chemin, pas de l'étape : une exigence d'arête ne
 			// bloque que ce chemin-là (§7 bis.13.4).
 			const effets = page.getByTestId('effets-exigence')
-			await expect(effets).toContainText('11 affaires ne pourront plus emprunter ce chemin')
+			// DOUZE DEPUIS `CRM-111` T8 : l'endormi de l'infogérance est en `Prospection` (docs/SPEC-seed.md §36).
+			await expect(effets).toContainText('12 affaires ne pourront plus emprunter ce chemin')
 		} finally {
 			await purgerChamps(request)
 		}
@@ -1607,9 +1611,10 @@ test.describe('la prévisualisation des effets sur la vraie base (§7 bis.13)', 
 			const cellule = caseDe(page, 'e2e-wf-sans-effet', ETAPE_INITIALE_SEED)
 			await cellule.selectOption('required')
 			const effets = page.getByTestId('effets-case')
-			// `Prospection` porte ONZE affaires depuis `CRM-046` §9.11 : elles sont « sur place »,
-			// et rien à l'entrée — l'étape initiale n'a aucune arête entrante.
-			await expect(effets).toContainText('11 affaires sont déjà à cette étape')
+			// `Prospection` porte ONZE affaires depuis `CRM-046` §9.11, DOUZE depuis `CRM-111` T8 (l'endormi de
+			// l'infogérance, docs/SPEC-seed.md §36) : elles sont « sur place », et rien à l'entrée — l'étape initiale n'a
+			// aucune arête entrante.
+			await expect(effets).toContainText('12 affaires sont déjà à cette étape')
 			await expect(effets).not.toContainText('ne pourront plus entrer')
 		} finally {
 			await purgerChamps(request)

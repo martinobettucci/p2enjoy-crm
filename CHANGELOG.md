@@ -531,6 +531,12 @@ changelog.*
   refus de plus). **`mail-sync`** joint les pièces, archive avant d'envoyer, efface les dépôts abandonnés après 24 heures.
 - **Le seed** fait partir un message réel avec copie cachée et pièce jointe depuis « Refonte du monitoring — Vertuo ».
 
+- **`CRM-111` T8 — le seed des rattachements multiples** : deux affaires posées par les vraies fonctions portent les
+  cinq situations de la spécification — « Plateforme de billetterie — Musée des Confluences », dans « Grands comptes »
+  et « Refonte de site » ; « Infogérance applicative — Groupe Ardent », active dans « Maintenance », archivée dans
+  « Refonte de site », en sommeil dans « Grands comptes ». `scripts/verify-seed-rattachements.sh` les relit sous les
+  jetons des trois profils. Les preuves qui comptaient les affaires du seed sont révisées. Aucune migration.
+
 - **`CRM-111` T7.5 et T7.6 — la pastille « aussi rattachée à », et le manuel** : sur le board et dans la vue liste, une
   affaire rattachée à d'autres channels porte une pastille « +N » qui les nomme au survol et au focus clavier — elle ne
   compte que ceux que l'on lit. Le manuel rassemble les rattachements en une section 9.17, « Rattacher une affaire à

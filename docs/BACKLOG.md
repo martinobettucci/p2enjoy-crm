@@ -17428,8 +17428,20 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         propre, la fiche à l'adresse, le bloc, rattacher, archiver, retirer, le fil, les renvois vers le temps, la
         rentabilité, la messagerie et les relances ; la pastille en §9.10 ; images `pas-rattachee-ici`, `rattachements`,
         `rattacher`, `retirer`, `fil-rattachements`, `aussi-rattachee` ; `docs/SPEC-manual.md` §12 ; `verify-manual` 168.
-- [@] **T8 — seed et E2E** (§12, §13) : les cinq situations du §12 par les vraies fonctions ; campagne E2E complète.
-      *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable, session 4891a451) depuis 2026-11-03 12:45 UTC — état avant : [ ]*
+- [~] **T8 — seed et E2E** (§12, §13) : les cinq situations du §12 par les vraies fonctions ; campagne E2E complète.
+      *Livrée en développement le 2026-11-03, sauf la campagne entièrement verte* : seed `docs/SPEC-seed.md` §36 (deux
+      affaires, cinq situations, `creer_affaire`, `attach_card`, `move_card`, `snooze_card` et les écritures de la fiche ;
+      convergence prouvée par deux passages sans événement de plus) ; `scripts/verify-seed-rattachements.sh` 11/11 sous
+      les vrais jetons. Preuves révisées avec leur motif (décision 51) : API `analytique`, `board`, `colonnes-protegees`,
+      `corbeille`, `filtre-sommeil`, `liste-cards`, `previsualisation-exigence`, `rattachements-miroir` (« au moins un
+      rattachement », les deux affaires nommées), `recherche-globale`, `valeurs-champs` ; UI `administration-catalogue`,
+      `administration-workflows`, `filtre-sommeil`, `liste-cards`, `pilotage`, `versions-workflow` ; pgTAP `0015`, `0034`,
+      `0065`, `0068`, `0086` (capacité d'une affaire : l'un de ses channels), `0097`, `0098`, `0099` — suite pgTAP 137
+      fichiers et 4866 assertions. **Reste rouge, sans rapport avec le seed** : `e2e/api/inbox-lecture.spec.ts` (lectures
+      de messages accumulées par les campagnes de l'inbox), `e2e/ui/etat-messagerie.spec.ts` (dernière relève),
+      `e2e/ui/plateforme-mcp.spec.ts` (journal MCP rempli par les campagnes), `e2e/ui/webhooks.spec.ts` (remises
+      accumulées), `e2e/ui/premier-lancement.spec.ts:182` (instable connu) — tous dépendent de l'état dérivé de la base
+      partagée, et attendent une base reconstruite (`./resetMe.sh`, destructeur, à coordonner) pour être constatés verts.
       **Découpage, arrêté le 2026-11-03** : **T8.1** le seed (`docs/SPEC-seed.md` §36 — deux affaires, cinq situations, par
       les vraies fonctions ; convergence vérifiée par le seed) ; **T8.2** la campagne E2E complète sur le seed enrichi, les
       preuves qui comptaient les affaires d'un channel révisées, `scripts/verify-seed-rattachements.sh` — un harnais propre plutôt

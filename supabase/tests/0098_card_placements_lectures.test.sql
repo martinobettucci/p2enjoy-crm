@@ -1,3 +1,5 @@
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes et les invariants révisés sur le seed enrichi
+--           (docs/SPEC-seed.md §36, décision 51)
 -- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.2 : les lectures. Les tables filles désignent le rattachement, la
 --           timeline distingue l'affaire du rattachement, et les fonctions de lecture jugent par les rattachements
 -- @verifies docs/SPEC-rattachements.md §2 bis.1 (les fonctions), §3.3 (valeurs par rattachement), §4 (lire, écrire la
@@ -89,13 +91,17 @@ select isnt((select count(*)::int from public.card_field_values), 0, '(témoin) 
 select is(
 	(select count(*)::int from public.card_events e
 	  where e.type in ('moved', 'assigned', 'channel_changed', 'workflow_changed', 'archived', 'unarchived',
-	                   'snoozed', 'woken', 'stalled', 'field_changed')
-	    and e.placement_id is distinct from app.card_first_placement(e.card_id)),
-	0, 'décision 670 : tout événement de rattachement de l''historique désigne le rattachement de son affaire');
+	                   'snoozed', 'woken', 'stalled', 'field_changed', 'attached', 'detached')
+	    -- RÉVISÉ PAR `CRM-111` T8 (décision 51) : une affaire à plusieurs rattachements (docs/SPEC-seed.md §36) écrit
+	    -- chacun de ses événements sur SON rattachement, qui n'est pas forcément le plus ancien. La règle reste : un
+	    -- rattachement de son affaire, et jamais aucun.
+	    and not exists (select 1 from public.card_placements p where p.id = e.placement_id and p.card_id = e.card_id)),
+	0, 'décision 670 : tout événement de rattachement de l''historique désigne un rattachement de son affaire');
 select is(
 	(select count(*)::int from public.card_events e
+	  -- RÉVISÉ PAR `CRM-111` T8 : `attached` et `detached` (migration 0148) sont des événements de RATTACHEMENT.
 	  where e.type not in ('moved', 'assigned', 'channel_changed', 'workflow_changed', 'archived', 'unarchived',
-	                       'snoozed', 'woken', 'stalled', 'field_changed')
+	                       'snoozed', 'woken', 'stalled', 'field_changed', 'attached', 'detached')
 	    and e.placement_id is not null),
 	0, 'les événements de l''AFFAIRE — création, corbeille, contacts, mails — n''en désignent aucun');
 select is(

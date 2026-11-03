@@ -1,3 +1,5 @@
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes et les invariants révisés sur le seed enrichi
+--           (docs/SPEC-seed.md §36, décision 51)
 -- @verifies CRM-077 (docs/BACKLOG.md), dixième tranche — docs/SPEC-corbeille.md §8.4 (…038 en corbeille fermé à qui ne l'a pas retiré)
 -- @verifies CRM-093 (docs/BACKLOG.md) — tranche T1 : la capacité d'écriture sur un channel et sur une affaire, lisible
 --           par l'interface
@@ -57,10 +59,14 @@ create or replace function pg_temp.lus() returns text language sql as $$
 $$;
 -- Les affaires lues dont la capacité diffère de celle de leur channel : doit être vide.
 create or replace function pg_temp.divergences() returns bigint language sql as $$
-	-- `CRM-111` T2.4.5 : l'affaire se compare au channel de son rattachement.
-	select count(*) from public.cards k join public.card_placements p on p.card_id = k.id
-	  join public.channels c on c.id = p.channel_id
-	 where k.ecriture_permise is distinct from c.ecriture_permise
+	-- `CRM-111` T2.4.5 : l'affaire se compare au channel de son rattachement. RÉVISÉ PAR `CRM-111` T8 (décision 51) :
+	-- à plusieurs rattachements (docs/SPEC-seed.md §36), elle se compare à l'UN DE SES channels lisibles — écrire la
+	-- partie commune, c'est écrire au moins un des channels rattachés (docs/SPEC-rattachements.md §4).
+	select count(*) from public.cards k
+	 where k.ecriture_permise is distinct from (
+	       select bool_or(c.ecriture_permise) from public.card_placements p
+	         join public.channels c on c.id = p.channel_id
+	        where p.card_id = k.id)
 $$;
 
 -- ---------------------------------------------------------------------------------------------

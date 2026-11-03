@@ -1,3 +1,4 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : plusieurs rattachements par affaire dans le seed (docs/SPEC-seed.md §36)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.1 : la table des rattachements, lue et refusée hors interface, avec
 //           les jetons réels du seed
 // @verifies docs/SPEC-rattachements.md §3.1 (la table), §4 (un rattachement se lit si son channel se lit), §14 (T2.1 :
@@ -40,9 +41,24 @@ type Erreur = { code: string; message: string }
 
 const rest = (chemin: string) => `${URL_API}/rest/v1/${chemin}`
 
+/** Les affaires du seed à plusieurs rattachements (`docs/SPEC-seed.md` §36), et combien chacun en lit. */
+const BILLETTERIE = 'Plateforme de billetterie — Musée des Confluences'
+const INFOGERANCE = 'Infogérance applicative — Groupe Ardent'
+
+/** Le nombre de rattachements lus par affaire, pour celles qui en ont plus d'un. */
+function multiples(cartes: Ligne[], rattachements: Ligne[]): Record<string, number> {
+	const titres = new Map(cartes.map((carte) => [carte.id, String(carte['title' as keyof Ligne])]))
+	const comptes: Record<string, number> = {}
+	for (const r of rattachements) {
+		const titre = titres.get(r.card_id!) ?? r.card_id!
+		comptes[titre] = (comptes[titre] ?? 0) + 1
+	}
+	return Object.fromEntries(Object.entries(comptes).filter(([, n]) => n > 1))
+}
+
 /** Les affaires et les rattachements que l'appelant lit, ceux-ci avec leurs treize colonnes. */
 async function lire(requete: APIRequestContext, enTetes: Record<string, string>) {
-	const cartes = await requete.get(rest('cards?select=id'), { headers: enTetes })
+	const cartes = await requete.get(rest('cards?select=id,title'), { headers: enTetes })
 	const rattachements = await requete.get(rest(`card_placements?select=id,card_id,${COLONNES.join(',')}`), {
 		headers: enTetes,
 	})
@@ -52,27 +68,32 @@ async function lire(requete: APIRequestContext, enTetes: Record<string, string>)
 }
 
 /**
- * Les écarts entre les affaires lues et leurs rattachements lus : vide quand chaque affaire a exactement un rattachement
- * lisible, porteur d'un channel, et qu'aucun rattachement lisible ne désigne une affaire illisible.
+ * Les écarts entre les affaires lues et leurs rattachements lus : vide quand chaque affaire a AU MOINS un rattachement
+ * lisible, chacun porteur d'un channel, et qu'aucun rattachement lisible ne désigne une affaire illisible.
+ *
+ * RÉVISÉ PAR `CRM-111` T8 (décision 51) : « exactement un » était l'invariant de T2.1, levé par T3 ; le seed porte depuis
+ * T8 deux affaires à plusieurs rattachements (`docs/SPEC-seed.md` §36). Les assertions qui suivent nomment lesquelles.
  */
 function ecarts(cartes: Ligne[], rattachements: Ligne[]): string[] {
 	const sortie: string[] = []
 	const lues = new Set(cartes.map((carte) => carte.id))
 	for (const carte of cartes) {
 		const siens = rattachements.filter((r) => r.card_id === carte.id)
-		if (siens.length !== 1) sortie.push(`${carte.id} : ${siens.length} rattachement(s)`)
-		else if (siens[0]!.channel_id === null) sortie.push(`${carte.id} : rattachement sans channel`)
+		if (siens.length === 0) sortie.push(`${carte.id} : aucun rattachement lisible`)
+		for (const sien of siens) if (sien.channel_id === null) sortie.push(`${carte.id} : rattachement sans channel`)
 	}
 	for (const r of rattachements) if (!lues.has(r.card_id!)) sortie.push(`${r.id} : affaire ${r.card_id} illisible`)
 	return sortie
 }
 
 test.describe('CRM-111 T2.1 — les rattachements, lus et refusés par l’API', () => {
-	test('l’administratrice lit un rattachement par affaire', async ({ request }) => {
+	test('l’administratrice lit au moins un rattachement par affaire, et plusieurs pour les deux affaires du §36', async ({ request }) => {
 		const { cartes, rattachements } = await lire(request, enTetesAuthentifies(await jetonDe(ADMIN)))
 		expect(cartes.length, 'le seed porte des affaires').toBeGreaterThan(0)
-		expect(rattachements).toHaveLength(cartes.length)
 		expect(ecarts(cartes, rattachements)).toEqual([])
+		// La billetterie : deux ; l'infogérance : trois, archivé et endormi compris.
+		expect(multiples(cartes, rattachements)).toEqual({ [BILLETTERIE]: 2, [INFOGERANCE]: 3 })
+		expect(rattachements).toHaveLength(cartes.length + 3)
 	})
 
 	test('la lectrice ne voit aucun rattachement d’un channel qui lui est fermé, et exactement ceux qu’elle lit', async ({
@@ -87,8 +108,11 @@ test.describe('CRM-111 T2.1 — les rattachements, lus et refusés par l’API',
 
 		const { cartes, rattachements } = await lire(request, enTetes)
 		expect(cartes.map((c) => c.id), 'elle lit CARD_C4 : la vue n’est pas vide').toContain(CARD_C4)
-		expect(rattachements).toHaveLength(cartes.length)
 		expect(ecarts(cartes, rattachements)).toEqual([])
+		// De la billetterie, le seul rattachement de « Refonte de site » ; de l'infogérance, « Maintenance » et
+		// l'archivé de « Refonte » — jamais l'endormi de « Grands comptes » (`docs/SPEC-seed.md` §36, situation 5).
+		expect(multiples(cartes, rattachements)).toEqual({ [INFOGERANCE]: 2 })
+		expect(rattachements).toHaveLength(cartes.length + 1)
 	})
 
 	test('l’anonyme lit zéro ligne, sans erreur de privilège', async ({ request }) => {

@@ -1,3 +1,5 @@
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes et les invariants révisés sur le seed enrichi
+--           (docs/SPEC-seed.md §36, décision 51)
 -- @verifies CRM-068 (docs/BACKLOG.md) tranche T1 — révision d'un garde-fou de compte (docs/SPEC-checklists.md §3), décision 51
 -- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3, étape 0 : la fondation des écritures par rattachement. La timeline
 --           d'un rattachement est écrite par `card_placements`, un miroir inverse tient l'affaire égale, et un client
@@ -41,9 +43,15 @@ $$;
 -- mesure compte les affaires qui n'ont pas exactement UN rattachement.
 create or replace function pg_temp.divergences()
 returns bigint language sql stable as $$
+	-- RÉVISÉE PAR `CRM-111` T8 (décision 51) : « exactement un » était l'invariant de T2.1, levé par T3. Les deux affaires
+	-- du §36 de docs/SPEC-seed.md en portent plusieurs, et elles seules : toute autre affaire en garde UN, et aucune
+	-- n'en a zéro. Un doublon inattendu reste donc compté.
 	select count(*)
 	  from public.cards c
-	 where (select count(*) from public.card_placements q where q.card_id = c.id) <> 1;
+	 where (select count(*) from public.card_placements q where q.card_id = c.id)
+	       <> case c.title when 'Plateforme de billetterie — Musée des Confluences' then 2
+	                       when 'Infogérance applicative — Groupe Ardent' then 3
+	                       else 1 end;
 $$;
 
 create temp table t_debut as select clock_timestamp() as t;

@@ -1,3 +1,4 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes mesurés sur le seed enrichi (docs/SPEC-seed.md §36)
 // @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, sixième tranche :
 //            la prévisualisation des effets, éprouvée HORS INTERFACE
 // @verifies docs/SPEC-workflow-engine.md §7 bis.13.2 (`security invoker` est une propriété de
@@ -75,10 +76,15 @@ test.describe('P1 — la prévisualisation rend les deux effets, et ils ne sont 
 		const jeton = await jetonDe('admin@p2enjoy.test')
 
 		// `Prospection` est l'étape INITIALE : aucune arête n'y mène, donc rien « à l'entrée ».
+		//
+		// COMPTES RÉVISÉS PAR `CRM-111` T8 (décision 51, `docs/SPEC-seed.md` §36) : les quatre rattachements actifs de
+		// la billetterie et de l'infogérance, aucun ne portant ce champ. L'endormi de « Grands comptes » est sur place en
+		// `Prospection` (12) ; la vente de la billetterie, en `Négociation`, peut entrer en `Signature` (9) ; tous quatre
+		// peuvent entrer en `Perdu` (33). L'archivé n'est pas compté. L'inversion que démontrent ces lignes est intacte.
 		expect(await effets(request, jeton, {
 			p_field_id: CHAMP_DATE_SIGNATURE,
 			p_step_id: ETAPE_PROSPECTION,
-		})).toEqual({ sur_place: 11, a_l_entree: 0 })
+		})).toEqual({ sur_place: 12, a_l_entree: 0 })
 
 		// `Signature` rend l'INVERSE EXACT : personne sur place, des affaires empêchées d'entrer.
 		// Ces deux lignes ensemble sont la preuve qu'un seul nombre n'aurait pas suffi.
@@ -101,13 +107,13 @@ test.describe('P1 — la prévisualisation rend les deux effets, et ils ne sont 
 		expect(await effets(request, jeton, {
 			p_field_id: CHAMP_DATE_SIGNATURE,
 			p_step_id: ETAPE_SIGNATURE,
-		})).toEqual({ sur_place: 0, a_l_entree: 8 })
+		})).toEqual({ sur_place: 0, a_l_entree: 9 })
 
 		// `Perdu` porte les deux à la fois.
 		expect(await effets(request, jeton, {
 			p_field_id: CHAMP_DATE_SIGNATURE,
 			p_step_id: ETAPE_PERDU,
-		})).toEqual({ sur_place: 1, a_l_entree: 29 })
+		})).toEqual({ sur_place: 1, a_l_entree: 33 })
 	})
 
 	test('une cible de TRANSITION ne compte que son chemin, jamais l’étape d’arrivée', async ({
@@ -122,9 +128,9 @@ test.describe('P1 — la prévisualisation rend les deux effets, et ils ne sont 
 		// `sur_place` est TOUJOURS nul pour une transition : elle ne porte pas sur une étape.
 		expect(parChemin.sur_place).toBe(0)
 		// Et son compte est strictement inférieur à celui de l'étape d'arrivée, qui agrège ses cinq
-		// chemins : 11 contre 29. Un écran qui aurait confondu les deux cibles aurait doublé l'effet
-		// annoncé sur le geste le plus courant du bloc des exigences.
-		expect(parChemin.a_l_entree).toBe(11)
+		// chemins : 12 contre 33 (révisé par `CRM-111` T8, l'endormi de l'infogérance en `Prospection`). Un écran qui
+		// aurait confondu les deux cibles aurait doublé l'effet annoncé sur le geste le plus courant du bloc des exigences.
+		expect(parChemin.a_l_entree).toBe(12)
 	})
 })
 
@@ -141,8 +147,10 @@ test.describe('P2 — `security invoker` : le compte est celui de ce que l’app
 		const vuParLAdmin = await effets(request, admin, couple)
 		const vuParLeViewer = await effets(request, viewer, couple)
 
-		expect(vuParLAdmin).toEqual({ sur_place: 1, a_l_entree: 29 })
-		expect(vuParLeViewer).toEqual({ sur_place: 1, a_l_entree: 25 })
+		// RÉVISÉ PAR `CRM-111` T8 : la lectrice lit les deux rattachements en relance du §36 (« Refonte de site »,
+		// « Maintenance »), jamais ceux de « Grands comptes » — 27 contre 33.
+		expect(vuParLAdmin).toEqual({ sur_place: 1, a_l_entree: 33 })
+		expect(vuParLeViewer).toEqual({ sur_place: 1, a_l_entree: 27 })
 		// L'inégalité est écrite explicitement : si un jour la fonction passait en
 		// `security definer`, les deux nombres deviendraient égaux et cette assertion tomberait
 		// AVANT que quiconque ne s'aperçoive que le produit annonce des affaires interdites.
@@ -158,7 +166,7 @@ test.describe('P2 — `security invoker` : le compte est celui de ce que l’app
 		expect(await effets(request, jeton, {
 			p_field_id: CHAMP_DATE_SIGNATURE,
 			p_step_id: ETAPE_PERDU,
-		})).toEqual({ sur_place: 1, a_l_entree: 29 })
+		})).toEqual({ sur_place: 1, a_l_entree: 33 })
 	})
 
 	test('l’appelant ANONYME est refusé par le privilège, avant toute politique', async ({

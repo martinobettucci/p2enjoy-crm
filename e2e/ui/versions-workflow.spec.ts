@@ -1,3 +1,4 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes mesurés sur le seed enrichi (docs/SPEC-seed.md §36)
 // @verifies CRM-078 (docs/BACKLOG.md) — cinquième tranche : les écrans du versionnement
 // @verifies docs/SPEC-workflow-engine.md §7 ter.14.3 (la liste des versions et son auteur),
 //           §7 ter.14.4 (les quatre gestes), §7 ter.14.7 (les refus traduits),
@@ -98,7 +99,7 @@ test.describe('les gestes (§7 ter.14.4)', () => {
 		await expect(page.getByTestId('comparaison-collections')).toHaveCount(0)
 	})
 
-	test('le plan rend les trente-neuf affaires du workflow, et se dit applicable', async ({ page }) => {
+	test('le plan rend les quarante-quatre affaires du workflow, et se dit applicable', async ({ page }) => {
 		await connecter(page, ADMIN)
 		await ouvrirEditeur(page)
 
@@ -108,11 +109,13 @@ test.describe('les gestes (§7 ter.14.4)', () => {
 		// MESURÉ : trente-neuf affaires depuis `CRM-046` tranche 2 (`docs/SPEC-seed.md` §9.11),
 		// toutes inchangées, aucune étape retirée — la structure vivante est celle de la version.
 		// Le verdict vient de la base, jamais d'un calcul d'écran, et le compte suit la donnée.
-		await expect(plan).toContainText('39 affaire(s)')
+		// RÉVISÉ PAR `CRM-111` T8 (décision 51) : QUARANTE-QUATRE — le plan compte les RATTACHEMENTS du workflow, dont les
+		// cinq du §36 de docs/SPEC-seed.md, archivé et endormi compris.
+		await expect(plan).toContainText('44 affaire(s)')
 		await expect(page.getByTestId('plan-verdict')).toContainText('Plus aucune affaire')
 		await expect(page.getByTestId('etapes-retirees')).toHaveCount(0)
 		// La troncature est écrite dans les deux cas : ici, la liste est entière.
-		await expect(page.getByTestId('plan-troncature')).toContainText('39 affaire(s) listées')
+		await expect(page.getByTestId('plan-troncature')).toContainText('44 affaire(s) listées')
 	})
 })
 

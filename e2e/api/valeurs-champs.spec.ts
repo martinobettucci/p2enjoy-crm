@@ -1,3 +1,4 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes mesurés sur le seed enrichi (docs/SPEC-seed.md §36)
 // @verifies CRM-036 (docs/BACKLOG.md) — valeurs de formulaire et validation, hors interface
 // @verifies CRM-060 tranche 3 (docs/BACKLOG.md) — résolution de `contact` et `user`, bloc V5
 // @verifies docs/SPEC-contacts.md §9 (la règle, les cas a à j du §9.5, le seed laissé intact §9.6)
@@ -135,13 +136,15 @@ test.describe('V0 — état de départ', () => {
 	// devenues vingt et une, puis VINGT-TROIS — les deux réponses résolues de « Migration ERP
 	// Sogexia », `contact-principal` et `referent-technique` (docs/SPEC-contacts.md §13.6). Le cas
 	// éprouvé ici — `budget` de `c1` VIDE — est inchangé.
-	test('le seed pose bien vingt-trois valeurs, et `budget` de `c1` est VIDE', async ({ request }) => {
+	// RÉVISÉ PAR `CRM-111` T8 : VINGT-SIX — les trois valeurs de bloc de la billetterie, `source` sur ses deux
+	// rattachements et `budget` sur sa vente (docs/SPEC-seed.md §36).
+	test('le seed pose bien vingt-six valeurs, et `budget` de `c1` est VIDE', async ({ request }) => {
 		const reponse = await request.get(`${VALEURS}?select=card_id,field_id,value`, {
 			headers: enTetesService(),
 		})
 		expect(reponse.status()).toBe(200)
 		const valeurs = (await reponse.json()) as Valeur[]
-		expect(valeurs.length, 'docs/SPEC-seed.md §2.13 et §9.6 ; docs/SPEC-contacts.md §13.6').toBe(23)
+		expect(valeurs.length, 'docs/SPEC-seed.md §2.13, §9.6 et §36 ; docs/SPEC-contacts.md §13.6').toBe(26)
 
 		const budgetC1 = valeurs.find((v) => v.card_id === CARD_C1 && v.field_id === CHAMP_BUDGET)
 		expect(budgetC1, 'la LIGNE existe').toBeDefined()
@@ -182,7 +185,7 @@ test.describe('V1 — lecture', () => {
 	test('c) `admin` lit les valeurs de son workspace', async ({ request }) => {
 		const reponse = await request.get(VALEURS, { headers: enTetesAuthentifies(jetonAdmin) })
 		expect(reponse.status()).toBe(200)
-		expect(((await reponse.json()) as Valeur[]).length).toBe(23)
+		expect(((await reponse.json()) as Valeur[]).length).toBe(26)
 	})
 })
 

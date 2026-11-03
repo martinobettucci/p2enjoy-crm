@@ -1,3 +1,4 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : un rattachement endormi dans « Grands comptes » (docs/SPEC-seed.md §36)
 // @verifies CRM-081 (docs/BACKLOG.md) — tranche 2 b : le filtre du sommeil, hors interface
 // @verifies docs/SPEC-cards.md §16.2 (« en sommeil » = non nulle ET future), §16.12.1 (le prédicat
 //           d'exclusion et sa mesure), §16.12.2 (l'instant est envoyé comme VALEUR, et pourquoi ce
@@ -64,7 +65,11 @@ const FILTRES_ACTIVES = 'archived_at=is.null&affaire.deleted_at=is.null'
  */
 const ACTIVES_PROSPECTION = 2
 const EVEILLEES_PROSPECTION = 1
-const ACTIVES_GRANDS_COMPTES = 4
+// RÉVISÉ PAR `CRM-111` T8 (décision 51, `docs/SPEC-seed.md` §36) : SIX rattachements actifs — la billetterie, et
+// l'infogérance, qui y DORT : le mode masqué en rend donc CINQ.
+const ACTIVES_GRANDS_COMPTES = 6
+const EVEILLEES_GRANDS_COMPTES = 5
+const TITRE_INFOGERANCE = 'Infogérance applicative — Groupe Ardent'
 
 type LigneLue = { id: string; title: string; snoozed_until: string | null }
 
@@ -149,19 +154,20 @@ test.describe('le mode masqué écarte les endormies, et le total suit (§16.12.
 		expect(avec.total).toBe(EVEILLEES_PROSPECTION)
 	})
 
-	// UNE ÉCHÉANCE ÉCHUE N'EST PAS UN SOMMEIL (§16.2) : `grands-comptes` rend ses quatre lignes dans
-	// les deux modes, et c'est ce qui distingue le prédicat du produit d'un simple
-	// « snoozed_until is null ».
-	test('`grands-comptes` rend ses 4 lignes dans les DEUX modes, échéance échue comprise', async ({
+	// UNE ÉCHÉANCE ÉCHUE N'EST PAS UN SOMMEIL (§16.2) : l'affaire échue de `grands-comptes` est rendue dans les deux
+	// modes, et c'est ce qui distingue le prédicat du produit d'un simple « snoozed_until is null ». RÉVISÉ PAR
+	// `CRM-111` T8 : le rattachement endormi de l'infogérance (§36) part en mode masqué, seul.
+	test('`grands-comptes` rend 6 lignes sans filtre et 5 masquées : l’échue reste, l’endormie part', async ({
 		request,
 	}) => {
 		const sans = await lire(request, jetonAdmin, adresse(CHANNEL_GRANDS_COMPTES, null))
 		const avec = await lire(request, jetonAdmin, adresse(CHANNEL_GRANDS_COMPTES, new Date()))
 		expect(sans.lignes).toHaveLength(ACTIVES_GRANDS_COMPTES)
-		expect(avec.lignes).toHaveLength(ACTIVES_GRANDS_COMPTES)
+		expect(avec.lignes).toHaveLength(EVEILLEES_GRANDS_COMPTES)
 		expect(sans.total).toBe(ACTIVES_GRANDS_COMPTES)
-		expect(avec.total).toBe(ACTIVES_GRANDS_COMPTES)
+		expect(avec.total).toBe(EVEILLEES_GRANDS_COMPTES)
 		expect(avec.lignes.map((ligne) => ligne.title)).toContain(TITRE_ECHUE)
+		expect(avec.lignes.map((ligne) => ligne.title)).not.toContain(TITRE_INFOGERANCE)
 	})
 
 	// Un `not.gt` aurait écarté toutes les affaires qui n'ont jamais dormi : la moitié du filtre

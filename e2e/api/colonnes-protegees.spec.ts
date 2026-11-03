@@ -1,3 +1,4 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes mesurés sur le seed enrichi (docs/SPEC-seed.md §36)
 // @verifies CRM-013 (docs/BACKLOG.md) — colonnes protégées, hors interface
 // @verifies docs/SPEC-permissions-rls.md §4.4.4 (contrat d'API, lignes a à l), §4.3 (le
 //           mécanisme), §4.4.2 (le chemin d'insertion est déjà sûr), §4.4.3 (la forme retenue),
@@ -375,7 +376,8 @@ test.describe('CRM-013 — les refus de LECTURE restent zéro ligne, non une err
 			// tranche 2 de `CRM-046` (§9.11). Le contrôle garde sa fonction — établir que la table
 			// n'est PAS vide avant de conclure du `[]` rendu à l'anonyme.
 			// RÉVISÉ PAR `CRM-068` T3a : trois affaires de plus, celles du channel « Checklists » (§28) — QUARANTE-QUATRE.
-			expect(((await peuplee.json()) as Card[]).length, 'la table porte des lignes').toBe(44)
+			// RÉVISÉ PAR `CRM-111` T8 : deux affaires de plus, celles des rattachements multiples (§36) — QUARANTE-SIX.
+			expect(((await peuplee.json()) as Card[]).length, 'la table porte des lignes').toBe(46)
 
 			const reponse = await anonyme.get(`${CARDS}?select=id`)
 			expect(reponse.status(), 'un refus de LECTURE n’est pas une erreur').toBe(200)

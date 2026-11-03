@@ -1,3 +1,4 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes mesurés sur le seed enrichi (docs/SPEC-seed.md §36)
 // @verifies INC-337 (docs/INCONSISTENCY_REPORT.md) — la capture attend le tiroir refermé sous 1024 px
 // @verifies CRM-030 (docs/BACKLOG.md) — administration du catalogue de nœuds, parcours d'interface
 // @verifies docs/SPEC-workflow-engine.md §2 bis.2 (l'adresse et l'index), §2 bis.3 (la lecture
@@ -325,7 +326,9 @@ test.describe('Administration du catalogue de nœuds — CRM-030', () => {
 		// ce que le scénario démontre — le refus vient de la base ET porte son compte — est intact.
 		// RÉVISÉ PAR `CRM-068` T3a (décision 51) : « Formation IA — Cerfrance », au nœud `prospection` du workflow de
 		// démonstration des checklists (`docs/SPEC-seed.md` §28), y porte DOUZE affaires actives.
-		await expect(alerte).toContainText('12 affaires en cours')
+		// RÉVISÉ PAR `CRM-111` T8 (décision 51) : TREIZE — le rattachement endormi de l'infogérance occupe `prospection`
+		// dans « Grands comptes » (docs/SPEC-seed.md §36).
+		await expect(alerte).toContainText('13 affaires en cours')
 		await expect(alerte).toContainText('déplacez-les')
 
 		// LA LIGNE EST RELUE : le refus n'a rien archivé, et une preuve qui se contenterait de

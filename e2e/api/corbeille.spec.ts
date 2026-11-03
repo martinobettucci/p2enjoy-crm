@@ -1,3 +1,4 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes mesurés sur le seed enrichi (docs/SPEC-seed.md §36)
 // @verifies CRM-077 (docs/BACKLOG.md) — corbeille : l'énumération des enfants rendus inaccessibles,
 //           le GESTE de mise à la corbeille d'un track et d'un channel (septième tranche), puis
 //           celui d'une AFFAIRE (huitième tranche)
@@ -217,7 +218,9 @@ test.describe('E1 — l’énumération du track en corbeille', () => {
 })
 
 test.describe('E2 — un enfant ARCHIVÉ est compté, et le compte est celui de l’appelant', () => {
-	test('l’administratrice lit trois channels — dont l’archivé — et sept affaires', async ({
+	// RÉVISÉ PAR `CRM-111` T8 (décision 51) : NEUF — les rattachements de « Grands comptes » de la billetterie et de
+	// l'infogérance (`docs/SPEC-seed.md` §36). Le compte porte sur les rattachements des channels du track.
+	test('l’administratrice lit trois channels — dont l’archivé — et neuf affaires', async ({
 		request,
 	}) => {
 		const archives = await request.get(
@@ -228,7 +231,7 @@ test.describe('E2 — un enfant ARCHIVÉ est compté, et le compte est celui de 
 
 		expect(await enumererTrack(request, jetonAdmin, TRACK_CONSEIL)).toEqual({
 			channels: 3,
-			cards: 7,
+			cards: 9,
 		})
 	})
 

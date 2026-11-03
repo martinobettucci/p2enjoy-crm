@@ -1,3 +1,5 @@
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes révisés sur le seed enrichi
+--           (docs/SPEC-seed.md §36, décision 51)
 -- @verifies CRM-065 (docs/BACKLOG.md) — recherche globale, TRANCHE 1 : la recherche en base
 -- @verifies docs/SPEC-recherche.md §3 (le vocabulaire `app.francais_sans_accent` et ce qu'il
 --            garantit), §4 (les cinq familles et leurs poids), §5 (les index d'expression),
@@ -204,10 +206,12 @@ select is(
 	'CRM-065 §6.7 lignes *b* et *m* — « audi » trouve les deux affaires « Audit… » par PRÉFIXE. '
 	'Sans le suffixe `:*` du §6.2, une palette ne rendrait rien avant le dernier caractère');
 
+-- RÉVISÉ PAR `CRM-111` T8 (décision 51) : SIX — la prochaine action de l'infogérance du §36 de docs/SPEC-seed.md,
+-- « Valider le périmètre des astreintes », porte le terme.
 select is(
 	(select count(*)::integer from public.recherche_globale('astreint', 20)),
-	5,
-	'CRM-065 §6.7 ligne *m* — « astreint » trouve les CINQ lignes du seed qui le portent');
+	6,
+	'CRM-065 §6.7 ligne *m* — « astreint » trouve les SIX lignes du seed qui le portent');
 
 select is(
 	array[
@@ -279,10 +283,10 @@ select is(
 		(select count(*)::integer from public.recherche_globale('candidature', 20)),
 		(select count(*)::integer from public.recherche_globale('astreint', 20))
 	],
-	array[0, 0, 0, 5],
+	array[0, 0, 0, 6],
 	'CRM-065 §6.7 ligne *c* — sous la lectrice, les TROIS familles se taisent : l''affaire de '
 	'« Grands comptes », son commentaire et le message ne lui sont pas ouverts. ZÉRO LIGNE, jamais '
-	'une erreur. Et « astreint » rend ses cinq lignes : ce n''est pas la fonction qui est muette');
+	'une erreur. Et « astreint » rend ses six lignes : ce n''est pas la fonction qui est muette');
 
 set local request.jwt.claims to '{"sub":"5eed0000-0000-4000-8000-000000000012","role":"authenticated"}';
 

@@ -1,3 +1,4 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : un rattachement endormi dans « Grands comptes » (docs/SPEC-seed.md §36)
 // @verifies CRM-081 (docs/BACKLOG.md) — tranche 2 b : le filtre du board et de la vue liste
 // @verifies docs/SPEC-cards.md §16.2 (« en sommeil » = non nulle ET future), §16.12.1 (le prédicat
 //           d'exclusion), §16.12.3 (board à la composition, liste au serveur), §16.12.4 (la bascule
@@ -135,10 +136,17 @@ test.describe('le board masque, ramène et marque (docs/SPEC-cards.md §16.12.3,
 		page,
 	}) => {
 		await connecter(page)
-		for (const adresse of [GRANDS_COMPTES.board, `${GRANDS_COMPTES.board}?sommeil=visibles`]) {
+		// RÉVISÉ PAR `CRM-111` T8 (décision 51) : `grands-comptes` porte aussi le rattachement ENDORMI de l'infogérance
+		// (docs/SPEC-seed.md §36) — masqué, puis rendu avec SA pastille. L'échue, elle, n'en porte jamais.
+		for (const [adresse, pastilles] of [
+			[GRANDS_COMPTES.board, 0],
+			[`${GRANDS_COMPTES.board}?sommeil=visibles`, 1],
+		] as const) {
 			await page.goto(adresse)
 			await expect(page.getByRole('link', { name: GRANDS_COMPTES.echue })).toBeVisible()
-			await expect(page.getByTestId('pastille-sommeil')).toHaveCount(0)
+			const carteEchue = page.getByTestId('carte-card').filter({ has: page.getByRole('link', { name: GRANDS_COMPTES.echue }) })
+			await expect(carteEchue.getByTestId('pastille-sommeil')).toHaveCount(0)
+			await expect(page.getByTestId('pastille-sommeil')).toHaveCount(pastilles)
 		}
 	})
 
@@ -192,15 +200,22 @@ test.describe('la vue liste masque au serveur, et son total suit (§16.12.3, §1
 		await capturer(page, 'filtre-sommeil-liste-visibles-1440', UNITE)
 	})
 
-	test('`grands-comptes` rend ses quatre affaires dans les deux modes, sans pastille', async ({
+	// RÉVISÉ PAR `CRM-111` T8 (décision 51, docs/SPEC-seed.md §36) : la billetterie s'ajoute, et l'infogérance y dort —
+	// cinq affaires masquées, six rendues, et l'échue sans pastille dans les deux modes.
+	test('`grands-comptes` rend l’échue dans les deux modes, sans pastille, et le total suit l’endormie', async ({
 		page,
 	}) => {
 		await connecter(page)
-		for (const adresse of [GRANDS_COMPTES.liste, `${GRANDS_COMPTES.liste}?sommeil=visibles`]) {
+		for (const [adresse, total, pastilles] of [
+			[GRANDS_COMPTES.liste, 'Affaires : 5', 0],
+			[`${GRANDS_COMPTES.liste}?sommeil=visibles`, 'Affaires : 6', 1],
+		] as const) {
 			await page.goto(adresse)
-			await expect(page.getByTestId('total-liste')).toHaveText('Affaires : 4')
+			await expect(page.getByTestId('total-liste')).toHaveText(total)
 			await expect(page.getByRole('link', { name: GRANDS_COMPTES.echue })).toBeVisible()
-			await expect(page.getByTestId('pastille-sommeil')).toHaveCount(0)
+			const ligneEchue = page.getByTestId('ligne-card').filter({ has: page.getByRole('link', { name: GRANDS_COMPTES.echue }) })
+			await expect(ligneEchue.getByTestId('pastille-sommeil')).toHaveCount(0)
+			await expect(page.getByTestId('pastille-sommeil')).toHaveCount(pastilles)
 		}
 	})
 

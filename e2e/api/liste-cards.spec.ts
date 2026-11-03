@@ -1,3 +1,4 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes mesurés sur le seed enrichi (docs/SPEC-seed.md §36)
 // @verifies CRM-042 (docs/BACKLOG.md) — la lecture paginée de la vue liste, hors interface
 // @verifies CRM-022 (docs/BACKLOG.md) — l'identité du responsable embarquée dans chaque ligne
 // @verifies docs/SPEC-cards.md §12.3 (ce que la liste lit, et le total exact), §12.4 (le tri
@@ -42,7 +43,7 @@ import {
 const WORKFLOW_GLOBAL = '5eed0000-0000-4000-8000-000000000051'
 const CHANNEL_GRANDS_COMPTES = '5eed0000-0000-4000-8000-000000000032'
 /**
- * Le channel de VOLUME, posé par `CRM-046` tranche 2 (`docs/SPEC-seed.md` §9.11). Il porte 27 cards
+ * Le channel de VOLUME, posé par `CRM-046` tranche 2 (`docs/SPEC-seed.md` §9.11). Il porte 28 cards
  * actives là où tous les autres en portent moins de cinq : c'est le seul du seed dont la vue liste
  * ait une SECONDE page, et le seul qui porte des données longues.
  */
@@ -100,8 +101,11 @@ type CardLue = {
  * RÉVISÉ PAR `CRM-046` (décision 51) : trois devenues QUATRE — `…0cd` y occupe l'étape « Livré »,
  * dont la seule card était archivée, donc invisible de tout écran (docs/SPEC-seed.md §9.3). La
  * constante existe précisément pour que cette révision tienne en une ligne.
+ *
+ * RÉVISÉ PAR `CRM-111` T8 (décision 51, `docs/SPEC-seed.md` §36) : SIX — la billetterie, et l'infogérance, endormie ;
+ * cette lecture ne filtre pas le sommeil (le mode du §16.12 est éprouvé par `filtre-sommeil.spec.ts`).
  */
-const ACTIVES_GRANDS_COMPTES = 4
+const ACTIVES_GRANDS_COMPTES = 6
 
 /** Les filtres d'activité, écrits une fois : ils sont la définition d'« active » du §5. */
 // `CRM-111` T2.4.1 : le rattachement archivé, et l'affaire en corbeille — celle-ci par le plongement `!inner`.
@@ -571,8 +575,8 @@ test.describe('la seconde page, contre la base réelle (docs/SPEC-seed.md §9.11
 		`${RATTACHEMENTS}?select=id:card_id,next_action,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_MAINTENANCE}` +
 		`&${FILTRES_ACTIVES}&${ORDRE_TITRE}`
 
-	/** Mesuré en base après application du seed (§9.11.2). */
-	const ACTIVES_MAINTENANCE = 27
+	/** Mesuré en base après application du seed (§9.11.2). RÉVISÉ PAR `CRM-111` T8 : l'infogérance du §36 — 28. */
+	const ACTIVES_MAINTENANCE = 28
 
 	test('le channel porte plus d’une page, et le total est EXACT', async ({ request }) => {
 		const reponse = await request.get(adresse, {
@@ -596,7 +600,7 @@ test.describe('la seconde page, contre la base réelle (docs/SPEC-seed.md §9.11
 	})
 
 	// LA PREUVE QUE LA SUBSTITUTION NE POUVAIT PAS RENDRE : une seconde page réellement servie.
-	test('la SECONDE page existe et porte DEUX lignes, distinctes de la première', async ({
+	test('la SECONDE page existe et porte TROIS lignes, distinctes de la première', async ({
 		request,
 	}) => {
 		const premiere = await request.get(adresse, {

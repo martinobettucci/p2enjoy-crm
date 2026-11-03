@@ -1,3 +1,4 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes mesurés sur le seed enrichi (docs/SPEC-seed.md §36)
 // @verifies CRM-066 (docs/BACKLOG.md) — analytique de conversion et prévisionnel pondéré,
 //           TRANCHE 3 a : le parcours d'interface de l'écran `/pilotage` ;
 //           TRANCHE 3 b : le sélecteur de portée, sur la pile réelle ;
@@ -36,6 +37,11 @@
 //     MÊME 34 600,00 CHF : aucune des quatre affaires qu'elle ne voit pas n'est en francs ;
 //   * l'écart vaut donc 36 150,00 EUR, et il est INCHANGÉ depuis la tranche 2 c : les quatre
 //     affaires manquantes sont à `prospection`, `relance` et `livre`, aucune à `negociation`.
+//
+// RÉVISÉ PAR `CRM-111` T8 (décision 51, `docs/SPEC-seed.md` §36) : quatre rattachements actifs s'ajoutent. Le
+// prévisionnel de l'administratrice vaut 421 362,50 EUR, celui de la lectrice 354 012,50 — elle lit les deux en relance
+// (« Refonte de site », « Maintenance »), non ceux de « Grands comptes ». L'écart vaut désormais 67 350,00 : 36 150,00,
+// plus la vente de la billetterie en `negociation` (48 000 × 65 %), qui lui est fermée. Le franc ne bouge pas.
 
 import { autoriserErreursConsole, connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -99,9 +105,10 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		const negociation = ligneNoeud(page, 'EUR', 'Négociation')
 		// RÉVISÉ PAR `CRM-068` T3a (décision 51) : les trois affaires du channel « Checklists » (`docs/SPEC-seed.md` §28),
 		// nées sans montant en prospection, relance et négociation, s'ajoutent aux comptes ; montants et pondérés intacts.
-		await expect(negociation.getByTestId('pilotage-affaires')).toHaveText('10')
-		expect(chiffresDe(await negociation.getByTestId('pilotage-montant').innerText())).toBe(36685000)
-		expect(chiffresDe(await negociation.getByTestId('pilotage-pondere').innerText())).toBe(23075250)
+		// RÉVISÉ PAR `CRM-111` T8 : la vente de la billetterie (§36) — onze, 414 850, 261 952,50.
+		await expect(negociation.getByTestId('pilotage-affaires')).toHaveText('11')
+		expect(chiffresDe(await negociation.getByTestId('pilotage-montant').innerText())).toBe(41485000)
+		expect(chiffresDe(await negociation.getByTestId('pilotage-pondere').innerText())).toBe(26195250)
 	})
 
 	test('S2 — LE GENRE EST UN MOT, et c’est lui qui dit pourquoi « Livré » n’est pas au prévisionnel', async ({
@@ -123,8 +130,8 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		).toHaveText('Ouvert')
 
 		// « Livré » porte 311 000 dans l'entonnoir, et le prévisionnel n'en tient AUCUN compte : les
-		// nœuds terminaux en sont exclus (§7.2). 381 042,50 et non 692 042,50.
-		expect(chiffresDe(await previsionnelDe(page, 'EUR').innerText())).toBe(38104250)
+		// nœuds terminaux en sont exclus (§7.2). 421 362,50 (révisé par `CRM-111` T8) et non 732 362,50.
+		expect(chiffresDe(await previsionnelDe(page, 'EUR').innerText())).toBe(42136250)
 	})
 
 	test('S3 — UN TABLEAU PAR DEVISE, et le franc n’est jamais mêlé à l’euro (§11.2)', async ({
@@ -179,8 +186,9 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		// elle, un prévisionnel bas se lit comme un portefeuille PAUVRE au lieu d'un portefeuille MAL
 		// RENSEIGNÉ.
 		// RÉVISÉ PAR `CRM-068` T3a : les trois affaires du channel « Checklists » (§28) sont nées sans montant — QUATRE.
+		// RÉVISÉ PAR `CRM-111` T8 : le rattachement endormi de l'infogérance (§36), sans montant — CINQ.
 		await expect(page.getByTestId('pilotage-sans-montant')).toHaveText(
-			'4 affaires sans montant renseigné.',
+			'5 affaires sans montant renseigné.',
 		)
 		// La portée est ÉCRITE : sans elle, l'écart avec le total d'un collègue se lirait comme une
 		// erreur de calcul.
@@ -195,8 +203,8 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		await connecter(page, VIEWER)
 		await page.goto(PILOTAGE)
 
-		// 344 892,50 et non 381 042,50 : quatre affaires du channel `grands-comptes` lui sont fermées.
-		expect(chiffresDe(await previsionnelDe(page, 'EUR').innerText())).toBe(34489250)
+		// 354 012,50 et non 421 362,50 : les rattachements du channel `grands-comptes` lui sont fermés.
+		expect(chiffresDe(await previsionnelDe(page, 'EUR').innerText())).toBe(35401250)
 		// Le FRANC est identique — aucune des quatre affaires manquantes n'est en francs. Une preuve
 		// qui n'observerait que l'écart global ne dirait pas où il se loge.
 		expect(chiffresDe(await previsionnelDe(page, 'CHF').innerText())).toBe(3460000)
@@ -208,11 +216,13 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		await expect(
 			ligneNoeud(page, 'EUR', 'Prospection').getByTestId('pilotage-affaires'),
 		).toHaveText('11')
+		// RÉVISÉ PAR `CRM-111` T8 : les deux rattachements en relance du §36, qu'elle lit — NEUF.
 		await expect(ligneNoeud(page, 'EUR', 'Relance').getByTestId('pilotage-affaires')).toHaveText(
-			'7',
+			'9',
 		)
 		await expect(ligneNoeud(page, 'EUR', 'Livré').getByTestId('pilotage-affaires')).toHaveText('6')
-		// Et `Négociation` est IDENTIQUE : aucune des affaires qu'elle ne voit pas n'est à ce nœud.
+		// Et `Négociation` est celle d'AVANT `CRM-111` T8 : la seule affaire qu'elle ne voit pas à ce nœud est la vente de
+		// la billetterie, dans « Grands comptes » — dix pour elle, onze pour l'administratrice.
 		await expect(
 			ligneNoeud(page, 'EUR', 'Négociation').getByTestId('pilotage-affaires'),
 		).toHaveText('10')
@@ -222,7 +232,7 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		await expect(page.getByText(/masqué/i)).toHaveCount(0)
 	})
 
-	test('S6 — LA CONTRE-ÉPREUVE : l’administratrice lit 36 150,00 de plus, et rien d’autre', async ({
+	test('S6 — LA CONTRE-ÉPREUVE : l’administratrice lit 67 350,00 de plus, et rien d’autre', async ({
 		page,
 	}) => {
 		// Sans elle, `S5` ne prouverait rien : 344 892,50 serait indistinguable d'un portefeuille qui
@@ -231,16 +241,17 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		await page.goto(PILOTAGE)
 
 		const eur = chiffresDe(await previsionnelDe(page, 'EUR').innerText())
-		expect(eur, 'le prévisionnel de l’administratrice vaut 381 042,50 EUR').toBe(38104250)
-		// LA DIFFÉRENCE EST MESURÉE, et pas seulement la présence d'une ligne de plus : 381 042,50 −
-		// 344 892,50 vaut 36 150,00, et c'est ce que la Definition of Done demande de prouver. Une
-		// preuve qui n'observerait que le nombre de lignes ne dirait pas si l'entonnoir a été calculé
-		// avant ou après la RLS.
-		expect(eur - 34489250, 'l’écart entre les deux profils vaut 36 150,00 EUR').toBe(3615000)
-		// Le compte des affaires suit la même règle : douze pour elle, onze pour la lectrice (révisé par `CRM-068` T3a).
+		expect(eur, 'le prévisionnel de l’administratrice vaut 421 362,50 EUR').toBe(42136250)
+		// LA DIFFÉRENCE EST MESURÉE, et pas seulement la présence d'une ligne de plus : 421 362,50 −
+		// 354 012,50 vaut 67 350,00 (révisé par `CRM-111` T8), et c'est ce que la Definition of Done demande de prouver.
+		// Une preuve qui n'observerait que le nombre de lignes ne dirait pas si l'entonnoir a été calculé avant ou après
+		// la RLS.
+		expect(eur - 35401250, 'l’écart entre les deux profils vaut 67 350,00 EUR').toBe(6735000)
+		// Le compte des affaires suit la même règle : treize pour elle, onze pour la lectrice (révisé par `CRM-068` T3a,
+		// puis par `CRM-111` T8 : l'endormi de l'infogérance, en `prospection` de « Grands comptes »).
 		await expect(
 			ligneNoeud(page, 'EUR', 'Prospection').getByTestId('pilotage-affaires'),
-		).toHaveText('12')
+		).toHaveText('13')
 	})
 
 	test('S7 — l’entrée « Pilotage » de la barre latérale mène ici, atteinte au CLAVIER', async ({

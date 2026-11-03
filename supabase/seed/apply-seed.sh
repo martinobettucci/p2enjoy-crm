@@ -5477,6 +5477,148 @@ code=$(api_jeton "$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test')" 
 attendu "$code" "désactivation du webhook « Ancienne intégration »" 204
 info "Webhooks : trois, dont un limité à « Refonte » et un désactivé ; remises produites par la vraie chaîne jusqu'au récepteur local — CRM-073, docs/SPEC-seed.md §34"
 
+# --- Les rattachements multiples — CRM-111 T8, docs/SPEC-seed.md §36 -------------------------------------------------------
+# @spec CRM-111 (docs/BACKLOG.md) — tranche T8.1 ; docs/SPEC-rattachements.md §12 (les cinq situations), §5 (les gestes)
+# PAR LES VRAIES FONCTIONS (CLAUDE.md §8) : `creer_affaire`, `attach_card`, `move_card`, `snooze_card`, et les écritures
+# REST de la fiche (en-tête, formulaire, archivage), sous les jetons des personnes qui les font. Convergence par
+# présence : une affaire est retrouvée par son titre dans son channel de naissance, un rattachement par son channel, et un
+# geste n'est rejoué que si l'état n'est pas encore celui du §36.1.
+echo
+say "8 untricies. Rattachements multiples"
+
+JETON_ADMIN_RM=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+JETON_VIEWER_RM=$(sso_jeton_interne "$API" "$ANON_KEY" 'viewer@p2enjoy.test' || true)
+[ -n "$JETON_ADMIN_RM" ] && [ -n "$JETON_VIEWER_RM" ] || die "connexion d'un compte du jeu
+        impossible : les rattachements s'écrivent sous le jeton de Camille et se relisent sous celui de Farida
+        (docs/SPEC-seed.md §36.2)."
+
+RM_GRANDS_COMPTES='5eed0000-0000-4000-8000-000000000032'
+RM_REFONTE='5eed0000-0000-4000-8000-000000000034'
+RM_MAINTENANCE='5eed0000-0000-4000-8000-000000000035'
+RM_CAMILLE='5eed0000-0000-4000-8000-000000000011'
+RM_DRISS='5eed0000-0000-4000-8000-000000000012'
+RM_RELANCE='5eed0000-0000-4000-8000-000000000062'
+RM_NEGOCIATION='5eed0000-0000-4000-8000-000000000063'
+RM_SOURCE='5eed0000-0000-4000-8000-000000000082'
+RM_BUDGET='5eed0000-0000-4000-8000-000000000081'
+RM_BILLETTERIE='Plateforme de billetterie — Musée des Confluences'
+RM_INFOGERANCE='Infogérance applicative — Groupe Ardent'
+
+# Rend dans RM_AFFAIRE l'affaire au titre donné, créée dans son channel de naissance si elle n'y est pas.
+rm_affaire() { # $1 = jeton, $2 = channel de naissance, $3 = titre
+	code=$(api GET "/rest/v1/card_placements?select=card_id,affaire:cards!inner(title,deleted_at)&channel_id=eq.$2&affaire.title=eq.$(jq -rn --arg t "$3" '$t|@uri')&affaire.deleted_at=is.null")
+	attendu "$code" "lecture de l'affaire « $3 »" 200
+	RM_AFFAIRE=$(jq -r '.[0].card_id // empty' "$CORPS")
+	[ -n "$RM_AFFAIRE" ] && return 0
+	code=$(api_jeton "$1" POST /rest/v1/rpc/creer_affaire -d "$(jq -nc --arg c "$2" --arg t "$3" '{p_channel: $c, p_titre: $t}')")
+	attendu "$code" "création de l'affaire « $3 »" 200
+	RM_AFFAIRE=$(jq -r '.' "$CORPS")
+}
+# Rend dans RM_RATTACHEMENT le rattachement de l'affaire au channel, posé par `attach_card` s'il manque.
+rm_rattacher() { # $1 = affaire, $2 = channel, $3 = libellé
+	code=$(api GET "/rest/v1/card_placements?select=id&card_id=eq.$1&channel_id=eq.$2")
+	attendu "$code" "lecture du rattachement $3" 200
+	RM_RATTACHEMENT=$(jq -r '.[0].id // empty' "$CORPS")
+	[ -n "$RM_RATTACHEMENT" ] && return 0
+	code=$(api_jeton "$JETON_ADMIN_RM" POST /rest/v1/rpc/attach_card -d "$(jq -nc --arg c "$1" --arg ch "$2" '{p_card: $c, p_channel: $ch}')")
+	attendu "$code" "rattachement $3" 200
+	RM_RATTACHEMENT=$(jq -r '.id' "$CORPS")
+}
+# Fait avancer le rattachement, transition déclarée par transition déclarée, jusqu'à l'étape visée.
+rm_avancer() { # $1 = jeton, $2 = rattachement, $3 = libellé, puis les étapes dans l'ordre
+	local jeton=$1 rattachement=$2 libelle=$3 etape courante
+	shift 3
+	code=$(api GET "/rest/v1/card_placements?select=current_step_id&id=eq.$rattachement")
+	attendu "$code" "étape de $libelle" 200
+	courante=$(jq -r '.[0].current_step_id' "$CORPS")
+	# CONVERGENCE : déjà à l'étape visée, rien ne bouge ; sinon le chemin reprend APRÈS l'étape courante. Rejouer le chemin
+	# entier ferait reculer puis avancer un rattachement déjà arrivé (Négociation → Relance existe), et écrirait au fil
+	# deux déplacements à chaque passage (mesuré au deuxième passage).
+	[ "$courante" = "${!#}" ] && return 0
+	local apres=non
+	for etape in "$@"; do [ "$etape" = "$courante" ] && apres=oui; done
+	for etape in "$@"; do
+		if [ "$apres" = oui ]; then
+			[ "$etape" = "$courante" ] && apres=passe
+			continue
+		fi
+		code=$(api_jeton "$jeton" POST /rest/v1/rpc/move_card -d "$(jq -nc --arg p "$rattachement" --arg e "$etape" '{p_placement: $p, to_step_id: $e}')")
+		attendu "$code" "déplacement de $libelle" 200
+		courante=$etape
+	done
+}
+# Le responsable, le montant et la prochaine action du rattachement : le chemin de l'en-tête de la fiche.
+rm_entete() { # $1 = rattachement, $2 = responsable, $3 = montant, $4 = prochaine action, $5 = libellé
+	code=$(api_jeton "$JETON_ADMIN_RM" PATCH "/rest/v1/card_placements?id=eq.$1" -H 'Prefer: return=representation' \
+		-d "$(jq -nc --arg o "$2" --argjson m "$3" --arg a "$4" '{owner_id: $o, amount: $m, next_action: $a}')")
+	attendu "$code" "en-tête de $5" 200
+	[ "$(jq -r 'length' "$CORPS")" = "1" ] || die "l'en-tête de $5 n'a touché aucune ligne (docs/SPEC-seed.md §36.2)."
+}
+# La valeur d'un champ du bloc : le chemin du formulaire de la fiche (`on_conflict=placement_id,field_id`).
+rm_valeur() { # $1 = affaire, $2 = rattachement, $3 = champ, $4 = valeur JSON, $5 = libellé
+	code=$(api_jeton "$JETON_ADMIN_RM" POST "/rest/v1/card_field_values?on_conflict=placement_id,field_id" \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$(jq -nc --arg c "$1" --arg p "$2" --arg f "$3" --arg wf "$WF_ID" --arg ws "$WS_ID" --argjson v "$4" \
+			'{card_id: $c, placement_id: $p, field_id: $f, workflow_id: $wf, workspace_id: $ws, value: $v}')")
+	attendu "$code" "valeur du bloc de $5" 200 201
+}
+
+# 1. La billetterie : la vente dans « Grands comptes », la production dans « Refonte de site » (situations 1, 4 et 5).
+rm_affaire "$JETON_ADMIN_RM" "$RM_GRANDS_COMPTES" "$RM_BILLETTERIE"
+RM_ID_BILLETTERIE=$RM_AFFAIRE
+rm_rattacher "$RM_ID_BILLETTERIE" "$RM_GRANDS_COMPTES" "vente de la billetterie"
+RM_VENTE=$RM_RATTACHEMENT
+rm_rattacher "$RM_ID_BILLETTERIE" "$RM_REFONTE" "production de la billetterie"
+RM_PRODUCTION=$RM_RATTACHEMENT
+# Les valeurs du bloc AVANT les déplacements : la transition Relance → Négociation exige le budget (champ obligatoire).
+rm_valeur "$RM_ID_BILLETTERIE" "$RM_VENTE" "$RM_SOURCE" '"salon"' "la vente de la billetterie"
+rm_valeur "$RM_ID_BILLETTERIE" "$RM_VENTE" "$RM_BUDGET" '48000' "la vente de la billetterie"
+rm_valeur "$RM_ID_BILLETTERIE" "$RM_PRODUCTION" "$RM_SOURCE" '"recommandation"' "la production de la billetterie"
+rm_avancer "$JETON_ADMIN_RM" "$RM_VENTE" "la vente de la billetterie" "$RM_RELANCE" "$RM_NEGOCIATION"
+rm_avancer "$JETON_ADMIN_RM" "$RM_PRODUCTION" "la production de la billetterie" "$RM_RELANCE"
+rm_entete "$RM_VENTE" "$RM_CAMILLE" 48000 'Présenter la proposition au conservateur' "la vente de la billetterie"
+rm_entete "$RM_PRODUCTION" "$RM_DRISS" 36000 'Cadrer le lot billetterie avec la DSI' "la production de la billetterie"
+
+# 2. L'infogérance : active dans « Maintenance », archivée dans « Refonte de site », en sommeil dans « Grands comptes »
+#    (situations 2 et 3).
+# Driss ne fait que LIRE « Maintenance » (droit fin du §2.11) : l'administratrice crée et fait avancer, Driss est responsable.
+rm_affaire "$JETON_ADMIN_RM" "$RM_MAINTENANCE" "$RM_INFOGERANCE"
+RM_ID_INFOGERANCE=$RM_AFFAIRE
+rm_rattacher "$RM_ID_INFOGERANCE" "$RM_MAINTENANCE" "maintenance de l'infogérance"
+RM_ACTIF=$RM_RATTACHEMENT
+rm_rattacher "$RM_ID_INFOGERANCE" "$RM_REFONTE" "refonte de l'infogérance"
+RM_ARCHIVE=$RM_RATTACHEMENT
+rm_rattacher "$RM_ID_INFOGERANCE" "$RM_GRANDS_COMPTES" "grands comptes de l'infogérance"
+RM_ENDORMI=$RM_RATTACHEMENT
+rm_avancer "$JETON_ADMIN_RM" "$RM_ACTIF" "la maintenance de l'infogérance" "$RM_RELANCE"
+rm_entete "$RM_ACTIF" "$RM_DRISS" 9600 'Valider le périmètre des astreintes' "la maintenance de l'infogérance"
+code=$(api_jeton "$JETON_ADMIN_RM" PATCH "/rest/v1/card_placements?id=eq.$RM_ARCHIVE&archived_at=is.null" \
+	-H 'Prefer: return=minimal' -d "$(jq -nc --arg t "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{archived_at: $t}')")
+attendu "$code" "archivage du rattachement « Refonte de site » de l'infogérance" 204
+code=$(api_jeton "$JETON_ADMIN_RM" POST /rest/v1/rpc/snooze_card \
+	-d "$(jq -nc --arg p "$RM_ENDORMI" --arg u "$(date -u -d '+30 days' +%Y-%m-%dT09:00:00Z)" '{p_placement: $p, until: $u}')")
+attendu "$code" "sommeil du rattachement « Grands comptes » de l'infogérance" 200
+
+# 3. Vérifier l'état final (§36.3), sous la clé de service, puis la lecture de la lectrice.
+code=$(api GET "/rest/v1/card_placements?select=channel_id,current_step_id,owner_id,amount,archived_at,snoozed_until&card_id=in.($RM_ID_BILLETTERIE,$RM_ID_INFOGERANCE)")
+attendu "$code" "relecture des rattachements multiples" 200
+rm_etat=$(jq -r --arg gc "$RM_GRANDS_COMPTES" --arg rf "$RM_REFONTE" --arg mt "$RM_MAINTENANCE" '
+	[ .[] | (if .channel_id == $gc then "gc" elif .channel_id == $rf then "rf" elif .channel_id == $mt then "mt" else "?" end)
+	        + ":" + .current_step_id[-2:] + ":" + ((.amount // 0) | tonumber | floor | tostring)
+	        + ":" + (if .archived_at != null then "archive" elif .snoozed_until != null then "sommeil" else "actif" end) ]
+	| sort | join(" ")' "$CORPS")
+[ "$rm_etat" = "gc:61:0:sommeil gc:63:48000:actif mt:62:9600:actif rf:61:0:archive rf:62:36000:actif" ] \
+	|| die "les rattachements multiples ne sont pas ceux du §36.1 de docs/SPEC-seed.md : $rm_etat"
+code=$(api GET "/rest/v1/card_field_values?select=value&field_id=eq.$RM_SOURCE&card_id=eq.$RM_ID_BILLETTERIE&order=value")
+attendu "$code" "relecture des valeurs de bloc de la billetterie" 200
+[ "$(jq -c '[.[].value]' "$CORPS")" = '["recommandation","salon"]' ] \
+	|| die "les deux valeurs de bloc de la billetterie diffèrent du §36.1 : $(head -c 200 "$CORPS")"
+code=$(api_jeton "$JETON_VIEWER_RM" GET "/rest/v1/card_placements?select=channel_id&card_id=eq.$RM_ID_BILLETTERIE")
+attendu "$code" "lecture de la billetterie par la lectrice" 200
+[ "$(jq -c '[.[].channel_id]' "$CORPS")" = "[\"$RM_REFONTE\"]" ] \
+	|| die "la lectrice doit lire la billetterie par « Refonte de site » seulement (§36.1, situation 5) : $(head -c 200 "$CORPS")"
+info "Rattachements multiples : la billetterie dans deux tracks, l'infogérance active, archivée et en sommeil — CRM-111, docs/SPEC-seed.md §36"
+
 # --- Le journal d'audit couvre ses familles — CRM-072 T1, docs/SPEC-seed.md §25 ------------------------------------------
 # @spec CRM-072 (docs/BACKLOG.md) — tranche T1 ; docs/SPEC-audit.md §4, §10 ; docs/JOURNAL.md décisions 725 et 726
 # VÉRIFIÉ, JAMAIS FABRIQUÉ : `audit_log` n'a aucun chemin d'écriture cliente, et le seed n'y écrit rien. Il se remplit

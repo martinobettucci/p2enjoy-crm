@@ -1,3 +1,5 @@
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes révisés sur le seed enrichi
+--           (docs/SPEC-seed.md §36, décision 51)
 -- @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, sixième tranche :
 --            la prévisualisation des effets
 -- @verifies docs/SPEC-workflow-engine.md §7 bis.13.1 (les DEUX effets et leurs comptes mesurés),
@@ -100,8 +102,10 @@ select is(
 	   from public.previsualiser_exigence(
 	        '5eed0000-0000-4000-8000-000000000083',
 	        '5eed0000-0000-4000-8000-000000000061')),
-	array[11::bigint, 0::bigint],
-	'5 — `date-signature-prevue` × `Prospection` : 11 sur place, 0 à l''entrée');
+	-- RÉVISÉ PAR `CRM-111` T8 (décision 51) : l'infogérance du §36 dort en `Prospection` de « Grands comptes », et la
+	-- vente de sa billetterie, en `Négociation`, peut entrer en `Signature` (docs/SPEC-seed.md §36). L'inversion tient.
+	array[12::bigint, 0::bigint],
+	'5 — `date-signature-prevue` × `Prospection` : 12 sur place, 0 à l''entrée');
 
 -- 6. Ce n'est pas la fonction qui a changé, c'est la donnée qu'elle compte : l'assertion continue
 --    d'affirmer ce qu'elle affirmait — les deux nombres NE SONT PAS le même, `sur_place` restant à 0
@@ -111,8 +115,8 @@ select is(
 	   from public.previsualiser_exigence(
 	        '5eed0000-0000-4000-8000-000000000083',
 	        '5eed0000-0000-4000-8000-000000000064')),
-	array[0::bigint, 8::bigint],
-	'6 — `date-signature-prevue` × `Signature` : 0 sur place, 8 à l''entrée — l''inverse exact');
+	array[0::bigint, 9::bigint],
+	'6 — `date-signature-prevue` × `Signature` : 0 sur place, 9 à l''entrée — l''inverse exact');
 
 -- 7. LE COMPTE D'UNE ÉTAPE EST L'UNION DE SES ARÊTES. Cinq arêtes mènent à `Perdu`, et l'étape en
 --    rend 29 depuis `CRM-046` tranche 2. L'assertion vérifie l'égalité, et non

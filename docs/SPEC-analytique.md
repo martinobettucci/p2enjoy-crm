@@ -77,6 +77,14 @@ seed ne la porte, aucun trigger ne l'écrit, aucun module de la webapp ne la lit
 écrit au backlog de `CRM-034` — « `health_score` et `snoozed_until` restent jamais alimentées » — et
 `snoozed_until` en est sortie depuis `CRM-081`.
 
+> **Mesure d'époque.** Les nombres de M6 et de §5.3 sont ceux du seed de `CRM-066`. Le seed a grandi depuis — les
+> affaires du channel « Checklists » (`CRM-068`, `docs/SPEC-seed.md` §28), puis les rattachements multiples (`CRM-111`
+> T8, §36) : l'entonnoir compte des rattachements, et en rend **46** pour l'administratrice et **40** pour la lectrice,
+> pour un prévisionnel de **421 362,50 EUR** contre **354 012,50 EUR** (34 600,00 CHF pour les deux). Les valeurs
+> courantes vivent dans les preuves (`e2e/api/analytique.spec.ts`, `e2e/ui/pilotage.spec.ts`,
+> `supabase/tests/0068_entonnoir_conversion.test.sql`), révisées avec leur motif (décision 51) ; les règles décrites ici
+> ne changent pas.
+
 **M6 — le portefeuille seedé est riche et à deux devises.** 41 cards, dont **39 actives** — une en
 corbeille (`Saisie erronée`) et une archivée (`Contrat cadre 2025`). Deux devises présentes, `EUR` et
 `CHF`. **Deux cards sans montant**, dont une active (`Piste entrante à qualifier`). L'entonnoir

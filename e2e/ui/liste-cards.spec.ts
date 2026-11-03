@@ -1,3 +1,4 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes mesurés sur le seed enrichi (docs/SPEC-seed.md §36)
 // @verifies CRM-042 (docs/BACKLOG.md) — la vue liste d'un channel dans l'application réelle
 // @verifies CRM-046 (docs/BACKLOG.md) — le volume et les données longues du jeu de démonstration
 // @verifies docs/SPEC-seed.md §9.11 (le contrat du volume), §9.11.4 (la card aux données longues),
@@ -654,8 +655,11 @@ test.describe('les données longues et la seconde page, contre la pile réelle',
 	/** Mesurés en base, et non recopiés d'un souvenir (§9.11.7, preuve n° 3). */
 	const LONGUEUR_TITRE = 128
 	const LONGUEUR_ACTION = 134
-	/** §9.11.2 : 27 actives, donc une première page pleine et une seconde de deux lignes. */
-	const ACTIVES_MAINTENANCE = 27
+	/**
+	 * §9.11.2 : 27 actives, donc une première page pleine et une seconde de deux lignes. RÉVISÉ PAR `CRM-111` T8
+	 * (décision 51) : 28, l'infogérance du §36 de docs/SPEC-seed.md — une seconde page de trois lignes.
+	 */
+	const ACTIVES_MAINTENANCE = 28
 
 	/** Connexion par le formulaire réel — jamais un jeton posé à la main dans l'onglet. */
 	async function connecter(page: Page): Promise<void> {
@@ -824,7 +828,8 @@ test.describe('le parcours complet, à la souris et au clavier seuls', () => {
 	/** Le track et le channel de VOLUME : 27 cards actives, seul channel du seed à deux pages. */
 	const TRACK = 'studio-web'
 	const CHANNEL_VOLUME = 'maintenance'
-	const ACTIVES = 27
+	// RÉVISÉ PAR `CRM-111` T8 : l'infogérance du §36 de docs/SPEC-seed.md — 28.
+	const ACTIVES = 28
 
 	async function connecter(page: Page): Promise<void> {
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')

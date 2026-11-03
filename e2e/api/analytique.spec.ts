@@ -1,3 +1,4 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes mesurés sur le seed enrichi (docs/SPEC-seed.md §36)
 // @verifies CRM-066 (docs/BACKLOG.md) — analytique de conversion et prévisionnel pondéré,
 //           TRANCHE 2 a : l'agrégat descend en base ; TRANCHE 2 c : le seed exerce la résolution
 // @verifies docs/SPEC-analytique.md §6 (les quinze lignes du contrat d'API), §9 (les deux
@@ -59,11 +60,15 @@ const CADRAGE_DATA = '5eed0000-0000-4000-8000-0000000000ca'
 // RÉVISÉ PAR `CRM-068` T3a (décision 51) : les trois affaires du channel « Checklists » (`docs/SPEC-seed.md` §28), nées
 // sans montant par `creer_affaire`, ajoutent une affaire SANS MONTANT en prospection, relance et négociation (EUR) — trois
 // lignes de plus, aucun montant ni pondéré changé, le prévisionnel intact.
+// RÉVISÉ PAR `CRM-111` T8 (décision 51 ; `docs/SPEC-seed.md` §36) : l'entonnoir compte des RATTACHEMENTS. Quatre
+// s'ajoutent, actifs : la billetterie en négociation dans « Grands comptes » (48 000) et en relance dans « Refonte de site »
+// (36 000), l'infogérance en relance dans « Maintenance » (9 600) et en prospection, endormie et sans montant, dans
+// « Grands comptes ». Son rattachement archivé n'est pas compté.
 const ENTONNOIR_REPLIE = [
-	{ cle: 'prospection', devise: 'EUR', affaires: 12, sansMontant: 2, montant: 294200, pondere: 29420 },
+	{ cle: 'prospection', devise: 'EUR', affaires: 13, sansMontant: 3, montant: 294200, pondere: 29420 },
 	{ cle: 'relance', devise: 'CHF', affaires: 1, sansMontant: 0, montant: 47000, pondere: 9400 },
-	{ cle: 'relance', devise: 'EUR', affaires: 9, sansMontant: 1, montant: 284350, pondere: 56870 },
-	{ cle: 'negociation', devise: 'EUR', affaires: 10, sansMontant: 1, montant: 366850, pondere: 230752.5 },
+	{ cle: 'relance', devise: 'EUR', affaires: 11, sansMontant: 1, montant: 329950, pondere: 65990 },
+	{ cle: 'negociation', devise: 'EUR', affaires: 11, sansMontant: 1, montant: 414850, pondere: 261952.5 },
 	{ cle: 'signature', devise: 'CHF', affaires: 1, sansMontant: 0, montant: 28000, pondere: 25200 },
 	{ cle: 'realisation', devise: 'EUR', affaires: 1, sansMontant: 0, montant: 64000, pondere: 64000 },
 	{ cle: 'livre', devise: 'EUR', affaires: 7, sansMontant: 0, montant: 311000, pondere: 311000 },
@@ -167,21 +172,23 @@ test.describe("l'entonnoir de conversion, par la vraie route (docs/SPEC-analytiq
 		expect(((await reponse.json()) as { code?: string }).code).toBe('42501')
 	})
 
-	test('b — l’administratrice obtient `200`, dix-neuf lignes et quarante-deux affaires', async ({
+	// RÉVISÉ PAR `CRM-111` T8 : 21 lignes et 46 rattachements (`docs/SPEC-seed.md` §36) — deux lignes nouvelles, la
+	// négociation et la prospection de « Grands comptes » étant déjà là pour l'une, la relance de « Refonte » nouvelle.
+	test('b — l’administratrice obtient `200`, vingt et une lignes et quarante-six affaires', async ({
 		request,
 	}) => {
 		const reponse = await request.post(RPC, { headers: enTetesAuthentifies(jetonAdmin), data: {} })
 		expect(reponse.status()).toBe(200)
 		const lignes = (await reponse.json()) as LigneEntonnoir[]
-		expect(lignes).toHaveLength(19)
-		expect(total(lignes)).toBe(42)
+		expect(lignes).toHaveLength(21)
+		expect(total(lignes)).toBe(46)
 		// Les quatorze colonnes, ni plus ni moins, et sur CHAQUE ligne.
 		for (const ligne of lignes) {
 			expect(Object.keys(ligne).sort()).toEqual([...COLONNES].sort())
 		}
 	})
 
-	test('c — repliées par nœud et par devise, les dix-neuf lignes rendent les huit de M6', async ({
+	test('c — repliées par nœud et par devise, les vingt et une lignes rendent les huit de M6', async ({
 		request,
 	}) => {
 		const reponse = await request.post(RPC, { headers: enTetesAuthentifies(jetonAdmin), data: {} })
@@ -198,7 +205,8 @@ test.describe("l'entonnoir de conversion, par la vraie route (docs/SPEC-analytiq
 		}
 		// Le prévisionnel du §7.2 — les seules lignes `open`. Une affaire gagnée n'est plus une
 		// prévision, une affaire perdue vaut zéro.
-		expect(previsionnel(lignes).EUR).toBeCloseTo(381042.5, 2)
+		// RÉVISÉ PAR `CRM-111` T8 : + 7 200 + 1 920 + 31 200, les pondérés des trois rattachements chiffrés du §36.
+		expect(previsionnel(lignes).EUR).toBeCloseTo(421362.5, 2)
 		expect(previsionnel(lignes).CHF).toBeCloseTo(34600, 2)
 	})
 
@@ -226,26 +234,28 @@ test.describe("l'entonnoir de conversion, par la vraie route (docs/SPEC-analytiq
 		expect(second.map(clef)).toEqual(premier.map(clef))
 	})
 
-	test('e — le business developer obtient les mêmes quarante-deux affaires', async ({ request }) => {
+	test('e — le business developer obtient les mêmes quarante-six affaires', async ({ request }) => {
 		const reponse = await request.post(RPC, { headers: enTetesAuthentifies(jetonBizdev), data: {} })
 		expect(reponse.status()).toBe(200)
-		expect(total((await reponse.json()) as LigneEntonnoir[])).toBe(42)
+		expect(total((await reponse.json()) as LigneEntonnoir[])).toBe(46)
 	})
 
-	test('f — la lectrice obtient SEIZE lignes et TRENTE-HUIT affaires, et son prévisionnel diffère', async ({
+	// RÉVISÉ PAR `CRM-111` T8 : la lectrice lit les deux rattachements en relance du §36 (« Refonte de site »,
+	// « Maintenance »), jamais ceux de « Grands comptes » — une ligne de plus, deux affaires de plus.
+	test('f — la lectrice obtient DIX-SEPT lignes et QUARANTE affaires, et son prévisionnel diffère', async ({
 		request,
 	}) => {
 		const reponse = await request.post(RPC, { headers: enTetesAuthentifies(jetonViewer), data: {} })
 		const lignes = (await reponse.json()) as LigneEntonnoir[]
-		expect(lignes).toHaveLength(16)
-		expect(total(lignes)).toBe(38)
+		expect(lignes).toHaveLength(17)
+		expect(total(lignes)).toBe(40)
 		// AUCUNE ligne du channel qui lui est fermé.
 		expect(lignes.filter((l) => l.channel_id === CH_GRANDS_COMPTES)).toHaveLength(0)
 		// Trois lignes repliées diffèrent, et quatre sont IDENTIQUES : c'est la forme exacte de la
 		// divergence, et l'asserter en bloc empêcherait de voir qu'une seule d'entre elles a bougé.
 		const replie = new Map(replier(lignes).map((l) => [`${l.cle}/${l.devise}`, l]))
 		expect(replie.get('prospection/EUR')?.affaires).toBe(11)
-		expect(replie.get('relance/EUR')?.affaires).toBe(7)
+		expect(replie.get('relance/EUR')?.affaires).toBe(9)
 		expect(replie.get('livre/EUR')?.affaires).toBe(6)
 		expect(replie.get('negociation/EUR')?.affaires).toBe(10)
 		expect(replie.get('signature/CHF')?.affaires).toBe(1)
@@ -253,7 +263,7 @@ test.describe("l'entonnoir de conversion, par la vraie route (docs/SPEC-analytiq
 		expect(replie.get('perdu/EUR')?.affaires).toBe(1)
 		// LE PRÉVISIONNEL N'EST PAS LE MÊME, ET C'EST CORRECT. Un total est une divulgation : celui
 		// qui inclurait les affaires de `grands-comptes` les révélerait par soustraction.
-		expect(previsionnel(lignes).EUR).toBeCloseTo(344892.5, 2)
+		expect(previsionnel(lignes).EUR).toBeCloseTo(354012.5, 2)
 		expect(previsionnel(lignes).CHF).toBeCloseTo(34600, 2)
 	})
 
@@ -271,7 +281,7 @@ test.describe("l'entonnoir de conversion, par la vraie route (docs/SPEC-analytiq
 		const reponse = await request.post(RPC, { headers: enTetesService(), data: {} })
 		expect(reponse.status()).toBe(200)
 		const lignes = (await reponse.json()) as LigneEntonnoir[]
-		expect(total(lignes)).toBe(42)
+		expect(total(lignes)).toBe(46)
 		expect(lignes.filter((l) => l.channel_id === CH_GRANDS_COMPTES).length).toBeGreaterThan(0)
 	})
 
@@ -294,24 +304,27 @@ test.describe("l'entonnoir de conversion, par la vraie route (docs/SPEC-analytiq
 		// manquant n'a pas été compté, et l'affaire l'a été.
 		const replie = replier(lignes).find((l) => l.cle === 'prospection' && l.devise === 'EUR')
 		// RÉVISÉ PAR `CRM-068` T3a : « Formation IA — Cerfrance » (§28) y ajoute la sienne, sans montant elle aussi.
-		expect(replie?.affaires).toBe(12)
-		expect(replie?.sansMontant).toBe(2)
+		// RÉVISÉ PAR `CRM-111` T8 : le rattachement endormi de l'infogérance (§36), sans montant lui aussi.
+		expect(replie?.affaires).toBe(13)
+		expect(replie?.sansMontant).toBe(3)
 		expect(replie?.montant).toBeCloseTo(294200, 2)
 	})
 
 	test('j — ni l’affaire en corbeille ni l’archivée ne sont comptées', async ({ request }) => {
 		const reponse = await request.post(RPC, { headers: enTetesAuthentifies(jetonAdmin), data: {} })
 		const lignes = (await reponse.json()) as LigneEntonnoir[]
-		// `grands-comptes` porte six affaires, dont une supprimée au nœud `prospection` et une
-		// archivée au nœud `livre` : l'entonnoir doit en compter QUATRE.
+		// `grands-comptes` porte huit rattachements, dont une affaire supprimée au nœud `prospection` et une
+		// archivée au nœud `livre` : l'entonnoir doit en compter SIX — révisé par `CRM-111` T8, qui y ajoute la
+		// billetterie et l'infogérance endormie (`docs/SPEC-seed.md` §36 ; le sommeil compte, ligne *k*).
 		expect(
 			lignes
 				.filter((l) => l.channel_id === CH_GRANDS_COMPTES)
 				.reduce((somme, l) => somme + l.affaires, 0),
-		).toBe(4)
-		// Et le total du workspace vaut 42, jamais 44.
+		).toBe(6)
+		// Et le total du workspace vaut 46, jamais 49 : ni la supprimée, ni l'archivée, ni le rattachement archivé de
+		// l'infogérance dans « Refonte de site ».
 		const parService = await request.post(RPC, { headers: enTetesService(), data: {} })
-		expect(total((await parService.json()) as LigneEntonnoir[])).toBe(42)
+		expect(total((await parService.json()) as LigneEntonnoir[])).toBe(46)
 	})
 
 	test('k — l’affaire EN SOMMEIL compte, et `cards_figees` ne la rend pas', async ({ request }) => {
@@ -484,11 +497,11 @@ test.describe("l'entonnoir de conversion, par la vraie route (docs/SPEC-analytiq
 		expect(lyon?.affaires).toBe(1)
 		expect(lyon?.montant_pondere).toBeCloseTo(46800, 2)
 
-		// Et le nœud entier : 230 752,50, et non 183 425,00 — le total qu'il vaudrait si le
-		// catalogue l'emportait partout.
+		// Et le nœud entier : 261 952,50 — 230 752,50 du seed d'avant, plus la vente de la billetterie (`CRM-111` T8,
+		// 48 000 × 65 % dans « Grands comptes ») —, et non le total qu'il vaudrait si le catalogue l'emportait partout.
 		const negociation = lignes
 			.filter((l) => l.node_key === 'negociation')
 			.reduce((somme, l) => somme + Number(l.montant_pondere), 0)
-		expect(negociation).toBeCloseTo(230752.5, 2)
+		expect(negociation).toBeCloseTo(261952.5, 2)
 	})
 })

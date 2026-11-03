@@ -1,3 +1,5 @@
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes révisés sur le seed enrichi
+--           (docs/SPEC-seed.md §36, décision 51)
 -- @verifies CRM-013 (docs/BACKLOG.md) — colonnes protégées
 -- @verifies docs/SPEC-permissions-rls.md §4.3 (le mécanisme), §4.4 (ce que `CRM-013` ferme),
 --           §4.4.2 (le chemin d'insertion est déjà sûr), §4.4.3 (la forme retenue),
@@ -285,21 +287,24 @@ release savepoint p_insert;
 --
 -- RÉVISÉE PAR `CRM-068` T3a (décision 51) : le channel « Checklists » du seed (`docs/SPEC-seed.md` §28, décision 755)
 -- porte trois affaires de plus. Le compte suit le contrat du seed ; l'objet de l'assertion ne bouge pas.
+--
+-- RÉVISÉE PAR `CRM-111` T8 (décision 51) : les deux affaires à plusieurs rattachements (`docs/SPEC-seed.md` §36) —
+-- QUARANTE-SIX. Même raison, même objet.
 select is(
 	(select count(*)::int from public.cards),
-	44,
-	'les quarante-quatre cards du seed sont intactes : cette unité ne touche aucun contenu');
+	46,
+	'les quarante-six cards du seed sont intactes : cette unité ne touche aucun contenu');
 
 select is(
 	(select count(*)::int from public.cards
 	  where email_local_part ~ '^c-[0-9abcdefghjkmnpqrstvwxyz]{8}$'),
-	44,
-	'et leurs quarante-quatre adresses ont toujours la forme générée : aucune n''a été réécrite');
+	46,
+	'et leurs quarante-six adresses ont toujours la forme générée : aucune n''a été réécrite');
 
 select is(
 	(select count(distinct email_local_part)::int from public.cards),
-	44,
-	'quarante-quatre adresses DISTINCTES : l''index unique tient, et le retrait du privilège ne '
+	46,
+	'quarante-six adresses DISTINCTES : l''index unique tient, et le retrait du privilège ne '
 	'l''a pas relâché');
 
 -- =============================================================================================

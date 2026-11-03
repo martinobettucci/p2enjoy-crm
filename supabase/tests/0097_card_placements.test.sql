@@ -1,3 +1,5 @@
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes et les invariants révisés sur le seed enrichi
+--           (docs/SPEC-seed.md §36, décision 51)
 -- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.1 : la table des rattachements et la reprise (décision 705). Chaque
 --           affaire a UN rattachement, égal à ses colonnes de rattachement après la reprise et après chaque geste ;
 --           `cards` reste le seul chemin d'écriture ; la lecture suit la forme optimisée et ses trois gardes
@@ -43,9 +45,15 @@ $$;
 -- colonnes ont quitté `cards` et les miroirs sont retirés. Lue en propriétaire : la RLS ne doit rien cacher.
 create or replace function pg_temp.divergences()
 returns bigint language sql stable as $$
+	-- RÉVISÉE PAR `CRM-111` T8 (décision 51) : « exactement un » était l'invariant de T2.1, levé par T3. Les deux affaires
+	-- du §36 de docs/SPEC-seed.md en portent plusieurs, et elles seules : toute autre affaire en garde UN, et aucune
+	-- n'en a zéro. Un doublon inattendu reste donc compté.
 	select count(*)
 	  from public.cards c
-	 where (select count(*) from public.card_placements q where q.card_id = c.id) <> 1;
+	 where (select count(*) from public.card_placements q where q.card_id = c.id)
+	       <> case c.title when 'Plateforme de billetterie — Musée des Confluences' then 2
+	                       when 'Infogérance applicative — Groupe Ardent' then 3
+	                       else 1 end;
 $$;
 
 -- =============================================================================================
@@ -277,10 +285,12 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013');
 select is(
 	(select count(*)::int from public.card_placements where channel_id = '5eed0000-0000-4000-8000-000000000032'),
 	0, 'la lectrice ne voit AUCUN rattachement d''un channel qui lui est fermé — existence comprise (décision 642)');
+-- RÉVISÉ PAR `CRM-111` T8 (décision 51) : une de plus — de l'infogérance (docs/SPEC-seed.md §36), elle lit le
+-- rattachement de « Maintenance » ET l'archivé de « Refonte de site », jamais l'endormi de « Grands comptes ».
 select is(
 	(select count(*)::int from public.card_placements),
-	(select count(*)::int from public.cards),
-	'elle voit exactement un rattachement par affaire qu''elle lit : la règle est celle de `cards`');
+	(select count(*)::int from public.cards) + 1,
+	'elle voit un rattachement par affaire qu''elle lit, deux pour l''infogérance : la règle est celle de `cards`');
 -- RÉVISÉE PAR `CRM-111` T2.3.0 : le privilège de la colonne existe désormais ; c'est la POLITIQUE qui refuse la lectrice
 -- là où elle lit sans écrire — Maintenance (…035) —, en filtrant : aucune ligne touchée, aucune erreur. Le seed lui
 -- ouvre l'écriture de Prospection (…031), où elle modifie, comme elle le faisait déjà sur l'affaire.

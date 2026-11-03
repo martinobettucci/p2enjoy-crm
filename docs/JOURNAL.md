@@ -38718,3 +38718,19 @@ existant et non archivé de l'espace. Trois codes s'ajoutent : `exigence_commune
 2. le contrôle en base ;
 3. `public.proposition_du_workflow` et `app.document_cible_ia` ;
 4. le panneau de suggestion de la webapp.
+
+### `CRM-111` T8 — le seed des rattachements multiples et la campagne
+
+*2026-11-03, session interactive (4891a451).* **Fait** : `docs/SPEC-seed.md` §36 écrit avant le code ; deux affaires
+posées par les vraies fonctions. **Observations** : Driss ne fait que lire « Maintenance » (droit fin du §2.11) —
+l'administratrice crée et fait avancer ; la transition Relance → Négociation exige le budget — les valeurs du bloc
+précèdent les déplacements ; le premier `rm_avancer` rejouait tout le chemin et faisait reculer puis avancer un
+rattachement déjà arrivé (deux `moved` par passage) — corrigé pour reprendre après l'étape courante, et les deux affaires
+retirées puis reposées pour un fil propre ; un rattachement endormi compte dans les lectures non filtrées de « Grands
+comptes » (+2 et non +1). **Campagne** : API 1275 passés et 37 échecs, UI 1055 passés et 19 échecs avant révision ; tous
+les échecs dus au seed révisés avec leur motif (décision 51), et rejoués verts ; l'invariant « exactement un rattachement »
+de T2.1 devient « au moins un, et plusieurs pour les deux affaires du §36 », et la capacité d'une affaire « l'un de ses
+channels » (§4). L'image `mcp` en service ne portait pas `crm_organization_create` : reconstruite. **Reste** : cinq
+preuves rouges qui dépendent de l'état dérivé de la base partagée (lectures, relève, journal MCP, remises de webhooks,
+une instabilité connue) — T8 reste `[~]` jusqu'à leur constat sur une base reconstruite.
+
