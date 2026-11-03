@@ -244,6 +244,41 @@ garde : désarchiver les rend.
   sa RLS) ; aucune lecture par ligne. Les types `user`, `contact` et `file` ne s'affichent pas en colonne : leur valeur est
   un identifiant que la liste ne nomme pas sans une lecture de plus ; la case « listé » leur est refusée à l'écran, et la
   liste les ignore si la base les porte listés.
+- *Précisé le 2026-11-03, avant le code de T4.b (`docs/JOURNAL.md` décision 831, `docs/DESIGN_SYSTEM.md` §5.92)* :
+  - **T4.b filtre les champs actifs de tous les types sauf personne, contact et fichier**, listés ou non : lister fait une
+    colonne, pas un filtre. Les trois autres types sont la tranche **T4.c** (un filtre qui doit nommer une personne, un
+    contact, un fichier) ; les vues sauvegardées qui gardent ces filtres sont **T4.d**, à arbitrer par le responsable
+    (la liste des clés d'une vue est fermée en base, `docs/SPEC-vues-import-export.md` §2.2).
+  - **L'adresse porte chaque filtre** sous `c.<clé du champ>` — la clé ne change jamais (§3.1) : `c.siret=123` (contient),
+    `c.secteur=btp,sante` (choix), `c.ca=1000..5000`, `c.ca=1000..`, `c.ca=..5000` (bornes), `c.echeance=2026-01-01..2026-03-31`
+    (dates), `c.signe=oui|non|vide` (case). Une clé inconnue ou archivée, un choix inconnu, une borne illisible sont
+    **ignorés sans erreur** (lecture tolérante, `docs/SPEC-cards.md` §12.2). « Effacer les filtres » les retire avec les
+    autres ; la page revient à 1 à chaque changement, comme pour les autres filtres.
+  - **Au serveur, dans la même requête** : chaque filtre actif plonge une fois `card_common_field_values` sous l'affaire,
+    avec un alias propre (`c1`, `c2`…), en `!inner`, borné à son champ (`field_id=eq.`) et à sa condition ; le total et
+    la pagination restent exacts (mesuré : deux filtres combinés, 13 lignes sur 28, total juste). « Vide » (case)
+    plonge **sans** `!inner` et ne garde que l'affaire sans valeur non vide (`value` ni nulle ni `null` JSON) — mesuré :
+    3 valeurs vidées et 2 absentes rendent 5 lignes.
+  - **Les conditions, par type** : contient — `value_search` (ci-dessous) `like` le texte saisi, ramené en minuscules et
+    sans accents par l'écran, comme la recherche de la liste ignore les accents (décision 532) ; choix — un `or` de
+    `value=eq."<choix>"` ; plusieurs choix — un `or` de `value=cs.["<choix>"]` (contient l'un des choix) ; nombre et
+    montant — `value` entre les bornes (la comparaison du JSON est numérique) ; date — `value_date` entre les bornes ;
+    date et heure — `value_timestamp` entre minuit du premier jour et minuit du lendemain du dernier, à l'heure de
+    l'appareil ; case — `value` égale `true` ou `false`, ou « vide ».
+  - **Une migration ajoute trois colonnes posées par la base**, jamais par l'appelant (aucun droit d'écriture), par le
+    déclencheur de validation existant : `value_search` (texte en minuscules sans accents, pour les types texte),
+    `value_date` (type `date`), `value_timestamp` (type `datetime`). *Motif mesuré* : la validation accepte toute chaîne que
+    PostgreSQL sait convertir (`::date`, `::timestamptz`) — comparer les chaînes JSON ne serait juste que pour l'ISO.
+    Les valeurs existantes sont reprises par la migration, sans toucher à `updated_at`. Aucun index : le volume ne le
+    justifie pas encore (`CLAUDE.md` §21) ; la mesure est refaite en T4.b.
+  - **Le coût sous la RLS, mesuré le 2026-11-03** (5 champs × 45 affaires, canal de 28 rattachements, profil `bizdev`) :
+    la liste passe de 9 ms à **30 ms** avec un filtre ; la politique de lecture de la valeur (`app.can_read_card`) est
+    évaluée sur chaque valeur candidate, environ 0,5 ms chacune, comme en T1. La proposition de T1 — ne pas réévaluer
+    les droits ligne à ligne — **n'est pas tenable par PostgREST** : un filtre sur une table plongée passe par sa
+    politique. T4.b la remplace par une **mesure à refaire** : réécrire la politique de lecture en semi-jointure sur les
+    rattachements lisibles, si elle rend le même droit, est mesuré avant le code ; à défaut, le coût est accepté et
+    consigné au DAT, avec son seuil (environ 0,5 s pour 1 000 affaires porteuses du champ dans un channel).
+  - **Le connecteur MCP** : le filtre de `crm_card_list` est la tranche T9 (décision 664) ; T4.b ne l'ajoute pas.
 
 ## 9. Modèles d'email (décision 664, complément 2)
 

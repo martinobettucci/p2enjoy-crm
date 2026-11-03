@@ -38877,3 +38877,32 @@ corriger si le responsable en désigne une autre.
 
 **Conséquences** : les sessions 75, 25 et d1 en sont prévenues ; elles ne jouent plus de campagne complète et transmettent
 à la session 3a toute instruction de livrer. Leurs comptes rendus nomment le sous-ensemble joué.
+
+### décision 831 — `CRM-112` T4.b : les filtres des champs de l'affaire, spécifiés avant le code
+
+*2026-11-03, session 4522fa9c (p2enjoy-crm-3a), pendant la campagne de livraison ; précision de conception sous la
+décision 664 (arbitrage 4), qui a validé les filtres par type.*
+**Problème** : T4.b filtre la vue liste sur les champs communs, au serveur, sans fausser le total ni la pagination.
+**Observations, mesurées le 2026-11-03** sur une sonde de 5 champs × 45 affaires (retirée ensuite, déclencheurs
+suspendus pour ne rien écrire au fil), canal de 28 rattachements, jeton réel de `bizdev`, PostgREST v14.12 :
+- PostgREST filtre le JSON plongé directement : `value=eq."a"` (13/28), `value=cs.["a"]`, `value=gte.1000` (27/28),
+  `value->>0=ilike.*x*` (PostgreSQL 17 rend le texte d'un scalaire) ; deux alias `!inner` du même plongement font deux
+  filtres combinés, total exact ; `value=ilike` est refusé (`42883`) ;
+- « vide » : plongement sans `!inner`, `field_id`, `value=not.is.null`, `value=neq.null`, puis `alias=is.null` — 5
+  lignes pour 3 valeurs vidées et 2 absentes ;
+- la validation accepte toute chaîne convertible (`::date`, `::timestamptz`) : comparer les chaînes JSON d'une date
+  n'est juste que pour l'ISO ;
+- coût SQL : 9 ms sans filtre, 30 ms avec — `app.can_read_card` évaluée sur chaque valeur candidate, ~0,5 ms chacune
+  (même constat qu'en T1) ; 85 ms puis 140 ms en HTTP.
+**Décision** (`docs/SPEC-champs-communs.md` §8, précision T4.b ; `docs/DESIGN_SYSTEM.md` §5.92) : un bouton « Champs
+de l'affaire » dans la barre de filtres déplie un panneau dans le flux, un `fieldset` par champ, « Appliquer » ; l'adresse
+porte `c.<clé>` ; un plongement `!inner` par filtre ; trois colonnes posées par le déclencheur de validation —
+`value_search`, `value_date`, `value_timestamp` — dans une migration au premier numéro libre ; tous les types sauf
+personne, contact, fichier (T4.c). **La proposition de T1** (« ne pas réévaluer les droits ligne à ligne ») n'est pas
+tenable par PostgREST ; elle devient une mesure à faire avant le code : une politique de lecture en semi-jointure sur les
+rattachements lisibles, si elle rend le même droit ; sinon le coût est accepté et consigné au DAT avec son seuil.
+**Solutions écartées** : comparer les chaînes JSON des dates (faux hors ISO) ; une fonction RPC qui rendrait la page
+filtrée (elle reprendrait toute la composition de la liste que PostgREST fait déjà) ; filtrer les seuls champs listés
+(la spécification filtre par type, lister fait une colonne). **Question laissée au responsable** : T4.d, les vues
+sauvegardées qui gardent ces filtres (clés fermées en base). **MCP** : le filtre de `crm_card_list` reste T9.
+

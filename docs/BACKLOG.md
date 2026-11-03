@@ -17630,7 +17630,16 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
               `3afd9295` seule ne passe pas `tsc` (constaté sur un export de la révision) ; avec les clés, elle passe.
       - [ ] **T4.b — les filtres au serveur** : un filtre par type (§8), dans la même requête paginée ; colonnes de
             recherche typées sur `card_common_field_values` (migration), mesures du coût sous la RLS ; l'état dans
-            l'adresse.
+            l'adresse. *Spécifiée le 2026-11-03 avant le code* (décision 831) : `docs/SPEC-champs-communs.md` §8
+            (précision T4.b), `docs/DESIGN_SYSTEM.md` §5.92 — le bouton « Champs de l'affaire » et son panneau, les
+            paramètres `c.<clé>`, un plongement `!inner` par filtre, la migration de `value_search`, `value_date` et
+            `value_timestamp` (numéro pris à la synchronisation), la mesure d'une politique de lecture en semi-jointure
+            avant le code. Tous les types sauf personne, contact et fichier. MCP : T9.
+      - [ ] **T4.c — les filtres personne, contact et fichier** (§8) : un filtre qui nomme une personne, un contact ;
+            « renseigné ou vide » pour un fichier. À spécifier.
+      - [ ] **T4.d — les filtres des champs dans les vues sauvegardées** : **à arbitrer par le responsable** — la liste
+            des clés d'une vue est fermée en base (`docs/SPEC-vues-import-export.md` §2.2) ; jusque-là, une vue ne garde
+            pas ces filtres, et « Filtres modifiés depuis la vue » ne les compte pas.
 - [ ] **T5** — modèles d'email : `{{card.field.<clé>}}`, contrôle d'écriture par déclencheur, rendu, sélecteur.
 - [ ] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
 - [ ] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.

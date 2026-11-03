@@ -7791,3 +7791,36 @@ spécifié par `docs/SPEC-champs-communs.md` §8 ; ces règles ne disent que de 
   appareil : c'est une donnée de l'espace, posée par l'administrateur (`CLAUDE.md` §11).
 - **Le tableau défile dans son conteneur** (§12.6) ; la page ne défile jamais de côté (§7).
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.**
+
+### 5.92 Filtrer la vue liste sur les champs de l'affaire — `CRM-112` T4.b
+
+*Écrit le 2026-11-03, avant le code (`docs/JOURNAL.md` décision 831), après relecture intégrale de ce document le même
+jour.* Ce que le filtre envoie et compte est spécifié par `docs/SPEC-champs-communs.md` §8 (précision T4.b) ; ces règles
+ne disent que de quoi il a l'air.
+
+- **UN BOUTON « Champs de l'affaire » REJOINT LA BARRE DE FILTRES** (§5.9), après « Étiquette » : secondaire, icône
+  `SlidersHorizontal` de Lucide avant le libellé, `aria-expanded` et `aria-controls`. Quand des filtres de champ sont
+  actifs, leur nombre suit le libellé — « Champs de l'affaire (2) » — : on sait sans ouvrir qu'un filtre restreint la
+  liste. Il n'est rendu que si l'espace a un champ filtrable, ou qu'un filtre posé par l'adresse doit pouvoir se retirer
+  (la règle du filtre « Étiquette », §5.73).
+- **IL DÉPLIE UN PANNEAU DANS LE FLUX, SOUS LA BARRE**, jamais une modale ni un menu flottant : la liste reste visible
+  sous lui, et le panneau tient autant de champs qu'il le faut. Carte `--color-surface`, bordure `--color-border`,
+  `rounded-md`, marge interne `--space-4`. Une grille `repeat(auto-fill, minmax(16rem, 1fr))`, une colonne à 390 px.
+  « Échap » le replie et rend le focus au bouton.
+- **UN `fieldset` PAR CHAMP**, dans l'ordre de la partie commune, sa `legend` le libellé du champ (13 px
+  `--color-text-2`, comme un libellé du §5.7) ; le contrôle selon le type :
+  - texte, texte long, email, téléphone, adresse web : un champ « contient » ;
+  - choix et choix multiple : les choix en cases de 24 px (§5.7 bis), un par ligne — « est l'un des choix cochés » ou
+    « contient l'un des choix cochés » en aide 13 px `--color-text-2` sous la légende ;
+  - nombre et montant : deux champs côte à côte, « De » et « À », chacun facultatif ;
+  - date, date et heure : deux champs date, « Du » et « Au », chacun facultatif ;
+  - case : un `select` « Indifférent », « Oui », « Non », « Vide ».
+- **« Appliquer » (primaire) et « Fermer » (discret) terminent le panneau** : rien ne filtre avant « Appliquer », comme
+  la recherche attend sa validation. « Appliquer » ramène à la page 1 ; le panneau reste
+  ouvert, pour corriger. Une borne illisible ne part pas : le champ dit « Saisissez un nombre. » ou « Saisissez une
+  date. » sous lui, en `--color-danger` avec `aria-invalid` (§5.7), et rien n'est appliqué.
+- **« Effacer les filtres » les retire avec les autres** (`docs/SPEC-cards.md` §16.12.5) ; il paraît dès qu'un filtre de champ est actif.
+  L'état vide « Aucune affaire ne correspond à ce filtre » porte le même geste (§5.8).
+- **Les types personne, contact et fichier n'y paraissent pas encore** (tranche T4.c), et aucune phrase ne l'annonce :
+  un contrôle absent ne promet rien.
+- **Aucune couleur, aucun jeton nouveau** ; une icône nouvelle, `SlidersHorizontal`, réservée à ce bouton.
