@@ -17445,6 +17445,10 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       - [ ] **T2.c.2 — les comparaisons de versions** (0040, 0043) : la collection `required_common_fields` dans
             `compare_workflow_versions` et `compare_workflow_with_source`, avec la liste fermée de la webapp
             (`versions-workflow.ts`) et son libellé. Avec T3.
+      - [x] **T2.d.0 — l'acceptation d'une suggestion garde les champs communs exigés** (défaut de la `0157`, trouvé
+            avant toute livraison). *Faite le 2026-11-03*, migration `0159` : test rouge avant le correctif (l'exigence
+            retirée), vert après ; pgTAP `0148` **4/4** ; suite **136 fichiers, 4 854 assertions** ; les 5 specs API de
+            l'assistant **21/21**.
       - [ ] **T2.d — l'assistant IA** (0102, 0103) : une proposition vise un champ commun existant par sa clé, sans en
             créer ; pgTAP ; API.
 - [ ] **T3** — écrans : Réglages ▸ « Champs de l'affaire », exigence dans l'éditeur de workflow, partie commune de la

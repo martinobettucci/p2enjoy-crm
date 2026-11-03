@@ -2481,6 +2481,14 @@ uuid)` et `drop function public.mail_inbound_account_record_sync(uuid)`, **avec 
 d'avant** : l'image de `main` appelle `mail_inbound_account_record_sync` à chaque relève, et chaque relève échouerait sans
 elle.
 
+### Migration `0159` — accepter une suggestion de l'assistant garde les champs communs exigés (`CRM-112` T2.d.0 ; livrée en développement le 2026-11-03)
+
+`docs/SPEC-champs-communs.md` §5. **`app.document_cible_ia`** est reprise de sa définition en base, avec un seul ajout : le
+document cible reprend `required_common_fields` du workflow vivant, pour les transitions que la proposition garde, et
+seulement quand il y en a. **Corrige un défaut de la `0157`, jamais livré** : `app.appliquer_composition` lit une clé
+absente comme « aucune exigence », si bien qu'une suggestion acceptée retirait les champs communs exigés. **Retrait** :
+reposer la fonction telle qu'en base avant la `0159`.
+
 ### Migration `0158` — le rendu d'un modèle par rattachement (`CRM-111` T6.2, décisions 657 et 821 ; livrée en développement le 2026-11-03)
 
 `docs/SPEC-modeles-emails.md` §15 ; `docs/SPEC-rattachements.md` §7. **Aucune table, aucune donnée.**

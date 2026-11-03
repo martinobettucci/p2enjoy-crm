@@ -38664,3 +38664,23 @@ channel. **Conséquences** : INC-065 trouve sa règle — une adresse d'un chann
 le dit ; le scénario `e2e/ui/formulaire.spec.ts` qui attend la fiche sous un track inexistant (décision 613) est révisé
 dans T7.1. **Découpage** : T7.1 à T7.6 (`docs/BACKLOG.md`). **MCP** : rien de nouveau, le §11 tranche déjà (T9).
 
+
+### `CRM-112` T2.d.0 : un défaut de la `0157`, trouvé avant toute livraison (2026-11-03)
+
+**Problème.** La restauration, `app.appliquer_composition`, lit une clé `required_common_fields` absente comme « aucune
+exigence ». C'est voulu pour une version antérieure aux champs communs. Mais l'acceptation d'une suggestion de
+l'assistant applique un document que construit `app.document_cible_ia`, et ce document ne portait pas cette clé : une
+suggestion acceptée **retirait donc les champs communs exigés** du workflow.
+
+**Comment il a été trouvé.** En lisant les fonctions de l'assistant pour préparer T2.d, avant d'écrire la moindre ligne.
+Toutes les fonctions qui appellent `app.appliquer_composition` ont été recensées : la restauration (qui lit la version),
+l'acceptation (qui lit `document_cible_ia`) et le générateur (un workflow neuf, sans exigence). Seule l'acceptation était
+en défaut.
+
+**Correction** (`0159`, `CRM-112` T2.d.0) :
+- `app.document_cible_ia` reprend les exigences vivantes des transitions que la proposition garde ;
+- le test, rouge avant le correctif (l'exigence retirée), est vert après ;
+- la `0159` part toujours dans la même fenêtre que la `0157` (`docs/PROD_MIGRATIONS.md` §3).
+
+**Leçon.** Quand une fonction partagée apprend à lire une clé nouvelle, tous ses appelants doivent être recensés avant le
+commit, et non après.

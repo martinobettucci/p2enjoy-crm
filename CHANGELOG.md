@@ -28,6 +28,8 @@ d'exécuter le code attendu.
   la transition. Le refus `missing_required_fields` nomme sa clé après celles des champs de workflow.
 - **T2.c.1 (migration 157)** : les versions d'un workflow photographient les champs communs exigés. La restauration
   les rétablit et refuse un champ archivé ; la copie vers un track les reprend, et le journal d'audit les inscrit.
+- **T2.d.0 (migration 159)** : accepter une suggestion de l'assistant garde les champs communs exigés. Elle corrige la
+  157 et part avec elle.
 
 - **`CRM-127` T2 et T3 — la relève date `last_sync_at`, et le test de connexion d'un compte de messagerie passe par une
   fonction edge** (décision 816, INC-340 ; `docs/SPEC-mail-subsystem.md` §23). Migration `0151` :
