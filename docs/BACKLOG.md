@@ -17606,8 +17606,9 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
               4 927 assertions** ;
             - unitaires **5 366** (le détail commun) ; E2E `fiche-champs-communs` étendue (la ligne du fil, l'événement
               relu en base sans rattachement) et `timeline.spec.ts` : **20/20** ; capture observée.
-- [ ] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; la case « Afficher dans la liste » de
+- [@] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; la case « Afficher dans la liste » de
       Réglages ▸ « Champs de l'affaire » (reportée de T3.a, `docs/DESIGN_SYSTEM.md` §5.86) ; unitaires ; API.
+      *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-3a) depuis 2026-11-03 18:30 UTC — état avant : [ ]*
 - [ ] **T5** — modèles d'email : `{{card.field.<clé>}}`, contrôle d'écriture par déclencheur, rendu, sélecteur.
 - [ ] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
 - [ ] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.
