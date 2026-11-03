@@ -9,6 +9,8 @@
 # @spec INC-266 (docs/INCONSISTENCY_REPORT.md, décision 619) — deux relèves d'un même compte ne se chevauchent pas
 # @spec CRM-127 (docs/BACKLOG.md) — tranche T2 : la relève allée au bout écrit `last_sync_at` (docs/SPEC-mail-subsystem.md
 #       §23.2, INC-340, décision 816)
+# @spec CRM-111 (docs/BACKLOG.md) — tranche T6.1 : le dossier d'une affaire est `CRM/Affaires/<titre> (<id court>)`, hors de
+#       l'arborescence ; plus aucun parent n'est inscrit (docs/SPEC-rattachements.md §7, décisions 657 et 818)
 #
 # CE MODULE ORCHESTRE, IL NE DÉCIDE PAS. L'analyse MIME vit dans `mime_analyse`, l'antivirus dans
 # `antivirus`, l'accès à la base dans `postgrest` : ce fichier enchaîne, et c'est tout. La
@@ -119,7 +121,7 @@ def ranger_dans_dossier(
     dossier_source: str,
     uid: int,
 ) -> bool:
-    """Crée `CRM/<Track>/<Channel>/<Card>` s'il le faut, y COPIE le message, et mémorise le chemin.
+    """Crée `CRM/Affaires/<affaire>` s'il le faut, y COPIE le message, et mémorise le chemin (`CRM-111` T6.1).
 
     Le chemin RÉEL est relu après création — le serveur ré-encode les noms (§17.1) — et c'est lui
     qui sert de cible à la copie comme de valeur à la correspondance. Le dossier source est
@@ -133,18 +135,9 @@ def ranger_dans_dossier(
 
     cree = creer_arborescence(imap, chemin)
 
-    # LES TROIS NIVEAUX SONT MÉMORISÉS, pas seulement la card. Sans les deux parents, renommer un
-    # track n'aurait rien à renommer : le service déplacerait chaque card une à une et laisserait
-    # un dossier vide derrière lui (§4.5).
-    for parent in client_base.parents_de_card(card_id):
-        client_base.enregistrer_dossier(
-            account_id=account_id,
-            entity_type=parent["entity_type"],
-            entity_id=parent["entity_id"],
-            requested_path=parent["chemin"],
-            actual_path=parent["chemin"],
-        )
-
+    # `CRM-111` T6.1 : le dossier d'une affaire ne vit plus sous son track et son channel, qui ne le contiennent plus.
+    # Seule l'affaire est mémorisée : y inscrire encore des parents ferait renommer des dossiers qui ne la portent pas,
+    # et un renommage refusé — un dossier de track absent — arrêterait la boucle des renommages (§4.5).
     client_base.enregistrer_dossier(
         account_id=account_id,
         entity_type="card",

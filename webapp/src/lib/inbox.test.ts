@@ -15,6 +15,8 @@
 //
 // LA RÉDUCTION DU HTML EST ÉPROUVÉE SANS NAVIGATEUR : c'est tout l'objet de la séparation entre
 // `inbox.ts` et `RouteInbox.tsx`, et c'est la garantie de sécurité la plus importante de l'unité.
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T6.1 : l'arbre porte les non classés puis le nœud « Affaires », sans track
+//           ni channel (docs/DESIGN_SYSTEM.md §5.4 ; docs/SPEC-rattachements.md §7, décisions 657 et 818)
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -158,51 +160,41 @@ const ligneArbre = (partiel: Record<string, unknown>) => ({
 	...partiel,
 }) as never
 
-describe('la construction de l’arbre (§18.3)', () => {
+describe('la construction de l’arbre (§18.3 ; CRM-111 T6.1)', () => {
 	it('porte le compte des non classés, et le garde MÊME À ZÉRO', () => {
-		expect(construireArbre([ligneArbre({ nombre: 0 })])).toEqual({ nonClasses: 0, nonClassesNonLus: 0, tracks: [] })
+		expect(construireArbre([ligneArbre({ nombre: 0 })])).toEqual({
+			nonClasses: 0,
+			nonClassesNonLus: 0,
+			affaires: { nombre: 0, nonLus: 0, cards: [] },
+		})
 		expect(construireArbre([ligneArbre({ nombre: 3 })]).nonClasses).toBe(3)
 	})
 
-	it('cumule les comptes des cards vers leur channel, puis vers leur track', () => {
+	it('range les affaires sous le seul nœud « Affaires », sans track ni channel, et en cumule les comptes', () => {
 		const arbre = construireArbre([
 			ligneArbre({ nombre: 1 }),
-			ligneArbre({
-				track_id: 't1', track_name: 'Studio web', channel_id: 'h1', channel_name: 'Prospection',
-				card_id: 'c1', card_title: 'Refonte', nombre: 2,
-			}),
-			ligneArbre({
-				track_id: 't1', track_name: 'Studio web', channel_id: 'h1', channel_name: 'Prospection',
-				card_id: 'c2', card_title: 'Intranet', nombre: 5,
-			}),
-			ligneArbre({
-				track_id: 't1', track_name: 'Studio web', channel_id: 'h2', channel_name: 'Maintenance',
-				card_id: 'c3', card_title: 'Support', nombre: 4,
-			}),
+			ligneArbre({ card_id: 'c1', card_title: 'Intranet', nombre: 2 }),
+			ligneArbre({ card_id: 'c2', card_title: 'Refonte', nombre: 5 }),
 		])
 		expect(arbre.nonClasses).toBe(1)
-		expect(arbre.tracks).toHaveLength(1)
-		expect(arbre.tracks[0]?.nombre).toBe(11)
-		expect(arbre.tracks[0]?.channels.map((channel) => [channel.nom, channel.nombre])).toEqual([
-			['Prospection', 7],
-			['Maintenance', 4],
+		expect(arbre.affaires.nombre).toBe(7)
+		expect(arbre.affaires.cards.map((card) => [card.titre, card.nombre])).toEqual([
+			['Intranet', 2],
+			['Refonte', 5],
 		])
 	})
 
-	// L'arborescence ne rejoue PAS le board : une inbox est une vue du courrier, pas un second
-	// board. Seules les branches qui portent du courrier apparaissent (§18.3).
-	it('ne fabrique aucune branche : un track sans courrier n’a pas de ligne, donc pas de nœud', () => {
-		const arbre = construireArbre([ligneArbre({ nombre: 0 })])
-		expect(arbre.tracks).toEqual([])
+	it('ne fabrique aucune branche : sans courrier classé, le nœud « Affaires » est vide', () => {
+		expect(construireArbre([ligneArbre({ nombre: 0 })]).affaires.cards).toEqual([])
 	})
 
 	it('conserve l’ORDRE rendu par la base, sans le retrier', () => {
 		const arbre = construireArbre([
 			ligneArbre({ nombre: 0 }),
-			ligneArbre({ track_id: 'tz', track_name: 'Zèbre', channel_id: 'h', channel_name: 'C', card_id: 'a', card_title: 'A', nombre: 1 }),
-			ligneArbre({ track_id: 'ta', track_name: 'Alpha', channel_id: 'h2', channel_name: 'C', card_id: 'b', card_title: 'B', nombre: 1 }),
+			ligneArbre({ card_id: 'z', card_title: 'Zèbre', nombre: 1 }),
+			ligneArbre({ card_id: 'a', card_title: 'Alpha', nombre: 1 }),
 		])
-		expect(arbre.tracks.map((track) => track.nom)).toEqual(['Zèbre', 'Alpha'])
+		expect(arbre.affaires.cards.map((card) => card.titre)).toEqual(['Zèbre', 'Alpha'])
 	})
 })
 
@@ -385,22 +377,15 @@ describe('l’état de lecture (§18 bis)', () => {
 	it('cumule les non lus À CÔTÉ du total, qui reste (décision 716)', () => {
 		const arbre = construireArbre([
 			ligneArbre({ nombre: 2, unread_count: 1 }),
-			ligneArbre({
-				track_id: 't1', track_name: 'Studio web', channel_id: 'h1', channel_name: 'Prospection',
-				card_id: 'c1', card_title: 'Refonte', nombre: 3, unread_count: 2,
-			}),
-			ligneArbre({
-				track_id: 't1', track_name: 'Studio web', channel_id: 'h2', channel_name: 'Maintenance',
-				card_id: 'c2', card_title: 'Support', nombre: 4, unread_count: 0,
-			}),
+			ligneArbre({ card_id: 'c1', card_title: 'Refonte', nombre: 3, unread_count: 2 }),
+			ligneArbre({ card_id: 'c2', card_title: 'Support', nombre: 4, unread_count: 0 }),
 		])
 		expect([arbre.nonClasses, arbre.nonClassesNonLus]).toEqual([2, 1])
-		expect([arbre.tracks[0]?.nombre, arbre.tracks[0]?.nonLus]).toEqual([7, 2])
-		expect(arbre.tracks[0]?.channels.map((channel) => [channel.nombre, channel.nonLus])).toEqual([
+		expect([arbre.affaires.nombre, arbre.affaires.nonLus]).toEqual([7, 2])
+		expect(arbre.affaires.cards.map((card) => [card.nombre, card.nonLus])).toEqual([
 			[3, 2],
 			[4, 0],
 		])
-		expect(arbre.tracks[0]?.channels[0]?.cards[0]?.nonLus).toBe(2)
 	})
 
 	it('écrit la pastille : absente à zéro, exacte jusqu’à 99, « 99+ » au-delà', () => {

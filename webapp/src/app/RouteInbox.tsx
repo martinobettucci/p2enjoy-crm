@@ -41,6 +41,8 @@
 //
 // AUCUN DROIT N'EST APPLIQUÉ ICI. Les compteurs, la liste et le message sont ce que la RLS laisse
 // passer (§18.1) ; l'écran ne filtre rien et ne devine rien.
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T6.1 : l'arbre de l'inbox — « Non classés », puis le nœud « Affaires »,
+//       sans track ni channel (docs/DESIGN_SYSTEM.md §5.4 ; docs/SPEC-rattachements.md §7, décisions 657 et 818)
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CheckCheck, ChevronDown, ChevronRight, Inbox, Mail, MailOpen, MailX, Moon, Sparkles, Sun } from 'lucide-react'
@@ -294,6 +296,9 @@ function BoutonDossier({
 	)
 }
 
+/** `CRM-111` T6.1 : la clé de dépliage du nœud « Affaires », distincte de tout identifiant d'affaire. */
+const NOEUD_AFFAIRES = 'affaires'
+
 function PanneauDossiers({
 	etat,
 	selection,
@@ -344,65 +349,41 @@ function PanneauDossiers({
 							/>
 						</li>
 					</ul>
-					{etat.donnees.tracks.length === 0 ? (
+					{/* `CRM-111` T6.1 (§5.4) : un seul nœud « Affaires », plus de track ni de channel — le dossier d'une affaire vit
+					    sous `CRM/Affaires/`, et une affaire partagée n'en a qu'un. */}
+					{etat.donnees.affaires.cards.length === 0 ? (
 						<EtatVide titre={t('inbox.folders.empty.title')} corps={t('inbox.folders.empty.body')} />
 					) : (
 						<ul className="border-t border-border mt-1 pt-1">
-							{etat.donnees.tracks.map((track) => (
-								<li key={track.id}>
-									<BoutonDossier
-										libelle={track.nom}
-										nombre={track.nombre}
-										nonLus={track.nonLus}
-										profondeur={0}
-										choisi={false}
-										depliage={{
-											ouvert: !replies.has(track.id),
-											basculer: () => basculer(track.id),
-										}}
-									/>
-									{replies.has(track.id) ? null : (
-										<ul>
-											{track.channels.map((channel) => (
-												<li key={channel.id}>
-													<BoutonDossier
-														libelle={channel.nom}
-														nombre={channel.nombre}
-														nonLus={channel.nonLus}
-														profondeur={1}
-														choisi={false}
-														depliage={{
-															ouvert: !replies.has(channel.id),
-															basculer: () => basculer(channel.id),
-														}}
-													/>
-													{replies.has(channel.id) ? null : (
-														<ul>
-															{channel.cards.map((card) => (
-																<li key={card.id}>
-																	<BoutonDossier
-																		libelle={card.titre}
-																		nombre={card.nombre}
-																		nonLus={card.nonLus}
-																		profondeur={2}
-																		choisi={
-																			selection?.genre === 'card' &&
-																			selection.cardId === card.id
-																		}
-																		onChoisir={() =>
-																			onChoisir({ genre: 'card', cardId: card.id })
-																		}
-																	/>
-																</li>
-															))}
-														</ul>
-													)}
-												</li>
-											))}
-										</ul>
-									)}
-								</li>
-							))}
+							<li>
+								<BoutonDossier
+									libelle={t('inbox.folders.cards')}
+									nombre={etat.donnees.affaires.nombre}
+									nonLus={etat.donnees.affaires.nonLus}
+									profondeur={0}
+									choisi={false}
+									depliage={{
+										ouvert: !replies.has(NOEUD_AFFAIRES),
+										basculer: () => basculer(NOEUD_AFFAIRES),
+									}}
+								/>
+								{replies.has(NOEUD_AFFAIRES) ? null : (
+									<ul>
+										{etat.donnees.affaires.cards.map((card) => (
+											<li key={card.id}>
+												<BoutonDossier
+													libelle={card.titre}
+													nombre={card.nombre}
+													nonLus={card.nonLus}
+													profondeur={1}
+													choisi={selection?.genre === 'card' && selection.cardId === card.id}
+													onChoisir={() => onChoisir({ genre: 'card', cardId: card.id })}
+												/>
+											</li>
+										))}
+									</ul>
+								)}
+							</li>
 						</ul>
 					)}
 				</nav>

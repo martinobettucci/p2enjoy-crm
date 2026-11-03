@@ -7,7 +7,8 @@
 # @spec docs/JOURNAL.md décision 316
 # @spec CRM-058 (docs/BACKLOG.md) — tranche 2 : la lecture et l'effacement des pièces à envoyer, l'archive des pièces
 #       envoyées — docs/SPEC-mail-subsystem.md §19 bis.2 points 7 et 8, §19 bis.4
-# @spec CRM-111 T2.4.2 (docs/BACKLOG.md) — le channel d'une card se lit sur son plus ancien rattachement (docs/SPEC-rattachements.md §7)
+# @spec CRM-111 T2.4.2 et T6.1 (docs/BACKLOG.md) — le dossier d'une affaire ne nomme plus ses parents : `parents_de_card` est retiré
+#       (docs/SPEC-rattachements.md §7, décisions 657 et 818)
 # @spec CRM-074 (docs/BACKLOG.md) — tranche T2 : la prise et le résultat des extractions de texte, la lecture d'une pièce reçue
 #       (docs/SPEC-pieces-jointes.md §3, §4.1)
 # @spec CRM-127 (docs/BACKLOG.md) — tranche T2 : la relève réussie écrit `last_sync_at` (docs/SPEC-mail-subsystem.md §23.2,
@@ -401,48 +402,6 @@ class PostgrestClient:
             },
         )
         return resultat if isinstance(resultat, str) else None
-
-    def parents_de_card(self, card_id: str) -> list[dict[str, str]]:
-        """Le track et le channel d'une card, avec leurs chemins souhaités.
-
-        Les TROIS niveaux sont mémorisés, et pas seulement la card : sans les deux parents, un
-        renommage de track n'aurait rien à renommer et déplacerait les cards une à une en laissant
-        un dossier vide derrière (§4.5).
-
-        DEUX LECTURES PLATES PLUTÔT QU'UNE RELATION EMBARQUÉE, et c'est mesuré : `cards` portait DEUX
-        clés étrangères vers `channels` — une par workflow, une par workspace —, et PostgREST refuse
-        l'ambiguïté par un `PGRST201`. Nommer l'une des deux contraintes marcherait, mais lierait ce
-        service à un nom d'index ; deux requêtes sans jointure ne dépendent de rien.
-        """
-
-        # `CRM-111` T2.4.2 : le channel est celui du PLUS ANCIEN rattachement de la card
-        # (docs/SPEC-rattachements.md §7), comme `app.card_first_placement` en base.
-        _, corps = self._rest(
-            "GET",
-            f"/rest/v1/card_placements?card_id=eq.{card_id}&select=channel_id"
-            "&order=created_at.asc,id.asc&limit=1",
-        )
-        rattachements = json.loads(corps) if corps else []
-        if not rattachements or not rattachements[0].get("channel_id"):
-            return []
-        channel_id = rattachements[0]["channel_id"]
-
-        _, corps = self._rest("GET", f"/rest/v1/channels?id=eq.{channel_id}&select=track_id")
-        channels = json.loads(corps) if corps else []
-        track_id = channels[0]["track_id"] if channels else None
-
-        parents: list[dict[str, str]] = []
-        for type_entite, identifiant in (("track", track_id), ("channel", channel_id)):
-            if not identifiant:
-                continue
-            chemin = self._rpc(
-                "chemin_dossier_entite", {"p_type": type_entite, "p_id": identifiant}
-            )
-            if isinstance(chemin, str):
-                parents.append(
-                    {"entity_type": type_entite, "entity_id": identifiant, "chemin": chemin}
-                )
-        return parents
 
     def reparenter_dossiers(self, account_id: str, ancien: str, nouveau: str) -> int:
         """Fait suivre en base les descendants que le serveur a déjà déplacés (§4.5)."""

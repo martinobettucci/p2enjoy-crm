@@ -519,6 +519,11 @@ changelog.*
   refus de plus). **`mail-sync`** joint les pièces, archive avant d'envoyer, efface les dépôts abandonnés après 24 heures.
 - **Le seed** fait partir un message réel avec copie cachée et pièce jointe depuis « Refonte du monitoring — Vertuo ».
 
+- **`CRM-111` T6.1 — le dossier d'une affaire hors de l'arborescence** (migration `0154`) : le dossier IMAP d'une affaire
+  devient `CRM/Affaires/<titre> (<8 derniers caractères de l'identifiant>)`, et `mail-sync` y déplace les dossiers
+  existants à sa relève suivante ; une affaire rattachée à plusieurs channels n'a qu'un dossier. L'inbox liste les
+  affaires sous « Affaires », sans track ni channel. Image `mail-sync` et webapp à livrer avec la migration ; manuel §12.2.
+
 - **`CRM-111` T5.2 — la marque « partagée » de « Rentabilité »** : la ligne d'une affaire rattachée à plusieurs
   channels porte « partagée » dans la colonne de l'état, et une phrase sous le tableau dit que le sous-total d'un track
   et le total ne comptent ses montants qu'une fois. Webapp seule, avec la migration `0153` ; manuel §29.3.

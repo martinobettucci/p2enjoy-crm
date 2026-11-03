@@ -6,6 +6,9 @@
 // @verifies docs/JOURNAL.md décisions 323, 324 et 325
 // @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
 //           (docs/SPEC-rattachements.md §3.2, §5)
+// @verifies CRM-111 T6.1 (docs/BACKLOG.md) — le dossier d'une affaire est `CRM/Affaires/<titre> (<8 derniers caractères de
+//           l'identifiant>)`, sans parent inscrit ; un dossier de l'ancienne arborescence est DÉPLACÉ à la relève
+//           (docs/SPEC-rattachements.md §7, décisions 657, 818 et 820 ; docs/SPEC-mail-subsystem.md §4.5)
 //
 // L'ARBORESCENCE EST LUE PAR UN CLIENT IMAP TIERS, et c'est ce que la Definition of Done exige.
 // Le client vit dans un conteneur jetable — il n'est ni le service, ni sa connexion : si le
@@ -301,8 +304,9 @@ test.describe('dossiers IMAP — l’arborescence vue par un client', () => {
 			data: { p_card_id: carte!.id },
 		})
 		const chemin = (await cheminReponse.json()) as string
-		expect(chemin.startsWith('CRM/')).toBe(true)
-		expect(chemin.split('/')).toHaveLength(4)
+		// `CRM-111` T6.1 : hors de l'arborescence des tracks et des channels.
+		expect(chemin.startsWith('CRM/Affaires/')).toBe(true)
+		expect(chemin.split('/')).toHaveLength(3)
 
 		try {
 			envoyer(identifiant, `${carte!.email_local_part}@crm.p2enjoy.test`)
@@ -312,7 +316,7 @@ test.describe('dossiers IMAP — l’arborescence vue par un client', () => {
 
 			// L'ARBORESCENCE EST LUE PAR UN CLIENT IMAP TIERS, niveau par niveau.
 			const arbre = arborescence()
-			for (const niveau of ['CRM', chemin.split('/').slice(0, 2).join('/'), chemin.split('/').slice(0, 3).join('/'), chemin]) {
+			for (const niveau of ['CRM', 'CRM/Affaires', chemin]) {
 				expect(arbre, `le niveau « ${niveau} » manque`).toContain(niveau)
 			}
 
@@ -321,97 +325,78 @@ test.describe('dossiers IMAP — l’arborescence vue par un client', () => {
 			expect(messagesDuDossier(chemin)).toBeGreaterThanOrEqual(1)
 			expect(messagesDuDossier('INBOX')).toBeGreaterThanOrEqual(1)
 
-			// La correspondance porte les TROIS niveaux, sans quoi renommer un track n'aurait rien
-			// à renommer.
+			// `CRM-111` T6.1 : seule l'affaire est inscrite — son track et son channel ne contiennent plus son dossier, et
+			// un parent inscrit ferait renommer un dossier qui ne la porte pas.
 			const carte_ = await request.get(
 				`${URL_API}/rest/v1/mail_folder_map?select=entity_type,actual_path&order=entity_type`,
 				{ headers: enTetesService() },
 			)
 			const types = ((await carte_.json()) as { entity_type: string }[]).map((l) => l.entity_type)
-			expect(types).toContain('track')
-			expect(types).toContain('channel')
-			expect(types).toContain('card')
+			expect([...new Set(types)]).toEqual(['card'])
 		} finally {
 			await nettoyerDansLOrdre(request, compte!.id, identifiant)
 		}
 	})
 
-	test('renommer un TRACK renomme son dossier et emporte ses enfants', async ({ request }) => {
+	test('un dossier d’affaire de l’ancienne arborescence est DÉPLACÉ sous CRM/Affaires à la relève (CRM-111 T6.1)', async ({
+		request,
+	}) => {
 		test.setTimeout(300_000)
-		const identifiant = `renom-${Date.now()}`
+		const identifiant = `deplace-${Date.now()}`
+		const ANCIEN = 'CRM/Ancien track/Ancien channel/Ancienne affaire'
 
 		const comptes = await request.get(
 			`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&select=id`,
 			{ headers: enTetesService() },
 		)
 		const [compte] = (await comptes.json()) as { id: string }[]
-
 		const cartes = await request.get(
-			`${URL_API}/rest/v1/cards?select=id,email_local_part,card_placements!card_placements_card_fk!inner(channel_id,archived_at)&card_placements.archived_at=is.null&deleted_at=is.null&limit=1`,
+			`${URL_API}/rest/v1/cards?select=id,card_placements!card_placements_card_fk!inner(archived_at)&card_placements.archived_at=is.null&deleted_at=is.null&limit=1`,
 			{ headers: enTetesService() },
 		)
-		const [carte] = (await cartes.json()) as {
-			id: string
-			email_local_part: string
-			// `CRM-111` T2.4.4 : le channel est celui du rattachement, plongé.
-			card_placements: { channel_id: string }[]
-		}[]
-		const canaux = await request.get(
-			`${URL_API}/rest/v1/channels?id=eq.${carte!.card_placements[0]!.channel_id}&select=track_id`,
-			{ headers: enTetesService() },
-		)
-		const [canal] = (await canaux.json()) as { track_id: string }[]
-		const pistes = await request.get(
-			`${URL_API}/rest/v1/tracks?id=eq.${canal!.track_id}&select=name`,
-			{ headers: enTetesService() },
-		)
-		const [piste] = (await pistes.json()) as { name: string }[]
-		const nomOrigine = piste!.name
-		const nomTemporaire = `${nomOrigine} (renommé ${Date.now()})`
+		const [carte] = (await cartes.json()) as { id: string }[]
+		const cheminReponse = await request.post(`${URL_API}/rest/v1/rpc/chemin_dossier_card`, {
+			headers: enTetesService(),
+			data: { p_card_id: carte!.id },
+		})
+		const chemin = (await cheminReponse.json()) as string
 
 		try {
-			envoyer(identifiant, `${carte!.email_local_part}@crm.p2enjoy.test`)
-			relever(compte!.id)
-			expect(await cardDuMessage(request, identifiant)).toBe(carte!.id)
-
-			await request.patch(`${URL_API}/rest/v1/tracks?id=eq.${canal!.track_id}`, {
-				headers: enTetesService(),
-				data: { name: nomTemporaire },
+			// L'état d'une boîte d'avant T6.1 : le dossier de l'affaire existe sous son track et son channel, et le
+			// registre le connaît sous ce chemin — exactement ce que la production porte au jour de la livraison.
+			python(
+				`
+import imaplib
+c = imaplib.IMAP4('stalwart', 143)
+c.login('systeme@crm.p2enjoy.test', 'SeedDev2026Local')
+for nom in ('CRM', 'CRM/Ancien track', 'CRM/Ancien track/Ancien channel', 'CRM/Ancien track/Ancien channel/Ancienne affaire'):
+    c.create('"%s"' % nom)
+c.logout()
+`,
+			)
+			const inscrite = await request.post(`${URL_API}/rest/v1/mail_folder_map`, {
+				headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+				data: { account_id: compte!.id, entity_type: 'card', entity_id: carte!.id, requested_path: ANCIEN, actual_path: ANCIEN },
 			})
+			expect(inscrite.status(), await inscrite.text()).toBe(201)
+			expect(arborescence()).toContain(ANCIEN)
 
-			const apres = relever(compte!.id)
-			// UN SEUL RENOMMAGE SUFFIT : le `RENAME` d'un parent emporte ses enfants (§17.1). Cette relève en fait un, ou
-			// aucun si la veille l'a précédée (INC-271) — jamais deux : l'arborescence et les trois correspondances,
-			// relues ci-dessous, disent que le parent a bien emporté ses enfants.
-			expect(apres['renamed'], JSON.stringify(apres)).toBeLessThanOrEqual(1)
-
+			// La relève renomme le dossier qui diverge — elle, ou la veille qui l'a précédée (INC-271) : le contrat est
+			// jugé sur l'état final.
+			relever(compte!.id)
 			const arbre = arborescence()
-			expect(arbre.some((n) => n.includes('(renommé'))).toBe(true)
-			expect(arbre.filter((n) => n === `CRM/${nomOrigine}`)).toHaveLength(0)
+			expect(arbre, 'le dossier de l’affaire est sous CRM/Affaires').toContain(chemin)
+			expect(arbre, 'l’ancien dossier de l’affaire a quitté l’arborescence').not.toContain(ANCIEN)
 
-			// LES TROIS CORRESPONDANCES ONT SUIVI EN BASE, comme les dossiers ont suivi sur le
-			// serveur : sans cela, la relève suivante croirait devoir les renommer encore.
 			const carte_ = await request.get(
-				`${URL_API}/rest/v1/mail_folder_map?select=entity_type,actual_path`,
+				`${URL_API}/rest/v1/mail_folder_map?entity_type=eq.card&entity_id=eq.${carte!.id}&select=actual_path,requested_path`,
 				{ headers: enTetesService() },
 			)
-			const chemins = ((await carte_.json()) as { actual_path: string }[]).map(
-				(l) => l.actual_path,
-			)
-			expect(chemins).toHaveLength(3)
-			expect(chemins.every((c) => c.includes('(renommé'))).toBe(true)
-
+			expect(await carte_.json(), 'le registre a suivi').toEqual([{ actual_path: chemin, requested_path: chemin }])
 			// Et une seconde relève ne renomme plus rien : la divergence est résolue.
 			expect(relever(compte!.id)['renamed']).toBe(0)
 		} finally {
-			// Le track est renommé en retour APRÈS la suppression des correspondances : il n'y a alors plus aucune
-			// divergence qu'un tour de veille pourrait vouloir résoudre (INC-271).
-			await nettoyerDansLOrdre(request, compte!.id, identifiant, async () => {
-				await request.patch(`${URL_API}/rest/v1/tracks?id=eq.${canal!.track_id}`, {
-					headers: enTetesService(),
-					data: { name: nomOrigine },
-				})
-			})
+			await nettoyerDansLOrdre(request, compte!.id, identifiant)
 		}
 	})
 })

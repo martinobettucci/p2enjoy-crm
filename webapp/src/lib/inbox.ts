@@ -13,6 +13,8 @@
 //       fil marqué lu à l'ouverture, total gardé), §18 bis.3 (`is_read`, `unread_count`, les deux fonctions), §18 bis.4 ;
 //       docs/DESIGN_SYSTEM.md §5.4 quinquies ; docs/JOURNAL.md décisions 715 et 716
 // @spec CRM-111 T2.4.1 (docs/BACKLOG.md) — le classement situe l'affaire par son plus ancien rattachement (docs/SPEC-rattachements.md §5)
+// @spec CRM-111 T6.1 (docs/BACKLOG.md) — l'arbre : les non classés, puis le nœud « Affaires » (docs/SPEC-rattachements.md §7,
+//       décisions 657 et 818 ; docs/DESIGN_SYSTEM.md §5.4, « Les affaires hors de l'arborescence »)
 //
 // Ce module ne rend rien : il **lit, réduit et classe**. La séparation est ce qui rend la
 // réduction du HTML, la construction de l'arbre et la classification des refus vérifiables
@@ -237,26 +239,21 @@ export type NoeudCard = {
 	readonly nonLus: number
 }
 
-export type NoeudChannel = {
-	readonly id: string
-	readonly nom: string
+/**
+ * `CRM-111` T6.1 (décisions 657 et 818, docs/DESIGN_SYSTEM.md §5.4) : les affaires ne se rangent plus sous leurs tracks et
+ * leurs channels — le dossier d'une affaire vit sous `CRM/Affaires/`, et une affaire partagée n'en a qu'un. L'arbre porte
+ * les non classés, puis le nœud « Affaires » et ses affaires.
+ */
+export type NoeudAffaires = {
 	readonly nombre: number
 	readonly nonLus: number
 	readonly cards: readonly NoeudCard[]
 }
 
-export type NoeudTrack = {
-	readonly id: string
-	readonly nom: string
-	readonly nombre: number
-	readonly nonLus: number
-	readonly channels: readonly NoeudChannel[]
-}
-
 export type ArbreInbox = {
 	readonly nonClasses: number
 	readonly nonClassesNonLus: number
-	readonly tracks: readonly NoeudTrack[]
+	readonly affaires: NoeudAffaires
 }
 
 type LigneArbre = Database['public']['Functions']['inbox_arborescence']['Returns'][number]
@@ -264,47 +261,33 @@ type LigneArbre = Database['public']['Functions']['inbox_arborescence']['Returns
 /**
  * Construit l'arbre depuis les lignes plates rendues par la base.
  *
- * LES CUMULS SONT CALCULÉS ICI, ET NON DEMANDÉS À LA BASE : un track affiche la somme de ses
- * channels, un channel celle de ses cards. Les demander séparément multiplierait les agrégats pour
- * une addition que le client sait faire sur des données qu'il tient déjà.
+ * LE CUMUL DU NŒUD « Affaires » EST CALCULÉ ICI, et non demandé à la base : c'est la somme de ses affaires, que le
+ * client tient déjà.
  *
- * L'ORDRE VIENT DE LA BASE et n'est pas retrié ici : la fonction ordonne par nom de track, de
- * channel puis de card, et refaire ce tri côté client ferait diverger deux définitions du même
- * ordre.
+ * L'ORDRE VIENT DE LA BASE et n'est pas retrié ici : la fonction ordonne les affaires par titre puis par identifiant, et
+ * refaire ce tri côté client ferait diverger deux définitions du même ordre.
  */
 export function construireArbre(lignes: readonly LigneArbre[]): ArbreInbox {
 	let nonClasses = 0
 	let nonClassesNonLus = 0
-	const tracks: Array<{ id: string; nom: string; nombre: number; nonLus: number; channels: NoeudChannel[] }> = []
+	let nombre = 0
+	let nonLus = 0
+	const cards: NoeudCard[] = []
 
 	for (const ligne of lignes) {
-		if (ligne.card_id === null || ligne.channel_id === null || ligne.track_id === null) {
+		if (ligne.card_id === null) {
 			nonClasses = Number(ligne.nombre)
 			nonClassesNonLus = Number(ligne.unread_count)
 			continue
 		}
-		const nombre = Number(ligne.nombre)
-		const nonLus = Number(ligne.unread_count)
-		let track = tracks.find((candidat) => candidat.id === ligne.track_id)
-		if (track === undefined) {
-			track = { id: ligne.track_id, nom: ligne.track_name ?? '', nombre: 0, nonLus: 0, channels: [] }
-			tracks.push(track)
-		}
-		track.nombre += nombre
-		track.nonLus += nonLus
-		let channel = track.channels.find((candidat) => candidat.id === ligne.channel_id) as
-			| { id: string; nom: string; nombre: number; nonLus: number; cards: NoeudCard[] }
-			| undefined
-		if (channel === undefined) {
-			channel = { id: ligne.channel_id, nom: ligne.channel_name ?? '', nombre: 0, nonLus: 0, cards: [] }
-			track.channels.push(channel as NoeudChannel)
-		}
-		channel.nombre += nombre
-		channel.nonLus += nonLus
-		channel.cards.push({ id: ligne.card_id, titre: ligne.card_title ?? '', nombre, nonLus })
+		const compte = Number(ligne.nombre)
+		const nonLusCard = Number(ligne.unread_count)
+		nombre += compte
+		nonLus += nonLusCard
+		cards.push({ id: ligne.card_id, titre: ligne.card_title ?? '', nombre: compte, nonLus: nonLusCard })
 	}
 
-	return { nonClasses, nonClassesNonLus, tracks }
+	return { nonClasses, nonClassesNonLus, affaires: { nombre, nonLus, cards } }
 }
 
 /** Ce que le premier panneau désigne. `null` : rien n'est encore choisi, et c'est un état normal. */

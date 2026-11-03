@@ -67,8 +67,9 @@ select is(char_length(app.assainir_segment_dossier(repeat('é', 300))), 120,
 select matches(
 	public.chemin_dossier_card((select c.id from public.cards c join public.card_placements p on p.card_id = c.id
 	                             where p.archived_at is null and c.deleted_at is null limit 1)),
-	'^CRM/[^/]+/[^/]+/[^/]+$',
-	'13 — le chemin d''une card a QUATRE segments : CRM, track, channel, card');
+	-- `CRM-111` T6.1 (décisions 818 et 820) : `CRM/Affaires/<titre> (<8 derniers caractères de l'identifiant>)`.
+	'^CRM/Affaires/[^/]+ \([0-9a-f]{8}\)$',
+	'13 — le chemin d''une affaire est CRM/Affaires/<titre> (<identifiant court>), hors de l''arborescence (CRM-111 T6.1)');
 
 select is(
 	public.chemin_dossier_entite('track', (select id from public.tracks order by name limit 1)),

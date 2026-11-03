@@ -138,12 +138,19 @@ Le classement manuel (`classify_message`) est journalisé (`classified_by`) et �
 
 ### 4.5 Dossiers IMAP
 
-**Révisé par `CRM-111` T2.4.2** (docs/SPEC-rattachements.md §7) : le track et le channel parents du dossier d'une affaire
-sont ceux de son **plus ancien** rattachement, lu par `mail-sync` sur `card_placements`. Le dossier de l'affaire sortira
-de l'arborescence avec la tranche T6 de `CRM-111` (`CRM/Affaires/<affaire>`, décision 657).
+**Révisé par `CRM-111` T6.1** (docs/SPEC-rattachements.md §7, décisions 657, 818 et 820) : le dossier d'une affaire sort
+de l'arborescence des tracks et des channels. `chemin_dossier_card` rend **`CRM/Affaires/<titre assaini> (<8 derniers
+caractères de l'identifiant>)`** pour toutes les affaires, quel que soit leur nombre de rattachements ; deux affaires de
+même titre ont deux dossiers. **Les dossiers existants sont déplacés par `mail-sync`** sans geste nouveau : le registre
+(`mail_folder_map`, `dossiers_a_renommer`) voit chaque dossier d'affaire diverger de son nouveau chemin, et la relève
+suivante le renomme (§4.5 ci-dessous, « renommage »), comme pour un titre changé. **Plus aucun parent n'est inscrit** :
+le track et le channel ne contiennent plus le dossier d'une affaire, et les y inscrire ferait renommer des dossiers qui
+ne la portent pas — un renommage refusé arrêterait la boucle. Les dossiers `CRM/<track>/<channel>` déjà créés restent
+sur le serveur, vides, sans être retirés : `mail-sync` n'efface jamais un dossier de la boîte.
+*Avant T6.1 (`CRM-111` T2.4.2)* : le track et le channel parents étaient ceux du plus ancien rattachement.
 
-Après classement, le worker s'assure de l'existence du chemin `CRM/<Track>/<Channel>/<Card>` sur
-le compte concerné et y dépose une copie du message.
+Après classement, le worker s'assure de l'existence du chemin `CRM/Affaires/<affaire>` sur le compte concerné et y dépose
+une copie du message.
 
 - **Dossiers imbriqués par défaut**, en respectant le délimiteur annoncé par le serveur.
 - **Labels** lorsque la capacité `X-GM-EXT-1` est détectée (Gmail), le modèle de dossiers y étant

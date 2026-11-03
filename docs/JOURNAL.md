@@ -38586,3 +38586,20 @@ seed ; même forme, même stabilité. Écarté : l'identifiant complet (36 carac
 **Persisté** : `docs/SPEC-rattachements.md` §7, backlog, ce journal ; la `0154` non poussée est corrigée avant sa
 première poussée.
 
+### `CRM-111` T6.1 — le dossier hors de l'arborescence (2026-11-03)
+
+*2026-11-03, session interactive (4891a451).* **Fait** : migration `0154` — `chemin_dossier_card` rend `CRM/Affaires/<titre>
+(<8 derniers caractères de l'identifiant>)` (décisions 818 et 820) ; `inbox_arborescence` rend les affaires sans track ni
+channel, par titre. **Aucune mécanique nouvelle pour déplacer les dossiers** : le registre voit chaque dossier diverger,
+et le renommage existant de `mail-sync` les déplace — prouvé sur le vrai serveur IMAP par un dossier créé sous
+l'ancienne arborescence et inscrit au registre, que la relève déplace sous `CRM/Affaires`. `mail-sync` n'inscrit plus de
+parents (`parents_de_card` retiré). L'inbox suit (§5.4).
+**Trouvé en prouvant** : (1) la règle des 8 premiers caractères faisait partager un dossier à deux homonymes du seed
+(décision 820) ; (2) le service `mail-sync` de la pile tournait avec l'ancien code, qui réinscrivait les parents pendant
+la preuve : il faut le reconstruire avec la tranche — en production aussi, le contrat le dit.
+**Limite de l'environnement, non de la tranche** : `scripts/verify-mail-dossiers.sh` appelle `pytest` avec le Python de
+l'hôte, qui ne l'a pas ; ses trois contrôles `pytest` (preuve, témoin, restauration) échouent pour cette seule raison ;
+pytest de `mail-sync` passe dans un conteneur jetable (289). Les 34 autres contrôles du harnais sont verts.
+**Vérifications** : pgTAP 131 fichiers et 4811 assertions ; IMAP réel 2/2 et Roundcube 1/1 ; unitaires 5246 ; E2E inbox
+58/58 ; `verify-manual` 167.
+

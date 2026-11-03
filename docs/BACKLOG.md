@@ -17338,7 +17338,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       *Arbitré le 2026-11-03 (décisions 818 et 820)* : le dossier se nomme `CRM/Affaires/<titre> (<8 derniers caractères de
       l'identifiant>)` ; `crm_mail_send` gagne `placement_id`, facultatif, dans la famille `messagerie`.
       **Découpage, arrêté le 2026-11-03 (journal, décision 818)** :
-      - [@] **T6.1 — le dossier hors de l'arborescence** : `chemin_dossier_card` rend le nouveau chemin ; `mail-sync`
+      - [x] **T6.1 — le dossier hors de l'arborescence** : `chemin_dossier_card` rend le nouveau chemin ; `mail-sync`
         déplace les dossiers existants et y place les nouveaux messages ; `inbox_arborescence` ne range plus les
         affaires sous leurs channels, et l'arborescence de l'inbox suit (`docs/DESIGN_SYSTEM.md` §5.4 avant le code).
         Livrables : migration, pgTAP, pytest de `mail-sync`, preuves IMAP réelles (`scripts/verify-mail-inbound.sh`),
@@ -17348,6 +17348,13 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         *Piège relevé avant le code* : `mail-sync` inscrit le track et le channel comme parents du dossier d'une affaire
         (`parents_de_card`) ; ils ne le contiennent plus, et un renommage refusé arrête la boucle des renommages — il
         cesse de les inscrire.
+        *Livrée en développement le 2026-11-03 (journal, « `CRM-111` T6.1 — le dossier hors de l'arborescence »)* :
+        migration `0154` ; `mail-sync` sans parents ; inbox « Affaires ». pgTAP `0143` 8 et `0028` ajustée, toutes les
+        suites 131 fichiers et 4811 assertions ; pytest `mail-sync` 289 (conteneur jetable) ; IMAP réel : le dossier
+        d'une affaire créé sous `CRM/Affaires`, un dossier de l'ancienne arborescence DÉPLACÉ à la relève, Roundcube
+        observé (`e2e/mail/dossiers.spec.ts` 2/2, `roundcube-dossiers` 1/1) ; unitaires 5246 ; E2E inbox et voisins 58/58 ;
+        manuel §12.2 et images du chapitre 12 renouvelées, `verify-manual` 167. Production : la `0154`, l'image
+        `mail-sync` et la webapp de `main` ensemble (`docs/PROD_MIGRATIONS.md` §3).
       - [ ] **T6.2 — les variables par rattachement** : `app.mail_template_variables` et `rendre_modele_email` reçoivent
         le rattachement d'où l'on écrit ; le formulaire d'envoi de la webapp le passe ; `crm_mail_send` gagne
         `placement_id`. Livrables : migration, pgTAP, API, unitaires webapp et connecteur, `docs/SPEC-modeles-emails.md`,

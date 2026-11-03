@@ -2968,8 +2968,9 @@ message lui-même à droite. Sous 1024 px de large, les trois deviennent une **p
 d'un panneau au suivant, et un bouton « Retour » remonte d'un cran.
 
 **Les dossiers.** « Non classés » vient toujours en premier, même quand il est vide : c'est
-l'entrée du travail de tri. Viennent ensuite les affaires qui portent du courrier, rangées sous
-leur track et leur channel. **Une affaire sans courrier n'apparaît pas** : l'inbox est une vue du
+l'entrée du travail de tri. Vient ensuite **« Affaires »**, qui liste par titre les affaires portant du courrier ; une
+affaire rattachée à plusieurs channels n'y paraît qu'une fois, et ses messages vivent dans un seul dossier, sous
+`CRM/Affaires` dans la boîte. **Une affaire sans courrier n'apparaît pas** : l'inbox est une vue du
 courrier reçu, pas une seconde copie du board. Chaque ligne affiche le nombre de messages **que
 vous pouvez voir**, ce qui explique que deux personnes n'y lisent pas les mêmes nombres. Quand un
 dossier contient des messages que vous n'avez pas encore lus, une **pastille bleue** en donne le

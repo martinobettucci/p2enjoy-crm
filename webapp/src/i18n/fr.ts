@@ -148,7 +148,9 @@ export const fr = {
 	'inbox.folders.title': 'Dossiers',
 	'inbox.folders.unclassified': 'Non classés',
 	'inbox.folders.empty.title': 'Aucun courrier rangé',
-	'inbox.folders.empty.body': "Les messages classés dans une affaire apparaîtront ici, sous leur track.",
+	// `CRM-111` T6.1 (§5.4) : les affaires ne se rangent plus sous leur track ; elles ont leur nœud, « Affaires ».
+	'inbox.folders.empty.body': 'Les messages classés dans une affaire apparaîtront ici, sous « Affaires ».',
+	'inbox.folders.cards': 'Affaires',
 	'inbox.folders.expand': 'Déplier',
 	'inbox.folders.collapse': 'Replier',
 	'inbox.folders.unread.one': '1 message non lu',

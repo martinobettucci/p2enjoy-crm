@@ -61,10 +61,7 @@ class FauxClientBaseRangement:
     def chemin_dossier_card(self, card_id: str) -> str | None:
         if card_id == "card-sans-chemin":
             return None
-        return f"CRM/Track/Channel/{card_id}"
-
-    def parents_de_card(self, card_id: str) -> list[dict]:
-        return []
+        return f"CRM/Affaires/{card_id}"
 
     def enregistrer_dossier(self, **kwargs) -> None:
         self.dossiers_enregistres.append(kwargs)
@@ -78,7 +75,7 @@ def test_un_message_repris_avec_succes_est_marque() -> None:
 
     assert reprendre_rangements_manques(imap=imap, client_base=base, account_id="compte-1") == 1
     assert base.marques == ["m1"]
-    assert imap.copies == [("INBOX", 42, "CRM/Track/Channel/card-1")]
+    assert imap.copies == [("INBOX", 42, "CRM/Affaires/card-1")]
 
 
 def test_un_rangement_qui_echoue_encore_n_est_pas_marque() -> None:

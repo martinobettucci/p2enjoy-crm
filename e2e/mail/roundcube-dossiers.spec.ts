@@ -6,6 +6,8 @@
 // @verifies CLAUDE.md §16 (vérification visuelle) ; docs/JOURNAL.md décision 323
 // @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
 //           (docs/SPEC-rattachements.md §3.2, §5)
+// @verifies CRM-111 T6.1 (docs/BACKLOG.md) — le dossier d'une affaire se voit sous `CRM/Affaires` (docs/SPEC-rattachements.md
+//           §7, décisions 657, 818 et 820)
 //
 // LA DEFINITION OF DONE EXIGE UNE OBSERVATION VISUELLE, et c'est le seul endroit du produit où
 // l'arborescence se voit : aucun écran ne la montre avant `CRM-057`. Le parcours est celui d'un
@@ -108,7 +110,8 @@ test.describe('M6 — l’arborescence des cards se voit dans Roundcube', () => 
 			data: { p_card_id: carte!.id },
 		})
 		const chemin = (await cheminReponse.json()) as string
-		const [, track, channel, card] = chemin.split('/')
+		// `CRM-111` T6.1 : `CRM/Affaires/<titre> (<identifiant court>)`, hors de l'arborescence des tracks et des channels.
+		const [, affaires, card] = chemin.split('/')
 
 		try {
 			python(
@@ -147,16 +150,14 @@ with urllib.request.urlopen(requete, timeout=180) as r:
 			await page.setViewportSize({ width: 1440, height: 900 })
 			await ouvrirSession(page)
 
-			// LES TROIS NIVEAUX SONT LUS À L'ÉCRAN, avec leurs vrais noms — accents et esperluette
-			// compris. Un libellé illisible signalerait un défaut d'encodage que l'API ne montre
-			// pas.
+			// LES NIVEAUX SONT LUS À L'ÉCRAN, avec leurs vrais noms — accents et esperluette compris. Un libellé
+			// illisible signalerait un défaut d'encodage que l'API ne montre pas.
 			const dossiers = page.locator('#mailboxlist')
 			// L'attente porte sur `CRM`, dont l'apparition prouve que la souscription a pris : un
 			// dossier créé mais NON SOUSCRIT n'apparaît pas dans un client de messagerie, et c'est
 			// ce que cette observation a trouvé la première fois.
 			await expect(dossiers).toContainText('CRM', { timeout: 30_000 })
-			await expect(dossiers).toContainText(track as string)
-			await expect(dossiers).toContainText(channel as string)
+			await expect(dossiers).toContainText(affaires as string)
 			await expect(dossiers).toContainText(card as string)
 
 			await capturer(page, 'roundcube-arborescence-cards-1440', 'CRM-056')

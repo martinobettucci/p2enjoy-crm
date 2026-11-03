@@ -278,7 +278,28 @@
 				},
 				{
 					"type": "text",
-					"text": " « Non classés » vient toujours en premier, même quand il est vide : c'est\nl'entrée du travail de tri. Viennent ensuite les affaires qui portent du courrier, rangées sous\nleur track et leur channel. "
+					"text": " « Non classés » vient toujours en premier, même quand il est vide : c'est\nl'entrée du travail de tri. Vient ensuite "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Affaires »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", qui liste par titre les affaires portant du courrier ; une\naffaire rattachée à plusieurs channels n'y paraît qu'une fois, et ses messages vivent dans un seul dossier, sous\n"
+				},
+				{
+					"type": "code",
+					"text": "CRM/Affaires"
+				},
+				{
+					"type": "text",
+					"text": " dans la boîte. "
 				},
 				{
 					"type": "strong",

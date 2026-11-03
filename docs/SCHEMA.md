@@ -2481,6 +2481,17 @@ uuid)` et `drop function public.mail_inbound_account_record_sync(uuid)`, **avec 
 d'avant** : l'image de `main` appelle `mail_inbound_account_record_sync` à chaque relève, et chaque relève échouerait sans
 elle.
 
+### Migration `0154` — le dossier d'une affaire hors de l'arborescence (`CRM-111` T6.1, décisions 657, 818 et 820 ; livrée en développement le 2026-11-03)
+
+`docs/SPEC-rattachements.md` §7 ; `docs/SPEC-mail-subsystem.md` §4.5. Deux fonctions réécrites depuis la `0109`, leur
+signature inchangée ; **aucune table, aucune donnée.** **`public.chemin_dossier_card`** rend `CRM/Affaires/<titre
+assaini> (<8 derniers caractères de l'identifiant>)` pour toutes les affaires, quel que soit leur nombre de
+rattachements. **`public.inbox_arborescence`** rend les affaires sans track ni channel (colonnes nulles), par titre puis
+identifiant, la ligne des non classés en tête. **Effet sur les boîtes** : le registre (`mail_folder_map`) voit chaque
+dossier d'affaire diverger, et `mail-sync` le renomme à sa relève suivante (`dossiers_a_renommer`, `0027`). **Retrait** :
+les définitions de la `0109` ; les dossiers déjà déplacés le seraient en retour par la même mécanique, avec l'image
+`mail-sync` d'avant.
+
 ### Migration `0153` — la rentabilité par rattachement (`CRM-111` T5.1, décision 643 ; livrée en développement le 2026-11-03)
 
 `docs/SPEC-rattachements.md` §6 ; `docs/SPEC-recettes.md` §5. **`public.rentabilite_affaires` supprimée puis recréée**
