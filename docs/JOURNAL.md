@@ -38934,3 +38934,24 @@ deux channels, un assistant connecté qui voit `crm_card_attach` — quel consta
 **Conséquence** : `CRM-111` passe `[x]` (décision 697) ; son entrée du changelog était déjà sous « Publié » (livraison du
 2026-11-03, révision `e44d04aa`). Les autres constats de cette livraison (`CRM-112` T1 à T3.a, `CRM-127` T2 et T3) restent
 à faire.
+
+### décision 834 — livrer les migrations 0162 et 0163, l'image `mcp` et la webapp de `main`, sans instantané
+
+*2026-11-03, session 4522fa9c (p2enjoy-crm-f9, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+
+**Question.** Le lot est stable après la campagne complète (décisions 830 et 832) : livrer maintenant ?
+**Le lot** : la migration `0162` et l'image `mcp` reconstruite (`CRM-128` T2 et T3, INC-341), la migration `0163`
+(`CRM-112` T3.d), la webapp de `main` (`CRM-128` T4, `CRM-112` T3.c et T4.a), révision `23c0a11f`.
+**La campagne** : ui 1 105 sur 1 111 — six échecs, dont trois rejoués verts seuls, `connecteur-messagerie` corrigé par
+la session de `CRM-128` (`02e9e80c`) et quatre rattachés à INC-342 ; api 1 312 sur 1 316 — `manuel` vert après
+publication du manuel de développement, `webhooks-remise` vert rejoué, `inbox-lecture` INC-342 ; mail 50 sur 50 après
+réparation de l'empreinte de `0163` au registre de développement ; `verify-mcp` 109 contrôles ; pgTAP 140 fichiers
+(`0064` vert après retrait d'une préférence laissée) ; manuel 139 sur 143 puis `09a` corrigé (`71003512`), deux
+INC-342 ; garde du manuel 168 contrôles ; captures renouvelées et observées (`2e3da3b3`).
+**Décision : oui, sans instantané**, comme les décisions 815 et 828 : une sauvegarde `pg_dump` de la base de production
+avant la fenêtre ; `0162` crée une table vide et des déclencheurs, `0163` une contrainte, une fonction et un déclencheur,
+aucune donnée transformée.
+**Conséquences** : fenêtre avec migration, l'image `mcp` reconstruite dans la même fenêtre ; vérifications en lecture
+seule : registre terminé par la 163, `select count(*) from pg_trigger where tgname like '%refuser_connecteur'` rend 2,
+`verifier.sh`, le manuel publié ; consignation (baseline, changelog, backlog, INC-341).
+
