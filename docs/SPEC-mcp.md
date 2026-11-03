@@ -1146,6 +1146,36 @@ autre ; `crm_card_list` avec `view` rend les affaires de la vue ; une vue inconn
 matrice (case « Affaires ▸ Consulter » décochée : les outils ne sont pas visibles) ; journal écrit ; et **E2E** : la vue
 choisie à l'écran et la même vue demandée au connecteur rendent les mêmes affaires.
 
+### 9.2 quindecies Les rattachements d'une affaire — `CRM-111` T9 (`docs/SPEC-rattachements.md` §11 ; décision 826)
+
+*Écrit le 2026-11-03, avant le code.* Les deux questions de `CLAUDE.md` sont tranchées au §11 de la spécification : la
+famille `affaires`, ses quatre actions, **aucune famille ni case nouvelle**, **aucun outil de retrait** (geste
+d'administrateur dans la webapp, décision 643). Un genre d'ancre s'ajoute : **`placement`**, résolu par
+`card_placements.workspace_id`, libellé « rattachement ».
+
+| Outil | Action | Ancre (et `autres`) | Ce qu'il appelle | Remarques |
+|---|---|---|---|---|
+| `crm_card_attach` | `ajouter` | `card:card_id` ; `autres` : `channel:channel_id` | `attach_card(p_card, p_channel)` | le rattachement naît à l'étape initiale du workflow du channel ; un rattachement archivé au même channel est désarchivé tel quel ; refus traduits : `already_attached`, `channel_closed`, `step_not_initial` |
+| `crm_card_placement_update` | `modifier` | `placement:placement_id` | `PATCH card_placements` (montant, probabilité, prochaine action et échéance, responsable) ; `card_field_values` en `upsert` sur `(placement_id, field_id)` pour les réponses du bloc | les mêmes champs, désignations et refus que la partie « rattachement » de `crm_card_update` ; seuls les champs donnés sont écrits |
+| `crm_card_placement_archive` | `supprimer` | `placement:placement_id` | `PATCH card_placements set archived_at` — le geste du bloc « Rattachements » | `archived` vaut `true` par défaut ; `false` désarchive ; zéro ligne rendue est un refus |
+
+**Les outils existants désignent un rattachement.**
+- `crm_card_get` rend, en plus de la partie commune, la liste **`placements`** des rattachements que la personne lit —
+  identifiant, track, channel, étape, responsable, montant, prochaine action, archivé, en sommeil —, dans l'ordre des
+  tracks puis des channels. Ceux d'un channel qu'elle ne lit pas n'y sont pas, existence comprise (§4 de la
+  spécification).
+- `crm_card_list` (un channel) rend, pour chaque ligne, son **`placement_id`** : c'est le rattachement de l'affaire à ce
+  channel.
+- `crm_card_move`, `crm_card_move_to_channel`, `crm_card_snooze`, `crm_card_wake` reçoivent un argument facultatif
+  **`placement_id`** (`autres` : `placement:placement_id`) ; absent, le plus ancien rattachement que la personne lit,
+  comme aujourd'hui. Un rattachement d'une autre affaire est refusé comme introuvable.
+- `crm_card_update` garde son contrat : le titre et la description, et les champs du **plus ancien** rattachement lisible ;
+  pour un autre rattachement, `crm_card_placement_update`.
+
+**Preuves** (§13) : pour chaque outil nouveau ou révisé, contre la vraie base et un vrai client MCP — succès, refus par la
+matrice, refus par le CRM malgré la matrice ouverte (une lectrice qui rattache ; un rattachement d'une autre affaire),
+journal écrit ; unitaires des traductions ; `scripts/verify-mcp.sh --rapide`.
+
 ### 9.3 Réponses
 
 - **Forme.** Un JSON structuré, avec les identifiants **et** les libellés utiles : nom du track,

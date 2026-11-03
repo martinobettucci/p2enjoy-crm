@@ -38757,3 +38757,16 @@ ne porte pas (décision 664).
 
 **Vérifications prévues** : un test unitaire rouge avant le correctif de `normaliser` ; unitaires de l'aperçu, du
 différentiel et des retraits ; E2E du panneau sur une suggestion qui exige un champ commun.
+
+### décision 826 — `CRM-111` T9 : les outils du connecteur sur les rattachements
+
+*2026-11-03, session interactive (4891a451), forme choisie par la session dans le cadre du §11 de
+`docs/SPEC-rattachements.md` (validé, décision 662), révisable par le responsable.* **Choix** : un genre d'ancre
+`placement` plutôt qu'un rattachement désigné par son channel — l'identifiant est rendu par `crm_card_get` et
+`crm_card_list`, et la politique résout son espace comme pour tout objet ; `placement_id` **facultatif** sur les gestes
+existants, le plus ancien rattachement par défaut, pour ne casser aucun appel d'assistant ; `crm_card_update` inchangé,
+et `crm_card_placement_update` pour un autre rattachement, plutôt qu'un `placement_id` de plus sur un outil qui écrit
+aussi la partie commune ; `crm_card_placement_archive` porte aussi le désarchivage (`archived=false`), un seul outil pour
+un seul geste réversible. **MCP** : famille `affaires`, aucune case nouvelle (§11). Spécifié au §9.2 quindecies de
+`docs/SPEC-mcp.md`.
+
