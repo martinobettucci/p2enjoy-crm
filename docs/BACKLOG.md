@@ -17611,7 +17611,7 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-3a) depuis 2026-11-03 18:30 UTC — état avant : [ ]*
       **Découpage** (2026-11-03, après lecture de la vue liste : une requête PostgREST sur `card_placements`, l'affaire plongée,
       filtres au serveur avant la pagination et le compte) :
-      - [~] **T4.a — les colonnes** : la case « Afficher dans la liste des affaires » de Réglages (reportée de T3.a), et une
+      - [x] **T4.a — les colonnes** : la case « Afficher dans la liste des affaires » de Réglages (reportée de T3.a), et une
             colonne par champ listé, ses valeurs plongées dans la même requête. Sans migration. `docs/DESIGN_SYSTEM.md`
             §5.91. Les types personne, contact et fichier ne s'affichent pas en colonne.
             *Faite le 2026-11-03*, sans migration :
@@ -17623,9 +17623,11 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
             - sous-ensemble de mon périmètre — liste, sommeil, vues, export, imports, Réglages, éditeur — **140/141** :
               `administration-workflows` « comparer à la source » rouge dans la campagne, **vert seul** — un effet d'ordre,
               à surveiller dans la campagne complète ;
-            - **reste le manuel** (§18.16, la case et la pilule, avec leur image) : `docs/manual.md` porte en ce moment le
-              texte non commité de `CRM-128` T4 (session 75), dont les images n'existent pas encore — le manuel ne se
-              construit pas, et le fichier ne se commite pas par morceaux sans emporter ce texte. Repris dès son commit.
+            - manuel §18.16 : le paragraphe et l'image « dans-la-liste » (`e2e/manuel/18-workflows.spec.ts`, la case cochée
+              par l'écran, la mention « Dans la liste » sur la ligne), image observée ; garde du manuel verte sur la section ;
+            - **défaut du commit `3afd9295`, corrigé par le suivant** : les sept clés de traduction de T4.a n'y étaient pas —
+              `fr.ts` portait aussi le travail non commité de `CRM-128` T4 et avait été écarté du commit. La révision
+              `3afd9295` seule ne passe pas `tsc` (constaté sur un export de la révision) ; avec les clés, elle passe.
       - [ ] **T4.b — les filtres au serveur** : un filtre par type (§8), dans la même requête paginée ; colonnes de
             recherche typées sur `card_common_field_values` (migration), mesures du coût sous la RLS ; l'état dans
             l'adresse.

@@ -2185,6 +2185,13 @@ export const fr = {
 	'admin.commonFields.refus.panne': 'L’enregistrement n’a pas abouti. Réessayez.',
 	'admin.commonFields.refus.employe': 'Ce champ est exigé par des transitions : {transitions}. Retirez ces exigences dans l’éditeur de workflows avant de l’archiver.',
 	'admin.commonFields.refus.employe.lien': 'Ouvrir l’éditeur de workflows',
+	// `CRM-112` T4.a — docs/DESIGN_SYSTEM.md §5.91.
+	'liste.commun.oui': 'Oui',
+	'liste.commun.non': 'Non',
+	'admin.commonFields.form.listed': 'Afficher dans la liste des affaires',
+	'admin.commonFields.form.listed.help': 'Le champ devient une colonne de la vue liste de chaque channel.',
+	'admin.commonFields.form.listed.unavailable': 'Ce type de champ ne s’affiche pas en colonne.',
+	'admin.commonFields.listed.pill': 'Dans la liste',
 	// Les étiquettes — CRM-069 T2, docs/DESIGN_SYSTEM.md §5.73.
 	'labels.pill.archived': '{nom}, étiquette archivée',
 	'labels.list.aria': 'Étiquettes',

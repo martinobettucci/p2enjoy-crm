@@ -4565,8 +4565,15 @@ de l'écran ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse
 
 Un chemin peut exiger l'un de ces champs pour être franchi ([section 18.9](#ce-qu-il-faut-avoir-rempli-pour-emprunter-un-chemin)).
 Sur la fiche d'une affaire, ils se remplissent dans le bloc « Champs de l'affaire »
-([section 9.6](#la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent)). Ils ne paraissent pas encore
-comme colonne de la vue liste : cette étape vient ensuite.
+([section 9.6](#la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent)).
+
+Dans le formulaire d'un champ, la case « Afficher dans la liste des affaires » en fait une colonne de la vue liste de
+chaque channel ([section 9.11](#la-vue-liste-d-un-channel)), après les colonnes habituelles ; la ligne du champ porte alors
+la mention « Dans la liste ». Les champs qui désignent une personne, un contact ou un fichier ne s'affichent pas en
+colonne : la case leur est refusée, et l'écran le dit. Le choix vaut pour tout l'espace. Filtrer la liste sur ces champs
+viendra ensuite.
+
+![Le formulaire du champ « Numéro de TVA » : la case « Afficher dans la liste des affaires » cochée, et la mention « Dans la liste » sur sa ligne](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/dans-la-liste.jpg)
 
 ## 19. Le catalogue de nœuds : le vocabulaire de vos workflows
 

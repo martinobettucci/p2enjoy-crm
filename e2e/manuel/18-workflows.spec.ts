@@ -8,6 +8,8 @@
 // @spec CRM-112 tranche T3.a — les images de la section 18.16, « Les champs communs à toute affaire » :
 //       docs/SPEC-champs-communs.md §6, §7 ; docs/DESIGN_SYSTEM.md §5.86
 // @spec CRM-112 tranche T3.b — l'image « exigence-champ-commun » de la section 18.9 : docs/DESIGN_SYSTEM.md §5.87
+// @spec CRM-112 tranche T4.a — l'image « dans-la-liste » de la section 18.16 : docs/SPEC-champs-communs.md §8 ;
+//       docs/DESIGN_SYSTEM.md §5.91
 //
 // Les workflows du seed sont lus, jamais modifiés : chaque formulaire ouvert est annulé, et les refus montrés sont ceux du
 // serveur (clé prise, transition déjà déclarée, rôle retiré en cours de page). Ce que l'écran crée — un workflow vide, un
@@ -342,6 +344,19 @@ test('les champs communs à toute affaire : l’écran, et l’archivage d’un 
 	await expect(confirmation.getByRole('alert')).toContainText('Ce champ est exigé par des transitions')
 	await illustrer(page, { chapitre: CHAPITRE, section: S.communs, nom: 'champ-commun-exige', cibles: [confirmation] })
 	await confirmation.getByRole('button', { name: 'Annuler' }).click()
+
+	// `CRM-112` T4.a — la case « Afficher dans la liste des affaires », cochée par l'écran et enregistrée : la ligne porte
+	// alors « Dans la liste ». Le champ est retiré avec les autres par l'épilogue.
+	await liste.getByRole('button', { name: 'Modifier le champ Numéro de TVA' }).click()
+	const caseListe = page.getByLabel('Afficher dans la liste des affaires')
+	await caseListe.check()
+	await page.getByRole('button', { name: 'Enregistrer' }).click()
+	const pilule = liste.locator(`[data-champ="${actif}"]`).getByTestId('champ-dans-la-liste')
+	await expect(pilule).toBeVisible()
+	await liste.getByRole('button', { name: 'Modifier le champ Numéro de TVA' }).click()
+	await expect(caseListe).toBeChecked()
+	await illustrer(page, { chapitre: CHAPITRE, section: S.communs, nom: 'dans-la-liste', cibles: [liste.locator(`[data-champ="${actif}"]`)] })
+	await page.getByRole('button', { name: 'Annuler' }).click()
 
 	// `CRM-112` T3.b — la même exigence, vue depuis l'éditeur : la ligne du chemin et sa mention « Champ de l'affaire ».
 	await ouvrir(page, DEFAUT)

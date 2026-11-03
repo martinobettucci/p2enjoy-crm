@@ -838,6 +838,38 @@
 			]
 		},
 		{
+			"fichier": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/dans-la-liste.jpg",
+			"largeur": 899,
+			"hauteur": 583,
+			"chapitre": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+			"section": "les-champs-communs-a-toute-affaire",
+			"pleinePage": false,
+			"libelles": [
+				"Afficher dans la liste des affaires",
+				"Annuler",
+				"Archiver le champ Numéro de TVA",
+				"Champ « Numéro de TVA »",
+				"Clé : numero-tva-manuel. Elle ne se modifie pas : les exports et les messages d'erreur la citent. Archivez ce champ et redéclarez-en un pour en changer.",
+				"Dans la liste",
+				"Descendre Numéro de TVA",
+				"Enregistrer",
+				"Facultatif. Affiché sous la question pour expliquer ce qui est attendu.",
+				"Le champ devient une colonne de la vue liste de chaque channel.",
+				"Le numéro de TVA intracommunautaire du client",
+				"Le texte affiché au-dessus de la question, sur chaque affaire.",
+				"Libellé",
+				"Modifier le champ Numéro de TVA",
+				"Monter Numéro de TVA",
+				"Numéro de TVA",
+				"Numéro de TVA numero-tva-manuel Texte court Dans la liste Le numéro de TVA intracommunautaire du client Champ « Numéro de TVA » Clé : numero-tva-manuel. Elle ne se modifie pas : les exports et les messages d'erreur la citent. Archivez ce champ et redéclarez-en un pour en changer. Libellé Le texte affiché au-dessus de la question, sur chaque affaire. Type : Texte court. Il ne se modifie pas : les réponses déjà saisies resteraient dans l'ancien format, et aucune conversion n'existe encore. Texte d'aide Facultatif. Affiché sous la question pour expliquer ce qui est attendu. Afficher dans la liste des affaires Le champ devient une colonne de la vue liste de chaque channel. Enregistrer Annuler",
+				"Texte court",
+				"Texte d'aide",
+				"Type : Texte court. Il ne se modifie pas : les réponses déjà saisies resteraient dans l'ancien format, et aucune conversion n'existe encore.",
+				"numero-tva-manuel",
+				"on"
+			]
+		},
+		{
 			"fichier": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/declarer-un-champ.jpg",
 			"largeur": 883,
 			"hauteur": 138,
