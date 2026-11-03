@@ -1,5 +1,6 @@
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — la fiche lit la capacité d'écrire sur l'affaire et la FOURNIT à ses blocs ;
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : une étiquette posée ou retirée depuis l'en-tête fait relire le fil — docs/DESIGN_SYSTEM.md §5.73
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T3.d : le fil nomme une valeur commune (libellés des champs communs) — docs/DESIGN_SYSTEM.md §5.89
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T3.c : le bloc « Champs de l'affaire » après « Rattachements » — docs/DESIGN_SYSTEM.md §5.88
 // @spec CRM-066 (docs/BACKLOG.md) — tranche 4 : le bloc « Santé de l'affaire » sous l'en-tête — docs/DESIGN_SYSTEM.md §5.65
 //       refusée par la base, le motif se pose en tête de la colonne de gauche (docs/SPEC-droits-interface.md §2.1, §3 ;
@@ -96,6 +97,7 @@ import { ancetresAffaire } from '../lib/fil-ariane'
 import { mettreCardALaCorbeille, type NatureRefusGeste } from '../lib/corbeille'
 import { BlocRattachementsCard } from './BlocRattachementsCard'
 import { BlocChampsCommunsCard } from './BlocChampsCommunsCard'
+import { lireChampsCommunsEspace } from '../lib/champs-communs'
 import { lireClesExigees, useContenuCard, type ModeleFormulaire, type RattachementSitue } from '../lib/formulaire'
 import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
 import { idRattachement } from '../lib/rattachements'
@@ -225,6 +227,20 @@ function ContenuCard({
 	// celle de `RouteCard`, faite ici plutôt que transmise : le formulaire les reçoit déjà par le contenu chargé.
 	const [parametresAdresse] = useSearchParams()
 	const clesExigees = lireClesExigees(parametresAdresse.get('exiges'))
+	// `CRM-112` T3.d (§5.89) : les libellés des champs COMMUNS, pour nommer leurs `field_changed` au fil. Une lecture de plus,
+	// assumée comme celle des étapes (`lireEtapesWorkflow`) ; son échec laisse ces lignes sans détail, le fil reste lisible.
+	const espaceCard = etat.statut === 'pret' ? (etat.donnees.card?.workspace_id ?? null) : null
+	const [libellesCommuns, setLibellesCommuns] = useState<ReadonlyMap<string, string>>(new Map())
+	useEffect(() => {
+		if (espaceCard === null || clientCrm === null) return
+		let vivant = true
+		void lireChampsCommunsEspace(clientCrm, espaceCard).then((lu) => {
+			if (vivant && lu.statut === 'pret') setLibellesCommuns(new Map(lu.donnees.map((c) => [c.id, c.label])))
+		})
+		return () => {
+			vivant = false
+		}
+	}, [espaceCard])
 	const idUtilisateur =
 		authentification.etat.statut === 'authentifie' ? authentification.etat.utilisateur.id : null
 
@@ -462,7 +478,7 @@ function ContenuCard({
 				idCard={etat.donnees.card.id}
 				idWorkspace={etat.donnees.card.workspace_id}
 				idWorkflow={etat.donnees.card.workflow_id}
-				libellesChamps={libellesChamps(etat.donnees.modele)}
+				libellesChamps={new Map([...libellesCommuns, ...libellesChamps(etat.donnees.modele)])}
 				idUtilisateur={idUtilisateur}
 				estAdminWorkspace={estAdministrateur(role.etat)}
 				relectureActivites={relectureActivites}

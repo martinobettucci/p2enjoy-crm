@@ -13,6 +13,12 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-112` T3.d — une valeur de l'affaire dans le fil (migration 163)
+
+- Remplir ou changer un champ de l'affaire écrit une ligne « Champ renseigné » au fil, le champ nommé suivi de « champ de
+  l'affaire ». La ligne appartient à l'affaire et non à l'un de ses rattachements : elle paraît sur la fiche de chacun.
+  Une valeur réécrite à l'identique n'écrit rien.
+
 ### `CRM-112` T3.c — les champs de l'affaire sur la fiche (sans migration)
 
 - La fiche d'une affaire porte un bloc « Champs de l'affaire », juste après les rattachements : les champs communs de

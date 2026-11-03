@@ -1,7 +1,7 @@
 // @verifies CRM-112 (docs/BACKLOG.md) — tranche T3.c : la partie commune de la fiche sur la pile réelle — le refus d'un
 //           déplacement qui nomme un champ commun par son libellé, la reprise vers la fiche où il est demandé et prend le
 //           focus, la saisie relue en base, le second déplacement qui passe ; l'archivé valué en lecture ; la lectrice
-//           refusée par la base ; quatre paliers
+//           refusée par la base ; quatre paliers ; T3.d : la ligne du fil, et l'événement sans rattachement relu en base
 // @verifies docs/SPEC-champs-communs.md §5 et §7 (précision T3.c) ; docs/DESIGN_SYSTEM.md §5.88, §5.7 quater, §7
 // @verifies CLAUDE.md §10 (le refus prouvé avec le jeton réel de la lectrice), §15, §16 (captures observées)
 //
@@ -149,6 +149,19 @@ test.describe('La partie commune de la fiche (docs/DESIGN_SYSTEM.md §5.88)', ()
 				(await lireService<{ value: unknown }>(request, `card_common_field_values?select=value&card_id=eq.${sonde.idCard}&field_id=eq.${sonde.idChamp}`)).map((v) => v.value),
 			)
 			.toEqual(['12345678900011'])
+
+		// `CRM-112` T3.d (§5.89) : le fil porte la ligne « Champ renseigné », le champ nommé suivi de « champ de l'affaire », et
+		// la base l'a écrite sans rattachement.
+		await page.reload()
+		const fil = page.getByRole('region', { name: 'Fil de cette affaire' })
+		await expect(fil.getByRole('listitem').filter({ hasText: `${LIBELLE} — champ de l’affaire` })).toHaveCount(1)
+		await expect(fil.getByRole('listitem').filter({ hasText: `${LIBELLE} — champ de l’affaire` })).toContainText('Champ renseigné')
+		const evenements = await lireService<{ placement_id: string | null; payload: { scope?: string } }>(
+			request,
+			`card_events?select=placement_id,payload&card_id=eq.${sonde.idCard}&type=eq.field_changed&payload->>field_id=eq.${sonde.idChamp}`,
+		)
+		expect(evenements).toEqual([{ placement_id: null, payload: expect.objectContaining({ scope: 'common', to: '12345678900011' }) }])
+		await capturer(page, 'fiche-communs-fil-xl-1440', UNITE)
 
 		// Le second déplacement passe : la base porte la nouvelle étape.
 		await page.goto(BOARD)

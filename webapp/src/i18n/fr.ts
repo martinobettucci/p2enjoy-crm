@@ -1373,6 +1373,8 @@ export const fr = {
 	'timeline.event.trashed': 'Affaire mise à la corbeille',
 	'timeline.event.restored': 'Affaire restaurée',
 	'timeline.event.field_changed': 'Champ renseigné',
+	// `CRM-112` T3.d — docs/DESIGN_SYSTEM.md §5.89.
+	'timeline.detail.commonField': '{nom} — champ de l’affaire',
 	'timeline.event.mail_received': 'Message reçu',
 	// `CRM-058` §19.5 — INC-220. Le type existait en base depuis la migration `0030` et n'avait
 	// jamais eu de libellé : neuf lignes du fil se lisaient « Événement ».

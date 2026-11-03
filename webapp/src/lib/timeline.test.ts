@@ -1,3 +1,4 @@
+// @verifies CRM-112 (docs/BACKLOG.md) tranche T3.d — le détail d'une valeur commune (docs/DESIGN_SYSTEM.md §5.89)
 // @verifies CRM-111 (docs/BACKLOG.md) T7.4 — `attached` et `detached` nommés et rangés (docs/DESIGN_SYSTEM.md §5.84)
 // @verifies CRM-069 (docs/BACKLOG.md) — tranche T2 : la pose et le retrait d'une étiquette rangés dans la famille « Champs » (docs/SPEC-etiquettes-digest.md §2.2)
 // @verifies CRM-044 (docs/BACKLOG.md) — fusion du fil, familles, filtres et résolution des libellés
@@ -497,6 +498,16 @@ describe('la résolution des libellés (§14.6)', () => {
 		expect(
 			resoudreDetail(ligne({ id: 'e2', type: 'field_changed', payload: { field_id: 'f9' } }), libelles)
 				.detail,
+		).toBeNull()
+	})
+
+	// `CRM-112` T3.d (docs/DESIGN_SYSTEM.md §5.89) : une valeur de la partie commune le dit ; inconnue, elle se tait aussi.
+	it('nomme le champ d’une valeur commune, suivi de « champ de l’affaire »', () => {
+		expect(
+			resoudreDetail(ligne({ id: 'e3', type: 'field_changed', payload: { field_id: 'f1', scope: 'common' } }), libelles).detail,
+		).toBe('Budget — champ de l’affaire')
+		expect(
+			resoudreDetail(ligne({ id: 'e4', type: 'field_changed', payload: { field_id: 'f9', scope: 'common' } }), libelles).detail,
 		).toBeNull()
 	})
 

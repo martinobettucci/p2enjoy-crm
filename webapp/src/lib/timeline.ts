@@ -1,3 +1,5 @@
+// @spec CRM-112 (docs/BACKLOG.md) tranche T3.d — une valeur commune dans le fil : « Champ renseigné », le champ nommé suivi
+//       de « champ de l'affaire » (docs/SPEC-champs-communs.md §7 ; docs/DESIGN_SYSTEM.md §5.89)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : « Étiquette posée » et « Étiquette retirée » dans le fil, famille « Champs » (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-044 (docs/BACKLOG.md) — lecture des événements et fusion du fil unifié
 // @spec CRM-062 (docs/BACKLOG.md) — tranche 3b : la relance automatique NOMMÉE dans le fil
@@ -365,7 +367,10 @@ export function resoudreDetail(ligne: LigneEvenement, libelles: LibellesFil): De
 	if (ligne.type === 'field_changed') {
 		const champ = texte(ligne.payload['field_id'])
 		const nom = champ === null ? undefined : libelles.champs.get(champ)
-		return { detail: nom ?? null }
+		if (nom === undefined) return { detail: null }
+		// `CRM-112` T3.d (docs/DESIGN_SYSTEM.md §5.89) : une valeur de la partie commune le dit, par une clé — la ligne paraît
+		// sur la fiche de chaque rattachement, et on chercherait sinon la question dans le formulaire de l'étape.
+		return { detail: ligne.payload['scope'] === 'common' ? t('timeline.detail.commonField', { nom }) : nom }
 	}
 	// `mail_sent` suit `mail_received` : son `payload` porte le même `message_id`, et le message
 	// envoyé est archivé sur l'affaire (`CRM-058` §19.5), donc la même carte de libellés le nomme.

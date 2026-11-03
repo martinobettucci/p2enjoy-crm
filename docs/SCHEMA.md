@@ -2511,6 +2511,20 @@ elle.
 attente sont perdus : les lister avant. **Avec l'image `mcp` d'avant `CRM-128` T3** : sans la garde, son `crm_mail_send`
 enverrait de nouveau directement.
 
+### Migration `0163` — une valeur commune écrit `field_changed` au fil, sans rattachement (`CRM-112` T3.d ; livrée en développement le 2026-11-03)
+
+`docs/SPEC-champs-communs.md` §7 (précision T3.d). **Aucune table, aucune donnée.**
+- **`card_events_placement_by_type`** est redéfinie : un `field_changed` dont `payload.scope` vaut `common` n'a pas de
+  rattachement, tout autre `field_changed` en garde un ; la comparaison passe par `is not distinct from`, pour qu'un
+  `scope` absent ne rende jamais la contrainte nulle.
+- **`app.card_events_fill_placement`** est reprise de sa définition en base, avec la même exception.
+- **`app.card_events_apres_ecriture_valeur_commune()`**, neuve, `security definer`, déclencheur
+  `card_events_apres_ecriture_valeur_commune` après insertion et mise à jour de `value` sur `card_common_field_values` :
+  `field_changed` avec `{field_id, scope: "common", from?, to}`, rien quand la valeur ne change pas.
+
+**Retrait** : supprimer le déclencheur et sa fonction, reposer `app.card_events_fill_placement` et la contrainte de la
+`0148`.
+
 ### Migration `0161` — les champs communs exigés dans les comparaisons, et l'aperçu de leurs effets (`CRM-112` T2.c.2 et T3.b, INC-344 ; livrée en développement le 2026-11-03)
 
 `docs/SPEC-champs-communs.md` §5 et §7 (précisions T2.c.2 et T3.b). **Aucune table, aucune donnée.** Trois fonctions sont

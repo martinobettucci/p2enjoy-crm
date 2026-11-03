@@ -17550,7 +17550,7 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
                   - sans régression : specs UI de l'assistant **25/25**, specs API **14/14** ;
                   - manuel, chapitre 18 : image `champs-communs` (`e2e/manuel/18-workflows.spec.ts`),
                     `verify-manual` 168 contrôles sans anomalie.
-- [ ] **T3** — écrans : Réglages ▸ « Champs de l'affaire », exigence dans l'éditeur de workflow, partie commune de la
+- [P] **T3** — écrans : Réglages ▸ « Champs de l'affaire », exigence dans l'éditeur de workflow, partie commune de la
       fiche, timeline ; `docs/DESIGN_SYSTEM.md` avant le code ; unitaires.
       **Découpage** (2026-11-03, après relecture intégrale de `docs/DESIGN_SYSTEM.md` ; mesuré sur `0152` : la clé et le
       type ne se modifient pas, faute de privilège de colonne ; libellé, options, aide, « listé », position et archivage
@@ -17597,9 +17597,15 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
               de mon périmètre — fiche, board, formulaire, parcours, checklists, rattachements — **161/161** ; captures
               observées ;
             - manuel §9.6 et §18.16 avec une image, `verify-manual` sans anomalie.
-      - [@] **T3.d — le fil** : `field_changed` d'une valeur commune (`placement_id` nul, `scope: "common"`, §7), et son
+      - [x] **T3.d — le fil** : `field_changed` d'une valeur commune (`placement_id` nul, `scope: "common"`, §7), et son
             rendu « partie commune » ; migration si l'écriture manque ; pgTAP ; unitaires.
-            *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-3a) depuis 2026-11-03 17:40 UTC — état avant : [ ]*
+            *Faite le 2026-11-03*, migration `0163` appliquée en développement :
+            - pgTAP `0152` **7/7** — dont un défaut trouvé par la preuve et corrigé avant tout push : `scope` absent rendait
+              la condition nulle, si bien qu'un `field_changed` de workflow perdait son rattachement sans que le `CHECK`
+              le refuse ; `is not distinct from` partout, aucun événement orphelin en développement ; suite **140 fichiers,
+              4 927 assertions** ;
+            - unitaires **5 366** (le détail commun) ; E2E `fiche-champs-communs` étendue (la ligne du fil, l'événement
+              relu en base sans rattachement) et `timeline.spec.ts` : **20/20** ; capture observée.
 - [ ] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; la case « Afficher dans la liste » de
       Réglages ▸ « Champs de l'affaire » (reportée de T3.a, `docs/DESIGN_SYSTEM.md` §5.86) ; unitaires ; API.
 - [ ] **T5** — modèles d'email : `{{card.field.<clé>}}`, contrôle d'écriture par déclencheur, rendu, sélecteur.
