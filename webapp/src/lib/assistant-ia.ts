@@ -6,6 +6,9 @@
 //       §13.4 (accepter une modification : le point de retour ; « workflow modifie » en `PT409`, « workflow archive »),
 //       §13.5 (portée et cible envoyées à la fonction ; `workflow_introuvable`), §13.6 (les suggestions d'un
 //       workflow) ; décision 620
+// @spec CRM-112 (docs/BACKLOG.md) tranche T2.d.3 — docs/SPEC-ia.md §12.5 (l'aperçu lit les champs communs de l'espace
+//       de la suggestion, archivés compris, sous la RLS, pour nommer ceux que `exigences_communes` vise) ;
+//       docs/SPEC-champs-communs.md §4 (tout membre lit les définitions) ; décision 825
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone : une panne n'est jamais un succès) ; CLAUDE.md §10
 //
 // Ce module ne rend rien : il appelle et CLASSE. Les refus sont classés ici, à un seul endroit, et l'écran les
@@ -44,6 +47,8 @@ export type SuggestionEnRevue = {
 
 export type SuggestionIa = SuggestionEnRevue & {
 	readonly statut: 'en_revue' | 'acceptee' | 'abandonnee'
+	/** L'espace de la suggestion : celui dont les champs communs sont lus (`CRM-112` T2.d.3). */
+	readonly workspace_id: string
 	/** Le workflow qu'elle fait évoluer ; `null` pour une création. */
 	readonly workflow_id: string | null
 	readonly workflow_cree_id: string | null
@@ -65,7 +70,7 @@ export type RevisionIa = {
 export type SuggestionLue = { readonly suggestion: SuggestionIa; readonly revisions: readonly RevisionIa[] }
 
 export const COLONNES_SUGGESTION =
-	'id, portee, demande, statut, created_at, generation_depuis, derniere_erreur, workflow_id, workflow_cree_id, version_retour_id'
+	'id, workspace_id, portee, demande, statut, created_at, generation_depuis, derniere_erreur, workflow_id, workflow_cree_id, version_retour_id'
 const COLONNES_EN_REVUE = 'id, portee, demande, created_at, generation_depuis, derniere_erreur'
 export const COLONNES_REVISION = 'id, numero, origine, consigne, proposition, defauts, modele, created_at'
 
@@ -139,6 +144,28 @@ export async function lireWorkflowVivant(client: ClientCrm, idWorkflow: string):
 				? Object.fromEntries(Object.entries(occupation.data).filter((e): e is [string, number] => typeof e[1] === 'number'))
 				: {}
 		return pret({ composition: composition.data as unknown as PropositionIa, occupation: nombres })
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/** Un champ commun de l'espace, tel que l'aperçu le nomme : sa clé, son libellé, et s'il est archivé. */
+export type ChampCommunIa = { readonly cle: string; readonly libelle: string; readonly archive: boolean }
+
+/**
+ * Les champs communs d'un espace, archivés compris — un champ archivé qu'une proposition exige se nomme et porte
+ * « Archivé » (docs/DESIGN_SYSTEM.md §5.52 ter). Filtrés par l'espace de la suggestion : la clé n'est unique que dans
+ * son espace.
+ */
+export async function lireChampsCommuns(client: ClientCrm, idEspace: string): Promise<EtatAsync<readonly ChampCommunIa[]>> {
+	try {
+		const reponse = await client
+			.from('card_common_fields')
+			.select('key, label, archived_at')
+			.eq('workspace_id', idEspace)
+			.order('position')
+		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
+		return pret(reponse.data.map((c) => ({ cle: c.key, libelle: c.label, archive: c.archived_at !== null })))
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}

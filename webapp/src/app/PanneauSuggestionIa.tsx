@@ -12,6 +12,9 @@
 // @spec CRM-113 (docs/BACKLOG.md) tranches T3 et T5 — docs/SPEC-ia.md §14.5 (`native_field` traduit, `native` nommé par
 //       un mot), §14.7 (le nom effectif d'une étape, lu dans sa clé `label`) ; docs/DESIGN_SYSTEM.md §5.52 bis ;
 //       décisions 646, 677 et 679
+// @spec CRM-112 (docs/BACKLOG.md) tranche T2.d.3 — docs/SPEC-ia.md §12.5 (les champs communs de l'espace lus pour
+//       nommer ceux qu'une proposition exige), §12.1 (les trois codes de défaut traduits) ; docs/DESIGN_SYSTEM.md
+//       §5.52 ter ; décision 825
 //
 // AUCUN DROIT N'EST CALCULÉ ICI (CLAUDE.md §10) : chaque commande est rendue, la base et la fonction `ia`
 // refusent, et le panneau traduit. Les seules commandes désactivées le sont par l'état de la saisie — rien de
@@ -35,12 +38,14 @@ import {
 	formaterHorodatage,
 	generationEnVol,
 	genererSuggestion,
+	lireChampsCommuns,
 	lireEtatAssistant,
 	lireNumeroVersion,
 	lireSuggestion,
 	lireWorkflowVivant,
 	revoirSuggestion,
 	type AccesAssistant,
+	type ChampCommunIa,
 	type PorteeModification,
 	type WorkflowVivant,
 	type DefautIa,
@@ -104,6 +109,10 @@ const CLES_DEFAUT: Readonly<Record<string, CleTraduction>> = {
 	// `CRM-113` (docs/SPEC-ia.md §14.3, §14.5).
 	native_field: 'ia.defaut.native_field',
 	step_probability_invalid: 'ia.defaut.step_probability_invalid',
+	// `CRM-112` T2.d (docs/SPEC-ia.md §12.1, décision 825).
+	exigence_champ_commun_absent: 'ia.defaut.exigence_champ_commun_absent',
+	exigence_commune_transition_absente: 'ia.defaut.exigence_commune_transition_absente',
+	exigence_commune_en_double: 'ia.defaut.exigence_commune_en_double',
 }
 
 /** L'information native qu'un champ doublonne, nommée par un mot traduit — jamais par le code de la base (§5.52 bis). */
@@ -521,6 +530,22 @@ function VueSuggestion({
 
 	const derniere: RevisionIa | null = lue.statut === 'pret' && lue.donnees !== null ? (lue.donnees.revisions[0] ?? null) : null
 
+	// Les champs communs de l'espace de la suggestion, pour nommer ceux qu'une proposition exige (§5.52 ter). Une panne
+	// se dit dans la section, qui garde les clés : la suggestion reste relisible et corrigeable sans eux.
+	const idEspace = lue.statut === 'pret' && lue.donnees !== null ? lue.donnees.suggestion.workspace_id : null
+	const [champsCommuns, setChampsCommuns] = useState<EtatAsync<ReadonlyMap<string, ChampCommunIa>>>(enChargement)
+	useEffect(() => {
+		if (idEspace === null) return
+		let actif = true
+		void lireChampsCommuns(client, idEspace).then((lu) => {
+			if (!actif) return
+			setChampsCommuns(lu.statut === 'pret' ? { statut: 'pret', donnees: new Map(lu.donnees.map((c) => [c.cle, c])) } : lu)
+		})
+		return () => {
+			actif = false
+		}
+	}, [client, idEspace, tentative])
+
 	// Une MODIFICATION (docs/SPEC-ia.md §13.6) : le workflow vivant et son occupation, relus avec la suggestion. Une
 	// relecture garde l'état lu le temps qu'elle aboutisse — le différentiel ne clignote pas à chaque geste (§5.29).
 	const idWorkflowVise = lue.statut === 'pret' && lue.donnees !== null ? lue.donnees.suggestion.workflow_id : null
@@ -669,6 +694,7 @@ function VueSuggestion({
 			cle,
 		champ: (cle) =>
 			proposition?.champs.find((c) => c.cle === cle)?.libelle || vivante?.composition.champs.find((c) => c.cle === cle)?.libelle || cle,
+		champCommun: (cle) => (champsCommuns.statut === 'pret' ? champsCommuns.donnees.get(cle)?.libelle : undefined) || cle,
 	}
 	const enVolAilleurs = generation === null && suggestion.statut === 'en_revue' && generationEnVol(suggestion, maintenant())
 	const depuis = suggestion.generation_depuis === null ? null : formaterHorodatage(suggestion.generation_depuis, 'heure')
@@ -775,6 +801,7 @@ function VueSuggestion({
 						catalogue={catalogue}
 						desactive={occupe || suggestion.statut !== 'en_revue'}
 						vivante={vivante?.composition ?? null}
+						champsCommuns={champsCommuns}
 						onChange={(nouvelle, annonce) => {
 							setBrouillon({ revision: derniere.id, proposition: nouvelle })
 							if (annonce !== undefined) annoncer(annonce)

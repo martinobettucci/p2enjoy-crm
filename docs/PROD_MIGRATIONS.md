@@ -727,7 +727,8 @@ développement le 2026-11-03.
 
 **La 160, après la 159** (`CRM-112` T2.d.2, décision 825 ; sa ligne au §3.2). L'assistant peut exiger un champ commun
 existant. **Dans la même fenêtre que le service `functions`** de `main`, dont la fonction `ia` envoie les champs communs
-au modèle. Aucune table ni donnée. Appliquée en développement le 2026-11-03.
+au modèle. Aucune table ni donnée. Appliquée en développement le 2026-11-03. **Avec la webapp de `main`** (T2.d.3) : sans
+elle, une correction à la main d'une suggestion effacerait les exigences de champ commun que l'assistant a proposées.
 
 **La 159, après la 158** (`CRM-112` T2.d.0 ; sa ligne au §3.2). Elle corrige la 157 : sans elle, accepter une
 suggestion de l'assistant retirerait les champs communs exigés. **Toujours dans la même fenêtre que la 157.** Appliquée en

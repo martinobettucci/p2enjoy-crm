@@ -8,6 +8,9 @@
 //       docs/DESIGN_SYSTEM.md §5.52 bis ; décisions 646 et 677
 // @spec CRM-113 tranche T5 — décision 679 : les clés `label` et `probability` ; une différence de casse seule du nom
 //       d'une étape n'est pas un changement (docs/SPEC-ia.md §14.3, §14.4)
+// @spec CRM-112 (docs/BACKLOG.md) tranche T2.d.3 — docs/SPEC-ia.md §6.1 (une cible qui porte `exigences_communes`
+//       décide, même vide ; sans elle, les exigences vivantes restent) et §12.5 ; docs/DESIGN_SYSTEM.md §5.52 ter (la
+//       section « Champs communs exigés » du différentiel, après « Exigences ») ; décision 825
 //
 // Module pur : il compare deux propositions `version: 1` — la composition vivante, telle que la base la rend
 // (`proposition_du_workflow`), et la cible — et ne juge rien. Les défauts sont l'affaire de la base (§12.1) ; ce
@@ -18,7 +21,7 @@ import { memeLibelle, type PropositionIa } from './brouillon-ia'
 
 export type GenreChangement = 'ajout' | 'retrait' | 'modification'
 
-export const COLLECTIONS_DIFFERENTIEL = ['workflow', 'etapes', 'transitions', 'champs', 'regles', 'exigences'] as const
+export const COLLECTIONS_DIFFERENTIEL = ['workflow', 'etapes', 'transitions', 'champs', 'regles', 'exigences', 'exigences_communes'] as const
 export type CollectionDifferentiel = (typeof COLLECTIONS_DIFFERENTIEL)[number]
 
 export type ObjetDifferentiel =
@@ -28,6 +31,7 @@ export type ObjetDifferentiel =
 	| { readonly collection: 'champs'; readonly cle: string }
 	| { readonly collection: 'regles'; readonly champ: string; readonly etape: string }
 	| { readonly collection: 'exigences'; readonly de: string; readonly vers: string; readonly champ: string }
+	| { readonly collection: 'exigences_communes'; readonly de: string; readonly vers: string; readonly champ: string }
 
 export type CodeAttribut =
 	| 'nom'
@@ -188,6 +192,19 @@ export function differentiel(vivante: PropositionIa, cible: PropositionIa): read
 			() => [],
 		),
 	)
+
+	// Une cible qui ne porte pas la liste garde les exigences vivantes (docs/SPEC-ia.md §6.1) : rien ne change.
+	if (cible.exigences_communes !== undefined) {
+		changements.push(
+			...comparer(
+				vivante.exigences_communes ?? [],
+				cible.exigences_communes,
+				(x) => `${x.de}>${x.vers}@${x.champ}`,
+				(x) => ({ collection: 'exigences_communes', de: x.de, vers: x.vers, champ: x.champ }),
+				() => [],
+			),
+		)
+	}
 
 	return changements
 }

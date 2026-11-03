@@ -5483,10 +5483,14 @@ ce que les §5.52, §5.52 bis et §5.53 posent vaut sans être répété** ; seu
   change rien aux exigences vivantes (`docs/SPEC-ia.md` §6.1) : il n'y a rien à relire, et une section vide affirmerait
   qu'il n'y en a aucune. **Une liste portée mais vide rend « Aucun champ commun exigé. »** (§5.15 : jamais un vide) : elle
   décide, et pour une modification le différentiel dit ce qu'elle retire.
-- **UNE LIGNE PAR EXIGENCE**, la ligne des exigences (§5.52) : « « SIRET » exigé pour passer de « Prospection » à
-  « Qualification » », le champ nommé par son **libellé**, lu dans les champs communs de l'espace, les étapes par leur
-  nom effectif (§5.52 bis) ; puis la clé du champ en `code` sur `--color-hover` (§5.15) — la clé est ce que la
-  proposition porte, et ce que la base résout.
+- **UNE LIGNE PAR EXIGENCE**, dans la forme exacte de la ligne d'une exigence (§5.52) : « Prospection vers
+  Qualification exige le champ commun SIRET », le champ nommé par son **libellé**, lu dans les champs communs de
+  l'espace, les étapes par leur nom effectif (§5.52 bis) ; puis la clé du champ en `code` sur `--color-hover` (§5.15) —
+  la clé est ce que la proposition porte, et ce que la base résout. *Précisé à l'écriture du code* : la première
+  rédaction proposait une autre tournure ; deux lignes voisines qui disent la même chose se disent de la même façon.
+  - **Les libellés en panne de lecture** : une phrase en 13 px `--color-text-2` sous l'aide — « Les libellés des champs
+    communs n'ont pas pu être lus : leurs clés sont affichées. » —, et chaque ligne garde sa clé. Ce n'est pas une alerte :
+    la suggestion reste relisible, corrigeable et acceptable, et la base juge sur les clés.
   - **Une clé qu'aucun champ commun lisible de l'espace ne porte se rend telle quelle**, en `code`, sans libellé inventé
     (§5.62 : on ne fait jamais un nom d'un identifiant) ; le défaut `exigence_champ_commun_absent` le dit en tête.
   - **Un champ commun archivé porte la pilule « Archivé »** du §5.15 après son libellé : la base refuse de l'exiger, et

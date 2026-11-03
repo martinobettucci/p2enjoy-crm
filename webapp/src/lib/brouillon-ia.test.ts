@@ -8,6 +8,10 @@
 //           décision 679 ; un libellé qui ne diffère que par la casse est le même nom),
 //           §14.7 (le nom et la probabilité de toute étape se corrigent ; « Utiliser le nœud du catalogue » les garde,
 //           ou rien quand ils sont égaux) ; docs/DESIGN_SYSTEM.md §5.52 bis (le nom effectif) ; décision 677
+// @verifies CRM-112 (docs/BACKLOG.md) tranche T2.d.3 — docs/SPEC-ia.md §6.1 (`exigences_communes`, facultative : portée,
+//           elle décide ; absente, rien ne change) et §12.5 (une correction garde la liste telle qu'elle est ; une
+//           exigence commune se retire, et les retraits en cascade l'emportent) ; docs/DESIGN_SYSTEM.md §5.52 ter
+//           (les cascades comptées avec les exigences) ; décision 825
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -23,6 +27,7 @@ import {
 	normaliser,
 	retirerChamp,
 	retirerEtape,
+	retirerExigenceCommune,
 	retirerTransition,
 	utiliserNoeudDuCatalogue,
 	type PropositionIa,
@@ -210,5 +215,48 @@ describe('CRM-113 T3 — le nom et la probabilité d’une étape (docs/SPEC-ia.
 		expect(memeLibelle('Négociation', 'Negociation')).toBe(false)
 		expect(memeLibelle(null, '  ')).toBe(true)
 		expect(memeLibelle('Devis', null)).toBe(false)
+	})
+})
+
+describe('CRM-112 T2.d.3 — les champs communs exigés (docs/SPEC-ia.md §6.1, §12.5)', () => {
+	const COMMUNES: PropositionIa = {
+		...VALIDE,
+		exigences_communes: [
+			{ de: 'maquette', vers: 'gagne-web', champ: 'siret' },
+			{ de: 'prise-de-contact', vers: 'maquette', champ: 'secteur' },
+		],
+	}
+
+	it('la forme canonique GARDE la liste : une correction enregistrée ne l’efface pas', () => {
+		expect(normaliser(COMMUNES).exigences_communes).toEqual(COMMUNES.exigences_communes)
+		expect(memesPropositions(VALIDE, COMMUNES)).toBe(false)
+	})
+
+	it('portée vide, elle reste portée — elle décide ; absente, elle reste absente — une révision antérieure', () => {
+		expect(normaliser({ ...VALIDE, exigences_communes: [] })).toHaveProperty('exigences_communes', [])
+		expect(normaliser(VALIDE)).not.toHaveProperty('exigences_communes')
+		expect(memesPropositions(VALIDE, { ...VALIDE, exigences_communes: [] })).toBe(false)
+	})
+
+	it('une exigence commune se retire, seule', () => {
+		expect(retirerExigenceCommune(COMMUNES, 0).exigences_communes).toEqual([COMMUNES.exigences_communes?.[1]])
+		expect(retirerExigenceCommune(COMMUNES, 9).exigences_communes).toEqual(COMMUNES.exigences_communes)
+		expect(retirerExigenceCommune(VALIDE, 0)).not.toHaveProperty('exigences_communes')
+	})
+
+	it('retirer une étape ou une transition emporte les exigences communes qui la touchent, comptées avec les exigences', () => {
+		const etape = retirerEtape(COMMUNES, 'maquette')
+		expect(etape.proposition.exigences_communes).toEqual([])
+		expect(etape.emportes).toEqual({ transitions: 3, regles: 1, exigences: 3 })
+		const transition = retirerTransition(COMMUNES, 1)
+		expect(transition.proposition.exigences_communes).toEqual([COMMUNES.exigences_communes?.[1]])
+		expect(transition.emportes.exigences).toBe(2)
+		// Absente, la liste le reste : un retrait n'invente pas une décision que la révision ne portait pas.
+		expect(retirerEtape(VALIDE, 'maquette').proposition).not.toHaveProperty('exigences_communes')
+		expect(retirerTransition(VALIDE, 1).proposition).not.toHaveProperty('exigences_communes')
+	})
+
+	it('retirer un champ de la proposition ne touche pas aux exigences communes', () => {
+		expect(retirerChamp(COMMUNES, 0).proposition.exigences_communes).toEqual(COMMUNES.exigences_communes)
 	})
 })

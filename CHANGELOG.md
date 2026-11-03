@@ -33,6 +33,11 @@ d'exécuter le code attendu.
 - **T2.d.1 et T2.d.2 (migration 160, fonction `ia`)** : l'assistant connaît les champs communs de l'espace et peut en
   exiger un sur une transition, par sa clé, sans jamais en créer. Une clé inconnue, une transition absente ou un doublon
   sont relevés comme défauts.
+- **T2.d.3 (webapp)** : le panneau de suggestion montre les champs communs exigés sous « Champs communs exigés », nommés
+  par leur libellé, leur clé à côté, « Archivé » quand il y a lieu ; on les retire comme les autres exigences, et retirer
+  une étape ou une transition emporte les siennes. Le différentiel d'une modification les compare au workflow vivant, et
+  les trois défauts ont leur phrase. **Corrigé avant toute livraison** : « Enregistrer la correction » effaçait la liste
+  que l'assistant avait proposée. Manuel, chapitre 18, avec une image.
 
 - **`CRM-127` T2 et T3 — la relève date `last_sync_at`, et le test de connexion d'un compte de messagerie passe par une
   fonction edge** (décision 816, INC-340 ; `docs/SPEC-mail-subsystem.md` §23). Migration `0151` :

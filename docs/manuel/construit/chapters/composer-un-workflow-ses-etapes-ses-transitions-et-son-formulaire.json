@@ -828,7 +828,46 @@
 				},
 				{
 					"type": "text",
-					"text": " —, les transitions\nau départ de chaque étape, les champs, leur visibilité par étape et les champs exigés pour franchir une\ntransition. Si la proposition a des "
+					"text": " —, les transitions\nau départ de chaque étape, les champs, leur visibilité par étape et les champs exigés pour franchir une\ntransition. Si votre espace définit des "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "champs communs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " à toutes ses affaires, l'IA peut aussi exiger\nl'un d'eux pour franchir une transition : ces exigences sont rangées à part, sous "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Champs communs\nexigés »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", chacune avec le nom du champ et sa clé. L'IA ne crée jamais de champ commun, elle exige\nseulement ceux qui existent ; un champ archivé porte la mention "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Archivé »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et une clé qu'aucun champ\nne porte s'affiche telle quelle. Si la proposition a des "
 				},
 				{
 					"type": "strong",
@@ -841,14 +880,14 @@
 				},
 				{
 					"type": "text",
-					"text": " — deux étapes initiales, une transition vers une étape\nqui n'existe pas, une liste sans choix… —, ils sont listés en tête, et la suggestion "
+					"text": " — deux étapes initiales, une transition\nvers une étape qui n'existe pas, une liste sans choix, un champ commun archivé ou inconnu… —, ils sont\nlistés en tête, et la suggestion "
 				},
 				{
 					"type": "strong",
 					"content": [
 						{
 							"type": "text",
-							"text": "ne peut pas être\nacceptée"
+							"text": "ne peut pas être acceptée"
 						}
 					]
 				},
@@ -857,6 +896,13 @@
 					"text": " tant qu'ils demeurent."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champs-communs.jpg",
+			"alt": "La section « Champs communs exigés » : le numéro de TVA exigé pour signer le devis, et un ancien code client archivé, chacun avec sa clé et la commande qui retire l'exigence",
+			"width": 862,
+			"height": 210
 		},
 		{
 			"type": "image",
@@ -918,7 +964,7 @@
 				},
 				{
 					"type": "text",
-					"text": ") — laissés\nvides, l'étape garde le nom et la probabilité de son nœud, que le champ montre en gris (un nom qui ne\ndiffère de celui du nœud que par les majuscules n'est pas un nouveau nom : l'étape garde celui de son nœud, et\nun nom déjà donné à l'étape ne change pas si seules ses majuscules changent) ; changer le\nlibellé, la nature et la probabilité d'un nœud nouveau ; choisir l'étape initiale ; retirer une étape, une\ntransition, un champ, une règle ou une exigence ; ajouter une transition ; changer le type, les choix,\nla devise ou l'aide d'un champ. Un retrait emporte ce qui en dépend — retirer une étape retire aussi\nses transitions et les règles qui la visent — et l'écran annonce ce qui a été emporté. Vos modifications\nrestent locales jusqu'à "
+					"text": ") — laissés\nvides, l'étape garde le nom et la probabilité de son nœud, que le champ montre en gris (un nom qui ne\ndiffère de celui du nœud que par les majuscules n'est pas un nouveau nom : l'étape garde celui de son nœud, et\nun nom déjà donné à l'étape ne change pas si seules ses majuscules changent) ; changer le\nlibellé, la nature et la probabilité d'un nœud nouveau ; choisir l'étape initiale ; retirer une étape, une\ntransition, un champ, une règle, une exigence ou un champ commun exigé ; ajouter une transition ; changer le type, les choix,\nla devise ou l'aide d'un champ. Un retrait emporte ce qui en dépend — retirer une étape retire aussi\nses transitions et les règles qui la visent — et l'écran annonce ce qui a été emporté. Vos modifications\nrestent locales jusqu'à "
 				},
 				{
 					"type": "strong",

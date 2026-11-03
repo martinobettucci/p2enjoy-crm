@@ -7,6 +7,8 @@
 //       par un mot, une étape retirée vide qui ne paraît pas), §5.15, §8, §10 ; décision 620
 // @spec CRM-113 (docs/BACKLOG.md) tranche T3 — docs/DESIGN_SYSTEM.md §5.52 bis (« Nom de l'étape » et « Probabilité »
 //       nommés par un mot dans le différentiel) ; docs/SPEC-ia.md §14.4 ; décision 677
+// @spec CRM-112 (docs/BACKLOG.md) tranche T2.d.3 — docs/DESIGN_SYSTEM.md §5.52 ter (la section « Champs communs exigés »
+//       du différentiel, après « Exigences », nommée comme dans l'aperçu) ; décision 825
 //
 // Composants de présentation : ils ne lisent rien et ne décident de rien. Le différentiel vient de
 // `lib/differentiel-ia.ts`, et le panneau tient le brouillon où un choix de destination s'écrit.
@@ -35,6 +37,7 @@ const TITRES: Readonly<Record<CollectionDifferentiel, CleTraduction>> = {
 	champs: 'ia.apercu.champs',
 	regles: 'ia.apercu.regles',
 	exigences: 'ia.apercu.exigences',
+	exigences_communes: 'ia.apercu.exigences_communes',
 }
 
 const ATTRIBUTS: Readonly<Record<CodeAttribut, CleTraduction>> = {
@@ -52,7 +55,12 @@ const ATTRIBUTS: Readonly<Record<CodeAttribut, CleTraduction>> = {
 	visibilite: 'ia.differentiel.attribut.visibilite',
 }
 
-export type Nommage = { readonly etape: (cle: string) => string; readonly champ: (cle: string) => string }
+export type Nommage = {
+	readonly etape: (cle: string) => string
+	readonly champ: (cle: string) => string
+	/** Un champ commun de l'espace, par sa clé : son libellé, sinon la clé (§5.52 ter). */
+	readonly champCommun: (cle: string) => string
+}
 
 /** Une valeur d'attribut en mots : `null` est rendu « aucune valeur » par la ligne (§5.15). */
 function valeurEnMots(code: CodeAttribut, valeur: ValeurAttribut): string | null {
@@ -81,6 +89,12 @@ function nomDuChangement(changement: Changement, noms: Nommage): string {
 			return t('ia.apercu.regle', { champ: noms.champ(objet.champ), etape: noms.etape(objet.etape) })
 		case 'exigences':
 			return t('ia.apercu.exigence', { de: noms.etape(objet.de), vers: noms.etape(objet.vers), champ: noms.champ(objet.champ) })
+		case 'exigences_communes':
+			return t('ia.apercu.exigence_commune', {
+				de: noms.etape(objet.de),
+				vers: noms.etape(objet.vers),
+				champ: noms.champCommun(objet.champ),
+			})
 	}
 }
 

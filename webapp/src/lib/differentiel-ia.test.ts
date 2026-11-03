@@ -7,6 +7,8 @@
 // @verifies CRM-113 (docs/BACKLOG.md) tranche T3 — docs/SPEC-ia.md §14.4 (une étape conservée dont le nom ou la
 //           probabilité EFFECTIFS changent est modifiée ; une cible muette garde la surcharge vivante) ;
 //           docs/DESIGN_SYSTEM.md §5.52 bis ; décision 677
+// @verifies CRM-112 (docs/BACKLOG.md) tranche T2.d.3 — docs/SPEC-ia.md §6.1 et §12.5 (les exigences de champ commun
+//           comparées au vivant, seulement quand la cible porte la liste) ; docs/DESIGN_SYSTEM.md §5.52 ter ; décision 825
 
 import { describe, expect, it } from 'vitest'
 import type { PropositionIa } from './brouillon-ia'
@@ -204,5 +206,30 @@ describe('CRM-113 T3 — le nom et la probabilité effectifs d’une étape (doc
 		expect(differentiel(NOMMEE, cible((e) => (e.noeud === 'relance' ? { ...e, label: ' RELANCE CLIENT ' } : e)))).toEqual([])
 		const accent = differentiel(NOMMEE, cible((e) => (e.noeud === 'relance' ? { ...e, label: 'Relance cliént' } : e)))
 		expect(accent).toHaveLength(1)
+	})
+})
+
+describe('CRM-112 T2.d.3 — les champs communs exigés (docs/SPEC-ia.md §6.1, §12.5)', () => {
+	const vivante: PropositionIa = { ...copie(), exigences_communes: [{ de: 'relance', vers: 'negociation', champ: 'siret' }] }
+
+	it('une cible qui porte la liste se compare au vivant : ajout et retrait, par le triplet', () => {
+		const cible: PropositionIa = { ...copie(), exigences_communes: [{ de: 'negociation', vers: 'perdu', champ: 'siret' }] }
+		expect(differentiel(vivante, cible).filter((c) => c.objet.collection === 'exigences_communes')).toEqual([
+			{ genre: 'ajout', objet: { collection: 'exigences_communes', de: 'negociation', vers: 'perdu', champ: 'siret' }, attributs: [] },
+			{ genre: 'retrait', objet: { collection: 'exigences_communes', de: 'relance', vers: 'negociation', champ: 'siret' }, attributs: [] },
+		])
+	})
+
+	it('portée vide, elle retire tout ; un vivant sans liste n’a rien à retirer', () => {
+		expect(differentiel(vivante, { ...copie(), exigences_communes: [] }).map((c) => c.genre)).toEqual(['retrait'])
+		expect(differentiel(copie(), { ...copie(), exigences_communes: [] })).toEqual([])
+	})
+
+	it('une cible sans la liste — une révision antérieure — garde le vivant : rien à dire', () => {
+		expect(differentiel(vivante, copie())).toEqual([])
+	})
+
+	it('la même liste ne change rien', () => {
+		expect(differentiel(vivante, structuredClone(vivante) as PropositionIa)).toEqual([])
 	})
 })

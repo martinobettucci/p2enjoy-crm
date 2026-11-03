@@ -12,6 +12,10 @@
 //       l'étape » sur chaque étape, l'exemple à la valeur du nœud, le nom effectif partout, « Utiliser le nœud du
 //       catalogue » qui garde le nom) ; docs/SPEC-ia.md §14.7 ; décisions 646 et 677
 // @spec CRM-113 tranche T5 — décision 679 : l'étape lue et écrite par ses clés `label` et `probability`
+// @spec CRM-112 (docs/BACKLOG.md) tranche T2.d.3 — docs/DESIGN_SYSTEM.md §5.52 ter (la section « Champs communs exigés »
+//       après « Exigences », rendue seulement si la proposition porte la liste ; le champ nommé par son libellé, sa clé
+//       en `code`, « Archivé », une clé inconnue rendue telle quelle ; retrait sans ajout) ; docs/SPEC-ia.md §6.1,
+//       §12.5 ; décision 825
 //
 // Composant contrôlé : il ne garde que l'état d'ouverture du formulaire d'ajout. Chaque geste rend la proposition
 // modifiée — et, pour un retrait, l'annonce de ce qu'il a emporté — au panneau, qui tient le brouillon.
@@ -21,6 +25,8 @@ import { ArrowRight, Plus, Trash2 } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { t } from '../i18n'
 import type { CleTraduction } from '../i18n/fr'
+import type { EtatAsync } from '../lib/async'
+import type { ChampCommunIa } from '../lib/assistant-ia'
 import {
 	ajouterTransition,
 	designerInitiale,
@@ -35,6 +41,7 @@ import {
 	retirerChamp,
 	retirerEtape,
 	retirerExigence,
+	retirerExigenceCommune,
 	retirerRegle,
 	retirerTransition,
 	utiliserNoeudDuCatalogue,
@@ -100,9 +107,18 @@ type ProprietesApercu = {
 	readonly onChange: (proposition: PropositionIa, annonce?: string) => void
 	/** La composition vivante, pour une suggestion qui fait évoluer un workflow existant (§5.53) ; absente sinon. */
 	readonly vivante?: PropositionIa | null
+	/** Les champs communs de l'espace, par clé, pour nommer ceux que la proposition exige (§5.52 ter). */
+	readonly champsCommuns?: EtatAsync<ReadonlyMap<string, ChampCommunIa>> | null
 }
 
-export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onChange, vivante = null }: ProprietesApercu) {
+export function ApercuPropositionIa({
+	proposition: p,
+	catalogue,
+	desactive,
+	onChange,
+	vivante = null,
+	champsCommuns = null,
+}: ProprietesApercu) {
 	const prefixe = useId()
 	const [ajoutOuvert, setAjoutOuvert] = useState(false)
 	// Les champs « Nom de l'étape », par clé : « Utiliser le nœud du catalogue » disparaît sous le doigt, et le focus
@@ -128,6 +144,8 @@ export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onCh
 	// défaut, que la base dit —, aucun radio n'est coché, plutôt que le dernier rendu, qui mentirait (§5.52).
 	const initiales = p.etapes.filter((e) => e.initiale).length
 	const nomChamp = (cle: string) => p.champs.find((c) => c.cle === cle)?.libelle || cle
+	// Un champ commun : par son libellé quand l'espace le porte ; sinon sa clé, jamais un libellé inventé (§5.52 ter).
+	const champCommun = (cle: string) => (champsCommuns?.statut === 'pret' ? champsCommuns.donnees.get(cle) : undefined)
 	const departs = [
 		...p.etapes.map((e) => e.noeud),
 		...p.transitions.map((x) => x.de).filter((de, i, toutes) => !p.etapes.some((e) => e.noeud === de) && toutes.indexOf(de) === i),
@@ -599,6 +617,50 @@ export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onCh
 					</ul>
 				)}
 			</section>
+
+			{/* Rendue seulement si la proposition PORTE la liste : absente — une révision antérieure —, elle ne change rien aux
+			    exigences vivantes, et une section vide affirmerait qu'il n'y en a aucune (§5.52 ter). */}
+			{p.exigences_communes === undefined ? null : (
+				<section className="flex flex-col gap-2" aria-labelledby={`${prefixe}-exigences-communes`} data-testid="ia-exigences-communes">
+					<h3 id={`${prefixe}-exigences-communes`}>{t('ia.apercu.exigences_communes')}</h3>
+					<p className="text-sm text-text-2">{t('ia.apercu.exigences_communes.aide')}</p>
+					{champsCommuns?.statut === 'erreur' ? (
+						<p className="text-sm text-text-2">{t('ia.apercu.exigences_communes.lecture')}</p>
+					) : null}
+					{p.exigences_communes.length === 0 ? (
+						<p className="text-sm text-text-2">{t('ia.apercu.exigences_communes.vide')}</p>
+					) : (
+						<ul className={LISTE}>
+							{p.exigences_communes.map((exigence, rang) => {
+								const champ = champCommun(exigence.champ)
+								const noms = { de: nomEtape(exigence.de), vers: nomEtape(exigence.vers), champ: champ?.libelle || exigence.champ }
+								return (
+									<li
+										key={`${exigence.de}>${exigence.vers}@${exigence.champ}#${rang}`}
+										className={LIGNE}
+										data-testid="ia-exigence-commune"
+									>
+										<span className="min-w-0 flex-1 basis-[12rem]">{t('ia.apercu.exigence_commune', noms)}</span>
+										<span className="flex flex-wrap items-center gap-2">
+											<code className={CLE}>{exigence.champ}</code>
+											{champ?.archive ? <span className={PILULE}>{t('ia.apercu.exigences_communes.archive')}</span> : null}
+											<Button
+												taille="compacte"
+												variante="discret"
+												aria-label={t('ia.apercu.retirer_exigence_commune', noms)}
+												disabled={desactive}
+												onClick={() => onChange(retirerExigenceCommune(p, rang), t('ia.annonce.retrait.exigence'))}
+											>
+												<Trash2 aria-hidden="true" size={16} strokeWidth={2} />
+											</Button>
+										</span>
+									</li>
+								)
+							})}
+						</ul>
+					)}
+				</section>
+			)}
 		</div>
 	)
 }

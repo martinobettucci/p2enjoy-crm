@@ -13,6 +13,9 @@
 // @verifies CRM-113 (docs/BACKLOG.md) tranche T3 — docs/SPEC-ia.md §14.7 (le nom et la probabilité de toute étape se
 //           corrigent et partent avec la correction ; « Utiliser le nœud du catalogue » garde le nom et l'annonce ; les
 //           défauts `native_field` et `step_probability_invalid` traduits) ; docs/DESIGN_SYSTEM.md §5.52 bis ; décision 677
+// @verifies CRM-112 (docs/BACKLOG.md) tranche T2.d.3 — docs/SPEC-ia.md §6.1 et §12.5 (les champs communs exigés nommés
+//           par les champs de l'espace ; retirés ; une correction GARDE la liste, même vide, et n'en invente pas une
+//           absente ; le différentiel), §12.1 (les trois codes traduits) ; docs/DESIGN_SYSTEM.md §5.52 ter ; décision 825
 
 import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -63,6 +66,7 @@ const SUGGESTION = {
 	generation_depuis: null as string | null,
 	derniere_erreur: null as string | null,
 	workflow_cree_id: null,
+	workspace_id: 'ws-1',
 }
 
 const revision = (numero: number, defauts: DefautIa[] = [], proposition = PROPOSITION) => ({
@@ -79,6 +83,8 @@ type Options = {
 	correction?: { data: unknown; error: unknown }
 	acceptation?: { data: unknown; error: unknown }
 	abandon?: { data: unknown; error: unknown }
+	/** Les champs communs de l'espace, tels que `card_common_fields` les rend ; `'panne'` : la lecture échoue. */
+	champsCommuns?: { key: string; label: string; archived_at: string | null }[] | 'panne'
 }
 
 /** Un client qui sert la suggestion, ses révisions et le catalogue, et retient les écritures. */
@@ -98,6 +104,12 @@ function clientFactice(options: Options = {}) {
 				if (table === 'suggestions_ia_revisions') return chaine(ok(options.revisions ?? [revision(1)]))
 				if (table === 'workflow_nodes_catalog') return chaine(ok([{ id: 'n-1', key: 'relance', label: 'Relance', kind: 'open' }]))
 				if (table === 'workflow_versions') return chaine(ok(options.version === null ? null : { version_number: options.version ?? 4 }))
+				if (table === 'card_common_fields')
+					return chaine(
+						options.champsCommuns === 'panne'
+							? { data: null, error: { message: 'panne' }, status: 500 }
+							: ok(options.champsCommuns ?? []),
+					)
 				throw new Error(`lecture inattendue : ${table}`)
 			},
 			insert: (charge: unknown) => {
@@ -617,3 +629,113 @@ describe('CRM-113 T3 — le nom des étapes et les champs natifs (docs/DESIGN_SY
 	})
 })
 
+
+describe('CRM-112 T2.d.3 — les champs communs exigés (docs/DESIGN_SYSTEM.md §5.52 ter)', () => {
+	const g = (texte: string) => texte.replace(/« /g, '«\u00a0').replace(/ »/g, '\u00a0»')
+	const CHAMPS = [
+		{ key: 'siret', label: 'SIRET', archived_at: null },
+		{ key: 'ancien', label: 'Ancien code client', archived_at: '2026-11-01T00:00:00Z' },
+	]
+	const COMMUNES: PropositionIa = {
+		...PROPOSITION,
+		exigences_communes: [
+			{ de: 'maquette', vers: 'gagne-web', champ: 'siret' },
+			{ de: 'prise-de-contact', vers: 'maquette', champ: 'ancien' },
+			{ de: 'prise-de-contact', vers: 'maquette', champ: 'inconnu' },
+		],
+	}
+
+	it('les trois codes ont leur phrase, par clé', () => {
+		expect(phraseDefaut({ code: 'exigence_champ_commun_absent', chemin: 'exigences_communes[0]', valeurs: { cle: 'siret' } })).toBe(
+			g('Une exigence vise « siret », qui n’est pas un champ commun actif de l’espace.'),
+		)
+		expect(
+			phraseDefaut({ code: 'exigence_commune_transition_absente', chemin: 'exigences_communes[0]', valeurs: { de: 'a', vers: 'b' } }),
+		).toBe(g('Une exigence de champ commun vise la transition absente « a » vers « b ».'))
+		expect(
+			phraseDefaut({ code: 'exigence_commune_en_double', chemin: 'exigences_communes[1]', valeurs: { de: 'a', vers: 'b', champ: 'siret' } }),
+		).toBe(g('L’exigence du champ commun « siret » sur « a » vers « b » est déclarée deux fois.'))
+	})
+
+	it('la section nomme le champ par son libellé, montre la clé, « Archivé », et une clé inconnue telle quelle', async () => {
+		const { client } = clientFactice({ revisions: [revision(1, [], COMMUNES)], champsCommuns: CHAMPS })
+		rendre({ client, ouverture: { type: 'suggestion', id: ID } })
+		const section = await screen.findByTestId('ia-exigences-communes')
+		await waitFor(() => expect(section.textContent).toContain('Maquette et devis vers Gagné exige le champ commun SIRET'))
+		const lignes = within(section).getAllByTestId('ia-exigence-commune')
+		expect(lignes.map((l) => l.querySelector('code')?.textContent)).toEqual(['siret', 'ancien', 'inconnu'])
+		expect(lignes[1]?.textContent).toContain('Archivé')
+		expect(lignes[0]?.textContent).not.toContain('Archivé')
+		// Une clé qu'aucun champ commun ne porte n'est jamais habillée d'un libellé inventé.
+		expect(lignes[2]?.textContent).toContain('exige le champ commun inconnu')
+		expect(section.textContent).toContain('l’assistant les exige sans les créer')
+	})
+
+	it('retirer une exigence commune l’annonce, et la correction envoie la liste RESTANTE', async () => {
+		const { client, ecritures } = clientFactice({ revisions: [revision(1, [], COMMUNES)], champsCommuns: CHAMPS })
+		const rappels = rendre({ client, ouverture: { type: 'suggestion', id: ID } })
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Retirer l’exigence du champ commun SIRET de Maquette et devis vers Gagné' }),
+		)
+		expect(rappels.annoncer).toHaveBeenCalledWith('Exigence retirée.')
+		await userEvent.click(screen.getByRole('button', { name: 'Enregistrer la correction' }))
+		await waitFor(() => expect(rappels.annoncer).toHaveBeenCalledWith('Correction enregistrée, sans défaut.'))
+		const envoi = ecritures.find((e) => e.verbe === 'insert')?.charge as { proposition: PropositionIa }
+		expect(envoi.proposition.exigences_communes).toEqual(COMMUNES.exigences_communes?.slice(1))
+	})
+
+	it('une correction d’AUTRE CHOSE garde la liste entière — le défaut trouvé à la lecture du code', async () => {
+		const { client, ecritures } = clientFactice({ revisions: [revision(1, [], COMMUNES)], champsCommuns: CHAMPS })
+		const rappels = rendre({ client, ouverture: { type: 'suggestion', id: ID } })
+		await userEvent.type(await screen.findByLabelText('Nom du workflow'), ' bis')
+		await userEvent.click(screen.getByRole('button', { name: 'Enregistrer la correction' }))
+		await waitFor(() => expect(rappels.annoncer).toHaveBeenCalled())
+		const envoi = ecritures.find((e) => e.verbe === 'insert')?.charge as { proposition: PropositionIa }
+		expect(envoi.proposition.exigences_communes).toEqual(COMMUNES.exigences_communes)
+	})
+
+	it('retirer une étape emporte ses exigences communes, comptées avec les exigences', async () => {
+		const { client } = clientFactice({ revisions: [revision(1, [], COMMUNES)], champsCommuns: CHAMPS })
+		const rappels = rendre({ client, ouverture: { type: 'suggestion', id: ID } })
+		await userEvent.click(await screen.findByRole('button', { name: 'Retirer l’étape Maquette et devis' }))
+		expect(rappels.annoncer).toHaveBeenCalledWith(
+			'Étape Maquette et devis retirée. Retirées avec elle — transitions : 2, règles : 1, exigences : 4.',
+		)
+		expect(screen.getByTestId('ia-exigences-communes').textContent).toContain('Aucun champ commun exigé.')
+	})
+
+	it('une révision sans la liste n’a pas de section, et sa correction n’en invente pas', async () => {
+		const { client, ecritures } = clientFactice({ champsCommuns: CHAMPS })
+		const rappels = rendre({ client, ouverture: { type: 'suggestion', id: ID } })
+		await userEvent.type(await screen.findByLabelText('Nom du workflow'), ' bis')
+		expect(screen.queryByTestId('ia-exigences-communes')).toBeNull()
+		await userEvent.click(screen.getByRole('button', { name: 'Enregistrer la correction' }))
+		await waitFor(() => expect(rappels.annoncer).toHaveBeenCalled())
+		const envoi = ecritures.find((e) => e.verbe === 'insert')?.charge as { proposition: PropositionIa }
+		expect(envoi.proposition).not.toHaveProperty('exigences_communes')
+	})
+
+	it('la lecture des champs communs en panne se DIT, et les clés restent affichées', async () => {
+		const { client } = clientFactice({ revisions: [revision(1, [], COMMUNES)], champsCommuns: 'panne' })
+		rendre({ client, ouverture: { type: 'suggestion', id: ID } })
+		const section = await screen.findByTestId('ia-exigences-communes')
+		await waitFor(() => expect(section.textContent).toContain('Les libellés des champs communs n’ont pas pu être lus'))
+		expect(section.textContent).toContain('exige le champ commun siret')
+	})
+
+	it('le différentiel d’une modification compare la liste au vivant : ajout et retrait nommés', async () => {
+		rendreModification({
+			revisions: [revision(1, [], { ...CIBLE, exigences_communes: [{ de: 'prospection', vers: 'qualification-ia', champ: 'siret' }] })],
+			vivant: {
+				composition: { ...VIVANTE, exigences_communes: [{ de: 'relance', vers: 'negociation', champ: 'ancien' }] },
+				occupation: { prospection: 11, relance: 9, negociation: 8 },
+			},
+			champsCommuns: CHAMPS,
+		})
+		const section = await screen.findByTestId('ia-differentiel-exigences_communes')
+		await waitFor(() => expect(section.textContent).toContain('exige le champ commun SIRET'))
+		expect(section.textContent).toContain('Ajouté')
+		expect(section.textContent).toContain('Retiré')
+		expect(section.textContent).toContain('exige le champ commun Ancien code client')
+	})
+})

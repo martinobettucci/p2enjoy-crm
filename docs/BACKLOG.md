@@ -17511,7 +17511,7 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
             avant toute livraison). *Faite le 2026-11-03*, migration `0159` : test rouge avant le correctif (l'exigence
             retirée), vert après ; pgTAP `0148` **4/4** ; suite **136 fichiers, 4 854 assertions** ; les 5 specs API de
             l'assistant **21/21**.
-      - [~] **T2.d — l'assistant IA** : une proposition exige un champ commun existant par sa clé, dans
+      - [x] **T2.d — l'assistant IA** : une proposition exige un champ commun existant par sa clé, dans
             `exigences_communes` (décision 825), sans en créer. Découpé :
             - [x] **T2.d.1 — la fonction edge** : la forme (`proposition.ts`), les consignes et la liste des champs
                   communs envoyée au modèle (`consignes.ts`), leur lecture sous la RLS (`dependances.ts`, `handler.ts`).
@@ -17522,10 +17522,21 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
                   *Faite le 2026-11-03*, migration `0160` : pgTAP `0149` **12/12** (forme, trois défauts, rendu, document
                   cible qui décide ou garde le vivant, création acceptée) ; specs API de l'assistant **21/21** ; la suite
                   pgTAP n'a d'autre rouge que les comptes du seed revus par `CRM-111` T8 (deux affaires partagées).
-            - [ ] **T2.d.3 — le panneau de suggestion** : les exigences communes affichées et retirables ; unitaires ;
+            - [x] **T2.d.3 — le panneau de suggestion** : les exigences communes affichées et retirables ; unitaires ;
                   E2E. *Spécifiée le 2026-11-03, avant le code* : `docs/DESIGN_SYSTEM.md` §5.52 ter, `docs/SPEC-ia.md`
                   §12.5 ; la normalisation du brouillon garde la liste telle qu'elle est (défaut trouvé à la lecture du
                   code : une correction l'effaçait, journal du 2026-11-03).
+                  *Faite le 2026-11-03* :
+                  - le défaut prouvé d'abord : `brouillon-ia.test.ts` rouge (4 tests) avant le correctif, vert après ;
+                  - unitaires : brouillon 24/24, différentiel 17/17, panneau 42/42 ; suite entière **213 fichiers,
+                    5 322 tests** ; `typecheck` vert ;
+                  - E2E `e2e/ui/assistant-ia-champs-communs.spec.ts` **5/5** aux vrais jetons : défauts écrits par la
+                    base, retrait à la souris et au clavier, correction relue en base, exigence posée sur le workflow
+                    créé, quatre paliers sans défilement de côté ; captures `e2e/output/CRM-112/ia-champs-communs-*`
+                    observées ;
+                  - sans régression : specs UI de l'assistant **25/25**, specs API **14/14** ;
+                  - manuel, chapitre 18 : image `champs-communs` (`e2e/manuel/18-workflows.spec.ts`),
+                    `verify-manual` 168 contrôles sans anomalie.
 - [ ] **T3** — écrans : Réglages ▸ « Champs de l'affaire », exigence dans l'éditeur de workflow, partie commune de la
       fiche, timeline ; `docs/DESIGN_SYSTEM.md` avant le code ; unitaires.
 - [ ] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; unitaires ; API.

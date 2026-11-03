@@ -3,6 +3,8 @@
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitre 18 ; docs/SPEC-workflow-engine.md (l'éditeur, ses
 //       blocs, les versions) ; docs/SPEC-ia.md §11.6 (le simulateur), §12 (créer avec l'IA), §13 (faire évoluer) ;
 //       docs/SPEC-checklists.md ; docs/SPEC-modeles-affaires.md
+// @spec CRM-112 (docs/BACKLOG.md) tranche T2.d.3 — l'image « champs-communs » de la section « Créer un workflow avec
+//       l'IA » : docs/SPEC-ia.md §6.1, §12.5 ; docs/DESIGN_SYSTEM.md §5.52 ter ; décision 825
 //
 // Les workflows du seed sont lus, jamais modifiés : chaque formulaire ouvert est annulé, et les refus montrés sont ceux du
 // serveur (clé prise, transition déjà déclarée, rôle retiré en cours de page). Ce que l'écran crée — un workflow vide, un
@@ -51,7 +53,11 @@ const DEMANDE_CREATION = 'Un cycle pour une agence web : prise de contact, maque
 const DEMANDE_CATALOGUE = 'Un cycle de ventes accompagnées, qui reprend la prospection du catalogue.'
 const DEMANDE_ECHEC = 'Un cycle de formation inter-entreprises, de la demande à la convention.'
 const DEMANDE_EVOLUTION = 'Remplace la deuxième étape par une qualification des besoins.'
-const DEMANDES = [DEMANDE_CREATION, DEMANDE_CATALOGUE, DEMANDE_ECHEC, DEMANDE_EVOLUTION]
+const DEMANDE_CHAMPS_COMMUNS = 'Un cycle de devis qui exige le numéro de TVA avant la signature.'
+const DEMANDES = [DEMANDE_CREATION, DEMANDE_CATALOGUE, DEMANDE_ECHEC, DEMANDE_EVOLUTION, DEMANDE_CHAMPS_COMMUNS]
+// Deux champs communs propres à l'image, jamais ceux du seed (docs/SPEC-champs-communs.md §13) : le retrait les vise
+// par leur clé, qui ne doit rien emporter d'autre.
+const CHAMPS_COMMUNS = ['numero-tva-manuel', 'ancien-code-client-manuel']
 
 const TRACK_STUDIO = '5eed0000-0000-4000-8000-000000000022'
 const NOEUDS = {
@@ -121,6 +127,7 @@ async function ranger(request: APIRequestContext): Promise<void> {
 	await service(request, 'delete', `workflows?workspace_id=eq.${WORKSPACE_SEED}&name=eq.${encodeURIComponent(NOM_VIDE)}`)
 	await service(request, 'delete', `workflow_transitions?id=eq.${TRANSITION_DOUBLON}`)
 	await service(request, 'delete', `workflow_nodes_catalog?workspace_id=eq.${WORKSPACE_SEED}&key=eq.qualification-ia`)
+	await service(request, 'delete', `card_common_fields?workspace_id=eq.${WORKSPACE_SEED}&key=in.(${CHAMPS_COMMUNS.join(',')})`)
 	// Le seed n'archive aucun point de checklist : celui qu'une image a archivé est rendu, même si le test a échoué.
 	await service(request, 'patch', `workflow_step_checklist_items?workspace_id=eq.${WORKSPACE_SEED}&archived_at=not.is.null`, { archived_at: null })
 }
@@ -252,6 +259,55 @@ test('créer un workflow avec l’IA : demander, relire, corriger, abandonner', 
 	await illustrer(page, { chapitre: CHAPITRE, section: S.ia, nom: 'abandonner', cibles: [confirmation] })
 	await confirmation.getByRole('button', { name: 'Abandonner', exact: true }).click()
 	await expect(panneauIa(page)).toHaveCount(0)
+})
+
+test('créer avec l’IA : les champs communs exigés', async ({ page, request }) => {
+	// Les champs de l'espace et la révision sont posés par la clé de service : la révision prend le chemin d'une
+	// correction (docs/SPEC-ia.md §12.2), et la base en calcule les défauts comme pour toute autre.
+	const [actif, archive] = CHAMPS_COMMUNS
+	await service(request, 'post', 'card_common_fields', [
+		{ workspace_id: WORKSPACE_SEED, key: actif, label: 'Numéro de TVA', type: 'text', archived_at: null },
+		{ workspace_id: WORKSPACE_SEED, key: archive, label: 'Ancien code client', type: 'text', archived_at: new Date().toISOString() },
+	])
+	const id = 'e1120000-0000-4000-8000-0000000000a1'
+	await service(request, 'post', 'suggestions_ia', { id, workspace_id: WORKSPACE_SEED, portee: 'workflow', demande: DEMANDE_CHAMPS_COMMUNS })
+	await service(request, 'post', 'suggestions_ia_revisions', {
+		suggestion_id: id,
+		origine: 'correction',
+		proposition: {
+			version: 1,
+			workflow: { nom: 'Devis avec TVA' },
+			noeuds: [
+				{ cle: 'demande-de-devis', libelle: 'Demande de devis', nature: 'open', probabilite: 20 },
+				{ cle: 'devis-envoye', libelle: 'Devis envoyé', nature: 'open', probabilite: 50 },
+				{ cle: 'devis-signe', libelle: 'Devis signé', nature: 'won', probabilite: 100 },
+			],
+			etapes: [
+				{ noeud: 'demande-de-devis', initiale: true, label: null, probability: null },
+				{ noeud: 'devis-envoye', initiale: false, label: null, probability: null },
+				{ noeud: 'devis-signe', initiale: false, label: null, probability: null },
+			],
+			transitions: [
+				{ de: 'demande-de-devis', vers: 'devis-envoye', libelle: 'Envoyer le devis', commentaire_requis: false },
+				{ de: 'devis-envoye', vers: 'devis-signe', libelle: 'Signer', commentaire_requis: false },
+			],
+			champs: [],
+			regles: [],
+			exigences: [],
+			exigences_communes: [
+				{ de: 'devis-envoye', vers: 'devis-signe', champ: actif },
+				{ de: 'devis-envoye', vers: 'devis-signe', champ: archive },
+			],
+		},
+	})
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto(EDITEUR)
+	await page.getByTestId('ia-suggestions-en-revue').getByRole('button', { name: new RegExp(DEMANDE_CHAMPS_COMMUNS) }).click()
+	const section = page.getByTestId('ia-exigences-communes')
+	await expect(section.getByTestId('ia-exigence-commune')).toHaveCount(2)
+	await expect(section).toContainText('Numéro de TVA')
+	await centrer(section)
+	await illustrer(page, { chapitre: CHAPITRE, section: S.ia, nom: 'champs-communs', cibles: [section] })
 })
 
 test('créer avec l’IA : un nœud du catalogue redéclaré, un champ « montant », un échec, un refus', async ({ page, request }) => {

@@ -9,6 +9,10 @@
 //       docs/DESIGN_SYSTEM.md §5.52 bis (le nom effectif partout) ; décisions 646 et 677
 // @spec CRM-113 tranche T5 — décision 679 : les clés `label` et `probability` de l'étape ; un libellé qui ne diffère de
 //       celui du catalogue que par la casse n'est pas reporté (docs/SPEC-ia.md §14.3, §14.7)
+// @spec CRM-112 (docs/BACKLOG.md) tranche T2.d.3 — docs/SPEC-ia.md §6.1 (`exigences_communes`, facultative : portée,
+//       même vide, elle décide ; absente, les exigences vivantes restent) et §12.5 (une correction garde la liste telle
+//       qu'elle est ; une exigence commune se retire ; les retraits en cascade l'emportent) ; docs/DESIGN_SYSTEM.md
+//       §5.52 ter ; décision 825
 //
 // Module pur : chaque geste rend une NOUVELLE proposition, jamais une mutation, et les retraits disent ce qu'ils
 // ont emporté — l'écran l'annonce (docs/DESIGN_SYSTEM.md §5.52). Rien n'est jugé ici : une correction peut
@@ -41,6 +45,8 @@ export type ChampIa = {
 }
 export type RegleIa = { readonly champ: string; readonly etape: string; readonly visibilite: string }
 export type ExigenceIa = { readonly de: string; readonly vers: string; readonly champ: string }
+/** L'exigence d'un champ COMMUN de l'espace, par sa clé : la proposition ne le crée pas (docs/SPEC-ia.md §6.1). */
+export type ExigenceCommuneIa = { readonly de: string; readonly vers: string; readonly champ: string }
 /** Où vont les affaires d'une étape retirée — une modification seulement (docs/SPEC-ia.md §13.1). */
 export type RemappageIa = { readonly de: string; readonly vers: string }
 
@@ -55,6 +61,12 @@ export type PropositionIa = {
 	readonly exigences: readonly ExigenceIa[]
 	/** Facultative : absente d'une création, elle le reste. */
 	readonly remappages?: readonly RemappageIa[]
+	/**
+	 * Facultative, et sa PRÉSENCE est une donnée : portée, même vide, elle décide des exigences de champ commun ;
+	 * absente — une révision antérieure à `CRM-112` —, elle les laisse telles qu'elles vivent (docs/SPEC-ia.md §6.1).
+	 * Aucun geste ne l'ajoute ni ne la retire entière.
+	 */
+	readonly exigences_communes?: readonly ExigenceCommuneIa[]
 }
 
 /** Ce qu'un retrait a emporté avec lui, pour l'annonce. */
@@ -81,8 +93,18 @@ export function normaliser(p: PropositionIa): PropositionIa {
 		regles: p.regles.map((r) => ({ champ: r.champ, etape: r.etape, visibilite: r.visibilite })),
 		exigences: p.exigences.map((x) => ({ de: x.de, vers: x.vers, champ: x.champ })),
 		...(p.remappages === undefined ? {} : { remappages: p.remappages.map((r) => ({ de: r.de, vers: r.vers })) }),
+		...(p.exigences_communes === undefined
+			? {}
+			: { exigences_communes: p.exigences_communes.map((x) => ({ de: x.de, vers: x.vers, champ: x.champ })) }),
 	}
 }
+
+/** Les exigences communes gardées par un filtre — et la liste absente reste absente. */
+function filtrerCommunes(p: PropositionIa, garder: (x: ExigenceCommuneIa) => boolean): Pick<PropositionIa, 'exigences_communes'> {
+	return p.exigences_communes === undefined ? {} : { exigences_communes: p.exigences_communes.filter(garder) }
+}
+
+const nombreCommunes = (p: PropositionIa) => p.exigences_communes?.length ?? 0
 
 export function renommerWorkflow(p: PropositionIa, nom: string): PropositionIa {
 	return { ...p, workflow: { nom } }
@@ -166,13 +188,15 @@ export function utiliserNoeudDuCatalogue(p: PropositionIa, cle: string, duCatalo
 }
 
 /**
- * Retire une étape, ses transitions entrantes et sortantes, leurs exigences, ses règles et son nœud proposé — et
- * les remappages qui la visaient : une destination absente n'en est plus une.
+ * Retire une étape, ses transitions entrantes et sortantes, leurs exigences — de champs communs comprises, comptées
+ * avec les autres (docs/DESIGN_SYSTEM.md §5.52 ter) —, ses règles et son nœud proposé, et les remappages qui la
+ * visaient : une destination absente n'en est plus une.
  */
 export function retirerEtape(p: PropositionIa, cle: string): Retrait {
 	const touchees = (t: { de: string; vers: string }) => t.de === cle || t.vers === cle
 	const transitions = p.transitions.filter((t) => !touchees(t))
 	const exigences = p.exigences.filter((x) => !touchees(x))
+	const communes = filtrerCommunes(p, (x) => !touchees(x))
 	const regles = p.regles.filter((r) => r.etape !== cle)
 	return {
 		proposition: {
@@ -183,11 +207,12 @@ export function retirerEtape(p: PropositionIa, cle: string): Retrait {
 			regles,
 			exigences,
 			...(p.remappages === undefined ? {} : { remappages: p.remappages.filter((r) => r.vers !== cle) }),
+			...communes,
 		},
 		emportes: {
 			transitions: p.transitions.length - transitions.length,
 			regles: p.regles.length - regles.length,
-			exigences: p.exigences.length - exigences.length,
+			exigences: p.exigences.length - exigences.length + nombreCommunes(p) - (communes.exigences_communes?.length ?? 0),
 		},
 	}
 }
@@ -204,14 +229,20 @@ export function ajouterTransition(p: PropositionIa, transition: TransitionIa): P
 	return { ...p, transitions: [...p.transitions, transition] }
 }
 
-/** Retire une transition et les exigences qui portaient sur elle. */
+/** Retire une transition et les exigences — de champs communs comprises — qui portaient sur elle. */
 export function retirerTransition(p: PropositionIa, rang: number): Retrait {
 	const visee = p.transitions[rang]
 	if (visee === undefined) return { proposition: p, emportes: AUCUN }
-	const exigences = p.exigences.filter((x) => !(x.de === visee.de && x.vers === visee.vers))
+	const autre = (x: { de: string; vers: string }) => !(x.de === visee.de && x.vers === visee.vers)
+	const exigences = p.exigences.filter(autre)
+	const communes = filtrerCommunes(p, autre)
 	return {
-		proposition: { ...p, transitions: p.transitions.filter((_, i) => i !== rang), exigences },
-		emportes: { transitions: 0, regles: 0, exigences: p.exigences.length - exigences.length },
+		proposition: { ...p, transitions: p.transitions.filter((_, i) => i !== rang), exigences, ...communes },
+		emportes: {
+			transitions: 0,
+			regles: 0,
+			exigences: p.exigences.length - exigences.length + nombreCommunes(p) - (communes.exigences_communes?.length ?? 0),
+		},
 	}
 }
 
@@ -241,6 +272,11 @@ export function retirerRegle(p: PropositionIa, rang: number): PropositionIa {
 
 export function retirerExigence(p: PropositionIa, rang: number): PropositionIa {
 	return { ...p, exigences: p.exigences.filter((_, i) => i !== rang) }
+}
+
+/** Retire une exigence de champ commun ; la liste reste portée, même vidée — elle décide encore (§6.1). */
+export function retirerExigenceCommune(p: PropositionIa, rang: number): PropositionIa {
+	return { ...p, ...filtrerCommunes(p, (x) => p.exigences_communes?.indexOf(x) !== rang) }
 }
 
 /**

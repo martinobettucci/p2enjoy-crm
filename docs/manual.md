@@ -3953,9 +3953,15 @@ créer le workflow à la main.
 **2. Relire.** La suggestion s'affiche à la place du workflow choisi, dans l'ordre de l'éditeur : le
 nom, les étapes — chacune dit si son nœud est **nouveau** ou vient **du catalogue** —, les transitions
 au départ de chaque étape, les champs, leur visibilité par étape et les champs exigés pour franchir une
-transition. Si la proposition a des **défauts** — deux étapes initiales, une transition vers une étape
-qui n'existe pas, une liste sans choix… —, ils sont listés en tête, et la suggestion **ne peut pas être
-acceptée** tant qu'ils demeurent.
+transition. Si votre espace définit des **champs communs** à toutes ses affaires, l'IA peut aussi exiger
+l'un d'eux pour franchir une transition : ces exigences sont rangées à part, sous **« Champs communs
+exigés »**, chacune avec le nom du champ et sa clé. L'IA ne crée jamais de champ commun, elle exige
+seulement ceux qui existent ; un champ archivé porte la mention **« Archivé »**, et une clé qu'aucun champ
+ne porte s'affiche telle quelle. Si la proposition a des **défauts** — deux étapes initiales, une transition
+vers une étape qui n'existe pas, une liste sans choix, un champ commun archivé ou inconnu… —, ils sont
+listés en tête, et la suggestion **ne peut pas être acceptée** tant qu'ils demeurent.
+
+![La section « Champs communs exigés » : le numéro de TVA exigé pour signer le devis, et un ancien code client archivé, chacun avec sa clé et la commande qui retire l'exigence](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champs-communs.jpg)
 
 ![La suggestion relue : la demande, le nom proposé, et la première étape avec son nœud nouveau](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/relire.jpg)
 
@@ -3965,7 +3971,7 @@ vides, l'étape garde le nom et la probabilité de son nœud, que le champ montr
 diffère de celui du nœud que par les majuscules n'est pas un nouveau nom : l'étape garde celui de son nœud, et
 un nom déjà donné à l'étape ne change pas si seules ses majuscules changent) ; changer le
 libellé, la nature et la probabilité d'un nœud nouveau ; choisir l'étape initiale ; retirer une étape, une
-transition, un champ, une règle ou une exigence ; ajouter une transition ; changer le type, les choix,
+transition, un champ, une règle, une exigence ou un champ commun exigé ; ajouter une transition ; changer le type, les choix,
 la devise ou l'aide d'un champ. Un retrait emporte ce qui en dépend — retirer une étape retire aussi
 ses transitions et les règles qui la visent — et l'écran annonce ce qui a été emporté. Vos modifications
 restent locales jusqu'à **« Enregistrer la correction »** ; « Rétablir » les annule. Ajouter une étape

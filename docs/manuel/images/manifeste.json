@@ -538,6 +538,28 @@
 			]
 		},
 		{
+			"fichier": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champs-communs.jpg",
+			"largeur": 862,
+			"hauteur": 210,
+			"chapitre": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+			"section": "creer-un-workflow-avec-l-ia",
+			"pleinePage": false,
+			"libelles": [
+				"Archivé",
+				"Ces champs sont définis pour tout l'espace, dans Réglages : l'assistant les exige sans les créer.",
+				"Champs communs exigés",
+				"Devis envoyé vers Devis signé exige le champ commun Ancien code client",
+				"Devis envoyé vers Devis signé exige le champ commun Ancien code client ancien-code-client-manuel Archivé",
+				"Devis envoyé vers Devis signé exige le champ commun Numéro de TVA",
+				"Devis envoyé vers Devis signé exige le champ commun Numéro de TVA numero-tva-manuel",
+				"Retirer l'exigence du champ commun Ancien code client de Devis envoyé vers Devis signé",
+				"Retirer l'exigence du champ commun Numéro de TVA de Devis envoyé vers Devis signé",
+				"ancien-code-client-manuel",
+				"ancien-code-client-manuel Archivé",
+				"numero-tva-manuel"
+			]
+		},
+		{
 			"fichier": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champs-du-formulaire.jpg",
 			"largeur": 883,
 			"hauteur": 152,
