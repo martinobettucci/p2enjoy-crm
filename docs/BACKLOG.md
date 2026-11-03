@@ -17597,8 +17597,9 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
               de mon périmètre — fiche, board, formulaire, parcours, checklists, rattachements — **161/161** ; captures
               observées ;
             - manuel §9.6 et §18.16 avec une image, `verify-manual` sans anomalie.
-      - [ ] **T3.d — le fil** : `field_changed` d'une valeur commune (`placement_id` nul, `scope: "common"`, §7), et son
+      - [@] **T3.d — le fil** : `field_changed` d'une valeur commune (`placement_id` nul, `scope: "common"`, §7), et son
             rendu « partie commune » ; migration si l'écriture manque ; pgTAP ; unitaires.
+            *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-3a) depuis 2026-11-03 17:40 UTC — état avant : [ ]*
 - [ ] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; la case « Afficher dans la liste » de
       Réglages ▸ « Champs de l'affaire » (reportée de T3.a, `docs/DESIGN_SYSTEM.md` §5.86) ; unitaires ; API.
 - [ ] **T5** — modèles d'email : `{{card.field.<clé>}}`, contrôle d'écriture par déclencheur, rendu, sélecteur.
