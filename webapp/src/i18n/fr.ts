@@ -3845,6 +3845,8 @@ export const fr = {
 	'admin.mailTemplates.previewPane.title': 'Prévisualisation de « {modele} »',
 	'admin.mailTemplates.previewPane.card': 'Affaire',
 	'admin.mailTemplates.previewPane.card.none': 'Choisissez une affaire',
+	'admin.mailTemplates.previewPane.placement': 'Rattachement',
+	'admin.mailTemplates.previewPane.placement.path': '{track} › {channel}',
 	'admin.mailTemplates.previewPane.contact': 'Contact',
 	'admin.mailTemplates.previewPane.contact.none': 'Aucun contact',
 	'admin.mailTemplates.previewPane.identity': 'Identité d’expédition',

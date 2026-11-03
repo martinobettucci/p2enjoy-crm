@@ -472,6 +472,105 @@
 			"type": "paragraph",
 			"content": [
 				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une affaire rattachée à plusieurs channels"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " fait paraître un quatrième choix, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Rattachement »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", juste après\nl'affaire. Chaque rattachement a sa propre étape, son montant et sa prochaine action : le choix dit lesquels remplissent\n"
+				},
+				{
+					"type": "code",
+					"text": "{{card.step}}"
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "code",
+					"text": "{{card.amount}}"
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "code",
+					"text": "{{card.next_action}}"
+				},
+				{
+					"type": "text",
+					"text": " et "
+				},
+				{
+					"type": "code",
+					"text": "{{card.channel}}"
+				},
+				{
+					"type": "text",
+					"text": ". Chaque option se lit « Track ›\nChannel » ; le plus ancien rattachement est choisi d'avance, parce que c'est lui que le produit emploie quand rien\nd'autre n'est désigné. Une affaire qui n'a qu'un rattachement ne montre pas ce choix. Une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "relance"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " automatique\nemploie, elle, le rattachement sur lequel sa séquence a été armée\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "enchainer-des-relances-les-sequences"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 16"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "ecrire-des-modeles-d-emails-et-les-previsualiser/rattachement.jpg",
+			"alt": "Le choix « Rattachement » de la prévisualisation, sous une affaire rattachée à deux channels",
+			"width": 899,
+			"height": 205
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
 					"type": "text",
 					"text": "« Prévisualiser » affiche alors l'"
 				},

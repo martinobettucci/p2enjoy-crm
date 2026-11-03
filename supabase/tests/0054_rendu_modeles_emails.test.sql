@@ -5,6 +5,7 @@
 -- @verifies docs/SPEC-modeles-emails.md §2.4 (la liste fermée des douze variables et leur source)
 -- @verifies docs/SPEC-permissions-rls.md §7 (le refus est zéro ligne, jamais une erreur)
 -- @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface)
+-- @verifies CRM-111 T6.2 (docs/BACKLOG.md) — la signature à cinq paramètres (docs/SPEC-modeles-emails.md §15.2)
 -- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
 --           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
@@ -110,8 +111,8 @@ values
 -- comportement, comme la suite 0053 vérifie la RLS avant les politiques.
 
 select has_function('public', 'rendre_modele_email',
-	array['uuid', 'uuid', 'uuid', 'uuid'],
-	'CRM-063 §8.3 — public.rendre_modele_email(uuid, uuid, uuid, uuid) existe');
+	array['uuid', 'uuid', 'uuid', 'uuid', 'uuid'],
+	'CRM-063 §8.3, CRM-111 T6.2 §15.2 — public.rendre_modele_email(uuid, uuid, uuid, uuid, uuid) existe');
 
 select has_function('app', 'mail_template_substituer', array['text', 'jsonb'],
 	'CRM-063 §8.4 — app.mail_template_substituer(text, jsonb) existe');
@@ -142,17 +143,17 @@ select is(
 -- aussi importante que les positives — c'est elle qui fige le `401` du contrat d'API.
 select ok(
 	has_function_privilege('authenticated',
-		'public.rendre_modele_email(uuid, uuid, uuid, uuid)', 'execute'),
+		'public.rendre_modele_email(uuid, uuid, uuid, uuid, uuid)', 'execute'),
 	'CRM-063 §8.7 — authenticated exécute le rendu');
 
 select ok(
 	has_function_privilege('service_role',
-		'public.rendre_modele_email(uuid, uuid, uuid, uuid)', 'execute'),
+		'public.rendre_modele_email(uuid, uuid, uuid, uuid, uuid)', 'execute'),
 	'CRM-063 §8.7 — service_role exécute le rendu');
 
 select ok(
 	not has_function_privilege('anon',
-		'public.rendre_modele_email(uuid, uuid, uuid, uuid)', 'execute'),
+		'public.rendre_modele_email(uuid, uuid, uuid, uuid, uuid)', 'execute'),
 	'CRM-063 §8.7 — anon N''EXÉCUTE PAS le rendu : son refus est un 401 de privilège');
 
 -- =============================================================================================

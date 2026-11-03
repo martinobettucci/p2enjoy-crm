@@ -2,6 +2,9 @@
 //       signature d'une identité, les séquences de relance
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitres 14, 15, 16 ; docs/SPEC-modeles-emails.md (les
 //       modèles, la prévisualisation, les séquences, l'armement §13.8)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T6.2 : l'image « rattachement » montre le sélecteur « Rattachement » de la
+//       prévisualisation (docs/manual.md §14.2 ; docs/SPEC-modeles-emails.md §15.4 ; docs/DESIGN_SYSTEM.md §5.39). Le
+//       seed n'a pas encore d'affaire à deux rattachements (T8) : le scénario en pose une jetable, puis la retire.
 //
 // Les modèles, les identités et la séquence « Relance en trois temps » sont ceux du seed. Rien n'est enregistré ni
 // supprimé : les confirmations sont montrées puis annulées. La relance armée sur « Refonte intranet Ville de Lyon »
@@ -9,8 +12,9 @@
 // le fait — une inscription active ferait partir de vrais messages.
 
 import { expect, test } from '@playwright/test'
+import { enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { illustrer } from './illustrer'
-import { ADMIN, AFFAIRE_SOGEXIA, connecterAvecLeLabs, service } from './outils'
+import { ADMIN, AFFAIRE_SOGEXIA, CHANNEL_GRANDS_COMPTES, WORKFLOW_GLOBAL, connecterAvecLeLabs, poserAffaire, rest, service } from './outils'
 
 const MODELES = 'ecrire-des-modeles-d-emails-et-les-previsualiser'
 const SIGNATURES = 'signer-les-messages-expedies-depuis-une-identite'
@@ -51,6 +55,44 @@ test('les modèles d’emails : la liste, la création, la prévisualisation, la
 	// Ce qui n'est pas encore offert : le formulaire « Écrire un message » d'une affaire ne part pas d'un modèle.
 	await page.goto(AFFAIRE_SOGEXIA)
 	await illustrer(page, { chapitre: MODELES, section: 'ce-qui-n-est-pas-encore-offert', nom: 'ecrire-un-message', cibles: [page.getByTestId('envoi-ouvrir')] })
+})
+
+test('la prévisualisation d’une affaire rattachée à deux channels', async ({ page, request }) => {
+	const affaire = '5eed0000-0000-4000-8000-00000000f113'
+	await poserAffaire(request, {
+		id: affaire,
+		titre: 'Portail partagé des adhérents',
+		channel: '5eed0000-0000-4000-8000-000000000034',
+		workflow: WORKFLOW_GLOBAL,
+		etape: '5eed0000-0000-4000-8000-000000000061',
+	})
+	try {
+		const rattache = await request.post(rest('rpc/attach_card'), {
+			headers: enTetesAuthentifies(await jetonDe(ADMIN)),
+			data: { p_card: affaire, p_channel: CHANNEL_GRANDS_COMPTES },
+		})
+		expect(rattache.status(), await rattache.text()).toBe(200)
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto('/reglages/modeles-emails')
+		await page.getByTestId('ligne-modele-email').filter({ hasText: 'Relance sans réponse' }).getByTestId('previsualiser-modele').click()
+		await page.getByTestId('champ-affaire-previsualisation').selectOption({ label: 'Portail partagé des adhérents' })
+		const rattachement = page.getByTestId('champ-rattachement-previsualisation')
+		await expect(rattachement).toBeVisible()
+		await rattachement.selectOption({ label: 'Conseil & IA › Grands comptes' })
+		await illustrer(page, {
+			chapitre: MODELES,
+			section: 'previsualiser-un-modele-sur-une-affaire-reelle',
+			nom: 'rattachement',
+			// Les étiquettes entières, libellés compris : le seul champ rognait le libellé « Affaire » (vu sur l'image).
+			cibles: [
+				page.getByTestId('previsualisation-modele').getByRole('heading'),
+				page.locator('label', { has: page.getByTestId('champ-affaire-previsualisation') }),
+				page.locator('label', { has: rattachement }),
+			],
+		})
+	} finally {
+		await request.delete(rest(`cards?id=eq.${affaire}`), { headers: enTetesService() })
+	}
 })
 
 test('la signature d’une identité', async ({ page }) => {

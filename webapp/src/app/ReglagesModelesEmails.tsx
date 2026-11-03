@@ -16,6 +16,9 @@
 //       révision `CRM-124`, décision 806 ; docs/DESIGN_SYSTEM.md §5.39)
 // @spec docs/BACKLOG.md « Correctifs arbitrés », INC-231 ; docs/JOURNAL.md décisions 592 et 594 —
 //       classes absentes du CSS produit remplacées (docs/DESIGN_SYSTEM.md §11, §5.29)
+// @spec CRM-111 (docs/BACKLOG.md) T6.2 — le sélecteur « Rattachement » de la prévisualisation, dès deux rattachements,
+//       sans option vide et ouvert sur le plus ancien (docs/SPEC-modeles-emails.md §15.4 ; docs/DESIGN_SYSTEM.md §5.39,
+//       révision `CRM-111` ; décision 821)
 //
 // UN ÉCRAN QUI LIT ET QUI ÉCRIT, ET QUI N'OUVRE AUCUNE POLITIQUE. La lecture et l'écriture passent
 // par les routes REST de `mail_templates` sous la RLS de la migration `0055` ; la palette appelle
@@ -39,12 +42,14 @@ import {
 	libelleIdentitePrevisualisation,
 	lireAffairesPrevisualisation,
 	lireModelesEmails,
+	lireRattachementsPrevisualisation,
 	lireVariablesModele,
 	rendreModeleEmail,
 	supprimerModeleEmail,
 	type AffairePrevisualisation,
 	type IssueEcritureModele,
 	type ModeleEmail,
+	type RattachementPrevisualisation,
 	type RenduModeleEmail,
 	type SaisieModeleEmail,
 } from '../lib/modeles-emails'
@@ -804,6 +809,11 @@ function Previsualisation({
 	const [idAffaire, setIdAffaire] = useState('')
 	const [idContact, setIdContact] = useState('')
 	const [idIdentite, setIdIdentite] = useState('')
+	// `CRM-111` T6.2 (§15.4) : les rattachements de l'affaire choisie, et celui qui est montré. Moins de deux, la liste
+	// reste vide et le sélecteur n'existe pas.
+	const [rattachements, setRattachements] = useState<readonly RattachementPrevisualisation[]>([])
+	const [idRattachement, setIdRattachement] = useState('')
+	const demandeRattachements = useRef(0)
 	const [rendu, setRendu] = useState<EtatAsync<RenduModeleEmail | null> | null>(null)
 	const [enVol, setEnVol] = useState(false)
 	const premier = useRef<HTMLSelectElement | null>(null)
@@ -823,6 +833,20 @@ function Previsualisation({
 	const choisirAffaire = useCallback(
 		(id: string) => {
 			setIdAffaire(id)
+			// Le rattachement de l'affaire précédente ne part jamais avec la nouvelle : vidé tout de suite, relu ensuite.
+			setRattachements([])
+			setIdRattachement('')
+			const rangRattachements = ++demandeRattachements.current
+			if (id !== '') {
+				void (async () => {
+					const lus = await lireRattachementsPrevisualisation(client, id)
+					if (rangRattachements !== demandeRattachements.current) return
+					// UN ÉCHEC NE BLOQUE RIEN : sans sélecteur, la base rend le plus ancien rattachement lisible.
+					const liste = lus.statut === 'pret' && lus.donnees.length >= 2 ? lus.donnees : []
+					setRattachements(liste)
+					setIdRattachement(liste[0]?.id ?? '')
+				})()
+			}
 			const rang = ++demandeRattaches.current
 			void (async () => {
 				const lus = id === '' ? null : await lireContactsDeLAffaire(client, id)
@@ -878,10 +902,11 @@ function Previsualisation({
 			idAffaire,
 			idContact,
 			idIdentite,
+			idRattachement,
 		})
 		setEnVol(false)
 		setRendu(resultat)
-	}, [client, enVol, idAffaire, idContact, idIdentite, modele.id])
+	}, [client, enVol, idAffaire, idContact, idIdentite, idRattachement, modele.id])
 
 	return (
 		<section
@@ -914,6 +939,29 @@ function Previsualisation({
 						))}
 					</select>
 				</label>
+
+				{rattachements.length >= 2 ? (
+					<label className={CLASSES_ETIQUETTE}>
+						{t('admin.mailTemplates.previewPane.placement')}
+						{/* AUCUNE OPTION VIDE (§15.4) : la base rend le plus ancien rattachement sans désignation, et le
+						    sélecteur s'ouvre sur lui — la valeur montrée dit toujours ce qui sera rendu. */}
+						<select
+							data-testid="champ-rattachement-previsualisation"
+							value={idRattachement}
+							onChange={(evenement) => setIdRattachement(evenement.target.value)}
+							className={CLASSES_CHAMP}
+						>
+							{rattachements.map((rattachement) => (
+								<option key={rattachement.id} value={rattachement.id}>
+									{t('admin.mailTemplates.previewPane.placement.path', {
+										track: rattachement.track,
+										channel: rattachement.channel,
+									})}
+								</option>
+							))}
+						</select>
+					</label>
+				) : null}
 
 				<label className={CLASSES_ETIQUETTE}>
 					{t('admin.mailTemplates.previewPane.contact')}

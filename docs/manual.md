@@ -3338,6 +3338,16 @@ Les autres refus sont dits de la même façon : un nom de plus de 120 caractère
   identités peuvent être « par défaut », chacune pour une personne ou pour le service, et le produit ne tranche pas à
   votre place.
 
+**Une affaire rattachée à plusieurs channels** fait paraître un quatrième choix, **« Rattachement »**, juste après
+l'affaire. Chaque rattachement a sa propre étape, son montant et sa prochaine action : le choix dit lesquels remplissent
+`{{card.step}}`, `{{card.amount}}`, `{{card.next_action}}` et `{{card.channel}}`. Chaque option se lit « Track ›
+Channel » ; le plus ancien rattachement est choisi d'avance, parce que c'est lui que le produit emploie quand rien
+d'autre n'est désigné. Une affaire qui n'a qu'un rattachement ne montre pas ce choix. Une **relance** automatique
+emploie, elle, le rattachement sur lequel sa séquence a été armée
+([chapitre 16](#enchainer-des-relances-les-sequences)).
+
+![Le choix « Rattachement » de la prévisualisation, sous une affaire rattachée à deux channels](manuel/images/ecrire-des-modeles-d-emails-et-les-previsualiser/rattachement.jpg)
+
 « Prévisualiser » affiche alors l'**objet** et le **corps** exactement tels qu'ils partiront, retours
 à la ligne compris.
 

@@ -5329,6 +5329,7 @@ export type Database = {
           p_card_id: string
           p_contact_id?: string
           p_identity_id?: string
+          p_placement_id?: string
           p_template_id: string
         }
         Returns: {

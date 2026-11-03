@@ -12,6 +12,8 @@
 //       prévisualisation (docs/SPEC-modeles-emails.md §9.5, révision `CRM-124`, décision 806)
 // @spec CRM-125 (docs/BACKLOG.md) T3 — `rendreApercuExemple`, l'aperçu sur le jeu d'exemple
 //       (docs/SPEC-modeles-emails.md §14.2, §14.5, décision 809)
+// @spec CRM-111 (docs/BACKLOG.md) T6.2 — `lireRattachementsPrevisualisation` et le rattachement passé au rendu
+//       (docs/SPEC-modeles-emails.md §15.2, §15.4 ; docs/SPEC-rattachements.md §7 ; décision 821)
 //
 // CE MODULE N'OUVRE AUCUNE POLITIQUE ET N'AJOUTE AUCUNE RÈGLE. Il lit `mail_templates` sous la RLS
 // de la migration `0055`, y écrit par les routes REST de cette même table — il n'existe aucune RPC
@@ -369,6 +371,56 @@ export async function lireAffairesPrevisualisation(
 	}
 }
 
+/** Un rattachement de l'affaire choisie, tel que le sélecteur le nomme — §15.4 (`CRM-111` T6.2). */
+export type RattachementPrevisualisation = {
+	readonly id: string
+	readonly track: string
+	readonly channel: string
+}
+
+/** L'identifiant et le chemin du rattachement, rien de plus (§15.4). */
+export const COLONNES_RATTACHEMENT_PREVISUALISATION =
+	'id, channels!card_placements_channel_fk(name, tracks(name))' as const
+
+type LigneRattachementPrevisualisation = {
+	readonly id: string
+	readonly channels: { readonly name: string; readonly tracks: { readonly name: string } | null } | null
+}
+
+/**
+ * Les rattachements lisibles d'une affaire, du plus ancien au plus récent — §15.4 (`CRM-111` T6.2).
+ *
+ * L'ORDRE EST CELUI DE LA BASE (`created_at`, puis `id`) : le premier est celui que `rendre_modele_email` rend sans
+ * rattachement désigné, et c'est sur lui que le sélecteur s'ouvre. La RLS de `card_placements` retranche ce que
+ * l'appelant ne lit pas ; aucun filtre n'est recopié ici.
+ */
+export async function lireRattachementsPrevisualisation(
+	client: ClientCrm,
+	idAffaire: string,
+): Promise<EtatAsync<readonly RattachementPrevisualisation[]>> {
+	try {
+		const reponse = await client
+			.from('card_placements')
+			.select(COLONNES_RATTACHEMENT_PREVISUALISATION)
+			.eq('card_id', idAffaire)
+			.order('created_at')
+			.order('id')
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		const lignes = (reponse.data ?? []) as unknown as readonly LigneRattachementPrevisualisation[]
+		return pret(
+			lignes.map((ligne) => ({
+				id: ligne.id,
+				track: ligne.channels?.tracks?.name ?? '',
+				channel: ligne.channels?.name ?? '',
+			})),
+		)
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
 /** Ce que `public.rendre_modele_email` rend — §8.3, les trois colonnes. */
 export type RenduModeleEmail = {
 	readonly subject: string
@@ -389,6 +441,8 @@ export type SourcesPrevisualisation = {
 	readonly idAffaire: string
 	readonly idContact: string
 	readonly idIdentite: string
+	/** Le rattachement choisi (§15.4) ; la chaîne vide, aucun : la base rend alors le plus ancien lisible. */
+	readonly idRattachement?: string
 }
 
 /**
@@ -413,6 +467,10 @@ export async function rendreModeleEmail(
 			p_card_id: sources.idAffaire === '' ? (null as never) : sources.idAffaire,
 			p_contact_id: sources.idContact === '' ? (null as never) : sources.idContact,
 			p_identity_id: sources.idIdentite === '' ? (null as never) : sources.idIdentite,
+			// `CRM-111` T6.2 (§15.2) : absent plutôt que nul quand rien n'est choisi, le défaut de la base fait le reste.
+			...(sources.idRattachement === undefined || sources.idRattachement === ''
+				? {}
+				: { p_placement_id: sources.idRattachement }),
 		})
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))

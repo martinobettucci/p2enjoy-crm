@@ -17332,11 +17332,12 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         et la mention ; unitaires 617 (rentabilité, écran du temps, i18n) ; E2E `rentabilite-partage` et voisins 9/9 ;
         capture `rentabilite-partage-xl-1440` observée ; manuel §29.3 et image `affaire-partagee` ; `verify-manual`
         167 contrôles, aucune anomalie. Production : la webapp de `main`, avec la `0153`.
-- [@] **T6 — messagerie** (§7, décision 657) : dossier `CRM/Affaires/<affaire>` et déplacement des dossiers existants
-      par `mail-sync` ; cadences et variables des modèles par rattachement ; preuves IMAP réelles.
-      *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable, session 4891a451) depuis 2026-11-02 22:58 UTC — état avant : [ ]*
+- [x] **T6 — messagerie** (§7, décision 657) : dossier `CRM/Affaires/<affaire>` et déplacement des dossiers existants
+      par `mail-sync` ; cadences et variables des modèles par rattachement ; preuves IMAP réelles. *Close le 2026-11-03 ;
+      la relecture des envois du connecteur, relevée en chemin, est INC-341, hors de cette unité.*
       *Arbitré le 2026-11-03 (décisions 818 et 820)* : le dossier se nomme `CRM/Affaires/<titre> (<8 derniers caractères de
-      l'identifiant>)` ; `crm_mail_send` gagne `placement_id`, facultatif, dans la famille `messagerie`.
+      l'identifiant>)` ; `crm_mail_send` gagne `placement_id`, facultatif, dans la famille `messagerie` — *point retiré
+      par la décision 821 : `crm_mail_send` envoie un mail libre, sans modèle, et ne change pas*.
       **Découpage, arrêté le 2026-11-03 (journal, décision 818)** :
       - [x] **T6.1 — le dossier hors de l'arborescence** : `chemin_dossier_card` rend le nouveau chemin ; `mail-sync`
         déplace les dossiers existants et y place les nouveaux messages ; `inbox_arborescence` ne range plus les
@@ -17355,12 +17356,19 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         observé (`e2e/mail/dossiers.spec.ts` 2/2, `roundcube-dossiers` 1/1) ; unitaires 5246 ; E2E inbox et voisins 58/58 ;
         manuel §12.2 et images du chapitre 12 renouvelées, `verify-manual` 167. Production : la `0154`, l'image
         `mail-sync` et la webapp de `main` ensemble (`docs/PROD_MIGRATIONS.md` §3).
-      - [ ] **T6.2 — les variables par rattachement** (*révisée par la décision 821*) : `rendre_modele_email` reçoit le
+      - [x] **T6.2 — les variables par rattachement** (*révisée par la décision 821*) : `rendre_modele_email` reçoit le
         rattachement ; les relances automatiques le rendent avec le rattachement de leur inscription
         (`app.executer_sequences_relance`) ; l'aperçu de Réglages ▸ Modèles d'emails laisse choisir le rattachement d'une
         affaire qui en a plusieurs. `crm_mail_send` ne change pas (mail libre, sans modèle). Livrables : migration,
         pgTAP, API, unitaires et E2E de l'aperçu, `docs/SPEC-modeles-emails.md` §15 (spécifiée le 2026-11-03, avant le
-        code), `docs/DESIGN_SYSTEM.md` §5.39, SCHEMA, contrat de déploiement, manuel chapitre 15.
+        code), `docs/DESIGN_SYSTEM.md` §5.39, SCHEMA, contrat de déploiement, manuel chapitre 14.
+        *Livrée en développement le 2026-11-03 (journal, « `CRM-111` T6.2 — le rendu d'un modèle par rattachement »)* :
+        migration `0158` ; pgTAP `0147` 13/13 (dont la relance armée sur le second rattachement, partie avec son channel
+        et son étape) et `0054` révisée, toutes les suites 135 fichiers et 4850 assertions ; API
+        `rendu-par-rattachement` aux vrais jetons et `rendu-modeles-emails` 12/12 ; unitaires 5255 ; E2E
+        `modele-par-rattachement` et `reglages-modeles-emails` 11/11 ; captures `modele-rattachement-xl-1440` et `-sm-390`
+        observées (la seconde reprise : le tiroir restait ouvert au redimensionnement) ; manuel §14.2 et image
+        `rattachement`, `verify-manual` 167. Production : la `0158` avec la webapp de `main`.
 - [ ] **T7 — webapp** (§8) : fiche à partie commune et blocs, pastille « aussi rattachée à », rattacher, archiver,
       retirer avec confirmation ; `docs/DESIGN_SYSTEM.md` avant le code ; unitaires ; captures aux quatre paliers ;
       `docs/manual.md`, chapitre « Rattacher une affaire à plusieurs channels ».

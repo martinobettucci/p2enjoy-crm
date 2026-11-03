@@ -526,6 +526,11 @@ changelog.*
   refus de plus). **`mail-sync`** joint les pièces, archive avant d'envoyer, efface les dépôts abandonnés après 24 heures.
 - **Le seed** fait partir un message réel avec copie cachée et pièce jointe depuis « Refonte du monitoring — Vertuo ».
 
+- **`CRM-111` T6.2 — le rendu d'un modèle par rattachement** (migration `0158`) : une relance automatique remplit
+  l'étape, le montant, la prochaine action et le channel de son modèle avec le rattachement sur lequel sa séquence a été
+  armée, et non plus avec le plus ancien. La prévisualisation de Réglages ▸ Modèles d'emails offre un choix
+  « Rattachement » pour une affaire rattachée à plusieurs channels. Webapp à livrer avec la migration ; manuel §14.2.
+
 - **`CRM-111` T6.1 — le dossier d'une affaire hors de l'arborescence** (migration `0154`) : le dossier IMAP d'une affaire
   devient `CRM/Affaires/<titre> (<8 derniers caractères de l'identifiant>)`, et `mail-sync` y déplace les dossiers
   existants à sa relève suivante ; une affaire rattachée à plusieurs channels n'a qu'un dossier. L'inbox liste les

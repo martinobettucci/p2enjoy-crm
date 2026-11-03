@@ -9,6 +9,8 @@
 //           décision 806) : le contact présélectionné après le choix d'une affaire
 // @verifies CRM-125 (docs/BACKLOG.md) T3 — docs/SPEC-modeles-emails.md §14.2 : l'appel de l'aperçu sur le jeu
 //           d'exemple, zéro ligne rendu `null`, l'erreur classée
+// @verifies CRM-111 (docs/BACKLOG.md) T6.2 — docs/SPEC-modeles-emails.md §15.2, §15.4 : le rattachement passé au rendu
+//           (absent quand rien n'est choisi), la lecture des rattachements d'une affaire dans l'ordre de la base
 //
 // CE FICHIER ÉPROUVE LA REQUÊTE RÉELLEMENT ÉMISE, et pas seulement la valeur rendue. Trois
 // exigences sont portées par l'appel lui-même et qu'aucune assertion sur le résultat
@@ -31,6 +33,7 @@ import {
 	libelleContactPrevisualisation,
 	libelleIdentitePrevisualisation,
 	lireModelesEmails,
+	lireRattachementsPrevisualisation,
 	lireVariablesModele,
 	rendreApercuExemple,
 	rendreModeleEmail,
@@ -654,5 +657,61 @@ describe('rendreApercuExemple — CRM-125, §14.2', () => {
 		expect(rendu.statut === 'pret' && rendu.donnees?.signature_text).toBeNull()
 		const enPanne = client({ data: null, error: { message: 'boom' }, status: 500 })
 		expect((await rendreApercuExemple(enPanne.faux, MODELE)).statut).toBe('erreur')
+	})
+})
+
+describe('le rattachement de la prévisualisation — §15.2, §15.4 (CRM-111 T6.2)', () => {
+	it('passe le rattachement choisi en `p_placement_id`', async () => {
+		const { client, appel } = espionRpc({ data: [], error: null, status: 200 })
+		await rendreModeleEmail(client, { idModele: MODELE, idAffaire: 'affaire-1', idContact: '', idIdentite: '', idRattachement: 'p-2' })
+		expect(appel.arguments).toMatchObject({ p_card_id: 'affaire-1', p_placement_id: 'p-2' })
+	})
+
+	it('n’envoie aucun `p_placement_id` quand rien n’est choisi : le défaut de la base rend le plus ancien', async () => {
+		for (const idRattachement of [undefined, '']) {
+			const { client, appel } = espionRpc({ data: [], error: null, status: 200 })
+			await rendreModeleEmail(client, { idModele: MODELE, idAffaire: 'affaire-1', idContact: '', idIdentite: '', idRattachement })
+			expect(appel.arguments).not.toHaveProperty('p_placement_id')
+		}
+	})
+
+	/** Un faux client qui retient le filtre et les tris posés sur `card_placements`. */
+	function espionRattachements(reponse: Reponse) {
+		const appel: { table?: string; colonnes?: string; filtre?: [string, string]; tris: string[] } = { tris: [] }
+		const maillon: Record<string, unknown> = {}
+		maillon.select = (colonnes: string) => ((appel.colonnes = colonnes), maillon)
+		maillon.eq = (colonne: string, valeur: string) => ((appel.filtre = [colonne, valeur]), maillon)
+		maillon.order = (colonne: string) => (appel.tris.push(colonne), maillon)
+		maillon.then = (resoudre: (r: Reponse) => unknown) => resoudre(reponse)
+		const client = { from: (table: string) => ((appel.table = table), maillon) } as unknown as ClientCrm
+		return { client, appel }
+	}
+
+	it('lit les rattachements de l’affaire, du plus ancien au plus récent, et les nomme par leur track et leur channel', async () => {
+		const { client, appel } = espionRattachements({
+			data: [
+				{ id: 'p-1', channels: { name: 'Refonte de site', tracks: { name: 'Studio web' } } },
+				{ id: 'p-2', channels: { name: 'Grands comptes', tracks: { name: 'Conseil & IA' } } },
+			],
+			error: null,
+			status: 200,
+		})
+		const etat = await lireRattachementsPrevisualisation(client, 'affaire-1')
+		expect(appel.table).toBe('card_placements')
+		expect(appel.filtre).toEqual(['card_id', 'affaire-1'])
+		expect(appel.tris).toEqual(['created_at', 'id'])
+		expect(etat).toEqual({
+			statut: 'pret',
+			donnees: [
+				{ id: 'p-1', track: 'Studio web', channel: 'Refonte de site' },
+				{ id: 'p-2', track: 'Conseil & IA', channel: 'Grands comptes' },
+			],
+		})
+	})
+
+	it('classe une erreur de lecture, sans rien rendre', async () => {
+		const { client } = espionRattachements({ data: null, error: { message: 'permission denied' }, status: 403 })
+		const etat = await lireRattachementsPrevisualisation(client, 'affaire-1')
+		expect(etat.statut).toBe('erreur')
 	})
 })

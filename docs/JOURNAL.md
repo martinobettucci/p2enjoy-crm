@@ -38634,3 +38634,19 @@ Fallait-il livrer maintenant, au titre de la consigne de boucle « livre entre c
 
 **Décision : « Not yet ».** Le lot attend une instruction du responsable, et le travail du backlog continue. La consigne de
 boucle ne vaut pas autorisation de fenêtre : chaque fenêtre est demandée.
+
+### `CRM-111` T6.2 — le rendu d'un modèle par rattachement
+
+*2026-11-03, session interactive (4891a451).* **Problème** : `rendre_modele_email` lisait le plus ancien rattachement
+d'une affaire ; une relance armée sur un autre rattachement partait avec l'étape, le montant et le channel du premier.
+**Décision appliquée** (821, `docs/SPEC-modeles-emails.md` §15) : migration `0158`, `p_placement_id` (forme à quatre
+paramètres supprimée, patron de la décision 661) ; l'exécuteur des relances, repris de la base (identique à la `0119`,
+comparé par `pg_get_functiondef`), passe `v_inscription.placement_id` ; la prévisualisation offre « Rattachement » dès
+deux rattachements, sans option vide, ouverte sur le plus ancien. **Observations** : un palier à zéro jour est refusé par
+`mail_sequence_steps_delai_borne` — la preuve antidate l'armement ; la session 3a a appliqué la `0158` non poussée en
+passant le runner, et `0054` en a rougi (signature à quatre paramètres) — révisée dans ce même changement ; à 390 px,
+redimensionner sur place laissait le tiroir ouvert sur la capture — l'écran est rechargé au palier, comme au §5.54.
+**Vérifications** : pgTAP 135 fichiers et 4850 assertions ; API, unitaires 5255, E2E, captures observées, manuel
+`verify-manual` 167. **Conséquence** : la `0158` part avec la webapp de `main` ; `crm_mail_send` ne change pas, et la
+relecture des envois du connecteur reste INC-341, à arbitrer.
+

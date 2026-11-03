@@ -2481,6 +2481,17 @@ uuid)` et `drop function public.mail_inbound_account_record_sync(uuid)`, **avec 
 d'avant** : l'image de `main` appelle `mail_inbound_account_record_sync` à chaque relève, et chaque relève échouerait sans
 elle.
 
+### Migration `0158` — le rendu d'un modèle par rattachement (`CRM-111` T6.2, décisions 657 et 821 ; livrée en développement le 2026-11-03)
+
+`docs/SPEC-modeles-emails.md` §15 ; `docs/SPEC-rattachements.md` §7. **Aucune table, aucune donnée.**
+**`public.rendre_modele_email`** reçoit un cinquième paramètre, `p_placement_id uuid default null` : nul, le plus ancien
+rattachement lisible de l'affaire (comportement de la `0109`) ; renseigné, ce rattachement-là s'il appartient à
+l'affaire et que l'appelant le lit, sinon **zéro ligne**. La forme à quatre paramètres est **supprimée**, non surchargée ;
+les privilèges de la `0056` sont reposés (`authenticated`, `service_role`, jamais `anon`).
+**`app.executer_sequences_relance`**, reprise de la base (identique à la `0119`), passe le rattachement de l'inscription
+(`card_sequence_enrollments.placement_id`). **Retrait** : supprimer la forme à cinq paramètres, reposer
+`rendre_modele_email` de la `0109` avec les privilèges de la `0056`, et l'exécuteur de la `0119` ; la webapp d'avant.
+
 ### Migration `0157` — les champs communs exigés dans les versions et les copies (`CRM-112` T2.c.1, décision 819 ; livrée en développement le 2026-11-03)
 
 `docs/SPEC-champs-communs.md` §5. Trois fonctions sont reprises de leur définition en base, chacune avec un seul ajout :
