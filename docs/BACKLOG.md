@@ -17428,7 +17428,8 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         propre, la fiche à l'adresse, le bloc, rattacher, archiver, retirer, le fil, les renvois vers le temps, la
         rentabilité, la messagerie et les relances ; la pastille en §9.10 ; images `pas-rattachee-ici`, `rattachements`,
         `rattacher`, `retirer`, `fil-rattachements`, `aussi-rattachee` ; `docs/SPEC-manual.md` §12 ; `verify-manual` 168.
-- [ ] **T8 — seed et E2E** (§12, §13) : les cinq situations du §12 par les vraies fonctions ; campagne E2E complète.
+- [@] **T8 — seed et E2E** (§12, §13) : les cinq situations du §12 par les vraies fonctions ; campagne E2E complète.
+      *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable, session 4891a451) depuis 2026-11-03 12:45 UTC — état avant : [ ]*
 - [ ] **T9 — connecteur MCP** (§11) : `crm_card_attach`, `crm_card_placement_update`, `crm_card_placement_archive`,
       outils existants sur le rattachement ; refusés par la matrice puis par le CRM ; `docs/SPEC-mcp.md` §9.2.
 - [P] **Livraison en production**, sur instruction du responsable : sauvegarde, migration en fenêtre, `mail-sync`,
