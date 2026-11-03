@@ -5,8 +5,12 @@
 //           fabriquée), §16 (captures)
 // @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T3) — sans adresse, le connecteur prend l'identité
 //           PAR DÉFAUT de l'administratrice, jamais celle du service (docs/SPEC-mcp.md §9.2 decies)
+// @verifies CRM-128 (docs/BACKLOG.md) — tranches T3 et T4, RÉVISION de cette preuve (décision 51) : le connecteur ne fait
+//           plus que PRÉPARER (`crm_mail_prepare`), rien n'est en file ; l'administratrice relit dans l'inbox par le lien
+//           que l'outil rend, met en file, et le worker soumet — docs/SPEC-mails-prepares.md §5, §6.1, §8 ; décision 829
 //
-// Un VRAI client MCP, au nom de l'administratrice, lit le fil de « Refonte du site vitrine » puis y envoie un email ;
+// Un VRAI client MCP, au nom de l'administratrice, lit le fil de « Refonte du site vitrine » puis y PRÉPARE un email, qui
+// n'entre pas dans la file ; elle le relit dans l'inbox et le met en file elle-même (`CRM-128`) ;
 // l'identité est la SIENNE, par défaut (décision 805) : celle du service ne s'emprunte plus, et celle de Driss, que
 // Stalwart refuse en expéditeur pour elle, ne passerait pas le worker (INC-087). La file est vidée par la route interne de `mail-sync`, le vrai
 // chemin ; le fil de l'affaire, dans la webapp, nomme alors le message envoyé. Le ménage retire l'envoi, le message et
@@ -108,30 +112,49 @@ async function sessionDe(browser: Browser, adresse: string): Promise<SessionMcp>
 	}
 }
 
-async function retirerEnvoi(request: APIRequestContext, idEnvoi: string | undefined): Promise<void> {
+async function retirerEnvoi(request: APIRequestContext, idEnvoi: string | undefined, idPrepare: string | undefined): Promise<void> {
 	if (idEnvoi !== undefined) await request.delete(rest(`mail_outbox?id=eq.${idEnvoi}`), { headers: enTetesService() })
+	if (idPrepare !== undefined) await request.delete(rest(`mail_drafts?id=eq.${idPrepare}`), { headers: enTetesService() })
 }
 
-test('un email envoyé par le connecteur paraît dans le fil de l’affaire', async ({ page, browser, request }) => {
+test('un email préparé par le connecteur, relu et mis en file dans le CRM, paraît dans le fil de l’affaire', async ({ page, browser, request }) => {
 	test.setTimeout(240_000)
 	const marqueur = `ConnecteurMcp${Date.now()}`
 	const debut = new Date().toISOString()
 	const dossiersAvant = await instantaneDesBoites(BOITES)
 	let idEnvoi: string | undefined
+	let idPrepare: string | undefined
 	try {
 		const session = await sessionDe(browser, ADMIN.adresse)
 		const fil = await session.appeler('tools/call', { name: 'crm_card_mail_list', arguments: { card_id: CARD } })
 		expect(fil.isError ?? false, JSON.stringify(fil)).toBe(false)
 		expect((fil.structuredContent as { messages: { subject: string }[] }).messages[0]?.subject).toBe('Demande de devis — refonte')
 
-		const envoi = await session.appeler('tools/call', {
-			name: 'crm_mail_send',
+		const preparation = await session.appeler('tools/call', {
+			name: 'crm_mail_prepare',
 			arguments: { card_id: CARD, to: [DESTINATAIRE], subject: `Proposition ${marqueur}`, body: 'Bonjour,\n\nVoici notre proposition.' },
 		})
-		expect(envoi.isError ?? false, JSON.stringify(envoi)).toBe(false)
-		const rendu = envoi.structuredContent as { outbox_id: string; status: string; from_address: string }
-		idEnvoi = rendu.outbox_id
-		expect([rendu.status, rendu.from_address]).toEqual(['queued', 'admin@p2enjoy.test'])
+		expect(preparation.isError ?? false, JSON.stringify(preparation)).toBe(false)
+		const rendu = preparation.structuredContent as { draft_id: string; status: string; from_address: string; review_url: string }
+		idPrepare = rendu.draft_id
+		expect([rendu.status, rendu.from_address]).toEqual(['pending_review', 'admin@p2enjoy.test'])
+
+		// LE CONNECTEUR N'ENVOIE RIEN (`CRM-128`, décision 829) : aucune ligne n'est entrée dans la file d'envoi.
+		const avantRelecture = (await (await request.get(rest(`mail_outbox?select=id&subject=eq.${encodeURIComponent(`Proposition ${marqueur}`)}`), { headers: enTetesService() })).json()) as unknown[]
+		expect(avantRelecture).toEqual([])
+
+		// L'ADMINISTRATRICE SUIT LE LIEN DE RELECTURE que l'outil rend, et met en file ce qu'elle a relu. Seuls le chemin et
+		// la requête du lien sont suivis : son origine est celle que le connecteur de dev connaît, pas celle de la preuve.
+		await connecterAvecLeLabs(page, ADMIN.adresse)
+		const lien = new URL(rendu.review_url)
+		await page.goto(`${lien.pathname}${lien.search}`)
+		const relecture = page.getByTestId('inbox-relecture')
+		await expect(relecture.getByLabel('Objet')).toHaveValue(`Proposition ${marqueur}`)
+		await relecture.getByTestId('envoi-valider').click()
+		await expect(page.getByTestId('inbox-relecture')).toHaveCount(0)
+		const [prepare] = (await (await request.get(rest(`mail_drafts?select=status,outbox_id&id=eq.${idPrepare}`), { headers: enTetesService() })).json()) as { status: string; outbox_id: string }[]
+		expect(prepare?.status).toBe('sent')
+		idEnvoi = prepare?.outbox_id
 
 		// LE WORKER SOUMET RÉELLEMENT : la ligne passe à `sent` et le message sortant est inscrit au fil.
 		const passe = viderLaFile()
@@ -139,7 +162,6 @@ test('un email envoyé par le connecteur paraît dans le fil de l’affaire', as
 		const [ligne] = (await (await request.get(rest(`mail_outbox?select=status,created_by&id=eq.${idEnvoi}`), { headers: enTetesService() })).json()) as { status: string; created_by: string }[]
 		expect(ligne).toEqual({ status: 'sent', created_by: ADMIN.sub })
 
-		await connecterAvecLeLabs(page, ADMIN.adresse)
 		await page.goto(BOARD)
 		await page.getByRole('link', { name: TITRE_CARD }).click()
 		await expect(page).toHaveURL(new RegExp(`/cards/${CARD}$`, 'u'))
@@ -150,7 +172,7 @@ test('un email envoyé par le connecteur paraît dans le fil de l’affaire', as
 		await message.scrollIntoViewIfNeeded()
 		await capturer(page, 'connecteur-messagerie-fil-1440', UNITE)
 	} finally {
-		await retirerEnvoi(request, idEnvoi)
+		await retirerEnvoi(request, idEnvoi, idPrepare)
 		await rendreLesBoites(request, { boites: BOITES, motif: marqueur, avant: dossiersAvant, debut })
 	}
 })
