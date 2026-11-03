@@ -17355,10 +17355,11 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         observé (`e2e/mail/dossiers.spec.ts` 2/2, `roundcube-dossiers` 1/1) ; unitaires 5246 ; E2E inbox et voisins 58/58 ;
         manuel §12.2 et images du chapitre 12 renouvelées, `verify-manual` 167. Production : la `0154`, l'image
         `mail-sync` et la webapp de `main` ensemble (`docs/PROD_MIGRATIONS.md` §3).
-      - [ ] **T6.2 — les variables par rattachement** : `app.mail_template_variables` et `rendre_modele_email` reçoivent
-        le rattachement d'où l'on écrit ; le formulaire d'envoi de la webapp le passe ; `crm_mail_send` gagne
-        `placement_id`. Livrables : migration, pgTAP, API, unitaires webapp et connecteur, `docs/SPEC-modeles-emails.md`,
-        `docs/SPEC-mcp.md`, SCHEMA, contrat de déploiement.
+      - [ ] **T6.2 — les variables par rattachement** (*révisée par la décision 821*) : `rendre_modele_email` reçoit le
+        rattachement ; les relances automatiques le rendent avec le rattachement de leur inscription
+        (`app.executer_sequences_relance`) ; l'aperçu de Réglages ▸ Modèles d'emails laisse choisir le rattachement d'une
+        affaire qui en a plusieurs. `crm_mail_send` ne change pas (mail libre, sans modèle). Livrables : migration,
+        pgTAP, API, unitaires et E2E de l'aperçu, `docs/SPEC-modeles-emails.md`, SCHEMA, contrat de déploiement.
 - [ ] **T7 — webapp** (§8) : fiche à partie commune et blocs, pastille « aussi rattachée à », rattacher, archiver,
       retirer avec confirmation ; `docs/DESIGN_SYSTEM.md` avant le code ; unitaires ; captures aux quatre paliers ;
       `docs/manual.md`, chapitre « Rattacher une affaire à plusieurs channels ».

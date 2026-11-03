@@ -38603,3 +38603,20 @@ pytest de `mail-sync` passe dans un conteneur jetable (289). Les 34 autres contr
 **Vérifications** : pgTAP 131 fichiers et 4811 assertions ; IMAP réel 2/2 et Roundcube 1/1 ; unitaires 5246 ; E2E inbox
 58/58 ; `verify-manual` 167.
 
+### décision 821 — `CRM-111` T6.2 : un modèle n'est rendu que par les relances et l'aperçu ; `crm_mail_send` ne change pas
+
+*2026-11-03, session interactive (4891a451), réponse du responsable.* **Constat, à la vérification du code** : un modèle
+d'email n'est rendu que par les relances automatiques (`app.executer_sequences_relance`) et par l'aperçu de Réglages ▸
+Modèles d'emails ; ni le formulaire d'envoi de la webapp ni `crm_mail_send` n'emploient de modèle. Le `placement_id` que
+la décision 818 (arbitrage 2) donnait à `crm_mail_send` n'aurait donc eu aucun effet. **Réponse du responsable** :
+« on doit pouvoir envoyer un mail complètement custom depuis le MCP comme on le ferait depuis le client webmail, mais il
+faut quand même le rattacher à son affaire. D'ailleurs les envois par MCP ne partent JAMAIS direct et aucun détournement
+possible ; ils finissent dans une file de mails préparés qui nécessitent une interface web pour relecture et envoi. Les
+relances auto ne passent pas par cette interface. » **Décisions** :
+1. **T6.2** : `rendre_modele_email` reçoit le rattachement ; les relances le rendent avec celui de leur inscription ;
+   l'aperçu laisse choisir le rattachement. `crm_mail_send` reste un envoi libre, rattaché à son affaire par `card_id` :
+   **le point 2 de la décision 818 est retiré**.
+2. **La relecture des envois du connecteur** : la règle énoncée n'est tenue nulle part — `crm_mail_send` appelle
+   `queue_outbound_email`, et `mail-sync` expédie sans relecture. Consignée en **INC-341**, comportement inchangé dans
+   cette unité ; sa correction est une unité à part, soumise au responsable.
+

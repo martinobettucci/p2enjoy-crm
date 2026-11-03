@@ -8622,3 +8622,19 @@ demandé le même jour et les deux questions du connecteur MCP. **Statut : ouver
 **Arbitrée le 2026-11-02 (décision 816)** : le correctif proposé est retenu, et porté par `CRM-127` avec le bouton
 « Tester la connexion » (`docs/SPEC-mail-subsystem.md` §23). Connecteur MCP : non. `CRM-059` repasse `[~]`. **Ouverte**
 jusqu'à la livraison de `CRM-127` T2.
+
+### INC-341 — les envois du connecteur MCP partent directement, alors que la règle du responsable exige une relecture
+
+*Relevé le 2026-11-03 par la session de `CRM-111` T6 (décision 821).* **La règle**, énoncée par le responsable : « les
+envois par MCP ne partent JAMAIS direct et aucun détournement possible ; ils finissent dans une file de mails préparés
+qui nécessitent une interface web pour relecture et envoi. Les relances auto ne passent pas par cette interface. »
+**Le code** : `crm_mail_send` (`mcp/crm_mcp/outils/messagerie.py`) appelle `public.queue_outbound_email`, qui inscrit le
+mail dans `mail_outbox` par `app.mail_outbox_inserer` ; `mail-sync` l'expédie sans aucune relecture humaine. Aucune
+table, aucun état, aucun écran de mails préparés n'existe (recherche dans le schéma, `docs/SPEC-mcp.md`,
+`docs/SPEC-mail-subsystem.md`, le backlog). `docs/SPEC-mcp.md` §9.2 *decies* décrit l'envoi direct. **Conséquence** : un
+assistant piloté par une personne peut aujourd'hui expédier un courrier au nom de l'espace sans qu'un humain le relise.
+**Comportement laissé inchangé** dans `CRM-111` (hors de son périmètre). **Correction proposée** (à arbitrer) : une unité
+dédiée — une file de mails préparés (`mail_drafts` ou un état `awaiting_review` de `mail_outbox`, refusé à
+l'expédition par la base, jamais par la seule interface), `crm_mail_send` qui y écrit, un écran web de relecture et
+d'envoi, l'envoi réservé à l'interface, les relances automatiques inchangées ; les deux questions MCP de `CLAUDE.md`.
+

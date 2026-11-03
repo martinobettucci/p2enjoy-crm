@@ -414,12 +414,13 @@ déclencheur n'est jamais suspendu.
   l'identité de service, qui ne s'emprunte plus (décision 805, INC-335) ; `armer_sequence_relance` exige toujours l'identité, et la
   règle d'emprunt reste entière ; le connecteur garde une identité explicite (décision 803, INC-315), et
   `app.executer_sequences_relance` lit son `entered_step_at`. Une affaire peut avoir une cadence par rattachement.
-- **Les variables des modèles d'email viennent du rattachement d'où l'on écrit** (décision 657, arbitrage 3).
-  `app.mail_template_variables` et `rendre_modele_email` reçoivent le rattachement : le bloc depuis lequel l'email est
-  rédigé dans la webapp, ou le rattachement désigné par un envoi MCP (`crm_mail_send`). **Côté connecteur** (décision
-  818, arbitrage 2, les deux questions de `CLAUDE.md` posées pour T6) : `crm_mail_send` gagne un paramètre facultatif
-  `placement_id`, le rattachement d'où l'on écrit, le plus ancien à défaut ; famille `messagerie` existante, même
-  action, aucune case nouvelle.
+- **Les variables des modèles d'email viennent du rattachement d'où l'on écrit** (décision 657, arbitrage 3) —
+  **précisé par la décision 821** : un modèle n'est rendu que par les **relances automatiques**, qui le rendent avec le
+  rattachement de leur inscription, et par l'**aperçu** de Réglages ▸ Modèles d'emails, qui laisse choisir le
+  rattachement d'une affaire qui en a plusieurs ; `rendre_modele_email` reçoit le rattachement. **Le connecteur ne change
+  pas** : `crm_mail_send` envoie un mail entièrement libre, sans modèle, rattaché à son affaire par `card_id` — le
+  `placement_id` de la décision 818 (arbitrage 2) est retiré, il n'aurait eu aucun effet. *La règle de la relecture des
+  envois du connecteur est hors de cette unité : INC-341.*
 
 ## 8. Écrans
 
