@@ -4,6 +4,9 @@
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T7.2 : le bloc « Rattachements », archiver et désarchiver chaque
 //           rattachement (la base relue), la commande éteinte pour la lectrice et son refus en base par son jeton, les
 //           quatre paliers
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T7.3 : rattacher à un channel depuis la fiche — la liste offerte, la fiche
+//           du nouveau rattachement ouverte, la base relue ; la lectrice : commande éteinte, et `attach_card` refusé par son
+//           jeton (docs/SPEC-rattachements.md §5 ; docs/DESIGN_SYSTEM.md §5.83 ; CLAUDE.md §10)
 //           (docs/SPEC-rattachements.md §5, §8.1 ; docs/DESIGN_SYSTEM.md §5.82)
 //
 // Une affaire JETABLE de `refonte` (track « Studio web »), posée par la clé de service avec un montant de 12 000, que
@@ -33,7 +36,7 @@ test.use({ viewport: { width: 1440, height: 900 } })
 
 let affaire = ''
 
-async function poser(requete: APIRequestContext): Promise<void> {
+async function poser(requete: APIRequestContext, partagee = true): Promise<void> {
 	affaire = randomUUID()
 	const pose = await posterAffaire(requete, rest('cards'), {
 		headers: { ...enTetesService(), Prefer: 'return=representation' },
@@ -43,6 +46,7 @@ async function poser(requete: APIRequestContext): Promise<void> {
 		},
 	})
 	expect(pose.status(), await pose.text()).toBe(201)
+	if (!partagee) return
 	const rattache = await requete.post(rest('rpc/attach_card'), {
 		headers: enTetesAuthentifies(await jetonDe(ADMIN)),
 		data: { p_card: affaire, p_channel: GRANDS_COMPTES },
@@ -184,5 +188,53 @@ test('la lectrice ne voit que le rattachement qu’elle lit ; la base lui refuse
 	expect(await directe.json()).toEqual([])
 	expect(await archiveeEnBase(request, REFONTE)).toBe(false)
 	await capturer(page, 'fiche-rattachements-lectrice-xl-1440', UNITE)
+})
+
+test('rattacher à un channel depuis la fiche : la liste offerte, puis la fiche du nouveau rattachement', async ({ page, request }) => {
+	await poser(request, false)
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto(fiche('studio-web/refonte'))
+	const bloc = page.getByTestId('bloc-rattachements')
+	await expect(bloc.getByTestId('ligne-rattachement')).toHaveCount(1)
+	await bloc.getByTestId('ouvrir-rattacher').click()
+	const champ = bloc.getByTestId('champ-channel-rattacher')
+	await expect(champ).toBeFocused()
+	await expect(champ.locator('option').first()).toHaveText('Choisissez un channel')
+	// Le channel de la fiche n'est pas offert : l'affaire y est déjà.
+	await expect(champ.locator('option', { hasText: 'Studio web › Refonte de site' })).toHaveCount(0)
+	await champ.selectOption({ label: 'Conseil & IA › Grands comptes' })
+	await capturer(page, 'fiche-rattacher-xl-1440', UNITE)
+	await bloc.getByTestId('envoyer-rattacher').click()
+
+	await expect(page).toHaveURL(new RegExp(`/tracks/conseil-ia/grands-comptes/cards/${affaire}$`))
+	await expect(bloc.getByTestId('ligne-rattachement')).toHaveCount(2)
+	await expect(bloc.locator('[aria-current="page"]')).toContainText('Conseil & IA › Grands comptes')
+	const lus = await request.get(rest(`card_placements?card_id=eq.${affaire}&select=channel_id`), { headers: enTetesService() })
+	expect(((await lus.json()) as { channel_id: string }[]).map((l) => l.channel_id).sort()).toEqual([GRANDS_COMPTES, REFONTE].sort())
+
+	// Palier 390 : le formulaire tient, la page ne défile pas de côté.
+	await page.setViewportSize({ width: 390, height: 844 })
+	await page.reload()
+	await bloc.getByTestId('ouvrir-rattacher').click()
+	await expect(bloc.getByTestId('champ-channel-rattacher')).toBeVisible()
+	expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+	await bloc.getByTestId('formulaire-rattacher').scrollIntoViewIfNeeded()
+	await capturer(page, 'fiche-rattacher-sm-390', UNITE)
+	await page.keyboard.press('Escape')
+	await expect(bloc.getByTestId('ouvrir-rattacher')).toBeFocused()
+})
+
+test('la lectrice ne peut pas rattacher : la commande est éteinte, et `attach_card` refusé par son jeton', async ({ page, request }) => {
+	await poser(request, false)
+	await connecterAvecLeLabs(page, LECTRICE)
+	await page.goto(fiche('studio-web/refonte'))
+	await expect(page.getByTestId('bloc-rattachements').getByTestId('ouvrir-rattacher')).toBeDisabled()
+	const directe = await request.post(rest('rpc/attach_card'), {
+		headers: enTetesAuthentifies(await jetonDe(LECTRICE)),
+		data: { p_card: affaire, p_channel: '5eed0000-0000-4000-8000-000000000035' },
+	})
+	expect(directe.status(), await directe.text()).toBe(403)
+	const lus = await request.get(rest(`card_placements?card_id=eq.${affaire}&select=id`), { headers: enTetesService() })
+	expect(await lus.json()).toHaveLength(1)
 })
 

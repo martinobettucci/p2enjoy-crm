@@ -2,10 +2,13 @@
 //           marquée et sans détail, les autres en liens avec étape, responsable, montant et pilules ; archiver relit la
 //           fiche, un refus se dit dans la ligne ; la commande d'un channel que la base refuse est éteinte avec le motif
 //           du bloc (docs/SPEC-rattachements.md §8.1 ; docs/DESIGN_SYSTEM.md §5.82, §5.59)
+// @verifies CRM-111 (docs/BACKLOG.md) T7.3 — « Rattacher à un channel » : les channels offerts (modifiables, ouverts, non
+//           rattachés), l'option vide, l'appel d'`attach_card`, la fiche du nouveau rattachement ouverte, les refus
+//           traduits, la liste vide, `Échap` (docs/SPEC-rattachements.md §5 ; docs/DESIGN_SYSTEM.md §5.83)
 
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, useLocation } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RattachementDuBloc } from '../lib/formulaire'
 import type { ClientCrm } from '../lib/supabase'
@@ -24,23 +27,46 @@ const AUTRE: RattachementDuBloc = {
 }
 
 /** `ecritures` : ce que `channels.ecriture_permise` rend pour chaque channel (§5.59) ; absent, la ligne est inconnue. */
+/** Les channels de l'espace, tels que la liste de « Rattacher » les lit (§5.83). */
+const CHANNELS = [
+	{ id: 'ch-refonte', slug: 'refonte', name: 'Refonte de site', ecriture_permise: true, tracks: { slug: 'studio-web', name: 'Studio web', archived_at: null, deleted_at: null } },
+	{ id: 'ch-grands-comptes', slug: 'grands-comptes', name: 'Grands comptes', ecriture_permise: true, tracks: { slug: 'conseil-ia', name: 'Conseil & IA', archived_at: null, deleted_at: null } },
+	{ id: 'ch-maint', slug: 'maintenance', name: 'Maintenance', ecriture_permise: true, tracks: { slug: 'studio-web', name: 'Studio web', archived_at: null, deleted_at: null } },
+	{ id: 'ch-audit', slug: 'audit', name: 'Audit', ecriture_permise: true, tracks: { slug: 'conseil-ia', name: 'Conseil & IA', archived_at: null, deleted_at: null } },
+	{ id: 'ch-ferme', slug: 'ferme', name: 'Fermé', ecriture_permise: false, tracks: { slug: 'conseil-ia', name: 'Conseil & IA', archived_at: null, deleted_at: null } },
+	{ id: 'ch-vieux', slug: 'vieux', name: 'Vieux', ecriture_permise: true, tracks: { slug: 'ancien', name: 'Ancien', archived_at: '2026-01-01', deleted_at: null } },
+]
+
 function client(
 	reponse: { data: unknown[] | null; error: unknown; status: number },
 	ecritures: Record<string, boolean> = { 'ch-refonte': true, 'ch-grands-comptes': true },
+	options: { channels?: unknown[]; rattacher?: { error: { code?: string; message: string } | null; status: number } } = {},
 ) {
 	const charges: unknown[] = []
+	const rpcs: { nom: string; args: unknown }[] = []
 	const faux = {
+		rpc: (nom: string, args: unknown) => {
+			rpcs.push({ nom, args })
+			return Promise.resolve({ data: null, ...(options.rattacher ?? { error: null, status: 200 }) })
+		},
 		from: (table: string) =>
 			table === 'channels'
 				? {
-						select: () => ({
-							in: () =>
-								Promise.resolve({
-									data: Object.entries(ecritures).map(([id, ecriture_permise]) => ({ id, ecriture_permise })),
-									error: null,
-									status: 200,
-								}),
-						}),
+						select: () => {
+							const liste = { data: options.channels ?? CHANNELS, error: null, status: 200 }
+							const chaine: Record<string, unknown> = {
+								in: () =>
+									Promise.resolve({
+										data: Object.entries(ecritures).map(([id, ecriture_permise]) => ({ id, ecriture_permise })),
+										error: null,
+										status: 200,
+									}),
+								eq: () => chaine,
+								is: () => chaine,
+								then: (resoudre: (r: unknown) => unknown) => resoudre(liste),
+							}
+							return chaine
+						},
 					}
 				: {
 						update: (charge: unknown) => {
@@ -50,14 +76,20 @@ function client(
 						},
 					},
 	} as unknown as ClientCrm
-	return { faux, charges }
+	return { faux, charges, rpcs }
+}
+
+function Adresse() {
+	return <p data-testid="adresse">{useLocation().pathname}</p>
 }
 
 function monter(c: ClientCrm, onChange = vi.fn()) {
 	render(
-		<MemoryRouter>
+		<MemoryRouter initialEntries={['/tracks/studio-web/refonte/cards/c-1']}>
+			<Adresse />
 			<BlocRattachementsCard
 				idCard="c-1"
+				idWorkspace="ws-1"
 				devise="EUR"
 				rattachements={[AUTRE, COURANT]}
 				onChange={onChange}
@@ -130,5 +162,57 @@ describe('le bloc « Rattachements » (§5.82)', () => {
 		monter(client({ data: [], error: null, status: 200 }).faux)
 		await waitFor(() => expect((screen.getAllByRole('button')[0] as HTMLButtonElement).disabled).toBe(false))
 		expect(screen.queryByTestId('motif-lecture-seule')).toBeNull()
+	})
+
+	it('« Rattacher » offre les channels modifiables, ouverts et non rattachés, puis ouvre la fiche du nouveau rattachement', async () => {
+		const { faux, rpcs } = client({ data: [], error: null, status: 200 })
+		monter(faux)
+		await userEvent.click(await screen.findByTestId('ouvrir-rattacher'))
+		const champ = (await screen.findByTestId('champ-channel-rattacher')) as HTMLSelectElement
+		await waitFor(() => expect(document.activeElement).toBe(champ))
+		expect([...champ.options].map((o) => o.textContent)).toEqual([
+			'Choisissez un channel',
+			'Conseil & IA › Audit',
+			'Studio web › Maintenance',
+		])
+		expect(champ.value).toBe('')
+		await userEvent.selectOptions(champ, 'ch-maint')
+		await userEvent.click(screen.getByTestId('envoyer-rattacher'))
+		await waitFor(() => expect(screen.getByTestId('adresse').textContent).toBe('/tracks/studio-web/maintenance/cards/c-1'))
+		expect(rpcs).toEqual([{ nom: 'attach_card', args: { p_card: 'c-1', p_channel: 'ch-maint' } }])
+	})
+
+	it('sans choix, la base refuse et l’écran le traduit, le formulaire reste ouvert', async () => {
+		const { faux, rpcs } = client({ data: [], error: null, status: 200 }, undefined, {
+			rattacher: { error: { code: 'P0001', message: 'channel_not_found' }, status: 400 },
+		})
+		monter(faux)
+		await userEvent.click(await screen.findByTestId('ouvrir-rattacher'))
+		await screen.findByTestId('champ-channel-rattacher')
+		await userEvent.click(screen.getByTestId('envoyer-rattacher'))
+		const refus = await screen.findByTestId('refus-rattacher')
+		expect(refus.getAttribute('data-refus')).toBe('channel-introuvable')
+		expect(rpcs[0]?.args).toEqual({ p_card: 'c-1', p_channel: null })
+		expect(screen.getByTestId('adresse').textContent).toBe('/tracks/studio-web/refonte/cards/c-1')
+	})
+
+	it('un workflow sans étape initiale : le refus porte le lien vers l’éditeur de workflows', async () => {
+		monter(client({ data: [], error: null, status: 200 }, undefined, {
+			rattacher: { error: { code: '22023', message: 'step_not_initial' }, status: 400 },
+		}).faux)
+		await userEvent.click(await screen.findByTestId('ouvrir-rattacher'))
+		await userEvent.selectOptions(await screen.findByTestId('champ-channel-rattacher'), 'ch-audit')
+		await userEvent.click(screen.getByTestId('envoyer-rattacher'))
+		const refus = await screen.findByTestId('refus-rattacher')
+		expect(within(refus).getByRole('link').textContent).toContain('éditeur de workflows')
+	})
+
+	it('aucun channel à offrir : une phrase, et seulement « Annuler » ; `Échap` rend le focus à la commande', async () => {
+		monter(client({ data: [], error: null, status: 200 }, undefined, { channels: [] }).faux)
+		await userEvent.click(await screen.findByTestId('ouvrir-rattacher'))
+		expect((await screen.findByTestId('aucun-channel-rattachable')).textContent).toBe('Aucun autre channel que vous pouvez modifier.')
+		expect(screen.queryByTestId('envoyer-rattacher')).toBeNull()
+		await userEvent.keyboard('{Escape}')
+		await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('ouvrir-rattacher')))
 	})
 })

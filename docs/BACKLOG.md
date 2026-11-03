@@ -17395,8 +17395,15 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         lectrice : commande éteinte, et la même écriture par son jeton ne touche aucune ligne ; les 47 specs de la fiche,
         432 passés, 1 instable connu (`commentaires-gestes:140`) ; captures aux quatre paliers, archivée et lectrice,
         observées ; manuel §9.6 et image `rattachements`, `verify-manual` 167. Production : la webapp de `main`.
-      - [ ] **T7.3 — rattacher à un channel** : la liste des channels écrits non rattachés, `attach_card`, la fiche
+      - [x] **T7.3 — rattacher à un channel** : la liste des channels écrits non rattachés, `attach_card`, la fiche
         ouverte sur le nouveau rattachement ; refus traduits. Unitaires, E2E, captures.
+        *Livrée en développement le 2026-11-03* : `docs/DESIGN_SYSTEM.md` §5.83 avant le code ; `lireChannelsRattachables`
+        (ouverts, `ecriture_permise`, non rattachés), `rattacherAffaire` et le dictionnaire fermé des refus de
+        `attach_card` ; formulaire replié, option vide, focus et `Échap`. Unitaires 5280 ; E2E `fiche-rattachement` 6/6 —
+        la liste offerte, la fiche du nouveau rattachement ouverte, la base relue ; la lectrice : commande éteinte et
+        `attach_card` refusé `403` par son jeton ; les 47 specs de la fiche, 435/435 ; captures 1440 (champ borné à 48ch
+        après observation) et 390 ; manuel §9.6 et image `rattacher`, `verify-manual` 167. Production : la webapp de
+        `main`.
       - [ ] **T7.4 — retirer un rattachement** : administrateurs, éteint sur le dernier, confirmation qui nomme la perte,
         `detach_card`. Unitaires, E2E (dont le refus d'un non-administrateur par l'API), captures.
       - [ ] **T7.5 — la pastille « aussi rattachée à N »** sur le board et la liste d'un channel, les rattachements lisibles

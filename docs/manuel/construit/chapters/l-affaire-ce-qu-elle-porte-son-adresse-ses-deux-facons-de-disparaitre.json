@@ -3089,7 +3089,32 @@
 			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattachements.jpg",
 			"alt": "Le bloc « Rattachements » : la fiche ouverte, et l'autre rattachement, archivé, en lien avec son étape",
 			"width": 650,
-			"height": 211
+			"height": 263
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Rattacher à un channel »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sous la liste, rattache l'affaire à un autre channel : choisissez-le dans la liste —\nelle propose les channels ouverts que vous pouvez modifier et où l'affaire n'est pas encore —, puis « Rattacher ».\nL'affaire entre dans ce channel à l'étape initiale de son workflow, sans responsable ni montant, et sa fiche s'ouvre à\nl'adresse de ce nouveau rattachement, où vous les réglez. Pour rouvrir un rattachement archivé, utilisez « Désarchiver »\nsur sa ligne. Rattacher demande de pouvoir modifier l'affaire et le channel choisi ; sinon la commande reste inactive, ou\nle produit dit pourquoi il refuse."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattacher.jpg",
+			"alt": "Le formulaire « Rattacher à un channel » : la liste des channels, « Rattacher » et « Annuler »",
+			"width": 650,
+			"height": 149
 		},
 		{
 			"type": "heading",

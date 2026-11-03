@@ -6,7 +6,8 @@
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T7.1 : l'image « pas-rattachee-ici » montre l'adresse d'un channel auquel
 //       l'affaire n'est pas rattachée (docs/manual.md §9.6 ; docs/SPEC-rattachements.md §8.1 ; docs/DESIGN_SYSTEM.md
 //       §5.81), sur une affaire jetable rattachée à deux channels par la vraie API, puis détruite ; tranche T7.2 : l'image
-//       « rattachements » montre le bloc du même nom (docs/manual.md §9.6 ; docs/DESIGN_SYSTEM.md §5.82)
+//       « rattachements » montre le bloc du même nom (docs/manual.md §9.6 ; docs/DESIGN_SYSTEM.md §5.82) ; tranche T7.3 :
+//       l'image « rattacher » montre son formulaire ouvert, rien n'est envoyé (docs/DESIGN_SYSTEM.md §5.83)
 //
 // Ce qui se LIT vient du seed : « Migration ERP Sogexia » (contacts, activités, santé), « Contrat cadre 2025 »
 // (archivée), « Atelier prompt — Lycée Vauban » (checklist). Ce qui s'ÉCRIT porte sur une affaire posée à « Signature »
@@ -133,6 +134,12 @@ test('une affaire rattachée ailleurs : l’adresse d’un channel où elle n’
 		// La souris quitte la commande : l'image montre son repos, non son survol.
 		await page.mouse.move(0, 0)
 		await illustrer(page, { chapitre: CHAPITRE, section: S.fiche, nom: 'rattachements', cibles: [bloc] })
+		await bloc.getByTestId('ouvrir-rattacher').click()
+		const champ = bloc.getByTestId('champ-channel-rattacher')
+		await expect(champ).toBeFocused()
+		await champ.selectOption({ label: 'Studio web › Maintenance' })
+		await illustrer(page, { chapitre: CHAPITRE, section: S.fiche, nom: 'rattacher', cibles: [bloc.getByTestId('formulaire-rattacher')] })
+		await bloc.getByTestId('annuler-rattacher').click()
 	} finally {
 		await detruireAffaire(request, affaire)
 	}

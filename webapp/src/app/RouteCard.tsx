@@ -320,6 +320,7 @@ function ContenuCard({
 				    relit la fiche en place, et inscrit `archived` ou `unarchived` au fil, qui se relit aussi. */}
 				<BlocRattachementsCard
 					idCard={etat.donnees.card.id}
+					idWorkspace={etat.donnees.card.workspace_id}
 					devise={etat.donnees.card.currency}
 					rattachements={etat.donnees.rattachements ?? []}
 					onChange={() => {

@@ -7,18 +7,29 @@
 // commande d'un channel refusé est éteinte avec le motif du bloc (§5.59), et la politique `card_placements_update` reste
 // la règle — un refus qui survient malgré tout se dit dans la ligne. Un succès fait relire la fiche en place : l'en-tête
 // et le bloc disent alors le même état, sans écran de chargement intermédiaire.
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T7.3 : « Rattacher à un channel », replié en formulaire sous la liste ; le
+//       succès ouvre la fiche du nouveau rattachement (docs/SPEC-rattachements.md §5 ; docs/DESIGN_SYSTEM.md §5.83)
 // @spec docs/DESIGN_SYSTEM.md §5.59 (la commande refusée par une capacité de la base, un motif par bloc) ;
 //       docs/SPEC-droits-interface.md §2 à §4
 
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router'
-import { Archive, ArchiveRestore, Moon } from 'lucide-react'
+import { useEffect, useId, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router'
+import { Archive, ArchiveRestore, Moon, Plus, TriangleAlert } from 'lucide-react'
+import { useRefus } from '../components/ui/RefusCommandes'
+import { CHEMIN_ADMIN_WORKFLOWS } from './chemins'
 import { Button } from '../components/ui/Button'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { enChargement, type EtatAsync } from '../lib/async'
 import { capaciteDansLEtat, lireEcrituresPermises, motifVisible, proprietesCommande, type Capacite } from '../lib/capacites'
 import { t } from '../i18n'
-import { archiverRattachement, type IssueArchivage } from '../lib/bloc-rattachements'
+import {
+	archiverRattachement,
+	lireChannelsRattachables,
+	rattacherAffaire,
+	type ChannelRattachable,
+	type IssueArchivage,
+	type RefusRattachement,
+} from '../lib/bloc-rattachements'
 import { formaterMontant } from '../lib/entete-card'
 import type { RattachementDuBloc } from '../lib/formulaire'
 import { estEnSommeil, formaterEcheanceSommeil } from '../lib/sommeil-card'
@@ -26,6 +37,7 @@ import { clientCrm, type ClientCrm } from '../lib/supabase'
 
 export function BlocRattachementsCard({
 	idCard,
+	idWorkspace,
 	devise,
 	rattachements,
 	onChange,
@@ -33,6 +45,7 @@ export function BlocRattachementsCard({
 	maintenant = () => new Date(),
 }: {
 	readonly idCard: string
+	readonly idWorkspace: string
 	readonly devise: string
 	readonly rattachements: readonly RattachementDuBloc[]
 	/** Un archivage a réussi : la fiche se relit en place. */
@@ -82,7 +95,192 @@ export function BlocRattachementsCard({
 					/>
 				))}
 			</ul>
+			<Rattacher
+				idCard={idCard}
+				idWorkspace={idWorkspace}
+				exclus={idsChannels}
+				client={client}
+			/>
 		</section>
+	)
+}
+
+const CLASSES_CHAMP = 'min-h-[var(--size-target)] px-3 rounded-sm max-w-full border border-border bg-surface text-ink'
+const CLES_REFUS: Readonly<Record<RefusRattachement, Parameters<typeof t>[0]>> = {
+	'channel-introuvable': 'cardPlacements.attach.refused.channel',
+	'channel-ferme': 'cardPlacements.attach.refused.closed',
+	interdit: 'cardPlacements.attach.refused.forbidden',
+	'deja-rattachee': 'cardPlacements.attach.refused.already',
+	'sans-etape-initiale': 'cardPlacements.attach.refused.initial',
+	'affaire-introuvable': 'cardPlacements.attach.refused.card',
+	reseau: 'cardPlacements.attach.refused.network',
+}
+
+/**
+ * « Rattacher à un channel » (§5.83) : la commande, repliée en formulaire dans le flux. La liste des channels est une
+ * commodité ; `attach_card` tient la règle, et son refus est traduit sous le champ, le choix conservé.
+ */
+function Rattacher({
+	idCard,
+	idWorkspace,
+	exclus,
+	client,
+}: {
+	readonly idCard: string
+	readonly idWorkspace: string
+	readonly exclus: readonly string[]
+	readonly client: ClientCrm | null
+}) {
+	const droit = useRefus()
+	const naviguer = useNavigate()
+	const [ouvert, setOuvert] = useState(false)
+	const [offerts, setOfferts] = useState<readonly ChannelRattachable[] | null>(null)
+	const [choix, setChoix] = useState('')
+	const [refus, setRefus] = useState<RefusRattachement | null>(null)
+	const [enVol, setEnVol] = useState(false)
+	const commande = useRef<HTMLButtonElement>(null)
+	const champ = useRef<HTMLSelectElement>(null)
+	const annuler = useRef<HTMLButtonElement>(null)
+	const rendreLeFocus = useRef(false)
+	const idChamp = useId()
+	const idRefus = useId()
+
+	useEffect(() => {
+		if (!ouvert || client === null) return
+		let vivant = true
+		void lireChannelsRattachables(client, idWorkspace, new Set(exclus)).then((etat) => {
+			// UN ÉCHEC DE LECTURE N'EMPÊCHE RIEN : la liste reste vide, et la phrase le dit (§5.83).
+			if (vivant) setOfferts(etat.statut === 'pret' ? etat.donnees : [])
+		})
+		return () => {
+			vivant = false
+		}
+		// La liste se relit à chaque ouverture ; `exclus` est stable entre deux relectures de la fiche.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ouvert, client, idWorkspace])
+
+	useEffect(() => {
+		// Le focus entre dans le formulaire (§5.23) : le champ, ou « Annuler » quand aucun channel n'est offert.
+		if (ouvert && offerts !== null) (offerts.length === 0 ? annuler.current : champ.current)?.focus()
+	}, [ouvert, offerts])
+	useEffect(() => {
+		if (ouvert || !rendreLeFocus.current) return
+		rendreLeFocus.current = false
+		commande.current?.focus()
+	}, [ouvert])
+
+	const fermer = () => {
+		rendreLeFocus.current = true
+		setOuvert(false)
+		setOfferts(null)
+		setChoix('')
+		setRefus(null)
+	}
+
+	const envoyer = async () => {
+		if (client === null || enVol) return
+		setEnVol(true)
+		const issue = await rattacherAffaire(client, idCard, choix)
+		setEnVol(false)
+		if (!issue.ok) {
+			setRefus(issue.refus)
+			return
+		}
+		const cible = offerts?.find((offert) => offert.id === choix)
+		// LE SUCCÈS OUVRE LA FICHE DU NOUVEAU RATTACHEMENT (§5.83) : c'est là qu'on règle son étape et son responsable.
+		if (cible !== undefined) naviguer(`/tracks/${cible.slugTrack}/${cible.slugChannel}/cards/${idCard}`)
+	}
+
+	if (!ouvert) {
+		return (
+			<Button
+				ref={commande}
+				variante="secondaire"
+				taille="compacte"
+				data-testid="ouvrir-rattacher"
+				className="self-start"
+				{...droit}
+				onClick={() => setOuvert(true)}
+			>
+				<Plus aria-hidden="true" className="size-4" />
+				{t('cardPlacements.attach')}
+			</Button>
+		)
+	}
+
+	return (
+		<form
+			data-testid="formulaire-rattacher"
+			className="flex flex-col gap-3"
+			onSubmit={(evenement) => {
+				evenement.preventDefault()
+				void envoyer()
+			}}
+			onKeyDown={(evenement) => {
+				if (evenement.key === 'Escape') fermer()
+			}}
+		>
+			{offerts === null ? null : offerts.length === 0 ? (
+				<p data-testid="aucun-channel-rattachable" className="text-sm text-text-2">
+					{t('cardPlacements.attach.none')}
+				</p>
+			) : (
+				<label htmlFor={idChamp} className="flex flex-col gap-1 text-sm text-text-2 min-w-0 max-w-[48ch]">
+					{t('cardPlacements.attach.channel')}
+					<select
+						id={idChamp}
+						ref={champ}
+						data-testid="champ-channel-rattacher"
+						value={choix}
+						onChange={(evenement) => {
+							setChoix(evenement.target.value)
+							setRefus(null)
+						}}
+						{...(refus === null ? {} : { 'aria-describedby': idRefus, 'aria-invalid': true })}
+						className={CLASSES_CHAMP}
+					>
+						<option value="">{t('cardPlacements.attach.channel.none')}</option>
+						{offerts.map((offert) => (
+							<option key={offert.id} value={offert.id}>
+								{t('cardPlacements.path', { track: offert.track, channel: offert.channel })}
+							</option>
+						))}
+					</select>
+				</label>
+			)}
+			{refus === null ? null : (
+				<div
+					id={idRefus}
+					role="alert"
+					data-testid="refus-rattacher"
+					data-refus={refus}
+					className="flex items-start gap-2 rounded-sm bg-danger-soft text-danger-on-soft p-3 text-sm max-w-[72ch]"
+				>
+					<TriangleAlert aria-hidden="true" size={16} strokeWidth={2} className="shrink-0 mt-1" />
+					<div className="flex flex-col gap-2 min-w-0">
+						<p>{t(CLES_REFUS[refus])}</p>
+						{refus !== 'sans-etape-initiale' ? null : (
+							<Link
+								to={CHEMIN_ADMIN_WORKFLOWS}
+								className="inline-flex items-center self-start min-h-[var(--size-target)] px-4 rounded-sm bg-surface text-ink border border-border font-medium hover:bg-hover"
+							>
+								{t('affaire.creation.refus.initiale.lien')}
+							</Link>
+						)}
+					</div>
+				</div>
+			)}
+			<div className="flex flex-wrap items-center gap-2">
+				{offerts === null || offerts.length === 0 ? null : (
+					<Button type="submit" variante="primaire" data-testid="envoyer-rattacher" aria-busy={enVol}>
+						{t('cardPlacements.attach.submit')}
+					</Button>
+				)}
+				<Button ref={annuler} type="button" variante="secondaire" data-testid="annuler-rattacher" onClick={fermer}>
+					{t('cardPlacements.attach.cancel')}
+				</Button>
+			</div>
+		</form>
 	)
 }
 

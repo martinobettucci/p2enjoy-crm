@@ -1495,6 +1495,15 @@ concerné ; sinon la commande reste visible mais inactive, et une phrase en têt
 
 ![Le bloc « Rattachements » : la fiche ouverte, et l'autre rattachement, archivé, en lien avec son étape](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattachements.jpg)
 
+**« Rattacher à un channel »**, sous la liste, rattache l'affaire à un autre channel : choisissez-le dans la liste —
+elle propose les channels ouverts que vous pouvez modifier et où l'affaire n'est pas encore —, puis « Rattacher ».
+L'affaire entre dans ce channel à l'étape initiale de son workflow, sans responsable ni montant, et sa fiche s'ouvre à
+l'adresse de ce nouveau rattachement, où vous les réglez. Pour rouvrir un rattachement archivé, utilisez « Désarchiver »
+sur sa ligne. Rattacher demande de pouvoir modifier l'affaire et le channel choisi ; sinon la commande reste inactive, ou
+le produit dit pourquoi il refuse.
+
+![Le formulaire « Rattacher à un channel » : la liste des channels, « Rattacher » et « Annuler »](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattacher.jpg)
+
 ### 9.7 Les contacts d'une affaire : les rattacher, les détacher
 
 ![Le bloc des contacts d'une affaire, avec le rôle de chacun et la commande pour détacher](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/contacts-de-l-affaire.jpg)

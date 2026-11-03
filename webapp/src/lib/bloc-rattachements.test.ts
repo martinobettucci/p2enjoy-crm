@@ -1,9 +1,11 @@
 // @verifies CRM-111 (docs/BACKLOG.md) T7.2 — archiver et désarchiver un rattachement : la seule colonne écrite, la ligne
 //           relue, le refus de politique (`200` et zéro ligne) dit comme un refus, la panne comme une panne
 //           (docs/SPEC-rattachements.md §5, §8.1 ; docs/DESIGN_SYSTEM.md §5.82)
+// @verifies CRM-111 (docs/BACKLOG.md) T7.3 — le dictionnaire fermé des refus d'`attach_card` (migration 0148 ;
+//           docs/DESIGN_SYSTEM.md §5.83)
 
 import { describe, expect, it } from 'vitest'
-import { archiverRattachement, issueArchivage } from './bloc-rattachements'
+import { archiverRattachement, issueArchivage, refusRattachement } from './bloc-rattachements'
 import type { ClientCrm } from './supabase'
 
 type Reponse = { data: unknown[] | null; error: { message: string; code?: string } | null; status: number }
@@ -66,5 +68,18 @@ describe('archiver un rattachement (§5.82)', () => {
 		for (const issue of ['sans-effet', 'invalide', 'introuvable', 'refus', 'inconnu'] as const) {
 			expect(issueArchivage(issue)).toBe('refusee')
 		}
+	})
+})
+
+describe('les refus d’`attach_card` (§5.83)', () => {
+	it('chaque symbole de la migration 0148 a son refus ; l’inconnu et la panne se lisent comme une panne', () => {
+		expect(refusRattachement(400, 'P0001', 'channel_not_found')).toBe('channel-introuvable')
+		expect(refusRattachement(400, 'P0001', 'channel_closed')).toBe('channel-ferme')
+		expect(refusRattachement(403, '42501', 'forbidden')).toBe('interdit')
+		expect(refusRattachement(400, 'P0001', 'already_attached')).toBe('deja-rattachee')
+		expect(refusRattachement(400, '22023', 'step_not_initial')).toBe('sans-etape-initiale')
+		expect(refusRattachement(400, 'P0001', 'card_not_found')).toBe('affaire-introuvable')
+		expect(refusRattachement(undefined, null, '')).toBe('reseau')
+		expect(refusRattachement(500, 'XX000', 'boom')).toBe('reseau')
 	})
 })
