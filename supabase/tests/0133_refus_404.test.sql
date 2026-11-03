@@ -1,3 +1,4 @@
+-- @verifies CRM-112 (docs/BACKLOG.md) — tranche T2.a : le compte des levées « introuvable » révisé (décision 51), +1
 -- @verifies CRM-120 (docs/BACKLOG.md) — tranche T2 : les refus « introuvable » rendent 404 — la fonction qui lève,
 --           sa forme (SQLSTATE `PGRST`, code `P0002` et message inchangés dans le corps, statut dans le détail), ses
 --           privilèges, plus aucune levée de `P0002`, et deux refus réels : un 404 sous la RLS, le 409 de
@@ -60,8 +61,10 @@ select is(
 	  where n.nspname in ('public', 'app') and p.prosrc ~ 'app\.raise_http_error\(404, '),
 	-- RÉVISÉ PAR `CRM-127` T2 (migration 0151), non relâché : deux fonctions de plus lèvent par ce chemin,
 	-- `mail_inbound_account_record_sync` et `authorize_mail_connection_test` (docs/SPEC-mail-subsystem.md §23.2, §23.3).
-	29,
-	'5 — les vingt-sept fonctions « introuvable » de CRM-120, et les deux de CRM-127, lèvent par `app.raise_http_error(404, …)`');
+	-- RÉVISÉ PAR `CRM-112` T2.a (migration 0155), non relâché : `app.workflow_transition_required_common_fields_avant` refuse
+	-- une transition inconnue par ce chemin (`transition_not_found`, docs/SPEC-champs-communs.md §5).
+	30,
+	'5 — les vingt-sept fonctions « introuvable » de CRM-120, les deux de CRM-127 et celle de CRM-112, lèvent par `app.raise_http_error(404, …)`');
 
 select is(
 	(select array_agg(p.proname::text) from pg_proc p join pg_namespace n on n.oid = p.pronamespace

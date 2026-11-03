@@ -2481,6 +2481,24 @@ uuid)` et `drop function public.mail_inbound_account_record_sync(uuid)`, **avec 
 d'avant** : l'image de `main` appelle `mail_inbound_account_record_sync` à chaque relève, et chaque relève échouerait sans
 elle.
 
+### Migration `0155` — une transition exige un champ commun (`CRM-112` T2.a, décisions 664 et 819 ; livrée en développement le 2026-11-03)
+
+`docs/SPEC-champs-communs.md` §5 et §6.
+- **`public.workflow_transition_required_common_fields`** (`transition_id`, `common_field_id`, `workspace_id`,
+  `created_at`) ; clé primaire `(transition_id, common_field_id)`. C'est une table distincte de
+  `workflow_transition_required_fields`, dont elle laisse la clé primaire intacte (décision 819).
+- **Deux clés composites par `workspace_id`**, vers `workflow_transitions` et vers `card_common_fields`. La première
+  exige l'unicité `workflow_transitions_id_workspace_key (id, workspace_id)`, posée par la migration seulement si elle
+  manque.
+- **`app.workflow_transition_required_common_fields_avant`** pose l'espace depuis la transition. Une transition inconnue
+  rend un 404 par `app.raise_http_error`, et un champ archivé est refusé par `common_field_archived`.
+- **Politiques** : lecture par les membres de l'espace ; pose et retrait par l'administrateur. **Privilèges** : insertion
+  des seules colonnes `transition_id` et `common_field_id`, aucune mise à jour.
+- **`app.card_common_fields_refuser_archivage_employe`** refuse l'archivage d'un champ exigé : `common_field_in_use`, avec
+  les transitions nommées dans le détail (« workflow : étape → étape »).
+- **Retrait** : supprimer le déclencheur d'archivage, la table, sa fonction d'avant-insertion et l'unicité
+  `workflow_transitions_id_workspace_key`.
+
 ### Migration `0154` — le dossier d'une affaire hors de l'arborescence (`CRM-111` T6.1, décisions 657, 818 et 820 ; livrée en développement le 2026-11-03)
 
 `docs/SPEC-rattachements.md` §7 ; `docs/SPEC-mail-subsystem.md` §4.5. Deux fonctions réécrites depuis la `0109`, leur

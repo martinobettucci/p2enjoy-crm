@@ -4047,6 +4047,42 @@ export type Database = {
           },
         ]
       }
+      workflow_transition_required_common_fields: {
+        Row: {
+          common_field_id: string
+          created_at: string
+          transition_id: string
+          workspace_id: string
+        }
+        Insert: {
+          common_field_id: string
+          created_at?: string
+          transition_id: string
+          workspace_id: string
+        }
+        Update: {
+          common_field_id?: string
+          created_at?: string
+          transition_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_transition_required_common_fields_field_fkey"
+            columns: ["common_field_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "card_common_fields"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "workflow_transition_required_common_fields_transition_fkey"
+            columns: ["transition_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_transitions"
+            referencedColumns: ["id", "workspace_id"]
+          },
+        ]
+      }
       workflow_transition_required_fields: {
         Row: {
           field_id: string

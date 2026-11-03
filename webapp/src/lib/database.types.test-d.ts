@@ -348,6 +348,10 @@ type _tables = Expect<
     | 'audit_log'
     | 'workspace_members'
     | 'workspaces'
+    // `0155` de `CRM-112` TRANCHE T2.a ajoute `workflow_transition_required_common_fields` (docs/SPEC-champs-communs.md §5,
+    // décision 819). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `workspace_id` est posé depuis la transition (ni le client ni `Insert`
+    // ne le choisissent vraiment) ; un champ archivé est refusé (`common_field_archived`) ; aucune mise à jour n'est ouverte.
+    | 'workflow_transition_required_common_fields'
   >
 >
 

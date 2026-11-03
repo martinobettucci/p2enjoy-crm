@@ -1,3 +1,5 @@
+-- @verifies CRM-112 (docs/BACKLOG.md) — tranche T2.a : le recensement des politiques révisé (décision 51), +3 des exigences
+--           de champ commun (docs/SPEC-champs-communs.md §5)
 -- @verifies CRM-112 (docs/BACKLOG.md) — tranche T1 : le recensement des politiques révisé (décision 51), +6 des champs
 --           communs (docs/SPEC-champs-communs.md §4)
 -- @verifies CRM-073 (docs/BACKLOG.md) — tranche T1 : le recensement des politiques révisé (décision 51), +2 des webhooks
@@ -236,8 +238,11 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	191,
-	'CENT QUATRE-VINGT-ONZE politiques dans `public`, et pas une de plus — 185 avant `CRM-112` tranche T1, plus les SIX '
+	194,
+	'CENT QUATRE-VINGT-QUATORZE politiques dans `public`, et pas une de plus — 191 avant `CRM-112` tranche T2.a, plus les '
+	'TROIS des exigences de champ commun (docs/SPEC-champs-communs.md §5, décision 819) : leur lecture par tout membre de '
+	'l''espace, leur pose et leur retrait par l''administrateur seul, comme les exigences de champ de workflow. Avant '
+	'elles : 191, soit 185 avant `CRM-112` tranche T1, plus les SIX '
 	'des champs communs (docs/SPEC-champs-communs.md §4) : la lecture des définitions par tout membre de l''espace, leur '
 	'création et leur modification par l''administrateur seul ; la lecture d''une valeur par qui lit son affaire, son '
 	'écriture et sa modification par qui écrit son affaire. AUCUNE SUPPRESSION, ni politique ni privilège. Avant elles : '

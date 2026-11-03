@@ -21,6 +21,9 @@ d'exécuter le code attendu.
 - La validation par type est partagée par les champs de workflow et les champs communs (`app.validate_field_value`).
 - Aucun écran ne les montre encore (T3). Les mesures du filtre et de la recherche sont au §8 et au §10 de
   `docs/SPEC-champs-communs.md`.
+- **T2.a (migration 155)** : une transition peut exiger un champ commun (décision 819), dans une table distincte des
+  exigences de champ de workflow. L'archivage d'un champ exigé est refusé, et le refus nomme les transitions. `move_card`
+  en tiendra compte en T2.b.
 
 - **`CRM-127` T2 et T3 — la relève date `last_sync_at`, et le test de connexion d'un compte de messagerie passe par une
   fonction edge** (décision 816, INC-340 ; `docs/SPEC-mail-subsystem.md` §23). Migration `0151` :

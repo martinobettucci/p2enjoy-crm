@@ -17394,9 +17394,14 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       copies, refus `common_field_in_use` et `common_field_archived` ; pgTAP ; API.
       *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-3a) depuis 2026-11-02 22:28 UTC — état avant : [ ]*
       **Découpage** (2026-11-02, mesuré sur les migrations qui lisent `workflow_transition_required_fields`) :
-      - [ ] **T2.a — la base de l'exigence** : la table distincte `workflow_transition_required_common_fields`
+      - [x] **T2.a — la base de l'exigence** : la table distincte `workflow_transition_required_common_fields`
             (décision 819), `workspace_id` posé depuis la transition, clé composite vers `card_common_fields` ; refus
             `common_field_in_use` à l'archivage d'un champ exigé (§6, les modèles d'email suivent en T5) ; pgTAP.
+            *Faite le 2026-11-03*, migration `0155`, rejouable (appliquée deux fois de suite) :
+            - pgTAP `0144` **12/12** ; la suite entière **132 fichiers, 4 823 assertions**, sans anomalie ;
+            - deux comptes révisés, non relâchés (décision 51) : les politiques de `public` (`0016`, 194) et les levées
+              par `app.raise_http_error(404, …)` (`0133`, 30) ;
+            - types régénérés, témoin des tables tenu ; `docs/SCHEMA.md` « Migration `0155` », contrat (§3, ligne 155).
       - [ ] **T2.b — la sixième vérification de `move_card`** (0128) : l'union des champs de workflow, lus sur le
             rattachement, et des champs communs, lus sur l'affaire ; `missing_required_fields` nomme les deux ; pgTAP ;
             API aux vrais jetons.
