@@ -2233,6 +2233,8 @@ publique sert le module d'objectifs de ce build (`200`). La baseline reste **81*
   le formateur écarte les champs `panne` et `account_id` (INC-343). Le compte date d'avant le lot et n'a aucune relève
   réussie, donc rien ne rattache l'échec à la 151 ou à la 154.
 - **Ce que la fenêtre n'emporte pas** : aucun `./runProd.sh --spark` ordinaire ; les §2.18, §2.21 et §2.22 gardent leur état.
+- **Constat de `CRM-111`, favorable, le 2026-11-03** (décision 833) : rattacher puis retirer depuis la fiche, la pastille
+  « +1 » du board, un assistant qui voit `crm_card_attach`.
 - **Reste** : le constat du responsable. Sur une affaire, « Rattacher à un channel » puis « Retirer », la pastille « +1 »
   sur le board, le bloc « Rattachements » ; Réglages ▸ « Champs de l'affaire » ouvert à l'administrateur ; un assistant
   connecté qui voit `crm_card_attach` ; l'écran d'état de la messagerie qui date la dernière relève d'un compte configuré.

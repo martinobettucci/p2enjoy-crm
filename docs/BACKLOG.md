@@ -16983,7 +16983,7 @@ prête — politiques `organizations_insertion_bizdev_admin` et `organizations_m
 
 ## Demande du 2026-10-23 — rattachements multiples (décisions 637 à 662)
 
-### CRM-111 — Rattachements multiples d'une affaire `[P]`
+### CRM-111 — Rattachements multiples d'une affaire `[x]`
 *Créée le 2026-10-24 — exploration demandée par le responsable le 2026-10-23, arbitrée en sept séries (décisions 638,
 639, 642, 643, 645, 657, 661) et validée le 2026-10-24 (décision 662). Spécification : `docs/SPEC-rattachements.md`.*
 Une affaire peut être rattachée à plusieurs channels, y compris de tracks différents. Chaque rattachement a son étape,
@@ -17460,7 +17460,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       *Spécifiée le 2026-11-03, avant le code (`docs/SPEC-mcp.md` §9.2 quindecies, décision 826)* : trois outils nouveaux,
       le genre d'ancre `placement`, `placement_id` facultatif sur les gestes existants, les rattachements lisibles dans
       `crm_card_get`.
-- [P] **Livraison en production**, sur instruction du responsable : sauvegarde, migration en fenêtre, `mail-sync`,
+- [x] **Livraison en production**, sur instruction du responsable : sauvegarde, migration en fenêtre, `mail-sync`,
       webapp et connecteur redéployés ensemble ; constat ; `CHANGELOG.md`.
       **Livrée le 2026-11-01** par la fenêtre des migrations 106 à 141 (décision 792, révision `6e7d6266` ; `docs/PROD_MIGRATIONS.md` §8) ;
       reste le constat du responsable.
@@ -17468,6 +17468,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       fenêtre des migrations 150 à 160 (décision 827, révision `e44d04aa` ; `docs/PROD_MIGRATIONS.md` §8) : registre à 158
       lignes, webapp, images `mcp` et `mail-sync`, `functions` redémarré, manuel publié. Reste le constat du responsable :
       rattacher puis retirer depuis la fiche, la pastille « +1 » du board, un assistant qui voit `crm_card_attach`.
+      **Constat favorable du responsable le 2026-11-03** (décision 833) : l'unité est terminée.
 
 ### CRM-112 — Champs personnalisés communs de portée espace `[~]`
 *Réservée le 2026-10-24 — décision 642, arbitrage 4 ; ordre fixé par la décision 645 : après `CRM-111`. Arbitrée le

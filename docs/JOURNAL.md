@@ -38925,3 +38925,12 @@ Motif : qu'aucune session ne relance le E2E complet de son côté.
 les migrations, les services à reconstruire et tout geste préalable. Une correction de la session de livraison reste
 permise sur ses propres unités (ainsi `4c48b14b`, défaut de `CRM-112` T3.d trouvé par la campagne).
 
+
+### décision 833 — constat favorable de `CRM-111` en production
+
+*2026-11-03, session interactive 4891a451, réponse du responsable à `AskUserQuestion`.* **Question** : sur
+`https://crm.lelabs.tech`, rattacher puis retirer depuis la fiche d'une affaire, la pastille « +1 » sur le board de l'un des
+deux channels, un assistant connecté qui voit `crm_card_attach` — quel constat ? **Réponse : « Constat favorable »**.
+**Conséquence** : `CRM-111` passe `[x]` (décision 697) ; son entrée du changelog était déjà sous « Publié » (livraison du
+2026-11-03, révision `e44d04aa`). Les autres constats de cette livraison (`CRM-112` T1 à T3.a, `CRM-127` T2 et T3) restent
+à faire.
