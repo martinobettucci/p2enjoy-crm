@@ -731,6 +731,10 @@ développement le 2026-11-03.
 appliqué la 150 à la 160, avec la webapp de `main`, les images `mcp` et `mail-sync` et le service `functions`.
 *Historique de l'attente* — les paragraphes qui suivent, jusqu'à la 150, décrivent ce lot tel qu'il attendait.
 
+**Sans migration, avec la prochaine livraison** (`CRM-112` T3.c) : la webapp de `main` — le bloc « Champs de l'affaire » de
+la fiche, et le libellé d'un champ commun dans le bandeau de refus du board. Elle s'appuie sur les tables de la `0152`,
+déjà en production.
+
 **Sans migration, avec la prochaine livraison** (`CRM-111` T7, T8, T9) : la webapp de `main` (la fiche au rattachement de
 l'adresse, le bloc « Rattachements », la pastille « aussi rattachée à ») et l'**image `mcp` reconstruite** (les outils des
 rattachements, §9.2 quindecies de `docs/SPEC-mcp.md`). Le seed ne se joue jamais en production. Vérification : un

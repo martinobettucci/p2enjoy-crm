@@ -1,3 +1,5 @@
+// @spec CRM-112 (docs/BACKLOG.md) tranche T3.c — le refus d'un déplacement nomme un champ commun par son libellé
+//       (docs/SPEC-champs-communs.md §5, §7 ; docs/DESIGN_SYSTEM.md §5.88)
 // @spec CRM-041 (docs/BACKLOG.md) — composition du board kanban et appel de la garde `move_card`
 // @spec CRM-022 (docs/BACKLOG.md) — profil du responsable embarqué avec chaque card
 // @spec docs/SPEC-workflow-engine.md §7.2 (ce que le board lit), §7.3 (composition des colonnes),
@@ -729,14 +731,20 @@ export async function lireLibellesChamps(
 	workflowId: string,
 ): Promise<EtatAsync<readonly ChampLibelle[]>> {
 	try {
-		const reponse = await client
-			.from('form_fields')
-			.select(COLONNES_CHAMP_LIBELLE)
-			.eq('workflow_id', workflowId)
+		// `CRM-112` T3.c (docs/DESIGN_SYSTEM.md §5.88) : le refus `missing_required_fields` nomme aussi les clés des champs
+		// COMMUNS, que `form_fields` ignore. Ils sont lus avec, sous la RLS de l'appelant, et viennent EN TÊTE : la carte
+		// construite ensuite garde le libellé du champ du workflow quand une clé est portée par les deux.
+		const [reponse, communs] = await Promise.all([
+			client.from('form_fields').select(COLONNES_CHAMP_LIBELLE).eq('workflow_id', workflowId),
+			client.from('card_common_fields').select('key, label'),
+		])
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}
-		return pret(reponse.data)
+		if (communs.error !== null) {
+			return enErreur(classerErreur(communs.status, communs.error.message))
+		}
+		return pret([...(communs.data as readonly ChampLibelle[]), ...reponse.data])
 	} catch (cause) {
 		return enErreur(surException(cause))
 	}

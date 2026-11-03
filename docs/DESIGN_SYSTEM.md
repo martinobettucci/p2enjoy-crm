@@ -7677,7 +7677,8 @@ aide, contrôle du type, enregistrement champ par champ et ses quatre états, re
 - **LE BLOC N'EST PAS RENDU QUAND IL N'A RIEN À MONTRER** (§5.36) — aucun champ actif, aucun archivé porteur d'une valeur :
   un espace sans champ commun garde la fiche d'avant.
 - **UN DÉPLACEMENT REFUSÉ QUI NOMME UN CHAMP COMMUN LE DEMANDE ICI** (§5.7 quater, `docs/SPEC-form-composer.md` §4 ter) :
-  liseré `--color-brand`, mention « Demandé pour ce déplacement ». **Le focus va au premier champ nommé du formulaire
+  liseré `--color-brand`, et la mention du champ de formulaire, « Exigé par le déplacement que vous avez demandé » (*précisé à
+  l'écriture du code : le champ est réemployé, sa mention avec lui*). **Le focus va au premier champ nommé du formulaire
   d'étape, et à celui de ce bloc seulement si le formulaire n'en nomme aucun** : un seul focus par demande.
 - **LE BANDEAU DE REFUS DU BOARD NOMME LE CHAMP COMMUN PAR SON LIBELLÉ**, comme un champ du workflow ; une clé que rien ne
   nomme s'écrit telle quelle (§5.62). Le lien « Compléter la fiche » emporte les deux sortes de clés.

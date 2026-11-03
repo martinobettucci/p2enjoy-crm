@@ -13,6 +13,15 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-112` T3.c — les champs de l'affaire sur la fiche (sans migration)
+
+- La fiche d'une affaire porte un bloc « Champs de l'affaire », juste après les rattachements : les champs communs de
+  l'espace, remplis comme les questions du formulaire et enregistrés chacun à la sortie du champ. La valeur appartient à
+  l'affaire, la même dans tous ses channels. Un champ archivé qui garde une valeur reste lisible, marqué « Archivé ».
+- Un déplacement refusé parce qu'un champ de l'affaire est vide le nomme dans le bandeau du board, et « Renseigner ces
+  champs » mène à lui, mis en évidence et focalisé.
+- Manuel, §9.6 et §18.16, avec une image.
+
 ### `CRM-128` — le connecteur MCP prépare les emails, il ne les envoie jamais (INC-341, décision 829)
 
 - **T2 (migration `0162`)** : une file de **mails préparés**, `mail_drafts`, que seule la personne au nom de laquelle un

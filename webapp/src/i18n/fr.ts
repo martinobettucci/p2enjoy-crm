@@ -2153,6 +2153,12 @@ export const fr = {
 	'admin.settings.index.workflows': 'Workflows : étapes et composition',
 	'admin.settings.index.workflows.body':
 		"Composer un workflow : choisir ses étapes dans le catalogue, les ordonner, surcharger leur libellé, leur probabilité et leur seuil de relance, désigner l'étape initiale, et déclarer les transitions qui relient les étapes.",
+	// La partie commune de la fiche — CRM-112 T3.c, docs/DESIGN_SYSTEM.md §5.88.
+	'card.commonFields.title': 'Champs de l’affaire',
+	'card.commonFields.intro': 'Ces informations valent pour l’affaire dans tous ses channels.',
+	'card.commonFields.loading': 'Chargement des champs de l’affaire',
+	'card.commonFields.error': 'Les champs de l’affaire n’ont pas pu être lus.',
+	'card.commonFields.archived': 'Archivé',
 	// Réglages ▸ Champs de l’affaire — CRM-112 T3.a, docs/DESIGN_SYSTEM.md §5.86.
 	'admin.settings.index.commonFields': 'Champs de l’affaire',
 	'admin.settings.index.commonFields.body': 'Les champs que porte toute affaire de l’espace, quel que soit son channel : les déclarer, les ordonner, les archiver.',

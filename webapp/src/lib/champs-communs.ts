@@ -3,6 +3,8 @@
 // @spec docs/SPEC-champs-communs.md §3.2 (la définition ; ni la clé ni le type ne se modifient, faute de privilège de
 //       colonne), §4 (lecture par les membres, écriture par l'administrateur), §6 (`common_field_in_use`, qui nomme les
 //       transitions), §7 ; docs/DESIGN_SYSTEM.md §5.86
+// @spec CRM-112 tranche T3.c — docs/SPEC-champs-communs.md §3.3 (une valeur par affaire), §7 (précision T3.c : écrire par
+//       mise à jour puis insertion ; la partie commune et ses champs exigés) ; docs/DESIGN_SYSTEM.md §5.88
 // @spec CLAUDE.md §10 — ce module ne décide AUCUN droit : il écrit, et la base tranche ; ses refus sont classés ici
 //
 // Ce module ne rend rien : il lit, écrit et classe les refus. Les colonnes sont celles des éléments de l'éditeur de
@@ -10,6 +12,9 @@
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { ChampDeclarable } from './administration-workflows'
+import type { Json } from './database.types'
+import { classerRefusValeur, type ChampResolu, type ResultatEcriture } from './formulaire'
+import { estRenseigne } from './valeur-renseignee'
 import type { Database } from './database.types'
 import type { ClientCrm } from './supabase'
 
@@ -145,4 +150,98 @@ export function deplacerChampCommun(client: ClientCrm, idChamp: string, position
 /** Archive (un instant) ou restaure (`null`). L'archivage d'un champ exigé est refusé et nommé (§6). */
 export function archiverChampCommun(client: ClientCrm, idChamp: string, instant: string | null): Promise<IssueChampCommun> {
 	return executer(() => client.from('card_common_fields').update({ archived_at: instant }).eq('id', idChamp).select('id'))
+}
+
+// ---------------------------------------------------------------------------------------------
+// La partie commune de la fiche — `CRM-112` T3.c, docs/SPEC-champs-communs.md §7, docs/DESIGN_SYSTEM.md §5.88
+// ---------------------------------------------------------------------------------------------
+
+export type ValeurCommune = { readonly field_id: string; readonly value: Json | null }
+
+/** Les valeurs communes d'une affaire, sous la RLS : l'appelant ne les lit que s'il lit l'affaire (§4). */
+export async function lireValeursCommunes(client: ClientCrm, idCard: string): Promise<EtatAsync<readonly ValeurCommune[]>> {
+	try {
+		const reponse = await client.from('card_common_field_values').select('field_id, value').eq('card_id', idCard)
+		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
+		return pret(reponse.data as readonly ValeurCommune[])
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+export type EcritureValeurCommune = {
+	readonly idCard: string
+	readonly idChamp: string
+	readonly idWorkspace: string
+	readonly valeur: Json
+}
+
+/**
+ * Écrit la valeur commune d'une affaire : une MISE À JOUR de sa ligne si elle existe, une INSERTION sinon. Pas d'`upsert` :
+ * PostgREST y réécrit toutes les colonnes envoyées, et le privilège de colonne n'accorde la mise à jour que de `value`
+ * (docs/SPEC-champs-communs.md §7). Une insertion concurrente refusée en `23505` — la ligne est née entre-temps — est
+ * reprise en mise à jour.
+ */
+export async function ecrireValeurCommune(client: ClientCrm, ecriture: EcritureValeurCommune): Promise<ResultatEcriture> {
+	const mettreAJour = () =>
+		client
+			.from('card_common_field_values')
+			.update({ value: ecriture.valeur })
+			.eq('card_id', ecriture.idCard)
+			.eq('field_id', ecriture.idChamp)
+			.select('field_id')
+	try {
+		const misAJour = await mettreAJour()
+		if (misAJour.error !== null) return { statut: 'refus', refus: classerRefusValeur(misAJour.status, misAJour.error.message) }
+		if ((misAJour.data ?? []).length > 0) return { statut: 'enregistree' }
+		const insere = await client
+			.from('card_common_field_values')
+			.insert({ card_id: ecriture.idCard, field_id: ecriture.idChamp, workspace_id: ecriture.idWorkspace, value: ecriture.valeur })
+			.select('field_id')
+		if (insere.error === null) return { statut: 'enregistree' }
+		if (insere.error.code === '23505') {
+			const reprise = await mettreAJour()
+			if (reprise.error === null && (reprise.data ?? []).length > 0) return { statut: 'enregistree' }
+			if (reprise.error !== null) return { statut: 'refus', refus: classerRefusValeur(reprise.status, reprise.error.message) }
+		}
+		return { statut: 'refus', refus: classerRefusValeur(insere.status, insere.error.message) }
+	} catch (cause) {
+		return { statut: 'refus', refus: classerRefusValeur(undefined, cause instanceof Error ? cause.message : String(cause)) }
+	}
+}
+
+/** La partie commune, prête à rendre : les champs actifs, puis les archivés qui portent une valeur (§5.88). */
+export type PartieCommune = {
+	readonly actifs: readonly ChampResolu[]
+	readonly archives: readonly ChampResolu[]
+	/** Les clés communes demandées par un déplacement refusé, dans l'ordre de la partie commune. */
+	readonly clesExigeesRetenues: readonly string[]
+}
+
+/**
+ * Compose la partie commune d'une affaire. Un champ commun n'a pas d'étape : sa visibilité est toujours `visible`, il
+ * n'est jamais « manquant » à l'étape ; seul un déplacement refusé le demande (`exiges`). Une clé demandée qui n'est pas
+ * un champ actif est ignorée, comme au formulaire (`docs/SPEC-form-composer.md` §4 ter.7).
+ */
+export function composerPartieCommune(
+	champs: readonly ChampDeclarable[],
+	valeurs: readonly ValeurCommune[],
+	clesExigees: readonly string[],
+): PartieCommune {
+	const parChamp = new Map(valeurs.map((v) => [v.field_id, v.value]))
+	const ordonnes = [...champs].sort((a, b) => a.position - b.position || a.label.localeCompare(b.label, 'fr'))
+	const resoudre = (champ: ChampDeclarable): ChampResolu => {
+		const valeur = parChamp.has(champ.id) ? (parChamp.get(champ.id) ?? null) : undefined
+		return {
+			champ,
+			visibilite: 'visible',
+			valeur,
+			renseigne: estRenseigne(valeur ?? undefined),
+			manquant: false,
+			exigeParDeplacement: champ.archived_at === null && clesExigees.includes(champ.key),
+		}
+	}
+	const actifs = ordonnes.filter((champ) => champ.archived_at === null).map(resoudre)
+	const archives = ordonnes.filter((champ) => champ.archived_at !== null).map(resoudre).filter((resolu) => resolu.renseigne)
+	return { actifs, archives, clesExigeesRetenues: actifs.filter((r) => r.exigeParDeplacement).map((r) => r.champ.key) }
 }

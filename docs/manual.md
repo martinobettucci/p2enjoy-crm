@@ -1470,6 +1470,15 @@ revenez au board et refaites votre geste. Et la mention ne nomme pas l'étape ve
 vouliez aller : la fiche ne la connaît pas, et le produit préfère ne rien dire plutôt que de
 deviner.
 
+**Les champs de l'affaire.** Si votre espace déclare des champs communs à toute affaire
+([section 18.16](#les-champs-communs-a-toute-affaire)), la fiche les montre dans un bloc **« Champs de l'affaire »**, juste
+après les rattachements. Ils se remplissent comme les questions du formulaire, chacun s'enregistrant à la sortie du champ,
+mais leur valeur appartient à l'affaire : elle est la même dans tous les channels où l'affaire est rattachée. Un champ
+archivé qui porte encore une valeur reste lisible, marqué « Archivé ». Si un déplacement est refusé parce qu'un de ces
+champs est vide, le bandeau du board le nomme, et « Renseigner ces champs » vous mène à lui, mis en évidence.
+
+![Le bloc « Champs de l'affaire » d'une fiche : le numéro de TVA à remplir, et un ancien code client archivé qui garde sa valeur](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/champs-de-l-affaire.jpg)
+
 **Un second geste y est offert : mettre l'affaire à la corbeille** ([chapitre 9.15](#mettre-une-affaire-a-la-corbeille)).
 
 Une card que votre compte ne peut pas lire — ou qui n'existe pas — affiche « Card introuvable » :
@@ -4555,8 +4564,9 @@ aux **administrateurs de l'espace**. Pour les autres, les commandes restent visi
 de l'écran ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)).
 
 Un chemin peut exiger l'un de ces champs pour être franchi ([section 18.9](#ce-qu-il-faut-avoir-rempli-pour-emprunter-un-chemin)).
-Ils ne paraissent pas encore sur la fiche d'une affaire, ni comme colonne de la vue liste : ces deux étapes viennent
-ensuite.
+Sur la fiche d'une affaire, ils se remplissent dans le bloc « Champs de l'affaire »
+([section 9.6](#la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent)). Ils ne paraissent pas encore
+comme colonne de la vue liste : cette étape vient ensuite.
 
 ## 19. Le catalogue de nœuds : le vocabulaire de vos workflows
 

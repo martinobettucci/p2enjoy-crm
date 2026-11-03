@@ -1,3 +1,5 @@
+// @verifies CRM-112 (docs/BACKLOG.md) tranche T3.c — les libellés des champs communs, pour un `missing_required_fields`
+//           (docs/SPEC-champs-communs.md §7 ; docs/DESIGN_SYSTEM.md §5.88)
 // @verifies CRM-069 (docs/BACKLOG.md) — tranche T2 : la carte du board porte les étiquettes de l'affaire (docs/DESIGN_SYSTEM.md §5.73)
 // @verifies CRM-068 (docs/BACKLOG.md) — tranche T3a : le compte « n/m » des points de l'étape sur la carte, relu après un
 //           déplacement (docs/SPEC-checklists.md §3.3, §4 ; docs/DESIGN_SYSTEM.md §5.70)
@@ -582,11 +584,44 @@ describe('les quatre lectures du board (§7.2)', () => {
 		})
 	})
 
-	it('demande les libellés des champs du workflow, et rien de plus', async () => {
-		const { client, appel } = clientEspion(OK)
-		await lireLibellesChamps(client, 'wf-1')
-		expect(appel.table).toBe('form_fields')
-		expect(appel.colonnes).toBe(COLONNES_CHAMP_LIBELLE)
+	// RÉVISÉ PAR `CRM-112` T3.c (docs/DESIGN_SYSTEM.md §5.88) : les libellés des champs COMMUNS sont lus aussi, pour nommer
+	// leurs clés dans un `missing_required_fields` — décision 51, révisé et non relâché : la lecture des champs du workflow
+	// reste filtrée sur le workflow, et seule la table des champs communs s'ajoute.
+	it('demande les libellés des champs du workflow et des champs communs, et rien de plus', async () => {
+		const lectures: { table: string; colonnes: string; egalites: [string, unknown][] }[] = []
+		const client = {
+			from: (table: string) => ({
+				select: (colonnes: string) => {
+					const lecture = { table, colonnes, egalites: [] as [string, unknown][] }
+					lectures.push(lecture)
+					const donnees =
+						table === 'form_fields'
+							? [{ key: 'siret', label: 'SIRET du workflow' }]
+							: [{ key: 'siret', label: 'SIRET commun' }, { key: 'secteur', label: 'Secteur' }]
+					const chaine = {
+						eq: (colonne: string, valeur: unknown) => {
+							lecture.egalites.push([colonne, valeur])
+							return chaine
+						},
+						then: (resoudre: (valeur: unknown) => unknown) => Promise.resolve({ data: donnees, error: null, status: 200 }).then(resoudre),
+					}
+					return chaine
+				},
+			}),
+		} as unknown as ClientCrm
+		const resultat = await lireLibellesChamps(client, 'wf-1')
+		expect(lectures.map((l) => [l.table, l.colonnes, l.egalites])).toEqual([
+			['form_fields', COLONNES_CHAMP_LIBELLE, [['workflow_id', 'wf-1']]],
+			['card_common_fields', 'key, label', []],
+		])
+		if (resultat.statut !== 'pret') throw new Error('lecture refusée')
+		// Le champ du workflow vient APRÈS : une carte construite sur cette liste garde son libellé.
+		expect(new Map(resultat.donnees.map((c) => [c.key, c.label]))).toEqual(
+			new Map([
+				['siret', 'SIRET du workflow'],
+				['secteur', 'Secteur'],
+			]),
+		)
 	})
 
 	it('rend un état d’erreur quand le backend répond en erreur', async () => {

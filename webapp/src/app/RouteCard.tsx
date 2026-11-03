@@ -1,5 +1,6 @@
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — la fiche lit la capacité d'écrire sur l'affaire et la FOURNIT à ses blocs ;
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : une étiquette posée ou retirée depuis l'en-tête fait relire le fil — docs/DESIGN_SYSTEM.md §5.73
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T3.c : le bloc « Champs de l'affaire » après « Rattachements » — docs/DESIGN_SYSTEM.md §5.88
 // @spec CRM-066 (docs/BACKLOG.md) — tranche 4 : le bloc « Santé de l'affaire » sous l'en-tête — docs/DESIGN_SYSTEM.md §5.65
 //       refusée par la base, le motif se pose en tête de la colonne de gauche (docs/SPEC-droits-interface.md §2.1, §3 ;
 //       docs/DESIGN_SYSTEM.md §5.59)
@@ -94,6 +95,7 @@ import { projeterChannels, useContenuTrack } from '../lib/channels'
 import { ancetresAffaire } from '../lib/fil-ariane'
 import { mettreCardALaCorbeille, type NatureRefusGeste } from '../lib/corbeille'
 import { BlocRattachementsCard } from './BlocRattachementsCard'
+import { BlocChampsCommunsCard } from './BlocChampsCommunsCard'
 import { lireClesExigees, useContenuCard, type ModeleFormulaire, type RattachementSitue } from '../lib/formulaire'
 import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
 import { idRattachement } from '../lib/rattachements'
@@ -219,6 +221,10 @@ function ContenuCard({
 	// tenue par la politique `UPDATE` de `card_comments` (`CLAUDE.md` §10). Le hook est appelé
 	// avant tout retour anticipé : l'ordre des hooks ne dépend jamais de l'état.
 	const authentification = useAuthentification()
+	// `CRM-112` T3.c : les clés demandées par un déplacement refusé, pour la partie commune (§5.88) — la même lecture que
+	// celle de `RouteCard`, faite ici plutôt que transmise : le formulaire les reçoit déjà par le contenu chargé.
+	const [parametresAdresse] = useSearchParams()
+	const clesExigees = lireClesExigees(parametresAdresse.get('exiges'))
 	const idUtilisateur =
 		authentification.etat.statut === 'authentifie' ? authentification.etat.utilisateur.id : null
 
@@ -327,6 +333,15 @@ function ContenuCard({
 						onRelire()
 						relireEvenements()
 					}}
+				/>
+				{/* LA PARTIE COMMUNE — `CRM-112` T3.c, docs/DESIGN_SYSTEM.md §5.88 : les champs de l'affaire, juste après les
+				    rattachements — ce qu'on sait de l'affaire quel que soit le channel. Elle prend le focus d'une demande `exiges`
+				    seulement si le formulaire d'étape n'en a retenu aucune clé : un seul focus par demande. */}
+				<BlocChampsCommunsCard
+					idCard={etat.donnees.card.id}
+					idWorkspace={etat.donnees.card.workspace_id}
+					clesExigees={clesExigees}
+					focaliser={etat.donnees.modele.clesExigeesRetenues.length === 0}
 				/>
 				{/* LES DEUX SCORES DE SANTÉ — `CRM-066` tranche 4, docs/DESIGN_SYSTEM.md §5.65 : sous l'en-tête, qui dit ce
 				    qu'est l'affaire ; les scores disent comment elle va. Aucun bloc pour une affaire décidée. */}

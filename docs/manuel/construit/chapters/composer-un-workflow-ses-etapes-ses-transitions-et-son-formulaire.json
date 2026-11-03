@@ -5628,7 +5628,24 @@
 				},
 				{
 					"type": "text",
-					"text": ").\nIls ne paraissent pas encore sur la fiche d'une affaire, ni comme colonne de la vue liste : ces deux étapes viennent\nensuite."
+					"text": ").\nSur la fiche d'une affaire, ils se remplissent dans le bloc « Champs de l'affaire »\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 9.6"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Ils ne paraissent pas encore\ncomme colonne de la vue liste : cette étape vient ensuite."
 				}
 			]
 		}

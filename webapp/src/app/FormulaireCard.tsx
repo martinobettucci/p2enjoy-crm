@@ -13,6 +13,9 @@
 //       §8 (accessibilité), §9 (icônes Lucide), §10 (aucun texte en dur)
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T2.3.6 : la valeur s'écrit sur le rattachement de l'affaire, calculé au geste
 //       (docs/SPEC-rattachements.md §3.3)
+// @spec CRM-112 (docs/BACKLOG.md) tranche T3.c — docs/DESIGN_SYSTEM.md §5.88 : le champ, sa valeur en lecture seule et la
+//       lecture des listes de référence sont partagés avec la partie commune de la fiche (`BlocChampsCommunsCard`), qui
+//       rend ses champs avec les mêmes contrôles
 //
 // Ce composant **ne compose rien** : il rend un `ModeleFormulaire` déjà résolu par
 // `webapp/src/lib/formulaire.ts`. La séparation est ce qui rend la règle du §4.1 vérifiable sans
@@ -106,18 +109,18 @@ type TypeReference = 'contact' | 'user'
  * unitaire vérifie. Confondre les deux ferait rendre « Chargement… » à jamais sur un champ qui n'en
  * attend aucune.
  */
-type ListesReference = Readonly<Record<TypeReference, EtatAsync<readonly OptionReference[]> | null>>
+export type ListesReference = Readonly<Record<TypeReference, EtatAsync<readonly OptionReference[]> | null>>
 
 const AUCUNE_LISTE: ListesReference = { contact: null, user: null }
 
 /** Les quatre états d'un champ du §4 bis.6. */
-type EtatEcriture =
+export type EtatEcriture =
 	| { readonly phase: 'inactif' }
 	| { readonly phase: 'envoi' }
 	| { readonly phase: 'enregistre' }
 	| { readonly phase: 'refus'; readonly nature: NatureRefusValeur }
 
-const INACTIF: EtatEcriture = { phase: 'inactif' }
+export const INACTIF: EtatEcriture = { phase: 'inactif' }
 
 // Les deux graduations de la mention d'état (docs/DESIGN_SYSTEM.md §5.7 ter), nommées HORS du JSX.
 // Le contrôle de classes du harnais relève les chaînes citées dans un attribut `className` : une
@@ -157,53 +160,10 @@ export function FormulaireCard({
 
 	const [etats, setEtats] = useState<Readonly<Record<string, EtatEcriture>>>({})
 
-	// LES DEUX LISTES DE RÉFÉRENCE (§13.4), et la CONDITION qui évite deux requêtes gratuites sur
-	// l'écran le plus ouvert du produit : chacune n'est lue que si le modèle porte au moins un champ
-	// de son type, section repliée comprise.
-	const [listes, setListes] = useState<ListesReference>(AUCUNE_LISTE)
-	// Une lecture relancée par l'action de reprise du cas h : incrémenter ce compteur suffit à
-	// rejouer l'effet, sans dupliquer la lecture ailleurs.
-	const [reprises, setReprises] = useState(0)
-
 	const porteContact = modelePorteType(modele, 'contact')
 	const porteUser = modelePorteType(modele, 'user')
 
-	useEffect(() => {
-		if (client === null) return
-		if (!porteContact && !porteUser) return
-		let vivant = true
-		const lire = async (
-			type: TypeReference,
-			charger: () => Promise<EtatAsync<readonly OptionReference[]>>,
-		) => {
-			setListes((precedentes) => ({ ...precedentes, [type]: enChargement() }))
-			const etat = await charger()
-			if (!vivant) return
-			setListes((precedentes) => ({ ...precedentes, [type]: etat }))
-		}
-		if (porteContact) {
-			void lire('contact', async () => {
-				const etat = await lireContactsDuCarnet(client)
-				if (etat.statut !== 'pret') return etat.statut === 'erreur' ? enErreur(etat.erreur) : enChargement()
-				return pret(
-					etat.donnees.map((contact) => ({
-						valeur: contact.id,
-						libelle: libelleContactAvecOrganisation(contact),
-					})),
-				)
-			})
-		}
-		if (porteUser) {
-			void lire('user', async () => {
-				const etat = await lireMembresAffectables(client, idWorkspace)
-				if (etat.statut !== 'pret') return etat.statut === 'erreur' ? enErreur(etat.erreur) : enChargement()
-				return pret(etat.donnees.map((membre) => ({ valeur: membre.id, libelle: membre.nom })))
-			})
-		}
-		return () => {
-			vivant = false
-		}
-	}, [client, idWorkspace, porteContact, porteUser, reprises])
+	const { listes, relancer: relancerListes } = useListesReference(client, idWorkspace, porteContact, porteUser)
 
 	// LE DÉFILEMENT ET LE FOCUS DU §4 ter.6, et ils ne se produisent QU'UNE FOIS PAR DEMANDE.
 	//
@@ -305,7 +265,7 @@ export function FormulaireCard({
 							ecrituresPossibles={client !== null && droit.disabled !== true}
 							motifRefus={droit['aria-describedby']}
 							listes={listes}
-							onReprise={() => setReprises((tour) => tour + 1)}
+							onReprise={relancerListes}
 							onEnregistrer={enregistrer}
 						/>
 					))}
@@ -315,6 +275,64 @@ export function FormulaireCard({
 			<SectionAutresEtapes champs={modele.autresEtapes} listes={listes} />
 		</section>
 	)
+}
+
+/**
+ * Les listes de référence d'un ensemble de champs (§13.4) : chacune n'est lue que si un champ de son type est rendu.
+ * Partagées par le formulaire d'étape et la partie commune de la fiche (`CRM-112` T3.c).
+ */
+export function useListesReference(
+	client: ClientCrm | null,
+	idWorkspace: string,
+	porteContact: boolean,
+	porteUser: boolean,
+): { readonly listes: ListesReference; readonly relancer: () => void } {
+	// LES DEUX LISTES DE RÉFÉRENCE (§13.4), et la CONDITION qui évite deux requêtes gratuites sur
+	// l'écran le plus ouvert du produit : chacune n'est lue que si le modèle porte au moins un champ
+	// de son type, section repliée comprise.
+	const [listes, setListes] = useState<ListesReference>(AUCUNE_LISTE)
+	// Une lecture relancée par l'action de reprise du cas h : incrémenter ce compteur suffit à
+	// rejouer l'effet, sans dupliquer la lecture ailleurs.
+	const [reprises, setReprises] = useState(0)
+
+	useEffect(() => {
+		if (client === null) return
+		if (!porteContact && !porteUser) return
+		let vivant = true
+		const lire = async (
+			type: TypeReference,
+			charger: () => Promise<EtatAsync<readonly OptionReference[]>>,
+		) => {
+			setListes((precedentes) => ({ ...precedentes, [type]: enChargement() }))
+			const etat = await charger()
+			if (!vivant) return
+			setListes((precedentes) => ({ ...precedentes, [type]: etat }))
+		}
+		if (porteContact) {
+			void lire('contact', async () => {
+				const etat = await lireContactsDuCarnet(client)
+				if (etat.statut !== 'pret') return etat.statut === 'erreur' ? enErreur(etat.erreur) : enChargement()
+				return pret(
+					etat.donnees.map((contact) => ({
+						valeur: contact.id,
+						libelle: libelleContactAvecOrganisation(contact),
+					})),
+				)
+			})
+		}
+		if (porteUser) {
+			void lire('user', async () => {
+				const etat = await lireMembresAffectables(client, idWorkspace)
+				if (etat.statut !== 'pret') return etat.statut === 'erreur' ? enErreur(etat.erreur) : enChargement()
+				return pret(etat.donnees.map((membre) => ({ valeur: membre.id, libelle: membre.nom })))
+			})
+		}
+		return () => {
+			vivant = false
+		}
+	}, [client, idWorkspace, porteContact, porteUser, reprises])
+	const relancer = useCallback(() => setReprises((tour) => tour + 1), [])
+	return { listes, relancer }
 }
 
 /**
@@ -328,7 +346,7 @@ export function FormulaireCard({
  * (§4 bis.6) : la rejeter effacerait un travail sans le dire, ce que `CLAUDE.md` §18 interdit. La
  * valeur **connue de la base** ne bouge, elle, que sur confirmation du serveur.
  */
-function ChampSaisie({
+export function ChampSaisie({
 	resolu,
 	etape,
 	etat,
@@ -337,7 +355,13 @@ function ChampSaisie({
 	listes,
 	onReprise,
 	onEnregistrer,
+	prefixeId = 'champ',
 }: {
+	/**
+	 * `CRM-112` T3.c : le préfixe des identifiants. Un champ commun peut porter la clé d'un champ du workflow ; la partie
+	 * commune passe `commun`, pour que deux contrôles de la fiche ne partagent jamais un identifiant.
+	 */
+	readonly prefixeId?: string
 	readonly resolu: ChampResolu
 	readonly etape: string
 	readonly etat: EtatEcriture
@@ -349,7 +373,7 @@ function ChampSaisie({
 	readonly onEnregistrer: (resolu: ChampResolu, valeur: Json) => Promise<void>
 }) {
 	const { champ, visibilite, manquant, exigeParDeplacement } = resolu
-	const idControle = `champ-${champ.key}`
+	const idControle = `${prefixeId}-${champ.key}`
 	const idAide = `${idControle}-aide`
 	const idAlerte = `${idControle}-alerte`
 	const idEtat = `${idControle}-etat`
@@ -760,7 +784,7 @@ const MESSAGES_LISTE_ERREUR: Readonly<Record<TypeReference, CleTraduction>> = {
  *     qu'il est ; le rendre en texte ordinaire le ferait passer pour un nom ;
  *   * tout autre type suit la règle inchangée du §5.7 bis.
  */
-function ValeurLectureSeule({
+export function ValeurLectureSeule({
 	resolu,
 	listes,
 }: {

@@ -17584,10 +17584,19 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
               relues en base, lectrice refusée en `403`, quatre paliers), éditeur et versions sans régression **87/87** ;
               captures observées ;
             - manuel §18.9 et §18.16 avec une image, `verify-manual` sans anomalie.
-      - [@] **T3.c — la partie commune de la fiche** : les valeurs, éditables ou en lecture selon la capacité de
+      - [x] **T3.c — la partie commune de la fiche** : les valeurs, éditables ou en lecture selon la capacité de
             l'affaire ; un champ archivé porteur d'une valeur, marqué ; le refus `missing_required_fields` qui nomme un
             champ commun par son libellé (board et fiche) ; unitaires ; E2E.
-            *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-3a) depuis 2026-11-03 16:20 UTC — état avant : [ ]*
+            *Faite le 2026-11-03*, sans migration (`docs/DESIGN_SYSTEM.md` §5.88, `docs/SPEC-champs-communs.md` §7) :
+            - le champ du formulaire d'étape réemployé (`ChampSaisie`, préfixe d'identifiant `commun`), la lecture des
+              listes de référence partagée (`useListesReference`) ; l'écriture par mise à jour puis insertion ;
+            - unitaires du bloc **9/9**, un compte de lectures du board révisé (décision 51) ; suite entière **215
+              fichiers, 5 353 tests** ; `typecheck` ;
+            - E2E `e2e/ui/fiche-champs-communs.spec.ts` **6/6** aux vrais jetons (refus nommé au board, reprise, focus,
+              saisie relue en base, second déplacement en base, lectrice refusée en `403`, quatre paliers) ; sous-ensemble
+              de mon périmètre — fiche, board, formulaire, parcours, checklists, rattachements — **161/161** ; captures
+              observées ;
+            - manuel §9.6 et §18.16 avec une image, `verify-manual` sans anomalie.
       - [ ] **T3.d — le fil** : `field_changed` d'une valeur commune (`placement_id` nul, `scope: "common"`, §7), et son
             rendu « partie commune » ; migration si l'écriture manque ; pgTAP ; unitaires.
 - [ ] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; la case « Afficher dans la liste » de

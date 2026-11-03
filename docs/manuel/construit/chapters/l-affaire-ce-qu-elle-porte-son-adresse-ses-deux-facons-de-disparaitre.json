@@ -2966,6 +2966,61 @@
 					"content": [
 						{
 							"type": "text",
+							"text": "Les champs de l'affaire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Si votre espace déclare des champs communs à toute affaire\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+						"anchor": "les-champs-communs-a-toute-affaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 18.16"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), la fiche les montre dans un bloc "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Champs de l'affaire »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", juste\naprès les rattachements. Ils se remplissent comme les questions du formulaire, chacun s'enregistrant à la sortie du champ,\nmais leur valeur appartient à l'affaire : elle est la même dans tous les channels où l'affaire est rattachée. Un champ\narchivé qui porte encore une valeur reste lisible, marqué « Archivé ». Si un déplacement est refusé parce qu'un de ces\nchamps est vide, le bandeau du board le nomme, et « Renseigner ces champs » vous mène à lui, mis en évidence."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/champs-de-l-affaire.jpg",
+			"alt": "Le bloc « Champs de l'affaire » d'une fiche : le numéro de TVA à remplir, et un ancien code client archivé qui garde sa valeur",
+			"width": 650,
+			"height": 247
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
 							"text": "Un second geste y est offert : mettre l'affaire à la corbeille"
 						}
 					]

@@ -1,3 +1,4 @@
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T3.c : l'image « champs-de-l-affaire » de la section 9.6 (docs/DESIGN_SYSTEM.md §5.88)
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.2b : les images du chapitre 9, « L'affaire » — la fiche
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitre 9 (sections 9.1 à 9.9, 9.15)
 // @spec docs/SPEC-cards.md (l'en-tête, le formulaire, la corbeille), docs/SPEC-workflow-engine.md §7 (la garde du
@@ -110,6 +111,39 @@ test('une affaire du seed : la fiche, la santé, l’adresse', async ({ page, co
 
 	await page.goto(`/contacts/${LEO}`)
 	await illustrer(page, { chapitre: CHAPITRE, section: S.contacts, nom: 'modifier-le-role', cibles: [page.getByTestId('modifier-role-affaire').first()] })
+})
+
+// `CRM-112` T3.c — le bloc « Champs de l'affaire » (docs/DESIGN_SYSTEM.md §5.88). Deux champs propres à l'image, jamais ceux
+// du seed (docs/SPEC-champs-communs.md §13) : le retrait les vise par leur clé, et leurs valeurs partent avec eux.
+test('les champs de l’affaire sur la fiche', async ({ page, request }) => {
+	const cles = ['numero-tva-manuel-fiche', 'ancien-code-manuel-fiche']
+	const ranger = async () => {
+		const champs = await lireService<{ id: string }[]>(request, `card_common_fields?workspace_id=eq.${WORKSPACE_SEED}&key=in.(${cles.join(',')})&select=id`)
+		for (const { id } of champs) {
+			await service(request, 'delete', `card_common_field_values?field_id=eq.${id}`)
+			await service(request, 'delete', `card_common_fields?id=eq.${id}`)
+		}
+	}
+	await ranger()
+	try {
+		const ancien = 'e1120000-0000-4000-8000-0000000000d2'
+		await service(request, 'post', 'card_common_fields', [
+			{ id: 'e1120000-0000-4000-8000-0000000000d1', workspace_id: WORKSPACE_SEED, key: cles[0], label: 'Numéro de TVA', type: 'text', help_text: 'Le numéro intracommunautaire du client', archived_at: null },
+			{ id: ancien, workspace_id: WORKSPACE_SEED, key: cles[1], label: 'Ancien code client', type: 'text', help_text: null, archived_at: null },
+		])
+		await service(request, 'post', 'card_common_field_values', {
+			card_id: '5eed0000-0000-4000-8000-0000000000c2', field_id: ancien, workspace_id: WORKSPACE_SEED, value: 'SOG-0042',
+		})
+		await service(request, 'patch', `card_common_fields?id=eq.${ancien}`, { archived_at: new Date().toISOString() })
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto(AFFAIRE_SOGEXIA)
+		const bloc = page.getByTestId('bloc-champs-communs')
+		await expect(bloc.getByText('SOG-0042')).toBeVisible()
+		await bloc.scrollIntoViewIfNeeded()
+		await illustrer(page, { chapitre: CHAPITRE, section: S.fiche, nom: 'champs-de-l-affaire', cibles: [bloc] })
+	} finally {
+		await ranger()
+	}
 })
 
 test('une affaire rattachée ailleurs : l’adresse d’un channel où elle n’est pas', async ({ page, request }) => {
