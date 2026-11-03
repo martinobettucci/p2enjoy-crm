@@ -38857,3 +38857,23 @@ aurait porté des lignes modifiables et `reserver_envois` aurait dû les filtrer
 expédier ; une garde dans le seul connecteur — elle ne tiendrait pas « aucun détournement possible ». **Conséquences** :
 découpage en six tranches (§9 de la spécification), la migration au premier numéro libre après `0161`, livrée dans la
 même fenêtre que l'image `mcp` et la webapp.
+
+### décision 830 — une seule session livre, durablement, et elle seule joue les campagnes E2E complètes
+
+*2026-11-03, consigne du responsable, reçue par la session 4522fa9c (p2enjoy-crm-3a).*
+
+**Consigne** : « dorénavant une seule session se charge de livrer et cette même session est en charge des tests full
+E2E. Les autres sessions peuvent exécuter un sous-ensemble rapide de leurs tests limité à leur périmètre de travail (pour
+accélérer les retours rapides) mais seule la session de livraison exécute les full E2E API Clavier+Souris avant un lot
+stable de livraison. »
+
+**Décision** : `CLAUDE.md` §12 (« Une seule session livre en production ») gagne deux règles — le rôle est durable, d'une
+fenêtre à l'autre ; la session de livraison est la seule à jouer les campagnes E2E complètes avant un lot stable —, et §15
+(« Tests E2E ») y renvoie. L'annonce et le verrou du contrat continuent de marquer chaque fenêtre (décision 813).
+
+**La session désignée** : la session 3a (4522fa9c), que le responsable a désignée session de livraison en tête de sa
+session (« tu es la session qui prend en charge les livraisons ») et qui a livré la fenêtre de la décision 828. À
+corriger si le responsable en désigne une autre.
+
+**Conséquences** : les sessions 75, 25 et d1 en sont prévenues ; elles ne jouent plus de campagne complète et transmettent
+à la session 3a toute instruction de livrer. Leurs comptes rendus nomment le sous-ensemble joué.

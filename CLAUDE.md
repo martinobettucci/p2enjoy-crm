@@ -607,6 +607,15 @@ deux sessions qui livrent chacune leur unité livrent en réalité le même lot,
   backlog), ou dans un commit dédié si elle y renonce. Une annonce sans commit de sa session depuis 6 heures est expirée,
   et sa reprise le dit.
 - Le responsable désigne la session de livraison lorsqu'il le précise ; sinon, c'est la première qui s'annonce.
+- **Le rôle est durable** (consigne du responsable, 2026-11-03, décision 830) : désormais, une seule session se charge de
+  livrer, d'une fenêtre à l'autre. L'annonce et le verrou du contrat continuent de marquer chaque fenêtre ; les autres
+  sessions transmettent toute instruction de livrer à cette session.
+- **La session de livraison est la seule à jouer les campagnes complètes** (décision 830) : les preuves E2E entières —
+  API, interface à la souris et au clavier, quatre paliers — avant de livrer un lot stable. Les autres sessions ne jouent
+  qu'un **sous-ensemble rapide limité à leur périmètre de travail** — les tests unitaires, pgTAP et E2E de leur unité, et
+  ceux des écrans ou des fonctions qu'elles touchent —, pour des retours rapides ; leur compte rendu nomme ce
+  sous-ensemble, et ne prétend jamais à une campagne complète. Une régression qu'une campagne complète révèle hors du
+  périmètre de la session de livraison est signalée à la session qui porte l'unité, et le lot attend.
 
 Lorsqu'un déploiement est confirmé :
 
@@ -767,6 +776,9 @@ Les mocks sont acceptables pour les dépendances externes impossibles à exécut
 Tests E2E
 
 Chaque fonctionnalité visible ou parcours utilisateur doit être vérifié avec Playwright ou un outil E2E équivalent.
+
+Chaque session joue les E2E de son périmètre ; **la campagne E2E complète — API, souris et clavier — appartient à la seule
+session de livraison**, avant un lot stable (§12, décision 830).
 
 Les tests doivent :
 
