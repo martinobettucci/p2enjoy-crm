@@ -3041,6 +3041,57 @@
 			"height": 312
 		},
 		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le bloc « Rattachements »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sous l'en-tête, liste les channels de l'affaire que vous lisez. Celui de la fiche porte la\nmention « fiche ouverte » ; chacun des autres est un lien vers sa fiche, suivi de son étape, de son responsable — ou\n« Aucun responsable » —, de son montant, et des pastilles « Archivé » ou « En sommeil » s'il y a lieu. Chaque ligne porte\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Archiver »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", ou "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Désarchiver »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " pour un rattachement archivé : le geste n'archive que ce rattachement, l'affaire\nreste visible dans ses autres channels, et il s'annule d'un clic. Il faut pouvoir modifier les affaires du channel\nconcerné ; sinon la commande reste visible mais inactive, et une phrase en tête du bloc dit pourquoi."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattachements.jpg",
+			"alt": "Le bloc « Rattachements » : la fiche ouverte, et l'autre rattachement, archivé, en lien avec son étape",
+			"width": 650,
+			"height": 211
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "les-contacts-d-une-affaire-les-rattacher-les-detacher",

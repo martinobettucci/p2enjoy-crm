@@ -7426,8 +7426,9 @@ l'affaire est rattachée et porte les gestes sur ses rattachements ; il les **re
 son adresse (§5.81), jamais en second jeu de blocs dans la page.
 
 - **Il vit sous l'en-tête, avant le bloc de santé** (§5.3 bis, §5.65) : il dit **où** l'affaire se trouve, juste après ce
-  qu'elle **est**. Carte du §5.3 (`rounded-lg border bg-surface p-4`), titre `h3` « Rattachements », `section` nommée par
-  lui.
+  qu'elle **est**. La forme des autres blocs de la fiche (§5.21 pour les contacts) : `section` séparée par une bordure
+  haute `--color-border`, nommée par son titre « Rattachements » en `text-h3`. *Corrigé à l'écriture du code : la
+  première rédaction disait « carte », forme qu'aucun bloc de la colonne n'emploie.*
 - **Une `ul` de lignes plates** (§5.18), une ligne par rattachement lisible, dans l'ordre des tracks puis des channels
   (décision 814). Rien ne dit qu'un rattachement masqué existe (§4 de la spécification).
 - **Chaque ligne porte, dans cet ordre** : le chemin « Track › Channel » (forme du §5.54) ; l'étape ; le responsable — ou
@@ -7442,10 +7443,15 @@ son adresse (§5.81), jamais en second jeu de blocs dans la page.
   « déplier » du repli.
 - **« Archiver » et « Désarchiver »**, sur chaque ligne : secondaire compacte (§5.5), icônes `Archive` et
   `ArchiveRestore` de Lucide, une seule des deux selon l'état. Aucune confirmation : le geste est réversible d'un geste,
-  sans perte (la règle du réveil, §5.3 quater). **La commande n'est jamais éteinte d'avance** (§5.3 ter) : le droit est
-  celui d'écrire le channel du rattachement, la base refuse, et le refus se dit en `role="alert"` **dans la ligne**, aux
-  jetons `--color-danger-soft` / `--color-danger-on-soft`. Un succès relit la fiche : la pilule de l'en-tête et le
-  bloc disent le même état.
+  sans perte (la règle du réveil, §5.3 quater). **Le droit est celui d'écrire le channel du rattachement, et la base le
+  dit sur la ligne** (`channels.ecriture_permise`, lue en une requête pour toutes les lignes) : la commande d'un channel
+  refusé est rendue **désactivée avec son motif** (§5.59), et le bloc porte en tête **un** `MotifLectureSeule` qui dit
+  quelles lignes sont éteintes — le patron de la corbeille, dont le bloc mêle aussi des lignes permises et refusées.
+  *Corrigé à l'écriture du code : la première rédaction disait la commande « jamais éteinte d'avance », règle d'avant
+  `CRM-093` que le §5.59 a complétée.* Un refus qui survient malgré tout se dit en `role="alert"` **dans la ligne**, aux
+  jetons `--color-danger-soft` / `--color-danger-on-soft`. Pendant le vol, la commande n'est **pas** désactivée (elle
+  perdrait le focus) : elle porte `aria-busy`, et un second clic est ignoré. Un succès relit la fiche en place : la
+  pilule de l'en-tête et le bloc disent le même état, et le focus reste sur la commande.
 - **Responsive** : la ligne passe à la ligne entre le chemin, les segments et la commande (`flex-wrap`) ; aucune largeur
   fixe, aucun défilement horizontal à 390 px.
 - **Aucune couleur, aucun jeton nouveau** ; deux icônes Lucide nouvelles dans la fiche, `Archive` étant déjà celle de la

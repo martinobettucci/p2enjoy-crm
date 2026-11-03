@@ -6,6 +6,7 @@
 //           (docs/SPEC-form-composer.md §4.4, §4 quinquies ; docs/JOURNAL.md décision 690)
 // @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — la fiche lit les colonnes du rattachement le plus ancien
 //           (docs/SPEC-rattachements.md §4 et §5)
+// @verifies CRM-111 T7.2 (docs/BACKLOG.md) — les lignes du bloc « Rattachements » (docs/DESIGN_SYSTEM.md §5.82)
 // @verifies CRM-111 T7.1 (docs/BACKLOG.md) — la fiche s'ouvre sur le rattachement du channel de l'adresse, porte ce seul
 //           rattachement, et nomme les rattachements lisibles dans l'ordre des tracks (docs/SPEC-rattachements.md §8.1,
 //           décision 823 ; docs/DESIGN_SYSTEM.md §5.81)
@@ -19,6 +20,7 @@ import { describe, expect, it } from 'vitest'
 import {
 	appliquerEcriture,
 	cardDepuisRattachements,
+	rattachementsDuBloc,
 	rattachementsSitues,
 	CAS_RENSEIGNE,
 	classerRefusValeur,
@@ -616,6 +618,20 @@ describe('la fiche lit le rattachement (CRM-111 T2.4.1)', () => {
 		const affaire = lue([rattachement('r-ancien', '2026-01-01T00:00:00+00:00', 'etape-a')])
 		expect(cardDepuisRattachements(affaire, { slugTrack: 'conseil-ia', slugChannel: 'grands-comptes' })).toBeNull()
 		expect(cardDepuisRattachements(affaire, { slugTrack: 'formation', slugChannel: 'refonte' })).toBeNull()
+	})
+
+	it('les lignes du bloc : celle de la fiche marquée, chacune avec son étape, son responsable et son montant (T7.2)', () => {
+		const lignes = rattachementsDuBloc(
+			lue([
+				{ ...rattachement('r-studio', '2026-01-01T00:00:00+00:00', 'etape-a'), workflow_steps: { label_override: null, workflow_nodes_catalog: { label: 'Négociation' } } },
+				{ ...rattachement('r-conseil', '2026-05-01T00:00:00+00:00', 'etape-b', conseil), workflow_steps: { label_override: 'Qualification', workflow_nodes_catalog: { label: 'Prospection' } }, profiles: null },
+			]),
+			'r-studio',
+		)
+		expect(lignes.map((l) => [l.id, l.courant, l.etape, l.responsable, l.montant])).toEqual([
+			['r-conseil', false, 'Qualification', null, 1200],
+			['r-studio', true, 'Négociation', 'Alice Martin', 1200],
+		])
 	})
 
 	it('nomme les rattachements lisibles dans l’ordre des tracks puis des channels, et omet un chemin non rendu (T7.1)', () => {

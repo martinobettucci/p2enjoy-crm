@@ -14,6 +14,8 @@
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T7.1 : la fiche s'ouvre sur le rattachement du channel de l'adresse, ses
 //       valeurs se lisent par ce rattachement, et une adresse sans rattachement lisible nomme les rattachements lisibles
 //       (docs/SPEC-rattachements.md §8.1, décision 823 ; docs/DESIGN_SYSTEM.md §5.81)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T7.2 : `rattachementsDuBloc`, les lignes du bloc « Rattachements », et la
+//       relecture en place après un archivage (docs/SPEC-rattachements.md §8.1 ; docs/DESIGN_SYSTEM.md §5.82)
 //
 // Ce module ne rend rien : il **compose**. La séparation n'est pas un goût d'architecture — elle
 // est ce qui rend la règle du §4.1 vérifiable sans navigateur, et ce qui permet au tableau de cas
@@ -91,7 +93,7 @@ export const COLONNES_VALEUR = 'field_id, value'
 // se lisent sur `card_placements`, plongé ; `cardDepuisRattachements` les rend à la forme d'avant, celles du plus
 // ancien (docs/SPEC-rattachements.md §5). Le responsable se nomme par la contrainte du rattachement.
 export const COLONNES_CARD_FORMULAIRE =
-	'id, title, workspace_id, email_local_part, currency, workspaces(inbound_domain), etiquettes:card_labels(etiquette:labels(id, name, color, archived_at)), card_placements!card_placements_card_fk(id, created_at, channel_id, workflow_id, current_step_id, amount, next_action, next_action_at, archived_at, snoozed_until, profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), channels!card_placements_channel_fk(slug, name, tracks(slug, name)))'
+	'id, title, workspace_id, email_local_part, currency, workspaces(inbound_domain), etiquettes:card_labels(etiquette:labels(id, name, color, archived_at)), card_placements!card_placements_card_fk(id, created_at, channel_id, workflow_id, current_step_id, amount, next_action, next_action_at, archived_at, snoozed_until, profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), channels!card_placements_channel_fk(slug, name, tracks(slug, name)), workflow_steps!card_placements_step_fk(label_override, workflow_nodes_catalog(label)))'
 
 /** L'étape courante, telle que la mention « requis à l'étape <étape> » a besoin de la nommer (décision 688). */
 export type EtapeCourante = {
@@ -150,6 +152,11 @@ type RattachementFormulaire = Pick<
 	| 'channel_id'
 > & {
 	readonly profiles: ProfilAffiche | null
+	/** `CRM-111` T7.2 : l'étape du rattachement, nommée comme le board la nomme (décision 690). */
+	readonly workflow_steps?: {
+		readonly label_override: string | null
+		readonly workflow_nodes_catalog: { readonly label: string } | null
+	} | null
 	/** `CRM-111` T7.1 : le chemin du rattachement, pour le reconnaître à l'adresse et le nommer. */
 	readonly channels: {
 		readonly slug: string
@@ -168,6 +175,40 @@ export type RattachementSitue = {
 	readonly slugChannel: string
 	readonly track: string
 	readonly channel: string
+}
+
+/** Une ligne du bloc « Rattachements » (`docs/DESIGN_SYSTEM.md` §5.82). */
+export type RattachementDuBloc = RattachementSitue & {
+	/** Le rattachement de la fiche : sa ligne ne répète ni l'étape, ni le responsable, ni le montant (§5.82). */
+	readonly courant: boolean
+	/** Son channel : le droit d'archiver est celui de l'écrire (`channels.ecriture_permise`, §5.59). */
+	readonly idChannel: string
+	readonly etape: string | null
+	readonly responsable: string | null
+	readonly montant: number | null
+	readonly archivedAt: string | null
+	readonly snoozedUntil: string | null
+}
+
+/** Les lignes du bloc, dans l'ordre des tracks puis des channels, celle de la fiche marquée. */
+export function rattachementsDuBloc(
+	lue: Pick<CardFormulaireLue, 'card_placements'>,
+	idCourant: string,
+): readonly RattachementDuBloc[] {
+	const parId = new Map(lue.card_placements.map((rattachement) => [rattachement.id, rattachement]))
+	return rattachementsSitues(lue).map((situe) => {
+		const rattachement = parId.get(situe.id)!
+		return {
+			...situe,
+			courant: situe.id === idCourant,
+			idChannel: rattachement.channel_id,
+			etape: rattachement.workflow_steps ? (libelleEtape(rattachement.workflow_steps) ?? null) : null,
+			responsable: rattachement.profiles?.full_name ?? null,
+			montant: rattachement.amount,
+			archivedAt: rattachement.archived_at,
+			snoozedUntil: rattachement.snoozed_until,
+		}
+	})
 }
 
 /** Le rattachement de l'adresse : celui dont le channel ET son track portent les deux slugs. */
@@ -410,6 +451,8 @@ export type ContenuCard = {
 	 * — l'état du §5.81 les propose. Vide dans tous les autres cas.
 	 */
 	readonly ailleurs?: readonly RattachementSitue[]
+	/** `CRM-111` T7.2 : les lignes du bloc « Rattachements », quand la fiche s'ouvre. */
+	readonly rattachements?: readonly RattachementDuBloc[]
 }
 
 /**
@@ -565,17 +608,21 @@ export function useContenuCard(
 ): {
 	readonly etat: EtatAsync<ContenuCard>
 	readonly recharger: () => void
+	/** `CRM-111` T7.2 : relit sans repasser par le chargement — l'écran reste monté, le focus aussi. */
+	readonly relireEnPlace: () => void
 } {
 	const [etat, setEtat] = useState<EtatAsync<ContenuCard>>(enChargement)
 	const [tentative, setTentative] = useState(0)
 	// Une réponse arrivée après le démontage ne doit pas écrire dans un composant démonté, ni une
 	// réponse périmée écraser une réponse plus récente — l'identifiant change d'une card à l'autre.
 	const courant = useRef(0)
+	const enPlace = useRef(false)
 
 	useEffect(() => {
 		if (client === null || idCard === undefined) return
 		const rang = ++courant.current
-		setEtat(enChargement)
+		if (!enPlace.current) setEtat(enChargement)
+		enPlace.current = false
 		void (async () => {
 			const resultatLue = await lireAffaireLue(client, idCard)
 			if (rang !== courant.current) return
@@ -606,7 +653,7 @@ export function useContenuCard(
 			if (resultatEtape.statut !== 'pret' || resultatEtape.donnees === null) {
 				// La card existe, son étape non : le backend a consenti l'une et refusé l'autre.
 				// L'écran le dit par son état vide plutôt que d'inventer une étape sans nom.
-				setEtat(pret({ card, modele: null }))
+				setEtat(pret({ card, modele: null, rattachements: rattachementsDuBloc(lue!, card.card_placements[0]!.id) }))
 				return
 			}
 			if (resultatChamps.statut !== 'pret' || resultatRegles.statut !== 'pret') return
@@ -614,6 +661,7 @@ export function useContenuCard(
 			setEtat(
 				pret({
 					card,
+					rattachements: rattachementsDuBloc(lue!, card.card_placements[0]!.id),
 					modele: composerFormulaire({
 						champs: resultatChamps.donnees,
 						regles: resultatRegles.donnees,
@@ -632,8 +680,12 @@ export function useContenuCard(
 	const recharger = useCallback(() => {
 		setTentative((precedente) => precedente + 1)
 	}, [])
+	const relireEnPlace = useCallback(() => {
+		enPlace.current = true
+		setTentative((precedente) => precedente + 1)
+	}, [])
 
-	return { etat, recharger }
+	return { etat, recharger, relireEnPlace }
 }
 
 // ---------------------------------------------------------------------------------------------

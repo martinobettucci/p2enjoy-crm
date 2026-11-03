@@ -528,6 +528,12 @@ changelog.*
   refus de plus). **`mail-sync`** joint les pièces, archive avant d'envoyer, efface les dépôts abandonnés après 24 heures.
 - **Le seed** fait partir un message réel avec copie cachée et pièce jointe depuis « Refonte du monitoring — Vertuo ».
 
+- **`CRM-111` T7.2 — le bloc « Rattachements » de la fiche** : sous l'en-tête, une ligne par channel de l'affaire que
+  l'on lit — celui de la fiche marqué « fiche ouverte », les autres en liens vers leur fiche avec leur étape, leur
+  responsable, leur montant et leurs pastilles. « Archiver » et « Désarchiver » agissent sur un seul rattachement ; la
+  commande d'un channel qu'on ne peut pas modifier est inactive, avec son motif en tête du bloc. Webapp seule ; manuel
+  §9.6.
+
 - **`CRM-111` T7.1 — la fiche au rattachement de l'adresse** : la fiche d'une affaire rattachée à plusieurs channels
   s'ouvre sur le rattachement du channel de son adresse — étape, formulaire et valeurs, responsable, montant, prochaine
   action, sommeil, checklist et relance sont les siens. Une adresse d'un channel où l'affaire n'est pas rattachée dit

@@ -725,6 +725,9 @@ export const fr = {
 		'Vous consultez cet écran. Ses modifications sont réservées aux administrateurs et aux business developers de l’espace : les commandes restent visibles mais sont inactives.',
 	'rights.readonly.channel':
 		'Vous consultez ce channel. Vos droits ne vous permettent pas d’en modifier les affaires : les commandes restent visibles mais sont inactives.',
+	// `CRM-111` T7.2 : le bloc « Rattachements » mêle des channels permis et refusés (docs/DESIGN_SYSTEM.md §5.82).
+	'rights.readonly.placements':
+		'Vos droits ne vous permettent pas de modifier les rattachements aux channels que vous ne pouvez pas modifier : leurs commandes restent visibles mais sont inactives.',
 	'rights.readonly.card':
 		'Vous consultez cette affaire. Vos droits ne vous permettent pas de la modifier : les commandes restent visibles mais sont inactives.',
 	// La corbeille mêle la structure et les affaires : chaque motif dit quelles lignes il éteint (CRM-093 T4).
@@ -1021,6 +1024,13 @@ export const fr = {
 		"Un board sans étape n'a aucune colonne. Les étapes d'un workflow s'ajoutent dans l'éditeur de workflows.",
 	'route.channel.nostep.action': "Ouvrir l'éditeur de workflows",
 	'route.card.title': 'Card',
+	'cardPlacements.title': 'Rattachements',
+	'cardPlacements.path': '{track} › {channel}',
+	'cardPlacements.current': 'fiche ouverte',
+	'cardPlacements.archive': 'Archiver',
+	'cardPlacements.unarchive': 'Désarchiver',
+	'cardPlacements.archive.refused': 'Rien n’a été enregistré : vos droits ne permettent pas d’écrire dans ce channel.',
+	'cardPlacements.archive.network': 'Rien n’a été enregistré : le serveur n’a pas répondu. Réessayez.',
 	'route.card.elsewhere.title': 'Cette affaire n’est pas rattachée à ce channel',
 	'route.card.elsewhere.body': 'Elle est rattachée ailleurs. Ouvrez-la dans l’un de ses channels :',
 	'route.card.elsewhere.link': '{track} › {channel}',

@@ -72,6 +72,8 @@
 // rattachement lisible rend l'état qui propose les rattachements lisibles.
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T7.1 : la fiche au rattachement de l'adresse, et l'état d'une adresse sans
 //       rattachement (docs/SPEC-rattachements.md §8.1, décision 823 ; docs/DESIGN_SYSTEM.md §5.81)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T7.2 : le bloc « Rattachements » sous l'en-tête, relu en place après un
+//       archivage (docs/DESIGN_SYSTEM.md §5.82)
 // @spec CRM-098 (docs/BACKLOG.md) — tranche T3 : le bloc « Temps passé » de la fiche (docs/SPEC-temps.md §7.5)
 // @spec CRM-106 (docs/BACKLOG.md) — tranche T2 : la bande de la semaine du bloc, pour la personne connectée
 //       (docs/SPEC-temps.md §7.6, docs/DESIGN_SYSTEM.md §5.54 bis)
@@ -91,6 +93,7 @@ import { t, type CleTraduction } from '../i18n'
 import { projeterChannels, useContenuTrack } from '../lib/channels'
 import { ancetresAffaire } from '../lib/fil-ariane'
 import { mettreCardALaCorbeille, type NatureRefusGeste } from '../lib/corbeille'
+import { BlocRattachementsCard } from './BlocRattachementsCard'
 import { lireClesExigees, useContenuCard, type ModeleFormulaire, type RattachementSitue } from '../lib/formulaire'
 import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
 import { idRattachement } from '../lib/rattachements'
@@ -158,7 +161,7 @@ export function RouteCard() {
 	const [parametres] = useSearchParams()
 	const clesExigees = lireClesExigees(parametres.get('exiges'))
 	const adresse = slugTrack === undefined || slugChannel === undefined ? null : { slugTrack, slugChannel }
-	const { etat, recharger } = useContenuCard(clientCrm, idCard, clesExigees, adresse)
+	const { etat, recharger, relireEnPlace } = useContenuCard(clientCrm, idCard, clesExigees, adresse)
 	const { etat: etatTrack, recharger: rechargerTrack } = useContenuTrack(clientCrm, slugTrack)
 
 	const card = etat.statut === 'pret' ? etat.donnees.card : null
@@ -188,7 +191,13 @@ export function RouteCard() {
 			onRechargerChannels={rechargerTrack}
 			{...(slugTrack === undefined ? {} : { slugTrack })}
 		>
-			<ContenuCard etat={etat} onReprise={recharger} cheminChannel={cheminChannel} idCard={idCard} />
+			<ContenuCard
+				etat={etat}
+				onReprise={recharger}
+				onRelire={relireEnPlace}
+				cheminChannel={cheminChannel}
+				idCard={idCard}
+			/>
 		</AppShell>
 	)
 }
@@ -198,9 +207,11 @@ function ContenuCard({
 	onReprise,
 	cheminChannel,
 	idCard,
+	onRelire,
 }: {
 	readonly etat: ReturnType<typeof useContenuCard>['etat']
 	readonly onReprise: () => void
+	readonly onRelire: () => void
 	readonly cheminChannel: string | null
 	readonly idCard: string | undefined
 }) {
@@ -305,6 +316,17 @@ function ContenuCard({
 				    est déjà pris par le geste de retrait. Placé en dessous, il aurait de plus été poussé
 				    hors de vue par le défilement de la reprise d'un déplacement refusé (§4 ter). */}
 				<EnTeteCard card={etat.donnees.card} onEvenement={relireEvenements} />
+				{/* OÙ L'AFFAIRE SE TROUVE — `CRM-111` T7.2, docs/DESIGN_SYSTEM.md §5.82 : juste après ce qu'elle EST. Un archivage
+				    relit la fiche en place, et inscrit `archived` ou `unarchived` au fil, qui se relit aussi. */}
+				<BlocRattachementsCard
+					idCard={etat.donnees.card.id}
+					devise={etat.donnees.card.currency}
+					rattachements={etat.donnees.rattachements ?? []}
+					onChange={() => {
+						onRelire()
+						relireEvenements()
+					}}
+				/>
 				{/* LES DEUX SCORES DE SANTÉ — `CRM-066` tranche 4, docs/DESIGN_SYSTEM.md §5.65 : sous l'en-tête, qui dit ce
 				    qu'est l'affaire ; les scores disent comment elle va. Aucun bloc pour une affaire décidée. */}
 				<BlocSanteCard idCard={etat.donnees.card.id} />

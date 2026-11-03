@@ -17385,9 +17385,16 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         maquettes de fiche des specs `formulaire`, `timeline`, `commentaires`, `manuel` portent le chemin du rattachement,
         et le scénario de la décision 613 attend l'état dédié ; captures `fiche-ailleurs` (1440, 390, lectrice) observées ;
         manuel §9.6 et image `pas-rattachee-ici`, `verify-manual` 167. Production : la webapp de `main`, aucune migration.
-      - [ ] **T7.2 — le bloc « Rattachements »** : une ligne par rattachement lisible, le courant marqué, les autres en
+      - [x] **T7.2 — le bloc « Rattachements »** : une ligne par rattachement lisible, le courant marqué, les autres en
         lien vers leur adresse ; archiver et désarchiver. Unitaires, E2E (dont la lectrice qui ne voit qu'un rattachement),
         captures aux quatre paliers.
+        *Livrée en développement le 2026-11-03* : `docs/DESIGN_SYSTEM.md` §5.82 avant le code (corrigé à l'écriture : la
+        forme de section des autres blocs, et la commande d'un channel refusé éteinte avec le motif du bloc, §5.59) ;
+        `BlocRattachementsCard`, `archiverRattachement`, la fiche relue en place (le focus reste sur la commande).
+        Unitaires 5275 ; E2E `fiche-rattachement` 4/4 — archiver et désarchiver chaque rattachement, la base relue ; la
+        lectrice : commande éteinte, et la même écriture par son jeton ne touche aucune ligne ; les 47 specs de la fiche,
+        432 passés, 1 instable connu (`commentaires-gestes:140`) ; captures aux quatre paliers, archivée et lectrice,
+        observées ; manuel §9.6 et image `rattachements`, `verify-manual` 167. Production : la webapp de `main`.
       - [ ] **T7.3 — rattacher à un channel** : la liste des channels écrits non rattachés, `attach_card`, la fiche
         ouverte sur le nouveau rattachement ; refus traduits. Unitaires, E2E, captures.
       - [ ] **T7.4 — retirer un rattachement** : administrateurs, éteint sur le dernier, confirmation qui nomme la perte,

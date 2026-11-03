@@ -1486,6 +1486,15 @@ que vous visiez.
 
 ![L'adresse d'un channel où l'affaire n'est pas rattachée : un lien vers chacun de ses rattachements](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/pas-rattachee-ici.jpg)
 
+**Le bloc « Rattachements »**, sous l'en-tête, liste les channels de l'affaire que vous lisez. Celui de la fiche porte la
+mention « fiche ouverte » ; chacun des autres est un lien vers sa fiche, suivi de son étape, de son responsable — ou
+« Aucun responsable » —, de son montant, et des pastilles « Archivé » ou « En sommeil » s'il y a lieu. Chaque ligne porte
+**« Archiver »**, ou **« Désarchiver »** pour un rattachement archivé : le geste n'archive que ce rattachement, l'affaire
+reste visible dans ses autres channels, et il s'annule d'un clic. Il faut pouvoir modifier les affaires du channel
+concerné ; sinon la commande reste visible mais inactive, et une phrase en tête du bloc dit pourquoi.
+
+![Le bloc « Rattachements » : la fiche ouverte, et l'autre rattachement, archivé, en lien avec son étape](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattachements.jpg)
+
 ### 9.7 Les contacts d'une affaire : les rattacher, les détacher
 
 ![Le bloc des contacts d'une affaire, avec le rôle de chacun et la commande pour détacher](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/contacts-de-l-affaire.jpg)
