@@ -8565,6 +8565,15 @@ sans objet.
 tourner, le serveur d'interface étant occupé par une autre campagne. Alors seulement décider si `main` déborde (défaut du
 produit, `docs/DESIGN_SYSTEM.md` §7) ou si seul le scénario garde un défilement d'une taille précédente.
 
+**Close le 2026-11-03.** La sonde a tourné : `main`, le document et chaque élément sont à `scrollLeft = 0` aux quatre
+paliers. **Rien ne défile** ; ce n'est donc pas un défaut du produit. Le décalage apparent du catalogue est le **tiroir
+de la barre latérale en cours de fermeture** : il recouvre le bord gauche, c'est le motif d'INC-336. Le scénario attend
+désormais le tiroir refermé sous 1024 px, et `CRM-030/catalogue-liste-sm-390` et `md-900` sont renouvelées et
+observées : la page commence au bord, le tiroir est fermé.
+
+`CRM-060/fiche-contact-detachement-390` est, comme la corbeille, le **conteneur du tableau** qui défile après le clic
+sur « Détacher », au bout de la ligne (`docs/DESIGN_SYSTEM.md` §12.6) : ce n'est pas un défaut.
+
 ### INC-338 — La cible 3/6 de `CRM-013` attend `api_tokens.token_hash` de `CRM-073`, qui a livré des webhooks sans jeton d'API
 
 *Constaté le 2026-11-01 en relisant les entrées ouvertes de `CRM-013`.* La garde des colonnes protégées compte six cibles.

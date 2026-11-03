@@ -1,3 +1,4 @@
+// @verifies INC-337 (docs/INCONSISTENCY_REPORT.md) — la capture attend le tiroir refermé sous 1024 px
 // @verifies CRM-030 (docs/BACKLOG.md) — administration du catalogue de nœuds, parcours d'interface
 // @verifies docs/SPEC-workflow-engine.md §2 bis.2 (l'adresse et l'index), §2 bis.3 (la lecture
 //           rapporte AUSSI les archivés), §2 bis.4 (les quatre gestes), §2 bis.5 (les refus
@@ -153,6 +154,11 @@ test.describe('Administration du catalogue de nœuds — CRM-030', () => {
 
 		for (const palier of PALIERS) {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			// INC-337 : sous 1024 px, la barre latérale devient un tiroir qui se referme par une transition ; capturée trop
+			// tôt, elle recouvre le bord gauche et la page paraît décalée. La capture attend sa position finale.
+			if (palier.largeur < 1024) {
+				await expect.poll(async () => (await page.getByTestId('barre-laterale').boundingBox())?.x ?? 0).toBeLessThan(-200)
+			}
 			await capturer(page, `catalogue-liste-${palier.nom}`, UNITE)
 		}
 	})
