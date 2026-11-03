@@ -6328,6 +6328,13 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     poser, est refusé avant toute écriture, et l'assistant reçoit la liste des étiquettes possibles. L'assistant ne crée,
     ne renomme ni n'archive aucune étiquette : ces gestes restent ceux des réglages ;
   - *Supprimer* (« Affaires ▸ Supprimer ») : la **mettre à la corbeille**, d'où un administrateur la restaure.
+- **Une affaire dans plusieurs channels** ([section 9.17](#rattacher-une-affaire-a-plusieurs-channels)) : lue, une affaire
+  dit ses **rattachements** que vous lisez — channel, étape, responsable, montant, état. L'assistant peut la **rattacher**
+  à un autre channel (« Affaires ▸ Ajouter »), **régler un rattachement** — son montant, sa probabilité, sa prochaine
+  action, son responsable, ses réponses au formulaire — et le **déplacer**, l'**endormir** ou le **réveiller**, en
+  désignant celui qu'il vise (« Affaires ▸ Modifier ») ; et **archiver ou désarchiver** un rattachement (« Affaires ▸
+  Supprimer »). Sans désignation, il agit sur le plus ancien. Il ne **retire** jamais un rattachement : ce geste reste
+  celui des administrateurs, dans la fiche.
 
   Les règles sont celles de l'écran. Un déplacement non déclaré, un motif manquant, une question obligatoire sans
   réponse ou une date d'activité future sont refusés, et l'assistant reçoit le motif. Changer de channel vers un autre

@@ -11,6 +11,7 @@
 #       tranche T2.c : le genre `version`
 # @spec CRM-118 (docs/BACKLOG.md) — tranche T2.b : le genre d'ancre `checklist_item` (docs/SPEC-mcp.md §9.2 undecies)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T1 : le genre d'ancre `workflow` (docs/SPEC-mcp.md §9.2 quater, décision 656)
+# @spec CRM-111 (docs/BACKLOG.md) — tranche T9 : le genre d'ancre `placement` (docs/SPEC-mcp.md §9.2 quindecies, décision 826)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.b : le genre d'ancre `activity` (docs/SPEC-mcp.md §9.2 ter, décision 655)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.a : l'ancre `autres` FACULTATIVE, permise si son argument vaut `None` par
 #       défaut, et pour elle seule (docs/SPEC-mcp.md §9.2 bis, décision 654)
@@ -73,6 +74,8 @@ RESOLUTIONS: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "track": ("tracks", "workspace_id", ("workspace_id",)),
     "channel": ("channels", "workspace_id", ("workspace_id",)),
     "card": ("cards", "workspace_id", ("workspace_id",)),
+    # `CRM-111` T9 : un rattachement d'affaire porte son espace (docs/SPEC-mcp.md §9.2 quindecies, décision 826).
+    "placement": ("card_placements", "workspace_id", ("workspace_id",)),
     "contact": ("contacts", "workspace_id", ("workspace_id",)),
     "organisation": ("organizations", "workspace_id", ("workspace_id",)),
     "budget": ("budgets", "track:tracks(workspace_id)", ("track", "workspace_id")),
@@ -122,6 +125,7 @@ LIBELLES = {
     "track": "track",
     "channel": "channel",
     "card": "affaire",
+    "placement": "rattachement",
     "contact": "contact",
     "organisation": "organisation",
     "budget": "budget",

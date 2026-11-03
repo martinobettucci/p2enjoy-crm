@@ -1935,6 +1935,147 @@
 								}
 							]
 						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Une affaire dans plusieurs channels"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "rattacher-une-affaire-a-plusieurs-channels"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 9.17"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ") : lue, une affaire\ndit ses "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "rattachements"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " que vous lisez — channel, étape, responsable, montant, état. L'assistant peut la "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "rattacher"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "\nà un autre channel (« Affaires ▸ Ajouter »), "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "régler un rattachement"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — son montant, sa probabilité, sa prochaine\naction, son responsable, ses réponses au formulaire — et le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "déplacer"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", l'"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "endormir"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ou le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "réveiller"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", en\ndésignant celui qu'il vise (« Affaires ▸ Modifier ») ; et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "archiver ou désarchiver"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " un rattachement (« Affaires ▸\nSupprimer »). Sans désignation, il agit sur le plus ancien. Il ne "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "retire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " jamais un rattachement : ce geste reste\ncelui des administrateurs, dans la fiche."
+							}
+						]
 					},
 					{
 						"type": "paragraph",

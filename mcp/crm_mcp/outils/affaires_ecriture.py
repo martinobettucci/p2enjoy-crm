@@ -7,6 +7,9 @@
 # @spec CRM-111 (docs/BACKLOG.md) — tranche T2.3 : les gestes désignent le rattachement, résolu depuis `card_id`
 #       (docs/SPEC-rattachements.md §5, §11) ; T2.3.6 : les réponses s'écrivent sur son bloc (§3.3) ; T2.4.2 : le
 #       workflow et le résumé rendu se lisent sur le plus ancien rattachement
+# @spec CRM-111 (docs/BACKLOG.md) — tranche T9 : `crm_card_attach`, `crm_card_placement_update`,
+#       `crm_card_placement_archive`, et `placement_id` facultatif sur les gestes d'un rattachement (docs/SPEC-mcp.md
+#       §9.2 quindecies, décision 826 ; docs/SPEC-rattachements.md §5, §11)
 """Écrire sur les affaires, sous l'identité de la personne.
 
 Chaque outil appelle la fonction ou la table que la webapp appelle pour le même geste ; la base garde ses règles —
@@ -26,7 +29,14 @@ from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
-from crm_mcp.outils.affaires import COLONNES_LISTE, fiche_depuis_rattachements, ligne_depuis_rattachement, resume_carte
+from crm_mcp.outils.affaires import (
+    COLONNES_LISTE,
+    COLONNES_RATTACHEMENTS,
+    fiche_depuis_rattachements,
+    ligne_depuis_rattachement,
+    rattachements_lisibles,
+    resume_carte,
+)
 from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable, traduire_refus
 
 TYPES_ACTIVITE = ("call", "meeting", "visio")
@@ -42,6 +52,9 @@ REFUS_NOMMES = {
     "(`to_step`).",
     "same_channel": "same_channel — the affaire is already in that channel.",
     "already_attached": "already_attached — the affaire is already attached to that channel by another placement.",
+    "channel_closed": "channel_closed — that channel is archived or in the trash: nothing is attached to it.",
+    "step_not_initial": "step_not_initial — the channel's workflow has no initial step; an administrator must set one in "
+    "the workflow editor.",
     "snooze_date_in_past": "snooze_date_in_past — the wake-up date must be in the future.",
     "snooze_date_required": "snooze_date_required — give the wake-up date `until`.",
     "aucune etape initiale": "aucune_etape_initiale — the channel's workflow has no initial step; an administrator "
@@ -150,23 +163,23 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             raise RefusCrm(introuvable("card", card_id))
         return fiche
 
-    async def rattachement(jeton: str, card_id: str) -> str:
-        """Le rattachement de l'affaire que le geste désigne (`CRM-111` T2.3, docs/SPEC-mcp.md §9.2 ter).
+    async def bloc(jeton: str, card_id: str, placement_id: str | None = None) -> dict[str, Any]:
+        """Le rattachement de l'affaire que le geste désigne, avec son workflow (`CRM-111` T2.3, T9 ; §9.2 quindecies).
 
-        Le contrat de l'outil garde `card_id` pendant la bascule (docs/SPEC-rattachements.md §11) : il prend le plus
-        ancien rattachement que l'appelant lit, comme `app.card_first_placement` en base. Aucun : l'affaire est absente
-        pour lui, et le refus le dit sans en révéler davantage.
+        `placement_id` le désigne ; il doit être un rattachement de CETTE affaire, sinon le refus est celui d'un objet
+        introuvable, sans rien révéler. Absent, le plus ancien que l'appelant lit, comme `app.card_first_placement` en
+        base. Aucun : l'affaire est absente pour lui.
         """
-        lignes = await lire(
-            jeton,
-            "card_placements",
-            {"card_id": f"eq.{card_id}", "select": "id", "order": "created_at.asc,id.asc", "limit": "1"},
-            "card",
-            card_id,
-        )
+        parametres = {"card_id": f"eq.{card_id}", "select": "id,workflow_id", "order": "created_at.asc,id.asc", "limit": "1"}
+        if placement_id is not None:
+            parametres["id"] = f"eq.{placement_id}"
+        lignes = await lire(jeton, "card_placements", parametres, "card", card_id)
         if len(lignes) != 1:
-            raise RefusCrm(introuvable("card", card_id))
-        return str(lignes[0]["id"])
+            raise RefusCrm(introuvable("placement" if placement_id is not None else "card", placement_id or card_id))
+        return lignes[0]
+
+    async def rattachement(jeton: str, card_id: str, placement_id: str | None = None) -> str:
+        return str((await bloc(jeton, card_id, placement_id))["id"])
 
     async def etapes(jeton: str, workflow_id: str, genre: str, valeur: Any) -> list[dict[str, Any]]:
         lignes = await lire(
@@ -186,6 +199,73 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             "card",
             card_id,
         )
+
+    async def responsable(jeton: str, nom: str, genre: str, valeur: Any) -> str:
+        """Le membre de l'espace qui porte ce nom complet (§9.2 ter : le responsable est NOMMÉ)."""
+        membres = await lire(
+            jeton,
+            "workspace_members",
+            {"workspace_id": f"eq.{appel_courant().espace}", "select": "user_id,profiles(full_name)"},
+            genre,
+            valeur,
+        )
+        return choisir_par_nom(
+            [{"id": m["user_id"], "nom": (m.get("profiles") or {}).get("full_name")} for m in membres], nom, "member"
+        )
+
+    async def ecrire_bloc(
+        jeton: str, espace: str, card_id: str, rattache_lu: dict[str, Any], colonnes: dict[str, Any], reponses: dict[str, Any]
+    ) -> None:
+        """Les colonnes d'un rattachement, puis les réponses de son bloc (`CRM-111` T2.3.2, T2.3.6, T9).
+
+        Le montant, la probabilité, la prochaine action et le responsable appartiennent au rattachement ; une réponse
+        s'écrit sur SON bloc, clé `(placement_id, field_id)`, et se désigne par la clé du champ dans SON workflow.
+        """
+        if colonnes:
+            reponse = await crm.ecrire(
+                jeton,
+                "PATCH",
+                "card_placements",
+                parametres={"id": f"eq.{rattache_lu['id']}", "select": "id"},
+                corps=colonnes,
+            )
+            une_ligne(reponse, "placement", rattache_lu["id"])
+        if not reponses:
+            return
+        champs = {str(c["key"]): c for c in await champs_du_workflow(jeton, rattache_lu["workflow_id"], card_id)}
+        inconnues = sorted(set(reponses) - set(champs))
+        if inconnues:
+            raise ToolError(f"Unknown field key(s): {', '.join(inconnues)}. Known: {', '.join(sorted(champs))}.")
+        for cle, valeur in reponses.items():
+            reponse = await crm.ecrire(
+                jeton,
+                "POST",
+                "card_field_values",
+                parametres={"on_conflict": "placement_id,field_id", "select": "field_id"},
+                corps={
+                    "card_id": card_id,
+                    "placement_id": rattache_lu["id"],
+                    "field_id": champs[cle]["id"],
+                    "workflow_id": rattache_lu["workflow_id"],
+                    "workspace_id": espace,
+                    "value": valeur,
+                },
+                fusion=True,
+            )
+            une_ligne(reponse, "placement", rattache_lu["id"])
+
+    async def placement_resume(jeton: str, placement_id: str) -> dict[str, Any]:
+        """Un rattachement nommé, la forme des lignes de `placements` dans `crm_card_get` (§9.2 quindecies)."""
+        lignes = await lire(
+            jeton,
+            "card_placements",
+            {"id": f"eq.{placement_id}", "select": f"card_id,{COLONNES_RATTACHEMENTS}"},
+            "placement",
+            placement_id,
+        )
+        if len(lignes) != 1:
+            raise RefusCrm(introuvable("placement", placement_id))
+        return {"card_id": lignes[0]["card_id"], **rattachements_lisibles(lignes)[0]}
 
     async def resume(jeton: str, card_id: str) -> dict[str, Any]:
         """L'affaire résumée par son plus ancien rattachement, la forme de `crm_card_list` (`CRM-111` T2.4.2)."""
@@ -220,6 +300,34 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         description=(
             "Creates an affaire (card) in a channel with its title, as the board's « Nouvelle affaire » button: it starts "
             "at the workflow's initial step. Refused when the channel's workflow has no initial step or is closed to you."
+        ),
+    )
+
+    async def crm_card_attach(
+        card_id: Annotated[str, Field(description="The affaire (card) id")],
+        channel_id: Annotated[str, Field(description="The channel id where the affaire is also attached")],
+    ) -> dict[str, Any]:
+        appel = appel_courant()
+        # `CRM-111` T9 (§9.2 quindecies) : `attach_card`, le geste de la fiche. L'étape initiale du workflow du channel ;
+        # un rattachement archivé au même channel est désarchivé tel quel.
+        reponse = await crm.rpc(appel.jeton, "attach_card", {"p_card": card_id, "p_channel": channel_id})
+        if not reponse.reussie:
+            corps = reponse.corps if isinstance(reponse.corps, dict) else {}
+            if corps.get("message") == "channel_not_found":
+                raise RefusCrm(introuvable("channel", channel_id))
+            raise refus(reponse, "card", card_id)
+        place = reponse.corps if isinstance(reponse.corps, dict) else {}
+        return {"placement": await placement_resume(appel.jeton, str(place.get("id")))}
+
+    moteur.enregistrer(
+        serveur,
+        crm_card_attach,
+        Declaration(famille="affaires", action="ajouter", espace="card:card_id", autres=("channel:channel_id",)),
+        titre="Attach an affaire to another channel (rattacher)",
+        description=(
+            "Attaches an affaire (card) to one more channel, as the card's « Rattacher à un channel »: it enters that "
+            "channel at its workflow's initial step, with its own step, owner, amount and form answers, and stays in its "
+            "other channels. Refused if already attached there, if the channel is archived, or if you cannot write both."
         ),
     )
 
@@ -331,7 +439,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         answers: Annotated[dict[str, Any] | None, Field(description="Form answers by field key, e.g. {\"budget\": 45000}")] = None,
     ) -> dict[str, Any]:
         appel = appel_courant()
-        fiche = await carte(appel.jeton, card_id)
+        await carte(appel.jeton, card_id)
         # DEUX ÉCRITURES, UNE PAR TABLE (`CRM-111` T2.3.2, docs/SPEC-rattachements.md §3.2, §11) : le titre et la
         # description appartiennent à l'affaire ; le montant, la probabilité, la prochaine action et le responsable, à son
         # rattachement. Le compromis est assumé : si la seconde est refusée, la première reste écrite — chacune est jugée
@@ -351,16 +459,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if next_action_at is not None:
             rattache["next_action_at"] = instant(next_action_at, "next_action_at") if next_action_at.strip() else None
         if owner is not None:
-            membres = await lire(
-                appel.jeton,
-                "workspace_members",
-                {"workspace_id": f"eq.{appel.espace}", "select": "user_id,profiles(full_name)"},
-                "card",
-                card_id,
-            )
-            rattache["owner_id"] = choisir_par_nom(
-                [{"id": m["user_id"], "nom": (m.get("profiles") or {}).get("full_name")} for m in membres], owner, "member"
-            )
+            rattache["owner_id"] = await responsable(appel.jeton, owner, "card", card_id)
         if not entete and not rattache and not answers:
             raise ToolError("Give at least one field to change.")
         if entete:
@@ -368,39 +467,8 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
                 appel.jeton, "PATCH", "cards", parametres={"id": f"eq.{card_id}", "select": "id"}, corps=entete
             )
             une_ligne(reponse, "card", card_id)
-        if rattache:
-            reponse = await crm.ecrire(
-                appel.jeton,
-                "PATCH",
-                "card_placements",
-                parametres={"id": f"eq.{await rattachement(appel.jeton, card_id)}", "select": "id"},
-                corps=rattache,
-            )
-            une_ligne(reponse, "card", card_id)
-        if answers:
-            champs = {str(c["key"]): c for c in await champs_du_workflow(appel.jeton, fiche["workflow_id"], card_id)}
-            inconnues = sorted(set(answers) - set(champs))
-            if inconnues:
-                raise ToolError(f"Unknown field key(s): {', '.join(inconnues)}. Known: {', '.join(sorted(champs))}.")
-            # `CRM-111` T2.3.6 : la réponse s'écrit sur le bloc du RATTACHEMENT, clé `(placement_id, field_id)`.
-            bloc = await rattachement(appel.jeton, card_id)
-            for cle, valeur in answers.items():
-                reponse = await crm.ecrire(
-                    appel.jeton,
-                    "POST",
-                    "card_field_values",
-                    parametres={"on_conflict": "placement_id,field_id", "select": "field_id"},
-                    corps={
-                        "card_id": card_id,
-                        "placement_id": bloc,
-                        "field_id": champs[cle]["id"],
-                        "workflow_id": fiche["workflow_id"],
-                        "workspace_id": appel.espace,
-                        "value": valeur,
-                    },
-                    fusion=True,
-                )
-                une_ligne(reponse, "card", card_id)
+        if rattache or answers:
+            await ecrire_bloc(appel.jeton, appel.espace, card_id, await bloc(appel.jeton, card_id), rattache, answers or {})
         return {"card": await resume(appel.jeton, card_id)}
 
     moteur.enregistrer(
@@ -419,24 +487,28 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         card_id: Annotated[str, Field(description="The affaire (card) id")],
         to_step: Annotated[str, Field(description="Name of the arrival step (FR: étape), e.g. Négociation")],
         comment: Annotated[str | None, Field(description="Reason (FR: motif), when the move requires one")] = None,
+        placement_id: Annotated[
+            str | None, Field(description="Which placement (FR: rattachement) of the affaire, from crm_card_get; default the oldest")
+        ] = None,
     ) -> dict[str, Any]:
         appel = appel_courant()
-        fiche = await carte(appel.jeton, card_id)
-        cible = choisir_par_nom(await etapes(appel.jeton, fiche["workflow_id"], "card", card_id), to_step, "step")
-        # `CRM-111` T2.3.3 : le geste désigne le rattachement de l'affaire, résolu depuis `card_id` (§11).
-        arguments: dict[str, Any] = {"p_placement": await rattachement(appel.jeton, card_id), "to_step_id": cible}
+        # `CRM-111` T2.3.3, T9 : le geste désigne un rattachement de l'affaire — celui donné, sinon le plus ancien — et
+        # l'étape se cherche dans SON workflow (§11, §9.2 quindecies).
+        designe = await bloc(appel.jeton, card_id, placement_id)
+        cible = choisir_par_nom(await etapes(appel.jeton, designe["workflow_id"], "card", card_id), to_step, "step")
+        arguments: dict[str, Any] = {"p_placement": designe["id"], "to_step_id": cible}
         if comment and comment.strip():
             arguments["comment"] = comment.strip()
         reponse = await crm.rpc(appel.jeton, "move_card", arguments)
         if not reponse.reussie:
-            champs = {str(c["key"]): str(c["label"]) for c in await champs_du_workflow(appel.jeton, fiche["workflow_id"], card_id)}
+            champs = {str(c["key"]): str(c["label"]) for c in await champs_du_workflow(appel.jeton, designe["workflow_id"], card_id)}
             raise refus(reponse, "card", card_id, champs)
         return {"card": await resume(appel.jeton, card_id)}
 
     moteur.enregistrer(
         serveur,
         crm_card_move,
-        Declaration(famille="affaires", action="modifier", espace="card:card_id"),
+        Declaration(famille="affaires", action="modifier", espace="card:card_id", autres=("placement:placement_id",)),
         titre="Move an affaire to another step (étape)",
         description=(
             "Moves an affaire (card) to another step of its workflow, by the step's name, as on the board. Only declared "
@@ -450,11 +522,14 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         to_channel_id: Annotated[str, Field(description="The target channel id")],
         to_step: Annotated[str | None, Field(description="Arrival step name, required when the workflow changes")] = None,
         discard_field_values: Annotated[bool, Field(description="Accept losing the form answers if the workflow changes")] = False,
+        placement_id: Annotated[
+            str | None, Field(description="Which placement (FR: rattachement) of the affaire, from crm_card_get; default the oldest")
+        ] = None,
     ) -> dict[str, Any]:
         appel = appel_courant()
-        # `CRM-111` T2.3.4 : le geste désigne le rattachement de l'affaire, résolu depuis `card_id` (§11).
+        # `CRM-111` T2.3.4, T9 : le geste désigne un rattachement de l'affaire, celui donné sinon le plus ancien (§11).
         arguments: dict[str, Any] = {
-            "p_placement": await rattachement(appel.jeton, card_id),
+            "p_placement": await rattachement(appel.jeton, card_id, placement_id),
             "to_channel_id": to_channel_id,
             "discard_field_values": discard_field_values,
         }
@@ -476,7 +551,10 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         serveur,
         crm_card_move_to_channel,
         Declaration(
-            famille="affaires", action="modifier", espace="card:card_id", autres=("channel:to_channel_id",)
+            famille="affaires",
+            action="modifier",
+            espace="card:card_id",
+            autres=("channel:to_channel_id", "placement:placement_id"),
         ),
         titre="Move an affaire to another channel",
         description=(
@@ -490,12 +568,15 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     async def crm_card_snooze(
         card_id: Annotated[str, Field(description="The affaire (card) id")],
         until: Annotated[str, Field(description="Wake-up date YYYY-MM-DD or ISO 8601 instant with offset")],
+        placement_id: Annotated[
+            str | None, Field(description="Which placement (FR: rattachement) of the affaire, from crm_card_get; default the oldest")
+        ] = None,
     ) -> dict[str, Any]:
         appel = appel_courant()
         reponse = await crm.rpc(
             appel.jeton,
             "snooze_card",
-            {"p_placement": await rattachement(appel.jeton, card_id), "until": instant(until, "until")},
+            {"p_placement": await rattachement(appel.jeton, card_id, placement_id), "until": instant(until, "until")},
         )
         if not reponse.reussie:
             raise refus(reponse, "card", card_id)
@@ -504,16 +585,21 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     moteur.enregistrer(
         serveur,
         crm_card_snooze,
-        Declaration(famille="affaires", action="modifier", espace="card:card_id"),
+        Declaration(famille="affaires", action="modifier", espace="card:card_id", autres=("placement:placement_id",)),
         titre="Put an affaire to sleep (mettre en sommeil)",
         description="Puts an affaire (card) to sleep until a future date: it leaves the default views until then.",
     )
 
     async def crm_card_wake(
         card_id: Annotated[str, Field(description="The affaire (card) id")],
+        placement_id: Annotated[
+            str | None, Field(description="Which placement (FR: rattachement) of the affaire, from crm_card_get; default the oldest")
+        ] = None,
     ) -> dict[str, Any]:
         appel = appel_courant()
-        reponse = await crm.rpc(appel.jeton, "wake_card", {"p_placement": await rattachement(appel.jeton, card_id)})
+        reponse = await crm.rpc(
+            appel.jeton, "wake_card", {"p_placement": await rattachement(appel.jeton, card_id, placement_id)}
+        )
         if not reponse.reussie:
             raise refus(reponse, "card", card_id)
         return {"card": await resume(appel.jeton, card_id)}
@@ -521,9 +607,54 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     moteur.enregistrer(
         serveur,
         crm_card_wake,
-        Declaration(famille="affaires", action="modifier", espace="card:card_id"),
+        Declaration(famille="affaires", action="modifier", espace="card:card_id", autres=("placement:placement_id",)),
         titre="Wake an affaire up (réveiller)",
         description="Wakes a sleeping affaire (card) up now.",
+    )
+
+    async def crm_card_placement_update(
+        placement_id: Annotated[str, Field(description="The placement (FR: rattachement) id, from crm_card_get")],
+        amount: Annotated[float | None, Field(description="In the affaire's currency")] = None,
+        probability: Annotated[int | None, Field(ge=0, le=100, description="This placement's own probability, %")] = None,
+        next_action: Annotated[str | None, Field(description="Empty string clears it", max_length=500)] = None,
+        next_action_at: Annotated[str | None, Field(description="ISO 8601 with offset; empty string clears it")] = None,
+        owner: Annotated[str | None, Field(description="Full name of a workspace member who becomes the owner")] = None,
+        answers: Annotated[dict[str, Any] | None, Field(description="Form answers by field key of this placement's workflow")] = None,
+    ) -> dict[str, Any]:
+        appel = appel_courant()
+        # `CRM-111` T9 (§9.2 quindecies) : la partie « rattachement » de `crm_card_update`, sur le rattachement DONNÉ.
+        lus = await lire(
+            appel.jeton, "card_placements", {"id": f"eq.{placement_id}", "select": "id,card_id,workflow_id"}, "placement", placement_id
+        )
+        if len(lus) != 1:
+            raise RefusCrm(introuvable("placement", placement_id))
+        colonnes: dict[str, Any] = {}
+        if amount is not None:
+            colonnes["amount"] = amount
+        if probability is not None:
+            colonnes["probability_override"] = probability
+        if next_action is not None:
+            colonnes["next_action"] = next_action.strip() or None
+        if next_action_at is not None:
+            colonnes["next_action_at"] = instant(next_action_at, "next_action_at") if next_action_at.strip() else None
+        if owner is not None:
+            colonnes["owner_id"] = await responsable(appel.jeton, owner, "placement", placement_id)
+        if not colonnes and not answers:
+            raise ToolError("Give at least one field to change.")
+        await ecrire_bloc(appel.jeton, appel.espace, str(lus[0]["card_id"]), lus[0], colonnes, answers or {})
+        return {"placement": await placement_resume(appel.jeton, placement_id)}
+
+    moteur.enregistrer(
+        serveur,
+        crm_card_placement_update,
+        Declaration(famille="affaires", action="modifier", espace="placement:placement_id"),
+        titre="Update one placement (rattachement) of an affaire",
+        description=(
+            "An affaire can sit in several channels; each placement (FR: rattachement) has its own amount, probability, "
+            "next action and due date, owner (by full name among the workspace members) and form answers (by field key of "
+            "its channel's workflow). Changes those of the placement given; only the fields given are written. The title "
+            "and description are shared: crm_card_update."
+        ),
     )
 
     async def crm_card_contact_link(
@@ -660,6 +791,36 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     )
 
     # --- supprimer -------------------------------------------------------------------------------------------------
+
+    async def crm_card_placement_archive(
+        placement_id: Annotated[str, Field(description="The placement (FR: rattachement) id, from crm_card_get")],
+        archived: Annotated[bool, Field(description="true archives it, false brings it back")] = True,
+    ) -> dict[str, Any]:
+        appel = appel_courant()
+        # `CRM-111` T9 (§9.2 quindecies) : le geste du bloc « Rattachements » ; zéro ligne rendue est un refus.
+        reponse = await crm.ecrire(
+            appel.jeton,
+            "PATCH",
+            "card_placements",
+            parametres={"id": f"eq.{placement_id}", "select": "id"},
+            corps={"archived_at": datetime.now(UTC).isoformat() if archived else None},
+        )
+        une_ligne(reponse, "placement", placement_id)
+        return {"placement": await placement_resume(appel.jeton, placement_id)}
+
+    moteur.enregistrer(
+        serveur,
+        crm_card_placement_archive,
+        Declaration(famille="affaires", action="supprimer", espace="placement:placement_id"),
+        titre="Archive one placement (rattachement) of an affaire",
+        description=(
+            "Archives the affaire in ONE of its channels (FR: rattachement): it leaves that channel's board and stays in "
+            "its other channels. archived=false brings it back. Nothing is deleted; removing a placement for good is an "
+            "administrator's gesture in the web app."
+        ),
+        destructif=True,
+    )
+
 
     async def crm_card_trash(
         card_id: Annotated[str, Field(description="The affaire (card) id")],

@@ -1,3 +1,4 @@
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T9 : `placement_id` des lignes, `placements` de la fiche (docs/SPEC-mcp.md §9.2 quindecies)
 # @verifies CRM-104 (docs/BACKLOG.md) — tranche T2.a : les sept outils de lecture de la famille `affaires`, devant un CRM
 # @verifies CRM-066 (docs/BACKLOG.md) — tranche 4 : les deux scores de santé rendus tels quels par crm_card_list et
 #           crm_card_get, et demandés avec la ligne ; docs/SPEC-analytique.md §13.7 ; décision 708 (M4 B)
@@ -341,6 +342,9 @@ async def test_la_fiche_nomme_tout_et_rend_la_capacite_d_ecrire(monde: Monde) ->
         {"field": "Origine du contact", "key": "origine", "type": "select", "value": "salon", "value_label": "Salon"},
         {"field": "Budget estimé", "key": "budget", "type": "amount", "value": 45000},
     ]
+    # `CRM-111` T9 (§9.2 quindecies) : la fiche liste ses rattachements lisibles, même quand elle porte des réponses —
+    # la liste était écrasée par la lecture des champs, défaut trouvé par l'intégration sur la billetterie du seed.
+    assert [(p["placement_id"], p["channel"]["name"]) for p in fiche["placements"]] == [(f"r-{CARD_A}", "Grands comptes")]
 
 
 async def test_le_fil_fusionne_trois_sources_dans_l_ordre_ou_l_histoire_s_est_ecrite(monde: Monde) -> None:
@@ -479,4 +483,5 @@ def test_la_ligne_d_un_rattachement_porte_l_identifiant_de_l_affaire() -> None:
     ligne = ligne_depuis_rattachement(
         {"id": "r1", "created_at": "t", "amount": 5, "affaire": {"id": "a", "title": "T", "currency": "EUR"}}
     )
-    assert ligne == {"id": "a", "title": "T", "currency": "EUR", "amount": 5}
+    # `CRM-111` T9 (§9.2 quindecies) : la ligne porte aussi son rattachement, que les gestes désignent.
+    assert ligne == {"id": "a", "title": "T", "currency": "EUR", "amount": 5, "placement_id": "r1"}

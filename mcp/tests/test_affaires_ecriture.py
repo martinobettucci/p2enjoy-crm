@@ -1,3 +1,5 @@
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T9 : rattacher, mettre à jour et archiver un rattachement, `placement_id`
+#           sur les gestes (docs/SPEC-mcp.md §9.2 quindecies, décision 826)
 # @verifies CRM-104 (docs/BACKLOG.md) — tranche T2.b : les douze outils d'écriture de la famille `affaires`, devant un CRM
 #           simulé qui enregistre chaque écriture
 # @verifies CRM-067 (docs/BACKLOG.md) — tranche T4 : `crm_card_activity_add` et `crm_card_activity_update`
@@ -38,6 +40,8 @@ CARD_A = "c0000000-0000-4000-8000-0000000000c1"
 CARD_B = "c0000000-0000-4000-8000-0000000000c2"
 RATTACHEMENT_A = "e0000000-0000-4000-8000-0000000000e1"
 RATTACHEMENT_B = "e0000000-0000-4000-8000-0000000000e2"
+#: `CRM-111` T9 : le SECOND rattachement de l'affaire A, dans un channel d'un autre workflow, plus récent.
+RATTACHEMENT_A2 = "e0000000-0000-4000-8000-0000000000e3"
 CHANNEL_A = "d0000000-0000-4000-8000-0000000000d1"
 CHANNEL_A2 = "d0000000-0000-4000-8000-0000000000d3"
 CHANNEL_B = "d0000000-0000-4000-8000-0000000000d2"
@@ -51,6 +55,8 @@ OUTILS = {
     "crm_card_create", "crm_card_comment_add", "crm_card_activity_add", "crm_card_update", "crm_card_move",
     "crm_card_move_to_channel", "crm_card_snooze", "crm_card_wake", "crm_card_contact_link", "crm_card_contact_unlink",
     "crm_card_activity_update", "crm_card_trash",
+    # `CRM-111` T9 (docs/SPEC-mcp.md §9.2 quindecies).
+    "crm_card_attach", "crm_card_placement_update", "crm_card_placement_archive",
 }
 
 
@@ -70,6 +76,8 @@ class CrmEcriture(CrmSimule):
              "workflow_id": WORKFLOW, "affaire": {"id": CARD_A, "title": "Migration ERP"}},
             {"id": RATTACHEMENT_B, "card_id": CARD_B, "workspace_id": ESPACE_B, "created_at": "2026-01-01T00:00:00+00:00",
              "workflow_id": WORKFLOW, "affaire": {"id": CARD_B, "title": "Ailleurs"}},
+            {"id": RATTACHEMENT_A2, "card_id": CARD_A, "workspace_id": ESPACE_A, "created_at": "2026-06-01T00:00:00+00:00",
+             "workflow_id": WORKFLOW_2, "affaire": {"id": CARD_A, "title": "Migration ERP"}},
         ]
         cartes = [
             {"id": CARD_A, "workspace_id": ESPACE_A, "title": "Migration ERP"},
@@ -111,7 +119,13 @@ class CrmEcriture(CrmSimule):
         if nom not in tables:
             return None
         filtres = {k: v.removeprefix("eq.") for k, v in parametres.items() if v.startswith("eq.")}
-        return [l for l in tables[nom] if all(str(l.get(k)) == v for k, v in filtres.items() if k in l)]
+        lues = [l for l in tables[nom] if all(str(l.get(k)) == v for k, v in filtres.items() if k in l)]
+        # `CRM-111` T9 : l'affaire A a deux rattachements — l'ordre et la borne de PostgREST sont honorés.
+        if parametres.get("order", "").startswith("created_at"):
+            lues.sort(key=lambda l: (str(l.get("created_at")), str(l.get("id"))))
+        if "limit" in parametres:
+            lues = lues[: int(parametres["limit"])]
+        return lues
 
     async def table_ecriture(self, requete: Request) -> Response:
         personne = self._personne(requete)
@@ -136,13 +150,15 @@ class CrmEcriture(CrmSimule):
 
     async def rpc_ecriture(self, requete: Request) -> Response:
         fonction = requete.path_params["fonction"]
-        if fonction in ("creer_affaire", "move_card", "move_card_to_channel", "snooze_card", "wake_card"):
+        if fonction in ("creer_affaire", "move_card", "move_card_to_channel", "snooze_card", "wake_card", "attach_card"):
             if self._personne(requete) is None:
                 return JSONResponse({"message": "JWT invalide"}, status_code=401)
             self.rpcs.append((fonction, await requete.json()))
             if fonction in self.forcees:
                 statut, rendu = self.forcees[fonction]
                 return JSONResponse(rendu, status_code=statut)
+            if fonction == "attach_card":
+                return JSONResponse({"id": RATTACHEMENT_A2, "card_id": CARD_A})
             return JSONResponse(CARD_A if fonction == "creer_affaire" else {"id": CARD_A})
         return await self.rpc(requete)
 
@@ -203,20 +219,26 @@ TOUT = (("affaires", "ajouter"), ("affaires", "modifier"), ("affaires", "supprim
 # --- Déclarations ------------------------------------------------------------------------------------------------------
 
 
-async def test_les_douze_outils_leurs_actions_et_leurs_annotations(monde: Monde) -> None:
+# RÉVISÉ PAR `CRM-111` T9 (décision 51) : quinze outils — `crm_card_attach`, `crm_card_placement_update`,
+# `crm_card_placement_archive` ; `placement_id` facultatif sur les gestes d'un rattachement (§9.2 quindecies).
+async def test_les_quinze_outils_leurs_actions_et_leurs_annotations(monde: Monde) -> None:
     declarations = {n: d for n, d in monde.moteur.declarations.items() if n in OUTILS}
     assert set(declarations) == OUTILS
     assert {n for n, d in declarations.items() if d.action == "ajouter"} == {
-        "crm_card_create", "crm_card_comment_add", "crm_card_activity_add"
+        "crm_card_create", "crm_card_comment_add", "crm_card_activity_add", "crm_card_attach"
     }
-    assert {n for n, d in declarations.items() if d.action == "supprimer"} == {"crm_card_trash"}
+    assert {n for n, d in declarations.items() if d.action == "supprimer"} == {"crm_card_trash", "crm_card_placement_archive"}
     assert declarations["crm_card_activity_update"].espace == "activity:activity_id"
-    assert declarations["crm_card_move_to_channel"].autres == ("channel:to_channel_id",)
+    assert declarations["crm_card_move_to_channel"].autres == ("channel:to_channel_id", "placement:placement_id")
+    for nom in ("crm_card_move", "crm_card_snooze", "crm_card_wake"):
+        assert declarations[nom].autres == ("placement:placement_id",)
+    assert declarations["crm_card_placement_update"].espace == "placement:placement_id"
+    assert declarations["crm_card_attach"].autres == ("channel:channel_id",)
     assert declarations["crm_card_contact_link"].aussi == (("contacts", "consulter"),)
     monde.ouvrir(*TOUT)
     outils = await monde.outils()
     destructifs = {n for n in OUTILS if outils[n].annotations.destructive_hint}
-    assert destructifs == {"crm_card_move", "crm_card_move_to_channel", "crm_card_trash"}
+    assert destructifs == {"crm_card_move", "crm_card_move_to_channel", "crm_card_trash", "crm_card_placement_archive"}
     assert not any(outils[n].annotations.read_only_hint for n in OUTILS)
 
 
@@ -414,3 +436,86 @@ def test_un_instant_sans_fuseau_est_refuse() -> None:
         instant("23/10/2026", "x")
     with pytest.raises(ToolError):
         instant("2026-10-23T10:00:00", "x")
+
+
+# --- Les rattachements — `CRM-111` T9 (docs/SPEC-mcp.md §9.2 quindecies) ----------------------------------------------
+
+
+async def test_rattacher_passe_par_attach_card_et_rend_le_rattachement(monde: Monde) -> None:
+    monde.ouvrir(*TOUT)
+    resultat = await monde.appel("crm_card_attach", {"card_id": CARD_A, "channel_id": CHANNEL_A2})
+    assert monde.simule.rpcs == [("attach_card", {"p_card": CARD_A, "p_channel": CHANNEL_A2})]
+    assert resultat["placement"]["placement_id"] == RATTACHEMENT_A2
+    assert resultat["placement"]["card_id"] == CARD_A
+
+
+async def test_rattacher_a_un_channel_d_un_autre_espace_est_le_refus_uniforme(monde: Monde) -> None:
+    monde.ouvrir(*TOUT)
+    with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre : channel"):
+        await monde.appel("crm_card_attach", {"card_id": CARD_A, "channel_id": CHANNEL_B})
+    assert monde.simule.rpcs == []
+
+
+async def test_rattacher_traduit_les_refus_nommes(monde: Monde) -> None:
+    monde.ouvrir(*TOUT)
+    monde.simule.forcees["attach_card"] = (400, {"code": "P0001", "message": "already_attached"})
+    with pytest.raises(ToolError, match="already_attached"):
+        await monde.appel("crm_card_attach", {"card_id": CARD_A, "channel_id": CHANNEL_A2})
+    monde.simule.forcees["attach_card"] = (400, {"code": "P0001", "message": "channel_closed"})
+    with pytest.raises(ToolError, match="channel_closed"):
+        await monde.appel("crm_card_attach", {"card_id": CARD_A, "channel_id": CHANNEL_A2})
+
+
+async def test_deplacer_un_rattachement_designe_cherche_l_etape_dans_son_workflow(monde: Monde) -> None:
+    monde.ouvrir(*TOUT)
+    await monde.appel("crm_card_move", {"card_id": CARD_A, "to_step": "Accueil", "placement_id": RATTACHEMENT_A2})
+    assert monde.simule.rpcs == [("move_card", {"p_placement": RATTACHEMENT_A2, "to_step_id": "s9"})]
+
+
+async def test_sans_rattachement_designe_le_geste_vise_le_plus_ancien(monde: Monde) -> None:
+    monde.ouvrir(*TOUT)
+    await monde.appel("crm_card_wake", {"card_id": CARD_A})
+    assert monde.simule.rpcs == [("wake_card", {"p_placement": RATTACHEMENT_A})]
+
+
+async def test_un_rattachement_hors_de_l_espace_est_le_refus_uniforme(monde: Monde) -> None:
+    monde.ouvrir(*TOUT)
+    with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre : rattachement"):
+        await monde.appel("crm_card_snooze", {"card_id": CARD_A, "until": "2099-01-01", "placement_id": RATTACHEMENT_B})
+    assert monde.simule.rpcs == []
+
+
+async def test_mettre_a_jour_un_rattachement_n_ecrit_que_lui(monde: Monde) -> None:
+    monde.ouvrir(*TOUT)
+    await monde.appel(
+        "crm_card_placement_update", {"placement_id": RATTACHEMENT_A2, "amount": 9600, "owner": "Driss Lemoine"}
+    )
+    (ecriture,) = monde.ecritures("card_placements")
+    assert ecriture["methode"] == "PATCH"
+    assert ecriture["parametres"]["id"] == f"eq.{RATTACHEMENT_A2}"
+    assert ecriture["corps"] == {"amount": 9600, "owner_id": "p-driss"}
+    assert monde.ecritures("cards") == []
+
+
+async def test_mettre_a_jour_sans_champ_est_refuse_avant_d_ecrire(monde: Monde) -> None:
+    monde.ouvrir(*TOUT)
+    with pytest.raises(ToolError, match="at least one field"):
+        await monde.appel("crm_card_placement_update", {"placement_id": RATTACHEMENT_A2})
+    assert monde.simule.ecritures == []
+
+
+async def test_archiver_et_desarchiver_un_rattachement(monde: Monde) -> None:
+    monde.ouvrir(*TOUT)
+    await monde.appel("crm_card_placement_archive", {"placement_id": RATTACHEMENT_A2})
+    await monde.appel("crm_card_placement_archive", {"placement_id": RATTACHEMENT_A2, "archived": False})
+    archive, desarchive = monde.ecritures("card_placements")
+    assert archive["corps"]["archived_at"] is not None
+    assert desarchive["corps"] == {"archived_at": None}
+
+
+async def test_archiver_zero_ligne_est_un_refus(monde: Monde) -> None:
+    monde.ouvrir(*TOUT)
+    monde.simule.forcees["card_placements"] = (200, [])
+    with pytest.raises(ToolError, match="rattachement"):
+        await monde.appel("crm_card_placement_archive", {"placement_id": RATTACHEMENT_A2})
+

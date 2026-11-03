@@ -1,3 +1,5 @@
+# @spec CRM-111 (docs/BACKLOG.md) — tranche T9 : `placements` dans `crm_card_get`, `placement_id` dans les lignes
+#       (docs/SPEC-mcp.md §9.2 quindecies, décision 826 ; docs/SPEC-rattachements.md §11)
 # @spec CRM-071 (docs/BACKLOG.md) — tranche T3 : l'argument `view` de crm_card_list (docs/SPEC-mcp.md §9.2 quattuordecies)
 # @spec CRM-069 (docs/BACKLOG.md) — tranche T3 : les étiquettes rendues par crm_card_get et crm_card_list, le filtre `label`, le
 #       détail des événements `label_added` et `label_removed` (docs/SPEC-mcp.md §9.2 tredecies)
@@ -119,6 +121,8 @@ def ligne_depuis_rattachement(rattachement: dict[str, Any]) -> dict[str, Any]:
     return {
         **{k: v for k, v in rattachement.items() if k not in ("id", "created_at", "affaire")},
         **affaire,
+        # `CRM-111` T9 (§9.2 quindecies) : le rattachement de la ligne, que les gestes désignent par `placement_id`.
+        **({"placement_id": rattachement["id"]} if "id" in rattachement else {}),
     }
 
 
@@ -130,6 +134,34 @@ def fiche_depuis_rattachements(fiche: dict[str, Any]) -> dict[str, Any] | None:
         return None
     colonnes = {k: v for k, v in premier.items() if k not in ("id", "created_at")}
     return {**{k: v for k, v in fiche.items() if k != "card_placements"}, **colonnes}
+
+
+#: Un rattachement tel que `crm_card_get` le liste (`CRM-111` T9, §9.2 quindecies).
+COLONNES_RATTACHEMENTS = f"id,created_at,amount,next_action,next_action_at,archived_at,snoozed_until,{RESPONSABLE},{CHANNEL},{ETAPE}"
+
+
+def rattachements_lisibles(lignes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Les rattachements que la personne lit, nommés, dans l'ordre des tracks puis des channels (décision 814)."""
+    rendus = []
+    for r in lignes:
+        channel = r.get("channel") or {}
+        track = channel.get("track") or {}
+        etape = r.get("etape") or {}
+        rendus.append(
+            {
+                "placement_id": r["id"],
+                "track": {"id": track.get("id"), "name": track.get("name")},
+                "channel": {"id": channel.get("id"), "name": channel.get("name")},
+                "step": {"id": etape.get("id"), "name": (etape.get("noeud") or {}).get("label")},
+                "owner": (r.get("responsable") or {}).get("full_name"),
+                "amount": r.get("amount"),
+                "next_action": r.get("next_action"),
+                "next_action_at": r.get("next_action_at"),
+                "archived": r.get("archived_at") is not None,
+                "snoozed_until": r.get("snoozed_until"),
+            }
+        )
+    return sorted(rendus, key=lambda r: (str(r["track"]["name"] or "").casefold(), str(r["channel"]["name"] or "").casefold(), r["placement_id"]))
 
 
 def etiquettes(ligne: dict[str, Any]) -> list[dict[str, Any]]:
@@ -153,6 +185,8 @@ def resume_carte(ligne: dict[str, Any]) -> dict[str, Any]:
     responsable = ligne.get("responsable") or {}
     return {
         "id": ligne["id"],
+        # `CRM-111` T9 : le rattachement que la ligne montre, quand elle part d'un rattachement (§9.2 quindecies).
+        **({"placement_id": ligne["placement_id"]} if ligne.get("placement_id") else {}),
         "title": ligne["title"],
         "track": {"id": track.get("id"), "name": track.get("name")},
         "channel": {"id": channel.get("id"), "name": channel.get("name")},
@@ -487,11 +521,21 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             "card",
             card_id,
         )
-        valeurs = _lignes(
-            await crm.lire(appel.jeton, "card_field_values", {"card_id": f"eq.{card_id}", "select": "field_id,value"}),
+        # `CRM-111` T9 (§9.2 quindecies) : les rattachements lisibles ; les réponses rendues sont celles du PLUS ANCIEN,
+        # celui dont la fiche résumée montre l'étape — un autre rattachement porte son propre bloc.
+        rattachements_lus = _lignes(
+            await crm.lire(
+                appel.jeton,
+                "card_placements",
+                {"card_id": f"eq.{card_id}", "select": COLONNES_RATTACHEMENTS, "order": "created_at.asc,id.asc"},
+            ),
             "card",
             card_id,
         )
+        filtre_valeurs = {"card_id": f"eq.{card_id}", "select": "field_id,value"}
+        if rattachements_lus:
+            filtre_valeurs["placement_id"] = f"eq.{rattachements_lus[0]['id']}"
+        valeurs = _lignes(await crm.lire(appel.jeton, "card_field_values", filtre_valeurs), "card", card_id)
         champs: dict[str, dict[str, Any]] = {}
         if valeurs:
             lus = _lignes(
@@ -538,6 +582,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
                 for c in contacts
             ],
             "form_answers": reponses,
+            "placements": rattachements_lisibles(rattachements_lus),
         }
 
     moteur.enregistrer(
@@ -551,7 +596,9 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             "linked contacts with their role, the labels (FR: étiquettes), the form answers by label, can_write — whether the CRM lets you change it — "
             "and the two health scores: health_momentum (100 minus each listed penalty) and health_commercial (four "
             "weighted signals; an unknown one has its weight shared). Tiers: healthy ≥ 70, watch 40–69, danger < 40; none "
-            "for a decided, archived or trashed affaire."
+            "for a decided, archived or trashed affaire. An affaire can sit in several channels (FR: rattachements): "
+            "`placements` lists those you can read, each with its placement_id, step, owner, amount and state; the header "
+            "fields and form answers above are those of the oldest one."
         ),
     )
 

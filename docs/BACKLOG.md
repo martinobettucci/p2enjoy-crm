@@ -17446,9 +17446,16 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       les vraies fonctions ; convergence vérifiée par le seed) ; **T8.2** la campagne E2E complète sur le seed enrichi, les
       preuves qui comptaient les affaires d'un channel révisées, `scripts/verify-seed-rattachements.sh` — un harnais propre plutôt
       que `scripts/verify-seed-demo.sh` étendu, qui rejoue le seed et le dégrade.
-- [@] **T9 — connecteur MCP** (§11) : `crm_card_attach`, `crm_card_placement_update`, `crm_card_placement_archive`,
+- [x] **T9 — connecteur MCP** (§11) : `crm_card_attach`, `crm_card_placement_update`, `crm_card_placement_archive`,
       outils existants sur le rattachement ; refusés par la matrice puis par le CRM ; `docs/SPEC-mcp.md` §9.2.
-      *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable, session 4891a451) depuis 2026-11-03 14:30 UTC — état avant : [ ]*
+      *Livrée en développement le 2026-11-03* : le genre d'ancre `placement` ; les trois outils ; `placement_id` facultatif
+      sur `crm_card_move`, `crm_card_move_to_channel`, `crm_card_snooze`, `crm_card_wake` ; `placements` dans
+      `crm_card_get` et `placement_id` dans `crm_card_list`. Unitaires 305 (dont onze des rattachements, et la régression
+      d'une liste de rattachements écrasée par la lecture des champs, trouvée par l'intégration et vérifiée mordante) ;
+      intégration contre le vrai Keycloak et la vraie base 80/80, en direct et à travers Caddy — rattacher, régler,
+      déplacer, archiver et désarchiver, `already_attached` ; la lectrice refusée par le CRM, rien d'écrit ; la case
+      « ajouter » retirée retire l'outil ; `scripts/verify-mcp.sh --rapide` 108 contrôles. Manuel §33.5. Production : l'image
+      `mcp` de `main`.
       *Spécifiée le 2026-11-03, avant le code (`docs/SPEC-mcp.md` §9.2 quindecies, décision 826)* : trois outils nouveaux,
       le genre d'ancre `placement`, `placement_id` facultatif sur les gestes existants, les rattachements lisibles dans
       `crm_card_get`.

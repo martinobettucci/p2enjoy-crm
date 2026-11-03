@@ -536,6 +536,11 @@ changelog.*
   refus de plus). **`mail-sync`** joint les pièces, archive avant d'envoyer, efface les dépôts abandonnés après 24 heures.
 - **Le seed** fait partir un message réel avec copie cachée et pièce jointe depuis « Refonte du monitoring — Vertuo ».
 
+- **`CRM-111` T9 — le connecteur MCP et les rattachements** : trois outils, `crm_card_attach`, `crm_card_placement_update`,
+  `crm_card_placement_archive` ; `crm_card_get` liste les rattachements lisibles, `crm_card_list` rend le rattachement de
+  chaque ligne, et les déplacements, le sommeil et le réveil peuvent désigner un rattachement. Famille « Affaires »,
+  aucune case nouvelle. Image `mcp` à reconstruire. Manuel §33.5.
+
 - **`CRM-111` T8 — le seed des rattachements multiples** : deux affaires posées par les vraies fonctions portent les
   cinq situations de la spécification — « Plateforme de billetterie — Musée des Confluences », dans « Grands comptes »
   et « Refonte de site » ; « Infogérance applicative — Groupe Ardent », active dans « Maintenance », archivée dans

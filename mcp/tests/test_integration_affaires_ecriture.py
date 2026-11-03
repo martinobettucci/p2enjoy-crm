@@ -1,3 +1,5 @@
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T9 : rattacher, régler, déplacer, archiver un rattachement contre la vraie
+#           base ; la lectrice refusée par le CRM ; la matrice qui retire l'outil (docs/SPEC-mcp.md §9.2 quindecies)
 # @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — le channel, la probabilité et le responsable se lisent sur le rattachement
 #           (migration 0134, docs/SPEC-rattachements.md §3.2)
 # @verifies CRM-104 (docs/BACKLOG.md) — tranche T2.b : les douze outils d'écriture des affaires contre le vrai Keycloak, la
@@ -173,5 +175,95 @@ async def test_sans_la_case_supprimer_la_corbeille_n_existe_pas():
             )
             with pytest.raises(ToolError):
                 await client.call_tool("crm_card_trash", {"card_id": SOGEXIA})
+    finally:
+        await _retirer(DRISS, cases)
+
+# --- Les rattachements — `CRM-111` T9 (docs/SPEC-mcp.md §9.2 quindecies) ----------------------------------------------
+
+BILLETTERIE = "Plateforme de billetterie — Musée des Confluences"
+
+
+async def test_rattacher_regler_deplacer_et_archiver_un_rattachement_par_le_connecteur():
+    """Driss, la famille ouverte : une affaire née dans « Grands comptes » est rattachée à « Refonte de site », et ce
+    second rattachement est réglé, déplacé, archivé puis désarchivé — chaque geste au journal, la base relue."""
+    await _nettoyer()
+    await _poser(DRISS, CASES)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_visible(client, "crm_card_placement_archive")
+
+            async def appeler(outil: str, arguments: dict) -> dict:
+                resultat = (await client.call_tool(outil, arguments)).structured_content
+                assert await _dernier_journal(DRISS[1]) == (outil, "ok"), outil
+                return resultat
+
+            ident = (await appeler("crm_card_create", {"channel_id": GRANDS_COMPTES, "title": f"{TITRE} partagée"}))["card"]["id"]
+            place = (await appeler("crm_card_attach", {"card_id": ident, "channel_id": REFONTE}))["placement"]
+            assert place["channel"]["id"] == REFONTE and place["step"]["name"] == "Prospection"
+            fiche = await appeler("crm_card_get", {"card_id": ident})
+            assert sorted(p["channel"]["id"] for p in fiche["placements"]) == sorted([GRANDS_COMPTES, REFONTE])
+
+            await appeler("crm_card_placement_update", {"placement_id": place["placement_id"], "amount": 9600})
+            await appeler("crm_card_move", {"card_id": ident, "to_step": "Relance", "placement_id": place["placement_id"]})
+            lus = (await _service("GET", "/card_placements", params={
+                "card_id": f"eq.{ident}", "select": "channel_id,amount,current_step_id,archived_at"})).json()
+            par_channel = {l["channel_id"]: l for l in lus}
+            assert float(par_channel[REFONTE]["amount"]) == 9600
+            assert par_channel[REFONTE]["current_step_id"].endswith("062")
+            # Le rattachement de « Grands comptes » n'a pas bougé : le geste visait l'autre.
+            assert par_channel[GRANDS_COMPTES]["amount"] is None
+            assert par_channel[GRANDS_COMPTES]["current_step_id"].endswith("061")
+
+            await appeler("crm_card_placement_archive", {"placement_id": place["placement_id"]})
+            lu = (await _service("GET", "/card_placements", params={"id": f"eq.{place['placement_id']}", "select": "archived_at"})).json()
+            assert lu[0]["archived_at"] is not None
+            await appeler("crm_card_placement_archive", {"placement_id": place["placement_id"], "archived": False})
+            lu = (await _service("GET", "/card_placements", params={"id": f"eq.{place['placement_id']}", "select": "archived_at"})).json()
+            assert lu[0]["archived_at"] is None
+
+            # Rattacher deux fois au même channel : le CRM le refuse, et le dit.
+            with pytest.raises(ToolError, match="already_attached"):
+                await client.call_tool("crm_card_attach", {"card_id": ident, "channel_id": REFONTE})
+            assert await _dernier_journal(DRISS[1]) == ("crm_card_attach", "refus_crm")
+    finally:
+        await _retirer(DRISS, CASES)
+        await _nettoyer()
+
+
+async def test_la_lectrice_ne_rattache_ni_n_archive_et_ne_voit_qu_un_rattachement():
+    """La lectrice, la famille ouverte : elle lit la billetterie du seed par « Refonte de site » seulement (§36), et le
+    CRM lui refuse de la rattacher, de régler ou d'archiver ce rattachement — refus uniformes, rien d'écrit."""
+    billetterie = (await _service("GET", "/cards", params={"title": f"eq.{BILLETTERIE}", "select": "id"})).json()[0]["id"]
+    avant = (await _service("GET", "/card_placements", params={"card_id": f"eq.{billetterie}", "select": "*", "order": "id"})).json()
+    await _poser(FARIDA, CASES)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(FARIDA)) as client:
+            await _attendre_visible(client, "crm_card_placement_archive")
+            fiche = (await client.call_tool("crm_card_get", {"card_id": billetterie})).structured_content
+            assert [p["channel"]["id"] for p in fiche["placements"]] == [REFONTE]
+            sien = fiche["placements"][0]["placement_id"]
+            appels = {
+                "crm_card_attach": {"card_id": billetterie, "channel_id": PROSPECTION},
+                "crm_card_placement_archive": {"placement_id": sien},
+                "crm_card_placement_update": {"placement_id": sien, "amount": 1},
+            }
+            for outil, arguments in appels.items():
+                with pytest.raises(ToolError):
+                    await client.call_tool(outil, arguments)
+                assert await _dernier_journal(FARIDA[1]) == (outil, "refus_crm"), outil
+        apres = (await _service("GET", "/card_placements", params={"card_id": f"eq.{billetterie}", "select": "*", "order": "id"})).json()
+        assert apres == avant
+    finally:
+        await _retirer(FARIDA, CASES)
+
+
+async def test_sans_la_case_ajouter_rattacher_n_existe_pas():
+    cases = [c for c in CASES if c != ("affaires", "ajouter")]
+    await _poser(DRISS, cases)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_outils(
+                client, lambda noms: "crm_card_move" in noms and "crm_card_attach" not in noms, "rattacher reste visible"
+            )
     finally:
         await _retirer(DRISS, cases)

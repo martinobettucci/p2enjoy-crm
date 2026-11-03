@@ -721,6 +721,11 @@ les adresses régénérées sont celles que les correspondants reçoivent désor
 
 ## 3. Migrations en attente
 
+**Sans migration, avec la prochaine livraison** (`CRM-111` T7, T8, T9) : la webapp de `main` (la fiche au rattachement de
+l'adresse, le bloc « Rattachements », la pastille « aussi rattachée à ») et l'**image `mcp` reconstruite** (les outils des
+rattachements, §9.2 quindecies de `docs/SPEC-mcp.md`). Le seed ne se joue jamais en production. Vérification : un
+assistant connecté voit `crm_card_attach` dès que « Affaires ▸ Ajouter » lui est ouvert.
+
 **La 158, après la 157** (`CRM-111` T6.2 ; sa ligne au §3.2). Le rendu d'un modèle prend le rattachement désigné ;
 une relance rend avec celui de son inscription. Aucune table ni donnée ; avec la webapp de `main`. Appliquée en
 développement le 2026-11-03.
