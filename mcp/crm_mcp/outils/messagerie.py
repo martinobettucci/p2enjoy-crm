@@ -15,11 +15,14 @@
 # @spec INC-335 (docs/BACKLOG.md, correctif de la décision 805, T3) — `crm_mail_send` n'emprunte que les identités de la
 #       personne, jamais celle du service ; sans `from_address`, il prend son identité par défaut, à défaut l'unique —
 #       docs/SPEC-mcp.md §9.2 decies (famille `messagerie`, action `ajouter`) ; docs/SPEC-mail-subsystem.md §14.2, §19.4
-"""La messagerie d'une affaire, sous l'identité de la personne : lire son fil, lire un message, envoyer un email.
+# @spec CRM-128 (docs/BACKLOG.md) — tranche T3 : le connecteur prépare et n'envoie jamais — `crm_mail_prepare`
+#       (successeur de `crm_mail_send`, retiré sans alias), `crm_mail_draft_list`, `crm_mail_draft_discard`, ancre `draft`,
+#       le lien de relecture ; docs/SPEC-mails-prepares.md §5 ; docs/SPEC-mcp.md §9.2 decies (révisée) ; décision 829
+"""La messagerie d'une affaire, sous l'identité de la personne : lire son fil, lire un message, PRÉPARER un email.
 
-Les mêmes tables et la même fonction que l'écran : `mail_messages`, `mail_outbound_identities`, et
-`public.queue_outbound_email`, qui garde l'écriture sur l'affaire, l'emprunt de l'identité, le quota et la signature. Le
-message part par le worker de `mail-sync`, puis paraît dans le fil de l'affaire comme un envoi depuis l'écran.
+Le connecteur n'envoie jamais (`CRM-128`, décision 829) : `public.prepare_email` écrit un mail préparé, que seule la
+personne relit et envoie depuis l'interface web ; la base refuse tout envoi sous le jeton du connecteur. Les lectures
+sont celles de l'écran : `mail_messages`, `mail_outbound_identities`, `mail_drafts`.
 """
 
 from __future__ import annotations
@@ -67,7 +70,7 @@ _ENTITES = (
     (re.compile(r"&quot;", re.IGNORECASE), '"'),
     (re.compile(r"&#0*39;|&apos;", re.IGNORECASE), "'"),
 )
-# Les codes de `queue_outbound_email` (migration 0030), nommés plutôt que fondus dans le refus uniforme : l'affaire est
+# Les codes de `queue_outbound_email` (migration 0030) puis de `prepare_email` (0162), nommés plutôt que fondus dans le refus uniforme : l'affaire est
 # lisible, la personne doit savoir pourquoi l'envoi échoue (décision 684).
 REFUS_ENVOI = {
     "forbidden": "you may read this affaire but not write on it, so you cannot send from it",
@@ -76,7 +79,15 @@ REFUS_ENVOI = {
     "recipient_required": "give at least one recipient",
     "body_required": "the message text is empty",
     "quota_exceeded": "the daily sending quota of this identity is reached; try again tomorrow",
+    # `CRM-128` (migration 0162, docs/SPEC-mails-prepares.md §3.3 à §3.5, §5).
+    "reply_outside_card": "you can only reply to an email of this affaire",
+    "draft_limit_reached": "200 prepared emails already await your review in this workspace; review or discard some first",
+    "draft_not_pending": "this prepared email was already sent or discarded",
+    "review_required": "an email prepared through the connector is sent from the CRM, after review",
 }
+#: Ce que l'assistant doit dire à la personne : rien n'est parti (docs/SPEC-mails-prepares.md §5).
+NOTE_RELECTURE = "This email is NOT sent. It awaits your review in the CRM: open review_url to review and send it."
+COLONNES_BROUILLON = "id,card_id,to_addrs,cc_addrs,subject,body_text,origin,created_at,card:cards(title)"
 
 
 def reduire_html_en_texte(html: str) -> str:
@@ -173,12 +184,33 @@ def choisir_identite(possibles: list[dict[str, Any]], adresse: str | None) -> di
     raise ToolError(f"Unknown sending address {adresse!r}; give one of: {adresses}.")
 
 
-def _refus_envoi(reponse: Reponse, card_id: str) -> ToolError:
+def _refus_envoi(reponse: Reponse, valeur: str, genre: str = "card") -> ToolError:
     corps = reponse.corps if isinstance(reponse.corps, dict) else {}
     code = str(corps.get("message") or "")
     if code in REFUS_ENVOI:
         return RefusCrm(f"Refusé par le CRM : {code} — {REFUS_ENVOI[code]}.")
-    return traduire_refus(reponse, "card", card_id)
+    return traduire_refus(reponse, genre, valeur)
+
+
+def lien_de_relecture(origine_webapp: str, brouillon: str) -> str:
+    """L'adresse qui ouvre la relecture d'un mail préparé dans l'inbox (docs/SPEC-mails-prepares.md §6.1)."""
+    return f"{origine_webapp}/inbox?brouillon={quote(brouillon, safe='')}"
+
+
+def brouillon_lu(b: dict[str, Any], origine_webapp: str) -> dict[str, Any]:
+    affaire = b.get("card") if isinstance(b.get("card"), dict) else {}
+    return {
+        "id": b["id"],
+        "card_id": b.get("card_id"),
+        "card_title": affaire.get("title"),
+        "to": b.get("to_addrs") or [],
+        "cc": b.get("cc_addrs") or [],
+        "subject": b.get("subject"),
+        "excerpt": extrait(b.get("body_text") or ""),
+        "origin": b.get("origin"),
+        "created_at": b.get("created_at"),
+        "review_url": lien_de_relecture(origine_webapp, b["id"]),
+    }
 
 
 def _lignes(reponse: Reponse, genre: str, valeur: Any) -> list[dict[str, Any]]:
@@ -194,7 +226,7 @@ def _une_ligne(reponse: Reponse, genre: str, valeur: Any) -> dict[str, Any]:
     return lignes[0]
 
 
-def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
+def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_webapp: str) -> None:
     async def crm_card_mail_list(
         card_id: Annotated[str, Field(description="The affaire (card) id")],
         limit: Annotated[int, Field(ge=1, le=100)] = 25,
@@ -329,8 +361,8 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         ),
     )
 
-    async def crm_mail_send(
-        card_id: Annotated[str, Field(description="The affaire (card) the email is sent from")],
+    async def crm_mail_prepare(
+        card_id: Annotated[str, Field(description="The affaire (card) the email will be sent from")],
         to: Annotated[list[str], Field(min_length=1, max_length=DESTINATAIRES_MAX, description="Recipient addresses")],
         body: Annotated[str, Field(min_length=1, max_length=100_000, description="Plain text; the signature is added")],
         subject: Annotated[str | None, Field(max_length=998, description="Required unless replying")] = None,
@@ -351,8 +383,8 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         copies = [a.strip() for a in (cc or []) if a.strip()]
         copies_cachees = [a.strip() for a in (bcc or []) if a.strip()]
         if in_reply_to_message_id is not None:
-            # La fonction ne vérifie pas que le message appartient à l'affaire, et l'écran ne propose de répondre qu'à
-            # un message du fil : l'outil tient la même règle (décision 684).
+            # La base le vérifie aussi (`reply_outside_card`, migration 0162) ; l'outil le dit avant l'appel, et en tire
+            # l'objet de la réponse (décision 684).
             origine = _une_ligne(
                 await crm.lire(
                     appel.jeton,
@@ -389,23 +421,24 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         }
         if in_reply_to_message_id is not None:
             arguments["p_in_reply_to_message_id"] = in_reply_to_message_id
-        reponse = await crm.rpc(appel.jeton, "queue_outbound_email", arguments)
+        reponse = await crm.rpc(appel.jeton, "prepare_email", arguments)
         if not reponse.reussie:
             raise _refus_envoi(reponse, card_id)
         return {
-            "outbox_id": reponse.corps,
-            "status": "queued",
+            "draft_id": reponse.corps,
+            "status": "pending_review",
             "from_address": identite["from_address"],
             "to": destinataires,
             "cc": copies,
             "bcc": copies_cachees,
             "subject": subject.strip(),
-            "note": "The email leaves through the CRM's queue and then appears in the affaire's thread.",
+            "review_url": lien_de_relecture(origine_webapp, str(reponse.corps)),
+            "note": NOTE_RELECTURE,
         }
 
     moteur.enregistrer(
         serveur,
-        crm_mail_send,
+        crm_mail_prepare,
         Declaration(
             famille="messagerie",
             action="ajouter",
@@ -413,13 +446,69 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             aussi=(("affaires", "consulter"),),
             autres=("message:in_reply_to_message_id",),
         ),
-        titre="Send an email from an affaire",
+        titre="Prepare an email from an affaire, for the person to review and send",
         description=(
-            "Sends an email from an affaire (card) through the CRM's sending queue, with the identity's signature; it "
-            "then appears in the affaire's thread. IRREVERSIBLE: the email leaves the CRM — confirm recipients, subject "
-            "and text with the person before calling. from_address picks one of YOUR sending identities; without it, your "
-            "default identity is used. The workspace's service identity is never used; in_reply_to_message_id replies to an email of this "
-            "affaire; bcc adds blind copies, delivered but never shown to the other recipients. No attachments."
+            "Prepares an email from an affaire (card). NOTHING IS SENT: the email waits in the person's prepared emails, "
+            "and only the person, in the CRM's web interface, reviews it, may change it, and sends it. Give the person "
+            "the returned review_url. from_address picks one of YOUR sending identities; without it, your default "
+            "identity is proposed. in_reply_to_message_id replies to an email of this affaire; bcc adds blind copies. "
+            "No attachments: the person may add them while reviewing."
+        ),
+    )
+
+    async def crm_mail_draft_list(
+        workspace: Annotated[str, Field(description="Workspace slug or id")],
+        card_id: Annotated[str | None, Field(description="Only the prepared emails of this affaire")] = None,
+        limit: Annotated[int, Field(ge=1, le=100)] = 25,
+        offset: Annotated[int, Field(ge=0)] = 0,
+    ) -> dict[str, Any]:
+        appel = appel_courant()
+        parametres = {
+            "workspace_id": f"eq.{appel.espace}",
+            "status": "eq.pending",
+            "select": COLONNES_BROUILLON,
+            "order": "created_at.asc,id.asc",
+            "limit": str(limit + 1),
+            "offset": str(offset),
+        }
+        if card_id is not None:
+            parametres["card_id"] = f"eq.{card_id}"
+        lignes = _lignes(await crm.lire(appel.jeton, "mail_drafts", parametres), "workspace", workspace)
+        return {
+            "offset": offset,
+            "has_more": len(lignes) > limit,
+            "drafts": [brouillon_lu(b, origine_webapp) for b in lignes[:limit]],
+        }
+
+    moteur.enregistrer(
+        serveur,
+        crm_mail_draft_list,
+        Declaration(famille="messagerie", action="consulter", espace="workspace:workspace", autres=("card:card_id",)),
+        titre="List your prepared emails awaiting review",
+        description=(
+            "Lists YOUR prepared emails that still await review in the CRM, oldest first, optionally for one affaire: "
+            "recipients, subject, an excerpt, and the review_url to give the person. Sent or discarded ones are not listed; "
+            "nobody else's prepared emails are ever visible."
+        ),
+    )
+
+    async def crm_mail_draft_discard(
+        draft_id: Annotated[str, Field(description="A prepared email awaiting review")],
+    ) -> dict[str, Any]:
+        appel = appel_courant()
+        reponse = await crm.rpc(appel.jeton, "discard_email_draft", {"p_draft_id": draft_id})
+        if not reponse.reussie:
+            raise _refus_envoi(reponse, draft_id, genre="draft")
+        return {"draft_id": draft_id, "status": "discarded"}
+
+    moteur.enregistrer(
+        serveur,
+        crm_mail_draft_discard,
+        Declaration(famille="messagerie", action="supprimer", espace="draft:draft_id"),
+        titre="Discard a prepared email",
+        description=(
+            "Discards one of YOUR prepared emails that still awaits review: it will never be sent and leaves the review "
+            "list. A prepared email already sent or discarded cannot be discarded."
         ),
         destructif=True,
     )

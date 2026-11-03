@@ -6223,7 +6223,8 @@ Les dix familles, et ce que chacune couvre :
   administrateurs de l'espace ;
 - **Temps** : saisies de temps, et le coût du personnel en lecture ;
 - **Objectifs** : tableaux d'objectifs ;
-- **Messagerie** : lecture des fils ; l'envoi compte comme « ajouter ».
+- **Messagerie** : lecture des fils ; préparer un email compte comme « ajouter », et l'envoi se fait toujours dans le
+  CRM, par vous.
 
 Les quatre actions sont **Consulter**, **Ajouter**, **Modifier** et **Supprimer**. « Supprimer » place en corbeille ou
 archive, avec une seule exception : **retirer une étape ou une transition d'un workflow** (« Workflows ▸ Supprimer »)
@@ -6503,17 +6504,20 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     l'expéditeur n'a écrit qu'en HTML, le texte en est extrait comme à l'écran, et l'assistant le sait. Chaque email dit
     aussi s'il est **lu ou non lu pour vous** ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)) ; le lire par l'assistant ne le marque pas lu, et aucun outil
     ne change cet état ;
-  - *Ajouter* : **envoyer un email depuis une affaire**, par la même file que le bouton « Envoyer » de la fiche : la
-    signature de l'identité est ajoutée, le message part, puis paraît dans le fil de l'affaire. L'assistant peut
-    répondre à un email **de cette affaire** ; l'objet est alors repris, précédé de « Re: ». Il peut ajouter une
-    **copie cachée** ; il ne joint **aucun fichier**.
+  - *Ajouter* : **préparer un email depuis une affaire**. L'assistant rédige un email entièrement libre, rattaché à son
+    affaire : destinataires, copie, **copie cachée**, objet et texte. Il peut répondre à un email **de cette affaire** ;
+    l'objet est alors repris, précédé de « Re: ». Il ne joint **aucun fichier**.
+  - *Consulter* (suite) : la liste de **vos** mails préparés qui attendent encore votre relecture ;
+  - *Supprimer* : **écarter** un de vos mails préparés ; il ne partira jamais.
 
-  **Un envoi est irréversible** : l'outil l'annonce, et l'assistant vous demande de confirmer les destinataires,
-  l'objet et le texte avant d'envoyer. Il envoie avec **votre** identité d'expédition, jamais avec celle du service. Si
-  vous ne lui dites pas laquelle, il prend votre adresse par défaut ; si vous en avez plusieurs sans adresse par défaut,
-  il vous demande laquelle.
-  L'envoi exige aussi la case « Affaires — Consulter », et le droit d'écrire sur l'affaire. Le quota journalier de
-  l'identité s'applique comme à l'écran.
+  **L'assistant n'envoie jamais rien.** Un mail préparé attend dans le CRM que **vous** le relisiez, le modifiiez si
+  besoin et l'envoyiez vous-même : l'assistant vous donne le lien qui l'ouvre. Rien ne permet de le faire partir
+  autrement, pas même en contournant l'assistant : le CRM refuse tout envoi venant du connecteur. Personne d'autre que
+  vous ne voit vos mails préparés. Le mail proposera **votre** identité d'expédition, jamais celle du service ; si vous
+  ne dites pas laquelle, votre adresse par défaut ; si vous en avez plusieurs sans adresse par défaut, l'assistant vous
+  demande laquelle. Préparer exige aussi la case « Affaires — Consulter » et le droit d'écrire sur l'affaire. Le quota
+  journalier de l'identité s'applique au moment où vous envoyez. Les relances automatiques ne changent pas : elles
+  partent seules, comme avant.
 
 ### 33.6 Ce que le connecteur n'offre pas
 

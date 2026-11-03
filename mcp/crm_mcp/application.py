@@ -15,6 +15,8 @@
 #       enregistrés et nommés au modèle (docs/SPEC-mcp.md §9.2 bis à quinquies)
 # @spec CRM-118 (docs/BACKLOG.md) tranches T2.a à T2.e — la famille `workflows` enregistrée, sa ligne dans les consignes au
 #       modèle (docs/SPEC-mcp.md §9.2 undecies)
+# @spec CRM-128 (docs/BACKLOG.md) — tranche T3 : la consigne « le connecteur n'envoie jamais » et l'origine de la webapp remise
+#       à la messagerie pour le lien de relecture (docs/SPEC-mails-prepares.md §5, décision 829)
 # @spec docs/SPEC-mcp.md §2 (un service, un hôte, `/mcp`), §3 (mandataire OAuth, état chiffré), §6.2 (audit puis
 #       politique, avant l'outil), §11 (`/sante`, `/pret`) ; docs/JOURNAL.md décision 627 (D1, D5, D8)
 # @spec Modèle : `evoliz_mcp/application.py` (p2enjoy-evoliz, révision 80a3e27). Écarts : aucune administration
@@ -84,8 +86,8 @@ you see and change exactly what you could in the CRM web app, never more.
   budget (and an occurrence when the budget is recurrent). Amounts are never added across currencies.
 - Time: crm_time_entry_set sets one cell of the time grid (a person, a day, one target); 0 clears it.
 - Goals: crm_goal_board_get reads a goal board as text; a block's progress (fill_percent) is entered, never computed.
-- Email: read crm_card_mail_list (then crm_mail_get) before replying. crm_mail_send is irreversible: confirm the
-  recipients, subject and text with the person before sending.
+- Email: read crm_card_mail_list (then crm_mail_get) before replying. The connector never sends an email:
+  crm_mail_prepare leaves it for the person to review and send in the CRM; give them its review_url.
 - Outside your rights or the CRM's, a call is refused with "Introuvable ou hors de votre périmètre"
   (FR: not found or outside your perimeter), whether the object exists or not.
 - Lists are paginated: use limit (max 100) and offset.
@@ -199,7 +201,8 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
     # `CRM-104` T6 : les canevas d'objectifs (docs/SPEC-mcp.md §9.2 nonies).
     objectifs.ajouter(serveur, moteur, crm)
     # `CRM-104` T7 : la messagerie d'une affaire (docs/SPEC-mcp.md §9.2 decies).
-    messagerie.ajouter(serveur, moteur, crm)
+    # `CRM-128` T3 : le connecteur prépare et n'envoie jamais ; le lien de relecture mène à la webapp.
+    messagerie.ajouter(serveur, moteur, crm, reglages.origine_webapp)
     # L'ordre compte : l'audit enveloppe la politique, qui précède l'outil (docs/SPEC-mcp.md §6.2).
     serveur.add_middleware(AuditOutils(registre, reglages.taille_max_reponse))
     serveur.add_middleware(PolitiqueOutils(moteur))

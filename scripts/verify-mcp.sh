@@ -39,6 +39,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+# @spec CRM-128 (docs/BACKLOG.md) T3, docs/SPEC-mails-prepares.md §8 : `JWT_SECRET` et `ANON_KEY` remis aux preuves
+#       d'intégration, pour la preuve de contournement du catalogue par le jeton du connecteur
 # @verifies CRM-115 (docs/BACKLOG.md) tranche T5 — le réseau et les volumes de la pile dérivés de son projet (`projet_pile`),
 #           jamais ceux de l'emplacement 0 écrits en dur (docs/SPEC-pile-par-session.md §9)
 # shellcheck source=scripts/lib/conteneur.sh
@@ -102,6 +104,9 @@ ENV_INTEGRATION="$TRAVAIL/integration.env"
 		printf 'SSO_OIDC_ISSUER=%s\nSSO_OIDC_CLIENT_ID=%s\n' "$(valeur SSO_OIDC_ISSUER)" "$(valeur SSO_OIDC_CLIENT_ID)"
 		printf 'SSO_DEV_ADMIN_PASSWORD=%s\nSITE_URL=%s\n' "$(valeur SSO_DEV_ADMIN_PASSWORD)" "$(valeur SITE_URL)"
 		printf 'SUPABASE_SERVICE_ROLE_KEY=%s\nDOMAINE=%s\n' "$(valeur SERVICE_ROLE_KEY)" "$(valeur MAIL_DEV_PERSONAL_DOMAIN)"
+		# `CRM-128` T3 : la preuve de contournement frappe le jeton du connecteur par son propre code (`jeton_interne.frapper`)
+		# et appelle PostgREST sans passer par le catalogue (docs/SPEC-mails-prepares.md §8). Secret de la pile de dev.
+		printf 'JWT_SECRET=%s\nSUPABASE_ANON_KEY=%s\n' "$(valeur JWT_SECRET)" "$(valeur ANON_KEY)"
 	} >"$ENV_INTEGRATION"
 )
 integration() { # integration <url du connecteur> [arguments pytest…]

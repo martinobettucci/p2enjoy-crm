@@ -739,10 +739,14 @@ n'est ni construit ni démarré, et ne reçoit aucun secret ; la plateforme se l
 déjà obligatoire, pour y mener : un lien sur son accueil, et une redirection `302` de ses chemins `/plateforme` et
 `/admin` (`CRM-102` T6, `docs/SPEC-mcp.md` §2.2). Sans `SITE_URL`, il refuse de démarrer en la nommant.
 
-**Il envoie des emails par la file de l'écran, jamais par un chemin à lui** (`CRM-104` T7, `docs/SPEC-mcp.md` §9.2
-*decies*). `crm_mail_send` appelle `queue_outbound_email` sous le jeton de la personne ; le worker de `mail-sync` soumet
-ensuite le message, comme pour un envoi depuis la fiche. Le connecteur ne détient donc aucun secret SMTP, et la
-dépendance nouvelle est indirecte : un envoi par le connecteur part si et seulement si `mail-sync` tourne.
+**Il n'envoie aucun email : il en prépare, que la personne relit et envoie dans la webapp** (`CRM-128`, décision 829,
+`docs/SPEC-mails-prepares.md` ; révise `CRM-104` T7). `crm_mail_prepare` appelle `prepare_email` sous le jeton de la
+personne et écrit dans `mail_drafts` ; seule la webapp appelle `send_email_draft`, qui passe par `queue_outbound_email`,
+puis le worker de `mail-sync` soumet le message comme tout envoi depuis la fiche. **La base tient la règle** : un
+déclencheur refuse toute insertion dans `mail_outbox` et `card_sequence_enrollments` sous un jeton qui porte
+`canal = mcp` ou `iss = p2enjoy-crm/mcp` (`app.via_connector`). Le connecteur ne détient aucun secret SMTP. **Compromis**
+: la garde reconnaît le connecteur par les revendications que ses deux émetteurs de jetons, la fonction `session` et le
+connecteur, écrivent ; un troisième émetteur devrait être rangé par `app.via_connector`.
 
 ### 3.7 quater Le manuel — bucket `manual` (`CRM-117` ; spécifié le 2026-10-26 avant le code, révisé à l'écriture, décision 751)
 

@@ -856,7 +856,9 @@ connecteur paraît sur le canevas, avec son avancement.
 > mail préparé que seule la personne relit et envoie depuis l'interface web, `crm_mail_draft_list` liste ses mails
 > préparés en attente, `crm_mail_draft_discard` en écarte un (genre d'ancre `draft`). Même famille, actions `ajouter`,
 > `consulter` et `supprimer`, aucune case nouvelle. La base refuse tout envoi direct sous le jeton du connecteur
-> (`review_required`). Ce qui suit décrit l'état livré par `CRM-104` T7, jusqu'à la livraison de `CRM-128` T3.
+> (`review_required`). **Écrit en développement par `CRM-128` T3 le 2026-11-03** : ce qui suit décrit l'état livré par
+> `CRM-104` T7, en vigueur en production jusqu'à la livraison de `CRM-128` ; partout où il dit « envoyer », lire
+> « préparer » (`prepare_email` au lieu de `queue_outbound_email`, sans `destructiveHint`).
 
 **Trois outils** : lire les messages d'une affaire, en lire un, et **envoyer un email depuis une affaire** par la même
 file que l'écran (`envoi.ts`, `inbox.ts`) — `public.queue_outbound_email`, qui garde le droit d'écrire sur l'affaire,

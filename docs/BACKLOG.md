@@ -18482,9 +18482,15 @@ inbox et fiche).
       interne, et le recensement des voies d'envoi ; `0016` (195 politiques) et `0133` (32 levées 404) révisées ; suite
       pgTAP complète verte (139 fichiers). **Conséquence attendue** jusqu'à T3 : en développement, `crm_mail_send` est
       refusé par la base (`review_required`).
-- [ ] **T3 — connecteur** : `crm_mail_prepare`, `crm_mail_draft_list`, `crm_mail_draft_discard`, genre d'ancre `draft`,
+- [x] **T3 — connecteur**, vérifiée le 2026-11-03 : `crm_mail_prepare`, `crm_mail_draft_list`, `crm_mail_draft_discard`, genre d'ancre `draft`,
       `crm_mail_send` retiré, consignes ; pytest ; intégration contre le vrai Keycloak, dont le contournement du
       catalogue refusé par la base ; `docs/SPEC-mcp.md` §9.2 *decies* ; manuel §33.
+      Pytest 308 (outils déclarés, `crm_mail_send` absent, `prepare_email` seul appelé, lien de relecture, liste,
+      écarter, refus nommés) ; `scripts/verify-mcp.sh --rapide` 108 contrôles, intégration 81/81 en direct et à travers
+      Caddy, dont le contournement du catalogue : le jeton frappé par `jeton_interne.frapper` appelle
+      `queue_outbound_email`, `send_email_draft` et `armer_sequence_relance` par PostgREST, trois `403 review_required`,
+      rien d'écrit ; un mail préparé invisible et inécartable par une autre personne. Manuel §33.1 et §33.5 ; DAT §3.7 ter.
+      **En développement, jusqu'à T4, un mail préparé ne peut pas encore être envoyé** : l'écran de relecture manque.
 - [ ] **T4 — webapp** : `docs/DESIGN_SYSTEM.md` d'abord ; l'entrée « Mails préparés » de l'inbox, la relecture dans le
       formulaire d'envoi, « Écarter », l'adresse `/inbox?brouillon=<id>`, l'encadré de la fiche, la phrase de l'onglet
       « Connecteur MCP » ; unitaires, API, E2E, captures aux quatre paliers ; manuel (inbox, fiche).

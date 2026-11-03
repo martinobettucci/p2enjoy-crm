@@ -375,7 +375,7 @@
 							},
 							{
 								"type": "text",
-								"text": " : lecture des fils ; l'envoi compte comme « ajouter »."
+								"text": " : lecture des fils ; préparer un email compte comme « ajouter », et l'envoi se fait toujours dans le\nCRM, par vous."
 							}
 						]
 					}
@@ -3419,26 +3419,13 @@
 											"content": [
 												{
 													"type": "text",
-													"text": "envoyer un email depuis une affaire"
+													"text": "préparer un email depuis une affaire"
 												}
 											]
 										},
 										{
 											"type": "text",
-											"text": ", par la même file que le bouton « Envoyer » de la fiche : la\nsignature de l'identité est ajoutée, le message part, puis paraît dans le fil de l'affaire. L'assistant peut\nrépondre à un email "
-										},
-										{
-											"type": "strong",
-											"content": [
-												{
-													"type": "text",
-													"text": "de cette affaire"
-												}
-											]
-										},
-										{
-											"type": "text",
-											"text": " ; l'objet est alors repris, précédé de « Re: ». Il peut ajouter une\n"
+											"text": ". L'assistant rédige un email entièrement libre, rattaché à son\naffaire : destinataires, copie, "
 										},
 										{
 											"type": "strong",
@@ -3451,7 +3438,20 @@
 										},
 										{
 											"type": "text",
-											"text": " ; il ne joint "
+											"text": ", objet et texte. Il peut répondre à un email "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "de cette affaire"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " ;\nl'objet est alors repris, précédé de « Re: ». Il ne joint "
 										},
 										{
 											"type": "strong",
@@ -3468,6 +3468,72 @@
 										}
 									]
 								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Consulter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " (suite) : la liste de "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "vos"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " mails préparés qui attendent encore votre relecture ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Supprimer"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "écarter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " un de vos mails préparés ; il ne partira jamais."
+										}
+									]
+								}
 							]
 						]
 					},
@@ -3479,13 +3545,26 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "Un envoi est irréversible"
+										"text": "L'assistant n'envoie jamais rien."
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " : l'outil l'annonce, et l'assistant vous demande de confirmer les destinataires,\nl'objet et le texte avant d'envoyer. Il envoie avec "
+								"text": " Un mail préparé attend dans le CRM que "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "vous"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " le relisiez, le modifiiez si\nbesoin et l'envoyiez vous-même : l'assistant vous donne le lien qui l'ouvre. Rien ne permet de le faire partir\nautrement, pas même en contournant l'assistant : le CRM refuse tout envoi venant du connecteur. Personne d'autre que\nvous ne voit vos mails préparés. Le mail proposera "
 							},
 							{
 								"type": "strong",
@@ -3498,7 +3577,7 @@
 							},
 							{
 								"type": "text",
-								"text": " identité d'expédition, jamais avec celle du service. Si\nvous ne lui dites pas laquelle, il prend votre adresse par défaut ; si vous en avez plusieurs sans adresse par défaut,\nil vous demande laquelle.\nL'envoi exige aussi la case « Affaires — Consulter », et le droit d'écrire sur l'affaire. Le quota journalier de\nl'identité s'applique comme à l'écran."
+								"text": " identité d'expédition, jamais celle du service ; si vous\nne dites pas laquelle, votre adresse par défaut ; si vous en avez plusieurs sans adresse par défaut, l'assistant vous\ndemande laquelle. Préparer exige aussi la case « Affaires — Consulter » et le droit d'écrire sur l'affaire. Le quota\njournalier de l'identité s'applique au moment où vous envoyez. Les relances automatiques ne changent pas : elles\npartent seules, comme avant."
 							}
 						]
 					}

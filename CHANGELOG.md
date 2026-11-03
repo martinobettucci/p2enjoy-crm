@@ -13,7 +13,18 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### `CRM-128` — le connecteur MCP prépare les emails, il ne les envoie jamais (INC-341, décision 829)
+
+- **T2 (migration `0162`)** : une file de **mails préparés**, `mail_drafts`, que seule la personne au nom de laquelle un
+  mail a été préparé peut lire. `prepare_email` prépare un mail rattaché à son affaire ; `send_email_draft` l'envoie
+  avec le contenu relu, par la même porte que l'écran (signature, quota, journal) ; `discard_email_draft` l'écarte.
+  **La base refuse tout envoi venant du connecteur** : un déclencheur sur les deux files d'envoi rejette toute insertion
+  sous son jeton (`review_required`), quelle que soit la fonction. Les relances automatiques ne changent pas.
+- **T3 (image `mcp`)** : `crm_mail_send` est retiré. `crm_mail_prepare` prépare un email et rend le lien de relecture ;
+  `crm_mail_draft_list` liste vos mails préparés en attente ; `crm_mail_draft_discard` en écarte un. Famille
+  « Messagerie », aucune case nouvelle. Manuel §33.1 et §33.5.
+- **À livrer ensemble** : la migration `0162`, l'image `mcp` et la webapp de T4 (l'écran de relecture). Sans l'écran,
+  un mail préparé ne peut pas être envoyé.
 
 ## [Publié]
 

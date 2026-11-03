@@ -12,6 +12,10 @@
 # @verifies CRM-074 (docs/BACKLOG.md) — tranche T4 : les pièces listées dans les deux lectures, `crm_mail_attachment_get`
 #           (ancre `attachment`, la pièce rendue en binaire — image ou ressource embarquée —, lue sous le jeton de la
 #           personne, refus d'une pièce non saine, trop grande, absente) ; docs/SPEC-pieces-jointes.md §6 ; décisions 788, 789
+# @verifies CRM-128 (docs/BACKLOG.md) — tranche T3 : le connecteur prépare et n'envoie jamais — `crm_mail_prepare` appelle
+#           `prepare_email` (jamais `queue_outbound_email`), sans `destructiveHint`, rend le lien de relecture ;
+#           `crm_mail_draft_list` (ses mails en attente, par espace et par affaire) ; `crm_mail_draft_discard` (ancre
+#           `draft`, `destructiveHint`) ; `crm_mail_send` absent ; refus nommés (docs/SPEC-mails-prepares.md §5 ; décision 829)
 """Le CRM simulé rend le fil d'une affaire (un message texte, un message HTML seul, une pièce jointe), un message d'une
 autre affaire, et trois identités dont celle d'une collègue ; la vraie base est éprouvée par
 `tests/test_integration_messagerie.py`."""
@@ -46,7 +50,10 @@ AUTRE_CARD = "a0000000-0000-4000-8000-0000000000c2"
 MESSAGE_TEXTE = "a0000000-0000-4000-8000-0000000000e1"
 MESSAGE_HTML = "a0000000-0000-4000-8000-0000000000e2"
 MESSAGE_AILLEURS = "a0000000-0000-4000-8000-0000000000e3"
-OUTILS = {"crm_card_mail_list", "crm_mail_get", "crm_mail_send", "crm_mail_attachment_get"}
+OUTILS = {"crm_card_mail_list", "crm_mail_get", "crm_mail_prepare", "crm_mail_draft_list", "crm_mail_draft_discard",
+          "crm_mail_attachment_get"}
+WEBAPP = "https://crm.exemple.test"
+BROUILLON = "a0000000-0000-4000-8000-0000000000d1"
 PIECE_PDF = "a0000000-0000-4000-8000-0000000000f1"
 PIECE_IMAGE = "a0000000-0000-4000-8000-0000000000f2"
 PIECE_INFECTEE = "a0000000-0000-4000-8000-0000000000f3"
@@ -61,6 +68,8 @@ class CrmMessagerie(CrmSimule):
         super().__init__()
         self.lectures: list[tuple[str, dict[str, str]]] = []
         self.envois: list[dict[str, Any]] = []
+        self.fonctions: list[str] = []
+        self.ecartes: list[dict[str, Any]] = []
         self.refus_envoi: tuple[int, Any] | None = None
         self.objets_lus: list[tuple[str, str]] = []
         self.objets = {"ws/m1/pdf": OCTETS_PDF, "ws/m1/png": OCTETS_PNG}
@@ -123,7 +132,7 @@ class CrmMessagerie(CrmSimule):
 
     async def table_messagerie(self, requete: Request) -> Response:
         nom = requete.path_params["table"]
-        if nom not in ("mail_messages", "mail_outbound_identities", "cards", "mail_attachments"):
+        if nom not in ("mail_messages", "mail_outbound_identities", "cards", "mail_attachments", "mail_drafts"):
             return await self.table(requete)
         if self._personne(requete) is None:
             return JSONResponse({"message": "JWT invalide"}, status_code=401)
@@ -135,19 +144,30 @@ class CrmMessagerie(CrmSimule):
             lignes = self.messages()
         elif nom == "mail_attachments":
             lignes = self.pieces()
+        elif nom == "mail_drafts":
+            lignes = self.brouillons()
         else:
             lignes = self.identites
         filtres = {k: v.removeprefix("eq.") for k, v in parametres.items() if v.startswith("eq.")}
         return JSONResponse([l for l in lignes if all(str(l.get(k)) == v for k, v in filtres.items() if k in l)])
 
+    def brouillons(self) -> list[dict[str, Any]]:
+        return [
+            {"id": BROUILLON, "workspace_id": ESPACE_A, "card_id": CARD, "status": "pending", "to_addrs": ["a@b.test"],
+             "cc_addrs": [], "subject": "Proposition", "body_text": "Bonjour,   voici " + "y" * 400, "origin": "mcp",
+             "created_at": "2026-11-03T10:00:00Z", "card": {"title": "Refonte"}},
+        ]
+
     async def rpc_messagerie(self, requete: Request) -> Response:
-        if requete.path_params["fonction"] != "queue_outbound_email":
+        fonction = requete.path_params["fonction"]
+        if fonction not in ("queue_outbound_email", "prepare_email", "discard_email_draft"):
             return await self.rpc(requete)
+        self.fonctions.append(fonction)
         corps = await requete.json()
-        self.envois.append(corps)
+        (self.ecartes if fonction == "discard_email_draft" else self.envois).append(corps)
         if self.refus_envoi is not None:
             return JSONResponse(self.refus_envoi[1], status_code=self.refus_envoi[0])
-        return JSONResponse("outbox-1")
+        return JSONResponse(None if fonction == "discard_email_draft" else "draft-1")
 
     def application(self) -> Starlette:
         return Starlette(routes=[
@@ -168,11 +188,11 @@ class Monde:
                                       identite_du_jeton=lambda _j: THOMAS)
         self.mcp = FastMCP("test")
         reference.ajouter(self.mcp, self.moteur, self.crm)
-        messagerie.ajouter(self.mcp, self.moteur, self.crm)
+        messagerie.ajouter(self.mcp, self.moteur, self.crm, WEBAPP)
         self.mcp.add_middleware(AuditOutils(self.moteur.registre, 200_000))
         self.mcp.add_middleware(PolitiqueOutils(self.moteur))
         self.simule.membres = {"sujet-thomas": {ESPACE_A: "editor"}}
-        self.simule.droits |= {("sujet-thomas", ESPACE_A, "messagerie", a) for a in ("consulter", "ajouter")}
+        self.simule.droits |= {("sujet-thomas", ESPACE_A, "messagerie", a) for a in ("consulter", "ajouter", "supprimer")}
         self.simule.droits |= {("sujet-thomas", ESPACE_A, "affaires", "consulter")}
 
     async def appel(self, outil: str, arguments: dict[str, Any]) -> Any:
@@ -212,17 +232,27 @@ def test_le_html_est_reduit_comme_a_l_ecran() -> None:
     assert objet_de_reponse(" RE : Devis ") == "RE : Devis"
 
 
-async def test_trois_outils_l_envoi_destructif_avec_sa_case_aussi(monde: Monde) -> None:
+async def test_le_connecteur_prepare_et_n_envoie_jamais(monde: Monde) -> None:
     declares = {n: d for n, d in monde.moteur.declarations.items() if d.famille == "messagerie"}
     assert set(declares) == OUTILS
+    assert "crm_mail_send" not in monde.moteur.declarations
     assert (declares["crm_mail_get"].action, declares["crm_mail_get"].espace) == ("consulter", "message:message_id")
-    envoi = declares["crm_mail_send"]
-    assert (envoi.action, envoi.espace, envoi.aussi, envoi.autres) == (
+    preparation = declares["crm_mail_prepare"]
+    assert (preparation.action, preparation.espace, preparation.aussi, preparation.autres) == (
         "ajouter", "card:card_id", (("affaires", "consulter"),), ("message:in_reply_to_message_id",)
     )
+    assert (declares["crm_mail_draft_list"].action, declares["crm_mail_draft_list"].espace,
+            declares["crm_mail_draft_list"].autres) == ("consulter", "workspace:workspace", ("card:card_id",))
+    assert (declares["crm_mail_draft_discard"].action, declares["crm_mail_draft_discard"].espace) == (
+        "supprimer", "draft:draft_id"
+    )
     outils = await monde.outils()
-    assert outils["crm_mail_send"].annotations.destructive_hint is True
-    assert outils["crm_mail_send"].annotations.read_only_hint is False
+    assert "crm_mail_send" not in outils
+    # PRÉPARER NE SORT RIEN DU CRM : pas d'annonce destructive ; écarter est définitif, et le dit.
+    assert outils["crm_mail_prepare"].annotations.destructive_hint is not True
+    assert outils["crm_mail_prepare"].annotations.read_only_hint is False
+    assert outils["crm_mail_draft_discard"].annotations.destructive_hint is True
+    assert outils["crm_mail_draft_list"].annotations.read_only_hint is True
     assert outils["crm_card_mail_list"].annotations.read_only_hint is True
 
 
@@ -255,14 +285,19 @@ async def test_un_message_rend_son_corps_affichable_jamais_le_html(monde: Monde)
     assert texte["body_from_html"] is False and [p["id"] for p in texte["attachments"]] == [PIECE_PDF, PIECE_INFECTEE]
 
 
-async def test_l_envoi_passe_par_la_file_avec_l_identite_designee(monde: Monde) -> None:
-    rendu = await monde.appel("crm_mail_send", {"card_id": CARD, "to": [" client@exemple.test ", ""], "subject": " Suite ",
+async def test_la_preparation_passe_par_prepare_email_avec_l_identite_designee(monde: Monde) -> None:
+    rendu = await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": [" client@exemple.test ", ""], "subject": " Suite ",
                                                "body": "Bonjour", "cc": ["chef@exemple.test"]})
     # L'identité de Sabine, lisible par la RLS (supervision), n'est pas empruntable : l'unique possible est prise.
     assert monde.simule.envois[-1] == {"p_card_id": CARD, "p_identity_id": "id-thomas", "p_to": ["client@exemple.test"],
                                        "p_subject": "Suite", "p_body_text": "Bonjour", "p_cc": ["chef@exemple.test"],
                                        "p_bcc": []}
-    assert (rendu["outbox_id"], rendu["status"], rendu["from_address"]) == ("outbox-1", "queued", "Thomas@Atelier.test")
+    assert (rendu["draft_id"], rendu["status"], rendu["from_address"]) == ("draft-1", "pending_review", "Thomas@Atelier.test")
+    # LE LIEN DE RELECTURE, et la phrase qui dit que rien n'est parti (docs/SPEC-mails-prepares.md §5).
+    assert rendu["review_url"] == "https://crm.exemple.test/inbox?brouillon=draft-1"
+    assert rendu["note"].startswith("This email is NOT sent.")
+    # JAMAIS LA FILE D'ENVOI.
+    assert monde.simule.fonctions == ["prepare_email"]
     lecture = next(p for n, p in monde.simule.lectures if n == "mail_outbound_identities")
     assert lecture["workspace_id"] == f"eq.{ESPACE_A}"
 
@@ -271,17 +306,17 @@ async def test_plusieurs_identites_sans_defaut_exigent_une_adresse(monde: Monde)
     monde.simule.identites.append({"id": "id-thomas-2", "workspace_id": ESPACE_A, "label": "Thomas bis",
                                    "from_address": "devis@atelier.test", "owner_id": "sujet-thomas"})
     with pytest.raises(ToolError, match="none is your default; give from_address, one of: Thomas@Atelier.test, devis@atelier.test"):
-        await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b"})
+        await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b"})
     assert monde.simule.envois == []
-    await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
+    await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
                                         "from_address": "DEVIS@atelier.test"})
     assert monde.simule.envois[-1]["p_identity_id"] == "id-thomas-2"
     with pytest.raises(ToolError, match="Unknown sending address 'sabine@atelier.test'"):
-        await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
+        await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
                                             "from_address": "sabine@atelier.test"})
     monde.simule.identites = [i for i in monde.simule.identites if i["owner_id"] == "sujet-sabine"]
     with pytest.raises(ToolError, match="no_sending_identity"):
-        await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b"})
+        await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b"})
 
 
 async def test_sans_adresse_l_identite_par_defaut_de_la_personne(monde: Monde) -> None:
@@ -289,7 +324,7 @@ async def test_sans_adresse_l_identite_par_defaut_de_la_personne(monde: Monde) -
     # par libellé (« Thomas » précède « Thomas bis »).
     monde.simule.identites.append({"id": "id-thomas-2", "workspace_id": ESPACE_A, "label": "Thomas bis",
                                    "from_address": "devis@atelier.test", "owner_id": "sujet-thomas", "is_default": True})
-    rendu = await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b"})
+    rendu = await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b"})
     assert monde.simule.envois[-1]["p_identity_id"] == "id-thomas-2"
     assert rendu["from_address"] == "devis@atelier.test"
     lecture = next(p for n, p in monde.simule.lectures if n == "mail_outbound_identities")
@@ -301,41 +336,42 @@ async def test_l_identite_de_service_n_est_jamais_empruntee(monde: Monde) -> Non
     # refuserait (`identity_not_available`), et l'outil ne tente pas un envoi voué au refus.
     monde.simule.identites.append({"id": "id-service", "workspace_id": ESPACE_A, "label": "Service",
                                    "from_address": "contact@atelier.test", "owner_id": None, "is_default": True})
-    await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b"})
+    await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b"})
     assert monde.simule.envois[-1]["p_identity_id"] == "id-thomas"
     with pytest.raises(ToolError, match="Unknown sending address 'contact@atelier.test'; give one of: Thomas@Atelier.test"):
-        await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
+        await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
                                             "from_address": "contact@atelier.test"})
     assert len(monde.simule.envois) == 1
 
 
 async def test_une_reponse_vise_un_message_de_l_affaire_et_prefixe_l_objet(monde: Monde) -> None:
-    await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["client@exemple.test"], "body": "Merci",
+    await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["client@exemple.test"], "body": "Merci",
                                         "in_reply_to_message_id": MESSAGE_TEXTE})
     assert monde.simule.envois[-1]["p_subject"] == "Re: Devis"
     assert monde.simule.envois[-1]["p_in_reply_to_message_id"] == MESSAGE_TEXTE
     with pytest.raises(ToolError, match="reply_outside_card"):
-        await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["x@y.test"], "body": "b",
+        await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["x@y.test"], "body": "b",
                                             "in_reply_to_message_id": MESSAGE_AILLEURS})
     with pytest.raises(ToolError, match="Give a subject"):
-        await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["x@y.test"], "body": "b"})
+        await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["x@y.test"], "body": "b"})
     assert len(monde.simule.envois) == 1
 
 
-async def test_les_refus_de_la_file_sont_nommes(monde: Monde) -> None:
+async def test_les_refus_de_la_preparation_sont_nommes(monde: Monde) -> None:
     arguments = {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b"}
     for statut, code, attendu in (
         (403, {"code": "42501", "message": "forbidden"}, "forbidden — you may read this affaire but not write"),
         (403, {"code": "42501", "message": "identity_not_available"}, "identity_not_available"),
         (400, {"code": "23514", "message": "card_not_available"}, "card_not_available — the affaire is archived"),
-        (409, {"code": "23505", "message": "quota_exceeded"}, "quota_exceeded — the daily sending quota"),
+        (400, {"code": "23514", "message": "draft_limit_reached"}, "draft_limit_reached — 200 prepared emails"),
+        (403, {"code": "42501", "message": "review_required"}, "review_required — an email prepared through the connector"),
     ):
         monde.simule.refus_envoi = (statut, code)
         with pytest.raises(ToolError, match=attendu):
-            await monde.appel("crm_mail_send", arguments)
+            await monde.appel("crm_mail_prepare", arguments)
     monde.simule.refus_envoi = (403, {"code": "42501", "message": "permission denied for table"})
     with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre : affaire"):
-        await monde.appel("crm_mail_send", arguments)
+        await monde.appel("crm_mail_prepare", arguments)
 
 
 async def test_un_message_illisible_est_le_refus_uniforme(monde: Monde) -> None:
@@ -355,8 +391,8 @@ async def test_l_etat_lu_est_rendu_par_les_deux_lectures_sans_marquer(monde: Mon
     assert not any("mark_message" in str(n) or "mark_message" in str(p) for n, p in monde.simule.lectures)
 
 
-async def test_la_copie_cachee_est_transmise_a_la_file_et_rendue(monde: Monde) -> None:
-    rendu = await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["client@exemple.test"], "subject": "s",
+async def test_la_copie_cachee_est_transmise_et_rendue(monde: Monde) -> None:
+    rendu = await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["client@exemple.test"], "subject": "s",
                                                "body": "b", "bcc": [" direction@exemple.test ", ""]})
     assert monde.simule.envois[-1]["p_bcc"] == ["direction@exemple.test"]
     assert rendu["bcc"] == ["direction@exemple.test"]
@@ -364,7 +400,7 @@ async def test_la_copie_cachee_est_transmise_a_la_file_et_rendue(monde: Monde) -
     # aucune.
     assert "p_attachments" not in monde.simule.envois[-1]
     with pytest.raises(ToolError):
-        await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
+        await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
                                             "attachments": ["x"]})
 
 
@@ -410,3 +446,41 @@ async def test_un_objet_plus_grand_que_sa_ligne_ne_le_dit_est_interrompu(monde: 
          "mime_type": "application/pdf", "size_bytes": 4, "av_status": "clean", "storage_path": "ws/m1/pdf"}])
     with pytest.raises(ToolError, match="attachment_too_large"):
         await monde.appel("crm_mail_attachment_get", {"attachment_id": PIECE_PDF})
+
+
+async def test_la_liste_rend_ses_mails_en_attente_avec_leur_lien(monde: Monde) -> None:
+    rendu = await monde.appel("crm_mail_draft_list", {"workspace": ESPACE_A, "card_id": CARD, "limit": 5})
+    assert rendu["has_more"] is False
+    (brouillon,) = rendu["drafts"]
+    assert (brouillon["id"], brouillon["card_id"], brouillon["card_title"], brouillon["to"], brouillon["origin"]) == (
+        BROUILLON, CARD, "Refonte", ["a@b.test"], "mcp"
+    )
+    assert brouillon["excerpt"].startswith("Bonjour, voici yyy") and len(brouillon["excerpt"]) == 280
+    assert brouillon["review_url"] == f"https://crm.exemple.test/inbox?brouillon={BROUILLON}"
+    lecture = next(p for n, p in monde.simule.lectures if n == "mail_drafts")
+    # SEULS LES MAILS EN ATTENTE, de l'espace résolu, de l'affaire demandée, du plus ancien au plus récent ; la RLS fait
+    # le reste (la personne seule).
+    assert (lecture["workspace_id"], lecture["status"], lecture["card_id"], lecture["order"], lecture["limit"]) == (
+        f"eq.{ESPACE_A}", "eq.pending", f"eq.{CARD}", "created_at.asc,id.asc", "6"
+    )
+
+
+async def test_ecarter_un_mail_prepare(monde: Monde) -> None:
+    monde.simule.brouillons = lambda: [{"id": BROUILLON, "workspace_id": ESPACE_A}]  # l'ancre se résout par l'espace
+    rendu = await monde.appel("crm_mail_draft_discard", {"draft_id": BROUILLON})
+    assert rendu == {"draft_id": BROUILLON, "status": "discarded"}
+    assert monde.simule.ecartes == [{"p_draft_id": BROUILLON}]
+    monde.simule.refus_envoi = (400, {"code": "23514", "message": "draft_not_pending"})
+    with pytest.raises(ToolError, match="draft_not_pending — this prepared email was already sent or discarded"):
+        await monde.appel("crm_mail_draft_discard", {"draft_id": BROUILLON})
+    # Résolu par l'ancre puis disparu (envoyé et purgé entre-temps) : le 404 de la base, nommé comme tout 404 (CRM-120).
+    monde.simule.refus_envoi = (404, {"code": "P0002", "message": "draft_not_found"})
+    with pytest.raises(ToolError, match="Refusé par le CRM : draft_not_found"):
+        await monde.appel("crm_mail_draft_discard", {"draft_id": BROUILLON})
+
+
+async def test_un_mail_prepare_d_autrui_est_le_refus_uniforme_sans_appel(monde: Monde) -> None:
+    monde.simule.brouillons = lambda: []
+    with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre : mail préparé"):
+        await monde.appel("crm_mail_draft_discard", {"draft_id": BROUILLON})
+    assert monde.simule.ecartes == []

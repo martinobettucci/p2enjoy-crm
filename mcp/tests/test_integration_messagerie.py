@@ -1,8 +1,7 @@
 # @verifies CRM-104 (docs/BACKLOG.md) — tranche T7 : les trois outils de la famille `messagerie` contre le vrai Keycloak,
 #           la vraie base et le vrai service `mcp`, par le parcours OAuth réel
 # @verifies docs/SPEC-mcp.md §13 (par outil : succès, refus par la matrice, refus par le CRM malgré la matrice ouverte,
-#           journal écrit), §9.2 decies (le fil dans l'ordre, la réponse par la file de l'écran, l'envoi constaté dans
-#           `mail_outbox` sans relève réelle) ; docs/SPEC-mail-subsystem.md §19.4 (le quota de l'identité)
+#           journal écrit), §9.2 decies (le fil dans l'ordre ; l'envoi, révisé par `CRM-128` : préparé, jamais en file)
 # @verifies CRM-057 (docs/BACKLOG.md) — tranche 2 : `read` est l'état DE LA PERSONNE, lu dans la vraie base, et lire par le
 #           connecteur n'écrit aucune lecture ; docs/SPEC-mail-subsystem.md §18 bis.5 ; décision 708 (M1 B)
 # @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : la copie cachée du connecteur arrive dans la vraie file ;
@@ -10,21 +9,29 @@
 # @verifies CRM-074 (docs/BACKLOG.md) — tranche T4 : une pièce saine lue en binaire par Driss sous son propre jeton, par la
 #           vraie API de stockage et sa politique (migration 0029) ; une pièce infectée refusée ; la lectrice, à qui la RLS
 #           cache l'affaire, refusée ; docs/SPEC-pieces-jointes.md §6 ; décisions 788 et 789
+# @verifies CRM-128 (docs/BACKLOG.md) — tranche T3 : préparer ne fait rien partir (le mail préparé en base, aucune ligne en
+#           file), lister et écarter, la personne seule ; et, EN CONTOURNANT LE CATALOGUE, le jeton frappé par le code du
+#           connecteur refusé par la base sur `queue_outbound_email`, `send_email_draft` et `armer_sequence_relance`
+#           (`review_required`, rien d'écrit) ; docs/SPEC-mails-prepares.md §4.2, §5, §8 ; décision 829 ; CLAUDE.md §10
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
 LE SEED : l'affaire « Refonte du site vitrine » (`c1`) porte deux messages reçus, « Demande de devis — refonte » puis sa
-réponse ; Driss, business developer, emprunte sa propre identité « Envoi de Driss Lemoine ». L'envoi en file est effacé,
-le quota de l'identité remis tel quel ; les cases de la matrice que le seed n'accorde pas sont posées puis retirées."""
+réponse ; Driss, business developer, emprunte sa propre identité « Envoi de Driss Lemoine ». Les mails préparés et
+les envois éventuels sont effacés ; les cases de la matrice que le seed n'accorde pas sont posées puis retirées."""
 
 from __future__ import annotations
 
 import base64
 import hashlib
+import os
+import time
 
 import httpx2
 import pytest
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
+
+from crm_mcp.jeton_interne import Identite, frapper
 
 from .test_integration_budgets import _manquantes
 from .test_integration_contacts import _poser, _retirer
@@ -33,15 +40,20 @@ from .test_integration_oauth import FARIDA, MCP, _service, pytestmark  # noqa: F
 from .test_integration_recettes import DRISS, _attendre_outils, _attendre_visible, _dernier_journal, _jeton
 
 CARD = "5eed0000-0000-4000-8000-0000000000c1"
+ESPACE = "5eed0000-0000-4000-8000-000000000001"
 #: « Piste entrante à qualifier », que la lectrice lit ; `c1` est dans « Grands comptes », channel qu'elle ne lit pas.
 CARD_LUE = "5eed0000-0000-4000-8000-0000000000c6"
 OBJET = "Demande de devis — refonte"
 CORPS = "Envoi d'intégration du connecteur MCP."
 TOUTES = [("messagerie", "consulter"), ("messagerie", "ajouter"), ("affaires", "consulter")]
+#: « Refonte intranet Ville de Lyon », figée, écrite par Driss, sans cadence active : armer y passerait tous les contrôles.
+CARD_FIGEE = "5eed0000-0000-4000-8000-0000000000c4"
+SEQUENCE = "5e900000-0000-4000-8000-000000000001"
 
 
 async def _nettoyer() -> None:
     await _service("DELETE", "/mail_outbox", params={"card_id": f"eq.{CARD}", "body_text": f"like.{CORPS}*"})
+    await _service("DELETE", "/mail_drafts", params={"body_text": f"like.{CORPS}*"})
 
 
 async def _identite_de_driss() -> dict:
@@ -50,14 +62,21 @@ async def _identite_de_driss() -> dict:
     })).json()[0]
 
 
-async def test_lire_le_fil_et_repondre_par_la_file_de_l_ecran():
+async def _rien_en_file(card_id: str) -> None:
+    assert (await _service("GET", "/mail_outbox", params={
+        "card_id": f"eq.{card_id}", "body_text": f"like.{CORPS}*", "select": "id"})).json() == []
+
+
+async def test_lire_le_fil_et_preparer_une_reponse_qui_ne_part_pas():
     await _nettoyer()
     identite = await _identite_de_driss()
-    posees = await _manquantes(DRISS, TOUTES)
+    posees = await _manquantes(DRISS, TOUTES + [("messagerie", "supprimer")])
     await _poser(DRISS, posees)
     try:
         async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
-            await _attendre_visible(client, "crm_mail_send")
+            await _attendre_visible(client, "crm_mail_prepare")
+            # `crm_mail_send` N'EXISTE PLUS, toutes les cases de la famille ouvertes (docs/SPEC-mails-prepares.md §5).
+            assert "crm_mail_send" not in {o.name for o in await client.list_tools()}
 
             async def appeler(outil: str, arguments: dict) -> dict:
                 resultat = (await client.call_tool(outil, arguments)).structured_content
@@ -72,54 +91,108 @@ async def test_lire_le_fil_et_repondre_par_la_file_de_l_ecran():
             assert (lu["card_id"], lu["subject"]) == (CARD, OBJET)
             assert lu["body"] and lu["body_from_html"] is False
 
-            envoi = await appeler("crm_mail_send", {
+            prepare = await appeler("crm_mail_prepare", {
                 "card_id": CARD, "to": ["client@exterieur.test"], "body": CORPS,
                 "in_reply_to_message_id": premier["id"], "bcc": ["direction@exterieur.test"],
             })
-            assert (envoi["status"], envoi["from_address"], envoi["subject"]) == (
-                "queued", identite["from_address"], f"Re: {OBJET}"
+            assert (prepare["status"], prepare["from_address"], prepare["subject"]) == (
+                "pending_review", identite["from_address"], f"Re: {OBJET}"
             )
-            # L'ENVOI EST CONSTATÉ EN FILE, SANS RELÈVE RÉELLE : la ligne que l'écran aurait écrite, au nom de Driss.
-            ligne = (await _service("GET", "/mail_outbox", params={
-                "id": f"eq.{envoi['outbox_id']}", "select": "status,created_by,card_id,identity_id,in_reply_to_message_id,to_addrs,bcc_addrs",
+            assert prepare["review_url"].endswith(f"/inbox?brouillon={prepare['draft_id']}")
+            # LE MAIL PRÉPARÉ EST EN BASE, AU NOM DE DRISS, D'ORIGINE `mcp` — ET RIEN N'EST EN FILE D'ENVOI.
+            ligne = (await _service("GET", "/mail_drafts", params={
+                "id": f"eq.{prepare['draft_id']}",
+                "select": "status,origin,created_by,card_id,identity_id,in_reply_to_message_id,to_addrs,bcc_addrs",
             })).json()
-            assert ligne == [{"status": "queued", "created_by": DRISS[1], "card_id": CARD, "identity_id": identite["id"],
-                              "in_reply_to_message_id": premier["id"], "to_addrs": ["client@exterieur.test"],
-                              "bcc_addrs": ["direction@exterieur.test"]}]
+            assert ligne == [{"status": "pending", "origin": "mcp", "created_by": DRISS[1], "card_id": CARD,
+                              "identity_id": identite["id"], "in_reply_to_message_id": premier["id"],
+                              "to_addrs": ["client@exterieur.test"], "bcc_addrs": ["direction@exterieur.test"]}]
+            await _rien_en_file(CARD)
+
+            liste = await appeler("crm_mail_draft_list", {"workspace": "p2enjoy", "card_id": CARD})
+            assert prepare["draft_id"] in [d["id"] for d in liste["drafts"]]
+            ecarte = await appeler("crm_mail_draft_discard", {"draft_id": prepare["draft_id"]})
+            assert ecarte["status"] == "discarded"
+            assert (await _service("GET", "/mail_drafts", params={
+                "id": f"eq.{prepare['draft_id']}", "select": "status"})).json() == [{"status": "discarded"}]
+            with pytest.raises(ToolError, match="draft_not_pending"):
+                await client.call_tool("crm_mail_draft_discard", {"draft_id": prepare["draft_id"]})
+            await _rien_en_file(CARD)
     finally:
         await _retirer(DRISS, posees)
         await _nettoyer()
 
 
-async def test_le_quota_de_l_identite_est_un_refus_du_crm_malgre_la_matrice():
+async def test_un_mail_prepare_ne_se_lit_ni_ne_s_ecarte_par_une_autre_personne():
     await _nettoyer()
-    identite = await _identite_de_driss()
     posees = await _manquantes(DRISS, TOUTES)
     await _poser(DRISS, posees)
-    await _service("PATCH", "/mail_outbound_identities", params={"id": f"eq.{identite['id']}"}, json={"daily_quota": 0})
+    posees_farida = await _manquantes(FARIDA, [("messagerie", "consulter"), ("messagerie", "supprimer")])
+    await _poser(FARIDA, posees_farida)
     try:
         async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
-            await _attendre_visible(client, "crm_mail_send")
-            with pytest.raises(ToolError, match="quota_exceeded"):
-                await client.call_tool("crm_mail_send", {"card_id": CARD, "to": ["client@exterieur.test"],
-                                                         "subject": "Quota", "body": CORPS})
-            assert await _dernier_journal(DRISS[1]) == ("crm_mail_send", "refus_crm")
-        assert (await _service("GET", "/mail_outbox", params={
-            "card_id": f"eq.{CARD}", "body_text": f"like.{CORPS}*", "select": "id"})).json() == []
+            await _attendre_visible(client, "crm_mail_prepare")
+            prepare = (await client.call_tool("crm_mail_prepare", {
+                "card_id": CARD, "to": ["client@exterieur.test"], "subject": "À relire", "body": CORPS,
+            })).structured_content
+        async with Client(f"{MCP}/mcp", auth=await _jeton(FARIDA)) as client:
+            await _attendre_visible(client, "crm_mail_draft_discard")
+            liste = (await client.call_tool("crm_mail_draft_list", {"workspace": "p2enjoy"})).structured_content
+            assert prepare["draft_id"] not in [d["id"] for d in liste["drafts"]]
+            with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre : mail préparé"):
+                await client.call_tool("crm_mail_draft_discard", {"draft_id": prepare["draft_id"]})
+        assert (await _service("GET", "/mail_drafts", params={
+            "id": f"eq.{prepare['draft_id']}", "select": "status"})).json() == [{"status": "pending"}]
     finally:
-        await _service("PATCH", "/mail_outbound_identities", params={"id": f"eq.{identite['id']}"},
-                       json={"daily_quota": identite["daily_quota"]})
         await _retirer(DRISS, posees)
+        await _retirer(FARIDA, posees_farida)
         await _nettoyer()
 
 
-async def test_la_lectrice_lit_le_fil_et_la_matrice_lui_ferme_l_envoi():
+async def test_le_catalogue_contourne_le_jeton_du_connecteur_n_envoie_rien():
+    """`CLAUDE.md` §10 : la règle se prouve par une requête qui contourne l'interface. Le jeton est frappé par le code même
+    du connecteur (`jeton_interne.frapper`), pour Driss, et appelle PostgREST directement : les trois voies qui feraient
+    partir un courrier sont refusées par la base (docs/SPEC-mails-prepares.md §4.2, §8), et rien n'est écrit."""
+    await _nettoyer()
+    identite = await _identite_de_driss()
+    jeton = frapper(os.environ["JWT_SECRET"], Identite(DRISS[1], None, None, True, False, None), int(time.time()))
+    placement = (await _service("GET", "/card_placements", params={
+        "card_id": f"eq.{CARD_FIGEE}", "select": "id", "limit": "1"})).json()[0]["id"]
+    await _service("POST", "/mail_drafts", json={
+        "workspace_id": ESPACE, "card_id": CARD, "to_addrs": ["client@exterieur.test"], "body_text": CORPS,
+        "origin": "mcp", "created_by": DRISS[1]})
+    brouillon = (await _service("GET", "/mail_drafts", params={
+        "body_text": f"like.{CORPS}*", "select": "id"})).json()[0]["id"]
+    entetes = {"apikey": os.environ["SUPABASE_ANON_KEY"], "Authorization": f"Bearer {jeton}"}
+    appels = {
+        "queue_outbound_email": {"p_card_id": CARD, "p_identity_id": identite["id"], "p_to": ["client@exterieur.test"],
+                                 "p_subject": "Contournement", "p_body_text": CORPS},
+        "send_email_draft": {"p_draft_id": brouillon, "p_identity_id": identite["id"],
+                             "p_to": ["client@exterieur.test"], "p_body_text": CORPS},
+        "armer_sequence_relance": {"p_placement": placement, "p_sequence_id": SEQUENCE, "p_identity_id": identite["id"]},
+    }
+    try:
+        async with httpx2.AsyncClient(timeout=10) as http:
+            for fonction, arguments in appels.items():
+                reponse = await http.post(f"{API}/rest/v1/rpc/{fonction}", headers=entetes, json=arguments)
+                assert reponse.status_code == 403, (fonction, reponse.status_code, reponse.text)
+                assert reponse.json()["message"] == "review_required", (fonction, reponse.text)
+        await _rien_en_file(CARD)
+        assert (await _service("GET", "/card_sequence_enrollments", params={
+            "placement_id": f"eq.{placement}", "status": "eq.active", "select": "id"})).json() == []
+        assert (await _service("GET", "/mail_drafts", params={
+            "id": f"eq.{brouillon}", "select": "status"})).json() == [{"status": "pending"}]
+    finally:
+        await _nettoyer()
+
+
+async def test_la_lectrice_lit_le_fil_et_la_matrice_lui_ferme_la_preparation():
     posees = await _manquantes(FARIDA, [("messagerie", "consulter"), ("affaires", "consulter")])
     await _poser(FARIDA, posees)
     try:
         async with Client(f"{MCP}/mcp", auth=await _jeton(FARIDA)) as client:
             await _attendre_outils(
-                client, lambda noms: "crm_card_mail_list" in noms and "crm_mail_send" not in noms, "matrice attendue"
+                client, lambda noms: "crm_card_mail_list" in noms and "crm_mail_prepare" not in noms, "matrice attendue"
             )
             fil = (await client.call_tool("crm_card_mail_list", {"card_id": CARD_LUE})).structured_content
             assert await _dernier_journal(FARIDA[1]) == ("crm_card_mail_list", "ok")
@@ -129,28 +202,28 @@ async def test_la_lectrice_lit_le_fil_et_la_matrice_lui_ferme_l_envoi():
                 await client.call_tool("crm_card_mail_list", {"card_id": CARD})
             assert await _dernier_journal(FARIDA[1]) == ("crm_card_mail_list", "refus_crm")
             with pytest.raises(ToolError):
-                await client.call_tool("crm_mail_send", {"card_id": CARD_LUE, "to": ["client@exterieur.test"],
-                                                         "subject": "Interdit", "body": CORPS})
-        assert (await _service("GET", "/mail_outbox", params={
-            "card_id": f"eq.{CARD_LUE}", "body_text": f"like.{CORPS}*", "select": "id"})).json() == []
+                await client.call_tool("crm_mail_prepare", {"card_id": CARD_LUE, "to": ["client@exterieur.test"],
+                                                            "subject": "Interdit", "body": CORPS})
+        await _rien_en_file(CARD_LUE)
     finally:
         await _retirer(FARIDA, posees)
 
 
-async def test_la_lectrice_qui_envoie_est_refusee_par_le_crm_malgre_la_matrice_ouverte():
-    # La RLS ne lui montre aucune identité : ni la sienne, qu'elle n'a pas, ni celle du service, réservée aux
-    # administrateurs. Le refus vient donc de ce que le CRM lui rend, et rien ne part.
+async def test_la_lectrice_qui_prepare_est_refusee_par_le_crm_malgre_la_matrice_ouverte():
+    # La RLS ne lui montre aucune identité : elle n'en a pas. Le refus vient donc de ce que le CRM lui rend, et rien
+    # n'est préparé ni envoyé.
     posees = await _manquantes(FARIDA, TOUTES)
     await _poser(FARIDA, posees)
     try:
         async with Client(f"{MCP}/mcp", auth=await _jeton(FARIDA)) as client:
-            await _attendre_visible(client, "crm_mail_send")
+            await _attendre_visible(client, "crm_mail_prepare")
             with pytest.raises(ToolError, match="no_sending_identity"):
-                await client.call_tool("crm_mail_send", {"card_id": CARD_LUE, "to": ["client@exterieur.test"],
-                                                         "subject": "Interdit", "body": CORPS})
-            assert await _dernier_journal(FARIDA[1]) == ("crm_mail_send", "refus_crm")
-        assert (await _service("GET", "/mail_outbox", params={
-            "card_id": f"eq.{CARD_LUE}", "body_text": f"like.{CORPS}*", "select": "id"})).json() == []
+                await client.call_tool("crm_mail_prepare", {"card_id": CARD_LUE, "to": ["client@exterieur.test"],
+                                                            "subject": "Interdit", "body": CORPS})
+            assert await _dernier_journal(FARIDA[1]) == ("crm_mail_prepare", "refus_crm")
+        await _rien_en_file(CARD_LUE)
+        assert (await _service("GET", "/mail_drafts", params={
+            "body_text": f"like.{CORPS}*", "select": "id"})).json() == []
     finally:
         await _retirer(FARIDA, posees)
 
@@ -186,7 +259,6 @@ async def test_l_etat_lu_est_celui_de_la_personne_et_lire_ne_marque_pas():
             await _service("POST", "/mail_message_reads", json=avant)
 
 
-ESPACE = "5eed0000-0000-4000-8000-000000000001"
 CONTENU_PIECE = "Note d'intégration du connecteur : la pièce lue en binaire.\n".encode()
 
 
