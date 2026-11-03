@@ -119,9 +119,14 @@ Aucune suppression de valeur : vider, c'est écrire `'null'::jsonb` (`docs/SPEC-
 Un champ commun n'a pas d'étape : il n'est jamais `required` par la visibilité d'une étape, et jamais exigé à la
 création. Une **transition** peut en revanche l'exiger : « pour passer en Signé, le SIRET est renseigné ».
 
-- **`workflow_transition_required_fields`** reçoit une colonne `common_field_id`, FK `card_common_fields`. Une ligne
-  désigne **soit** `field_id`, **soit** `common_field_id`, jamais les deux (`CHECK`) ; l'unicité porte sur la transition
-  et le champ désigné. Le champ commun doit appartenir à l'**espace du workflow** (clé composite par `workspace_id`).
+- **Une table distincte, `workflow_transition_required_common_fields`** (`transition_id`, `common_field_id`,
+  `workspace_id`), clé primaire `(transition_id, common_field_id)` — **révisé par la décision 819** (2026-11-03). La
+  colonne `common_field_id` sur `workflow_transition_required_fields`, prévue d'abord, aurait remplacé sa clé primaire
+  `(transition_id, field_id)`. Or le connecteur MCP nomme son refus `already_required` d'après cette clé, et les fonctions
+  de photographie, de comparaison et de restauration des versions lisent `field_id` comme non nul. La table distincte les
+  laisse intactes. Le champ commun doit appartenir à l'**espace du workflow** : `workspace_id` est posé depuis la
+  transition, et une clé composite le relie à `card_common_fields`. Les mêmes politiques que pour les champs de workflow
+  s'appliquent : lecture par les membres, écriture et retrait par l'administrateur.
 - **La sixième vérification de `move_card`** (`docs/SPEC-form-composer.md` §6.7) contrôle l'union des champs de workflow
   exigés, lus sur les valeurs du **rattachement**, et des champs communs exigés, lus sur les valeurs de l'**affaire**.
   Le refus reste `missing_required_fields`, et sa liste nomme les deux sortes de champs.

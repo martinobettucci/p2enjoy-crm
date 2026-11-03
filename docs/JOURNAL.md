@@ -38556,3 +38556,20 @@ règle de `CLAUDE.md` demande, pour la modification de l'envoi, si le connecteur
 les variables par rattachement (base, formulaire d'envoi, connecteur). Les cadences s'inscrivent déjà à un
 rattachement depuis la `0119` (T2) : rien à refaire. **Persisté** : `docs/SPEC-rattachements.md` §7, backlog, ce journal.
 
+
+### décision 819 — `CRM-112` T2 : l'exigence d'un champ commun par une transition vit dans une table distincte
+
+*2026-11-03, session 4522fa9c (p2enjoy-crm-3a), arbitrage du responsable (`AskUserQuestion`).*
+
+**Question.** La spécification (§5) ajoutait `common_field_id` à `workflow_transition_required_fields`. Mesuré sur les
+migrations qui lisent cette table, le changement emporte trois choses :
+- la clé primaire `(transition_id, field_id)`, qu'il faut remplacer pour rendre `field_id` facultatif ;
+- le refus `already_required` du connecteur MCP, nommé d'après cette clé (`mcp/crm_mcp/outils/workflows_formulaire.py`) ;
+- les fonctions de photographie, de comparaison et de restauration des versions (0039, 0040, 0042, 0043, 0086, 0122),
+  qui lisent `field_id` comme non nul, ainsi que le `ON CONFLICT` de la restauration.
+
+**Options** : une table distincte, que `move_card`, les versions et les copies lisent en plus ; ou la colonne, comme
+spécifié, avec deux index uniques partiels, un `CHECK`, et la reprise du connecteur et de chaque lecteur.
+
+**Décision : la table distincte**, `workflow_transition_required_common_fields`. La spécification §5 est révisée. Le
+découpage de T2 ne change pas, et la migration de T2.a prend le premier numéro libre après 0154.
