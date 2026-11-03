@@ -2793,3 +2793,52 @@ Le seed **vérifie** l'état final, et s'arrête avec sa cause sinon : les cinq 
 PDF avec texte, le Word et l'Excel, `empty` pour le scan, aucun statut pour l'image. `Message-ID` fixe : rejouer le seed
 n'envoie rien de plus.
 
+
+## 36. Les rattachements multiples — `CRM-111` T8 (`docs/SPEC-rattachements.md` §12)
+
+*Écrit le 2026-11-03, avant le code.* Le §12 de la spécification exige cinq situations, posées **par les vraies
+fonctions**. Deux affaires les portent toutes ; elles ajoutent **une** carte visible au board de « Grands comptes », de
+« Refonte de site » et de « Maintenance », et rien d'autre : un rattachement archivé ou en sommeil n'y paraît pas.
+
+### 36.1 Les deux affaires
+
+| Affaire | Rattachement | Étape | Responsable | Montant | État |
+|---|---|---|---|---|---|
+| « Plateforme de billetterie — Musée des Confluences » | Conseil & IA › Grands comptes (la vente) | Négociation | Camille Aubert | 48 000 EUR | actif |
+| | Studio web › Refonte de site (la production) | Relance | Driss Lemoine | 36 000 EUR | actif |
+| « Infogérance applicative — Groupe Ardent » | Studio web › Maintenance | Relance | Driss Lemoine | 9 600 EUR | actif |
+| | Studio web › Refonte de site | Prospection | — | — | **archivé** |
+| | Conseil & IA › Grands comptes | Prospection | — | — | **en sommeil** jusqu'à J+30 |
+
+Les cinq situations du §12 : (1) la billetterie, deux channels de deux tracks, deux responsables, deux montants, deux
+étapes ; (2) l'infogérance, un rattachement archivé et un actif ; (3) l'infogérance, un rattachement en sommeil et un
+actif ; (4) la billetterie, deux rattachements du **même** workflow global, avec des valeurs de bloc différentes —
+`source` vaut « Salon » sur la vente et « Recommandation » sur la production ; (5) la lectrice, fermée à « Grands
+comptes », lit la billetterie par « Refonte de site » seulement : une partie commune, un bloc, et rien qui révèle l'autre.
+
+### 36.2 Le vrai chemin
+
+- **Création** : `creer_affaire(p_channel, p_titre)`, sous le jeton de Camille (la billetterie, dans « Grands comptes ») et
+  de Driss (l'infogérance, dans « Maintenance ») — l'étape initiale, le rattachement et l'événement `created`.
+- **Rattacher** : `attach_card(p_card, p_channel)`, sous le jeton de Camille — l'événement `attached`.
+- **Faire avancer** : `move_card(p_placement, to_step_id)`, transition déclarée par transition déclarée, sous le jeton du
+  responsable du rattachement.
+- **Responsable, montant, prochaine action** : la mise à jour du rattachement par l'API REST, sous le jeton de Camille —
+  le chemin de l'en-tête de la fiche.
+- **Valeurs de bloc** : l'écriture de `card_field_values` sur le rattachement (`on_conflict=placement_id,field_id`) — le
+  chemin du formulaire de la fiche.
+- **Archiver** : la mise à jour de `archived_at` du rattachement, sous le jeton de Camille — le geste du bloc
+  « Rattachements ». **Endormir** : `snooze_card(p_placement, until)`.
+
+### 36.3 Convergence
+
+Rejouer le seed ne crée rien de plus : chaque affaire est retrouvée par son titre dans son channel de naissance, chaque
+rattachement par son channel ; un geste n'est rejoué que si l'état n'est pas encore celui du tableau. L'échéance du sommeil
+est recalculée à J+30 à chaque passage, pour rester dans le futur. Le seed **vérifie** l'état final et s'arrête avec sa
+cause sinon : les cinq rattachements, leurs étapes, responsables, montants et états, les deux valeurs de `source`, et la
+lectrice qui lit un seul rattachement de la billetterie.
+
+### 36.4 Ce que les preuves en attendent
+
+Les preuves qui comptent les affaires d'un channel du seed sont révisées dans le même changement (§12 de la
+spécification, campagne E2E de T8) : une carte de plus dans « Grands comptes », « Refonte de site » et « Maintenance ».
