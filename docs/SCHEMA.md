@@ -2481,6 +2481,22 @@ uuid)` et `drop function public.mail_inbound_account_record_sync(uuid)`, **avec 
 d'avant** : l'image de `main` appelle `mail_inbound_account_record_sync` à chaque relève, et chaque relève échouerait sans
 elle.
 
+### Migration `0157` — les champs communs exigés dans les versions et les copies (`CRM-112` T2.c.1, décision 819 ; livrée en développement le 2026-11-03)
+
+`docs/SPEC-champs-communs.md` §5. Trois fonctions sont reprises de leur définition en base, chacune avec un seul ajout :
+- **`app.workflow_composition_document`** ajoute `required_common_fields` (`transition_id`, `common_field_id`, `key`),
+  seulement quand le workflow en exige. L'empreinte d'une composition sans exigence est inchangée.
+- **`app.appliquer_composition`** (la restauration) retire les exigences absentes du document et pose les autres. Un champ
+  archivé est refusé (`common_field_archived`). Le compte rendu ne change pas de forme.
+- **`public.copy_workflow_to_track`** copie les exigences sur les transitions de la copie, avec le même champ commun, et
+  contrôle leur nombre.
+
+Elle ajoute aussi **`app.audit_transition_required_common_fields`** et son déclencheur : `required_common_field_added` et
+`required_common_field_removed`, avec la clé du champ, au journal d'audit.
+
+**Retrait** : reposer les trois fonctions de leurs migrations précédentes (`0039`, `0122`, `0019` et suivantes, telles
+qu'en base avant la `0157`), puis retirer le déclencheur et la fonction d'audit.
+
 ### Migration `0156` — `move_card` lit les champs communs exigés (`CRM-112` T2.b, décisions 664 et 819 ; livrée en développement le 2026-11-03)
 
 `docs/SPEC-champs-communs.md` §5 ; `docs/SPEC-workflow-engine.md` §5.3. **`public.move_card`** est reprise à l'identique

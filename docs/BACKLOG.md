@@ -17413,9 +17413,15 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
             - sans régression : suite pgTAP **133 fichiers, 4 829 assertions**, et les 15 specs API qui appellent
               `move_card`, **292/292** ;
             - reste à T3 la résolution des libellés d'un refus qui nomme un champ commun.
-      - [ ] **T2.c — versions et copies** : photographie par identifiant et clé (0039, 0122) ; comparaison (0040,
-            0043) ; restauration (0042, 0086, 0122), refusée par `common_field_archived` ; copie vers un track (0019) ;
-            journal d'audit (0115) ; pgTAP ; API.
+      - [x] **T2.c.1 — versions, restauration, copies, audit** (0039, 0122, 0019, 0115). *Faite le 2026-11-03*,
+            migration `0157` :
+            - pgTAP `0146` **8/8**, dont l'empreinte inchangée sans exigence et le refus d'un champ archivé ;
+            - les 10 specs API de publication, de restauration, de copie et de comparaison, **146/146** ; suite pgTAP
+              sans rouge propre à l'unité (`0054` est rougie par la `0158` en cours de `CRM-111` T6.2, appliquée en
+              développement avant d'être poussée ; sa session est prévenue).
+      - [ ] **T2.c.2 — les comparaisons de versions** (0040, 0043) : la collection `required_common_fields` dans
+            `compare_workflow_versions` et `compare_workflow_with_source`, avec la liste fermée de la webapp
+            (`versions-workflow.ts`) et son libellé. Avec T3.
       - [ ] **T2.d — l'assistant IA** (0102, 0103) : une proposition vise un champ commun existant par sa clé, sans en
             créer ; pgTAP ; API.
 - [ ] **T3** — écrans : Réglages ▸ « Champs de l'affaire », exigence dans l'éditeur de workflow, partie commune de la

@@ -137,6 +137,15 @@ création. Une **transition** peut en revanche l'exiger : « pour passer en Sign
 - **Versions de workflow** (`CRM-078`) : la composition photographiée référence le champ commun par son **identifiant**
   et sa **clé** ; elle ne le copie pas. Restaurer une version qui exige un champ commun archivé est **refusé**
   (`common_field_archived`) **[proposition]**.
+  **Livré par T2.c.1 (migration `0157`)**.
+  - Le document de composition porte `required_common_fields` (`transition_id`, `common_field_id`, `key`) **seulement
+    quand le workflow en exige**. L'empreinte d'une composition sans exigence reste donc celle d'avant, et aucune copie
+    existante ne se découvre divergente.
+  - La restauration rétablit les exigences de la version ; une clé absente, celle d'une version antérieure, vaut
+    « aucune ».
+  - **Les comparaisons de versions** (`compare_workflow_versions`, `compare_workflow_with_source`) n'en parlent pas
+    encore : la webapp les lit par une liste fermée de collections, et la collection nouvelle arrive avec son écran (T2.c.2,
+    avec T3).
 - **Copies vers un track** (`copy_workflow_to_track`) : une copie reste dans l'espace, donc elle garde l'exigence telle
   quelle.
 - **Assistant IA** (`CRM-097`) : une proposition peut viser un champ commun existant comme exigence, par sa clé ; elle
