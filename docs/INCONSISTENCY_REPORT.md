@@ -8551,6 +8551,19 @@ défilement horizontal, mais ne le mesurent pas au moment de ces captures. **À 
 `main` au moment de la capture, et le conteneur qui devrait le porter (`docs/DESIGN_SYSTEM.md` §7, §12.6). Connecteur MCP :
 sans objet.
 
+**Resserré le 2026-11-03**, sur les captures du renouvellement d'avant livraison (`9e64cb73`), observées par planche
+(39 images à 390 et 900 px des écrans cités) :
+- **Ne sont plus décalées** : la fiche d'un contact, l'inbox, les modèles d'emails, la corbeille et le tableau des coûts.
+- **`CRM-077/corbeille-reaffectation-sm-390` n'est pas un défaut.** Le clic sur « Réaffecter », au bout de la ligne,
+  fait défiler le **conteneur du tableau**, comme le veut `docs/DESIGN_SYSTEM.md` §12.6 ; la page, elle, reste en place.
+- **Restent décalées, la page entière hors du bord** (titre compris) : `CRM-030/catalogue-liste-sm-390` et
+  `CRM-060/fiche-contact-detachement-390`. Le scénario du catalogue capture dans une boucle qui **rétrécit** la fenêtre de
+  1440 à 390 px sans recharger la page. Les preuves de palier ne mesurent que `document.documentElement`, jamais `main`.
+  `CRM-030/catalogue-liste-md-900` montre en outre le tiroir en transition (le motif d'INC-336).
+
+**Reste** : mesurer le défilement horizontal de `main` au moment de ces deux captures. La sonde est écrite ; elle n'a pu
+tourner, le serveur d'interface étant occupé par une autre campagne. Alors seulement décider si `main` déborde (défaut du
+produit, `docs/DESIGN_SYSTEM.md` §7) ou si seul le scénario garde un défilement d'une taille précédente.
 
 ### INC-338 — La cible 3/6 de `CRM-013` attend `api_tokens.token_hash` de `CRM-073`, qui a livré des webhooks sans jeton d'API
 
