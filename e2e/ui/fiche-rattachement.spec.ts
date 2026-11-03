@@ -7,6 +7,9 @@
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T7.3 : rattacher à un channel depuis la fiche — la liste offerte, la fiche
 //           du nouveau rattachement ouverte, la base relue ; la lectrice : commande éteinte, et `attach_card` refusé par son
 //           jeton (docs/SPEC-rattachements.md §5 ; docs/DESIGN_SYSTEM.md §5.83 ; CLAUDE.md §10)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T7.4 : retirer un rattachement — la confirmation, la base relue, le
+//           dernier éteint ; retirer celui de la fiche ouvre le restant ; le business developer : commande éteinte et
+//           `detach_card` refusé par son jeton (docs/SPEC-rattachements.md §4, §5 ; docs/DESIGN_SYSTEM.md §5.84)
 //           (docs/SPEC-rattachements.md §5, §8.1 ; docs/DESIGN_SYSTEM.md §5.82)
 //
 // Une affaire JETABLE de `refonte` (track « Studio web »), posée par la clé de service avec un montant de 12 000, que
@@ -22,6 +25,7 @@ import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/je
 const UNITE = 'CRM-111'
 const ADMIN = 'admin@p2enjoy.test'
 const LECTRICE = 'viewer@p2enjoy.test'
+const BIZDEV = 'bizdev@p2enjoy.test'
 const W = '5eed0000-0000-4000-8000-000000000001'
 const WORKFLOW_GLOBAL = '5eed0000-0000-4000-8000-000000000051'
 const ETAPE_INITIALE = '5eed0000-0000-4000-8000-000000000061'
@@ -236,5 +240,71 @@ test('la lectrice ne peut pas rattacher : la commande est éteinte, et `attach_c
 	expect(directe.status(), await directe.text()).toBe(403)
 	const lus = await request.get(rest(`card_placements?card_id=eq.${affaire}&select=id`), { headers: enTetesService() })
 	expect(await lus.json()).toHaveLength(1)
+})
+
+const channelsEnBase = async (requete: APIRequestContext): Promise<string[]> => {
+	const lus = await requete.get(rest(`card_placements?card_id=eq.${affaire}&select=channel_id`), { headers: enTetesService() })
+	return ((await lus.json()) as { channel_id: string }[]).map((l) => l.channel_id).sort()
+}
+
+test('l’administratrice retire un rattachement après confirmation ; le dernier ne se retire pas', async ({ page, request }) => {
+	await poser(request)
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto(fiche('studio-web/refonte'))
+	const bloc = page.getByTestId('bloc-rattachements')
+	const autre = bloc.getByTestId('ligne-rattachement').filter({ has: page.getByRole('link', { name: 'Conseil & IA › Grands comptes' }) })
+	await autre.getByTestId('ouvrir-retrait-rattachement').click()
+	const confirmation = autre.getByTestId('confirmation-retrait-rattachement')
+	await expect(confirmation).toContainText('Retirer le rattachement à Conseil & IA › Grands comptes ?')
+	await expect(confirmation.getByTestId('confirmer-retrait-rattachement')).toBeFocused()
+	await page.mouse.move(0, 0)
+	await capturer(page, 'fiche-retrait-confirmation-xl-1440', UNITE)
+	await confirmation.getByTestId('confirmer-retrait-rattachement').click()
+
+	await expect(bloc.getByTestId('ligne-rattachement')).toHaveCount(1)
+	expect(await channelsEnBase(request)).toEqual([REFONTE])
+	// Le fil nomme les deux gestes, jamais « Événement » (§5.84).
+	await expect(page.getByText('Rattachée à un channel')).toBeVisible()
+	await expect(page.getByText('Rattachement retiré')).toBeVisible()
+	// Le dernier : « Retirer » éteint, avec son motif.
+	await expect(bloc.getByTestId('ouvrir-retrait-rattachement')).toBeDisabled()
+	await expect(bloc.getByTestId('motif-retrait-dernier')).toBeVisible()
+	await capturer(page, 'fiche-retrait-dernier-xl-1440', UNITE)
+})
+
+test('retirer le rattachement de la fiche ouvre la fiche au rattachement restant', async ({ page, request }) => {
+	await poser(request)
+	await connecterAvecLeLabs(page, ADMIN)
+	// Palier 390, pris à l'ouverture de l'écran : redimensionnée sur place, la coquille laissait voir son tiroir (vu sur la
+	// capture). La confirmation tient dans la ligne, la page ne défile pas de côté.
+	await page.setViewportSize({ width: 390, height: 844 })
+	await page.goto(fiche('conseil-ia/grands-comptes'))
+	const courante = page.getByTestId('bloc-rattachements').locator('[aria-current="page"]')
+	await courante.getByTestId('ouvrir-retrait-rattachement').click()
+	await expect(courante.getByTestId('confirmation-retrait-rattachement')).toBeVisible()
+	expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+	await courante.getByTestId('confirmation-retrait-rattachement').scrollIntoViewIfNeeded()
+	await capturer(page, 'fiche-retrait-confirmation-sm-390', UNITE)
+	await courante.getByTestId('confirmer-retrait-rattachement').click()
+	await expect(page).toHaveURL(new RegExp(`/tracks/studio-web/refonte/cards/${affaire}$`))
+	expect(await channelsEnBase(request)).toEqual([REFONTE])
+})
+
+test('le business developer ne retire pas : la commande est éteinte, et `detach_card` refusé par son jeton', async ({ page, request }) => {
+	await poser(request)
+	await connecterAvecLeLabs(page, BIZDEV)
+	await page.goto(fiche('studio-web/refonte'))
+	const bloc = page.getByTestId('bloc-rattachements')
+	await expect(bloc.getByTestId('motif-retrait-administration')).toBeVisible()
+	for (const commande of await bloc.getByTestId('ouvrir-retrait-rattachement').all()) await expect(commande).toBeDisabled()
+	const [ligne] = (await (
+		await request.get(rest(`card_placements?card_id=eq.${affaire}&channel_id=eq.${GRANDS_COMPTES}&select=id`), { headers: enTetesService() })
+	).json()) as { id: string }[]
+	const directe = await request.post(rest('rpc/detach_card'), {
+		headers: enTetesAuthentifies(await jetonDe(BIZDEV)),
+		data: { p_placement: ligne!.id, discard_field_values: true },
+	})
+	expect(directe.status(), await directe.text()).toBe(403)
+	expect(await channelsEnBase(request)).toEqual([GRANDS_COMPTES, REFONTE].sort())
 })
 

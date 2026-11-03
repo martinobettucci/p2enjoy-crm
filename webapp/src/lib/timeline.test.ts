@@ -1,3 +1,4 @@
+// @verifies CRM-111 (docs/BACKLOG.md) T7.4 — `attached` et `detached` nommés et rangés (docs/DESIGN_SYSTEM.md §5.84)
 // @verifies CRM-069 (docs/BACKLOG.md) — tranche T2 : la pose et le retrait d'une étiquette rangés dans la famille « Champs » (docs/SPEC-etiquettes-digest.md §2.2)
 // @verifies CRM-044 (docs/BACKLOG.md) — fusion du fil, familles, filtres et résolution des libellés
 // @verifies CRM-062 (docs/BACKLOG.md) — tranche 3b : le vocabulaire à quatorze et le détail d'une
@@ -97,13 +98,17 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 	// du vocabulaire, aucune valeur jamais retirée, et les cinq familles restent cinq.
 	// RÉVISÉE PAR `CRM-068` T3a (décision 51) : `checklist_checked` et `checklist_unchecked`, écrits par la migration
 	// `0125`, portent le vocabulaire à VINGT-ET-UN, rangés dans « Champs » (décision 748, Q2) ; aucune famille nouvelle.
-	it('range les vingt-trois types livrés dans exactement cinq familles d’événements', () => {
+	it('range les vingt-cinq types livrés dans exactement cinq familles d’événements', () => {
+		// RÉVISÉE PAR `CRM-111` T7.4 (décision 51) : `attached` et `detached`, écrits par la migration `0148`, famille
+		// « Organisation », avec l'écran qui fait les deux gestes (docs/DESIGN_SYSTEM.md §5.84).
 		// RÉVISÉE PAR `CRM-069` T2 (décision 51) : `label_added` et `label_removed`, famille « Champs »
 		// (docs/SPEC-etiquettes-digest.md §2.2).
 		// RÉVISÉE, NON RETIRÉE (mécanisme de la décision 51) — DIX-NEUVIÈME type, `mail_unclassified`,
 		// livré par `CRM-055` tranche 2 (§16.5.3). Le compte est le garde-fou : il rougit à chaque
 		// extension et force à ranger le type neuf plutôt qu'à le laisser tomber sur le repli.
-		expect(TYPES_EVENEMENT).toHaveLength(23)
+		expect(TYPES_EVENEMENT).toHaveLength(25)
+		expect(FAMILLE_PAR_TYPE.attached).toBe('organisation')
+		expect(FAMILLE_PAR_TYPE.detached).toBe('organisation')
 		expect(FAMILLE_PAR_TYPE.label_added).toBe('champs')
 		expect(FAMILLE_PAR_TYPE.label_removed).toBe('champs')
 		const familles = new Set(TYPES_EVENEMENT.map((type) => familleDe(type)))

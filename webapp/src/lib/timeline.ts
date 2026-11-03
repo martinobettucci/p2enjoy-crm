@@ -109,6 +109,10 @@ export const TYPES_EVENEMENT = [
 	// `CRM-069` T1 (docs/SPEC-etiquettes-digest.md §2.2) : la pose et le retrait d'une étiquette.
 	'label_added',
 	'label_removed',
+	// `CRM-111` T3 (migration 0148) écrit `attached` et `detached` ; T7.4 les nomme, avec l'écran qui fait les deux
+	// gestes (docs/DESIGN_SYSTEM.md §5.84) — sans quoi le fil les rendait « Événement », le défaut d'INC-207.
+	'attached',
+	'detached',
 ] as const
 
 export type TypeEvenement = (typeof TYPES_EVENEMENT)[number]
@@ -187,6 +191,9 @@ export const FAMILLE_PAR_TYPE: Readonly<Record<TypeEvenement, Famille>> = {
 	checklist_unchecked: 'champs',
 	label_added: 'champs',
 	label_removed: 'champs',
+	// « OÙ VIT CETTE AFFAIRE ? » : la question de l'organisation, qui porte déjà `channel_changed` (§5.11).
+	attached: 'organisation',
+	detached: 'organisation',
 }
 
 /**

@@ -528,6 +528,11 @@ changelog.*
   refus de plus). **`mail-sync`** joint les pièces, archive avant d'envoyer, efface les dépôts abandonnés après 24 heures.
 - **Le seed** fait partir un message réel avec copie cachée et pièce jointe depuis « Refonte du monitoring — Vertuo ».
 
+- **`CRM-111` T7.4 — retirer un rattachement depuis la fiche** : « Retirer », sur chaque ligne du bloc, réservé aux
+  administrateurs de l'espace et inactif sur le dernier rattachement, chaque fois avec sa raison ; une confirmation
+  nomme le rattachement et ce qui est perdu. Retirer celui de la fiche ouvre la fiche d'un rattachement restant. Le fil
+  nomme « Rattachée à un channel » et « Rattachement retiré » au lieu de « Événement ». Webapp seule ; manuel §9.6.
+
 - **`CRM-111` T7.3 — rattacher une affaire à un channel depuis sa fiche** : « Rattacher à un channel », sous la liste
   du bloc, propose les channels ouverts que l'on peut modifier et où l'affaire n'est pas encore ; l'affaire y entre à
   l'étape initiale, et sa fiche s'ouvre à l'adresse du nouveau rattachement. Chaque refus de la base a sa phrase. Webapp

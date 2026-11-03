@@ -7,7 +7,9 @@
 //       l'affaire n'est pas rattachée (docs/manual.md §9.6 ; docs/SPEC-rattachements.md §8.1 ; docs/DESIGN_SYSTEM.md
 //       §5.81), sur une affaire jetable rattachée à deux channels par la vraie API, puis détruite ; tranche T7.2 : l'image
 //       « rattachements » montre le bloc du même nom (docs/manual.md §9.6 ; docs/DESIGN_SYSTEM.md §5.82) ; tranche T7.3 :
-//       l'image « rattacher » montre son formulaire ouvert, rien n'est envoyé (docs/DESIGN_SYSTEM.md §5.83)
+//       l'image « rattacher » montre son formulaire ouvert, rien n'est envoyé (docs/DESIGN_SYSTEM.md §5.83) ; tranche
+//       T7.4 : l'image « retirer » montre la confirmation du retrait, puis « fil-rattachements » les deux lignes du fil
+//       après le retrait réel (docs/DESIGN_SYSTEM.md §5.84)
 //
 // Ce qui se LIT vient du seed : « Migration ERP Sogexia » (contacts, activités, santé), « Contrat cadre 2025 »
 // (archivée), « Atelier prompt — Lycée Vauban » (checklist). Ce qui s'ÉCRIT porte sur une affaire posée à « Signature »
@@ -140,6 +142,18 @@ test('une affaire rattachée ailleurs : l’adresse d’un channel où elle n’
 		await champ.selectOption({ label: 'Studio web › Maintenance' })
 		await illustrer(page, { chapitre: CHAPITRE, section: S.fiche, nom: 'rattacher', cibles: [bloc.getByTestId('formulaire-rattacher')] })
 		await bloc.getByTestId('annuler-rattacher').click()
+		await autre.getByTestId('ouvrir-retrait-rattachement').click()
+		const confirmation = autre.getByTestId('confirmation-retrait-rattachement')
+		await expect(confirmation.getByTestId('confirmer-retrait-rattachement')).toBeFocused()
+		await illustrer(page, { chapitre: CHAPITRE, section: S.fiche, nom: 'retirer', cibles: [confirmation] })
+		// Le retrait réellement fait (l'affaire est jetable) : le fil nomme alors les deux gestes, image « fil-rattachements ».
+		await confirmation.getByTestId('confirmer-retrait-rattachement').click()
+		await expect(bloc.getByTestId('ligne-rattachement')).toHaveCount(1)
+		// Les lignes entières du fil, icônes comprises : le seul texte rognait les pastilles (vu sur l'image).
+		const rattachee = page.locator('li').filter({ hasText: 'Rattachée à un channel' })
+		const retire = page.locator('li').filter({ hasText: 'Rattachement retiré' })
+		await expect(retire).toBeVisible()
+		await illustrer(page, { chapitre: CHAPITRE, section: S.fiche, nom: 'fil-rattachements', cibles: [rattachee, retire] })
 	} finally {
 		await detruireAffaire(request, affaire)
 	}

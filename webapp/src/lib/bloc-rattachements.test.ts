@@ -1,11 +1,12 @@
 // @verifies CRM-111 (docs/BACKLOG.md) T7.2 — archiver et désarchiver un rattachement : la seule colonne écrite, la ligne
 //           relue, le refus de politique (`200` et zéro ligne) dit comme un refus, la panne comme une panne
 //           (docs/SPEC-rattachements.md §5, §8.1 ; docs/DESIGN_SYSTEM.md §5.82)
+// @verifies CRM-111 (docs/BACKLOG.md) T7.4 — `detach_card` appelé avec l'aveu de la perte, et ses refus (§5.84)
 // @verifies CRM-111 (docs/BACKLOG.md) T7.3 — le dictionnaire fermé des refus d'`attach_card` (migration 0148 ;
 //           docs/DESIGN_SYSTEM.md §5.83)
 
 import { describe, expect, it } from 'vitest'
-import { archiverRattachement, issueArchivage, refusRattachement } from './bloc-rattachements'
+import { archiverRattachement, issueArchivage, refusRattachement, refusRetrait, retirerRattachement } from './bloc-rattachements'
 import type { ClientCrm } from './supabase'
 
 type Reponse = { data: unknown[] | null; error: { message: string; code?: string } | null; status: number }
@@ -83,3 +84,23 @@ describe('les refus d’`attach_card` (§5.83)', () => {
 		expect(refusRattachement(500, 'XX000', 'boom')).toBe('reseau')
 	})
 })
+
+describe('retirer un rattachement (§5.84)', () => {
+	it('appelle `detach_card` sur le rattachement, avec l’aveu de la perte que la confirmation a nommée', async () => {
+		const appels: unknown[] = []
+		const client = {
+			rpc: (nom: string, args: unknown) => (appels.push([nom, args]), Promise.resolve({ data: null, error: null, status: 204 })),
+		} as unknown as ClientCrm
+		expect(await retirerRattachement(client, 'p-1')).toEqual({ ok: true })
+		expect(appels).toEqual([['detach_card', { p_placement: 'p-1', discard_field_values: true }]])
+	})
+
+	it('chaque refus de la migration 0148 a le sien ; l’inconnu et la panne se lisent comme une panne', () => {
+		expect(refusRetrait(403, '42501', 'forbidden')).toBe('interdit')
+		expect(refusRetrait(400, 'P0001', 'last_placement')).toBe('dernier')
+		expect(refusRetrait(400, 'P0001', 'card_not_found')).toBe('introuvable')
+		expect(refusRetrait(undefined, null, '')).toBe('reseau')
+		expect(refusRetrait(500, 'XX000', 'boom')).toBe('reseau')
+	})
+})
+

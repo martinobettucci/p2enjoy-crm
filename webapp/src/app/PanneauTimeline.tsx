@@ -54,6 +54,8 @@ import {
 	UserRoundPen,
 	ArchiveRestore,
 	ArrowRightLeft,
+	FolderInput,
+	FolderOutput,
 	FolderSync,
 	PencilLine,
 	RotateCcw,
@@ -195,6 +197,10 @@ const PRESENTATION: Readonly<
 	// `CRM-069` T2 (docs/DESIGN_SYSTEM.md §5.73) : une icône pour les deux gestes ; la phrase dit lequel.
 	label_added: { cle: 'timeline.event.label_added', icone: Tag, pastille: 'bg-brand-soft text-brand-on-soft' },
 	label_removed: { cle: 'timeline.event.label_removed', icone: Tag, pastille: 'bg-hover text-text-3' },
+	// `CRM-111` T7.4 (docs/DESIGN_SYSTEM.md §5.84) — l'affaire entre dans un channel, ou en sort. Le couple d'icônes de
+	// dossier, distinct de `FolderSync` (« Dossier changé ») et des commandes du bloc (§9 : une icône, un objet).
+	attached: { cle: 'timeline.event.attached', icone: FolderInput, pastille: 'bg-accent-soft text-ink' },
+	detached: { cle: 'timeline.event.detached', icone: FolderOutput, pastille: 'bg-hover text-text-3' },
 }
 
 /**

@@ -9,26 +9,39 @@
 // et le bloc disent alors le même état, sans écran de chargement intermédiaire.
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T7.3 : « Rattacher à un channel », replié en formulaire sous la liste ; le
 //       succès ouvre la fiche du nouveau rattachement (docs/SPEC-rattachements.md §5 ; docs/DESIGN_SYSTEM.md §5.83)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T7.4 : « Retirer », éteint pour qui n'administre pas l'espace et sur le
+//       dernier rattachement, sa confirmation dans la ligne (docs/SPEC-rattachements.md §4, §5 ; docs/DESIGN_SYSTEM.md
+//       §5.84)
 // @spec docs/DESIGN_SYSTEM.md §5.59 (la commande refusée par une capacité de la base, un motif par bloc) ;
 //       docs/SPEC-droits-interface.md §2 à §4
 
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { Archive, ArchiveRestore, Moon, Plus, TriangleAlert } from 'lucide-react'
+import { Archive, ArchiveRestore, Moon, Plus, TriangleAlert, Unlink } from 'lucide-react'
+import { useContexteEspace } from './ContexteEspace'
 import { useRefus } from '../components/ui/RefusCommandes'
 import { CHEMIN_ADMIN_WORKFLOWS } from './chemins'
 import { Button } from '../components/ui/Button'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { enChargement, type EtatAsync } from '../lib/async'
-import { capaciteDansLEtat, lireEcrituresPermises, motifVisible, proprietesCommande, type Capacite } from '../lib/capacites'
+import {
+	capaciteDansLEtat,
+	lireEcrituresPermises,
+	motifVisible,
+	proprietesCommande,
+	type Capacite,
+	type ProprietesCommande,
+} from '../lib/capacites'
 import { t } from '../i18n'
 import {
 	archiverRattachement,
 	lireChannelsRattachables,
 	rattacherAffaire,
+	retirerRattachement,
 	type ChannelRattachable,
 	type IssueArchivage,
 	type RefusRattachement,
+	type RefusRetrait,
 } from '../lib/bloc-rattachements'
 import { formaterMontant } from '../lib/entete-card'
 import type { RattachementDuBloc } from '../lib/formulaire'
@@ -70,6 +83,20 @@ export function BlocRattachementsCard({
 	}, [client, cle])
 	const capaciteDe = (idChannel: string): Capacite => (client === null ? 'inconnue' : capaciteDansLEtat(capacites, idChannel))
 	const unRefus = idsChannels.some((idChannel) => motifVisible(capaciteDe(idChannel)))
+	// RETIRER (§5.84) : réservé aux administrateurs de l'espace — la capacité que la base rend pour l'espace —, et jamais
+	// le dernier rattachement. Deux causes, deux motifs, qui peuvent coexister.
+	const administration = useContexteEspace().capacites.administration
+	const dernier = rattachements.length === 1
+	const naviguer = useNavigate()
+	const apresRetrait = (retire: RattachementDuBloc) => {
+		// L'ADRESSE NE DÉSIGNE PLUS RIEN quand on retire celui de la fiche : elle s'ouvre au premier rattachement restant.
+		const suivant = rattachements.find((rattachement) => rattachement.id !== retire.id)
+		if (retire.courant && suivant !== undefined) {
+			naviguer(`/tracks/${suivant.slugTrack}/${suivant.slugChannel}/cards/${idCard}`)
+			return
+		}
+		onChange()
+	}
 
 	return (
 		<section
@@ -81,6 +108,16 @@ export function BlocRattachementsCard({
 				{t('cardPlacements.title')}
 			</h2>
 			{unRefus ? <MotifLectureSeule id={ID_MOTIF_RATTACHEMENTS}>{t('rights.readonly.placements')}</MotifLectureSeule> : null}
+			{motifVisible(administration) ? (
+				<MotifLectureSeule id={ID_MOTIF_ADMINISTRATION} data-testid="motif-retrait-administration">
+					{t('cardPlacements.detach.readonly.administration')}
+				</MotifLectureSeule>
+			) : null}
+			{dernier ? (
+				<MotifLectureSeule id={ID_MOTIF_DERNIER} data-testid="motif-retrait-dernier">
+					{t('cardPlacements.detach.readonly.last')}
+				</MotifLectureSeule>
+			) : null}
 			<ul className="flex flex-col divide-y divide-border">
 				{rattachements.map((rattachement) => (
 					<LigneRattachement
@@ -88,6 +125,8 @@ export function BlocRattachementsCard({
 						idCard={idCard}
 						devise={devise}
 						capacite={capaciteDe(rattachement.idChannel)}
+						retrait={proprietesRetrait(administration, dernier)}
+						onRetire={() => apresRetrait(rattachement)}
 						rattachement={rattachement}
 						onChange={onChange}
 						client={client}
@@ -285,11 +324,30 @@ function Rattacher({
 }
 
 const ID_MOTIF_RATTACHEMENTS = 'motif-rattachements'
+const ID_MOTIF_ADMINISTRATION = 'motif-retrait-administration'
+const ID_MOTIF_DERNIER = 'motif-retrait-dernier'
+
+/** Les propriétés de « Retirer » : éteint, avec ses motifs, pour l'une ou l'autre cause (§5.84). */
+function proprietesRetrait(administration: Capacite, dernier: boolean): ProprietesCommande {
+	const admin = proprietesCommande(administration, ID_MOTIF_ADMINISTRATION)
+	if (!dernier) return admin
+	const motifs = [admin['aria-describedby'], ID_MOTIF_DERNIER].filter((id) => id !== undefined).join(' ')
+	return { disabled: true, 'aria-describedby': motifs }
+}
+
+const CLES_REFUS_RETRAIT: Readonly<Record<RefusRetrait, Parameters<typeof t>[0]>> = {
+	interdit: 'cardPlacements.detach.refused.forbidden',
+	dernier: 'cardPlacements.detach.refused.last',
+	introuvable: 'cardPlacements.detach.refused.card',
+	reseau: 'cardPlacements.detach.refused.network',
+}
 
 function LigneRattachement({
 	idCard,
 	devise,
 	capacite,
+	retrait,
+	onRetire,
 	rattachement,
 	onChange,
 	client,
@@ -298,6 +356,8 @@ function LigneRattachement({
 	readonly idCard: string
 	readonly devise: string
 	readonly capacite: Capacite
+	readonly retrait: ProprietesCommande
+	readonly onRetire: () => void
 	readonly rattachement: RattachementDuBloc
 	readonly onChange: () => void
 	readonly client: ClientCrm | null
@@ -305,6 +365,29 @@ function LigneRattachement({
 }) {
 	const [enVol, setEnVol] = useState(false)
 	const [issue, setIssue] = useState<IssueArchivage | null>(null)
+	const [confirmation, setConfirmation] = useState(false)
+	const [refusRetrait, setRefusRetrait] = useState<RefusRetrait | null>(null)
+	const [retraitEnVol, setRetraitEnVol] = useState(false)
+	const commandeRetrait = useRef<HTMLButtonElement>(null)
+	const rendreFocusRetrait = useRef(false)
+	useEffect(() => {
+		if (confirmation || !rendreFocusRetrait.current) return
+		rendreFocusRetrait.current = false
+		commandeRetrait.current?.focus()
+	}, [confirmation])
+	const fermerConfirmation = () => {
+		rendreFocusRetrait.current = true
+		setConfirmation(false)
+		setRefusRetrait(null)
+	}
+	const retirer = async () => {
+		if (client === null || retraitEnVol) return
+		setRetraitEnVol(true)
+		const resultat = await retirerRattachement(client, rattachement.id)
+		setRetraitEnVol(false)
+		if (resultat.ok) onRetire()
+		else setRefusRetrait(resultat.refus)
+	}
 	const chemin = t('cardPlacements.path', { track: rattachement.track, channel: rattachement.channel })
 	const archive = rattachement.archivedAt !== null
 
@@ -355,13 +438,81 @@ function LigneRattachement({
 					{t(archive ? 'cardPlacements.unarchive' : 'cardPlacements.archive')}
 					<span className="sr-only">{chemin}</span>
 				</Button>
+				{confirmation ? null : (
+					<Button
+						ref={commandeRetrait}
+						variante="secondaire"
+						taille="compacte"
+						data-testid="ouvrir-retrait-rattachement"
+						{...retrait}
+						onClick={() => setConfirmation(true)}
+					>
+						<Unlink aria-hidden="true" className="size-4" />
+						{t('cardPlacements.detach')}
+						<span className="sr-only">{chemin}</span>
+					</Button>
+				)}
 			</div>
+			{confirmation ? (
+				<ConfirmationRetrait
+					chemin={chemin}
+					refus={refusRetrait}
+					enVol={retraitEnVol}
+					onConfirmer={() => void retirer()}
+					onAnnuler={fermerConfirmation}
+				/>
+			) : null}
 			{issue === null ? null : (
 				<p role="alert" data-testid="refus-archivage-rattachement" className="rounded-sm bg-danger-soft text-danger-on-soft px-3 py-2 text-sm">
 					{t(issue === 'reseau' ? 'cardPlacements.archive.network' : 'cardPlacements.archive.refused')}
 				</p>
 			)}
 		</li>
+	)
+}
+
+/** La confirmation du retrait, dans la ligne (§5.84) : elle nomme le rattachement et la perte ; le focus y entre. */
+function ConfirmationRetrait({
+	chemin,
+	refus,
+	enVol,
+	onConfirmer,
+	onAnnuler,
+}: {
+	readonly chemin: string
+	readonly refus: RefusRetrait | null
+	readonly enVol: boolean
+	readonly onConfirmer: () => void
+	readonly onAnnuler: () => void
+}) {
+	const premier = useRef<HTMLButtonElement>(null)
+	useEffect(() => {
+		premier.current?.focus()
+	}, [])
+	return (
+		<div
+			data-testid="confirmation-retrait-rattachement"
+			className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-4"
+			onKeyDown={(evenement) => {
+				if (evenement.key === 'Escape') onAnnuler()
+			}}
+		>
+			<p className="font-medium">{t('cardPlacements.detach.confirm.title', { chemin })}</p>
+			<p className="text-sm text-text-2">{t('cardPlacements.detach.confirm.body')}</p>
+			{refus === null ? null : (
+				<p role="alert" data-testid="refus-retrait-rattachement" data-refus={refus} className="rounded-sm bg-danger-soft px-3 py-2 text-sm text-danger-on-soft">
+					{t(CLES_REFUS_RETRAIT[refus])}
+				</p>
+			)}
+			<div className="flex flex-wrap gap-2">
+				<Button ref={premier} variante="destructif" aria-busy={enVol} onClick={onConfirmer} data-testid="confirmer-retrait-rattachement">
+					{t('cardPlacements.detach.confirm.action')}
+				</Button>
+				<Button variante="secondaire" onClick={onAnnuler} data-testid="annuler-retrait-rattachement">
+					{t('cardPlacements.attach.cancel')}
+				</Button>
+			</div>
+		</div>
 	)
 }
 

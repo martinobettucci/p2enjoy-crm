@@ -2,6 +2,8 @@
 //       « Rattachements » de la fiche (docs/SPEC-rattachements.md §5 « Archiver, désarchiver », §8.1 ; décision 823)
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T7.3 : rattacher l'affaire à un channel — les channels offerts, `attach_card`
 //       et le dictionnaire fermé de ses refus (docs/SPEC-rattachements.md §5 « Rattacher » ; docs/DESIGN_SYSTEM.md §5.83)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T7.4 : retirer un rattachement — `detach_card` et ses refus
+//       (docs/SPEC-rattachements.md §4, §5 « Retirer », décision 643 ; docs/DESIGN_SYSTEM.md §5.84)
 // @spec docs/DESIGN_SYSTEM.md §5.82 (le geste, sans confirmation, refus dans la ligne) ;
 //       docs/SPEC-rattachements.md §4 (le droit : écrire le channel du rattachement, tenu par `card_placements_update`)
 //
@@ -139,6 +141,36 @@ export function refusRattachement(statut: number | undefined, code: string | nul
 	if (message === 'channel_closed') return 'channel-ferme'
 	if (message === 'already_attached') return 'deja-rattachee'
 	if (message === 'card_not_found') return 'affaire-introuvable'
+	return 'reseau'
+}
+
+/** Les refus de `detach_card` (migration 0148), chacun avec sa phrase (§5.84). */
+export type RefusRetrait = 'interdit' | 'dernier' | 'introuvable' | 'reseau'
+
+/**
+ * Retire un rattachement. La confirmation a NOMMÉ la perte des réponses de son formulaire (§5.84) : le geste la consent,
+ * et `discard_field_values` part à vrai — la doctrine de `move_card_to_channel` (décision 216), dont la base exige
+ * l'aveu explicite.
+ */
+export async function retirerRattachement(
+	client: ClientCrm,
+	idRattachement: string,
+): Promise<{ readonly ok: true } | { readonly ok: false; readonly refus: RefusRetrait }> {
+	try {
+		const reponse = await client.rpc('detach_card', { p_placement: idRattachement, discard_field_values: true })
+		if (reponse.error === null) return { ok: true }
+		return { ok: false, refus: refusRetrait(reponse.status, reponse.error.code ?? null, reponse.error.message) }
+	} catch {
+		return { ok: false, refus: 'reseau' }
+	}
+}
+
+/** Classe un refus de `detach_card` par son code et son symbole ; l'inconnu se lit comme une panne, à réessayer. */
+export function refusRetrait(statut: number | undefined, code: string | null, message: string): RefusRetrait {
+	if (statut === undefined || statut === 0) return 'reseau'
+	if (code === '42501') return 'interdit'
+	if (message === 'last_placement') return 'dernier'
+	if (message === 'card_not_found') return 'introuvable'
 	return 'reseau'
 }
 

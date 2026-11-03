@@ -1504,6 +1504,18 @@ le produit dit pourquoi il refuse.
 
 ![Le formulaire « Rattacher à un channel » : la liste des channels, « Rattacher » et « Annuler »](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattacher.jpg)
 
+**« Retirer »**, sur une ligne, supprime ce rattachement — ce n'est pas archiver : son étape, son responsable, son
+montant, sa prochaine action et les réponses de son formulaire sont perdus, et l'affaire quitte ce channel. Une
+confirmation le dit et nomme le rattachement ; « Retirer le rattachement » l'exécute, « Annuler » renonce. Seuls les
+administrateurs de l'espace retirent un rattachement, et jamais le dernier d'une affaire : la commande reste alors
+inactive, avec la raison en tête du bloc. Retirer le rattachement de la fiche ouverte vous emmène à la fiche d'un
+rattachement restant. Le fil de l'affaire garde la trace des deux gestes : « Rattachée à un channel » et
+« Rattachement retiré ».
+
+![La confirmation du retrait, qui nomme le rattachement et ce qui est perdu](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/retirer.jpg)
+
+![Le fil de l'affaire : « Rattachée à un channel » puis « Rattachement retiré »](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/fil-rattachements.jpg)
+
 ### 9.7 Les contacts d'une affaire : les rattacher, les détacher
 
 ![Le bloc des contacts d'une affaire, avec le rôle de chacun et la commande pour détacher](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/contacts-de-l-affaire.jpg)

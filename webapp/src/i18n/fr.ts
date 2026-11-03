@@ -1043,6 +1043,18 @@ export const fr = {
 	'cardPlacements.attach.refused.initial': 'Le workflow de ce channel n’a pas d’étape initiale.',
 	'cardPlacements.attach.refused.card': 'Cette affaire n’est plus lisible : elle a peut-être été mise à la corbeille.',
 	'cardPlacements.attach.refused.network': 'Rien n’a été enregistré : le serveur n’a pas répondu. Réessayez.',
+	'cardPlacements.detach': 'Retirer',
+	'cardPlacements.detach.readonly.administration':
+		'Retirer un rattachement est réservé aux administrateurs de l’espace : la commande reste visible mais inactive.',
+	'cardPlacements.detach.readonly.last': 'Une affaire garde au moins un rattachement : le dernier ne se retire pas.',
+	'cardPlacements.detach.confirm.title': 'Retirer le rattachement à {chemin} ?',
+	'cardPlacements.detach.confirm.body':
+		'Son étape, son responsable, son montant, sa prochaine action et les réponses de son formulaire sont perdus. L’affaire reste dans ses autres channels.',
+	'cardPlacements.detach.confirm.action': 'Retirer le rattachement',
+	'cardPlacements.detach.refused.forbidden': 'Retirer un rattachement est réservé aux administrateurs de l’espace.',
+	'cardPlacements.detach.refused.last': 'C’est le dernier rattachement de l’affaire : il ne se retire pas.',
+	'cardPlacements.detach.refused.card': 'Ce rattachement n’existe plus ou ne vous est plus lisible.',
+	'cardPlacements.detach.refused.network': 'Rien n’a été retiré : le serveur n’a pas répondu. Réessayez.',
 	'cardPlacements.archive.network': 'Rien n’a été enregistré : le serveur n’a pas répondu. Réessayez.',
 	'route.card.elsewhere.title': 'Cette affaire n’est pas rattachée à ce channel',
 	'route.card.elsewhere.body': 'Elle est rattachée ailleurs. Ouvrez-la dans l’un de ses channels :',
@@ -1376,6 +1388,8 @@ export const fr = {
 	// `CRM-060` tranche 5 — docs/SPEC-contacts.md §19.5. Les libellés nomment le GESTE, et le
 	// détail porte le nom du contact, résolu à la lecture : le payload n'en porte aucun (§14.6),
 	// un nom recopié dans un événement immuable deviendrait faux au premier renommage.
+	'timeline.event.attached': 'Rattachée à un channel',
+	'timeline.event.detached': 'Rattachement retiré',
 	'timeline.event.contact_linked': 'Contact rattaché',
 	'timeline.event.contact_unlinked': 'Contact détaché',
 	'timeline.event.contact_role_changed': 'Rôle du contact modifié',

@@ -3089,7 +3089,7 @@
 			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattachements.jpg",
 			"alt": "Le bloc « Rattachements » : la fiche ouverte, et l'autre rattachement, archivé, en lien avec son étape",
 			"width": 650,
-			"height": 263
+			"height": 311
 		},
 		{
 			"type": "paragraph",
@@ -3115,6 +3115,38 @@
 			"alt": "Le formulaire « Rattacher à un channel » : la liste des channels, « Rattacher » et « Annuler »",
 			"width": 650,
 			"height": 149
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Retirer »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sur une ligne, supprime ce rattachement — ce n'est pas archiver : son étape, son responsable, son\nmontant, sa prochaine action et les réponses de son formulaire sont perdus, et l'affaire quitte ce channel. Une\nconfirmation le dit et nomme le rattachement ; « Retirer le rattachement » l'exécute, « Annuler » renonce. Seuls les\nadministrateurs de l'espace retirent un rattachement, et jamais le dernier d'une affaire : la commande reste alors\ninactive, avec la raison en tête du bloc. Retirer le rattachement de la fiche ouverte vous emmène à la fiche d'un\nrattachement restant. Le fil de l'affaire garde la trace des deux gestes : « Rattachée à un channel » et\n« Rattachement retiré »."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/retirer.jpg",
+			"alt": "La confirmation du retrait, qui nomme le rattachement et ce qui est perdu",
+			"width": 650,
+			"height": 186
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/fil-rattachements.jpg",
+			"alt": "Le fil de l'affaire : « Rattachée à un channel » puis « Rattachement retiré »",
+			"width": 519,
+			"height": 187
 		},
 		{
 			"type": "heading",

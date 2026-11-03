@@ -17404,8 +17404,16 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         `attach_card` refusé `403` par son jeton ; les 47 specs de la fiche, 435/435 ; captures 1440 (champ borné à 48ch
         après observation) et 390 ; manuel §9.6 et image `rattacher`, `verify-manual` 167. Production : la webapp de
         `main`.
-      - [ ] **T7.4 — retirer un rattachement** : administrateurs, éteint sur le dernier, confirmation qui nomme la perte,
+      - [x] **T7.4 — retirer un rattachement** : administrateurs, éteint sur le dernier, confirmation qui nomme la perte,
         `detach_card`. Unitaires, E2E (dont le refus d'un non-administrateur par l'API), captures.
+        *Livrée en développement le 2026-11-03* : `docs/DESIGN_SYSTEM.md` §5.84 avant le code (complété à l'écriture : le
+        fil nommait les deux gestes « Événement », défaut d'INC-207 — `attached` et `detached` ont désormais leur libellé,
+        leur icône et leur famille) ; `retirerRattachement` (`discard_field_values` à vrai, la perte nommée par la
+        confirmation) et ses refus ; « Retirer » éteint avec motif (administration de l'espace, dernier rattachement).
+        Unitaires 5287 ; E2E `fiche-rattachement` 9/9 — retrait confirmé et base relue, dernier éteint, retrait de celui de
+        la fiche qui ouvre le restant, fil nommé ; le business developer : commande éteinte et `detach_card` refusé `403`
+        par son jeton ; les 47 specs de la fiche, 438/438 ; captures (confirmation 1440 et 390, dernier) observées ;
+        manuel §9.6 et images `retirer`, `fil-rattachements`, `verify-manual` 167. Production : la webapp de `main`.
       - [ ] **T7.5 — la pastille « aussi rattachée à N »** sur le board et la liste d'un channel, les rattachements lisibles
         nommés au survol et au focus. Unitaires, E2E, captures.
       - [ ] **T7.6 — le manuel** : chapitre « Rattacher une affaire à plusieurs channels », images, `verify-manual`.

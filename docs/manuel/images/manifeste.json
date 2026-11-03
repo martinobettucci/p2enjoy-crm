@@ -3448,6 +3448,25 @@
 			]
 		},
 		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/fil-rattachements.jpg",
+			"largeur": 519,
+			"hauteur": 187,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent",
+			"pleinePage": false,
+			"libelles": [
+				"03/11/2026 11:45",
+				"03/11/2026 11:45par Camille Aubert",
+				"Affaire archivée",
+				"Affaire archivée 03/11/2026 11:45par Camille Aubert",
+				"Rattachement retiré",
+				"Rattachement retiré 03/11/2026 11:45par Camille Aubert",
+				"Rattachée à un channel",
+				"Rattachée à un channel 03/11/2026 11:45par Camille Aubert",
+				"par Camille Aubert"
+			]
+		},
+		{
 			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/filtre-etiquette.jpg",
 			"largeur": 224,
 			"hauteur": 97,
@@ -3803,7 +3822,7 @@
 		{
 			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattachements.jpg",
 			"largeur": 650,
-			"hauteur": 263,
+			"hauteur": 311,
 			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
 			"section": "la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent",
 			"pleinePage": false,
@@ -3812,15 +3831,18 @@
 				"Archiver Studio web › Refonte de site",
 				"Archivé",
 				"Conseil & IA › Grands comptes",
-				"Conseil & IA › Grands comptes Signature · Aucun responsable Archivé Désarchiver Conseil & IA › Grands comptes",
+				"Conseil & IA › Grands comptes Signature · Aucun responsable Archivé Désarchiver Conseil & IA › Grands comptes Retirer Conseil & IA › Grands comptes",
 				"Désarchiver",
 				"Désarchiver Conseil & IA › Grands comptes",
 				"Rattachements",
 				"Rattacher à un channel",
+				"Retirer",
+				"Retirer Conseil & IA › Grands comptes",
+				"Retirer Studio web › Refonte de site",
 				"Signature · Aucun responsable",
 				"Studio web › Refonte de site",
 				"Studio web › Refonte de site fiche ouverte",
-				"Studio web › Refonte de site fiche ouverte Archiver Studio web › Refonte de site",
+				"Studio web › Refonte de site fiche ouverte Archiver Studio web › Refonte de site Retirer Studio web › Refonte de site",
 				"fiche ouverte"
 			]
 		},
@@ -3931,6 +3953,20 @@
 				"Responsable modifié",
 				"Responsable modifié 31/10/2026 23:10par Camille Aubert",
 				"par Camille Aubert"
+			]
+		},
+		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/retirer.jpg",
+			"largeur": 650,
+			"hauteur": 186,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent",
+			"pleinePage": false,
+			"libelles": [
+				"Annuler",
+				"Retirer le rattachement",
+				"Retirer le rattachement à Conseil & IA › Grands comptes ?",
+				"Son étape, son responsable, son montant, sa prochaine action et les réponses de son formulaire sont perdus. L'affaire reste dans ses autres channels."
 			]
 		},
 		{

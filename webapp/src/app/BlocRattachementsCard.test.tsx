@@ -5,6 +5,10 @@
 // @verifies CRM-111 (docs/BACKLOG.md) T7.3 — « Rattacher à un channel » : les channels offerts (modifiables, ouverts, non
 //           rattachés), l'option vide, l'appel d'`attach_card`, la fiche du nouveau rattachement ouverte, les refus
 //           traduits, la liste vide, `Échap` (docs/SPEC-rattachements.md §5 ; docs/DESIGN_SYSTEM.md §5.83)
+// @verifies CRM-111 (docs/BACKLOG.md) T7.4 — « Retirer » : éteint avec son motif pour qui n'administre pas l'espace et sur
+//           le dernier rattachement, la confirmation qui nomme la perte, `Échap`, le retrait d'un autre rattachement qui
+//           relit la fiche, celui de la fiche qui ouvre le rattachement restant, le refus dans la confirmation
+//           (docs/SPEC-rattachements.md §4, §5 ; docs/DESIGN_SYSTEM.md §5.84)
 
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -13,6 +17,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RattachementDuBloc } from '../lib/formulaire'
 import type { ClientCrm } from '../lib/supabase'
 import { BlocRattachementsCard } from './BlocRattachementsCard'
+import { FournisseurEspace } from './ContexteEspace'
+import type { Capacite } from '../lib/capacites'
 
 afterEach(cleanup)
 
@@ -83,20 +89,28 @@ function Adresse() {
 	return <p data-testid="adresse">{useLocation().pathname}</p>
 }
 
-function monter(c: ClientCrm, onChange = vi.fn()) {
+function monter(
+	c: ClientCrm,
+	onChange = vi.fn(),
+	options: { administration?: Capacite; rattachements?: readonly RattachementDuBloc[] } = {},
+) {
 	render(
-		<MemoryRouter initialEntries={['/tracks/studio-web/refonte/cards/c-1']}>
-			<Adresse />
-			<BlocRattachementsCard
-				idCard="c-1"
-				idWorkspace="ws-1"
-				devise="EUR"
-				rattachements={[AUTRE, COURANT]}
-				onChange={onChange}
-				client={c}
-				maintenant={() => new Date('2026-11-03T10:00:00Z')}
-			/>
-		</MemoryRouter>,
+		<FournisseurEspace
+			valeur={{ idWorkspace: 'ws-1', estAdmin: true, capacites: { administration: options.administration ?? 'permise', edition: 'permise' } }}
+		>
+			<MemoryRouter initialEntries={['/tracks/studio-web/refonte/cards/c-1']}>
+				<Adresse />
+				<BlocRattachementsCard
+					idCard="c-1"
+					idWorkspace="ws-1"
+					devise="EUR"
+					rattachements={options.rattachements ?? [AUTRE, COURANT]}
+					onChange={onChange}
+					client={c}
+					maintenant={() => new Date('2026-11-03T10:00:00Z')}
+				/>
+			</MemoryRouter>
+		</FournisseurEspace>,
 	)
 	return onChange
 }
@@ -120,16 +134,16 @@ describe('le bloc « Rattachements » (§5.82)', () => {
 		expect(within(autre).getByTestId('rattachement-archive').textContent).toContain('Archivé')
 		expect(within(autre).getByTestId('rattachement-sommeil')).toBeTruthy()
 		// Archivé, il offre « Désarchiver » ; la fiche, « Archiver ».
-		expect(within(autre).getByRole('button').textContent).toContain('Désarchiver')
-		expect(within(courante).getByRole('button').textContent).toContain('Archiver')
+		expect(within(autre).getByTestId('basculer-archivage-rattachement').textContent).toContain('Désarchiver')
+		expect(within(courante).getByTestId('basculer-archivage-rattachement').textContent).toContain('Archiver')
 	})
 
 	it('archiver écrit `archived_at`, puis fait relire la fiche', async () => {
 		const { faux, charges } = client({ data: [{ id: 'p-studio' }], error: null, status: 200 })
 		const onChange = monter(faux)
 		const courante = screen.getAllByTestId('ligne-rattachement').find((l) => l.getAttribute('aria-current') === 'page')!
-		await waitFor(() => expect((within(courante).getByRole('button') as HTMLButtonElement).disabled).toBe(false))
-		await userEvent.click(within(courante).getByRole('button'))
+		await waitFor(() => expect((within(courante).getByTestId('basculer-archivage-rattachement') as HTMLButtonElement).disabled).toBe(false))
+		await userEvent.click(within(courante).getByTestId('basculer-archivage-rattachement'))
 		await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1))
 		expect(Object.keys(charges[0] as object)).toEqual(['archived_at'])
 		expect(screen.queryByTestId('refus-archivage-rattachement')).toBeNull()
@@ -138,8 +152,8 @@ describe('le bloc « Rattachements » (§5.82)', () => {
 	it('un refus de la base (zéro ligne) se dit dans la ligne, et rien n’est relu', async () => {
 		const onChange = monter(client({ data: [], error: null, status: 200 }).faux)
 		const autre = screen.getAllByTestId('ligne-rattachement').find((l) => l.getAttribute('aria-current') !== 'page')!
-		await waitFor(() => expect((within(autre).getByRole('button') as HTMLButtonElement).disabled).toBe(false))
-		await userEvent.click(within(autre).getByRole('button'))
+		await waitFor(() => expect((within(autre).getByTestId('basculer-archivage-rattachement') as HTMLButtonElement).disabled).toBe(false))
+		await userEvent.click(within(autre).getByTestId('basculer-archivage-rattachement'))
 		const refus = await within(autre).findByRole('alert')
 		expect(refus.textContent).toContain('vos droits ne permettent pas')
 		expect(onChange).not.toHaveBeenCalled()
@@ -152,15 +166,15 @@ describe('le bloc « Rattachements » (§5.82)', () => {
 		const lignes = screen.getAllByTestId('ligne-rattachement')
 		const autre = lignes.find((l) => l.getAttribute('aria-current') !== 'page')!
 		const courante = lignes.find((l) => l.getAttribute('aria-current') === 'page')!
-		const eteinte = within(autre).getByRole('button') as HTMLButtonElement
+		const eteinte = within(autre).getByTestId('basculer-archivage-rattachement') as HTMLButtonElement
 		expect(eteinte.disabled).toBe(true)
 		expect(eteinte.getAttribute('aria-describedby')).toBe(motif.id)
-		expect((within(courante).getByRole('button') as HTMLButtonElement).disabled).toBe(false)
+		expect((within(courante).getByTestId('basculer-archivage-rattachement') as HTMLButtonElement).disabled).toBe(false)
 	})
 
 	it('aucun channel refusé : aucun motif', async () => {
 		monter(client({ data: [], error: null, status: 200 }).faux)
-		await waitFor(() => expect((screen.getAllByRole('button')[0] as HTMLButtonElement).disabled).toBe(false))
+		await waitFor(() => expect((screen.getAllByTestId('basculer-archivage-rattachement')[0] as HTMLButtonElement).disabled).toBe(false))
 		expect(screen.queryByTestId('motif-lecture-seule')).toBeNull()
 	})
 
@@ -214,5 +228,65 @@ describe('le bloc « Rattachements » (§5.82)', () => {
 		expect(screen.queryByTestId('envoyer-rattacher')).toBeNull()
 		await userEvent.keyboard('{Escape}')
 		await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('ouvrir-rattacher')))
+	})
+
+	it('« Retirer » est éteint avec son motif pour qui n’administre pas l’espace', () => {
+		monter(client({ data: [], error: null, status: 200 }).faux, vi.fn(), { administration: 'refusee' })
+		const motif = screen.getByTestId('motif-retrait-administration')
+		for (const commande of screen.getAllByTestId('ouvrir-retrait-rattachement') as HTMLButtonElement[]) {
+			expect(commande.disabled).toBe(true)
+			expect(commande.getAttribute('aria-describedby')).toBe(motif.id)
+		}
+		expect(screen.queryByTestId('motif-retrait-dernier')).toBeNull()
+	})
+
+	it('« Retirer » est éteint sur le dernier rattachement, avec son propre motif', () => {
+		monter(client({ data: [], error: null, status: 200 }).faux, vi.fn(), { rattachements: [COURANT] })
+		const commande = screen.getByTestId('ouvrir-retrait-rattachement') as HTMLButtonElement
+		expect(commande.disabled).toBe(true)
+		expect(commande.getAttribute('aria-describedby')).toBe(screen.getByTestId('motif-retrait-dernier').id)
+	})
+
+	it('la confirmation nomme le rattachement et la perte ; `Échap` la referme et rend le focus à « Retirer »', async () => {
+		const { faux, rpcs } = client({ data: [], error: null, status: 200 })
+		monter(faux)
+		const autre = screen.getAllByTestId('ligne-rattachement').find((l) => l.getAttribute('aria-current') !== 'page')!
+		await userEvent.click(within(autre).getByTestId('ouvrir-retrait-rattachement'))
+		const confirmation = within(autre).getByTestId('confirmation-retrait-rattachement')
+		expect(confirmation.textContent).toContain('Retirer le rattachement à Conseil & IA › Grands comptes ?')
+		expect(confirmation.textContent).toContain('les réponses de son formulaire sont perdus')
+		expect(document.activeElement).toBe(within(confirmation).getByTestId('confirmer-retrait-rattachement'))
+		await userEvent.keyboard('{Escape}')
+		await waitFor(() => expect(document.activeElement).toBe(within(autre).getByTestId('ouvrir-retrait-rattachement')))
+		expect(rpcs).toEqual([])
+	})
+
+	it('retirer un AUTRE rattachement relit la fiche ; retirer celui de la fiche ouvre le rattachement restant', async () => {
+		const { faux, rpcs } = client({ data: [], error: null, status: 200 })
+		const onChange = monter(faux)
+		const lignes = () => screen.getAllByTestId('ligne-rattachement')
+		const autre = lignes().find((l) => l.getAttribute('aria-current') !== 'page')!
+		await userEvent.click(within(autre).getByTestId('ouvrir-retrait-rattachement'))
+		await userEvent.click(within(autre).getByTestId('confirmer-retrait-rattachement'))
+		await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1))
+		expect(rpcs.at(-1)).toEqual({ nom: 'detach_card', args: { p_placement: 'p-conseil', discard_field_values: true } })
+
+		const courante = lignes().find((l) => l.getAttribute('aria-current') === 'page')!
+		await userEvent.click(within(courante).getByTestId('ouvrir-retrait-rattachement'))
+		await userEvent.click(within(courante).getByTestId('confirmer-retrait-rattachement'))
+		await waitFor(() => expect(screen.getByTestId('adresse').textContent).toBe('/tracks/conseil-ia/grands-comptes/cards/c-1'))
+		expect(onChange).toHaveBeenCalledTimes(1)
+	})
+
+	it('un refus de la base se dit dans la confirmation, qui reste ouverte', async () => {
+		const { faux } = client({ data: [], error: null, status: 200 }, undefined, {
+			rattacher: { error: { code: '42501', message: 'forbidden' }, status: 403 },
+		})
+		const onChange = monter(faux)
+		const autre = screen.getAllByTestId('ligne-rattachement').find((l) => l.getAttribute('aria-current') !== 'page')!
+		await userEvent.click(within(autre).getByTestId('ouvrir-retrait-rattachement'))
+		await userEvent.click(within(autre).getByTestId('confirmer-retrait-rattachement'))
+		expect((await within(autre).findByTestId('refus-retrait-rattachement')).getAttribute('data-refus')).toBe('interdit')
+		expect(onChange).not.toHaveBeenCalled()
 	})
 })
