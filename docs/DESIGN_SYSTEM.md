@@ -7688,3 +7688,14 @@ aide, contrôle du type, enregistrement champ par champ et ses quatre états, re
   utilisable sans lui.
 - **SOUS `md`**, les champs prennent toute la largeur, comme ceux du formulaire. **Aucune couleur, aucun jeton, aucune
   icône nouvelle.**
+
+### 5.89 Une valeur commune dans le fil — `CRM-112` T3.d
+
+*Écrit le 2026-11-03, avant le code.* `docs/SPEC-champs-communs.md` §7 dit ce que la base écrit ; ces règles ne disent que
+de quoi la ligne a l'air. **C'est la ligne « Champ renseigné » du §5.11**, même icône (`PencilLine`), même pastille, même
+famille « Champs » : une valeur commune changée est un champ renseigné.
+- **Le détail nomme le champ par son libellé, suivi de « — champ de l'affaire »** (une clé, jamais une concaténation, §10) :
+  la même ligne paraît sur la fiche de chaque rattachement, et sans cette mention on chercherait la question dans le
+  formulaire de l'étape. Un champ que la fiche ne sait plus nommer laisse la ligne sans détail, comme pour un champ du
+  workflow (§5.11 : le fil n'invente jamais un nom).
+- **Aucune couleur, aucun jeton, aucune icône nouvelle.**

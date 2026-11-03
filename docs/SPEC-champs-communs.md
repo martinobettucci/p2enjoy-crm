@@ -199,6 +199,12 @@ garde : désarchiver les rend.
   libellés par la lecture de `card_common_fields`, et la fiche les reçoit par `exiges`, comme les autres.
 - **Timeline** : une valeur changée écrit `field_changed`, avec un `placement_id` **nul** (« partie commune »,
   `docs/SPEC-rattachements.md` §5) et un `payload` qui porte `field_id` et `scope: "common"` **[proposition]**.
+  *Précisé le 2026-11-03, avant le code de T3.d (migration `0163`, `docs/DESIGN_SYSTEM.md` §5.89)* : un déclencheur après
+  insertion et mise à jour de `card_common_field_values` écrit l'événement par `app.card_event_ecrire`, avec `from` (une
+  mise à jour) et `to`, et rien quand la valeur ne change pas — la règle du déclencheur des champs de workflow.
+  `app.card_events_fill_placement`, qui rattache aujourd'hui tout `field_changed` au premier rattachement, laisse le
+  rattachement **nul** quand `payload.scope = 'common'`. Le fil lit tous les événements d'une affaire : la ligne paraît
+  donc sur la fiche de chaque rattachement. Les webhooks reçoivent l'événement comme tout `field_changed`.
 
 ## 8. Vue liste : colonnes et filtres (décision 664, arbitrage 4)
 
