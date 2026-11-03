@@ -38734,3 +38734,26 @@ channels » (§4). L'image `mcp` en service ne portait pas `crm_organization_cre
 preuves rouges qui dépendent de l'état dérivé de la base partagée (lectures, relève, journal MCP, remises de webhooks,
 une instabilité connue) — T8 reste `[~]` jusqu'à leur constat sur une base reconstruite.
 
+
+### `CRM-112` T2.d.3 — le panneau de suggestion et les champs communs exigés : ce qui est écrit avant le code (2026-11-03)
+
+*Session 4522fa9c (p2enjoy-crm-3a), après relecture intégrale de `docs/DESIGN_SYSTEM.md`.*
+
+**Problème.** T2.d.1 et T2.d.2 ont appris `exigences_communes` à la fonction edge et à la base ; le panneau de la webapp
+ne la connaît pas. **Observation, à la lecture du code** : `normaliser` (`webapp/src/lib/brouillon-ia.ts`) recompose la
+proposition clé par clé et ne garde que les clés qu'il nomme. « Enregistrer la correction » envoie cette forme : une
+correction à la main effacerait donc la liste que l'assistant a proposée, et la révision `correction` n'exigerait plus
+rien — pour une création, rien ne serait posé ; pour une modification, la liste absente garderait le vivant, et la
+proposition de l'assistant serait perdue sans que l'écran le dise. Aucune livraison n'emporte encore ce chemin : les
+migrations `0157` à `0160` et la fonction attendent l'instruction du responsable (décision 822).
+
+**Décision (précision de la décision 825, sans arbitrage nouveau).** La normalisation garde la liste **telle qu'elle
+est** — portée, même vide, elle est renvoyée ; absente, elle reste absente. L'aperçu rend une section « Champs communs
+exigés » après « Exigences », retirable ligne à ligne, sans ajout ; les retraits en cascade l'emportent ; le différentiel
+d'une modification la compare au vivant quand la cible la porte ; les trois codes sont traduits. Forme :
+`docs/DESIGN_SYSTEM.md` §5.52 ter ; parcours : `docs/SPEC-ia.md` §12.5. **Connecteur MCP** : les deux questions sont déjà
+répondues — les suggestions n'y sont pas (décision 653), et exiger un champ commun est une définition, que le connecteur
+ne porte pas (décision 664).
+
+**Vérifications prévues** : un test unitaire rouge avant le correctif de `normaliser` ; unitaires de l'aperçu, du
+différentiel et des retraits ; E2E du panneau sur une suggestion qui exige un champ commun.

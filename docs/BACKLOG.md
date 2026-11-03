@@ -17520,7 +17520,9 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
                   cible qui décide ou garde le vivant, création acceptée) ; specs API de l'assistant **21/21** ; la suite
                   pgTAP n'a d'autre rouge que les comptes du seed revus par `CRM-111` T8 (deux affaires partagées).
             - [ ] **T2.d.3 — le panneau de suggestion** : les exigences communes affichées et retirables ; unitaires ;
-                  E2E.
+                  E2E. *Spécifiée le 2026-11-03, avant le code* : `docs/DESIGN_SYSTEM.md` §5.52 ter, `docs/SPEC-ia.md`
+                  §12.5 ; la normalisation du brouillon garde la liste telle qu'elle est (défaut trouvé à la lecture du
+                  code : une correction l'effaçait, journal du 2026-11-03).
 - [ ] **T3** — écrans : Réglages ▸ « Champs de l'affaire », exigence dans l'éditeur de workflow, partie commune de la
       fiche, timeline ; `docs/DESIGN_SYSTEM.md` avant le code ; unitaires.
 - [ ] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; unitaires ; API.

@@ -448,6 +448,17 @@ s'achève ensuite n'écrit rien (§12.6).
   transitions, leurs exigences, ses règles et son nœud proposé ; un champ, ses règles et ses exigences ; une
   transition, ses exigences. « Enregistrer la correction » écrit la révision (§12.2) ; « Rétablir » revient à
   la dernière révision.
+- **Les champs communs exigés** (`CRM-112` T2.d.3, écrit le 2026-11-03 avant le code ; forme :
+  `docs/DESIGN_SYSTEM.md` §5.52 ter). L'aperçu lit les champs communs de l'espace (`card_common_fields`, archivés
+  compris, sous la RLS : tout membre lit les définitions, `docs/SPEC-champs-communs.md` §4) pour nommer ceux que
+  `exigences_communes` vise. Une exigence commune **se retire**, et les retraits en cascade l'emportent comme les
+  exigences : une étape, une transition, ce qui les touche. **Elle ne s'ajoute pas** dans l'aperçu (règle ci-dessus).
+  **Une correction garde la liste telle qu'elle est** : portée, même vide, elle est renvoyée ; absente d'une révision
+  antérieure, elle reste absente — la normalisation du brouillon ne l'ajoute ni ne la retire, faute de quoi
+  « Enregistrer la correction » effacerait ce que l'assistant a proposé (défaut trouvé à la lecture du code, journal du
+  2026-11-03). Le différentiel d'une modification compare la liste à celle du vivant, seulement quand la cible la
+  porte. **Connecteur MCP : non** — les suggestions n'y sont pas (décision 653), et exiger un champ commun est une
+  définition (décision 664).
 - **Faire revoir.** Une consigne et « Revoir avec l'IA » : une correction non enregistrée est d'abord
   enregistrée — l'IA revoit ce que l'administrateur voit (§2) —, puis la revue part.
 - **Accepter.** « Accepter et créer le workflow » : une correction non enregistrée est d'abord enregistrée ;

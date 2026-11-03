@@ -5469,6 +5469,51 @@ et §5.53 posent vaut sans être répété** ; seuls les ajouts sont écrits.
   La page ne défile jamais horizontalement (§7).
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.**
 
+### 5.52 ter Les champs communs exigés dans l'aperçu d'une suggestion — `CRM-112` T2.d.3
+
+*Écrit le 2026-11-03, avant le code, après relecture intégrale de ce document le même jour (décision 825).*
+`docs/SPEC-ia.md` §6.1 et §12.5 disent ce que l'aperçu lit et envoie ; ces règles ne disent que de quoi il a l'air. **Tout
+ce que les §5.52, §5.52 bis et §5.53 posent vaut sans être répété** ; seuls les ajouts sont écrits.
+
+- **UNE SECTION « Champs communs exigés », TITRÉE `h3`, JUSTE APRÈS « Exigences »** — l'ordre de l'éditeur (§5.15). Elle
+  n'est pas mêlée aux exigences : un champ commun n'appartient pas à la proposition, et le ranger parmi les champs
+  qu'elle exige ferait croire qu'elle le crée. Une phrase en 13 px `--color-text-2` sous le titre le dit : « Ces champs
+  sont définis pour tout l'espace, dans Réglages : l'assistant les exige sans les créer. »
+- **ELLE N'EST RENDUE QUE SI LA PROPOSITION PORTE LA LISTE** (§5.36). Une révision antérieure, qui ne la porte pas, ne
+  change rien aux exigences vivantes (`docs/SPEC-ia.md` §6.1) : il n'y a rien à relire, et une section vide affirmerait
+  qu'il n'y en a aucune. **Une liste portée mais vide rend « Aucun champ commun exigé. »** (§5.15 : jamais un vide) : elle
+  décide, et pour une modification le différentiel dit ce qu'elle retire.
+- **UNE LIGNE PAR EXIGENCE**, la ligne des exigences (§5.52) : « « SIRET » exigé pour passer de « Prospection » à
+  « Qualification » », le champ nommé par son **libellé**, lu dans les champs communs de l'espace, les étapes par leur
+  nom effectif (§5.52 bis) ; puis la clé du champ en `code` sur `--color-hover` (§5.15) — la clé est ce que la
+  proposition porte, et ce que la base résout.
+  - **Une clé qu'aucun champ commun lisible de l'espace ne porte se rend telle quelle**, en `code`, sans libellé inventé
+    (§5.62 : on ne fait jamais un nom d'un identifiant) ; le défaut `exigence_champ_commun_absent` le dit en tête.
+  - **Un champ commun archivé porte la pilule « Archivé »** du §5.15 après son libellé : la base refuse de l'exiger, et
+    le défaut le dit ; la pilule dit pourquoi sans attendre de lire le bloc des défauts.
+- **RETIRER : un bouton discret compact `Trash2`**, nom accessible qui nomme le champ et la transition, **sans
+  confirmation** (§5.52 : rien n'est encore créé, « Rétablir » ramène la révision) ; l'issue s'annonce dans la région
+  vivante : « Exigence retirée ».
+- **AUCUN AJOUT DANS L'APERÇU, ET L'ABSENCE EST ASSUMÉE.** Exiger un champ commun se fait dans l'éditeur de workflows
+  (`CRM-112` T3), ou se demande par une consigne : l'aperçu n'est pas un second éditeur (décision 618, point 7), il retire
+  ce que l'assistant a proposé — la règle du §12.5 de la spécification pour les exigences.
+- **LES RETRAITS EN CASCADE L'EMPORTENT AUSSI.** Retirer une étape ou une transition retire les exigences communes qui la
+  touchaient, comme la base les emporterait, et l'annonce les compte **avec** les exigences — « Étape retirée, avec
+  2 transitions, 1 règle et 3 exigences » : pour la personne qui retire, ce sont des exigences de la transition, et une
+  quatrième grandeur allongerait la phrase sans rien lui apprendre.
+- **LE DIFFÉRENTIEL D'UNE MODIFICATION GAGNE UNE SECTION « Champs communs exigés »**, après « Exigences », une ligne
+  « Ajouté » ou « Retiré » par exigence, nommée comme dans l'aperçu (§5.53). Elle n'est calculée que si la cible porte la
+  liste : une cible qui ne la porte pas garde les exigences vivantes, et ne change donc rien à dire.
+- **LES TROIS DÉFAUTS NOUVEAUX** s'écrivent dans le bloc des défauts (§5.52), une phrase chacun, par clé :
+  `exigence_champ_commun_absent` — « Une exigence vise « {cle} », qui n'est pas un champ commun actif de l'espace. » ;
+  `exigence_commune_transition_absente` — « Une exigence de champ commun vise la transition absente « {de} » vers
+  « {vers} ». » ; `exigence_commune_en_double` — « L'exigence du champ commun « {champ} » sur « {de} » vers « {vers} »
+  est déclarée deux fois. »
+- **SOUS `md`**, la ligne se replie — le texte, puis la clé et la commande —, cible conservée ; `md` et jamais `sm` (§11).
+  La page ne défile jamais horizontalement (§7).
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : la section emprunte au §5.52 sa ligne et son retrait, au §5.15
+  sa clé en `code` et sa pilule « Archivé », au §5.53 ses lignes de différentiel.
+
 ### 5.54 Saisie de temps et coût du personnel — `CRM-098`
 
 Spécifiée avant code, `docs/SPEC-temps.md` §7 (décision 621).
