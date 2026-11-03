@@ -8663,6 +8663,8 @@ jusqu'à la livraison de `CRM-127` T2.
 
 ### INC-341 — les envois du connecteur MCP partent directement, alors que la règle du responsable exige une relecture
 
+> **CLOSE le 2026-11-04** (décision 835) : `CRM-128` livrée et constatée en production par le responsable.
+
 *Relevé le 2026-11-03 par la session de `CRM-111` T6 (décision 821).* **La règle**, énoncée par le responsable : « les
 envois par MCP ne partent JAMAIS direct et aucun détournement possible ; ils finissent dans une file de mails préparés
 qui nécessitent une interface web pour relecture et envoi. Les relances auto ne passent pas par cette interface. »
@@ -8680,7 +8682,8 @@ d'envoi, l'envoi réservé à l'interface, les relances automatiques inchangées
 L'incohérence reste ouverte jusqu'à la livraison de `CRM-128` T3 (le connecteur cesse d'envoyer) et T2 (la base refuse).
 **Livrée le 2026-11-03** (décision 834, révision `52da28ac`) : la migration `0162` et l'image `mcp` sans `crm_mail_send`,
 relues en production — deux déclencheurs `%refuser_connecteur`, `crm_mail_prepare` dans l'image. Elle se clôt sur le
-constat du responsable : un assistant qui prépare un mail, la relecture dans l'inbox, la mise en file.
+constat du responsable : un assistant qui prépare un mail, la relecture dans l'inbox, la mise en file. **Constat
+favorable le 2026-11-04** (décision 835) : close.
 
 ### INC-342 — cinq preuves dépendent de l'état accumulé de la base de développement partagée
 

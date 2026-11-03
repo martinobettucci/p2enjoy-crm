@@ -18531,7 +18531,7 @@ Question du connecteur : **non** (décision 816).
 
 ## Demande du 2026-11-03 — les envois du connecteur passent par une relecture humaine (décision 827, INC-341)
 
-### CRM-128 — Les mails préparés : un envoi du connecteur MCP attend la relecture et l'envoi depuis l'interface web `[P]`
+### CRM-128 — Les mails préparés : un envoi du connecteur MCP attend la relecture et l'envoi depuis l'interface web `[x]`
 *Créée le 2026-11-03 — décision 827 (« Unit, top priority »), INC-341.* La règle du responsable : un envoi demandé par le
 connecteur MCP ne part **jamais** directement, sans détournement possible ; il entre dans une file de mails préparés, que
 seule l'interface web permet de relire et d'envoyer. Les relances automatiques ne passent pas par cette file.
@@ -18570,11 +18570,12 @@ inbox et fiche).
 - [x] **T5 — seed**, vérifié le 2026-11-03 : `docs/SPEC-seed.md` §37 — deux mails en attente pour Camille et un écarté,
       préparés par `prepare_email` sous un jeton aux revendications du connecteur (origine `mcp`), vérifiés dans la section
       même ; seed rejoué sur la pile de dev (code 0) ; images du manuel §12.4 prises sur ces mails.
-- [P] **T6 — livraison en production**, sur instruction du responsable : migration, image `mcp` et webapp dans la même
+- [x] **T6 — livraison en production**, sur instruction du responsable : migration, image `mcp` et webapp dans la même
       fenêtre ; constat.
       *Le 2026-11-03* : T1 à T5 vérifiés en développement ; la session de livraison (3a, décision 830) joue la campagne
       complète puis demande la fenêtre au responsable. Reste : la livraison et le constat — un assistant qui prépare un mail,
       la relecture dans l'inbox, la mise en file ; INC-341 se clôt sur ce constat.
       **Livrée le 2026-11-03** (décision 834, révision `52da28ac` : migration 162, image `mcp` reconstruite, webapp,
       manuel ; `docs/PROD_MIGRATIONS.md` §8) après la campagne complète, dont le défaut de `connecteur-messagerie` corrigé
-      par la session de l'unité (`02e9e80c`). Reste le constat du responsable.
+      par la session de l'unité (`02e9e80c`). **Constat favorable du responsable le 2026-11-04** (décision 835) : un
+      assistant prépare un mail qui ne part pas, la relecture dans l'inbox, la mise en file ; l'unité est terminée.

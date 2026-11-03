@@ -38955,3 +38955,12 @@ aucune donnée transformée.
 seule : registre terminé par la 163, `select count(*) from pg_trigger where tgname like '%refuser_connecteur'` rend 2,
 `verifier.sh`, le manuel publié ; consignation (baseline, changelog, backlog, INC-341).
 
+
+### décision 835 — constat favorable de `CRM-128` en production ; INC-341 close
+
+*2026-11-04, session interactive 4891a451, réponse du responsable à `AskUserQuestion`.* **Question** : sur
+`https://crm.lelabs.tech`, après la livraison de la décision 834 (révision `52da28ac`), un assistant connecté prépare un mail
+sur une affaire, le mail ne part pas, il se relit par le lien de relecture ou l'entrée « Mails préparés » de l'inbox, puis
+se met en file — quel constat ? **Réponse : « Constat favorable »**. **Conséquence** : `CRM-128` passe `[x]` (décision 697)
+et INC-341 est close. La règle du responsable (décision 821) est tenue en production : le connecteur prépare, la base
+refuse tout envoi venant de lui, et seule la personne envoie, depuis l'interface web.
