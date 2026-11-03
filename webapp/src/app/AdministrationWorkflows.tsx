@@ -97,6 +97,7 @@ import {
 	type OuvertureChecklist,
 } from './ChecklistsWorkflow'
 import { lireChecklistsWorkflow, type ChecklistsWorkflow } from '../lib/administration-checklists'
+import { lireChampsCommunsEspace } from '../lib/champs-communs'
 import { CHEMIN_ADMIN_CATALOGUE } from './chemins'
 import {
 	AlerteRefus,
@@ -115,7 +116,7 @@ import { EtatErreur, EtatVide } from '../components/ui/States'
 import { t } from '../i18n'
 import type { CleTraduction } from '../i18n/fr'
 import type { EtatAsync } from '../lib/async'
-import { enChargement } from '../lib/async'
+import { enChargement, pret } from '../lib/async'
 import { useApresWorkflowDeDepart } from '../lib/demarrage'
 import {
 	PARAM_CREER,
@@ -162,10 +163,15 @@ import {
 	exigencesEffectives,
 	exigencesSansEffet,
 	exigerChamp,
+	exigerChampCommun,
 	lireExigences,
+	lireExigencesCommunes,
+	previsualiserExigenceCommune,
 	retirerExigence,
+	retirerExigenceCommune,
+	type ChampDeclarable,
+	type ExigenceCommune,
 	type ExigenceAdministrable,
-	type ExigenceEffective,
 	type OrigineExigence,
 	type RefusExigence,
 	type ResultatExigence,
@@ -406,6 +412,8 @@ type Ouverture =
 			readonly type: 'exigence-retrait'
 			readonly idTransition: string
 			readonly idChamp: string
+			/** `CRM-112` T3.b : le champ est un champ COMMUN de l'espace (§5.87). */
+			readonly commun?: boolean
 	  }
 
 const AUCUNE: Ouverture = { type: 'aucune' }
@@ -1516,11 +1524,14 @@ function LigneExigence({
 	nomTransition,
 	enCours,
 	onOuvrirRetrait,
+	commun = false,
 }: {
-	readonly exigence: ExigenceEffective
+	readonly exigence: { readonly champ: Pick<ChampDeclarable, 'key' | 'label'>; readonly origine: OrigineExigence }
 	readonly nomTransition: string
 	readonly enCours: boolean
 	readonly onOuvrirRetrait: () => void
+	/** `CRM-112` T3.b : un champ commun de l'espace, que la pilule « Champ de l'affaire » nomme (§5.87). */
+	readonly commun?: boolean
 }) {
 	const droit = useRefus()
 	const retirable = exigence.origine !== 'regle'
@@ -1529,10 +1540,14 @@ function LigneExigence({
 			data-testid="ligne-exigence"
 			data-champ={exigence.champ.key}
 			data-origine={exigence.origine}
+			{...(commun ? { 'data-commun': 'oui' } : {})}
 			className="flex flex-wrap items-center gap-2"
 		>
 			<span>{exigence.champ.label}</span>
 			<code className="rounded-sm bg-hover px-1 text-sm text-text-2">{exigence.champ.key}</code>
+			{commun ? (
+				<span className="rounded-full bg-hover px-2 text-xs text-text-2">{t('admin.workflows.requirements.common.pill')}</span>
+			) : null}
 			<span className="text-sm text-text-2">{t(LIBELLES_ORIGINE[exigence.origine])}</span>
 			{retirable ? (
 				<button {...droit}
@@ -1566,6 +1581,7 @@ function LigneExigence({
  */
 function FormulaireExigence({
 	champs,
+	champsCommuns = [],
 	dejaParRegle,
 	nomTransition,
 	refus,
@@ -1576,25 +1592,32 @@ function FormulaireExigence({
 	onAnnuler,
 }: {
 	readonly champs: readonly ChampAdministrable[]
+	/** `CRM-112` T3.b : les champs communs de l'espace qu'elle peut encore exiger, dans leur propre groupe (§5.87). */
+	readonly champsCommuns?: readonly ChampDeclarable[]
 	readonly dejaParRegle: ReadonlySet<string>
 	readonly nomTransition: string
 	readonly refus: string | null
 	readonly enCours: boolean
 	readonly effets: MessageEffets | null
-	readonly onChoisir: (idChamp: string) => void
-	readonly onValider: (idChamp: string) => void
+	readonly onChoisir: (idChamp: string, commun: boolean) => void
+	readonly onValider: (idChamp: string, commun: boolean) => void
 	readonly onAnnuler: () => void
 }) {
 	const droit = useRefus()
 	const prefixe = useId()
 	const premier = useRef<HTMLSelectElement>(null)
-	const [idChamp, setIdChamp] = useState(() => champs[0]?.id ?? '')
+	// La valeur du choix dit d'où vient le champ — `w:` un champ du workflow, `c:` un champ commun : deux identifiants de
+	// deux tables ne se distinguent pas autrement.
+	const choix = [...champs.map((champ) => `w:${champ.id}`), ...champsCommuns.map((champ) => `c:${champ.id}`)]
+	const [valeur, setValeur] = useState(() => choix[0] ?? '')
 
 	useEffect(() => {
 		premier.current?.focus()
 	}, [])
 
-	const retenu = champs.some((champ) => champ.id === idChamp) ? idChamp : (champs[0]?.id ?? '')
+	const retenueValeur = choix.includes(valeur) ? valeur : (choix[0] ?? '')
+	const commun = retenueValeur.startsWith('c:')
+	const retenu = retenueValeur.slice(2)
 
 	// LA PRÉVISUALISATION SUIT LE CHAMP CHOISI, y compris celui que le formulaire propose d'office :
 	// sans cet effet, le premier champ de la liste serait le seul dont l'effet resterait inconnu,
@@ -1609,8 +1632,8 @@ function FormulaireExigence({
 	const choisirRef = useRef(onChoisir)
 	choisirRef.current = onChoisir
 	useEffect(() => {
-		if (retenu !== '') choisirRef.current(retenu)
-	}, [retenu])
+		if (retenueValeur !== '') choisirRef.current(retenueValeur.slice(2), retenueValeur.startsWith('c:'))
+	}, [retenueValeur])
 
 	return (
 		<form
@@ -1619,10 +1642,10 @@ function FormulaireExigence({
 			className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4"
 			onSubmit={(evenement) => {
 				evenement.preventDefault()
-				if (retenu !== '' && !enCours) onValider(retenu)
+				if (retenu !== '' && !enCours) onValider(retenu, commun)
 			}}
 		>
-			{champs.length === 0 ? (
+			{choix.length === 0 ? (
 				<p role="status" data-testid="exigences-choix-epuises" className="text-sm text-text-2">
 					{t('admin.workflows.requirements.add.none')}
 				</p>
@@ -1634,17 +1657,40 @@ function FormulaireExigence({
 					<select
 						id={`${prefixe}-champ`}
 						ref={premier}
-						value={retenu}
-						onChange={(evenement) => setIdChamp(evenement.target.value)}
+						value={retenueValeur}
+						onChange={(evenement) => setValeur(evenement.target.value)}
 						className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3"
 					>
-						{champs.map((champ) => (
-							<option key={champ.id} value={champ.id}>
-								{champ.label}
-							</option>
-						))}
+						{/* Sans champ commun, la liste reste celle d'avant — aucun groupe ; avec eux, deux groupes traduits, et un
+						    groupe vide n'est pas rendu (§5.87). */}
+						{champsCommuns.length === 0 ? (
+							champs.map((champ) => (
+								<option key={champ.id} value={`w:${champ.id}`}>
+									{champ.label}
+								</option>
+							))
+						) : (
+							<>
+								{champs.length === 0 ? null : (
+									<optgroup label={t('admin.workflows.requirements.group.workflow')}>
+										{champs.map((champ) => (
+											<option key={champ.id} value={`w:${champ.id}`}>
+												{champ.label}
+											</option>
+										))}
+									</optgroup>
+								)}
+								<optgroup label={t('admin.workflows.requirements.group.common')}>
+									{champsCommuns.map((champ) => (
+										<option key={champ.id} value={`c:${champ.id}`}>
+											{champ.label}
+										</option>
+									))}
+								</optgroup>
+							</>
+						)}
 					</select>
-					{dejaParRegle.has(retenu) ? (
+					{!commun && dejaParRegle.has(retenu) ? (
 						<p data-testid="exigence-deja-par-regle" className="text-sm text-text-2">
 							{t('admin.workflows.requirements.add.alreadyByRule')}
 						</p>
@@ -1656,7 +1702,7 @@ function FormulaireExigence({
 			)}
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button {...droit} type="submit" variante="primaire" disabled={droit.disabled === true || champs.length === 0 || enCours}>
+				<Button {...droit} type="submit" variante="primaire" disabled={droit.disabled === true || choix.length === 0 || enCours}>
 					{t('admin.workflows.requirements.add.submit')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -1769,13 +1815,14 @@ const CLES_REFUS_COMPARAISON: Readonly<Record<RefusComparaisonSource, CleTraduct
 	generique: 'admin.workflows.compareSource.refus.generique',
 }
 
-/** Les cinq collections rendues, et leurs intitulés — ceux du bloc des versions, non redéfinis. */
+/** Les six collections rendues, et leurs intitulés — ceux du bloc des versions, non redéfinis. */
 const CLES_COLLECTION_SOURCE: Readonly<Record<CleCollectionSource, CleTraduction>> = {
 	steps: 'admin.workflows.versions.collection.steps',
 	transitions: 'admin.workflows.versions.collection.transitions',
 	fields: 'admin.workflows.versions.collection.fields',
 	rules: 'admin.workflows.versions.collection.rules',
 	required_fields: 'admin.workflows.versions.collection.required_fields',
+	required_common_fields: 'admin.workflows.versions.collection.required_common_fields',
 }
 
 /**
@@ -1961,7 +2008,7 @@ export function AdministrationWorkflows({
 	acces = accesAssistantCrm,
 }: ProprietesAdministrationWorkflows = {}) {
 	// `CRM-093` — ce composant FOURNIT le refus à ses blocs ; ses propres commandes le lisent ici directement.
-	const { capacites } = useContexteEspace()
+	const { capacites, idWorkspace: espaceCourant } = useContexteEspace()
 	const droit = proprietesCommande(capacites.administration, ID_MOTIF_WORKFLOWS)
 	const [workflows, setWorkflows] = useState<EtatAsync<readonly WorkflowAdministrable[]>>(enChargement)
 	const [idChoisi, setIdChoisi] = useState<string | null>(null)
@@ -1978,6 +2025,9 @@ export function AdministrationWorkflows({
 	const [regles, setRegles] = useState<EtatAsync<readonly RegleAdministrable[]>>(enChargement)
 	const [exigences, setExigences] =
 		useState<EtatAsync<readonly ExigenceAdministrable[]>>(enChargement)
+	/** `CRM-112` T3.b (docs/DESIGN_SYSTEM.md §5.87) : les champs communs de l'espace et leurs exigences, lus avec le graphe. */
+	const [champsCommuns, setChampsCommuns] = useState<EtatAsync<readonly ChampDeclarable[]>>(enChargement)
+	const [exigencesCommunes, setExigencesCommunes] = useState<EtatAsync<readonly ExigenceCommune[]>>(enChargement)
 	/** `CRM-068` T3b (docs/DESIGN_SYSTEM.md §5.70 bis) : les points des étapes et les points exigés, lus avec le graphe. */
 	const [checklists, setChecklists] = useState<EtatAsync<ChecklistsWorkflow>>(enChargement)
 	const [ouvertureChecklist, setOuvertureChecklist] = useState<OuvertureChecklist>(null)
@@ -2498,15 +2548,24 @@ export function AdministrationWorkflows({
 			// même instant que son graphe, et une mention lue à un autre instant pourrait décrire
 			// un état que l'écran ne montre pas.
 			// `CRM-068` T3b : les checklists partent avec eux — un point n'a de sens qu'entre une étape du même instant.
-			const [lues, arretes, formulaire, visibilites, exigees, origine, pointsEtExigences] = await Promise.all([
-				lireEtapes(client, idWorkflow),
-				lireTransitions(client, idWorkflow),
-				lireChamps(client, idWorkflow),
-				lireRegles(client, idWorkflow),
-				lireExigences(client, idWorkflow),
-				lireDerivation(client, idWorkflow),
-				lireChecklistsWorkflow(client, idWorkflow),
-			])
+			// `CRM-112` T3.b : les champs communs et leurs exigences aussi — une exigence commune n'a de sens qu'entre une
+			// arête et un champ du même instant.
+			const [lues, arretes, formulaire, visibilites, exigees, origine, pointsEtExigences, communs, exigeesCommunes] =
+				await Promise.all([
+					lireEtapes(client, idWorkflow),
+					lireTransitions(client, idWorkflow),
+					lireChamps(client, idWorkflow),
+					lireRegles(client, idWorkflow),
+					lireExigences(client, idWorkflow),
+					lireDerivation(client, idWorkflow),
+					lireChecklistsWorkflow(client, idWorkflow),
+					espaceCourant === null
+						? Promise.resolve(pret([] as readonly ChampDeclarable[]))
+						: lireChampsCommunsEspace(client, espaceCourant),
+					lireExigencesCommunes(client, idWorkflow),
+				])
+			setChampsCommuns(communs)
+			setExigencesCommunes(exigeesCommunes)
 			setChecklists(pointsEtExigences)
 			setEtapes(lues)
 			setTransitions(arretes)
@@ -2524,7 +2583,7 @@ export function AdministrationWorkflows({
 			setComparaisonSource(null)
 			setRefusComparaison(null)
 		},
-		[client],
+		[client, espaceCourant],
 	)
 
 	// `CRM-068` T3b — UN SEUL ÉLÉMENT OUVERT À LA FOIS DANS L'ÉDITEUR (§5.28) : ouvrir un élément des checklists ferme celui
@@ -3797,7 +3856,9 @@ export function AdministrationWorkflows({
 													>
 														{t('admin.workflows.requirements.noTransitions')}
 													</p>
-												) : champs.donnees.every((champ) => champ.archived_at !== null) ? (
+												) : champs.donnees.every((champ) => champ.archived_at !== null) &&
+												  // `CRM-112` T3.b (§5.87) : un workflow sans champ actif peut encore exiger un champ de l'affaire.
+												  !(champsCommuns.statut === 'pret' && champsCommuns.donnees.some((champ) => champ.archived_at === null)) ? (
 													<>
 														<p
 															role="status"
@@ -3866,6 +3927,23 @@ export function AdministrationWorkflows({
 																			.filter((item) => item.origine !== 'transition')
 																			.map((item) => item.champ.id),
 																	)
+																	// `CRM-112` T3.b (§5.87) : les champs communs que l'arête exige, dans l'ordre de la
+																	// partie commune, et ceux qu'elle peut encore exiger.
+																	const communsDisponibles =
+																		champsCommuns.statut === 'pret' ? champsCommuns.donnees : []
+																	const idsCommunsExiges = new Set(
+																		exigencesCommunes.statut === 'pret'
+																			? exigencesCommunes.donnees
+																					.filter((lien) => lien.transition_id === sortie.id)
+																					.map((lien) => lien.common_field_id)
+																			: [],
+																	)
+																	const communsExiges = communsDisponibles.filter((champ) =>
+																		idsCommunsExiges.has(champ.id),
+																	)
+																	const communsLiables = communsDisponibles.filter(
+																		(champ) => champ.archived_at === null && !idsCommunsExiges.has(champ.id),
+																	)
 																	return (
 																		<li
 																			key={sortie.id}
@@ -3874,7 +3952,7 @@ export function AdministrationWorkflows({
 																			className="flex flex-col gap-2"
 																		>
 																			<span className="font-medium">{nomTransition}</span>
-																			{effectives.length === 0 ? (
+																			{effectives.length === 0 && communsExiges.length === 0 ? (
 																				<span
 																					data-testid="transition-sans-exigence"
 																					className="text-sm text-text-2"
@@ -3895,6 +3973,25 @@ export function AdministrationWorkflows({
 																										type: 'exigence-retrait',
 																										idTransition: sortie.id,
 																										idChamp: item.champ.id,
+																									})
+																								}}
+																							/>
+																						</li>
+																					))}
+																					{communsExiges.map((champ) => (
+																						<li key={`commun-${champ.id}`}>
+																							<LigneExigence
+																								exigence={{ champ, origine: 'transition' }}
+																								commun
+																								nomTransition={nomTransition}
+																								enCours={enCours}
+																								onOuvrirRetrait={() => {
+																									setRefus(null)
+																									setOuverture({
+																										type: 'exigence-retrait',
+																										idTransition: sortie.id,
+																										idChamp: champ.id,
+																										commun: true,
 																									})
 																								}}
 																							/>
@@ -3939,9 +4036,12 @@ export function AdministrationWorkflows({
 																						'admin.workflows.requirements.remove.confirm',
 																						{
 																							champ:
-																								champs.donnees.find(
-																									(champ) =>
-																										champ.id === ouverture.idChamp,
+																								(ouverture.commun === true
+																									? communsDisponibles.find((champ) => champ.id === ouverture.idChamp)
+																									: champs.donnees.find(
+																											(champ) =>
+																												champ.id === ouverture.idChamp,
+																										)
 																								)?.label ?? ouverture.idChamp,
 																							transition: nomTransition,
 																						},
@@ -3957,13 +4057,15 @@ export function AdministrationWorkflows({
 																					onConfirmer={() =>
 																						void executerExigenceTransition(
 																							() =>
-																								retirerExigence(
-																									client,
-																									sortie.id,
-																									ouverture.type === 'exigence-retrait'
-																										? ouverture.idChamp
-																										: '',
-																								),
+																								ouverture.type === 'exigence-retrait' && ouverture.commun === true
+																									? retirerExigenceCommune(client, sortie.id, ouverture.idChamp)
+																									: retirerExigence(
+																											client,
+																											sortie.id,
+																											ouverture.type === 'exigence-retrait'
+																												? ouverture.idChamp
+																												: '',
+																										),
 																							t('live.workflows.requirement.removed'),
 																						)
 																					}
@@ -3977,23 +4079,31 @@ export function AdministrationWorkflows({
 																			ouverture.idTransition === sortie.id ? (
 																				<FormulaireExigence
 																					champs={liables}
+																					champsCommuns={communsLiables}
 																					dejaParRegle={parRegle}
 																					nomTransition={nomTransition}
 																					refus={refus}
 																					enCours={enCours}
 																					effets={effetsExigence}
-																					onChoisir={(idChamp) => {
+																					onChoisir={(idChamp, commun) => {
 																						setEffetsExigence(null)
-																						void previsualiserExigence(client, idChamp, {
-																							genre: 'transition',
-																							idTransition: sortie.id,
-																						}).then((resultat) =>
+																						void (
+																							commun
+																								? previsualiserExigenceCommune(client, idChamp, sortie.id)
+																								: previsualiserExigence(client, idChamp, {
+																										genre: 'transition',
+																										idTransition: sortie.id,
+																									})
+																						).then((resultat) =>
 																							setEffetsExigence(composerMessageEffets(resultat)),
 																						)
 																					}}
-																					onValider={(idChamp) =>
+																					onValider={(idChamp, commun) =>
 																						void executerExigenceTransition(
-																							() => exigerChamp(client, sortie.id, idChamp),
+																							() =>
+																								commun
+																									? exigerChampCommun(client, sortie.id, idChamp)
+																									: exigerChamp(client, sortie.id, idChamp),
 																							t('live.workflows.requirement.added'),
 																						)
 																					}

@@ -8715,7 +8715,8 @@ reconstruire l'image `mail-sync`.
 ### INC-344 — `compare_workflow_versions` ignore les champs communs exigés : « différentes », et rien de listé
 
 *Relevé le 2026-11-03 par la session 3a en préparant `CRM-112` T2.c.2 ; livré en production avec la migration 157 le même
-jour (décision 827) ; correction : `CRM-112` T2.c.2, migration `0161`.*
+jour (décision 827) ; **corrigée en développement le 2026-11-03** par la migration `0161` (pgTAP `0150`), à livrer : close
+quand la 161 sera constatée en production.*
 
 **Le constat, mesuré** (transaction annulée sur la pile de développement). Depuis la `0157`, la composition photographiée
 d'une version porte `required_common_fields` quand le workflow exige un champ commun, et l'empreinte en dépend. Mais

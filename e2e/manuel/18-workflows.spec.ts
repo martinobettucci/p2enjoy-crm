@@ -7,6 +7,7 @@
 //       l'IA » : docs/SPEC-ia.md §6.1, §12.5 ; docs/DESIGN_SYSTEM.md §5.52 ter ; décision 825
 // @spec CRM-112 tranche T3.a — les images de la section 18.16, « Les champs communs à toute affaire » :
 //       docs/SPEC-champs-communs.md §6, §7 ; docs/DESIGN_SYSTEM.md §5.86
+// @spec CRM-112 tranche T3.b — l'image « exigence-champ-commun » de la section 18.9 : docs/DESIGN_SYSTEM.md §5.87
 //
 // Les workflows du seed sont lus, jamais modifiés : chaque formulaire ouvert est annulé, et les refus montrés sont ceux du
 // serveur (clé prise, transition déjà déclarée, rôle retiré en cours de page). Ce que l'écran crée — un workflow vide, un
@@ -341,6 +342,13 @@ test('les champs communs à toute affaire : l’écran, et l’archivage d’un 
 	await expect(confirmation.getByRole('alert')).toContainText('Ce champ est exigé par des transitions')
 	await illustrer(page, { chapitre: CHAPITRE, section: S.communs, nom: 'champ-commun-exige', cibles: [confirmation] })
 	await confirmation.getByRole('button', { name: 'Annuler' }).click()
+
+	// `CRM-112` T3.b — la même exigence, vue depuis l'éditeur : la ligne du chemin et sa mention « Champ de l'affaire ».
+	await ouvrir(page, DEFAUT)
+	const ligne = page.locator(`[data-testid="transition-exigences"][data-transition="${TRANSITION_RELANCER}"]`)
+	await expect(ligne.locator('[data-commun="oui"]')).toContainText('Numéro de TVA')
+	await centrer(ligne)
+	await illustrer(page, { chapitre: CHAPITRE, section: S.exigences, nom: 'exigence-champ-commun', cibles: [ligne] })
 })
 
 test('créer avec l’IA : un nœud du catalogue redéclaré, un champ « montant », un échec, un refus', async ({ page, request }) => {

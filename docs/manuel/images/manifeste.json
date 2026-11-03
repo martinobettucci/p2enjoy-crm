@@ -1245,6 +1245,30 @@
 			]
 		},
 		{
+			"fichier": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/exigence-champ-commun.jpg",
+			"largeur": 870,
+			"hauteur": 249,
+			"chapitre": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+			"section": "ce-qu-il-faut-avoir-rempli-pour-emprunter-un-chemin",
+			"pleinePage": false,
+			"libelles": [
+				"Aucun point exigé.",
+				"Champ de l'affaire",
+				"Exiger un champ",
+				"Exiger un point",
+				"Exiger un point pour Transition Prospection vers Relance",
+				"Ne plus exiger",
+				"Ne plus exiger « Numéro de TVA » pour « Transition Prospection vers Relance »",
+				"Numéro de TVA",
+				"Numéro de TVA numero-tva-manuel Champ de l'affaire exigé par cette transition Ne plus exiger",
+				"Points de checklist exigés",
+				"Transition Prospection vers Relance",
+				"Transition Prospection vers Relance Numéro de TVA numero-tva-manuel Champ de l'affaire exigé par cette transition Ne plus exiger Exiger un champ Points de checklist exigés Aucun point exigé. Exiger un point",
+				"exigé par cette transition",
+				"numero-tva-manuel"
+			]
+		},
+		{
 			"fichier": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/exigences.jpg",
 			"largeur": 896,
 			"hauteur": 318,

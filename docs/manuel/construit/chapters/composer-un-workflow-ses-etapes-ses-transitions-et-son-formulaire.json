@@ -3478,6 +3478,61 @@
 			"type": "paragraph",
 			"content": [
 				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Exiger un champ de l'affaire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un chemin peut aussi exiger un champ commun à toute affaire de l'espace\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+						"anchor": "les-champs-communs-a-toute-affaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 18.16"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), par exemple un numéro de TVA avant la relance. Dès que l'espace en\ndéclare, la liste d'« Exiger un champ » les range dans un second groupe, après les questions du workflow, et l'aperçu dit\ncombien d'affaires en cours ne pourraient plus emprunter le chemin tant que ce champ est vide. Une fois exigé, le champ\ns'écrit sur sa ligne avec la mention "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Champ de l'affaire »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et « Ne plus exiger » le retire comme une question."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/exigence-champ-commun.jpg",
+			"alt": "Le chemin « Prospection vers Relance » exige le numéro de TVA, marqué « Champ de l'affaire », avec « Ne plus exiger »",
+			"width": 870,
+			"height": 249
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
 					"type": "text",
 					"text": "Deux précisions que l'écran écrit lui-même :"
 				}
@@ -5556,7 +5611,24 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Ces champs ne paraissent pas encore sur la fiche d'une affaire, ni comme colonne de la vue liste : ces deux étapes\nviennent ensuite."
+					"text": "Un chemin peut exiger l'un de ces champs pour être franchi ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+						"anchor": "ce-qu-il-faut-avoir-rempli-pour-emprunter-un-chemin"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 18.9"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ").\nIls ne paraissent pas encore sur la fiche d'une affaire, ni comme colonne de la vue liste : ces deux étapes viennent\nensuite."
 				}
 			]
 		}

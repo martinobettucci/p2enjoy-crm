@@ -1,3 +1,5 @@
+// @spec CRM-112 (docs/BACKLOG.md) tranche T3.b — les champs communs exigés : lecture, écriture, retrait, aperçu
+//       (docs/SPEC-champs-communs.md §5 et §7, docs/DESIGN_SYSTEM.md §5.87)
 // @spec CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième,
 //       troisième, quatrième et cinquième tranches
 // @spec docs/SPEC-workflow-engine.md §7 bis.3 (ce que l'écran lit), §7 bis.4 (les six gestes),
@@ -1747,6 +1749,78 @@ export async function previsualiserExigence(
 	}
 }
 
+// ---------------------------------------------------------------------------------------------
+// Les champs COMMUNS exigés — `CRM-112` T3.b, docs/SPEC-champs-communs.md §5 et §7, docs/DESIGN_SYSTEM.md §5.87
+// ---------------------------------------------------------------------------------------------
+
+/** Une transition exige un champ commun de l'espace (`workflow_transition_required_common_fields`, migration 0155). */
+export type ExigenceCommune = { readonly transition_id: string; readonly common_field_id: string }
+
+/**
+ * Les exigences de champ commun des arêtes d'un workflow. Le filtre passe par une jointure interne, pour la raison de
+ * `lireExigences` : la table ne porte pas le workflow, qui se déduit de la transition.
+ */
+export async function lireExigencesCommunes(
+	client: ClientCrm,
+	idWorkflow: string,
+): Promise<EtatAsync<readonly ExigenceCommune[]>> {
+	try {
+		const reponse = await client
+			.from('workflow_transition_required_common_fields')
+			.select('transition_id, common_field_id, transition:workflow_transitions!inner(workflow_id)')
+			.eq('transition.workflow_id', idWorkflow)
+			.order('transition_id')
+		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
+		const lues = (reponse.data ?? []) as readonly { transition_id: string; common_field_id: string }[]
+		return pret(lues.map((ligne) => ({ transition_id: ligne.transition_id, common_field_id: ligne.common_field_id })))
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/** Exige un champ commun. L'espace est posé par la base depuis la transition (`0155`). */
+export async function exigerChampCommun(client: ClientCrm, idTransition: string, idChamp: string): Promise<ResultatExigence> {
+	return executerExigence(() =>
+		client
+			.from('workflow_transition_required_common_fields')
+			// Le type généré exige `workspace_id`, que le déclencheur pose depuis la transition : l'écran l'omet.
+			.insert({ transition_id: idTransition, common_field_id: idChamp } as unknown as Database['public']['Tables']['workflow_transition_required_common_fields']['Insert'])
+			.select('common_field_id'),
+	)
+}
+
+export async function retirerExigenceCommune(client: ClientCrm, idTransition: string, idChamp: string): Promise<ResultatExigence> {
+	return executerExigence(() =>
+		client
+			.from('workflow_transition_required_common_fields')
+			.delete()
+			.eq('transition_id', idTransition)
+			.eq('common_field_id', idChamp)
+			.select('common_field_id'),
+	)
+}
+
+/**
+ * L'aperçu des effets d'une exigence commune (`preview_common_field_requirement`, migration 0161) : rien « sur place »,
+ * une exigence de transition ne portant sur aucune étape ; « à l'entrée », ce que la base compte.
+ */
+export async function previsualiserExigenceCommune(
+	client: ClientCrm | null,
+	idChamp: string,
+	idTransition: string,
+): Promise<ResultatPrevisualisation> {
+	if (client === null) return { statut: 'indisponible' }
+	try {
+		const reponse = await client.rpc('preview_common_field_requirement', { p_common_field_id: idChamp, p_transition_id: idTransition })
+		if (reponse.error !== null) return { statut: 'indisponible' }
+		const ligne = (reponse.data ?? [])[0]
+		if (ligne === undefined) return { statut: 'indisponible' }
+		return { statut: 'mesure', effets: { surPlace: 0, aLEntree: Number(ligne.at_entry) } }
+	} catch {
+		return { statut: 'indisponible' }
+	}
+}
+
 /**
  * Ce que l'écran doit dire d'une prévisualisation, sous forme de clé et de nombres.
  *
@@ -2050,6 +2124,8 @@ export const COLLECTIONS_SOURCE = [
 	'fields',
 	'rules',
 	'required_fields',
+	// `CRM-112` T2.c.2 (INC-344, migration 0161) : une copie garde les champs communs exigés de sa source.
+	'required_common_fields',
 ] as const
 
 export type CleCollectionSource = (typeof COLLECTIONS_SOURCE)[number]

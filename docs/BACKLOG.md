@@ -17488,9 +17488,10 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
         recherche prend 1,8 s sous RLS (index inemployé) contre 9,4 ms en interrogeant l'index puis en appliquant les
         droits. La forme de l'index de T6 est proposée, à arbitrer ;
       - `docs/SCHEMA.md` « Migration `0152` », contrat de déploiement (§3, ligne 152).
-- [@] **T2** — exigence par une transition (`common_field_id`), sixième vérification de `move_card`, versions et
+- [P] **T2** — exigence par une transition (`common_field_id`), sixième vérification de `move_card`, versions et
       copies, refus `common_field_in_use` et `common_field_archived` ; pgTAP ; API.
-      *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-3a) depuis 2026-11-02 22:28 UTC — état avant : [ ]*
+      *Toutes les tranches faites et vérifiées en développement le 2026-11-03 ; la 155 à la 160 livrées le même jour
+      (décision 827) ; reste à livrer la `0161` (T2.c.2) et à la constater en production.*
       **Découpage** (2026-11-02, mesuré sur les migrations qui lisent `workflow_transition_required_fields`) :
       - [x] **T2.a — la base de l'exigence** : la table distincte `workflow_transition_required_common_fields`
             (décision 819), `workspace_id` posé depuis la transition, clé composite vers `card_common_fields` ; refus
@@ -17515,7 +17516,7 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
             - les 10 specs API de publication, de restauration, de copie et de comparaison, **146/146** ; suite pgTAP
               sans rouge propre à l'unité (`0054` est rougie par la `0158` en cours de `CRM-111` T6.2, appliquée en
               développement avant d'être poussée ; sa session est prévenue).
-      - [ ] **T2.c.2 — les comparaisons de versions** (0040, 0043) : la collection `required_common_fields` dans
+      - [x] **T2.c.2 — les comparaisons de versions** (0040, 0043) : la collection `required_common_fields` dans
             `compare_workflow_versions` et `compare_workflow_with_source`, avec la liste fermée de la webapp
             (`versions-workflow.ts`) et son libellé. Avec T3.
       - [x] **T2.d.0 — l'acceptation d'une suggestion garde les champs communs exigés** (défaut de la `0157`, trouvé
@@ -17567,13 +17568,21 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
               écriture directe (`403`, et zéro ligne à l'archivage), quatre paliers ; captures observées ;
             - manuel, section 18.16, deux images (`e2e/manuel/18-workflows.spec.ts`), `verify-manual` sans anomalie ;
               l'aide de l'écran mène à la section.
-      - [@] **T3.b — l'exigence dans l'éditeur de workflow**, et **T2.c.2** (la collection dans les deux comparaisons de
+      - [x] **T3.b — l'exigence dans l'éditeur de workflow**, et **T2.c.2** (la collection dans les deux comparaisons de
             versions, migration) : exiger et ne plus exiger un champ commun sous chaque transition ; unitaires ; pgTAP ;
             E2E.
-            *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-3a) depuis 2026-11-03 13:50 UTC — état avant : [ ]*
             *Spécifiée le 2026-11-03, avant le code* : `docs/DESIGN_SYSTEM.md` §5.87, `docs/SPEC-champs-communs.md` §5 et §7
             (précisions T3.b) ; migration `0161` (les trois fonctions de comparaison, INC-344, et
             `preview_common_field_requirement`).
+            *Faite le 2026-11-03*, migration `0161` appliquée en développement :
+            - pgTAP `0150` **10/10** (INC-344 avant/après, copie, aperçu) ; suite **138 fichiers, 4 876 assertions** ;
+            - API des comparaisons et de l'aperçu **29/29**, un compte révisé et non relâché (sept collections, décision 51) ;
+            - unitaires **5 341**, dont quatre de l'éditeur pour T3.b et trois comptes de collections révisés ; `typecheck`
+              et témoin des types (une fonction de plus) ;
+            - E2E `e2e/ui/exigence-champ-commun.spec.ts` **6/6** aux vrais jetons (aperçu mesuré, exigence posée et retirée
+              relues en base, lectrice refusée en `403`, quatre paliers), éditeur et versions sans régression **87/87** ;
+              captures observées ;
+            - manuel §18.9 et §18.16 avec une image, `verify-manual` sans anomalie.
       - [ ] **T3.c — la partie commune de la fiche** : les valeurs, éditables ou en lecture selon la capacité de
             l'affaire ; un champ archivé porteur d'une valeur, marqué ; le refus `missing_required_fields` qui nomme un
             champ commun par son libellé (board et fiche) ; unitaires ; E2E.

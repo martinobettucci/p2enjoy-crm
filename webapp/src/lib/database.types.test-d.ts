@@ -1200,9 +1200,13 @@ type _vueDerivationColonnes = Expect<
 // ÉCHAPPE AU GÉNÉRATEUR : `p_target` est une liste fermée — `inbound`, `outbound` (`22023 invalid_target`) — ; ses refus
 // nommés, `not_authenticated`, `not_found` (404, sans divulgation), `disabled` et `too_soon` (30 s) ; `account_not_found`
 // pour la première. Le compte s'accroît de deux.
+// `0161` de `CRM-112` TRANCHE T3.b ajoute `preview_common_field_requirement` — l'aperçu des effets d'une exigence de champ
+// commun (docs/SPEC-champs-communs.md §7). CE QUI ÉCHAPPE AU GÉNÉRATEUR : elle rend toujours UNE ligne, `0` pour un champ
+// archivé ou inconnu ; aucun refus nommé. Le compte s'accroît de un.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'preview_common_field_requirement'
     | 'acces_effectif_membre'
     | 'inscrire_attente'
     | 'journaliser_refus_admission'

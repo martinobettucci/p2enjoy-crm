@@ -2481,6 +2481,25 @@ uuid)` et `drop function public.mail_inbound_account_record_sync(uuid)`, **avec 
 d'avant** : l'image de `main` appelle `mail_inbound_account_record_sync` à chaque relève, et chaque relève échouerait sans
 elle.
 
+### Migration `0161` — les champs communs exigés dans les comparaisons, et l'aperçu de leurs effets (`CRM-112` T2.c.2 et T3.b, INC-344 ; livrée en développement le 2026-11-03)
+
+`docs/SPEC-champs-communs.md` §5 et §7 (précisions T2.c.2 et T3.b). **Aucune table, aucune donnée.** Trois fonctions sont
+reprises de leur définition en base, chacune avec un ajout :
+- **`app.workflow_composition_naturel`** : la collection `required_common_fields` — `{from_node_id, to_node_id,
+  common_field_key}` —, toujours présente, vide quand rien n'est exigé ;
+- **`public.compare_workflow_versions`** : la collection `required_common_fields`, identité `(transition_id,
+  common_field_id)`, comptée dans `summary` ; l'invariant « empreintes égales ⇔ collections vides » redevient vrai
+  (INC-344) ;
+- **`public.compare_workflow_with_source`** : la même collection, identité `(from_node_id, to_node_id, common_field_key)`.
+
+Une fonction neuve : **`public.preview_common_field_requirement(p_common_field_id uuid, p_transition_id uuid) returns
+table (at_entry bigint)`** — `security invoker`, `stable` ; le nombre d'affaires distinctes dont un rattachement non
+archivé est à l'étape de départ de la transition et dont la valeur commune est vide ; `0` pour un champ archivé ou
+inconnu. `execute` à `authenticated` et `service_role`.
+
+**Retrait** : reposer les trois fonctions telles qu'en base avant la `0161`, et `drop function
+public.preview_common_field_requirement(uuid, uuid)`.
+
 ### Migration `0160` — l'assistant exige des champs communs (`CRM-112` T2.d.2, décision 825 ; livrée en développement le 2026-11-03)
 
 `docs/SPEC-ia.md` §6.1 et §12.1. Cinq fonctions sont reprises de leur définition en base, chacune avec un ajout :

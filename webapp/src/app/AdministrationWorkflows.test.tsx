@@ -23,6 +23,9 @@
 // @verifies docs/SPEC-transition-required-fields.md §1 (l'union), §5.1 (la sixième garde)
 // @verifies docs/SPEC-form-composer.md §2.3 (types), §2.4 (options), §2.7 (aucune suppression),
 //           §3.1 (l'absence de règle vaut `visible`), §5 (un champ archivé n'est dans aucun formulaire)
+// @verifies CRM-112 (docs/BACKLOG.md) tranche T3.b — docs/SPEC-champs-communs.md §7 (précision T3.b) ;
+//           docs/DESIGN_SYSTEM.md §5.87 : les champs communs dans le choix d'une exigence, en deux groupes ; l'aperçu de
+//           leurs effets ; leur ligne et sa pilule ; leur retrait ; un workflow sans champ actif peut les exiger
 // @verifies docs/DESIGN_SYSTEM.md §5.9 (tableau sémantique, jamais simulé)
 // @verifies docs/DESIGN_SYSTEM.md §5.7 bis (case à cocher), §5.8 (états), §6 (confirmation avant
 //           retrait), §8, §10
@@ -269,6 +272,9 @@ type Options = {
 		error: { message: string; code?: string } | null
 		status: number
 	}
+	/** `CRM-112` T3.b : les champs communs de l'espace et leurs exigences (lus seulement avec un espace courant). */
+	readonly champsCommuns?: unknown[]
+	readonly exigencesCommunes?: unknown[]
 	/** Réponse de `previsualiser_exigence` (§7 bis.13). Absente = un couple sans effet. */
 	readonly previsualisation?: {
 		data: unknown[] | null
@@ -384,6 +390,9 @@ function clientFactice(options: Options = {}): {
 				// le filtre `workflow_id` distingue les suggestions d'un workflow de celles qui en créent un.
 				if (table === 'suggestions_ia') return lectureSuggestions()
 				if (table === 'suggestions_ia_revisions') return lecture([])
+				// `CRM-112` T3.b : routées explicitement, pour la même raison que les autres.
+				if (table === 'card_common_fields') return lecture(options.champsCommuns ?? [])
+				if (table === 'workflow_transition_required_common_fields') return lecture(options.exigencesCommunes ?? [])
 				return lecture(options.catalogue ?? CATALOGUE)
 			},
 			insert: (charge: Record<string, unknown>) => ecriture(table, 'insert', charge),
@@ -398,6 +407,9 @@ function clientFactice(options: Options = {}): {
 		// passer un couple d'effets pour un document de comparaison.
 		rpc: (nom: string, params: Record<string, unknown>) => {
 			previsualisations.push({ nom, params })
+			if (nom === 'preview_common_field_requirement') {
+				return Promise.resolve({ data: [{ at_entry: 3 }], error: null, status: 200 })
+			}
 			if (nom === 'compare_workflow_with_source') {
 				return Promise.resolve(
 					options.comparaisonSource ?? { data: null, error: { message: 'workflow introuvable' } },
@@ -2141,7 +2153,9 @@ describe('le geste « comparer à la source » (§4 quater)', () => {
 		expect(screen.queryByTestId('comparaison-source-collections')).toBeNull()
 	})
 
-	it('un écart écrit les compteurs, les CINQ collections et l’attribut modifié (§4 quater.4)', async () => {
+	// RÉVISÉ PAR `CRM-112` T2.c.2 (INC-344, migration 0161) : SIX collections, les champs de l'affaire exigés en dernier —
+	// décision 51, révisé et non relâché.
+	it('un écart écrit les compteurs, les SIX collections et l’attribut modifié (§4 quater.4)', async () => {
 		monter({ derivations: DERIVATION, comparaisonSource: COMPARAISON_DIVERGENTE })
 		await attendreEcran()
 		await userEvent.click(await screen.findByTestId('comparer-source'))
@@ -2157,6 +2171,7 @@ describe('le geste « comparer à la source » (§4 quater)', () => {
 			'Champs de formulaire',
 			'Règles de visibilité',
 			'Champs exigés par une transition',
+			'Champs de l’affaire exigés par une transition',
 		])
 		// L'en-tête N'EST PAS une collection rendue : la copie ne le copie pas (§4 ter.3).
 		expect(intitules).not.toContain('Workflow')
@@ -2418,5 +2433,98 @@ describe('éditeur de workflows — l’administration refusée par la base (CRM
 		await waitFor(() =>
 			expect(factice.lectures.filter((table) => table === 'workflow_steps').length).toBeGreaterThan(avant),
 		)
+	})
+})
+
+// --- CRM-112 T3.b — exiger un champ commun (docs/DESIGN_SYSTEM.md §5.87) ---------------------------------------------
+
+describe('éditeur de workflows — les champs communs exigés (CRM-112 T3.b)', () => {
+	const COMMUNS = [
+		{ id: 'cc-siret', key: 'siret', label: 'SIRET', type: 'text', options: {}, help_text: null, position: 1, archived_at: null },
+		{ id: 'cc-vieux', key: 'vieux', label: 'Ancien code', type: 'text', options: {}, help_text: null, position: 2, archived_at: '2026-10-01T00:00:00Z' },
+	]
+
+	function monterEnEspace(options: Options = {}) {
+		const factice = clientFactice(options)
+		render(
+			<MemoryRouter initialEntries={['/reglages/workflows']}>
+				<FournisseurEspace valeur={{ idWorkspace: 'ws-1', estAdmin: true, capacites: { administration: 'permise', edition: 'permise' } }}>
+					<AdministrationWorkflows client={factice.client} />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+		return factice
+	}
+
+	it('le choix offre deux groupes ; choisir un champ commun en mesure l’effet, et l’exiger écrit dans sa table', async () => {
+		const { ecritures, previsualisations } = monterEnEspace({ champsCommuns: COMMUNS })
+		await attendreEcran()
+		const arete = await screen.findByTestId('transition-exigences')
+		await userEvent.click(within(arete).getByRole('button', { name: 'Exiger un champ' }))
+		const formulaire = await screen.findByTestId('formulaire-exigence')
+		const choix = within(formulaire).getByRole('combobox') as HTMLSelectElement
+		const groupes = [...choix.querySelectorAll('optgroup')].map((groupe) => [groupe.label, groupe.querySelectorAll('option').length])
+		// L'archivé n'est pas offert (§5.21) ; chaque groupe dit d'où vient le champ (§5.87).
+		expect(groupes).toEqual([
+			[fr['admin.workflows.requirements.group.workflow'], 1],
+			[fr['admin.workflows.requirements.group.common'], 1],
+		])
+		await userEvent.selectOptions(choix, 'c:cc-siret')
+		await waitFor(() =>
+			expect(previsualisations).toContainEqual({
+				nom: 'preview_common_field_requirement',
+				params: { p_common_field_id: 'cc-siret', p_transition_id: 'tr-1' },
+			}),
+		)
+		expect(await within(formulaire).findByTestId('effets-exigence')).toBeDefined()
+		await userEvent.click(within(formulaire).getByRole('button', { name: 'Exiger ce champ' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]).toMatchObject({
+			table: 'workflow_transition_required_common_fields',
+			verbe: 'insert',
+			charge: { transition_id: 'tr-1', common_field_id: 'cc-siret' },
+		})
+	})
+
+	it('une exigence commune est une ligne d’exigence, avec sa pilule ; « Ne plus exiger » la retire de sa table', async () => {
+		const { ecritures } = monterEnEspace({
+			champsCommuns: COMMUNS,
+			exigencesCommunes: [{ transition_id: 'tr-1', common_field_id: 'cc-siret' }],
+		})
+		await attendreEcran()
+		const arete = await screen.findByTestId('transition-exigences')
+		const ligne = await within(arete).findByText('SIRET')
+		const ligneCommune = ligne.closest('[data-testid="ligne-exigence"]') as HTMLElement
+		expect(ligneCommune.getAttribute('data-commun')).toBe('oui')
+		expect(ligneCommune.textContent).toContain(fr['admin.workflows.requirements.common.pill'])
+		await userEvent.click(within(ligneCommune).getByRole('button'))
+		const confirmation = await screen.findByTestId('confirmation-retrait-exigence')
+		expect(confirmation.textContent).toContain('SIRET')
+		await userEvent.click(within(confirmation).getByRole('button', { name: fr['admin.workflows.requirements.remove.confirm.action'] }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]).toMatchObject({
+			table: 'workflow_transition_required_common_fields',
+			verbe: 'delete',
+			filtres: [
+				['transition_id', 'tr-1'],
+				['common_field_id', 'cc-siret'],
+			],
+		})
+	})
+
+	it('sans champ commun, le choix reste une liste sans groupe — l’écran d’avant', async () => {
+		monterEnEspace()
+		await attendreEcran()
+		const arete = await screen.findByTestId('transition-exigences')
+		await userEvent.click(within(arete).getByRole('button', { name: 'Exiger un champ' }))
+		const choix = within(await screen.findByTestId('formulaire-exigence')).getByRole('combobox') as HTMLSelectElement
+		expect(choix.querySelectorAll('optgroup')).toHaveLength(0)
+	})
+
+	it('un workflow sans champ actif peut encore exiger un champ de l’affaire', async () => {
+		monterEnEspace({ champsCommuns: COMMUNS, champs: CHAMPS.map((champ) => ({ ...champ, archived_at: '2026-01-01T00:00:00Z' })) })
+		await attendreEcran()
+		expect(await screen.findByTestId('transition-exigences')).toBeDefined()
+		expect(screen.queryByTestId('exigences-sans-champ')).toBeNull()
 	})
 })

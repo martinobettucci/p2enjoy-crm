@@ -4305,6 +4305,14 @@ Deux gestes seulement, tous deux confirmés en base :
 - **Ne plus exiger** demande une confirmation nommant la question et le chemin. Elle rappelle que la
   question **reste dans le formulaire** : elle cesse seulement d'être obligatoire pour ce chemin.
 
+**Exiger un champ de l'affaire.** Un chemin peut aussi exiger un champ commun à toute affaire de l'espace
+([section 18.16](#les-champs-communs-a-toute-affaire)), par exemple un numéro de TVA avant la relance. Dès que l'espace en
+déclare, la liste d'« Exiger un champ » les range dans un second groupe, après les questions du workflow, et l'aperçu dit
+combien d'affaires en cours ne pourraient plus emprunter le chemin tant que ce champ est vide. Une fois exigé, le champ
+s'écrit sur sa ligne avec la mention **« Champ de l'affaire »**, et « Ne plus exiger » le retire comme une question.
+
+![Le chemin « Prospection vers Relance » exige le numéro de TVA, marqué « Champ de l'affaire », avec « Ne plus exiger »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/exigence-champ-commun.jpg)
+
 Deux précisions que l'écran écrit lui-même :
 
 - un chemin sans aucune exigence l'annonce en toutes lettres — « Aucun champ exigé » —, jamais par
@@ -4546,8 +4554,9 @@ d'abord l'exigence dans l'éditeur ; le lien **« Ouvrir l'éditeur de workflows
 aux **administrateurs de l'espace**. Pour les autres, les commandes restent visibles mais grisées, avec la raison en tête
 de l'écran ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)).
 
-Ces champs ne paraissent pas encore sur la fiche d'une affaire, ni comme colonne de la vue liste : ces deux étapes
-viennent ensuite.
+Un chemin peut exiger l'un de ces champs pour être franchi ([section 18.9](#ce-qu-il-faut-avoir-rempli-pour-emprunter-un-chemin)).
+Ils ne paraissent pas encore sur la fiche d'une affaire, ni comme colonne de la vue liste : ces deux étapes viennent
+ensuite.
 
 ## 19. Le catalogue de nœuds : le vocabulaire de vos workflows
 

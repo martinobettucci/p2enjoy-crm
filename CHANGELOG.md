@@ -13,7 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### `CRM-112` T2.c.2 et T3.b — exiger un champ de l'affaire dans l'éditeur de workflows (migration 161)
+
+- L'éditeur de workflows propose, dans « Exiger un champ », les champs de l'affaire après ceux du workflow, en deux
+  groupes. L'aperçu dit combien d'affaires en cours ne pourraient plus emprunter le chemin, mesuré par la base
+  (`preview_common_field_requirement`). Une exigence commune porte la mention « Champ de l'affaire », et « Ne plus
+  exiger » la retire. Un workflow sans question active peut tout de même exiger un champ de l'affaire.
+- **Corrigé (INC-344, livrée avec la 157)** : la comparaison de deux versions qui ne différaient que par un champ commun
+  exigé disait « différentes » sans rien lister. Les deux comparaisons — versions, copie et source — portent désormais
+  la collection « Champs de l'affaire exigés par une transition ».
+- Manuel, §18.9 et §18.16, avec une image.
 
 ## [Publié]
 

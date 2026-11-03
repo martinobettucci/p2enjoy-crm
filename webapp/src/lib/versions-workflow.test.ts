@@ -299,11 +299,13 @@ const COMPARAISON_IDENTIQUE = {
 }
 
 describe('composerComparaison (§7 ter.11.4)', () => {
-	it('rend six collections vides et `identique` sur la comparaison mesurée d’une version à elle-même', () => {
+	// RÉVISÉ PAR `CRM-112` T2.c.2 (INC-344, migration 0161) : SEPT collections — décision 51, révisé et non relâché. Le
+	// document mesuré, antérieur à la 0161, ne porte pas la septième : elle est rendue vide, jamais omise.
+	it('rend sept collections vides et `identique` sur la comparaison mesurée d’une version à elle-même', () => {
 		const rendue = composerComparaison(COMPARAISON_IDENTIQUE, new Map())
 		expect(rendue).not.toBeNull()
 		expect(rendue?.identique).toBe(true)
-		expect(rendue?.collections).toHaveLength(6)
+		expect(rendue?.collections).toHaveLength(7)
 		expect(rendue?.collections.every((collection) => collection.elements.length === 0)).toBe(true)
 	})
 

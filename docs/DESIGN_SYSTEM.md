@@ -7639,8 +7639,9 @@ le §5.15 pose pour le bloc des exigences vaut sans être répété** : une list
   d'où vient le champ, sans pilule ni couleur dans une liste native (§5.22). Un groupe vide n'est pas rendu. N'y sont
   offerts que les champs **non archivés** et **pas encore exigés** par la transition (§5.21).
 - **UNE EXIGENCE COMMUNE EST UNE LIGNE D'EXIGENCE**, dans la forme exacte de celles du workflow — libellé, clé en `code`,
-  mot d'origine, « Ne plus exiger » —, **suivie de la pilule neutre « Champ de l'affaire »** (§5.6) : la même transition
-  peut exiger les deux sortes, et la ligne doit dire laquelle sans attendre qu'on ouvre le choix. Les lignes communes
+  mot d'origine, « Ne plus exiger » —, **la pilule neutre « Champ de l'affaire » suivant la clé** (§5.6) : la même
+  transition peut exiger les deux sortes, et la ligne doit dire laquelle sans attendre qu'on ouvre le choix. *Précisé à
+  l'écriture du code* : la pilule qualifie le champ, elle se place donc contre lui, avant le mot d'origine. Les lignes communes
   viennent après celles du workflow, dans l'ordre de la partie commune (`position`).
 - **« Ne plus exiger » ouvre la même confirmation** que pour un champ du workflow ; son texte nomme le champ et la
   transition.
@@ -7652,7 +7653,7 @@ le §5.15 pose pour le bloc des exigences vaut sans être répété** : une list
 - **Un champ commun archivé n'apparaît jamais comme exigé** : la base refuse d'archiver un champ exigé (§5.86), le cas ne
   peut donc pas naître, et l'écran ne le prévoit pas.
 - **LA COMPARAISON DE VERSIONS ET CELLE D'UNE COPIE AVEC SA SOURCE** (§5.15, `CollectionsComparees`) gagnent la collection
-  « Champs communs exigés », après « Champs exigés », dans la même forme ; un élément se nomme par la clé du champ quand le
-  document la porte, par ses identifiants sinon (§7 ter.14.6).
+  « Champs de l'affaire exigés par une transition », après « Champs exigés par une transition », dans la même forme ; un
+  élément se nomme par la clé du champ quand le document la porte, par ses identifiants sinon (§7 ter.14.6).
 - **Les commandes suivent la capacité d'administrer l'espace** (§5.59). **Aucune couleur, aucun jeton, aucune icône
   nouvelle.**

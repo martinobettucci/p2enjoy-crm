@@ -267,7 +267,10 @@ export async function publierVersion(
 // Comparer — §7 ter.11.3, §7 ter.11.4, §7 ter.14.6
 // ---------------------------------------------------------------------------------------------
 
-/** Les six collections du document de comparaison, dans l'ordre où l'écran les rend. */
+/**
+ * Les sept collections du document de comparaison, dans l'ordre où l'écran les rend. `required_common_fields` : `CRM-112`
+ * T2.c.2 (INC-344, migration 0161, docs/DESIGN_SYSTEM.md §5.87) — après les champs exigés, dont elle est la jumelle.
+ */
 export const COLLECTIONS = [
 	'workflow',
 	'steps',
@@ -275,6 +278,7 @@ export const COLLECTIONS = [
 	'fields',
 	'rules',
 	'required_fields',
+	'required_common_fields',
 ] as const
 
 export type CleCollection = (typeof COLLECTIONS)[number]

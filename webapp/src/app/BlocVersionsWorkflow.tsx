@@ -1,3 +1,5 @@
+// @spec CRM-112 (docs/BACKLOG.md) tranche T2.c.2 — la collection « Champs de l'affaire exigés par une transition » dans la
+//       comparaison de deux versions (INC-344, migration 0161 ; docs/DESIGN_SYSTEM.md §5.87)
 // @spec CRM-093 (docs/BACKLOG.md) tranche T3 — publier, planifier et restaurer lisent le refus de l'éditeur ; comparer
 //       deux versions, une lecture, reste offert (docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-078 (docs/BACKLOG.md) — cinquième tranche : les écrans du versionnement
@@ -71,6 +73,7 @@ const CLES_COLLECTION: Readonly<Record<CleCollection, CleTraduction>> = {
 	fields: 'admin.workflows.versions.collection.fields',
 	rules: 'admin.workflows.versions.collection.rules',
 	required_fields: 'admin.workflows.versions.collection.required_fields',
+	required_common_fields: 'admin.workflows.versions.collection.required_common_fields',
 }
 
 

@@ -6,6 +6,8 @@
 // @verifies docs/SPEC-permissions-rls.md §7 (preuve de refus n° 3 au niveau des versions)
 // @verifies docs/SPEC-test-harness.md §4.3 (projet `api`, hors interface)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
+// @verifies CRM-112 (docs/BACKLOG.md) tranche T2.c.2 — docs/SPEC-champs-communs.md §5 (précision T2.c.2) : la collection
+//           `required_common_fields` est rendue, vide quand rien n'est exigé (INC-344)
 //
 // Ces scénarios exercent le backend **sans passer par l'interface**, avec les jetons réels des
 // trois profils seedés obtenus par la véritable route de connexion. Aucun navigateur n'est lancé :
@@ -140,10 +142,12 @@ test.describe('N1 — la comparaison rend ce qui a changé (lignes a, b, c, d, e
 			const comparaison = (await reponse.json()) as Comparaison
 			expect(comparaison.identical).toBe(true)
 			expect(comparaison.summary).toEqual({ added: 0, removed: 0, modified: 0 })
-			// Les six collections sont présentes et vides : un appelant n'a pas à tester
-			// l'existence de chaque clé avant de la parcourir.
+			// Les sept collections sont présentes et vides : un appelant n'a pas à tester
+			// l'existence de chaque clé avant de la parcourir. RÉVISÉ PAR `CRM-112` T2.c.2 (INC-344,
+			// migration 0161) : `required_common_fields` rejoint les six — décision 51, révisé et non relâché.
 			expect(Object.keys(comparaison.changes).sort()).toEqual([
 				'fields',
+				'required_common_fields',
 				'required_fields',
 				'rules',
 				'steps',

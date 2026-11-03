@@ -1909,7 +1909,8 @@ describe('comparerAvecSource — lecture 10 (§4 quater.3)', () => {
 		expect(issue.donnees.resume).toEqual({ ajouts: 0, retraits: 0, modifications: 0 })
 	})
 
-	it('rend CINQ collections, et jamais celle de l’en-tête (§4 ter.3)', async () => {
+	// RÉVISÉ PAR `CRM-112` T2.c.2 (INC-344, migration 0161) : SIX collections — décision 51, révisé et non relâché.
+	it('rend SIX collections, et jamais celle de l’en-tête (§4 ter.3)', async () => {
 		const { client } = espionComparaison({ data: documentIdentique, error: null })
 		const issue = await comparerAvecSource(client, 'wf-copie', new Map())
 
@@ -1920,6 +1921,7 @@ describe('comparerAvecSource — lecture 10 (§4 quater.3)', () => {
 			'fields',
 			'rules',
 			'required_fields',
+			'required_common_fields',
 		])
 		// `workflow` est exclue du document naturalisé : `name`, `scope`, `track_id`, `is_default` et
 		// `archived_at` sont précisément ce que la copie ne copie pas. La rendre déclarerait

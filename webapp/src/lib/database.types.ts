@@ -5231,6 +5231,12 @@ export type Database = {
         Args: { p_workspace_id: string }
         Returns: number
       }
+      preview_common_field_requirement: {
+        Args: { p_common_field_id: string; p_transition_id: string }
+        Returns: {
+          at_entry: number
+        }[]
+      }
       previsualiser_exigence: {
         Args: {
           p_field_id: string

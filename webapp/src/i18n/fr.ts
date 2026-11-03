@@ -3353,6 +3353,12 @@ export const fr = {
 	'admin.workflows.versions.collection.fields': 'Champs de formulaire',
 	'admin.workflows.versions.collection.rules': 'Règles de visibilité',
 	'admin.workflows.versions.collection.required_fields': 'Champs exigés par une transition',
+	// `CRM-112` T3.b — exiger un champ commun dans l'éditeur (docs/DESIGN_SYSTEM.md §5.87).
+	'admin.workflows.requirements.common.pill': 'Champ de l’affaire',
+	'admin.workflows.requirements.group.workflow': 'Champs du workflow',
+	'admin.workflows.requirements.group.common': 'Champs de l’affaire',
+	// `CRM-112` T2.c.2 — docs/DESIGN_SYSTEM.md §5.87.
+	'admin.workflows.versions.collection.required_common_fields': 'Champs de l’affaire exigés par une transition',
 	'admin.workflows.versions.change.ajout': 'Ajouté',
 	'admin.workflows.versions.change.retrait': 'Retiré',
 	'admin.workflows.versions.change.modification': 'Modifié',
