@@ -18473,10 +18473,15 @@ inbox et fiche).
 
 - [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-03 : `docs/SPEC-mails-prepares.md`, décision
       829, `docs/SPEC-mcp.md` §9.2 *decies* (révision annoncée), INC-341 arbitrée.
-- [ ] **T2 — base** : migration au premier numéro libre après `0161` — `mail_drafts`, politiques, `app.via_connector`,
+- [x] **T2 — base**, vérifiée le 2026-11-03 : migration **`0162`** — `mail_drafts`, politiques, `app.via_connector`,
       `prepare_email`, `send_email_draft`, `discard_email_draft`, refus `review_required` de `queue_outbound_email`,
       `send_email_draft` et `armer_sequence_relance` sous le jeton du connecteur ; pgTAP (dont le recensement des voies
       d'envoi) ; `docs/SCHEMA.md` ; contrat de déploiement.
+      Garde posée en **déclencheur** `BEFORE INSERT` sur les deux files (spécification §4.2, précisée à l'écriture) ;
+      pgTAP `0151` 44/44, dont le refus sous `canal` seul, sous `iss` seul, au propriétaire de la table et par la porte
+      interne, et le recensement des voies d'envoi ; `0016` (195 politiques) et `0133` (32 levées 404) révisées ; suite
+      pgTAP complète verte (139 fichiers). **Conséquence attendue** jusqu'à T3 : en développement, `crm_mail_send` est
+      refusé par la base (`review_required`).
 - [ ] **T3 — connecteur** : `crm_mail_prepare`, `crm_mail_draft_list`, `crm_mail_draft_discard`, genre d'ancre `draft`,
       `crm_mail_send` retiré, consignes ; pytest ; intégration contre le vrai Keycloak, dont le contournement du
       catalogue refusé par la base ; `docs/SPEC-mcp.md` §9.2 *decies* ; manuel §33.

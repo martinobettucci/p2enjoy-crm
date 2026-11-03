@@ -65,7 +65,7 @@ affaire ; le seed, le manuel, les preuves.
 | `card_id` | `uuid` | l'affaire, non nulle, `on delete cascade` (la purge de l'affaire emporte ses mails préparés) |
 | `identity_id` | `uuid` | l'identité d'expédition proposée, `on delete set null` — la relecture en choisit une (§3.4) |
 | `in_reply_to_message_id` | `uuid` | facultatif, un message **classé dans cette affaire**, `on delete set null` |
-| `to_addrs`, `cc_addrs`, `bcc_addrs` | `text[]` | `to` : 1 à 50 adresses ; `cc` et `bcc` : 0 à 50 ; mêmes règles d'adresse que `queue_outbound_email` |
+| `to_addrs`, `cc_addrs`, `bcc_addrs` | `text[]` | `to` : 1 à 50 adresses ; `cc` et `bcc` : 0 à 50. Comme pour `queue_outbound_email`, la base borne le nombre ; la forme d'une adresse est vérifiée par le connecteur et par le formulaire |
 | `subject` | `text` | 0 à 998 caractères |
 | `body_text` | `text` | 1 à 100 000 caractères |
 | `origin` | `text` | `mcp` ou `web` : `mcp` quand la préparation vient du jeton du connecteur (§4.1) |
@@ -142,19 +142,26 @@ spécification de cet émetteur le dira. La garde ne repose jamais sur un en-tê
 
 ### 4.2 Les gardes
 
+**La garde est un déclencheur, pas une liste de fonctions** (*précisé à l'écriture de T2, le 2026-11-03*). Un
+déclencheur `BEFORE INSERT`, `app.refuser_envoi_connecteur`, est posé sur les deux files qui font partir un courrier,
+`mail_outbox` et `card_sequence_enrollments` : sous le jeton du connecteur, **toute insertion** est refusée
+(`review_required`, `42501`), quelle que soit la fonction qui l'écrit — y compris une fonction à venir, et même le
+propriétaire de la table. Les contrôles d'une fonction s'exécutent d'abord : un appel du connecteur qui échouerait pour
+une autre raison (affaire non écrite, identité d'autrui) rend ce refus-là, et rien n'est écrit dans les deux cas.
+
 | Fonction | Sous le jeton du connecteur |
 |---|---|
-| `public.queue_outbound_email` | **refusée** : `review_required`, `42501` |
-| `public.send_email_draft` | **refusée** : `review_required`, `42501` |
-| `public.armer_sequence_relance` | **refusée** : `review_required`, `42501` — armer une séquence ferait partir des paliers sans relecture |
+| `public.queue_outbound_email` | **refusée** à l'insertion : `review_required` |
+| `public.armer_sequence_relance` | **refusée** à l'insertion : `review_required` — armer une séquence ferait partir des paliers sans relecture |
+| `public.send_email_draft` | **refusée avant toute lecture** : `review_required` — rien n'apprend au connecteur qu'un mail préparé existe |
 | `public.prepare_email`, `public.discard_email_draft` | permises |
 | `public.interrompre_sequence_relance` | permise : interrompre ne fait rien sortir |
 
 `authenticated` n'écrit ni `mail_outbox` ni `card_sequence_enrollments` (mesuré le 2026-11-03 : `SELECT` seul), et les
 fonctions réservées à `service_role` (`reserver_envois`, `marquer_envoi_reussi`, `reprogrammer_envoi`…) restent hors de
-portée de tout jeton de personne. **Aucune autre voie n'écrit dans la file d'envoi** : le recensement est rejoué par une
-preuve pgTAP qui liste les fonctions exécutables par `authenticated` dont le corps nomme `mail_outbox` ou
-`card_sequence_enrollments`, et échoue si une fonction nouvelle n'est pas rangée dans ce tableau.
+portée de tout jeton de personne. **Le recensement** est rejoué par une preuve pgTAP : les fonctions exécutables par
+`authenticated` dont le corps insère dans l'une des deux files sont exactement `queue_outbound_email` et
+`armer_sequence_relance` ; une fonction nouvelle fait échouer la preuve jusqu'à ce qu'elle soit lue et rangée.
 
 ### 4.3 Les relances automatiques
 

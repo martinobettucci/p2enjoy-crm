@@ -4,6 +4,8 @@
 --           privilèges, plus aucune levée de `P0002`, et deux refus réels : un 404 sous la RLS, le 409 de
 --           `outbox_not_reschedulable`
 -- @verifies CRM-127 (docs/BACKLOG.md) — tranche T2 : le compte de l'assertion 5 inclut ses deux fonctions (migration 0151)
+-- @verifies CRM-128 (docs/BACKLOG.md) — tranche T2 : le compte de l'assertion 5 inclut ses deux fonctions (migration 0162,
+--           docs/SPEC-mails-prepares.md §3.4, §3.5)
 -- @verifies docs/SPEC-refus-404.md §2, §3, §4 ; docs/JOURNAL.md décisions 762 et 797 ; CLAUDE.md §10
 --
 -- Le `rollback` final rend la base intacte.
@@ -63,8 +65,8 @@ select is(
 	-- `mail_inbound_account_record_sync` et `authorize_mail_connection_test` (docs/SPEC-mail-subsystem.md §23.2, §23.3).
 	-- RÉVISÉ PAR `CRM-112` T2.a (migration 0155), non relâché : `app.workflow_transition_required_common_fields_avant` refuse
 	-- une transition inconnue par ce chemin (`transition_not_found`, docs/SPEC-champs-communs.md §5).
-	30,
-	'5 — les vingt-sept fonctions « introuvable » de CRM-120, les deux de CRM-127 et celle de CRM-112, lèvent par `app.raise_http_error(404, …)`');
+	32,
+	'5 — les vingt-sept fonctions « introuvable » de CRM-120, les deux de CRM-127, celle de CRM-112 et les deux de CRM-128 (`send_email_draft`, `discard_email_draft`), lèvent par `app.raise_http_error(404, …)`');
 
 select is(
 	(select array_agg(p.proname::text) from pg_proc p join pg_namespace n on n.oid = p.pronamespace

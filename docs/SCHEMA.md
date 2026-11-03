@@ -2481,6 +2481,36 @@ uuid)` et `drop function public.mail_inbound_account_record_sync(uuid)`, **avec 
 d'avant** : l'image de `main` appelle `mail_inbound_account_record_sync` à chaque relève, et chaque relève échouerait sans
 elle.
 
+### Migration `0162` — les mails préparés, et aucun envoi direct sous le jeton du connecteur (`CRM-128` T2, décision 829, INC-341 ; livrée en développement le 2026-11-03)
+
+`docs/SPEC-mails-prepares.md` §3 et §4. **Une table neuve, aucune donnée existante changée.**
+- **`public.mail_drafts`** : `id`, `workspace_id` et `card_id` (`on delete cascade`), `identity_id`,
+  `in_reply_to_message_id` et `outbox_id` (`on delete set null`), `to_addrs` (1 à 50), `cc_addrs` et `bcc_addrs` (0 à 50),
+  `subject` (≤ 998), `body_text` (1 à 100 000), `origin` (`mcp` | `web`), `status` (`pending` | `sent` | `discarded`),
+  `created_by` (`profiles`, `on delete cascade`), `created_at`, `updated_at` (`app.set_updated_at`), `sent_at` et
+  `discarded_at`, cohérentes avec l'état. Index `(created_by, workspace_id, status, created_at)` et `(card_id, status)`.
+  **RLS** : une politique, `mail_drafts_lecture_personne` — `created_by = auth.uid()` et `app.can_read_card(card_id)` ;
+  `authenticated` n'a que `SELECT`, `anon` rien, `service_role` tout.
+- **`app.via_connector() returns boolean`** : vrai si `auth.jwt()` porte `canal = mcp` ou `iss = p2enjoy-crm/mcp`.
+- **`app.refuser_envoi_connecteur()`**, déclencheur `BEFORE INSERT` de `mail_outbox` (`mail_outbox_refuser_connecteur`) et
+  de `card_sequence_enrollments` (`card_sequence_enrollments_refuser_connecteur`) : `review_required` (`42501`) sous le
+  jeton du connecteur.
+- **`public.prepare_email(p_card_id, p_to, p_body_text, p_subject, p_identity_id, p_cc, p_bcc, p_in_reply_to_message_id)
+  returns uuid`** — `security definer` ; refus `not_authenticated`, `forbidden`, `card_not_available`,
+  `identity_not_available`, `reply_outside_card`, `recipient_required`, `body_required`, `draft_limit_reached` (200 en
+  attente par personne et par espace).
+- **`public.send_email_draft(p_draft_id, p_identity_id, p_to, p_body_text, p_subject, p_cc, p_bcc, p_attachments) returns
+  uuid`** — `security definer`, `execute` à `authenticated` seul ; `review_required` sous le jeton du connecteur, avant
+  toute lecture ; `draft_not_found` en 404 (`app.raise_http_error`), `draft_not_pending` ; puis
+  `queue_outbound_email` avec le contenu relu, et le mail préparé passe à `sent`.
+- **`public.discard_email_draft(p_draft_id) returns void`** — `security definer` ; `draft_not_found` en 404,
+  `draft_not_pending`.
+
+**Retrait** : retirer les deux déclencheurs de garde, `public.send_email_draft`, `public.discard_email_draft`,
+`public.prepare_email`, `app.refuser_envoi_connecteur`, `app.via_connector`, puis la table — les mails préparés en
+attente sont perdus : les lister avant. **Avec l'image `mcp` d'avant `CRM-128` T3** : sans la garde, son `crm_mail_send`
+enverrait de nouveau directement.
+
 ### Migration `0161` — les champs communs exigés dans les comparaisons, et l'aperçu de leurs effets (`CRM-112` T2.c.2 et T3.b, INC-344 ; livrée en développement le 2026-11-03)
 
 `docs/SPEC-champs-communs.md` §5 et §7 (précisions T2.c.2 et T3.b). **Aucune table, aucune donnée.** Trois fonctions sont

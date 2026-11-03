@@ -37,6 +37,8 @@
 --           attentes d'espace, nommées ; total RÉVISÉ de 122 à 125
 -- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
 --           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
+-- @verifies CRM-128 T2 (docs/BACKLOG.md) — la politique de lecture des mails préparés ; total RÉVISÉ de 194 à 195
+--           (docs/SPEC-mails-prepares.md §3.2)
 --
 -- Suite pgTAP de l'unité `CRM-014`. Le fichier de scénarios `e2e/api/preuves-refus.spec.ts` prouve
 -- que le produit **refuse** ; cette suite prouve que le produit **est en état d'être interrogé**,
@@ -238,8 +240,8 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	194,
-	'CENT QUATRE-VINGT-QUATORZE politiques dans `public`, et pas une de plus — 191 avant `CRM-112` tranche T2.a, plus les '
+	195,
+	'CENT QUATRE-VINGT-QUINZE politiques dans `public`, et pas une de plus — 194 avant `CRM-128` tranche T2, plus la lecture des mails préparés par la personne seule (docs/SPEC-mails-prepares.md §3.2) : aucune écriture directe, toutes passent par les fonctions. Avant elle : 194, soit 191 avant `CRM-112` tranche T2.a, plus les '
 	'TROIS des exigences de champ commun (docs/SPEC-champs-communs.md §5, décision 819) : leur lecture par tout membre de '
 	'l''espace, leur pose et leur retrait par l''administrateur seul, comme les exigences de champ de workflow. Avant '
 	'elles : 191, soit 185 avant `CRM-112` tranche T1, plus les SIX '
