@@ -7505,4 +7505,29 @@ rattachement d'une affaire.
   illisible, réseau — chacun sa phrase.
 - **Le succès** : retirer **un autre** rattachement relit la fiche en place ; retirer **celui de la fiche** ouvre la
   fiche au premier rattachement restant (ordre des tracks puis des channels), puisque l'adresse ne désigne plus rien.
-- **Aucune couleur, aucun jeton nouveau** ; une icône nouvelle, `Unlink`.
+- **Le fil nomme les deux gestes** (§5.11) : `attached` « Rattachée à un channel », icône `FolderInput`, pastille
+  `--color-accent-soft` ; `detached` « Rattachement retiré », icône `FolderOutput`, pastille neutre — famille
+  « Organisation », qui porte déjà « Dossier changé » (`FolderSync`). *Ajouté à l'écriture du code : la capture a montré
+  deux lignes « Événement », le défaut d'INC-207.*
+- **Aucune couleur, aucun jeton nouveau** ; trois icônes nouvelles, `Unlink`, `FolderInput`, `FolderOutput`.
+
+### 5.85 La pastille « aussi rattachée à N », sur le board et dans la vue liste — `CRM-111` T7.5
+
+*Écrit le 2026-11-03, avant le code (`docs/SPEC-rattachements.md` §8, décision 823).* Une affaire rattachée à plusieurs
+channels paraît dans le board et la liste de chacun ; la pastille dit qu'elle est **aussi ailleurs**, et où.
+
+- **Elle ne compte que les AUTRES rattachements LISIBLES** : ceux d'un channel que l'appelant ne lit pas sont masqués
+  par la base, existence comprise (§4 de la spécification), et la pastille n'existe pas quand il n'en reste aucun.
+- **Forme : la pastille compacte du sommeil** (§5.3 quinquies) — `rounded-full`, `text-xs`, icône puis texte — aux jetons
+  **neutres** de la pilule « partagée » (§5.54, §5.60), `--color-hover` / `--color-text-2` : c'est une information,
+  jamais un état ni une alerte. Icône `FolderInput` (l'entrée d'une affaire dans un channel, §5.84 — le même objet),
+  texte « +N » ; le nom accessible est la phrase entière, accordée par clé (§10) : « Aussi rattachée à 1 autre channel »,
+  « Aussi rattachée à N autres channels ».
+- **Son survol, ou son focus clavier, nomme les channels** : la pastille est un `span` focalisable porteur de
+  l'**infobulle du §5.58**, titre « Aussi rattachée à », puis une ligne par rattachement « Track › Channel », dans l'ordre
+  des tracks puis des channels. *Le §5.58 s'étend d'autant : cinquième élément porteur, la seule pastille qui en porte
+  une.* Elle n'est pas un lien : la carte et la ligne mènent déjà à la fiche, dont le bloc « Rattachements » (§5.82) porte
+  les liens.
+- **Place** : sur la carte du board, avec les pastilles d'étiquettes et de sommeil, après elles ; dans la vue liste, dans
+  la cellule « Affaire », `shrink-0` après le titre — la densité d'une ligne ne bouge pas (§5.3 quinquies).
+- **Aucune couleur, aucun jeton nouveau** ; `FolderInput` déjà nommée au §5.84.
