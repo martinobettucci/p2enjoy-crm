@@ -2511,6 +2511,25 @@ elle.
 attente sont perdus : les lister avant. **Avec l'image `mcp` d'avant `CRM-128` T3** : sans la garde, son `crm_mail_send`
 enverrait de nouveau directement.
 
+### Migration `0164` — les colonnes de recherche des valeurs communes, et leur lecture en semi-jointure (`CRM-112` T4.b ; livrée en développement le 2026-11-03)
+
+`docs/SPEC-champs-communs.md` §8 (précision T4.b), décision 831. **Aucune table ; les valeurs existantes sont reprises.**
+- **`card_common_field_values`** gagne trois colonnes que la base pose et que l'appelant n'écrit jamais (aucun
+  privilège) : **`value_search text`** — le texte des types `text`, `textarea`, `email`, `phone`, `url`, en minuscules et
+  sans accents (`extensions.unaccent`) — ; **`value_date date`** (type `date`) ; **`value_timestamp timestamptz`** (type
+  `datetime`). Les autres types les laissent nulles ; une valeur vide aussi.
+- **`app.card_common_value_columns(p_type text, p_value jsonb)`**, neuve, `stable` : le calcul des trois colonnes.
+- **`app.card_common_field_values_validate`** est reprise de sa définition en base, avec un seul ajout : elle recalcule
+  les trois colonnes à chaque écriture.
+- **La politique `card_common_field_values_select`** devient une semi-jointure — `card_id in (select p.card_id from
+  card_placements p where p.channel_id in (select unnest(app.readable_channel_ids())))` —, le même droit que
+  `app.can_read_card` (prouvé profil par profil par `supabase/tests/0153`), évalué une fois par requête et non par valeur.
+- **La reprise** des valeurs existantes passe par un `update` des trois colonnes seules, le déclencheur de validation
+  suspendu le temps de la reprise (il toucherait `updated_at`) ; le déclencheur du fil ne réagit qu'à `value`.
+
+**Retrait** : reposer la politique `using (app.can_read_card(card_id))`, la fonction de validation d'avant la `0164`,
+`drop function app.card_common_value_columns(text, jsonb)` et les trois colonnes.
+
 ### Migration `0163` — une valeur commune écrit `field_changed` au fil, sans rattachement (`CRM-112` T3.d ; livrée en développement le 2026-11-03)
 
 `docs/SPEC-champs-communs.md` §7 (précision T3.d). **Aucune table, aucune donnée.**

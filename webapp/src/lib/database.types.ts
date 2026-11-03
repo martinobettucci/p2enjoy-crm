@@ -516,6 +516,9 @@ export type Database = {
           updated_at: string
           updated_by: string | null
           value: Json | null
+          value_date: string | null
+          value_search: string | null
+          value_timestamp: string | null
           workspace_id: string
         }
         Insert: {
@@ -525,6 +528,9 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           value?: Json | null
+          value_date?: string | null
+          value_search?: string | null
+          value_timestamp?: string | null
           workspace_id: string
         }
         Update: {
@@ -534,6 +540,9 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           value?: Json | null
+          value_date?: string | null
+          value_search?: string | null
+          value_timestamp?: string | null
           workspace_id?: string
         }
         Relationships: [

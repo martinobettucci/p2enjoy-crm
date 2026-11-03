@@ -17636,6 +17636,11 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
             paramètres `c.<clé>`, un plongement `!inner` par filtre, la migration de `value_search`, `value_date` et
             `value_timestamp` (numéro pris à la synchronisation), la mesure d'une politique de lecture en semi-jointure
             avant le code. Tous les types sauf personne, contact et fichier. MCP : T9.
+            *Le 2026-11-03, première partie* : la migration `0164` (les colonnes `value_search`, `value_date`,
+            `value_timestamp`, la politique de lecture en semi-jointure) et sa preuve pgTAP `0153` **13/13** — dont
+            l'égalité des droits avec `app.can_read_card` pour Camille, Driss, Farida et un compte hors de l'espace, Farida
+            départageant (40 affaires sur 46) ; suite pgTAP 141 fichiers ; types régénérés, unitaires 5 381. Reste
+            l'écran (§5.92), ses unitaires, E2E et captures, le manuel.
       - [ ] **T4.c — les filtres personne, contact et fichier** (§8) : un filtre qui nomme une personne, un contact ;
             « renseigné ou vide » pour un fichier. À spécifier.
       - [ ] **T4.d — les filtres des champs dans les vues sauvegardées** : **à arbitrer par le responsable** — la liste
