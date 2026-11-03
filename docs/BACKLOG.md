@@ -17500,9 +17500,12 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
             - [x] **T2.d.1 — la fonction edge** : la forme (`proposition.ts`), les consignes et la liste des champs
                   communs envoyée au modèle (`consignes.ts`), leur lecture sous la RLS (`dependances.ts`, `handler.ts`).
                   *Faite le 2026-11-03* : Vitest de la fonction **107/107**, `typecheck` vert.
-            - [ ] **T2.d.2 — la base** : les trois codes de défaut (`docs/SPEC-ia.md` §12.1), les exigences vivantes
+            - [x] **T2.d.2 — la base** : les trois codes de défaut (`docs/SPEC-ia.md` §12.1), les exigences vivantes
                   rendues par `public.proposition_du_workflow`, le document cible et le générateur qui les reprennent de
                   la proposition ; pgTAP ; API de l'assistant.
+                  *Faite le 2026-11-03*, migration `0160` : pgTAP `0149` **12/12** (forme, trois défauts, rendu, document
+                  cible qui décide ou garde le vivant, création acceptée) ; specs API de l'assistant **21/21** ; la suite
+                  pgTAP n'a d'autre rouge que les comptes du seed revus par `CRM-111` T8 (deux affaires partagées).
             - [ ] **T2.d.3 — le panneau de suggestion** : les exigences communes affichées et retirables ; unitaires ;
                   E2E.
 - [ ] **T3** — écrans : Réglages ▸ « Champs de l'affaire », exigence dans l'éditeur de workflow, partie commune de la

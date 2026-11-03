@@ -30,6 +30,9 @@ d'exécuter le code attendu.
   les rétablit et refuse un champ archivé ; la copie vers un track les reprend, et le journal d'audit les inscrit.
 - **T2.d.0 (migration 159)** : accepter une suggestion de l'assistant garde les champs communs exigés. Elle corrige la
   157 et part avec elle.
+- **T2.d.1 et T2.d.2 (migration 160, fonction `ia`)** : l'assistant connaît les champs communs de l'espace et peut en
+  exiger un sur une transition, par sa clé, sans jamais en créer. Une clé inconnue, une transition absente ou un doublon
+  sont relevés comme défauts.
 
 - **`CRM-127` T2 et T3 — la relève date `last_sync_at`, et le test de connexion d'un compte de messagerie passe par une
   fonction edge** (décision 816, INC-340 ; `docs/SPEC-mail-subsystem.md` §23). Migration `0151` :

@@ -2481,6 +2481,20 @@ uuid)` et `drop function public.mail_inbound_account_record_sync(uuid)`, **avec 
 d'avant** : l'image de `main` appelle `mail_inbound_account_record_sync` à chaque relève, et chaque relève échouerait sans
 elle.
 
+### Migration `0160` — l'assistant exige des champs communs (`CRM-112` T2.d.2, décision 825 ; livrée en développement le 2026-11-03)
+
+`docs/SPEC-ia.md` §6.1 et §12.1. Cinq fonctions sont reprises de leur définition en base, chacune avec un ajout :
+- **`app.proposition_ia_bien_formee`** : `exigences_communes` est facultative ; si elle est présente, c'est un tableau de
+  `{de, vers, champ}` en textes, compté dans le plafond de 200.
+- **`app.defauts_proposition_ia`** : `exigence_commune_transition_absente`, `exigence_champ_commun_absent` (un champ
+  commun non archivé de l'espace) et `exigence_commune_en_double`.
+- **`public.proposition_du_workflow`** : les exigences vivantes, par clés, seulement s'il y en a.
+- **`app.document_cible_ia`** : une proposition qui porte la clé décide, même vide ; sans la clé, les exigences vivantes
+  sont reprises (`0159`).
+- **`public.accepter_suggestion_ia`** : une création pose les exigences résolues par clé dans l'espace.
+
+**Retrait** : reposer les cinq fonctions telles qu'en base avant la `0160`.
+
 ### Migration `0159` — accepter une suggestion de l'assistant garde les champs communs exigés (`CRM-112` T2.d.0 ; livrée en développement le 2026-11-03)
 
 `docs/SPEC-champs-communs.md` §5. **`app.document_cible_ia`** est reprise de sa définition en base, avec un seul ajout : le

@@ -139,8 +139,11 @@ fixé par la tranche T1 (§11.5), versionné (`version: 1`).
 > - `champ` y nomme un **champ commun existant** de l'espace, non archivé, par sa clé. L'assistant **n'en crée jamais** :
 >   les champs communs se définissent dans Réglages (`docs/SPEC-champs-communs.md` §5, §7).
 > - Les consignes du modèle reçoivent la liste des champs communs de l'espace (clé, libellé, type).
-> - `public.proposition_du_workflow` rend les exigences vivantes dans cette liste ; à l'acceptation, le document cible
->   les reprend de la proposition, et non plus du workflow vivant (la reprise de la `0159` cède la place).
+> - `public.proposition_du_workflow` rend les exigences vivantes dans cette liste, seulement s'il y en a.
+> - **Une proposition qui porte la clé décide**, même avec une liste vide : à l'acceptation, le document cible prend ses
+>   exigences, résolues par clé dans l'espace. **Une proposition qui ne la porte pas**, celle d'une révision antérieure,
+>   garde les exigences vivantes des transitions qu'elle conserve, comme la `0159`. Précisé à l'écriture de T2.d.2 (`0160`),
+>   pour ne rien retirer à l'acceptation d'une révision écrite avant.
 > - Les codes `exigence_commune_transition_absente`, `exigence_champ_commun_absent` et `exigence_commune_en_double`
 >   s'ajoutent au §12.1. Les codes de `exigences` sont inchangés.
 
