@@ -68,6 +68,12 @@ async function publierDepuisLEcran(page: Page): Promise<string> {
 	await page.getByLabel('Votre commentaire').fill(texte)
 	await page.getByRole('button', { name: 'Publier' }).click()
 	await expect(page.getByText(texte)).toBeVisible()
+	// INC-331 : dans l'ordre d'une campagne, la relecture qui suit l'affichage n'a pas trouvé la ligne (identifiant
+	// `undefined`, puis une requête invalide). La preuve attend donc que la BASE porte le commentaire, par sondage,
+	// avant toute relecture — une attente sur un état, jamais une temporisation.
+	await expect
+		.poll(async () => (await relire(page.request, texte))?.id, { message: 'la base porte le commentaire publié' })
+		.toBeDefined()
 	return texte
 }
 

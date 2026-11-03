@@ -8418,6 +8418,14 @@ l'import **du seed** par ses comptes exacts au lieu de compter toutes les lignes
 service avant la lecture. Les sept fichiers touchés passent 116/116 sur base reconstruite. **Reste** le troisième
 (`commentaires-gestes`), qui demande à être rejoué dans l'ordre d'une campagne complète pour être constaté.
 
+**Le troisième, mesuré le 2026-11-03.** Dans la campagne d'avant livraison, « la suppression exige une confirmation… »
+a échoué parce que la relecture qui suit la publication n'a pas trouvé la ligne. L'identifiant valait donc `undefined`,
+et la requête faite avec lui était invalide. Seul, le scénario passe. Les causes écartées par mesure : un écran
+optimiste (aucun dans le code des commentaires) et une accumulation de commentaires sur l'affaire (zéro ligne : les
+scénarios les effacent). La trace de l'échec a été écrasée depuis. **Correction de preuve** :
+`publierDepuisLEcran` attend, par sondage, que la base porte le commentaire avant toute relecture, une attente sur un
+état et non une temporisation. 8/8 seul. **Reste** : le constater dans l'ordre de la prochaine campagne complète.
+
 ### INC-332 — À 390 px, l'icône « Aide » faisait passer la cloche et l'identité sur une deuxième ligne de commandes
 
 *Constaté le 2026-11-01 en observant la campagne de renouvellement de `CRM-122` T3 (`docs/captures/CRM-100/nouveau-channel-
