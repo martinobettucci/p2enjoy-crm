@@ -38782,3 +38782,19 @@ au responsable avant d'appliquer. **Question 2** : INC-341, une unité dédiée 
 créer l'unité, poser les deux questions MCP, la spécifier avant le code, et l'implémenter avant toute autre tâche, dès
 la livraison faite.
 
+
+### Livraison du 2026-11-03 — migrations 150 à 160 (décision 827)
+
+*2026-11-03, session de livraison 4891a451.* **Problème** : livrer le lot de la décision 827 sans emporter les §2.18,
+§2.21 et §2.22, toujours en attente de leur instruction. **Gestes** : instantané de VM confirmé par le responsable
+(« Snapshot taken »), `pg_dump -Fc` dans la cellule en plus ; `livrer.sh -- --migrate --instantane-verifie` à la révision
+`e44d04aa` ; reconstructions ciblées de `mcp` et de `mail-sync`, redémarrage de `functions`, manuel publié (537
+fichiers, deux passes). **Observations** : registre à 158 lignes, objets du lot présents, 93 affaires pour 93
+rattachements ; `verifier.sh` 33/34, l'échec étant le redémarrage de `rest` à 07:36 UTC, avant la fenêtre (INC-277,
+état ajouté). Un avertissement `veille_compte_echoue` à chaque tour de `mail-sync` : **hypothèse écartée** d'une
+régression de la 151 ou de la 154, puisque le seul compte entrant est `pending` depuis le 2026-11-01 sans aucune relève
+réussie ; **la cause reste inconnue**, le formateur du journal écartant `panne` et `account_id` (INC-343, ouverte, aucun
+comportement changé). **Changelog** : les entrées `CRM-111` T4.1 à T9 avaient été écrites par erreur dans la section
+publiée du 2026-11-01 ; elles rejoignent l'entrée datée du 2026-11-03, avec `CRM-112` et `CRM-127`. **Conséquences** :
+le verrou de livraison est levé par le commit qui consigne la fenêtre ; restent les constats du responsable
+(`docs/PROD_MIGRATIONS.md` §8), puis INC-341, prioritaire.

@@ -17464,7 +17464,10 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       webapp et connecteur redéployés ensemble ; constat ; `CHANGELOG.md`.
       **Livrée le 2026-11-01** par la fenêtre des migrations 106 à 141 (décision 792, révision `6e7d6266` ; `docs/PROD_MIGRATIONS.md` §8) ;
       reste le constat du responsable.
-      **T3** (migration `0148`) reste à livrer, avec la prochaine fenêtre : sans consommateur, sans geste préalable.
+      **T3** (migration `0148`) livrée le 2026-11-02 (révision `9e64cb73`). **T4 à T9 livrées le 2026-11-03** par la
+      fenêtre des migrations 150 à 160 (décision 827, révision `e44d04aa` ; `docs/PROD_MIGRATIONS.md` §8) : registre à 158
+      lignes, webapp, images `mcp` et `mail-sync`, `functions` redémarré, manuel publié. Reste le constat du responsable :
+      rattacher puis retirer depuis la fiche, la pastille « +1 » du board, un assistant qui voit `crm_card_attach`.
 
 ### CRM-112 — Champs personnalisés communs de portée espace `[~]`
 *Réservée le 2026-10-24 — décision 642, arbitrage 4 ; ordre fixé par la décision 645 : après `CRM-111`. Arbitrée le
@@ -17580,7 +17583,10 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
 - [ ] **T8** — seed (`docs/SPEC-champs-communs.md` §13), E2E, captures aux quatre paliers, `docs/manual.md`.
 - [ ] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de
       `crm_card_list` ; `docs/SPEC-mcp.md` §9.2.
-- [ ] **Livraison en production** avec `CRM-111` ou après elle, sur instruction du responsable.
+- [~] **Livraison en production** avec `CRM-111` ou après elle, sur instruction du responsable. **T1 à T3.a livrées le
+      2026-11-03** avec `CRM-111` (décision 827, révision `e44d04aa`, migrations 152, 155 à 157, 159 et 160, service
+      `functions`, webapp ; `docs/PROD_MIGRATIONS.md` §8). Reste le constat du responsable (Réglages ▸ « Champs de
+      l'affaire » ouvert à l'administrateur), puis la livraison de T4 à T9.
 
 ## Demande du 2026-10-25 — une pile de développement par session (décision 701)
 
@@ -18435,3 +18441,6 @@ Question du connecteur : **non** (décision 816).
 - [ ] **T4 — écrans, design system, manuel, E2E et captures.**
 - [ ] **T5 — livraison en production et constat** : une boîte testée depuis l'écran, et sa date de relève visible sur
       l'écran d'état.
+      *Partielle le 2026-11-03* : la migration `0151`, l'image `mail-sync` et la fonction edge sont livrées avec le lot
+      150 à 160 (décision 827, `docs/PROD_MIGRATIONS.md` §8) ; le bouton attend T4. L'unique compte entrant de
+      production, `pending`, échoue à chaque relève pour une cause que le journal ne dit pas (INC-343).

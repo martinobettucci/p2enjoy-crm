@@ -13,7 +13,98 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-112` T1 — les champs communs de portée espace, en base (migration 152)
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-03 — migrations 150 à 160, la webapp de `main`, les images `mcp` et `mail-sync`, le service `functions`, le manuel
+
+Cellule Spark `crm`, révision `e44d04aa` : `scripts/spark/livrer.sh -- --migrate --instantane-verifie` (décision 827),
+sur l'instantané de VM confirmé par le responsable et un `pg_dump -Fc` pris dans la cellule avant la fenêtre ; puis les
+images `mcp` et `mail-sync` reconstruites dans la cellule, le service `functions` redémarré, et le manuel publié (537
+fichiers, deux passes). **Vérifié, en lecture seule** : registre à 158 lignes, la dernière
+`0160_suggestion_ia_exigences_communes.sql`, les onze migrations 150 à 160 en `application` ; `rendre_modele_email`
+prend `p_placement_id` ; `attach_card`, `detach_card`, `mail_inbound_account_record_sync`,
+`authorize_mail_connection_test` et `app.validate_field_value` présents ; les trois tables des champs communs présentes ;
+93 affaires, 93 rattachements, aucune affaire sans rattachement ; 537 objets dans le bucket `manual` ; `verifier.sh`
+33/34 — le seul échec est le compteur de redémarrage de `rest` (INC-277), antérieur à la fenêtre. Le constat du
+responsable reste à faire (`docs/PROD_MIGRATIONS.md` §8, entrée du 2026-11-03).
+
+#### `CRM-111` T4 à T9 — rattachements multiples : les lectures, la fiche, la pastille, le seed, le connecteur
+
+
+- **`CRM-111` T9 — le connecteur MCP et les rattachements** : trois outils, `crm_card_attach`, `crm_card_placement_update`,
+  `crm_card_placement_archive` ; `crm_card_get` liste les rattachements lisibles, `crm_card_list` rend le rattachement de
+  chaque ligne, et les déplacements, le sommeil et le réveil peuvent désigner un rattachement. Famille « Affaires »,
+  aucune case nouvelle. Image `mcp` reconstruite. Manuel §33.5.
+
+- **`CRM-111` T8 — le seed des rattachements multiples** : deux affaires posées par les vraies fonctions portent les
+  cinq situations de la spécification — « Plateforme de billetterie — Musée des Confluences », dans « Grands comptes »
+  et « Refonte de site » ; « Infogérance applicative — Groupe Ardent », active dans « Maintenance », archivée dans
+  « Refonte de site », en sommeil dans « Grands comptes ». `scripts/verify-seed-rattachements.sh` les relit sous les
+  jetons des trois profils. Les preuves qui comptaient les affaires du seed sont révisées. Aucune migration.
+
+- **`CRM-111` T7.5 et T7.6 — la pastille « aussi rattachée à », et le manuel** : sur le board et dans la vue liste, une
+  affaire rattachée à d'autres channels porte une pastille « +N » qui les nomme au survol et au focus clavier — elle ne
+  compte que ceux que l'on lit. Le manuel rassemble les rattachements en une section 9.17, « Rattacher une affaire à
+  plusieurs channels ». Webapp seule.
+
+- **`CRM-111` T7.4 — retirer un rattachement depuis la fiche** : « Retirer », sur chaque ligne du bloc, réservé aux
+  administrateurs de l'espace et inactif sur le dernier rattachement, chaque fois avec sa raison ; une confirmation
+  nomme le rattachement et ce qui est perdu. Retirer celui de la fiche ouvre la fiche d'un rattachement restant. Le fil
+  nomme « Rattachée à un channel » et « Rattachement retiré » au lieu de « Événement ». Webapp seule ; manuel §9.6.
+
+- **`CRM-111` T7.3 — rattacher une affaire à un channel depuis sa fiche** : « Rattacher à un channel », sous la liste
+  du bloc, propose les channels ouverts que l'on peut modifier et où l'affaire n'est pas encore ; l'affaire y entre à
+  l'étape initiale, et sa fiche s'ouvre à l'adresse du nouveau rattachement. Chaque refus de la base a sa phrase. Webapp
+  seule ; manuel §9.6.
+
+- **`CRM-111` T7.2 — le bloc « Rattachements » de la fiche** : sous l'en-tête, une ligne par channel de l'affaire que
+  l'on lit — celui de la fiche marqué « fiche ouverte », les autres en liens vers leur fiche avec leur étape, leur
+  responsable, leur montant et leurs pastilles. « Archiver » et « Désarchiver » agissent sur un seul rattachement ; la
+  commande d'un channel qu'on ne peut pas modifier est inactive, avec son motif en tête du bloc. Webapp seule ; manuel
+  §9.6.
+
+- **`CRM-111` T7.1 — la fiche au rattachement de l'adresse** : la fiche d'une affaire rattachée à plusieurs channels
+  s'ouvre sur le rattachement du channel de son adresse — étape, formulaire et valeurs, responsable, montant, prochaine
+  action, sommeil, checklist et relance sont les siens. Une adresse d'un channel où l'affaire n'est pas rattachée dit
+  « Cette affaire n'est pas rattachée à ce channel » et propose ses rattachements lisibles (INC-065). Webapp seule ;
+  manuel §9.6.
+
+- **`CRM-111` T6.2 — le rendu d'un modèle par rattachement** (migration `0158`) : une relance automatique remplit
+  l'étape, le montant, la prochaine action et le channel de son modèle avec le rattachement sur lequel sa séquence a été
+  armée, et non plus avec le plus ancien. La prévisualisation de Réglages ▸ Modèles d'emails offre un choix
+  « Rattachement » pour une affaire rattachée à plusieurs channels. Webapp livrée avec la migration ; manuel §14.2.
+
+- **`CRM-111` T6.1 — le dossier d'une affaire hors de l'arborescence** (migration `0154`) : le dossier IMAP d'une affaire
+  devient `CRM/Affaires/<titre> (<8 derniers caractères de l'identifiant>)`, et `mail-sync` y déplace les dossiers
+  existants à sa relève suivante ; une affaire rattachée à plusieurs channels n'a qu'un dossier. L'inbox liste les
+  affaires sous « Affaires », sans track ni channel. Image `mail-sync` et webapp livrées avec la migration ; manuel §12.2.
+
+- **`CRM-111` T5.2 — la marque « partagée » de « Rentabilité »** : la ligne d'une affaire rattachée à plusieurs
+  channels porte « partagée » dans la colonne de l'état, et une phrase sous le tableau dit que le sous-total d'un track
+  et le total ne comptent ses montants qu'une fois. Webapp seule, avec la migration `0153` ; manuel §29.3.
+
+- **`CRM-111` T5.1 — la rentabilité par rattachement** (migration `0153`) : une affaire rattachée à plusieurs channels
+  paraît sous chacun dans « Rentabilité », avec l'état et le montant de ce rattachement ; ses recettes, coûts et
+  personnel y sont rappelés, et le sous-total d'un track qui la porte deux fois, le total, les mentions et
+  `crm_profitability_report` ne la comptent qu'une fois. Le filtre d'état porte sur l'état du rattachement. Tant
+  qu'aucune affaire n'a plus d'un rattachement, rien ne change à l'écran ; la marque « partagée » vient avec T5.2.
+
+- **`CRM-111` T4.2 — la marque « partagée » du rapport de temps** : une affaire rattachée à plusieurs channels paraît
+  sous chacun dans le rapport mensuel, sa ligne marquée « partagée », et une phrase sous le tableau dit que le total ne
+  compte sa saisie qu'une fois ; le bloc « Coût du personnel » d'un track le dit aussi quand l'affaire est rattachée à
+  deux de ses channels. Webapp seule, avec la migration `0150` de T4.1 ; manuel §28.4.
+
+- **`CRM-111` T4.1 — la recherche, le temps et la relance à plusieurs rattachements** (migration `0150`) : une
+  affaire trouvée par la recherche est nommée par tous les channels où elle est rattachée et que l'on lit, dans l'ordre
+  des tracks puis des channels, et son lien mène au premier ; elle se trouve aussi par la prochaine action de chacun. Le
+  temps saisi sur une affaire paraît sous chacun de ses channels, marqué partagé, et les totaux du rapport, de la série
+  « Personnel », de la fiche, de la rentabilité et de `crm_time_report` ne le comptent qu'une fois. La relance d'une
+  affaire figée désigne le rattachement figé. Tant qu'aucune affaire n'a plus d'un rattachement, rien ne change à
+  l'écran ; la marque « partagée » du rapport vient avec T4.2.
+
+#### `CRM-112` T1 à T3.a — les champs communs de portée espace (migrations 152, 155 à 157, 159 et 160)
 
 - Deux tables, `card_common_fields` (les définitions, propres à l'espace) et `card_common_field_values` (une valeur par
   affaire et par champ), avec leurs politiques. Un administrateur définit les champs, la lectrice lit sans écrire, et un
@@ -45,6 +136,8 @@ d'exécuter le code attendu.
   avec leur raison. Manuel, section 18.16, avec deux images. La case « Afficher dans la liste » viendra avec la vue liste
   (T4).
 
+#### `CRM-127` T2 et T3 — la relève date `last_sync_at`, et le test de connexion passe par une fonction edge (migration 151)
+
 - **`CRM-127` T2 et T3 — la relève date `last_sync_at`, et le test de connexion d'un compte de messagerie passe par une
   fonction edge** (décision 816, INC-340 ; `docs/SPEC-mail-subsystem.md` §23). Migration `0151` :
   `mail_inbound_account_record_sync`, réservée à `service_role`, que `mail-sync` appelle à la fin de chaque relève allée
@@ -53,10 +146,8 @@ d'exécuter le code attendu.
   `mail-connection-test` : la base décide avec le jeton de l'appelant, puis la fonction relaie vers `mail-sync` avec son
   jeton interne, remis à elle seule. Défaut trouvé par la suite pgTAP avant tout commit : sur une ligne sans propriétaire,
   la comparaison au propriétaire valait `NULL` et le refus ne se déclenchait pas. L'écran d'état affichera la vraie date
-  de dernière relève. Le bouton des écrans de réglages reste à livrer (T4). **À livrer ensemble** : migration `0151`, image
-  `mail-sync`, service `functions` (`docs/PROD_MIGRATIONS.md` §3).
-
-## [Publié]
+  de dernière relève. Le bouton des écrans de réglages reste à livrer (T4). **Livrés ensemble** : migration `0151`, image
+  `mail-sync`, service `functions`.
 
 ### Déployé en production, 2026-11-02 — migrations 144, 145, 148 et 149, la webapp de `main`, l'image `mcp`, le manuel
 
@@ -541,77 +632,6 @@ changelog.*
   trois politiques, `queue_outbound_email` avec `p_bcc` et `p_attachments` (taille et type relus dans le stockage, trois
   refus de plus). **`mail-sync`** joint les pièces, archive avant d'envoyer, efface les dépôts abandonnés après 24 heures.
 - **Le seed** fait partir un message réel avec copie cachée et pièce jointe depuis « Refonte du monitoring — Vertuo ».
-
-- **`CRM-111` T9 — le connecteur MCP et les rattachements** : trois outils, `crm_card_attach`, `crm_card_placement_update`,
-  `crm_card_placement_archive` ; `crm_card_get` liste les rattachements lisibles, `crm_card_list` rend le rattachement de
-  chaque ligne, et les déplacements, le sommeil et le réveil peuvent désigner un rattachement. Famille « Affaires »,
-  aucune case nouvelle. Image `mcp` à reconstruire. Manuel §33.5.
-
-- **`CRM-111` T8 — le seed des rattachements multiples** : deux affaires posées par les vraies fonctions portent les
-  cinq situations de la spécification — « Plateforme de billetterie — Musée des Confluences », dans « Grands comptes »
-  et « Refonte de site » ; « Infogérance applicative — Groupe Ardent », active dans « Maintenance », archivée dans
-  « Refonte de site », en sommeil dans « Grands comptes ». `scripts/verify-seed-rattachements.sh` les relit sous les
-  jetons des trois profils. Les preuves qui comptaient les affaires du seed sont révisées. Aucune migration.
-
-- **`CRM-111` T7.5 et T7.6 — la pastille « aussi rattachée à », et le manuel** : sur le board et dans la vue liste, une
-  affaire rattachée à d'autres channels porte une pastille « +N » qui les nomme au survol et au focus clavier — elle ne
-  compte que ceux que l'on lit. Le manuel rassemble les rattachements en une section 9.17, « Rattacher une affaire à
-  plusieurs channels ». Webapp seule.
-
-- **`CRM-111` T7.4 — retirer un rattachement depuis la fiche** : « Retirer », sur chaque ligne du bloc, réservé aux
-  administrateurs de l'espace et inactif sur le dernier rattachement, chaque fois avec sa raison ; une confirmation
-  nomme le rattachement et ce qui est perdu. Retirer celui de la fiche ouvre la fiche d'un rattachement restant. Le fil
-  nomme « Rattachée à un channel » et « Rattachement retiré » au lieu de « Événement ». Webapp seule ; manuel §9.6.
-
-- **`CRM-111` T7.3 — rattacher une affaire à un channel depuis sa fiche** : « Rattacher à un channel », sous la liste
-  du bloc, propose les channels ouverts que l'on peut modifier et où l'affaire n'est pas encore ; l'affaire y entre à
-  l'étape initiale, et sa fiche s'ouvre à l'adresse du nouveau rattachement. Chaque refus de la base a sa phrase. Webapp
-  seule ; manuel §9.6.
-
-- **`CRM-111` T7.2 — le bloc « Rattachements » de la fiche** : sous l'en-tête, une ligne par channel de l'affaire que
-  l'on lit — celui de la fiche marqué « fiche ouverte », les autres en liens vers leur fiche avec leur étape, leur
-  responsable, leur montant et leurs pastilles. « Archiver » et « Désarchiver » agissent sur un seul rattachement ; la
-  commande d'un channel qu'on ne peut pas modifier est inactive, avec son motif en tête du bloc. Webapp seule ; manuel
-  §9.6.
-
-- **`CRM-111` T7.1 — la fiche au rattachement de l'adresse** : la fiche d'une affaire rattachée à plusieurs channels
-  s'ouvre sur le rattachement du channel de son adresse — étape, formulaire et valeurs, responsable, montant, prochaine
-  action, sommeil, checklist et relance sont les siens. Une adresse d'un channel où l'affaire n'est pas rattachée dit
-  « Cette affaire n'est pas rattachée à ce channel » et propose ses rattachements lisibles (INC-065). Webapp seule ;
-  manuel §9.6.
-
-- **`CRM-111` T6.2 — le rendu d'un modèle par rattachement** (migration `0158`) : une relance automatique remplit
-  l'étape, le montant, la prochaine action et le channel de son modèle avec le rattachement sur lequel sa séquence a été
-  armée, et non plus avec le plus ancien. La prévisualisation de Réglages ▸ Modèles d'emails offre un choix
-  « Rattachement » pour une affaire rattachée à plusieurs channels. Webapp à livrer avec la migration ; manuel §14.2.
-
-- **`CRM-111` T6.1 — le dossier d'une affaire hors de l'arborescence** (migration `0154`) : le dossier IMAP d'une affaire
-  devient `CRM/Affaires/<titre> (<8 derniers caractères de l'identifiant>)`, et `mail-sync` y déplace les dossiers
-  existants à sa relève suivante ; une affaire rattachée à plusieurs channels n'a qu'un dossier. L'inbox liste les
-  affaires sous « Affaires », sans track ni channel. Image `mail-sync` et webapp à livrer avec la migration ; manuel §12.2.
-
-- **`CRM-111` T5.2 — la marque « partagée » de « Rentabilité »** : la ligne d'une affaire rattachée à plusieurs
-  channels porte « partagée » dans la colonne de l'état, et une phrase sous le tableau dit que le sous-total d'un track
-  et le total ne comptent ses montants qu'une fois. Webapp seule, avec la migration `0153` ; manuel §29.3.
-
-- **`CRM-111` T5.1 — la rentabilité par rattachement** (migration `0153`) : une affaire rattachée à plusieurs channels
-  paraît sous chacun dans « Rentabilité », avec l'état et le montant de ce rattachement ; ses recettes, coûts et
-  personnel y sont rappelés, et le sous-total d'un track qui la porte deux fois, le total, les mentions et
-  `crm_profitability_report` ne la comptent qu'une fois. Le filtre d'état porte sur l'état du rattachement. Tant
-  qu'aucune affaire n'a plus d'un rattachement, rien ne change à l'écran ; la marque « partagée » vient avec T5.2.
-
-- **`CRM-111` T4.2 — la marque « partagée » du rapport de temps** : une affaire rattachée à plusieurs channels paraît
-  sous chacun dans le rapport mensuel, sa ligne marquée « partagée », et une phrase sous le tableau dit que le total ne
-  compte sa saisie qu'une fois ; le bloc « Coût du personnel » d'un track le dit aussi quand l'affaire est rattachée à
-  deux de ses channels. Webapp seule, avec la migration `0150` de T4.1 ; manuel §28.4.
-
-- **`CRM-111` T4.1 — la recherche, le temps et la relance à plusieurs rattachements** (migration `0150`) : une
-  affaire trouvée par la recherche est nommée par tous les channels où elle est rattachée et que l'on lit, dans l'ordre
-  des tracks puis des channels, et son lien mène au premier ; elle se trouve aussi par la prochaine action de chacun. Le
-  temps saisi sur une affaire paraît sous chacun de ses channels, marqué partagé, et les totaux du rapport, de la série
-  « Personnel », de la fiche, de la rentabilité et de `crm_time_report` ne le comptent qu'une fois. La relance d'une
-  affaire figée désigne le rattachement figé. Tant qu'aucune affaire n'a plus d'un rattachement, rien ne change à
-  l'écran ; la marque « partagée » du rapport vient avec T4.2.
 
 - **`CRM-111` T3 — rattacher et retirer** (migration `0148`) : une affaire peut être rattachée à plusieurs channels, un
   par channel. `attach_card` la rattache à l'étape initiale (ou désarchive son rattachement au channel), `detach_card`

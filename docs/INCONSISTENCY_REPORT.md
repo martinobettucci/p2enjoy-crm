@@ -7352,6 +7352,12 @@ le compteur à zéro sans rien perdre, et surveiller ; (2) relever la limite de 
 `docker-compose.spark.yml`, à mesurer d'abord sur la durée ; (3) laisser en l'état, en sachant `verifier.sh` rouge sur
 ce seul contrôle.
 
+**État au 2026-11-03.** Pendant la fenêtre des migrations 150 à 160, `verifier.sh` compte 34 contrôles et le même échec :
+`p2enjoy-rest` porte désormais `RestartCount=2` ; son dernier démarrage date de **07:36:08 UTC**, six heures avant la
+fenêtre (13:41 UTC), et le conteneur n'a pas été recréé depuis le 2026-09-23. Le journal ne garde rien d'avant ce
+démarrage ; `OOMKilled` est faux au relevé. Au même relevé : `rest` 63 Mio sur 128, Kong 153 Mio sur 256 — Kong a baissé
+depuis le 2026-10-21. L'arbitrage reste ouvert.
+
 ### INC-278 — la preuve « Ma journée » du contrat du seed suppose un seed appliqué le jour même
 
 > **OUVERTE le 2026-10-21**, à arbitrer par le responsable ; aucun comportement n'est changé.
@@ -8687,3 +8693,21 @@ indépendantes de l'accumulation — cibler leurs propres lignes plutôt qu'un r
 qu'elles écrivent — ou reconstruire la base (`./resetMe.sh`, destructeur, à coordonner entre les sessions) avant une
 campagne de constat.
 
+### INC-343 — la veille de `mail-sync` écrit `panne` et `account_id`, que le formateur du journal écarte
+
+*Relevé le 2026-11-03 pendant la livraison des migrations 150 à 160 ; ouverte : comportement inchangé.*
+
+**Le constat.** `mail-sync/src/mail_sync/veille.py` journalise un échec de relève par
+`journal("veille_compte_echoue", account_id=…, panne=type(erreur).__name__)` : le compte et le type de la panne,
+jamais le message. Mais `JsonFormatter` (`mail-sync/src/mail_sync/structured_logging.py`) n'écrit que les champs de
+`SAFE_FIELDS`, où ni `panne` ni `account_id` ne figurent. La ligne publiée ne garde que `event`, `level`, `service` et
+`timestamp` : rien ne dit quel compte échoue, ni pourquoi. `veille_source_indisponible` perd sa `panne` de la même façon.
+En production, l'unique compte entrant (`pending` depuis le 2026-11-01, `last_error` vide, aucune relève réussie)
+produit cette ligne à chaque tour, et le diagnostic n'est possible qu'en lisant la base.
+
+**Pourquoi ce n'est pas tranché ici.** La correction touche la liste des champs admis au journal, un contrat
+d'observabilité (`CLAUDE.md` §20), et dépasse la livraison en cours.
+
+**Correction proposée** : admettre `account_id` et `panne` dans `SAFE_FIELDS` — un identifiant et un nom de classe
+d'exception, ni secret ni donnée personnelle —, avec un test du formateur qui lise la ligne d'un échec de veille ; puis
+reconstruire l'image `mail-sync`.
