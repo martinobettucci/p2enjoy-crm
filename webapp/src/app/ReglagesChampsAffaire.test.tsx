@@ -2,6 +2,8 @@
 //           archivés sous leur case, la déclaration (clé, type, choix), l'édition qui fige clé et type, l'ordre en une
 //           écriture, l'archivage confirmé et son refus qui nomme les transitions et le geste, la capacité refusée qui
 //           éteint les commandes avec leur motif, les états
+// @verifies CRM-112 tranche T4.a — la case « Afficher dans la liste des affaires », refusée aux types personne, contact et
+//           fichier, et la pilule « Dans la liste » (docs/DESIGN_SYSTEM.md §5.91)
 // @verifies docs/SPEC-champs-communs.md §3.2, §4, §6, §7 ; docs/DESIGN_SYSTEM.md §5.86, §5.15, §5.59, §5.8
 //
 // L'écran RÉEL est monté sur un client espion qui sert les champs et note chaque écriture. La pile réelle est éprouvée
@@ -112,7 +114,16 @@ describe('Réglages ▸ Champs de l’affaire (docs/DESIGN_SYSTEM.md §5.86)', (
 		expect(ecritures).toEqual([
 			{
 				methode: 'insert',
-				valeur: { workspace_id: 'ws-1', key: 'budget-client', label: 'Budget du client', type: 'money', help_text: null, options: { currency: 'EUR' } },
+				// RÉVISÉ PAR `CRM-112` T4.a (§5.91) : la déclaration porte `is_listed`, faux sans la case cochée — décision 51.
+				valeur: {
+					workspace_id: 'ws-1',
+					key: 'budget-client',
+					label: 'Budget du client',
+					type: 'money',
+					help_text: null,
+					options: { currency: 'EUR' },
+					is_listed: false,
+				},
 				filtres: [],
 			},
 		])
@@ -132,7 +143,13 @@ describe('Réglages ▸ Champs de l’affaire (docs/DESIGN_SYSTEM.md §5.86)', (
 		await userEvent.click(screen.getByRole('button', { name: fr['admin.action.save'] }))
 		expect(ecritures[0]).toEqual({
 			methode: 'update',
-			valeur: { label: 'Secteur d’activité', help_text: 'Le secteur du client', options: { choices: [{ key: 'industrie', label: 'Industrie' }] } },
+			// RÉVISÉ PAR `CRM-112` T4.a (§5.91) : la modification réécrit aussi `is_listed` — décision 51.
+			valeur: {
+				label: 'Secteur d’activité',
+				help_text: 'Le secteur du client',
+				options: { choices: [{ key: 'industrie', label: 'Industrie' }] },
+				is_listed: false,
+			},
 			filtres: [['id', 'c-secteur']],
 		})
 	})
@@ -192,6 +209,32 @@ describe('Réglages ▸ Champs de l’affaire (docs/DESIGN_SYSTEM.md §5.86)', (
 		monter(panne)
 		expect(await screen.findByText(fr['admin.commonFields.error.title'])).toBeDefined()
 		expect(screen.getByRole('button', { name: fr['state.error.retry'] })).toBeDefined()
+	})
+})
+
+describe('la case « Afficher dans la liste des affaires » (CRM-112 T4.a, §5.91)', () => {
+	it('cochée, elle part avec la déclaration ; un type personne la rend désactivée, avec sa raison', async () => {
+		const { client: c, ecritures } = client([])
+		monter(c)
+		await userEvent.click(await screen.findByTestId('nouveau-champ-commun'))
+		await userEvent.type(screen.getByLabelText(fr['admin.workflows.fields.form.key']), 'siret')
+		await userEvent.type(screen.getByLabelText(fr['admin.workflows.fields.form.label']), 'SIRET')
+		const caseListe = screen.getByLabelText(fr['admin.commonFields.form.listed']) as HTMLInputElement
+		await userEvent.selectOptions(screen.getByLabelText(fr['admin.workflows.fields.form.type']), 'user')
+		expect(caseListe.disabled).toBe(true)
+		expect(screen.getByText(fr['admin.commonFields.form.listed.unavailable'])).toBeDefined()
+		await userEvent.selectOptions(screen.getByLabelText(fr['admin.workflows.fields.form.type']), 'text')
+		expect(caseListe.disabled).toBe(false)
+		await userEvent.click(caseListe)
+		await userEvent.click(screen.getByRole('button', { name: fr['admin.action.save'] }))
+		expect((ecritures[0]?.valeur as { is_listed: boolean }).is_listed).toBe(true)
+	})
+
+	it('un champ listé porte la pilule « Dans la liste » sur sa ligne', async () => {
+		monter(client([{ ...LUS[0], is_listed: true }, LUS[1]]).client)
+		await waitFor(() => expect(lignes()).toHaveLength(2))
+		expect(within(lignes()[0]!).getByTestId('champ-dans-la-liste').textContent).toBe(fr['admin.commonFields.listed.pill'])
+		expect(within(lignes()[1]!).queryByTestId('champ-dans-la-liste')).toBeNull()
 	})
 })
 

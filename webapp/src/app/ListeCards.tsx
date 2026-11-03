@@ -1,3 +1,5 @@
+// @spec CRM-112 (docs/BACKLOG.md) tranche T4.a — une colonne par champ de l'affaire listé, après les colonnes natives
+//       (docs/SPEC-champs-communs.md §8 ; docs/DESIGN_SYSTEM.md §5.91)
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T7.5 : la pastille « aussi rattachée à N » dans la cellule « Affaire »
 //       (docs/DESIGN_SYSTEM.md §5.85)
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T6 : « Importer un fichier » après l'export, son panneau sous la barre (docs/DESIGN_SYSTEM.md §5.78)
@@ -29,6 +31,7 @@
 // Aucune règle d'accès n'est portée ici : ce que la liste montre est ce que la RLS a consenti à
 // rendre (CLAUDE.md §10).
 
+import { celluleCommune, type ChampCommun } from '../lib/champs-communs'
 import { PastilleAussiRattachee } from '../components/ui/AussiRattachee'
 import { PastillesEtiquettes } from '../components/ui/PastilleEtiquette'
 import type { Etiquette } from '../lib/etiquettes'
@@ -132,6 +135,8 @@ function formaterEcheance(horodatage: string): string {
 }
 
 export type ProprietesListeCards = {
+	/** `CRM-112` T4.a (§5.91) : les champs de l'affaire listés, une colonne chacun, après les colonnes natives. */
+	readonly colonnesCommunes?: readonly ChampCommun[]
 	readonly cards: readonly CardListe[]
 	readonly etapes: readonly EtapeBoard[]
 	/** `CRM-069` T2 (§5.73) : les étiquettes non archivées de l'espace, que le filtre propose. */
@@ -193,6 +198,7 @@ export type ProprietesListeCards = {
  * où l'on est.
  */
 export function ListeCards({
+	colonnesCommunes = [],
 	cards,
 	etapes,
 	catalogueEtiquettes = [],
@@ -275,6 +281,17 @@ export function ListeCards({
 										onParametres={onParametres}
 										alignementDroite
 									/>
+									{colonnesCommunes.map((champ) => (
+										<th
+											key={champ.id}
+											scope="col"
+											data-testid="entete-commun"
+											data-champ={champ.key}
+											className="bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3 whitespace-nowrap"
+										>
+											{champ.label}
+										</th>
+									))}
 								</tr>
 							</thead>
 							<tbody>
@@ -286,6 +303,7 @@ export function ListeCards({
 										slugTrack={slugTrack}
 										slugChannel={slugChannel}
 										maintenant={maintenant}
+										colonnesCommunes={colonnesCommunes}
 									/>
 								))}
 							</tbody>
@@ -382,7 +400,9 @@ function Ligne({
 	slugTrack,
 	slugChannel,
 	maintenant,
+	colonnesCommunes,
 }: {
+	readonly colonnesCommunes: readonly ChampCommun[]
 	readonly card: CardListe
 	readonly etape: EtapeBoard | undefined
 	readonly slugTrack: string
@@ -455,6 +475,29 @@ function Ligne({
 					</code>
 				)}
 			</td>
+			{colonnesCommunes.map((champ) => {
+				// `CRM-112` T4.a (§5.91) : une ligne, en ellipse, la valeur entière en `title` ; vide sans valeur.
+				const cellule = celluleCommune(champ, card.valeursCommunes?.[champ.id])
+				const complet = cellule === null ? '' : cellule.devise === null ? cellule.texte : `${cellule.texte} ${cellule.devise}`
+				return (
+					<td
+						key={champ.id}
+						data-testid="cellule-commune"
+						data-champ={champ.key}
+						title={complet}
+						className={cellule?.technique === true ? `${CLASSES_CELLULE_TECHNIQUE} max-w-[32ch] truncate` : CLASSES_CELLULE}
+					>
+						{cellule === null ? null : cellule.technique ? (
+							<>
+								<code className="text-text-2">{cellule.texte}</code>
+								{cellule.devise === null ? null : <span className="ml-1 text-sm text-text-2">{cellule.devise}</span>}
+							</>
+						) : (
+							cellule.texte
+						)}
+					</td>
+				)
+			})}
 		</tr>
 	)
 }

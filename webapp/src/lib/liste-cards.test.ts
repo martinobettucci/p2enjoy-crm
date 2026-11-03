@@ -1,3 +1,4 @@
+// @verifies CRM-112 (docs/BACKLOG.md) tranche T4.a — la ligne porte ses valeurs communes (docs/DESIGN_SYSTEM.md §5.91)
 // @verifies CRM-071 (docs/BACKLOG.md) — tranche T2 : la vue choisie portée par l'adresse (docs/SPEC-vues-import-export.md §3)
 // @verifies CRM-069 (docs/BACKLOG.md) — tranche T2 : le filtre par étiquette, porté par l'adresse et appliqué au serveur ;
 //           les étiquettes de la ligne (docs/DESIGN_SYSTEM.md §5.73)
@@ -590,7 +591,8 @@ describe('la lecture d’une page (§12.3)', () => {
 		const ligne = card({ id: 'c1', title: 'Refonte', amount: 12000, owner_id: 'p-1' })
 		// Révisée par `CRM-069` T2 (décision 51) : la ligne porte ses étiquettes, vides sans plongement.
 		// `CRM-111` T7.5 : sans autre rattachement plongé, aucune pastille (§5.85).
-		expect(ligneDepuisRattachement(enRattachement(ligne))).toEqual({ ...ligne, etiquettes: [], autresRattachements: [] })
+		// RÉVISÉ PAR `CRM-112` T4.a (§5.91) : la ligne porte ses valeurs communes, vides sans plongement — décision 51.
+		expect(ligneDepuisRattachement(enRattachement(ligne))).toEqual({ ...ligne, etiquettes: [], autresRattachements: [], valeursCommunes: {} })
 	})
 
 	it('trie le titre, la création et le départage sur l’affaire, le montant et l’échéance sur le rattachement', () => {

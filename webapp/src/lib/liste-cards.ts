@@ -34,7 +34,7 @@ import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './a
 import { lireEtapes, resoudreEtape, type EtapeBoard } from './board'
 import { CODE_PAGE_INEXISTANTE, COLONNES_RATTACHEMENT_LISTE, COLONNES_RATTACHEMENT_LISTE_PAR_ETIQUETTE, LIGNES_PAR_PAGE } from './colonnes-liste'
 import type { LigneAffaire } from './rattachements'
-import type { Database } from './database.types'
+import type { Database, Json } from './database.types'
 import {
 	CLE_URL_SOMMEIL,
 	MODE_SOMMEIL_PAR_DEFAUT,
@@ -131,6 +131,8 @@ export type RattachementListe = Pick<
 		readonly etiquettes?: readonly { readonly etiquette: EtiquetteLue | null }[] | null
 		/** `CRM-111` T7.5 : les rattachements lisibles de l'affaire, pour la pastille « aussi rattachée à » (§5.85). */
 		readonly rattachements?: readonly RattachementPlonge[] | null
+		/** `CRM-112` T4.a : les valeurs communes de l'affaire, pour les colonnes de la liste (§5.91). */
+		readonly communs?: readonly { readonly field_id: string; readonly value: Json | null }[] | null
 	}
 }
 
@@ -150,6 +152,7 @@ export function ligneDepuisRattachement(ligne: RattachementListe): CardListe {
 		responsable: ligne.responsable ?? null,
 		etiquettes: etiquettesDeLAffaire(ligne.affaire.etiquettes),
 		autresRattachements: autresRattachements(ligne.affaire.rattachements, ligne.id),
+		valeursCommunes: Object.fromEntries((ligne.affaire.communs ?? []).map((v) => [v.field_id, v.value])),
 	}
 }
 
@@ -316,6 +319,8 @@ export type CardListe = Pick<
 	readonly etiquettes?: readonly Etiquette[]
 	/** `CRM-111` T7.5 (docs/DESIGN_SYSTEM.md §5.85) : ses autres rattachements lisibles. */
 	readonly autresRattachements?: readonly CheminRattachement[]
+	/** `CRM-112` T4.a (docs/DESIGN_SYSTEM.md §5.91) : les valeurs communes, par identifiant de champ. */
+	readonly valeursCommunes?: Readonly<Record<string, Json | null>>
 }
 
 /**

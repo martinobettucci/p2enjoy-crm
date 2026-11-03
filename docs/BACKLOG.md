@@ -17611,9 +17611,21 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-3a) depuis 2026-11-03 18:30 UTC — état avant : [ ]*
       **Découpage** (2026-11-03, après lecture de la vue liste : une requête PostgREST sur `card_placements`, l'affaire plongée,
       filtres au serveur avant la pagination et le compte) :
-      - [ ] **T4.a — les colonnes** : la case « Afficher dans la liste des affaires » de Réglages (reportée de T3.a), et une
+      - [~] **T4.a — les colonnes** : la case « Afficher dans la liste des affaires » de Réglages (reportée de T3.a), et une
             colonne par champ listé, ses valeurs plongées dans la même requête. Sans migration. `docs/DESIGN_SYSTEM.md`
             §5.91. Les types personne, contact et fichier ne s'affichent pas en colonne.
+            *Faite le 2026-11-03*, sans migration :
+            - unitaires **5 377** — dont les colonnes et la cellule par type, la case et sa pilule ; trois attentes révisées
+              (décision 51) : la ligne porte ses valeurs communes, la déclaration et la modification portent `is_listed` ;
+            - E2E `e2e/ui/liste-champs-communs.spec.ts` **6/6** (la case cochée relue en base, la colonne et sa valeur, la case
+              refusée au type personne, quatre paliers) ; captures observées — un défaut vu et corrigé : le montant se
+              lisait « 1 500,00 EUR » à côté de « 15 500 € » ;
+            - sous-ensemble de mon périmètre — liste, sommeil, vues, export, imports, Réglages, éditeur — **140/141** :
+              `administration-workflows` « comparer à la source » rouge dans la campagne, **vert seul** — un effet d'ordre,
+              à surveiller dans la campagne complète ;
+            - **reste le manuel** (§18.16, la case et la pilule, avec leur image) : `docs/manual.md` porte en ce moment le
+              texte non commité de `CRM-128` T4 (session 75), dont les images n'existent pas encore — le manuel ne se
+              construit pas, et le fichier ne se commite pas par morceaux sans emporter ce texte. Repris dès son commit.
       - [ ] **T4.b — les filtres au serveur** : un filtre par type (§8), dans la même requête paginée ; colonnes de
             recherche typées sur `card_common_field_values` (migration), mesures du coût sous la RLS ; l'état dans
             l'adresse.

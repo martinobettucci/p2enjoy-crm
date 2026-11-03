@@ -7782,8 +7782,9 @@ spécifié par `docs/SPEC-champs-communs.md` §8 ; ces règles ne disent que de 
   en-tête est le libellé du champ (une donnée, §10), non triable : le tri reste la liste close du §5.9.
 - **LA CELLULE TIENT UNE LIGNE** (§5.9), en ellipse, la valeur entière dans `title`. La valeur se lit comme dans la fiche
   (§5.7 bis) : un texte tel quel ; un choix par son libellé ; plusieurs choix séparés par une virgule ; une case par
-  « Oui » ou « Non » ; un nombre, un montant, une date en donnée technique alignée à droite — un montant suivi de sa devise
-  dans son propre élément (§5.11). **Une valeur absente laisse la cellule vide** (§5.9).
+  « Oui » ou « Non » ; un nombre, un montant, une date en donnée technique alignée à droite — **un montant dans le format
+  de la colonne « Montant » de la même liste** (*précisé en regardant la capture* : écrit d'abord « 1 500,00 EUR », il se
+  lisait autrement que « 15 500 € » deux colonnes plus loin). **Une valeur absente laisse la cellule vide** (§5.9).
 - **Aucun champ listé : aucune colonne**, et le tableau est celui d'avant. Les colonnes ne s'enregistrent sur aucun
   appareil : c'est une donnée de l'espace, posée par l'administrateur (`CLAUDE.md` §11).
 - **Le tableau défile dans son conteneur** (§12.6) ; la page ne défile jamais de côté (§7).

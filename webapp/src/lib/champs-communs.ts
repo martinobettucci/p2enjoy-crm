@@ -5,13 +5,16 @@
 //       transitions), §7 ; docs/DESIGN_SYSTEM.md §5.86
 // @spec CRM-112 tranche T3.c — docs/SPEC-champs-communs.md §3.3 (une valeur par affaire), §7 (précision T3.c : écrire par
 //       mise à jour puis insertion ; la partie commune et ses champs exigés) ; docs/DESIGN_SYSTEM.md §5.88
+// @spec CRM-112 tranche T4.a — docs/SPEC-champs-communs.md §8 (précision T4.a) ; docs/DESIGN_SYSTEM.md §5.91 : les colonnes de la
+//       vue liste et ce qu'une cellule dit
 // @spec CLAUDE.md §10 — ce module ne décide AUCUN droit : il écrit, et la base tranche ; ses refus sont classés ici
 //
 // Ce module ne rend rien : il lit, écrit et classe les refus. Les colonnes sont celles des éléments de l'éditeur de
 // champs (`ChampDeclarable`), réemployés par l'écran.
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
-import type { ChampDeclarable } from './administration-workflows'
+import { choixDuChamp, deviseDuChamp, type ChampDeclarable } from './administration-workflows'
+import { t } from '../i18n'
 import type { Json } from './database.types'
 import { classerRefusValeur, type ChampResolu, type ResultatEcriture } from './formulaire'
 import { estRenseigne } from './valeur-renseignee'
@@ -19,13 +22,16 @@ import type { Database } from './database.types'
 import type { ClientCrm } from './supabase'
 
 /** Colonnes réellement demandées. Exportées pour que les tests éprouvent la requête émise. */
-export const COLONNES_CHAMP_COMMUN = 'id, key, label, type, options, help_text, position, archived_at'
+export const COLONNES_CHAMP_COMMUN = 'id, key, label, type, options, help_text, position, archived_at, is_listed'
+
+/** Un champ commun : les colonnes d'un champ déclaré, et sa présence dans la vue liste (`CRM-112` T4.a). */
+export type ChampCommun = ChampDeclarable & { readonly is_listed: boolean }
 
 /** Les champs communs de l'espace, archivés compris, dans l'ordre de la partie commune (`position`). */
 export async function lireChampsCommunsEspace(
 	client: ClientCrm,
 	idWorkspace: string,
-): Promise<EtatAsync<readonly ChampDeclarable[]>> {
+): Promise<EtatAsync<readonly ChampCommun[]>> {
 	try {
 		const reponse = await client
 			.from('card_common_fields')
@@ -34,7 +40,7 @@ export async function lireChampsCommunsEspace(
 			.order('position')
 			.order('label')
 		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
-		return pret(reponse.data as readonly ChampDeclarable[])
+		return pret(reponse.data as readonly ChampCommun[])
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}
@@ -103,6 +109,7 @@ export type DeclarationChampCommun = {
 	readonly type: string
 	readonly aide: string | null
 	readonly options: Record<string, unknown>
+	readonly liste: boolean
 }
 
 /** Déclare un champ commun. La position est posée par la base, en fin de liste (`0152`). */
@@ -122,6 +129,7 @@ export function declarerChampCommun(
 				type: declaration.type,
 				help_text: declaration.aide,
 				options: declaration.options as Options,
+				is_listed: declaration.liste,
 			} as unknown as Database['public']['Tables']['card_common_fields']['Insert'])
 			.select('id'),
 	)
@@ -131,12 +139,22 @@ export function declarerChampCommun(
 export function modifierChampCommun(
 	client: ClientCrm,
 	idChamp: string,
-	modification: { readonly libelle: string; readonly aide: string | null; readonly options: Record<string, unknown> },
+	modification: {
+		readonly libelle: string
+		readonly aide: string | null
+		readonly options: Record<string, unknown>
+		readonly liste: boolean
+	},
 ): Promise<IssueChampCommun> {
 	return executer(() =>
 		client
 			.from('card_common_fields')
-			.update({ label: modification.libelle, help_text: modification.aide, options: modification.options as Options })
+			.update({
+				label: modification.libelle,
+				help_text: modification.aide,
+				options: modification.options as Options,
+				is_listed: modification.liste,
+			})
 			.eq('id', idChamp)
 			.select('id'),
 	)
@@ -244,4 +262,77 @@ export function composerPartieCommune(
 	const actifs = ordonnes.filter((champ) => champ.archived_at === null).map(resoudre)
 	const archives = ordonnes.filter((champ) => champ.archived_at !== null).map(resoudre).filter((resolu) => resolu.renseigne)
 	return { actifs, archives, clesExigeesRetenues: actifs.filter((r) => r.exigeParDeplacement).map((r) => r.champ.key) }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Les colonnes de la vue liste — `CRM-112` T4.a, docs/DESIGN_SYSTEM.md §5.91
+// ---------------------------------------------------------------------------------------------
+
+/** Les types dont la valeur est un identifiant : la liste ne les nomme pas sans une lecture de plus (§8, précision T4.a). */
+const TYPES_HORS_COLONNE: ReadonlySet<string> = new Set(['user', 'contact', 'file'])
+
+/** Les colonnes de la vue liste : les champs actifs, listés, d'un type affichable, dans l'ordre de la partie commune. */
+export function colonnesCommunes(champs: readonly ChampCommun[]): readonly ChampCommun[] {
+	return [...champs]
+		.filter((c) => c.archived_at === null && c.is_listed && !TYPES_HORS_COLONNE.has(c.type))
+		.sort((a, b) => a.position - b.position || a.label.localeCompare(b.label, 'fr'))
+}
+
+/** Ce qu'une cellule dit : un texte, s'il est une donnée technique (alignée à droite), et la devise d'un montant. */
+export type CelluleCommune = { readonly texte: string; readonly technique: boolean; readonly devise: string | null }
+
+/**
+ * La cellule d'un champ commun (§5.91) : la valeur lue comme dans la fiche. `null` : la cellule reste vide. Une valeur que le
+ * type ne sait pas lire se montre telle quelle plutôt que d'être tue : la base l'a validée, l'écran n'invente rien.
+ */
+export function celluleCommune(champ: ChampDeclarable, valeur: Json | null | undefined): CelluleCommune | null {
+	if (valeur === null || valeur === undefined || valeur === '') return null
+	const brut = typeof valeur === 'string' ? valeur : JSON.stringify(valeur)
+	const choix = () => new Map(choixDuChamp(champ).map((c) => [c.key, c.label]))
+	switch (champ.type) {
+		case 'select':
+			return { texte: typeof valeur === 'string' ? (choix().get(valeur) ?? valeur) : brut, technique: false, devise: null }
+		case 'multiselect': {
+			if (!Array.isArray(valeur) || valeur.length === 0) return Array.isArray(valeur) ? null : { texte: brut, technique: false, devise: null }
+			const libelles = choix()
+			return { texte: valeur.map((v) => (typeof v === 'string' ? (libelles.get(v) ?? v) : JSON.stringify(v))).join(', '), technique: false, devise: null }
+		}
+		case 'checkbox':
+			return typeof valeur === 'boolean'
+				? { texte: t(valeur ? 'liste.commun.oui' : 'liste.commun.non'), technique: false, devise: null }
+				: { texte: brut, technique: false, devise: null }
+		case 'number':
+			return typeof valeur === 'number'
+				? { texte: new Intl.NumberFormat('fr-FR').format(valeur), technique: true, devise: null }
+				: { texte: brut, technique: true, devise: null }
+		case 'money': {
+			// Le format de la colonne « Montant » de la même liste (§5.91, *précisé en regardant la capture*) : deux montants
+			// d'un même tableau ne se lisent pas de deux façons. Une devise que le navigateur ne connaît pas reste à part.
+			if (typeof valeur !== 'number') return { texte: brut, technique: true, devise: null }
+			const devise = deviseDuChamp(champ)
+			try {
+				return {
+					texte: new Intl.NumberFormat('fr-FR', { style: 'currency', currency: devise, maximumFractionDigits: 0 }).format(valeur),
+					technique: true,
+					devise: null,
+				}
+			} catch {
+				return { texte: new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(valeur), technique: true, devise: devise || null }
+			}
+		}
+		case 'date':
+		case 'datetime': {
+			const date = typeof valeur === 'string' ? new Date(valeur) : null
+			if (date === null || Number.isNaN(date.getTime())) return { texte: brut, technique: true, devise: null }
+			const options: Intl.DateTimeFormatOptions =
+				champ.type === 'date' ? { dateStyle: 'short', timeZone: 'UTC' } : { dateStyle: 'short', timeStyle: 'short' }
+			return { texte: new Intl.DateTimeFormat('fr-FR', options).format(date), technique: true, devise: null }
+		}
+		case 'email':
+		case 'url':
+		case 'phone':
+			return { texte: brut, technique: true, devise: null }
+		default:
+			return { texte: brut, technique: false, devise: null }
+	}
 }

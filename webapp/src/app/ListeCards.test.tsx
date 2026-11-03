@@ -1,3 +1,4 @@
+// @verifies CRM-112 (docs/BACKLOG.md) tranche T4.a — les colonnes des champs de l'affaire (docs/DESIGN_SYSTEM.md §5.91)
 // @verifies CRM-071 (docs/BACKLOG.md) — tranche T2 : la pagination conserve la vue choisie (révision, décision 51)
 // @verifies CRM-069 (docs/BACKLOG.md) — tranche T2 : la colonne « Étiquettes » et le filtre « Étiquette » de la vue liste
 //           (docs/DESIGN_SYSTEM.md §5.73)
@@ -837,5 +838,47 @@ describe('les étiquettes de la vue liste (CRM-069 T2)', () => {
 		expect(screen.getByTestId('filtre-etiquette')).toBeDefined()
 		await userEvent.setup().click(screen.getByTestId('effacer-filtres'))
 		expect(onParametres).toHaveBeenCalledWith(expect.objectContaining({ etiquette: null }))
+	})
+})
+
+// --- CRM-112 T4.a — les colonnes des champs de l'affaire (docs/DESIGN_SYSTEM.md §5.91) ---------------------------------
+
+describe('les colonnes des champs de l’affaire (CRM-112 T4.a)', () => {
+	it('une colonne par champ listé, après les natives ; la cellule tient la valeur, vide sans elle', () => {
+		const colonnes = [
+			{ id: 'cc-siret', key: 'siret', label: 'SIRET', type: 'text', options: {}, help_text: null, position: 1, archived_at: null, is_listed: true },
+			{ id: 'cc-budget', key: 'budget', label: 'Budget client', type: 'money', options: { currency: 'EUR' }, help_text: null, position: 2, archived_at: null, is_listed: true },
+		]
+		const cards = [
+			card({ id: 'c1', title: 'Refonte', valeursCommunes: { 'cc-siret': '12345678900011', 'cc-budget': 1500 } }),
+			card({ id: 'c3', title: 'Audit' }),
+		]
+		render(
+			<MemoryRouter>
+				<ListeCards
+					colonnesCommunes={colonnes}
+					cards={cards}
+					etapes={ETAPES}
+					parametres={parametres()}
+					total={2}
+					slugTrack="conseil-ia"
+					slugChannel="grands-comptes"
+					onParametres={vi.fn()}
+				/>
+			</MemoryRouter>,
+		)
+		const entetes = screen.getAllByRole('columnheader').map((th) => th.textContent?.trim())
+		expect(entetes.slice(-2)).toEqual(['SIRET', 'Budget client'])
+		const [premiere, seconde] = screen.getAllByTestId('ligne-card')
+		const cellules = premiere!.querySelectorAll('[data-testid="cellule-commune"]')
+		expect(cellules[0]?.textContent).toBe('12345678900011')
+		expect(cellules[1]?.textContent).toBe('1\u202f500\u00a0€')
+		expect(cellules[1]?.getAttribute('title')).toBe('1\u202f500\u00a0€')
+		expect([...seconde!.querySelectorAll('[data-testid="cellule-commune"]')].map((c) => c.textContent)).toEqual(['', ''])
+	})
+
+	it('aucun champ listé : aucune colonne de plus', () => {
+		rendre()
+		expect(screen.queryAllByTestId('entete-commun')).toHaveLength(0)
 	})
 })

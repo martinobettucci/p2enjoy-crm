@@ -1,3 +1,4 @@
+// @spec CRM-112 (docs/BACKLOG.md) tranche T4.a — les colonnes des champs de l'affaire de la vue liste (docs/DESIGN_SYSTEM.md §5.91)
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T6 : la vue liste monte « Importer un fichier » et son panneau, exclusif du
 //       formulaire de création, puis relit la liste sans chargement (docs/DESIGN_SYSTEM.md §5.78)
 // @spec CRM-071 (docs/BACKLOG.md) — tranches T2 et T4 : la vue liste monte les vues sauvegardées du channel et l'export CSV
@@ -45,6 +46,8 @@
 // (docs/SPEC-permissions-rls.md §7).
 
 import { lireEtiquettes, type Etiquette } from '../lib/etiquettes'
+import { colonnesCommunes, lireChampsCommunsEspace, type ChampCommun } from '../lib/champs-communs'
+import { useContexteEspace } from './ContexteEspace'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
@@ -578,6 +581,20 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 			actif = false
 		}
 	}, [])
+	// `CRM-112` T4.a (docs/DESIGN_SYSTEM.md §5.91) : les champs de l'affaire listés de l'espace, une colonne chacun. Une
+	// lecture en panne laisse la liste sans eux : elle ne dépend pas d'eux.
+	const { idWorkspace: espaceCourant } = useContexteEspace()
+	const [colonnesCommunesListe, setColonnesCommunesListe] = useState<readonly ChampCommun[]>([])
+	useEffect(() => {
+		if (clientCrm === null || espaceCourant === null) return
+		let actif = true
+		void lireChampsCommunsEspace(clientCrm, espaceCourant).then((lu) => {
+			if (actif && lu.statut === 'pret') setColonnesCommunesListe(colonnesCommunes(lu.donnees))
+		})
+		return () => {
+			actif = false
+		}
+	}, [espaceCourant])
 
 	// Le bornage se fait **après** une réponse qui porte un total, jamais avant : borner par un
 	// total qu'on n'a pas reviendrait à inventer une valeur par défaut (CLAUDE.md §18).
@@ -737,6 +754,7 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 				cards={cards}
 				etapes={etapes.etat.donnees}
 				catalogueEtiquettes={catalogueEtiquettes}
+				colonnesCommunes={colonnesCommunesListe}
 				parametres={parametres}
 				total={totalFiltre}
 				slugTrack={slugTrack}
@@ -800,6 +818,7 @@ function ListeRendue({
 	cards,
 	etapes,
 	catalogueEtiquettes,
+	colonnesCommunes: colonnesListees,
 	parametres,
 	total,
 	slugTrack,
@@ -817,6 +836,7 @@ function ListeRendue({
 	readonly cards: readonly CardListeRendue[]
 	readonly etapes: readonly EtapeBoard[]
 	readonly catalogueEtiquettes: readonly Etiquette[]
+	readonly colonnesCommunes: readonly ChampCommun[]
 	readonly parametres: ParametresListe
 	readonly total: number
 	readonly slugTrack: string
@@ -835,6 +855,7 @@ function ListeRendue({
 		<>
 			<LiveRegion libelle={t('live.liste.aria')} message={t('live.liste.loaded')} />
 			<ListeCards
+				colonnesCommunes={colonnesListees}
 				cards={cards}
 				etapes={etapes}
 				catalogueEtiquettes={catalogueEtiquettes}

@@ -7,6 +7,8 @@
 //       le déclarent de la même façon. Un champ commun a les colonnes d'un champ de workflow, moins le workflow : les
 //       éléments ne lisent que `ChampDeclarable`. La confirmation de retrait reçoit, après son refus, une suite
 //       facultative — le lien qui lève le refus.
+// @spec CRM-112 tranche T4.a — docs/DESIGN_SYSTEM.md §5.91 : la case « Afficher dans la liste des affaires » du formulaire,
+//       offerte aux seuls champs communs (`caseListe`), et la pilule « Dans la liste » de la ligne
 
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Archive, ArchiveRestore, ArrowDown, ArrowUp, Pencil, Plus, Trash2, TriangleAlert } from 'lucide-react'
@@ -314,7 +316,12 @@ export type SaisieChamp = {
 	readonly aide: string
 	readonly choix: readonly ChoixChamp[]
 	readonly devise: string
+	/** `CRM-112` T4.a : le champ commun est une colonne de la vue liste (§5.91). Sans objet pour un champ de workflow. */
+	readonly liste: boolean
 }
+
+/** `CRM-112` T4.a (§5.91) : les types dont la valeur est un identifiant ne s'affichent pas en colonne. */
+export const TYPES_HORS_COLONNE: readonly string[] = ['user', 'contact', 'file']
 
 /** La saisie d'édition repart du champ tel qu'il est, options comprises. */
 export function saisieDepuisChamp(champ: ChampDeclarable): SaisieChamp {
@@ -325,6 +332,7 @@ export function saisieDepuisChamp(champ: ChampDeclarable): SaisieChamp {
 		aide: champ.help_text ?? '',
 		choix: choixDuChamp(champ),
 		devise: deviseDuChamp(champ),
+		liste: (champ as { readonly is_listed?: boolean }).is_listed === true,
 	}
 }
 
@@ -343,18 +351,21 @@ export function FormulaireChamp({
 	enCours,
 	onValider,
 	onAnnuler,
+	caseListe = false,
 }: {
 	readonly champ: ChampDeclarable | null
 	readonly refus: string | null
 	readonly enCours: boolean
 	readonly onValider: (saisie: SaisieChamp) => void
 	readonly onAnnuler: () => void
+	/** `CRM-112` T4.a (§5.91) : la case « Afficher dans la liste des affaires », offerte aux seuls champs communs. */
+	readonly caseListe?: boolean
 }) {
 	const droit = useRefus()
 	const prefixe = useId()
 	const [saisie, setSaisie] = useState<SaisieChamp>(() =>
 		champ === null
-			? { cle: '', libelle: '', type: 'text', aide: '', choix: [], devise: 'EUR' }
+			? { cle: '', libelle: '', type: 'text', aide: '', choix: [], devise: 'EUR', liste: false }
 			: saisieDepuisChamp(champ),
 	)
 	const premierChamp = useRef<HTMLInputElement>(null)
@@ -484,6 +495,27 @@ export function FormulaireChamp({
 				{...(aideInvalide ? { erreur: t('admin.workflows.fields.form.help.invalid') } : {})}
 			/>
 
+			{caseListe ? (
+				<div className="flex flex-col gap-1">
+					<label className="inline-flex min-h-[var(--size-target)] items-center gap-2 text-sm">
+						<input
+							type="checkbox"
+							className="size-6 accent-[var(--color-brand)]"
+							checked={saisie.liste && !TYPES_HORS_COLONNE.includes(saisie.type)}
+							disabled={TYPES_HORS_COLONNE.includes(saisie.type)}
+							aria-describedby={`${prefixe}-liste-aide`}
+							onChange={(evenement) => setSaisie((precedente) => ({ ...precedente, liste: evenement.target.checked }))}
+						/>
+						{t('admin.commonFields.form.listed')}
+					</label>
+					<span id={`${prefixe}-liste-aide`} className="text-sm text-text-2">
+						{TYPES_HORS_COLONNE.includes(saisie.type)
+							? t('admin.commonFields.form.listed.unavailable')
+							: t('admin.commonFields.form.listed.help')}
+					</span>
+				</div>
+			) : null}
+
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
 				<Button {...droit} type="submit" variante="primaire" disabled={droit.disabled === true || !complet || enCours}>
@@ -527,6 +559,12 @@ export function LigneChamp({
 			<span className="text-sm text-text-2" data-testid="champ-type">
 				{libelleType(champ.type)}
 			</span>
+			{/* `CRM-112` T4.a (§5.91) : un champ commun listé le dit sur sa ligne. */}
+			{(champ as { readonly is_listed?: boolean }).is_listed === true && !TYPES_HORS_COLONNE.includes(champ.type) ? (
+				<span data-testid="champ-dans-la-liste" className="rounded-full bg-hover px-2 text-xs text-text-2">
+					{t('admin.commonFields.listed.pill')}
+				</span>
+			) : null}
 			{/* Un champ archivé est NOMMÉ, jamais seulement grisé : la couleur seule ne dit rien
 			    (docs/DESIGN_SYSTEM.md §1), et l'archivage est le seul retrait du produit. */}
 			{archive ? (

@@ -5,6 +5,8 @@
 //       l'éditeur de formulaire des workflows) ; docs/DESIGN_SYSTEM.md §5.86 (l'écran), §5.15 (la ligne, le formulaire,
 //       la confirmation), §5.29 bis (« Afficher les archivés » ; un refus nomme le geste qui le lève), §5.59 (capacité
 //       d'administrer), §5.8 (états)
+// @spec CRM-112 tranche T4.a — docs/DESIGN_SYSTEM.md §5.91 : la case « Afficher dans la liste des affaires », écrite avec le
+//       champ (`is_listed`)
 // @spec CLAUDE.md §10 — l'écran ne décide aucun droit : refusée par la base, la capacité d'administrer éteint ses
 //       commandes avec leur motif ; la RLS de `card_common_fields` reste seule juge de chaque écriture
 
@@ -35,7 +37,7 @@ import {
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { CHEMIN_ADMIN_WORKFLOWS } from './chemins'
 import { useContexteEspace } from './ContexteEspace'
-import { ConfirmationRetrait, FormulaireChamp, LigneChamp, type SaisieChamp } from './ElementsChampAdmin'
+import { ConfirmationRetrait, FormulaireChamp, LigneChamp, TYPES_HORS_COLONNE, type SaisieChamp } from './ElementsChampAdmin'
 
 const ID_MOTIF = 'motif-champs-affaire'
 
@@ -164,11 +166,13 @@ export function ReglagesChampsAffaire({ client = clientCrm }: ProprietesReglages
 		const libelle = saisie.libelle.trim()
 		const aide = saisie.aide.trim() === '' ? null : saisie.aide.trim()
 		const options = composerOptions(saisie.type, saisie.choix, saisie.devise)
+		// `CRM-112` T4.a (§5.91) : un type qui ne s'affiche pas en colonne n'est jamais écrit listé.
+		const liste = saisie.liste && !TYPES_HORS_COLONNE.includes(saisie.type)
 		void executer(
 			() =>
 				champ === null
-					? declarerChampCommun(client, idWorkspace, { cle: saisie.cle.trim(), libelle, type: saisie.type, aide, options })
-					: modifierChampCommun(client, champ.id, { libelle, aide, options }),
+					? declarerChampCommun(client, idWorkspace, { cle: saisie.cle.trim(), libelle, type: saisie.type, aide, options, liste })
+					: modifierChampCommun(client, champ.id, { libelle, aide, options, liste }),
 			t('admin.commonFields.saved', { nom: libelle }),
 			true,
 		)
@@ -200,7 +204,14 @@ export function ReglagesChampsAffaire({ client = clientCrm }: ProprietesReglages
 				<LiveRegion libelle={t('live.admin.aria')} message={annonce} />
 
 				{ouverture.type === 'creation' ? (
-					<FormulaireChamp champ={null} refus={texteRefus} enCours={enCours} onValider={(saisie) => enregistrer(null, saisie)} onAnnuler={fermer} />
+					<FormulaireChamp
+						champ={null}
+						caseListe
+						refus={texteRefus}
+						enCours={enCours}
+						onValider={(saisie) => enregistrer(null, saisie)}
+						onAnnuler={fermer}
+					/>
 				) : null}
 
 				{lecture.statut === 'chargement' ? (
@@ -256,6 +267,7 @@ export function ReglagesChampsAffaire({ client = clientCrm }: ProprietesReglages
 								{ouverture.type === 'edition' && ouverture.idChamp === champ.id ? (
 									<FormulaireChamp
 										champ={champ}
+										caseListe
 										refus={texteRefus}
 										enCours={enCours}
 										onValider={(saisie) => enregistrer(champ, saisie)}

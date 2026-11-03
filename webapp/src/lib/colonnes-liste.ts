@@ -45,7 +45,7 @@
 // `CRM-111` T7.5 (docs/DESIGN_SYSTEM.md §5.85) : l'affaire plonge ses rattachements lisibles, pour la pastille « aussi
 // rattachée à N » de la cellule « Affaire ».
 export const COLONNES_RATTACHEMENT_LISTE =
-	'id, amount, next_action, next_action_at, current_step_id, owner_id, snoozed_until, responsable:profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), affaire:cards!inner(id, title, description, currency, created_at, etiquettes:card_labels(etiquette:labels(id, name, color, archived_at)), rattachements:card_placements!card_placements_card_fk(id, channels!card_placements_channel_fk(name, tracks(name))))'
+	'id, amount, next_action, next_action_at, current_step_id, owner_id, snoozed_until, responsable:profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), affaire:cards!inner(id, title, description, currency, created_at, communs:card_common_field_values(field_id, value), etiquettes:card_labels(etiquette:labels(id, name, color, archived_at)), rattachements:card_placements!card_placements_card_fk(id, channels!card_placements_channel_fk(name, tracks(name))))'
 
 /**
  * `CRM-069` T2 (docs/DESIGN_SYSTEM.md §5.73) : la même lecture, filtrée par une étiquette. Le second plongement, `!inner`,
@@ -53,7 +53,12 @@ export const COLONNES_RATTACHEMENT_LISTE =
  * pagination et le compte (§12.5) ; le premier rapporte toutes les étiquettes de l'affaire.
  */
 export const COLONNES_RATTACHEMENT_LISTE_PAR_ETIQUETTE =
-	'id, amount, next_action, next_action_at, current_step_id, owner_id, snoozed_until, responsable:profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), affaire:cards!inner(id, title, description, currency, created_at, etiquettes:card_labels(etiquette:labels(id, name, color, archived_at)), filtre:card_labels!inner(label_id), rattachements:card_placements!card_placements_card_fk(id, channels!card_placements_channel_fk(name, tracks(name))))'
+	'id, amount, next_action, next_action_at, current_step_id, owner_id, snoozed_until, responsable:profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), affaire:cards!inner(id, title, description, currency, created_at, communs:card_common_field_values(field_id, value), etiquettes:card_labels(etiquette:labels(id, name, color, archived_at)), filtre:card_labels!inner(label_id), rattachements:card_placements!card_placements_card_fk(id, channels!card_placements_channel_fk(name, tracks(name))))'
+
+/*
+ * `CRM-112` T4.a (docs/DESIGN_SYSTEM.md §5.91) : les valeurs communes de l'affaire sont plongées dans les deux lectures
+ * (`communs`), sous la RLS de `card_common_field_values` — aucune lecture par ligne pour les colonnes de la liste.
+ */
 
 /**
  * Nombre de lignes d'une page.

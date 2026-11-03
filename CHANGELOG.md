@@ -13,6 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-112` T4.a — les champs de l'affaire en colonnes de la vue liste (sans migration)
+
+- Dans Réglages ▸ « Champs de l'affaire », la case « Afficher dans la liste des affaires » fait d'un champ une colonne de
+  la vue liste de chaque channel, après les colonnes habituelles ; la ligne du champ porte « Dans la liste ». Les champs
+  personne, contact et fichier n'en ont pas : la case leur est refusée, avec sa raison.
+- Une valeur se lit comme sur la fiche ; un montant a le format de la colonne « Montant ». Les valeurs viennent avec la
+  page, sans lecture par ligne.
+
 ### `CRM-112` T3.d — une valeur de l'affaire dans le fil (migration 163)
 
 - Remplir ou changer un champ de l'affaire écrit une ligne « Champ renseigné » au fil, le champ nommé suivi de « champ de
