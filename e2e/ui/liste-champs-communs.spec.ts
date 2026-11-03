@@ -4,17 +4,24 @@
 // @verifies docs/SPEC-champs-communs.md §8 (précision T4.a) ; docs/DESIGN_SYSTEM.md §5.91, §7
 // @verifies CLAUDE.md §15, §16 (captures observées)
 //
-// Le champ de sonde porte la clé `sonde-112-lc` ; sa valeur est posée sur une affaire du seed de « Grands comptes » par la clé
-// de service, qui la retire ensuite avec le champ — retrait CONSTATÉ.
+// Le champ de sonde porte la clé `sonde-112-lc` ; sa valeur est posée par la clé de service sur une affaire de sonde de
+// « Grands comptes », retirée ensuite avec le champ — retrait CONSTATÉ. *Révisé par la campagne de livraison* : posée d'abord
+// sur une affaire du seed, la valeur laissait au fil de celle-ci ses `field_changed` (migration 0163), que le retrait de la
+// valeur n'emporte pas ; l'affaire de sonde les emporte avec elle.
 
+import { randomUUID } from 'node:crypto'
 import { connecterAvecLeLabs, expect, test, type APIRequestContext } from './fixtures'
 import { PALIERS, capturer } from './captures'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
+import { posterAffaire } from '../affaire'
 
 const UNITE = 'CRM-112'
 const ADMIN = 'admin@p2enjoy.test'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
-const AFFAIRE = '5eed0000-0000-4000-8000-0000000000c2'
+const CHANNEL = '5eed0000-0000-4000-8000-000000000032'
+const WORKFLOW = '5eed0000-0000-4000-8000-000000000051'
+const PROSPECTION = '5eed0000-0000-4000-8000-000000000061'
+const TITRE = 'tst-crm112-lc'
 const LISTE = '/tracks/conseil-ia/grands-comptes/liste'
 const CLE = 'sonde-112-lc'
 const LIBELLE = 'Budget client (sonde)'
@@ -28,6 +35,11 @@ async function lireService<T>(requete: APIRequestContext, chemin: string): Promi
 }
 
 async function ranger(request: APIRequestContext): Promise<void> {
+	for (const { id } of await lireService<{ id: string }>(request, `cards?select=id&title=like.${TITRE}*`)) {
+		await request.delete(rest(`card_common_field_values?card_id=eq.${id}`), { headers: enTetesService() })
+		await request.delete(rest(`cards?id=eq.${id}`), { headers: enTetesService() })
+	}
+	expect(await lireService(request, `cards?select=id&title=like.${TITRE}*`)).toEqual([])
 	for (const { id } of await lireService<{ id: string }>(request, `card_common_fields?select=id&key=like.${CLE}*`)) {
 		await request.delete(rest(`card_common_field_values?field_id=eq.${id}`), { headers: enTetesService() })
 		await request.delete(rest(`card_common_fields?id=eq.${id}`), { headers: enTetesService() })
@@ -38,8 +50,14 @@ async function ranger(request: APIRequestContext): Promise<void> {
 test.beforeEach(async ({ request }) => ranger(request))
 test.afterEach(async ({ request }) => ranger(request))
 
-/** Un champ montant posé par l'administratrice, NON listé, et sa valeur sur une affaire du seed. */
-async function poser(request: APIRequestContext, liste: boolean): Promise<string> {
+/** Une affaire de sonde, un champ montant posé par l'administratrice, et sa valeur sur l'affaire. */
+async function poser(request: APIRequestContext, liste: boolean): Promise<{ readonly idChamp: string; readonly idCard: string }> {
+	const idCard = randomUUID()
+	const creation = await posterAffaire(request, rest('cards'), {
+		headers: { ...enTetesService(), Prefer: 'return=representation' },
+		data: { id: idCard, workspace_id: ESPACE, channel_id: CHANNEL, workflow_id: WORKFLOW, current_step_id: PROSPECTION, title: `${TITRE} ${idCard.slice(0, 8)}` },
+	})
+	expect(creation.status(), await creation.text()).toBe(201)
 	const reponse = await request.post(rest('card_common_fields'), {
 		headers: { ...enTetesAuthentifies(await jetonDe(ADMIN)), Prefer: 'return=representation' },
 		data: { workspace_id: ESPACE, key: CLE, label: LIBELLE, type: 'money', options: { currency: 'EUR' }, is_listed: liste },
@@ -48,17 +66,17 @@ async function poser(request: APIRequestContext, liste: boolean): Promise<string
 	const [champ] = (await reponse.json()) as { id: string }[]
 	const valeur = await request.post(rest('card_common_field_values'), {
 		headers: enTetesService(),
-		data: { card_id: AFFAIRE, field_id: champ?.id, workspace_id: ESPACE, value: 1500 },
+		data: { card_id: idCard, field_id: champ?.id, workspace_id: ESPACE, value: 1500 },
 	})
 	expect(valeur.status(), await valeur.text()).toBe(201)
-	return champ?.id ?? ''
+	return { idChamp: champ?.id ?? '', idCard }
 }
 
 test.describe('Les champs de l’affaire en colonnes (docs/DESIGN_SYSTEM.md §5.91)', () => {
 	test.use({ viewport: { width: 1440, height: 900 } })
 
 	test('cocher « Afficher dans la liste » dans Réglages fait paraître la colonne et sa valeur', async ({ page, request }) => {
-		const id = await poser(request, false)
+		const { idChamp: id, idCard } = await poser(request, false)
 		await connecterAvecLeLabs(page, ADMIN)
 		await page.goto(LISTE)
 		await expect(page.getByTestId('tableau-liste')).toBeVisible()
@@ -77,7 +95,7 @@ test.describe('Les champs de l’affaire en colonnes (docs/DESIGN_SYSTEM.md §5.
 		await page.goto(LISTE)
 		const entete = page.locator(`[data-testid="entete-commun"][data-champ="${CLE}"]`)
 		await expect(entete).toHaveText(LIBELLE)
-		const cellule = page.locator(`[data-testid="ligne-card"][data-card="${AFFAIRE}"] [data-testid="cellule-commune"][data-champ="${CLE}"]`)
+		const cellule = page.locator(`[data-testid="ligne-card"][data-card="${idCard}"] [data-testid="cellule-commune"][data-champ="${CLE}"]`)
 		await expect(cellule).toHaveAttribute('title', '1 500 €')
 		await cellule.scrollIntoViewIfNeeded()
 		await capturer(page, 'liste-communs-colonne-xl-1440', UNITE)

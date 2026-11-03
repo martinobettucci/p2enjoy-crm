@@ -7,6 +7,8 @@
 --           `0109` » ; docs/JOURNAL.md décisions 639, 642, 657, 670, 705
 -- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
 --           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
+-- @verifies CRM-112 (docs/BACKLOG.md) — tranche T3.d : un `field_changed` de la partie commune n'a pas de rattachement
+--           (docs/SPEC-champs-communs.md §7, précision T3.d ; migration `0163`) ; sa forme est prouvée par `0152`
 --
 -- CE QUE CETTE SUITE PROUVE, sur le seed migré :
 --   1. la FORME : les trois colonnes `placement_id`, leurs contraintes, les déclencheurs, les deux auxiliaires ;
@@ -95,6 +97,11 @@ select is(
 	    -- RÉVISÉ PAR `CRM-111` T8 (décision 51) : une affaire à plusieurs rattachements (docs/SPEC-seed.md §36) écrit
 	    -- chacun de ses événements sur SON rattachement, qui n'est pas forcément le plus ancien. La règle reste : un
 	    -- rattachement de son affaire, et jamais aucun.
+	    -- RÉVISÉ PAR `CRM-112` T3.d (décision 51, migration 0163) : un `field_changed` de la PARTIE COMMUNE est un
+	    -- événement de l'affaire, sans rattachement — la contrainte `card_events_placement_by_type` porte la même exception,
+	    -- et `0152` prouve qu'il n'en a aucun. *Trouvé par la campagne de livraison* : la suite était verte au commit de T3.d
+	    -- parce que la base de développement ne portait encore aucune valeur commune. Tout autre `field_changed` reste jugé.
+	    and not (e.type = 'field_changed' and e.payload ->> 'scope' is not distinct from 'common')
 	    and not exists (select 1 from public.card_placements p where p.id = e.placement_id and p.card_id = e.card_id)),
 	0, 'décision 670 : tout événement de rattachement de l''historique désigne un rattachement de son affaire');
 select is(
