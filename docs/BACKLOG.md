@@ -17369,9 +17369,10 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         `modele-par-rattachement` et `reglages-modeles-emails` 11/11 ; captures `modele-rattachement-xl-1440` et `-sm-390`
         observées (la seconde reprise : le tiroir restait ouvert au redimensionnement) ; manuel §14.2 et image
         `rattachement`, `verify-manual` 167. Production : la `0158` avec la webapp de `main`.
-- [ ] **T7 — webapp** (§8) : fiche à partie commune et blocs, pastille « aussi rattachée à », rattacher, archiver,
+- [@] **T7 — webapp** (§8) : fiche à partie commune et blocs, pastille « aussi rattachée à », rattacher, archiver,
       retirer avec confirmation ; `docs/DESIGN_SYSTEM.md` avant le code ; unitaires ; captures aux quatre paliers ;
       `docs/manual.md`, chapitre « Rattacher une affaire à plusieurs channels ».
+      *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable, session 4891a451) depuis 2026-11-03 10:40 UTC — état avant : [ ]*
 - [ ] **T8 — seed et E2E** (§12, §13) : les cinq situations du §12 par les vraies fonctions ; campagne E2E complète.
 - [ ] **T9 — connecteur MCP** (§11) : `crm_card_attach`, `crm_card_placement_update`, `crm_card_placement_archive`,
       outils existants sur le rattachement ; refusés par la matrice puis par le CRM ; `docs/SPEC-mcp.md` §9.2.
