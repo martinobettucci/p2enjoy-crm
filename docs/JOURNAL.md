@@ -38573,3 +38573,16 @@ spécifié, avec deux index uniques partiels, un `CHECK`, et la reprise du conne
 
 **Décision : la table distincte**, `workflow_transition_required_common_fields`. La spécification §5 est révisée. Le
 découpage de T2 ne change pas, et la migration de T2.a prend le premier numéro libre après 0154.
+
+### décision 820 — `CRM-111` T6.1 : les 8 DERNIERS caractères de l'identifiant nomment le dossier, non les 8 premiers
+
+*2026-11-03, session interactive (4891a451), réponse du responsable à `AskUserQuestion`.* **Problème, trouvé par la
+preuve** (pgTAP `0143`) : la décision 818 nommait le dossier d'une affaire par son titre suivi des **8 premiers**
+caractères de son identifiant. Les identifiants du seed commencent tous par `5eed0000` : deux affaires homonymes du seed
+partageaient donc un dossier IMAP — la règle ne tenait pas sa promesse en développement, la production (identifiants
+aléatoires) n'étant pas touchée. **Arbitrage**, conforme à la recommandation : les **8 derniers** caractères —
+`CRM/Affaires/Refonte intranet (000000c4)` —, aléatoires en production comme le début, distincts pour chaque affaire du
+seed ; même forme, même stabilité. Écarté : l'identifiant complet (36 caractères de plus dans le client mail).
+**Persisté** : `docs/SPEC-rattachements.md` §7, backlog, ce journal ; la `0154` non poussée est corrigée avant sa
+première poussée.
+

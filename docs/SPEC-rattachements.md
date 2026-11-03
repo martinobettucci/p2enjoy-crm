@@ -405,8 +405,8 @@ déclencheur n'est jamais suspendu.
   `CRM/Affaires/<affaire>` pour **toutes** les affaires, quel que soit leur nombre de rattachements. Conséquences : les
   dossiers existants sont **déplacés** sur le serveur IMAP par `mail-sync`, qui est le seul à écrire dans la boîte ;
   `inbox_arborescence` ne range plus les affaires sous leurs channels. **Le nom du dossier** (décision 818,
-  arbitrage 1) : le titre assaini de l'affaire suivi des **8 premiers caractères de son identifiant**, entre parenthèses
-  — `CRM/Affaires/Refonte intranet (5eed0000)` —, toujours, et non un suffixe en cas de doublon : deux affaires de même
+  arbitrage 1, **révisée par la décision 820**) : le titre assaini de l'affaire suivi des **8 derniers caractères de son
+  identifiant**, entre parenthèses — `CRM/Affaires/Refonte intranet (000000c4)` —, toujours, et non un suffixe en cas de doublon : deux affaires de même
   titre ont deux dossiers, et le nom ne change que si le titre change (renommage que `mail-sync` sait déjà faire).
 - **Une cadence de relance s'inscrit à un rattachement** (décision 657, arbitrage 2). `card_sequence_enrollments` reçoit
   le rattachement ; son responsable est l'expéditeur par défaut **à l'écran** : le bloc d'armement présélectionne l'identité d'envoi de la
