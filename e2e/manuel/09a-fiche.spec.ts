@@ -3,6 +3,9 @@
 // @spec docs/SPEC-cards.md (l'en-tête, le formulaire, la corbeille), docs/SPEC-workflow-engine.md §7 (la garde du
 //       déplacement), docs/SPEC-rattachements.md (les contacts de l'affaire), docs/DESIGN_SYSTEM.md §5.63 (les activités),
 //       §5.70 (la checklist)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T7.1 : l'image « pas-rattachee-ici » montre l'adresse d'un channel auquel
+//       l'affaire n'est pas rattachée (docs/manual.md §9.6 ; docs/SPEC-rattachements.md §8.1 ; docs/DESIGN_SYSTEM.md
+//       §5.81), sur une affaire jetable rattachée à deux channels par la vraie API, puis détruite
 //
 // Ce qui se LIT vient du seed : « Migration ERP Sogexia » (contacts, activités, santé), « Contrat cadre 2025 »
 // (archivée), « Atelier prompt — Lycée Vauban » (checklist). Ce qui s'ÉCRIT porte sur une affaire posée à « Signature »
@@ -12,8 +15,9 @@
 
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
+import { enTetesAuthentifies, jetonDe } from '../api/jetons'
 import { illustrer } from './illustrer'
-import { ADMIN, AFFAIRE_SOGEXIA, BIZDEV, WORKSPACE_SEED, connecterAvecLeLabs, detruireAffaire, immobile, lireService, poserAffaire, retablirLeSeed, retenir, service } from './outils'
+import { ADMIN, AFFAIRE_SOGEXIA, BIZDEV, WORKSPACE_SEED, connecterAvecLeLabs, detruireAffaire, immobile, lireService, poserAffaire, rest, retablirLeSeed, retenir, service } from './outils'
 
 const CHAPITRE = 'l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre'
 const S = {
@@ -100,6 +104,25 @@ test('une affaire du seed : la fiche, la santé, l’adresse', async ({ page, co
 
 	await page.goto(`/contacts/${LEO}`)
 	await illustrer(page, { chapitre: CHAPITRE, section: S.contacts, nom: 'modifier-le-role', cibles: [page.getByTestId('modifier-role-affaire').first()] })
+})
+
+test('une affaire rattachée ailleurs : l’adresse d’un channel où elle n’est pas', async ({ page, request }) => {
+	const affaire = randomUUID()
+	await poserAffaire(request, { id: affaire, titre: 'Portail partagé des adhérents', channel: CHANNEL_GRANDS_COMPTES, workflow: WORKFLOW_GLOBAL, etape: ETAPE_SIGNATURE })
+	try {
+		const rattache = await request.post(rest('rpc/attach_card'), {
+			headers: enTetesAuthentifies(await jetonDe(ADMIN)),
+			data: { p_card: affaire, p_channel: '5eed0000-0000-4000-8000-000000000034' },
+		})
+		expect(rattache.status(), await rattache.text()).toBe(200)
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto(`/tracks/studio-web/maintenance/cards/${affaire}`)
+		const etat = page.getByTestId('etat-vide')
+		await expect(etat.getByRole('link')).toHaveCount(2)
+		await illustrer(page, { chapitre: CHAPITRE, section: S.fiche, nom: 'pas-rattachee-ici', cibles: [etat] })
+	} finally {
+		await detruireAffaire(request, affaire)
+	}
 })
 
 test('une affaire neuve : le refus du déplacement, la reprise, l’en-tête, les blocs, la corbeille', async ({ page, request }) => {

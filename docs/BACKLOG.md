@@ -17374,9 +17374,17 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       `docs/manual.md`, chapitre « Rattacher une affaire à plusieurs channels ».
       *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable, session 4891a451) depuis 2026-11-03 10:40 UTC — état avant : [ ]*
       **Découpage, arrêté le 2026-11-03 (journal, décision 823 ; `docs/SPEC-rattachements.md` §8.1)** :
-      - [ ] **T7.1 — la fiche au rattachement de l'adresse** : `lireCard` reçoit le channel de l'adresse et ouvre la fiche
+      - [x] **T7.1 — la fiche au rattachement de l'adresse** : `lireCard` reçoit le channel de l'adresse et ouvre la fiche
         sur son rattachement ; une adresse d'un channel sans rattachement lisible rend un état qui propose les
         rattachements lisibles (INC-065). Livrables : `docs/DESIGN_SYSTEM.md` avant le code, unitaires, E2E, captures.
+        *Livrée en développement le 2026-11-03* : `docs/DESIGN_SYSTEM.md` §5.81 avant le code ; la fiche porte le seul
+        rattachement de l'adresse (tous ses blocs le visent par `idRattachement`) et lit ses valeurs par lui
+        (`placement_id`) ; état « Cette affaire n'est pas rattachée à ce channel ». Unitaires 5259 (dont `formulaire` et
+        `RouteCard`) ; E2E `fiche-rattachement` 2/2 (dont la lectrice) ; les 47 specs qui ouvrent une fiche, 427 passés,
+        2 instables connus (`premier-lancement:182`, `commentaires-gestes:140`, rejoués seuls hors de la fiche) ; les
+        maquettes de fiche des specs `formulaire`, `timeline`, `commentaires`, `manuel` portent le chemin du rattachement,
+        et le scénario de la décision 613 attend l'état dédié ; captures `fiche-ailleurs` (1440, 390, lectrice) observées ;
+        manuel §9.6 et image `pas-rattachee-ici`, `verify-manual` 167. Production : la webapp de `main`, aucune migration.
       - [ ] **T7.2 — le bloc « Rattachements »** : une ligne par rattachement lisible, le courant marqué, les autres en
         lien vers leur adresse ; archiver et désarchiver. Unitaires, E2E (dont la lectrice qui ne voit qu'un rattachement),
         captures aux quatre paliers.

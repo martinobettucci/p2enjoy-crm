@@ -82,6 +82,9 @@ const CARD_SERVIE = [
 				archived_at: null,
 				snoozed_until: null,
 				profiles: null,
+				// `CRM-111` T7.1 : la fiche s'ouvre sur le rattachement du channel de l'adresse, reconnu par ses slugs.
+				channel_id: CHANNEL.id,
+				channels: { slug: CHANNEL.slug, name: 'Inter-entreprises', tracks: { slug: TRACK.slug, name: TRACK.nom } },
 			},
 		],
 	},

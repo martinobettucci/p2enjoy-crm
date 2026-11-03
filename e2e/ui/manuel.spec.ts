@@ -265,6 +265,9 @@ test.describe('INC-077 — ce que le fil montre d’un changement de dossier', (
 							archived_at: null,
 							snoozed_until: null,
 							profiles: null,
+							// `CRM-111` T7.1 : la fiche s'ouvre sur le rattachement du channel de l'adresse, reconnu par ses slugs.
+							channel_id: '5eed0000-0000-4000-8000-000000000032',
+							channels: { slug: CHANNEL, name: 'Grands comptes', tracks: { slug: TRACK, name: 'Conseil & IA' } },
 						},
 					],
 				},

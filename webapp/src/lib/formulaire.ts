@@ -11,6 +11,9 @@
 // @spec docs/SPEC-webapp.md §6.3 (ce que la coquille lit), §6.4 (contrat asynchrone)
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T2.3.6 : une valeur s'écrit sur le RATTACHEMENT, clé `(placement_id, field_id)`
 //       (docs/SPEC-rattachements.md §3.3) ; la lecture reste par affaire jusqu'aux écrans de T5
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T7.1 : la fiche s'ouvre sur le rattachement du channel de l'adresse, ses
+//       valeurs se lisent par ce rattachement, et une adresse sans rattachement lisible nomme les rattachements lisibles
+//       (docs/SPEC-rattachements.md §8.1, décision 823 ; docs/DESIGN_SYSTEM.md §5.81)
 //
 // Ce module ne rend rien : il **compose**. La séparation n'est pas un goût d'architecture — elle
 // est ce qui rend la règle du §4.1 vérifiable sans navigateur, et ce qui permet au tableau de cas
@@ -88,7 +91,7 @@ export const COLONNES_VALEUR = 'field_id, value'
 // se lisent sur `card_placements`, plongé ; `cardDepuisRattachements` les rend à la forme d'avant, celles du plus
 // ancien (docs/SPEC-rattachements.md §5). Le responsable se nomme par la contrainte du rattachement.
 export const COLONNES_CARD_FORMULAIRE =
-	'id, title, workspace_id, email_local_part, currency, workspaces(inbound_domain), etiquettes:card_labels(etiquette:labels(id, name, color, archived_at)), card_placements!card_placements_card_fk(id, created_at, workflow_id, current_step_id, amount, next_action, next_action_at, archived_at, snoozed_until, profiles!card_placements_owner_id_fkey(id, full_name, avatar_url))'
+	'id, title, workspace_id, email_local_part, currency, workspaces(inbound_domain), etiquettes:card_labels(etiquette:labels(id, name, color, archived_at)), card_placements!card_placements_card_fk(id, created_at, channel_id, workflow_id, current_step_id, amount, next_action, next_action_at, archived_at, snoozed_until, profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), channels!card_placements_channel_fk(slug, name, tracks(slug, name)))'
 
 /** L'étape courante, telle que la mention « requis à l'étape <étape> » a besoin de la nommer (décision 688). */
 export type EtapeCourante = {
@@ -144,7 +147,59 @@ type RattachementFormulaire = Pick<
 	| 'next_action_at'
 	| 'archived_at'
 	| 'snoozed_until'
-> & { readonly profiles: ProfilAffiche | null }
+	| 'channel_id'
+> & {
+	readonly profiles: ProfilAffiche | null
+	/** `CRM-111` T7.1 : le chemin du rattachement, pour le reconnaître à l'adresse et le nommer. */
+	readonly channels: {
+		readonly slug: string
+		readonly name: string
+		readonly tracks: { readonly slug: string; readonly name: string } | null
+	} | null
+}
+
+/** Le channel désigné par l'adresse de la fiche (`CHEMIN_CARD`), par ses deux slugs. */
+export type AdresseFiche = { readonly slugTrack: string; readonly slugChannel: string }
+
+/** Un rattachement lisible, situé et nommé — ce qu'un lien vers sa fiche exige (`docs/DESIGN_SYSTEM.md` §5.81). */
+export type RattachementSitue = {
+	readonly id: string
+	readonly slugTrack: string
+	readonly slugChannel: string
+	readonly track: string
+	readonly channel: string
+}
+
+/** Le rattachement de l'adresse : celui dont le channel ET son track portent les deux slugs. */
+function rattachementDeLAdresse(
+	liste: readonly RattachementFormulaire[],
+	adresse: AdresseFiche,
+): RattachementFormulaire | null {
+	return (
+		liste.find(
+			(rattachement) =>
+				rattachement.channels?.slug === adresse.slugChannel &&
+				rattachement.channels.tracks?.slug === adresse.slugTrack,
+		) ?? null
+	)
+}
+
+/**
+ * Les rattachements lisibles d'une affaire, situés, dans l'ordre des tracks puis des channels — l'ordre de la recherche
+ * (décision 814). Un rattachement dont le channel ou le track n'est pas rendu n'a pas d'adresse, et n'est pas proposé.
+ */
+export function rattachementsSitues(lue: Pick<CardFormulaireLue, 'card_placements'>): readonly RattachementSitue[] {
+	const situes: RattachementSitue[] = []
+	for (const rattachement of lue.card_placements) {
+		const channel = rattachement.channels
+		const track = channel?.tracks ?? null
+		if (channel === null || track === null) continue
+		situes.push({ id: rattachement.id, slugTrack: track.slug, slugChannel: channel.slug, track: track.name, channel: channel.name })
+	}
+	return situes.sort(
+		(a, b) => a.track.localeCompare(b.track, 'fr') || a.channel.localeCompare(b.channel, 'fr') || a.id.localeCompare(b.id),
+	)
+}
 
 /** L'affaire telle que `COLONNES_CARD_FORMULAIRE` la rend, avant sa mise à la forme de l'écran. */
 export type CardFormulaireLue = Pick<
@@ -161,8 +216,10 @@ export type CardFormulaireLue = Pick<
  * sans rattachement lisible rend `null`, comme une affaire illisible : la lecture de `cards` passe par celle de ses
  * rattachements (docs/SPEC-rattachements.md §4), et l'écran n'aurait ni workflow ni étape à montrer.
  */
-export function cardDepuisRattachements(lue: CardFormulaireLue): CardOuverte | null {
-	const rattachement = premierRattachement(lue.card_placements)
+export function cardDepuisRattachements(lue: CardFormulaireLue, adresse: AdresseFiche | null = null): CardOuverte | null {
+	// `CRM-111` T7.1 (§8.1) : le rattachement de l'adresse ; sans adresse, le plus ancien, la forme d'avant.
+	const rattachement =
+		adresse === null ? premierRattachement(lue.card_placements) : rattachementDeLAdresse(lue.card_placements, adresse)
 	if (rattachement === null) return null
 	return {
 		id: lue.id,
@@ -180,7 +237,9 @@ export function cardDepuisRattachements(lue: CardFormulaireLue): CardOuverte | n
 		archived_at: rattachement.archived_at,
 		snoozed_until: rattachement.snoozed_until,
 		profiles: rattachement.profiles,
-		card_placements: lue.card_placements,
+		// LE SEUL RATTACHEMENT DE LA FICHE : tous les blocs qui agissent sur un rattachement le lisent par `idRattachement`,
+		// et c'est celui de l'adresse qu'ils doivent viser, jamais le plus ancien (décision 823).
+		card_placements: [rattachement],
 	}
 }
 
@@ -346,6 +405,11 @@ function lireVisibilite(brute: string): Visibilite {
 export type ContenuCard = {
 	readonly card: CardOuverte | null
 	readonly modele: ModeleFormulaire | null
+	/**
+	 * `CRM-111` T7.1 : quand l'affaire se lit mais n'est pas rattachée au channel de l'adresse, ses rattachements lisibles
+	 * — l'état du §5.81 les propose. Vide dans tous les autres cas.
+	 */
+	readonly ailleurs?: readonly RattachementSitue[]
 }
 
 /**
@@ -359,7 +423,15 @@ export type ContenuCard = {
 export async function lireCard(
 	client: ClientCrm,
 	idCard: string,
+	adresse: AdresseFiche | null = null,
 ): Promise<EtatAsync<CardOuverte | null>> {
+	const lue = await lireAffaireLue(client, idCard)
+	if (lue.statut !== 'pret') return lue
+	return pret(lue.donnees === null ? null : cardDepuisRattachements(lue.donnees, adresse))
+}
+
+/** L'affaire telle que la base la rend, avant le choix de son rattachement ; `null` si elle n'est pas lisible. */
+async function lireAffaireLue(client: ClientCrm, idCard: string): Promise<EtatAsync<CardFormulaireLue | null>> {
 	try {
 		const reponse = await client
 			.from('cards')
@@ -370,8 +442,7 @@ export async function lireCard(
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}
-		const lue = reponse.data[0]
-		return pret(lue === undefined ? null : cardDepuisRattachements(lue))
+		return pret(reponse.data[0] ?? null)
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}
@@ -452,10 +523,15 @@ export async function lireRegles(
 /** Les valeurs saisies sur la card, tous champs confondus — la section repliée en a besoin. */
 export async function lireValeurs(
 	client: ClientCrm,
-	idCard: string,
+	idRattachementFiche: string,
 ): Promise<EtatAsync<readonly ValeurChamp[]>> {
 	try {
-		const reponse = await client.from('card_field_values').select(COLONNES_VALEUR).eq('card_id', idCard)
+		// `CRM-111` T7.1 : les valeurs du RATTACHEMENT de la fiche (§3.3) ; par affaire, deux rattachements d'un même
+		// workflow rendraient deux valeurs pour un champ.
+		const reponse = await client
+			.from('card_field_values')
+			.select(COLONNES_VALEUR)
+			.eq('placement_id', idRattachementFiche)
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}
@@ -484,6 +560,8 @@ export function useContenuCard(
 	 * pour le workflow, et un filtre serveur de plus ne rapporterait rien de neuf.
 	 */
 	clesExigees: readonly string[] = [],
+	/** `CRM-111` T7.1 : le channel de l'adresse ; `null`, le plus ancien rattachement (la forme d'avant). */
+	adresse: AdresseFiche | null = null,
 ): {
 	readonly etat: EtatAsync<ContenuCard>
 	readonly recharger: () => void
@@ -499,22 +577,24 @@ export function useContenuCard(
 		const rang = ++courant.current
 		setEtat(enChargement)
 		void (async () => {
-			const resultatCard = await lireCard(client, idCard)
+			const resultatLue = await lireAffaireLue(client, idCard)
 			if (rang !== courant.current) return
-			if (resultatCard.statut !== 'pret') {
-				setEtat(resultatCard)
+			if (resultatLue.statut !== 'pret') {
+				setEtat(resultatLue)
 				return
 			}
-			const card = resultatCard.donnees
+			const lue = resultatLue.donnees
+			const card = lue === null ? null : cardDepuisRattachements(lue, adresse)
 			if (card === null) {
-				setEtat(pret({ card: null, modele: null }))
+				// Lisible mais pas à cette adresse : ses rattachements lisibles sont proposés (§5.81) ; illisible, rien.
+				setEtat(pret({ card: null, modele: null, ailleurs: lue === null ? [] : rattachementsSitues(lue) }))
 				return
 			}
 			const [resultatEtape, resultatChamps, resultatRegles, resultatValeurs] = await Promise.all([
 				lireEtape(client, card.current_step_id),
 				lireChamps(client, card.workflow_id),
 				lireRegles(client, card.current_step_id),
-				lireValeurs(client, card.id),
+				lireValeurs(client, card.card_placements[0]!.id),
 			])
 			if (rang !== courant.current) return
 			for (const resultat of [resultatEtape, resultatChamps, resultatRegles, resultatValeurs]) {
@@ -547,7 +627,7 @@ export function useContenuCard(
 		// `clesExigees` est reconstruite à chaque rendu par la lecture de l'adresse : la dépendance
 		// porte donc sur sa forme TEXTUELLE, faute de quoi l'effet se rejouerait sans fin.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [client, idCard, tentative, clesExigees.join(',')])
+	}, [client, idCard, tentative, clesExigees.join(','), adresse?.slugTrack, adresse?.slugChannel])
 
 	const recharger = useCallback(() => {
 		setTentative((precedente) => precedente + 1)

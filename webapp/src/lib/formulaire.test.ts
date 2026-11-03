@@ -6,6 +6,9 @@
 //           (docs/SPEC-form-composer.md §4.4, §4 quinquies ; docs/JOURNAL.md décision 690)
 // @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — la fiche lit les colonnes du rattachement le plus ancien
 //           (docs/SPEC-rattachements.md §4 et §5)
+// @verifies CRM-111 T7.1 (docs/BACKLOG.md) — la fiche s'ouvre sur le rattachement du channel de l'adresse, porte ce seul
+//           rattachement, et nomme les rattachements lisibles dans l'ordre des tracks (docs/SPEC-rattachements.md §8.1,
+//           décision 823 ; docs/DESIGN_SYSTEM.md §5.81)
 //
 // Le jeu d'essai reprend **le seed réellement appliqué**, relu en base le 2026-08-05 : sept
 // champs dont un archivé, l'étape `Prospection` et ses cinq règles pour six champs actifs. Ce
@@ -16,6 +19,7 @@ import { describe, expect, it } from 'vitest'
 import {
 	appliquerEcriture,
 	cardDepuisRattachements,
+	rattachementsSitues,
 	CAS_RENSEIGNE,
 	classerRefusValeur,
 	composerFormulaire,
@@ -545,9 +549,16 @@ describe('le nom de l’étape courante (§4.4, §4 quinquies)', () => {
 })
 
 describe('la fiche lit le rattachement (CRM-111 T2.4.1)', () => {
-	const rattachement = (id: string, created_at: string, etape: string) => ({
+	const rattachement = (
+		id: string,
+		created_at: string,
+		etape: string,
+		chemin: readonly [string, string, string, string] = ['studio-web', 'Studio web', 'refonte', 'Refonte de site'],
+	) => ({
 		id,
 		created_at,
+		channel_id: `ch-${chemin[2]}`,
+		channels: { slug: chemin[2], name: chemin[3], tracks: { slug: chemin[0], name: chemin[1] } },
 		workflow_id: 'wf-1',
 		current_step_id: etape,
 		amount: 1200,
@@ -583,7 +594,43 @@ describe('la fiche lit le rattachement (CRM-111 T2.4.1)', () => {
 			profiles: { full_name: 'Alice Martin' },
 			workspaces: { inbound_domain: 'crm.test' },
 		})
-		expect(card?.card_placements).toHaveLength(2)
+		// `CRM-111` T7.1 : la fiche ne porte que SON rattachement — tous ses blocs le visent par `idRattachement`.
+		expect(card?.card_placements.map((r) => r.id)).toEqual(['r-ancien'])
+	})
+
+	const conseil = ['conseil-ia', 'Conseil & IA', 'grands-comptes', 'Grands comptes'] as const
+
+	it('à une adresse, s’ouvre sur le rattachement de son channel, même s’il n’est pas le plus ancien (T7.1)', () => {
+		const card = cardDepuisRattachements(
+			lue([
+				rattachement('r-ancien', '2026-01-01T00:00:00+00:00', 'etape-a'),
+				rattachement('r-conseil', '2026-05-01T00:00:00+00:00', 'etape-b', conseil),
+			]),
+			{ slugTrack: 'conseil-ia', slugChannel: 'grands-comptes' },
+		)
+		expect(card?.current_step_id).toBe('etape-b')
+		expect(card?.card_placements.map((r) => r.id)).toEqual(['r-conseil'])
+	})
+
+	it('à une adresse sans rattachement, ou dont seul le slug du channel correspond, ne s’ouvre pas (T7.1)', () => {
+		const affaire = lue([rattachement('r-ancien', '2026-01-01T00:00:00+00:00', 'etape-a')])
+		expect(cardDepuisRattachements(affaire, { slugTrack: 'conseil-ia', slugChannel: 'grands-comptes' })).toBeNull()
+		expect(cardDepuisRattachements(affaire, { slugTrack: 'formation', slugChannel: 'refonte' })).toBeNull()
+	})
+
+	it('nomme les rattachements lisibles dans l’ordre des tracks puis des channels, et omet un chemin non rendu (T7.1)', () => {
+		const sansChannel = { ...rattachement('r-masque', '2026-03-01T00:00:00+00:00', 'etape-c'), channels: null }
+		const situes = rattachementsSitues(
+			lue([
+				rattachement('r-studio', '2026-01-01T00:00:00+00:00', 'etape-a'),
+				rattachement('r-conseil', '2026-05-01T00:00:00+00:00', 'etape-b', conseil),
+				sansChannel,
+			]),
+		)
+		expect(situes).toEqual([
+			{ id: 'r-conseil', slugTrack: 'conseil-ia', slugChannel: 'grands-comptes', track: 'Conseil & IA', channel: 'Grands comptes' },
+			{ id: 'r-studio', slugTrack: 'studio-web', slugChannel: 'refonte', track: 'Studio web', channel: 'Refonte de site' },
+		])
 	})
 
 	it('une affaire sans rattachement lisible se lit comme une affaire absente', () => {

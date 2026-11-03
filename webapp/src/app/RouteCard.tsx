@@ -67,8 +67,11 @@
 // L'onglet courant n'est **pas** calculé ici : `NavLink` le résout par préfixe de segments, et
 // l'adresse d'une card commence par celle de son channel (§4.6 bis).
 //
-// Rien ne confronte le couple `(slugTrack, slugChannel)` de l'adresse à la card qu'elle désigne —
-// **INC-065**, comportement inchangé, arbitrage demandé.
+// Rien ne confrontait le couple `(slugTrack, slugChannel)` de l'adresse à la card qu'elle désigne — INC-065.
+// `CRM-111` T7.1 lui donne sa règle : la fiche s'ouvre sur le rattachement du channel de l'adresse, et une adresse sans
+// rattachement lisible rend l'état qui propose les rattachements lisibles.
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T7.1 : la fiche au rattachement de l'adresse, et l'état d'une adresse sans
+//       rattachement (docs/SPEC-rattachements.md §8.1, décision 823 ; docs/DESIGN_SYSTEM.md §5.81)
 // @spec CRM-098 (docs/BACKLOG.md) — tranche T3 : le bloc « Temps passé » de la fiche (docs/SPEC-temps.md §7.5)
 // @spec CRM-106 (docs/BACKLOG.md) — tranche T2 : la bande de la semaine du bloc, pour la personne connectée
 //       (docs/SPEC-temps.md §7.6, docs/DESIGN_SYSTEM.md §5.54 bis)
@@ -88,7 +91,7 @@ import { t, type CleTraduction } from '../i18n'
 import { projeterChannels, useContenuTrack } from '../lib/channels'
 import { ancetresAffaire } from '../lib/fil-ariane'
 import { mettreCardALaCorbeille, type NatureRefusGeste } from '../lib/corbeille'
-import { lireClesExigees, useContenuCard, type ModeleFormulaire } from '../lib/formulaire'
+import { lireClesExigees, useContenuCard, type ModeleFormulaire, type RattachementSitue } from '../lib/formulaire'
 import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
 import { idRattachement } from '../lib/rattachements'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
@@ -154,7 +157,8 @@ export function RouteCard() {
 	// sont déjà tous lus pour le workflow, la clé n'entre que dans la composition.
 	const [parametres] = useSearchParams()
 	const clesExigees = lireClesExigees(parametres.get('exiges'))
-	const { etat, recharger } = useContenuCard(clientCrm, idCard, clesExigees)
+	const adresse = slugTrack === undefined || slugChannel === undefined ? null : { slugTrack, slugChannel }
+	const { etat, recharger } = useContenuCard(clientCrm, idCard, clesExigees, adresse)
 	const { etat: etatTrack, recharger: rechargerTrack } = useContenuTrack(clientCrm, slugTrack)
 
 	const card = etat.statut === 'pret' ? etat.donnees.card : null
@@ -184,7 +188,7 @@ export function RouteCard() {
 			onRechargerChannels={rechargerTrack}
 			{...(slugTrack === undefined ? {} : { slugTrack })}
 		>
-			<ContenuCard etat={etat} onReprise={recharger} cheminChannel={cheminChannel} />
+			<ContenuCard etat={etat} onReprise={recharger} cheminChannel={cheminChannel} idCard={idCard} />
 		</AppShell>
 	)
 }
@@ -193,10 +197,12 @@ function ContenuCard({
 	etat,
 	onReprise,
 	cheminChannel,
+	idCard,
 }: {
 	readonly etat: ReturnType<typeof useContenuCard>['etat']
 	readonly onReprise: () => void
 	readonly cheminChannel: string | null
+	readonly idCard: string | undefined
 }) {
 	// L'identité de session ne sert qu'à décider quels gestes du fil SONT OFFERTS ; la règle reste
 	// tenue par la politique `UPDATE` de `card_comments` (`CLAUDE.md` §10). Le hook est appelé
@@ -258,6 +264,10 @@ function ContenuCard({
 				onReprise={onReprise}
 			/>
 		)
+	}
+
+	if (etat.donnees.card === null && (etat.donnees.ailleurs ?? []).length > 0) {
+		return <AffaireAilleurs rattachements={etat.donnees.ailleurs ?? []} idCard={idCard ?? ''} />
 	}
 
 	if (etat.donnees.card === null) {
@@ -624,6 +634,38 @@ function ConfirmationCorbeilleCard({
  * restaure. Aucune annulation sur place — restaurer est le geste de l'écran de corbeille, avec ses
  * trois issues et son refus nommé (§4.5).
  */
+/**
+ * L'affaire se lit, mais n'est pas rattachée au channel de l'adresse — `CRM-111` T7.1, docs/DESIGN_SYSTEM.md §5.81. Un
+ * lien par rattachement lisible, vers la fiche à son adresse ; aucune redirection : ce serait deviner lequel était visé.
+ */
+export function AffaireAilleurs({
+	rattachements,
+	idCard,
+}: {
+	readonly rattachements: readonly RattachementSitue[]
+	readonly idCard: string
+}) {
+	return (
+		<EtatVide
+			titre={t('route.card.elsewhere.title')}
+			corps={t('route.card.elsewhere.body')}
+			action={
+				<div data-testid="affaire-ailleurs" className="flex flex-wrap justify-center gap-2">
+					{rattachements.map((rattachement, rang) => (
+						<Link
+							key={rattachement.id}
+							to={`/tracks/${rattachement.slugTrack}/${rattachement.slugChannel}/cards/${idCard}`}
+							className={rang === 0 ? CLASSES_RETOUR : CLASSES_RETOUR_SECONDAIRE}
+						>
+							{t('route.card.elsewhere.link', { track: rattachement.track, channel: rattachement.channel })}
+						</Link>
+					))}
+				</div>
+			}
+		/>
+	)
+}
+
 function AffaireRetiree({ cheminChannel }: { readonly cheminChannel: string | null }) {
 	return (
 		<div

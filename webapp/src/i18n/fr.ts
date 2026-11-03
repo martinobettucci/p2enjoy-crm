@@ -1021,6 +1021,9 @@ export const fr = {
 		"Un board sans étape n'a aucune colonne. Les étapes d'un workflow s'ajoutent dans l'éditeur de workflows.",
 	'route.channel.nostep.action': "Ouvrir l'éditeur de workflows",
 	'route.card.title': 'Card',
+	'route.card.elsewhere.title': 'Cette affaire n’est pas rattachée à ce channel',
+	'route.card.elsewhere.body': 'Elle est rattachée ailleurs. Ouvrez-la dans l’un de ses channels :',
+	'route.card.elsewhere.link': '{track} › {channel}',
 	'route.card.notfound.title': 'Card introuvable',
 	'route.card.notfound.body':
 		"Aucune card ne correspond à cette adresse, ou votre compte n'y a pas accès.",

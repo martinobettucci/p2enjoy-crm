@@ -3003,6 +3003,44 @@
 			]
 		},
 		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une affaire rattachée à plusieurs channels a une fiche dans chacun."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " L'adresse de la fiche nomme un track et un\nchannel : l'étape, le formulaire, le responsable, le montant, la prochaine action, le sommeil, la checklist et la relance\nqu'elle montre sont ceux du rattachement à "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ce"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " channel. Le titre, les contacts, les activités, les recettes, les\ncoûts, le temps, les mails et le fil sont communs à toutes ses fiches. Si l'adresse nomme un channel auquel l'affaire\nn'est pas rattachée — ou que vous ne lisez pas —, la fiche affiche « Cette affaire n'est pas rattachée à ce channel » et\npropose un lien vers chacun de ses rattachements que vous lisez. Le produit ne choisit pas pour vous : vous ouvrez celui\nque vous visiez."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/pas-rattachee-ici.jpg",
+			"alt": "L'adresse d'un channel où l'affaire n'est pas rattachée : un lien vers chacun de ses rattachements",
+			"width": 548,
+			"height": 312
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "les-contacts-d-une-affaire-les-rattacher-les-detacher",

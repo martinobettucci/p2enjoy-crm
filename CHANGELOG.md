@@ -528,6 +528,12 @@ changelog.*
   refus de plus). **`mail-sync`** joint les pièces, archive avant d'envoyer, efface les dépôts abandonnés après 24 heures.
 - **Le seed** fait partir un message réel avec copie cachée et pièce jointe depuis « Refonte du monitoring — Vertuo ».
 
+- **`CRM-111` T7.1 — la fiche au rattachement de l'adresse** : la fiche d'une affaire rattachée à plusieurs channels
+  s'ouvre sur le rattachement du channel de son adresse — étape, formulaire et valeurs, responsable, montant, prochaine
+  action, sommeil, checklist et relance sont les siens. Une adresse d'un channel où l'affaire n'est pas rattachée dit
+  « Cette affaire n'est pas rattachée à ce channel » et propose ses rattachements lisibles (INC-065). Webapp seule ;
+  manuel §9.6.
+
 - **`CRM-111` T6.2 — le rendu d'un modèle par rattachement** (migration `0158`) : une relance automatique remplit
   l'étape, le montant, la prochaine action et le channel de son modèle avec le rattachement sur lequel sa séquence a été
   armée, et non plus avec le plus ancien. La prévisualisation de Réglages ▸ Modèles d'emails offre un choix

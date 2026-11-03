@@ -1476,6 +1476,16 @@ Une card que votre compte ne peut pas lire — ou qui n'existe pas — affiche �
 c'est le refus réel du serveur. Une card consentie ouvre sa fiche et son fil. Sans connexion,
 l'adresse mène à l'écran de connexion, qui y ramène une fois connecté.
 
+**Une affaire rattachée à plusieurs channels a une fiche dans chacun.** L'adresse de la fiche nomme un track et un
+channel : l'étape, le formulaire, le responsable, le montant, la prochaine action, le sommeil, la checklist et la relance
+qu'elle montre sont ceux du rattachement à **ce** channel. Le titre, les contacts, les activités, les recettes, les
+coûts, le temps, les mails et le fil sont communs à toutes ses fiches. Si l'adresse nomme un channel auquel l'affaire
+n'est pas rattachée — ou que vous ne lisez pas —, la fiche affiche « Cette affaire n'est pas rattachée à ce channel » et
+propose un lien vers chacun de ses rattachements que vous lisez. Le produit ne choisit pas pour vous : vous ouvrez celui
+que vous visiez.
+
+![L'adresse d'un channel où l'affaire n'est pas rattachée : un lien vers chacun de ses rattachements](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/pas-rattachee-ici.jpg)
+
 ### 9.7 Les contacts d'une affaire : les rattacher, les détacher
 
 ![Le bloc des contacts d'une affaire, avec le rôle de chacun et la commande pour détacher](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/contacts-de-l-affaire.jpg)

@@ -7,6 +7,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.3 (le bloc du geste, sa confirmation dans le flux, son succès),
 //           §5.13 (le focus revient à la commande qui a ouvert la confirmation), §8 (role="status")
 // @verifies CLAUDE.md §10 (la règle vit dans la politique, jamais dans l'écran)
+// @verifies CRM-111 (docs/BACKLOG.md) T7.1 — l'état d'une adresse sans rattachement : un lien « Track › Channel » par
+//           rattachement lisible, vers la fiche à son adresse (docs/SPEC-rattachements.md §8.1 ; docs/DESIGN_SYSTEM.md §5.81)
 //
 // Ces preuves montent le bloc RÉEL du geste avec un client factice. Le parcours connecté sur la
 // vraie base — et la disparition effective de l'affaire — relève de `e2e/ui/corbeille.spec.ts`.
@@ -18,7 +20,8 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { BlocCorbeilleCard } from './RouteCard'
+import { MemoryRouter } from 'react-router'
+import { AffaireAilleurs, BlocCorbeilleCard } from './RouteCard'
 import { FournisseurRefus } from '../components/ui/RefusCommandes'
 import type { ClientCrm } from '../lib/supabase'
 
@@ -169,3 +172,26 @@ describe('le retrait d’une affaire sous le refus de la fiche (CRM-093)', () =>
 		expect(commande.getAttribute('aria-describedby')).toBe('fiche-affaire-lecture-seule')
 	})
 })
+
+describe('l’adresse d’un channel sans rattachement (CRM-111 T7.1, §5.81)', () => {
+	it('dit que l’affaire n’est pas rattachée ici, et propose un lien par rattachement lisible, à son adresse', () => {
+		render(
+			<MemoryRouter>
+				<AffaireAilleurs
+					idCard="c-9"
+					rattachements={[
+						{ id: 'r-1', slugTrack: 'conseil-ia', slugChannel: 'grands-comptes', track: 'Conseil & IA', channel: 'Grands comptes' },
+						{ id: 'r-2', slugTrack: 'studio-web', slugChannel: 'refonte', track: 'Studio web', channel: 'Refonte de site' },
+					]}
+				/>
+			</MemoryRouter>,
+		)
+		expect(screen.getByText('Cette affaire n’est pas rattachée à ce channel')).toBeTruthy()
+		const liens = screen.getAllByRole('link')
+		expect(liens.map((lien) => [lien.textContent, lien.getAttribute('href')])).toEqual([
+			['Conseil & IA › Grands comptes', '/tracks/conseil-ia/grands-comptes/cards/c-9'],
+			['Studio web › Refonte de site', '/tracks/studio-web/refonte/cards/c-9'],
+		])
+	})
+})
+

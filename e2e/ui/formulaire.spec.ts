@@ -104,6 +104,9 @@ const CARD_SERVIE = [
 				archived_at: null,
 				snoozed_until: null,
 				profiles: null,
+				// `CRM-111` T7.1 : la fiche s'ouvre sur le rattachement du channel de l'adresse, reconnu par ses slugs.
+				channel_id: CHANNEL.id,
+				channels: { slug: CHANNEL.slug, name: 'Inter-entreprises', tracks: { slug: TRACK.slug, name: TRACK.nom } },
 			},
 		],
 	},
@@ -554,10 +557,12 @@ test.describe('la coquille autour du formulaire (§4.6 bis)', () => {
 			if (url.includes('/rest/v1/tracks') || url.includes('/rest/v1/channels')) urls.push(url)
 		})
 		await page.goto(`/tracks/${SLUG_TRACK_INEXISTANT}/${CHANNEL.slug}/cards/${CARD}`)
-		// RÉVISÉ le 2026-09-29 (INC-261, décision 613) : ce scénario attendait `etat-vide`, qu'une base neuve
-		// ne produit pas — la lectrice LIT l'affaire `…0c6`, et la route d'une card ne confronte pas les slugs
-		// de l'adresse à la card (INC-065) : la fiche est rendue. Il attend désormais ce que son titre promet.
-		await expect(page.getByTestId('entete-card')).toBeVisible()
+		// RÉVISÉ le 2026-09-29 (INC-261, décision 613), puis par `CRM-111` T7.1 (décision 823, INC-065) : la lectrice LIT
+		// l'affaire `…0c6`, que l'adresse ne situe sous aucun de ses rattachements. L'écran le dit, et propose le seul
+		// rattachement qu'elle lit (docs/DESIGN_SYSTEM.md §5.81) ; la barre reste vide, ce que le titre promet.
+		const ailleurs = page.getByTestId('affaire-ailleurs')
+		await expect(ailleurs).toBeVisible()
+		await expect(ailleurs.getByRole('link')).toHaveAttribute('href', `/tracks/${TRACK.slug}/${CHANNEL.slug}/cards/${CARD}`)
 		await expect(page.getByTestId('onglets-vides')).toBeVisible()
 
 		const resolution = urls.find((url) => url.includes(`slug=eq.${SLUG_TRACK_INEXISTANT}`))
