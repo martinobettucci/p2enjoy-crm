@@ -1,3 +1,5 @@
+// @spec CRM-112 (docs/BACKLOG.md) tranche T4.b — le bouton « Champs de l'affaire » de la barre de filtres et son panneau, sous la
+//       barre ; « Effacer les filtres » les retire avec les autres (docs/DESIGN_SYSTEM.md §5.92)
 // @spec CRM-112 (docs/BACKLOG.md) tranche T4.a — une colonne par champ de l'affaire listé, après les colonnes natives
 //       (docs/SPEC-champs-communs.md §8 ; docs/DESIGN_SYSTEM.md §5.91)
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T7.5 : la pastille « aussi rattachée à N » dans la cellule « Affaire »
@@ -35,8 +37,9 @@ import { celluleCommune, type ChampCommun } from '../lib/champs-communs'
 import { PastilleAussiRattachee } from '../components/ui/AussiRattachee'
 import { PastillesEtiquettes } from '../components/ui/PastilleEtiquette'
 import type { Etiquette } from '../lib/etiquettes'
-import { ArrowDown, ArrowUp, ArrowUpDown, Search } from 'lucide-react'
-import { useId, type ReactNode } from 'react'
+import { ArrowDown, ArrowUp, ArrowUpDown, Search, SlidersHorizontal } from 'lucide-react'
+import { useId, useRef, useState, type ReactNode } from 'react'
+import { PanneauFiltresCommuns } from './PanneauFiltresCommuns'
 import { Link } from 'react-router'
 import { Badge, type TonBadge } from '../components/ui/Badge'
 import { Avatar } from '../components/ui/Avatar'
@@ -137,6 +140,15 @@ function formaterEcheance(horodatage: string): string {
 export type ProprietesListeCards = {
 	/** `CRM-112` T4.a (§5.91) : les champs de l'affaire listés, une colonne chacun, après les colonnes natives. */
 	readonly colonnesCommunes?: readonly ChampCommun[]
+	/** `CRM-112` T4.b (§5.92) : les champs de l'affaire que le panneau des filtres propose. */
+	readonly champsFiltrables?: readonly ChampCommun[]
+	/**
+	 * `CRM-112` T4.b (§5.92) : le panneau ouvert, TENU PAR L'APPELANT quand il est fourni. *Trouvé par la preuve E2E* : la
+	 * page remplace le tableau par son état de chargement à chaque lecture, ce qui démonte ce composant — un état local
+	 * repliait le panneau après « Appliquer », que la spécification veut ouvert pour corriger.
+	 */
+	readonly panneauCommunsOuvert?: boolean
+	readonly onPanneauCommuns?: (ouvert: boolean) => void
 	readonly cards: readonly CardListe[]
 	readonly etapes: readonly EtapeBoard[]
 	/** `CRM-069` T2 (§5.73) : les étiquettes non archivées de l'espace, que le filtre propose. */
@@ -199,6 +211,9 @@ export type ProprietesListeCards = {
  */
 export function ListeCards({
 	colonnesCommunes = [],
+	champsFiltrables = [],
+	panneauCommunsOuvert: ouvertParLAppelant,
+	onPanneauCommuns,
 	cards,
 	etapes,
 	catalogueEtiquettes = [],
@@ -220,6 +235,20 @@ export function ListeCards({
 	const etapesParId = new Map(etapes.map((etape) => [etape.id, etape]))
 	const pages = nombreDePages(total)
 	const vide = total === 0 && etatVide !== undefined
+	// `CRM-112` T4.b (§5.92) : le panneau des filtres de champ, déplié sous la barre ; « Fermer » et `Échap` rendent le focus
+	// au bouton qui l'a ouvert.
+	const [ouvertIci, setOuvertIci] = useState(false)
+	const panneauCommunsOuvert = ouvertParLAppelant ?? ouvertIci
+	const setPanneauCommunsOuvert = (ouvert: boolean) => {
+		setOuvertIci(ouvert)
+		onPanneauCommuns?.(ouvert)
+	}
+	const boutonCommuns = useRef<HTMLButtonElement | null>(null)
+	const idPanneauCommuns = useId()
+	const fermerPanneauCommuns = () => {
+		setPanneauCommunsOuvert(false)
+		boutonCommuns.current?.focus()
+	}
 
 	return (
 		<div className="flex flex-col gap-3 min-w-0">
@@ -238,6 +267,22 @@ export function ListeCards({
 					total={total}
 					onParametres={onParametres}
 					offrirEffacement={!vide}
+					commandeCommuns={
+						champsFiltrables.length === 0 && Object.keys(parametres.communs ?? {}).length === 0 ? null : (
+							<Button
+								ref={boutonCommuns}
+								data-testid="ouvrir-filtres-communs"
+								aria-expanded={panneauCommunsOuvert}
+								aria-controls={idPanneauCommuns}
+								onClick={() => setPanneauCommunsOuvert(!panneauCommunsOuvert)}
+							>
+								<SlidersHorizontal aria-hidden="true" size={16} strokeWidth={2} />
+								{Object.keys(parametres.communs ?? {}).length === 0
+									? t('liste.communs.bouton')
+									: t('liste.communs.bouton.actifs', { nombre: String(Object.keys(parametres.communs ?? {}).length) })}
+							</Button>
+						)
+					}
 				/>
 				{commandeExport}
 				{commandeImport}
@@ -245,6 +290,15 @@ export function ListeCards({
 			{formulaireCreation}
 			{panneauImport}
 			{panneauVues}
+			{panneauCommunsOuvert ? (
+				<PanneauFiltresCommuns
+					id={idPanneauCommuns}
+					champs={champsFiltrables}
+					bruts={parametres.communs ?? {}}
+					onAppliquer={(communs) => onParametres({ ...parametres, communs, page: 1 })}
+					onFermer={fermerPanneauCommuns}
+				/>
+			) : null}
 			{vide ? (
 				etatVide
 			) : (
@@ -516,6 +570,7 @@ function BarreFiltres({
 	total,
 	onParametres,
 	offrirEffacement,
+	commandeCommuns = null,
 }: {
 	readonly etapes: readonly EtapeBoard[]
 	readonly catalogueEtiquettes: readonly Etiquette[]
@@ -524,6 +579,8 @@ function BarreFiltres({
 	readonly onParametres: (parametres: ParametresListe) => void
 	/** `false` lorsque l'état vide porte déjà l'action : deux boutons identiques côte à côte. */
 	readonly offrirEffacement: boolean
+	/** `CRM-112` T4.b (§5.92) : « Champs de l'affaire », après « Étiquette » ; reçu, son panneau vit sous la barre. */
+	readonly commandeCommuns?: ReactNode
 }) {
 	const idEtape = useId()
 	const idEtiquette = useId()
@@ -535,7 +592,11 @@ function BarreFiltres({
 	// la plus prévisible de « effacer les filtres ».
 	const filtre =
 		offrirEffacement &&
-		(parametres.etape !== null || etiquette !== null || parametres.recherche !== '' || parametres.sommeil === 'visibles')
+		(parametres.etape !== null ||
+			etiquette !== null ||
+			parametres.recherche !== '' ||
+			parametres.sommeil === 'visibles' ||
+			Object.keys(parametres.communs ?? {}).length > 0)
 
 	return (
 		<form
@@ -604,6 +665,8 @@ function BarreFiltres({
 				</div>
 			)}
 
+			{commandeCommuns}
+
 			<div className="flex flex-col gap-1 min-w-0">
 				<label htmlFor={idRecherche} className="text-sm text-text-2">
 					{t('liste.filtre.recherche')}
@@ -647,6 +710,7 @@ function BarreFiltres({
 							etiquette: null,
 							recherche: '',
 							sommeil: MODE_SOMMEIL_PAR_DEFAUT,
+							communs: {},
 							page: 1,
 						})
 					}

@@ -7,6 +7,9 @@
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T7.5 : l'image « aussi-rattachee » montre la pastille d'une affaire rattachée
 //       à deux channels et son infobulle (docs/manual.md §9.10 ; docs/DESIGN_SYSTEM.md §5.85) ; l'affaire jetable est
 //       rattachée par la vraie API, puis détruite.
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T4.b : l'image « filtrer-sur-les-champs » de la section 9.11, le panneau des
+//       filtres de champ ouvert et rempli (docs/DESIGN_SYSTEM.md §5.92 ; docs/SPEC-champs-communs.md §8) ; quatre champs
+//       propres à l'image, posés puis retirés par la clé de service
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
@@ -111,6 +114,43 @@ test('le tableau : une affaire aussi rattachée à un autre channel', async ({ p
 		await illustrer(page, { chapitre: CHAPITRE, section: S.board, nom: 'aussi-rattachee', cibles: [carte, page.getByTestId('infobulle')] })
 	} finally {
 		await detruireAffaire(request, affaire)
+	}
+})
+
+// Quatre champs de l'affaire propres à l'image, jamais ceux du seed : le retrait les vise par leur préfixe de clé.
+const PREFIXE_FILTRES = 'manuel-lf'
+
+async function retirerChampsFiltres(request: APIRequestContext): Promise<void> {
+	await service(request, 'delete', `card_common_fields?workspace_id=eq.${WORKSPACE_SEED}&key=like.${PREFIXE_FILTRES}*`)
+}
+
+test('la vue liste : filtrer sur les champs de l’affaire', async ({ page, request }) => {
+	await retirerChampsFiltres(request)
+	try {
+		await service(request, 'post', 'card_common_fields', [
+			{ workspace_id: WORKSPACE_SEED, key: `${PREFIXE_FILTRES}-raison`, label: 'Raison sociale', type: 'text', position: 901, options: {} },
+			{
+				workspace_id: WORKSPACE_SEED,
+				key: `${PREFIXE_FILTRES}-secteur`,
+				label: 'Secteur',
+				type: 'select',
+				position: 902,
+				options: { choices: [{ key: 'btp', label: 'BTP' }, { key: 'sante', label: 'Santé' }, { key: 'public', label: 'Secteur public' }] },
+			},
+			{ workspace_id: WORKSPACE_SEED, key: `${PREFIXE_FILTRES}-ca`, label: 'Chiffre d’affaires', type: 'money', position: 903, options: { currency: 'EUR' } },
+			{ workspace_id: WORKSPACE_SEED, key: `${PREFIXE_FILTRES}-signe`, label: 'Contrat cadre signé', type: 'checkbox', position: 904, options: {} },
+		])
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto(`${GRANDS_COMPTES}/liste`)
+		const bouton = page.getByTestId('ouvrir-filtres-communs')
+		await bouton.click()
+		const panneau = page.getByTestId('panneau-filtres-communs')
+		await panneau.locator(`[data-champ="${PREFIXE_FILTRES}-raison"]`).getByLabel('Contient').fill('sogexia')
+		await panneau.locator(`[data-champ="${PREFIXE_FILTRES}-secteur"]`).getByLabel('Secteur public').check()
+		await panneau.locator(`[data-champ="${PREFIXE_FILTRES}-ca"]`).getByLabel('De').fill('10000')
+		await illustrer(page, { chapitre: CHAPITRE, section: S.liste, nom: 'filtrer-sur-les-champs', cibles: [bouton, panneau] })
+	} finally {
+		await retirerChampsFiltres(request)
 	}
 })
 

@@ -17607,9 +17607,9 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
               4 927 assertions** ;
             - unitaires **5 366** (le détail commun) ; E2E `fiche-champs-communs` étendue (la ligne du fil, l'événement
               relu en base sans rattachement) et `timeline.spec.ts` : **20/20** ; capture observée.
-- [@] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; la case « Afficher dans la liste » de
+- [~] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; la case « Afficher dans la liste » de
       Réglages ▸ « Champs de l'affaire » (reportée de T3.a, `docs/DESIGN_SYSTEM.md` §5.86) ; unitaires ; API.
-      *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-3a) depuis 2026-11-03 18:30 UTC — état avant : [ ]*
+      T4.a livrée, T4.b vérifiée en développement ; restent T4.c (à spécifier) et T4.d (à arbitrer).
       **Découpage** (2026-11-03, après lecture de la vue liste : une requête PostgREST sur `card_placements`, l'affaire plongée,
       filtres au serveur avant la pagination et le compte) :
       - [P] **T4.a — les colonnes** (livrée le 2026-11-03, décision 834 ; constat du responsable) : la case « Afficher dans la liste des affaires » de Réglages (reportée de T3.a), et une
@@ -17629,7 +17629,7 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
             - **défaut du commit `3afd9295`, corrigé par le suivant** : les sept clés de traduction de T4.a n'y étaient pas —
               `fr.ts` portait aussi le travail non commité de `CRM-128` T4 et avait été écarté du commit. La révision
               `3afd9295` seule ne passe pas `tsc` (constaté sur un export de la révision) ; avec les clés, elle passe.
-      - [ ] **T4.b — les filtres au serveur** : un filtre par type (§8), dans la même requête paginée ; colonnes de
+      - [P] **T4.b — les filtres au serveur** (vérifiée en développement le 2026-11-03 ; livraison et constat) : un filtre par type (§8), dans la même requête paginée ; colonnes de
             recherche typées sur `card_common_field_values` (migration), mesures du coût sous la RLS ; l'état dans
             l'adresse. *Spécifiée le 2026-11-03 avant le code* (décision 831) : `docs/SPEC-champs-communs.md` §8
             (précision T4.b), `docs/DESIGN_SYSTEM.md` §5.92 — le bouton « Champs de l'affaire » et son panneau, les
@@ -17641,11 +17641,22 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
             l'égalité des droits avec `app.can_read_card` pour Camille, Driss, Farida et un compte hors de l'espace, Farida
             départageant (40 affaires sur 46) ; suite pgTAP 141 fichiers ; types régénérés, unitaires 5 381. Reste
             l'écran (§5.92), ses unitaires, E2E et captures, le manuel.
+            *Le 2026-11-03, seconde partie* : le module `filtres-communs.ts` (l'adresse `c.<clé>`, le filtre par type, le
+            texte ramené à la forme de `value_search`), la requête de la page (un plongement par filtre), le bouton
+            « Champs de l'affaire » et son panneau (`PanneauFiltresCommuns.tsx`) ; unitaires **5 410** (dont 16 du module,
+            8 du panneau, deux attentes révisées — décision 51 — pour le neuvième paramètre de la liste) ; E2E
+            `e2e/ui/filtres-champs-communs.spec.ts` **7/7** — contient sans accents, choix, borne, case vide, l'adresse
+            relue, effacer, la borne illisible, le clavier, la lectrice refusée par requête directe, quatre paliers ;
+            captures observées ; manuel §9.11 (paragraphe et image) et §18.16. *Trouvé par la preuve E2E* : le panneau se
+            repliait après « Appliquer » (la page démonte le tableau pendant la lecture) — son état est tenu par la page.
+            *Précisé au code* : l'export CSV ne retient pas ces filtres (clés fermées d'`export_cards`), le panneau le dit ;
+            l'export rejoint T4.d. Reste la livraison de la migration `0164` avec la webapp, et le constat.
       - [ ] **T4.c — les filtres personne, contact et fichier** (§8) : un filtre qui nomme une personne, un contact ;
             « renseigné ou vide » pour un fichier. À spécifier.
-      - [ ] **T4.d — les filtres des champs dans les vues sauvegardées** : **à arbitrer par le responsable** — la liste
-            des clés d'une vue est fermée en base (`docs/SPEC-vues-import-export.md` §2.2) ; jusque-là, une vue ne garde
-            pas ces filtres, et « Filtres modifiés depuis la vue » ne les compte pas.
+      - [ ] **T4.d — les filtres des champs dans les vues sauvegardées et dans l'export CSV** : **à arbitrer par le
+            responsable** — la liste des clés d'une vue est fermée en base (`docs/SPEC-vues-import-export.md` §2.2), et
+            `export_cards` reçoit ces mêmes clés ; jusque-là, une vue ne garde pas ces filtres, « Filtres modifiés depuis la
+            vue » ne les compte pas, l'export ne les applique pas — et le panneau le dit.
 - [ ] **T5** — modèles d'email : `{{card.field.<clé>}}`, contrôle d'écriture par déclencheur, rendu, sélecteur.
 - [ ] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
 - [ ] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.

@@ -17,6 +17,8 @@
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T7.5 : les autres rattachements de chaque ligne (docs/DESIGN_SYSTEM.md §5.85)
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la page lit les rattachements du channel, le tri et la recherche
 //       traduits vers l'affaire plongée là où ils la visent (docs/SPEC-rattachements.md §8)
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T4.b : les filtres des champs de l'affaire dans l'adresse (`c.<clé>`) et dans la
+//       même requête paginée — un plongement par filtre (docs/SPEC-champs-communs.md §8, précision T4.b ; décision 831)
 //
 // Ce module ne rend rien : il **compose**, et il lit. La séparation est ce qui rend les règles du
 // §12 vérifiables sans navigateur — la clôture des tris, l'ordre total, le repli des paramètres
@@ -44,6 +46,7 @@ import {
 	type ModeSommeil,
 } from './filtre-sommeil'
 import type { ProfilAffiche } from './identites'
+import { ecrireFiltresBruts, lireFiltresBruts, minuitLocal, motifContient, operandeOu, type FiltreActif } from './filtres-communs'
 import type { ClientCrm } from './supabase'
 
 export { CODE_PAGE_INEXISTANTE, COLONNES_RATTACHEMENT_LISTE, LIGNES_PAR_PAGE } from './colonnes-liste'
@@ -182,6 +185,11 @@ export type ParametresListe = {
 	 * mise à jour. « Effacer les filtres » la garde ; « Aucune vue » la retire.
 	 */
 	readonly vue?: string | null
+	/**
+	 * `CRM-112` T4.b : les filtres des champs de l'affaire, BRUTS, par clé de champ (`c.<clé>` dans l'adresse). Ils ne se
+	 * lisent qu'avec les champs de l'espace (`filtresActifs`) : un paramètre inconnu reste dans l'adresse sans rien filtrer.
+	 */
+	readonly communs?: Readonly<Record<string, string>>
 }
 
 export const PARAMETRES_PAR_DEFAUT: ParametresListe = {
@@ -193,6 +201,7 @@ export const PARAMETRES_PAR_DEFAUT: ParametresListe = {
 	page: 1,
 	sommeil: MODE_SOMMEIL_PAR_DEFAUT,
 	vue: null,
+	communs: {},
 }
 
 /** Les noms des paramètres dans l'adresse. Déclarés une fois : les preuves les importent. */
@@ -243,6 +252,7 @@ export function lireParametres(recherche: URLSearchParams): ParametresListe {
 		page: Number.isFinite(pageDemandee) && pageDemandee >= 1 ? pageDemandee : 1,
 		sommeil: lireModeSommeil(recherche.get(CLES_URL.sommeil)),
 		vue: vueDemandee !== null && FORME_UUID.test(vueDemandee) ? vueDemandee : null,
+		communs: lireFiltresBruts(recherche),
 	}
 }
 
@@ -266,6 +276,7 @@ export function ecrireParametres(parametres: ParametresListe): URLSearchParams {
 	// (§16.12.4), et `?sommeil=masquees` ne dirait rien de plus que l'adresse nue.
 	if (parametres.sommeil === 'visibles') sortie.set(CLES_URL.sommeil, VALEUR_URL_SOMMEIL_VISIBLES)
 	if (parametres.vue !== null && parametres.vue !== undefined) sortie.set(CLES_URL.vue, parametres.vue)
+	ecrireFiltresBruts(sortie, parametres.communs)
 	return sortie
 }
 
@@ -294,6 +305,26 @@ export function plageDe(page: number): { readonly de: number; readonly a: number
 	const rang = Math.max(1, Math.floor(page))
 	const de = (rang - 1) * LIGNES_PAR_PAGE
 	return { de, a: de + LIGNES_PAR_PAGE - 1 }
+}
+
+// --- Les filtres des champs de l'affaire (`CRM-112` T4.b) -------------------------------------
+
+/** L'alias du plongement d'un filtre de champ, suivi de son rang : `fc0`, `fc1`… */
+export const ALIAS_FILTRE_COMMUN = 'fc'
+
+/**
+ * La chaîne `select` de la page, avec un plongement de `card_common_field_values` par filtre de champ, sous l'affaire.
+ * `!inner` borne les rattachements à ceux dont l'affaire a une valeur qui passe ; « vide » (une case) plonge sans `!inner`,
+ * et la requête retient l'affaire dont le plongement est vide (`liste-cards.ts`, `lirePageCards`).
+ */
+export function colonnesAvecFiltresCommuns(colonnes: string, filtres: readonly FiltreActif[]): string {
+	if (filtres.length === 0) return colonnes
+	const plongements = filtres
+		.map(({ filtre }, rang) =>
+			`${ALIAS_FILTRE_COMMUN}${rang}:card_common_field_values${filtre.sorte === 'case' && filtre.etat === 'vide' ? '' : '!inner'}(field_id)`,
+		)
+		.join(', ')
+	return colonnes.replace('affaire:cards!inner(id, ', `affaire:cards!inner(id, ${plongements}, `)
 }
 
 // --- La lecture (§12.3) ----------------------------------------------------------------------
@@ -388,6 +419,7 @@ export async function lirePageCards(
 		channelId,
 		parametres,
 		maintenant = new Date(),
+		filtresCommuns = [],
 	}: {
 		readonly channelId: string
 		readonly parametres: ParametresListe
@@ -397,6 +429,8 @@ export async function lirePageCards(
 		 * l'heure à laquelle elle s'exécute.
 		 */
 		readonly maintenant?: Date
+		/** `CRM-112` T4.b : les filtres des champs de l'affaire, résolus contre les champs de l'espace (`filtresActifs`). */
+		readonly filtresCommuns?: readonly FiltreActif[]
 	},
 ): Promise<EtatAsync<ContenuListe>> {
 	try {
@@ -405,9 +439,12 @@ export async function lirePageCards(
 		let requete = client
 			.from('card_placements')
 			.select(
-				parametres.etiquette === null || parametres.etiquette === undefined
-					? COLONNES_RATTACHEMENT_LISTE
-					: COLONNES_RATTACHEMENT_LISTE_PAR_ETIQUETTE,
+				colonnesAvecFiltresCommuns(
+					parametres.etiquette === null || parametres.etiquette === undefined
+						? COLONNES_RATTACHEMENT_LISTE
+						: COLONNES_RATTACHEMENT_LISTE_PAR_ETIQUETTE,
+					filtresCommuns,
+				) as typeof COLONNES_RATTACHEMENT_LISTE,
 				{ count: 'exact' },
 			)
 			.eq('channel_id', channelId)
@@ -424,6 +461,49 @@ export async function lirePageCards(
 		if (parametres.etiquette !== null && parametres.etiquette !== undefined) {
 			requete = requete.eq('affaire.filtre.label_id', parametres.etiquette)
 		}
+		// `CRM-112` T4.b (§8, précision T4.b) : chaque filtre de champ borne son plongement à son champ et à sa condition,
+		// AVANT la pagination et le compte, comme les autres filtres (§12.5). Mesuré : deux filtres combinés, total exact.
+		filtresCommuns.forEach(({ champ, filtre }, rang) => {
+			const alias = `affaire.${ALIAS_FILTRE_COMMUN}${rang}`
+			requete = requete.eq(`${alias}.field_id`, champ.id)
+			switch (filtre.sorte) {
+				case 'contient':
+					requete = requete.like(`${alias}.value_search`, motifContient(filtre.texte))
+					break
+				case 'choix':
+					// Un choix simple : la valeur est l'un des choix — un tableau JSON contient la valeur scalaire qui y figure.
+					// Plusieurs choix : la valeur contient l'un des choix cochés.
+					requete =
+						champ.type === 'select'
+							? requete.filter(`${alias}.value`, 'cd', JSON.stringify(filtre.cles))
+							: requete.or(filtre.cles.map((cle) => `value.cs.${operandeOu(JSON.stringify([cle]))}`).join(','), { referencedTable: alias })
+					break
+				case 'bornes':
+					// La comparaison du JSON est numérique entre deux nombres (mesuré).
+					if (filtre.de !== null) requete = requete.gte(`${alias}.value`, String(filtre.de))
+					if (filtre.a !== null) requete = requete.lte(`${alias}.value`, String(filtre.a))
+					break
+				case 'dates':
+					if (champ.type === 'date') {
+						if (filtre.du !== null) requete = requete.gte(`${alias}.value_date`, filtre.du)
+						if (filtre.au !== null) requete = requete.lte(`${alias}.value_date`, filtre.au)
+					} else {
+						// Une date et heure : de minuit du premier jour à minuit du lendemain du dernier, à l'heure de l'appareil.
+						if (filtre.du !== null) requete = requete.gte(`${alias}.value_timestamp`, minuitLocal(filtre.du))
+						if (filtre.au !== null) requete = requete.lt(`${alias}.value_timestamp`, minuitLocal(filtre.au, 1))
+					}
+					break
+				case 'case':
+					if (filtre.etat === 'vide') {
+						// Le plongement est sans `!inner` (`colonnesAvecFiltresCommuns`) : il ne garde que les valeurs non vides du
+						// champ, et l'affaire est retenue quand il n'en reste aucune — mesuré : vidées et absentes.
+						requete = requete.not(`${alias}.value`, 'is', null).neq(`${alias}.value`, 'null').is(alias, null)
+					} else {
+						requete = requete.eq(`${alias}.value`, filtre.etat === 'oui' ? 'true' : 'false')
+					}
+					break
+			}
+		})
 		if (parametres.recherche !== '') {
 			// `plfts` et non `ilike` : `search_tsv` est une colonne générée `STORED` indexée en GIN
 			// (docs/SPEC-cards.md §2.7), qu'un `ilike '%…%'` ne peut pas employer. La configuration
@@ -487,6 +567,11 @@ export function usePageCards(
 	client: ClientCrm | null,
 	channelId: string | undefined,
 	parametres: ParametresListe,
+	/**
+	 * `CRM-112` T4.b : les filtres de champ résolus ; `null` tant que les champs de l'espace ne sont pas lus ET que l'adresse
+	 * en porte — la page attend, plutôt que de montrer une liste non filtrée qu'elle reprendrait aussitôt. Défaut : aucun.
+	 */
+	filtresCommuns: readonly FiltreActif[] | null = [],
 ): {
 	readonly etat: EtatAsync<ContenuListe>
 	readonly total: number | null
@@ -508,8 +593,14 @@ export function usePageCards(
 	const { tri, sens, etape, recherche, page, sommeil } = parametres
 	const etiquette = parametres.etiquette ?? null
 
+	// La clé des filtres de champ : les dépendances de l'effet doivent être des valeurs, pas un tableau recréé à chaque rendu.
+	const cleFiltresCommuns = filtresCommuns === null ? null : JSON.stringify(filtresCommuns.map(({ champ, filtre }) => [champ.id, champ.type, filtre]))
+	const filtresCourants = useRef(filtresCommuns)
+	filtresCourants.current = filtresCommuns
+
 	useEffect(() => {
 		if (client === null || channelId === undefined) return
+		if (cleFiltresCommuns === null) return
 		const rang = ++courant.current
 		if (discret.current) discret.current = false
 		else setEtat(enChargement)
@@ -517,6 +608,7 @@ export function usePageCards(
 			const resultat = await lirePageCards(client, {
 				channelId,
 				parametres: { tri, sens, etape, etiquette, recherche, page, sommeil },
+				filtresCommuns: filtresCourants.current ?? [],
 				// L'instant est pris AU MOMENT DE LA LECTURE, jamais au rendu : un `new Date()` calculé
 				// dans le corps du composant changerait à chaque rendu et relancerait l'effet en boucle.
 				maintenant: new Date(),
@@ -527,7 +619,7 @@ export function usePageCards(
 			}
 			setEtat(resultat)
 		})()
-	}, [client, channelId, tri, sens, etape, etiquette, recherche, page, sommeil, tentative])
+	}, [client, channelId, tri, sens, etape, etiquette, recherche, page, sommeil, cleFiltresCommuns, tentative])
 
 	const recharger = useCallback(() => {
 		setTentative((precedente) => precedente + 1)

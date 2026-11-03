@@ -13,7 +13,20 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### `CRM-112` T4.b — filtrer la vue liste sur les champs de l'affaire (migration 164)
+
+- Le bouton « Champs de l'affaire » rejoint la barre de filtres de la vue liste, et ouvre sous elle un panneau : un filtre
+  par champ, selon son type — un texte « Contient », sans tenir compte des majuscules ni des accents ; des choix à
+  cocher ; un nombre ou un montant entre deux bornes ; une date entre deux jours ; une case oui, non ou vide. Rien ne
+  filtre avant « Appliquer » ; le bouton dit combien de filtres sont actifs ; une borne illisible est refusée sous son
+  champ. Les filtres s'appliquent au serveur, avec le compte et la pagination justes, et s'inscrivent dans l'adresse.
+  « Effacer les filtres » les retire avec les autres. L'export CSV et les vues sauvegardées ne les retiennent pas encore,
+  et le panneau le dit.
+- **Migration `0164`** : trois colonnes de recherche posées par la base sur les valeurs communes (`value_search`,
+  `value_date`, `value_timestamp`) ; la politique de lecture de ces valeurs devient une semi-jointure — le même droit,
+  évalué une fois par requête au lieu d'une fois par valeur (mesuré : 37,7 → 24,6 ms, et un coût qui ne croît plus).
+- Manuel, §9.11 avec une image, et §18.16.
+- **À livrer ensemble** : la migration `0164` et la webapp.
 
 ## [Publié]
 

@@ -166,6 +166,8 @@ describe('les paramètres d’adresse (§12.2)', () => {
 			sommeil: 'masquees',
 			// `CRM-071` T2 (décision 51) : la vue choisie, absente de l'adresse, vaut son défaut.
 			vue: null,
+			// `CRM-112` T4.b (décision 51) : aucun filtre de champ dans l'adresse, aucun filtre.
+			communs: {},
 		})
 	})
 

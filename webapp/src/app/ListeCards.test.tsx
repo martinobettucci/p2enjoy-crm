@@ -423,6 +423,8 @@ describe('la pagination (§12.6)', () => {
 			sommeil: 'masquees',
 			// `CRM-071` T2 (décision 51) : la vue choisie, huitième paramètre, conservée avec son défaut.
 			vue: null,
+			// `CRM-112` T4.b (décision 51) : les filtres de champ, neuvième paramètre, conservés avec leur défaut.
+			communs: {},
 		})
 		await utilisateur.click(screen.getByTestId('page-precedente'))
 		expect(onParametres).toHaveBeenCalledWith(expect.objectContaining({ page: 1 }))

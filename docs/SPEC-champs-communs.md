@@ -286,6 +286,9 @@ garde : désarchiver les rend.
     `app.can_read_card` une fois par valeur. La même migration porte la politique ; une preuve pgTAP compare, profil par
     profil, les valeurs visibles par l'ancienne et la nouvelle règle.
   - **Le connecteur MCP** : le filtre de `crm_card_list` est la tranche T9 (décision 664) ; T4.b ne l'ajoute pas.
+  - *Précisé au code, le 2026-11-03* : **« Exporter en CSV » ne retient pas ces filtres** — il passe par
+    `export_cards(p_channel, p_filters)`, dont les filtres sont les clés fermées d'une vue (`docs/SPEC-vues-import-export.md`
+    §2.2). Le panneau le dit ; l'export rejoint donc la tranche **T4.d**, avec les vues sauvegardées.
 
 ## 9. Modèles d'email (décision 664, complément 2)
 

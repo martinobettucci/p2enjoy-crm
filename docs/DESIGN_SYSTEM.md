@@ -7815,10 +7815,15 @@ ne disent que de quoi il a l'air.
   - nombre et montant : deux champs côte à côte, « De » et « À », chacun facultatif ;
   - date, date et heure : deux champs date, « Du » et « Au », chacun facultatif ;
   - case : un `select` « Indifférent », « Oui », « Non », « Vide ».
+- **UNE PHRASE AVANT LES COMMANDES DIT CE QUE CES FILTRES NE TOUCHENT PAS** — « L'export CSV et les vues sauvegardées ne
+  retiennent pas encore ces filtres. » —, 13 px `--color-text-2`. *Précisé au code* : « Exporter en CSV » passe par les
+  clés fermées d'une vue (`export_cards`), comme les vues elles-mêmes ; exporter moins de filtres que l'écran n'en montre
+  sans le dire tromperait. Tranche T4.d, à arbitrer.
 - **« Appliquer » (primaire) et « Fermer » (discret) terminent le panneau** : rien ne filtre avant « Appliquer », comme
   la recherche attend sa validation. « Appliquer » ramène à la page 1 ; le panneau reste
-  ouvert, pour corriger. Une borne illisible ne part pas : le champ dit « Saisissez un nombre. » ou « Saisissez une
-  date. » sous lui, en `--color-danger` avec `aria-invalid` (§5.7), et rien n'est appliqué.
+  ouvert, pour corriger. Une borne illisible ne part pas : le champ dit « Saisissez un nombre. » sous lui, en `--color-danger`
+  avec `aria-invalid` (§5.7), et rien n'est appliqué. *Précisé au code* : une date se saisit par un champ date natif, qui
+  ne rend jamais une valeur illisible — la phrase « Saisissez une date. » n'a pas lieu d'être.
 - **« Effacer les filtres » les retire avec les autres** (`docs/SPEC-cards.md` §16.12.5) ; il paraît dès qu'un filtre de champ est actif.
   L'état vide « Aucune affaire ne correspond à ce filtre » porte le même geste (§5.8).
 - **Les types personne, contact et fichier n'y paraissent pas encore** (tranche T4.c), et aucune phrase ne l'annonce :

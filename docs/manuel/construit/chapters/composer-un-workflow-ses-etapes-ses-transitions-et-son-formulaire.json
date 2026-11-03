@@ -5671,7 +5671,24 @@
 				},
 				{
 					"type": "text",
-					"text": "), après les colonnes habituelles ; la ligne du champ porte alors\nla mention « Dans la liste ». Les champs qui désignent une personne, un contact ou un fichier ne s'affichent pas en\ncolonne : la case leur est refusée, et l'écran le dit. Le choix vaut pour tout l'espace. Filtrer la liste sur ces champs\nviendra ensuite."
+					"text": "), après les colonnes habituelles ; la ligne du champ porte alors\nla mention « Dans la liste ». Les champs qui désignent une personne, un contact ou un fichier ne s'affichent pas en\ncolonne : la case leur est refusée, et l'écran le dit. Le choix vaut pour tout l'espace. Chaque champ, listé ou non, se\nfiltre aussi dans la vue liste ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "la-vue-liste-d-un-channel"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 9.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		},

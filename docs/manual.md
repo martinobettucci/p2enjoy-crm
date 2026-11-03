@@ -1831,6 +1831,18 @@ grosse affaire du channel.
 Le compte affiché à droite — « Affaires : 3 » — est celui des affaires **qui correspondent aux
 filtres**, pas celui du channel entier.
 
+**Filtrer sur les champs de l'affaire.** Si votre espace déclare des champs de l'affaire
+([section 18.16](#les-champs-communs-a-toute-affaire)), le bouton « Champs de l'affaire » rejoint les filtres. Il ouvre,
+sous la barre, un panneau avec un filtre par champ, selon son type : un texte se cherche par « Contient » — sans tenir
+compte des majuscules ni des accents ; un champ à choix, par les choix que vous cochez ; un nombre ou un montant, entre
+« De » et « À », chacun facultatif ; une date, entre deux jours ; une case, par oui, non ou vide. Rien ne filtre avant
+« Appliquer » ; le panneau reste ouvert pour corriger, et « Fermer » le replie. Le bouton dit combien de ces filtres
+sont actifs. Une borne qui n'est pas un nombre est refusée sous son champ. Ces filtres s'inscrivent dans l'adresse comme
+les autres, mais l'export CSV et les vues sauvegardées ne les retiennent pas encore : le panneau le rappelle. Les champs
+qui désignent une personne, un contact ou un fichier ne se filtrent pas encore.
+
+![Le panneau « Champs de l'affaire » ouvert sous la barre de filtres : « Contient », les choix, « De » et « À », la case, et « Appliquer »](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/filtrer-sur-les-champs.jpg)
+
 **Paginer.** La liste affiche **25 affaires par page**. Les boutons *Page précédente* et *Page
 suivante* encadrent le rang courant, écrit en toutes lettres (« Page 2 sur 5 ») ; ils restent
 visibles aux extrémités, simplement inutilisables, plutôt que de disparaître.
@@ -1848,7 +1860,7 @@ plus la preuve d'un channel vide. Un quatrième existe : si le nombre d'affaires
 que la page était ouverte, une page devenue inexistante affiche « Cette page n'existe plus » et
 propose de revenir à la première — jamais un message d'erreur technique.
 
-**« Effacer les filtres » efface les trois.** L'étape, la recherche **et** l'affichage des affaires
+**« Effacer les filtres » efface tout.** L'étape, la recherche, les filtres de champ **et** l'affichage des affaires
 en sommeil reprennent leur valeur par défaut : le bouton rend la vue par défaut, et la vue par
 défaut ne montre pas les affaires endormies. Il apparaît donc aussi sur une liste dont la seule
 différence est que ces affaires y sont visibles.
@@ -4608,8 +4620,8 @@ Sur la fiche d'une affaire, ils se remplissent dans le bloc « Champs de l'affai
 Dans le formulaire d'un champ, la case « Afficher dans la liste des affaires » en fait une colonne de la vue liste de
 chaque channel ([section 9.11](#la-vue-liste-d-un-channel)), après les colonnes habituelles ; la ligne du champ porte alors
 la mention « Dans la liste ». Les champs qui désignent une personne, un contact ou un fichier ne s'affichent pas en
-colonne : la case leur est refusée, et l'écran le dit. Le choix vaut pour tout l'espace. Filtrer la liste sur ces champs
-viendra ensuite.
+colonne : la case leur est refusée, et l'écran le dit. Le choix vaut pour tout l'espace. Chaque champ, listé ou non, se
+filtre aussi dans la vue liste ([section 9.11](#la-vue-liste-d-un-channel)).
 
 ![Le formulaire du champ « Numéro de TVA » : la case « Afficher dans la liste des affaires » cochée, et la mention « Dans la liste » sur sa ligne](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/dans-la-liste.jpg)
 

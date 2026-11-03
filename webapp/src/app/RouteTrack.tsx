@@ -47,6 +47,7 @@
 
 import { lireEtiquettes, type Etiquette } from '../lib/etiquettes'
 import { colonnesCommunes, lireChampsCommunsEspace, type ChampCommun } from '../lib/champs-communs'
+import { champsFiltrables, filtresActifs } from '../lib/filtres-communs'
 import { useContexteEspace } from './ContexteEspace'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
@@ -567,7 +568,25 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 		...demandes,
 		page: pageBornee ?? demandes.page,
 	}
-	const { etat, total, recharger, relireDiscretement } = usePageCards(clientCrm, channel.id, parametres)
+	// `CRM-112` T4.b (docs/DESIGN_SYSTEM.md §5.92) : les champs de l'affaire de l'espace — les colonnes listées (T4.a) et les
+	// filtres. `null` tant qu'ils ne sont pas lus ; une lecture en panne rend une liste vide : la page ne dépend pas d'eux.
+	const { idWorkspace: espaceCourant } = useContexteEspace()
+	const [champsCommunsEspace, setChampsCommunsEspace] = useState<readonly ChampCommun[] | null>(null)
+	useEffect(() => {
+		if (clientCrm === null || espaceCourant === null) return
+		let actif = true
+		void lireChampsCommunsEspace(clientCrm, espaceCourant).then((lu) => {
+			if (actif) setChampsCommunsEspace(lu.statut === 'pret' ? lu.donnees : [])
+		})
+		return () => {
+			actif = false
+		}
+	}, [espaceCourant])
+	const filtresDemandes = Object.keys(parametres.communs ?? {}).length > 0
+	// Des filtres dans l'adresse avant que les champs soient lus : la page attend (`usePageCards`), elle ne montre pas une
+	// liste non filtrée qu'elle reprendrait aussitôt.
+	const filtresCommuns = champsCommunsEspace === null ? (filtresDemandes ? null : []) : filtresActifs(champsCommunsEspace, parametres.communs)
+	const { etat, total, recharger, relireDiscretement } = usePageCards(clientCrm, channel.id, parametres, filtresCommuns)
 	// `CRM-069` T2 (docs/DESIGN_SYSTEM.md §5.73) : les étiquettes non archivées de l'espace, que le filtre propose. Une
 	// lecture en panne laisse le filtre absent : la liste ne dépend pas d'elle.
 	const [catalogueEtiquettes, setCatalogueEtiquettes] = useState<readonly Etiquette[]>([])
@@ -581,20 +600,11 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 			actif = false
 		}
 	}, [])
-	// `CRM-112` T4.a (docs/DESIGN_SYSTEM.md §5.91) : les champs de l'affaire listés de l'espace, une colonne chacun. Une
-	// lecture en panne laisse la liste sans eux : elle ne dépend pas d'eux.
-	const { idWorkspace: espaceCourant } = useContexteEspace()
-	const [colonnesCommunesListe, setColonnesCommunesListe] = useState<readonly ChampCommun[]>([])
-	useEffect(() => {
-		if (clientCrm === null || espaceCourant === null) return
-		let actif = true
-		void lireChampsCommunsEspace(clientCrm, espaceCourant).then((lu) => {
-			if (actif && lu.statut === 'pret') setColonnesCommunesListe(colonnesCommunes(lu.donnees))
-		})
-		return () => {
-			actif = false
-		}
-	}, [espaceCourant])
+	// `CRM-112` T4.a (docs/DESIGN_SYSTEM.md §5.91) : les champs de l'affaire listés de l'espace, une colonne chacun.
+	const colonnesCommunesListe = colonnesCommunes(champsCommunsEspace ?? [])
+	const champsFiltrablesListe = champsFiltrables(champsCommunsEspace ?? [])
+	// Le panneau des filtres de champ survit au rechargement de la page qui suit « Appliquer » (§5.92).
+	const [panneauCommunsOuvert, setPanneauCommunsOuvert] = useState(false)
 
 	// Le bornage se fait **après** une réponse qui porte un total, jamais avant : borner par un
 	// total qu'on n'a pas reviendrait à inventer une valeur par défaut (CLAUDE.md §18).
@@ -669,7 +679,7 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 	}
 
 	const { cards, total: totalFiltre } = etat.donnees
-	const filtre = parametres.etape !== null || parametres.recherche !== ''
+	const filtre = parametres.etape !== null || parametres.recherche !== '' || (filtresCommuns ?? []).length > 0
 	// TROIS ÉTATS VIDES, ET NON DEUX (§16.12.6). Le troisième n'existe que lorsque le sommeil est la
 	// SEULE cause possible du vide : aucun autre filtre posé, et le mode masqué. La liste, elle, ne
 	// sait pas s'il dort réellement une affaire — elle a demandé les éveillées et n'en a reçu aucune
@@ -720,6 +730,8 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 											recherche: '',
 											// « Effacer les filtres » efface celui-ci aussi (§16.12.5).
 											sommeil: MODE_SOMMEIL_PAR_DEFAUT,
+											// `CRM-112` T4.b (§5.92) : les filtres de champ avec les autres.
+											communs: {},
 											page: 1,
 										})
 									}
@@ -755,6 +767,9 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 				etapes={etapes.etat.donnees}
 				catalogueEtiquettes={catalogueEtiquettes}
 				colonnesCommunes={colonnesCommunesListe}
+				champsFiltrables={champsFiltrablesListe}
+				panneauCommunsOuvert={panneauCommunsOuvert}
+				onPanneauCommuns={setPanneauCommunsOuvert}
 				parametres={parametres}
 				total={totalFiltre}
 				slugTrack={slugTrack}
@@ -819,6 +834,9 @@ function ListeRendue({
 	etapes,
 	catalogueEtiquettes,
 	colonnesCommunes: colonnesListees,
+	champsFiltrables,
+	panneauCommunsOuvert,
+	onPanneauCommuns,
 	parametres,
 	total,
 	slugTrack,
@@ -837,6 +855,9 @@ function ListeRendue({
 	readonly etapes: readonly EtapeBoard[]
 	readonly catalogueEtiquettes: readonly Etiquette[]
 	readonly colonnesCommunes: readonly ChampCommun[]
+	readonly champsFiltrables: readonly ChampCommun[]
+	readonly panneauCommunsOuvert: boolean
+	readonly onPanneauCommuns: (ouvert: boolean) => void
 	readonly parametres: ParametresListe
 	readonly total: number
 	readonly slugTrack: string
@@ -856,6 +877,9 @@ function ListeRendue({
 			<LiveRegion libelle={t('live.liste.aria')} message={t('live.liste.loaded')} />
 			<ListeCards
 				colonnesCommunes={colonnesListees}
+				champsFiltrables={champsFiltrables}
+				panneauCommunsOuvert={panneauCommunsOuvert}
+				onPanneauCommuns={onPanneauCommuns}
 				cards={cards}
 				etapes={etapes}
 				catalogueEtiquettes={catalogueEtiquettes}
