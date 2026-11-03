@@ -17543,9 +17543,10 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       type ne se modifient pas, faute de privilège de colonne ; libellé, options, aide, « listé », position et archivage
       se modifient) :
       - [ ] **T3.a — Réglages ▸ « Champs de l'affaire »** (`/reglages/champs`) : liste, créer, modifier, réordonner,
-            archiver et désarchiver, « Afficher dans la liste » ; le refus `common_field_in_use` qui nomme les
-            transitions ; l'entrée de l'index ; capacité d'administration (§5.59). PostgREST seul, aucune migration ;
-            unitaires ; E2E.
+            archiver et désarchiver ; le refus `common_field_in_use` qui nomme les transitions ; l'entrée de l'index ;
+            capacité d'administration (§5.59). PostgREST seul, aucune migration ; unitaires ; E2E. *Forme écrite avant
+            le code* : `docs/DESIGN_SYSTEM.md` §5.86 ; la case « Afficher dans la liste » passe à T4, qui pose la colonne
+            qu'elle commande (`docs/SPEC-champs-communs.md` §7).
       - [ ] **T3.b — l'exigence dans l'éditeur de workflow**, et **T2.c.2** (la collection dans les deux comparaisons de
             versions, migration) : exiger et ne plus exiger un champ commun sous chaque transition ; unitaires ; pgTAP ;
             E2E.
@@ -17554,7 +17555,8 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
             champ commun par son libellé (board et fiche) ; unitaires ; E2E.
       - [ ] **T3.d — le fil** : `field_changed` d'une valeur commune (`placement_id` nul, `scope: "common"`, §7), et son
             rendu « partie commune » ; migration si l'écriture manque ; pgTAP ; unitaires.
-- [ ] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; unitaires ; API.
+- [ ] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; la case « Afficher dans la liste » de
+      Réglages ▸ « Champs de l'affaire » (reportée de T3.a, `docs/DESIGN_SYSTEM.md` §5.86) ; unitaires ; API.
 - [ ] **T5** — modèles d'email : `{{card.field.<clé>}}`, contrôle d'écriture par déclencheur, rendu, sélecteur.
 - [ ] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
 - [ ] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.

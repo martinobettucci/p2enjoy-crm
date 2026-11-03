@@ -169,6 +169,9 @@ garde : désarchiver les rend.
   réemploie les éléments de l'éditeur de formulaire des workflows (`ElementsFormulaireAdmin`). Consultable par tout
   membre, commandes réservées à l'administrateur par la capacité d'administration de `CRM-093`
   (`docs/DESIGN_SYSTEM.md` §5.59). Un refus `common_field_in_use` affiche la liste qu'il nomme.
+  *Précisé le 2026-11-03, avant le code de T3.a (`docs/DESIGN_SYSTEM.md` §5.86)* : la case « Afficher dans la liste »
+  arrive avec T4, qui pose la colonne qu'elle commande ; rendue avant, elle ne commanderait rien. L'entrée de l'index
+  vient après « Workflows ».
 - **L'éditeur de workflow** : parmi les champs qu'une transition peut exiger, les champs communs de l'espace, marqués
   comme tels.
 - **La fiche** : les champs communs non archivés paraissent dans la partie commune, sous les champs natifs, dans

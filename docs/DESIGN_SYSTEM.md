@@ -7580,3 +7580,49 @@ channels paraît dans le board et la liste de chacun ; la pastille dit qu'elle e
 - **Place** : sur la carte du board, avec les pastilles d'étiquettes et de sommeil, après elles ; dans la vue liste, dans
   la cellule « Affaire », `shrink-0` après le titre — la densité d'une ligne ne bouge pas (§5.3 quinquies).
 - **Aucune couleur, aucun jeton nouveau** ; `FolderInput` déjà nommée au §5.84.
+
+### 5.86 Réglages ▸ « Champs de l'affaire » — `CRM-112` T3.a
+
+*Écrit le 2026-11-03, avant le code, après relecture intégrale de ce document le même jour.* Ce que l'écran lit, écrit et
+refuse est spécifié par `docs/SPEC-champs-communs.md` §3.2, §4, §6 et §7 ; ces règles ne disent que de quoi il a l'air.
+**L'écran réemploie les éléments de l'éditeur de formulaire des workflows (§5.15), extraits sans changer leur rendu** : la
+ligne d'un champ, son formulaire de déclaration et d'édition, l'éditeur de choix, la confirmation d'archivage. Deux
+écrans qui déclarent la même chose — un champ — la déclarent de la même façon (§5.29 bis).
+
+- **L'ENTRÉE « Champs de l'affaire » VIENT APRÈS « Workflows » DANS L'INDEX**, avant « Modèles d'affaires » : un workflow
+  porte ses propres champs, l'espace porte ceux de toute affaire, et un modèle remplit les uns et les autres. Elle reste un
+  **lien pour tous** : l'écran se consulte (§5.59, §5.61).
+- **TITRE `h2` « Champs de l'affaire »**, puis une phrase en 13 px `--color-text-2`, `max-w-[72ch]` : « Ces champs
+  paraissent sur toute affaire de l'espace, quel que soit son channel. Une transition peut les exiger. » Largeur de
+  l'écran `max-w-[104ch]`, celle des modèles et des étiquettes (§5.71, §5.73).
+- **UNE LISTE PLATE, UNE LIGNE PAR CHAMP**, dans l'ordre de `position` : la ligne de champ de l'éditeur (§5.15), telle
+  quelle — libellé en `font-medium`, clé en `code`, type en mot, mention « Archivé » (`Archive`) pour un archivé, aide en
+  `--color-text-3`, puis « Monter » (`ArrowUp`), « Descendre » (`ArrowDown`), « Modifier » (`Pencil`), « Archiver »
+  (`Archive`) ou « Rétablir » (`ArchiveRestore`), noms accessibles nommant le champ. Les commandes d'ordre sont
+  désactivées aux extrémités, jamais masquées (§5.15).
+- **« Afficher les archivés »**, la case du §5.29 bis, au-dessus de la liste ; rendue même quand aucun champ n'est archivé.
+- **« Nouveau champ », primaire, `Plus`**, au-dessus de la liste, et dans l'état vide (§5.51). Il ouvre le formulaire de
+  champ de l'éditeur **dans le flux, en tête de la liste**, et la commande et le formulaire s'excluent (§5.23) : clé,
+  libellé, type, choix pour une liste, devise pour un montant, aide. **À l'édition, la clé et le type se lisent en phrase**,
+  jamais en champ désactivé (§5.15) : la base ne les laisse pas modifier, et le formulaire de l'éditeur le dit déjà ainsi.
+  Le formulaire d'édition s'ouvre **sous la ligne** qu'il modifie.
+- **ARCHIVER OUVRE LA CONFIRMATION DE L'ÉDITEUR**, sous la ligne, qui nomme le champ et dit l'effet : le champ quitte la
+  partie commune de chaque affaire, ses valeurs sont gardées, et « Rétablir » les rend. Son bouton est destructif, comme
+  dans l'éditeur. **« Rétablir » n'en demande aucune** : il se défait d'un geste (§5.16).
+- **LE REFUS `common_field_in_use` NOMME LES TRANSITIONS ET LE GESTE QUI LE LÈVE** (§5.29 bis), dans la confirmation,
+  `role="alert"` : « Ce champ est exigé par des transitions : Cycle commercial standard : Négociation → Signature. Retirez
+  ces exigences dans l'éditeur de workflows avant de l'archiver. », suivi du lien **« Ouvrir l'éditeur de workflows »**
+  (forme du lien de l'état vide, §5.51). La liste des transitions est une **donnée** — la base l'écrit —, jamais traduite.
+  Les modèles d'email s'y ajouteront avec `CRM-112` T5.
+- **LES COMMANDES SUIVENT LA CAPACITÉ D'ADMINISTRER L'ESPACE** (§5.59) : refusée par la base, le motif générique
+  `rights.readonly.administration` est posé en tête de l'écran, et « Nouveau champ » et chaque commande de ligne sont
+  montés, désactivés, lisibles. Pendant la lecture de la capacité, désactivés sans motif ; sur un défaut, offerts.
+- **LA CASE « Afficher dans la liste » N'EST PAS RENDUE ICI AVANT `CRM-112` T4** — *écart borné au §7 de la
+  spécification* : elle commande une colonne de la vue liste que T4 seul pose, et une case qui ne commande encore rien
+  serait la commande morte du §5.10 — la règle que le §5.74 tient pour un canal absent. Elle viendra avec sa colonne.
+- **ÉTATS** (§5.8) : squelette au premier chargement seulement, la relecture après une écriture gardant la liste
+  (§5.29 tranche 2 c) ; erreur avec « Réessayer » ; vide « Aucun champ de l'affaire dans cet espace. », avec « Nouveau
+  champ ». Les issues s'annoncent dans une région vivante polie : « Champ « … » enregistré », « archivé », « rétabli ».
+- **SOUS `md`**, la ligne se replie — libellé et pilules, puis les commandes —, cibles conservées ; les champs du
+  formulaire prennent toute la largeur. `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : tout vient de l'éditeur de workflows (§5.15).
