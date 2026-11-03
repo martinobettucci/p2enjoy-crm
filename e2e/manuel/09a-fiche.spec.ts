@@ -91,6 +91,9 @@ test('une affaire du seed : la fiche, la santé, l’adresse', async ({ page, co
 	await illustrer(page, { chapitre: CHAPITRE, section: S.contacts, nom: 'contacts-de-l-affaire', cibles: [page.getByTestId('bloc-contacts-card')] })
 	const activites = page.getByTestId('bloc-activites-card')
 	await activites.getByText('Compte rendu', { exact: true }).first().click()
+	// *Révisé par la campagne de livraison du 2026-11-03* : le bloc « Rattachements » (`CRM-111` T7) allonge la fiche, et
+	// le défilement de Playwright ne ramenait plus le titre et le bloc ensemble dans la fenêtre. Le titre est mis en haut.
+	await page.getByRole('heading', { name: 'Contacts de l’affaire' }).evaluate((titre) => titre.scrollIntoView({ block: 'start' }))
 	await illustrer(page, {
 		chapitre: CHAPITRE,
 		section: S.activites,
@@ -274,8 +277,10 @@ test('une affaire neuve : le refus du déplacement, la reprise, l’en-tête, le
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await activites.getByTestId('envoyer-activite').click()
 		await expect(activites.getByTestId('ligne-activite')).toHaveCount(1)
-		await activites.getByTestId('actions-activite').first().click()
-		await page.getByRole('menuitem', { name: /Retirer/ }).or(page.getByRole('button', { name: /^Retirer/ })).first().click()
+		// *Révisé par la campagne de livraison du 2026-11-03* : « Retirer » est cherché DANS les commandes de l'activité. Cherché
+		// dans la page, il trouvait d'abord le « Retirer » éteint d'une ligne du bloc « Rattachements » (`CRM-111` T7.4), et le
+		// clic attendait jusqu'à la fin du temps imparti.
+		await activites.getByTestId('actions-activite').first().getByRole('button', { name: /^Retirer/ }).click()
 		await activites.getByTestId('confirmer-retrait-activite').click()
 		await expect(activites.getByTestId('activite-retiree').first()).toHaveText('Activité retirée')
 		await illustrer(page, { chapitre: CHAPITRE, section: S.activites, nom: 'activite-retiree', cibles: [activites.getByTestId('ligne-activite').first()] })
