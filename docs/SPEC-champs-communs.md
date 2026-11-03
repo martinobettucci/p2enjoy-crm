@@ -130,6 +130,10 @@ création. Une **transition** peut en revanche l'exiger : « pour passer en Sign
 - **La sixième vérification de `move_card`** (`docs/SPEC-form-composer.md` §6.7) contrôle l'union des champs de workflow
   exigés, lus sur les valeurs du **rattachement**, et des champs communs exigés, lus sur les valeurs de l'**affaire**.
   Le refus reste `missing_required_fields`, et sa liste nomme les deux sortes de champs.
+  **Livré par T2.b (migration `0156`)** : les clés des champs de workflow manquants, puis celles des champs communs, dans
+  le même `DETAIL`. **Reste à T3** : la webapp résout les clés du refus en libellés en lisant `form_fields`
+  (`docs/SPEC-workflow-engine.md`, tableau des refus). Elle ne trouvera pas une clé de champ commun, et doit la chercher
+  dans `card_common_fields`.
 - **Versions de workflow** (`CRM-078`) : la composition photographiée référence le champ commun par son **identifiant**
   et sa **clé** ; elle ne le copie pas. Restaurer une version qui exige un champ commun archivé est **refusé**
   (`common_field_archived`) **[proposition]**.

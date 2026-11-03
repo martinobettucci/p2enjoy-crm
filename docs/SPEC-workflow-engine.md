@@ -2083,7 +2083,7 @@ Les codes HTTP sont **mesurés** contre PostgREST `v14.12` selon la table du §4
 | 4 | Une transition est déclarée de l'étape courante vers la cible | `transition_not_allowed` | `P0001` | `400` |
 | 5 | Le commentaire est fourni si la transition l'exige | `comment_required` | `P0001` | `400` |
 | 5 bis | Le commentaire fourni tient dans les bornes d'un commentaire — 10 000 caractères | `comment_too_long` | `P0001` | `400` |
-| 6 | Les champs requis de l'étape cible sont renseignés | `missing_required_fields`, `DETAIL` portant les clés manquantes | `P0001` | `400` |
+| 6 | Les champs requis de l'étape cible sont renseignés — et, depuis `CRM-112` T2.b (migration `0156`), les **champs communs** que la transition exige, lus sur l'affaire (`docs/SPEC-champs-communs.md` §5) | `missing_required_fields`, `DETAIL` portant les clés manquantes, celles des champs de workflow puis celles des champs communs | `P0001` | `400` |
 | 6 bis | Les points de checklist que la transition exige sont cochés sur le rattachement — *ajoutée par `CRM-068` T2, migration `0128`, `docs/SPEC-checklists.md` §3.4* | `checklist_incomplete`, `DETAIL` portant un tableau JSON des libellés manquants | `P0001` | `400` |
 
 **L'ordre des deux premières est une règle de discrétion, reprise du §4.3 et non réinventée.**

@@ -2481,6 +2481,15 @@ uuid)` et `drop function public.mail_inbound_account_record_sync(uuid)`, **avec 
 d'avant** : l'image de `main` appelle `mail_inbound_account_record_sync` à chaque relève, et chaque relève échouerait sans
 elle.
 
+### Migration `0156` — `move_card` lit les champs communs exigés (`CRM-112` T2.b, décisions 664 et 819 ; livrée en développement le 2026-11-03)
+
+`docs/SPEC-champs-communs.md` §5 ; `docs/SPEC-workflow-engine.md` §5.3. **`public.move_card`** est reprise à l'identique
+de sa définition en base (migration `0128`), avec un seul ajout, à la fin de la vérification 6 : les champs communs que
+la transition exige (`workflow_transition_required_common_fields`), non archivés, sans valeur non vide **sur l'affaire**
+(`card_common_field_values`). Leurs clés suivent celles des champs de workflow dans le `DETAIL` de
+`missing_required_fields`. Signature, privilèges et autres vérifications inchangés. **Retrait** : reposer la définition de
+la migration `0128`.
+
 ### Migration `0155` — une transition exige un champ commun (`CRM-112` T2.a, décisions 664 et 819 ; livrée en développement le 2026-11-03)
 
 `docs/SPEC-champs-communs.md` §5 et §6.

@@ -17402,9 +17402,15 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
             - deux comptes révisés, non relâchés (décision 51) : les politiques de `public` (`0016`, 194) et les levées
               par `app.raise_http_error(404, …)` (`0133`, 30) ;
             - types régénérés, témoin des tables tenu ; `docs/SCHEMA.md` « Migration `0155` », contrat (§3, ligne 155).
-      - [ ] **T2.b — la sixième vérification de `move_card`** (0128) : l'union des champs de workflow, lus sur le
+      - [x] **T2.b — la sixième vérification de `move_card`** (0128) : l'union des champs de workflow, lus sur le
             rattachement, et des champs communs, lus sur l'affaire ; `missing_required_fields` nomme les deux ; pgTAP ;
             API aux vrais jetons.
+            *Faite le 2026-11-03*, migration `0156` :
+            - pgTAP `0145` **6/6** : refus, détail, valeur vide, passage, valeur d'une autre affaire ;
+            - `e2e/api/move-card-champs-communs.spec.ts` **1/1** aux vrais jetons, refus seul pour ne pas salir le seed ;
+            - sans régression : suite pgTAP **133 fichiers, 4 829 assertions**, et les 15 specs API qui appellent
+              `move_card`, **292/292** ;
+            - reste à T3 la résolution des libellés d'un refus qui nomme un champ commun.
       - [ ] **T2.c — versions et copies** : photographie par identifiant et clé (0039, 0122) ; comparaison (0040,
             0043) ; restauration (0042, 0086, 0122), refusée par `common_field_archived` ; copie vers un track (0019) ;
             journal d'audit (0115) ; pgTAP ; API.
