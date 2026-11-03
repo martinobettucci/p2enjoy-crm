@@ -134,8 +134,8 @@ fixé par la tranche T1 (§11.5), versionné (`version: 1`).
 ```
 
 > **Ajouté par `CRM-112` T2.d, le 2026-11-03 (décision 825).**
-> - `exigences_communes` est **facultative**. Une proposition qui ne la porte pas n'exige aucun champ commun, et une
->   révision antérieure reste lisible telle quelle.
+> - `exigences_communes` est **facultative**. Une proposition qui ne la porte pas ne change rien aux exigences de champ
+>   commun (voir plus bas), et une révision antérieure reste lisible telle quelle.
 > - `champ` y nomme un **champ commun existant** de l'espace, non archivé, par sa clé. L'assistant **n'en crée jamais** :
 >   les champs communs se définissent dans Réglages (`docs/SPEC-champs-communs.md` §5, §7).
 > - Les consignes du modèle reçoivent la liste des champs communs de l'espace (clé, libellé, type).
