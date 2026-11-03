@@ -17584,9 +17584,10 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
               relues en base, lectrice refusée en `403`, quatre paliers), éditeur et versions sans régression **87/87** ;
               captures observées ;
             - manuel §18.9 et §18.16 avec une image, `verify-manual` sans anomalie.
-      - [ ] **T3.c — la partie commune de la fiche** : les valeurs, éditables ou en lecture selon la capacité de
+      - [@] **T3.c — la partie commune de la fiche** : les valeurs, éditables ou en lecture selon la capacité de
             l'affaire ; un champ archivé porteur d'une valeur, marqué ; le refus `missing_required_fields` qui nomme un
             champ commun par son libellé (board et fiche) ; unitaires ; E2E.
+            *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-3a) depuis 2026-11-03 16:20 UTC — état avant : [ ]*
       - [ ] **T3.d — le fil** : `field_changed` d'une valeur commune (`placement_id` nul, `scope: "common"`, §7), et son
             rendu « partie commune » ; migration si l'écriture manque ; pgTAP ; unitaires.
 - [ ] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; la case « Afficher dans la liste » de
