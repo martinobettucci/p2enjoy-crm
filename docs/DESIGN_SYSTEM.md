@@ -7481,3 +7481,28 @@ son adresse (§5.81), jamais en second jeu de blocs dans la page.
 - **Le succès ouvre la fiche à l'adresse du nouveau rattachement** (§5.81) : c'est là qu'on le règle — étape,
   responsable, montant. Le fil y porte l'événement « rattachée ».
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.**
+
+### 5.84 « Retirer » un rattachement, et sa confirmation — `CRM-111` T7.4
+
+*Écrit le 2026-11-03, avant le code (décision 823 ; `docs/SPEC-rattachements.md` §4, §5 « Retirer », décision 643).*
+Retirer n'est pas archiver : le rattachement **disparaît**, avec son étape, son responsable, son montant, sa prochaine
+action et les réponses de son formulaire. Le geste est réservé aux administrateurs de l'espace et refusé sur le dernier
+rattachement d'une affaire.
+
+- **« Retirer » vit sur chaque ligne du bloc** (§5.82), après « Archiver » : secondaire compacte, icône `Unlink` de
+  Lucide. Comme au §5.3, c'est la commande **qui ouvre la confirmation** : elle n'est pas destructive ; le bouton de la
+  confirmation l'est.
+- **Éteinte avec un motif** (§5.59), dans deux cas que la base dit ou que la liste établit : l'appelant n'administre pas
+  l'espace (la capacité `administration` de l'espace, motif `rights.readonly.administration` du §5.59, rendu une fois en
+  tête du bloc) ; l'affaire n'a plus qu'un rattachement (motif propre, « Une affaire garde au moins un rattachement :
+  le dernier ne se retire pas. »). Les deux motifs peuvent coexister : chacun dit une cause différente.
+- **La confirmation vit dans la ligne, dans le flux**, jamais en modale (§5.13) : le focus y entre, `Échap` et
+  « Annuler » la referment en rendant le focus à « Retirer ». Elle **nomme** le rattachement (« Track › Channel ») et la
+  **perte** : « Son étape, son responsable, son montant, sa prochaine action et les réponses de son formulaire sont
+  perdus. L'affaire reste dans ses autres channels. » Bouton destructif plein « Retirer le rattachement », secondaire
+  « Annuler ». Aucune case « je comprends » : la phrase dit la perte, le geste explicite la consent.
+- **Le refus se dit dans la confirmation**, `role="alert"`, aux jetons de danger : droits, dernier rattachement, affaire
+  illisible, réseau — chacun sa phrase.
+- **Le succès** : retirer **un autre** rattachement relit la fiche en place ; retirer **celui de la fiche** ouvre la
+  fiche au premier rattachement restant (ordre des tracks puis des channels), puisque l'adresse ne désigne plus rien.
+- **Aucune couleur, aucun jeton nouveau** ; une icône nouvelle, `Unlink`.
