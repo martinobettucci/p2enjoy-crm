@@ -7418,3 +7418,33 @@ tels quels.
 - **Une affaire illisible garde l'écran « introuvable »** (§5.3, `docs/SPEC-permissions-rls.md` §7). L'état dédié ne
   paraît que pour une affaire que l'appelant lit par au moins un rattachement : il ne révèle rien qu'il ne lise déjà.
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : l'icône et le ton de l'état vide (§5.8).
+
+### 5.82 Le bloc « Rattachements » de la fiche — `CRM-111` T7.2
+
+*Écrit le 2026-11-03, avant le code (décision 823 ; `docs/SPEC-rattachements.md` §8.1).* Il nomme les channels auxquels
+l'affaire est rattachée et porte les gestes sur ses rattachements ; il les **replie** : un autre rattachement s'ouvre à
+son adresse (§5.81), jamais en second jeu de blocs dans la page.
+
+- **Il vit sous l'en-tête, avant le bloc de santé** (§5.3 bis, §5.65) : il dit **où** l'affaire se trouve, juste après ce
+  qu'elle **est**. Carte du §5.3 (`rounded-lg border bg-surface p-4`), titre `h3` « Rattachements », `section` nommée par
+  lui.
+- **Une `ul` de lignes plates** (§5.18), une ligne par rattachement lisible, dans l'ordre des tracks puis des channels
+  (décision 814). Rien ne dit qu'un rattachement masqué existe (§4 de la spécification).
+- **Chaque ligne porte, dans cet ordre** : le chemin « Track › Channel » (forme du §5.54) ; l'étape ; le responsable — ou
+  « Aucun responsable », la phrase du §5.3 bis — ; le montant en donnée technique, sa devise dans son propre élément, la
+  ligne omise sans montant (§5.3 bis) ; les pilules « Archivé » et « En sommeil » de l'en-tête, telles quelles (§5.3 bis,
+  §5.3 quater). Termes et valeurs en `dl` n'ajouteraient que du bruit à une ligne : l'étape, le responsable et le montant
+  sont des segments séparés par des points médians, en 13 px `--color-text-2`, le chemin en `--color-ink` 14 px.
+- **Le rattachement de la fiche n'est pas un lien** : son chemin est du texte, suivi de la mention « fiche ouverte » en
+  13 px `--color-text-2`, et la ligne porte `aria-current="page"`. **Les autres chemins sont des liens** vers la fiche à
+  leur adresse — l'action « déplier » du repli.
+- **« Archiver » et « Désarchiver »**, sur chaque ligne : secondaire compacte (§5.5), icônes `Archive` et
+  `ArchiveRestore` de Lucide, une seule des deux selon l'état. Aucune confirmation : le geste est réversible d'un geste,
+  sans perte (la règle du réveil, §5.3 quater). **La commande n'est jamais éteinte d'avance** (§5.3 ter) : le droit est
+  celui d'écrire le channel du rattachement, la base refuse, et le refus se dit en `role="alert"` **dans la ligne**, aux
+  jetons `--color-danger-soft` / `--color-danger-on-soft`. Un succès relit la fiche : la pilule de l'en-tête et le
+  bloc disent le même état.
+- **Responsive** : la ligne passe à la ligne entre le chemin, les segments et la commande (`flex-wrap`) ; aucune largeur
+  fixe, aucun défilement horizontal à 390 px.
+- **Aucune couleur, aucun jeton nouveau** ; deux icônes Lucide nouvelles dans la fiche, `Archive` étant déjà celle de la
+  pilule.
