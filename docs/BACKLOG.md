@@ -17432,7 +17432,8 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable, session 4891a451) depuis 2026-11-03 12:45 UTC — état avant : [ ]*
       **Découpage, arrêté le 2026-11-03** : **T8.1** le seed (`docs/SPEC-seed.md` §36 — deux affaires, cinq situations, par
       les vraies fonctions ; convergence vérifiée par le seed) ; **T8.2** la campagne E2E complète sur le seed enrichi, les
-      preuves qui comptaient les affaires d'un channel révisées, `scripts/verify-seed-demo.sh` étendu.
+      preuves qui comptaient les affaires d'un channel révisées, `scripts/verify-seed-rattachements.sh` — un harnais propre plutôt
+      que `scripts/verify-seed-demo.sh` étendu, qui rejoue le seed et le dégrade.
 - [ ] **T9 — connecteur MCP** (§11) : `crm_card_attach`, `crm_card_placement_update`, `crm_card_placement_archive`,
       outils existants sur le rattachement ; refusés par la matrice puis par le CRM ; `docs/SPEC-mcp.md` §9.2.
 - [P] **Livraison en production**, sur instruction du responsable : sauvegarde, migration en fenêtre, `mail-sync`,
