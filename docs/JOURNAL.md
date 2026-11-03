@@ -38831,3 +38831,29 @@ jetons ; unitaires de l'éditeur et de la comparaison ; E2E ; captures ; manuel 
 
 **Conséquences** : fenêtre avec migration ; vérifications en lecture seule : registre à 159 lignes terminé par la 161,
 `preview_common_field_requirement` présente, `verifier.sh` ; consignation (baseline, changelog, backlog, INC-344).
+
+### décision 829 — `CRM-128` : les mails préparés du connecteur ; les deux questions MCP et l'écran de relecture
+
+*2026-11-03, session interactive 4891a451, réponses du responsable à `AskUserQuestion`, avant toute spécification.*
+**Problème** : INC-341 — `crm_mail_send` expédie sans relecture, contre la règle du responsable (décision 821).
+**Question 1 (MCP)** : la fonctionnalité doit-elle exister dans le connecteur ? **Réponse : « Préparer + lire/retirer »** —
+`crm_mail_send` ne fait plus que préparer, et l'assistant peut lister ses mails préparés et écarter un brouillon ; il
+n'envoie jamais et ne marque rien comme relu. **Question 2 (famille)** : **« messagerie existante »** — préparer est
+`ajouter`, lister `consulter`, écarter `supprimer` ; aucune migration de la liste fermée. **Question 3 (qui relit)** :
+**« La personne seule »** — seule la personne au nom de laquelle le mail est préparé le lit, le relit et l'envoie, avec
+sa propre identité ; tenu en base. **Question 4 (écran)** : **« Inbox + fiche »** — une entrée « Mails préparés » dans
+l'inbox, et l'encadré du mail préparé sur la fiche de son affaire.
+**Observations, mesurées avant d'écrire** : `authenticated` n'a que `SELECT` sur `mail_outbox` et
+`card_sequence_enrollments` ; les seules fonctions qu'un jeton de personne peut appeler pour faire partir un courrier
+sont `queue_outbound_email` et `armer_sequence_relance` ; le jeton interne du connecteur porte `iss = p2enjoy-crm/mcp`
+et `canal = mcp` (`docs/SPEC-mcp.md` §5), frappés par le service seul.
+**Décision de conception** (`docs/SPEC-mails-prepares.md`) : une table `mail_drafts` distincte de la file d'envoi ;
+`prepare_email`, `send_email_draft` (le contenu envoyé est celui du formulaire de relecture, puis l'envoi passe par
+`queue_outbound_email`), `discard_email_draft` ; `app.via_connector()` et le refus `review_required` de
+`queue_outbound_email`, `send_email_draft` et `armer_sequence_relance` sous le jeton du connecteur ; les relances
+automatiques inchangées. `crm_mail_send` est retiré sans alias, remplacé par `crm_mail_prepare`, `crm_mail_draft_list`
+et `crm_mail_draft_discard`. **Solutions écartées** : un état `awaiting_review` dans `mail_outbox` — la file d'envoi
+aurait porté des lignes modifiables et `reserver_envois` aurait dû les filtrer, une seule omission suffisant à les
+expédier ; une garde dans le seul connecteur — elle ne tiendrait pas « aucun détournement possible ». **Conséquences** :
+découpage en six tranches (§9 de la spécification), la migration au premier numéro libre après `0161`, livrée dans la
+même fenêtre que l'image `mcp` et la webapp.

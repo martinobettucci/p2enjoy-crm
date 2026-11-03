@@ -18465,4 +18465,22 @@ Question du connecteur : **non** (décision 816).
 *Créée le 2026-11-03 — décision 827 (« Unit, top priority »), INC-341.* La règle du responsable : un envoi demandé par le
 connecteur MCP ne part **jamais** directement, sans détournement possible ; il entre dans une file de mails préparés, que
 seule l'interface web permet de relire et d'envoyer. Les relances automatiques ne passent pas par cette file.
-Spécification à écrire et committer avant le code, après les deux questions MCP de `CLAUDE.md`.
+Spécification : `docs/SPEC-mails-prepares.md` ; décision 829 (les deux questions MCP : famille `messagerie` existante,
+préparer = `ajouter`, lister = `consulter`, écarter = `supprimer`, aucune case nouvelle ; la personne seule relit ;
+inbox et fiche).
+
+- [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-03 : `docs/SPEC-mails-prepares.md`, décision
+      829, `docs/SPEC-mcp.md` §9.2 *decies* (révision annoncée), INC-341 arbitrée.
+- [ ] **T2 — base** : migration au premier numéro libre après `0161` — `mail_drafts`, politiques, `app.via_connector`,
+      `prepare_email`, `send_email_draft`, `discard_email_draft`, refus `review_required` de `queue_outbound_email`,
+      `send_email_draft` et `armer_sequence_relance` sous le jeton du connecteur ; pgTAP (dont le recensement des voies
+      d'envoi) ; `docs/SCHEMA.md` ; contrat de déploiement.
+- [ ] **T3 — connecteur** : `crm_mail_prepare`, `crm_mail_draft_list`, `crm_mail_draft_discard`, genre d'ancre `draft`,
+      `crm_mail_send` retiré, consignes ; pytest ; intégration contre le vrai Keycloak, dont le contournement du
+      catalogue refusé par la base ; `docs/SPEC-mcp.md` §9.2 *decies* ; manuel §33.
+- [ ] **T4 — webapp** : `docs/DESIGN_SYSTEM.md` d'abord ; l'entrée « Mails préparés » de l'inbox, la relecture dans le
+      formulaire d'envoi, « Écarter », l'adresse `/inbox?brouillon=<id>`, l'encadré de la fiche, la phrase de l'onglet
+      « Connecteur MCP » ; unitaires, API, E2E, captures aux quatre paliers ; manuel (inbox, fiche).
+- [ ] **T5 — seed** (`docs/SPEC-seed.md`) et sa vérification.
+- [ ] **T6 — livraison en production**, sur instruction du responsable : migration, image `mcp` et webapp dans la même
+      fenêtre ; constat.

@@ -8676,6 +8676,9 @@ dédiée — une file de mails préparés (`mail_drafts` ou un état `awaiting_r
 l'expédition par la base, jamais par la seule interface), `crm_mail_send` qui y écrit, un écran web de relecture et
 d'envoi, l'envoi réservé à l'interface, les relances automatiques inchangées ; les deux questions MCP de `CLAUDE.md`.
 
+**Arbitrée le 2026-11-03** (décisions 827 et 829) : l'unité `CRM-128`, spécifiée par `docs/SPEC-mails-prepares.md`.
+L'incohérence reste ouverte jusqu'à la livraison de `CRM-128` T3 (le connecteur cesse d'envoyer) et T2 (la base refuse).
+
 ### INC-342 — cinq preuves dépendent de l'état accumulé de la base de développement partagée
 
 *Relevé le 2026-11-03 par la session de `CRM-111` T8 (campagnes E2E complètes avant et après le seed du §36).* Ces

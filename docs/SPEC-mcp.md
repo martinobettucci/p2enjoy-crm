@@ -851,6 +851,13 @@ connecteur paraît sur le canevas, avec son avancement.
 
 ### 9.2 decies Famille `messagerie` — `CRM-104` T7 (liste fixée, **validée par la session le 2026-10-24**, décision 684, **confirmée par le responsable**, décision 706 ; périmètre arbitré par la décision 676)
 
+> **Révisée par `CRM-128`** (décision 829, `docs/SPEC-mails-prepares.md` §5 ; *écrit le 2026-11-03, avant le code*) :
+> **le connecteur n'envoie plus**. `crm_mail_send` est retiré du catalogue, sans alias ; `crm_mail_prepare` écrit un
+> mail préparé que seule la personne relit et envoie depuis l'interface web, `crm_mail_draft_list` liste ses mails
+> préparés en attente, `crm_mail_draft_discard` en écarte un (genre d'ancre `draft`). Même famille, actions `ajouter`,
+> `consulter` et `supprimer`, aucune case nouvelle. La base refuse tout envoi direct sous le jeton du connecteur
+> (`review_required`). Ce qui suit décrit l'état livré par `CRM-104` T7, jusqu'à la livraison de `CRM-128` T3.
+
 **Trois outils** : lire les messages d'une affaire, en lire un, et **envoyer un email depuis une affaire** par la même
 file que l'écran (`envoi.ts`, `inbox.ts`) — `public.queue_outbound_email`, qui garde le droit d'écrire sur l'affaire,
 le droit d'emprunter l'identité d'expédition, la signature, le quota et le journal de l'affaire.
