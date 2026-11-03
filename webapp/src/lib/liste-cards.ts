@@ -14,6 +14,7 @@
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone) ; docs/DESIGN_SYSTEM.md §5.9 (tableau)
 // @spec CRM-105 (docs/BACKLOG.md) — `description` portée par chaque ligne, pour l'infobulle du titre
 //       (docs/SPEC-cards.md §12.3, docs/DESIGN_SYSTEM.md §5.58)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T7.5 : les autres rattachements de chaque ligne (docs/DESIGN_SYSTEM.md §5.85)
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la page lit les rattachements du channel, le tri et la recherche
 //       traduits vers l'affaire plongée là où ils la visent (docs/SPEC-rattachements.md §8)
 //
@@ -24,6 +25,7 @@
 // Sans session, la lecture rend `200` et un total de zéro ; avec la session restaurée par
 // `CRM-009`, elle rend les lignes consenties par la RLS. Le module ne bifurque jamais sur un rôle.
 
+import { autresRattachements, type CheminRattachement, type RattachementPlonge } from './aussi-rattachee'
 import { etiquettesDeLAffaire, type Etiquette, type EtiquetteLue } from './etiquettes'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
@@ -127,6 +129,8 @@ export type RattachementListe = Pick<
 	readonly responsable: ProfilAffiche | null
 	readonly affaire: Pick<Database['public']['Tables']['cards']['Row'], 'id' | 'title' | 'description' | 'currency'> & {
 		readonly etiquettes?: readonly { readonly etiquette: EtiquetteLue | null }[] | null
+		/** `CRM-111` T7.5 : les rattachements lisibles de l'affaire, pour la pastille « aussi rattachée à » (§5.85). */
+		readonly rattachements?: readonly RattachementPlonge[] | null
 	}
 }
 
@@ -145,6 +149,7 @@ export function ligneDepuisRattachement(ligne: RattachementListe): CardListe {
 		snoozed_until: ligne.snoozed_until,
 		responsable: ligne.responsable ?? null,
 		etiquettes: etiquettesDeLAffaire(ligne.affaire.etiquettes),
+		autresRattachements: autresRattachements(ligne.affaire.rattachements, ligne.id),
 	}
 }
 
@@ -309,6 +314,8 @@ export type CardListe = Pick<
 	readonly responsable: ProfilAffiche | null
 	/** `CRM-069` T2 (docs/DESIGN_SYSTEM.md §5.73) : les étiquettes de l'affaire, triées par nom. */
 	readonly etiquettes?: readonly Etiquette[]
+	/** `CRM-111` T7.5 (docs/DESIGN_SYSTEM.md §5.85) : ses autres rattachements lisibles. */
+	readonly autresRattachements?: readonly CheminRattachement[]
 }
 
 /**

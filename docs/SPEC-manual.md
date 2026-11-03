@@ -573,6 +573,7 @@ chapitre. La preuve du §16 vérifie que chaque identifiant de cette table exist
 | `CRM-044` | l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre | l-historique-et-la-discussion-d-une-affaire |
 | `CRM-081` | l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre | mettre-une-affaire-en-sommeil-et-la-retrouver |
 | `CRM-045` | l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre | ranger-une-affaire-dans-un-autre-dossier |
+| `CRM-111` | l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre | rattacher-une-affaire-a-plusieurs-channels |
 | `CRM-076` | composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire | — |
 | `CRM-031` | composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire | creer-un-workflow |
 | `CRM-097` | composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire | creer-un-workflow-avec-l-ia |

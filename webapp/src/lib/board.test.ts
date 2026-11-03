@@ -577,6 +577,8 @@ describe('les quatre lectures du board (§7.2)', () => {
 			snoozed_until: null,
 			responsable: null,
 			card_placements: [{ id: 'rattachement-1', created_at: '2026-01-01T00:00:00Z' }],
+			// `CRM-111` T7.5 : l'affaire n'a pas d'autre rattachement plongé — aucune pastille (§5.85).
+			autresRattachements: [],
 		})
 	})
 

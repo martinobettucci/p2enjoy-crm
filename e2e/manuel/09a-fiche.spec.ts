@@ -32,6 +32,8 @@ const S = {
 	activites: 'les-activites-d-une-affaire-appels-reunions-visios',
 	checklist: 'la-checklist-d-une-affaire-les-points-a-cocher',
 	corbeille: 'mettre-une-affaire-a-la-corbeille',
+	// `CRM-111` T7.6 : la section qui rassemble les rattachements (docs/manual.md §9.17).
+	rattachements: 'rattacher-une-affaire-a-plusieurs-channels',
 } as const
 
 const GRANDS_COMPTES = '/tracks/conseil-ia/grands-comptes'
@@ -123,7 +125,7 @@ test('une affaire rattachée ailleurs : l’adresse d’un channel où elle n’
 		await page.goto(`/tracks/studio-web/maintenance/cards/${affaire}`)
 		const etat = page.getByTestId('etat-vide')
 		await expect(etat.getByRole('link')).toHaveCount(2)
-		await illustrer(page, { chapitre: CHAPITRE, section: S.fiche, nom: 'pas-rattachee-ici', cibles: [etat] })
+		await illustrer(page, { chapitre: CHAPITRE, section: S.rattachements, nom: 'pas-rattachee-ici', cibles: [etat] })
 		// La fiche dans un de ses channels : le bloc « Rattachements », l'autre rattachement en lien.
 		await etat.getByRole('link', { name: 'Studio web › Refonte de site' }).click()
 		const bloc = page.getByTestId('bloc-rattachements')
@@ -135,17 +137,17 @@ test('une affaire rattachée ailleurs : l’adresse d’un channel où elle n’
 		await expect(autre.getByTestId('rattachement-archive')).toBeVisible()
 		// La souris quitte la commande : l'image montre son repos, non son survol.
 		await page.mouse.move(0, 0)
-		await illustrer(page, { chapitre: CHAPITRE, section: S.fiche, nom: 'rattachements', cibles: [bloc] })
+		await illustrer(page, { chapitre: CHAPITRE, section: S.rattachements, nom: 'rattachements', cibles: [bloc] })
 		await bloc.getByTestId('ouvrir-rattacher').click()
 		const champ = bloc.getByTestId('champ-channel-rattacher')
 		await expect(champ).toBeFocused()
 		await champ.selectOption({ label: 'Studio web › Maintenance' })
-		await illustrer(page, { chapitre: CHAPITRE, section: S.fiche, nom: 'rattacher', cibles: [bloc.getByTestId('formulaire-rattacher')] })
+		await illustrer(page, { chapitre: CHAPITRE, section: S.rattachements, nom: 'rattacher', cibles: [bloc.getByTestId('formulaire-rattacher')] })
 		await bloc.getByTestId('annuler-rattacher').click()
 		await autre.getByTestId('ouvrir-retrait-rattachement').click()
 		const confirmation = autre.getByTestId('confirmation-retrait-rattachement')
 		await expect(confirmation.getByTestId('confirmer-retrait-rattachement')).toBeFocused()
-		await illustrer(page, { chapitre: CHAPITRE, section: S.fiche, nom: 'retirer', cibles: [confirmation] })
+		await illustrer(page, { chapitre: CHAPITRE, section: S.rattachements, nom: 'retirer', cibles: [confirmation] })
 		// Le retrait réellement fait (l'affaire est jetable) : le fil nomme alors les deux gestes, image « fil-rattachements ».
 		await confirmation.getByTestId('confirmer-retrait-rattachement').click()
 		await expect(bloc.getByTestId('ligne-rattachement')).toHaveCount(1)
@@ -153,7 +155,7 @@ test('une affaire rattachée ailleurs : l’adresse d’un channel où elle n’
 		const rattachee = page.locator('li').filter({ hasText: 'Rattachée à un channel' })
 		const retire = page.locator('li').filter({ hasText: 'Rattachement retiré' })
 		await expect(retire).toBeVisible()
-		await illustrer(page, { chapitre: CHAPITRE, section: S.fiche, nom: 'fil-rattachements', cibles: [rattachee, retire] })
+		await illustrer(page, { chapitre: CHAPITRE, section: S.rattachements, nom: 'fil-rattachements', cibles: [rattachee, retire] })
 	} finally {
 		await detruireAffaire(request, affaire)
 	}

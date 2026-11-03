@@ -2751,6 +2751,37 @@
 			]
 		},
 		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/aussi-rattachee.jpg",
+			"largeur": 415,
+			"hauteur": 210,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "le-tableau-kanban-d-un-channel",
+			"pleinePage": false,
+			"libelles": [
+				"+",
+				"+1",
+				"0",
+				"0 j dans cette étape",
+				"1",
+				"82",
+				"85",
+				"Actions",
+				"Actions Portail partagé des adhérents",
+				"Aussi rattachée à",
+				"Aussi rattachée à 1 autre channel",
+				"Dynamique",
+				"Dynamique 85",
+				"Dynamique 85 sur 100, sain",
+				"Portail partagé des adhérents",
+				"Portail partagé des adhérents Dynamique 85 Santé 82 0 j dans cette étape +1 Studio web › Refonte de site Actions",
+				"Santé",
+				"Santé 82",
+				"Santé 82 sur 100, sain",
+				"Studio web › Refonte de site",
+				"j dans cette étape"
+			]
+		},
+		{
 			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/barre-du-tableau.jpg",
 			"largeur": 1160,
 			"hauteur": 72,
@@ -3452,17 +3483,17 @@
 			"largeur": 519,
 			"hauteur": 187,
 			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
-			"section": "la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent",
+			"section": "rattacher-une-affaire-a-plusieurs-channels",
 			"pleinePage": false,
 			"libelles": [
-				"03/11/2026 11:45",
-				"03/11/2026 11:45par Camille Aubert",
+				"03/11/2026 12:49",
+				"03/11/2026 12:49par Camille Aubert",
 				"Affaire archivée",
-				"Affaire archivée 03/11/2026 11:45par Camille Aubert",
+				"Affaire archivée 03/11/2026 12:49par Camille Aubert",
 				"Rattachement retiré",
-				"Rattachement retiré 03/11/2026 11:45par Camille Aubert",
+				"Rattachement retiré 03/11/2026 12:49par Camille Aubert",
 				"Rattachée à un channel",
-				"Rattachée à un channel 03/11/2026 11:45par Camille Aubert",
+				"Rattachée à un channel 03/11/2026 12:49par Camille Aubert",
 				"par Camille Aubert"
 			]
 		},
@@ -3770,7 +3801,7 @@
 			"largeur": 548,
 			"hauteur": 312,
 			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
-			"section": "la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent",
+			"section": "rattacher-une-affaire-a-plusieurs-channels",
 			"pleinePage": false,
 			"libelles": [
 				"Cette affaire n'est pas rattachée à ce channel",
@@ -3824,7 +3855,7 @@
 			"largeur": 650,
 			"hauteur": 311,
 			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
-			"section": "la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent",
+			"section": "rattacher-une-affaire-a-plusieurs-channels",
 			"pleinePage": false,
 			"libelles": [
 				"Archiver",
@@ -3870,7 +3901,7 @@
 			"largeur": 650,
 			"hauteur": 149,
 			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
-			"section": "la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent",
+			"section": "rattacher-une-affaire-a-plusieurs-channels",
 			"pleinePage": false,
 			"libelles": [
 				"Annuler",
@@ -3960,7 +3991,7 @@
 			"largeur": 650,
 			"hauteur": 186,
 			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
-			"section": "la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent",
+			"section": "rattacher-une-affaire-a-plusieurs-channels",
 			"pleinePage": false,
 			"libelles": [
 				"Annuler",

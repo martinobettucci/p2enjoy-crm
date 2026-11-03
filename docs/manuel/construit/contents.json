@@ -336,8 +336,12 @@
 					"title": "9.16 Les étiquettes d'une affaire"
 				},
 				{
+					"anchor": "rattacher-une-affaire-a-plusieurs-channels",
+					"title": "9.17 Rattacher une affaire à plusieurs channels"
+				},
+				{
 					"anchor": "ce-qui-n-est-pas-encore-offert",
-					"title": "9.17 Ce qui n'est pas encore offert"
+					"title": "9.18 Ce qui n'est pas encore offert"
 				}
 			]
 		},

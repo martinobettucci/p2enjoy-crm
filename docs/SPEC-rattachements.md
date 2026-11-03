@@ -441,7 +441,7 @@ déclencheur n'est jamais suspendu.
 - **Ma journée, Affaires figées, Pilotage, Rentabilité** : une ligne par rattachement, la partie commune rappelée.
 - `docs/DESIGN_SYSTEM.md` recevra le bloc de rattachement, la pastille « aussi rattachée à » et la confirmation de
   retrait, et `docs/manual.md` un chapitre « Rattacher une affaire à plusieurs channels », dans les tranches qui les
-  livrent.
+  livrent. *Livrés par T7 : §5.81 à §5.85 du design system ; le manuel en section 9.17 (décision 824).*
 
 ### 8.1 La forme livrée par T7 — décision 823
 

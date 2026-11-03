@@ -27,6 +27,8 @@
 //       (INC-259, décision 612 ; docs/SPEC-workflow-engine.md §7.8 révisé)
 // @spec CRM-105 (docs/BACKLOG.md) — la description d'une affaire en infobulle sur le titre de sa carte
 //       (docs/DESIGN_SYSTEM.md §5.58, docs/SPEC-workflow-engine.md §7.2, décision 629)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T7.5 : la pastille « aussi rattachée à N » sur la carte (docs/DESIGN_SYSTEM.md
+//       §5.85)
 //
 // Ce composant **rend** ; il ne compose pas. Les colonnes, l'ordre, les cumuls, l'ancienneté et
 // la classification des refus vivent dans `webapp/src/lib/board.ts`, où ils sont vérifiables sans
@@ -35,6 +37,7 @@
 // Aucune règle d'accès n'est portée ici : ce que le board montre est ce que la RLS a consenti à
 // rendre, et ce qu'il n'offre pas, `move_card` le refuse de son côté (CLAUDE.md §10).
 
+import { PastilleAussiRattachee } from '../components/ui/AussiRattachee'
 import { PastillesEtiquettes } from '../components/ui/PastilleEtiquette'
 import { CalendarClock, Clock, GripVertical, Moon, SquareCheck, Sun, TriangleAlert } from 'lucide-react'
 import { useCallback, useId, useMemo, useState } from 'react'
@@ -664,7 +667,10 @@ function CarteDeCard({
 				    suivante plutôt que de déborder : une carte fait 288 px, et « 12 jours » suivi
 				    d'une date ne tient pas toujours. Le conteneur n'existe que si l'une des deux a
 				    quelque chose à dire — un `div` vide ajouterait un `gap` visible sous l'avatar. */}
-				{carte.seuilJours === null && !carte.enSommeil && card.checklist === undefined ? null : (
+				{carte.seuilJours === null &&
+				!carte.enSommeil &&
+				card.checklist === undefined &&
+				(card.autresRattachements ?? []).length === 0 ? null : (
 					<div className="flex flex-wrap items-center gap-2">
 						{carte.seuilJours === null ? null : (
 							<p
@@ -689,6 +695,8 @@ function CarteDeCard({
 						{/* LA CHECKLIST DE L'ÉTAPE — `CRM-068` T3a, §5.70 : à côté de l'ancienneté, sa phrase pour nom accessible ;
 						    tous cochés, la pastille passe en succès. */}
 						{card.checklist === undefined ? null : <CompteChecklistCarte compte={card.checklist} />}
+						{/* `CRM-111` T7.5, §5.85 : l'affaire est aussi dans d'autres channels — leur nom au survol et au focus. */}
+						<PastilleAussiRattachee autres={card.autresRattachements ?? []} />
 					</div>
 				)}
 

@@ -42,8 +42,10 @@
 // création et la recherche. La ligne rendue à l'écran est inchangée (`ligneDepuisRattachement`, `liste-cards.ts`).
 // PostgREST ne trie sur `affaire(…)` qu'une colonne que le plongement SÉLECTIONNE (mesuré, `42703`) : `id`, `title` et
 // `created_at` y sont donc, même ceux que la ligne n'affiche pas.
+// `CRM-111` T7.5 (docs/DESIGN_SYSTEM.md §5.85) : l'affaire plonge ses rattachements lisibles, pour la pastille « aussi
+// rattachée à N » de la cellule « Affaire ».
 export const COLONNES_RATTACHEMENT_LISTE =
-	'id, amount, next_action, next_action_at, current_step_id, owner_id, snoozed_until, responsable:profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), affaire:cards!inner(id, title, description, currency, created_at, etiquettes:card_labels(etiquette:labels(id, name, color, archived_at)))'
+	'id, amount, next_action, next_action_at, current_step_id, owner_id, snoozed_until, responsable:profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), affaire:cards!inner(id, title, description, currency, created_at, etiquettes:card_labels(etiquette:labels(id, name, color, archived_at)), rattachements:card_placements!card_placements_card_fk(id, channels!card_placements_channel_fk(name, tracks(name))))'
 
 /**
  * `CRM-069` T2 (docs/DESIGN_SYSTEM.md §5.73) : la même lecture, filtrée par une étiquette. Le second plongement, `!inner`,
@@ -51,7 +53,7 @@ export const COLONNES_RATTACHEMENT_LISTE =
  * pagination et le compte (§12.5) ; le premier rapporte toutes les étiquettes de l'affaire.
  */
 export const COLONNES_RATTACHEMENT_LISTE_PAR_ETIQUETTE =
-	'id, amount, next_action, next_action_at, current_step_id, owner_id, snoozed_until, responsable:profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), affaire:cards!inner(id, title, description, currency, created_at, etiquettes:card_labels(etiquette:labels(id, name, color, archived_at)), filtre:card_labels!inner(label_id))'
+	'id, amount, next_action, next_action_at, current_step_id, owner_id, snoozed_until, responsable:profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), affaire:cards!inner(id, title, description, currency, created_at, etiquettes:card_labels(etiquette:labels(id, name, color, archived_at)), filtre:card_labels!inner(label_id), rattachements:card_placements!card_placements_card_fk(id, channels!card_placements_channel_fk(name, tracks(name))))'
 
 /**
  * Nombre de lignes d'une page.

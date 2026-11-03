@@ -17369,10 +17369,10 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         `modele-par-rattachement` et `reglages-modeles-emails` 11/11 ; captures `modele-rattachement-xl-1440` et `-sm-390`
         observées (la seconde reprise : le tiroir restait ouvert au redimensionnement) ; manuel §14.2 et image
         `rattachement`, `verify-manual` 167. Production : la `0158` avec la webapp de `main`.
-- [@] **T7 — webapp** (§8) : fiche à partie commune et blocs, pastille « aussi rattachée à », rattacher, archiver,
+- [x] **T7 — webapp** (§8) : fiche à partie commune et blocs, pastille « aussi rattachée à », rattacher, archiver,
       retirer avec confirmation ; `docs/DESIGN_SYSTEM.md` avant le code ; unitaires ; captures aux quatre paliers ;
-      `docs/manual.md`, chapitre « Rattacher une affaire à plusieurs channels ».
-      *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable, session 4891a451) depuis 2026-11-03 10:40 UTC — état avant : [ ]*
+      `docs/manual.md`, chapitre « Rattacher une affaire à plusieurs channels » — *livré en section 9.17 (décision 824)*.
+      *Close le 2026-11-03.*
       **Découpage, arrêté le 2026-11-03 (journal, décision 823 ; `docs/SPEC-rattachements.md` §8.1)** :
       - [x] **T7.1 — la fiche au rattachement de l'adresse** : `lireCard` reçoit le channel de l'adresse et ouvre la fiche
         sur son rattachement ; une adresse d'un channel sans rattachement lisible rend un état qui propose les
@@ -17414,9 +17414,20 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         la fiche qui ouvre le restant, fil nommé ; le business developer : commande éteinte et `detach_card` refusé `403`
         par son jeton ; les 47 specs de la fiche, 438/438 ; captures (confirmation 1440 et 390, dernier) observées ;
         manuel §9.6 et images `retirer`, `fil-rattachements`, `verify-manual` 167. Production : la webapp de `main`.
-      - [ ] **T7.5 — la pastille « aussi rattachée à N »** sur le board et la liste d'un channel, les rattachements lisibles
+      - [x] **T7.5 — la pastille « aussi rattachée à N »** sur le board et la liste d'un channel, les rattachements lisibles
         nommés au survol et au focus. Unitaires, E2E, captures.
-      - [ ] **T7.6 — le manuel** : chapitre « Rattacher une affaire à plusieurs channels », images, `verify-manual`.
+        *Livrée en développement le 2026-11-03* : `docs/DESIGN_SYSTEM.md` §5.85 avant le code ; le board et la liste
+        plongent les rattachements lisibles de l'affaire (`autresRattachements`), `PastilleAussiRattachee` porte
+        l'infobulle du §5.58. Unitaires 5297 ; E2E `pastille-rattachement` 3/3 — « +1 » et l'infobulle au focus clavier
+        sur les deux boards, la ligne de liste à la hauteur d'une autre, rien pour la lectrice ; suite UI complète 1070
+        passés, 6 en échec dont 2 instables rejoués verts et 4 dus à l'état dérivé de la base partagée (dates de
+        « Ma journée », dernière relève, journal MCP, remises de webhooks accumulées), sans rapport avec le board ;
+        captures board 1440 et 390, liste 1440, observées. Production : la webapp de `main`.
+      - [x] **T7.6 — le manuel** : chapitre « Rattacher une affaire à plusieurs channels », images, `verify-manual`.
+        *Livrée le 2026-11-03 en section 9.17 du chapitre de l'affaire (décision 824)* : le concept, le commun et le
+        propre, la fiche à l'adresse, le bloc, rattacher, archiver, retirer, le fil, les renvois vers le temps, la
+        rentabilité, la messagerie et les relances ; la pastille en §9.10 ; images `pas-rattachee-ici`, `rattachements`,
+        `rattacher`, `retirer`, `fil-rattachements`, `aussi-rattachee` ; `docs/SPEC-manual.md` §12 ; `verify-manual` 168.
 - [ ] **T8 — seed et E2E** (§12, §13) : les cinq situations du §12 par les vraies fonctions ; campagne E2E complète.
 - [ ] **T9 — connecteur MCP** (§11) : `crm_card_attach`, `crm_card_placement_update`, `crm_card_placement_archive`,
       outils existants sur le rattachement ; refusés par la matrice puis par le CRM ; `docs/SPEC-mcp.md` §9.2.

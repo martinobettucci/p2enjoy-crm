@@ -38684,3 +38684,15 @@ en défaut.
 
 **Leçon.** Quand une fonction partagée apprend à lire une clé nouvelle, tous ses appelants doivent être recensés avant le
 commit, et non après.
+
+### décision 824 — `CRM-111` T7.6 : les rattachements forment la section 9.17 du chapitre de l'affaire, non un chapitre
+
+*2026-11-03, session interactive (4891a451), choix de la session, révisable par le responsable.* **Problème** :
+`docs/SPEC-rattachements.md` §8 annonce un chapitre « Rattacher une affaire à plusieurs channels ». **Solutions
+envisagées** : un chapitre 10, qui renumérote les chapitres 10 à 34 et leurs renvois ; un chapitre 35, à la fin, loin de
+l'affaire ; une section du chapitre 9. **Décision** : la section 9.17, avant « Ce qui n'est pas encore offert » (devenue
+9.18). Un rattachement n'existe que par l'affaire, que le chapitre 9 décrit déjà — sa fiche, son tableau, sa liste, son
+fil —, et le §10 bis de `docs/SPEC-manual.md` range par sujet sans renuméroter pour une unité. **Conséquences** : les
+images des gestes passent de la section 9.6 à la 9.17 ; la 9.6 renvoie à la 9.17 ; `docs/SPEC-manual.md` §12 porte la
+ligne de `CRM-111`. **Vérification** : `verify-manual` 168 contrôles, aucune anomalie.
+

@@ -589,7 +589,8 @@ describe('la lecture d’une page (§12.3)', () => {
 	it('recompose la ligne d’avant depuis le rattachement : l’affaire désignée par son identifiant', () => {
 		const ligne = card({ id: 'c1', title: 'Refonte', amount: 12000, owner_id: 'p-1' })
 		// Révisée par `CRM-069` T2 (décision 51) : la ligne porte ses étiquettes, vides sans plongement.
-		expect(ligneDepuisRattachement(enRattachement(ligne))).toEqual({ ...ligne, etiquettes: [] })
+		// `CRM-111` T7.5 : sans autre rattachement plongé, aucune pastille (§5.85).
+		expect(ligneDepuisRattachement(enRattachement(ligne))).toEqual({ ...ligne, etiquettes: [], autresRattachements: [] })
 	})
 
 	it('trie le titre, la création et le départage sur l’affaire, le montant et l’échéance sur le rattachement', () => {

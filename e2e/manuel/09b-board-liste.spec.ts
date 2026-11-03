@@ -4,11 +4,15 @@
 //
 // Le tableau et la liste sont ceux de « Grands comptes », du seed. L'affaire créée par « Nouvelle affaire » et celle
 // qu'on endort sont détruites à la fin ; un channel sans affaire est posé puis retiré par la clé de service.
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T7.5 : l'image « aussi-rattachee » montre la pastille d'une affaire rattachée
+//       à deux channels et son infobulle (docs/manual.md §9.10 ; docs/DESIGN_SYSTEM.md §5.85) ; l'affaire jetable est
+//       rattachée par la vraie API, puis détruite.
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
 import { illustrer } from './illustrer'
-import { ADMIN, WORKSPACE_SEED, connecterAvecLeLabs, detruireAffaire, lireService, poserAffaire, retablirLeSeed, retenir, service } from './outils'
+import { enTetesAuthentifies, jetonDe } from '../api/jetons'
+import { ADMIN, WORKSPACE_SEED, connecterAvecLeLabs, detruireAffaire, lireService, poserAffaire, rest, retablirLeSeed, retenir, service } from './outils'
 
 const CHAPITRE = 'l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre'
 const S = {
@@ -81,6 +85,33 @@ test('le tableau : sa barre, la création d’une affaire', async ({ page, reque
 	await expect(introuvable).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: S.board, nom: 'track-introuvable', cibles: [introuvable] })
 	await illustrer(page, { chapitre: CHAPITRE, section: S.liste, nom: 'track-introuvable-liste', cibles: [introuvable] })
+})
+
+test('le tableau : une affaire aussi rattachée à un autre channel', async ({ page, request }) => {
+	const affaire = randomUUID()
+	await poserAffaire(request, { id: affaire, titre: 'Portail partagé des adhérents', channel: CHANNEL_GRANDS_COMPTES, workflow: WORKFLOW_GLOBAL, etape: ETAPE_SIGNATURE })
+	try {
+		const rattache = await request.post(rest('rpc/attach_card'), {
+			headers: enTetesAuthentifies(await jetonDe(ADMIN)),
+			data: { p_card: affaire, p_channel: '5eed0000-0000-4000-8000-000000000034' },
+		})
+		expect(rattache.status(), await rattache.text()).toBe(200)
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto(GRANDS_COMPTES)
+		const carte = page.locator(`[data-testid="carte-card"][data-card="${affaire}"]`)
+		const pastille = carte.getByTestId('pastille-aussi-rattachee')
+		// La carte vit dans la dernière colonne : elle est amenée dans la fenêtre, sans quoi l'image la rognait.
+		// Centrée dans le conteneur qui défile : « si besoin » la jugeait visible à moitié.
+		await carte.evaluate((element) => element.scrollIntoView({ block: 'center', inline: 'center' }))
+		// Au clavier : l'infobulle s'ouvre au focus clavier, jamais au clic (§5.58).
+		await pastille.focus()
+		await page.keyboard.press('Shift+Tab')
+		await page.keyboard.press('Tab')
+		await expect(page.getByTestId('infobulle')).toContainText('Studio web › Refonte de site')
+		await illustrer(page, { chapitre: CHAPITRE, section: S.board, nom: 'aussi-rattachee', cibles: [carte, page.getByTestId('infobulle')] })
+	} finally {
+		await detruireAffaire(request, affaire)
+	}
 })
 
 test('la vue liste : le compte, la pagination, les vides', async ({ page, request }) => {

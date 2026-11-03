@@ -1476,45 +1476,8 @@ Une card que votre compte ne peut pas lire — ou qui n'existe pas — affiche �
 c'est le refus réel du serveur. Une card consentie ouvre sa fiche et son fil. Sans connexion,
 l'adresse mène à l'écran de connexion, qui y ramène une fois connecté.
 
-**Une affaire rattachée à plusieurs channels a une fiche dans chacun.** L'adresse de la fiche nomme un track et un
-channel : l'étape, le formulaire, le responsable, le montant, la prochaine action, le sommeil, la checklist et la relance
-qu'elle montre sont ceux du rattachement à **ce** channel. Le titre, les contacts, les activités, les recettes, les
-coûts, le temps, les mails et le fil sont communs à toutes ses fiches. Si l'adresse nomme un channel auquel l'affaire
-n'est pas rattachée — ou que vous ne lisez pas —, la fiche affiche « Cette affaire n'est pas rattachée à ce channel » et
-propose un lien vers chacun de ses rattachements que vous lisez. Le produit ne choisit pas pour vous : vous ouvrez celui
-que vous visiez.
-
-![L'adresse d'un channel où l'affaire n'est pas rattachée : un lien vers chacun de ses rattachements](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/pas-rattachee-ici.jpg)
-
-**Le bloc « Rattachements »**, sous l'en-tête, liste les channels de l'affaire que vous lisez. Celui de la fiche porte la
-mention « fiche ouverte » ; chacun des autres est un lien vers sa fiche, suivi de son étape, de son responsable — ou
-« Aucun responsable » —, de son montant, et des pastilles « Archivé » ou « En sommeil » s'il y a lieu. Chaque ligne porte
-**« Archiver »**, ou **« Désarchiver »** pour un rattachement archivé : le geste n'archive que ce rattachement, l'affaire
-reste visible dans ses autres channels, et il s'annule d'un clic. Il faut pouvoir modifier les affaires du channel
-concerné ; sinon la commande reste visible mais inactive, et une phrase en tête du bloc dit pourquoi.
-
-![Le bloc « Rattachements » : la fiche ouverte, et l'autre rattachement, archivé, en lien avec son étape](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattachements.jpg)
-
-**« Rattacher à un channel »**, sous la liste, rattache l'affaire à un autre channel : choisissez-le dans la liste —
-elle propose les channels ouverts que vous pouvez modifier et où l'affaire n'est pas encore —, puis « Rattacher ».
-L'affaire entre dans ce channel à l'étape initiale de son workflow, sans responsable ni montant, et sa fiche s'ouvre à
-l'adresse de ce nouveau rattachement, où vous les réglez. Pour rouvrir un rattachement archivé, utilisez « Désarchiver »
-sur sa ligne. Rattacher demande de pouvoir modifier l'affaire et le channel choisi ; sinon la commande reste inactive, ou
-le produit dit pourquoi il refuse.
-
-![Le formulaire « Rattacher à un channel » : la liste des channels, « Rattacher » et « Annuler »](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattacher.jpg)
-
-**« Retirer »**, sur une ligne, supprime ce rattachement — ce n'est pas archiver : son étape, son responsable, son
-montant, sa prochaine action et les réponses de son formulaire sont perdus, et l'affaire quitte ce channel. Une
-confirmation le dit et nomme le rattachement ; « Retirer le rattachement » l'exécute, « Annuler » renonce. Seuls les
-administrateurs de l'espace retirent un rattachement, et jamais le dernier d'une affaire : la commande reste alors
-inactive, avec la raison en tête du bloc. Retirer le rattachement de la fiche ouverte vous emmène à la fiche d'un
-rattachement restant. Le fil de l'affaire garde la trace des deux gestes : « Rattachée à un channel » et
-« Rattachement retiré ».
-
-![La confirmation du retrait, qui nomme le rattachement et ce qui est perdu](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/retirer.jpg)
-
-![Le fil de l'affaire : « Rattachée à un channel » puis « Rattachement retiré »](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/fil-rattachements.jpg)
+**Une affaire rattachée à plusieurs channels a une fiche dans chacun** : l'adresse choisit le rattachement que la fiche
+montre ([section 9.17](#rattacher-une-affaire-a-plusieurs-channels)).
 
 ### 9.7 Les contacts d'une affaire : les rattacher, les détacher
 
@@ -1729,6 +1692,13 @@ sa fiche —, son montant, sa prochaine action, et depuis combien de jours elle 
 Ce dernier repère passe au **rouge** quand le seuil de relance de l'étape est dépassé ; il
 n'apparaît pas lorsque l'étape n'en définit aucun. Sous le titre, ses **étiquettes** : trois au plus, puis « +1 »,
 « +2 »… qui nomme les autres ([section 9.16](#les-etiquettes-d-une-affaire)).
+
+Une affaire **rattachée aussi à d'autres channels** porte une petite pastille grise, une icône de dossier suivie du
+nombre de ces autres channels. Survolée, ou atteinte au clavier, elle les nomme ; elle ne compte que ceux que vous
+pouvez lire. La même pastille paraît dans la vue liste, à côté du titre. Pour passer d'un channel à l'autre, ouvrez la
+fiche : son bloc des rattachements mène à chacun ([section 9.6](#la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent)).
+
+![Une carte du tableau aussi rattachée à un autre channel, et l'infobulle qui le nomme](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/aussi-rattachee.jpg)
 
 Les affaires **archivées** et celles en **corbeille** n'y figurent pas : le tableau montre l'activité
 en cours ([chapitre 9.4](#archiver-n-est-pas-supprimer)). Les affaires **en sommeil** n'y figurent pas non plus, jusqu'à leur
@@ -2325,7 +2295,65 @@ l'entrée des réglages grisée. Poser ou retirer une étiquette est ouvert à q
 autres, le bouton de la fiche est grisé, avec la raison
 ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)).
 
-### 9.17 Ce qui n'est pas encore offert
+### 9.17 Rattacher une affaire à plusieurs channels
+
+Une même affaire peut vivre dans **plusieurs channels** à la fois : une vente suivie par l'équipe commerciale et sa
+réalisation suivie par l'équipe de production, par exemple. Chaque channel où elle se trouve est un **rattachement**.
+Ce qui est **commun** à tous ses rattachements : le titre, la devise, les contacts, les activités, les recettes, les
+coûts, le temps passé, les mails et le fil. Ce qui est **propre** à chacun : l'étape, les réponses du formulaire, le
+responsable, le montant, la prochaine action, le sommeil, l'archivage, la checklist et la relance automatique.
+
+L'affaire paraît dans le tableau et la vue liste de chacun de ses channels, à l'étape de **ce** rattachement
+([section 9.10](#le-tableau-kanban-d-un-channel)). Vous ne voyez que les rattachements aux channels que vous pouvez
+lire : rien ne vous signale ceux des autres.
+
+**Une affaire rattachée à plusieurs channels a une fiche dans chacun.** L'adresse de la fiche nomme un track et un
+channel : l'étape, le formulaire, le responsable, le montant, la prochaine action, le sommeil, la checklist et la relance
+qu'elle montre sont ceux du rattachement à **ce** channel. Le titre, les contacts, les activités, les recettes, les
+coûts, le temps, les mails et le fil sont communs à toutes ses fiches. Si l'adresse nomme un channel auquel l'affaire
+n'est pas rattachée — ou que vous ne lisez pas —, la fiche affiche « Cette affaire n'est pas rattachée à ce channel » et
+propose un lien vers chacun de ses rattachements que vous lisez. Le produit ne choisit pas pour vous : vous ouvrez celui
+que vous visiez.
+
+![L'adresse d'un channel où l'affaire n'est pas rattachée : un lien vers chacun de ses rattachements](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/pas-rattachee-ici.jpg)
+
+**Le bloc « Rattachements »**, sous l'en-tête, liste les channels de l'affaire que vous lisez. Celui de la fiche porte la
+mention « fiche ouverte » ; chacun des autres est un lien vers sa fiche, suivi de son étape, de son responsable — ou
+de la mention qu'il n'en a pas —, de son montant, et des pastilles « Archivé » ou « En sommeil » s'il y a lieu. Chaque ligne porte
+**« Archiver »**, ou **« Désarchiver »** pour un rattachement archivé : le geste n'archive que ce rattachement, l'affaire
+reste visible dans ses autres channels, et il s'annule d'un clic. Il faut pouvoir modifier les affaires du channel
+concerné ; sinon la commande reste visible mais inactive, et une phrase en tête du bloc dit pourquoi.
+
+![Le bloc « Rattachements » : la fiche ouverte, et l'autre rattachement, archivé, en lien avec son étape](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattachements.jpg)
+
+**« Rattacher à un channel »**, sous la liste, rattache l'affaire à un autre channel : choisissez-le dans la liste —
+elle propose les channels ouverts que vous pouvez modifier et où l'affaire n'est pas encore —, puis « Rattacher ».
+L'affaire entre dans ce channel à l'étape initiale de son workflow, sans responsable ni montant, et sa fiche s'ouvre à
+l'adresse de ce nouveau rattachement, où vous les réglez. Pour rouvrir un rattachement archivé, utilisez « Désarchiver »
+sur sa ligne. Rattacher demande de pouvoir modifier l'affaire et le channel choisi ; sinon la commande reste inactive, ou
+le produit dit pourquoi il refuse.
+
+![Le formulaire « Rattacher à un channel » : la liste des channels, « Rattacher » et « Annuler »](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattacher.jpg)
+
+**« Retirer »**, sur une ligne, supprime ce rattachement — ce n'est pas archiver : son étape, son responsable, son
+montant, sa prochaine action et les réponses de son formulaire sont perdus, et l'affaire quitte ce channel. Une
+confirmation le dit et nomme le rattachement ; « Retirer le rattachement » l'exécute, « Annuler » renonce. Seuls les
+administrateurs de l'espace retirent un rattachement, et jamais le dernier d'une affaire : la commande reste alors
+inactive, avec la raison en tête du bloc. Retirer le rattachement de la fiche ouverte vous emmène à la fiche d'un
+rattachement restant. Le fil de l'affaire garde la trace des deux gestes : « Rattachée à un channel » et
+« Rattachement retiré ».
+
+![La confirmation du retrait, qui nomme le rattachement et ce qui est perdu](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/retirer.jpg)
+
+![Le fil de l'affaire : « Rattachée à un channel » puis « Rattachement retiré »](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/fil-rattachements.jpg)
+
+**Ailleurs dans le produit.** Le temps passé et la rentabilité d'une affaire partagée paraissent sous chacun de ses
+channels, mais ne comptent qu'une fois dans les totaux ([section 28.4](#le-rapport-mensuel),
+[section 29.3](#l-ecran-rentabilite)). Son courrier vit dans un seul dossier de la messagerie, hors de l'arborescence
+des tracks ([section 12.2](#l-inbox-lire-et-trier-le-courrier-recu)). Une relance automatique s'arme sur un rattachement et en emploie
+l'étape et le montant ([chapitre 16](#enchainer-des-relances-les-sequences)).
+
+### 9.18 Ce qui n'est pas encore offert
 
 - **Le choix du nombre de lignes par page** : la liste en affiche vingt-cinq, et cela ne se règle pas.
 - **La recherche de la vue liste** est bornée au channel ouvert ; la recherche de l'en-tête cherche partout

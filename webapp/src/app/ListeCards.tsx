@@ -1,3 +1,5 @@
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T7.5 : la pastille « aussi rattachée à N » dans la cellule « Affaire »
+//       (docs/DESIGN_SYSTEM.md §5.85)
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T6 : « Importer un fichier » après l'export, son panneau sous la barre (docs/DESIGN_SYSTEM.md §5.78)
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T4 : « Exporter en CSV » en fin de barre (docs/DESIGN_SYSTEM.md §5.76)
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T2 : le sélecteur « Vue » et ses commandes après « Nouvelle affaire », le panneau
@@ -27,6 +29,7 @@
 // Aucune règle d'accès n'est portée ici : ce que la liste montre est ce que la RLS a consenti à
 // rendre (CLAUDE.md §10).
 
+import { PastilleAussiRattachee } from '../components/ui/AussiRattachee'
 import { PastillesEtiquettes } from '../components/ui/PastilleEtiquette'
 import type { Etiquette } from '../lib/etiquettes'
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from 'lucide-react'
@@ -412,6 +415,8 @@ function Ligne({
 						enSommeil={estEnSommeil(card.snoozed_until, maintenant)}
 						echeance={card.snoozed_until}
 					/>
+					{/* `CRM-111` T7.5, §5.85 : `shrink-0` après le titre, la densité de la ligne ne bouge pas. */}
+					<PastilleAussiRattachee autres={card.autresRattachements ?? []} />
 				</span>
 			</td>
 			{/* LES ÉTIQUETTES — `CRM-069` T2, §5.73 : toutes, sans plafond ; la cellule passe à la ligne. */}

@@ -1043,6 +1043,9 @@ export const fr = {
 	'cardPlacements.attach.refused.initial': 'Le workflow de ce channel n’a pas d’étape initiale.',
 	'cardPlacements.attach.refused.card': 'Cette affaire n’est plus lisible : elle a peut-être été mise à la corbeille.',
 	'cardPlacements.attach.refused.network': 'Rien n’a été enregistré : le serveur n’a pas répondu. Réessayez.',
+	'cardPlacements.also.title': 'Aussi rattachée à',
+	'cardPlacements.also.one': 'Aussi rattachée à {nombre} autre channel',
+	'cardPlacements.also.many': 'Aussi rattachée à {nombre} autres channels',
 	'cardPlacements.detach': 'Retirer',
 	'cardPlacements.detach.readonly.administration':
 		'Retirer un rattachement est réservé aux administrateurs de l’espace : la commande reste visible mais inactive.',

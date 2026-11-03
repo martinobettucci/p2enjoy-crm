@@ -13,6 +13,8 @@
 // @spec CRM-068 (docs/BACKLOG.md) — tranche T3a : le compte de checklist de la carte (docs/DESIGN_SYSTEM.md §5.70)
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : le board lit les rattachements du channel, l'affaire en plongement,
 //       et rend aux écrans la même carte (docs/SPEC-rattachements.md §8, §14)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T7.5 : les autres rattachements lisibles de chaque carte, pour la pastille
+//       « aussi rattachée à N » (docs/DESIGN_SYSTEM.md §5.85)
 // @spec CRM-095 (docs/BACKLOG.md) — tranche T2 : l'étape INITIALE résolue avec chaque colonne
 //       (docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.2)
 // @spec CRM-105 (docs/BACKLOG.md) — `description` portée par chaque card, pour l'infobulle du titre
@@ -29,6 +31,7 @@
 // reçoit `200` et `[]` ; un membre consent les colonnes réelles, et le parcours connecté est
 // éprouvé sans substitution par `e2e/ui/authentification.spec.ts`.
 
+import { autresRattachements, type CheminRattachement, type RattachementPlonge } from './aussi-rattachee'
 import { etiquettesDeLAffaire, type Etiquette, type EtiquetteLue } from './etiquettes'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
@@ -123,6 +126,8 @@ export type CardBoard = Pick<
 	readonly checklist?: CompteChecklist
 	/** `CRM-069` T2 (docs/DESIGN_SYSTEM.md §5.73) : les étiquettes de l'affaire, triées par nom ; vide quand elle n'en porte pas. */
 	readonly etiquettes?: readonly Etiquette[]
+	/** `CRM-111` T7.5 (docs/DESIGN_SYSTEM.md §5.85) : ses autres rattachements lisibles ; vide quand il n'y en a pas. */
+	readonly autresRattachements?: readonly CheminRattachement[]
 } & RattachementsLus
 
 /** Le compte « 3/5 » d'une carte : les points de checklist de l'étape où se trouve son rattachement. */
@@ -683,7 +688,11 @@ export type RattachementBoard = Pick<
 	readonly affaire: Pick<
 		Database['public']['Tables']['cards']['Row'],
 		'id' | 'title' | 'description' | 'currency' | 'email_local_part'
-	> & { readonly etiquettes?: readonly { readonly etiquette: EtiquetteLue | null }[] | null }
+	> & {
+		readonly etiquettes?: readonly { readonly etiquette: EtiquetteLue | null }[] | null
+		/** `CRM-111` T7.5 : les rattachements lisibles de l'affaire, pour la pastille « aussi rattachée à » (§5.85). */
+		readonly rattachements?: readonly RattachementPlonge[] | null
+	}
 }
 
 /**
@@ -711,6 +720,7 @@ export function carteDepuisRattachement(ligne: RattachementBoard): CardBoard {
 		snoozed_until: ligne.snoozed_until,
 		responsable: ligne.responsable ?? null,
 		card_placements: [{ id: ligne.id, created_at: ligne.created_at }],
+		autresRattachements: autresRattachements(ligne.affaire.rattachements, ligne.id),
 	}
 }
 

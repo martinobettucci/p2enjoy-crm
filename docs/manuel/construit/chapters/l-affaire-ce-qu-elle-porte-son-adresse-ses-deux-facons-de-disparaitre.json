@@ -3010,143 +3010,32 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "Une affaire rattachée à plusieurs channels a une fiche dans chacun."
+							"text": "Une affaire rattachée à plusieurs channels a une fiche dans chacun"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " L'adresse de la fiche nomme un track et un\nchannel : l'étape, le formulaire, le responsable, le montant, la prochaine action, le sommeil, la checklist et la relance\nqu'elle montre sont ceux du rattachement à "
+					"text": " : l'adresse choisit le rattachement que la fiche\nmontre ("
 				},
 				{
-					"type": "strong",
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "rattacher-une-affaire-a-plusieurs-channels"
+					},
 					"content": [
 						{
 							"type": "text",
-							"text": "ce"
+							"text": "section 9.17"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " channel. Le titre, les contacts, les activités, les recettes, les\ncoûts, le temps, les mails et le fil sont communs à toutes ses fiches. Si l'adresse nomme un channel auquel l'affaire\nn'est pas rattachée — ou que vous ne lisez pas —, la fiche affiche « Cette affaire n'est pas rattachée à ce channel » et\npropose un lien vers chacun de ses rattachements que vous lisez. Le produit ne choisit pas pour vous : vous ouvrez celui\nque vous visiez."
+					"text": ")."
 				}
 			]
-		},
-		{
-			"type": "image",
-			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/pas-rattachee-ici.jpg",
-			"alt": "L'adresse d'un channel où l'affaire n'est pas rattachée : un lien vers chacun de ses rattachements",
-			"width": 548,
-			"height": 312
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Le bloc « Rattachements »"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", sous l'en-tête, liste les channels de l'affaire que vous lisez. Celui de la fiche porte la\nmention « fiche ouverte » ; chacun des autres est un lien vers sa fiche, suivi de son étape, de son responsable — ou\n« Aucun responsable » —, de son montant, et des pastilles « Archivé » ou « En sommeil » s'il y a lieu. Chaque ligne porte\n"
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "« Archiver »"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", ou "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "« Désarchiver »"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " pour un rattachement archivé : le geste n'archive que ce rattachement, l'affaire\nreste visible dans ses autres channels, et il s'annule d'un clic. Il faut pouvoir modifier les affaires du channel\nconcerné ; sinon la commande reste visible mais inactive, et une phrase en tête du bloc dit pourquoi."
-				}
-			]
-		},
-		{
-			"type": "image",
-			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattachements.jpg",
-			"alt": "Le bloc « Rattachements » : la fiche ouverte, et l'autre rattachement, archivé, en lien avec son étape",
-			"width": 650,
-			"height": 311
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "« Rattacher à un channel »"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", sous la liste, rattache l'affaire à un autre channel : choisissez-le dans la liste —\nelle propose les channels ouverts que vous pouvez modifier et où l'affaire n'est pas encore —, puis « Rattacher ».\nL'affaire entre dans ce channel à l'étape initiale de son workflow, sans responsable ni montant, et sa fiche s'ouvre à\nl'adresse de ce nouveau rattachement, où vous les réglez. Pour rouvrir un rattachement archivé, utilisez « Désarchiver »\nsur sa ligne. Rattacher demande de pouvoir modifier l'affaire et le channel choisi ; sinon la commande reste inactive, ou\nle produit dit pourquoi il refuse."
-				}
-			]
-		},
-		{
-			"type": "image",
-			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattacher.jpg",
-			"alt": "Le formulaire « Rattacher à un channel » : la liste des channels, « Rattacher » et « Annuler »",
-			"width": 650,
-			"height": 149
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "« Retirer »"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", sur une ligne, supprime ce rattachement — ce n'est pas archiver : son étape, son responsable, son\nmontant, sa prochaine action et les réponses de son formulaire sont perdus, et l'affaire quitte ce channel. Une\nconfirmation le dit et nomme le rattachement ; « Retirer le rattachement » l'exécute, « Annuler » renonce. Seuls les\nadministrateurs de l'espace retirent un rattachement, et jamais le dernier d'une affaire : la commande reste alors\ninactive, avec la raison en tête du bloc. Retirer le rattachement de la fiche ouverte vous emmène à la fiche d'un\nrattachement restant. Le fil de l'affaire garde la trace des deux gestes : « Rattachée à un channel » et\n« Rattachement retiré »."
-				}
-			]
-		},
-		{
-			"type": "image",
-			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/retirer.jpg",
-			"alt": "La confirmation du retrait, qui nomme le rattachement et ce qui est perdu",
-			"width": 650,
-			"height": 186
-		},
-		{
-			"type": "image",
-			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/fil-rattachements.jpg",
-			"alt": "Le fil de l'affaire : « Rattachée à un channel » puis « Rattachement retiré »",
-			"width": 519,
-			"height": 187
 		},
 		{
 			"type": "heading",
@@ -5298,6 +5187,52 @@
 					"text": ")."
 				}
 			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une affaire "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "rattachée aussi à d'autres channels"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " porte une petite pastille grise, une icône de dossier suivie du\nnombre de ces autres channels. Survolée, ou atteinte au clavier, elle les nomme ; elle ne compte que ceux que vous\npouvez lire. La même pastille paraît dans la vue liste, à côté du titre. Pour passer d'un channel à l'autre, ouvrez la\nfiche : son bloc des rattachements mène à chacun ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 9.6"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/aussi-rattachee.jpg",
+			"alt": "Une carte du tableau aussi rattachée à un autre channel, et l'infobulle qui le nomme",
+			"width": 415,
+			"height": 210
 		},
 		{
 			"type": "paragraph",
@@ -10918,11 +10853,353 @@
 		{
 			"type": "heading",
 			"level": 3,
+			"anchor": "rattacher-une-affaire-a-plusieurs-channels",
+			"content": [
+				{
+					"type": "text",
+					"text": "9.17 Rattacher une affaire à plusieurs channels"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une même affaire peut vivre dans "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "plusieurs channels"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " à la fois : une vente suivie par l'équipe commerciale et sa\nréalisation suivie par l'équipe de production, par exemple. Chaque channel où elle se trouve est un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "rattachement"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ".\nCe qui est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "commun"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " à tous ses rattachements : le titre, la devise, les contacts, les activités, les recettes, les\ncoûts, le temps passé, les mails et le fil. Ce qui est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "propre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " à chacun : l'étape, les réponses du formulaire, le\nresponsable, le montant, la prochaine action, le sommeil, l'archivage, la checklist et la relance automatique."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'affaire paraît dans le tableau et la vue liste de chacun de ses channels, à l'étape de "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ce"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " rattachement\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "le-tableau-kanban-d-un-channel"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 9.10"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Vous ne voyez que les rattachements aux channels que vous pouvez\nlire : rien ne vous signale ceux des autres."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une affaire rattachée à plusieurs channels a une fiche dans chacun."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " L'adresse de la fiche nomme un track et un\nchannel : l'étape, le formulaire, le responsable, le montant, la prochaine action, le sommeil, la checklist et la relance\nqu'elle montre sont ceux du rattachement à "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ce"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " channel. Le titre, les contacts, les activités, les recettes, les\ncoûts, le temps, les mails et le fil sont communs à toutes ses fiches. Si l'adresse nomme un channel auquel l'affaire\nn'est pas rattachée — ou que vous ne lisez pas —, la fiche affiche « Cette affaire n'est pas rattachée à ce channel » et\npropose un lien vers chacun de ses rattachements que vous lisez. Le produit ne choisit pas pour vous : vous ouvrez celui\nque vous visiez."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/pas-rattachee-ici.jpg",
+			"alt": "L'adresse d'un channel où l'affaire n'est pas rattachée : un lien vers chacun de ses rattachements",
+			"width": 548,
+			"height": 312
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le bloc « Rattachements »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sous l'en-tête, liste les channels de l'affaire que vous lisez. Celui de la fiche porte la\nmention « fiche ouverte » ; chacun des autres est un lien vers sa fiche, suivi de son étape, de son responsable — ou\nde la mention qu'il n'en a pas —, de son montant, et des pastilles « Archivé » ou « En sommeil » s'il y a lieu. Chaque ligne porte\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Archiver »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", ou "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Désarchiver »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " pour un rattachement archivé : le geste n'archive que ce rattachement, l'affaire\nreste visible dans ses autres channels, et il s'annule d'un clic. Il faut pouvoir modifier les affaires du channel\nconcerné ; sinon la commande reste visible mais inactive, et une phrase en tête du bloc dit pourquoi."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattachements.jpg",
+			"alt": "Le bloc « Rattachements » : la fiche ouverte, et l'autre rattachement, archivé, en lien avec son étape",
+			"width": 650,
+			"height": 311
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Rattacher à un channel »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sous la liste, rattache l'affaire à un autre channel : choisissez-le dans la liste —\nelle propose les channels ouverts que vous pouvez modifier et où l'affaire n'est pas encore —, puis « Rattacher ».\nL'affaire entre dans ce channel à l'étape initiale de son workflow, sans responsable ni montant, et sa fiche s'ouvre à\nl'adresse de ce nouveau rattachement, où vous les réglez. Pour rouvrir un rattachement archivé, utilisez « Désarchiver »\nsur sa ligne. Rattacher demande de pouvoir modifier l'affaire et le channel choisi ; sinon la commande reste inactive, ou\nle produit dit pourquoi il refuse."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattacher.jpg",
+			"alt": "Le formulaire « Rattacher à un channel » : la liste des channels, « Rattacher » et « Annuler »",
+			"width": 650,
+			"height": 149
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Retirer »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sur une ligne, supprime ce rattachement — ce n'est pas archiver : son étape, son responsable, son\nmontant, sa prochaine action et les réponses de son formulaire sont perdus, et l'affaire quitte ce channel. Une\nconfirmation le dit et nomme le rattachement ; « Retirer le rattachement » l'exécute, « Annuler » renonce. Seuls les\nadministrateurs de l'espace retirent un rattachement, et jamais le dernier d'une affaire : la commande reste alors\ninactive, avec la raison en tête du bloc. Retirer le rattachement de la fiche ouverte vous emmène à la fiche d'un\nrattachement restant. Le fil de l'affaire garde la trace des deux gestes : « Rattachée à un channel » et\n« Rattachement retiré »."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/retirer.jpg",
+			"alt": "La confirmation du retrait, qui nomme le rattachement et ce qui est perdu",
+			"width": 650,
+			"height": 186
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/fil-rattachements.jpg",
+			"alt": "Le fil de l'affaire : « Rattachée à un channel » puis « Rattachement retiré »",
+			"width": 519,
+			"height": 187
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ailleurs dans le produit."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le temps passé et la rentabilité d'une affaire partagée paraissent sous chacun de ses\nchannels, mais ne comptent qu'une fois dans les totaux ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-temps-passe-et-le-cout-du-personnel",
+						"anchor": "le-rapport-mensuel"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 28.4"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ",\n"
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-recettes-d-une-affaire-et-sa-rentabilite",
+						"anchor": "l-ecran-rentabilite"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 29.3"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Son courrier vit dans un seul dossier de la messagerie, hors de l'arborescence\ndes tracks ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-inbox-lire-trier-et-repondre",
+						"anchor": "l-inbox-lire-et-trier-le-courrier-recu"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 12.2"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Une relance automatique s'arme sur un rattachement et en emploie\nl'étape et le montant ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "enchainer-des-relances-les-sequences"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 16"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
 			"anchor": "ce-qui-n-est-pas-encore-offert",
 			"content": [
 				{
 					"type": "text",
-					"text": "9.17 Ce qui n'est pas encore offert"
+					"text": "9.18 Ce qui n'est pas encore offert"
 				}
 			]
 		},
