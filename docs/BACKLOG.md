@@ -17491,7 +17491,8 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
 - [P] **T2** — exigence par une transition (`common_field_id`), sixième vérification de `move_card`, versions et
       copies, refus `common_field_in_use` et `common_field_archived` ; pgTAP ; API.
       *Toutes les tranches faites et vérifiées en développement le 2026-11-03 ; la 155 à la 160 livrées le même jour
-      (décision 827) ; reste à livrer la `0161` (T2.c.2) et à la constater en production.*
+      (décision 827), la `0161` (T2.c.2) par la seconde fenêtre du jour (décision 828). Reste le constat du responsable en
+      production : exiger un champ de l'affaire depuis l'éditeur, comparer deux versions (`docs/PROD_MIGRATIONS.md` §8).*
       **Découpage** (2026-11-02, mesuré sur les migrations qui lisent `workflow_transition_required_fields`) :
       - [x] **T2.a — la base de l'exigence** : la table distincte `workflow_transition_required_common_fields`
             (décision 819), `workspace_id` posé depuis la transition, clé composite vers `card_common_fields` ; refus

@@ -13,7 +13,18 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-112` T2.c.2 et T3.b — exiger un champ de l'affaire dans l'éditeur de workflows (migration 161)
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-03 (seconde fenêtre) — migration 161, la webapp de `main`, le manuel
+
+Cellule Spark `crm`, révision `fbc71e59` : `scripts/spark/livrer.sh -- --migrate --instantane-verifie` (décision 828,
+sans nouvel instantané, un `pg_dump -Fc` pris dans la cellule avant la fenêtre), puis le manuel publié (538 fichiers,
+deux passes). **Vérifié, en lecture seule** : registre à 159 lignes, la dernière `0161_champs_communs_comparaisons_apercu.sql`,
+`preview_common_field_requirement` présente, `verifier.sh` 33/34 (INC-277, antérieur).
+
+#### `CRM-112` T2.c.2 et T3.b — exiger un champ de l'affaire dans l'éditeur de workflows (migration 161)
 
 - L'éditeur de workflows propose, dans « Exiger un champ », les champs de l'affaire après ceux du workflow, en deux
   groupes. L'aperçu dit combien d'affaires en cours ne pourraient plus emprunter le chemin, mesuré par la base
@@ -23,8 +34,6 @@ d'exécuter le code attendu.
   exigé disait « différentes » sans rien lister. Les deux comparaisons — versions, copie et source — portent désormais
   la collection « Champs de l'affaire exigés par une transition ».
 - Manuel, §18.9 et §18.16, avec une image.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-03 — migrations 150 à 160, la webapp de `main`, les images `mcp` et `mail-sync`, le service `functions`, le manuel
 
