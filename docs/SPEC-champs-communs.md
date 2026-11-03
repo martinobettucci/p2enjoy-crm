@@ -278,6 +278,13 @@ garde : désarchiver les rend.
     politique. T4.b la remplace par une **mesure à refaire** : réécrire la politique de lecture en semi-jointure sur les
     rattachements lisibles, si elle rend le même droit, est mesuré avant le code ; à défaut, le coût est accepté et
     consigné au DAT, avec son seuil (environ 0,5 s pour 1 000 affaires porteuses du champ dans un channel).
+    **Mesuré le 2026-11-03, la semi-jointure est retenue** : la politique de lecture des valeurs devient
+    `card_id in (select p.card_id from card_placements p where p.channel_id in (select unnest(app.readable_channel_ids())))`
+    — le même droit que `app.can_read_card` (un rattachement dans un channel lisible), sous la forme que `cards_lecture`
+    emploie déjà. Sur la même sonde : **37,7 ms → 24,6 ms**, mêmes 27 lignes ; surtout, le coût ne croît plus avec le
+    nombre de valeurs : `app.readable_channel_ids()` est évaluée une fois par requête (~5 ms) au lieu de
+    `app.can_read_card` une fois par valeur. La même migration porte la politique ; une preuve pgTAP compare, profil par
+    profil, les valeurs visibles par l'ancienne et la nouvelle règle.
   - **Le connecteur MCP** : le filtre de `crm_card_list` est la tranche T9 (décision 664) ; T4.b ne l'ajoute pas.
 
 ## 9. Modèles d'email (décision 664, complément 2)

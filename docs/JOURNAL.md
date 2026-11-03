@@ -38905,6 +38905,11 @@ rattachements lisibles, si elle rend le même droit ; sinon le coût est accept�
 filtrée (elle reprendrait toute la composition de la liste que PostgREST fait déjà) ; filtrer les seuls champs listés
 (la spécification filtre par type, lister fait une colonne). **Question laissée au responsable** : T4.d, les vues
 sauvegardées qui gardent ces filtres (clés fermées en base). **MCP** : le filtre de `crm_card_list` reste T9.
+**Complément, mesuré le même jour pendant la campagne** (transaction annulée, sonde de 45 valeurs, `bizdev`) : la politique
+de lecture des valeurs réécrite en semi-jointure sur les rattachements des channels lisibles — le même droit que
+`app.can_read_card`, la forme de `cards_lecture` — passe le filtre de 37,7 ms à 24,6 ms, mêmes 27 lignes, et rend son
+coût **constant** (une évaluation de `app.readable_channel_ids()` par requête) au lieu de linéaire. **Retenue** : la
+migration de T4.b porte la politique, et une preuve pgTAP compare ancienne et nouvelle règle profil par profil.
 
 ### décision 832 — la session de livraison reçoit les unités terminées, propose chaque livraison, renvoie les défauts
 
