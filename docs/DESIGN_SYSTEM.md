@@ -7436,8 +7436,10 @@ son adresse (§5.81), jamais en second jeu de blocs dans la page.
   §5.3 quater). Termes et valeurs en `dl` n'ajouteraient que du bruit à une ligne : l'étape, le responsable et le montant
   sont des segments séparés par des points médians, en 13 px `--color-text-2`, le chemin en `--color-ink` 14 px.
 - **Le rattachement de la fiche n'est pas un lien** : son chemin est du texte, suivi de la mention « fiche ouverte » en
-  13 px `--color-text-2`, et la ligne porte `aria-current="page"`. **Les autres chemins sont des liens** vers la fiche à
-  leur adresse — l'action « déplier » du repli.
+  13 px `--color-text-2`, et la ligne porte `aria-current="page"`. **Elle ne répète ni l'étape, ni le responsable, ni le
+  montant, ni les pilules** : l'en-tête et le formulaire les portent juste au-dessus et au-dessous, et les y modifier
+  laisserait une copie périmée dans le bloc. **Les autres chemins sont des liens** vers la fiche à leur adresse — l'action
+  « déplier » du repli.
 - **« Archiver » et « Désarchiver »**, sur chaque ligne : secondaire compacte (§5.5), icônes `Archive` et
   `ArchiveRestore` de Lucide, une seule des deux selon l'état. Aucune confirmation : le geste est réversible d'un geste,
   sans perte (la règle du réveil, §5.3 quater). **La commande n'est jamais éteinte d'avance** (§5.3 ter) : le droit est
