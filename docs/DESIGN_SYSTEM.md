@@ -7456,3 +7456,28 @@ son adresse (§5.81), jamais en second jeu de blocs dans la page.
   fixe, aucun défilement horizontal à 390 px.
 - **Aucune couleur, aucun jeton nouveau** ; deux icônes Lucide nouvelles dans la fiche, `Archive` étant déjà celle de la
   pilule.
+
+### 5.83 « Rattacher à un channel », dans le bloc « Rattachements » — `CRM-111` T7.3
+
+*Écrit le 2026-11-03, avant le code (décision 823 ; `docs/SPEC-rattachements.md` §5, §8.1).*
+
+- **La commande vit sous la liste du bloc** (§5.82) : secondaire compacte, icône `Plus` (la commande de création du
+  §5.50), libellé « Rattacher à un channel ». Elle est éteinte avec le motif de la fiche quand la base refuse d'écrire
+  l'affaire (`cards.ecriture_permise`, §5.59) — le premier droit du geste.
+- **Elle se replie en un formulaire dans le flux**, jamais en modale (§5.23) : le formulaire remplace la commande, le
+  focus entre dans son champ, `Échap` et « Annuler » le referment en rendant le focus à la commande (§5.25).
+- **Un `select` « Channel »**, dont chaque option se lit « Track › Channel » (§5.54), dans l'ordre des tracks puis des
+  channels : les channels **non archivés que l'appelant peut modifier** (la base le dit par `channels.ecriture_permise`)
+  et auxquels l'affaire **n'est pas déjà rattachée** — un rattachement archivé se rouvre par « Désarchiver », sur sa
+  ligne. Il ouvre sur une **option vide**, « Choisissez un channel » : la cible est un choix que personne n'a encore fait
+  (l'écart du §5.39 avec le §5.34, pour le même motif), et un rattachement posé par défaut sur le premier channel du tri
+  serait une écriture que personne n'a voulue.
+- **Aucun channel à offrir** : le formulaire le dit en une phrase — « Aucun autre channel que vous pouvez modifier » — et
+  ne porte que « Annuler ».
+- **« Rattacher » est primaire et n'est jamais désactivé par l'état du champ** (§5.3 ter) : sans choix, la base refuse
+  (`channel_not_found`), et le refus est traduit sous le champ, `role="alert"`, la saisie conservée (§5.7 ter). Les refus
+  de `attach_card` ont chacun leur phrase (dictionnaire fermé) : channel absent ou illisible, channel archivé, droits,
+  déjà rattachée, workflow sans étape initiale (avec le lien vers l'éditeur de workflows, §5.29 bis), réseau.
+- **Le succès ouvre la fiche à l'adresse du nouveau rattachement** (§5.81) : c'est là qu'on le règle — étape,
+  responsable, montant. Le fil y porte l'événement « rattachée ».
+- **Aucune couleur, aucun jeton, aucune icône nouvelle.**
