@@ -8695,6 +8695,14 @@ affaires du §36. **Comportement laissé inchangé.** **Corrections proposées**
 indépendantes de l'accumulation — cibler leurs propres lignes plutôt qu'un rang ou un compte global, et retirer ce
 qu'elles écrivent — ou reconstruire la base (`./resetMe.sh`, destructeur, à coordonner entre les sessions) avant une
 campagne de constat.
+**Complété le 2026-11-03 par la campagne de livraison du lot 0162, 0163, mcp et webapp (session 4522fa9c)** :
+- la cause de `inbox-lecture.spec.ts:106` est nommée : `e2e/ui/pieces-jointes.spec.ts` ouvre `<seed-pieces-jointes@…>`
+  sous Camille, ce qui le marque lu, et ne rend pas la lecture ; toute campagne qui joue `ui` avant `api` la fait rougir ;
+- `supabase/tests/0064_preferences_notifications.test.sql` rougit sur une préférence `mention` de Driss laissée par une
+  preuve (les deux preuves de préférences rangent pourtant après elles ; la ligne datait de 18:09 UTC) — retirée à la main ;
+- `e2e/manuel/13-etat-messagerie.spec.ts:19` (« Jamais relevée ») et `e2e/manuel/34-webhooks.spec.ts:108` (l'historique ne
+  tient plus dans la fenêtre) ont la même cause que leurs sœurs de `e2e/ui` ; les images du manuel régénérées sur la base
+  accumulée faisaient rougir sa garde (journal d'audit, « Aucune remise ») : elles n'ont pas été reprises.
 
 ### INC-343 — la veille de `mail-sync` écrit `panne` et `account_id`, que le formateur du journal écarte
 
