@@ -38906,3 +38906,17 @@ filtrée (elle reprendrait toute la composition de la liste que PostgREST fait d
 (la spécification filtre par type, lister fait une colonne). **Question laissée au responsable** : T4.d, les vues
 sauvegardées qui gardent ces filtres (clés fermées en base). **MCP** : le filtre de `crm_card_list` reste T9.
 
+### décision 832 — la session de livraison reçoit les unités terminées, propose chaque livraison, renvoie les défauts
+
+*2026-11-03, consigne du responsable à la session 4522fa9c (p2enjoy-crm-3a), qui la confirme et la précise sous la décision
+830 et `CLAUDE.md` §12.*
+**Consigne** : la session 3a informe les autres sessions du projet qu'elle est la seule chargée des livraisons en
+production, et la seule à jouer les tests complets — E2E API, interface au clavier et à la souris — avant de préparer une
+livraison. **Dès qu'une session a terminé une unité, elle le signale à la session de livraison** ; dès qu'un lot est
+stable, la session de livraison **propose la livraison au responsable** (`AskUserQuestion`) et livre sur son accord. **Un
+défaut trouvé par la campagne complète est renvoyé à la session qui porte l'unité**, avec son constat ; à elle de corriger.
+Motif : qu'aucune session ne relance le E2E complet de son côté.
+**Application** : les sessions 75, 25 et d1 en sont prévenues le 2026-11-03 par message ; leur signalement nomme l'unité,
+les migrations, les services à reconstruire et tout geste préalable. Une correction de la session de livraison reste
+permise sur ses propres unités (ainsi `4c48b14b`, défaut de `CRM-112` T3.d trouvé par la campagne).
+
