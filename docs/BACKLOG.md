@@ -16983,7 +16983,7 @@ prête — politiques `organizations_insertion_bizdev_admin` et `organizations_m
 
 ## Demande du 2026-10-23 — rattachements multiples (décisions 637 à 662)
 
-### CRM-111 — Rattachements multiples d'une affaire `[~]`
+### CRM-111 — Rattachements multiples d'une affaire `[P]`
 *Créée le 2026-10-24 — exploration demandée par le responsable le 2026-10-23, arbitrée en sept séries (décisions 638,
 639, 642, 643, 645, 657, 661) et validée le 2026-10-24 (décision 662). Spécification : `docs/SPEC-rattachements.md`.*
 Une affaire peut être rattachée à plusieurs channels, y compris de tracks différents. Chaque rattachement a son étape,
@@ -17054,7 +17054,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       un ordre de droits), et trois harnais qui ne dégradaient plus rien (`analytique`, `signature-identite`, `mentions`,
       dont les rejeux échouaient depuis la 134) ; tous rendent l'empreinte d'ouverture. Rouges étrangers consignés :
       INC-339.
-- [ ] **T2 — bascule, découpée en quatre étapes vertes (décision 705, option B)** ; chaque étape poussée laisse `main` vert, et
+- [x] **T2 — bascule, découpée en quatre étapes vertes (décision 705, option B)** ; chaque étape poussée laisse `main` vert, et
       aucune fonction n'expose jamais deux contrats à la fois (décision 661, tenue fonction par fonction) :
       - [x] **T2.1 — la table et la reprise** : `card_placements` (§3.1), une ligne par affaire reprise de `cards`,
         politiques sous la forme optimisée et ses trois gardes ; `cards` reste le chemin d'écriture, et un déclencheur
@@ -17081,11 +17081,12 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         pgTAP complet en développement **98 fichiers, 4106 assertions, aucune anomalie** ; API
         `e2e/api/rattachements-lectures.spec.ts` et projet `api` 1203/1204 (le rouge, `ingestion.spec.ts:91`, tient au seed
         de `CRM-058`, sans lien) ; interface complète **940/940** ; `scripts/verify-mcp.sh` **88/88** ; types régénérés, `typecheck` vert. Aucun écran ne change.
-      - [~] **T2.3 — les signatures, par groupe** (§5) : pour chaque geste, l'ancienne signature par affaire est retirée
+      - [x] **T2.3 — les signatures, par groupe** (§5) : pour chaque geste, l'ancienne signature par affaire est retirée
         dans le même changement que sa remplaçante par rattachement et que tous ses appelants (webapp, connecteur, seed,
         scripts, pgTAP, API, E2E) ; le chemin d'écriture passe à `card_placements`, et le déclencheur s'inverse tant que
         des lecteurs de `cards` subsistent. Preuve par groupe : aucune ancienne signature au catalogue, suite verte.
-        *État : T2.3.0 à T2.3.7 livrées en développement ; T2.3.5 reste `[~]` sur l'arbitrage d'INC-315.*
+        *État : T2.3.0 à T2.3.7 livrées en développement ; INC-315, arbitrée par la décision 803, livrée par INC-335 T2 et
+        close le 2026-11-03.*
         **Découpage, arrêté le 2026-10-26 (journal, entrée « `CRM-111` T2.3 — le découpage »)** — une étape poussée chacune,
         `main` vert à chaque fois :
         - [x] **T2.3.0 — la fondation** : la timeline d'un rattachement écrite par `card_placements` (`cards` ne garde que
@@ -17428,8 +17429,8 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         propre, la fiche à l'adresse, le bloc, rattacher, archiver, retirer, le fil, les renvois vers le temps, la
         rentabilité, la messagerie et les relances ; la pastille en §9.10 ; images `pas-rattachee-ici`, `rattachements`,
         `rattacher`, `retirer`, `fil-rattachements`, `aussi-rattachee` ; `docs/SPEC-manual.md` §12 ; `verify-manual` 168.
-- [~] **T8 — seed et E2E** (§12, §13) : les cinq situations du §12 par les vraies fonctions ; campagne E2E complète.
-      *Livrée en développement le 2026-11-03, sauf la campagne entièrement verte* : seed `docs/SPEC-seed.md` §36 (deux
+- [x] **T8 — seed et E2E** (§12, §13) : les cinq situations du §12 par les vraies fonctions ; campagne E2E complète.
+      *Livrée en développement le 2026-11-03* : seed `docs/SPEC-seed.md` §36 (deux
       affaires, cinq situations, `creer_affaire`, `attach_card`, `move_card`, `snooze_card` et les écritures de la fiche ;
       convergence prouvée par deux passages sans événement de plus) ; `scripts/verify-seed-rattachements.sh` 11/11 sous
       les vrais jetons. Preuves révisées avec leur motif (décision 51) : API `analytique`, `board`, `colonnes-protegees`,
@@ -17441,7 +17442,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       de messages accumulées par les campagnes de l'inbox), `e2e/ui/etat-messagerie.spec.ts` (dernière relève),
       `e2e/ui/plateforme-mcp.spec.ts` (journal MCP rempli par les campagnes), `e2e/ui/webhooks.spec.ts` (remises
       accumulées), `e2e/ui/premier-lancement.spec.ts:182` (instable connu) — tous dépendent de l'état dérivé de la base
-      partagée, et attendent une base reconstruite (`./resetMe.sh`, destructeur, à coordonner) pour être constatés verts.
+      partagée, quatre échouaient avant le seed du §36, aucun ne lit ses affaires : **INC-342**, hors de cette unité.
       **Découpage, arrêté le 2026-11-03** : **T8.1** le seed (`docs/SPEC-seed.md` §36 — deux affaires, cinq situations, par
       les vraies fonctions ; convergence vérifiée par le seed) ; **T8.2** la campagne E2E complète sur le seed enrichi, les
       preuves qui comptaient les affaires d'un channel révisées, `scripts/verify-seed-rattachements.sh` — un harnais propre plutôt

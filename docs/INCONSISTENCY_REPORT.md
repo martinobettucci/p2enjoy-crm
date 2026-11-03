@@ -8082,7 +8082,9 @@ facultatif, l'identité du responsable par défaut, refusée par (e) si l'appela
 du responsable reste celle des envois, l'armement ne choisissant plus d'identité — ce qui contredit le refus (e).
 **Comportement laissé inchangé** : T2.3.5 livre la signature par rattachement, l'identité reste exigée. **Arbitrée le
 2026-11-01 (décision 803)** : lecture (1) — la fiche présélectionne l'identité du responsable quand c'est lui qui arme,
-sinon rien ; la base et le connecteur ne changent pas. Portée par `CRM-111` T2.3.5. **Statut : arbitrée, à livrer.**
+sinon rien ; la base et le connecteur ne changent pas. Portée par `CRM-111` T2.3.5. **Statut : close** — livrée par
+INC-335 T2 (`identiteArmementAPreselectionner`, `webapp/src/lib/envoi.test.ts`, `e2e/ui/armement-sequence.spec.ts`,
+verts dans les campagnes de `CRM-111` T7 et T8) ; constatée le 2026-11-03.
 
 ### INC-316 — La purge de la corbeille rencontre un budget « indestructible » partagé avec un autre track
 
@@ -8667,4 +8669,21 @@ assistant piloté par une personne peut aujourd'hui expédier un courrier au nom
 dédiée — une file de mails préparés (`mail_drafts` ou un état `awaiting_review` de `mail_outbox`, refusé à
 l'expédition par la base, jamais par la seule interface), `crm_mail_send` qui y écrit, un écran web de relecture et
 d'envoi, l'envoi réservé à l'interface, les relances automatiques inchangées ; les deux questions MCP de `CLAUDE.md`.
+
+### INC-342 — cinq preuves dépendent de l'état accumulé de la base de développement partagée
+
+*Relevé le 2026-11-03 par la session de `CRM-111` T8 (campagnes E2E complètes avant et après le seed du §36).* Ces
+preuves comptent ou positionnent des lignes que les campagnes successives accumulent sans les retirer, et ne sont vertes
+que sur une base fraîchement reconstruite :
+- `e2e/api/inbox-lecture.spec.ts:106` — les lectures de messages laissées par les preuves de l'inbox (Camille a lu des
+  messages hors des cibles du test) ;
+- `e2e/ui/etat-messagerie.spec.ts:62` — « Jamais relevée » sur la boîte système, qu'une relève a depuis datée ;
+- `e2e/ui/plateforme-mcp.spec.ts:195` — la ligne du journal MCP du seed, repoussée par les appels des campagnes ;
+- `e2e/ui/webhooks.spec.ts:25` — la remise semée, repoussée par les remises « Affaire créée » des affaires jetables ;
+- `e2e/ui/premier-lancement.spec.ts:182` — l'instabilité clavier déjà connue.
+**Mesuré** : quatre échouaient déjà dans la campagne de `CRM-111` T7.5, avant le seed du §36 ; aucune ne lit les
+affaires du §36. **Comportement laissé inchangé.** **Corrections proposées** (à arbitrer) : rendre ces preuves
+indépendantes de l'accumulation — cibler leurs propres lignes plutôt qu'un rang ou un compte global, et retirer ce
+qu'elles écrivent — ou reconstruire la base (`./resetMe.sh`, destructeur, à coordonner entre les sessions) avant une
+campagne de constat.
 
