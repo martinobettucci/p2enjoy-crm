@@ -38770,3 +38770,15 @@ aussi la partie commune ; `crm_card_placement_archive` porte aussi le désarchiv
 un seul geste réversible. **MCP** : famille `affaires`, aucune case nouvelle (§11). Spécifié au §9.2 quindecies de
 `docs/SPEC-mcp.md`.
 
+### décision 827 — livrer le lot des migrations 0150 à 0160 ; la relecture des envois du connecteur devient une unité prioritaire
+
+*2026-11-03, session interactive (4891a451), réponses du responsable à `AskUserQuestion`.* **Question 1** : ouvrir une
+fenêtre de livraison pour le lot en attente (migrations 0150 à 0160, webapp de `main`, images `mcp` et `mail-sync`,
+service `functions`) ? **Réponse : « Deliver now »** — la décision 822 est levée ; cette session s'annonce session de
+livraison (décision 813) et suit la procédure du §3.1 de `docs/PROD_MIGRATIONS.md`, comme la fenêtre du 2026-11-02 :
+`--migrate` seul, puis les seuls gestes du lot (reconstructions ciblées, `functions`, manuel) — les §2.18, §2.21 et §2.22
+restent en attente de leur propre instruction. L'instantané de la machine virtuelle, seul retour arrière, est demandé
+au responsable avant d'appliquer. **Question 2** : INC-341, une unité dédiée ? **Réponse : « Unit, top priority »** —
+créer l'unité, poser les deux questions MCP, la spécifier avant le code, et l'implémenter avant toute autre tâche, dès
+la livraison faite.
+
