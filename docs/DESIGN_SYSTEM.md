@@ -7657,3 +7657,33 @@ le §5.15 pose pour le bloc des exigences vaut sans être répété** : une list
   élément se nomme par la clé du champ quand le document la porte, par ses identifiants sinon (§7 ter.14.6).
 - **Les commandes suivent la capacité d'administrer l'espace** (§5.59). **Aucune couleur, aucun jeton, aucune icône
   nouvelle.**
+
+### 5.88 La partie commune de la fiche : les champs de l'affaire — `CRM-112` T3.c
+
+*Écrit le 2026-11-03, avant le code, après relecture intégrale de ce document le même jour.* Ce que le bloc lit, écrit et
+refuse est spécifié par `docs/SPEC-champs-communs.md` §3.3, §4, §5 et §7 ; ces règles ne disent que de quoi il a l'air.
+**Chaque champ est le champ du formulaire d'étape (§5.7, §5.7 bis, §5.7 ter, §5.7 quater), réemployé tel quel** : libellé,
+aide, contrôle du type, enregistrement champ par champ et ses quatre états, refus traduit sous le champ.
+
+- **UN BLOC « Champs de l'affaire », JUSTE APRÈS « Rattachements »**, avant la santé de l'affaire (§5.65) : l'en-tête dit ce
+  qu'est l'affaire dans ce channel, les rattachements où elle se trouve, et les champs de l'affaire ce qu'on en sait
+  **quel que soit le channel** — la même valeur dans tous ses rattachements. Forme des blocs voisins (§5.82) : `section`
+  séparée par une bordure haute `--color-border`, titre `h2` en `--text-h3` — le nom de l'écran du §5.86 —, puis une phrase
+  en 13 px `--color-text-2` : « Ces informations valent pour l'affaire dans tous ses channels. »
+- **LES CHAMPS ACTIFS, DANS L'ORDRE DE LA PARTIE COMMUNE** (`position`). **Aucune mention « Requis à l'étape »** : un champ
+  commun n'a pas d'étape (`docs/SPEC-champs-communs.md` §5) ; il n'est exigé que par une transition.
+- **UN CHAMP ARCHIVÉ QUI PORTE UNE VALEUR RESTE LISIBLE** sous les champs actifs : sa valeur en lecture seule (§5.7 bis), son
+  libellé suivi de la pilule « Archivé » (§5.15). **Un champ archivé vide disparaît** : il n'a rien à dire.
+- **LE BLOC N'EST PAS RENDU QUAND IL N'A RIEN À MONTRER** (§5.36) — aucun champ actif, aucun archivé porteur d'une valeur :
+  un espace sans champ commun garde la fiche d'avant.
+- **UN DÉPLACEMENT REFUSÉ QUI NOMME UN CHAMP COMMUN LE DEMANDE ICI** (§5.7 quater, `docs/SPEC-form-composer.md` §4 ter) :
+  liseré `--color-brand`, mention « Demandé pour ce déplacement ». **Le focus va au premier champ nommé du formulaire
+  d'étape, et à celui de ce bloc seulement si le formulaire n'en nomme aucun** : un seul focus par demande.
+- **LE BANDEAU DE REFUS DU BOARD NOMME LE CHAMP COMMUN PAR SON LIBELLÉ**, comme un champ du workflow ; une clé que rien ne
+  nomme s'écrit telle quelle (§5.62). Le lien « Compléter la fiche » emporte les deux sortes de clés.
+- **LES ÉCRITURES SUIVENT LA CAPACITÉ D'ÉCRIRE L'AFFAIRE** (§5.59) : refusée par la base, chaque contrôle est inactif, sa
+  valeur lisible, et cite le motif de la fiche.
+- **ÉTATS** (§5.8) : squelette de deux lignes pendant la lecture ; erreur avec « Réessayer », dans le bloc — la fiche reste
+  utilisable sans lui.
+- **SOUS `md`**, les champs prennent toute la largeur, comme ceux du formulaire. **Aucune couleur, aucun jeton, aucune
+  icône nouvelle.**

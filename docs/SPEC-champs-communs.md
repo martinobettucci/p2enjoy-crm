@@ -191,6 +191,12 @@ garde : désarchiver les rend.
   l'ordre de `position`. Ils sont éditables par qui écrit l'affaire, sinon en lecture seule. Un champ archivé qui porte
   une valeur reste lisible, marqué archivé ; un champ archivé vide disparaît **[proposition]**. Un champ exigé par une
   transition refusée est signalé comme les champs de workflow (`docs/SPEC-form-composer.md` §4.4).
+  *Précisé le 2026-11-03, avant le code de T3.c (`docs/DESIGN_SYSTEM.md` §5.88)* : la partie commune est un bloc « Champs
+  de l'affaire », juste après « Rattachements ». Une valeur s'écrit dans `card_common_field_values` : une mise à jour de
+  la ligne de l'affaire si elle existe, une insertion sinon (le privilège de colonne n'accorde la mise à jour que de
+  `value`, ce qui interdit l'`upsert` de PostgREST, qui réécrit toutes les colonnes envoyées) ; une insertion concurrente
+  refusée en `23505` est reprise en mise à jour. Le board résout les clés communes d'un `missing_required_fields` en
+  libellés par la lecture de `card_common_fields`, et la fiche les reçoit par `exiges`, comme les autres.
 - **Timeline** : une valeur changée écrit `field_changed`, avec un `placement_id` **nul** (« partie commune »,
   `docs/SPEC-rattachements.md` §5) et un `payload` qui porte `field_id` et `scope: "common"` **[proposition]**.
 
