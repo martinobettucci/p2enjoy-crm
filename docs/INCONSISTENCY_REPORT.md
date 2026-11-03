@@ -8678,6 +8678,9 @@ d'envoi, l'envoi réservé à l'interface, les relances automatiques inchangées
 
 **Arbitrée le 2026-11-03** (décisions 827 et 829) : l'unité `CRM-128`, spécifiée par `docs/SPEC-mails-prepares.md`.
 L'incohérence reste ouverte jusqu'à la livraison de `CRM-128` T3 (le connecteur cesse d'envoyer) et T2 (la base refuse).
+**Livrée le 2026-11-03** (décision 834, révision `52da28ac`) : la migration `0162` et l'image `mcp` sans `crm_mail_send`,
+relues en production — deux déclencheurs `%refuser_connecteur`, `crm_mail_prepare` dans l'image. Elle se clôt sur le
+constat du responsable : un assistant qui prépare un mail, la relecture dans l'inbox, la mise en file.
 
 ### INC-342 — cinq preuves dépendent de l'état accumulé de la base de développement partagée
 

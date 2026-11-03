@@ -17612,7 +17612,7 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-3a) depuis 2026-11-03 18:30 UTC — état avant : [ ]*
       **Découpage** (2026-11-03, après lecture de la vue liste : une requête PostgREST sur `card_placements`, l'affaire plongée,
       filtres au serveur avant la pagination et le compte) :
-      - [x] **T4.a — les colonnes** : la case « Afficher dans la liste des affaires » de Réglages (reportée de T3.a), et une
+      - [P] **T4.a — les colonnes** (livrée le 2026-11-03, décision 834 ; constat du responsable) : la case « Afficher dans la liste des affaires » de Réglages (reportée de T3.a), et une
             colonne par champ listé, ses valeurs plongées dans la même requête. Sans migration. `docs/DESIGN_SYSTEM.md`
             §5.91. Les types personne, contact et fichier ne s'affichent pas en colonne.
             *Faite le 2026-11-03*, sans migration :
@@ -17651,6 +17651,10 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       2026-11-03** avec `CRM-111` (décision 827, révision `e44d04aa`, migrations 152, 155 à 157, 159 et 160, service
       `functions`, webapp ; `docs/PROD_MIGRATIONS.md` §8). Reste le constat du responsable (Réglages ▸ « Champs de
       l'affaire » ouvert à l'administrateur), puis la livraison de T4 à T9.
+      **T2.c.2 et T3.b livrées le 2026-11-03** (décision 828, révision `fbc71e59`, migration 161) ; **T3.c, T3.d et T4.a
+      livrées le 2026-11-03** (décision 834, révision `52da28ac`, migration 163, webapp ; `docs/PROD_MIGRATIONS.md` §8).
+      Restent le constat du responsable — le bloc « Champs de l'affaire » d'une fiche, la ligne du fil, la colonne de la
+      liste — et la livraison de T4.b à T9.
 
 ## Demande du 2026-10-25 — une pile de développement par session (décision 701)
 
@@ -18555,3 +18559,6 @@ inbox et fiche).
       *Le 2026-11-03* : T1 à T5 vérifiés en développement ; la session de livraison (3a, décision 830) joue la campagne
       complète puis demande la fenêtre au responsable. Reste : la livraison et le constat — un assistant qui prépare un mail,
       la relecture dans l'inbox, la mise en file ; INC-341 se clôt sur ce constat.
+      **Livrée le 2026-11-03** (décision 834, révision `52da28ac` : migration 162, image `mcp` reconstruite, webapp,
+      manuel ; `docs/PROD_MIGRATIONS.md` §8) après la campagne complète, dont le défaut de `connecteur-messagerie` corrigé
+      par la session de l'unité (`02e9e80c`). Reste le constat du responsable.

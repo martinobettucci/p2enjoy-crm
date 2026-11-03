@@ -13,7 +13,20 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-112` T4.a — les champs de l'affaire en colonnes de la vue liste (sans migration)
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-03 (troisième fenêtre) — migrations 162 et 163, l'image `mcp`, la webapp de `main`, le manuel
+
+Cellule Spark `crm`, révision `52da28ac` : `scripts/spark/livrer.sh -- --migrate --instantane-verifie` (décision 834,
+sans nouvel instantané, un `pg_dump -Fc` pris dans la cellule avant la fenêtre), l'image `mcp` reconstruite dans la
+cellule, puis le manuel publié (543 fichiers, deux passes). **Vérifié, en lecture seule** : registre à 161 lignes, la
+dernière `0163_fil_valeurs_communes.sql` ; les deux déclencheurs qui refusent un envoi sous le jeton du connecteur ;
+`mail_drafts` présente ; `crm_mail_prepare` dans l'image `mcp` ; `verifier.sh` 33/34 (INC-277, antérieur). Campagne E2E
+complète jouée avant la fenêtre (décisions 830 et 832). Le constat fonctionnel du responsable reste à faire.
+
+#### `CRM-112` T4.a — les champs de l'affaire en colonnes de la vue liste (sans migration)
 
 - Dans Réglages ▸ « Champs de l'affaire », la case « Afficher dans la liste des affaires » fait d'un champ une colonne de
   la vue liste de chaque channel, après les colonnes habituelles ; la ligne du champ porte « Dans la liste ». Les champs
@@ -21,13 +34,13 @@ d'exécuter le code attendu.
 - Une valeur se lit comme sur la fiche ; un montant a le format de la colonne « Montant ». Les valeurs viennent avec la
   page, sans lecture par ligne.
 
-### `CRM-112` T3.d — une valeur de l'affaire dans le fil (migration 163)
+#### `CRM-112` T3.d — une valeur de l'affaire dans le fil (migration 163)
 
 - Remplir ou changer un champ de l'affaire écrit une ligne « Champ renseigné » au fil, le champ nommé suivi de « champ de
   l'affaire ». La ligne appartient à l'affaire et non à l'un de ses rattachements : elle paraît sur la fiche de chacun.
   Une valeur réécrite à l'identique n'écrit rien.
 
-### `CRM-112` T3.c — les champs de l'affaire sur la fiche (sans migration)
+#### `CRM-112` T3.c — les champs de l'affaire sur la fiche (sans migration)
 
 - La fiche d'une affaire porte un bloc « Champs de l'affaire », juste après les rattachements : les champs communs de
   l'espace, remplis comme les questions du formulaire et enregistrés chacun à la sortie du champ. La valeur appartient à
@@ -36,7 +49,7 @@ d'exécuter le code attendu.
   champs » mène à lui, mis en évidence et focalisé.
 - Manuel, §9.6 et §18.16, avec une image.
 
-### `CRM-128` — le connecteur MCP prépare les emails, il ne les envoie jamais (INC-341, décision 829)
+#### `CRM-128` — le connecteur MCP prépare les emails, il ne les envoie jamais (INC-341, décision 829)
 
 - **T2 (migration `0162`)** : une file de **mails préparés**, `mail_drafts`, que seule la personne au nom de laquelle un
   mail a été préparé peut lire. `prepare_email` prépare un mail rattaché à son affaire ; `send_email_draft` l'envoie
@@ -55,8 +68,6 @@ d'exécuter le code attendu.
 - **T5 (seed)** : deux mails préparés en attente pour Camille, comme un assistant les aurait préparés, et un écarté.
 - **À livrer ensemble** : la migration `0162`, l'image `mcp` et la webapp de T4 (l'écran de relecture). Sans l'écran,
   un mail préparé ne peut pas être envoyé.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-03 (seconde fenêtre) — migration 161, la webapp de `main`, le manuel
 
