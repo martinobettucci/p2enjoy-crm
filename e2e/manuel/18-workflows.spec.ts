@@ -5,6 +5,8 @@
 //       docs/SPEC-checklists.md ; docs/SPEC-modeles-affaires.md
 // @spec CRM-112 (docs/BACKLOG.md) tranche T2.d.3 — l'image « champs-communs » de la section « Créer un workflow avec
 //       l'IA » : docs/SPEC-ia.md §6.1, §12.5 ; docs/DESIGN_SYSTEM.md §5.52 ter ; décision 825
+// @spec CRM-112 tranche T3.a — les images de la section 18.16, « Les champs communs à toute affaire » :
+//       docs/SPEC-champs-communs.md §6, §7 ; docs/DESIGN_SYSTEM.md §5.86
 //
 // Les workflows du seed sont lus, jamais modifiés : chaque formulaire ouvert est annulé, et les refus montrés sont ceux du
 // serveur (clé prise, transition déjà déclarée, rôle retiré en cours de page). Ce que l'écran crée — un workflow vide, un
@@ -41,6 +43,7 @@ const S = {
 	effets: 'ce-qu-une-exigence-fera-aux-affaires-en-cours',
 	versions: 'garder-une-photographie-d-un-workflow-et-y-revenir',
 	modeles: 'preparer-des-modeles-d-affaires',
+	communs: 'les-champs-communs-a-toute-affaire',
 } as const
 
 const EDITEUR = '/reglages/workflows'
@@ -127,6 +130,14 @@ async function ranger(request: APIRequestContext): Promise<void> {
 	await service(request, 'delete', `workflows?workspace_id=eq.${WORKSPACE_SEED}&name=eq.${encodeURIComponent(NOM_VIDE)}`)
 	await service(request, 'delete', `workflow_transitions?id=eq.${TRANSITION_DOUBLON}`)
 	await service(request, 'delete', `workflow_nodes_catalog?workspace_id=eq.${WORKSPACE_SEED}&key=eq.qualification-ia`)
+	// L'exigence d'abord : elle référence le champ. Visée par l'identifiant du champ de l'image, jamais par la transition.
+	const exiges = await lireService<{ id: string }[]>(
+		request,
+		`card_common_fields?workspace_id=eq.${WORKSPACE_SEED}&key=in.(${CHAMPS_COMMUNS.join(',')})&select=id`,
+	)
+	if (exiges.length > 0) {
+		await service(request, 'delete', `workflow_transition_required_common_fields?common_field_id=in.(${exiges.map((c) => c.id).join(',')})`)
+	}
 	await service(request, 'delete', `card_common_fields?workspace_id=eq.${WORKSPACE_SEED}&key=in.(${CHAMPS_COMMUNS.join(',')})`)
 	// Le seed n'archive aucun point de checklist : celui qu'une image a archivé est rendu, même si le test a échoué.
 	await service(request, 'patch', `workflow_step_checklist_items?workspace_id=eq.${WORKSPACE_SEED}&archived_at=not.is.null`, { archived_at: null })
@@ -308,6 +319,28 @@ test('créer avec l’IA : les champs communs exigés', async ({ page, request }
 	await expect(section).toContainText('Numéro de TVA')
 	await centrer(section)
 	await illustrer(page, { chapitre: CHAPITRE, section: S.ia, nom: 'champs-communs', cibles: [section] })
+})
+
+test('les champs communs à toute affaire : l’écran, et l’archivage d’un champ exigé refusé', async ({ page, request }) => {
+	const [actif, ancien] = CHAMPS_COMMUNS
+	const idActif = 'e1120000-0000-4000-8000-0000000000c1'
+	await service(request, 'post', 'card_common_fields', [
+		{ id: idActif, workspace_id: WORKSPACE_SEED, key: actif, label: 'Numéro de TVA', type: 'text', help_text: 'Le numéro de TVA intracommunautaire du client' },
+		{ id: 'e1120000-0000-4000-8000-0000000000c2', workspace_id: WORKSPACE_SEED, key: ancien, label: 'Ancien code client', type: 'text', help_text: null },
+	])
+	// La transition « Prospection → Relance » du workflow par défaut exige le numéro de TVA : son archivage sera refusé.
+	await service(request, 'post', 'workflow_transition_required_common_fields', { transition_id: TRANSITION_RELANCER, common_field_id: idActif })
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto('/reglages/champs')
+	const liste = page.getByTestId('liste-champs-communs')
+	await expect(liste.getByTestId('ligne-champ')).toHaveCount(2)
+	await illustrer(page, { chapitre: CHAPITRE, section: S.communs, nom: 'champs-de-l-affaire', cibles: [page.getByTestId('reglages-champs-affaire')] })
+	await liste.getByRole('button', { name: 'Archiver le champ Numéro de TVA' }).click()
+	const confirmation = page.getByTestId('confirmation-archivage-champ-commun')
+	await confirmation.getByRole('button', { name: 'Archiver', exact: true }).click()
+	await expect(confirmation.getByRole('alert')).toContainText('Ce champ est exigé par des transitions')
+	await illustrer(page, { chapitre: CHAPITRE, section: S.communs, nom: 'champ-commun-exige', cibles: [confirmation] })
+	await confirmation.getByRole('button', { name: 'Annuler' }).click()
 })
 
 test('créer avec l’IA : un nœud du catalogue redéclaré, un champ « montant », un échec, un refus', async ({ page, request }) => {

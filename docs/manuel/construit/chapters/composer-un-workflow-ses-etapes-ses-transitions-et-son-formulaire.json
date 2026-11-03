@@ -5359,6 +5359,206 @@
 					"text": "). Choisir un modèle à la création\nd'une affaire est ouvert à quiconque peut créer une affaire dans le channel."
 				}
 			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-champs-communs-a-toute-affaire",
+			"content": [
+				{
+					"type": "text",
+					"text": "18.16 Les champs communs à toute affaire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Les questions d'un workflow ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+						"anchor": "les-questions-du-formulaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 18.7"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") ne valent que pour les affaires de ce\nworkflow. Certaines informations valent pour "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "toute affaire de l'espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", quel que soit son channel : un numéro de\nSIRET, un secteur d'activité. On les déclare une fois, dans "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages ▸ Champs de l'affaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", juste après les\nworkflows."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champs-de-l-affaire.jpg",
+			"alt": "Réglages ▸ Champs de l'affaire : « Nouveau champ », « Afficher les archivés », et deux champs avec leur clé, leur type et leurs commandes",
+			"width": 925,
+			"height": 295
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'écran reprend exactement le formulaire et les commandes des questions d'un workflow : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Nouveau champ »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " demande une\nclé, un libellé, un type, les choix d'une liste ou la devise d'un montant, et une aide ; les flèches réordonnent ; le\ncrayon modifie le libellé, l'aide, les choix ou la devise — la clé et le type ne changent plus ; l'archivage retire le\nchamp sans perdre les valeurs déjà saisies, et la case "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Afficher les archivés »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " le ramène avec sa commande de\nrestauration."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un champ exigé ne s'archive pas."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Si une transition d'un workflow exige le champ pour être franchie, l'archivage est\nrefusé, et le message nomme chaque transition concernée — le workflow, l'étape de départ et l'étape d'arrivée. Retirez\nd'abord l'exigence dans l'éditeur ; le lien "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Ouvrir l'éditeur de workflows »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " y mène."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champ-commun-exige.jpg",
+			"alt": "L'archivage refusé : le champ est exigé par la transition « Prospection → Relance » du « Cycle commercial standard », et le lien vers l'éditeur",
+			"width": 899,
+			"height": 259
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui peut le faire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Tout membre consulte cet écran ; déclarer, modifier, réordonner, archiver et restaurer sont réservés\naux "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs de l'espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Pour les autres, les commandes restent visibles mais grisées, avec la raison en tête\nde l'écran ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Ces champs ne paraissent pas encore sur la fiche d'une affaire, ni comme colonne de la vue liste : ces deux étapes\nviennent ensuite."
+				}
+			]
 		}
 	]
 }

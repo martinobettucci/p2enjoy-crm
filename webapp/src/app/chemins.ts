@@ -109,6 +109,12 @@ export const CHEMIN_ADMIN_JOURNAL = '/reglages/journal' as const
 export const CHEMIN_ADMIN_WORKFLOWS = '/reglages/workflows' as const
 
 /**
+ * Réglages ▸ Champs de l'affaire — `CRM-112` T3.a, `docs/DESIGN_SYSTEM.md` §5.86 : les champs communs de l'espace. Après
+ * les workflows, avant les modèles d'affaires. Un lien pour tous : l'écran se consulte, ses commandes s'éteignent (§5.59).
+ */
+export const CHEMIN_ADMIN_CHAMPS_AFFAIRE = '/reglages/champs' as const
+
+/**
  * Réglages ▸ Modèles d'affaires — `CRM-068` T4b1, `docs/DESIGN_SYSTEM.md` §5.71. Après les workflows : un modèle sert les
  * affaires d'un workflow, et se lit après lui. Réservé aux administrateurs : son entrée suit la règle de « Coût du
  * personnel » (§5.59).

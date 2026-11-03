@@ -77,7 +77,8 @@ async function preparer(request: APIRequestContext, suffixe: string): Promise<{ 
 		data: { workspace_id: ESPACE, portee: 'workflow', demande },
 	})
 	expect(suggestion.status(), await suggestion.text()).toBe(201)
-	const [{ id }] = (await suggestion.json()) as { id: string }[]
+	const [creee] = (await suggestion.json()) as { id: string }[]
+	const id = creee?.id ?? ''
 	const [depart, devis, gagne] = NOEUDS
 	const revision = await request.post(rest('suggestions_ia_revisions'), {
 		headers: entetes,

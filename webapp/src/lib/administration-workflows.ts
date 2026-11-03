@@ -747,6 +747,12 @@ export type ChampAdministrable = Pick<
 	'id' | 'workflow_id' | 'workspace_id' | 'key' | 'label' | 'type' | 'options' | 'help_text' | 'position' | 'archived_at'
 >
 
+/**
+ * Ce qu'un champ DÉCLARÉ porte, qu'il soit d'un workflow ou commun à l'espace (`CRM-112` T3.a,
+ * docs/DESIGN_SYSTEM.md §5.86) : les éléments de l'éditeur de champs ne lisent que cela.
+ */
+export type ChampDeclarable = Pick<ChampAdministrable, 'id' | 'key' | 'label' | 'type' | 'options' | 'help_text' | 'position' | 'archived_at'>
+
 export const COLONNES_CHAMP_ADMIN =
 	'id, workflow_id, workspace_id, key, label, type, options, help_text, position, archived_at'
 
@@ -832,7 +838,7 @@ export type ChoixChamp = {
  * ÉCARTÉES plutôt que rendues à moitié — une entrée sans clé ne peut désigner aucune valeur, et
  * l'afficher dans l'éditeur inviterait à la conserver.
  */
-export function choixDuChamp(champ: ChampAdministrable): readonly ChoixChamp[] {
+export function choixDuChamp(champ: Pick<ChampAdministrable, 'options'>): readonly ChoixChamp[] {
 	const options = champ.options
 	if (options === null || typeof options !== 'object' || Array.isArray(options)) return []
 	const choix = (options as Record<string, unknown>).choices
@@ -849,7 +855,7 @@ export function choixDuChamp(champ: ChampAdministrable): readonly ChoixChamp[] {
 }
 
 /** La devise portée par un champ `money` (§2.4), ou la chaîne vide si elle est absente. */
-export function deviseDuChamp(champ: ChampAdministrable): string {
+export function deviseDuChamp(champ: Pick<ChampAdministrable, 'options'>): string {
 	const options = champ.options
 	if (options === null || typeof options !== 'object' || Array.isArray(options)) return ''
 	const devise = (options as Record<string, unknown>).currency

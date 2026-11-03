@@ -4521,6 +4521,34 @@ Un message confirme le nom du modèle enregistré.
 raison ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). Choisir un modèle à la création
 d'une affaire est ouvert à quiconque peut créer une affaire dans le channel.
 
+### 18.16 Les champs communs à toute affaire
+
+Les questions d'un workflow ([section 18.7](#les-questions-du-formulaire)) ne valent que pour les affaires de ce
+workflow. Certaines informations valent pour **toute affaire de l'espace**, quel que soit son channel : un numéro de
+SIRET, un secteur d'activité. On les déclare une fois, dans **Réglages ▸ Champs de l'affaire**, juste après les
+workflows.
+
+![Réglages ▸ Champs de l'affaire : « Nouveau champ », « Afficher les archivés », et deux champs avec leur clé, leur type et leurs commandes](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champs-de-l-affaire.jpg)
+
+L'écran reprend exactement le formulaire et les commandes des questions d'un workflow : **« Nouveau champ »** demande une
+clé, un libellé, un type, les choix d'une liste ou la devise d'un montant, et une aide ; les flèches réordonnent ; le
+crayon modifie le libellé, l'aide, les choix ou la devise — la clé et le type ne changent plus ; l'archivage retire le
+champ sans perdre les valeurs déjà saisies, et la case **« Afficher les archivés »** le ramène avec sa commande de
+restauration.
+
+**Un champ exigé ne s'archive pas.** Si une transition d'un workflow exige le champ pour être franchie, l'archivage est
+refusé, et le message nomme chaque transition concernée — le workflow, l'étape de départ et l'étape d'arrivée. Retirez
+d'abord l'exigence dans l'éditeur ; le lien **« Ouvrir l'éditeur de workflows »** y mène.
+
+![L'archivage refusé : le champ est exigé par la transition « Prospection → Relance » du « Cycle commercial standard », et le lien vers l'éditeur](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champ-commun-exige.jpg)
+
+**Qui peut le faire.** Tout membre consulte cet écran ; déclarer, modifier, réordonner, archiver et restaurer sont réservés
+aux **administrateurs de l'espace**. Pour les autres, les commandes restent visibles mais grisées, avec la raison en tête
+de l'écran ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)).
+
+Ces champs ne paraissent pas encore sur la fiche d'une affaire, ni comme colonne de la vue liste : ces deux étapes
+viennent ensuite.
+
 ## 19. Le catalogue de nœuds : le vocabulaire de vos workflows
 
 Un **nœud** est un état par lequel une affaire peut passer : « Prospection », « Négociation »,

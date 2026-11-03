@@ -17550,11 +17550,20 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       **Découpage** (2026-11-03, après relecture intégrale de `docs/DESIGN_SYSTEM.md` ; mesuré sur `0152` : la clé et le
       type ne se modifient pas, faute de privilège de colonne ; libellé, options, aide, « listé », position et archivage
       se modifient) :
-      - [ ] **T3.a — Réglages ▸ « Champs de l'affaire »** (`/reglages/champs`) : liste, créer, modifier, réordonner,
+      - [x] **T3.a — Réglages ▸ « Champs de l'affaire »** (`/reglages/champs`) : liste, créer, modifier, réordonner,
             archiver et désarchiver ; le refus `common_field_in_use` qui nomme les transitions ; l'entrée de l'index ;
             capacité d'administration (§5.59). PostgREST seul, aucune migration ; unitaires ; E2E. *Forme écrite avant
             le code* : `docs/DESIGN_SYSTEM.md` §5.86 ; la case « Afficher dans la liste » passe à T4, qui pose la colonne
             qu'elle commande (`docs/SPEC-champs-communs.md` §7).
+            *Faite le 2026-11-03* :
+            - les éléments de champ de l'éditeur extraits dans `webapp/src/app/ElementsChampAdmin.tsx`, rendu inchangé :
+              unitaires de l'éditeur **147/147**, specs UI de l'éditeur et du formulaire vertes ;
+            - unitaires de l'écran **8/8** ; suite entière **5 337 tests** ; `typecheck` vert ;
+            - E2E `e2e/ui/reglages-champs-affaire.spec.ts` **6/6** aux vrais jetons : déclarer, modifier, réordonner au
+              clavier, refus `common_field_in_use` nommé, archiver et restaurer, la lectrice refusée à l'écran et par
+              écriture directe (`403`, et zéro ligne à l'archivage), quatre paliers ; captures observées ;
+            - manuel, section 18.16, deux images (`e2e/manuel/18-workflows.spec.ts`), `verify-manual` sans anomalie ;
+              l'aide de l'écran mène à la section.
       - [ ] **T3.b — l'exigence dans l'éditeur de workflow**, et **T2.c.2** (la collection dans les deux comparaisons de
             versions, migration) : exiger et ne plus exiger un champ commun sous chaque transition ; unitaires ; pgTAP ;
             E2E.

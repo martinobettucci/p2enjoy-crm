@@ -7598,7 +7598,7 @@ ligne d'un champ, son formulaire de déclaration et d'édition, l'éditeur de ch
 - **UNE LISTE PLATE, UNE LIGNE PAR CHAMP**, dans l'ordre de `position` : la ligne de champ de l'éditeur (§5.15), telle
   quelle — libellé en `font-medium`, clé en `code`, type en mot, mention « Archivé » (`Archive`) pour un archivé, aide en
   `--color-text-3`, puis « Monter » (`ArrowUp`), « Descendre » (`ArrowDown`), « Modifier » (`Pencil`), « Archiver »
-  (`Archive`) ou « Rétablir » (`ArchiveRestore`), noms accessibles nommant le champ. Les commandes d'ordre sont
+  (`Archive`) ou « Restaurer » (`ArchiveRestore`), noms accessibles nommant le champ. Les commandes d'ordre sont
   désactivées aux extrémités, jamais masquées (§5.15).
 - **« Afficher les archivés »**, la case du §5.29 bis, au-dessus de la liste ; rendue même quand aucun champ n'est archivé.
 - **« Nouveau champ », primaire, `Plus`**, au-dessus de la liste, et dans l'état vide (§5.51). Il ouvre le formulaire de
@@ -7607,8 +7607,8 @@ ligne d'un champ, son formulaire de déclaration et d'édition, l'éditeur de ch
   jamais en champ désactivé (§5.15) : la base ne les laisse pas modifier, et le formulaire de l'éditeur le dit déjà ainsi.
   Le formulaire d'édition s'ouvre **sous la ligne** qu'il modifie.
 - **ARCHIVER OUVRE LA CONFIRMATION DE L'ÉDITEUR**, sous la ligne, qui nomme le champ et dit l'effet : le champ quitte la
-  partie commune de chaque affaire, ses valeurs sont gardées, et « Rétablir » les rend. Son bouton est destructif, comme
-  dans l'éditeur. **« Rétablir » n'en demande aucune** : il se défait d'un geste (§5.16).
+  partie commune de chaque affaire, ses valeurs sont gardées, et « Restaurer » les rend. Son bouton est destructif, comme
+  dans l'éditeur. **« Restaurer » n'en demande aucune** : il se défait d'un geste (§5.16).
 - **LE REFUS `common_field_in_use` NOMME LES TRANSITIONS ET LE GESTE QUI LE LÈVE** (§5.29 bis), dans la confirmation,
   `role="alert"` : « Ce champ est exigé par des transitions : Cycle commercial standard : Négociation → Signature. Retirez
   ces exigences dans l'éditeur de workflows avant de l'archiver. », suivi du lien **« Ouvrir l'éditeur de workflows »**
@@ -7622,7 +7622,7 @@ ligne d'un champ, son formulaire de déclaration et d'édition, l'éditeur de ch
   serait la commande morte du §5.10 — la règle que le §5.74 tient pour un canal absent. Elle viendra avec sa colonne.
 - **ÉTATS** (§5.8) : squelette au premier chargement seulement, la relecture après une écriture gardant la liste
   (§5.29 tranche 2 c) ; erreur avec « Réessayer » ; vide « Aucun champ de l'affaire dans cet espace. », avec « Nouveau
-  champ ». Les issues s'annoncent dans une région vivante polie : « Champ « … » enregistré », « archivé », « rétabli ».
+  champ ». Les issues s'annoncent dans une région vivante polie : « Champ « … » enregistré », « archivé », « restauré ».
 - **SOUS `md`**, la ligne se replie — libellé et pilules, puis les commandes —, cibles conservées ; les champs du
   formulaire prennent toute la largeur. `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : tout vient de l'éditeur de workflows (§5.15).

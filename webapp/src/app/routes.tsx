@@ -74,6 +74,7 @@ import {
 	CHEMIN_ADMIN_COUT_PERSONNEL,
 	CHEMIN_ADMIN_MEMBRES,
 	CHEMIN_ADMIN_JOURNAL,
+	CHEMIN_ADMIN_CHAMPS_AFFAIRE,
 	CHEMIN_ADMIN_MODELES_AFFAIRES,
 	CHEMIN_ADMIN_ETIQUETTES,
 	CHEMIN_ADMIN_WEBHOOKS,
@@ -114,6 +115,7 @@ export {
 	CHEMIN_ADMIN_COUT_PERSONNEL,
 	CHEMIN_ADMIN_MEMBRES,
 	CHEMIN_ADMIN_JOURNAL,
+	CHEMIN_ADMIN_CHAMPS_AFFAIRE,
 	CHEMIN_ADMIN_MODELES_AFFAIRES,
 	CHEMIN_ADMIN_ETIQUETTES,
 	CHEMIN_ADMIN_WEBHOOKS,
@@ -241,6 +243,9 @@ export const CLE_TITRE_MEMBRES: CleTraduction = 'members.title'
 
 /** Titre de Réglages ▸ Journal d'audit — `CRM-072` T2, docs/SPEC-audit.md §8. */
 export const CLE_TITRE_JOURNAL: CleTraduction = 'audit.title'
+
+/** Titre de Réglages ▸ Champs de l'affaire — `CRM-112` T3.a, docs/DESIGN_SYSTEM.md §5.86. */
+export const CLE_TITRE_CHAMPS_AFFAIRE: CleTraduction = 'admin.commonFields.title'
 
 /** Titre de Réglages ▸ Modèles d'affaires — `CRM-068` T4b1, docs/DESIGN_SYSTEM.md §5.71. */
 export const CLE_TITRE_MODELES_AFFAIRES: CleTraduction = 'admin.cardTemplates.title'
@@ -465,6 +470,18 @@ export function IndexReglages() {
 					>
 						<span className="font-medium">{t('admin.settings.index.workflows')}</span>
 						<span className="text-sm text-text-2">{t('admin.settings.index.workflows.body')}</span>
+					</Link>
+				</li>
+				{/* Les champs de l'affaire viennent APRÈS les workflows — `CRM-112` T3.a, docs/DESIGN_SYSTEM.md §5.86 : un workflow
+				    porte ses propres champs, l'espace ceux de toute affaire. Un lien pour tous : l'écran se consulte (§5.59). */}
+				<li>
+					<Link
+						to={CHEMIN_ADMIN_CHAMPS_AFFAIRE}
+						data-testid="entree-champs-affaire"
+						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+					>
+						<span className="font-medium">{t('admin.settings.index.commonFields')}</span>
+						<span className="text-sm text-text-2">{t('admin.settings.index.commonFields.body')}</span>
 					</Link>
 				</li>
 				{/* Les modèles d'affaires viennent APRÈS les workflows — `CRM-068` T4b1, docs/DESIGN_SYSTEM.md §5.71 : un modèle

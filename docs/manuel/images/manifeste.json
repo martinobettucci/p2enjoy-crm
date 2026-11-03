@@ -518,6 +518,22 @@
 			]
 		},
 		{
+			"fichier": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champ-commun-exige.jpg",
+			"largeur": 899,
+			"hauteur": 259,
+			"chapitre": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+			"section": "les-champs-communs-a-toute-affaire",
+			"pleinePage": false,
+			"libelles": [
+				"Annuler",
+				"Archiver",
+				"Archiver le champ « Numéro de TVA » ?",
+				"Ce champ est exigé par des transitions : Cycle commercial standard : Prospection → Relance. Retirez ces exigences dans l'éditeur de workflows avant de l'archiver.",
+				"Il quitte la partie commune de chaque affaire. Ses valeurs sont gardées, et « Restaurer » les rend.",
+				"Ouvrir l'éditeur de workflows"
+			]
+		},
+		{
 			"fichier": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champ-montant.jpg",
 			"largeur": 860,
 			"hauteur": 186,
@@ -557,6 +573,37 @@
 				"ancien-code-client-manuel",
 				"ancien-code-client-manuel Archivé",
 				"numero-tva-manuel"
+			]
+		},
+		{
+			"fichier": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champs-de-l-affaire.jpg",
+			"largeur": 925,
+			"hauteur": 295,
+			"chapitre": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+			"section": "les-champs-communs-a-toute-affaire",
+			"pleinePage": false,
+			"libelles": [
+				"Afficher les archivés",
+				"Ancien code client",
+				"Ancien code client ancien-code-client-manuel Texte court",
+				"Archiver le champ Ancien code client",
+				"Archiver le champ Numéro de TVA",
+				"Ces champs paraissent sur toute affaire de l'espace, quel que soit son channel. Une transition peut les exiger.",
+				"Champs de l'affaire",
+				"Descendre Ancien code client",
+				"Descendre Numéro de TVA",
+				"Le numéro de TVA intracommunautaire du client",
+				"Modifier le champ Ancien code client",
+				"Modifier le champ Numéro de TVA",
+				"Monter Ancien code client",
+				"Monter Numéro de TVA",
+				"Nouveau champ",
+				"Numéro de TVA",
+				"Numéro de TVA numero-tva-manuel Texte court Le numéro de TVA intracommunautaire du client",
+				"Texte court",
+				"ancien-code-client-manuel",
+				"numero-tva-manuel",
+				"on"
 			]
 		},
 		{

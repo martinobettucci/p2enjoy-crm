@@ -38,6 +38,12 @@ d'exécuter le code attendu.
   une étape ou une transition emporte les siennes. Le différentiel d'une modification les compare au workflow vivant, et
   les trois défauts ont leur phrase. **Corrigé avant toute livraison** : « Enregistrer la correction » effaçait la liste
   que l'assistant avait proposée. Manuel, chapitre 18, avec une image.
+- **T3.a (webapp)** : Réglages ▸ « Champs de l'affaire » (`/reglages/champs`), après « Workflows » dans l'index. On y
+  déclare, modifie, réordonne, archive et restaure les champs communs, avec le formulaire et les commandes de l'éditeur
+  de workflows, extraits dans un module partagé sans changer leur rendu. L'archivage d'un champ exigé par une transition
+  est refusé, et le message nomme les transitions avec un lien vers l'éditeur. La lectrice consulte, commandes grisées
+  avec leur raison. Manuel, section 18.16, avec deux images. La case « Afficher dans la liste » viendra avec la vue liste
+  (T4).
 
 - **`CRM-127` T2 et T3 — la relève date `last_sync_at`, et le test de connexion d'un compte de messagerie passe par une
   fonction edge** (décision 816, INC-340 ; `docs/SPEC-mail-subsystem.md` §23). Migration `0151` :
