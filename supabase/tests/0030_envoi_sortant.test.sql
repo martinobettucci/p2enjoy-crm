@@ -17,7 +17,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(22);
+select plan(23);
 
 create or replace function pg_temp.endosser(utilisateur uuid)
 returns void language plpgsql as $$
@@ -48,7 +48,14 @@ select 'identite_camille', id::text from public.mail_outbound_identities
  where owner_id = '5eed0000-0000-4000-8000-000000000011';
 insert into pg_temp_ref values ('card', '5eed0000-0000-4000-8000-0000000000c1');
 insert into pg_temp_ref
-select 'card_archivee', card_id::text from public.card_placements where archived_at is not null limit 1;
+-- RÉVISÉ PAR LA CAMPAGNE DE LIVRAISON DU 2026-11-04 (décision 51) : depuis `CRM-111`, une affaire a plusieurs
+-- rattachements, et un rattachement archivé ne fait plus une affaire archivée. L'affaire retenue n'a AUCUN rattachement
+-- actif. *Trouvé sur une base fraîchement semée* : le `limit 1` d'avant y prenait une affaire du §36 de `docs/SPEC-seed.md`
+-- dont un autre rattachement est actif — elle reçoit et envoie, à bon droit.
+select 'card_archivee', p.card_id::text from public.card_placements p
+ where p.archived_at is not null
+   and not exists (select 1 from public.card_placements q where q.card_id = p.card_id and q.archived_at is null)
+ order by p.card_id limit 1;
 
 -- TÉMOIN : sans lui, « la garde refuse » serait vrai aussi si les objets manquaient.
 select is(
@@ -260,6 +267,10 @@ select throws_ok(
 	'23514',
 	null,
 	'21 — un sens de circulation inconnu est refusé : un message va dans un sens ou dans l''autre');
+
+-- (témoin, décision 50) l'affaire sans rattachement actif existe : sans elle, la preuve de l'affaire archivée passerait à vide.
+select isnt((select valeur from pg_temp_ref where nom = 'card_archivee'), null,
+	'(témoin) le seed porte une affaire dont aucun rattachement n''est actif');
 
 select * from finish();
 rollback;
