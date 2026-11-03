@@ -17373,6 +17373,20 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       retirer avec confirmation ; `docs/DESIGN_SYSTEM.md` avant le code ; unitaires ; captures aux quatre paliers ;
       `docs/manual.md`, chapitre « Rattacher une affaire à plusieurs channels ».
       *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable, session 4891a451) depuis 2026-11-03 10:40 UTC — état avant : [ ]*
+      **Découpage, arrêté le 2026-11-03 (journal, décision 823 ; `docs/SPEC-rattachements.md` §8.1)** :
+      - [ ] **T7.1 — la fiche au rattachement de l'adresse** : `lireCard` reçoit le channel de l'adresse et ouvre la fiche
+        sur son rattachement ; une adresse d'un channel sans rattachement lisible rend un état qui propose les
+        rattachements lisibles (INC-065). Livrables : `docs/DESIGN_SYSTEM.md` avant le code, unitaires, E2E, captures.
+      - [ ] **T7.2 — le bloc « Rattachements »** : une ligne par rattachement lisible, le courant marqué, les autres en
+        lien vers leur adresse ; archiver et désarchiver. Unitaires, E2E (dont la lectrice qui ne voit qu'un rattachement),
+        captures aux quatre paliers.
+      - [ ] **T7.3 — rattacher à un channel** : la liste des channels écrits non rattachés, `attach_card`, la fiche
+        ouverte sur le nouveau rattachement ; refus traduits. Unitaires, E2E, captures.
+      - [ ] **T7.4 — retirer un rattachement** : administrateurs, éteint sur le dernier, confirmation qui nomme la perte,
+        `detach_card`. Unitaires, E2E (dont le refus d'un non-administrateur par l'API), captures.
+      - [ ] **T7.5 — la pastille « aussi rattachée à N »** sur le board et la liste d'un channel, les rattachements lisibles
+        nommés au survol et au focus. Unitaires, E2E, captures.
+      - [ ] **T7.6 — le manuel** : chapitre « Rattacher une affaire à plusieurs channels », images, `verify-manual`.
 - [ ] **T8 — seed et E2E** (§12, §13) : les cinq situations du §12 par les vraies fonctions ; campagne E2E complète.
 - [ ] **T9 — connecteur MCP** (§11) : `crm_card_attach`, `crm_card_placement_update`, `crm_card_placement_archive`,
       outils existants sur le rattachement ; refusés par la matrice puis par le CRM ; `docs/SPEC-mcp.md` §9.2.

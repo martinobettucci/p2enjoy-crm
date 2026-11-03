@@ -38650,3 +38650,17 @@ redimensionner sur place laissait le tiroir ouvert sur la capture — l'écran e
 `verify-manual` 167. **Conséquence** : la `0158` part avec la webapp de `main` ; `crm_mail_send` ne change pas, et la
 relecture des envois du connecteur reste INC-341, à arbitrer.
 
+### décision 823 — `CRM-111` T7 : la fiche s'ouvre sur le rattachement de l'adresse ; les autres sont des liens
+
+*2026-11-03, session interactive (4891a451), forme proposée par la session pour les deux points « [proposition] » du §8
+de `docs/SPEC-rattachements.md`, validée avec la spécification (décision 662) ; révisable par le responsable.*
+**Constat** : chaque bloc de la fiche qui agit sur un rattachement (en-tête, formulaire et étape, checklist, relance) le
+fait déjà sur un seul, choisi aujourd'hui comme le plus ancien (`premierRattachement`). **Solutions envisagées** : (a)
+rendre N jeux complets de blocs modifiables dans la même page ; (b) ouvrir la fiche sur le rattachement de l'adresse et
+présenter les autres repliés, en liens vers leur adresse. **Décision : (b)**. (a) ferait coexister deux formulaires, deux
+étapes et deux relances de la même affaire dans une page, deux saisies concurrentes, et doublerait les lectures de chaque
+bloc ; (b) réemploie tous les blocs tels quels et donne à chaque rattachement une adresse stable, celle du board de son
+channel. **Conséquences** : INC-065 trouve sa règle — une adresse d'un channel sans rattachement lisible rend un état qui
+le dit ; le scénario `e2e/ui/formulaire.spec.ts` qui attend la fiche sous un track inexistant (décision 613) est révisé
+dans T7.1. **Découpage** : T7.1 à T7.6 (`docs/BACKLOG.md`). **MCP** : rien de nouveau, le §11 tranche déjà (T9).
+

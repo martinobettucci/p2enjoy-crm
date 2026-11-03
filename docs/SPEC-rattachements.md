@@ -443,6 +443,31 @@ déclencheur n'est jamais suspendu.
   retrait, et `docs/manual.md` un chapitre « Rattacher une affaire à plusieurs channels », dans les tranches qui les
   livrent.
 
+### 8.1 La forme livrée par T7 — décision 823
+
+Les deux points « **[proposition]** » du §8 reçoivent la forme suivante. Elle se fonde sur l'existant : chaque bloc de la
+fiche qui agit sur un rattachement (en-tête — responsable, montant, prochaine action, sommeil —, formulaire et étape,
+checklist, relance) le fait **déjà** sur un seul rattachement.
+
+- **La fiche s'ouvre sur le rattachement du channel de l'adresse.** Tous les blocs qui agissent sur un rattachement
+  agissent sur **lui** ; la partie commune (titre, devise, contacts, activités, recettes, coûts, temps, rentabilité, mails,
+  fil) ne change pas. Le bloc ouvert du §8 est donc la fiche à cette adresse.
+- **Les autres rattachements sont « repliés » dans un bloc « Rattachements »**, placé sous l'en-tête : une ligne par
+  rattachement lisible — chemin « Track › Channel », étape, responsable, montant, marques « archivé » et « en sommeil » —,
+  celui de l'adresse marqué comme courant. **Déplier un autre rattachement, c'est ouvrir la fiche à son adresse** : un
+  lien, jamais un second jeu de blocs modifiables dans la même page — deux formulaires, deux étapes et deux relances
+  côte à côte seraient deux saisies concurrentes de la même affaire.
+- Le bloc porte les gestes du §5 : **« Rattacher à un channel »** (les channels que l'appelant écrit, auxquels l'affaire
+  n'est pas rattachée ; à l'issue, la fiche s'ouvre sur le nouveau rattachement), **archiver et désarchiver** chaque
+  rattachement (écriture de son channel), **« Retirer »** (administrateurs seulement, éteint sur le dernier, confirmation
+  qui nomme la perte des valeurs de bloc).
+- **Adresse d'un channel sans rattachement lisible** (INC-065) : un état dédié dit que l'affaire n'est pas rattachée à ce
+  channel et propose les liens vers ses rattachements lisibles. Une affaire illisible garde l'écran « introuvable » :
+  rien ne distingue ce qui est masqué de ce qui n'existe pas.
+- **Connecteur MCP** (les deux questions de `CLAUDE.md`) : déjà tranchées au §11 — `crm_card_attach` (`affaires` ▸
+  `ajouter`), `crm_card_placement_archive` (`affaires` ▸ `supprimer`), aucun outil de retrait (décision 643). Livrés par
+  T9 ; T7 n'ajoute ni famille ni case.
+
 ## 9. Recherche
 
 `recherche_globale` rend **une ligne par affaire**. Elle nomme les rattachements lisibles, et le lien mène au premier
