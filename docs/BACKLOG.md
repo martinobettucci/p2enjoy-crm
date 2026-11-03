@@ -17567,9 +17567,13 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
               écriture directe (`403`, et zéro ligne à l'archivage), quatre paliers ; captures observées ;
             - manuel, section 18.16, deux images (`e2e/manuel/18-workflows.spec.ts`), `verify-manual` sans anomalie ;
               l'aide de l'écran mène à la section.
-      - [ ] **T3.b — l'exigence dans l'éditeur de workflow**, et **T2.c.2** (la collection dans les deux comparaisons de
+      - [@] **T3.b — l'exigence dans l'éditeur de workflow**, et **T2.c.2** (la collection dans les deux comparaisons de
             versions, migration) : exiger et ne plus exiger un champ commun sous chaque transition ; unitaires ; pgTAP ;
             E2E.
+            *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-3a) depuis 2026-11-03 13:50 UTC — état avant : [ ]*
+            *Spécifiée le 2026-11-03, avant le code* : `docs/DESIGN_SYSTEM.md` §5.87, `docs/SPEC-champs-communs.md` §5 et §7
+            (précisions T3.b) ; migration `0161` (les trois fonctions de comparaison, INC-344, et
+            `preview_common_field_requirement`).
       - [ ] **T3.c — la partie commune de la fiche** : les valeurs, éditables ou en lecture selon la capacité de
             l'affaire ; un champ archivé porteur d'une valeur, marqué ; le refus `missing_required_fields` qui nomme un
             champ commun par son libellé (board et fiche) ; unitaires ; E2E.
@@ -18444,3 +18448,12 @@ Question du connecteur : **non** (décision 816).
       *Partielle le 2026-11-03* : la migration `0151`, l'image `mail-sync` et la fonction edge sont livrées avec le lot
       150 à 160 (décision 827, `docs/PROD_MIGRATIONS.md` §8) ; le bouton attend T4. L'unique compte entrant de
       production, `pending`, échoue à chaque relève pour une cause que le journal ne dit pas (INC-343).
+
+## Demande du 2026-11-03 — les envois du connecteur passent par une relecture humaine (décision 827, INC-341)
+
+### CRM-128 — Les mails préparés : un envoi du connecteur MCP attend la relecture et l'envoi depuis l'interface web `[@]`
+*Prise en charge : session interactive 4891a451 (p2enjoy-crm-75) depuis 2026-11-03 13:53 UTC — état avant : [ ]*
+*Créée le 2026-11-03 — décision 827 (« Unit, top priority »), INC-341.* La règle du responsable : un envoi demandé par le
+connecteur MCP ne part **jamais** directement, sans détournement possible ; il entre dans une file de mails préparés, que
+seule l'interface web permet de relire et d'envoyer. Les relances automatiques ne passent pas par cette file.
+Spécification à écrire et committer avant le code, après les deux questions MCP de `CLAUDE.md`.
