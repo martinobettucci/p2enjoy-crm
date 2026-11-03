@@ -7398,3 +7398,23 @@ spécification, qui écrivait « fenêtre modale large », est révisée.
   `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
 - **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `ScanEye`**, qui ne sert aucun autre objet (§9).
 
+
+### 5.81 La fiche d'une affaire au rattachement de l'adresse — `CRM-111` T7.1
+
+*Écrit le 2026-11-03, avant le code (décision 823 ; `docs/SPEC-rattachements.md` §8.1).* Une affaire peut être
+rattachée à plusieurs channels. Sa fiche s'ouvre sur le rattachement du channel **de l'adresse** : l'en-tête
+(responsable, montant, prochaine action, sommeil, pilule « Archivé »), le formulaire et son étape, la checklist et la
+relance sont ceux de **ce** rattachement. Rien ne change dans leur forme : §5.3 à §5.3 sexies, §5.42 et §5.70 valent
+tels quels.
+
+- **Une adresse d'un channel auquel l'affaire n'est pas rattachée — ou d'un rattachement que l'appelant ne lit pas —
+  rend un état vide dédié**, dans la forme du §5.8 et du §5.51 : titre « Cette affaire n'est pas rattachée à ce
+  channel », une phrase qui dit qu'elle l'est ailleurs, puis **un lien par rattachement lisible**, libellé
+  « Track › Channel » (la forme du §5.54), vers la fiche à son adresse. Des liens et non des boutons : ils changent
+  d'adresse (§12.1). Le premier est primaire (le lien de retour du §5.5), les suivants secondaires ; ils passent à la
+  ligne sous 390 px sans défilement horizontal.
+- **Aucune redirection automatique** : choisir un rattachement à la place de la personne serait deviner lequel elle
+  visait, et l'adresse qu'elle a tapée ou suivie resterait sans explication.
+- **Une affaire illisible garde l'écran « introuvable »** (§5.3, `docs/SPEC-permissions-rls.md` §7). L'état dédié ne
+  paraît que pour une affaire que l'appelant lit par au moins un rattachement : il ne révèle rien qu'il ne lise déjà.
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : l'icône et le ton de l'état vide (§5.8).
