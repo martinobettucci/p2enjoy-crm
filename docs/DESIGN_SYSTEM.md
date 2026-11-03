@@ -7699,3 +7699,65 @@ famille « Champs » : une valeur commune changée est un champ renseigné.
   formulaire de l'étape. Un champ que la fiche ne sait plus nommer laisse la ligne sans détail, comme pour un champ du
   workflow (§5.11 : le fil n'invente jamais un nom).
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.**
+
+### 5.90 Les mails préparés : l'entrée de l'inbox, la relecture, l'encadré de la fiche — `CRM-128` T4
+
+*Écrit le 2026-11-03, avant le code, après relecture intégrale de ce document le même jour (décision 829).* Ce que les
+écrans lisent, envoient et refusent est spécifié par `docs/SPEC-mails-prepares.md` §3 et §6 ; ces règles ne disent que de
+quoi ils ont l'air. Un mail préparé est un email que l'assistant a rédigé et qui **n'est pas parti** : tout l'écran sert à
+ce qu'on ne le croie jamais envoyé.
+
+- **UNE ENTRÉE DE TÊTE « Mails préparés », AVANT « Non classés »**, dans le premier panneau de l'inbox (§5.4) : le patron
+  `BoutonDossier`, son compte en `--color-text-3` et la pastille du §5.43 — `--color-brand` à texte `--color-white` — qui
+  porte le même nombre, puisque tout mail préparé attend un geste. Icône Lucide **`MailCheck`**, qui ne sert aucun autre
+  objet (§9) : elle dit un email qui attend une validation. **L'entrée n'est rendue que si la personne a au moins un mail
+  préparé en attente** (§5.36) ; pendant la lecture et sur son échec, elle est absente, jamais devinée (§5.31). Le nom
+  accessible dit le compte entier : « Mails préparés : 2 en attente de relecture ».
+- **LA LISTE** (deuxième panneau) : la liste plate du §5.18, une ligne par mail préparé, **du plus ancien au plus
+  récent** — c'est une file de travail, et le premier arrivé attend depuis le plus longtemps (l'écart assumé avec le
+  §5.43). Une ligne porte, dans cet ordre : les destinataires, l'objet en `font-medium` (qui se replie, §5.46), le titre de
+  l'affaire en 13 px `--color-text-2`, puis la **pilule neutre « Préparé par l'assistant »**, icône `Sparkles` — ce que le
+  produit propose de lui-même (§5.4 ter, §5.52) — ou « Préparé dans le CRM » pour l'autre origine, et la date en donnée
+  technique (§2). La ligne retenue porte `aria-current` (§5.4). Liste vide après un geste : « Aucun mail préparé en
+  attente. », sans action (§5.16).
+- **LA RELECTURE** (troisième panneau) : en tête, un bandeau `role="note"` en `--color-accent-soft` /
+  `--color-accent-on-soft`, icône `TriangleAlert` — une consigne, pas une erreur (§5.79) — : « Ce mail n'est pas envoyé.
+  Relisez-le, modifiez-le si besoin, puis envoyez-le. » ; puis le titre de l'affaire en lien vers sa fiche (§5.4) ; puis
+  **le formulaire d'envoi habituel** (§5.4 sexies, `FormulaireEnvoi`), **ouvert d'emblée et prérempli** — identité,
+  destinataires, objet, corps, réponse — : c'est le même formulaire, pas un second (§19.6 de `docs/SPEC-mail-subsystem.md`).
+  - **Il gagne un champ « Copie » quand le mail préparé en porte une**, sous « Destinataires », du gabarit du §5.7 : le
+    formulaire n'en a pas d'ordinaire (§5.4 sexies), mais taire une copie que l'assistant a prévue enverrait autre chose que
+    ce qui a été préparé. Une copie cachée prévue ouvre d'emblée le champ « Cci ».
+  - **L'identité est celle que le mail préparé propose** si elle est encore parmi les siennes ; sinon la présélection du
+    §5.4 sexies, et le sélecteur le montre.
+  - **« Envoyer » reste le bouton primaire** et passe par la même mise en file ; **« Écarter » est un bouton secondaire**,
+    icône `Trash2`, posé après « Envoyer » — le geste qui retire vient après celui qui engage (§5.52). Il ouvre une
+    confirmation dans le flux, sous les boutons (§5.13) : « Écarter ce mail préparé ? Il ne sera jamais envoyé. », bouton
+    destructif « Écarter le mail », « Annuler » ; le focus y entre et revient à « Écarter » à l'annulation.
+  - **Pendant un geste, toutes les commandes du formulaire sont inactives** (§5.52) ; le bouton appuyé porte `aria-busy` et
+    dit « Envoi… » ou « Écart… ».
+  - **Les issues** : envoyé, la ligne quitte la liste, la relecture se referme sur l'état « absence de sélection » (§5.4), et
+    la région vivante dit « Message mis en file d'envoi » — jamais « envoyé » : le worker n'a pas encore parlé (§5.4
+    sexies) ; écarté, de même, « Mail préparé écarté ». Le focus va à l'entrée « Mails préparés » si elle reste, sinon au
+    titre du panneau de la liste (§5.13 : jamais sur un élément qui disparaît).
+  - **Un refus** se dit sous les boutons, `role="alert"`, la saisie conservée (§5.7 ter), par le dictionnaire de l'envoi,
+    plus deux phrases : « Ce mail préparé n'est plus en attente : il a été envoyé ou écarté. » (`draft_not_pending`, et
+    `draft_not_found`, que l'écran ne distingue pas) ; la liste est relue.
+  - **Les commandes suivent la capacité d'écrire l'affaire** (§5.59) : refusée, le formulaire est rendu inactif avec le
+    motif de la fiche, et « Écarter » reste offert — écarter son propre brouillon n'écrit rien sur l'affaire.
+- **L'ADRESSE `/inbox?brouillon=<id>`** ouvre directement la relecture — c'est le lien que l'assistant donne. Le paramètre
+  se lit au montage et se retire aussitôt, comme `message` (§15 de `docs/SPEC-recherche.md`) ; sous 1024 px, on arrive sur
+  la relecture, pas sur les dossiers. Un mail introuvable, écarté, envoyé ou à autrui rend, dans le troisième panneau,
+  l'état vide « Ce mail préparé n'est plus en attente. » avec, s'il en reste, l'entrée qui mène aux autres : rien ne
+  distingue l'absent de l'interdit (§5.33).
+- **SUR LA FICHE DE L'AFFAIRE, UN ENCADRÉ PAR MAIL PRÉPARÉ EN ATTENTE DE LA PERSONNE**, juste au-dessus du formulaire
+  d'envoi de la fiche : la carte discrète du §5.4 ter — `--color-surface`, `--radius-sm`, bordure `--color-border`, 12 px —,
+  l'icône `MailCheck` puis « Mail préparé, à relire » en `font-medium`, les destinataires et l'objet en 13 px
+  `--color-text-2`, et le **lien « Relire et envoyer »** vers `/inbox?brouillon=<id>` — un lien, il change d'adresse
+  (§12.1), en forme de bouton secondaire compact pour tenir la cible (§5.57). Aucun mail préparé : rien n'est rendu
+  (§5.36). La lecture en échec ne rend rien non plus : la fiche reste entière, et l'inbox porte l'entrée.
+- **L'ONGLET « Connecteur MCP »** (§5.56) : la phrase de portée de « Messagerie » devient « Lecture des fils ; préparer un
+  email compte comme « ajouter », l'envoi se fait toujours dans le CRM ». Aucune autre forme ne change.
+- **SOUS `lg`**, la pile du §5.4 : entrée → liste → relecture, « Retour » à chaque étage ; sous `md`, les boutons du
+  formulaire passent à la ligne, cibles conservées. `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
+- **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `MailCheck`**, qui ne sert aucun autre objet (§9).

@@ -18501,7 +18501,7 @@ inbox et fiche).
       `queue_outbound_email`, `send_email_draft` et `armer_sequence_relance` par PostgREST, trois `403 review_required`,
       rien d'écrit ; un mail préparé invisible et inécartable par une autre personne. Manuel §33.1 et §33.5 ; DAT §3.7 ter.
       **En développement, jusqu'à T4, un mail préparé ne peut pas encore être envoyé** : l'écran de relecture manque.
-- [ ] **T4 — webapp** : `docs/DESIGN_SYSTEM.md` d'abord ; l'entrée « Mails préparés » de l'inbox, la relecture dans le
+- [ ] **T4 — webapp** : `docs/DESIGN_SYSTEM.md` d'abord (§5.90, écrit le 2026-11-03 avant le code) ; l'entrée « Mails préparés » de l'inbox, la relecture dans le
       formulaire d'envoi, « Écarter », l'adresse `/inbox?brouillon=<id>`, l'encadré de la fiche, la phrase de l'onglet
       « Connecteur MCP » ; unitaires, API, E2E, captures aux quatre paliers ; manuel (inbox, fiche).
 - [ ] **T5 — seed** (`docs/SPEC-seed.md`) et sa vérification.
