@@ -17609,6 +17609,14 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
 - [@] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; la case « Afficher dans la liste » de
       Réglages ▸ « Champs de l'affaire » (reportée de T3.a, `docs/DESIGN_SYSTEM.md` §5.86) ; unitaires ; API.
       *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-3a) depuis 2026-11-03 18:30 UTC — état avant : [ ]*
+      **Découpage** (2026-11-03, après lecture de la vue liste : une requête PostgREST sur `card_placements`, l'affaire plongée,
+      filtres au serveur avant la pagination et le compte) :
+      - [ ] **T4.a — les colonnes** : la case « Afficher dans la liste des affaires » de Réglages (reportée de T3.a), et une
+            colonne par champ listé, ses valeurs plongées dans la même requête. Sans migration. `docs/DESIGN_SYSTEM.md`
+            §5.91. Les types personne, contact et fichier ne s'affichent pas en colonne.
+      - [ ] **T4.b — les filtres au serveur** : un filtre par type (§8), dans la même requête paginée ; colonnes de
+            recherche typées sur `card_common_field_values` (migration), mesures du coût sous la RLS ; l'état dans
+            l'adresse.
 - [ ] **T5** — modèles d'email : `{{card.field.<clé>}}`, contrôle d'écriture par déclencheur, rendu, sélecteur.
 - [ ] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
 - [ ] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.

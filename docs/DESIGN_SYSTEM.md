@@ -7761,3 +7761,30 @@ ce qu'on ne le croie jamais envoyé.
 - **SOUS `lg`**, la pile du §5.4 : entrée → liste → relecture, « Retour » à chaque étage ; sous `md`, les boutons du
   formulaire passent à la ligne, cibles conservées. `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
 - **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `MailCheck`**, qui ne sert aucun autre objet (§9).
+
+### 5.91 Les champs de l'affaire en colonnes de la vue liste — `CRM-112` T4.a
+
+*Écrit le 2026-11-03, avant le code, après relecture intégrale de ce document le même jour.* Ce que l'écran lit est
+spécifié par `docs/SPEC-champs-communs.md` §8 ; ces règles ne disent que de quoi il a l'air.
+
+**Dans Réglages ▸ « Champs de l'affaire » (§5.86).**
+- **LE FORMULAIRE D'UN CHAMP GAGNE LA CASE « Afficher dans la liste des affaires »**, après l'aide : case native de 24 px
+  sur une ligne de `--size-target` (§5.7 bis), et dessous, en 13 px `--color-text-2`, « Le champ devient une colonne de la
+  vue liste de chaque channel. » Elle s'écrit avec le champ, à « Enregistrer » (§5.34 : une seule commande).
+- **Les types personne, contact et fichier ne s'affichent pas en colonne** : leur valeur est un identifiant que la liste ne
+  sait pas nommer sans une lecture par ligne. La case est alors rendue désactivée, lisible, et sa phrase dit pourquoi :
+  « Ce type de champ ne s'affiche pas en colonne. » — un état de la saisie, jamais un droit (§5.50).
+- **La ligne d'un champ listé porte la pilule neutre « Dans la liste »** (§5.6) après son type : on lit sans ouvrir le
+  formulaire quels champs la liste montre.
+
+**Dans la vue liste (§5.9).**
+- **UNE COLONNE PAR CHAMP LISTÉ ET ACTIF, APRÈS LES COLONNES NATIVES**, dans l'ordre de la partie commune (`position`). Son
+  en-tête est le libellé du champ (une donnée, §10), non triable : le tri reste la liste close du §5.9.
+- **LA CELLULE TIENT UNE LIGNE** (§5.9), en ellipse, la valeur entière dans `title`. La valeur se lit comme dans la fiche
+  (§5.7 bis) : un texte tel quel ; un choix par son libellé ; plusieurs choix séparés par une virgule ; une case par
+  « Oui » ou « Non » ; un nombre, un montant, une date en donnée technique alignée à droite — un montant suivi de sa devise
+  dans son propre élément (§5.11). **Une valeur absente laisse la cellule vide** (§5.9).
+- **Aucun champ listé : aucune colonne**, et le tableau est celui d'avant. Les colonnes ne s'enregistrent sur aucun
+  appareil : c'est une donnée de l'espace, posée par l'administrateur (`CLAUDE.md` §11).
+- **Le tableau défile dans son conteneur** (§12.6) ; la page ne défile jamais de côté (§7).
+- **Aucune couleur, aucun jeton, aucune icône nouvelle.**

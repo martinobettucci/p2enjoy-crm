@@ -239,6 +239,11 @@ garde : désarchiver les rend.
   chacune. Le placement est déjà lu sous sa RLS ; T4 doit donc vérifier la valeur sans réévaluer les droits ligne à ligne
   **[proposition]**.
 - **L'état de la vue** (filtres actifs) suit la règle existante de la liste, sans stockage nouveau.
+- *Précisé le 2026-11-03, avant le code de T4.a (`docs/DESIGN_SYSTEM.md` §5.91)* : T4 est découpée — T4.a les colonnes,
+  T4.b les filtres. Les valeurs d'une page sont **plongées** dans la requête de la liste (`card_common_field_values`, sous
+  sa RLS) ; aucune lecture par ligne. Les types `user`, `contact` et `file` ne s'affichent pas en colonne : leur valeur est
+  un identifiant que la liste ne nomme pas sans une lecture de plus ; la case « listé » leur est refusée à l'écran, et la
+  liste les ignore si la base les porte listés.
 
 ## 9. Modèles d'email (décision 664, complément 2)
 
