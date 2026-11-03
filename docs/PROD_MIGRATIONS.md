@@ -1,5 +1,7 @@
 # Contrat de déploiement — P2Enjoy CRM
 
+*Session de livraison : session interactive 4891a451 (Claude Code, poste du responsable) depuis 2026-11-03 13:40 UTC — lot : migrations 0150 à 0160 (`CRM-111` T4 à T9, `CRM-127` T2 et T3, `CRM-112` T1 et T2), webapp de `main`, images `mcp` et `mail-sync`, service `functions`, manuel (décision 827).*
+
 Ce document décrit **ce qu'un humain doit appliquer** pour déployer ou mettre à jour la
 production. Il ne dérive jamais de l'état réel du projet : toute modification du schéma, des
 services déployés ou des variables d'environnement le met à jour **dans le même changement**.
