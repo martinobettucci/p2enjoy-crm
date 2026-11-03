@@ -38620,3 +38620,17 @@ relances auto ne passent pas par cette interface. » **Décisions** :
    `queue_outbound_email`, et `mail-sync` expédie sans relecture. Consignée en **INC-341**, comportement inchangé dans
    cette unité ; sa correction est une unité à part, soumise au responsable.
 
+
+### décision 822 — le lot des migrations 0150 à 0156 attend : pas de livraison pour l'instant
+
+*2026-11-03, session 4522fa9c (p2enjoy-crm-3a), réponse du responsable (`AskUserQuestion`).*
+
+**Question.** `main` porte les migrations 0150 à 0156, qui forment un lot :
+- `CRM-111` T4.1, T5 et T6.1, de la session 75 ;
+- `CRM-127` T2 et T3, de la session 25, qui exige l'image `mail-sync` et le service `functions` dans la même fenêtre ;
+- `CRM-112` T1, T2.a et T2.b.
+
+Fallait-il livrer maintenant, au titre de la consigne de boucle « livre entre chaque itération stable » ?
+
+**Décision : « Not yet ».** Le lot attend une instruction du responsable, et le travail du backlog continue. La consigne de
+boucle ne vaut pas autorisation de fenêtre : chaque fenêtre est demandée.
