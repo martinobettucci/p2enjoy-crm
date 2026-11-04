@@ -13,7 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-112` T4.c — filtrer sur une personne, un contact, un fichier (migration 166)
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-04 (troisième fenêtre) — migration 166, la webapp de `main`, l'image `mcp`, le manuel
+
+Cellule Spark `crm`, révision `6a190ad9` (décision 843, sans nouvel instantané, un `pg_dump -Fc` avant). **Vérifié** : registre à
+164 lignes, la dernière `0166_filtres_references_fichiers.sql` ; `verifier.sh` 33/34 (INC-277). Le constat fonctionnel du
+responsable reste à faire.
+
+#### `CRM-112` T4.c — filtrer sur une personne, un contact, un fichier (migration 166)
 
 - Le panneau « Champs de l'affaire » de la vue liste filtre aussi les champs qui désignent une personne (choisie parmi les
   membres de l'espace), un contact (choisi dans le carnet) ou un fichier (« Renseigné » ou « Vide »). Tous les types de
@@ -22,8 +32,6 @@ d'exécuter le code attendu.
 - **Image `mcp`** : `crm_card_list(view=…)` applique ces filtres.
 - Manuel, §9.11.
 - **À livrer ensemble** : la migration `0166`, la webapp et l'image `mcp`.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-04 (seconde fenêtre) — migration 165, la webapp de `main`, l'image `mcp`, le manuel
 

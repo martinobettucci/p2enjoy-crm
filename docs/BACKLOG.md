@@ -17609,8 +17609,7 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
               relu en base sans rattachement) et `timeline.spec.ts` : **20/20** ; capture observée.
 - [P] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; la case « Afficher dans la liste » de
       Réglages ▸ « Champs de l'affaire » (reportée de T3.a, `docs/DESIGN_SYSTEM.md` §5.86) ; unitaires ; API.
-      T4.a, T4.b et T4.d livrées le 2026-11-03 et le 2026-11-04 ; T4.c vérifiée en développement, à livrer ; constat du
-      responsable.
+      T4.a à T4.d livrées les 2026-11-03 et 2026-11-04 ; reste le constat du responsable.
       **Découpage** (2026-11-03, après lecture de la vue liste : une requête PostgREST sur `card_placements`, l'affaire plongée,
       filtres au serveur avant la pagination et le compte) :
       - [P] **T4.a — les colonnes** (livrée le 2026-11-03, décision 834 ; constat du responsable) : la case « Afficher dans la liste des affaires » de Réglages (reportée de T3.a), et une
@@ -17652,8 +17651,8 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
             repliait après « Appliquer » (la page démonte le tableau pendant la lecture) — son état est tenu par la page.
             *Précisé au code* : l'export CSV ne retient pas ces filtres (clés fermées d'`export_cards`), le panneau le dit ;
             l'export rejoint T4.d. Reste la livraison de la migration `0164` avec la webapp, et le constat.
-      - [P] **T4.c — les filtres personne, contact et fichier** (vérifiée en développement le 2026-11-04 ; livraison de
-            `0166`, webapp et image `mcp` ensemble, puis constat) (§8) : un filtre qui nomme une personne, un contact ;
+      - [P] **T4.c — les filtres personne, contact et fichier** (**livrée le 2026-11-04**, décision 843, révision `6a190ad9` ;
+            constat du responsable) (§8) : un filtre qui nomme une personne, un contact ;
             « renseigné ou vide » pour un fichier. *Arbitrée le 2026-11-04 (décision 837) : les trois.* *Spécifiée le
             2026-11-04 avant le code (décision 839)* : §8 (précision T4.c), `docs/DESIGN_SYSTEM.md` §5.92 ; une migration
             (`filled` pour la forme `is`, les trois types dans l'interprétation), la webapp, le connecteur.
