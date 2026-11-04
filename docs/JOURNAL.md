@@ -39035,3 +39035,14 @@ deux fonctions et en ajoute deux, aucune table, aucune donnée.
 **Conséquences** : fenêtre avec migration, image `mcp` reconstruite dans la cellule ; constat en lecture seule ;
 consignation.
 
+### décision 841 — `CRM-112` T5 et T6 : les deux questions MCP
+
+*2026-11-04, session 4522fa9c (p2enjoy-crm-f9), réponses du responsable à `AskUserQuestion`, avant toute spécification.*
+**T5 — les variables `{{card.field.<clé>}}` des modèles d'email** : **pas dans le connecteur.** Réponse du responsable :
+« Les modèles d'emails servent pour les messages de service, les relances, les envois depuis l'interface web. Le MCP lui
+utilise un modèle de langage, beaucoup plus flexible en termes de composition… les contraindre aux modèles me semble
+vraiment idiot. » L'assistant compose librement ; il lit les valeurs des champs de l'affaire par `crm_card_get` (T9) pour
+s'en servir. Aucune famille, aucune case.
+**T6 — la recherche globale par les champs de l'affaire** : **oui, par l'outil de recherche existant**, famille
+« affaires » (consulter) ; aucune famille nouvelle.
+
