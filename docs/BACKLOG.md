@@ -17654,12 +17654,13 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       - [ ] **T4.c — les filtres personne, contact et fichier** (§8) : un filtre qui nomme une personne, un contact ;
             « renseigné ou vide » pour un fichier. *Arbitrée le 2026-11-04 (décision 837) : les trois.* À spécifier.
             MCP : par T9, famille « affaires ».
-      - [ ] **T4.d — les filtres des champs dans les vues sauvegardées et dans l'export CSV** : **à arbitrer par le
+      - [@] **T4.d — les filtres des champs dans les vues sauvegardées et dans l'export CSV** : **à arbitrer par le
             responsable** — la liste des clés d'une vue est fermée en base (`docs/SPEC-vues-import-export.md` §2.2), et
             `export_cards` reçoit ces mêmes clés ; jusque-là, une vue ne garde pas ces filtres, « Filtres modifiés depuis la
             vue » ne les compte pas, l'export ne les applique pas — et le panneau le dit. *Arbitrée le 2026-11-04
             (décision 837) : les vues ET l'export* ; une migration élargit les clés d'une vue et `export_cards` ; la phrase
             du panneau est retirée. MCP : `crm_view_list` rend les filtres de champ (T9), famille « affaires ». À spécifier.
+            *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-f9) depuis 2026-11-04 00:41 UTC — état avant : [ ]*
 - [ ] **T5** — modèles d'email : `{{card.field.<clé>}}`, contrôle d'écriture par déclencheur, rendu, sélecteur.
 - [ ] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
 - [ ] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.
