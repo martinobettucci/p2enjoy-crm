@@ -289,6 +289,9 @@ garde : désarchiver les rend.
   - *Précisé au code, le 2026-11-03* : **« Exporter en CSV » ne retient pas ces filtres** — il passe par
     `export_cards(p_channel, p_filters)`, dont les filtres sont les clés fermées d'une vue (`docs/SPEC-vues-import-export.md`
     §2.2). Le panneau le dit ; l'export rejoint donc la tranche **T4.d**, avec les vues sauvegardées.
+- *Arbitré le 2026-11-04 (`docs/JOURNAL.md` décision 837)* : **T4.d** — les vues sauvegardées et l'export CSV retiennent
+  les filtres de champ ; **T4.c** — personne, contact et fichier sont filtrés ; **connecteur** — par T9 (`crm_card_list`,
+  `crm_view_list`), famille « affaires », aucune famille nouvelle.
 
 ## 9. Modèles d'email (décision 664, complément 2)
 
