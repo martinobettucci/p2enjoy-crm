@@ -38982,3 +38982,18 @@ valeurs sans en changer aucune.
 **Conséquences** : fenêtre avec migration, sans service à reconstruire ; vérifications en lecture seule : registre terminé
 par la 164, les trois colonnes, la politique ; `verifier.sh` ; le manuel publié ; consignation.
 
+### décision 837 — `CRM-112` T4.c et T4.d : les filtres de champ retenus par les vues et l'export ; les trois types restants ; le connecteur par T9
+
+*2026-11-04, session 4522fa9c (p2enjoy-crm-f9), réponses du responsable à `AskUserQuestion`, avant toute spécification.*
+**T4.d** — *« Vues et export »* : une vue sauvegardée enregistre aussi ses filtres de champ, « Filtres modifiés depuis la
+vue » les compte, et l'export CSV applique exactement ce que l'écran montre. Une migration élargit la liste fermée des
+clés d'une vue (`docs/SPEC-vues-import-export.md` §2.2) et `export_cards` ; la phrase du panneau (« L'export CSV et les
+vues sauvegardées ne retiennent pas encore ces filtres ») est retirée quand T4.d est livrée.
+**T4.c** — *« Les trois »* : personne (« est cette personne »), contact (« est ce contact »), fichier (« renseigné ou
+vide »), comme le tableau de `docs/SPEC-champs-communs.md` §8.
+**Question MCP 1** — *« Oui, via T9 »* : `crm_card_list` reçoit les filtres de champ (T9), et `crm_view_list` rend les
+vues avec leurs filtres de champ ; aucun outil nouveau en T4.c ni en T4.d.
+**Question MCP 2** — *« Famille affaires »* : les mêmes cases que `crm_card_list` et `crm_view_list` (consulter) ; aucune
+migration de la liste fermée des familles (`docs/SPEC-mcp.md` §6.1).
+**Conséquences** : T4.d et T4.c sont à spécifier (précisions de §8, `docs/DESIGN_SYSTEM.md`, migration), T4.d d'abord.
+
