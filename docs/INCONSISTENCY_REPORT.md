@@ -8710,6 +8710,11 @@ campagne de constat.
 - `e2e/manuel/13-etat-messagerie.spec.ts:19` (« Jamais relevée ») et `e2e/manuel/34-webhooks.spec.ts:108` (l'historique ne
   tient plus dans la fenêtre) ont la même cause que leurs sœurs de `e2e/ui` ; les images du manuel régénérées sur la base
   accumulée faisaient rougir sa garde (journal d'audit, « Aucune remise ») : elles n'ont pas été reprises.
+- *Le 2026-11-04, deux campagnes de suite* : `e2e/ui/connecteur-organisations.spec.ts:70` rougit dans la campagne
+  (« Unknown tool: 'crm_organization_create' ») et passe seul — une preuve jouée avant elle laisse la matrice du connecteur
+  sans la case de la famille « Organisations » ; effet d'ordre, non une régression ; et « Ma journée » (`e2e/ui/ma-journee.spec.ts:64`,
+  `e2e/api/ma-journee.spec.ts:363`) rougit dès que la campagne passe minuit après le seed : la section « Aujourd'hui » du
+  seed est celle de son jour.
 
 ### INC-343 — la veille de `mail-sync` écrit `panne` et `account_id`, que le formateur du journal écarte
 
