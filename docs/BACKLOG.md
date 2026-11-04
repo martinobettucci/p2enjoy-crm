@@ -17629,7 +17629,7 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
             - **défaut du commit `3afd9295`, corrigé par le suivant** : les sept clés de traduction de T4.a n'y étaient pas —
               `fr.ts` portait aussi le travail non commité de `CRM-128` T4 et avait été écarté du commit. La révision
               `3afd9295` seule ne passe pas `tsc` (constaté sur un export de la révision) ; avec les clés, elle passe.
-      - [P] **T4.b — les filtres au serveur** (vérifiée en développement le 2026-11-03 ; livraison et constat) : un filtre par type (§8), dans la même requête paginée ; colonnes de
+      - [P] **T4.b — les filtres au serveur** (vérifiée en développement le 2026-11-03 ; **livrée le 2026-11-04**, décision 836, révision `1a6af590` ; constat du responsable) : un filtre par type (§8), dans la même requête paginée ; colonnes de
             recherche typées sur `card_common_field_values` (migration), mesures du coût sous la RLS ; l'état dans
             l'adresse. *Spécifiée le 2026-11-03 avant le code* (décision 831) : `docs/SPEC-champs-communs.md` §8
             (précision T4.b), `docs/DESIGN_SYSTEM.md` §5.92 — le bouton « Champs de l'affaire » et son panneau, les

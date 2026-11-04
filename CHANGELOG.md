@@ -13,7 +13,19 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-112` T4.b — filtrer la vue liste sur les champs de l'affaire (migration 164)
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-04 — migration 164, la webapp de `main`, le manuel
+
+Cellule Spark `crm`, révision `1a6af590` : `scripts/spark/livrer.sh -- --migrate --instantane-verifie` (décision 836,
+sans nouvel instantané, un `pg_dump -Fc` pris dans la cellule avant la fenêtre), puis le manuel publié (544 fichiers, deux
+passes). **Vérifié, en lecture seule** : registre à 162 lignes, la dernière `0164_filtres_champs_communs.sql` ; les trois
+colonnes de recherche et la politique en semi-jointure ; `verifier.sh` 33/34 (INC-277, antérieur). Campagne E2E complète
+jouée avant la fenêtre. Le constat fonctionnel du responsable reste à faire.
+
+#### `CRM-112` T4.b — filtrer la vue liste sur les champs de l'affaire (migration 164)
 
 - Le bouton « Champs de l'affaire » rejoint la barre de filtres de la vue liste, et ouvre sous elle un panneau : un filtre
   par champ, selon son type — un texte « Contient », sans tenir compte des majuscules ni des accents ; des choix à
@@ -27,8 +39,6 @@ d'exécuter le code attendu.
   évalué une fois par requête au lieu d'une fois par valeur (mesuré : 37,7 → 24,6 ms, et un coût qui ne croît plus).
 - Manuel, §9.11 avec une image, et §18.16.
 - **À livrer ensemble** : la migration `0164` et la webapp.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-03 (troisième fenêtre) — migrations 162 et 163, l'image `mcp`, la webapp de `main`, le manuel
 
