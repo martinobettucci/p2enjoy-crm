@@ -272,7 +272,12 @@ test.describe('Le parcours complet : mentionner, et voir la cloche du destinatai
 			// Le bouton est actif sans qu'aucune personne ne soit choisie : mentionner est
 			// facultatif, et le composeur reste celui que `CRM-043` a livré.
 			await expect(page.getByRole('button', { name: 'Publier' })).toBeEnabled()
+			// *Révisé par la campagne de livraison du 2026-11-04 (INC-342)* : la sonde restait parfois en base — le texte encore
+			// dans le composeur satisfaisait l'attente avant que l'insertion n'aboutisse, et le retrait du `finally` passait
+			// AVANT elle. La réponse de l'insertion est désormais attendue.
+			const insertion = page.waitForResponse((r) => r.url().includes('/rest/v1/card_comments') && r.request().method() === 'POST')
 			await page.getByRole('button', { name: 'Publier' }).click()
+			expect((await insertion).status()).toBe(201)
 
 			await expect(page.getByText(corps)).toBeVisible()
 			await expect(page.getByTestId('mentions-refusees')).toHaveCount(0)
