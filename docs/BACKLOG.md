@@ -17661,6 +17661,13 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
             (décision 837) : les vues ET l'export* ; une migration élargit les clés d'une vue et `export_cards` ; la phrase
             du panneau est retirée. MCP : `crm_view_list` rend les filtres de champ (T9), famille « affaires ». À spécifier.
             *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-f9) depuis 2026-11-04 00:41 UTC — état avant : [ ]*
+            *Spécifiée le 2026-11-04 avant le code (décision 838)* : `docs/SPEC-champs-communs.md` §8 (précision T4.d),
+            `docs/SPEC-vues-import-export.md` §2.2, `docs/DESIGN_SYSTEM.md` §5.92. Découpage :
+            - [ ] **T4.d.1** — migration : `common_fields` et `time_zone` dans la validation des vues,
+              `app.card_common_filters_match`, `export_cards` qui l'emploie ; pgTAP.
+            - [ ] **T4.d.2** — webapp : vues et export portent les filtres de champ ; phrase du panneau retirée ; manuel.
+            - [ ] **T4.d.3** — connecteur, même livraison : `crm_card_list` applique les filtres de champ d'une vue,
+              `crm_view_list` les rend.
 - [ ] **T5** — modèles d'email : `{{card.field.<clé>}}`, contrôle d'écriture par déclencheur, rendu, sélecteur.
 - [ ] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
 - [ ] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.

@@ -38997,3 +38997,19 @@ vues avec leurs filtres de champ ; aucun outil nouveau en T4.c ni en T4.d.
 migration de la liste fermée des familles (`docs/SPEC-mcp.md` §6.1).
 **Conséquences** : T4.d et T4.c sont à spécifier (précisions de §8, `docs/DESIGN_SYSTEM.md`, migration), T4.d d'abord.
 
+### décision 838 — `CRM-112` T4.d : la forme des filtres de champ d'une vue, leur interprétation en base, le connecteur dans la même livraison
+
+*2026-11-04, session 4522fa9c (p2enjoy-crm-f9), précision de conception sous la décision 837, avant le code.*
+**Problème** : une vue et l'export doivent retenir les filtres de champ (décision 837). La forme de l'adresse (`c.<clé>`,
+valeurs brutes, clés de choix encodées) se prête mal à une interprétation en base.
+**Observations** : la liste des clés d'une vue est fermée par `app.saved_view_filters_valid` (migration 0135) ;
+`export_cards` interprète ces clés en SQL (0136) ; le connecteur applique lui-même les filtres d'une vue
+(`mcp/crm_mcp/outils/affaires.py`, `crm_card_list(view=…)`).
+**Décision** : une forme structurée en anglais sous `common_fields` (`contains`, `any_of`, `min`/`max`, `from`/`to`,
+`is`), une clé facultative `time_zone` ; une fonction unique `app.card_common_filters_match`, `security invoker`,
+qu'emploie `export_cards` ; l'écran traduit entre la forme et l'adresse. **Le connecteur dans la même livraison**
+(T4.d.3) : sans lui, une vue lue par `crm_card_list` rendrait plus d'affaires que l'écran.
+**Solutions écartées** : stocker la forme brute de l'adresse (la base devrait décoder les clés de choix et deviner le
+fuseau) ; livrer les vues sans le connecteur (une vue dirait deux choses selon qui la lit).
+**Conséquences** : trois tranches T4.d.1, T4.d.2, T4.d.3 ; une migration au premier numéro libre.
+

@@ -292,6 +292,33 @@ garde : désarchiver les rend.
 - *Arbitré le 2026-11-04 (`docs/JOURNAL.md` décision 837)* : **T4.d** — les vues sauvegardées et l'export CSV retiennent
   les filtres de champ ; **T4.c** — personne, contact et fichier sont filtrés ; **connecteur** — par T9 (`crm_card_list`,
   `crm_view_list`), famille « affaires », aucune famille nouvelle.
+- *Précisé le 2026-11-04, avant le code de T4.d (décisions 837 et 838)* :
+  - **Une vue garde ses filtres de champ sous la clé `common_fields`**, une forme structurée, en anglais (`docs/DAT.md`
+    §12 bis), que la base valide et sait interpréter — jamais la forme brute de l'adresse :
+
+    | Type du champ | Forme | Sens |
+    |---|---|---|
+    | texte | `{"contains": "<texte>"}` (200 caractères au plus) | `value_search` contient le texte, minuscules et accents ignorés |
+    | choix | `{"any_of": ["<clé>", …]}` (50 au plus) | la valeur est l'une des clés |
+    | choix multiple | `{"any_of": ["<clé>", …]}` | la valeur contient l'une des clés |
+    | nombre, montant | `{"min": <nombre> \| null, "max": <nombre> \| null}`, l'un au moins | entre les bornes, incluses |
+    | date, date et heure | `{"from": "AAAA-MM-JJ" \| null, "to": "AAAA-MM-JJ" \| null}`, l'un au moins | le jour, bornes incluses |
+    | case | `{"is": "yes" \| "no" \| "empty"}` | `true`, `false`, ou aucune valeur |
+
+    Au plus 50 champs, chacun par sa clé (la forme de `card_common_fields.key`). Une clé inconnue, archivée, ou d'un type
+    qui ne correspond pas à la forme est **ignorée** à la lecture, comme l'adresse le fait (§12.2 de `docs/SPEC-cards.md`).
+    L'écran traduit cette forme vers ses paramètres `c.<clé>` et retour.
+  - **`time_zone`**, clé facultative des filtres d'une vue ou d'un export (un nom IANA connu de PostgreSQL) : le jour d'un
+    champ date et heure s'y lit, comme l'écran le lit à l'heure de l'appareil. Absente : UTC.
+  - **Une fonction unique interprète ces filtres en base**, `app.card_common_filters_match(card, filtres, fuseau)`,
+    `security invoker` — la RLS de la personne s'applique ; `export_cards` l'emploie, et la validation des vues
+    (`app.saved_view_filters_valid`) contrôle la forme.
+  - **Découpage** : **T4.d.1** — la migration (la validation élargie, la fonction, `export_cards`) et sa preuve pgTAP ;
+    **T4.d.2** — la webapp : une vue enregistre et rouvre ses filtres de champ, « Filtres modifiés depuis la vue » les
+    compte, l'export les envoie avec le fuseau de l'appareil, la phrase du panneau est retirée ; manuel ; **T4.d.3** — le
+    connecteur, **dans la même livraison** : `crm_card_list` applique les filtres de champ d'une vue (`view`), et
+    `crm_view_list` les rend (part de T9 avancée, décision 837) ; sans elle, une vue lue par le connecteur rendrait plus
+    d'affaires que l'écran.
 
 ## 9. Modèles d'email (décision 664, complément 2)
 

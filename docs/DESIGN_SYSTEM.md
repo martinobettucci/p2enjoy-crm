@@ -7818,7 +7818,10 @@ ne disent que de quoi il a l'air.
 - **UNE PHRASE AVANT LES COMMANDES DIT CE QUE CES FILTRES NE TOUCHENT PAS** — « L'export CSV et les vues sauvegardées ne
   retiennent pas encore ces filtres. » —, 13 px `--color-text-2`. *Précisé au code* : « Exporter en CSV » passe par les
   clés fermées d'une vue (`export_cards`), comme les vues elles-mêmes ; exporter moins de filtres que l'écran n'en montre
-  sans le dire tromperait. Tranche T4.d, à arbitrer.
+  sans le dire tromperait. Tranche T4.d, à arbitrer. *Arbitrée le 2026-11-04 (décision 837)* : les vues et l'export
+  retiennent ces filtres ; **la phrase est retirée avec T4.d.2**, et rien ne la remplace — le panneau n'a plus de limite à
+  dire. Une vue choisie qui porte des filtres de champ les applique ; « Filtres modifiés depuis la vue » paraît dès qu'ils
+  s'en écartent, comme pour les autres filtres (§5.75).
 - **« Appliquer » (primaire) et « Fermer » (discret) terminent le panneau** : rien ne filtre avant « Appliquer », comme
   la recherche attend sa validation. « Appliquer » ramène à la page 1 ; le panneau reste
   ouvert, pour corriger. Une borne illisible ne part pas : le champ dit « Saisissez un nombre. » sous lui, en `--color-danger`

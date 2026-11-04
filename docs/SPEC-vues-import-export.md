@@ -54,6 +54,8 @@ l'adresse eux-mêmes*) :
 | `label_id` (`etiquette`) | `uuid` d'une étiquette de l'espace |
 | `search` (`q`) | texte, 200 caractères au plus |
 | `snoozed` (`sommeil`) | `hidden` (défaut) ou `shown` (`visibles`) |
+| `common_fields` (`c.<clé>`) | *`CRM-112` T4.d, 2026-11-04* : les filtres des champs de l'affaire, forme structurée de `docs/SPEC-champs-communs.md` §8 (précision T4.d) |
+| `time_zone` | *`CRM-112` T4.d* : le fuseau où se lit le jour d'un champ date et heure ; facultatif, UTC par défaut |
 
 Une clé absente prend son défaut. **Ouvrir une vue, c'est naviguer vers l'adresse qu'elle compose** : la lecture tolérante
 de l'adresse (`docs/SPEC-cards.md` §12.2) replie ce qui ne vaut plus (une étape retirée, une étiquette archivée), sans
