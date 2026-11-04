@@ -517,8 +517,14 @@ async function preparerExportAffaires(
 	client: ClientCrm,
 	channel: Channel,
 	parametres: ParametresListe,
+	champs: readonly ChampCommun[],
 ): Promise<FichierPrepare> {
-	const issue = await exporterAffaires(client, channel.id, filtresDepuisParametres(parametres))
+	// `CRM-112` T4.d (§8, précision T4.d) : l'export applique aussi les filtres de champ, et lit le jour d'un champ date et
+	// heure dans le fuseau de l'appareil, comme la liste.
+	const issue = await exporterAffaires(client, channel.id, {
+		...filtresDepuisParametres(parametres, champs),
+		time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+	})
 	if (issue.statut === 'refus') {
 		return {
 			refus:
@@ -787,16 +793,18 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 						/>
 					) : null
 				}
-				commandesVues={<CommandesVues vues={vues} parametres={parametres} onParametres={appliquer} />}
+				commandesVues={<CommandesVues vues={vues} parametres={parametres} onParametres={appliquer} champs={champsCommunsEspace ?? []} />}
 				panneauVues={
-					vues.panneau === null ? null : <PanneauVue vues={vues} parametres={parametres} onParametres={appliquer} />
+					vues.panneau === null ? null : (
+						<PanneauVue vues={vues} parametres={parametres} onParametres={appliquer} champs={champsCommunsEspace ?? []} />
+					)
 				}
 				commandeExport={
 					clientExport === null ? null : (
 						<CommandeExportCsv
 							testId="exporter-affaires"
 							nomAccessible={t('export.commande.affaires.aria', { channel: channel.name })}
-							preparer={() => preparerExportAffaires(clientExport, channel, parametres)}
+							preparer={() => preparerExportAffaires(clientExport, channel, parametres, champsCommunsEspace ?? [])}
 						/>
 					)
 				}

@@ -1,5 +1,7 @@
 # @verifies CRM-071 (docs/BACKLOG.md) — tranche T3 : les vues sauvegardées dans le connecteur — `crm_view_list` et l'argument
 #           `view` de `crm_card_list`, devant un CRM simulé qui garde chaque lecture
+# @verifies CRM-112 (docs/BACKLOG.md) — tranche T4.d.3 : les filtres des champs de l'affaire d'une vue, traduits en plongements
+#           et conditions PostgREST, et rendus en clair (docs/SPEC-champs-communs.md §8, précision T4.d ; décision 838)
 # @verifies CRM-104 (docs/BACKLOG.md) — le catalogue du connecteur (docs/SPEC-mcp.md §9.2)
 # @verifies docs/SPEC-mcp.md §9.2 quattuordecies (famille `affaires`, `consulter`, ancre `channel` ; filtres en clair ; une
 #           vue inconnue refusée avant toute lecture des affaires ; étape disparue ignorée ; l'argument de l'appel l'emporte ;
@@ -112,10 +114,12 @@ def test_une_vue_en_clair_et_l_ordre_de_la_vue_liste() -> None:
     assert en_clair(VUES[0], {ETAPE: "Négociation"}, {})["filters"] == {
         "sort": "next_action_at", "direction": "asc", "step": "Négociation", "label": None, "search": "lyon",
         "include_snoozed": True,
+        # `CRM-112` T4.d.3 (décision 51) : une vue sans filtre de champ en rend une liste vide.
+        "fields": [],
     }
     vide = en_clair({**VUES[0], "filters": None}, {}, {})
     assert vide["filters"] == {"sort": "title", "direction": "asc", "step": None, "label": None, "search": None,
-                               "include_snoozed": False}
+                               "include_snoozed": False, "fields": []}
     assert ordre("title", "asc") == "affaire(title).asc.nullslast,affaire(id).asc.nullslast"
     assert ordre("amount", "desc") == "amount.desc.nullslast,affaire(title).asc.nullslast,affaire(id).asc.nullslast"
     assert ordre("created_at", "desc").startswith("affaire(created_at).desc.nullslast,")
@@ -179,3 +183,63 @@ async def test_une_vue_inconnue_est_refusee_avant_toute_lecture_des_affaires(mon
     with pytest.raises(ToolError, match="No saved view named 'Revue du lundi'"):
         await monde.appel("crm_card_list", {"workspace": ESPACE_A, "view": "Revue du lundi"})
     assert not [n for n, _ in monde.simule.lectures if n == "card_placements"]
+
+
+# --- `CRM-112` T4.d.3 : les filtres des champs de l'affaire d'une vue (docs/SPEC-champs-communs.md §8, précision T4.d) --
+
+from crm_mcp.outils.vues import conditions_filtres_communs, filtres_communs_en_clair  # noqa: E402
+
+CHAMPS = {
+    "siret": {"id": "t", "key": "siret", "label": "SIRET", "type": "text"},
+    "secteur": {"id": "s", "key": "secteur", "label": "Secteur", "type": "select"},
+    "tags": {"id": "m", "key": "tags", "label": "Tags", "type": "multiselect"},
+    "ca": {"id": "n", "key": "ca", "label": "CA", "type": "money"},
+    "echeance": {"id": "d", "key": "echeance", "label": "Échéance", "type": "date"},
+    "rdv": {"id": "i", "key": "rdv", "label": "Rendez-vous", "type": "datetime"},
+    "signe": {"id": "c", "key": "signe", "label": "Signé", "type": "checkbox"},
+}
+
+
+def test_un_plongement_par_filtre_borne_a_son_champ_et_a_sa_condition():
+    plongements, parametres = conditions_filtres_communs(
+        {
+            "siret": {"contains": "Élan"},
+            "secteur": {"any_of": ["btp", "a,b"]},
+            "tags": {"any_of": ["x", "y"]},
+            "ca": {"min": 1000, "max": None},
+            "echeance": {"from": "2026-01-01", "to": "2026-03-31"},
+            "rdv": {"from": None, "to": "2026-03-31"},
+            "signe": {"is": "empty"},
+        },
+        CHAMPS,
+    )
+    # L'ordre des clés est trié : `ca`, `echeance`, `rdv`, `secteur`, `signe`, `siret`, `tags`.
+    assert plongements == [
+        "fc0:card_common_field_values!inner(field_id)",
+        "fc1:card_common_field_values!inner(field_id)",
+        "fc2:card_common_field_values!inner(field_id)",
+        "fc3:card_common_field_values!inner(field_id)",
+        "fc4:card_common_field_values(field_id)",
+        "fc5:card_common_field_values!inner(field_id)",
+        "fc6:card_common_field_values!inner(field_id)",
+    ]
+    assert parametres["affaire.fc0.and"] == "(field_id.eq.n,value.gte.1000)"
+    assert parametres["affaire.fc1.and"] == "(field_id.eq.d,value_date.gte.2026-01-01,value_date.lte.2026-03-31)"
+    assert parametres["affaire.fc2.and"] == "(field_id.eq.i,value_timestamp.lte.2026-03-31T23:59:59.999999Z)"
+    assert parametres["affaire.fc3.and"] == '(field_id.eq.s,value.cd."[\\"btp\\", \\"a,b\\"]")'
+    assert parametres["affaire.fc4.and"] == "(field_id.eq.c,value.not.is.null,value.neq.null)"
+    assert parametres["affaire.fc4"] == "is.null"
+    assert parametres["affaire.fc5.and"] == '(field_id.eq.t,value_search.like."*elan*")'
+    assert parametres["affaire.fc6.and"] == '(field_id.eq.m,or(value.cs."[\\"x\\"]",value.cs."[\\"y\\"]"))'
+
+
+def test_une_forme_hors_type_ou_un_champ_inconnu_est_ignore():
+    plongements, parametres = conditions_filtres_communs(
+        {"ca": {"contains": "12"}, "inconnu": {"is": "yes"}, "signe": {"is": "peut-etre"}}, CHAMPS
+    )
+    assert plongements == [] and parametres == {}
+
+
+def test_crm_view_list_rend_les_filtres_de_champ_par_libelle():
+    vue = {"filters": {"common_fields": {"secteur": {"any_of": ["btp"]}, "archive": {"is": "yes"}}}}
+    assert filtres_communs_en_clair(vue, CHAMPS) == [{"field": "Secteur", "key": "secteur", "any_of": ["btp"]}]

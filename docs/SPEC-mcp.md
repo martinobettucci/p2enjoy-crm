@@ -1155,6 +1155,15 @@ autre ; `crm_card_list` avec `view` rend les affaires de la vue ; une vue inconn
 matrice (case « Affaires ▸ Consulter » décochée : les outils ne sont pas visibles) ; journal écrit ; et **E2E** : la vue
 choisie à l'écran et la même vue demandée au connecteur rendent les mêmes affaires.
 
+*Précisé le 2026-11-04 (`CRM-112` T4.d.3, décisions 837 et 838)* : **une vue peut porter des filtres de champ**
+(`common_fields`, `docs/SPEC-champs-communs.md` §8, précision T4.d). `crm_view_list` les rend sous `filters.fields` —
+une entrée par champ actif, `{field, key, …condition}` dans la forme de la base ; un champ archivé ou inconnu est omis.
+`crm_card_list(view=…)` les applique **comme la vue liste** : un plongement de `card_common_field_values` par filtre sous
+l'affaire, borné à son champ et à sa condition (`!inner`, sauf une case « vide ») ; une forme qui ne convient pas au type
+est ignorée. **Le jour d'une date et heure s'y lit en UTC** : le connecteur n'a pas de fuseau d'appareil. Même famille,
+même action, aucune case nouvelle. **Preuves** : `mcp/tests/test_vues.py` (la traduction, type par type) ;
+`mcp/tests/test_integration_vues.py` (une vue aux filtres de champ rend, par le connecteur, l'affaire que la base retient).
+
 ### 9.2 quindecies Les rattachements d'une affaire — `CRM-111` T9 (`docs/SPEC-rattachements.md` §11 ; décision 826)
 
 *Écrit le 2026-11-03, avant le code.* Les deux questions de `CLAUDE.md` sont tranchées au §11 de la spécification : la

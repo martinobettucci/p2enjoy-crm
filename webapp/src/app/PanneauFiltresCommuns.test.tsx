@@ -124,11 +124,13 @@ describe('le panneau (§5.92)', () => {
 		expect(document.activeElement).toBe(bouton)
 	})
 
-	it('dit que l’export et les vues ne retiennent pas encore ces filtres', async () => {
+	// RÉVISÉ PAR T4.d.2 (décision 51) : les vues et l'export retiennent désormais ces filtres ; la phrase qui disait le
+	// contraire est retirée, et sa présence serait un mensonge.
+	it('ne dit plus que l’export et les vues ignorent ces filtres (T4.d.2)', async () => {
 		const utilisateur = userEvent.setup()
 		rendre()
 		await utilisateur.click(screen.getByTestId('ouvrir-filtres-communs'))
-		expect(screen.getByText('L’export CSV et les vues sauvegardées ne retiennent pas encore ces filtres.')).not.toBeNull()
+		expect(screen.queryByText(/ne retiennent pas encore ces filtres/)).toBeNull()
 	})
 })
 

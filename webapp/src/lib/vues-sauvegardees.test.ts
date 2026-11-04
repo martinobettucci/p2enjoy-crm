@@ -1,9 +1,12 @@
 // @verifies CRM-071 (docs/BACKLOG.md) — tranche T2 : la traduction des filtres d'une vue, l'écart des filtres courants, la
 //           lecture et les écritures des vues, le classement des refus
+// @verifies CRM-112 (docs/BACKLOG.md) — tranche T4.d.2 : une vue garde, rouvre et compare ses filtres de champ
+//           (docs/SPEC-champs-communs.md §8, précision T4.d ; décision 838)
 // @verifies docs/SPEC-vues-import-export.md §2.2 (six clés en anglais, une valeur par défaut non écrite, la page jamais),
 //           §2.3 (les refus de la base : nom pris, forme, dépublication, droit, zéro ligne), §3 (décision 777)
 
 import { describe, expect, it } from 'vitest'
+import type { ChampCommun } from './champs-communs'
 import { PARAMETRES_PAR_DEFAUT, type ParametresListe } from './liste-cards'
 import type { ClientCrm } from './supabase'
 import {
@@ -60,6 +63,8 @@ describe('les filtres d’une vue (§2.2)', () => {
 			page: 1,
 			sommeil: 'visibles',
 			vue: VUE.id,
+			// `CRM-112` T4.d.2 (décision 51) : une vue sans filtre de champ n'en compose aucun.
+			communs: {},
 		})
 	})
 
@@ -170,3 +175,32 @@ describe('la lecture et les écritures', () => {
 		})
 	})
 })
+
+describe('les filtres de champ d’une vue (`CRM-112` T4.d.2)', () => {
+	const champs: readonly ChampCommun[] = [
+		{ id: 'c1', key: 'secteur', label: 'Secteur', type: 'select', options: { choices: [{ key: 'btp', label: 'BTP' }] }, help_text: null, position: 1, archived_at: null, is_listed: false },
+		{ id: 'c2', key: 'ca', label: 'CA', type: 'money', options: { currency: 'EUR' }, help_text: null, position: 2, archived_at: null, is_listed: false },
+	]
+
+	it('une vue garde les filtres de champ de l’écran, et les rouvre', () => {
+		const filtres = filtresDepuisParametres({ ...parametresDepuisVue(VUE), communs: { secteur: 'btp', ca: '1000..' } }, champs)
+		expect(filtres.common_fields).toEqual({ secteur: { any_of: ['btp'] }, ca: { min: 1000, max: null } })
+		expect(parametresDepuisVue({ ...VUE, filtres }).communs).toEqual({ secteur: 'btp', ca: '1000..' })
+	})
+
+	it('« Filtres modifiés » compte un filtre de champ ajouté, changé ou retiré — et l’ordre des clés n’y fait rien', () => {
+		const vue = { ...VUE, filtres: { ...VUE.filtres, common_fields: { ca: { min: 1000, max: null }, secteur: { any_of: ['btp'] } } } }
+		const courants = parametresDepuisVue(vue)
+		expect(filtresEcartes(courants, vue, champs)).toBe(false)
+		expect(filtresEcartes({ ...courants, communs: { secteur: 'btp' } }, vue, champs)).toBe(true)
+		expect(filtresEcartes({ ...courants, communs: { secteur: 'btp', ca: '2000..' } }, vue, champs)).toBe(true)
+	})
+
+	it('relit les filtres de champ du réseau en ignorant une forme illisible', () => {
+		expect(lireFiltres({ common_fields: { ca: { min: 'beaucoup' }, secteur: { any_of: ['btp'] } } })).toEqual({
+			common_fields: { secteur: { any_of: ['btp'] } },
+		})
+		expect(lireFiltres({ common_fields: { ca: { min: 'beaucoup' } } })).toEqual({})
+	})
+})
+

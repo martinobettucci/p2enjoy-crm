@@ -3,6 +3,8 @@
 // @spec docs/SPEC-vues-import-export.md §2.3 (qui écrit : la base tranche), §3 (la vue choisie portée par l'adresse, des
 //       filtres qui s'en écartent dits, décision 777) ; docs/DESIGN_SYSTEM.md §5.75, §5.59 (la capacité d'administrer
 //       l'espace, le motif porté par la commande), §5.50 (le panneau dans le flux), §5.22 (le `select` et sa dérogation)
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T4.d.2 : la vue garde et rouvre les filtres de champ ; « Filtres modifiés » les
+//       compte (docs/SPEC-champs-communs.md §8, précision T4.d ; docs/DESIGN_SYSTEM.md §5.92)
 //
 // L'ÉTAT VIT DANS UN CROCHET, LE RENDU DANS DEUX COMPOSANTS : la vue liste reçoit le sélecteur dans sa barre et le panneau
 // sous elle, comme « Nouvelle affaire » (`NouvelleAffaire.tsx`). Aucun droit n'est calculé ici : une vue privée rendue
@@ -17,6 +19,7 @@ import { t, type CleTraduction } from '../i18n'
 import type { EtatAsync } from '../lib/async'
 import { proprietesCommande } from '../lib/capacites'
 import type { ParametresListe } from '../lib/liste-cards'
+import type { ChampCommun } from '../lib/champs-communs'
 import type { ClientCrm } from '../lib/supabase'
 import {
 	enregistrerVue,
@@ -150,10 +153,13 @@ export function CommandesVues({
 	vues: etatVues,
 	parametres,
 	onParametres,
+	champs = [],
 }: {
 	readonly vues: VuesDuChannel
 	readonly parametres: ParametresListe
 	readonly onParametres: (parametres: ParametresListe) => void
+	/** `CRM-112` T4.d (§5.92) : les champs de l'affaire de l'espace, qui traduisent les filtres de champ de la vue. */
+	readonly champs?: readonly ChampCommun[]
 }) {
 	const { capacites } = useContexteEspace()
 	const idSelecteur = useId()
@@ -162,7 +168,7 @@ export function CommandesVues({
 	const { etat, panneau } = etatVues
 	const vues = etat.statut === 'pret' ? etat.donnees : []
 	const choisie = vueChoisie(vues, parametres)
-	const ecart = choisie !== undefined && filtresEcartes(parametres, choisie)
+	const ecart = choisie !== undefined && filtresEcartes(parametres, choisie, champs)
 	const miennes = vues.filter((v) => v.visibilite === 'privee')
 	const espace = vues.filter((v) => v.visibilite === 'espace')
 	// UNE VUE DE L'ESPACE SUIT LA CAPACITÉ D'ADMINISTRER (§5.59) ; une vue privée rendue est celle de la personne.
@@ -185,7 +191,7 @@ export function CommandesVues({
 		if (choisie === undefined || enVol) return
 		etatVues.setRefus(null)
 		setEnVol(true)
-		const issue = await mettreAJourVue(client, choisie.id, filtresDepuisParametres(parametres))
+		const issue = await mettreAJourVue(client, choisie.id, filtresDepuisParametres(parametres, champs))
 		setEnVol(false)
 		if (issue.statut === 'refus') {
 			etatVues.setRefus(issue.nature)
@@ -356,10 +362,13 @@ export function PanneauVue({
 	vues: etatVues,
 	parametres,
 	onParametres,
+	champs = [],
 }: {
 	readonly vues: VuesDuChannel
 	readonly parametres: ParametresListe
 	readonly onParametres: (parametres: ParametresListe) => void
+	/** `CRM-112` T4.d (§5.92) : les champs de l'affaire de l'espace, qui traduisent les filtres de champ de la vue. */
+	readonly champs?: readonly ChampCommun[]
 }) {
 	const { capacites } = useContexteEspace()
 	const idNom = useId()
@@ -397,7 +406,7 @@ export function PanneauVue({
 		setEnCours(true)
 		const issue = modification
 			? await modifierVue(client, choisie.id, { nom, publier })
-			: await enregistrerVue(client, etatVues.idChannel, { nom, publier, filtres: filtresDepuisParametres(parametres) })
+			: await enregistrerVue(client, etatVues.idChannel, { nom, publier, filtres: filtresDepuisParametres(parametres, champs) })
 		setEnCours(false)
 		if (issue.statut === 'refus') {
 			etatVues.setRefus(issue.nature)

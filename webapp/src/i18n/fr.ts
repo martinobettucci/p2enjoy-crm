@@ -2407,7 +2407,6 @@ export const fr = {
 	'liste.communs.erreur.nombre': 'Saisissez un nombre.',
 	'liste.communs.appliquer': 'Appliquer',
 	'liste.communs.fermer': 'Fermer',
-	'liste.communs.note': 'L’export CSV et les vues sauvegardées ne retiennent pas encore ces filtres.',
 	'liste.colonne.etiquettes': 'Étiquettes',
 	// Réglages ▸ Modèles d'affaires — CRM-068 T4b1, docs/DESIGN_SYSTEM.md §5.71.
 	'admin.settings.index.cardTemplates': "Modèles d'affaires",

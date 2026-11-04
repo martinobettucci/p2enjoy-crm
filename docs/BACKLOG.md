@@ -17654,13 +17654,13 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       - [ ] **T4.c — les filtres personne, contact et fichier** (§8) : un filtre qui nomme une personne, un contact ;
             « renseigné ou vide » pour un fichier. *Arbitrée le 2026-11-04 (décision 837) : les trois.* À spécifier.
             MCP : par T9, famille « affaires ».
-      - [@] **T4.d — les filtres des champs dans les vues sauvegardées et dans l'export CSV** : **à arbitrer par le
+      - [P] **T4.d — les filtres des champs dans les vues sauvegardées et dans l'export CSV** (vérifiée en développement le
+            2026-11-04 ; livraison de `0165`, webapp et image `mcp` ensemble, puis constat) : **à arbitrer par le
             responsable** — la liste des clés d'une vue est fermée en base (`docs/SPEC-vues-import-export.md` §2.2), et
             `export_cards` reçoit ces mêmes clés ; jusque-là, une vue ne garde pas ces filtres, « Filtres modifiés depuis la
             vue » ne les compte pas, l'export ne les applique pas — et le panneau le dit. *Arbitrée le 2026-11-04
             (décision 837) : les vues ET l'export* ; une migration élargit les clés d'une vue et `export_cards` ; la phrase
             du panneau est retirée. MCP : `crm_view_list` rend les filtres de champ (T9), famille « affaires ». À spécifier.
-            *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-f9) depuis 2026-11-04 00:41 UTC — état avant : [ ]*
             *Spécifiée le 2026-11-04 avant le code (décision 838)* : `docs/SPEC-champs-communs.md` §8 (précision T4.d),
             `docs/SPEC-vues-import-export.md` §2.2, `docs/DESIGN_SYSTEM.md` §5.92. Découpage :
             - [x] **T4.d.1** — migration : `common_fields` et `time_zone` dans la validation des vues,
@@ -17669,9 +17669,18 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
               par type, le fuseau UTC et Paris, l'export de Camille, le fuseau inconnu refusé, la lectrice sans droit) —
               *défaut trouvé par la preuve* : une affaire illisible « passait » les filtres, elle ne passe plus ; suite
               142 fichiers, 4 964 assertions. Livrée avec T4.d.2 et T4.d.3.
-            - [ ] **T4.d.2** — webapp : vues et export portent les filtres de champ ; phrase du panneau retirée ; manuel.
-            - [ ] **T4.d.3** — connecteur, même livraison : `crm_card_list` applique les filtres de champ d'une vue,
-              `crm_view_list` les rend.
+            - [x] **T4.d.2** — webapp : vues et export portent les filtres de champ ; phrase du panneau retirée ; manuel.
+              *Faite le 2026-11-04* : la forme structurée traduite depuis et vers l'adresse (`filtres-communs.ts`), les vues
+              (`vues-sauvegardees.ts` : garder, rouvrir, comparer), l'export avec le fuseau de l'appareil ; unitaires
+              **5 416** (dont deux attentes révisées — décision 51 — pour `communs` et la phrase retirée) ; E2E
+              `e2e/ui/vues-filtres-communs.spec.ts` (la vue relue en base sous sa forme structurée, rouverte, l'export
+              filtré, l'écart dit) avec les preuves voisines (filtres, vues, export) **13/13** ; capture observée ; manuel
+              §9.11 (image renouvelée), garde 168.
+            - [x] **T4.d.3** — connecteur, même livraison : `crm_card_list` applique les filtres de champ d'une vue,
+              `crm_view_list` les rend. *Faite le 2026-11-04* : `conditions_filtres_communs` (un plongement et une
+              condition `and=(…)` par filtre), `filters.fields` ; pytest unitaires 310 (deux attentes révisées, décision 51)
+              et intégration par le vrai OAuth (une vue aux filtres de champ rend l'affaire que la base retient) —
+              `verify-mcp.sh` **109 contrôles** ; `docs/SPEC-mcp.md` §9.2 quattuordecies précisé ; manuel §33.
 - [ ] **T5** — modèles d'email : `{{card.field.<clé>}}`, contrôle d'écriture par déclencheur, rendu, sélecteur.
 - [ ] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
 - [ ] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.

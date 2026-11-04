@@ -1,12 +1,16 @@
 // @verifies CRM-112 (docs/BACKLOG.md) — tranche T4.b : les filtres de champ de la vue liste — l'adresse lue avec tolérance et
 //           réécrite à l'identique, le filtre selon le type, le texte ramené à la forme de `value_search`, et la requête de
 //           la page : un plongement par filtre, sa condition, « vide » sans `!inner`
+// @verifies CRM-112 tranche T4.d.2 — la forme structurée `common_fields`, depuis et vers l'adresse (§8, précision T4.d)
 // @verifies docs/SPEC-champs-communs.md §8 (précision T4.b) ; docs/DESIGN_SYSTEM.md §5.92 ; docs/SPEC-cards.md §12.2, §12.5
 
 import { describe, expect, it } from 'vitest'
 import type { ChampCommun } from './champs-communs'
 import {
 	champsFiltrables,
+	communsVersStructure,
+	filtreDeStructure,
+	structureVersCommuns,
 	filtresActifs,
 	formaterFiltre,
 	interpreterFiltre,
@@ -200,5 +204,44 @@ describe('la requête de la page (§8, §12.5)', () => {
 		const { client, appels } = clientEnregistreur()
 		await lirePageCards(client, { channelId: 'ch', parametres: PARAMETRES_PAR_DEFAUT, filtresCommuns: [{ champ: caseVide, filtre: { sorte: 'case', etat: 'non' } }] })
 		expect(appels).toContainEqual(['eq', ['affaire.fc0.value', 'false']])
+	})
+})
+
+// `CRM-112` T4.d.2 — la forme structurée d'une vue et d'un export (docs/SPEC-champs-communs.md §8, précision T4.d).
+describe('la forme structurée d’une vue (§8, précision T4.d)', () => {
+	const champs = [
+		champ({ key: 'siret', type: 'text' }),
+		champ({ key: 'secteur', type: 'select', options: CHOIX }),
+		champ({ key: 'ca', type: 'money' }),
+		champ({ key: 'echeance', type: 'date' }),
+		champ({ key: 'signe', type: 'checkbox' }),
+	]
+
+	it('l’adresse se traduit dans la forme de la base, avec les types des champs', () => {
+		expect(
+			communsVersStructure(champs, { siret: 'elan', secteur: 'btp,a%2Cb', ca: '1000..', echeance: '..2026-03-31', signe: 'vide', inconnu: 'x' }),
+		).toEqual({
+			siret: { contains: 'elan' },
+			secteur: { any_of: ['btp', 'a,b'] },
+			ca: { min: 1000, max: null },
+			echeance: { from: null, to: '2026-03-31' },
+			signe: { is: 'empty' },
+		})
+		// Sans les champs, rien ne se traduit : « btp » serait un choix ou un texte.
+		expect(communsVersStructure([], { secteur: 'btp' })).toEqual({})
+	})
+
+	it('et revient à l’adresse à l’identique', () => {
+		const bruts = { siret: 'elan', secteur: 'btp,a%2Cb', ca: '1000..', echeance: '..2026-03-31', signe: 'vide' }
+		expect(structureVersCommuns(communsVersStructure(champs, bruts))).toEqual(bruts)
+	})
+
+	it('une forme illisible ou une clé hors de forme est ignorée', () => {
+		expect(structureVersCommuns({ ok: { is: 'yes' }, mauvaise: { is: 'peut-etre' }, 'Mauvaise Cle': { is: 'no' }, vide: { min: null, max: null } })).toEqual({
+			ok: 'oui',
+		})
+		expect(filtreDeStructure({ contains: 'x', any_of: ['a'] })).toBeNull()
+		expect(filtreDeStructure({ from: '01/01/2026' })).toBeNull()
+		expect(structureVersCommuns(null)).toEqual({})
 	})
 })

@@ -1,5 +1,7 @@
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T4.b : le panneau des filtres de champ de la vue liste — un `fieldset` par champ,
 //       le contrôle selon le type, « Appliquer » et « Fermer », la borne illisible refusée sous son champ
+// @spec CRM-112 tranche T4.d.2 — la phrase « L'export CSV et les vues sauvegardées ne retiennent pas encore ces filtres »
+//       retirée : ils les retiennent (docs/DESIGN_SYSTEM.md §5.92, décision 837)
 // @spec docs/DESIGN_SYSTEM.md §5.92, §5.7, §5.7 bis, §8 ; docs/SPEC-champs-communs.md §8 (précision T4.b) ; docs/JOURNAL.md
 //       décision 831
 //
@@ -124,7 +126,6 @@ export function PanneauFiltresCommuns({ id, champs, bruts, onAppliquer, onFermer
 					)
 				})}
 			</div>
-			<p className="text-sm text-text-2">{t('liste.communs.note')}</p>
 			<div className="flex flex-wrap gap-2">
 				<Button variante="primaire" data-testid="appliquer-filtres-communs" onClick={appliquer}>
 					{t('liste.communs.appliquer')}

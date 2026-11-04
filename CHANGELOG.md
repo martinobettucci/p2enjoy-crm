@@ -13,7 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### `CRM-112` T4.d — les filtres des champs de l'affaire dans les vues sauvegardées et l'export (migration 165)
+
+- Une vue sauvegardée retient désormais les filtres posés dans « Champs de l'affaire » et les rouvre ; « Filtres
+  modifiés depuis la vue » paraît dès qu'ils s'en écartent. « Exporter en CSV » les applique — une date et heure s'y lit
+  à l'heure de l'appareil, comme dans la liste. Le panneau ne dit plus qu'ils sont ignorés.
+- **Migration `0165`** : la vue garde ses filtres de champ sous une forme structurée (`common_fields`), validée par la
+  base ; `export_cards` les interprète comme l'écran, et refuse un fuseau inconnu.
+- **Image `mcp`** : `crm_view_list` rend les filtres de champ d'une vue (`filters.fields`), et `crm_card_list(view=…)`
+  les applique, comme la vue liste — une date et heure s'y lit en UTC. Même famille « Affaires », aucune case nouvelle.
+- Manuel, §9.11 (image renouvelée) et §33.
+- **À livrer ensemble** : la migration `0165`, la webapp et l'image `mcp`.
 
 ## [Publié]
 

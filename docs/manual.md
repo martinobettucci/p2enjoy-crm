@@ -1838,8 +1838,9 @@ compte des majuscules ni des accents ; un champ à choix, par les choix que vous
 « De » et « À », chacun facultatif ; une date, entre deux jours ; une case, par oui, non ou vide. Rien ne filtre avant
 « Appliquer » ; le panneau reste ouvert pour corriger, et « Fermer » le replie. Le bouton dit combien de ces filtres
 sont actifs. Une borne qui n'est pas un nombre est refusée sous son champ. Ces filtres s'inscrivent dans l'adresse comme
-les autres, mais l'export CSV et les vues sauvegardées ne les retiennent pas encore : le panneau le rappelle. Les champs
-qui désignent une personne, un contact ou un fichier ne se filtrent pas encore.
+les autres ; une **vue sauvegardée** les retient, « Filtres modifiés depuis la vue » paraît dès qu'ils s'en écartent, et
+**« Exporter en CSV »** les applique — une date et heure s'y lit à l'heure de votre appareil, comme dans la liste. Les
+champs qui désignent une personne, un contact ou un fichier ne se filtrent pas encore.
 
 ![Le panneau « Champs de l'affaire » ouvert sous la barre de filtres : « Contient », les choix, « De » et « À », la case, et « Appliquer »](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/filtrer-sur-les-champs.jpg)
 
@@ -6406,8 +6407,9 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   - **lister par étiquette** : la liste des affaires se filtre par le nom d'une étiquette, et chaque affaire, lue ou
     listée, dit ses étiquettes ([section 9.16](#les-etiquettes-d-une-affaire)) ;
   - **lister selon une vue sauvegardée** : l'assistant lit les vues d'un channel que vous voyez — les vôtres et celles de
-    l'espace —, avec leurs filtres en clair, et liste les affaires d'une vue désignée par son nom, dans le même ordre
-    qu'à l'écran ([section 9.11](#la-vue-liste-d-un-channel)). Il n'enregistre, ne modifie ni ne supprime aucune vue :
+    l'espace —, avec leurs filtres en clair, filtres sur les champs de l'affaire compris, et liste les affaires d'une vue
+    désignée par son nom, dans le même ordre qu'à l'écran ([section 9.11](#la-vue-liste-d-un-channel)) ; le jour d'un
+    champ date et heure s'y lit en temps universel (UTC), et non à l'heure de votre appareil. Il n'enregistre, ne modifie ni ne supprime aucune vue :
     ces gestes restent ceux de la vue liste ;
   - **lire sa checklist** ([section 9.9](#la-checklist-d-une-affaire-les-points-a-cocher)) : les points libres, ceux de l'étape
     courante et ceux des étapes passées, cochés ou non, par qui et quand, et les étapes pour lesquelles un point est

@@ -1525,7 +1525,7 @@
 										},
 										{
 											"type": "text",
-											"text": " : l'assistant lit les vues d'un channel que vous voyez — les vôtres et celles de\nl'espace —, avec leurs filtres en clair, et liste les affaires d'une vue désignée par son nom, dans le même ordre\nqu'à l'écran ("
+											"text": " : l'assistant lit les vues d'un channel que vous voyez — les vôtres et celles de\nl'espace —, avec leurs filtres en clair, filtres sur les champs de l'affaire compris, et liste les affaires d'une vue\ndésignée par son nom, dans le même ordre qu'à l'écran ("
 										},
 										{
 											"type": "link",
@@ -1542,7 +1542,7 @@
 										},
 										{
 											"type": "text",
-											"text": "). Il n'enregistre, ne modifie ni ne supprime aucune vue :\nces gestes restent ceux de la vue liste ;"
+											"text": ") ; le jour d'un\nchamp date et heure s'y lit en temps universel (UTC), et non à l'heure de votre appareil. Il n'enregistre, ne modifie ni ne supprime aucune vue :\nces gestes restent ceux de la vue liste ;"
 										}
 									]
 								}

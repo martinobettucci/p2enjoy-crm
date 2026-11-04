@@ -6539,7 +6539,33 @@
 				},
 				{
 					"type": "text",
-					"text": "), le bouton « Champs de l'affaire » rejoint les filtres. Il ouvre,\nsous la barre, un panneau avec un filtre par champ, selon son type : un texte se cherche par « Contient » — sans tenir\ncompte des majuscules ni des accents ; un champ à choix, par les choix que vous cochez ; un nombre ou un montant, entre\n« De » et « À », chacun facultatif ; une date, entre deux jours ; une case, par oui, non ou vide. Rien ne filtre avant\n« Appliquer » ; le panneau reste ouvert pour corriger, et « Fermer » le replie. Le bouton dit combien de ces filtres\nsont actifs. Une borne qui n'est pas un nombre est refusée sous son champ. Ces filtres s'inscrivent dans l'adresse comme\nles autres, mais l'export CSV et les vues sauvegardées ne les retiennent pas encore : le panneau le rappelle. Les champs\nqui désignent une personne, un contact ou un fichier ne se filtrent pas encore."
+					"text": "), le bouton « Champs de l'affaire » rejoint les filtres. Il ouvre,\nsous la barre, un panneau avec un filtre par champ, selon son type : un texte se cherche par « Contient » — sans tenir\ncompte des majuscules ni des accents ; un champ à choix, par les choix que vous cochez ; un nombre ou un montant, entre\n« De » et « À », chacun facultatif ; une date, entre deux jours ; une case, par oui, non ou vide. Rien ne filtre avant\n« Appliquer » ; le panneau reste ouvert pour corriger, et « Fermer » le replie. Le bouton dit combien de ces filtres\nsont actifs. Une borne qui n'est pas un nombre est refusée sous son champ. Ces filtres s'inscrivent dans l'adresse comme\nles autres ; une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "vue sauvegardée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " les retient, « Filtres modifiés depuis la vue » paraît dès qu'ils s'en écartent, et\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Exporter en CSV »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " les applique — une date et heure s'y lit à l'heure de votre appareil, comme dans la liste. Les\nchamps qui désignent une personne, un contact ou un fichier ne se filtrent pas encore."
 				}
 			]
 		},
@@ -6548,7 +6574,7 @@
 			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/filtrer-sur-les-champs.jpg",
 			"alt": "Le panneau « Champs de l'affaire » ouvert sous la barre de filtres : « Contient », les choix, « De » et « À », la case, et « Appliquer »",
 			"width": 1160,
-			"height": 491
+			"height": 455
 		},
 		{
 			"type": "paragraph",

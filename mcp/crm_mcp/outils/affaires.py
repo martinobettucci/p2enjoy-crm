@@ -1,5 +1,7 @@
 # @spec CRM-111 (docs/BACKLOG.md) — tranche T9 : `placements` dans `crm_card_get`, `placement_id` dans les lignes
 #       (docs/SPEC-mcp.md §9.2 quindecies, décision 826 ; docs/SPEC-rattachements.md §11)
+# @spec CRM-112 (docs/BACKLOG.md) — tranche T4.d.3 : `crm_card_list(view=…)` applique les filtres des champs de l'affaire de
+#       la vue (docs/SPEC-champs-communs.md §8, précision T4.d ; décision 838)
 # @spec CRM-071 (docs/BACKLOG.md) — tranche T3 : l'argument `view` de crm_card_list (docs/SPEC-mcp.md §9.2 quattuordecies)
 # @spec CRM-069 (docs/BACKLOG.md) — tranche T3 : les étiquettes rendues par crm_card_get et crm_card_list, le filtre `label`, le
 #       détail des événements `label_added` et `label_removed` (docs/SPEC-mcp.md §9.2 tredecies)
@@ -34,7 +36,18 @@ from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
-from crm_mcp.outils.vues import CONFIGURATION_RECHERCHE, SENS_PAR_DEFAUT, choisir_vue, filtres, lire_vues, noms_des_filtres, ordre
+from crm_mcp.outils.vues import (
+    CONFIGURATION_RECHERCHE,
+    SENS_PAR_DEFAUT,
+    champs_des_filtres,
+    choisir_vue,
+    conditions_filtres_communs,
+    filtres,
+    filtres_communs,
+    lire_vues,
+    noms_des_filtres,
+    ordre,
+)
 from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable, traduire_refus
 
 LIMITE_MAX = 100
@@ -406,10 +419,12 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         vue: dict[str, Any] | None = None
         noms_etapes: dict[str, str] = {}
         noms_etiquettes: dict[str, str] = {}
+        champs_vue: dict[str, dict[str, Any]] = {}
         if view is not None:
             vue = choisir_vue(await lire_vues(crm, appel.jeton, appel.espace, channel_id), view)
             channel_id = vue["channel_id"]
             noms_etapes, noms_etiquettes = await noms_des_filtres(crm, appel.jeton, appel.espace, [vue])
+            champs_vue = await champs_des_filtres(crm, appel.jeton, appel.espace, [vue])
         de_la_vue = filtres(vue) if vue is not None else {}
         colonnes = COLONNES_LISTE
         parametres: dict[str, str] = {
@@ -463,6 +478,11 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             colonnes = colonnes.replace(f"{ETIQUETTES})", f"{ETIQUETTES},filtre:card_labels!inner(label_id))")
             parametres["affaire.filtre.label_id"] = f"eq.{de_la_vue['label_id']}"
         if vue is not None:
+            # `CRM-112` T4.d.3 : les filtres des champs de l'affaire de la vue, un plongement chacun, comme la vue liste.
+            plongements, conditions = conditions_filtres_communs(filtres_communs(vue), champs_vue)
+            if plongements:
+                colonnes = colonnes.replace("affaire:cards!inner(id,", f"affaire:cards!inner(id,{','.join(plongements)},", 1)
+                parametres.update(conditions)
             tri = de_la_vue.get("sort") if de_la_vue.get("sort") in SENS_PAR_DEFAUT else "title"
             sens = de_la_vue.get("direction") if de_la_vue.get("direction") in ("asc", "desc") else SENS_PAR_DEFAUT[tri]
             parametres["order"] = ordre(str(tri), str(sens))

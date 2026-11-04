@@ -1,5 +1,7 @@
 # @verifies CRM-071 (docs/BACKLOG.md) — tranche T3 : les vues sauvegardées par le connecteur contre le vrai Keycloak, la
 #           vraie base et le vrai service `mcp`, par le parcours OAuth réel
+# @verifies CRM-112 (docs/BACKLOG.md) — tranche T4.d.3 : une vue qui porte des filtres de champ — `crm_view_list` les rend
+#           par libellé, `crm_card_list(view=…)` rend exactement les affaires que la base retient pour eux (décision 838)
 # @verifies CRM-104 (docs/BACKLOG.md) — le catalogue du connecteur (docs/SPEC-mcp.md §9.2)
 # @verifies docs/SPEC-mcp.md §13 (succès, refus par la matrice, journal écrit), §9.2 quattuordecies (la RLS de `saved_views` :
 #           la vue privée d'autrui n'est jamais rendue ; les affaires d'une vue sont celles que la base retient pour ses
@@ -79,3 +81,66 @@ async def test_la_lectrice_ne_lit_jamais_la_vue_privee_de_driss():
                 await client.call_tool("crm_card_list", {"workspace": "p2enjoy", "view": "Mes négociations"})
     finally:
         await _retirer(FARIDA)
+
+
+# --- `CRM-112` T4.d.3 : une vue qui porte des filtres de champ ------------------------------------------------------
+
+PREFIXE = "tst-t4d3"
+
+
+async def _ranger_filtres_communs() -> None:
+    await _service("DELETE", "/saved_views", params={"name": f"like.{PREFIXE}*"})
+    champs = (await _service("GET", "/card_common_fields", params={"key": f"like.{PREFIXE}*", "select": "id"})).json()
+    for champ in champs:
+        await _service("DELETE", "/card_common_field_values", params={"field_id": f"eq.{champ['id']}"})
+        await _service("DELETE", "/card_common_fields", params={"id": f"eq.{champ['id']}"})
+
+
+async def test_une_vue_aux_filtres_de_champ_rend_les_memes_affaires_que_la_base():
+    await _ranger_filtres_communs()
+    await _poser(DRISS)
+    try:
+        creation = (await _service("POST", "/card_common_fields", json=[
+            {"workspace_id": ESPACE_SEEDE, "key": f"{PREFIXE}-secteur", "label": "Secteur (sonde)", "type": "select",
+             "options": {"choices": [{"key": "btp", "label": "BTP"}, {"key": "sante", "label": "Santé"}]}},
+            {"workspace_id": ESPACE_SEEDE, "key": f"{PREFIXE}-signe", "label": "Signé (sonde)", "type": "checkbox", "options": {}},
+        ]))
+        assert creation.status_code == 201, creation.text
+        champs = (await _service("GET", "/card_common_fields", params={"key": f"like.{PREFIXE}*", "select": "id,key"})).json()
+        secteur = next(c["id"] for c in champs if c["key"].endswith("secteur"))
+        signe = next(c["id"] for c in champs if c["key"].endswith("signe"))
+        affaires = sorted({p["card_id"] for p in (await _service("GET", "/card_placements", params={
+            "channel_id": f"eq.{REFONTE}", "archived_at": "is.null", "snoozed_until": "is.null", "select": "card_id",
+        })).json()})
+        assert len(affaires) >= 2, "le jeu porte au moins deux affaires éveillées sur « Refonte de site »"
+        a, b = affaires[0], affaires[1]
+        # A : BTP, sans case ; B : BTP, signé — la vue retient BTP ET case vide : A seule.
+        reponse = await _service("POST", "/card_common_field_values", json=[
+            {"card_id": a, "field_id": secteur, "workspace_id": ESPACE_SEEDE, "value": "btp"},
+            {"card_id": b, "field_id": secteur, "workspace_id": ESPACE_SEEDE, "value": "btp"},
+            {"card_id": b, "field_id": signe, "workspace_id": ESPACE_SEEDE, "value": True},
+        ])
+        assert reponse.status_code == 201, reponse.text
+        vue = await _service("POST", "/saved_views", json={
+            "workspace_id": ESPACE_SEEDE, "channel_id": REFONTE, "owner_id": DRISS[1], "name": f"{PREFIXE} BTP à signer",
+            "visibility": "private",
+            "filters": {"common_fields": {f"{PREFIXE}-secteur": {"any_of": ["btp"]}, f"{PREFIXE}-signe": {"is": "empty"}}},
+        })
+        assert vue.status_code == 201, vue.text
+
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_visible(client, "crm_view_list")
+            vues = (await client.call_tool("crm_view_list", {"channel_id": REFONTE})).structured_content["views"]
+            la_vue = next(v for v in vues if v["name"] == f"{PREFIXE} BTP à signer")
+            assert la_vue["filters"]["fields"] == [
+                {"field": "Secteur (sonde)", "key": f"{PREFIXE}-secteur", "any_of": ["btp"]},
+                {"field": "Signé (sonde)", "key": f"{PREFIXE}-signe", "is": "empty"},
+            ]
+            liste = (await client.call_tool(
+                "crm_card_list", {"workspace": "p2enjoy", "view": f"{PREFIXE} BTP à signer"}
+            )).structured_content
+            assert [c["id"] for c in liste["cards"]] == [a], "BTP et case vide : l'affaire A seule, comme à l'écran"
+    finally:
+        await _retirer(DRISS)
+        await _ranger_filtres_communs()
+

@@ -1,6 +1,8 @@
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T4.b : les filtres de la vue liste sur les champs de l'affaire — ce que l'adresse
 //       porte (`c.<clé>`), ce qu'un filtre veut dire selon le type, la lecture tolérante, et le texte ramené à la forme de
 //       `value_search`
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T4.d.2 : la forme structurée `common_fields` d'une vue et d'un export, traduite
+//       depuis et vers l'adresse (docs/SPEC-champs-communs.md §8, précision T4.d ; décision 838)
 // @spec docs/SPEC-champs-communs.md §8 (précision T4.b) ; docs/DESIGN_SYSTEM.md §5.92 ; docs/JOURNAL.md décision 831 ;
 //       docs/SPEC-cards.md §12.2 (une adresse tapée à la main n'est pas une panne)
 //
@@ -181,5 +183,85 @@ export function minuitLocal(jour: string, jours = 0): string {
  */
 export function operandeOu(valeur: string): string {
 	return `"${valeur.replace(/[\\"]/g, (c) => `\\${c}`)}"`
+}
+
+// --- La forme structurée d'une vue et d'un export (`CRM-112` T4.d, décision 838) --------------------------------------
+
+/** Un filtre de champ tel que la base le garde dans une vue (`common_fields`), en anglais (§8, précision T4.d). */
+export type FiltreStructure =
+	| { readonly contains: string }
+	| { readonly any_of: readonly string[] }
+	| { readonly min: number | null; readonly max: number | null }
+	| { readonly from: string | null; readonly to: string | null }
+	| { readonly is: 'yes' | 'no' | 'empty' }
+
+const CASE_VERS_STRUCTURE = { oui: 'yes', non: 'no', vide: 'empty' } as const
+const STRUCTURE_VERS_CASE = { yes: 'oui', no: 'non', empty: 'vide' } as const
+
+/** La forme structurée d'un filtre. */
+export function structureDe(filtre: FiltreCommun): FiltreStructure {
+	switch (filtre.sorte) {
+		case 'contient':
+			return { contains: filtre.texte }
+		case 'choix':
+			return { any_of: filtre.cles }
+		case 'bornes':
+			return { min: filtre.de, max: filtre.a }
+		case 'dates':
+			return { from: filtre.du, to: filtre.au }
+		case 'case':
+			return { is: CASE_VERS_STRUCTURE[filtre.etat] }
+	}
+}
+
+const estNombreOuNul = (v: unknown): v is number | null => v === null || (typeof v === 'number' && Number.isFinite(v))
+const estJourOuNul = (v: unknown): v is string | null => v === null || (typeof v === 'string' && FORME_DATE.test(v))
+
+/** Le filtre qu'une forme structurée dit, ou `null` : une forme illisible est ignorée, comme l'adresse le fait (§12.2). */
+export function filtreDeStructure(brut: unknown): FiltreCommun | null {
+	if (brut === null || typeof brut !== 'object' || Array.isArray(brut)) return null
+	const f = brut as Record<string, unknown>
+	const cles = Object.keys(f)
+	if (cles.length === 1 && typeof f['contains'] === 'string' && f['contains'].trim() !== '') return { sorte: 'contient', texte: f['contains'].trim() }
+	if (cles.length === 1 && Array.isArray(f['any_of'])) {
+		const choix = f['any_of'].filter((c): c is string => typeof c === 'string')
+		return choix.length === 0 ? null : { sorte: 'choix', cles: choix }
+	}
+	if (cles.length === 1 && (f['is'] === 'yes' || f['is'] === 'no' || f['is'] === 'empty')) return { sorte: 'case', etat: STRUCTURE_VERS_CASE[f['is']] }
+	if (cles.every((c) => c === 'min' || c === 'max')) {
+		const de = f['min'] ?? null
+		const a = f['max'] ?? null
+		return estNombreOuNul(de) && estNombreOuNul(a) && (de !== null || a !== null) ? { sorte: 'bornes', de, a } : null
+	}
+	if (cles.every((c) => c === 'from' || c === 'to')) {
+		const du = f['from'] ?? null
+		const au = f['to'] ?? null
+		return estJourOuNul(du) && estJourOuNul(au) && (du !== null || au !== null) ? { sorte: 'dates', du, au } : null
+	}
+	return null
+}
+
+/**
+ * Les filtres de champ de l'adresse, sous la forme d'une vue. Il faut les champs : « btp,sante » est un choix ou un texte
+ * selon le type. Un paramètre que les champs n'expliquent pas n'est pas gardé (`filtresActifs`).
+ */
+export function communsVersStructure(
+	champs: readonly ChampDeclarable[],
+	bruts: Readonly<Record<string, string>> | undefined,
+): Readonly<Record<string, FiltreStructure>> {
+	return Object.fromEntries(filtresActifs(champs, bruts).map(({ champ, filtre }) => [champ.key, structureDe(filtre)]))
+}
+
+/** Les filtres de champ d'une vue, rendus à l'adresse (`c.<clé>`) ; une forme illisible est ignorée. */
+export function structureVersCommuns(structure: unknown): Readonly<Record<string, string>> {
+	if (structure === null || typeof structure !== 'object' || Array.isArray(structure)) return {}
+	const sortie: Record<string, string> = {}
+	for (const [cle, brut] of Object.entries(structure as Record<string, unknown>)) {
+		if (!FORME_CLE.test(cle)) continue
+		const filtre = filtreDeStructure(brut)
+		const valeur = filtre === null ? null : formaterFiltre(filtre)
+		if (valeur !== null) sortie[cle] = valeur
+	}
+	return sortie
 }
 
