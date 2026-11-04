@@ -39078,3 +39078,13 @@ la politique de lecture des valeurs est en semi-jointure depuis la `0164`.
 droits) est décidée par une mesure sous le jeton réel, avant le code. **Aucun outil nouveau** dans le connecteur.
 **Écarté** : une sixième famille « champ » (le résultat est l'affaire ; une famille de plus doublerait ses lignes).
 
+
+### décision 845 — livrer la migration 0167 et la webapp de `main` (`CRM-112` T5), sans instantané
+
+*2026-11-04, session 4522fa9c (p2enjoy-crm-54, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : la migration `0167` (les champs de l'affaire dans les modèles d'email), la webapp de `main`, révision
+`5e9c2505` ; l'image `mcp` est inchangée (décision 841 : aucun outil). **La campagne** : ui 1 117 sur 1 122, api 1 312 sur
+1 316, mail 50 sur 50, `verify-mcp` 109, pgTAP 144 fichiers, manuel 142 sur 144, garde du manuel verte ; le reste rejoué
+vert seul, INC-342, ou l'effet de minuit sur « Ma journée ».
+**Décision : oui, sans instantané** : un `pg_dump` avant ; `0167` remplace deux CHECK par un déclencheur et reprend des
+fonctions, aucune table, aucune donnée.
