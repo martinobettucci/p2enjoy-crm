@@ -38964,3 +38964,21 @@ sur une affaire, le mail ne part pas, il se relit par le lien de relecture ou l'
 se met en file — quel constat ? **Réponse : « Constat favorable »**. **Conséquence** : `CRM-128` passe `[x]` (décision 697)
 et INC-341 est close. La règle du responsable (décision 821) est tenue en production : le connecteur prépare, la base
 refuse tout envoi venant de lui, et seule la personne envoie, depuis l'interface web.
+
+### décision 836 — livrer la migration 0164 et la webapp de `main` (`CRM-112` T4.b), sans instantané
+
+*2026-11-04, session 4522fa9c (p2enjoy-crm-f9, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+
+**Question.** Le lot `CRM-112` T4.b est stable après la campagne complète (décisions 830 et 832) : livrer maintenant ?
+**Le lot** : la migration `0164` (trois colonnes posées par la base, la lecture des valeurs communes en semi-jointure) et
+la webapp de `main` (les filtres de champ de la vue liste), révision `18eae579`.
+**La campagne**, sur une base fraîchement semée : ui 1 110 sur 1 116, api 1 311 sur 1 316, mail 50 sur 50, `verify-mcp`
+109, pgTAP 141 fichiers, manuel 142 sur 144, garde du manuel 168. Quatre défauts de preuves trouvés et corrigés (pgTAP
+`0027` et `0030`, la sonde de `mentions-composeur`, le panneau de T4.b) ; le reste rejoué vert seul, INC-342, ou l'effet
+de minuit sur « Ma journée » (un seed de la veille).
+**Décision : oui, sans instantané**, comme les décisions 828 et 834 : un `pg_dump` de la base de production avant la
+fenêtre ; `0164` ajoute des colonnes, une fonction, redéfinit une fonction et une politique — même droit — et reprend des
+valeurs sans en changer aucune.
+**Conséquences** : fenêtre avec migration, sans service à reconstruire ; vérifications en lecture seule : registre terminé
+par la 164, les trois colonnes, la politique ; `verifier.sh` ; le manuel publié ; consignation.
+
