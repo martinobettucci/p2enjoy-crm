@@ -17658,7 +17658,8 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
             MCP : par T9, famille « affaires ».
             *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-f9) depuis 2026-11-04 01:12 UTC — état avant : [ ]*
       - [P] **T4.d — les filtres des champs dans les vues sauvegardées et dans l'export CSV** (vérifiée en développement le
-            2026-11-04 ; livraison de `0165`, webapp et image `mcp` ensemble, puis constat) : **à arbitrer par le
+            2026-11-04 ; **livrée le 2026-11-04**, décision 840, révision `d1dcff73` — `0165`, webapp et image `mcp` ; constat du
+            responsable) : **à arbitrer par le
             responsable** — la liste des clés d'une vue est fermée en base (`docs/SPEC-vues-import-export.md` §2.2), et
             `export_cards` reçoit ces mêmes clés ; jusque-là, une vue ne garde pas ces filtres, « Filtres modifiés depuis la
             vue » ne les compte pas, l'export ne les applique pas — et le panneau le dit. *Arbitrée le 2026-11-04

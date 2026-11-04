@@ -13,7 +13,18 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-112` T4.d — les filtres des champs de l'affaire dans les vues sauvegardées et l'export (migration 165)
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-04 (seconde fenêtre) — migration 165, la webapp de `main`, l'image `mcp`, le manuel
+
+Cellule Spark `crm`, révision `d1dcff73` : `scripts/spark/livrer.sh -- --migrate --instantane-verifie` (décision 840, sans
+nouvel instantané, un `pg_dump -Fc` pris avant), l'image `mcp` reconstruite, le manuel publié (544 fichiers, deux passes).
+**Vérifié, en lecture seule** : registre à 163 lignes, la dernière `0165_vues_filtres_communs.sql` ; les deux fonctions ;
+`verifier.sh` 33/34 (INC-277, antérieur). Le constat fonctionnel du responsable reste à faire.
+
+#### `CRM-112` T4.d — les filtres des champs de l'affaire dans les vues sauvegardées et l'export (migration 165)
 
 - Une vue sauvegardée retient désormais les filtres posés dans « Champs de l'affaire » et les rouvre ; « Filtres
   modifiés depuis la vue » paraît dès qu'ils s'en écartent. « Exporter en CSV » les applique — une date et heure s'y lit
@@ -24,8 +35,6 @@ d'exécuter le code attendu.
   les applique, comme la vue liste — une date et heure s'y lit en UTC. Même famille « Affaires », aucune case nouvelle.
 - Manuel, §9.11 (image renouvelée) et §33.
 - **À livrer ensemble** : la migration `0165`, la webapp et l'image `mcp`.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-04 — migration 164, la webapp de `main`, le manuel
 
