@@ -13,7 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-112` T5 — les champs de l'affaire dans les modèles d'email (migration 167)
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-04 (quatrième fenêtre) — migration 167, la webapp de `main`, le manuel
+
+Cellule Spark `crm`, révision `a914f9b3` (décision 845, sans nouvel instantané, un `pg_dump -Fc` avant). **Vérifié** : registre à
+165 lignes, la dernière `0167_modeles_champs_communs.sql` ; le déclencheur des variables présent ; `verifier.sh` 33/34
+(INC-277). Le constat fonctionnel du responsable reste à faire.
+
+#### `CRM-112` T5 — les champs de l'affaire dans les modèles d'email (migration 167)
 
 - Un modèle d'email peut citer un champ de l'affaire, `{{card.field.<clé>}}` : la palette de l'éditeur les propose dans un
   second groupe, « Champs de l'affaire », chacun sous son libellé. À l'envoi et dans les relances automatiques, la valeur
@@ -24,8 +34,6 @@ d'exécuter le code attendu.
 - **Migration `0167`**. Le connecteur MCP n'est pas concerné (décision 841).
 - Manuel, §14.1 et §18.16 (image renouvelée).
 - **À livrer ensemble** : la migration `0167` et la webapp.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-04 (troisième fenêtre) — migration 166, la webapp de `main`, l'image `mcp`, le manuel
 

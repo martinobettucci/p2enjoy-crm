@@ -17690,7 +17690,7 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
               et intégration par le vrai OAuth (une vue aux filtres de champ rend l'affaire que la base retient) —
               `verify-mcp.sh` **109 contrôles** ; `docs/SPEC-mcp.md` §9.2 quattuordecies précisé ; manuel §33.
 - [P] **T5** — modèles d'email : `{{card.field.<clé>}}`, contrôle d'écriture par déclencheur, rendu, sélecteur.
-      (Vérifiée en développement le 2026-11-04 ; livraison de `0167` et de la webapp, puis constat.)
+      (**Livrée le 2026-11-04**, décision 845, révision `a914f9b3` ; reste le constat du responsable.)
       *MCP (décision 841)* : **non** — le connecteur compose librement, il ne passe pas par les modèles ; il lit les valeurs
       par `crm_card_get` (T9). *Spécifiée le 2026-11-04 avant le code (décision 842)* : §9 (précision T5) — le
       déclencheur de contrôle, la valeur rendue par type, l'aperçu `[libellé]`, le guichet `mail_template_variables_espace`,

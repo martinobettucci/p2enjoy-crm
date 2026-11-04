@@ -39078,7 +39078,6 @@ la politique de lecture des valeurs est en semi-jointure depuis la `0164`.
 droits) est décidée par une mesure sous le jeton réel, avant le code. **Aucun outil nouveau** dans le connecteur.
 **Écarté** : une sixième famille « champ » (le résultat est l'affaire ; une famille de plus doublerait ses lignes).
 
-
 ### décision 845 — livrer la migration 0167 et la webapp de `main` (`CRM-112` T5), sans instantané
 
 *2026-11-04, session 4522fa9c (p2enjoy-crm-54, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
