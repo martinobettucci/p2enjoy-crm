@@ -343,7 +343,24 @@ garde : désarchiver les rend.
 - **Rendu** (`rendre_modele_email`) : la valeur est mise en forme selon son type — date et montant au format français,
   libellé du choix, nom de la personne ou du contact ; un champ vide rend une **chaîne vide**.
 - Le sélecteur de variables de l'éditeur de modèles liste les champs communs sous leur libellé.
-
+- *Précisé le 2026-11-04, avant le code de T5 (décision 842)* :
+  - **Le contrôle des variables** passe des deux contraintes `CHECK` à un **déclencheur** `before insert or update of
+    subject, body_text` sur `mail_templates`, qui accepte les variables natives et les `card.field.<clé>` des champs
+    **actifs** de l'espace du modèle. **Le refus garde sa forme** : `23514`, nommé `mail_templates_subject_variables` ou
+    `mail_templates_body_variables` (`raise … using constraint`), que l'écran classe déjà.
+  - **La valeur rendue**, selon le type : texte tel quel ; nombre et montant comme `card.amount` (`FM999999999990.00`) ;
+    date `JJ/MM/AAAA` ; date et heure `JJ/MM/AAAA HH:MI` en UTC, comme `card.next_action_at` ; choix par son libellé,
+    choix multiples séparés par une virgule ; case « Oui » ou « Non » ; personne par le nom du profil ; contact par son
+    nom ; fichier tel quel. Vide : `null` dans la carte, donc une chaîne vide au rendu et un nom dans `variables_nulles`.
+    **Une carte unique** (`rendre_modele_email`), que les relances automatiques emploient déjà.
+  - **L'aperçu** (`render_mail_template_sample`) rend un champ par son libellé entre crochets — `[SIRET]` —, puisque le
+    jeu d'exemple ne peut pas deviner une valeur plausible pour un champ qu'il ne connaît pas.
+  - **La palette** lit ses variables dans la base par un guichet nouveau, `public.mail_template_variables_espace(p_workspace
+    uuid)` : `(name, label)`, les douze natives (`label` nul) puis une par champ actif, sous la RLS de la personne. Elle
+    n'est **jamais recopiée** dans l'écran (`docs/DESIGN_SYSTEM.md` §5.39).
+  - **L'archivage gardé** (§6) nomme aussi les modèles d'email qui emploient le champ ; `detail` porte les transitions,
+    puis les modèles (« Modèle : <nom> »).
+  - **MCP** : aucun (décision 841).
 ## 10. Recherche globale (décision 664, complément 3)
 
 - **Indexés** : les valeurs des types `text`, `textarea`, `email`, `phone`, `url`, et le **libellé** des choix pour

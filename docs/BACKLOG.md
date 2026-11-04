@@ -17692,7 +17692,9 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
               `verify-mcp.sh` **109 contrôles** ; `docs/SPEC-mcp.md` §9.2 quattuordecies précisé ; manuel §33.
 - [@] **T5** — modèles d'email : `{{card.field.<clé>}}`, contrôle d'écriture par déclencheur, rendu, sélecteur.
       *MCP (décision 841)* : **non** — le connecteur compose librement, il ne passe pas par les modèles ; il lit les valeurs
-      par `crm_card_get` (T9).
+      par `crm_card_get` (T9). *Spécifiée le 2026-11-04 avant le code (décision 842)* : §9 (précision T5) — le
+      déclencheur de contrôle, la valeur rendue par type, l'aperçu `[libellé]`, le guichet `mail_template_variables_espace`,
+      l'archivage qui nomme les modèles ; `docs/DESIGN_SYSTEM.md` §5.39.
       *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-f9) depuis 2026-11-04 06:54 UTC — état avant : [ ]*
 - [ ] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
       *MCP (décision 841)* : **oui**, par l'outil de recherche existant, famille « affaires » (consulter).

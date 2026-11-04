@@ -39046,3 +39046,16 @@ s'en servir. Aucune famille, aucune case.
 **T6 — la recherche globale par les champs de l'affaire** : **oui, par l'outil de recherche existant**, famille
 « affaires » (consulter) ; aucune famille nouvelle.
 
+### décision 842 — `CRM-112` T5 : les champs de l'affaire dans les modèles d'email, spécifiés avant le code
+
+*2026-11-04, session 4522fa9c (p2enjoy-crm-f9), précision de conception sous la décision 664 (complément 2) et 841.*
+**Observations** : le contrôle des variables est deux `CHECK` sur `app.mail_template_variables_inconnues(texte)`, qui ne
+reçoit pas l'espace ; l'écran classe le refus par le nom de la contrainte ; `rendre_modele_email` bâtit une carte unique
+que `app.executer_sequences_relance` emploie ; l'aperçu a son jeu d'exemple ; la palette lit `mail_template_variables()`
+et ne recopie jamais la liste ; le refus d'archivage (§6) ne nomme que les transitions.
+**Décision** : un déclencheur remplace les deux `CHECK` et garde la forme du refus (`23514`, mêmes noms) ; la carte
+reçoit une entrée par champ actif, mise en forme selon le type ; l'aperçu rend `[libellé]` ; un guichet
+`mail_template_variables_espace` donne à la palette les variables et leurs libellés ; l'archivage nomme aussi les modèles.
+**Écarté** : recopier les champs dans l'écran (contre §5.39) ; une valeur d'exemple par type dans l'aperçu (elle ferait
+croire à une donnée réelle).
+

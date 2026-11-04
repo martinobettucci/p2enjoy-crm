@@ -4046,6 +4046,10 @@ porteur du geste, sélecteur jamais restreint selon le rôle, borne de liste à 
   base qui refuse une variable inconnue, refus **traduit**. La liste vient de la base et n'est
   **jamais recopiée dans l'écran** : une treizième variable y paraîtrait sans qu'on touche à
   l'interface.
+  *`CRM-112` T5, écrit le 2026-11-04 avant le code* : **les champs de l'affaire forment un second groupe**, titré
+  « Champs de l'affaire » (13 px `--color-text-2`), après les variables natives ; chaque bouton porte le **libellé** du
+  champ, et le nom technique `card.field.<clé>` en donnée technique après lui. Aucun champ actif : le groupe n'est pas
+  rendu. Le refus d'archivage d'un champ employé (§5.86) nomme aussi les modèles : « Ce champ est employé — {emplois}. »
 
 - **LA PRÉVISUALISATION NE PRÉSÉLECTIONNE RIEN.** Ses trois sélecteurs — affaire, contact, identité
   — ouvrent tous sur une **option vide**, y compris celui de l'affaire, qui est pourtant
