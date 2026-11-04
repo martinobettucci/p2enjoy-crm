@@ -17703,6 +17703,8 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       et §18.16 (image renouvelée), garde 168.
 - [@] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
       *MCP (décision 841)* : **oui**, par l'outil de recherche existant, famille « affaires » (consulter).
+      *Spécifiée le 2026-11-04 avant le code (décision 844)* : §10 (précision T6) — `value_tsv` et son index, l'extrait
+      qui nomme le champ, la mesure sous le jeton réel avant le code.
       *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-54) depuis 2026-11-04 09:24 UTC — état avant : [ ]*
 - [ ] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.
 - [ ] **T8** — seed (`docs/SPEC-champs-communs.md` §13), E2E, captures aux quatre paliers, `docs/manual.md`.

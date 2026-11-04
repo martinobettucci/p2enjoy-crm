@@ -39067,3 +39067,14 @@ reconstruite, révision `e94075f5`. **La campagne** : ui 1 115 sur 1 120, api 1 
 pgTAP 143 fichiers, manuel 142 sur 144, garde du manuel 168 ; le reste rejoué vert seul, INC-342, ou l'effet de minuit.
 **Décision : oui, sans instantané** : un `pg_dump` avant ; `0166` reprend deux fonctions, aucune table, aucune donnée.
 
+### décision 844 — `CRM-112` T6 : la recherche globale par les champs de l'affaire, spécifiée avant le code
+
+*2026-11-04, session 4522fa9c (p2enjoy-crm-54), précision de conception sous les décisions 664 (complément 3) et 841.*
+**Observations** : `recherche_globale(p_terme, p_limite)` rend `(objet, id, workspace_id, titre, sous_titre, extrait, rang)`
+et la famille `affaire` y laisse `extrait` nul ; l'écran (`recherche.ts`) et le connecteur (`excerpt`) relaient l'extrait ;
+la politique de lecture des valeurs est en semi-jointure depuis la `0164`.
+**Décision** : `value_tsv` posée par la base et indexée en GIN, recalculée quand les choix d'un champ changent ; la famille
+`affaire` trouve aussi par un champ, et l'extrait le nomme ; la forme d'exécution (`security invoker` simple, ou index puis
+droits) est décidée par une mesure sous le jeton réel, avant le code. **Aucun outil nouveau** dans le connecteur.
+**Écarté** : une sixième famille « champ » (le résultat est l'affaire ; une famille de plus doublerait ses lignes).
+

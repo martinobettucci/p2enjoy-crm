@@ -383,6 +383,21 @@ garde : désarchiver les rend.
   aucune expression d'index ne peut joindre. La lecture passe par une fonction `security definer` qui interroge l'index puis
   applique `app.can_read_card` aux seules affaires trouvées, et ne rend jamais un identifiant illisible.
   `recherche_globale` reste `security invoker`.
+- *Précisé le 2026-11-04, avant le code de T6 (décisions 841 et 844)* :
+  - **Une colonne `value_tsv tsvector`** sur `card_common_field_values`, posée par la base (le déclencheur de validation,
+    comme `value_search`) : le texte des types `text`, `textarea`, `email`, `phone`, `url`, et le **libellé** des choix
+    pour `select` et `multiselect`, sous la configuration `app.francais_sans_accent` ; nulle pour les autres types. Un
+    **index GIN** la sert. Quand les choix d'un champ changent (`options`), un déclencheur sur `card_common_fields` recalcule
+    les valeurs de ce champ ; la migration reprend l'existant.
+  - **`recherche_globale`** garde sa signature : la famille `affaire` trouve aussi une affaire par un champ actif dont la
+    valeur répond, et son **`extrait`** — nul jusqu'ici pour une affaire — nomme alors le champ : « SIRET : 123 456 789 »
+    (`app.card_common_field_texte`). Une affaire trouvée par son titre ou sa description garde un extrait nul. Le rang
+    compte le champ au poids `B`. Elle reste `security invoker` : la politique de lecture des valeurs (semi-jointure,
+    `0164`) s'applique.
+  - **La forme `security definer` de T1 n'est pas retenue sans mesure** : la politique de lecture a changé depuis (`0164`,
+    coût constant) ; la mesure est refaite avant le code, sous le jeton réel, et décide.
+  - **L'écran** affiche l'extrait d'une affaire comme celui des autres familles ; **le connecteur** le rend déjà
+    (`excerpt` de son outil de recherche) — aucun outil nouveau, famille « affaires » (décision 841).
 
 ## 11. Connecteur MCP (décisions 642 et 664, arbitrage 3)
 
