@@ -39059,3 +39059,11 @@ reçoit une entrée par champ actif, mise en forme selon le type ; l'aperçu ren
 **Écarté** : recopier les champs dans l'écran (contre §5.39) ; une valeur d'exemple par type dans l'aperçu (elle ferait
 croire à une donnée réelle).
 
+### décision 843 — livrer la migration 0166, la webapp de `main` et l'image `mcp` (`CRM-112` T4.c), sans instantané
+
+*2026-11-04, session 4522fa9c (p2enjoy-crm-f9, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : la migration `0166` (les filtres personne, contact et fichier), la webapp de `main`, l'image `mcp`
+reconstruite, révision `e94075f5`. **La campagne** : ui 1 115 sur 1 120, api 1 312 sur 1 316, mail 50 sur 50, `verify-mcp` 109,
+pgTAP 143 fichiers, manuel 142 sur 144, garde du manuel 168 ; le reste rejoué vert seul, INC-342, ou l'effet de minuit.
+**Décision : oui, sans instantané** : un `pg_dump` avant ; `0166` reprend deux fonctions, aucune table, aucune donnée.
+
