@@ -17651,9 +17651,10 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
             repliait après « Appliquer » (la page démonte le tableau pendant la lecture) — son état est tenu par la page.
             *Précisé au code* : l'export CSV ne retient pas ces filtres (clés fermées d'`export_cards`), le panneau le dit ;
             l'export rejoint T4.d. Reste la livraison de la migration `0164` avec la webapp, et le constat.
-      - [ ] **T4.c — les filtres personne, contact et fichier** (§8) : un filtre qui nomme une personne, un contact ;
+      - [@] **T4.c — les filtres personne, contact et fichier** (§8) : un filtre qui nomme une personne, un contact ;
             « renseigné ou vide » pour un fichier. *Arbitrée le 2026-11-04 (décision 837) : les trois.* À spécifier.
             MCP : par T9, famille « affaires ».
+            *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-f9) depuis 2026-11-04 01:12 UTC — état avant : [ ]*
       - [P] **T4.d — les filtres des champs dans les vues sauvegardées et dans l'export CSV** (vérifiée en développement le
             2026-11-04 ; livraison de `0165`, webapp et image `mcp` ensemble, puis constat) : **à arbitrer par le
             responsable** — la liste des clés d'une vue est fermée en base (`docs/SPEC-vues-import-export.md` §2.2), et
