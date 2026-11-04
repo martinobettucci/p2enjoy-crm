@@ -17701,8 +17701,9 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       palette, le modèle relu en base, la prévisualisation qui rend la valeur, l'archivage refusé qui nomme le modèle, la
       variable inconnue refusée par requête directe) et les voisines révisées **8/8** ; captures observées ; manuel §14.1
       et §18.16 (image renouvelée), garde 168.
-- [ ] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
+- [@] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
       *MCP (décision 841)* : **oui**, par l'outil de recherche existant, famille « affaires » (consulter).
+      *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-54) depuis 2026-11-04 09:24 UTC — état avant : [ ]*
 - [ ] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.
 - [ ] **T8** — seed (`docs/SPEC-champs-communs.md` §13), E2E, captures aux quatre paliers, `docs/manual.md`.
 - [ ] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de
