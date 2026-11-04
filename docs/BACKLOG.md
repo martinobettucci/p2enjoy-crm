@@ -17690,9 +17690,10 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
               condition `and=(…)` par filtre), `filters.fields` ; pytest unitaires 310 (deux attentes révisées, décision 51)
               et intégration par le vrai OAuth (une vue aux filtres de champ rend l'affaire que la base retient) —
               `verify-mcp.sh` **109 contrôles** ; `docs/SPEC-mcp.md` §9.2 quattuordecies précisé ; manuel §33.
-- [ ] **T5** — modèles d'email : `{{card.field.<clé>}}`, contrôle d'écriture par déclencheur, rendu, sélecteur.
+- [@] **T5** — modèles d'email : `{{card.field.<clé>}}`, contrôle d'écriture par déclencheur, rendu, sélecteur.
       *MCP (décision 841)* : **non** — le connecteur compose librement, il ne passe pas par les modèles ; il lit les valeurs
       par `crm_card_get` (T9).
+      *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-f9) depuis 2026-11-04 06:54 UTC — état avant : [ ]*
 - [ ] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
       *MCP (décision 841)* : **oui**, par l'outil de recherche existant, famille « affaires » (consulter).
 - [ ] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.
