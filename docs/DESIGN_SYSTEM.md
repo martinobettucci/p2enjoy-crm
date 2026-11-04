@@ -7822,6 +7822,11 @@ ne disent que de quoi il a l'air.
   retiennent ces filtres ; **la phrase est retirée avec T4.d.2**, et rien ne la remplace — le panneau n'a plus de limite à
   dire. Une vue choisie qui porte des filtres de champ les applique ; « Filtres modifiés depuis la vue » paraît dès qu'ils
   s'en écartent, comme pour les autres filtres (§5.75).
+- *`CRM-112` T4.c, écrit le 2026-11-04 avant le code* : **une personne, un contact, un fichier** rejoignent le panneau.
+  Personne : un `select` « Toutes les personnes », puis les membres de l'espace par nom ; contact : un `select` « Tous les
+  contacts », puis les contacts du carnet, chacun avec son organisation — les listes et libellés du formulaire de la fiche
+  (§5.7) ; fichier : un `select` « Indifférent », « Renseigné », « Vide ». La phrase « Les types personne, contact et
+  fichier n'y paraissent pas encore » cesse d'être vraie : tous les types se filtrent.
 - **« Appliquer » (primaire) et « Fermer » (discret) terminent le panneau** : rien ne filtre avant « Appliquer », comme
   la recherche attend sa validation. « Appliquer » ramène à la page 1 ; le panneau reste
   ouvert, pour corriger. Une borne illisible ne part pas : le champ dit « Saisissez un nombre. » sous lui, en `--color-danger`

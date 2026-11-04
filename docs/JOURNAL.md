@@ -39013,3 +39013,13 @@ qu'emploie `export_cards` ; l'écran traduit entre la forme et l'adresse. **Le c
 fuseau) ; livrer les vues sans le connecteur (une vue dirait deux choses selon qui la lit).
 **Conséquences** : trois tranches T4.d.1, T4.d.2, T4.d.3 ; une migration au premier numéro libre.
 
+### décision 839 — `CRM-112` T4.c : les filtres personne, contact et fichier, spécifiés avant le code
+
+*2026-11-04, session 4522fa9c (p2enjoy-crm-f9), précision de conception sous la décision 837.*
+**Observations** : une valeur personne ou contact est un identifiant en chaîne JSON, validé contre les membres ou le
+carnet de l'espace ; une valeur fichier est une chaîne (`app.validate_field_value`, migration 0152).
+**Décision** : personne et contact réemploient la forme `any_of` (un seul identifiant choisi à l'écran) et la condition
+du choix ; fichier reçoit `{"is": "filled" | "empty"}`, `filled` étant accordé par une migration nouvelle — la `0165`,
+déjà dans le lot en campagne, n'est pas reprise. L'écran emploie les listes et libellés du formulaire de la fiche.
+**Écarté** : une forme propre aux références (`{"ref": …}`) — elle ne dirait rien de plus que `any_of`.
+

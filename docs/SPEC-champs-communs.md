@@ -319,6 +319,15 @@ garde : désarchiver les rend.
     connecteur, **dans la même livraison** : `crm_card_list` applique les filtres de champ d'une vue (`view`), et
     `crm_view_list` les rend (part de T9 avancée, décision 837) ; sans elle, une vue lue par le connecteur rendrait plus
     d'affaires que l'écran.
+- *Précisé le 2026-11-04, avant le code de T4.c (décisions 837 et 839)* :
+  - **Personne** et **contact** : la valeur est un identifiant (`"<uuid>"`). Le filtre est « est cette personne » ou « est
+    ce contact » : un seul choix à l'écran, sous la forme `{"any_of": ["<uuid>"]}` — la forme du choix, appliquée par la
+    même condition (`value` contenue dans le tableau). Adresse : `c.<clé>=<uuid>`.
+  - **Fichier** : « renseigné » ou « vide », sous la forme `{"is": "filled" | "empty"}` — **`filled` est une valeur
+    nouvelle** de la forme `is`, accordée par une migration (la `0165` est déjà dans un lot ; elle n'est pas reprise).
+    Renseigné : une valeur ni nulle, ni `null` JSON, ni chaîne vide. Adresse : `c.<clé>=renseigne|vide`.
+  - **La migration** élargit `app.common_field_filter_shape_valid` (`filled`) et `app.card_common_filters_match` (les
+    types `user`, `contact`, `file`) ; **le connecteur** applique les mêmes formes (`conditions_filtres_communs`).
 
 ## 9. Modèles d'email (décision 664, complément 2)
 
