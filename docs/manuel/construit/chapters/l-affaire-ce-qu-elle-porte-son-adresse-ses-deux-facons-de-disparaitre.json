@@ -6539,7 +6539,7 @@
 				},
 				{
 					"type": "text",
-					"text": "), le bouton « Champs de l'affaire » rejoint les filtres. Il ouvre,\nsous la barre, un panneau avec un filtre par champ, selon son type : un texte se cherche par « Contient » — sans tenir\ncompte des majuscules ni des accents ; un champ à choix, par les choix que vous cochez ; un nombre ou un montant, entre\n« De » et « À », chacun facultatif ; une date, entre deux jours ; une case, par oui, non ou vide. Rien ne filtre avant\n« Appliquer » ; le panneau reste ouvert pour corriger, et « Fermer » le replie. Le bouton dit combien de ces filtres\nsont actifs. Une borne qui n'est pas un nombre est refusée sous son champ. Ces filtres s'inscrivent dans l'adresse comme\nles autres ; une "
+					"text": "), le bouton « Champs de l'affaire » rejoint les filtres. Il ouvre,\nsous la barre, un panneau avec un filtre par champ, selon son type : un texte se cherche par « Contient » — sans tenir\ncompte des majuscules ni des accents ; un champ à choix, par les choix que vous cochez ; un nombre ou un montant, entre\n« De » et « À », chacun facultatif ; une date, entre deux jours ; une case, par oui, non ou vide ; une personne ou un\ncontact, en le choisissant dans la liste des membres ou dans le carnet ; un fichier, renseigné ou vide. Rien ne filtre avant\n« Appliquer » ; le panneau reste ouvert pour corriger, et « Fermer » le replie. Le bouton dit combien de ces filtres\nsont actifs. Une borne qui n'est pas un nombre est refusée sous son champ. Ces filtres s'inscrivent dans l'adresse comme\nles autres ; une "
 				},
 				{
 					"type": "strong",
@@ -6565,7 +6565,7 @@
 				},
 				{
 					"type": "text",
-					"text": " les applique — une date et heure s'y lit à l'heure de votre appareil, comme dans la liste. Les\nchamps qui désignent une personne, un contact ou un fichier ne se filtrent pas encore."
+					"text": " les applique — une date et heure s'y lit à l'heure de votre appareil, comme dans la liste. Tous\nles types de champ se filtrent."
 				}
 			]
 		},

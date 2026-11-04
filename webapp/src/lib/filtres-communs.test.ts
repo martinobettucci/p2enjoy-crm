@@ -1,6 +1,7 @@
 // @verifies CRM-112 (docs/BACKLOG.md) — tranche T4.b : les filtres de champ de la vue liste — l'adresse lue avec tolérance et
 //           réécrite à l'identique, le filtre selon le type, le texte ramené à la forme de `value_search`, et la requête de
 //           la page : un plongement par filtre, sa condition, « vide » sans `!inner`
+// @verifies CRM-112 tranche T4.c — personne, contact, fichier : le filtre, sa forme structurée, la requête (§8, précision T4.c)
 // @verifies CRM-112 tranche T4.d.2 — la forme structurée `common_fields`, depuis et vers l'adresse (§8, précision T4.d)
 // @verifies docs/SPEC-champs-communs.md §8 (précision T4.b) ; docs/DESIGN_SYSTEM.md §5.92 ; docs/SPEC-cards.md §12.2, §12.5
 
@@ -89,7 +90,8 @@ describe('le filtre selon le type (§8)', () => {
 		expect(interpreterFiltre(c, 'peut-etre')).toBeNull()
 	})
 
-	it('personne, contact et fichier ne sont pas filtrés par T4.b ; un champ archivé non plus', () => {
+	// RÉVISÉ PAR T4.c (décision 51) : personne, contact et fichier sont désormais filtrés ; un champ archivé reste écarté.
+	it('tous les types sont filtrés depuis T4.c ; un champ archivé ne l’est pas', () => {
 		const champs = [
 			champ({ key: 'b', type: 'text', position: 2 }),
 			champ({ key: 'a', type: 'number', position: 1 }),
@@ -97,7 +99,8 @@ describe('le filtre selon le type (§8)', () => {
 			champ({ key: 'f', type: 'file' }),
 			champ({ key: 'x', type: 'text', archived_at: '2026-01-01T00:00:00Z' }),
 		]
-		expect(champsFiltrables(champs).map((c) => c.key)).toEqual(['a', 'b'])
+		expect(champsFiltrables(champs).map((c) => c.key)).toEqual(['a', 'u', 'f', 'b'])
+		// « quelqu-un » n'est pas un identifiant : la personne n'est pas filtrée ; le champ archivé non plus.
 		expect(filtresActifs(champs, { u: 'quelqu-un', x: 'texte', b: 'texte', inconnu: '1' }).map((f) => f.champ.key)).toEqual(['b'])
 	})
 
@@ -243,5 +246,46 @@ describe('la forme structurée d’une vue (§8, précision T4.d)', () => {
 		expect(filtreDeStructure({ contains: 'x', any_of: ['a'] })).toBeNull()
 		expect(filtreDeStructure({ from: '01/01/2026' })).toBeNull()
 		expect(structureVersCommuns(null)).toEqual({})
+	})
+})
+
+// `CRM-112` T4.c — personne, contact, fichier (docs/SPEC-champs-communs.md §8, précision T4.c).
+describe('personne, contact et fichier (§8, précision T4.c)', () => {
+	const ID = '5eed0000-0000-4000-8000-000000000012'
+
+	it('une personne ou un contact : un identifiant ; un fichier : renseigné ou vide', () => {
+		expect(interpreterFiltre(champ({ type: 'user' }), ID)).toEqual({ sorte: 'reference', id: ID })
+		expect(interpreterFiltre(champ({ type: 'contact' }), 'Camille')).toBeNull()
+		expect(interpreterFiltre(champ({ type: 'file' }), 'renseigne')).toEqual({ sorte: 'fichier', etat: 'renseigne' })
+		expect(interpreterFiltre(champ({ type: 'file' }), 'oui')).toBeNull()
+		expect(champsFiltrables([champ({ key: 'u', type: 'user' }), champ({ key: 'f', type: 'file', position: 2 })]).map((c) => c.key)).toEqual(['u', 'f'])
+	})
+
+	it('leur forme structurée : any_of pour une référence, is filled/empty pour un fichier — et le retour', () => {
+		const champs = [champ({ key: 'referent', type: 'user' }), champ({ key: 'kbis', type: 'file' })]
+		const structure = communsVersStructure(champs, { referent: ID, kbis: 'renseigne' })
+		expect(structure).toEqual({ referent: { any_of: [ID] }, kbis: { is: 'filled' } })
+		expect(structureVersCommuns(structure)).toEqual({ referent: ID, kbis: 'renseigne' })
+		expect(communsVersStructure(champs, { kbis: 'vide' })).toEqual({ kbis: { is: 'empty' } })
+	})
+
+	it('la requête : un identifiant comme un choix ; un fichier vide sans !inner', async () => {
+		const { client, appels } = clientEnregistreur()
+		const reference = champ({ id: 'r', key: 'referent', type: 'contact' })
+		const fichier = champ({ id: 'k', key: 'kbis', type: 'file' })
+		await lirePageCards(client, {
+			channelId: 'ch',
+			parametres: PARAMETRES_PAR_DEFAUT,
+			filtresCommuns: [
+				{ champ: reference, filtre: { sorte: 'reference', id: ID } },
+				{ champ: fichier, filtre: { sorte: 'fichier', etat: 'vide' } },
+			],
+		})
+		expect(appels).toContainEqual(['filter', ['affaire.fc0.value', 'cd', `["${ID}"]`]])
+		expect(appels).toContainEqual(['neq', ['affaire.fc1.value', '""']])
+		expect(appels).toContainEqual(['is', ['affaire.fc1', null]])
+		expect(
+			colonnesAvecFiltresCommuns(COLONNES_RATTACHEMENT_LISTE, [{ champ: fichier, filtre: { sorte: 'fichier', etat: 'vide' } }]),
+		).toContain('fc0:card_common_field_values(field_id)')
 	})
 })

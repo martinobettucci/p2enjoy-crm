@@ -1,6 +1,8 @@
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T4.b : les filtres de la vue liste sur les champs de l'affaire — ce que l'adresse
 //       porte (`c.<clé>`), ce qu'un filtre veut dire selon le type, la lecture tolérante, et le texte ramené à la forme de
 //       `value_search`
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T4.c : personne et contact (« est cette personne », « est ce contact ») et fichier
+//       (« renseigné », « vide ») — docs/SPEC-champs-communs.md §8 (précision T4.c), décision 839
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T4.d.2 : la forme structurée `common_fields` d'une vue et d'un export, traduite
 //       depuis et vers l'adresse (docs/SPEC-champs-communs.md §8, précision T4.d ; décision 838)
 // @spec docs/SPEC-champs-communs.md §8 (précision T4.b) ; docs/DESIGN_SYSTEM.md §5.92 ; docs/JOURNAL.md décision 831 ;
@@ -28,8 +30,9 @@ export const SEPARATEUR_BORNES = '..'
 
 const FORME_CLE = /^[a-z0-9]+(-[a-z0-9]+)*$/
 const FORME_DATE = /^\d{4}-\d{2}-\d{2}$/
+const FORME_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-/** Les types que T4.b filtre ; personne, contact et fichier sont la tranche T4.c. */
+/** Les types filtrés : T4.b, puis personne, contact et fichier avec T4.c. */
 const TYPES_CONTIENT: ReadonlySet<string> = new Set(['text', 'textarea', 'email', 'phone', 'url'])
 const TYPES_BORNES: ReadonlySet<string> = new Set(['number', 'money'])
 const TYPES_DATES: ReadonlySet<string> = new Set(['date', 'datetime'])
@@ -41,6 +44,8 @@ export type FiltreCommun =
 	| { readonly sorte: 'bornes'; readonly de: number | null; readonly a: number | null }
 	| { readonly sorte: 'dates'; readonly du: string | null; readonly au: string | null }
 	| { readonly sorte: 'case'; readonly etat: 'oui' | 'non' | 'vide' }
+	| { readonly sorte: 'reference'; readonly id: string }
+	| { readonly sorte: 'fichier'; readonly etat: 'renseigne' | 'vide' }
 
 /** Un filtre actif et le champ qu'il vise : ce que la requête de la liste applique. */
 export type FiltreActif = { readonly champ: ChampDeclarable; readonly filtre: FiltreCommun }
@@ -52,6 +57,8 @@ export function sorteDuType(type: string): FiltreCommun['sorte'] | null {
 	if (TYPES_BORNES.has(type)) return 'bornes'
 	if (TYPES_DATES.has(type)) return 'dates'
 	if (type === 'checkbox') return 'case'
+	if (type === 'user' || type === 'contact') return 'reference'
+	if (type === 'file') return 'fichier'
 	return null
 }
 
@@ -128,6 +135,10 @@ export function interpreterFiltre(champ: ChampDeclarable, brut: string): FiltreC
 		}
 		case 'case':
 			return brut === 'oui' || brut === 'non' || brut === 'vide' ? { sorte: 'case', etat: brut } : null
+		case 'reference':
+			return FORME_UUID.test(brut) ? { sorte: 'reference', id: brut.toLowerCase() } : null
+		case 'fichier':
+			return brut === 'renseigne' || brut === 'vide' ? { sorte: 'fichier', etat: brut } : null
 		default:
 			return null
 	}
@@ -145,6 +156,10 @@ export function formaterFiltre(filtre: FiltreCommun): string | null {
 		case 'dates':
 			return filtre.du === null && filtre.au === null ? null : `${filtre.du ?? ''}${SEPARATEUR_BORNES}${filtre.au ?? ''}`
 		case 'case':
+			return filtre.etat
+		case 'reference':
+			return filtre.id
+		case 'fichier':
 			return filtre.etat
 	}
 }
@@ -193,7 +208,7 @@ export type FiltreStructure =
 	| { readonly any_of: readonly string[] }
 	| { readonly min: number | null; readonly max: number | null }
 	| { readonly from: string | null; readonly to: string | null }
-	| { readonly is: 'yes' | 'no' | 'empty' }
+	| { readonly is: 'yes' | 'no' | 'empty' | 'filled' }
 
 const CASE_VERS_STRUCTURE = { oui: 'yes', non: 'no', vide: 'empty' } as const
 const STRUCTURE_VERS_CASE = { yes: 'oui', no: 'non', empty: 'vide' } as const
@@ -211,6 +226,10 @@ export function structureDe(filtre: FiltreCommun): FiltreStructure {
 			return { from: filtre.du, to: filtre.au }
 		case 'case':
 			return { is: CASE_VERS_STRUCTURE[filtre.etat] }
+		case 'reference':
+			return { any_of: [filtre.id] }
+		case 'fichier':
+			return { is: filtre.etat === 'renseigne' ? 'filled' : 'empty' }
 	}
 }
 
@@ -228,6 +247,8 @@ export function filtreDeStructure(brut: unknown): FiltreCommun | null {
 		return choix.length === 0 ? null : { sorte: 'choix', cles: choix }
 	}
 	if (cles.length === 1 && (f['is'] === 'yes' || f['is'] === 'no' || f['is'] === 'empty')) return { sorte: 'case', etat: STRUCTURE_VERS_CASE[f['is']] }
+	// `filled` n'existe que pour un fichier ; « vide » s'écrit de même pour une case et un fichier, le type le départage.
+	if (cles.length === 1 && f['is'] === 'filled') return { sorte: 'fichier', etat: 'renseigne' }
 	if (cles.every((c) => c === 'min' || c === 'max')) {
 		const de = f['min'] ?? null
 		const a = f['max'] ?? null

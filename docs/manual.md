@@ -1835,12 +1835,13 @@ filtres**, pas celui du channel entier.
 ([section 18.16](#les-champs-communs-a-toute-affaire)), le bouton « Champs de l'affaire » rejoint les filtres. Il ouvre,
 sous la barre, un panneau avec un filtre par champ, selon son type : un texte se cherche par « Contient » — sans tenir
 compte des majuscules ni des accents ; un champ à choix, par les choix que vous cochez ; un nombre ou un montant, entre
-« De » et « À », chacun facultatif ; une date, entre deux jours ; une case, par oui, non ou vide. Rien ne filtre avant
+« De » et « À », chacun facultatif ; une date, entre deux jours ; une case, par oui, non ou vide ; une personne ou un
+contact, en le choisissant dans la liste des membres ou dans le carnet ; un fichier, renseigné ou vide. Rien ne filtre avant
 « Appliquer » ; le panneau reste ouvert pour corriger, et « Fermer » le replie. Le bouton dit combien de ces filtres
 sont actifs. Une borne qui n'est pas un nombre est refusée sous son champ. Ces filtres s'inscrivent dans l'adresse comme
 les autres ; une **vue sauvegardée** les retient, « Filtres modifiés depuis la vue » paraît dès qu'ils s'en écartent, et
-**« Exporter en CSV »** les applique — une date et heure s'y lit à l'heure de votre appareil, comme dans la liste. Les
-champs qui désignent une personne, un contact ou un fichier ne se filtrent pas encore.
+**« Exporter en CSV »** les applique — une date et heure s'y lit à l'heure de votre appareil, comme dans la liste. Tous
+les types de champ se filtrent.
 
 ![Le panneau « Champs de l'affaire » ouvert sous la barre de filtres : « Contient », les choix, « De » et « À », la case, et « Appliquer »](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/filtrer-sur-les-champs.jpg)
 

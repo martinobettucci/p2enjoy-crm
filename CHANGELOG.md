@@ -13,7 +13,15 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### `CRM-112` T4.c — filtrer sur une personne, un contact, un fichier (migration 166)
+
+- Le panneau « Champs de l'affaire » de la vue liste filtre aussi les champs qui désignent une personne (choisie parmi les
+  membres de l'espace), un contact (choisi dans le carnet) ou un fichier (« Renseigné » ou « Vide »). Tous les types de
+  champ se filtrent désormais ; une vue sauvegardée et l'export les retiennent.
+- **Migration `0166`** : la forme `{"is": "filled"}` acceptée, les trois types interprétés en base comme à l'écran.
+- **Image `mcp`** : `crm_card_list(view=…)` applique ces filtres.
+- Manuel, §9.11.
+- **À livrer ensemble** : la migration `0166`, la webapp et l'image `mcp`.
 
 ## [Publié]
 

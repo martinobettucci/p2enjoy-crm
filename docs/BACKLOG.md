@@ -17607,9 +17607,10 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
               4 927 assertions** ;
             - unitaires **5 366** (le détail commun) ; E2E `fiche-champs-communs` étendue (la ligne du fil, l'événement
               relu en base sans rattachement) et `timeline.spec.ts` : **20/20** ; capture observée.
-- [~] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; la case « Afficher dans la liste » de
+- [P] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; la case « Afficher dans la liste » de
       Réglages ▸ « Champs de l'affaire » (reportée de T3.a, `docs/DESIGN_SYSTEM.md` §5.86) ; unitaires ; API.
-      T4.a livrée, T4.b vérifiée en développement ; restent T4.c (à spécifier) et T4.d (à arbitrer).
+      T4.a, T4.b et T4.d livrées le 2026-11-03 et le 2026-11-04 ; T4.c vérifiée en développement, à livrer ; constat du
+      responsable.
       **Découpage** (2026-11-03, après lecture de la vue liste : une requête PostgREST sur `card_placements`, l'affaire plongée,
       filtres au serveur avant la pagination et le compte) :
       - [P] **T4.a — les colonnes** (livrée le 2026-11-03, décision 834 ; constat du responsable) : la case « Afficher dans la liste des affaires » de Réglages (reportée de T3.a), et une
@@ -17651,12 +17652,16 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
             repliait après « Appliquer » (la page démonte le tableau pendant la lecture) — son état est tenu par la page.
             *Précisé au code* : l'export CSV ne retient pas ces filtres (clés fermées d'`export_cards`), le panneau le dit ;
             l'export rejoint T4.d. Reste la livraison de la migration `0164` avec la webapp, et le constat.
-      - [@] **T4.c — les filtres personne, contact et fichier** (§8) : un filtre qui nomme une personne, un contact ;
+      - [P] **T4.c — les filtres personne, contact et fichier** (vérifiée en développement le 2026-11-04 ; livraison de
+            `0166`, webapp et image `mcp` ensemble, puis constat) (§8) : un filtre qui nomme une personne, un contact ;
             « renseigné ou vide » pour un fichier. *Arbitrée le 2026-11-04 (décision 837) : les trois.* *Spécifiée le
             2026-11-04 avant le code (décision 839)* : §8 (précision T4.c), `docs/DESIGN_SYSTEM.md` §5.92 ; une migration
             (`filled` pour la forme `is`, les trois types dans l'interprétation), la webapp, le connecteur.
             MCP : par T9, famille « affaires ».
-            *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-f9) depuis 2026-11-04 01:12 UTC — état avant : [ ]*
+            *Faite le 2026-11-04* : migration `0166`, pgTAP `0155` **9/9** (suite 143 fichiers, 4 973 assertions) ;
+            webapp — `reference` et `fichier` dans `filtres-communs.ts`, la requête, le panneau (les listes du formulaire de
+            la fiche) ; unitaires **5 419** (une attente de T4.b révisée, décision 51) ; connecteur — pytest `test_vues.py`
+            12/12 ; E2E `e2e/ui/filtres-references-fichiers.spec.ts` et ses voisines **9/9** ; capture observée ; manuel §9.11.
       - [P] **T4.d — les filtres des champs dans les vues sauvegardées et dans l'export CSV** (vérifiée en développement le
             2026-11-04 ; **livrée le 2026-11-04**, décision 840, révision `d1dcff73` — `0165`, webapp et image `mcp` ; constat du
             responsable) : **à arbitrer par le

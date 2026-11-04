@@ -7,7 +7,8 @@
 #       docs/JOURNAL.md décision 775
 # @spec CRM-112 (docs/BACKLOG.md) — tranche T4.d.3 : les filtres des champs de l'affaire d'une vue — rendus par
 #       `crm_view_list`, appliqués par `crm_card_list(view=…)` comme la vue liste les applique (docs/SPEC-champs-communs.md
-#       §8, précision T4.d ; décisions 837 et 838 ; famille `affaires`, `consulter`)
+#       §8, précision T4.d ; décisions 837 et 838 ; famille `affaires`, `consulter`) ; T4.c : personne et contact comme un
+#       choix, fichier renseigné ou vide (précision T4.c, décision 839)
 """Les vues sauvegardées d'un channel, lues sous l'identité de la personne.
 
 La RLS de `saved_views` ne rend que les vues privées de la personne et les vues de l'espace sur les channels qu'elle lit :
@@ -158,7 +159,7 @@ def conditions_filtres_communs(
         vide = False
         if type_ in _TEXTES and isinstance(f.get("contains"), str) and f["contains"].strip():
             conditions.append(f"value_search.like.{_quoter('*' + _sans_accents(f['contains']) + '*')}")
-        elif type_ == "select" and isinstance(f.get("any_of"), list) and f["any_of"]:
+        elif type_ in ("select", "user", "contact") and isinstance(f.get("any_of"), list) and f["any_of"]:
             conditions.append(f"value.cd.{_quoter(json.dumps([str(c) for c in f['any_of']], ensure_ascii=False))}")
         elif type_ == "multiselect" and isinstance(f.get("any_of"), list) and f["any_of"]:
             conditions.append(
@@ -179,6 +180,10 @@ def conditions_filtres_communs(
                 conditions.append(f"value_timestamp.gte.{f['from']}T00:00:00Z")
             if _jour(f.get("to")):
                 conditions.append(f"value_timestamp.lte.{f['to']}T23:59:59.999999Z")
+        elif type_ == "file" and f.get("is") in ("filled", "empty"):
+            # Renseigné : ni nul, ni `null` JSON, ni chaîne vide ; vide : aucune valeur ainsi (plongement sans `!inner`).
+            conditions += ["value.not.is.null", "value.neq.null", f"value.neq.{_quoter(json.dumps(''))}"]
+            vide = f["is"] == "empty"
         elif type_ == "checkbox" and f.get("is") in ("yes", "no"):
             conditions.append(f"value.eq.{'true' if f['is'] == 'yes' else 'false'}")
         elif type_ == "checkbox" and f.get("is") == "empty":

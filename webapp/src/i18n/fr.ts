@@ -2404,6 +2404,11 @@ export const fr = {
 	'liste.communs.case.oui': 'Oui',
 	'liste.communs.case.non': 'Non',
 	'liste.communs.case.vide': 'Vide',
+	// `CRM-112` T4.c — docs/DESIGN_SYSTEM.md §5.92.
+	'liste.communs.reference.personnes': 'Toutes les personnes',
+	'liste.communs.reference.contacts': 'Tous les contacts',
+	'liste.communs.fichier.renseigne': 'Renseigné',
+	'liste.communs.fichier.vide': 'Vide',
 	'liste.communs.erreur.nombre': 'Saisissez un nombre.',
 	'liste.communs.appliquer': 'Appliquer',
 	'liste.communs.fermer': 'Fermer',

@@ -1,5 +1,7 @@
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T4.b : le panneau des filtres de champ de la vue liste — un `fieldset` par champ,
 //       le contrôle selon le type, « Appliquer » et « Fermer », la borne illisible refusée sous son champ
+// @spec CRM-112 tranche T4.c — une personne, un contact (les listes du formulaire de la fiche), un fichier renseigné ou vide
+//       (docs/DESIGN_SYSTEM.md §5.92, docs/SPEC-champs-communs.md §8 précision T4.c, décision 839)
 // @spec CRM-112 tranche T4.d.2 — la phrase « L'export CSV et les vues sauvegardées ne retiennent pas encore ces filtres »
 //       retirée : ils les retiennent (docs/DESIGN_SYSTEM.md §5.92, décision 837)
 // @spec docs/DESIGN_SYSTEM.md §5.92, §5.7, §5.7 bis, §8 ; docs/SPEC-champs-communs.md §8 (précision T4.b) ; docs/JOURNAL.md
@@ -13,6 +15,9 @@ import { Button } from '../components/ui/Button'
 import { t } from '../i18n'
 import { choixDuChamp } from '../lib/administration-workflows'
 import type { ChampCommun } from '../lib/champs-communs'
+import { clientCrm } from '../lib/supabase'
+import { useContexteEspace } from './ContexteEspace'
+import { useListesReference, type ListesReference } from './FormulaireCard'
 import { formaterFiltre, interpreterFiltre, lireNombre, sorteDuType, type FiltreCommun } from '../lib/filtres-communs'
 
 /** Ce que l'écran garde d'un champ pendant la saisie, avant « Appliquer ». */
@@ -22,9 +27,11 @@ type Brouillon = {
 	readonly de: string
 	readonly a: string
 	readonly etat: '' | 'oui' | 'non' | 'vide'
+	readonly ref: string
+	readonly fichier: '' | 'renseigne' | 'vide'
 }
 
-const VIDE: Brouillon = { texte: '', cles: [], de: '', a: '', etat: '' }
+const VIDE: Brouillon = { texte: '', cles: [], de: '', a: '', etat: '', ref: '', fichier: '' }
 
 function brouillonDe(filtre: FiltreCommun | null): Brouillon {
 	if (filtre === null) return VIDE
@@ -39,6 +46,10 @@ function brouillonDe(filtre: FiltreCommun | null): Brouillon {
 			return { ...VIDE, de: filtre.du ?? '', a: filtre.au ?? '' }
 		case 'case':
 			return { ...VIDE, etat: filtre.etat }
+		case 'reference':
+			return { ...VIDE, ref: filtre.id }
+		case 'fichier':
+			return { ...VIDE, fichier: filtre.etat }
 	}
 }
 
@@ -59,6 +70,10 @@ function filtreDe(champ: ChampCommun, brouillon: Brouillon): FiltreCommun | null
 			return brouillon.de === '' && brouillon.a === '' ? null : { sorte: 'dates', du: brouillon.de || null, au: brouillon.a || null }
 		case 'case':
 			return brouillon.etat === '' ? null : { sorte: 'case', etat: brouillon.etat }
+		case 'reference':
+			return brouillon.ref === '' ? null : { sorte: 'reference', id: brouillon.ref }
+		case 'fichier':
+			return brouillon.fichier === '' ? null : { sorte: 'fichier', etat: brouillon.fichier }
 		default:
 			return null
 	}
@@ -79,6 +94,14 @@ export function PanneauFiltresCommuns({ id, champs, bruts, onAppliquer, onFermer
 		Object.fromEntries(champs.map((champ) => [champ.key, brouillonDe(bruts[champ.key] === undefined ? null : interpreterFiltre(champ, bruts[champ.key] ?? ''))])),
 	)
 	const [illisibles, setIllisibles] = useState<ReadonlySet<string>>(new Set())
+	// `CRM-112` T4.c : les membres et les contacts, lus seulement si un champ personne ou contact est proposé.
+	const { idWorkspace } = useContexteEspace()
+	const { listes } = useListesReference(
+		clientCrm,
+		idWorkspace ?? '',
+		champs.some((c) => c.type === 'contact'),
+		champs.some((c) => c.type === 'user'),
+	)
 
 	const modifier = (cle: string, changement: Partial<Brouillon>) =>
 		setBrouillons((precedents) => ({ ...precedents, [cle]: { ...(precedents[cle] ?? VIDE), ...changement } }))
@@ -121,7 +144,14 @@ export function PanneauFiltresCommuns({ id, champs, bruts, onAppliquer, onFermer
 					return (
 						<fieldset key={champ.id} data-champ={champ.key} data-testid="filtre-commun" className="flex flex-col gap-2 min-w-0">
 							<legend className="text-sm text-text-2 mb-1">{champ.label}</legend>
-							<ControleFiltre champ={champ} brouillon={brouillon} idChamp={idChamp} illisible={illisible} onChange={(c) => modifier(champ.key, c)} />
+							<ControleFiltre
+								champ={champ}
+								brouillon={brouillon}
+								idChamp={idChamp}
+								illisible={illisible}
+								listes={listes}
+								onChange={(c) => modifier(champ.key, c)}
+							/>
 						</fieldset>
 					)
 				})}
@@ -145,15 +175,54 @@ function ControleFiltre({
 	brouillon,
 	idChamp,
 	illisible,
+	listes,
 	onChange,
 }: {
 	readonly champ: ChampCommun
 	readonly brouillon: Brouillon
 	readonly idChamp: string
 	readonly illisible: boolean
+	readonly listes: ListesReference
 	readonly onChange: (changement: Partial<Brouillon>) => void
 }) {
 	const sorte = sorteDuType(champ.type)
+	if (sorte === 'reference') {
+		const liste = listes[champ.type === 'contact' ? 'contact' : 'user']
+		const options = liste !== null && liste.statut === 'pret' ? liste.donnees : []
+		return (
+			<div className="flex flex-col gap-1">
+				<label htmlFor={idChamp} className="sr-only">
+					{champ.label}
+				</label>
+				<select id={idChamp} value={brouillon.ref} onChange={(e) => onChange({ ref: e.target.value })} className={CLASSES_SAISIE}>
+					<option value="">{t(champ.type === 'contact' ? 'liste.communs.reference.contacts' : 'liste.communs.reference.personnes')}</option>
+					{options.map((option) => (
+						<option key={option.valeur} value={option.valeur}>
+							{option.libelle}
+						</option>
+					))}
+				</select>
+			</div>
+		)
+	}
+	if (sorte === 'fichier')
+		return (
+			<div className="flex flex-col gap-1">
+				<label htmlFor={idChamp} className="sr-only">
+					{champ.label}
+				</label>
+				<select
+					id={idChamp}
+					value={brouillon.fichier}
+					onChange={(e) => onChange({ fichier: e.target.value as Brouillon['fichier'] })}
+					className={CLASSES_SAISIE}
+				>
+					<option value="">{t('liste.communs.case.indifferent')}</option>
+					<option value="renseigne">{t('liste.communs.fichier.renseigne')}</option>
+					<option value="vide">{t('liste.communs.fichier.vide')}</option>
+				</select>
+			</div>
+		)
 	if (sorte === 'contient')
 		return (
 			<div className="flex flex-col gap-1">

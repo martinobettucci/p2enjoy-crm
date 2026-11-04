@@ -321,7 +321,7 @@ export function colonnesAvecFiltresCommuns(colonnes: string, filtres: readonly F
 	if (filtres.length === 0) return colonnes
 	const plongements = filtres
 		.map(({ filtre }, rang) =>
-			`${ALIAS_FILTRE_COMMUN}${rang}:card_common_field_values${filtre.sorte === 'case' && filtre.etat === 'vide' ? '' : '!inner'}(field_id)`,
+			`${ALIAS_FILTRE_COMMUN}${rang}:card_common_field_values${(filtre.sorte === 'case' || filtre.sorte === 'fichier') && filtre.etat === 'vide' ? '' : '!inner'}(field_id)`,
 		)
 		.join(', ')
 	return colonnes.replace('affaire:cards!inner(id, ', `affaire:cards!inner(id, ${plongements}, `)
@@ -492,6 +492,15 @@ export async function lirePageCards(
 						if (filtre.du !== null) requete = requete.gte(`${alias}.value_timestamp`, minuitLocal(filtre.du))
 						if (filtre.au !== null) requete = requete.lt(`${alias}.value_timestamp`, minuitLocal(filtre.au, 1))
 					}
+					break
+				case 'reference':
+					// `CRM-112` T4.c : un identifiant, comme un choix simple.
+					requete = requete.filter(`${alias}.value`, 'cd', JSON.stringify([filtre.id]))
+					break
+				case 'fichier':
+					// `CRM-112` T4.c : renseigné — ni nul, ni `null` JSON, ni chaîne vide ; vide — aucune valeur ainsi.
+					requete = requete.not(`${alias}.value`, 'is', null).neq(`${alias}.value`, 'null').neq(`${alias}.value`, '""')
+					if (filtre.etat === 'vide') requete = requete.is(alias, null)
 					break
 				case 'case':
 					if (filtre.etat === 'vide') {

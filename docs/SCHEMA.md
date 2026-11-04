@@ -2511,6 +2511,15 @@ elle.
 attente sont perdus : les lister avant. **Avec l'image `mcp` d'avant `CRM-128` T3** : sans la garde, son `crm_mail_send`
 enverrait de nouveau directement.
 
+### Migration `0166` — les filtres de champ personne, contact et fichier (`CRM-112` T4.c ; livrée en développement le 2026-11-04)
+
+`docs/SPEC-champs-communs.md` §8 (précision T4.c), décision 839. **Aucune table, aucune donnée.** Deux fonctions reprises
+de la `0165`, chacune avec un ajout : **`app.common_field_filter_shape_valid`** accepte `{"is": "filled"}` ;
+**`app.card_common_filters_match`** interprète `user` et `contact` comme un choix (`any_of`), et `file` par `is` — renseigné :
+ni nul, ni `null` JSON, ni chaîne vide ; vide : le contraire.
+
+**Retrait** : reposer les deux fonctions de la `0165`, après avoir retiré `{"is": "filled"}` des vues qui en portent.
+
 ### Migration `0165` — les filtres de champ d'une vue sauvegardée et de l'export (`CRM-112` T4.d.1 ; livrée en développement le 2026-11-04)
 
 `docs/SPEC-champs-communs.md` §8 (précision T4.d), `docs/SPEC-vues-import-export.md` §2.2, décision 838. **Aucune table,

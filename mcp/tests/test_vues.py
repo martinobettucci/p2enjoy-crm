@@ -1,5 +1,6 @@
 # @verifies CRM-071 (docs/BACKLOG.md) — tranche T3 : les vues sauvegardées dans le connecteur — `crm_view_list` et l'argument
 #           `view` de `crm_card_list`, devant un CRM simulé qui garde chaque lecture
+# @verifies CRM-112 (docs/BACKLOG.md) — tranche T4.c : personne, contact et fichier traduits pour la vue (précision T4.c)
 # @verifies CRM-112 (docs/BACKLOG.md) — tranche T4.d.3 : les filtres des champs de l'affaire d'une vue, traduits en plongements
 #           et conditions PostgREST, et rendus en clair (docs/SPEC-champs-communs.md §8, précision T4.d ; décision 838)
 # @verifies CRM-104 (docs/BACKLOG.md) — le catalogue du connecteur (docs/SPEC-mcp.md §9.2)
@@ -243,3 +244,26 @@ def test_une_forme_hors_type_ou_un_champ_inconnu_est_ignore():
 def test_crm_view_list_rend_les_filtres_de_champ_par_libelle():
     vue = {"filters": {"common_fields": {"secteur": {"any_of": ["btp"]}, "archive": {"is": "yes"}}}}
     assert filtres_communs_en_clair(vue, CHAMPS) == [{"field": "Secteur", "key": "secteur", "any_of": ["btp"]}]
+
+
+def test_t4c_personne_contact_et_fichier():
+    champs = {
+        "referent": {"id": "u", "key": "referent", "label": "Référent", "type": "user"},
+        "kbis": {"id": "k", "key": "kbis", "label": "Kbis", "type": "file"},
+        "contrat": {"id": "f", "key": "contrat", "label": "Contrat", "type": "file"},
+    }
+    plongements, parametres = conditions_filtres_communs(
+        {"referent": {"any_of": ["5eed0000-0000-4000-8000-000000000012"]}, "kbis": {"is": "filled"}, "contrat": {"is": "empty"}},
+        champs,
+    )
+    # Ordre trié : `contrat`, `kbis`, `referent`.
+    assert plongements == [
+        "fc0:card_common_field_values(field_id)",
+        "fc1:card_common_field_values!inner(field_id)",
+        "fc2:card_common_field_values!inner(field_id)",
+    ]
+    assert parametres["affaire.fc0.and"] == '(field_id.eq.f,value.not.is.null,value.neq.null,value.neq."\\"\\"")'
+    assert parametres["affaire.fc0"] == "is.null"
+    assert parametres["affaire.fc1.and"] == '(field_id.eq.k,value.not.is.null,value.neq.null,value.neq."\\"\\"")'
+    assert parametres["affaire.fc2.and"] == '(field_id.eq.u,value.cd."[\\"5eed0000-0000-4000-8000-000000000012\\"]")'
+

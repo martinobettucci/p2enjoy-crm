@@ -1163,6 +1163,8 @@ l'affaire, borné à son champ et à sa condition (`!inner`, sauf une case « vi
 est ignorée. **Le jour d'une date et heure s'y lit en UTC** : le connecteur n'a pas de fuseau d'appareil. Même famille,
 même action, aucune case nouvelle. **Preuves** : `mcp/tests/test_vues.py` (la traduction, type par type) ;
 `mcp/tests/test_integration_vues.py` (une vue aux filtres de champ rend, par le connecteur, l'affaire que la base retient).
+*`CRM-112` T4.c (décision 839)* : une personne et un contact s'appliquent comme un choix (`any_of`), un fichier par
+`{"is": "filled" | "empty"}` ; `mcp/tests/test_vues.py` le prouve.
 
 ### 9.2 quindecies Les rattachements d'une affaire — `CRM-111` T9 (`docs/SPEC-rattachements.md` §11 ; décision 826)
 
