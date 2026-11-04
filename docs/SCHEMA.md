@@ -2511,6 +2511,24 @@ elle.
 attente sont perdus : les lister avant. **Avec l'image `mcp` d'avant `CRM-128` T3** : sans la garde, son `crm_mail_send`
 enverrait de nouveau directement.
 
+### Migration `0165` — les filtres de champ d'une vue sauvegardée et de l'export (`CRM-112` T4.d.1 ; livrée en développement le 2026-11-04)
+
+`docs/SPEC-champs-communs.md` §8 (précision T4.d), `docs/SPEC-vues-import-export.md` §2.2, décision 838. **Aucune table,
+aucune donnée.**
+- **`app.common_field_filter_shape_valid(jsonb)`**, neuve, `immutable` : l'une des cinq formes d'un filtre de champ
+  (`contains`, `any_of`, `min`/`max`, `from`/`to`, `is`).
+- **`app.saved_view_filters_valid`** est reprise de sa définition en base, avec deux clés de plus : `common_fields` (50
+  champs au plus, chacun par une clé de la forme d'une clé de champ et dans l'une des cinq formes) et `time_zone` (la
+  forme d'un nom IANA, 64 caractères au plus) ; la contrainte `saved_views_filters_check` les accepte donc.
+- **`app.card_common_filters_match(p_card uuid, p_filters jsonb, p_time_zone text default 'UTC')`**, neuve, `stable`,
+  `security invoker` : l'affaire passe-t-elle les filtres de champ ; une affaire illisible ne passe pas ; une clé inconnue,
+  archivée, ou une forme hors type est ignorée. `execute` à `authenticated` et `service_role`.
+- **`public.export_cards`** est reprise de sa définition en base, avec deux ajouts : le fuseau (`time_zone`) refusé
+  (`invalid_filters`) s'il n'est pas dans `pg_timezone_names`, et la condition des filtres de champ.
+
+**Retrait** : reposer `app.saved_view_filters_valid` et `public.export_cards` d'avant la `0165`, puis supprimer les deux
+fonctions neuves — après avoir retiré `common_fields` et `time_zone` des vues qui en portent.
+
 ### Migration `0164` — les colonnes de recherche des valeurs communes, et leur lecture en semi-jointure (`CRM-112` T4.b ; livrée en développement le 2026-11-03)
 
 `docs/SPEC-champs-communs.md` §8 (précision T4.b), décision 831. **Aucune table ; les valeurs existantes sont reprises.**

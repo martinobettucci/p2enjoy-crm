@@ -17663,8 +17663,12 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
             *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-f9) depuis 2026-11-04 00:41 UTC — état avant : [ ]*
             *Spécifiée le 2026-11-04 avant le code (décision 838)* : `docs/SPEC-champs-communs.md` §8 (précision T4.d),
             `docs/SPEC-vues-import-export.md` §2.2, `docs/DESIGN_SYSTEM.md` §5.92. Découpage :
-            - [ ] **T4.d.1** — migration : `common_fields` et `time_zone` dans la validation des vues,
-              `app.card_common_filters_match`, `export_cards` qui l'emploie ; pgTAP.
+            - [x] **T4.d.1** — migration : `common_fields` et `time_zone` dans la validation des vues,
+              `app.card_common_filters_match`, `export_cards` qui l'emploie ; pgTAP. *Faite le 2026-11-04* : migration
+              `0165`, pgTAP `0154` **22/22** (les cinq formes et leurs refus, la contrainte de la table, la sémantique type
+              par type, le fuseau UTC et Paris, l'export de Camille, le fuseau inconnu refusé, la lectrice sans droit) —
+              *défaut trouvé par la preuve* : une affaire illisible « passait » les filtres, elle ne passe plus ; suite
+              142 fichiers, 4 964 assertions. Livrée avec T4.d.2 et T4.d.3.
             - [ ] **T4.d.2** — webapp : vues et export portent les filtres de champ ; phrase du panneau retirée ; manuel.
             - [ ] **T4.d.3** — connecteur, même livraison : `crm_card_list` applique les filtres de champ d'une vue,
               `crm_view_list` les rend.
