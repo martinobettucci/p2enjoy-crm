@@ -39023,3 +39023,15 @@ du choix ; fichier reçoit `{"is": "filled" | "empty"}`, `filled` étant accord�
 déjà dans le lot en campagne, n'est pas reprise. L'écran emploie les listes et libellés du formulaire de la fiche.
 **Écarté** : une forme propre aux références (`{"ref": …}`) — elle ne dirait rien de plus que `any_of`.
 
+### décision 840 — livrer la migration 0165, la webapp de `main` et l'image `mcp` (`CRM-112` T4.d), sans instantané
+
+*2026-11-04, session 4522fa9c (p2enjoy-crm-f9, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : la migration `0165` (les filtres de champ d'une vue et de l'export), la webapp de `main` (vues et export qui
+les retiennent), l'image `mcp` reconstruite (`crm_view_list` et `crm_card_list(view)`), révision `b9a39c92`.
+**La campagne** : ui 1 114 sur 1 119, api 1 312 sur 1 316, mail 50 sur 50, `verify-mcp` 109, pgTAP 142 fichiers, manuel
+142 sur 144, garde du manuel 168 ; le reste rejoué vert seul, INC-342, ou l'effet de minuit sur « Ma journée ».
+**Décision : oui, sans instantané** (comme les décisions 828, 834, 836) : un `pg_dump` avant la fenêtre ; `0165` reprend
+deux fonctions et en ajoute deux, aucune table, aucune donnée.
+**Conséquences** : fenêtre avec migration, image `mcp` reconstruite dans la cellule ; constat en lecture seule ;
+consignation.
+
