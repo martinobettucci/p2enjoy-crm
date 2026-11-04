@@ -1,3 +1,4 @@
+// @verifies CRM-112 (docs/BACKLOG.md) — tranche T5 : le guichet `mail_template_variables_espace` (§9, précision T5)
 // @verifies CRM-063 (docs/BACKLOG.md) — modèles d'emails, tranche 2, sous-tranche 2b : L'ÉCRAN
 // @verifies docs/SPEC-modeles-emails.md §9.2 (les colonnes demandées, et celles qui ne le sont
 //           jamais), §9.3 (le guichet et l'insertion d'un trou à la position du curseur), §9.5
@@ -35,6 +36,7 @@ import {
 	lireModelesEmails,
 	lireRattachementsPrevisualisation,
 	lireVariablesModele,
+	lireVariablesModeleEspace,
 	rendreApercuExemple,
 	rendreModeleEmail,
 	supprimerModeleEmail,
@@ -715,3 +717,26 @@ describe('le rattachement de la prévisualisation — §15.2, §15.4 (CRM-111 T6
 		expect(etat.statut).toBe('erreur')
 	})
 })
+
+// `CRM-112` T5 (docs/SPEC-champs-communs.md §9, précision T5) : le guichet de l'espace, natives puis champs de l'affaire.
+describe('les variables de l’espace (`CRM-112` T5)', () => {
+	it('appelle le guichet de l’espace et garde le libellé d’un champ, nul pour une native', async () => {
+		const { client, appel } = espionRpc({
+			data: [
+				{ name: 'card.title', label: null },
+				{ name: 'card.field.siret', label: 'SIRET' },
+			],
+			error: null,
+			status: 200,
+		})
+		const etat = await lireVariablesModeleEspace(client, 'ws')
+		expect(appel).toEqual({ fonction: 'mail_template_variables_espace', arguments: { p_workspace: 'ws' } })
+		expect(etat).toEqual({ statut: 'pret', donnees: [{ nom: 'card.title', libelle: null }, { nom: 'card.field.siret', libelle: 'SIRET' }] })
+	})
+
+	it('un refus du guichet est classé, et ne bloque rien', async () => {
+		const { client } = espionRpc({ data: null, error: { message: 'permission denied' }, status: 401 })
+		expect((await lireVariablesModeleEspace(client, 'ws')).statut).toBe('erreur')
+	})
+})
+

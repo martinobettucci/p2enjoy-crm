@@ -1,6 +1,7 @@
 // @spec CRM-093 (docs/BACKLOG.md) tranche T3 — « Nouveau modèle » et « Modifier » désactivés avec leur motif quand la
 //       base refuse l'édition de l'espace ; la prévisualisation, une lecture, reste offerte
 //       (docs/SPEC-droits-interface.md §2.2, §3, §5 ; docs/DESIGN_SYSTEM.md §5.59)
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T5 : la palette en deux groupes, les champs de l'affaire par leur libellé (docs/DESIGN_SYSTEM.md §5.39)
 // @spec CRM-063 (docs/BACKLOG.md) — modèles d'emails, tranche 2, sous-tranche 2b : L'ÉCRAN
 // @spec docs/SPEC-modeles-emails.md §9.1 (ce que l'écran est et où il vit), §9.2 (ce qu'il lit),
 //       §9.3 (la palette des douze variables et son insertion), §9.4 (la liste), §9.5 (les trois
@@ -43,7 +44,8 @@ import {
 	lireAffairesPrevisualisation,
 	lireModelesEmails,
 	lireRattachementsPrevisualisation,
-	lireVariablesModele,
+	lireVariablesModeleEspace,
+	type VariableModele,
 	rendreModeleEmail,
 	supprimerModeleEmail,
 	type AffairePrevisualisation,
@@ -113,7 +115,7 @@ export function ReglagesModelesEmails({
 	const refusEdition = proprietesCommande(capacites.edition, ID_MOTIF_MODELES)
 	const [idWorkspace, setIdWorkspace] = useState<string | null>(null)
 	const [etat, setEtat] = useState<EtatAsync<readonly ModeleEmail[]>>(enChargement)
-	const [variables, setVariables] = useState<EtatAsync<readonly string[]>>(enChargement)
+	const [variables, setVariables] = useState<EtatAsync<readonly VariableModele[]>>(enChargement)
 	const [tentative, setTentative] = useState(0)
 	const [saisie, setSaisie] = useState<SaisieModeleEmail | null>(null)
 	const [refus, setRefus] = useState<CleTraduction | null>(null)
@@ -163,17 +165,18 @@ export function ReglagesModelesEmails({
 	// LA PALETTE SE CHARGE UNE FOIS, ET SON ÉCHEC NE BLOQUE PAS L'ÉCRAN (§9.3). Une liste de
 	// variables illisible rend la palette muette et le dit ; elle n'empêche ni de lire, ni d'écrire
 	// un modèle — c'est toujours la base qui refuse une variable inconnue.
+	// `CRM-112` T5 : les variables de L'ESPACE — les champs de l'affaire s'y ajoutent —, lues dès que l'espace est connu.
 	useEffect(() => {
-		if (client === null) return
+		if (client === null || idWorkspace === null) return
 		let vivant = true
 		void (async () => {
-			const lues = await lireVariablesModele(client)
+			const lues = await lireVariablesModeleEspace(client, idWorkspace)
 			if (vivant) setVariables(lues)
 		})()
 		return () => {
 			vivant = false
 		}
-	}, [client])
+	}, [client, idWorkspace])
 
 	useEffect(() => {
 		if (saisie !== null || !focusARendre.current) return
@@ -480,7 +483,7 @@ function FicheModele({
 	onValider,
 }: {
 	readonly saisie: SaisieModeleEmail
-	readonly variables: EtatAsync<readonly string[]>
+	readonly variables: EtatAsync<readonly VariableModele[]>
 	readonly enCours: boolean
 	readonly refus: CleTraduction | null
 	/** Le modèle dont la suppression attend sa confirmation, ou `null`. */
@@ -679,7 +682,7 @@ function PaletteVariables({
 	variables,
 	onInserer,
 }: {
-	readonly variables: EtatAsync<readonly string[]>
+	readonly variables: EtatAsync<readonly VariableModele[]>
 	readonly onInserer: (variable: string) => void
 }) {
 	if (variables.statut === 'erreur') {
@@ -690,6 +693,9 @@ function PaletteVariables({
 		)
 	}
 	if (variables.statut !== 'pret' || variables.donnees.length === 0) return null
+	const natives = variables.donnees.filter((v) => v.libelle === null)
+	// `CRM-112` T5 (§5.39) : les champs de l'affaire, second groupe, chacun par son libellé puis son nom technique.
+	const champs = variables.donnees.filter((v) => v.libelle !== null)
 	return (
 		<div className="flex flex-col gap-2">
 			<p className="text-sm font-medium text-ink">{t('admin.mailTemplates.variables.title')}</p>
@@ -697,7 +703,7 @@ function PaletteVariables({
 				{t('admin.mailTemplates.variables.body')}
 			</p>
 			<ul data-testid="palette-variables" className="flex flex-wrap gap-2">
-				{variables.donnees.map((variable) => (
+				{natives.map(({ nom: variable }) => (
 					<li key={variable}>
 						{/* LE NOM EST RENDU EN DONNÉE TECHNIQUE (§2 du design system) : c'est la chaîne
 						    exacte que le rédacteur retrouvera dans son texte. */}
@@ -714,6 +720,28 @@ function PaletteVariables({
 					</li>
 				))}
 			</ul>
+			{champs.length === 0 ? null : (
+				<>
+					<p className="text-sm text-text-2">{t('admin.mailTemplates.variables.fields.title')}</p>
+					<ul data-testid="palette-variables-champs" className="flex flex-wrap gap-2">
+						{champs.map(({ nom, libelle }) => (
+							<li key={nom}>
+								<button
+									type="button"
+									data-testid="inserer-variable"
+									data-variable={nom}
+									onClick={() => onInserer(nom)}
+									aria-label={t('admin.mailTemplates.variables.insert.aria', { variable: nom })}
+									className="min-h-[var(--size-target)] px-2 rounded-sm border border-border bg-surface text-sm text-text-2 hover:bg-hover inline-flex items-center gap-2"
+								>
+									<span className="text-ink">{libelle}</span>
+									<span className="font-mono">{`{{${nom}}}`}</span>
+								</button>
+							</li>
+						))}
+					</ul>
+				</>
+			)}
 		</div>
 	)
 }

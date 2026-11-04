@@ -13,7 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### `CRM-112` T5 — les champs de l'affaire dans les modèles d'email (migration 167)
+
+- Un modèle d'email peut citer un champ de l'affaire, `{{card.field.<clé>}}` : la palette de l'éditeur les propose dans un
+  second groupe, « Champs de l'affaire », chacun sous son libellé. À l'envoi et dans les relances automatiques, la valeur
+  est mise en forme selon le type ; un champ vide laisse un trou que la prévisualisation signale.
+- Une variable de champ inconnue ou archivée est refusée comme les autres, sous le nom de son champ (objet ou corps).
+- Archiver un champ cité par un modèle est refusé : le message, « Ce champ est employé — … », nomme les transitions et
+  les modèles.
+- **Migration `0167`**. Le connecteur MCP n'est pas concerné (décision 841).
+- Manuel, §14.1 et §18.16 (image renouvelée).
+- **À livrer ensemble** : la migration `0167` et la webapp.
 
 ## [Publié]
 

@@ -5528,13 +5528,30 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "Un champ exigé ne s'archive pas."
+							"text": "Un champ employé ne s'archive pas."
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " Si une transition d'un workflow exige le champ pour être franchie, l'archivage est\nrefusé, et le message nomme chaque transition concernée — le workflow, l'étape de départ et l'étape d'arrivée. Retirez\nd'abord l'exigence dans l'éditeur ; le lien "
+					"text": " Si une transition d'un workflow exige le champ pour être franchie, ou si un modèle\nd'email le cite ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "ecrire-des-modeles-d-emails-et-les-previsualiser",
+						"anchor": "ecrire-un-modele"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 14.1"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), l'archivage est refusé, et le message nomme chaque emploi — le\nworkflow, l'étape de départ et l'étape d'arrivée d'une transition, le nom d'un modèle. Retirez d'abord ces emplois ; le\nlien "
 				},
 				{
 					"type": "strong",
@@ -5547,7 +5564,7 @@
 				},
 				{
 					"type": "text",
-					"text": " y mène."
+					"text": " mène aux exigences."
 				}
 			]
 		},
@@ -5556,7 +5573,7 @@
 			"src": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champ-commun-exige.jpg",
 			"alt": "L'archivage refusé : le champ est exigé par la transition « Prospection → Relance » du « Cycle commercial standard », et le lien vers l'éditeur",
 			"width": 899,
-			"height": 259
+			"height": 239
 		},
 		{
 			"type": "paragraph",

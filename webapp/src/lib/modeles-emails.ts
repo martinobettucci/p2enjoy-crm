@@ -20,6 +20,8 @@
 // d'écriture, et c'est un choix de la spécification (§2.6) : la règle tient entièrement dans les
 // quatre politiques —, et appelle `public.rendre_modele_email` (`0056`) et
 // `public.mail_template_variables` (`0057`).
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T5 : la palette lit aussi les champs de l'affaire de l'espace
+//       (`mail_template_variables_espace`, docs/SPEC-champs-communs.md §9 précision T5, décision 842)
 //
 // IL NE REND JAMAIS LE MESSAGE DU SERVEUR, et le motif est ici plus étroit que l'INC-193 des
 // identités : le corps d'un refus de contrainte de PostgREST porte le champ `details`, qui contient
@@ -102,6 +104,29 @@ export async function lireVariablesModele(
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}
 		return pret(reponse.data ?? [])
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/** `CRM-112` T5 : une variable de la palette, et le libellé du champ de l'affaire qu'elle cite (`null` : une native). */
+export type VariableModele = { readonly nom: string; readonly libelle: string | null }
+
+/**
+ * `CRM-112` T5 (docs/SPEC-champs-communs.md §9, précision T5) : les variables de l'espace — les douze natives, puis une par
+ * champ de l'affaire actif, sous son libellé — par le guichet `mail_template_variables_espace`. La liste vient de la base
+ * et n'est jamais recopiée ici (§9.3, `docs/DESIGN_SYSTEM.md` §5.39).
+ */
+export async function lireVariablesModeleEspace(
+	client: ClientCrm,
+	idWorkspace: string,
+): Promise<EtatAsync<readonly VariableModele[]>> {
+	try {
+		const reponse = await client.rpc('mail_template_variables_espace', { p_workspace: idWorkspace })
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		return pret((reponse.data ?? []).map((ligne) => ({ nom: ligne.name, libelle: ligne.label ?? null })))
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}

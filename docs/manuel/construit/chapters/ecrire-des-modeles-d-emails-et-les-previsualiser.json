@@ -309,6 +309,57 @@
 			]
 		},
 		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les champs de l'affaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de votre espace ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+						"anchor": "les-champs-communs-a-toute-affaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 18.16"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") forment un second\ngroupe de boutons, chacun sous le libellé du champ : un clic insère "
+				},
+				{
+					"type": "code",
+					"text": "{{card.field.<clé>}}"
+				},
+				{
+					"type": "text",
+					"text": ", par exemple\n"
+				},
+				{
+					"type": "code",
+					"text": "{{card.field.siret}}"
+				},
+				{
+					"type": "text",
+					"text": ". À l'envoi, la variable prend la valeur du champ sur l'affaire, mise en forme selon son type — une\ndate en jour/mois/année, un choix par son libellé, une case par Oui ou Non, une personne ou un contact par son\nnom ; un champ vide laisse un trou vide, que la prévisualisation signale comme les autres. Un champ archivé n'est plus\nproposé, et un modèle ne peut plus le citer."
+				}
+			]
+		},
+		{
 			"type": "image",
 			"src": "ecrire-des-modeles-d-emails-et-les-previsualiser/nouveau-modele.jpg",
 			"alt": "La fiche d'un nouveau modèle : le corps du message, les variables disponibles et « Enregistrer »",

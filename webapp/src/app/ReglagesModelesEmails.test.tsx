@@ -1,3 +1,4 @@
+// @verifies CRM-112 (docs/BACKLOG.md) — tranche T5 : la palette en deux groupes (docs/DESIGN_SYSTEM.md §5.39)
 // @verifies CRM-124 (docs/BACKLOG.md) T2 — la prévisualisation d'un modèle présélectionne l'unique contact rattaché à
 //           l'affaire choisie : un rattaché, aucun, plusieurs, choix manuel conservé, présélection retirée, lecture en
 //           échec, réponse périmée ignorée, identifiant transmis au rendu
@@ -10,7 +11,7 @@
 // L'écran RÉEL est monté sur un client espion qui sert les lectures et retient la réponse des rattachements d'une affaire,
 // pour éprouver l'ordre d'arrivée. La pile réelle est éprouvée par `e2e/ui/reglages-modeles-emails.spec.ts`.
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import { CAPACITES_INCONNUES } from '../lib/capacites'
@@ -97,7 +98,14 @@ function client(retenir: ReadonlySet<string> = new Set()) {
 		},
 		rpc: (nom: string, args: Record<string, unknown>) => {
 			if (nom === 'rendre_modele_email') rendus.push(args)
-			const data = nom === 'mail_template_variables' ? ['contact.full_name'] : [{ subject: 'Objet', body_text: 'Corps', variables_nulles: [] }]
+			// RÉVISÉ PAR `CRM-112` T5 (décision 51) : la palette lit le guichet de l'espace — une native, puis un champ de l'affaire.
+			const data =
+				nom === 'mail_template_variables_espace'
+					? [
+							{ name: 'contact.full_name', label: null },
+							{ name: 'card.field.siret', label: 'SIRET' },
+						]
+					: [{ subject: 'Objet', body_text: 'Corps', variables_nulles: [] }]
 			return Promise.resolve({ data, error: null, status: 200 })
 		},
 	} as unknown as ClientCrm
@@ -246,5 +254,24 @@ describe('le rattachement de la prévisualisation (§15.4, CRM-111 T6.2)', () =>
 		liberer('rattachements:a-deux')
 		await new Promise((fin) => setTimeout(fin, 0))
 		expect(champRattachement()?.value).toBe('p-maint')
+	})
+})
+
+// `CRM-112` T5 (docs/DESIGN_SYSTEM.md §5.39) : la palette en deux groupes, le champ de l'affaire par son libellé.
+describe('la palette et les champs de l’affaire (`CRM-112` T5)', () => {
+	it('les natives, puis « Champs de l’affaire » : le libellé et le nom technique, et l’insertion du nom', async () => {
+		render(
+			<FournisseurEspace valeur={{ idWorkspace: 'ws-1', estAdmin: true, capacites: { ...CAPACITES_INCONNUES } }}>
+				<ReglagesModelesEmails client={client().client} />
+			</FournisseurEspace>,
+		)
+		await userEvent.click(await screen.findByTestId('modifier-modele'))
+		const natives = await screen.findByTestId('palette-variables')
+		expect(within(natives).getAllByTestId('inserer-variable').map((b) => b.getAttribute('data-variable'))).toEqual(['contact.full_name'])
+		const champs = screen.getByTestId('palette-variables-champs')
+		expect(screen.getByText('Champs de l’affaire')).not.toBeNull()
+		const bouton = within(champs).getByTestId('inserer-variable')
+		expect(bouton.textContent).toBe('SIRET{{card.field.siret}}')
+		expect(bouton.getAttribute('data-variable')).toBe('card.field.siret')
 	})
 })

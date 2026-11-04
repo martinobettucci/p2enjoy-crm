@@ -520,7 +520,7 @@
 		{
 			"fichier": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champ-commun-exige.jpg",
 			"largeur": 899,
-			"hauteur": 259,
+			"hauteur": 239,
 			"chapitre": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
 			"section": "les-champs-communs-a-toute-affaire",
 			"pleinePage": false,
@@ -528,7 +528,7 @@
 				"Annuler",
 				"Archiver",
 				"Archiver le champ « Numéro de TVA » ?",
-				"Ce champ est exigé par des transitions : Cycle commercial standard : Prospection → Relance. Retirez ces exigences dans l'éditeur de workflows avant de l'archiver.",
+				"Ce champ est employé — Cycle commercial standard : Prospection → Relance. Retirez ces emplois avant de l'archiver.",
 				"Il quitte la partie commune de chaque affaire. Ses valeurs sont gardées, et « Restaurer » les rend.",
 				"Ouvrir l'éditeur de workflows"
 			]

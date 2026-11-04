@@ -3442,6 +3442,13 @@ Trois champs : le **nom**, l'**objet** et le **corps du message**.
 variable **à l'endroit du curseur**, dans le champ que vous venez de quitter — l'objet ou le corps.
 Vous pouvez aussi les taper à la main : rien ne vous en empêche.
 
+**Les champs de l'affaire** de votre espace ([section 18.16](#les-champs-communs-a-toute-affaire)) forment un second
+groupe de boutons, chacun sous le libellé du champ : un clic insère `{{card.field.<clé>}}`, par exemple
+`{{card.field.siret}}`. À l'envoi, la variable prend la valeur du champ sur l'affaire, mise en forme selon son type — une
+date en jour/mois/année, un choix par son libellé, une case par Oui ou Non, une personne ou un contact par son
+nom ; un champ vide laisse un trou vide, que la prévisualisation signale comme les autres. Un champ archivé n'est plus
+proposé, et un modèle ne peut plus le citer.
+
 ![La fiche d'un nouveau modèle : le corps du message, les variables disponibles et « Enregistrer »](manuel/images/ecrire-des-modeles-d-emails-et-les-previsualiser/nouveau-modele.jpg)
 
 **Une variable qui n'existe pas est refusée**, et le produit dit **dans quel champ** elle se trouve :
@@ -4605,9 +4612,10 @@ crayon modifie le libellé, l'aide, les choix ou la devise — la clé et le typ
 champ sans perdre les valeurs déjà saisies, et la case **« Afficher les archivés »** le ramène avec sa commande de
 restauration.
 
-**Un champ exigé ne s'archive pas.** Si une transition d'un workflow exige le champ pour être franchie, l'archivage est
-refusé, et le message nomme chaque transition concernée — le workflow, l'étape de départ et l'étape d'arrivée. Retirez
-d'abord l'exigence dans l'éditeur ; le lien **« Ouvrir l'éditeur de workflows »** y mène.
+**Un champ employé ne s'archive pas.** Si une transition d'un workflow exige le champ pour être franchie, ou si un modèle
+d'email le cite ([section 14.1](#ecrire-un-modele)), l'archivage est refusé, et le message nomme chaque emploi — le
+workflow, l'étape de départ et l'étape d'arrivée d'une transition, le nom d'un modèle. Retirez d'abord ces emplois ; le
+lien **« Ouvrir l'éditeur de workflows »** mène aux exigences.
 
 ![L'archivage refusé : le champ est exigé par la transition « Prospection → Relance » du « Cycle commercial standard », et le lien vers l'éditeur](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champ-commun-exige.jpg)
 

@@ -2207,7 +2207,8 @@ export const fr = {
 	'admin.commonFields.refus.forbidden': 'Les champs de l’affaire sont réservés aux administrateurs de l’espace.',
 	'admin.commonFields.refus.sansEffet': 'Rien n’a changé : ce champ n’est plus accessible.',
 	'admin.commonFields.refus.panne': 'L’enregistrement n’a pas abouti. Réessayez.',
-	'admin.commonFields.refus.employe': 'Ce champ est exigé par des transitions : {transitions}. Retirez ces exigences dans l’éditeur de workflows avant de l’archiver.',
+	// RÉVISÉ PAR `CRM-112` T5 (§5.39) : l'emploi nomme aussi les modèles d'email qui citent le champ.
+	'admin.commonFields.refus.employe': 'Ce champ est employé — {transitions}. Retirez ces emplois avant de l’archiver.',
 	'admin.commonFields.refus.employe.lien': 'Ouvrir l’éditeur de workflows',
 	// `CRM-112` T4.a — docs/DESIGN_SYSTEM.md §5.91.
 	'liste.commun.oui': 'Oui',
@@ -3950,6 +3951,7 @@ export const fr = {
 	'admin.mailTemplates.variables.body':
 		'Ces trous sont remplacés à l’envoi par la valeur de l’affaire. Un clic insère la variable à l’endroit du curseur.',
 	'admin.mailTemplates.variables.insert.aria': 'Insérer la variable {variable}',
+	'admin.mailTemplates.variables.fields.title': 'Champs de l’affaire',
 	'admin.mailTemplates.variables.error':
 		'La liste des variables n’a pas pu être lue. Les modèles restent modifiables, mais aucune variable n’est proposée.',
 	// Les refus de la fiche — §9.8, dictionnaire fermé. Aucune phrase du serveur n'atteint l'écran.

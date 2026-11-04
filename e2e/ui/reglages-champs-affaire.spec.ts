@@ -126,7 +126,8 @@ test.describe('Réglages ▸ Champs de l’affaire (docs/DESIGN_SYSTEM.md §5.86
 		const confirmation = page.getByTestId('confirmation-archivage-champ-commun')
 		await confirmation.getByRole('button', { name: 'Archiver', exact: true }).click()
 		const alerte = confirmation.getByRole('alert')
-		await expect(alerte).toContainText('Ce champ est exigé par des transitions')
+		// RÉVISÉ PAR `CRM-112` T5 (décision 51, §5.39) : le refus nomme tous les emplois — transitions et modèles d'email.
+		await expect(alerte).toContainText('Ce champ est employé')
 		await expect(alerte).toContainText('Cycle commercial standard')
 		await expect(confirmation.getByRole('link', { name: 'Ouvrir l’éditeur de workflows' })).toHaveAttribute('href', '/reglages/workflows')
 		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[400]])

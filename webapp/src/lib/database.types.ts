@@ -5029,6 +5029,13 @@ export type Database = {
         Returns: string
       }
       mail_template_variables: { Args: never; Returns: string[] }
+      mail_template_variables_espace: {
+        Args: { p_workspace: string }
+        Returns: {
+          label: string
+          name: string
+        }[]
+      }
       mark_message_unread: { Args: { p_message_id: string }; Returns: boolean }
       mark_messages_read: { Args: { p_message_ids: string[] }; Returns: number }
       marquer_envoi_echoue: {

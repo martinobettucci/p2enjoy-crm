@@ -2511,6 +2511,23 @@ elle.
 attente sont perdus : les lister avant. **Avec l'image `mcp` d'avant `CRM-128` T3** : sans la garde, son `crm_mail_send`
 enverrait de nouveau directement.
 
+### Migration `0167` — les champs de l'affaire dans les modèles d'email (`CRM-112` T5 ; livrée en développement le 2026-11-04)
+
+`docs/SPEC-champs-communs.md` §9 (précision T5), décision 842. **Aucune table, aucune donnée.**
+- Les contraintes **`mail_templates_subject_variables`** et **`mail_templates_body_variables`** sont retirées ; le
+  déclencheur **`mail_templates_valider_variables`** (`before insert or update of subject, body_text`) les remplace et
+  refuse sous le même code et le même nom (`23514`, `raise … using constraint`) ; il accepte les variables natives et les
+  `card.field.<clé>` des champs actifs de l'espace du modèle (`app.mail_template_variables_inconnues_espace`).
+- **`app.card_common_field_texte(type, options, valeur)`** : la valeur d'un champ dans un texte, selon le type.
+- **`public.rendre_modele_email`** et **`public.render_mail_template_sample`** reprises avec un ajout chacune : la carte
+  reçoit une entrée par champ actif ; l'aperçu rend un champ par `[libellé]`.
+- **`public.mail_template_variables_espace(p_workspace uuid) returns table (name, label)`**, `security invoker` : le
+  guichet de la palette.
+- **`app.card_common_fields_refuser_archivage_employe`** reprise : `detail` nomme aussi les modèles (« Modèle : <nom> »).
+
+**Retrait** : reposer les deux contraintes (après avoir retiré les `card.field.*` des modèles), les trois fonctions d'avant
+la `0167`, supprimer le déclencheur et les trois fonctions neuves.
+
 ### Migration `0166` — les filtres de champ personne, contact et fichier (`CRM-112` T4.c ; livrée en développement le 2026-11-04)
 
 `docs/SPEC-champs-communs.md` §8 (précision T4.c), décision 839. **Aucune table, aucune donnée.** Deux fonctions reprises

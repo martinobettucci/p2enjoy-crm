@@ -341,7 +341,8 @@ test('les champs communs à toute affaire : l’écran, et l’archivage d’un 
 	await liste.getByRole('button', { name: 'Archiver le champ Numéro de TVA' }).click()
 	const confirmation = page.getByTestId('confirmation-archivage-champ-commun')
 	await confirmation.getByRole('button', { name: 'Archiver', exact: true }).click()
-	await expect(confirmation.getByRole('alert')).toContainText('Ce champ est exigé par des transitions')
+	// RÉVISÉ PAR `CRM-112` T5 (décision 51) : le refus nomme tous les emplois — transitions et modèles d'email.
+	await expect(confirmation.getByRole('alert')).toContainText('Ce champ est employé')
 	await illustrer(page, { chapitre: CHAPITRE, section: S.communs, nom: 'champ-commun-exige', cibles: [confirmation] })
 	await confirmation.getByRole('button', { name: 'Annuler' }).click()
 

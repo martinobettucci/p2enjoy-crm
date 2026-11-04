@@ -1213,9 +1213,14 @@ type _vueDerivationColonnes = Expect<
 // (docs/SPEC-mails-prepares.md §3.3 à §3.5). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `send_email_draft` refuse le jeton du connecteur
 // (`review_required`, `42501`) ; `draft_not_found` en 404, `draft_not_pending`, `draft_limit_reached` (200). Le compte
 // s'accroît de trois.
+// `0167` de `CRM-112` TRANCHE T5 ajoute `mail_template_variables_espace` — les variables de la palette, natives puis une
+// par champ de l'affaire actif, sous son libellé (docs/SPEC-champs-communs.md §9, précision T5). CE QUI ÉCHAPPE AU
+// GÉNÉRATEUR : `label` est nul pour une variable native ; aucun refus nommé (la RLS des champs s'applique). Le compte
+// s'accroît de un.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'mail_template_variables_espace'
     | 'prepare_email'
     | 'send_email_draft'
     | 'discard_email_draft'

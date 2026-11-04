@@ -1,3 +1,4 @@
+-- @verifies CRM-112 (docs/BACKLOG.md) — tranche T5 : deux assertions révisées, le refus nommé prouvé par le déclencheur (0167)
 -- @verifies CRM-063 (docs/BACKLOG.md) — modèles d'emails, tranche 1 : le modèle d'email
 -- @verifies docs/SPEC-modeles-emails.md §2.2 (colonnes et bornes), §2.3 (la validation est en
 --           base), §2.4 (la liste fermée des douze variables), §2.5 (les treize refus, ligne à
@@ -226,17 +227,17 @@ $$, '23514', null,
 
 -- LE REFUS NOMME LA COLONNE, et ce n'est pas cosmétique : sans cela, l'écran de la tranche 2
 -- devrait deviner près de quel champ poser son message.
-select is(
-	(select conname::text from pg_constraint
-	  where conrelid = 'public.mail_templates'::regclass
-	    and conname = 'mail_templates_subject_variables'),
-	'mail_templates_subject_variables',
+-- RÉVISÉ PAR `CRM-112` T5 (décision 51, migration 0167) : les deux `CHECK` sont devenus un déclencheur, qui lit les champs
+-- de l'affaire de l'espace ; la propriété — un refus NOMMÉ par sa colonne — est désormais prouvée par le refus lui-même.
+select throws_like(
+	$$insert into public.mail_templates (workspace_id, name, subject, body_text)
+	  values ('5eed0000-0000-4000-8000-000000000001', 'tst-0053 objet', 'Objet {{card.inconnue}}', 'Corps')$$,
+	'%mail_templates_subject_variables%',
 	'CRM-063 §2.5 — la contrainte de l''objet est NOMMÉE par sa colonne');
-select is(
-	(select conname::text from pg_constraint
-	  where conrelid = 'public.mail_templates'::regclass
-	    and conname = 'mail_templates_body_variables'),
-	'mail_templates_body_variables',
+select throws_like(
+	$$insert into public.mail_templates (workspace_id, name, subject, body_text)
+	  values ('5eed0000-0000-4000-8000-000000000001', 'tst-0053 corps', 'Objet', 'Corps {{card.inconnue}}')$$,
+	'%mail_templates_body_variables%',
 	'CRM-063 §2.5 — la contrainte du corps est NOMMÉE par sa colonne');
 
 -- --- Point f : le trou vide --------------------------------------------------------------------

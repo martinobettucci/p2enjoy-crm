@@ -17689,12 +17689,18 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
               condition `and=(…)` par filtre), `filters.fields` ; pytest unitaires 310 (deux attentes révisées, décision 51)
               et intégration par le vrai OAuth (une vue aux filtres de champ rend l'affaire que la base retient) —
               `verify-mcp.sh` **109 contrôles** ; `docs/SPEC-mcp.md` §9.2 quattuordecies précisé ; manuel §33.
-- [@] **T5** — modèles d'email : `{{card.field.<clé>}}`, contrôle d'écriture par déclencheur, rendu, sélecteur.
+- [P] **T5** — modèles d'email : `{{card.field.<clé>}}`, contrôle d'écriture par déclencheur, rendu, sélecteur.
+      (Vérifiée en développement le 2026-11-04 ; livraison de `0167` et de la webapp, puis constat.)
       *MCP (décision 841)* : **non** — le connecteur compose librement, il ne passe pas par les modèles ; il lit les valeurs
       par `crm_card_get` (T9). *Spécifiée le 2026-11-04 avant le code (décision 842)* : §9 (précision T5) — le
       déclencheur de contrôle, la valeur rendue par type, l'aperçu `[libellé]`, le guichet `mail_template_variables_espace`,
       l'archivage qui nomme les modèles ; `docs/DESIGN_SYSTEM.md` §5.39.
-      *Prise en charge : session interactive 4522fa9c (p2enjoy-crm-f9) depuis 2026-11-04 06:54 UTC — état avant : [ ]*
+      *Faite le 2026-11-04* : migration `0167`, pgTAP `0156` **17/17** et `0053` révisée (décision 51 : le refus nommé
+      prouvé par le déclencheur) — suite 144 fichiers, 4 990 assertions ; webapp — le guichet de l'espace, la palette en
+      deux groupes, le refus d'archivage élargi ; unitaires **5 422** ; E2E `e2e/ui/modeles-champs-communs.spec.ts` (la
+      palette, le modèle relu en base, la prévisualisation qui rend la valeur, l'archivage refusé qui nomme le modèle, la
+      variable inconnue refusée par requête directe) et les voisines révisées **8/8** ; captures observées ; manuel §14.1
+      et §18.16 (image renouvelée), garde 168.
 - [ ] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
       *MCP (décision 841)* : **oui**, par l'outil de recherche existant, famille « affaires » (consulter).
 - [ ] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.
