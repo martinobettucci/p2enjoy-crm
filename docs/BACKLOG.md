@@ -16840,6 +16840,7 @@ non. Aucune migration, aucune règle d'accès, aucune requête nouvelle.*
       (`2b048ba0`) ; `verifier.sh` 26/27, l'écart étant un compteur de redémarrage antérieur. **Reste avant `[x]`** : le
       constat visuel du fil sur une affaire en production, à faire par le responsable.
 - [~] **T5 — INC-293, option (b) du responsable (décision 679)** : à 1152 px, le titre long d'une affaire mesurait
+      *Prise en charge : session interactive 152dd27d (p2enjoy-crm-ac) depuis 2026-11-05 10:05 UTC — état avant : [~]*
       105 px pour un seuil de 120. Entre `lg` et `xl`, le nom de la session passe en `sr-only` ; l'adresse passe en
       infobulle sur l'identité entière. **Implémentée et vérifiée en développement le 2026-10-24** :
       `fil-ariane.spec.ts` vert aux quatre paliers, rouge à 1152 px avant la correction, avec une assertion nouvelle (le
