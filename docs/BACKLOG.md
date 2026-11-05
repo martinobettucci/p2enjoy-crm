@@ -18568,8 +18568,10 @@ Question du connecteur : **non** (décision 816).
       `docs/SPEC-mail-subsystem.md` §23, INC-340 arbitrée.
 - [@] **T2 — base et `mail-sync`** : migration **`0151`** (la `0150` est `CRM-111` T4.1), `last_sync_at` écrite par la
       relève, garde de droit. Vérifié le 2026-11-02 sur une base reconstruite : pgTAP complet (128 fichiers), pytest (291),
-      une relève réelle datée. **Reste** : rejouer `scripts/verify-mail-inbound.sh` en entier, et l'E2E de l'écran d'état
-      avec T4.
+      une relève réelle datée. `scripts/verify-mail-inbound.sh` rejoué en entier le 2026-11-05 : **48/48**, après la
+      correction de deux défauts du harnais lui-même (décision 847 : le compte d'API à 14, pytest par
+      `scripts/lib/pytest-mail-sync.sh`, et la dégradation Python qui exige un vrai échec de test ; INC-345 pour les six
+      autres harnais). **Reste** : l'E2E `mail` de l'écran d'état (§23.7), écrite avec T4.
 - [x] **T3 — fonction edge `mail-connection-test`**, vérifiée le 2026-11-02 : unitaires (gestionnaire, dépendances,
       environnement par fonction) ; API `e2e/api/tester-connexion.spec.ts` 7/7 sur la pile réelle.
 - [@] **T4 — écrans, design system, manuel, E2E et captures.**

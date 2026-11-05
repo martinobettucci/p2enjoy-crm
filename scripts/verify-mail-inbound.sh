@@ -35,9 +35,9 @@
 # AUCUN ÉCRAN. Le §2.3 décrit des formulaires de configuration qu'aucune unité du backlog ne
 # porte ; le geste existe par l'API interne du service, comme l'exploitant l'exercera (§13.1).
 #
-# AUCUNE SYNCHRONISATION. `last_sync_at` et `sync_state` restent nuls : `CRM-054` les remplira.
-# Le harnais échoue si l'un d'eux prétend autre chose — une valeur y apparaîtrait sans que rien
-# ne l'écrive.
+# LA SYNCHRONISATION N'EST PAS SON SUJET. `sync_state` (écrite par la relève de `CRM-054`) n'est contrôlée que dans sa
+# forme, et `last_sync_at` (datée par `CRM-127` T2) par une seule relève réelle, au §4 : la relève elle-même appartient à
+# `scripts/verify-mail-sync.sh` et à `e2e/mail/`.
 #
 # `ssl` IMPLICITE N'EST PAS PROUVABLE ici, faute de listener 993 (§13.6). L'absence est figée par
 # une assertion de `e2e/mail/comptes-entrants.spec.ts`, jamais par un commentaire.
@@ -68,6 +68,10 @@ TEST_SONDE=mail-sync/tests/test_imap_probe.py
 SEED=supabase/seed/apply-seed.sh
 # shellcheck source=scripts/lib/conteneur.sh
 source scripts/lib/conteneur.sh
+# @spec CRM-127 (docs/BACKLOG.md) T2, docs/JOURNAL.md décision 847 : pytest là où il peut tourner — `.venv`, hôte, ou
+#       un conteneur jetable de l'image de base de mail-sync.
+# shellcheck source=scripts/lib/pytest-mail-sync.sh
+source scripts/lib/pytest-mail-sync.sh
 # @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
 DB_CONTAINER=$(conteneur db)
 
@@ -360,10 +364,12 @@ if [ "$RAPIDE" = false ]; then
 	if E2E_PROJETS=api npx playwright test --config e2e/playwright.config.ts --project=api \
 		"$SPEC_API" >"$TRAVAIL/api.log" 2>&1; then
 		passes=$(grep -oE '[0-9]+ passed' "$TRAVAIL/api.log" | tail -1 | grep -oE '[0-9]+')
-		if [ "${passes:-0}" -eq 11 ]; then
-			ok "preuve d'API dédiée — 11 scénarios, refus n° 6, n° 7 et n° 11 compris"
+		# 14 depuis `CRM-088` (f5c51b76, 2026-08-20), qui a ajouté trois scénarios sans réviser ce compte : le harnais
+		# rougissait depuis d'une preuve plus riche, non d'une preuve affaiblie (décision 847).
+		if [ "${passes:-0}" -eq 14 ]; then
+			ok "preuve d'API dédiée — 14 scénarios, refus n° 6, n° 7 et n° 11 compris"
 		else
-			fail "preuve d'API verte mais ${passes:-0} scénarios au lieu de 11"
+			fail "preuve d'API verte mais ${passes:-0} scénarios au lieu de 14"
 		fi
 	else
 		fail_journal "la preuve d'API ÉCHOUE" "$TRAVAIL/api.log"
@@ -381,8 +387,7 @@ if [ "$RAPIDE" = false ]; then
 		fail_journal "la preuve mail ÉCHOUE" "$TRAVAIL/mail.log"
 	fi
 
-	if [ -x "$RACINE/.venv/bin/python" ]; then PYTHON=$RACINE/.venv/bin/python; else PYTHON=python3; fi
-	if "$PYTHON" -m pytest "$RACINE/mail-sync/tests" -q >"$TRAVAIL/pytest.log" 2>&1; then
+	if pytest_mail_sync -q >"$TRAVAIL/pytest.log" 2>&1; then
 		ok "pytest mail-sync/tests : $(tail -1 "$TRAVAIL/pytest.log")"
 	else
 		fail_journal "pytest mail-sync/tests ÉCHOUE" "$TRAVAIL/pytest.log"
@@ -461,11 +466,16 @@ if [ "$RAPIDE" = false ]; then
 	# service écrirait une valeur que la contrainte de la base rejette.
 	sauvegarder "$SONDE"
 	sed -i 's/^AUTH_FAILED = "auth_failed"$/AUTH_FAILED = "mauvais_mot_de_passe"/' "$SONDE"
-	if [ -x "$RACINE/.venv/bin/python" ]; then PYTHON=$RACINE/.venv/bin/python; else PYTHON=python3; fi
-	if "$PYTHON" -m pytest "$RACINE/mail-sync/tests" -q >"$TRAVAIL/degrade-py.log" 2>&1; then
+	# Le code 1, et lui seul : des tests ont ÉCHOUÉ. Un pytest absent ou une installation impossible rendaient aussi
+	# « non zéro », et la dégradation se disait vue sans qu'aucun test l'ait vue (décision 847).
+	code_py=0
+	pytest_mail_sync -q >"$TRAVAIL/degrade-py.log" 2>&1 || code_py=$?
+	if [ "$code_py" -eq 1 ]; then
+		ok "dégradation vue : un code hors catalogue fait échouer pytest"
+	elif [ "$code_py" -eq 0 ]; then
 		fail "dégradation NON VUE : un code hors catalogue passe les preuves Python"
 	else
-		ok "dégradation vue : un code hors catalogue fait échouer pytest"
+		fail_journal "dégradation NON PROUVÉE : pytest n'a pas tourné (code $code_py)" "$TRAVAIL/degrade-py.log"
 	fi
 	rendre "$SONDE"
 
@@ -477,7 +487,7 @@ if [ "$RAPIDE" = false ]; then
 		fail_journal "la suite pgTAP reste ROUGE après restauration" "$TRAVAIL/restaure.log"
 	fi
 
-	if "$PYTHON" -m pytest "$RACINE/mail-sync/tests" -q >"$TRAVAIL/restaure-py.log" 2>&1; then
+	if pytest_mail_sync -q >"$TRAVAIL/restaure-py.log" 2>&1; then
 		ok "pytest redevient vert après restauration"
 	else
 		fail_journal "pytest reste ROUGE après restauration" "$TRAVAIL/restaure-py.log"

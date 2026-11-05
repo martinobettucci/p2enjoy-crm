@@ -8756,3 +8756,26 @@ l'acceptation d'une suggestion de l'assistant qui en porte une (`0160`) peut la 
 (`app.workflow_composition_naturel`), identité `(transition_id, common_field_id)` pour les versions et `(from_node_id,
 to_node_id, common_field_key)` pour la copie ; la liste fermée de la webapp et son titre. Migration `0161`, avec T3.b.
 
+
+### INC-345 — six harnais de la messagerie et le README supposent un pytest de l'hôte ; une dégradation s'y dit « vue » sans test
+
+*Relevé le 2026-11-05 par la session d5b44a2d (p2enjoy-crm-30) en rejouant `scripts/verify-mail-inbound.sh` pour `CRM-127`
+T2 (décision 847). Corrigé pour ce seul harnais ; **ouverte** pour les autres, hors de la tranche autorisée.*
+
+**Le constat, mesuré.** L'hôte de développement n'a ni `.venv` à la racine ni `pytest`, et ne peut pas en créer : Python
+3.14 sans `ensurepip`, aucun `pip`. Les harnais jouent `"$PYTHON" -m pytest mail-sync/tests` avec `PYTHON=python3` à
+défaut de `.venv` : pytest rend « No module named pytest », code 1. Deux effets :
+- la preuve pytest et sa restauration rougissent, sans rien dire du produit ;
+- **plus grave, une dégradation Python se déclare « vue »** : le harnais n'exige qu'un code non nul, qu'un pytest absent
+  fournit. Le contrôle de non-complaisance devient un faux vert.
+
+**Portée** : `verify-mail-sync.sh`, `verify-mail-outbound.sh`, `verify-mail-envoi.sh`, `verify-mail-dossiers.sh`,
+`verify-mail-ingestion.sh`, `verify-mail-resilience.sh` emploient la même forme (`verify-mcp.sh` joue son pytest dans
+l'image `--target dev`, et n'est pas touché). Le README §7 (« `pytest mail-sync/tests` … 40 tests ») ne décrit plus ni le
+compte (289 le 2026-11-05) ni l'hôte réel.
+
+**Correction proposée** : `scripts/lib/pytest-mail-sync.sh` (`pytest_mail_sync`, écrite pour `CRM-127` T2) joue la suite
+dans le `.venv`, sur l'hôte, ou à défaut dans un conteneur jetable de l'image de base de `mail-sync/Dockerfile` ; elle rend
+le code de pytest, et 125 pour une installation impossible. Les six harnais l'adoptent, et chaque dégradation Python
+exige le **code 1** ; le README §7 nomme la bibliothèque. À arbitrer : par quelle unité, et si le conteneur jetable devient
+la voie documentée plutôt que le `.venv`.

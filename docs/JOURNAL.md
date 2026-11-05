@@ -39101,6 +39101,24 @@ lecture seule. **Décision de conception** (`docs/SPEC-mcp.md` §9.2 *sexdecies*
 inconnue ou une forme qui ne convient pas est refusée et nommée, pour que le modèle apprenne son erreur ; une valeur d'un
 champ archivé n'est pas écrite par le connecteur (`common_field_archived`), aide qui tient la promesse de l'écran.
 
+### décision 847 — `CRM-127` T2 : `verify-mail-inbound.sh` rejoué en entier, et deux défauts du harnais lui-même
+
+*2026-11-05, session interactive d5b44a2d (p2enjoy-crm-30), tranche confiée par le responsable par la session de
+livraison (54).* **Le problème** : il restait à T2 de rejouer `scripts/verify-mail-inbound.sh` en entier. **Observations**
+(premier passage, pile de dev annoncée aux sessions 54, b6 et ac) : 48 contrôles, 45 verts, dont la relève réelle qui date
+`last_sync_at` (§4 retourné), le seed qui converge, pgTAP 0024 à 60 assertions, la preuve `mail` 6/6 et les six
+dégradations SQL vues puis restaurées. Trois échecs, tous du harnais : (1) la preuve d'API compte **14** scénarios et le
+harnais en attend 11, figé avant que `CRM-088` (`f5c51b76`, 2026-08-20) en ajoute trois ; (2) et (3) pytest et sa
+restauration rougissent par « No module named pytest » : l'hôte n'a ni `.venv` ni `pip`, et ne peut en créer (Python 3.14
+sans `ensurepip`). Le même défaut faisait passer la dégradation de la sonde IMAP pour « vue » : faux vert (INC-345).
+**Solutions envisagées** : installer `python3-venv` (geste système, hors de portée de la session) ; jouer pytest dans
+l'image `mail-sync` (elle n'a pas les dépendances de test) ; **un conteneur jetable de l'image de base**, qui installe
+`requirements-dev.txt` et joue la suite sur l'arbre en lecture seule. **Décision** : la troisième, dans
+`scripts/lib/pytest-mail-sync.sh`, après le `.venv` et le pytest de l'hôte ; le compte d'API porté à 14 ; la dégradation
+Python exige le code 1 de pytest, et un pytest qui n'a pas tourné rougit en le nommant. **Conséquences** : les six autres
+harnais de la messagerie portent le même défaut ; INC-345 les nomme, hors de la tranche. **Vérifications** : la bibliothèque
+seule rend 0 (289 tests) et 5 (aucun test choisi) ; le second passage complet du harnais est consigné au backlog.
+
 ### décision 848 — `CRM-112` T6 : la recherche lit d'abord les valeurs qui répondent, et reste `security invoker`
 
 *2026-11-05, session interactive 152dd27d (p2enjoy-crm-ac), tranche confiée par le responsable par la session de
