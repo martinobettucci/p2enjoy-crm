@@ -3,6 +3,8 @@
 #           à jour, puis insertion, reprise sur conflit, clé inconnue ou champ archivé refusés avant tout geste,
 #           `invalid_field_value` nommé) et les filtres directs de `crm_card_list`, contrôlés et nommés
 #           (docs/SPEC-mcp.md §9.2 sexdecies ; docs/SPEC-champs-communs.md §7, §8, §11 ; décisions 664, 837 et 846)
+# @verifies CRM-104 (docs/BACKLOG.md) — le catalogue de la famille `affaires` (docs/SPEC-mcp.md §9.2 bis), où T9 inscrit
+#           `crm_common_field_list`
 """Devant les CRM simulés de `test_affaires.py` (lecture) et `test_affaires_ecriture.py` (écriture), garnis de champs de
 l'affaire. Les vraies tables, leurs politiques et `app.validate_field_value` sont prouvées par
 `tests/test_integration_champs_communs.py`."""

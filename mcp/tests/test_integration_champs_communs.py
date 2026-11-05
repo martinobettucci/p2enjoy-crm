@@ -3,6 +3,8 @@
 #           de `crm_card_update` (insertion puis mise à jour, sous les politiques et `app.validate_field_value`), le filtre
 #           de `crm_card_list`, les refus nommés et le refus uniforme de la lectrice (docs/SPEC-mcp.md §9.2 sexdecies, §13 ;
 #           docs/SPEC-champs-communs.md §7, §8, §11 ; décision 846)
+# @verifies CRM-104 (docs/BACKLOG.md) — le catalogue de la famille `affaires` (docs/SPEC-mcp.md §9.2 bis), où T9 inscrit
+#           `crm_common_field_list`
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
 Le seed ne définit pas encore de champ de l'affaire (`CRM-112` T8) : la preuve pose les siens par la clé de service, sous

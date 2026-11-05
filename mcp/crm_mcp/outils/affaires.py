@@ -1,3 +1,4 @@
+# @spec CRM-104 (docs/BACKLOG.md) — tranche T2.a : les sept outils de LECTURE de la famille `affaires` (décisions 652 à 654)
 # @spec CRM-111 (docs/BACKLOG.md) — tranche T9 : `placements` dans `crm_card_get`, `placement_id` dans les lignes
 #       (docs/SPEC-mcp.md §9.2 quindecies, décision 826 ; docs/SPEC-rattachements.md §11)
 # @spec CRM-112 (docs/BACKLOG.md) — tranche T9 : `common_fields` dans `crm_card_get` (la partie commune) et dans
@@ -7,7 +8,6 @@
 # @spec CRM-071 (docs/BACKLOG.md) — tranche T3 : l'argument `view` de crm_card_list (docs/SPEC-mcp.md §9.2 quattuordecies)
 # @spec CRM-069 (docs/BACKLOG.md) — tranche T3 : les étiquettes rendues par crm_card_get et crm_card_list, le filtre `label`, le
 #       détail des événements `label_added` et `label_removed` (docs/SPEC-mcp.md §9.2 tredecies)
-# @spec CRM-104 (docs/BACKLOG.md) — tranche T2.a : les sept outils de LECTURE de la famille `affaires` (décisions 652 à 654)
 # @spec CRM-066 (docs/BACKLOG.md) — tranche 4 : les deux scores de santé dans crm_card_list et crm_card_get —
 #       docs/SPEC-analytique.md §13.7 ; décision 708 (M4 B)
 # @spec CRM-067 (docs/BACKLOG.md) — tranche T4 : `crm_card_activity_list` (docs/SPEC-activites.md §6, décision 653)

@@ -2,6 +2,8 @@
 #       partie commune rendue par `crm_card_get`, les valeurs écrites par `crm_card_update`, les filtres directs de
 #       `crm_card_list` contrôlés et nommés (docs/SPEC-mcp.md §9.2 sexdecies ; docs/SPEC-champs-communs.md §7, §8, §11 ;
 #       décisions 664, 837 et 846)
+# @spec CRM-104 (docs/BACKLOG.md) — le catalogue de la famille `affaires` (docs/SPEC-mcp.md §9.2 bis), où T9 inscrit
+#       `crm_common_field_list`
 """Les champs de l'affaire — champs communs de portée espace — sous l'identité de la personne.
 
 Le connecteur ne définit pas les champs : il les lit, lit et écrit leurs valeurs, et filtre les affaires. Les tables sont
