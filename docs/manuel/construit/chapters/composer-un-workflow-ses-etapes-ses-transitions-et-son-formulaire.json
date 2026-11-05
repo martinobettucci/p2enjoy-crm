@@ -1174,6 +1174,41 @@
 			]
 		},
 		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les champs de l'affaire de votre espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+						"anchor": "les-champs-communs-a-toute-affaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 18.16"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") comptent de même :\nl'IA les connaît, et ne doit pas en proposer un double dans le formulaire du workflow. Si un champ nouveau reprend\nun champ de l'affaire actif — même clé, ou même libellé, comme un champ « SIRET » quand l'espace en porte déjà un —,\nle défaut le nomme : « Le champ « siret » reprend le champ de l'affaire « SIRET », déjà porté par toute affaire de\nl'espace : retirez-le ou renommez-le. » Tant qu'il demeure, « Accepter » reste retenu. Un champ de l'affaire\narchivé ne compte pas. Pour qu'une transition exige un champ de l'affaire, l'IA le place parmi les « Champs\ncommuns exigés », sans le recréer."
+				}
+			]
+		},
+		{
 			"type": "image",
 			"src": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champ-montant.jpg",
 			"alt": "Un champ « montant » proposé par l'IA, de type « Montant »",

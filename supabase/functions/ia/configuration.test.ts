@@ -3,6 +3,7 @@
 //           qu'en développement, et l'en-tête est ignoré en production)
 // @verifies CRM-097 tranche T3.b — docs/SPEC-ia.md §13.5 (le scénario `modification` du simulateur) ; décision 620
 // @verifies CRM-113 tranche T2 — docs/SPEC-ia.md §14.6 (le scénario `catalogue` du simulateur) ; décision 677
+// @verifies CRM-112 (docs/BACKLOG.md) tranche T7 — docs/SPEC-ia.md §14.11 (le scénario `champ_commun` du simulateur) ; décision 851
 
 import { describe, expect, it } from 'vitest'
 import { CONTEXTE_PAR_DEFAUT, MODELE_PAR_DEFAUT, cibleDe, lireConfiguration } from './configuration.ts'
@@ -66,6 +67,11 @@ describe('cibleDe', () => {
 	it('le scénario `catalogue` de `CRM-113` T2 (docs/SPEC-ia.md §14.6) vise lui aussi le simulateur', () => {
 		const dev = lireConfiguration(env({ OLLAMA_HOST: 'https://h', OLLAMA_API_KEY: 'sk-x', IA_SIMULATEUR_HOST: 'http://s' }))
 		expect(cibleDe(dev, avecScenario('catalogue'))).toEqual({ hote: 'http://s', cle: 'simule-catalogue', simulee: true })
+	})
+
+	it('le scénario `champ_commun` de `CRM-112` T7 (docs/SPEC-ia.md §14.11) vise lui aussi le simulateur', () => {
+		const dev = lireConfiguration(env({ OLLAMA_HOST: 'https://h', OLLAMA_API_KEY: 'sk-x', IA_SIMULATEUR_HOST: 'http://s' }))
+		expect(cibleDe(dev, avecScenario('champ_commun'))).toEqual({ hote: 'http://s', cle: 'simule-champ_commun', simulee: true })
 	})
 
 	it('un scénario inconnu n’ouvre pas le simulateur, même en développement', () => {

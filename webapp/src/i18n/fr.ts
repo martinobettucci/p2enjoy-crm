@@ -4335,6 +4335,8 @@ export const fr = {
 	'ia.defaut.exigence_champ_commun_absent': 'Une exigence vise « {cle} », qui n’est pas un champ commun actif de l’espace.',
 	'ia.defaut.exigence_commune_transition_absente': 'Une exigence de champ commun vise la transition absente « {de} » vers « {vers} ».',
 	'ia.defaut.exigence_commune_en_double': 'L’exigence du champ commun « {champ} » sur « {de} » vers « {vers} » est déclarée deux fois.',
+	// `CRM-112` T7 (docs/SPEC-ia.md §14.11, docs/DESIGN_SYSTEM.md §5.52 ter, décision 851) : le champ de l’affaire repris.
+	'ia.defaut.common_field': 'Le champ « {key} » reprend le champ de l’affaire « {libelleCommun} », déjà porté par toute affaire de l’espace : retirez-le ou renommez-le.',
 	// `CRM-097` T3 — les cinq défauts d'une modification (docs/SPEC-ia.md §13.3).
 	'ia.defaut.type_non_modifiable': 'Le type du champ « {cle} » ne se modifie pas : il reste celui du champ existant.',
 	'ia.defaut.remappage_requis': 'Affaires sans destination : l’étape retirée « {cle} » en porte {affaires}.',

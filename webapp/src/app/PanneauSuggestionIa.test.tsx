@@ -16,6 +16,8 @@
 // @verifies CRM-112 (docs/BACKLOG.md) tranche T2.d.3 — docs/SPEC-ia.md §6.1 et §12.5 (les champs communs exigés nommés
 //           par les champs de l'espace ; retirés ; une correction GARDE la liste, même vide, et n'en invente pas une
 //           absente ; le différentiel), §12.1 (les trois codes traduits) ; docs/DESIGN_SYSTEM.md §5.52 ter ; décision 825
+// @verifies CRM-112 (docs/BACKLOG.md) tranche T7 — docs/SPEC-ia.md §14.11 (`common_field` traduit, le champ de l'affaire
+//           nommé par son libellé) ; docs/DESIGN_SYSTEM.md §5.52 ter ; décision 851
 
 import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -596,6 +598,19 @@ describe('CRM-113 T3 — le nom des étapes et les champs natifs (docs/DESIGN_SY
 	it('step_probability_invalid nomme l’étape', () => {
 		expect(phraseDefaut({ code: 'step_probability_invalid', chemin: 'etapes[0].probability', valeurs: { key: 'prospection' } }))
 			.toBe(g('La probabilité de l’étape « prospection » doit être comprise entre 0 et 100.'))
+	})
+
+	// `CRM-112` T7 (docs/SPEC-ia.md §14.11, décision 851).
+	it('common_field nomme le champ proposé et le champ de l’affaire par son libellé, jamais par son code', () => {
+		const phrase = phraseDefaut({
+			code: 'common_field',
+			chemin: 'champs[1]',
+			valeurs: { key: 'siret', common_key: 'siret', common_label: 'SIRET' },
+		})
+		expect(phrase).toBe(
+			g('Le champ « siret » reprend le champ de l’affaire « SIRET », déjà porté par toute affaire de l’espace : retirez-le ou renommez-le.'),
+		)
+		expect(phrase).not.toContain('common_field')
 	})
 
 	it('le nom et la probabilité d’une étape se corrigent, et partent avec la correction', async () => {

@@ -2,6 +2,7 @@
 // @spec docs/SPEC-ia.md §3 (les quatre variables `OLLAMA_*`), §4 (mode dégradé), §11.6 (le simulateur,
 //       instrumentation du seul développement) ; docs/JOURNAL.md décision 617 ; tranche T3.b : le scénario
 //       `modification` (docs/SPEC-ia.md §13.5, décision 620)
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T7 : le scénario `champ_commun` du simulateur (docs/SPEC-ia.md §14.11, décision 851)
 //
 // Module pur. La clé n'est lue qu'ici et ne ressort que dans l'en-tête `Authorization` de l'appel au
 // serveur : aucune réponse ni aucun journal ne la porte.
@@ -16,7 +17,16 @@ export const CONTEXTE_PAR_DEFAUT = 36_864
 export const EN_TETE_SIMULATEUR = 'x-ia-simulateur'
 /** `modification` (`CRM-097` T3.b, docs/SPEC-ia.md §13.5) : une cible dérivée du workflow vivant envoyé au modèle. */
 /** `catalogue` (`CRM-113` T2, docs/SPEC-ia.md §14.6) : un nœud du catalogue renommé, un nœud redéclaré, un champ natif. */
-export const SCENARIOS_SIMULATEUR = ['valide', 'incoherente', 'invalide', 'cle_refusee', 'modification', 'catalogue'] as const
+/** `champ_commun` (`CRM-112` T7, docs/SPEC-ia.md §14.11) : un champ `siret` qui reprend un champ de l'affaire de l'espace. */
+export const SCENARIOS_SIMULATEUR = [
+	'valide',
+	'incoherente',
+	'invalide',
+	'cle_refusee',
+	'modification',
+	'catalogue',
+	'champ_commun',
+] as const
 
 export type ConfigurationIa = {
 	readonly hote: string | null

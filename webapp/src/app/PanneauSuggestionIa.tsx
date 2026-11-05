@@ -9,6 +9,8 @@
 // @spec CRM-097 tranche T3.c — docs/SPEC-ia.md §13.6 (le panneau dans la colonne du workflow, titré par la portée ;
 //       le différentiel ; les affaires des étapes retirées ; accepter, puis l'annonce du point de retour), §13.4
 //       (« workflow modifie », « workflow archive ») ; docs/DESIGN_SYSTEM.md §5.53 ; décision 620
+// @spec CRM-112 (docs/BACKLOG.md) tranche T7 — docs/SPEC-ia.md §14.11 (`common_field` traduit, le champ de l'affaire nommé
+//       par son libellé) ; docs/DESIGN_SYSTEM.md §5.52 ter ; décision 851
 // @spec CRM-113 (docs/BACKLOG.md) tranches T3 et T5 — docs/SPEC-ia.md §14.5 (`native_field` traduit, `native` nommé par
 //       un mot), §14.7 (le nom effectif d'une étape, lu dans sa clé `label`) ; docs/DESIGN_SYSTEM.md §5.52 bis ;
 //       décisions 646, 677 et 679
@@ -113,6 +115,8 @@ const CLES_DEFAUT: Readonly<Record<string, CleTraduction>> = {
 	exigence_champ_commun_absent: 'ia.defaut.exigence_champ_commun_absent',
 	exigence_commune_transition_absente: 'ia.defaut.exigence_commune_transition_absente',
 	exigence_commune_en_double: 'ia.defaut.exigence_commune_en_double',
+	// `CRM-112` T7 (docs/SPEC-ia.md §14.11, décision 851).
+	common_field: 'ia.defaut.common_field',
 }
 
 /** L'information native qu'un champ doublonne, nommée par un mot traduit — jamais par le code de la base (§5.52 bis). */
@@ -136,6 +140,8 @@ export function phraseDefaut(defaut: DefautIa): string {
 		const natif = Object.hasOwn(CLES_NATIF, valeurs.native) ? CLES_NATIF[valeurs.native] : undefined
 		valeurs.native = t(natif ?? 'ia.natif.inconnu')
 	}
+	// `CRM-112` T7 : `common_label`, écrit par la base, n'est pas un marqueur de traduction valide (lettres seules).
+	if (valeurs.common_label !== undefined) valeurs.libelleCommun = valeurs.common_label
 	const cle = Object.hasOwn(CLES_DEFAUT, defaut.code) ? CLES_DEFAUT[defaut.code] : undefined
 	return cle === undefined ? t('ia.defaut.inconnu', { code: defaut.code }) : t(cle, valeurs)
 }

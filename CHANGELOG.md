@@ -13,7 +13,18 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### `CRM-112` T7 — le générateur de workflow ne doublonne pas un champ de l'affaire (migration `0169`)
+
+*En développement seulement. Prouvé par la suite pgTAP `0158`, l'API et l'E2E du générateur contre le simulateur, et les
+unitaires de la fonction `ia` et de l'écran (décision 851, docs/SPEC-ia.md §14.11).*
+
+- La base relève le défaut bloquant `common_field` quand un champ nouveau proposé par l'IA reprend un champ de l'affaire
+  actif de l'espace, par sa clé ou par son libellé ; l'acceptation reste refusée tant qu'il demeure. Un champ archivé ne
+  compte pas, et un champ vivant d'un workflow existant n'est jamais relevé.
+- La fonction `ia` envoie au modèle la consigne de ne pas déclarer de champ pour ces informations.
+- L'aperçu de la suggestion nomme le champ de l'affaire repris par son libellé.
+- Le simulateur de développement gagne le scénario `champ_commun`.
+- Connecteur MCP : non concerné.
 
 ## [Publié]
 

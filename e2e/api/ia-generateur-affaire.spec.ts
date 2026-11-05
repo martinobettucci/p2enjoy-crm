@@ -7,6 +7,9 @@
 //           par la base ; le libellé et la probabilité de l'étape gardés par la mise en forme de la fonction)
 // @verifies CRM-113 tranche T5 — décision 679 : les clés `label` et `probability` de l'étape, l'enveloppe `key` des codes
 //           nouveaux, et un libellé égal au nœud à la casse près qui ne surcharge rien (docs/SPEC-ia.md §14.3)
+// @verifies CRM-112 (docs/BACKLOG.md) — tranche T7 : le scénario `champ_commun` du simulateur, le défaut `common_field`
+//           écrit par la base et bloquant l'acceptation, un champ de l'affaire archivé qui ne relève rien
+//           (docs/SPEC-ia.md §14.11, décision 851)
 // @verifies CLAUDE.md §10 (le commercial ne corrige pas une suggestion, avec son jeton réel), §15 (effets relus en base)
 //
 // La suggestion naît par la vraie fonction et le simulateur (scénario `valide`) ; les corrections passent par
@@ -155,5 +158,50 @@ test.describe('Le générateur connaît l’affaire et le catalogue — la base 
 		])
 		const refus = await accepter(request, jeton, id)
 		expect(await refus.json()).toMatchObject({ code: 'P0001', message: 'proposition non conforme', details: '2 defaut(s)' })
+	})
+
+	// `CRM-112` T7 (docs/SPEC-ia.md §14.11, décision 851). Le champ de l'affaire `siret` est posé par la clé de service s'il
+	// manque à l'espace, et retiré à la fin seulement s'il a été posé ici : le seed de `CRM-112` T8 le portera.
+	test('T7 — le scénario `champ_commun` : la base relève common_field, bloquant ; archivé, le champ ne relève plus rien', async ({ request }) => {
+		const existants = await lireService<{ id: string; archived_at: string | null }>(request,
+			`card_common_fields?workspace_id=eq.${ESPACE}&key=eq.siret&select=id,archived_at`)
+		let pose: string | null = null
+		if (existants.length === 0) {
+			const creation = await request.post(rest('card_common_fields?select=id'), {
+				headers: { ...enTetesService(), prefer: 'return=representation' },
+				data: { workspace_id: ESPACE, key: 'siret', label: 'SIRET', type: 'text', options: {}, position: 9701 },
+			})
+			expect(creation.status(), await creation.text()).toBe(201)
+			pose = ((await creation.json()) as { id: string }[])[0]?.id ?? null
+		}
+		const [champ] = await lireService<{ id: string; label: string; archived_at: string | null }>(request,
+			`card_common_fields?workspace_id=eq.${ESPACE}&key=eq.siret&select=id,label,archived_at`)
+		expect(champ?.archived_at, 'le champ siret de l’espace doit être actif').toBeNull()
+		try {
+			const jeton = await jetonDe(ADMIN.adresse)
+			const { id, proposition } = await suggerer(request, jeton, 'champ commun', 'champ_commun')
+			const [revision] = await lireService<Revision>(request, `suggestions_ia_revisions?suggestion_id=eq.${id}&select=numero,defauts`)
+			expect(revision?.defauts).toEqual([
+				{ code: 'common_field', chemin: 'champs[0]', valeurs: { key: 'siret', common_key: 'siret', common_label: champ?.label } },
+			])
+			const refus = await accepter(request, jeton, id)
+			expect(await refus.json()).toMatchObject({ code: 'P0001', message: 'proposition non conforme', details: '1 defaut(s)' })
+
+			// Archivé, le champ de l'affaire ne relève plus rien : une correction identique est sans défaut.
+			if (pose !== null) {
+				const archivage = await request.patch(rest(`card_common_fields?id=eq.${pose}`), {
+					headers: enTetesService(), data: { archived_at: new Date().toISOString() },
+				})
+				expect(archivage.status()).toBe(204)
+				const reponse = await corriger(request, jeton, id, proposition)
+				expect(reponse.status(), await reponse.text()).toBe(201)
+				expect(((await reponse.json()) as Revision[])[0]?.defauts).toEqual([])
+			}
+		} finally {
+			if (pose !== null) {
+				const retrait = await request.delete(rest(`card_common_fields?id=eq.${pose}`), { headers: enTetesService() })
+				expect(retrait.status()).toBe(204)
+			}
+		}
 	})
 })

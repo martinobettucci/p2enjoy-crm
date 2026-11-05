@@ -6,11 +6,13 @@
 //           de l'étape (décision 679)
 // @verifies CRM-112 (docs/BACKLOG.md) tranche T2.d.1 — docs/SPEC-ia.md §6.1 : la règle des « exigences_communes » et la
 //           liste des champs communs de l'espace envoyées au modèle (décision 825)
+// @verifies CRM-112 (docs/BACKLOG.md) tranche T7 — docs/SPEC-ia.md §14.11 : la consigne de ne pas doublonner un champ de
+//           l'affaire, envoyée avec la liste et jamais sans elle (décision 851)
 //
 // Module pur : les messages se lisent tels qu'ils partiraient au modèle.
 
 import { describe, expect, it } from 'vitest'
-import { INFORMATIONS_NATIVES, messagesDePremiereGeneration, messagesDeRevue, type NoeudDuCatalogue } from './consignes.ts'
+import { CONSIGNE_CHAMPS_COMMUNS, INFORMATIONS_NATIVES, messagesDePremiereGeneration, messagesDeRevue, type NoeudDuCatalogue } from './consignes.ts'
 
 const CATALOGUE: NoeudDuCatalogue[] = [
 	{ cle: 'prospection', libelle: 'Prospection', nature: 'open', probabilite: 10 },
@@ -84,5 +86,20 @@ describe('CRM-112 T2.d.1 — les champs communs envoyés au modèle (docs/SPEC-i
 
 	it('sans champ commun, le modèle l’apprend et laisse la liste vide', () => {
 		expect(systeme()).toContain('L’espace n’a aucun champ commun : « exigences_communes » reste vide.')
+	})
+
+	// `CRM-112` T7 (docs/SPEC-ia.md §14.11, décision 851).
+	it('la consigne de ne pas doublonner un champ de l’affaire suit la liste, à la première génération comme à la revue', () => {
+		const premiere = messagesDePremiereGeneration('Un cycle', CATALOGUE, null, CHAMPS)[0]?.content ?? ''
+		const revue = messagesDeRevue('Un cycle', {}, [], 'Corrige', CATALOGUE, null, CHAMPS)[0]?.content ?? ''
+		for (const texte of [premiere, revue]) {
+			expect(texte).toContain(CONSIGNE_CHAMPS_COMMUNS)
+			expect(texte.indexOf(CONSIGNE_CHAMPS_COMMUNS)).toBeGreaterThan(texte.indexOf('- siret — SIRET (text)'))
+		}
+		expect(CONSIGNE_CHAMPS_COMMUNS).toContain('ne déclare jamais dans « champs » un champ pour l’une de ces informations')
+	})
+
+	it('sans champ commun, la consigne n’est pas envoyée', () => {
+		expect(systeme()).not.toContain(CONSIGNE_CHAMPS_COMMUNS)
 	})
 })

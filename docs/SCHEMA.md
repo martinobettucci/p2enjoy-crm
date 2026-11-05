@@ -2511,6 +2511,20 @@ elle.
 attente sont perdus : les lister avant. **Avec l'image `mcp` d'avant `CRM-128` T3** : sans la garde, son `crm_mail_send`
 enverrait de nouveau directement.
 
+### Migration `0169` — le générateur ne doublonne pas un champ de l'affaire (`CRM-112` T7 ; livrée en développement le 2026-11-05)
+
+`docs/SPEC-ia.md` §14.11, décision 851. **Aucune table, aucune donnée.**
+- **`app.defauts_proposition_ia`** reprise à l'identique de la `0160`, avec un ajout. Le défaut **`common_field`**
+  (`key`, `common_key`, `common_label`) est rendu juste après `native_field`, au chemin `champs[i]`, sur un champ
+  **nouveau** de la proposition (non vivant dans le workflow ciblé). Il est relevé quand un champ de l'affaire **non
+  archivé** de l'espace répond à l'une de trois égalités exactes : les deux clés ; le libellé proposé mis à la forme des
+  clés (`app.cle_de_libelle_ia`) et la clé commune ; la clé ou le libellé proposé et le libellé commun mis à la forme des
+  clés. Le premier champ commun par `position`, puis `key`, est nommé. Comme tout défaut, il bloque
+  `accepter_suggestion_ia`, qui recalcule les défauts (« proposition non conforme »).
+
+**Retrait** : reposer `app.defauts_proposition_ia` de la `0160`. Aucune donnée n'est perdue ; les révisions déjà écrites
+gardent leurs défauts.
+
 ### Migration `0168` — la recherche globale par les champs de l'affaire (`CRM-112` T6 ; livrée en développement le 2026-11-05)
 
 `docs/SPEC-champs-communs.md` §10 (précision T6 et mesure du 2026-11-05), décisions 844 et 848. **Aucune table.**

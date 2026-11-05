@@ -17723,11 +17723,18 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       régénérés (`value_tsv`). Sous-ensemble de ce périmètre seulement, jamais la campagne complète (décision 830).
       **Reste** : la livraison de la `0168` avec la webapp de `main`, par la session de livraison, et le constat du
       responsable — une affaire retrouvée en production par un de ses champs.
-- [@] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.
+- [P] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.
       *Spécifiée le 2026-11-05 avant le code (décision 851)* : `docs/SPEC-ia.md` §14.11 — la consigne au modèle, le défaut
       bloquant `common_field` (champs actifs seuls) par une migration, sa traduction à l'écran, le scénario `champ_commun`
       du simulateur. Connecteur MCP : non.
-      *Prise en charge : session interactive 4891a451 (p2enjoy-crm-b6) depuis 2026-11-05 09:02 UTC — état avant : [ ]*
+      *Vérifiée en développement le 2026-11-05* : migration **`0169`** appliquée en dev (registre à 167) ; pgTAP `0158`
+      (14 assertions) et les suites voisines 0077, 0078, 0080, 0093, 0148 et 0149 vertes (196) ; API
+      `e2e/api/ia-generateur-affaire.spec.ts` 4/4, dont le scénario `champ_commun` ; unitaires de la fonction `ia` (110) et
+      de l'écran (653) ; E2E `e2e/ui/ia-generateur-champs-communs.spec.ts` 6/6 (souris, clavier, quatre paliers) et
+      `ia-generateur.spec.ts` 6/6 ; captures `docs/captures/CRM-112/ia-champ-commun-*` observées ; manuel vérifié (168).
+      Sous-ensemble de ce périmètre seulement, jamais la campagne complète (décision 830). La suggestion de démonstration du
+      scénario entre au seed avec `siret`, en T8. **Reste** : la livraison de la `0169` avec la fonction `ia` et la webapp de
+      `main`, par la session de livraison, et le constat du responsable — un champ « SIRET » proposé par l'IA, refusé.
 - [ ] **T8** — seed (`docs/SPEC-champs-communs.md` §13), E2E, captures aux quatre paliers, `docs/manual.md`.
 - [P] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de
       (**Livrée le 2026-11-05**, décision 852, révision `b9fa4d11`, image `mcp` reconstruite ; reste le constat du responsable.)

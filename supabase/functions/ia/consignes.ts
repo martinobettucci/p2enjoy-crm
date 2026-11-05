@@ -7,6 +7,8 @@
 //       `probability` de l'étape (décision 679)
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T2.d.1 : la règle des « exigences_communes » et la liste des champs communs
 //       de l'espace, envoyées au modèle (docs/SPEC-ia.md §6.1, décision 825 ; docs/SPEC-champs-communs.md §5)
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T7 : la consigne qui interdit de doublonner un champ de l'affaire dans
+//       « champs », envoyée avec la liste des champs communs actifs (docs/SPEC-ia.md §14.11, décision 851)
 // @spec docs/SPEC-ia.md §2 (rectifier : la dernière révision et la consigne), §3 (« ce qui est envoyé au
 //       modèle » : jamais une affaire, un contact, un message ni une donnée personnelle ; pour un remappage, le
 //       NOMBRE d'affaires par étape), §6.1 (le format) ; docs/JOURNAL.md décision 617
@@ -112,11 +114,19 @@ function catalogueEnTexte(catalogue: readonly NoeudDuCatalogue[]): string {
 	].join('\n')
 }
 
+/** `CRM-112` T7 (docs/SPEC-ia.md §14.11) : la consigne qui accompagne la liste des champs communs, jamais envoyée sans elle. */
+export const CONSIGNE_CHAMPS_COMMUNS =
+	'Toute affaire de l’espace porte déjà ces champs : ne déclare jamais dans « champs » un champ pour l’une de ces ' +
+	'informations, même sous une autre clé ou un autre libellé ; pour en exiger un à une transition, utilise ' +
+	'« exigences_communes ».'
+
 function champsCommunsEnTexte(champs: readonly ChampCommun[]): string {
 	if (champs.length === 0) return 'L’espace n’a aucun champ commun : « exigences_communes » reste vide.'
 	return [
 		'Champs communs de l’espace (une transition peut les exiger dans « exigences_communes », par leur clé) :',
 		...champs.map((c) => `- ${c.cle} — ${c.libelle} (${c.type})`),
+		// `CRM-112` T7 (docs/SPEC-ia.md §14.11, décision 851) : la base relève `common_field` sur un tel doublon.
+		CONSIGNE_CHAMPS_COMMUNS,
 	].join('\n')
 }
 

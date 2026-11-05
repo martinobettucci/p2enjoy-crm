@@ -6,6 +6,8 @@
 # @spec CRM-113 tranche T2 — docs/SPEC-ia.md §14.6 (le scénario `catalogue` : un nœud du catalogue du seed sous un libellé
 #       surchargé, un nœud du catalogue redéclaré, un champ `montant`) ; docs/JOURNAL.md décisions 646 et 677
 # @spec CRM-113 tranche T5 — l'étape du scénario `catalogue` porte `label` et `probability` (décision 679)
+# @spec CRM-112 (docs/BACKLOG.md) — tranche T7 : le scénario `champ_commun`, un champ `siret` qui reprend un champ de
+#       l'affaire de l'espace (docs/SPEC-ia.md §14.11, décision 851)
 #
 # Bibliothèque standard seule. Le scénario voyage comme clé — `Bearer simule-<scénario>` —, là où le serveur
 # réel attend la sienne : la fonction `ia` n'a qu'un chemin d'appel, et ce sont les preuves qui choisissent.
@@ -76,9 +78,36 @@ CATALOGUE = {
     "exigences": [],
 }
 
+# `CRM-112` T7 (docs/SPEC-ia.md §14.11, décision 851) : une création sur le catalogue du SEED, valide à un champ près —
+# `siret`, au libellé « SIRET », qui reprend le champ de l'affaire `siret` de l'espace (`common_field`). Exactement ce
+# défaut, écrit par la base, dans un espace qui déclare ce champ ; aucun ailleurs.
+CHAMP_COMMUN = {
+    "workflow": {"nom": "Ventes aux entreprises"},
+    "noeuds": [],
+    "etapes": [
+        {"noeud": "prospection", "initiale": True, "label": None, "probability": None},
+        {"noeud": "negociation", "initiale": False, "label": None, "probability": None},
+        {"noeud": "livre", "initiale": False, "label": None, "probability": None},
+        {"noeud": "perdu", "initiale": False, "label": None, "probability": None},
+    ],
+    "transitions": [
+        {"de": "prospection", "vers": "negociation", "libelle": "Engager la discussion", "commentaire_requis": False},
+        {"de": "negociation", "vers": "livre", "libelle": "Conclure", "commentaire_requis": False},
+        {"de": "prospection", "vers": "perdu", "libelle": "Abandonner", "commentaire_requis": True},
+        {"de": "negociation", "vers": "perdu", "libelle": "Abandonner", "commentaire_requis": True},
+    ],
+    "champs": [
+        {"cle": "siret", "libelle": "SIRET", "type": "text", "choix": None, "devise": None, "aide": None},
+        {"cle": "source", "libelle": "Source", "type": "select", "choix": ["Salon", "Recommandation"], "devise": None, "aide": None},
+    ],
+    "regles": [{"champ": "source", "etape": "prospection", "visibilite": "visible"}],
+    "exigences": [],
+}
+
 CONTENUS = {
     "valide": json.dumps(VALIDE, ensure_ascii=False),
     "catalogue": json.dumps(CATALOGUE, ensure_ascii=False),
+    "champ_commun": json.dumps(CHAMP_COMMUN, ensure_ascii=False),
     "incoherente": json.dumps(INCOHERENTE, ensure_ascii=False),
     "invalide": "Voici votre workflow : une prise de contact, puis un devis.",
 }

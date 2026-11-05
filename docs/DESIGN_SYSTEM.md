@@ -5520,6 +5520,12 @@ ce que les §5.52, §5.52 bis et §5.53 posent vaut sans être répété** ; seu
   `exigence_commune_transition_absente` — « Une exigence de champ commun vise la transition absente « {de} » vers
   « {vers} ». » ; `exigence_commune_en_double` — « L'exigence du champ commun « {champ} » sur « {de} » vers « {vers} »
   est déclarée deux fois. »
+- **LE DÉFAUT `common_field`** (`CRM-112` T7, *écrit le 2026-11-05 avant le code, après relecture intégrale de ce document le
+  même jour* ; `docs/SPEC-ia.md` §14.11, décision 851) s'écrit dans le même bloc, une phrase par clé, sur le patron exact de
+  `native_field` (§5.52 bis) : « Le champ « {key} » reprend le champ de l'affaire « {libellé} », déjà porté par toute affaire
+  de l'espace : retirez-le ou renommez-le. » Le champ de l'affaire est nommé par son **libellé**, que la base écrit
+  (`common_label`), jamais par sa clé seule ni par le code du défaut. Il ne gagne aucune forme : le bloc, sa teinte d'accent
+  et « Accepter » retenu tant qu'il demeure sont ceux du §5.52.
 - **SOUS `md`**, la ligne se replie — le texte, puis la clé et la commande —, cible conservée ; `md` et jamais `sm` (§11).
   La page ne défile jamais horizontalement (§7).
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : la section emprunte au §5.52 sa ligne et son retrait, au §5.15

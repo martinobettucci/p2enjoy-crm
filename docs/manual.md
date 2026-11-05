@@ -4106,6 +4106,14 @@ proposer de champ pour elles ; si un champ nouveau en reprend une — un champ �
 défaut le dit : « Le champ « montant » reprend le montant, déjà porté par l'affaire : retirez-le ou
 renommez-le. » Un champ qui existe déjà dans un workflow n'est jamais signalé.
 
+**Les champs de l'affaire de votre espace** ([section 18.16](#les-champs-communs-a-toute-affaire)) comptent de même :
+l'IA les connaît, et ne doit pas en proposer un double dans le formulaire du workflow. Si un champ nouveau reprend
+un champ de l'affaire actif — même clé, ou même libellé, comme un champ « SIRET » quand l'espace en porte déjà un —,
+le défaut le nomme : « Le champ « siret » reprend le champ de l'affaire « SIRET », déjà porté par toute affaire de
+l'espace : retirez-le ou renommez-le. » Tant qu'il demeure, « Accepter » reste retenu. Un champ de l'affaire
+archivé ne compte pas. Pour qu'une transition exige un champ de l'affaire, l'IA le place parmi les « Champs
+communs exigés », sans le recréer.
+
 ![Un champ « montant » proposé par l'IA, de type « Montant »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champ-montant.jpg)
 
 **Les suggestions en revue** sont listées sous les workflows, dans « Suggestions de l’IA en revue » :
