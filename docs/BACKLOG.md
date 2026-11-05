@@ -18563,13 +18563,14 @@ Question du connecteur : **non** (décision 816).
 
 - [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-02 : décision 816,
       `docs/SPEC-mail-subsystem.md` §23, INC-340 arbitrée.
-- [~] **T2 — base et `mail-sync`** : migration **`0151`** (la `0150` est `CRM-111` T4.1), `last_sync_at` écrite par la
+- [@] **T2 — base et `mail-sync`** : migration **`0151`** (la `0150` est `CRM-111` T4.1), `last_sync_at` écrite par la
       relève, garde de droit. Vérifié le 2026-11-02 sur une base reconstruite : pgTAP complet (128 fichiers), pytest (291),
       une relève réelle datée. **Reste** : rejouer `scripts/verify-mail-inbound.sh` en entier, et l'E2E de l'écran d'état
       avec T4.
 - [x] **T3 — fonction edge `mail-connection-test`**, vérifiée le 2026-11-02 : unitaires (gestionnaire, dépendances,
       environnement par fonction) ; API `e2e/api/tester-connexion.spec.ts` 7/7 sur la pile réelle.
-- [ ] **T4 — écrans, design system, manuel, E2E et captures.**
+- [@] **T4 — écrans, design system, manuel, E2E et captures.**
+      *Prise en charge (T2 et T4) : session interactive d5b44a2d (p2enjoy-crm-30) depuis 2026-11-05 08:16 UTC — état avant : [~] (T2), [ ] (T4)*
 - [ ] **T5 — livraison en production et constat** : une boîte testée depuis l'écran, et sa date de relève visible sur
       l'écran d'état.
       *Partielle le 2026-11-03* : la migration `0151`, l'image `mail-sync` et la fonction edge sont livrées avec le lot
