@@ -8779,3 +8779,23 @@ dans le `.venv`, sur l'hôte, ou à défaut dans un conteneur jetable de l'image
 le code de pytest, et 125 pour une installation impossible. Les six harnais l'adoptent, et chaque dégradation Python
 exige le **code 1** ; le README §7 nomme la bibliothèque. À arbitrer : par quelle unité, et si le conteneur jetable devient
 la voie documentée plutôt que le `.venv`.
+
+### INC-346 — l'accueil d'un espace qui a des channels dit qu'aucun channel n'est disponible
+
+*Relevé le 2026-11-05 par la session 152dd27d (p2enjoy-crm-ac) en observant les captures de `CRM-112` T6
+(`docs/captures/CRM-112/recherche-par-champ-xl-1440.jpg`) ; cause localisée par la session de livraison (p2enjoy-crm-54).
+**Ouverte** : la correction est une décision du responsable, et le comportement reste inchangé.*
+
+**Le constat.** Connectée sur l'espace du seed, qui porte trois tracks et leurs channels, l'administratrice ouvre `/` et lit
+« Aucun board à afficher » puis « Un board affiche les cards d'un channel. Aucun channel n'est disponible dans cet espace
+de travail. » La seconde phrase est fausse : les channels existent, et la barre latérale les montre.
+
+**La cause.** `AccueilDemarrage` (`webapp/src/app/GuideDemarrage.tsx`, l. 583 à 595) rend l'état vide `route.board.empty`
+dès que le guide de démarrage est fini ou masqué, et aussi sans session. Ce texte vient de `CRM-020`, quand l'accueil ne
+rendait un board que si l'espace avait des channels ; il affirme depuis une absence que l'écran ne mesure pas.
+
+**Ce qui contredit quoi.** `docs/DESIGN_SYSTEM.md` §5.8 et §5.51 : un état vide dit ce qui manque, et nomme l'écran qui le
+comble ; ici rien ne manque, et le texte ne mène nulle part. `CLAUDE.md` §18 : une valeur par défaut trompeuse.
+
+**Pistes, à arbitrer** : un texte d'accueil qui invite à choisir un track ou un channel dans la barre latérale ; ou un accueil
+qui ouvre le premier board lisible ; ou garder l'état vide pour un espace réellement sans channel, et un autre texte sinon.
