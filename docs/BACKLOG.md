@@ -17701,7 +17701,8 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       palette, le modèle relu en base, la prévisualisation qui rend la valeur, l'archivage refusé qui nomme le modèle, la
       variable inconnue refusée par requête directe) et les voisines révisées **8/8** ; captures observées ; manuel §14.1
       et §18.16 (image renouvelée), garde 168.
-- [ ] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
+- [@] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
+      *Prise en charge : session interactive 152dd27d (p2enjoy-crm-ac) depuis 2026-11-05 08:17 UTC — état avant : [ ]*
       *MCP (décision 841)* : **oui**, par l'outil de recherche existant, famille « affaires » (consulter).
       *Spécifiée le 2026-11-04 avant le code (décision 844)* : §10 (précision T6) — `value_tsv` et son index, l'extrait
       qui nomme le champ, la mesure sous le jeton réel avant le code.
