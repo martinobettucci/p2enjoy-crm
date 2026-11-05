@@ -1,5 +1,7 @@
 # Contrat de déploiement — P2Enjoy CRM
 
+*Session de livraison : session interactive 4522fa9c (p2enjoy-crm-54, poste du responsable) depuis 2026-11-05 14:45 UTC — lot : migration 0169, fonction edge `ia` et webapp de `main` (`CRM-112` T7) ; campagne E2E complète avant la demande de fenêtre (décisions 830 et 832).*
+
 Ce document décrit **ce qu'un humain doit appliquer** pour déployer ou mettre à jour la
 production. Il ne dérive jamais de l'état réel du projet : toute modification du schéma, des
 services déployés ou des variables d'environnement le met à jour **dans le même changement**.
