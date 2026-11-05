@@ -2875,3 +2875,62 @@ encore en attente.
 **Ce que le jeu démontre** : l'entrée « Mails préparés » de l'inbox de Camille avec son compte, la mention « Préparé par
 l'assistant », la relecture avec une copie, une réponse, et l'encadré de la fiche de « Refonte du site vitrine »
 (`docs/DESIGN_SYSTEM.md` §5.90, manuel §12.4).
+
+## 38. Les champs de l'affaire — `CRM-112` T8 (`docs/SPEC-champs-communs.md` §13 ; `docs/SPEC-ia.md` §14.11)
+
+*Écrit le 2026-11-05, avant la section du seed.* Section « 8 tertricies. Champs de l'affaire » de
+`supabase/seed/apply-seed.sh`. Elle vient après les rattachements multiples (§36), dont elle reprend la billetterie.
+
+### 38.1 Ce que le seed pose
+
+**Cinq champs de l'affaire**, déclarés par Camille (administratrice) par l'écriture de Réglages ▸ « Champs de
+l'affaire » :
+
+| Clé | Libellé | Type | Listé | État |
+|---|---|---|---|---|
+| `siret` | SIRET | texte, aide « Quatorze chiffres, sans espace » | oui | actif |
+| `secteur` | Secteur | choix : `industrie` Industrie, `sante` Santé, `public` Secteur public, `services` Services | oui | actif |
+| `date-signature` | Date de signature | date | non | actif |
+| `budget-client` | Budget du client | montant, `EUR` | non | actif |
+| `code-client-historique` | Ancien code client | texte | non | **archivé**, après avoir reçu une valeur |
+
+**Des valeurs**, écrites par Camille comme la fiche les écrit (mise à jour, sinon insertion) :
+
+| Affaire | Valeurs |
+|---|---|
+| « Plateforme de billetterie — Musée des Confluences » (deux rattachements, §36) | SIRET `81234567800012`, Secteur public, budget 48 000 EUR, ancien code `CLI-0042` (archivé ensuite) |
+| « Refonte du site vitrine » | SIRET `79012345600021`, Services |
+| « Formation Data & IA — promo 2026 » (étape Signature) | SIRET `41234567800035`, Secteur public, signée le 2026-10-20, budget 18 000 EUR |
+| « Refonte intranet Ville de Lyon » (étape Négociation) | Secteur public — **sans SIRET** |
+
+**Une exigence** : la transition « Négociation → Signature » du workflow « Cycle commercial standard » exige `siret`.
+« Refonte intranet Ville de Lyon » en est **bloquée** : son déplacement vers Signature est refusé tant que le SIRET manque.
+
+**Un modèle d'email**, « SIRET pour la facturation » : objet « Facturation — {{card.title}} », corps qui cite
+`{{card.field.siret}}`.
+
+**Une suggestion de l'assistant**, en revue, par la vraie fonction `ia` et le scénario `champ_commun` du simulateur : son
+champ `siret` porte le défaut `common_field` (`docs/SPEC-ia.md` §14.11).
+
+### 38.2 Le vrai chemin
+
+Les champs, les valeurs, l'exigence et le modèle passent par PostgREST sous le jeton de Camille, comme l'écran les écrit
+(`webapp/src/lib/champs-communs.ts`, l'éditeur de workflows, `webapp/src/lib/modeles-emails.ts`) ; l'archivage par la
+mise à jour de `archived_at`. La suggestion naît par `functions/v1/ia/suggestions` avec l'en-tête `x-ia-simulateur`.
+Aucune écriture n'est faite sous la clé de service.
+
+### 38.3 Convergence et vérification
+
+Un champ est retrouvé par sa clé, une valeur par son couple (affaire, champ), l'exigence par son couple (transition,
+champ), le modèle par son identifiant stable, la suggestion par sa demande : rien n'est réécrit qui soit déjà là. Le
+champ archivé n'est archivé qu'une fois, après sa valeur. La section vérifie, sous la clé de service : cinq champs dont un
+archivé, les valeurs du tableau, l'exigence ; puis, sous le jeton de Camille, que `move_card` de « Refonte intranet Ville
+de Lyon » vers Signature est refusé et que l'affaire reste en Négociation ; sous celui de Farida (lectrice), qu'elle lit les
+valeurs de la billetterie et que sa mise à jour d'une valeur ne touche aucune ligne.
+
+### 38.4 Ce que le jeu démontre
+
+Réglages ▸ « Champs de l'affaire » avec un champ archivé ; la partie commune de la fiche, dont la valeur gardée d'un champ
+archivé ; les colonnes SIRET et Secteur de la vue liste et leurs filtres ; le refus de transition et sa reprise ; le modèle
+et sa prévisualisation ; la recherche par SIRET ; le défaut `common_field` de l'assistant ; la lectrice qui lit sans
+écrire.

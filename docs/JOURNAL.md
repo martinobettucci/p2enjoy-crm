@@ -39207,3 +39207,19 @@ défaut du lot, une preuve du connecteur dépendante de l'ordre, corrigé par la
 complet rejoué : 112 contrôles, aucune anomalie.
 **Décision : oui, sans instantané** : un `pg_dump` avant ; `0168` ajoute une colonne et son index, reprend deux fonctions
 et un déclencheur ; aucune table, aucune donnée hors `value_tsv`.
+
+### décision 853 — `CRM-112` T8 : le seed des champs de l'affaire, et la transition qui exige le SIRET
+
+*2026-11-05, session interactive 4891a451 (p2enjoy-crm-b6), tranche confiée par la session de livraison.* **Problème** :
+le §13 de `docs/SPEC-champs-communs.md` fixe ce que le seed doit démontrer, sans désigner les affaires, la transition ni
+les valeurs. **Observations** (lecture seule de la base de dev) : aucun champ de l'affaire dans l'espace seedé ; les E2E
+existants posent les leurs sous des clés préfixées, sans collision avec `siret`, `secteur`, `date-signature` et
+`budget-client` ; dans « Cycle commercial standard », « Négociation → Signature » n'exige rien et compte neuf affaires à
+son départ, dont la billetterie (§36) et « Refonte intranet Ville de Lyon ». **Décision de conception**
+(`docs/SPEC-seed.md` §38) : « Négociation → Signature » exige `siret` — l'exemple que le design system cite déjà (§5.86) ;
+la billetterie, « Refonte du site vitrine » et « Formation Data & IA — promo 2026 » portent un SIRET ; « Refonte intranet
+Ville de Lyon » n'en porte pas et reste bloquée en Négociation ; un cinquième champ, archivé après avoir reçu une valeur ;
+un modèle d'email qui cite `{{card.field.siret}}` ; une suggestion du scénario `champ_commun`. Tout passe par PostgREST
+et la fonction `ia` sous le jeton de Camille. **Conséquence à mesurer** : l'espace seedé porte désormais des champs, des
+valeurs et une exigence, si bien que les E2E et les captures du manuel qui comptent les champs, les colonnes ou franchissent
+« Négociation → Signature » doivent être rejoués, et repris si leur attente supposait un espace sans champ commun.
