@@ -17735,7 +17735,8 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       Sous-ensemble de ce périmètre seulement, jamais la campagne complète (décision 830). La suggestion de démonstration du
       scénario entre au seed avec `siret`, en T8. **Reste** : la livraison de la `0169` avec la fonction `ia` et la webapp de
       `main`, par la session de livraison, et le constat du responsable — un champ « SIRET » proposé par l'IA, refusé.
-- [ ] **T8** — seed (`docs/SPEC-champs-communs.md` §13), E2E, captures aux quatre paliers, `docs/manual.md`.
+- [@] **T8** — seed (`docs/SPEC-champs-communs.md` §13), E2E, captures aux quatre paliers, `docs/manual.md`.
+      *Prise en charge : session interactive 4891a451 (p2enjoy-crm-b6) depuis 2026-11-05 14:44 UTC — état avant : [ ]*
 - [P] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de
       (**Livrée le 2026-11-05**, décision 852, révision `b9fa4d11`, image `mcp` reconstruite ; reste le constat du responsable.)
       `crm_card_list` ; `docs/SPEC-mcp.md` §9.2.
