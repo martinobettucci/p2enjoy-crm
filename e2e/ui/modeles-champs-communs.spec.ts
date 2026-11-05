@@ -54,7 +54,8 @@ async function poser(request: APIRequestContext): Promise<void> {
 		data: { workspace_id: ESPACE, key: CLE, label: LIBELLE, type: 'text', options: {} },
 	})
 	expect(champ.status(), await champ.text()).toBe(201)
-	const [{ id: idChamp }] = (await champ.json()) as { id: string }[]
+	const idChamp = ((await champ.json()) as { id: string }[])[0]?.id
+	expect(idChamp, 'le champ de sonde créé').toBeTruthy()
 	const idCard = randomUUID()
 	const creation = await posterAffaire(request, rest('cards'), {
 		headers: { ...enTetesService(), Prefer: 'return=representation' },
