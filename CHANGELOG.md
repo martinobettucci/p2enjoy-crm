@@ -13,6 +13,20 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-112` T6 — la recherche globale par les champs de l'affaire (migration `0168`)
+
+*En développement seulement. Prouvé par la suite pgTAP `0157`, le test d'API `e2e/api/recherche-champs-communs.spec.ts`
+et l'unitaire du module de recherche (décisions 844 et 848, docs/SPEC-champs-communs.md §10).*
+
+- La palette de recherche trouve une affaire par ses champs de l'affaire : un texte, une adresse email, un téléphone,
+  une adresse web, ou le libellé d'un choix. Les nombres, montants, dates, cases, personnes, contacts et fichiers ne se
+  cherchent pas, ni les champs archivés.
+- Le résultat dit par quel champ : « SIRET : 552 100 554 ». Une affaire trouvée par son titre garde un résultat sans
+  extrait.
+- Les droits sont ceux de l'affaire : une personne ne trouve que ce qu'elle lit. La recherche reste lue sous ses droits,
+  et la valeur cherchable est posée par la base, qui la recalcule quand les choix d'un champ changent.
+- Le connecteur MCP rend le même extrait par son outil de recherche ; aucun outil nouveau.
+
 ### `CRM-112` T9 — les champs de l'affaire dans le connecteur MCP (image `mcp`, aucune migration)
 
 *En développement seulement. Prouvé par les tests pytest du connecteur et par `scripts/verify-mcp.sh` contre la vraie

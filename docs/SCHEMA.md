@@ -2511,6 +2511,27 @@ elle.
 attente sont perdus : les lister avant. **Avec l'image `mcp` d'avant `CRM-128` T3** : sans la garde, son `crm_mail_send`
 enverrait de nouveau directement.
 
+### Migration `0168` — la recherche globale par les champs de l'affaire (`CRM-112` T6 ; livrée en développement le 2026-11-05)
+
+`docs/SPEC-champs-communs.md` §10 (précision T6 et mesure du 2026-11-05), décisions 844 et 848. **Aucune table.**
+- **`card_common_field_values.value_tsv tsvector`**, posée par la base : le texte des types `text`, `textarea`, `email`,
+  `phone`, `url`, et le **libellé** des choix de `select` et `multiselect`, sous `app.francais_sans_accent` ; nulle pour
+  les autres types et pour une valeur vide. Index GIN **`card_common_field_values_value_tsv_idx`**.
+- **`app.card_common_value_tsv(type, options, valeur) returns tsvector`** : son calcul, fermé aux clients.
+- **`app.card_common_field_values_validate`** reprise avec un ajout : elle pose `value_tsv` à chaque écriture ; sous le
+  drapeau de transaction `app.common_value_tsv_recompute`, elle ne fait que ce calcul, sans revalider ni redater.
+- **`app.card_common_fields_recompute_tsv`** et son déclencheur `after update of options` sur `card_common_fields` :
+  quand les choix d'un champ changent, les valeurs de ce champ sont recalculées sous le drapeau — retirer un choix
+  encore employé reste permis, et aucune valeur n'est redatée.
+- **`public.recherche_globale`** reprise avec un ajout, toujours `security invoker` : une expression de table lit d'abord
+  les valeurs qui répondent, la première par affaire dans l'ordre de la partie commune (champ actif) ; la famille
+  `affaire` trouve aussi par elle, son rang compte le champ au poids `B`, et son `extrait` vaut alors « libellé : texte »
+  (`app.card_common_field_texte`). Une affaire trouvée par son seul titre garde un extrait nul.
+- Les valeurs existantes reçoivent leur `value_tsv`, déclencheur de validation suspendu le temps de la reprise.
+
+**Retrait** : reposer `recherche_globale` et `app.card_common_field_values_validate` de la `0150` et de la `0164`,
+supprimer le déclencheur et les deux fonctions neuves, puis l'index et la colonne. Aucune donnée n'est perdue.
+
 ### Migration `0167` — les champs de l'affaire dans les modèles d'email (`CRM-112` T5 ; livrée en développement le 2026-11-04)
 
 `docs/SPEC-champs-communs.md` §9 (précision T5), décision 842. **Aucune table, aucune donnée.**

@@ -2,6 +2,8 @@
 #           vraie base et le vrai service `mcp`, par le parcours OAuth réel
 # @verifies docs/SPEC-mcp.md §13 (par outil : succès, refus par la matrice, refus par le CRM malgré la matrice ouverte,
 #           journal écrit), §9.2 quater (recherche filtrée par la matrice, ni slug ni workflow modifiés)
+# @verifies CRM-112 (docs/BACKLOG.md) — tranche T6 : la recherche du connecteur trouve une affaire par un champ de
+#           l'affaire et rend l'extrait qui le nomme, famille `affaires` (docs/SPEC-champs-communs.md §10, décision 841)
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
 L'administratrice (Camille) et le business developer reçoivent, par la clé de service, les cases de la preuve ; elles sont
@@ -101,6 +103,33 @@ async def test_la_recherche_suit_la_matrice_de_chaque_famille():
             assert await _dernier_journal(CAMILLE[1]) == ("crm_search", "ok")
     finally:
         await _retirer(CAMILLE, [("structure", "consulter"), ("affaires", "consulter")])
+
+
+VITRINE = "5eed0000-0000-4000-8000-0000000000c1"
+
+
+async def test_la_recherche_trouve_une_affaire_par_un_champ_de_l_affaire_et_le_nomme():
+    """`CRM-112` T6 : le connecteur relaie `extrait` en `excerpt`, sans rien recomposer ; aucun outil nouveau."""
+    cle = "tst-t6-mcp-siret"
+    assert (await _service("POST", "/card_common_fields", json={
+        "workspace_id": ESPACE_SEEDE, "key": cle, "label": "SIRET MCP", "type": "text", "options": {},
+    })).status_code == 201
+    champ = (await _service("GET", "/card_common_fields", params={"key": f"eq.{cle}", "select": "id"})).json()[0]["id"]
+    await _poser(CAMILLE, [("affaires", "consulter")])
+    try:
+        assert (await _service("POST", "/card_common_field_values", json={
+            "card_id": VITRINE, "field_id": champ, "workspace_id": ESPACE_SEEDE, "value": "Quorvex 552 100 554",
+        })).status_code == 201
+        async with Client(f"{MCP}/mcp", auth=await _jeton(CAMILLE)) as client:
+            await _attendre_visible(client, "crm_search")
+            resultats = (await client.call_tool("crm_search", {"query": "quorvex"})).structured_content["results"]
+            assert resultats == [{
+                "kind": "affaire", "id": VITRINE, "workspace_id": ESPACE_SEEDE, "title": "Refonte du site vitrine",
+                "subtitle": resultats[0]["subtitle"], "excerpt": "SIRET MCP : Quorvex 552 100 554",
+            }]
+    finally:
+        await _retirer(CAMILLE, [("affaires", "consulter")])
+        await _service("DELETE", "/card_common_fields", params={"key": f"eq.{cle}"})
 
 
 async def test_le_business_developer_est_refuse_par_le_crm_et_la_corbeille_fermee_par_la_matrice():

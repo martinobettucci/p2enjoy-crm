@@ -9,6 +9,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.46 (la ligne sans destination reste rendue)
 // @verifies CRM-111 T4.1 (docs/BACKLOG.md) — l'adresse d'une affaire mène à son premier rattachement dans l'ordre des
 //           tracks puis des channels, celui que le sous-titre nomme en tête (docs/SPEC-rattachements.md §9, décision 814)
+// @verifies CRM-112 T6 (docs/BACKLOG.md) — l'extrait d'une affaire trouvée par un champ de l'affaire est rendu tel que la
+//           base l'écrit (docs/SPEC-champs-communs.md §10 ; docs/SPEC-recherche.md §6.5 ; docs/DESIGN_SYSTEM.md §5.46)
 //
 // Ces tests portent sur la LOGIQUE, sans navigateur : c'est ce que la séparation du module rend
 // possible (§10.2). La pile réelle est éprouvée par `e2e/api/recherche-palette.spec.ts`, et la
@@ -223,6 +225,20 @@ describe('la destination, famille par famille (§13.4, §13.5)', () => {
 			adressesCommentaires,
 		)
 		expect(resultat.adresse).toBe('/tracks/conseil-ia/grands-comptes/cards/a-1')
+	})
+
+	// `CRM-112` T6 : une affaire trouvée par un champ de l'affaire porte l'extrait « libellé : valeur » que la base compose ;
+	// le module le rend tel quel, sans le recomposer, et une affaire trouvée par son titre garde un extrait nul.
+	it('rend l’extrait d’une AFFAIRE trouvée par un champ de l’affaire tel que la base l’écrit', () => {
+		const parChamp = composerResultat(
+			ligne({ objet: 'affaire', id: 'a-1', titre: 'Refonte du site vitrine', extrait: 'SIRET : 552 100 554' }),
+			adressesAffaires,
+			adressesCommentaires,
+		)
+		expect(parChamp).toMatchObject({ famille: 'affaire', extrait: 'SIRET : 552 100 554' })
+		expect(parChamp.adresse).toBe('/tracks/conseil-ia/grands-comptes/cards/a-1')
+		const parTitre = composerResultat(ligne({ objet: 'affaire', id: 'a-1' }), adressesAffaires, adressesCommentaires)
+		expect(parTitre.extrait).toBeNull()
 	})
 
 	it('mène un COMMENTAIRE à l’affaire commentée, JAMAIS à lui-même', () => {

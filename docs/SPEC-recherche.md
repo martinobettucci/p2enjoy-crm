@@ -516,6 +516,12 @@ L'extrait est ensuite **replié** : `regexp_replace(…, '\s+', ' ', 'g')` puis 
 qu'un corps court est rendu en entier, retours à la ligne compris, et une palette n'affiche qu'une
 ligne.
 
+*Révisé par `CRM-112` T6 (migration `0168`, `docs/SPEC-champs-communs.md` §10, décision 848).* **Une affaire trouvée par
+un champ de l'affaire porte un extrait** : « libellé : texte », le premier champ actif qui répond dans l'ordre de la partie
+commune, sa valeur rendue comme dans un modèle d'email (`app.card_common_field_texte` : un choix par son libellé). Une
+affaire trouvée par son seul titre, sa description ou ses prochaines actions garde un extrait nul ; trouvée aussi par un
+champ, elle porte l'extrait du champ. Les familles `contact` et `organisation` gardent un extrait nul.
+
 ### 6.6 Ordre et bornes
 
 - Ordre : `rang desc`, puis `titre` en `collate "fr-FR-x-icu"`, puis `id`. Le second et le troisième

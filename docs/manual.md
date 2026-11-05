@@ -544,7 +544,7 @@ Cinq familles d'objets, dans la même frappe :
 
 | Famille | Ce qui est cherché |
 |---|---|
-| **Affaire** | son titre |
+| **Affaire** | son titre, sa description, ses prochaines actions, et ses **champs de l'affaire** : un texte, une adresse email, un téléphone, une adresse web, ou le libellé d'un choix |
 | **Contact** | son nom, sa fonction, son adresse email |
 | **Organisation** | son nom, son domaine |
 | **Commentaire** | le texte du propos |
@@ -553,6 +553,9 @@ Cinq familles d'objets, dans la même frappe :
 Chaque résultat porte **le nom de sa famille en toutes lettres**, puis ce qui l'identifie et le
 contexte où il vit — le channel d'une affaire, l'organisation d'un contact, l'auteur d'un
 commentaire. Pour un commentaire et un message, un **extrait du passage trouvé** est affiché.
+Une affaire trouvée par l'un de ses champs de l'affaire dit lequel : « SIRET : 552 100 554 ». Les nombres, montants,
+dates et cases à cocher ne se cherchent pas, ni les champs archivés ; et vous ne trouvez une affaire que si vous pouvez
+la lire.
 
 ### 4.3 Ce qu'elle comprend, et ce qu'elle ne comprend pas
 

@@ -4644,6 +4644,9 @@ parce qu'elle porte sur le produit entier, et non sur l'utilisateur.
   repli du §5.21 : l'extrait est un **échantillon**, pas une donnée dont la troncature perdrait
   quelque chose. **Le titre et le sous-titre, eux, se replient** — ils nomment l'objet, et le §5.43
   a déjà payé ce défaut en regardant une capture : « le lien ne nommait plus l'affaire qu'il ouvre ».
+  *`CRM-112` T6, écrit le 2026-11-05 avec le code, après relecture intégrale de ce document le même jour* : une affaire
+  trouvée par un champ de l'affaire porte l'extrait « libellé : texte » — « SIRET : 552 100 554 » —, composé par la base
+  (`docs/SPEC-recherche.md` §6.5). Il se rend comme tout extrait, sur une ligne, en ellipse : aucune forme nouvelle.
 
 - **UNE LIGNE SANS DESTINATION RESTE RENDUE, SANS LIEN.** Elle garde son titre, son sous-titre et
   son extrait ; elle n'est ni cliquable, ni atteignable par `Entrée`, et une mention en `--text-xs`

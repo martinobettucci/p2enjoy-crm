@@ -17701,11 +17701,21 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       palette, le modèle relu en base, la prévisualisation qui rend la valeur, l'archivage refusé qui nomme le modèle, la
       variable inconnue refusée par requête directe) et les voisines révisées **8/8** ; captures observées ; manuel §14.1
       et §18.16 (image renouvelée), garde 168.
-- [@] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
-      *Prise en charge : session interactive 152dd27d (p2enjoy-crm-ac) depuis 2026-11-05 08:17 UTC — état avant : [ ]*
+- [P] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
       *MCP (décision 841)* : **oui**, par l'outil de recherche existant, famille « affaires » (consulter).
       *Spécifiée le 2026-11-04 avant le code (décision 844)* : §10 (précision T6) — `value_tsv` et son index, l'extrait
       qui nomme le champ, la mesure sous le jeton réel avant le code.
+      *Vérifiée en développement le 2026-11-05* (décision 848) : mesure sous les droits de Driss, 4 410 valeurs — +30 ms
+      pour la forme retenue, les valeurs qui répondent lues d'abord, `security invoker` ; migration **`0168`** appliquée
+      en dev (registre à 166) ; pgTAP `0157` (20 assertions) et les suites voisines 0012, 0065, 0133, 0140, 0141, 0152 à
+      0154 et 0156 vertes ; API `e2e/api/recherche-champs-communs.spec.ts` (5) et les 18 de la recherche ; unitaire du
+      module de recherche (21) ; E2E `e2e/ui/recherche-champs-communs.spec.ts` (3 : l'administratrice, la lectrice, quatre
+      paliers), captures `docs/captures/CRM-112/recherche-par-champ-*` observées ; connecteur : `test_la_recherche_trouve_une_affaire_par_un_champ_de_l_affaire_et_le_nomme`
+      (`mcp/tests/test_integration_structure.py`), vert dans deux passages de `verify-mcp.sh --rapide` joués par b6 avec une
+      image qui le contenait. Types
+      régénérés (`value_tsv`). Sous-ensemble de ce périmètre seulement, jamais la campagne complète (décision 830).
+      **Reste** : la livraison de la `0168` avec la webapp de `main`, par la session de livraison, et le constat du
+      responsable — une affaire retrouvée en production par un de ses champs.
 - [ ] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.
 - [ ] **T8** — seed (`docs/SPEC-champs-communs.md` §13), E2E, captures aux quatre paliers, `docs/manual.md`.
 - [P] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de

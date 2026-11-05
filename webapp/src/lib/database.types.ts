@@ -519,6 +519,7 @@ export type Database = {
           value_date: string | null
           value_search: string | null
           value_timestamp: string | null
+          value_tsv: unknown
           workspace_id: string
         }
         Insert: {
@@ -531,6 +532,7 @@ export type Database = {
           value_date?: string | null
           value_search?: string | null
           value_timestamp?: string | null
+          value_tsv?: unknown
           workspace_id: string
         }
         Update: {
@@ -543,6 +545,7 @@ export type Database = {
           value_date?: string | null
           value_search?: string | null
           value_timestamp?: string | null
+          value_tsv?: unknown
           workspace_id?: string
         }
         Relationships: [

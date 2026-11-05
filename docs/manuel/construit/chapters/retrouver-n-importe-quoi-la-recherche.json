@@ -255,7 +255,20 @@
 					[
 						{
 							"type": "text",
-							"text": "son titre"
+							"text": "son titre, sa description, ses prochaines actions, et ses "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "champs de l'affaire"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : un texte, une adresse email, un téléphone, une adresse web, ou le libellé d'un choix"
 						}
 					]
 				],
@@ -368,7 +381,7 @@
 				},
 				{
 					"type": "text",
-					"text": " est affiché."
+					"text": " est affiché.\nUne affaire trouvée par l'un de ses champs de l'affaire dit lequel : « SIRET : 552 100 554 ». Les nombres, montants,\ndates et cases à cocher ne se cherchent pas, ni les champs archivés ; et vous ne trouvez une affaire que si vous pouvez\nla lire."
 				}
 			]
 		},
