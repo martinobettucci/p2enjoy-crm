@@ -17717,7 +17717,8 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       régénérés (`value_tsv`). Sous-ensemble de ce périmètre seulement, jamais la campagne complète (décision 830).
       **Reste** : la livraison de la `0168` avec la webapp de `main`, par la session de livraison, et le constat du
       responsable — une affaire retrouvée en production par un de ses champs.
-- [ ] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.
+- [@] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.
+      *Prise en charge : session interactive 4891a451 (p2enjoy-crm-b6) depuis 2026-11-05 09:12 UTC — état avant : [ ]*
 - [ ] **T8** — seed (`docs/SPEC-champs-communs.md` §13), E2E, captures aux quatre paliers, `docs/manual.md`.
 - [P] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de
       `crm_card_list` ; `docs/SPEC-mcp.md` §9.2.
