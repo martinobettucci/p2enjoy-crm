@@ -2905,6 +2905,10 @@ l'affaire » :
 | « Refonte du monitoring — Vertuo » (étape Négociation, channel « Maintenance ») | Services — **sans SIRET** |
 
 **Une exigence** : la transition « Négociation → Signature » du workflow « Cycle commercial standard » exige `siret`.
+*Révisé le même jour (décision 855)* : le champ `siret` et cette exigence sont posés dans la section « 6 bis » du seed,
+**avant la copie** du workflow par défaut (section 7) — la composition compte les exigences communes depuis la migration
+0157, et une exigence ajoutée après la copie ferait diverger la source au rejeu. La copie « Cycle commercial — Conseil
+IA » porte donc la même exigence. Une base de dev seedée avant cette révision se recrée une fois (`./resetMe.sh`).
 « Refonte du monitoring — Vertuo » en est **bloquée** : son déplacement vers Signature est refusé tant que le SIRET manque.
 *Révisé le même jour, avant d'appliquer le seed (décision 853)* : la première rédaction bloquait « Refonte intranet Ville
 de Lyon », mais `e2e/api/valeurs-champs.spec.ts` (q bis) déplace cette affaire vers Signature et attend la liste exacte de

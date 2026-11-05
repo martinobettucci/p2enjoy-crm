@@ -39237,3 +39237,17 @@ ui 1 135 sur 1 139, api 1 319 sur 1 322, mail 51/51, manuel 143 sur 145, `verify
 5 024 assertions, garde du manuel 168 ; le reste rejoué vert seul, INC-342, ou l'âge du seed (`rentabilite`). Aucun
 défaut du lot. Les sessions ont redémarré pendant le dépouillement : la session de livraison s'appelle désormais `be`.
 **Décision : oui, sans instantané** : un `pg_dump` avant ; `0169` reprend une fonction, aucune table, aucune donnée.
+
+### décision 855 — `CRM-112` T8 : l'exigence du SIRET est posée avant la copie du workflow par défaut, et la base de dev est recréée
+
+*2026-11-05, session interactive 4891a451 (p2enjoy-crm-2f, ex-b6).* **Problème** : posée par la section « 8 tertricies »,
+l'exigence du SIRET sur « Négociation → Signature » modifie la composition du workflow par défaut **après** sa copie
+(section 7) ; la composition compte les exigences communes depuis la migration 0157, si bien que le second passage du seed
+voit la source diverger de sa copie et refuse de continuer (garde de la décision 303). **Mesuré** : le premier passage
+est vert, le second échoue à la section 7 ; l'exigence retirée, la copie redevient conforme (`source_modified_since_copy`
+faux) et le seed converge. **Options soumises au responsable** : poser le champ `siret` et l'exigence en section 6 bis,
+avant la copie, et recréer la base de dev une fois ; porter l'exigence sur le workflow des checklists ; ou ne pas en
+poser. **Arbitrage du responsable** : avant la copie, avec une recréation de la base de dev (`./resetMe.sh`), coordonnée
+avec les autres sessions. **Conséquences** : la copie « Cycle commercial — Conseil IA » porte elle aussi l'exigence ; une
+base de dev antérieure doit être recréée une fois pour converger ; la garde du compte des modèles d'email ne compte plus
+que les siens, la section « 8 tertricies » en posant un troisième.
