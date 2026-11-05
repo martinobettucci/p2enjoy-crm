@@ -17708,6 +17708,7 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       variable inconnue refusée par requête directe) et les voisines révisées **8/8** ; captures observées ; manuel §14.1
       et §18.16 (image renouvelée), garde 168.
 - [P] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
+      (**Livrée le 2026-11-05**, décision 852, révision `b9fa4d11`, migration `0168` ; reste le constat du responsable.)
       *MCP (décision 841)* : **oui**, par l'outil de recherche existant, famille « affaires » (consulter).
       *Spécifiée le 2026-11-04 avant le code (décision 844)* : §10 (précision T6) — `value_tsv` et son index, l'extrait
       qui nomme le champ, la mesure sous le jeton réel avant le code.
@@ -17729,6 +17730,7 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       *Prise en charge : session interactive 4891a451 (p2enjoy-crm-b6) depuis 2026-11-05 09:02 UTC — état avant : [ ]*
 - [ ] **T8** — seed (`docs/SPEC-champs-communs.md` §13), E2E, captures aux quatre paliers, `docs/manual.md`.
 - [P] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de
+      (**Livrée le 2026-11-05**, décision 852, révision `b9fa4d11`, image `mcp` reconstruite ; reste le constat du responsable.)
       `crm_card_list` ; `docs/SPEC-mcp.md` §9.2.
       *Spécifiée le 2026-11-05 avant le code (décision 846)* : `docs/SPEC-mcp.md` §9.2 *sexdecies* — famille « affaires »,
       aucune case nouvelle ; `crm_common_field_list`, `common_fields` dans `crm_card_get`, `crm_card_update` et `crm_card_list`.
@@ -18622,7 +18624,7 @@ Question du connecteur : **non** (décision 816).
       réglages et l'écran d'état ; captures `docs/captures/CRM-127/` observées (un défaut trouvé et corrigé : les commandes
       séparées à 1440 px) ; manuel §11.1 et §11.2 avec l'image `tester-une-boite`, `verify-manual` 168/168. **Reste** : la
       livraison de la webapp de `main` et le constat (`docs/PROD_MIGRATIONS.md` §2.30, T5).
-- [ ] **T5 — livraison en production et constat** : une boîte testée depuis l'écran, et sa date de relève visible sur
+- [P] **T5 — livraison en production et constat** (**livrée le 2026-11-05**, décision 852, révision `b9fa4d11` ; reste le constat du responsable) : une boîte testée depuis l'écran, et sa date de relève visible sur
       l'écran d'état.
       *Partielle le 2026-11-03* : la migration `0151`, l'image `mail-sync` et la fonction edge sont livrées avec le lot
       150 à 160 (décision 827, `docs/PROD_MIGRATIONS.md` §8) ; le bouton attend T4. L'unique compte entrant de

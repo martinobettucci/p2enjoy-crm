@@ -13,7 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-127` T4 — « Tester la connexion » sur les comptes entrants et les identités sortantes (webapp seule)
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-05 — migration 168, la webapp de `main`, l'image `mcp`, le manuel
+
+Cellule Spark `crm`, révision `b9fa4d11` (décision 852, sans nouvel instantané, un `pg_dump -Fc` avant). **Vérifié** : registre à
+166 lignes, la dernière `0168_recherche_champs_communs.sql` ; `value_tsv` et son index présents ; image `mcp` reconstruite,
+saine ; `verifier.sh` 33/34 (INC-277). Le constat fonctionnel du responsable reste à faire.
+
+#### `CRM-127` T4 — « Tester la connexion » sur les comptes entrants et les identités sortantes (webapp seule)
 
 *En développement seulement. Prouvé par les unitaires des deux écrans, `e2e/ui/tester-connexion.spec.ts` (vraies sessions
 IMAP et SMTP, échec par un mauvais mot de passe puis remise en état) et `e2e/mail/releve-datee.spec.ts` (décisions 849 et
@@ -29,7 +39,7 @@ IMAP et SMTP, échec par un mauvais mot de passe puis remise en état) et `e2e/m
 - Le harnais `scripts/verify-mail-inbound.sh` est rejoué en entier : pytest passe par `scripts/lib/pytest-mail-sync.sh`
   sur un hôte sans `pip` (décision 847, INC-345).
 
-### `CRM-112` T6 — la recherche globale par les champs de l'affaire (migration `0168`)
+#### `CRM-112` T6 — la recherche globale par les champs de l'affaire (migration `0168`)
 
 *En développement seulement. Prouvé par la suite pgTAP `0157`, le test d'API `e2e/api/recherche-champs-communs.spec.ts`
 et l'unitaire du module de recherche (décisions 844 et 848, docs/SPEC-champs-communs.md §10).*
@@ -43,7 +53,7 @@ et l'unitaire du module de recherche (décisions 844 et 848, docs/SPEC-champs-co
   et la valeur cherchable est posée par la base, qui la recalcule quand les choix d'un champ changent.
 - Le connecteur MCP rend le même extrait par son outil de recherche ; aucun outil nouveau.
 
-### `CRM-112` T9 — les champs de l'affaire dans le connecteur MCP (image `mcp`, aucune migration)
+#### `CRM-112` T9 — les champs de l'affaire dans le connecteur MCP (image `mcp`, aucune migration)
 
 *En développement seulement. Prouvé par les tests pytest du connecteur et par `scripts/verify-mcp.sh` contre la vraie
 base (décision 846, docs/SPEC-mcp.md §9.2 sexdecies).*
@@ -58,8 +68,6 @@ base (décision 846, docs/SPEC-mcp.md §9.2 sexdecies).*
 - `crm_card_list` accepte `common_fields`, des filtres directs de la forme des vues, qui affinent ceux de la vue. Une
   clé inconnue ou archivée, ou une condition qui ne convient pas au type du champ, est refusée et nommée.
 - Aucune case nouvelle dans la matrice du connecteur.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-04 (quatrième fenêtre) — migration 167, la webapp de `main`, le manuel
 
