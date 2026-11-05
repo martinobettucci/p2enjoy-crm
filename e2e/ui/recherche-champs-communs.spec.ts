@@ -34,7 +34,8 @@ test.describe('La palette trouve une affaire par un champ de l’affaire (CRM-11
 			data: { workspace_id: ESPACE, key: CLE, label: 'Numéro SIRET de l’établissement principal', type: 'text', options: {} },
 		})
 		expect(champ.status()).toBe(201)
-		const [{ id }] = (await champ.json()) as { id: string }[]
+		const id = ((await champ.json()) as { id: string }[])[0]?.id
+		expect(id, 'le champ de la preuve est créé et rendu').toBeTruthy()
 		const valeur = await request.post(`${URL_API}/rest/v1/card_common_field_values`, {
 			headers: { ...enTetesService(), prefer: 'return=minimal' },
 			data: { card_id: AFFAIRE, field_id: id, workspace_id: ESPACE, value: 'Quorvex 552 100 554 00017' },
