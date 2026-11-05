@@ -39226,3 +39226,14 @@ un modèle d'email qui cite `{{card.field.siret}}` ; une suggestion du scénario
 et la fonction `ia` sous le jeton de Camille. **Conséquence à mesurer** : l'espace seedé porte désormais des champs, des
 valeurs et une exigence, si bien que les E2E et les captures du manuel qui comptent les champs, les colonnes ou franchissent
 « Négociation → Signature » doivent être rejoués, et repris si leur attente supposait un espace sans champ commun.
+
+### décision 854 — livrer la migration 0169, la fonction edge `ia` et la webapp de `main` (`CRM-112` T7), sans instantané
+
+*2026-11-05, session 4522fa9c (p2enjoy-crm-be, ex-54, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : la migration `0169` (un champ de l'affaire doublonné par le générateur devient un défaut bloquant
+`common_field`), la fonction edge `ia` (la consigne au modèle), la webapp de `main` (la phrase du défaut) ; pas d'image
+`mcp`. **La campagne** : types verts, unitaires verts après rejeu (1 234 tests ; les 16 échecs tenaient à la charge),
+ui 1 135 sur 1 139, api 1 319 sur 1 322, mail 51/51, manuel 143 sur 145, `verify-mcp` 112, pgTAP 146 fichiers et
+5 024 assertions, garde du manuel 168 ; le reste rejoué vert seul, INC-342, ou l'âge du seed (`rentabilite`). Aucun
+défaut du lot. Les sessions ont redémarré pendant le dépouillement : la session de livraison s'appelle désormais `be`.
+**Décision : oui, sans instantané** : un `pg_dump` avant ; `0169` reprend une fonction, aucune table, aucune donnée.
