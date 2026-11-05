@@ -5,6 +5,8 @@
 #           docs/SPEC-champs-communs.md §7, §8, §11 ; décision 846)
 # @verifies CRM-104 (docs/BACKLOG.md) — le catalogue de la famille `affaires` (docs/SPEC-mcp.md §9.2 bis), où T9 inscrit
 #           `crm_common_field_list`
+# @verifies CRM-112 T9, correctif (docs/BACKLOG.md) — la preuve attend tous ses outils, et ne dépend plus de l'ordre des
+#           fichiers de `scripts/verify-mcp.sh` (docs/SPEC-mcp.md §13 ; la visibilité retenue, `DUREE_VISIBILITE_S`)
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
 Le seed ne définit pas encore de champ de l'affaire (`CRM-112` T8) : la preuve pose les siens par la clé de service, sous
@@ -18,12 +20,14 @@ from fastmcp import Client
 from fastmcp.exceptions import ToolError
 
 from .test_integration_oauth import ESPACE_SEEDE, FARIDA, MCP, _service, pytestmark  # noqa: F401
-from .test_integration_recettes import DRISS, _attendre_visible, _dernier_journal, _jeton
+from .test_integration_recettes import DRISS, _attendre_outils, _dernier_journal, _jeton
 
 GRANDS_COMPTES = "5eed0000-0000-4000-8000-000000000032"
 SOGEXIA = "5eed0000-0000-4000-8000-0000000000c2"
 TITRE = "Affaire MCP champs communs"
 CASES = [("affaires", a) for a in ("consulter", "ajouter", "modifier", "supprimer")]
+#: Les outils que la preuve appelle sous le jeton de Driss : elle attend qu'ils soient tous visibles avant le premier appel.
+OUTILS_DRISS = {"crm_common_field_list", "crm_card_create", "crm_card_update", "crm_card_get", "crm_card_list"}
 CHAMPS = [
     {"key": "mcp-t9-siret", "label": "SIRET (preuve MCP)", "type": "text", "position": 9001},
     {"key": "mcp-t9-segment", "label": "Segment (preuve MCP)", "type": "select", "position": 9002,
@@ -71,7 +75,10 @@ async def test_lire_ecrire_et_filtrer_les_champs_de_l_affaire_par_le_connecteur(
     await _poser(DRISS, CASES)
     try:
         async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
-            await _attendre_visible(client, "crm_common_field_list")
+            # Tous les outils de la preuve, et non le premier : la visibilité retenue par le service (`DUREE_VISIBILITE_S`)
+            # peut encore porter la matrice d'une preuve précédente, qui ouvrait la consultation sans l'ajout — la liste
+            # montrait alors `crm_common_field_list` sans `crm_card_create` (défaut trouvé par la campagne complète).
+            await _attendre_outils(client, lambda noms: OUTILS_DRISS <= noms, "outils de la preuve invisibles")
 
             async def appeler(outil: str, arguments: dict) -> dict:
                 resultat = (await client.call_tool(outil, arguments)).structured_content
@@ -141,7 +148,7 @@ async def test_la_lectrice_ne_peut_pas_ecrire_un_champ_de_l_affaire_malgre_la_ma
     await _poser(FARIDA, CASES)
     try:
         async with Client(f"{MCP}/mcp", auth=await _jeton(FARIDA)) as client:
-            await _attendre_visible(client, "crm_common_field_list")
+            await _attendre_outils(client, lambda noms: "crm_card_update" in noms, "crm_card_update reste invisible")
             with pytest.raises(ToolError):
                 await client.call_tool("crm_card_update", {"card_id": SOGEXIA, "common_fields": {"mcp-t9-siret": "1"}})
             assert await _dernier_journal(FARIDA[1]) == ("crm_card_update", "refus_crm")

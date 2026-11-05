@@ -17738,10 +17738,15 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       périmètre seulement, jamais la campagne complète (décision 830). **Image `mcp` modifiée, aucune migration, aucun
       geste préalable.** **Reste** : la livraison de l'image `mcp` par la session de livraison, et le constat du
       responsable — un assistant qui lit et écrit un champ de l'affaire en production.
-      - [@] **Correctif — la preuve d'intégration dépend de l'ordre** : `verify-mcp.sh` complet, 2 échecs en direct et à
+      - [x] **Correctif — la preuve d'intégration dépend de l'ordre** : `verify-mcp.sh` complet, 2 échecs en direct et à
             travers Caddy, `test_integration_champs_communs.py::test_lire_ecrire_et_filtrer_les_champs_de_l_affaire_par_le_connecteur`
             (`Unknown tool: 'crm_card_create'` après les autres fichiers, vert seul) ; trouvé par la campagne complète de 54.
-            *Prise en charge : session interactive 152dd27d (p2enjoy-crm-ac) depuis 2026-11-05 11:47 UTC — état avant : [ ]*
+            **Cause** : la preuve n'attendait que `crm_common_field_list` ; la visibilité retenue par le service
+            (`DUREE_VISIBILITE_S`, 2 s) portait encore la matrice d'une preuve précédente qui ouvrait la consultation sans
+            l'ajout. Aucun test précédent ne garde ce qu'il a pris : retirer ses cases est son droit. **Correction** : la
+            preuve attend tous ses outils (et la seconde, `crm_card_update`). **Vérifiée le 2026-11-05** : la liste complète
+            de `verify-mcp.sh` rejouée dans une image à part, rouge avant (1 échec, 84 réussis, la même erreur), verte après
+            (85/85) ; puis `scripts/verify-mcp.sh` complet, sans `--rapide`, **112 contrôles, aucune anomalie**.
 - [~] **Livraison en production** avec `CRM-111` ou après elle, sur instruction du responsable. **T1 à T3.a livrées le
       2026-11-03** avec `CRM-111` (décision 827, révision `e44d04aa`, migrations 152, 155 à 157, 159 et 160, service
       `functions`, webapp ; `docs/PROD_MIGRATIONS.md` §8). Reste le constat du responsable (Réglages ▸ « Champs de
