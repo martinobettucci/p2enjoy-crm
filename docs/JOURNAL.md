@@ -39171,3 +39171,26 @@ venues :
 689/689 ; types des quatre projets et build verts ; E2E `ui` `tester-connexion` 8/8, `reglages-comptes-mail`,
 `reglages-identites-mail` et `etat-messagerie` verts ; E2E `mail` `releve-datee` 1/1 ; images du manuel 11 rejouées 5/5,
 `verify-manual` 168/168 ; captures aux quatre paliers observées.
+
+### décision 851 — `CRM-112` T7 : le générateur ne doublonne pas un champ de l'affaire
+
+*2026-11-05, session interactive 4891a451 (p2enjoy-crm-b6), tranche confiée par la session de livraison à la place de
+p2enjoy-crm-ac.* **Problème** : le générateur de workflow peut proposer un champ de formulaire qui doublonne un champ
+de l'affaire de l'espace, par exemple « SIRET ». `CRM-113` ne l'empêche que pour les informations natives (`native_field`).
+**Observations** : la fonction `ia` envoie déjà au modèle les champs communs non archivés de l'espace, mais seulement
+pour `exigences_communes` (`CRM-112` T2.d.1). `app.defauts_proposition_ia` relève `native_field` sur un champ nouveau,
+par sa clé ou par son libellé mis à la forme des clés, et épargne les champs vivants. **Réponses du responsable** :
+- les deux questions MCP de `CLAUDE.md` : connecteur MCP **non**, puisque la génération n'y est pas exposée ; la famille
+  est donc sans objet ;
+- **un défaut bloquant dédié**, `common_field` (`key`, `common_key`, `common_label`), plutôt que `native_field`
+  réemployé ou une consigne seule ;
+- **seuls les champs actifs** comptent.
+
+**Décision de conception** (`docs/SPEC-ia.md` §14.11) :
+- une consigne ajoutée au bloc des champs communs ;
+- le défaut, sur trois égalités exactes (les clés, et les libellés mis à la forme des clés), après `native_field`,
+  par une migration qui reprend la fonction à l'identique ;
+- la traduction de l'écran ;
+- le scénario `champ_commun` du simulateur.
+
+**Conséquence** : la suggestion de démonstration de ce scénario entre au seed avec le champ `siret`, en T8.

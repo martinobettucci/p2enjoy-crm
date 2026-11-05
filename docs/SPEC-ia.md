@@ -908,3 +908,62 @@ transmis au modèle (§12.6). L'écran traduit `native` par une clé de traducti
 | **T3** | Écran : `docs/DESIGN_SYSTEM.md` §5.52 révisé avant le code ; nom et probabilité d'étape éditables, bouton qui garde le nom, différentiel, traductions ; unitaires, E2E, captures, manuel, seed |
 | **T4** | Livraison, sur instruction du responsable : migration en fenêtre, fonction `ia` redéployée, webapp reconstruite ; constat. Le responsable s'en charge (décision 679) |
 | **T5** | Révision de la décision 679, avant toute livraison : clés `label` et `probability`, enveloppe `{key}` des codes nouveaux, comparaison des libellés sans la casse — migration `0103` (`0102` appliquée en développement n'est pas modifiée, `docs/DAT.md` §3.2 bis), fonction `ia`, simulateur, écran, seed, preuves de T1 à T3 |
+
+### 14.11 Les champs de l'affaire de l'espace — `CRM-112` T7 (écrit le 2026-11-05, avant son code ; décision 851)
+
+*Révision du §14.5 et du §14.6 pour `CRM-112` T7 (`docs/SPEC-champs-communs.md` §12).* Un workspace peut déclarer des
+**champs de l'affaire** (`card_common_fields`), portés par toute affaire de l'espace quel que soit son channel. Le
+générateur ne doit pas en proposer de doublon dans le formulaire d'un workflow, exactement comme pour les informations
+natives du §14.5.
+
+**Arbitrages du responsable (décision 851)** :
+- **Connecteur MCP : non.** La génération par IA n'est pas exposée dans le connecteur (`CRM-113`) ; aucune famille n'est
+  concernée.
+- **Un défaut bloquant dédié**, `common_field`, plutôt que `native_field` réemployé ou une consigne seule.
+- **Seuls les champs actifs comptent** : un champ de l'affaire archivé ne relève rien, ni dans la consigne ni dans le
+  défaut — comme la liste déjà envoyée au modèle pour `exigences_communes` (`CRM-112` T2.d.1).
+
+**Ce que le modèle apprend.** La liste des champs communs de l'espace lui est déjà envoyée (`CRM-112` T2.d.1 : clé,
+libellé, type ; non archivés ; lus sous les droits de l'appelant ; une configuration, jamais une valeur, §3). Le bloc
+gagne une consigne : *toute affaire de l'espace porte déjà ces champs ; ne déclare jamais dans « champs » un champ pour
+l'une de ces informations ; pour en exiger un à une transition, utilise « exigences_communes »*. Sans champ commun, ni la
+liste ni la consigne ne sont envoyées, comme aujourd'hui.
+
+**Le défaut `common_field`** (`key`, `common_key`, `common_label`), rendu par `app.defauts_proposition_ia` juste après
+`native_field`, au chemin `champs[i]`. Il relève un champ **nouveau** de la proposition — c'est-à-dire non vivant dans le
+workflow ciblé, comme pour `native_field` — lorsqu'un champ de l'affaire **non archivé de l'espace de la suggestion**
+vérifie l'une de ces égalités, toutes **exactes** :
+- la clé du champ proposé est la clé du champ commun ;
+- le libellé du champ proposé, mis à la forme des clés (`app.cle_de_libelle_ia`), est la clé du champ commun ;
+- la clé ou le libellé mis à la forme des clés du champ proposé est le libellé du champ commun mis à la forme des clés.
+
+Si plusieurs champs communs répondent, le premier dans l'ordre `position`, puis `key`, est nommé. `common_label` est le
+libellé du champ commun : l'écran en a besoin pour le nommer, et c'est une configuration, pas une valeur. Un champ
+déclenche `native_field` et `common_field` à la fois s'il répond aux deux règles. Le défaut **bloque l'acceptation**
+comme les autres (§12.3, contrôle 7), sur le même chemin que `native_field` : l'administrateur retire ou renomme le
+champ, ou le fait revoir, et les défauts sont transmis au modèle (§12.6). Un champ vivant conservé d'un workflow existant
+n'est **jamais** relevé, même si un champ commun de même clé est né après lui.
+
+**La base.** Une migration reprend `app.defauts_proposition_ia` à l'identique de sa définition en base
+(`pg_get_functiondef`), avec ce seul ajout. Son numéro est pris à l'écriture, après synchronisation. Rien d'autre ne
+change, et les révisions déjà enregistrées gardent leurs défauts écrits. Il y a un retour arrière : reprendre la
+définition précédente.
+
+**L'écran** (`docs/DESIGN_SYSTEM.md` §5.52 bis, relu en entier avant le code). Une traduction s'ajoute :
+`ia.defaut.common_field` — « Le champ « {key} » reprend le champ de l'affaire « {common_label} », déjà porté par toute
+affaire de l'espace : retirez-le ou renommez-le. » Elle est rendue comme celle de `native_field`, dans la liste des
+défauts, et l'acceptation reste fermée.
+
+**Le simulateur** gagne le scénario `champ_commun` (développement seul). Il rend une création valide à un champ près :
+`siret`, de type `text`, au libellé « SIRET ». Cela provoque `common_field` dans un espace qui déclare le champ de
+l'affaire `siret` : le seed le fait (`CRM-112` T8, `docs/SPEC-champs-communs.md` §13), et les preuves posent le leur.
+
+**Preuves** :
+- pgTAP : clé égale, libellé égal à la clé, clé égale au libellé du champ commun ; un champ archivé ou d'un autre espace
+  ne relève rien ; un champ vivant conservé n'est pas relevé ; l'acceptation est refusée tant que le défaut demeure ;
+- unitaires : la consigne de la fonction `ia` (présente avec la liste, absente sans elle), la traduction de l'écran ;
+- API, aux jetons réels contre le simulateur : le scénario `champ_commun` rend `common_field`, écrit par la base ;
+- E2E à la souris et au clavier : le défaut nommé et l'acceptation fermée, avec des captures aux quatre paliers ;
+- le manuel, au chapitre du générateur ;
+- le seed : une suggestion du scénario `champ_commun` en revue, passée par la vraie fonction. Elle entre avec le champ
+  `siret` du seed, en T8.

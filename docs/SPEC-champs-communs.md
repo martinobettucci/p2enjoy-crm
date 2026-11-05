@@ -432,7 +432,10 @@ rend en lecture seule (§7).
 - **`CRM-111`** fournit la partie commune de la fiche, la règle d'écriture « un channel suffit » et `placement_id` dans
   `card_events`. `CRM-112` ne commence qu'après sa tranche T2.
 - **`CRM-113`** apprend au générateur de workflow les champs natifs de l'affaire, pour qu'il n'en propose pas de doublon
-  (`docs/SPEC-ia.md` §14.5). Les champs communs de l'espace rejoignent cette liste (T7).
+  (`docs/SPEC-ia.md` §14.5). Les champs communs de l'espace rejoignent cette liste (T7). *Spécifié le 2026-11-05, avant
+  le code (décision 851)* : `docs/SPEC-ia.md` §14.11. La consigne est envoyée au modèle avec la liste des champs actifs.
+  Le défaut bloquant dédié `common_field` (`key`, `common_key`, `common_label`) est relevé par la base, et l'écran le
+  traduit. Le simulateur gagne le scénario `champ_commun`. Connecteur MCP : non.
 - **`CRM-063`** (modèles d'email) et **`CRM-065`** (recherche globale) voient leurs contrats étendus, dans
   `docs/SPEC-modeles-emails.md` et `docs/SPEC-recherche.md`, par les tranches T5 et T6.
 
