@@ -17738,7 +17738,7 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
 - [@] **T8** — seed (`docs/SPEC-champs-communs.md` §13), E2E, captures aux quatre paliers, `docs/manual.md`.
       *Prise en charge : session interactive 4891a451 (p2enjoy-crm-b6) depuis 2026-11-05 14:44 UTC — état avant : [ ]*
       *Spécifiée le 2026-11-05 avant le code (décision 853)* : `docs/SPEC-seed.md` §38 — cinq champs dont un archivé, les
-      valeurs de quatre affaires, « Négociation → Signature » exige `siret` et bloque « Refonte intranet Ville de Lyon », un
+      valeurs de quatre affaires, « Négociation → Signature » exige `siret` et bloque « Refonte du monitoring — Vertuo », un
       modèle d'email, la suggestion du scénario `champ_commun`. Connecteur MCP : sans objet (un seed, aucun outil).
 - [P] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de
       (**Livrée le 2026-11-05**, décision 852, révision `b9fa4d11`, image `mcp` reconstruite ; reste le constat du responsable.)

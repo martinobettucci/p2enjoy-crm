@@ -2901,10 +2901,15 @@ l'affaire » :
 | « Plateforme de billetterie — Musée des Confluences » (deux rattachements, §36) | SIRET `81234567800012`, Secteur public, budget 48 000 EUR, ancien code `CLI-0042` (archivé ensuite) |
 | « Refonte du site vitrine » | SIRET `79012345600021`, Services |
 | « Formation Data & IA — promo 2026 » (étape Signature) | SIRET `41234567800035`, Secteur public, signée le 2026-10-20, budget 18 000 EUR |
-| « Refonte intranet Ville de Lyon » (étape Négociation) | Secteur public — **sans SIRET** |
+| « Refonte intranet Ville de Lyon » (étape Négociation) | SIRET `21690123400019`, Secteur public |
+| « Refonte du monitoring — Vertuo » (étape Négociation, channel « Maintenance ») | Services — **sans SIRET** |
 
 **Une exigence** : la transition « Négociation → Signature » du workflow « Cycle commercial standard » exige `siret`.
-« Refonte intranet Ville de Lyon » en est **bloquée** : son déplacement vers Signature est refusé tant que le SIRET manque.
+« Refonte du monitoring — Vertuo » en est **bloquée** : son déplacement vers Signature est refusé tant que le SIRET manque.
+*Révisé le même jour, avant d'appliquer le seed (décision 853)* : la première rédaction bloquait « Refonte intranet Ville
+de Lyon », mais `e2e/api/valeurs-champs.spec.ts` (q bis) déplace cette affaire vers Signature et attend la liste exacte de
+ses champs de formulaire manquants. Elle reçoit donc un SIRET ; l'affaire bloquée est une affaire de « Maintenance » qu'aucune
+preuve ne déplace.
 
 **Un modèle d'email**, « SIRET pour la facturation » : objet « Facturation — {{card.title}} », corps qui cite
 `{{card.field.siret}}`.
@@ -2924,8 +2929,8 @@ Aucune écriture n'est faite sous la clé de service.
 Un champ est retrouvé par sa clé, une valeur par son couple (affaire, champ), l'exigence par son couple (transition,
 champ), le modèle par son identifiant stable, la suggestion par sa demande : rien n'est réécrit qui soit déjà là. Le
 champ archivé n'est archivé qu'une fois, après sa valeur. La section vérifie, sous la clé de service : cinq champs dont un
-archivé, les valeurs du tableau, l'exigence ; puis, sous le jeton de Camille, que `move_card` de « Refonte intranet Ville
-de Lyon » vers Signature est refusé et que l'affaire reste en Négociation ; sous celui de Farida (lectrice), qu'elle lit les
+archivé, les valeurs du tableau, l'exigence ; puis, sous le jeton de Camille, que `move_card` de « Refonte du monitoring —
+Vertuo » vers Signature est refusé et que l'affaire reste en Négociation ; sous celui de Farida (lectrice), qu'elle lit les
 valeurs de la billetterie et que sa mise à jour d'une valeur ne touche aucune ligne.
 
 ### 38.4 Ce que le jeu démontre

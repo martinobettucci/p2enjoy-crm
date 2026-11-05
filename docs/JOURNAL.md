@@ -39215,10 +39215,13 @@ le §13 de `docs/SPEC-champs-communs.md` fixe ce que le seed doit démontrer, sa
 les valeurs. **Observations** (lecture seule de la base de dev) : aucun champ de l'affaire dans l'espace seedé ; les E2E
 existants posent les leurs sous des clés préfixées, sans collision avec `siret`, `secteur`, `date-signature` et
 `budget-client` ; dans « Cycle commercial standard », « Négociation → Signature » n'exige rien et compte neuf affaires à
-son départ, dont la billetterie (§36) et « Refonte intranet Ville de Lyon ». **Décision de conception**
+son départ, dont la billetterie (§36), « Refonte intranet Ville de Lyon » et « Refonte du monitoring — Vertuo ». **Décision de conception**
 (`docs/SPEC-seed.md` §38) : « Négociation → Signature » exige `siret` — l'exemple que le design system cite déjà (§5.86) ;
-la billetterie, « Refonte du site vitrine » et « Formation Data & IA — promo 2026 » portent un SIRET ; « Refonte intranet
-Ville de Lyon » n'en porte pas et reste bloquée en Négociation ; un cinquième champ, archivé après avoir reçu une valeur ;
+la billetterie, « Refonte du site vitrine », « Formation Data & IA — promo 2026 » et « Refonte intranet Ville de Lyon »
+portent un SIRET ; « Refonte du monitoring — Vertuo » (Maintenance) n'en porte pas et reste bloquée en Négociation —
+*révisé avant d'appliquer le seed* : l'intranet, d'abord retenu, est déplacé vers Signature par
+`e2e/api/valeurs-champs.spec.ts` (q bis), qui attend la liste exacte de ses champs de formulaire manquants, alors
+qu'aucune preuve ne déplace l'affaire de Vertuo ; un cinquième champ, archivé après avoir reçu une valeur ;
 un modèle d'email qui cite `{{card.field.siret}}` ; une suggestion du scénario `champ_commun`. Tout passe par PostgREST
 et la fonction `ia` sous le jeton de Camille. **Conséquence à mesurer** : l'espace seedé porte désormais des champs, des
 valeurs et une exigence, si bien que les E2E et les captures du manuel qui comptent les champs, les colonnes ou franchissent
