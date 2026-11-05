@@ -1331,7 +1331,57 @@
 										},
 										{
 											"type": "text",
-											"text": " d'un espace, par titre, avec leur track, leur channel, leur étape, leur responsable et leur\nprochaine action — filtrées au besoin par channel, par mots du titre, par étape ou par échéance (en retard,\naujourd'hui, dans la semaine). Les affaires en sommeil n'y paraissent que si on le demande ;"
+											"text": " d'un espace, par titre, avec leur track, leur channel, leur étape, leur responsable et leur\nprochaine action — filtrées au besoin par channel, par mots du titre, par étape ou par échéance (en retard,\naujourd'hui, dans la semaine), ou par les "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "champs de l'affaire"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " de l'espace (un texte contenu, un choix, un montant\nou un nombre borné, une période de dates, une case cochée ou non). Les affaires en sommeil n'y paraissent que si on\nle demande ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "lister les champs de l'affaire"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " de l'espace ("
+										},
+										{
+											"type": "link",
+											"target": {
+												"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+												"anchor": "les-champs-communs-a-toute-affaire"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "section 18.16"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": "), avec leur clé,\nleur type, leur aide et leurs choix ; les champs archivés seulement si on le demande ;"
 										}
 									]
 								}
@@ -1351,7 +1401,20 @@
 										},
 										{
 											"type": "text",
-											"text": " : son en-tête, sa description, sa probabilité, ses contacts liés et leur rôle, ses réponses au\nformulaire, si vous pouvez la modifier, et ses "
+											"text": " : son en-tête, sa description, sa probabilité, ses contacts liés et leur rôle, ses réponses au\nformulaire, ses "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "champs de l'affaire"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " — chaque champ actif, rempli ou vide, puis les champs archivés qui gardent une\nvaleur, comme le bloc de la fiche —, si vous pouvez la modifier, et ses "
 										},
 										{
 											"type": "strong",
@@ -1779,7 +1842,7 @@
 										},
 										{
 											"type": "text",
-											"text": " — titre, description, montant, probabilité,\nprochaine action et échéance, responsable désigné par son nom — et ses "
+											"text": " — titre, description, montant, probabilité,\nprochaine action et échéance, responsable désigné par son nom —, ses "
 										},
 										{
 											"type": "strong",
@@ -1792,7 +1855,20 @@
 										},
 										{
 											"type": "text",
-											"text": " ; la\n"
+											"text": " et ses "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "champs de\nl'affaire"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", désignés par leur clé (une valeur vide efface le champ ; un champ archivé reste en lecture seule, et une\nvaleur qui ne convient pas au type ou aux choix du champ est refusée, comme à l'écran) ; la\n"
 										},
 										{
 											"type": "strong",

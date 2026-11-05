@@ -1,5 +1,7 @@
 # @spec CRM-111 (docs/BACKLOG.md) — tranche T9 : `placements` dans `crm_card_get`, `placement_id` dans les lignes
 #       (docs/SPEC-mcp.md §9.2 quindecies, décision 826 ; docs/SPEC-rattachements.md §11)
+# @spec CRM-112 (docs/BACKLOG.md) — tranche T9 : `common_fields` dans `crm_card_get` (la partie commune) et dans
+#       `crm_card_list` (filtres directs contrôlés, combinés à ceux de la vue) — docs/SPEC-mcp.md §9.2 sexdecies ; décision 846
 # @spec CRM-112 (docs/BACKLOG.md) — tranche T4.d.3 : `crm_card_list(view=…)` applique les filtres des champs de l'affaire de
 #       la vue (docs/SPEC-champs-communs.md §8, précision T4.d ; décision 838)
 # @spec CRM-071 (docs/BACKLOG.md) — tranche T3 : l'argument `view` de crm_card_list (docs/SPEC-mcp.md §9.2 quattuordecies)
@@ -36,6 +38,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
+from crm_mcp.outils.champs_communs import controler_filtres, lire_champs_communs, partie_commune
 from crm_mcp.outils.vues import (
     CONFIGURATION_RECHERCHE,
     SENS_PAR_DEFAUT,
@@ -406,6 +409,15 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             str | None,
             Field(description="Optional saved view (FR: vue sauvegardée) name or id, from crm_view_list", max_length=100),
         ] = None,
+        common_fields: Annotated[
+            dict[str, Any] | None,
+            Field(
+                description="Optional filters on the affaire fields (FR: champs de l'affaire) by key, from "
+                "crm_common_field_list: {\"<key>\": <condition>}, e.g. {\"siret\": {\"contains\": \"552\"}}, "
+                "{\"segment\": {\"any_of\": [\"pme\"]}}, {\"budget\": {\"min\": 10000}}, {\"signed-on\": {\"from\": "
+                "\"2026-01-01\"}}, {\"nda\": {\"is\": \"yes\"}}; they refine the view's"
+            ),
+        ] = None,
         timezone: Annotated[str, Field(description="IANA time zone for `today`")] = "Europe/Paris",
         limit: Annotated[int, Field(ge=1, le=LIMITE_MAX)] = 50,
         offset: Annotated[int, Field(ge=0)] = 0,
@@ -477,12 +489,19 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         elif str(de_la_vue.get("label_id")) in noms_etiquettes:
             colonnes = colonnes.replace(f"{ETIQUETTES})", f"{ETIQUETTES},filtre:card_labels!inner(label_id))")
             parametres["affaire.filtre.label_id"] = f"eq.{de_la_vue['label_id']}"
+        # `CRM-112` T4.d.3 et T9 : les filtres des champs de l'affaire — ceux de la vue, puis ceux de l'appel, contrôlés et
+        # nommés, qui l'emportent pour une même clé —, un plongement chacun, comme la vue liste.
+        communs = filtres_communs(vue) if vue is not None else {}
+        champs_filtres = dict(champs_vue)
+        if common_fields:
+            actifs = {str(c["key"]): c for c in await lire_champs_communs(crm, appel.jeton, appel.espace, False)}
+            communs = {**communs, **controler_filtres(common_fields, actifs)}
+            champs_filtres.update(actifs)
+        plongements, conditions = conditions_filtres_communs(communs, champs_filtres)
+        if plongements:
+            colonnes = colonnes.replace("affaire:cards!inner(id,", f"affaire:cards!inner(id,{','.join(plongements)},", 1)
+            parametres.update(conditions)
         if vue is not None:
-            # `CRM-112` T4.d.3 : les filtres des champs de l'affaire de la vue, un plongement chacun, comme la vue liste.
-            plongements, conditions = conditions_filtres_communs(filtres_communs(vue), champs_vue)
-            if plongements:
-                colonnes = colonnes.replace("affaire:cards!inner(id,", f"affaire:cards!inner(id,{','.join(plongements)},", 1)
-                parametres.update(conditions)
             tri = de_la_vue.get("sort") if de_la_vue.get("sort") in SENS_PAR_DEFAUT else "title"
             sens = de_la_vue.get("direction") if de_la_vue.get("direction") in ("asc", "desc") else SENS_PAR_DEFAUT[tri]
             parametres["order"] = ordre(str(tri), str(sens))
@@ -513,7 +532,8 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             "owner, amount, next action and its due date, and the two health scores (health_momentum: 100 minus listed "
             "penalties; health_commercial: weighted signals; tiers healthy/watch/danger), and the labels (FR: étiquettes). Filters: channel, words "
             "of the title, step name, label name, next action due (overdue, today, week), or a saved view (FR: vue sauvegardée) "
-            "by name from crm_view_list, whose filters and sort apply and which your own arguments refine. Sleeping affaires "
+            "by name from crm_view_list, whose filters and sort apply and which your own arguments refine, and conditions "
+            "on the affaire fields (common_fields, keys from crm_common_field_list). Sleeping affaires "
             "are left out unless include_snoozed (or the view shows them). Paginated."
         ),
     )
@@ -579,6 +599,18 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             if isinstance(v["value"], str) and v["value"] in libelles:
                 reponse["value_label"] = libelles[v["value"]]
             reponses.append(reponse)
+        # `CRM-112` T9 : la partie commune, comme la fiche — chaque champ actif, puis les archivés qui portent une valeur.
+        champs_communs = await lire_champs_communs(crm, appel.jeton, appel.espace, True)
+        valeurs_communes: dict[str, Any] = {}
+        if champs_communs:
+            lues = _lignes(
+                await crm.lire(
+                    appel.jeton, "card_common_field_values", {"card_id": f"eq.{card_id}", "select": "field_id,value"}
+                ),
+                "card",
+                card_id,
+            )
+            valeurs_communes = {str(v["field_id"]): v["value"] for v in lues}
         resume = resume_carte(fiche)
         return {
             **resume,
@@ -602,6 +634,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
                 for c in contacts
             ],
             "form_answers": reponses,
+            "common_fields": partie_commune(champs_communs, valeurs_communes),
             "placements": rattachements_lisibles(rattachements_lus),
         }
 
@@ -613,7 +646,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         description=(
             "Reads one affaire (card): title, description, track, channel, workflow and step, owner, amount and currency, "
             "probability (the affaire's own, else its step's, else its node's), next action and due date, sleep, the "
-            "linked contacts with their role, the labels (FR: étiquettes), the form answers by label, can_write — whether the CRM lets you change it — "
+            "linked contacts with their role, the labels (FR: étiquettes), the form answers by label, the affaire fields (FR: champs de l'affaire, common_fields: every active one with its value or null, then archived ones holding a value), can_write — whether the CRM lets you change it — "
             "and the two health scores: health_momentum (100 minus each listed penalty) and health_commercial (four "
             "weighted signals; an unknown one has its weight shared). Tiers: healthy ≥ 70, watch 40–69, danger < 40; none "
             "for a decided, archived or trashed affaire. An affaire can sit in several channels (FR: rattachements): "

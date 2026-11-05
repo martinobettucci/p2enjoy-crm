@@ -15,6 +15,8 @@
 #       enregistrés et nommés au modèle (docs/SPEC-mcp.md §9.2 bis à quinquies)
 # @spec CRM-118 (docs/BACKLOG.md) tranches T2.a à T2.e — la famille `workflows` enregistrée, sa ligne dans les consignes au
 #       modèle (docs/SPEC-mcp.md §9.2 undecies)
+# @spec CRM-112 (docs/BACKLOG.md) — tranche T9 : `crm_common_field_list` enregistré, la ligne des champs de l'affaire dans
+#       les consignes au modèle (docs/SPEC-mcp.md §9.2 sexdecies ; décision 846)
 # @spec CRM-128 (docs/BACKLOG.md) — tranche T3 : la consigne « le connecteur n'envoie jamais » et l'origine de la webapp remise
 #       à la messagerie pour le lien de relecture (docs/SPEC-mails-prepares.md §5, décision 829)
 # @spec docs/SPEC-mcp.md §2 (un service, un hôte, `/mcp`), §3 (mandataire OAuth, état chiffré), §6.2 (audit puis
@@ -46,6 +48,7 @@ from crm_mcp.outils import (
     affaires_etiquettes,
     affaires_ecriture,
     budgets,
+    champs_communs,
     contacts,
     messagerie,
     objectifs,
@@ -86,6 +89,9 @@ you see and change exactly what you could in the CRM web app, never more.
   budget (and an occurrence when the budget is recurrent). Amounts are never added across currencies.
 - Time: crm_time_entry_set sets one cell of the time grid (a person, a day, one target); 0 clears it.
 - Goals: crm_goal_board_get reads a goal board as text; a block's progress (fill_percent) is entered, never computed.
+- Affaire fields (FR: champs de l'affaire), the same on every affaire of the workspace: list them with
+  crm_common_field_list, read values with crm_card_get, write them with crm_card_update (common_fields), filter
+  crm_card_list by them. Administrators define them in the CRM, never through the connector.
 - Email: read crm_card_mail_list (then crm_mail_get) before replying. The connector never sends an email:
   crm_mail_prepare leaves it for the person to review and send in the CRM; give them its review_url.
 - Outside your rights or the CRM's, a call is refused with "Introuvable ou hors de votre périmètre"
@@ -170,6 +176,8 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
     affaires.ajouter(serveur, moteur, crm)
     # `CRM-104` T2.b : l'écriture des affaires (docs/SPEC-mcp.md §9.2 ter).
     affaires_ecriture.ajouter(serveur, moteur, crm)
+    # `CRM-112` T9 : la liste des champs de l'affaire (docs/SPEC-mcp.md §9.2 sexdecies).
+    champs_communs.ajouter(serveur, moteur, crm)
     # `CRM-068` T5 : la checklist d'une affaire (docs/SPEC-mcp.md §9.2 duodecies).
     affaires_checklists.ajouter(serveur, moteur, crm)
     # `CRM-069` T3 : les étiquettes d'une affaire (docs/SPEC-mcp.md §9.2 tredecies).

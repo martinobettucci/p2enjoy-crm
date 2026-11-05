@@ -1,3 +1,4 @@
+# @verifies CRM-112 (docs/BACKLOG.md) — tranche T9 : `common_fields` de la fiche, vide sans champ (docs/SPEC-mcp.md §9.2 sexdecies)
 # @verifies CRM-111 (docs/BACKLOG.md) — tranche T9 : `placement_id` des lignes, `placements` de la fiche (docs/SPEC-mcp.md §9.2 quindecies)
 # @verifies CRM-104 (docs/BACKLOG.md) — tranche T2.a : les sept outils de lecture de la famille `affaires`, devant un CRM
 # @verifies CRM-066 (docs/BACKLOG.md) — tranche 4 : les deux scores de santé rendus tels quels par crm_card_list et
@@ -74,6 +75,8 @@ class CrmAffaires(CrmSimule):
     def __init__(self) -> None:
         super().__init__()
         self.requetes = []
+        #: `CRM-112` T9 : les champs de l'affaire et leurs valeurs, vides sauf pour `tests/test_champs_communs.py`.
+        self.communs: dict[str, list[dict[str, Any]]] = {"card_common_fields": [], "card_common_field_values": []}
 
     def _cards(self) -> list[dict[str, Any]]:
         etape = {"id": ETAPE_1, "probability_override": None, "noeud": {"label": "Prospection", "default_probability": 20}}
@@ -184,6 +187,10 @@ class CrmAffaires(CrmSimule):
                        "duration_minutes": 30, "subject": "Appel", "body": None, "author_id": "p",
                        "created_at": "2026-10-05T09:00:00+00:00", "edited_at": None, "deleted_at": None, "deleted_by": None,
                        "auteur": {"full_name": "Driss Lemoine"}, "participants": []}]
+        elif nom in self.communs:
+            lignes = [l for l in self.communs[nom] if l["workspace_id"] in lisibles]
+            if parametres.get("archived_at") == "is.null":
+                lignes = [l for l in lignes if l.get("archived_at") is None]
         else:
             return await self.table(requete)
         lignes = [l for l in lignes if all(str(l.get(k)) == v for k, v in filtres.items() if k in l)]

@@ -1,4 +1,6 @@
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.b : les douze outils d'ÉCRITURE de la famille `affaires` (décision 655)
+# @spec CRM-112 (docs/BACKLOG.md) — tranche T9 : `common_fields` dans `crm_card_update`, les valeurs communes par leur clé
+#       (docs/SPEC-mcp.md §9.2 sexdecies ; décision 846)
 # @spec CRM-067 (docs/BACKLOG.md) — tranche T4 : `crm_card_activity_add`, `crm_card_activity_update` (docs/SPEC-activites.md
 #       §6, décision 653 ; aucun retrait, décision 648)
 # @spec docs/SPEC-mcp.md §9.2 ter (la liste, les ancres, les identifiants jugés dans l'affaire), §9.1 (aucun chemin
@@ -29,6 +31,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
+from crm_mcp.outils.champs_communs import ecrire_valeurs, lire_champs_communs, verifier_cles
 from crm_mcp.outils.affaires import (
     COLONNES_LISTE,
     COLONNES_RATTACHEMENTS,
@@ -437,6 +440,13 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         next_action_at: Annotated[str | None, Field(description="ISO 8601 with offset; empty string clears it")] = None,
         owner: Annotated[str | None, Field(description="Full name of a workspace member who becomes the owner")] = None,
         answers: Annotated[dict[str, Any] | None, Field(description="Form answers by field key, e.g. {\"budget\": 45000}")] = None,
+        common_fields: Annotated[
+            dict[str, Any] | None,
+            Field(
+                description="Affaire field values (FR: champs de l'affaire) by key, from crm_common_field_list, e.g. "
+                "{\"siret\": \"55210055400013\"}; null clears a value"
+            ),
+        ] = None,
     ) -> dict[str, Any]:
         appel = appel_courant()
         await carte(appel.jeton, card_id)
@@ -460,8 +470,13 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             rattache["next_action_at"] = instant(next_action_at, "next_action_at") if next_action_at.strip() else None
         if owner is not None:
             rattache["owner_id"] = await responsable(appel.jeton, owner, "card", card_id)
-        if not entete and not rattache and not answers:
+        if not entete and not rattache and not answers and not common_fields:
             raise ToolError("Give at least one field to change.")
+        champs: list[dict[str, Any]] = []
+        if common_fields:
+            # `CRM-112` T9 : les clés sont jugées avant tout geste, pour ne jamais écrire l'en-tête à moitié.
+            champs = await lire_champs_communs(crm, appel.jeton, appel.espace, True)
+            verifier_cles(common_fields, champs)
         if entete:
             reponse = await crm.ecrire(
                 appel.jeton, "PATCH", "cards", parametres={"id": f"eq.{card_id}", "select": "id"}, corps=entete
@@ -469,6 +484,9 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             une_ligne(reponse, "card", card_id)
         if rattache or answers:
             await ecrire_bloc(appel.jeton, appel.espace, card_id, await bloc(appel.jeton, card_id), rattache, answers or {})
+        if common_fields:
+            # `CRM-112` T9 (§9.2 sexdecies) : les valeurs communes, par leur clé, la troisième table du geste.
+            await ecrire_valeurs(crm, appel.jeton, appel.espace, card_id, common_fields, champs)
         return {"card": await resume(appel.jeton, card_id)}
 
     moteur.enregistrer(
@@ -478,8 +496,8 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         titre="Update an affaire (card)",
         description=(
             "Changes an affaire's header — title, description, amount, its own probability, next action and due date, "
-            "owner (by full name among the workspace members) — and/or its form answers by field key. Only the fields "
-            "given are written. Moving to another step is crm_card_move."
+            "owner (by full name among the workspace members) — and/or its form answers by field key, and/or its affaire "
+            "fields (FR: champs de l'affaire, common_fields) by key, null clearing a value. Only the fields given are written. Moving to another step is crm_card_move."
         ),
     )
 

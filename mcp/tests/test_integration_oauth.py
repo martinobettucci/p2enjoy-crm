@@ -1,6 +1,8 @@
 # @verifies INC-319 (docs/INCONSISTENCY_REPORT.md, doublon INC-324) — l'égalité stricte des outils visibles attend l'échéance de la visibilité
 #           calculée (2 s), au lieu de dépendre de l'ordre des fichiers de la suite
 # @verifies CRM-071 (docs/BACKLOG.md) — tranche T3 : `crm_view_list` dans les consultations de la famille `affaires` (révision)
+# @verifies CRM-112 (docs/BACKLOG.md) — tranche T9 : `crm_common_field_list` dans les consultations de la famille `affaires`
+#           (docs/SPEC-mcp.md §9.2 sexdecies)
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T3 : le parcours OAuth complet, contre la vraie pile de développement
 # @verifies CRM-102 T3 — docs/SPEC-mcp.md §3.1 (flux : 401, métadonnées, enregistrement, consentement, SSO, retour,
 #           échange), §3.3 (connexion longue : `offline_access` si et seulement si la case est cochée, et le
@@ -74,6 +76,8 @@ from .parcours_oauth import (  # noqa: F401 — réexportés pour `test_integrat
 CONSULTATIONS_AFFAIRES = frozenset({
     "crm_card_list", "crm_card_get", "crm_card_timeline", "crm_card_comment_list", "crm_card_activity_list",
     "crm_stale_card_list", "crm_card_mine", "crm_card_checklist_list", "crm_view_list",
+    # `CRM-112` T9 : les champs de l'affaire de l'espace (docs/SPEC-mcp.md §9.2 sexdecies).
+    "crm_common_field_list",
 })
 
 pytestmark = [

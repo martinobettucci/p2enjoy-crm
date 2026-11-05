@@ -1,3 +1,5 @@
+# @verifies CRM-112 (docs/BACKLOG.md) — tranche T9 : le CRM simulé sert les champs de l'affaire et force une réponse par méthode
+#           (support de `tests/test_champs_communs.py` ; docs/SPEC-mcp.md §9.2 sexdecies)
 # @verifies CRM-111 (docs/BACKLOG.md) — tranche T9 : rattacher, mettre à jour et archiver un rattachement, `placement_id`
 #           sur les gestes (docs/SPEC-mcp.md §9.2 quindecies, décision 826)
 # @verifies CRM-104 (docs/BACKLOG.md) — tranche T2.b : les douze outils d'écriture de la famille `affaires`, devant un CRM
@@ -65,8 +67,11 @@ class CrmEcriture(CrmSimule):
         super().__init__()
         self.ecritures: list[dict[str, Any]] = []
         self.rpcs: list[tuple[str, dict[str, Any]]] = []
-        #: réponse forcée par table ou fonction : (statut, corps)
-        self.forcees: dict[str, tuple[int, Any]] = {}
+        #: réponse forcée par table ou fonction : (statut, corps) ; `CRM-112` T9 : aussi par (table, méthode), et une liste
+        #: de réponses rendues dans l'ordre.
+        self.forcees: dict[Any, Any] = {}
+        #: `CRM-112` T9 : les champs de l'affaire et leurs valeurs, vides sauf pour `tests/test_champs_communs.py`.
+        self.communs: dict[str, list[dict[str, Any]]] = {"card_common_fields": [], "card_common_field_values": []}
 
     def lignes(self, nom: str, parametres: dict[str, str], lisibles: set[str]) -> list[dict[str, Any]] | None:
         # `CRM-111` T2.3 : le rattachement unique de chaque affaire, lisible comme elle ; T2.4.2 : il porte le workflow,
@@ -115,11 +120,14 @@ class CrmEcriture(CrmSimule):
                 {"user_id": "p-camille", "workspace_id": ESPACE_A, "profiles": {"full_name": "Camille Aubert"}},
                 {"user_id": "p-driss", "workspace_id": ESPACE_A, "profiles": {"full_name": "Driss Lemoine"}},
             ],
+            **{n: [l for l in lignes if l["workspace_id"] in lisibles] for n, lignes in self.communs.items()},
         }
         if nom not in tables:
             return None
         filtres = {k: v.removeprefix("eq.") for k, v in parametres.items() if v.startswith("eq.")}
         lues = [l for l in tables[nom] if all(str(l.get(k)) == v for k, v in filtres.items() if k in l)]
+        if parametres.get("archived_at") == "is.null":
+            lues = [l for l in lues if l.get("archived_at") is None]
         # `CRM-111` T9 : l'affaire A a deux rattachements — l'ordre et la borne de PostgREST sont honorés.
         if parametres.get("order", "").startswith("created_at"):
             lues.sort(key=lambda l: (str(l.get("created_at")), str(l.get("id"))))
@@ -139,8 +147,11 @@ class CrmEcriture(CrmSimule):
                 {"methode": requete.method, "table": nom, "parametres": parametres, "corps": corps,
                  "prefer": requete.headers.get("prefer")}
             )
-            if nom in self.forcees:
-                statut, rendu = self.forcees[nom]
+            forcee = self.forcees.get((nom, requete.method), self.forcees.get(nom))
+            if isinstance(forcee, list):
+                forcee = forcee.pop(0) if len(forcee) > 1 else forcee[0]
+            if forcee is not None:
+                statut, rendu = forcee
                 return JSONResponse(rendu, status_code=statut)
             return JSONResponse([{"id": "neuf", **(corps or {})}], status_code=201 if requete.method == "POST" else 200)
         lignes = self.lignes(nom, parametres, self._lisibles(personne))

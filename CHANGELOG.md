@@ -13,7 +13,21 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### `CRM-112` T9 — les champs de l'affaire dans le connecteur MCP (image `mcp`, aucune migration)
+
+*En développement seulement. Prouvé par les tests pytest du connecteur et par `scripts/verify-mcp.sh` contre la vraie
+base (décision 846, docs/SPEC-mcp.md §9.2 sexdecies).*
+
+- Nouvel outil `crm_common_field_list` (famille `affaires`, « Consulter ») : les champs de l'affaire de l'espace, avec
+  leur clé, leur type, leur aide, leurs choix et leur devise ; les archivés sur demande.
+- `crm_card_get` rend `common_fields`, la partie commune de la fiche : chaque champ actif, rempli ou `null`, puis les
+  champs archivés qui gardent une valeur.
+- `crm_card_update` écrit `common_fields` par clé, sous les politiques de l'écran : mise à jour, sinon insertion, et
+  `null` vide la valeur. Une clé inconnue ou un champ archivé (`common_field_archived`) est refusé avant tout geste ;
+  `invalid_field_value` est nommé avec sa clé.
+- `crm_card_list` accepte `common_fields`, des filtres directs de la forme des vues, qui affinent ceux de la vue. Une
+  clé inconnue ou archivée, ou une condition qui ne convient pas au type du champ, est refusée et nommée.
+- Aucune case nouvelle dans la matrice du connecteur.
 
 ## [Publié]
 

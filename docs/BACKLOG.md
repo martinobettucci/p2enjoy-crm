@@ -17708,11 +17708,19 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       qui nomme le champ, la mesure sous le jeton réel avant le code.
 - [ ] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.
 - [ ] **T8** — seed (`docs/SPEC-champs-communs.md` §13), E2E, captures aux quatre paliers, `docs/manual.md`.
-- [@] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de
+- [P] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de
       `crm_card_list` ; `docs/SPEC-mcp.md` §9.2.
       *Spécifiée le 2026-11-05 avant le code (décision 846)* : `docs/SPEC-mcp.md` §9.2 *sexdecies* — famille « affaires »,
       aucune case nouvelle ; `crm_common_field_list`, `common_fields` dans `crm_card_get`, `crm_card_update` et `crm_card_list`.
-      *Prise en charge : session interactive 4891a451 (p2enjoy-crm-b6) depuis 2026-11-05 08:16 UTC — état avant : [ ]*
+      *Vérifiée en développement le 2026-11-05* : `mcp/crm_mcp/outils/champs_communs.py`, branché dans `crm_card_get`,
+      `crm_card_update` et `crm_card_list` ; clés jugées avant tout geste (l'en-tête n'est jamais écrit à moitié).
+      pytest du connecteur 326 réussis (dont `tests/test_champs_communs.py`, 14) ; `scripts/verify-mcp.sh --rapide`,
+      intégration en direct et à travers Caddy verte, dont `tests/test_integration_champs_communs.py` (2 : lister, lire,
+      insérer puis mettre à jour, filtrer, vider, refus `invalid_field_value` et `common_field_archived`, la lectrice
+      refusée par le CRM) et `test_integration_oauth.py`, qui compte le nouvel outil. Manuel §33.5. Sous-ensemble de ce
+      périmètre seulement, jamais la campagne complète (décision 830). **Image `mcp` modifiée, aucune migration, aucun
+      geste préalable.** **Reste** : la livraison de l'image `mcp` par la session de livraison, et le constat du
+      responsable — un assistant qui lit et écrit un champ de l'affaire en production.
 - [~] **Livraison en production** avec `CRM-111` ou après elle, sur instruction du responsable. **T1 à T3.a livrées le
       2026-11-03** avec `CRM-111` (décision 827, révision `e44d04aa`, migrations 152, 155 à 157, 159 et 160, service
       `functions`, webapp ; `docs/PROD_MIGRATIONS.md` §8). Reste le constat du responsable (Réglages ▸ « Champs de

@@ -6406,9 +6406,14 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
 - **Affaires, en lecture** (« Affaires ▸ Consulter ») :
   - **lister les affaires** d'un espace, par titre, avec leur track, leur channel, leur étape, leur responsable et leur
     prochaine action — filtrées au besoin par channel, par mots du titre, par étape ou par échéance (en retard,
-    aujourd'hui, dans la semaine). Les affaires en sommeil n'y paraissent que si on le demande ;
+    aujourd'hui, dans la semaine), ou par les **champs de l'affaire** de l'espace (un texte contenu, un choix, un montant
+    ou un nombre borné, une période de dates, une case cochée ou non). Les affaires en sommeil n'y paraissent que si on
+    le demande ;
+  - **lister les champs de l'affaire** de l'espace ([section 18.16](#les-champs-communs-a-toute-affaire)), avec leur clé,
+    leur type, leur aide et leurs choix ; les champs archivés seulement si on le demande ;
   - **lire une affaire** : son en-tête, sa description, sa probabilité, ses contacts liés et leur rôle, ses réponses au
-    formulaire, si vous pouvez la modifier, et ses **deux scores de santé** avec leur détail ([chapitre 9.1](#ce-qu-une-affaire-porte)) — la liste
+    formulaire, ses **champs de l'affaire** — chaque champ actif, rempli ou vide, puis les champs archivés qui gardent une
+    valeur, comme le bloc de la fiche —, si vous pouvez la modifier, et ses **deux scores de santé** avec leur détail ([chapitre 9.1](#ce-qu-une-affaire-porte)) — la liste
     des affaires les rend aussi ;
   - **lire son historique**, comme le fil de la fiche ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)) : événements, commentaires et activités, du plus
     ancien au plus récent ;
@@ -6434,7 +6439,9 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     initiale, comme par le bouton « Nouvelle affaire » ; **la commenter** ; y **consigner une activité** réalisée,
     avec ses participants ;
   - *Modifier* (« Affaires ▸ Modifier ») : changer son **en-tête** — titre, description, montant, probabilité,
-    prochaine action et échéance, responsable désigné par son nom — et ses **réponses au formulaire** ; la
+    prochaine action et échéance, responsable désigné par son nom —, ses **réponses au formulaire** et ses **champs de
+    l'affaire**, désignés par leur clé (une valeur vide efface le champ ; un champ archivé reste en lecture seule, et une
+    valeur qui ne convient pas au type ou aux choix du champ est refusée, comme à l'écran) ; la
     **déplacer** vers une étape désignée par son nom, dans les seuls déplacements que le workflow déclare ; la **changer
     de channel** ; la **mettre en sommeil** ou la **réveiller** ; **lier ou délier un contact** (ce geste demande aussi
     « Contacts ▸ Consulter ») ; **corriger une activité** dont vous êtes l'auteur ; **cocher ou décocher un point de
