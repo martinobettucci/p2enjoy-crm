@@ -1196,6 +1196,36 @@ d'administrateur dans la webapp, décision 643). Un genre d'ancre s'ajoute : **`
 matrice, refus par le CRM malgré la matrice ouverte (une lectrice qui rattache ; un rattachement d'une autre affaire),
 journal écrit ; unitaires des traductions ; `scripts/verify-mcp.sh --rapide`.
 
+### 9.2 sexdecies Les champs de l'affaire — `CRM-112` T9 (`docs/SPEC-champs-communs.md` §11 ; décisions 664, 837 et 846)
+
+*Écrit le 2026-11-05, avant le code.* **Famille `affaires`, aucune case nouvelle** (décisions 664 et 837) : lister, lire et
+filtrer sont `consulter`, écrire une valeur est `modifier`. Le connecteur **ne définit pas** les champs : créer, modifier,
+archiver ou exiger un champ reste un geste d'administrateur dans la webapp.
+
+| Outil | Action | Ancre | Ce qu'il fait |
+|---|---|---|---|
+| `crm_common_field_list` | `consulter` | `workspace:workspace` | les champs de l'affaire de l'espace, dans l'ordre de `position` : `key`, `label`, `type`, `help`, `choices` (`key`, `label`) pour un choix, `currency` pour un montant, `listed`, `archived` ; les archivés seulement si `include_archived` |
+| `crm_card_get` | `consulter` (inchangé) | `card:card_id` | gagne `common_fields` : chaque champ actif, valeur comprise ou `null`, puis les archivés qui portent une valeur — `field`, `key`, `type`, `value`, `value_label` pour un choix, `archived` ; la forme de la partie commune de la fiche (`docs/DESIGN_SYSTEM.md` §5.88) |
+| `crm_card_update` | `modifier` (inchangé) | `card:card_id` | gagne `common_fields`, un objet `{<clé>: <valeur>}` ; `null` vide la valeur ; une mise à jour de la ligne, une insertion sinon, comme l'écran (`ecrireValeurCommune`) |
+| `crm_card_list` | `consulter` (inchangé) | inchangée | gagne `common_fields`, un objet `{<clé>: <condition>}` dans la forme des vues (`docs/SPEC-champs-communs.md` §8, précision T4.d), combiné aux filtres de la vue `view` : pour une même clé, la condition donnée l'emporte |
+
+**Refus et contrôles du connecteur**, nommés plutôt que fondus dans le refus uniforme :
+- **une clé inconnue de l'espace** est refusée avant tout appel, en nommant les clés possibles ; pour le filtre, une clé
+  archivée l'est aussi, et une condition dont la forme ne convient pas au type du champ est refusée en disant la forme
+  attendue — là où une vue sauvegardée les ignore en silence, un appel du modèle doit apprendre son erreur ;
+- **une valeur d'un champ archivé ne s'écrit pas** (`common_field_archived`) : la fiche la rend en lecture seule. C'est une
+  aide du connecteur et non une règle de la base, qui l'accepterait ; elle tient la même promesse que l'écran ;
+- **une valeur refusée par la base** (`invalid_field_value`, `app.validate_field_value`) remonte nommée, avec la clé ;
+- **le droit d'écrire** est celui de l'affaire, tenu par les politiques de `card_common_field_values` : la lectrice est
+  refusée par le CRM, rien n'est écrit.
+
+**Les consignes au modèle** gagnent une ligne : les champs de l'affaire se lisent par `crm_common_field_list` et
+`crm_card_get`, s'écrivent par `crm_card_update` (`common_fields`), et filtrent `crm_card_list`.
+
+**Preuves** : pytest (déclarations, refus, la forme des filtres, l'écriture en mise à jour puis insertion) ; intégration
+contre le vrai Keycloak et la vraie base, sur des champs posés par la clé de service et retirés à la fin : lister, lire,
+écrire puis vider une valeur, filtrer, la lectrice refusée par le CRM. Manuel §33.5.
+
 ### 9.3 Réponses
 
 - **Forme.** Un JSON structuré, avec les identifiants **et** les libellés utiles : nom du track,

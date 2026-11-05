@@ -410,6 +410,11 @@ Famille `affaires` (`cards` après le lot 1 d'INC-286), au catalogue de `CRM-104
 connecteur ne définit pas les champs** : créer, modifier ou archiver un champ commun, ou l'exiger dans une transition,
 reste un geste d'administrateur dans la webapp, comme l'édition des workflows.
 
+*Précisé le 2026-11-05, avant le code de T9 (décision 846)* : les outils, leurs arguments et leurs refus sont écrits au
+§9.2 *sexdecies* de `docs/SPEC-mcp.md`. `crm_card_list` accepte en plus de `view` un argument `common_fields`, dans la forme
+structurée des vues (§8, précision T4.d) ; une valeur d'un champ archivé ne s'écrit pas par le connecteur, comme la fiche la
+rend en lecture seule (§7).
+
 ## 12. Interactions avec les autres unités
 
 - **`CRM-111`** fournit la partie commune de la fiche, la règle d'écriture « un channel suffit » et `placement_id` dans

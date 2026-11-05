@@ -39087,3 +39087,16 @@ droits) est décidée par une mesure sous le jeton réel, avant le code. **Aucun
 vert seul, INC-342, ou l'effet de minuit sur « Ma journée ».
 **Décision : oui, sans instantané** : un `pg_dump` avant ; `0167` remplace deux CHECK par un déclencheur et reprend des
 fonctions, aucune table, aucune donnée.
+
+### décision 846 — `CRM-112` T9 : les outils du connecteur sur les champs de l'affaire
+
+*2026-11-05, session interactive 4891a451 (p2enjoy-crm-b6), tranche confiée par le responsable par la session de
+livraison.* **Les deux questions MCP de `CLAUDE.md`** sont déjà tranchées et ne sont pas reposées : oui, dans le connecteur
+(décision 664, arbitrage 3) ; famille existante `affaires`, aucune case nouvelle (décisions 664 et 837). **Observations** :
+`crm_card_list(view=…)` applique déjà les filtres de champ d'une vue (T4.d.3, `conditions_filtres_communs`) ; la base
+valide une valeur par `app.validate_field_value` et n'interdit pas d'écrire celle d'un champ archivé, que la fiche rend en
+lecture seule. **Décision de conception** (`docs/SPEC-mcp.md` §9.2 *sexdecies*) : `crm_common_field_list` ;
+`common_fields` dans `crm_card_get` (la partie commune de la fiche), dans `crm_card_update` (mise à jour puis insertion,
+`null` vide) et dans `crm_card_list` (la forme des vues, la condition donnée l'emportant sur celle de la vue). Une clé
+inconnue ou une forme qui ne convient pas est refusée et nommée, pour que le modèle apprenne son erreur ; une valeur d'un
+champ archivé n'est pas écrite par le connecteur (`common_field_archived`), aide qui tient la promesse de l'écran.
