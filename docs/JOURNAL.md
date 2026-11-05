@@ -39194,3 +39194,16 @@ par sa clé ou par son libellé mis à la forme des clés, et épargne les champ
 - le scénario `champ_commun` du simulateur.
 
 **Conséquence** : la suggestion de démonstration de ce scénario entre au seed avec le champ `siret`, en T8.
+
+### décision 852 — livrer la migration 0168, la webapp de `main` et l'image `mcp` (`CRM-112` T6 et T9, `CRM-127` T4), sans instantané
+
+*2026-11-05, session 4522fa9c (p2enjoy-crm-54, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : la migration `0168` (la recherche globale par les champs de l'affaire), la webapp de `main` (l'extrait qui nomme
+le champ, « Tester la connexion » sur les comptes et les identités de messagerie), l'image `mcp` reconstruite (les outils
+des champs de l'affaire), révision `b106a211`. **La campagne** : types et unitaires verts, ui 1 120 sur 1 133, api 1 318
+sur 1 321, mail 51/51, manuel 143 sur 145, pgTAP 145 fichiers et 5 010 assertions, garde du manuel 168 ; le reste rejoué
+vert seul, INC-342, l'âge du seed (`rentabilite`), ou l'ordre d'un test hors du lot (`mentions-composeur`, vert seul). Un
+défaut du lot, une preuve du connecteur dépendante de l'ordre, corrigé par la session ac (`b106a211`) ; `verify-mcp.sh`
+complet rejoué : 112 contrôles, aucune anomalie.
+**Décision : oui, sans instantané** : un `pg_dump` avant ; `0168` ajoute une colonne et son index, reprend deux fonctions
+et un déclencheur ; aucune table, aucune donnée hors `value_tsv`.
