@@ -10899,6 +10899,13 @@ sixième cellule) et `filtre-sommeil.spec.ts` (l'étape en quatrième) ; « Enre
 51). **Rejouées le 2026-10-30** : E2E `liste-cards`, `filtre-sommeil`, `commentaires-gestes`, `preferences-notifications`
 **67/67** ; pgTAP `0001` et `0064` vertes dans la suite complète (115 fichiers). L'unité repasse `[P]`.
 
+**Correctif du seed, le 2026-11-06** (relevé par `CRM-112` T8 au second passage du seed, rapporté par la session de
+livraison) : la section « 8 octovicies » envoyait le digest du jour pour 7 h 15 de la date **UTC** (`current_date`), et le
+relisait sur la date **de Paris** ; entre 0 h et 1 h de Paris (2 h en été), les deux divergeaient, et le second passage
+mourait sur « le digest de Driss n'a pas d'issue pour aujourd'hui ». La date de Paris sert désormais des deux côtés.
+**Preuve** : second passage rouge à 00 h 33 de Paris, vert à 00 h 36 après la correction. Seed seulement, développement :
+rien à livrer. L'unité reste `[P]`.
+
 **`[P]` le 2026-10-28, avant la révision ci-dessus** : tout est prouvé en développement. Reste la livraison sur instruction du responsable, et son
 constat en production : la migration `0133` après la `0132`, l'image `mail-sync` et sa variable `SITE_URL`, le connecteur
 (`docs/PROD_MIGRATIONS.md`) ; puis un digest reçu un matin par un membre abonné.

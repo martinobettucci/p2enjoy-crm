@@ -5263,7 +5263,9 @@ if [ "$(jq -r 'length' "$CORPS")" = "0" ]; then
 	code=$(api_jeton "$JETON_BIZDEV_DG" POST /rest/v1/digest_subscriptions -d "$(jq -nc --arg ws "$CK_ESPACE" '{workspace_id: $ws}')")
 	attendu "$code" "consentement de Driss au récapitulatif" 201
 fi
-DG_FILES=$(psql_seed -c "select app.envoyer_digests(((current_date + time '07:15') at time zone 'Europe/Paris'))")
+# Correctif du 2026-11-06 : la date de Paris des deux côtés, comme la relecture ci-dessous. `current_date` est la date UTC :
+# entre 0 h et 1 h de Paris (2 h en été), elle valait la veille, et le second passage ne trouvait pas le digest du jour.
+DG_FILES=$(psql_seed -c "select app.envoyer_digests((((now() at time zone 'Europe/Paris')::date + time '07:15') at time zone 'Europe/Paris'))")
 DG_ISSUE=$(psql_seed -c "select status from public.digest_runs where profile_id = '5eed0000-0000-4000-8000-000000000012' and workspace_id = '$CK_ESPACE' and day = (now() at time zone 'Europe/Paris')::date")
 [ -n "$DG_ISSUE" ] || die "le digest de Driss n'a pas d'issue pour aujourd'hui : app.envoyer_digests n'a rien inscrit (§31.1)."
 printf '  %-36s Driss abonné ; digest du jour : %s (%s mis en file par ce passage)\n' 'Récapitulatif' "$DG_ISSUE" "$DG_FILES"
