@@ -39147,3 +39147,27 @@ T7.1. **Décision de conception** (`docs/DESIGN_SYSTEM.md` §5.93, après relect
 « Tester la connexion » (`PlugZap`) avant « Configurer », avec ses propriétés de capacité ; le verdict et les refus sous la
 ligne, dans une région `role="status"` qui survit à une relecture **sans squelette** ; l'incident nommé à côté de « En
 erreur » ; `pending` lu « Non testée ». Le focus revient à la commande quand elle se réactive.
+
+### décision 850 — `CRM-127` T4 vérifiée en développement : deux défauts trouvés, et la preuve de l'écran d'état passe au projet `ui`
+
+*2026-11-05, session interactive d5b44a2d (p2enjoy-crm-30).* **Observations et décisions**, dans l'ordre où elles sont
+venues :
+- **Les commandes se séparaient à 1440 px** (vu sur la capture, `CLAUDE.md` §16) : « Tester la connexion » restait sur la
+  ligne et « Configurer » passait seule à la suivante — le défaut que le §5.34 avait déjà payé. Les deux commandes forment
+  un groupe qui se replie d'un tenant, et la borne des deux écrans passe de `104ch` à `120ch` (`docs/DESIGN_SYSTEM.md`
+  §5.93, révise les §5.34 et §5.35).
+- **`e2e/ui/etat-messagerie.spec.ts` figeait « Jamais relevée »** sur la boîte système : faux depuis la migration 151,
+  puisque la veille de `mail-sync` date chaque relève. L'assertion est retournée : une relève réelle par `/poll`, puis la
+  date à l'écran. « Jamais relevée » reste prouvé par `EtatMessagerie.test.tsx`.
+- **Le projet `mail` ne sert pas la webapp** (`SERVEUR_REQUIS`) : la preuve `mail` du §23.7 garde la relève réelle et sa
+  datation (`e2e/mail/releve-datee.spec.ts`), et la date à l'écran est prouvée dans le projet `ui`. *Écarté* : faire
+  construire la webapp à chaque campagne de messagerie. Le §23.7 de la spécification le précise.
+- **Le refus `429` laisse une erreur de ressource dans la console** : `ERREUR_RESSOURCE_HTTP[429]` rejoint la liste des
+  refus attendus des preuves d'interface.
+- **Le manuel §11 promettait « aucun bouton Tester la connexion »**, et son tableau des causes n'employait pas les mots de
+  l'écran (« Identifiants refusés » pour « Authentification refusée ») : réécrit d'après l'écran, avec l'image
+  `tester-une-boite`.
+**Vérifications** (sous-ensemble du périmètre, décision 830) : Vitest des deux écrans, de la bibliothèque et de l'i18n
+689/689 ; types des quatre projets et build verts ; E2E `ui` `tester-connexion` 8/8, `reglages-comptes-mail`,
+`reglages-identites-mail` et `etat-messagerie` verts ; E2E `mail` `releve-datee` 1/1 ; images du manuel 11 rejouées 5/5,
+`verify-manual` 168/168 ; captures aux quatre paliers observées.

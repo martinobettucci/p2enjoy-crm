@@ -7881,4 +7881,9 @@ suivent la capacité d'écrire la boîte ou l'identité (§5.59).
   montre désormais une date, que la relève écrit (§23.2).
 - **SOUS `md`**, la ligne se replie (§5.34) et ses deux commandes passent ensemble à la ligne suivante, cibles conservées ;
   le verdict prend toute la largeur de la ligne. `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
+- **LES DEUX COMMANDES FORMENT UN GROUPE, ET LA LISTE PASSE À `120ch`** — *défaut trouvé en regardant la capture à 1440 px*
+  (`CLAUDE.md` §16, 2026-11-05). Posées côte à côte sans groupe, « Tester la connexion » restait sur la ligne et
+  « Configurer » passait seule à la suivante : deux lignes voisines n'avaient plus la même hauteur, le défaut que le
+  §5.34 avait déjà payé. Le groupe se replie d'un seul tenant ; la borne des deux écrans passe de `104ch` à `120ch`, pour
+  que la ligne d'une boîte tienne à 1440 px avec ses deux commandes. *Révise la borne du §5.34 et du §5.35.*
 - **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `PlugZap`.**

@@ -3136,7 +3136,7 @@ Les scénarios qui le font remettent la ligne dans son état d'origine.
 | Deno | le gestionnaire : chaque code de la table du §23.4, le jeton interne jamais dans la réponse ni le journal ; `environnement.test.ts` : seul `mail-connection-test` reçoit `MAIL_SYNC_INTERNAL_TOKEN` |
 | Vitest | la traduction d'une réponse en issue d'écran ; la commande, son vol, sa désactivation par capacité, le verdict et les refus |
 | API (Playwright) | sur la pile réelle, sans l'interface : un membre sur la boîte d'un collègue → `404` ; sans session → `401` ; deux tests rapprochés → `429` ; un test réussi écrit `last_checked_at` en base |
-| E2E `mail` | une relève réelle (`/poll`) renseigne `last_sync_at`, et l'écran d'état montre sa date au lieu de « Jamais relevée » |
+| E2E `mail` | une relève réelle (`/poll`) renseigne `last_sync_at` et ses bornes d'UID (`e2e/mail/releve-datee.spec.ts`). *Précisé à l'écriture de T4 (décision 850)* : l'écran d'état, que le projet `mail` ne sert pas, montre la date après une relève réelle dans `e2e/ui/etat-messagerie.spec.ts` |
 | E2E UI | administratrice : test de la boîte système → « Connectée » relue en base ; membre : test de sa boîte et de son identité ; échec `auth_failed` par un mauvais mot de passe, puis remise en état ; captures 1440, 900 et 390 observées |
 | Harnais | `scripts/verify-mail-inbound.sh` §4 retourné (§23.2) |
 

@@ -151,13 +151,13 @@
 			"src": "les-boites-de-reception-et-les-adresses-d-expedition/reglages-boites.jpg",
 			"alt": "La liste des réglages : « Comptes de messagerie entrante » vient avant « État de la messagerie »",
 			"width": 545,
-			"height": 470
+			"height": 471
 		},
 		{
 			"type": "image",
 			"src": "les-boites-de-reception-et-les-adresses-d-expedition/liste-des-boites.jpg",
-			"alt": "La liste des boîtes : serveur, sécurité, identifiant, état « En attente » ou « Connectée », et « Configurer » sur chaque ligne",
-			"width": 925,
+			"alt": "La liste des boîtes : serveur, sécurité, identifiant, état « Non testée » ou « Connectée », puis « Tester la connexion » et « Configurer » sur chaque ligne",
+			"width": 1062,
 			"height": 205
 		},
 		{
@@ -277,13 +277,73 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "Changer la connexion remet l'état à « En attente »"
+										"text": "Changer la connexion remet l'état à « Non testée »"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " et efface le dernier incident : un\n« Connectée » obtenu avec l'ancien serveur ne dirait plus rien du nouveau."
+								"text": " et efface le dernier incident : un\n« Connectée » obtenu avec l'ancien serveur ne dirait plus rien du nouveau. « Non testée » veut\nseulement dire qu'aucun essai n'a eu lieu depuis : la relève, elle, n'attend rien."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Tester la connexion », sur chaque ligne, essaie la boîte tout de suite."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Le produit ouvre une\nvraie session avec le serveur, puis écrit le résultat sous la ligne — la connexion réussie, ou\nl'échec et sa cause — et l'état de la boîte se met à jour. L'essai dure quelques secondes, le temps\nque le serveur réponde ; le bouton dit alors qu'un test est en cours. Le droit de tester est celui\nde configurer : une boîte que vous ne pouvez pas configurer ne se teste pas non plus."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Un nouvel essai attend trente secondes."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Chaque essai est une vraie authentification, et un\nfournisseur peut verrouiller un compte après des échecs répétés : un second test trop rapproché\nest refusé, et la ligne le dit. Une boîte désactivée ne se teste pas, et une boîte sans mot de\npasse enregistré non plus — le message dit quoi faire."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Une boîte en erreur dit pourquoi"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", à côté de sa pastille d'état, avec les mots du tableau\nci-dessous."
 							}
 						]
 					}
@@ -303,20 +363,7 @@
 							},
 							{
 								"type": "text",
-								"text": ", et c'est écrit plutôt que suggéré : aucun bouton "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "Tester la\nconnexion"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " — l'essai est fait par le service de messagerie, et son résultat s'affiche dans l'état\nde la boîte ; aucune "
+								"text": ", et c'est écrit plutôt que suggéré : aucune "
 							},
 							{
 								"type": "strong",
@@ -329,7 +376,7 @@
 							},
 							{
 								"type": "text",
-								"text": " de boîte ; aucun réglage des dossiers relevés ni de la\nprofondeur d'historique, que l'écran ne touche jamais."
+								"text": " de\nboîte ; aucun réglage des dossiers relevés ni de la profondeur d'historique, que l'écran ne touche\njamais."
 							}
 						]
 					}
@@ -338,9 +385,16 @@
 		},
 		{
 			"type": "image",
+			"src": "les-boites-de-reception-et-les-adresses-d-expedition/tester-une-boite.jpg",
+			"alt": "Une boîte testée : sous sa ligne, le verdict « Connexion réussie. », et l'état « Connectée »",
+			"width": 1060,
+			"height": 121
+		},
+		{
+			"type": "image",
 			"src": "les-boites-de-reception-et-les-adresses-d-expedition/configurer-une-boite.jpg",
 			"alt": "Le formulaire d'une boîte : boîte visée, libellé, serveur, port, sécurité, identifiant, mot de passe vide, « Enregistrer »",
-			"width": 925,
+			"width": 1062,
 			"height": 327
 		},
 		{
@@ -415,7 +469,7 @@
 				},
 				{
 					"type": "text",
-					"text": " Il ne se contente pas d'enregistrer ce qui a été\nsaisi : il ouvre une session avec le serveur déclaré et regarde ce qui se passe. Le résultat est\nenregistré, et il ne dit jamais plus que nécessaire :"
+					"text": " Il ne se contente pas d'enregistrer ce qui a été\nsaisi : il ouvre une session avec le serveur déclaré et regarde ce qui se passe. Le résultat est\nenregistré, et il ne dit jamais plus que nécessaire. Ces mots sont ceux de la ligne d'une boîte en\nerreur, du verdict d'un test et de l'état de la messagerie :"
 				}
 			]
 		},
@@ -447,7 +501,7 @@
 							"content": [
 								{
 									"type": "text",
-									"text": "Identifiants refusés"
+									"text": "Authentification refusée"
 								}
 							]
 						}
@@ -479,7 +533,7 @@
 							"content": [
 								{
 									"type": "text",
-									"text": "Serveur introuvable"
+									"text": "Hôte injoignable"
 								}
 							]
 						}
@@ -487,7 +541,7 @@
 					[
 						{
 							"type": "text",
-							"text": "Le nom du serveur ne correspond à rien"
+							"text": "Le nom du serveur ne correspond à rien, ou le serveur ne se laisse pas atteindre"
 						}
 					]
 				],
@@ -517,7 +571,7 @@
 							"content": [
 								{
 									"type": "text",
-									"text": "Sécurité impossible à vérifier"
+									"text": "Échec TLS"
 								}
 							]
 						}
@@ -555,7 +609,7 @@
 							"content": [
 								{
 									"type": "text",
-									"text": "Réponse inattendue"
+									"text": "Erreur de protocole"
 								}
 							]
 						}
@@ -683,8 +737,8 @@
 		{
 			"type": "image",
 			"src": "les-boites-de-reception-et-les-adresses-d-expedition/liste-des-adresses.jpg",
-			"alt": "La liste des adresses d'expédition : chaque adresse, ses pastilles « Par défaut » et « Signature », son serveur et « Configurer »",
-			"width": 925,
+			"alt": "La liste des adresses d'expédition : chaque adresse, ses pastilles « Par défaut » et « Signature », son serveur, « Tester la connexion » et « Configurer »",
+			"width": 1062,
 			"height": 325
 		},
 		{
@@ -951,26 +1005,33 @@
 								"content": [
 									{
 										"type": "text",
+										"text": "« Tester la connexion », sur chaque ligne, essaie l'adresse tout de suite"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", comme pour une boîte\nde réception : une vraie session avec le serveur d'envoi, sans envoyer de message, puis le résultat\nsous la ligne. Les mêmes règles valent — le droit de configurer, trente secondes entre deux essais,\nla cause d'une erreur écrite à côté de la pastille d'état."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
 										"text": "Ce que l'écran n'offre pas"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": ", et c'est écrit plutôt que suggéré : aucun bouton "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "Tester la\nconnexion"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " — l'essai est fait par le service de messagerie, et son résultat s'affiche dans l'état\nde l'identité ; aucune "
+								"text": ", et c'est écrit plutôt que suggéré : aucune "
 							},
 							{
 								"type": "strong",
@@ -983,7 +1044,7 @@
 							},
 							{
 								"type": "text",
-								"text": " ; aucun réglage du "
+								"text": " ;\naucun réglage du "
 							},
 							{
 								"type": "strong",
@@ -1036,8 +1097,8 @@
 			"type": "image",
 			"src": "les-boites-de-reception-et-les-adresses-d-expedition/configurer-une-adresse.jpg",
 			"alt": "Le formulaire d'une adresse d'expédition, avec la case « Identité par défaut de cette personne » cochée",
-			"width": 925,
-			"height": 703
+			"width": 1062,
+			"height": 627
 		},
 		{
 			"type": "paragraph",

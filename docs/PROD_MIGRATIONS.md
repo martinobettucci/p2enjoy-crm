@@ -719,6 +719,22 @@ rend `0`. **Retour arrière** : avant le geste 4, la ligne « Retrait » de `doc
 les adresses régénérées sont celles que les correspondants reçoivent désormais, et revenir en arrière demande de régler
 `c-` puis de régénérer à nouveau.
 
+### 2.30 `CRM-127` T4, décision 849 — « Tester la connexion » sur les comptes entrants et les identités sortantes (À LIVRER : webapp de `main` seule)
+
+`docs/SPEC-mail-subsystem.md` §23.5 ; `docs/DESIGN_SYSTEM.md` §5.93. **La webapp de `main` seule** : la migration 151, la
+fonction edge `mail-connection-test`, l'image `mail-sync` et la variable `MAIL_SYNC_URL` du service `functions` sont en
+production depuis la fenêtre du 2026-11-03 (§8). Aucune migration, aucune variable, aucun secret, aucune image.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer la webapp de `main` | session de livraison, dans une fenêtre (§3.1) | rien de propre à cette tranche |
+| 2 | Constater le test d'une boîte | responsable, Réglages ▸ Comptes de messagerie entrante | « Tester la connexion » sur la boîte de production : sous la ligne, « Connexion réussie. », ou « Échec : » et sa cause ; l'état de la boîte suit |
+| 3 | Constater la date de relève | responsable, Réglages ▸ État de la messagerie | la « Dernière relève réussie » de la boîte montre une date, et non « Jamais relevée » (INC-340, INC-343) |
+
+**Vérification après la fenêtre**, en lecture seule : `select status, last_error, last_checked_at from
+public.mail_inbound_accounts` montre le verdict du geste 2 écrit par le service. **Retour arrière** : la webapp
+précédente ; aucune donnée n'est touchée.
+
 ## 3. Migrations en attente
 
 **La 168, après la 167** (`CRM-112` T6, décision 848) — *en attente.* La recherche globale trouve une affaire par un

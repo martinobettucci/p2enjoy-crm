@@ -4,6 +4,8 @@
 //       entrants, les identités d'expédition, le plafond du jour)
 // @spec INC-335 (docs/BACKLOG.md, correctif de la décision 805, T2) — la case « par défaut » dit ce qu'elle règle, et
 //       chaque ligne nomme son propriétaire (docs/SPEC-mail-subsystem.md §22.14 ; docs/manual.md §11.2)
+// @spec CRM-127 (docs/BACKLOG.md) — tranche T4 : l'image d'une boîte testée, son verdict sous la ligne
+//       (docs/SPEC-mail-subsystem.md §23.5 ; docs/DESIGN_SYSTEM.md §5.93 ; docs/manual.md §11.1)
 //
 // Les boîtes et les identités sont celles du seed. Deux états sont posés par la clé de service et rendus tels qu'ils
 // ont été lus : une boîte « Connectée », et le plafond du jour d'une adresse d'expédition ramené à zéro le temps d'un
@@ -17,6 +19,7 @@ const CHAPITRE = 'les-boites-de-reception-et-les-adresses-d-expedition'
 const BOITES = 'les-boites-de-reception-declarees'
 const ADRESSES = 'les-adresses-d-expedition'
 const BOITE_DRISS = `mail_inbound_accounts?label=eq.${encodeURIComponent('Boîte de Driss Lemoine')}`
+const BOITE_SYSTEME = 'mail_inbound_accounts?owner_id=is.null'
 
 test('les réglages de la messagerie, dans leur ordre', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
@@ -47,6 +50,28 @@ test('les boîtes de réception : la liste, une boîte connectée, la configurat
 		await illustrer(page, { chapitre: CHAPITRE, section: BOITES, nom: 'configurer-une-boite', cibles: [formulaire] })
 	} finally {
 		await service(request, 'patch', BOITE_DRISS, avant)
+	}
+})
+
+// UN VRAI TEST DE CONNEXION, vers le Stalwart de développement (§23.5) : le verdict de l'image est celui que le service a
+// rendu. La garde de 30 s est levée avant par la clé de service, et l'état de la boîte rendu au seed après.
+test('une boîte testée : le verdict sous la ligne', async ({ page, request }) => {
+	test.setTimeout(90_000)
+	const [avant] = await lireService<{ status: string; last_error: string | null; last_checked_at: string | null }[]>(
+		request,
+		`${BOITE_SYSTEME}&select=status,last_error,last_checked_at`,
+	)
+	if (avant === undefined) throw new Error('la boîte système est absente du seed')
+	await service(request, 'patch', BOITE_SYSTEME, { last_checked_at: null })
+	try {
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto('/reglages/comptes-mail')
+		const ligne = page.getByTestId('ligne-compte-configuration').filter({ hasText: 'Boîte système du workspace' })
+		await ligne.getByTestId('tester-connexion').click()
+		await expect(ligne.getByTestId('verdict-test-connexion')).toHaveText('Connexion réussie.', { timeout: 60_000 })
+		await illustrer(page, { chapitre: CHAPITRE, section: BOITES, nom: 'tester-une-boite', cibles: [ligne] })
+	} finally {
+		await service(request, 'patch', BOITE_SYSTEME, avant)
 	}
 })
 

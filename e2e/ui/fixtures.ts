@@ -39,6 +39,9 @@ export const ERREUR_RESSOURCE_HTTP = {
 	// présente comme le refus métier qu'il est (docs/SPEC-workflow-engine.md §7 bis.4).
 	409: 'console.error: Failed to load resource: the server responded with a status of 409 (Conflict)',
 	416: 'console.error: Failed to load resource: the server responded with a status of 416 (Range Not Satisfiable)',
+	// `429` AJOUTÉ PAR `CRM-127` T4 : la fonction `mail-connection-test` rend `429 too_soon` à un second test dans les
+	// 30 secondes (docs/SPEC-mail-subsystem.md §23.3), que l'écran présente comme un refus et non comme une panne.
+	429: 'console.error: Failed to load resource: the server responded with a status of 429 (Too Many Requests)',
 } as const
 
 export const ERREUR_CONNEXION_REFUSEE =

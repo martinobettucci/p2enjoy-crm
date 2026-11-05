@@ -19,6 +19,9 @@
 // service, qui n'est le jeton de personne et que la fonction refuse en `not_authenticated`
 // (défaut trouvé en exécutant la suite jumelle, `CRM-088`).
 
+// @verifies CRM-127 (docs/BACKLOG.md) — tranche T4 : `pending` se lit « Non testée » (docs/SPEC-mail-subsystem.md §23.5,
+//           docs/DESIGN_SYSTEM.md §5.93)
+
 import {
 	autoriserErreursConsole,
 	connecterAvecLeLabs,
@@ -144,8 +147,8 @@ test.describe('configuration des identités sortantes (docs/SPEC-mail-subsystem.
 		).toBeVisible()
 		// La connexion est une donnée technique, le mode de sécurité un MOT (§5.35).
 		await expect(page.getByTestId('connexion-identite').first()).toHaveText('stalwart:587')
-		// Les deux identités du seed n'ont jamais été éprouvées : elles sont « En attente ».
-		await expect(page.getByText('En attente').first()).toBeVisible()
+		// Les identités du seed n'ont jamais été éprouvées : leur pilule lit « Non testée » (CRM-127 T4, §23.5).
+		await expect(page.getByText('Non testée').first()).toBeVisible()
 		// Les trois sont par défaut, chacune pour son propriétaire — l'index unique est PARTIEL. C'est le cas même
 		// d'INC-335 : chaque ligne nomme désormais à qui elle appartient (décision 805, §22.14).
 		await expect(page.getByText('Par défaut')).toHaveCount(3)

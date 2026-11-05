@@ -18568,7 +18568,7 @@ nouvelle (décision 810).
 
 ## Demande du 2026-11-02 — tester un compte de messagerie, et savoir si la boîte est relevée (décision 816, INC-340)
 
-### CRM-127 — « Tester la connexion » sur les comptes entrants et les identités sortantes, et la relève écrit `last_sync_at` `[~]`
+### CRM-127 — « Tester la connexion » sur les comptes entrants et les identités sortantes, et la relève écrit `last_sync_at` `[P]`
 Demande et arbitrage du responsable du 2026-11-02 (décision 816), qui arbitre INC-340.
 
 **Spécification** : `docs/SPEC-mail-subsystem.md` §23 ; `docs/SPEC-edge-functions.md` (la fonction
@@ -18591,16 +18591,25 @@ Question du connecteur : **non** (décision 816).
 
 - [x] **T1 — spécification**, écrite et committée avant le code le 2026-11-02 : décision 816,
       `docs/SPEC-mail-subsystem.md` §23, INC-340 arbitrée.
-- [@] **T2 — base et `mail-sync`** : migration **`0151`** (la `0150` est `CRM-111` T4.1), `last_sync_at` écrite par la
+- [x] **T2 — base et `mail-sync`** : migration **`0151`** (la `0150` est `CRM-111` T4.1), `last_sync_at` écrite par la
       relève, garde de droit. Vérifié le 2026-11-02 sur une base reconstruite : pgTAP complet (128 fichiers), pytest (291),
       une relève réelle datée. `scripts/verify-mail-inbound.sh` rejoué en entier le 2026-11-05 : **48/48**, après la
       correction de deux défauts du harnais lui-même (décision 847 : le compte d'API à 14, pytest par
       `scripts/lib/pytest-mail-sync.sh`, et la dégradation Python qui exige un vrai échec de test ; INC-345 pour les six
-      autres harnais). **Reste** : l'E2E `mail` de l'écran d'état (§23.7), écrite avec T4.
+      autres harnais). E2E le 2026-11-05 (décision 850) : `e2e/mail/releve-datee.spec.ts` 1/1 (relève réelle datée, bornes
+      d'UID), et l'écran d'état montre la date après une relève réelle (`e2e/ui/etat-messagerie.spec.ts`, assertion
+      « Jamais relevée » retournée).
 - [x] **T3 — fonction edge `mail-connection-test`**, vérifiée le 2026-11-02 : unitaires (gestionnaire, dépendances,
       environnement par fonction) ; API `e2e/api/tester-connexion.spec.ts` 7/7 sur la pile réelle.
-- [@] **T4 — écrans, design system, manuel, E2E et captures.**
-      *Prise en charge (T2 et T4) : session interactive d5b44a2d (p2enjoy-crm-30) depuis 2026-11-05 08:16 UTC — état avant : [~] (T2), [ ] (T4)*
+- [P] **T4 — écrans, design system, manuel, E2E et captures**, vérifiée en développement le 2026-11-05 (décisions 849
+      et 850) : `docs/DESIGN_SYSTEM.md` §5.93 écrit avant le code ; « Tester la connexion » (`PlugZap`) sur chaque ligne des
+      deux écrans, verdict et refus sous la ligne, liste relue sans squelette, incident à côté de « En erreur », `pending`
+      lu « Non testée » ; composant partagé `webapp/src/app/TestConnexionMail.tsx`. Sous-ensemble du périmètre : Vitest
+      689/689 (dont 15 nouveaux, rouges sans la commande), types et build ; E2E `tester-connexion` 8/8 (vraies sessions IMAP
+      et SMTP, `auth_failed` par un mauvais mot de passe puis remise en état, `429`, quatre paliers), les deux écrans de
+      réglages et l'écran d'état ; captures `docs/captures/CRM-127/` observées (un défaut trouvé et corrigé : les commandes
+      séparées à 1440 px) ; manuel §11.1 et §11.2 avec l'image `tester-une-boite`, `verify-manual` 168/168. **Reste** : la
+      livraison de la webapp de `main` et le constat (`docs/PROD_MIGRATIONS.md` §2.30, T5).
 - [ ] **T5 — livraison en production et constat** : une boîte testée depuis l'écran, et sa date de relève visible sur
       l'écran d'état.
       *Partielle le 2026-11-03* : la migration `0151`, l'image `mail-sync` et la fonction edge sont livrées avec le lot

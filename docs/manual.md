@@ -2894,7 +2894,7 @@ on configure une boîte avant d'en superviser la relève.
 
 ![La liste des réglages : « Comptes de messagerie entrante » vient avant « État de la messagerie »](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/reglages-boites.jpg)
 
-![La liste des boîtes : serveur, sécurité, identifiant, état « En attente » ou « Connectée », et « Configurer » sur chaque ligne](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/liste-des-boites.jpg)
+![La liste des boîtes : serveur, sécurité, identifiant, état « Non testée » ou « Connectée », puis « Tester la connexion » et « Configurer » sur chaque ligne](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/liste-des-boites.jpg)
 
 - **Choisissez d'abord la boîte visée.** La liste propose les boîtes que vous voyez, plus celle que
   vous pouvez créer — la vôtre si vous n'en avez pas encore, et la boîte système de l'espace de
@@ -2906,12 +2906,25 @@ on configure une boîte avant d'en superviser la relève.
 - **Le mot de passe est toujours vide à l'ouverture, et il n'est jamais affiché.** Le laisser vide
   **conserve** celui qui est enregistré ; le remplir le **remplace**. Sur une boîte qui n'existe
   pas encore, il est obligatoire — sans lui, aucune connexion ne serait possible.
-- **Changer la connexion remet l'état à « En attente »** et efface le dernier incident : un
-  « Connectée » obtenu avec l'ancien serveur ne dirait plus rien du nouveau.
-- **Ce que l'écran n'offre pas**, et c'est écrit plutôt que suggéré : aucun bouton *Tester la
-  connexion* — l'essai est fait par le service de messagerie, et son résultat s'affiche dans l'état
-  de la boîte ; aucune **suppression** de boîte ; aucun réglage des dossiers relevés ni de la
-  profondeur d'historique, que l'écran ne touche jamais.
+- **Changer la connexion remet l'état à « Non testée »** et efface le dernier incident : un
+  « Connectée » obtenu avec l'ancien serveur ne dirait plus rien du nouveau. « Non testée » veut
+  seulement dire qu'aucun essai n'a eu lieu depuis : la relève, elle, n'attend rien.
+- **« Tester la connexion », sur chaque ligne, essaie la boîte tout de suite.** Le produit ouvre une
+  vraie session avec le serveur, puis écrit le résultat sous la ligne — la connexion réussie, ou
+  l'échec et sa cause — et l'état de la boîte se met à jour. L'essai dure quelques secondes, le temps
+  que le serveur réponde ; le bouton dit alors qu'un test est en cours. Le droit de tester est celui
+  de configurer : une boîte que vous ne pouvez pas configurer ne se teste pas non plus.
+- **Un nouvel essai attend trente secondes.** Chaque essai est une vraie authentification, et un
+  fournisseur peut verrouiller un compte après des échecs répétés : un second test trop rapproché
+  est refusé, et la ligne le dit. Une boîte désactivée ne se teste pas, et une boîte sans mot de
+  passe enregistré non plus — le message dit quoi faire.
+- **Une boîte en erreur dit pourquoi**, à côté de sa pastille d'état, avec les mots du tableau
+  ci-dessous.
+- **Ce que l'écran n'offre pas**, et c'est écrit plutôt que suggéré : aucune **suppression** de
+  boîte ; aucun réglage des dossiers relevés ni de la profondeur d'historique, que l'écran ne touche
+  jamais.
+
+![Une boîte testée : sous sa ligne, le verdict « Connexion réussie. », et l'état « Connectée »](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/tester-une-boite.jpg)
 
 ![Le formulaire d'une boîte : boîte visée, libellé, serveur, port, sécurité, identifiant, mot de passe vide, « Enregistrer »](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/configurer-une-boite.jpg)
 
@@ -2928,16 +2941,17 @@ boîte voit une liste vide, ce qui n'est pas une erreur.
 
 **Le produit essaie vraiment la connexion.** Il ne se contente pas d'enregistrer ce qui a été
 saisi : il ouvre une session avec le serveur déclaré et regarde ce qui se passe. Le résultat est
-enregistré, et il ne dit jamais plus que nécessaire :
+enregistré, et il ne dit jamais plus que nécessaire. Ces mots sont ceux de la ligne d'une boîte en
+erreur, du verdict d'un test et de l'état de la messagerie :
 
 | Ce qui est affiché | Ce que cela veut dire |
 |---|---|
-| *Identifiants refusés* | Le mot de passe est faux **ou** le compte n'existe pas — les serveurs de messagerie ne font pas la différence, et le produit ne l'invente pas |
-| *Serveur introuvable* | Le nom du serveur ne correspond à rien |
+| *Authentification refusée* | Le mot de passe est faux **ou** le compte n'existe pas — les serveurs de messagerie ne font pas la différence, et le produit ne l'invente pas |
+| *Hôte injoignable* | Le nom du serveur ne correspond à rien, ou le serveur ne se laisse pas atteindre |
 | *Connexion refusée* | Rien n'écoute à cette adresse et sur ce port |
-| *Sécurité impossible à vérifier* | Le certificat du serveur ne peut pas être vérifié |
+| *Échec TLS* | Le certificat du serveur ne peut pas être vérifié |
 | *Délai dépassé* | Le serveur n'a pas répondu à temps |
-| *Réponse inattendue* | Le serveur a répondu, mais pas comme un serveur de messagerie |
+| *Erreur de protocole* | Le serveur a répondu, mais pas comme un serveur de messagerie |
 
 **Le message d'origine du serveur n'est jamais conservé.** Un serveur tiers peut écrire n'importe
 quoi dans son refus — l'identifiant essayé, une adresse interne, un numéro de dossier. Ce texte
@@ -2956,7 +2970,7 @@ de la messagerie » : on reçoit avant d'expédier, et on configure avant de sup
 
 ![L'entrée « Identités d'expédition » de la liste des réglages](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/reglages-adresses.jpg)
 
-![La liste des adresses d'expédition : chaque adresse, ses pastilles « Par défaut » et « Signature », son serveur et « Configurer »](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/liste-des-adresses.jpg)
+![La liste des adresses d'expédition : chaque adresse, ses pastilles « Par défaut » et « Signature », son serveur, « Tester la connexion » et « Configurer »](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/liste-des-adresses.jpg)
 
 - **Une ligne commence par l'adresse**, précédée du nom affiché quand il est renseigné — sous la
   forme `Nom <adresse>`, celle que verront vos destinataires. C'est cette adresse qui distingue
@@ -2987,9 +3001,12 @@ de la messagerie » : on reçoit avant d'expédier, et on configure avant de sup
   choisie d'avance quand cette personne écrit. Sur l'adresse de service, elle désigne l'adresse des envois
   automatiques. La case est cochée d'avance sur une déclaration, parce que c'est ce que le produit ferait de toute
   façon. La décocher n'est utile que si vous en avez déjà une.
-- **Ce que l'écran n'offre pas**, et c'est écrit plutôt que suggéré : aucun bouton *Tester la
-  connexion* — l'essai est fait par le service de messagerie, et son résultat s'affiche dans l'état
-  de l'identité ; aucune **suppression** ; aucun réglage du **plafond quotidien** d'envois (voir plus bas). La
+- **« Tester la connexion », sur chaque ligne, essaie l'adresse tout de suite**, comme pour une boîte
+  de réception : une vraie session avec le serveur d'envoi, sans envoyer de message, puis le résultat
+  sous la ligne. Les mêmes règles valent — le droit de configurer, trente secondes entre deux essais,
+  la cause d'une erreur écrite à côté de la pastille d'état.
+- **Ce que l'écran n'offre pas**, et c'est écrit plutôt que suggéré : aucune **suppression** ;
+  aucun réglage du **plafond quotidien** d'envois (voir plus bas). La
   **signature**, elle, se règle sur ce même écran ([chapitre 15](#signer-les-messages-expedies-depuis-une-identite)).
 
 ![Le formulaire d'une adresse d'expédition, avec la case « Identité par défaut de cette personne » cochée](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/configurer-une-adresse.jpg)

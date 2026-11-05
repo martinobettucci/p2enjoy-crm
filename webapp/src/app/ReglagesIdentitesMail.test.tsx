@@ -13,6 +13,9 @@
 //           §4, §5 (« Comptes entrants, identités mail ») ; docs/DESIGN_SYSTEM.md §5.59
 // @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T2) — chaque ligne nomme son propriétaire, et la case
 //           dit ce qu'elle règle selon l'identité visée (docs/SPEC-mail-subsystem.md §22.14 ; docs/DESIGN_SYSTEM.md §5.35)
+// @verifies CRM-127 (docs/BACKLOG.md) — tranche T4 : « Tester la connexion » sur chaque identité, nommée par son adresse,
+//           le test `outbound`, le verdict sous la ligne et la liste relue, l'incident d'une identité en erreur, `pending`
+//           lu « Non testée » ; docs/SPEC-mail-subsystem.md §23.5 ; docs/DESIGN_SYSTEM.md §5.93
 
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -22,6 +25,7 @@ import { ReglagesIdentitesMail } from './ReglagesIdentitesMail'
 import { FournisseurEspace } from './ContexteEspace'
 import type { Capacite } from '../lib/capacites'
 import type { ClientCrm } from '../lib/supabase'
+import type { AccesTest } from '../lib/test-connexion-mail'
 
 afterEach(cleanup)
 
@@ -126,7 +130,8 @@ describe('ReglagesIdentitesMail — la liste', () => {
 		expect(screen.getAllByTestId('connexion-identite')[0]?.textContent).toBe('stalwart:587')
 		// Le mode de sécurité est un MOT, jamais une teinte (§5.34, §5.35).
 		expect(screen.getByText('STARTTLS')).toBeTruthy()
-		expect(screen.getByText('En attente')).toBeTruthy()
+		// `pending` se lit « Non testée » depuis CRM-127 T4 (§23.5).
+		expect(screen.getByText('Non testée')).toBeTruthy()
 		expect(screen.getByText('En erreur')).toBeTruthy()
 	})
 
@@ -540,5 +545,46 @@ describe('ReglagesIdentitesMail — la capacité d’administration rendue par l
 			expect(screen.queryByTestId('motif-identites-mail')).toBeNull()
 			cleanup()
 		}
+	})
+})
+
+describe('ReglagesIdentitesMail — « Tester la connexion » (CRM-127 T4)', () => {
+	it('teste l’identité par son adresse, écrit le verdict sous la ligne et relit la liste', async () => {
+		let lectures = 0
+		const relue = IDENTITES.map((identite) => (identite.id === 'i-2' ? { ...identite, status: 'ok', last_error: null } : identite))
+		const c = client() as unknown as { from: (table: string) => unknown }
+		const de = c.from.bind(c)
+		c.from = (table: string) =>
+			table === 'mail_outbound_identities'
+				? { select: () => ({ order: () => Promise.resolve({ data: lectures++ === 0 ? IDENTITES : relue, error: null, status: 200 }) }) }
+				: de(table)
+		const appels: unknown[] = []
+		const acces: AccesTest = {
+			url: 'http://crm.test',
+			cleAnonyme: 'anon',
+			jeton: () => 'jwt',
+			requete: async (_url, init) => {
+				appels.push(JSON.parse(String(init?.body)))
+				return new Response(JSON.stringify({ status: 'ok', error: null, checked_at: 't' }), { status: 200 })
+			},
+		}
+		render(
+			<MemoryRouter>
+				<ReglagesIdentitesMail client={c as unknown as ClientCrm} accesTest={acces} idUtilisateur={CAMILLE} />
+			</MemoryRouter>,
+		)
+		await screen.findAllByTestId('tester-connexion')
+		const ligne = () => document.querySelector('[data-identite="i-2"]') as HTMLElement
+		const commande = ligne().querySelector('[data-testid="tester-connexion"]') as HTMLButtonElement
+		expect(commande.getAttribute('aria-label')).toBe('Tester la connexion de systeme@crm.p2enjoy.test')
+		expect(ligne().querySelector('[data-testid="incident-identite"]')?.textContent).toBe('Authentification refusée')
+
+		await userEvent.click(commande)
+		expect(appels).toEqual([{ target: 'outbound', id: 'i-2' }])
+		await waitFor(() => expect(ligne().textContent).toContain('Connectée'))
+		expect(lectures).toBe(2)
+		expect(ligne().querySelector('[data-testid="verdict-test-connexion"]')?.textContent).toBe('Connexion réussie.')
+		// Relue sans erreur, la ligne ne porte plus d'incident : l'écran dit ce que la base retient.
+		expect(ligne().querySelector('[data-testid="incident-identite"]')).toBeNull()
 	})
 })

@@ -3001,6 +3001,21 @@ export const fr = {
 	'admin.mail.incident.tls_failed': 'Échec TLS',
 	'admin.mail.incident.timeout': 'Délai dépassé',
 	'admin.mail.incident.protocol_error': 'Erreur de protocole',
+	// @spec CRM-127 (docs/BACKLOG.md) T4 — « Tester la connexion » (docs/SPEC-mail-subsystem.md §23.5,
+	//       docs/DESIGN_SYSTEM.md §5.93) : la commande, son vol, le verdict et les refus, partagés par les deux écrans.
+	'admin.mail.incident.unknown': 'cause non reconnue',
+	'admin.mailTest.command': 'Tester la connexion',
+	'admin.mailTest.command.aria': 'Tester la connexion de {ligne}',
+	'admin.mailTest.inFlight': 'Test en cours…',
+	'admin.mailTest.success': 'Connexion réussie.',
+	'admin.mailTest.failure': 'Échec : {incident}',
+	'admin.mailTest.failure.unknown': 'Échec : cause non reconnue',
+	'admin.mailTest.refusal.tooSoon': 'Un test vient d’avoir lieu sur cette ligne. Réessayez dans quelques secondes.',
+	'admin.mailTest.refusal.notFound': 'Cette ligne n’est plus disponible pour vous.',
+	'admin.mailTest.refusal.disabled': 'Cette ligne est désactivée : elle ne se teste pas.',
+	'admin.mailTest.refusal.secretMissing': 'Aucun mot de passe n’est enregistré : configurez-le avant de tester.',
+	'admin.mailTest.refusal.session': 'Votre session a expiré. Reconnectez-vous, puis réessayez.',
+	'admin.mailTest.refusal.service': 'Le service de messagerie n’a pas répondu : rien n’a été testé.',
 
 	// --- Configuration des comptes entrants — CRM-088, docs/SPEC-mail-subsystem.md §21 --------
 	'admin.settings.index.mailAccounts': 'Comptes de messagerie entrante',
@@ -3046,7 +3061,8 @@ export const fr = {
 
 	// Les quatre valeurs de `mail_inbound_accounts_statut` (migration 0022) — jamais le code brut
 	// (docs/SPEC-mail-subsystem.md §21.3, docs/DESIGN_SYSTEM.md §5.34).
-	'admin.mailAccounts.status.pending': 'En attente',
+	// @spec CRM-127 T4 (docs/SPEC-mail-subsystem.md §23.5) : « En attente » se lisait comme une relève en suspens.
+	'admin.mailAccounts.status.pending': 'Non testée',
 	'admin.mailAccounts.status.ok': 'Connectée',
 	'admin.mailAccounts.status.error': 'En erreur',
 	'admin.mailAccounts.status.disabled': 'Désactivée',
@@ -3138,7 +3154,8 @@ export const fr = {
 
 	// Les quatre valeurs de `mail_outbound_identities_statut` (migration 0023) — jamais le code
 	// brut (docs/SPEC-mail-subsystem.md §22.3, docs/DESIGN_SYSTEM.md §5.35).
-	'admin.mailIdentities.status.pending': 'En attente',
+	// @spec CRM-127 T4 (docs/SPEC-mail-subsystem.md §23.5) : « En attente » se lisait comme une relève en suspens.
+	'admin.mailIdentities.status.pending': 'Non testée',
 	'admin.mailIdentities.status.ok': 'Connectée',
 	'admin.mailIdentities.status.error': 'En erreur',
 	'admin.mailIdentities.status.disabled': 'Désactivée',

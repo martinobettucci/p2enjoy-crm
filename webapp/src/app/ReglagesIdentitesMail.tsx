@@ -15,6 +15,9 @@
 //       docs/SPEC-droits-interface.md §4, §5 (« Comptes entrants, identités mail ») ; docs/DESIGN_SYSTEM.md §5.59
 // @spec INC-335 (docs/BACKLOG.md, correctif de la décision 805, T2) — chaque ligne nomme son propriétaire, et la case dit
 //       ce qu'elle règle — docs/SPEC-mail-subsystem.md §22.14 ; docs/DESIGN_SYSTEM.md §5.35
+// @spec CRM-127 (docs/BACKLOG.md) — tranche T4 : « Tester la connexion » sur chaque ligne, la liste relue sans squelette,
+//       l'incident d'une identité en erreur à côté de sa pilule ; docs/SPEC-mail-subsystem.md §23.5 ;
+//       docs/DESIGN_SYSTEM.md §5.93
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { PencilLine, Plus } from 'lucide-react'
@@ -24,6 +27,14 @@ import { LiveRegion } from '../components/ui/LiveRegion'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { capaciteDeBoiteMail, motifVisible, proprietesCommande, type ProprietesCommande } from '../lib/capacites'
 import { useContexteEspace } from './ContexteEspace'
+import {
+	CommandeTestConnexion,
+	libelleIncident,
+	useTestsConnexion,
+	VerdictTestConnexion,
+	type EtatTestLigne,
+} from './TestConnexionMail'
+import { accesTestCrm, type AccesTest } from '../lib/test-connexion-mail'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import type { CleTraduction } from '../i18n'
@@ -170,6 +181,8 @@ const CLASSES_ETIQUETTE = 'flex flex-col gap-1 text-sm text-text-2 min-w-0'
 
 export type ProprietesReglagesIdentitesMail = {
 	readonly client?: ClientCrm | null
+	/** L'accès à la fonction edge du test de connexion, injectable pour les preuves (`CRM-127` T4). */
+	readonly accesTest?: AccesTest | null
 	/**
 	 * Identifiant de session, injectable pour les preuves.
 	 *
@@ -184,6 +197,7 @@ const ID_MOTIF_IDENTITES = 'identites-mail-motif'
 
 export function ReglagesIdentitesMail({
 	client = clientCrm,
+	accesTest = accesTestCrm,
 	idUtilisateur,
 }: ProprietesReglagesIdentitesMail = {}) {
 	const authentification = useAuthentification()
@@ -251,6 +265,19 @@ export function ReglagesIdentitesMail({
 	}, [saisie])
 
 	const recharger = useCallback(() => setTentative((precedente) => precedente + 1), [])
+
+	// UNE RElireIdentitesSortantes SANS SQUELETTE après un test (§5.93, §5.29 tranche 2 c) : la ligne reste montée, et avec elle son
+	// verdict et sa commande, qui reprend le focus. Un échec de lecture reste dit : l'écran d'erreur remplace la liste.
+	const relireEnPlace = useCallback(() => {
+		if (client === null) return
+		const rang = ++courant.current
+		void (async () => {
+			const lues = await lireIdentitesSortantes(client)
+			if (rang !== courant.current) return
+			setEtat(lues.statut === 'pret' ? pret(lues.donnees) : lues)
+		})()
+	}, [client])
+	const tests = useTestsConnexion('outbound', relireEnPlace, accesTest)
 
 	const identites = etat.statut === 'pret' ? etat.donnees : []
 
@@ -348,7 +375,7 @@ export function ReglagesIdentitesMail({
 		// trois données techniques. La borne d'un paragraphe de prose y replierait les lignes.
 		<section
 			aria-label={t('admin.mailIdentities.aria')}
-			className="flex flex-col gap-4 max-w-[104ch]"
+			className="flex flex-col gap-4 max-w-[120ch]"
 		>
 			<LiveRegion libelle={t('admin.mailIdentities.live.aria')} message={annonce} />
 			{motif ? (
@@ -387,6 +414,8 @@ export function ReglagesIdentitesMail({
 							key={identite.id}
 							identite={identite}
 							commande={proprietesCommande(capaciteDe(identite.owner_id), ID_MOTIF_IDENTITES, enCours)}
+							test={tests.etats[identite.id]}
+							onTester={() => void tests.tester(identite.id)}
 							onConfigurer={(depuis) => ouvrir(identite.id, depuis)}
 						/>
 					))}
@@ -443,11 +472,16 @@ export function proprietaireLisible(identite: IdentiteSortante): string {
 function LigneIdentite({
 	identite,
 	commande,
+	test,
+	onTester,
 	onConfigurer,
 }: {
 	readonly identite: IdentiteSortante
 	/** Désactivée pendant un envoi, ou par une capacité refusée — et citant alors son motif. */
 	readonly commande: ProprietesCommande
+	/** Le test de connexion de cette ligne : en vol, et sa dernière issue (§5.93). */
+	readonly test: EtatTestLigne | undefined
+	readonly onTester: () => void
 	readonly onConfigurer: (depuis: HTMLButtonElement | null) => void
 }) {
 	const expediteur = expediteurLisible(identite)
@@ -506,18 +540,36 @@ function LigneIdentite({
 			{estEtatIdentiteConnu(identite.status) && (
 				<Badge ton={ETATS[identite.status].ton}>{t(ETATS[identite.status].cle)}</Badge>
 			)}
+			{/* L'INCIDENT D'UNE IDENTITÉ EN ERREUR, par le dictionnaire fermé (§5.93). */}
+			{identite.status === 'error' && (
+				<span data-testid="incident-identite" className="text-sm text-text-2">
+					{libelleIncident(identite.last_error)}
+				</span>
+			)}
 			<span className="grow" />
-			<button
-				type="button"
-				data-testid="configurer-identite"
-				{...commande}
-				onClick={(evenement) => onConfigurer(evenement.currentTarget)}
-				aria-label={t('admin.mailIdentities.configure.aria', { identite: expediteur })}
-				className={CLASSES_BOUTON_DISCRET}
-			>
-				<PencilLine aria-hidden="true" className="size-4" />
-				{t('admin.mailIdentities.configure')}
-			</button>
+			{/* LES DEUX COMMANDES SE REPLIENT ENSEMBLE (§5.93) — défaut trouvé en regardant la capture à 1440 px : séparées,
+			    « Configurer » passait seul à la ligne suivante, et deux lignes voisines n'avaient plus la même hauteur. */}
+			<span className="flex items-center gap-1 shrink-0">
+				<CommandeTestConnexion
+					nomLigne={identite.from_address}
+					etat={test}
+					commande={commande}
+					classes={CLASSES_BOUTON_DISCRET}
+					onTester={onTester}
+				/>
+				<button
+					type="button"
+					data-testid="configurer-identite"
+					{...commande}
+					onClick={(evenement) => onConfigurer(evenement.currentTarget)}
+					aria-label={t('admin.mailIdentities.configure.aria', { identite: expediteur })}
+					className={CLASSES_BOUTON_DISCRET}
+				>
+					<PencilLine aria-hidden="true" className="size-4" />
+					{t('admin.mailIdentities.configure')}
+				</button>
+			</span>
+			<VerdictTestConnexion etat={test} />
 		</li>
 	)
 }

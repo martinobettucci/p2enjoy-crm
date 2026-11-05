@@ -13,6 +13,22 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-127` T4 — « Tester la connexion » sur les comptes entrants et les identités sortantes (webapp seule)
+
+*En développement seulement. Prouvé par les unitaires des deux écrans, `e2e/ui/tester-connexion.spec.ts` (vraies sessions
+IMAP et SMTP, échec par un mauvais mot de passe puis remise en état) et `e2e/mail/releve-datee.spec.ts` (décisions 849 et
+850, `docs/SPEC-mail-subsystem.md` §23).*
+
+- Réglages ▸ Comptes de messagerie entrante et Identités d'expédition : chaque ligne porte « Tester la connexion ». Le
+  verdict s'écrit sous la ligne — « Connexion réussie. » ou « Échec : » et sa cause —, et la liste est relue.
+- Un second test dans les 30 secondes, une ligne désactivée ou sans mot de passe, une session expirée ou un service muet
+  sont dits chacun par leur phrase.
+- Une boîte ou une identité en erreur nomme sa cause à côté de sa pastille ; l'état `pending` se lit « Non testée ».
+- L'écran d'état de la messagerie montre la date de la dernière relève réussie (la relève la date depuis la migration
+  151, en production).
+- Le harnais `scripts/verify-mail-inbound.sh` est rejoué en entier : pytest passe par `scripts/lib/pytest-mail-sync.sh`
+  sur un hôte sans `pip` (décision 847, INC-345).
+
 ### `CRM-112` T6 — la recherche globale par les champs de l'affaire (migration `0168`)
 
 *En développement seulement. Prouvé par la suite pgTAP `0157`, le test d'API `e2e/api/recherche-champs-communs.spec.ts`

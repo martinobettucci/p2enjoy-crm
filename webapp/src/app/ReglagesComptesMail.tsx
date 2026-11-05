@@ -13,6 +13,10 @@
 // @spec CRM-093 (docs/BACKLOG.md) — tranche T4 : la boîte système et celles des autres s'éteignent avec leur motif
 //       quand la base refuse l'administration de l'espace ; la sienne reste toujours offerte (famille P) ;
 //       docs/SPEC-droits-interface.md §4, §5 (« Comptes entrants, identités mail ») ; docs/DESIGN_SYSTEM.md §5.59
+//
+// @spec CRM-127 (docs/BACKLOG.md) — tranche T4 : « Tester la connexion » sur chaque ligne, la liste relue sans squelette,
+//       l'incident d'une boîte en erreur à côté de sa pilule ; docs/SPEC-mail-subsystem.md §23.5 ;
+//       docs/DESIGN_SYSTEM.md §5.93
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { PencilLine, Plus } from 'lucide-react'
@@ -22,6 +26,14 @@ import { LiveRegion } from '../components/ui/LiveRegion'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { capaciteDeBoiteMail, motifVisible, proprietesCommande, type ProprietesCommande } from '../lib/capacites'
 import { useContexteEspace } from './ContexteEspace'
+import {
+	CommandeTestConnexion,
+	libelleIncident,
+	useTestsConnexion,
+	VerdictTestConnexion,
+	type EtatTestLigne,
+} from './TestConnexionMail'
+import { accesTestCrm, type AccesTest } from '../lib/test-connexion-mail'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import type { CleTraduction } from '../i18n'
@@ -156,6 +168,8 @@ const CLASSES_CHAMP = [
 
 export type ProprietesReglagesComptesMail = {
 	readonly client?: ClientCrm | null
+	/** L'accès à la fonction edge du test de connexion, injectable pour les preuves (`CRM-127` T4). */
+	readonly accesTest?: AccesTest | null
 	/**
 	 * Identifiant de session, injectable pour les preuves.
 	 *
@@ -168,6 +182,7 @@ export type ProprietesReglagesComptesMail = {
 
 export function ReglagesComptesMail({
 	client = clientCrm,
+	accesTest = accesTestCrm,
 	idUtilisateur,
 }: ProprietesReglagesComptesMail = {}) {
 	const authentification = useAuthentification()
@@ -217,6 +232,19 @@ export function ReglagesComptesMail({
 	}, [saisie])
 
 	const recharger = useCallback(() => setTentative((precedente) => precedente + 1), [])
+
+	// UNE RElireComptesEntrants SANS SQUELETTE après un test (§5.93, §5.29 tranche 2 c) : la ligne reste montée, et avec elle son
+	// verdict et sa commande, qui reprend le focus. Un échec de lecture reste dit : l'écran d'erreur remplace la liste.
+	const relireEnPlace = useCallback(() => {
+		if (client === null) return
+		const rang = ++courant.current
+		void (async () => {
+			const lus = await lireComptesEntrants(client)
+			if (rang !== courant.current) return
+			setEtat(lus.statut === 'pret' ? pret(lus.donnees) : lus)
+		})()
+	}, [client])
+	const tests = useTestsConnexion('inbound', relireEnPlace, accesTest)
 
 	const comptes = etat.statut === 'pret' ? etat.donnees : []
 
@@ -298,13 +326,15 @@ export function ReglagesComptesMail({
 	)
 
 	return (
-		// LA BORNE EST À `104ch`, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE (`CLAUDE.md`
+		// LA BORNE EST À `120ch` DEPUIS `CRM-127` T4 (§5.93) : la seconde commande, « Tester la connexion », ne tenait plus
+		// dans `104ch` à 1440 px. Le motif d'origine, ci-dessous, est inchangé.
+		// LA BORNE ÉTAIT À `104ch`, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE (`CLAUDE.md`
 		// §16). Écrite d'abord à `72ch` — la largeur d'une colonne de prose —, la ligne d'une boîte
 		// personnelle se repliait DÈS 1440 px et sa commande passait seule à la ligne suivante,
 		// alors que celle de la boîte système tenait : deux lignes voisines n'avaient plus la même
 		// hauteur sans qu'aucune donnée ne le justifie. Une ligne porte ici six éléments, dont
 		// trois données techniques ; sa borne est celle de son contenu, pas celle d'un paragraphe.
-		<section aria-label={t('admin.mailAccounts.aria')} className="flex flex-col gap-4 max-w-[104ch]">
+		<section aria-label={t('admin.mailAccounts.aria')} className="flex flex-col gap-4 max-w-[120ch]">
 			<LiveRegion libelle={t('admin.mailAccounts.live.aria')} message={annonce} />
 			{motif ? (
 				<MotifLectureSeule id={ID_MOTIF_COMPTES} data-testid="motif-comptes-mail">
@@ -342,6 +372,8 @@ export function ReglagesComptesMail({
 							key={compte.id}
 							compte={compte}
 							commande={proprietesCommande(capaciteDe(compte.owner_id), ID_MOTIF_COMPTES, enCours)}
+							test={tests.etats[compte.id]}
+							onTester={() => void tests.tester(compte.id)}
 							onConfigurer={(depuis) => ouvrir(compte.owner_id, depuis)}
 						/>
 					))}
@@ -389,11 +421,16 @@ export function ReglagesComptesMail({
 function LigneCompte({
 	compte,
 	commande,
+	test,
+	onTester,
 	onConfigurer,
 }: {
 	readonly compte: CompteEntrant
 	/** Désactivée pendant un envoi, ou par une capacité refusée — et citant alors son motif. */
 	readonly commande: ProprietesCommande
+	/** Le test de connexion de cette ligne : en vol, et sa dernière issue (§5.93). */
+	readonly test: EtatTestLigne | undefined
+	readonly onTester: () => void
 	readonly onConfigurer: (depuis: HTMLButtonElement | null) => void
 }) {
 	return (
@@ -421,18 +458,37 @@ function LigneCompte({
 			{estEtatCompteConnu(compte.status) && (
 				<Badge ton={ETATS[compte.status].ton}>{t(ETATS[compte.status].cle)}</Badge>
 			)}
+			{/* L'INCIDENT D'UNE BOÎTE EN ERREUR, par le dictionnaire fermé (§5.93) : sans lui, l'écran disait qu'une boîte
+			    échoue sans dire pourquoi. */}
+			{compte.status === 'error' && (
+				<span data-testid="incident-compte" className="text-sm text-text-2">
+					{libelleIncident(compte.last_error)}
+				</span>
+			)}
 			<span className="grow" />
-			<button
-				type="button"
-				data-testid="configurer-compte"
-				{...commande}
-				onClick={(evenement) => onConfigurer(evenement.currentTarget)}
-				aria-label={t('admin.mailAccounts.configure.aria', { boite: compte.label })}
-				className={CLASSES_BOUTON_DISCRET}
-			>
-				<PencilLine aria-hidden="true" className="size-4" />
-				{t('admin.mailAccounts.configure')}
-			</button>
+			{/* LES DEUX COMMANDES SE REPLIENT ENSEMBLE (§5.93) — défaut trouvé en regardant la capture à 1440 px : séparées,
+			    « Configurer » passait seul à la ligne suivante, et deux lignes voisines n'avaient plus la même hauteur. */}
+			<span className="flex items-center gap-1 shrink-0">
+				<CommandeTestConnexion
+					nomLigne={compte.label}
+					etat={test}
+					commande={commande}
+					classes={CLASSES_BOUTON_DISCRET}
+					onTester={onTester}
+				/>
+				<button
+					type="button"
+					data-testid="configurer-compte"
+					{...commande}
+					onClick={(evenement) => onConfigurer(evenement.currentTarget)}
+					aria-label={t('admin.mailAccounts.configure.aria', { boite: compte.label })}
+					className={CLASSES_BOUTON_DISCRET}
+				>
+					<PencilLine aria-hidden="true" className="size-4" />
+					{t('admin.mailAccounts.configure')}
+				</button>
+			</span>
+			<VerdictTestConnexion etat={test} />
 		</li>
 	)
 }

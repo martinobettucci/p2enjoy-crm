@@ -14,6 +14,9 @@
 // remettent la boîte système dans son état d'origine par le VÉRITABLE chemin d'écriture, celui-là
 // même que l'écran emprunte, et non par un `PATCH` direct que la base refuse de toute façon.
 
+// @verifies CRM-127 (docs/BACKLOG.md) — tranche T4 : `pending` se lit « Non testée » (docs/SPEC-mail-subsystem.md §23.5,
+//           docs/DESIGN_SYSTEM.md §5.93)
+
 import {
 	autoriserErreursConsole,
 	connecterAvecLeLabs,
@@ -105,8 +108,8 @@ test.describe('configuration des comptes entrants (docs/SPEC-mail-subsystem.md �
 		await expect(
 			page.getByTestId('ligne-compte-configuration').filter({ hasText: 'système' }).getByText('Aucune'),
 		).toBeVisible()
-		// Les trois comptes du seed n'ont jamais été éprouvés : ils sont « En attente ».
-		await expect(page.getByText('En attente').first()).toBeVisible()
+		// Les trois comptes du seed n'ont jamais été éprouvés : leur pilule lit « Non testée » (CRM-127 T4, §23.5).
+		await expect(page.getByText('Non testée').first()).toBeVisible()
 
 		// Le formulaire est REPLIÉ par défaut (§5.34).
 		await expect(page.getByTestId('formulaire-compte-mail')).toHaveCount(0)

@@ -4,6 +4,9 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.14 (cette surface), §7 (paliers) ; CLAUDE.md §16
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-127 (docs/BACKLOG.md) — tranche T2 : la relève date `last_sync_at`, et la boîte système relevée montre sa
+//           date (docs/SPEC-mail-subsystem.md §23.2, INC-340) ; « Jamais relevée » reste prouvé par
+//           `webapp/src/app/EtatMessagerie.test.tsx`, la veille du service datant désormais chaque boîte du seed
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée. Le seed ne pose aucun compte en incident — les trois comptes sont
@@ -11,6 +14,8 @@
 // chemin qui le peut (`mail_inbound_accounts` n'accorde aucune écriture à `authenticated`), et
 // RENDU AU SEED DANS LE `finally` — même discipline que `e2e/mail/resilience.spec.ts`.
 
+import { execFileSync } from 'node:child_process'
+import { conteneur } from '../conteneur'
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
@@ -51,6 +56,28 @@ async function mettreDrissEnIncident(page: Page): Promise<void> {
 	expect(await reponse.json(), `le compte « ${LABEL_DRISS} » doit exister dans le seed`).toHaveLength(1)
 }
 
+/**
+ * Une relève réelle de la boîte système, par la route interne du service (`CRM-127` T2) : la date que l'écran montre est
+ * celle qu'elle a posée, jamais une valeur écrite par la clé de service.
+ */
+async function releverBoiteSysteme(page: Page): Promise<void> {
+	const reponse = await page.request.get(`${URL_API}/rest/v1/mail_inbound_accounts?select=id&owner_id=is.null`, {
+		headers: enTetesService(),
+	})
+	const [systeme] = (await reponse.json()) as { id: string }[]
+	expect(systeme, 'la boîte système du seed').toBeDefined()
+	execFileSync('docker', [
+		'exec', '-e', `COMPTE=${systeme!.id}`, conteneur('mail-sync'), 'python', '-c',
+		`
+import os, sys, urllib.request
+requete = urllib.request.Request(
+    "http://127.0.0.1:8080/internal/v1/inbound-accounts/" + os.environ["COMPTE"] + "/poll", data=b"", method="POST",
+    headers={"Authorization": "Bearer " + os.environ["MAIL_SYNC_INTERNAL_TOKEN"]})
+sys.exit(0 if urllib.request.urlopen(requete, timeout=120).status == 200 else 1)
+`,
+	], { stdio: ['ignore', 'pipe', 'pipe'] })
+}
+
 async function restaurerDriss(page: Page): Promise<void> {
 	await page.request.patch(cheminCompteDriss(), {
 		headers: { ...enTetesService(), Prefer: 'return=minimal' },
@@ -62,6 +89,8 @@ test.describe('état de la messagerie (docs/SPEC-mail-subsystem.md §20.11)', ()
 	test('l’administratrice voit les trois comptes, dont un incident, et les deux compteurs', async ({
 		page,
 	}) => {
+		test.setTimeout(150_000)
+		await releverBoiteSysteme(page)
 		await mettreDrissEnIncident(page)
 		try {
 			await connecter(page, ADMIN)
@@ -81,10 +110,12 @@ test.describe('état de la messagerie (docs/SPEC-mail-subsystem.md §20.11)', ()
 			await expect(ligneDriss.getByText('Authentification refusée')).toBeVisible()
 			await expect(ligneDriss).not.toContainText('auth_failed')
 
-			// Un compte jamais relevé le dit en toutes lettres, pas une cellule vide (§20.11.3).
-			await expect(
-				page.getByTestId('ligne-compte-mail').filter({ hasText: 'système' }).getByText('Jamais relevée'),
-			).toBeVisible()
+			// RETOURNÉE PAR `CRM-127` T2 (§23.2, INC-340) : la boîte système vient d'être relevée, et la ligne montre sa date
+			// en donnée technique. Cette assertion figeait « Jamais relevée », qu'aucune relève n'écrivait alors ; la veille
+			// du service date désormais chaque boîte, et l'absence se prouve dans `EtatMessagerie.test.tsx`.
+			const ligneSysteme = page.getByTestId('ligne-compte-mail').filter({ hasText: 'système' })
+			await expect(ligneSysteme).not.toContainText('Jamais relevée')
+			await expect(ligneSysteme.locator('code').first()).toHaveText(/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/)
 
 			// Les deux compteurs de la file sortante, sans pilule ni couleur d'alerte (§20.11.5).
 			const compteurs = page.getByTestId('compteur-mail')

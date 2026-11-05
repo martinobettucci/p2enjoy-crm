@@ -10,6 +10,9 @@
 // @verifies CRM-093 (docs/BACKLOG.md) — tranche T4 : la boîte système et celles des autres s'éteignent avec leur motif
 //           quand la base refuse l'administration ; la sienne reste offerte (famille P) ; docs/SPEC-droits-interface.md
 //           §4, §5 (« Comptes entrants, identités mail ») ; docs/DESIGN_SYSTEM.md §5.59
+// @verifies CRM-127 (docs/BACKLOG.md) — tranche T4 : « Tester la connexion » sur chaque ligne — la commande, son vol, le
+//           verdict et les refus traduits sous la ligne, la liste relue sans squelette, le focus rendu, l'incident d'une
+//           boîte en erreur, `pending` lu « Non testée » ; docs/SPEC-mail-subsystem.md §23.5 ; docs/DESIGN_SYSTEM.md §5.93
 
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -19,6 +22,7 @@ import { ReglagesComptesMail } from './ReglagesComptesMail'
 import { FournisseurEspace } from './ContexteEspace'
 import type { Capacite } from '../lib/capacites'
 import type { ClientCrm } from '../lib/supabase'
+import type { AccesTest } from '../lib/test-connexion-mail'
 
 afterEach(cleanup)
 
@@ -108,7 +112,8 @@ describe('ReglagesComptesMail — la liste', () => {
 		expect(screen.getAllByTestId('connexion-compte')[0]?.textContent).toBe('stalwart:143')
 		// Le mode de sécurité est un MOT, jamais une teinte (§5.34).
 		expect(screen.getByText('STARTTLS')).toBeTruthy()
-		expect(screen.getByText('En attente')).toBeTruthy()
+		// `pending` se lit « Non testée » depuis CRM-127 T4 (§23.5) : « En attente » se lisait comme une relève en suspens.
+		expect(screen.getByText('Non testée')).toBeTruthy()
 		expect(screen.getByText('En erreur')).toBeTruthy()
 	})
 
@@ -420,5 +425,163 @@ describe('ReglagesComptesMail — la capacité d’administration rendue par la 
 			expect(screen.queryByTestId('motif-comptes-mail')).toBeNull()
 			cleanup()
 		}
+	})
+})
+
+describe('ReglagesComptesMail — « Tester la connexion » (CRM-127 T4)', () => {
+	/** Un client dont la liste change entre deux lectures, pour voir ce que la relecture rapporte. */
+	function clientRelu(lectures: readonly (readonly Record<string, unknown>[])[]) {
+		let rang = 0
+		const compte = { lectures: 0 }
+		const c = {
+			from: (table: string) => {
+				if (table === 'workspaces') {
+					return {
+						select: () => ({
+							order: () => Promise.resolve({ data: [{ id: WORKSPACE, name: 'P2Enjoy', slug: 'p2enjoy' }], error: null, status: 200 }),
+						}),
+					}
+				}
+				return {
+					select: () => ({
+						order: () => {
+							compte.lectures += 1
+							const donnees = lectures[Math.min(rang++, lectures.length - 1)]
+							return Promise.resolve({ data: donnees, error: null, status: 200 })
+						},
+					}),
+				}
+			},
+			rpc: () => Promise.resolve({ data: null, error: null, status: 200 }),
+		} as unknown as ClientCrm
+		return { c, compte }
+	}
+
+	/** Un accès dont la réponse est retenue jusqu'à `rendre`, pour observer le vol. */
+	function accesRetenu() {
+		const appels: { url: string; corps: unknown }[] = []
+		let rendre: (reponse: Response) => void = () => undefined
+		const acces: AccesTest = {
+			url: 'http://crm.test',
+			cleAnonyme: 'anon',
+			jeton: () => 'jwt',
+			requete: (url, init) => {
+				appels.push({ url, corps: JSON.parse(String(init?.body)) })
+				return new Promise<Response>((resoudre) => {
+					rendre = resoudre
+				})
+			},
+		}
+		return { acces, appels, rendre: (statut: number, corps: unknown) => rendre(new Response(JSON.stringify(corps), { status: statut })) }
+	}
+
+	const monterTest = (c: ClientCrm, acces: AccesTest) =>
+		render(
+			<MemoryRouter>
+				<ReglagesComptesMail client={c} accesTest={acces} idUtilisateur={CAMILLE} />
+			</MemoryRouter>,
+		)
+	const ligne = (id: string) => document.querySelector(`[data-compte="${id}"]`) as HTMLElement
+	const commandeDe = (id: string) => ligne(id).querySelector('[data-testid="tester-connexion"]') as HTMLButtonElement
+
+	it('chaque ligne porte « Tester la connexion », nommée par sa boîte, AVANT « Configurer »', async () => {
+		const { c } = clientRelu([COMPTES])
+		monterTest(c, accesRetenu().acces)
+		await screen.findAllByTestId('tester-connexion')
+		const boutons = [...ligne('c-1').querySelectorAll('button')].map((b) => b.getAttribute('data-testid'))
+		expect(boutons).toEqual(['tester-connexion', 'configurer-compte'])
+		expect(commandeDe('c-1').getAttribute('aria-label')).toBe('Tester la connexion de Boîte de Camille Aubert')
+		expect(commandeDe('c-1').textContent).toBe('Tester la connexion')
+	})
+
+	it('le vol éteint la seule commande de sa ligne, puis le verdict paraît et la liste est RELUE sans squelette', async () => {
+		const relue = COMPTES.map((compte) => (compte.id === 'c-1' ? { ...compte, status: 'ok' } : compte))
+		const { c, compte } = clientRelu([COMPTES, relue])
+		const { acces, appels, rendre } = accesRetenu()
+		monterTest(c, acces)
+		await screen.findAllByTestId('tester-connexion')
+		const ligneAvant = ligne('c-1')
+		expect(ligneAvant.textContent).toContain('Non testée')
+
+		await userEvent.click(commandeDe('c-1'))
+		expect(appels).toEqual([{ url: 'http://crm.test/functions/v1/mail-connection-test', corps: { target: 'inbound', id: 'c-1' } }])
+		expect(commandeDe('c-1').disabled).toBe(true)
+		expect(commandeDe('c-1').getAttribute('aria-busy')).toBe('true')
+		expect(commandeDe('c-1').textContent).toBe('Test en cours…')
+		expect(commandeDe('c-2').disabled).toBe(false)
+
+		rendre(200, { status: 'ok', error: null, checked_at: '2026-11-05T09:00:00Z' })
+		await waitFor(() => expect(ligne('c-1').textContent).toContain('Connectée'))
+		expect(ligne('c-1')).toBe(ligneAvant)
+		expect(compte.lectures).toBe(2)
+		expect(screen.queryByLabelText('Chargement en cours')).toBeNull()
+		const verdict = ligne('c-1').querySelector('[data-testid="verdict-test-connexion"]') as HTMLElement
+		expect(verdict.getAttribute('role')).toBe('status')
+		expect(verdict.textContent).toBe('Connexion réussie.')
+		expect(commandeDe('c-1').disabled).toBe(false)
+	})
+
+	it.each([
+		[200, { status: 'error', error: 'auth_failed', checked_at: 't' }, 'Échec : Authentification refusée'],
+		[200, { status: 'error', error: 'SELECT 1', checked_at: 't' }, 'Échec : cause non reconnue'],
+		[429, { error: 'too_soon' }, 'Un test vient d’avoir lieu sur cette ligne. Réessayez dans quelques secondes.'],
+		[404, { error: 'not_found' }, 'Cette ligne n’est plus disponible pour vous.'],
+		[409, { error: 'secret_missing' }, 'Aucun mot de passe n’est enregistré : configurez-le avant de tester.'],
+		[409, { error: 'disabled' }, 'Cette ligne est désactivée : elle ne se teste pas.'],
+		[401, { error: 'unauthorized' }, 'Votre session a expiré. Reconnectez-vous, puis réessayez.'],
+		[502, { error: 'service_unavailable' }, 'Le service de messagerie n’a pas répondu : rien n’a été testé.'],
+	] as const)('%i %j s’écrit sous la ligne : « %s »', async (statut, corps, phrase) => {
+		const { c } = clientRelu([COMPTES])
+		const { acces, rendre } = accesRetenu()
+		monterTest(c, acces)
+		await screen.findAllByTestId('tester-connexion')
+		await userEvent.click(commandeDe('c-1'))
+		rendre(statut, corps)
+		await waitFor(() =>
+			expect((ligne('c-1').querySelector('[data-testid="verdict-test-connexion"]') as HTMLElement).textContent).toBe(phrase),
+		)
+		expect(ligne('c-2').querySelector('[data-testid="verdict-test-connexion"]')?.textContent).toBe('')
+	})
+
+	it('au clavier, le focus revient à la commande quand elle se réactive', async () => {
+		const { c } = clientRelu([COMPTES])
+		const { acces, rendre } = accesRetenu()
+		monterTest(c, acces)
+		await screen.findAllByTestId('tester-connexion')
+		commandeDe('c-1').focus()
+		await userEvent.keyboard('{Enter}')
+		expect(commandeDe('c-1').disabled).toBe(true)
+		rendre(200, { status: 'ok', error: null, checked_at: 't' })
+		await waitFor(() => expect(document.activeElement).toBe(commandeDe('c-1')))
+	})
+
+	it('une boîte en erreur nomme son incident à côté de sa pilule ; une autre n’en porte aucun', async () => {
+		const { c } = clientRelu([COMPTES])
+		monterTest(c, accesRetenu().acces)
+		await screen.findAllByTestId('tester-connexion')
+		expect(ligne('c-2').querySelector('[data-testid="incident-compte"]')?.textContent).toBe('Authentification refusée')
+		expect(ligne('c-1').querySelector('[data-testid="incident-compte"]')).toBeNull()
+	})
+
+	it('un incident inconnu n’est jamais recopié', async () => {
+		const { c } = clientRelu([COMPTES.map((compte) => ({ ...compte, last_error: compte.id === 'c-2' ? 'BOOM' : null }))])
+		monterTest(c, accesRetenu().acces)
+		await screen.findAllByTestId('tester-connexion')
+		expect(ligne('c-2').querySelector('[data-testid="incident-compte"]')?.textContent).toBe('cause non reconnue')
+	})
+
+	it('la capacité refusée éteint la commande de la boîte système avec le motif de « Configurer »', async () => {
+		const { c } = clientRelu([COMPTES])
+		render(
+			<MemoryRouter>
+				<FournisseurEspace valeur={{ idWorkspace: WORKSPACE, estAdmin: false, capacites: { administration: 'refusee', edition: 'permise' } }}>
+					<ReglagesComptesMail client={c} accesTest={accesRetenu().acces} idUtilisateur={CAMILLE} />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+		const motif = await screen.findByTestId('motif-comptes-mail')
+		expect(commandeDe('c-2').disabled).toBe(true)
+		expect(commandeDe('c-2').getAttribute('aria-describedby')).toBe(motif.id)
+		expect(commandeDe('c-1').disabled).toBe(false)
 	})
 })
