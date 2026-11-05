@@ -39100,3 +39100,20 @@ lecture seule. **Décision de conception** (`docs/SPEC-mcp.md` §9.2 *sexdecies*
 `null` vide) et dans `crm_card_list` (la forme des vues, la condition donnée l'emportant sur celle de la vue). Une clé
 inconnue ou une forme qui ne convient pas est refusée et nommée, pour que le modèle apprenne son erreur ; une valeur d'un
 champ archivé n'est pas écrite par le connecteur (`common_field_archived`), aide qui tient la promesse de l'écran.
+
+### décision 848 — `CRM-112` T6 : la recherche lit d'abord les valeurs qui répondent, et reste `security invoker`
+
+*2026-11-05, session interactive 152dd27d (p2enjoy-crm-ac), tranche confiée par le responsable par la session de
+livraison ; le responsable a choisi de la faire porter par cette session (« Prendre T6 ici »).* **Problème** : la
+spécification (§10, décision 844) laissait la forme d'exécution à une mesure sous le jeton réel, faite avant le code.
+**Hypothèses** : la semi-jointure de la `0164` rend la lecture des valeurs constante, et la forme `security definer` de T1
+n'est plus nécessaire. **Observations** (`docs/SPEC-champs-communs.md` §10, mesure du 2026-11-05) : sous les droits de
+Driss, 4 410 valeurs, `recherche_globale` passe de 157–198 ms à 233–281 ms avec une sous-requête latérale par affaire, et à
+196–216 ms quand les valeurs qui répondent sont lues une fois, d'abord ; leur lecture sous la RLS coûte 10,5 ms, dont 9 pour
+la liste des channels lisibles, évaluée une seule fois. **Solutions envisagées** : la sous-requête latérale du brouillon ;
+une fonction `security definer` qui lit l'index puis applique `app.can_read_card` (forme de T1) ; une expression de table
+`materialized` lue d'abord, sous la RLS. **Décision** : la troisième. Elle garde la fonction `security invoker`, n'ajoute
+aucune fonction qui contourne la RLS, et coûte trois fois moins que la première. Une affaire qui répond par son titre et
+par un champ porte l'extrait du champ. **Conséquences** : la migration `0168` pose `value_tsv` et son index, la tient à
+jour par la base, et reprend `recherche_globale` avec ce seul ajout. **Vérifications** : la mesure ci-dessus, faite dans
+une transaction annulée ; les preuves de la tranche suivent dans son commit de clôture.

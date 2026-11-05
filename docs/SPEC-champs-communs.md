@@ -396,6 +396,18 @@ garde : désarchiver les rend.
     `0164`) s'applique.
   - **La forme `security definer` de T1 n'est pas retenue sans mesure** : la politique de lecture a changé depuis (`0164`,
     coût constant) ; la mesure est refaite avant le code, sous le jeton réel, et décide.
+  - **Mesuré le 2026-11-05, avant le code (décision 848)**, sous les droits de Driss (business developer du seed), dans une
+    transaction annulée : 98 champs texte × 45 affaires, soit **4 410 valeurs**, `analyze` fait. `recherche_globale`
+    **avant la `0168`** : 157 à 198 ms. **Forme du brouillon** — une sous-requête latérale par affaire — : 233 à 281 ms, soit
+    environ +80 ms. **Forme retenue — l'index d'abord** : une expression de table `materialized` lit une fois les valeurs
+    qui répondent (`value_tsv @@ …`), la première par affaire dans l'ordre de la partie commune, puis la famille `affaire`
+    la joint : 196 à 216 ms, soit environ +30 ms. Sous la RLS, cette lecture prend **10,5 ms**, dont 9 pour
+    `app.readable_channel_ids()`, évaluée **une fois** par la semi-jointure de la `0164` : le défaut de T1 (1,8 s, un
+    `app.can_read_card` par ligne) ne se reproduit pas. À ce volume, le planificateur préfère un parcours séquentiel à
+    l'index GIN ; celui-ci sert quand le volume croît. **`recherche_globale` reste donc `security invoker`**, sans fonction
+    `security definer` intermédiaire : la RLS des valeurs s'applique d'elle-même aux seules lignes trouvées.
+  - **Une affaire qui répond à la fois par son titre et par un champ** porte l'extrait du champ : il dit pourquoi elle est
+    là quand le titre ne le dit pas, et il ne coûte rien de plus.
   - **L'écran** affiche l'extrait d'une affaire comme celui des autres familles ; **le connecteur** le rend déjà
     (`excerpt` de son outil de recherche) — aucun outil nouveau, famille « affaires » (décision 841).
 
