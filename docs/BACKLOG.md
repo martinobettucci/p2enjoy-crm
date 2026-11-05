@@ -17707,8 +17707,9 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       qui nomme le champ, la mesure sous le jeton réel avant le code.
 - [ ] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.
 - [ ] **T8** — seed (`docs/SPEC-champs-communs.md` §13), E2E, captures aux quatre paliers, `docs/manual.md`.
-- [ ] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de
+- [@] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de
       `crm_card_list` ; `docs/SPEC-mcp.md` §9.2.
+      *Prise en charge : session interactive 4891a451 (p2enjoy-crm-b6) depuis 2026-11-05 08:16 UTC — état avant : [ ]*
 - [~] **Livraison en production** avec `CRM-111` ou après elle, sur instruction du responsable. **T1 à T3.a livrées le
       2026-11-03** avec `CRM-111` (décision 827, révision `e44d04aa`, migrations 152, 155 à 157, 159 et 160, service
       `functions`, webapp ; `docs/PROD_MIGRATIONS.md` §8). Reste le constat du responsable (Réglages ▸ « Champs de
