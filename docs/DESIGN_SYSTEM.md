@@ -7841,3 +7841,41 @@ ne disent que de quoi il a l'air.
 - **Les types personne, contact et fichier n'y paraissent pas encore** (tranche T4.c), et aucune phrase ne l'annonce :
   un contrôle absent ne promet rien.
 - **Aucune couleur, aucun jeton nouveau** ; une icône nouvelle, `SlidersHorizontal`, réservée à ce bouton.
+
+### 5.93 « Tester la connexion » sur les comptes entrants et les identités sortantes — `CRM-127` T4
+
+*Écrit le 2026-11-05, avant le code, après relecture intégrale de ce document le même jour.* Ce que la commande envoie, ce
+que la fonction edge rend et ce que l'écran en dit est spécifié par `docs/SPEC-mail-subsystem.md` §23.4 et §23.5 ; ces
+règles ne disent que de quoi elle a l'air. *La spécification réservait le §5.81 à cette tranche ; `CRM-111` T7.1 l'a pris
+depuis.* **Tout ce que les §5.34 et §5.35 posent vaut sans être répété** — liste plate, pilule d'état, commandes de ligne qui
+suivent la capacité d'écrire la boîte ou l'identité (§5.59).
+
+- **UNE COMMANDE PAR LIGNE, « Tester la connexion », AVANT « Configurer »** : bouton discret compact (§5.5), icône Lucide
+  **`PlugZap`**, qui ne sert aucun autre objet (§9) — `Plug` dit le connecteur MCP (§5.57), un autre objet. Son nom accessible
+  nomme la ligne : « Tester la connexion de {boîte} », « Tester la connexion de {adresse} ». Le geste qui vérifie vient
+  avant celui qui modifie (§5.28). Elle reprend les propriétés de « Configurer » sur la même ligne : désactivée avec le même
+  motif quand la base refuse d'écrire la ligne (§5.59), puisque le droit de tester est celui d'écrire.
+- **PENDANT LE VOL, LA COMMANDE EST DÉSACTIVÉE ET DIT « Test en cours… »**, `aria-busy` ; les autres lignes restent
+  utilisables, et chacune peut avoir son test en vol. **Le focus revient à la commande quand elle se réactive**, au rendu
+  suivant (§5.52 : un élément désactivé ne garde pas le focus) ; aucune temporisation (`CLAUDE.md` §18).
+- **AU RETOUR, LA LISTE EST RELUE SANS SQUELETTE** (§5.29 tranche 2 c) : la pilule montre ce que le service a écrit en base,
+  jamais une valeur déduite de la réponse (§23.5). La ligne ne se démonte pas, si bien que son verdict et sa commande
+  survivent à la relecture.
+- **LE VERDICT S'ÉCRIT SOUS LA LIGNE**, dans l'élément de liste, une région `role="status"` en 13 px, et il y reste jusqu'au
+  test suivant de cette ligne :
+  - « Connexion réussie. » en `--color-success-on-soft` ;
+  - « Échec : {incident} », l'incident tiré du dictionnaire fermé des six codes (§5.14, `admin.mail.incident.*`), « Échec :
+    cause non reconnue » pour un code inconnu — jamais le code brut —, et **chaque refus** (`429`, `404`, `409`, `401`, `502`
+    ou réseau) avec sa phrase du §23.5 : tous en `--color-danger-on-soft` sur `--color-danger-soft`, `--radius-sm`,
+    rembourrage 8 px / 12 px, la forme du refus d'un formulaire (§5.34). Un refus est dit au même endroit qu'un verdict :
+    c'est la réponse au même geste.
+- **UNE LIGNE EN ERREUR NOMME SON INCIDENT À CÔTÉ DE LA PILULE « En erreur »**, en 13 px `--color-text-2`, par le même
+  dictionnaire ; un code inconnu donne « cause non reconnue ». C'est la donnée de la ligne (`last_error`), présente au
+  chargement comme après un test : sans elle, l'écran disait qu'une boîte échoue sans dire pourquoi. Une ligne qui n'est pas
+  en erreur ne porte aucun incident.
+- **`pending` SE LIT « Non testée »** sur les deux écrans, pilule neutre inchangée (§5.34). « En attente » se lisait comme une
+  relève en suspens. L'écran d'état (§5.14) n'affiche pas `status` et n'est pas touché ; sa « Dernière relève réussie »
+  montre désormais une date, que la relève écrit (§23.2).
+- **SOUS `md`**, la ligne se replie (§5.34) et ses deux commandes passent ensemble à la ligne suivante, cibles conservées ;
+  le verdict prend toute la largeur de la ligne. `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
+- **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `PlugZap`.**

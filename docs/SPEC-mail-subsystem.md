@@ -3117,8 +3117,8 @@ désactivée avec le même motif quand la base refuse l'administration, puisque 
 - **`pending` se lit « Non testée »** sur les deux écrans de réglages. L'écran d'état (§20.11) n'affiche pas `status`
   en pilule et n'est pas touché.
 
-Les règles visuelles seront écrites au `docs/DESIGN_SYSTEM.md` §5.81 avec l'écran (tranche T4), après la lecture intégrale
-du design system qu'exige `CLAUDE.md` §4.
+Les règles visuelles sont écrites au `docs/DESIGN_SYSTEM.md` §5.93 avec l'écran (tranche T4 ; le §5.81, d'abord
+réservé, a été pris par `CRM-111` T7.1), après la lecture intégrale du design system qu'exige `CLAUDE.md` §4.
 
 ### 23.6 Seed
 

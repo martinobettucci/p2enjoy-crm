@@ -39135,3 +39135,15 @@ aucune fonction qui contourne la RLS, et coûte trois fois moins que la premièr
 par un champ porte l'extrait du champ. **Conséquences** : la migration `0168` pose `value_tsv` et son index, la tient à
 jour par la base, et reprend `recherche_globale` avec ce seul ajout. **Vérifications** : la mesure ci-dessus, faite dans
 une transaction annulée ; les preuves de la tranche suivent dans son commit de clôture.
+
+### décision 849 — `CRM-127` T4 : les écrans « Tester la connexion » spécifiés avant le code
+
+*2026-11-05, session interactive d5b44a2d (p2enjoy-crm-30), tranche confiée par le responsable par la session de
+livraison (54).* **Les deux questions MCP de `CLAUDE.md`** sont déjà tranchées et ne sont pas reposées : non, le test reste
+un geste d'écran (décision 816, `docs/SPEC-mail-subsystem.md` §23.1). **Observations** : la bibliothèque cliente
+`webapp/src/lib/test-connexion-mail.ts` existe depuis T3 ; les deux écrans relisent leur liste en repassant par le
+squelette, ce qui démonterait la ligne et son verdict ; le §5.81 que la spécification réservait a été pris par `CRM-111`
+T7.1. **Décision de conception** (`docs/DESIGN_SYSTEM.md` §5.93, après relecture intégrale du design system) : la commande
+« Tester la connexion » (`PlugZap`) avant « Configurer », avec ses propriétés de capacité ; le verdict et les refus sous la
+ligne, dans une région `role="status"` qui survit à une relecture **sans squelette** ; l'incident nommé à côté de « En
+erreur » ; `pending` lu « Non testée ». Le focus revient à la commande quand elle se réactive.

@@ -18547,7 +18547,7 @@ nouvelle (décision 810).
 Demande et arbitrage du responsable du 2026-11-02 (décision 816), qui arbitre INC-340.
 
 **Spécification** : `docs/SPEC-mail-subsystem.md` §23 ; `docs/SPEC-edge-functions.md` (la fonction
-`mail-connection-test`, §10) ; `docs/DESIGN_SYSTEM.md` §5.81 (à écrire avec T4) ; `docs/SCHEMA.md` (migration
+`mail-connection-test`, §10) ; `docs/DESIGN_SYSTEM.md` §5.93 (écrit avec T4 le 2026-11-05 ; le §5.81 a été pris par `CRM-111` T7.1) ; `docs/SCHEMA.md` (migration
 `0151`).
 
 **DoD** :
