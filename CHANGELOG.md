@@ -13,7 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-112` T7 — le générateur de workflow ne doublonne pas un champ de l'affaire (migration `0169`)
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-05 (seconde fenêtre) — migration 169, la fonction `ia`, la webapp de `main`, le manuel
+
+Cellule Spark `crm`, révision `ae9888f9` (décision 854, sans nouvel instantané, un `pg_dump -Fc` avant) ; `functions`
+redémarré. **Vérifié** : registre à 167 lignes, la dernière `0169_suggestion_ia_champs_communs.sql` ; le défaut
+`common_field` connu de la base ; `verifier.sh` 33/34 (INC-277). Le constat fonctionnel du responsable reste à faire.
+
+#### `CRM-112` T7 — le générateur de workflow ne doublonne pas un champ de l'affaire (migration `0169`)
 
 *En développement seulement. Prouvé par la suite pgTAP `0158`, l'API et l'E2E du générateur contre le simulateur, et les
 unitaires de la fonction `ia` et de l'écran (décision 851, docs/SPEC-ia.md §14.11).*
@@ -25,8 +35,6 @@ unitaires de la fonction `ia` et de l'écran (décision 851, docs/SPEC-ia.md §1
 - L'aperçu de la suggestion nomme le champ de l'affaire repris par son libellé.
 - Le simulateur de développement gagne le scénario `champ_commun`.
 - Connecteur MCP : non concerné.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-05 — migration 168, la webapp de `main`, l'image `mcp`, le manuel
 

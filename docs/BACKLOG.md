@@ -17724,6 +17724,7 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       **Reste** : la livraison de la `0168` avec la webapp de `main`, par la session de livraison, et le constat du
       responsable — une affaire retrouvée en production par un de ses champs.
 - [P] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.
+      (**Livrée le 2026-11-05**, décision 854, révision `ae9888f9` : migration `0169`, fonction `ia`, webapp ; reste le constat du responsable.)
       *Spécifiée le 2026-11-05 avant le code (décision 851)* : `docs/SPEC-ia.md` §14.11 — la consigne au modèle, le défaut
       bloquant `common_field` (champs actifs seuls) par une migration, sa traduction à l'écran, le scénario `champ_commun`
       du simulateur. Connecteur MCP : non.
