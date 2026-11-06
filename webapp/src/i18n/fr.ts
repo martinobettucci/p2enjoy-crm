@@ -138,6 +138,10 @@ export const fr = {
 	// contredisait lui-même. Ce qui manque réellement pour ouvrir un board, ce sont les channels.
 	'route.board.empty.body':
 		"Un board affiche les cards d'un channel. Aucun channel n'est disponible dans cet espace de travail.",
+	// CRM-129 (docs/SPEC-onboarding.md §4.2, décision 859) : l'accueil quand la personne LIT des channels.
+	'route.board.pick.title': 'Choisissez un channel',
+	'route.board.pick.body':
+		"Un board affiche les affaires d'un channel. Ouvrez un track dans la barre latérale, puis l'un de ses channels.",
 	'route.inbox.title': 'Inbox',
 	// L'état vide « la messagerie n'est pas encore raccordée » de `CRM-007` est RETIRÉ : il ne
 	// décrivait plus rien depuis que `CRM-057` livre l'écran, et une clé qui ment est pire qu'une

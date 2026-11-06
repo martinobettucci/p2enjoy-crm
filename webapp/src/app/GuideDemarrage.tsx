@@ -1,3 +1,6 @@
+// @spec CRM-129 (docs/BACKLOG.md) — `AccueilDemarrage` : l'état vide seulement sans channel lisible, sinon l'état
+//       neutre « Choisissez un channel » ; docs/SPEC-onboarding.md §4.2 (précision du 2026-11-06),
+//       docs/DESIGN_SYSTEM.md §5.17, décisions 858 et 859
 // @spec CRM-093 (docs/BACKLOG.md) tranche T3 — un lien d'étape qui mène à un geste d'administration refusé par la base
 //       est rendu en TEXTE citant le motif, posé une fois au-dessus de la liste (docs/SPEC-droits-interface.md §3, §5 ;
 //       docs/DESIGN_SYSTEM.md §5.59)
@@ -23,7 +26,7 @@
 // une décision d'interface (`CLAUDE.md` §10, §6.3 de la spécification). Le GESTE, lui, n'est rendu
 // qu'à qui la base rend `admin` (§10.3) : il écrit, et la base le refuse à tout autre rôle.
 
-import { Circle, CircleCheck, CircleHelp } from 'lucide-react'
+import { Circle, CircleCheck, CircleHelp, LayoutGrid } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { useAuthentification } from './Authentification'
@@ -31,12 +34,13 @@ import { Button } from '../components/ui/Button'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t, type CleTraduction } from '../i18n'
 import type { EtatAsync } from '../lib/async'
-import { EtatVide } from '../components/ui/States'
+import { EtatNeutre, EtatVide } from '../components/ui/States'
 import {
 	compterAccomplies,
 	creerWorkflowDeDepart,
 	estAccomplie,
 	mesureEnCours,
+	presenceChannels,
 	resteUneEtape,
 	useDemarrage,
 	type CleEtapeDemarrage,
@@ -570,6 +574,10 @@ export function GuideDemarrage({
  * vide EXISTANT, celui de `CRM-007`, et n'émet aucune mesure. Le guide s'adresse à un compte qui
  * se connecte ; à un visiteur sans session, « créez un premier track » nommerait le mauvais
  * problème, quand la coquille lui dit déjà que son espace de travail est absent.
+ *
+ * Depuis `CRM-129`, le guide fini ou masqué, l'état vide ne paraît que si la personne ne lit AUCUN
+ * channel : à qui en lit, « aucun channel n'est disponible » serait faux. Sinon, et quand la mesure a
+ * échoué, un état neutre qui dit où trouver un board, sans rien prétendre manquer (décision 859).
  */
 export function AccueilDemarrage({
 	client = clientCrm,
@@ -589,28 +597,32 @@ export function AccueilDemarrage({
 	if (resteUneEtape(progression) && !masque) {
 		return <VueGuideDemarrage progression={progression} recharger={recharger} onMasquer={masquer} geste={geste} />
 	}
+	const action = resteUneEtape(progression) ? (
+			// Masqué ne veut pas dire perdu : le lien discret est le chemin de retour promis
+			// par la phrase d'aide du bouton de masquage (§5).
+			<Link
+				to={CHEMIN_DEMARRAGE}
+				data-testid="rouvrir-guide"
+				className={[
+					'inline-flex items-center justify-center',
+					'min-h-[var(--size-target)] px-4 rounded-sm',
+					'bg-surface text-ink border border-border font-medium',
+					'transition-colors duration-[var(--transition-duration-fast)] hover:bg-hover',
+				].join(' ')}
+			>
+				{t('onboarding.reopen')}
+			</Link>
+		) : undefined
+	if (presenceChannels(progression) === 'aucun') {
+		return <EtatVide titre={t('route.board.empty.title')} corps={t('route.board.empty.body')} action={action} />
+	}
 	return (
-		<EtatVide
-			titre={t('route.board.empty.title')}
-			corps={t('route.board.empty.body')}
-			action={
-				resteUneEtape(progression) ? (
-					// Masqué ne veut pas dire perdu : le lien discret est le chemin de retour promis
-					// par la phrase d'aide du bouton de masquage (§5).
-					<Link
-						to={CHEMIN_DEMARRAGE}
-						data-testid="rouvrir-guide"
-						className={[
-							'inline-flex items-center justify-center',
-							'min-h-[var(--size-target)] px-4 rounded-sm',
-							'bg-surface text-ink border border-border font-medium',
-							'transition-colors duration-[var(--transition-duration-fast)] hover:bg-hover',
-						].join(' ')}
-					>
-						{t('onboarding.reopen')}
-					</Link>
-				) : undefined
-			}
+		<EtatNeutre
+			icone={LayoutGrid}
+			titre={t('route.board.pick.title')}
+			corps={t('route.board.pick.body')}
+			testId="accueil-choisir"
+			{...(action === undefined ? {} : { action })}
 		/>
 	)
 }

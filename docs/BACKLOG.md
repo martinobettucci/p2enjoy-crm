@@ -18755,8 +18755,7 @@ inbox et fiche).
 
 ## Demande du 2026-11-06 — l'accueil ne prétend plus une absence de channel (décision 858, INC-346)
 
-### CRM-129 — L'accueil dit deux choses selon que l'espace a des channels lisibles ou non `[@]`
-*Prise en charge : session interactive 4891a451 (p2enjoy-crm-2f) depuis 2026-11-06 08:21 UTC — état avant : [ ]*
+### CRM-129 — L'accueil dit deux choses selon que l'espace a des channels lisibles ou non `[P]`
 *Spécifiée le 2026-11-06 avant le code (décision 859)* : `docs/SPEC-onboarding.md` §4.2, `docs/DESIGN_SYSTEM.md` §5.17.
 
 **Origine** : INC-346, relevé sur les captures de `CRM-112` T6 ; arbitré le 2026-11-06 (décision 858).
@@ -18768,6 +18767,15 @@ qui ne prétend aucune absence. La présence se mesure. Sans session, le comport
 mesure des channels lisibles ; le manuel si l'accueil y paraît.
 **DoD** : unitaire des deux cas (et sans session) ; E2E souris et clavier sur le seed (des channels : le texte neutre) et
 sur un compte sans channel lisible (l'état vide) ; captures aux quatre paliers observées ; INC-346 close.
+
+- [x] **Spécification**, committée avant le code le 2026-11-06 (cce43768, décision 859).
+- [x] **Code et preuves**, vérifiés le 2026-11-06 : `presenceChannels` (`webapp/src/lib/demarrage.ts`), `EtatNeutre`
+      (`States.tsx`), `AccueilDemarrage`, clés `route.board.pick.*` ; unitaires (`demarrage.test.ts`,
+      `GuideDemarrage.test.tsx`, `routes.test.tsx` : 94, dont les deux cas, l'échec de mesure et le cas sans session) ;
+      E2E `e2e/ui/accueil-channels.spec.ts` (4 : seed à la souris et au clavier, espace jetable sans channel à la souris
+      et au clavier), `demarrage.spec.ts` et `guide-flottant.spec.ts` rejoués (16) ; captures `docs/captures/CRM-129/`
+      aux quatre paliers, observées ; typecheck racine. Manuel : l'accueil n'y paraît pas. INC-346 close.
+- [P] **Livraison et constat** : webapp de `main` (`docs/PROD_MIGRATIONS.md` §2.31).
 
 ## Demande du 2026-11-06 — des couloirs (swim lanes) sur le board d'un channel (décision 860)
 

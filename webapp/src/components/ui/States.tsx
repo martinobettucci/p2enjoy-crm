@@ -1,6 +1,8 @@
 // @spec CRM-007 (docs/BACKLOG.md) — états vide, erreur et absence de droit
 // @spec docs/DESIGN_SYSTEM.md §5.8 (quatre états explicites), §9 (pastille d'icône, Lucide)
 // @spec docs/SPEC-webapp.md §7 (états systématiques)
+// @spec CRM-129 (docs/BACKLOG.md) — `EtatNeutre` : docs/DESIGN_SYSTEM.md §5.17 (« l'accueil ne prétend pas une absence
+//       qu'il n'a pas mesurée »), docs/SPEC-onboarding.md §4.2, décision 859
 //
 // Les trois états partagent une même composition — pastille d'icône, titre, explication,
 // action facultative — parce qu'ils répondent à la même question de l'utilisateur : « que
@@ -60,6 +62,32 @@ export function EtatVide({ titre, corps, action }: ProprietesEtatVide) {
 			titre={titre}
 			corps={corps}
 			testId="etat-vide"
+			{...(action === undefined ? {} : { action })}
+		/>
+	)
+}
+
+export type ProprietesEtatNeutre = {
+	/** L'icône de l'objet dont on parle (§9) ; jamais `FolderOpen`, qui dit l'absence. */
+	readonly icone: LucideIcon
+	readonly titre: string
+	readonly corps: string
+	readonly action?: ReactNode
+	readonly testId: string
+}
+
+/**
+ * Un état qui oriente sans rien prétendre manquer : même composition et même ton que l'état vide,
+ * mais une icône d'objet, et un `testId` à lui — une preuve qui cherche `etat-vide` ne le trouve pas.
+ */
+export function EtatNeutre({ icone, titre, corps, action, testId }: ProprietesEtatNeutre) {
+	return (
+		<BlocEtat
+			icone={icone}
+			ton="neutre"
+			titre={titre}
+			corps={corps}
+			testId={testId}
 			{...(action === undefined ? {} : { action })}
 		/>
 	)

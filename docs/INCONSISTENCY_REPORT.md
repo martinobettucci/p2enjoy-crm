@@ -8790,6 +8790,9 @@ la voie documentée plutôt que le `.venv`.
 **Ouverte** : la correction est une décision du responsable, et le comportement reste inchangé.*
 **Arbitrée le 2026-11-06 (décision 858)** : deux textes selon le cas — l'état vide pour un espace réellement sans channel,
 un texte neutre sinon ; aucun outil MCP. Correction portée par `CRM-129`.
+**Close le 2026-11-06 avec `CRM-129`** (session 4891a451, p2enjoy-crm-2f ; décision 859) : l'état vide ne paraît que si
+l'étape « channel » du guide compte zéro ; sinon « Choisissez un channel ». Preuves : unitaires, `e2e/ui/accueil-channels.spec.ts`,
+`docs/captures/CRM-129/`. La barre d'onglets, qui dit encore « Aucun channel » hors d'un track, est un autre écran : INC-348.
 
 **Le constat.** Connectée sur l'espace du seed, qui porte trois tracks et leurs channels, l'administratrice ouvre `/` et lit
 « Aucun board à afficher » puis « Un board affiche les cards d'un channel. Aucun channel n'est disponible dans cet espace
@@ -8851,3 +8854,25 @@ la suite** : toute nouvelle politique de Storage s'écrit sous `postgres`, sans 
 sur l'image épinglée —, et le commentaire du harnais le dit, avec la mesure ; (c) corriger le motif écrit dans `docs/DAT.md`
 et dans le commentaire du harnais, la nouvelle en-tête ne pouvant pas toucher 0029. *Écarté* : réécrire les trois
 migrations sous `postgres` (empreintes figées, déjà appliquées en production).
+
+### INC-348 — hors d'un track, la barre d'onglets dit « Aucun channel » à qui en lit
+
+*Relevé le 2026-11-06 par la session 4891a451 (p2enjoy-crm-2f) en observant les captures de `CRM-129`
+(`docs/captures/CRM-129/accueil-neutre-xl-1440.jpg`). **Ouverte** : hors du périmètre arbitré par la décision 858, le
+comportement reste inchangé ; la correction est une décision du responsable.*
+
+**Le constat.** Sur `/`, l'administratrice du seed lit au centre « Choisissez un channel » (`CRM-129`), et juste au-dessus,
+dans la barre d'onglets, « Aucun channel ». Elle en lit six. Le même écran dit donc encore une absence que le centre ne
+prétend plus.
+
+**La cause.** `webapp/src/app/TabBar.tsx` (`Contenu`) : hors d'une route de track (`slugTrack` absent), la barre rend
+toujours `tabs.empty` (« Aucun channel »), avec pour les lecteurs d'écran seulement `tabs.empty.hint` (« Les channels
+apparaîtront ici une fois un track ouvert. »). Le texte visible vient de `CRM-007`, d'avant les channels réels.
+
+**Ce qui contredit quoi.** `docs/DESIGN_SYSTEM.md` §5.17 (« l'accueil ne prétend pas une absence qu'il n'a pas mesurée »,
+`CRM-129`), §5.8 ; `CLAUDE.md` §18 (valeur par défaut trompeuse).
+
+**Pistes, à arbitrer** : hors d'un track, la barre ne rend rien de visible ; ou elle rend la phrase d'aide, aujourd'hui
+réservée aux lecteurs d'écran (« Les channels apparaîtront ici une fois un track ouvert. ») ; ou elle garde « Aucun
+channel » seulement quand la personne n'en lit aucun, comme l'accueil.
+

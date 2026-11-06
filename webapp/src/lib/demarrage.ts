@@ -9,6 +9,8 @@
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone) ; docs/DESIGN_SYSTEM.md §5.17
 // @spec CRM-095 (docs/BACKLOG.md) tranche T3 — docs/SPEC-onboarding.md §10.7, docs/SPEC-cards.md §18.4 :
 //       l'étape « affaire » mène au board du premier channel lisible et vivant, lu avec chaque mesure
+// @spec CRM-129 (docs/BACKLOG.md) — docs/SPEC-onboarding.md §4.2 (précision du 2026-11-06), décision 859 : le compte
+//       de l'étape « channel » décide de ce que l'accueil dit (`presenceChannels`)
 // @spec CRM-001 (docs/BACKLOG.md) tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
 //
 // CE MODULE N'OUVRE AUCUNE POLITIQUE NOUVELLE. Chaque table est comptée sous la politique qui la
@@ -204,6 +206,21 @@ export function compterAccomplies(progression: ProgressionDemarrage): {
  */
 export function resteUneEtape(progression: ProgressionDemarrage): boolean {
 	return progression.etapes.some((etat) => !estAccomplie(etat))
+}
+
+/**
+ * Ce que l'accueil peut dire des channels lisibles (`CRM-129`, docs/SPEC-onboarding.md §4.2, décision 859).
+ * La présence n'est pas une requête de plus : c'est le compte de l'étape « channel », déjà mesuré sous la
+ * RLS de l'appelant. `inconnu` quand cette mesure a échoué : l'accueil ne prétend alors ni absence ni
+ * présence.
+ */
+export type PresenceChannels = 'aucun' | 'present' | 'inconnu' | 'chargement'
+
+export function presenceChannels(progression: ProgressionDemarrage): PresenceChannels {
+	const etat = progression.etapes[CLES_ETAPES_DEMARRAGE.indexOf('channel')]
+	if (etat === undefined || etat.statut === 'erreur') return 'inconnu'
+	if (etat.statut === 'chargement') return 'chargement'
+	return etat.donnees.compte >= 1 ? 'present' : 'aucun'
 }
 
 /** Vrai tant qu'une mesure est en vol : `/` rend alors les squelettes, jamais l'état vide (§4.2). */

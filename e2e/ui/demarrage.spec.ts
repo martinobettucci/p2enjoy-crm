@@ -232,7 +232,7 @@ test.describe('CRM-079 — guide de démarrage', () => {
 
 	test('masquer le guide le retire de l’accueil, et le laisse à son adresse', async ({ page }) => {
 		// Le seed accomplit les six étapes pour l'administratrice : l'accueil rend donc déjà son
-		// état vide. La lectrice, elle, garde une étape à faire — c'est chez elle que le masquage
+		// état neutre « Choisissez un channel » (`CRM-129`, `accueil-channels.spec.ts`). La lectrice, elle, garde une étape à faire — c'est chez elle que le masquage
 		// s'observe (§4.2).
 		await connecter(page, VIEWER)
 		await page.goto('/')

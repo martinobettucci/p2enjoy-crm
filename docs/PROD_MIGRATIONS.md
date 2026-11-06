@@ -735,6 +735,18 @@ production depuis la fenêtre du 2026-11-03 (§8). Aucune migration, aucune vari
 public.mail_inbound_accounts` montre le verdict du geste 2 écrit par le service. **Retour arrière** : la webapp
 précédente ; aucune donnée n'est touchée.
 
+### 2.31 `CRM-129`, décision 859 — l'accueil ne prétend plus une absence de channel (À LIVRER : webapp de `main` seule)
+
+`docs/SPEC-onboarding.md` §4.2 (précision du 2026-11-06) ; `docs/DESIGN_SYSTEM.md` §5.17. Aucune migration, aucune variable,
+aucun secret, aucune image.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer la webapp de `main` | session de livraison, dans une fenêtre (§3.1) | rien de propre à cette unité |
+| 2 | Constater l'accueil | responsable, connecté, sur `/` | « Choisissez un channel », et non plus « Aucun channel n'est disponible dans cet espace de travail » |
+
+**Retour arrière** : la webapp précédente ; aucune donnée n'est touchée.
+
 ## 3. Migrations en attente
 
 **Aucune migration en attente depuis la seconde fenêtre du 2026-11-05** : la 169 a été appliquée avec la fonction `ia` et la

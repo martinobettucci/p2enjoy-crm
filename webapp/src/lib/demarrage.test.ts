@@ -12,6 +12,8 @@
 // valeur rendue : les filtres `archived_at`/`deleted_at` du §3 sont une exigence de la
 // spécification portée par la requête elle-même. Une étape qui compterait un objet en corbeille se
 // dirait accomplie par un objet que l'écran ne montre nulle part.
+// @verifies CRM-129 (docs/BACKLOG.md) — `presenceChannels` : le compte de l'étape « channel » décide de ce que
+//           l'accueil dit ; docs/SPEC-onboarding.md §4.2 (précision du 2026-11-06), décision 859
 // @verifies CRM-001 tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
 
 import { renderHook } from '@testing-library/react'
@@ -27,6 +29,7 @@ import {
 	mesureEnCours,
 	mesurerDemarrage,
 	mesurerEtape,
+	presenceChannels,
 	PROGRESSION_INITIALE,
 	resteUneEtape,
 	useApresWorkflowDeDepart,
@@ -321,6 +324,42 @@ describe('les trois états d’une étape, et la décision de l’accueil', () =
 			aFaire,
 		]
 		expect(mesureEnCours({ etapes: rendus, boardAffaire: null })).toBe(false)
+	})
+})
+
+describe('la présence de channels lisibles — CRM-129, docs/SPEC-onboarding.md §4.2', () => {
+	/** Une progression dont seule l'étape « channel » varie : les cinq autres sont accomplies. */
+	function avecChannel(etat: EtatAsync<EtapeDemarrage>) {
+		return {
+			etapes: CLES_ETAPES_DEMARRAGE.map((cle) => (cle === 'channel' ? etat : pret<EtapeDemarrage>({ cle, compte: 1 }))),
+			boardAffaire: null,
+		}
+	}
+
+	it('zéro channel lisible : « aucun », le seul cas où l’état vide dit vrai', () => {
+		expect(presenceChannels(avecChannel(pret({ cle: 'channel', compte: 0 })))).toBe('aucun')
+	})
+
+	it('au moins un channel lisible : « présent »', () => {
+		expect(presenceChannels(avecChannel(pret({ cle: 'channel', compte: 1 })))).toBe('present')
+		expect(presenceChannels(avecChannel(pret({ cle: 'channel', compte: 6 })))).toBe('present')
+	})
+
+	it('la mesure en échec : « inconnu », jamais « aucun »', () => {
+		expect(presenceChannels(avecChannel(enErreur({ nature: 'forbidden', detail: 'refus' })))).toBe('inconnu')
+		expect(presenceChannels(avecChannel(enErreur({ nature: 'network', detail: 'panne' })))).toBe('inconnu')
+	})
+
+	it('la mesure en vol : « chargement », jamais « aucun »', () => {
+		expect(presenceChannels(PROGRESSION_INITIALE)).toBe('chargement')
+	})
+
+	it('lit l’étape « channel » par sa place, et non une autre étape à zéro', () => {
+		const progression = {
+			etapes: CLES_ETAPES_DEMARRAGE.map((cle) => pret<EtapeDemarrage>({ cle, compte: cle === 'channel' ? 2 : 0 })),
+			boardAffaire: null,
+		}
+		expect(presenceChannels(progression)).toBe('present')
 	})
 })
 

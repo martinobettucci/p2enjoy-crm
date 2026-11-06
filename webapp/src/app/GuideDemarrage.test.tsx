@@ -1,3 +1,6 @@
+// @verifies CRM-129 (docs/BACKLOG.md) — l'accueil, guide fini ou masqué : l'état vide sans channel lisible, l'état
+//           neutre « Choisissez un channel » avec des channels ou quand leur mesure échoue, rien de changé sans
+//           session ; docs/SPEC-onboarding.md §4.2 (précision du 2026-11-06), docs/DESIGN_SYSTEM.md §5.17, décision 859
 // @verifies CRM-093 (docs/BACKLOG.md) tranche T3 — les liens d'administration du guide rendus en texte citant le motif
 //           quand la base refuse l'administration (docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-079 (docs/BACKLOG.md) — guide de démarrage : l'écran et ses deux surfaces
@@ -247,12 +250,52 @@ describe('l’accueil et sa décision — §4.2', () => {
 		expect(screen.getByTestId('masquer-guide')).toBeTruthy()
 	})
 
-	it('rend l’état vide du board une fois les six étapes accomplies', async () => {
+	it('les six étapes accomplies, rend l’état NEUTRE, jamais l’état vide : la personne lit des channels — CRM-129', async () => {
 		monter(<AccueilDemarrage sessionOuverte client={client(SEED_ADMIN)} />)
 		await waitFor(() => expect(screen.queryByTestId('guide-demarrage')).toBeNull())
-		expect(screen.getByTestId('etat-vide')).toBeTruthy()
+		const neutre = screen.getByTestId('accueil-choisir')
+		expect(screen.getByRole('heading').textContent).toBe(fr['route.board.pick.title'])
+		expect(neutre.textContent).toContain(fr['route.board.pick.body'])
+		// « Aucun channel n'est disponible » serait faux : six channels sont lisibles (INC-346).
+		expect(screen.queryByTestId('etat-vide')).toBeNull()
+		expect(neutre.textContent).not.toContain(fr['route.board.empty.body'])
 		// Rien à rouvrir : le guide n'a plus rien à enseigner.
 		expect(screen.queryByTestId('rouvrir-guide')).toBeNull()
+	})
+
+	it('masqué SANS channel lisible, rend l’état vide existant, qui dit vrai — CRM-129', async () => {
+		const utilisateur = userEvent.setup()
+		monter(<AccueilDemarrage sessionOuverte client={client(NEUF)} />)
+		await utilisateur.click(await screen.findByTestId('masquer-guide'))
+		await waitFor(() => expect(screen.queryByTestId('guide-demarrage')).toBeNull())
+		expect(screen.getByTestId('etat-vide').textContent).toContain(fr['route.board.empty.body'])
+		expect(screen.queryByTestId('accueil-choisir')).toBeNull()
+		expect(screen.getByTestId('rouvrir-guide').getAttribute('href')).toBe('/demarrage')
+	})
+
+	it('masqué AVEC des channels lisibles, rend l’état neutre ET le chemin de retour — CRM-129', async () => {
+		// La lectrice du seed lit cinq channels, et l'étape « messagerie » lui reste à faire.
+		const utilisateur = userEvent.setup()
+		monter(<AccueilDemarrage sessionOuverte client={client(SEED_VIEWER)} />)
+		await utilisateur.click(await screen.findByTestId('masquer-guide'))
+		await waitFor(() => expect(screen.queryByTestId('guide-demarrage')).toBeNull())
+		expect(screen.getByTestId('accueil-choisir')).toBeTruthy()
+		expect(screen.queryByTestId('etat-vide')).toBeNull()
+		expect(screen.getByTestId('rouvrir-guide').getAttribute('href')).toBe('/demarrage')
+	})
+
+	it('la mesure des channels en ÉCHEC : l’état neutre, qui ne prétend aucune absence — CRM-129', async () => {
+		const utilisateur = userEvent.setup()
+		monter(
+			<AccueilDemarrage
+				sessionOuverte
+				client={client({ ...SEED_ADMIN, channels: { count: null, error: { message: 'panne' }, status: 500 } })}
+			/>,
+		)
+		await utilisateur.click(await screen.findByTestId('masquer-guide'))
+		await waitFor(() => expect(screen.queryByTestId('guide-demarrage')).toBeNull())
+		expect(screen.getByTestId('accueil-choisir')).toBeTruthy()
+		expect(screen.queryByTestId('etat-vide')).toBeNull()
 	})
 
 	it('ne rend JAMAIS l’état vide pendant le chargement', () => {
@@ -362,6 +405,8 @@ describe('aucune mesure sans session — docs/SPEC-onboarding.md §4.4', () => {
 
 		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
 		expect(screen.queryByTestId('guide-demarrage')).toBeNull()
+		// `CRM-129` n'y change rien : sans mesure, ni l'état neutre, ni sa phrase.
+		expect(screen.queryByTestId('accueil-choisir')).toBeNull()
 		// L'état vide est celui de `CRM-007`, inchangé : il ne porte donc AUCUN lien de réouverture,
 		// qui n'aurait de sens que si le guide avait été masqué (§4.2, troisième ligne).
 		expect(screen.queryByTestId('rouvrir-guide')).toBeNull()

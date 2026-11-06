@@ -13,7 +13,12 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### `CRM-129` — l'accueil ne prétend plus une absence de channel (INC-346, décisions 858 et 859)
+
+- Sur `/`, guide de démarrage fini ou masqué : « Aucun board à afficher — Aucun channel n'est disponible… » ne paraît plus
+  que si la personne ne lit **aucun** channel. Sinon, et si cette mesure échoue, l'accueil dit « Choisissez un channel » et
+  où le trouver (la barre latérale). La présence est le compte de l'étape « channel » du guide, déjà mesuré : aucune
+  requête de plus. Sans session, rien ne change. **Avec la webapp de `main`** ; aucune migration.
 
 ## [Publié]
 
