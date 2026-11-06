@@ -17483,7 +17483,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       rattacher puis retirer depuis la fiche, la pastille « +1 » du board, un assistant qui voit `crm_card_attach`.
       **Constat favorable du responsable le 2026-11-03** (décision 833) : l'unité est terminée.
 
-### CRM-112 — Champs personnalisés communs de portée espace `[~]`
+### CRM-112 — Champs personnalisés communs de portée espace `[P]`
 *Réservée le 2026-10-24 — décision 642, arbitrage 4 ; ordre fixé par la décision 645 : après `CRM-111`. Arbitrée le
 2026-10-24 (décision 664). Spécification : `docs/SPEC-champs-communs.md`.* Un administrateur définit des champs au
 niveau de l'espace ; ils paraissent dans la partie commune de toute affaire, servent d'exigence de transition, de
@@ -17744,6 +17744,7 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       scénario entre au seed avec `siret`, en T8. **Reste** : la livraison de la `0169` avec la fonction `ia` et la webapp de
       `main`, par la session de livraison, et le constat du responsable — un champ « SIRET » proposé par l'IA, refusé.
 - [P] **T8** — seed (`docs/SPEC-champs-communs.md` §13), E2E, captures aux quatre paliers, `docs/manual.md`.
+      (**Livrée le 2026-11-06**, décision 857, révision `dc24db3c` : la webapp et le manuel ; reste le constat du responsable. T1 à T9 livrées : l'unité passe `[P]`.)
       *Spécifiée le 2026-11-05 avant le code (décision 853)* : `docs/SPEC-seed.md` §38 — cinq champs dont un archivé, les
       valeurs de cinq affaires, « Négociation → Signature » exige `siret` et bloque « Refonte du monitoring — Vertuo », un
       modèle d'email, la suggestion du scénario `champ_commun`. Connecteur MCP : sans objet (un seed, aucun outil).

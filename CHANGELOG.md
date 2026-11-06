@@ -13,7 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-112` T8 — le jeu de démonstration des champs de l'affaire, ses preuves et son manuel
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-06 — la webapp de `main` et le manuel
+
+Cellule Spark `crm`, révision `dc24db3c` (décision 857, sans nouvel instantané, un `pg_dump -Fc` avant) ; aucune migration.
+**Vérifié** : registre inchangé à 167 lignes ; la route publique sert le bundle de ce build ; `verifier.sh` 33/34
+(INC-277). Le constat fonctionnel du responsable reste à faire.
+
+#### `CRM-112` T8 — le jeu de démonstration des champs de l'affaire, ses preuves et son manuel
 
 *En développement seulement : le seed n'existe qu'en développement ; le manuel et ses images sont à livrer (décisions 853
 et 855, `docs/SPEC-seed.md` §38).*
@@ -29,8 +39,6 @@ et 855, `docs/SPEC-seed.md` §38).*
 - Correctif de la fiche : l'arrivée sur un champ demandé par un déplacement refusé, et sur la checklist, attend que les
   champs de l'affaire soient affichés ; ils la repoussaient sinon hors de la fenêtre (décision 856). **Avec la webapp de
   `main`.**
-
-## [Publié]
 
 ### Déployé en production, 2026-11-05 (seconde fenêtre) — migration 169, la fonction `ia`, la webapp de `main`, le manuel
 
