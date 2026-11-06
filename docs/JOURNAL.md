@@ -39335,3 +39335,18 @@ mémorisé avec le channel. **Hors périmètre, explicitement** : ni revues, ni 
 **Conséquences** : unité `CRM-130` ouverte au backlog, `[ ]`, **à spécifier avant le code**. La règle « froide depuis plus
 de six mois » demande que le moteur de règles sache dire une inactivité ; à vérifier à la spécification.
 
+### décision 861 — `CRM-130` : la date du trimestre, et la famille `structure` pour le connecteur
+
+*2026-11-06, session interactive 4891a451 (p2enjoy-crm-2f), réponses du responsable aux deux questions laissées ouvertes
+par la décision 860.*
+1. **Date du trimestre** : le responsable laisse la session trancher (« laisse l'agent se débrouiller »). **Observation** :
+   l'affaire ne porte aucune date de clôture prévue (`docs/SCHEMA.md`, `cards`) ; elle a sa date de création, et les champs
+   communs de type date (le seed en a un, « Date de signature », `date-signature`). **Décision de la session** : le
+   générateur « par trimestre » demande **quelle date** il emploie : la **date de création** de l'affaire, par défaut, ou un
+   **champ commun de type date**. Une affaire dont la date choisie est vide paraît dans « Autres ». Le trimestre est celui
+   du calendrier, à l'heure de Paris. Ce choix se révise à la spécification si elle révèle mieux.
+2. **Connecteur MCP, question 2** : **famille existante `structure`** (`docs/SPEC-mcp.md` §6.1), celle des tracks et des
+   channels. Lire les couloirs relève de `consulter`, les créer de `ajouter`, les modifier de `modifier`, les retirer de
+   `supprimer`, dans les cases de `structure` : aucune famille nouvelle, aucune migration de la liste fermée.
+**Conséquences** : `CRM-130` n'a plus de question ouverte ; elle reste `[ ]`, à spécifier avant le code.
+

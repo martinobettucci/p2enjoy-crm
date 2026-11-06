@@ -18785,9 +18785,10 @@ sur un compte sans channel lisible (l'état vide) ; captures aux quatre paliers 
   retient vont dans « Autres », en dernier ; une affaire rattachée à plusieurs channels suit les couloirs de chacun.
 **Hors périmètre** : la vue liste (aucun couloir) ; toute revue, tout sous-budget, toute règle métier par couloir.
 **MCP** : question 1, **oui** : lire les couloirs existants et aider à les créer (exemple : « les affaires froides depuis
-plus de six mois »). Question 2 (famille existante ou nouvelle) : **ouverte**, à trancher par le responsable.
-**Ouvert aussi** : la date qui range une affaire dans un trimestre.
-**Spécification** : à écrire avant le code, après les réponses ouvertes — modèle de données et migration, RLS, le board,
+plus de six mois »). Question 2 : **famille existante `structure`** (décision 861), actions `consulter`, `ajouter`,
+`modifier`, `supprimer` ; aucune migration de la liste fermée.
+**Trimestre** (décision 861) : sur la date de création, par défaut, ou sur un champ commun de type date ; date vide, « Autres ».
+**Spécification** : à écrire avant le code — modèle de données et migration, RLS, le board,
 `docs/DESIGN_SYSTEM.md`, i18n, le manuel, le seed, les outils MCP.
 **DoD** : à fixer avec la spécification (unitaires, pgTAP, E2E souris et clavier, refus d'autorisation directs, captures
 aux quatre paliers, seed, manuel).
