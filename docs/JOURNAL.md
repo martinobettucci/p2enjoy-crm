@@ -39367,3 +39367,18 @@ caducs ; `CRM-130` est corrigée au backlog. Le point 2 de la décision 861 (fam
 **Leçon pour la session** : une réponse qui ne choisit aucune option proposée n'est pas une délégation. Dans le doute, la
 session redemande ; elle ne décide pas à la place du responsable.
 
+### décision 863 — `CRM-130` : le manuel prime, puis l'ordre ; une affaire qu'aucun couloir ne retient reste hors couloir, en haut
+
+*2026-11-06, session interactive 4891a451 (p2enjoy-crm-2f), réponses du responsable.*
+**Décisions du responsable** :
+1. **Départage** d'une affaire retenue par plusieurs couloirs d'un même channel : **le couloir manuel prime, puis
+   l'ordre** des couloirs.
+2. **Hors couloir** : une affaire qu'aucun couloir, automatique ou manuel, ne retient **reste hors couloir, tout en haut**
+   du board.
+**Propositions de la session, non validées par le responsable** : un couloir automatique ne stocke que sa règle et
+l'appartenance se calcule à l'affichage ; un couloir manuel stocke ses affaires ; le calcul se fait en base pour que
+l'écran et le connecteur MCP rendent la même réponse.
+**Encore ouvert** : une même affaire cochée dans deux couloirs manuels d'un channel ; l'indication « aussi retenue par »
+sur la carte ; l'import d'un couloir manuel défini au niveau du track ou de l'espace ; un couloir importé suit-il la règle
+d'origine modifiée, ou garde-t-il celle du jour de l'import.
+
