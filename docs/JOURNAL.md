@@ -39304,3 +39304,34 @@ décide — zéro, l'état vide inchangé ; au moins un ou une mesure en erreur,
 `LayoutGrid` (celle de l'entrée « Board »), `data-testid="accueil-choisir"`, clés `route.board.pick.*` ; sans session, rien
 ne change. Aucune requête de plus, aucune action ajoutée. **Connecteur MCP** : non (décision 858).
 
+### décision 860 — les couloirs (swim lanes) du board d'un channel : brainstorm du responsable, réponses consignées avant toute spécification
+
+*2026-11-06, session interactive 4891a451 (p2enjoy-crm-2f), brainstorm du responsable.*
+**Problème** : quand le CRM se remplira, un board de channel deviendra illisible ; le responsable veut des couloirs
+(*swim lanes*) pour regrouper visuellement les affaires d'un channel.
+**Demande du responsable (substance)** : des couloirs automatiques (idée initiale : par trimestre) ou créés à la demande
+(« nouveau couloir », choix d'affaires par cases à cocher sous la vue) ; **purement visuels** ; repliables, l'état replié
+**gardé et partagé** (replié pour quiconque ouvre le channel) ; un couloir peut naître dans un channel, ou être défini au
+niveau du track ou de l'espace et **importé** dans un channel pour y paraître ; ce qui a été importé ou créé sur place est
+mémorisé avec le channel. **Hors périmètre, explicitement** : ni revues, ni sous-budgets, ni rien de métier par couloir.
+**Recommandation de la session**, retenue par le responsable :
+- **Nature** : un couloir est défini **par une règle** — le moteur de filtres existant, le trimestre étant un générateur de
+  règles — **ou par une sélection manuelle** d'affaires.
+- **Import** : par lien et non par copie ; l'ordre des couloirs et leur état replié sont propres au channel.
+**Réponses du responsable (2026-11-06)** :
+1. **Nature** : règles et sélection, comme recommandé.
+2. **Exclusivité, par channel** : dans un channel, une affaire ne paraît que dans **un seul** couloir (le premier qui la
+   retient dans l'ordre du channel ; les autres vont dans « Autres », en dernier). Une affaire rattachée à plusieurs
+   channels, voire à plusieurs tracks, paraît dans un couloir de **chacun** d'eux, selon les couloirs propres à chaque
+   channel : l'exclusivité ne vaut qu'à l'intérieur d'un channel.
+3. **Vue liste** : **aucun couloir**. Les couloirs sont une aide visuelle du **board du channel**, et de lui seul.
+4. **Connecteur MCP, question 1** : **oui**. Le connecteur **voit les couloirs existants** et peut **aider à les créer**.
+   Exemple du responsable : « fais-moi, dans tel track, tel channel, un couloir de toutes les affaires froides depuis plus
+   de six mois », donc une règle d'inactivité exprimée par l'assistant.
+**Questions encore ouvertes, à trancher par le responsable avant la spécification** :
+- la **date** qui range une affaire dans un trimestre (question posée le 2026-11-06, restée sans réponse) ;
+- **connecteur MCP, question 2** (`docs/SPEC-mcp.md` §6.1, décision 659) : les couloirs relèvent-ils d'une **famille
+  existante** (par exemple `structure`, celle des tracks et des channels) ou d'une **famille nouvelle** ?
+**Conséquences** : unité `CRM-130` ouverte au backlog, `[ ]`, **à spécifier avant le code**. La règle « froide depuis plus
+de six mois » demande que le moteur de règles sache dire une inactivité ; à vérifier à la spécification.
+

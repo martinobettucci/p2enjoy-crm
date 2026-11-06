@@ -18736,3 +18736,25 @@ mesure des channels lisibles ; le manuel si l'accueil y paraît.
 **DoD** : unitaire des deux cas (et sans session) ; E2E souris et clavier sur le seed (des channels : le texte neutre) et
 sur un compte sans channel lisible (l'état vide) ; captures aux quatre paliers observées ; INC-346 close.
 
+## Demande du 2026-11-06 — des couloirs (swim lanes) sur le board d'un channel (décision 860)
+
+### CRM-130 — Les couloirs du board d'un channel : par règle ou par sélection, repliables, exclusifs par channel `[ ]`
+
+**Origine** : brainstorm du responsable, 2026-11-06 (décision 860).
+**Comportement attendu** (substance validée ; détail à spécifier) :
+- sur le **board d'un channel**, des couloirs regroupent les affaires ; ils sont **purement visuels** ;
+- un couloir est défini **par une règle** (moteur de filtres existant ; trimestre comme générateur) **ou par une sélection
+  manuelle** (cases à cocher sous la vue) ;
+- il naît dans le channel, ou au niveau du track ou de l'espace, et s'**importe** dans un channel par lien ;
+- l'ordre des couloirs et leur **état replié** sont propres au channel, gardés et partagés ;
+- **exclusivité par channel** : une affaire ne paraît que dans un couloir d'un même channel ; celles qu'aucun couloir ne
+  retient vont dans « Autres », en dernier ; une affaire rattachée à plusieurs channels suit les couloirs de chacun.
+**Hors périmètre** : la vue liste (aucun couloir) ; toute revue, tout sous-budget, toute règle métier par couloir.
+**MCP** : question 1, **oui** : lire les couloirs existants et aider à les créer (exemple : « les affaires froides depuis
+plus de six mois »). Question 2 (famille existante ou nouvelle) : **ouverte**, à trancher par le responsable.
+**Ouvert aussi** : la date qui range une affaire dans un trimestre.
+**Spécification** : à écrire avant le code, après les réponses ouvertes — modèle de données et migration, RLS, le board,
+`docs/DESIGN_SYSTEM.md`, i18n, le manuel, le seed, les outils MCP.
+**DoD** : à fixer avec la spécification (unitaires, pgTAP, E2E souris et clavier, refus d'autorisation directs, captures
+aux quatre paliers, seed, manuel).
+
