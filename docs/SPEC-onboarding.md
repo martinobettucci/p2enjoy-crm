@@ -142,6 +142,21 @@ session (§5) : c'est ce qui le rend **relançable**, exigence explicite de la D
 La dernière ligne n'est pas un détail : rendre l'état vide pendant le chargement ferait clignoter
 l'écran d'accueil à chaque ouverture, et afficherait « aucun board » à qui en a.
 
+**Précisé le 2026-11-06 par `CRM-129` (INC-346, décisions 858 et 859), avant le code.** « L'état vide existant » des
+deuxième et troisième lignes affirmait « Aucun channel n'est disponible dans cet espace de travail » à qui en lisait cinq :
+l'écran se contredisait, comme `CRM-020` l'avait déjà constaté une fois. L'état vide ne paraît désormais que s'il dit vrai,
+et **la présence se mesure** : c'est le compte de l'étape « channel » (§3), déjà émis avec la progression — les channels
+vivants que la personne peut lire, sous ses droits —, sans requête de plus.
+
+| Compte de l'étape « channel » | Contenu de `/` (guide fini ou masqué) |
+|---|---|
+| zéro | l'état vide existant, `route.board.empty`, inchangé |
+| au moins un | un **texte neutre**, `route.board.pick` : « Choisissez un channel » — « Un board affiche les affaires d'un channel. Ouvrez un track dans la barre latérale, puis l'un de ses channels. » |
+| mesure en erreur | le texte neutre : sans mesure, l'écran ne prétend ni absence ni présence |
+
+Le lien discret vers `/demarrage` accompagne l'un comme l'autre quand le guide est masqué. **Sans session**, rien ne
+change : l'état vide de `CRM-007`, aucune mesure (§4.4).
+
 ~~Le guide n'est pas rendu ailleurs. Aucune surimpression, aucune bannière sur les écrans métier :
 une aide au démarrage qui suit l'utilisateur partout devient un bandeau qu'on apprend à ignorer.~~
 **RENVERSÉ par la décision 606** (arbitrage du responsable, 2026-09-28) : le guide « se perdait » dès

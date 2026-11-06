@@ -1811,6 +1811,15 @@ d'autres écrans. Ce que le guide lit, mesure et refuse de deviner est spécifi�
   l'écran rend un squelette **par étape**, à la forme de la ligne attendue (§5.8) — jamais l'état
   vide du board, qui écrirait « aucun board » à qui en a.
 
+- **L'ACCUEIL NE PRÉTEND PAS UNE ABSENCE QU'IL N'A PAS MESURÉE** — *`CRM-129`, écrit le 2026-11-06 avant le code, après
+  relecture intégrale de ce document (INC-346, décisions 858 et 859).* Le guide fini ou masqué, `/` rend l'état vide « Aucun
+  board à afficher » **seulement** si la personne ne lit aucun channel vivant. Sinon, et quand la mesure a échoué, un **état
+  neutre** : le `BlocEtat` du §5.8, ton neutre, mais l'icône **`LayoutGrid`** — celle de l'entrée « Board » de la barre
+  latérale, le même objet (§9) — et non `FolderOpen`, qui dit l'absence ; titre « Choisissez un channel », phrase qui dit où
+  le trouver, sans action ajoutée (le chemin est la barre latérale, toujours visible ou à un geste sous `lg`). Il porte
+  `data-testid="accueil-choisir"`, distinct de `etat-vide`. Le lien « Rouvrir le guide » l'accompagne comme il accompagne
+  l'état vide. **Aucune couleur, aucun jeton nouveau ; aucune icône nouvelle.**
+
 ### 5.18 Administration du catalogue de nœuds — `CRM-030`
 
 Cinquième surface d'administration, et la première dont l'objet est une **liste plate**. Ce que

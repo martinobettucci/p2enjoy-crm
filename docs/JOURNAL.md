@@ -39293,3 +39293,14 @@ absence. La présence se mesure (les channels lisibles), elle ne se suppose pas.
 décisions 627 et 659).
 **Conséquences** : une unité `CRM-129` au backlog, à spécifier avant le code (`docs/DESIGN_SYSTEM.md` §5.8 et §5.51, le
 manuel si l'accueil y paraît), un unitaire et un E2E qui couvrent les deux cas ; INC-346 se clôt avec elle.
+
+### décision 859 — `CRM-129` : l'accueil mesure les channels lisibles, et rend un état neutre quand il y en a
+
+*2026-11-06, session interactive 4891a451 (p2enjoy-crm-2f), unité confiée par la session de livraison (décision 858).*
+**Observations** : `AccueilDemarrage` rend `route.board.empty` dès que le guide est fini ou masqué, quoi que l'espace
+contienne ; la progression du guide compte déjà les channels vivants lisibles (`FILTRES_ETAPES_DEMARRAGE.channel`, sous la
+RLS de l'appelant). **Décision de conception** (`docs/SPEC-onboarding.md` §4.2, `docs/DESIGN_SYSTEM.md` §5.17) : ce compte
+décide — zéro, l'état vide inchangé ; au moins un ou une mesure en erreur, un état neutre « Choisissez un channel », icône
+`LayoutGrid` (celle de l'entrée « Board »), `data-testid="accueil-choisir"`, clés `route.board.pick.*` ; sans session, rien
+ne change. Aucune requête de plus, aucune action ajoutée. **Connecteur MCP** : non (décision 858).
+

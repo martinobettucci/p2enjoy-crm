@@ -18724,6 +18724,7 @@ inbox et fiche).
 
 ### CRM-129 — L'accueil dit deux choses selon que l'espace a des channels lisibles ou non `[@]`
 *Prise en charge : session interactive 4891a451 (p2enjoy-crm-2f) depuis 2026-11-06 08:21 UTC — état avant : [ ]*
+*Spécifiée le 2026-11-06 avant le code (décision 859)* : `docs/SPEC-onboarding.md` §4.2, `docs/DESIGN_SYSTEM.md` §5.17.
 
 **Origine** : INC-346, relevé sur les captures de `CRM-112` T6 ; arbitré le 2026-11-06 (décision 858).
 **Comportement attendu** : sur `/`, quand le guide de démarrage est fini ou masqué, l'état vide actuel
