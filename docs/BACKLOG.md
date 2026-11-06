@@ -18820,7 +18820,8 @@ neutre sinon ; la présence se mesure, comme l'accueil de `CRM-129` (décision 8
 **DoD** : unitaire des deux cas ; E2E souris et clavier (seed, espace sans channel) ; captures aux quatre paliers ;
 INC-348 close.
 
-### CRM-132 — Les harnais de la messagerie prouvent leurs dégradations sur tout poste `[ ]`
+### CRM-132 — Les harnais de la messagerie prouvent leurs dégradations sur tout poste `[@]`
+*Prise en charge : session interactive 152dd27d (p2enjoy-crm-d9) depuis 2026-11-06 11:22 UTC — état avant : [ ]*
 
 **Origine** : INC-345 (session d9, `CRM-059`) ; arbitrée le 2026-11-06 (décision 867).
 **Comportement attendu** : les six harnais de la messagerie qui appellent un pytest d'hôte, dont
@@ -18829,7 +18830,8 @@ quand une dégradation n'est pas réellement vue — jamais « vue » à tort.
 **MCP** : non (décision 867). **DoD** : chaque harnais rejoué vert sur ce poste ; une dégradation volontairement
 inefficace le fait rougir (mutation) ; INC-345 close.
 
-### Suite d'INC-347 — la liste close des marqueurs de rôle (décision 865) `[ ]`
+### Suite d'INC-347 — la liste close des marqueurs de rôle (décision 865) `[@]`
+*Prise en charge : session interactive 152dd27d (p2enjoy-crm-d9) depuis 2026-11-06 11:22 UTC — état avant : [ ]*
 
 0107 et 0127 nommées dans `MARQUEURS_ATTENDUS` ; le commentaire du harnais dit la mesure et ferme la porte (toute
 nouvelle politique de Storage sous `postgres`) ; le DAT corrigé. **DoD** : `scripts/verify-scripts.sh` sans anomalie ;
