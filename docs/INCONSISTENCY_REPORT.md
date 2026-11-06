@@ -8633,6 +8633,9 @@ renouveler le jeton de `verify-copie-workflow.sh` avant sa restauration. **Statu
 
 ### INC-340 — `last_sync_at` n'est écrite par aucune relève, alors que l'écran d'état de `CRM-059` la donne pour « écrite par la relève elle-même »
 
+> **CLOSE le 2026-11-06** : le correctif est livré avec `CRM-127` T2 (migration `0151`, décision 852, révision `b9fa4d11`) ;
+> `CRM-059` passe `[P]`, le constat du responsable en production restant dû.
+
 *Relevé le 2026-11-02, en lisant le code sans l'exécuter, en réponse au responsable : en production, la messagerie
 entrante est affichée « En attente » depuis des heures.* **Constats** :
 1. **Aucun écrivain.** Dans `mail-sync/src` et `supabase/migrations`, `mail_inbound_accounts.last_sync_at` n'est que

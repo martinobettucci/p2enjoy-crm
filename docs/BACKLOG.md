@@ -7326,8 +7326,32 @@ Ce qui est **déjà mesuré**, et ne sera pas redécouvert pendant l'implémenta
 - **Le backoff n'appartient pas à cette unité** : `CRM-059` le revendique. Un échec passe `failed`
   et le dit.
 
-### CRM-059 — Backfill, résilience, supervision `[@]`
-*Prise en charge : session interactive 152dd27d (p2enjoy-crm-d9) depuis 2026-11-06 08:22 UTC — état avant : [~]*
+### CRM-059 — Backfill, résilience, supervision `[P]`
+> **REVUE LE 2026-11-06 PAR LA SESSION 152dd27d (p2enjoy-crm-d9), À LA DEMANDE DE LA SESSION DE LIVRAISON : `[P]`.** La
+> Definition of Done est confrontée aux preuves du jour, rejouées sur la pile de dev — sous-ensemble de ce périmètre,
+> jamais la campagne complète (décision 830) :
+>
+> | Exigence de la DoD | Preuve rejouée le 2026-11-06 | Résultat |
+> |---|---|---|
+> | pytest sur le backoff | `pytest mail-sync/tests` par `scripts/lib/pytest-mail-sync.sh` (conteneur jetable) | **289 passed**, `test_backoff.py` et `test_veille.py` compris |
+> | coupure SMTP simulée sans perte de message | `npm run e2e:mail` entière, `resilience.spec.ts` compris | **51 passed**, S3 et `backfill.spec.ts` compris |
+> | état affiché conforme à la réalité | `releve-datee.spec.ts` (dans `e2e:mail`) ; `e2e/ui/etat-messagerie.spec.ts` ; `mail-etat.test.ts` ; `e2e/api/comptes-entrants.spec.ts` | **verts** : 6 aux quatre paliers, 14, 14 |
+> | INC-091 (assertion 9 de `0029`) | `supabase/tests/0029_inbox_globale.test.sql` | **22 assertions, aucune anomalie** |
+>
+> **Les trois écarts qui la tenaient `[~]` sont levés.** **INC-091** : close le 2026-08-14 (décisions 362, 370, 371).
+> **INC-092** : le choix de conception que ce texte réservait au responsable n'est plus dû — la course entre la veille et
+> le mot de passe faux de `comptes-entrants.spec.ts` a disparu avec INC-271 (décision 624, 2026-10-12), les scénarios
+> faussant désormais **leur propre compte jetable**, que la veille ne relève pas. **INC-340** : `last_sync_at` est écrite
+> par la relève depuis `CRM-127` T2 (migration `0151`), **livrée** le 2026-11-05 (décision 852, révision `b9fa4d11`).
+>
+> **Non rejoué, et dit tel quel : `scripts/verify-mail-resilience.sh`.** Sur cet hôte, il porte **INC-345** (ouverte) : il
+> joue pytest par le `python3` de l'hôte, qui n'en a pas ; ses sections pytest y rougiraient, et ses **dégradations Python
+> s'y déclareraient « vues » sans qu'aucun test ne les ait vues**. Sa non-complaisance n'est donc pas rejouée ce jour ;
+> les preuves qu'il agrège l'ont été une à une ci-dessus. La correction d'INC-345 attend l'arbitrage de son unité.
+>
+> **Reste** : le constat du responsable en production — « État de la messagerie » montre, pour une boîte munie d'un
+> secret, une date de dernière relève qui avance (le même constat que `CRM-127` T5).
+>
 > **REPASSÉE `[~]` LE 2026-11-02 (décision 816, INC-340)** : le §20.7 promet `last_sync_at` « écrit par la relève
 > elle-même », et aucun code ne l'écrit. L'écart est porté par `CRM-127` T2 ; l'unité revient à son état à sa
 > livraison.
