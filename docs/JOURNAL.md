@@ -39266,3 +39266,15 @@ ce signal (`attendreMiseEnPage`), comme ils attendent la lecture de la capacité
 verte ; unitaires du formulaire, de la partie commune, de la checklist et de la fiche ; E2E du formulaire, de la checklist
 et de la fiche. Les six autres preuves renvoyées sont des attentes révisées (trois modèles au seed) ou des images recadrées.
 
+
+### décision 857 — livrer la webapp de `main` et le manuel (`CRM-112` T8), sans instantané
+
+*2026-11-06, session 4522fa9c (p2enjoy-crm-be, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : la webapp de `main` (le correctif de la fiche, décision 856 : le champ exigé d'un déplacement refusé est
+atteint et visible après la lecture des champs de l'affaire) et le manuel et ses images, révision `584f725e` ; aucune
+migration, fonction ni image `mcp`. Le jeu de démonstration de T8 et le correctif du récapitulatif (`CRM-069` T5,
+`ea56f391`) n'existent qu'en développement. **La campagne** : complète à `053c75e6` (API, mail, `verify-mcp` 112, pgTAP
+146 fichiers et 5 024 assertions verts ; sept preuves renvoyées à la session 2f et corrigées en `a0de154c`), puis rejeu de
+ce qui dépend de la webapp à `a0de154c` : types et unitaires verts (5 446), ui 1 145 sur 1 147, manuel 141 sur 144,
+garde du manuel 168 ; le reste INC-342, ou vert rejoué seul.
+**Décision : oui, sans instantané** : un `pg_dump` avant ; aucune écriture de schéma ni de données.
