@@ -7317,7 +7317,8 @@ Ce qui est **déjà mesuré**, et ne sera pas redécouvert pendant l'implémenta
 - **Le backoff n'appartient pas à cette unité** : `CRM-059` le revendique. Un échec passe `failed`
   et le dit.
 
-### CRM-059 — Backfill, résilience, supervision `[~]`
+### CRM-059 — Backfill, résilience, supervision `[@]`
+*Prise en charge : session interactive 152dd27d (p2enjoy-crm-d9) depuis 2026-11-06 08:22 UTC — état avant : [~]*
 > **REPASSÉE `[~]` LE 2026-11-02 (décision 816, INC-340)** : le §20.7 promet `last_sync_at` « écrit par la relève
 > elle-même », et aucun code ne l'écrit. L'écart est porté par `CRM-127` T2 ; l'unité revient à son état à sa
 > livraison.
