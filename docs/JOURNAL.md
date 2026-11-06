@@ -39424,3 +39424,15 @@ aucun channel lisible, un texte neutre sinon ; la présence se mesure. **MCP** :
 ce poste, et leurs dégradations Python s'y déclareraient « vues » à tort. **Décision** : une unité dédiée, `CRM-132` — les
 harnais passent par le conteneur jetable de pytest (la bibliothèque de la session 30, `scripts/lib/pytest-mail-sync.sh`),
 et rougissent quand une dégradation n'est pas réellement vue. **MCP** : non, outillage de preuve.
+
+### décision 868 — `CRM-131` : la barre hors d'un track réemploie la mesure de l'accueil, et rend « Ouvrez un track pour voir ses channels »
+
+*2026-11-06, session interactive 4891a451 (p2enjoy-crm-2f), unité confiée par la session de livraison (décision 866).*
+**Observations** : `TabBar` rend `tabs.empty` (« Aucun channel ») dès que la route n'a pas de `slugTrack` ; la coquille
+(`AppShell`) ne lit aucun channel hors d'un track ; l'accueil de `CRM-129` mesure déjà les channels vivants lisibles par
+`mesurerEtape(client, 'channel')`. **Décision de conception** (`docs/SPEC-channels.md` §5.5, `docs/DESIGN_SYSTEM.md` §4) :
+la coquille émet cette même mesure hors d'un track avec une session ouverte ; zéro, « Aucun channel » inchangé ; au moins
+un, en vol ou en erreur, le texte neutre `tabs.pick`, `data-testid="onglets-choisir"` ; sans session, rien ne change.
+Aucune lecture nouvelle de `channels`. **Coût accepté** : sur `/`, deux comptes identiques (accueil et barre). **MCP** : non
+(décision 866).
+

@@ -18816,7 +18816,8 @@ aux quatre paliers, seed, manuel).
 **Origine** : INC-348 (session 2f, captures de `CRM-129`) ; arbitrée le 2026-11-06 (décision 866).
 **Comportement attendu** : « Aucun channel » seulement si la personne n'a réellement aucun channel lisible ; un texte
 neutre sinon ; la présence se mesure, comme l'accueil de `CRM-129` (décision 858).
-**MCP** : non (décision 866). **Spécification** : à écrire avant le code — `docs/DESIGN_SYSTEM.md`, la clé i18n.
+**MCP** : non (décision 866). **Spécification** : écrite avant le code le 2026-11-06 (décision 868) —
+`docs/SPEC-channels.md` §5.5, `docs/DESIGN_SYSTEM.md` §4 (onglets), clé `tabs.pick`.
 **DoD** : unitaire des deux cas ; E2E souris et clavier (seed, espace sans channel) ; captures aux quatre paliers ;
 INC-348 close.
 
