@@ -18810,7 +18810,8 @@ aux quatre paliers, seed, manuel).
 
 ## Demande du 2026-11-06 — trois arbitrages du responsable (décisions 865 à 867)
 
-### CRM-131 — Hors d'un track, la barre des channels ne prétend plus une absence `[ ]`
+### CRM-131 — Hors d'un track, la barre des channels ne prétend plus une absence `[@]`
+*Prise en charge : session interactive 4891a451 (p2enjoy-crm-2f) depuis 2026-11-06 11:21 UTC — état avant : [ ]*
 
 **Origine** : INC-348 (session 2f, captures de `CRM-129`) ; arbitrée le 2026-11-06 (décision 866).
 **Comportement attendu** : « Aucun channel » seulement si la personne n'a réellement aucun channel lisible ; un texte
