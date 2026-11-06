@@ -17756,8 +17756,15 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       vues-filtres-communs), et la nouvelle `seed-champs-communs.spec.ts` **8/8** ; captures
       `docs/captures/CRM-112/seed-champs-*` aux quatre paliers, observées ; `verify-mcp.sh --rapide` **111/111** ; manuel :
       chapitres 09a, 14-16 et 18 rejoués (scénarios recadrés, la fiche illustrée par le seed), `verify-manual` **168** sans
-      anomalie. Sous-ensemble de ce périmètre seulement, jamais la campagne complète (décision 830). **Reste** : la campagne
-      complète, la livraison (le seed n'existe qu'en dev ; le manuel et ses images), et le constat du responsable.
+      anomalie. Sous-ensemble de ce périmètre seulement, jamais la campagne complète (décision 830).
+      *Repris le 2026-11-06 sur le renvoi de la campagne complète* : sept preuves hors du sous-ensemble rougies par le seed.
+      **Un défaut du produit** (décision 856) : l'arrivée sur un champ demandé — formulaire et checklist — se posait avant la
+      mise en page de la partie commune, qui la repoussait hors de la fenêtre ; elle attend désormais la fin de sa lecture
+      (`formulaire.spec.ts:700` rouge avant, vert après). Les autres : trois modèles au seed (`modeles-emails` ×2,
+      `rendu-modeles-emails`, `reglages-sequences-relance`), deux images de la fiche recadrées (manuel 23-33 et 27-29). Rejouées :
+      API 23/23, ui 36/36 et 37/37, manuel 09a, 18, 23-33, 27-29, `verify-manual` 168 ; unitaires.
+      **Reste** : la campagne complète, la livraison (le seed n'existe qu'en dev ; la webapp, le manuel et ses images), et le
+      constat du responsable.
 - [P] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de
       (**Livrée le 2026-11-05**, décision 852, révision `b9fa4d11`, image `mcp` reconstruite ; reste le constat du responsable.)
       `crm_card_list` ; `docs/SPEC-mcp.md` §9.2.

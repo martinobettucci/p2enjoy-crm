@@ -1,3 +1,6 @@
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T8 : l'arrivée sur un champ demandé attend que la partie commune ait fini sa
+//       lecture — le bloc, au-dessus, repoussait sinon le champ hors de la fenêtre (docs/DESIGN_SYSTEM.md §5.88, §5.7 quater ;
+//       docs/SPEC-form-composer.md §4 ter.6 ; décision 856)
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les champs inactifs, valeurs lisibles, et citant le motif de la fiche quand
 //       la base refuse l'écriture sur l'affaire (docs/SPEC-droits-interface.md §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-037 (docs/BACKLOG.md) — rendu du formulaire conditionnel d'une card, et sa saisie
@@ -138,6 +141,12 @@ export type ProprietesFormulaireCard = {
 	readonly rattachements: RattachementsLus
 	readonly idWorkflow: string
 	readonly idWorkspace: string
+	/**
+	 * `CRM-112` T8 : vrai tant qu'un bloc placé AU-DESSUS du formulaire — la partie commune — lit encore ce qu'il rend. Le
+	 * focus et le défilement vers le champ demandé l'attendent : posés avant, ils laissaient le champ hors de la fenêtre
+	 * quand le bloc grandissait. Absent, rien n'est attendu.
+	 */
+	readonly attendreMiseEnPage?: boolean
 	/** Injectable pour les preuves ; en production, le client réel du module `supabase`. */
 	readonly client?: ClientCrm | null
 }
@@ -148,6 +157,7 @@ export function FormulaireCard({
 	rattachements,
 	idWorkflow,
 	idWorkspace,
+	attendreMiseEnPage = false,
 	client = clientCrm,
 }: ProprietesFormulaireCard) {
 	// `CRM-093` — le refus de la fiche (§5.59) : refusée par la base, aucun champ ne s'enregistre.
@@ -182,6 +192,8 @@ export function FormulaireCard({
 		if (signature === '') return
 		if (demandeHonoree.current === signature) return
 		if (capaciteEnLecture) return
+		// `CRM-112` T8 : la demande attend aussi la mise en page — sinon, marquée honorée, elle ne serait jamais rejouée.
+		if (attendreMiseEnPage) return
 		demandeHonoree.current = signature
 		const premiere = modele.clesExigeesRetenues[0]
 		if (premiere === undefined) return
@@ -205,7 +217,7 @@ export function FormulaireCard({
 		if (typeof controle.scrollIntoView === 'function') {
 			controle.scrollIntoView({ block: 'center', behavior: sobre ? 'auto' : 'smooth' })
 		}
-	}, [signature, modele.clesExigeesRetenues, capaciteEnLecture])
+	}, [signature, modele.clesExigeesRetenues, capaciteEnLecture, attendreMiseEnPage])
 
 	const enregistrer = useCallback(
 		async (resolu: ChampResolu, valeur: Json) => {

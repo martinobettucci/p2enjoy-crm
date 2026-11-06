@@ -39251,3 +39251,18 @@ poser. **Arbitrage du responsable** : avant la copie, avec une recréation de la
 avec les autres sessions. **Conséquences** : la copie « Cycle commercial — Conseil IA » porte elle aussi l'exigence ; une
 base de dev antérieure doit être recréée une fois pour converger ; la garde du compte des modèles d'email ne compte plus
 que les siens, la section « 8 tertricies » en posant un troisième.
+
+### décision 856 — `CRM-112` T8 : l'arrivée sur un champ demandé attend la mise en page de la partie commune
+
+*2026-11-06, session interactive 4891a451 (p2enjoy-crm-2f).* **Problème** : la campagne complète de la session de livraison
+renvoie sept preuves que le seed de T8 rougit. L'une, `e2e/ui/formulaire.spec.ts:700` (« le champ atteint est réellement
+VISIBLE »), n'est pas une attente à réviser mais un défaut du produit, comme la session de livraison le soupçonnait.
+**Observé** : le formulaire pose le focus et fait défiler vers le champ demandé dès qu'il est prêt ; la partie commune,
+placée au-dessus et lue à part, paraît ensuite et le repousse hors de la fenêtre (ratio de visibilité 0, reproductible). Sans
+champ commun, le bloc ne se rendait pas, et le défaut ne se voyait pas. L'arrivée de la checklist en souffre aussi : la
+première reprise du manuel l'avait masqué par un recadrage, retiré depuis. **Décision** : la partie commune signale la fin
+de sa lecture (`onLu`) ; la fiche retient l'affaire pour laquelle elle l'a fait, et le formulaire et la checklist attendent
+ce signal (`attendreMiseEnPage`), comme ils attendent la lecture de la capacité. **Vérifié** : la preuve, rouge avant, est
+verte ; unitaires du formulaire, de la partie commune, de la checklist et de la fiche ; E2E du formulaire, de la checklist
+et de la fiche. Les six autres preuves renvoyées sont des attentes révisées (trois modèles au seed) ou des images recadrées.
+

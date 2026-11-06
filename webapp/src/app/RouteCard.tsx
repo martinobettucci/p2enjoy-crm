@@ -1,3 +1,6 @@
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T8 : l'arrivée sur un champ demandé attend que la partie commune ait fini sa
+//       lecture — le bloc, au-dessus, repoussait sinon le champ hors de la fenêtre (docs/DESIGN_SYSTEM.md §5.88, §5.7 quater ;
+//       docs/SPEC-form-composer.md §4 ter.6 ; décision 856)
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — la fiche lit la capacité d'écrire sur l'affaire et la FOURNIT à ses blocs ;
 // @spec CRM-128 (docs/BACKLOG.md) — tranche T4 : l'encadré des mails préparés au-dessus du formulaire d'envoi
 //       (docs/SPEC-mails-prepares.md §6.2 ; docs/DESIGN_SYSTEM.md §5.90)
@@ -278,6 +281,9 @@ function ContenuCard({
 	const [relectureEvenements, setRelectureEvenements] = useState(0)
 	const relireEvenements = useCallback(() => setRelectureEvenements((n) => n + 1), [])
 	const marquerRetiree = useCallback(() => setRetiree(true), [])
+	// `CRM-112` T8 (docs/DESIGN_SYSTEM.md §5.88) : l'affaire dont la partie commune a fini sa lecture. Le formulaire et la
+	// checklist, plus bas, attendent ce signal pour amener un champ demandé dans la fenêtre.
+	const [communsLusPour, setCommunsLusPour] = useState<string | null>(null)
 
 	// Placé AVANT toute lecture de l'état de chargement : l'écran ne relit rien après le geste, et
 	// retomber sur « Card introuvable » serait faux pour celui qui vient de la retirer (§4 ter.5).
@@ -361,6 +367,7 @@ function ContenuCard({
 					idWorkspace={etat.donnees.card.workspace_id}
 					clesExigees={clesExigees}
 					focaliser={etat.donnees.modele.clesExigeesRetenues.length === 0}
+					onLu={((idLue: string) => () => setCommunsLusPour(idLue))(etat.donnees.card.id)}
 				/>
 				{/* LES DEUX SCORES DE SANTÉ — `CRM-066` tranche 4, docs/DESIGN_SYSTEM.md §5.65 : sous l'en-tête, qui dit ce
 				    qu'est l'affaire ; les scores disent comment elle va. Aucun bloc pour une affaire décidée. */}
@@ -375,6 +382,7 @@ function ContenuCard({
 					rattachements={etat.donnees.card}
 					idWorkflow={etat.donnees.card.workflow_id}
 					idWorkspace={etat.donnees.card.workspace_id}
+					attendreMiseEnPage={communsLusPour !== etat.donnees.card.id}
 				/>
 				{/* LA CHECKLIST — `CRM-068` T3a, docs/SPEC-checklists.md §4 : juste après le formulaire — les points disent ce qu'il
 				    reste à faire dans l'étape, à côté des questions qui disent ce qu'on en sait (docs/DESIGN_SYSTEM.md §5.70). Le
@@ -385,6 +393,7 @@ function ContenuCard({
 					idRattachement={idRattachement(etat.donnees.card)}
 					idEtapeCourante={etat.donnees.card.current_step_id}
 					onChange={relireEvenements}
+					attendreMiseEnPage={communsLusPour !== etat.donnees.card.id}
 				/>
 				{/* LES CONTACTS DE L'AFFAIRE — CRM-060 sous-tranche 4c, docs/SPEC-contacts.md §12.2.
 				    Ils vivent ENTRE le formulaire et le bloc de corbeille, et les deux bornes sont déjà

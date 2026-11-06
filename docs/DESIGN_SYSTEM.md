@@ -7693,6 +7693,11 @@ aide, contrôle du type, enregistrement champ par champ et ses quatre états, re
   liseré `--color-brand`, et la mention du champ de formulaire, « Exigé par le déplacement que vous avez demandé » (*précisé à
   l'écriture du code : le champ est réemployé, sa mention avec lui*). **Le focus va au premier champ nommé du formulaire
   d'étape, et à celui de ce bloc seulement si le formulaire n'en nomme aucun** : un seul focus par demande.
+- **LE BLOC SE MET EN PAGE AVANT QU'UNE ARRIVÉE NE SE POSE** — *ajouté le 2026-11-06 par `CRM-112` T8 (décision 856), défaut
+  trouvé par la campagne complète, sur le seed qui porte des champs de l'affaire.* Le bloc lit ses champs à part et grandit
+  en paraissant : le focus et le défilement du formulaire (§5.7 quater) et de la checklist (§5.7 quinquies), posés avant,
+  laissaient le champ demandé hors de la fenêtre. Ils attendent la fin de la lecture du bloc — rendu, vide ou en erreur —,
+  comme ils attendent celle de la capacité (§5.59). Aucune forme ne change.
 - **LE BANDEAU DE REFUS DU BOARD NOMME LE CHAMP COMMUN PAR SON LIBELLÉ**, comme un champ du workflow ; une clé que rien ne
   nomme s'écrit telle quelle (§5.62). Le lien « Compléter la fiche » emporte les deux sortes de clés.
 - **LES ÉCRITURES SUIVENT LA CAPACITÉ D'ÉCRIRE L'AFFAIRE** (§5.59) : refusée par la base, chaque contrôle est inactif, sa

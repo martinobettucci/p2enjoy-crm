@@ -905,6 +905,14 @@ revanche si l'adresse change, `exiges` compris : c'est alors une **autre** deman
 **`prefers-reduced-motion` est respecté** (§6 du design system) : le défilement est immédiat lorsque
 la préférence est posée, animé sinon.
 
+**L'arrivée attend la mise en page de la fiche** — *ajouté le 2026-11-06 par `CRM-112` T8 (décision 856), défaut trouvé
+par la campagne complète.* La partie commune (« Champs de l'affaire », `docs/DESIGN_SYSTEM.md` §5.88) vit **au-dessus** du
+formulaire et lit ses champs à part : posés dès que le formulaire était prêt, le focus et le défilement amenaient le champ au
+centre, puis le bloc, en paraissant, le repoussait hors de la fenêtre. Ils attendent donc la fin de la lecture de ce bloc —
+rendu, vide ou en erreur —, comme ils attendent déjà celle de la capacité (`CRM-093`). La demande n'est marquée honorée
+qu'au moment où elle est servie. L'arrivée de la checklist (`#checklist`, `docs/DESIGN_SYSTEM.md` §5.7 quinquies) suit la
+même règle.
+
 #### 4 ter.7 Une clé qui ne désigne rien est ignorée, et ce n'est pas un masquage
 
 Une clé de `exiges` qui ne correspond à aucun champ du workflow — ou à un champ archivé — n'ajoute

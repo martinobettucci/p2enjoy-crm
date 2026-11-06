@@ -599,9 +599,6 @@ test('les checklists d’un workflow, les points qu’un chemin exige, et le ref
 	await bandeau.getByRole('link', { name: 'Cocher ces points' }).click()
 	const checklist = page.getByTestId('bloc-checklist-card')
 	await expect(checklist).toBeVisible()
-	// `CRM-112` T8 : la fiche porte au-dessus les champs de l'affaire du seed ; l'arrivée laisse le bloc à cheval sur le bord,
-	// et l'image le centre.
-	await checklist.evaluate((bloc) => bloc.scrollIntoView({ block: 'center' }))
 	await illustrer(page, { chapitre: CHAPITRE, section: S.checklists, nom: 'checklist-de-l-affaire', cibles: [checklist] })
 })
 

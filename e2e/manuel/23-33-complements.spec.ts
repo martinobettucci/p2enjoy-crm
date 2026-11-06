@@ -1,3 +1,5 @@
+// @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : les images de la fiche attendent la mise en page de la partie commune
+//           (docs/SPEC-seed.md §38)
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.5 : les images qui complètent les chapitres 23 à 33 — les refus, les
 //       états vides, les commandes photographiées avant leur clic, les issues du journal des appels
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitres 23 à 33 ; docs/SPEC-costs.md, docs/SPEC-temps.md,
@@ -215,6 +217,9 @@ test('l’onglet « À saisir » : le libellé, un réel enregistré, un track t
 
 
 	await page.goto(FICHE)
+	// `CRM-112` T8 (docs/SPEC-seed.md §38) : la partie commune, au-dessus, se lit à part et décale la fiche en paraissant ;
+	// l'image attend sa mise en page.
+	await expect(page.getByTestId('bloc-champs-communs')).toBeVisible()
 	const bloc = page.getByTestId('bloc-couts-card')
 	const bascules = bloc.getByTestId('cout-reels-bascule')
 	for (let i = 0; i < (await bascules.count()); i += 1) {
@@ -288,6 +293,9 @@ test('le temps : ajouter une affaire, une journée trop longue, le rapport de l�
 	await personnel.scrollIntoViewIfNeeded()
 	await illustrer(page, { chapitre: TEMPS, section: 'le-cout-du-personnel-a-cote-des-couts', nom: 'personnel-du-track', cibles: [personnel, ceMois, page.getByTestId('personnel-ligne').first()] })
 	await page.goto(FICHE)
+	// `CRM-112` T8 (docs/SPEC-seed.md §38) : la partie commune, au-dessus, se lit à part et décale la fiche en paraissant ;
+	// l'image attend sa mise en page.
+	await expect(page.getByTestId('bloc-champs-communs')).toBeVisible()
 	const temps = page.getByTestId('temps-card')
 	await illustrer(page, { chapitre: TEMPS, section: 'le-cout-du-personnel-a-cote-des-couts', nom: 'temps-de-l-affaire', cibles: [temps] })
 	await temps.getByRole('button', { name: /semaine précédente/i }).first().click()
@@ -299,9 +307,14 @@ test('le temps : ajouter une affaire, une journée trop longue, le rapport de l�
 test('les recettes et la rentabilité : le réel d’une recette, l’écran, l’onglet « À saisir »', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
 	await page.goto(FICHE)
+	// `CRM-112` T8 (docs/SPEC-seed.md §38) : la partie commune, au-dessus, se lit à part et décale la fiche en paraissant ;
+	// l'image attend sa mise en page.
+	await expect(page.getByTestId('bloc-champs-communs')).toBeVisible()
 	const recettes = page.getByTestId('bloc-recettes-card')
 	await recettes.getByTestId('recette-reels-bascule').first().click()
 	await illustrer(page, { chapitre: RECETTES, section: 'saisir-les-recettes-dans-la-fiche', nom: 'reel-d-une-recette', cibles: [recettes] })
+	// `CRM-112` T8 : la fiche, plus haute, laissait le titre au bord de la fenêtre ; l'image le centre.
+	await page.getByTestId('bloc-couts-card').getByRole('heading').first().evaluate((titre) => titre.scrollIntoView({ block: 'center' }))
 	await illustrer(page, { chapitre: RECETTES, section: 'saisir-les-recettes-dans-la-fiche', nom: 'couts-de-l-affaire', cibles: [page.getByTestId('bloc-couts-card').getByRole('heading').first()] })
 	await illustrer(page, { chapitre: RECETTES, section: 'la-rentabilite-d-une-affaire', nom: 'temps-passe', cibles: [page.getByTestId('temps-card').getByRole('heading').first()] })
 

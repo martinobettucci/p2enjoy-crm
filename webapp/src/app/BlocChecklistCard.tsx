@@ -1,3 +1,6 @@
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T8 : l'arrivée sur un champ demandé attend que la partie commune ait fini sa
+//       lecture — le bloc, au-dessus, repoussait sinon le champ hors de la fenêtre (docs/DESIGN_SYSTEM.md §5.88, §5.7 quater ;
+//       docs/SPEC-form-composer.md §4 ter.6 ; décision 856)
 // @spec CRM-068 (docs/BACKLOG.md) — tranche T3a : le bloc « Checklist » de la fiche d'une affaire — lire, cocher, ajouter
 //       et retirer un point
 // @spec docs/SPEC-checklists.md §2 (points d'étape du rattachement, points libres de l'affaire), §3.2 (qui écrit quoi),
@@ -62,6 +65,8 @@ export type ProprietesBlocChecklistCard = {
 	readonly idEtapeCourante: string | null
 	/** Appelé après chaque écriture appliquée : un cochage écrit une ligne du fil, que la fiche fait relire. */
 	readonly onChange?: () => void
+	/** `CRM-112` T8 : vrai tant que la partie commune, au-dessus, lit encore ce qu'elle rend — l'arrivée l'attend. */
+	readonly attendreMiseEnPage?: boolean
 	/** Injectable pour les preuves ; en production, le client réel du module `supabase`. */
 	readonly client?: ClientCrm | null
 }
@@ -72,6 +77,7 @@ export function BlocChecklistCard({
 	idRattachement,
 	idEtapeCourante,
 	onChange,
+	attendreMiseEnPage = false,
 	client = clientCrm,
 }: ProprietesBlocChecklistCard) {
 	const [etat, setEtat] = useState<EtatAsync<ChecklistAffichee>>(enChargement)
@@ -112,7 +118,7 @@ export function BlocChecklistCard({
 	const droitBloc = useRefus()
 	const capaciteEnLecture = droitBloc.disabled === true && droitBloc['aria-describedby'] === undefined
 	useEffect(() => {
-		if (arriveeTraitee.current || etat.statut !== 'pret' || capaciteEnLecture) return
+		if (arriveeTraitee.current || etat.statut !== 'pret' || capaciteEnLecture || attendreMiseEnPage) return
 		if (typeof window === 'undefined' || window.location.hash !== '#checklist') return
 		arriveeTraitee.current = true
 		const cible = premierPointAReprendre(etat.donnees)
@@ -122,7 +128,7 @@ export function BlocChecklistCard({
 				: section.current?.querySelector<HTMLInputElement>(`[data-point="${cible}"] input[type="checkbox"]`)
 		section.current?.scrollIntoView({ block: 'center', behavior: preferenceMouvementReduit() ? 'auto' : 'smooth' })
 		element?.focus({ preventScroll: true })
-	}, [etat, capaciteEnLecture])
+	}, [etat, capaciteEnLecture, attendreMiseEnPage])
 
 	if (client === null) return null
 	const checklist = etat.statut === 'pret' ? etat.donnees : null

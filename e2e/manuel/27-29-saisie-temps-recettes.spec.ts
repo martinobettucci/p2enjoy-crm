@@ -1,3 +1,5 @@
+// @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : les images de la fiche attendent la mise en page de la partie commune
+//           (docs/SPEC-seed.md §38)
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.5 : les images des chapitres 27 à 29 — l'onglet « À saisir », le temps
 //       passé et le coût du personnel, les recettes et la rentabilité
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitres 27, 28, 29 ; docs/SPEC-costs.md (les coûts réels,
@@ -53,6 +55,9 @@ test('l’onglet « À saisir » vu par une lectrice', async ({ page }) => {
 test('les réels d’une ligne de coût, dans la fiche', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
 	await page.goto(FICHE)
+	// `CRM-112` T8 (docs/SPEC-seed.md §38) : la partie commune, au-dessus, se lit à part et décale la fiche en paraissant ;
+	// l'image attend sa mise en page.
+	await expect(page.getByTestId('bloc-champs-communs')).toBeVisible()
 	const bloc = page.getByTestId('bloc-couts-card')
 	await expect(bloc).toBeVisible()
 	const bascule = bloc.getByTestId('cout-reels-bascule').first()
@@ -63,6 +68,8 @@ test('les réels d’une ligne de coût, dans la fiche', async ({ page }) => {
 	const rentabilite = page.getByTestId('bloc-rentabilite-card')
 	await illustrer(page, { chapitre: RECETTES, section: 'la-rentabilite-d-une-affaire', nom: 'rentabilite-de-l-affaire', cibles: [rentabilite] })
 	const temps = page.getByTestId('temps-card')
+	// `CRM-112` T8 : la fiche, plus haute, laissait le bloc au bord de la fenêtre ; l'image le centre.
+	await temps.evaluate((bloc) => bloc.scrollIntoView({ block: 'center' }))
 	await illustrer(page, { chapitre: TEMPS, section: 'saisir-son-temps-depuis-la-fiche-d-une-affaire', nom: 'temps-dans-la-fiche', cibles: [temps] })
 })
 

@@ -1,3 +1,5 @@
+// @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : le seed porte trois modèles, dont « SIRET pour la facturation »
+//           (docs/SPEC-seed.md §38 ; décision 51 : la garde se révise sans se relâcher)
 // @verifies CRM-063 (docs/BACKLOG.md) — modèles d'emails, tranche 1 : le modèle d'email
 // @verifies docs/SPEC-modeles-emails.md §2.7 (les quatorze lignes du contrat d'API), §2.5 (ce que
 //           la base refuse), §2.6 (autorisations), §2.8 (le jeu de démonstration)
@@ -29,7 +31,8 @@ const FARIDA = '5eed0000-0000-4000-8000-000000000013'
 /** « Relance sans réponse » — le modèle du seed qui porte des variables dans les DEUX colonnes. */
 const MODELE_SEED = '7e11a7e0-0000-4000-8000-000000000001'
 /** Le nombre de modèles que le seed pose, et auquel la suite doit revenir (`docs/SPEC-seed.md` §14.3). */
-const MODELES_DU_SEED = 2
+// RÉVISÉ PAR `CRM-112` T8 (docs/SPEC-seed.md §38) : « SIRET pour la facturation », qui cite un champ de l'affaire.
+const MODELES_DU_SEED = 3
 
 /**
  * Préfixe commun aux lignes que cette suite crée.
@@ -115,7 +118,7 @@ test.describe('les modèles d’email, par la vraie route (docs/SPEC-modeles-ema
 	// Lignes 3, 4 et 5 — les trois profils lisent
 	// -------------------------------------------------------------------------------------------
 
-	test('3, 4, 5 — les TROIS profils lisent les deux modèles du seed, la lectrice comprise', async ({
+	test('3, 4, 5 — les TROIS profils lisent les modèles du seed, la lectrice comprise', async ({
 		request,
 	}) => {
 		for (const [role, jeton] of [
@@ -133,6 +136,7 @@ test.describe('les modèles d’email, par la vraie route (docs/SPEC-modeles-ema
 			expect(lignes.map((l) => l.name), `les modèles lus par ${role}`).toEqual([
 				'Prise de contact',
 				'Relance sans réponse',
+				'SIRET pour la facturation',
 			])
 		}
 	})
@@ -332,7 +336,7 @@ test.describe('les modèles d’email, par la vraie route (docs/SPEC-modeles-ema
 		})
 		const lignes = (await restantes.json()) as Modele[]
 		expect(lignes).toHaveLength(MODELES_DU_SEED)
-		expect(lignes.map((l) => l.name)).toEqual(['Prise de contact', 'Relance sans réponse'])
+		expect(lignes.map((l) => l.name)).toEqual(['Prise de contact', 'Relance sans réponse', 'SIRET pour la facturation'])
 		// Et l'auteur du seed est celui que `docs/SPEC-seed.md` §14.1 annonce : une suppression qui
 		// aurait emporté une ligne du seed, puis un rejeu, se verrait ici.
 		expect(lignes.every((l) => l.created_by === CAMILLE)).toBe(true)

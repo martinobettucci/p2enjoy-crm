@@ -1,3 +1,5 @@
+// @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : le seed porte trois modèles, dont « SIRET pour la facturation »
+//           (docs/SPEC-seed.md §38 ; décision 51 : la garde se révise sans se relâcher)
 // @verifies CRM-063 (docs/BACKLOG.md) — modèles d'emails, tranche 2, sous-tranche 2a : LE RENDU
 // @verifies docs/SPEC-modeles-emails.md §8.8 (les quatorze lignes du contrat d'API), §8.3 (contrat
 //           de la fonction), §8.4 (ce qu'un trou nul rend, et son inventaire), §8.5 (les sources
@@ -41,7 +43,8 @@ const CONTACT_SOPHIE = '5eed0000-0000-4000-8000-000000000092'
 const INCONNU = '00000000-0000-4000-8000-000000000000'
 
 /** Le nombre de modèles que le seed pose (`docs/SPEC-seed.md` §14.3). */
-const MODELES_DU_SEED = 2
+// RÉVISÉ PAR `CRM-112` T8 (docs/SPEC-seed.md §38) : « SIRET pour la facturation », qui cite un champ de l'affaire.
+const MODELES_DU_SEED = 3
 
 type Rendu = {
 	subject: string

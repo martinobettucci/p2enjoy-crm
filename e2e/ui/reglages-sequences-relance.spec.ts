@@ -1,3 +1,5 @@
+// @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : le seed porte trois modèles, dont « SIRET pour la facturation »
+//           (docs/SPEC-seed.md §38 ; décision 51 : la garde se révise sans se relâcher)
 // @verifies CRM-063 (docs/BACKLOG.md) — modèles d'emails, signatures, séquences de relance,
 //           TRANCHE 4, SOUS-TRANCHE 4c : L'ÉCRAN
 // @verifies docs/SPEC-modeles-emails.md §13.4 (la place de l'écran dans l'index des réglages),
@@ -344,7 +346,8 @@ test.describe('administration des séquences de relance (docs/SPEC-modeles-email
 
 		// LE MODÈLE EST TOUJOURS LÀ.
 		await page.goto('/reglages/modeles-emails')
-		await expect(page.getByTestId('ligne-modele-email')).toHaveCount(2)
+		// RÉVISÉ PAR `CRM-112` T8 (docs/SPEC-seed.md §38) : trois modèles au seed, dont « SIRET pour la facturation ».
+		await expect(page.getByTestId('ligne-modele-email')).toHaveCount(3)
 	})
 
 	test('les quatre paliers du §7 rendent l’écran lisible, et le tiroir s’ouvre fermé sous 390 px', async ({

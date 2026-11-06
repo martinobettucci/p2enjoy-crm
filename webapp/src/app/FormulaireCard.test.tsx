@@ -1,3 +1,5 @@
+// @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : l'arrivée sur un champ demandé attend la fin de la lecture de la partie
+//           commune (docs/DESIGN_SYSTEM.md §5.88, §5.7 quater ; décision 856)
 // @verifies CRM-037 (docs/BACKLOG.md) — rendu réel du formulaire conditionnel, et sa saisie
 // @verifies CRM-037 (docs/BACKLOG.md) tranche INC-134 — « Requis à l'étape <étape> » (docs/JOURNAL.md décision 688)
 // @verifies docs/SPEC-form-composer.md §4.2 (section repliée), §4.4 (astérisque et mention),
@@ -541,6 +543,16 @@ describe('champs exigés par un déplacement refusé (§4 ter)', () => {
 		// En lecture : les champs sont inactifs, et aucun focus n'est posé sur eux.
 		expect(document.activeElement).toBe(document.body)
 		rendu.rerender(avec({}))
+		expect(document.activeElement).toBe(screen.getByLabelText(/Origine du contact/))
+	})
+
+	// `CRM-112` T8 : la partie commune, au-dessus, lit encore ce qu'elle rend ; le focus attend sa mise en page.
+	it('CRM-112 T8 : tant que la mise en page est attendue, le focus ATTEND, puis se pose sur le premier champ exigé', () => {
+		const modele = composerFormulaire({ champs: CHAMPS, regles: REGLES, valeurs: [], etape: ETAPE, clesExigees: ['motif-perte', 'source'] })
+		const factice = clientFactice()
+		const rendu = render(<FormulaireCard modele={modele} {...CARD} attendreMiseEnPage client={factice.client} />)
+		expect(document.activeElement).toBe(document.body)
+		rendu.rerender(<FormulaireCard modele={modele} {...CARD} attendreMiseEnPage={false} client={factice.client} />)
 		expect(document.activeElement).toBe(screen.getByLabelText(/Origine du contact/))
 	})
 

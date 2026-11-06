@@ -1,3 +1,6 @@
+// @spec CRM-112 (docs/BACKLOG.md) — tranche T8 : l'arrivée sur un champ demandé attend que la partie commune ait fini sa
+//       lecture — le bloc, au-dessus, repoussait sinon le champ hors de la fenêtre (docs/DESIGN_SYSTEM.md §5.88, §5.7 quater ;
+//       docs/SPEC-form-composer.md §4 ter.6 ; décision 856)
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T3.c : la partie commune de la fiche — les champs de l'affaire, éditables par qui
 //       écrit l'affaire, l'archivé porteur d'une valeur en lecture, le champ demandé par un déplacement refusé
 // @spec docs/SPEC-champs-communs.md §3.3 (une valeur par affaire), §4 (lecture et écriture), §5, §7 (précision T3.c) ;
@@ -29,10 +32,15 @@ export type ProprietesBlocChampsCommuns = {
 	readonly clesExigees: readonly string[]
 	/** Le focus n'est pris ici que si le formulaire d'étape n'a aucun champ demandé (§5.88 : un seul focus par demande). */
 	readonly focaliser: boolean
+	/**
+	 * `CRM-112` T8 : appelé quand la lecture du bloc est terminée — rendu, vide ou en erreur. Le bloc vit AU-DESSUS du
+	 * formulaire et de la checklist, et sa hauteur ne se connaît qu'alors : leur arrivée sur un champ demandé l'attend.
+	 */
+	readonly onLu?: () => void
 	readonly client?: ClientCrm | null
 }
 
-export function BlocChampsCommunsCard({ idCard, idWorkspace, clesExigees, focaliser, client = clientCrm }: ProprietesBlocChampsCommuns) {
+export function BlocChampsCommunsCard({ idCard, idWorkspace, clesExigees, focaliser, onLu, client = clientCrm }: ProprietesBlocChampsCommuns) {
 	const droit = useRefus()
 	const [partie, setPartie] = useState<EtatAsync<PartieCommune>>(enChargement)
 	const [tentative, setTentative] = useState(0)
@@ -54,6 +62,13 @@ export function BlocChampsCommunsCard({ idCard, idWorkspace, clesExigees, focali
 			vivant = false
 		}
 	}, [client, idWorkspace, idCard, signatureExigees, tentative])
+
+	// `CRM-112` T8 : la fin de la lecture, signalée à la fiche ; la relecture après une écriture ne repasse pas par le
+	// chargement, et ne la signale donc pas une seconde fois.
+	const lectureTerminee = partie.statut !== 'chargement'
+	useEffect(() => {
+		if (lectureTerminee) onLu?.()
+	}, [lectureTerminee, onLu])
 
 	const donnees = partie.statut === 'pret' ? partie.donnees : null
 	const rendus = donnees === null ? [] : [...donnees.actifs, ...donnees.archives]

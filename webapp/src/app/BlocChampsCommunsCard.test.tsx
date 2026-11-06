@@ -1,3 +1,5 @@
+// @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : l'arrivée sur un champ demandé attend la fin de la lecture de la partie
+//           commune (docs/DESIGN_SYSTEM.md §5.88, §5.7 quater ; décision 856)
 // @verifies CRM-112 (docs/BACKLOG.md) — tranche T3.c : la partie commune de la fiche — la composition (actifs dans l'ordre,
 //           archivé valué en lecture, archivé vide absent, clés demandées), l'écriture par mise à jour puis insertion et
 //           sa reprise sur un `23505`, le bloc absent sans objet, le champ demandé et son focus, la capacité refusée,
@@ -9,7 +11,7 @@
 
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fr } from '../i18n'
 import { FournisseurRefus } from '../components/ui/RefusCommandes'
 import { composerPartieCommune, ecrireValeurCommune } from '../lib/champs-communs'
@@ -124,6 +126,18 @@ describe('BlocChampsCommunsCard (docs/DESIGN_SYSTEM.md §5.88)', () => {
 		await userEvent.type(within(bloc).getByLabelText('Secteur'), 'BTP')
 		await userEvent.tab()
 		await waitFor(() => expect(espion.ecritures.some((e) => e.verbe === 'update' || e.verbe === 'insert')).toBe(true))
+	})
+
+	// `CRM-112` T8 : la fin de la lecture est signalée à la fiche, que le bloc rende des champs ou rien.
+	it('CRM-112 T8 : signale la fin de sa lecture, avec des champs comme sans aucun', async () => {
+		const lu = vi.fn()
+		render(<BlocChampsCommunsCard idCard="c-1" idWorkspace="ws-1" clesExigees={[]} focaliser={false} onLu={lu} client={client().client} />)
+		expect(lu).not.toHaveBeenCalled()
+		await screen.findByLabelText('Secteur')
+		expect(lu).toHaveBeenCalled()
+		const vide = vi.fn()
+		render(<BlocChampsCommunsCard idCard="c-2" idWorkspace="ws-1" clesExigees={[]} focaliser={false} onLu={vide} client={client({ champs: [], valeurs: [] }).client} />)
+		await waitFor(() => expect(vide).toHaveBeenCalled())
 	})
 
 	it('un espace sans champ commun ne rend aucun bloc', async () => {

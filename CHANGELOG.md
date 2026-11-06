@@ -26,6 +26,9 @@ et 855, `docs/SPEC-seed.md` §38).*
 - Un E2E de bout en bout sur ce jeu, et ses captures aux quatre paliers ; les preuves qui supposaient un espace sans champ
   commun sont ajustées.
 - Le manuel montre la fiche du jeu de démonstration ; ses images de la fiche, de l'éditeur et des modèles sont renouvelées.
+- Correctif de la fiche : l'arrivée sur un champ demandé par un déplacement refusé, et sur la checklist, attend que les
+  champs de l'affaire soient affichés ; ils la repoussaient sinon hors de la fenêtre (décision 856). **Avec la webapp de
+  `main`.**
 
 ## [Publié]
 
