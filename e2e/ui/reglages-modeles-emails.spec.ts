@@ -1,3 +1,4 @@
+// @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : le seed porte trois modèles (docs/SPEC-seed.md §38)
 // @verifies CRM-063 (docs/BACKLOG.md) — modèles d'emails, tranche 2, sous-tranche 2b : L'ÉCRAN
 // @verifies docs/SPEC-modeles-emails.md §9.1 (la place de l'écran dans l'index des réglages),
 //           §9.3 (la palette et l'insertion d'un trou), §9.4 (la liste), §9.5 (les trois
@@ -33,10 +34,11 @@ const ADMIN = 'admin@p2enjoy.test'
 const VIEWER = 'viewer@p2enjoy.test'
 const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 
-/** Les deux modèles du seed (`docs/SPEC-seed.md` §14) — des littéraux stables. */
+/** Les modèles du seed (`docs/SPEC-seed.md` §14) — des littéraux stables. RÉVISÉ PAR `CRM-112` T8 (§38) : un troisième,
+ * « SIRET pour la facturation », cite un champ de l'affaire ; il se range après les deux autres. */
 const MODELE_RELANCE = 'Relance sans réponse'
 const MODELE_CONTACT = 'Prise de contact'
-const MODELES_DU_SEED = 2
+const MODELES_DU_SEED = 3
 
 /**
  * L'affaire du seed qui porte À LA FOIS un montant, une étape et un contact rattaché.
@@ -77,7 +79,7 @@ async function rendreLeSeedIntact(page: Page): Promise<void> {
 }
 
 test.describe('administration des modèles d’emails (docs/SPEC-modeles-emails.md §9)', () => {
-	test('l’administratrice atteint l’écran depuis les réglages et voit les deux modèles', async ({
+	test('l’administratrice atteint l’écran depuis les réglages et voit les modèles du seed', async ({
 		page,
 	}) => {
 		await connecter(page, ADMIN)
@@ -110,7 +112,7 @@ test.describe('administration des modèles d’emails (docs/SPEC-modeles-emails.
 		// L'OBJET SE REND AVEC SES VARIABLES TELLES QUELLES : la liste n'est PAS une
 		// prévisualisation, et substituer y supposerait une affaire qu'elle n'a pas (§5.39).
 		await expect(
-			page.getByTestId('objet-modele').filter({ hasText: '{{card.title}}' }),
+			page.getByTestId('objet-modele').filter({ hasText: 'Où en est {{card.title}}' }),
 		).toBeVisible()
 
 		// La fiche est REPLIÉE par défaut (§5.39, §5.23), et aucune prévisualisation n'est ouverte.
@@ -138,7 +140,9 @@ test.describe('administration des modèles d’emails (docs/SPEC-modeles-emails.
 
 		// LA PALETTE VIENT DE LA BASE (§9.3) : douze boutons, et la liste n'est jamais recopiée dans
 		// l'écran. Le compte se vérifie, parce que c'est lui qui dirait qu'une variable a disparu.
-		await expect(page.getByTestId('inserer-variable')).toHaveCount(12)
+		// RÉVISÉ PAR `CRM-112` T8 (docs/SPEC-seed.md §38) : les champs de l'affaire du seed forment un second groupe ; les
+		// douze variables natives se comptent dans le leur.
+		await expect(page.getByTestId('palette-variables').getByTestId('inserer-variable')).toHaveCount(12)
 
 		// L'INSERTION SE FAIT DANS LE DERNIER CHAMP VISITÉ, à la position du curseur — ici l'objet,
 		// que l'on vient de quitter pour cliquer sur la palette.

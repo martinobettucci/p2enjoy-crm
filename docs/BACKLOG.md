@@ -17743,11 +17743,21 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       Sous-ensemble de ce périmètre seulement, jamais la campagne complète (décision 830). La suggestion de démonstration du
       scénario entre au seed avec `siret`, en T8. **Reste** : la livraison de la `0169` avec la fonction `ia` et la webapp de
       `main`, par la session de livraison, et le constat du responsable — un champ « SIRET » proposé par l'IA, refusé.
-- [@] **T8** — seed (`docs/SPEC-champs-communs.md` §13), E2E, captures aux quatre paliers, `docs/manual.md`.
-      *Prise en charge : session interactive 4891a451 (p2enjoy-crm-b6) depuis 2026-11-05 14:44 UTC — état avant : [ ]*
+- [P] **T8** — seed (`docs/SPEC-champs-communs.md` §13), E2E, captures aux quatre paliers, `docs/manual.md`.
       *Spécifiée le 2026-11-05 avant le code (décision 853)* : `docs/SPEC-seed.md` §38 — cinq champs dont un archivé, les
-      valeurs de quatre affaires, « Négociation → Signature » exige `siret` et bloque « Refonte du monitoring — Vertuo », un
+      valeurs de cinq affaires, « Négociation → Signature » exige `siret` et bloque « Refonte du monitoring — Vertuo », un
       modèle d'email, la suggestion du scénario `champ_commun`. Connecteur MCP : sans objet (un seed, aucun outil).
+      *Révisée le même jour (décision 855, arbitrage du responsable)* : `siret` et son exigence sont posés en section 6 bis,
+      avant la copie du workflow par défaut, qui la porte donc aussi ; la base de dev a été recréée une fois (`resetMe`).
+      *Vérifiée en développement le 2026-11-06* : seed sur base recréée puis rejoué, convergent (5 champs, 13 valeurs, 2
+      exigences, 3 modèles, 1 suggestion) ; pgTAP complet **146 fichiers, 5024 assertions** — sept suites ajustées à l'état
+      du seed (0037, 0040, 0054, 0146, 0148, 0149, 0150) ; API du périmètre **143/143** ; E2E `ui` du périmètre **296**, dont
+      huit reprises (liste-champs-communs, liste-cards, administration-workflows, reglages-modeles-emails ×5,
+      vues-filtres-communs), et la nouvelle `seed-champs-communs.spec.ts` **8/8** ; captures
+      `docs/captures/CRM-112/seed-champs-*` aux quatre paliers, observées ; `verify-mcp.sh --rapide` **111/111** ; manuel :
+      chapitres 09a, 14-16 et 18 rejoués (scénarios recadrés, la fiche illustrée par le seed), `verify-manual` **168** sans
+      anomalie. Sous-ensemble de ce périmètre seulement, jamais la campagne complète (décision 830). **Reste** : la campagne
+      complète, la livraison (le seed n'existe qu'en dev ; le manuel et ses images), et le constat du responsable.
 - [P] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de
       (**Livrée le 2026-11-05**, décision 852, révision `b9fa4d11`, image `mcp` reconstruite ; reste le constat du responsable.)
       `crm_card_list` ; `docs/SPEC-mcp.md` §9.2.

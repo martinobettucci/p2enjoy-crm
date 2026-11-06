@@ -1,3 +1,4 @@
+// @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : « Passer en signature » exige aussi le SIRET du seed (docs/SPEC-seed.md §38)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes mesurés sur le seed enrichi (docs/SPEC-seed.md §36)
 // @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, parcours d'interface
 // @verifies docs/SPEC-workflow-engine.md §7 bis.2 (adresse depuis l'index des réglages),
@@ -1256,12 +1257,11 @@ test.describe('les exigences de transition sur la vraie base (§7 bis.12)', () =
 		// signature` arrive sur `Signature`, où TROIS champs portent `required` — mesuré. Aucune
 		// liaison ne les déclare, et pourtant `move_card` les exige.
 		const signature = blocExigences(page, '5eed0000-0000-4000-8000-000000000073')
-		await expect(signature.getByTestId('ligne-exigence')).toHaveCount(3)
-		for (const origine of await signature
-			.getByTestId('ligne-exigence')
-			.evaluateAll((lignes) => lignes.map((ligne) => ligne.getAttribute('data-origine')))) {
-			expect(origine, 'une exigence venue de la seule règle').toBe('regle')
-		}
+		// RÉVISÉ PAR `CRM-112` T8 (docs/SPEC-seed.md §38, décision 855) : le seed exige aussi le champ de l'affaire SIRET sur
+		// cette arête ; sa ligne suit les trois de la règle (docs/DESIGN_SYSTEM.md §5.87).
+		await expect(signature.getByTestId('ligne-exigence')).toHaveCount(4)
+		await expect(signature.locator('[data-testid="ligne-exigence"][data-origine="regle"]')).toHaveCount(3)
+		await expect(signature.getByTestId('ligne-exigence').filter({ hasText: 'SIRET' })).toHaveCount(1)
 	})
 
 	test('une exigence venue d’une règle n’offre AUCUNE commande de retrait', async ({ page }) => {

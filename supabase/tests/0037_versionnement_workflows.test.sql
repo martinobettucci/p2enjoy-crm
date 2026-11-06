@@ -1,3 +1,4 @@
+-- @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : indépendante de l'exigence `siret` que pose le seed (docs/SPEC-seed.md §38)
 -- @verifies CRM-078 (docs/BACKLOG.md) — versionnement des workflows, première tranche : versions
 --            immuables et publication
 -- @verifies docs/SPEC-workflow-engine.md §7 ter.2 (empreinte inchangée par l'extraction),
@@ -77,7 +78,8 @@ select has_function('app', 'workflow_composition_document', array['uuid'],
 -- contourné (mécanisme de la décision 51). Valeur MESURÉE sur la pile seedée à froid.
 select is(
 	app.workflow_composition_fingerprint('5eed0000-0000-4000-8000-000000000051'),
-	'e77d7b7c580e03b7ee0ada4ca8e830a2528a5243490853e66b06d6bbac518e30',
+	-- RÉVISÉE PAR `CRM-112` T8 (docs/SPEC-seed.md §38, décision 855) : la composition du seed porte l'exigence `siret`.
+	'7831734d43870046f376d65c0236e20fa39985d92ec981366043c2d1ff74d3c3',
 	'2 — empreinte du workflow par défaut, révisée par la composition et non par l''extraction');
 
 -- RÉVISÉE PAR L'ARBITRAGE DE LA DÉCISION 430, ET NON CONTOURNÉE (INC-122). Cette assertion citait
@@ -108,13 +110,15 @@ select is(
 	'3 — empreinte du workflow dérivé INCHANGÉE par l''extraction : la fonction rend le condensé du document');
 
 -- Le document porte les six clés du contrat, et rien d'autre : une clé ajoutée ou retirée
--- changerait toutes les empreintes du produit.
+-- changerait toutes les empreintes du produit. RÉVISÉ PAR `CRM-112` T8 (docs/SPEC-seed.md §38, décision 855) : le workflow
+-- du seed exige un champ commun, et son document porte donc aussi `required_common_fields`, la septième clé que la
+-- migration 0157 n'ajoute qu'à un workflow qui en a.
 select is(
 	(select array_agg(k order by k)
 	   from jsonb_object_keys(
 	          app.workflow_composition_document('5eed0000-0000-4000-8000-000000000051')) as k),
-	array['fields', 'required_fields', 'rules', 'steps', 'transitions', 'workflow'],
-	'4 — le document canonique porte exactement les six clés du §7 ter.2');
+	array['fields', 'required_common_fields', 'required_fields', 'rules', 'steps', 'transitions', 'workflow'],
+	'4 — le document canonique porte les six clés du §7 ter.2, et l''exigence commune du seed');
 
 select is(
 	app.workflow_composition_document('00000000-0000-4000-8000-000000000000'),

@@ -1,3 +1,5 @@
+-- @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : la copie ne perd que l'exigence de la preuve, le seed exigeant aussi `siret`
+--           (docs/SPEC-seed.md §38, décision 855)
 -- @verifies CRM-112 (docs/BACKLOG.md) — tranches T2.c.2 et T3.b : les champs communs exigés dans les deux comparaisons de
 --           versions (INC-344 : la version qui n'en diffère que par eux n'est plus « différente et vide »), et l'aperçu
 --           des effets d'une exigence commune, sous la lecture de l'appelant
@@ -12,6 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 
 select plan(10);
+
 
 create or replace function pg_temp.endosser(utilisateur uuid) returns void language plpgsql as $$
 begin
@@ -68,9 +71,11 @@ create temp table pg_temp.copie as
 select ok((public.compare_workflow_with_source((select id from pg_temp.copie)) ->> 'identical')::boolean,
 	'5 — la copie qui garde l''exigence commune est identique à sa source');
 reset role;
+-- RÉVISÉ PAR `CRM-112` T8 : seule l'exigence de la preuve est retirée de la copie — celle du seed (`siret`) y reste.
 delete from public.workflow_transition_required_common_fields r
  using public.workflow_transitions t
- where t.id = r.transition_id and t.workflow_id = (select id from pg_temp.copie);
+ where t.id = r.transition_id and t.workflow_id = (select id from pg_temp.copie)
+   and r.common_field_id = (select id from pg_temp.champ);
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 create temp table pg_temp.divergence as select public.compare_workflow_with_source((select id from pg_temp.copie)) as c;
 select is((select c -> 'summary' from pg_temp.divergence), '{"added": 0, "removed": 1, "modified": 0}'::jsonb,

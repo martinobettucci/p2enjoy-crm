@@ -60,7 +60,7 @@
 			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/sante.jpg",
 			"alt": "Le bloc Santé de l'affaire : la dynamique et la santé, avec le détail de chaque critère et son poids",
 			"width": 650,
-			"height": 259
+			"height": 275
 		},
 		{
 			"type": "image",
@@ -1600,14 +1600,14 @@
 			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/exige-par-le-deplacement.jpg",
 			"alt": "Le champ exigé par le déplacement demandé, signalé sous son libellé",
 			"width": 650,
-			"height": 147
+			"height": 146
 		},
 		{
 			"type": "image",
 			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/formulaire-de-l-etape.jpg",
 			"alt": "Le formulaire de l'étape : les champs requis signalés, et le champ renseigné marqué Enregistré",
 			"width": 650,
-			"height": 867
+			"height": 884
 		},
 		{
 			"type": "image",
@@ -3009,9 +3009,9 @@
 		{
 			"type": "image",
 			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/champs-de-l-affaire.jpg",
-			"alt": "Le bloc « Champs de l'affaire » d'une fiche : le numéro de TVA à remplir, et un ancien code client archivé qui garde sa valeur",
+			"alt": "Le bloc « Champs de l'affaire » d'une fiche : le SIRET, le secteur, la date de signature et le budget du client, puis un ancien code client archivé qui garde sa valeur",
 			"width": 650,
-			"height": 247
+			"height": 490
 		},
 		{
 			"type": "paragraph",
@@ -3143,7 +3143,7 @@
 			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattachement-refuse.jpg",
 			"alt": "Le rattachement refusé faute de droit de modifier l'affaire",
 			"width": 650,
-			"height": 440
+			"height": 441
 		},
 		{
 			"type": "paragraph",
@@ -3643,7 +3643,7 @@
 			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/activites.jpg",
 			"alt": "Le bloc des activités : un compte rendu déplié, ses participants, et la commande pour consigner",
 			"width": 650,
-			"height": 747
+			"height": 607
 		},
 		{
 			"type": "image",
@@ -3657,14 +3657,14 @@
 			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/consigner-une-activite.jpg",
 			"alt": "Le formulaire d'une activité : son type, sa date, sa durée, son sujet, son compte rendu et ses participants",
 			"width": 650,
-			"height": 723
+			"height": 724
 		},
 		{
 			"type": "image",
 			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/activite-retiree.jpg",
 			"alt": "Une activité retirée, qui reste dans la liste à sa date",
 			"width": 650,
-			"height": 92
+			"height": 93
 		},
 		{
 			"type": "paragraph",
@@ -4531,7 +4531,7 @@
 			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/aucun-point.jpg",
 			"alt": "La checklist d'une affaire dont l'étape ne porte aucun point",
 			"width": 650,
-			"height": 205
+			"height": 206
 		},
 		{
 			"type": "image",

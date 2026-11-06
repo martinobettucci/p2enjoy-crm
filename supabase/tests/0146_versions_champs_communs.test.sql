@@ -1,3 +1,4 @@
+-- @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : indépendante de l'exigence `siret` que pose le seed (docs/SPEC-seed.md §38)
 -- @verifies CRM-112 (docs/BACKLOG.md) — tranche T2.c.1 : les champs communs exigés dans les versions et les copies — la
 --           photographie par identifiant et clé (et rien quand rien n'est exigé : l'empreinte ne bouge pas), la
 --           restauration qui rétablit l'exigence et refuse un champ archivé, la copie vers un track, le journal d'audit
@@ -11,6 +12,13 @@ begin;
 create extension if not exists pgtap with schema extensions;
 
 select plan(8);
+
+-- `CRM-112` T8 (docs/SPEC-seed.md §38, décision 855) : le seed exige `siret` vers Signature, dans le workflow par défaut et
+-- sa copie. Ces preuves supposent un workflow sans exigence commune : elles retirent celles du seed, dans leur transaction.
+delete from public.workflow_transition_required_common_fields
+ where common_field_id in (select f.id from public.card_common_fields f
+                            where f.workspace_id = '5eed0000-0000-4000-8000-000000000001' and f.key = 'siret');
+
 
 create or replace function pg_temp.endosser(utilisateur uuid) returns void language plpgsql as $$
 begin

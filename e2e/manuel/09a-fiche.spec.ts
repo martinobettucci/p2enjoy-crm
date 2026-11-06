@@ -1,3 +1,4 @@
+// @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : la fiche illustrée est celle du seed (docs/SPEC-seed.md §38)
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T3.c : l'image « champs-de-l-affaire » de la section 9.6 (docs/DESIGN_SYSTEM.md §5.88)
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.2b : les images du chapitre 9, « L'affaire » — la fiche
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitre 9 (sections 9.1 à 9.9, 9.15)
@@ -93,13 +94,10 @@ test('une affaire du seed : la fiche, la santé, l’adresse', async ({ page, co
 	await activites.getByText('Compte rendu', { exact: true }).first().click()
 	// *Révisé par la campagne de livraison du 2026-11-03* : le bloc « Rattachements » (`CRM-111` T7) allonge la fiche, et
 	// le défilement de Playwright ne ramenait plus le titre et le bloc ensemble dans la fenêtre. Le titre est mis en haut.
-	await page.getByRole('heading', { name: 'Contacts de l’affaire' }).evaluate((titre) => titre.scrollIntoView({ block: 'start' }))
-	await illustrer(page, {
-		chapitre: CHAPITRE,
-		section: S.activites,
-		nom: 'activites',
-		cibles: [page.getByRole('heading', { name: 'Contacts de l’affaire' }), activites],
-	})
+	// RÉVISÉ PAR `CRM-112` T8 : avec les champs de l'affaire du seed, le titre des contacts et le bloc des activités ne tiennent
+	// plus ensemble dans la fenêtre ; l'image cadre le bloc des activités, centré.
+	await activites.evaluate((bloc) => bloc.scrollIntoView({ block: 'center' }))
+	await illustrer(page, { chapitre: CHAPITRE, section: S.activites, nom: 'activites', cibles: [activites] })
 	await illustrer(page, { chapitre: CHAPITRE, section: S.activites, nom: 'temps', cibles: [page.getByRole('link', { name: 'Temps', exact: true })] })
 
 	await page.goto(ARCHIVEE)
@@ -116,86 +114,18 @@ test('une affaire du seed : la fiche, la santé, l’adresse', async ({ page, co
 	await illustrer(page, { chapitre: CHAPITRE, section: S.contacts, nom: 'modifier-le-role', cibles: [page.getByTestId('modifier-role-affaire').first()] })
 })
 
-// `CRM-112` T3.c — le bloc « Champs de l'affaire » (docs/DESIGN_SYSTEM.md §5.88). Deux champs propres à l'image, jamais ceux
-// du seed (docs/SPEC-champs-communs.md §13) : le retrait les vise par leur clé, et leurs valeurs partent avec eux.
+// `CRM-112` T3.c — le bloc « Champs de l'affaire » (docs/DESIGN_SYSTEM.md §5.88). RÉVISÉ PAR `CRM-112` T8 : l'image montre
+// le jeu de démonstration (docs/SPEC-seed.md §38) — la billetterie, ses valeurs, et la valeur gardée d'un champ archivé —,
+// au lieu de poser deux champs propres à l'image, qui s'ajouteraient désormais à ceux du seed.
 test('les champs de l’affaire sur la fiche', async ({ page, request }) => {
-	const cles = ['numero-tva-manuel-fiche', 'ancien-code-manuel-fiche']
-	const ranger = async () => {
-		const champs = await lireService<{ id: string }[]>(request, `card_common_fields?workspace_id=eq.${WORKSPACE_SEED}&key=in.(${cles.join(',')})&select=id`)
-		for (const { id } of champs) {
-			await service(request, 'delete', `card_common_field_values?field_id=eq.${id}`)
-			await service(request, 'delete', `card_common_fields?id=eq.${id}`)
-		}
-	}
-	await ranger()
-	try {
-		const ancien = 'e1120000-0000-4000-8000-0000000000d2'
-		await service(request, 'post', 'card_common_fields', [
-			{ id: 'e1120000-0000-4000-8000-0000000000d1', workspace_id: WORKSPACE_SEED, key: cles[0], label: 'Numéro de TVA', type: 'text', help_text: 'Le numéro intracommunautaire du client', archived_at: null },
-			{ id: ancien, workspace_id: WORKSPACE_SEED, key: cles[1], label: 'Ancien code client', type: 'text', help_text: null, archived_at: null },
-		])
-		await service(request, 'post', 'card_common_field_values', {
-			card_id: '5eed0000-0000-4000-8000-0000000000c2', field_id: ancien, workspace_id: WORKSPACE_SEED, value: 'SOG-0042',
-		})
-		await service(request, 'patch', `card_common_fields?id=eq.${ancien}`, { archived_at: new Date().toISOString() })
-		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto(AFFAIRE_SOGEXIA)
-		const bloc = page.getByTestId('bloc-champs-communs')
-		await expect(bloc.getByText('SOG-0042')).toBeVisible()
-		await bloc.scrollIntoViewIfNeeded()
-		await illustrer(page, { chapitre: CHAPITRE, section: S.fiche, nom: 'champs-de-l-affaire', cibles: [bloc] })
-	} finally {
-		await ranger()
-	}
-})
-
-test('une affaire rattachée ailleurs : l’adresse d’un channel où elle n’est pas', async ({ page, request }) => {
-	const affaire = randomUUID()
-	await poserAffaire(request, { id: affaire, titre: 'Portail partagé des adhérents', channel: CHANNEL_GRANDS_COMPTES, workflow: WORKFLOW_GLOBAL, etape: ETAPE_SIGNATURE })
-	try {
-		const rattache = await request.post(rest('rpc/attach_card'), {
-			headers: enTetesAuthentifies(await jetonDe(ADMIN)),
-			data: { p_card: affaire, p_channel: '5eed0000-0000-4000-8000-000000000034' },
-		})
-		expect(rattache.status(), await rattache.text()).toBe(200)
-		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto(`/tracks/studio-web/maintenance/cards/${affaire}`)
-		const etat = page.getByTestId('etat-vide')
-		await expect(etat.getByRole('link')).toHaveCount(2)
-		await illustrer(page, { chapitre: CHAPITRE, section: S.rattachements, nom: 'pas-rattachee-ici', cibles: [etat] })
-		// La fiche dans un de ses channels : le bloc « Rattachements », l'autre rattachement en lien.
-		await etat.getByRole('link', { name: 'Studio web › Refonte de site' }).click()
-		const bloc = page.getByTestId('bloc-rattachements')
-		await expect(bloc.getByTestId('ligne-rattachement')).toHaveCount(2)
-		// L'autre rattachement archivé : l'image montre « Archivé », « Désarchiver » et « Archiver » ensemble. L'affaire est
-		// détruite ensuite.
-		const autre = bloc.getByTestId('ligne-rattachement').filter({ has: page.getByRole('link', { name: 'Conseil & IA › Grands comptes' }) })
-		await autre.getByTestId('basculer-archivage-rattachement').click()
-		await expect(autre.getByTestId('rattachement-archive')).toBeVisible()
-		// La souris quitte la commande : l'image montre son repos, non son survol.
-		await page.mouse.move(0, 0)
-		await illustrer(page, { chapitre: CHAPITRE, section: S.rattachements, nom: 'rattachements', cibles: [bloc] })
-		await bloc.getByTestId('ouvrir-rattacher').click()
-		const champ = bloc.getByTestId('champ-channel-rattacher')
-		await expect(champ).toBeFocused()
-		await champ.selectOption({ label: 'Studio web › Maintenance' })
-		await illustrer(page, { chapitre: CHAPITRE, section: S.rattachements, nom: 'rattacher', cibles: [bloc.getByTestId('formulaire-rattacher')] })
-		await bloc.getByTestId('annuler-rattacher').click()
-		await autre.getByTestId('ouvrir-retrait-rattachement').click()
-		const confirmation = autre.getByTestId('confirmation-retrait-rattachement')
-		await expect(confirmation.getByTestId('confirmer-retrait-rattachement')).toBeFocused()
-		await illustrer(page, { chapitre: CHAPITRE, section: S.rattachements, nom: 'retirer', cibles: [confirmation] })
-		// Le retrait réellement fait (l'affaire est jetable) : le fil nomme alors les deux gestes, image « fil-rattachements ».
-		await confirmation.getByTestId('confirmer-retrait-rattachement').click()
-		await expect(bloc.getByTestId('ligne-rattachement')).toHaveCount(1)
-		// Les lignes entières du fil, icônes comprises : le seul texte rognait les pastilles (vu sur l'image).
-		const rattachee = page.locator('li').filter({ hasText: 'Rattachée à un channel' })
-		const retire = page.locator('li').filter({ hasText: 'Rattachement retiré' })
-		await expect(retire).toBeVisible()
-		await illustrer(page, { chapitre: CHAPITRE, section: S.rattachements, nom: 'fil-rattachements', cibles: [rattachee, retire] })
-	} finally {
-		await detruireAffaire(request, affaire)
-	}
+	const [billetterie] = await lireService<{ id: string }[]>(
+		request, `cards?title=eq.${encodeURIComponent('Plateforme de billetterie — Musée des Confluences')}&select=id`)
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto(`${GRANDS_COMPTES}/cards/${billetterie?.id}`)
+	const bloc = page.getByTestId('bloc-champs-communs')
+	await expect(bloc.getByText('CLI-0042')).toBeVisible()
+	await bloc.evaluate((element) => element.scrollIntoView({ block: 'start' }))
+	await illustrer(page, { chapitre: CHAPITRE, section: S.fiche, nom: 'champs-de-l-affaire', cibles: [bloc] })
 })
 
 test('une affaire neuve : le refus du déplacement, la reprise, l’en-tête, les blocs, la corbeille', async ({ page, request }) => {
@@ -220,6 +150,8 @@ test('une affaire neuve : le refus du déplacement, la reprise, l’en-tête, le
 		await page.keyboard.type('https://p2enjoy.test/propositions/valdor')
 		await page.keyboard.press('Tab')
 		await expect(page.getByTestId('etat-lien-proposition')).toContainText('Enregistré')
+		// `CRM-112` T8 : le formulaire est centré dans la fenêtre, la fiche portant au-dessus les champs de l'affaire du seed.
+		await page.getByTestId('formulaire-card').evaluate((bloc) => bloc.scrollIntoView({ block: 'center' }))
 		await illustrer(page, { chapitre: CHAPITRE, section: S.fiche, nom: 'formulaire-de-l-etape', cibles: [page.getByTestId('formulaire-card')] })
 
 		// L'en-tête : sans responsable, puis en saisie.

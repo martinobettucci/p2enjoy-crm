@@ -1480,7 +1480,7 @@ mais leur valeur appartient à l'affaire : elle est la même dans tous les chann
 archivé qui porte encore une valeur reste lisible, marqué « Archivé ». Si un déplacement est refusé parce qu'un de ces
 champs est vide, le bandeau du board le nomme, et « Renseigner ces champs » vous mène à lui, mis en évidence.
 
-![Le bloc « Champs de l'affaire » d'une fiche : le numéro de TVA à remplir, et un ancien code client archivé qui garde sa valeur](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/champs-de-l-affaire.jpg)
+![Le bloc « Champs de l'affaire » d'une fiche : le SIRET, le secteur, la date de signature et le budget du client, puis un ancien code client archivé qui garde sa valeur](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/champs-de-l-affaire.jpg)
 
 **Un second geste y est offert : mettre l'affaire à la corbeille** ([chapitre 9.15](#mettre-une-affaire-a-la-corbeille)).
 
@@ -4632,7 +4632,7 @@ workflow. Certaines informations valent pour **toute affaire de l'espace**, quel
 SIRET, un secteur d'activité. On les déclare une fois, dans **Réglages ▸ Champs de l'affaire**, juste après les
 workflows.
 
-![Réglages ▸ Champs de l'affaire : « Nouveau champ », « Afficher les archivés », et deux champs avec leur clé, leur type et leurs commandes](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champs-de-l-affaire.jpg)
+![Réglages ▸ Champs de l'affaire : « Nouveau champ », « Afficher les archivés », et les champs de l'espace — SIRET, Secteur, Date de signature, Budget du client et d'autres — avec leur clé, leur type et leurs commandes](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champs-de-l-affaire.jpg)
 
 L'écran reprend exactement le formulaire et les commandes des questions d'un workflow : **« Nouveau champ »** demande une
 clé, un libellé, un type, les choix d'une liste ou la devise d'un montant, et une aide ; les flèches réordonnent ; le

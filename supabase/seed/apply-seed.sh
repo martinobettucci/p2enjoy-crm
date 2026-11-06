@@ -1370,7 +1370,37 @@ code=$(api GET "/rest/v1/workflow_transitions?workflow_id=eq.$WF_ID&select=id,wo
 attendu "$code" "inventaire exact des exigences source avant copie" 200
 [ "$(jq -r '[.[].workflow_transition_required_fields[]?] | length' "$CORPS")" -eq 1 ] || \
 	die "le workflow source ne porte pas exactement l'exigence seedée : aucune copie n'est reconstruite."
-info "Source : ${#CHAMPS[@]} champs, ${#REGLES[@]} règles et 1 exigence — prête à copier"
+# `CRM-112` T8 (docs/SPEC-seed.md §38, décision 855) : le champ de l'affaire `siret` et son exigence sur « Négociation →
+# Signature » appartiennent à la COMPOSITION du workflow source depuis la migration 0157. Posés ICI, avant la copie (section
+# 7), la copie les porte aussi, et le rejeu ne voit aucune divergence ; posés après, ils feraient refuser la copie au second
+# passage. Par PostgREST sous le jeton de Camille, comme Réglages ▸ « Champs de l'affaire » et l'éditeur de workflows ; la
+# section « 8 tertricies » retrouve le champ par sa clé.
+JETON_ADMIN_6B=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+[ -n "$JETON_ADMIN_6B" ] || die "connexion de l'administratrice seedée impossible : le champ de l'affaire « siret » se déclare
+        sous son jeton (docs/SPEC-seed.md §38.2)."
+code=$(api GET "/rest/v1/card_common_fields?select=id&workspace_id=eq.$WS_ID&key=eq.siret")
+attendu "$code" "lecture du champ de l'affaire « siret »" 200
+CHAMP_SIRET=$(jq -r '.[0].id // empty' "$CORPS")
+if [ -z "$CHAMP_SIRET" ]; then
+	code=$(curl -s -o "$CORPS" -w '%{http_code}' -X POST "$API/rest/v1/card_common_fields?select=id" \
+		-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_ADMIN_6B" -H 'Content-Type: application/json' \
+		-H 'Prefer: return=representation' \
+		-d "$(jq -nc --arg w "$WS_ID" '{workspace_id: $w, key: "siret", label: "SIRET", type: "text", options: {},
+			help_text: "Quatorze chiffres, sans espace", is_listed: true, position: 1}')")
+	attendu "$code" "déclaration du champ de l'affaire « siret »" 201
+	CHAMP_SIRET=$(jq -r '.[0].id' "$CORPS")
+fi
+TRANSITION_SIGNATURE='5eed0000-0000-4000-8000-000000000073'
+code=$(api GET "/rest/v1/workflow_transition_required_common_fields?select=transition_id&transition_id=eq.$TRANSITION_SIGNATURE&common_field_id=eq.$CHAMP_SIRET")
+attendu "$code" "lecture de l'exigence du SIRET" 200
+if [ "$(jq -r 'length' "$CORPS")" = "0" ]; then
+	code=$(curl -s -o "$CORPS" -w '%{http_code}' -X POST "$API/rest/v1/workflow_transition_required_common_fields" \
+		-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_ADMIN_6B" -H 'Content-Type: application/json' \
+		-H 'Prefer: return=minimal' \
+		-d "$(jq -nc --arg t "$TRANSITION_SIGNATURE" --arg f "$CHAMP_SIRET" '{transition_id: $t, common_field_id: $f}')")
+	attendu "$code" "exigence du SIRET sur « Négociation → Signature »" 201
+fi
+info "Source : ${#CHAMPS[@]} champs, ${#REGLES[@]} règles, 1 exigence et le SIRET exigé vers Signature — prête à copier"
 
 
 # --- 7. Copie vers un track — docs/SPEC-workflow-engine.md §4.10 --------------------------------
@@ -4420,7 +4450,10 @@ done
 
 # GARDE DE CONVERGENCE, comme celle des identités sortantes : un rejeu ne doit RIEN dupliquer.
 # `resolution=merge-duplicates` s'appuie sur la clé primaire, et les identifiants sont stables.
-modeles_mail=$(curl -s "$API/rest/v1/mail_templates?select=id" \
+# `CRM-112` T8 (docs/SPEC-seed.md §38) : la section « 8 tertricies » pose un troisième modèle, qui cite un champ de
+# l'affaire et ne peut donc naître qu'après lui ; la garde compte les seuls modèles de CETTE section, par leur identifiant.
+ids_modeles_mail=$(printf '%s\n' "${MODELES_MAIL[@]}" | cut -d'|' -f1 | paste -sd, -)
+modeles_mail=$(curl -s "$API/rest/v1/mail_templates?select=id&id=in.($ids_modeles_mail)" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 [ "$modeles_mail" = "${#MODELES_MAIL[@]}" ] || die "modèles d'email : $modeles_mail lignes au lieu
         de ${#MODELES_MAIL[@]} — le rejeu a dupliqué, ou une écriture a été refusée."
@@ -5691,6 +5724,155 @@ code=$(api_jeton "$JETON_VIEWER_RM" GET "/rest/v1/mail_drafts?select=id")
 attendu "$code" "lecture des mails préparés par la lectrice" 200
 [ "$(jq 'length' "$CORPS")" = "0" ] || die "la lectrice ne doit lire aucun mail préparé de Camille (§37)."
 info "Mails préparés : deux en attente de la relecture de Camille, préparés comme le connecteur, un écarté — CRM-128, docs/SPEC-seed.md §37"
+
+say "8 tertricies. Champs de l'affaire"
+# @spec CRM-112 (docs/BACKLOG.md) — tranche T8 : cinq champs de l'affaire dont un archivé, les valeurs de quatre affaires,
+#       « Négociation → Signature » qui exige `siret`, un modèle d'email qui le cite, la suggestion du scénario
+#       `champ_commun` — docs/SPEC-seed.md §38 ; docs/SPEC-champs-communs.md §13 ; docs/SPEC-ia.md §14.11 ; décision 853
+#
+# PAR LES VRAIES ÉCRITURES (CLAUDE.md §8) : PostgREST sous le jeton de Camille, comme Réglages ▸ « Champs de l'affaire »,
+# la fiche, l'éditeur de workflows et Réglages ▸ « Modèles d'emails » ; la suggestion par la vraie fonction `ia`. CONVERGENT :
+# un champ par sa clé, une valeur par (affaire, champ), l'exigence par (transition, champ), le modèle par son identifiant,
+# la suggestion par sa demande ; le champ archivé ne l'est qu'une fois, après avoir reçu sa valeur.
+JETON_ADMIN_CC=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+JETON_VIEWER_CC=$(sso_jeton_interne "$API" "$ANON_KEY" 'viewer@p2enjoy.test' || true)
+[ -n "$JETON_ADMIN_CC" ] && [ -n "$JETON_VIEWER_CC" ] || die "connexion d'un compte du jeu impossible : les champs de
+        l'affaire s'écrivent sous le jeton de Camille et se relisent sous celui de Farida (docs/SPEC-seed.md §38.2)."
+CC_TRANSITION_SIGNATURE='5eed0000-0000-4000-8000-000000000073'
+CC_VITRINE='5eed0000-0000-4000-8000-0000000000c1'
+CC_INTRANET='5eed0000-0000-4000-8000-0000000000c4'
+CC_FORMATION='5eed0000-0000-4000-8000-0000000000c7'
+CC_VERTUO='5eed0000-0000-4000-8000-00000000d012'
+CC_MODELE='7e11a7e0-0000-4000-8000-000000000003'
+
+# Rend dans CC_CHAMP l'identifiant du champ de clé $1, déclaré s'il manque (le formulaire de Réglages ▸ « Champs de l'affaire »).
+cc_champ() { # $1 = clé, $2 = corps JSON sans workspace_id ni clé
+	code=$(api GET "/rest/v1/card_common_fields?select=id&workspace_id=eq.$WS_ID&key=eq.$1")
+	attendu "$code" "lecture du champ de l'affaire « $1 »" 200
+	CC_CHAMP=$(jq -r '.[0].id // empty' "$CORPS")
+	[ -n "$CC_CHAMP" ] && return 0
+	code=$(api_jeton "$JETON_ADMIN_CC" POST '/rest/v1/card_common_fields?select=id' -H 'Prefer: return=representation' \
+		-d "$(jq -nc --arg w "$WS_ID" --arg k "$1" --argjson c "$2" '{workspace_id: $w, key: $k} + $c')")
+	attendu "$code" "déclaration du champ de l'affaire « $1 »" 201
+	CC_CHAMP=$(jq -r '.[0].id' "$CORPS")
+}
+# La valeur d'un champ de l'affaire : mise à jour de la ligne si elle existe, insertion sinon — `ecrireValeurCommune`.
+cc_valeur() { # $1 = affaire, $2 = champ, $3 = valeur JSON, $4 = libellé
+	code=$(api_jeton "$JETON_ADMIN_CC" PATCH "/rest/v1/card_common_field_values?card_id=eq.$1&field_id=eq.$2&select=field_id" \
+		-H 'Prefer: return=representation' -d "$(jq -nc --argjson v "$3" '{value: $v}')")
+	attendu "$code" "mise à jour de la valeur « $4 »" 200
+	[ "$(jq -r 'length' "$CORPS")" = "1" ] && return 0
+	code=$(api_jeton "$JETON_ADMIN_CC" POST '/rest/v1/card_common_field_values?select=field_id' -H 'Prefer: return=representation' \
+		-d "$(jq -nc --arg c "$1" --arg f "$2" --arg w "$WS_ID" --argjson v "$3" '{card_id: $c, field_id: $f, workspace_id: $w, value: $v}')")
+	attendu "$code" "écriture de la valeur « $4 »" 201
+}
+
+# 1. Les cinq champs (§38.1), dans l'ordre de la partie commune.
+cc_champ 'siret' '{"label": "SIRET", "type": "text", "options": {}, "help_text": "Quatorze chiffres, sans espace", "is_listed": true, "position": 1}'
+CC_SIRET=$CC_CHAMP
+cc_champ 'secteur' '{"label": "Secteur", "type": "select", "is_listed": true, "position": 2, "options": {"choices": [{"key": "industrie", "label": "Industrie"}, {"key": "sante", "label": "Santé"}, {"key": "public", "label": "Secteur public"}, {"key": "services", "label": "Services"}]}}'
+CC_SECTEUR=$CC_CHAMP
+cc_champ 'date-signature' '{"label": "Date de signature", "type": "date", "options": {}, "position": 3}'
+CC_DATE=$CC_CHAMP
+cc_champ 'budget-client' '{"label": "Budget du client", "type": "money", "options": {"currency": "EUR"}, "position": 4}'
+CC_BUDGET=$CC_CHAMP
+cc_champ 'code-client-historique' '{"label": "Ancien code client", "type": "text", "options": {}, "position": 5}'
+CC_ANCIEN=$CC_CHAMP
+
+# 2. Les valeurs (§38.1). L'ancien code client reçoit la sienne AVANT d'être archivé, une seule fois.
+code=$(api GET "/rest/v1/card_common_fields?select=archived_at&id=eq.$CC_ANCIEN")
+attendu "$code" "état de l'ancien code client" 200
+if [ "$(jq -r '.[0].archived_at' "$CORPS")" = "null" ]; then
+	cc_valeur "$RM_ID_BILLETTERIE" "$CC_ANCIEN" '"CLI-0042"' "ancien code de la billetterie"
+	code=$(api_jeton "$JETON_ADMIN_CC" PATCH "/rest/v1/card_common_fields?id=eq.$CC_ANCIEN&select=id" -H 'Prefer: return=representation' \
+		-d "$(jq -nc --arg t "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{archived_at: $t}')")
+	attendu "$code" "archivage de l'ancien code client" 200
+fi
+cc_valeur "$RM_ID_BILLETTERIE" "$CC_SIRET" '"81234567800012"' "SIRET de la billetterie"
+cc_valeur "$RM_ID_BILLETTERIE" "$CC_SECTEUR" '"public"' "secteur de la billetterie"
+cc_valeur "$RM_ID_BILLETTERIE" "$CC_BUDGET" '48000' "budget de la billetterie"
+cc_valeur "$CC_VITRINE" "$CC_SIRET" '"79012345600021"' "SIRET de la refonte du site vitrine"
+cc_valeur "$CC_VITRINE" "$CC_SECTEUR" '"services"' "secteur de la refonte du site vitrine"
+cc_valeur "$CC_FORMATION" "$CC_SIRET" '"41234567800035"' "SIRET de la formation Data & IA"
+cc_valeur "$CC_FORMATION" "$CC_SECTEUR" '"public"' "secteur de la formation Data & IA"
+cc_valeur "$CC_FORMATION" "$CC_DATE" '"2026-10-20"' "date de signature de la formation Data & IA"
+cc_valeur "$CC_FORMATION" "$CC_BUDGET" '18000' "budget de la formation Data & IA"
+cc_valeur "$CC_INTRANET" "$CC_SIRET" '"21690123400019"' "SIRET de l'intranet de la Ville de Lyon"
+cc_valeur "$CC_INTRANET" "$CC_SECTEUR" '"public"' "secteur de l'intranet de la Ville de Lyon"
+cc_valeur "$CC_VERTUO" "$CC_SECTEUR" '"services"' "secteur du monitoring de Vertuo"
+
+# 3. L'exigence du SIRET sur « Négociation → Signature » est posée en section 6 bis, avant la copie (décision 855).
+
+# 4. Le modèle d'email qui cite le SIRET — Réglages ▸ « Modèles d'emails ».
+code=$(api GET "/rest/v1/mail_templates?select=id&id=eq.$CC_MODELE")
+attendu "$code" "lecture du modèle « SIRET pour la facturation »" 200
+if [ "$(jq -r 'length' "$CORPS")" = "0" ]; then
+	code=$(api_jeton "$JETON_ADMIN_CC" POST /rest/v1/mail_templates -H 'Prefer: return=minimal' \
+		-d "$(jq -nc --arg id "$CC_MODELE" --arg w "$WS_ID" --arg par "$RM_CAMILLE" '{id: $id, workspace_id: $w, created_by: $par,
+			name: "SIRET pour la facturation", subject: "Facturation — {{card.title}}",
+			body_text: "Bonjour {{contact.full_name}},\n\nPour établir la facture de « {{card.title}} », nous retenons le SIRET {{card.field.siret}}. Merci de nous signaler toute correction.\n\nBien cordialement,"}')")
+	attendu "$code" "création du modèle « SIRET pour la facturation »" 201
+fi
+
+# 5. La suggestion de l'assistant qui doublonne le SIRET — la vraie fonction et le scénario `champ_commun`.
+DEMANDE_IA_CHAMP_COMMUN="Un cycle de vente aux entreprises : prospection, négociation, puis livré ou perdu. Le SIRET et la source du contact."
+demande_cc_uri=$(jq -rn --arg d "$DEMANDE_IA_CHAMP_COMMUN" '$d | @uri')
+code=$(api GET "/rest/v1/suggestions_ia?select=id&workspace_id=eq.$WS_ID&statut=eq.en_revue&demande=eq.$demande_cc_uri")
+attendu "$code" "lecture de la suggestion qui doublonne le SIRET" 200
+if [ "$(jq -r 'length' "$CORPS")" = "0" ]; then
+	flux_cc=$(curl -s -N -X POST "$API/functions/v1/ia/suggestions" \
+		-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_ADMIN_CC" \
+		-H 'Content-Type: application/json' -H 'x-ia-simulateur: champ_commun' \
+		-d "$(jq -n --arg w "$WS_ID" --arg d "$DEMANDE_IA_CHAMP_COMMUN" '{workspace_id: $w, portee: "workflow", demande: $d}')")
+	[ "$(printf '%s\n' "$flux_cc" | tail -n 1 | jq -r '.issue // empty')" = "revision" ] || die "la suggestion qui doublonne le
+        SIRET n'a pas reçu de révision : $(printf '%s' "$flux_cc" | head -c 300)"
+	id_cc=$(printf '%s\n' "$flux_cc" | head -n 1 | jq -r '.suggestion_id')
+	code=$(api GET "/rest/v1/suggestions_ia_revisions?select=defauts&suggestion_id=eq.$id_cc&order=numero.desc&limit=1")
+	attendu "$code" "lecture de la révision qui doublonne le SIRET" 200
+	[ "$(jq -r '[.[0].defauts[].code] | join(",")' "$CORPS")" = "common_field" ] || die "la suggestion qui doublonne le SIRET ne
+        porte pas le seul défaut common_field : $(head -c 300 "$CORPS")"
+fi
+
+# 6. Vérifier (§38.3), sous la clé de service, puis sous les jetons de Camille et de Farida.
+code=$(api GET "/rest/v1/card_common_fields?select=key,archived_at&workspace_id=eq.$WS_ID&order=position")
+attendu "$code" "relecture des champs de l'affaire" 200
+cc_champs=$(jq -r '[.[] | .key + (if .archived_at == null then "" else ":archive" end)] | join(" ")' "$CORPS")
+[ "$cc_champs" = "siret secteur date-signature budget-client code-client-historique:archive" ] \
+	|| die "les champs de l'affaire ne sont pas ceux du §38.1 de docs/SPEC-seed.md : $cc_champs"
+code=$(api GET "/rest/v1/card_common_field_values?select=card_id,value,champ:card_common_fields(key)&card_id=in.($RM_ID_BILLETTERIE,$CC_VITRINE,$CC_FORMATION,$CC_INTRANET,$CC_VERTUO)")
+attendu "$code" "relecture des valeurs communes" 200
+[ "$(jq 'length' "$CORPS")" = "13" ] || die "les valeurs communes ne sont pas les treize du §38.1 : $(head -c 300 "$CORPS")"
+[ "$(jq -r --arg c "$CC_VERTUO" '[.[] | select(.card_id == $c and .champ.key == "siret")] | length' "$CORPS")" = "0" ] \
+	|| die "« Refonte du monitoring — Vertuo » ne doit porter aucun SIRET (§38.1)."
+code=$(api GET "/rest/v1/workflow_transition_required_common_fields?select=transition_id&common_field_id=eq.$CC_SIRET")
+attendu "$code" "relecture de l'exigence du SIRET" 200
+[ "$(jq 'length' "$CORPS")" = "2" ] || die "le SIRET doit être exigé vers Signature par le workflow par défaut ET par sa copie
+        (§38.1, décision 855) : $(head -c 200 "$CORPS")"
+code=$(api GET "/rest/v1/card_placements?select=id,current_step_id&card_id=eq.$CC_VERTUO")
+attendu "$code" "rattachement du monitoring de Vertuo" 200
+CC_BLOQUE_RATTACHEMENT=$(jq -r '.[0].id' "$CORPS")
+CC_BLOQUE_ETAPE=$(jq -r '.[0].current_step_id' "$CORPS")
+code=$(api GET "/rest/v1/workflow_transitions?select=to_step_id&id=eq.$CC_TRANSITION_SIGNATURE")
+attendu "$code" "étape d'arrivée de « Négociation → Signature »" 200
+CC_SIGNATURE=$(jq -r '.[0].to_step_id' "$CORPS")
+code=$(api_jeton "$JETON_ADMIN_CC" POST /rest/v1/rpc/move_card \
+	-d "$(jq -nc --arg p "$CC_BLOQUE_RATTACHEMENT" --arg e "$CC_SIGNATURE" '{p_placement: $p, to_step_id: $e}')")
+[ "$code" != "200" ] && [ "$(jq -r '.message // empty' "$CORPS")" = "missing_required_fields" ] \
+	|| die "« Refonte du monitoring — Vertuo » doit être bloquée vers Signature par le SIRET (§38.3) : $code $(head -c 200 "$CORPS")"
+code=$(api GET "/rest/v1/card_placements?select=current_step_id&id=eq.$CC_BLOQUE_RATTACHEMENT")
+attendu "$code" "relecture de l'étape du monitoring de Vertuo" 200
+[ "$(jq -r '.[0].current_step_id' "$CORPS")" = "$CC_BLOQUE_ETAPE" ] || die "le monitoring de Vertuo a quitté son étape (§38.3)."
+code=$(api_jeton "$JETON_VIEWER_CC" GET "/rest/v1/card_common_field_values?select=field_id&card_id=eq.$RM_ID_BILLETTERIE")
+attendu "$code" "lecture des valeurs de la billetterie par la lectrice" 200
+[ "$(jq 'length' "$CORPS")" = "4" ] || die "la lectrice doit lire les quatre valeurs de la billetterie (§38.3) : $(head -c 200 "$CORPS")"
+code=$(api_jeton "$JETON_VIEWER_CC" PATCH "/rest/v1/card_common_field_values?card_id=eq.$RM_ID_BILLETTERIE&field_id=eq.$CC_SIRET&select=field_id" \
+	-H 'Prefer: return=representation' -d '{"value": "00000000000000"}')
+if [ "$code" = "200" ]; then
+	[ "$(jq 'length' "$CORPS")" = "0" ] || die "la lectrice a écrit le SIRET de la billetterie (§38.3)."
+else
+	attendu "$code" "écriture du SIRET par la lectrice, refusée" 401 403
+fi
+info "Champs de l'affaire : cinq champs dont un archivé, treize valeurs, le SIRET exigé vers Signature, un modèle, une suggestion — CRM-112, docs/SPEC-seed.md §38"
 
 # --- Le journal d'audit couvre ses familles — CRM-072 T1, docs/SPEC-seed.md §25 ------------------------------------------
 # @spec CRM-072 (docs/BACKLOG.md) — tranche T1 ; docs/SPEC-audit.md §4, §10 ; docs/JOURNAL.md décisions 725 et 726

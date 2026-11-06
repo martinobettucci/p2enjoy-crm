@@ -1238,7 +1238,7 @@
 			"src": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/suggestions-en-revue.jpg",
 			"alt": "La liste « Suggestions de l'IA en revue », sous les workflows",
 			"width": 312,
-			"height": 248
+			"height": 343
 		},
 		{
 			"type": "image",
@@ -3892,7 +3892,7 @@
 			"src": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/points-exiges.jpg",
 			"alt": "« Points de checklist exigés » sous la transition Relance vers Négociation, avec « Ne plus exiger »",
 			"width": 870,
-			"height": 152
+			"height": 228
 		},
 		{
 			"type": "list",
@@ -4059,7 +4059,7 @@
 			"src": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/checklist-de-l-affaire.jpg",
 			"alt": "La fiche ouverte sur son bloc « Checklist », le point exigé à cocher",
 			"width": 650,
-			"height": 423
+			"height": 439
 		},
 		{
 			"type": "paragraph",
@@ -5516,9 +5516,9 @@
 		{
 			"type": "image",
 			"src": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champs-de-l-affaire.jpg",
-			"alt": "Réglages ▸ Champs de l'affaire : « Nouveau champ », « Afficher les archivés », et deux champs avec leur clé, leur type et leurs commandes",
+			"alt": "Réglages ▸ Champs de l'affaire : « Nouveau champ », « Afficher les archivés », et les champs de l'espace — SIRET, Secteur, Date de signature, Budget du client et d'autres — avec leur clé, leur type et leurs commandes",
 			"width": 925,
-			"height": 295
+			"height": 487
 		},
 		{
 			"type": "paragraph",
@@ -5749,7 +5749,7 @@
 			"src": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/dans-la-liste.jpg",
 			"alt": "Le formulaire du champ « Numéro de TVA » : la case « Afficher dans la liste des affaires » cochée, et la mention « Dans la liste » sur sa ligne",
 			"width": 899,
-			"height": 583
+			"height": 567
 		}
 	]
 }

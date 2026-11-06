@@ -1,3 +1,5 @@
+// @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : l'attente porte sur la colonne de la sonde, l'espace seedé listant ses
+//           propres champs (docs/SPEC-seed.md §38)
 // @verifies CRM-112 (docs/BACKLOG.md) — tranche T4.a : les champs de l'affaire en colonnes de la vue liste, sur la pile réelle —
 //           la case « Afficher dans la liste des affaires » cochée dans Réglages, relue en base ; la colonne et sa valeur dans la
 //           liste ; la case refusée au type personne ; quatre paliers
@@ -80,7 +82,9 @@ test.describe('Les champs de l’affaire en colonnes (docs/DESIGN_SYSTEM.md §5.
 		await connecterAvecLeLabs(page, ADMIN)
 		await page.goto(LISTE)
 		await expect(page.getByTestId('tableau-liste')).toBeVisible()
-		await expect(page.getByTestId('entete-commun')).toHaveCount(0)
+		// `CRM-112` T8 : le seed liste ses propres champs (SIRET, Secteur, docs/SPEC-seed.md §38) ; seule la colonne de la
+		// sonde est attendue absente avant la case.
+		await expect(page.locator(`[data-testid="entete-commun"][data-champ="${CLE}"]`)).toHaveCount(0)
 
 		await page.goto('/reglages/champs')
 		await page.locator(`[data-champ="${CLE}"]`).getByRole('button', { name: /Modifier le champ/ }).click()

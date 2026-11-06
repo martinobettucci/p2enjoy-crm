@@ -1,3 +1,4 @@
+// @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : la liste des champs porte ceux du seed (docs/SPEC-seed.md §38)
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.4 : les images du chapitre 18, « Composer un workflow : ses étapes, ses
 //       transitions et son formulaire »
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitre 18 ; docs/SPEC-workflow-engine.md (l'éditeur, ses
@@ -336,7 +337,9 @@ test('les champs communs à toute affaire : l’écran, et l’archivage d’un 
 	await connecterAvecLeLabs(page, ADMIN)
 	await page.goto('/reglages/champs')
 	const liste = page.getByTestId('liste-champs-communs')
-	await expect(liste.getByTestId('ligne-champ')).toHaveCount(2)
+	// RÉVISÉ PAR `CRM-112` T8 (docs/SPEC-seed.md §38) : la liste porte aussi les champs du seed ; les deux de l'image y sont.
+	await expect(liste.locator(`[data-champ="${actif}"]`)).toBeVisible()
+	await expect(liste.locator(`[data-champ="${ancien}"]`)).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: S.communs, nom: 'champs-de-l-affaire', cibles: [page.getByTestId('reglages-champs-affaire')] })
 	await liste.getByRole('button', { name: 'Archiver le champ Numéro de TVA' }).click()
 	const confirmation = page.getByTestId('confirmation-archivage-champ-commun')
@@ -596,6 +599,9 @@ test('les checklists d’un workflow, les points qu’un chemin exige, et le ref
 	await bandeau.getByRole('link', { name: 'Cocher ces points' }).click()
 	const checklist = page.getByTestId('bloc-checklist-card')
 	await expect(checklist).toBeVisible()
+	// `CRM-112` T8 : la fiche porte au-dessus les champs de l'affaire du seed ; l'arrivée laisse le bloc à cheval sur le bord,
+	// et l'image le centre.
+	await checklist.evaluate((bloc) => bloc.scrollIntoView({ block: 'center' }))
 	await illustrer(page, { chapitre: CHAPITRE, section: S.checklists, nom: 'checklist-de-l-affaire', cibles: [checklist] })
 })
 

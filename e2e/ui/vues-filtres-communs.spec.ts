@@ -1,3 +1,4 @@
+// @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : le filtre visé est celui de la sonde, le seed portant un choix homonyme (docs/SPEC-seed.md §38)
 // @verifies CRM-112 (docs/BACKLOG.md) — tranche T4.d.2 : une vue sauvegardée retient les filtres de champ (relus en base sous
 //           leur forme structurée), les rouvre, dit « Filtres modifiés » quand ils s'en écartent ; l'export CSV les applique ;
 //           le panneau ne dit plus le contraire
@@ -123,7 +124,8 @@ test('une vue retient le filtre de champ, le rouvre, dit l’écart ; l’export
 
 	// Changer le filtre de champ : la vue reste nommée, l'écart est dit.
 	await page.getByTestId('ouvrir-filtres-communs').click()
-	await page.getByTestId('panneau-filtres-communs').getByLabel('Santé').check()
+	// `CRM-112` T8 : le champ Secteur du seed a aussi un choix « Santé » ; le filtre visé est celui de la sonde.
+	await page.getByTestId('panneau-filtres-communs').locator(`[data-champ="${PREFIXE}-secteur"]`).getByLabel('Santé').check()
 	await page.getByTestId('appliquer-filtres-communs').click()
 	await expect(page.getByTestId('vue-ecart')).toHaveText('Filtres modifiés depuis la vue')
 	await capturer(page, 'vues-filtres-communs-ecart-xl-1440', UNITE)

@@ -1,3 +1,4 @@
+// @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : les sept colonnes natives, suivies des deux colonnes listées du seed (docs/SPEC-seed.md §38)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes mesurés sur le seed enrichi (docs/SPEC-seed.md §36)
 // @verifies CRM-042 (docs/BACKLOG.md) — la vue liste d'un channel dans l'application réelle
 // @verifies CRM-046 (docs/BACKLOG.md) — le volume et les données longues du jeu de démonstration
@@ -354,7 +355,10 @@ test.describe('le tableau (§12.7)', () => {
 		await expect(page.getByTestId('ligne-card')).toHaveCount(3)
 		// Sept depuis `CRM-069` T2 (révisée, décision 51) : la colonne « Étiquettes » suit le titre
 		// (docs/DESIGN_SYSTEM.md §5.73).
-		await expect(page.getByRole('columnheader')).toHaveCount(7)
+		// RÉVISÉ PAR `CRM-112` T8 (docs/SPEC-seed.md §38) : le seed liste deux champs de l'affaire, SIRET et Secteur, qui
+		// suivent les sept colonnes natives (docs/DESIGN_SYSTEM.md §5.91).
+		await expect(page.getByTestId('entete-commun')).toHaveCount(2)
+		await expect(page.getByRole('columnheader')).toHaveCount(9)
 		await expect(page.getByRole('columnheader', { name: 'Étiquettes' })).toBeVisible()
 		await expect(page.getByRole('columnheader', { name: 'Responsable' })).toBeVisible()
 		await expect(page.getByRole('link', { name: 'Refonte du site vitrine' })).toHaveAttribute(

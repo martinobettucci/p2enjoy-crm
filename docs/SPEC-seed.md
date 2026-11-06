@@ -2910,6 +2910,8 @@ l'affaire » :
 0157, et une exigence ajoutée après la copie ferait diverger la source au rejeu. La copie « Cycle commercial — Conseil
 IA » porte donc la même exigence. Une base de dev seedée avant cette révision se recrée une fois (`./resetMe.sh`).
 « Refonte du monitoring — Vertuo » en est **bloquée** : son déplacement vers Signature est refusé tant que le SIRET manque.
+*Constaté à l'écran le 2026-11-06* : le refus nomme aussi trois questions du formulaire que l'étape Signature exige
+(budget estimé, date de signature prévue, décideur identifié) — le SIRET y figure à côté d'elles.
 *Révisé le même jour, avant d'appliquer le seed (décision 853)* : la première rédaction bloquait « Refonte intranet Ville
 de Lyon », mais `e2e/api/valeurs-champs.spec.ts` (q bis) déplace cette affaire vers Signature et attend la liste exacte de
 ses champs de formulaire manquants. Elle reçoit donc un SIRET ; l'affaire bloquée est une affaire de « Maintenance » qu'aucune
@@ -2933,7 +2935,7 @@ Aucune écriture n'est faite sous la clé de service.
 Un champ est retrouvé par sa clé, une valeur par son couple (affaire, champ), l'exigence par son couple (transition,
 champ), le modèle par son identifiant stable, la suggestion par sa demande : rien n'est réécrit qui soit déjà là. Le
 champ archivé n'est archivé qu'une fois, après sa valeur. La section vérifie, sous la clé de service : cinq champs dont un
-archivé, les valeurs du tableau, l'exigence ; puis, sous le jeton de Camille, que `move_card` de « Refonte du monitoring —
+archivé, les treize valeurs du tableau, l'exigence du workflow par défaut et celle de sa copie ; puis, sous le jeton de Camille, que `move_card` de « Refonte du monitoring —
 Vertuo » vers Signature est refusé et que l'affaire reste en Négociation ; sous celui de Farida (lectrice), qu'elle lit les
 valeurs de la billetterie et que sa mise à jour d'une valeur ne touche aucune ligne.
 

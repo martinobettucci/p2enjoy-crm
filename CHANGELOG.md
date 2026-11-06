@@ -13,7 +13,19 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### `CRM-112` T8 — le jeu de démonstration des champs de l'affaire, ses preuves et son manuel
+
+*En développement seulement : le seed n'existe qu'en développement ; le manuel et ses images sont à livrer (décisions 853
+et 855, `docs/SPEC-seed.md` §38).*
+
+- Le seed pose cinq champs de l'affaire (SIRET et Secteur listés, Date de signature, Budget du client, un Ancien code client
+  archivé qui garde sa valeur), treize valeurs sur cinq affaires, l'exigence du SIRET sur « Négociation → Signature » du
+  workflow par défaut — posée avant sa copie, qui la porte aussi —, un modèle d'email qui cite le SIRET, et une suggestion
+  de l'assistant qui le doublonne. « Refonte du monitoring — Vertuo » est bloquée vers Signature faute de SIRET.
+- Une base de développement seedée avant cette version se recrée une fois (`./resetMe.sh`).
+- Un E2E de bout en bout sur ce jeu, et ses captures aux quatre paliers ; les preuves qui supposaient un espace sans champ
+  commun sont ajustées.
+- Le manuel montre la fiche du jeu de démonstration ; ses images de la fiche, de l'éditeur et des modèles sont renouvelées.
 
 ## [Publié]
 

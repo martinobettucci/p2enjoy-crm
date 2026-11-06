@@ -1,3 +1,4 @@
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : l'affaire de la preuve a un seul rattachement (docs/SPEC-seed.md §36)
 -- @verifies CRM-078 (docs/BACKLOG.md) — versionnement des workflows, QUATRIÈME TRANCHE :
 --            l'application transactionnelle du plan et son retour arrière
 -- @verifies docs/SPEC-workflow-engine.md §7 ter.13 (la tranche), §7 ter.13.2 (le plan rejoué),
@@ -276,8 +277,12 @@ select (select wf from t_ctx)                                             as wf,
        'dddd0000-0000-4000-8000-0000000000d3'::uuid                       as arete,
        (select s.id from public.workflow_steps s
          where s.workflow_id = (select wf from t_ctx) and s.is_initial)    as initiale,
+       -- Une affaire à UN SEUL rattachement : celles de `CRM-111` T8 en ont plusieurs, et leurs identifiants, tirés au
+       -- hasard par `creer_affaire`, peuvent précéder les autres après un `resetMe` (constaté le 2026-11-06).
        (select c.id from public.cards c join public.card_placements cp on cp.card_id = c.id
-         where cp.workflow_id = (select wf from t_ctx) order by c.id limit 1) as carte,
+         where cp.workflow_id = (select wf from t_ctx)
+           and (select count(*) from public.card_placements x where x.card_id = c.id) = 1
+         order by c.id limit 1) as carte,
        (select v.id from public.workflow_versions v
          where v.workflow_id = (select wf from t_ctx)
          order by v.version_number limit 1)                                as version_seed;

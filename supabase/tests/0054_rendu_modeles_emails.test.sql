@@ -1,3 +1,4 @@
+-- @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : le seed porte trois modèles (docs/SPEC-seed.md §38)
 -- @verifies CRM-063 (docs/BACKLOG.md) — modèles d'emails, tranche 2, sous-tranche 2a : LE RENDU
 -- @verifies docs/SPEC-modeles-emails.md §8.3 (contrat de `public.rendre_modele_email`), §8.4 (ce
 --           qu'un trou dont la source est nulle rend, et son inventaire), §8.5 (les sources ne se
@@ -536,8 +537,9 @@ select is(
 	(select count(*)::int from public.mail_templates
 	  where workspace_id = '5eed0000-0000-4000-8000-000000000001'
 	    and name not like '%suite 0054'),
-	2,
-	'CRM-063 §2.8 — le seed porte toujours ses DEUX modèles : le rendu n''écrit rien');
+	-- RÉVISÉ PAR `CRM-112` T8 (docs/SPEC-seed.md §38) : le seed pose un troisième modèle, qui cite le SIRET.
+	3,
+	'CRM-063 §2.8 — le seed porte toujours ses TROIS modèles : le rendu n''écrit rien');
 
 select * from finish();
 rollback;
