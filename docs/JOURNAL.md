@@ -39382,3 +39382,19 @@ l'écran et le connecteur MCP rendent la même réponse.
 sur la carte ; l'import d'un couloir manuel défini au niveau du track ou de l'espace ; un couloir importé suit-il la règle
 d'origine modifiée, ou garde-t-il celle du jour de l'import.
 
+### décision 864 — `CRM-130` : stockage, unicité dans un channel, import et couloirs généraux
+
+*2026-11-06, session interactive 4891a451 (p2enjoy-crm-2f), réponses du responsable aux questions restées ouvertes par la
+décision 863.*
+**Décisions du responsable** :
+1. **Stockage et calcul** : un couloir automatique **stocke sa règle seule** ; l'appartenance **se calcule à
+   l'affichage**, **en base**. Les propositions de la décision 863 sont validées.
+2. **Unicité dans un channel** : dans un channel, une affaire est dans **un seul couloir, ou hors couloir** ; être dans
+   deux couloirs manuels du même channel est **impossible**. Placer à la main dans un couloir manuel une affaire déjà dans
+   un autre couloir manuel l'en **sort** : elle quitte le premier et arrive dans le second.
+3. **« Aussi retenue par »** : **non** (le responsable : « on s'en fout, mais pas ça »).
+4. **Import** : **oui**. On définit des couloirs au niveau du **track** ou du **workspace** ; dans un channel, on les
+   **choisit**, et ils **s'ajoutent sous le channel**.
+5. **Couloir importé** : il est **unique et général**. Le modifier le modifie **pour tous les channels qui l'utilisent**.
+**Conséquences** : `CRM-130` n'a plus de question ouverte. Elle reste `[ ]`, à spécifier avant le code.
+

@@ -18785,8 +18785,12 @@ sur un compte sans channel lisible (l'état vide) ; captures aux quatre paliers 
 - **exclusivité par channel** : une affaire ne paraît que dans un couloir d'un même channel ; une affaire rattachée à
   plusieurs channels suit les couloirs de chacun. **Départage** (décision 863) : le couloir manuel prime, puis l'ordre ;
   une affaire qu'aucun couloir ne retient reste **hors couloir, tout en haut** du board.
-  **Encore ouvert** : ce qui est stocké (proposition : la règle seule pour un automatique, les affaires pour un manuel) ;
-  une affaire dans deux couloirs manuels ; « aussi retenue par » ; l'import d'un couloir manuel ; lien vivant ou figé.
+  **Stockage** (décision 864) : un couloir automatique stocke sa règle seule ; l'appartenance se calcule à l'affichage, en
+  base. Dans un channel, une affaire est dans un seul couloir ou hors couloir : la placer dans un couloir manuel la sort
+  d'un autre couloir manuel. Aucune indication « aussi retenue par ».
+- **import** (décision 864) : des couloirs définis au niveau du track ou du workspace se choisissent dans un channel et
+  s'ajoutent sous lui ; un couloir importé est unique et général : le modifier le modifie pour tous les channels qui
+  l'utilisent.
 **Hors périmètre** : la vue liste (aucun couloir) ; toute revue, tout sous-budget, toute règle métier par couloir.
 **MCP** : question 1, **oui** : lire les couloirs existants et aider à les créer (exemple : « les affaires froides depuis
 plus de six mois »). Question 2 : **famille existante `structure`** (décision 861), actions `consulter`, `ajouter`,
