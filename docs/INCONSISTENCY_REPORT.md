@@ -8824,3 +8824,30 @@ rien n'est modifié, la correction touche une liste de sécurité et le contrat 
 les ajouter **nommément** à `MARQUEURS_ATTENDUS`, le libellé du contrôle suivant (« pg_cron, les politiques de Storage et
 les fonctions auth.* ») ; (2) déclarer `WEBAPP_PREVIEW_PORT` dans `.env.example` avec rôle, format, caractère facultatif
 et valeur d'exemple (4173). À arbitrer : l'unité qui porte ces corrections.
+
+**Point 2 — corrigé le 2026-11-06** (session d5b44a2d, à la demande de la session de livraison) : `WEBAPP_PREVIEW_PORT` est
+déclarée dans `.env.example`, **facultative à exemple vide** (« Requise : non — vide ou absente, elle vaut 4173 »). Un exemple
+non vide l'aurait rendue obligatoire pour `env_validate`, qui passe AVANT l'écriture des ports d'emplacement dans
+`runDev.sh`, et refuserait tout `.env` qui ne la porte pas — celui de production d'abord, où elle est sans objet. Les deux
+lecteurs replient déjà le vide sur 4173 (`emplacement_ports_base`, `verify-emplacements.sh` §1, `e2e/env.ts`).
+`verify-scripts.sh` : l'anomalie n'est plus relevée (115 vérifications, 1 anomalie, le point 1).
+
+**Point 1 — MESURÉ le 2026-11-06, la liste N'EST PAS ÉLARGIE** (décision du responsable, garde de sécurité). Sur la base de
+développement, image épinglée `supabase/postgres:17.6.1.136` :
+- `storage.objects` appartient à `supabase_storage_admin`, `postgres` n'est ni superutilisateur ni membre de ce rôle ;
+- **et pourtant `postgres` y crée une politique** : `create policy … on storage.objects` réussit sous `postgres`, dans une
+  transaction annulée. La cause est `supautils` : `supautils.policy_grants` accorde à `postgres` la création de politiques
+  sur `storage.objects` (et sur les autres tables d'`auth`, `realtime` et `storage`). **La phrase « MESURÉ le 2026-08-11 :
+  `postgres` ne peut donc pas y créer de politique » de la migration 0029 n'est plus vraie sur cette image** ;
+- 0029, 0107 et 0127 ne créent, sous `supabase_admin`, **que** des politiques de `storage.objects` (`drop policy if exists`,
+  `create policy`, `comment on policy`), précédées d'une garde qui exige `current_user = supabase_admin` : aucune fonction,
+  aucun `SECURITY DEFINER`, aucun `grant` ;
+- les trois sont appliquées en production, et le runner fige chaque fichier appliqué par son empreinte SHA-256 : on ne peut
+  pas retirer leur marqueur.
+
+**Recommandation, à porter au responsable** : (a) nommer **0107 et 0127** dans `MARQUEURS_ATTENDUS`, puisqu'elles sont
+figées, appliquées, et qu'elles ne font sous `supabase_admin` que ce que leur en-tête annonce ; (b) **fermer la porte pour
+la suite** : toute nouvelle politique de Storage s'écrit sous `postgres`, sans marqueur — l'élévation n'est plus nécessaire
+sur l'image épinglée —, et le commentaire du harnais le dit, avec la mesure ; (c) corriger le motif écrit dans `docs/DAT.md`
+et dans le commentaire du harnais, la nouvelle en-tête ne pouvant pas toucher 0029. *Écarté* : réécrire les trois
+migrations sous `postgres` (empreintes figées, déjà appliquées en production).
