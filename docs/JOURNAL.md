@@ -39339,7 +39339,7 @@ de six mois » demande que le moteur de règles sache dire une inactivité ; à 
 
 *2026-11-06, session interactive 4891a451 (p2enjoy-crm-2f), réponses du responsable aux deux questions laissées ouvertes
 par la décision 860.*
-1. **Date du trimestre** : le responsable laisse la session trancher (« laisse l'agent se débrouiller »). **Observation** :
+1. **RÉVISÉ PAR LA DÉCISION 862 : ce point est annulé, aucun trimestre.** **Date du trimestre** : le responsable laisse la session trancher (« laisse l'agent se débrouiller »). **Observation** :
    l'affaire ne porte aucune date de clôture prévue (`docs/SCHEMA.md`, `cards`) ; elle a sa date de création, et les champs
    communs de type date (le seed en a un, « Date de signature », `date-signature`). **Décision de la session** : le
    générateur « par trimestre » demande **quelle date** il emploie : la **date de création** de l'affaire, par défaut, ou un
@@ -39349,4 +39349,20 @@ par la décision 860.*
    channels. Lire les couloirs relève de `consulter`, les créer de `ajouter`, les modifier de `modifier`, les retirer de
    `supprimer`, dans les cases de `structure` : aucune famille nouvelle, aucune migration de la liste fermée.
 **Conséquences** : `CRM-130` n'a plus de question ouverte ; elle reste `[ ]`, à spécifier avant le code.
+
+### décision 862 — `CRM-130` : aucun couloir par trimestre ; un couloir est une règle du responsable, ou une sélection à la main
+
+*2026-11-06, session interactive 4891a451 (p2enjoy-crm-2f), correction du responsable.*
+**Problème** : la décision 861 (point 1) a pris la réponse « laisse l'agent se débrouiller » pour une délégation, et la
+session a choisi seule une date de trimestre. Le responsable la corrige : il n'a rien délégué, et **il ne veut pas de
+trimestre**.
+**Décision du responsable** :
+- **aucun couloir par trimestre** : ni par défaut, ni comme générateur fourni par le produit ;
+- un couloir est **soit automatique**, sur une **règle que la personne définit elle-même** (le moteur de filtres), **soit
+  manuel**, une sélection d'affaires à la main ;
+- le produit ne crée **aucun couloir de lui-même** et ne propose aucun découpage prédéfini.
+**Conséquences** : le point 1 de la décision 861 et la mention « trimestre comme générateur » de la décision 860 sont
+caducs ; `CRM-130` est corrigée au backlog. Le point 2 de la décision 861 (famille MCP `structure`) reste valide.
+**Leçon pour la session** : une réponse qui ne choisit aucune option proposée n'est pas une délégation. Dans le doute, la
+session redemande ; elle ne décide pas à la place du responsable.
 

@@ -18777,8 +18777,9 @@ sur un compte sans channel lisible (l'état vide) ; captures aux quatre paliers 
 **Origine** : brainstorm du responsable, 2026-11-06 (décision 860).
 **Comportement attendu** (substance validée ; détail à spécifier) :
 - sur le **board d'un channel**, des couloirs regroupent les affaires ; ils sont **purement visuels** ;
-- un couloir est défini **par une règle** (moteur de filtres existant ; trimestre comme générateur) **ou par une sélection
-  manuelle** (cases à cocher sous la vue) ;
+- un couloir est **automatique**, sur une **règle que la personne définit** (moteur de filtres existant), **ou manuel**, par
+  une sélection d'affaires (cases à cocher sous la vue) ; **aucun couloir par trimestre**, ni par défaut ni comme
+  générateur, et le produit n'en crée aucun de lui-même (décision 862) ;
 - il naît dans le channel, ou au niveau du track ou de l'espace, et s'**importe** dans un channel par lien ;
 - l'ordre des couloirs et leur **état replié** sont propres au channel, gardés et partagés ;
 - **exclusivité par channel** : une affaire ne paraît que dans un couloir d'un même channel ; celles qu'aucun couloir ne
@@ -18787,7 +18788,6 @@ sur un compte sans channel lisible (l'état vide) ; captures aux quatre paliers 
 **MCP** : question 1, **oui** : lire les couloirs existants et aider à les créer (exemple : « les affaires froides depuis
 plus de six mois »). Question 2 : **famille existante `structure`** (décision 861), actions `consulter`, `ajouter`,
 `modifier`, `supprimer` ; aucune migration de la liste fermée.
-**Trimestre** (décision 861) : sur la date de création, par défaut, ou sur un champ commun de type date ; date vide, « Autres ».
 **Spécification** : à écrire avant le code — modèle de données et migration, RLS, le board,
 `docs/DESIGN_SYSTEM.md`, i18n, le manuel, le seed, les outils MCP.
 **DoD** : à fixer avec la spécification (unitaires, pgTAP, E2E souris et clavier, refus d'autorisation directs, captures
