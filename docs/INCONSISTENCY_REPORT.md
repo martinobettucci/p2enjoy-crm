@@ -8801,3 +8801,23 @@ comble ; ici rien ne manque, et le texte ne mène nulle part. `CLAUDE.md` §18 :
 
 **Pistes, à arbitrer** : un texte d'accueil qui invite à choisir un track ou un channel dans la barre latérale ; ou un accueil
 qui ouvre le premier board lisible ; ou garder l'état vide pour un espace réellement sans channel, et un autre texte sinon.
+
+### INC-347 — `scripts/verify-scripts.sh` rougit de deux dérives depuis le 2026-10-26 : élévations hors liste et port hors gabarit
+
+*Relevé le 2026-11-06 par la session d5b44a2d (p2enjoy-crm-c2) en rejouant le harnais en entier pour `CRM-001`. **Ouverte** :
+rien n'est modifié, la correction touche une liste de sécurité et le contrat du gabarit, hors de la tâche confiée.*
+
+**Le constat, mesuré** (115 vérifications, 2 anomalies) :
+1. **« marqueurs de rôle de migration inattendus »** : `0107_envoi_pieces_jointes_stockage.sql` (`CRM-058` T2, 787257b9) et
+   `0127_lecture_du_manuel.sql` (`CRM-117` T2, 26e78598) portent `-- @migration-role: supabase_admin`, que la liste close
+   `MARQUEURS_ATTENDUS` du harnais ne nomme pas (elle s'arrête à 0018, 0029, 0074). Leurs en-têtes motivent l'élévation —
+   une politique sur `storage.objects`, propriété de `supabase_storage_admin`, « le patron exact de la migration 29 » —, mais
+   la liste n'a pas été révisée avec elles : le contrôle qui doit refuser toute élévation non nommée rougit depuis.
+2. **« variables consommées par Compose et absentes du gabarit : `WEBAPP_PREVIEW_PORT` »** : `docker-compose.dev.yml`
+   (`SSO_DEV_PREVIEW_REDIRECT_URI`) la lit depuis `CRM-115` T4 (cb77357e), `scripts/lib/emplacement.sh` l'écrit dans `.env`,
+   et `.env.example` ne la déclare pas.
+
+**Correction proposée** : (1) relire les deux migrations, et si leur seule élévation est la politique de Storage annoncée,
+les ajouter **nommément** à `MARQUEURS_ATTENDUS`, le libellé du contrôle suivant (« pg_cron, les politiques de Storage et
+les fonctions auth.* ») ; (2) déclarer `WEBAPP_PREVIEW_PORT` dans `.env.example` avec rôle, format, caractère facultatif
+et valeur d'exemple (4173). À arbitrer : l'unité qui porte ces corrections.

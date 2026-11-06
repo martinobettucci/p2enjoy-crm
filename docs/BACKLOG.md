@@ -56,7 +56,7 @@ documentation à jour, commit poussé. **Aucune exception.**
 
 ## Chunk 2 — Infrastructure et socle d'identité
 
-### CRM-001 — Pile Supabase self-hosted `[~]`
+### CRM-001 — Pile Supabase self-hosted `[P]`
 Pile self-hosted à versions épinglées. Assemblage `docker-compose.yml` + overlays dev et prod.
 MinIO en dev, Storage sur S3.
 **DoD** : `docker compose up` démarre tous les services sains ; Kong répond ; Studio accessible en
@@ -66,8 +66,7 @@ dev ; aucun service de développement présent en prod.
       `auth`, `rest`, `realtime`, `storage`, `functions`, `kong`. Toutes les images épinglées à une
       version exacte. **`supavisor` en a été retiré** le 2026-08-13 (décision 366) : le pooler
       n'avait aucun consommateur.
-- [@] **Démarrage à froid REJOUÉ le 2026-08-18, et trois preuves sur quatre sont acquises.**
-      *Prise en charge : session interactive d5b44a2d (p2enjoy-crm-c2) depuis 2026-11-06 08:21 UTC — état avant : [~] ; confiée par la session de livraison (be) : rejouer « la reconstruction sans CA n'emprunte pas sa branche inactive » sur un hôte sans interception TLS* La
+- [x] **Démarrage à froid REJOUÉ le 2026-08-18, et trois preuves sur quatre sont acquises.** La
       séquence exigée a été menée dans l'ordre, sur un poste dont le démon répondait :
       `./resetMe.sh --yes` **code 0**, `./runDev.sh` **code 0**, `scripts/verify-stack.sh`
       **54 vérifications, aucune anomalie** — dont la chaîne de stockage complète, dépôt et
@@ -98,6 +97,13 @@ dev ; aucun service de développement présent en prod.
       la branche inerte —, l'accès au registre rend `SELF_SIGNED_CERT_IN_CHAIN`, « self-signed
       certificate in certificate chain », tandis que la même reconstruction **avec** le CA réussit
       dans le même rejeu. `CRM-001` reste `[~]` pour ce seul contrôle.
+      **ACQUIS le 2026-11-06 sur un hôte sans interception** (session d5b44a2d, confiée par la session de livraison) : le
+      certificat de `registry.npmjs.org` est émis par Google Trust Services (CN WE1) et `curl` le valide.
+      `scripts/verify-scripts.sh` rejoué en entier, **contrôle inchangé** : « build sans cache et sans CA : branche
+      inactive, `npm ci` réussi » **vert**, comme les quatre autres du §7 (assemblages dev et prod, `npm_ca` sur
+      `/dev/null` sans `NPM_CA_FILE`, chemin PEM transporté, build avec CA, image sans résidu). Bilan : 115 vérifications,
+      **2 anomalies étrangères à cette unité**, consignées en INC-347 et laissées en l'état : deux élévations
+      `supabase_admin` hors de la liste close (0107, 0127) et `WEBAPP_PREVIEW_PORT` absente du gabarit.
       *Relevé d'origine, conservé :* les preuves de démarrage dataient d'un assemblage comportant
       encore `supavisor`, la base `_supabase` et le mot de passe du rôle `pgbouncer` ; la
       vérification n'avait pas pu être rejouée le 2026-08-13, le démon Docker étant absent.
@@ -134,6 +140,9 @@ dev ; aucun service de développement présent en prod.
       seuls verts, **aucun `502` et aucune erreur amont chez Kong sur toute la campagne** (26 à la précédente). Le saut
       Caddy est prouvé par un Caddy jetable, pas en production. **Livrée le 2026-11-01** (`docs/PROD_MIGRATIONS.md`
       §2.21, §8 ; décisions 792 et 793) : webapp, Kong à `= 3`, Caddy à `crm-001`. **Reste** : le constat du responsable.
+
+*État au 2026-11-06* : `[P]` et non `[x]` — toutes les preuves de développement sont acquises ; il reste le constat du
+responsable sur la tranche INC-299, livrée le 2026-11-01.
 
 *DoD adaptée, écarts explicites.* Aucun test unitaire ni test E2E dédié : cette unité ne livre
 aucune logique métier ni parcours utilisateur, seulement l'assemblage d'exécution. Les preuves
