@@ -66,7 +66,8 @@ dev ; aucun service de développement présent en prod.
       `auth`, `rest`, `realtime`, `storage`, `functions`, `kong`. Toutes les images épinglées à une
       version exacte. **`supavisor` en a été retiré** le 2026-08-13 (décision 366) : le pooler
       n'avait aucun consommateur.
-- [~] **Démarrage à froid REJOUÉ le 2026-08-18, et trois preuves sur quatre sont acquises.** La
+- [@] **Démarrage à froid REJOUÉ le 2026-08-18, et trois preuves sur quatre sont acquises.**
+      *Prise en charge : session interactive d5b44a2d (p2enjoy-crm-c2) depuis 2026-11-06 08:21 UTC — état avant : [~] ; confiée par la session de livraison (be) : rejouer « la reconstruction sans CA n'emprunte pas sa branche inactive » sur un hôte sans interception TLS* La
       séquence exigée a été menée dans l'ordre, sur un poste dont le démon répondait :
       `./resetMe.sh --yes` **code 0**, `./runDev.sh` **code 0**, `scripts/verify-stack.sh`
       **54 vérifications, aucune anomalie** — dont la chaîne de stockage complète, dépôt et
@@ -18720,7 +18721,8 @@ inbox et fiche).
 
 ## Demande du 2026-11-06 — l'accueil ne prétend plus une absence de channel (décision 858, INC-346)
 
-### CRM-129 — L'accueil dit deux choses selon que l'espace a des channels lisibles ou non `[ ]`
+### CRM-129 — L'accueil dit deux choses selon que l'espace a des channels lisibles ou non `[@]`
+*Prise en charge : session interactive 4891a451 (p2enjoy-crm-2f) depuis 2026-11-06 08:21 UTC — état avant : [ ]*
 
 **Origine** : INC-346, relevé sur les captures de `CRM-112` T6 ; arbitré le 2026-11-06 (décision 858).
 **Comportement attendu** : sur `/`, quand le guide de démarrage est fini ou masqué, l'état vide actuel
