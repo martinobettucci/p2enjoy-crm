@@ -18782,8 +18782,9 @@ sur un compte sans channel lisible (l'état vide) ; captures aux quatre paliers 
   générateur, et le produit n'en crée aucun de lui-même (décision 862) ;
 - il naît dans le channel, ou au niveau du track ou de l'espace, et s'**importe** dans un channel par lien ;
 - l'ordre des couloirs et leur **état replié** sont propres au channel, gardés et partagés ;
-- **exclusivité par channel** : une affaire ne paraît que dans un couloir d'un même channel ; celles qu'aucun couloir ne
-  retient vont dans « Autres », en dernier ; une affaire rattachée à plusieurs channels suit les couloirs de chacun.
+- **exclusivité par channel** : une affaire ne paraît que dans un couloir d'un même channel ; une affaire rattachée à
+  plusieurs channels suit les couloirs de chacun. **En discussion** : qui départage une affaire retenue par plusieurs
+  couloirs, ce que devient celle qu'aucun ne retient, et ce qui est stocké (la règle seule, ou l'appartenance).
 **Hors périmètre** : la vue liste (aucun couloir) ; toute revue, tout sous-budget, toute règle métier par couloir.
 **MCP** : question 1, **oui** : lire les couloirs existants et aider à les créer (exemple : « les affaires froides depuis
 plus de six mois »). Question 2 : **famille existante `structure`** (décision 861), actions `consulter`, `ajouter`,

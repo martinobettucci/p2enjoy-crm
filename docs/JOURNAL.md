@@ -39320,8 +39320,9 @@ mémorisé avec le channel. **Hors périmètre, explicitement** : ni revues, ni 
 - **Import** : par lien et non par copie ; l'ordre des couloirs et leur état replié sont propres au channel.
 **Réponses du responsable (2026-11-06)** :
 1. **Nature** : règles et sélection, comme recommandé.
-2. **Exclusivité, par channel** : dans un channel, une affaire ne paraît que dans **un seul** couloir (le premier qui la
-   retient dans l'ordre du channel ; les autres vont dans « Autres », en dernier). Une affaire rattachée à plusieurs
+2. **Exclusivité, par channel** : dans un channel, une affaire ne paraît que dans **un seul** couloir. *(Rectifié le
+   2026-11-06 : la règle qui départage une affaire retenue par plusieurs couloirs, et le sort des affaires qu'aucun ne
+   retient, ne sont **pas** décidés ; c'est une proposition de la session, en discussion avec le responsable.)* Une affaire rattachée à plusieurs
    channels, voire à plusieurs tracks, paraît dans un couloir de **chacun** d'eux, selon les couloirs propres à chaque
    channel : l'exclusivité ne vaut qu'à l'intérieur d'un channel.
 3. **Vue liste** : **aucun couloir**. Les couloirs sont une aide visuelle du **board du channel**, et de lui seul.
