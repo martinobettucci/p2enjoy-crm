@@ -39398,3 +39398,29 @@ décision 863.*
 5. **Couloir importé** : il est **unique et général**. Le modifier le modifie **pour tous les channels qui l'utilisent**.
 **Conséquences** : `CRM-130` n'a plus de question ouverte. Elle reste `[ ]`, à spécifier avant le code.
 
+
+### décision 865 — INC-347 : 0107 et 0127 nommées dans la liste close, et la porte fermée pour la suite
+
+*2026-11-06, session 4522fa9c (p2enjoy-crm-be), arbitrage du responsable (`AskUserQuestion`), sur la recommandation de la
+session c2 (INC-347).* **Constat** : `scripts/verify-scripts.sh` refuse `@migration-role: supabase_admin` hors de
+`MARQUEURS_ATTENDUS` ; 0107 (`CRM-058` T2) et 0127 (`CRM-117` T2) le portent, appliquées en production et figées par leur
+empreinte ; elles ne posent que des politiques sur `storage.objects` et une garde `current_user`. Sur l'image épinglée
+`supabase/postgres:17.6.1.136`, `postgres` crée ces politiques sans élévation (`supautils.policy_grants`), mesuré en
+transaction annulée. **Décision** : (a) nommer 0107 et 0127 dans la liste close ; (b) toute nouvelle politique de Storage
+s'écrit sous `postgres`, sans marqueur, et le commentaire du harnais le dit avec la mesure ; (c) corriger le motif dans le
+DAT et dans ce commentaire (le « mesuré le 2026-08-11 » de 0029 n'est plus vrai). Les migrations ne sont pas réécrites.
+
+### décision 866 — INC-348 : la barre des channels hors d'un track ne prétend plus une absence
+
+*2026-11-06, session 4522fa9c (p2enjoy-crm-be), arbitrage du responsable (`AskUserQuestion`).* **Constat** (session 2f,
+captures de `CRM-129`) : hors d'un track, la barre d'onglets des channels dit « Aucun channel » alors que l'espace en a.
+**Décision : texte neutre**, comme l'accueil (décision 858) : « Aucun channel » seulement si la personne n'a réellement
+aucun channel lisible, un texte neutre sinon ; la présence se mesure. **MCP** : non, comportement d'écran. Unité `CRM-131`.
+
+### décision 867 — INC-345 : une unité dédiée rend les harnais de la messagerie probants sur tout poste
+
+*2026-11-06, session 4522fa9c (p2enjoy-crm-be), arbitrage du responsable (`AskUserQuestion`).* **Constat** (session d9,
+`CRM-059`) : six harnais de la messagerie, dont `scripts/verify-mail-resilience.sh`, appellent un pytest d'hôte absent de
+ce poste, et leurs dégradations Python s'y déclareraient « vues » à tort. **Décision** : une unité dédiée, `CRM-132` — les
+harnais passent par le conteneur jetable de pytest (la bibliothèque de la session 30, `scripts/lib/pytest-mail-sync.sh`),
+et rougissent quand une dégradation n'est pas réellement vue. **MCP** : non, outillage de preuve.

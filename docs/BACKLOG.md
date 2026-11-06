@@ -18808,3 +18808,29 @@ plus de six mois »). Question 2 : **famille existante `structure`** (décision 
 **DoD** : à fixer avec la spécification (unitaires, pgTAP, E2E souris et clavier, refus d'autorisation directs, captures
 aux quatre paliers, seed, manuel).
 
+## Demande du 2026-11-06 — trois arbitrages du responsable (décisions 865 à 867)
+
+### CRM-131 — Hors d'un track, la barre des channels ne prétend plus une absence `[ ]`
+
+**Origine** : INC-348 (session 2f, captures de `CRM-129`) ; arbitrée le 2026-11-06 (décision 866).
+**Comportement attendu** : « Aucun channel » seulement si la personne n'a réellement aucun channel lisible ; un texte
+neutre sinon ; la présence se mesure, comme l'accueil de `CRM-129` (décision 858).
+**MCP** : non (décision 866). **Spécification** : à écrire avant le code — `docs/DESIGN_SYSTEM.md`, la clé i18n.
+**DoD** : unitaire des deux cas ; E2E souris et clavier (seed, espace sans channel) ; captures aux quatre paliers ;
+INC-348 close.
+
+### CRM-132 — Les harnais de la messagerie prouvent leurs dégradations sur tout poste `[ ]`
+
+**Origine** : INC-345 (session d9, `CRM-059`) ; arbitrée le 2026-11-06 (décision 867).
+**Comportement attendu** : les six harnais de la messagerie qui appellent un pytest d'hôte, dont
+`scripts/verify-mail-resilience.sh`, passent par le conteneur jetable (`scripts/lib/pytest-mail-sync.sh`) et rougissent
+quand une dégradation n'est pas réellement vue — jamais « vue » à tort.
+**MCP** : non (décision 867). **DoD** : chaque harnais rejoué vert sur ce poste ; une dégradation volontairement
+inefficace le fait rougir (mutation) ; INC-345 close.
+
+### Suite d'INC-347 — la liste close des marqueurs de rôle (décision 865) `[ ]`
+
+0107 et 0127 nommées dans `MARQUEURS_ATTENDUS` ; le commentaire du harnais dit la mesure et ferme la porte (toute
+nouvelle politique de Storage sous `postgres`) ; le DAT corrigé. **DoD** : `scripts/verify-scripts.sh` sans anomalie ;
+INC-347 close.
+

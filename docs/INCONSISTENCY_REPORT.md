@@ -8761,6 +8761,7 @@ to_node_id, common_field_key)` pour la copie ; la liste fermée de la webapp et 
 
 
 ### INC-345 — six harnais de la messagerie et le README supposent un pytest de l'hôte ; une dégradation s'y dit « vue » sans test
+**Arbitrée le 2026-11-06 (décision 867)** : une unité dédiée, `CRM-132`, rend les six harnais probants sur tout poste.
 
 *Relevé le 2026-11-05 par la session d5b44a2d (p2enjoy-crm-30) en rejouant `scripts/verify-mail-inbound.sh` pour `CRM-127`
 T2 (décision 847). Corrigé pour ce seul harnais ; **ouverte** pour les autres, hors de la tranche autorisée.*
@@ -8809,6 +8810,8 @@ comble ; ici rien ne manque, et le texte ne mène nulle part. `CLAUDE.md` §18 :
 qui ouvre le premier board lisible ; ou garder l'état vide pour un espace réellement sans channel, et un autre texte sinon.
 
 ### INC-347 — `scripts/verify-scripts.sh` rougit de deux dérives depuis le 2026-10-26 : élévations hors liste et port hors gabarit
+**Arbitrée le 2026-11-06 (décision 865)** : 0107 et 0127 nommées dans la liste close ; toute nouvelle politique de Storage
+s'écrit sous `postgres` ; le motif corrigé au DAT et au harnais.
 
 *Relevé le 2026-11-06 par la session d5b44a2d (p2enjoy-crm-c2) en rejouant le harnais en entier pour `CRM-001`. **Ouverte** :
 rien n'est modifié, la correction touche une liste de sécurité et le contrat du gabarit, hors de la tâche confiée.*
@@ -8856,6 +8859,7 @@ et dans le commentaire du harnais, la nouvelle en-tête ne pouvant pas toucher 0
 migrations sous `postgres` (empreintes figées, déjà appliquées en production).
 
 ### INC-348 — hors d'un track, la barre d'onglets dit « Aucun channel » à qui en lit
+**Arbitrée le 2026-11-06 (décision 866)** : texte neutre quand des channels lisibles existent ; correction portée par `CRM-131`.
 
 *Relevé le 2026-11-06 par la session 4891a451 (p2enjoy-crm-2f) en observant les captures de `CRM-129`
 (`docs/captures/CRM-129/accueil-neutre-xl-1440.jpg`). **Ouverte** : hors du périmètre arbitré par la décision 858, le
