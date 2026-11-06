@@ -18717,3 +18717,18 @@ inbox et fiche).
       manuel ; `docs/PROD_MIGRATIONS.md` §8) après la campagne complète, dont le défaut de `connecteur-messagerie` corrigé
       par la session de l'unité (`02e9e80c`). **Constat favorable du responsable le 2026-11-04** (décision 835) : un
       assistant prépare un mail qui ne part pas, la relecture dans l'inbox, la mise en file ; l'unité est terminée.
+
+## Demande du 2026-11-06 — l'accueil ne prétend plus une absence de channel (décision 858, INC-346)
+
+### CRM-129 — L'accueil dit deux choses selon que l'espace a des channels lisibles ou non `[ ]`
+
+**Origine** : INC-346, relevé sur les captures de `CRM-112` T6 ; arbitré le 2026-11-06 (décision 858).
+**Comportement attendu** : sur `/`, quand le guide de démarrage est fini ou masqué, l'état vide actuel
+(`route.board.empty`) ne paraît que si la personne n'a **aucun** channel lisible ; sinon l'accueil rend un texte neutre,
+qui ne prétend aucune absence. La présence se mesure. Sans session, le comportement de `CRM-007` reste.
+**MCP** : **non** (décision 858) — comportement d'écran, sans outil ni famille.
+**Spécification** : à écrire avant le code — `docs/DESIGN_SYSTEM.md` §5.8 et §5.51 (le texte, son ton), la clé i18n, la
+mesure des channels lisibles ; le manuel si l'accueil y paraît.
+**DoD** : unitaire des deux cas (et sans session) ; E2E souris et clavier sur le seed (des channels : le texte neutre) et
+sur un compte sans channel lisible (l'état vide) ; captures aux quatre paliers observées ; INC-346 close.
+

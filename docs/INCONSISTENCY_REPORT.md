@@ -8785,6 +8785,8 @@ la voie documentée plutôt que le `.venv`.
 *Relevé le 2026-11-05 par la session 152dd27d (p2enjoy-crm-ac) en observant les captures de `CRM-112` T6
 (`docs/captures/CRM-112/recherche-par-champ-xl-1440.jpg`) ; cause localisée par la session de livraison (p2enjoy-crm-54).
 **Ouverte** : la correction est une décision du responsable, et le comportement reste inchangé.*
+**Arbitrée le 2026-11-06 (décision 858)** : deux textes selon le cas — l'état vide pour un espace réellement sans channel,
+un texte neutre sinon ; aucun outil MCP. Correction portée par `CRM-129`.
 
 **Le constat.** Connectée sur l'espace du seed, qui porte trois tracks et leurs channels, l'administratrice ouvre `/` et lit
 « Aucun board à afficher » puis « Un board affiche les cards d'un channel. Aucun channel n'est disponible dans cet espace

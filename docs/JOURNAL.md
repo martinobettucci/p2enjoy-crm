@@ -39278,3 +39278,18 @@ migration, fonction ni image `mcp`. Le jeu de démonstration de T8 et le correct
 ce qui dépend de la webapp à `a0de154c` : types et unitaires verts (5 446), ui 1 145 sur 1 147, manuel 141 sur 144,
 garde du manuel 168 ; le reste INC-342, ou vert rejoué seul.
 **Décision : oui, sans instantané** : un `pg_dump` avant ; aucune écriture de schéma ni de données.
+
+### décision 858 — INC-346 : l'accueil dit deux choses selon que l'espace a des channels ou non ; aucun outil MCP
+
+*2026-11-06, session 4522fa9c (p2enjoy-crm-be), arbitrage du responsable (`AskUserQuestion`).*
+**Le problème** : sur `/`, quand le guide de démarrage est fini ou masqué, `AccueilDemarrage`
+(`webapp/src/app/GuideDemarrage.tsx`) rend l'état vide `route.board.empty`, qui affirme « Aucun channel n'est disponible
+dans cet espace de travail » sans le mesurer (INC-346). **Pistes présentées** : ouvrir le premier board lisible ; un état
+d'accueil qui oriente vers la barre latérale ; deux textes selon le cas.
+**Décision : deux textes selon le cas.** L'état vide actuel reste, inchangé, pour un espace **réellement** sans channel
+lisible par la personne ; quand des channels existent, l'accueil rend un **autre texte, neutre**, qui ne prétend aucune
+absence. La présence se mesure (les channels lisibles), elle ne se suppose pas.
+**MCP** : **non** — c'est un comportement d'écran ; le connecteur n'a pas d'accueil (consigne des deux questions,
+décisions 627 et 659).
+**Conséquences** : une unité `CRM-129` au backlog, à spécifier avant le code (`docs/DESIGN_SYSTEM.md` §5.8 et §5.51, le
+manuel si l'accueil y paraît), un unitaire et un E2E qui couvrent les deux cas ; INC-346 se clôt avec elle.
