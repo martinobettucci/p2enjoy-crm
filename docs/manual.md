@@ -258,12 +258,13 @@ L'écran se lit en quatre zones :
 - en haut, l'**en-tête** : le **fil d'Ariane**, qui dit où vous êtes ([section 3.2](#le-fil-d-ariane-savoir-ou-vous-etes)),
   puis la recherche, l'icône **« Aide »**, la cloche des notifications, votre nom et **Se déconnecter** ;
 - sous l'en-tête, la **barre d'onglets** : les channels du track ouvert ([section 3.4](#les-onglets-d-un-track)). Hors
-  d'un track, elle écrit « Aucun channel » ;
+  d'un track, elle écrit « Ouvrez un track pour voir ses channels » ; si vous ne voyez encore aucun channel, elle le
+  dit ;
 - au centre, le **contenu** de la page.
 
 ![L'en-tête : la recherche, l'icône « Aide », la cloche des notifications, le nom et « Se déconnecter »](manuel/images/naviguer-barre-laterale-onglets-etats/en-tete.jpg)
 
-![La barre d'onglets hors d'un track, qui écrit « Aucun channel »](manuel/images/naviguer-barre-laterale-onglets-etats/aucun-channel.jpg)
+![La barre d'onglets hors d'un track, qui écrit « Ouvrez un track pour voir ses channels »](manuel/images/naviguer-barre-laterale-onglets-etats/hors-d-un-track.jpg)
 
 ### 3.2 Le fil d'Ariane : savoir où vous êtes
 

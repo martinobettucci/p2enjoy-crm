@@ -213,7 +213,7 @@
 							},
 							{
 								"type": "text",
-								"text": "). Hors\nd'un track, elle écrit « Aucun channel » ;"
+								"text": "). Hors\nd'un track, elle écrit « Ouvrez un track pour voir ses channels » ; si vous ne voyez encore aucun channel, elle le\ndit ;"
 							}
 						]
 					}
@@ -253,9 +253,9 @@
 		},
 		{
 			"type": "image",
-			"src": "naviguer-barre-laterale-onglets-etats/aucun-channel.jpg",
-			"alt": "La barre d'onglets hors d'un track, qui écrit « Aucun channel »",
-			"width": 123,
+			"src": "naviguer-barre-laterale-onglets-etats/hors-d-un-track.jpg",
+			"alt": "La barre d'onglets hors d'un track, qui écrit « Ouvrez un track pour voir ses channels »",
+			"width": 269,
 			"height": 53
 		},
 		{

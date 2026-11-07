@@ -45,6 +45,9 @@
 // écrivant `nouveau-channel=1` dans l'adresse —, mais elle n'a ni bordure basse ni `aria-current` : rien ne la lit
 // comme la page courante. Pendant la saisie, elle quitte la barre (§5.50 : la commande et le formulaire s'excluent).
 //
+// @spec CRM-131 (docs/BACKLOG.md) — hors d'un track, « Aucun channel » seulement si la personne n'en lit aucun ;
+//       sinon « Ouvrez un track pour voir ses channels » (docs/SPEC-channels.md §5.5 ; docs/DESIGN_SYSTEM.md §4 ;
+//       décisions 866 et 868)
 // @spec CRM-105 (docs/BACKLOG.md) — la description d'un channel en infobulle sous son onglet
 //       (docs/DESIGN_SYSTEM.md §5.58, docs/SPEC-channels.md §5, décision 629)
 
@@ -55,6 +58,7 @@ import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import type { EtatAsync } from '../lib/async'
 import type { Channel } from '../lib/channels'
+import type { PresenceChannels } from '../lib/demarrage'
 import {
 	PARAM_NOUVEAU_CHANNEL,
 	VALEUR_NOUVEAU_CHANNEL_TRACK,
@@ -77,9 +81,14 @@ export type ProprietesTabBar = {
 	readonly etat?: EtatAsync<readonly Channel[]>
 	/** Slug du track porteur, nécessaire pour construire l'adresse de chaque onglet. */
 	readonly slugTrack?: string
+	/**
+	 * Hors d'un track seulement : la présence de channels lisibles, mesurée par la coquille (`CRM-131`). Absente
+	 * sans session : la barre garde « Aucun channel », comme depuis `CRM-007`.
+	 */
+	readonly presenceHorsTrack?: PresenceChannels
 }
 
-export function TabBar({ etat, slugTrack }: ProprietesTabBar) {
+export function TabBar({ etat, slugTrack, presenceHorsTrack }: ProprietesTabBar) {
 	return (
 		<div
 			data-testid="barre-onglets"
@@ -88,12 +97,12 @@ export function TabBar({ etat, slugTrack }: ProprietesTabBar) {
 			// sans indication ». Défaut vu sur la capture à 390 px (docs/DESIGN_SYSTEM.md §12.6).
 			className="flex items-center gap-2 px-4 bg-bg border-b border-border overflow-x-auto indique-debordement-x"
 		>
-			<Contenu etat={etat} slugTrack={slugTrack} />
+			<Contenu etat={etat} slugTrack={slugTrack} presenceHorsTrack={presenceHorsTrack} />
 		</div>
 	)
 }
 
-function Contenu({ etat, slugTrack }: ProprietesTabBar) {
+function Contenu({ etat, slugTrack, presenceHorsTrack }: ProprietesTabBar) {
 	if (etat?.statut === 'chargement') {
 		return (
 			<div className="py-2">
@@ -107,8 +116,18 @@ function Contenu({ etat, slugTrack }: ProprietesTabBar) {
 	// latérale à `CRM-020`.
 	const channels = etat?.statut === 'pret' ? etat.donnees : []
 
-	// Hors d'une route de track, il n'y a ni channel ni coûts à proposer : l'état vide reste seul,
-	// exactement comme avant `CRM-086`.
+	// Hors d'une route de track, il n'y a ni channel ni coûts à proposer. Depuis `CRM-131`, « Aucun channel »
+	// n'y paraît que si la personne n'en lit réellement aucun ; sinon — et pendant la mesure, ou si elle a
+	// échoué — un texte neutre, vrai dans tous les cas (docs/SPEC-channels.md §5.5).
+	if (slugTrack === undefined && presenceHorsTrack !== undefined && presenceHorsTrack !== 'aucun') {
+		return (
+			<div className="flex items-center gap-2 py-2" aria-label={t('tabs.aria')}>
+				<span data-testid="onglets-choisir" className="text-sm text-text-3 whitespace-nowrap">
+					{t('tabs.pick')}
+				</span>
+			</div>
+		)
+	}
 	if (slugTrack === undefined) {
 		return (
 			<div className="flex items-center gap-2 py-2" aria-label={t('tabs.aria')}>

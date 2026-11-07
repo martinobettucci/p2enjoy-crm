@@ -1,6 +1,8 @@
 // @spec CRM-007 (docs/BACKLOG.md) — coquille de l'application
 // @spec docs/DESIGN_SYSTEM.md §4 (architecture des écrans), §5.8 (états), §7, §8
 // @spec docs/SPEC-webapp.md §5.1 (coquille), §7 (états), §9 (accessibilité), §11 (stockage)
+// @spec CRM-131 (docs/BACKLOG.md) — la mesure des channels lisibles, émise hors d'un track pour la barre d'onglets
+//       (docs/SPEC-channels.md §5.5 ; docs/DESIGN_SYSTEM.md §4 ; décision 868)
 // @spec CRM-094 (docs/BACKLOG.md) tranches T2 et T3 — l'espace courant et son rôle rendus par un contexte,
 //       et le guide flottant monté au bas de la zone principale (docs/SPEC-onboarding.md §10.2,
 //       docs/DESIGN_SYSTEM.md §5.49)
@@ -26,6 +28,7 @@ import { t, type CleTraduction } from '../i18n'
 import type { EtatAsync } from '../lib/async'
 import { clientCrm } from '../lib/supabase'
 import type { Channel } from '../lib/channels'
+import { useMesureChannels } from '../lib/demarrage'
 import type { NiveauAriane } from '../lib/fil-ariane'
 import { useEstSuperadmin } from '../lib/plateforme'
 import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
@@ -105,6 +108,11 @@ export function AppShell({
 	// pendant la lecture et en cas d'échec, elle est absente.
 	const etatSuperadmin = useEstSuperadmin(clientCrm, idUtilisateur)
 	const plateforme = etatSuperadmin.statut === 'pret' && etatSuperadmin.donnees
+	// `CRM-131` — hors d'un track, avec une session, la barre dit si la personne lit des channels : la mesure de
+	// l'accueil, émise ici seulement (docs/SPEC-channels.md §5.5). Sans session, aucune mesure, et la barre garde
+	// « Aucun channel ».
+	const sessionOuverte = etatSession.statut === 'authentifie'
+	const presenceHorsTrack = useMesureChannels(slugTrack === undefined && sessionOuverte ? clientCrm : null)
 
 	const toutRecharger = useCallback(() => {
 		recharger()
@@ -178,7 +186,11 @@ export function AppShell({
 						onOuvrirTiroir={ouvrirTiroir}
 						etatWorkspaces={etat}
 					/>
-					<TabBar etat={etatChannels} slugTrack={slugTrack} />
+					<TabBar
+						etat={etatChannels}
+						slugTrack={slugTrack}
+						{...(slugTrack === undefined && sessionOuverte ? { presenceHorsTrack } : {})}
+					/>
 					<main id={ID_CONTENU} tabIndex={-1} className="flex-1 min-w-0 p-4 overflow-x-auto">
 						{/* Le chargement des channels rejoint les deux autres : un échec ne doit pas
 						    être avalé par une barre d'onglets qui n'a pas la place de l'expliquer,

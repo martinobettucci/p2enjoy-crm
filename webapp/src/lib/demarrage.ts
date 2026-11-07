@@ -11,6 +11,8 @@
 //       l'étape « affaire » mène au board du premier channel lisible et vivant, lu avec chaque mesure
 // @spec CRM-129 (docs/BACKLOG.md) — docs/SPEC-onboarding.md §4.2 (précision du 2026-11-06), décision 859 : le compte
 //       de l'étape « channel » décide de ce que l'accueil dit (`presenceChannels`)
+// @spec CRM-131 (docs/BACKLOG.md) — docs/SPEC-channels.md §5.5, décision 868 : la même mesure, émise à part pour
+//       la barre d'onglets hors d'un track (`useMesureChannels`, `presenceMesuree`)
 // @spec CRM-001 (docs/BACKLOG.md) tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
 //
 // CE MODULE N'OUVRE AUCUNE POLITIQUE NOUVELLE. Chaque table est comptée sous la politique qui la
@@ -217,10 +219,42 @@ export function resteUneEtape(progression: ProgressionDemarrage): boolean {
 export type PresenceChannels = 'aucun' | 'present' | 'inconnu' | 'chargement'
 
 export function presenceChannels(progression: ProgressionDemarrage): PresenceChannels {
-	const etat = progression.etapes[CLES_ETAPES_DEMARRAGE.indexOf('channel')]
+	return presenceMesuree(progression.etapes[CLES_ETAPES_DEMARRAGE.indexOf('channel')])
+}
+
+/** La lecture d'une mesure de l'étape « channel », partagée par l'accueil et la barre d'onglets (`CRM-131`). */
+export function presenceMesuree(etat: EtatAsync<EtapeDemarrage> | undefined): PresenceChannels {
 	if (etat === undefined || etat.statut === 'erreur') return 'inconnu'
 	if (etat.statut === 'chargement') return 'chargement'
 	return etat.donnees.compte >= 1 ? 'present' : 'aucun'
+}
+
+/**
+ * La présence de channels lisibles, mesurée À PART de la progression du guide (`CRM-131`,
+ * docs/SPEC-channels.md §5.5, décision 868) : la coquille en a besoin hors d'un track, où elle ne lit
+ * aucun channel. C'est LA MÊME mesure que l'étape « channel » — `mesurerEtape(client, 'channel')` —, si
+ * bien que l'accueil et la barre n'ont qu'une définition de « channel vivant ».
+ *
+ * `client` nul : aucune mesure n'est émise (hors session, ou sur une route de track) et la présence reste
+ * « chargement ». Elle est remesurée à chaque fois que `client` redevient non nul : à chaque entrée sur une
+ * route transverse.
+ */
+export function useMesureChannels(client: ClientCrm | null): PresenceChannels {
+	const [etat, setEtat] = useState<EtatAsync<EtapeDemarrage>>(() => enChargement<EtapeDemarrage>())
+	useEffect(() => {
+		if (client === null) {
+			setEtat(enChargement<EtapeDemarrage>())
+			return
+		}
+		let actif = true
+		void mesurerEtape(client, 'channel').then((mesure) => {
+			if (actif) setEtat(mesure)
+		})
+		return () => {
+			actif = false
+		}
+	}, [client])
+	return presenceMesuree(etat)
 }
 
 /** Vrai tant qu'une mesure est en vol : `/` rend alors les squelettes, jamais l'état vide (§4.2). */

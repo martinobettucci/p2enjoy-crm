@@ -12,6 +12,8 @@
 //           docs/SPEC-administration-arborescence.md §13.3 (un lien qui ouvre le formulaire par l'adresse, la vue
 //           liste conservée, la racine du track hors d'une vue de track, absente pendant la saisie) ;
 //           docs/DESIGN_SYSTEM.md §5.55 (après les channels, avant le filet ; ni bordure basse ni `aria-current`)
+// @verifies CRM-131 (docs/BACKLOG.md) — hors d'un track, « Aucun channel » seulement sans channel lisible, sinon
+//           « Ouvrez un track pour voir ses channels » ; docs/SPEC-channels.md §5.5, docs/DESIGN_SYSTEM.md §4, décision 868
 //
 // Ces tests montent la **vraie** barre d'onglets et isolent ses états par leurs rôles accessibles.
 // Le parcours connecté réel atteint la même barre dans `e2e/ui/authentification.spec.ts`.
@@ -25,6 +27,7 @@ import type { Capacite } from '../lib/capacites'
 import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
 import { fr } from '../i18n'
 import type { Channel } from '../lib/channels'
+import type { PresenceChannels } from '../lib/demarrage'
 
 // `workflow_id` a rejoint la lecture partagée à `CRM-041` (docs/SPEC-channels.md §5) : la barre
 // d'onglets ne l'affiche pas, mais elle la transporte, et une fixture amputée ne compilerait plus.
@@ -82,6 +85,56 @@ describe('barre d’onglets — états', () => {
 	it('ne duplique pas l’erreur : elle est présentée au centre de l’écran', () => {
 		monter(enErreur({ nature: 'network', detail: 'fetch failed' }))
 		expect(screen.getByTestId('onglets-vides')).toBeTruthy()
+	})
+})
+
+describe('barre d’onglets — hors d’un track, la présence mesurée (CRM-131, SPEC-channels §5.5)', () => {
+	/** Une route transverse : aucun `slugTrack`, aucun `etat` ; la présence vient de la coquille. */
+	function monterHorsTrack(presence: PresenceChannels | undefined) {
+		return render(
+			<MemoryRouter initialEntries={['/inbox']}>
+				<TabBar {...(presence === undefined ? {} : { presenceHorsTrack: presence })} />
+			</MemoryRouter>,
+		)
+	}
+
+	it('des channels lisibles : le texte neutre, jamais « Aucun channel »', () => {
+		monterHorsTrack('present')
+		expect(screen.getByTestId('onglets-choisir').textContent).toBe(fr['tabs.pick'])
+		expect(screen.queryByTestId('onglets-vides')).toBeNull()
+		expect(screen.queryByText(fr['tabs.empty'])).toBeNull()
+	})
+
+	it('aucun channel lisible : « Aucun channel » et sa phrase pour lecteurs d’écran, inchangés', () => {
+		monterHorsTrack('aucun')
+		expect(screen.getByTestId('onglets-vides').textContent).toBe(fr['tabs.empty'])
+		expect(screen.getByText(fr['tabs.empty.hint'])).toBeTruthy()
+		expect(screen.queryByTestId('onglets-choisir')).toBeNull()
+	})
+
+	it('la mesure en vol ou en échec : le texte neutre, qui ne prétend aucune absence', () => {
+		monterHorsTrack('chargement')
+		expect(screen.getByTestId('onglets-choisir')).toBeTruthy()
+		cleanup()
+		monterHorsTrack('inconnu')
+		expect(screen.getByTestId('onglets-choisir')).toBeTruthy()
+		expect(screen.queryByTestId('onglets-vides')).toBeNull()
+	})
+
+	it('sans session (aucune présence transmise) : « Aucun channel », comme depuis CRM-007', () => {
+		monterHorsTrack(undefined)
+		expect(screen.getByTestId('onglets-vides').textContent).toBe(fr['tabs.empty'])
+		expect(screen.queryByTestId('onglets-choisir')).toBeNull()
+	})
+
+	it('sur une route de track, la présence est ignorée : un track sans channel reste « Aucun channel »', () => {
+		render(
+			<MemoryRouter initialEntries={['/tracks/conseil-ia']}>
+				<TabBar etat={pret([])} slugTrack="conseil-ia" presenceHorsTrack="present" />
+			</MemoryRouter>,
+		)
+		expect(screen.getByTestId('onglets-vides')).toBeTruthy()
+		expect(screen.queryByTestId('onglets-choisir')).toBeNull()
 	})
 })
 

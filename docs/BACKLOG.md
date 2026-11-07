@@ -18810,8 +18810,7 @@ aux quatre paliers, seed, manuel).
 
 ## Demande du 2026-11-06 — trois arbitrages du responsable (décisions 865 à 867)
 
-### CRM-131 — Hors d'un track, la barre des channels ne prétend plus une absence `[@]`
-*Prise en charge : session interactive 4891a451 (p2enjoy-crm-2f) depuis 2026-11-06 11:21 UTC — état avant : [ ]*
+### CRM-131 — Hors d'un track, la barre des channels ne prétend plus une absence `[P]`
 
 **Origine** : INC-348 (session 2f, captures de `CRM-129`) ; arbitrée le 2026-11-06 (décision 866).
 **Comportement attendu** : « Aucun channel » seulement si la personne n'a réellement aucun channel lisible ; un texte
@@ -18820,6 +18819,16 @@ neutre sinon ; la présence se mesure, comme l'accueil de `CRM-129` (décision 8
 `docs/SPEC-channels.md` §5.5, `docs/DESIGN_SYSTEM.md` §4 (onglets), clé `tabs.pick`.
 **DoD** : unitaire des deux cas ; E2E souris et clavier (seed, espace sans channel) ; captures aux quatre paliers ;
 INC-348 close.
+
+- [x] **Spécification**, committée avant le code le 2026-11-06 (80d8484d, décision 868).
+- [x] **Code et preuves**, vérifiés le 2026-11-07 : `useMesureChannels` et `presenceMesuree` (`webapp/src/lib/demarrage.ts`),
+      `AppShell` (la mesure hors d'un track, avec session), `TabBar` (`onglets-choisir`), clé `tabs.pick` ; unitaires
+      (`TabBar.test.tsx` : présent, aucun, en vol, en échec, sans session, route de track ; `demarrage.test.ts` : la
+      mesure, ses filtres, aucune sans client, la remesure) et suite unitaire entière (5464) ; E2E
+      `e2e/ui/accueil-channels.spec.ts` (8, dont 4 pour `CRM-131` : seed à la souris et au clavier, espace jetable sans
+      channel à la souris et au clavier) ; captures `docs/captures/CRM-131/` aux quatre paliers, observées ; manuel
+      chapitre 3 (texte et image `hors-d-un-track.jpg`), `verify-manual` 168/168 ; typecheck racine et build. INC-348 close.
+- [P] **Livraison et constat** : webapp de `main`, avec `CRM-129` (`docs/PROD_MIGRATIONS.md` §2.32).
 
 ### CRM-132 — Les harnais de la messagerie prouvent leurs dégradations sur tout poste `[@]`
 *Prise en charge : session interactive 152dd27d (p2enjoy-crm-d9) depuis 2026-11-06 11:22 UTC — état avant : [ ]*

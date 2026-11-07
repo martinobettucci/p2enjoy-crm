@@ -749,6 +749,18 @@ aucun secret, aucune image.
 
 **Retour arrière** : la webapp précédente ; aucune donnée n'est touchée.
 
+### 2.32 `CRM-131`, décision 868 — hors d'un track, la barre des channels ne prétend plus une absence (À LIVRER : webapp de `main` seule, avec le §2.31)
+
+`docs/SPEC-channels.md` §5.5 ; `docs/DESIGN_SYSTEM.md` §4. Aucune migration, aucune variable, aucun secret, aucune image.
+Le manuel (chapitre 3, image `hors-d-un-track.jpg`) part avec la webapp.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer la webapp de `main` | session de livraison, dans la fenêtre du §2.31 | rien de propre à cette unité |
+| 2 | Constater la barre | responsable, connecté, sur l'Inbox | sous l'en-tête, « Ouvrez un track pour voir ses channels », et non plus « Aucun channel » |
+
+**Retour arrière** : la webapp précédente ; aucune donnée n'est touchée.
+
 ## 3. Migrations en attente
 
 **Aucune migration en attente depuis la seconde fenêtre du 2026-11-05** : la 169 a été appliquée avec la fonction `ia` et la

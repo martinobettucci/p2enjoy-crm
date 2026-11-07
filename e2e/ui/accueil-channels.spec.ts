@@ -4,6 +4,9 @@
 // @verifies docs/SPEC-onboarding.md §4.2 (précision du 2026-11-06, décisions 858 et 859), §8 ter (l'espace neuf, monté
 //           et démonté par la preuve) ; docs/DESIGN_SYSTEM.md §5.17 (« l'accueil ne prétend pas une absence qu'il n'a
 //           pas mesurée »), §7 (quatre paliers, aucun défilement horizontal)
+// @verifies CRM-131 (docs/BACKLOG.md) — hors d'un track, la barre d'onglets : « Ouvrez un track pour voir ses channels » à
+//           qui lit des channels, « Aucun channel » à qui n'en lit aucun ; souris et clavier ; captures aux quatre
+//           paliers ; docs/SPEC-channels.md §5.5, docs/DESIGN_SYSTEM.md §4, décision 868
 // @verifies CLAUDE.md §10 (la présence se mesure sous les vrais droits du compte), §15 (état déterministe), §16 (captures)
 //
 // AUCUNE RÉPONSE N'EST SUBSTITUÉE : l'état neutre paraît parce que le seed porte des channels que l'administratrice et
@@ -17,6 +20,9 @@ import { creerCompteJetable, supprimerCompte } from '../api/keycloak-dev'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-129'
+const UNITE_BARRE = 'CRM-131'
+const BARRE_NEUTRE = 'Ouvrez un track pour voir ses channels'
+const BARRE_VIDE = 'Aucun channel'
 const ADMIN = 'admin@p2enjoy.test'
 const VIEWER = 'viewer@p2enjoy.test'
 const WORKSPACE_SEED = '5eed0000-0000-4000-8000-000000000001'
@@ -71,6 +77,26 @@ async function tabulerJusqua(page: Page, testId: string): Promise<void> {
 async function sansDefilementDeCote(page: Page, palier: string): Promise<void> {
 	const deborde = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)
 	expect(deborde, `la page ne doit pas défiler horizontalement à ${palier}`).toBe(false)
+}
+
+/** Avance au clavier jusqu'au lien dont le texte est `nom`. */
+async function tabulerJusquauLien(page: Page, nom: string): Promise<void> {
+	for (let pas = 0; pas < 80; pas += 1) {
+		await page.keyboard.press('Tab')
+		const atteint = await page.evaluate(
+			(n) => document.activeElement?.tagName === 'A' && document.activeElement.textContent?.trim() === n,
+			nom,
+		)
+		if (atteint) return
+	}
+	throw new Error(`le lien « ${nom} » n'est pas atteignable au clavier`)
+}
+
+async function attendreBarreNeutre(page: Page): Promise<void> {
+	const barre = page.getByTestId('barre-onglets')
+	await expect(barre.getByTestId('onglets-choisir')).toHaveText(BARRE_NEUTRE)
+	await expect(barre.getByTestId('onglets-vides')).toHaveCount(0)
+	await expect(barre.getByText(BARRE_VIDE, { exact: true })).toHaveCount(0)
 }
 
 async function attendreNeutre(page: Page): Promise<void> {
@@ -159,6 +185,83 @@ test.describe('CRM-129 — l’accueil ne prétend plus une absence de channel',
 			await page.keyboard.press('Enter')
 			await expect(page.getByTestId('etat-vide')).toContainText(PHRASE_ABSENCE)
 			await expect(page.getByTestId('accueil-choisir')).toHaveCount(0)
+		} finally {
+			await demonterEspaceSansChannel(request, compte)
+		}
+	})
+})
+
+test.describe('CRM-131 — hors d’un track, la barre ne prétend plus une absence', () => {
+	test('l’administratrice : texte neutre sur l’accueil et l’Inbox, les onglets dans un track, aux quatre paliers', async ({ page }) => {
+		await connecterAvecLeLabs(page, ADMIN)
+		for (const palier of PALIERS) {
+			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await page.goto('/inbox')
+			await attendreBarreNeutre(page)
+			await sansDefilementDeCote(page, palier.nom)
+			await capturer(page, `barre-neutre-${palier.nom}`, UNITE_BARRE)
+		}
+	})
+
+	test('À LA SOURIS : de l’Inbox à un track, puis retour — la barre dit vrai à chaque étape', async ({ page }) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto('/')
+		await attendreBarreNeutre(page)
+		await page.getByRole('link', { name: 'Inbox', exact: true }).click()
+		await expect(page).toHaveURL(/\/inbox$/)
+		await attendreBarreNeutre(page)
+		await page.getByTestId('entree-track').filter({ hasText: 'Conseil & IA' }).click()
+		await expect(page.getByTestId('onglet-channel').first()).toBeVisible()
+		await expect(page.getByTestId('onglets-choisir')).toHaveCount(0)
+		await page.getByRole('link', { name: 'Inbox', exact: true }).click()
+		await attendreBarreNeutre(page)
+	})
+
+	test('AU CLAVIER SEUL : la lectrice atteint l’Inbox, et la barre porte le texte neutre', async ({ page }) => {
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await connecterAvecLeLabs(page, VIEWER)
+		await page.goto('/contacts')
+		await attendreBarreNeutre(page)
+		await tabulerJusquauLien(page, 'Inbox')
+		await page.keyboard.press('Enter')
+		await expect(page).toHaveURL(/\/inbox$/)
+		await attendreBarreNeutre(page)
+	})
+
+	test('un compte qui ne lit AUCUN channel : « Aucun channel », à la souris puis au clavier, aux quatre paliers', async ({
+		page,
+		request,
+	}) => {
+		test.setTimeout(120_000)
+		let compte: Compte | null = null
+		try {
+			compte = await monterEspaceSansChannel(request)
+			await connecterAvecLeLabs(page, compte.adresse)
+			await page.setViewportSize({ width: 1440, height: 900 })
+			await page.goto('/')
+			const barre = page.getByTestId('barre-onglets')
+			await expect(barre.getByTestId('onglets-vides')).toHaveText(BARRE_VIDE)
+			await expect(barre.getByTestId('onglets-choisir')).toHaveCount(0)
+
+			// À la souris.
+			await page.getByRole('link', { name: 'Contacts', exact: true }).click()
+			await expect(page).toHaveURL(/\/contacts$/)
+			await expect(barre.getByTestId('onglets-vides')).toHaveText(BARRE_VIDE)
+			// Au clavier.
+			await tabulerJusquauLien(page, 'Inbox')
+			await page.keyboard.press('Enter')
+			await expect(page).toHaveURL(/\/inbox$/)
+			await expect(barre.getByTestId('onglets-vides')).toHaveText(BARRE_VIDE)
+			await expect(barre.getByTestId('onglets-choisir')).toHaveCount(0)
+
+			for (const palier of PALIERS) {
+				await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+				await page.goto('/inbox')
+				await expect(page.getByTestId('barre-onglets').getByTestId('onglets-vides')).toHaveText(BARRE_VIDE)
+				await sansDefilementDeCote(page, palier.nom)
+				await capturer(page, `barre-vide-sans-channel-${palier.nom}`, UNITE_BARRE)
+			}
 		} finally {
 			await demonterEspaceSansChannel(request, compte)
 		}

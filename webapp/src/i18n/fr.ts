@@ -124,6 +124,8 @@ export const fr = {
 	'tabs.aria': 'Channels du track courant',
 	'tabs.empty': 'Aucun channel',
 	'tabs.empty.hint': 'Les channels apparaîtront ici une fois un track ouvert.',
+	// CRM-131 (docs/SPEC-channels.md §5.5, décision 868) : hors d'un track, à qui LIT des channels.
+	'tabs.pick': 'Ouvrez un track pour voir ses channels',
 
 	// --- Tracks -------------------------------------------------------------------------
 	// Les libellés des tracks eux-mêmes sont des **données** et ne passent pas par ce

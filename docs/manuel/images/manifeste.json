@@ -12181,19 +12181,6 @@
 			]
 		},
 		{
-			"fichier": "naviguer-barre-laterale-onglets-etats/aucun-channel.jpg",
-			"largeur": 123,
-			"hauteur": 53,
-			"chapitre": "naviguer-barre-laterale-onglets-etats",
-			"section": "la-disposition-de-l-ecran",
-			"pleinePage": false,
-			"libelles": [
-				"Aucun channel",
-				"Aucun channel Les channels apparaîtront ici une fois un track ouvert.",
-				"Channels du track courant"
-			]
-		},
-		{
 			"fichier": "naviguer-barre-laterale-onglets-etats/bandeau-lecture.jpg",
 			"largeur": 553,
 			"hauteur": 91,
@@ -12340,6 +12327,18 @@
 				"P2Enjoy SAS",
 				"P2Enjoy SAS /",
 				"P2Enjoy SAS / Conseil & IA / Grands comptes / Migration ERP Sogexia"
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/hors-d-un-track.jpg",
+			"largeur": 269,
+			"hauteur": 53,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "la-disposition-de-l-ecran",
+			"pleinePage": false,
+			"libelles": [
+				"Channels du track courant",
+				"Ouvrez un track pour voir ses channels"
 			]
 		},
 		{

@@ -1,6 +1,7 @@
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.1 : les images du chapitre 3, « Naviguer : barre latérale, onglets, états »
 // @spec docs/SPEC-manual.md §11.1, §11.2, §13 (l'aide, ses états) ; docs/manual.md chapitre 3
 // @spec docs/DESIGN_SYSTEM.md §5.12 (la coquille), §5.62 (le fil d'Ariane), §5.69 (l'aide)
+// @spec CRM-131 (docs/BACKLOG.md) — la barre hors d'un track (docs/SPEC-channels.md §5.5, décision 868)
 //
 // Trois écrans exigent un état que le seed ne porte pas, et le scénario le pose puis le retire, par la clé de service :
 // un track sans channel, puis, dans ce même track, un channel dont le workflow n'a aucune étape. « Chargement
@@ -58,13 +59,13 @@ test('la disposition de l’écran, l’en-tête et la barre latérale', async (
 		cibles: [page.getByTestId('commande-nouveau-channel'), page.getByTestId('onglet-couts-track')],
 	})
 
-	// Hors d'un track, la barre d'onglets n'a rien à montrer.
+	// Hors d'un track, la barre d'onglets invite à en ouvrir un : l'administratrice lit des channels (`CRM-131`).
 	await page.goto('/inbox')
 	await illustrer(page, {
 		chapitre: CHAPITRE,
 		section: 'la-disposition-de-l-ecran',
-		nom: 'aucun-channel',
-		cibles: [page.getByText('Aucun channel', { exact: true })],
+		nom: 'hors-d-un-track',
+		cibles: [page.getByTestId('onglets-choisir')],
 	})
 })
 

@@ -20,6 +20,13 @@ d'exécuter le code attendu.
   où le trouver (la barre latérale). La présence est le compte de l'étape « channel » du guide, déjà mesuré : aucune
   requête de plus. Sans session, rien ne change. **Avec la webapp de `main`** ; aucune migration.
 
+### `CRM-131` — hors d'un track, la barre des channels ne prétend plus une absence (INC-348, décisions 866 et 868)
+
+- Sur une page qui n'est pas celle d'un track (accueil, Inbox, Contacts, Réglages…), la barre sous l'en-tête n'écrit plus
+  « Aucun channel » qu'à qui n'en lit aucun ; sinon, et pendant ou après une mesure en échec, « Ouvrez un track pour voir
+  ses channels ». La mesure est celle de l'accueil. Sans session, rien ne change. Le manuel (chapitre 3) et son image sont
+  mis à jour. **Avec la webapp de `main`** ; aucune migration.
+
 ## [Publié]
 
 ### Déployé en production, 2026-11-06 — la webapp de `main` et le manuel

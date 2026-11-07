@@ -14,9 +14,11 @@
 // dirait accomplie par un objet que l'écran ne montre nulle part.
 // @verifies CRM-129 (docs/BACKLOG.md) — `presenceChannels` : le compte de l'étape « channel » décide de ce que
 //           l'accueil dit ; docs/SPEC-onboarding.md §4.2 (précision du 2026-11-06), décision 859
+// @verifies CRM-131 (docs/BACKLOG.md) — `useMesureChannels` : la même mesure, émise à part hors d'un track, et jamais
+//           sans client ; docs/SPEC-channels.md §5.5, décision 868
 // @verifies CRM-001 tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
 
-import { renderHook } from '@testing-library/react'
+import { cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
 	CLES_ETAPES_DEMARRAGE,
@@ -30,6 +32,8 @@ import {
 	mesurerDemarrage,
 	mesurerEtape,
 	presenceChannels,
+	presenceMesuree,
+	useMesureChannels,
 	PROGRESSION_INITIALE,
 	resteUneEtape,
 	useApresWorkflowDeDepart,
@@ -360,6 +364,72 @@ describe('la présence de channels lisibles — CRM-129, docs/SPEC-onboarding.md
 			boardAffaire: null,
 		}
 		expect(presenceChannels(progression)).toBe('present')
+	})
+})
+
+describe('la mesure à part pour la barre d’onglets — CRM-131, docs/SPEC-channels.md §5.5', () => {
+	// Démonter chaque crochet : une mesure résolue après la fin du fichier ferait travailler React sans `window`.
+	afterEach(cleanup)
+
+	type Reponse = { count: number | null; error: { message: string } | null; status: number }
+	function clientEspion(reponse: Reponse) {
+		const tables: string[] = []
+		const nuls: string[] = []
+		const client = {
+			from: (table: string) => {
+				tables.push(table)
+				const chaine = {
+					is: (colonne: string) => {
+						nuls.push(colonne)
+						return chaine
+					},
+					limit: () => chaine,
+					then: (resoudre: (valeur: Reponse) => unknown) => Promise.resolve(reponse).then(resoudre),
+				}
+				return { select: () => chaine }
+			},
+		} as unknown as ClientCrm
+		return { client, tables, nuls }
+	}
+
+	it('sans client, n’émet AUCUNE mesure et reste « chargement »', async () => {
+		const { result } = renderHook(() => useMesureChannels(null))
+		await Promise.resolve()
+		expect(result.current).toBe('chargement')
+	})
+
+	it('compte les channels VIVANTS sous la RLS de l’appelant : la définition de l’étape « channel »', async () => {
+		const espion = clientEspion({ count: 3, error: null, status: 200 })
+		const { result } = renderHook(() => useMesureChannels(espion.client))
+		await waitFor(() => expect(result.current).toBe('present'))
+		expect(espion.tables).toEqual(['channels'])
+		expect(espion.nuls).toEqual([...FILTRES_ETAPES_DEMARRAGE.channel.nuls])
+	})
+
+	it('zéro : « aucun » ; un échec : « inconnu », jamais « aucun »', async () => {
+		const zero = renderHook(() => useMesureChannels(clientEspion({ count: 0, error: null, status: 200 }).client))
+		await waitFor(() => expect(zero.result.current).toBe('aucun'))
+		const panne = renderHook(() =>
+			useMesureChannels(clientEspion({ count: null, error: { message: 'panne' }, status: 500 }).client),
+		)
+		await waitFor(() => expect(panne.result.current).toBe('inconnu'))
+	})
+
+	it('remesure quand le client revient : à chaque entrée sur une route transverse', async () => {
+		const espion = clientEspion({ count: 2, error: null, status: 200 })
+		const { result, rerender } = renderHook(({ client }: { client: ClientCrm | null }) => useMesureChannels(client), {
+			initialProps: { client: espion.client as ClientCrm | null },
+		})
+		await waitFor(() => expect(result.current).toBe('present'))
+		rerender({ client: null })
+		expect(result.current).toBe('chargement')
+		rerender({ client: espion.client })
+		await waitFor(() => expect(result.current).toBe('present'))
+		expect(espion.tables).toHaveLength(2)
+	})
+
+	it('presenceMesuree lit une mesure absente comme « inconnu »', () => {
+		expect(presenceMesuree(undefined)).toBe('inconnu')
 	})
 })
 

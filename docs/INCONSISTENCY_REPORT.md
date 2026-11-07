@@ -8880,3 +8880,7 @@ apparaîtront ici une fois un track ouvert. »). Le texte visible vient de `CRM-
 réservée aux lecteurs d'écran (« Les channels apparaîtront ici une fois un track ouvert. ») ; ou elle garde « Aucun
 channel » seulement quand la personne n'en lit aucun, comme l'accueil.
 
+**Close le 2026-11-07 avec `CRM-131`** (session 4891a451, p2enjoy-crm-2f ; décisions 866 et 868) : hors d'un track, « Aucun
+channel » seulement si la mesure de l'accueil compte zéro ; sinon « Ouvrez un track pour voir ses channels ». Preuves :
+unitaires, `e2e/ui/accueil-channels.spec.ts` (bloc `CRM-131`), `docs/captures/CRM-131/`, manuel chapitre 3.
+
