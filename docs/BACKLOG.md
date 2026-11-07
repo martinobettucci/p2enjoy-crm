@@ -18838,3 +18838,19 @@ inefficace le fait rougir (mutation) ; INC-345 close.
 nouvelle politique de Storage sous `postgres`) ; le DAT corrigé. **DoD** : `scripts/verify-scripts.sh` sans anomalie ;
 INC-347 close.
 
+## Demande du 2026-11-07 — une description pour les étapes de workflow (décision 869)
+
+### CRM-133 — Une description sur le nœud du catalogue, surchargeable par l'étape d'un workflow `[ ]`
+
+**Origine** : un assistant connecté n'a pas pu enregistrer la description d'une étape (« À qualifier ») ; arbitrée le
+2026-11-07 (décision 869).
+**Comportement attendu** : le nœud du catalogue porte une description facultative ; une étape peut la surcharger, comme son
+libellé et sa probabilité ; une surcharge vide rend celle du nœud. La description se lit là où l'étape se lit.
+**MCP** : **oui, famille `workflows`** (décision 869) — lecture et écriture de la description du nœud et de sa surcharge
+d'étape, cases existantes ; au catalogue de `docs/SPEC-mcp.md` §9.2, dans une tranche de cette unité.
+**Spécification** : à écrire avant le code — `docs/SCHEMA.md` (migration), `docs/DESIGN_SYSTEM.md` (l'éditeur, l'affichage),
+`docs/SPEC-mcp.md`, le manuel (chapitre du compositeur de workflows).
+**DoD** : migration et pgTAP (surcharge, repli sur le nœud, droits) ; unitaires ; API ; E2E souris et clavier ; outils du
+connecteur et `verify-mcp.sh` ; seed (une description de nœud, une surcharge) ; captures aux quatre paliers ; manuel ;
+contrat de déploiement.
+

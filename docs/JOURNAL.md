@@ -39436,3 +39436,20 @@ un, en vol ou en erreur, le texte neutre `tabs.pick`, `data-testid="onglets-choi
 Aucune lecture nouvelle de `channels`. **Coût accepté** : sur `/`, deux comptes identiques (accueil et barre). **MCP** : non
 (décision 866).
 
+
+
+### décision 869 — une description sur le nœud du catalogue, surchargeable par l'étape ; MCP dans la famille `workflows`
+
+*2026-11-07, session 4522fa9c (p2enjoy-crm-be), arbitrage du responsable (`AskUserQuestion`).*
+**Le problème** : un assistant connecté a voulu enregistrer la description de l'étape « À qualifier » et ne l'a pas pu :
+ni `workflow_steps` ni `workflow_nodes_catalog` ne portent de description, et les outils `workflows` du connecteur
+n'exposent que la clé, le libellé, le type, la couleur, la probabilité et le seuil de relance. **Pistes présentées** : sur
+l'étape seule ; sur le nœud, surchargeable par l'étape ; rien.
+**Décision : sur le nœud, surchargeable par l'étape** — le nœud du catalogue porte une description par défaut, et l'étape
+peut la surcharger, comme le libellé (`label_override`) et la probabilité (`probability_override`) ; une surcharge vide
+rend celle du nœud.
+**MCP** : **oui, famille existante `workflows`** (`docs/SPEC-mcp.md` §6.1) — l'assistant lit et écrit la description du
+nœud et sa surcharge d'étape avec les cases en place (consulter, modifier) ; aucune famille nouvelle, aucune migration de
+la matrice.
+**Conséquences** : unité `CRM-133` — migration, `docs/SCHEMA.md`, l'éditeur du catalogue et du workflow, l'affichage là où
+l'étape se lit (la fiche, le board), les outils `workflows` du connecteur, le manuel ; à spécifier avant le code.
