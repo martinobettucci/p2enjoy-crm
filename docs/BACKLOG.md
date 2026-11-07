@@ -18849,7 +18849,8 @@ INC-347 close.
 
 ## Demande du 2026-11-07 — une description pour les étapes de workflow (décision 869)
 
-### CRM-133 — Une description sur le nœud du catalogue, surchargeable par l'étape d'un workflow `[ ]`
+### CRM-133 — Une description sur le nœud du catalogue, surchargeable par l'étape d'un workflow `[@]`
+*Prise en charge : session interactive 4891a451 (p2enjoy-crm-2f) depuis 2026-11-07 09:56 UTC — état avant : [ ] ; confiée par la session de livraison (be)*
 
 **Origine** : un assistant connecté n'a pas pu enregistrer la description d'une étape (« À qualifier ») ; arbitrée le
 2026-11-07 (décision 869).
