@@ -8927,3 +8927,8 @@ en production depuis la fenêtre du 2026-11-03 », ce qui est faux. `docs/SPEC-m
 - (b) Cause 2 : demander à l'hébergeur d'ouvrir 465 ou 587 en sortie ; ou passer par un relais d'envoi joignable en 443
   (API HTTP), ce qui serait une unité nouvelle ; ou au minimum le dire dans l'écran et le manuel.
 - (c) Réception : corriger la saisie du port ; journaliser la classe d'erreur dans `veille_compte_echoue`.
+
+**Cause 2 levée le 2026-11-09** par un réglage de l'hébergement, que le responsable a activé. Mesuré en lecture seule
+depuis `mail-sync` : le serveur des identités répond `220` sur 25, 465 et 587, et un serveur public témoin aussi. **La
+cause 1 demeure** : `functions` est toujours le conteneur du 2026-10-20, sans `MAIL_SYNC_URL` ni le jeton. Les trois
+identités restent en `pending`. **La réception aussi** : la boîte entrante est toujours réglée sur le port 587.
