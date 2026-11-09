@@ -5441,6 +5441,79 @@ occupé avec la perte consentie, l'affaire relue à sa destination au board ; la
 manque pour la démonstration — il n'est pas étendu (décision 764) : le jeu démontre tous les gestes sauf l'archivage
 accepté, qui se démontre sur un workflow créé d'un geste.
 
+## 7 sexies. La description d'un nœud, et sa surcharge par l'étape — `CRM-133` (décisions 869 et 870)
+
+*Écrit le 2026-11-07, avant le code.* **Origine** : un assistant connecté a voulu enregistrer la description de l'étape
+« À qualifier » ; ni l'étape ni le nœud n'en portaient. **Décision du responsable (869)** : le nœud du catalogue porte une
+description facultative, que l'étape peut surcharger **comme** `label_override` et `probability_override` ; une surcharge
+vide rend celle du nœud. Elle se lit là où l'étape se lit. **Connecteur MCP** : oui, famille existante `workflows`, cases
+`consulter` et `modifier` ; aucune famille nouvelle.
+
+### 7 sexies.1 Le modèle
+
+| Table | Colonne | Contrainte |
+|---|---|---|
+| `workflow_nodes_catalog` | `description text` | facultative ; **non vide après `btrim`** si elle est posée ; **aucune borne de longueur** (comme `channels.description`, `CRM-105`) |
+| `workflow_steps` | `description_override text` | facultative ; non vide après `btrim` si elle est posée — la règle de `label_override` (§3.3) |
+
+**Une surcharge vide rend celle du nœud** : vide n'est pas une valeur, c'est l'absence. Les écrans et le connecteur
+envoient `NULL` pour un champ vidé ou blanc ; la base refuse une chaîne blanche (`23514`), comme pour `label_override`.
+**Description effective** d'une étape : `coalesce(description_override, node.description)` ; nulle, l'étape n'en a pas.
+
+### 7 sexies.2 Droits
+
+**Aucune politique nouvelle.** Les colonnes s'écrivent sous les droits déjà posés sur leurs tables : le catalogue et les
+étapes s'administrent par les administrateurs d'espace (§2.7, §3.7) ; ils se lisent par les membres. Les `grant update`
+par colonne, s'il en existe sur ces tables, s'étendent aux deux colonnes nouvelles. pgTAP prouve le refus d'écriture pour
+un `business_developer` et un `viewer`, et la lecture pour eux.
+
+### 7 sexies.3 Versions, copie, comparaison, restauration, audit
+
+La surcharge suit **exactement** le chemin de `label_override` :
+
+- **Le document de composition** (`app.workflow_composition_document`, donc l'empreinte, les versions publiées, la
+  restauration) porte `description_override` dans l'objet d'une étape **seulement s'il est posé** — le patron de la
+  migration `0157` pour les champs communs : l'empreinte d'une composition sans surcharge reste celle d'avant, et aucune
+  copie existante ne se découvre divergente de sa source, aucun workflow « modifié depuis sa version ».
+- **La restauration** d'une version la rétablit (une version antérieure à `CRM-133`, sans la clé, la rétablit à `NULL`).
+- **La copie** vers un track (`copy_workflow_to_track`) la recopie.
+- **Les comparaisons** (`compare_workflow_versions`, `compare_workflow_with_source`, et le document naturalisé du §4 ter)
+  la comparent comme attribut de `steps`, à côté de `label_override` ; les écrans de comparaison la nomment
+  « Description ».
+- **La description du nœud** n'entre dans aucun document : comme son libellé, elle appartient au catalogue, qui n'est pas
+  versionné.
+- **Le journal d'audit** (`0115`) inscrit les deux colonnes dans les déclencheurs de `workflow_nodes_catalog` et de
+  `workflow_steps`, **nommées seulement** : une prose n'entre pas dans les valeurs courtes recopiées.
+
+### 7 sexies.4 Ce qui la lit, ce qui l'écrit
+
+| Surface | Lecture | Écriture |
+|---|---|---|
+| Réglages ▸ Catalogue de nœuds (§2 bis) | la description du nœud, dans le formulaire | « Description », création et modification (`docs/DESIGN_SYSTEM.md` §5.18) |
+| Éditeur de workflows (§7 bis) | la surcharge, et la description du nœud citée en aide | « Description de l'étape » (`docs/DESIGN_SYSTEM.md` §5.15) |
+| Board d'un channel (§7.2) | la description effective, dans la lecture déjà émise des étapes et de leur nœud | — |
+| Fiche d'une affaire, bloc des rattachements | la description effective de l'étape de chaque rattachement | — |
+| Connecteur MCP (`docs/SPEC-mcp.md` §9.2 undecies) | `crm_workflow_node_list`, `crm_workflow_get` | `crm_workflow_node_create`, `crm_workflow_node_update`, `crm_workflow_step_add`, `crm_workflow_step_update` |
+
+Le board et la fiche la montrent dans l'infobulle du `docs/DESIGN_SYSTEM.md` §5.58, révisé : un bouton d'information
+après le nom de l'étape, rendu seulement s'il y a une description effective.
+
+### 7 sexies.5 Ce que l'unité ne fait pas
+
+- **Ni la vue liste, ni les affaires figées, ni l'entonnoir, ni la timeline** ne montrent la description : la décision
+  nomme la fiche et le board.
+- **Ni le générateur ni les suggestions de l'assistant IA** ne proposent de description ; la proposition garde sa forme.
+- **Ni les modèles d'email, ni les webhooks, ni l'import** ne la portent.
+- **Aucune longueur bornée** ; l'infobulle défile au-delà de sa hauteur (§5.58).
+
+### 7 sexies.6 Le seed
+
+Le seed pose une description sur le nœud « Prospection » du catalogue, et une surcharge sur l'étape « Négociation » du
+workflow par défaut (elle surcharge déjà la probabilité, à 65 %). Les deux sont posées par l'API, sous la clé de service.
+**La surcharge est posée avant la copie du workflow par défaut vers un track** (section 6 bis du seed), comme l'exigence
+du SIRET (décision 855) : la copie la porte, et reste identique à sa source. Le seed reste convergent en deux passages
+(`docs/SPEC-seed.md`, section à ajouter avec l'unité).
+
 ## 8. Vérification exigée
 
 | Niveau | Preuves attendues |

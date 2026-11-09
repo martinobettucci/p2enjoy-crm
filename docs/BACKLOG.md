@@ -18858,8 +18858,16 @@ INC-347 close.
 libellé et sa probabilité ; une surcharge vide rend celle du nœud. La description se lit là où l'étape se lit.
 **MCP** : **oui, famille `workflows`** (décision 869) — lecture et écriture de la description du nœud et de sa surcharge
 d'étape, cases existantes ; au catalogue de `docs/SPEC-mcp.md` §9.2, dans une tranche de cette unité.
-**Spécification** : à écrire avant le code — `docs/SCHEMA.md` (migration), `docs/DESIGN_SYSTEM.md` (l'éditeur, l'affichage),
-`docs/SPEC-mcp.md`, le manuel (chapitre du compositeur de workflows).
+**Spécification** : écrite avant le code le 2026-11-07 (décision 870) — `docs/SPEC-workflow-engine.md` §7 sexies,
+`docs/SCHEMA.md` « Migration `0170` », `docs/DESIGN_SYSTEM.md` §5.15, §5.18 et §5.58 (révisé), `docs/SPEC-mcp.md`
+§9.2 undecies (T2.d révisée) ; le manuel : chapitres « Le catalogue de nœuds » et « Composer un workflow ».
+- [ ] **T1 — base** : migration `0170`, pgTAP (contraintes, surcharge et repli, droits, empreinte inchangée sans
+      surcharge, copie, restauration, comparaisons, audit).
+- [ ] **T2 — écrans** : catalogue, éditeur de workflows, board, fiche ; unitaires ; E2E souris et clavier ; captures aux
+      quatre paliers.
+- [ ] **T3 — connecteur** : outils `workflows` et `crm_workflow_get` ; pytest, intégration, `verify-mcp.sh`.
+- [ ] **T4 — seed, manuel, contrat** : description de « Prospection », surcharge de « Négociation » avant la copie ;
+      `docs/SPEC-seed.md` ; manuel et images ; `docs/PROD_MIGRATIONS.md`.
 **DoD** : migration et pgTAP (surcharge, repli sur le nœud, droits) ; unitaires ; API ; E2E souris et clavier ; outils du
 connecteur et `verify-mcp.sh` ; seed (une description de nœud, une surcharge) ; captures aux quatre paliers ; manuel ;
 contrat de déploiement.

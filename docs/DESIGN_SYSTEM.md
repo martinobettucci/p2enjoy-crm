@@ -1667,6 +1667,13 @@ décrit le workflow choisi.
   l'afficher à côté de « la source a changé » ferait mentir l'écran. Le §12.5 vaut ici sous une
   autre forme — on n'affiche pas une donnée approchante parce qu'elle est disponible.
 
+- **LA DESCRIPTION D'UNE ÉTAPE, SURCHARGE DE CELLE DU NŒUD** — *`CRM-133`, écrit le 2026-11-07 avant le code
+  (décisions 869 et 870), `docs/SPEC-workflow-engine.md` §7 sexies.* Le formulaire de surcharge d'une étape porte, après
+  le libellé, la probabilité et le seuil, un champ **« Description de l'étape »** : même `textarea` que le catalogue
+  (§5.18). Vide, l'étape reprend la description du nœud, que la phrase d'aide **cite** : « Vide, l'étape reprend celle
+  du nœud : « {description} ». », ou « Vide, l'étape n'a pas de description : le nœud n'en porte aucune. ». Comme les
+  autres surcharges, le vider la retire.
+
 ### 5.16 Corbeille — `CRM-077`
 
 Quatrième surface d'administration, et la première dont l'**état vide est le cas normal**. Ce que
@@ -1898,6 +1905,13 @@ alerte de refus dans le bloc concerné.
     geste n'a aucun effet observable sur un nœud que les sélecteurs d'étape ignorent déjà. La ligne
     archivée reste en revanche **comptée comme voisine** par le calcul, puisqu'elle occupe une place
     à l'œil (`docs/SPEC-workflow-engine.md` §2 ter.3).
+
+- **LA DESCRIPTION D'UN NŒUD** — *`CRM-133`, écrit le 2026-11-07 avant le code (décisions 869 et 870),
+  `docs/SPEC-workflow-engine.md` §7 sexies.* Le formulaire de création et celui de modification portent un champ
+  **« Description »**, facultatif, en dernier : un `textarea` de trois lignes, redimensionnable verticalement, avec la
+  phrase d'aide « Elle s'affiche au survol de l'étape, sur le board et sur la fiche ; une étape peut la remplacer. ».
+  Vidé, il retire la description. Sur la ligne du nœud, la description **ne s'affiche pas** : la liste qualifie un nœud
+  par ses attributs courts, et une prose y romprait la hauteur des lignes (§5.9). Elle se lit dans le formulaire.
 
 ### 5.19 Carnet de contacts — `CRM-060`
 
@@ -6115,6 +6129,15 @@ montrent de la même façon.
 - **ELLE VIT SUR QUATRE ÉLÉMENTS, ET SUR EUX SEULS** : la pilule d'un track dans la barre latérale (§5.5 bis), l'onglet
   d'un channel (§12.1), le titre d'une affaire sur sa carte de board (§5.1) et dans sa ligne de vue liste (§5.9).
   L'élément ne change ni de forme, ni de cible, ni de rôle : c'est toujours le même lien.
+  **RÉVISÉ PAR `CRM-133` (2026-11-07, décisions 869 et 870) : DEUX ÉLÉMENTS DE PLUS, l'étape.** L'en-tête d'une
+  colonne du board (§5.1) et le nom de l'étape de chaque rattachement, sur la fiche d'une affaire, montrent la
+  description **effective** de l'étape — sa surcharge, sinon celle de son nœud (`docs/SPEC-workflow-engine.md`
+  §7 sexies). Ni l'un ni l'autre n'est un lien : la bulle s'accroche donc à un **bouton d'information** posé juste après
+  le nom, icône Lucide **`Info`** à 16 px dans une cible de `--size-target` (§8), bouton discret, nom accessible
+  « Description de l'étape {étape} », `aria-describedby` vers la bulle ouverte. Il s'ouvre au survol, au focus et à la
+  touche Entrée, se ferme à Échap. **Sans description effective, aucun bouton** : la règle suivante vaut pour lui. La
+  bulle se pose **sous** le bouton, comme pour un onglet. Aucune couleur ni aucun jeton nouveau ; une icône Lucide
+  nouvelle, `Info`, qui ne sert aucun autre objet (§9).
 
 - **ELLE N'EXISTE QUE S'IL Y A UNE DESCRIPTION.** Une description absente, vide ou faite de blancs ne rend **rien** —
   ni bulle, ni texte masqué, ni changement de l'élément, dont le `title` reste celui d'avant. Une bulle qui ne dirait

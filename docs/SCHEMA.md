@@ -349,6 +349,7 @@ Catalogue partagé des étapes. C'est lui qui rend l'analytique comparable d'un 
 | `color` | `text` | jeton du design system |
 | `default_probability` | `numeric(5,2)` | `CHECK (0 <= x <= 100)` |
 | `default_stale_after_days` | `integer` | seuil de relance par défaut |
+| `description` | `text` | facultative, non vide après `btrim` si posée, sans borne — **`CRM-133`, migration `0170`** |
 | `position` | `numeric` | ordre d'affichage du catalogue, attribuée par trigger si omise |
 | `archived_at` | `timestamptz` | un nœud utilisé n'est jamais supprimé, seulement archivé |
 | `created_at`, `updated_at` | `timestamptz` | conventions générales ; `updated_at` maintenue par trigger |
@@ -417,6 +418,7 @@ Instanciation d'un nœud du catalogue dans un workflow.
 | `label_override` | `text` | surcharge locale facultative |
 | `probability_override` | `numeric(5,2)` | |
 | `stale_after_days` | `integer` | surcharge du seuil de relance |
+| `description_override` | `text` | surcharge de la description du nœud ; facultative, non vide après `btrim` si posée — **`CRM-133`, migration `0170`** |
 | `is_initial` | `boolean` | exactement une étape initiale par workflow |
 
 Unique : `(workflow_id, node_id)` — un nœud n'apparaît qu'une fois par workflow. Contrainte `DEFERRABLE INITIALLY
@@ -2510,6 +2512,25 @@ elle.
 `public.prepare_email`, `app.refuser_envoi_connecteur`, `app.via_connector`, puis la table — les mails préparés en
 attente sont perdus : les lister avant. **Avec l'image `mcp` d'avant `CRM-128` T3** : sans la garde, son `crm_mail_send`
 enverrait de nouveau directement.
+
+### Migration `0170` — la description d'un nœud, et sa surcharge par l'étape (`CRM-133` ; spécifiée le 2026-11-07, à écrire)
+
+`docs/SPEC-workflow-engine.md` §7 sexies, décisions 869 et 870.
+- **`workflow_nodes_catalog.description`** et **`workflow_steps.description_override`**, `text`, nulles, chacune avec un
+  `CHECK (x is null or btrim(x) <> '')`. Aucune donnée existante n'est touchée : les deux colonnes naissent nulles.
+- **Les `grant update` par colonne** de ces tables, s'il en existe, sont étendus aux deux colonnes ; aucune politique RLS
+  nouvelle.
+- **`app.workflow_composition_document`**, reprise à l'identique de sa définition en base, avec un ajout : la clé
+  `description_override` dans l'objet d'une étape, **seulement si elle est posée** (le patron de la `0157`) ; les
+  empreintes existantes ne changent pas.
+- **La restauration** (`app.appliquer_composition`), **la copie** (`copy_workflow_to_track`) et **les comparaisons**
+  (`compare_workflow_versions`, `app.workflow_composition_naturel`) reprises de même, chacune avec la seule colonne
+  ajoutée, à côté de `label_override`.
+- **Les déclencheurs d'audit** de `workflow_nodes_catalog` et de `workflow_steps` (`0115`) nomment les deux colonnes ;
+  elles n'entrent pas dans les valeurs courtes recopiées.
+
+**Retrait** : reposer les fonctions et les déclencheurs de leur définition précédente, puis retirer les deux colonnes ; les
+descriptions écrites sont perdues, et le contrat de déploiement le dit.
 
 ### Migration `0169` — le générateur ne doublonne pas un champ de l'affaire (`CRM-112` T7 ; livrée en développement le 2026-11-05)
 

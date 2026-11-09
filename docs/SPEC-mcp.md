@@ -1090,6 +1090,19 @@ journal écrit ; et **E2E** : une étape ajoutée par un vrai client MCP paraît
 champ exigé par le connecteur bloque un déplacement au board (T2.b), une restauration par le connecteur remappe une
 affaire visible au board (T2.c).
 
+
+**Révisé par `CRM-133` (2026-11-07, décisions 869 et 870 ; `docs/SPEC-workflow-engine.md` §7 sexies), dans la famille
+`workflows`, sans outil, famille, case ni migration de la matrice nouvelle** :
+- `crm_workflow_node_list` rend la `description` du nœud ;
+- `crm_workflow_node_create` et `crm_workflow_node_update` acceptent `description` ; une chaîne vide ou blanche est
+  envoyée `null` (« retirer ») ;
+- `crm_workflow_step_add` et `crm_workflow_step_update` acceptent `description_override`, même règle ; `null` rend la
+  description du nœud ;
+- `crm_workflow_get` (famille `structure`) rend pour chaque étape sa `description_override` et sa description
+  **effective**.
+Le test unitaire de chaque outil et `verify-mcp.sh --rapide` le prouvent ; l'intégration écrit puis relit une description
+sous un compte administrateur, et constate le refus pour un compte qui n'administre pas.
+
 ### 9.2 duodecies La checklist d'une affaire — `CRM-068` T5 (liste fixée par `docs/SPEC-checklists.md` §5, validée le 2026-10-26, décisions 747 et 748 ; précisée le 2026-10-27, décision 767)
 
 **Famille `affaires`, existante** : aucune migration, aucune ligne nouvelle dans la matrice. Lire la checklist relève de

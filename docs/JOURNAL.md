@@ -39453,3 +39453,23 @@ nœud et sa surcharge d'étape avec les cases en place (consulter, modifier) ; a
 la matrice.
 **Conséquences** : unité `CRM-133` — migration, `docs/SCHEMA.md`, l'éditeur du catalogue et du workflow, l'affichage là où
 l'étape se lit (la fiche, le board), les outils `workflows` du connecteur, le manuel ; à spécifier avant le code.
+
+### décision 870 — `CRM-133` : la surcharge de description suit le chemin de `label_override`, et se lit dans une infobulle
+
+*2026-11-07, session interactive 4891a451 (p2enjoy-crm-2f), unité confiée par la session de livraison (décision 869).*
+**Observations** : `label_override` est copié, versionné (document de composition, empreinte), restauré, comparé et
+audité ; la `0157` a ajouté une clé au document **seulement quand elle porte une valeur**, pour que les empreintes
+existantes ne bougent pas ; l'infobulle de description (`CRM-105`, `docs/DESIGN_SYSTEM.md` §5.58) vit sur quatre liens ;
+l'en-tête d'une colonne du board est un titre, l'étape d'un rattachement sur la fiche n'est pas un lien.
+**Décisions de conception** (`docs/SPEC-workflow-engine.md` §7 sexies, `docs/SCHEMA.md` « Migration `0170` »,
+`docs/DESIGN_SYSTEM.md` §5.15, §5.18, §5.58, `docs/SPEC-mcp.md` §9.2 undecies) :
+- deux colonnes `text` nulles, non blanches, sans borne ; « vide » s'envoie `NULL` ;
+- la surcharge suit **exactement** `label_override` : document (clé posée seulement si présente), restauration, copie,
+  comparaisons, audit (nommée seulement) ; la description du nœud n'est pas versionnée, comme son libellé ;
+- l'affichage : sur le board et la fiche seulement, un bouton d'information (`Info`) après le nom de l'étape, qui ouvre
+  l'infobulle du §5.58 ; aucun bouton sans description effective ;
+- hors périmètre, dit explicitement : vue liste, affaires figées, entonnoir, timeline, assistant IA, modèles d'email,
+  webhooks, import ;
+- le seed : la surcharge posée **avant** la copie du workflow par défaut (comme la décision 855).
+**MCP** : famille `workflows` (décision 869), cases existantes ; `crm_workflow_get` reste à `structure`.
+
