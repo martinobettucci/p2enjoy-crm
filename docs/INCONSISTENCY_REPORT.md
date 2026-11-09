@@ -8884,3 +8884,46 @@ channel » seulement quand la personne n'en lit aucun, comme l'accueil.
 channel » seulement si la mesure de l'accueil compte zéro ; sinon « Ouvrez un track pour voir ses channels ». Preuves :
 unitaires, `e2e/ui/accueil-channels.spec.ts` (bloc `CRM-131`), `docs/captures/CRM-131/`, manuel chapitre 3.
 
+
+### INC-349 — en production, aucun courrier ne peut partir, et « Tester la connexion » répond 502
+**Ouverte.**
+
+*Relevé le 2026-11-09 par la session 152dd27d (p2enjoy-crm-d9), à la demande du responsable (« les mails compte sortant ne
+fonctionnent pas alors que la config est juste »). Mesures **en lecture seule** sur la cellule : journaux des conteneurs,
+requêtes en `default_transaction_read_only`, connexions TCP sans authentification. Rien n'a été écrit, recréé ni relancé.*
+
+**Le constat.**
+- `mail_outbox` est **vide** en production : aucun courrier n'y est jamais entré. Les trois identités sortantes sont en
+  `pending`, `last_checked_at` nul. `mail-sync` n'a reçu **aucune** requête d'envoi ni de test depuis son démarrage du
+  2026-11-03.
+- « Tester la connexion » a reçu **sept `502 service_unavailable`**, rendus par `mail-connection-test` en 10 à 40 ms.
+
+**Cause 1 — le conteneur `functions` de production n'a ni `MAIL_SYNC_URL` ni `MAIL_SYNC_INTERNAL_TOKEN`.** Sans eux,
+`relayer` rend `indisponible` avant tout appel (`supabase/functions/mail-connection-test/dependances.ts`), d'où le 502
+immédiat. Le `docker-compose.yml` déployé les pose bien (ligne 280), mais le conteneur a été **créé le 2026-10-20** et
+seulement redémarré depuis : l'empreinte de sa configuration (`590018aa…`) n'est plus celle que les fichiers déployés
+produisent (`4669ba45…`). Les fenêtres depuis le 2026-11-03 ne l'ont donc pas recréé.
+
+**Cause 2, qui empêcherait l'envoi même après la cause 1 — l'hébergeur ferme la sortie SMTP.** Depuis `mail-sync`, les
+ports 25, 465, 587, 2525, 2587, 8025 et 8465 rendent `Network is unreachable` ou un dépassement de délai, vers le serveur
+des identités comme vers un serveur public témoin. 443, 993 et 143 passent. La limite est connue
+(`docs/spark-notes/CONTRIBUTORS.md`, « Sortie SMTP : 25, 465 et 587 fermés par l'hébergeur » ; `docs/PROD-SERVER.md`
+§4), mais l'écran laisse configurer une identité qui ne peut pas partir, et rien ne le dit.
+
+**Observé au passage, côté réception.** La boîte entrante de production a un `imap_port` à **587** (STARTTLS), un port
+SMTP fermé en sortie. Les ports IMAP du même serveur (993, 143) répondent. Chaque tour de veille échoue
+(`veille_compte_echoue`, 7 676 fois en 7 jours), sans cause dans le journal, et `mail_messages` est vide. C'est une
+saisie à corriger dans Réglages ▸ Comptes de messagerie entrante (993 en TLS), pas un défaut de code. En revanche,
+l'événement sans cause est un manque d'observabilité (`CLAUDE.md` §20).
+
+**Ce qui contredit quoi.** `docs/PROD_MIGRATIONS.md` §2.30 : « la variable `MAIL_SYNC_URL` du service `functions` [est]
+en production depuis la fenêtre du 2026-11-03 », ce qui est faux. `docs/SPEC-mail-subsystem.md` §23.4 (le relais).
+`CLAUDE.md` §12 (le contrat ne dérive jamais de l'état réel).
+
+**Pistes, à arbitrer.**
+- (a) Cause 1 : recréer `functions` dans une fenêtre (`./runProd.sh --spark`, ou `compose_prod up -d --no-deps
+  --force-recreate functions`), par la seule session de livraison, sur instruction du responsable ; corriger le §2.30 ;
+  ajouter à `scripts/spark/verifier.sh` la présence des deux variables dans `functions`.
+- (b) Cause 2 : demander à l'hébergeur d'ouvrir 465 ou 587 en sortie ; ou passer par un relais d'envoi joignable en 443
+  (API HTTP), ce qui serait une unité nouvelle ; ou au minimum le dire dans l'écran et le manuel.
+- (c) Réception : corriger la saisie du port ; journaliser la classe d'erreur dans `veille_compte_echoue`.
