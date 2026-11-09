@@ -39473,3 +39473,18 @@ l'en-tête d'une colonne du board est un titre, l'étape d'un rattachement sur l
 - le seed : la surcharge posée **avant** la copie du workflow par défaut (comme la décision 855).
 **MCP** : famille `workflows` (décision 869), cases existantes ; `crm_workflow_get` reste à `structure`.
 
+
+
+### décision 871 — archiver un channel depuis la vue, et le retrouver dans un groupe « Archivés » replié ; MCP dans la famille `structure`
+
+*2026-11-09, session 4522fa9c (p2enjoy-crm-be), demande et arbitrage du responsable (`AskUserQuestion`).*
+**La demande** : archiver les channels sans les supprimer ; un clic les fait disparaître de la vue principale, cachés mais
+faciles à ressortir, « décollapser ». **L'existant** : Réglages ▸ Tracks et channels archive déjà un channel (masqué
+partout, non supprimé) et le désarchive par « Afficher les archivés » (`admin.archive.confirm.channel`).
+**Décision : le geste et le repli dans la vue** — un bouton « Archiver » sur le channel là où on le voit (barre des
+channels ou barre latérale), et un groupe « Archivés » replié au bout de la liste, qu'un clic déplie pour les revoir et
+les désarchiver. L'archivage reste celui de Réglages (même donnée, mêmes droits côté base), seul l'accès change.
+**MCP** : **oui, famille existante `structure`** — l'assistant archive et désarchive un channel avec les cases en place ;
+aucune famille nouvelle.
+**Conséquences** : unité `CRM-134`, à spécifier avant le code (`docs/DESIGN_SYSTEM.md`, `docs/SPEC-channels.md`,
+`docs/SPEC-mcp.md`, le manuel).

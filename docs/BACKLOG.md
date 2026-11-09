@@ -18872,3 +18872,17 @@ d'étape, cases existantes ; au catalogue de `docs/SPEC-mcp.md` §9.2, dans une 
 connecteur et `verify-mcp.sh` ; seed (une description de nœud, une surcharge) ; captures aux quatre paliers ; manuel ;
 contrat de déploiement.
 
+## Demande du 2026-11-09 — archiver un channel depuis la vue, le retrouver replié (décision 871)
+
+### CRM-134 — Archiver un channel depuis la vue, et le retrouver dans un groupe « Archivés » replié `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-09 ; arbitrée le même jour (décision 871).
+**Comportement attendu** : un bouton « Archiver » sur le channel là où on le voit ; le channel quitte la vue principale
+sans être supprimé ; un groupe « Archivés » replié au bout de la liste se déplie d'un clic, montre les channels archivés
+et permet de les désarchiver. Même donnée et mêmes droits que l'archivage de Réglages ▸ Tracks et channels.
+**MCP** : **oui, famille `structure`** (décision 871) — archiver et désarchiver un channel, cases existantes.
+**Spécification** : à écrire avant le code — `docs/DESIGN_SYSTEM.md` (le bouton, la confirmation, le groupe replié),
+`docs/SPEC-channels.md`, `docs/SPEC-mcp.md` §9.2, le manuel.
+**DoD** : unitaires ; API (droits : refus pour qui ne peut pas archiver) ; E2E souris et clavier (archiver, déplier,
+désarchiver) ; outils du connecteur et `verify-mcp.sh` ; seed (un channel archivé) ; captures aux quatre paliers ; manuel.
+
