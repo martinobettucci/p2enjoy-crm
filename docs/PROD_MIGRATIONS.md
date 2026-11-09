@@ -726,6 +726,9 @@ les adresses régénérées sont celles que les correspondants reçoivent désor
 `docs/SPEC-mail-subsystem.md` §23.5 ; `docs/DESIGN_SYSTEM.md` §5.93. **La webapp de `main` seule** : la migration 151, la
 fonction edge `mail-connection-test`, l'image `mail-sync` et la variable `MAIL_SYNC_URL` du service `functions` sont en
 production depuis la fenêtre du 2026-11-03 (§8). Aucune migration, aucune variable, aucun secret, aucune image.
+**Rectifié le 2026-11-09 (INC-349, décision 872)** : la variable n'était **pas** en production — le conteneur `functions`
+datait du 2026-10-20, et un `docker restart` ne relit pas l'environnement. Il a été **recréé** le 2026-11-09 (§8) ; un
+service dont l'environnement change se recrée (`up --force-recreate --no-deps`), il ne se redémarre pas.
 
 | # | Geste | Qui | Comment |
 |---|---|---|---|
@@ -2276,6 +2279,18 @@ publique sert le module d'objectifs de ce build (`200`). La baseline reste **81*
   compteur antérieur, et une révision comparée au `HEAD` local qu'une autre session venait d'avancer d'un commit de
   documentation seule (`88caf34f`), sans code livrable.
 - **Reste** : le constat du responsable, un assistant connecté qui lit ou compose un canevas.
+
+### 2026-11-09 — `functions` recréé, le port IMAP de la boîte entrante corrigé (INC-349)
+
+- **Instruction** : décision 872 (« Maintenant » ; « Vous, sur mon instruction »), sur les mesures en lecture seule de la
+  session d9. La sortie SMTP de l'hébergeur a été ouverte par le responsable ; 25, 465 et 587 répondent `220`.
+- **Avant** : `sauvegardes/avant-inc349-20261109T192838Z.dump` (2,6 Mo, 3 156 entrées relues).
+- **Gestes** : `compose_prod up -d --force-recreate --no-deps --wait functions` dans la cellule, à la révision `dc24db3c`
+  (aucun code changé) : sain, `MAIL_SYNC_URL` et `MAIL_SYNC_INTERNAL_TOKEN` présents (noms seuls) ; puis la boîte
+  `d7d6ddd0` passée de 587/`starttls` à 993/`ssl` (une ligne, le secret intact).
+- **Constat** : la relève échoue encore (`veille_compte_echoue`, sans motif, `last_error` vide) ; cause en cours d'établissement
+  en lecture seule par la session d9 (INC-349). « Tester la connexion » ne peut plus rendre le `502` dû à l'absence de la
+  variable ; à constater par le responsable.
 
 ### 2026-11-06 — la webapp de `main` et le manuel (`CRM-112` T8)
 
