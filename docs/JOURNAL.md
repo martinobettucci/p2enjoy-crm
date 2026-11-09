@@ -39488,3 +39488,20 @@ les désarchiver. L'archivage reste celui de Réglages (même donnée, mêmes dr
 aucune famille nouvelle.
 **Conséquences** : unité `CRM-134`, à spécifier avant le code (`docs/DESIGN_SYSTEM.md`, `docs/SPEC-channels.md`,
 `docs/SPEC-mcp.md`, le manuel).
+
+
+### décision 872 — INC-349 : recréer `functions` en production maintenant, et corriger sur instruction le port IMAP de la boîte entrante
+
+*2026-11-09, session 4522fa9c (p2enjoy-crm-be, session de livraison), arbitrage du responsable (`AskUserQuestion`), sur les
+mesures en lecture seule de la session d9 (INC-349).*
+**Constats** : (1) le conteneur `p2enjoy-functions` de production date du 2026-10-20 et ne porte aucune variable
+`MAIL_SYNC*` — vérifié aussi par la session de livraison, noms seuls — d'où le `502` immédiat de « Tester la connexion » ;
+le `docker restart` du 2026-11-05 (décision 854) relance un conteneur sans relire son environnement, et le §2.30 du contrat
+affirmait le contraire ; (2) l'hébergeur bloquait la sortie SMTP ; (3) la boîte entrante de production est réglée sur le
+port IMAP 587, un port d'envoi : chaque relève échoue.
+**Décisions** : (1) **recréer `functions` maintenant** (même révision `dc24db3c`, seul l'environnement est relu), puis
+constater en lecture seule ; (2) **réglé par le responsable** : l'option de sortie SMTP de l'hébergeur est activée, et la
+session d9 a mesuré 25, 465 et 587 en `220` ; (3) **la session de livraison écrit le port, sur instruction explicite du
+responsable** : 993 en TLS, après un `pg_dump`, sans toucher au secret ; puis constater la relève.
+**Leçon** : un service dont l'environnement change se **recrée** (`up --force-recreate --no-deps`), il ne se redémarre
+pas ; le contrat le dira.
