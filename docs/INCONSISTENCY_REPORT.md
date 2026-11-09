@@ -8932,3 +8932,29 @@ en production depuis la fenêtre du 2026-11-03 », ce qui est faux. `docs/SPEC-m
 depuis `mail-sync` : le serveur des identités répond `220` sur 25, 465 et 587, et un serveur public témoin aussi. **La
 cause 1 demeure** : `functions` est toujours le conteneur du 2026-10-20, sans `MAIL_SYNC_URL` ni le jeton. Les trois
 identités restent en `pending`. **La réception aussi** : la boîte entrante est toujours réglée sur le port 587.
+
+**La relève après la correction de la boîte, mesurée le 2026-11-09** (session 152dd27d, en lecture seule, à la demande de
+be ; décision 872 : `functions` recréé et la boîte passée en 993/`ssl` par be). Les seules étapes de lecture d'une relève
+ont été rejouées dans `mail-sync`, sans aucune écriture en base et sans afficher d'identifiant ni de secret :
+`lire_comptes_a_veiller` (1 compte), `mail_inbound_account_credentials` (`stable`, port 993, `ssl`, identifiant et secret
+posés), les dossiers surveillés, les adresses de service, puis la connexion IMAP.
+- **La cause : le serveur IMAP refuse l'authentification**, `[AUTHENTICATIONFAILED] Authentication failed.`, par `LOGIN`
+  comme par `AUTHENTICATE PLAIN` (le serveur annonce `AUTH=PLAIN`). L'hôte, le port, le TLS et le réseau sont bons.
+- **Les mêmes identifiants passent en SMTP.** Les trois identités sortantes, sur le même hôte, avec le même identifiant
+  et le même secret (comparés en mémoire), s'authentifient par `probe_outbound_identity`, dont le verdict n'a pas été
+  écrit. Le secret est ASCII, sans espace ni guillemet. **Le refus vient donc du fournisseur, pour l'accès IMAP de cette
+  boîte**, et non de la saisie ni du code. Ce que la mesure ne départage pas : un accès IMAP désactivé ou verrouillé pour
+  la boîte, ou un mot de passe propre à l'IMAP. Seul le responsable peut le vérifier, depuis l'interface du fournisseur
+  ou un client de messagerie.
+- **Trois défauts de produit, qui ont rendu cette panne invisible** :
+  - (i) `structured_logging.SAFE_FIELDS` ne laisse passer ni `account_id`, ni `panne`, ni `releves`, ni `echecs`, ni
+    `ignores`. `veille_compte_echoue` et `veille_tour_termine` sortent donc sans aucun détail, alors que `veille.py` les
+    passe.
+  - (ii) Un échec de la veille n'écrit ni `status` ni `last_error` : l'écran montre « En attente » indéfiniment.
+  - (iii) Aucun espacement après un refus d'authentification : un `LOGIN` refusé à chaque tour, environ toutes les
+    70 secondes, ce qui peut amener le fournisseur à bloquer la boîte ou l'adresse de la cellule, l'envoi compris.
+  Ils relèvent d'une unité à ouvrir (`CRM-059` en revendique la supervision).
+- **Pistes, à arbitrer** :
+  - (d) le responsable vérifie l'accès IMAP de la boîte chez le fournisseur et ressaisit le mot de passe ;
+  - (e) en attendant, suspendre la relève de cette boîte, une écriture en production réservée à be sur instruction ;
+  - (f) une unité pour (i), (ii) et (iii).
