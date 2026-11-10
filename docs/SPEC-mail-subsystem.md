@@ -3598,11 +3598,18 @@ La forme est au §5.94 du design system. Le comportement :
 
 ### 26.4 Données de développement
 
-Le seed porte, **par le vrai chemin de la messagerie** (dépôt sur le serveur de courrier de dev, relève par
-`mail-sync`) :
-- un message **non classé d'un contact connu**, rattaché à **deux** affaires actives. La case cochée en montre deux ; la
-  règle 3 ne suggère rien, faute d'unicité ;
-- un message **non classé d'un expéditeur inconnu**, pour l'état vide qui propose de décocher.
+*Révisé le 2026-11-10 à l'écriture du code.* La première rédaction promettait un message d'un contact rattaché à **deux**
+affaires. Mesuré : le seed n'a qu'**une** boîte de correspondant extérieur, celle de Léo Marchand, et un principal du
+serveur de dev n'expédie que depuis sa propre adresse (`501 5.5.4`). En ajouter une seconde toucherait au provisionnement
+du serveur de courrier, et rattacher Léo à une seconde affaire supprimerait la suggestion (règle 3) que `CRM-060` prouve sur
+son message. **Le seed existant démontre donc l'unité sans changement** :
+- « Point d'avancement — migration ERP », de Léo Marchand, contact de la seule affaire `…00c2` : un **expéditeur connu**.
+  La case cochée montre cette affaire, présélectionnée (§26.3) ;
+- « Candidature spontanée », de `bizdev@p2enjoy.test`, contact d'aucune affaire : un **expéditeur inconnu**, pour l'état
+  vide qui propose de décocher.
+
+Le cas de **plusieurs** affaires connues est monté et défait par les preuves elles-mêmes. L'E2E API et l'E2E UI rattachent
+Léo à une seconde affaire par la clé de service, puis retirent ce lien. Le pgTAP crée sa propre sonde dans sa transaction.
 
 ### 26.5 Preuves
 
@@ -3615,7 +3622,10 @@ Le seed porte, **par le vrai chemin de la messagerie** (dépôt sur le serveur d
   - le message illisible en 404 ;
   - l'anonyme refusé ;
   - une affaire illisible jamais rendue, la lectrice ne voyant pas l'affaire `…00c1` ;
-  - un contact illisible qui ne rend pas une affaire « connue ».
+  - un lien affaire–contact illisible, celui d'une affaire illisible, qui ne rend jamais cette affaire. *Précisé à
+    l'écriture du code* : un contact se lit par tout membre de l'espace (`contacts_lecture_membre`), et un lien suit la
+    lecture de son affaire (`card_contacts_lecture`). Le cas d'un « contact illisible » se confond donc avec celui d'une
+    affaire illisible.
 - **API** : les mêmes droits par jeton réel, administratrice, business developer et lectrice.
 - **Unitaires** : le module de lecture et le composant (débounce, réponse périmée ignorée, présélection unique, choix
   conservé).
