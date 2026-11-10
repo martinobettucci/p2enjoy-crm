@@ -17,6 +17,8 @@
 --           `already_attached` (docs/SPEC-rattachements.md §5, §14 ; docs/JOURNAL.md décision 731)
 -- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
 --           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
+-- @verifies CRM-144 (docs/BACKLOG.md) — tranche T1 : le type `mail_cancelled` entre au `CHECK` des événements
+--           (docs/SPEC-mail-subsystem.md §28.3 ; docs/SCHEMA.md « Migration `0176` »)
 --
 -- Suite pgTAP de l'unité `CRM-045`. Elle prouve huit choses :
 --
@@ -246,6 +248,9 @@ select ok(
 --
 -- RÉVISÉE LE 2026-11-01 PAR `CRM-111` TRANCHE T3 — ONZIÈME ÉVOLUTION. `attached` et `detached` portent l'énumération à
 -- VINGT-CINQ (docs/SPEC-rattachements.md §5), dans la migration qui les écrit (0148), en queue. Aucune valeur retirée.
+--
+-- RÉVISÉE LE 2026-11-10 PAR `CRM-144` TRANCHE T1 — DOUZIÈME ÉVOLUTION. `mail_cancelled` porte l'énumération à VINGT-SIX
+-- (docs/SPEC-mail-subsystem.md §28.3, décision 906), dans la migration qui l'écrit (0176), en queue. Aucune valeur retirée.
 
 select is(
 	(select pg_get_constraintdef(c.oid) from pg_constraint c
@@ -257,10 +262,10 @@ select is(
 	'''snoozed''::text, ''woken''::text, '
 	'''stalled''::text, ''contact_linked''::text, ''contact_unlinked''::text, '
 	'''contact_role_changed''::text, ''checklist_checked''::text, ''checklist_unchecked''::text, '
-	'''label_added''::text, ''label_removed''::text, ''attached''::text, ''detached''::text])))',
-	'Le `CHECK` compte VINGT-CINQ valeurs : `CRM-111` tranche T3 ajoute le rattachement et le retrait d''une affaire sans '
-	'retirer aucune des vingt-trois précédentes. Le garde-fou historique ÉVOLUE avec '
-	'le vocabulaire au lieu de figer un état périmé — et c''est la ONZIÈME fois qu''il le fait');
+	'''label_added''::text, ''label_removed''::text, ''attached''::text, ''detached''::text, ''mail_cancelled''::text])))',
+	'Le `CHECK` compte VINGT-SIX valeurs : `CRM-144` tranche T1 ajoute l''annulation d''un envoi sans retirer aucune des '
+	'vingt-cinq précédentes. Le garde-fou historique ÉVOLUE avec '
+	'le vocabulaire au lieu de figer un état périmé — et c''est la DOUZIÈME fois qu''il le fait');
 
 -- LE MÉCANISME A JOUÉ UNE FOIS DE PLUS. `CRM-058` a étendu l'énumération dans la même migration
 -- que son écriture, exactement comme l'assertion le lui demandait. Elle est donc RETOURNÉE : le

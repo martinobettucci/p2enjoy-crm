@@ -903,7 +903,31 @@ dépôt ; `select pg_get_function_identity_arguments('public.inbox_arborescence'
 **Retour arrière** : reposer la webapp et l'image `mcp` précédentes, puis retirer les deux fonctions et reposer
 `inbox_arborescence()` de la `0154`, comme le dit `docs/SCHEMA.md`. Aucune donnée n'est touchée.
 
+### 2.39 `CRM-144`, décisions 898 et 906 — l'outbox : annuler, réessayer ; INC-354, la passe d'envoi au quota dépassé (À LIVRER : migration 176, seule pour T1 ; webapp et image `mcp` avec T3 et T4)
+
+`docs/SPEC-mail-subsystem.md` §28 ; `docs/SCHEMA.md` « Migration `0176` » ; `docs/INCONSISTENCY_REPORT.md` INC-354. **Hors du
+lot annoncé (0172 à 0175)** : la session de livraison décide si elle l'y ajoute. **La migration fonctionne seule** :
+aucun écran ni outil ne l'appelle avant T3 et T4, et l'image `mail-sync` est inchangée. Elle corrige **INC-354**, actif en
+production : dès qu'une identité a dépassé son quota au moment d'envoyer, `reserver_envois` échoue en entier et **plus
+aucun envoi ne part**, de toutes les identités, tant que la ligne en cause reste due. Trois colonnes facultatives sur
+`mail_outbox` (la reprise de `from_address` met à jour chaque ligne de l'outbox, une fois), un type d'événement, quatre
+fonctions nouvelles, trois reprises ; sans verrou notable au-delà de cette mise à jour. Aucune variable, aucun secret.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 176 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate`, instantané de VM pris |
+| 2 | Constater la passe d'envoi | session de livraison, en lecture seule | les journaux de `mail-sync` ne portent plus `column reference "attempts" is ambiguous` ; un envoi dû part |
+
+**Vérification après la fenêtre**, en lecture seule : le registre gagne une ligne, l'empreinte de la 176 est égale au
+dépôt ; `select count(*) from mail_outbox o join mail_outbound_identities i on i.id = o.identity_id where o.from_address is null` rend 0.
+**Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0176` » ; reposer `reserver_envois` de sa définition
+précédente rétablit INC-354. Aucun envoi n'est perdu.
+
 ## 3. Migrations en attente
+
+**La 176** (`CRM-144`, décisions 898 et 906), *en attente, hors du lot annoncé* : annuler et réessayer un envoi,
+l'adresse d'expédition gardée, et la correction d'INC-354 (`docs/SCHEMA.md` « Migration `0176` »). **Seule** pour T1
+(§2.39). Aucun geste préalable du responsable.
 
 **La 175** (`CRM-139`, décisions 879 et 902), *en attente* : `concerns_me` et `inbox_arborescence(p_only_me)`, le courrier qui concerne l'appelant (`docs/SCHEMA.md` « Migration `0175` »). Deux fonctions, aucune donnée, sans verrou notable. **Avec la webapp et l'image `mcp` de `main`, après elle** (§2.38). Aucun geste préalable du responsable.
 

@@ -9128,3 +9128,30 @@ dépendent ») ; la décision 51 (un garde-fou se révise sur une valeur mesuré
 **Piste, à arbitrer** : donner au champ `siret` un identifiant stable dans le seed (passé au `POST` de
 `card_common_fields`), puis mesurer l'empreinte sur une base recréée et réviser la preuve 2 avec ce motif. La preuve demande
 un `./resetMe.sh` de la pile partagée, dont la fenêtre appartient à la session de livraison.
+
+### INC-354 — `reserver_envois` échoue en entier dès qu'une identité a dépassé son quota au moment d'envoyer
+**Ouverte le 2026-11-10.** *Relevée par la session d5b44a2d (p2enjoy-crm-c2), en écrivant la preuve pgTAP de `CRM-144` T1.*
+
+**Le constat, mesuré en développement.** Un envoi `queued` et échu, dont l'identité a dépassé son `daily_quota`, fait
+échouer l'appel entier de `public.reserver_envois` :
+`ERROR: column reference "attempts" is ambiguous — It could refer to either a PL/pgSQL variable or a table column`
+(`… set status = 'failed', last_error = 'quota_exceeded', attempts = attempts + 1`). La transaction est défaite : aucune
+ligne n'est réservée, pas même celles des autres identités.
+
+**La cause.** La migration `0133` (`CRM-069` T4, le récapitulatif quotidien) a ajouté `attempts integer` aux colonnes que
+la fonction rend (`returns table (…)`). Dans le corps PL/pgSQL, `attempts` désigne désormais aussi ce paramètre de sortie,
+et la branche du quota, inchangée depuis `0030`, devient ambiguë. Aucune preuve n'exerçait cette branche au moment de la
+réservation : `0030` éprouve le quota à la mise en file (`queue_outbound_email`).
+
+**La conséquence en production.** La `0133` y est appliquée. Le jour où une identité atteint son quota entre la mise en file
+et l'envoi, chaque passe de `mail-sync` échoue, et **plus aucun envoi de l'espace ne part** tant que la ligne fautive reste
+`queued`. Le comportement attendu (`docs/SPEC-mail-subsystem.md` §19.4) est que seul cet envoi passe `failed`
+(`quota_exceeded`).
+
+**Ce qui contredit quoi.** `docs/SPEC-mail-subsystem.md` §19.4 (« le contrôle a lieu deux fois […] la règle est celle du
+worker ») contre le code de `0133`.
+
+**Correction proposée, dans le périmètre de `CRM-144`** : la migration `0176` reprend `reserver_envois` à l'identique, la
+seule mise à jour du quota qualifiée (`attempts = o.attempts + 1` sur `public.mail_outbox o`). Une preuve pgTAP exerce la
+branche : un envoi échu sur une identité au quota atteint passe `failed` (`quota_exceeded`), et la passe réserve les autres.
+**À livrer avec la `0176`**, ou en avance si la session de livraison le juge urgent.

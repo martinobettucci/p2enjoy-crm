@@ -13,6 +13,13 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-144` — l'outbox : annuler un envoi en file, réessayer un échec (décisions 898 et 906) — tranche T1, la base
+
+- **Annuler et réessayer, contrôlés par la base** : `cancel_outbound_email` annule un envoi encore en file, `retry_outbound_email` remet en file un envoi échoué ; seuls l'auteur de l'envoi et les administrateurs de l'espace qui écrivent l'affaire le peuvent (migration 176). Un envoi parti, en cours, ou dont un premier essai a été interrompu (le message a pu partir) ne s'annule pas, et chaque refus est nommé.
+- **La course contre la passe d'envoi** est tenue par le verrou de ligne et deux transitions conditionnelles : une annulation ne laisse jamais partir un message, et ne dit jamais annulé un message parti.
+- **Le fil de l'affaire** garde une ligne « Envoi annulé », et chaque envoi garde son adresse d'expédition au moment de la mise en file.
+- **Correctif (INC-354)** : la passe d'envoi échouait en entier dès qu'une identité avait dépassé son quota au moment d'envoyer ; l'envoi concerné passe désormais en échec `quota_exceeded`, et les autres partent.
+
 #### `CRM-139` — « Seulement moi » dans l'inbox (décisions 879, 901 et 902)
 
 - **L'inbox s'ouvre sur le courrier qui vous concerne** : la case « Seulement moi », cochée par défaut dans l'en-tête des dossiers, ne montre que les messages adressés (À, Cc, Cci) à l'une de vos adresses d'expédition personnelles, ou envoyés depuis elles. Les nombres des dossiers suivent la case. Décochée, l'inbox d'avant.

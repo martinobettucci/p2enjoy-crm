@@ -19309,12 +19309,18 @@ l'espace qu'il a le droit de lire. Annuler et réessayer sont contrôlés côté
 un envoi parti, on ne réessaie qu'un échec).
 **MCP** : **oui, famille `messagerie`**, lecture (consulter) et actions annuler et réessayer (modifier) (décision 898).
 **Spécification** : `docs/SPEC-mail-subsystem.md` §28, écrite le 2026-11-10 avant le code (décisions 898 et 906), cinq
-tranches (§28.12) ; `docs/SCHEMA.md` « Migration à numéroter au push — l'outbox » ; `docs/SPEC-mcp.md` §9.2 *undevicies* ; le
+tranches (§28.12) ; `docs/SCHEMA.md` « Migration `0176` » ; `docs/SPEC-mcp.md` §9.2 *undevicies* ; le
 design system et le manuel s'écrivent avec l'écran.
 **DoD** : pgTAP (droits, transitions d'état, course annulation contre départ) ; unitaires ; API avec refus de droits ; E2E
 souris et clavier (en file, annuler, envoyés, échec, réessayer) ; pytest `mail-sync` si l'annulation y touche ; outils du
 connecteur et `verify-mcp.sh` ; seed (un envoi en file, un envoyé, un échec) ; captures aux quatre paliers ; manuel ;
 contrat.
+**État (2026-11-10, session c2)** : **T1 implémentée et vérifiée en développement** — migration `0176` (les colonnes
+`from_address`, `cancelled_at`, `cancelled_by`, l'événement `mail_cancelled`, `cancel_outbound_email`,
+`retry_outbound_email`, `app.outbox_gestes_permis`, `app.outbox_refuser_etat`, la purge reprise) et la correction
+d'INC-354 (`reserver_envois` au quota dépassé) ; pgTAP `0165` 35 assertions, gardes `0019` et `0133` révisées, suite
+complète 153 fichiers, 5187 assertions, sans anomalie. Restent T2 (la course à deux connexions et en parallèle), T3
+(l'écran), T4 (le connecteur), T5 (le seed et le contrat).
 
 ## Demande du 2026-11-10 — une livraison se voit au prochain chargement (décision 899)
 

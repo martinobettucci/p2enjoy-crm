@@ -2545,7 +2545,9 @@ revenue_lines integer, lines_without_actual integer)`, `sql`, `stable`, `securit
 **Retour arrière** : `drop function public.organization_revenue_totals(uuid);`. Aucune donnée n'en dépend ; la webapp et
 l'image `mcp` qui l'appellent se livrent avec elle.
 
-### Migration à numéroter au push — l'outbox : annuler, réessayer, l'adresse d'expédition gardée (`CRM-144`, décisions 898 et 906 ; spécifiée le 2026-11-10, à écrire)
+### Migration `0176` — l'outbox : annuler, réessayer, l'adresse d'expédition gardée (`CRM-144`, décisions 898 et 906 ; livrée en développement le 2026-11-10)
+
+*Numérotée `0176` au push, premier numéro libre sur `main` après la `0175` de `CRM-139`. Son test pgTAP prend le `0165`.*
 
 `docs/SPEC-mail-subsystem.md` §28.
 - **`mail_outbox.from_address`**, `text` : l'adresse d'expédition au moment de la mise en file, posée par un déclencheur
@@ -2557,9 +2559,17 @@ l'image `mcp` qui l'appellent se livrent avec elle.
   `security definer`, `authenticated` seul ; leurs refus nommés (§28.3, §28.4).
 - **`app.outbox_gestes_permis(public.mail_outbox) returns boolean`**, colonne calculée : l'auteur ou un administrateur de
   l'espace, qui écrit l'affaire.
-- **`public.depots_envoi_abandonnes`**, reprise : elle épargne les objets cités par un envoi `failed`.
+  `public.outbox_gestes_permis(public.mail_outbox)` l'expose à PostgREST (`authenticated` seul).
+- **`app.outbox_refuser_etat(text, text)`** : le refus d'état en 409 — `outbox_uncertain` pour une ligne `queued` à
+  `worker_interrompu`, `outbox_<statut>` sinon.
+- **`public.depots_envoi_abandonnes`**, reprise : elle épargne les objets cités par un envoi `queued`, `sending` ou
+  `failed`, et ceux d'un mail préparé en attente.
+- **`public.reserver_envois`**, reprise pour INC-354 : identique, sauf la branche du quota dépassé, qui qualifie
+  `attempts` par sa table (`o.attempts + 1`) ; sans quoi la référence est ambiguë avec la colonne rendue depuis la `0133`,
+  et la passe échoue en entier.
 
-**Retrait** : reposer `depots_envoi_abandonnes`, retirer les trois fonctions, rétablir la contrainte des types (un
+**Retrait** : reposer `depots_envoi_abandonnes` et `reserver_envois` de leur définition précédente (cette dernière
+rétablit le défaut d'INC-354), retirer les fonctions nouvelles, rétablir la contrainte des types (un
 événement `mail_cancelled` existant l'empêcherait : le retirer d'abord), puis les trois colonnes. Aucun envoi n'est perdu.
 
 ### Migration `0173` — le repli confirmé des pièces non analysées, leur reprise, les pièces d'un mail préparé (`CRM-143`, décisions 889 et 892 ; livrée en développement le 2026-11-10)

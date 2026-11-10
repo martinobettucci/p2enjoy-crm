@@ -3862,10 +3862,15 @@ L'annuler dirait « annulé » d'un message qui part : **elle est refusée** (`o
 peuvent encore écrire.
 
 **Les preuves** :
-- **pgTAP, à deux connexions réelles** (`dblink`, extension posée par la seule preuve) : les deux ordres du verrou, joués
-  pas à pas — l'annulation tient le verrou et la passe ne réserve rien ; la passe tient le verrou et l'annulation, débloquée
-  à la validation, refuse `outbox_sending`. Les lignes de la preuve sont validées par les connexions secondaires, puis
-  retirées ;
+- **pgTAP, à une connexion** : les invariants de chaque transition — une ligne `cancelled`, même due et la plus ancienne,
+  n'est jamais réservée ; une ligne `sending` ne s'annule pas (`outbox_sending`) ; une ligne `queued` à l'issue incertaine
+  non plus (`outbox_uncertain`), et elle reste `queued` ;
+- **`scripts/verify-outbox-course.sh`, à deux connexions réelles** : deux sessions `psql` ouvertes dans le conteneur de la
+  base locale, pilotées pas à pas, jouent les deux ordres du verrou — l'annulation tient le verrou et la passe ne réserve
+  rien, ni pendant ni après ; la passe tient le verrou et l'annulation, débloquée à la validation, refuse `outbox_sending`.
+  Les lignes de la preuve sont créées puis retirées par le script. *Révisé le 2026-11-10 (`CRM-144` T1)* : la preuve
+  prévue en pgTAP par `dblink` n'est pas jouable — le rôle `postgres` de Supabase n'est pas superutilisateur et `dblink`
+  exige alors un mot de passe, qu'aucune preuve versionnée ne porte (`CLAUDE.md` §3) ;
 - **pytest** (intégration du connecteur, contre la vraie base) : une série d'envois annulés **pendant** que des passes
   `reserver_envois` tournent en parallèle ; à l'issue, chaque envoi est soit `cancelled` et jamais réservé, soit réservé et
   son annulation refusée — jamais les deux, jamais aucun ;
@@ -3909,9 +3914,13 @@ Une migration, au premier numéro libre au push :
 - `mail_outbox.cancelled_at`, `mail_outbox.cancelled_by` (`profiles`, `on delete set null`) ;
 - le type d'événement `mail_cancelled` dans la contrainte de `card_events` (et hors du rattachement, comme `mail_sent`) ;
 - `cancel_outbound_email`, `retry_outbound_email`, `app.outbox_gestes_permis` ;
-- `depots_envoi_abandonnes`, reprise (§28.4).
+- `depots_envoi_abandonnes`, reprise (§28.4) ;
+- `app.outbox_refuser_etat`, qui lève les refus d'état en 409, et `public.outbox_gestes_permis`, l'enveloppe qui expose la
+  colonne calculée à PostgREST ;
+- `reserver_envois`, reprise pour INC-354 : la branche du quota dépassé qualifie `attempts` par sa table, faute de quoi
+  la passe échoue en entier dès qu'une identité a dépassé son quota au moment d'envoyer.
 
-`docs/SCHEMA.md` la décrit, avec son retrait.
+Elle porte le numéro `0176`, et son test pgTAP le `0165`. `docs/SCHEMA.md` la décrit, avec son retrait.
 
 ### 28.10 Seed
 
@@ -3924,7 +3933,8 @@ auteur.
 
 | Niveau | Preuve |
 |---|---|
-| pgTAP | chaque refus des deux fonctions ; les transitions permises et refusées ; l'issue incertaine ; l'événement `mail_cancelled` ; la colonne `from_address` reprise ; la course à deux connexions (§28.5) ; la purge qui épargne un échec |
+| pgTAP | chaque refus des deux fonctions ; les transitions permises et refusées ; l'issue incertaine ; l'événement `mail_cancelled` ; la colonne `from_address` reprise ; les invariants de la course à une connexion (§28.5) ; la purge qui épargne un échec ; la passe au quota dépassé (INC-354) |
+| Script | `scripts/verify-outbox-course.sh` : la course à deux connexions réelles, les deux ordres du verrou (§28.5) |
 | pytest | la course en parallèle contre la vraie base (§28.5) ; la passe ne reçoit jamais une ligne annulée |
 | unitaires | le dictionnaire des motifs, l'heure prévue, les états d'écran |
 | API (Playwright, jetons réels) | l'auteur annule ; un administrateur annule ; une collègue non administratrice est refusée ; la lectrice ne voit rien et est refusée ; réessayer un échec, et pas un envoyé |
@@ -3934,8 +3944,9 @@ auteur.
 
 ### 28.12 Tranches
 
-1. **T1, base** : la migration et pgTAP (la course comprise).
-2. **T2, la course en parallèle** : le pytest d'intégration et celui de `mail-sync`.
+1. **T1, base** : la migration et pgTAP (les invariants de la course), avec la correction d'INC-354.
+2. **T2, la course** : `scripts/verify-outbox-course.sh` à deux connexions, le pytest d'intégration en parallèle et celui
+   de `mail-sync`.
 3. **T3, l'écran** : les trois dossiers, l'API, l'E2E `ui`, les captures, le design system, le manuel.
 4. **T4, le connecteur** : les trois outils, `verify-mcp.sh`, `docs/SPEC-mcp.md`.
 5. **T5, le seed**.
