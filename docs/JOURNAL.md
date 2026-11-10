@@ -40040,3 +40040,15 @@ service `clamav`, livrés ensemble. Le paragraphe du design system se prend au p
 **Conséquences** : une migration au prochain numéro libre, une fonction sans table ni donnée, livrée avec la webapp et
 l'image `mcp`. Le seed reçoit, par le vrai chemin de la messagerie, un message d'un contact rattaché à deux affaires et
 un message d'un inconnu.
+
+
+### décision 894 — livrer la migration 0170 et l'image `mail-sync` (`CRM-135`), sans instantané
+
+*2026-11-10, session 4522fa9c (p2enjoy-crm-be, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : la migration `0170` puis l'image `mail-sync` reconstruite, dans cet ordre (contrat §2.33) : la veille journalise
+ses échecs sans secret, les écrit (`status`, `last_error`), espace les refus d'authentification et ignore une boîte
+désactivée (décisions 873, 874). **La campagne** : complète ; types et unitaires verts, mail 53/53, mcp 112, ui 1 152 sur
+1 157, api 1 319 sur 1 322, manuel 143 sur 144 ; deux défauts du lot (pgTAP 0133, deux renvois du manuel) corrigés par la
+session c2 (`44f2474c`) — garde du manuel 168, 0133 vert à HEAD ; le reste INC-342, vert rejoué seul, ou hors du lot et
+renvoyé à la session 2f (`premier-lancement`, aléa sous charge non reproduit ; pgTAP 0037, INC-353).
+**Décision : oui, sans instantané** : un `pg_dump` avant. L'IMAP de la boîte de production reste refusé par Gandi (INC-349).
