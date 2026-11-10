@@ -9014,4 +9014,6 @@ mêmes filtres que l'étape « channel ». L'affichage ne change pour personne.
 réglage serait une commande sans effet (`docs/DESIGN_SYSTEM.md` §5.10).
 **Laissé inchangé**, et soumis au responsable avec la spécification (`docs/SPEC-mail-subsystem.md` §25.2, point 2 ; décision
 884) : soit `label` interdit au CRM de créer des dossiers et d'y copier, soit le réglage n'est pas exposé.
+**Arbitrée le 2026-11-10 (décision 885)** : le réglage **n'est pas exposé**. L'incohérence reste ouverte, sans correction dans
+`CRM-136` : la colonne demeure stockée et non lue.
 

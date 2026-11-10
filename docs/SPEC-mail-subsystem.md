@@ -3333,17 +3333,18 @@ est rendue.
 
 ## 25. Historique, dossiers relevés, style de classement et quota d'envoi réglables à l'écran — `CRM-136`
 
-*Écrit avant le code, `docs/JOURNAL.md` décisions 875 (l'arbitrage du responsable) et 884 (les choix de conception, et trois
-points soumis à son arbitrage). Origine : la boîte de production ne relève que le courrier reçu depuis son branchement
+*Écrit avant le code, `docs/JOURNAL.md` décisions 875 (l'arbitrage du responsable), 884 (les choix de conception, et trois
+points soumis à son arbitrage) et 885 (ses réponses). Origine : la boîte de production ne relève que le courrier reçu depuis son branchement
 (§20.6 bis.4, `backfill_months = 0`), et aucun écran ne permet de changer ce réglage.*
 
 ### 25.1 Ce que l'unité livre, et ce qu'elle ne livre pas
 
 Livré :
 
-- **(i) trois réglages de relève sur Réglages ▸ Comptes de messagerie entrante** (§21) : l'historique
-  (`backfill_months`), les dossiers relevés (`watch_folders`) et le style de classement (`folder_style`). Le §21.1 les
-  renvoyait à `CRM-054` et `CRM-056`, qui ne les ont jamais exposés ; ils entrent au formulaire (§25.4) ;
+- **(i) deux réglages de relève sur Réglages ▸ Comptes de messagerie entrante** (§21) : l'historique
+  (`backfill_months`, au formulaire, §25.4) et les dossiers relevés (`watch_folders`, au panneau, §25.5). Le §21.1 les
+  renvoyait à `CRM-054` et `CRM-056`, qui ne les ont jamais exposés. **Le style de classement (`folder_style`) n'est pas
+  exposé** (décision 885, §25.2) ;
 - **(ii) le choix des dossiers parmi ceux de la boîte** (§25.3, §25.5) : l'écran lit la liste réelle des dossiers du
   serveur IMAP et propose une case par dossier ;
 - **(iii) le quota journalier sur Réglages ▸ Identités d'expédition** (§22), y compris le retour à « aucun plafond »
@@ -3357,13 +3358,15 @@ aucune case de la matrice (`docs/SPEC-mcp.md` §6.1).
 
 - **aucune suppression d'un message déjà relevé** quand un dossier est décoché ou l'historique réduit (§25.7) ;
 - **aucun relevé « immédiat » de l'historique** : l'historique descend par lots, au rythme de la veille (§20.6 bis.3) ;
-- **aucun réglage de l'intervalle de veille**, qui reste une variable d'installation (§20.10.5).
+- **aucun réglage de l'intervalle de veille**, qui reste une variable d'installation (§20.10.5) ;
+- **aucun réglage du style de classement** (`folder_style`) : aucun code ne le lit (INC-351), et le responsable a choisi de
+  ne pas l'exposer (décision 885). INC-351 reste ouverte, sans correction dans cette unité.
 
-### 25.2 Trois points soumis à l'arbitrage du responsable
+### 25.2 Trois points soumis à l'arbitrage du responsable — tranchés
 
-La décision 875 tranche le quoi ; la conception a rencontré trois questions qu'elle ne tranche pas. Chacune porte ici la
-**recommandation** retenue par défaut. Le code d'un point n'est écrit qu'après la réponse du responsable sur ce point,
-consignée au journal (décision 884, puis la décision qui y répond).
+La décision 875 tranche le quoi ; la conception a rencontré trois questions qu'elle ne tranche pas. **Le responsable les a
+tranchées le 2026-11-10 (décision 885)** : (1) le panneau dans le flux, comme recommandé ; (2) **`folder_style` n'est pas
+exposé** ; (3) la liste par le test de connexion, comme recommandé. Le texte d'origine des trois questions suit.
 
 1. **« Une fenêtre de cases à cocher »** : le design system n'admet aucune modale sur les écrans de réglages (§5.13,
    §5.34 : « aucune modale », pour ne pas recouvrir la liste que l'on règle). **Recommandé** : un **panneau dans le flux du
@@ -3375,7 +3378,7 @@ consignée au journal (décision 884, puis la décision qui y répond).
    `folder` (« Dossiers ») garde le comportement actuel, et `label` (« Libellés ») **interdit au CRM de créer des dossiers
    et d'y copier les messages dans cette boîte**, même sur un serveur qui le permettrait. La détection d'un serveur à
    libellés reste prioritaire : `folder` ne force jamais les dossiers chez Gmail. L'autre voie est de ne pas exposer le
-   réglage.
+   réglage. **Retenue par le responsable (décision 885) : le réglage n'est pas exposé.**
 3. **Lister les dossiers est une connexion réelle.** **Recommandé** : la liste vient du **test de connexion existant**
    (§23), qui ouvre déjà la session et exécute `LIST`. Lister les dossiers est donc un test : il écrit `status`,
    `last_error` et `last_checked_at`, et la garde de 30 s le borne (§23.3). Un fournisseur peut verrouiller une boîte après
@@ -3399,26 +3402,25 @@ seulement**, sous le même droit : celui d'écrire la ligne (§23.3). Aucune rou
 Un appel de l'écran porte `{"target": "inbound", "id": …}` comme aujourd'hui ; la réponse d'une identité sortante est
 inchangée.
 
-### 25.4 Le formulaire de la boîte gagne deux champs
+### 25.4 Le formulaire de la boîte gagne un champ
 
-Sous les champs de connexion du §21.4, deux champs, **sans garde de saisie qui doublerait la base** (§5.3 ter) :
+Sous les champs de connexion du §21.4, un champ, **sans garde de saisie qui doublerait la base** (§5.3 ter) :
 
 | Champ | Contrôle | Contrainte de la base | Valeur envoyée |
 |---|---|---|---|
 | Historique relevé, en mois | nombre | `mail_inbound_accounts_backfill_borne`, 0 à 120 | `p_backfill_months` |
-| Style de classement | `select` fermé, « Dossiers » ou « Libellés » (§25.2, point 2) | `mail_inbound_accounts_folder_style` | `p_folder_style` |
 
-- **Préremplis** des valeurs de la boîte (§21.4) ; pour une boîte à créer, des défauts de la table, `0` et `folder`.
+- **Prérempli** de la valeur de la boîte (§21.4) ; pour une boîte à créer, du défaut de la table, `0`.
+- **`p_folder_style` n'est jamais envoyé** (décision 885) : `coalesce` garde la valeur en place, comme avant.
 - **Le texte d'aide de l'historique dit ce que fait le nombre** : `0` relève le courrier reçu depuis le branchement, et
   rien d'avant (§20.6 bis.4). Un nombre de mois fait descendre l'historique **par lots**, du plus récent au plus ancien, au
   fil des relèves (§20.6 bis.3).
 - Les refus nouveaux entrent au dictionnaire fermé du §21.7 : `mail_inbound_accounts_backfill_borne` donne « L'historique
-  doit être un nombre entier de mois, de 0 à 120 », avec `23502` et `22P02` sur ce champ ; `mail_inbound_accounts_folder_style`
-  donne « Le style de classement n'est pas reconnu ».
+  doit être un nombre entier de mois, de 0 à 120 », avec `23502` et `22P02` sur ce champ.
 - **Les dossiers relevés ne sont pas un champ du formulaire** : ils se choisissent dans le panneau du §25.5, parce que la
   liste à proposer vient du serveur.
 
-`mail-comptes.ts` lit désormais `watch_folders`, `folder_style` et `backfill_months` (§21.3 : colonnes couvertes par le
+`mail-comptes.ts` lit désormais `watch_folders` et `backfill_months`, jamais `folder_style` (§21.3 : colonnes couvertes par le
 `GRANT SELECT` de `0022`). Ce n'est pas un secret.
 
 ### 25.5 Le panneau « Dossiers relevés »
@@ -3469,8 +3471,6 @@ Les règles visuelles s'écrivent au `docs/DESIGN_SYSTEM.md` §5.94 avec l'écra
   `backfill_months > 0`.
 - **Dossier retiré** : il n'est plus relevé. Son état reste dans `sync_state`, ses messages restent dans le CRM, et le
   recocher reprend où il s'était arrêté.
-- **Style passé à « Libellés »** : le CRM ne crée plus de dossier dans la boîte et n'y copie plus. Les dossiers déjà créés
-  restent dans la boîte : le CRM ne supprime jamais rien chez le fournisseur (§17.2).
 
 ### 25.8 Seed
 
@@ -3487,9 +3487,9 @@ Les règles visuelles s'écrivent au `docs/DESIGN_SYSTEM.md` §5.94 avec l'écra
 | Niveau | Preuve |
 |---|---|
 | pgTAP | `upsert_mail_outbound_identity` : `p_daily_quota_set` absent garde le quota ; `true` avec `NULL` le remet à « aucun plafond » ; `true` avec `n` l'écrit ; la borne refuse `100001` ; un membre ne règle pas l'identité d'un autre, et `anon` n'exécute pas. `upsert_mail_inbound_account` : `p_watch_folders` vide refusé, `p_backfill_months` hors bornes refusé |
-| pytest | la sonde rend `folder_names` sans `\Noselect` ni la racine `CRM` ; un dossier absent ne fait pas échouer la relève (existant) ; `folder_style = 'label'` empêche la création et la copie (§25.2, point 2, s'il est retenu) |
+| pytest | la sonde rend `folder_names` sans `\Noselect` ni la racine `CRM` ; un dossier absent ne fait pas échouer la relève (existant)  |
 | Deno | le relais rend `folder_names` pour `inbound`, rien de plus pour `outbound` ; un corps de service sans `folder_names` reste lisible |
-| Vitest | le module : colonnes lues, `p_daily_quota_set` toujours envoyé, vide → `NULL` ; le panneau : vol, cases, absent du serveur, aucun cochée refusé et traduit, annulation, focus rendu ; le formulaire : deux champs préremplis et traduits |
+| Vitest | le module : colonnes lues, `p_daily_quota_set` toujours envoyé, vide → `NULL` ; le panneau : vol, cases, absent du serveur, aucun cochée refusé et traduit, annulation, focus rendu ; le formulaire : l'historique prérempli et traduit, `p_folder_style` jamais envoyé |
 | API (Playwright) | avec les jetons réels : un membre règle sa boîte et se voit refuser celle d'un collègue (`404` au test, `42501` à l'écriture) ; le quota remis à « aucun plafond » est relu `null` |
 | E2E `ui` | **sur le vrai Stalwart** : le panneau liste les dossiers de la boîte du seed, on coche un second dossier mesuré, on enregistre, `watch_folders` est relu en base et une relève réelle relève ce dossier. Le formulaire règle l'historique. Une identité reçoit un plafond, puis revient à « aucun plafond ». Au clavier et à la souris, captures aux quatre paliers observées |
 | Manuel | §11 : les deux champs, le panneau, le quota ; images |

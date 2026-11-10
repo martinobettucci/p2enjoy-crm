@@ -18960,9 +18960,9 @@ Ce n'est pas une campagne complète. **Reste** : la livraison de la migration 17
 - (iii) Réglages ▸ Identités sortantes règle `daily_quota`, y compris le retour à « aucun plafond », ce qui demande de
   corriger le `coalesce` de `upsert_mail_outbound_identity`.
 **MCP** : **non**, « réglages internes exclusifs UI » (décision 875) : aucun outil, aucune famille de la matrice.
-**Spécification** : `docs/SPEC-mail-subsystem.md` §25, choix de conception à la décision 884. **Trois points soumis au
-responsable** (§25.2 : panneau dans le flux, sens de `folder_style` et INC-351, la liste des dossiers par le test). Le code
-d'un point attend sa réponse. La spécification d'origine, en révisant `docs/SPEC-mail-subsystem.md` §21.1 et §22.1, avec une
+**Spécification** : `docs/SPEC-mail-subsystem.md` §25, choix de conception à la décision 884. **Trois points tranchés par le
+responsable** (décision 885) : panneau dans le flux ; **`folder_style` non exposé** (INC-351 reste ouverte) ; la liste des
+dossiers par le test de connexion. La spécification d'origine, en révisant `docs/SPEC-mail-subsystem.md` §21.1 et §22.1, avec une
 section nouvelle :
 - une route interne de `mail-sync` qui liste les dossiers ;
 - son relais par une fonction edge sous le droit d'écriture de la boîte (patron §23) ;

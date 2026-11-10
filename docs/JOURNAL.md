@@ -39823,3 +39823,17 @@ qui disparaît, un historique augmenté après coup.
 
 **Conséquences** : une migration, l'image `mail-sync` et la fonction edge `mail-connection-test`, livrées ensemble avec la
 webapp. MCP : non (décision 875).
+
+### décision 885 — CRM-136 : le panneau dans le flux, `folder_style` non exposé, la liste des dossiers par le test de connexion
+
+*2026-11-10, arbitrage du responsable (`AskUserQuestion`, posé par la session de livraison be), sur les trois points de la
+décision 884. Consigné par la session d5b44a2d (p2enjoy-crm-c2), avant le code.*
+**Décisions du responsable** :
+- **(a)** les dossiers relevés se choisissent dans **un panneau dans le flux**, sous la ligne de la boîte, avec les cases,
+  « Enregistrer » et « Annuler », sans voile ni piège de focus. C'était la recommandation ;
+- **(b)** **`folder_style` n'est pas exposé.** Le réglage reste caché ; l'historique, les dossiers relevés et le quota
+  paraissent seuls à l'écran. INC-351, un réglage que rien ne lit, reste ouverte, sans correction dans `CRM-136` ;
+- **(c)** la liste des dossiers vient **du test de connexion existant**, enrichi des noms de dossiers : l'état de la boîte
+  est écrit, la garde de 30 s s'applique, aucune route ni aucun droit nouveau. C'était la recommandation.
+**Conséquences** : `docs/SPEC-mail-subsystem.md` §25 est révisée. Le formulaire gagne le seul champ de l'historique ;
+`p_folder_style` n'est jamais envoyé ; aucune preuve ni aucun code ne touche `folder_style`.
