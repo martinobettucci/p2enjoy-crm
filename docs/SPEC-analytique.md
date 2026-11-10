@@ -810,3 +810,50 @@ activité datée — **par les mêmes écritures que l'écran**, jamais par une 
 | E2E `ui` | les pastilles sur le board et le détail sur la fiche, aux quatre paliers d'écran, au clavier |
 | MCP | les deux objets dans `crm_card_get` et `crm_card_list` |
 | Mesure | `EXPLAIN ANALYZE` du board avec les deux colonnes, comparé sans elles |
+
+### 13.10 Un seul contrôle de droits par rattachement — `CRM-142` (INC-352, décisions 887 et 888)
+
+*Écrit le 2026-11-10, avant le code.* **Le défaut mesuré** (INC-352) : en production, le board d'un channel de
+53 rattachements met 8,59 s, au-delà du `statement_timeout` de 8 s, dont 98 % dans les deux colonnes de santé — environ
+80 ms par rattachement et par score. `app.health_context`, `SECURITY INVOKER`, relit l'affaire, ses activités et ses
+courriers sous la RLS de l'appelant : les politiques y sont réévaluées à chaque appel, et `app.can_read_card` à chaque
+activité et à chaque courrier. **Révise** le §13.5 (« elles lisent les activités et le courrier sous la RLS de l'appelant »)
+pour `app.health_context` seule.
+
+**La forme retenue (décision 888, validée par le responsable)** : `app.health_context(public.card_placements)` devient
+**`SECURITY DEFINER`**, `search_path` vide, et pose **un seul contrôle**, avant toute autre lecture :
+1. elle **relit le rattachement en base par son identifiant** (`card_placements.id`), et calcule sur cette ligne — jamais
+   sur les valeurs que l'appelant passe : un rattachement forgé n'apprend rien ;
+2. elle rend **vide** si le rattachement est inconnu, ou si **`app.can_read_channel(channel_id)`** est faux — la règle
+   exacte de `card_placements_select` (`channel_id` parmi `app.readable_channel_ids()`, qui est `can_read_channel`
+   appliquée à chaque channel) ;
+3. le contrôle passé, elle lit l'étape, son nœud, l'affaire et le dernier contact (`app.health_last_contact`, appelée
+   depuis la fonction, donc sous les droits de son propriétaire) **sans RLS**.
+
+**Pourquoi les droits sont équivalents** :
+- *le rattachement est lisible* : l'appelant lit alors l'affaire (`cards_lecture` exige un rattachement dans un channel
+  lisible), donc **toutes** ses activités et **tous** ses courriers (`app.can_read_card`), et l'étape et son nœud (il est
+  membre de l'espace : `can_read_channel` le suppose). Les lignes lues sont les mêmes, le résultat aussi ;
+- *le rattachement n'est pas lisible, ni l'affaire* : la santé était vide (l'affaire cachée) ; elle l'est encore (le
+  contrôle échoue) ;
+- *un seul cas devient plus strict* : l'appel direct, avec un rattachement illisible d'une affaire lisible par un autre
+  channel, rendait une santé calculée sur l'étape de ce rattachement ; il rend vide. L'écran ne produit pas ce cas : il ne
+  lit jamais ce rattachement ;
+- *rien de plus ne sort* : la fonction ne rend que des nombres (seuil, jours dans l'étape, jours sans contact,
+  probabilité), comme avant ; aucune ligne d'activité ni de courrier.
+
+**Ce qui ne change pas** : `public.health_momentum`, `public.health_commercial` et `app.health_last_contact` restent
+`SECURITY INVOKER` et inchangées ; l'objet rendu, les pénalités, les signaux et les paliers sont les mêmes ; aucune
+politique RLS n'est touchée ; le board lit les mêmes colonnes et les mêmes plongements (décision 888 : ils ne coûtent que
+134 ms sur 8,59 s, on ne les allège pas). **Connecteur MCP** : non (décision 887) ; `crm_card_get` et `crm_card_list` en
+profitent, sans changement de contrat.
+
+**Preuves** : pgTAP — l'ancienne `app.health_context` recréée dans la transaction, et pour **chaque rattachement du seed
+sous chaque profil** (administratrice, business developer, lectrice, compte non membre, anonyme refusé) les deux versions
+rendent **la même chose**, sauf le cas strict ci-dessus, qui rend vide ; un rattachement forgé (identifiant inconnu,
+valeurs inventées) rend vide ou la valeur calculée sur la ligne en base ; la fonction est `SECURITY DEFINER` à
+`search_path` vide, et non exécutable par `anon`. La preuve 3 de `supabase/tests/0110_scores_sante.test.sql` est révisée en
+conséquence. API — un appelant ne reçoit pas le score d'un rattachement qu'il ne lit pas (`e2e/api/scores-sante.spec.ts`,
+rejoué). Mesure — le plan du board avant et après, sous le jeton d'un membre, sur un volume au moins égal à la production
+(53 rattachements), en développement ; puis en production après livraison, par la session de livraison. E2E — le board et
+la fiche affichent les mêmes pastilles qu'avant.

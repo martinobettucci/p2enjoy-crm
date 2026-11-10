@@ -39871,3 +39871,22 @@ checklist — d'où les 8 s, quand la liste paginée (25) passe.
 puis corriger : droits évalués une fois par requête plutôt que par ligne (politiques en semi-jointure sur un ensemble
 calculé une fois, sur le modèle de la `0164`), allègement des plongements du board ; sans rien relâcher des droits.
 **MCP** : **non** — correction interne ; le connecteur en profite s'il lit les mêmes tables.
+
+### décision 888 — `CRM-142` : la santé d'un rattachement se calcule sous un seul contrôle de droits ; les plongements du board restent
+
+*2026-11-10, session interactive 4891a451 (p2enjoy-crm-2f), arbitrage du responsable (`AskUserQuestion`, puis « ok alors
+go » après l'explication de l'équivalence des droits).*
+**Mesures** (INC-352) : en production, le board de « Partenariats marques » (53 rattachements) met 8 586 ms ; ses
+plongements finissent à 134 ms ; `health_momentum` et `health_commercial`, isolées, 3 928 et 4 373 ms. En
+développement, 33 ms par rattachement pour les deux. Cause : `app.health_context`, `SECURITY INVOKER`, relit l'affaire, ses
+activités et ses courriers sous la RLS, réévaluée par appel, et `app.can_read_card` par activité et par courrier.
+**Pistes présentées** : un seul contrôle par rattachement ; la santé lue à part par l'écran ; les deux. Et, pour la piste
+de la décision 887 « alléger les plongements » : ne pas alléger ; alléger quand même.
+**Décisions du responsable** :
+- **un seul contrôle par rattachement** — le responsable a demandé d'être convaincu de l'équivalence de sécurité ; elle
+  lui a été exposée (`docs/SPEC-analytique.md` §13.10 : relecture du rattachement par son identifiant, contrôle
+  `app.can_read_channel`, mêmes lignes lues, un seul cas plus strict, rien de plus rendu), puis validée ;
+- **ne pas alléger les plongements** : ils ne coûtent que 134 ms sur 8,59 s. La piste de la décision 887 est écartée.
+**Conséquences** : `docs/SPEC-analytique.md` §13.10, `docs/SCHEMA.md` « Migration de `CRM-142` » (numéro pris au push),
+`CRM-142` au backlog. **MCP** : non (décision 887).
+

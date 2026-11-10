@@ -2221,6 +2221,17 @@ next_action_at, position, archived_at) on public.cards from authenticated` : ces
 (owner_id, amount, probability_override, next_action, next_action_at, position, archived_at) on public.cards to
 authenticated;`, avec la webapp et l'image `mcp` d'avant.
 
+### Migration de `CRM-142` — la santé d'un rattachement sous un seul contrôle de droits (numéro pris au push ; spécifiée le 2026-11-10, à écrire)
+
+`docs/SPEC-analytique.md` §13.10, INC-352, décisions 887 et 888. **Aucune table, aucune colonne, aucune politique.**
+- **`app.health_context(public.card_placements)`** reprise, même signature et même résultat, **`SECURITY DEFINER`**,
+  `search_path` vide : elle relit le rattachement par son identifiant, rend vide s'il est inconnu ou si
+  `app.can_read_channel(channel_id)` est faux, puis lit l'étape, le nœud, l'affaire et `app.health_last_contact` sans RLS.
+- `revoke execute … from public, anon` ; `grant execute … to authenticated, service_role` (inchangé).
+- `public.health_momentum`, `public.health_commercial`, `app.health_last_contact` : inchangées, `SECURITY INVOKER`.
+
+**Retrait** : reposer `app.health_context` de la `0134` (`SECURITY INVOKER`). Aucune donnée n'est touchée.
+
 ### Migration `0113` — les deux scores de santé d'une affaire (`CRM-066` tranche 4, décisions 723 et 724 ; livrée en développement le 2026-10-26)
 
 `docs/SPEC-analytique.md` §13. **Aucune table, aucune colonne écrite** : deux colonnes calculées de `cards`, à paramètre

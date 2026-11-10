@@ -19116,8 +19116,17 @@ livraison) ; arbitrée le 2026-11-10 (décision 887), **prioritaire**.
 **Comportement attendu** : le board de « Partenariats marques » (53 rattachements en production) et de tout channel
 comparable s'ouvre bien sous le `statement_timeout` de 8 s, avec une marge mesurée ; les droits rendus sont exactement
 ceux d'avant.
-**MCP** : non (décision 887). **Spécification** : à écrire avant le code, après la mesure du plan — les politiques visées,
-la forme retenue, `docs/SCHEMA.md` (migration, numéro pris au push), le contrat.
+**MCP** : non (décision 887). **Spécification** : écrite avant le code le 2026-11-10 (décision 888) —
+`docs/SPEC-analytique.md` §13.10, `docs/SCHEMA.md` « Migration de `CRM-142` » (numéro pris au push). Mesure : 98 % du temps
+dans les deux colonnes de santé ; `app.health_context` sous un seul contrôle de droits ; plongements gardés.
+
+- [x] **Mesure**, 2026-11-10 : en développement (session 2f) et en production en lecture seule (session de livraison),
+      INC-352.
+- [x] **Spécification**, 2026-11-10 (décision 888).
+- [ ] **Migration et pgTAP** : `app.health_context` en `SECURITY DEFINER` sous un seul contrôle ; équivalence avec
+      l'ancienne version pour chaque rattachement du seed sous chaque profil ; preuve 3 de `0110_scores_sante` révisée.
+- [ ] **API, E2E, mesure** : `e2e/api/scores-sante.spec.ts` rejoué ; board et fiche ; plan du board avant et après sur
+      53 rattachements au moins en développement ; contrat de déploiement ; changelog.
 **DoD** : le plan mesuré avant et après sous le jeton d'un membre, sur un volume au moins égal à celui de la production
 (seed ou jeu de charge) ; pgTAP prouvant que les droits n'ont pas changé (lectrice, membre, refus) ; API du board ; E2E du
 board ; INC-352 close sur le constat en production.
