@@ -837,8 +837,9 @@ pour `app.health_context` seule.
   session directe du propriétaire (pgTAP, scripts d'exploitation) calculaient la santé de tout rattachement, la RLS ne
   s'appliquant pas à eux. Le rôle de l'appelant se lit par `current_setting('role')` — que `SECURITY DEFINER` ne change pas,
   mesuré le 2026-11-10 : `authenticated`, `service_role`, ou `none` hors `SET ROLE`, auquel cas `session_user` le donne ;
-  s'il porte `rolbypassrls` ou `rolsuper`, le contrôle de channel est sauté. Un jeton d'utilisateur ne peut pas changer ce
-  rôle (`SET ROLE` exige d'en être membre). Sans cela, la vérification du seed (sous la clé de service) et les preuves de
+  s'il porte `rolbypassrls` ou `rolsuper`, le contrôle de channel est sauté. Le contournement repose sur cet **attribut du
+  rôle**, jamais sur un claim : un jeton d'utilisateur ne peut pas changer ce rôle (`SET ROLE` et `set_config('role', …)`
+  exigent d'en être membre, `42501`), et un claim `role` forgé ne change pas `current_setting('role')`. Sans cela, la vérification du seed (sous la clé de service) et les preuves de
   `0110_scores_sante` (sous le propriétaire) rendraient une santé vide — un changement de comportement que la décision 888
   exclut ;
 - **`execute`** reste retiré à `public` et `anon`, accordé à `authenticated` (les écrans et le connecteur) et à

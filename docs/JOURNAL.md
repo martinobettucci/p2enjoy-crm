@@ -39946,6 +39946,11 @@ elle n'ouvre rien à un jeton d'utilisateur, qui ne peut pas changer son rôle. 
 retiré à `public` et `anon`. Un rattachement illisible et un identifiant inconnu rendent le même ensemble vide.
 **Vérification** : pgTAP — l'équivalence sous `service_role` et sous le propriétaire, en plus des quatre profils ; le
 rattachement illisible d'un profil et l'identifiant inconnu indiscernables.
+**Complément du même jour (session de livraison)** : le contournement repose sur l'**attribut du rôle** courant
+(`rolbypassrls`, `rolsuper` dans `pg_roles`), **jamais sur un claim** du jeton. Un appelant `authenticated` ne peut pas s'en
+servir : `SET ROLE service_role` et `set_config('role', 'service_role', …)` lui sont refusés (`42501`), et un claim
+`"role": "service_role"` écrit dans `request.jwt.claims` ne change pas `current_setting('role')`. pgTAP le prouve sous le
+jeton de la lectrice, et que le rattachement qu'elle ne lit pas reste alors sans santé.
 
 
 ### décision 891 — CRM-137 : le connecteur propose les affaires candidates d'un message ET le classe ; famille messagerie
