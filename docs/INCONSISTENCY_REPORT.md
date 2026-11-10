@@ -9077,3 +9077,13 @@ l'identité de l'administratrice du seed ; la requête est celle que PostgREST g
 **L'hypothèse (2) est confirmée en développement**, sous une forme précise : ce ne sont pas les plongements, mais les
 deux colonnes de santé, réévaluées par ligne sous la RLS. À confirmer en production par le plan de la même requête,
 puis par `health_momentum` et `health_commercial` isolées.
+
+**Mesure en production, 2026-11-10** (session de livraison 4522fa9c, à la demande de la session 2f ; `begin read only`
+puis `rollback`, rôle `authenticated` sous l'identité d'un administrateur de l'espace, aucune donnée personnelle lue ;
+channel « Partenariats marques », **53** rattachements actifs). **Le diagnostic de développement est confirmé.**
+- Isolées : lire les rattachements, **17,9 ms** ; `health_momentum(p.*)`, **3 928 ms** ; `health_commercial(p.*)`,
+  **4 373 ms** — environ **74 et 83 ms par rattachement**, contre 33 ms à deux en développement.
+- La requête exacte du board : **8 586 ms** d'exécution (planification 131 ms), au-delà des 8 s. Le tri et tous les
+  plongements sont finis à **134 ms** (2 332 tampons) ; le nœud `Result` du sommet, qui évalue les deux colonnes de santé,
+  va de 278 à **8 583 ms** (126 285 tampons). **98 % du temps et des tampons** viennent des colonnes de santé, non des
+  plongements.
