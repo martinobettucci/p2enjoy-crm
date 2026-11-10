@@ -19267,7 +19267,9 @@ board ; INC-352 close sur le constat en production.
 
 ## Demande du 2026-11-10 — l'outbox des mails (décision 898)
 
-### CRM-144 — L'outbox : en file (annuler), envoyés, échecs (réessayer), pour toute l'équipe `[ ]`
+### CRM-144 — L'outbox : en file (annuler), envoyés, échecs (réessayer), pour toute l'équipe `[@]`
+
+*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-c2) depuis 2026-11-10 16:53 UTC — état avant : [ ] ; confiée par la session de livraison (ee), après CRM-143*
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 898).
 **Comportement attendu** : dans la messagerie, un dossier « En file » (heure prévue ; annuler avant le départ), un dossier
