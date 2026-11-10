@@ -9156,9 +9156,8 @@ seule mise à jour du quota qualifiée (`attempts = o.attempts + 1` sur `public.
 branche : un envoi échu sur une identité au quota atteint passe `failed` (`quota_exceeded`), et la passe réserve les autres.
 **À livrer avec la `0176`**, ou en avance si la session de livraison le juge urgent.
 
-**La mesure en production : pas encore faite** (2026-11-10). La session qui l'a relevée n'a pas d'accès à la cellule : ses
-adresses (`SPARK_SSH_HOTE`) ne sont pas versionnées et ne sont pas dans son environnement. La session de livraison, sur le
-poste du responsable, la joue **en lecture seule**. Trois requêtes, aucune n'écrit (`app.envois_du_jour` est `stable`, un
+**La mesure en production : jouée le 2026-11-10, en lecture seule, par la session de livraison** (p2enjoy-crm-ee, sur
+le poste du responsable ; la session qui l'a relevée n'a pas d'accès à la cellule). Trois requêtes, aucune n'écrit (`app.envois_du_jour` est `stable`, un
 simple `count`) :
 1. les identités au-delà de leur quota du jour, celles qui déclenchent le défaut —
    `select i.id, i.daily_quota, app.envois_du_jour(i.id) from public.mail_outbound_identities i where i.daily_quota is not null and app.envois_du_jour(i.id) > i.daily_quota;`
@@ -9169,3 +9168,7 @@ simple `count`) :
 **Ce qui dirait le défaut actif** : une ligne en 1, des envois dus en 2 qui vieillissent d'une passe à l'autre, et des
 lignes en 3. Aucune ligne en 1 et rien en 3 : le défaut est latent, il frappera au premier quota atteint entre la mise en
 file et l'envoi.
+**Le résultat, le 2026-11-10** : 1 → **0** identité au-delà de son quota du jour ; 2 → **0** envoi dû en file ; 3 → **0**
+ligne dans les journaux de `p2enjoy-mail-sync`. **Le défaut est LATENT, non actif** : aucun envoi n'est bloqué
+aujourd'hui, et il frappera au premier quota atteint entre la mise en file et l'envoi. La `0176` part avec le prochain
+lot, en avance de `CRM-144` (session de livraison). L'incohérence reste ouverte jusqu'à sa livraison constatée.
