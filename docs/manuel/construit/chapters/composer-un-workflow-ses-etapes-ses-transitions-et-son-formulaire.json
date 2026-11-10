@@ -2276,7 +2276,20 @@
 							},
 							{
 								"type": "text",
-								"text": " : le crayon ouvre un formulaire à trois champs — libellé, probabilité, seuil de\nrelance. "
+								"text": " : le crayon ouvre un formulaire à quatre champs — libellé, probabilité, seuil de\nrelance et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "description de l'étape"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". "
 							},
 							{
 								"type": "strong",
@@ -2289,7 +2302,7 @@
 							},
 							{
 								"type": "text",
-								"text": ", et ce n'est pas\nla même chose que zéro : une probabilité surchargée à "
+								"text": ", et ce\nn'est pas la même chose que zéro : une probabilité surchargée à "
 							},
 							{
 								"type": "code",
@@ -2297,7 +2310,37 @@
 							},
 							{
 								"type": "text",
-								"text": " est une probabilité nulle voulue, que\nl'écran affiche comme telle. Vider un champ déjà surchargé retire la surcharge."
+								"text": " est une probabilité nulle voulue, que\nl'écran affiche comme telle. Vider un champ déjà surchargé retire la surcharge. Sous la description, l'aide "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "cite"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "\ncelle du nœud, que l'étape reprend quand le champ est vide — ou dit que le nœud n'en porte aucune. La description\nparaît ensuite au survol de l'étape, sur le tableau et sur la fiche ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "naviguer-barre-laterale-onglets-etats",
+									"anchor": "la-description-d-un-track-d-un-channel-ou-d-une-affaire-au-survol"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "§3.6"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}

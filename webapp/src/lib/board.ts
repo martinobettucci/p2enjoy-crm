@@ -1,6 +1,8 @@
 // @spec CRM-112 (docs/BACKLOG.md) tranche T3.c — le refus d'un déplacement nomme un champ commun par son libellé
 //       (docs/SPEC-champs-communs.md §5, §7 ; docs/DESIGN_SYSTEM.md §5.88)
 // @spec CRM-041 (docs/BACKLOG.md) — composition du board kanban et appel de la garde `move_card`
+// @spec CRM-133 (docs/BACKLOG.md) — tranche T2 : la description EFFECTIVE d'une étape, sa surcharge sinon celle de son
+//       nœud (docs/SPEC-workflow-engine.md §7 sexies.1, §7 sexies.4 ; docs/DESIGN_SYSTEM.md §5.58)
 // @spec CRM-022 (docs/BACKLOG.md) — profil du responsable embarqué avec chaque card
 // @spec docs/SPEC-workflow-engine.md §7.2 (ce que le board lit), §7.3 (composition des colonnes),
 //       §7.4 (contenu d'une carte), §7.5 (transitions atteignables), §7.9 (optimisme et retour
@@ -50,6 +52,7 @@ import { MODE_SOMMEIL_PAR_DEFAUT, type ModeSommeil } from './filtre-sommeil'
 import type { ProfilAffiche } from './identites'
 import { idRattachement, type RattachementsLus, type LigneAffaire } from './rattachements'
 import { estEnSommeil } from './sommeil-card'
+import { descriptionEffective } from './description-etape'
 import type { ClientCrm } from './supabase'
 
 /** Les cinq jetons de couleur que `workflow_nodes_catalog.color` accepte (docs/SCHEMA.md §4). */
@@ -73,13 +76,14 @@ export function couleurNoeud(valeur: string | null | undefined): CouleurNoeud {
  */
 export type EtapeLue = Pick<
 	Database['public']['Tables']['workflow_steps']['Row'],
-	'id' | 'position' | 'is_initial' | 'label_override' | 'stale_after_days'
+	'id' | 'position' | 'is_initial' | 'label_override' | 'stale_after_days' | 'description_override'
 > & {
 	readonly workflow_nodes_catalog: {
 		readonly label: string
 		readonly color: string
 		readonly kind: string
 		readonly default_stale_after_days: number | null
+		readonly description: string | null
 	} | null
 }
 
@@ -97,6 +101,11 @@ export type EtapeBoard = {
 	 * porte l'action de création (docs/DESIGN_SYSTEM.md §5.2). Lue, jamais déduite de la position.
 	 */
 	readonly initiale: boolean
+	/**
+	 * `CRM-133` (docs/SPEC-workflow-engine.md §7 sexies.1) : la description EFFECTIVE — la surcharge de l'étape, sinon
+	 * celle du nœud ; `null` sans l'une ni l'autre, et l'en-tête de colonne ne porte alors aucun bouton (§5.58).
+	 */
+	readonly description: string | null
 }
 
 export type CardBoard = Pick<
@@ -249,6 +258,7 @@ export function resoudreEtape(lue: EtapeLue): EtapeBoard {
 		kind: noeud?.kind ?? 'open',
 		seuilJours: seuilEffectif(lue.stale_after_days, noeud?.default_stale_after_days),
 		initiale: lue.is_initial,
+		description: descriptionEffective(lue.description_override, noeud?.description),
 	}
 }
 

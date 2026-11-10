@@ -413,6 +413,13 @@ annonce la description avec le nom de l'élément.
 **Ce qui n'est pas proposé** : sur un écran tactile, il n'y a pas de survol, et toucher l'élément l'ouvre ; la
 description n'y paraît pas en bulle. La description d'une affaire ne se saisit pas encore depuis l'écran.
 
+**La description d'une étape.** Une étape peut aussi porter une description : celle de son nœud, saisie dans le
+[catalogue de nœuds](#modifier-un-noeud), ou la sienne propre, qui la remplace pour ce workflow
+([§18](#composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire), « Surcharger »). Quand elle existe, un
+petit bouton **ⓘ** suit le nom de l'étape — dans l'en-tête de sa colonne du tableau, et sur la fiche d'une affaire, à
+côté de l'étape de chacun de ses **autres** rattachements. Survolez-le, ou atteignez-le par `Tab` : la bulle écrit le
+nom de l'étape, puis sa description. `Entrée` la rouvre après `Échap`. Sans description, il n'y a pas de bouton.
+
 ### 3.7 Replier la barre latérale
 
 Le bouton en haut de la barre latérale la replie en colonne d'icônes, et la déplie à nouveau. Ce choix vaut **pour la
@@ -4292,10 +4299,12 @@ relance — ceux du catalogue, ou ceux que vous avez surchargés.
   le catalogue de nœuds**.
 - **Ordonner** : les flèches montent et descendent une étape. Une flèche désactivée sans être en
   bout de liste s'explique comme au [§17.3](#quand-un-deplacement-est-indisponible-sans-etre-en-bout-de-liste).
-- **Surcharger** : le crayon ouvre un formulaire à trois champs — libellé, probabilité, seuil de
-  relance. **Un champ laissé vide veut dire « prendre la valeur du catalogue »**, et ce n'est pas
-  la même chose que zéro : une probabilité surchargée à `0` est une probabilité nulle voulue, que
-  l'écran affiche comme telle. Vider un champ déjà surchargé retire la surcharge.
+- **Surcharger** : le crayon ouvre un formulaire à quatre champs — libellé, probabilité, seuil de
+  relance et **description de l'étape**. **Un champ laissé vide veut dire « prendre la valeur du catalogue »**, et ce
+  n'est pas la même chose que zéro : une probabilité surchargée à `0` est une probabilité nulle voulue, que
+  l'écran affiche comme telle. Vider un champ déjà surchargé retire la surcharge. Sous la description, l'aide **cite**
+  celle du nœud, que l'étape reprend quand le champ est vide — ou dit que le nœud n'en porte aucune. La description
+  paraît ensuite au survol de l'étape, sur le tableau et sur la fiche ([§3.6](#la-description-d-un-track-d-un-channel-ou-d-une-affaire-au-survol)).
 - **Désigner l'étape initiale** : le fanion. C'est par elle que les nouvelles affaires entrent. Un
   workflow qui n'en a aucune l'annonce en tête de liste — aucune affaire ne peut y entrer tant
   qu'elle n'est pas désignée.
@@ -4756,6 +4765,12 @@ Probabilité et seuil de relance sont facultatifs. Laissés vides, ils restent v
 pas**. Elle est ce sur quoi vos statistiques s'appuient, et la renommer réécrirait l'histoire de
 toutes les affaires passées par ce nœud. Si un nœud ne convient plus, archivez-le et créez-en un
 autre.
+
+Les deux formulaires, création et modification, portent en dernier un champ **« Description »**, facultatif : quelques
+lignes qui disent ce que l'étape signifie pour une affaire. Elle paraît au survol de l'étape, sur le tableau et sur la
+fiche ([§3.6](#la-description-d-un-track-d-un-channel-ou-d-une-affaire-au-survol)), dans **tous** les workflows qui
+emploient ce nœud — sauf là où une étape la remplace par la sienne ([§18](#composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire)).
+Vider le champ la retire. Elle ne s'affiche pas sur la ligne du nœud, qui ne montre que ses attributs courts.
 
 ### 19.4 Archiver un nœud, et le rétablir
 

@@ -1,3 +1,5 @@
+// @verifies CRM-133 (docs/BACKLOG.md) — tranche T2 : « Description de l'étape », l'aide qui cite celle du nœud, la surcharge
+//           écrite et retirée (docs/SPEC-workflow-engine.md §7 sexies.1, §7 sexies.4 ; docs/DESIGN_SYSTEM.md §5.15)
 // @verifies CRM-093 (docs/BACKLOG.md) tranche T3 — l'éditeur sous une administration refusée : commandes d'écriture
 //           éteintes avec leur motif, le choix d'un workflow offert (docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième,
@@ -90,6 +92,7 @@ const NOEUD_PROSPECTION = {
 	color: 'neutral',
 	default_probability: 10,
 	default_stale_after_days: 14,
+	description: 'Premier contact : qualifier le besoin.',
 }
 
 const ETAPES = [
@@ -103,6 +106,7 @@ const ETAPES = [
 		probability_override: null,
 		stale_after_days: null,
 		is_initial: true,
+		description_override: null,
 		node: NOEUD_PROSPECTION,
 	},
 	{
@@ -115,6 +119,7 @@ const ETAPES = [
 		probability_override: 0,
 		stale_after_days: 7,
 		is_initial: false,
+		description_override: null,
 		node: {
 			id: 'n-2',
 			key: 'qualification',
@@ -123,6 +128,7 @@ const ETAPES = [
 			color: 'brand',
 			default_probability: 30,
 			default_stale_after_days: 10,
+			description: null,
 		},
 	},
 ]
@@ -672,9 +678,10 @@ describe('le formulaire de surcharge (§7 bis.5, §2.5)', () => {
 		await attendreEcran()
 		await userEvent.click(screen.getByRole('button', { name: 'Surcharger Prospection' }))
 		const formulaire = await screen.findByTestId('formulaire-surcharge')
-		// Prospection n'a aucune surcharge : les trois champs sont VIDES, pas remplis du catalogue.
+		// Prospection n'a aucune surcharge : les quatre champs sont VIDES, pas remplis du catalogue — la description
+		// comprise depuis CRM-133 (§7 sexies.4), que l'aide cite sans la recopier dans le champ.
 		const champs = within(formulaire).getAllByRole('textbox') as HTMLInputElement[]
-		expect(champs.map((champ) => champ.value)).toEqual(['', '', ''])
+		expect(champs.map((champ) => champ.value)).toEqual(['', '', '', ''])
 	})
 
 	it('enregistre `0` comme probabilité et `null` comme retrait, dans la même écriture', async () => {
@@ -690,7 +697,32 @@ describe('le formulaire de surcharge (§7 bis.5, §2.5)', () => {
 			label_override: 'Qualification fine',
 			probability_override: 0,
 			stale_after_days: null,
+			// CRM-133 : la description laissée vide part à `NULL` dans la même écriture (§7 sexies.1).
+			description_override: null,
 		})
+	})
+
+	it('CRM-133 : l\'aide cite la description du nœud, que l\'étape reprend quand le champ est vide (§5.15)', async () => {
+		monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Surcharger Prospection' }))
+		const formulaire = await screen.findByTestId('formulaire-surcharge')
+		const champ = within(formulaire).getByLabelText('Description de l’étape')
+		expect(champ.tagName).toBe('TEXTAREA')
+		expect(champ.getAttribute('aria-describedby')).not.toBeNull()
+		expect(within(formulaire).getByText('Vide, l’étape reprend celle du nœud : « Premier contact : qualifier le besoin. ».')).toBeTruthy()
+	})
+
+	it('CRM-133 : sans description au nœud, l\'aide le dit ; la surcharge saisie est écrite nette', async () => {
+		const { ecritures } = monter()
+		await attendreEcran()
+		await userEvent.click(screen.getByRole('button', { name: 'Surcharger Qualification fine' }))
+		const formulaire = await screen.findByTestId('formulaire-surcharge')
+		expect(within(formulaire).getByText('Vide, l’étape n’a pas de description : le nœud n’en porte aucune.')).toBeTruthy()
+		await userEvent.type(within(formulaire).getByLabelText('Description de l’étape'), '  Le besoin est confirmé.  ')
+		await userEvent.click(within(formulaire).getByRole('button', { name: 'Enregistrer' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]?.charge).toMatchObject({ description_override: 'Le besoin est confirmé.' })
 	})
 
 	it('refuse une probabilité hors bornes avec une erreur associée au champ, sans écrire', async () => {

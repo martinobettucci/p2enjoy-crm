@@ -309,6 +309,74 @@
 			]
 		},
 		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Les deux formulaires, création et modification, portent en dernier un champ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Description »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", facultatif : quelques\nlignes qui disent ce que l'étape signifie pour une affaire. Elle paraît au survol de l'étape, sur le tableau et sur la\nfiche ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "la-description-d-un-track-d-un-channel-ou-d-une-affaire-au-survol"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§3.6"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), dans "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tous"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " les workflows qui\nemploient ce nœud — sauf là où une étape la remplace par la sienne ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§18"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ").\nVider le champ la retire. Elle ne s'affiche pas sur la ligne du nœud, qui ne montre que ses attributs courts."
+				}
+			]
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "archiver-un-noeud-et-le-retablir",

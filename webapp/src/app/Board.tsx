@@ -36,6 +36,8 @@
 //
 // Aucune règle d'accès n'est portée ici : ce que le board montre est ce que la RLS a consenti à
 // rendre, et ce qu'il n'offre pas, `move_card` le refuse de son côté (CLAUDE.md §10).
+// @spec CRM-133 (docs/BACKLOG.md) — tranche T2 : la description effective de l'étape, par un bouton d'information après le
+//       nom de la colonne (docs/SPEC-workflow-engine.md §7 sexies.4 ; docs/DESIGN_SYSTEM.md §5.58, révisé)
 
 import { PastilleAussiRattachee } from '../components/ui/AussiRattachee'
 import { PastillesEtiquettes } from '../components/ui/PastilleEtiquette'
@@ -46,6 +48,7 @@ import { Badge, type TonBadge } from '../components/ui/Badge'
 import { Avatar } from '../components/ui/Avatar'
 import { Button } from '../components/ui/Button'
 import { Infobulle } from '../components/ui/Infobulle'
+import { BoutonDescriptionEtape } from './BoutonDescriptionEtape'
 import { PastilleSante } from '../components/ui/PastilleSante'
 import { lireCommerciale, lireDynamique } from '../lib/sante'
 import { LiveRegion } from '../components/ui/LiveRegion'
@@ -526,9 +529,16 @@ function Colonne({
 				].join(' ')}
 			>
 				<div className="flex items-center justify-between gap-2 min-w-0">
-					<h3 className="truncate min-w-0" title={colonne.etape.libelle}>
-						{colonne.etape.libelle}
-					</h3>
+					<div className="flex items-center gap-1 min-w-0">
+						<h3 className="truncate min-w-0" title={colonne.etape.libelle}>
+							{colonne.etape.libelle}
+						</h3>
+						<BoutonDescriptionEtape
+							etape={colonne.etape.libelle}
+							description={colonne.etape.description}
+							testId="description-colonne"
+						/>
+					</div>
 					<Badge ton={TONS_KIND[colonne.etape.kind] ?? 'neutre'}>{colonne.cartes.length}</Badge>
 				</div>
 				{colonne.cumul === null ? null : (

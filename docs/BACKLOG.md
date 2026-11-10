@@ -18910,8 +18910,17 @@ d'étape, cases existantes ; au catalogue de `docs/SPEC-mcp.md` §9.2, dans une 
       garde la surcharge — décision 882) ; gardes de colonnes de `0006` et `0007` révisées (décision 51) ; les 55 suites
       pgTAP qui touchent les workflows ou l'audit sans échec. Sous-ensemble de ce périmètre (décision 830). **À ne pas
       livrer avant la fin de l'unité.**
-- [ ] **T2 — écrans** : catalogue, éditeur de workflows, board, fiche ; unitaires ; E2E souris et clavier ; captures aux
-      quatre paliers.
+- [x] **T2 — écrans**, vérifiée en développement le 2026-11-10 : « Description » au catalogue (`AdministrationCatalogue`),
+      « Description de l'étape » dans la surcharge, son aide citant celle du nœud (`AdministrationWorkflows`), le bouton
+      d'information `BoutonDescriptionEtape` sur l'en-tête de colonne du board et sur l'étape des autres rattachements de
+      la fiche (`Infobulle` reçoit `ouvrirAEntree`) ; `lib/description-etape.ts`. Unitaires 5 520 sans échec (nouveaux :
+      `description-etape`, `BoutonDescriptionEtape`, cas CRM-133 du catalogue, de l'éditeur, du board et du bloc des
+      rattachements ; charges attendues révisées) ; `typecheck` ; build. E2E `e2e/ui/description-etapes.spec.ts` 2/2 —
+      souris (écrite par Réglages, lue sur le board et la fiche, vidée et retirée en base) et clavier (`Tab`, focus,
+      `Échap`, `Entrée`). Captures observées (`e2e/output/CRM-133/`) : board aux quatre paliers, fiche, formulaires à 1440
+      et 390 ; deux défauts trouvés et corrigés — l'en-tête plus haut de 12 px, les espaces perdus sur la fiche
+      (`docs/DESIGN_SYSTEM.md` §5.58). Manuel §3.6, §18, §19.3 (texte) ; les images, avec le seed, en T4. Lecture du design
+      system par ses sections générales et celles des écrans touchés (décision 897). Sous-ensemble de ce périmètre.
 - [ ] **T3 — connecteur** : outils `workflows` et `crm_workflow_get` ; pytest, intégration, `verify-mcp.sh`.
 - [ ] **T4 — seed, manuel, contrat** : description de « Prospection », surcharge de « Négociation » avant la copie ;
       `docs/SPEC-seed.md` ; manuel et images ; `docs/PROD_MIGRATIONS.md`.

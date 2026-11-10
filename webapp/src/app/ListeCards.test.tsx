@@ -35,9 +35,9 @@ import {
 afterEach(cleanup)
 
 const ETAPES: readonly EtapeBoard[] = [
-	{ id: 's1', position: 1, libelle: 'Prospection', couleur: 'neutral', kind: 'open', seuilJours: 14, initiale: true },
-	{ id: 's2', position: 2, libelle: 'Relance', couleur: 'accent', kind: 'open', seuilJours: 7, initiale: false },
-	{ id: 's7', position: 7, libelle: 'Perdu', couleur: 'danger', kind: 'lost', seuilJours: null, initiale: false },
+	{ id: 's1', position: 1, libelle: 'Prospection', couleur: 'neutral', kind: 'open', seuilJours: 14, initiale: true, description: null },
+	{ id: 's2', position: 2, libelle: 'Relance', couleur: 'accent', kind: 'open', seuilJours: 7, initiale: false, description: null },
+	{ id: 's7', position: 7, libelle: 'Perdu', couleur: 'danger', kind: 'lost', seuilJours: null, initiale: false, description: null },
 ]
 
 function card(partiel: Partial<CardListe> & Pick<CardListe, 'id'>): CardListe {

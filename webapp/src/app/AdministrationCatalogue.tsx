@@ -18,8 +18,10 @@
 // base les mesure, et une commande éteinte d'avance ferait passer une règle du produit pour une
 // décision d'interface. Elle se tromperait de surcroît dès qu'une affaire aurait bougé entre le
 // chargement et le clic.
+// @spec CRM-133 (docs/BACKLOG.md) — tranche T2 : le champ « Description » du nœud, en création et en modification
+//       (docs/SPEC-workflow-engine.md §7 sexies.4 ; docs/DESIGN_SYSTEM.md §5.18)
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { Archive, ArchiveRestore, ArrowDown, ArrowUp, Pencil, Plus } from 'lucide-react'
 import { EtatErreur, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
@@ -124,6 +126,8 @@ type Saisie = {
 	readonly couleur: CouleurNoeud
 	readonly probabilite: string
 	readonly seuilRelance: string
+	/** `CRM-133` : la description, en saisie brute ; vide, le nœud n'en porte pas. */
+	readonly description: string
 }
 
 const SAISIE_VIDE: Saisie = {
@@ -133,6 +137,7 @@ const SAISIE_VIDE: Saisie = {
 	couleur: 'neutral',
 	probabilite: '',
 	seuilRelance: '',
+	description: '',
 }
 
 /**
@@ -155,6 +160,7 @@ function saisieDepuis(noeud: NoeudCatalogue): Saisie {
 		probabilite: noeud.default_probability === null ? '' : String(Number(noeud.default_probability)),
 		seuilRelance:
 			noeud.default_stale_after_days === null ? '' : String(noeud.default_stale_after_days),
+		description: noeud.description ?? '',
 	}
 }
 
@@ -376,6 +382,7 @@ export function AdministrationCatalogue({
 									couleur: saisie.couleur,
 									probabilite: lireSaisieNumerique(saisie.probabilite),
 									seuilRelance: lireSaisieNumerique(saisie.seuilRelance),
+									description: saisie.description,
 								}),
 							'admin.catalog.created',
 							saisie.libelle,
@@ -423,6 +430,7 @@ export function AdministrationCatalogue({
 											couleur: saisie.couleur,
 											probabilite: lireSaisieNumerique(saisie.probabilite),
 											seuilRelance: lireSaisieNumerique(saisie.seuilRelance),
+											description: saisie.description,
 										}),
 									'admin.catalog.updated',
 									saisie.libelle,
@@ -765,6 +773,7 @@ function FormulaireNoeud({
 	readonly onAnnuler: () => void
 	readonly onValider: () => void
 }) {
+	const idFormulaire = useId()
 	const droit = useRefus()
 	const premier = useRef<HTMLInputElement | null>(null)
 	// Ouvrir un formulaire déplace le focus dans son premier champ (§5.13).
@@ -890,6 +899,24 @@ function FormulaireNoeud({
 					/>
 				</label>
 			</div>
+
+			{/* CRM-133 (docs/DESIGN_SYSTEM.md §5.18) : la description, facultative, EN DERNIER ; vidée, elle est retirée. */}
+			<label className="flex flex-col gap-1 text-sm text-text-2">
+				{t('admin.catalog.field.description')}
+				<textarea
+					data-testid="champ-description-noeud"
+					rows={3}
+					value={saisie.description}
+					aria-describedby={`${idFormulaire}-aide-description`}
+					onChange={(evenement) =>
+						onChangement({ ...saisie, description: evenement.target.value })
+					}
+					className={`${CLASSES_CHAMP} resize-y py-2`}
+				/>
+				<span id={`${idFormulaire}-aide-description`} className="text-text-3">
+					{t('admin.catalog.field.descriptionHelp')}
+				</span>
+			</label>
 
 			<p className="text-sm text-text-3">{t('admin.catalog.field.optional')}</p>
 

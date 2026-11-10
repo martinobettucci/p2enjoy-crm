@@ -1,3 +1,5 @@
+// @verifies CRM-133 (docs/BACKLOG.md) — tranche T2 : le bouton d'information de l'étape d'un autre rattachement, après son
+//           nom, absent sans description (docs/SPEC-workflow-engine.md §7 sexies.4 ; docs/DESIGN_SYSTEM.md §5.58)
 // @verifies CRM-111 (docs/BACKLOG.md) T7.2 — le bloc « Rattachements » : une ligne par rattachement, celle de la fiche
 //           marquée et sans détail, les autres en liens avec étape, responsable, montant et pilules ; archiver relit la
 //           fiche, un refus se dit dans la ligne ; la commande d'un channel que la base refuse est éteinte avec le motif
@@ -24,11 +26,12 @@ afterEach(cleanup)
 
 const COURANT: RattachementDuBloc = {
 	id: 'p-studio', slugTrack: 'studio-web', slugChannel: 'refonte', track: 'Studio web', channel: 'Refonte de site',
-	courant: true, idChannel: 'ch-refonte', etape: 'Négociation', responsable: 'Camille Aubert', montant: 12000, archivedAt: null, snoozedUntil: null,
+	courant: true, idChannel: 'ch-refonte', etape: 'Négociation', descriptionEtape: 'Le devis est envoyé.', responsable: 'Camille Aubert', montant: 12000, archivedAt: null,
+	snoozedUntil: null,
 }
 const AUTRE: RattachementDuBloc = {
 	id: 'p-conseil', slugTrack: 'conseil-ia', slugChannel: 'grands-comptes', track: 'Conseil & IA', channel: 'Grands comptes',
-	courant: false, idChannel: 'ch-grands-comptes', etape: 'Prospection', responsable: null, montant: 4321, archivedAt: '2026-11-01T00:00:00Z',
+	courant: false, idChannel: 'ch-grands-comptes', etape: 'Prospection', descriptionEtape: null, responsable: null, montant: 4321, archivedAt: '2026-11-01T00:00:00Z',
 	snoozedUntil: '2026-12-01T00:00:00Z',
 }
 
@@ -136,6 +139,19 @@ describe('le bloc « Rattachements » (§5.82)', () => {
 		// Archivé, il offre « Désarchiver » ; la fiche, « Archiver ».
 		expect(within(autre).getByTestId('basculer-archivage-rattachement').textContent).toContain('Désarchiver')
 		expect(within(courante).getByTestId('basculer-archivage-rattachement').textContent).toContain('Archiver')
+	})
+
+	it('CRM-133 : l’étape d’un autre rattachement porte son bouton d’information après son nom ; sans description, aucun', () => {
+		monter(client({ data: [], error: null, status: 200 }).faux, vi.fn(), {
+			rattachements: [{ ...AUTRE, descriptionEtape: 'Premier contact : qualifier le besoin.' }, COURANT],
+		})
+		const bouton = screen.getByRole('button', { name: 'Description de l’étape Prospection' })
+		expect(bouton.getAttribute('data-testid')).toBe('description-etape-rattachement')
+		// La ligne de la fiche ne répète pas l'étape (§5.82) : sa description n'y paraît pas non plus.
+		expect(screen.queryByRole('button', { name: 'Description de l’étape Négociation' })).toBeNull()
+		cleanup()
+		monter(client({ data: [], error: null, status: 200 }).faux)
+		expect(screen.queryByTestId('description-etape-rattachement')).toBeNull()
 	})
 
 	it('archiver écrit `archived_at`, puis fait relire la fiche', async () => {

@@ -1,3 +1,5 @@
+// @verifies CRM-133 (docs/BACKLOG.md) — tranche T2 : l'étape du board porte sa description effective, lue avec les étapes
+//           (docs/SPEC-workflow-engine.md §7 sexies.4)
 // @verifies CRM-112 (docs/BACKLOG.md) tranche T3.c — les libellés des champs communs, pour un `missing_required_fields`
 //           (docs/SPEC-champs-communs.md §7 ; docs/DESIGN_SYSTEM.md §5.88)
 // @verifies CRM-069 (docs/BACKLOG.md) — tranche T2 : la carte du board porte les étiquettes de l'affaire (docs/DESIGN_SYSTEM.md §5.73)
@@ -62,11 +64,11 @@ import type { ClientCrm } from './supabase'
 
 /** Les sept étapes du workflow standard, telles que la base les rend (mesuré le 2026-08-05). */
 const ETAPES: readonly EtapeBoard[] = [
-	{ id: 's1', position: 1, libelle: 'Prospection', couleur: 'neutral', kind: 'open', seuilJours: 14, initiale: true },
-	{ id: 's2', position: 2, libelle: 'Relance', couleur: 'accent', kind: 'open', seuilJours: 7, initiale: false },
-	{ id: 's3', position: 3, libelle: 'Négociation', couleur: 'brand', kind: 'open', seuilJours: 5, initiale: false },
-	{ id: 's4', position: 4, libelle: 'Signature', couleur: 'brand', kind: 'open', seuilJours: 7, initiale: false },
-	{ id: 's7', position: 7, libelle: 'Perdu', couleur: 'danger', kind: 'lost', seuilJours: null, initiale: false },
+	{ id: 's1', position: 1, libelle: 'Prospection', couleur: 'neutral', kind: 'open', seuilJours: 14, initiale: true, description: null },
+	{ id: 's2', position: 2, libelle: 'Relance', couleur: 'accent', kind: 'open', seuilJours: 7, initiale: false, description: null },
+	{ id: 's3', position: 3, libelle: 'Négociation', couleur: 'brand', kind: 'open', seuilJours: 5, initiale: false, description: null },
+	{ id: 's4', position: 4, libelle: 'Signature', couleur: 'brand', kind: 'open', seuilJours: 7, initiale: false, description: null },
+	{ id: 's7', position: 7, libelle: 'Perdu', couleur: 'danger', kind: 'lost', seuilJours: null, initiale: false, description: null },
 ]
 
 const MAINTENANT = new Date('2026-08-05T12:00:00.000Z')
@@ -296,12 +298,26 @@ describe('résolution d’une étape lue (§7.2)', () => {
 			color: 'success',
 			kind: 'open',
 			default_stale_after_days: 30,
+			description: null,
 		},
+		description_override: null,
 		...partiel,
 	})
 
 	it('emploie le libellé du nœud en l’absence de surcharge', () => {
 		expect(resoudreEtape(lue({})).libelle).toBe('Réalisation')
+	})
+
+	it('CRM-133 : porte la description effective — la surcharge, sinon celle du nœud, sinon aucune (§7 sexies.1)', () => {
+		const noeud = { label: 'Négociation', color: 'brand', kind: 'open', default_stale_after_days: 10 }
+		expect(resoudreEtape(lue({ workflow_nodes_catalog: { ...noeud, description: 'Du nœud.' } })).description).toBe('Du nœud.')
+		expect(
+			resoudreEtape(lue({ description_override: 'De l’étape.', workflow_nodes_catalog: { ...noeud, description: 'Du nœud.' } }))
+				.description,
+		).toBe('De l’étape.')
+		expect(resoudreEtape(lue({ workflow_nodes_catalog: { ...noeud, description: null } })).description).toBeNull()
+		expect(COLONNES_ETAPE).toContain('description_override')
+		expect(COLONNES_ETAPE).toContain('default_stale_after_days, description)')
 	})
 
 	it('préfère la surcharge de l’étape, comme le seed en pose une', () => {

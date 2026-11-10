@@ -6139,6 +6139,13 @@ montrent de la même façon.
   touche Entrée, se ferme à Échap. **Sans description effective, aucun bouton** : la règle suivante vaut pour lui. La
   bulle se pose **sous** le bouton, comme pour un onglet. Aucune couleur ni aucun jeton nouveau ; une icône Lucide
   nouvelle, `Info`, qui ne sert aucun autre objet (§9).
+  *Écrit à la mise en œuvre (2026-11-10), d'après les captures (`CLAUDE.md` §16)* : **la cible garde ses 40 px sans
+  pousser la ligne** — une marge verticale négative de 8 px (`-my-2`) ; sans elle, l'en-tête d'une colonne qui porte le
+  bouton était 12 px plus haut que ses voisines, et les montants cumulés ne s'alignaient plus d'une colonne à l'autre.
+  **Sur la fiche, la ligne d'un rattachement reste du TEXTE**, le bouton y est un bloc en ligne (`align-middle`) : mise
+  en `flex`, elle perdait les espaces de bord de ses séparateurs (« ·36 000,00EUR »). Le composant est
+  `webapp/src/app/BoutonDescriptionEtape.tsx`, commun aux deux emplacements ; `Infobulle` reçoit `ouvrirAEntree`, réservé
+  à ce bouton : sur un lien, Entrée navigue, et la bulle resterait sur l'écran d'arrivée.
 
 - **ELLE N'EXISTE QUE S'IL Y A UNE DESCRIPTION.** Une description absente, vide ou faite de blancs ne rend **rien** —
   ni bulle, ni texte masqué, ni changement de l'élément, dont le `title` reste celui d'avant. Une bulle qui ne dirait

@@ -2692,6 +2692,10 @@ export const fr = {
 	'admin.workflows.form.stale': 'Seuil de relance (jours)',
 	'admin.workflows.form.stale.help':
 		'Nombre entier de jours, strictement positif. Laisser vide reprend le seuil du catalogue.',
+	'admin.workflows.form.description': 'Description de l’étape',
+	'workflow.step.descriptionButton': 'Description de l’étape {etape}',
+	'admin.workflows.form.description.help': 'Vide, l’étape reprend celle du nœud : « {description} ».',
+	'admin.workflows.form.description.helpNone': 'Vide, l’étape n’a pas de description : le nœud n’en porte aucune.',
 	'admin.workflows.form.stale.invalid':
 		'Le seuil de relance doit être un nombre entier de jours strictement positif.',
 
@@ -3408,6 +3412,9 @@ export const fr = {
 	'admin.catalog.field.color': 'Couleur',
 	'admin.catalog.field.probability': 'Probabilité par défaut',
 	'admin.catalog.field.stale': 'Seuil de relance',
+	'admin.catalog.field.description': 'Description',
+	'admin.catalog.field.descriptionHelp':
+		'Elle s’affiche au survol de l’étape, sur le board et sur la fiche ; une étape peut la remplacer.',
 	'admin.catalog.field.optional':
 		"Probabilité et seuil de relance sont facultatifs. Laissés vides, le nœud ne se prononce pas — ce qui n'est pas la même chose que zéro.",
 

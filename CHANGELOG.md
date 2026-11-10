@@ -29,12 +29,15 @@ d'exécuter le code attendu.
 - **Le connecteur MCP classe aussi** (famille `messagerie`) : `crm_mail_classification_candidates` liste les affaires candidates, et `crm_mail_classify` range le message.
 - Déploiement : `docs/PROD_MIGRATIONS.md` §2.36. D'abord la migration 172, puis la webapp et l'image `mcp`.
 
-#### `CRM-133` — une description sur le nœud du catalogue, surchargeable par l'étape (décisions 869, 870 et 882) — *tranche T1, l'unité en cours*
+#### `CRM-133` — une description sur le nœud du catalogue, surchargeable par l'étape (décisions 869, 870 et 882) — *tranches T1 et T2, l'unité en cours*
 
 - **Un nœud du catalogue peut porter une description**, et une étape d'un workflow la surcharger, comme son libellé ; une
   surcharge vide rend celle du nœud. La surcharge suit les versions, la copie vers un track, la restauration, les
-  comparaisons et le journal d'audit ; une suggestion acceptée de l'assistant la garde. Migration **174**. *Les écrans, le
-  connecteur et le seed arrivent avec les tranches T2 à T4.*
+  comparaisons et le journal d'audit ; une suggestion acceptée de l'assistant la garde. Migration **174**.
+- **À l'écran (T2)** : le champ « Description » du catalogue de nœuds, et « Description de l'étape » dans la surcharge
+  d'une étape, dont l'aide cite celle du nœud. Sur le tableau et sur la fiche d'une affaire, un bouton **ⓘ** suit le nom
+  d'une étape décrite : au survol, au focus ou à `Entrée`, une bulle en donne la description. *Le connecteur et le seed
+  arrivent avec les tranches T3 et T4.*
 - Déploiement : `docs/PROD_MIGRATIONS.md` §3, la migration 174 ; **à ne pas livrer avant la fin de l'unité**.
 
 #### `CRM-112`, tranche INC-353 — le champ « SIRET » du jeu de démonstration garde le même identifiant (décision 895)

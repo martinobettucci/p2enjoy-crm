@@ -2033,6 +2033,107 @@
 			]
 		},
 		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "La description d'une étape."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une étape peut aussi porter une description : celle de son nœud, saisie dans le\n"
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows",
+						"anchor": "modifier-un-noeud"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "catalogue de nœuds"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", ou la sienne propre, qui la remplace pour ce workflow\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§18"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", « Surcharger »). Quand elle existe, un\npetit bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ⓘ"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " suit le nom de l'étape — dans l'en-tête de sa colonne du tableau, et sur la fiche d'une affaire, à\ncôté de l'étape de chacun de ses "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "autres"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " rattachements. Survolez-le, ou atteignez-le par "
+				},
+				{
+					"type": "code",
+					"text": "Tab"
+				},
+				{
+					"type": "text",
+					"text": " : la bulle écrit le\nnom de l'étape, puis sa description. "
+				},
+				{
+					"type": "code",
+					"text": "Entrée"
+				},
+				{
+					"type": "text",
+					"text": " la rouvre après "
+				},
+				{
+					"type": "code",
+					"text": "Échap"
+				},
+				{
+					"type": "text",
+					"text": ". Sans description, il n'y a pas de bouton."
+				}
+			]
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "replier-la-barre-laterale",

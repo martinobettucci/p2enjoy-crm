@@ -1,3 +1,5 @@
+// @spec CRM-133 (docs/BACKLOG.md) — tranche T2 : la description effective de l'étape d'un rattachement, pour le bloc
+//       « Rattachements » (docs/SPEC-workflow-engine.md §7 sexies.4 ; docs/DESIGN_SYSTEM.md §5.58, révisé)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : la fiche lit les étiquettes de l'affaire (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-037 (docs/BACKLOG.md) — composition du formulaire conditionnel d'une étape, et la
 //       saisie depuis la fiche
@@ -28,6 +30,7 @@
 import { etiquettesDeLAffaire, type Etiquette, type EtiquetteLue } from './etiquettes'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { libelleEtape } from './affaires-figees'
+import { descriptionEffective } from './description-etape'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
 import type { Database, Json } from './database.types'
 import type { ProfilAffiche } from './identites'
@@ -93,7 +96,7 @@ export const COLONNES_VALEUR = 'field_id, value'
 // se lisent sur `card_placements`, plongé ; `cardDepuisRattachements` les rend à la forme d'avant, celles du plus
 // ancien (docs/SPEC-rattachements.md §5). Le responsable se nomme par la contrainte du rattachement.
 export const COLONNES_CARD_FORMULAIRE =
-	'id, title, workspace_id, email_local_part, currency, workspaces(inbound_domain), etiquettes:card_labels(etiquette:labels(id, name, color, archived_at)), card_placements!card_placements_card_fk(id, created_at, channel_id, workflow_id, current_step_id, amount, next_action, next_action_at, archived_at, snoozed_until, profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), channels!card_placements_channel_fk(slug, name, tracks(slug, name)), workflow_steps!card_placements_step_fk(label_override, workflow_nodes_catalog(label)))'
+	'id, title, workspace_id, email_local_part, currency, workspaces(inbound_domain), etiquettes:card_labels(etiquette:labels(id, name, color, archived_at)), card_placements!card_placements_card_fk(id, created_at, channel_id, workflow_id, current_step_id, amount, next_action, next_action_at, archived_at, snoozed_until, profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), channels!card_placements_channel_fk(slug, name, tracks(slug, name)), workflow_steps!card_placements_step_fk(label_override, description_override, workflow_nodes_catalog(label, description)))'
 
 /** L'étape courante, telle que la mention « requis à l'étape <étape> » a besoin de la nommer (décision 688). */
 export type EtapeCourante = {
@@ -155,7 +158,9 @@ type RattachementFormulaire = Pick<
 	/** `CRM-111` T7.2 : l'étape du rattachement, nommée comme le board la nomme (décision 690). */
 	readonly workflow_steps?: {
 		readonly label_override: string | null
-		readonly workflow_nodes_catalog: { readonly label: string } | null
+		/** `CRM-133` : la surcharge de description ; avec celle du nœud, la description effective (§7 sexies.1). */
+		readonly description_override?: string | null
+		readonly workflow_nodes_catalog: { readonly label: string; readonly description?: string | null } | null
 	} | null
 	/** `CRM-111` T7.1 : le chemin du rattachement, pour le reconnaître à l'adresse et le nommer. */
 	readonly channels: {
@@ -184,6 +189,8 @@ export type RattachementDuBloc = RattachementSitue & {
 	/** Son channel : le droit d'archiver est celui de l'écrire (`channels.ecriture_permise`, §5.59). */
 	readonly idChannel: string
 	readonly etape: string | null
+	/** `CRM-133` : la description effective de cette étape ; `null`, aucun bouton d'information (§5.58). */
+	readonly descriptionEtape: string | null
 	readonly responsable: string | null
 	readonly montant: number | null
 	readonly archivedAt: string | null
@@ -203,6 +210,10 @@ export function rattachementsDuBloc(
 			courant: situe.id === idCourant,
 			idChannel: rattachement.channel_id,
 			etape: rattachement.workflow_steps ? (libelleEtape(rattachement.workflow_steps) ?? null) : null,
+			descriptionEtape: descriptionEffective(
+				rattachement.workflow_steps?.description_override,
+				rattachement.workflow_steps?.workflow_nodes_catalog?.description,
+			),
 			responsable: rattachement.profiles?.full_name ?? null,
 			montant: rattachement.amount,
 			archivedAt: rattachement.archived_at,

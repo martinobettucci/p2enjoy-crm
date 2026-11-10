@@ -219,6 +219,7 @@ function etape(partiel: Partial<EtapeAdministrable> & { id: string; node_id: str
 		probability_override: null,
 		stale_after_days: null,
 		is_initial: false,
+		description_override: null,
 		node: null,
 		...partiel,
 	}
@@ -297,6 +298,7 @@ describe('le libellé d’une étape (§3.3)', () => {
 		color: 'neutral',
 		default_probability: null,
 		default_stale_after_days: null,
+		description: null,
 	}
 
 	it('prend la surcharge lorsqu’elle existe', () => {
@@ -432,11 +434,13 @@ describe('les écritures de l’éditeur (§7 bis.4)', () => {
 	// `null` EST ENVOYÉ, PAS OMIS : c'est ainsi qu'une surcharge se retire (§2.5).
 	it('la surcharge envoie les trois colonnes, `null` compris', async () => {
 		const { client, appels } = espionEcritures([OK])
-		await surchargerEtape(client, 'e1', { libelle: 'Devis', probabilite: 0, anciennete: null })
+		await surchargerEtape(client, 'e1', { libelle: 'Devis', probabilite: 0, anciennete: null, description: null })
 		expect(appels[0]?.charge).toEqual({
 			label_override: 'Devis',
 			probability_override: 0,
 			stale_after_days: null,
+			// CRM-133 (§7 sexies.1) : la surcharge de description part dans la même écriture, `null` la retire.
+			description_override: null,
 		})
 	})
 
@@ -2076,6 +2080,7 @@ describe('structureNaturelle — la table de nommage (§4 quater.5)', () => {
 			probability_override: null,
 			stale_after_days: null,
 			is_initial: true,
+			description_override: null,
 			node: null,
 		}
 		const champ = {

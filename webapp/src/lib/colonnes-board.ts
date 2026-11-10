@@ -1,4 +1,6 @@
 // @spec CRM-041 (docs/BACKLOG.md) — les colonnes demandées par les quatre lectures du board
+// @spec CRM-133 (docs/BACKLOG.md) — tranche T2 : la surcharge de description de l'étape et la description de son nœud,
+//       dans la lecture déjà émise des étapes (docs/SPEC-workflow-engine.md §7 sexies.4)
 // @spec CRM-066 (docs/BACKLOG.md) — tranche 4 : les deux scores de santé lus avec la carte — docs/SPEC-analytique.md §13.5
 // @spec CRM-022 (docs/BACKLOG.md) — responsable embarqué, sans requête par card
 // @spec docs/SPEC-workflow-engine.md §7.2 (ce que le board lit, et en combien de requêtes)
@@ -38,7 +40,7 @@
  * affaire naît là et nulle part ailleurs. Le drapeau est lu, jamais déduit de la position.
  */
 export const COLONNES_ETAPE =
-	'id, position, is_initial, label_override, stale_after_days, workflow_nodes_catalog(label, color, kind, default_stale_after_days)'
+	'id, position, is_initial, label_override, stale_after_days, description_override, workflow_nodes_catalog(label, color, kind, default_stale_after_days, description)'
 
 /** Transitions du workflow : l'index des gestes atteignables (§7.5). */
 export const COLONNES_TRANSITION = 'id, from_step_id, to_step_id, label, require_comment'

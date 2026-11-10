@@ -66,6 +66,8 @@
 // Le seul filtre que l'écran applique seul est celui des nœuds déjà employés dans le sélecteur
 // d'ajout : l'unicité `(workflow_id, node_id)` refuserait l'insertion de toute façon, et il évite
 // d'offrir un choix dont on sait qu'il sera refusé — une aide d'interface, pas une garde.
+// @spec CRM-133 (docs/BACKLOG.md) — tranche T2 : « Description de l'étape », la surcharge de la description du nœud, que
+//       l'aide cite (docs/SPEC-workflow-engine.md §7 sexies.4 ; docs/DESIGN_SYSTEM.md §5.15)
 
 import { useContexteEspace } from './ContexteEspace'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
@@ -99,6 +101,7 @@ import {
 import { lireChecklistsWorkflow, type ChecklistsWorkflow } from '../lib/administration-checklists'
 import { lireChampsCommunsEspace } from '../lib/champs-communs'
 import { CHEMIN_ADMIN_CATALOGUE } from './chemins'
+import { descriptionEnvoyee } from '../lib/administration-catalogue'
 import {
 	AlerteRefus,
 	ChampSurcharge,
@@ -432,6 +435,8 @@ type SaisieSurcharge = {
 	readonly libelle: string
 	readonly probabilite: string
 	readonly anciennete: string
+	/** `CRM-133` : la surcharge de description, en saisie brute ; vide, l'étape reprend celle du nœud. */
+	readonly description: string
 }
 
 /**
@@ -444,6 +449,7 @@ function saisieDepuis(etape: EtapeAdministrable): SaisieSurcharge {
 		libelle: etape.label_override ?? '',
 		probabilite: etape.probability_override === null ? '' : String(etape.probability_override),
 		anciennete: etape.stale_after_days === null ? '' : String(etape.stale_after_days),
+		description: etape.description_override ?? '',
 	}
 }
 
@@ -452,11 +458,13 @@ function versSurcharge(saisie: SaisieSurcharge): {
 	readonly libelle: string | null
 	readonly probabilite: number | null
 	readonly anciennete: number | null
+	readonly description: string | null
 } {
 	return {
 		libelle: saisie.libelle.trim() === '' ? null : saisie.libelle.trim(),
 		probabilite: saisie.probabilite.trim() === '' ? null : Number(saisie.probabilite),
 		anciennete: saisie.anciennete.trim() === '' ? null : Number(saisie.anciennete),
+		description: descriptionEnvoyee(saisie.description),
 	}
 }
 
@@ -722,6 +730,30 @@ function FormulaireSurcharge({
 				aide={t('admin.workflows.form.stale.help')}
 				{...(ancienneteInvalide ? { erreur: t('admin.workflows.form.stale.invalid') } : {})}
 			/>
+			{/* CRM-133 (docs/DESIGN_SYSTEM.md §5.15) : même `textarea` que le catalogue (§5.18) ; l'aide CITE la description
+			    du nœud, que l'étape reprend quand le champ est vide. */}
+			<div className="flex flex-col gap-1">
+				<label htmlFor={`${prefixe}-description`} className="text-sm text-text-2">
+					{t('admin.workflows.form.description')}
+				</label>
+				<textarea
+					id={`${prefixe}-description`}
+					data-testid="champ-description-etape"
+					rows={3}
+					value={saisie.description}
+					onChange={(evenement) => {
+						const description = evenement.target.value
+						setSaisie((precedente) => ({ ...precedente, description }))
+					}}
+					aria-describedby={`${prefixe}-description-aide`}
+					className="min-h-[var(--size-target)] resize-y rounded-sm border border-border bg-surface px-3 py-2"
+				/>
+				<span id={`${prefixe}-description-aide`} className="whitespace-pre-line text-sm text-text-3">
+					{etape.node?.description == null
+						? t('admin.workflows.form.description.helpNone')
+						: t('admin.workflows.form.description.help', { description: etape.node.description })}
+				</span>
+			</div>
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
 				<Button {...droit} type="submit" variante="primaire" disabled={droit.disabled === true || !complet || enCours}>

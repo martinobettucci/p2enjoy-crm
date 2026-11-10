@@ -9,6 +9,8 @@
 // @spec docs/SPEC-permissions-rls.md §7 (un refus de lecture est zéro ligne)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
 // @spec CLAUDE.md §10 (la règle est backend, l'écran traduit le refus qu'il reçoit)
+// @spec CRM-133 (docs/BACKLOG.md) — tranche T2 : la description facultative du nœud, lue et écrite ; vide, elle est `NULL`
+//       (docs/SPEC-workflow-engine.md §7 sexies.1, §7 sexies.4 ; docs/DESIGN_SYSTEM.md §5.18)
 //
 // CE MODULE N'OUVRE AUCUNE POLITIQUE NOUVELLE. Il lit et écrit `workflow_nodes_catalog` sous les
 // trois politiques de `CRM-030`, inchangées depuis la migration 5 : lecture par tout membre du
@@ -42,11 +44,12 @@ export type NoeudCatalogue = Pick<
 	| 'default_stale_after_days'
 	| 'position'
 	| 'archived_at'
+	| 'description'
 >
 
 /** Colonnes réellement demandées. Exportée pour que les tests vérifient la requête émise. */
 export const COLONNES_NOEUD =
-	'id, workspace_id, key, label, kind, color, default_probability, default_stale_after_days, position, archived_at'
+	'id, workspace_id, key, label, kind, color, default_probability, default_stale_after_days, position, archived_at, description'
 
 /**
  * Les trois types d'un nœud, et les cinq jetons de couleur.
@@ -286,6 +289,17 @@ export function valeurNumeriqueEnvoyee(saisie: SaisieNumerique): number | null {
 // Les écritures — §2 bis.4
 // ---------------------------------------------------------------------------------------------
 
+/**
+ * La description envoyée — `CRM-133`, `docs/SPEC-workflow-engine.md` §7 sexies.1. **Vide n'est pas une valeur** : une
+ * saisie vide ou faite de blancs part à `NULL`, que la base distingue d'une chaîne (elle refuse la chaîne blanche,
+ * `23514`). Une saisie posée est envoyée sans ses blancs de bord, ses retours à la ligne intérieurs préservés. Sert aussi
+ * à la surcharge d'une étape (`administration-workflows.ts`), dont la règle est la même.
+ */
+export function descriptionEnvoyee(saisie: string): string | null {
+	const nette = saisie.trim()
+	return nette === '' ? null : nette
+}
+
 export type CreationNoeud = {
 	readonly idWorkspace: string
 	readonly cle: string
@@ -294,6 +308,8 @@ export type CreationNoeud = {
 	readonly couleur: CouleurNoeud
 	readonly probabilite: SaisieNumerique
 	readonly seuilRelance: SaisieNumerique
+	/** `CRM-133` : la saisie brute du champ « Description » ; vide, `NULL` (`descriptionEnvoyee`). */
+	readonly description: string
 }
 
 /**
@@ -320,6 +336,7 @@ export async function creerNoeud(
 				color: creation.couleur,
 				default_probability: valeurNumeriqueEnvoyee(creation.probabilite),
 				default_stale_after_days: valeurNumeriqueEnvoyee(creation.seuilRelance),
+				description: descriptionEnvoyee(creation.description),
 				position: null,
 			} as unknown as Database['public']['Tables']['workflow_nodes_catalog']['Insert'])
 			.select('id'),
@@ -332,6 +349,8 @@ export type ModificationNoeud = {
 	readonly couleur: CouleurNoeud
 	readonly probabilite: SaisieNumerique
 	readonly seuilRelance: SaisieNumerique
+	/** `CRM-133` : la saisie brute du champ « Description » ; vide, `NULL` (`descriptionEnvoyee`). */
+	readonly description: string
 }
 
 /**
@@ -357,6 +376,7 @@ export async function modifierNoeud(
 				color: modification.couleur,
 				default_probability: valeurNumeriqueEnvoyee(modification.probabilite),
 				default_stale_after_days: valeurNumeriqueEnvoyee(modification.seuilRelance),
+				description: descriptionEnvoyee(modification.description),
 			})
 			.eq('id', id)
 			.select('id'),

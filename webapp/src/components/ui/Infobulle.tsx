@@ -12,6 +12,8 @@
 // Ce que le composant NE fait PAS : changer l'élément. Il le reçoit par une fonction, lui donne
 // l'identifiant de la description à citer, et c'est l'écran appelant qui décide de garder ou non son
 // `title` — gardé quand il n'y a pas de description, retiré quand la bulle le remplace (§5.58).
+// @spec CRM-133 (docs/BACKLOG.md) — tranche T2 : `ouvrirAEntree`, pour le bouton d'information d'une étape, qui s'ouvre aussi
+//       à la touche Entrée (docs/DESIGN_SYSTEM.md §5.58, révisé)
 
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
@@ -36,6 +38,12 @@ export type ProprietesInfobulle = {
 	/** Le côté de l'élément où la bulle se pose d'abord ; `droite` pour la barre latérale. */
 	readonly cote?: CoteInfobulle
 	/**
+	 * `CRM-133` (§5.58 révisé) : la touche Entrée ouvre aussi la bulle — pour le bouton d'information d'une étape, qui
+	 * n'est pas un lien et ne navigue pas. Jamais pour un lien : Entrée y navigue, et la bulle resterait sur l'écran
+	 * d'arrivée.
+	 */
+	readonly ouvrirAEntree?: boolean
+	/**
 	 * Rend l'élément. `idDescription` est l'identifiant à citer en `aria-describedby`, ou `undefined`
 	 * quand il n'y a rien à décrire — l'élément est alors rendu exactement comme avant.
 	 */
@@ -55,7 +63,13 @@ function focusClavier(element: Element): boolean {
 	}
 }
 
-export function Infobulle({ titre, description, cote = 'bas', children }: ProprietesInfobulle) {
+export function Infobulle({
+	titre,
+	description,
+	cote = 'bas',
+	ouvrirAEntree = false,
+	children,
+}: ProprietesInfobulle) {
 	const texte = descriptionAffichable(description)
 	const idDescription = useId()
 	const [ouverte, setOuverte] = useState(false)
@@ -172,6 +186,11 @@ export function Infobulle({ titre, description, cote = 'bas', children }: Propri
 				}}
 				onFocus={(evenement) => {
 					if (focusClavier(evenement.target)) ouvrirApres(0)
+				}}
+				onKeyDown={(evenement) => {
+					if (!ouvrirAEntree || evenement.key !== 'Enter') return
+					tenueFermee.current = false
+					ouvrirApres(0)
 				}}
 				onBlur={() => {
 					tenueFermee.current = false

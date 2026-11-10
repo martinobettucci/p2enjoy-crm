@@ -1,5 +1,7 @@
 // @spec CRM-112 (docs/BACKLOG.md) tranche T3.b — les champs communs exigés : lecture, écriture, retrait, aperçu
 //       (docs/SPEC-champs-communs.md §5 et §7, docs/DESIGN_SYSTEM.md §5.87)
+// @spec CRM-133 (docs/BACKLOG.md) — tranche T2 : la surcharge de description d'une étape, lue avec la description du
+//       nœud embarqué et écrite comme `label_override` (docs/SPEC-workflow-engine.md §7 sexies ; docs/DESIGN_SYSTEM.md §5.15)
 // @spec CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième,
 //       troisième, quatrième et cinquième tranches
 // @spec docs/SPEC-workflow-engine.md §7 bis.3 (ce que l'écran lit), §7 bis.4 (les six gestes),
@@ -56,7 +58,14 @@ export type WorkflowAdministrable = Pick<
 /** Le nœud du catalogue, tel qu'il est embarqué dans la lecture d'une étape. */
 export type NoeudEmbarque = Pick<
 	Database['public']['Tables']['workflow_nodes_catalog']['Row'],
-	'id' | 'key' | 'label' | 'kind' | 'color' | 'default_probability' | 'default_stale_after_days'
+	| 'id'
+	| 'key'
+	| 'label'
+	| 'kind'
+	| 'color'
+	| 'default_probability'
+	| 'default_stale_after_days'
+	| 'description'
 >
 
 /**
@@ -78,6 +87,7 @@ export type EtapeAdministrable = Pick<
 	| 'probability_override'
 	| 'stale_after_days'
 	| 'is_initial'
+	| 'description_override'
 > & { readonly node: NoeudEmbarque | null }
 
 /** Un nœud du catalogue, tel que le sélecteur d'ajout le présente. */
@@ -89,9 +99,9 @@ export type NoeudAjoutable = Pick<
 /** Colonnes réellement demandées. Exportées pour que les tests vérifient la requête émise. */
 export const COLONNES_WORKFLOW_ADMIN = 'id, workspace_id, name, scope, track_id, is_default, archived_at'
 export const COLONNES_NOEUD_EMBARQUE =
-	'id, key, label, kind, color, default_probability, default_stale_after_days'
+	'id, key, label, kind, color, default_probability, default_stale_after_days, description'
 export const COLONNES_ETAPE_ADMIN =
-	`id, workflow_id, workspace_id, node_id, position, label_override, probability_override, stale_after_days, is_initial, node:workflow_nodes_catalog!workflow_steps_node_id_workspace_id_fkey(${COLONNES_NOEUD_EMBARQUE})`
+	`id, workflow_id, workspace_id, node_id, position, label_override, probability_override, stale_after_days, is_initial, description_override, node:workflow_nodes_catalog!workflow_steps_node_id_workspace_id_fkey(${COLONNES_NOEUD_EMBARQUE})`
 export const COLONNES_NOEUD_AJOUTABLE =
 	'id, key, label, kind, color, position, default_probability, default_stale_after_days'
 
@@ -397,6 +407,8 @@ export type SurchargeEtape = {
 	readonly libelle: string | null
 	readonly probabilite: number | null
 	readonly anciennete: number | null
+	/** `CRM-133` : `null` retire la surcharge, et l'étape reprend la description du nœud (§7 sexies.1). */
+	readonly description: string | null
 }
 
 export async function surchargerEtape(
@@ -411,6 +423,7 @@ export async function surchargerEtape(
 				label_override: surcharge.libelle,
 				probability_override: surcharge.probabilite,
 				stale_after_days: surcharge.anciennete,
+				description_override: surcharge.description,
 			})
 			.eq('id', idEtape)
 			.select('id'),

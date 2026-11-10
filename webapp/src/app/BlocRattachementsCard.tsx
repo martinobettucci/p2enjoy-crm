@@ -14,7 +14,10 @@
 //       §5.84)
 // @spec docs/DESIGN_SYSTEM.md §5.59 (la commande refusée par une capacité de la base, un motif par bloc) ;
 //       docs/SPEC-droits-interface.md §2 à §4
+// @spec CRM-133 (docs/BACKLOG.md) — tranche T2 : le bouton d'information de l'étape d'un rattachement, juste après son nom
+//       (docs/SPEC-workflow-engine.md §7 sexies.4 ; docs/DESIGN_SYSTEM.md §5.58, révisé)
 
+import { BoutonDescriptionEtape } from './BoutonDescriptionEtape'
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { Archive, ArchiveRestore, Moon, Plus, TriangleAlert, Unlink } from 'lucide-react'
@@ -528,14 +531,24 @@ function Details({
 }) {
 	const montant = formaterMontant({ amount: rattachement.montant, currency: devise })
 	const echeance = estEnSommeil(rattachement.snoozedUntil, maintenant()) ? formaterEcheanceSommeil(rattachement.snoozedUntil) : null
-	const segments = [
-		rattachement.etape,
-		rattachement.responsable ?? t('card.header.owner.none'),
-	].filter((segment): segment is string => segment !== null)
+	const responsable = rattachement.responsable ?? t('card.header.owner.none')
 	return (
 		<>
 			<span className="text-sm text-text-2">
-				{segments.join(' · ')}
+				{/* CRM-133 : le bouton suit le NOM de l'étape, pas la ligne (§5.58) ; sans description effective, rien. La ligne
+				    reste du TEXTE : en `flex`, les espaces de bord de « · » disparaissaient (« ·36 000,00EUR », capture du 2026-11-10). */}
+				{rattachement.etape === null ? null : (
+					<>
+						<span>{rattachement.etape}</span>
+						<BoutonDescriptionEtape
+							etape={rattachement.etape}
+							description={rattachement.descriptionEtape}
+							testId="description-etape-rattachement"
+						/>
+						{' · '}
+					</>
+				)}
+				{responsable}
 				{montant === null ? null : (
 					<>
 						{' · '}

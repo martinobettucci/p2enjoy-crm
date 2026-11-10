@@ -1,3 +1,5 @@
+// @verifies CRM-133 (docs/BACKLOG.md) — tranche T2 : la description du nœud, envoyée nette, vide à `NULL`
+//           (docs/SPEC-workflow-engine.md §7 sexies.1, §7 sexies.4 ; docs/DESIGN_SYSTEM.md §5.18)
 // @verifies CRM-030 (docs/BACKLOG.md) — administration du catalogue : lecture, écritures, refus
 // @verifies docs/SPEC-workflow-engine.md §2 bis.3 (la lecture unique, archivés compris),
 //           §2 bis.4 (les quatre gestes), §2 bis.5 (les cinq refus mesurés), §2 bis.6 (validation
@@ -24,6 +26,7 @@ import {
 	compterAffairesOccupantes,
 	creerNoeud,
 	deplacerNoeud,
+	descriptionEnvoyee,
 	lireCatalogueAdministrable,
 	lireSaisieNumerique,
 	modifierNoeud,
@@ -275,6 +278,7 @@ describe('creerNoeud', () => {
 			couleur: 'accent',
 			probabilite: lireSaisieNumerique('20'),
 			seuilRelance: lireSaisieNumerique(''),
+			description: '',
 		})
 
 		expect(resultat).toEqual({ statut: 'applique' })
@@ -290,6 +294,8 @@ describe('creerNoeud', () => {
 			default_probability: 20,
 			// Le champ laissé vide vaut `NULL`, jamais `0` (§2.5).
 			default_stale_after_days: null,
+			// CRM-133 : la description laissée vide part à `NULL` (§7 sexies.1).
+			description: null,
 			position: null,
 		})
 	})
@@ -308,6 +314,7 @@ describe('creerNoeud', () => {
 			couleur: 'neutral',
 			probabilite: lireSaisieNumerique(''),
 			seuilRelance: lireSaisieNumerique(''),
+			description: '',
 		})
 		expect(resultat).toMatchObject({ statut: 'refus', refus: { nature: 'cle-prise' } })
 	})
@@ -322,6 +329,7 @@ describe('modifierNoeud', () => {
 			couleur: 'neutral',
 			probabilite: lireSaisieNumerique('10'),
 			seuilRelance: lireSaisieNumerique('14'),
+			description: '',
 		})
 
 		expect(premierAppel(appels)).toMatchObject({ table: 'workflow_nodes_catalog', verbe: 'update' })
@@ -332,6 +340,7 @@ describe('modifierNoeud', () => {
 			color: 'neutral',
 			default_probability: 10,
 			default_stale_after_days: 14,
+			description: null,
 		})
 		expect(premierAppel(appels).filtres).toEqual([['eq', 'id', NOEUD]])
 	})
@@ -349,8 +358,46 @@ describe('modifierNoeud', () => {
 			couleur: 'neutral',
 			probabilite: lireSaisieNumerique(''),
 			seuilRelance: lireSaisieNumerique(''),
+			description: '',
 		})
 		expect(resultat).toEqual({ statut: 'sans-effet' })
+	})
+})
+
+describe('la description du nœud — CRM-133 (§7 sexies.1)', () => {
+	it('part nette, retours à la ligne intérieurs préservés ; vide ou blanche, à `NULL`', () => {
+		expect(descriptionEnvoyee('  Premier contact.\nQualifier le besoin.  ')).toBe('Premier contact.\nQualifier le besoin.')
+		expect(descriptionEnvoyee('')).toBeNull()
+		expect(descriptionEnvoyee('   \n\t ')).toBeNull()
+	})
+
+	it('est écrite à la création et à la modification, et la vider la retire', async () => {
+		const creation = espion({ data: [{ id: NOEUD }], error: null, status: 201 })
+		await creerNoeud(creation.client, {
+			idWorkspace: WORKSPACE,
+			cle: 'a-qualifier',
+			libelle: 'À qualifier',
+			type: 'open',
+			couleur: 'neutral',
+			probabilite: lireSaisieNumerique(''),
+			seuilRelance: lireSaisieNumerique(''),
+			description: ' Le premier échange a eu lieu. ',
+		})
+		expect(premierAppel(creation.appels).charge).toMatchObject({ description: 'Le premier échange a eu lieu.' })
+		const modification = espion({ data: [{ id: NOEUD }], error: null, status: 200 })
+		await modifierNoeud(modification.client, NOEUD, {
+			libelle: 'À qualifier',
+			type: 'open',
+			couleur: 'neutral',
+			probabilite: lireSaisieNumerique(''),
+			seuilRelance: lireSaisieNumerique(''),
+			description: '  ',
+		})
+		expect(premierAppel(modification.appels).charge).toMatchObject({ description: null })
+	})
+
+	it('est lue avec le nœud', () => {
+		expect(COLONNES_NOEUD.split(', ')).toContain('description')
 	})
 })
 
