@@ -39927,6 +39927,10 @@ restent en non analysées en production ».
 
 La spécification révise l'assertion « `skipped` non » (`e2e/api/inbox.spec.ts:159`), retournée et non retirée
 (décision 51). Elle rectifie aussi la note de la cellule (2 Gio).
+*Ajout du 2026-11-10, rapporté par la session de livraison sur une mesure de d9 en lecture seule* : le responsable a porté
+la mémoire de la cellule à **16 384 Mo, dont 15 030 disponibles, et 8 cœurs**, sans redémarrage. Les « ≈ 1 960 Mo
+disponibles » ci-dessus ne valent plus, et la contrainte mémoire de ClamAV disparaît : un plafond raisonnable suffit
+(`docs/SPEC-pieces-jointes.md` §17.2).
 
 ### décision 890 — `CRM-142` : le contrôle unique porte sur l'appelant, et laisse passer qui contournait déjà la RLS
 
@@ -39968,3 +39972,37 @@ email » (`docs/SPEC-mcp.md` §6.1). La contradiction n'est pas résolue implici
 
 Les cases restent celles de la famille, sans case nouvelle. La portée de la famille au §6.1 s'allonge du classement
 d'un message.
+
+### décision 892 — CRM-143 : les choix de conception des pièces jointes en production
+
+*2026-11-10, session interactive d5b44a2d (p2enjoy-crm-c2). Unité confiée par la session de livraison (be), avant
+`CRM-136`. Elle applique la décision 889, et la spécification est écrite avant le code : `docs/SPEC-pieces-jointes.md`
+§17.*
+
+**Observations** :
+- la politique de lecture du bucket appelle `app.piece_jointe_telechargeable`, qui n'admet que `clean` ;
+- une pièce trop volumineuse est rangée `skipped` **sans être déposée** ;
+- une pièce devenue `clean` déclenche d'elle-même l'extraction de son texte (`0141`) ;
+- `crm_mail_send` n'existe plus (`CRM-128`) ; les mails préparés ne portent aucune pièce ;
+- `clamav` consomme 894 Mio au repos en développement ;
+- la cellule compte désormais 16 Go (ajout à la décision 889).
+
+**Décisions de conception** :
+1. **La confirmation est une ligne en base**, par personne et par pièce, posée par une fonction qui refuse une pièce
+   infectée, saine, en cours d'analyse ou non conservée. La règle du téléchargement la lit. Un booléen client n'entre
+   nulle part (`CLAUDE.md` §10).
+2. **« Non analysée »** : `skipped` avec objet déposé, ou `pending` depuis plus de quinze minutes.
+3. **La raison d'un `skipped` est gardée** (`av_skip_reason`) : l'écran dit « trop volumineuse » sans proposer un
+   téléchargement impossible, et la reprise ne touche que ce qui est analysable.
+4. **La reprise vit dans `mail-sync`**, par lots de 20 toutes les 15 minutes et à la demande. Elle s'arrête au premier
+   silence de l'antivirus et n'écrit qu'un verdict réel.
+5. **Le connecteur** : `crm_mail_attachment_get` lit une pièce non analysée sur `acknowledge_unscanned`, qui pose la
+   confirmation de la personne. `crm_mail_prepare` dépose des fichiers dans le bucket d'envoi, et le mail préparé les garde.
+6. **ClamAV dans la cellule** : la même image que le développement, son volume de signatures, un plafond au double de
+   l'empreinte mesurée au rechargement. La sortie HTTPS vers les miroirs de signatures est un risque nommé du contrat.
+7. **Le seed** porte `infected` (EICAR) et `skipped` trop volumineuse, par les vrais chemins. Le `skipped` faute
+   d'antivirus naît dans les preuves, sur un exemplaire jetable du service.
+
+**Conséquences** : une migration au premier numéro libre au push ; les images `mail-sync` et `mcp`, la webapp et le
+service `clamav`, livrés ensemble. Le paragraphe du design system se prend au premier numéro libre à l'écriture de l'écran.
+

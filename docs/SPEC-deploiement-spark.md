@@ -32,7 +32,7 @@ harnais.
 | La Forge termine TLS et fait suivre une **route** vers un port de la cellule | Caddy sert **en clair**, sans ACME ; la route se **propose**, elle ne se pose pas | `docs/PROD-SERVER.md` §6, §8 |
 | Variables dans `/etc/spark/env`, secrets dans `/run/spark/secrets`, **posés par la console seulement** | Aucun `.env` n'est écrit sur l'hôte ; la pile lit ces deux fichiers | S6, `docs/PROD-SERVER.md` §5 |
 | `/run` est un `tmpfs` | Après un redémarrage, les secrets reviennent quand le plan de contrôle les repose ; les conteneurs, eux, repartent avec leur configuration enregistrée | `docs/PROD-SERVER.md` §8 |
-| 2 Gio de mémoire, 10 Gio de disque, 0,5 CPU garanti | Chaque service est borné ; les images pèsent 5,9 Go | S4, S9 |
+| 2 Gio de mémoire, 10 Gio de disque, 0,5 CPU garanti — *16 384 Mo et 8 cœurs depuis le 2026-11-10 (décision 889, ajout daté)* | Chaque service est borné ; les images pèsent 5,9 Go | S4, S9 |
 | Ni Node, ni `jq`, ni `age` | La webapp se construit sur le poste qui livre ; les scripts de cellule n'emploient que `sh`, `python3` et `openssl` | S5 |
 | `nproc` et `free` décrivent la Forge | Aucun service ne dimensionne ses processus sur `nproc` sans borne explicite | `docs/PROD-SERVER.md` §3 |
 
@@ -89,6 +89,9 @@ tableau `SPARK_COMPOSE` ; aucun appel ne compose ces fichiers à la main.
 - Une limite `mem_limit` par service, chiffrée au §8 après mesure. Une limite rend la défaillance
   **localisée et nommée** : sans elle, le premier service qui déborde fait tuer par le noyau un
   voisin quelconque de la cellule.
+- *Révisé par `CRM-143` (décision 889 et son ajout du 2026-11-10 ; `docs/SPEC-pieces-jointes.md` §17.2)* : la cellule
+  compte désormais **16 384 Mo et 8 cœurs**, et ClamAV y entre, avec un plafond mesuré. Le paragraphe suivant décrit
+  l'état d'avant, et sera réécrit avec le code.
 - **ClamAV n'est pas déclaré dans la cellule.** Ses signatures exigent à elles seules plus de
   1 Gio. Le produit échoue **fermé** : une pièce jointe naît `pending` et ne devient `clean` que si
   ClamAV le dit (`docs/SPEC-mail-subsystem.md` §15.5) ; sans lui, aucune pièce jointe reçue n'est
@@ -371,7 +374,7 @@ pile compte désormais neuf services durables (onze conteneurs avec les deux pas
 
 `migrations-runner` (128 Mio) et `minio-createbucket` (64 Mio) ne vivent que le temps de leur
 passage. Les limites valent environ le double de l'empreinte, arrondi : ce sont des **plafonds**, et
-leur somme dépasse volontairement les 2 Gio (§3.4). La marge réelle est celle qui reste au démon
+leur somme dépasse volontairement les 2 Gio (§3.4) — *la cellule en compte 16 depuis le 2026-11-10 (§3.4, `CRM-143`)*. La marge réelle est celle qui reste au démon
 rootless et au système de la cellule — environ 900 Mio —, **à relever dans la cellule** au premier
 déploiement, `nproc` et `free` y décrivant la Forge.
 

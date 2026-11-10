@@ -19148,7 +19148,8 @@ board ; INC-352 close sur le constat en production.
 - (iv) `crm_mail_prepare` et `crm_mail_send` du connecteur joignent des pièces ; la lecture d'une pièce non analysée par
   le connecteur exige un accusé explicite.
 **MCP** : **oui, famille `messagerie`**, cases existantes (décision 889).
-**Spécification** : à écrire avant le code. Elle couvre :
+**Spécification** : `docs/SPEC-pieces-jointes.md` §17, écrite le 2026-11-10 avant le code (décision 892), six tranches
+(§17.10) ; `docs/SCHEMA.md` « Migration à numéroter au push — le repli confirmé ». La spécification d'origine couvrait :
 - `docs/SPEC-mail-subsystem.md` : §4.3 révisé, §19 bis.1, le repli, la reprise ;
 - `docs/SPEC-pieces-jointes.md` ;
 - `docs/SPEC-deploiement-spark.md` et `docs/PROD_MIGRATIONS.md` : service, mémoire, signatures ;

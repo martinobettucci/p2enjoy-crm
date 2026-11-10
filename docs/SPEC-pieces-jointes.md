@@ -238,3 +238,209 @@ Sans changer un point validé :
   chapitre 33, l'outil `crm_mail_attachment_get` (texte seul, aucune image nouvelle). L'état « extraction en cours » est
   décrit sans être cité, faute d'une image qui le montre (règle de la décision 736).
 
+
+## 17. ClamAV en production, le repli confirmé, la reprise, les pièces jointes du connecteur — `CRM-143`
+
+*Écrit avant le code, le 2026-11-10, session d5b44a2d. `docs/JOURNAL.md` décision 889 (l'arbitrage du responsable) et
+décision 892 (les choix de conception). Origine : en production, les quatre pièces reçues sont `skipped`, faute
+d'antivirus dans la cellule, et `skipped` ne se télécharge pas (`docs/SPEC-mail-subsystem.md` §4.3).*
+
+**Connecteur MCP : oui, famille `messagerie`, cases existantes** (décision 889). Lire une pièce relève de `consulter`.
+Joindre une pièce à un mail préparé relève de l'action qui prépare déjà le mail. Aucune famille, aucune case et aucune
+migration de la matrice.
+
+### 17.1 Ce que l'unité livre, et ce qu'elle ne livre pas
+
+Livré :
+- **(i) ClamAV dans la cellule de production** (§17.2), sous un plafond mémoire mesuré ;
+- **(ii) le repli confirmé** (§17.3, §17.4) : une pièce **non analysée** — `skipped` faute d'antivirus, ou `pending`
+  depuis plus de quinze minutes — se télécharge **après un avertissement et une confirmation**. La confirmation est
+  persistée en base, par personne et par pièce, et c'est la base qui la lit (`CLAUDE.md` §10). Une pièce `infected` ne se
+  télécharge **jamais** ;
+- **(iii) la reprise** (§17.5) : `mail-sync` analyse les pièces `skipped` déjà reçues dès que l'antivirus répond. Saine,
+  la pièce devient `clean` ; infectée, elle reste bloquée ;
+- **(iv) les pièces jointes du connecteur** (§17.6) : `crm_mail_prepare` joint des fichiers au mail qu'il prépare, et
+  `crm_mail_attachment_get` lit une pièce non analysée sur un accusé explicite. `crm_mail_send`, que nomme la décision
+  889, n'existe plus : `CRM-128` l'a retiré sans alias, et le connecteur prépare sans jamais envoyer.
+
+Non livré, et nommé :
+- **aucun aperçu d'une pièce non analysée.** L'aperçu (§5) reste réservé aux pièces saines : il ouvre le fichier dans la
+  page. Le repli ne fait que télécharger, après la confirmation ;
+- **aucune reprise d'une pièce trop volumineuse.** Elle n'a jamais été déposée (§4.3 du sous-système), et il n'y a rien à
+  analyser ;
+- **aucune ligne au journal d'audit pour une confirmation** : la table de confirmation est elle-même la trace (qui, quoi,
+  quand).
+
+### 17.2 ClamAV dans la cellule
+
+*Rectifié le 2026-11-10* : la cellule compte désormais **16 384 Mo, dont 15 030 disponibles, et 8 cœurs**, mesurés en
+lecture seule par la session d9 après l'agrandissement par le responsable. Les « 2 Gio » de
+`docs/spark-notes/CONTRIBUTORS.md` et de `docs/SPEC-deploiement-spark.md` §2 et §3.4, puis les « ≈ 1 960 Mo
+disponibles » de la décision 889, sont dépassés. La décision ne se réécrit pas : un ajout daté le dit.
+
+- **Le service `clamav`** entre dans `docker-compose.spark.yml`. Image `clamav/clamav:1.4.3`, celle du développement, avec
+  la même sonde (`clamdcheck.sh`) et un volume nommé pour ses signatures (`clamav-data`) : un redémarrage ne les
+  retélécharge pas. Aucun port publié : `mail-sync` le joint par le réseau de la pile (`CLAMAV_HOST=clamav`, déjà posé).
+- **Le plafond** `mem_limit` vaut le double de l'empreinte **mesurée en développement** au pire moment, celui du
+  rechargement des signatures, arrondi. Le rechargement garde son mode par défaut, concurrent : la mémoire ne manque plus,
+  et un rechargement concurrent ne suspend pas les analyses. Mesure au repos le 2026-11-10 : **894 Mio**. La mesure au
+  rechargement est faite au code, et le plafond l'en déduit.
+- **Les signatures se mettent à jour** par le `freshclam` intégré à l'image. **Risque nommé** : la cellule doit joindre
+  `database.clamav.net` en HTTPS. La sortie SMTP y est fermée (INC-349), et la sortie HTTPS n'est pas mesurée. Sans
+  signatures, `clamd` ne démarre pas, et chaque pièce reste `skipped` : le produit échoue fermé, comme avant. Le contrat
+  de déploiement prévoit la vérification et le recours, un miroir ou des fichiers CVD copiés.
+- **Le disque** : l'image et les signatures pèsent de l'ordre de 650 Mo. Le contrat exige `df -h /` avant la livraison.
+- `docs/SPEC-deploiement-spark.md` §3.4 et §8, `docs/spark-notes/CONTRIBUTORS.md` et `README.md` §11 sont révisés avec le
+  code.
+
+### 17.3 Le repli confirmé, en base
+
+**Une pièce est NON ANALYSÉE** quand `av_status = 'skipped'` **et que son objet est déposé**, ou quand `av_status =
+'pending'` depuis plus de **quinze minutes**. Le délai est une constante de la fonction, nommée et commentée. Un `pending`
+plus jeune est une analyse en cours, pas une panne.
+
+**Pourquoi un `skipped` a eu lieu** se garde dans une colonne nouvelle, `mail_attachments.av_skip_reason` :
+- `scanner_unavailable`, quand l'antivirus n'a pas répondu ;
+- `too_large`, quand la pièce dépasse `MAIL_MAX_ATTACHMENT_MB` et n'a pas été déposée.
+
+La colonne est nulle hors de `skipped`, par contrainte. `mail-sync` l'écrit. La migration la pose sur les lignes
+existantes : `scanner_unavailable` si l'objet existe dans `storage.objects`, `too_large` sinon. L'écran dit ainsi pourquoi
+une pièce n'est pas analysée, sans attendre un refus.
+
+**La confirmation est une ligne**, table nouvelle `public.mail_attachment_risk_acknowledgments` :
+- colonnes `attachment_id` (`on delete cascade`), `user_id` (`profiles`, `on delete cascade`), `acknowledged_at` ;
+- clé primaire `(attachment_id, user_id)` ;
+- RLS : chacun lit ses lignes, personne n'écrit directement, `anon` rien.
+
+Elle s'écrit par une fonction, **`public.acknowledge_unscanned_attachment(p_attachment_id uuid) returns timestamptz`**,
+`security definer`, exécutable par `authenticated` seul. Ses refus :
+
+| Cas | Code |
+|---|---|
+| Sans session | `not_authenticated` (`42501`) |
+| Pièce absente, ou message invisible pour l'appelant | `app.raise_http_error(404, 'attachment_not_found')` : l'absence et l'interdit ne se distinguent pas |
+| Pièce `infected` | `attachment_infected` (`42501`) : **jamais**, quoi qu'on confirme |
+| Pièce `clean` | `attachment_clean` (`22023`) : rien à confirmer |
+| Pièce `pending` depuis moins de quinze minutes | `attachment_scanning` (`55000`) : l'analyse est en cours |
+| Pièce `skipped` sans objet déposé (`too_large`) | `attachment_not_stored` (`55000`) |
+
+Une seconde confirmation de la même pièce rend la date de la première : le geste est idempotent.
+
+**La règle du téléchargement est celle de la base.** `app.piece_jointe_telechargeable(text)` (migration `0028`), qui porte
+la politique de lecture du bucket, est reprise à l'identique, avec un ajout : une pièce **non analysée** se lit aussi quand
+l'appelant l'a **confirmée**. Elle exige donc une ligne de confirmation pour `auth.uid()` et la visibilité du message.
+**`infected` reste refusée à tous**, et l'anonyme reste refusé sur tout. La politique `mail_attachments_objets_lecture`
+(`0029`) ne change pas : elle appelle la fonction.
+
+**Une confirmation ne survit pas à un verdict.** Si la reprise passe la pièce en `clean`, la confirmation devient sans
+objet ; si elle la passe en `infected`, la fonction refuse quand même. Aucune ligne n'a besoin d'être effacée.
+
+### 17.4 Le repli à l'écran
+
+Le §5.4 du design system et le §17 du chapitre de l'inbox posaient qu'une pièce non saine n'a **pas** de commande. Ils
+sont révisés pour la seule pièce **non analysée** :
+- **sa ligne** dit pourquoi, en toutes lettres : « non analysée : antivirus indisponible », « non analysée : analyse en
+  attente », ou, pour `too_large`, « non analysée : trop volumineuse, non conservée », cette dernière **sans aucune
+  commande** ;
+- **une commande « Télécharger quand même »**, bouton discret compact, icône Lucide `ShieldAlert`, ouvre sous la ligne un
+  **avertissement dans le flux**, jamais une modale (§5.13). Il porte une phrase qui dit le risque — « Ce fichier n'a pas été
+  analysé par l'antivirus : il peut contenir un logiciel malveillant. Ne l'ouvrez que si vous connaissez l'expéditeur et
+  attendiez ce fichier. » —, puis « Je comprends le risque, télécharger » et « Annuler » ;
+- **la confirmation appelle la fonction, puis télécharge** par l'API de stockage, sous le jeton de la personne. Un refus
+  se dit dans l'avertissement, `role="alert"`, par un dictionnaire fermé : pièce introuvable, infectée, en cours
+  d'analyse, non conservée, réseau ;
+- **une pièce déjà confirmée** n'en demande plus : sa ligne porte « Télécharger », et la mention « non analysée » reste ;
+- **une pièce `infected`** garde sa forme : son statut en toutes lettres, aucune commande.
+
+Les règles visuelles s'écrivent au `docs/DESIGN_SYSTEM.md`, au premier paragraphe libre à l'écriture de l'écran (le §5.94
+est pris par `CRM-137`), après sa lecture intégrale.
+
+### 17.5 La reprise, dans `mail-sync`
+
+- **Une fonction de base**, `public.mail_attachments_to_rescan(p_limit int) returns table (id, storage_path, mime_type)`,
+  réservée à `service_role`. Elle rend les pièces `skipped` dont la raison est `scanner_unavailable`, ou `pending` depuis
+  plus de quinze minutes, les plus anciennes d'abord.
+- **Une fonction d'écriture**, `public.mail_attachment_record_scan(p_attachment_id uuid, p_status text) returns void`,
+  réservée à `service_role`. Elle passe une pièce non analysée en `clean` ou en `infected`, rien d'autre : une pièce déjà
+  jugée n'est pas réécrite. Le déclencheur de `0141` pose alors l'extraction du texte d'une pièce devenue saine.
+- **Une boucle** `PiloteReprise` dans le service, sur le patron de `PiloteExtraction` (§4.1), et une route interne
+  `POST /internal/v1/attachments/rescan?limit=n` qui exécute un lot à la demande. Un lot télécharge chaque objet sous la
+  clé de service, le soumet à `clamd` par la fonction existante (`antivirus.analyser_contenu`), puis écrit le verdict.
+- **Si l'antivirus ne répond toujours pas**, le lot s'arrête au premier `skipped` et n'écrit rien : la pièce reste non
+  analysée, et le lot suivant réessaiera.
+- **Le rythme** : un lot de 20 pièces toutes les 15 minutes, et au démarrage du service. Les pièces de production seront
+  donc reprises au premier lot après la livraison.
+- **Le journal** : `reprise_antivirus_lot` avec ses compteurs (`analysees`, `saines`, `infectees`, `restees`), jamais un
+  nom de fichier (§4.3 du sous-système). Une infection est journalisée avec l'identifiant de la pièce, sans signature.
+- **L'ingestion écrit `av_skip_reason`** quand elle range une pièce en `skipped`, avec les deux valeurs du §17.3.
+
+### 17.6 Le connecteur
+
+- **`crm_mail_attachment_get`** gagne `acknowledge_unscanned: bool = false`. Sur une pièce non analysée, sans ce paramètre,
+  l'outil refuse en le disant : `attachment_not_scanned`, avec la raison et le moyen, le paramètre. Avec le paramètre, il
+  appelle `acknowledge_unscanned_attachment` **sous le jeton de la personne**, puis lit la pièce : la confirmation est
+  celle de la personne au nom de qui l'assistant agit. Une pièce `infected` est refusée dans tous les cas. Les statuts
+  rendus par les outils de lecture gagnent `not_scanned_unavailable`, `not_scanned_too_large` et `scanning`.
+- **`crm_mail_prepare`** gagne `attachments`, une liste d'au plus 10 objets `{filename, content_base64, mime_type?}`, 10 Mo
+  décodés au plus en tout, les bornes de l'envoi (`CRM-058` T2). Le connecteur dépose chaque fichier dans
+  `mail-outbound-attachments`, au chemin `<espace>/<personne>/<uuid>/<nom>`, sous le jeton de la personne : c'est la
+  politique de dépôt de `0107` qui s'applique. Puis il appelle `prepare_email` avec les chemins.
+- **Le mail préparé garde ses pièces** : `mail_drafts.attachments`, colonne nouvelle, la forme de `mail_outbox.attachments`.
+  `prepare_email` gagne `p_attachments jsonb`, validée comme dans `queue_outbound_email` : au plus 10, 10 Mo, des objets
+  existants déposés par l'appelant. `depots_envoi_abandonnes` épargne les objets cités par un mail préparé **en attente**.
+- **La relecture** dans l'inbox (§5.90 du design system) précharge ces pièces dans le formulaire d'envoi, qui les montre
+  comme des fichiers joints, retirables. L'envoi passe leurs chemins à `send_email_draft`, qui les accepte déjà.
+- `docs/SPEC-mcp.md` §9.2 est révisée avec l'outil. L'image `mcp` est à reconstruire.
+
+### 17.7 Migration
+
+Une migration, au premier numéro libre au push (arbitrage de la session de livraison du 2026-11-10) :
+- `mail_attachments.av_skip_reason`, sa contrainte et sa reprise ;
+- la table de confirmation et ses droits ;
+- `acknowledge_unscanned_attachment` ;
+- `app.piece_jointe_telechargeable`, reprise ;
+- `mail_attachments_to_rescan` et `mail_attachment_record_scan` ;
+- `mail_drafts.attachments` ;
+- `prepare_email`, reprise avec `p_attachments` : son ancienne signature est retirée, PostgREST ne départageant pas deux
+  surcharges ;
+- `depots_envoi_abandonnes`, reprise.
+
+`docs/SCHEMA.md` la décrit, avec son retrait.
+
+### 17.8 Seed
+
+« Une pièce par statut », par les vrais chemins (`CLAUDE.md` §8) :
+- `clean` : les cinq pièces existantes ;
+- `infected` : un courrier portant l'échantillon EICAR, relevé et analysé par le vrai ClamAV ;
+- `skipped` (`too_large`) : un courrier portant une pièce au-delà de `MAIL_MAX_ATTACHMENT_MB`, relevé par le vrai service.
+  Le poids de ce courrier est mesuré au code, et la borne de développement peut être baissée pour le seed si le serveur de
+  messagerie le refuse.
+
+Une pièce `skipped` (`scanner_unavailable`) n'est **pas** seedée : elle naît quand l'antivirus est absent, et la reprise la
+rendrait `clean` dans le quart d'heure. Elle naît dans les preuves, par le patron de l'exemplaire jetable (§17.9).
+
+### 17.9 Preuves exigées
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | `acknowledge_unscanned_attachment` : chaque refus du tableau, l'idempotence, `anon` refusé. `app.piece_jointe_telechargeable` : `skipped` refusé sans confirmation, permis avec la confirmation de l'appelant **et pas** celle d'un autre, `infected` refusé même confirmé, `pending` jeune refusé, `pending` vieux permis avec confirmation, message invisible refusé. `mail_attachment_record_scan` : refusée à `authenticated`, ne réécrit pas une pièce jugée. `prepare_email` : pièces validées, bornes |
+| pytest | la reprise : un lot qui passe `skipped` en `clean` et en `infected`, un antivirus muet qui n'écrit rien, le journal sans nom de fichier ; l'ingestion qui écrit `av_skip_reason` |
+| API (Playwright, jetons réels) | le téléchargement d'une pièce `skipped` refusé sans confirmation, permis après, refusé pour une collègue qui n'a pas confirmé ; `infected` refusé avant et après ; l'anonyme refusé. Retourne l'assertion « `skipped` non » de `e2e/api/inbox.spec.ts` (décision 51 : retournée, non retirée) |
+| E2E `mail`, vrai ClamAV | sur un **exemplaire jetable** de `mail-sync`, `CLAMAV_HOST` injoignable, le service partagé arrêté le temps de la preuve (§12.6 du sous-système, règle 3) : une pièce naît `skipped` (`scanner_unavailable`) ; le service partagé revenu, la route de reprise la passe en `clean`. L'échantillon EICAR naît `infected` et y reste |
+| E2E `ui`, souris et clavier | l'avertissement, la confirmation et le téléchargement réel ; l'annulation ; le refus d'une pièce infectée (aucune commande) ; captures aux quatre paliers |
+| Connecteur | les deux outils dans `scripts/verify-mcp.sh` : refus sans accusé, lecture avec ; un mail préparé avec deux pièces, puis relu dans l'inbox avec ses pièces |
+| Mémoire | `docker stats` de `clamav` en développement, au repos et au rechargement des signatures ; le plafond s'en déduit |
+| Manuel | le chapitre de l'inbox : le statut d'une pièce, le repli, son avertissement ; le chapitre du connecteur |
+
+### 17.10 Tranches
+
+1. **T1, base** : la migration et pgTAP.
+2. **T2, `mail-sync`** : `av_skip_reason` et la reprise, avec pytest et l'E2E `mail`.
+3. **T3, la cellule** : `clamav` dans `docker-compose.spark.yml`, la mesure, le contrat de déploiement et les notes.
+4. **T4, l'écran** : le repli, le préchargement des pièces d'un mail préparé, l'API, l'E2E `ui`, les captures, le design
+   system et le manuel.
+5. **T5, le connecteur** : les deux outils, `verify-mcp.sh` et `docs/SPEC-mcp.md`.
+6. **T6, le seed** : les statuts `infected` et `skipped`.
+
+Une livraison emporte ensemble la migration, les images `mail-sync` et `mcp`, la webapp et le service `clamav`. Le
+contrat de déploiement les ordonne.

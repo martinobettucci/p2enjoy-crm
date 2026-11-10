@@ -48,7 +48,9 @@ Objets : volume `minio-data`. État de `mail-sync` : volume `mail-sync-state`.
   « unable to change to runas gid »). Realtime tourne donc sur une image dérivée, construite sur le
   poste, où `nobody` porte l'identifiant 64000 (`supabase/docker/realtime-spark/Dockerfile`). Ne
   jamais « réparer » par un `docker pull` de l'image d'origine.
-- **ClamAV absent** (mémoire) : une pièce jointe reçue reste non téléchargeable.
+- **ClamAV absent** (mémoire) : une pièce jointe reçue reste non téléchargeable. *Rectifié le 2026-11-10* : la cellule
+  compte désormais 16 Go et 8 cœurs (décision 889, ajout daté), et `CRM-143` y ajoute ClamAV
+  (`docs/SPEC-pieces-jointes.md` §17.2).
 - **Sauvegardes hors site non en place** : `age` n'est pas installé.
 - Sortie SMTP : `25`, `465` et `587` fermés par l'hébergeur. Une identité d'expédition d'utilisateur
   qui n'emploie que l'un de ces ports ne pourra pas envoyer depuis cette cellule.

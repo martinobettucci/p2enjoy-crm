@@ -2526,6 +2526,44 @@ elle.
 attente sont perdus : les lister avant. **Avec l'image `mcp` d'avant `CRM-128` T3** : sans la garde, son `crm_mail_send`
 enverrait de nouveau directement.
 
+### Migration à numéroter au push — le repli confirmé des pièces non analysées, leur reprise, les pièces d'un mail préparé (`CRM-143`, décisions 889 et 892 ; spécifiée le 2026-11-10, à écrire)
+
+`docs/SPEC-pieces-jointes.md` §17.3, §17.5, §17.6 et §17.7.
+- **`mail_attachments.av_skip_reason`**, `text`, `scanner_unavailable` | `too_large`, nulle hors de `skipped`
+  (contrainte) ; reprise des lignes existantes selon la présence de l'objet dans `storage.objects`.
+- **`public.mail_attachment_risk_acknowledgments`** : `attachment_id` (`on delete cascade`), `user_id` (`profiles`,
+  `on delete cascade`), `acknowledged_at` ; clé `(attachment_id, user_id)` ; RLS de lecture des siennes, aucune écriture
+  directe, `anon` rien.
+- **`public.acknowledge_unscanned_attachment(uuid) returns timestamptz`**, `security definer`, `authenticated` seul ; refus
+  `not_authenticated`, `attachment_not_found` (404), `attachment_infected`, `attachment_clean`, `attachment_scanning`,
+  `attachment_not_stored`.
+- **`app.piece_jointe_telechargeable(text)`**, reprise : `clean`, ou non analysée **et** confirmée par `auth.uid()` ;
+  `infected` jamais.
+- **`public.mail_attachments_to_rescan(int)`** et **`public.mail_attachment_record_scan(uuid, text)`**, `service_role`
+  seul.
+- **`mail_drafts.attachments`**, `jsonb`, la forme de `mail_outbox.attachments` ; **`prepare_email`** reprise avec
+  `p_attachments` (l'ancienne signature retirée) ; **`depots_envoi_abandonnes`** reprise, qui épargne les objets cités
+  par un mail préparé en attente.
+
+**Retrait** : reposer `prepare_email`, `app.piece_jointe_telechargeable` et `depots_envoi_abandonnes` de leur définition
+précédente, retirer les trois fonctions nouvelles, la table, puis les deux colonnes. Les confirmations et les pièces des
+mails préparés sont perdues. **Avec les images `mail-sync`, `mcp` et la webapp d'avant `CRM-143`.**
+
+### Migration (prochain numéro libre) — les affaires candidates au classement d'un message (`CRM-137` ; spécifiée le 2026-11-10, à écrire)
+
+`docs/SPEC-mail-subsystem.md` §26.2, décisions 877, 891 et 892. **Une fonction, aucune table, aucune colonne, aucune
+donnée.** `public.classification_candidates(p_message_id uuid, p_known_sender boolean default true, p_search text
+default null, p_limit integer default 50) returns table (card_id uuid, title text, path text, known_sender boolean)`,
+`security invoker`, `stable`, `search_path` vidé ; `execute` à `authenticated` seul.
+- Message illisible : `app.raise_http_error(404, 'message_not_found')`.
+- Candidate : affaire hors corbeille, avec au moins un rattachement non archivé lisible.
+- `known_sender` : un contact lisible rattaché porte `lower(btrim(from_address))`.
+- Recherche : sous-chaîne sans casse ni accents (`extensions.unaccent`) sur le titre et sur le chemin.
+- Ordre : les connues d'abord, puis le titre, puis l'identifiant.
+- `p_limit` est ramené entre 1 et 100.
+**Retour arrière** : `drop function public.classification_candidates(uuid, boolean, text, integer);`. Aucune donnée n'en
+dépend ; la webapp et l'image `mcp` qui l'appellent se livrent avec elle.
+
 ### Migration `0170` — la relève écrit son échec et son succès (`CRM-135`, décisions 873 et 874 ; livrée en développement le 2026-11-10)
 
 *Numérotée `0170` au push, premier numéro libre sur `main` (arbitrage de la session de livraison du 2026-11-10 : une

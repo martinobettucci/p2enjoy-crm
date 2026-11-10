@@ -116,6 +116,11 @@ Storage. Elle est ensuite soumise à ClamAV.
 - `infected` : conservée pour investigation, **jamais téléchargeable**, signalée dans la card ;
 - `skipped` : analyse impossible (taille), traitée comme non téléchargeable.
 
+*Révisé par `CRM-143` (`docs/SPEC-pieces-jointes.md` §17.3, décision 889)* : `skipped` a deux raisons, gardées en base,
+`scanner_unavailable` et `too_large`. Une pièce **non analysée** — `skipped` déposée, ou `pending` depuis plus de quinze
+minutes — se télécharge après un avertissement et une confirmation persistée par personne. `infected` ne se télécharge
+jamais. Une reprise analyse les pièces non analysées dès que l'antivirus répond.
+
 Une taille maximale (`MAIL_MAX_ATTACHMENT_MB`) borne l'ingestion. Le dépassement est journalisé
 et visible dans la card : la pièce jointe manquante ne disparaît jamais silencieusement.
 
@@ -3424,6 +3429,9 @@ Sous les champs de connexion du §21.4, un champ, **sans garde de saisie qui dou
 `GRANT SELECT` de `0022`). Ce n'est pas un secret.
 
 ### 25.5 Le panneau « Dossiers relevés »
+
+*Précision du 2026-11-10 (décision 892)* : le §5.94 du design system est pris par `CRM-137` ; ce panneau prendra le
+premier paragraphe libre à l'écriture de son écran.
 
 - **Où** : sous la ligne de la boîte, dans le flux, comme le formulaire (§25.2, point 1). Une commande discrète
   **« Dossiers relevés »** (icône Lucide `FolderTree`) sur chaque ligne de boîte, avant « Tester la connexion », avec les
