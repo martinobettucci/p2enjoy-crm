@@ -39600,3 +39600,19 @@ au plus remplace le comptage. Ce que la barre affiche ne change pour aucun rôle
 **Conséquences** : `docs/SPEC-channels.md` §5.5, `docs/DESIGN_SYSTEM.md` §4 (onglets), `CHANGELOG.md`, INC-350 ; tests
 unitaires de `useMesureChannels` réécrits sur la lecture d'une ligne ; preuves `guide-flottant`, `accueil-channels`,
 `demarrage` rejouées.
+
+
+### décision 877 — classer un mail : un sélecteur cherchable, et « Expéditeur connu » coché par défaut ; MCP dans la famille `messagerie`
+
+*2026-11-10, session 4522fa9c (p2enjoy-crm-be), demande et arbitrage du responsable (`AskUserQuestion`).*
+**La demande** : « rattacher un mail à une affaire, c'est épouvantable : pas de recherche, juste une combobox avec des
+centaines de lignes » ; et une case « expéditeur connu » qui filtre les affaires dont l'expéditeur est un contact.
+**L'existant** : le formulaire de classement de l'inbox (`webapp/src/app/RouteInbox.tsx`, `inbox-formulaire-classement`)
+rend un `<select>` de toutes les affaires lisibles, « chemin › titre », sans recherche.
+**Décision** : un **sélecteur cherchable** (par le titre et le chemin) remplace la liste ; une case **« Expéditeur connu »,
+cochée par défaut**, restreint aux affaires dont un contact rattaché porte l'adresse de l'expéditeur du message ; la
+décocher élargit à toutes les affaires lisibles, et la recherche vaut dans les deux cas. Le filtre se calcule côté
+serveur, sous les droits de la personne.
+**MCP** : **oui, famille existante `messagerie`** — l'outil qui classe un message peut proposer les affaires de
+l'expéditeur, cases en place.
+**Conséquences** : unité `CRM-137`, à spécifier avant le code.

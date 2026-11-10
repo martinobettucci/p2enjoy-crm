@@ -18953,3 +18953,21 @@ manuel et le contrat de déploiement (migration, image `mail-sync`, fonction edg
 **DoD** : unitaires webapp et pytest (la liste des dossiers) ; pgTAP (quota remis à `NULL`, refus de droits) ; API avec
 refus de droits par jeton réel ; E2E souris et clavier sur le vrai serveur IMAP de dev (la fenêtre liste les dossiers du
 seed, le choix est relevé) ; seed ; captures aux quatre paliers ; manuel ; contrat de déploiement.
+
+## Demande du 2026-11-10 — classer un mail sans parcourir des centaines d'affaires (décision 877)
+
+### CRM-137 — Classer un mail : un sélecteur d'affaire cherchable, filtré par défaut sur l'expéditeur connu `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 877).
+**Comportement attendu** : dans le formulaire de classement de l'inbox, un sélecteur cherchable (titre, chemin) remplace la
+liste déroulante ; la case « Expéditeur connu », cochée par défaut, ne montre que les affaires dont un contact rattaché a
+l'adresse de l'expéditeur ; décochée, toutes les affaires lisibles ; un état vide qui propose de décocher quand
+l'expéditeur n'est le contact d'aucune affaire. Filtre côté serveur, sous les droits de la personne ; clavier complet.
+**MCP** : **oui, famille `messagerie`** (décision 877) — proposer les affaires de l'expéditeur au classement d'un message,
+cases existantes.
+**Spécification** : à écrire avant le code — `docs/DESIGN_SYSTEM.md` (le sélecteur cherchable, la case), la requête
+serveur, `docs/SPEC-mcp.md` §9.2, le manuel (inbox).
+**DoD** : unitaires ; API (le filtre, les droits : une affaire illisible n'apparaît jamais) ; E2E souris et clavier (case
+cochée, décochée, recherche, état vide) ; outil du connecteur et `verify-mcp.sh` ; seed (un message d'un contact connu, un
+d'un inconnu) ; captures aux quatre paliers ; manuel.
+
