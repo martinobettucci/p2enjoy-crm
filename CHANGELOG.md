@@ -13,7 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-132` — les harnais de la messagerie ne se disent plus verts sans avoir vu (INC-345, décision 867)
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-10 — la webapp de `main` et le manuel
+
+Cellule Spark `crm`, révision `b4e1b924` (décision 880, sans nouvel instantané, un `pg_dump -Fc` avant) ; aucune migration.
+**Vérifié** : registre inchangé à 167 lignes ; la route publique sert le bundle de ce build ; `verifier.sh` 33/34 (INC-277).
+Le constat fonctionnel du responsable reste à faire. Les harnais de `CRM-132` n'existent qu'en développement.
+
+#### `CRM-132` — les harnais de la messagerie ne se disent plus verts sans avoir vu (INC-345, décision 867)
 
 - **Outillage de développement seul**, rien à livrer. Les six harnais `verify-mail-*` qui jouaient pytest sur l'hôte
   passent par `scripts/lib/pytest-mail-sync.sh`, qui le joue au besoin dans un conteneur jetable.
@@ -28,22 +38,20 @@ d'exécuter le code attendu.
   - l'invariant de classement, qui comptait l'envoi archivé.
 - Le README documente `pytest_mail_sync`.
 
-### `CRM-129` — l'accueil ne prétend plus une absence de channel (INC-346, décisions 858 et 859)
+#### `CRM-129` — l'accueil ne prétend plus une absence de channel (INC-346, décisions 858 et 859)
 
 - Sur `/`, guide de démarrage fini ou masqué : « Aucun board à afficher — Aucun channel n'est disponible… » ne paraît plus
   que si la personne ne lit **aucun** channel. Sinon, et si cette mesure échoue, l'accueil dit « Choisissez un channel » et
   où le trouver (la barre latérale). La présence est le compte de l'étape « channel » du guide, déjà mesuré : aucune
   requête de plus. Sans session, rien ne change. **Avec la webapp de `main`** ; aucune migration.
 
-### `CRM-131` — hors d'un track, la barre des channels ne prétend plus une absence (INC-348, décisions 866 et 868)
+#### `CRM-131` — hors d'un track, la barre des channels ne prétend plus une absence (INC-348, décisions 866 et 868)
 
 - Sur une page qui n'est pas celle d'un track (accueil, Inbox, Contacts, Réglages…), la barre sous l'en-tête n'écrit plus
   « Aucun channel » qu'à qui n'en lit aucun ; sinon, et pendant ou après une mesure en échec, « Ouvrez un track pour voir
   ses channels ». Les channels comptés sont ceux de l'accueil ; la barre les lit par une lecture de présence d'une ligne,
   qui n'est pas un comptage du guide : une lectrice n'en reçoit toujours aucun (CRM-094, INC-350). Sans session, rien ne change. Le manuel (chapitre 3) et son image sont
   mis à jour. **Avec la webapp de `main`** ; aucune migration.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-06 — la webapp de `main` et le manuel
 

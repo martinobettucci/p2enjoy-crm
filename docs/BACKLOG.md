@@ -18756,6 +18756,8 @@ inbox et fiche).
 ## Demande du 2026-11-06 — l'accueil ne prétend plus une absence de channel (décision 858, INC-346)
 
 ### CRM-129 — L'accueil dit deux choses selon que l'espace a des channels lisibles ou non `[P]`
+
+**Livrée le 2026-11-10** (décision 880, révision `b4e1b924`) ; reste le constat du responsable.
 *Spécifiée le 2026-11-06 avant le code (décision 859)* : `docs/SPEC-onboarding.md` §4.2, `docs/DESIGN_SYSTEM.md` §5.17.
 
 **Origine** : INC-346, relevé sur les captures de `CRM-112` T6 ; arbitré le 2026-11-06 (décision 858).
@@ -18811,6 +18813,8 @@ aux quatre paliers, seed, manuel).
 ## Demande du 2026-11-06 — trois arbitrages du responsable (décisions 865 à 867)
 
 ### CRM-131 — Hors d'un track, la barre des channels ne prétend plus une absence `[P]`
+
+**Livrée le 2026-11-10** (décision 880, révision `b4e1b924`) ; reste le constat du responsable.
 
 **Origine** : INC-348 (session 2f, captures de `CRM-129`) ; arbitrée le 2026-11-06 (décision 866).
 **Comportement attendu** : « Aucun channel » seulement si la personne n'a réellement aucun channel lisible ; un texte
