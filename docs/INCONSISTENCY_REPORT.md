@@ -9058,3 +9058,22 @@ jeton d'un membre, sur un volume comparable.
 **Pistes, à arbitrer après la mesure** : corriger la cause mesurée (politique ou index) ; alléger la lecture du board
 (lire à part ce qui n'est pas affiché dans la carte) ; borner le board par colonne. Un changement de ce que le board
 montre est une décision du responsable.
+
+**Mesure en développement, 2026-11-10** (session 2f, `CRM-142` ; transaction en lecture seule, rôle `authenticated` sous
+l'identité de l'administratrice du seed ; la requête est celle que PostgREST génère pour le board, relevée dans
+`pg_stat_statements`, paramètres substitués). Channel du seed le plus chargé : **28** rattachements actifs.
+- La requête entière : **1 006 à 1 220 ms**. Le tri des 28 lignes, plongements compris (affaire, étiquettes,
+  rattachements, channels, tracks, responsable, points de checklist), est fini à **52 à 62 ms**. Le reste, environ
+  **1 s**, est le nœud `Result` du sommet, qui calcule `health_momentum(card_placements.*)` et
+  `health_commercial(card_placements.*)` pour chaque ligne (11 984 tampons contre 808 sous le tri).
+- Isolées sur les mêmes 28 lignes : lire les rattachements, **3,7 ms** ; `health_momentum`, **468 ms** ; `health_commercial`,
+  **449 ms** — environ **33 ms par rattachement** pour les deux.
+- Pourquoi : les deux colonnes calculées de santé (`CRM-066`, `0113`) sont `plpgsql`, `security invoker`, et appellent
+  chacune `app.health_context`, qui relit `cards` (politique : `app.readable_channel_ids()`, 6,7 ms en dev, **20 ms en
+  production**) et `app.health_last_contact`, qui relit `card_activities` et `mail_messages` (politiques :
+  `app.can_read_card` **par activité et par message** de l'affaire). Chaque appel est une requête à part : les
+  politiques y sont réévaluées, par rattachement et deux fois.
+- La vue liste ne lit pas ces deux colonnes : c'est la différence qui la fait passer, plus que sa pagination.
+**L'hypothèse (2) est confirmée en développement**, sous une forme précise : ce ne sont pas les plongements, mais les
+deux colonnes de santé, réévaluées par ligne sous la RLS. À confirmer en production par le plan de la même requête,
+puis par `health_momentum` et `health_commercial` isolées.

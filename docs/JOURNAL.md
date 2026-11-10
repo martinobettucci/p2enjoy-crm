@@ -39853,6 +39853,8 @@ chercher la cause ; puis en production, en lecture seule, pour la confirmer sur 
 production, un seul `EXPLAIN (ANALYZE, BUFFERS)` de cette lecture, sous le rôle `authenticated` et l'identité d'un
 membre, sans écriture, joué par la session de livraison (`CLAUDE.md` §9, §12). Aucune correction n'est décidée avant la
 mesure ; la correction sera spécifiée, avec les deux questions du connecteur MCP, avant le code.
+*Suite : la décision 887 (session de livraison, même jour) ouvre l'unité `CRM-142`, prioritaire, qui porte cette mesure et la
+correction ; le connecteur MCP n'y entre pas.*
 
 
 ### décision 887 — INC-352 : une unité prioritaire rend le board d'un channel chargé lisible sous 8 s ; aucun outil MCP
