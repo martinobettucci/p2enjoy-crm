@@ -349,7 +349,7 @@ Catalogue partagé des étapes. C'est lui qui rend l'analytique comparable d'un 
 | `color` | `text` | jeton du design system |
 | `default_probability` | `numeric(5,2)` | `CHECK (0 <= x <= 100)` |
 | `default_stale_after_days` | `integer` | seuil de relance par défaut |
-| `description` | `text` | facultative, non vide après `btrim` si posée, sans borne — **`CRM-133`, migration `0171`** |
+| `description` | `text` | facultative, non vide après `btrim` si posée, sans borne — **`CRM-133`, migration au numéro pris au push** |
 | `position` | `numeric` | ordre d'affichage du catalogue, attribuée par trigger si omise |
 | `archived_at` | `timestamptz` | un nœud utilisé n'est jamais supprimé, seulement archivé |
 | `created_at`, `updated_at` | `timestamptz` | conventions générales ; `updated_at` maintenue par trigger |
@@ -418,7 +418,7 @@ Instanciation d'un nœud du catalogue dans un workflow.
 | `label_override` | `text` | surcharge locale facultative |
 | `probability_override` | `numeric(5,2)` | |
 | `stale_after_days` | `integer` | surcharge du seuil de relance |
-| `description_override` | `text` | surcharge de la description du nœud ; facultative, non vide après `btrim` si posée — **`CRM-133`, migration `0171`** |
+| `description_override` | `text` | surcharge de la description du nœud ; facultative, non vide après `btrim` si posée — **`CRM-133`, migration au numéro pris au push** |
 | `is_initial` | `boolean` | exactement une étape initiale par workflow |
 
 Unique : `(workflow_id, node_id)` — un nœud n'apparaît qu'une fois par workflow. Contrainte `DEFERRABLE INITIALLY
@@ -2582,10 +2582,10 @@ aussi `status = 'ok'` et `last_error = null`, sauf sur une ligne `disabled`, qu'
 `mail_inbound_account_record_sync` telle qu'en `0151`, **avec l'image `mail-sync` d'avant `CRM-135`** : l'image qui suit
 appelle la nouvelle fonction à chaque relève en échec.
 
-### Migration `0171` — la description d'un nœud, et sa surcharge par l'étape (`CRM-133` ; spécifiée le 2026-11-07, à écrire)
+### Migration de `CRM-133` — la description d'un nœud, et sa surcharge par l'étape (numéro pris au push ; spécifiée le 2026-11-07, à écrire)
 
-*Numérotée `0171` au push : spécifiée sous `0170`, que `CRM-135` a prise en entrant la première sur `main` (arbitrage de la
-session de livraison du 2026-11-10 : une migration prend son numéro à son entrée sur `main`).*
+*Spécifiée sous `0170`, puis `0171` : `CRM-135` et `CRM-142` sont entrées les premières sur `main` (arbitrage de la session
+de livraison du 2026-11-10 : une migration prend son numéro à son entrée sur `main`).*
 
 `docs/SPEC-workflow-engine.md` §7 sexies, décisions 869 et 870.
 - **`workflow_nodes_catalog.description`** et **`workflow_steps.description_override`**, `text`, nulles, chacune avec un

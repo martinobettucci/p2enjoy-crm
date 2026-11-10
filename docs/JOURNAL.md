@@ -39461,7 +39461,7 @@ l'étape se lit (la fiche, le board), les outils `workflows` du connecteur, le m
 audité ; la `0157` a ajouté une clé au document **seulement quand elle porte une valeur**, pour que les empreintes
 existantes ne bougent pas ; l'infobulle de description (`CRM-105`, `docs/DESIGN_SYSTEM.md` §5.58) vit sur quatre liens ;
 l'en-tête d'une colonne du board est un titre, l'étape d'un rattachement sur la fiche n'est pas un lien.
-**Décisions de conception** (`docs/SPEC-workflow-engine.md` §7 sexies, `docs/SCHEMA.md` « Migration `0171` »,
+**Décisions de conception** (`docs/SPEC-workflow-engine.md` §7 sexies, `docs/SCHEMA.md` « Migration de `CRM-133` »,
 `docs/DESIGN_SYSTEM.md` §5.15, §5.18, §5.58, `docs/SPEC-mcp.md` §9.2 undecies) :
 - deux colonnes `text` nulles, non blanches, sans borne ; « vide » s'envoie `NULL` ;
 - la surcharge suit **exactement** `label_override` : document (clé posée seulement si présente), restauration, copie,
@@ -39725,7 +39725,7 @@ assertion figée par décision 51 est **retournée, non retirée**. La spécific
   `NULL` ;
 - `compare_workflow_versions` et `compare_workflow_with_source` comparent tous les attributs présents dans l'un ou l'autre
   document (`app.composition_collection_diff`).
-**Décisions de conception** (`docs/SPEC-workflow-engine.md` §7 sexies.3, `docs/SCHEMA.md` « Migration `0171` ») :
+**Décisions de conception** (`docs/SPEC-workflow-engine.md` §7 sexies.3, `docs/SCHEMA.md` « Migration de `CRM-133` ») :
 - `app.document_cible_ia` est reprise : une étape existante garde sa `description_override` vivante ; une étape nouvelle
   naît sans. C'est la lecture de la décision 870 et du §7 sexies.5 (l'assistant ne propose aucune description) : aucune
   description n'est retirée par un geste qui n'en parle pas. Elle ne change aucun comportement existant ;
