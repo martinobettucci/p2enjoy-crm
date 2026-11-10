@@ -8892,7 +8892,7 @@ unitaires, `e2e/ui/accueil-channels.spec.ts` (bloc `CRM-131`), `docs/captures/CR
 
 
 ### INC-349 — en production, aucun courrier ne peut partir, et « Tester la connexion » répond 502
-**Ouverte.**
+**Close le 2026-11-10** (voir la fin de l'entrée).
 
 *Relevé le 2026-11-09 par la session 152dd27d (p2enjoy-crm-d9), à la demande du responsable (« les mails compte sortant ne
 fonctionnent pas alors que la config est juste »). Mesures **en lecture seule** sur la cellule : journaux des conteneurs,
@@ -8979,6 +8979,19 @@ motif et les compteurs. Une relève en échec écrit `error` et son code, et l'�
 espace la boîte de 5 minutes à une heure. Une boîte `disabled` n'est plus relevée. **À constater en production** avec la
 migration 170 et l'image `mail-sync` (`docs/PROD_MIGRATIONS.md` §2.33). Le refus IMAP du fournisseur (pistes d et e)
 reste ouvert : l'incident ne se ferme pas sur ces seuls points.
+
+**Close le 2026-11-10** (session 152dd27d, p2enjoy-crm-d9, sur le constat de la session de livraison) :
+- **cause 1** : `functions` est recréé en production le 2026-11-09, avec `MAIL_SYNC_URL` et `MAIL_SYNC_INTERNAL_TOKEN`
+  (décision 872) ;
+- **cause 2** : la sortie SMTP est ouverte par l'hébergeur le même jour, et mesurée ;
+- **la boîte entrante** : son port est corrigé en 993/`ssl` (décision 872). Le responsable a rétabli chez le fournisseur
+  l'accès IMAP de la boîte (pistes d et e). Constat de be, lecture seule, le 2026-11-10 : la boîte de production est
+  relevée avec succès, `status = ok`, `last_sync_at` à 11:38 UTC, 15 messages ;
+- **défauts (i) à (iv)** : livrés en production par `CRM-135` (livraison consignée `babb2edb`, révision `315adc18`,
+  registre à 168).
+
+Rien ne reste ouvert sous cette entrée. La question de POP, posée en chemin, a été répondue au responsable : le CRM relève
+en IMAP par construction (dossiers, copie par affaire, plages d'UID), et aucune unité ne la porte.
 
 ### INC-350 — hors d'un track, la coquille émet pour une lectrice un comptage du guide que `CRM-094` lui refuse
 **Close le 2026-11-10, corrigée par `CRM-131` (décision 876)** : unitaires, `e2e/ui/guide-flottant.spec.ts` (5/5, dont la
