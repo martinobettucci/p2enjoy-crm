@@ -40364,3 +40364,20 @@ serveur est injoignable (l'envoi reste en file, reprogrammé par le worker), l'a
 `auth_failed`). Les gardes qui comptent les identités du seed sont **révisées, non relâchées** (décision 51).
 **Conséquences** : `docs/SPEC-seed.md` (la section de l'outbox), `supabase/seed/apply-seed.sh`, les preuves qui comptent les
 identités ; `CRM-144` T5.
+
+### décision 914 — `CRM-136` T3 : le design system lu par ses sections générales et celles des réglages de la messagerie
+
+*2026-11-11, session interactive d5b44a2d (p2enjoy-crm-c2), arbitrage du responsable (`AskUserQuestion`), avant les écrans
+de l'unité (`docs/SPEC-mail-subsystem.md` §25.4 à §25.6).*
+**Le problème** : celui des décisions 897, 901, 907 et 910. `docs/DESIGN_SYSTEM.md` dépasse 8 000 lignes ; la décision 910
+ne valait que pour `CRM-144`.
+**Pistes présentées** : les sections ciblées ; la lecture intégrale, par tranches, sur plusieurs reprises de contexte.
+**Décision du responsable** : **les sections ciblées**, en entier :
+- §1 à §4 et §6 à §12 ;
+- les écrans de réglages de la messagerie : §5.14, §5.34 (comptes entrants), §5.35 (identités), §5.93 (« Tester la
+  connexion ») ;
+- §5.5, §5.7 à §5.7 ter (les champs), §5.8, §5.13 (le flux), §5.59 ;
+- les sections qu'elles citent.
+Le compte rendu de l'unité dit que la lecture n'était pas intégrale. Le diff d'interface reste vérifié contre ces sections
+avant le commit.
+**Portée** : `CRM-136` seulement ; la règle de `CLAUDE.md` n'est pas changée.
