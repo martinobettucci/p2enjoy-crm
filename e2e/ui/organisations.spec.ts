@@ -4,6 +4,8 @@
 //           ouvre la fiche, modification), §5.59 (commandes éteintes avec le motif), §7 (aucun défilement horizontal) ;
 //           CLAUDE.md §10 (le refus de la base, ici par l'écran ; la requête directe est `e2e/api/organisations.spec.ts`),
 //           §16 (captures)
+// @verifies CRM-146 (docs/BACKLOG.md) — tranche T2 : le compte des contacts est lu dans SA cellule, la quatrième — la
+//           cinquième, « Réel sur prévu », est désormais la dernière (docs/SPEC-recettes.md §12.4)
 //
 // Les organisations du seed sont LUES ; ce fichier crée la sienne et l'efface par la clé de service, avant et après.
 
@@ -40,7 +42,8 @@ test.describe('l’onglet « Organisations » (docs/DESIGN_SYSTEM.md §5.64)', (
 		await expect(onglets(page).getByRole('link', { name: 'Organisations' })).toHaveAttribute('aria-current', 'page')
 		const vasseur = page.getByTestId('ligne-organisation').filter({ hasText: 'Comptoir Vasseur' })
 		await expect(vasseur).toContainText('comptoir-vasseur.example')
-		await expect(vasseur.locator('td').last()).toHaveText('0')
+		// RÉVISÉE par `CRM-146` T2 : `last()` lisait le compte des contacts tant qu'il fermait la ligne.
+		await expect(vasseur.locator('td').nth(3)).toHaveText('0')
 		await capturer(page, 'organisations-liste-1440', UNITE)
 		await vasseur.getByRole('link', { name: 'Comptoir Vasseur' }).click()
 		await expect(page).toHaveURL(/\/contacts\/organisations\/5eed0000-0000-4000-8000-000000000083$/u)

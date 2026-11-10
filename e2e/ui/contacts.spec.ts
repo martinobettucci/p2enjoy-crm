@@ -10,6 +10,8 @@
 //           destination), §15.9 (cas a, b, c, e, h, i, m, n, o)
 // @verifies docs/DESIGN_SYSTEM.md §5.19 (le carnet), §5.20 (la fiche), §5.9 (tableau),
 //           §7 (paliers) ; CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-146 (docs/BACKLOG.md) — tranche T2 : la fiche d'organisation porte aussi le vide de son bloc de recettes ;
+//           le vide des contacts est désigné par son titre (docs/SPEC-recettes.md §12.5)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 // @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : les scénarios anonymes
@@ -331,7 +333,8 @@ test.describe("fiche d'organisation (docs/SPEC-contacts.md §11)", () => {
 			'comptoir-vasseur.example',
 		)
 		await expect(page.getByTestId('tableau-contacts-organisation')).toHaveCount(0)
-		const vide = page.getByTestId('etat-vide')
+		// RÉVISÉE par `CRM-146` T2 : la fiche a deux vides — celui des recettes, puis celui-ci —, désigné par son titre.
+		const vide = page.getByTestId('etat-vide').filter({ hasText: 'Aucun contact rattaché' })
 		await expect(vide).toBeVisible()
 		// Aucune action : cette surface ne livre aucun geste de création (§11.8).
 		await expect(vide.locator('button')).toHaveCount(0)
