@@ -18922,6 +18922,8 @@ désarchiver) ; outils du connecteur et `verify-mcp.sh` ; seed (un channel archi
 
 ### CRM-135 — La veille journalise ses échecs, les écrit, espace les refus d'authentification et ignore une boîte désactivée `[P]`
 
+**Livrée le 2026-11-10** (décision 894, révision `315adc18` : migration 170, image `mail-sync`) ; reste le constat du responsable.
+
 **Origine** : INC-349 (session d9) ; arbitrée le 2026-11-10 (décision 873).
 **Comportement attendu** : (i) le journal de la veille porte le compte, le motif et les compteurs, jamais un secret ni un
 identifiant de connexion ; (ii) un échec écrit `status = 'error'` et `last_error` (motif lisible, sans secret) ; un succès

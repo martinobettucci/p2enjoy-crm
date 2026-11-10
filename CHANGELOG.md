@@ -13,7 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-135` — la veille de la messagerie dit pourquoi elle échoue, et sait s'arrêter (INC-349, décisions 873 et 874)
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-10 (seconde fenêtre) — migration 170, l'image `mail-sync`, le manuel
+
+Cellule Spark `crm`, révision `315adc18` (décision 894, sans nouvel instantané, un `pg_dump -Fc` avant). **Vérifié** : registre
+à 168 lignes, la dernière `0170_releve_echec_ecrit.sql` ; `mail-sync` reconstruit, sain ; la boîte de production relevée
+avec succès ; `verifier.sh` 33/34 (INC-277). Le constat fonctionnel du responsable reste à faire.
+
+#### `CRM-135` — la veille de la messagerie dit pourquoi elle échoue, et sait s'arrêter (INC-349, décisions 873 et 874)
 
 - **Une relève en échec s'écrit sur la boîte** : `status = 'error'` et l'un des six codes en `last_error`, pour un refus
   d'authentification, un hôte injoignable, un échec TLS, un délai, etc. Une relève allée au bout rend la boîte « Connectée »
@@ -30,8 +40,6 @@ d'exécuter le code attendu.
   reprise. Elle est à livrer **avec l'image `mail-sync`** (`docs/PROD_MIGRATIONS.md` §2.33).
 - Preuves : pytest (`tests/test_veille_echecs.py`), pgTAP (`0159`), E2E `mail` (`releve-echec-ecrite.spec.ts`) et `ui`
   (`releve-en-echec.spec.ts`), `scripts/verify-mail-inbound.sh` §4 bis et ses dégradations.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-10 — la webapp de `main` et le manuel
 
