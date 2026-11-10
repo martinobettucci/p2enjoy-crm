@@ -40122,3 +40122,17 @@ heures après une livraison. Le reste de l'écart tient à ce que la plupart des
 **Décision : une unité prioritaire, `CRM-145`** — `no-cache` sur `index.html` et les routes de l'application (toujours
 revalidées), `public, max-age=31536000, immutable` sur les fichiers hachés de `/assets/` ; le manuel publié et les autres
 fichiers sous une règle explicite. **MCP** : non.
+
+
+### décision 900 — l'organisation montre son prévisionnel et son réel ; la liste, une barre de progression par devise ; MCP en lecture, famille `recettes`
+
+*2026-11-10, session 4522fa9c (p2enjoy-crm-ee), demande et arbitrage du responsable (`AskUserQuestion`).*
+**La demande** : sur la page d'une organisation, voir le prévisionnel et le réel faits avec elle ; dans la liste des
+organisations, le total prévisionnel comme une barre de progression, remplie par le réel renseigné dans ses affaires.
+**Décision** : (1) le **prévisionnel** est la somme des **recettes prévues** des affaires de l'organisation, le **réel** la
+somme de leurs **recettes réelles** saisies (l'onglet « À saisir » de la rentabilité) ; (2) **une barre par devise**, sans
+conversion, comme la rentabilité de `CRM-126` ; (3) la fiche de l'organisation porte les deux montants ; la liste porte la
+barre (le réel sur le prévisionnel). Les montants ne comptent que les affaires que la personne a le droit de lire, et le
+calcul se fait côté serveur.
+**MCP** : **oui, famille existante `recettes`**, lecture seule — le prévisionnel et le réel d'une organisation.
+**Conséquences** : unité `CRM-146`, à spécifier avant le code.

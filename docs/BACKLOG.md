@@ -19264,3 +19264,21 @@ fichier haché immuable, un `/assets/` absent en `no-cache` (jamais immuable), u
 sécurité présents ; `caddy validate` des deux Caddyfile. En développement, la webapp est servie par Vite, sans Caddy.
 Sous-ensemble de ce périmètre (décision 830). **Reste** : la livraison (`docs/PROD_MIGRATIONS.md` §2.37), les en-têtes
 constatés sur la route publique, et le constat du responsable.
+
+## Demande du 2026-11-10 — le prévisionnel et le réel d'une organisation (décision 900)
+
+### CRM-146 — L'organisation montre son prévisionnel et son réel ; la liste, une barre de progression par devise `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 900).
+**Comportement attendu** : la fiche d'une organisation montre, par devise, le prévisionnel (somme des recettes prévues de ses
+affaires) et le réel (somme de leurs recettes réelles saisies) ; la liste des organisations montre, par devise, une barre de
+progression : le réel sur le prévisionnel, avec les deux montants lisibles (pas seulement la couleur). Seules comptent les
+affaires lisibles par la personne ; calcul côté serveur ; une organisation sans recette ne montre pas de barre vide trompeuse.
+**MCP** : **oui, famille `recettes`**, lecture (décision 900).
+**Spécification** : à écrire avant le code — `docs/SPEC-costs.md` ou la spécification des recettes (l'agrégat par organisation,
+le lien affaire–organisation retenu), `docs/DESIGN_SYSTEM.md` (la barre, accessible : texte et `progressbar`), `docs/SPEC-mcp.md`
+§9.2, le manuel.
+**DoD** : pgTAP de l'agrégat (droits : une affaire illisible ne compte pas ; plusieurs devises) ; unitaires ; API avec refus de
+droits ; E2E souris et clavier (fiche, liste) ; outil du connecteur et `verify-mcp.sh` ; seed (une organisation avec prévu et
+réel dans deux devises, une sans recette) ; captures aux quatre paliers ; manuel.
+
