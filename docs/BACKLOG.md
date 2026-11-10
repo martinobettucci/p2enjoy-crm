@@ -18888,7 +18888,9 @@ désarchiver) ; outils du connecteur et `verify-mcp.sh` ; seed (un channel archi
 
 ## Demande du 2026-11-10 — la veille de `mail-sync` dit pourquoi elle échoue, et sait s'arrêter (décision 873, INC-349)
 
-### CRM-135 — La veille journalise ses échecs, les écrit, espace les refus d'authentification et ignore une boîte désactivée `[ ]`
+### CRM-135 — La veille journalise ses échecs, les écrit, espace les refus d'authentification et ignore une boîte désactivée `[@]`
+
+*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-c2) depuis 2026-11-10 08:24 UTC — état avant : [ ] ; confiée par la session de livraison (be)*
 
 **Origine** : INC-349 (session d9) ; arbitrée le 2026-11-10 (décision 873).
 **Comportement attendu** : (i) le journal de la veille porte le compte, le motif et les compteurs, jamais un secret ni un
