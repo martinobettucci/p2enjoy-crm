@@ -3462,24 +3462,29 @@ peut lire, les siens comme ceux de ses collègues. Le nombre à côté de chaque
 « Échecs » porte en plus une pastille rouge tant qu'un envoi a échoué.
 
 - **« En file »** : les envois qui attendent leur départ, du plus proche au plus lointain. Chaque ligne dit l'heure
-  prévue, ou « au prochain passage » quand elle est passée. Un envoi qu'une panne a retardé dit aussi combien d'essais ont
-  eu lieu et pourquoi (« 2 essais — le serveur d'envoi est injoignable ») : le service réessaie seul, de plus en plus
-  espacé. Un envoi « En cours d'envoi » est en train de partir.
-- **« Envoyés »** : les envois partis, du plus récent au plus ancien, avec la date d'envoi. « Afficher plus » montre les
-  plus anciens.
+  prévue, ou *au prochain passage* quand elle est passée. Un envoi qu'une panne a retardé dit aussi combien d'essais ont
+  eu lieu et pourquoi : le service réessaie, de plus en plus espacé. Un envoi marqué *en cours d'envoi* est en train de
+  partir.
+- **« Envoyés »** : les envois partis, du plus récent au plus ancien, avec la date d'envoi. Un bouton sous la liste
+  montre les plus anciens.
 - **« Échecs »** : les envois que le service a renoncé à remettre, avec **le motif en toutes lettres** — par exemple « le
-  serveur d'envoi a refusé l'identifiant ou le mot de passe ». Un motif que le produit ne reconnaît pas se dit « cause non
-  reconnue ».
+  serveur d'envoi a refusé l'identifiant ou le mot de passe ». Un motif que le produit ne reconnaît pas est dit *cause non
+  reconnue*, sans jamais montrer le code technique.
+
+![Les trois entrées « En file », « Envoyés » et « Échecs », un envoi en échec avec son motif, et « Réessayer »](manuel/images/l-inbox-lire-trier-et-repondre/outbox-echecs.jpg)
 
 **Choisir un envoi ouvre son détail** : les destinataires, la copie et la copie cachée s'il y en a, l'adresse
 d'expédition, l'auteur, l'affaire (le lien ouvre sa fiche), la date, le motif, puis le message.
 
-- **« Annuler l'envoi »** (dossier « En file ») demande une confirmation qui nomme l'objet : « Annuler l'envoi de
-  « … » ? Le message ne partira pas. » Confirmé, l'envoi quitte la file, et le fil de l'affaire garde une ligne
-  « Envoi annulé », avec son objet et la personne qui l'a annulé. « Garder en file », ou la touche Échap, renonce.
+- **« Annuler l'envoi »** (dossier « En file ») demande une confirmation qui nomme l'objet et rappelle que le message ne
+  partira pas. Confirmé, l'envoi quitte la file, et le fil de l'affaire garde une ligne *Envoi annulé*, avec son objet et
+  la personne qui l'a annulé. « Garder en file », ou la touche Échap, renonce.
+
+  ![Un envoi en file retardé par une panne (« 1 essai — le serveur d'envoi a refusé la connexion ») et la confirmation « Annuler l'envoi »](manuel/images/l-inbox-lire-trier-et-repondre/outbox-annuler.jpg)
+
 - **« Réessayer »** (dossier « Échecs ») remet l'envoi en file aussitôt, sans confirmation, sous l'adresse d'expédition
   choisie à l'origine. Corrigez d'abord la cause si elle dépend de vous — un mot de passe changé se met à jour dans
-  Réglages ▸ « Identités d'expédition » ([section 11.2](#les-adresses-d-expedition)).
+  Réglages ▸ Identités d'expédition ([section 11.2](#les-adresses-d-expedition)).
 - **Un message en cours d'envoi ne s'annule plus** : il est déjà en train de partir.
 - **« Un premier essai a été interrompu : le message a pu partir »** : le service s'est arrêté pendant un envoi, et
   personne ne peut savoir si le message est parti. Le produit refuse alors de l'annuler, plutôt que de vous dire

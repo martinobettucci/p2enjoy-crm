@@ -24,11 +24,12 @@ d'exécuter le code attendu.
 - **La base calcule, sous vos droits, ce qu'une organisation a prévu et encaissé** : `organization_revenue_totals`, une ligne par organisation et par devise (migration 177). Une affaire compte pour une organisation dès qu'un de ses contacts rattachés en fait partie ; une affaire illisible ne compte pas. Rien ne l'affiche encore : la fiche, la liste et le connecteur viennent avec les tranches suivantes.
 - Déploiement : `docs/PROD_MIGRATIONS.md`, la migration 177 seule, hors du lot annoncé.
 
-#### `CRM-144` — l'outbox : annuler un envoi en file, réessayer un échec (décisions 898 et 906) — tranches T1 à T4
+#### `CRM-144` — l'outbox : annuler un envoi en file, réessayer un échec (décisions 898, 906 et 913)
 
 - **Trois entrées dans l'inbox, « En file », « Envoyés » et « Échecs »**, sous « Mails préparés » : chacun y suit les envois des affaires qu'il peut lire. « En file » dit l'heure prévue, ou « au prochain passage », et les essais d'un envoi retardé par une panne ; « Échecs » dit le motif en toutes lettres et porte une pastille ; « Envoyés » se pagine. Le dossier ouvert vit dans l'adresse (`?envois=`).
 - **Le détail d'un envoi** porte « Annuler l'envoi », confirmé dans le flux, ou « Réessayer », sans confirmation. Un envoi en cours d'envoi, ou dont un premier essai a été interrompu, n'a pas de commande et dit pourquoi ; pour qui n'est ni l'auteur ni un administrateur qui modifie l'affaire, les commandes sont grisées avec leur motif.
 - **Le fil de l'affaire** montre « Envoi annulé », avec l'objet et la personne qui a annulé.
+- **Le jeu de démonstration** (développement seulement) montre un envoi en file après une vraie panne, un vrai échec et un envoi annulé, par deux identités de démonstration de Camille.
 - **Le connecteur MCP** lit l'outbox (`crm_mail_outbox_list`), annule un envoi en file (`crm_mail_outbox_cancel`, l'assistant demande confirmation) et réessaie un échec (`crm_mail_outbox_retry`), dans la famille « Messagerie » (consulter, modifier), sous les mêmes droits que l'écran.
 - **Annuler et réessayer, contrôlés par la base** : `cancel_outbound_email` annule un envoi encore en file, `retry_outbound_email` remet en file un envoi échoué ; seuls l'auteur de l'envoi et les administrateurs de l'espace qui écrivent l'affaire le peuvent (migration 176). Un envoi parti, en cours, ou dont un premier essai a été interrompu (le message a pu partir) ne s'annule pas, et chaque refus est nommé.
 - **La course contre la passe d'envoi** est tenue par le verrou de ligne et deux transitions conditionnelles : une annulation ne laisse jamais partir un message, et ne dit jamais annulé un message parti.

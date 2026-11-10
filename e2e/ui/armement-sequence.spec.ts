@@ -1,3 +1,5 @@
+// @verifies CRM-144 (docs/BACKLOG.md) — tranche T5 : les deux identités de démonstration de Camille proposées
+//           (docs/SPEC-seed.md §42 ; décision 913)
 // @verifies CRM-063 (docs/BACKLOG.md) — modèles d'emails, signatures, séquences de relance,
 //           TRANCHE 4, SOUS-TRANCHE 4c : l'armement depuis l'affaire
 // @verifies docs/SPEC-modeles-emails.md §13.8 (où le bloc vit, ses deux états, ses refus traduits,
@@ -145,10 +147,14 @@ test.describe('armer une relance depuis l’affaire (docs/SPEC-modeles-emails.md
 		// rattachement (Driss l'est), si bien que l'adresse n'est pas présélectionnée (décision 803).
 		await expect(bloc.getByTestId('champ-sequence')).toHaveValue('')
 		await expect(bloc.getByTestId('champ-identite-sequence')).toHaveValue('')
-		// L'IDENTITÉ DE SERVICE N'EST PAS PROPOSÉE (décision 805) : seule la sienne l'est, après l'option vide.
+		// L'IDENTITÉ DE SERVICE N'EST PAS PROPOSÉE (décision 805) : seules les siennes le sont, après l'option vide.
+		// RÉVISÉE PAR `CRM-144` T5 (décision 913), non relâchée : Camille porte en plus les deux identités de démonstration de
+		// l'outbox (docs/SPEC-seed.md §42) ; celle du service n'est toujours pas proposée.
 		await expect(bloc.getByTestId('champ-identite-sequence').locator('option')).toHaveText([
 			/.*/,
 			'Envoi de Camille Aubert — admin@p2enjoy.test',
+			'Factures — mot de passe refusé — factures@p2enjoy.test',
+			'Relances — serveur injoignable — relances@p2enjoy.test',
 		])
 		// LA COMMANDE N'EST JAMAIS ÉTEINTE (§5.3 ter, §5.42).
 		await expect(bloc.getByTestId('armer-sequence')).toBeEnabled()

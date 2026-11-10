@@ -3047,3 +3047,36 @@ jamais par la clé de service :
 - **Convergence** : un rattachement existant n'est pas recréé (la clé `(card_id, contact_id)`).
 - **Le seed constate** ensuite, sous le jeton de l'administratrice, que `organization_revenue_totals()` rend deux devises
   pour Vertigo Conseil et rien pour Sogexia ; il s'arrête en nommant la cause sinon.
+
+## 42. L'outbox : un envoi en file après une panne, un échec, un annulé — `CRM-144` T5 (`docs/SPEC-mail-subsystem.md` §28.10)
+
+*Écrit le 2026-11-10, avant le code (décision 913).* Les trois dossiers de l'outbox doivent montrer chacun un envoi né
+par les vrais chemins : rien n'est écrit dans `mail_outbox` à la main.
+
+- **Deux identités de démonstration, à Camille, non par défaut**, posées par `upsert_mail_outbound_identity` comme les
+  trois du §22 (clé : l'adresse d'expédition) :
+
+  | Identité | Serveur | Ce qui arrive à l'envoi |
+  |---|---|---|
+  | « Relances — serveur injoignable », `relances@<domaine personnel>` | `stalwart`, port **1**, où rien n'écoute | la connexion est refusée : `connection_refused`, une panne que le worker **rejoue** (après 1, 4, 16 puis 64 minutes, cinq essais au plus) |
+  | « Factures — mot de passe refusé », `factures@<domaine personnel>` | `stalwart:587`, l'identifiant de Camille avec un mot de passe faux | le serveur refuse : `auth_failed`, un refus que le worker ne rejoue **jamais** |
+
+- **Trois envois, mis en file par `queue_outbound_email` sous le jeton de Camille**, sur « Refonte du monitoring — Vertuo »
+  (`…d012`, l'affaire de l'envoi de démonstration du §35, et non `c1`, dont les preuves de l'inbox figent les comptes) :
+  1. « Relance du devis de monitoring » par l'identité injoignable ;
+  2. « Facture d'acompte — monitoring » par l'identité au mot de passe refusé ;
+  3. « Proposition à retirer » par l'identité injoignable, **annulée aussitôt** par `cancel_outbound_email` sous le jeton de
+     Camille — le fil de l'affaire porte « Envoi annulé ». Si la passe du worker l'a prise entre-temps (`outbox_sending`),
+     l'annulation est retentée : la panne la rend aussitôt à la file.
+- **Une passe du worker**, déclenchée par `POST /internal/v1/outbox/flush` comme au §35, traite les deux premiers : le
+  premier reste **en file**, `connection_refused`, un essai ; le second passe **en échec**, `auth_failed`.
+- **Les envoyés** sont ceux du seed existant (§35 et les réponses de l'inbox).
+- **Ce que les passes font au jeu, et qui est dit plutôt que caché** : le worker d'envoi est déclenché par sa route
+  interne (`docs/SPEC-mail-subsystem.md` §19.2) ; chaque passe qui le trouve dû le rejoue, et au cinquième essai il passe
+  en échec. Le seed est la photographie de l'instant du seed, comme la santé d'une affaire ; une preuve qui a besoin d'un
+  envoi en file le pose elle-même par la même voie (l'image du manuel §12.5 le fait). *Précisé à l'écriture du code* : une
+  preuve qui compte les envois d'une passe le fait « au moins », et lit le sort du sien sur sa ligne
+  (`e2e/mail/resilience.spec.ts`, révisée).
+- **Rejouable** : un envoi déjà présent sous son objet n'est pas refait. **Le seed constate** les trois états et la ligne
+  `mail_cancelled`, et s'arrête en nommant la cause sinon.
+- **Les preuves qui comptent les identités du seed** passent de trois à cinq, révisées, non relâchées (décision 51).

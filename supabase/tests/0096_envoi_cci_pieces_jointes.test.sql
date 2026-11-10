@@ -1,3 +1,5 @@
+-- @verifies CRM-144 (docs/BACKLOG.md) — tranche T5 : l'identité de Camille lue par défaut, le seed en portant trois
+--           (docs/SPEC-seed.md §42 ; décision 913)
 -- @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : copie cachée et pièces jointes à l'envoi
 -- @verifies docs/SPEC-mail-subsystem.md §19 bis.2 (Cci, 10 fichiers et 10 Mo, bucket privé vérifié en base, archive),
 --           §19 bis.3 (colonnes, bucket, prédicats, les trois refus, taille et type lus dans `storage.objects`, la
@@ -35,7 +37,9 @@ create temporary table pg_temp_ref (nom text primary key, valeur text);
 grant all on pg_temp_ref to authenticated, service_role;
 insert into pg_temp_ref
 -- L'IDENTITÉ DE CAMILLE, non celle du service : celle-ci ne s'emprunte plus (décision 805, INC-335).
-select 'identite', id::text from public.mail_outbound_identities where owner_id = '5eed0000-0000-4000-8000-000000000011';
+-- RÉVISÉ PAR `CRM-144` T5 (décision 913), non relâché : Camille porte en plus les deux identités de démonstration de
+-- l'outbox (docs/SPEC-seed.md §42) ; sa lecture vise son identité PAR DÉFAUT, celle que cette preuve a toujours employée.
+select 'identite', id::text from public.mail_outbound_identities where owner_id = '5eed0000-0000-4000-8000-000000000011' and is_default;
 
 -- Deux objets de Camille dans son dossier, un de Driss dans le sien, deux gros objets de Camille.
 insert into storage.objects (bucket_id, name, owner, metadata) values

@@ -1,3 +1,5 @@
+// @verifies CRM-144 (docs/BACKLOG.md) — tranche T5 : les deux identités de démonstration de Camille comptées
+//           (docs/SPEC-seed.md §42 ; décision 913)
 // @verifies CRM-053 (docs/BACKLOG.md) — identités sortantes SMTP, contrat d'API
 // @verifies CRM-089 (docs/BACKLOG.md) — les trois scénarios finaux, ajoutés par l'écran de
 //           configuration : docs/SPEC-mail-subsystem.md §22.7 (les réponses mesurées),
@@ -72,7 +74,9 @@ test.describe('identités sortantes — ce que la pile consent', () => {
 			`${URL_API}/rest/v1/mail_outbound_identities?select=id`,
 			{ headers: enTetesService() },
 		)
-		expect((await toutes.json()) as unknown[]).toHaveLength(3)
+		// RÉVISÉE PAR `CRM-144` T5 (décision 913), non relâchée : CINQ, dont les deux identités de démonstration de Camille
+		// (docs/SPEC-seed.md §42) — Driss, lui, ne voit toujours que la sienne.
+		expect((await toutes.json()) as unknown[]).toHaveLength(5)
 	})
 
 	test('REFUS N° 6, seconde moitié : `secret_id` est illisible sur une ligne que l’on voit', async ({
@@ -96,15 +100,20 @@ test.describe('identités sortantes — ce que la pile consent', () => {
 
 	// TROIS DEPUIS LA DÉCISION 805 : Camille a la sienne, l'identité de service ne s'empruntant plus. Elle lit les trois et
 	// n'en possède qu'une — lire n'est toujours pas posséder.
-	test('l’administratrice voit les trois, et n’en possède qu’une, la sienne', async ({ request }) => {
+	// RÉVISÉE PAR `CRM-144` T5 (décision 913), non relâchée : l'administratrice voit les CINQ, et possède les trois de
+	// Camille — son identité par défaut et les deux de démonstration de l'outbox (docs/SPEC-seed.md §42) ; une seule est par
+	// défaut.
+	test('l’administratrice voit les cinq, et possède les trois de Camille, dont une par défaut', async ({ request }) => {
 		const jeton = await jetonDe('admin@p2enjoy.test')
 		const lues = await request.get(
 			`${URL_API}/rest/v1/mail_outbound_identities?select=id,owner_id,from_address,smtp_username,is_default,status`,
 			{ headers: enTetesAuthentifies(jeton) },
 		)
 		const lignes = (await lues.json()) as Identite[]
-		expect(lignes).toHaveLength(3)
-		expect(lignes.filter((ligne) => ligne.owner_id === CAMILLE)).toHaveLength(1)
+		expect(lignes).toHaveLength(5)
+		const siennes = lignes.filter((ligne) => ligne.owner_id === CAMILLE)
+		expect(siennes).toHaveLength(3)
+		expect(siennes.filter((ligne) => ligne.is_default)).toHaveLength(1)
 	})
 
 	test('REFUS N° 11 : un anonyme ne lit rien', async ({ request }) => {

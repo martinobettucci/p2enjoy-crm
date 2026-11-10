@@ -19305,9 +19305,7 @@ board ; INC-352 close sur le constat en production.
 
 ## Demande du 2026-11-10 — l'outbox des mails (décision 898)
 
-### CRM-144 — L'outbox : en file (annuler), envoyés, échecs (réessayer), pour toute l'équipe `[@]`
-
-*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-c2) depuis 2026-11-10 16:53 UTC — état avant : [ ] ; confiée par la session de livraison (ee), après CRM-143*
+### CRM-144 — L'outbox : en file (annuler), envoyés, échecs (réessayer), pour toute l'équipe `[P]`
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 898).
 **Comportement attendu** : dans la messagerie, un dossier « En file » (heure prévue ; annuler avant le départ), un dossier
@@ -19338,8 +19336,15 @@ décision 910), le manuel §12.5 (texte ; ses images avec le seed de T5) ; vites
 `e2e/api/outbox.spec.ts` 1/1, `e2e/ui/outbox.spec.ts` 8/8 (souris, clavier, quatre paliers), captures observées.
 **T4 implémentée et vérifiée en développement** — `crm_mail_outbox_list`, `crm_mail_outbox_cancel`
 (`destructiveHint`), `crm_mail_outbox_retry`, ancre `outbox` ; pytest 17 unitaires, intégration 4/4, `verify-mcp.sh
---rapide` 114 contrôles ; la phrase de portée « Messagerie » de l'onglet « Connecteur MCP » ; manuel §33. Restent T5 (le seed,
-les images du manuel §12.5) et la livraison (contrat §2.39).
+--rapide` 114 contrôles ; la phrase de portée « Messagerie » de l'onglet « Connecteur MCP » ; manuel §33. **T5 implémentée
+et vérifiée en développement** (décision 913) — deux identités de démonstration de Camille, un envoi en file après une vraie
+connexion refusée, un vrai échec `auth_failed`, un annulé par la vraie fonction (`docs/SPEC-seed.md` §42) ; reset et rejeu du
+seed, `verify-seed.sh` 52 contrôles ; les gardes qui comptaient les identités révisées, non relâchées (pgTAP 0030, 0058, 0096,
+0151 ; e2e `reglages-identites-mail`, `armement-sequence`, `identites-sortantes`, `preuves-refus`, `seulement-moi`, et les
+trois `e2e/mail` qui prenaient la première identité de Camille), `resilience.spec.ts` qui lit le sort de son envoi sur sa
+ligne ; pgTAP complet 154 fichiers, 5205 assertions ; les images du manuel §12.5, observées, `verify-manual.sh` 168 contrôles
+(sur `HEAD` et ces seuls ajouts) ; les captures versionnées `docs/captures/CRM-144/`. **`[P]`** : reste la livraison (contrat
+§2.39 : la migration 176, puis la webapp et l'image `mcp`) et le constat du responsable en production.
 
 ## Demande du 2026-11-10 — une livraison se voit au prochain chargement (décision 899)
 

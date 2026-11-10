@@ -1,3 +1,5 @@
+// @verifies CRM-144 (docs/BACKLOG.md) — tranche T5 : les deux identités de démonstration de Camille comptées
+//           (docs/SPEC-seed.md §42 ; décision 913)
 // @verifies CRM-014 (docs/BACKLOG.md) — les douze preuves de refus, hors interface
 // @verifies CRM-022 (docs/BACKLOG.md) — preuve n° 10 devenue une vraie garde d'intégrité
 // @verifies docs/SPEC-permissions-rls.md §7 (le tableau des douze preuves), §7.1 (pourquoi elles
@@ -606,7 +608,9 @@ test.describe('PREUVES N° 6 et N° 7 — le compte mail d’un autre, et son se
 			enTetesService(),
 		)
 		// TROIS depuis la décision 805 (INC-335) : le service, Driss et Camille (docs/SPEC-seed.md §2.18).
-		expect(toutes).toHaveLength(3)
+		// RÉVISÉE PAR `CRM-144` T5 (décision 913), non relâchée : CINQ — Camille porte en plus les deux identités de
+		// démonstration de l'outbox (docs/SPEC-seed.md §42). Driss, lui, ne lit toujours que la sienne.
+		expect(toutes).toHaveLength(5)
 	})
 })
 

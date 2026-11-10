@@ -10,6 +10,9 @@
 //       compte (docs/DESIGN_SYSTEM.md §5.96 ; docs/SPEC-mail-subsystem.md §27.4)
 // @spec CRM-137 (docs/BACKLOG.md) — l'image « classer-expediteur-connu » de la section 12.1 : le sélecteur cherchable et
 //       la case « Expéditeur connu » (docs/DESIGN_SYSTEM.md §5.94 ; docs/SPEC-mail-subsystem.md §26.3)
+// @spec CRM-144 (docs/BACKLOG.md) — tranche T5 : les images de la section 12.5 — « Échecs » et « Réessayer » sur l'échec du
+//       seed, « En file » et la confirmation d'annulation sur un envoi posé par la vraie voie (docs/DESIGN_SYSTEM.md §5.98 ;
+//       docs/SPEC-seed.md §42 ; décision 913)
 // @spec CRM-143 (docs/BACKLOG.md) — tranche T4 : l'image « piece-non-analysee » de la section 12.1 — « Télécharger quand
 //       même » et son avertissement (docs/DESIGN_SYSTEM.md §5.95 ; docs/SPEC-pieces-jointes.md §17.4)
 //
@@ -20,10 +23,13 @@
 // @verifies CRM-139 (docs/BACKLOG.md) — l'inbox s'ouvre ici case « Seulement moi » décochée, `courrier=tous` : le sujet de ces
 //           preuves est ailleurs (docs/SPEC-mail-subsystem.md §27.5)
 
+import { execFileSync } from 'node:child_process'
 import { expect, test, type Page } from '@playwright/test'
+import { conteneur } from '../conteneur'
+import { lireEnv } from '../env'
 import { illustrer } from './illustrer'
-import { ADMIN, AFFAIRE_SOGEXIA, WORKSPACE_SEED, connecterAvecLeLabs, lireService, retenir, service } from './outils'
-import { URL_API, enTetesService } from '../api/jetons'
+import { ADMIN, AFFAIRE_SOGEXIA, WORKSPACE_SEED, connecterAvecLeLabs, lireService, rest, retenir, service } from './outils'
+import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 
 // LE CHROMIUM COMPLET, et non le « headless shell » : seul le premier porte le lecteur PDF du navigateur, que l'image de
 // l'aperçu d'un PDF montre (`CRM-074` T3). Le choix vaut pour le fichier entier : Playwright ne le permet pas par groupe.
@@ -327,3 +333,88 @@ test('relire un mail préparé : l’entrée, la liste, la relecture, puis l’e
 		cibles: [encadre, page.getByTestId('envoi-ouvrir')],
 	})
 })
+
+/** Une passe d'envoi par la route interne du service — le vrai chemin (`e2e/ui/connecteur-messagerie.spec.ts`). */
+function passeDEnvoi(): Record<string, number> {
+	const reseau = execFileSync('docker', ['inspect', conteneur('mail-sync'), '--format', '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}'], { encoding: 'utf8' }).trim()
+	const source = `
+import os, urllib.error, urllib.request
+requete = urllib.request.Request("http://mail-sync:8080/internal/v1/outbox/flush", data=b"", method="POST")
+requete.add_header("Authorization", "Bearer " + os.environ["JETON"])
+try:
+    with urllib.request.urlopen(requete, timeout=180) as r:
+        print(r.read().decode(), end="")
+except urllib.error.HTTPError as e:
+    print(e.read().decode(), end="")
+`
+	const brut = execFileSync(
+		'docker',
+		['run', '--rm', '--network', reseau, '-e', `JETON=${lireEnv('MAIL_SYNC_INTERNAL_TOKEN')}`, 'python:3.13.13-slim-bookworm', 'python', '-c', source],
+		{ encoding: 'utf8', timeout: 300_000 },
+	).trim()
+	return JSON.parse(brut) as Record<string, number>
+}
+
+// `CRM-144` T5 : l'outbox (docs/SPEC-seed.md §42). L'échec est celui du seed, « Facture d'acompte — monitoring » (un vrai
+// `auth_failed`) : il ne bouge plus. L'envoi en file du seed, lui, ne vit qu'une heure et demie (le worker le rejoue puis
+// l'abandonne au fil des passes) : la preuve pose donc le sien par la même voie — mis en file sous le jeton de Camille sur
+// l'identité injoignable, puis soumis par une vraie passe du worker —, montre la confirmation sans annuler, puis l'annule par la
+// vraie fonction. La ligne « Envoi annulé » que cela laisse au fil de l'affaire est l'historique, qui ne se corrige pas.
+test('suivre ses envois : « Échecs » et « Réessayer », puis « En file » et sa confirmation', async ({ page, request }) => {
+	test.setTimeout(180_000)
+	const SECTION = 'suivre-ses-envois-en-file-envoyes-echecs'
+	const OBJET = 'Relance — point de calendrier'
+	const entetesCamille = { ...enTetesAuthentifies(await jetonDe(ADMIN)), 'Content-Type': 'application/json' }
+	const [injoignable] = await lireService<{ id: string }[]>(request, 'mail_outbound_identities?select=id&from_address=like.relances@*')
+	expect(injoignable, 'l’identité injoignable du seed (§42)').toBeDefined()
+	const mise = await request.post(rest('rpc/queue_outbound_email'), {
+		headers: entetesCamille,
+		data: {
+			p_card_id: '5eed0000-0000-4000-8000-00000000d012',
+			p_identity_id: injoignable!.id,
+			p_to: ['bizdev@p2enjoy.test'],
+			p_subject: OBJET,
+			p_body_text: 'Bonjour,\n\nPouvons-nous fixer le point de calendrier ?',
+		},
+	})
+	expect(mise.status(), await mise.text()).toBe(200)
+	const id = (await mise.json()) as string
+	try {
+		// UNE VRAIE PASSE DU WORKER le prend et le reprogramme : l'image montre un envoi retardé par une vraie panne.
+		const passe = passeDEnvoi()
+		expect(passe['rescheduled'], `passe = ${JSON.stringify(passe)}`).toBeGreaterThanOrEqual(1)
+		const [relu] = await lireService<{ status: string; attempts: number; last_error: string }[]>(
+			request,
+			`mail_outbox?select=status,attempts,last_error&id=eq.${id}`,
+		)
+		expect(relu).toEqual({ status: 'queued', attempts: 1, last_error: 'connection_refused' })
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto('/inbox?courrier=tous&envois=echecs')
+		const echec = page.getByTestId('inbox-envoi').filter({ hasText: "Facture d'acompte — monitoring" })
+		await expect(echec).toContainText('le serveur d’envoi a refusé l’identifiant ou le mot de passe')
+		await echec.click()
+		await illustrer(page, {
+			chapitre: CHAPITRE,
+			section: SECTION,
+			nom: 'outbox-echecs',
+			cibles: [page.getByTestId('inbox-envois'), echec, page.getByTestId('inbox-envoi-reessayer')],
+		})
+		await page.getByTestId('inbox-envois-file').click()
+		const enFile = page.locator(`[data-testid="inbox-envoi"][data-envoi="${id}"]`)
+		await expect(enFile).toContainText('1 essai — le serveur d’envoi a refusé la connexion')
+		await enFile.click()
+		await page.getByTestId('inbox-envoi-annuler').click()
+		await expect(page.getByTestId('inbox-envoi-confirmation')).toBeVisible()
+		await illustrer(page, {
+			chapitre: CHAPITRE,
+			section: SECTION,
+			nom: 'outbox-annuler',
+			cibles: [enFile, page.getByTestId('inbox-envoi-confirmation')],
+		})
+		await page.getByTestId('inbox-envoi-annuler-garder').click()
+	} finally {
+		await request.post(rest('rpc/cancel_outbound_email'), { headers: entetesCamille, data: { p_outbox_id: id } })
+		await request.delete(rest(`mail_outbox?id=eq.${id}`), { headers: enTetesService() })
+	}
+})
+

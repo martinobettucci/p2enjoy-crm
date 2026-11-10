@@ -1,3 +1,5 @@
+// @verifies CRM-144 (docs/BACKLOG.md) — tranche T5 : cinq identités au seed, dont les deux de démonstration de l'outbox
+//           (docs/SPEC-seed.md §42 ; décision 913)
 // @verifies CRM-089 (docs/BACKLOG.md) — écran des identités sortantes SMTP, parcours réel
 // @verifies docs/SPEC-mail-subsystem.md §22.2 (l'adresse et sa place dans l'index), §22.3 (les
 //           trois lectures), §22.4 (changer l'adresse déclare une seconde identité), §22.5 (le
@@ -139,7 +141,9 @@ test.describe('configuration des identités sortantes (docs/SPEC-mail-subsystem.
 		await expect(page.getByRole('heading', { name: 'Identités d’expédition' })).toBeVisible()
 
 		// TROIS LIGNES depuis la décision 805 : le service, Driss, et Camille elle-même (§22.11).
-		await expect(page.getByTestId('ligne-identite-mail')).toHaveCount(3)
+		// RÉVISÉE PAR `CRM-144` T5 (décision 913), non relâchée : CINQ — Camille porte en plus les deux identités de
+		// démonstration de l'outbox, l'injoignable et celle au mot de passe refusé (docs/SPEC-seed.md §42), non par défaut.
+		await expect(page.getByTestId('ligne-identite-mail')).toHaveCount(5)
 		// L'ADRESSE EST EN TÊTE (§5.35), et le cas d'usage du §2.2 est enfin VISIBLE : Driss
 		// expédie depuis `contact@`, alors qu'il reçoit sur `bizdev@`.
 		await expect(
@@ -152,7 +156,14 @@ test.describe('configuration des identités sortantes (docs/SPEC-mail-subsystem.
 		// Les trois sont par défaut, chacune pour son propriétaire — l'index unique est PARTIEL. C'est le cas même
 		// d'INC-335 : chaque ligne nomme désormais à qui elle appartient (décision 805, §22.14).
 		await expect(page.getByText('Par défaut')).toHaveCount(3)
-		await expect(page.getByTestId('proprietaire-identite')).toHaveText(['Camille Aubert', 'Driss Lemoine', 'Service'])
+		// Dans l'ordre de la liste, celui des adresses : admin@, contact@, factures@, relances@, systeme@.
+		await expect(page.getByTestId('proprietaire-identite')).toHaveText([
+			'Camille Aubert',
+			'Driss Lemoine',
+			'Camille Aubert',
+			'Camille Aubert',
+			'Service',
+		])
 
 		// Le formulaire est REPLIÉ par défaut (§5.35, §5.23).
 		await expect(page.getByTestId('formulaire-identite-mail')).toHaveCount(0)

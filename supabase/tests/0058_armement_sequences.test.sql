@@ -1,3 +1,5 @@
+-- @verifies CRM-144 (docs/BACKLOG.md) — tranche T5 : l'identité de Camille lue par défaut, le seed en portant trois
+--           (docs/SPEC-seed.md §42 ; décision 913)
 -- @verifies CRM-063 (docs/BACKLOG.md) — modèles d'emails, signatures, séquences de relance,
 -- @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : l'assertion n° 45 bornée aux affaires inscrites (docs/SPEC-seed.md §2.19 ter)
 -- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.5 : l'armement désigne le RATTACHEMENT, l'inscription le porte, et
@@ -206,7 +208,9 @@ select set_config('tests.identite_service',
 -- L'IDENTITÉ DE CAMILLE, capturée de même : depuis la décision 805 (INC-335), c'est avec elle que l'administratrice arme,
 -- l'identité de service ne s'empruntant plus.
 select set_config('tests.identite_camille',
-	(select id::text from public.mail_outbound_identities where owner_id = '5eed0000-0000-4000-8000-000000000011'),
+-- RÉVISÉ PAR `CRM-144` T5 (décision 913), non relâché : Camille porte en plus les deux identités de démonstration de
+-- l'outbox (docs/SPEC-seed.md §42) ; sa lecture vise son identité PAR DÉFAUT, celle que cette preuve a toujours employée.
+	(select id::text from public.mail_outbound_identities where owner_id = '5eed0000-0000-4000-8000-000000000011' and is_default),
 	false);
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');

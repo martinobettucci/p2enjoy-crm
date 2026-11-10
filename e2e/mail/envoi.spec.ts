@@ -1,3 +1,5 @@
+// @verifies CRM-144 (docs/BACKLOG.md) — tranche T5 : l'identité de Camille lue par défaut, le seed en portant trois
+//           (docs/SPEC-seed.md §42 ; décision 913)
 // @verifies CRM-058 (docs/BACKLOG.md) — l'aller-retour complet, sans aucune substitution
 // @verifies docs/SPEC-mail-subsystem.md §5 (envoi), §19.1 (ce que le serveur ne fait pas),
 //           §19.5 (ce que le worker compose), §19.7 (preuves exigées)
@@ -17,6 +19,9 @@
 // scénario deviendrait rouge — c'est exactement ce qu'on lui demande de garantir.
 
 // @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+//
+// RÉVISÉ PAR `CRM-144` T5 (décision 913), non relâché : Camille porte en plus les deux identités de démonstration de l'outbox
+// (docs/SPEC-seed.md §42) ; la lecture vise son identité PAR DÉFAUT, celle que cette preuve a toujours employée.
 import { conteneur } from '../conteneur'
 import { execFileSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
@@ -175,7 +180,7 @@ test.describe('envoi sortant — l’aller-retour complet', () => {
 			//    toujours au nom de quelqu'un.
 			//    L'IDENTITÉ DE CAMILLE, non celle du service : celle-ci ne s'emprunte plus (décision 805).
 			const identite = await request.get(
-				`${URL_API}/rest/v1/mail_outbound_identities?select=id&owner_id=eq.5eed0000-0000-4000-8000-000000000011`,
+				`${URL_API}/rest/v1/mail_outbound_identities?select=id&owner_id=eq.5eed0000-0000-4000-8000-000000000011&is_default=is.true`,
 				{ headers: enTetesService() },
 			)
 			const [camille] = (await identite.json()) as { id: string }[]

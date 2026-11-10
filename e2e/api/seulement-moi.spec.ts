@@ -1,3 +1,5 @@
+// @verifies CRM-144 (docs/BACKLOG.md) — tranche T5 : les deux identités de démonstration de Camille comptées
+//           (docs/SPEC-seed.md §42 ; décision 913)
 // @verifies CRM-139 (docs/BACKLOG.md) — « Seulement moi » hors interface, avec les jetons réels : `concerns_me` et
 //           `inbox_arborescence(p_only_me)` rendent le seul courrier qui concerne l'appelant, par toutes ses identités
 //           personnelles ; jamais celui d'une autre personne ; et jamais un message illisible, filtre ou non
@@ -99,10 +101,12 @@ test.describe('« Seulement moi » : `concerns_me` et `inbox_arborescence(p_only
 		expect(retrait.status()).toBe(204)
 	})
 
-	test('Camille, une identité : le filtre rend exactement son courrier, que l’oracle trouve par ses adresses', async ({ request }) => {
+	// RÉVISÉE PAR `CRM-144` T5 (décision 913), non relâchée : Camille porte TROIS identités — la sienne et les deux de
+	// démonstration de l'outbox (docs/SPEC-seed.md §42) — et le filtre compte chacune de ses adresses, comme l'oracle.
+	test('Camille, trois identités : le filtre rend exactement son courrier, que l’oracle trouve par ses adresses', async ({ request }) => {
 		const jeton = await jetonDe(CAMILLE.adresse)
 		const adresses = await adressesDe(request, CAMILLE.id)
-		expect(adresses.size).toBe(1)
+		expect(adresses.size).toBe(3)
 		const tout = await lus(request, jeton, false)
 		const filtre = await lus(request, jeton, true)
 		expect(tries(filtre)).toEqual(tries(tout.filter((m) => concerne(m, adresses))))
@@ -130,11 +134,13 @@ test.describe('« Seulement moi » : `concerns_me` et `inbox_arborescence(p_only
 		expect(await avant.json()).toEqual(await arbre(request, jeton, false))
 	})
 
-	test('Camille, DEUX identités : le filtre réunit le courrier des deux', async ({ request }) => {
+	// RÉVISÉE PAR `CRM-144` T5 (décision 913), non relâchée : l'identité prêtée s'ajoute aux TROIS de Camille (la sienne et
+	// les deux de démonstration de l'outbox, docs/SPEC-seed.md §42) ; le filtre réunit toujours le courrier de toutes.
+	test('Camille, une identité de plus : le filtre réunit le courrier de toutes', async ({ request }) => {
 		await preterIdentite(request, CAMILLE.id)
 		const jeton = await jetonDe(CAMILLE.adresse)
 		const adresses = await adressesDe(request, CAMILLE.id)
-		expect(adresses.size).toBe(2)
+		expect(adresses.size).toBe(4)
 		const tout = await lus(request, jeton, false)
 		const filtre = await lus(request, jeton, true)
 		expect(tries(filtre)).toEqual(tries(tout.filter((m) => concerne(m, adresses))))

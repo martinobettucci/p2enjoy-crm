@@ -1,3 +1,5 @@
+-- @verifies CRM-144 (docs/BACKLOG.md) — tranche T5 : l'identité de Camille lue par défaut, le seed en portant trois
+--           (docs/SPEC-seed.md §42 ; décision 913)
 -- @verifies CRM-143 (docs/BACKLOG.md) — l'assertion 6 vise la signature de `prepare_email` qui porte `p_attachments`
 --           (migration 0173, docs/SPEC-pieces-jointes.md §17.6)
 -- @verifies CRM-128 (docs/BACKLOG.md) — tranche T2 : les mails préparés en base, et le refus de tout envoi direct sous
@@ -39,7 +41,9 @@ insert into pg_temp_ref values
 	('lectrice', '5eed0000-0000-4000-8000-000000000013'),
 	('affaire', '5eed0000-0000-4000-8000-0000000000c1');
 insert into pg_temp_ref
-select 'identite', id::text from public.mail_outbound_identities where owner_id = '5eed0000-0000-4000-8000-000000000011';
+-- RÉVISÉ PAR `CRM-144` T5 (décision 913), non relâché : Camille porte en plus les deux identités de démonstration de
+-- l'outbox (docs/SPEC-seed.md §42) ; sa lecture vise son identité PAR DÉFAUT, celle que cette preuve a toujours employée.
+select 'identite', id::text from public.mail_outbound_identities where owner_id = '5eed0000-0000-4000-8000-000000000011' and is_default;
 insert into pg_temp_ref
 select 'identite_driss', id::text from public.mail_outbound_identities where owner_id = '5eed0000-0000-4000-8000-000000000012';
 insert into pg_temp_ref

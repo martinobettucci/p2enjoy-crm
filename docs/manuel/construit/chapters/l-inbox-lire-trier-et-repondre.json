@@ -3230,7 +3230,33 @@
 							},
 							{
 								"type": "text",
-								"text": " : les envois qui attendent leur départ, du plus proche au plus lointain. Chaque ligne dit l'heure\nprévue, ou « au prochain passage » quand elle est passée. Un envoi qu'une panne a retardé dit aussi combien d'essais ont\neu lieu et pourquoi (« 2 essais — le serveur d'envoi est injoignable ») : le service réessaie seul, de plus en plus\nespacé. Un envoi « En cours d'envoi » est en train de partir."
+								"text": " : les envois qui attendent leur départ, du plus proche au plus lointain. Chaque ligne dit l'heure\nprévue, ou "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "au prochain passage"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " quand elle est passée. Un envoi qu'une panne a retardé dit aussi combien d'essais ont\neu lieu et pourquoi : le service réessaie, de plus en plus espacé. Un envoi marqué "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "en cours d'envoi"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " est en train de\npartir."
 							}
 						]
 					}
@@ -3250,7 +3276,7 @@
 							},
 							{
 								"type": "text",
-								"text": " : les envois partis, du plus récent au plus ancien, avec la date d'envoi. « Afficher plus » montre les\nplus anciens."
+								"text": " : les envois partis, du plus récent au plus ancien, avec la date d'envoi. Un bouton sous la liste\nmontre les plus anciens."
 							}
 						]
 					}
@@ -3283,12 +3309,32 @@
 							},
 							{
 								"type": "text",
-								"text": " — par exemple « le\nserveur d'envoi a refusé l'identifiant ou le mot de passe ». Un motif que le produit ne reconnaît pas se dit « cause non\nreconnue »."
+								"text": " — par exemple « le\nserveur d'envoi a refusé l'identifiant ou le mot de passe ». Un motif que le produit ne reconnaît pas est dit "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "cause non\nreconnue"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", sans jamais montrer le code technique."
 							}
 						]
 					}
 				]
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/outbox-echecs.jpg",
+			"alt": "Les trois entrées « En file », « Envoyés » et « Échecs », un envoi en échec avec son motif, et « Réessayer »",
+			"width": 800,
+			"height": 490
 		},
 		{
 			"type": "paragraph",
@@ -3328,9 +3374,29 @@
 							},
 							{
 								"type": "text",
-								"text": " (dossier « En file ») demande une confirmation qui nomme l'objet : « Annuler l'envoi de\n« … » ? Le message ne partira pas. » Confirmé, l'envoi quitte la file, et le fil de l'affaire garde une ligne\n« Envoi annulé », avec son objet et la personne qui l'a annulé. « Garder en file », ou la touche Échap, renonce."
+								"text": " (dossier « En file ») demande une confirmation qui nomme l'objet et rappelle que le message ne\npartira pas. Confirmé, l'envoi quitte la file, et le fil de l'affaire garde une ligne "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "Envoi annulé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", avec son objet et\nla personne qui l'a annulé. « Garder en file », ou la touche Échap, renonce."
 							}
 						]
+					},
+					{
+						"type": "image",
+						"src": "l-inbox-lire-trier-et-repondre/outbox-annuler.jpg",
+						"alt": "Un envoi en file retardé par une panne (« 1 essai — le serveur d'envoi a refusé la connexion ») et la confirmation « Annuler l'envoi »",
+						"width": 912,
+						"height": 604
 					}
 				],
 				[
@@ -3348,7 +3414,7 @@
 							},
 							{
 								"type": "text",
-								"text": " (dossier « Échecs ») remet l'envoi en file aussitôt, sans confirmation, sous l'adresse d'expédition\nchoisie à l'origine. Corrigez d'abord la cause si elle dépend de vous — un mot de passe changé se met à jour dans\nRéglages ▸ « Identités d'expédition » ("
+								"text": " (dossier « Échecs ») remet l'envoi en file aussitôt, sans confirmation, sous l'adresse d'expédition\nchoisie à l'origine. Corrigez d'abord la cause si elle dépend de vous — un mot de passe changé se met à jour dans\nRéglages ▸ Identités d'expédition ("
 							},
 							{
 								"type": "link",

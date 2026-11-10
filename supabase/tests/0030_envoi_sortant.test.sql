@@ -1,3 +1,5 @@
+-- @verifies CRM-144 (docs/BACKLOG.md) — tranche T5 : l'identité de Camille lue par défaut, le seed en portant trois
+--           (docs/SPEC-seed.md §42 ; décision 913)
 -- @verifies CRM-058 (docs/BACKLOG.md) — la garde de la file d'envoi et son quota
 -- @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : assertion révisée par les migrations 106 et 107 (docs/SPEC-mail-subsystem.md §19 bis.3)
 -- @verifies docs/SPEC-mail-subsystem.md §19.4 (les six refus, le quota), §19.5 (les trois effets),
@@ -43,9 +45,11 @@ select 'identite_service', id::text from public.mail_outbound_identities where o
 insert into pg_temp_ref
 select 'identite_driss', id::text from public.mail_outbound_identities
  where owner_id = '5eed0000-0000-4000-8000-000000000012';
+-- RÉVISÉ PAR `CRM-144` T5 (décision 913), non relâché : Camille porte en plus les deux identités de démonstration de
+-- l'outbox (docs/SPEC-seed.md §42) ; sa lecture vise son identité PAR DÉFAUT, celle que cette preuve a toujours employée.
 insert into pg_temp_ref
 select 'identite_camille', id::text from public.mail_outbound_identities
- where owner_id = '5eed0000-0000-4000-8000-000000000011';
+ where owner_id = '5eed0000-0000-4000-8000-000000000011' and is_default;
 insert into pg_temp_ref values ('card', '5eed0000-0000-4000-8000-0000000000c1');
 insert into pg_temp_ref
 -- RÉVISÉ PAR LA CAMPAGNE DE LIVRAISON DU 2026-11-04 (décision 51) : depuis `CRM-111`, une affaire a plusieurs

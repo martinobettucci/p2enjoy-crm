@@ -1,3 +1,5 @@
+// @verifies CRM-144 (docs/BACKLOG.md) — tranche T5 : l'identité de Camille lue par défaut, le seed en portant trois
+//           (docs/SPEC-seed.md §42 ; décision 913)
 // @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : l'aller réel d'un message avec copie cachée et pièces jointes
 // @verifies docs/SPEC-mail-subsystem.md §19 bis.2 (points 1, 2, 6 et 7), §19 bis.4, §19 bis.7 (ligne « E2E mail ») ;
 //           docs/JOURNAL.md décisions 719 et 720 ; CLAUDE.md §8 (aucune trace fabriquée)
@@ -10,6 +12,9 @@
 // INTACTE — son empreinte relue dans la boîte est celle du fichier déposé.
 
 // @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+//
+// RÉVISÉ PAR `CRM-144` T5 (décision 913), non relâché : Camille porte en plus les deux identités de démonstration de l'outbox
+// (docs/SPEC-seed.md §42) ; la lecture vise son identité PAR DÉFAUT, celle que cette preuve a toujours employée.
 import { conteneur } from '../conteneur'
 import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
@@ -128,7 +133,7 @@ test.describe('envoi sortant — copie cachée et pièces jointes (§19 bis)', (
 
 			// 2. LA MISE EN FILE PAR LA VRAIE GARDE.
 			const identite = await request.get(
-				`${URL_API}/rest/v1/mail_outbound_identities?select=id&owner_id=eq.5eed0000-0000-4000-8000-000000000011`,
+				`${URL_API}/rest/v1/mail_outbound_identities?select=id&owner_id=eq.5eed0000-0000-4000-8000-000000000011&is_default=is.true`,
 				{ headers: enTetesService() },
 			)
 			// L'IDENTITÉ DE CAMILLE, non celle du service : celle-ci ne s'emprunte plus (décision 805).

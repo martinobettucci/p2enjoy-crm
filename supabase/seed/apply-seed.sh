@@ -2677,7 +2677,9 @@ lignes_signature=$(curl -s "$API/rest/v1/mail_outbound_identities?select=signatu
 [ "$lignes_signature" = "2" ] || die "signature de Driss : $lignes_signature ligne(s) au lieu de 2 —
         la conservation des retours à la ligne n'est plus démontrée (CRM-063 §10.3)." 
 
-identites_sortantes=$(curl -s "$API/rest/v1/mail_outbound_identities?select=id" \
+# RÉVISÉE PAR `CRM-144` T5 (décision 913), non relâchée : les deux identités de démonstration de l'outbox (§42), posées plus
+# loin et présentes au rejeu, sont comptées à part — la garde dénonce toujours une duplication des trois du §22.
+identites_sortantes=$(curl -s "$API/rest/v1/mail_outbound_identities?select=id&from_address=not.in.(relances@$PERSONAL_DOMAIN,factures@$PERSONAL_DOMAIN)" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 [ "$identites_sortantes" = "${#IDENTITES_SORTANTES[@]}" ] || die "identités sortantes :
         $identites_sortantes lignes au lieu de ${#IDENTITES_SORTANTES[@]} — le rejeu a dupliqué."
@@ -3211,6 +3213,95 @@ archive_envoi=$(curl -s "$API/rest/v1/mail_messages?select=bcc_addresses,mail_at
 	&& [ "$(echo "$archive_envoi" | jq -r '.[0].mail_attachments | length')" = 1 ] \
 	|| die "l'envoi de démonstration n'est pas archivé avec sa copie cachée et sa pièce : $archive_envoi"
 info "Envoi : « $OBJET_ENVOI_SEED » soumis par le worker, copie cachée et pièce jointe archivées sur ${CARD_ENVOI_SEED: -4}"
+
+# --- L'outbox : un envoi en file après une panne, un échec, un annulé — CRM-144 T5, docs/SPEC-seed.md §42 ----------------
+# @spec CRM-144 (docs/BACKLOG.md) — tranche T5 : les trois dossiers de l'outbox peuplés par les vrais chemins
+#       (docs/SPEC-seed.md §42 ; docs/SPEC-mail-subsystem.md §28.10 ; décision 913)
+#
+# RIEN N'EST ÉCRIT DANS `mail_outbox` À LA MAIN : deux identités de Camille posées par la vraie fonction, trois envois mis
+# en file par la vraie garde sous son jeton, une annulation par la vraie fonction, puis une passe du vrai worker, qui
+# rencontre deux vraies pannes — une connexion refusée (rien n'écoute sur le port 1 de `stalwart`), un mot de passe refusé.
+# REJOUABLE : un envoi déjà présent sous son objet n'est pas refait, et le rejeu ne fait rien partir.
+OBJET_OUTBOX_FILE='Relance du devis de monitoring'
+OBJET_OUTBOX_ECHEC="Facture d'acompte — monitoring"
+OBJET_OUTBOX_ANNULE='Proposition à retirer'
+CAMILLE_ID=5eed0000-0000-4000-8000-000000000011
+envoi_outbox() { # envoi_outbox <objet> → l'état et le motif de l'envoi de cet objet sur l'affaire, s'il existe
+	curl -s "$API/rest/v1/mail_outbox?select=id,status,last_error,attempts&card_id=eq.$CARD_ENVOI_SEED&subject=eq.$(jq -rn --arg s "$1" '$s|@uri')" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY"
+}
+identite_demo() { # identite_demo <libellé> <adresse> <port> <mot de passe>
+	code=$(api_admin POST /rest/v1/rpc/upsert_mail_outbound_identity \
+		-d "$(jq -nc --arg ws "$WS_ID" --arg l "$1" --arg f "$2" --arg u "admin@$PERSONAL_DOMAIN" --argjson port "$3" \
+		         --arg p "$4" --arg o "$CAMILLE_ID" \
+		      '{p_workspace_id: $ws, p_label: $l, p_smtp_host: "stalwart", p_smtp_port: $port, p_smtp_security: "none",
+		        p_smtp_username: $u, p_from_address: $f, p_password: $p, p_owner_id: $o, p_is_default: false}')")
+	attendu "$code" "configuration de l'identité de démonstration « $1 »" 200
+	curl -s "$API/rest/v1/mail_outbound_identities?select=id&from_address=eq.$(jq -rn --arg s "$2" '$s|@uri')" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].id // empty'
+}
+mettre_en_file() { # mettre_en_file <identité> <objet> → l'identifiant de l'envoi
+	code=$(api_admin POST /rest/v1/rpc/queue_outbound_email -d "$(jq -n \
+		--arg card "$CARD_ENVOI_SEED" --arg id "$1" --arg objet "$2" \
+		'{p_card_id: $card, p_identity_id: $id, p_to: ["bizdev@p2enjoy.test"], p_subject: $objet,
+		  p_body_text: "Bonjour,\n\nCe message illustre l’outbox du CRM."}')")
+	attendu "$code" "mise en file de « $2 »" 200
+	jq -r '.' "$CORPS"
+}
+IDENTITE_INJOIGNABLE=$(identite_demo 'Relances — serveur injoignable' "relances@$PERSONAL_DOMAIN" 1 "$MAILBOX_PASSWORD")
+IDENTITE_REFUSEE=$(identite_demo 'Factures — mot de passe refusé' "factures@$PERSONAL_DOMAIN" 587 'mot-de-passe-refuse')
+[ -n "$IDENTITE_INJOIGNABLE" ] && [ -n "$IDENTITE_REFUSEE" ] || die "les identités de démonstration de l'outbox sont introuvables."
+OUTBOX_CREEE=false
+if [ "$(envoi_outbox "$OBJET_OUTBOX_FILE" | jq -r 'length')" = 0 ]; then
+	OUTBOX_CREEE=true
+	# L'ANNULÉ D'ABORD, avant toute passe : il est mis en file puis annulé sous le jeton de son autrice. Si le worker local
+	# l'a pris entre-temps, la connexion refusée le rend aussitôt à la file, et l'annulation est retentée.
+	id_annule=$(mettre_en_file "$IDENTITE_INJOIGNABLE" "$OBJET_OUTBOX_ANNULE")
+	for essai in 1 2 3 4 5; do
+		code=$(api_admin POST /rest/v1/rpc/cancel_outbound_email -d "$(jq -nc --arg id "$id_annule" '{p_outbox_id: $id}')")
+		[ "$code" = 200 ] && break
+		grep -q 'outbox_sending' "$CORPS" || die "annulation de « $OBJET_OUTBOX_ANNULE » refusée : $(cat "$CORPS")"
+		sleep 2
+	done
+	attendu "$code" "annulation de « $OBJET_OUTBOX_ANNULE »" 200
+	mettre_en_file "$IDENTITE_INJOIGNABLE" "$OBJET_OUTBOX_FILE" >/dev/null
+	mettre_en_file "$IDENTITE_REFUSEE" "$OBJET_OUTBOX_ECHEC" >/dev/null
+	passe=$(docker compose exec -T -e JETON="$MAIL_SYNC_TOKEN" mail-sync python -c '
+import os, urllib.error, urllib.request
+r = urllib.request.Request("http://localhost:8080/internal/v1/outbox/flush", data=b"", method="POST")
+r.add_header("Authorization", "Bearer " + os.environ["JETON"])
+try:
+    with urllib.request.urlopen(r, timeout=300) as s:
+        print(s.read().decode(), end="")
+except urllib.error.HTTPError as e:
+    print(e.read().decode(), end="")
+' 2>/dev/null)
+	info "Outbox : passe du worker — $passe"
+fi
+# LE SEED CONSTATE les trois états QU'IL VIENT DE CRÉER. Au rejeu, les envois sont ceux d'une démonstration vivante : les
+# passes du worker ont pu rejouer l'envoi en file jusqu'à l'échec (cinq essais, §42), une personne a pu l'annuler ou
+# réessayer l'échec depuis l'écran. Le rejeu ne les juge donc pas ; il dit ce qu'il trouve.
+etat_file=$(envoi_outbox "$OBJET_OUTBOX_FILE" | jq -r '.[0] | "\(.status):\(.last_error)"')
+etat_echec=$(envoi_outbox "$OBJET_OUTBOX_ECHEC" | jq -r '.[0] | "\(.status):\(.last_error)"')
+if [ "$OUTBOX_CREEE" = false ]; then
+	info "Outbox : déjà présente — « $OBJET_OUTBOX_FILE » ($etat_file), « $OBJET_OUTBOX_ECHEC » ($etat_echec)"
+else
+case "$etat_file" in
+	queued:connection_refused | sending:connection_refused) ;;
+	*) die "l'envoi « $OBJET_OUTBOX_FILE » est « $etat_file » au lieu d'être en file après une connexion refusée.
+        Le port 1 de stalwart écoute-t-il ? Le worker a-t-il fait sa passe ?" ;;
+esac
+[ "$etat_echec" = 'failed:auth_failed' ] \
+	|| die "l'envoi « $OBJET_OUTBOX_ECHEC » est « $etat_echec » au lieu de « failed:auth_failed »."
+id_annule=$(envoi_outbox "$OBJET_OUTBOX_ANNULE" | jq -r '.[0].id // empty')
+[ "$(envoi_outbox "$OBJET_OUTBOX_ANNULE" | jq -r '.[0].status')" = cancelled ] \
+	|| die "l'envoi « $OBJET_OUTBOX_ANNULE » n'est pas annulé."
+evenement_annule=$(curl -s "$API/rest/v1/card_events?select=actor_id&type=eq.mail_cancelled&payload->>outbox_id=eq.$id_annule" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].actor_id // empty')
+[ "$evenement_annule" = "$CAMILLE_ID" ] \
+	|| die "le fil de l'affaire ne porte pas « Envoi annulé » par Camille pour « $OBJET_OUTBOX_ANNULE »."
+info "Outbox : « $OBJET_OUTBOX_FILE » ($etat_file), « $OBJET_OUTBOX_ECHEC » ($etat_echec), « $OBJET_OUTBOX_ANNULE » annulé par Camille"
+fi
 
 # --- Un courrier reçu avec cinq pièces jointes — CRM-074 T3, docs/SPEC-seed.md §35 ------------------------------------
 # @spec CRM-074 (docs/BACKLOG.md) — tranche T3 : l'aperçu des pièces jointes et leur texte extrait se démontrent sur un
