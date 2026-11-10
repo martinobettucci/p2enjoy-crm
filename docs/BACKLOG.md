@@ -19064,7 +19064,8 @@ reste sinon) ; E2E souris et clavier (non lu, sommeil, effacer, annuler, restaur
 
 ## Demande du 2026-11-10 — l'inbox, par défaut, ne montre que mes mails (décision 879)
 
-### CRM-139 — Inbox : une case « Seulement moi », cochée par défaut, sur les adresses d'expédition personnelles `[ ]`
+### CRM-139 — Inbox : une case « Seulement moi », cochée par défaut, sur les adresses d'expédition personnelles `[@]`
+*Prise en charge : session interactive 152dd27d (p2enjoy-crm-a8) depuis 2026-11-10 16:02 UTC — état avant : [ ] ; file confirmée par la session de livraison (ee)*
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 879).
 **Comportement attendu** :
