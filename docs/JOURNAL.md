@@ -40094,3 +40094,19 @@ internationalisation, implémentation, écarts), et les composants de l'unité �
 (catalogue de nœuds), §5.58 (infobulle de description) — ainsi que ceux qu'ils citent. Le compte rendu de T2 dit que la
 lecture n'était pas intégrale. La vérification du diff d'interface contre ces sections reste exigée avant le commit.
 **Portée** : cette tranche seulement ; la règle de `CLAUDE.md` n'est pas changée.
+
+
+### décision 898 — l'outbox des mails : en file, envoyés, échecs et nouvel essai, pour toute l'équipe ; MCP en lecture et en actions
+
+*2026-11-10, session 4522fa9c (p2enjoy-crm-ee), demande et arbitrage du responsable (`AskUserQuestion`).*
+**La demande** : « nous n'avons pas encore abordé l'outbox des mails ». **L'existant** : la file `mail_outbox` existe en base
+et `mail-sync` la vide ; l'inbox montre « Mails préparés », « Non classés » et « Affaires », mais aucun écran ne montre ce
+qui attend de partir, ce qui est parti, ni ce qui a échoué.
+**Décision** : une outbox avec quatre parties — (1) un dossier **« En file »** (les messages mis en file et pas encore
+partis, leur heure prévue, **annuler** un envoi avant son départ) ; (2) un dossier **« Envoyés »** (date d'envoi, identité
+d'expédition, l'affaire de rattachement) ; (3) les **échecs** avec leur motif (refus SMTP, quota…) et **« Réessayer »** ;
+(4) **toute l'équipe** voit les envois de l'espace qu'elle a le droit de lire, pas seulement les siens — droits appliqués
+côté serveur.
+**MCP** : **oui, lecture et actions**, famille existante `messagerie` — l'assistant lit l'état des envois, et peut annuler et
+réessayer sous la case « modifier » de la messagerie.
+**Conséquences** : unité `CRM-144`, à spécifier avant le code.

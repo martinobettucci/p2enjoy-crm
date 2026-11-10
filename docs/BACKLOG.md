@@ -18995,8 +18995,7 @@ seed, le choix est relevé) ; seed ; captures aux quatre paliers ; manuel ; cont
 
 ## Demande du 2026-11-10 — classer un mail sans parcourir des centaines d'affaires (décision 877)
 
-### CRM-137 — Classer un mail : un sélecteur d'affaire cherchable, filtré par défaut sur l'expéditeur connu `[@]`
-*Prise en charge : session interactive 152dd27d (p2enjoy-crm-d9) depuis 2026-11-10 09:39 UTC — état avant : [ ] ; confiée par la session de livraison (be)*
+### CRM-137 — Classer un mail : un sélecteur d'affaire cherchable, filtré par défaut sur l'expéditeur connu `[P]`
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 877).
 **Comportement attendu** : dans le formulaire de classement de l'inbox, un sélecteur cherchable (titre, chemin) remplace la
@@ -19011,6 +19010,30 @@ classement n'existait : lister les affaires candidates d'un message (`consulter`
 **DoD** : unitaires ; API (le filtre, les droits : une affaire illisible n'apparaît jamais) ; E2E souris et clavier (case
 cochée, décochée, recherche, état vide) ; outil du connecteur et `verify-mcp.sh` ; seed (un message d'un contact connu, un
 d'un inconnu) ; captures aux quatre paliers ; manuel.
+
+*Faite le 2026-11-10, vérifiée en développement (session a8)* :
+- **base** : migration `0172`, `classification_candidates` (`security invoker`). pgTAP `0161` **18/18** ; `0133` à 34
+  fonctions 404 avec le témoin 5 ter, **11/11** ;
+- **API** : `e2e/api/candidats-classement.spec.ts` **7/7** par jetons réels. Il prouve l'expéditeur connu d'une ou de
+  deux affaires, la recherche sans casse ni accents, la borne, le 404 de la lectrice et le refus de l'anonyme ;
+- **écran** : `SelecteurClassement` remplace le `<select>` ; `lireCardsClassables` est retirée. Unitaires **113/113**
+  (sélecteur, module de lecture, inbox), typecheck vert ;
+- **E2E souris et clavier** : `e2e/ui/classement-candidats.spec.ts` **5/5**. Il couvre la case cochée avec la
+  présélection unique, la case décochée avec la pilule, le choix qui survit au filtre, le vide d'un terme, deux connues
+  et le clic, le vide de l'expéditeur inconnu, « Voir toutes les affaires », « VITRÎ », les flèches et `Entrée`, `Tab`
+  jusqu'à « Classer » relu par l'API, `Échap`, et les quatre paliers sans débordement. `e2e/ui/inbox.spec.ts` est
+  **13/13**, rejoué sur un 502 passager de la passerelle pendant une migration d'une autre session ;
+- **captures** observées dans `docs/captures/CRM-137/`. Elles ont révélé un défaut, corrigé avant le commit : `pl-9` est
+  hors de l'échelle fermée et n'était pas engendré, si bien que l'icône chevauchait la saisie. Le champ porte maintenant
+  `pl-[36px]`, comme la palette (§5.46), et `classes-css.mjs` ne signale aucune classe absente du code de l'unité ;
+- **connecteur** : `crm_mail_classification_candidates` et `crm_mail_classify`. pytest unitaires **330**, et trois
+  preuves d'intégration (succès et journal, refus par la matrice, refus par le CRM malgré la matrice ouverte).
+  `scripts/verify-mcp.sh` **112/112**, intégration **88/88** en direct et à travers Caddy ;
+- **manuel** : section « Ranger un message » du chapitre 12, image `classer-expediteur-connu` observée,
+  `scripts/verify-manual.sh` **168/168** ;
+- **seed** inchangé, comme le §26.4 le dit.
+Reste : la livraison (`docs/PROD_MIGRATIONS.md` §2.36, avec `CRM-143` selon la session de livraison) et le constat du
+responsable.
 
 
 ## Demande du 2026-11-10 — non lu visible, « message » plutôt que « fil », et effacer un mail (décision 878)
@@ -19202,3 +19225,21 @@ board ; INC-352 close sur le constat en production.
 - captures aux quatre paliers ;
 - manuel ;
 - contrat de déploiement, avec la mesure mémoire dans la cellule après déploiement.
+
+## Demande du 2026-11-10 — l'outbox des mails (décision 898)
+
+### CRM-144 — L'outbox : en file (annuler), envoyés, échecs (réessayer), pour toute l'équipe `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 898).
+**Comportement attendu** : dans la messagerie, un dossier « En file » (heure prévue ; annuler avant le départ), un dossier
+« Envoyés » (date, identité d'expédition, affaire), les échecs avec leur motif et « Réessayer » ; chacun voit les envois de
+l'espace qu'il a le droit de lire. Annuler et réessayer sont contrôlés côté serveur (droits, état de l'envoi : on n'annule pas
+un envoi parti, on ne réessaie qu'un échec).
+**MCP** : **oui, famille `messagerie`**, lecture (consulter) et actions annuler et réessayer (modifier) (décision 898).
+**Spécification** : à écrire avant le code — `docs/SPEC-mail-subsystem.md` (les états de `mail_outbox`, l'annulation, le
+nouvel essai, la course avec `mail-sync`), `docs/DESIGN_SYSTEM.md`, `docs/SPEC-mcp.md` §9.2, le manuel.
+**DoD** : pgTAP (droits, transitions d'état, course annulation contre départ) ; unitaires ; API avec refus de droits ; E2E
+souris et clavier (en file, annuler, envoyés, échec, réessayer) ; pytest `mail-sync` si l'annulation y touche ; outils du
+connecteur et `verify-mcp.sh` ; seed (un envoi en file, un envoyé, un échec) ; captures aux quatre paliers ; manuel ;
+contrat.
+
