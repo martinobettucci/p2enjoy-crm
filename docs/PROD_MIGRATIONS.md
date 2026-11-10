@@ -802,7 +802,35 @@ donnée, aucune politique, aucune webapp, aucune image, aucune variable, aucun s
 **Retour arrière** : reposer `app.health_context` de la `0134` (`SECURITY INVOKER`), comme le dit `docs/SCHEMA.md`
 « Migration `0171` ». Aucune donnée n'est touchée.
 
+### 2.36 `CRM-137`, décisions 877, 891 et 893 — classer un mail : les affaires candidates, cherchables, l'expéditeur connu d'abord (À LIVRER : migration 172, webapp de `main` et image `mcp`, ensemble)
+
+`docs/SPEC-mail-subsystem.md` §26 ; `docs/SCHEMA.md` « Migration `0172` » ; `docs/SPEC-mcp.md` §9.2 *septendecies*.
+**La migration 172 d'abord, puis la webapp et l'image `mcp` de `main`, dans la même fenêtre** : le formulaire de
+classement de l'inbox et les deux outils `crm_mail_classification_candidates` et `crm_mail_classify` appellent
+`classification_candidates`. Une webapp sans la migration rendrait l'erreur « La liste des affaires n'a pas pu être
+lue. » à chaque ouverture du formulaire, sans pouvoir classer. La migration ajoute une fonction : pas de table, pas de
+colonne, pas de donnée, pas de politique, et pas de verrou notable. Aucune variable, aucun secret, aucune fonction edge.
+
+**État, à relire avant la fenêtre** : la migration 172 et ses preuves sont dans `main`. L'écran, les outils du connecteur
+et leurs preuves suivent. **Ne pas livrer avant que `CRM-137` soit signalée `[P]`.**
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 172 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate`, instantané de VM pris |
+| 2 | Livrer la webapp de `main` | session de livraison, après le geste 1 | `scripts/spark/livrer.sh` (§3.1) |
+| 3 | Reconstruire `mcp` | session de livraison, après le geste 1 | `up -d --build --no-deps --wait mcp`, par `compose_prod` (§4) |
+| 4 | Constater le classement | responsable, Inbox ▸ Non classés | « Classer dans une affaire » ouvre la case « Expéditeur connu », cochée, et le champ « Rechercher une affaire ». Pour un expéditeur contact d'une seule affaire, elle est déjà choisie. Décochée, la liste montre toutes les affaires ; une frappe la resserre |
+| 5 | Constater le connecteur | responsable, depuis un assistant connecté | sur un message non classé, l'assistant liste les affaires candidates, puis classe, dans les droits de la famille `messagerie` |
+
+**Vérification après la fenêtre**, en lecture seule : le registre gagne une ligne, et l'empreinte de la 172 est égale au
+dépôt. `select has_function_privilege('authenticated', 'public.classification_candidates(uuid, boolean, text, integer)',
+'execute')` rend `true`, et la même requête pour `anon` rend `false`. **Retour arrière** : reposer la webapp et l'image
+`mcp` précédentes, puis `drop function public.classification_candidates(uuid, boolean, text, integer)`, comme le dit
+`docs/SCHEMA.md` « Migration `0172` ». Aucune donnée n'est touchée.
+
 ## 3. Migrations en attente
+
+**La 172** (`CRM-137`, décisions 877, 891 et 893), *en attente* : `classification_candidates`, les affaires candidates au classement d'un message (`docs/SCHEMA.md` « Migration `0172` »). Une fonction, aucune donnée, sans verrou notable. **Avec la webapp et l'image `mcp` de `main`, après elle** (§2.36). Aucun geste préalable du responsable.
 
 **Aucune migration en attente depuis la troisième fenêtre du 2026-11-10** : la 171 a été appliquée (révision `e15dd487`,
 décision 896 ; §8), registre à **169** lignes.
