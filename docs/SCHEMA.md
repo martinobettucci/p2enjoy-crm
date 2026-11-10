@@ -2526,6 +2526,25 @@ elle.
 attente sont perdus : les lister avant. **Avec l'image `mcp` d'avant `CRM-128` T3** : sans la garde, son `crm_mail_send`
 enverrait de nouveau directement.
 
+### Migration de `CRM-146` — le prévisionnel et le réel d'une organisation (numéro pris au push ; spécifiée le 2026-11-10, à écrire)
+
+`docs/SPEC-recettes.md` §12.3, décisions 900, 903 et 908. **Une fonction, aucune table, aucune colonne, aucune donnée,
+aucune politique.** `public.organization_revenue_totals(p_organization_id uuid default null) returns table
+(organization_id uuid, currency text, estimated_total numeric, actual_total numeric, cards integer, shared_cards integer,
+revenue_lines integer, lines_without_actual integer)`, `sql`, `stable`, `security invoker`, `search_path` vidé ; `execute`
+à `authenticated` et `service_role`, révoqué à `public` et `anon`.
+- **Le lien** : `organizations` → `contacts.organization_id` → `card_contacts` → `cards`, affaire **hors corbeille**
+  (`deleted_at is null`, la RLS la laissant lire à l'administrateur et à son auteur) ; une affaire une fois par
+  organisation.
+- **Les sommes** : `card_revenues` de ces affaires, par `cards.currency` ; `actual_total` est la somme des
+  `actual_amount` non nuls, nulle s'il n'y en a aucun ; `lines_without_actual` compte les lignes `settled_at is null`
+  et `actual_amount is null`.
+- **`shared_cards`** : les affaires dont un autre rattachement lisible mène à un contact d'une **autre** organisation.
+- **Les droits** sont ceux de la RLS de l'appelant (`security invoker`) : rien d'illisible ne compte.
+- Seules les organisations × devises qui portent au moins une ligne de recette ont une ligne.
+**Retour arrière** : `drop function public.organization_revenue_totals(uuid);`. Aucune donnée n'en dépend ; la webapp et
+l'image `mcp` qui l'appellent se livrent avec elle.
+
 ### Migration à numéroter au push — l'outbox : annuler, réessayer, l'adresse d'expédition gardée (`CRM-144`, décisions 898 et 906 ; spécifiée le 2026-11-10, à écrire)
 
 `docs/SPEC-mail-subsystem.md` §28.

@@ -1303,6 +1303,19 @@ il n'envoie pas un mail nouveau, il remet en file un échec existant, sous les g
 préparer un email compte comme « ajouter », annuler et réessayer un envoi comme « modifier », l'envoi se fait toujours dans
 le CRM ».
 
+### 9.2 vicies Le prévisionnel et le réel d'une organisation — `CRM-146` (`docs/SPEC-recettes.md` §12 ; décisions 900, 903 et 908)
+
+*Écrit le 2026-11-10, avant le code.* **Famille `recettes`, action `consulter`, aucune case nouvelle** (décision 900).
+L'ancre `organisation`, qui existe (§9.2 *sexies*), situe l'espace.
+
+| Outil | Action | Ancre | Ce qu'il appelle | Remarques |
+|---|---|---|---|---|
+| `crm_organization_revenues` | `consulter` | `organisation:organization_id` | `public.organization_revenue_totals(p_organization_id)` | Rend `organization_id` et `by_currency` : par devise, `currency`, `estimated_total`, `actual_total` (nul si aucun réel n'est connu), `progress` (le réel sur le prévu, nul quand le prévu est nul ou négatif ; peut dépasser 1), `cards`, `shared_cards`, `revenue_lines`, `lines_without_actual`. Une organisation sans recette rend `by_currency` vide. Une note le dit au modèle : une affaire compte pour chaque organisation dont un contact y est rattaché, et les devises ne s'additionnent pas. Une organisation illisible reçoit le refus uniforme (§6.2) |
+
+**Aucune case `aussi`** [choix de rédaction, décision 908] : l'outil ne rend aucune donnée de l'organisation, son nom
+compris — seulement des sommes de recettes, que la famille `recettes` garde. **La ligne « Recettes » de l'onglet
+« Connecteur MCP »** voit sa phrase de portée complétée : « … ; prévisionnel et réel d'une organisation ».
+
 ### 9.3 Réponses
 
 - **Forme.** Un JSON structuré, avec les identifiants **et** les libellés utiles : nom du track,

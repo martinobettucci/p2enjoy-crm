@@ -3027,3 +3027,23 @@ sinon : `eicar-test.txt` `infected`, `enregistrement-reunion.mov` `skipped` et `
 Dans l'inbox et dans le fil de l'affaire, une pièce « écartée par l'antivirus » et une pièce « non analysée : trop
 volumineuse, non conservée », ni l'une ni l'autre avec une commande ; par le connecteur, les statuts `infected` et
 `not_scanned_too_large`. L'affaire porte un courrier de plus, dans l'inbox comme dans son fil.
+
+## 41. Le prévisionnel et le réel d'une organisation — `CRM-146` (`docs/SPEC-recettes.md` §12.7)
+
+*Écrit le 2026-11-10, avant le code ; révisable à l'écriture du code si une preuve existante compte ces rattachements,
+comme le §27.5 de `docs/SPEC-mail-subsystem.md` l'a été.* Le jeu porte des recettes (§21) et des organisations, mais une
+seule affaire est rattachée au contact d'une organisation — « Migration ERP Sogexia », sans recette. Il gagne trois
+rattachements, créés par la vraie route (`POST /rest/v1/card_contacts`) sous le jeton d'un profil qui écrit l'affaire,
+jamais par la clé de service :
+
+| Contact (organisation) | Affaire | Ce que l'écran montre |
+|---|---|---|
+| Marc Lefort (Vertigo Conseil) | `…0cd` « Socle analytique — Vertuo » (EUR) | Vertigo Conseil : 163 000,00 sur 210 000,00 EUR |
+| Nadia Benali (Vertigo Conseil) | `…0c7` « Formation Data & IA — promo 2026 » (CHF) | Vertigo Conseil : 14 000,00 sur 28 000,00 CHF — **deux devises**, deux barres |
+| Thomas Garnier (Atelier Lumen) | `…0cd` « Socle analytique — Vertuo » | l'affaire compte pour **deux organisations** : la fiche de chacune le dit |
+
+- **Sogexia** garde « Migration ERP Sogexia », sans recette : sa fiche montre le vide, sa cellule reste vide.
+- **Comptoir Vasseur**, sans contact : aucune affaire, cellule vide.
+- **Convergence** : un rattachement existant n'est pas recréé (la clé `(card_id, contact_id)`).
+- **Le seed constate** ensuite, sous le jeton de l'administratrice, que `organization_revenue_totals()` rend deux devises
+  pour Vertigo Conseil et rien pour Sogexia ; il s'arrête en nommant la cause sinon.

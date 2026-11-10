@@ -5,6 +5,8 @@
 §5.60. Schéma : `docs/SCHEMA.md`, « Migration `0095` ». Connecteur : `docs/SPEC-mcp.md` §6.1 et §9.2.*
 *Révisée le 2026-11-01 par `CRM-126` (décision 810) : une balance par devise dans un seul tableau (§4.4, §6.2, §6.3,
 §7, §11).*
+*Complétée le 2026-11-10 par `CRM-146` (décisions 900, 903 et 908) : le prévisionnel et le réel d'une
+organisation (§12).*
 
 Les choix que la décision 632 ne tranche pas et que cette spécification arrête sont marqués **[choix de rédaction]** :
 ils se contestent comme une décision, pas comme un détail.
@@ -454,3 +456,163 @@ temps est **non valorisé**, et des lignes non soldées pour l'onglet « À sais
   base ; la saisie en série au clavier ; le rapport de l'administratrice, ses filtres et ses deux vues ; le membre qui
   lit « Réservé aux administrateurs » et saisit dans « À saisir » ; un outil du connecteur dont l'effet se voit dans la
   fiche ; quatre paliers sans défilement de la page ; captures observées.
+
+## 12. Le prévisionnel et le réel d'une organisation — `CRM-146`
+
+*Écrit le 2026-11-10, avant le code, sur les décisions 900, 903 et 907, et les choix de rédaction consignés en décision
+908 (`docs/JOURNAL.md`). Unité de backlog : `CRM-146` (`docs/BACKLOG.md`). Règles visuelles : `docs/DESIGN_SYSTEM.md`
+§5.97. Schéma : `docs/SCHEMA.md`, « Migration de `CRM-146` ». Connecteur : `docs/SPEC-mcp.md` §9.2 *vicies*. Jeu de
+démonstration : `docs/SPEC-seed.md` §41.*
+
+Une organisation montre, **par devise**, ce qui est prévu et ce qui a été réellement saisi en recettes dans ses
+affaires. La liste des organisations le rend en barre de progression (le réel sur le prévu), la fiche en montants.
+
+### 12.1 Quelles affaires comptent pour une organisation
+
+**Par ses contacts rattachés** (décision 903). Une affaire compte pour l'organisation *O* dès qu'un contact rattaché à
+l'affaire (`card_contacts`) a `contacts.organization_id = O`.
+- **Une fois par organisation**, quel que soit le nombre de ses contacts qui en font partie.
+- **Pour chaque organisation** de ses contacts : une affaire dont les contacts viennent de deux organisations compte pour
+  les deux. La fiche le dit (§12.5). Elle n'est jamais répartie entre elles : une recette n'est pas partagée (§9).
+- **Aucun champ nouveau** : ni organisation sur l'affaire, ni contact principal. Le rôle d'un rattachement, texte libre,
+  ne compte pas.
+- **Hors corbeille** [choix de rédaction] : une affaire mise à la corbeille ne compte pas, comme dans la rentabilité
+  (§4.6). La RLS de `cards` laisse lire une affaire à la corbeille à un administrateur et à son auteur ; le calcul l'exclut
+  donc lui-même.
+- **Archivée, elle compte** [choix de rédaction] : la rentabilité garde les affaires archivées (§4.6), et c'est
+  précisément une affaire livrée puis archivée qui porte le réel.
+- **Tous les états comptent**, gagnée, en cours ou perdue [choix de rédaction] : la fiche d'une organisation n'a pas le
+  filtre d'état du rapport, et cacher une affaire sans le dire ferait mentir la somme. Une ligne de recette se crée en
+  général sur une affaire gagnée ou en passe de l'être.
+
+### 12.2 Les grandeurs
+
+Pour une organisation et **une devise** (la devise d'une ligne de recette est celle de son affaire, §2.4) :
+
+| Grandeur | Définition |
+|---|---|
+| prévu | somme des `estimated_amount` des lignes de recette de ses affaires dans cette devise |
+| réel | somme des `actual_amount` **connus** de ces lignes ; **nul** si aucun n'est connu (« nul n'est pas zéro », §2.3) |
+| affaires | nombre d'affaires distinctes qui comptent (§12.1) et portent au moins une ligne dans cette devise |
+| affaires partagées | parmi elles, celles qui comptent aussi pour une autre organisation lisible |
+| lignes | nombre de lignes de recette |
+| lignes sans réel | lignes **ouvertes** sans aucun réel (§4.3, cause 1) |
+
+- **Les devises ne s'additionnent jamais** (§4.4) : une balance par devise, aucune conversion.
+- **Une organisation sans ligne de recette dans ses affaires n'a aucune grandeur.** Rien n'est rendu pour elle : ni zéro,
+  ni barre vide (décision 900).
+- **La part réalisée** est `réel ÷ prévu`, calculée par l'écran et le connecteur, jamais en base (la règle du §5 : la base
+  rend des sommes). Elle est **sans objet** quand le prévu est nul ou négatif — un avoir peut annuler un prévu, §2.1 —
+  [choix de rédaction] : un rapport à un dénominateur nul ou négatif ne dit rien de lisible. Elle peut **dépasser
+  100 %** : un réel au-delà du prévu est un fait, ni bon ni mauvais. Un réel nul (inconnu) vaut une part de 0 %, et
+  l'écran dit qu'aucun réel n'est saisi.
+
+### 12.3 `public.organization_revenue_totals(p_organization_id uuid default null)`
+
+`stable`, **`security invoker`**, `search_path` vide ; `EXECUTE` à `authenticated` et `service_role`, **révoqué nommément à
+`public` et `anon`** (la forme du §5). Nom anglais : décision 658.
+
+**Ce qu'elle rend** : une ligne par **organisation × devise** où au moins une ligne de recette existe, triée par
+organisation puis par devise.
+
+| Colonne | Contenu |
+|---|---|
+| `organization_id` | l'organisation |
+| `currency` | la devise |
+| `estimated_total` | le prévu (§12.2), arrondi une fois au centime |
+| `actual_total` | le réel, **nul** si aucun réel n'est connu |
+| `cards` | les affaires |
+| `shared_cards` | les affaires partagées |
+| `revenue_lines` | les lignes |
+| `lines_without_actual` | les lignes sans réel |
+
+- **`p_organization_id`** restreint à une organisation, la fiche (§12.5) ; nul, toutes celles de l'appelant, la liste
+  (§12.4).
+- **Les droits sont ceux de la RLS, et c'est le point même de `security invoker`** (décision 900 : « seules comptent les
+  affaires lisibles par la personne »). La fonction somme ce que l'appelant lit : l'organisation et le contact
+  (`app.is_workspace_member`), le rattachement et l'affaire (`app.can_read_card`), les lignes (`app.can_read_card`). **Une
+  affaire qu'il ne lit pas ne compte pas, et rien n'en transparaît** : ni son montant, ni son existence, ni dans
+  `cards`, ni dans `shared_cards` (le contact de l'autre organisation et son rattachement sont lus sous la même RLS).
+- **Aucune réserve aux administrateurs**, à la différence de la rentabilité (§3) : les recettes se lisent par qui lit
+  l'affaire, et ces sommes ne rapprochent aucun coût du personnel.
+- **Aucun refus nommé** : l'anonyme est refusé par le privilège (`401`) ; une organisation inconnue ou d'un autre espace
+  rend zéro ligne, comme une organisation sans recette — l'écran ne les distingue pas, et la fiche a déjà dit
+  « introuvable » par sa propre lecture (`docs/SPEC-permissions-rls.md` §7).
+
+### 12.4 La liste des organisations
+
+L'onglet « Organisations » du carnet (`docs/SPEC-organisations.md` §4) gagne une colonne **« Réel sur prévu »**, après
+« Contacts » :
+- une ligne par devise où l'organisation a un prévu, dans l'ordre alphabétique des codes ;
+- chaque ligne : la **barre** (la part réalisée, bornée à 100 % pour le dessin) puis le texte « *réel* sur *prévu* » et le
+  code devise. Un réel inconnu s'écrit « Rien de saisi sur *prévu* », barre vide. Une part sans objet (§12.2) n'a pas de
+  barre ;
+- **une organisation sans recette laisse la cellule vide** (`docs/DESIGN_SYSTEM.md` §5.9), sans barre ;
+- la liste lit `organization_revenue_totals()` à côté de `organizations`, **les deux attendues ensemble** [choix de
+  rédaction] : une colonne qui se remplirait après coup confondrait « pas encore lu » et « aucune recette ». Un échec de
+  l'une ou l'autre rend l'état d'erreur de l'onglet, et « Réessayer » relit les deux.
+
+### 12.5 La fiche d'une organisation
+
+Un bloc **« Recettes avec cette organisation »** entre ses caractéristiques et ses contacts :
+- **un tableau** : une ligne par devise (en-tête de ligne, le code), et trois colonnes, « Prévu », « Réel », « Réel sur
+  prévu » (la barre et la part en pourcentage entier, sans objet : vide) ;
+- **les mentions sous le tableau** :
+  - « *n* affaires comptent pour cette organisation : celles dont un contact rattaché en fait partie. » — toujours ;
+  - « Dont *m* comptent aussi pour une autre organisation. » — si *m* > 0 (décision 903 : « la fiche le dit ») ;
+  - « *k* lignes de recette sans réel saisi. » — si *k* > 0 ; elles traversent les devises : ce sont des lignes, pas de
+    l'argent ;
+  - la portée : « Les affaires que vous lisez, hors corbeille. » — deux personnes lisent deux sommes différentes, et
+    sans cette phrase l'écart se lirait comme une erreur (`docs/DESIGN_SYSTEM.md` §5.48) ;
+- **vide** : « Aucune recette prévue avec cette organisation. », sans action — la fiche ne crée pas de recette ;
+- **erreur** : un message et « Réessayer », dans le bloc seul ; le reste de la fiche reste rendu ;
+- **chargement** : un squelette à la forme du tableau.
+
+**Aucun lien vers les affaires** [choix de rédaction] : la fiche ne les liste pas (§12.8). Un lien vers « Rentabilité »
+serait une impasse pour un membre, à qui le rapport est réservé (§3).
+
+### 12.6 Connecteur MCP
+
+**Oui, famille existante `recettes`, action `consulter`** (décision 900) ; aucune case, aucune famille nouvelle. L'outil
+`crm_organization_revenues` est spécifié au `docs/SPEC-mcp.md` §9.2 *vicies*.
+
+### 12.7 Jeu de démonstration
+
+`docs/SPEC-seed.md` §41 : une organisation avec un prévu et un réel dans **deux devises**, une affaire qui compte pour
+**deux organisations**, une organisation qui a des affaires **sans recette**.
+
+### 12.8 Ce qui n'est pas au périmètre
+
+- la liste des affaires d'une organisation, et leurs montants un à un ;
+- un champ « Organisation » sur l'affaire, ou un contact principal (décision 903) ;
+- la marge ou les coûts d'une organisation — ils rapprocheraient le coût du personnel, réservé (§3) ;
+- une période, un filtre d'état, un tri de la liste par montant ;
+- toute conversion de devise.
+
+### 12.9 Découpage
+
+Chaque tranche est poussée une fois vérifiée (décision 904).
+
+| Tranche | Contenu |
+|---|---|
+| **T1** | Migration (numéro pris au push) : `organization_revenue_totals` ; pgTAP ; contrat de déploiement |
+| **T2** | Webapp : la colonne de la liste, le bloc de la fiche, `docs/DESIGN_SYSTEM.md` §5.97 ; unitaires ; API par jetons réels |
+| **T3** | Seed §41 ; E2E souris et clavier ; captures aux quatre paliers ; manuel (le carnet) |
+| **T4** | Connecteur : `crm_organization_revenues` ; pytest unitaires et intégration ; `verify-mcp.sh` ; manuel §33 |
+| **T5** | Production, par la session de livraison, sur instruction du responsable |
+
+### 12.10 Preuves
+
+- **pgTAP** : une affaire compte par un contact, une fois malgré deux contacts de la même organisation, pour deux
+  organisations par deux contacts ; deux devises, jamais additionnées ; réel nul sans réel connu, `0` pour une ligne
+  soldée sans réel ; lignes sans réel ; corbeille exclue sous l'administratrice qui la lit, archivée comptée ;
+  **droits** : une affaire illisible pour le business developer ne compte ni dans les sommes ni dans `cards` ni dans
+  `shared_cards`, une organisation d'un autre espace rend zéro ligne, l'anonyme n'exécute pas ; `p_organization_id`.
+- **API** (`e2e/api`) : sous les jetons réels, les sommes égales à un oracle lu par la clé de service sur les tables, pour
+  l'administratrice et pour un profil qui lit moins ; l'anonyme refusé.
+- **Unitaires** (Vitest) : la part réalisée (prévu nul ou négatif, réel inconnu, dépassement) ; la colonne de la liste,
+  ses états et l'attente des deux lectures ; le bloc de la fiche, ses mentions, son vide, son erreur et sa reprise.
+- **E2E** (Playwright) : la liste et la fiche à la souris et au clavier sur le seed §41 ; quatre paliers sans défilement
+  horizontal de la page ; captures observées.
+- **Connecteur** (pytest) : déclaration (famille, action, ancre) ; contre la vraie base, succès, refus par la matrice,
+  refus uniforme d'une organisation illisible, journal écrit ; la part calculée par les mêmes cas que la webapp.

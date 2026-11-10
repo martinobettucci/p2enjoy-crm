@@ -62,6 +62,9 @@ Un refus s'écrit dans le formulaire, la saisie conservée.
   dans cet espace. », la commande restant offerte).
 - **La fiche d'organisation gagne « Modifier »**, sur le patron de la fiche d'un contact (`CRM-060` 4g).
 - **Design system** : une section nouvelle, écrite après lecture intégrale du document, avant le code de l'écran.
+- **Depuis `CRM-146`** (`docs/SPEC-recettes.md` §12, décisions 900 et 903) : la liste porte une cinquième colonne, « Réel
+  sur prévu », une barre par devise ; la fiche, un bloc « Recettes avec cette organisation ». Une affaire compte pour une
+  organisation par ses contacts rattachés.
 
 ## 5. Le connecteur MCP — famille `organizations`
 

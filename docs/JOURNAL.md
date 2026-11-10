@@ -40266,3 +40266,28 @@ dans la mémoire de travail de l'agent. La décision 901 ne valait que pour `CRM
 Le compte rendu de l'unité dit que la lecture n'était pas intégrale. Le diff d'interface reste vérifié contre ces sections
 avant le commit.
 **Portée** : `CRM-146` seulement ; la règle de `CLAUDE.md` n'est pas changée.
+
+
+### décision 908 — `CRM-146` : les choix que les décisions 900 et 903 laissaient à la spécification
+
+*2026-11-10, session interactive 152dd27d (p2enjoy-crm-a8), en écrivant la spécification avant le code
+(`docs/SPEC-recettes.md` §12). Choix de conception, motivés ; aucun ne contredit la 900 ni la 903.*
+- **Le calcul en base, sous les droits de l'appelant** : `organization_revenue_totals(p_organization_id)`, `security
+  invoker`. Elle rend des sommes par organisation et par devise ; la part réalisée se calcule à l'écran et au connecteur,
+  comme la marge (§5 des recettes). **Aucune réserve aux administrateurs** : les recettes se lisent par qui lit l'affaire.
+- **Les affaires qui comptent** : hors corbeille ; archivées comprises ; tous les états. Comme la rentabilité par défaut,
+  sans son filtre d'état, que la fiche n'a pas.
+- **Le réel inconnu reste nul**, jamais zéro ; la part est sans objet sur un prévu nul ou négatif, et peut dépasser 100 %.
+- **Une organisation sans recette ne rend rien** : ni ligne, ni barre, ni zéro.
+- **La barre ne change jamais de couleur** et elle est `aria-hidden`, le texte portant tout (`docs/DESIGN_SYSTEM.md`
+  §5.29, §5.97). **Écarté** : le rôle `progressbar` que la ligne du backlog citait. Il ferait entendre la valeur deux fois.
+- **La liste attend ses deux lectures ensemble** : une colonne remplie après coup confondrait « pas encore lu » et
+  « aucune recette ».
+- **La fiche ne liste pas les affaires** et n'a aucun lien ; elle dit par une mention combien d'affaires comptent aussi
+  pour une autre organisation (décision 903).
+- **Le connecteur** : `crm_organization_revenues`, famille `recettes`, `consulter`, ancre `organisation` ; **sans case
+  `aussi`**, car il ne rend aucune donnée de l'organisation.
+- **Le seed** : trois rattachements par la vraie route (`docs/SPEC-seed.md` §41) — Vertigo Conseil en EUR et en CHF, « Socle
+  analytique — Vertuo » partagée avec Atelier Lumen.
+**Conséquences** : `docs/SPEC-recettes.md` §12, `docs/DESIGN_SYSTEM.md` §5.97, `docs/SPEC-mcp.md` §9.2 *vicies*,
+`docs/SCHEMA.md`, `docs/SPEC-seed.md` §41 ; découpage en cinq tranches (§12.9).

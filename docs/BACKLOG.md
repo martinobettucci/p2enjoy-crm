@@ -19350,9 +19350,11 @@ affaires lisibles par la personne ; calcul côté serveur ; une organisation san
 **MCP** : **oui, famille `recettes`**, lecture (décision 900).
 **Lien affaire–organisation** (décision 903) : par les contacts rattachés. Une affaire compte pour une organisation dès
 qu'un de ses contacts en fait partie, et pour les deux si ses contacts viennent de deux organisations ; aucun champ nouveau.
-**Spécification** : à écrire avant le code — `docs/SPEC-costs.md` ou la spécification des recettes (l'agrégat par organisation,
-le lien affaire–organisation retenu), `docs/DESIGN_SYSTEM.md` (la barre, accessible : texte et `progressbar`), `docs/SPEC-mcp.md`
-§9.2, le manuel.
+**Spécification** : écrite le 2026-11-10, avant le code (décisions 907 et 908) — `docs/SPEC-recettes.md` §12 (le lien,
+les grandeurs, `organization_revenue_totals`, la liste, la fiche, le découpage en cinq tranches T1 à T5, les preuves),
+`docs/DESIGN_SYSTEM.md` §5.97 (la barre, `aria-hidden`, le texte portant tout), `docs/SPEC-mcp.md` §9.2 *vicies*
+(`crm_organization_revenues`), `docs/SCHEMA.md` « Migration de `CRM-146` », `docs/SPEC-seed.md` §41, le manuel avec T3 et
+T4.
 **DoD** : pgTAP de l'agrégat (droits : une affaire illisible ne compte pas ; plusieurs devises) ; unitaires ; API avec refus de
 droits ; E2E souris et clavier (fiche, liste) ; outil du connecteur et `verify-mcp.sh` ; seed (une organisation avec prévu et
 réel dans deux devises, une sans recette) ; captures aux quatre paliers ; manuel.

@@ -8082,3 +8082,46 @@ spécifié par `docs/SPEC-mail-subsystem.md` §27 ; ces règles ne disent que de
   (§5.4 quinquies), et elle ne porte aucune mention de plus. La case est à côté, et elle dit déjà ce qui est compté.
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.** La case n'a pas d'icône : `User` désignerait le profil, et une
   icône qui sert deux objets contredit le §9.
+
+### 5.97 Le prévisionnel et le réel d'une organisation : la barre de la liste, le bloc de la fiche — `CRM-146`
+
+*Écrit le 2026-11-10, avant le code, après lecture des sections ciblées par la décision 907 — non intégrale : §1 à §4,
+§6 à §12, §5.6, §5.8, §5.9, §5.19, §5.20, §5.29, §5.30, §5.48, §5.60, §5.64.* Ce que les écrans lisent est spécifié par
+`docs/SPEC-recettes.md` §12. Ces règles ne disent que de quoi ils ont l'air.
+
+- **LA BARRE EST LA JAUGE DU §5.29, RÉEMPLOYÉE** : 6 px de haut (`h-[6px]`, valeur arbitraire assumée, §5.29), fond
+  `--color-brand-soft`, remplissage `--color-brand`, `rounded-full`, largeur fixe de 96 px (`w-[96px]`) pour que les barres
+  d'une colonne se comparent. **Elle ne change jamais de couleur** : ni vert quand le réel atteint le prévu, ni rouge
+  quand il le dépasse ou reste bas. Une recette encaissée au-delà du prévu n'est pas une faute, et une recette en retard
+  de saisie n'est pas un échec ; la teinte y porterait un jugement que le §5.29 interdit. Un dépassement remplit la barre,
+  et le texte dit le reste.
+- **LA BARRE EST `aria-hidden`, ET LE TEXTE PORTE TOUT** — la décision du §5.29 pour sa jauge, et pour son motif : une
+  barre annoncée en `progressbar` à côté de son texte ferait entendre la valeur deux fois. *Révise la formule du backlog*
+  (« accessible : texte et `progressbar` », écrite avant cette lecture) : l'accessibilité est tenue par le texte, que la
+  barre double à l'œil seulement (§1 : une couleur ne porte jamais seule une information).
+- **LA COLONNE « Réel sur prévu » DE LA LISTE** (§5.64, cinquième colonne, après « Contacts ») : une ligne par devise,
+  empilées comme au §5.60 (`flex flex-col items-end`, ordre alphabétique des codes, 4 px entre deux lignes) — **l'écart
+  au §5.9 que le §5.60 a déjà pris**, voulu pour la même raison. Chaque ligne : la barre, puis le texte « 163 000,00 sur
+  210 000,00 » en donnée technique (§2, chiffres tabulaires), puis le code devise **dans son propre élément**, 13 px
+  `--color-text-2` (§5.48, §5.60). Un réel inconnu : « Rien de saisi sur 72 000,00 », barre vide. Une part sans objet
+  (prévu nul ou négatif) : le texte seul, et la place de la barre gardée vide pour que les textes restent alignés.
+  **Une organisation sans recette laisse la cellule vide** (§5.9) : ni barre à zéro, ni « 0 sur 0 ».
+- **LE BLOC « Recettes avec cette organisation » DE LA FICHE** (§5.20) vient entre la liste de définitions et les contacts,
+  titré comme eux (`h2` au style `text-h3`). C'est un **tableau du §5.9** — prévu et réel se comparent, le critère du
+  §5.60 — : l'en-tête de ligne est le code devise (`th scope="row"`, aligné à gauche explicitement, §5.30), puis « Prévu »,
+  « Réel » et « Réel sur prévu », données techniques alignées à droite. La dernière colonne porte la barre et la part en
+  pourcentage entier (« 78 % »). Une cellule sans valeur reste vide (§5.9). Le tableau repose sur une surface bordée
+  (§5.60) et son conteneur porte `.indique-debordement-x` (§12.6).
+- **LES MENTIONS SOUS LE TABLEAU** suivent la graduation du §5.30 (13 px `--color-text-2`), accord par clé (§10) : le
+  nombre d'affaires qui comptent et ce qui les fait compter ; celles qui comptent aussi pour une autre organisation, si
+  le compte n'est pas nul ; les lignes sans réel, si le compte n'est pas nul ; la phrase de portée, qui ferme le bloc et
+  n'est jamais rendue sur le vide (§5.48).
+- **LES ÉTATS DU §5.8, DANS LE BLOC SEUL** : squelette à la forme du tableau ; erreur avec « Réessayer » (§5.5), le reste
+  de la fiche restant rendu ; vide, « Aucune recette prévue avec cette organisation. », **sans action**, l'écart du
+  §5.19 et du §5.48 : la fiche ne crée pas de recette. **La liste attend ses deux lectures ensemble** : son squelette et
+  son erreur sont ceux du §5.64.
+- **AUCUN LIEN, ET L'ABSENCE EST ASSUMÉE** (§5.48) : la fiche ne liste pas les affaires, et « Rentabilité » est réservée aux
+  administrateurs (§5.60).
+- **SOUS `md`**, le tableau de la fiche et celui de la liste défilent dans leur conteneur ; la page ne défile jamais
+  horizontalement (§7). `md` et jamais `sm` (§11).
+- **Aucune couleur, aucun jeton, aucune icône nouvelle.**
