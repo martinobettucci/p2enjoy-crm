@@ -40248,3 +40248,21 @@ partir.
 - le récapitulatif quotidien, sans affaire, reste hors de l'outbox, comme la RLS de `mail_outbox` le veut déjà.
 **MCP** : inchangé (décision 898) — famille `messagerie`, lecture en `consulter`, annuler et réessayer en `modifier`.
 **Conséquences** : la spécification de `CRM-144` s'écrit sur ces règles, avant le code.
+
+
+### décision 907 — `CRM-146` : le design system lu par ses sections générales, celles des organisations, de la jauge et des recettes
+
+*2026-11-10, session interactive 152dd27d (p2enjoy-crm-a8), arbitrage du responsable (`AskUserQuestion`), avant la
+spécification d'interface.*
+**Le problème** : celui des décisions 897 et 901. `docs/DESIGN_SYSTEM.md` compte 8 084 lignes et ne tient pas en une fois
+dans la mémoire de travail de l'agent. La décision 901 ne valait que pour `CRM-139`.
+**Pistes présentées** : les sections ciblées, comme la 901 ; la lecture intégrale.
+**Décision du responsable** : **les sections ciblées**, en entier :
+- §1 à §4 et §6 à §12 ;
+- les sections des organisations : §5.19 (le carnet), §5.20 (la fiche d'organisation), §5.64 (l'onglet du carnet) ;
+- la jauge existante : §5.29 (canevas d'objectifs), dont la barre de `CRM-146` reprend la retenue de teinte ;
+- les recettes et la rentabilité : §5.60 ;
+- les sections qu'elles citent.
+Le compte rendu de l'unité dit que la lecture n'était pas intégrale. Le diff d'interface reste vérifié contre ces sections
+avant le commit.
+**Portée** : `CRM-146` seulement ; la règle de `CLAUDE.md` n'est pas changée.
