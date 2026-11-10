@@ -7936,3 +7936,66 @@ suivent la capacité d'écrire la boîte ou l'identité (§5.59).
   §5.34 avait déjà payé. Le groupe se replie d'un seul tenant ; la borne des deux écrans passe de `104ch` à `120ch`, pour
   que la ligne d'une boîte tienne à 1440 px avec ses deux commandes. *Révise la borne du §5.34 et du §5.35.*
 - **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `PlugZap`.**
+
+### 5.94 Classer un mail : le sélecteur d'affaire cherchable et « Expéditeur connu » — `CRM-137`
+
+*Écrit le 2026-11-10, avant le code, après relecture intégrale de ce document le même jour (décisions 877, 891 et 893).* Ce
+que la liste lit et ce que le geste envoie est spécifié par `docs/SPEC-mail-subsystem.md` §26 ; ces règles ne disent que de
+quoi il a l'air. **Il remplace le `<select>` du formulaire de classement** (§5.4) : tout le reste du pied du message — la
+suggestion au-dessus (§5.4 ter), « Classer » et « Annuler », les refus — est inchangé.
+
+- **L'ÉCART AU §5.22 EST MOTIVÉ, ET IL EST MESURÉ.** Le §5.22 garde le `select` natif tant que le nombre d'options n'est pas
+  mesuré. Ici il l'est : des centaines d'affaires sur un espace réel, et le responsable les fait défiler à chaque mail
+  (décision 877). Le patron est donc **la `combobox` de la palette** (§5.46), déjà employée par « Ajouter une affaire » de la
+  matrice des temps (§5.54) : deux sélecteurs qui cherchent une affaire la cherchent de la même façon.
+- **DANS L'ORDRE DU FORMULAIRE** : la case « Expéditeur connu », puis le champ, puis la liste, puis le choix retenu, puis les
+  boutons. La case qualifie la liste, et ce qui qualifie se lit avant (§5.48 bis).
+- **LA CASE « Expéditeur connu »** est la case native de 24 px sur une ligne de `--size-target`, son libellé pour cible
+  étendue (§5.7 bis), accent `--color-brand`. Elle est **cochée à chaque ouverture** du formulaire ; son état n'est gardé
+  nulle part (`CLAUDE.md` §11). Dessous, en 13 px `--color-text-2`, reliée par `aria-describedby` : « Seulement les affaires
+  dont un contact porte l'adresse {adresse} ». L'adresse est une donnée technique, en `code` (§2). Une case et non deux
+  liens : c'est un raffinement binaire de la liste, pas une seconde vue (§5.36).
+- **LE CHAMP** est un `input type="search"` du §5.7, avec un **libellé visible**, « Rechercher une affaire ». C'est l'écart
+  avec la palette, dont le libellé est masqué : ici le champ vit dans un formulaire, et le §5.22 veut un libellé visible. Il
+  porte l'icône `Search` en `aria-hidden`, celle de la palette, pour le même geste (§9). Il prend le focus à l'ouverture
+  du formulaire, à la place du `select` (§5.13).
+- **LE FOCUS NE QUITTE PAS LE CHAMP** (§5.46) : `role="combobox"`, `aria-expanded`, `aria-controls` vers la liste, et
+  `aria-activedescendant` sur l'option active. Les flèches déplacent l'option active, et `Entrée` **choisit** l'option active
+  sans envoyer : envoyer reste le geste de « Classer », que `Entrée` ne déclenche pas tant qu'une option est active.
+  `Échap`, depuis le champ, referme le formulaire comme « Annuler » et rend le focus à « Classer dans une affaire ».
+- **LA LISTE** est une `listbox` toujours dépliée sous le champ, et non un menu flottant : c'est le contenu du formulaire, et
+  rien ne doit la recouvrir. Elle est bornée à `20rem` de haut et défile en elle-même ; la page ne défile pas.
+  - **Une option** est une ligne de la liste plate du §5.18, de hauteur au moins `--size-target`. Elle porte le titre de
+    l'affaire en `font-medium`, qui se replie et n'est jamais en ellipse (§5.46 : il nomme l'objet), puis le chemin « Track ›
+    Channel » en 13 px `--color-text-2`.
+  - **Case décochée**, une affaire dont l'expéditeur est un contact porte la pilule neutre « Expéditeur connu » (§5.6, point
+    de tête), dont le nom accessible est « L'expéditeur est un contact de cette affaire ». Case cochée, toutes le sont, et la
+    pilule serait du bruit (§5.35).
+  - **L'option active** a le fond `--color-brand-soft` et le liseré gauche de 3 px `--color-brand` de la palette (§5.46). Le
+    survol est en `--color-hover`. **L'option choisie** porte `aria-selected="true"` et l'icône `Check` (16 px,
+    `--color-brand`) en fin de ligne, en plus de sa teinte : le choix ne repose pas sur la couleur (§1).
+  - **Un clic choisit**, et le focus reste dans le champ.
+- **LE CHOIX RETENU SE LIT SOUS LA LISTE**, en 13 px : « Affaire choisie : {titre} — {chemin} », dans une région
+  `role="status"`. Il reste écrit si une frappe fait sortir l'affaire de la liste : c'est elle que « Classer » enverra, et
+  l'écran le dit. Sans choix, la ligne n'est pas rendue.
+- **« Classer » est désactivé tant qu'aucune affaire n'est choisie** : un état de la saisie, jamais un droit (§5.50).
+- **LES ÉTATS** (§5.8) :
+  - au premier chargement, un squelette de trois lignes ;
+  - pendant une relecture, la liste précédente reste rendue sous `aria-busy`, sans clignoter (§5.46) ;
+  - une erreur dit « La liste des affaires n'a pas pu être lue. », en `role="alert"`, avec « Réessayer » ;
+  - la troncature est écrite sous la liste, en 13 px `--color-text-3`, quand la base rend une affaire de plus que celles
+    montrées : « Les 50 premières affaires : affinez la recherche. » (§5.43).
+- **LES VIDES SONT DEUX, ET LE PREMIER PORTE SON ACTION** (§5.3 quinquies : un vide dû à un filtre offre le geste qui le
+  lève) :
+  - case cochée, aucun terme : « {adresse} n'est le contact d'aucune affaire. », suivi du bouton secondaire compact « Voir
+    toutes les affaires », qui décoche la case et rend le focus au champ ;
+  - avec un terme : « Aucune affaire ne correspond à « {terme} » », et, case cochée, le même bouton, libellé « Chercher dans
+    toutes les affaires ».
+  - Case décochée, sans terme ni affaire : « Aucune affaire ne peut recevoir ce message. », sans action. Il n'y a rien à
+    élargir (§5.16).
+- **LES ANNONCES** : le compte de la liste est annoncé dans une région polie après chaque relecture, par clé (« 3
+  affaires », §10), mais pas à chaque frappe intermédiaire : seulement quand la lecture répond.
+- **SOUS `md`**, le formulaire prend toute la largeur du panneau de lecture, et les boutons passent à la ligne, cibles
+  conservées. `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
+- **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `Check`**, qui ne sert aucun autre objet (§9) : elle
+  marque l'option choisie. `Search` vient de la palette (§5.46), pour le même geste.

@@ -40006,3 +40006,37 @@ d'un message.
 **Conséquences** : une migration au premier numéro libre au push ; les images `mail-sync` et `mcp`, la webapp et le
 service `clamav`, livrés ensemble. Le paragraphe du design system se prend au premier numéro libre à l'écriture de l'écran.
 
+
+### décision 893 — CRM-137 : les choix de conception du classement cherchable
+
+*2026-11-10, session 152dd27d (p2enjoy-crm-d9), unité confiée par la session de livraison. Spécification
+`docs/SPEC-mail-subsystem.md` §26, `docs/DESIGN_SYSTEM.md` §5.94, `docs/SPEC-mcp.md` §9.2 septendecies, `docs/SCHEMA.md`,
+écrites avant le code après relecture intégrale du design system.*
+**Choix, chacun avec son motif** :
+- **Une fonction de la base**, `classification_candidates`, en `security invoker` : le filtre « expéditeur connu » se
+  calcule côté serveur, sous les droits de la personne (décision 877). L'écran et le connecteur la partagent : une seule
+  définition de « candidate » et de « connu ».
+- **« Connu » compare l'adresse exacte, sans casse**, comme la règle 3 (`0046`) : un même expéditeur ne peut pas être
+  connu à un endroit et inconnu à l'autre.
+- **Une candidate est une affaire hors corbeille, avec un rattachement non archivé lisible**, la règle de
+  `lireCardsClassables`, passée dans la base. Proposer une affaire rangée serait promettre un refus (§16.2).
+- **La recherche est une sous-chaîne sans casse ni accents, sur le titre et le chemin** : « vitri » doit trouver
+  « vitrine », ce que la recherche globale, radicalisée, ne promet pas.
+- **Ordre fixé par la base** : connues d'abord, puis le titre, puis l'identifiant.
+- **Borne de 50 à l'écran, avec la ligne de plus pour dire la troncature** ; 1 à 100 côté fonction.
+- **La combobox de la palette (§5.46), et non un `select`.** C'est un écart motivé au §5.22, dont la condition (« nombre
+  non mesuré ») est tombée : des centaines d'affaires, mesurées par le responsable.
+- **La case repart cochée à chaque ouverture**, sans mémoire (`CLAUDE.md` §11) : c'est le défaut arbitré.
+- **Une seule présélection** : l'affaire unique d'une liste cochée et sans terme.
+- **L'état vide porte « Voir toutes les affaires »**, qui décoche (§5.3 quinquies).
+- **Le connecteur** : `crm_mail_classification_candidates` (`consulter`, `known_sender` vrai par défaut) et
+  `crm_mail_classify` (`modifier`, par `classify_message` inchangée), famille `messagerie`, aucune case nouvelle
+  (décisions 877 et 891).
+- **Une icône nouvelle, `Check`**, pour l'option choisie ; aucune couleur ni aucun jeton.
+**Écarté** :
+- étendre la règle 3 à plusieurs affaires : la suggestion reste « exactement une », et la case couvre le reste ;
+- rapprocher par le domaine de l'organisation : la décision 877 dit « contact » ;
+- trier ou filtrer à l'écran : la base rend l'ordre et le filtre.
+**Conséquences** : une migration au prochain numéro libre, une fonction sans table ni donnée, livrée avec la webapp et
+l'image `mcp`. Le seed reçoit, par le vrai chemin de la messagerie, un message d'un contact rattaché à deux affaires et
+un message d'un inconnu.

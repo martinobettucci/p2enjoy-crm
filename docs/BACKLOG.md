@@ -18988,8 +18988,9 @@ l'adresse de l'expéditeur ; décochée, toutes les affaires lisibles ; un état
 l'expéditeur n'est le contact d'aucune affaire. Filtre côté serveur, sous les droits de la personne ; clavier complet.
 **MCP** : **oui, famille `messagerie`** (décisions 877 et 891), cases existantes. Deux outils, puisqu'aucun outil de
 classement n'existait : lister les affaires candidates d'un message (`consulter`), et classer le message (`modifier`).
-**Spécification** : à écrire avant le code — `docs/DESIGN_SYSTEM.md` (le sélecteur cherchable, la case), la requête
-serveur, `docs/SPEC-mcp.md` §9.2, le manuel (inbox).
+**Spécification** : écrite le 2026-11-10 avant le code (décision 893) — `docs/SPEC-mail-subsystem.md` §26,
+`docs/DESIGN_SYSTEM.md` §5.94, `docs/SPEC-mcp.md` §9.2 septendecies, `docs/SCHEMA.md` (une fonction,
+`classification_candidates`, au prochain numéro de migration). Le manuel (inbox) suivra avec le code.
 **DoD** : unitaires ; API (le filtre, les droits : une affaire illisible n'apparaît jamais) ; E2E souris et clavier (case
 cochée, décochée, recherche, état vide) ; outil du connecteur et `verify-mcp.sh` ; seed (un message d'un contact connu, un
 d'un inconnu) ; captures aux quatre paliers ; manuel.

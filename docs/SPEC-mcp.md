@@ -312,7 +312,7 @@ connecteur.
 | `recettes` | lignes de recette d'une affaire et leurs réels ; rapport de rentabilité, réservé aux administrateurs par la base — **ajoutée par `CRM-108`** (`docs/SPEC-recettes.md` §7, décision 632, migration `0095`) |
 | `temps` | saisies de temps ; le coût du personnel en lecture, dans ce que la RLS ouvre |
 | `objectifs` | tableaux d'objectifs, blocs, flèches |
-| `messagerie` | lecture des fils d'une affaire et des messages ; envoi d'un email |
+| `messagerie` | lecture des fils d'une affaire et des messages ; envoi d'un email ; classement d'un message dans une affaire (`CRM-137`, décision 891) |
 | `workflows` | workflows, leurs étapes et leurs transitions : les créer, les modifier, les archiver — **décidée le 2026-10-26, à livrer par `CRM-118`** (décision 752) ; migration de la liste fermée au prochain numéro libre ; `crm_workflow_get` reste à `structure` ; périmètre complet : workflow, étapes et transitions, exigences d'une transition, champs de formulaire et règles de visibilité, copie, versions et remappage ; **retirer une étape ou une transition relève de `supprimer`, exception assumée** à la règle ci-dessous, le CRM ne sachant que les détruire (décision 754) ; liste des outils fixée par la spécification de la tranche ; nom anglais (décision 658) |
 
 | Action | Sens |
@@ -1238,6 +1238,21 @@ archiver ou exiger un champ reste un geste d'administrateur dans la webapp.
 **Preuves** : pytest (déclarations, refus, la forme des filtres, l'écriture en mise à jour puis insertion) ; intégration
 contre le vrai Keycloak et la vraie base, sur des champs posés par la clé de service et retirés à la fin : lister, lire,
 écrire puis vider une valeur, filtrer, la lectrice refusée par le CRM. Manuel §33.5.
+
+### 9.2 septendecies Classer un message — `CRM-137` (`docs/SPEC-mail-subsystem.md` §26 ; décisions 877, 891 et 893)
+
+*Écrit le 2026-11-10, avant le code.* **Famille `messagerie`, aucune case nouvelle** (décision 877) : lister les affaires
+candidates est `consulter`, classer est `modifier` — un message existant change d'appartenance. Aucun outil de
+classement n'existait (décision 891).
+
+| Outil | Action | Ancre (et `autres`) | Ce qu'il appelle | Remarques |
+|---|---|---|---|---|
+| `crm_mail_classification_candidates` | `consulter` | `message:message_id` | `classification_candidates` | Arguments : `message_id`, `known_sender` (booléen, **vrai par défaut**, comme la case de l'écran), `search` (facultatif), `limit` (1 à 100, défaut 50). Rend les affaires dans l'ordre de la base : `card_id`, `title`, `path`, `known_sender`. Quand `known_sender` est vrai et que rien ne revient, la réponse le dit en une phrase pour l'assistant — « l'expéditeur n'est le contact d'aucune affaire ; relancer avec `known_sender: false` » —, qui est l'action de l'état vide de l'écran. |
+| `crm_mail_classify` | `modifier` | `message:message_id` (`autres` : `card:card_id`) | `classify_message` | Arguments : `message_id`, `card_id`. La base garde tout (droit d'écrire l'affaire, affaire rangée refusée, message illisible) ; ses refus sont rendus traduits, jamais le message brut. Pas d'`destructiveHint` : le geste se défait dans l'interface (« Retirer de l'affaire », §16.5.5). |
+
+**Pas d'outil pour retirer un message de son affaire** : la décision 891 ne l'a pas demandé, et le geste reste dans
+l'interface. **Les deux outils s'inscrivent au catalogue** de la famille, et la ligne « Messagerie » de l'onglet
+« Connecteur MCP » garde sa phrase de portée, complétée : « … ; classer un message dans une affaire ».
 
 ### 9.3 Réponses
 

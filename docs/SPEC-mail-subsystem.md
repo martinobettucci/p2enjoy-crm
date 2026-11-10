@@ -3509,3 +3509,120 @@ Les règles visuelles s'écrivent au `docs/DESIGN_SYSTEM.md` §5.94 avec l'écra
 - Un historique profond descend lentement, 200 messages par dossier et par tour (§20.6 bis.3) ; la valeur n'est toujours
   pas mesurée sur une vraie boîte.
 - Aucun écran ne pose encore `disabled` (§24.1).
+
+## 26. Classer un mail : les affaires candidates, cherchables, l'expéditeur connu d'abord — `CRM-137`
+
+*Écrit le 2026-11-10 avant le code, après relecture intégrale de `docs/DESIGN_SYSTEM.md` le même jour. `docs/JOURNAL.md`
+décisions 877 (l'arbitrage du responsable), 891 (les deux outils du connecteur) et 893 (les choix de conception).*
+
+### 26.1 Ce que l'unité livre, et ce qu'elle ne livre pas
+
+**Le défaut.** Le formulaire de classement de l'inbox (§16, `FormulaireClassement`) rend un `<select>` de toutes les
+affaires lisibles, « chemin › titre », lues côté client par trois requêtes et bornées à 200 (`CARDS_CLASSABLES_MAX`). Il
+n'a ni recherche ni rapprochement avec l'expéditeur. Sur un espace réel, le responsable fait défiler des centaines de
+lignes à chaque mail (décision 877).
+
+Livré :
+- **une fonction de lecture, `public.classification_candidates`** (§26.2), qui rend les affaires candidates d'un message,
+  côté serveur et sous les droits de l'appelant ;
+- **le sélecteur cherchable** et la case **« Expéditeur connu »**, cochée par défaut, à la place du `<select>`
+  (`docs/DESIGN_SYSTEM.md` §5.94) ;
+- **deux outils du connecteur**, famille `messagerie` (`docs/SPEC-mcp.md` §9.2 *septendecies*) : lister les candidates,
+  et classer.
+
+Non livré, et nommé :
+- **le classement lui-même ne change pas.** `classify_message`, sa garde (droit d'écrire l'affaire, affaire ni archivée ni
+  en corbeille) et ses refus restent ceux du §16 ;
+- **la suggestion (règle 3, §4.4) ne change pas.** Elle reste rendue au-dessus du formulaire (§5.4 ter du design system),
+  et n'existe que pour **exactement une** affaire active. La case « Expéditeur connu » couvre aussi le cas de plusieurs
+  affaires, que la règle 3 tait ;
+- **aucun rapprochement par le domaine de l'organisation** : la décision 877 dit « un contact rattaché » ; le domaine
+  reste le pivot de la seule création de contact (§16) ;
+- **un contact porte une seule adresse** (`contacts.email`) : l'unité n'en ajoute pas.
+
+### 26.2 `public.classification_candidates` — le contrat
+
+```
+public.classification_candidates(
+  p_message_id   uuid,
+  p_known_sender boolean default true,
+  p_search       text    default null,
+  p_limit        integer default 50
+) returns table (card_id uuid, title text, path text, known_sender boolean)
+```
+
+- **`security invoker`, `stable`, `search_path` vidé**, relations pleinement qualifiées. Elle ne lit **que ce que les
+  politiques de l'appelant lui rendent** : le message (`mail_messages`), les affaires et leurs rattachements, les channels
+  et les tracks, les contacts et leurs liens. Aucun droit n'est calculé dans la fonction : c'est la RLS qui filtre
+  (`CLAUDE.md` §10). `execute` à `authenticated` seulement ; l'anonyme est refusé par le privilège.
+- **Le message doit être lisible.** Sinon la fonction refuse par `app.raise_http_error(404, 'message_not_found')` (la
+  convention de `CRM-120`) : un message illisible et un message inexistant ne se distinguent pas.
+- **Une affaire est candidate** si elle n'est pas en corbeille (`deleted_at is null`) et a **au moins un rattachement non
+  archivé lisible**. C'est la règle de `lireCardsClassables`, passée dans la base : la base refuse de classer dans une
+  affaire rangée (§16.2), et la proposer serait promettre un refus.
+- **`known_sender`** est vrai quand un contact **lisible** rattaché à l'affaire (`card_contacts`) porte l'adresse de
+  l'expéditeur : `lower(contacts.email) = lower(btrim(mail_messages.from_address))`. C'est la comparaison exacte de la
+  règle 3 (`0046`), pour qu'un même expéditeur soit « connu » de la même façon partout. `from_address` est stockée
+  nue (mesuré : `bizdev@p2enjoy.test`, sans nom).
+- **`p_known_sender` vrai** ne rend que les affaires où `known_sender` est vrai ; **faux**, toutes les candidates, et la
+  colonne dit lesquelles sont connues.
+- **`p_search`**, rogné, retient les affaires dont le titre **ou** le chemin contient le terme, sans tenir compte de la
+  casse ni des accents : `extensions.unaccent(lower(…))` des deux côtés, en sous-chaîne. Un terme vide ou nul ne filtre
+  rien. Ce n'est pas la recherche globale (`recherche_globale`, radicalisée et préfixe) : un sélecteur cherche une
+  affaire qu'on a sous les yeux, et « vitri » doit trouver « vitrine ».
+- **`path`** est « Track › Channel » du **plus ancien rattachement non archivé lisible** de l'affaire, la règle de
+  `lireCardsClassables` (`CRM-111` T2.4.1) ; vide si le channel ou le track ne se lit pas.
+- **L'ordre** : les affaires connues d'abord, puis le titre, puis l'identifiant. Il est rendu par la base et jamais
+  retrié à l'écran (§5.22 du design system).
+- **`p_limit`** est borné de 1 à 100 (défaut 50) ; une valeur hors bornes est ramenée dans les bornes, sans refus.
+  L'appelant qui veut savoir s'il y en a plus demande **une ligne de plus** qu'il n'en montre (§26.3).
+
+**Migration** : au prochain numéro libre, pris à l'écriture du code. Elle ne crée ni table ni colonne, ne touche aucune
+donnée et se retire par un `drop function` (`docs/SCHEMA.md`). Elle part avec la webapp et l'image `mcp` qui
+l'appellent (`docs/PROD_MIGRATIONS.md`).
+
+### 26.3 L'écran
+
+La forme est au §5.94 du design system. Le comportement :
+- **à l'ouverture du formulaire**, la case est **cochée** et la liste demande `p_known_sender => true`, sans terme, avec
+  `p_limit => 51`, pour en montrer 50 et savoir s'il y en a d'autres. L'état de la case n'est mémorisé nulle part : il
+  repart coché à chaque ouverture (`CLAUDE.md` §11) ;
+- **chaque frappe relance la lecture** après 200 ms de repos (le délai de la palette, `docs/SPEC-recherche.md` §13.3) ;
+  **décocher ou recocher** la relance aussitôt. Une réponse arrivée après une plus récente est ignorée ;
+- **aucune affaire n'est présélectionnée**, sauf quand la liste **cochée et sans terme** n'en rend **qu'une** : elle est
+  alors choisie, comme le contact unique d'une prévisualisation (`CRM-124`). « Classer » reste désactivé sans choix
+  (§5.50 du design system) ;
+- **le choix survit au filtre** : une affaire choisie qui sort de la liste après une frappe reste nommée sous le champ
+  (« Affaire choisie : … »), et c'est elle que « Classer » envoie ;
+- « Classer » appelle `classify_message`, inchangée, et ses refus restent ceux d'aujourd'hui.
+
+### 26.4 Données de développement
+
+Le seed porte, **par le vrai chemin de la messagerie** (dépôt sur le serveur de courrier de dev, relève par
+`mail-sync`) :
+- un message **non classé d'un contact connu**, rattaché à **deux** affaires actives. La case cochée en montre deux ; la
+  règle 3 ne suggère rien, faute d'unicité ;
+- un message **non classé d'un expéditeur inconnu**, pour l'état vide qui propose de décocher.
+
+### 26.5 Preuves
+
+- **pgTAP** :
+  - le filtre connu et non connu ;
+  - la recherche sans casse ni accents, sur le titre et sur le chemin ;
+  - l'ordre ;
+  - les bornes de `p_limit` ;
+  - une affaire en corbeille ou au rattachement archivé exclue ;
+  - le message illisible en 404 ;
+  - l'anonyme refusé ;
+  - une affaire illisible jamais rendue, la lectrice ne voyant pas l'affaire `…00c1` ;
+  - un contact illisible qui ne rend pas une affaire « connue ».
+- **API** : les mêmes droits par jeton réel, administratrice, business developer et lectrice.
+- **Unitaires** : le module de lecture et le composant (débounce, réponse périmée ignorée, présélection unique, choix
+  conservé).
+- **E2E souris et clavier** sur le seed :
+  - case cochée, puis décochée ;
+  - recherche ;
+  - état vide et son action ;
+  - classement réussi ;
+  - captures aux quatre paliers.
+- **Connecteur** : `mcp/tests` et `scripts/verify-mcp.sh`.

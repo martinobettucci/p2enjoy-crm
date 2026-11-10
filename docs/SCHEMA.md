@@ -2551,7 +2551,7 @@ mails préparés sont perdues. **Avec les images `mail-sync`, `mcp` et la webapp
 
 ### Migration (prochain numéro libre) — les affaires candidates au classement d'un message (`CRM-137` ; spécifiée le 2026-11-10, à écrire)
 
-`docs/SPEC-mail-subsystem.md` §26.2, décisions 877, 891 et 892. **Une fonction, aucune table, aucune colonne, aucune
+`docs/SPEC-mail-subsystem.md` §26.2, décisions 877, 891 et 893. **Une fonction, aucune table, aucune colonne, aucune
 donnée.** `public.classification_candidates(p_message_id uuid, p_known_sender boolean default true, p_search text
 default null, p_limit integer default 50) returns table (card_id uuid, title text, path text, known_sender boolean)`,
 `security invoker`, `stable`, `search_path` vidé ; `execute` à `authenticated` seul.
