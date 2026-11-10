@@ -830,7 +830,7 @@ pour `app.health_context` seule.
 3. le contrôle passé, elle lit l'étape, son nœud, l'affaire et le dernier contact (`app.health_last_contact`, appelée
    depuis la fonction, donc sous les droits de son propriétaire) **sans RLS**.
 
-*Précision du 2026-11-10, avant le code (décision 889)* — **qui est l'appelant** :
+*Précision du 2026-11-10, avant le code (décision 890)* — **qui est l'appelant** :
 - le contrôle porte sur **l'appelant**, jamais sur le propriétaire de la fonction : `app.can_read_channel` lit
   `auth.uid()`, l'identité du jeton de la requête, que `SECURITY DEFINER` ne change pas ;
 - **un appelant qui contourne la RLS lisait tout, et lit tout** : la clé de service (`service_role`, `rolbypassrls`), et une

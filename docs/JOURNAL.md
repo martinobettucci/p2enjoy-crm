@@ -39928,7 +39928,7 @@ restent en non analysées en production ».
 La spécification révise l'assertion « `skipped` non » (`e2e/api/inbox.spec.ts:159`), retournée et non retirée
 (décision 51). Elle rectifie aussi la note de la cellule (2 Gio).
 
-### décision 889 — `CRM-142` : le contrôle unique porte sur l'appelant, et laisse passer qui contournait déjà la RLS
+### décision 890 — `CRM-142` : le contrôle unique porte sur l'appelant, et laisse passer qui contournait déjà la RLS
 
 *2026-11-10, session interactive 4891a451 (p2enjoy-crm-2f), avant le code, sur trois exigences de la session de livraison
 (le contrôle sur `auth.uid()` de l'appelant ; `execute` retiré à `public` et `anon` ; un appel forgé sur un rattachement

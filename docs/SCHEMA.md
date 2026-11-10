@@ -2228,7 +2228,7 @@ authenticated;`, avec la webapp et l'image `mcp` d'avant.
   `search_path` vide : elle relit le rattachement par son identifiant, rend vide s'il est inconnu ou si
   `app.can_read_channel(channel_id)` est faux, puis lit l'étape, le nœud, l'affaire et `app.health_last_contact` sans RLS.
   Le contrôle est sauté pour un appelant qui contourne la RLS (rôle `current_setting('role')`, ou `session_user` hors
-  `SET ROLE`, portant `rolbypassrls` ou `rolsuper`), qui lisait déjà tout (décision 889).
+  `SET ROLE`, portant `rolbypassrls` ou `rolsuper`), qui lisait déjà tout (décision 890).
 - `revoke execute … from public, anon` ; `grant execute … to authenticated, service_role` (inchangé).
 - `public.health_momentum`, `public.health_commercial`, `app.health_last_contact` : inchangées, `SECURITY INVOKER`.
 
