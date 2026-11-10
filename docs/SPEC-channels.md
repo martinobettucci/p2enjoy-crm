@@ -427,20 +427,24 @@ section 6 du harnais.
 pas un cas d'erreur » : « Aucun channel », que la barre affichait à qui en lisait six, sous l'accueil de `CRM-129` qui ne
 le prétend plus. **La barre ne dit plus « Aucun channel » hors d'un track que si la personne n'en lit réellement aucun.**
 
-**La mesure** est celle de l'accueil (`docs/SPEC-onboarding.md` §4.2, décision 859) : le compte de l'étape « channel » du
-guide, `mesurerEtape(client, 'channel')` — les channels vivants (`archived_at` et `deleted_at` nuls) que la personne lit,
-sous la RLS, par un `GET … limit=0` (décision 700). **Aucune lecture nouvelle de `channels`, donc aucune seconde définition
-de « channel vivant »** ; le §5.4.1 n'est pas touché (la barre n'est pas une route, et la mesure ne passe pas par
-`from('channels')` littéral). La coquille l'émet **hors d'un track seulement, avec une session ouverte**, une fois à
-chaque entrée sur une route transverse ; sur une route de track, la barre a ses channels et n'en émet aucune.
-Sur `/`, la mesure de l'accueil et celle de la barre sont deux comptes identiques : coût accepté, un `GET` borné à zéro
-ligne, plutôt qu'un état partagé entre la coquille et la route.
+**La mesure** — RÉVISÉE le 2026-11-10 (INC-350, décision 876) : **une lecture de présence propre à la barre, qui n'est
+pas un comptage du guide**. `lirePresenceChannels` lit **au plus une ligne** de `channels` (`select=id`, `limit=1`, sans
+`Prefer: count=exact`), avec les filtres de l'étape « channel » du guide (`FILTRES_ETAPES_DEMARRAGE.channel` :
+`archived_at` et `deleted_at` nuls), sous la RLS de la personne. Une ligne rendue : présent ; aucune : aucun ; un refus, une
+panne ou une réponse sans données : inconnu. **Une seule définition de « channel vivant »**, celle du guide, mais **aucun
+comptage du guide** : `docs/SPEC-onboarding.md` §10.2 réserve les comptages du guide à qui voit sa pastille, et une
+lectrice n'en reçoit aucun (`e2e/ui/guide-flottant.spec.ts`, « à qui la pastille ne paraît pas »). La première rédaction
+réemployait `mesurerEtape(client, 'channel')`, un comptage du guide émis pour tout rôle : c'était le défaut. Le §5.4.1 n'est
+pas touché (la barre n'est pas une route, et la lecture ne passe pas par `from('channels')` littéral). La coquille l'émet
+**hors d'un track seulement, avec une session ouverte**, une fois à chaque entrée sur une route transverse ; sur une route
+de track, la barre a ses channels et n'en émet aucune. Sur `/`, l'accueil compte et la barre lit : coût accepté, une ligne
+au plus, plutôt qu'un état partagé entre la coquille et la route.
 
 | Hors d'un track | La barre rend |
 |---|---|
-| mesure : zéro channel lisible | « Aucun channel » et sa phrase pour lecteurs d'écran, **inchangés** (`tabs.empty`, `tabs.empty.hint`) |
-| mesure : au moins un | un **texte neutre**, `tabs.pick` : « Ouvrez un track pour voir ses channels » |
-| mesure en vol, ou en erreur | le texte neutre : il est vrai dans tous les cas, et ne prétend ni absence ni présence |
+| lecture : aucun channel lisible | « Aucun channel » et sa phrase pour lecteurs d'écran, **inchangés** (`tabs.empty`, `tabs.empty.hint`) |
+| lecture : au moins un | un **texte neutre**, `tabs.pick` : « Ouvrez un track pour voir ses channels » |
+| lecture en vol, ou en erreur | le texte neutre : il est vrai dans tous les cas, et ne prétend ni absence ni présence |
 | sans session | « Aucun channel », inchangé (`CRM-007`) ; aucune mesure (comme `docs/SPEC-onboarding.md` §4.4) |
 
 Sur une route de track, rien ne change : un track sans channel garde « Aucun channel », qui y est vrai (§5.3).

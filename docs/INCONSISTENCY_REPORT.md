@@ -8966,3 +8966,25 @@ la boîte, le même qu'en SMTP. Avec ces mêmes identifiants, depuis `mail-sync`
 (`AUTHENTICATIONFAILED`). Le refus porte donc sur le seul accès IMAP de cette boîte, chez le fournisseur. Le mot de
 passe, l'identifiant et le réseau de la cellule ne sont pas en cause. Le CRM ne relève qu'en IMAP (§4.5, §17, §20.6 bis :
 dossiers, copie dans `CRM/Affaires/…`, plages d'UID) ; aucune décision n'a écarté POP explicitement.
+
+### INC-350 — hors d'un track, la coquille émet pour une lectrice un comptage du guide que `CRM-094` lui refuse
+**Ouverte le 2026-11-10, corrigée par `CRM-131` (décision 876).**
+
+*Relevé le 2026-11-10 par la session de livraison 4522fa9c (p2enjoy-crm-be), campagne complète du lot `CRM-129` +
+`CRM-131`, rejouée sur un seed frais ; transmis à la session 4891a451 (p2enjoy-crm-2f), qui porte `CRM-131`.*
+
+**Le constat.** `e2e/ui/guide-flottant.spec.ts:381`, « CRM-094 — à qui la pastille ne paraît pas › la lectrice : aucune
+pastille, et AUCUNE mesure émise pour elle », rougit seul et sur seed frais : « aucun comptage du guide pour un rôle qui ne
+voit pas la pastille », attendu 0, reçu 1. Il passait dans les campagnes d'avant `CRM-129`.
+
+**La cause.** `CRM-131` (décision 868, `docs/SPEC-channels.md` §5.5 première rédaction) faisait émettre par la coquille,
+hors d'un track et pour tout rôle, `mesurerEtape(client, 'channel')` : un `GET channels … limit=0` avec
+`Prefer: count=exact`, c'est-à-dire un comptage du guide (`estUnCompte`, décision 700). La lectrice sur `/contacts` en
+recevait un.
+
+**Ce qui contredit quoi.** `docs/SPEC-onboarding.md` §10.2 (le guide et ses comptages suivent l'administrateur ; la
+coquille ne mesure rien qu'elle n'afficherait pas) contre `docs/SPEC-channels.md` §5.5 dans sa première rédaction. Le
+contrat de `CRM-094` ne se révise pas (session de livraison) : c'est le code de `CRM-131` qui se corrige.
+
+**La correction** (décision 876) : la barre lit sa présence par `lirePresenceChannels`, au plus une ligne, sans comptage ;
+mêmes filtres que l'étape « channel ». L'affichage ne change pour personne.

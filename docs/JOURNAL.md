@@ -39582,3 +39582,21 @@ IMAP, donc de `mail-sync` : il faut une route interne de lecture et un relais so
 - ce que « première connexion » veut dire pour une boîte existante, comme celle de production ;
 - le comportement d'un dossier coché qui disparaît du serveur ;
 - l'effet d'un `backfill_months` augmenté sur une boîte déjà relevée.
+
+### décision 876 — `CRM-131`, INC-350 : la barre lit la présence des channels par une ligne, sans comptage du guide
+
+*2026-11-10, session interactive 4891a451 (p2enjoy-crm-2f), sur le signalement de la session de livraison (INC-350).*
+**Le problème** : la mesure de la barre hors d'un track (décision 868) était un comptage du guide
+(`mesurerEtape(client, 'channel')`), émis pour tout rôle ; `CRM-094` (`docs/SPEC-onboarding.md` §10.2) n'en émet aucun pour
+qui ne voit pas la pastille, et son E2E le prouve (`e2e/ui/guide-flottant.spec.ts:381`, rouge).
+**Pistes transmises par la session de livraison** : lire les channels lisibles autrement ; ou garder le comptage pour les
+seuls rôles qui voient la pastille. La seconde changerait ce que lit une lectrice sans channel (« Ouvrez un track… » au lieu
+de « Aucun channel ») : c'est un changement de comportement, que cette correction ne décide pas.
+**Décision technique** : la première. `lirePresenceChannels` (`webapp/src/lib/demarrage.ts`) lit au plus une ligne de
+`channels` (`select=id`, `limit=1`, sans `Prefer: count=exact`), avec `FILTRES_ETAPES_DEMARRAGE.channel` ; `useMesureChannels`
+la rend. La décision 868 est révisée sur un seul point, « aucune lecture nouvelle de `channels` » : une lecture d'une ligne
+au plus remplace le comptage. Ce que la barre affiche ne change pour aucun rôle. Le contrat de `CRM-094` n'est pas touché.
+**MCP** : non, comme la décision 866 (comportement d'écran).
+**Conséquences** : `docs/SPEC-channels.md` §5.5, `docs/DESIGN_SYSTEM.md` §4 (onglets), `CHANGELOG.md`, INC-350 ; tests
+unitaires de `useMesureChannels` réécrits sur la lecture d'une ligne ; preuves `guide-flottant`, `accueil-channels`,
+`demarrage` rejouées.

@@ -169,7 +169,8 @@ valeur n'existe. Écrire `p-5` ne produit rien.
   lorsque le track n'a aucun channel** — les budgets d'un track existent indépendamment de ses
   channels, et l'état vide de la barre, qui reste vrai, ne dit alors plus tout ce qu'elle propose.*
   *`CRM-131` (2026-11-06, écrit avant le code, décisions 866 et 868 ; `docs/SPEC-channels.md` §5.5) : **hors d'un track,
-  « Aucun channel » ne paraît que si la personne n'en lit aucun**, mesuré comme l'accueil (§5.17). Sinon — et pendant la
+  « Aucun channel » ne paraît que si la personne n'en lit aucun**, avec la définition des channels vivants de l'accueil
+  (§5.17), par une lecture de présence propre à la barre (révisé le 2026-11-10, INC-350). Sinon — et pendant la
   mesure, ou si elle échoue — la barre porte un **texte neutre**, « Ouvrez un track pour voir ses channels », même place,
   même style que « Aucun channel » (13 px, `--color-text-3`, une ligne, `whitespace-nowrap`), `data-testid="onglets-choisir"`,
   sans phrase cachée : le texte visible se suffit. Aucune couleur, aucun jeton, aucune icône nouvelle.*

@@ -24,7 +24,8 @@ d'exécuter le code attendu.
 
 - Sur une page qui n'est pas celle d'un track (accueil, Inbox, Contacts, Réglages…), la barre sous l'en-tête n'écrit plus
   « Aucun channel » qu'à qui n'en lit aucun ; sinon, et pendant ou après une mesure en échec, « Ouvrez un track pour voir
-  ses channels ». La mesure est celle de l'accueil. Sans session, rien ne change. Le manuel (chapitre 3) et son image sont
+  ses channels ». Les channels comptés sont ceux de l'accueil ; la barre les lit par une lecture de présence d'une ligne,
+  qui n'est pas un comptage du guide : une lectrice n'en reçoit toujours aucun (CRM-094, INC-350). Sans session, rien ne change. Le manuel (chapitre 3) et son image sont
   mis à jour. **Avec la webapp de `main`** ; aucune migration.
 
 ## [Publié]
