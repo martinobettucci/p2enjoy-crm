@@ -18948,7 +18948,9 @@ Ce n'est pas une campagne complète. **Reste** : la livraison de la migration 17
 
 ## Demande du 2026-11-10 — les réglages cachés de la messagerie, exposés à l'écran (décision 875)
 
-### CRM-136 — Historique, dossiers relevés (choisis parmi ceux de la boîte), style de classement et quota d'envoi réglables à l'écran `[ ]`
+### CRM-136 — Historique, dossiers relevés (choisis parmi ceux de la boîte), style de classement et quota d'envoi réglables à l'écran `[@]`
+
+*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-c2) depuis 2026-11-10 10:09 UTC — état avant : [ ] ; confiée par la session de livraison (be)*
 
 **Origine** : question du responsable sur l'historique non relevé en production ; arbitrée le 2026-11-10 (décision 875).
 **Comportement attendu** :
