@@ -1,6 +1,6 @@
 # Contrat de déploiement — P2Enjoy CRM
 
-*Session de livraison : session interactive 4522fa9c (p2enjoy-crm-ee, poste du responsable) depuis 2026-11-10 17:26 UTC — lot : les migrations 0172 à 0175, clamav, les images `mail-sync` et `mcp`, la webapp et Caddy de `main` (`CRM-137`, `CRM-139`, `CRM-143`, `CRM-145` ; `CRM-133` T1 à T3 en avance de son unité) ; campagne E2E complète avant la demande de fenêtre (décisions 830 et 832).*
+*Session de livraison : session interactive 4522fa9c (p2enjoy-crm-ee, poste du responsable) depuis 2026-11-10 (lot élargi le 2026-11-10 22:38 UTC) — lot : les migrations 0172 à 0178, clamav, les images `mail-sync` et `mcp`, la webapp et Caddy de `main` (`CRM-133`, `CRM-137`, `CRM-139`, `CRM-143`, `CRM-144`, `CRM-145` ; `CRM-146` T1-T2 et `CRM-136` T1 en avance de leur unité) ; campagne E2E complète avant la demande de fenêtre (décisions 830 et 832).*
 
 Ce document décrit **ce qu'un humain doit appliquer** pour déployer ou mettre à jour la
 production. Il ne dérive jamais de l'état réel du projet : toute modification du schéma, des
