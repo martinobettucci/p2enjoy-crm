@@ -8125,3 +8125,73 @@ spécifié par `docs/SPEC-mail-subsystem.md` §27 ; ces règles ne disent que de
 - **SOUS `md`**, le tableau de la fiche et celui de la liste défilent dans leur conteneur ; la page ne défile jamais
   horizontalement (§7). `md` et jamais `sm` (§11).
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.**
+
+### 5.98 L'outbox dans l'inbox : « En file », « Envoyés », « Échecs », et l'envoi annulé dans le fil — `CRM-144` T3
+
+*Écrit le 2026-11-10, avant le code. Lecture ciblée du document, décidée par le responsable (décision 910) : §1 à §4, §6 à
+§12, §5.4 à §5.4 sexies, §5.5, §5.8, §5.11, §5.13, §5.59, §5.90, §5.94 à §5.96, et ce qu'elles citent (§5.18, §5.36).* Ce
+que l'écran lit, envoie et refuse est spécifié par `docs/SPEC-mail-subsystem.md` §28.3 à §28.7 ; ces règles ne disent que
+de quoi il a l'air. **Le patron est celui des mails préparés** (§5.90) : des entrées de tête dans le premier panneau, une
+liste plate dans le deuxième, le détail dans le troisième.
+
+- **TROIS ENTRÉES DE TÊTE, APRÈS « Mails préparés » ET AVANT « Non classés »**, dans un groupe nommé « Envois » : le patron
+  `BoutonDossier`, chacune avec son compte en `--color-text-3` (§5.4). **Elles sont toujours rendues**, à zéro compris :
+  l'outbox est un endroit où l'on vient vérifier, et une entrée absente ne dirait pas si rien n'attend ou si rien n'a été
+  lu (§5.31). Pendant la lecture, le compte n'est pas rendu ; sur son échec, non plus, et la liste dira l'erreur. **Seule
+  « Échecs » porte la pastille du §5.43** — `--color-danger` à texte `--color-white` —, parce qu'un échec attend un geste ;
+  absente à zéro. Le nom accessible dit le compte entier : « Échecs : 2 envois ». Icônes Lucide : **`Mails`** pour
+  « En file » (des courriels qui attendent leur départ), **`Send`** pour « Envoyés » (celle de « Message envoyé » au fil,
+  §5.11 : le même objet), **`MailWarning`** pour « Échecs ». `Mails` et `MailWarning` ne servent aucun autre objet (§9).
+- **LA LISTE** (deuxième panneau), la liste plate du §5.18. Une ligne porte, dans cet ordre : les destinataires, l'objet en
+  `font-medium` (qui se replie), le titre de l'affaire en 13 px `--color-text-2`, puis une ligne de métadonnées en 13 px
+  `--color-text-2` — l'adresse d'expédition en `code` (§2) et l'auteur —, et la date en donnée technique (§2). La ligne
+  retenue porte `aria-current` (§5.4).
+  - **« En file »**, du plus proche départ au plus lointain : la date est **l'heure prévue**, ou « au prochain passage »
+    quand elle est échue. Un envoi `sending` porte la pilule neutre « En cours d'envoi » (§5.6, point de tête). Un envoi
+    reprogrammé après une panne porte, en 13 px `--color-text-2`, « {n} essais — {motif} » par le dictionnaire du §28.7.
+  - **« Envoyés »**, du plus récent au plus ancien : la date d'envoi. **Paginée** par « Afficher plus », bouton secondaire
+    compact sous la liste, absent quand tout est rendu (§5.43).
+  - **« Échecs »**, du plus récent au plus ancien : la date de l'échec, et **le motif en toutes lettres** sous l'objet, en
+    13 px `--color-danger-on-soft` précédé de l'icône `MailWarning` en `aria-hidden` : la couleur ne porte rien seule (§1).
+  - **Les vides**, un par dossier, sans action (§5.16) : « Aucun envoi en file. », « Aucun envoi pour le moment. »,
+    « Aucun échec d'envoi. ». Le chargement est un squelette de trois lignes ; l'erreur, « Les envois n'ont pas pu être
+    lus. » en `role="alert"` avec « Réessayer » (§5.8).
+- **LE DÉTAIL** (troisième panneau) : l'objet en titre, puis une `dl` (§5.3 bis) — « Destinataires », « Copie », « Copie
+  cachée » (rendus seulement s'ils portent une adresse), « Expédié depuis » (`code`), « Auteur », « Affaire » (le titre en
+  lien vers sa fiche, la pilule du §5.4), et selon l'état « Départ prévu », « Envoyé le » ou « Échec le » —, puis le corps
+  en texte (§5.4), puis le bloc des commandes.
+  - **« Annuler l'envoi »** (en file) : bouton secondaire, icône **`Ban`**, qui ne sert aucun autre objet (§9). Il ouvre une
+    confirmation **dans le flux**, sous lui (§5.13) : « Annuler l'envoi de « {objet} » ? Le message ne partira pas. », bouton
+    **destructif** « Annuler l'envoi » et « Garder en file » (secondaire). Le focus entre sur le bouton destructif et
+    revient à la commande à l'abandon ; `Échap` abandonne. Pendant l'appel, les deux boutons sont inactifs et le bouton
+    appuyé dit « Annulation… », `aria-busy`.
+  - **« Réessayer »** (échec) : bouton primaire, icône **`Redo2`** — celle de « Renvoyer » une remise de webhook : le même
+    geste, relancer une remise échouée (§9). **Sans confirmation** : il ne détruit rien (§6). Pendant l'appel, il dit
+    « Remise en file… », `aria-busy`.
+  - **Un envoi en cours d'envoi n'a aucune commande** : à la place, en 13 px `--color-text-2`, « Ce message est en cours
+    d'envoi : il ne peut plus être annulé. ».
+  - **Un envoi à l'issue incertaine** (`worker_interrompu`, décision 906 Q3) n'a pas de commande non plus : à sa place, le
+    bandeau `role="note"` en `--color-accent-soft` / `--color-accent-on-soft`, icône `TriangleAlert` — une consigne, pas une
+    erreur (§5.90) —, « Un premier essai a été interrompu : le message a pu partir. Il ne peut pas être annulé. ».
+  - **LES COMMANDES SUIVENT LA CAPACITÉ QUE LA BASE REND SUR LA LIGNE** (`outbox_gestes_permis`, §5.59) : refusée, elles
+    restent montées, `disabled`, lisibles, et citent un **motif propre** posé en tête du bloc (`MotifLectureSeule`) :
+    « Vous pouvez consulter cet envoi. Seuls son auteur et les administrateurs de l'espace qui modifient l'affaire peuvent
+    l'annuler ou le réessayer. ». Pendant la lecture, désactivées sans motif ; sur un défaut de lecture, offertes (§5.59).
+  - **Les issues** : annulé, la ligne quitte « En file », le détail se referme sur l'état « absence de sélection » (§5.4),
+    et la région vivante dit « Envoi annulé » ; remis en file, la ligne quitte « Échecs » et la région dit « Envoi remis
+    en file ». Le focus va à l'entrée du dossier quitté (§5.13 : jamais sur un élément qui disparaît). Les comptes sont
+    relus.
+  - **Un refus** se dit dans le bloc des commandes, `role="alert"`, `--color-danger-soft` / `--color-danger-on-soft`, par un
+    dictionnaire fermé (§28.3, §28.4) — parti, en cours d'envoi, déjà annulé, issue incertaine, introuvable, refusé,
+    affaire indisponible, quota atteint, réseau, inconnu —, et la liste est relue : l'état a changé sous les yeux.
+- **L'ADRESSE** : le dossier ouvert vit dans l'adresse, sous la clé `envois` (`file`, `envoyes`, `echecs`) — une
+  désignation de ce qui est montré, comme un dossier (§5.36), et un rechargement le garde. « Seulement moi » (§5.96) ne
+  s'applique pas aux envois : il qualifie le courrier reçu et classé, pas l'outbox, qui montre tous les envois que la
+  personne peut lire ; la case reste rendue et inchangée.
+- **DANS LE FIL DE L'AFFAIRE** (§5.11), le type **`mail_cancelled`** rejoint la famille **Discussion**, comme
+  `mail_sent` : une ligne d'événement, pastille `--color-hover` et icône `Ban` en `--color-text-2` — un fait neutre —, le
+  libellé « Envoi annulé : {objet} », l'acteur nommé par la règle du §5.11. Aucune bascule nouvelle.
+- **SOUS `lg`**, la pile du §5.4 : entrée → liste → détail, « Retour » à chaque étage ; sous `md`, les boutons passent à la
+  ligne, cibles conservées. `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
+- **Aucune couleur, aucun jeton nouveau ; trois icônes Lucide nouvelles, `Mails`, `MailWarning` et `Ban`**, chacune pour un
+  seul objet (§9) ; `Send` et `Redo2` sont réemployées pour le même objet et le même geste.

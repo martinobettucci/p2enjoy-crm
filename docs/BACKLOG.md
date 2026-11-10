@@ -19310,7 +19310,8 @@ un envoi parti, on ne réessaie qu'un échec).
 **MCP** : **oui, famille `messagerie`**, lecture (consulter) et actions annuler et réessayer (modifier) (décision 898).
 **Spécification** : `docs/SPEC-mail-subsystem.md` §28, écrite le 2026-11-10 avant le code (décisions 898 et 906), cinq
 tranches (§28.12) ; `docs/SCHEMA.md` « Migration `0176` » ; `docs/SPEC-mcp.md` §9.2 *undevicies* ; le
-design system et le manuel s'écrivent avec l'écran.
+design system et le manuel s'écrivent avec l'écran — `docs/DESIGN_SYSTEM.md` §5.98, écrit avant le code de T3 (décision
+910).
 **DoD** : pgTAP (droits, transitions d'état, course annulation contre départ) ; unitaires ; API avec refus de droits ; E2E
 souris et clavier (en file, annuler, envoyés, échec, réessayer) ; pytest `mail-sync` si l'annulation y touche ; outils du
 connecteur et `verify-mcp.sh` ; seed (un envoi en file, un envoyé, un échec) ; captures aux quatre paliers ; manuel ;

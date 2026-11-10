@@ -3884,7 +3884,10 @@ peuvent encore écrire.
 
 ### 28.6 L'écran — trois dossiers de l'inbox
 
-Les règles visuelles s'écrivent au `docs/DESIGN_SYSTEM.md`, au premier paragraphe libre, à l'écriture de l'écran.
+Les règles visuelles sont au `docs/DESIGN_SYSTEM.md` §5.98, écrites le 2026-11-10 avant le code (lecture ciblée,
+décision 910). Deux précisions qu'il fixe : le dossier ouvert vit dans l'adresse sous la clé `envois` (`file`, `envoyes`,
+`echecs`) ; « Seulement moi » (§27) ne s'applique pas à l'outbox, qui montre à toute l'équipe les envois qu'elle peut
+lire (décision 898).
 - **« En file »** : les envois `queued` et `sending`, du plus proche départ au plus lointain (`next_attempt_at`) ; par
   ligne, les destinataires, l'objet, l'affaire, l'adresse d'expédition, l'auteur, **l'heure prévue** — « au prochain
   passage » quand elle est échue —, et, pour un envoi reprogrammé après une panne, le nombre d'essais et le motif. Un envoi
