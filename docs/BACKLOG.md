@@ -19108,7 +19108,8 @@ réévaluation.
 
 ## Demande du 2026-11-10 — le board d'un channel chargé ne tombe plus en délai dépassé (décision 887, INC-352)
 
-### CRM-142 — Le board d'un channel chargé s'ouvre sous le délai : droits évalués une fois par requête, plongements allégés `[ ]`
+### CRM-142 — Le board d'un channel chargé s'ouvre sous le délai : droits évalués une fois par requête, plongements allégés `[@]`
+*Prise en charge : session interactive 4891a451 (p2enjoy-crm-2f) depuis 2026-11-10 10:46 UTC — état avant : [ ]*
 
 **Origine** : INC-352 (le responsable, HAR ; relevé par la session 2f ; mesuré en lecture seule par la session de
 livraison) ; arbitrée le 2026-11-10 (décision 887), **prioritaire**.
