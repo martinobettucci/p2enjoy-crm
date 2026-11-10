@@ -3762,3 +3762,180 @@ navigation du manuel) ne changent pas.
   vide sous le filtre et son action ; personne sans identité (case désactivée, explication, lien) ; adresse d'un message
   caché qui décoche la case ; captures aux quatre paliers.
 - **Connecteur** : `mcp/tests` (unitaires et intégration) et `scripts/verify-mcp.sh`.
+
+## 28. L'outbox : en file (annuler), envoyés, échecs (réessayer), pour toute l'équipe — `CRM-144`
+
+*Écrit le 2026-11-10, avant le code. `docs/JOURNAL.md` décisions 898 (la demande et son périmètre) et 906 (qui exerce les
+gestes, où se voit un annulé, l'envoi à l'issue incertaine). Session d5b44a2d.*
+
+### 28.1 Ce que l'unité livre, et ce qu'elle ne livre pas
+
+**L'existant** : `mail_outbox` porte cinq états (`queued`, `sending`, `sent`, `failed`, `cancelled`) ; `mail-sync` la vide par
+`reserver_envois` (§19.4, §20.4) ; aucun écran ne montre ce qui attend, ce qui est parti, ni ce qui a échoué, et rien
+n'écrit `cancelled`.
+
+Livré :
+- **trois dossiers dans l'inbox** (§28.6) : « En file » — l'heure prévue, « Annuler » ; « Envoyés » — la date, l'adresse
+  d'expédition, l'affaire ; « Échecs » — le motif en toutes lettres, « Réessayer » ;
+- **deux gestes, contrôlés par la base** : `public.cancel_outbound_email` et `public.retry_outbound_email` (§28.3, §28.4) ;
+- **la course entre l'annulation et la passe d'envoi**, tenue par la base et prouvée (§28.5) ;
+- **une ligne « Envoi annulé par X »** dans le fil de l'affaire (décision 906, Q2) ;
+- **trois outils du connecteur** (§28.8).
+
+Non livré, et nommé :
+- **le récapitulatif quotidien** (`kind = 'digest'`, sans affaire) **reste hors de l'outbox** : la RLS de `mail_outbox`
+  (`app.can_read_card(card_id)`) ne le rend à personne, et l'unité ne la change pas ;
+- **aucun dossier « Annulés »** (décision 906, Q2) : l'annulé se lit dans le fil de son affaire ;
+- **aucune modification d'un envoi en file** : on l'annule, puis on écrit un nouveau message ;
+- **le double envoi possible d'un envoi orphelin** (§20.4), antérieur à l'unité, n'est pas résolu ici ; l'unité refuse
+  seulement d'en dire « annulé » (§28.3).
+
+### 28.2 Qui voit quoi
+
+**Toute l'équipe voit les envois des affaires qu'elle lit** (décision 898) : la politique existante
+`mail_outbox_lecture` (`app.can_read_card(card_id)`) s'applique telle quelle. La liste ne demande rien de plus, sauf l'adresse
+d'expédition : la RLS de `mail_outbound_identities` ne rend une identité qu'à son propriétaire et aux administrateurs, si bien
+qu'une collègue ne lirait pas l'adresse sous laquelle un envoi part. **L'envoi porte donc sa propre adresse** :
+`mail_outbox.from_address`, posée à la mise en file depuis l'identité (déclencheur `BEFORE INSERT`), reprise pour les lignes
+existantes. C'est aussi la vérité historique : une identité renommée ne réécrit pas les envois partis.
+
+### 28.3 Annuler — `public.cancel_outbound_email(p_outbox_id uuid) returns timestamptz`
+
+`SECURITY DEFINER`, `search_path` vidé, `authenticated` seul. Les refus, dans cet ordre :
+
+| Refus | Code | Statut HTTP | Cas |
+|---|---|---|---|
+| `not_authenticated` | `42501` | 401 | aucune session |
+| `outbox_not_found` | — | 404 (`app.raise_http_error`) | inconnu, illisible (`app.can_read_card` faux), ou récapitulatif quotidien : l'absence et l'interdit ne se distinguent pas |
+| `forbidden` | `42501` | 403 | ni l'auteur (`created_by`) ni un administrateur de l'espace, **ou** sans droit d'écrire sur l'affaire (décision 906, Q1) |
+| `outbox_sending` | — | 409 | en cours d'envoi : trop tard |
+| `outbox_sent` | — | 409 | déjà parti |
+| `outbox_failed` | — | 409 | en échec : rien à annuler (« Réessayer » ou rien) |
+| `outbox_cancelled` | — | 409 | déjà annulé |
+| `outbox_uncertain` | — | 409 | **issue incertaine** : `queued` avec `last_error = 'worker_interrompu'`, un premier essai interrompu dont le message a pu partir (décision 906, Q3) |
+
+**Ce qu'elle écrit, en une seule mise à jour conditionnelle** : `status = 'cancelled'`, `cancelled_at = now()`,
+`cancelled_by = auth.uid()`, **où** `id = p_outbox_id` **et** `status = 'queued'` **et** `last_error` n'est pas
+`worker_interrompu`. Zéro ligne mise à jour : la fonction relit l'état et lève le refus qui lui correspond. Puis elle écrit
+l'événement **`mail_cancelled`** dans le fil de l'affaire (`app.card_event_ecrire`, acteur l'appelant, `payload` :
+`outbox_id`, `subject`) et rend `cancelled_at`.
+
+### 28.4 Réessayer — `public.retry_outbound_email(p_outbox_id uuid) returns uuid`
+
+`SECURITY DEFINER`, `authenticated` seul. Mêmes trois premiers refus que l'annulation ; puis :
+- **l'état** : seul un `failed` se réessaie — `outbox_queued`, `outbox_sending`, `outbox_sent`, `outbox_cancelled` sinon
+  (409) ;
+- **les gardes de la mise en file** (§19.4), relues pour l'affaire et l'identité de l'envoi : `card_not_available`
+  (`23514` : archivée, en corbeille, sans adresse), `quota_exceeded` (`23505` : le quota de l'identité, compté comme à la
+  mise en file). L'identité est celle de l'auteur : **un administrateur qui réessaie l'envoi d'un collègue l'envoie sous
+  l'adresse que le collègue avait choisie** (décision 906, Q1) — c'est un nouvel essai du même envoi, pas un nouvel envoi.
+
+**Ce qu'elle écrit, conditionnellement** (`where status = 'failed'`) : `status = 'queued'`, `next_attempt_at = now()`,
+`last_error = null`, `reserved_at = null` ; `attempts` est **conservé** (l'historique des essais). Elle rend l'identifiant de
+l'envoi. Aucun événement de fil : l'envoi réussi écrira « Message envoyé », comme toujours.
+
+**Les pièces d'un échec restent au stockage** : `public.depots_envoi_abandonnes` épargne désormais les objets cités par un
+envoi `failed`, sans quoi un nouvel essai après vingt-quatre heures échouerait en `attachment_missing`. Ceux d'un envoi
+`cancelled` redeviennent purgeables.
+
+### 28.5 La course entre l'annulation et la passe d'envoi
+
+**L'exigence** (décision 898, rappelée par la session de livraison) : une annulation ne laisse **jamais** partir un message,
+et ne dit **jamais** « annulé » d'un message parti.
+
+**Ce qui la tient, en base** :
+1. `reserver_envois` choisit ses lignes `for update of o skip locked` **sur `status = 'queued'`**, et Postgres réévalue
+   la condition sur la version la plus récente de la ligne (`READ COMMITTED`) ;
+2. l'annulation est une mise à jour **conditionnelle** sur `status = 'queued'`, qui prend le même verrou de ligne.
+
+D'où les trois ordres possibles, et aucun autre :
+- **l'annulation verrouille d'abord** : la passe saute la ligne tant que le verrou est tenu, puis la relit `cancelled` et ne
+  la réserve pas — rien ne part, l'annulation est vraie ;
+- **la passe verrouille d'abord** : l'annulation attend, relit `sending`, ne met à jour aucune ligne et refuse
+  `outbox_sending` — le message part, et personne ne l'a dit annulé ;
+- **aucune ne se chevauche** : la seconde lit l'état laissé par la première.
+
+**Le cas de l'envoi orphelin** (§20.4) : une ligne `sending` depuis dix minutes repasse `queued` avec `worker_interrompu`,
+alors qu'un worker lent l'envoie peut-être encore, et que `marquer_envoi_reussi` la passera `sent` sans condition d'état.
+L'annuler dirait « annulé » d'un message qui part : **elle est refusée** (`outbox_uncertain`, décision 906, Q3).
+`marquer_envoi_reussi` et `marquer_envoi_echoue` ne sont pas modifiés : l'annulation ne vise jamais une ligne qu'ils
+peuvent encore écrire.
+
+**Les preuves** :
+- **pgTAP, à deux connexions réelles** (`dblink`, extension posée par la seule preuve) : les deux ordres du verrou, joués
+  pas à pas — l'annulation tient le verrou et la passe ne réserve rien ; la passe tient le verrou et l'annulation, débloquée
+  à la validation, refuse `outbox_sending`. Les lignes de la preuve sont validées par les connexions secondaires, puis
+  retirées ;
+- **pytest** (intégration du connecteur, contre la vraie base) : une série d'envois annulés **pendant** que des passes
+  `reserver_envois` tournent en parallèle ; à l'issue, chaque envoi est soit `cancelled` et jamais réservé, soit réservé et
+  son annulation refusée — jamais les deux, jamais aucun ;
+- **pytest `mail-sync`** : la passe ne reçoit jamais une ligne annulée (le client de `reserver_envois` ne voit que ce que
+  la base rend), et l'annulation ne touche aucun code du worker.
+
+### 28.6 L'écran — trois dossiers de l'inbox
+
+Les règles visuelles s'écrivent au `docs/DESIGN_SYSTEM.md`, au premier paragraphe libre, à l'écriture de l'écran.
+- **« En file »** : les envois `queued` et `sending`, du plus proche départ au plus lointain (`next_attempt_at`) ; par
+  ligne, les destinataires, l'objet, l'affaire, l'adresse d'expédition, l'auteur, **l'heure prévue** — « au prochain
+  passage » quand elle est échue —, et, pour un envoi reprogrammé après une panne, le nombre d'essais et le motif. Un envoi
+  `sending` dit « en cours d'envoi », sans commande. **« Annuler »**, avec une confirmation dans le flux qui nomme l'objet ;
+  un envoi à l'issue incertaine porte la phrase de la décision 906 au lieu de la commande.
+- **« Envoyés »** : les envois `sent`, du plus récent au plus ancien, paginés ; la date d'envoi, les destinataires,
+  l'objet, l'adresse d'expédition, l'affaire (lien vers sa fiche).
+- **« Échecs »** : les envois `failed`, du plus récent au plus ancien ; **le motif en toutes lettres**, par un dictionnaire
+  fermé des codes de `last_error` (§28.7) ; **« Réessayer »**, sans confirmation — il ne détruit rien.
+- Les commandes suivent les droits que la base dit sur la ligne (décision 906, Q1) : une colonne calculée
+  `app.outbox_gestes_permis(mail_outbox)` rend vrai pour l'auteur ou un administrateur qui écrit l'affaire ; refusée, la
+  commande est **désactivée avec son motif** (`docs/DESIGN_SYSTEM.md` §5.59), jamais masquée. La base refuse de toute
+  façon.
+
+### 28.7 Le dictionnaire des motifs
+
+Les codes que la file écrit (§13.7, §19 bis.4, §20.4) : `auth_failed`, `tls_failed`, `timeout`, `host_unreachable`,
+`connection_refused`, `protocol_error`, `quota_exceeded`, `credentials_missing`, `storage_unavailable`,
+`attachment_infected`, `attachment_missing`, `worker_interrompu`. Chacun a sa phrase ; un code inconnu rend « cause non
+reconnue », jamais le code brut.
+
+### 28.8 Le connecteur
+
+**MCP : oui, famille `messagerie`, cases existantes** (décisions 898 et 906) — `docs/SPEC-mcp.md` §9.2 *undevicies* :
+`crm_mail_outbox_list` (`consulter`), `crm_mail_outbox_cancel` et `crm_mail_outbox_retry` (`modifier`), ancre nouvelle
+`outbox` (`mail_outbox`, qui porte son espace).
+
+### 28.9 Migration
+
+Une migration, au premier numéro libre au push :
+- `mail_outbox.from_address` (`text`), son déclencheur `BEFORE INSERT` et la reprise des lignes existantes ;
+- `mail_outbox.cancelled_at`, `mail_outbox.cancelled_by` (`profiles`, `on delete set null`) ;
+- le type d'événement `mail_cancelled` dans la contrainte de `card_events` (et hors du rattachement, comme `mail_sent`) ;
+- `cancel_outbound_email`, `retry_outbound_email`, `app.outbox_gestes_permis` ;
+- `depots_envoi_abandonnes`, reprise (§28.4).
+
+`docs/SCHEMA.md` la décrit, avec son retrait.
+
+### 28.10 Seed
+
+Par les vrais chemins (`CLAUDE.md` §8) : **un envoi en file** reprogrammé après une panne réelle (une identité dont le
+serveur SMTP est injoignable : la passe le reprogramme avec son délai), **un échec** réel (une identité au mot de passe
+refusé : `auth_failed`), **un envoyé** (ceux du seed existant), **un annulé** par la vraie fonction, sous la session de son
+auteur.
+
+### 28.11 Preuves exigées
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | chaque refus des deux fonctions ; les transitions permises et refusées ; l'issue incertaine ; l'événement `mail_cancelled` ; la colonne `from_address` reprise ; la course à deux connexions (§28.5) ; la purge qui épargne un échec |
+| pytest | la course en parallèle contre la vraie base (§28.5) ; la passe ne reçoit jamais une ligne annulée |
+| unitaires | le dictionnaire des motifs, l'heure prévue, les états d'écran |
+| API (Playwright, jetons réels) | l'auteur annule ; un administrateur annule ; une collègue non administratrice est refusée ; la lectrice ne voit rien et est refusée ; réessayer un échec, et pas un envoyé |
+| E2E `ui`, souris et clavier | « En file » et « Annuler », « Envoyés », « Échecs » et « Réessayer », le refus d'un envoi à l'issue incertaine ; captures aux quatre paliers |
+| Connecteur | les trois outils et `scripts/verify-mcp.sh` |
+| Manuel | le chapitre de l'inbox ; le chapitre du connecteur |
+
+### 28.12 Tranches
+
+1. **T1, base** : la migration et pgTAP (la course comprise).
+2. **T2, la course en parallèle** : le pytest d'intégration et celui de `mail-sync`.
+3. **T3, l'écran** : les trois dossiers, l'API, l'E2E `ui`, les captures, le design system, le manuel.
+4. **T4, le connecteur** : les trois outils, `verify-mcp.sh`, `docs/SPEC-mcp.md`.
+5. **T5, le seed**.

@@ -1284,6 +1284,25 @@ l'inbox : celui qui liste des messages est `crm_card_mail_list` (§9.2 *decies*)
 
 **La ligne « Messagerie » de l'onglet « Connecteur MCP » ne change pas** : aucun outil n'est ajouté.
 
+### 9.2 undevicies L'outbox — `CRM-144` (`docs/SPEC-mail-subsystem.md` §28 ; décisions 898 et 906)
+
+*Écrit le 2026-11-10, avant le code.* **Famille `messagerie`, cases existantes** (décision 898) : lire en `consulter`,
+annuler et réessayer en `modifier`. **Un genre d'ancre nouveau, `outbox`** : `mail_outbox`, qui porte son `workspace_id`.
+
+| Outil | Action | Ancre | Ce qu'il appelle | Remarques |
+|---|---|---|---|---|
+| `crm_mail_outbox_list` | `consulter` | `workspace` ; `autres` : `card:card_id`, facultative | `mail_outbox` sous la RLS | `box` : `queued` (avec `sending`), `sent` ou `failed` ; `card_id` facultatif ; paginé (`limit` 25, borné à 100, `offset`). Par envoi : `id`, `status`, `card_id`, `card_title`, `to`, `cc`, `subject`, `from_address`, `created_by` (nom), `next_attempt_at`, `sent_at`, `attempts`, `error` (le code et sa phrase), `cancellable`, `retryable` (les colonnes calculées de §28.6). Jamais le corps, jamais les pièces. Le récapitulatif quotidien n'y est pas (§28.1) |
+| `crm_mail_outbox_cancel` | `modifier` (`destructiveHint`) | `outbox:outbox_id` | `public.cancel_outbound_email` | refus nommés de §28.3 : l'assistant dit à la personne pourquoi, `outbox_uncertain` avec la phrase de la décision 906 |
+| `crm_mail_outbox_retry` | `modifier` | `outbox:outbox_id` | `public.retry_outbound_email` | refus nommés de §28.4 ; rend l'état `queued` et l'heure prévue |
+
+**Annuler est irréversible** : `destructiveHint` l'annonce, pour que l'assistant demande confirmation avant l'appel.
+**Réessayer envoie un message** : l'assistant le dit avant d'appeler l'outil, comme il le dit avant de préparer un email ;
+il n'envoie pas un mail nouveau, il remet en file un échec existant, sous les gardes de la base.
+
+**La ligne « Messagerie » de l'onglet « Connecteur MCP »** gagne la mention de l'outbox : « Lecture des fils et de l'outbox ;
+préparer un email compte comme « ajouter », annuler et réessayer un envoi comme « modifier », l'envoi se fait toujours dans
+le CRM ».
+
 ### 9.3 Réponses
 
 - **Forme.** Un JSON structuré, avec les identifiants **et** les libellés utiles : nom du track,

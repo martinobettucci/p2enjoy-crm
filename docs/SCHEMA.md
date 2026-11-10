@@ -2526,6 +2526,23 @@ elle.
 attente sont perdus : les lister avant. **Avec l'image `mcp` d'avant `CRM-128` T3** : sans la garde, son `crm_mail_send`
 enverrait de nouveau directement.
 
+### Migration à numéroter au push — l'outbox : annuler, réessayer, l'adresse d'expédition gardée (`CRM-144`, décisions 898 et 906 ; spécifiée le 2026-11-10, à écrire)
+
+`docs/SPEC-mail-subsystem.md` §28.
+- **`mail_outbox.from_address`**, `text` : l'adresse d'expédition au moment de la mise en file, posée par un déclencheur
+  `BEFORE INSERT` depuis `mail_outbound_identities`, reprise pour les lignes existantes. La RLS des identités ne rend une
+  identité qu'à son propriétaire et aux administrateurs (§28.2).
+- **`mail_outbox.cancelled_at`** (`timestamptz`) et **`mail_outbox.cancelled_by`** (`profiles`, `on delete set null`).
+- **`card_events`** : le type **`mail_cancelled`** dans la contrainte des types, hors rattachement comme `mail_sent`.
+- **`public.cancel_outbound_email(uuid) returns timestamptz`** et **`public.retry_outbound_email(uuid) returns uuid`**,
+  `security definer`, `authenticated` seul ; leurs refus nommés (§28.3, §28.4).
+- **`app.outbox_gestes_permis(public.mail_outbox) returns boolean`**, colonne calculée : l'auteur ou un administrateur de
+  l'espace, qui écrit l'affaire.
+- **`public.depots_envoi_abandonnes`**, reprise : elle épargne les objets cités par un envoi `failed`.
+
+**Retrait** : reposer `depots_envoi_abandonnes`, retirer les trois fonctions, rétablir la contrainte des types (un
+événement `mail_cancelled` existant l'empêcherait : le retirer d'abord), puis les trois colonnes. Aucun envoi n'est perdu.
+
 ### Migration `0173` — le repli confirmé des pièces non analysées, leur reprise, les pièces d'un mail préparé (`CRM-143`, décisions 889 et 892 ; livrée en développement le 2026-11-10)
 
 *Numérotée `0173` au push, premier numéro libre sur `main` après la `0172` de `CRM-137`. Son test pgTAP prend le `0162`.*
