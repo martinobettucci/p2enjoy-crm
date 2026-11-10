@@ -9087,3 +9087,26 @@ channel « Partenariats marques », **53** rattachements actifs). **Le diagnosti
   plongements sont finis à **134 ms** (2 332 tampons) ; le nœud `Result` du sommet, qui évalue les deux colonnes de santé,
   va de 278 à **8 583 ms** (126 285 tampons). **98 % du temps et des tampons** viennent des colonnes de santé, non des
   plongements.
+
+### INC-353 — l'empreinte du workflow par défaut change à chaque seed : `0037` ne peut pas la figer
+**Ouverte le 2026-11-10.** Aucune correction décidée ; la preuve 2 de `supabase/tests/0037_versionnement_workflows.test.sql`
+reste rouge, sans révision de sa constante.
+
+*Relevé par la session de livraison 4522fa9c (p2enjoy-crm-be), campagne du lot `CRM-135` sur un seed frais ; analysé par la
+session 4891a451 (p2enjoy-crm-2f).*
+
+**Le constat.** La preuve 2 attend `7831734d…`, la base rend `991cff43…`.
+
+**La cause, mesurée.** Depuis `CRM-112` T8 (`docs/SPEC-seed.md` §38, décision 855), la composition du workflow par défaut
+porte `required_common_fields` : `[{transition_id: …0073, common_field_id: <id de « siret »>, key: "siret"}]`, et son
+empreinte condense ce document. Le seed crée le champ de l'affaire `siret` par l'API **sans identifiant** : il reçoit un
+identifiant aléatoire à chaque base neuve (sur la base de dev du 2026-11-10, `95b0e3b1-…`, créé à 08:25 par le
+`./resetMe.sh` de la session de livraison). L'empreinte change donc à chaque reconstruction ; `7831734d…` avait été mesurée
+sur la base d'avant. Réviser la constante en `991cff43…` rougirait au reset suivant.
+
+**Ce qui contredit quoi.** `CLAUDE.md` §8 (« utiliser des identifiants stables lorsque les tests et captures en
+dépendent ») ; la décision 51 (un garde-fou se révise sur une valeur mesurée, il n'est ni retiré ni contourné).
+
+**Piste, à arbitrer** : donner au champ `siret` un identifiant stable dans le seed (passé au `POST` de
+`card_common_fields`), puis mesurer l'empreinte sur une base recréée et réviser la preuve 2 avec ce motif. La preuve demande
+un `./resetMe.sh` de la pile partagée, dont la fenêtre appartient à la session de livraison.
