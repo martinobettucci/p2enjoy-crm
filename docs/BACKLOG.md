@@ -17801,6 +17801,10 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       API 23/23, ui 36/36 et 37/37, manuel 09a, 18, 23-33, 27-29, `verify-manual` 168 ; unitaires.
       **Reste** : la campagne complète, la livraison (le seed n'existe qu'en dev ; la webapp, le manuel et ses images), et le
       constat du responsable.
+- [@] **Tranche INC-353** — l'identifiant stable du champ `siret` dans le seed, pour que l'empreinte du workflow par défaut
+      ne change plus à chaque base neuve ; la preuve 2 de `supabase/tests/0037_versionnement_workflows.test.sql` révisée sur
+      la valeur mesurée (`docs/SPEC-seed.md` §38.1, précision du 2026-11-10). Confiée par la session de livraison.
+      *Prise en charge : session interactive 4891a451 (p2enjoy-crm-32, ex-2f) depuis 2026-11-10 13:02 UTC — état avant : [ ]*
 - [P] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de
       (**Livrée le 2026-11-05**, décision 852, révision `b9fa4d11`, image `mcp` reconstruite ; reste le constat du responsable.)
       `crm_card_list` ; `docs/SPEC-mcp.md` §9.2.
