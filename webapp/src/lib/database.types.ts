@@ -4751,6 +4751,20 @@ export type Database = {
         }
         Returns: string
       }
+      classification_candidates: {
+        Args: {
+          p_known_sender?: boolean
+          p_limit?: number
+          p_message_id: string
+          p_search?: string
+        }
+        Returns: {
+          card_id: string
+          known_sender: boolean
+          path: string
+          title: string
+        }[]
+      }
       classify_message: {
         Args: { p_card_id: string; p_message_id: string }
         Returns: string
@@ -5009,6 +5023,10 @@ export type Database = {
       mail_inbound_account_record_check: {
         Args: { p_account_id: string; p_error?: string; p_status: string }
         Returns: string
+      }
+      mail_inbound_account_record_poll_failure: {
+        Args: { p_account_id: string; p_error: string }
+        Returns: undefined
       }
       mail_inbound_account_record_sync: {
         Args: { p_account_id: string }

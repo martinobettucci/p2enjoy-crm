@@ -18,6 +18,7 @@
 // LE SEED EST RENDU INTACT. Le scénario qui classe le message non classé le **remet** non classé
 // par la clé de service dans son `finally` — le seul chemin qui le peut, `mail_messages`
 // n'accordant aucune écriture à `authenticated`.
+// @verifies CRM-137 (docs/BACKLOG.md) — le classement passe par le sélecteur cherchable (docs/DESIGN_SYSTEM.md §5.94)
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -184,15 +185,17 @@ test.describe('inbox globale (docs/SPEC-mail-subsystem.md §18)', () => {
 			await page.getByTestId('inbox-classer').click()
 			const formulaire = page.getByTestId('inbox-formulaire-classement')
 			await expect(formulaire).toBeVisible()
-			// Le focus part sur le sélecteur : sans cela, le clavier repartirait du début du
+			// Le focus part sur le champ de recherche : sans cela, le clavier repartirait du début du
 			// document après la disparition du bouton.
-			await expect(page.getByLabel('Affaire de destination')).toBeFocused()
+			await expect(page.getByRole('combobox', { name: 'Rechercher une affaire' })).toBeFocused()
 			await capturer(page, 'inbox-classement-1440', UNITE)
 
-			// Le sélecteur porte le chemin complet de l'affaire — track, channel, titre —, et c'est
-			// ce que l'utilisateur lit. L'option est donc désignée par sa VALEUR, l'identifiant de
-			// la card, plutôt que par un libellé qui dépend du nommage des tracks.
-			await page.getByLabel('Affaire de destination').selectOption(CARD_COURRIER)
+			// `CRM-137` (docs/DESIGN_SYSTEM.md §5.94) : le sélecteur est cherchable, et la case « Expéditeur connu »
+			// part cochée. L'expéditeur de ce message n'est le contact d'aucune affaire : on cherche dans toutes.
+			await page.getByTestId('classement-connu').uncheck()
+			await page.getByRole('combobox', { name: 'Rechercher une affaire' }).fill(TITRE_CARD_COURRIER)
+			await page.getByTestId('classement-option').filter({ hasText: TITRE_CARD_COURRIER }).click()
+			await expect(page.getByTestId('classement-choix')).toContainText(TITRE_CARD_COURRIER)
 			await page.getByTestId('inbox-classer-valider').click()
 
 			// L'ÉCRAN RELIT TOUT CE QUI A CHANGÉ : le message porte désormais son affaire.

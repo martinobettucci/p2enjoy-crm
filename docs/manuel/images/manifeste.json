@@ -4857,6 +4857,28 @@
 			]
 		},
 		{
+			"fichier": "l-inbox-lire-trier-et-repondre/classer-expediteur-connu.jpg",
+			"largeur": 536,
+			"hauteur": 336,
+			"chapitre": "l-inbox-lire-trier-et-repondre",
+			"section": "l-inbox-lire-et-trier-le-courrier-recu",
+			"pleinePage": false,
+			"libelles": [
+				"Affaire choisie : Migration ERP Sogexia — Conseil & IA › Grands comptes",
+				"Annuler",
+				"Classer",
+				"Conseil & IA › Grands comptes",
+				"Expéditeur connu",
+				"Migration ERP Sogexia",
+				"Migration ERP Sogexia Conseil & IA › Grands comptes",
+				"Rechercher une affaire",
+				"Seulement les affaires dont un contact porte l'adresse",
+				"Seulement les affaires dont un contact porte l'adresse leo.marchand@sogexia.example",
+				"leo.marchand@sogexia.example",
+				"on"
+			]
+		},
+		{
 			"fichier": "l-inbox-lire-trier-et-repondre/confirmer-le-retrait.jpg",
 			"largeur": 536,
 			"hauteur": 170,

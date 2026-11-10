@@ -13,6 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-137` — classer un mail : les affaires candidates, cherchables, l'expéditeur connu d'abord (décisions 877, 891 et 893)
+
+- **Le formulaire « Classer dans une affaire » de l'inbox cherche** : un champ « Rechercher une affaire » remplace la liste déroulante, et filtre par le titre, le track ou le channel, sans tenir compte des majuscules ni des accents. Les flèches parcourent la liste et `Entrée` choisit.
+- **La case « Expéditeur connu », cochée à chaque ouverture**, ne montre que les affaires dont un contact porte l'adresse de l'expéditeur. Quand il n'y en a qu'une, elle est déjà choisie. Décochée, la liste montre toutes les affaires, les connues en tête avec leur pilule. Si l'expéditeur n'est le contact d'aucune affaire, l'écran le dit et propose « Voir toutes les affaires ».
+- **La liste vient du serveur, sous les droits de la personne** : `classification_candidates` (migration 172) ne rend jamais une affaire illisible, archivée ou en corbeille, et s'arrête à 50 affaires en le disant.
+- **Le connecteur MCP classe aussi** (famille `messagerie`) : `crm_mail_classification_candidates` liste les affaires candidates, et `crm_mail_classify` range le message.
+- Déploiement : `docs/PROD_MIGRATIONS.md` §2.36. D'abord la migration 172, puis la webapp et l'image `mcp`.
+
 #### `CRM-133` — une description sur le nœud du catalogue, surchargeable par l'étape (décisions 869, 870 et 882) — *tranche T1, l'unité en cours*
 
 - **Un nœud du catalogue peut porter une description**, et une étape d'un workflow la surcharger, comme son libellé ; une

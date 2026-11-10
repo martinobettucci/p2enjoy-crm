@@ -945,7 +945,187 @@
 				},
 				{
 					"type": "text",
-					"text": " Un message non classé propose « Classer dans une affaire ». Choisissez\nl'affaire dans la liste, puis validez : le message rejoint l'affaire, son historique en garde la\ntrace, et vous le retrouvez ensuite "
+					"text": " Un message non classé propose « Classer dans une affaire ». Le formulaire s'ouvre sur un champ\n« Rechercher une affaire » et, au-dessus, la case « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Expéditeur connu"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " », cochée."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Case cochée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", la liste ne montre que les affaires dont un "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "contact"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " porte l'adresse de l'expéditeur : c'est le plus\nsouvent celle que vous cherchez. Quand il n'y en a qu'une, elle est déjà choisie."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Case décochée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", la liste montre toutes les affaires où vous pouvez ranger le message. Celles de l'expéditeur viennent\nen tête et portent la mention « Expéditeur connu »."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Tapez"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " une partie du titre de l'affaire, ou du nom de son track ou de son channel : la liste se resserre. Les\nmajuscules et les accents ne comptent pas, « vitri » trouve « Refonte du site vitrine »."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Choisissez"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " l'affaire d'un clic, ou au clavier : les flèches parcourent la liste, "
+							},
+							{
+								"type": "code",
+								"text": "Entrée"
+							},
+							{
+								"type": "text",
+								"text": " choisit. L'affaire choisie\nest rappelée sous la liste, puis « "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Classer"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " » range le message. "
+							},
+							{
+								"type": "code",
+								"text": "Échap"
+							},
+							{
+								"type": "text",
+								"text": " referme le formulaire."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Si l'expéditeur n'est le contact d'aucune affaire, le formulaire le dit et propose « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Voir toutes les affaires"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " », qui\ndécoche la case. La liste s'arrête aux 50 premières affaires, et le dit : une recherche la resserre. Les affaires\narchivées ou en corbeille n'y figurent jamais."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/classer-expediteur-connu.jpg",
+			"alt": "Le formulaire de classement : la case « Expéditeur connu », la recherche et l'affaire choisie",
+			"width": 536,
+			"height": 336
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le message rejoint l'affaire, son historique en garde la trace, et vous le retrouvez ensuite "
 				},
 				{
 					"type": "strong",
@@ -958,7 +1138,7 @@
 				},
 				{
 					"type": "text",
-					"text": " — dans l'affaire et sous son dossier dans\nl'inbox. Ranger exige le droit d'"
+					"text": " : dans\nl'affaire et sous son dossier dans l'inbox. Ranger exige le droit d'"
 				},
 				{
 					"type": "strong",
@@ -984,7 +1164,7 @@
 				},
 				{
 					"type": "text",
-					"text": " le message.\nUne affaire archivée ou en corbeille est refusée, avec son motif."
+					"text": "\nle message. La liste ne montre que les affaires que vous pouvez voir ; une affaire que vous voyez sans pouvoir y écrire\nest refusée au moment de classer, avec son motif."
 				}
 			]
 		},
@@ -1122,7 +1302,7 @@
 						"content": [
 							{
 								"type": "text",
-								"text": "« Classer dans une affaire » reste offert à côté, et propose "
+								"text": "« Classer dans une affaire » reste offert à côté : décochez « Expéditeur connu », et il propose\n"
 							},
 							{
 								"type": "strong",
@@ -1135,7 +1315,7 @@
 							},
 							{
 								"type": "text",
-								"text": " les affaires : une\nsuggestion peut désigner la mauvaise, et vous gardez le dernier mot ;"
+								"text": " les affaires. Une suggestion peut désigner la mauvaise, et vous gardez le dernier mot ;"
 							}
 						]
 					}

@@ -46,6 +46,8 @@
 // passer (§18.1) ; l'écran ne filtre rien et ne devine rien.
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T6.1 : l'arbre de l'inbox — « Non classés », puis le nœud « Affaires »,
 //       sans track ni channel (docs/DESIGN_SYSTEM.md §5.4 ; docs/SPEC-rattachements.md §7, décisions 657 et 818)
+// @spec CRM-137 (docs/BACKLOG.md) — le formulaire de classement porte le sélecteur cherchable et « Expéditeur connu »,
+//       à la place du `select` (docs/DESIGN_SYSTEM.md §5.94 ; docs/SPEC-mail-subsystem.md §26.3 ; décision 893)
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
@@ -77,7 +79,6 @@ import {
 	declasserMessage,
 	filEstNonLu,
 	idsNonLus,
-	lireCardsClassables,
 	lireCheminCard,
 	lireDossierDuMessage,
 	marquerLus,
@@ -88,7 +89,6 @@ import {
 	useMessage,
 	useMessages,
 	type ArbreInbox,
-	type CardClassable,
 	type MessageComplet,
 	type MessageListe,
 	type NatureRefusClassement,
@@ -123,6 +123,8 @@ import { objetDeReponse } from '../lib/envoi'
 import { PARAMETRE_BROUILLON, lireMailsPrepares, type MailPrepare } from '../lib/mails-prepares'
 import { clientCrm } from '../lib/supabase'
 import { FormulaireEnvoi } from './FormulaireEnvoi'
+import { SelecteurClassement, lecteurBase } from './SelecteurClassement'
+import type { Candidate } from '../lib/candidats-classement'
 import { ListePiecesJointes } from './PiecesJointes'
 
 /** Le panneau visible sous 1024 px. Sur grand écran, les trois sont montrés ensemble. */
@@ -925,36 +927,38 @@ function FormulaireClassement({
 	readonly variante: 'primaire' | 'secondaire'
 }) {
 	const [ouvert, setOuvert] = useState(false)
-	const [cards, setCards] = useState<readonly CardClassable[]>([])
-	const [choix, setChoix] = useState('')
+	const [choix, setChoix] = useState<Candidate | null>(null)
 	const [envoi, setEnvoi] = useState(false)
 	const [refus, setRefus] = useState<string | null>(null)
-	const selecteur = useRef<HTMLSelectElement | null>(null)
+	const champ = useRef<HTMLInputElement | null>(null)
+	const commande = useRef<HTMLButtonElement | null>(null)
+	// La commande est démontée pendant que le formulaire est ouvert : le focus lui revient au rendu suivant (§5.25).
+	const rendreFocus = useRef(false)
+	// `CRM-137` (docs/SPEC-mail-subsystem.md §26) : les candidates sont lues par la base, sous les droits de l'appelant,
+	// et non plus par trois lectures côté client bornées à 200.
+	const lecteur = useMemo(() => lecteurBase(clientCrm), [])
 
+	// LE FOCUS SUIT L'OUVERTURE : sans cela, le clavier resterait sur un bouton qui vient de
+	// disparaître et repartirait du début du document (docs/DESIGN_SYSTEM.md §10, §5.94).
 	useEffect(() => {
-		if (!ouvert) return
-		let vivant = true
-		void (async () => {
-			const lues = await lireCardsClassables(clientCrm)
-			if (!vivant) return
-			setCards(lues)
-			setChoix(lues[0]?.id ?? '')
-		})()
-		return () => {
-			vivant = false
+		if (ouvert) champ.current?.focus()
+		else if (rendreFocus.current) {
+			rendreFocus.current = false
+			commande.current?.focus()
 		}
 	}, [ouvert])
 
-	// LE FOCUS SUIT L'OUVERTURE : sans cela, le clavier resterait sur un bouton qui vient de
-	// disparaître et repartirait du début du document (docs/DESIGN_SYSTEM.md §10).
-	useEffect(() => {
-		if (ouvert) selecteur.current?.focus()
-	}, [ouvert, cards])
+	const fermer = useCallback(() => {
+		rendreFocus.current = true
+		setOuvert(false)
+		setChoix(null)
+		setRefus(null)
+	}, [])
 
 	const soumettre = useCallback(async () => {
-		if (choix === '') return
+		if (choix === null) return
 		setEnvoi(true)
-		const echec = await classerMessage(clientCrm, message.id, choix)
+		const echec = await classerMessage(clientCrm, message.id, choix.id)
 		setEnvoi(false)
 		if (echec !== null) {
 			setRefus(t(LIBELLE_REFUS[echec.nature]))
@@ -967,7 +971,7 @@ function FormulaireClassement({
 
 	if (!ouvert) {
 		return (
-			<Button variante={variante} onClick={() => setOuvert(true)} data-testid="inbox-classer">
+			<Button ref={commande} variante={variante} onClick={() => setOuvert(true)} data-testid="inbox-classer">
 				{t('inbox.classify.open')}
 			</Button>
 		)
@@ -975,26 +979,15 @@ function FormulaireClassement({
 
 	return (
 		<div className="flex flex-col gap-2" data-testid="inbox-formulaire-classement">
-			<label htmlFor="inbox-card" className="text-sm text-text-2">
-				{t('inbox.classify.label')}
-			</label>
-			{cards.length === 0 ? (
-				<p className="text-sm text-text-3">{t('inbox.classify.empty')}</p>
-			) : (
-				<select
-					id="inbox-card"
-					ref={selecteur}
-					value={choix}
-					onChange={(evenement) => setChoix(evenement.target.value)}
-					className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-2 focus-visible:outline-2 focus-visible:outline-brand"
-				>
-					{cards.map((card) => (
-						<option key={card.id} value={card.id}>
-							{card.chemin === '' ? card.titre : `${card.chemin} › ${card.titre}`}
-						</option>
-					))}
-				</select>
-			)}
+			<SelecteurClassement
+				messageId={message.id}
+				expediteur={message.expediteurAdresse}
+				choix={choix}
+				onChoisir={setChoix}
+				onEchap={fermer}
+				champ={champ}
+				lire={lecteur}
+			/>
 			{refus !== null ? (
 				<p role="alert" className="text-sm text-danger">
 					{refus}
@@ -1003,13 +996,13 @@ function FormulaireClassement({
 			<div className="flex gap-2">
 				<Button
 					variante="primaire"
-					disabled={envoi || choix === ''}
+					disabled={envoi || choix === null}
 					onClick={() => void soumettre()}
 					data-testid="inbox-classer-valider"
 				>
 					{envoi ? t('inbox.classify.working') : t('inbox.classify.submit')}
 				</Button>
-				<Button variante="secondaire" onClick={() => setOuvert(false)}>
+				<Button variante="secondaire" onClick={fermer}>
 					{t('inbox.classify.cancel')}
 				</Button>
 			</div>

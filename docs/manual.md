@@ -3166,11 +3166,28 @@ numérisé. ». Une pièce de plus de 25 Mo n'a pas d'aperçu : elle se téléc
 
 ![Un document numérisé : « Aucun texte lisible : le document est sans doute numérisé. »](manuel/images/l-inbox-lire-trier-et-repondre/aucun-texte-lisible.jpg)
 
-**Ranger un message.** Un message non classé propose « Classer dans une affaire ». Choisissez
-l'affaire dans la liste, puis validez : le message rejoint l'affaire, son historique en garde la
-trace, et vous le retrouvez ensuite **des deux côtés** — dans l'affaire et sous son dossier dans
-l'inbox. Ranger exige le droit d'**écrire** sur l'affaire choisie, et celui de **voir** le message.
-Une affaire archivée ou en corbeille est refusée, avec son motif.
+**Ranger un message.** Un message non classé propose « Classer dans une affaire ». Le formulaire s'ouvre sur un champ
+« Rechercher une affaire » et, au-dessus, la case « **Expéditeur connu** », cochée.
+
+- **Case cochée**, la liste ne montre que les affaires dont un **contact** porte l'adresse de l'expéditeur : c'est le plus
+  souvent celle que vous cherchez. Quand il n'y en a qu'une, elle est déjà choisie.
+- **Case décochée**, la liste montre toutes les affaires où vous pouvez ranger le message. Celles de l'expéditeur viennent
+  en tête et portent la mention « Expéditeur connu ».
+- **Tapez** une partie du titre de l'affaire, ou du nom de son track ou de son channel : la liste se resserre. Les
+  majuscules et les accents ne comptent pas, « vitri » trouve « Refonte du site vitrine ».
+- **Choisissez** l'affaire d'un clic, ou au clavier : les flèches parcourent la liste, `Entrée` choisit. L'affaire choisie
+  est rappelée sous la liste, puis « **Classer** » range le message. `Échap` referme le formulaire.
+
+Si l'expéditeur n'est le contact d'aucune affaire, le formulaire le dit et propose « **Voir toutes les affaires** », qui
+décoche la case. La liste s'arrête aux 50 premières affaires, et le dit : une recherche la resserre. Les affaires
+archivées ou en corbeille n'y figurent jamais.
+
+![Le formulaire de classement : la case « Expéditeur connu », la recherche et l'affaire choisie](manuel/images/l-inbox-lire-trier-et-repondre/classer-expediteur-connu.jpg)
+
+Le message rejoint l'affaire, son historique en garde la trace, et vous le retrouvez ensuite **des deux côtés** : dans
+l'affaire et sous son dossier dans l'inbox. Ranger exige le droit d'**écrire** sur l'affaire choisie, et celui de **voir**
+le message. La liste ne montre que les affaires que vous pouvez voir ; une affaire que vous voyez sans pouvoir y écrire
+est refusée au moment de classer, avec son motif.
 
 **La suggestion de classement.** Quand l'expéditeur d'un message non classé est un **contact** de
 votre carnet et qu'il n'est rattaché qu'à **une seule** affaire en cours, le produit vous le dit :
@@ -3184,8 +3201,8 @@ raison de la suggestion — « l'expéditeur est un contact rattaché à cette a
 C'est une **suggestion, pas une décision** :
 
 - elle ne range **rien** toute seule. Tant que vous n'avez pas appuyé, le message reste non classé ;
-- « Classer dans une affaire » reste offert à côté, et propose **toutes** les affaires : une
-  suggestion peut désigner la mauvaise, et vous gardez le dernier mot ;
+- « Classer dans une affaire » reste offert à côté : décochez « Expéditeur connu », et il propose
+  **toutes** les affaires. Une suggestion peut désigner la mauvaise, et vous gardez le dernier mot ;
 - elle ne vous donne **aucun droit de plus**. Si vous n'avez pas le droit d'écrire sur l'affaire
   proposée, « Classer ici » est grisé et l'encadré dit pourquoi ; vous pouvez la consulter, ou
   ranger le message ailleurs ;

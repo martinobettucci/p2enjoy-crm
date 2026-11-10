@@ -13,6 +13,9 @@
 #           file), lister et écarter, la personne seule ; et, EN CONTOURNANT LE CATALOGUE, le jeton frappé par le code du
 #           connecteur refusé par la base sur `queue_outbound_email`, `send_email_draft` et `armer_sequence_relance`
 #           (`review_required`, rien d'écrit) ; docs/SPEC-mails-prepares.md §4.2, §5, §8 ; décision 829 ; CLAUDE.md §10
+# @verifies CRM-137 (docs/BACKLOG.md) — les deux outils du classement, `crm_mail_classification_candidates` et
+#           `crm_mail_classify` : succès et journal, refus par la matrice, refus par le CRM malgré la matrice ouverte ;
+#           docs/SPEC-mcp.md §9.2 septendecies, §13 ; docs/SPEC-mail-subsystem.md §26.2, §26.5 ; décision 891
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
 LE SEED : l'affaire « Refonte du site vitrine » (`c1`) porte deux messages reçus, « Demande de devis — refonte » puis sa
@@ -315,3 +318,85 @@ async def test_driss_lit_une_piece_saine_en_binaire_et_ni_une_infectee_ni_la_lec
         await _service("DELETE", "/mail_attachments", params={"filename": "like.tst-crm074*"})
         await _sous_cle_de_service("DELETE", f"{API}/storage/v1/object/mail-attachments", json={"prefixes": [chemin]})
 
+
+#: « Demande de devis — refonte », classé dans `c1` par le seed : Driss le lit, la lectrice non (`CRM-137`).
+MSGID_CLASSE = "<seed-inbox-classe@p2enjoy.test>"
+
+
+async def _message_classe() -> dict:
+    return (await _service("GET", "/mail_messages", params={
+        "rfc822_message_id": f"eq.{MSGID_CLASSE}", "select": "id,card_id,classification,classified_by,classified_at",
+    })).json()[0]
+
+
+async def test_driss_liste_les_affaires_candidates_puis_classe_et_rien_ne_change_deux_fois():
+    """`CRM-137` : la liste par la vraie fonction et sous la RLS de Driss, puis le classement dans l'affaire qui porte déjà
+    le message. `classify_message` est IDEMPOTENTE dans ce cas (`0028`) : le geste réussit réellement, et la ligne du
+    message sort identique — la preuve ne laisse rien derrière elle."""
+    avant = await _message_classe()
+    assert avant["card_id"] == CARD
+    posees = await _manquantes(DRISS, [("messagerie", "consulter"), ("messagerie", "modifier")])
+    await _poser(DRISS, posees)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_visible(client, "crm_mail_classify")
+            liste = (await client.call_tool("crm_mail_classification_candidates", {
+                "message_id": avant["id"], "known_sender": False, "search": "VITRÎNE",
+            })).structured_content
+            assert await _dernier_journal(DRISS[1]) == ("crm_mail_classification_candidates", "ok")
+            # SANS CASSE NI ACCENTS, sur le titre : « Refonte du site vitrine » est rendue, avec son chemin.
+            vitrine = [a for a in liste["affaires"] if a["card_id"] == CARD]
+            assert len(vitrine) == 1 and " › " in vitrine[0]["path"]
+            assert liste["known_sender"] is False and "note" not in liste
+
+            classe = (await client.call_tool("crm_mail_classify", {
+                "message_id": avant["id"], "card_id": CARD,
+            })).structured_content
+            assert classe == {"message_id": avant["id"], "card_id": CARD, "status": "filed"}
+            assert await _dernier_journal(DRISS[1]) == ("crm_mail_classify", "ok")
+        assert await _message_classe() == avant
+    finally:
+        await _retirer(DRISS, posees)
+
+
+async def test_sans_la_case_modifier_le_classement_n_est_pas_offert():
+    posees = await _manquantes(DRISS, [("messagerie", "consulter")])
+    await _poser(DRISS, posees)
+    # La case `modifier` de la famille est retirée le temps de la preuve, si le seed l'accorde, puis rendue.
+    tenue = ("messagerie", "modifier") not in await _manquantes(DRISS, [("messagerie", "modifier")])
+    if tenue:
+        await _retirer(DRISS, [("messagerie", "modifier")])
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_outils(
+                client,
+                lambda noms: "crm_mail_classification_candidates" in noms and "crm_mail_classify" not in noms,
+                "la matrice ferme le classement et ouvre la liste",
+            )
+            message = await _message_classe()
+            with pytest.raises(ToolError):
+                await client.call_tool("crm_mail_classify", {"message_id": message["id"], "card_id": CARD})
+    finally:
+        if tenue:
+            await _poser(DRISS, [("messagerie", "modifier")])
+        await _retirer(DRISS, posees)
+
+
+async def test_la_lectrice_est_refusee_par_le_crm_malgre_la_matrice_ouverte():
+    """La RLS cache `c1` et son courrier à la lectrice : la liste et le classement rendent le refus uniforme, que la
+    matrice ouvre pourtant, et rien n'est écrit."""
+    avant = await _message_classe()
+    posees = await _manquantes(FARIDA, [("messagerie", "consulter"), ("messagerie", "modifier")])
+    await _poser(FARIDA, posees)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(FARIDA)) as client:
+            await _attendre_visible(client, "crm_mail_classify")
+            with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
+                await client.call_tool("crm_mail_classification_candidates", {"message_id": avant["id"]})
+            assert await _dernier_journal(FARIDA[1]) == ("crm_mail_classification_candidates", "refus_crm")
+            with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
+                await client.call_tool("crm_mail_classify", {"message_id": avant["id"], "card_id": CARD_LUE})
+            assert await _dernier_journal(FARIDA[1]) == ("crm_mail_classify", "refus_crm")
+        assert await _message_classe() == avant
+    finally:
+        await _retirer(FARIDA, posees)

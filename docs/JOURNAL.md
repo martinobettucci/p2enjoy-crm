@@ -40110,15 +40110,3 @@ côté serveur.
 **MCP** : **oui, lecture et actions**, famille existante `messagerie` — l'assistant lit l'état des envois, et peut annuler et
 réessayer sous la case « modifier » de la messagerie.
 **Conséquences** : unité `CRM-144`, à spécifier avant le code.
-
-
-### décision 899 — chaque livraison doit être vue au prochain chargement : `Cache-Control` sur la webapp ; aucun outil MCP
-
-*2026-11-10, session 4522fa9c (p2enjoy-crm-ee, session de livraison), constat et arbitrage du responsable (`AskUserQuestion`).*
-**Le constat** : le responsable « ne voit quasi aucune des choses livrées récemment ». Mesuré : la production sert bien la
-dernière révision (`e15dd487`, `index-PjOHB-qi.js`) ; mais `caddy/routes.caddy` n'envoie **aucun `Cache-Control`** sur
-`index.html` (seuls `ETag` et `Last-Modified`), si bien qu'un navigateur peut garder l'ancienne page par heuristique, des
-heures après une livraison. Le reste de l'écart tient à ce que la plupart des unités demandées ne sont pas encore livrées.
-**Décision : une unité prioritaire, `CRM-145`** — `no-cache` sur `index.html` et les routes de l'application (toujours
-revalidées), `public, max-age=31536000, immutable` sur les fichiers hachés de `/assets/` ; le manuel publié et les autres
-fichiers sous une règle explicite. **MCP** : non.

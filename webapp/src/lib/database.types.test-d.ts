@@ -1217,6 +1217,12 @@ type _vueDerivationColonnes = Expect<
 // par champ de l'affaire actif, sous son libellé (docs/SPEC-champs-communs.md §9, précision T5). CE QUI ÉCHAPPE AU
 // GÉNÉRATEUR : `label` est nul pour une variable native ; aucun refus nommé (la RLS des champs s'applique). Le compte
 // s'accroît de un.
+// `0172` de `CRM-137` ajoute `classification_candidates` — les affaires candidates au classement d'un message
+// (docs/SPEC-mail-subsystem.md §26.2). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `p_limit` est ramené entre 1 et 100 ; `path` est vide
+// quand le channel ou le track ne se lit pas ; `message_not_found` en 404. Le compte s'accroît de un.
+// `0170` de `CRM-135` avait ajouté `mail_inbound_account_record_poll_failure` (réservée à la clé de service,
+// docs/SPEC-mail-subsystem.md §24.3) sans régénérer les types ; la régénération de `CRM-137` l'y fait entrer, et elle est
+// nommée ici. Le compte s'accroît de un.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1283,6 +1289,8 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'chemin_dossier_card'
     | 'chemin_dossier_entite'
     | 'classer_message_automatiquement'
+    | 'classification_candidates'
+    | 'mail_inbound_account_record_poll_failure'
     | 'classify_message'
     | 'dossiers_a_renommer'
     | 'etat_messagerie'

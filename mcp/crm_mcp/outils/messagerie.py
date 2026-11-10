@@ -18,6 +18,10 @@
 # @spec CRM-128 (docs/BACKLOG.md) — tranche T3 : le connecteur prépare et n'envoie jamais — `crm_mail_prepare`
 #       (successeur de `crm_mail_send`, retiré sans alias), `crm_mail_draft_list`, `crm_mail_draft_discard`, ancre `draft`,
 #       le lien de relecture ; docs/SPEC-mails-prepares.md §5 ; docs/SPEC-mcp.md §9.2 decies (révisée) ; décision 829
+# @spec CRM-137 (docs/BACKLOG.md) — classer un message : `crm_mail_classification_candidates` (`consulter`, les affaires
+#       candidates par `classification_candidates`, l'expéditeur connu d'abord) et `crm_mail_classify` (`modifier`, par
+#       `classify_message` inchangée) ; docs/SPEC-mcp.md §9.2 septendecies ; docs/SPEC-mail-subsystem.md §26 ;
+#       décisions 877, 891 et 893
 """La messagerie d'une affaire, sous l'identité de la personne : lire son fil, lire un message, PRÉPARER un email.
 
 Le connecteur n'envoie jamais (`CRM-128`, décision 829) : `public.prepare_email` écrit un mail préparé, que seule la
@@ -85,6 +89,16 @@ REFUS_ENVOI = {
     "draft_not_pending": "this prepared email was already sent or discarded",
     "review_required": "an email prepared through the connector is sent from the CRM, after review",
 }
+#: Les refus de `classify_message` (`CRM-137`, docs/SPEC-mail-subsystem.md §16) : une phrase par code, jamais le message
+#: brut de la base (docs/SPEC-mcp.md §9.3).
+REFUS_CLASSEMENT = {
+    "forbidden": "you may not file this email in this affaire: writing on it is not open to you",
+    "card_not_available": "the affaire is archived or in the trash: it receives no email",
+}
+#: La phrase de l'état vide de l'écran, pour l'assistant (docs/SPEC-mcp.md §9.2 septendecies).
+NOTE_EXPEDITEUR_INCONNU = (
+    "The sender is a contact of no affaire. Call again with known_sender: false to list every affaire you may read."
+)
 #: Ce que l'assistant doit dire à la personne : rien n'est parti (docs/SPEC-mails-prepares.md §5).
 NOTE_RELECTURE = "This email is NOT sent. It awaits your review in the CRM: open review_url to review and send it."
 COLONNES_BROUILLON = "id,card_id,to_addrs,cc_addrs,subject,body_text,origin,created_at,card:cards(title)"
@@ -296,6 +310,79 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_w
             "text is reduced from it as the web app does (body_from_html). Its attachments are listed (id, file name, "
             "type, size, status); read an available one with crm_mail_attachment_get. read tells whether the person has "
             "read it in the inbox; reading it here does not mark it read."
+        ),
+    )
+
+    async def crm_mail_classification_candidates(
+        message_id: Annotated[str, Field(description="The email message id, from crm_search or crm_mail_get")],
+        known_sender: Annotated[
+            bool,
+            Field(description="Only the affaires where a contact has the sender's address (true by default, like the CRM)"),
+        ] = True,
+        search: Annotated[
+            str | None, Field(max_length=200, description="Part of the affaire title or of its Track › Channel path")
+        ] = None,
+        limit: Annotated[int, Field(ge=1, le=100)] = 50,
+    ) -> dict[str, Any]:
+        appel = appel_courant()
+        arguments: dict[str, Any] = {"p_message_id": message_id, "p_known_sender": known_sender, "p_limit": limit}
+        if search is not None and search.strip() != "":
+            arguments["p_search"] = search.strip()
+        reponse = await crm.rpc(appel.jeton, "classification_candidates", arguments)
+        lignes = _lignes(reponse, "message", message_id)
+        resultat: dict[str, Any] = {
+            "message_id": message_id,
+            "known_sender": known_sender,
+            "affaires": [
+                {
+                    "card_id": ligne["card_id"],
+                    "title": ligne.get("title"),
+                    "path": ligne.get("path") or "",
+                    "known_sender": ligne.get("known_sender") is True,
+                }
+                for ligne in lignes
+            ],
+        }
+        if known_sender and not lignes and (search is None or search.strip() == ""):
+            resultat["note"] = NOTE_EXPEDITEUR_INCONNU
+        return resultat
+
+    moteur.enregistrer(
+        serveur,
+        crm_mail_classification_candidates,
+        Declaration(famille="messagerie", action="consulter", espace="message:message_id"),
+        titre="List the affaires an email can be filed in",
+        description=(
+            "Lists the affaires where an email can be filed, as the CRM proposes them: by default only those where a "
+            "contact has the sender's address (known_sender), known ones first, then by title. Archived affaires and "
+            "affaires in the trash are never proposed. search narrows by title or Track › Channel path, ignoring case "
+            "and accents. File the email with crm_mail_classify."
+        ),
+    )
+
+    async def crm_mail_classify(
+        message_id: Annotated[str, Field(description="The email message id")],
+        card_id: Annotated[str, Field(description="The affaire to file it in, from crm_mail_classification_candidates")],
+    ) -> dict[str, Any]:
+        appel = appel_courant()
+        reponse = await crm.rpc(appel.jeton, "classify_message", {"p_message_id": message_id, "p_card_id": card_id})
+        if not reponse.reussie:
+            corps = reponse.corps if isinstance(reponse.corps, dict) else {}
+            code = str(corps.get("message") or "")
+            if code in REFUS_CLASSEMENT:
+                raise RefusCrm(f"Refusé par le CRM : {code} — {REFUS_CLASSEMENT[code]}.")
+            raise traduire_refus(reponse, "message", message_id)
+        return {"message_id": message_id, "card_id": card_id, "status": "filed"}
+
+    moteur.enregistrer(
+        serveur,
+        crm_mail_classify,
+        Declaration(famille="messagerie", action="modifier", espace="message:message_id", autres=("card:card_id",)),
+        titre="File an email in an affaire",
+        description=(
+            "Files an email in an affaire, as the CRM's inbox does: the email then belongs to the affaire's thread. You "
+            "must be able to write on the affaire; archived affaires and affaires in the trash are refused. Filing an "
+            "email already in that affaire changes nothing."
         ),
     )
 

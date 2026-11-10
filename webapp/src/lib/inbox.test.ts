@@ -31,7 +31,6 @@ import {
 	corpsAffichable,
 	filEstNonLu,
 	idsNonLus,
-	lireCardsClassables,
 	lireCheminCard,
 	lireArborescence,
 	lireMessages,
@@ -468,24 +467,6 @@ const RATTACHEMENTS_C1 = [
 	{ id: 'r2', channel_id: 'ch-recent', created_at: '2026-10-02T09:00:00+00:00' },
 	{ id: 'r1', channel_id: 'ch-ancien', created_at: '2026-10-01T09:00:00+00:00' },
 ]
-
-describe('les affaires classables (`CRM-111` T2.4.1)', () => {
-	it('ne propose que les affaires dont un rattachement est actif, et situe chacune par le plus ancien', async () => {
-		const { client, demandes } = clientParTable({
-			cards: [{ id: 'c1', title: 'Refonte', card_placements: RATTACHEMENTS_C1 }],
-			channels: [
-				{ id: 'ch-ancien', name: 'Grands comptes', track_id: 't1' },
-				{ id: 'ch-recent', name: 'Maintenance', track_id: 't1' },
-			],
-			tracks: [{ id: 't1', name: 'Conseil IA' }],
-		})
-		expect(await lireCardsClassables(client)).toEqual([
-			{ id: 'c1', titre: 'Refonte', chemin: 'Conseil IA \u203a Grands comptes' },
-		])
-		expect(demandes.colonnes).toContain('card_placements!card_placements_card_fk!inner(')
-		expect(demandes.nuls).toEqual(['card_placements.archived_at', 'deleted_at'])
-	})
-})
 
 describe('le chemin d’une affaire (`CRM-111` T2.4.1)', () => {
 	it('adresse l’affaire par le channel de son plus ancien rattachement', async () => {

@@ -740,74 +740,9 @@ export function useFilsEndormis(client: ClientCrm | null): Relecture<FilsEndormi
 // =================================================================================================
 // Les affaires proposées au classement
 // =================================================================================================
-
-export type CardClassable = {
-	readonly id: string
-	readonly titre: string
-	readonly chemin: string
-}
-
-/**
- * Les affaires que l'écran propose comme destination.
- *
- * ELLE LIT LE DROIT DE **LECTURE**, ET LE DIT : la RLS de `cards` gouverne la lecture, et rien
- * dans PostgREST ne permet de demander « celles où je peux écrire » sans une fonction dédiée. Une
- * affaire proposée peut donc être refusée par `classify_message`, et ce refus est présenté tel
- * quel. Filtrer ici sur une supposition serait pire : l'écran cacherait des affaires légitimes
- * sans jamais l'avouer.
- *
- * Les affaires archivées et en corbeille sont exclues — la base les refuse (`card_not_available`),
- * et les proposer serait promettre un refus.
- */
-export async function lireCardsClassables(client: ClientCrm | null): Promise<readonly CardClassable[]> {
-	if (client === null) return []
-	try {
-		// TROIS LECTURES PLUTÔT QU'UNE JOINTURE EMBARQUÉE, ET C'EST MESURÉ : les clés étrangères de
-		// `cards` vers `channels` et de `channels` vers `tracks` sont **composites**
-		// (`cards_channel_id_workspace_id_fkey`), et l'imbrication PostgREST ne les résout pas par
-		// le seul nom de colonne. Trois lectures de tables déjà cloisonnées par la RLS coûtent
-		// moins qu'une jointure qui échouerait à l'exécution.
-		//
-		// `CRM-111` T2.4.1 : le channel est celui du RATTACHEMENT. L'affaire est proposée si l'un de ses rattachements est
-		// actif (`!inner` sur les seuls non archivés), et son chemin est celui du plus ancien d'entre eux.
-		const [cards, channels, tracks] = await Promise.all([
-			client
-				.from('cards')
-				.select('id, title, card_placements!card_placements_card_fk!inner(id, channel_id, created_at)')
-				.is('card_placements.archived_at', null)
-				.is('deleted_at', null)
-				.order('title')
-				.limit(CARDS_CLASSABLES_MAX),
-			client.from('channels').select('id, name, track_id'),
-			client.from('tracks').select('id, name'),
-		])
-		if (cards.error !== null || channels.error !== null || tracks.error !== null) return []
-
-		const nomChannel = new Map(channels.data.map((ligne) => [ligne.id, ligne]))
-		const nomTrack = new Map(tracks.data.map((ligne) => [ligne.id, ligne.name]))
-		return cards.data.map((ligne) => {
-			const rattachement = premierRattachement(ligne.card_placements)
-			const channel = rattachement === null ? undefined : nomChannel.get(rattachement.channel_id)
-			const track = channel === undefined ? undefined : nomTrack.get(channel.track_id)
-			return {
-				id: ligne.id,
-				titre: ligne.title,
-				chemin: [track, channel?.name].filter((morceau) => morceau !== undefined).join(' \u203a '),
-			}
-		})
-	} catch {
-		return []
-	}
-}
-
-/**
- * Borne du sélecteur d'affaires.
- *
- * Une liste déroulante de plusieurs milliers d'entrées n'est plus un choix, c'est un labyrinthe.
- * La borne est explicite plutôt que laissée à PostgREST (`CLAUDE.md` §21) ; au-delà, c'est une
- * recherche qu'il faudra livrer, pas une liste plus longue.
- */
-export const CARDS_CLASSABLES_MAX = 200
+//
+// `CRM-137` : elles sont lues par la base, `classification_candidates`, dans `candidats-classement.ts`
+// (docs/SPEC-mail-subsystem.md §26). `lireCardsClassables` et sa borne de 200 sont retirées avec le `select`.
 
 /**
  * L'affaire d'un message classé, et son adresse dans l'application.

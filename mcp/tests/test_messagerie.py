@@ -16,6 +16,9 @@
 #           `prepare_email` (jamais `queue_outbound_email`), sans `destructiveHint`, rend le lien de relecture ;
 #           `crm_mail_draft_list` (ses mails en attente, par espace et par affaire) ; `crm_mail_draft_discard` (ancre
 #           `draft`, `destructiveHint`) ; `crm_mail_send` absent ; refus nommés (docs/SPEC-mails-prepares.md §5 ; décision 829)
+# @verifies CRM-137 (docs/BACKLOG.md) — `crm_mail_classification_candidates` (`consulter`, ancre `message`, la case
+#           « expéditeur connu » vraie par défaut, le terme rogné, la note de l'état vide) et `crm_mail_classify` (`modifier`,
+#           ancre `message` et `card`, `classify_message`, refus nommés) ; docs/SPEC-mcp.md §9.2 septendecies ; décision 893
 """Le CRM simulé rend le fil d'une affaire (un message texte, un message HTML seul, une pièce jointe), un message d'une
 autre affaire, et trois identités dont celle d'une collègue ; la vraie base est éprouvée par
 `tests/test_integration_messagerie.py`."""
@@ -51,7 +54,7 @@ MESSAGE_TEXTE = "a0000000-0000-4000-8000-0000000000e1"
 MESSAGE_HTML = "a0000000-0000-4000-8000-0000000000e2"
 MESSAGE_AILLEURS = "a0000000-0000-4000-8000-0000000000e3"
 OUTILS = {"crm_card_mail_list", "crm_mail_get", "crm_mail_prepare", "crm_mail_draft_list", "crm_mail_draft_discard",
-          "crm_mail_attachment_get"}
+          "crm_mail_attachment_get", "crm_mail_classification_candidates", "crm_mail_classify"}
 WEBAPP = "https://crm.exemple.test"
 BROUILLON = "a0000000-0000-4000-8000-0000000000d1"
 PIECE_PDF = "a0000000-0000-4000-8000-0000000000f1"
@@ -71,6 +74,7 @@ class CrmMessagerie(CrmSimule):
         self.fonctions: list[str] = []
         self.ecartes: list[dict[str, Any]] = []
         self.refus_envoi: tuple[int, Any] | None = None
+        self.classements: list[dict[str, Any]] = []
         self.objets_lus: list[tuple[str, str]] = []
         self.objets = {"ws/m1/pdf": OCTETS_PDF, "ws/m1/png": OCTETS_PNG}
         self.identites = [
@@ -160,6 +164,21 @@ class CrmMessagerie(CrmSimule):
 
     async def rpc_messagerie(self, requete: Request) -> Response:
         fonction = requete.path_params["fonction"]
+        if fonction in ("classification_candidates", "classify_message"):
+            if self._personne(requete) is None:
+                return JSONResponse({"message": "JWT invalide"}, status_code=401)
+            self.fonctions.append(fonction)
+            corps = await requete.json()
+            self.classements.append(corps)
+            if self.refus_envoi is not None:
+                return JSONResponse(self.refus_envoi[1], status_code=self.refus_envoi[0])
+            if fonction == "classify_message":
+                return JSONResponse(corps["p_card_id"])
+            connues = [{"card_id": CARD, "title": "Refonte", "path": "Conseil IA › Grands comptes", "known_sender": True}]
+            autres = [{"card_id": AUTRE_CARD, "title": "Audit", "path": "", "known_sender": False}]
+            if corps.get("p_known_sender") is False:
+                return JSONResponse(connues + autres)
+            return JSONResponse(connues if corps["p_message_id"] == MESSAGE_TEXTE else [])
         if fonction not in ("queue_outbound_email", "prepare_email", "discard_email_draft"):
             return await self.rpc(requete)
         self.fonctions.append(fonction)
@@ -484,3 +503,58 @@ async def test_un_mail_prepare_d_autrui_est_le_refus_uniforme_sans_appel(monde: 
     with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre : mail préparé"):
         await monde.appel("crm_mail_draft_discard", {"draft_id": BROUILLON})
     assert monde.simule.ecartes == []
+
+
+async def test_les_affaires_candidates_d_un_message_par_la_base(monde: Monde) -> None:
+    declaration = monde.moteur.declarations["crm_mail_classification_candidates"]
+    assert (declaration.famille, declaration.action, declaration.espace) == ("messagerie", "consulter", "message:message_id")
+    rendu = await monde.appel("crm_mail_classification_candidates", {"message_id": MESSAGE_TEXTE, "search": "  refo "})
+    assert monde.simule.classements[-1] == {
+        "p_message_id": MESSAGE_TEXTE, "p_known_sender": True, "p_limit": 50, "p_search": "refo",
+    }
+    assert rendu["affaires"] == [
+        {"card_id": CARD, "title": "Refonte", "path": "Conseil IA › Grands comptes", "known_sender": True},
+    ]
+    assert "note" not in rendu
+    tout = await monde.appel(
+        "crm_mail_classification_candidates", {"message_id": MESSAGE_TEXTE, "known_sender": False, "limit": 10}
+    )
+    assert monde.simule.classements[-1] == {"p_message_id": MESSAGE_TEXTE, "p_known_sender": False, "p_limit": 10}
+    assert [a["known_sender"] for a in tout["affaires"]] == [True, False]
+    outils = await monde.outils()
+    assert outils["crm_mail_classification_candidates"].annotations.read_only_hint is True
+
+
+async def test_un_expediteur_inconnu_rend_la_note_de_l_etat_vide(monde: Monde) -> None:
+    rendu = await monde.appel("crm_mail_classification_candidates", {"message_id": MESSAGE_HTML})
+    assert rendu["affaires"] == []
+    assert "known_sender: false" in rendu["note"]
+
+
+async def test_classer_passe_par_classify_message_en_modifier(monde: Monde) -> None:
+    declaration = monde.moteur.declarations["crm_mail_classify"]
+    assert (declaration.famille, declaration.action, declaration.espace, declaration.autres) == (
+        "messagerie", "modifier", "message:message_id", ("card:card_id",)
+    )
+    # Sans la case `modifier`, l'outil n'est même pas offert : la matrice le retient avant tout appel.
+    with pytest.raises(ToolError):
+        await monde.appel("crm_mail_classify", {"message_id": MESSAGE_TEXTE, "card_id": CARD})
+    assert "classify_message" not in monde.simule.fonctions
+    monde.simule.droits |= {("sujet-thomas", ESPACE_A, "messagerie", "modifier")}
+    rendu = await monde.appel("crm_mail_classify", {"message_id": MESSAGE_TEXTE, "card_id": AUTRE_CARD})
+    assert rendu == {"message_id": MESSAGE_TEXTE, "card_id": AUTRE_CARD, "status": "filed"}
+    assert monde.simule.classements[-1] == {"p_message_id": MESSAGE_TEXTE, "p_card_id": AUTRE_CARD}
+    outils = await monde.outils()
+    assert outils["crm_mail_classify"].annotations.destructive_hint is not True
+
+
+async def test_les_refus_du_classement_sont_nommes(monde: Monde) -> None:
+    monde.simule.droits |= {("sujet-thomas", ESPACE_A, "messagerie", "modifier")}
+    arguments = {"message_id": MESSAGE_TEXTE, "card_id": CARD}
+    for statut, code, attendu in (
+        (403, {"code": "42501", "message": "forbidden"}, "forbidden — you may not file this email"),
+        (400, {"code": "23514", "message": "card_not_available"}, "card_not_available — the affaire is archived"),
+    ):
+        monde.simule.refus_envoi = (statut, code)
+        with pytest.raises(ToolError, match=attendu):
+            await monde.appel("crm_mail_classify", arguments)

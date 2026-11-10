@@ -69,27 +69,6 @@ tableau `SPARK_COMPOSE` ; aucun appel ne compose ces fichiers à la main.
   configuration entière. Le service `mcp` n'est assemblé que sous le profil `mcp`, que `compose_prod` active quand
   `CRM_MCP_HOTE` est posée ; `scripts/verify-spark.sh` résout la cellule dans les deux états.
 
-### 3.2 bis Le cache de la webapp — `CRM-145` (décision 899)
-
-*Écrit le 2026-11-10, avant le code.* **Le constat** : `caddy/routes.caddy` ne posait aucun `Cache-Control` sur la webapp ;
-un navigateur gardait `index.html` par heuristique (seuls `ETag` et `Last-Modified`), donc l'ancien bundle, des heures après
-une livraison. **La règle**, dans `caddy/routes.caddy`, donc commune aux deux Caddyfile :
-
-| Ce qui est servi | `Cache-Control` | Pourquoi |
-|---|---|---|
-| un fichier **existant** de `/assets/` | `public, max-age=31536000, immutable` | son nom porte le hachage du build Vite : un contenu nouveau a un nom nouveau |
-| `index.html`, toute route de l'application (repli `try_files`), un `/assets/` **absent** | `no-cache` | revalidé à chaque chargement par `ETag` (un `304` sans corps) : la livraison est vue au prochain chargement |
-| les autres fichiers de `/srv/www` (`favicon.svg`, `avatars/`) | `no-cache` | sans hachage dans le nom, ils doivent être revalidés ; le manuel publié est dans le bundle |
-
-**Un `/assets/` absent n'est jamais immuable** : l'ancien bundle d'une page restée ouverte retombe sur `index.html`, qui ne
-doit pas être figé un an — d'où le matcher `file`, qui exige que le fichier existe. Les routes relayées (`/rest/v1/*`…, le
-connecteur MCP) et le `404` de GoTrue ne reçoivent aucune règle nouvelle ; les en-têtes de sécurité sont inchangés.
-Le label `com.p2enjoy.caddy-routes-revision` passe à **`crm-145`** (§5.1) : Caddy est recréé au `up` ordinaire.
-**Preuve** : `scripts/verify-spark.sh` §4 lance un Caddy jetable avec `Caddyfile.spark` et `routes.caddy` sur un `/srv/www`
-de démonstration et lit les en-têtes réels (`/`, `/index.html`, une route profonde, un fichier haché, un fichier absent de
-`/assets/`, `favicon.svg`, un `304`). En développement, la webapp est servie par Vite, sans Caddy : la preuve porte sur la
-configuration de la cellule, la seule qui serve la production. **Connecteur MCP** : non (décision 899).
-
 ### 3.3 Stockage objet : un MinIO interne
 
 - Service `minio`, image `cgr.dev/chainguard/minio` **épinglée par empreinte**, la même que le développement

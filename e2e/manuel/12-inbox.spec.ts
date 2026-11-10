@@ -6,6 +6,8 @@
 // @spec CRM-128 (docs/BACKLOG.md) — tranches T4 et T5 : les images de la section 12.4 — l'entrée et la liste, la relecture
 //       d'un mail préparé, l'encadré de la fiche — sur les mails du seed (docs/DESIGN_SYSTEM.md §5.90 ;
 //       docs/SPEC-mails-prepares.md §6 ; docs/SPEC-seed.md §37)
+// @spec CRM-137 (docs/BACKLOG.md) — l'image « classer-expediteur-connu » de la section 12.1 : le sélecteur cherchable et
+//       la case « Expéditeur connu » (docs/DESIGN_SYSTEM.md §5.94 ; docs/SPEC-mail-subsystem.md §26.3)
 //
 // Les messages sont ceux du seed : « Candidature spontanée » (non classé), « Demande de devis — refonte » et sa réponse
 // (classés dans « Refonte du site vitrine »), « Point d'avancement — migration ERP » (suggéré). Rien n'est classé, retiré,
@@ -141,6 +143,22 @@ test('un message non classé, et une suggestion', async ({ page }) => {
 		nom: 'suggestion-de-classement',
 		cibles: [suggestion, page.getByTestId('inbox-classer')],
 	})
+
+	// `CRM-137` : le formulaire de classement, la case « Expéditeur connu » cochée, l'unique affaire de Léo déjà choisie
+	// (docs/SPEC-mail-subsystem.md §26.3). Le formulaire est refermé par « Annuler » : rien n'est classé.
+	await page.getByTestId('inbox-classer').click()
+	const choix = page.getByTestId('classement-choix')
+	await expect(choix).toContainText('Affaire choisie')
+	// Le panneau du message défile en lui-même : le haut du sélecteur, la case comprise, est amené en tête de la vue, sans
+	// quoi l'image couperait la case qu'elle doit montrer.
+	await page.getByTestId('classement-selecteur').evaluate((noeud) => noeud.scrollIntoView({ block: 'center' }))
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: LIRE,
+		nom: 'classer-expediteur-connu',
+		cibles: [page.getByTestId('classement-selecteur'), page.getByTestId('inbox-classer-valider')],
+	})
+	await page.getByRole('button', { name: 'Annuler' }).click()
 })
 
 test('écrire depuis une affaire : la copie cachée, les pièces jointes', async ({ page, request }) => {
