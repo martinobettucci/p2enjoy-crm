@@ -2,6 +2,8 @@
 # @verifies CRM-002 (docs/BACKLOG.md) — Definition of Done des scripts de lancement et du gabarit
 # @verifies CRM-015 (docs/BACKLOG.md) — secret BuildKit npm_ca facultatif et sans fuite
 # @verifies CRM-017 (docs/BACKLOG.md) — rôle propriétaire explicite des migrations d'extension
+# @verifies Suite d'INC-347 (docs/BACKLOG.md) — la liste close des marqueurs de rôle : 0107 et 0127 nommées, la porte
+#           fermée aux nouvelles politiques de Storage (docs/DAT.md, migrations ; docs/JOURNAL.md décision 865)
 # @verifies CRM-090 (docs/BACKLOG.md) — le gabarit couvre aussi l'overlay de la cellule Spark
 # @verifies INC-265 (docs/INCONSISTENCY_REPORT.md, décision 619) — tri et comparaison du gabarit dans une même
 #           collation : un avertissement de `comm` est une anomalie, plus une ligne qui défile
@@ -846,15 +848,26 @@ fi
 # TROIS depuis `CRM-092` tranche T1 (décision 581) : `0074_revendications_du_jeton.sql` redéfinit
 # `auth.uid()` et ses trois sœurs, que GoTrue posait et dont `postgres` n'est pas membre du
 # propriétaire (K12). Motif mesuré en en-tête, rien d'autre créé — la liste reste NOMMÉE.
+# CINQ depuis INC-347 (décision 865) : `0107_envoi_pieces_jointes_stockage.sql` (`CRM-058` T2) et
+# `0127_lecture_du_manuel.sql` (`CRM-117` T2) portaient le marqueur sans que la liste soit révisée. Elles ne
+# font sous `supabase_admin` que poser des politiques de `storage.objects`, derrière une garde
+# `current_user` ; appliquées en production et figées par leur empreinte, elles sont nommées, non réécrites.
+# LE MOTIF DE LA 0029 N'EST PLUS VRAI : MESURÉ le 2026-11-06, en transaction annulée, sur l'image épinglée
+# `supabase/postgres:17.6.1.136`, `postgres` crée une politique sur `storage.objects` sans élévation —
+# `supautils.policy_grants` le lui accorde, bien qu'il ne soit ni superutilisateur ni membre de
+# `supabase_storage_admin`. LA PORTE EST DONC FERMÉE : toute NOUVELLE politique de Storage s'écrit sous
+# `postgres`, SANS marqueur, et cette liste ne s'allonge plus pour elle.
 MARQUEURS_ATTENDUS='supabase/migrations/0018_pg_cron.sql
 supabase/migrations/0029_pieces_jointes_telechargeables.sql
-supabase/migrations/0074_revendications_du_jeton.sql'
+supabase/migrations/0074_revendications_du_jeton.sql
+supabase/migrations/0107_envoi_pieces_jointes_stockage.sql
+supabase/migrations/0127_lecture_du_manuel.sql'
 role_markers=$(grep -l '^-- @migration-role:' supabase/migrations/*.sql 2>/dev/null || true)
 role_valeurs=$(grep -h '^-- @migration-role:' supabase/migrations/*.sql 2>/dev/null |
 	sort -u || true)
 if [ "$role_markers" = "$MARQUEURS_ATTENDUS" ] \
 	&& [ "$role_valeurs" = '-- @migration-role: supabase_admin' ]; then
-	ok "seules pg_cron, la politique de Storage et les fonctions auth.* exigent supabase_admin"
+	ok "seules pg_cron, les trois migrations de politiques de Storage nommées et les fonctions auth.* exigent supabase_admin"
 else
 	fail "marqueurs de rôle de migration inattendus : ${role_markers:-aucun}"
 fi

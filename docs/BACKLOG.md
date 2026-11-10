@@ -18864,12 +18864,15 @@ inefficace le fait rougir (mutation) ; INC-345 close.
 - Observé hors périmètre : le scénario de coupure SMTP réelle de `verify-mail-resilience.sh` a échoué une fois (`sent`
   = 1 dans la passe en panne), sans se reproduire.
 
-### Suite d'INC-347 — la liste close des marqueurs de rôle (décision 865) `[@]`
-*Prise en charge : session interactive 152dd27d (p2enjoy-crm-d9) depuis 2026-11-06 11:22 UTC — état avant : [ ]*
+### Suite d'INC-347 — la liste close des marqueurs de rôle (décision 865) `[x]`
 
 0107 et 0127 nommées dans `MARQUEURS_ATTENDUS` ; le commentaire du harnais dit la mesure et ferme la porte (toute
 nouvelle politique de Storage sous `postgres`) ; le DAT corrigé. **DoD** : `scripts/verify-scripts.sh` sans anomalie ;
 INC-347 close.
+**Fait le 2026-11-10** (session 152dd27d, p2enjoy-crm-d9) : `scripts/verify-scripts.sh` rejoué en entier sur la pile
+libre (après le rejeu de be), **115 vérifications, aucune anomalie**, dont « seules pg_cron, les trois migrations de
+politiques de Storage nommées et les fonctions auth.* exigent supabase_admin ». Le DAT décrit les cinq fichiers marqués.
+Rien à livrer : outillage et documentation.
 
 ## Demande du 2026-11-07 — une description pour les étapes de workflow (décision 869)
 

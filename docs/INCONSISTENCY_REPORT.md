@@ -8815,6 +8815,9 @@ qui ouvre le premier board lisible ; ou garder l'état vide pour un espace réel
 ### INC-347 — `scripts/verify-scripts.sh` rougit de deux dérives depuis le 2026-10-26 : élévations hors liste et port hors gabarit
 **Arbitrée le 2026-11-06 (décision 865)** : 0107 et 0127 nommées dans la liste close ; toute nouvelle politique de Storage
 s'écrit sous `postgres` ; le motif corrigé au DAT et au harnais.
+**Close le 2026-11-10** (session 152dd27d, p2enjoy-crm-d9, suite d'INC-347) : `MARQUEURS_ATTENDUS` nomme 0018, 0029, 0074,
+0107 et 0127, avec la mesure et la règle pour la suite ; le DAT corrigé. `scripts/verify-scripts.sh` rejoué en entier : 115
+vérifications, aucune anomalie.
 
 *Relevé le 2026-11-06 par la session d5b44a2d (p2enjoy-crm-c2) en rejouant le harnais en entier pour `CRM-001`. **Ouverte** :
 rien n'est modifié, la correction touche une liste de sécurité et le contrat du gabarit, hors de la tâche confiée.*

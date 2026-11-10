@@ -307,9 +307,16 @@ formait un verrou que Compose refuse même de tenter sur un volume neuf.
 
 Le rôle par défaut reste `postgres`. Une migration qui doit administrer un objet détenu par
 Supabase peut porter `-- @migration-role: supabase_admin` ; le runner n'autorise **que** ce rôle
-explicite et refuse tout autre marqueur. `0018_pg_cron.sql` est l'unique cas actuel : elle ferme
-les ACL de l'extension sous leur propriétaire, puis exécute `SET ROLE postgres` avant de créer les
-objets applicatifs et le job. `scripts/verify-scripts.sh` éprouve le choix et son refus.
+explicite et refuse tout autre marqueur. **Cinq fichiers le portent, nommés par une liste close** que
+`scripts/verify-scripts.sh` éprouve avec le choix et son refus : `0018_pg_cron.sql`, qui ferme les ACL de
+l'extension sous leur propriétaire puis exécute `SET ROLE postgres` avant de créer les objets applicatifs et le job ;
+`0074_revendications_du_jeton.sql`, qui redéfinit `auth.uid()` et ses sœurs ; et `0029`, `0107` et `0127`, qui ne
+posent que des politiques de `storage.objects`, derrière une garde `current_user`.
+*Révisé le 2026-11-06 (INC-347, décision 865).* Le motif de ces trois dernières — « `postgres` ne peut pas créer de
+politique sur `storage.objects` », mesuré le 2026-08-11 — **n'est plus vrai** : sur l'image épinglée
+`supabase/postgres:17.6.1.136`, `supautils.policy_grants` l'accorde à `postgres`, mesuré en transaction annulée. Elles
+restent marquées, appliquées en production et figées par leur empreinte ; **toute nouvelle politique de Storage s'écrit
+sous `postgres`, sans marqueur**, et la liste close ne s'allonge plus pour elle.
 
 En production, ce chemin est **désactivé par défaut** par `APPLY_MIGRATIONS=false` : le conteneur se
 contente de renvoyer vers `docs/PROD_MIGRATIONS.md` et se termine avec le code `0`. **Décision 489,
@@ -762,7 +769,7 @@ Caddy.
 - **Service** : le **stockage**, bucket privé `manual`. `scripts/manuel/publier.sh` y recopie le manuel construit et
   les images avec la clé de service ; le bucket est un miroir de la source. En développement, la publication suit le
   seed ; en production, elle est une opération de livraison.
-- **Autorisation** : une seule politique sur `storage.objects`, `manual_select`, en lecture pour `authenticated`,
+- **Autorisation** : une seule politique sur le bucket `manual`, `manual_select`, en lecture pour `authenticated`,
   restreinte au bucket. Sans session, rien ne se lit ; aucune session n'écrit. Ni l'espace ni le rôle n'interviennent.
 - **Flux** : la webapp lit le sommaire, un chapitre, puis ses images, par le client de stockage et avec le jeton de
   session ; chaque image est lue en `Blob` et rendue depuis une adresse locale au navigateur, un `<img>` ne pouvant pas
