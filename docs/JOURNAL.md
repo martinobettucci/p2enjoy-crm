@@ -39505,3 +39505,17 @@ session d9 a mesuré 25, 465 et 587 en `220` ; (3) **la session de livraison éc
 responsable** : 993 en TLS, après un `pg_dump`, sans toucher au secret ; puis constater la relève.
 **Leçon** : un service dont l'environnement change se **recrée** (`up --force-recreate --no-deps`), il ne se redémarre
 pas ; le contrat le dira.
+
+
+### décision 873 — INC-349 : une unité corrige quatre défauts de la veille de `mail-sync` ; aucun outil MCP
+
+*2026-11-10, session 4522fa9c (p2enjoy-crm-be), arbitrage du responsable (`AskUserQuestion`), sur les mesures en lecture
+seule de la session d9 (INC-349, `bda7185e`, `bf1dacc0`).*
+**Constats** : en production, Gandi refuse l'authentification IMAP de `contact@p2enjoy.studio` (« AUTHENTICATIONFAILED »)
+alors que les mêmes identifiants passent en SMTP et en POP3 ; le responsable dit avoir vérifié côté Gandi. La veille rejoue
+un LOGIN refusé environ toutes les 70 s, et quatre défauts la rendent muette et sans frein : (i) `SAFE_FIELDS` jette
+`account_id`, le motif et les compteurs — « veille_compte_echoue » sans détail ; (ii) un échec n'écrit ni `status` ni
+`last_error` ; (iii) aucun espacement après un refus d'authentification ; (iv) une boîte `disabled` est relevée quand même
+(`lire_comptes_a_veiller` ne filtre pas le statut), d'où aucun moyen de suspendre.
+**Décision : une unité `CRM-135` pour les quatre.** **MCP** : **non** — service interne ; l'état des boîtes se lit à l'écran
+« État de la messagerie ».

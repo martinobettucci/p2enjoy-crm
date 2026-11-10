@@ -18886,3 +18886,18 @@ et permet de les désarchiver. Même donnée et mêmes droits que l'archivage de
 **DoD** : unitaires ; API (droits : refus pour qui ne peut pas archiver) ; E2E souris et clavier (archiver, déplier,
 désarchiver) ; outils du connecteur et `verify-mcp.sh` ; seed (un channel archivé) ; captures aux quatre paliers ; manuel.
 
+## Demande du 2026-11-10 — la veille de `mail-sync` dit pourquoi elle échoue, et sait s'arrêter (décision 873, INC-349)
+
+### CRM-135 — La veille journalise ses échecs, les écrit, espace les refus d'authentification et ignore une boîte désactivée `[ ]`
+
+**Origine** : INC-349 (session d9) ; arbitrée le 2026-11-10 (décision 873).
+**Comportement attendu** : (i) le journal de la veille porte le compte, le motif et les compteurs, jamais un secret ni un
+identifiant de connexion ; (ii) un échec écrit `status = 'error'` et `last_error` (motif lisible, sans secret) ; un succès
+les rend ; (iii) après un refus d'authentification, la boîte n'est plus retentée avant un délai croissant borné ; (iv) une
+boîte `disabled` n'est pas relevée.
+**MCP** : non (décision 873). **Spécification** : à écrire avant le code — `docs/SPEC-mail-subsystem.md` (veille), le DAT
+(observabilité), le contrat (image `mail-sync`).
+**DoD** : pytest (journal sans secret, écriture de l'échec, espacement, boîte désactivée) ; preuve d'intégration contre la
+vraie base ; `verify-mail-*` concernés ; écran d'état (le motif paraît) en E2E ; contrat de déploiement ; INC-349 close
+sur ces points.
+
