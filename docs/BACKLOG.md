@@ -18972,3 +18972,29 @@ serveur, `docs/SPEC-mcp.md` §9.2, le manuel (inbox).
 cochée, décochée, recherche, état vide) ; outil du connecteur et `verify-mcp.sh` ; seed (un message d'un contact connu, un
 d'un inconnu) ; captures aux quatre paliers ; manuel.
 
+
+## Demande du 2026-11-10 — non lu visible, « message » plutôt que « fil », et effacer un mail (décision 878)
+
+### CRM-138 — Mails : « Marquer comme non lu » libellé près du sommeil, « message » au lieu de « fil », et effacer avec confirmation (corbeille du CRM, boîte IMAP en option) `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 878).
+**Comportement attendu** :
+- (i) dans le message ouvert de l'inbox, un bouton libellé « Marquer comme non lu » ou « Marquer comme lu », à côté du
+  bouton de sommeil, remplace l'icône seule ;
+- (ii) les textes du sommeil disent « message » au lieu de « fil » ;
+- (iii) « Effacer » ouvre une fenêtre de confirmation. Le message part dans la corbeille du CRM, restaurable puis purgé.
+  Une case à cocher l'efface aussi dans la boîte IMAP, en le déplaçant dans la corbeille du serveur.
+**MCP** : **oui, famille `messagerie`**, cases existantes (décision 878) : marquer non lu, mettre en sommeil, effacer.
+**Spécification** : à écrire avant le code. Elle couvre :
+- `docs/SPEC-mail-subsystem.md`, avec une section nouvelle : la corbeille des messages, qui peut effacer, ce que voit
+  l'affaire, la purge, le déplacement IMAP par `mail-sync` sous une route interne et un relais sous autorisation ;
+- `docs/SPEC-cards.md` §16.14 et suivants (le vocabulaire du sommeil) ;
+- `docs/SCHEMA.md` (migration) ;
+- `docs/DESIGN_SYSTEM.md` (les boutons du message ouvert, la fenêtre de confirmation et sa case) ;
+- `docs/SPEC-mcp.md` §9.2 ;
+- le manuel (inbox) ;
+- le contrat de déploiement.
+**DoD** : unitaires ; pgTAP (corbeille, RLS, purge, refus de droits) ; API avec refus de droits par jeton réel ; pytest et
+E2E `mail` sur le vrai serveur IMAP de dev (le message arrive dans la corbeille de la boîte quand la case est cochée, il y
+reste sinon) ; E2E souris et clavier (non lu, sommeil, effacer, annuler, restaurer) ; outils du connecteur et
+`verify-mcp.sh` ; seed ; captures aux quatre paliers ; manuel ; contrat de déploiement.

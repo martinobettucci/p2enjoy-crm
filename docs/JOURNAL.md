@@ -39616,3 +39616,33 @@ serveur, sous les droits de la personne.
 **MCP** : **oui, famille existante `messagerie`** — l'outil qui classe un message peut proposer les affaires de
 l'expéditeur, cases en place.
 **Conséquences** : unité `CRM-137`, à spécifier avant le code.
+
+### décision 878 — Mails : « Marquer comme non lu » libellé à côté du sommeil, « message » plutôt que « fil », et effacer vers la corbeille du CRM, la boîte IMAP en option ; connecteur dans la famille messagerie
+
+*2026-11-10, session 152dd27d (p2enjoy-crm-d9), arbitrage du responsable (conversation et `AskUserQuestion`).*
+**Problème** : le responsable dit qu'on ne peut ni remettre un mail en non lu, ni le mettre en sommeil « comme pour les
+affaires », ni l'effacer avec confirmation. Mesuré dans le code et dans la webapp de production (livrée le 2026-11-06) :
+- les deux premiers gestes existent dans le message ouvert de l'inbox, mais on ne les trouve pas : « Marquer comme non
+  lu » est une icône seule à droite de l'objet (`inbox-basculer-lecture`, `CRM-063` tranche 2, `0105`), et « Mettre le
+  fil en sommeil » un bouton sous l'en-tête (`fil-endormir`, `CRM-081` 2 c, `0048`) ;
+- l'effacement n'existe pas : aucune fonction ne retire un message, ni dans la base, ni dans la boîte.
+**Décision du responsable** :
+- **non lu** : un bouton **libellé** (« Marquer comme non lu » ou « Marquer comme lu »), placé **à côté du bouton de
+  sommeil**, au lieu de l'icône seule ;
+- **le vocabulaire** : « au lieu de dire "fil", dit "message" ». « Mettre le fil en sommeil » devient « Mettre le
+  message en sommeil », et de même pour les libellés, les annonces et les refus du sommeil dans l'inbox. *À noter pour la
+  spécification* : le sommeil reste celui du fil (`snooze_thread`, clé de fil), et tout le fil dort. Seul le mot change ;
+  la spécification dira comment le nommer sans tromper sur un fil de plusieurs messages ;
+- **effacer**, avec une fenêtre de confirmation : le message va dans **la corbeille du CRM**, restaurable puis purgé
+  comme la corbeille des affaires. La fenêtre porte **une case à cocher** pour l'effacer **aussi dans la boîte IMAP**,
+  c'est-à-dire le déplacer dans sa corbeille chez le fournisseur ;
+- **MCP : oui, famille `messagerie`**, existante, dont il partage les cases (`docs/SPEC-mcp.md` §6.1) : marquer non lu,
+  mettre en sommeil, effacer.
+**Conséquences** : une unité, `CRM-138`, à spécifier avant le code. Elle demande une migration (la corbeille des messages,
+sa RLS, sa purge), une écriture IMAP par `mail-sync` (le déplacement vers la corbeille, sous une route interne et un
+relais sous autorisation) et les outils du connecteur. La spécification tranchera :
+- qui peut effacer (droit d'écriture sur l'affaire ou sur la boîte) ;
+- ce que voient l'affaire et son fil d'un message effacé ;
+- le délai avant la purge ;
+- le dossier de corbeille IMAP (rôle `\Trash` annoncé par le serveur) ;
+- le refus si la boîte n'est pas joignable.
