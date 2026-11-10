@@ -19131,3 +19131,38 @@ dans les deux colonnes de santé ; `app.health_context` sous un seul contrôle d
 (seed ou jeu de charge) ; pgTAP prouvant que les droits n'ont pas changé (lectrice, membre, refus) ; API du board ; E2E du
 board ; INC-352 close sur le constat en production.
 
+
+## Demande du 2026-11-10 — les pièces jointes, téléchargeables en production et jointes depuis le connecteur (décision 889)
+
+### CRM-143 — Pièces jointes : ClamAV en production, repli confirmé pour une pièce non analysée, reprise des pièces déjà reçues, pièces jointes depuis le connecteur `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 889).
+**Comportement attendu** :
+- (i) ClamAV tourne dans la cellule de production, sous un plafond mémoire mesuré, et analyse les pièces reçues ;
+- (ii) une pièce non analysée se télécharge après un avertissement et une confirmation, règle appliquée côté serveur ;
+  une pièce infectée jamais ;
+- (iii) une reprise analyse les pièces `skipped` existantes ;
+- (iv) `crm_mail_prepare` et `crm_mail_send` du connecteur joignent des pièces ; la lecture d'une pièce non analysée par
+  le connecteur exige un accusé explicite.
+**MCP** : **oui, famille `messagerie`**, cases existantes (décision 889).
+**Spécification** : à écrire avant le code. Elle couvre :
+- `docs/SPEC-mail-subsystem.md` : §4.3 révisé, §19 bis.1, le repli, la reprise ;
+- `docs/SPEC-pieces-jointes.md` ;
+- `docs/SPEC-deploiement-spark.md` et `docs/PROD_MIGRATIONS.md` : service, mémoire, signatures ;
+- `docs/SCHEMA.md`, si la confirmation est persistée ;
+- `docs/DESIGN_SYSTEM.md` : l'avertissement ;
+- `docs/SPEC-mcp.md` §9.2 ;
+- le manuel ;
+- `docs/spark-notes/` : la mémoire réelle de la cellule.
+**DoD** :
+- unitaires ;
+- pgTAP et API : `skipped` téléchargeable seulement avec la confirmation, `infected` jamais, l'anonyme rien, refus de
+  droits par jeton réel ;
+- pytest et E2E `mail` sur le vrai ClamAV de dev : la reprise passe une pièce `skipped` en `clean`, et l'échantillon EICAR
+  en `infected` ;
+- E2E souris et clavier : l'avertissement, la confirmation, l'annulation ;
+- outils du connecteur et `verify-mcp.sh` ;
+- seed : une pièce par statut ;
+- captures aux quatre paliers ;
+- manuel ;
+- contrat de déploiement, avec la mesure mémoire dans la cellule après déploiement.

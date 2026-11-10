@@ -39890,3 +39890,40 @@ de la décision 887 « alléger les plongements » : ne pas alléger ; alléger 
 **Conséquences** : `docs/SPEC-analytique.md` §13.10, `docs/SCHEMA.md` « Migration de `CRM-142` » (numéro pris au push),
 `CRM-142` au backlog. **MCP** : non (décision 887).
 
+
+### décision 889 — Pièces jointes : ClamAV en production, une pièce non analysée téléchargeable après avertissement, reprise des pièces déjà reçues ; joindre depuis le connecteur ; famille messagerie
+
+*2026-11-10, session 152dd27d (p2enjoy-crm-d9), demande et arbitrage du responsable (conversation, capture d'écran et
+`AskUserQuestion`).*
+**Demande** : « apparemment on ne gère pas les pièces jointes non plus : il faut les lister et les laisser télécharger
+sur un mail, et on doit pouvoir les ajouter à un mail (MCP inclus) ». Puis, capture à l'appui : « les pièces jointes
+restent en non analysées en production ».
+**État mesuré, en lecture seule** :
+- le message ouvert liste ses pièces (`ListePiecesJointes`), et le formulaire d'envoi les joint (`CRM-058` T2) ;
+- le connecteur lit une pièce (`crm_mail_attachment_get`), mais `crm_mail_prepare` et `crm_mail_send` n'en joignent
+  aucune ;
+- en production, les 4 pièces reçues sont `skipped` : aucun antivirus dans la cellule
+  (`docs/SPEC-mail-subsystem.md` §19 bis.1), et `skipped` n'est pas téléchargeable (§4.3) ;
+- la cellule a 3 328 Mo, dont environ 1 960 Mo disponibles. `docs/spark-notes/CONTRIBUTORS.md` en annonçait 2 Gio,
+  d'où l'absence de ClamAV ; son démon tient de l'ordre de 1,2 à 1,4 Go, signatures chargées, sans rechargement
+  concurrent.
+**Décision du responsable** :
+- **ClamAV en production**, dans la cellule, sous un plafond mémoire mesuré ; les signatures sont rechargées sans
+  doublon (choix recommandé) ;
+- **un repli** : tant qu'une pièce n'est pas analysée (`skipped`, ou `pending` au-delà d'un délai), elle se télécharge
+  **après un avertissement et une confirmation** explicites. Une pièce `infected` ne se télécharge jamais ;
+- **une reprise** : une fois l'antivirus en place, les pièces `skipped` existantes sont analysées ; saines, elles
+  deviennent téléchargeables, infectées, elles restent bloquées (choix recommandé) ;
+- **joindre depuis le connecteur** : `crm_mail_prepare` et `crm_mail_send` acceptent des pièces jointes ;
+- **MCP : oui, famille `messagerie`**, existante, cases partagées (« MCP inclus ») : joindre, lister, lire une pièce. La
+  lecture d'une pièce non analysée exige un accusé explicite dans l'appel.
+**Conséquences** : une unité, `CRM-143`, à spécifier avant le code. Elle demande :
+- le service `clamav` dans `docker-compose.spark.yml` et le contrat de déploiement : mémoire, signatures, mise à jour ;
+- la révision du §4.3 et de la politique de stockage des pièces, pour que le repli soit appliqué côté serveur avec une
+  confirmation persistée ou un paramètre explicite, jamais un simple booléen client (`CLAUDE.md` §10) ;
+- l'avertissement à l'écran ;
+- la reprise ;
+- les paramètres de pièces jointes des outils d'envoi du connecteur.
+
+La spécification révise l'assertion « `skipped` non » (`e2e/api/inbox.spec.ts:159`), retournée et non retirée
+(décision 51). Elle rectifie aussi la note de la cellule (2 Gio).
