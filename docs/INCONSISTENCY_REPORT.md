@@ -8958,3 +8958,11 @@ posés), les dossiers surveillés, les adresses de service, puis la connexion IM
   - (d) le responsable vérifie l'accès IMAP de la boîte chez le fournisseur et ressaisit le mot de passe ;
   - (e) en attendant, suspendre la relève de cette boîte, une écriture en production réservée à be sur instruction ;
   - (f) une unité pour (i), (ii) et (iii).
+
+**Mesure complémentaire du 2026-11-10** (session 152dd27d, en lecture seule). Les réglages de la boîte sont ceux de la
+documentation du fournisseur : serveur `mail.gandi.net`, 993 en SSL, adresse complète comme identifiant, mot de passe de
+la boîte, le même qu'en SMTP. Avec ces mêmes identifiants, depuis `mail-sync`, **POP3 sur 995 s'authentifie** (`STAT` :
+16 877 messages ; aucun `RETR` ni `DELE`, `QUIT` sans effacement). Au même instant, **IMAP sur 993 refuse**
+(`AUTHENTICATIONFAILED`). Le refus porte donc sur le seul accès IMAP de cette boîte, chez le fournisseur. Le mot de
+passe, l'identifiant et le réseau de la cellule ne sont pas en cause. Le CRM ne relève qu'en IMAP (§4.5, §17, §20.6 bis :
+dossiers, copie dans `CRM/Affaires/…`, plages d'UID) ; aucune décision n'a écarté POP explicitement.
