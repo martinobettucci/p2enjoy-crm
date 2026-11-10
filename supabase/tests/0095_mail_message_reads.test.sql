@@ -4,6 +4,8 @@
 --           `mail_message_reads` ; docs/SPEC-permissions-rls.md §7 (la discrétion) ; docs/JOURNAL.md décisions 715, 716
 -- @verifies CRM-074 (docs/BACKLOG.md) — tranche T3 : le compte des non-lus de départ suit le message aux pièces jointes du seed
 --           (docs/SPEC-seed.md §35 ; révision du n° 11, décision 51)
+-- @verifies CRM-143 (docs/BACKLOG.md) — tranche T6 : le compte suit le courrier « Pièces à vérifier » du seed
+--           (docs/SPEC-seed.md §40 ; révision du n° 11, décision 51)
 --
 -- LA SUITE S'APPUIE SUR LE COURRIER DU SEED (§2.19), sans en fabriquer : Camille (admin) voit les quatre messages,
 -- Driss (business_developer) les deux classés seulement. LES COMPTES DE DOSSIER SONT BORNÉS À L'AFFAIRE DU FIL
@@ -78,8 +80,10 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');  -- Camille, ad
 
 -- RÉVISÉ par `CRM-074` T3 (décision 51) : le seed reçoit un cinquième message, « Dossier de consultation — monitoring
 -- Vertuo » et ses cinq pièces jointes (docs/SPEC-seed.md §35), que personne n'ouvre.
-select is((select count(*) from public.mail_messages m where not public.is_read(m)), 5::bigint,
-	'11 — au départ, les cinq messages reçus sont non lus pour Camille : aucune lecture fabriquée');
+-- RÉVISÉ par `CRM-143` T6 (décision 51), non relâché : un sixième, « Pièces à vérifier — monitoring Vertuo », l'échantillon
+-- EICAR et une pièce trop volumineuse (docs/SPEC-seed.md §40), que personne n'ouvre non plus.
+select is((select count(*) from public.mail_messages m where not public.is_read(m)), 6::bigint,
+	'11 — au départ, les six messages reçus sont non lus pour Camille : aucune lecture fabriquée');
 select is((select unread_count from public.inbox_arborescence() where card_id is null), 2::bigint,
 	'12 — « Non classés » : deux non lus pour Camille');
 select is((select nombre from public.inbox_arborescence() where card_id is null), 2::bigint,
