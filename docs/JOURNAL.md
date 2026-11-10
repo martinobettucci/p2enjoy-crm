@@ -40323,3 +40323,14 @@ reprises de contexte.
 Le compte rendu de l'unité dit que la lecture n'était pas intégrale. Le diff d'interface reste vérifié contre ces sections
 avant le commit.
 **Portée** : `CRM-144` seulement ; la règle de `CLAUDE.md` n'est pas changée.
+
+### décision 910 — `CRM-147` : où est la clé, constaté puis indiqué par le responsable
+
+*2026-11-10, session interactive 4891a451 (p2enjoy-crm-32) ; complète la décision 909.*
+**Constaté en lecture seule sous `spark-docker`** (le compte que la décision 909 désigne) : `git ls-remote` vers le dépôt
+répond « Permission denied (publickey) » ; `~/.ssh` ne contient que `authorized_keys`, et aucune configuration SSH ne
+désigne une clé ailleurs. Aucune clé n'a été lue ; aucune écriture n'a eu lieu dans la cellule.
+**Indication du responsable** (`AskUserQuestion`) : la clé autorisée à cloner est **`/root/.ssh/id_ed25519`**. Elle n'est
+ni lue, ni copiée, ni ouverte par un agent, et root reste hors de son périmètre (décision 909).
+**Point ouvert, à arbitrer par le responsable à la spécification de `CRM-147`** : la manière dont la livraison, qui
+s'exécute sous `spark-docker`, met cette clé en œuvre sans qu'un agent n'agisse en root.
