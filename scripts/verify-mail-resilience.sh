@@ -6,6 +6,8 @@
 #           affiché), §20.8 (preuves exigées), §20.10 (la boucle de veille), §20.11 (l'écran d'état)
 # @verifies docs/JOURNAL.md décision 331, décision 341, décision 342, décision 346, décision 347
 # @verifies CLAUDE.md §16 (vérification visuelle)
+# @spec CRM-132 (docs/BACKLOG.md) — pytest par `scripts/lib/pytest-mail-sync.sh`, sur tout poste, et une dégradation
+#       n'est « vue » que sur le code 1 de pytest (INC-345, décision 867)
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais prouve.
@@ -102,7 +104,8 @@ restaurer() {
 }
 trap restaurer EXIT
 
-if [ -x "$RACINE/.venv/bin/python" ]; then PYTHON=$RACINE/.venv/bin/python; else PYTHON=python3; fi
+# shellcheck source=scripts/lib/pytest-mail-sync.sh
+source "$RACINE/scripts/lib/pytest-mail-sync.sh"
 
 printf '\033[1mPreuves de CRM-059 — backfill, résilience, supervision\033[0m\n'
 
@@ -213,7 +216,7 @@ if [ "$RAPIDE" = true ]; then
 else
 	titre "5. pytest — SANS SERVEUR"
 
-	if "$PYTHON" -m pytest "$RACINE/mail-sync/tests" -q >"$TRAVAIL/pytest.log" 2>&1; then
+	if pytest_mail_sync -q >"$TRAVAIL/pytest.log" 2>&1; then
 		ok "pytest mail-sync/tests : $(tail -1 "$TRAVAIL/pytest.log")"
 	else
 		fail_journal "pytest ÉCHOUE" "$TRAVAIL/pytest.log"
@@ -250,7 +253,7 @@ else
 
 	titre "7. Non-complaisance"
 
-	if "$PYTHON" -m pytest "$RACINE/mail-sync/tests/test_backoff.py" -q >"$TRAVAIL/temoin-py.log" 2>&1
+	if pytest_mail_sync_cible "$TEST_MODULE_BACKOFF" -q >"$TRAVAIL/temoin-py.log" 2>&1
 	then
 		ok "témoin : le backoff est VERT avant toute dégradation"
 	else
@@ -270,11 +273,14 @@ else
 			rendre "$fichier"
 			return
 		fi
-		if "$PYTHON" -m pytest "$RACINE/$module_pytest" -q >"$TRAVAIL/degrade.log" 2>&1; then
-			fail "dégradation NON VUE : $libelle"
-		else
-			ok "dégradation vue : $libelle"
-		fi
+		# Le code 1, et lui seul : un pytest qui n'a pas tourné ne voit rien (INC-345).
+		local issue=0
+		juger_degradation_py "$TRAVAIL/degrade.log" "$module_pytest" -q || issue=$?
+		case $issue in
+			0) ok "dégradation vue : $libelle" ;;
+			1) fail "dégradation NON VUE : $libelle" ;;
+			*) fail_journal "dégradation NON PROUVÉE : $libelle" "$TRAVAIL/degrade.log" ;;
+		esac
 		rendre "$fichier"
 	}
 
@@ -309,7 +315,7 @@ else
 		"\['queued', 'sending'\]" "['queued']"
 
 	titre "8. Restauration"
-	if "$PYTHON" -m pytest "$RACINE/mail-sync/tests/test_backoff.py" -q >"$TRAVAIL/restaure-py.log" 2>&1
+	if pytest_mail_sync_cible "$TEST_MODULE_BACKOFF" -q >"$TRAVAIL/restaure-py.log" 2>&1
 	then
 		ok "les preuves du backoff redeviennent vertes après restauration"
 	else

@@ -8762,6 +8762,9 @@ to_node_id, common_field_key)` pour la copie ; la liste fermée de la webapp et 
 
 ### INC-345 — six harnais de la messagerie et le README supposent un pytest de l'hôte ; une dégradation s'y dit « vue » sans test
 **Arbitrée le 2026-11-06 (décision 867)** : une unité dédiée, `CRM-132`, rend les six harnais probants sur tout poste.
+**Close le 2026-11-10 avec `CRM-132`** (session 152dd27d, p2enjoy-crm-d9) : les six harnais passent par `scripts/lib/pytest-mail-sync.sh` ;
+une dégradation n'est « vue » que sur le code 1 de pytest, et « NON PROUVÉE » sinon. Preuves : les six harnais rejoués verts, et une
+mutation qui les fait rougir. Le README documente `pytest_mail_sync`.
 
 *Relevé le 2026-11-05 par la session d5b44a2d (p2enjoy-crm-30) en rejouant `scripts/verify-mail-inbound.sh` pour `CRM-127`
 T2 (décision 847). Corrigé pour ce seul harnais ; **ouverte** pour les autres, hors de la tranche autorisée.*

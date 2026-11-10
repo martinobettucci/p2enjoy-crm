@@ -4,6 +4,8 @@
 #           refus, le quota), §19.5 (ce que le worker compose), §19.8 (limites nommées)
 # @verifies docs/SPEC-permissions-rls.md §7.2 preuve de refus n° 12 ACQUISE
 # @verifies docs/JOURNAL.md décision 330 ; CLAUDE.md §16
+# @spec CRM-132 (docs/BACKLOG.md) — pytest par `scripts/lib/pytest-mail-sync.sh`, sur tout poste, et une dégradation
+#       n'est « vue » que sur le code 1 de pytest (INC-345, décision 867)
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais prouve.
@@ -93,15 +95,18 @@ for fichier in "$MIGRATION" "$TEST_SQL" "$SPEC_API" "$SPEC_MAIL" "$SPEC_UI" "$MO
 	"$TEST_MODULE" "$WORKER" "$ECRAN"; do
 	if [ -f "$fichier" ]; then ok "$fichier est livré"; else fail "$fichier est ABSENT"; fi
 done
+# `CRM-132` : l'en-tête entier, et non ses trois premières lignes — d'autres unités y ont ajouté les leurs depuis
+# (`CRM-069` en tête de `composition.py` et d'`envoi.py`). Le bloc de commentaires de tête, sans tube (`pipefail`).
+entete() { awk 'NR > 1 && !/^(#|\/\/|--)/ { exit } { print }' "$1"; }
 for fichier in "$MIGRATION" "$MODULE" "$WORKER" "$ECRAN"; do
-	if head -3 "$fichier" | grep -q 'CRM-058'; then
+	if grep -q 'CRM-058' <<<"$(entete "$fichier")"; then
 		ok "$(basename "$fichier") porte son commentaire @spec"
 	else
 		fail "$(basename "$fichier") ne cite pas son unité"
 	fi
 done
 for fichier in "$TEST_SQL" "$SPEC_API" "$SPEC_MAIL" "$SPEC_UI" "$TEST_MODULE"; do
-	if head -3 "$fichier" | grep -q '@verifies CRM-058'; then
+	if grep -q '@verifies CRM-058' <<<"$(entete "$fichier")"; then
 		ok "$(basename "$fichier") porte son commentaire @verifies"
 	else
 		fail "$(basename "$fichier") ne cite pas son unité"
@@ -191,7 +196,8 @@ else
 	fail_journal "pgTAP ÉCHOUE" "$TRAVAIL/pgtap.log"
 fi
 
-if [ -x "$RACINE/.venv/bin/python" ]; then PYTHON=$RACINE/.venv/bin/python; else PYTHON=python3; fi
+# shellcheck source=scripts/lib/pytest-mail-sync.sh
+source "$RACINE/scripts/lib/pytest-mail-sync.sh"
 
 if [ "$RAPIDE" = true ]; then
 	titre "5. Preuves longues"
@@ -199,7 +205,7 @@ if [ "$RAPIDE" = true ]; then
 else
 	titre "5. pytest, API, aller-retour et écran"
 
-	if "$PYTHON" -m pytest "$RACINE/$TEST_MODULE" -q >"$TRAVAIL/pytest.log" 2>&1; then
+	if pytest_mail_sync_cible "$TEST_MODULE" -q >"$TRAVAIL/pytest.log" 2>&1; then
 		ok "pytest $TEST_MODULE : $(tail -1 "$TRAVAIL/pytest.log")"
 	else
 		fail_journal "pytest ÉCHOUE" "$TRAVAIL/pytest.log"
@@ -230,7 +236,7 @@ else
 
 	titre "6. Non-complaisance"
 
-	if "$PYTHON" -m pytest "$RACINE/$TEST_MODULE" -q >"$TRAVAIL/temoin.log" 2>&1; then
+	if pytest_mail_sync_cible "$TEST_MODULE" -q >"$TRAVAIL/temoin.log" 2>&1; then
 		ok "témoin : les preuves de composition sont VERTES avant toute dégradation"
 	else
 		fail_journal "témoin ROUGE : la suite ne mesure plus rien" "$TRAVAIL/temoin.log"
@@ -244,11 +250,13 @@ else
 			rendre "$MODULE"
 			return
 		fi
-		if "$PYTHON" -m pytest "$RACINE/$TEST_MODULE" -q >"$TRAVAIL/degrade.log" 2>&1; then
-			fail "dégradation NON VUE : $libelle"
-		else
-			ok "dégradation vue : $libelle"
-		fi
+		local issue=0
+		juger_degradation_py "$TRAVAIL/degrade.log" "$TEST_MODULE" -q || issue=$?
+		case $issue in
+			0) ok "dégradation vue : $libelle" ;;
+			1) fail "dégradation NON VUE : $libelle" ;;
+			*) fail_journal "dégradation NON PROUVÉE : $libelle" "$TRAVAIL/degrade.log" ;;
+		esac
 		rendre "$MODULE"
 	}
 
@@ -265,11 +273,12 @@ else
 		'message\["Subject"\] = envoi.subject if envoi.subject else OBJET_PAR_DEFAUT' \
 		'message["Subject"] = envoi.subject'
 
+	# `CRM-132` : le motif suit l'enveloppe actuelle, qui porte aussi la copie cachée (`CRM-058` tranche 2).
 	degrader "les copies retirées de l'enveloppe — elles ne seraient jamais remises" \
-		'return (\*envoi.to_addrs, \*envoi.cc_addrs)' 'return tuple(envoi.to_addrs)'
+		'for adresse in (\*envoi.to_addrs, \*envoi.cc_addrs, \*envoi.bcc_addrs):' 'for adresse in (*envoi.to_addrs,):'
 
 	titre "7. Restauration"
-	if "$PYTHON" -m pytest "$RACINE/$TEST_MODULE" -q >"$TRAVAIL/restaure.log" 2>&1; then
+	if pytest_mail_sync_cible "$TEST_MODULE" -q >"$TRAVAIL/restaure.log" 2>&1; then
 		ok "les preuves de composition redeviennent vertes après restauration"
 	else
 		fail_journal "les preuves restent ROUGES après restauration" "$TRAVAIL/restaure.log"

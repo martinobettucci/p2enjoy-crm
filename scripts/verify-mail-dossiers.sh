@@ -3,6 +3,8 @@
 # @verifies docs/SPEC-mail-subsystem.md §4.5 (dossiers, renommage, copie et non déplacement),
 #           §17.1 (mesures), §17.2 (ce que l'unité livre)
 # @verifies docs/JOURNAL.md décisions 323, 324, 325 ; CLAUDE.md §16 (vérification visuelle)
+# @spec CRM-132 (docs/BACKLOG.md) — pytest par `scripts/lib/pytest-mail-sync.sh`, sur tout poste, et une dégradation
+#       n'est « vue » que sur le code 1 de pytest (INC-345, décision 867)
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais prouve.
@@ -194,8 +196,9 @@ if [ "$RAPIDE" = false ]; then
 		fi
 	done
 
-	if [ -x "$RACINE/.venv/bin/python" ]; then PYTHON=$RACINE/.venv/bin/python; else PYTHON=python3; fi
-	if "$PYTHON" -m pytest "$RACINE/$TEST_MODULE" -q >"$TRAVAIL/pytest.log" 2>&1; then
+	# shellcheck source=scripts/lib/pytest-mail-sync.sh
+	source "$RACINE/scripts/lib/pytest-mail-sync.sh"
+	if pytest_mail_sync_cible "$TEST_MODULE" -q >"$TRAVAIL/pytest.log" 2>&1; then
 		ok "pytest $TEST_MODULE : $(tail -1 "$TRAVAIL/pytest.log")"
 	else
 		fail_journal "pytest ÉCHOUE" "$TRAVAIL/pytest.log"
@@ -203,7 +206,7 @@ if [ "$RAPIDE" = false ]; then
 
 	titre "5. Non-complaisance"
 
-	if "$PYTHON" -m pytest "$RACINE/$TEST_MODULE" -q >"$TRAVAIL/temoin.log" 2>&1; then
+	if pytest_mail_sync_cible "$TEST_MODULE" -q >"$TRAVAIL/temoin.log" 2>&1; then
 		ok "témoin : les preuves du module sont VERTES avant toute dégradation"
 	else
 		fail_journal "témoin ROUGE" "$TRAVAIL/temoin.log"
@@ -213,11 +216,13 @@ if [ "$RAPIDE" = false ]; then
 		local libelle=$1 motif=$2 remplacement=$3
 		sauvegarder "$MODULE"
 		sed -i "s|$motif|$remplacement|" "$MODULE"
-		if "$PYTHON" -m pytest "$RACINE/$TEST_MODULE" -q >"$TRAVAIL/degrade.log" 2>&1; then
-			fail "dégradation NON VUE : $libelle"
-		else
-			ok "dégradation vue : $libelle"
-		fi
+		local issue=0
+		juger_degradation_py "$TRAVAIL/degrade.log" "$TEST_MODULE" -q || issue=$?
+		case $issue in
+			0) ok "dégradation vue : $libelle" ;;
+			1) fail "dégradation NON VUE : $libelle" ;;
+			*) fail_journal "dégradation NON PROUVÉE : $libelle" "$TRAVAIL/degrade.log" ;;
+		esac
 		rendre "$MODULE"
 	}
 
@@ -233,7 +238,7 @@ if [ "$RAPIDE" = false ]; then
 		"return CAPACITE_GMAIL not in capacites" "return True"
 
 	titre "6. Restauration"
-	if "$PYTHON" -m pytest "$RACINE/$TEST_MODULE" -q >"$TRAVAIL/restaure.log" 2>&1; then
+	if pytest_mail_sync_cible "$TEST_MODULE" -q >"$TRAVAIL/restaure.log" 2>&1; then
 		ok "les preuves du module redeviennent vertes après restauration"
 	else
 		fail_journal "les preuves restent ROUGES après restauration" "$TRAVAIL/restaure.log"

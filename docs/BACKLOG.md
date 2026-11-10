@@ -18836,8 +18836,7 @@ INC-348 close.
       barre affiche ne change pas, et les E2E le relisent.
 - [P] **Livraison et constat** : webapp de `main`, avec `CRM-129` (`docs/PROD_MIGRATIONS.md` §2.32).
 
-### CRM-132 — Les harnais de la messagerie prouvent leurs dégradations sur tout poste `[@]`
-*Prise en charge : session interactive 152dd27d (p2enjoy-crm-d9) depuis 2026-11-06 11:22 UTC — état avant : [ ]*
+### CRM-132 — Les harnais de la messagerie prouvent leurs dégradations sur tout poste `[x]`
 
 **Origine** : INC-345 (session d9, `CRM-059`) ; arbitrée le 2026-11-06 (décision 867).
 **Comportement attendu** : les six harnais de la messagerie qui appellent un pytest d'hôte, dont
@@ -18845,6 +18844,25 @@ INC-348 close.
 quand une dégradation n'est pas réellement vue — jamais « vue » à tort.
 **MCP** : non (décision 867). **DoD** : chaque harnais rejoué vert sur ce poste ; une dégradation volontairement
 inefficace le fait rougir (mutation) ; INC-345 close.
+**Fait le 2026-11-10** (session 152dd27d, p2enjoy-crm-d9) :
+- les six harnais passent par `scripts/lib/pytest-mail-sync.sh` (`pytest_mail_sync_cible`, `juger_degradation_py`) ;
+  une dégradation n'est « vue » que sur le code 1, « NON PROUVÉE » sur tout autre code ;
+- le README documente la commande.
+- Rejoués verts après le reset de be et la synchronisation sur `6001ce76` : sync 61, dossiers 37, envoi 43, outbound 51,
+  ingestion 39, résilience 56. Pendant ces passages, l'arbre portait les modifications non commitées de `CRM-135`
+  dans `mail-sync/src` ; elles ont été restaurées à l'identique (empreintes vérifiées).
+- Mutation : une dégradation rendue sans effet (`FACTEUR = 4` → `FACTEUR = 4`) donne « NON VUE », et une cible pytest
+  absente donne « NON PROUVÉE », dans une copie temporaire de `verify-mail-resilience.sh`, effacée ensuite : le harnais
+  rougit.
+- Défauts trouvés en route et corrigés, antérieurs à l'unité :
+  - `verify-mail-sync.sh` : `printf | grep -q` sous `pipefail` rendait 141 (SIGPIPE) sur un long journal ;
+  - des contrôles de traçabilité limités à trois lignes d'en-tête ;
+  - des comptes de scénarios figés (outbound 10, mail 5) ;
+  - un motif de dégradation périmé (envoi) ;
+  - la liste des politiques de stockage, close et bornée au bucket ;
+  - l'invariant « classé sans `classified_at` », qui comptait l'envoi archivé `outbound` (`0030`).
+- Observé hors périmètre : le scénario de coupure SMTP réelle de `verify-mail-resilience.sh` a échoué une fois (`sent`
+  = 1 dans la passe en panne), sans se reproduire.
 
 ### Suite d'INC-347 — la liste close des marqueurs de rôle (décision 865) `[@]`
 *Prise en charge : session interactive 152dd27d (p2enjoy-crm-d9) depuis 2026-11-06 11:22 UTC — état avant : [ ]*

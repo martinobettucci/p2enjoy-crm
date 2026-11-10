@@ -9,6 +9,8 @@
 # @verifies docs/DAT.md §3.3 (service mail-sync) ; CLAUDE.md §10 (règle appliquée côté backend)
 # @verifies CRM-115 (docs/BACKLOG.md) tranche T5 — le réseau et les volumes de la pile dérivés de son projet (`projet_pile`),
 #           jamais ceux de l'emplacement 0 écrits en dur (docs/SPEC-pile-par-session.md §9)
+# @spec CRM-132 (docs/BACKLOG.md) — pytest par `scripts/lib/pytest-mail-sync.sh`, sur tout poste, et une dégradation
+#       n'est « vue » que sur le code 1 de pytest (INC-345, décision 867)
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais prouve.
@@ -142,20 +144,17 @@ printf '\033[1mPreuves de CRM-051 — socle du service mail-sync\033[0m\n'
 
 titre "1. Preuve unitaire Python"
 
-if [ -x "$RACINE/.venv/bin/python" ]; then
-	PYTHON=$RACINE/.venv/bin/python
-else
-	PYTHON=python3
-fi
+# shellcheck source=scripts/lib/pytest-mail-sync.sh
+source "$RACINE/scripts/lib/pytest-mail-sync.sh"
 
-if sortie_pytest=$("$PYTHON" -m pytest "$RACINE/mail-sync/tests" -q 2>&1); then
+if sortie_pytest=$(pytest_mail_sync -q 2>&1); then
 	ok "pytest mail-sync/tests : $(printf '%s' "$sortie_pytest" | tail -1)"
 else
 	fail "pytest mail-sync/tests échoue"
 	printf '%s\n' "$sortie_pytest" | tail -20
 fi
 
-if printf '%s' "$sortie_pytest" | grep -q 'warning'; then
+if grep -q 'warning' <<<"$sortie_pytest"; then
 	fail "pytest signale des avertissements : la console doit rester silencieuse"
 else
 	ok "pytest ne produit aucun avertissement"
@@ -409,6 +408,10 @@ relu=$(corps_de "$(appel_interne GET /internal/v1/dev/checkpoint "Bearer $JETON"
 	&& ok "boot_id est renouvelé" || fail "boot_id inchangé : le démarrage n'a pas eu lieu"
 
 # --- 8. Journaux ---------------------------------------------------------------------------------
+# `CRM-132` : les recherches lisent le journal par une chaîne (`<<<`), jamais par un tube. Sous `pipefail`, `grep -q`
+# s'arrête au premier résultat et `printf` reçoit SIGPIPE (code 141) dès que le journal dépasse le tampon du tube —
+# mesuré : 3,4 Mo après quelques jours de veille. Le pipeline échouait alors sur une ligne PRÉSENTE : un événement se
+# disait absent, et une ligne WARNING ou le jeton se seraient dits absents eux aussi.
 
 titre "8. Journaux JSON, sans secret ni avertissement"
 
@@ -430,27 +433,27 @@ else
 	fail "au moins une ligne de journal n'est pas un JSON conforme"
 fi
 
-if printf '%s\n' "$journaux" | grep -qE '"level":"(WARNING|ERROR|CRITICAL)"'; then
+if grep -qE '"level":"(WARNING|ERROR|CRITICAL)"' <<<"$journaux"; then
 	fail "le nominal produit une ligne WARNING ou pire"
 	printf '%s\n' "$journaux" | grep -E '"level":"(WARNING|ERROR|CRITICAL)"' | head -5
 else
 	ok "aucune ligne WARNING, ERROR ou CRITICAL après démarrage, API, arrêt et reprise"
 fi
 
-if printf '%s\n' "$journaux" | grep -qF "$JETON"; then
+if grep -qF "$JETON" <<<"$journaux"; then
 	fail "le jeton interne apparaît dans les journaux"
 else
 	ok "le jeton interne n'apparaît dans aucun journal"
 fi
 
-if printf '%s\n' "$journaux" | grep -qiE 'authorization|"padding"|checkpoint":"[0-9a-f]{8}-'; then
+if grep -qiE 'authorization|"padding"|checkpoint":"[0-9a-f]{8}-' <<<"$journaux"; then
 	fail "un en-tête ou un corps de requête est journalisé"
 else
 	ok "ni en-tête d'authentification, ni corps de requête ne sont journalisés"
 fi
 
 for evenement in service_started request_completed; do
-	printf '%s\n' "$journaux" | grep -q "\"event\":\"$evenement\"" \
+	grep -q "\"event\":\"$evenement\"" <<<"$journaux" \
 		&& ok "l'événement $evenement est présent" \
 		|| fail "l'événement $evenement est absent"
 done

@@ -523,7 +523,7 @@ CAPTURES_RENOUVELLEMENT=1 npm run e2e:ui           # renouvellement de toutes le
 npm run captures:rapport   # …trié par écart de pixels, le bruit rendu (docs/SPEC-captures.md)
 npm run e2e:mail           # Playwright — IMAP, SMTP, ClamAV et Roundcube réels  (pile)
 npm run e2e:report         # sert le dernier rapport HTML sur http://localhost:9323
-pytest mail-sync/tests     # pytest, 40 tests du service mail-sync — aucune pile requise
+(source scripts/lib/pytest-mail-sync.sh && pytest_mail_sync -q)   # pytest du service mail-sync (289 le 2026-11-05) — aucune pile requise
 docker build -q --target dev -t crm-mcp:dev mcp && docker run --rm crm-mcp:dev   # pytest du connecteur MCP — aucune pile requise
 ```
 
@@ -547,12 +547,20 @@ appartient à `scripts/verify-mail-sync.sh` et à `e2e/mail/mail-sync.spec.ts`. 
 retiré cette commande de la DoD de `CRM-008` — décision 277, INC-023 — plutôt que de créer un
 harnais vide ; elle y revient avec ce qu'elle éprouve.
 
-L'environnement Python attendu est un `.venv` à la racine, créé une fois :
+**La commande documentée est `pytest_mail_sync`, de `scripts/lib/pytest-mail-sync.sh`** (`CRM-132`, décision 867). Elle
+joue la suite dans le `.venv` de la racine s'il existe, sinon avec le `python3` de l'hôte s'il porte pytest, sinon — c'est le
+cas du poste de développement, Python 3.14 sans `ensurepip` ni `pip` — dans un **conteneur jetable** tiré de l'image de
+base de `mail-sync/Dockerfile`, sur l'arbre monté en lecture seule. Elle rend le code de pytest, et 125 pour une
+installation impossible. `pytest_mail_sync_cible tests/test_backoff.py -q` joue un seul fichier. Les sept harnais de la
+messagerie l'emploient, et une dégradation n'y est dite « vue » que sur le code 1 de pytest — un pytest qui n'a pas
+tourné ne voit rien (INC-345).
+
+Un `.venv`, là où l'hôte le permet, reste reconnu :
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r mail-sync/requirements-dev.txt
-.venv/bin/python -m pytest mail-sync/tests
+(source scripts/lib/pytest-mail-sync.sh && pytest_mail_sync -q)
 ```
 
 `npm run test:sql` ne se fie **ni** au code de sortie de `psql`, **ni** au diagnostic de pgTAP :
@@ -816,7 +824,7 @@ Le service Python livré par `CRM-051` :
 ```
 mail-sync/
 ├── src/mail_sync/          Configuration, état durable, journaux JSONL, API interne
-├── tests/                  pytest — 40 cas, sans pile
+├── tests/                  pytest — 289 cas le 2026-11-05, sans pile
 └── Dockerfile              Image épinglée, utilisateur non privilégié, racine en lecture seule
 ```
 

@@ -13,6 +13,21 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-132` — les harnais de la messagerie ne se disent plus verts sans avoir vu (INC-345, décision 867)
+
+- **Outillage de développement seul**, rien à livrer. Les six harnais `verify-mail-*` qui jouaient pytest sur l'hôte
+  passent par `scripts/lib/pytest-mail-sync.sh`, qui le joue au besoin dans un conteneur jetable.
+- Une dégradation n'y est dite « vue » que si des tests échouent réellement (code 1). Avant, un pytest absent de l'hôte
+  suffisait à la déclarer vue.
+- Corrigés au passage :
+  - une recherche par tube qui ratait des événements présents dans un long journal (`verify-mail-sync.sh`) ;
+  - des contrôles d'en-tête trop courts ;
+  - des comptes de scénarios figés ;
+  - un motif de dégradation périmé ;
+  - la liste des politiques de stockage ;
+  - l'invariant de classement, qui comptait l'envoi archivé.
+- Le README documente `pytest_mail_sync`.
+
 ### `CRM-129` — l'accueil ne prétend plus une absence de channel (INC-346, décisions 858 et 859)
 
 - Sur `/`, guide de démarrage fini ou masqué : « Aucun board à afficher — Aucun channel n'est disponible… » ne paraît plus

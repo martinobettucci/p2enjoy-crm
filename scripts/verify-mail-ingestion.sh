@@ -5,6 +5,8 @@
 #           §15.4 (dossiers surveillés), §15.5 (dépôt puis analyse), §15.6 (preuves exigées)
 # @verifies docs/SPEC-permissions-rls.md §7, preuve de refus n° 9
 # @verifies docs/JOURNAL.md décision 320 ; CLAUDE.md §8 (aucune trace fabriquée)
+# @spec CRM-132 (docs/BACKLOG.md) — pytest par `scripts/lib/pytest-mail-sync.sh`, sur tout poste, et une dégradation
+#       n'est « vue » que sur le code 1 de pytest (INC-345, décision 867)
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais prouve.
@@ -141,10 +143,24 @@ fi
 # mesurer ce que la seule politique admise autorise. Elle n'est pas retirée, elle est retournée.
 politiques=$(psql_db -c "select coalesce(string_agg(policyname || ':' || cmd, ',' order by policyname), '')
 	from pg_policies where schemaname='storage' and tablename='objects'")
-if [ "$politiques" = "mail_attachments_objets_lecture:SELECT" ]; then
-	ok "une SEULE politique d'objet, en lecture : \`mail_attachments_objets_lecture\` — aucune écriture n'est ouverte sur \`storage.objects\`"
+# `CRM-132` : la liste est CLOSE et NOMMÉE. Depuis `CRM-054`, deux unités ont posé les leurs, sur LEURS buckets : la
+# copie des pièces envoyées (`CRM-058` tranche 2, bucket `mail-outbound-attachments`) et le manuel (`CRM-117`, bucket
+# `manual`). Une politique de plus, ou de moins, rougit toujours ; et le contrôle suivant borne le bucket de cette unité.
+POLITIQUES_OBJETS="mail_attachments_objets_lecture:SELECT,mail_outbound_attachments_depot:INSERT,\
+mail_outbound_attachments_lecture:SELECT,mail_outbound_attachments_retrait:DELETE,manual_select:SELECT"
+if [ "$politiques" = "$POLITIQUES_OBJETS" ]; then
+	ok "les politiques de \`storage.objects\` sont exactement les cinq attendues, chacune nommée par son unité"
 else
-	fail "les politiques de \`storage.objects\` ne sont plus la seule lecture attendue : « $politiques »"
+	fail "les politiques de \`storage.objects\` ne sont plus celles attendues : « $politiques »"
+fi
+# SUR LE BUCKET DE CETTE UNITÉ, une seule politique, et en lecture : aucune écriture n'y est ouverte.
+sur_bucket=$(psql_db -c "select coalesce(string_agg(policyname || ':' || cmd, ',' order by policyname), '')
+	from pg_policies where schemaname='storage' and tablename='objects'
+	  and (coalesce(qual, '') || coalesce(with_check, '')) like '%''mail-attachments''%'")
+if [ "$sur_bucket" = "mail_attachments_objets_lecture:SELECT" ]; then
+	ok "une SEULE politique sur le bucket \`mail-attachments\`, en lecture : aucune écriture n'y est ouverte"
+else
+	fail "le bucket \`mail-attachments\` porte d'autres politiques que sa lecture : « $sur_bucket »"
 fi
 
 if [ "$(psql_db -c "select qual like '%piece_jointe_telechargeable%' and qual like '%mail-attachments%'
@@ -205,10 +221,15 @@ fi
 # geste qui l'a classé, jamais un classement apparu de nulle part. Le détail des quatre règles du
 # §4.4 reste sous `CRM-055` et son propre harnais ; ici, seule la frontière entre les deux unités
 # est éprouvée.
+#
+# `outbound` EST HORS DE L'ASSERTION (`CRM-132`, INC-345) : depuis `CRM-058` (`0030_envoi_sortant.sql`), un message ENVOYÉ
+# est archivé en `classification = 'outbound'` — « né dans sa card : il n'a été classé par aucune règle » —, donc sans
+# `classified_at`. MESURÉ le 2026-11-10 sur le seed frais : le seul message classé sans trace est l'envoi archivé du seed
+# (`direction = 'outbound'`). L'assertion le comptait comme un classement « apparu de nulle part », ce qu'il n'est pas.
 sans_trace=$(psql_db -c "select count(*) from public.mail_messages
-	where classification <> 'unclassified' and classified_at is null")
+	where classification not in ('unclassified', 'outbound') and classified_at is null")
 if [ "$sans_trace" = 0 ]; then
-	classes=$(psql_db -c "select count(*) from public.mail_messages where classification <> 'unclassified'")
+	classes=$(psql_db -c "select count(*) from public.mail_messages where classification not in ('unclassified', 'outbound')")
 	ok "les $classes message(s) classé(s) portent tous la trace de leur classement : l'ingestion n'en fabrique aucun — la frontière CRM-054 / CRM-055 tient"
 else
 	fail "$sans_trace message(s) classé(s) SANS \`classified_at\` : un classement est apparu hors du chemin de CRM-055"
@@ -250,17 +271,21 @@ if [ "$RAPIDE" = false ]; then
 	if E2E_PROJETS=mail npx playwright test --config e2e/playwright.config.ts --project=mail \
 		"$SPEC_MAIL" >"$TRAVAIL/mail.log" 2>&1; then
 		passes=$(grep -oE '[0-9]+ passed' "$TRAVAIL/mail.log" | tail -1 | grep -oE '[0-9]+')
-		if [ "${passes:-0}" -eq 2 ]; then
-			ok "preuve mail — un email RÉELLEMENT envoyé, relevé, analysé, et rejoué sans doublon"
+		# `CRM-132` : cinq scénarios, et non plus deux — `CRM-055` (le classement à l'adresse d'une affaire), INC-326 (la
+		# pièce d'un courrier classé porte son affaire), `CRM-127` T2 (la relève exige le jeton interne) et `CRM-123` (une
+		# adresse régénérée) en ont ajouté trois. Le compte reste figé : un scénario sauté ou retiré rougit.
+		if [ "${passes:-0}" -eq 5 ]; then
+			ok "preuve mail — un email RÉELLEMENT envoyé, relevé, analysé, et rejoué sans doublon (5 scénarios)"
 		else
-			fail "preuve mail verte mais ${passes:-0} scénarios au lieu de 2"
+			fail "preuve mail verte mais ${passes:-0} scénarios au lieu de 5"
 		fi
 	else
 		fail_journal "la preuve mail ÉCHOUE" "$TRAVAIL/mail.log"
 	fi
 
-	if [ -x "$RACINE/.venv/bin/python" ]; then PYTHON=$RACINE/.venv/bin/python; else PYTHON=python3; fi
-	if "$PYTHON" -m pytest "$RACINE/mail-sync/tests" -q >"$TRAVAIL/pytest.log" 2>&1; then
+	# shellcheck source=scripts/lib/pytest-mail-sync.sh
+	source "$RACINE/scripts/lib/pytest-mail-sync.sh"
+	if pytest_mail_sync -q >"$TRAVAIL/pytest.log" 2>&1; then
 		ok "pytest mail-sync/tests : $(tail -1 "$TRAVAIL/pytest.log")"
 	else
 		fail_journal "pytest ÉCHOUE" "$TRAVAIL/pytest.log"
@@ -314,20 +339,32 @@ if [ "$RAPIDE" = false ]; then
 	# LA SONDE ANTIVIRUS DÉGRADÉE : une panne d'antivirus ne doit JAMAIS rendre `clean`.
 	sauvegarder "$ANTIVIRUS"
 	sed -i 's/^        return VerdictAntivirus(statut=SKIPPED)$/        return VerdictAntivirus(statut=CLEAN)/' "$ANTIVIRUS"
-	if "$PYTHON" -m pytest "$RACINE/mail-sync/tests/test_antivirus.py" -q >"$TRAVAIL/degrade-av.log" 2>&1; then
-		fail "dégradation NON VUE : un antivirus injoignable rendrait le statut sain"
+	if ! grep -q '^        return VerdictAntivirus(statut=CLEAN)$' "$ANTIVIRUS"; then
+		fail "dégradation INAPPLICABLE : la sonde antivirus n'a pas pu être dégradée"
 	else
-		ok "dégradation vue : un antivirus injoignable ne peut pas rendre le statut sain"
+		issue=0
+		juger_degradation_py "$TRAVAIL/degrade-av.log" tests/test_antivirus.py -q || issue=$?
+		case $issue in
+			0) ok "dégradation vue : un antivirus injoignable ne peut pas rendre le statut sain" ;;
+			1) fail "dégradation NON VUE : un antivirus injoignable rendrait le statut sain" ;;
+			*) fail_journal "dégradation NON PROUVÉE : un antivirus injoignable ne peut pas rendre le statut sain" "$TRAVAIL/degrade-av.log" ;;
+		esac
 	fi
 	rendre "$ANTIVIRUS"
 
 	# L'EMPREINTE DE REPLI SANS SÉPARATEUR : deux messages différents auraient la même.
 	sauvegarder "$MIME"
 	sed -i 's/    brut = "\\x00".join(composantes).encode("utf-8")/    brut = "".join(composantes).encode("utf-8")/' "$MIME"
-	if "$PYTHON" -m pytest "$RACINE/mail-sync/tests/test_mime_analyse.py" -q >"$TRAVAIL/degrade-mime.log" 2>&1; then
-		fail "dégradation NON VUE : l'empreinte sans séparateur passe les preuves"
+	if ! grep -q '^    brut = "".join(composantes).encode("utf-8")$' "$MIME"; then
+		fail "dégradation INAPPLICABLE : le séparateur de l'empreinte n'a pas pu être retiré"
 	else
-		ok "dégradation vue : retirer le séparateur de l'empreinte fait échouer pytest"
+		issue=0
+		juger_degradation_py "$TRAVAIL/degrade-mime.log" tests/test_mime_analyse.py -q || issue=$?
+		case $issue in
+			0) ok "dégradation vue : retirer le séparateur de l'empreinte fait échouer pytest" ;;
+			1) fail "dégradation NON VUE : l'empreinte sans séparateur passe les preuves" ;;
+			*) fail_journal "dégradation NON PROUVÉE : retirer le séparateur de l'empreinte fait échouer pytest" "$TRAVAIL/degrade-mime.log" ;;
+		esac
 	fi
 	rendre "$MIME"
 
@@ -338,7 +375,7 @@ if [ "$RAPIDE" = false ]; then
 	else
 		fail_journal "la suite pgTAP reste ROUGE après restauration" "$TRAVAIL/restaure.log"
 	fi
-	if "$PYTHON" -m pytest "$RACINE/mail-sync/tests" -q >"$TRAVAIL/restaure-py.log" 2>&1; then
+	if pytest_mail_sync -q >"$TRAVAIL/restaure-py.log" 2>&1; then
 		ok "pytest redevient vert après restauration"
 	else
 		fail_journal "pytest reste ROUGE après restauration" "$TRAVAIL/restaure-py.log"

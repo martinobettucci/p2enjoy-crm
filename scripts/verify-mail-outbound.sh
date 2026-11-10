@@ -10,6 +10,8 @@
 #           est appliquée côté backend et prouvée hors interface)
 # @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — le seed porte trois identités, dont celle de
 #           Camille, chacune avec son défaut (docs/SPEC-mail-subsystem.md §14.6 ; docs/SPEC-seed.md §2.18)
+# @spec CRM-132 (docs/BACKLOG.md) — pytest par `scripts/lib/pytest-mail-sync.sh`, sur tout poste, et une dégradation
+#       n'est « vue » que sur le code 1 de pytest (INC-345, décision 867)
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais prouve.
@@ -131,8 +133,11 @@ for fichier in "$MIGRATION" "$TEST_SQL" "$SPEC_API" "$SPEC_MAIL" "$SONDE" "$CLIE
 	if [ -f "$fichier" ]; then ok "$fichier est livré"; else fail "$fichier est ABSENT"; fi
 done
 
+# `CRM-132` : l'en-tête entier, et non ses trois premières lignes — `CRM-069` a placé les siennes en tête de
+# `postgrest.py`. Le bloc de commentaires de tête, lu sans tube (`pipefail`).
+entete() { awk 'NR > 1 && !/^(#|\/\/|--)/ { exit } { print }' "$1"; }
 for fichier in "$MIGRATION" "$SONDE" "$CLIENT"; do
-	if head -3 "$fichier" | grep -q '@spec CRM-053'; then
+	if grep -q '@spec CRM-053' <<<"$(entete "$fichier")"; then
 		ok "$(basename "$fichier") porte son commentaire @spec"
 	else
 		fail "$(basename "$fichier") ne cite pas son unité de backlog"
@@ -140,7 +145,7 @@ for fichier in "$MIGRATION" "$SONDE" "$CLIENT"; do
 done
 
 for fichier in "$TEST_SQL" "$SPEC_API" "$SPEC_MAIL" "$TEST_SONDE"; do
-	if head -3 "$fichier" | grep -q '@verifies CRM-053'; then
+	if grep -q '@verifies CRM-053' <<<"$(entete "$fichier")"; then
 		ok "$(basename "$fichier") porte son commentaire @verifies"
 	else
 		fail "$(basename "$fichier") ne cite pas son unité de backlog"
@@ -353,10 +358,12 @@ if [ "$RAPIDE" = false ]; then
 	if E2E_PROJETS=api npx playwright test --config e2e/playwright.config.ts --project=api \
 		"$SPEC_API" >"$TRAVAIL/api.log" 2>&1; then
 		passes=$(grep -oE '[0-9]+ passed' "$TRAVAIL/api.log" | tail -1 | grep -oE '[0-9]+')
-		if [ "${passes:-0}" -eq 7 ]; then
-			ok "preuve d'API dédiée — 7 scénarios, secondes moitiés des refus n° 6 et n° 7 comprises"
+		# `CRM-132` : dix scénarios, et non plus sept — `CRM-089` en a ajouté trois (déclarer sa propre identité, changer
+		# l'adresse, effacer le nom d'expéditeur). Le compte reste figé : un scénario sauté ou retiré rougit.
+		if [ "${passes:-0}" -eq 10 ]; then
+			ok "preuve d'API dédiée — 10 scénarios, secondes moitiés des refus n° 6 et n° 7 comprises"
 		else
-			fail "preuve d'API verte mais ${passes:-0} scénarios au lieu de 7"
+			fail "preuve d'API verte mais ${passes:-0} scénarios au lieu de 10"
 		fi
 	else
 		fail_journal "la preuve d'API ÉCHOUE" "$TRAVAIL/api.log"
@@ -374,8 +381,9 @@ if [ "$RAPIDE" = false ]; then
 		fail_journal "la preuve mail ÉCHOUE" "$TRAVAIL/mail.log"
 	fi
 
-	if [ -x "$RACINE/.venv/bin/python" ]; then PYTHON=$RACINE/.venv/bin/python; else PYTHON=python3; fi
-	if "$PYTHON" -m pytest "$RACINE/mail-sync/tests" -q >"$TRAVAIL/pytest.log" 2>&1; then
+	# shellcheck source=scripts/lib/pytest-mail-sync.sh
+	source "$RACINE/scripts/lib/pytest-mail-sync.sh"
+	if pytest_mail_sync -q >"$TRAVAIL/pytest.log" 2>&1; then
 		ok "pytest mail-sync/tests : $(tail -1 "$TRAVAIL/pytest.log")"
 	else
 		fail_journal "pytest mail-sync/tests ÉCHOUE" "$TRAVAIL/pytest.log"
@@ -465,11 +473,17 @@ if [ "$RAPIDE" = false ]; then
 	# service écrirait une valeur que la contrainte de la base rejette.
 	sauvegarder "$SONDE"
 	sed -i 's/^DEFAULT_TIMEOUT_SECONDS = 30.0$/DEFAULT_TIMEOUT_SECONDS = 5.0/' "$SONDE"
-	if [ -x "$RACINE/.venv/bin/python" ]; then PYTHON=$RACINE/.venv/bin/python; else PYTHON=python3; fi
-	if "$PYTHON" -m pytest "$RACINE/mail-sync/tests" -q >"$TRAVAIL/degrade-py.log" 2>&1; then
-		fail "dégradation NON VUE : un délai plus court que la pénalité passe les preuves Python"
+	# Une dégradation qui ne s'applique plus ne prouve rien ; et seul le code 1 de pytest la dit vue (INC-345).
+	issue=0
+	if ! grep -q '^DEFAULT_TIMEOUT_SECONDS = 5.0$' "$SONDE"; then
+		fail "dégradation INAPPLICABLE : le délai SMTP n'a pas pu être ramené sous la pénalité"
 	else
-		ok "dégradation vue : ramener le délai SMTP sous la pénalité fait échouer pytest"
+		juger_degradation_py "$TRAVAIL/degrade-py.log" tests -q || issue=$?
+		case $issue in
+			0) ok "dégradation vue : ramener le délai SMTP sous la pénalité fait échouer pytest" ;;
+			1) fail "dégradation NON VUE : un délai plus court que la pénalité passe les preuves Python" ;;
+			*) fail_journal "dégradation NON PROUVÉE : pytest n'a pas tourné" "$TRAVAIL/degrade-py.log" ;;
+		esac
 	fi
 	rendre "$SONDE"
 
@@ -481,7 +495,7 @@ if [ "$RAPIDE" = false ]; then
 		fail_journal "la suite pgTAP reste ROUGE après restauration" "$TRAVAIL/restaure.log"
 	fi
 
-	if "$PYTHON" -m pytest "$RACINE/mail-sync/tests" -q >"$TRAVAIL/restaure-py.log" 2>&1; then
+	if pytest_mail_sync -q >"$TRAVAIL/restaure-py.log" 2>&1; then
 		ok "pytest redevient vert après restauration"
 	else
 		fail_journal "pytest reste ROUGE après restauration" "$TRAVAIL/restaure-py.log"
