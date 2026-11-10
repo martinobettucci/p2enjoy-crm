@@ -40350,3 +40350,17 @@ condensé de `main`. GitHub n'est **pas** dans `~/.ssh/known_hosts` : le constat
 écrire (`UserKnownHostsFile=/dev/null`). **La spécification exige donc d'épingler la clé d'hôte de GitHub** (son empreinte
 publiée), geste d'écriture dans la cellule réservé à la session de livraison ou au responsable ; une livraison ne
 contourne jamais la vérification d'hôte.
+
+### décision 913 — `CRM-144` T5 : deux identités de démonstration pour le seed de l'outbox, les gardes d'identités révisées
+
+*2026-11-10, session interactive d5b44a2d (p2enjoy-crm-c2), arbitrage du responsable (`AskUserQuestion`), avant le seed.*
+**Le problème** : le §28.10 de `docs/SPEC-mail-subsystem.md` produit un envoi « En file » après une panne réelle et un échec
+réel par deux identités de démonstration ; or des preuves existantes figent les identités du seed à trois (Réglages ▸
+Identités d'expédition : Camille, Driss, le service ; `e2e/ui/reglages-identites-mail.spec.ts`).
+**Pistes présentées** : deux identités de démonstration, les gardes révisées ; une seule identité injoignable et un échec par
+une pièce retirée du stockage (`attachment_missing`) ; aucune identité nouvelle, « En file » vide dans le seed.
+**Décision du responsable** : **deux identités de démonstration**, comme le §28.10 — deux identités de Camille, l'une dont le
+serveur est injoignable (l'envoi reste en file, reprogrammé par le worker), l'autre au mot de passe refusé (échec
+`auth_failed`). Les gardes qui comptent les identités du seed sont **révisées, non relâchées** (décision 51).
+**Conséquences** : `docs/SPEC-seed.md` (la section de l'outbox), `supabase/seed/apply-seed.sh`, les preuves qui comptent les
+identités ; `CRM-144` T5.

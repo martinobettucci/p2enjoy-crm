@@ -3936,6 +3936,8 @@ Par les vrais chemins (`CLAUDE.md` §8) : **un envoi en file** reprogrammé apr�
 serveur SMTP est injoignable : la passe le reprogramme avec son délai), **un échec** réel (une identité au mot de passe
 refusé : `auth_failed`), **un envoyé** (ceux du seed existant), **un annulé** par la vraie fonction, sous la session de son
 auteur.
+*Confirmé par le responsable le 2026-11-10 (décision 913)* : les deux identités sont à Camille, en plus de son identité par
+défaut ; les gardes qui comptent les identités du seed sont révisées, non relâchées (décision 51).
 
 ### 28.11 Preuves exigées
 
