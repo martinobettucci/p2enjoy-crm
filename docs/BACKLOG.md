@@ -19055,3 +19055,40 @@ rendu).
 - seed : un message HTML avec lien, image distante et image `cid:` ;
 - captures aux quatre paliers ;
 - manuel.
+
+## Demande du 2026-11-10 — le LLM pré-trie les mails en pastilles configurables (décision 883)
+
+### CRM-141 — Pastilles de mail posées par le LLM, définies dans les réglages, réévaluables, corrigeables à la main `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 883).
+**Comportement attendu** :
+- (i) Réglages ▸ Pastilles des mails, réservé aux administrateurs : créer, modifier, supprimer une pastille (nom, couleur
+  de la charte, descriptif pour le LLM). Des pastilles par défaut sont posées par la migration : Spam, Lead, Devis /
+  commande, Facture / paiement, Support client, Partenariat, Recrutement, Newsletter, Administratif ;
+- (ii) chaque mail reçu est évalué en tâche de fond par le modèle de l'IA existante, qui lui attribue zéro, une ou
+  plusieurs pastilles, contrôlées contre la liste de l'espace ;
+- (iii) les pastilles sont visibles dans la liste des mails et dans le message ouvert ;
+- (iv) le bouton « Réévaluer les pastilles », à côté de « non lu » et du sommeil, relance l'évaluation d'un message ;
+- (v) on pose ou on retire une pastille à la main, et la réévaluation ne revient jamais sur un choix manuel.
+**MCP** : **oui, famille `messagerie`**, cases existantes (décision 883) : lire les pastilles d'un mail, demander une
+réévaluation.
+**Spécification** : à écrire avant le code. Elle couvre :
+- `docs/SPEC-ia.md` : ce qui est envoyé au modèle, la sortie contrôlée, le mode dégradé ;
+- `docs/SPEC-mail-subsystem.md` : la file d'évaluation, les pastilles d'un message, les droits ;
+- `docs/SCHEMA.md` (migration) ;
+- `docs/DESIGN_SYSTEM.md` : la pastille, l'écran de réglages, le bouton ;
+- `docs/SPEC-mcp.md` §9.2 ;
+- le manuel ;
+- le contrat de déploiement : migration, fonction ou service, variables.
+**DoD** :
+- unitaires : contrôle de la sortie du modèle, clés inconnues rejetées ;
+- pgTAP : RLS, administrateurs seuls sur les pastilles, la main prime, les défauts ;
+- API avec refus de droits par jeton réel ;
+- évaluation contre un modèle local de dev ou un double documenté du contrat Ollama (`CLAUDE.md` §15), et contre le vrai
+  modèle quand il est joignable ;
+- E2E souris et clavier : réglages, pastilles en liste, réévaluer, poser et retirer à la main ;
+- outils du connecteur et `verify-mcp.sh` ;
+- seed : des pastilles, des messages déjà évalués, un message corrigé à la main ;
+- captures aux quatre paliers ;
+- manuel ;
+- contrat de déploiement.

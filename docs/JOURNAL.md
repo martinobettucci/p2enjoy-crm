@@ -39729,3 +39729,58 @@ assertion figée par décision 51 est **retournée, non retirée**. La spécific
   description n'est retirée par un geste qui n'en parle pas. Elle ne change aucun comportement existant ;
 - `compare_workflow_versions` et `compare_workflow_with_source` ne sont pas reprises : la nouvelle clé y entre d'elle-même.
 **MCP** : inchangé (décision 869). **Vérification** : pgTAP de la migration, une suggestion acceptée sur une étape surchargée.
+
+### décision 883 — Pré-tri des mails par le LLM en pastilles configurables ; à l'arrivée et au bouton « Réévaluer » ; la main prime ; connecteur dans la famille messagerie
+
+*2026-11-10, session 152dd27d (p2enjoy-crm-d9), demande et arbitrage du responsable (conversation et `AskUserQuestion`).*
+**Demande** : « puisque le CRM dispose déjà de son assistant IA et d'une connexion à un LLM, il devrait passer les mails au
+LLM pour avoir un pré-tri et leur ajouter une pastille visible dans la liste des mails ». Les pastilles se configurent
+dans les réglages : un nom, et un texte qui explique au LLM ce qui lui correspond. Exemple : la pastille « youtube »,
+avec pour descriptif « toute demande de partenariat ou production vidéo destinée à la chaîne youtube ». Un message peut
+porter plusieurs pastilles. Le bouton de réévaluation est placé « à côté des non lu, en sommeil… ». Des pastilles par
+défaut viennent de la migration, « spam », « lead » et d'autres, que le responsable pourra modifier.
+**État mesuré** : l'IA du CRM est un serveur Ollama (`OLLAMA_MODEL`, défaut `gemma4:e2b`), joint par la fonction edge
+`ia` (`docs/SPEC-ia.md`). Aujourd'hui, seuls la demande et la consigne d'un administrateur lui sont envoyées
+(`docs/SPEC-ia.md`, « ce qui est envoyé au modèle, et rien d'autre »). **Le contenu des mails lui sera désormais envoyé** :
+c'est un changement de ce qui sort vers le modèle, voulu par le responsable, que la spécification décrira (§11 et §20 de
+`CLAUDE.md` : ce qui est envoyé, rien de plus, sans journaliser de contenu).
+**Décision du responsable** :
+- **déclenchement** : chaque mail **reçu** est évalué automatiquement en tâche de fond, peu après son arrivée. Le bouton
+  « Réévaluer les pastilles », placé à côté de « non lu » et du sommeil dans le message ouvert, relance l'évaluation d'un
+  message (choix recommandé) ;
+- **gestion** : les pastilles et leurs descriptifs sont **communs à l'espace**, gérés par les **administrateurs** dans les
+  réglages ; tout le monde les voit sur les mails qu'il lit (choix recommandé) ;
+- **la main prime** : on peut poser ou retirer une pastille à la main, et une réévaluation ne revient jamais sur un choix
+  fait à la main (choix recommandé) ;
+- **plusieurs pastilles par message** ; elles sont visibles dans la liste des mails ;
+- **pastilles par défaut**, posées par la migration et modifiables :
+  - « Spam » ;
+  - « Lead » ;
+  - « Devis / commande » ;
+  - « Facture / paiement » ;
+  - « Support client » ;
+  - « Partenariat » ;
+  - « Recrutement » ;
+  - « Newsletter » ;
+  - « Administratif ».
+
+  Chacune a un descriptif écrit pour le LLM ;
+- **MCP : oui, famille `messagerie`**, existante, cases partagées (`docs/SPEC-mcp.md` §6.1) : lire les pastilles d'un
+  mail et demander une réévaluation. La gestion des pastilles reste à l'écran.
+**Conséquences** : une unité, `CRM-141`, à spécifier avant le code. Elle demande :
+- une migration : les pastilles de l'espace, le lien message ↔ pastille avec son origine (`llm` ou `manual`), la RLS,
+  les défauts ;
+- une file d'évaluation, avec sa reprise et l'espacement des échecs ;
+- l'appel au modèle par le chemin de l'IA existante (fonction edge ou service), avec une sortie contrôlée : seules des
+  clés de pastilles existantes sont acceptées, comme pour l'IA de la conception (`docs/SPEC-ia.md`, « la sortie du
+  modèle n'est jamais crue ») ;
+- l'écran de réglages, les pastilles dans la liste et le message ouvert, le bouton ;
+- les outils du connecteur.
+
+La spécification tranchera :
+- ce qui est envoyé au modèle (objet, expéditeur, texte tronqué ; jamais de pièce jointe) ;
+- le mode dégradé quand le modèle est indisponible (`cle_absente`, panne) ;
+- le coût et le débit (une file bornée) ;
+- les mails envoyés (non évalués par défaut) ;
+- la suppression d'une pastille ;
+- un éventuel filtre de la liste par pastille.
