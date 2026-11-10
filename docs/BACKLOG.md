@@ -19001,8 +19001,10 @@ Ce n'est pas une campagne complète. **Reste** : la livraison de la migration 17
 
 *Prise en charge : session interactive d5b44a2d (p2enjoy-crm-c2) depuis 2026-11-10 22:31 UTC — état avant : [~] ; confiée par la session de livraison (ee), après CRM-144*
 
-*État (2026-11-10, session c2)* : spécifiée et arbitrée (décisions 884 et 885), aucun code écrit. Mise en pause par la
-session de livraison au profit de `CRM-143` ; c2 la reprendra ensuite.
+*État (2026-11-10, session c2)* : spécifiée et arbitrée (décisions 884 et 885), quatre tranches (`docs/SPEC-mail-subsystem.md`
+§25.11). **T1 implémentée et vérifiée en développement** — migration `0178` (`p_daily_quota_set`), pgTAP `0167` 16
+assertions, suite complète 155 fichiers, 5221 assertions ; `docs/SCHEMA.md`, contrat §2.41. Restent T2 (la liste des
+dossiers), T3 (les écrans), T4 (le seed).
 
 **Origine** : question du responsable sur l'historique non relevé en production ; arbitrée le 2026-11-10 (décision 875).
 **Comportement attendu** :

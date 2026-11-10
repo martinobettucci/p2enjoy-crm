@@ -2526,6 +2526,22 @@ elle.
 attente sont perdus : les lister avant. **Avec l'image `mcp` d'avant `CRM-128` T3** : sans la garde, son `crm_mail_send`
 enverrait de nouveau directement.
 
+### Migration `0178` — le quota d'une identité effaçable (`CRM-136` T1, décisions 875, 884 et 885 ; livrée en développement le 2026-11-10)
+
+*Numérotée `0178` au push, premier numéro libre après la `0177` de `CRM-146`. Son test pgTAP prend le `0167`.*
+
+`docs/SPEC-mail-subsystem.md` §25.6. **Une fonction recréée, aucune table, aucune donnée.**
+- **`public.upsert_mail_outbound_identity`** gagne un quatorzième paramètre, **`p_daily_quota_set boolean default false`**.
+  À faux, rien ne change : `coalesce(p_daily_quota, daily_quota)` conserve le quota, et les appelants existants (seed,
+  harnais) ne sont pas touchés. À vrai, `daily_quota = p_daily_quota` tel quel, `NULL` compris — le retour à « aucun
+  plafond ». Le corps est celui de la `0058`, la ligne du quota exceptée.
+- **Recréée, pas remplacée** : l'ancienne signature à treize paramètres est retirée, pour que PostgREST n'ait pas deux
+  surcharges à départager. `execute` à `authenticated` et `service_role`, révoqué à `public` et `anon` ; le commentaire est
+  reposé.
+
+**Retour arrière** : retirer la fonction à quatorze paramètres et reposer celle de la `0058`. Aucune donnée n'en dépend ; un
+quota déjà remis à `NULL` le reste, ce qui était déjà permis à la création.
+
 ### Migration `0177` — le prévisionnel et le réel d'une organisation (`CRM-146` T1, décisions 900, 903 et 908 ; livrée en développement le 2026-11-10)
 
 *Numérotée `0177` au push, premier numéro libre sur `main` ; son pgTAP prend le `0166`.*

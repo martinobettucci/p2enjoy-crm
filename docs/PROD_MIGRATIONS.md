@@ -951,7 +951,27 @@ dépôt ; `select pg_get_function_identity_arguments('public.organization_revenu
 `p_organization_id uuid`. **Retour arrière** : `drop function public.organization_revenue_totals(uuid);`. Aucune donnée
 n'est touchée.
 
+### 2.41 `CRM-136` T1, décisions 875, 884 et 885 — le quota d'une identité effaçable (À LIVRER : migration 178 ; **hors du lot annoncé**)
+
+`docs/SPEC-mail-subsystem.md` §25.6 ; `docs/SCHEMA.md` « Migration `0178` ». **La migration fonctionne seule** : elle recrée
+`upsert_mail_outbound_identity` avec un paramètre de plus, faux par défaut, et la webapp actuelle, qui ne l'envoie pas,
+garde exactement son comportement. L'écran du quota (T3) en dépendra. Une fonction, aucune table, aucune donnée, sans
+verrou notable. Aucune variable, aucun secret.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 178 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate`, instantané de VM pris |
+| 2 | Constater qu'une identité s'enregistre toujours | responsable, Réglages ▸ Identités d'expédition | modifier le libellé d'une identité et enregistrer : accepté, le quota inchangé |
+
+**Vérification après la fenêtre**, en lecture seule : le registre gagne une ligne, l'empreinte de la 178 est égale au
+dépôt ; `select pg_get_function_identity_arguments('public.upsert_mail_outbound_identity'::regproc)` finit par
+`p_daily_quota_set boolean`.
+**Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0178` ».
+
 ## 3. Migrations en attente
+
+**La 178** (`CRM-136` T1), *en attente, hors du lot annoncé* : `p_daily_quota_set` sur `upsert_mail_outbound_identity`
+(`docs/SCHEMA.md` « Migration `0178` »). Seule (§2.41). Aucun geste préalable du responsable.
 
 **La 177** (`CRM-146` T1, décisions 900, 903 et 908), *en attente, hors du lot annoncé* : `organization_revenue_totals`, le prévu et le réel d'une organisation par devise (`docs/SCHEMA.md` « Migration `0177` »). Une fonction, aucune donnée, sans verrou notable. **La webapp de `main` l'appelle depuis `CRM-146` T2 : elle part avec la webapp, ou avant elle, jamais après** (§2.40). Aucun geste préalable du responsable.
 

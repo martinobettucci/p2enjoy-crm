@@ -5832,6 +5832,7 @@ export type Database = {
       upsert_mail_outbound_identity: {
         Args: {
           p_daily_quota?: number
+          p_daily_quota_set?: boolean
           p_from_address: string
           p_from_name?: string
           p_is_default?: boolean

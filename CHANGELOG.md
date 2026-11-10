@@ -13,6 +13,10 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-136` — historique, dossiers relevés et quota d'envoi réglables à l'écran (décisions 875, 884 et 885) — tranche T1, la base
+
+- **Le quota journalier d'une identité redevient effaçable** : la fonction d'écriture des identités d'expédition accepte un drapeau qui écrit le quota tel quel, « aucun plafond » compris (migration 178). Sans le drapeau, le quota est conservé comme avant ; l'écran qui l'emploiera arrive avec la tranche des écrans.
+
 #### `CRM-146` T2 — le prévisionnel et le réel d'une organisation, à l'écran
 
 - **La liste des organisations gagne la colonne « Réel sur prévu »** : par devise, une barre et le texte « 163 000,00 sur 210 000,00 EUR », ou « Rien de saisi sur … » quand aucun réel n'est saisi. Une organisation sans recette garde la cellule vide.
