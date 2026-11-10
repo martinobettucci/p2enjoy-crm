@@ -40079,3 +40079,18 @@ board de « Partenariats marques » rendait 8,59 s en production pour une limite
 machine) ; types et unitaires verts, ui 1 155 sur 1 157, api 1 320 sur 1 322, mail 53/53, manuel 143 sur 144, mcp 112,
 pgTAP 148 fichiers, garde du manuel 168 ; le reste INC-342, vert rejoué seul, ou pgTAP 0037 hors du lot (INC-353). Aucun
 défaut du lot. **Décision : oui, sans instantané** : un `pg_dump` avant ; une fonction reprise, aucune table ni donnée.
+
+### décision 897 — `CRM-133` T2 : le design system lu par ses sections générales et celles des écrans touchés
+
+*2026-11-10, session interactive 4891a451 (p2enjoy-crm-32, ex-2f), arbitrage du responsable (`AskUserQuestion`).*
+**Le problème** : `CLAUDE.md` §4 exige de lire **intégralement** `docs/DESIGN_SYSTEM.md` avant toute modification d'interface.
+Le fichier compte 8 001 lignes (650 Ko, environ 160 000 jetons) : il ne tient pas en une fois dans la mémoire de travail de
+l'agent, qui en aurait résumé — donc perdu — le début avant d'écrire le code.
+**Pistes présentées** : lire les sections générales et celles des écrans touchés ; tout lire par morceaux, au prix d'une
+mémoire partielle au moment de coder ; attendre.
+**Décision du responsable** : **les sections générales et celles des écrans touchés**, en entier : §1 à §4 (palette,
+typographie, espacements et rayons, architecture des écrans), §6 à §12 (interactions, responsive, accessibilité, icônes,
+internationalisation, implémentation, écarts), et les composants de l'unité — §5.15 (éditeur de workflows), §5.18
+(catalogue de nœuds), §5.58 (infobulle de description) — ainsi que ceux qu'ils citent. Le compte rendu de T2 dit que la
+lecture n'était pas intégrale. La vérification du diff d'interface contre ces sections reste exigée avant le commit.
+**Portée** : cette tranche seulement ; la règle de `CLAUDE.md` n'est pas changée.
