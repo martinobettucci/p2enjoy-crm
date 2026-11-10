@@ -18956,7 +18956,8 @@ seed, le choix est relevé) ; seed ; captures aux quatre paliers ; manuel ; cont
 
 ## Demande du 2026-11-10 — classer un mail sans parcourir des centaines d'affaires (décision 877)
 
-### CRM-137 — Classer un mail : un sélecteur d'affaire cherchable, filtré par défaut sur l'expéditeur connu `[ ]`
+### CRM-137 — Classer un mail : un sélecteur d'affaire cherchable, filtré par défaut sur l'expéditeur connu `[@]`
+*Prise en charge : session interactive 152dd27d (p2enjoy-crm-d9) depuis 2026-11-10 09:39 UTC — état avant : [ ] ; confiée par la session de livraison (be)*
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 877).
 **Comportement attendu** : dans le formulaire de classement de l'inbox, un sélecteur cherchable (titre, chemin) remplace la
