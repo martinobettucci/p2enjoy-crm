@@ -18986,8 +18986,8 @@ seed, le choix est relevé) ; seed ; captures aux quatre paliers ; manuel ; cont
 liste déroulante ; la case « Expéditeur connu », cochée par défaut, ne montre que les affaires dont un contact rattaché a
 l'adresse de l'expéditeur ; décochée, toutes les affaires lisibles ; un état vide qui propose de décocher quand
 l'expéditeur n'est le contact d'aucune affaire. Filtre côté serveur, sous les droits de la personne ; clavier complet.
-**MCP** : **oui, famille `messagerie`** (décision 877) — proposer les affaires de l'expéditeur au classement d'un message,
-cases existantes.
+**MCP** : **oui, famille `messagerie`** (décisions 877 et 891), cases existantes. Deux outils, puisqu'aucun outil de
+classement n'existait : lister les affaires candidates d'un message (`consulter`), et classer le message (`modifier`).
 **Spécification** : à écrire avant le code — `docs/DESIGN_SYSTEM.md` (le sélecteur cherchable, la case), la requête
 serveur, `docs/SPEC-mcp.md` §9.2, le manuel (inbox).
 **DoD** : unitaires ; API (le filtre, les droits : une affaire illisible n'apparaît jamais) ; E2E souris et clavier (case

@@ -39947,3 +39947,19 @@ retiré à `public` et `anon`. Un rattachement illisible et un identifiant incon
 **Vérification** : pgTAP — l'équivalence sous `service_role` et sous le propriétaire, en plus des quatre profils ; le
 rattachement illisible d'un profil et l'identifiant inconnu indiscernables.
 
+
+### décision 891 — CRM-137 : le connecteur propose les affaires candidates d'un message ET le classe ; famille messagerie
+
+*2026-11-10, session 152dd27d (p2enjoy-crm-d9), arbitrage du responsable (`AskUserQuestion`), qui précise la décision 877.*
+**Constat** : la décision 877 écrit que « l'outil qui classe un message peut proposer les affaires de l'expéditeur, cases
+en place ». **Aucun outil de classement n'existe** dans le connecteur : `mcp/crm_mcp/outils/messagerie.py` porte
+`crm_mail_get`, `crm_mail_attachment_get`, `crm_mail_prepare`, `crm_mail_send`, `crm_mail_draft_list`,
+`crm_mail_draft_discard`, et la famille `messagerie` couvre « lecture des fils d'une affaire et des messages ; envoi d'un
+email » (`docs/SPEC-mcp.md` §6.1). La contradiction n'est pas résolue implicitement : elle est soumise au responsable.
+**Décision** : `CRM-137` livre **deux outils** dans la famille `messagerie`, sous les mêmes droits que l'écran :
+- un outil de **lecture** (`consulter`) qui liste les affaires candidates d'un message : expéditeur connu par défaut,
+  recherche par titre et chemin ;
+- un outil d'**écriture** (`modifier`) qui classe le message dans une affaire, par `classify_message`, avec ses refus.
+
+Les cases restent celles de la famille, sans case nouvelle. La portée de la famille au §6.1 s'allonge du classement
+d'un message.
