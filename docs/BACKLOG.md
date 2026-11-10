@@ -18892,8 +18892,9 @@ d'étape, cases existantes ; au catalogue de `docs/SPEC-mcp.md` §9.2, dans une 
 **Spécification** : écrite avant le code le 2026-11-07 (décision 870) — `docs/SPEC-workflow-engine.md` §7 sexies,
 `docs/SCHEMA.md` « Migration `0170` », `docs/DESIGN_SYSTEM.md` §5.15, §5.18 et §5.58 (révisé), `docs/SPEC-mcp.md`
 §9.2 undecies (T2.d révisée) ; le manuel : chapitres « Le catalogue de nœuds » et « Composer un workflow ».
-- [ ] **T1 — base** : migration `0170`, pgTAP (contraintes, surcharge et repli, droits, empreinte inchangée sans
-      surcharge, copie, restauration, comparaisons, audit).
+- [ ] **T1 — base** : migration `0170` (son numéro se prend au push, décision de la session de livraison du 2026-11-10),
+      pgTAP (contraintes, surcharge et repli, droits, empreinte inchangée sans surcharge, copie, restauration,
+      comparaisons, audit, suggestion de l'assistant acceptée qui garde la surcharge — décision 882).
 - [ ] **T2 — écrans** : catalogue, éditeur de workflows, board, fiche ; unitaires ; E2E souris et clavier ; captures aux
       quatre paliers.
 - [ ] **T3 — connecteur** : outils `workflows` et `crm_workflow_get` ; pytest, intégration, `verify-mcp.sh`.

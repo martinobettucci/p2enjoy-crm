@@ -5480,6 +5480,9 @@ La surcharge suit **exactement** le chemin de `label_override` :
 - **Les comparaisons** (`compare_workflow_versions`, `compare_workflow_with_source`, et le document naturalisé du §4 ter)
   la comparent comme attribut de `steps`, à côté de `label_override` ; les écrans de comparaison la nomment
   « Description ».
+- **Une suggestion de modification de l'assistant acceptée** (`CRM-113`) **garde** la surcharge vivante d'une étape
+  existante : l'assistant ne propose aucune description (§7 sexies.5), donc n'en retire aucune ; une étape qu'il ajoute
+  naît sans surcharge. *Précision du 2026-11-10 (décision 882)* : sans elle, l'acceptation l'aurait effacée.
 - **La description du nœud** n'entre dans aucun document : comme son libellé, elle appartient au catalogue, qui n'est pas
   versionné.
 - **Le journal d'audit** (`0115`) inscrit les deux colonnes dans les déclencheurs de `workflow_nodes_catalog` et de

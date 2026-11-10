@@ -2537,9 +2537,16 @@ appelle la nouvelle fonction à chaque relève en échec.
 - **`app.workflow_composition_document`**, reprise à l'identique de sa définition en base, avec un ajout : la clé
   `description_override` dans l'objet d'une étape, **seulement si elle est posée** (le patron de la `0157`) ; les
   empreintes existantes ne changent pas.
-- **La restauration** (`app.appliquer_composition`), **la copie** (`copy_workflow_to_track`) et **les comparaisons**
-  (`compare_workflow_versions`, `app.workflow_composition_naturel`) reprises de même, chacune avec la seule colonne
-  ajoutée, à côté de `label_override`.
+- **La restauration** (`app.appliquer_composition`), **la copie** (`copy_workflow_to_track`) et **la comparaison à la
+  source** (`app.workflow_composition_naturel`) reprises de même, chacune avec la seule colonne ajoutée, à côté de
+  `label_override` ; dans le document naturalisé aussi, la clé n'est posée que si elle porte une valeur.
+  *Précision du 2026-11-10, mesurée en écrivant la migration (décision 882)* : **`compare_workflow_versions` et
+  `compare_workflow_with_source` ne sont pas reprises** — elles comparent chaque attribut présent dans l'un ou l'autre
+  document (`app.composition_collection_diff`), si bien que `description_override` y entre sans rien changer.
+- **`app.document_cible_ia`** (le document qu'une suggestion de modification de l'assistant applique, `CRM-113`) reprise
+  avec un ajout (décision 882) : une étape **existante** y garde sa `description_override` vivante. Sans cet ajout,
+  `app.appliquer_composition` la remettrait à `NULL` à l'acceptation d'une suggestion, alors que l'assistant ne propose
+  aucune description (`docs/SPEC-workflow-engine.md` §7 sexies.5). Une étape nouvelle naît sans surcharge.
 - **Les déclencheurs d'audit** de `workflow_nodes_catalog` et de `workflow_steps` (`0115`) nomment les deux colonnes ;
   elles n'entrent pas dans les valeurs courtes recopiées.
 

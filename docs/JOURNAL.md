@@ -39712,3 +39712,20 @@ assertion figée par décision 51 est **retournée, non retirée**. La spécific
 - le texte seul pour un message sans HTML, où les adresses web deviennent des liens ;
 - le thème, la hauteur du cadre, l'impression, l'accessibilité clavier ;
 - les mails préparés et les messages envoyés.
+
+### décision 882 — `CRM-133` : une suggestion de l'assistant acceptée garde la description d'une étape ; les comparaisons ne sont pas reprises
+
+*2026-11-10, session interactive 4891a451 (p2enjoy-crm-2f), en écrivant la migration de `CRM-133`, avant le code.*
+**Observations**, mesurées sur les définitions en base (`pg_get_functiondef`) :
+- `app.document_cible_ia` construit le document qu'applique l'acceptation d'une suggestion de modification (`CRM-113`) :
+  pour une étape existante, il reprend `label_override`, `probability_override` et `stale_after_days`, et rien d'autre.
+  `app.appliquer_composition` réécrivant chaque colonne photographiée, une surcharge de description y serait remise à
+  `NULL` ;
+- `compare_workflow_versions` et `compare_workflow_with_source` comparent tous les attributs présents dans l'un ou l'autre
+  document (`app.composition_collection_diff`).
+**Décisions de conception** (`docs/SPEC-workflow-engine.md` §7 sexies.3, `docs/SCHEMA.md` « Migration `0170` ») :
+- `app.document_cible_ia` est reprise : une étape existante garde sa `description_override` vivante ; une étape nouvelle
+  naît sans. C'est la lecture de la décision 870 et du §7 sexies.5 (l'assistant ne propose aucune description) : aucune
+  description n'est retirée par un geste qui n'en parle pas. Elle ne change aucun comportement existant ;
+- `compare_workflow_versions` et `compare_workflow_with_source` ne sont pas reprises : la nouvelle clé y entre d'elle-même.
+**MCP** : inchangé (décision 869). **Vérification** : pgTAP de la migration, une suggestion acceptée sur une étape surchargée.
