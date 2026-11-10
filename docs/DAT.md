@@ -1539,6 +1539,14 @@ livraison contre une cellule simulée, avec leurs dégradations.
 
 - Journaux structurés en JSONL UTC pour `mail-sync`, avec niveau, événement et identifiant de
   corrélation ; aucun en-tête, jeton, secret, corps ou paramètre de configuration n'y entre.
+- **Les champs d'une ligne de `mail-sync` sont une liste fermée** (`structured_logging.SAFE_FIELDS`) : tout champ
+  absent de la liste est jeté par le formateur. La liste n'admet que des valeurs sûres par construction : identifiants
+  internes, codes d'un vocabulaire fermé, noms de classe d'exception, entiers. Jamais le texte d'une exception, qui peut
+  recopier un identifiant de connexion. *`CRM-135`, `docs/SPEC-mail-subsystem.md` §24.2* : la veille y gagne le compte
+  (`account_id`), le motif (`panne`, `error`, `postgrest_status`) et ses compteurs. Sans eux, INC-349 sortait
+  « veille_compte_echoue » sans aucun détail.
+- **Une relève en échec s'écrit sur la boîte** (`status = 'error'`, `last_error`, `CRM-135`, §24.3), et une relève
+  allée au bout la rend `ok`. L'écran d'état et les réglages la montrent sans lire le journal.
 - État de synchronisation par compte mail exposé dans l'interface : dernière synchronisation,
   dernier incident, nombre de messages en attente d'envoi.
 - Points de contrôle de santé sur chaque service pour l'orchestrateur.

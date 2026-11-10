@@ -2216,6 +2216,8 @@ un seul compte mal configuré priverait de courrier tous les autres.
 **L'absorption n'est pas un silence.** L'événement `veille_compte_echoue` porte l'identifiant du
 compte et le **type** de la panne, jamais son texte, qui peut contenir un identifiant de connexion
 (§13.7). Le `try/except` vide que `CLAUDE.md` §18 proscrit est celui qui ne dit rien ; celui-ci dit.
+*Précisé par `CRM-135` (§24.2, INC-349) : la liste fermée du formateur jetait ces deux champs, et la ligne sortait sans
+détail. Elle les admet désormais, avec le code de l'échec et les compteurs du tour.*
 
 #### 20.10.4 Un tour ne se chevauche jamais avec lui-même
 
@@ -2250,6 +2252,9 @@ tour et par compte incomplet, c'est-à-dire un journal qui crie sans rien appren
 L'ordre est celui de `last_sync_at` **croissante, les jamais relevés d'abord** : le compte le plus en
 retard passe en tête. Trier par date de création ferait attendre un compte neuf derrière tous les
 anciens.
+
+*Complété par `CRM-135` (§24.4, §24.5) : une boîte `disabled` n'est pas relevée, et une boîte au mot de passe refusé
+est espacée.*
 
 ### 20.11 L'écran d'état — sa forme, et ce qu'il n'invente pas
 
@@ -3016,7 +3021,8 @@ Livré :
 
 - **une relève qui échoue n'écrit ni `status` ni `last_error`.** Ces deux colonnes restent le constat du seul test de
   connexion (§13.2). Une relève en échec se voit à `last_sync_at` qui vieillit sur l'écran d'état (§20.7), et dans le
-  journal du service (`veille_compte_echoue`).
+  journal du service (`veille_compte_echoue`). *Révisé par `CRM-135` (§24.3, décision 873) : une relève qui échoue
+  écrit désormais `status = 'error'` et `last_error`, et une relève allée au bout les rend.*
 - **aucun test automatique à l'enregistrement.** Enregistrer remet `status` à `pending` (§21, §22) ; le test reste un
   geste explicite.
 - **aucun test depuis l'écran d'état** (§20.11), qui lit et n'agit pas.
@@ -3145,4 +3151,174 @@ Les scénarios qui le font remettent la ligne dans son état d'origine.
 - La garde de 30 secondes ne protège pas contre deux appels simultanés (§23.3).
 - Le résultat d'un test n'est pas annoncé aux autres personnes qui ont l'écran ouvert : elles le verront à leur
   prochain chargement.
-- Une relève en échec n'a toujours pas de pilule propre (§23.1) : seule la date de `last_sync_at` le dit.
+- Une relève en échec n'a toujours pas de pilule propre (§23.1) : seule la date de `last_sync_at` le dit. *Levée par
+  `CRM-135` (§24.3) : la relève en échec écrit `error` et son code, que la pilule et l'incident montrent.*
+
+---
+
+## 24. La veille dit pourquoi elle échoue, l'écrit, espace les refus et ignore une boîte désactivée — `CRM-135`
+
+*Écrit avant le code, `docs/JOURNAL.md` décisions 873 (l'arbitrage du responsable) et 874 (les choix de conception).
+Origine : INC-349. En production, le fournisseur refuse l'authentification IMAP de la boîte entrante. La veille rejoue ce
+LOGIN refusé à chaque tour, environ toutes les 70 s, et quatre défauts la rendent muette et sans frein.*
+
+### 24.1 Ce que l'unité livre, et ce qu'elle ne livre pas
+
+Livré :
+
+- **(i) un journal qui dit quoi** (§24.2) : le compte, le motif et les compteurs paraissent dans les lignes de la veille.
+  Ni secret ni identifiant de connexion n'y entre ;
+- **(ii) une relève qui échoue l'écrit** (§24.3) : `status = 'error'` et `last_error`, un des six codes du §13.7.
+  Une relève allée au bout les rend : `status = 'ok'`, `last_error` nulle. **Le §23.1 est révisé sur ce point** : une
+  relève en échec ne se voit plus seulement à `last_sync_at` qui vieillit. Les écrans qui lisent déjà ces colonnes la
+  montrent sans changer : la pilule et l'incident des réglages (§23.5), le « Dernier incident » de l'écran d'état
+  (§20.11.3) ;
+- **(iii) l'espacement après un refus d'authentification** (§24.4) : la veille ne retente plus la boîte avant un délai
+  croissant, borné à une heure ;
+- **(iv) une boîte `disabled` n'est pas relevée par la veille** (§24.5).
+
+**Connecteur MCP : non** (décision 873). C'est un service interne : l'état des boîtes se lit à l'écran « État de la
+messagerie ».
+
+**Non livré, et nommé :**
+
+- **aucun geste d'écran pour désactiver une boîte.** Aucune fonction ne pose `disabled` aujourd'hui (§13.2, §21). La
+  valeur reste une décision d'exploitation, posée en base sur instruction du responsable. Si un geste d'écran est
+  voulu, c'est une unité à part ;
+- **la route interne `/poll` n'est pas espacée et ne refuse pas une boîte `disabled`.** C'est un geste explicite
+  (preuves, ordonnanceur d'un exploitant, §20.10.5), pas une boucle. Elle écrit pourtant l'échec et le succès (ii), parce
+  que l'écriture vit dans `relever_compte`, que les deux chemins partagent (§23.2) ;
+- **l'espacement ne survit pas à un redémarrage du service** (§24.4) : au pire, un LOGIN refusé de plus à chaque
+  redémarrage.
+
+### 24.2 (i) Le journal de la veille
+
+Le formateur JSON (`structured_logging.JsonFormatter`, §12.5) **n'émet que les champs d'une liste fermée**,
+`SAFE_FIELDS` : tout autre champ passé à `log_event` est jeté, et c'est ce qui garantit qu'aucun secret ne sort.
+Le défaut d'INC-349 vient de cette garde : la veille passait `account_id` et `panne`, la liste ne les connaissait pas, et
+la ligne sortait vide. **La garde reste ; la liste s'allonge de champs dont la valeur est sûre par construction** :
+
+| Champ | Valeur | Pourquoi elle est sûre |
+|---|---|---|
+| `account_id` | l'UUID du compte | un identifiant interne, ni adresse ni identifiant de connexion |
+| `error` | un des six codes du §13.7 | un vocabulaire fermé, jamais le texte du serveur |
+| `panne` | le **nom de classe** de l'exception (`LoginError`, `PostgrestError`…) | un nom de type, jamais le message de l'exception |
+| `postgrest_status` | le code HTTP rendu par PostgREST (`0` : injoignable) | un entier |
+| `releves`, `echecs`, `ignores`, `espaces` | les compteurs d'un tour | des entiers |
+| `intervalle_secondes` | l'intervalle de la veille | un entier de configuration publique (§20.10.5) |
+| `refus_consecutifs`, `retry_in_seconds` | l'espacement d'un compte (§24.4) | des entiers |
+
+`account_id`, `error` et `postgrest_status` sont déjà passés par d'autres événements du service, par exemple
+`inbound_account_checked` et `inbound_poll_failed`. Ils y paraissent désormais aussi, et c'est voulu : ces lignes
+étaient muettes pour la même raison.
+
+**Jamais** : le message d'une exception (`str(erreur)`), l'hôte, le port, l'identifiant de connexion, l'adresse de la
+boîte, le mot de passe. Un serveur IMAP peut recopier l'identifiant de connexion dans son refus, et `LoginError` le
+porte alors dans son texte.
+
+**Les lignes de la veille** :
+
+| Événement | Niveau | Champs |
+|---|---|---|
+| `veille_compte_echoue` | `WARNING` | `account_id`, `panne`, `error` si l'échec est celui de la boîte (§24.3), `postgrest_status` si c'est la base ; avec `refus_consecutifs` et `retry_in_seconds` après un refus d'authentification |
+| `veille_source_indisponible` | `WARNING` | `panne`, `postgrest_status` |
+| `veille_tour_termine` | `INFO` | `releves`, `echecs`, `ignores`, `espaces` |
+| `releve_echec_non_ecrit` | `ERROR` | `account_id`, `error`, `postgrest_status` : l'échec n'a pas pu être écrit en base (§24.3) |
+
+### 24.3 (ii) L'échec et le succès d'une relève s'écrivent
+
+**Le classement de l'échec** est une fonction pure du service, `classer_echec_releve(erreur) -> str | None`. Elle rend
+l'un des six codes du §13.7 quand **la boîte** est en cause, et `None` sinon :
+
+- `PostgrestError` → `None` : c'est la base qui a failli, pas la boîte, et rien n'est écrit sur la ligne ;
+- une erreur IMAP (`IMAPClientError`), TLS (`ssl.SSLError`) ou réseau (`OSError`) → le code que rend déjà le test de
+  connexion, par la même traduction (`imap_probe`, §13.7). Un refus de LOGIN donne donc `auth_failed`, exactement comme
+  « Tester la connexion » ;
+- toute autre exception → `None` : c'est un défaut du service, pas un constat sur la boîte. L'écrire en
+  `protocol_error` ferait chercher la panne chez le fournisseur. La ligne de journal porte son `panne`.
+
+**L'écriture vit dans `relever_compte`**, autour de la relève, pour les deux chemins (§23.2). Quand le code n'est pas
+`None`, elle appelle la nouvelle fonction de base `mail_inbound_account_record_poll_failure`, puis **relance l'exception
+d'origine** : la veille la compte et la journalise, `/poll` rend `502` comme avant. Si cette écriture échoue à son tour,
+l'échec n'est pas avalé : `releve_echec_non_ecrit` le dit, et c'est l'exception d'origine qui remonte, pas celle de
+l'écriture.
+
+**Deux fonctions de base, migration `0171`** (`docs/SCHEMA.md` « Migration `0171` ») :
+
+- **`public.mail_inbound_account_record_poll_failure(p_account_id uuid, p_error text) returns void`** — nouvelle,
+  `SECURITY DEFINER`, `search_path = ''`, exécutable par le seul `service_role`. Elle pose `status = 'error'` et
+  `last_error = p_error`. La contrainte de la table (`0022`) refuse un code hors des six. **Elle ne touche ni
+  `last_checked_at` ni `last_sync_at`.** `last_checked_at` reste la date du dernier *test* : la garde de 30 s (§23.3) s'y
+  lit, et une relève qui l'écrirait refuserait « Tester la connexion » une fois sur deux. `last_sync_at` reste la date
+  de la dernière relève *réussie*. Un compte inconnu est refusé par `app.raise_http_error(404, 'account_not_found')`.
+- **`public.mail_inbound_account_record_sync(uuid)`** — reprise à l'identique (§23.2), avec un ajout : elle pose aussi
+  `status = 'ok'` et `last_error = null`. Une relève allée au bout prouve que la connexion fonctionne. Garder un
+  `error` ou un `pending` à côté d'une relève datée de la minute serait une contradiction à l'écran.
+
+**Une ligne `disabled` n'est jamais réécrite** par l'une ou l'autre : les deux fonctions laissent `status` et
+`last_error` en l'état quand `status = 'disabled'`. `record_sync` date tout de même la relève. Une relève par `/poll` a
+pu avoir lieu, et la date reste un constat.
+
+### 24.4 (iii) L'espacement après un refus d'authentification
+
+**Seul `auth_failed` est espacé.** Les cinq autres codes sont des pannes de transport (§20.3, décision 331). Un serveur
+injoignable reviendra, et la veille le retente au tour suivant comme aujourd'hui. Un mot de passe refusé ne deviendra
+pas juste en attendant, et chaque nouvel essai est un LOGIN refusé de plus, qu'un fournisseur peut sanctionner en
+verrouillant la boîte.
+
+**La règle est pure**, dans `veille.py`, comme le reste de la décision (§20.10.2) :
+
+- après le *n*-ième refus consécutif, la boîte n'est plus relevée avant `min(300 × 2^(n−1), 3 600)` secondes. La
+  suite est donc 5, 10, 20 et 40 minutes, puis une heure ;
+- **le plafond d'une heure** est la borne haute de l'intervalle de veille (§20.10.5). Une boîte réparée chez le
+  fournisseur, sans rien changer dans le CRM, est donc reprise dans l'heure ;
+- l'échéance se compte sur l'horloge **monotone** du pilote, injectable (§20.10.2) : la preuve avance l'horloge et ne
+  dort jamais.
+
+**L'espacement cesse dès que la base dit autre chose qu'`error`.** À chaque tour, la veille relit `status`. Il vaut
+`pending` quand la connexion a été modifiée : un nouveau mot de passe remet l'état à `pending` (`0022`, §21). Il vaut
+`ok` après un test réussi (§23). Dans ces deux cas, l'espacement du compte est oublié et la boîte est relevée au tour
+même. Corriger le mot de passe ou tester avec succès relance donc la relève sans attendre l'échéance. Une relève réussie
+l'oublie aussi.
+
+**L'état de l'espacement vit en mémoire du pilote**, pas en base. Le garder en base demanderait une colonne et une
+écriture par refus, pour un gain mince : sans espacement mémorisé, un redémarrage coûte au pire un LOGIN refusé.
+
+**Ce qui se voit** : `veille_compte_echoue` porte `refus_consecutifs` et `retry_in_seconds` ; `veille_tour_termine`
+compte les boîtes espacées en `espaces`, sans une ligne par boîte et par tour. Une boîte espacée n'est pas comptée en
+`ignores`, réservé aux comptes sans secret ou `disabled`.
+
+### 24.5 (iv) Une boîte `disabled` n'est pas relevée
+
+`lire_comptes_a_veiller` lit aussi `status`, et demande au serveur `status=neq.disabled`. `ordonner_comptes` écarte de
+plus toute boîte `disabled`, avec les comptes sans secret (§20.10.6) : la décision reste vérifiable sans base, même
+devant une source qui ne filtrerait pas. Une boîte `disabled` est comptée en `ignores`.
+
+`CompteAVeiller` gagne le champ `statut`, la valeur de `status` telle que la base la rend. L'espacement (§24.4) le lit
+aussi.
+
+### 24.6 Seed
+
+**Inchangé.** L'échec se reproduit par le véritable parcours, sans trace fabriquée (`CLAUDE.md` §8). Un mauvais mot de
+passe est posé par `upsert_mail_inbound_account`, une relève a lieu, puis le bon mot de passe est remis. Les scénarios qui
+le font rendent la ligne dans son état d'origine. Une boîte `disabled` naît de même dans la preuve qui en a besoin, et y
+est rendue.
+
+### 24.7 Preuves exigées
+
+| Niveau | Preuve |
+|---|---|
+| pytest | **le journal** : une ligne de la veille porte `account_id`, `panne`, `error` et les compteurs ; un champ hors liste (hôte, identifiant de connexion, mot de passe) n'est jamais émis ; le texte d'un `LoginError` qui recopie l'identifiant de connexion n'apparaît nulle part. **Le classement** : refus de LOGIN → `auth_failed`, TLS, délai, hôte, refus de connexion, `PostgrestError` → `None`, exception inattendue → `None`. **L'écriture** : `relever_compte` écrit l'échec de la boîte puis relance l'exception d'origine ; n'écrit rien pour un échec de la base ; une écriture qui échoue est journalisée et n'efface pas l'exception d'origine. **L'espacement** : la suite 300, 600, 1 200, 2 400, 3 600, 3 600 ; une boîte espacée n'est pas relevée avant l'échéance et l'est après, horloge avancée sans dormir ; `pending` ou `ok` relu oublie l'espacement ; une panne de transport n'espace pas. **Disabled** : `ordonner_comptes` l'écarte et la compte en `ignores` |
+| pgTAP | `mail_inbound_account_record_poll_failure` : refusée à `anon` et à `authenticated` ; pose `error` et le code pour `service_role` sans toucher `last_checked_at` ni `last_sync_at` ; refuse un code hors des six ; laisse une ligne `disabled` intacte ; `account_not_found` sur un inconnu. `mail_inbound_account_record_sync` : pose `ok` et efface `last_error`, laisse `disabled` en l'état tout en datant |
+| Intégration (pytest contre la vraie base) | sur la pile de développement, une relève réelle d'une boîte du seed au mauvais mot de passe écrit `error` et `auth_failed`. Remise au bon mot de passe, la relève suivante écrit `ok`. `lire_comptes_a_veiller` n'y rend pas une boîte `disabled` |
+| Harnais | `scripts/verify-mail-resilience.sh` (la veille) et `scripts/verify-mail-inbound.sh` (la relève), rejoués verts. Chacun gagne la preuve de son point, avec sa dégradation : sans le filtre `disabled`, sans l'écriture de l'échec |
+| E2E `ui` | `/reglages/messagerie` : après une relève réelle au mauvais mot de passe, la boîte montre « Authentification refusée » en « Dernier incident », relu en base ; la ligne est rendue ensuite. Captures 1440 et 390 observées |
+
+### 24.8 Limites nommées
+
+- L'espacement est perdu au redémarrage du service (§24.4).
+- Le classement range en `None` toute exception qui n'est ni IMAP, ni TLS, ni réseau. Une panne de la boîte qui
+  prendrait une autre forme ne serait pas écrite sur la ligne, seulement journalisée.
+- Une `OSError` levée hors de la session IMAP pendant une relève est classée comme une panne de la boîte. Par exemple, un
+  délai de lecture d'une réponse de la base qui ne serait pas enveloppé en `PostgrestError`. Le cas est étroit :
+  `PostgrestClient` enveloppe ses erreurs d'URL, et l'antivirus absorbe les siennes (§15).

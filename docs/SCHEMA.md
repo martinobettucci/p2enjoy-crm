@@ -2513,6 +2513,20 @@ elle.
 attente sont perdus : les lister avant. **Avec l'image `mcp` d'avant `CRM-128` T3** : sans la garde, son `crm_mail_send`
 enverrait de nouveau directement.
 
+### Migration `0171` — la relève écrit son échec et son succès (`CRM-135`, décisions 873 et 874 ; spécifiée le 2026-11-10, à écrire)
+
+`docs/SPEC-mail-subsystem.md` §24.3 ; INC-349. Deux fonctions ; **aucune table, aucune colonne, aucune donnée.**
+**`public.mail_inbound_account_record_poll_failure(uuid, text) returns void`**, nouvelle, `security definer`,
+`search_path = ''`, exécutable par le seul `service_role` (révoquée à `public`, `anon` et `authenticated`). Elle pose
+`status = 'error'` et `last_error = p_error` sur le compte dont la relève a échoué, et ne touche ni `last_checked_at` ni
+`last_sync_at`. Un code hors des six est refusé par la contrainte `mail_inbound_accounts_erreur_code` (`0022`), un compte
+inconnu par `app.raise_http_error(404, 'account_not_found')`, et une ligne `disabled` est laissée intacte.
+**`public.mail_inbound_account_record_sync(uuid) returns timestamptz`**, reprise de la `0151` avec un ajout : elle pose
+aussi `status = 'ok'` et `last_error = null`, sauf sur une ligne `disabled`, qu'elle date sans en changer l'état.
+**Retrait** : `drop function public.mail_inbound_account_record_poll_failure(uuid, text)` et reposer
+`mail_inbound_account_record_sync` telle qu'en `0151`, **avec l'image `mail-sync` d'avant `CRM-135`** : l'image qui suit
+appelle la nouvelle fonction à chaque relève en échec.
+
 ### Migration `0170` — la description d'un nœud, et sa surcharge par l'étape (`CRM-133` ; spécifiée le 2026-11-07, à écrire)
 
 `docs/SPEC-workflow-engine.md` §7 sexies, décisions 869 et 870.

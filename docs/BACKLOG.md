@@ -18897,8 +18897,9 @@ désarchiver) ; outils du connecteur et `verify-mcp.sh` ; seed (un channel archi
 identifiant de connexion ; (ii) un échec écrit `status = 'error'` et `last_error` (motif lisible, sans secret) ; un succès
 les rend ; (iii) après un refus d'authentification, la boîte n'est plus retentée avant un délai croissant borné ; (iv) une
 boîte `disabled` n'est pas relevée.
-**MCP** : non (décision 873). **Spécification** : à écrire avant le code — `docs/SPEC-mail-subsystem.md` (veille), le DAT
-(observabilité), le contrat (image `mail-sync`).
+**MCP** : non (décision 873). **Spécification** : `docs/SPEC-mail-subsystem.md` §24 (et §20.10, §23.1 révisés),
+`docs/SCHEMA.md` « Migration `0171` », `docs/DAT.md` §14 ; choix de conception, décision 874. Le contrat (migration `0171`
+et image `mail-sync`, livrées ensemble) est écrit avec le code.
 **DoD** : pytest (journal sans secret, écriture de l'échec, espacement, boîte désactivée) ; preuve d'intégration contre la
 vraie base ; `verify-mail-*` concernés ; écran d'état (le motif paraît) en E2E ; contrat de déploiement ; INC-349 close
 sur ces points.

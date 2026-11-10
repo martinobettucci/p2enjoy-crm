@@ -39519,3 +39519,39 @@ un LOGIN refusé environ toutes les 70 s, et quatre défauts la rendent muette e
 (`lire_comptes_a_veiller` ne filtre pas le statut), d'où aucun moyen de suspendre.
 **Décision : une unité `CRM-135` pour les quatre.** **MCP** : **non** — service interne ; l'état des boîtes se lit à l'écran
 « État de la messagerie ».
+
+### décision 874 — CRM-135 : les choix de conception de la veille corrigée
+
+*2026-11-10, session interactive d5b44a2d (p2enjoy-crm-c2). Unité confiée par la session de livraison (be). Elle applique la
+décision 873, et la spécification est écrite avant le code : `docs/SPEC-mail-subsystem.md` §24, `docs/SCHEMA.md`
+« Migration `0171` », `docs/DAT.md` §14.*
+
+**Problème** : la décision 873 nomme les quatre comportements et laisse ouverts leurs paramètres : quels champs entrent
+au journal, comment classer un échec, quel espacement et quand il cesse, où filtrer `disabled`.
+
+**Observations** :
+- `SAFE_FIELDS` est une liste fermée, appliquée par le formateur. C'est elle qui jetait `account_id` et `panne` ;
+- `mail_inbound_account_record_check` écrit `last_checked_at`, sur lequel se lit la garde de 30 s de « Tester la
+  connexion » (§23.3) ;
+- `upsert_mail_inbound_account` remet `status` à `pending` quand la connexion change (`0022`) ;
+- aucune fonction ne pose `disabled`.
+
+**Décisions** :
+1. **La liste fermée reste**. Elle s'allonge de champs sûrs par construction (§24.2), jamais du texte d'une exception.
+2. **Un échec ne s'écrit que s'il est celui de la boîte** : IMAP, TLS ou réseau, traduit en l'un des six codes par la
+   traduction du test de connexion. Un échec de la base, ou un défaut du service, est journalisé et n'est pas écrit
+   sur la ligne (§24.3). Les écrire ferait chercher la panne chez le fournisseur.
+3. **Une fonction nouvelle, `mail_inbound_account_record_poll_failure`**, plutôt que `record_check`. La relève ne doit
+   pas écrire `last_checked_at`, sinon elle refuserait le bouton de test une fois sur deux. `record_sync` pose en plus
+   `ok` et efface `last_error`. Aucune des deux ne réécrit une ligne `disabled`. Migration `0171`, la `0170` étant
+   réservée par `CRM-133`.
+4. **L'écriture vit dans `relever_compte`**, partagée par la veille et `/poll`, comme la datation du §23.2.
+5. **Seul `auth_failed` est espacé**, de `min(300 × 2^(n−1), 3 600)` secondes. Le plafond est la borne haute de
+   l'intervalle de veille. L'état vit en mémoire du pilote. L'espacement cesse dès que `status` relu n'est plus
+   `error` : nouveau mot de passe (`pending`) ou test réussi (`ok`).
+6. **`disabled` est filtré deux fois** : par le serveur dans `lire_comptes_a_veiller`, et par `ordonner_comptes`, pour
+   la preuve sans base. `/poll` n'est ni espacée ni filtrée : c'est un geste explicite.
+
+**Conséquences** : une migration, `0171`, et la nouvelle image `mail-sync`, à livrer **ensemble**. L'image appelle la
+nouvelle fonction. Le §23.1 est révisé : une relève en échec s'écrit. Aucun geste d'écran ne désactive une boîte :
+c'est une limite nommée (§24.1), et une unité à part si le responsable en veut un.
