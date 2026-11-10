@@ -2945,3 +2945,40 @@ Réglages ▸ « Champs de l'affaire » avec un champ archivé ; la partie commu
 archivé ; les colonnes SIRET et Secteur de la vue liste et leurs filtres ; le refus de transition et sa reprise ; le modèle
 et sa prévisualisation ; la recherche par SIRET ; le défaut `common_field` de l'assistant ; la lectrice qui lit sans
 écrire.
+
+## 39. La description d'un nœud, et sa surcharge par l'étape — `CRM-133` T4 (`docs/SPEC-workflow-engine.md` §7 sexies.6)
+
+*Écrit le 2026-11-10, avant la section du seed.* Dans la section « 6 bis » de `supabase/seed/apply-seed.sh`, **avant la
+copie** du workflow par défaut (section 7), comme l'exigence du SIRET (décision 855) : la composition photographie la
+surcharge (`docs/SCHEMA.md` « Migration `0171` »), et une surcharge posée après la copie ferait diverger la source au rejeu.
+
+### 39.1 Ce que le seed pose
+
+| Objet | Colonne | Texte |
+|---|---|---|
+| nœud « Prospection » du catalogue (`…0041`) | `description` | « Premier contact établi : le besoin du client reste à qualifier. » |
+| étape « Négociation » du workflow « Cycle commercial standard » (`…0063`, nœud `…0043`, déjà surchargée en probabilité à 65 %) | `description_override` | « Proposition chiffrée envoyée : le client en discute les termes et le budget. » |
+
+Le nœud « Négociation » ne porte **aucune** description : l'étape démontre une surcharge sans description de nœud, et
+« Prospection » une description de nœud sans surcharge. Les autres nœuds et étapes restent sans description : le board
+montre un bouton d'information sur deux colonnes seulement (`docs/DESIGN_SYSTEM.md` §5.58).
+
+La copie « Cycle commercial — Conseil IA » (section 7) porte la même surcharge, et reste identique à sa source.
+
+### 39.2 Comment
+
+Sous la clé de service, par l'API (PostgREST, `PATCH` filtré par identifiant) : le catalogue et l'étape n'ont pas
+d'écriture d'écran propre à un geste du seed, et la description du nœud comme la surcharge s'écrivent par la même mise à
+jour que les écrans de Réglages. Une base de dev seedée avant `CRM-133` se recrée une fois (`./resetMe.sh`) : sa copie,
+faite sans la surcharge, divergerait sinon de sa source.
+
+### 39.3 Convergence et vérification
+
+Chaque écriture n'a lieu que si la colonne diffère du texte attendu : rien n'est réécrit qui soit déjà là, et le seed
+converge en deux passages. La section relit les deux colonnes, et la surcharge de l'étape « Négociation » de la copie.
+
+### 39.4 Ce que le jeu démontre
+
+Le formulaire du catalogue avec une description ; l'éditeur de workflows avec une surcharge, la description du nœud citée
+en aide ; le bouton d'information et son infobulle sur les colonnes « Prospection » et « Négociation » du board ; la
+description effective de l'étape d'un rattachement sur la fiche ; la lecture et l'écriture par le connecteur.
