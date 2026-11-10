@@ -40291,3 +40291,16 @@ avant le commit.
   analytique — Vertuo » partagée avec Atelier Lumen.
 **Conséquences** : `docs/SPEC-recettes.md` §12, `docs/DESIGN_SYSTEM.md` §5.97, `docs/SPEC-mcp.md` §9.2 *vicies*,
 `docs/SCHEMA.md`, `docs/SPEC-seed.md` §41 ; découpage en cinq tranches (§12.9).
+
+### décision 909 — `CRM-147` : la clé est celle de l'utilisateur docker de la cellule ; la webapp se bâtit dans la cellule
+
+*2026-11-10, session interactive 4891a451 (p2enjoy-crm-32), réponses du responsable (`AskUserQuestion`), avant la
+spécification ; complète la décision 905.*
+**Q1 — le compte qui porte la clé autorisée à cloner le projet** : **l'utilisateur docker de la cellule** (`spark-docker`,
+`SPARK_SSH_UTILISATEUR`). **Jamais root** : le responsable le rappelle, l'accès root est interdit pour une bonne raison, et
+la question n'avait pas à le proposer. La clé n'est jamais lue, copiée ni journalisée ; son accès se constate par une
+commande git qui la met en œuvre sans l'afficher (`git ls-remote`), sous `spark-docker`.
+**Q2 — où bâtir la webapp du condensé** : **dans la cellule**, depuis son clone, dans un conteneur Node jetable. La décision
+567 (« build sur le poste, la cellule n'a pas Node ») est révisée pour la livraison par condensé : le coût mémoire du build
+pendant la livraison est accepté et sera borné par la spécification.
+**MCP** : non (décision 905).
