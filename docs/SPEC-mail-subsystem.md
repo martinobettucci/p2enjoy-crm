@@ -3636,3 +3636,120 @@ Léo à une seconde affaire par la clé de service, puis retirent ce lien. Le pg
   - classement réussi ;
   - captures aux quatre paliers.
 - **Connecteur** : `mcp/tests` et `scripts/verify-mcp.sh`.
+
+## 27. « Seulement moi » : l'inbox montre d'abord le courrier qui me concerne — `CRM-139`
+
+*Écrit le 2026-11-10, avant le code, après lecture des sections générales du design system et de celles de l'inbox
+(décision 901). `docs/JOURNAL.md` décisions 879 (l'arbitrage du responsable) et 902 (les points que la 879 laissait à la
+spécification).*
+
+### 27.1 Ce que l'unité livre, et ce qu'elle ne livre pas
+
+**La demande** (décision 879) : une case « Seulement moi », cochée par défaut, qui ne montre dans l'inbox que les mails où
+l'une des adresses d'expédition **personnelles** de la personne connectée est destinataire (À, Cc, Cci) ou expéditrice.
+
+Livré :
+- **une fonction de lecture par message, `public.concerns_me(public.mail_messages)`** (§27.2), employée comme colonne
+  calculée par la liste ;
+- **`public.inbox_arborescence(p_only_me boolean default false)`**, dont les compteurs suivent la case (§27.3) ;
+- **la case dans l'inbox**, son état dans l'adresse, et son état désactivé (`docs/DESIGN_SYSTEM.md` §5.96) ;
+- **un argument `only_me` sur `crm_card_mail_list`** (`docs/SPEC-mcp.md` §9.2 *duodevicies*).
+
+Non livré, et nommé :
+- **ce n'est pas une règle d'accès.** La RLS des messages ne change pas. Décochée, la case rend exactement l'inbox
+  d'avant. Un message qui ne concerne pas la personne reste lisible, par l'inbox décochée, par la fiche de l'affaire et
+  par la recherche ;
+- **la fiche d'une affaire n'a pas la case** : son fil reste entier ;
+- **l'identité de service** (`owner_id` nul) n'est l'adresse de personne. Elle n'entre jamais dans le filtre, même pour
+  un administrateur ;
+- **le domaine ne compte pas** : seule l'adresse exacte d'une identité compte, pas son domaine.
+
+### 27.2 `public.concerns_me` — le contrat
+
+```
+public.concerns_me(m public.mail_messages) returns boolean
+```
+
+- **`sql`, `stable`, `security invoker`, `search_path` vidé.** Elle lit les identités de l'appelant sous la RLS
+  (`mail_outbound_identities_lecture_proprietaire`), en filtrant explicitement `owner_id = auth.uid()`. Un
+  administrateur lit aussi les identités des autres (`…_lecture_admin`), et ce filtre explicite les écarte.
+- **Vraie** quand l'une des adresses de `m.to_addresses`, `m.cc_addresses`, `m.bcc_addresses` ou `m.from_address`
+  est égale à l'adresse d'une identité personnelle de l'appelant. La comparaison se fait par
+  `lower(btrim(…))` des deux côtés. **Mesuré** : `mail-sync` stocke les adresses nues et en minuscules, sans la forme
+  `Nom <adresse>` (`mime_analyse._adresses`). Une identité peut porter des majuscules, et la comparaison les ignore.
+- **Fausse** pour un appelant sans identité personnelle : rien ne le concerne. C'est l'écran qui, dans ce cas, n'applique
+  pas le filtre (§27.4).
+- Le statut de l'identité (en erreur, non testée) ne compte pas : l'adresse reste celle de la personne.
+- `execute` à `authenticated` seul.
+
+### 27.3 La liste et les compteurs
+
+- **La liste** (`lireMessages`) ajoute `concerns_me=is.true` à sa lecture quand le filtre s'applique. Le filtre porte
+  sur **les messages**, comme la décision 879 le dit. Le groupement en fils (§16.16) se fait ensuite, sur ce qui
+  reste : un fil ne montre que ses messages qui concernent la personne, et le sélecteur du panneau de lecture n'énumère
+  qu'eux. Décocher rend le fil entier.
+- **Le filtre du sommeil** se compose après, inchangé (§16.15) : il juge les fils ainsi formés.
+- **L'arborescence** : `inbox_arborescence(p_only_me => true)` compte, pour chaque dossier, les seuls messages qui
+  concernent l'appelant, et leurs non-lus. Un dossier d'affaire sans aucun message qui le concerne **n'est pas rendu**,
+  comme aujourd'hui un dossier sans message. « Non classés » reste toujours rendu, même à zéro. Sans argument, la fonction
+  rend les compteurs d'avant : la signature change, pas le comportement des appelants existants.
+- **« Tout marquer comme lu »** porte sur les fils affichés (§18 bis.2), donc sur ce que le filtre laisse.
+- **`CRM-137`** n'est pas touchée. Le classement d'un message ne dépend pas de la case, et un message classé quitte
+  « Non classés » pour le dossier de son affaire, qu'il y concerne la personne ou non.
+
+### 27.4 L'écran
+
+La forme est au §5.96 du design system. Le comportement :
+- **l'état de la case vit dans l'adresse**, comme le sommeil (§16.17.1) : la clé `courrier`, de valeur `tous` quand la
+  case est décochée, jamais écrite quand elle est cochée. Une valeur inconnue est ramenée au défaut. Rien n'est stocké
+  sur l'appareil (`CLAUDE.md` §11). Un rechargement garde ce que l'on regardait ;
+- **la présence d'une identité personnelle** est lue une fois au chargement de l'écran :
+  `mail_outbound_identities?owner_id=eq.<moi>&select=id&limit=1`. **La liste et l'arborescence attendent cette
+  lecture** avant de lire, pour ne pas montrer un instant le courrier de tous puis de le retirer ;
+- **avec au moins une identité personnelle**, le filtre s'applique quand la case est cochée ;
+- **sans identité personnelle**, la case est rendue décochée et désactivée, et le filtre ne s'applique pas. L'écran
+  l'explique : « Aucune adresse d'expédition personnelle : tous les mails sont affichés. », avec un lien vers
+  Réglages ▸ Identités sortantes ;
+- **si la lecture des identités échoue**, la case est désactivée de la même façon, et le filtre ne s'applique pas.
+  L'écran dit : « Vos adresses d'expédition n'ont pas pu être lues : tous les mails sont affichés. », avec
+  « Réessayer ». Montrer tout est l'état qui ne cache rien ;
+- **l'adresse d'un message l'emporte sur le filtre** (`docs/SPEC-recherche.md` §15). Quand `?message=` désigne un
+  message que la case cochée cacherait, l'écran ouvre le message, et la case passe décochée en écrivant
+  `courrier=tous`. La palette mène à un message, et elle ne doit pas mener à un panneau vide ;
+- **une liste vide sous le filtre** dit « Aucun message de ce dossier ne vous concerne. », avec l'action « Afficher tout
+  le courrier », qui décoche la case. L'écran ne sait pas, sans une lecture de plus, si le dossier a d'autres messages.
+  La phrase reste donc vraie dans les deux cas, et l'action ne promet rien.
+
+### 27.5 Données de développement
+
+Le seed démontre l'unité par le même mécanisme qu'aujourd'hui (`docs/SPEC-seed.md` §2.19 : des messages réellement
+soumis au serveur de courrier de développement, puis relevés). Le détail est écrit à l'écriture du code, dans
+`docs/SPEC-seed.md` :
+- **une seconde identité personnelle** pour l'administratrice (`admin@p2enjoy.test` en a déjà une), créée par le même
+  chemin que la première ;
+- **deux messages non classés**, chacun adressé en copie à l'une de ses deux adresses, d'un expéditeur qui n'est le
+  contact d'**aucune** affaire, pour ne créer aucune suggestion (règle 3) et ne rien changer à `CRM-060` ni à
+  `CRM-137` ;
+- **« Candidature spontanée »**, déjà seedé, ne la concerne pas : c'est le message qui disparaît quand la case est cochée.
+
+**Les preuves existantes de l'inbox** qui ne portent pas sur ce filtre ouvrent l'inbox avec `courrier=tous`. Leur sujet
+est ailleurs, et elles gardent ce qu'elles montraient.
+
+### 27.6 Preuves
+
+- **pgTAP** :
+  - `concerns_me` vraie par À, par Cc, par Cci et par l'expéditeur ;
+  - insensible à la casse de l'identité ;
+  - fausse pour une adresse de l'identité de service et pour l'identité d'une autre personne, y compris sous un
+    administrateur ;
+  - fausse sans identité ;
+  - `inbox_arborescence(true)` et ses compteurs ; `inbox_arborescence()` inchangée ;
+  - l'anonyme refusé.
+- **API**, par jetons réels : la liste filtrée de l'administratrice avec ses deux identités ; un business developer
+  avec la sienne ; un message illisible jamais rendu, filtre ou non.
+- **Unitaires** : la clé `courrier` (lecture, écriture, valeur inconnue), et la décision « le filtre s'applique ou
+  non » selon l'identité et l'échec de sa lecture.
+- **E2E souris et clavier** sur le seed : case cochée par défaut, puis décochée et recochée ; compteurs de l'arborescence ;
+  vide sous le filtre et son action ; personne sans identité (case désactivée, explication, lien) ; adresse d'un message
+  caché qui décoche la case ; captures aux quatre paliers.
+- **Connecteur** : `mcp/tests` (unitaires et intégration) et `scripts/verify-mcp.sh`.

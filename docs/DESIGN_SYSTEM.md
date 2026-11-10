@@ -8041,3 +8041,37 @@ cours d'analyse ou trop volumineuse. La ligne d'une pièce est celle du §5.80, 
 - **SOUS `md`**, les commandes passent sous le nom, cibles conservées, et l'avertissement prend la largeur de sa colonne ;
   `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
 - **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `ShieldQuestion`.**
+
+### 5.96 « Seulement moi » dans l'inbox — `CRM-139`
+
+*Écrit le 2026-11-10, avant le code. Lecture ciblée du document, décidée par le responsable (décision 901) : §1 à §4, §6 à
+§12, §5.3 quinquies et septies, §5.4 à §5.4 quinquies, §5.7 bis, §5.8 et §5.36. Ce que la case filtre et compte est
+spécifié par `docs/SPEC-mail-subsystem.md` §27 ; ces règles ne disent que de quoi elle a l'air.*
+
+- **UNE CASE À COCHER, PAS DEUX LIENS.** C'est le critère du §5.36. « Seulement moi » est un raffinement binaire de la
+  vue courante, pas une seconde vue nommée. C'est le patron de la bascule de sommeil (§5.3 septies) : la case native de
+  24 px, sur une ligne de `--size-target`, son libellé pour cible étendue (§5.7 bis), accent `--color-brand`.
+- **ELLE VIT DANS L'EN-TÊTE DU PANNEAU DES DOSSIERS**, à droite du titre « Dossiers ». Elle qualifie l'arborescence et
+  la liste à la fois, et ce qui qualifie se lit avant. Elle **reste rendue** sur une arborescence ou une liste vide, car
+  elle est la cause possible du vide (§5.3 quinquies). Sous 1024 px, l'inbox est une pile (§5.4) : la case vit dans le
+  panneau des dossiers, et la liste vide sous le filtre porte sa propre action (ci-dessous).
+- **SON ÉTAT VIT DANS L'ADRESSE**, sous la clé `courrier` (valeur `tous`, le défaut jamais écrit), comme la clé
+  `sommeil` (§5.3 septies). Le mode vaut pour tous les dossiers de l'écran.
+- **SANS IDENTITÉ PERSONNELLE, LA CASE EST DÉCOCHÉE ET DÉSACTIVÉE, ET ELLE DIT POURQUOI** (§8 : un état désactivé
+  explique pourquoi l'action est indisponible). Sous l'en-tête, en 13 px `--color-text-2`, reliée par
+  `aria-describedby` : « Aucune adresse d'expédition personnelle : tous les mails sont affichés. », puis le lien
+  « Ajouter une adresse d'expédition », vers Réglages ▸ Identités sortantes. Un lien, parce qu'il change d'adresse
+  (§12.1). La case désactivée garde son libellé lisible, au contraste du §8 : c'est l'état qui informe.
+- **SI LA LECTURE DES IDENTITÉS ÉCHOUE**, même place et même forme : « Vos adresses d'expédition n'ont pas pu être lues :
+  tous les mails sont affichés. », suivi d'un bouton discret compact « Réessayer » (§5.8). Ce n'est pas une alerte : le
+  produit reste utilisable, il montre tout.
+- **PENDANT CETTE LECTURE**, la case est rendue désactivée et cochée, sans texte, et l'arborescence et la liste montrent
+  leurs squelettes (§5.8). Rien ne clignote d'un état à l'autre.
+- **UNE LISTE VIDE SOUS LE FILTRE PORTE SON ACTION** (§5.3 quinquies, §5.8) : l'état vide du §5.4 avec le titre « Aucun
+  message de ce dossier ne vous concerne » et l'action secondaire compacte « Afficher tout le courrier », qui décoche la
+  case. L'action n'est pas répétée ailleurs dans la liste. Quand le vide vient du sommeil, c'est l'état vide du sommeil
+  qui s'affiche, comme avant : le sommeil juge les fils que le filtre a laissés.
+- **L'ARBORESCENCE NE CHANGE PAS DE FORME** : ses nombres et ses pastilles de non-lus comptent ce que la case laisse
+  (§5.4 quinquies), et elle ne porte aucune mention de plus. La case est à côté, et elle dit déjà ce qui est compté.
+- **Aucune couleur, aucun jeton, aucune icône nouvelle.** La case n'a pas d'icône : `User` désignerait le profil, et une
+  icône qui sert deux objets contredit le §9.

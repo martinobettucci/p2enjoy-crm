@@ -19077,8 +19077,10 @@ reste sinon) ; E2E souris et clavier (non lu, sommeil, effacer, annuler, restaur
 - filtre côté serveur, sous les droits de la personne ; clavier complet.
 **MCP** : **oui, famille `messagerie`**, cases existantes (décision 879) : un paramètre « seulement moi » sur l'outil qui
 liste les messages.
-**Spécification** : à écrire avant le code. Elle couvre `docs/SPEC-mail-subsystem.md` (la requête de la liste et des
-compteurs), `docs/DESIGN_SYSTEM.md` (la case dans l'inbox, l'état désactivé), `docs/SPEC-mcp.md` §9.2, le manuel (inbox).
+**Spécification** : écrite le 2026-11-10 avant le code (décision 902) — `docs/SPEC-mail-subsystem.md` §27,
+`docs/DESIGN_SYSTEM.md` §5.96 (lecture ciblée, décision 901), `docs/SPEC-mcp.md` §9.2 *duodevicies* (`only_me` sur
+`crm_card_mail_list`, faux par défaut), `docs/SCHEMA.md` (deux fonctions, `concerns_me` et `inbox_arborescence(p_only_me)`,
+migration gardée dans le scratchpad jusqu'au `[P]`). Le manuel (inbox) suivra avec le code.
 **DoD** : unitaires ; API (le filtre, avec plusieurs identités personnelles ; l'identité de service exclue ; un message
 illisible jamais rendu) ; E2E souris et clavier (case cochée, décochée, personne sans identité) ; outil du connecteur et
 `verify-mcp.sh` ; seed (deux identités personnelles d'une même personne, un message à chacune, un message qui ne lui est

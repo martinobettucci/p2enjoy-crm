@@ -40152,3 +40152,27 @@ par morceaux.
 Le compte rendu de l'unité dit que la lecture n'était pas intégrale. Le diff d'interface reste vérifié contre ces sections
 avant le commit.
 **Portée** : `CRM-139` seulement ; la règle de `CLAUDE.md` n'est pas changée.
+
+
+### décision 902 — `CRM-139` : les points que la décision 879 laissait à la spécification
+
+*2026-11-10, session interactive 152dd27d (p2enjoy-crm-a8), en écrivant la spécification avant le code
+(`docs/SPEC-mail-subsystem.md` §27). Choix de conception, motivés ; aucun ne contredit la 879.*
+- **La comparaison des adresses** : `lower(btrim(…))` des deux côtés, adresse exacte. **Mesuré** : `mail-sync` stocke
+  les adresses nues et en minuscules (`mime_analyse._adresses`). Le domaine ne compte pas.
+- **Le filtre porte sur les messages**, comme la 879 le dit, et le groupement en fils se fait ensuite. Un fil ne montre
+  que ses messages qui concernent la personne. **Écarté** : un filtre par fil entier. Il demanderait la clé de fil côté
+  serveur (`app.cle_fil`, hors de PostgREST), pour un coût quadratique sur un dossier chargé.
+- **Les compteurs suivent la case** : `inbox_arborescence(p_only_me)`. Sans argument, elle rend les compteurs d'avant.
+- **La mémoire de la case : l'adresse**, clé `courrier=tous`, comme `sommeil`. Rien n'est stocké sur l'appareil, et un
+  rechargement garde la vue. **Écartés** : rien, qui perdrait la case à chaque aller-retour vers une fiche ; et
+  `sessionStorage`, qui ferait deux écritures différentes pour deux bascules du même écran.
+- **L'adresse d'un message l'emporte** : `?message=` sur un message caché décoche la case.
+- **Sans identité, ou sur un échec de lecture des identités** : la case est désactivée, et tout est montré, avec
+  l'explication. Un échec ne cache rien.
+- **Le connecteur** : `crm_card_mail_list` reçoit `only_me`, **faux par défaut**. L'outil rend le fil d'une affaire, que
+  la fiche montre entier, et un appel existant garde sa réponse.
+- **La lecture du design system** : ciblée, par la décision 901.
+**Conséquences** : spécification dans `docs/SPEC-mail-subsystem.md` §27, `docs/DESIGN_SYSTEM.md` §5.96,
+`docs/SPEC-mcp.md` §9.2 *duodevicies* et `docs/SCHEMA.md`. Les preuves existantes de l'inbox ouvrent l'écran avec
+`courrier=tous`.

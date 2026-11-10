@@ -1254,6 +1254,17 @@ classement n'existait (décision 891).
 l'interface. **Les deux outils s'inscrivent au catalogue** de la famille, et la ligne « Messagerie » de l'onglet
 « Connecteur MCP » garde sa phrase de portée, complétée : « … ; classer un message dans une affaire ».
 
+### 9.2 duodevicies « Seulement moi » sur le fil d'une affaire — `CRM-139` (`docs/SPEC-mail-subsystem.md` §27 ; décisions 879 et 902)
+
+*Écrit le 2026-11-10, avant le code.* **Famille `messagerie`, aucune case nouvelle** (décision 879). Aucun outil ne liste
+l'inbox : celui qui liste des messages est `crm_card_mail_list` (§9.2 *decies*). Il reçoit l'argument.
+
+| Outil | Changement | Remarques |
+|---|---|---|
+| `crm_card_mail_list` | Argument `only_me`, booléen, **faux par défaut** | Vrai, il ne rend que les messages qui concernent la personne représentée, par la colonne calculée `concerns_me` (§27.2). Le défaut est faux, contrairement à l'inbox : l'outil rend le fil d'une **affaire**, et la fiche d'une affaire montre son fil entier (§27.1). Un appel existant garde donc sa réponse. Quand `only_me` est vrai et que la personne n'a aucune identité personnelle, la réponse est vide et le dit en une phrase pour l'assistant : « aucune adresse d'expédition personnelle ; relancer sans `only_me` ». |
+
+**La ligne « Messagerie » de l'onglet « Connecteur MCP » ne change pas** : aucun outil n'est ajouté.
+
 ### 9.3 Réponses
 
 - **Forme.** Un JSON structuré, avec les identifiants **et** les libellés utiles : nom du track,

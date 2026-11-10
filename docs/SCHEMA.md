@@ -2553,6 +2553,22 @@ enverrait de nouveau directement.
 précédente, retirer les trois fonctions nouvelles, la table, puis les deux colonnes. Les confirmations et les pièces des
 mails préparés sont perdues. **Avec les images `mail-sync`, `mcp` et la webapp d'avant `CRM-143`.**
 
+### Migration de `CRM-139` — « Seulement moi » : le courrier qui concerne l'appelant (numéro pris au push ; spécifiée le 2026-11-10, à écrire)
+
+`docs/SPEC-mail-subsystem.md` §27.2 et §27.3, décisions 879 et 902. **Deux fonctions, aucune table, aucune colonne,
+aucune donnée, aucune politique.** La migration reste dans le scratchpad de la session jusqu'au `[P]` de l'unité (règle de
+la session de livraison du 2026-11-10).
+- **`public.concerns_me(m public.mail_messages) returns boolean`**, nouvelle. `sql`, `stable`, `security invoker`,
+  `search_path` vidé ; `execute` à `authenticated` seul. Vraie quand une adresse de `to_addresses`, `cc_addresses`,
+  `bcc_addresses` ou `from_address` est égale, par `lower(btrim(…))`, à l'adresse d'une identité de
+  `mail_outbound_identities` où `owner_id = auth.uid()`. L'identité de service, à `owner_id` nul, n'en est jamais.
+- **`public.inbox_arborescence(p_only_me boolean default false)`** remplace `inbox_arborescence()`, par un `drop` puis un
+  `create` : une surcharge laisserait deux fonctions de même nom, et un appel sans argument serait ambigu. Le corps
+  reste celui de la `0154`, avec un `and (not p_only_me or public.concerns_me(m))` dans les deux branches. Les droits
+  d'`execute` sont reposés à l'identique.
+**Retour arrière** : `drop function public.concerns_me(public.mail_messages)`, puis reposer `inbox_arborescence()` de
+la `0154`. Aucune donnée n'en dépend ; la webapp et l'image `mcp` qui les appellent se livrent avec la migration.
+
 ### Migration `0172` — les affaires candidates au classement d'un message (`CRM-137`, décisions 877, 891 et 893 ; livrée en développement le 2026-11-10)
 
 *Numérotée `0172` au push, premier numéro libre sur `main` après la `0171` de `CRM-142`. Son test pgTAP prend le `0161`, le `0160` étant celui de la `0171`.*
