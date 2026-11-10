@@ -39786,3 +39786,40 @@ La spécification tranchera :
 - les mails envoyés (non évalués par défaut) ;
 - la suppression d'une pastille ;
 - un éventuel filtre de la liste par pastille.
+
+### décision 884 — CRM-136 : les choix de conception des réglages de la messagerie, et trois points soumis au responsable
+
+*2026-11-10, session interactive d5b44a2d (p2enjoy-crm-c2). Unité confiée par la session de livraison (be). Elle applique la
+décision 875, et la spécification est écrite avant le code : `docs/SPEC-mail-subsystem.md` §25.*
+
+**Problème** : la décision 875 expose quatre réglages et demande « une fenêtre de cases à cocher » des dossiers réels de la
+boîte. Elle laisse ouverts trois points qu'elle nomme : la « première connexion » d'une boîte existante, un dossier coché
+qui disparaît, un historique augmenté après coup.
+
+**Observations** :
+- le design system n'admet aucune modale sur les réglages (§5.13, §5.34) ;
+- **aucun code ne lit `folder_style`** : `mail-sync` détecte seul les serveurs à libellés (§17.2), d'où INC-351 ;
+- la sonde du test de connexion exécute déjà `LIST` et ne rend que le nombre de dossiers (§13.5) ;
+- `borne_backfill` est recalculée à chaque tour, et un dossier absent est écarté sans échec (§15.4) ;
+- `upsert_mail_outbound_identity` ne sait pas remettre `daily_quota` à `NULL` (§22.1).
+
+**Décisions de conception** (§25.3 à §25.8) :
+1. La liste des dossiers vient du test de connexion existant, qui gagne `folder_names`, sans `\Noselect` ni la racine `CRM`
+   du produit. La fonction edge la relaie pour une boîte entrante. Aucune route, aucune fonction, aucun droit nouveau.
+2. « Première connexion » : le panneau des dossiers s'ouvre de lui-même après la création d'une boîte. Une boîte
+   existante le reçoit par la commande « Dossiers relevés » de sa ligne.
+3. Un dossier coché absent du serveur paraît « absent de la boîte », coché et décochable. Rien ne le retire en silence.
+4. Historique augmenté : la passe reprend sous `uid_min` jusqu'à la nouvelle borne. Historique réduit, dossier retiré :
+   rien de relevé n'est supprimé.
+5. Le quota : un paramètre explicite, `p_daily_quota_set`. À `true`, la valeur est écrite telle quelle, `NULL` compris ;
+   omis, le comportement reste le même pour les appelants existants. La migration prend le premier numéro libre au push.
+6. Seed : un historique de 3 mois sur la boîte de Camille, un plafond de 200 envois par jour sur l'identité de Driss.
+
+**Soumis à l'arbitrage du responsable** (§25.2), avec une recommandation chacun. Le code d'un point attend sa réponse :
+- (a) la « fenêtre » rendue par un **panneau dans le flux** plutôt que par une modale ;
+- (b) `folder_style = 'label'` **interdit au CRM de créer des dossiers et d'y copier** ; la détection Gmail reste
+  prioritaire. L'autre voie est de ne pas exposer le réglage ;
+- (c) lister les dossiers **est** un test de connexion : il écrit l'état de la boîte et subit la garde de 30 s.
+
+**Conséquences** : une migration, l'image `mail-sync` et la fonction edge `mail-connection-test`, livrées ensemble avec la
+webapp. MCP : non (décision 875).

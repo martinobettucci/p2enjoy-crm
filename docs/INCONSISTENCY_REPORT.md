@@ -9002,3 +9002,16 @@ contrat de `CRM-094` ne se révise pas (session de livraison) : c'est le code de
 
 **La correction** (décision 876) : la barre lit sa présence par `lirePresenceChannels`, au plus une ligne, sans comptage ;
 mêmes filtres que l'étape « channel ». L'affichage ne change pour personne.
+
+### INC-351 — `folder_style` est accepté et stocké, mais aucun code ne le lit
+
+**Ouverte**, 2026-11-10, session d5b44a2d, en spécifiant `CRM-136`.
+**Le constat.** `mail_inbound_accounts.folder_style` (`folder` | `label`, `0022`) est écrit par
+`upsert_mail_inbound_account`, recopié au journal d'audit (`0115`), et **lu par aucun code** de `mail-sync` ni de la webapp
+(`grep` le 2026-11-10). Le service décide seul si une boîte se prête aux dossiers, par la capacité `X-GM-EXT-1`
+(`supporte_les_dossiers`, `docs/SPEC-mail-subsystem.md` §17.2).
+**Ce qui contredit quoi.** La décision 875 demande d'exposer « le style de classement » à l'écran. Exposé tel quel, le
+réglage serait une commande sans effet (`docs/DESIGN_SYSTEM.md` §5.10).
+**Laissé inchangé**, et soumis au responsable avec la spécification (`docs/SPEC-mail-subsystem.md` §25.2, point 2 ; décision
+884) : soit `label` interdit au CRM de créer des dossiers et d'y copier, soit le réglage n'est pas exposé.
+
