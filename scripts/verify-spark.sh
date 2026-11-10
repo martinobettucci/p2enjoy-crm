@@ -17,6 +17,8 @@
 #           `proposer.sh --connecteur-mcp`
 # @verifies CRM-143 (docs/BACKLOG.md) tranche T3 — docs/SPEC-pieces-jointes.md §17.6, docs/SPEC-deploiement-spark.md §3.4 ;
 #           docs/JOURNAL.md décision 889 : ClamAV épinglé, borné, sans port, signatures en volume, visé par mail-sync
+# @verifies CRM-145 (docs/BACKLOG.md) — docs/SPEC-deploiement-spark.md §3.2 bis ; docs/JOURNAL.md décision 899 : les en-têtes
+#           `Cache-Control` réels de la webapp, lus sur un Caddy jetable de la cellule ; révision de routes `crm-145`
 # @verifies docs/SPEC-deploiement-spark.md §5.1 ; docs/JOURNAL.md décision 603 — la cellule est jointe
 #           par ses IP, jamais par un alias : livrer.sh et verifier.sh refusent un nom d'hôte
 #
@@ -314,8 +316,9 @@ elif "mcp" in s:
 if s.get("kong", {}).get("labels", {}).get("com.p2enjoy.kong-config-revision") != "crm-115":
     e.append("Kong sans la révision de configuration crm-115")
 # `crm-001` depuis INC-299 (décision 696, docs/DAT.md §3.5 bis) : le délai de maintien des connexions amont de Caddy.
-if s.get("caddy", {}).get("labels", {}).get("com.p2enjoy.caddy-routes-revision") != "crm-001":
-    e.append("Caddy sans la révision de routes crm-001")
+# `crm-145` depuis CRM-145 (décision 899, docs/SPEC-deploiement-spark.md §3.2 bis) : le cache de la webapp.
+if s.get("caddy", {}).get("labels", {}).get("com.p2enjoy.caddy-routes-revision") != "crm-145":
+    e.append("Caddy sans la révision de routes crm-145")
 # Moindre privilège, mesuré le 2026-09-23 (docs/SPEC-deploiement-spark.md §3, décision 567) :
 # chaque secret atteint SEULEMENT les services qui le consomment. Un env_file posé sur un service
 # le remettrait à tous ; Compose le résout dans environment, et cette comparaison le voit.
@@ -389,6 +392,49 @@ if docker info >/dev/null 2>&1; then
 	done
 else
 	skip "démon Docker indisponible : Caddyfile non validés"
+fi
+# CRM-145 (décision 899, docs/SPEC-deploiement-spark.md §3.2 bis) : les en-têtes RÉELS, lus sur un Caddy jetable de la
+# cellule (`Caddyfile.spark` et `routes.caddy` du dépôt) qui sert un `/srv/www` de démonstration, sans réseau vers Kong.
+cache_de_la_webapp() {
+	local www="$WORK/www" nom="verif-spark-cache-$$" port u attendu recu
+	mkdir -p "$www/assets" "$www/avatars"
+	printf '<!doctype html><title>crm</title>\n' > "$www/index.html"
+	printf 'console.log(1)\n' > "$www/assets/index-Abc123.js"
+	printf '<svg xmlns="http://www.w3.org/2000/svg"/>\n' > "$www/favicon.svg"
+	chmod -R a+rX "$www"
+	docker run -d --rm --name "$nom" -p 127.0.0.1::8080 \
+		-v "$REPO_ROOT/caddy/Caddyfile.spark:/etc/caddy/Caddyfile:ro,z" -v "$REPO_ROOT/caddy/routes.caddy:/etc/caddy/routes.caddy:ro,z" \
+		-v "$www:/srv/www:ro,z" caddy:2.9-alpine >/dev/null 2>&1 || { fail "Caddy jetable non démarré"; return; }
+	port=""
+	for _ in $(seq 1 30); do
+		port=$(docker port "$nom" 8080 2>/dev/null | head -n 1 | sed 's/.*://')
+		[ -n "$port" ] && curl -s -o /dev/null "http://127.0.0.1:$port/" && break
+		sleep 0.2
+	done
+	while IFS='|' read -r u attendu; do
+		recu=$(curl -s -o /dev/null -D - "http://127.0.0.1:$port$u" | tr -d '\r' | sed -n 's/^[Cc]ache-[Cc]ontrol: //p')
+		[ "$recu" = "$attendu" ] && ok "Cache-Control de $u : $attendu" || fail "Cache-Control de $u : « $recu », attendu « $attendu »"
+	done <<'LISTE'
+/|no-cache
+/index.html|no-cache
+/affaires/5eed0000-0000-4000-8000-000000000101/fiche|no-cache
+/assets/index-Abc123.js|public, max-age=31536000, immutable
+/assets/index-Ancien.js|no-cache
+/favicon.svg|no-cache
+LISTE
+	recu=$(curl -s -o /dev/null -D - "http://127.0.0.1:$port/" | tr -d '\r')
+	echo "$recu" | grep -qi '^x-frame-options: DENY' && echo "$recu" | grep -qi '^strict-transport-security: max-age=31536000' \
+		&& echo "$recu" | grep -qi '^x-content-type-options: nosniff' \
+		&& ok "en-têtes de sécurité inchangés sur la webapp" || fail "en-têtes de sécurité absents de la webapp"
+	etag=$(echo "$recu" | sed -n 's/^[Ee][Tt]ag: //p')
+	recu=$(curl -s -o /dev/null -w '%{http_code}' -H "If-None-Match: $etag" "http://127.0.0.1:$port/index.html")
+	[ -n "$etag" ] && [ "$recu" = 304 ] && ok "index.html revalidé : 304 sur son ETag" || fail "index.html non revalidé (ETag « $etag », $recu)"
+	docker rm -f "$nom" >/dev/null 2>&1
+}
+if docker info >/dev/null 2>&1 && command -v curl >/dev/null; then
+	cache_de_la_webapp
+else
+	skip "démon Docker ou curl indisponible : en-têtes de la webapp non lus"
 fi
 grep -q 'import /etc/caddy/routes.caddy' caddy/Caddyfile && grep -q 'import /etc/caddy/routes.caddy' caddy/Caddyfile.spark \
 	&& ok "les deux Caddyfile importent le même fragment de routes" || fail "un Caddyfile n'importe pas routes.caddy"

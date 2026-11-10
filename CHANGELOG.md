@@ -13,6 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-145` — chaque livraison se voit au prochain chargement (décision 899)
+
+- **La page de l'application n'est plus gardée en cache** : `index.html` et toutes ses routes sont servis avec
+  `Cache-Control: no-cache`, donc revalidés à chaque chargement ; un navigateur ne montre plus l'ancienne version des
+  heures après une livraison. Les fichiers hachés de `/assets/` sont gardés un an (`immutable`) : leur nom change à chaque
+  build. Les en-têtes de sécurité sont inchangés.
+- Déploiement : `docs/PROD_MIGRATIONS.md` §2.37, `caddy/routes.caddy` et le label de Caddy `crm-145` ; aucune migration.
+
 #### `CRM-137` — classer un mail : les affaires candidates, cherchables, l'expéditeur connu d'abord (décisions 877, 891 et 893)
 
 - **Le formulaire « Classer dans une affaire » de l'inbox cherche** : un champ « Rechercher une affaire » remplace la liste déroulante, et filtre par le titre, le track ou le channel, sans tenir compte des majuscules ni des accents. Les flèches parcourent la liste et `Entrée` choisit.

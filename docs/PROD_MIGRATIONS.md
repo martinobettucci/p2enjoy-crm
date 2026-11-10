@@ -856,6 +856,22 @@ dépôt. `select has_function_privilege('authenticated', 'public.classification_
 `mcp` précédentes, puis `drop function public.classification_candidates(uuid, boolean, text, integer)`, comme le dit
 `docs/SCHEMA.md` « Migration `0172` ». Aucune donnée n'est touchée.
 
+### 2.37 `CRM-145`, décision 899 — chaque livraison vue au prochain chargement : `Cache-Control` sur la webapp (À LIVRER : `caddy/routes.caddy`, label `crm-145`)
+
+`docs/SPEC-deploiement-spark.md` §3.2 bis. **Aucune migration, aucune image, aucune variable, aucun secret.** Seuls
+`caddy/routes.caddy` et le label `com.p2enjoy.caddy-routes-revision` (`crm-001` → **`crm-145`**) changent : la livraison
+ordinaire de `main` extrait le fichier, et le `up` recrée Caddy parce que son label a changé (Caddy ne relit pas un fichier
+monté). Indépendante des migrations du lot ; elle part avec lui. Un bref redémarrage de Caddy, quelques secondes.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer `main` | session de livraison, dans la fenêtre du lot | `scripts/spark/livrer.sh` (§3.1) ; Caddy recréé au `up` |
+| 2 | Lire les en-têtes réels, en lecture seule | session de livraison | `curl -sI` sur la route publique : `/` et une route profonde → `Cache-Control: no-cache` ; le fichier `/assets/index-*.js` nommé par `index.html` → `public, max-age=31536000, immutable` ; `Strict-Transport-Security`, `X-Frame-Options`, `X-Content-Type-Options` toujours présents ; `docker inspect` : label `crm-145` |
+| 3 | Constater | responsable | après cette livraison et la suivante, la page montre la nouvelle version au premier rechargement ordinaire, sans vider le cache. *Une fois seulement* : la page déjà en cache avant cette livraison peut demander un rechargement forcé |
+
+**Retour arrière** : reposer `caddy/routes.caddy` et le label `crm-001` de la révision précédente, puis `up` ; aucune donnée
+n'est touchée.
+
 ## 3. Migrations en attente
 
 **La 174, après la 173** (`CRM-133`, décisions 869, 870 et 882), *en attente* : la description d'un nœud et sa surcharge
@@ -1751,7 +1767,7 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | Pile Supabase | À chaque changement de version épinglée d'un composant (tableau dans `docs/DAT.md` §3.7) |
 | `functions` | À chaque changement sous `supabase/functions/` ou de l'image Edge Runtime ; `CRM-016` impose un premier déploiement conjoint avec Kong. **`CRM-092` T3 et T3 bis (en attente de la reprise complète, §3)** : nouvelle fonction `session`, et le conteneur reçoit `JWT_SECRET`, `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID` et **`OIDC_CLIENT_SECRET`**, que le service principal ne remet qu'au worker `session` — la phrase « ne reçoit pas `JWT_SECRET` » plus bas est révisée par la décision 584. Recréer `functions` **après** la pose du secret par l'administrateur du realm et la correction de `SSO_OIDC_CLIENT_ID` (§2.3). **`CRM-127` T3** : nouvelle fonction `mail-connection-test` ; le conteneur reçoit `MAIL_SYNC_URL` (posée par `docker-compose.yml`) et `MAIL_SYNC_INTERNAL_TOKEN` (déjà au `.env` pour `mail-sync`), que le service principal ne remet qu'à ce worker — **recréer `functions` dans la fenêtre de la migration 151** |
 | `kong` | À chaque changement de `supabase/docker/volumes/api/kong.yml`, qui incrémente le label `com.p2enjoy.kong-config-revision` — **`crm-115`** depuis `CRM-115` T2 (Realtime joint par son alias réseau, §2.22) ; `crm-092` depuis `CRM-092` T6 : routes `/auth/v1/*` et `/.well-known/oauth-authorization-server` retirées, Kong répond 404 ; **INC-299** (décision 696, §2.21) : `KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT: 3` dans `docker-compose.yml` — la définition change, le `up` ordinaire recrée Kong |
-| `caddy` | À chaque changement de `caddy/Caddyfile`, de `caddy/Caddyfile.spark` ou de `caddy/routes.caddy` — **`CRM-090` les modifie : routes extraites et `/functions/v1/*` relayé** ; **`CRM-092` T6** : `/auth/v1/*` répond 404, et le label `com.p2enjoy.caddy-routes-revision` (`crm-092`) fait recréer Caddy au `up` ordinaire ; **`CRM-102` T3** : l'hôte du connecteur MCP aiguillé vers `mcp` (`MCP_HOTE`, `mcp.invalid` tant qu'il est éteint), label `crm-102` ; **INC-299** (décision 696, §2.21) : `keepalive 3s` sur les deux `reverse_proxy`, label `crm-001` |
+| `caddy` | À chaque changement de `caddy/Caddyfile`, de `caddy/Caddyfile.spark` ou de `caddy/routes.caddy` — **`CRM-090` les modifie : routes extraites et `/functions/v1/*` relayé** ; **`CRM-092` T6** : `/auth/v1/*` répond 404, et le label `com.p2enjoy.caddy-routes-revision` (`crm-092`) fait recréer Caddy au `up` ordinaire ; **`CRM-102` T3** : l'hôte du connecteur MCP aiguillé vers `mcp` (`MCP_HOTE`, `mcp.invalid` tant qu'il est éteint), label `crm-102` ; **INC-299** (décision 696, §2.21) : `keepalive 3s` sur les deux `reverse_proxy`, label `crm-001` ; **`CRM-145`** (décision 899, §2.37) : `Cache-Control` sur la webapp, label `crm-145` |
 | `mcp` | Sous le profil `mcp`, présent seulement si `CRM_MCP_HOTE` est posée (`CRM-102`, `docs/SPEC-mcp.md` §2.1). **Image construite dans la cellule** à sa première livraison (2026-10-21) ; comme pour `mail-sync`, `up -d` ne reconstruit jamais une image présente : **toute modification sous `mcp/` se livre par une reconstruction explicite** (`up -d --build --no-deps --wait mcp`, par `compose_prod`). Le volume `mcp-etat` (clients enregistrés, transactions, codes, chiffrés) survit aux recréations |
 | `minio`, `minio-createbucket` | Cellule Spark seulement (`CRM-090`) : stockage objet interne, sans port publié. **En attente (décision 681)** : nouvelle image Chainguard épinglée par empreinte, procédure au §2.18 |
 | `realtime` dans la cellule | À chaque montée de version de Realtime : reconstruire l'image dérivée, que `scripts/spark/livrer.sh` recharge (décision 571) |

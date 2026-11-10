@@ -19246,8 +19246,7 @@ contrat.
 
 ## Demande du 2026-11-10 — une livraison se voit au prochain chargement (décision 899)
 
-### CRM-145 — `Cache-Control` sur la webapp : `index.html` revalidé, `/assets/` immuable `[@]`
-*Prise en charge : session interactive 4891a451 (p2enjoy-crm-32) depuis 2026-11-10 15:56 UTC — état avant : [ ] ; confiée par la session de livraison (ee)*
+### CRM-145 — `Cache-Control` sur la webapp : `index.html` revalidé, `/assets/` immuable `[P]`
 
 **Origine** : le responsable ne voyait pas les livraisons récentes ; `caddy/routes.caddy` n'envoie aucun `Cache-Control` sur
 `index.html` (décision 899), **prioritaire**.
@@ -19257,4 +19256,11 @@ fichiers hachés de `/assets/` avec `public, max-age=31536000, immutable` ; aucu
 **MCP** : non. **DoD** : la configuration Caddy (`caddy/routes.caddy`, en dev et dans la cellule) ; une preuve qui lit les
 en-têtes réels (`verify-spark.sh` ou un E2E API : `index.html`, une route profonde, un fichier de `/assets/`) ; le contrat de
 déploiement (rechargement de Caddy) ; après livraison, les en-têtes constatés sur la route publique.
-
+**État (2026-11-10, session 32)** : implémentée et vérifiée en développement. `caddy/routes.caddy` : un fichier existant de
+`/assets/` en `public, max-age=31536000, immutable` (matcher `file`), tout le reste de la webapp en `no-cache` ; label de
+Caddy `crm-145` (`docker-compose.prod.yml`). `scripts/verify-spark.sh` 131 vérifications, aucune anomalie, dont les en-têtes
+réels lus sur un Caddy jetable de la cellule : `/`, `/index.html`, une route profonde et `favicon.svg` en `no-cache`, un
+fichier haché immuable, un `/assets/` absent en `no-cache` (jamais immuable), un `304` sur l'`ETag`, les en-têtes de
+sécurité présents ; `caddy validate` des deux Caddyfile. En développement, la webapp est servie par Vite, sans Caddy.
+Sous-ensemble de ce périmètre (décision 830). **Reste** : la livraison (`docs/PROD_MIGRATIONS.md` §2.37), les en-têtes
+constatés sur la route publique, et le constat du responsable.

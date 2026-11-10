@@ -53,9 +53,30 @@ handle @supabase {
 	}
 }
 
-# Webapp : application monopage, toute route inconnue retombe sur `index.html`.
+# @spec CRM-145 (docs/BACKLOG.md) — le cache de la webapp ; docs/SPEC-deploiement-spark.md §3.2 bis ; docs/JOURNAL.md
+#       décision 899 : chaque livraison est vue au prochain chargement
+# Les fichiers HACHÉS de `/assets/` (le nom change à chaque build Vite) sont immuables : un an, sans revalidation. Le
+# matcher `file` exige que le fichier EXISTE : un `/assets/` absent — l'ancien bundle d'une page restée ouverte — ne prend
+# pas cette règle, et retombe plus bas sur `index.html` revalidé ; jamais une page marquée immuable pour un an.
+@asset_hache {
+	path /assets/*
+	file {
+		root /srv/www
+	}
+}
+handle @asset_hache {
+	root * /srv/www
+	header Cache-Control "public, max-age=31536000, immutable"
+	file_server
+}
+
+# Webapp : application monopage, toute route inconnue retombe sur `index.html`. TOUT ce qu'elle sert hors de `/assets/` —
+# `index.html`, les routes profondes, `favicon.svg`, `avatars/` ; le manuel publié est dans le bundle — est `no-cache` :
+# conservé, mais revalidé à chaque chargement par `ETag` et `Last-Modified` (un 304 sans corps). Sans cette règle, un
+# navigateur gardait l'ancienne page par heuristique, des heures après une livraison (décision 899).
 handle {
 	root * /srv/www
+	header Cache-Control "no-cache"
 	try_files {path} /index.html
 	file_server
 }
