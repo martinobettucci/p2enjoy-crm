@@ -13,7 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-142` — le board d'un channel chargé s'ouvre de nouveau (INC-352, décisions 887, 888 et 890)
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-10 (troisième fenêtre) — migration 171
+
+Cellule Spark `crm`, révision `e15dd487` (décision 896, sans nouvel instantané, un `pg_dump -Fc` avant). **Vérifié** : registre
+à 169 lignes, la dernière `0171_sante_un_controle.sql` ; le board de « Partenariats marques » en 346 ms (8 586 ms avant) ;
+`verifier.sh` 33/34 (INC-277).
+
+#### `CRM-142` — le board d'un channel chargé s'ouvre de nouveau (INC-352, décisions 887, 888 et 890)
 
 - **Le board ne tombe plus en délai dépassé** quand un channel porte quelques dizaines d'affaires. En production, celui de
   « Partenariats marques » (53 rattachements) mettait 8,6 s et la base l'interrompait à 8 s ; la vue liste passait. La
@@ -25,8 +35,6 @@ d'exécuter le code attendu.
   l'écran, ni dans le connecteur.
 
 _Rien à publier pour le moment._
-
-## [Publié]
 
 ### Déployé en production, 2026-11-10 (seconde fenêtre) — migration 170, l'image `mail-sync`, le manuel
 

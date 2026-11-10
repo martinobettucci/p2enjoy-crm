@@ -19119,6 +19119,8 @@ réévaluation.
 
 ### CRM-142 — Le board d'un channel chargé s'ouvre sous le délai : droits évalués une fois par requête, plongements allégés `[P]`
 
+**Livrée le 2026-11-10** (décision 896, révision `e15dd487`, migration 171) : le board mesuré en production à 346 ms (8 586 ms avant) ; reste le constat du responsable.
+
 **Origine** : INC-352 (le responsable, HAR ; relevé par la session 2f ; mesuré en lecture seule par la session de
 livraison) ; arbitrée le 2026-11-10 (décision 887), **prioritaire**.
 **Comportement attendu** : le board de « Partenariats marques » (53 rattachements en production) et de tout channel

@@ -9036,6 +9036,8 @@ réglage serait une commande sans effet (`docs/DESIGN_SYSTEM.md` §5.10).
 seule) ; aucune correction décidée. Le channel compte moins de 100 affaires actives (responsable).
 **Mesurée le 2026-11-10 en lecture seule** (session de livraison) : 53 rattachements ; jointure aux affaires 210 ms
 (≈ 4 ms par ligne) — hypothèse (2), la réévaluation par ligne, la plus probable. **Arbitrée (décision 887)** : unité `CRM-142`, prioritaire.
+**Close le 2026-11-10** : `CRM-142` livrée (révision `e15dd487`, décision 896) ; la requête exacte du board mesurée en production en
+lecture seule à **346 ms**, contre 8 586 ms avant.
 
 *Relevé le 2026-11-10 par le responsable (capture HAR de Firefox, channel « Partenariats marques » du track « Gestion
 commercial YouTube ») ; analysé par la session 4891a451 (p2enjoy-crm-2f), sans accès à la production.*
