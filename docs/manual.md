@@ -6660,13 +6660,17 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   - *Consulter* : les emails classés dans une affaire, du plus ancien au plus récent — sens, date, expéditeur,
     destinataires, objet, un extrait, et la **liste** de ses pièces jointes — nom, type, taille, et si elle est
     disponible ; un email en entier, avec son texte. **Une pièce jointe disponible**, c'est-à-dire déclarée saine, l'assistant
-    peut la **lire elle-même**, jusqu'à 25 Mo : il reçoit le fichier et le lit à sa façon. Quand
+    peut la **lire elle-même**, jusqu'à 25 Mo : il reçoit le fichier et le lit à sa façon. **Une pièce que l'antivirus n'a pas
+    pu analyser**, il ne la lit que si vous le lui demandez après qu'il vous a prévenu du risque : votre confirmation est
+    alors enregistrée, comme celle de « Télécharger quand même » ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)).
+    Une pièce reconnue dangereuse, en cours d'analyse ou trop volumineuse ne se lit jamais. Quand
     l'expéditeur n'a écrit qu'en HTML, le texte en est extrait comme à l'écran, et l'assistant le sait. Chaque email dit
     aussi s'il est **lu ou non lu pour vous** ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)) ; le lire par l'assistant ne le marque pas lu, et aucun outil
     ne change cet état ;
   - *Ajouter* : **préparer un email depuis une affaire**. L'assistant rédige un email entièrement libre, rattaché à son
     affaire : destinataires, copie, **copie cachée**, objet et texte. Il peut répondre à un email **de cette affaire** ;
-    l'objet est alors repris, précédé de « Re: ». Il ne joint **aucun fichier**.
+    l'objet est alors repris, précédé de « Re: ». Il peut **joindre des fichiers** : dix au plus, 10 Mo en tout ; vous les
+    retrouvez dans la relecture, où vous pouvez en retirer.
   - *Consulter* (suite) : la liste de **vos** mails préparés qui attendent encore votre relecture ;
   - *Supprimer* : **écarter** un de vos mails préparés ; il ne partira jamais.
 
@@ -6682,8 +6686,8 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
 
 ### 33.6 Ce que le connecteur n'offre pas
 
-Toutes les familles ont leurs outils. Restent des gestes de l'écran : **joindre une pièce** à un envoi — le connecteur lit
-les pièces jointes, il n'en envoie aucune ; **classer, déclasser ou mettre en sommeil** un fil de la boîte de réception ;
+Toutes les familles ont leurs outils. Restent des gestes de l'écran : **envoyer** — l'assistant prépare, joint des fichiers,
+mais c'est vous qui envoyez ; **classer, déclasser ou mettre en sommeil** un fil de la boîte de réception ;
 **les modèles et les séquences** de relance.
 
 ## 34. Les webhooks : prévenir vos autres outils

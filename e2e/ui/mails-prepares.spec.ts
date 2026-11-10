@@ -2,6 +2,9 @@
 //           le formulaire d'envoi prérempli, la mise en file du contenu RELU (constatée en base), « Écarter » et sa
 //           confirmation, l'adresse `/inbox?brouillon=<id>`, l'encadré de la fiche, la personne seule
 // @verifies docs/SPEC-mails-prepares.md §3.4, §3.5, §6 ; docs/DESIGN_SYSTEM.md §5.90 ; décision 829 ; CLAUDE.md §15, §16
+// @verifies CRM-143 (docs/BACKLOG.md) — tranche T4 : la relecture précharge les pièces du mail préparé ; une pièce retirée
+//           n'est pas effacée du stockage, et la file ne porte que celles qui restent (docs/SPEC-pieces-jointes.md §17.6,
+//           §17.9 ; docs/DESIGN_SYSTEM.md §5.95)
 //
 // LES MAILS PRÉPARÉS SONT POSÉS PAR LA VRAIE FONCTION, `prepare_email`, sous le jeton de session de l'administratrice
 // (origine `web`) ; la préparation par le connecteur est prouvée par l'intégration de T3. Chaque scénario retire ce qu'il
@@ -165,4 +168,59 @@ test('à 390 px, la pile mène de l’entrée à la relecture sans défilement h
 	const largeur = await page.evaluate(() => document.documentElement.scrollWidth)
 	expect(largeur).toBeLessThanOrEqual(390)
 	await capturer(page, 'inbox-relecture-sm-390', UNITE)
+})
+
+// `CRM-143` T4 : les pièces d'un mail préparé, déposées par la personne sous son jeton comme le connecteur le fait, puis
+// citées par `prepare_email`, sont préchargées dans la relecture (docs/SPEC-pieces-jointes.md §17.6).
+test('la relecture précharge les pièces du mail préparé ; en retirer une ne l’efface pas, et la file porte les autres', async ({
+	page,
+	request,
+}) => {
+	const jeton = await jetonDe(ADMIN)
+	const [profil] = (await (
+		await request.get(rest(`profiles?select=id&email=eq.${encodeURIComponent(ADMIN)}`), { headers: enTetesService() })
+	).json()) as { id: string }[]
+	expect(profil, 'le profil de l’administratrice').toBeDefined()
+	const chemins = ['devis.pdf', 'annexe.txt'].map(
+		(nom) => `5eed0000-0000-4000-8000-000000000001/${profil!.id}/${crypto.randomUUID()}/${nom}`,
+	)
+	try {
+		for (const chemin of chemins) {
+			const depot = await request.post(`${URL_API}/storage/v1/object/mail-outbound-attachments/${chemin}`, {
+				headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/octet-stream' },
+				data: Buffer.from(`${MARQUE} ${chemin}`),
+			})
+			expect([200, 201], await depot.text()).toContain(depot.status())
+		}
+		const id = await preparer(request, 'Proposition avec pièces', { p_attachments: chemins })
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto(`/inbox?brouillon=${id}`)
+		const relecture = page.getByTestId('inbox-relecture')
+		const pieces = relecture.getByTestId('envoi-piece')
+		await expect(pieces).toHaveCount(2)
+		await expect(pieces.filter({ hasText: 'devis.pdf' })).toHaveAttribute('data-etat', 'pret')
+		await capturer(page, 'relecture-pieces-xl-1440', 'CRM-143')
+
+		await relecture.getByRole('button', { name: 'Retirer annexe.txt' }).click()
+		await expect(pieces).toHaveCount(1)
+		// RETIRÉE DU FORMULAIRE, PAS DU STOCKAGE : le mail préparé la cite encore tant qu'il n'est pas envoyé.
+		const encore = await request.get(`${URL_API}/storage/v1/object/mail-outbound-attachments/${chemins[1]}`, {
+			headers: enTetesService(),
+		})
+		expect(encore.status()).toBe(200)
+
+		await relecture.getByTestId('envoi-valider').click()
+		await expect(page.getByTestId('inbox-mail-prepare').filter({ hasText: 'Proposition avec pièces' })).toHaveCount(0)
+		const brouillon = await request.get(rest(`mail_drafts?id=eq.${id}&select=status,outbox_id`), { headers: enTetesService() })
+		const { status, outbox_id } = premiere((await brouillon.json()) as { status: string; outbox_id: string }[])
+		expect(status).toBe('sent')
+		const file = await request.get(rest(`mail_outbox?id=eq.${outbox_id}&select=attachments`), { headers: enTetesService() })
+		const { attachments } = premiere((await file.json()) as { attachments: { path: string }[] }[])
+		expect(attachments.map((piece) => piece.path)).toEqual([chemins[0]])
+	} finally {
+		await request.delete(`${URL_API}/storage/v1/object/mail-outbound-attachments`, {
+			headers: enTetesService(),
+			data: { prefixes: chemins },
+		})
+	}
 })

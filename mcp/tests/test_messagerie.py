@@ -19,6 +19,11 @@
 # @verifies CRM-137 (docs/BACKLOG.md) — `crm_mail_classification_candidates` (`consulter`, ancre `message`, la case
 #           « expéditeur connu » vraie par défaut, le terme rogné, la note de l'état vide) et `crm_mail_classify` (`modifier`,
 #           ancre `message` et `card`, `classify_message`, refus nommés) ; docs/SPEC-mcp.md §9.2 septendecies ; décision 893
+# @verifies CRM-143 (docs/BACKLOG.md) — tranche T5 : les statuts précis d'une pièce (`statut_piece`, le repli jamais
+#           permissif), `crm_mail_attachment_get` qui refuse une pièce non analysée sans accusé et la lit avec, la
+#           confirmation posée sous le jeton de la personne AVANT la lecture ; `crm_mail_prepare` qui joint des fichiers
+#           — décodés et bornés avant tout dépôt, déposés sous le jeton au chemin `<espace>/<personne>/<aléa>/<nom>`, leurs
+#           chemins passés à `prepare_email`, retirés si rien n'est préparé (docs/SPEC-pieces-jointes.md §17.6)
 """Le CRM simulé rend le fil d'une affaire (un message texte, un message HTML seul, une pièce jointe), un message d'une
 autre affaire, et trois identités dont celle d'une collègue ; la vraie base est éprouvée par
 `tests/test_integration_messagerie.py`."""
@@ -40,7 +45,7 @@ from crm_mcp.audit import AuditOutils
 from crm_mcp.crm import ClientCrm
 from crm_mcp.jeton_interne import Identite
 from crm_mcp.outils import messagerie, reference
-from crm_mcp.outils.messagerie import PIECE_MAX_OCTETS
+from crm_mcp.outils.messagerie import PIECE_MAX_OCTETS, nom_de_depot, statut_piece
 from crm_mcp.outils.messagerie import corps_affichable, extrait, objet_de_reponse, reduire_html_en_texte
 from crm_mcp.politique import MoteurPolitique, PolitiqueOutils
 from crm_mcp.registre import Registre
@@ -62,6 +67,8 @@ PIECE_IMAGE = "a0000000-0000-4000-8000-0000000000f2"
 PIECE_INFECTEE = "a0000000-0000-4000-8000-0000000000f3"
 PIECE_ENORME = "a0000000-0000-4000-8000-0000000000f4"
 PIECE_ORPHELINE = "a0000000-0000-4000-8000-0000000000f5"
+PIECE_NON_ANALYSEE = "a0000000-0000-4000-8000-0000000000f6"
+PIECE_LOURDE = "a0000000-0000-4000-8000-0000000000f7"
 OCTETS_PDF = b"%PDF-1.4 devis"
 OCTETS_PNG = b"\x89PNG\r\n\x1a\nimage"
 
@@ -76,7 +83,12 @@ class CrmMessagerie(CrmSimule):
         self.refus_envoi: tuple[int, Any] | None = None
         self.classements: list[dict[str, Any]] = []
         self.objets_lus: list[tuple[str, str]] = []
-        self.objets = {"ws/m1/pdf": OCTETS_PDF, "ws/m1/png": OCTETS_PNG}
+        self.objets = {"ws/m1/pdf": OCTETS_PDF, "ws/m1/png": OCTETS_PNG, "ws/m1/nonanalyse": OCTETS_PDF}
+        self.accuses: list[str] = []
+        self.refus_accuse: tuple[int, Any] | None = None
+        self.depots: list[tuple[str, str, bytes, str, str]] = []
+        self.refus_depot: int | None = None
+        self.retraits: list[list[str]] = []
         self.identites = [
             {"id": "id-thomas", "workspace_id": ESPACE_A, "label": "Thomas", "from_address": "Thomas@Atelier.test",
              "owner_id": "sujet-thomas"},
@@ -122,7 +134,26 @@ class CrmMessagerie(CrmSimule):
              "size_bytes": PIECE_MAX_OCTETS + 1, "av_status": "clean", "storage_path": "ws/m1/mp4"},
             {**commun, "id": PIECE_ORPHELINE, "filename": "perdu.pdf", "mime_type": "application/pdf", "size_bytes": 5,
              "av_status": "clean", "storage_path": "ws/m1/perdu"},
+            {**commun, "id": PIECE_NON_ANALYSEE, "filename": "releve.pdf", "mime_type": "application/pdf", "size_bytes": 14,
+             "av_status": "skipped", "av_skip_reason": "scanner_unavailable", "created_at": "2026-11-10T08:00:00Z",
+             "storage_path": "ws/m1/nonanalyse"},
+            {**commun, "id": PIECE_LOURDE, "filename": "film.mov", "mime_type": "video/quicktime", "size_bytes": 99,
+             "av_status": "skipped", "av_skip_reason": "too_large", "created_at": "2026-11-10T08:00:00Z",
+             "storage_path": "ws/m1/lourde"},
         ]
+
+    async def deposer(self, requete: Request) -> Response:
+        if self._personne(requete) is None:
+            return JSONResponse({"message": "refusé"}, status_code=403)
+        self.depots.append((requete.path_params["bucket"], requete.path_params["chemin"], await requete.body(),
+                            requete.headers.get("content-type", ""), requete.headers.get("authorization", "")))
+        if self.refus_depot is not None:
+            return JSONResponse({"message": "refusé"}, status_code=self.refus_depot)
+        return JSONResponse({"Key": requete.path_params["chemin"]})
+
+    async def retirer(self, requete: Request) -> Response:
+        self.retraits.append((await requete.json())["prefixes"])
+        return JSONResponse([])
 
     async def objet(self, requete: Request) -> Response:
         jeton = requete.headers.get("authorization", "")
@@ -179,6 +210,14 @@ class CrmMessagerie(CrmSimule):
             if corps.get("p_known_sender") is False:
                 return JSONResponse(connues + autres)
             return JSONResponse(connues if corps["p_message_id"] == MESSAGE_TEXTE else [])
+        if fonction == "acknowledge_unscanned_attachment":
+            if self._personne(requete) is None:
+                return JSONResponse({"message": "JWT invalide"}, status_code=401)
+            self.fonctions.append(fonction)
+            self.accuses.append((await requete.json())["p_attachment_id"])
+            if self.refus_accuse is not None:
+                return JSONResponse(self.refus_accuse[1], status_code=self.refus_accuse[0])
+            return JSONResponse("2026-11-10T12:00:00+00:00")
         if fonction not in ("queue_outbound_email", "prepare_email", "discard_email_draft"):
             return await self.rpc(requete)
         self.fonctions.append(fonction)
@@ -193,6 +232,8 @@ class CrmMessagerie(CrmSimule):
             Route("/rest/v1/rpc/{fonction}", self.rpc_messagerie, methods=["POST"]),
             Route("/rest/v1/{table}", self.table_messagerie, methods=["GET"]),
             Route("/storage/v1/object/authenticated/{bucket}/{chemin:path}", self.objet, methods=["GET"]),
+            Route("/storage/v1/object/{bucket}/{chemin:path}", self.deposer, methods=["POST"]),
+            Route("/storage/v1/object/{bucket}", self.retirer, methods=["DELETE"]),
         ])
 
 
@@ -290,7 +331,8 @@ async def test_le_fil_dans_l_ordre_avec_extrait_et_nombre_de_pieces(monde: Monde
     assert fil["has_more"] is True
     lecture = next(p for n, p in monde.simule.lectures if n == "mail_messages" and "order" in p)
     assert (lecture["order"], lecture["limit"], lecture["offset"]) == ("received_at.asc,id.asc", "2", "0")
-    assert "mail_attachments(id,filename,mime_type,size_bytes,av_status)" in lecture["select"]
+    # `CRM-143` T5 : la raison et la réception de la pièce, d'où son statut précis.
+    assert "mail_attachments(id,filename,mime_type,size_bytes,av_status,av_skip_reason,created_at)" in lecture["select"]
     assert "storage_path" not in lecture["select"]
 
 
@@ -558,3 +600,127 @@ async def test_les_refus_du_classement_sont_nommes(monde: Monde) -> None:
         monde.simule.refus_envoi = (statut, code)
         with pytest.raises(ToolError, match=attendu):
             await monde.appel("crm_mail_classify", arguments)
+
+
+# =================================================================================================
+# CRM-143 T5 — les pièces non analysées, et les pièces d'un mail préparé (docs/SPEC-pieces-jointes.md §17.6)
+# =================================================================================================
+
+
+def test_le_statut_d_une_piece_est_precis_et_son_repli_jamais_permissif() -> None:
+    from datetime import datetime, timezone
+
+    maintenant = datetime(2026, 11, 10, 12, 0, tzinfo=timezone.utc)
+    assert statut_piece({"av_status": "clean"}) == "available"
+    assert statut_piece({"av_status": "infected"}) == "infected"
+    assert statut_piece({"av_status": "skipped", "av_skip_reason": "scanner_unavailable"}) == "not_scanned_unavailable"
+    assert statut_piece({"av_status": "skipped", "av_skip_reason": "too_large"}) == "not_scanned_too_large"
+    assert statut_piece({"av_status": "pending", "created_at": "2026-11-10T11:50:00Z"}, maintenant) == "scanning"
+    assert statut_piece({"av_status": "pending", "created_at": "2026-11-10T11:44:00Z"}, maintenant) == "not_scanned_unavailable"
+    # LE REPLI : un statut inconnu, un `skipped` sans raison, une date illisible ou sans fuseau ne se lisent jamais.
+    assert statut_piece({"av_status": "quarantined"}) == "not_scanned"
+    assert statut_piece({"av_status": "skipped"}) == "not_scanned"
+    assert statut_piece({"av_status": "pending", "created_at": "hier"}, maintenant) == "not_scanned"
+    assert statut_piece({"av_status": "pending", "created_at": "2026-11-10T08:00:00"}, maintenant) == "not_scanned"
+
+
+def test_le_nom_de_depot_est_celui_de_la_webapp() -> None:
+    assert nom_de_depot("Proposition révisée.pdf") == "Proposition revisee.pdf"
+    assert nom_de_depot("a/b\\c?.txt") == "a_b_c_.txt"
+    assert nom_de_depot("  ") == "piece" and nom_de_depot("..") == "piece"
+    assert len(nom_de_depot("x" * 300)) == 200
+
+
+async def test_une_piece_non_analysee_est_refusee_sans_accuse_et_lue_avec_la_confirmation_d_abord(monde: Monde) -> None:
+    with pytest.raises(ToolError, match="attachment_not_scanned — the antivirus could not scan this attachment"):
+        await monde.appel("crm_mail_attachment_get", {"attachment_id": PIECE_NON_ANALYSEE})
+    assert monde.simule.accuses == [] and monde.simule.objets_lus == [], "sans accusé, rien n'est confirmé ni lu"
+
+    resultat = await monde.appel_complet(
+        "crm_mail_attachment_get", {"attachment_id": PIECE_NON_ANALYSEE, "acknowledge_unscanned": True}
+    )
+    assert resultat.structured_content["filename"] == "releve.pdf"
+    # LA CONFIRMATION, SOUS LE JETON DE LA PERSONNE, AVANT LA LECTURE AU STOCKAGE.
+    assert monde.simule.accuses == [PIECE_NON_ANALYSEE]
+    assert monde.simule.objets_lus == [("mail-attachments", "ws/m1/nonanalyse")]
+
+
+async def test_l_accuse_ne_vaut_ni_pour_une_infectee_ni_pour_une_trop_volumineuse(monde: Monde) -> None:
+    for piece, statut in ((PIECE_INFECTEE, "infected"), (PIECE_LOURDE, "not_scanned_too_large")):
+        with pytest.raises(ToolError, match=f"attachment_not_available — this attachment is {statut}"):
+            await monde.appel("crm_mail_attachment_get", {"attachment_id": piece, "acknowledge_unscanned": True})
+    assert monde.simule.accuses == [] and monde.simule.objets_lus == []
+
+
+async def test_un_refus_de_la_confirmation_est_traduit_et_rien_n_est_lu(monde: Monde) -> None:
+    monde.simule.refus_accuse = (400, {"code": "P0001", "message": "attachment_scanning"})
+    with pytest.raises(ToolError, match="Refusé par le CRM : attachment_scanning"):
+        await monde.appel("crm_mail_attachment_get", {"attachment_id": PIECE_NON_ANALYSEE, "acknowledge_unscanned": True})
+    assert monde.simule.objets_lus == []
+    # UNE PIÈCE DEVENUE SAINE ENTRE-TEMPS n'a plus rien à confirmer : elle se lit.
+    monde.simule.refus_accuse = (400, {"code": "22023", "message": "attachment_clean"})
+    await monde.appel("crm_mail_attachment_get", {"attachment_id": PIECE_NON_ANALYSEE, "acknowledge_unscanned": True})
+    assert monde.simule.objets_lus == [("mail-attachments", "ws/m1/nonanalyse")]
+
+
+async def test_les_listes_rendent_les_statuts_precis(monde: Monde) -> None:
+    monde.simule.messages = lambda: [{**CrmMessagerie.messages(monde.simule)[0], "mail_attachments": [
+        {"id": PIECE_NON_ANALYSEE, "filename": "releve.pdf", "mime_type": "application/pdf", "size_bytes": 14,
+         "av_status": "skipped", "av_skip_reason": "scanner_unavailable", "created_at": "2026-11-10T08:00:00Z"}]}]
+    lu = await monde.appel("crm_mail_get", {"message_id": MESSAGE_TEXTE})
+    assert [p["status"] for p in lu["attachments"]] == ["not_scanned_unavailable"]
+    lecture = next(p for n, p in monde.simule.lectures if n == "mail_messages" and "mail_attachments" in p.get("select", ""))
+    assert "av_skip_reason" in lecture["select"] and "created_at" in lecture["select"]
+
+
+async def test_preparer_avec_des_pieces_les_depose_sous_le_jeton_puis_passe_leurs_chemins(monde: Monde) -> None:
+    pdf = base64.b64encode(b"%PDF-1.4 devis").decode()
+    rendu = await monde.appel("crm_mail_prepare", {
+        "card_id": CARD, "to": ["client@exemple.test"], "subject": "Devis", "body": "Bonjour",
+        "attachments": [{"filename": "Devis révisé.pdf", "content_base64": pdf, "mime_type": "application/pdf"},
+                        {"filename": "note.txt", "content_base64": base64.b64encode(b"note").decode()}],
+    })
+    assert [(b, c.split("/")[0], c.split("/")[1], c.split("/")[3], o, ty) for b, c, o, ty, _ in monde.simule.depots] == [
+        ("mail-outbound-attachments", ESPACE_A, "sujet-thomas", "Devis revise.pdf", b"%PDF-1.4 devis", "application/pdf"),
+        ("mail-outbound-attachments", ESPACE_A, "sujet-thomas", "note.txt", b"note", "application/octet-stream"),
+    ]
+    # SOUS LE JETON DE LA PERSONNE, jamais la clé de service.
+    assert all(not jeton.endswith(CLE_SERVICE) for *_, jeton in monde.simule.depots)
+    assert monde.simule.envois[-1]["p_attachments"] == [c for _, c, *_ in monde.simule.depots]
+    assert rendu["attachments"] == [{"filename": "Devis revise.pdf", "size_bytes": 14}, {"filename": "note.txt", "size_bytes": 4}]
+    assert monde.simule.retraits == []
+
+
+async def test_les_pieces_sont_bornees_avant_tout_depot(monde: Monde, monkeypatch: pytest.MonkeyPatch) -> None:
+    un = base64.b64encode(b"x").decode()
+    monkeypatch.setattr(messagerie, "PIECES_OCTETS_MAX", 3)
+    with pytest.raises(ToolError, match="attachments_too_large"):
+        await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
+                                            "attachments": [{"filename": f"f{i}", "content_base64": un} for i in range(4)]})
+    with pytest.raises(ToolError, match="content_base64 is not valid base64"):
+        await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
+                                            "attachments": [{"filename": "f", "content_base64": "pas du base64 !"}]})
+    with pytest.raises(ToolError, match="give a filename"):
+        await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
+                                            "attachments": [{"filename": " ", "content_base64": un}]})
+    with pytest.raises(ToolError):
+        await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
+                                            "attachments": [{"filename": f"f{i}", "content_base64": un} for i in range(11)]})
+    assert monde.simule.depots == [] and monde.simule.envois == [], "aucun dépôt, aucune préparation"
+
+
+async def test_un_depot_refuse_ou_une_preparation_refusee_retire_ce_qui_a_ete_depose(monde: Monde) -> None:
+    un = base64.b64encode(b"x").decode()
+    monde.simule.refus_envoi = (400, {"code": "23514", "message": "attachment_not_available"})
+    with pytest.raises(ToolError, match="attachment_not_available"):
+        await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
+                                            "attachments": [{"filename": "a.txt", "content_base64": un}]})
+    assert monde.simule.retraits == [[monde.simule.depots[0][1]]]
+    monde.simule.refus_envoi = None
+    monde.simule.refus_depot = 403
+    monde.simule.depots.clear()
+    monde.simule.retraits.clear()
+    with pytest.raises(ToolError, match="could not be stored"):
+        await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
+                                            "attachments": [{"filename": "a.txt", "content_base64": un}]})
+    assert monde.simule.fonctions.count("prepare_email") == 1, "rien n'est préparé quand un dépôt est refusé"

@@ -22,6 +22,11 @@
 #       candidates par `classification_candidates`, l'expéditeur connu d'abord) et `crm_mail_classify` (`modifier`, par
 #       `classify_message` inchangée) ; docs/SPEC-mcp.md §9.2 septendecies ; docs/SPEC-mail-subsystem.md §26 ;
 #       décisions 877, 891 et 893
+# @spec CRM-143 (docs/BACKLOG.md) — tranche T5 : les pièces non analysées dans le connecteur — trois statuts précis
+#       (`statut_piece`), `crm_mail_attachment_get` qui lit une pièce non analysée sur un accusé explicite
+#       (`acknowledge_unscanned`, la confirmation posée sous le jeton de la personne), et `crm_mail_prepare` qui joint des
+#       fichiers (`attachments`, déposés sous le jeton de la personne) ; docs/SPEC-pieces-jointes.md §17.6 ;
+#       docs/SPEC-mcp.md §9.2 decies (révisée par CRM-143) ; décisions 889 et 892
 """La messagerie d'une affaire, sous l'identité de la personne : lire son fil, lire un message, PRÉPARER un email.
 
 Le connecteur n'envoie jamais (`CRM-128`, décision 829) : `public.prepare_email` écrit un mail préparé, que seule la
@@ -32,8 +37,12 @@ sont celles de l'écran : `mail_messages`, `mail_outbound_identities`, `mail_dra
 from __future__ import annotations
 
 import base64
+import binascii
 import json
 import re
+import unicodedata
+import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Annotated, Any
 from urllib.parse import quote
 
@@ -52,12 +61,21 @@ LONGUEUR_EXTRAIT = 280
 DESTINATAIRES_MAX = 50
 COLONNES_FIL = (
     "id,direction,sent_at,received_at,from_address,from_name,to_addresses,cc_addresses,subject,body_text,body_html,"
-    "mail_attachments(id,filename,mime_type,size_bytes,av_status),is_read"
+    "mail_attachments(id,filename,mime_type,size_bytes,av_status,av_skip_reason,created_at),is_read"
 )
 #: La borne d'une pièce rendue au connecteur (décision 789 : tout fichier sain jusqu'à 25 Mo).
 PIECE_MAX_OCTETS = 25 * 1024 * 1024
-#: Le statut d'une pièce, dans le vocabulaire du connecteur : seule `available` se lit.
-STATUTS_PIECE = {"clean": "available", "pending": "scanning", "infected": "infected", "skipped": "not_scanned"}
+#: `CRM-143` : au-delà de ce délai, une pièce encore `pending` est NON ANALYSÉE — la règle de `app.piece_non_analysee`
+#: (migration 0173), reprise pour le seul vocabulaire du connecteur : c'est la base qui juge.
+DELAI_ANALYSE = timedelta(minutes=15)
+#: Les statuts d'une pièce, dans le vocabulaire du connecteur (docs/SPEC-pieces-jointes.md §17.6). `available` se lit ;
+#: `not_scanned_unavailable` se lit sur l'accusé explicite de la personne ; les autres jamais.
+STATUTS_LISIBLES_SUR_ACCUSE = frozenset({"not_scanned_unavailable"})
+#: Le plafond des pièces d'un mail préparé : celui de l'envoi (`CRM-058` T2) — dix fichiers, 10 Mo décodés en tout.
+PIECES_MAX = 10
+PIECES_OCTETS_MAX = 10 * 1024 * 1024
+#: Le bucket où se déposent les pièces d'un envoi (`0106`), au chemin `<espace>/<personne>/<aléa>/<nom>`.
+BUCKET_ENVOI = "mail-outbound-attachments"
 #: Les types rendus comme contenu image ; tout autre fichier est une ressource binaire embarquée.
 TYPES_IMAGE = frozenset({"image/png", "image/jpeg", "image/gif", "image/webp"})
 COLONNES_MESSAGE = f"{COLONNES_FIL},card_id,classification"
@@ -136,6 +154,67 @@ def objet_de_reponse(objet: str | None) -> str:
     return propre if re.match(r"^re\s*:", propre, re.IGNORECASE) else f"Re: {propre}"
 
 
+def statut_piece(p: dict[str, Any], maintenant: datetime | None = None) -> str:
+    """Le statut d'une pièce pour le connecteur (§17.6). UN REPLI NE GLISSE JAMAIS DU CÔTÉ PERMISSIF : un statut inconnu, un
+    `skipped` sans raison ou une date illisible rendent `not_scanned`, qui ne se lit pas même sur accusé."""
+    statut = p.get("av_status")
+    if statut == "clean":
+        return "available"
+    if statut == "infected":
+        return "infected"
+    if statut == "skipped":
+        raison = p.get("av_skip_reason")
+        if raison == "scanner_unavailable":
+            return "not_scanned_unavailable"
+        if raison == "too_large":
+            return "not_scanned_too_large"
+        return "not_scanned"
+    if statut == "pending":
+        try:
+            recue = datetime.fromisoformat(str(p.get("created_at")).replace("Z", "+00:00"))
+        except ValueError:
+            return "not_scanned"
+        if recue.tzinfo is None:
+            return "not_scanned"
+        instant = maintenant or datetime.now(timezone.utc)
+        return "not_scanned_unavailable" if instant - recue > DELAI_ANALYSE else "scanning"
+    return "not_scanned"
+
+
+def nom_de_depot(nom: str) -> str:
+    """Le nom d'un fichier déposé : celui de la webapp (`nomDeDepot`, webapp/src/lib/envoi.ts), repris à l'identique —
+    accents translittérés, tout autre caractère hors de l'alphabet accepté remplacé par `_`, 200 caractères au plus."""
+    decompose = unicodedata.normalize("NFD", nom)
+    sans_accent = "".join(c for c in decompose if not ("\u0300" <= c <= "\u036f"))
+    propre = re.sub(r"[^A-Za-z0-9 ._()+,=@&$!'-]", "_", sans_accent).strip()
+    return "piece" if propre == "" or re.fullmatch(r"\.+", propre) else propre[:200]
+
+
+def pieces_a_joindre(entrees: list[dict[str, Any]]) -> list[tuple[str, bytes, str]]:
+    """Les fichiers d'un mail préparé, décodés et bornés AVANT tout dépôt : (nom de dépôt, contenu, type). La base
+    revérifie les bornes à `prepare_email` ; l'outil le dit avant de déposer quoi que ce soit."""
+    if len(entrees) > PIECES_MAX:
+        raise RefusCrm("Refusé par le CRM : too_many_attachments — at most 10 attachments per message.")
+    fichiers: list[tuple[str, bytes, str]] = []
+    total = 0
+    for rang, entree in enumerate(entrees, start=1):
+        nom = str(entree.get("filename") or "").strip()
+        if not nom:
+            raise ToolError(f"Attachment {rang}: give a filename.")
+        try:
+            contenu = base64.b64decode(str(entree.get("content_base64") or ""), validate=True)
+        except (binascii.Error, ValueError):
+            raise ToolError(f"Attachment {rang} ({nom}): content_base64 is not valid base64.") from None
+        if not contenu:
+            raise ToolError(f"Attachment {rang} ({nom}): the file is empty.")
+        total += len(contenu)
+        if total > PIECES_OCTETS_MAX:
+            raise RefusCrm("Refusé par le CRM : attachments_too_large — at most 10 MB of attachments per message.")
+        type_ = str(entree.get("mime_type") or "application/octet-stream").split(";", 1)[0].strip().lower()
+        fichiers.append((nom_de_depot(nom), contenu, type_ or "application/octet-stream"))
+    return fichiers
+
+
 def pieces(m: dict[str, Any]) -> list[dict[str, Any]]:
     """Les pièces d'un message, par nom : de quoi les demander à `crm_mail_attachment_get`, jamais leur contenu."""
     return [
@@ -144,7 +223,7 @@ def pieces(m: dict[str, Any]) -> list[dict[str, Any]]:
             "filename": p.get("filename"),
             "mime_type": p.get("mime_type"),
             "size_bytes": p.get("size_bytes"),
-            "status": STATUTS_PIECE.get(p.get("av_status") or "", "not_scanned"),
+            "status": statut_piece(p),
         }
         for p in sorted(m.get("mail_attachments") or [], key=lambda p: (p.get("filename") or "", p.get("id") or ""))
         if isinstance(p, dict) and "id" in p
@@ -388,22 +467,46 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_w
 
     async def crm_mail_attachment_get(
         attachment_id: Annotated[str, Field(description="The attachment id, from crm_mail_get or crm_card_mail_list")],
+        acknowledge_unscanned: Annotated[
+            bool,
+            Field(
+                description=(
+                    "Set to true ONLY when the person, informed that this attachment was not scanned by the antivirus "
+                    "and may contain malware, asks you to read it anyway. Their acknowledgment is recorded in the CRM."
+                )
+            ),
+        ] = False,
     ) -> ToolResult:
         appel = appel_courant()
         p = _une_ligne(
             await crm.lire(
                 appel.jeton,
                 "mail_attachments",
-                {"id": f"eq.{attachment_id}", "select": "id,message_id,filename,mime_type,size_bytes,av_status,storage_path"},
+                {
+                    "id": f"eq.{attachment_id}",
+                    "select": "id,message_id,filename,mime_type,size_bytes,av_status,av_skip_reason,created_at,storage_path",
+                },
             ),
             "attachment",
             attachment_id,
         )
-        statut = STATUTS_PIECE.get(p.get("av_status") or "", "not_scanned")
-        if statut != "available":
+        statut = statut_piece(p)
+        if statut in STATUTS_LISIBLES_SUR_ACCUSE:
+            if not acknowledge_unscanned:
+                raise RefusCrm(
+                    "Refusé par le CRM : attachment_not_scanned — the antivirus could not scan this attachment, so it may "
+                    "contain malware. Tell the person; only if they ask you to read it anyway, call this tool again with "
+                    "acknowledge_unscanned set to true. Their acknowledgment is recorded."
+                )
+            # LA CONFIRMATION DE LA PERSONNE, sous SON jeton : la règle du stockage la lit ensuite (§17.3). Une pièce
+            # devenue saine entre-temps n'a plus rien à confirmer.
+            accuse = await crm.rpc(appel.jeton, "acknowledge_unscanned_attachment", {"p_attachment_id": attachment_id})
+            if not accuse.reussie and "attachment_clean" not in (accuse.message or ""):
+                raise traduire_refus(accuse, "attachment", attachment_id)
+        elif statut != "available":
             raise RefusCrm(
                 f"Refusé par le CRM : attachment_not_available — this attachment is {statut}; only an attachment the "
-                "antivirus found clean can be read."
+                "antivirus found clean can be read, or, on the person's explicit acknowledgment, one it could not scan."
             )
         trop_grande = (
             "Refusé par le CRM : attachment_too_large — this attachment is larger than 25 MB; ask the person to open it in "
@@ -442,9 +545,12 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_w
         titre="Read an email attachment",
         description=(
             "Returns one attachment of an email, the file itself: an image as image content, any other file as an "
-            "embedded binary resource with its type and file name, so you can read it your own way. Only an attachment "
-            "whose status is available (found clean by the antivirus) can be read, up to 25 MB. Find attachment ids "
-            "with crm_mail_get or crm_card_mail_list."
+            "embedded binary resource with its type and file name, so you can read it your own way, up to 25 MB. An "
+            "attachment whose status is available (found clean by the antivirus) is read directly. One whose status is "
+            "not_scanned_unavailable (the antivirus could not scan it) is read only with acknowledge_unscanned set to "
+            "true, after the person, told it may contain malware, asked for it: their acknowledgment is recorded. "
+            "infected, scanning and not_scanned_too_large attachments are never read. Find attachment ids with "
+            "crm_mail_get or crm_card_mail_list."
         ),
     )
 
@@ -464,8 +570,20 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_w
         in_reply_to_message_id: Annotated[
             str | None, Field(description="An email of this affaire you are replying to")
         ] = None,
+        attachments: Annotated[
+            list[dict[str, Any]] | None,
+            Field(
+                max_length=PIECES_MAX,
+                description=(
+                    "Files to attach, at most 10 and 10 MB decoded in all: each an object "
+                    "{filename, content_base64, mime_type?}. They wait with the prepared email; the person sees them, "
+                    "may remove them, and sends them."
+                ),
+            ),
+        ] = None,
     ) -> dict[str, Any]:
         appel = appel_courant()
+        fichiers = pieces_a_joindre(list(attachments or []))
         destinataires = [a.strip() for a in to if a.strip()]
         copies = [a.strip() for a in (cc or []) if a.strip()]
         copies_cachees = [a.strip() for a in (bcc or []) if a.strip()]
@@ -508,8 +626,25 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_w
         }
         if in_reply_to_message_id is not None:
             arguments["p_in_reply_to_message_id"] = in_reply_to_message_id
+        # LES FICHIERS SE DÉPOSENT SOUS LE JETON DE LA PERSONNE, au chemin `<espace>/<personne>/<aléa>/<nom>` que la
+        # politique de dépôt de `0106` exige ; `prepare_email` vérifie ensuite qu'ils sont à elle (§17.6).
+        chemins: list[str] = []
+        for nom, contenu, type_ in fichiers:
+            chemin = f"{appel.espace}/{appel.sujet}/{uuid.uuid4()}/{nom}"
+            statut_depot = await crm.deposer_objet(appel.jeton, BUCKET_ENVOI, chemin, contenu, type_)
+            if not 200 <= statut_depot < 300:
+                await crm.retirer_objets(appel.jeton, BUCKET_ENVOI, chemins)
+                raise RefusCrm(
+                    f"Refusé par le CRM : attachment_not_available — the file {nom} could not be stored (HTTP "
+                    f"{statut_depot}); nothing was prepared."
+                )
+            chemins.append(chemin)
+        if chemins:
+            arguments["p_attachments"] = chemins
         reponse = await crm.rpc(appel.jeton, "prepare_email", arguments)
         if not reponse.reussie:
+            # UN MAIL QUI N'EST PAS PRÉPARÉ NE GARDE AUCUN DÉPÔT : rien ne les citerait.
+            await crm.retirer_objets(appel.jeton, BUCKET_ENVOI, chemins)
             raise _refus_envoi(reponse, card_id)
         return {
             "draft_id": reponse.corps,
@@ -519,6 +654,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_w
             "cc": copies,
             "bcc": copies_cachees,
             "subject": subject.strip(),
+            "attachments": [{"filename": nom, "size_bytes": len(contenu)} for nom, contenu, _ in fichiers],
             "review_url": lien_de_relecture(origine_webapp, str(reponse.corps)),
             "note": NOTE_RELECTURE,
         }

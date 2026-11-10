@@ -16,6 +16,9 @@
 # @verifies CRM-137 (docs/BACKLOG.md) — les deux outils du classement, `crm_mail_classification_candidates` et
 #           `crm_mail_classify` : succès et journal, refus par la matrice, refus par le CRM malgré la matrice ouverte ;
 #           docs/SPEC-mcp.md §9.2 septendecies, §13 ; docs/SPEC-mail-subsystem.md §26.2, §26.5 ; décision 891
+# @verifies CRM-143 (docs/BACKLOG.md) — tranche T5 : une pièce non analysée refusée sans accusé, lue avec, la confirmation de
+#           Driss écrite en base sous son propre jeton ; un mail préparé avec deux pièces, déposées par le connecteur sous le
+#           jeton de Driss dans `<espace>/<Driss>/…`, que le mail préparé cite ; docs/SPEC-pieces-jointes.md §17.6, §17.9
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
 LE SEED : l'affaire « Refonte du site vitrine » (`c1`) porte deux messages reçus, « Demande de devis — refonte » puis sa
@@ -400,3 +403,85 @@ async def test_la_lectrice_est_refusee_par_le_crm_malgre_la_matrice_ouverte():
         assert await _message_classe() == avant
     finally:
         await _retirer(FARIDA, posees)
+
+
+# `CRM-143` T5 (docs/SPEC-pieces-jointes.md §17.6) : les pièces non analysées, et les pièces d'un mail préparé.
+CORPS_PIECES = "Envoi d'intégration du connecteur MCP, avec pièces (CRM-143)."
+
+
+async def test_driss_lit_une_piece_non_analysee_sur_son_accuse_seulement_et_sa_confirmation_est_ecrite():
+    message = (await _service("GET", "/mail_messages", params={
+        "card_id": f"eq.{CARD}", "subject": f"eq.{OBJET}", "select": "id", "limit": "1"})).json()[0]["id"]
+    contenu = b"releve non analyse (CRM-143)"
+    empreinte = hashlib.sha256(contenu).hexdigest()
+    chemin = f"{ESPACE}/{message}/{empreinte}"
+    depot = await _sous_cle_de_service("POST", f"{API}/storage/v1/object/mail-attachments/{chemin}", content=contenu,
+                                       entetes={"Content-Type": "text/plain", "x-upsert": "true"})
+    assert depot.status_code in (200, 201), depot.text
+    # La raison `scanner_unavailable` est posée par le déclencheur de la migration 0173 : l'objet existe.
+    (ligne,) = (await _sous_cle_de_service("POST", f"{API}/rest/v1/mail_attachments",
+                                          entetes={"Prefer": "return=representation"}, json=[
+        {"message_id": message, "card_id": CARD, "filename": "tst-crm143-releve.txt", "mime_type": "text/plain",
+         "size_bytes": len(contenu), "storage_path": chemin, "sha256": empreinte, "av_status": "skipped"},
+    ])).json()
+    assert ligne["av_skip_reason"] == "scanner_unavailable"
+    posees = await _manquantes(DRISS, [("messagerie", "consulter")])
+    await _poser(DRISS, posees)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_visible(client, "crm_mail_attachment_get")
+            lu = (await client.call_tool("crm_mail_get", {"message_id": message})).structured_content
+            assert {p["filename"]: p["status"] for p in lu["attachments"]}["tst-crm143-releve.txt"] == "not_scanned_unavailable"
+            with pytest.raises(ToolError, match="attachment_not_scanned"):
+                await client.call_tool("crm_mail_attachment_get", {"attachment_id": ligne["id"]})
+            assert await _dernier_journal(DRISS[1]) == ("crm_mail_attachment_get", "refus_crm")
+            assert (await _service("GET", "/mail_attachment_risk_acknowledgments", params={
+                "attachment_id": f"eq.{ligne['id']}", "select": "user_id"})).json() == []
+            resultat = await client.call_tool(
+                "crm_mail_attachment_get", {"attachment_id": ligne["id"], "acknowledge_unscanned": True})
+            assert await _dernier_journal(DRISS[1]) == ("crm_mail_attachment_get", "ok")
+            ressource = next(b for b in resultat.content if b.type == "resource").resource
+            assert base64.b64decode(ressource.blob) == contenu
+            # LA CONFIRMATION EST CELLE DE DRISS, écrite sous son propre jeton (CLAUDE.md §10).
+            assert (await _service("GET", "/mail_attachment_risk_acknowledgments", params={
+                "attachment_id": f"eq.{ligne['id']}", "select": "user_id"})).json() == [{"user_id": DRISS[1]}]
+    finally:
+        await _retirer(DRISS, posees)
+        await _service("DELETE", "/mail_attachments", params={"filename": "like.tst-crm143*"})
+        await _sous_cle_de_service("DELETE", f"{API}/storage/v1/object/mail-attachments", json={"prefixes": [chemin]})
+
+
+async def test_driss_prepare_un_mail_avec_deux_pieces_deposees_sous_son_jeton_et_rien_ne_part():
+    await _service("DELETE", "/mail_drafts", params={"body_text": f"eq.{CORPS_PIECES}"})
+    posees = await _manquantes(DRISS, TOUTES)
+    await _poser(DRISS, posees)
+    chemins: list[str] = []
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_visible(client, "crm_mail_prepare")
+            prepare = (await client.call_tool("crm_mail_prepare", {
+                "card_id": CARD, "to": ["client@exterieur.test"], "subject": "Devis et annexe", "body": CORPS_PIECES,
+                "attachments": [
+                    {"filename": "Devis révisé.pdf", "content_base64": base64.b64encode(b"%PDF-1.4 devis").decode(),
+                     "mime_type": "application/pdf"},
+                    {"filename": "annexe.txt", "content_base64": base64.b64encode(b"annexe").decode()},
+                ],
+            })).structured_content
+            assert await _dernier_journal(DRISS[1]) == ("crm_mail_prepare", "ok")
+            assert [p["filename"] for p in prepare["attachments"]] == ["Devis revise.pdf", "annexe.txt"]
+        (brouillon,) = (await _service("GET", "/mail_drafts", params={
+            "id": f"eq.{prepare['draft_id']}", "select": "status,origin,attachments"})).json()
+        assert (brouillon["status"], brouillon["origin"]) == ("pending", "mcp")
+        chemins = [p["path"] for p in brouillon["attachments"]]
+        assert sorted(p["filename"] for p in brouillon["attachments"]) == ["Devis revise.pdf", "annexe.txt"]
+        # DÉPOSÉES SOUS LE JETON DE DRISS : dans SON préfixe, et il en est le propriétaire en base.
+        assert all(c.startswith(f"{ESPACE}/{DRISS[1]}/") for c in chemins)
+        objets = (await _service("POST", "/rpc/depots_envoi_abandonnes", json={"p_age": "-1 minute"})).json()
+        assert not set(chemins) & {o.get("name") for o in objets}, "un mail préparé en attente garde ses dépôts"
+        await _rien_en_file(CARD)
+    finally:
+        await _retirer(DRISS, posees)
+        await _service("DELETE", "/mail_drafts", params={"body_text": f"eq.{CORPS_PIECES}"})
+        if chemins:
+            await _sous_cle_de_service("DELETE", f"{API}/storage/v1/object/mail-outbound-attachments",
+                                       json={"prefixes": chemins})

@@ -905,9 +905,28 @@ montrée aux destinataires. Même action `ajouter`, aucune case nouvelle.
   quelle ; un objet illisible rend le refus uniforme. La garde de taille de l'audit (§9.1) ne mesure que le texte et le
   contenu structuré : le contenu binaire est borné par les 25 Mo.
 
+**Les pièces non analysées, et les pièces d'un mail préparé — révisé par `CRM-143` T5** (décisions 889 et 892 ;
+`docs/SPEC-pieces-jointes.md` §17.6 ; *écrit avec le code le 2026-11-10*). Même famille, mêmes actions, **aucune case
+nouvelle** :
+- **les statuts** rendus par `crm_card_mail_list` et `crm_mail_get` se précisent : `available`, `infected`, `scanning`
+  (`pending` depuis quinze minutes au plus), **`not_scanned_unavailable`** (`skipped` faute d'antivirus, ou `pending` depuis
+  plus de quinze minutes), **`not_scanned_too_large`** (jamais conservée) ; `not_scanned` ne reste que pour un état que la
+  base ne devrait pas rendre, et ne se lit jamais ;
+- **`crm_mail_attachment_get`** gagne **`acknowledge_unscanned`** (booléen, faux par défaut). Sur une pièce
+  `not_scanned_unavailable`, sans lui, l'outil refuse en le disant — `attachment_not_scanned`, la raison et le moyen, le
+  paramètre ; avec lui, il appelle `acknowledge_unscanned_attachment` **sous le jeton de la personne**, puis lit la pièce :
+  la règle du stockage lit cette confirmation. Une pièce devenue saine entre-temps se lit. `infected`, `scanning` et
+  `not_scanned_too_large` sont refusées dans tous les cas (`attachment_not_available`) ;
+- **`crm_mail_prepare`** gagne **`attachments`** : au plus 10 objets `{filename, content_base64, mime_type?}`, 10 Mo décodés
+  en tout, décodés et bornés **avant tout dépôt**. Chaque fichier est déposé **sous le jeton de la personne** dans
+  `mail-outbound-attachments`, au chemin `<espace>/<personne>/<aléa>/<nom>` — le nom nettoyé comme par l'écran
+  (`nomDeDepot`) —, puis ses chemins passent à `prepare_email` en `p_attachments`. Un dépôt refusé, ou un mail que la base
+  refuse de préparer, fait retirer les dépôts déjà faits. Le résultat nomme les pièces jointes, nom et taille.
+
 **Ce que la tranche ne fait pas, et pourquoi.**
 - **Les pièces jointes** : ni lues ni envoyées — y compris depuis `CRM-058` tranche 2 (décision 708). *Révisé par
-  `CRM-074` T4 : elles se lisent (ci-dessus) ; l'envoi reste exclu.*
+  `CRM-074` T4 : elles se lisent (ci-dessus) ; l'envoi reste exclu.* *Révisé par `CRM-143` T5 : un mail préparé porte des
+  pièces, que la personne relit et envoie ; le connecteur n'envoie toujours rien.*
 - **Classer, déclasser ou mettre en sommeil un fil** de la boîte de réception : gestes de l'écran.
 - **Les modèles et les séquences** : gestes de l'écran.
 

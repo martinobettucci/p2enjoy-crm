@@ -5,6 +5,8 @@
 #       même que la webapp (`card_field_values`, conflit sur `(card_id, field_id)`, docs/SPEC-mcp.md §9.2 ter)
 # @spec CRM-074 (docs/BACKLOG.md) — tranche T4 : `lire_objet`, la lecture d'une pièce jointe au stockage sous le jeton de la
 #       personne, bornée en taille (docs/SPEC-pieces-jointes.md §6)
+# @spec CRM-143 (docs/BACKLOG.md) — tranche T5 : `deposer_objet` et `retirer_objets`, le dépôt des pièces d'un mail préparé
+#       sous le jeton de la personne, que la politique de dépôt de `0106` juge (docs/SPEC-pieces-jointes.md §17.6)
 # @spec docs/SPEC-mcp.md §5 (toute donnée sous le jeton interne ; la clé de service pour le seul registre), §9.3
 #       (traduction des refus), §11 (aucun jeton journalisé) ; CLAUDE.md §19 (délai, erreurs, aucun secret dans les traces)
 """Appels HTTP vers PostgREST, par Kong, sur le réseau Compose.
@@ -164,6 +166,36 @@ class ClientCrm:
         except httpx2.HTTPError as erreur:
             journal.warning("crm_injoignable", extra={"chemin": "storage", "erreur": type(erreur).__name__, "tentative": 1})
             raise CrmIndisponible() from erreur
+
+    async def deposer_objet(self, jeton: str, bucket: str, chemin: str, contenu: bytes, type_mime: str) -> int:
+        """Dépose un objet sous le jeton de la personne : la politique de dépôt du bucket s'applique telle quelle (`0106`
+        pour `mail-outbound-attachments`), et le propriétaire de l'objet est la personne. Rend le statut, jamais le corps
+        d'erreur, qui peut nommer un chemin. Jamais rejoué : un dépôt n'est pas idempotent."""
+        url = f"{self._api}/storage/v1/object/{bucket}/{quote(chemin, safe='/')}"
+        try:
+            reponse = await self.http.post(
+                url, headers={**self._entetes(jeton), "Content-Type": type_mime}, content=contenu, timeout=DELAI_OBJET_S
+            )
+        except httpx2.HTTPError as erreur:
+            journal.warning("crm_injoignable", extra={"chemin": "storage", "erreur": type(erreur).__name__, "tentative": 1})
+            raise CrmIndisponible() from erreur
+        return reponse.status_code
+
+    async def retirer_objets(self, jeton: str, bucket: str, chemins: list[str]) -> None:
+        """Retire des objets déposés par la personne, sous son jeton. Au mieux : un reste est effacé par la purge des dépôts
+        abandonnés (`depots_envoi_abandonnes`), et un échec n'est que journalisé."""
+        if not chemins:
+            return
+        try:
+            await self.http.request(
+                "DELETE",
+                f"{self._api}/storage/v1/object/{bucket}",
+                headers=self._entetes(jeton),
+                json={"prefixes": chemins},
+                timeout=DELAI_OBJET_S,
+            )
+        except httpx2.HTTPError as erreur:
+            journal.warning("crm_injoignable", extra={"chemin": "storage", "erreur": type(erreur).__name__, "tentative": 1})
 
     async def sonder(self) -> int:
         """Le statut de `rest` à travers Kong, sous la clé anonyme, pour `/pret` (docs/SPEC-mcp.md §11).

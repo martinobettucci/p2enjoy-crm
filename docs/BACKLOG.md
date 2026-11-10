@@ -19223,8 +19223,18 @@ board ; INC-352 close sur le constat en production.
   - E2E `e2e/ui/pieces-non-analysees.spec.ts` (souris, clavier, collègue, quatre paliers, 6 sur 6), et les E2E voisins
     (aperçu, inbox, mails préparés, envoi, 26 sur 26) ;
   - captures `docs/captures/CRM-143/`, observées ;
-  - manuel §12.1 et §12.4, avec l'image « piece-non-analysee ».
-- **T5** (le connecteur) et **T6** (le seed) restent à faire.
+  - manuel §12.2 et §12.4, avec l'image « piece-non-analysee ».
+- **T5** (le connecteur) est implémentée et vérifiée en développement, `docs/SPEC-mcp.md` §9.2 decies révisée :
+  - les statuts précis d'une pièce ;
+  - `crm_mail_attachment_get` avec `acknowledge_unscanned` ;
+  - `crm_mail_prepare` avec `attachments`.
+  Preuves :
+  - pytest du connecteur (339) ;
+  - intégration `test_integration_messagerie.py` contre la vraie base, le vrai Keycloak et le vrai service (12 sur 12) ;
+  - E2E `e2e/ui/mails-prepares.spec.ts` : un mail préparé avec deux pièces, relu dans l'inbox avec ses pièces (7 sur 7) ;
+  - manuel §33.5 et §33.6.
+  La campagne `scripts/verify-mcp.sh` entière revient à la session de livraison.
+- **T6** (le seed) reste à faire.
 **DoD** :
 - unitaires ;
 - pgTAP et API : `skipped` téléchargeable seulement avec la confirmation, `infected` jamais, l'anonyme rien, refus de

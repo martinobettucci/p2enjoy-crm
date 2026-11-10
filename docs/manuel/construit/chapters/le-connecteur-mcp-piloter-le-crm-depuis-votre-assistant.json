@@ -3438,7 +3438,37 @@
 										},
 										{
 											"type": "text",
-											"text": ", jusqu'à 25 Mo : il reçoit le fichier et le lit à sa façon. Quand\nl'expéditeur n'a écrit qu'en HTML, le texte en est extrait comme à l'écran, et l'assistant le sait. Chaque email dit\naussi s'il est "
+											"text": ", jusqu'à 25 Mo : il reçoit le fichier et le lit à sa façon. "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "Une pièce que l'antivirus n'a pas\npu analyser"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", il ne la lit que si vous le lui demandez après qu'il vous a prévenu du risque : votre confirmation est\nalors enregistrée, comme celle de « Télécharger quand même » ("
+										},
+										{
+											"type": "link",
+											"target": {
+												"chapter": "l-inbox-lire-trier-et-repondre",
+												"anchor": "l-inbox-lire-et-trier-le-courrier-recu"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "chapitre 12.2"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ").\nUne pièce reconnue dangereuse, en cours d'analyse ou trop volumineuse ne se lit jamais. Quand\nl'expéditeur n'a écrit qu'en HTML, le texte en est extrait comme à l'écran, et l'assistant le sait. Chaque email dit\naussi s'il est "
 										},
 										{
 											"type": "strong",
@@ -3527,20 +3557,20 @@
 										},
 										{
 											"type": "text",
-											"text": " ;\nl'objet est alors repris, précédé de « Re: ». Il ne joint "
+											"text": " ;\nl'objet est alors repris, précédé de « Re: ». Il peut "
 										},
 										{
 											"type": "strong",
 											"content": [
 												{
 													"type": "text",
-													"text": "aucun fichier"
+													"text": "joindre des fichiers"
 												}
 											]
 										},
 										{
 											"type": "text",
-											"text": "."
+											"text": " : dix au plus, 10 Mo en tout ; vous les\nretrouvez dans la relecture, où vous pouvez en retirer."
 										}
 									]
 								}
@@ -3700,13 +3730,13 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "joindre une pièce"
+							"text": "envoyer"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " à un envoi — le connecteur lit\nles pièces jointes, il n'en envoie aucune ; "
+					"text": " — l'assistant prépare, joint des fichiers,\nmais c'est vous qui envoyez ; "
 				},
 				{
 					"type": "strong",
