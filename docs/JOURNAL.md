@@ -39853,3 +39853,19 @@ chercher la cause ; puis en production, en lecture seule, pour la confirmer sur 
 production, un seul `EXPLAIN (ANALYZE, BUFFERS)` de cette lecture, sous le rôle `authenticated` et l'identité d'un
 membre, sans écriture, joué par la session de livraison (`CLAUDE.md` §9, §12). Aucune correction n'est décidée avant la
 mesure ; la correction sera spécifiée, avec les deux questions du connecteur MCP, avant le code.
+
+
+### décision 887 — INC-352 : une unité prioritaire rend le board d'un channel chargé lisible sous 8 s ; aucun outil MCP
+
+*2026-11-10, session 4522fa9c (p2enjoy-crm-be, session de livraison), arbitrage du responsable (`AskUserQuestion`), sur le
+relevé de la session 2f (INC-352) et une mesure en lecture seule en production.*
+**Mesure** (transaction en lecture seule, rôle `authenticated` sous l'identité d'un administrateur, aucune donnée
+personnelle lue) : le channel « Partenariats marques » porte **53** rattachements actifs ; la base, 214 affaires et
+28 channels — **le volume n'explique pas le délai**. `app.readable_channel_ids()` répond en 20 ms ; compter les 53
+rattachements, 37 ms ; les **joindre à leurs affaires, 210 ms** (≈ 4 ms par ligne) : les politiques sont réévaluées par
+ligne, et le board plonge pour chacune l'affaire, ses étiquettes, ses rattachements avec channel et track, et ses points de
+checklist — d'où les 8 s, quand la liste paginée (25) passe.
+**Décision : une unité `CRM-142`, prioritaire** — mesurer le plan (`EXPLAIN (ANALYZE, BUFFERS)` sous le jeton d'un membre),
+puis corriger : droits évalués une fois par requête plutôt que par ligne (politiques en semi-jointure sur un ensemble
+calculé une fois, sur le modèle de la `0164`), allègement des plongements du board ; sans rien relâcher des droits.
+**MCP** : **non** — correction interne ; le connecteur en profite s'il lit les mêmes tables.

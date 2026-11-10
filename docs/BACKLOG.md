@@ -19105,3 +19105,19 @@ réévaluation.
 - captures aux quatre paliers ;
 - manuel ;
 - contrat de déploiement.
+
+## Demande du 2026-11-10 — le board d'un channel chargé ne tombe plus en délai dépassé (décision 887, INC-352)
+
+### CRM-142 — Le board d'un channel chargé s'ouvre sous le délai : droits évalués une fois par requête, plongements allégés `[ ]`
+
+**Origine** : INC-352 (le responsable, HAR ; relevé par la session 2f ; mesuré en lecture seule par la session de
+livraison) ; arbitrée le 2026-11-10 (décision 887), **prioritaire**.
+**Comportement attendu** : le board de « Partenariats marques » (53 rattachements en production) et de tout channel
+comparable s'ouvre bien sous le `statement_timeout` de 8 s, avec une marge mesurée ; les droits rendus sont exactement
+ceux d'avant.
+**MCP** : non (décision 887). **Spécification** : à écrire avant le code, après la mesure du plan — les politiques visées,
+la forme retenue, `docs/SCHEMA.md` (migration, numéro pris au push), le contrat.
+**DoD** : le plan mesuré avant et après sous le jeton d'un membre, sur un volume au moins égal à celui de la production
+(seed ou jeu de charge) ; pgTAP prouvant que les droits n'ont pas changé (lectrice, membre, refus) ; API du board ; E2E du
+board ; INC-352 close sur le constat en production.
+

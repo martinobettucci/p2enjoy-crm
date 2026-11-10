@@ -9021,6 +9021,8 @@ réglage serait une commande sans effet (`docs/DESIGN_SYSTEM.md` §5.10).
 ### INC-352 — en production, le board d'un channel chargé tombe en délai dépassé ; sa vue liste s'ouvre
 **Ouverte le 2026-11-10.** Cause mesurée : non, à faire (décision 886 : en développement, puis en production en lecture
 seule) ; aucune correction décidée. Le channel compte moins de 100 affaires actives (responsable).
+**Mesurée le 2026-11-10 en lecture seule** (session de livraison) : 53 rattachements ; jointure aux affaires 210 ms
+(≈ 4 ms par ligne) — hypothèse (2), la réévaluation par ligne, la plus probable. **Arbitrée (décision 887)** : unité `CRM-142`, prioritaire.
 
 *Relevé le 2026-11-10 par le responsable (capture HAR de Firefox, channel « Partenariats marques » du track « Gestion
 commercial YouTube ») ; analysé par la session 4891a451 (p2enjoy-crm-2f), sans accès à la production.*
