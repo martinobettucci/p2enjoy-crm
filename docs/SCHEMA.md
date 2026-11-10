@@ -2549,7 +2549,9 @@ enverrait de nouveau directement.
 précédente, retirer les trois fonctions nouvelles, la table, puis les deux colonnes. Les confirmations et les pièces des
 mails préparés sont perdues. **Avec les images `mail-sync`, `mcp` et la webapp d'avant `CRM-143`.**
 
-### Migration (prochain numéro libre) — les affaires candidates au classement d'un message (`CRM-137` ; spécifiée le 2026-11-10, à écrire)
+### Migration `0172` — les affaires candidates au classement d'un message (`CRM-137`, décisions 877, 891 et 893 ; livrée en développement le 2026-11-10)
+
+*Numérotée `0172` au push, premier numéro libre sur `main` après la `0171` de `CRM-142`. Son test pgTAP prend le `0161`, le `0160` étant celui de la `0171`.*
 
 `docs/SPEC-mail-subsystem.md` §26.2, décisions 877, 891 et 893. **Une fonction, aucune table, aucune colonne, aucune
 donnée.** `public.classification_candidates(p_message_id uuid, p_known_sender boolean default true, p_search text
