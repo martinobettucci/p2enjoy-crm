@@ -39672,3 +39672,15 @@ spécification tranchera :
 - l'effet sur les compteurs de l'arbre et des non lus ;
 - la mémoire de la case : la session seulement, ou rien (`CLAUDE.md` §11) ;
 - son articulation avec les dossiers, le filtre du sommeil, et `CRM-137`.
+
+
+### décision 880 — livrer la webapp de `main` (`CRM-129` et `CRM-131`), sans instantané
+
+*2026-11-10, session 4522fa9c (p2enjoy-crm-be, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : la webapp de `main` — l'accueil et la barre des channels hors d'un track ne prétendent plus « Aucun channel »
+quand il y en a (décisions 858, 866, 876 ; INC-346, 348, 350 closes) ; aucune migration, fonction ni image. **La campagne** :
+complète, puis rejeu sur seed frais (`resetMe`, décision des trois sessions) ; un défaut du lot trouvé (une mesure du guide
+émise pour la lectrice, CRM-094) et corrigé par la session 2f (`6001ce76`) ; rejeu de ce qui dépend de la webapp : types et
+unitaires verts, ui 1 149 sur 1 155, manuel 142 sur 144, API 70/70 sur seed frais, pgTAP vert ; le reste INC-342, vert
+rejoué seul, ou dû à la 0171 non poussée de `CRM-135`, appliquée en dev par un runner (hors du lot).
+**Décision : oui, sans instantané** : un `pg_dump` avant ; aucune écriture de schéma ni de données.
