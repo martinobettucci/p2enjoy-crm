@@ -9017,3 +9017,41 @@ réglage serait une commande sans effet (`docs/DESIGN_SYSTEM.md` §5.10).
 **Arbitrée le 2026-11-10 (décision 885)** : le réglage **n'est pas exposé**. L'incohérence reste ouverte, sans correction dans
 `CRM-136` : la colonne demeure stockée et non lue.
 
+
+### INC-352 — en production, le board d'un channel chargé tombe en délai dépassé ; sa vue liste s'ouvre
+**Ouverte le 2026-11-10.** Cause mesurée : non, à faire ; aucune correction décidée.
+
+*Relevé le 2026-11-10 par le responsable (capture HAR de Firefox, channel « Partenariats marques » du track « Gestion
+commercial YouTube ») ; analysé par la session 4891a451 (p2enjoy-crm-2f), sans accès à la production.*
+
+**Le constat (HAR).** À l'ouverture du board, toutes les lectures répondent en moins de 30 ms, sauf une : `GET
+/rest/v1/card_placements?select=<COLONNES_RATTACHEMENT_BOARD>&channel_id=eq.…&archived_at=is.null&affaire.deleted_at=is.null&order=position.asc,affaire(title).asc`,
+qui rend **`500`, code `57014`** (« canceling statement due to statement timeout ») après **8 028 ms** côté amont : le
+`statement_timeout` de 8 s du rôle `authenticated`. La vue liste du même channel s'ouvre.
+
+**Ce qui distingue les deux lectures** (`webapp/src/lib/colonnes-board.ts`, `colonnes-liste.ts`, `board.ts` `lireCards`) :
+- la liste est **paginée** (`LIGNES_PAR_PAGE` = 25) ; le board lit **tous** les rattachements actifs du channel en une
+  requête, sans borne ;
+- le board plonge en plus les points de checklist de chaque rattachement (`points:card_checklist_items(…, origine:
+  workflow_step_checklist_items(step_id))`, `CRM-068`) ; les deux plongent l'affaire, ses étiquettes et ses
+  rattachements avec leur channel et leur track (`CRM-111` T7.5).
+
+**Ce que coûte une ligne, d'après les politiques en base de dev** (non mesuré en production) : chaque table plongée est
+lue sous sa politique RLS — `cards_lecture` et `card_placements_select` par `app.readable_channel_ids()` (qui évalue
+`app.can_read_channel` sur **tous** les channels de la base) ; `card_labels_lecture` par `app.can_read_card` à chaque
+étiquette ; `channels_lecture_membre` par `app.resolve_channel_access` et `tracks_lecture_membre` par
+`app.resolve_track_access` ou `app.track_has_readable_channel` à chaque rattachement plongé ; `card_checklist_items_lecture`
+par une sous-requête sur `card_placements`, elle-même sous RLS.
+
+**Hypothèses, à mesurer avant toute correction** : (1) le coût vient du nombre de lignes sans borne, que la pagination
+de la liste masque ; (2) une fonction de politique est réévaluée par ligne plongée au lieu d'une fois par requête
+(`readable_channel_ids` dans un plongement latéral) ; (3) le plongement des points de checklist, propre au board, domine.
+Aucune n'est établie : il faut le plan d'exécution (`EXPLAIN (ANALYZE, BUFFERS)`) de cette requête, sous le rôle et le
+jeton d'un membre, sur un volume comparable.
+
+**Ce qui contredit quoi.** `CLAUDE.md` §21 (pas de chargement sans pagination quand le volume peut croître) et
+`docs/SPEC-cards.md` (le board rend les affaires actives d'un channel) : le board ne rend rien au-delà d'un volume.
+
+**Pistes, à arbitrer après la mesure** : corriger la cause mesurée (politique ou index) ; alléger la lecture du board
+(lire à part ce qui n'est pas affiché dans la carte) ; borner le board par colonne. Un changement de ce que le board
+montre est une décision du responsable.
