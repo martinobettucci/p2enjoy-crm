@@ -39887,7 +39887,7 @@ de la décision 887 « alléger les plongements » : ne pas alléger ; alléger 
   lui a été exposée (`docs/SPEC-analytique.md` §13.10 : relecture du rattachement par son identifiant, contrôle
   `app.can_read_channel`, mêmes lignes lues, un seul cas plus strict, rien de plus rendu), puis validée ;
 - **ne pas alléger les plongements** : ils ne coûtent que 134 ms sur 8,59 s. La piste de la décision 887 est écartée.
-**Conséquences** : `docs/SPEC-analytique.md` §13.10, `docs/SCHEMA.md` « Migration de `CRM-142` » (numéro pris au push),
+**Conséquences** : `docs/SPEC-analytique.md` §13.10, `docs/SCHEMA.md` « Migration `0171` » (numéro pris au push),
 `CRM-142` au backlog. **MCP** : non (décision 887).
 
 
@@ -39943,7 +39943,7 @@ ces rôles, ils obtenaient la santé de tout rattachement ; un contrôle `app.ca
 la leur rendrait vide. Mesuré dans une transaction annulée : dans une fonction `SECURITY DEFINER`, `current_setting('role')`
 rend le rôle de l'appelant (`authenticated`, `service_role`, `none` pour le propriétaire hors `SET ROLE`), pas celui du
 propriétaire.
-**Décision de conception** (`docs/SPEC-analytique.md` §13.10, `docs/SCHEMA.md` « Migration de `CRM-142` ») : le contrôle
+**Décision de conception** (`docs/SPEC-analytique.md` §13.10, `docs/SCHEMA.md` « Migration `0171` ») : le contrôle
 de channel est sauté quand le rôle de l'appelant (`current_setting('role')`, ou `session_user` hors `SET ROLE`) porte
 `rolbypassrls` ou `rolsuper` — il lisait déjà tout. C'est l'équivalence de la décision 888 étendue aux rôles privilégiés ;
 elle n'ouvre rien à un jeton d'utilisateur, qui ne peut pas changer son rôle. `execute` : `authenticated` et `service_role`,

@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-142` — le board d'un channel chargé s'ouvre de nouveau (INC-352, décisions 887, 888 et 890)
+
+- **Le board ne tombe plus en délai dépassé** quand un channel porte quelques dizaines d'affaires. En production, celui de
+  « Partenariats marques » (53 rattachements) mettait 8,6 s et la base l'interrompait à 8 s ; la vue liste passait. La
+  cause : les deux scores de santé de chaque carte relisaient l'affaire, ses activités et ses courriers en refaisant les
+  contrôles de droits à chaque ligne. Ils se calculent désormais sous **un seul contrôle par rattachement** — le droit de
+  lire son channel —, avec les mêmes résultats et les mêmes droits. Mesuré en développement sur 88 rattachements : 3 121 ms
+  avant, 254 ms après.
+- Migration **`0171`** : `app.health_context` reprise en `SECURITY DEFINER`, sans table ni donnée. Rien ne change à
+  l'écran, ni dans le connecteur.
+
 _Rien à publier pour le moment._
 
 ## [Publié]

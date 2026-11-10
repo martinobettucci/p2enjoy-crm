@@ -785,7 +785,28 @@ la relever. **Retour arrière** : l'image `mail-sync` précédente, puis la migr
 « Migration `0170` », dans cet ordre. Aucune donnée n'est perdue : `status` et `last_error` sont réécrits au prochain
 test ou à la prochaine relève.
 
+### 2.34 `CRM-142`, décisions 887, 888 et 890 — le board d'un channel chargé s'ouvre sous le délai (À LIVRER : migration 171 seule)
+
+`docs/SPEC-analytique.md` §13.10 ; `docs/SCHEMA.md` « Migration `0171` » ; INC-352. **La migration 171 seule** :
+`app.health_context` reprise en `SECURITY DEFINER` sous un seul contrôle de droits. Aucune table, aucune colonne, aucune
+donnée, aucune politique, aucune webapp, aucune image, aucune variable, aucun secret ; sans verrou notable (une fonction).
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 171 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate`, instantané de VM pris |
+| 2 | Mesurer le board | session de livraison, en lecture seule | le script d'`EXPLAIN (ANALYZE, BUFFERS)` d'INC-352 (B), sous le rôle `authenticated` d'un membre, sur « Partenariats marques » : sous 8 s avec marge (8 586 ms avant) |
+| 3 | Constater le board | responsable | « Partenariats marques » s'ouvre en board, avec ses pastilles de santé |
+
+**Vérification après la fenêtre**, en lecture seule : registre augmenté d'une ligne, empreinte de la 171 égale au dépôt ;
+`select prosecdef from pg_proc where oid = 'app.health_context(public.card_placements)'::regprocedure` rend `true`.
+**Retour arrière** : reposer `app.health_context` de la `0134` (`SECURITY INVOKER`), comme le dit `docs/SCHEMA.md`
+« Migration `0171` ». Aucune donnée n'est touchée.
+
 ## 3. Migrations en attente
+
+**La 171** (`CRM-142`, décisions 888 et 890), *en attente* : `app.health_context` sous un seul contrôle de droits
+(`docs/SCHEMA.md` « Migration `0171` »). Une fonction, aucune donnée, sans verrou notable. Seule, sans webapp (§2.34).
+Aucun geste préalable du responsable.
 
 **Aucune migration en attente depuis la fenêtre du 2026-11-10 (CRM-135)** : la 170 a été appliquée avec l'image `mail-sync`
 (révision `315adc18`, décision 894 ; §8), registre à **168** lignes.

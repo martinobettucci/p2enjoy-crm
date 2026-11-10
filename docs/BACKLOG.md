@@ -19112,8 +19112,7 @@ réévaluation.
 
 ## Demande du 2026-11-10 — le board d'un channel chargé ne tombe plus en délai dépassé (décision 887, INC-352)
 
-### CRM-142 — Le board d'un channel chargé s'ouvre sous le délai : droits évalués une fois par requête, plongements allégés `[@]`
-*Prise en charge : session interactive 4891a451 (p2enjoy-crm-2f) depuis 2026-11-10 10:46 UTC — état avant : [ ]*
+### CRM-142 — Le board d'un channel chargé s'ouvre sous le délai : droits évalués une fois par requête, plongements allégés `[P]`
 
 **Origine** : INC-352 (le responsable, HAR ; relevé par la session 2f ; mesuré en lecture seule par la session de
 livraison) ; arbitrée le 2026-11-10 (décision 887), **prioritaire**.
@@ -19121,16 +19120,22 @@ livraison) ; arbitrée le 2026-11-10 (décision 887), **prioritaire**.
 comparable s'ouvre bien sous le `statement_timeout` de 8 s, avec une marge mesurée ; les droits rendus sont exactement
 ceux d'avant.
 **MCP** : non (décision 887). **Spécification** : écrite avant le code le 2026-11-10 (décision 888) —
-`docs/SPEC-analytique.md` §13.10, `docs/SCHEMA.md` « Migration de `CRM-142` » (numéro pris au push). Mesure : 98 % du temps
+`docs/SPEC-analytique.md` §13.10, `docs/SCHEMA.md` « Migration `0171` » (numéro pris au push). Mesure : 98 % du temps
 dans les deux colonnes de santé ; `app.health_context` sous un seul contrôle de droits ; plongements gardés.
 
 - [x] **Mesure**, 2026-11-10 : en développement (session 2f) et en production en lecture seule (session de livraison),
       INC-352.
 - [x] **Spécification**, 2026-11-10 (décision 888).
-- [ ] **Migration et pgTAP** : `app.health_context` en `SECURITY DEFINER` sous un seul contrôle ; équivalence avec
-      l'ancienne version pour chaque rattachement du seed sous chaque profil ; preuve 3 de `0110_scores_sante` révisée.
-- [ ] **API, E2E, mesure** : `e2e/api/scores-sante.spec.ts` rejoué ; board et fiche ; plan du board avant et après sur
-      53 rattachements au moins en développement ; contrat de déploiement ; changelog.
+- [x] **Migration et pgTAP**, vérifiés le 2026-11-10 : migration `0171` ; `supabase/tests/0160_sante_un_controle.test.sql`
+      22/22 (l'ancienne version recréée, équivalence pour chaque rattachement du seed sous l'administratrice, le business
+      developer, la lectrice, un non-membre, la clé de service et le propriétaire ; l'illisible indiscernable de l'inconnu ;
+      le forgé calculé sur la ligne en base ; `SET ROLE`, `set_config('role')` et un claim forgé sans effet) ;
+      `0110_scores_sante` 30/30, preuve 3 révisée ; `0002`, `0009`, `0011`, `0012`, `0022`, `0023` sans échec.
+- [x] **API, E2E, mesure**, 2026-11-10 : `e2e/api/scores-sante.spec.ts` 5/5 ; `e2e/ui/board.spec.ts` 24/24 ; les six
+      paliers lus sous la clé de service (vérification du seed) ; le board sur 88 rattachements, dans une transaction
+      annulée : 3 121 ms avec la définition de la `0134`, 254 ms avec la `0171`. Contrat §2.34, changelog.
+- [P] **Livraison et constat** : la migration 171 seule (`docs/PROD_MIGRATIONS.md` §2.34), puis la mesure du board en
+      production ; INC-352 close sur ce constat.
 **DoD** : le plan mesuré avant et après sous le jeton d'un membre, sur un volume au moins égal à celui de la production
 (seed ou jeu de charge) ; pgTAP prouvant que les droits n'ont pas changé (lectrice, membre, refus) ; API du board ; E2E du
 board ; INC-352 close sur le constat en production.

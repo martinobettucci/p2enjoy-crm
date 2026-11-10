@@ -5,6 +5,8 @@
 --           `SECURITY INVOKER`, paliers) ; docs/JOURNAL.md décisions 708, 723 et 724
 -- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
 --           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
+-- @verifies CRM-142 (docs/BACKLOG.md) — la preuve 3 révisée : `app.health_context` sous un seul contrôle (docs/SPEC-analytique.md
+--           §13.10) ; les scores eux-mêmes restent prouvés ici, inchangés
 --
 -- L'AFFAIRE ÉPROUVÉE EST « Audit sécurité applicative » (`…c3`), ouverte, à l'étape Prospection (seuil de 14 jours). Ses
 -- colonnes, ses activités et son courrier sont réécrits DANS LA TRANSACTION par le propriétaire de la base, puis le
@@ -51,9 +53,12 @@ update public.card_placements set entered_step_at = now() - interval '3 days', n
 
 select has_function('public', 'health_momentum', array['card_placements'], '1 — la dynamique est une colonne calculée du rattachement');
 select has_function('public', 'health_commercial', array['card_placements'], '2 — la santé commerciale aussi');
+-- RÉVISÉE PAR `CRM-142` (docs/SPEC-analytique.md §13.10, décisions 888 et 890) : `app.health_context` est devenue
+-- `SECURITY DEFINER`, sous un seul contrôle de droits — son équivalence est prouvée par `0160_sante_un_controle`. Les deux
+-- scores et le dernier contact restent `SECURITY INVOKER`.
 select is((select bool_or(prosecdef) from pg_proc where proname in ('health_momentum', 'health_commercial',
-            'health_context', 'health_last_contact')), false,
-	'3 — toutes `SECURITY INVOKER` : le dernier contact se lit sous la RLS de l''appelant');
+            'health_last_contact')), false,
+	'3 — les deux scores et le dernier contact restent `SECURITY INVOKER` (`app.health_context` : `CRM-142`)');
 select ok(not has_function_privilege('anon', 'public.health_momentum(public.card_placements)', 'execute'),
 	'4 — l''anonyme ne l''exécute pas');
 select is(array[app.health_tier(39), app.health_tier(40), app.health_tier(69), app.health_tier(70)],

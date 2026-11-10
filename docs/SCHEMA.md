@@ -2221,7 +2221,7 @@ next_action_at, position, archived_at) on public.cards from authenticated` : ces
 (owner_id, amount, probability_override, next_action, next_action_at, position, archived_at) on public.cards to
 authenticated;`, avec la webapp et l'image `mcp` d'avant.
 
-### Migration de `CRM-142` — la santé d'un rattachement sous un seul contrôle de droits (numéro pris au push ; spécifiée le 2026-11-10, à écrire)
+### Migration `0171` — la santé d'un rattachement sous un seul contrôle de droits (`CRM-142` ; spécifiée et livrée en développement le 2026-11-10)
 
 `docs/SPEC-analytique.md` §13.10, INC-352, décisions 887 et 888. **Aucune table, aucune colonne, aucune politique.**
 - **`app.health_context(public.card_placements)`** reprise, même signature et même résultat, **`SECURITY DEFINER`**,
