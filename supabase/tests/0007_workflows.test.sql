@@ -1,6 +1,7 @@
 -- @verifies CRM-031 (docs/BACKLOG.md) — workflows, étapes, transitions : structure, ordre, droits
 -- @verifies docs/SPEC-workflow-engine.md §3.2 (workflows), §3.3 (étapes), §3.4 (transitions),
 --           §3.5 (étape initiale), §3.6 (ordre), §3.7 (autorisations)
+-- @verifies CRM-133 (docs/BACKLOG.md) — tranche T1 : la colonne `description_override` de l'étape (docs/SPEC-workflow-engine.md §7 sexies.1)
 -- @verifies docs/SCHEMA.md §2 (channels.workflow_id), §3 (workflows), « Conventions générales »
 -- @verifies docs/SPEC-permissions-rls.md §4 (politiques), §7 (preuves de refus n° 2, n° 3, n° 11)
 -- @verifies docs/INCONSISTENCY_REPORT.md INC-029 (clé étrangère livrée, NOT NULL différée),
@@ -67,8 +68,11 @@ select columns_are(
 select columns_are(
 	'public', 'workflow_steps',
 	array['id', 'workflow_id', 'workspace_id', 'node_id', 'position', 'label_override',
-	      'probability_override', 'stale_after_days', 'is_initial', 'created_at', 'updated_at'],
-	'`workflow_steps` porte exactement les colonnes du §3.3'
+	      'probability_override', 'stale_after_days', 'is_initial', 'created_at', 'updated_at',
+	      -- RÉVISÉE PAR `CRM-133` T1 (docs/SPEC-workflow-engine.md §7 sexies.1, décision 870) : la surcharge de la
+	      -- description du nœud, comme `label_override`. Garde-fou révisé, jamais retiré (décision 51) ; prouvée par `0163`.
+	      'description_override'],
+	'`workflow_steps` porte exactement les colonnes du §3.3 et du §7 sexies.1'
 );
 
 select columns_are(

@@ -858,6 +858,11 @@ dépôt. `select has_function_privilege('authenticated', 'public.classification_
 
 ## 3. Migrations en attente
 
+**La 174, après la 173** (`CRM-133`, décisions 869, 870 et 882), *en attente* : la description d'un nœud et sa surcharge
+par l'étape (`docs/SCHEMA.md` « Migration `0174` ») — deux colonnes facultatives, cinq fonctions de composition reprises,
+deux déclencheurs d'audit recréés ; aucune donnée reprise. **À ne pas livrer avant la fin de l'unité** (écrans, connecteur,
+seed : tranches T2 à T4). Aucun geste préalable du responsable.
+
 **La 172** (`CRM-137`, décisions 877, 891 et 893), *en attente* : `classification_candidates`, les affaires candidates au classement d'un message (`docs/SCHEMA.md` « Migration `0172` »). Une fonction, aucune donnée, sans verrou notable. **Avec la webapp et l'image `mcp` de `main`, après elle** (§2.36). Aucun geste préalable du responsable.
 
 **La 173, après la 172** (`CRM-143`, décisions 889 et 892), *en attente* : les pièces non analysées (`docs/SCHEMA.md` « Migration `0173` ») — la colonne `mail_attachments.av_skip_reason` reprise depuis le stockage, la table `mail_attachment_risk_acknowledgments`, la confirmation `acknowledge_unscanned_attachment`, la lecture des objets redéfinie, les deux fonctions de reprise réservées à `service_role`, la colonne `mail_drafts.attachments` et `prepare_email` à neuf arguments. La reprise de `av_skip_reason` parcourt les pièces `skipped` une fois (quatre en production le 2026-11-10), sans verrou notable. **Avec le service `clamav` et les images `mail-sync` et `mcp` de `main`, après elle** (§2.35). Geste préalable : la preuve de `freshclam` (§2.35, geste 1).

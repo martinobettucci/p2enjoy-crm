@@ -18892,7 +18892,7 @@ Rien à livrer : outillage et documentation.
 ## Demande du 2026-11-07 — une description pour les étapes de workflow (décision 869)
 
 ### CRM-133 — Une description sur le nœud du catalogue, surchargeable par l'étape d'un workflow `[@]`
-*Prise en charge : session interactive 4891a451 (p2enjoy-crm-2f) depuis 2026-11-07 09:56 UTC — état avant : [ ] ; confiée par la session de livraison (be)*
+*Prise en charge : session interactive 4891a451 (p2enjoy-crm-32, ex-2f) depuis 2026-11-07 09:56 UTC — état avant : [ ] ; confiée par la session de livraison (be)*
 
 **Origine** : un assistant connecté n'a pas pu enregistrer la description d'une étape (« À qualifier ») ; arbitrée le
 2026-11-07 (décision 869).
@@ -18901,11 +18901,15 @@ libellé et sa probabilité ; une surcharge vide rend celle du nœud. La descrip
 **MCP** : **oui, famille `workflows`** (décision 869) — lecture et écriture de la description du nœud et de sa surcharge
 d'étape, cases existantes ; au catalogue de `docs/SPEC-mcp.md` §9.2, dans une tranche de cette unité.
 **Spécification** : écrite avant le code le 2026-11-07 (décision 870) — `docs/SPEC-workflow-engine.md` §7 sexies,
-`docs/SCHEMA.md` « Migration de `CRM-133` », `docs/DESIGN_SYSTEM.md` §5.15, §5.18 et §5.58 (révisé), `docs/SPEC-mcp.md`
+`docs/SCHEMA.md` « Migration `0174` », `docs/DESIGN_SYSTEM.md` §5.15, §5.18 et §5.58 (révisé), `docs/SPEC-mcp.md`
 §9.2 undecies (T2.d révisée) ; le manuel : chapitres « Le catalogue de nœuds » et « Composer un workflow ».
-- [ ] **T1 — base** : migration au numéro pris au push (`0170` et `0171` sont entrées sur `main` avec `CRM-135` et `CRM-142`),
-      pgTAP (contraintes, surcharge et repli, droits, empreinte inchangée sans surcharge, copie, restauration,
-      comparaisons, audit, suggestion de l'assistant acceptée qui garde la surcharge — décision 882).
+- [x] **T1 — base**, vérifiée en développement le 2026-11-10 : migration `0174` (deux colonnes non blanches, cinq fonctions
+      reprises à l'identique de leur définition en base avec la seule surcharge, déclencheurs d'audit) ;
+      `supabase/tests/0163_description_noeuds_etapes.test.sql` 24/24 (contraintes, surcharge et repli, droits, empreinte
+      inchangée sans surcharge, copie, restauration, comparaisons, audit nommé, suggestion de l'assistant acceptée qui
+      garde la surcharge — décision 882) ; gardes de colonnes de `0006` et `0007` révisées (décision 51) ; les 55 suites
+      pgTAP qui touchent les workflows ou l'audit sans échec. Sous-ensemble de ce périmètre (décision 830). **À ne pas
+      livrer avant la fin de l'unité.**
 - [ ] **T2 — écrans** : catalogue, éditeur de workflows, board, fiche ; unitaires ; E2E souris et clavier ; captures aux
       quatre paliers.
 - [ ] **T3 — connecteur** : outils `workflows` et `crm_workflow_get` ; pytest, intégration, `verify-mcp.sh`.

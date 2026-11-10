@@ -13,6 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-133` — une description sur le nœud du catalogue, surchargeable par l'étape (décisions 869, 870 et 882) — *tranche T1, l'unité en cours*
+
+- **Un nœud du catalogue peut porter une description**, et une étape d'un workflow la surcharger, comme son libellé ; une
+  surcharge vide rend celle du nœud. La surcharge suit les versions, la copie vers un track, la restauration, les
+  comparaisons et le journal d'audit ; une suggestion acceptée de l'assistant la garde. Migration **174**. *Les écrans, le
+  connecteur et le seed arrivent avec les tranches T2 à T4.*
+- Déploiement : `docs/PROD_MIGRATIONS.md` §3, la migration 174 ; **à ne pas livrer avant la fin de l'unité**.
+
 #### `CRM-112`, tranche INC-353 — le champ « SIRET » du jeu de démonstration garde le même identifiant (décision 895)
 
 - **Développement seulement.** Le seed crée le champ de l'affaire `siret` sous un identifiant fixe, par la clé de service :

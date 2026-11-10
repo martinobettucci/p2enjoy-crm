@@ -1,6 +1,7 @@
 -- @verifies CRM-030 (docs/BACKLOG.md) — catalogue de nœuds : structure, ordre, archivage, droits
 -- @verifies docs/SPEC-workflow-engine.md §2.2 (modèle), §2.3 (clé stable), §2.4 (ordre),
 --           §2.5 (probabilité et seuil), §2.6 (archivage), §2.7 (autorisations)
+-- @verifies CRM-133 (docs/BACKLOG.md) — tranche T1 : la colonne `description` du nœud (docs/SPEC-workflow-engine.md §7 sexies.1)
 -- @verifies docs/SCHEMA.md §3 (workflows), « Conventions générales »
 -- @verifies docs/SPEC-permissions-rls.md §4 (politiques), §7 (preuves de refus n° 3 et n° 11)
 -- @verifies docs/DESIGN_SYSTEM.md §1 (couleurs de données)
@@ -49,8 +50,11 @@ select has_table('public', 'workflow_nodes_catalog',
 select columns_are(
 	'public', 'workflow_nodes_catalog',
 	array['id', 'workspace_id', 'key', 'label', 'kind', 'color', 'default_probability',
-	      'default_stale_after_days', 'position', 'archived_at', 'created_at', 'updated_at'],
-	'le catalogue porte exactement les colonnes de docs/SPEC-workflow-engine.md §2.2'
+	      'default_stale_after_days', 'position', 'archived_at', 'created_at', 'updated_at',
+	      -- RÉVISÉE PAR `CRM-133` T1 (docs/SPEC-workflow-engine.md §7 sexies.1, décision 870) : la description facultative du
+	      -- nœud. Garde-fou révisé, jamais retiré (décision 51) ; ses contraintes sont prouvées par `0163`.
+	      'description'],
+	'le catalogue porte exactement les colonnes de docs/SPEC-workflow-engine.md §2.2 et §7 sexies.1'
 );
 
 select col_is_pk('public', 'workflow_nodes_catalog', 'id',

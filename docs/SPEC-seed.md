@@ -2956,7 +2956,7 @@ et sa prévisualisation ; la recherche par SIRET ; le défaut `common_field` de 
 
 *Écrit le 2026-11-10, avant la section du seed.* Dans la section « 6 bis » de `supabase/seed/apply-seed.sh`, **avant la
 copie** du workflow par défaut (section 7), comme l'exigence du SIRET (décision 855) : la composition photographie la
-surcharge (`docs/SCHEMA.md` « Migration de `CRM-133` »), et une surcharge posée après la copie ferait diverger la source au rejeu.
+surcharge (`docs/SCHEMA.md` « Migration `0174` »), et une surcharge posée après la copie ferait diverger la source au rejeu.
 
 ### 39.1 Ce que le seed pose
 

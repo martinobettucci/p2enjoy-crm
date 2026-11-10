@@ -2588,7 +2588,7 @@ aussi `status = 'ok'` et `last_error = null`, sauf sur une ligne `disabled`, qu'
 `mail_inbound_account_record_sync` telle qu'en `0151`, **avec l'image `mail-sync` d'avant `CRM-135`** : l'image qui suit
 appelle la nouvelle fonction à chaque relève en échec.
 
-### Migration de `CRM-133` — la description d'un nœud, et sa surcharge par l'étape (numéro pris au push ; spécifiée le 2026-11-07, à écrire)
+### Migration `0174` — la description d'un nœud, et sa surcharge par l'étape (`CRM-133` T1 ; spécifiée le 2026-11-07, écrite et appliquée en développement le 2026-11-10)
 
 *Spécifiée sous `0170`, puis `0171` : `CRM-135` et `CRM-142` sont entrées les premières sur `main` (arbitrage de la session
 de livraison du 2026-11-10 : une migration prend son numéro à son entrée sur `main`).*
