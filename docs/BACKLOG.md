@@ -19319,8 +19319,12 @@ contrat.
 `from_address`, `cancelled_at`, `cancelled_by`, l'événement `mail_cancelled`, `cancel_outbound_email`,
 `retry_outbound_email`, `app.outbox_gestes_permis`, `app.outbox_refuser_etat`, la purge reprise) et la correction
 d'INC-354 (`reserver_envois` au quota dépassé) ; pgTAP `0165` 35 assertions, gardes `0019` et `0133` révisées, suite
-complète 153 fichiers, 5187 assertions, sans anomalie. Restent T2 (la course à deux connexions et en parallèle), T3
-(l'écran), T4 (le connecteur), T5 (le seed et le contrat).
+complète 153 fichiers, 5187 assertions, sans anomalie. **T2 implémentée et vérifiée en développement** —
+`scripts/verify-outbox-course.sh` (deux sessions `psql`, les deux ordres du verrou, l'attente constatée : 3 contrôles) et
+`mcp/tests/test_integration_outbox.py` (la course en parallèle à travers PostgREST, le worker réel y prenant part),
+chacun rouge contre une annulation affaiblie (sans sa condition d'état), vert une fois la définition restaurée ; aucun
+pytest `mail-sync`, l'annulation ne touchant aucun code du worker (§28.5). Restent T3 (l'écran), T4 (le connecteur), T5
+(le seed et le contrat).
 
 ## Demande du 2026-11-10 — une livraison se voit au prochain chargement (décision 899)
 
