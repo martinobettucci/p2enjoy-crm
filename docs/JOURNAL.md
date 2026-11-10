@@ -40068,3 +40068,14 @@ détecterait plus un changement involontaire de la méthode) ; laisser ouvert.
 **MCP** : non, un seed. **Vérification** : seed sur base neuve puis rejoué (convergent), l'empreinte égale sur deux bases
 neuves successives ; `0037` vert ; les preuves du seed des champs de l'affaire rejouées.
 
+
+
+### décision 896 — livrer la migration 0171 (`CRM-142`, INC-352), sans instantané
+
+*2026-11-10, session 4522fa9c (p2enjoy-crm-ee, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : la seule migration `0171` — `app.health_context` sous un seul contrôle de droits (décisions 887, 888, 890) ; le
+board de « Partenariats marques » rendait 8,59 s en production pour une limite de 8 s, dont 98 % dans les colonnes de santé.
+**La campagne** : complète sur une base recréée depuis `main` (`resetMe`, accord des trois sessions, après le plantage de la
+machine) ; types et unitaires verts, ui 1 155 sur 1 157, api 1 320 sur 1 322, mail 53/53, manuel 143 sur 144, mcp 112,
+pgTAP 148 fichiers, garde du manuel 168 ; le reste INC-342, vert rejoué seul, ou pgTAP 0037 hors du lot (INC-353). Aucun
+défaut du lot. **Décision : oui, sans instantané** : un `pg_dump` avant ; une fonction reprise, aucune table ni donnée.
