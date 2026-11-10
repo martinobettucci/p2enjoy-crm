@@ -14,8 +14,9 @@
 // dirait accomplie par un objet que l'écran ne montre nulle part.
 // @verifies CRM-129 (docs/BACKLOG.md) — `presenceChannels` : le compte de l'étape « channel » décide de ce que
 //           l'accueil dit ; docs/SPEC-onboarding.md §4.2 (précision du 2026-11-06), décision 859
-// @verifies CRM-131 (docs/BACKLOG.md) — `useMesureChannels` : la même mesure, émise à part hors d'un track, et jamais
-//           sans client ; docs/SPEC-channels.md §5.5, décision 868
+// @verifies CRM-131 (docs/BACKLOG.md) — `lirePresenceChannels`, `useMesureChannels` : la présence lue à part hors d'un
+//           track, une ligne au plus et jamais un comptage du guide, jamais sans client ; docs/SPEC-channels.md §5.5,
+//           décisions 868 et 876 (INC-350) ; docs/SPEC-onboarding.md §10.2 (aucun comptage du guide sans la pastille)
 // @verifies CRM-001 tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
 
 import { cleanup, renderHook, waitFor } from '@testing-library/react'
@@ -28,6 +29,7 @@ import {
 	compterAccomplies,
 	creerWorkflowDeDepart,
 	estAccomplie,
+	lirePresenceChannels,
 	mesureEnCours,
 	mesurerDemarrage,
 	mesurerEtape,
@@ -367,14 +369,16 @@ describe('la présence de channels lisibles — CRM-129, docs/SPEC-onboarding.md
 	})
 })
 
-describe('la mesure à part pour la barre d’onglets — CRM-131, docs/SPEC-channels.md §5.5', () => {
-	// Démonter chaque crochet : une mesure résolue après la fin du fichier ferait travailler React sans `window`.
+describe('la présence lue à part pour la barre d’onglets — CRM-131, docs/SPEC-channels.md §5.5, décision 876', () => {
+	// Démonter chaque crochet : une lecture résolue après la fin du fichier ferait travailler React sans `window`.
 	afterEach(cleanup)
 
-	type Reponse = { count: number | null; error: { message: string } | null; status: number }
-	function clientEspion(reponse: Reponse) {
+	type Reponse = { data: { id: string }[] | null; error: { message: string } | null; status: number }
+	function clientEspion(reponse: Reponse | Error) {
 		const tables: string[] = []
 		const nuls: string[] = []
+		const selections: unknown[][] = []
+		const limites: number[] = []
 		const client = {
 			from: (table: string) => {
 				tables.push(table)
@@ -383,40 +387,63 @@ describe('la mesure à part pour la barre d’onglets — CRM-131, docs/SPEC-cha
 						nuls.push(colonne)
 						return chaine
 					},
-					limit: () => chaine,
-					then: (resoudre: (valeur: Reponse) => unknown) => Promise.resolve(reponse).then(resoudre),
+					limit: (n: number) => {
+						limites.push(n)
+						return chaine
+					},
+					then: (resoudre: (valeur: Reponse) => unknown, rejeter: (cause: unknown) => unknown) =>
+						(reponse instanceof Error ? Promise.reject(reponse) : Promise.resolve(reponse)).then(resoudre, rejeter),
 				}
-				return { select: () => chaine }
+				return {
+					select: (...args: unknown[]) => {
+						selections.push(args)
+						return chaine
+					},
+				}
 			},
 		} as unknown as ClientCrm
-		return { client, tables, nuls }
+		return { client, tables, nuls, selections, limites }
 	}
+	const UNE_LIGNE: Reponse = { data: [{ id: 'c-1' }], error: null, status: 200 }
 
-	it('sans client, n’émet AUCUNE mesure et reste « chargement »', async () => {
+	it('lit AU PLUS UNE ligne des channels vivants, sans comptage : ce n’est pas une mesure du guide (INC-350)', async () => {
+		const espion = clientEspion(UNE_LIGNE)
+		expect(await lirePresenceChannels(espion.client)).toBe('present')
+		expect(espion.tables).toEqual(['channels'])
+		expect(espion.nuls).toEqual([...FILTRES_ETAPES_DEMARRAGE.channel.nuls])
+		expect(espion.limites).toEqual([1])
+		// Aucune option `count` : la requête ne porte pas `Prefer: count=exact`, la forme d'un comptage du guide.
+		expect(espion.selections).toEqual([['id']])
+	})
+
+	it('aucune ligne : « aucun » ; un refus, des données absentes ou une panne : « inconnu », jamais « aucun »', async () => {
+		expect(await lirePresenceChannels(clientEspion({ data: [], error: null, status: 200 }).client)).toBe('aucun')
+		expect(await lirePresenceChannels(clientEspion({ data: null, error: { message: 'refus' }, status: 403 }).client)).toBe(
+			'inconnu',
+		)
+		expect(await lirePresenceChannels(clientEspion({ data: null, error: null, status: 200 }).client)).toBe('inconnu')
+		expect(await lirePresenceChannels(clientEspion(new Error('réseau')).client)).toBe('inconnu')
+	})
+
+	it('sans client, n’émet AUCUNE lecture et reste « chargement »', async () => {
 		const { result } = renderHook(() => useMesureChannels(null))
 		await Promise.resolve()
 		expect(result.current).toBe('chargement')
 	})
 
-	it('compte les channels VIVANTS sous la RLS de l’appelant : la définition de l’étape « channel »', async () => {
-		const espion = clientEspion({ count: 3, error: null, status: 200 })
-		const { result } = renderHook(() => useMesureChannels(espion.client))
-		await waitFor(() => expect(result.current).toBe('present'))
-		expect(espion.tables).toEqual(['channels'])
-		expect(espion.nuls).toEqual([...FILTRES_ETAPES_DEMARRAGE.channel.nuls])
-	})
-
-	it('zéro : « aucun » ; un échec : « inconnu », jamais « aucun »', async () => {
-		const zero = renderHook(() => useMesureChannels(clientEspion({ count: 0, error: null, status: 200 }).client))
-		await waitFor(() => expect(zero.result.current).toBe('aucun'))
+	it('le crochet rend la présence lue', async () => {
+		const present = renderHook(() => useMesureChannels(clientEspion(UNE_LIGNE).client))
+		await waitFor(() => expect(present.result.current).toBe('present'))
+		const aucun = renderHook(() => useMesureChannels(clientEspion({ data: [], error: null, status: 200 }).client))
+		await waitFor(() => expect(aucun.result.current).toBe('aucun'))
 		const panne = renderHook(() =>
-			useMesureChannels(clientEspion({ count: null, error: { message: 'panne' }, status: 500 }).client),
+			useMesureChannels(clientEspion({ data: null, error: { message: 'panne' }, status: 500 }).client),
 		)
 		await waitFor(() => expect(panne.result.current).toBe('inconnu'))
 	})
 
-	it('remesure quand le client revient : à chaque entrée sur une route transverse', async () => {
-		const espion = clientEspion({ count: 2, error: null, status: 200 })
+	it('relit quand le client revient : à chaque entrée sur une route transverse', async () => {
+		const espion = clientEspion(UNE_LIGNE)
 		const { result, rerender } = renderHook(({ client }: { client: ClientCrm | null }) => useMesureChannels(client), {
 			initialProps: { client: espion.client as ClientCrm | null },
 		})

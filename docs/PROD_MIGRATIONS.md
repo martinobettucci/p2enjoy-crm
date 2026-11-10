@@ -755,7 +755,8 @@ aucun secret, aucune image.
 ### 2.32 `CRM-131`, décision 868 — hors d'un track, la barre des channels ne prétend plus une absence (À LIVRER : webapp de `main` seule, avec le §2.31)
 
 `docs/SPEC-channels.md` §5.5 ; `docs/DESIGN_SYSTEM.md` §4. Aucune migration, aucune variable, aucun secret, aucune image.
-Le manuel (chapitre 3, image `hors-d-un-track.jpg`) part avec la webapp.
+Le manuel (chapitre 3, image `hors-d-un-track.jpg`) part avec la webapp. Le lot porte le correctif INC-350 (décision 876,
+2026-11-10) : la barre lit sa présence par une ligne au plus, sans comptage du guide ; aucun geste de plus.
 
 | # | Geste | Qui | Comment |
 |---|---|---|---|

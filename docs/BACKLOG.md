@@ -18810,9 +18810,7 @@ aux quatre paliers, seed, manuel).
 
 ## Demande du 2026-11-06 — trois arbitrages du responsable (décisions 865 à 867)
 
-### CRM-131 — Hors d'un track, la barre des channels ne prétend plus une absence `[@]`
-*Prise en charge : session interactive 4891a451 (p2enjoy-crm-2f) depuis 2026-11-10 08:32 UTC — état avant : [P] ; correctif d'un défaut
-relevé par la campagne de la session de livraison (`e2e/ui/guide-flottant.spec.ts:381`, CRM-094)*
+### CRM-131 — Hors d'un track, la barre des channels ne prétend plus une absence `[P]`
 
 **Origine** : INC-348 (session 2f, captures de `CRM-129`) ; arbitrée le 2026-11-06 (décision 866).
 **Comportement attendu** : « Aucun channel » seulement si la personne n'a réellement aucun channel lisible ; un texte
@@ -18830,6 +18828,12 @@ INC-348 close.
       `e2e/ui/accueil-channels.spec.ts` (8, dont 4 pour `CRM-131` : seed à la souris et au clavier, espace jetable sans
       channel à la souris et au clavier) ; captures `docs/captures/CRM-131/` aux quatre paliers, observées ; manuel
       chapitre 3 (texte et image `hors-d-un-track.jpg`), `verify-manual` 168/168 ; typecheck racine et build. INC-348 close.
+- [x] **Correctif INC-350**, vérifié le 2026-11-10 (décision 876) : la campagne complète de la session de livraison avait
+      rougi `e2e/ui/guide-flottant.spec.ts:381` (un comptage du guide émis pour la lectrice, que `CRM-094` refuse). La barre
+      lit désormais sa présence par `lirePresenceChannels` (une ligne au plus, sans comptage), l'affichage inchangé ;
+      unitaires réécrits (`demarrage.test.ts`) et suite entière (5465) ; typecheck racine ; E2E `guide-flottant` (5),
+      `accueil-channels` (8), `demarrage` (11) et `channels` (14), tous verts. Aucune capture à renouveler : ce que la
+      barre affiche ne change pas, et les E2E le relisent.
 - [P] **Livraison et constat** : webapp de `main`, avec `CRM-129` (`docs/PROD_MIGRATIONS.md` §2.32).
 
 ### CRM-132 — Les harnais de la messagerie prouvent leurs dégradations sur tout poste `[@]`

@@ -8968,7 +8968,8 @@ passe, l'identifiant et le réseau de la cellule ne sont pas en cause. Le CRM ne
 dossiers, copie dans `CRM/Affaires/…`, plages d'UID) ; aucune décision n'a écarté POP explicitement.
 
 ### INC-350 — hors d'un track, la coquille émet pour une lectrice un comptage du guide que `CRM-094` lui refuse
-**Ouverte le 2026-11-10, corrigée par `CRM-131` (décision 876).**
+**Close le 2026-11-10, corrigée par `CRM-131` (décision 876)** : unitaires, `e2e/ui/guide-flottant.spec.ts` (5/5, dont la
+lectrice), `accueil-channels`, `demarrage`, `channels`, verts.
 
 *Relevé le 2026-11-10 par la session de livraison 4522fa9c (p2enjoy-crm-be), campagne complète du lot `CRM-129` +
 `CRM-131`, rejouée sur un seed frais ; transmis à la session 4891a451 (p2enjoy-crm-2f), qui porte `CRM-131`.*
