@@ -18998,3 +18998,24 @@ d'un inconnu) ; captures aux quatre paliers ; manuel.
 E2E `mail` sur le vrai serveur IMAP de dev (le message arrive dans la corbeille de la boîte quand la case est cochée, il y
 reste sinon) ; E2E souris et clavier (non lu, sommeil, effacer, annuler, restaurer) ; outils du connecteur et
 `verify-mcp.sh` ; seed ; captures aux quatre paliers ; manuel ; contrat de déploiement.
+
+## Demande du 2026-11-10 — l'inbox, par défaut, ne montre que mes mails (décision 879)
+
+### CRM-139 — Inbox : une case « Seulement moi », cochée par défaut, sur les adresses d'expédition personnelles `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 879).
+**Comportement attendu** :
+- la case « Seulement moi », cochée par défaut, ne montre que les messages dont une adresse d'identité sortante
+  **personnelle** de la personne connectée est en À, Cc ou Cci, ou en est l'expéditeur ;
+- décochée, tous les messages lisibles ;
+- sans identité personnelle, la case est décochée et désactivée, avec une explication et un lien vers Réglages ▸
+  Identités sortantes ;
+- filtre côté serveur, sous les droits de la personne ; clavier complet.
+**MCP** : **oui, famille `messagerie`**, cases existantes (décision 879) : un paramètre « seulement moi » sur l'outil qui
+liste les messages.
+**Spécification** : à écrire avant le code. Elle couvre `docs/SPEC-mail-subsystem.md` (la requête de la liste et des
+compteurs), `docs/DESIGN_SYSTEM.md` (la case dans l'inbox, l'état désactivé), `docs/SPEC-mcp.md` §9.2, le manuel (inbox).
+**DoD** : unitaires ; API (le filtre, avec plusieurs identités personnelles ; l'identité de service exclue ; un message
+illisible jamais rendu) ; E2E souris et clavier (case cochée, décochée, personne sans identité) ; outil du connecteur et
+`verify-mcp.sh` ; seed (deux identités personnelles d'une même personne, un message à chacune, un message qui ne lui est
+pas adressé) ; captures aux quatre paliers ; manuel.

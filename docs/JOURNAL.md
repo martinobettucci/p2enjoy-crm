@@ -39646,3 +39646,29 @@ relais sous autorisation) et les outils du connecteur. La spécification tranche
 - le délai avant la purge ;
 - le dossier de corbeille IMAP (rôle `\Trash` annoncé par le serveur) ;
 - le refus si la boîte n'est pas joignable.
+
+### décision 879 — Inbox : une case « Seulement moi », cochée par défaut, pour les mails des adresses d'expédition personnelles ; connecteur dans la famille messagerie
+
+*2026-11-10, session 152dd27d (p2enjoy-crm-d9), demande et arbitrage du responsable (conversation et `AskUserQuestion`).*
+**Demande** : « une checkbox (on par défaut) qui dit "Seulement moi" et qui n'affiche dans l'inbox que les emails dont
+le(s) compte(s) mail expéditeur(s) personnel(s) de l'utilisateur connecté est dans les destinataires (to, cc, bcc).
+Puisque l'on peut avoir plusieurs comptes expéditeurs, on affiche tous les mails qui contiennent l'un de nos comptes
+expéditeurs personnels connus si la case est cochée ».
+**Décision** :
+- **la case « Seulement moi »**, cochée par défaut, dans l'inbox ;
+- **cochée**, l'inbox ne montre que les messages dont l'une des adresses des identités sortantes **personnelles** de la
+  personne connectée (`mail_outbound_identities.owner_id` = elle ; l'identité de service, à `owner_id` nul, n'en est pas)
+  figure en À, Cc ou Cci, **ou en est l'expéditeur** : ses envois restent dans le fil (choix recommandé, retenu) ;
+- **décochée**, tous les messages que la personne lit, comme aujourd'hui ;
+- **sans aucune identité personnelle** : la case est décochée et désactivée, avec l'explication « Aucune adresse
+  d'expédition personnelle : tous les mails sont affichés » et un lien vers Réglages ▸ Identités sortantes (choix
+  recommandé, retenu) ;
+- **MCP : oui, famille `messagerie`**, existante, cases partagées (`docs/SPEC-mcp.md` §6.1) : un paramètre « seulement
+  moi » sur l'outil qui liste les messages.
+**Conséquences** : une unité, `CRM-139`, à spécifier avant le code. Le filtre se calcule **côté serveur**, sous les droits
+de la personne. C'est une restriction d'affichage, pas une règle d'accès : la RLS des messages ne change pas. La
+spécification tranchera :
+- la comparaison des adresses (casse, forme `Nom <adresse>`) ;
+- l'effet sur les compteurs de l'arbre et des non lus ;
+- la mémoire de la case : la session seulement, ou rien (`CLAUDE.md` §11) ;
+- son articulation avec les dossiers, le filtre du sommeil, et `CRM-137`.
