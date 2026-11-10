@@ -40221,3 +40221,30 @@ d'un lot stable), la cellule le récupère par git avec sa propre clé (le chemi
 avec le responsable, sans jamais lire ni copier la clé), la webapp est bâtie depuis ce condensé et non depuis l'arbre de
 travail ; `REVISION` et les constats inchangés. En attendant, la livraison reste celle d'aujourd'hui, avec ce qui part
 « en avance de son unité » annoncé au responsable. **MCP** : non.
+
+
+### décision 906 — l'outbox (`CRM-144`) : qui annule et réessaie, où se voit un annulé, l'envoi à l'issue incertaine
+
+*2026-11-10, session d5b44a2d (p2enjoy-crm-c2), trois arbitrages du responsable (`AskUserQuestion`, relayés par la session
+de livraison p2enjoy-crm-ee) ; complète la décision 898.*
+**Le problème** : la décision 898 ouvre la lecture de l'outbox à toute l'équipe, mais ne dit pas qui exerce les deux
+gestes. Réessayer envoie sous l'identité d'expédition de l'auteur, et `queue_outbound_email` n'emprunte que la sienne
+(décision 805). Elle ne dit pas non plus où se voit un envoi annulé. Enfin, un envoi que `mail-sync` a abandonné en route
+repasse en file avec le motif `worker_interrompu` (`reprendre_envois_orphelins`, §20.4 du sous-système), et son message a pu
+partir.
+**Décisions du responsable** :
+- **Q1 (a)** : **l'auteur de l'envoi et les administrateurs de l'espace**, avec le droit d'écrire sur l'affaire, peuvent
+  annuler et réessayer. Écartés : quiconque peut écrire sur l'affaire ; l'auteur seul.
+- **Q2 (a)** : un envoi annulé **quitte « En file »**, et le fil de l'affaire garde une ligne **« Envoi annulé par X »**,
+  comme « Message envoyé ». Écarté : un quatrième dossier « Annulés ».
+- **Q3 (a)** : un envoi **à l'issue incertaine** (premier essai interrompu, `worker_interrompu`) **ne peut pas être annulé**,
+  avec le message « un premier essai a été interrompu : le message a pu partir ». Écarté : l'annuler avec cette mention, ce
+  qui dirait « annulé » d'un message peut-être parti.
+**Ce qui ne demandait pas d'arbitrage, écrit tel que proposé** :
+- la course entre l'annulation et la passe d'envoi est tenue par la base : le verrou de ligne de `reserver_envois`
+  (`for update skip locked`) et deux transitions conditionnelles, `queued` → `cancelled` et `queued` → `sending`, dont une
+  seule peut réussir ;
+- réessayer ne vaut que depuis `failed`, sous les mêmes gardes que la mise en file ;
+- le récapitulatif quotidien, sans affaire, reste hors de l'outbox, comme la RLS de `mail_outbox` le veut déjà.
+**MCP** : inchangé (décision 898) — famille `messagerie`, lecture en `consulter`, annuler et réessayer en `modifier`.
+**Conséquences** : la spécification de `CRM-144` s'écrit sur ces règles, avant le code.
