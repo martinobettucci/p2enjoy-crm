@@ -1,3 +1,5 @@
+-- @verifies CRM-143 (docs/BACKLOG.md) — tranche T1 : le recensement des politiques révisé (décision 51), +1, la lecture de ses
+--           propres confirmations de pièces non analysées (docs/SPEC-pieces-jointes.md §17.3)
 -- @verifies CRM-112 (docs/BACKLOG.md) — tranche T2.a : le recensement des politiques révisé (décision 51), +3 des exigences
 --           de champ commun (docs/SPEC-champs-communs.md §5)
 -- @verifies CRM-112 (docs/BACKLOG.md) — tranche T1 : le recensement des politiques révisé (décision 51), +6 des champs
@@ -240,8 +242,8 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	195,
-	'CENT QUATRE-VINGT-QUINZE politiques dans `public`, et pas une de plus — 194 avant `CRM-128` tranche T2, plus la lecture des mails préparés par la personne seule (docs/SPEC-mails-prepares.md §3.2) : aucune écriture directe, toutes passent par les fonctions. Avant elle : 194, soit 191 avant `CRM-112` tranche T2.a, plus les '
+	196,
+	'CENT QUATRE-VINGT-SEIZE politiques dans `public`, et pas une de plus — 195 avant `CRM-143` T1, plus la lecture de ses propres confirmations de pièces non analysées (docs/SPEC-pieces-jointes.md §17.3, `mail_attachment_risk_acknowledgments_lecture`). Avant elle : 194 avant `CRM-128` tranche T2, plus la lecture des mails préparés par la personne seule (docs/SPEC-mails-prepares.md §3.2) : aucune écriture directe, toutes passent par les fonctions. Avant elle : 194, soit 191 avant `CRM-112` tranche T2.a, plus les '
 	'TROIS des exigences de champ commun (docs/SPEC-champs-communs.md §5, décision 819) : leur lecture par tout membre de '
 	'l''espace, leur pose et leur retrait par l''administrateur seul, comme les exigences de champ de workflow. Avant '
 	'elles : 191, soit 185 avant `CRM-112` tranche T1, plus les SIX '

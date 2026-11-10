@@ -2,6 +2,7 @@
 # sans données sensibles ; ce commentaire de portée couvre le formateur et la configuration.
 # @spec CRM-135 (docs/BACKLOG.md) — `SAFE_FIELDS` admet le compte, le motif et les compteurs de la veille
 #       (docs/SPEC-mail-subsystem.md §24.2, docs/DAT.md §14 ; INC-349, décisions 873 et 874)
+# @spec CRM-143 (docs/BACKLOG.md) — tranche T2 : les compteurs de la reprise (docs/SPEC-pieces-jointes.md §17.5)
 
 from __future__ import annotations
 
@@ -40,6 +41,11 @@ SAFE_FIELDS: Final = (
     "intervalle_secondes",
     "refus_consecutifs",
     "retry_in_seconds",
+    # `CRM-143` (docs/SPEC-pieces-jointes.md §17.5) : les compteurs de la reprise des pièces non analysées — des entiers.
+    "analysees",
+    "saines",
+    "infectees",
+    "restees",
 )
 
 

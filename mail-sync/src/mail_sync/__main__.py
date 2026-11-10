@@ -3,6 +3,8 @@
 # @spec CRM-059 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §20.10 — démarrage et arrêt de la
 #       boucle de veille ; `docs/JOURNAL.md` décision 341.
 # @spec CRM-135 (docs/BACKLOG.md) — la veille reçoit la traduction d'un échec (docs/SPEC-mail-subsystem.md §24.3, §24.4)
+# @spec CRM-143 (docs/BACKLOG.md) — tranche T2 : démarrage et arrêt de la reprise des pièces non analysées
+#       (docs/SPEC-pieces-jointes.md §17.5)
 # @spec CRM-074 (docs/BACKLOG.md) — tranche T2 : démarrage et arrêt de la boucle d'extraction des textes de pièces jointes
 #       (docs/SPEC-pieces-jointes.md §4.1), démarrée ici pour la même raison que la veille.
 #
@@ -24,6 +26,7 @@ from mail_sync.ingestion import classer_echec_releve
 from mail_sync.postgrest import PostgrestClient
 from mail_sync.structured_logging import configure_logging, log_event
 from mail_sync.veille import CompteAVeiller, PiloteVeille
+from mail_sync.reprise import PiloteReprise
 
 
 # `sysexits.h` : une configuration refusée n'est pas un plantage, c'est un contrat non tenu.
@@ -108,6 +111,33 @@ def _extraire_un_lot(settings, logger):
     return executer
 
 
+def _reprendre_un_lot(settings, logger):
+    """Un lot de reprise des pièces non analysées, avec un client neuf — le même chemin que la route interne
+    (`CRM-143`, docs/SPEC-pieces-jointes.md §17.5)."""
+
+    from mail_sync import antivirus
+    from mail_sync.reprise import reprendre_lot
+
+    def executer():
+        client = PostgrestClient(
+            settings.SUPABASE_URL,
+            settings.SERVICE_ROLE_KEY.get_secret_value(),
+            timeout=60.0,
+        )
+        return reprendre_lot(
+            client,
+            analyser=lambda contenu: antivirus.analyser_contenu(
+                contenu,
+                hote=settings.CLAMAV_HOST,
+                port=settings.CLAMAV_PORT,
+                timeout=settings.MAIL_SYNC_IMAP_TIMEOUT_SECONDS,
+            ),
+            journal=lambda evenement, **details: log_event(logger, logging.WARNING, evenement, **details),
+        )
+
+    return executer
+
+
 def main() -> int:
     try:
         settings = load_settings()
@@ -134,6 +164,9 @@ def main() -> int:
     pilote.demarrer()
     extraction = PiloteExtraction(executer=_extraire_un_lot(settings, logger), logger=logger)
     extraction.demarrer()
+    # `CRM-143` (§17.5) : la reprise des pièces non analysées, démarrée ici pour la même raison que la veille.
+    reprise = PiloteReprise(executer=_reprendre_un_lot(settings, logger), logger=logger)
+    reprise.demarrer()
     try:
         uvicorn.run(
             application,
@@ -149,6 +182,7 @@ def main() -> int:
         # processus jusqu'à ce que l'orchestrateur le tue.
         pilote.arreter()
         extraction.arreter()
+        reprise.arreter()
     return 0
 
 

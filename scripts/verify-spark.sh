@@ -15,6 +15,8 @@
 # @verifies CRM-102 (docs/BACKLOG.md) tranche T3 — docs/SPEC-mcp.md §2.1, §2.2, §10 : le connecteur n'est assemblé
 #           qu'avec CRM_MCP_HOTE (profil `mcp`), Caddy ne reçoit que l'hôte, révision de routes `crm-102`,
 #           `proposer.sh --connecteur-mcp`
+# @verifies CRM-143 (docs/BACKLOG.md) tranche T3 — docs/SPEC-pieces-jointes.md §17.6, docs/SPEC-deploiement-spark.md §3.4 ;
+#           docs/JOURNAL.md décision 889 : ClamAV épinglé, borné, sans port, signatures en volume, visé par mail-sync
 # @verifies docs/SPEC-deploiement-spark.md §5.1 ; docs/JOURNAL.md décision 603 — la cellule est jointe
 #           par ses IP, jamais par un alias : livrer.sh et verifier.sh refusent un nom d'hôte
 #
@@ -269,6 +271,18 @@ image_rt = rt.get("image")
 tirage_rt = rt.get("pull_policy")
 if image_rt != "p2enjoy/realtime-spark:v2.102.3" or tirage_rt != "never":
     e.append(f"realtime : image {image_rt}, pull_policy {tirage_rt} ; attendu : image dérivée, jamais tirée")
+# CRM-143 T3, décision 889 (docs/SPEC-pieces-jointes.md §17.6, docs/SPEC-deploiement-spark.md §3.4) : la cellule analyse les
+# pièces. ClamAV y est épinglé, borné, sans port publié, ses signatures dans un volume, et `mail-sync` le vise par son nom.
+cv = s.get("clamav", {})
+image_cv = cv.get("image")
+if image_cv != "clamav/clamav:1.4.3":
+    e.append(f"clamav : image {image_cv}, attendu clamav/clamav:1.4.3 épinglée")
+if not any(v.get("source") == "clamav-data" and v.get("target") == "/var/lib/clamav" for v in cv.get("volumes", [])):
+    e.append("clamav : signatures hors du volume clamav-data")
+if "clamdcheck.sh" not in " ".join(cv.get("healthcheck", {}).get("test", [])):
+    e.append("clamav : sans contrôle de santé clamdcheck.sh")
+if s.get("mail-sync", {}).get("environment", {}).get("CLAMAV_HOST") != "clamav":
+    e.append("mail-sync ne vise pas le service clamav de la cellule")
 st = s.get("storage", {}).get("environment", {})
 if st.get("GLOBAL_S3_ENDPOINT") != "http://minio:9000" or st.get("AWS_ACCESS_KEY_ID") != os.environ["MINIO_USER"]:
     e.append("storage ne vise pas le MinIO interne avec ses identifiants")
@@ -315,7 +329,9 @@ attendus = {
     "POSTGRES_PASSWORD": ["db", "migrations-runner", "realtime", "rest", "storage"],
     "SERVICE_ROLE_KEY": sorted(["functions", "kong", "mail-sync", "storage"] + mcp),
     "MINIO_ROOT_PASSWORD": ["minio", "minio-createbucket", "storage"],
-    "MAIL_SYNC_INTERNAL_TOKEN": ["mail-sync"],
+    # functions depuis CRM-127 T2 (868e741c) : « Tester la connexion » d’un compte de messagerie passe par une fonction edge
+    # qui appelle l’API interne de mail-sync (docs/PROD_MIGRATIONS.md §2, INC-349 cause 1). Attente rattrapée par CRM-143 T3.
+    "MAIL_SYNC_INTERNAL_TOKEN": ["functions", "mail-sync"],
     "OIDC_CLIENT_SECRET": sorted(["functions"] + mcp),
 }
 for nom, qui in attendus.items():
@@ -957,6 +973,9 @@ if docker compose version >/dev/null 2>&1; then
 	degrader "env_file des secrets posé sur Caddy" "import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace('  caddy:\n    mem_limit: 128m\n','  caddy:\n    mem_limit: 128m\n    env_file:\n      - $ENV_A\n',1); open(p,'w').write(s)"
 	degrader "Kong sans borne de processus" 'import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace("KONG_NGINX_WORKER_PROCESSES: \"1\"","KONG_NGINX_WORKER_PROCESSES: \"auto\"",1); open(p,"w").write(s)'
 	degrader "révision des routes de Caddy laissée à l'ancienne valeur" 'import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace("  caddy:\n    mem_limit: 128m\n","  caddy:\n    mem_limit: 128m\n    labels:\n      com.p2enjoy.caddy-routes-revision: crm-090\n",1); open(p,"w").write(s)'
+	# CRM-143 T3 (décision 889) : ClamAV non épinglé, ou ses signatures hors volume, rougissent l'assemblage.
+	degrader "ClamAV non épinglé" 'import sys; p=sys.argv[1]; s=open(p).read(); t=s.replace("    image: clamav/clamav:1.4.3\n","    image: clamav/clamav:latest\n",1); assert t != s; open(p,"w").write(t)'
+	degrader "signatures de ClamAV hors volume" 'import sys; p=sys.argv[1]; s=open(p).read(); t=s.replace("      - clamav-data:/var/lib/clamav\n","      - clamav-data:/srv/ailleurs\n",1); assert t != s; open(p,"w").write(t)'
 	degrader_allume() {
 		local libelle=$1 script=$2 cible=${3:-docker-compose.spark.yml}
 		rm -rf "$D"; mkdir -p "$D"

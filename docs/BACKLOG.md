@@ -19170,7 +19170,7 @@ board ; INC-352 close sur le constat en production.
   le connecteur exige un accusé explicite.
 **MCP** : **oui, famille `messagerie`**, cases existantes (décision 889).
 **Spécification** : `docs/SPEC-pieces-jointes.md` §17, écrite le 2026-11-10 avant le code (décision 892), six tranches
-(§17.10) ; `docs/SCHEMA.md` « Migration à numéroter au push — le repli confirmé ». La spécification d'origine couvrait :
+(§17.10) ; `docs/SCHEMA.md` « Migration `0173` ». La spécification d'origine couvrait :
 - `docs/SPEC-mail-subsystem.md` : §4.3 révisé, §19 bis.1, le repli, la reprise ;
 - `docs/SPEC-pieces-jointes.md` ;
 - `docs/SPEC-deploiement-spark.md` et `docs/PROD_MIGRATIONS.md` : service, mémoire, signatures ;
@@ -19179,6 +19179,13 @@ board ; INC-352 close sur le constat en production.
 - `docs/SPEC-mcp.md` §9.2 ;
 - le manuel ;
 - `docs/spark-notes/` : la mémoire réelle de la cellule.
+**État des tranches (2026-11-10)** :
+- **T1** (migration `0173`), **T2** (la reprise de `mail-sync`) et **T3** (`clamav` dans la cellule) sont implémentées et vérifiées en développement. Le contrat est au §2.35 de `docs/PROD_MIGRATIONS.md`. Preuves :
+  - pgTAP `0162` (24 assertions), `0133`, `0016`, `0151`, et les voisines `0026`, `0029`, `0096`, `0131` et `0132` ;
+  - pytest de `mail-sync` (330) ;
+  - E2E `mail` sur le vrai ClamAV, `pieces-non-analysees` et `ingestion` (6 sur 6) : la reprise passe le PDF en `clean` et EICAR en `infected` ;
+  - `scripts/verify-spark.sh` (123, avec deux dégradations ClamAV).
+- **T4** (l'écran et les pièces des mails préparés), **T5** (le connecteur) et **T6** (le seed) restent à faire.
 **DoD** :
 - unitaires ;
 - pgTAP et API : `skipped` téléchargeable seulement avec la confirmation, `infected` jamais, l'anonyme rien, refus de

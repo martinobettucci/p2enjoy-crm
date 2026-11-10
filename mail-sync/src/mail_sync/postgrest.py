@@ -634,6 +634,16 @@ class PostgrestClient:
         except urllib.error.URLError:
             raise PostgrestError(0) from None
 
+    def pieces_a_reprendre(self, limite: int = 20) -> list[dict[str, Any]]:
+        """Les pièces non analysées, les plus anciennes d'abord — `CRM-143`, docs/SPEC-pieces-jointes.md §17.5."""
+
+        return list(self._rpc("mail_attachments_to_rescan", {"p_limit": limite}) or [])
+
+    def enregistrer_verdict(self, attachment_id: str, statut: str) -> None:
+        """Écrit le verdict de la reprise ; la base n'écrit que sur une pièce encore non analysée (§17.5)."""
+
+        self._rpc("mail_attachment_record_scan", {"p_attachment_id": attachment_id, "p_status": statut})
+
     def depots_envoi_abandonnes(self) -> list[str]:
         """Les dépôts à effacer (§19 bis.2 point 8) — la base dit lesquels, l'API de stockage les efface."""
 

@@ -2526,9 +2526,13 @@ elle.
 attente sont perdus : les lister avant. **Avec l'image `mcp` d'avant `CRM-128` T3** : sans la garde, son `crm_mail_send`
 enverrait de nouveau directement.
 
-### Migration à numéroter au push — le repli confirmé des pièces non analysées, leur reprise, les pièces d'un mail préparé (`CRM-143`, décisions 889 et 892 ; spécifiée le 2026-11-10, à écrire)
+### Migration `0173` — le repli confirmé des pièces non analysées, leur reprise, les pièces d'un mail préparé (`CRM-143`, décisions 889 et 892 ; livrée en développement le 2026-11-10)
+
+*Numérotée `0173` au push, premier numéro libre sur `main` après la `0172` de `CRM-137`. Son test pgTAP prend le `0162`.*
 
 `docs/SPEC-pieces-jointes.md` §17.3, §17.5, §17.6 et §17.7.
+- **Le déclencheur `mail_attachments_av_skip_reason`** (`BEFORE INSERT OR UPDATE OF av_status, av_skip_reason`) pose la raison qui manque à une pièce `skipped` : `scanner_unavailable` si son objet est stocké, `too_large` sinon. Il l'efface hors de `skipped`. La contrainte est donc stricte (non nulle sous `skipped`, nulle ailleurs) sans casser l'image `mail-sync` d'avant, qui ne la pose pas.
+- **`app.piece_non_analysee(text, text, timestamptz)`**, `stable` : `skipped` et `scanner_unavailable`, ou `pending` depuis plus de 15 minutes.
 - **`mail_attachments.av_skip_reason`**, `text`, `scanner_unavailable` | `too_large`, nulle hors de `skipped`
   (contrainte) ; reprise des lignes existantes selon la présence de l'objet dans `storage.objects`.
 - **`public.mail_attachment_risk_acknowledgments`** : `attachment_id` (`on delete cascade`), `user_id` (`profiles`,

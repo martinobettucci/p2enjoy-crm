@@ -2,6 +2,8 @@
 # @spec docs/SPEC-deploiement-spark.md §3 (assemblage), §4.2 (variables sans objet), §8 (capacité)
 # @spec docs/DAT.md §3.5 (passerelle et périphérie), §9 (déploiement)
 # @spec docs/JOURNAL.md décisions 567 (la cellule), 681 (MinIO depuis Chainguard, INC-290), 571 (image Realtime)
+# @spec CRM-143 (docs/BACKLOG.md) — tranche T3 : ClamAV dans la cellule, son volume de signatures et son plafond
+#       (docs/SPEC-pieces-jointes.md §17.2, docs/SPEC-deploiement-spark.md §3.4 et §8 ; décisions 889 et 892)
 # @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2 — tranche T6 : plus de limite mémoire pour
 #       `auth` ni `auth-templates`, retirés de la pile (décision 589)
 #
@@ -14,7 +16,8 @@
 #   - aucun port sous 1024, et TLS terminé par la Forge : Caddy sert en clair sur SPARK_HTTP_PORT ;
 #   - aucun stockage objet fourni : un MinIO interne, sans port publié, que les sauvegardes savent
 #     lire (scripts/backup.sh) ;
-#   - 2 Gio pour toute la pile : Kong à un seul processus nginx.
+#   - 2 Gio pour toute la pile à l'origine : Kong à un seul processus nginx. *16 Go et 8 cœurs depuis le 2026-11-10*
+#     (décision 889, ajout daté), et ClamAV entre dans la cellule (`CRM-143`).
 #
 # `env_file` n'est PAS posé sur chaque service, contrairement au gabarit du dossier de cellule :
 # il remettrait tous les secrets à tous les conteneurs. L'interpolation depuis les deux mêmes
@@ -107,6 +110,32 @@ services:
         mc alias set p2enjoy http://minio:9000 "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}"
         mc mb --ignore-existing "p2enjoy/${GLOBAL_S3_BUCKET}"
 
+  # --- Antivirus — `CRM-143` (docs/SPEC-pieces-jointes.md §17.2) ------------------------------------------------------
+  #
+  # LA MÊME IMAGE QUE LE DÉVELOPPEMENT, épinglée, avec la même sonde. Ses signatures vivent dans un volume nommé : un
+  # redémarrage ne les retélécharge pas. Elles se mettent à jour par le `freshclam` intégré à l'image, qui doit joindre
+  # `database.clamav.net` en HTTPS — le contrat de déploiement le vérifie dans un conteneur jetable AVANT le démarrage
+  # (docs/PROD_MIGRATIONS.md §2.34). Aucun port publié : `mail-sync` le joint par le réseau de la pile
+  # (`CLAMAV_HOST=clamav`, `docker-compose.yml`).
+  #
+  # LE PLAFOND, 4 Go, vaut environ le double de l'empreinte MESURÉE au pire moment, le rechargement concurrent des
+  # signatures : 894 Mio au repos, environ 1,8 Gio au pic, en développement le 2026-11-10. Le rechargement garde son mode
+  # concurrent : la mémoire ne manque plus, et il ne suspend pas les analyses. Sans antivirus — signatures absentes,
+  # service tué —, chaque pièce naît `skipped` et le produit échoue fermé ; la reprise de `mail-sync` les analysera.
+  clamav:
+    container_name: p2enjoy-clamav
+    image: clamav/clamav:1.4.3
+    restart: always
+    mem_limit: 4g
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+    volumes:
+      - clamav-data:/var/lib/clamav
+
   storage:
     mem_limit: 512m
     depends_on:
@@ -151,3 +180,5 @@ services:
 
 volumes:
   minio-data:
+  # `CRM-143` : les signatures de ClamAV, qu'un redémarrage ne retélécharge pas.
+  clamav-data:

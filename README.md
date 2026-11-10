@@ -384,7 +384,7 @@ la pile de développement n'est pas destinée à être exposée sur le réseau.
 | Roundcube | http://localhost:8080 | Webmail de vérification : montre les dossiers IMAP créés par le CRM | **disponible** |
 | Stalwart | IMAP 1143 · SMTP 1025 (remise) · 1587 (soumission) | Vrai serveur mail local (boîte système + deux boîtes personnelles) | **disponible** |
 | Stalwart — API de gestion | http://localhost:8081/api/ | Provisionnement des réglages, domaines et boîtes ; la racine explique pourquoi aucune console n'est servie | **disponible** |
-| ClamAV (`clamd`) | localhost:3310 | Analyse antivirale des pièces jointes ; son consommateur arrive avec `CRM-054` | **disponible** |
+| ClamAV (`clamd`) | localhost:3310 | Analyse antivirale des pièces jointes reçues (`CRM-054`) et leur reprise par `mail-sync` (`CRM-143`) | **disponible** |
 | LeLabs de développement (Keycloak) | http://sso.localhost:18480 | Fournisseur de la **connexion unique** : realm `lelabs`, PKCE imposé, comptes alignés sur le seed (`keycloak/README.md`) ; administration sur `/admin` | **disponible** — `CRM-091` |
 
 Studio n'est **pas** joignable au travers de la passerelle : celle-ci ne connaît aucun service de
@@ -889,11 +889,7 @@ Documentation de référence :
   suggestion de modification ne s'accepte plus si le workflow a changé depuis sa création : on en demande une
   nouvelle.
 
-- **La cellule Spark `crm` est une production à 2 Gio de mémoire et 10 Gio de disque, et elle a
-  deux manques assumés** (`CRM-090`, `docs/SPEC-deploiement-spark.md`). **ClamAV n'y est pas
-  déclaré** — ses signatures exigent à elles seules plus de 1 Gio — : une pièce jointe reçue y reste
-  `pending`, donc **non téléchargeable** ; le produit échoue fermé plutôt que de servir un fichier
-  non analysé. Et **les sauvegardes hors site n'y sont pas en place** : `age` n'y est pas installé,
+- **La cellule Spark `crm` est une production à 16 Gio de mémoire et 8 cœurs depuis le 2026-11-10 (2 Gio auparavant), à 10 Gio de disque** (`CRM-090`, `docs/SPEC-deploiement-spark.md`). **ClamAV y est déclaré par `CRM-143` T3**, plafonné à 4 Go. Jusqu'à sa livraison (`docs/PROD_MIGRATIONS.md` §2.35), une pièce jointe reçue en production naît `skipped`, donc **non téléchargeable** : le produit échoue fermé plutôt que de servir un fichier non analysé. Ses signatures se téléchargent par `freshclam` depuis la cellule, que le réseau de diffusion pourrait refuser. Et **les sauvegardes hors site n'y sont pas en place** : `age` n'y est pas installé,
   et `scripts/backup.sh` le refuse sans repli. Le disque est la ressource la plus rare : les images
   occupent environ 6,5 Go des 9,7 Go libres mesurés.
 - **Le premier déploiement ne se fait pas par « démarrer, puis migrer »** : sur une base vierge, la

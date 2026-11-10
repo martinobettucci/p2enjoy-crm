@@ -89,13 +89,8 @@ tableau `SPARK_COMPOSE` ; aucun appel ne compose ces fichiers à la main.
 - Une limite `mem_limit` par service, chiffrée au §8 après mesure. Une limite rend la défaillance
   **localisée et nommée** : sans elle, le premier service qui déborde fait tuer par le noyau un
   voisin quelconque de la cellule.
-- *Révisé par `CRM-143` (décision 889 et son ajout du 2026-11-10 ; `docs/SPEC-pieces-jointes.md` §17.2)* : la cellule
-  compte désormais **16 384 Mo et 8 cœurs**, et ClamAV y entre, avec un plafond mesuré. Le paragraphe suivant décrit
-  l'état d'avant, et sera réécrit avec le code.
-- **ClamAV n'est pas déclaré dans la cellule.** Ses signatures exigent à elles seules plus de
-  1 Gio. Le produit échoue **fermé** : une pièce jointe naît `pending` et ne devient `clean` que si
-  ClamAV le dit (`docs/SPEC-mail-subsystem.md` §15.5) ; sans lui, aucune pièce jointe reçue n'est
-  téléchargeable. C'est une limite de la cellule, écrite dans `README.md` §11.
+- **ClamAV est déclaré dans la cellule** (`CRM-143` T3, décision 889 et son ajout du 2026-11-10 ; `docs/SPEC-pieces-jointes.md` §17.6). La cellule compte désormais **16 384 Mo et 8 cœurs**. `docker-compose.spark.yml` pose le service `clamav` : image épinglée `clamav/clamav:1.4.3`, `mem_limit` **4 Go**, aucun port publié, signatures dans le volume `clamav-data`, contrôle de santé `clamdcheck.sh` avec `start_period` 120 s, le temps du premier téléchargement. Le plafond vaut plus du double du pic mesuré en développement (§8). `mail-sync` le joint par `CLAMAV_HOST=clamav`, déjà posée par l'assemblage commun. Le produit échoue toujours **fermé** : sans ClamAV, une pièce reçue naît `skipped` (`scanner_unavailable`), ne se télécharge qu'après la confirmation de chaque personne, et la reprise de `mail-sync` l'analyse dès que ClamAV répond (`docs/SPEC-pieces-jointes.md` §17.3 à §17.5). *Avant `CRM-143`, ClamAV n'était pas déclaré : ses signatures dépassaient à elles seules la marge de la cellule de 2 Gio, et aucune pièce reçue n'était téléchargeable.*
+- **Les signatures viennent de `freshclam`**, depuis la cellule. Le réseau de diffusion filtre `curl` en `403` (mesuré le 2026-11-10) : seul un conteneur `freshclam` jetable prouve l'accès, avant tout démarrage (`docs/PROD_MIGRATIONS.md` §2.35, geste 1). S'il est refusé, le recours est une décision du responsable : un miroir privé, ou des signatures déposées avec l'image.
 
 ### 3.5 Realtime : une image dérivée, construite sur le poste
 
@@ -365,6 +360,7 @@ Caddy : un compte créé, 40 connexions et 200 lectures REST — **240 réponses
 | `mcp` (`CRM-102`, profil `mcp`) | — | — | 256 Mio, **provisoire** : le plafond de `mail-sync`, son voisin Python, en attendant la mesure dans la cellule au premier allumage ; absent tant que `CRM_MCP_HOTE` n'est pas posée |
 | `functions` | 23 Mio | 23 Mio | 256 Mio |
 | `caddy` | 13 Mio | 15 Mio | 128 Mio |
+| `clamav` (`CRM-143`) | 894 Mio, mesuré en développement le 2026-11-10 | pic de 1,51 à 1,80 Gio pendant trois rechargements des signatures | 4 Go ; **à relever dans la cellule** au premier démarrage (`docs/PROD_MIGRATIONS.md` §2.35, geste 6) |
 | ~~`auth-templates`~~ | 12 Mio | 12 Mio | ~~64 Mio~~ — retiré (`CRM-092` T6) |
 | ~~`auth`~~ | 10 Mio | 13 Mio | ~~128 Mio~~ — retiré (`CRM-092` T6) |
 | **Pile** | **≈ 1 060 Mio** | **≈ 940 Mio** | — |
@@ -389,7 +385,7 @@ vérifications (§7).
 
 | Niveau | Preuve |
 |---|---|
-| Harnais dédié `scripts/verify-spark.sh` | amorçage d'un espace contre la pile de développement (création, idempotence, compte invité, lien jamais affiché, profil `dev` refusé) ; image Realtime dérivée cohérente avec l'assemblage commun et avec `livrer.sh`, construite puis inspectée — aucune entrée de couche ni aucun compte cible du `sudo` de `run.sh` au-delà de l'identifiant 64534, `/app` à `nobody`, configuration d'exécution identique à l'origine ; fusion (ordre des sources, apostrophes, `$` littéral, grammaire, fichiers absents, `tmpfs` en `600`) ; gardes (profil, `APPLY_MIGRATIONS`, `CHANGE_ME_*`) ; `--premier-deploiement` refusé sans `--migrate` ; assemblage résolu : seul `SPARK_HTTP_PORT` publié, ni `80` ni `443`, aucun port pour `minio`, `sans-objet-cellule-spark` absent, `KONG_NGINX_WORKER_PROCESSES=1`, une limite mémoire sur chaque service ; `proposer.sh` sur des fichiers jetables — refus si `JWT_SECRET` existe, refus sur proposition pendante, aucune valeur de secret sur sa sortie ; témoin de non-complaisance par dégradation |
+| Harnais dédié `scripts/verify-spark.sh` | amorçage d'un espace contre la pile de développement (création, idempotence, compte invité, lien jamais affiché, profil `dev` refusé) ; image Realtime dérivée cohérente avec l'assemblage commun et avec `livrer.sh`, construite puis inspectée — aucune entrée de couche ni aucun compte cible du `sudo` de `run.sh` au-delà de l'identifiant 64534, `/app` à `nobody`, configuration d'exécution identique à l'origine ; fusion (ordre des sources, apostrophes, `$` littéral, grammaire, fichiers absents, `tmpfs` en `600`) ; gardes (profil, `APPLY_MIGRATIONS`, `CHANGE_ME_*`) ; `--premier-deploiement` refusé sans `--migrate` ; assemblage résolu : seul `SPARK_HTTP_PORT` publié, ni `80` ni `443`, aucun port pour `minio`, `sans-objet-cellule-spark` absent, `KONG_NGINX_WORKER_PROCESSES=1`, une limite mémoire sur chaque service ; `clamav` épinglé, ses signatures dans `clamav-data`, son contrôle de santé, et `mail-sync` qui le vise (`CRM-143` T3) ; `proposer.sh` sur des fichiers jetables — refus si `JWT_SECRET` existe, refus sur proposition pendante, aucune valeur de secret sur sa sortie ; témoin de non-complaisance par dégradation |
 | Intégration réelle | l'assemblage de la cellule démarré sur ce poste avec des secrets jetables, sous le même projet Compose isolé : tous les services sains, `--premier-deploiement` appliquant les migrations sur base vierge puis refusant sur base peuplée |
 | Déploiement | §7, exécuté dans la cellule et relevé dans `docs/PROD_MIGRATIONS.md` |
 
@@ -399,4 +395,4 @@ vérifications (§7).
 - **Les sauvegardes hors site depuis la cellule** : `age` n'y est pas installé (S5) et
   `scripts/backup.sh` le refuse sans repli. Sa mise en place appartient à l'exploitation de
   `CRM-080` et exige un paquet que seul `root` installe.
-- **ClamAV** : §3.4.
+- ~~**ClamAV**~~ : déclaré dans la cellule par `CRM-143` T3 (§3.4).

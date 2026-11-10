@@ -2,6 +2,8 @@
 #       docs/SPEC-etiquettes-digest.md §5.3 bis)
 # @spec CRM-069 (docs/BACKLOG.md) — tranche T4 : le digest sans affaire — aucun `Reply-To`, le jeton `{site}` remplacé par `SITE_URL`
 #       (docs/SPEC-etiquettes-digest.md §5.3, décision 772)
+# @spec CRM-143 (docs/BACKLOG.md) — tranche T2 : la route interne de la reprise des pièces non analysées
+#       (docs/SPEC-pieces-jointes.md §17.5, décision 892)
 # @spec CRM-051 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §12.3 et §12.5 — santé, API
 # @spec CRM-058 (docs/BACKLOG.md) — tranche 2 : antivirus des pièces envoyées et purge des dépôts abandonnés —
 #       docs/SPEC-mail-subsystem.md §19 bis.2 points 6 et 8
@@ -24,6 +26,8 @@ from mail_sync import __version__
 from mail_sync.config import Settings
 from mail_sync.envoi import vider_la_file
 from mail_sync.extraction import traiter_lot
+from mail_sync.reprise import reprendre_lot
+from mail_sync import antivirus
 from mail_sync.imap_probe import probe_inbound_account
 from mail_sync.postgrest import PostgrestClient, PostgrestError
 from mail_sync.ingestion import relever_compte
@@ -92,6 +96,16 @@ class EnvoiResponse(StrictModel):
     rescheduled: int = 0
     #: Orphelins repris d'un worker mort (§20.4).
     orphans: int = 0
+
+
+class RepriseResponse(StrictModel):
+    """Ce qu'un lot de reprise a produit (`CRM-143` §17.5) — des comptes, jamais un nom de fichier."""
+
+    scanned: int
+    clean: int
+    infected: int
+    remaining: int
+    scanner_unavailable: bool
 
 
 class ExtractionResponse(StrictModel):
@@ -626,6 +640,45 @@ def create_app(
             unsupported=bilan.non_reconnues,
             failed=bilan.echouees,
             retried=bilan.reprises,
+        )
+
+    # --- La reprise des pièces non analysées — `CRM-143` (docs/SPEC-pieces-jointes.md §17.5) --------------------------
+    #
+    # Le même lot que la boucle du service, à la demande : c'est le chemin des preuves, et celui d'un exploitant qui ne
+    # veut pas attendre le quart d'heure.
+    @application.post(
+        "/internal/v1/attachments/rescan",
+        response_model=RepriseResponse,
+        dependencies=[Depends(require_internal_token)],
+    )
+    def rescan_attachments(request: Request, limit: int = 20) -> RepriseResponse:
+        settings_courants: Settings = request.app.state.settings
+        client = PostgrestClient(
+            settings_courants.SUPABASE_URL,
+            settings_courants.SERVICE_ROLE_KEY.get_secret_value(),
+            timeout=60.0,
+        )
+        try:
+            bilan = reprendre_lot(
+                client,
+                analyser=lambda contenu: antivirus.analyser_contenu(
+                    contenu,
+                    hote=settings_courants.CLAMAV_HOST,
+                    port=settings_courants.CLAMAV_PORT,
+                    timeout=settings_courants.MAIL_SYNC_IMAP_TIMEOUT_SECONDS,
+                ),
+                journal=lambda evenement, **details: log_event(app_logger, logging.WARNING, evenement, **details),
+                limite=max(1, min(limit, 100)),
+            )
+        except PostgrestError as erreur:
+            log_event(app_logger, logging.ERROR, "reprise_antivirus_echouee", postgrest_status=erreur.status_code)
+            raise HTTPException(status_code=502, detail="Base indisponible") from None
+        return RepriseResponse(
+            scanned=bilan.analysees,
+            clean=bilan.saines,
+            infected=bilan.infectees,
+            remaining=bilan.restees,
+            scanner_unavailable=bilan.antivirus_muet,
         )
 
     @application.get(

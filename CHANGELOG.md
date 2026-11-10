@@ -20,6 +20,15 @@ d'exécuter le code attendu.
   `0037` qui la fige est de nouveau verte. Une base seedée avant ce changement le signale ; `./resetMe.sh` la reconstruit.
   Rien à livrer.
 
+#### `CRM-143` — les pièces jointes non analysées, et ClamAV dans la cellule (décisions 889 et 892) — *tranches T1 à T3, l'unité en cours*
+
+- **Une pièce que l'antivirus n'a pas pu analyser dit pourquoi** : `mail_attachments.av_skip_reason` distingue l'antivirus injoignable (`scanner_unavailable`) de la pièce trop lourde, jamais stockée (`too_large`). La migration 173 reprend la raison des pièces déjà reçues depuis le stockage.
+- **Elle se télécharge après une confirmation de la personne, enregistrée par le serveur** : `acknowledge_unscanned_attachment` inscrit la confirmation, et la règle de lecture du stockage l'exige. Une pièce saine se télécharge comme avant ; une pièce infectée, trop lourde ou en cours d'analyse, jamais. *L'écran de la confirmation arrive avec la tranche T4.*
+- **`mail-sync` reprend les pièces non analysées** dès qu'il démarre puis toutes les 15 minutes, par lots de 20 : chaque pièce repasse par ClamAV et devient saine ou infectée. Il s'arrête au premier silence de l'antivirus et réessaie au tour suivant. La route interne `POST /internal/v1/attachments/rescan` lance un lot à la demande.
+- **Un mail préparé peut porter des pièces** (`mail_drafts.attachments`, `prepare_email` à neuf arguments), contrôlées comme à l'envoi : dix au plus, 10 Mo au plus.
+- **ClamAV est déclaré dans la cellule de production** (`docker-compose.spark.yml`) : image épinglée, plafond de 4 Go, signatures dans un volume ; `scripts/verify-spark.sh` le contrôle. La cellule compte 16 Go depuis le 2026-11-10.
+- Déploiement : `docs/PROD_MIGRATIONS.md` §2.35, la migration 173, puis `clamav`, puis les images ; **à ne pas livrer avant la fin de l'unité**.
+
 ## [Publié]
 
 ### Déployé en production, 2026-11-10 (troisième fenêtre) — migration 171

@@ -802,6 +802,34 @@ donnée, aucune politique, aucune webapp, aucune image, aucune variable, aucun s
 **Retour arrière** : reposer `app.health_context` de la `0134` (`SECURITY INVOKER`), comme le dit `docs/SCHEMA.md`
 « Migration `0171` ». Aucune donnée n'est touchée.
 
+### 2.35 `CRM-143`, décisions 889 et 892 — ClamAV dans la cellule, le repli confirmé, la reprise, les pièces du connecteur (À LIVRER : migration 173, service `clamav`, images `mail-sync` et `mcp`, webapp de `main`)
+
+`docs/SPEC-pieces-jointes.md` §17 ; `docs/SCHEMA.md` « Migration `0173` ». **Ensemble, dans une fenêtre, dans l'ordre
+ci-dessous.** La migration d'abord : les images appellent ses fonctions. Le service `clamav` avant `mail-sync` : sa
+reprise analyse les pièces dès son démarrage, et un antivirus absent la ferait seulement attendre (§17.5). Aucune variable,
+aucun secret nouveau : `CLAMAV_HOST=clamav` est déjà posé (`docker-compose.yml`).
+
+**État des tranches, à relire avant la fenêtre** : la migration 173, la reprise de `mail-sync` (T1, T2) et le service `clamav` (T3) sont dans `main` ; l'écran du repli et les pièces des mails préparés (T4), les outils du connecteur (T5) et le seed (T6) restent à écrire. **Ne pas livrer avant que `CRM-143` soit signalée `[P]`.** **Jamais l'image `mail-sync` de `main` sans la migration 173** : elle écrit `av_skip_reason` à chaque pièce reçue, et sans la colonne l'ingestion échouerait.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 0 | Mesurer avant | session de livraison, lecture seule | `df -h /` : au moins 1,5 Go libres (l'image et les signatures pèsent environ 650 Mo) ; `free -m` : la cellule à 16 Go |
+| 1 | **Prouver que `freshclam` joint ses miroirs**, AVANT tout démarrage | session de livraison, dans la cellule | un conteneur jetable de l'image épinglée : `docker run --rm -v clamav-preuve:/var/lib/clamav clamav/clamav:1.4.3 freshclam --stdout`, puis la présence de `daily.cvd` ou `daily.cld` dans le volume (`docker run --rm -v clamav-preuve:/d alpine ls /d`), puis `docker volume rm clamav-preuve`. Le réseau de diffusion filtre `curl` en `403` (mesuré le 2026-11-10) : seul `freshclam` prouve. **Refusé** : ne pas poursuivre, et soumettre au responsable le recours, un miroir privé ou des définitions déposées avec l'image |
+| 2 | Appliquer la migration 173 | session de livraison | `./runProd.sh --migrate`, l'instantané de VM pris |
+| 3 | Démarrer `clamav` | session de livraison | `up -d --wait clamav` par `compose_prod` ; le premier démarrage télécharge les signatures, `start_period` 120 s |
+| 4 | Reconstruire `mail-sync` et `mcp` | session de livraison, après le geste 3 | `up -d --build --no-deps --wait mail-sync`, puis `mcp` (§4) |
+| 5 | Livrer la webapp de `main` | session de livraison | `scripts/spark/livrer.sh` (§3.1) |
+| 6 | **Mesurer la mémoire dans la cellule** | session de livraison, lecture seule | `docker stats --no-stream p2enjoy-clamav` au repos, puis pendant un rechargement (`docker exec p2enjoy-clamav clamdscan --reload`, relevé toutes les 2 s une minute) : consigner les deux valeurs au §8 de `docs/SPEC-deploiement-spark.md`. Mesuré en développement : 894 Mio au repos, environ 1,8 Gio au pic, sous le plafond de 4 Go |
+| 7 | Constater la reprise | session de livraison, lecture seule | les journaux de `mail-sync` : `reprise_antivirus_demarree`, puis `reprise_antivirus_lot` avec ses compteurs. `select av_status, av_skip_reason, count(*) from public.mail_attachments group by 1, 2` : les 4 pièces `skipped` de production sont devenues `clean` ou `infected` |
+| 8 | Constater à l'écran | responsable | une pièce reçue se télécharge ; une pièce non analysée, s'il en reste, propose « Télécharger quand même » et son avertissement ; une pièce infectée n'offre rien |
+
+**Vérification après la fenêtre**, en lecture seule : registre à **171** lignes (ou plus si d'autres migrations sont parties
+avant), empreinte de la 173 égale au dépôt ; `docker inspect p2enjoy-clamav --format '{{.State.Health.Status}}'` rend
+`healthy`. **Retour arrière** : arrêter `clamav` (les pièces naissent alors `skipped`, et le produit échoue fermé), reposer
+les images `mail-sync` et `mcp` et la webapp précédentes, puis retirer la migration comme le dit `docs/SCHEMA.md` ; les
+confirmations et les pièces des mails préparés sont perdues. **Risques** : la sortie vers les miroirs de signatures (geste 1) ;
+l'image de ClamAV dans la cellule rootless, prouvée par le même geste 1, qui la tire et l'exécute.
+
 ### 2.36 `CRM-137`, décisions 877, 891 et 893 — classer un mail : les affaires candidates, cherchables, l'expéditeur connu d'abord (À LIVRER : migration 172, webapp de `main` et image `mcp`, ensemble)
 
 `docs/SPEC-mail-subsystem.md` §26 ; `docs/SCHEMA.md` « Migration `0172` » ; `docs/SPEC-mcp.md` §9.2 *septendecies*.
@@ -831,6 +859,8 @@ dépôt. `select has_function_privilege('authenticated', 'public.classification_
 ## 3. Migrations en attente
 
 **La 172** (`CRM-137`, décisions 877, 891 et 893), *en attente* : `classification_candidates`, les affaires candidates au classement d'un message (`docs/SCHEMA.md` « Migration `0172` »). Une fonction, aucune donnée, sans verrou notable. **Avec la webapp et l'image `mcp` de `main`, après elle** (§2.36). Aucun geste préalable du responsable.
+
+**La 173, après la 172** (`CRM-143`, décisions 889 et 892), *en attente* : les pièces non analysées (`docs/SCHEMA.md` « Migration `0173` ») — la colonne `mail_attachments.av_skip_reason` reprise depuis le stockage, la table `mail_attachment_risk_acknowledgments`, la confirmation `acknowledge_unscanned_attachment`, la lecture des objets redéfinie, les deux fonctions de reprise réservées à `service_role`, la colonne `mail_drafts.attachments` et `prepare_email` à neuf arguments. La reprise de `av_skip_reason` parcourt les pièces `skipped` une fois (quatre en production le 2026-11-10), sans verrou notable. **Avec le service `clamav` et les images `mail-sync` et `mcp` de `main`, après elle** (§2.35). Geste préalable : la preuve de `freshclam` (§2.35, geste 1).
 
 **Aucune migration en attente depuis la troisième fenêtre du 2026-11-10** : la 171 a été appliquée (révision `e15dd487`,
 décision 896 ; §8), registre à **169** lignes.
@@ -1712,7 +1742,7 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | Service | Condition de redéploiement |
 |---|---|
 | `webapp` | À chaque changement d'interface — **et à chaque changement de `VITE_SUPABASE_URL` ou `VITE_SUPABASE_ANON_KEY`**, voir ci-dessous. **`CRM-092` T5** : la connexion passe par le seul SSO et l'échangeur de session, appelé par un chemin relatif que Caddy relaie déjà (`/functions/v1/*`) ; reconstruire avec `VITE_SSO_CLIENT_ID` au nouvel identifiant, et **seulement** avec les opérations de la reprise (§3) — une webapp neuve face à une base sans les migrations 74 à 76 ne connecterait personne |
-| `mail-sync` | À chaque changement du service de messagerie ou de ses dépendances. **`CRM-127` T2** : l'image de `main` date chaque relève par `mail_inbound_account_record_sync` — **reconstruire l'image dans la fenêtre de la migration 151, jamais avant elle** (§3). **`CRM-135`** : l'image écrit l'échec d'une relève par `mail_inbound_account_record_poll_failure` — **reconstruire dans la fenêtre de la migration 170, après elle** (§2.33) |
+| `mail-sync` | À chaque changement du service de messagerie ou de ses dépendances. **`CRM-127` T2** : l'image de `main` date chaque relève par `mail_inbound_account_record_sync` — **reconstruire l'image dans la fenêtre de la migration 151, jamais avant elle** (§3). **`CRM-135`** : l'image écrit l'échec d'une relève par `mail_inbound_account_record_poll_failure` — **reconstruire dans la fenêtre de la migration 170, après elle** (§2.33) ; **`CRM-143`** : l'image écrit `av_skip_reason` et reprend les pièces non analysées par `mail_attachments_to_rescan` et `mail_attachment_record_scan` — **reconstruire dans la fenêtre de la migration 173, après elle et après le démarrage de `clamav`** (§2.35) |
 | Pile Supabase | À chaque changement de version épinglée d'un composant (tableau dans `docs/DAT.md` §3.7) |
 | `functions` | À chaque changement sous `supabase/functions/` ou de l'image Edge Runtime ; `CRM-016` impose un premier déploiement conjoint avec Kong. **`CRM-092` T3 et T3 bis (en attente de la reprise complète, §3)** : nouvelle fonction `session`, et le conteneur reçoit `JWT_SECRET`, `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID` et **`OIDC_CLIENT_SECRET`**, que le service principal ne remet qu'au worker `session` — la phrase « ne reçoit pas `JWT_SECRET` » plus bas est révisée par la décision 584. Recréer `functions` **après** la pose du secret par l'administrateur du realm et la correction de `SSO_OIDC_CLIENT_ID` (§2.3). **`CRM-127` T3** : nouvelle fonction `mail-connection-test` ; le conteneur reçoit `MAIL_SYNC_URL` (posée par `docker-compose.yml`) et `MAIL_SYNC_INTERNAL_TOKEN` (déjà au `.env` pour `mail-sync`), que le service principal ne remet qu'à ce worker — **recréer `functions` dans la fenêtre de la migration 151** |
 | `kong` | À chaque changement de `supabase/docker/volumes/api/kong.yml`, qui incrémente le label `com.p2enjoy.kong-config-revision` — **`crm-115`** depuis `CRM-115` T2 (Realtime joint par son alias réseau, §2.22) ; `crm-092` depuis `CRM-092` T6 : routes `/auth/v1/*` et `/.well-known/oauth-authorization-server` retirées, Kong répond 404 ; **INC-299** (décision 696, §2.21) : `KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT: 3` dans `docker-compose.yml` — la définition change, le `up` ordinaire recrée Kong |
@@ -1758,14 +1788,7 @@ doit survivre aux recréations ordinaires du conteneur, mais ne remplace ni les 
 PostgreSQL ni celles de Storage. Ne pas appeler la route `/internal/v1/dev/checkpoint` : elle doit
 rendre `404` sous `P2ENJOY_ENV_PROFILE=prod`.
 
-**Opération due — déclarer `clamav` dans l'assemblage commun, avec `CRM-054`.** `CRM-050` a livré
-ClamAV dans `docker-compose.dev.yml` seulement, là où il est réellement exercé par ses preuves
-(`docs/JOURNAL.md` décision 236). Son unique consommateur est l'ingestion des pièces jointes,
-livrée par `CRM-054` : c'est cette unité qui devra le déplacer dans `docker-compose.yml`, ajouter
-sa variable de port au contrat d'environnement de production, et **rejouer les preuves de
-production de `CRM-002`** — le nombre de services attendus `healthy` par `scripts/verify-scripts.sh`
-change avec lui. Tant que l'opération n'est pas faite, la production n'analyse aucune pièce jointe,
-et elle n'en reçoit aucune : rien ne l'y dépose avant `CRM-054`.
+**`clamav` en production : `CRM-143` T3, décision 889 (§2.35).** `CRM-050` avait livré ClamAV dans `docker-compose.dev.yml` seulement (`docs/JOURNAL.md` décision 236), et `CRM-054` a livré l'ingestion sans le service : en production, chaque pièce reçue naît `skipped` (quatre le 2026-11-10). `CRM-143` le déclare dans la surcouche de la cellule, `docker-compose.spark.yml` (image épinglée `clamav/clamav:1.4.3`, `mem_limit` 4 Go, volume `clamav-data` des signatures), et non dans `docker-compose.yml` : seule la cellule le démarre. Aucune variable nouvelle : `CLAMAV_HOST=clamav` est déjà celle de `mail-sync`. Le nombre de services attendus `healthy` par `scripts/spark/verify-spark.sh` change avec lui.
 
 **Aucun des composants de `CRM-050` n'est destiné à la production.** Stalwart, Roundcube et le
 provisionnement de boîtes `stalwart-init` sont des composants **exclusivement** de développement

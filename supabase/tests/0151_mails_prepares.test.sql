@@ -1,3 +1,5 @@
+-- @verifies CRM-143 (docs/BACKLOG.md) — l'assertion 6 vise la signature de `prepare_email` qui porte `p_attachments`
+--           (migration 0173, docs/SPEC-pieces-jointes.md §17.6)
 -- @verifies CRM-128 (docs/BACKLOG.md) — tranche T2 : les mails préparés en base, et le refus de tout envoi direct sous
 --           le jeton du connecteur MCP
 -- @verifies docs/SPEC-mails-prepares.md §3.1 à §3.5 (table, droits, `prepare_email`, `send_email_draft`,
@@ -66,7 +68,9 @@ select ok(has_table_privilege('authenticated', 'public.mail_drafts', 'select')
           and not has_table_privilege('authenticated', 'public.mail_drafts', 'delete'),
 	'4 — `authenticated` lit seulement : toute écriture passe par les fonctions');
 select ok(not has_table_privilege('anon', 'public.mail_drafts', 'select'), '5 — `anon` n''a rien');
-select ok(not has_function_privilege('anon', 'public.prepare_email(uuid,text[],text,text,uuid,text[],text[],uuid)', 'execute')
+-- RÉVISÉE PAR `CRM-143` (migration 0173, docs/SPEC-pieces-jointes.md §17.6) : `prepare_email` gagne `p_attachments`, et
+-- l'ancienne signature est retirée. L'assertion vise la nouvelle, non relâchée.
+select ok(not has_function_privilege('anon', 'public.prepare_email(uuid,text[],text,text,uuid,text[],text[],uuid,jsonb)', 'execute')
           and not has_function_privilege('anon', 'public.send_email_draft(uuid,uuid,text[],text,text,text[],text[],jsonb)', 'execute')
           and not has_function_privilege('anon', 'public.discard_email_draft(uuid)', 'execute'),
 	'6 — `anon` n''exécute aucune des trois fonctions');

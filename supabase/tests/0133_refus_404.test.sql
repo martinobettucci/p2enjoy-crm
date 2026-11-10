@@ -10,6 +10,8 @@
 --           (migration 0170, docs/SPEC-mail-subsystem.md §24.3), et son témoin 5 bis la nomme
 -- @verifies CRM-137 (docs/BACKLOG.md) — le compte de l'assertion 5 inclut `classification_candidates` (migration 0172,
 --           docs/SPEC-mail-subsystem.md §26.2), et son témoin 5 ter la nomme
+-- @verifies CRM-143 (docs/BACKLOG.md) — le compte de l'assertion 5 inclut `acknowledge_unscanned_attachment` (migration
+--           0173, docs/SPEC-pieces-jointes.md §17.3), et son témoin 5 quater la nomme
 -- @verifies docs/SPEC-refus-404.md §2, §3, §4 ; docs/JOURNAL.md décisions 762 et 797 ; CLAUDE.md §10
 --
 -- Le `rollback` final rend la base intacte.
@@ -18,7 +20,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(11);
+select plan(12);
 
 -- Le refus levé par une requête, tel que PostgREST le lit : SQLSTATE, message, détail.
 create or replace function pg_temp.refus(p_sql text) returns text[] language plpgsql as $$
@@ -73,20 +75,29 @@ select is(
 	-- inconnu par ce chemin (`account_not_found`, docs/SPEC-mail-subsystem.md §24.3). Le témoin 5 bis la nomme.
 	-- RÉVISÉ PAR `CRM-137` (migration 0172), non relâché : `classification_candidates` refuse un message illisible ou
 	-- inexistant par ce chemin (`message_not_found`, docs/SPEC-mail-subsystem.md §26.2). Le témoin 5 ter la nomme.
-	34,
-	'5 — les vingt-sept fonctions « introuvable » de CRM-120, les deux de CRM-127, celle de CRM-112, les deux de CRM-128 (`send_email_draft`, `discard_email_draft`), celle de CRM-135 (`mail_inbound_account_record_poll_failure`) et celle de CRM-137 (`classification_candidates`) lèvent par `app.raise_http_error(404, …)`');
+	-- RÉVISÉ PAR `CRM-143` (migration 0173), non relâché : `acknowledge_unscanned_attachment` refuse une pièce inconnue ou
+	-- d'un message invisible par ce chemin (`attachment_not_found`, docs/SPEC-pieces-jointes.md §17.3). Le témoin 5 quater
+	-- la nomme.
+	35,
+	'5 — les vingt-sept fonctions « introuvable » de CRM-120, les deux de CRM-127, celle de CRM-112, les deux de CRM-128 (`send_email_draft`, `discard_email_draft`), celle de CRM-135 (`mail_inbound_account_record_poll_failure`), celle de CRM-137 (`classification_candidates`) et celle de CRM-143 (`acknowledge_unscanned_attachment`) lèvent par `app.raise_http_error(404, …)`');
 
 select ok(
 	(select p.prosrc ~ 'app\.raise_http_error\(404, ''account_not_found''\)'
 	   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
 	  where n.nspname = 'public' and p.proname = 'mail_inbound_account_record_poll_failure'),
-	'5 bis — témoin : `mail_inbound_account_record_poll_failure` (CRM-135) est l''une des 34, et refuse un compte inconnu par `app.raise_http_error(404, ''account_not_found'')`');
+	'5 bis — témoin : `mail_inbound_account_record_poll_failure` (CRM-135) est l''une des 35, et refuse un compte inconnu par `app.raise_http_error(404, ''account_not_found'')`');
 
 select ok(
 	(select p.prosrc ~ 'app\.raise_http_error\(404, ''message_not_found''\)'
 	   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
 	  where n.nspname = 'public' and p.proname = 'classification_candidates'),
-	'5 ter — témoin : `classification_candidates` (CRM-137) est l''une des 34, et refuse un message illisible par `app.raise_http_error(404, ''message_not_found'')`');
+	'5 ter — témoin : `classification_candidates` (CRM-137) est l''une des 35, et refuse un message illisible par `app.raise_http_error(404, ''message_not_found'')`');
+
+select ok(
+	(select p.prosrc ~ 'app\.raise_http_error\(404, ''attachment_not_found''\)'
+	   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+	  where n.nspname = 'public' and p.proname = 'acknowledge_unscanned_attachment'),
+	'5 quater — témoin : `acknowledge_unscanned_attachment` (CRM-143) est l''une des 35, et refuse une pièce inconnue par `app.raise_http_error(404, ''attachment_not_found'')`');
 
 select is(
 	(select array_agg(p.proname::text) from pg_proc p join pg_namespace n on n.oid = p.pronamespace

@@ -11,6 +11,8 @@
 #       §23.2, INC-340, décision 816)
 # @spec CRM-111 (docs/BACKLOG.md) — tranche T6.1 : le dossier d'une affaire est `CRM/Affaires/<titre> (<id court>)`, hors de
 #       l'arborescence ; plus aucun parent n'est inscrit (docs/SPEC-rattachements.md §7, décisions 657 et 818)
+# @spec CRM-143 (docs/BACKLOG.md) — tranche T2 : la raison d'une pièce `skipped`, `too_large` ou `scanner_unavailable`
+#       (docs/SPEC-pieces-jointes.md §17.3, décision 892)
 # @spec CRM-135 (docs/BACKLOG.md) — `classer_echec_releve` et l'écriture de l'échec dans `relever_compte`
 #       (docs/SPEC-mail-subsystem.md §24.3, INC-349, décisions 873 et 874)
 #
@@ -478,6 +480,8 @@ def _relever_compte(
                             storage_path=chemin_de_depot(workspace_id, message_id, piece.sha256),
                             sha256=piece.sha256,
                             av_status=antivirus.SKIPPED,
+                            # `CRM-143` (§17.3) : trop volumineuse, jamais déposée — rien que la reprise puisse analyser.
+                            av_skip_reason="too_large",
                         )
                         continue
 
@@ -499,6 +503,9 @@ def _relever_compte(
                         storage_path=chemin,
                         sha256=piece.sha256,
                         av_status=verdict.statut,
+                        # `CRM-143` (§17.3) : un `skipped` ici est un antivirus muet ; la pièce est déposée, la reprise
+                        # l'analysera quand il répondra.
+                        **({"av_skip_reason": "scanner_unavailable"} if verdict.statut == antivirus.SKIPPED else {}),
                     )
             # LA PROGRESSION N'EST ÉTENDUE QU'APRÈS le traitement du dossier, et avec les UID
             # RÉELLEMENT rapatriés — `imap.fetch` peut en rendre moins que demandé si un message a
