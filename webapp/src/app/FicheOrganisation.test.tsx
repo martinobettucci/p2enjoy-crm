@@ -13,8 +13,11 @@
 // @verifies CRM-114 (docs/BACKLOG.md) — tranche T2 : « Modifier » sur la fiche — formulaire prérempli à la place de la
 //           liste de définitions, PATCH normalisé, relecture sans squelette, annonce, refus, commande éteinte avec le
 //           motif (docs/SPEC-organisations.md §2 à §4 ; docs/DESIGN_SYSTEM.md §5.64, §5.59)
+// @verifies CRM-146 (docs/BACKLOG.md) — tranche T2 : le bloc « Recettes avec cette organisation » entre les
+//           caractéristiques et les contacts, et son échec qui laisse la fiche rendue (docs/SPEC-recettes.md §12.5 ;
+//           docs/DESIGN_SYSTEM.md §5.97). Les doubles rendent les totaux par `rpc` : sans recette par défaut.
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -41,8 +44,11 @@ function clientQuiRend(...reponses: Reponse[]): ClientCrm {
 			return Promise.resolve(reponse).then(resoudre)
 		},
 	}
-	return { from: () => ({ select: () => chaine }) } as unknown as ClientCrm
+	return { from: () => ({ select: () => chaine }), rpc: totauxVides } as unknown as ClientCrm
 }
+
+/** `CRM-146` : les totaux du bloc des recettes, vides — l'organisation n'a aucune recette (docs/SPEC-recettes.md §12.5). */
+const totauxVides = () => Promise.resolve({ data: [], error: null, status: 200 })
 
 const ID_SOGEXIA = '5eed0000-0000-4000-8000-000000000081'
 const ID_MEUNIER = '5eed0000-0000-4000-8000-000000000082'
@@ -171,7 +177,10 @@ describe("Fiche d'organisation", () => {
 		)
 		// Aucun bouton : cette surface ne livre aucun geste de création, et un bouton y serait un
 		// chemin vers nulle part (§11.8, §5.16).
-		const vide = screen.getByTestId('etat-vide')
+		// RÉVISÉE par `CRM-146` T2 : le bloc des recettes a son propre état vide ; celui des contacts est lu dans sa section.
+		const vide = within(
+			screen.getByText(fr['organization.contacts.empty.title']).closest('section') as HTMLElement,
+		).getByTestId('etat-vide')
 		expect(vide.querySelectorAll('button')).toHaveLength(0)
 		expect(vide.querySelectorAll('a')).toHaveLength(0)
 		// Le tableau n'est pas rendu du tout — pas rendu vide.
@@ -288,6 +297,7 @@ function clientModifiable(lectures: unknown[][], miseAJour: { data?: unknown; er
 				return chaine
 			},
 		}),
+		rpc: totauxVides,
 	} as unknown as ClientCrm
 	return { client, patchs, lectures: () => rang }
 }
@@ -337,5 +347,42 @@ describe('« Modifier » sur la fiche (docs/DESIGN_SYSTEM.md §5.64)', () => {
 		const commande = await screen.findByTestId('modifier-organisation')
 		expect((commande as HTMLButtonElement).disabled).toBe(true)
 		expect(document.getElementById(commande.getAttribute('aria-describedby') ?? '')?.textContent).toBe(fr['rights.readonly.edition'])
+	})
+})
+
+// --- `CRM-146` T2 : les recettes avec cette organisation -----------------------------------------------------------
+
+describe('les recettes avec cette organisation (docs/SPEC-recettes.md §12.5)', () => {
+	function clientAvecTotaux(totaux: () => Promise<unknown>) {
+		const chaine = {
+			eq: () => chaine,
+			order: () => chaine,
+			then: (resoudre: (v: unknown) => unknown) => Promise.resolve({ data: [SOGEXIA], error: null, status: 200 }).then(resoudre),
+		}
+		return { from: () => ({ select: () => chaine }), rpc: totaux } as unknown as ClientCrm
+	}
+
+	it('le bloc vient entre les caractéristiques et les contacts', async () => {
+		rendreA(ID_SOGEXIA, clientAvecTotaux(() => Promise.resolve({
+			data: [{ organization_id: ID_SOGEXIA, currency: 'EUR', estimated_total: 72000, actual_total: null, cards: 1, shared_cards: 0, revenue_lines: 1, lines_without_actual: 1 }],
+			error: null,
+			status: 200,
+		})))
+		await screen.findByTestId('tableau-recettes-organisation')
+		const ordre = [
+			screen.getByTestId('caracteristiques-organisation'),
+			screen.getByTestId('recettes-organisation'),
+			screen.getByTestId('tableau-contacts-organisation'),
+		]
+		expect(ordre[0]?.compareDocumentPosition(ordre[1] as Node)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+		expect(ordre[1]?.compareDocumentPosition(ordre[2] as Node)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+	})
+
+	it('son échec reste dans le bloc : la fiche et ses contacts restent rendus', async () => {
+		rendreA(ID_SOGEXIA, clientAvecTotaux(() => Promise.resolve({ data: null, error: { message: 'boom' }, status: 500 })))
+		const bloc = await screen.findByTestId('recettes-organisation')
+		expect(await within(bloc).findByRole('button', { name: fr['organization.revenues.error.retry'] })).toBeTruthy()
+		expect(screen.getByTestId('caracteristiques-organisation')).toBeTruthy()
+		expect(screen.getAllByTestId('ligne-contact-organisation')).toHaveLength(1)
 	})
 })

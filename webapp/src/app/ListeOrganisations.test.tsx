@@ -2,6 +2,9 @@
 // @verifies docs/SPEC-organisations.md §2 à §4 ; docs/DESIGN_SYSTEM.md §5.64 (tableau à quatre colonnes, commande et
 //           formulaire qui s'excluent, fiche ouverte après la création, refus dans le formulaire), §5.59 (commande
 //           éteinte avec le motif), §5.8 (états)
+// @verifies CRM-146 (docs/BACKLOG.md) — tranche T2 : la colonne « Réel sur prévu », cinquième, et les deux lectures
+//           attendues ensemble — un échec de l'une rend l'erreur de l'onglet, « Réessayer » relit les deux
+//           (docs/SPEC-recettes.md §12.4 ; docs/DESIGN_SYSTEM.md §5.97)
 
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -20,8 +23,18 @@ const SOGEXIA = { id: 'o2', name: 'Sogexia', domain: 'sogexia.example', website:
 
 type Reponse = { data?: unknown; error?: { code?: string; message: string } | null; status?: number }
 
-function double({ liste = [COMPTOIR, SOGEXIA] as unknown[], insertion = { data: [{ id: 'neuve' }], status: 201 } as Reponse } = {}) {
+const TOTAL_SOGEXIA = {
+	organization_id: 'o2', currency: 'EUR', estimated_total: 72000, actual_total: null,
+	cards: 1, shared_cards: 0, revenue_lines: 1, lines_without_actual: 1,
+}
+
+function double({
+	liste = [COMPTOIR, SOGEXIA] as unknown[],
+	insertion = { data: [{ id: 'neuve' }], status: 201 } as Reponse,
+	totaux = [{ data: [TOTAL_SOGEXIA] }] as (Reponse | 'jamais')[],
+} = {}) {
 	const ecritures: unknown[] = []
+	const appelsTotaux: unknown[] = []
 	const chaine = (r: Reponse) => {
 		const c: Record<string, unknown> = {
 			select: () => c, order: () => c, eq: () => c,
@@ -35,8 +48,15 @@ function double({ liste = [COMPTOIR, SOGEXIA] as unknown[], insertion = { data: 
 			select: () => chaine(table === 'workspaces' ? { data: [{ id: 'ws', name: 'P2Enjoy', slug: 'p2enjoy' }] } : { data: liste }),
 			insert: (charge: unknown) => { ecritures.push(charge); return chaine(insertion) },
 		}),
+		// `CRM-146` : les totaux, lus à côté de la liste (docs/SPEC-recettes.md §12.4).
+		rpc: (nom: string, args: unknown) => {
+			appelsTotaux.push([nom, args])
+			const r = totaux[Math.min(appelsTotaux.length - 1, totaux.length - 1)]
+			if (r === 'jamais' || r === undefined) return new Promise(() => {})
+			return Promise.resolve({ data: r.data ?? null, error: r.error ?? null, status: r.status ?? 200 })
+		},
 	} as unknown as ClientCrm
-	return { client, ecritures }
+	return { client, ecritures, appelsTotaux }
 }
 
 function monter(client: ClientCrm, edition: Capacite = 'permise') {
@@ -53,15 +73,41 @@ function monter(client: ClientCrm, edition: Capacite = 'permise') {
 }
 
 describe('l’onglet « Organisations » (docs/DESIGN_SYSTEM.md §5.64)', () => {
-	it('rend un tableau à quatre colonnes ; le nom est le seul lien, zéro contact s’écrit 0', async () => {
+	// RÉVISÉE par `CRM-146` T2 : quatre colonnes devenues cinq, « Réel sur prévu » après « Contacts » (§12.4) ; le compte des
+	// contacts est lu dans SA cellule, la quatrième, et non plus dans la dernière.
+	it('rend un tableau à cinq colonnes ; le nom est le seul lien, zéro contact s’écrit 0', async () => {
 		monter(double().client)
 		const lignes = await screen.findAllByTestId('ligne-organisation')
 		expect(screen.getAllByRole('columnheader').map((c) => c.textContent)).toEqual([
 			fr['organizations.table.name'], fr['organizations.table.domain'], fr['organizations.table.website'], fr['organizations.table.contacts'],
+			fr['organizations.table.revenues'],
 		])
 		expect(within(lignes[0] as HTMLElement).getAllByRole('link').map((l) => l.textContent)).toEqual(['Comptoir Vasseur'])
 		expect(within(lignes[1] as HTMLElement).getAllByRole('link')).toHaveLength(1)
-		expect((lignes[0] as HTMLElement).lastElementChild?.textContent).toBe('0')
+		expect((lignes[0] as HTMLElement).children[3]?.textContent).toBe('0')
+	})
+
+	it('« Réel sur prévu » : la ligne de l’organisation qui a des recettes, la cellule vide de celle qui n’en a pas', async () => {
+		const { client, appelsTotaux } = double()
+		monter(client)
+		const lignes = await screen.findAllByTestId('ligne-organisation')
+		expect(appelsTotaux).toEqual([['organization_revenue_totals', {}]])
+		expect((lignes[0] as HTMLElement).children[4]?.textContent).toBe('')
+		expect(within(lignes[1] as HTMLElement).getByTestId('reel-sur-prevu').textContent).toContain('Rien de saisi sur')
+	})
+
+	it('attend les deux lectures : la liste lue seule ne s’affiche pas sans ses totaux', async () => {
+		monter(double({ totaux: ['jamais'] }).client)
+		expect(await screen.findByLabelText(fr['state.loading.aria'])).toBeTruthy()
+		expect(screen.queryByTestId('tableau-organisations')).toBeNull()
+	})
+
+	it('un échec des totaux rend l’erreur de l’onglet, et « Réessayer » relit les deux', async () => {
+		const { client, appelsTotaux } = double({ totaux: [{ error: { message: 'boom' }, status: 500 }, { data: [TOTAL_SOGEXIA] }] })
+		monter(client)
+		await userEvent.click(await screen.findByRole('button', { name: fr['organizations.error.retry'] }))
+		expect(await screen.findAllByTestId('ligne-organisation')).toHaveLength(2)
+		expect(appelsTotaux).toHaveLength(2)
 	})
 
 	it('l’état vide garde la commande', async () => {

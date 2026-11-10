@@ -553,6 +553,29 @@ export const fr = {
 	'organization.field.website': 'Site web',
 	'organization.website.newTab': 'Ouvre un nouvel onglet',
 	'organization.contacts.title': 'Contacts',
+	// CRM-146 T2 : le bloc « Recettes avec cette organisation » (docs/SPEC-recettes.md §12.5, docs/DESIGN_SYSTEM.md §5.97).
+	'organization.revenues.title': 'Recettes avec cette organisation',
+	'organization.revenues.aria': 'Prévu et réel des recettes avec cette organisation, par devise',
+	'organization.revenues.column.currency': 'Devise',
+	'organization.revenues.column.estimated': 'Prévu',
+	'organization.revenues.column.actual': 'Réel',
+	'organization.revenues.column.progress': 'Réel sur prévu',
+	'organization.revenues.percent': '{n} %',
+	'organization.revenues.cards.one':
+		'{n} affaire compte pour cette organisation : celle dont un contact rattaché en fait partie.',
+	'organization.revenues.cards.many':
+		'{n} affaires comptent pour cette organisation : celles dont un contact rattaché en fait partie.',
+	'organization.revenues.shared.one': 'Dont {n} compte aussi pour une autre organisation.',
+	'organization.revenues.shared.many': 'Dont {n} comptent aussi pour une autre organisation.',
+	'organization.revenues.withoutActual.one': '{n} ligne de recette sans réel saisi.',
+	'organization.revenues.withoutActual.many': '{n} lignes de recette sans réel saisi.',
+	'organization.revenues.scope': 'Les affaires que vous lisez, hors corbeille.',
+	'organization.revenues.empty.title': 'Aucune recette prévue avec cette organisation.',
+	'organization.revenues.empty.body':
+		'Les recettes se prévoient sur la fiche d’une affaire dont un contact de l’organisation fait partie.',
+	'organization.revenues.error.title': 'Les recettes n’ont pas pu être chargées',
+	'organization.revenues.error.body': 'La lecture des recettes a échoué. Vérifiez votre connexion, puis réessayez.',
+	'organization.revenues.error.retry': 'Réessayer',
 	'organization.contacts.aria': 'Contacts de cette organisation',
 	'organization.contacts.empty.title': 'Aucun contact rattaché',
 	'organization.contacts.empty.body':
@@ -5354,6 +5377,10 @@ export const fr = {
 	'organizations.table.domain': 'Domaine',
 	'organizations.table.website': 'Site web',
 	'organizations.table.contacts': 'Contacts',
+	// CRM-146 T2 : la colonne « Réel sur prévu » (docs/SPEC-recettes.md §12.4, docs/DESIGN_SYSTEM.md §5.97).
+	'organizations.table.revenues': 'Réel sur prévu',
+	'organizations.revenues.progress': '{reel} sur {prevu}',
+	'organizations.revenues.noActual': 'Rien de saisi sur {prevu}',
 	'organizations.empty.title': 'Aucune organisation dans cet espace.',
 	'organizations.empty.body': 'Une organisation créée ici peut ensuite recevoir des contacts depuis le carnet.',
 	'organizations.error.title': 'Les organisations n’ont pas pu être chargées',

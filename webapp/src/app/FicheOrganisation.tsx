@@ -29,6 +29,10 @@
 //       définitions, la relecture sans squelette, l'annonce de l'issue ; la commande suit la capacité d'éditer l'espace
 //       (docs/SPEC-organisations.md §2 à §4 ; docs/DESIGN_SYSTEM.md §5.64, §5.59). L'écran qui lisait seulement, écrit
 //       ci-dessus, porte désormais ce geste-là, et lui seul : ni création ici, ni suppression.
+//
+// @spec CRM-146 (docs/BACKLOG.md) — tranche T2 : le bloc « Recettes avec cette organisation », entre ses caractéristiques
+//       et ses contacts (docs/SPEC-recettes.md §12.5 ; docs/DESIGN_SYSTEM.md §5.97). Il lit lui-même et porte ses propres
+//       états : son échec laisse la fiche rendue.
 
 import { ExternalLink, PencilLine } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -47,6 +51,7 @@ import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { AppShell } from './AppShell'
 import { useContexteEspace } from './ContexteEspace'
 import { FormulaireOrganisation } from './FormulaireOrganisation'
+import { BlocRecettesOrganisation } from './RecettesOrganisation'
 import { CHEMIN_CONTACTS, cheminContact } from './chemins'
 
 /** Cellule ordinaire du tableau des contacts — mêmes règles qu'au carnet (§5.9). */
@@ -332,6 +337,9 @@ function ContenuFiche({ client, etat, organisation, onReprise, onModifiee }: Pro
 			</Button>
 			</div>
 			)}
+
+			{/* CRM-146 — LES RECETTES AVEC CETTE ORGANISATION, par devise (docs/SPEC-recettes.md §12.5). */}
+			<BlocRecettesOrganisation client={client} idOrganisation={organisation.id} />
 
 			{/* ZONE 2 — LES CONTACTS. Lignes homogènes, donc le tableau du §5.9. */}
 			<section className="flex flex-col gap-3">

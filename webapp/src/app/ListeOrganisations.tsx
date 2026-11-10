@@ -2,6 +2,10 @@
 // @spec docs/SPEC-organisations.md §2 (lister, créer, puis ouvrir la fiche), §3 (droits de la base, refus), §4 (de quoi il a
 //       l'air) ; docs/DESIGN_SYSTEM.md §5.64 (tableau à quatre colonnes, « Nouvelle organisation »), §5.59 (commande
 //       éteinte avec le motif quand la base refuse l'édition de l'espace), §5.9 (tableau), §5.8 (états), §12.6
+// @spec CRM-146 (docs/BACKLOG.md) — tranche T2 : la colonne « Réel sur prévu », après « Contacts » ; la liste lit
+//       `organization_revenue_totals()` à côté de `organizations`, LES DEUX ATTENDUES ENSEMBLE — une colonne remplie après
+//       coup confondrait « pas encore lu » et « aucune recette » ; un échec de l'une rend l'erreur de l'onglet, et
+//       « Réessayer » relit les deux (docs/SPEC-recettes.md §12.4 ; docs/DESIGN_SYSTEM.md §5.97)
 //
 // L'écran ne calcule aucun droit : il lit la capacité que la base rend (`edition_permise`) pour éteindre la commande, et
 // traduit le refus de la base si elle survient malgré tout.
@@ -12,7 +16,7 @@ import { EtatErreur, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { t, type CleTraduction } from '../i18n'
-import { enChargement, type EtatAsync } from '../lib/async'
+import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
 import { motifVisible, proprietesCommande } from '../lib/capacites'
 import {
 	SAISIE_ORGANISATION_VIDE,
@@ -20,6 +24,7 @@ import {
 	lireOrganisations,
 	type OrganisationListee,
 } from '../lib/organisations'
+import { lireTotauxOrganisations, type TotauxParOrganisation } from '../lib/recettes-organisation'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useWorkspaces } from '../lib/workspaces'
 import { cheminOrganisation } from './chemins'
@@ -27,6 +32,7 @@ import { AppShell } from './AppShell'
 import { useContexteEspace } from './ContexteEspace'
 import { FormulaireOrganisation } from './FormulaireOrganisation'
 import { OngletsCarnet } from './OngletsCarnet'
+import { AUCUN_TOTAL, ReelSurPrevu } from './RecettesOrganisation'
 
 const ID_MOTIF = 'organisations-lecture-seule'
 /** Le titre de la route, nommé hors du JSX pour le contrôle des clés mortes, comme `CLE_TITRE_CARD`. */
@@ -46,12 +52,27 @@ export function RouteOrganisations() {
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[32ch]'
 const CLASSES_CELLULE_TECHNIQUE = 'h-[var(--size-target)] px-3 text-right whitespace-nowrap max-w-[36ch] truncate'
 const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3'
+// Une cellule « Réel sur prévu » prend la hauteur de ses devises empilées, 40 px restant son minimum (§5.97, l'écart au
+// §5.9 du §5.60).
+const CLASSES_CELLULE_RECETTES = 'h-[var(--size-target)] px-3 py-1 text-right whitespace-nowrap'
+
+/** Ce que l'onglet rend : les organisations et leurs totaux, lus ensemble (docs/SPEC-recettes.md §12.4). */
+type ListeLue = { readonly organisations: readonly OrganisationListee[]; readonly totaux: TotauxParOrganisation }
+
+/** Les deux lectures attendues ensemble ; la première erreur l'emporte. */
+async function lireListe(client: ClientCrm): Promise<EtatAsync<ListeLue>> {
+	const [organisations, totaux] = await Promise.all([lireOrganisations(client), lireTotauxOrganisations(client)])
+	if (organisations.statut === 'erreur') return enErreur(organisations.erreur)
+	if (totaux.statut === 'erreur') return enErreur(totaux.erreur)
+	if (organisations.statut !== 'pret' || totaux.statut !== 'pret') return enChargement()
+	return pret({ organisations: organisations.donnees, totaux: totaux.donnees })
+}
 
 export function ListeOrganisations({ client = clientCrm }: { readonly client?: ClientCrm | null } = {}) {
 	const { capacites } = useContexteEspace()
 	const navigate = useNavigate()
 	const espaces = useWorkspaces(client)
-	const [etat, setEtat] = useState<EtatAsync<readonly OrganisationListee[]>>(enChargement)
+	const [etat, setEtat] = useState<EtatAsync<ListeLue>>(enChargement)
 	const [tentative, setTentative] = useState(0)
 	const [ouvert, setOuvert] = useState(false)
 	const [focusARendre, setFocusARendre] = useState(false)
@@ -62,7 +83,7 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 		if (client === null) return
 		const rang = ++courant.current
 		void (async () => {
-			const lu = await lireOrganisations(client)
+			const lu = await lireListe(client)
 			if (rang === courant.current) setEtat(lu)
 		})()
 	}, [client, tentative])
@@ -133,7 +154,7 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 	return (
 		<section aria-label={t('organizations.aria')} className="flex flex-col gap-4">
 			{geste}
-			{etat.donnees.length === 0 ? (
+			{etat.donnees.organisations.length === 0 ? (
 				<EtatVide titre={t('organizations.empty.title')} corps={t('organizations.empty.body')} />
 			) : (
 				<div className="overflow-x-auto indique-debordement-x">
@@ -145,10 +166,11 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 								<th scope="col" className={`${CLASSES_ENTETE} text-right`}>{t('organizations.table.domain')}</th>
 								<th scope="col" className={`${CLASSES_ENTETE} text-right`}>{t('organizations.table.website')}</th>
 								<th scope="col" className={`${CLASSES_ENTETE} text-right`}>{t('organizations.table.contacts')}</th>
+								<th scope="col" className={`${CLASSES_ENTETE} text-right`}>{t('organizations.table.revenues')}</th>
 							</tr>
 						</thead>
 						<tbody>
-							{etat.donnees.map((organisation) => (
+							{etat.donnees.organisations.map((organisation) => (
 								<tr key={organisation.id} data-testid="ligne-organisation" data-organisation={organisation.id} className="border-b border-border hover:bg-hover">
 									<td className={CLASSES_CELLULE} title={organisation.name}>
 										<Link to={cheminOrganisation(organisation.id)} className="text-brand hover:underline" data-testid="lien-fiche-organisation">
@@ -162,6 +184,9 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 										{organisation.website === null ? '' : <code className="text-text-2">{organisation.website}</code>}
 									</td>
 									<td className={`${CLASSES_CELLULE_TECHNIQUE} tabular-nums`}>{organisation.contacts}</td>
+									<td className={CLASSES_CELLULE_RECETTES}>
+										<ReelSurPrevu totaux={etat.donnees.totaux.get(organisation.id) ?? AUCUN_TOTAL} />
+									</td>
 								</tr>
 							))}
 						</tbody>
