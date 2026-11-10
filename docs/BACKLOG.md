@@ -19348,3 +19348,18 @@ le lien affaire–organisation retenu), `docs/DESIGN_SYSTEM.md` (la barre, acces
 droits ; E2E souris et clavier (fiche, liste) ; outil du connecteur et `verify-mcp.sh` ; seed (une organisation avec prévu et
 réel dans deux devises, une sans recette) ; captures aux quatre paliers ; manuel.
 
+## Demande du 2026-11-10 — livrer une révision précise par git, depuis la cellule (décision 905)
+
+### CRM-147 — `livrer.sh` livre un condensé choisi, récupéré par git dans la cellule `[ ]`
+
+**Origine** : indication du responsable, le 2026-11-10 (décision 905) : la clé privée de la cellule est autorisée à cloner le
+projet ; une livraison ne doit plus emporter tout `HEAD`.
+**Comportement attendu** : `scripts/spark/livrer.sh --revision <condensé>` (le condensé doit être sur `origin/main`) ; la cellule
+clone ou met à jour le dépôt avec sa propre clé, se place sur le condensé, et la suite (migrations, images, webapp, `REVISION`)
+part de ce condensé ; la webapp est bâtie depuis le condensé, jamais depuis l'arbre de travail du poste ; refus net si le
+condensé est absent ou si la cellule n'a pas accès. Aucune clé n'est lue, copiée ni journalisée.
+**MCP** : non. **Spécification** : `docs/SPEC-deploiement-spark.md` (le chemin de la clé et l'utilisateur, établis avec le
+responsable ; le répertoire du clone ; le retour arrière vers un condensé antérieur), le contrat de déploiement.
+**DoD** : `verify-spark.sh` (une livraison à blanc d'un condensé ancien, puis récent, dans une cellule simulée) ; une première
+livraison réelle d'un condensé choisi, sur instruction du responsable ; le README et le DAT.
+

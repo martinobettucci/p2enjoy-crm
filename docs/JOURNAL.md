@@ -40206,3 +40206,18 @@ inscrite dans `CLAUDE.md`.
 livraison décide du lot, et marque « en avance de son unité » au contrat ce qui part avant la fin de son unité, en le
 soumettant au responsable comme tel. Les documents de décision restent poussés immédiatement (§5).
 **Conséquence** : `CRM-133` T3 et T4 seront poussées tranche par tranche, une fois vérifiées.
+
+
+### décision 905 — livrer une révision précise par git, depuis la cellule ; aucun outil MCP
+
+*2026-11-10, session 4522fa9c (p2enjoy-crm-ee, session de livraison), indication du responsable (`AskUserQuestion`).*
+**Le constat** : `scripts/spark/livrer.sh` livre toujours le `HEAD` du poste (archive `git archive HEAD`, webapp bâtie dans
+l'arbre de travail), si bien qu'une livraison emporte tout ce qui est sur `main`, unités inachevées comprises ; la décision
+904 maintient pourtant le push de chaque tranche (CLAUDE.md §13). **L'indication du responsable** : « tu n'as jamais livré en
+utilisant git depuis le début, mais le spark, sa clé privée, est autorisée à cloner le projet » — la cellule peut cloner le
+dépôt et se placer sur un condensé précis.
+**Décision** : une unité `CRM-147` — la livraison prend un **condensé choisi** par la session de livraison (le dernier commit
+d'un lot stable), la cellule le récupère par git avec sa propre clé (le chemin de la clé et l'utilisateur sont à établir
+avec le responsable, sans jamais lire ni copier la clé), la webapp est bâtie depuis ce condensé et non depuis l'arbre de
+travail ; `REVISION` et les constats inchangés. En attendant, la livraison reste celle d'aujourd'hui, avec ce qui part
+« en avance de son unité » annoncé au responsable. **MCP** : non.
