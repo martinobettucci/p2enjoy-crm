@@ -1,3 +1,5 @@
+// @spec CRM-133 (docs/BACKLOG.md) — tranche T4 : l'image du champ de description d'un nœud, sur « Prospection » décrit par le
+//       seed (manuel §19.3 ; docs/SPEC-seed.md §39 ; docs/DESIGN_SYSTEM.md §5.18)
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.4 : les images des chapitres 19 à 22 — le catalogue de nœuds, la
 //       corbeille, les membres et leurs droits, le journal d'audit
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitres 19, 20, 21, 22 ; docs/SPEC-workflow-engine.md (le
@@ -215,4 +217,15 @@ test('le journal d’audit vu par une lectrice', async ({ page }) => {
 	const refus = page.getByText('Réservé aux administrateurs', { exact: true }).first()
 	await expect(refus).toBeVisible()
 	await illustrer(page, { chapitre: JOURNAL, section: 'ouvrir-le-journal', nom: 'reserve-aux-administrateurs', cibles: [refus.locator('xpath=ancestor::*[.//p][1]')] })
+})
+
+test('CRM-133 : la description d’un nœud, dans son formulaire', async ({ page }) => {
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto('/reglages/catalogue')
+	await page.getByRole('button', { name: 'Modifier le nœud Prospection' }).click()
+	const champ = page.getByTestId('champ-description-noeud')
+	await expect(champ).toHaveValue(/Premier contact établi/)
+	await champ.scrollIntoViewIfNeeded()
+	// Le libellé qui enveloppe le champ et son aide : le bloc entier, et non le seul champ.
+	await illustrer(page, { chapitre: CATALOGUE, section: 'modifier-un-noeud', nom: 'description-noeud', cibles: [champ.locator('xpath=..')] })
 })

@@ -1027,6 +1027,19 @@
 			]
 		},
 		{
+			"fichier": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/description-etape.jpg",
+			"largeur": 836,
+			"hauteur": 169,
+			"chapitre": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+			"section": "les-etapes",
+			"pleinePage": false,
+			"libelles": [
+				"Description de l'étape",
+				"Proposition chiffrée envoyée : le client en discute les termes et le budget.",
+				"Vide, l'étape n'a pas de description : le nœud n'en porte aucune."
+			]
+		},
+		{
 			"fichier": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/echec.jpg",
 			"largeur": 896,
 			"hauteur": 266,
@@ -7334,6 +7347,20 @@
 			]
 		},
 		{
+			"fichier": "le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows/description-noeud.jpg",
+			"largeur": 1140,
+			"hauteur": 160,
+			"chapitre": "le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows",
+			"section": "modifier-un-noeud",
+			"pleinePage": false,
+			"libelles": [
+				"Description",
+				"Description Elle s'affiche au survol de l'étape, sur le board et sur la fiche ; une étape peut la remplacer.",
+				"Elle s'affiche au survol de l'étape, sur le board et sur la fiche ; une étape peut la remplacer.",
+				"Premier contact établi : le besoin du client reste à qualifier."
+			]
+		},
+		{
 			"fichier": "le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows/lignes.jpg",
 			"largeur": 1192,
 			"hauteur": 490,
@@ -12479,6 +12506,23 @@
 				"Chargement impossible",
 				"Le serveur n'a pas répondu. Vérifiez que l'instance est démarrée, puis réessayez.",
 				"Réessayer"
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/description-etape.jpg",
+			"largeur": 477,
+			"hauteur": 155,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "la-description-d-un-track-d-un-channel-ou-d-une-affaire-au-survol",
+			"pleinePage": false,
+			"libelles": [
+				"1",
+				"48 000 €",
+				"Description de l'étape Négociation",
+				"Négociation",
+				"Plateforme de billetterie — Musée des Confluences",
+				"Proposition chiffrée envoyée : le client en discute les termes et le budget.",
+				"Signature"
 			]
 		},
 		{

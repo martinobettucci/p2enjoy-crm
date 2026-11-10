@@ -2134,6 +2134,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/description-etape.jpg",
+			"alt": "Le bouton d'information de l'étape « Négociation » survolé, et sa description",
+			"width": 477,
+			"height": 155
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "replier-la-barre-laterale",

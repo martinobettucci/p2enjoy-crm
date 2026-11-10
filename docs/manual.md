@@ -420,6 +420,8 @@ petit bouton **ⓘ** suit le nom de l'étape — dans l'en-tête de sa colonne d
 côté de l'étape de chacun de ses **autres** rattachements. Survolez-le, ou atteignez-le par `Tab` : la bulle écrit le
 nom de l'étape, puis sa description. `Entrée` la rouvre après `Échap`. Sans description, il n'y a pas de bouton.
 
+![Le bouton d'information de l'étape « Négociation » survolé, et sa description](manuel/images/naviguer-barre-laterale-onglets-etats/description-etape.jpg)
+
 ### 3.7 Replier la barre latérale
 
 Le bouton en haut de la barre latérale la replie en colonne d'icônes, et la déplie à nouveau. Ce choix vaut **pour la
@@ -4375,6 +4377,8 @@ relance — ceux du catalogue, ou ceux que vous avez surchargés.
   l'écran affiche comme telle. Vider un champ déjà surchargé retire la surcharge. Sous la description, l'aide **cite**
   celle du nœud, que l'étape reprend quand le champ est vide — ou dit que le nœud n'en porte aucune. La description
   paraît ensuite au survol de l'étape, sur le tableau et sur la fiche ([§3.6](#la-description-d-un-track-d-un-channel-ou-d-une-affaire-au-survol)).
+
+  ![La description de l'étape « Négociation », propre à ce workflow, dans le formulaire de surcharge](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/description-etape.jpg)
 - **Désigner l'étape initiale** : le fanion. C'est par elle que les nouvelles affaires entrent. Un
   workflow qui n'en a aucune l'annonce en tête de liste — aucune affaire ne peut y entrer tant
   qu'elle n'est pas désignée.
@@ -4841,6 +4845,8 @@ lignes qui disent ce que l'étape signifie pour une affaire. Elle paraît au sur
 fiche ([§3.6](#la-description-d-un-track-d-un-channel-ou-d-une-affaire-au-survol)), dans **tous** les workflows qui
 emploient ce nœud — sauf là où une étape la remplace par la sienne ([§18](#composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire)).
 Vider le champ la retire. Elle ne s'affiche pas sur la ligne du nœud, qui ne montre que ses attributs courts.
+
+![Le champ de description du nœud « Prospection », dans son formulaire](manuel/images/le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows/description-noeud.jpg)
 
 ### 19.4 Archiver un nœud, et le rétablir
 

@@ -377,6 +377,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows/description-noeud.jpg",
+			"alt": "Le champ de description du nœud « Prospection », dans son formulaire",
+			"width": 1140,
+			"height": 160
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "archiver-un-noeud-et-le-retablir",

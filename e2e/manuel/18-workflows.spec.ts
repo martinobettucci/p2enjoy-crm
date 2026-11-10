@@ -1,3 +1,5 @@
+// @spec CRM-133 (docs/BACKLOG.md) — tranche T4 : l'image de « Description de l'étape », sur « Négociation » surchargée par le
+//       seed (manuel §18 ; docs/SPEC-seed.md §39 ; docs/DESIGN_SYSTEM.md §5.15)
 // @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : la liste des champs porte ceux du seed (docs/SPEC-seed.md §38)
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.4 : les images du chapitre 18, « Composer un workflow : ses étapes, ses
 //       transitions et son formulaire »
@@ -639,4 +641,17 @@ test('les modèles d’affaires', async ({ page }) => {
 	const enregistrer = page.getByTestId('entete-card-enregistrer-modele')
 	await expect(enregistrer).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: S.modeles, nom: 'enregistrer-comme-modele', cibles: [page.getByRole('button', { name: 'Mettre cette affaire en sommeil' }), enregistrer] })
+})
+
+test('CRM-133 : la description d’une étape, dans le formulaire de surcharge', async ({ page }) => {
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto(EDITEUR)
+	await page.getByRole('button', { name: 'Surcharger Négociation' }).click()
+	const formulaire = page.getByTestId('formulaire-surcharge')
+	const champ = formulaire.getByLabel('Description de l’étape')
+	await expect(champ).toHaveValue(/Proposition chiffrée envoyée/)
+	// Centré, et non seulement rendu visible : collé au bas de la fenêtre, il en débordait d'un pixel (garde de `illustrer`).
+	await champ.evaluate((element) => element.scrollIntoView({ block: 'center' }))
+	// Le bloc entier — libellé, champ et aide qui cite le nœud —, et non le seul champ : sinon le libellé est coupé.
+	await illustrer(page, { chapitre: CHAPITRE, section: S.etapes, nom: 'description-etape', cibles: [champ.locator('xpath=..')] })
 })

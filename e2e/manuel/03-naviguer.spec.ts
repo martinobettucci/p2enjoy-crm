@@ -1,3 +1,5 @@
+// @spec CRM-133 (docs/BACKLOG.md) — tranche T4 : l'image du bouton d'information d'une étape décrite par le seed (manuel §3.6 ;
+//       docs/SPEC-seed.md §39 ; docs/DESIGN_SYSTEM.md §5.58)
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.1 : les images du chapitre 3, « Naviguer : barre latérale, onglets, états »
 // @spec docs/SPEC-manual.md §11.1, §11.2, §13 (l'aide, ses états) ; docs/manual.md chapitre 3
 // @spec docs/DESIGN_SYSTEM.md §5.12 (la coquille), §5.62 (le fil d'Ariane), §5.69 (l'aide)
@@ -252,5 +254,23 @@ test('les commandes grisées d’une lectrice', async ({ page }) => {
 		section: 'les-commandes-grisees-ce-que-votre-role-vous-laisse-faire',
 		nom: 'reglages-lectrice',
 		cibles: [entree.locator('xpath=ancestor::li[1]')],
+	})
+})
+
+test('CRM-133 : la description d’une étape, au survol de son bouton d’information', async ({ page }) => {
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto(BOARD)
+	// Le seed surcharge la description de l'étape « Négociation » (docs/SPEC-seed.md §39.1).
+	const bouton = page.getByRole('button', { name: 'Description de l’étape Négociation' })
+	await bouton.hover()
+	const bulle = page.getByTestId('infobulle')
+	await expect(bulle).toContainText('Proposition chiffrée envoyée')
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: 'la-description-d-un-track-d-un-channel-ou-d-une-affaire-au-survol',
+		nom: 'description-etape',
+		// Le titre de la colonne avec son bouton, puis la bulle : le nom de l'étape ne doit pas être coupé. Le parent direct
+		// du bouton est l'enveloppe `contents` de l'infobulle, sans boîte : la ligne du titre est un cran plus haut.
+		cibles: [bouton.locator('xpath=../..'), bulle],
 	})
 })

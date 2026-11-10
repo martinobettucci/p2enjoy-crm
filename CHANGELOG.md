@@ -62,7 +62,7 @@ d'exécuter le code attendu.
 - **Le connecteur MCP classe aussi** (famille `messagerie`) : `crm_mail_classification_candidates` liste les affaires candidates, et `crm_mail_classify` range le message.
 - Déploiement : `docs/PROD_MIGRATIONS.md` §2.36. D'abord la migration 172, puis la webapp et l'image `mcp`.
 
-#### `CRM-133` — une description sur le nœud du catalogue, surchargeable par l'étape (décisions 869, 870 et 882) — *tranches T1 à T3, seed de T4, l'unité en cours*
+#### `CRM-133` — une description sur le nœud du catalogue, surchargeable par l'étape (décisions 869, 870 et 882) — *tranches T1 à T4*
 
 - **Un nœud du catalogue peut porter une description**, et une étape d'un workflow la surcharger, comme son libellé ; une
   surcharge vide rend celle du nœud. La surcharge suit les versions, la copie vers un track, la restauration, les

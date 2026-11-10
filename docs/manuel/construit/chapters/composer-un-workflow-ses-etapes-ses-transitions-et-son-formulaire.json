@@ -2343,6 +2343,13 @@
 								"text": ")."
 							}
 						]
+					},
+					{
+						"type": "image",
+						"src": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/description-etape.jpg",
+						"alt": "La description de l'étape « Négociation », propre à ce workflow, dans le formulaire de surcharge",
+						"width": 836,
+						"height": 169
 					}
 				],
 				[

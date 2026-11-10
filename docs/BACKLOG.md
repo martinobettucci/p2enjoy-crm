@@ -18891,8 +18891,7 @@ Rien à livrer : outillage et documentation.
 
 ## Demande du 2026-11-07 — une description pour les étapes de workflow (décision 869)
 
-### CRM-133 — Une description sur le nœud du catalogue, surchargeable par l'étape d'un workflow `[@]`
-*Prise en charge : session interactive 4891a451 (p2enjoy-crm-32, ex-2f) depuis 2026-11-07 09:56 UTC — état avant : [ ] ; confiée par la session de livraison (be)*
+### CRM-133 — Une description sur le nœud du catalogue, surchargeable par l'étape d'un workflow `[P]`
 
 **Origine** : un assistant connecté n'a pas pu enregistrer la description d'une étape (« À qualifier ») ; arbitrée le
 2026-11-07 (décision 869).
@@ -18930,18 +18929,27 @@ d'étape, cases existantes ; au catalogue de `docs/SPEC-mcp.md` §9.2, dans une 
       travers le Caddy de la cellule (`test_integration_workflows.py` : écrite puis relue sous l'administratrice, refusée
       par le CRM au business developer). Manuel §33 (famille « Workflows »). Sous-ensemble de ce périmètre. **Image `mcp`
       modifiée.**
-- [~] **T4 — seed, manuel, contrat** : description de « Prospection », surcharge de « Négociation » avant la copie ;
+- [x] **T4 — seed, manuel, contrat** : description de « Prospection », surcharge de « Négociation » avant la copie ;
       `docs/SPEC-seed.md` ; manuel et images ; `docs/PROD_MIGRATIONS.md`.
       *Seed vérifié en développement le 2026-11-10* : `supabase/seed/apply-seed.sh` (§39, avant la copie ; relecture de la
       copie) ; deux `./resetMe.sh` (accord des sessions a8, 75 et ee) : l'empreinte du workflow par défaut `038a7730…` sur
       les deux, inchangée par un second passage, la copie non divergente ; `0037` révisée sur cette valeur, `0163` publie sa
       propre version de base (le seed photographie désormais la surcharge) ; 57 suites pgTAP workflows et audit sans
       échec ; `verify-seed.sh` 52 ; E2E `description-etapes` (comptes du seed), `infobulle-description` et `board` 39/39.
-      **Reste** : les images du manuel (§3.6, §18, §19) sur ces données ; le contrat (rien de neuf : le seed n'existe qu'en
-      développement).
+      *Manuel vérifié le 2026-11-10* : trois images sur les données du seed — le bouton d'information de « Négociation »
+      survolé (§3.6), « Description de l'étape » dans la surcharge (§18.5), le champ de description de « Prospection »
+      (§19.3) —, produites par `e2e/manuel/03-naviguer`, `18-workflows` et `19-22-administration` (filtre « CRM-133 »),
+      observées ; `verify-manual.sh` 168 contrôles sans anomalie. Contrat : rien de neuf (le seed n'existe qu'en
+      développement ; la 174, la webapp et l'image `mcp` sont au §3, en avance de leur unité).
 **DoD** : migration et pgTAP (surcharge, repli sur le nœud, droits) ; unitaires ; API ; E2E souris et clavier ; outils du
 connecteur et `verify-mcp.sh` ; seed (une description de nœud, une surcharge) ; captures aux quatre paliers ; manuel ;
 contrat de déploiement.
+**État (2026-11-10, session 32)** : implémentée et vérifiée en développement, tranches T1 à T4 ; les captures observées sont
+sous `e2e/output/CRM-133/`, leur copie versionnée (`docs/captures/CRM-133/`, `CAPTURES_UNITES`) suit dans un commit à part.
+**Reste** : la livraison
+(la 174, la webapp et l'image `mcp`, déjà dans le lot de la session de livraison en avance de leur unité ; `docs/PROD_MIGRATIONS.md`
+§3), et le constat du responsable : la description d'un nœud et d'une étape saisie dans Réglages, lue au survol sur le
+board et sur la fiche, et par un assistant connecté.
 
 ## Demande du 2026-11-09 — archiver un channel depuis la vue, le retrouver replié (décision 871)
 
