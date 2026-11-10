@@ -18904,3 +18904,28 @@ et image `mail-sync`, livrées ensemble) est écrit avec le code.
 vraie base ; `verify-mail-*` concernés ; écran d'état (le motif paraît) en E2E ; contrat de déploiement ; INC-349 close
 sur ces points.
 
+
+## Demande du 2026-11-10 — les réglages cachés de la messagerie, exposés à l'écran (décision 875)
+
+### CRM-136 — Historique, dossiers relevés (choisis parmi ceux de la boîte), style de classement et quota d'envoi réglables à l'écran `[ ]`
+
+**Origine** : question du responsable sur l'historique non relevé en production ; arbitrée le 2026-11-10 (décision 875).
+**Comportement attendu** :
+- (i) Réglages ▸ Comptes de messagerie entrante règle `backfill_months` (0 à 120), `watch_folders` et `folder_style` ;
+- (ii) à la première connexion d'une boîte, l'écran lit les dossiers réels du serveur IMAP et ouvre une fenêtre de cases à
+  cocher pour choisir les dossiers relevés ;
+- (iii) Réglages ▸ Identités sortantes règle `daily_quota`, y compris le retour à « aucun plafond », ce qui demande de
+  corriger le `coalesce` de `upsert_mail_outbound_identity`.
+**MCP** : **non**, « réglages internes exclusifs UI » (décision 875) : aucun outil, aucune famille de la matrice.
+**Spécification** : à écrire avant le code, en révisant `docs/SPEC-mail-subsystem.md` §21.1 et §22.1, avec une section
+nouvelle :
+- une route interne de `mail-sync` qui liste les dossiers ;
+- son relais par une fonction edge sous le droit d'écriture de la boîte (patron §23) ;
+- ce que « première connexion » veut dire pour une boîte existante, un dossier coché qui disparaît, un historique augmenté
+  après coup.
+
+Elle touche aussi `docs/SCHEMA.md` (migration du quota), `docs/DESIGN_SYSTEM.md` (la fenêtre de cases à cocher), le
+manuel et le contrat de déploiement (migration, image `mail-sync`, fonction edge).
+**DoD** : unitaires webapp et pytest (la liste des dossiers) ; pgTAP (quota remis à `NULL`, refus de droits) ; API avec
+refus de droits par jeton réel ; E2E souris et clavier sur le vrai serveur IMAP de dev (la fenêtre liste les dossiers du
+seed, le choix est relevé) ; seed ; captures aux quatre paliers ; manuel ; contrat de déploiement.

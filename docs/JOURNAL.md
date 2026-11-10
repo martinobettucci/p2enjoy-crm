@@ -39555,3 +39555,30 @@ au journal, comment classer un échec, quel espacement et quand il cesse, où fi
 **Conséquences** : une migration, `0171`, et la nouvelle image `mail-sync`, à livrer **ensemble**. L'image appelle la
 nouvelle fonction. Le §23.1 est révisé : une relève en échec s'écrit. Aucun geste d'écran ne désactive une boîte :
 c'est une limite nommée (§24.1), et une unité à part si le responsable en veut un.
+
+### décision 875 — Les réglages cachés de la messagerie s'exposent à l'écran ; les dossiers se choisissent parmi ceux de la boîte ; aucun outil MCP
+
+*2026-11-10, session 152dd27d (p2enjoy-crm-d9), arbitrage du responsable (conversation et `AskUserQuestion`).*
+**Problème** : quatre options sont acceptées par la base mais aucun écran ni le connecteur ne les envoie
+(`docs/SPEC-mail-subsystem.md` §21.1, §22.1). Sur une boîte entrante : `backfill_months` (historique relevé, 0 à 120 mois,
+défaut 0), `watch_folders` (dossiers relevés, défaut `{INBOX}`) et `folder_style` (dossiers ou libellés, défaut `folder`).
+Sur une identité sortante : `daily_quota` (plafond d'envois par jour, `NULL` = aucun). Le §21.1 les renvoyait à `CRM-054` et
+`CRM-056`, qui ne les ont jamais exposés. Le §22.1 écartait le quota parce que le `coalesce` de
+`upsert_mail_outbound_identity` ne permet pas de revenir à `NULL`. Constat déclencheur : la boîte de production ne relève
+que le courrier depuis son branchement (§20.6 bis.4, `backfill_months = 0`).
+**Décision du responsable** :
+- les trois options de relève s'exposent dans Réglages ▸ Comptes de messagerie entrante ;
+- le quota s'expose dans Réglages ▸ Identités sortantes, dans la même unité, avec la correction de la fonction pour qu'il
+  puisse revenir à « aucun plafond » (choix recommandé, `AskUserQuestion`) ;
+- **les dossiers relevés** : « à la première connexion, expose les dossiers existants et génère une fenêtre de cases à
+  cocher pour choisir quels dossiers ». L'écran lit la liste réelle des dossiers de la boîte et propose une case par
+  dossier ;
+- **MCP : non.** « Ce sont des réglages internes exclusifs UI » : aucun outil, aucune famille, aucune case de la matrice
+  (`docs/SPEC-mcp.md` §6.1).
+**Conséquences** : une unité, `CRM-136`, à spécifier avant le code. La liste des dossiers ne peut venir que du serveur
+IMAP, donc de `mail-sync` : il faut une route interne de lecture et un relais sous autorisation, sur le patron de
+`mail-connection-test` (§23). Le navigateur ne porte jamais le jeton interne. Une migration est probable (quota remis à
+`NULL`), avec une nouvelle image `mail-sync` et une fonction edge, livrées ensemble. La spécification tranchera :
+- ce que « première connexion » veut dire pour une boîte existante, comme celle de production ;
+- le comportement d'un dossier coché qui disparaît du serveur ;
+- l'effet d'un `backfill_months` augmenté sur une boîte déjà relevée.
