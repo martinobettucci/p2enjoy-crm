@@ -9,6 +9,8 @@
 // LES MAILS PRÉPARÉS SONT POSÉS PAR LA VRAIE FONCTION, `prepare_email`, sous le jeton de session de l'administratrice
 // (origine `web`) ; la préparation par le connecteur est prouvée par l'intégration de T3. Chaque scénario retire ce qu'il
 // a posé : ses mails préparés et les envois que la relecture a mis en file.
+// @verifies CRM-139 (docs/BACKLOG.md) — l'inbox s'ouvre ici case « Seulement moi » décochée, `courrier=tous` : le sujet de ces
+//           preuves est ailleurs (docs/SPEC-mail-subsystem.md §27.5)
 
 import { connecterAvecLeLabs, expect, test } from './fixtures'
 import { capturer } from './captures'
@@ -59,7 +61,7 @@ test.afterEach(async ({ request }) => {
 test('l’entrée « Mails préparés » mène à la relecture, et le contenu RELU part en file', async ({ page, request }) => {
 	const id = await preparer(request, 'Proposition à relire', { p_cc: ['copie@exterieur.test'] })
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/inbox')
+	await page.goto('/inbox?courrier=tous')
 	const entree = page.getByTestId('inbox-mails-prepares')
 	await expect(entree).toBeVisible()
 	await expect(entree).toHaveAccessibleName(/Mails préparés : \d+ en attente de relecture/)
@@ -160,7 +162,7 @@ test('à 390 px, la pile mène de l’entrée à la relecture sans défilement h
 	await preparer(request, 'Sur mobile')
 	await page.setViewportSize({ width: 390, height: 844 })
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/inbox')
+	await page.goto('/inbox?courrier=tous')
 	await page.getByTestId('inbox-mails-prepares').click()
 	await page.getByTestId('inbox-mail-prepare').filter({ hasText: 'Sur mobile' }).click()
 	const relecture = page.getByTestId('inbox-relecture')

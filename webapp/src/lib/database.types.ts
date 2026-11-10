@@ -2573,6 +2573,7 @@ export type Database = {
           suggested_card_id: string | null
           to_addresses: string[]
           workspace_id: string
+          concerns_me: boolean | null
           is_read: boolean | null
         }
         Insert: {
@@ -4826,6 +4827,12 @@ export type Database = {
         Args: { workflow_id: string }
         Returns: Json
       }
+      concerns_me: {
+        Args: { "": Database["public"]["Tables"]["mail_messages"]["Row"] }
+        Returns: {
+          error: true
+        } & "the function public.concerns_me with parameter or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache"
+      }
       copy_workflow_to_track: {
         Args: { new_name?: string; track_id: string; workflow_id: string }
         Returns: string
@@ -5012,7 +5019,7 @@ export type Database = {
         }[]
       }
       inbox_arborescence: {
-        Args: never
+        Args: { p_only_me?: boolean }
         Returns: {
           card_id: string
           card_title: string

@@ -10,6 +10,8 @@
 // L'ÉCRAN MET EN FILE, IL N'ENVOIE PAS. Ces scénarios ne déclenchent donc aucun worker : ce qu'ils
 // mesurent, c'est que la file reçoit la bonne ligne. L'aller-retour réel est prouvé par
 // `e2e/mail/envoi.spec.ts`, qui soumet pour de bon.
+// @verifies CRM-139 (docs/BACKLOG.md) — l'inbox s'ouvre ici case « Seulement moi » décochée, `courrier=tous` : le sujet de ces
+//           preuves est ailleurs (docs/SPEC-mail-subsystem.md §27.5)
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -100,7 +102,7 @@ test.describe('composer et répondre (docs/SPEC-mail-subsystem.md §19.6)', () =
 
 	test('depuis l’INBOX : répondre vise la même affaire et cite le message', async ({ page }) => {
 		await connecter(page)
-		await page.goto('/inbox')
+		await page.goto('/inbox?courrier=tous')
 
 		const objetLu = 'Demande de devis — refonte'
 		let objetReponse = ''
@@ -146,7 +148,7 @@ test.describe('composer et répondre (docs/SPEC-mail-subsystem.md §19.6)', () =
 
 	test('un message NON CLASSÉ n’offre pas de réponse : il n’a pas d’affaire', async ({ page }) => {
 		await connecter(page)
-		await page.goto('/inbox')
+		await page.goto('/inbox?courrier=tous')
 
 		await page
 			.getByTestId('inbox-panneau-dossiers')

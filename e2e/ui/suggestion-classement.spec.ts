@@ -25,6 +25,8 @@
 // compteurs d'événements de `scripts/verify-seed-demo.sh` sont des **minorants**, et seul le compte
 // des `created` est exact. L'écart est écrit ici et au §8.8.10 plutôt que masqué par une
 // affirmation de restauration qui serait fausse.
+// @verifies CRM-139 (docs/BACKLOG.md) — l'inbox s'ouvre ici case « Seulement moi » décochée, `courrier=tous` : le sujet de ces
+//           preuves est ailleurs (docs/SPEC-mail-subsystem.md §27.5)
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -47,7 +49,7 @@ async function connecter(page: Page): Promise<void> {
 
 /** Ouvre le message suggéré du seed, par le chemin qu'un utilisateur emprunte. */
 async function ouvrirLeMessageSuggere(page: Page): Promise<void> {
-	await page.goto('/inbox')
+	await page.goto('/inbox?courrier=tous')
 	await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }).click()
 	await page
 		.getByTestId('inbox-panneau-liste')
@@ -84,7 +86,7 @@ test.describe('la suggestion de classement (docs/SPEC-contacts.md §8.8)', () =>
 
 	test('cas b — un message sans suggestion ne rend aucun bloc : le témoin', async ({ page }) => {
 		await connecter(page)
-		await page.goto('/inbox')
+		await page.goto('/inbox?courrier=tous')
 		await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }).click()
 		await page
 			.getByTestId('inbox-panneau-liste')
@@ -146,7 +148,7 @@ test.describe('la suggestion de classement (docs/SPEC-contacts.md §8.8)', () =>
 			expect(ligne?.suggested_card_id).toBe(CARD_SUGGEREE)
 
 			// LE MESSAGE A QUITTÉ « NON CLASSÉS » — c'est le cas f, et il se lit à l'écran.
-			await page.goto('/inbox')
+			await page.goto('/inbox?courrier=tous')
 			await page
 				.getByTestId('inbox-panneau-dossiers')
 				.getByRole('button', { name: /Non classés/ })

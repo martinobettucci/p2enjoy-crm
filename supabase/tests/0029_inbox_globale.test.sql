@@ -5,6 +5,8 @@
 --           les deux droits), §18.3 (l'arborescence), §18.5 (la pièce saine, et elle seule)
 -- @verifies docs/SPEC-permissions-rls.md §5 (Storage), §7.2 preuve de refus n° 9
 -- @verifies docs/JOURNAL.md décision 327
+-- @verifies CRM-139 (docs/BACKLOG.md) — assertions 4 et 6 révisées : l'arborescence prend l'argument `p_only_me`
+--           (docs/SPEC-mail-subsystem.md §27.3 ; docs/SCHEMA.md « Migration de `CRM-139` »)
 --
 -- LA SUITE S'APPUIE SUR LE COURRIER DU SEED (§2.19) : deux messages réellement reçus, l'un classé
 -- par la règle 1, l'autre non classé dans la boîte système. Elle ne les fabrique pas — un message
@@ -62,8 +64,10 @@ select has_function('app', 'boite_du_message_lisible', array['uuid'],
 select has_function('app', 'peut_voir_message', array['uuid'],
 	'3 — la visibilité d''un message existe : sa card, ou sa boîte');
 
-select has_function('public', 'inbox_arborescence', array[]::text[],
-	'4 — l''arborescence de l''inbox existe, et ne prend aucun argument');
+-- RÉVISÉ PAR `CRM-139`, non relâché : l'arborescence prend un argument, `p_only_me`, faux par défaut, si bien qu'un
+-- appel sans argument rend toujours l'arborescence d'avant (docs/SPEC-mail-subsystem.md §27.3).
+select has_function('public', 'inbox_arborescence', array['boolean'],
+	'4 — l''arborescence de l''inbox existe, et ne prend qu''un argument, « seulement moi »');
 
 -- `SECURITY INVOKER` : les compteurs sont ceux de l'APPELANT. Une fonction `DEFINER` aurait
 -- annoncé du courrier introuvable à qui n'y a pas droit (§18.3).
@@ -74,7 +78,7 @@ select is(
 	'5 — l''arborescence s''exécute avec les droits de l''APPELANT, jamais du définisseur');
 
 select ok(
-	not has_function_privilege('anon', 'public.inbox_arborescence()', 'execute'),
+	not has_function_privilege('anon', 'public.inbox_arborescence(boolean)', 'execute'),
 	'6 — l''anonyme ne peut pas l''exécuter');
 
 -- =============================================================================================

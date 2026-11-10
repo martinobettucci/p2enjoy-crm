@@ -27,6 +27,8 @@
 // UNE SEULE EXCEPTION, NOMMÉE : le neuvième scénario substitue un événement `channel_changed`,
 // parce que **rien d'autre ne peut le rendre visible** — la lectrice n'atteint pas le fil de cette
 // card. Il MESURE la clôture d'INC-077 plutôt que de la déduire de la lecture d'un fichier.
+// @verifies CRM-139 (docs/BACKLOG.md) — l'inbox s'ouvre ici case « Seulement moi » décochée, `courrier=tous` : le sujet de ces
+//           preuves est ailleurs (docs/SPEC-mail-subsystem.md §27.5)
 
 import {
 	connecterAvecLeLabs,
@@ -100,7 +102,7 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 	// Plus aucun `401` à consommer : la console doit rester vierge.
 	test('/inbox ouvre « Non classés » en premier, à zéro sans panne (§12.2)', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.goto('/inbox')
+		await page.goto('/inbox?courrier=tous')
 
 		const dossiers = page.getByRole('navigation', { name: 'Dossiers de la messagerie' }).getByRole('button')
 		await expect(dossiers.first()).toContainText(LIBELLES.nonClasses)

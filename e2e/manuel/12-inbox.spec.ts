@@ -6,6 +6,8 @@
 // @spec CRM-128 (docs/BACKLOG.md) — tranches T4 et T5 : les images de la section 12.4 — l'entrée et la liste, la relecture
 //       d'un mail préparé, l'encadré de la fiche — sur les mails du seed (docs/DESIGN_SYSTEM.md §5.90 ;
 //       docs/SPEC-mails-prepares.md §6 ; docs/SPEC-seed.md §37)
+// @spec CRM-139 (docs/BACKLOG.md) — l'image « seulement-moi » de la section 12.2 : la case cochée et les dossiers qu'elle
+//       compte (docs/DESIGN_SYSTEM.md §5.96 ; docs/SPEC-mail-subsystem.md §27.4)
 // @spec CRM-137 (docs/BACKLOG.md) — l'image « classer-expediteur-connu » de la section 12.1 : le sélecteur cherchable et
 //       la case « Expéditeur connu » (docs/DESIGN_SYSTEM.md §5.94 ; docs/SPEC-mail-subsystem.md §26.3)
 // @spec CRM-143 (docs/BACKLOG.md) — tranche T4 : l'image « piece-non-analysee » de la section 12.1 — « Télécharger quand
@@ -15,6 +17,8 @@
 // (classés dans « Refonte du site vitrine »), « Point d'avancement — migration ERP » (suggéré). Rien n'est classé, retiré,
 // endormi ni envoyé : chaque geste est montré puis annulé. Les fichiers joints au formulaire, déposés dans le stockage
 // dès leur choix, sont retirés à la fin comme `e2e/ui/envoi-pieces-jointes.spec.ts` le fait.
+// @verifies CRM-139 (docs/BACKLOG.md) — l'inbox s'ouvre ici case « Seulement moi » décochée, `courrier=tous` : le sujet de ces
+//           preuves est ailleurs (docs/SPEC-mail-subsystem.md §27.5)
 
 import { expect, test, type Page } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -33,7 +37,7 @@ const dossiers = (page: Page) => page.getByTestId('inbox-panneau-dossiers')
 const liste = (page: Page) => page.getByTestId('inbox-panneau-liste')
 
 async function ouvrir(page: Page, dossier: RegExp, objet: string): Promise<void> {
-	await page.goto('/inbox')
+	await page.goto('/inbox?courrier=tous')
 	await dossiers(page).getByRole('button', { name: dossier }).click()
 	await liste(page).getByTestId('inbox-message').filter({ hasText: objet }).first().click()
 	await expect(page.getByTestId('inbox-message-ouvert')).toContainText(objet)
@@ -41,7 +45,7 @@ async function ouvrir(page: Page, dossier: RegExp, objet: string): Promise<void>
 
 test('l’inbox : les dossiers, un fil, le classement', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/inbox')
+	await page.goto('/inbox?courrier=tous')
 	await expect(dossiers(page)).toBeVisible()
 	// L'image d'ouverture montre un dossier déplié et un message lu : les trois panneaux remplis.
 	await dossiers(page).getByRole('button', { name: /Non classés/ }).click()
@@ -196,6 +200,28 @@ test.describe('l’aperçu d’une pièce jointe', () => {
 	})
 })
 
+// `CRM-139` : la case « Seulement moi », cochée à l'ouverture, sans `courrier=tous` : seul le dossier de l'affaire où
+// Camille a écrit est compté (docs/SPEC-mail-subsystem.md §27.5).
+test('seulement moi : la case cochée, et le seul courrier qui vous concerne', async ({ page }) => {
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto('/inbox')
+	const caseMoi = page.getByTestId('inbox-seulement-moi')
+	await expect(caseMoi).toBeEnabled()
+	await expect(caseMoi).toBeChecked()
+	await expect(dossiers(page).getByRole('button', { name: /Refonte du monitoring/ })).toBeVisible()
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: LIRE,
+		nom: 'seulement-moi',
+		cibles: [caseMoi, dossiers(page).getByRole('button', { name: /Refonte du monitoring/ })],
+	})
+	// Le vide de « Non classés » sous la case, et son action.
+	await dossiers(page).getByRole('button', { name: /Non classés/ }).click()
+	const vide = liste(page).getByTestId('etat-vide')
+	await expect(vide).toContainText('Aucun message de ce dossier ne vous concerne')
+	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'seulement-moi-vide', cibles: [vide] })
+})
+
 test('un message non classé, et une suggestion', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
 	await ouvrir(page, /Non classés/, 'Point d’avancement — migration ERP')
@@ -276,7 +302,7 @@ test('écrire depuis une affaire : la copie cachée, les pièces jointes', async
 test('relire un mail préparé : l’entrée, la liste, la relecture, puis l’encadré de la fiche', async ({ page }) => {
 	const SECTION = 'relire-et-envoyer-un-mail-prepare-par-l-assistant'
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/inbox')
+	await page.goto('/inbox?courrier=tous')
 	const entree = dossiers(page).getByTestId('inbox-mails-prepares')
 	await entree.click()
 	const ligne = page.getByTestId('inbox-mail-prepare').filter({ hasText: 'Billetterie : proposition de calendrier' })

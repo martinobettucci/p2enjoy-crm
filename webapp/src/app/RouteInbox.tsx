@@ -49,7 +49,7 @@
 // @spec CRM-137 (docs/BACKLOG.md) — le formulaire de classement porte le sélecteur cherchable et « Expéditeur connu »,
 //       à la place du `select` (docs/DESIGN_SYSTEM.md §5.94 ; docs/SPEC-mail-subsystem.md §26.3 ; décision 893)
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import {
 	CheckCheck,
 	ChevronDown,
@@ -81,6 +81,7 @@ import {
 	idsNonLus,
 	lireCheminCard,
 	lireDossierDuMessage,
+	messageMeConcerne,
 	marquerLus,
 	marquerNonLu,
 	textePastille,
@@ -126,6 +127,17 @@ import { FormulaireEnvoi } from './FormulaireEnvoi'
 import { SelecteurClassement, lecteurBase } from './SelecteurClassement'
 import type { Candidate } from '../lib/candidats-classement'
 import { ListePiecesJointes } from './PiecesJointes'
+import { CaseSeulementMoi, ExplicationSeulementMoi, VideSeulementMoi } from './SeulementMoi'
+import { useAuthentification } from './Authentification'
+import {
+	CLE_URL_COURRIER,
+	ecrireModeCourrier,
+	filtreApplique,
+	lireModeCourrier,
+	lirePresenceIdentite,
+	type ModeCourrier,
+	type PresenceIdentite,
+} from '../lib/seulement-moi'
 
 /** Le panneau visible sous 1024 px. Sur grand écran, les trois sont montrés ensemble. */
 type Etage = 'dossiers' | 'liste' | 'message'
@@ -542,7 +554,15 @@ function PanneauDossiers({
 	preparesChoisis,
 	onChoisirPrepares,
 	refEntreePrepares,
+	courrier,
 }: {
+	/** `CRM-139` (§5.96) : la case « Seulement moi », dans l'en-tête des dossiers. */
+	readonly courrier: {
+		readonly mode: ModeCourrier
+		readonly presence: PresenceIdentite
+		readonly onMode: (mode: ModeCourrier) => void
+		readonly onReprise: () => void
+	}
 	readonly etat: EtatAsync<ArbreInbox>
 	readonly selection: Selection | null
 	readonly onChoisir: (choix: Selection) => void
@@ -563,13 +583,24 @@ function PanneauDossiers({
 		})
 	}, [])
 
+	const idAideCourrier = useId()
 	return (
 		<Panneau
 			id="dossiers"
 			titre={t('inbox.folders.title')}
 			visible={visible}
 			classe="lg:w-[var(--size-inbox-folders)] lg:shrink-0 lg:border-r lg:border-border w-full"
+			entete={
+				// LA CASE QUALIFIE L'ARBORESCENCE ET LA LISTE : elle se lit avant elles, et reste rendue sur un vide (§5.96).
+				<CaseSeulementMoi
+					mode={courrier.mode}
+					presence={courrier.presence}
+					onMode={courrier.onMode}
+					idAide={idAideCourrier}
+				/>
+			}
 		>
+			<ExplicationSeulementMoi presence={courrier.presence} idAide={idAideCourrier} onReprise={courrier.onReprise} />
 			{etat.statut === 'chargement' ? (
 				<SkeletonListe lignes={5} libelle={t('state.loading.aria')} />
 			) : null}
@@ -663,7 +694,13 @@ function PanneauListe({
 	maintenant,
 	onToutMarquer,
 	erreurMarquage,
+	filtreCourrier,
+	onToutAfficher,
 }: {
+	/** `CRM-139` (§27.4) : le filtre « Seulement moi » s'applique-t-il à cette liste ? */
+	readonly filtreCourrier: boolean
+	/** Le geste du vide sous le filtre : décocher la case. */
+	readonly onToutAfficher: () => void
 	readonly etat: EtatAsync<PageMessages>
 	readonly selection: Selection | null
 	readonly idOuvert: string | null
@@ -762,6 +799,10 @@ function PanneauListe({
 								/>
 							}
 						/>
+					) : filtreCourrier ? (
+						// `CRM-139` (§5.96) : un vide sous le filtre porte le geste qui le lève. Le sommeil, jugé après le filtre,
+						// garde son propre vide ci-dessus.
+						<VideSeulementMoi onToutAfficher={onToutAfficher} />
 					) : (
 						<EtatVide titre={t('inbox.list.empty.title')} corps={t('inbox.list.empty.body')} />
 					)
@@ -1946,8 +1987,61 @@ export function RouteInbox() {
 		}
 	}, [demandeInitiale, setParametresUrl])
 
-	const arbre = useArborescence(clientCrm)
-	const liste = useMessages(clientCrm, selection)
+	// `CRM-139` — « SEULEMENT MOI » (docs/SPEC-mail-subsystem.md §27.4). Un CONTRÔLE de l'écran, comme `sommeil` : il
+	// reste dans l'adresse, sous la clé `courrier`, et rien n'est stocké sur l'appareil. Le filtre ne s'applique qu'avec
+	// une identité personnelle ; tant que sa présence n'est pas lue, l'arborescence et la liste attendent.
+	const modeCourrier: ModeCourrier = lireModeCourrier(parametresUrl.get(CLE_URL_COURRIER))
+	const changerModeCourrier = useCallback(
+		(suivant: ModeCourrier) => {
+			// Un geste de l'utilisateur : « Précédent » le défait, comme la bascule de sommeil.
+			setParametresUrl((precedents) => ecrireModeCourrier(precedents, suivant))
+		},
+		[setParametresUrl],
+	)
+	const { etat: etatSession } = useAuthentification()
+	const idUtilisateur = etatSession.statut === 'authentifie' ? etatSession.utilisateur.id : null
+	const [presence, setPresence] = useState<PresenceIdentite>('chargement')
+	const [essaiPresence, setEssaiPresence] = useState(0)
+	useEffect(() => {
+		// SANS SESSION, PERSONNE N'A D'IDENTITÉ : le filtre ne s'applique pas. Seule une session en cours d'ouverture fait
+		// attendre l'écran.
+		if (etatSession.statut === 'anonyme') {
+			setPresence('aucune')
+			return
+		}
+		if (idUtilisateur === null) return
+		let vivant = true
+		setPresence('chargement')
+		void lirePresenceIdentite(clientCrm, idUtilisateur).then((lue) => {
+			if (vivant) setPresence(lue)
+		})
+		return () => {
+			vivant = false
+		}
+	}, [etatSession.statut, idUtilisateur, essaiPresence])
+	const filtreCourrier = filtreApplique(modeCourrier, presence)
+
+	// L'ADRESSE D'UN MESSAGE L'EMPORTE SUR LA CASE (§27.4) : la palette mène à un message, jamais à un panneau vide. Le
+	// message demandé est retenu à l'amorce ; dès que le filtre est connu et s'il s'applique, on demande à la base si ce
+	// message concerne la personne, et la case passe décochée s'il ne la concerne pas. Une seule fois.
+	const messageAVerifier = useRef<string | null>(demandeInitiale)
+	useEffect(() => {
+		const id = messageAVerifier.current
+		if (id === null || id === '' || filtreCourrier === null) return
+		messageAVerifier.current = null
+		if (!filtreCourrier) return
+		let vivant = true
+		void messageMeConcerne(clientCrm, id).then((concerne) => {
+			if (!vivant || concerne !== false) return
+			setParametresUrl((precedents) => ecrireModeCourrier(precedents, 'tous'), { replace: true })
+		})
+		return () => {
+			vivant = false
+		}
+	}, [filtreCourrier, setParametresUrl])
+
+	const arbre = useArborescence(clientCrm, filtreCourrier)
+	const liste = useMessages(clientCrm, selection, filtreCourrier)
 	const message = useMessage(clientCrm, idOuvert)
 	const fils = useFilsEndormis(clientCrm)
 
@@ -2121,6 +2215,12 @@ export function RouteInbox() {
 					preparesChoisis={preparesChoisis}
 					onChoisirPrepares={choisirPrepares}
 					refEntreePrepares={refEntreePrepares}
+					courrier={{
+						mode: modeCourrier,
+						presence,
+						onMode: changerModeCourrier,
+						onReprise: () => setEssaiPresence((n) => n + 1),
+					}}
 				/>
 				{preparesChoisis ? (
 					<>
@@ -2162,6 +2262,8 @@ export function RouteInbox() {
 					maintenant={maintenant}
 					onToutMarquer={toutMarquerLu}
 					erreurMarquage={erreurLectureListe}
+					filtreCourrier={filtreCourrier === true}
+					onToutAfficher={() => changerModeCourrier('tous')}
 				/>
 				<PanneauMessage
 					etat={message.etat}

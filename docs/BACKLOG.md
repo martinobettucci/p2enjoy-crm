@@ -19073,8 +19073,7 @@ reste sinon) ; E2E souris et clavier (non lu, sommeil, effacer, annuler, restaur
 
 ## Demande du 2026-11-10 — l'inbox, par défaut, ne montre que mes mails (décision 879)
 
-### CRM-139 — Inbox : une case « Seulement moi », cochée par défaut, sur les adresses d'expédition personnelles `[@]`
-*Prise en charge : session interactive 152dd27d (p2enjoy-crm-a8) depuis 2026-11-10 16:02 UTC — état avant : [ ] ; file confirmée par la session de livraison (ee)*
+### CRM-139 — Inbox : une case « Seulement moi », cochée par défaut, sur les adresses d'expédition personnelles `[P]`
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 879).
 **Comportement attendu** :
@@ -19094,6 +19093,30 @@ migration gardée dans le scratchpad jusqu'au `[P]`). Le manuel (inbox) suivra a
 illisible jamais rendu) ; E2E souris et clavier (case cochée, décochée, personne sans identité) ; outil du connecteur et
 `verify-mcp.sh` ; seed (deux identités personnelles d'une même personne, un message à chacune, un message qui ne lui est
 pas adressé) ; captures aux quatre paliers ; manuel.
+
+*Faite le 2026-11-10, vérifiée en développement (session a8)*. Le design system a été lu par sections ciblées
+(décision 901), pas intégralement.
+- **base** : migration `0175`, `concerns_me` (colonne calculée, paramètre sans nom) et `inbox_arborescence(p_only_me)`.
+  pgTAP `0164` **16/16** ; `0029` révisée (signature) **22/22** ; `0095` **32/32** et `0143` **8/8** inchangées ;
+- **API** : `e2e/api/seulement-moi.spec.ts` **6/6** par jetons réels. Il prouve l'oracle par les adresses, les compteurs,
+  deux identités (prêtée puis retirée), Driss, la lectrice à qui le filtre n'ouvre rien, et l'anonyme ;
+- **écran** : la case dans l'en-tête des dossiers, l'état dans l'adresse (`courrier=tous`), l'attente de la lecture des
+  identités, l'état désactivé (aucune identité, échec et reprise), le vide et son action, l'adresse d'un message qui
+  décoche. Unitaires **17** nouveaux (`seulement-moi.test.ts`, `RouteInbox.seulementMoi.test.tsx`), inbox existants
+  **95/95**, i18n vert, typecheck vert ;
+- **E2E souris et clavier** : `e2e/ui/seulement-moi.spec.ts` **5/5** (quatre paliers). Le sous-ensemble de l'inbox
+  adapté à `courrier=tous` est **117/117** ; trois scénarios adressables d'`inbox.spec.ts` ont été révisés, car l'adresse
+  garde `courrier=tous` après le retrait de `message` ;
+- **captures** observées dans `docs/captures/CRM-139/` : la case tient sur la ligne d'en-tête à 390 px, le vide porte son
+  action, et la case désactivée reste lisible ;
+- **connecteur** : `only_me` sur `crm_card_mail_list`. pytest unitaires **343**, et deux preuves d'intégration (l'oracle de
+  Driss, la note de la lectrice). `scripts/verify-mcp.sh` **112/112**, intégration **92/92** ;
+- **manuel** : « Seulement moi » au §12.2, avec deux images. Le §33 décrit aussi le classement par le connecteur
+  (`CRM-137`), et le §33.6 ne le dit plus absent. `scripts/verify-manual.sh` ne relève rien de l'unité ; les six
+  anomalies restantes viennent de `CRM-143` et `CRM-133`, et leurs sessions sont prévenues ;
+- **seed** inchangé (§27.5, révisé à l'écriture du code).
+Reste : la livraison (`docs/PROD_MIGRATIONS.md`, avec le lot que décide la session de livraison) et le constat du
+responsable.
 
 ## Demande du 2026-11-10 — rendre les liens, et les images à la demande (décision 881)
 

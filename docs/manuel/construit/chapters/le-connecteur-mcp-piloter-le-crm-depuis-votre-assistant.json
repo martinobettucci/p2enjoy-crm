@@ -375,7 +375,7 @@
 							},
 							{
 								"type": "text",
-								"text": " : lecture des fils ; préparer un email compte comme « ajouter », et l'envoi se fait toujours dans le\nCRM, par vous."
+								"text": " : lecture des fils ; préparer un email compte comme « ajouter », et l'envoi se fait toujours dans le\nCRM, par vous ; classer un email dans une affaire compte comme « modifier »."
 							}
 						]
 					}
@@ -3498,7 +3498,120 @@
 										},
 										{
 											"type": "text",
-											"text": ") ; le lire par l'assistant ne le marque pas lu, et aucun outil\nne change cet état ;"
+											"text": ") ; le lire par l'assistant ne le marque pas lu, et aucun outil\nne change cet état. Sur votre demande, l'assistant peut ne lister que les emails "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "qui vous concernent"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", comme la case\nde l'inbox ("
+										},
+										{
+											"type": "link",
+											"target": {
+												"chapter": "l-inbox-lire-trier-et-repondre",
+												"anchor": "l-inbox-lire-et-trier-le-courrier-recu"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "chapitre 12.2"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ") ; sinon, il lit le courrier entier de l'affaire ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Consulter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " (classement) : "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "les affaires où ranger un email"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", comme le formulaire de classement de l'inbox\n("
+										},
+										{
+											"type": "link",
+											"target": {
+												"chapter": "l-inbox-lire-trier-et-repondre",
+												"anchor": "l-inbox-lire-et-trier-le-courrier-recu"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "chapitre 12.2"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ") — d'abord celles dont un contact porte l'adresse de\nl'expéditeur, cherchables par leur titre, leur track ou leur channel ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Modifier"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "classer un email dans une affaire"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ". Il faut pouvoir écrire sur l'affaire, et une affaire archivée ou en\ncorbeille est refusée, comme à l'écran ;"
 										}
 									]
 								}
@@ -3743,13 +3856,13 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "classer, déclasser ou mettre en sommeil"
+							"text": "retirer un email de son affaire, ou mettre un fil en sommeil"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " un fil de la boîte de réception ;\n"
+					"text": ", dans la boîte de réception ;\n"
 				},
 				{
 					"type": "strong",

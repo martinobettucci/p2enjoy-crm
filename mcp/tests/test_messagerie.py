@@ -24,6 +24,9 @@
 #           confirmation posée sous le jeton de la personne AVANT la lecture ; `crm_mail_prepare` qui joint des fichiers
 #           — décodés et bornés avant tout dépôt, déposés sous le jeton au chemin `<espace>/<personne>/<aléa>/<nom>`, leurs
 #           chemins passés à `prepare_email`, retirés si rien n'est préparé (docs/SPEC-pieces-jointes.md §17.6)
+# @verifies CRM-139 (docs/BACKLOG.md) — `only_me` sur `crm_card_mail_list` : faux par défaut, vrai il demande la
+#           colonne calculée `concerns_me` à la base, et sans identité personnelle la réponse vide le dit ;
+#           docs/SPEC-mcp.md §9.2 duodevicies ; docs/SPEC-mail-subsystem.md §27.2 ; décision 902
 """Le CRM simulé rend le fil d'une affaire (un message texte, un message HTML seul, une pièce jointe), un message d'une
 autre affaire, et trois identités dont celle d'une collègue ; la vraie base est éprouvée par
 `tests/test_integration_messagerie.py`."""
@@ -724,3 +727,34 @@ async def test_un_depot_refuse_ou_une_preparation_refusee_retire_ce_qui_a_ete_de
         await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
                                             "attachments": [{"filename": "a.txt", "content_base64": un}]})
     assert monde.simule.fonctions.count("prepare_email") == 1, "rien n'est préparé quand un dépôt est refusé"
+
+
+async def test_only_me_est_faux_par_defaut_et_le_fil_reste_entier(monde: Monde) -> None:
+    await monde.appel("crm_card_mail_list", {"card_id": CARD})
+    lecture = next(p for n, p in monde.simule.lectures if n == "mail_messages" and "order" in p)
+    assert "concerns_me" not in lecture
+
+
+async def test_only_me_demande_concerns_me_a_la_base(monde: Monde) -> None:
+    fil = await monde.appel("crm_card_mail_list", {"card_id": CARD, "only_me": True})
+    lecture = next(p for n, p in monde.simule.lectures if n == "mail_messages" and "order" in p)
+    # LE FILTRE EST CELUI DE LA BASE, sous les droits de la personne : le connecteur ne compare aucune adresse.
+    assert lecture["concerns_me"] == "is.true"
+    assert fil["messages"] and fil["note"].startswith("Read an attachment")
+
+
+async def test_only_me_sans_identite_personnelle_le_dit(monde: Monde) -> None:
+    monde.simule.messages = lambda: []  # type: ignore[method-assign]
+    monde.simule.identites = []
+    fil = await monde.appel("crm_card_mail_list", {"card_id": CARD, "only_me": True})
+    assert fil["messages"] == []
+    assert fil["note"] == "You have no personal sending address: no email concerns you. Call again without only_me."
+    lecture = next(p for n, p in monde.simule.lectures if n == "mail_outbound_identities")
+    assert lecture["owner_id"].startswith("eq.")
+
+
+async def test_only_me_vide_avec_une_identite_ne_dit_rien_de_plus(monde: Monde) -> None:
+    monde.simule.messages = lambda: []  # type: ignore[method-assign]
+    fil = await monde.appel("crm_card_mail_list", {"card_id": CARD, "only_me": True})
+    assert fil["messages"] == []
+    assert fil["note"].startswith("Read an attachment")

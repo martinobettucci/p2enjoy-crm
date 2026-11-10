@@ -3101,6 +3101,28 @@ nombre, juste avant ce total, et le nom du dossier passe en gras.
 
 ![L'entrée Inbox de la barre latérale et le dossier « Non classés », en tête des dossiers](manuel/images/l-inbox-lire-trier-et-repondre/dossiers.jpg)
 
+**Seulement moi.** Au-dessus des dossiers, la case « **Seulement moi** » est cochée quand vous ouvrez l'inbox. Elle ne
+montre alors que le courrier qui **vous concerne** : les messages adressés à l'une de **vos adresses d'expédition** (en
+destinataire, en copie ou en copie cachée), et ceux que vous avez envoyés depuis elles. Les nombres des dossiers suivent
+la case, et une affaire dont aucun message ne vous concerne n'apparaît pas. Une conversation n'y montre que ses messages
+qui vous concernent.
+
+- **Décochez-la** pour voir tout le courrier que vous pouvez lire, comme avant. La case garde son état si vous rechargez
+  la page, et un lien vers l'inbox le garde aussi.
+- **Un dossier vide** sous la case le dit : « Aucun message de ce dossier ne vous concerne », avec « **Afficher tout le
+  courrier** », qui la décoche.
+- **Un message trouvé par la recherche** s'ouvre toujours : s'il ne vous concerne pas, la case se décoche d'elle-même.
+- **Sans adresse d'expédition personnelle**, la case est grisée et décochée, et l'inbox montre tout. Le lien « **Ajouter
+  une adresse d'expédition** » mène aux identités sortantes, où vous pouvez déclarer la vôtre. L'adresse de service de
+  l'espace de travail n'est l'adresse de personne : elle ne compte jamais.
+
+La case ne change pas ce que vous avez le **droit** de lire : elle choisit seulement ce qui s'affiche. La fiche d'une
+affaire, elle, montre toujours son courrier entier.
+
+![La case « Seulement moi », cochée : seul le dossier de l'affaire où vous avez écrit est compté](manuel/images/l-inbox-lire-trier-et-repondre/seulement-moi.jpg)
+
+![« Non classés » sous la case : « Aucun message de ce dossier ne vous concerne », et « Afficher tout le courrier »](manuel/images/l-inbox-lire-trier-et-repondre/seulement-moi-vide.jpg)
+
 **Qui voit quoi.** Un message déjà rangé dans une affaire se lit comme l'affaire : si vous pouvez
 la lire, vous lisez son courrier. Un message **non classé**, lui, n'appartient encore à aucune
 affaire : il est visible par le **propriétaire de la boîte** où il est arrivé, et par les
@@ -6394,7 +6416,7 @@ Les dix familles, et ce que chacune couvre :
 - **Temps** : saisies de temps, et le coût du personnel en lecture ;
 - **Objectifs** : tableaux d'objectifs ;
 - **Messagerie** : lecture des fils ; préparer un email compte comme « ajouter », et l'envoi se fait toujours dans le
-  CRM, par vous.
+  CRM, par vous ; classer un email dans une affaire compte comme « modifier ».
 
 Les quatre actions sont **Consulter**, **Ajouter**, **Modifier** et **Supprimer**. « Supprimer » place en corbeille ou
 archive, avec une seule exception : **retirer une étape ou une transition d'un workflow** (« Workflows ▸ Supprimer »)
@@ -6684,7 +6706,13 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     Une pièce reconnue dangereuse, en cours d'analyse ou trop volumineuse ne se lit jamais. Quand
     l'expéditeur n'a écrit qu'en HTML, le texte en est extrait comme à l'écran, et l'assistant le sait. Chaque email dit
     aussi s'il est **lu ou non lu pour vous** ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)) ; le lire par l'assistant ne le marque pas lu, et aucun outil
-    ne change cet état ;
+    ne change cet état. Sur votre demande, l'assistant peut ne lister que les emails **qui vous concernent**, comme la case
+    de l'inbox ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)) ; sinon, il lit le courrier entier de l'affaire ;
+  - *Consulter* (classement) : **les affaires où ranger un email**, comme le formulaire de classement de l'inbox
+    ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)) — d'abord celles dont un contact porte l'adresse de
+    l'expéditeur, cherchables par leur titre, leur track ou leur channel ;
+  - *Modifier* : **classer un email dans une affaire**. Il faut pouvoir écrire sur l'affaire, et une affaire archivée ou en
+    corbeille est refusée, comme à l'écran ;
   - *Ajouter* : **préparer un email depuis une affaire**. L'assistant rédige un email entièrement libre, rattaché à son
     affaire : destinataires, copie, **copie cachée**, objet et texte. Il peut répondre à un email **de cette affaire** ;
     l'objet est alors repris, précédé de « Re: ». Il peut **joindre des fichiers** : dix au plus, 10 Mo en tout ; vous les
@@ -6705,7 +6733,7 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
 ### 33.6 Ce que le connecteur n'offre pas
 
 Toutes les familles ont leurs outils. Restent des gestes de l'écran : **envoyer** — l'assistant prépare, joint des fichiers,
-mais c'est vous qui envoyez ; **classer, déclasser ou mettre en sommeil** un fil de la boîte de réception ;
+mais c'est vous qui envoyez ; **retirer un email de son affaire, ou mettre un fil en sommeil**, dans la boîte de réception ;
 **les modèles et les séquences** de relance.
 
 ## 34. Les webhooks : prévenir vos autres outils

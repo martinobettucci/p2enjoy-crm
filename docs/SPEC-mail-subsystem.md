@@ -3667,9 +3667,12 @@ Non livré, et nommé :
 ### 27.2 `public.concerns_me` — le contrat
 
 ```
-public.concerns_me(m public.mail_messages) returns boolean
+public.concerns_me(public.mail_messages) returns boolean
 ```
 
+- **Son paramètre n'a pas de nom** (*précisé à l'écriture du code*) : c'est ce qui en fait une **colonne calculée** de
+  `mail_messages` pour PostgREST et pour le générateur de types, comme `is_read` (§18 bis.3). La liste la lit et la
+  filtre par son nom, `concerns_me`.
 - **`sql`, `stable`, `security invoker`, `search_path` vidé.** Elle lit les identités de l'appelant sous la RLS
   (`mail_outbound_identities_lecture_proprietaire`), en filtrant explicitement `owner_id = auth.uid()`. Un
   administrateur lit aussi les identités des autres (`…_lecture_admin`), et ce filtre explicite les écarte.
@@ -3722,18 +3725,24 @@ La forme est au §5.96 du design system. Le comportement :
 
 ### 27.5 Données de développement
 
-Le seed démontre l'unité par le même mécanisme qu'aujourd'hui (`docs/SPEC-seed.md` §2.19 : des messages réellement
-soumis au serveur de courrier de développement, puis relevés). Le détail est écrit à l'écriture du code, dans
-`docs/SPEC-seed.md` :
-- **une seconde identité personnelle** pour l'administratrice (`admin@p2enjoy.test` en a déjà une), créée par le même
-  chemin que la première ;
-- **deux messages non classés**, chacun adressé en copie à l'une de ses deux adresses, d'un expéditeur qui n'est le
-  contact d'**aucune** affaire, pour ne créer aucune suggestion (règle 3) et ne rien changer à `CRM-060` ni à
-  `CRM-137` ;
-- **« Candidature spontanée »**, déjà seedé, ne la concerne pas : c'est le message qui disparaît quand la case est cochée.
+*Révisé le 2026-11-10 à l'écriture du code.* La première rédaction promettait une seconde identité personnelle à
+l'administratrice, et deux messages qui la concernent. Mesuré : quatre preuves comptent **exactement trois identités**
+(`e2e/api/identites-sortantes.spec.ts`, pgTAP `0025`, `0030` et `0135`), et le seed démontre déjà la case. **Le seed ne
+change donc pas** :
+- **Camille** (`admin@p2enjoy.test`, sa seule identité) a envoyé la proposition de démonstration, classée dans
+  « Refonte du monitoring — Vertuo ». Case cochée, c'est le seul dossier compté, avec ce seul message ;
+- **« Non classés »** ne la concerne pas : ses messages sont adressés à la seule boîte système. Case cochée, le dossier est
+  à zéro, et son vide porte l'action « Afficher tout le courrier » ;
+- **la lectrice** n'a aucune identité : la case est désactivée et explique.
 
-**Les preuves existantes de l'inbox** qui ne portent pas sur ce filtre ouvrent l'inbox avec `courrier=tous`. Leur sujet
-est ailleurs, et elles gardent ce qu'elles montraient.
+**Le cas de plusieurs identités** est monté et défait par les preuves, comme celui de `CRM-137` (§26.4). Le pgTAP crée
+une seconde identité dans sa transaction. L'E2E API prête une identité à Camille et à la lectrice par la clé de service,
+puis les retire.
+
+**Les preuves existantes de l'inbox** qui ne portent pas sur ce filtre ouvrent l'inbox avec `courrier=tous` : leur sujet
+est ailleurs. Celles qui ouvrent un message par `?message=` restent telles quelles, puisque l'adresse du message
+l'emporte sur la case. Celles qui n'emploient l'inbox que comme une page quelconque (l'aide, la barre des channels, la
+navigation du manuel) ne changent pas.
 
 ### 27.6 Preuves
 

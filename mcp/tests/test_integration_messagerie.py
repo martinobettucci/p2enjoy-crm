@@ -16,6 +16,9 @@
 # @verifies CRM-137 (docs/BACKLOG.md) — les deux outils du classement, `crm_mail_classification_candidates` et
 #           `crm_mail_classify` : succès et journal, refus par la matrice, refus par le CRM malgré la matrice ouverte ;
 #           docs/SPEC-mcp.md §9.2 septendecies, §13 ; docs/SPEC-mail-subsystem.md §26.2, §26.5 ; décision 891
+# @verifies CRM-139 (docs/BACKLOG.md) — `only_me` sur `crm_card_mail_list`, contre la vraie base : les seuls messages qui
+#           concernent Driss, égaux à un oracle lu par la clé de service ; la lectrice sans identité reçoit la note ;
+#           docs/SPEC-mcp.md §9.2 duodevicies ; docs/SPEC-mail-subsystem.md §27.2 ; décision 902
 # @verifies CRM-143 (docs/BACKLOG.md) — tranche T5 : une pièce non analysée refusée sans accusé, lue avec, la confirmation de
 #           Driss écrite en base sous son propre jeton ; un mail préparé avec deux pièces, déposées par le connecteur sous le
 #           jeton de Driss dans `<espace>/<Driss>/…`, que le mail préparé cite ; docs/SPEC-pieces-jointes.md §17.6, §17.9
@@ -485,3 +488,42 @@ async def test_driss_prepare_un_mail_avec_deux_pieces_deposees_sous_son_jeton_et
         if chemins:
             await _sous_cle_de_service("DELETE", f"{API}/storage/v1/object/mail-outbound-attachments",
                                        json={"prefixes": chemins})
+
+
+
+async def test_only_me_rend_les_seuls_messages_qui_concernent_driss():
+    """`CRM-139` : l'oracle est lu par la clé de service, sur les adresses en clair des identités PERSONNELLES de Driss —
+    jamais par `concerns_me`, que la preuve éprouve."""
+    adresses = {i["from_address"].strip().lower() for i in (await _service("GET", "/mail_outbound_identities", params={
+        "owner_id": f"eq.{DRISS[1]}", "select": "from_address"})).json()}
+    assert adresses, "le seed donne une identité personnelle à Driss"
+    tous = (await _service("GET", "/mail_messages", params={
+        "card_id": f"eq.{CARD}", "select": "id,from_address,to_addresses,cc_addresses,bcc_addresses"})).json()
+    attendus = sorted(m["id"] for m in tous if adresses & {a.lower() for a in (
+        (m["to_addresses"] or []) + (m["cc_addresses"] or []) + (m["bcc_addresses"] or []) + [m["from_address"]])})
+    posees = await _manquantes(DRISS, [("messagerie", "consulter")])
+    await _poser(DRISS, posees)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_visible(client, "crm_card_mail_list")
+            entier = (await client.call_tool("crm_card_mail_list", {"card_id": CARD, "limit": 100})).structured_content
+            assert len(entier["messages"]) == len(tous)
+            moi = (await client.call_tool("crm_card_mail_list", {
+                "card_id": CARD, "limit": 100, "only_me": True})).structured_content
+            assert sorted(m["id"] for m in moi["messages"]) == attendus
+            assert await _dernier_journal(DRISS[1]) == ("crm_card_mail_list", "ok")
+    finally:
+        await _retirer(DRISS, posees)
+
+
+async def test_only_me_dit_a_la_lectrice_qu_elle_n_a_aucune_adresse():
+    posees = await _manquantes(FARIDA, [("messagerie", "consulter"), ("affaires", "consulter")])
+    await _poser(FARIDA, posees)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(FARIDA)) as client:
+            await _attendre_visible(client, "crm_card_mail_list")
+            fil = (await client.call_tool("crm_card_mail_list", {"card_id": CARD_LUE, "only_me": True})).structured_content
+            assert fil["messages"] == []
+            assert "no personal sending address" in fil["note"]
+    finally:
+        await _retirer(FARIDA, posees)

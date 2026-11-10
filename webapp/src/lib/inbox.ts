@@ -6,6 +6,9 @@
 // @spec CRM-143 (docs/BACKLOG.md) — tranche T4 : une pièce porte sa raison de non-analyse, sa réception et la confirmation
 //       de la personne (`COLONNES_PIECE`, `pieceDepuisLigne`) ; docs/SPEC-pieces-jointes.md §17.3, §17.4
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
+// @spec CRM-139 (docs/BACKLOG.md) — « Seulement moi » : l'arborescence et la liste demandent à la base le seul courrier qui
+//       concerne la personne (`inbox_arborescence(p_only_me)`, `concerns_me`), et l'écran attend de savoir s'il le doit ;
+//       docs/SPEC-mail-subsystem.md §27.3, §27.4 ; docs/DESIGN_SYSTEM.md §5.96
 // @spec CRM-081 (docs/BACKLOG.md) — tranche 2 e : les trois colonnes du fil et la lecture des fils
 //       endormis, docs/SPEC-cards.md §16.15.3
 // @spec CRM-060 (docs/BACKLOG.md) — sous-tranche 2 bis : la SURFACE de la suggestion,
@@ -403,11 +406,36 @@ export async function lireDossierDuMessage(
 	}
 }
 
-/** Lit l'arborescence des dossiers, avec les compteurs de l'appelant. */
-export async function lireArborescence(client: ClientCrm | null): Promise<EtatAsync<ArbreInbox>> {
+/**
+ * Le message concerne-t-il la personne (`concerns_me`, §27.2) ? `null` s'il ne se lit pas.
+ *
+ * `CRM-139` (§27.4) : l'adresse d'un message l'emporte sur la case. L'écran ne pose cette question que lorsque le filtre
+ * s'applique, pour savoir s'il doit décocher la case afin de montrer le message demandé.
+ */
+export async function messageMeConcerne(client: ClientCrm | null, id: string): Promise<boolean | null> {
+	if (client === null) return null
+	try {
+		const reponse = await client.from('mail_messages').select('id, concerns_me').eq('id', id).limit(1)
+		if (reponse.error !== null) return null
+		const ligne = reponse.data[0]
+		return ligne === undefined ? null : ligne.concerns_me === true
+	} catch {
+		return null
+	}
+}
+
+/**
+ * Lit l'arborescence des dossiers, avec les compteurs de l'appelant.
+ *
+ * `seulementMoi` (`CRM-139`, §27.3) : les compteurs ne comptent que le courrier qui concerne la personne.
+ */
+export async function lireArborescence(
+	client: ClientCrm | null,
+	seulementMoi = false,
+): Promise<EtatAsync<ArbreInbox>> {
 	if (client === null) return enErreur(CONFIGURATION_ABSENTE)
 	try {
-		const reponse = await client.rpc('inbox_arborescence')
+		const reponse = await client.rpc('inbox_arborescence', { p_only_me: seulementMoi })
 		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
 		return pret(construireArbre(reponse.data ?? []))
 	} catch (cause) {
@@ -415,16 +443,23 @@ export async function lireArborescence(client: ClientCrm | null): Promise<EtatAs
 	}
 }
 
-/** Lit les messages d'un dossier, du plus récent au plus ancien. */
+/**
+ * Lit les messages d'un dossier, du plus récent au plus ancien.
+ *
+ * `seulementMoi` (`CRM-139`, §27.3) : seuls les messages qui concernent la personne. Le filtre porte sur les MESSAGES ;
+ * le groupement en fils se fait ensuite, sur ce qui reste.
+ */
 export async function lireMessages(
 	client: ClientCrm | null,
 	selection: Selection,
+	seulementMoi = false,
 ): Promise<EtatAsync<PageMessages>> {
 	if (client === null) return enErreur(CONFIGURATION_ABSENTE)
 	try {
 		const base = client.from('mail_messages').select(COLONNES_LISTE)
-		const filtree =
+		const dossier =
 			selection.genre === 'non-classes' ? base.is('card_id', null) : base.eq('card_id', selection.cardId)
+		const filtree = seulementMoi ? dossier.eq('concerns_me', true) : dossier
 		// L'ordre est TOTAL, terminé par `id` : deux messages reçus dans la même milliseconde
 		// suffisent à rendre l'affichage instable d'un rechargement à l'autre (décision 185).
 		const reponse = await filtree
@@ -742,15 +777,34 @@ function useLecture<T>(charger: () => Promise<EtatAsync<T>>, cles: readonly unkn
 	return { etat, recharger, reprendre }
 }
 
-export function useArborescence(client: ClientCrm | null): Relecture<ArbreInbox> {
-	return useLecture(() => lireArborescence(client), [client])
+/** Une lecture qui n'est pas encore demandée : elle reste en chargement, sans requête, jusqu'à ce qu'elle le soit. */
+const EN_ATTENTE = new Promise<never>(() => {})
+
+/**
+ * `seulementMoi` à `null` (`CRM-139`, §27.4) : on ne sait pas encore si le filtre s'applique. L'arborescence reste en
+ * chargement plutôt que de montrer un instant tout le courrier puis de le retirer.
+ */
+export function useArborescence(client: ClientCrm | null, seulementMoi: boolean | null = false): Relecture<ArbreInbox> {
+	return useLecture(
+		() => (seulementMoi === null ? EN_ATTENTE : lireArborescence(client, seulementMoi)),
+		[client, seulementMoi],
+	)
 }
 
-export function useMessages(client: ClientCrm | null, selection: Selection | null): Relecture<PageMessages> {
+export function useMessages(
+	client: ClientCrm | null,
+	selection: Selection | null,
+	seulementMoi: boolean | null = false,
+): Relecture<PageMessages> {
 	const cle = selection === null ? '' : selection.genre === 'card' ? selection.cardId : 'non-classes'
 	return useLecture(
-		async () => (selection === null ? pret({ messages: [], tronquee: false }) : lireMessages(client, selection)),
-		[client, cle],
+		async () =>
+			selection === null
+				? pret({ messages: [], tronquee: false })
+				: seulementMoi === null
+					? EN_ATTENTE
+					: lireMessages(client, selection, seulementMoi),
+		[client, cle, seulementMoi],
 	)
 }
 

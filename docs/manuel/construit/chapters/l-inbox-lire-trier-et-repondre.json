@@ -360,7 +360,213 @@
 			"src": "l-inbox-lire-trier-et-repondre/dossiers.jpg",
 			"alt": "L'entrée Inbox de la barre latérale et le dossier « Non classés », en tête des dossiers",
 			"width": 543,
-			"height": 152
+			"height": 176
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Seulement moi."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Au-dessus des dossiers, la case « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Seulement moi"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " » est cochée quand vous ouvrez l'inbox. Elle ne\nmontre alors que le courrier qui "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "vous concerne"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : les messages adressés à l'une de "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "vos adresses d'expédition"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (en\ndestinataire, en copie ou en copie cachée), et ceux que vous avez envoyés depuis elles. Les nombres des dossiers suivent\nla case, et une affaire dont aucun message ne vous concerne n'apparaît pas. Une conversation n'y montre que ses messages\nqui vous concernent."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Décochez-la"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " pour voir tout le courrier que vous pouvez lire, comme avant. La case garde son état si vous rechargez\nla page, et un lien vers l'inbox le garde aussi."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Un dossier vide"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " sous la case le dit : « Aucun message de ce dossier ne vous concerne », avec « "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Afficher tout le\ncourrier"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " », qui la décoche."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Un message trouvé par la recherche"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " s'ouvre toujours : s'il ne vous concerne pas, la case se décoche d'elle-même."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Sans adresse d'expédition personnelle"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", la case est grisée et décochée, et l'inbox montre tout. Le lien « "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ajouter\nune adresse d'expédition"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " » mène aux identités sortantes, où vous pouvez déclarer la vôtre. L'adresse de service de\nl'espace de travail n'est l'adresse de personne : elle ne compte jamais."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "La case ne change pas ce que vous avez le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "droit"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de lire : elle choisit seulement ce qui s'affiche. La fiche d'une\naffaire, elle, montre toujours son courrier entier."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/seulement-moi.jpg",
+			"alt": "La case « Seulement moi », cochée : seul le dossier de l'affaire où vous avez écrit est compté",
+			"width": 295,
+			"height": 243
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/seulement-moi-vide.jpg",
+			"alt": "« Non classés » sous la case : « Aucun message de ce dossier ne vous concerne », et « Afficher tout le courrier »",
+			"width": 391,
+			"height": 330
 		},
 		{
 			"type": "paragraph",

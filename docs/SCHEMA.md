@@ -2553,12 +2553,14 @@ enverrait de nouveau directement.
 précédente, retirer les trois fonctions nouvelles, la table, puis les deux colonnes. Les confirmations et les pièces des
 mails préparés sont perdues. **Avec les images `mail-sync`, `mcp` et la webapp d'avant `CRM-143`.**
 
-### Migration de `CRM-139` — « Seulement moi » : le courrier qui concerne l'appelant (numéro pris au push ; spécifiée le 2026-11-10, à écrire)
+### Migration `0175` — « Seulement moi » : le courrier qui concerne l'appelant (`CRM-139`, décisions 879 et 902 ; livrée en développement le 2026-11-10)
+
+*Numérotée `0175` au push, premier numéro libre sur `main`.*
 
 `docs/SPEC-mail-subsystem.md` §27.2 et §27.3, décisions 879 et 902. **Deux fonctions, aucune table, aucune colonne,
-aucune donnée, aucune politique.** La migration reste dans le scratchpad de la session jusqu'au `[P]` de l'unité (règle de
-la session de livraison du 2026-11-10).
-- **`public.concerns_me(m public.mail_messages) returns boolean`**, nouvelle. `sql`, `stable`, `security invoker`,
+aucune donnée, aucune politique.** Ré-exécutable : chaque fonction est retirée avant d'être posée.
+- **`public.concerns_me(public.mail_messages) returns boolean`**, nouvelle, au **paramètre sans nom** : une colonne
+  calculée de `mail_messages`, comme `is_read`. `sql`, `stable`, `security invoker`,
   `search_path` vidé ; `execute` à `authenticated` seul. Vraie quand une adresse de `to_addresses`, `cc_addresses`,
   `bcc_addresses` ou `from_address` est égale, par `lower(btrim(…))`, à l'adresse d'une identité de
   `mail_outbound_identities` où `owner_id = auth.uid()`. L'identité de service, à `owner_id` nul, n'en est jamais.

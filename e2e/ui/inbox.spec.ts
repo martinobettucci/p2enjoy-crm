@@ -19,6 +19,8 @@
 // par la clé de service dans son `finally` — le seul chemin qui le peut, `mail_messages`
 // n'accordant aucune écriture à `authenticated`.
 // @verifies CRM-137 (docs/BACKLOG.md) — le classement passe par le sélecteur cherchable (docs/DESIGN_SYSTEM.md §5.94)
+// @verifies CRM-139 (docs/BACKLOG.md) — l'inbox s'ouvre ici case « Seulement moi » décochée, `courrier=tous` : le sujet de ces
+//           preuves est ailleurs (docs/SPEC-mail-subsystem.md §27.5)
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -62,7 +64,7 @@ async function connecter(page: Page): Promise<void> {
 test.describe('inbox globale (docs/SPEC-mail-subsystem.md §18)', () => {
 	test('les trois panneaux montrent le courrier reçu, et le corps reste du texte', async ({ page }) => {
 		await connecter(page)
-		await page.goto('/inbox')
+		await page.goto('/inbox?courrier=tous')
 
 		// Panneau 1 — les dossiers. « Non classés » est en tête, avec son compte.
 		const dossiers = page.getByTestId('inbox-panneau-dossiers')
@@ -91,7 +93,7 @@ test.describe('inbox globale (docs/SPEC-mail-subsystem.md §18)', () => {
 		page,
 	}) => {
 		await connecter(page)
-		await page.goto('/inbox')
+		await page.goto('/inbox?courrier=tous')
 
 		const dossiers = page.getByTestId('inbox-panneau-dossiers')
 		const nonClasses = dossiers.getByRole('button', { name: /Non classés/ })
@@ -109,7 +111,7 @@ test.describe('inbox globale (docs/SPEC-mail-subsystem.md §18)', () => {
 
 	test('tout le parcours se fait AU CLAVIER, du dossier au message', async ({ page }) => {
 		await connecter(page)
-		await page.goto('/inbox')
+		await page.goto('/inbox?courrier=tous')
 		await expect(page.getByTestId('inbox-panneau-dossiers')).toBeVisible()
 
 		// Depuis le haut du document, on avance jusqu'au dossier des non classés, et on l'ouvre par
@@ -144,7 +146,7 @@ test.describe('inbox globale (docs/SPEC-mail-subsystem.md §18)', () => {
 		await connecter(page)
 
 		// 1. Dans l'inbox, sous le dossier de la card.
-		await page.goto('/inbox')
+		await page.goto('/inbox?courrier=tous')
 		const dossiers = page.getByTestId('inbox-panneau-dossiers')
 		await dossiers.getByRole('button', { name: /Refonte du site vitrine/ }).click()
 		const liste = page.getByTestId('inbox-panneau-liste')
@@ -172,7 +174,7 @@ test.describe('inbox globale (docs/SPEC-mail-subsystem.md §18)', () => {
 
 	test('un non classé se trie depuis l’écran, et le fil de la card l’enregistre', async ({ page }) => {
 		await connecter(page)
-		await page.goto('/inbox')
+		await page.goto('/inbox?courrier=tous')
 
 		try {
 			await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }).click()
@@ -232,7 +234,7 @@ test.describe('inbox globale (docs/SPEC-mail-subsystem.md §18)', () => {
 		page,
 	}) => {
 		await connecter(page)
-		await page.goto('/inbox')
+		await page.goto('/inbox?courrier=tous')
 		await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }).click()
 
 		for (const palier of PALIERS) {
@@ -313,7 +315,10 @@ test.describe('l’inbox adressable (docs/SPEC-recherche.md §15)', () => {
 
 		// L'ADRESSE NE PORTE PLUS LE PARAMÈTRE (§15) : le laisser rouvrirait ce message à chaque
 		// rechargement, longtemps après que l'utilisateur soit passé à autre chose.
-		await expect.poll(() => new URL(page.url()).search).toBe('')
+		// RÉVISÉ PAR `CRM-139` (docs/SPEC-mail-subsystem.md §27.4) : l'adresse d'un message qui ne concerne pas la personne
+		// décoche « Seulement moi », et `courrier=tous` reste dans l'adresse. Ce qui est éprouvé ici est le retrait de
+		// `message`, et lui seul.
+		await expect.poll(() => new URL(page.url()).searchParams.has('message')).toBe(false)
 
 		await capturer(page, 'inbox-adressable-1440', 'CRM-065')
 	})
@@ -341,7 +346,9 @@ test.describe('l’inbox adressable (docs/SPEC-recherche.md §15)', () => {
 		// UN `uuid` BIEN FORMÉ MAIS ABSENT : la colonne est typée, et un identifiant mal formé
 		// ferait échouer la requête sur sa SYNTAXE plutôt que sur son absence — ce n'est pas le cas
 		// que le §15 décrit. La lecture rend donc zéro ligne, ce qu'un refus de la RLS rend aussi.
-		await page.goto('/inbox?message=00000000-0000-4000-8000-000000000000')
+		// `courrier=tous` (`CRM-139`, §27.5) : sous « Seulement moi », le dossier que la preuve désigne n'existerait pas, et
+		// son absence de sélection ne prouverait rien.
+		await page.goto('/inbox?message=00000000-0000-4000-8000-000000000000&courrier=tous')
 
 		// AUCUN MESSAGE, AUCUN DOSSIER CHOISI, ET SURTOUT AUCUNE ALERTE : un refus ne se distingue
 		// pas d'une absence (docs/SPEC-permissions-rls.md §7). L'écran est celui d'une arrivée sans
@@ -356,7 +363,10 @@ test.describe('l’inbox adressable (docs/SPEC-recherche.md §15)', () => {
 		// ET LE PARAMÈTRE EST RETIRÉ MALGRÉ LE REFUS (§15.1) : le retrait est décidé par le
 		// TRAITEMENT, jamais par le succès. Un paramètre resté dans la barre d'adresse dirait qu'il
 		// s'est passé là quelque chose que l'écran ne montre pas.
-		await expect.poll(() => new URL(page.url()).search).toBe('')
+		// RÉVISÉ PAR `CRM-139` (docs/SPEC-mail-subsystem.md §27.4) : l'adresse d'un message qui ne concerne pas la personne
+		// décoche « Seulement moi », et `courrier=tous` reste dans l'adresse. Ce qui est éprouvé ici est le retrait de
+		// `message`, et lui seul.
+		await expect.poll(() => new URL(page.url()).searchParams.has('message')).toBe(false)
 	})
 
 	test('LA PALETTE Y MÈNE RÉELLEMENT — le parcours entier, du terme au message', async ({ page }) => {
@@ -382,6 +392,9 @@ test.describe('l’inbox adressable (docs/SPEC-recherche.md §15)', () => {
 		await expect(
 			page.getByTestId('inbox-message-ouvert').getByRole('heading', { name: OBJET_CLASSE }),
 		).toBeVisible()
-		await expect.poll(() => new URL(page.url()).search).toBe('')
+		// RÉVISÉ PAR `CRM-139` (docs/SPEC-mail-subsystem.md §27.4) : l'adresse d'un message qui ne concerne pas la personne
+		// décoche « Seulement moi », et `courrier=tous` reste dans l'adresse. Ce qui est éprouvé ici est le retrait de
+		// `message`, et lui seul.
+		await expect.poll(() => new URL(page.url()).searchParams.has('message')).toBe(false)
 	})
 })

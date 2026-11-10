@@ -13,6 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-139` — « Seulement moi » dans l'inbox (décisions 879, 901 et 902)
+
+- **L'inbox s'ouvre sur le courrier qui vous concerne** : la case « Seulement moi », cochée par défaut dans l'en-tête des dossiers, ne montre que les messages adressés (À, Cc, Cci) à l'une de vos adresses d'expédition personnelles, ou envoyés depuis elles. Les nombres des dossiers suivent la case. Décochée, l'inbox d'avant.
+- **La base filtre, sous vos droits** : la colonne calculée `concerns_me` et `inbox_arborescence(p_only_me)` (migration 175). L'identité de service ne compte jamais, et ce n'est pas une règle d'accès : rien de ce que vous lisez ne devient illisible.
+- **L'état vit dans l'adresse** (`?courrier=tous`), rien n'est stocké sur l'appareil. L'adresse d'un message qui ne vous concerne pas décoche la case.
+- **Sans adresse d'expédition personnelle**, la case est désactivée et le dit, avec un lien vers vos identités sortantes ; tout est montré.
+- **Le connecteur MCP** : `crm_card_mail_list` reçoit `only_me`, faux par défaut.
+- Le manuel décrit aussi le classement par le connecteur (`CRM-137`), que le §33 taisait.
+- Déploiement : `docs/PROD_MIGRATIONS.md`, la migration 175, puis la webapp et l'image `mcp`.
+
 #### `CRM-145` — chaque livraison se voit au prochain chargement (décision 899)
 
 - **La page de l'application n'est plus gardée en cache** : `index.html` et toutes ses routes sont servis avec

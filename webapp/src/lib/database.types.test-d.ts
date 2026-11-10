@@ -1239,6 +1239,9 @@ type _vueDerivationColonnes = Expect<
 // §17.5) ; `prepare_email` gagne `p_attachments`. CE QUI ÉCHAPPE AU GÉNÉRATEUR : `p_status` ne vaut que `clean` ou
 // `infected` (`22023 invalid_status`) ; les refus nommés de la confirmation, `attachment_not_found` (404),
 // `attachment_infected`, `attachment_clean`, `attachment_not_stored`, `attachment_scanning`. Le compte s'accroît de trois.
+// La migration de `CRM-139` ajoute `concerns_me`, la colonne calculée « le message concerne l'appelant »
+// (docs/SPEC-mail-subsystem.md §27.2), que le générateur range aussi dans `mail_messages.Row`, comme `is_read`. CE QUI
+// ÉCHAPPE AU GÉNÉRATEUR : l'identité de service et celles des autres personnes ne comptent jamais. Le compte s'accroît de un.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1309,6 +1312,7 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'chemin_dossier_entite'
     | 'classer_message_automatiquement'
     | 'classification_candidates'
+    | 'concerns_me'
     | 'mail_inbound_account_record_poll_failure'
     | 'classify_message'
     | 'dossiers_a_renommer'
@@ -1441,10 +1445,11 @@ type _editionPermise = Expect<
   >
 >
 
-// L'arborescence de l'inbox ne prend AUCUN argument, et c'est le contrat : elle rend ce que
-// l'appelant voit, jamais ce qu'on lui demande de voir (docs/SPEC-mail-subsystem.md §18.3).
+// L'arborescence de l'inbox ne prend qu'UN argument, facultatif : « seulement moi » (`CRM-139`,
+// docs/SPEC-mail-subsystem.md §27.3). Elle rend toujours ce que l'appelant voit, jamais ce qu'on lui demande de voir
+// (§18.3) : l'argument ne fait que RESTREINDRE l'affichage à son courrier.
 type _signatureArborescence = Expect<
-  Equal<Database['public']['Functions']['inbox_arborescence']['Args'], never>
+  Equal<Database['public']['Functions']['inbox_arborescence']['Args'], { p_only_me?: boolean }>
 >
 
 // La signature exposée au client TypeScript est celle du contrat d'API : `new_name` facultatif,

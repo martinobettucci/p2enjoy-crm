@@ -22,6 +22,8 @@
 #       candidates par `classification_candidates`, l'expéditeur connu d'abord) et `crm_mail_classify` (`modifier`, par
 #       `classify_message` inchangée) ; docs/SPEC-mcp.md §9.2 septendecies ; docs/SPEC-mail-subsystem.md §26 ;
 #       décisions 877, 891 et 893
+# @spec CRM-139 (docs/BACKLOG.md) — « Seulement moi » : `only_me` sur `crm_card_mail_list`, faux par défaut, par la colonne
+#       calculée `concerns_me` ; docs/SPEC-mcp.md §9.2 duodevicies ; docs/SPEC-mail-subsystem.md §27 ; décisions 879 et 902
 # @spec CRM-143 (docs/BACKLOG.md) — tranche T5 : les pièces non analysées dans le connecteur — trois statuts précis
 #       (`statut_piece`), `crm_mail_attachment_get` qui lit une pièce non analysée sur un accusé explicite
 #       (`acknowledge_unscanned`, la confirmation posée sous le jeton de la personne), et `crm_mail_prepare` qui joint des
@@ -114,6 +116,8 @@ REFUS_CLASSEMENT = {
     "card_not_available": "the affaire is archived or in the trash: it receives no email",
 }
 #: La phrase de l'état vide de l'écran, pour l'assistant (docs/SPEC-mcp.md §9.2 septendecies).
+#: `CRM-139` : `only_me` demandé par une personne sans identité personnelle — rien ne la concerne (§9.2 duodevicies).
+NOTE_SANS_IDENTITE = "You have no personal sending address: no email concerns you. Call again without only_me."
 NOTE_EXPEDITEUR_INCONNU = (
     "The sender is a contact of no affaire. Call again with known_sender: false to list every affaire you may read."
 )
@@ -324,32 +328,44 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_w
         card_id: Annotated[str, Field(description="The affaire (card) id")],
         limit: Annotated[int, Field(ge=1, le=100)] = 25,
         offset: Annotated[int, Field(ge=0)] = 0,
+        only_me: Annotated[
+            bool,
+            Field(
+                description=(
+                    "Only the emails addressed to (To, Cc, Bcc) or sent by one of your personal sending addresses. False "
+                    "by default: an affaire shows its whole thread."
+                )
+            ),
+        ] = False,
     ) -> dict[str, Any]:
         appel = appel_courant()
         # Ordre total, terminé par `id` : deux messages reçus dans la même milliseconde ne changent pas de place d'une
         # page à l'autre (décision 185).
-        lignes = _lignes(
-            await crm.lire(
-                appel.jeton,
-                "mail_messages",
-                {
-                    "card_id": f"eq.{card_id}",
-                    "select": COLONNES_FIL,
-                    "order": "received_at.asc,id.asc",
-                    "limit": str(limit),
-                    "offset": str(offset),
-                },
-            ),
-            "card",
-            card_id,
-        )
-        return {
+        parametres = {
+            "card_id": f"eq.{card_id}",
+            "select": COLONNES_FIL,
+            "order": "received_at.asc,id.asc",
+            "limit": str(limit),
+            "offset": str(offset),
+        }
+        if only_me:
+            # `CRM-139` : la colonne calculée de la base, sous les droits de la personne (§27.2) ; rien n'est filtré ici.
+            parametres["concerns_me"] = "is.true"
+        lignes = _lignes(await crm.lire(appel.jeton, "mail_messages", parametres), "card", card_id)
+        resultat: dict[str, Any] = {
             "messages": [message_lu(m) for m in lignes],
             "note": "Read an attachment whose status is available with crm_mail_attachment_get.",
             "limit": limit,
             "offset": offset,
             "has_more": len(lignes) == limit,
         }
+        if only_me and not lignes:
+            identites = await crm.lire(
+                appel.jeton, "mail_outbound_identities", {"owner_id": f"eq.{appel.sujet}", "select": "id", "limit": "1"}
+            )
+            if identites.reussie and isinstance(identites.corps, list) and not identites.corps:
+                resultat["note"] = NOTE_SANS_IDENTITE
+        return resultat
 
     moteur.enregistrer(
         serveur,
@@ -359,8 +375,9 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_w
         description=(
             "Lists the emails filed in an affaire (card), oldest first: direction, dates, sender, recipients, subject, a "
             "short excerpt, its attachments (id, file name, type, size and status — never their content) and whether the "
-            "person has read it in the inbox (read; reading here does not mark it). Read one in full with crm_mail_get, "
-            "and an available attachment with crm_mail_attachment_get."
+            "person has read it in the inbox (read; reading here does not mark it). only_me keeps the emails addressed to "
+            "or sent by one of the person's personal sending addresses. Read one in full with crm_mail_get, and an "
+            "available attachment with crm_mail_attachment_get."
         ),
     )
 

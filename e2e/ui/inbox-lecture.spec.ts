@@ -10,6 +10,8 @@
 // L'ÉTAT DE DÉPART EST POSÉ, PUIS RENDU. Avant chaque scénario, les lectures de Camille sur les messages du seed sont
 // relevées par la clé de service puis retirées — tout est non lu ; après, elles sont réécrites telles quelles. Le seed
 // sort donc intact, et chaque scénario part du même état quelle que soit la session qui l'a précédé.
+// @verifies CRM-139 (docs/BACKLOG.md) — l'inbox s'ouvre ici case « Seulement moi » décochée, `courrier=tous` : le sujet de ces
+//           preuves est ailleurs (docs/SPEC-mail-subsystem.md §27.5)
 
 import { autoriserErreursConsole, connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -97,7 +99,7 @@ test.describe('lu / non lu dans l’inbox (docs/SPEC-mail-subsystem.md §18 bis)
 		page,
 	}) => {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/inbox')
+		await page.goto('/inbox?courrier=tous')
 		const dossiers = page.getByTestId('inbox-panneau-dossiers')
 
 		// LE DOSSIER PORTE SES NON LUS À CÔTÉ DU TOTAL (décision 716), et son nom accessible le compte exact.
@@ -135,7 +137,7 @@ test.describe('lu / non lu dans l’inbox (docs/SPEC-mail-subsystem.md §18 bis)
 
 	test('« Tout marquer comme lu » se mène AU CLAVIER, puis disparaît', async ({ page }) => {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/inbox')
+		await page.goto('/inbox?courrier=tous')
 		const nonClasses = page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ })
 		await nonClasses.focus()
 		await page.keyboard.press('Enter')
@@ -158,7 +160,7 @@ test.describe('lu / non lu dans l’inbox (docs/SPEC-mail-subsystem.md §18 bis)
 		await page.route('**/rest/v1/rpc/mark_messages_read', (route) =>
 			route.fulfill({ status: 503, contentType: 'application/json', body: '{"message":"indisponible"}' }),
 		)
-		await page.goto('/inbox')
+		await page.goto('/inbox?courrier=tous')
 		await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }).click()
 		await page.getByRole('button', { name: 'Tout marquer comme lu' }).click()
 
@@ -175,7 +177,7 @@ test.describe('lu / non lu dans l’inbox (docs/SPEC-mail-subsystem.md §18 bis)
 
 	test('les quatre paliers : la ligne non lue et la pastille tiennent de 390 à 1440 px', async ({ page }) => {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/inbox')
+		await page.goto('/inbox?courrier=tous')
 		for (const palier of PALIERS) {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			await attendreBarreImmobile(page)

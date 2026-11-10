@@ -880,7 +880,30 @@ monté). Indépendante des migrations du lot ; elle part avec lui. Un bref redé
 **Retour arrière** : reposer `caddy/routes.caddy` et le label `crm-001` de la révision précédente, puis `up` ; aucune donnée
 n'est touchée.
 
+### 2.38 `CRM-139`, décisions 879, 901 et 902 — « Seulement moi » dans l'inbox (À LIVRER : migration 175, webapp de `main` et image `mcp`, ensemble)
+
+`docs/SPEC-mail-subsystem.md` §27 ; `docs/SCHEMA.md` « Migration `0175` » ; `docs/SPEC-mcp.md` §9.2 *duodevicies*. **La
+migration d'abord, puis la webapp et l'image `mcp` de `main`, dans la même fenêtre** : la webapp appelle
+`inbox_arborescence(p_only_me)` et lit `concerns_me`, et l'outil `crm_card_mail_list` filtre par `concerns_me`. Une webapp
+sans la migration rendrait l'inbox en erreur. Deux fonctions, aucune table, aucune donnée, sans verrou notable. Aucune
+variable, aucun secret.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 175 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate`, instantané de VM pris |
+| 2 | Livrer la webapp de `main` | session de livraison, après le geste 1 | `scripts/spark/livrer.sh` (§3.1) |
+| 3 | Reconstruire `mcp` | session de livraison, après le geste 1 | `up -d --build --no-deps --wait mcp`, par `compose_prod` (§4) |
+| 4 | Constater la case | responsable, Inbox | la case « Seulement moi » est cochée ; seuls les dossiers où un message vous est adressé, ou part de vous, sont comptés ; la décocher montre tout, et l'adresse porte `?courrier=tous` |
+| 5 | Constater la personne sans identité | responsable, avec un compte sans identité personnelle | la case est grisée, l'explication et le lien « Ajouter une adresse d'expédition » paraissent, et tout est montré |
+
+**Vérification après la fenêtre**, en lecture seule : le registre gagne une ligne, l'empreinte de la 175 est égale au
+dépôt ; `select pg_get_function_identity_arguments('public.inbox_arborescence'::regproc)` rend `p_only_me boolean`.
+**Retour arrière** : reposer la webapp et l'image `mcp` précédentes, puis retirer les deux fonctions et reposer
+`inbox_arborescence()` de la `0154`, comme le dit `docs/SCHEMA.md`. Aucune donnée n'est touchée.
+
 ## 3. Migrations en attente
+
+**La 175** (`CRM-139`, décisions 879 et 902), *en attente* : `concerns_me` et `inbox_arborescence(p_only_me)`, le courrier qui concerne l'appelant (`docs/SCHEMA.md` « Migration `0175` »). Deux fonctions, aucune donnée, sans verrou notable. **Avec la webapp et l'image `mcp` de `main`, après elle** (§2.38). Aucun geste préalable du responsable.
 
 **La 174, après la 173** (`CRM-133`, décisions 869, 870 et 882), *en attente* : la description d'un nœud et sa surcharge
 par l'étape (`docs/SCHEMA.md` « Migration `0174` ») — deux colonnes facultatives, cinq fonctions de composition reprises,
