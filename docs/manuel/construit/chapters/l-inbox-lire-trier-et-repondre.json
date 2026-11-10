@@ -832,7 +832,7 @@
 				},
 				{
 					"type": "text",
-					"text": " Quand l'antivirus n'a pas pu examiner une pièce, sa ligne dit pourquoi : « non analysée :\nantivirus indisponible », ou « non analysée : analyse en attente » si l'analyse tarde depuis plus d'un quart d'heure. Elle\nporte « "
+					"text": " Quand l'antivirus n'a pas pu examiner une pièce, sa ligne dit pourquoi : « non analysée :\nantivirus indisponible », ou, si l'analyse tarde depuis plus d'un quart d'heure, que l'analyse est en attente. Elle\nporte « "
 				},
 				{
 					"type": "strong",
@@ -902,7 +902,7 @@
 							},
 							{
 								"type": "text",
-								"text": " Une fois donnée, la pièce porte « Télécharger » pour vous, et sa mention\n« non analysée » reste : confirmer n'analyse rien. Un collègue qui ouvre le même message voit toujours l'avertissement."
+								"text": " Une fois donnée, la pièce porte « Télécharger » pour vous, et sa mention de\nnon-analyse reste : confirmer n'analyse rien. Un collègue qui ouvre le même message voit toujours l'avertissement."
 							}
 						]
 					}
@@ -942,11 +942,25 @@
 							},
 							{
 								"type": "text",
-								"text": " — « non analysée : trop volumineuse, non conservée » — n'a pas été conservée par le CRM :\nelle n'a aucun bouton. Demandez-la à l'expéditeur par un autre moyen."
+								"text": " — « non analysée : trop volumineuse, non conservée » — n'a pas été conservée par le CRM :\nelle n'a aucun bouton. Demandez-la à l'expéditeur par un autre moyen. Une pièce reconnue dangereuse — « écartée par\nl'antivirus » — n'en a pas davantage."
 							}
 						]
 					}
-				],
+				]
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/pieces-sans-bouton.jpg",
+			"alt": "Deux pièces sans bouton : l'une écartée par l'antivirus, l'autre trop volumineuse, non conservée",
+			"width": 536,
+			"height": 116
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
 				[
 					{
 						"type": "paragraph",
@@ -2780,7 +2794,7 @@
 				},
 				{
 					"type": "text",
-					"text": " sont déjà dans la liste des pièces jointes : ils partent avec le mail, et « Retirer » en écarte un. Le lien de\nl'affaire, au-dessus, ouvre sa fiche."
+					"text": " sont déjà dans la liste des pièces jointes : ils partent avec le mail, et vous pouvez en retirer un. Le lien de\nl'affaire, au-dessus, ouvre sa fiche."
 				}
 			]
 		},

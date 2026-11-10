@@ -3264,6 +3264,68 @@ attendu_pieces='budget-previsionnel.xlsx:clean:extracted cahier-des-charges.docx
 	|| die "les pièces du courrier « $OBJET_PIECES » ne sont pas dans l'état attendu : « $etat_pieces » (attendu « $attendu_pieces »). L'antivirus local et la boucle d'extraction de mail-sync sont-ils démarrés ?"
 info "Pièces jointes : « $OBJET_PIECES » reçu sur ${CARD_ENVOI_SEED: -4}, cinq pièces saines, quatre textes extraits ou constatés"
 
+# --- Une pièce par statut : l'infectée et la trop volumineuse — CRM-143 T6, docs/SPEC-seed.md §40 ----------------------
+# @spec CRM-143 (docs/BACKLOG.md) — tranche T6 : les statuts `infected` et `skipped` (`too_large`) se démontrent sur un
+#       courrier RÉELLEMENT reçu, par le chemin du §35 — l'infectée jugée par l'antivirus local, la trop volumineuse écartée
+#       par la borne d'ingestion (docs/SPEC-pieces-jointes.md §17.8 ; docs/SPEC-seed.md §40 ; CLAUDE.md §8)
+#
+# L'échantillon EICAR est le fichier de test standard, inoffensif. La pièce lourde est faite d'octets nuls, engendrés dans le
+# conteneur à la borne `MAIL_MAX_ATTACHMENT_MB` de son environnement plus un kilo-octet : aucun fichier n'est versionné.
+# Aucune pièce `skipped` faute d'antivirus n'est seedée : la reprise la rendrait saine dans le quart d'heure (§40.2).
+MSGID_STATUTS='seed-pieces-statuts@p2enjoy.test'
+OBJET_STATUTS='Pièces à vérifier — monitoring Vertuo'
+EICAR_SEED='X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*'
+
+message_statuts() {
+	curl -s "$API/rest/v1/mail_messages?select=id,card_id&rfc822_message_id=eq.%3C$MSGID_STATUTS%3E" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY"
+}
+
+if [ "$(message_statuts | jq -r 'length')" = 0 ]; then
+	adresse_statuts=$(curl -s "$API/rest/v1/cards?select=email_local_part&id=eq.$CARD_ENVOI_SEED" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].email_local_part // empty')
+	[ -n "$adresse_statuts" ] || die "l'affaire ${CARD_ENVOI_SEED: -4} n'a pas d'adresse : le courrier aux pièces à vérifier ne peut pas lui être adressé."
+	envoi_statuts=$(docker compose exec -T \
+		-e DEST="$adresse_statuts@$INBOUND_DOMAIN" -e MDP="$MAILBOX_PASSWORD" -e MSGID="$MSGID_STATUTS" \
+		-e OBJET="$OBJET_STATUTS" -e EICAR="$EICAR_SEED" \
+		mail-sync python -c '
+import os, smtplib
+from email.message import EmailMessage
+
+borne = int(os.environ.get("MAIL_MAX_ATTACHMENT_MB", "25")) * 1024 * 1024
+message = EmailMessage()
+message["From"] = "bizdev@p2enjoy.test"
+message["To"] = os.environ["DEST"]
+message["Subject"] = os.environ["OBJET"]
+message["Message-ID"] = "<" + os.environ["MSGID"] + ">"
+message.set_content("Bonjour,\n\nDeux fichiers reçus d un partenaire, à vérifier avant de les ouvrir : un fichier de test "
+                    "et l enregistrement de la réunion.\n\nBien à vous,\nDriss Lemoine")
+message.add_attachment(os.environ["EICAR"].encode(), maintype="text", subtype="plain", filename="eicar-test.txt")
+message.add_attachment(bytes(borne + 1024), maintype="video", subtype="quicktime", filename="enregistrement-reunion.mov")
+session = smtplib.SMTP("stalwart", 587, timeout=120)
+session.ehlo()
+session.login("bizdev@p2enjoy.test", os.environ["MDP"])
+session.send_message(message)
+session.quit()
+print("envoye")
+' 2>&1) || die "l'envoi du courrier aux pièces à vérifier a échoué : « $envoi_statuts »"
+	[ "${envoi_statuts##*$'\n'}" = "envoye" ] || die "l'envoi du courrier aux pièces à vérifier n'a rien confirmé : « $envoi_statuts »"
+	for _tentative in 1 2 3 4 5 6 7 8 9 10; do
+		relever_boite >/dev/null
+		[ "$(message_statuts | jq -r 'length')" = 1 ] && break
+		sleep 3
+	done
+fi
+[ "$(message_statuts | jq -r '.[0].card_id // empty')" = "$CARD_ENVOI_SEED" ] \
+	|| die "le courrier « $OBJET_STATUTS » n'est pas classé dans l'affaire ${CARD_ENVOI_SEED: -4} : $(message_statuts)"
+etat_statuts=$(curl -s "$API/rest/v1/mail_attachments?select=filename,av_status,av_skip_reason&message_id=eq.$(message_statuts | jq -r '.[0].id')&order=filename" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+	| jq -r 'map(.filename + ":" + .av_status + ":" + (.av_skip_reason // "-")) | join(" ")')
+attendu_statuts='eicar-test.txt:infected:- enregistrement-reunion.mov:skipped:too_large'
+[ "$etat_statuts" = "$attendu_statuts" ] \
+	|| die "les pièces du courrier « $OBJET_STATUTS » ne sont pas dans l'état attendu : « $etat_statuts » (attendu « $attendu_statuts »). L'antivirus local est-il démarré ?"
+info "Pièces jointes : « $OBJET_STATUTS » reçu sur ${CARD_ENVOI_SEED: -4}, une pièce infectée, une trop volumineuse"
+
 total_evenements=$(curl -s "$API/rest/v1/card_events?select=id" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 info "Événements : $total_evenements, tous écrits par les triggers — le seed ne peut PAS en forger un"

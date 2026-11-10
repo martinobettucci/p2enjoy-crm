@@ -2988,3 +2988,42 @@ converge en deux passages. La section relit les deux colonnes, et la surcharge d
 Le formulaire du catalogue avec une description ; l'éditeur de workflows avec une surcharge, la description du nœud citée
 en aide ; le bouton d'information et son infobulle sur les colonnes « Prospection » et « Négociation » du board ; la
 description effective de l'étape d'un rattachement sur la fiche ; la lecture et l'écriture par le connecteur.
+
+## 40. Une pièce par statut : l'infectée et la trop volumineuse — `CRM-143` T6 (`docs/SPEC-pieces-jointes.md` §17.8)
+
+*Écrit le 2026-11-10 avec la section du seed.* Le seed démontre déjà une pièce **saine** par statut d'aperçu (§35). Il lui
+manquait les deux statuts qui ne se téléchargent jamais, et que l'écran nomme en toutes lettres (`docs/DESIGN_SYSTEM.md`
+§5.4, §5.95).
+
+### 40.1 Ce que le seed pose
+
+Un courrier **réellement reçu**, « Pièces à vérifier — monitoring Vertuo », `Message-ID`
+`<seed-pieces-statuts@p2enjoy.test>`, adressé par Driss (`bizdev@p2enjoy.test`) à l'affaire « Refonte du monitoring —
+Vertuo » (`…d012`), classé par la règle 1. Il porte deux pièces :
+
+| Pièce | Ce qu'elle démontre | État attendu |
+|---|---|---|
+| `eicar-test.txt` | l'échantillon EICAR, le fichier de test standard reconnu par tout antivirus et inoffensif | `infected`, son objet conservé, jamais téléchargeable |
+| `enregistrement-reunion.mov` | une pièce plus lourde que `MAIL_MAX_ATTACHMENT_MB` (25 Mo en développement) d'un kilo-octet | `skipped`, raison `too_large`, aucun objet |
+
+### 40.2 Le vrai chemin
+
+Le chemin du §35 : soumission SMTP authentifiée sur Stalwart, relève par `mail-sync`, antivirus local, classement par la
+règle 1. **Rien n'est écrit en table à la main** (`CLAUDE.md` §8) : l'infectée l'est par ClamAV, la trop volumineuse par
+la borne d'ingestion. La pièce lourde est faite d'octets nuls, engendrés dans le conteneur à la taille de la borne lue
+dans son environnement, plus un kilo-octet : aucun fichier n'est versionné.
+
+**Aucune pièce `skipped` (`scanner_unavailable`) n'est seedée** (§17.8) : elle naît quand l'antivirus est absent, et la
+reprise la rendrait saine dans le quart d'heure. Elle naît dans les preuves, par le patron de l'exemplaire jetable
+(`e2e/mail/pieces-non-analysees.spec.ts`), ou pour une image du manuel, posée puis retirée.
+
+### 40.3 Convergence et vérification
+
+`Message-ID` fixe : rejouer le seed n'envoie rien de plus. Le seed **vérifie** l'état final et s'arrête avec sa cause
+sinon : `eicar-test.txt` `infected`, `enregistrement-reunion.mov` `skipped` et `too_large`.
+
+### 40.4 Ce que le jeu démontre
+
+Dans l'inbox et dans le fil de l'affaire, une pièce « écartée par l'antivirus » et une pièce « non analysée : trop
+volumineuse, non conservée », ni l'une ni l'autre avec une commande ; par le connecteur, les statuts `infected` et
+`not_scanned_too_large`. L'affaire porte un courrier de plus, dans l'inbox comme dans son fil.

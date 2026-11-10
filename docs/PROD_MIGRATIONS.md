@@ -809,7 +809,15 @@ ci-dessous.** La migration d'abord : les images appellent ses fonctions. Le serv
 reprise analyse les pièces dès son démarrage, et un antivirus absent la ferait seulement attendre (§17.5). Aucune variable,
 aucun secret nouveau : `CLAMAV_HOST=clamav` est déjà posé (`docker-compose.yml`).
 
-**État des tranches, à relire avant la fenêtre** : la migration 173, la reprise de `mail-sync` (T1, T2) et le service `clamav` (T3) sont dans `main` ; l'écran du repli et les pièces des mails préparés (T4), les outils du connecteur (T5) et le seed (T6) restent à écrire. **Ne pas livrer avant que `CRM-143` soit signalée `[P]`.** **Jamais l'image `mail-sync` de `main` sans la migration 173** : elle écrit `av_skip_reason` à chaque pièce reçue, et sans la colonne l'ingestion échouerait.
+**État des tranches** : les six tranches sont dans `main` et vérifiées en développement ; `CRM-143` est `[P]` (2026-11-10). Elles forment le lot :
+- la migration 173 ;
+- la reprise de `mail-sync` ;
+- le service `clamav` ;
+- l'écran du repli et le préchargement des pièces d'un mail préparé ;
+- les outils du connecteur, d'où la reconstruction de l'image `mcp` ;
+- le seed, qui ne concerne que le développement.
+
+Le lot part avec `CRM-137` (§2.36), selon la session de livraison. **Jamais l'image `mail-sync` de `main` sans la migration 173** : elle écrit `av_skip_reason` à chaque pièce reçue, et sans la colonne l'ingestion échouerait.
 
 | # | Geste | Qui | Comment |
 |---|---|---|---|

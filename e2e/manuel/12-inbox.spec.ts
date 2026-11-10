@@ -142,6 +142,22 @@ test('une pièce non analysée : « Télécharger quand même » et son avertiss
 	}
 })
 
+// `CRM-143` T6 (docs/SPEC-seed.md §40) : les deux pièces du seed qui n'ont aucun bouton, l'infectée et la trop volumineuse.
+test('deux pièces sans bouton : l’infectée et la trop volumineuse', async ({ page, request }) => {
+	const [message] = await lireService<{ id: string }[]>(
+		request,
+		`mail_messages?select=id&rfc822_message_id=eq.${encodeURIComponent('<seed-pieces-statuts@p2enjoy.test>')}`,
+	)
+	expect(message, 'le seed porte « Pièces à vérifier — monitoring Vertuo » (docs/SPEC-seed.md §40)').toBeDefined()
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto(`/inbox?message=${message!.id}`)
+	const ouvert = page.getByTestId('inbox-message-ouvert')
+	await expect(ouvert).toContainText('Pièces à vérifier — monitoring Vertuo')
+	const pieces = ouvert.getByTestId('pieces-jointes')
+	await expect(pieces).toContainText('non analysée : trop volumineuse, non conservée')
+	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'pieces-sans-bouton', cibles: [pieces] })
+})
+
 // `CRM-074` T3 (docs/DESIGN_SYSTEM.md §5.80) : l'aperçu des pièces du courrier « Dossier de consultation — monitoring Vertuo »
 // (docs/SPEC-seed.md §35).
 test.describe('l’aperçu d’une pièce jointe', () => {

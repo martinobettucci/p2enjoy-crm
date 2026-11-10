@@ -3158,7 +3158,7 @@ côté de son nom. Un bouton grisé promettrait ce que le serveur refuserait.
 ![Une pièce jointe déclarée saine, son nom et son bouton « Télécharger »](manuel/images/l-inbox-lire-trier-et-repondre/telecharger.jpg)
 
 **Une pièce non analysée.** Quand l'antivirus n'a pas pu examiner une pièce, sa ligne dit pourquoi : « non analysée :
-antivirus indisponible », ou « non analysée : analyse en attente » si l'analyse tarde depuis plus d'un quart d'heure. Elle
+antivirus indisponible », ou, si l'analyse tarde depuis plus d'un quart d'heure, que l'analyse est en attente. Elle
 porte « **Télécharger quand même** », qui ouvre sous la pièce un avertissement : « Ce fichier n'a pas été analysé par
 l'antivirus : il peut contenir un logiciel malveillant. Ne l'ouvrez que si vous connaissez l'expéditeur et attendiez ce
 fichier. » « **Je comprends le risque, télécharger** » enregistre votre confirmation, puis télécharge le fichier ;
@@ -3166,12 +3166,15 @@ fichier. » « **Je comprends le risque, télécharger** » enregistre votre con
 
 ![Une pièce non analysée, « Télécharger quand même » et l'avertissement ouvert sous elle](manuel/images/l-inbox-lire-trier-et-repondre/piece-non-analysee.jpg)
 
-- **La confirmation est la vôtre seulement.** Une fois donnée, la pièce porte « Télécharger » pour vous, et sa mention
-  « non analysée » reste : confirmer n'analyse rien. Un collègue qui ouvre le même message voit toujours l'avertissement.
+- **La confirmation est la vôtre seulement.** Une fois donnée, la pièce porte « Télécharger » pour vous, et sa mention de
+  non-analyse reste : confirmer n'analyse rien. Un collègue qui ouvre le même message voit toujours l'avertissement.
 - **Le CRM reprend l'analyse de lui-même.** Dès que l'antivirus répond, les pièces non analysées sont examinées : saines,
   elles se téléchargent directement ; reconnues dangereuses, elles ne se téléchargent plus, confirmation ou non.
 - **Une pièce trop volumineuse** — « non analysée : trop volumineuse, non conservée » — n'a pas été conservée par le CRM :
-  elle n'a aucun bouton. Demandez-la à l'expéditeur par un autre moyen.
+  elle n'a aucun bouton. Demandez-la à l'expéditeur par un autre moyen. Une pièce reconnue dangereuse — « écartée par
+  l'antivirus » — n'en a pas davantage.
+
+![Deux pièces sans bouton : l'une écartée par l'antivirus, l'autre trop volumineuse, non conservée](manuel/images/l-inbox-lire-trier-et-repondre/pieces-sans-bouton.jpg)
 - Elle n'a pas d'**aperçu** : l'aperçu reste réservé aux pièces déclarées saines.
 
 **L'aperçu d'une pièce.** Une image (PNG, JPEG, GIF, WebP), un PDF, un document Word, un classeur Excel ou un fichier
@@ -3407,7 +3410,7 @@ l'assistant ».
 habituel s'ouvre, déjà rempli — l'adresse d'expédition que l'assistant a proposée (si elle est toujours à vous, sinon
 votre adresse par défaut), les destinataires, la copie s'il en a prévu une (un champ « Copie » paraît alors), la copie
 cachée, l'objet et le message. Tout se modifie, et vous pouvez joindre des fichiers. **Les fichiers que l'assistant a
-joints** sont déjà dans la liste des pièces jointes : ils partent avec le mail, et « Retirer » en écarte un. Le lien de
+joints** sont déjà dans la liste des pièces jointes : ils partent avec le mail, et vous pouvez en retirer un. Le lien de
 l'affaire, au-dessus, ouvre sa fiche.
 
 ![La relecture d'un mail préparé : le bandeau « Ce mail n'est pas envoyé », le formulaire rempli, « Mettre en file » et « Écarter »](manuel/images/l-inbox-lire-trier-et-repondre/relire-un-mail-prepare.jpg)
@@ -6677,7 +6680,7 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     disponible ; un email en entier, avec son texte. **Une pièce jointe disponible**, c'est-à-dire déclarée saine, l'assistant
     peut la **lire elle-même**, jusqu'à 25 Mo : il reçoit le fichier et le lit à sa façon. **Une pièce que l'antivirus n'a pas
     pu analyser**, il ne la lit que si vous le lui demandez après qu'il vous a prévenu du risque : votre confirmation est
-    alors enregistrée, comme celle de « Télécharger quand même » ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)).
+    alors enregistrée, comme celle que vous donnez à l'écran avant de télécharger une telle pièce ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)).
     Une pièce reconnue dangereuse, en cours d'analyse ou trop volumineuse ne se lit jamais. Quand
     l'expéditeur n'a écrit qu'en HTML, le texte en est extrait comme à l'écran, et l'assistant le sait. Chaque email dit
     aussi s'il est **lu ou non lu pour vous** ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)) ; le lire par l'assistant ne le marque pas lu, et aucun outil

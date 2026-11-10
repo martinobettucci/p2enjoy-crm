@@ -47,14 +47,15 @@ d'exécuter le code attendu.
   `0037` qui la fige est de nouveau verte. Une base seedée avant ce changement le signale ; `./resetMe.sh` la reconstruit.
   Rien à livrer.
 
-#### `CRM-143` — les pièces jointes non analysées, et ClamAV dans la cellule (décisions 889 et 892) — *tranches T1 à T5, l'unité en cours*
+#### `CRM-143` — les pièces jointes non analysées, et ClamAV dans la cellule (décisions 889 et 892) — *les six tranches, vérifiées en développement*
 
 - **Une pièce que l'antivirus n'a pas pu analyser dit pourquoi** : `mail_attachments.av_skip_reason` distingue l'antivirus injoignable (`scanner_unavailable`) de la pièce trop lourde, jamais stockée (`too_large`). La migration 173 reprend la raison des pièces déjà reçues depuis le stockage.
 - **Elle se télécharge après une confirmation de la personne, enregistrée par le serveur** : `acknowledge_unscanned_attachment` inscrit la confirmation, et la règle de lecture du stockage l'exige. Une pièce saine se télécharge comme avant ; une pièce infectée, trop lourde ou en cours d'analyse, jamais. À l'écran, sa ligne dit pourquoi — « non analysée : antivirus indisponible » — et porte « Télécharger quand même », qui ouvre sous la pièce un avertissement ; « Je comprends le risque, télécharger » enregistre la confirmation, puis télécharge. Une collègue voit toujours l'avertissement : la confirmation est par personne.
 - **`mail-sync` reprend les pièces non analysées** dès qu'il démarre puis toutes les 15 minutes, par lots de 20 : chaque pièce repasse par ClamAV et devient saine ou infectée. Il s'arrête au premier silence de l'antivirus et réessaie au tour suivant. La route interne `POST /internal/v1/attachments/rescan` lance un lot à la demande.
 - **Un mail préparé peut porter des pièces** (`mail_drafts.attachments`, `prepare_email` à neuf arguments), contrôlées comme à l'envoi : dix au plus, 10 Mo au plus. Sa relecture dans l'inbox les précharge dans le formulaire d'envoi. **Le connecteur MCP** joint des fichiers au mail qu'il prépare (`crm_mail_prepare`, `attachments`), et ne lit une pièce non analysée que sur l'accusé explicite de la personne (`crm_mail_attachment_get`, `acknowledge_unscanned`), sa confirmation étant enregistrée comme à l'écran. Les statuts des pièces se précisent : `not_scanned_unavailable`, `not_scanned_too_large`, `scanning`.
 - **ClamAV est déclaré dans la cellule de production** (`docker-compose.spark.yml`) : image épinglée, plafond de 4 Go, signatures dans un volume ; `scripts/verify-spark.sh` le contrôle. La cellule compte 16 Go depuis le 2026-11-10.
-- Déploiement : `docs/PROD_MIGRATIONS.md` §2.35, la migration 173, puis `clamav`, puis les images ; **à ne pas livrer avant la fin de l'unité**.
+- **Le jeu de démonstration montre une pièce par statut** : un courrier porte l'échantillon EICAR, jugé infecté par l'antivirus, et une pièce trop volumineuse, non conservée.
+- Déploiement : `docs/PROD_MIGRATIONS.md` §2.35 — la preuve de `freshclam`, la migration 173, puis `clamav`, puis les images `mail-sync` et `mcp`, puis la webapp.
 
 ## [Publié]
 

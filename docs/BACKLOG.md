@@ -19195,9 +19195,7 @@ board ; INC-352 close sur le constat en production.
 
 ## Demande du 2026-11-10 — les pièces jointes, téléchargeables en production et jointes depuis le connecteur (décision 889)
 
-### CRM-143 — Pièces jointes : ClamAV en production, repli confirmé pour une pièce non analysée, reprise des pièces déjà reçues, pièces jointes depuis le connecteur `[@]`
-
-*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-c2) depuis 2026-11-10 11:12 UTC — état avant : [ ] ; confiée par la session de livraison (be), avant CRM-136*
+### CRM-143 — Pièces jointes : ClamAV en production, repli confirmé pour une pièce non analysée, reprise des pièces déjà reçues, pièces jointes depuis le connecteur `[P]`
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 889).
 **Comportement attendu** :
@@ -19243,7 +19241,17 @@ board ; INC-352 close sur le constat en production.
   - E2E `e2e/ui/mails-prepares.spec.ts` : un mail préparé avec deux pièces, relu dans l'inbox avec ses pièces (7 sur 7) ;
   - manuel §33.5 et §33.6.
   La campagne `scripts/verify-mcp.sh` entière revient à la session de livraison.
-- **T6** (le seed) reste à faire.
+- **T6** (le seed) est implémentée et vérifiée en développement : un courrier réellement reçu porte l'échantillon EICAR
+  (`infected`) et une pièce trop volumineuse (`skipped`, `too_large`), `docs/SPEC-seed.md` §40. Preuves :
+  - le seed rejoué, convergent ;
+  - `scripts/verify-seed.sh` (52) ;
+  - le fil de l'affaire montre les deux pièces sans commande (`e2e/ui/pieces-jointes.spec.ts`).
+- **Reste, au responsable, en production** (`docs/PROD_MIGRATIONS.md` §2.35) :
+  - la preuve de `freshclam` dans la cellule ;
+  - la mesure mémoire de `clamav` dans la cellule ;
+  - le constat de la reprise des quatre pièces `skipped` de production ;
+  - le constat à l'écran.
+  La campagne complète (dont `scripts/verify-mcp.sh`) revient à la session de livraison.
 **DoD** :
 - unitaires ;
 - pgTAP et API : `skipped` téléchargeable seulement avec la confirmation, `infected` jamais, l'anonyme rien, refus de

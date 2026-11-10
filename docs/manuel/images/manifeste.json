@@ -5255,6 +5255,24 @@
 			]
 		},
 		{
+			"fichier": "l-inbox-lire-trier-et-repondre/pieces-sans-bouton.jpg",
+			"largeur": 536,
+			"hauteur": 116,
+			"chapitre": "l-inbox-lire-trier-et-repondre",
+			"section": "l-inbox-lire-et-trier-le-courrier-recu",
+			"pleinePage": false,
+			"libelles": [
+				"25 Mo",
+				"68 o",
+				"eicar-test.txt",
+				"eicar-test.txt 68 o écartée par l'antivirus",
+				"enregistrement-reunion.mov",
+				"enregistrement-reunion.mov 25 Mo non analysée : trop volumineuse, non conservée",
+				"non analysée : trop volumineuse, non conservée",
+				"écartée par l'antivirus"
+			]
+		},
+		{
 			"fichier": "l-inbox-lire-trier-et-repondre/relire-un-mail-prepare.jpg",
 			"largeur": 536,
 			"hauteur": 749,

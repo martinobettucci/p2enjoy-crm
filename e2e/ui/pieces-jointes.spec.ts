@@ -5,6 +5,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.80, §5.4, §5.28, §7 ; docs/SPEC-pieces-jointes.md §5, §5.2 (décision 791) ;
 //           docs/SPEC-seed.md §35 ; CLAUDE.md §16 (captures)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du SSO
+// @verifies CRM-143 (docs/BACKLOG.md) — tranche T6 : le fil de l'affaire montre aussi les deux pièces du seed qui ne se
+//           téléchargent jamais, l'infectée et la trop volumineuse (docs/SPEC-seed.md §40 ; docs/DESIGN_SYSTEM.md §5.95)
 //
 // Le courrier vient du seed (§35) : réellement reçu, ses pièces analysées et leur texte extrait par la vraie chaîne. Le
 // scénario ne fait que lire : rien n'est écrit, rien n'est à rendre.
@@ -87,7 +89,12 @@ test('le fil de l’affaire liste les pièces sous la ligne du courrier, et l’
 	await page.getByTestId('inbox-pilule-card').click()
 	const fil = page.getByRole('region', { name: 'Fil de cette affaire' })
 	const pieces = fil.getByTestId('inbox-piece-jointe')
-	await expect(pieces).toHaveCount(6) // les cinq du courrier reçu, et proposition-monitoring.txt de l'envoi du seed
+	// les cinq du courrier reçu, proposition-monitoring.txt de l'envoi du seed, et les deux du courrier « Pièces à vérifier »
+	// de `CRM-143` T6 (docs/SPEC-seed.md §40) : l'infectée et la trop volumineuse, sans commande.
+	await expect(pieces).toHaveCount(8)
+	await expect(pieces.filter({ hasText: 'eicar-test.txt' })).toContainText('écartée par l’antivirus')
+	await expect(pieces.filter({ hasText: 'enregistrement-reunion.mov' })).toContainText('non analysée : trop volumineuse, non conservée')
+	await expect(pieces.filter({ hasText: 'enregistrement-reunion.mov' }).getByRole('button')).toHaveCount(0)
 	const budget = pieces.filter({ hasText: 'budget-previsionnel.xlsx' })
 	await budget.getByRole('button', { name: /Aperçu de/ }).click()
 	await expect(budget.getByTestId('texte-contenu')).toContainText('Tableaux de bord 7800')
