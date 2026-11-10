@@ -19413,7 +19413,8 @@ réel dans deux devises, une sans recette) ; captures aux quatre paliers ; manue
 
 ## Demande du 2026-11-10 — livrer une révision précise par git, depuis la cellule (décision 905)
 
-### CRM-147 — `livrer.sh` livre un condensé choisi, récupéré par git dans la cellule `[ ]`
+### CRM-147 — `livrer.sh` livre un condensé choisi, récupéré par git dans la cellule `[@]`
+*Prise en charge : session interactive 4891a451 (p2enjoy-crm-32) depuis 2026-11-10 22:37 UTC — état avant : [ ] ; confiée par la session de livraison (ee)*
 
 **Origine** : indication du responsable, le 2026-11-10 (décision 905) : la clé privée de la cellule est autorisée à cloner le
 projet ; une livraison ne doit plus emporter tout `HEAD`.
