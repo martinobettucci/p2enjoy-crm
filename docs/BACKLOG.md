@@ -19245,7 +19245,8 @@ contrat.
 
 ## Demande du 2026-11-10 — une livraison se voit au prochain chargement (décision 899)
 
-### CRM-145 — `Cache-Control` sur la webapp : `index.html` revalidé, `/assets/` immuable `[ ]`
+### CRM-145 — `Cache-Control` sur la webapp : `index.html` revalidé, `/assets/` immuable `[@]`
+*Prise en charge : session interactive 4891a451 (p2enjoy-crm-32) depuis 2026-11-10 15:56 UTC — état avant : [ ] ; confiée par la session de livraison (ee)*
 
 **Origine** : le responsable ne voyait pas les livraisons récentes ; `caddy/routes.caddy` n'envoie aucun `Cache-Control` sur
 `index.html` (décision 899), **prioritaire**.
