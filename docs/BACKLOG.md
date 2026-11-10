@@ -19330,7 +19330,8 @@ constatés sur la route publique, et le constat du responsable.
 
 ## Demande du 2026-11-10 — le prévisionnel et le réel d'une organisation (décision 900)
 
-### CRM-146 — L'organisation montre son prévisionnel et son réel ; la liste, une barre de progression par devise `[ ]`
+### CRM-146 — L'organisation montre son prévisionnel et son réel ; la liste, une barre de progression par devise `[@]`
+*Prise en charge : session interactive 152dd27d (p2enjoy-crm-a8) depuis 2026-11-10 17:16 UTC — état avant : [ ] ; confiée par la session de livraison (ee)*
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 900).
 **Comportement attendu** : la fiche d'une organisation montre, par devise, le prévisionnel (somme des recettes prévues de ses
