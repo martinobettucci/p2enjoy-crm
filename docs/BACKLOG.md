@@ -19026,3 +19026,31 @@ compteurs), `docs/DESIGN_SYSTEM.md` (la case dans l'inbox, l'état désactivé),
 illisible jamais rendu) ; E2E souris et clavier (case cochée, décochée, personne sans identité) ; outil du connecteur et
 `verify-mcp.sh` ; seed (deux identités personnelles d'une même personne, un message à chacune, un message qui ne lui est
 pas adressé) ; captures aux quatre paliers ; manuel.
+
+## Demande du 2026-11-10 — rendre les liens, et les images à la demande (décision 881)
+
+### CRM-140 — Le corps d'un mail HTML rendu confiné, liens cliquables, images distantes derrière « Afficher les images » `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 881).
+**Comportement attendu** :
+- le corps HTML d'un message est rendu dans un cadre isolé : aucun script, aucun formulaire, liens ouverts dans un nouvel
+  onglet sans référent ;
+- les images distantes sont bloquées, avec un bandeau et le bouton « Afficher les images », qui vaut pour ce message
+  seulement ;
+- un message sans HTML garde son texte, et ses adresses web deviennent des liens ;
+- le §18.4 est révisé.
+**MCP** : **non** (décision 881).
+**Spécification** : à écrire avant le code. Elle couvre `docs/SPEC-mail-subsystem.md` §18.4 révisé (bac à sable, CSP,
+nettoyage, `cid:`), `docs/DESIGN_SYSTEM.md` (le cadre, le bandeau des images), le manuel (inbox) et le DAT (sécurité du
+rendu).
+**DoD** :
+- unitaires, dont le nettoyage : scripts, gestionnaires `on*`, `javascript:`, formulaires, `meta refresh` ;
+- E2E souris et clavier :
+  - un mail du seed avec lien et image distante ;
+  - aucune requête vers l'hôte de l'image avant le clic, mesurée par l'interception réseau ;
+  - la requête part après le clic ;
+  - le message suivant repart bloqué ;
+  - le lien s'ouvre avec `noopener` ;
+- seed : un message HTML avec lien, image distante et image `cid:` ;
+- captures aux quatre paliers ;
+- manuel.

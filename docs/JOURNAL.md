@@ -39684,3 +39684,31 @@ complète, puis rejeu sur seed frais (`resetMe`, décision des trois sessions) ;
 unitaires verts, ui 1 149 sur 1 155, manuel 142 sur 144, API 70/70 sur seed frais, pgTAP vert ; le reste INC-342, vert
 rejoué seul, ou dû à la 0171 non poussée de `CRM-135`, appliquée en dev par un runner (hors du lot).
 **Décision : oui, sans instantané** : un `pg_dump` avant ; aucune écriture de schéma ni de données.
+
+### décision 881 — Le corps d'un mail HTML se rend confiné, liens compris ; les images distantes attendent « Afficher les images », pour ce message seulement ; aucun outil MCP
+
+*2026-11-10, session 152dd27d (p2enjoy-crm-d9), demande et arbitrage du responsable (conversation, capture d'écran et
+`AskUserQuestion`).*
+**Demande** : « les liens et les images ne sont pas rendus : il faudrait déjà rendre les liens, et pour les images il faut
+un bouton "afficher les images" pour nous protéger des pixels traceurs (comme le font 99,999 % des clients de messagerie) ».
+La capture montre un message Goodflag en « Mise en forme retirée : ce message est affiché en texte seul », et une URL
+d'invitation non cliquable.
+**État mesuré** : `mail_messages` conserve `body_text` et `body_html`. L'inbox n'affiche que du texte, et réduit le HTML en
+texte côté client (`docs/SPEC-mail-subsystem.md` §18.4, « le HTML d'un expéditeur ne s'affiche jamais »). Le §18.4
+réservait déjà « un rendu HTML confiné […] qui exige un bac à sable, une politique de contenu dédiée et ses propres
+preuves ».
+**Décision du responsable** :
+- **HTML confiné** (choix recommandé) : la mise en forme et les liens du mail sont rendus dans un cadre isolé, sans script
+  ni formulaire. Les liens s'ouvrent dans un nouvel onglet, sans référent ;
+- **les images distantes sont bloquées** jusqu'au clic sur « Afficher les images » ;
+- **ce clic vaut pour ce message seulement**, le temps qu'il reste ouvert : rien n'est mémorisé, et le message suivant
+  repart bloqué (choix recommandé) ;
+- **MCP : non**, c'est un rendu d'interface ; l'assistant garde le texte du mail.
+**Conséquences** : une unité, `CRM-140`, à spécifier avant le code. Elle révise le §18.4, que la décision lève, et son
+assertion figée par décision 51 est **retournée, non retirée**. La spécification tranchera :
+- le bac à sable : `iframe` `sandbox` sans `allow-scripts` ni `allow-same-origin`, `srcdoc`, CSP `img-src` fermée puis
+  ouverte au clic, nettoyage du HTML ;
+- les images embarquées (`cid:`) et `data:` ;
+- le texte seul pour un message sans HTML, où les adresses web deviennent des liens ;
+- le thème, la hauteur du cadre, l'impression, l'accessibilité clavier ;
+- les mails préparés et les messages envoyés.
