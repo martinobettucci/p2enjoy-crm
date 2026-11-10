@@ -19252,6 +19252,7 @@ contrat.
 `index.html` (décision 899), **prioritaire**.
 **Comportement attendu** : `index.html` et toute route de l'application monopage servis avec `Cache-Control: no-cache` ; les
 fichiers hachés de `/assets/` avec `public, max-age=31536000, immutable` ; aucun autre en-tête de sécurité changé.
+**Spécification** : `docs/SPEC-deploiement-spark.md` §3.2 bis, écrite le 2026-11-10 avant le code.
 **MCP** : non. **DoD** : la configuration Caddy (`caddy/routes.caddy`, en dev et dans la cellule) ; une preuve qui lit les
 en-têtes réels (`verify-spark.sh` ou un E2E API : `index.html`, une route profonde, un fichier de `/assets/`) ; le contrat de
 déploiement (rechargement de Caddy) ; après livraison, les en-têtes constatés sur la route publique.
