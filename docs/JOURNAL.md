@@ -39837,3 +39837,19 @@ décision 884. Consigné par la session d5b44a2d (p2enjoy-crm-c2), avant le code
   est écrit, la garde de 30 s s'applique, aucune route ni aucun droit nouveau. C'était la recommandation.
 **Conséquences** : `docs/SPEC-mail-subsystem.md` §25 est révisée. Le formulaire gagne le seul champ de l'historique ;
 `p_folder_style` n'est jamais envoyé ; aucune preuve ni aucun code ne touche `folder_style`.
+
+### décision 886 — INC-352 : la lecture du board se mesure en développement, puis en production en lecture seule
+
+*2026-11-10, session interactive 4891a451 (p2enjoy-crm-2f), arbitrage du responsable (`AskUserQuestion`).*
+**Le problème** : en production, le board du channel « Partenariats marques » rend `57014` (délai de 8 s dépassé) sur la
+lecture des rattachements ; la vue liste, paginée, s'ouvre (INC-352).
+**Observations** : HAR du responsable ; le channel compte, selon lui, **moins de 100 affaires actives**. Le volume seul
+n'explique donc pas 8 s : l'hypothèse d'une fonction de politique coûteuse, réévaluée par ligne plongée, devient la
+première à mesurer.
+**Décision du responsable** : mesurer **les deux** — en développement d'abord, sur un volume simulé comparable, pour
+chercher la cause ; puis en production, en lecture seule, pour la confirmer sur le vrai volume.
+**Règles d'application** : en développement, les affaires de mesure sont créées dans une transaction annulée
+(`rollback`), sans toucher au seed ; la mesure n'a lieu qu'avec l'accord des sessions qui occupent la pile. En
+production, un seul `EXPLAIN (ANALYZE, BUFFERS)` de cette lecture, sous le rôle `authenticated` et l'identité d'un
+membre, sans écriture, joué par la session de livraison (`CLAUDE.md` §9, §12). Aucune correction n'est décidée avant la
+mesure ; la correction sera spécifiée, avec les deux questions du connecteur MCP, avant le code.
