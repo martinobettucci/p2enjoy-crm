@@ -40336,3 +40336,17 @@ désigne une clé ailleurs. Aucune clé n'a été lue ; aucune écriture n'a eu 
 ni lue, ni copiée, ni ouverte par un agent, et root reste hors de son périmètre (décision 909).
 **Point ouvert, à arbitrer par le responsable à la spécification de `CRM-147`** : la manière dont la livraison, qui
 s'exécute sous `spark-docker`, met cette clé en œuvre sans qu'un agent n'agisse en root.
+
+### décision 912 — `CRM-147` : la clé de clonage est posée chez `spark-docker`, l'accès constaté
+
+*2026-11-10, session interactive 4891a451 (p2enjoy-crm-32) ; complète les décisions 909 et 911.*
+**Indication du responsable** (`AskUserQuestion`) : « le correctif a été déployé et la clef ssh est dans la home du user
+docker rootless » — le responsable a lui-même posé la clé de clonage chez `spark-docker`. Le point ouvert de la décision
+911 (employer une clé de root sous `spark-docker`) est donc **clos** : la livraison emploie la clé de `spark-docker`, et
+aucun agent n'agit en root.
+**Constaté en lecture seule sous `spark-docker`** : `~/.ssh` porte désormais `id_ed25519` et `id_ed25519.pub` (noms seuls ;
+la clé n'est ni lue ni affichée) ; `git ls-remote git@github.com:martinobettucci/p2enjoy-crm.git refs/heads/main` rend le
+condensé de `main`. GitHub n'est **pas** dans `~/.ssh/known_hosts` : le constat a passé la vérification d'hôte sans rien
+écrire (`UserKnownHostsFile=/dev/null`). **La spécification exige donc d'épingler la clé d'hôte de GitHub** (son empreinte
+publiée), geste d'écriture dans la cellule réservé à la session de livraison ou au responsable ; une livraison ne
+contourne jamais la vérification d'hôte.
