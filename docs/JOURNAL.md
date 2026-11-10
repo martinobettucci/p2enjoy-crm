@@ -40176,3 +40176,19 @@ avant le commit.
 **Conséquences** : spécification dans `docs/SPEC-mail-subsystem.md` §27, `docs/DESIGN_SYSTEM.md` §5.96,
 `docs/SPEC-mcp.md` §9.2 *duodevicies* et `docs/SCHEMA.md`. Les preuves existantes de l'inbox ouvrent l'écran avec
 `courrier=tous`.
+
+
+### décision 903 — `CRM-146` : une affaire compte pour une organisation par ses contacts rattachés
+
+*2026-11-10, session interactive 152dd27d (p2enjoy-crm-a8), arbitrage du responsable (`AskUserQuestion`), avant la
+spécification.*
+**Le problème** : la décision 900 somme les recettes « des affaires de l'organisation », mais une affaire ne porte pas
+d'organisation. **Mesuré** : le seul chemin passe par `card_contacts` puis `contacts.organization_id`. Il n'existe ni colonne
+d'organisation sur `cards`, ni contact principal (`card_contacts.role` est un texte libre).
+**Pistes présentées** : par les contacts rattachés ; un champ « Organisation » nouveau sur l'affaire, à renseigner ;
+l'organisation du premier contact rattaché.
+**Décision du responsable** : **par ses contacts.** Une affaire compte pour une organisation dès qu'un de ses contacts
+rattachés en fait partie. Une affaire dont les contacts viennent de deux organisations compte pour les deux, et la fiche le
+dit. Aucun champ nouveau.
+**Conséquences** : la spécification de `CRM-146` part de ce lien, sous les droits de la personne (le contact, le lien et
+l'affaire lisibles).

@@ -19339,6 +19339,8 @@ affaires) et le réel (somme de leurs recettes réelles saisies) ; la liste des 
 progression : le réel sur le prévisionnel, avec les deux montants lisibles (pas seulement la couleur). Seules comptent les
 affaires lisibles par la personne ; calcul côté serveur ; une organisation sans recette ne montre pas de barre vide trompeuse.
 **MCP** : **oui, famille `recettes`**, lecture (décision 900).
+**Lien affaire–organisation** (décision 903) : par les contacts rattachés. Une affaire compte pour une organisation dès
+qu'un de ses contacts en fait partie, et pour les deux si ses contacts viennent de deux organisations ; aucun champ nouveau.
 **Spécification** : à écrire avant le code — `docs/SPEC-costs.md` ou la spécification des recettes (l'agrégat par organisation,
 le lien affaire–organisation retenu), `docs/DESIGN_SYSTEM.md` (la barre, accessible : texte et `progressbar`), `docs/SPEC-mcp.md`
 §9.2, le manuel.
