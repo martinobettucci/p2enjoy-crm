@@ -313,14 +313,14 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Les deux formulaires, création et modification, portent en dernier un champ "
+					"text": "Les deux formulaires, création et modification, portent en dernier un champ de "
 				},
 				{
 					"type": "strong",
 					"content": [
 						{
 							"type": "text",
-							"text": "« Description »"
+							"text": "description"
 						}
 					]
 				},

@@ -4791,7 +4791,7 @@ pas**. Elle est ce sur quoi vos statistiques s'appuient, et la renommer réécri
 toutes les affaires passées par ce nœud. Si un nœud ne convient plus, archivez-le et créez-en un
 autre.
 
-Les deux formulaires, création et modification, portent en dernier un champ **« Description »**, facultatif : quelques
+Les deux formulaires, création et modification, portent en dernier un champ de **description**, facultatif : quelques
 lignes qui disent ce que l'étape signifie pour une affaire. Elle paraît au survol de l'étape, sur le tableau et sur la
 fiche ([§3.6](#la-description-d-un-track-d-un-channel-ou-d-une-affaire-au-survol)), dans **tous** les workflows qui
 emploient ce nœud — sauf là où une étape la remplace par la sienne ([§18](#composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire)).
