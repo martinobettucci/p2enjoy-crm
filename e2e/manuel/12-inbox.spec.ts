@@ -8,6 +8,8 @@
 //       docs/SPEC-mails-prepares.md §6 ; docs/SPEC-seed.md §37)
 // @spec CRM-137 (docs/BACKLOG.md) — l'image « classer-expediteur-connu » de la section 12.1 : le sélecteur cherchable et
 //       la case « Expéditeur connu » (docs/DESIGN_SYSTEM.md §5.94 ; docs/SPEC-mail-subsystem.md §26.3)
+// @spec CRM-143 (docs/BACKLOG.md) — tranche T4 : l'image « piece-non-analysee » de la section 12.1 — « Télécharger quand
+//       même » et son avertissement (docs/DESIGN_SYSTEM.md §5.95 ; docs/SPEC-pieces-jointes.md §17.4)
 //
 // Les messages sont ceux du seed : « Candidature spontanée » (non classé), « Demande de devis — refonte » et sa réponse
 // (classés dans « Refonte du site vitrine »), « Point d'avancement — migration ERP » (suggéré). Rien n'est classé, retiré,
@@ -16,7 +18,7 @@
 
 import { expect, test, type Page } from '@playwright/test'
 import { illustrer } from './illustrer'
-import { ADMIN, AFFAIRE_SOGEXIA, connecterAvecLeLabs, lireService, retenir } from './outils'
+import { ADMIN, AFFAIRE_SOGEXIA, WORKSPACE_SEED, connecterAvecLeLabs, lireService, retenir, service } from './outils'
 import { URL_API, enTetesService } from '../api/jetons'
 
 // LE CHROMIUM COMPLET, et non le « headless shell » : seul le premier porte le lecteur PDF du navigateur, que l'image de
@@ -92,6 +94,52 @@ test('l’inbox : les dossiers, un fil, le classement', async ({ page }) => {
 	const telecharger = page.getByTestId('inbox-message-ouvert').getByRole('button', { name: /Télécharger/ }).first()
 	await expect(telecharger).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'telecharger', cibles: [piece, telecharger] })
+})
+
+// `CRM-143` T4 (docs/DESIGN_SYSTEM.md §5.95) : une pièce non analysée. Le seed n'en porte pas — elle naît sans antivirus, et
+// la reprise la rendrait saine dans le quart d'heure (docs/SPEC-pieces-jointes.md §17.8) : l'image la pose sur un message du
+// seed, son objet réellement déposé par la clé de service, puis la retire. L'avertissement est ouvert puis annulé : aucune
+// confirmation n'est enregistrée.
+test('une pièce non analysée : « Télécharger quand même » et son avertissement', async ({ page, request }) => {
+	test.setTimeout(90_000)
+	const [message] = await lireService<{ id: string; card_id: string | null }[]>(
+		request,
+		`mail_messages?select=id,card_id&rfc822_message_id=eq.${encodeURIComponent('<seed-inbox-classe@p2enjoy.test>')}`,
+	)
+	expect(message, 'le seed porte « Demande de devis — refonte »').toBeDefined()
+	const empreinte = 'a'.repeat(64)
+	const chemin = `${WORKSPACE_SEED}/${message!.id}/${empreinte}`
+	const depot = await request.post(`${URL_API}/storage/v1/object/mail-attachments/${chemin}`, {
+		headers: { ...enTetesService(), 'Content-Type': 'application/pdf', 'x-upsert': 'true' },
+		data: Buffer.from('%PDF-1.4 releve\n%%EOF\n'),
+	})
+	expect([200, 201], await depot.text()).toContain(depot.status())
+	try {
+		await service(request, 'post', 'mail_attachments', {
+			message_id: message!.id,
+			card_id: message!.card_id,
+			filename: 'releve-de-compte.pdf',
+			mime_type: 'application/pdf',
+			size_bytes: 28,
+			storage_path: chemin,
+			sha256: empreinte,
+			av_status: 'skipped',
+		})
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto(`/inbox?message=${message!.id}`)
+		await expect(page.getByTestId('inbox-message-ouvert')).toContainText('Demande de devis — refonte')
+		const ligne = page.getByTestId('inbox-message-ouvert').getByTestId('inbox-piece-jointe').filter({ hasText: 'releve-de-compte.pdf' })
+		await ligne.getByTestId('telecharger-quand-meme').click()
+		const avertissement = ligne.getByTestId('avertissement-piece')
+		await expect(avertissement).toBeVisible()
+		await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'piece-non-analysee', cibles: [ligne, avertissement] })
+		await ligne.getByTestId('annuler-risque').click()
+	} finally {
+		await request.delete(`${URL_API}/rest/v1/mail_attachments?storage_path=eq.${encodeURIComponent(chemin)}`, {
+			headers: enTetesService(),
+		})
+		await request.delete(`${URL_API}/storage/v1/object/mail-attachments/${chemin}`, { headers: enTetesService() })
+	}
 })
 
 // `CRM-074` T3 (docs/DESIGN_SYSTEM.md §5.80) : l'aperçu des pièces du courrier « Dossier de consultation — monitoring Vertuo »

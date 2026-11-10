@@ -7999,3 +7999,45 @@ suggestion au-dessus (§5.4 ter), « Classer » et « Annuler », les refus — 
   conservées. `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
 - **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `Check`**, qui ne sert aucun autre objet (§9) : elle
   marque l'option choisie. `Search` vient de la palette (§5.46), pour le même geste.
+
+### 5.95 La pièce non analysée : sa raison, « Télécharger quand même » et son avertissement — `CRM-143` T4
+
+*Écrit le 2026-11-10 avec le code, après relecture intégrale de ce document le même jour (décisions 889 et 892).* Ce que la
+base lit, enregistre et refuse est spécifié par `docs/SPEC-pieces-jointes.md` §17.3 et §17.4 ; ces règles ne disent que
+de quoi l'écran a l'air. **Elles révisent le §5.4 pour la seule pièce NON ANALYSÉE** — `skipped` faute d'antivirus, ou
+`pending` depuis plus de quinze minutes : « une pièce non saine n'a pas de lien » reste vrai pour une pièce infectée, en
+cours d'analyse ou trop volumineuse. La ligne d'une pièce est celle du §5.80, partagée par l'inbox et le fil de l'affaire.
+
+- **SA RAISON EN TOUTES LETTRES**, à la place du statut, en 13 px `--color-text-3` : « non analysée : antivirus
+  indisponible », « non analysée : analyse en attente », ou « non analysée : trop volumineuse, non conservée ». Cette
+  dernière **n'a aucune commande** : elle n'a jamais été conservée, il n'y a rien à télécharger (§5.21). Un statut inconnu,
+  ou un `skipped` sans raison, garde « statut d'analyse inconnu », sans commande : le repli ne glisse jamais du côté
+  permissif.
+- **« Télécharger quand même »**, bouton discret compact, icône Lucide **`ShieldQuestion`** — une sûreté inconnue —, qui ne
+  sert aucun autre objet (§9). *Précision de la spécification* : le §17.4 nommait `ShieldAlert`, que l'état de refus du
+  §5.8 emploie déjà (`EtatRefus`) ; le §9 interdit qu'une icône serve deux objets. Nom accessible « Télécharger quand même
+  {nom} », `aria-expanded`, `aria-controls`. **Aucun « Aperçu »** : l'aperçu reste réservé aux pièces saines (§17.1).
+- **L'AVERTISSEMENT S'OUVRE SOUS LA LIGNE, DANS LE FLUX**, jamais en modale (§5.13) — la place du panneau d'aperçu du §5.80.
+  `role="group"` nommé « Avertissement : {nom} n'a pas été analysé », `--color-accent-soft` / `--color-accent-on-soft`,
+  `--radius-lg`, rembourrage 12 px, icône `TriangleAlert` décorative : une consigne, pas une erreur (§5.79, §5.90). La
+  phrase : « Ce fichier n'a pas été analysé par l'antivirus : il peut contenir un logiciel malveillant. Ne l'ouvrez que si
+  vous connaissez l'expéditeur et attendiez ce fichier. » Puis « Je comprends le risque, télécharger » (primaire compact) et
+  « Annuler » (secondaire compact).
+  - **La commande reste montée et porte `aria-expanded`** (§5.43, §5.80) : le focus lui revient sans différé. **Le focus
+    entre sur « Je comprends le risque, télécharger »**, qui cite la phrase du risque par `aria-describedby` : le lecteur
+    d'écran l'entend avant d'accepter. `Échap` et « Annuler » referment et rendent le focus à la commande.
+  - **« Je comprends le risque, télécharger » n'est pas destructif** : accepter un risque n'efface rien (§1, §6). Pendant
+    l'envoi, les deux boutons sont désactivés et le bouton appuyé dit « Téléchargement… », `aria-busy`.
+  - **La confirmation est écrite par la base AVANT le téléchargement** (`acknowledge_unscanned_attachment`), puis le
+    fichier se télécharge par l'adresse signée, sous la session : la règle du stockage lit la confirmation (`CLAUDE.md`
+    §10). Une pièce devenue saine entre-temps se télécharge, sans refus.
+  - **Un refus se dit dans l'avertissement**, `role="alert"`, `--color-danger-soft` / `--color-danger-on-soft`, par un
+    dictionnaire fermé — pièce introuvable, infectée, en cours d'analyse, non conservée, réseau, inconnu —, l'avertissement
+    restant ouvert ; le focus revient au bouton une fois réactivé (§5.63).
+- **UNE PIÈCE DÉJÀ CONFIRMÉE PAR LA PERSONNE** n'en demande plus : sa ligne porte « Télécharger » (`Download`), et la mention
+  « non analysée : … » **reste** — confirmer n'analyse rien. La confirmation est celle d'**une** personne : une collègue voit
+  toujours « Télécharger quand même ».
+- **Une pièce infectée garde sa forme** (§5.4) : son statut en toutes lettres, aucune commande.
+- **SOUS `md`**, les commandes passent sous le nom, cibles conservées, et l'avertissement prend la largeur de sa colonne ;
+  `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
+- **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `ShieldQuestion`.**

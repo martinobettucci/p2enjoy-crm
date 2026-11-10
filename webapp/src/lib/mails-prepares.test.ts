@@ -2,6 +2,8 @@
 //           récent, par affaire), l'envoi avec le contenu relu par `send_email_draft`, l'écart par `discard_email_draft`,
 //           le classement de leurs refus et l'adresse de relecture
 // @verifies docs/SPEC-mails-prepares.md §3.4, §3.5, §6.1 ; docs/DESIGN_SYSTEM.md §5.90 ; décision 829
+// @verifies CRM-143 (docs/BACKLOG.md) — tranche T4 : les pièces d'un mail préparé, lues défensivement de
+//           `mail_drafts.attachments` (docs/SPEC-pieces-jointes.md §17.6)
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -75,9 +77,26 @@ describe('la lecture des mails préparés', () => {
 		expect(mailPrepareDepuisLigne(LIGNE)).toEqual({
 			id: 'm1', idCard: 'c1', titreCard: 'Refonte', idIdentite: 'i1', repondA: 'r1',
 			destinataires: ['client@exemple.fr'], copies: ['copie@exemple.fr'], copiesCachees: [],
-			objet: 'Proposition', corps: 'Bonjour', origine: 'mcp', creeLe: '2026-11-03T10:00:00Z',
+			objet: 'Proposition', corps: 'Bonjour', origine: 'mcp', creeLe: '2026-11-03T10:00:00Z', pieces: [],
 		})
 		expect(mailPrepareDepuisLigne({ ...LIGNE, origin: 'autre', cards: null, subject: null }).origine).toBe('web')
+	})
+
+	it('CRM-143 : lit les pièces du mail préparé, et écarte ce qui ne pourrait pas partir', () => {
+		const ligne = {
+			...LIGNE,
+			attachments: [
+				{ path: 'e/p/u/devis.pdf', filename: 'devis.pdf', mime_type: 'application/pdf', size_bytes: 1200 },
+				{ path: 'e/p/u/sans-nom.bin' },
+				{ filename: 'sans-chemin.pdf' },
+				'pas un objet',
+			],
+		}
+		expect(mailPrepareDepuisLigne(ligne).pieces).toEqual([
+			{ chemin: 'e/p/u/devis.pdf', nom: 'devis.pdf', taille: 1200 },
+			{ chemin: 'e/p/u/sans-nom.bin', nom: 'sans-nom.bin', taille: 0 },
+		])
+		expect(mailPrepareDepuisLigne({ ...LIGNE, attachments: null }).pieces).toEqual([])
 	})
 
 	it('dit une panne de lecture comme une erreur, jamais comme une liste vide', async () => {

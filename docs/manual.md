@@ -3066,10 +3066,11 @@ y ajouter un message, c'est y ajouter du contenu.
 **Une affaire archivée ou en corbeille ne reçoit plus.** Un message qui lui était adressé reste non
 classé plutôt que de revenir dans un dossier que vous avez fermé.
 
-**Les pièces jointes sont analysées avant d'être proposées.** Une pièce n'est téléchargeable
-qu'une fois déclarée saine ; une pièce reconnue dangereuse est conservée mais **jamais**
-téléchargeable, et une pièce que l'antivirus n'a pas pu examiner ne l'est pas davantage. Un fichier
-non analysé n'est pas un fichier sain.
+**Les pièces jointes sont analysées avant d'être proposées.** Une pièce se télécharge directement
+une fois déclarée saine ; une pièce reconnue dangereuse est conservée mais **jamais**
+téléchargeable. Une pièce que l'antivirus n'a pas pu examiner n'est pas un fichier sain : elle ne se
+télécharge qu'**après un avertissement et votre confirmation**, et le CRM la fait analyser dès que
+l'antivirus répond de nouveau.
 
 **Le nom d'un fichier reçu est nettoyé sans être perdu** : le produit affiche un nom sûr, et
 conserve le nom d'origine tel que l'expéditeur l'a écrit.
@@ -3144,10 +3145,27 @@ dans votre navigateur, ni charger d'images qui signaleraient l'ouverture de votr
 message n'a été envoyé qu'en HTML, le produit vous le dit et n'en affiche que le texte.
 
 **Les pièces jointes.** Une pièce déclarée saine porte un bouton « Télécharger ». Une pièce en
-cours d'analyse, écartée par l'antivirus ou non analysée n'en a **pas** : son état est écrit en
-toutes lettres à côté de son nom. Un bouton grisé promettrait ce que le serveur refuserait.
+cours d'analyse ou écartée par l'antivirus n'en a **pas** : son état est écrit en toutes lettres à
+côté de son nom. Un bouton grisé promettrait ce que le serveur refuserait.
 
 ![Une pièce jointe déclarée saine, son nom et son bouton « Télécharger »](manuel/images/l-inbox-lire-trier-et-repondre/telecharger.jpg)
+
+**Une pièce non analysée.** Quand l'antivirus n'a pas pu examiner une pièce, sa ligne dit pourquoi : « non analysée :
+antivirus indisponible », ou « non analysée : analyse en attente » si l'analyse tarde depuis plus d'un quart d'heure. Elle
+porte « **Télécharger quand même** », qui ouvre sous la pièce un avertissement : « Ce fichier n'a pas été analysé par
+l'antivirus : il peut contenir un logiciel malveillant. Ne l'ouvrez que si vous connaissez l'expéditeur et attendiez ce
+fichier. » « **Je comprends le risque, télécharger** » enregistre votre confirmation, puis télécharge le fichier ;
+« **Annuler** », ou la touche Échap, referme l'avertissement sans rien enregistrer.
+
+![Une pièce non analysée, « Télécharger quand même » et l'avertissement ouvert sous elle](manuel/images/l-inbox-lire-trier-et-repondre/piece-non-analysee.jpg)
+
+- **La confirmation est la vôtre seulement.** Une fois donnée, la pièce porte « Télécharger » pour vous, et sa mention
+  « non analysée » reste : confirmer n'analyse rien. Un collègue qui ouvre le même message voit toujours l'avertissement.
+- **Le CRM reprend l'analyse de lui-même.** Dès que l'antivirus répond, les pièces non analysées sont examinées : saines,
+  elles se téléchargent directement ; reconnues dangereuses, elles ne se téléchargent plus, confirmation ou non.
+- **Une pièce trop volumineuse** — « non analysée : trop volumineuse, non conservée » — n'a pas été conservée par le CRM :
+  elle n'a aucun bouton. Demandez-la à l'expéditeur par un autre moyen.
+- Elle n'a pas d'**aperçu** : l'aperçu reste réservé aux pièces déclarées saines.
 
 **L'aperçu d'une pièce.** Une image (PNG, JPEG, GIF, WebP), un PDF, un document Word, un classeur Excel ou un fichier
 OpenDocument, déclarés sains, portent aussi « **Aperçu** ». L'aperçu s'ouvre **sous la pièce**, dans le message : l'image,
@@ -3329,8 +3347,8 @@ fichier… » — puis s'affiche avec sa taille et un bouton pour le retirer. So
   fermé — est effacé de lui-même au bout de 24 heures.
 - **Les fichiers envoyés restent dans l'affaire** : le message envoyé les montre comme ceux d'un message reçu. Quand
   l'analyse antivirus est en place, un fichier sain se télécharge, et **un fichier infecté empêche le message de
-  partir** : il est marqué en échec, et le dit. Sans antivirus, le message part et ses fichiers sont « non analysés »,
-  donc non téléchargeables, comme les pièces reçues.
+  partir** : il est marqué en échec, et le dit. Sans antivirus, le message part et ses fichiers sont « non analysés » :
+  ils ne se téléchargent qu'après l'avertissement et votre confirmation, comme les pièces reçues.
 
 **Répondre depuis l'inbox.** Un message rangé dans une affaire porte un bouton « Répondre » : le
 destinataire et l'objet sont déjà remplis, et votre réponse reste rattachée à la conversation. Un
@@ -3381,8 +3399,9 @@ l'assistant ».
 **Choisir un mail ouvre sa relecture** : un bandeau rappelle que le mail n'est pas envoyé, puis le formulaire d'envoi
 habituel s'ouvre, déjà rempli — l'adresse d'expédition que l'assistant a proposée (si elle est toujours à vous, sinon
 votre adresse par défaut), les destinataires, la copie s'il en a prévu une (un champ « Copie » paraît alors), la copie
-cachée, l'objet et le message. Tout se modifie, et vous pouvez joindre des fichiers. Le lien de l'affaire, au-dessus,
-ouvre sa fiche.
+cachée, l'objet et le message. Tout se modifie, et vous pouvez joindre des fichiers. **Les fichiers que l'assistant a
+joints** sont déjà dans la liste des pièces jointes : ils partent avec le mail, et « Retirer » en écarte un. Le lien de
+l'affaire, au-dessus, ouvre sa fiche.
 
 ![La relecture d'un mail préparé : le bandeau « Ce mail n'est pas envoyé », le formulaire rempli, « Mettre en file » et « Écarter »](manuel/images/l-inbox-lire-trier-et-repondre/relire-un-mail-prepare.jpg)
 

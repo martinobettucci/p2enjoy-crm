@@ -5185,6 +5185,27 @@
 			]
 		},
 		{
+			"fichier": "l-inbox-lire-trier-et-repondre/piece-non-analysee.jpg",
+			"largeur": 536,
+			"hauteur": 258,
+			"chapitre": "l-inbox-lire-trier-et-repondre",
+			"section": "l-inbox-lire-et-trier-le-courrier-recu",
+			"pleinePage": false,
+			"libelles": [
+				"28 o",
+				"Annuler",
+				"Avertissement : releve-de-compte.pdf n'a pas été analysé",
+				"Ce fichier n'a pas été analysé par l'antivirus : il peut contenir un logiciel malveillant. Ne l'ouvrez que si vous connaissez l'expéditeur et attendiez ce fichier.",
+				"Ce fichier n'a pas été analysé par l'antivirus : il peut contenir un logiciel malveillant. Ne l'ouvrez que si vous connaissez l'expéditeur et attendiez ce fichier. Je comprends le risque, télécharger Annuler",
+				"Je comprends le risque, télécharger",
+				"Télécharger quand même",
+				"Télécharger quand même releve-de-compte.pdf",
+				"non analysée : antivirus indisponible",
+				"releve-de-compte.pdf",
+				"releve-de-compte.pdf 28 o non analysée : antivirus indisponible Télécharger quand même Ce fichier n'a pas été analysé par l'antivirus : il peut contenir un logiciel malveillant. Ne l'ouvrez que si vous connaissez l'expéditeur et attendiez ce fichier. Je comprends le risque, télécharger Annuler"
+			]
+		},
+		{
 			"fichier": "l-inbox-lire-trier-et-repondre/pieces-dans-l-historique.jpg",
 			"largeur": 519,
 			"hauteur": 622,

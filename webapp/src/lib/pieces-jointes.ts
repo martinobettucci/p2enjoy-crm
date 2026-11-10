@@ -4,11 +4,15 @@
 // @spec docs/SPEC-pieces-jointes.md §3 (le texte, ses statuts), §5 (l'écran), §5.2 révisé par la décision 791, §7 (la RLS
 //       de la pièce, la politique de stockage 0029) ; docs/DESIGN_SYSTEM.md §5.80
 //
+// @spec CRM-143 (docs/BACKLOG.md) — tranche T4 : l'état d'une pièce non analysée (`etatPiece`), la confirmation du risque
+//       (`confirmerPieceNonAnalysee`) et son dictionnaire de refus ; docs/SPEC-pieces-jointes.md §17.3, §17.4 ;
+//       docs/DESIGN_SYSTEM.md §5.95
+//
 // AUCUN DROIT N'EST CALCULÉ ICI. Le fichier est lu sous la session, par la politique de stockage de la migration `0029`
 // (pièce saine, message lisible) ; le texte, sous la RLS de la pièce. Ce module décide seulement si un « Aperçu » a un
 // objet (docs/DESIGN_SYSTEM.md §5.21 : une commande vouée au refus ne se rend pas).
 
-import type { PieceJointe } from './inbox'
+import { COLONNES_PIECE, pieceDepuisLigne, type PieceJointe } from './inbox'
 import type { ClientCrm } from './supabase'
 
 /** La borne de l'aperçu (§5.2) : au-delà, le téléchargement seul. */
@@ -112,25 +116,101 @@ export async function lirePiecesDesMessages(
 	try {
 		const reponse = await client
 			.from('mail_attachments')
-			.select('id, message_id, filename, mime_type, size_bytes, storage_path, av_status')
+			.select(`message_id, ${COLONNES_PIECE}`)
 			.in('message_id', [...idsMessages])
 			.order('filename')
 		if (reponse.error !== null) return new Map()
 		const parMessage = new Map<string, PieceJointe[]>()
 		for (const ligne of reponse.data) {
 			const liste = parMessage.get(ligne.message_id) ?? []
-			liste.push({
-				id: ligne.id,
-				nom: ligne.filename,
-				type: ligne.mime_type,
-				taille: ligne.size_bytes,
-				chemin: ligne.storage_path,
-				statutAnalyse: ligne.av_status,
-			})
+			liste.push(pieceDepuisLigne(ligne))
 			parMessage.set(ligne.message_id, liste)
 		}
 		return parMessage
 	} catch {
 		return new Map()
+	}
+}
+
+// =================================================================================================
+// CRM-143 T4 — la pièce non analysée, et sa confirmation (docs/SPEC-pieces-jointes.md §17.3, §17.4)
+// =================================================================================================
+
+/**
+ * Le délai au-delà duquel une pièce encore `pending` est NON ANALYSÉE, et non plus « en cours » — la règle de la base,
+ * `app.piece_non_analysee` (migration `0173`), recopiée ici pour la seule forme de l'écran : c'est la base qui juge.
+ */
+export const DELAI_ANALYSE_MINUTES = 15
+
+/** Ce que l'écran dit d'une pièce : son état, et pour une pièce non analysée, pourquoi. */
+export type EtatPiece =
+	| { readonly etat: 'saine' }
+	| { readonly etat: 'infectee' }
+	| { readonly etat: 'en_cours' }
+	| { readonly etat: 'non_analysee'; readonly cause: 'antivirus_indisponible' | 'analyse_en_attente' }
+	| { readonly etat: 'trop_volumineuse' }
+	| { readonly etat: 'inconnue' }
+
+/** Les champs d'une pièce dont son état dépend. */
+export type PieceAnalysee = {
+	readonly statutAnalyse: string
+	readonly raisonNonAnalyse: string | null
+	readonly recueLe: string
+}
+
+/**
+ * L'état d'une pièce (§17.4). UN REPLI NE GLISSE JAMAIS DU CÔTÉ PERMISSIF : un statut inconnu, un `skipped` sans raison
+ * ou une date illisible rendent `inconnue`, qui n'a aucune commande.
+ */
+export function etatPiece(piece: PieceAnalysee, maintenant: Date = new Date()): EtatPiece {
+	switch (piece.statutAnalyse) {
+		case 'clean':
+			return { etat: 'saine' }
+		case 'infected':
+			return { etat: 'infectee' }
+		case 'skipped':
+			if (piece.raisonNonAnalyse === 'scanner_unavailable') return { etat: 'non_analysee', cause: 'antivirus_indisponible' }
+			if (piece.raisonNonAnalyse === 'too_large') return { etat: 'trop_volumineuse' }
+			return { etat: 'inconnue' }
+		case 'pending': {
+			const recue = Date.parse(piece.recueLe)
+			if (Number.isNaN(recue)) return { etat: 'inconnue' }
+			return maintenant.getTime() - recue > DELAI_ANALYSE_MINUTES * 60_000
+				? { etat: 'non_analysee', cause: 'analyse_en_attente' }
+				: { etat: 'en_cours' }
+		}
+		default:
+			return { etat: 'inconnue' }
+	}
+}
+
+/** Les refus de la confirmation, par un dictionnaire fermé (§17.4) : le message du serveur n'atteint jamais l'écran. */
+export type RefusConfirmation = 'introuvable' | 'infectee' | 'en_cours' | 'non_conservee' | 'reseau' | 'inconnu'
+
+/** Classe le refus de `acknowledge_unscanned_attachment` par son code, que la base écrit dans le message. */
+export function classerRefusConfirmation(message: string | undefined): RefusConfirmation {
+	const texte = message ?? ''
+	if (texte.includes('attachment_not_found')) return 'introuvable'
+	if (texte.includes('attachment_infected')) return 'infectee'
+	if (texte.includes('attachment_scanning')) return 'en_cours'
+	if (texte.includes('attachment_not_stored')) return 'non_conservee'
+	return 'inconnu'
+}
+
+export type IssueConfirmation = { readonly ok: true } | { readonly ok: false; readonly refus: RefusConfirmation }
+
+/**
+ * Pose la confirmation de la personne, sous sa session (§17.3). Une pièce devenue saine entre-temps (`attachment_clean`)
+ * n'a plus rien à confirmer : elle se télécharge, et c'est une issue réussie.
+ */
+export async function confirmerPieceNonAnalysee(client: ClientCrm | null, idPiece: string): Promise<IssueConfirmation> {
+	if (client === null) return { ok: false, refus: 'inconnu' }
+	try {
+		const reponse = await client.rpc('acknowledge_unscanned_attachment', { p_attachment_id: idPiece })
+		if (reponse.error === null) return { ok: true }
+		if (reponse.error.message.includes('attachment_clean')) return { ok: true }
+		return { ok: false, refus: classerRefusConfirmation(reponse.error.message) }
+	} catch {
+		return { ok: false, refus: 'reseau' }
 	}
 }

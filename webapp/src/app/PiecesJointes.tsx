@@ -4,23 +4,30 @@
 //       ses états), §5.4 (une pièce non saine n'a pas de lien), §5.28 (un seul panneau ouvert), §5.3 bis (la copie)
 // @spec docs/SPEC-pieces-jointes.md §5, §5.2 révisé par la décision 791 ; docs/SPEC-mail-subsystem.md §18.5
 // @spec CRM-057 (docs/BACKLOG.md) — la pièce saine téléchargeable, déplacée ici depuis RouteInbox (§18.5)
+// @spec CRM-143 (docs/BACKLOG.md) — tranche T4 : le repli confirmé d'une pièce non analysée — sa raison en toutes lettres,
+//       « Télécharger quand même », l'avertissement dans le flux, la confirmation enregistrée par la base avant le
+//       téléchargement, ses refus ; docs/SPEC-pieces-jointes.md §17.4 ; docs/DESIGN_SYSTEM.md §5.95 (révise §5.4)
 //
 // LE PANNEAU EST DANS LE FLUX, SOUS LA PIÈCE — jamais une modale (décision 791). Le fichier est lu par le client de
 // stockage, sous la session, et montré depuis une adresse locale dont le type est forcé : Caddy envoie
 // `X-Frame-Options: DENY` sur toute réponse, et c'est ce qui permet d'encadrer un PDF sans l'assouplir.
 
-import { Copy, Download, Paperclip, ScanEye } from 'lucide-react'
+import { Copy, Download, Paperclip, ScanEye, ShieldQuestion, TriangleAlert } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { Button } from '../components/ui/Button'
 import { t, type CleTraduction } from '../i18n'
 import { tailleLisible } from '../lib/envoi'
 import { urlPieceJointe, type PieceJointe } from '../lib/inbox'
 import {
+	confirmerPieceNonAnalysee,
+	etatPiece,
 	formeApercu,
 	lireFichierPiece,
 	lireTextePiece,
 	typeForce,
+	type EtatPiece,
 	type FormeApercu,
+	type RefusConfirmation,
 	type TextePiece,
 } from '../lib/pieces-jointes'
 import type { ClientCrm } from '../lib/supabase'
@@ -38,6 +45,32 @@ const LIBELLE_STATUT: Readonly<Record<string, CleTraduction>> = {
 }
 
 const libelleStatut = (statut: string): CleTraduction => LIBELLE_STATUT[statut] ?? 'inbox.attachments.status.unknown'
+
+/** Le libellé d'une pièce sans commande de téléchargement direct, selon son état (CRM-143, §17.4). */
+function libelleEtat(etat: EtatPiece, statut: string): CleTraduction {
+	switch (etat.etat) {
+		case 'non_analysee':
+			return etat.cause === 'antivirus_indisponible'
+				? 'inbox.attachments.status.unscanned.unavailable'
+				: 'inbox.attachments.status.unscanned.waiting'
+		case 'trop_volumineuse':
+			return 'inbox.attachments.status.tooLarge'
+		case 'inconnue':
+			return 'inbox.attachments.status.unknown'
+		default:
+			return libelleStatut(statut)
+	}
+}
+
+/** Les refus de la confirmation, par un dictionnaire fermé (§17.4). */
+const PHRASE_REFUS: Readonly<Record<RefusConfirmation, CleTraduction>> = {
+	introuvable: 'inbox.attachments.risk.refus.introuvable',
+	infectee: 'inbox.attachments.risk.refus.infectee',
+	en_cours: 'inbox.attachments.risk.refus.en_cours',
+	non_conservee: 'inbox.attachments.risk.refus.non_conservee',
+	reseau: 'inbox.attachments.risk.refus.reseau',
+	inconnu: 'inbox.attachments.risk.refus.inconnu',
+}
 
 const PHRASE_TEXTE: Readonly<Record<Exclude<TextePiece['statut'], 'extracted'>, CleTraduction>> = {
 	pending: 'inbox.attachments.text.pending',
@@ -90,6 +123,17 @@ function LignePieceJointe({
 	const commande = useRef<HTMLButtonElement>(null)
 	const forme = formeApercu(piece)
 	const idPanneau = `apercu-${piece.id}`
+	const etat = etatPiece(piece)
+	// LA CONFIRMATION EST CELLE QUE LA BASE A ENREGISTRÉE : lue avec la pièce, puis posée ici sur la seule réponse réussie de
+	// `acknowledge_unscanned_attachment` — jamais supposée (CLAUDE.md §10).
+	const [confirmee, setConfirmee] = useState(piece.confirmee)
+	const [avertissement, setAvertissement] = useState(false)
+	const [envoi, setEnvoi] = useState(false)
+	const [refus, setRefus] = useState<RefusConfirmation | null>(null)
+	const commandeRisque = useRef<HTMLButtonElement>(null)
+	const accepter = useRef<HTMLButtonElement>(null)
+	const idAvertissement = `avertissement-${piece.id}`
+	const idPhraseRisque = `risque-${piece.id}`
 
 	const telecharger = useCallback(async () => {
 		const url = await urlPieceJointe(client, piece.chemin)
@@ -107,8 +151,53 @@ function LignePieceJointe({
 		commande.current?.focus()
 	}, [onFermer])
 
+	// L'AVERTISSEMENT SE REFERME SUR SA COMMANDE, restée montée (§5.43) : le focus lui revient sans différé.
+	const fermerAvertissement = useCallback(() => {
+		setAvertissement(false)
+		setRefus(null)
+		commandeRisque.current?.focus()
+	}, [])
+
+	const ouvrirAvertissement = () => {
+		if (avertissement) {
+			fermerAvertissement()
+			return
+		}
+		setRefus(null)
+		setAvertissement(true)
+	}
+
+	// LE FOCUS ENTRE DANS L'AVERTISSEMENT, sur le geste qu'il demande (§5.13) — qui cite la phrase du risque.
+	useEffect(() => {
+		if (avertissement) accepter.current?.focus()
+	}, [avertissement])
+
+	// APRÈS UN REFUS, LE FOCUS REVIENT AU BOUTON UNE FOIS RÉACTIVÉ (§5.63) : désactivé pendant l'envoi, il l'avait perdu.
+	useEffect(() => {
+		if (!envoi && refus !== null) accepter.current?.focus()
+	}, [envoi, refus])
+
+	const accepterRisque = async () => {
+		setEnvoi(true)
+		setRefus(null)
+		const issue = await confirmerPieceNonAnalysee(client, piece.id)
+		setEnvoi(false)
+		if (!issue.ok) {
+			setRefus(issue.refus)
+			return
+		}
+		setConfirmee(true)
+		setAvertissement(false)
+		commandeRisque.current?.focus()
+		await telecharger()
+	}
+
 	const echap = (evenement: KeyboardEvent<HTMLLIElement>) => {
-		if (evenement.key === 'Escape' && ouverte) {
+		if (evenement.key !== 'Escape') return
+		if (avertissement) {
+			evenement.stopPropagation()
+			fermerAvertissement()
+		} else if (ouverte) {
 			evenement.stopPropagation()
 			fermer()
 		}
@@ -124,8 +213,9 @@ function LignePieceJointe({
 				<span className="shrink-0 text-sm text-text-2 tabular-nums" data-testid="taille-piece">
 					{tailleLisible(piece.taille)}
 				</span>
-				{/* UNE PIÈCE NON SAINE N'A PAS DE COMMANDE, elle a un statut en toutes lettres (§5.4). */}
-				{piece.statutAnalyse === 'clean' ? (
+				{/* UNE PIÈCE NON SAINE N'A PAS DE COMMANDE, elle a un statut en toutes lettres (§5.4) — sauf la pièce NON
+				    ANALYSÉE, qui se télécharge après l'avertissement et la confirmation (CRM-143, §5.95). */}
+				{etat.etat === 'saine' ? (
 					<span className="flex basis-full flex-wrap items-center gap-x-1 md:basis-auto">
 						{forme === null ? null : (
 							<Button
@@ -153,9 +243,86 @@ function LignePieceJointe({
 						</Button>
 					</span>
 				) : (
-					<span className="text-sm text-text-3">{t(libelleStatut(piece.statutAnalyse))}</span>
+					<>
+						<span className="text-sm text-text-3" data-testid="statut-piece">
+							{t(libelleEtat(etat, piece.statutAnalyse))}
+						</span>
+						{etat.etat === 'non_analysee' ? (
+							<span className="flex basis-full flex-wrap items-center gap-x-1 md:basis-auto">
+								{confirmee ? (
+									<Button
+										ref={commandeRisque}
+										variante="discret"
+										taille="compacte"
+										aria-label={t('inbox.attachments.download.name', { nom: piece.nom })}
+										onClick={() => void telecharger()}
+										data-testid="telecharger-confirmee"
+									>
+										<Download aria-hidden="true" size={14} />
+										{t('inbox.attachments.download')}
+									</Button>
+								) : (
+									<Button
+										ref={commandeRisque}
+										variante="discret"
+										taille="compacte"
+										aria-expanded={avertissement}
+										aria-controls={idAvertissement}
+										aria-label={t('inbox.attachments.risk.open.name', { nom: piece.nom })}
+										onClick={ouvrirAvertissement}
+										data-testid="telecharger-quand-meme"
+									>
+										<ShieldQuestion aria-hidden="true" size={14} />
+										{t('inbox.attachments.risk.open')}
+									</Button>
+								)}
+							</span>
+						) : null}
+					</>
 				)}
 			</div>
+			{avertissement && !confirmee ? (
+				<div
+					id={idAvertissement}
+					role="group"
+					aria-label={t('inbox.attachments.risk.region', { nom: piece.nom })}
+					className="mt-2 flex flex-col gap-3 rounded-lg bg-accent-soft p-3 text-accent-on-soft"
+					data-testid="avertissement-piece"
+				>
+					<p id={idPhraseRisque} className="flex items-start gap-2">
+						<TriangleAlert aria-hidden="true" size={16} className="mt-[2px] shrink-0" />
+						<span>{t('inbox.attachments.risk.warning')}</span>
+					</p>
+					<div className="flex flex-wrap items-center gap-2">
+						<Button
+							ref={accepter}
+							variante="primaire"
+							taille="compacte"
+							disabled={envoi}
+							aria-busy={envoi}
+							aria-describedby={idPhraseRisque}
+							onClick={() => void accepterRisque()}
+							data-testid="accepter-risque"
+						>
+							{envoi ? t('inbox.attachments.risk.confirming') : t('inbox.attachments.risk.confirm')}
+						</Button>
+						<Button
+							variante="secondaire"
+							taille="compacte"
+							disabled={envoi}
+							onClick={fermerAvertissement}
+							data-testid="annuler-risque"
+						>
+							{t('inbox.attachments.risk.cancel')}
+						</Button>
+					</div>
+					{refus === null ? null : (
+						<p role="alert" className="rounded-sm bg-danger-soft p-2 text-sm text-danger-on-soft" data-testid="refus-risque">
+							{t(PHRASE_REFUS[refus])}
+						</p>
+					)}
+				</div>
+			) : null}
 			{echec ? <p className="text-sm text-danger">{t('inbox.attachments.unavailable')}</p> : null}
 			{ouverte && forme !== null ? (
 				<ApercuPieceJointe

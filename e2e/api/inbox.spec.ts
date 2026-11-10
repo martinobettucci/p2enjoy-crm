@@ -3,6 +3,9 @@
 //           les deux droits), §18.3 (les compteurs sont ceux de l'appelant), §18.5 (la pièce saine)
 // @verifies docs/SPEC-permissions-rls.md §7, preuve de refus n° 9 RÉVISÉE ; CLAUDE.md §10
 // @verifies docs/JOURNAL.md décision 327
+// @verifies CRM-143 (docs/BACKLOG.md) — tranche T4 : l'assertion « `skipped` non » est RETOURNÉE, non retirée (décision 51) :
+//           sans la confirmation de l'appelant, une pièce non analysée reste refusée ; avec elle, elle se télécharge, et
+//           c'est `e2e/api/pieces-non-analysees.spec.ts` qui le prouve (docs/SPEC-pieces-jointes.md §17.9)
 // @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
 //           (docs/SPEC-rattachements.md §3.2, §5)
 //
@@ -158,7 +161,7 @@ test.describe('inbox globale — la pièce jointe saine, et elle seule (§18.5)'
 	// le bucket par la clé de service — le dépôt est le fait du service, comme en production. Le
 	// `clean` est le TÉMOIN : sans lui, « rien ne se télécharge » serait aussi vrai si le bucket
 	// était vide, et l'assertion ne prouverait rien du tout.
-	test('`clean` se télécharge, `infected`, `pending` et `skipped` non, et l’anonyme rien', async ({
+	test('`clean` se télécharge, `infected`, `pending` et `skipped` sans confirmation non, et l’anonyme rien', async ({
 		request,
 	}) => {
 		const [porteur] = await messageParIdentifiant(request, enTetesService(), MSGID_CLASSE)
@@ -210,7 +213,9 @@ test.describe('inbox globale — la pièce jointe saine, et elle seule (§18.5)'
 			expect(saine.status(), await saine.text()).toBe(200)
 			expect(await saine.text()).toBe('contenu clean')
 
-			// LES TROIS AUTRES SONT REFUSÉES — au MÊME appelant, sur des objets qui EXISTENT.
+			// LES TROIS AUTRES SONT REFUSÉES — au MÊME appelant, sur des objets qui EXISTENT. *Retourné par CRM-143* : la pièce
+			// `skipped` l'est parce que personne ne l'a CONFIRMÉE ; confirmée, elle se télécharge
+			// (`e2e/api/pieces-non-analysees.spec.ts`). `infected` et `pending` jeune restent refusées dans tous les cas.
 			for (const piece of pieces.filter((candidate) => candidate.statut !== 'clean')) {
 				const refus = await request.get(
 					`${URL_API}/storage/v1/object/mail-attachments/${cheminDe(piece.empreinte)}`,

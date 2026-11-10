@@ -2131,9 +2131,43 @@ export type Database = {
           },
         ]
       }
+      mail_attachment_risk_acknowledgments: {
+        Row: {
+          acknowledged_at: string
+          attachment_id: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          attachment_id: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string
+          attachment_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_attachment_risk_acknowledgments_attachment_id_fkey"
+            columns: ["attachment_id"]
+            isOneToOne: false
+            referencedRelation: "mail_attachments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_attachment_risk_acknowledgments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mail_attachments: {
         Row: {
           av_checked_at: string | null
+          av_skip_reason: string | null
           av_status: string
           card_id: string | null
           created_at: string
@@ -2153,6 +2187,7 @@ export type Database = {
         }
         Insert: {
           av_checked_at?: string | null
+          av_skip_reason?: string | null
           av_status?: string
           card_id?: string | null
           created_at?: string
@@ -2172,6 +2207,7 @@ export type Database = {
         }
         Update: {
           av_checked_at?: string | null
+          av_skip_reason?: string | null
           av_status?: string
           card_id?: string | null
           created_at?: string
@@ -2208,6 +2244,7 @@ export type Database = {
       }
       mail_drafts: {
         Row: {
+          attachments: Json
           bcc_addrs: string[]
           body_text: string
           card_id: string
@@ -2228,6 +2265,7 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          attachments?: Json
           bcc_addrs?: string[]
           body_text: string
           card_id: string
@@ -2248,6 +2286,7 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          attachments?: Json
           bcc_addrs?: string[]
           body_text?: string
           card_id?: string
@@ -3954,6 +3993,7 @@ export type Database = {
           created_at: string
           default_probability: number | null
           default_stale_after_days: number | null
+          description: string | null
           id: string
           key: string
           kind: string
@@ -3968,6 +4008,7 @@ export type Database = {
           created_at?: string
           default_probability?: number | null
           default_stale_after_days?: number | null
+          description?: string | null
           id?: string
           key: string
           kind?: string
@@ -3982,6 +4023,7 @@ export type Database = {
           created_at?: string
           default_probability?: number | null
           default_stale_after_days?: number | null
+          description?: string | null
           id?: string
           key?: string
           kind?: string
@@ -4064,6 +4106,7 @@ export type Database = {
       workflow_steps: {
         Row: {
           created_at: string
+          description_override: string | null
           id: string
           is_initial: boolean
           label_override: string | null
@@ -4077,6 +4120,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          description_override?: string | null
           id?: string
           is_initial?: boolean
           label_override?: string | null
@@ -4090,6 +4134,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          description_override?: string | null
           id?: string
           is_initial?: boolean
           label_override?: string | null
@@ -4617,6 +4662,10 @@ export type Database = {
           track_id: string
         }[]
       }
+      acknowledge_unscanned_attachment: {
+        Args: { p_attachment_id: string }
+        Returns: string
+      }
       administration_permise: {
         Args: { w: Database["public"]["Tables"]["workspaces"]["Row"] }
         Returns: boolean
@@ -5000,6 +5049,18 @@ export type Database = {
           sub: string
         }[]
       }
+      mail_attachment_record_scan: {
+        Args: { p_attachment_id: string; p_status: string }
+        Returns: undefined
+      }
+      mail_attachments_to_rescan: {
+        Args: { p_limit?: number }
+        Returns: {
+          id: string
+          mime_type: string
+          storage_path: string
+        }[]
+      }
       mail_folder_map_reparenter: {
         Args: {
           p_account_id: string
@@ -5377,6 +5438,7 @@ export type Database = {
       }
       prepare_email: {
         Args: {
+          p_attachments?: Json
           p_bcc?: string[]
           p_body_text: string
           p_card_id: string

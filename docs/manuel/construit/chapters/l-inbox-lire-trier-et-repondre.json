@@ -169,7 +169,7 @@
 				},
 				{
 					"type": "text",
-					"text": " Une pièce n'est téléchargeable\nqu'une fois déclarée saine ; une pièce reconnue dangereuse est conservée mais "
+					"text": " Une pièce se télécharge directement\nune fois déclarée saine ; une pièce reconnue dangereuse est conservée mais "
 				},
 				{
 					"type": "strong",
@@ -182,7 +182,20 @@
 				},
 				{
 					"type": "text",
-					"text": "\ntéléchargeable, et une pièce que l'antivirus n'a pas pu examiner ne l'est pas davantage. Un fichier\nnon analysé n'est pas un fichier sain."
+					"text": "\ntéléchargeable. Une pièce que l'antivirus n'a pas pu examiner n'est pas un fichier sain : elle ne se\ntélécharge qu'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "après un avertissement et votre confirmation"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et le CRM la fait analyser dès que\nl'antivirus répond de nouveau."
 				}
 			]
 		},
@@ -781,7 +794,7 @@
 				},
 				{
 					"type": "text",
-					"text": " Une pièce déclarée saine porte un bouton « Télécharger ». Une pièce en\ncours d'analyse, écartée par l'antivirus ou non analysée n'en a "
+					"text": " Une pièce déclarée saine porte un bouton « Télécharger ». Une pièce en\ncours d'analyse ou écartée par l'antivirus n'en a "
 				},
 				{
 					"type": "strong",
@@ -794,7 +807,7 @@
 				},
 				{
 					"type": "text",
-					"text": " : son état est écrit en\ntoutes lettres à côté de son nom. Un bouton grisé promettrait ce que le serveur refuserait."
+					"text": " : son état est écrit en toutes lettres à\ncôté de son nom. Un bouton grisé promettrait ce que le serveur refuserait."
 				}
 			]
 		},
@@ -804,6 +817,161 @@
 			"alt": "Une pièce jointe déclarée saine, son nom et son bouton « Télécharger »",
 			"width": 373,
 			"height": 73
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une pièce non analysée."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Quand l'antivirus n'a pas pu examiner une pièce, sa ligne dit pourquoi : « non analysée :\nantivirus indisponible », ou « non analysée : analyse en attente » si l'analyse tarde depuis plus d'un quart d'heure. Elle\nporte « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Télécharger quand même"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " », qui ouvre sous la pièce un avertissement : « Ce fichier n'a pas été analysé par\nl'antivirus : il peut contenir un logiciel malveillant. Ne l'ouvrez que si vous connaissez l'expéditeur et attendiez ce\nfichier. » « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Je comprends le risque, télécharger"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " » enregistre votre confirmation, puis télécharge le fichier ;\n« "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Annuler"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " », ou la touche Échap, referme l'avertissement sans rien enregistrer."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/piece-non-analysee.jpg",
+			"alt": "Une pièce non analysée, « Télécharger quand même » et l'avertissement ouvert sous elle",
+			"width": 536,
+			"height": 258
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "La confirmation est la vôtre seulement."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Une fois donnée, la pièce porte « Télécharger » pour vous, et sa mention\n« non analysée » reste : confirmer n'analyse rien. Un collègue qui ouvre le même message voit toujours l'avertissement."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Le CRM reprend l'analyse de lui-même."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Dès que l'antivirus répond, les pièces non analysées sont examinées : saines,\nelles se téléchargent directement ; reconnues dangereuses, elles ne se téléchargent plus, confirmation ou non."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Une pièce trop volumineuse"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — « non analysée : trop volumineuse, non conservée » — n'a pas été conservée par le CRM :\nelle n'a aucun bouton. Demandez-la à l'expéditeur par un autre moyen."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Elle n'a pas d'"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aperçu"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : l'aperçu reste réservé aux pièces déclarées saines."
+							}
+						]
+					}
+				]
+			]
 		},
 		{
 			"type": "paragraph",
@@ -2238,7 +2406,7 @@
 							},
 							{
 								"type": "text",
-								"text": " : il est marqué en échec, et le dit. Sans antivirus, le message part et ses fichiers sont « non analysés »,\ndonc non téléchargeables, comme les pièces reçues."
+								"text": " : il est marqué en échec, et le dit. Sans antivirus, le message part et ses fichiers sont « non analysés » :\nils ne se téléchargent qu'après l'avertissement et votre confirmation, comme les pièces reçues."
 							}
 						]
 					}
@@ -2599,7 +2767,20 @@
 				},
 				{
 					"type": "text",
-					"text": " : un bandeau rappelle que le mail n'est pas envoyé, puis le formulaire d'envoi\nhabituel s'ouvre, déjà rempli — l'adresse d'expédition que l'assistant a proposée (si elle est toujours à vous, sinon\nvotre adresse par défaut), les destinataires, la copie s'il en a prévu une (un champ « Copie » paraît alors), la copie\ncachée, l'objet et le message. Tout se modifie, et vous pouvez joindre des fichiers. Le lien de l'affaire, au-dessus,\nouvre sa fiche."
+					"text": " : un bandeau rappelle que le mail n'est pas envoyé, puis le formulaire d'envoi\nhabituel s'ouvre, déjà rempli — l'adresse d'expédition que l'assistant a proposée (si elle est toujours à vous, sinon\nvotre adresse par défaut), les destinataires, la copie s'il en a prévu une (un champ « Copie » paraît alors), la copie\ncachée, l'objet et le message. Tout se modifie, et vous pouvez joindre des fichiers. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les fichiers que l'assistant a\njoints"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " sont déjà dans la liste des pièces jointes : ils partent avec le mail, et « Retirer » en écarte un. Le lien de\nl'affaire, au-dessus, ouvre sa fiche."
 				}
 			]
 		},

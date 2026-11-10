@@ -29,6 +29,9 @@
 //           décision 643)
 // @verifies CRM-128 (docs/BACKLOG.md) tranche T2 — `mail_drafts`, `prepare_email`, `send_email_draft`, `discard_email_draft`
 //           (docs/SPEC-mails-prepares.md §3)
+// @verifies CRM-143 (docs/BACKLOG.md) tranche T4 — `mail_attachment_risk_acknowledgments`, `acknowledge_unscanned_attachment`,
+//           `mail_attachments_to_rescan`, `mail_attachment_record_scan`, `mail_attachments.av_skip_reason`,
+//           `mail_drafts.attachments` (docs/SPEC-pieces-jointes.md §17.3, §17.5, §17.6 ; docs/SCHEMA.md « Migration `0173` »)
 //
 // Test **unitaire** du contrat de types. Il ne s'exécute pas : il se compile. Chaque assertion
 // ci-dessous est une contrainte que `tsc --noEmit` vérifie, et qui fait échouer la compilation
@@ -147,9 +150,13 @@ type Expect<T extends true> = T
 // `mail_drafts`, LIVRÉE PAR `CRM-128` T2 (migration `0162`) : les mails préparés. CE QUI ÉCHAPPE AU GÉNÉRATEUR : la RLS
 // ne rend que ceux de la personne ; `authenticated` n'a que `SELECT` — toute écriture passe par `prepare_email`,
 // `send_email_draft` et `discard_email_draft` (docs/SPEC-mails-prepares.md §3).
+// `mail_attachment_risk_acknowledgments`, LIVRÉE PAR `CRM-143` T1 (migration `0173`) : la confirmation du risque d'une pièce
+// non analysée. CE QUI ÉCHAPPE AU GÉNÉRATEUR : la RLS ne rend que les siennes ; `authenticated` n'a que `SELECT` — la pose
+// passe par `acknowledge_unscanned_attachment` (docs/SPEC-pieces-jointes.md §17.3).
 type _tables = Expect<
   Equal<
     keyof Database['public']['Tables'],
+    | 'mail_attachment_risk_acknowledgments'
     | 'mail_drafts'
     | 'budget_occurrences'
     | 'budgets'
@@ -515,6 +522,8 @@ type _etapesColonnes = Expect<
   Equal<
     keyof Database['public']['Tables']['workflow_steps']['Row'],
     | 'created_at'
+    // `0174` de `CRM-133` (docs/SPEC-workflow-engine.md §7 sexies) ; entrée aux types par la régénération de `CRM-143` T4.
+    | 'description_override'
     | 'id'
     | 'is_initial'
     | 'label_override'
@@ -749,6 +758,8 @@ type _catalogueColonnes = Expect<
     | 'created_at'
     | 'default_probability'
     | 'default_stale_after_days'
+    // `0174` de `CRM-133` (docs/SPEC-workflow-engine.md §7 sexies) ; entrée aux types par la régénération de `CRM-143` T4.
+    | 'description'
     | 'id'
     | 'key'
     | 'kind'
@@ -1223,9 +1234,17 @@ type _vueDerivationColonnes = Expect<
 // `0170` de `CRM-135` avait ajouté `mail_inbound_account_record_poll_failure` (réservée à la clé de service,
 // docs/SPEC-mail-subsystem.md §24.3) sans régénérer les types ; la régénération de `CRM-137` l'y fait entrer, et elle est
 // nommée ici. Le compte s'accroît de un.
+// `0173` de `CRM-143` TRANCHE T1 ajoute `acknowledge_unscanned_attachment` (rend la date de la confirmation) et, réservées à
+// la clé de service, `mail_attachments_to_rescan` et `mail_attachment_record_scan` (docs/SPEC-pieces-jointes.md §17.3,
+// §17.5) ; `prepare_email` gagne `p_attachments`. CE QUI ÉCHAPPE AU GÉNÉRATEUR : `p_status` ne vaut que `clean` ou
+// `infected` (`22023 invalid_status`) ; les refus nommés de la confirmation, `attachment_not_found` (404),
+// `attachment_infected`, `attachment_clean`, `attachment_not_stored`, `attachment_scanning`. Le compte s'accroît de trois.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'acknowledge_unscanned_attachment'
+    | 'mail_attachments_to_rescan'
+    | 'mail_attachment_record_scan'
     | 'mail_template_variables_espace'
     | 'prepare_email'
     | 'send_email_draft'
@@ -1552,6 +1571,13 @@ type _aucunTypeCompose = Expect<Equal<keyof Database['public']['CompositeTypes']
 // `isolatedModules` exige que les types déclarés ici soient consommés ; cet export unique évite
 // des déclarations « inutilisées » sans relâcher aucune vérification.
 
+// `CRM-143` T1 (migration `0173`) : la raison d'une pièce non analysée, et les pièces d'un mail préparé.
+type _raisonNonAnalyse = Expect<Equal<Tables<'mail_attachments'>['av_skip_reason'], string | null>>
+type _piecesDuMailPrepare = Expect<Equal<Tables<'mail_drafts'>['attachments'], Json>>
+type _confirmationRendUneDate = Expect<
+  Equal<Database['public']['Functions']['acknowledge_unscanned_attachment']['Returns'], string>
+>
+
 export type AssertionsDuContratDeTypes = [
   _tables,
   _profilesColonnes,
@@ -1634,4 +1660,8 @@ export type AssertionsDuContratDeTypes = [
   _vueToutNullable,
   _aucunEnum,
   _aucunTypeCompose,
+  _raisonNonAnalyse,
+  _piecesDuMailPrepare,
+  _confirmationRendUneDate,
 ]
+

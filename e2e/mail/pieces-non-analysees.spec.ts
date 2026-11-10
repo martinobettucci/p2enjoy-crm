@@ -173,7 +173,9 @@ test('une pièce reçue sans antivirus naît non analysée et déposée ; l’an
 	const comptes = await request.get(`${URL_API}/rest/v1/mail_inbound_accounts?select=id&imap_username=eq.${BOITE.adresse}`, {
 		headers: enTetesService(),
 	})
-	const [{ id: compte }] = (await comptes.json()) as { id: string }[]
+	const [ligneCompte] = (await comptes.json()) as { id: string }[]
+	expect(ligneCompte, `le compte entrant de ${BOITE.adresse}`).toBeDefined()
+	const compte = ligneCompte!.id
 
 	try {
 		remplacerParUnExemplaireSansAntivirus()
@@ -188,7 +190,7 @@ test('une pièce reçue sans antivirus naît non analysée et déposée ; l’an
 			for (const nom of [PDF, ECHANTILLON]) {
 				expect(pieces[nom], nom).toMatchObject({ av_status: 'skipped', av_skip_reason: 'scanner_unavailable', text_status: null })
 				// DÉPOSÉE : sans quoi la reprise n'aurait rien à analyser, et le repli rien à télécharger (§17.3).
-				const objet = await request.get(`${URL_API}/storage/v1/object/mail-attachments/${pieces[nom].storage_path}`, {
+				const objet = await request.get(`${URL_API}/storage/v1/object/mail-attachments/${pieces[nom]!.storage_path}`, {
 					headers: enTetesService(),
 				})
 				expect(objet.status(), `l’objet de ${nom}, non analysé, est déposé`).toBe(200)
@@ -214,8 +216,8 @@ test('une pièce reçue sans antivirus naît non analysée et déposée ; l’an
 		expect(jugees[PDF], 'la reprise a jugé le PDF sain').toMatchObject({ av_status: 'clean', av_skip_reason: null })
 		expect(jugees[ECHANTILLON], 'la reprise a reconnu EICAR').toMatchObject({ av_status: 'infected', av_skip_reason: null })
 		// Devenue saine, un PDF entre dans l'extraction de son texte (le déclencheur de `0141`) ; l'infectée jamais.
-		expect(['pending', 'extracted', 'empty', 'failed']).toContain(jugees[PDF].text_status)
-		expect(jugees[ECHANTILLON].text_status).toBeNull()
+		expect(['pending', 'extracted', 'empty', 'failed']).toContain(jugees[PDF]!.text_status)
+		expect(jugees[ECHANTILLON]!.text_status).toBeNull()
 	} finally {
 		await rendreLesBoites(request, { boites: [BOITE], motif: sujet, avant, debut })
 	}

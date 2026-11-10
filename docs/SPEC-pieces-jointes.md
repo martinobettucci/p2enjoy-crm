@@ -349,7 +349,7 @@ sont révisés pour la seule pièce **non analysée** :
 - **sa ligne** dit pourquoi, en toutes lettres : « non analysée : antivirus indisponible », « non analysée : analyse en
   attente », ou, pour `too_large`, « non analysée : trop volumineuse, non conservée », cette dernière **sans aucune
   commande** ;
-- **une commande « Télécharger quand même »**, bouton discret compact, icône Lucide `ShieldAlert`, ouvre sous la ligne un
+- **une commande « Télécharger quand même »**, bouton discret compact, icône Lucide ~~`ShieldAlert`~~ **`ShieldQuestion`** (*précisé à l'écriture du code* : `ShieldAlert` sert déjà l'état de refus, `docs/DESIGN_SYSTEM.md` §9 et §5.95), ouvre sous la ligne un
   **avertissement dans le flux**, jamais une modale (§5.13). Il porte une phrase qui dit le risque — « Ce fichier n'a pas été
   analysé par l'antivirus : il peut contenir un logiciel malveillant. Ne l'ouvrez que si vous connaissez l'expéditeur et
   attendiez ce fichier. » —, puis « Je comprends le risque, télécharger » et « Annuler » ;

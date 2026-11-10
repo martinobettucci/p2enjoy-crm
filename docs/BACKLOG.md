@@ -19213,7 +19213,16 @@ board ; INC-352 close sur le constat en production.
   - pytest de `mail-sync` (330) ;
   - E2E `mail` sur le vrai ClamAV, `pieces-non-analysees` et `ingestion` (6 sur 6) : la reprise passe le PDF en `clean` et EICAR en `infected` ;
   - `scripts/verify-spark.sh` (123, avec deux dégradations ClamAV).
-- **T4** (l'écran et les pièces des mails préparés), **T5** (le connecteur) et **T6** (le seed) restent à faire.
+- **T4** (l'écran) est implémentée et vérifiée en développement : le repli à l'écran, `docs/DESIGN_SYSTEM.md` §5.95, et
+  le préchargement des pièces d'un mail préparé. Preuves :
+  - unitaires (vitest, 5 520) ;
+  - API `e2e/api/pieces-non-analysees.spec.ts`, avec de vrais jetons, et l'assertion « `skipped` non » d'`e2e/api/inbox.spec.ts`
+    retournée ;
+  - E2E `e2e/ui/pieces-non-analysees.spec.ts` (souris, clavier, collègue, quatre paliers, 6 sur 6), et les E2E voisins
+    (aperçu, inbox, mails préparés, envoi, 26 sur 26) ;
+  - captures `docs/captures/CRM-143/`, observées ;
+  - manuel §12.1 et §12.4, avec l'image « piece-non-analysee ».
+- **T5** (le connecteur) et **T6** (le seed) restent à faire.
 **DoD** :
 - unitaires ;
 - pgTAP et API : `skipped` téléchargeable seulement avec la confirmation, `infected` jamais, l'anonyme rien, refus de

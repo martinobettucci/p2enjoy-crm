@@ -2,6 +2,8 @@
 //       RLS), les envoyer avec le contenu relu (`send_email_draft`), les écarter (`discard_email_draft`), et le
 //       dictionnaire de leurs refus (docs/SPEC-mails-prepares.md §3.3 à §3.5, §6 ; docs/DESIGN_SYSTEM.md §5.90 ;
 //       décision 829)
+// @spec CRM-143 (docs/BACKLOG.md) — tranche T4 : les pièces d'un mail préparé (`mail_drafts.attachments`), lues pour être
+//       préchargées dans la relecture (docs/SPEC-pieces-jointes.md §17.6 ; docs/DESIGN_SYSTEM.md §5.95)
 //
 // CE MODULE N'OUVRE AUCUNE RÈGLE. La lecture passe par la politique `mail_drafts_lecture_personne`, qui ne rend que les
 // mails préparés de la personne ; l'envoi passe par `send_email_draft`, qui appelle `queue_outbound_email` et en garde
@@ -27,6 +29,32 @@ export type MailPrepare = {
 	/** `mcp` : préparé par l'assistant ; `web` : préparé dans le CRM. */
 	readonly origine: 'mcp' | 'web'
 	readonly creeLe: string
+	/** `CRM-143` : les pièces jointes par le connecteur, déjà déposées — leurs chemins partent avec le mail relu. */
+	readonly pieces: readonly PiecePreparee[]
+}
+
+/** Une pièce d'un mail préparé, la forme de `mail_outbox.attachments` (§17.6). */
+export type PiecePreparee = { readonly chemin: string; readonly nom: string; readonly taille: number }
+
+/**
+ * Les pièces d'un mail préparé, lues DÉFENSIVEMENT : la colonne est un `jsonb` que la base valide à l'écriture
+ * (`prepare_email`), mais un type ne garantit jamais une valeur (docs/SPEC-types.md). Une entrée sans chemin est écartée :
+ * elle ne pourrait pas partir.
+ */
+export function piecesPreparees(valeur: unknown): readonly PiecePreparee[] {
+	if (!Array.isArray(valeur)) return []
+	return valeur.flatMap((entree: unknown) => {
+		if (typeof entree !== 'object' || entree === null) return []
+		const { path, filename, size_bytes: taille } = entree as Record<string, unknown>
+		if (typeof path !== 'string' || path === '') return []
+		return [
+			{
+				chemin: path,
+				nom: typeof filename === 'string' && filename !== '' ? filename : (path.split('/').pop() ?? path),
+				taille: typeof taille === 'number' && Number.isFinite(taille) ? taille : 0,
+			},
+		]
+	})
 }
 
 type LigneMailPrepare = {
@@ -41,12 +69,13 @@ type LigneMailPrepare = {
 	readonly body_text: string
 	readonly origin: string
 	readonly created_at: string
+	readonly attachments?: unknown
 	readonly cards: { readonly title: string | null } | null
 }
 
 const COLONNES =
 	'id,card_id,identity_id,in_reply_to_message_id,to_addrs,cc_addrs,bcc_addrs,subject,body_text,origin,created_at,' +
-	'cards(title)'
+	'attachments,cards(title)'
 
 export function mailPrepareDepuisLigne(ligne: LigneMailPrepare): MailPrepare {
 	return {
@@ -64,6 +93,7 @@ export function mailPrepareDepuisLigne(ligne: LigneMailPrepare): MailPrepare {
 		// plus prudent est de ne pas attribuer au connecteur ce qu'on ne sait pas venir de lui.
 		origine: ligne.origin === 'mcp' ? 'mcp' : 'web',
 		creeLe: ligne.created_at,
+		pieces: piecesPreparees(ligne.attachments),
 	}
 }
 

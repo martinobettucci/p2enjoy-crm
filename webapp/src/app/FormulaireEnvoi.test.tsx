@@ -6,6 +6,9 @@
 // @verifies CRM-128 (docs/BACKLOG.md) — tranche T4 : la relecture d'un mail préparé — ouverte et préremplie, identité
 //           proposée, copie et Cci, mise en file par `send_email_draft`, « Écarter » et sa confirmation
 //           (docs/SPEC-mails-prepares.md §6.1 ; docs/DESIGN_SYSTEM.md §5.90)
+// @verifies CRM-143 (docs/BACKLOG.md) — tranche T4 : la relecture précharge les pièces du mail préparé ; elles partent avec
+//           lui, et une pièce retirée n'est pas effacée du stockage (docs/SPEC-pieces-jointes.md §17.6 ;
+//           docs/DESIGN_SYSTEM.md §5.95)
 //
 // LE VRAI COMPOSANT, AVEC UN CLIENT FACTICE qui journalise ce que l'écran demande au stockage et à la file. Le parcours
 // réel — dépôt par l'API de stockage, mise en file, remise — est prouvé par `e2e/ui/envoi-pieces-jointes.spec.ts`.
@@ -192,6 +195,7 @@ describe('FormulaireEnvoi — la relecture d’un mail préparé', () => {
 		corps: 'Bonjour, voici notre proposition.',
 		origine: 'mcp' as const,
 		creeLe: '2026-11-03T10:00:00Z',
+		pieces: [] as readonly { chemin: string; nom: string; taille: number }[],
 	}
 
 	it('s’ouvre d’emblée, prérempli, l’identité PROPOSÉE retenue plutôt que le défaut, la copie et la Cci rendues', async () => {
@@ -247,6 +251,24 @@ describe('FormulaireEnvoi — la relecture d’un mail préparé', () => {
 		await userEvent.click(screen.getByTestId('mail-prepare-ecarter-confirmer'))
 		await waitFor(() => expect(ecarte).toHaveBeenCalled())
 		expect(injecte.appels).toEqual([['rpc', 'discard_email_draft', { p_draft_id: 'mail-1' }]])
+	})
+
+	it('CRM-143 : précharge les pièces du mail préparé, les envoie avec lui, et n’efface pas celle qu’on retire', async () => {
+		const envoye = vi.fn()
+		const pieces = [
+			{ chemin: 'e/p/u1/devis.pdf', nom: 'devis.pdf', taille: 1200 },
+			{ chemin: 'e/p/u2/annexe.pdf', nom: 'annexe.pdf', taille: 800 },
+		]
+		render(<FormulaireEnvoi idCard="card-1" mailPrepare={{ ...MAIL, pieces }} onEnvoye={envoye} />)
+		await waitFor(() => expect(valeur(screen.getByRole('combobox'))).toBe('id-1'))
+		expect(screen.getAllByTestId('envoi-piece').map((ligne) => ligne.getAttribute('data-etat'))).toEqual(['pret', 'pret'])
+		await userEvent.click(screen.getByRole('button', { name: 'Retirer annexe.pdf' }))
+		expect(screen.getAllByTestId('envoi-piece')).toHaveLength(1)
+		expect(injecte.appels.filter(([genre]) => genre === 'remove')).toEqual([])
+		await userEvent.click(screen.getByTestId('envoi-valider'))
+		await waitFor(() => expect(envoye).toHaveBeenCalled())
+		const envoi = injecte.appels.find(([genre, nom]) => genre === 'rpc' && nom === 'send_email_draft')
+		expect((envoi?.[2] as { p_attachments: string[] }).p_attachments).toEqual(['e/p/u1/devis.pdf'])
 	})
 
 	it('sans identité proposée encore à soi, retombe sur la présélection du défaut', async () => {

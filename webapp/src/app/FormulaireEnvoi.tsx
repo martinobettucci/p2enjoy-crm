@@ -21,6 +21,8 @@
 //
 // L'ÉCRAN N'OUVRE AUCUNE CONNEXION : il met en file. Ce qu'il annonce, c'est « votre message part
 // », jamais « votre message est arrivé » — le worker n'a pas encore parlé.
+// @spec CRM-143 (docs/BACKLOG.md) — tranche T4 : la relecture d'un mail préparé précharge ses pièces, retirables, sans
+//       effacer l'objet que le mail préparé cite encore (docs/SPEC-pieces-jointes.md §17.6 ; docs/DESIGN_SYSTEM.md §5.95)
 
 import { useCallback, useEffect, useRef, useState, type DragEvent, type FormEvent } from 'react'
 import { Paperclip, Trash2, X } from 'lucide-react'
@@ -65,6 +67,12 @@ type PieceJointe = {
 	readonly taille: number
 	readonly chemin: string | null
 	readonly etat: 'depot' | 'pret' | 'refuse'
+	/**
+	 * `CRM-143` T4 : une pièce du MAIL PRÉPARÉ, déposée par le connecteur. Retirée du formulaire, son objet n'est pas
+	 * effacé : le mail préparé la cite encore tant qu'il n'est pas envoyé, et la purge des dépôts abandonnés s'en charge
+	 * ensuite (docs/SPEC-pieces-jointes.md §17.6).
+	 */
+	readonly preparee?: boolean
 }
 
 export type ProprietesFormulaireEnvoi = {
@@ -115,7 +123,18 @@ export function FormulaireEnvoi({
 	const [ecart, setEcart] = useState(false)
 	const commandeEcart = useRef<HTMLButtonElement | null>(null)
 	const boutonConfirmationEcart = useRef<HTMLButtonElement | null>(null)
-	const [pieces, setPieces] = useState<readonly PieceJointe[]>([])
+	// LES PIÈCES DU MAIL PRÉPARÉ SONT PRÉCHARGÉES (§17.6, §5.95) : des fichiers joints comme les autres, retirables.
+	const [pieces, setPieces] = useState<readonly PieceJointe[]>(
+		() =>
+			mailPrepare?.pieces.map((piece) => ({
+				cle: piece.chemin,
+				nom: piece.nom,
+				taille: piece.taille,
+				chemin: piece.chemin,
+				etat: 'pret' as const,
+				preparee: true,
+			})) ?? [],
+	)
 	const [survol, setSurvol] = useState(false)
 	const [idEspace, setIdEspace] = useState<string | null>(null)
 	const champCci = useRef<HTMLInputElement | null>(null)
@@ -187,14 +206,14 @@ export function FormulaireEnvoi({
 	const retirer = useCallback((cle: string) => {
 		setPieces((precedentes) => {
 			const piece = precedentes.find((candidate) => candidate.cle === cle)
-			if (piece?.chemin) void retirerPiece(clientCrm, piece.chemin)
+			if (piece?.chemin && piece.preparee !== true) void retirerPiece(clientCrm, piece.chemin)
 			return precedentes.filter((candidate) => candidate.cle !== cle)
 		})
 	}, [])
 
 	const annuler = useCallback(() => {
 		// UN FORMULAIRE ANNULÉ RETIRE SES DÉPÔTS : la purge des 24 heures ne rattrape que ce qu'un onglet fermé a laissé.
-		for (const piece of pieces) if (piece.chemin) void retirerPiece(clientCrm, piece.chemin)
+		for (const piece of pieces) if (piece.chemin && piece.preparee !== true) void retirerPiece(clientCrm, piece.chemin)
 		setPieces([])
 		setOuvert(false)
 	}, [pieces])

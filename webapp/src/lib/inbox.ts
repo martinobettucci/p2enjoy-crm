@@ -3,6 +3,8 @@
 //       HTML d'un expéditeur ne s'affiche jamais), §18.5 (la pièce jointe saine), §18.6 (le
 //       message dans la card)
 // @spec docs/DESIGN_SYSTEM.md §5.4 (inbox), §5.8 (états systématiques)
+// @spec CRM-143 (docs/BACKLOG.md) — tranche T4 : une pièce porte sa raison de non-analyse, sa réception et la confirmation
+//       de la personne (`COLONNES_PIECE`, `pieceDepuisLigne`) ; docs/SPEC-pieces-jointes.md §17.3, §17.4
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
 // @spec CRM-081 (docs/BACKLOG.md) — tranche 2 e : les trois colonnes du fil et la lecture des fils
 //       endormis, docs/SPEC-cards.md §16.15.3
@@ -96,6 +98,47 @@ export type PieceJointe = {
 	readonly taille: number
 	readonly chemin: string
 	readonly statutAnalyse: Database['public']['Tables']['mail_attachments']['Row']['av_status']
+	/** `CRM-143` : pourquoi une pièce `skipped` n'a pas été analysée — `scanner_unavailable` ou `too_large`. */
+	readonly raisonNonAnalyse: string | null
+	/** `CRM-143` : la réception, d'où se lit une analyse `pending` trop longue (docs/SPEC-pieces-jointes.md §17.3). */
+	readonly recueLe: string
+	/** `CRM-143` : la personne a confirmé le risque de cette pièce non analysée — une ligne que la base porte. */
+	readonly confirmee: boolean
+}
+
+/**
+ * `CRM-143` T4 : les colonnes d'une pièce, et SA confirmation. La RLS de `mail_attachment_risk_acknowledgments` ne rend que
+ * celles de la personne : une liste non vide dit qu'ELLE a confirmé, jamais une collègue (docs/SPEC-pieces-jointes.md
+ * §17.3).
+ */
+export const COLONNES_PIECE =
+	'id, filename, mime_type, size_bytes, storage_path, av_status, av_skip_reason, created_at, mail_attachment_risk_acknowledgments(user_id)' as const
+
+type LignePiece = {
+	readonly id: string
+	readonly filename: string
+	readonly mime_type: string
+	readonly size_bytes: number
+	readonly storage_path: string
+	readonly av_status: string
+	readonly av_skip_reason: string | null
+	readonly created_at: string
+	readonly mail_attachment_risk_acknowledgments: readonly unknown[] | null
+}
+
+/** Une ligne de `mail_attachments`, dans la forme de l'écran. */
+export function pieceDepuisLigne(ligne: LignePiece): PieceJointe {
+	return {
+		id: ligne.id,
+		nom: ligne.filename,
+		type: ligne.mime_type,
+		taille: ligne.size_bytes,
+		chemin: ligne.storage_path,
+		statutAnalyse: ligne.av_status,
+		raisonNonAnalyse: ligne.av_skip_reason,
+		recueLe: ligne.created_at,
+		confirmee: (ligne.mail_attachment_risk_acknowledgments?.length ?? 0) > 0,
+	}
 }
 
 export type MessageComplet = MessageListe & {
@@ -409,7 +452,7 @@ export async function lireMessage(client: ClientCrm | null, id: string): Promise
 
 		const pieces = await client
 			.from('mail_attachments')
-			.select('id, filename, mime_type, size_bytes, storage_path, av_status')
+			.select(COLONNES_PIECE)
 			.eq('message_id', id)
 			.order('filename')
 		if (pieces.error !== null) return enErreur(classerErreur(pieces.status, pieces.error.message))
@@ -423,14 +466,7 @@ export async function lireMessage(client: ClientCrm | null, id: string): Promise
 			corps,
 			corpsReduitDepuisHtml: reduitDepuisHtml,
 			suggestionCardId: ligne.suggested_card_id,
-			pieces: pieces.data.map((piece) => ({
-				id: piece.id,
-				nom: piece.filename,
-				type: piece.mime_type,
-				taille: piece.size_bytes,
-				chemin: piece.storage_path,
-				statutAnalyse: piece.av_status,
-			})),
+			pieces: pieces.data.map(pieceDepuisLigne),
 		})
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
