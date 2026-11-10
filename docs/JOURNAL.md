@@ -40192,3 +40192,17 @@ rattachés en fait partie. Une affaire dont les contacts viennent de deux organi
 dit. Aucun champ nouveau.
 **Conséquences** : la spécification de `CRM-146` part de ce lien, sous les droits de la personne (le contact, le lien et
 l'affaire lisibles).
+
+### décision 904 — le code d'une tranche vérifiée est poussé : `CLAUDE.md` §13 maintenu, la règle proposée par la session de livraison écartée
+
+*2026-11-10, session interactive 4891a451 (p2enjoy-crm-32), arbitrage du responsable (`AskUserQuestion`).*
+**Le problème** : la session de livraison (p2enjoy-crm-ee) a proposé qu'aucun code d'une unité inachevée — migration,
+écran, outil — n'entre sur `main` avant le `[P]` de l'unité entière, puis parte en un seul push, au motif qu'une livraison
+emporte tout `main` (`CRM-133` T1 et T2 partent en avance de leur unité). Cette règle s'écarte de `CLAUDE.md` §13 (« pousser
+systématiquement après chaque commit validé, y compris pour les étapes intermédiaires cohérentes »).
+**Pistes présentées** : la règle de la session de livraison ; `CLAUDE.md` §13 ; la règle de la session de livraison
+inscrite dans `CLAUDE.md`.
+**Décision du responsable** : **`CLAUDE.md` §13**. Chaque tranche vérifiée est commitée et poussée ; la session de
+livraison décide du lot, et marque « en avance de son unité » au contrat ce qui part avant la fin de son unité, en le
+soumettant au responsable comme tel. Les documents de décision restent poussés immédiatement (§5).
+**Conséquence** : `CRM-133` T3 et T4 seront poussées tranche par tranche, une fois vérifiées.
