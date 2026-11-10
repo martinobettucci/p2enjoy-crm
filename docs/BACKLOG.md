@@ -19324,8 +19324,15 @@ complète 153 fichiers, 5187 assertions, sans anomalie. **T2 implémentée et v�
 `scripts/verify-outbox-course.sh` (deux sessions `psql`, les deux ordres du verrou, l'attente constatée : 3 contrôles) et
 `mcp/tests/test_integration_outbox.py` (la course en parallèle à travers PostgREST, le worker réel y prenant part),
 chacun rouge contre une annulation affaiblie (sans sa condition d'état), vert une fois la définition restaurée ; aucun
-pytest `mail-sync`, l'annulation ne touchant aucun code du worker (§28.5). Restent T3 (l'écran), T4 (le connecteur), T5
-(le seed et le contrat).
+pytest `mail-sync`, l'annulation ne touchant aucun code du worker (§28.5). **T3 implémentée et vérifiée en
+développement** — l'écran de l'outbox (`webapp/src/lib/outbox.ts`, `OutboxInbox.tsx`, l'intégration dans `RouteInbox.tsx`,
+`PanneauInbox.tsx` sorti à l'identique), `mail_cancelled` dans le fil, `docs/DESIGN_SYSTEM.md` §5.98 (lecture ciblée,
+décision 910), le manuel §12.5 (texte ; ses images avec le seed de T5) ; vitest (19 nouveaux, deux gardes du fil révisées),
+`e2e/api/outbox.spec.ts` 1/1, `e2e/ui/outbox.spec.ts` 8/8 (souris, clavier, quatre paliers), captures observées.
+**T4 implémentée et vérifiée en développement** — `crm_mail_outbox_list`, `crm_mail_outbox_cancel`
+(`destructiveHint`), `crm_mail_outbox_retry`, ancre `outbox` ; pytest 17 unitaires, intégration 4/4, `verify-mcp.sh
+--rapide` 114 contrôles ; la phrase de portée « Messagerie » de l'onglet « Connecteur MCP » ; manuel §33. Restent T5 (le seed,
+les images du manuel §12.5) et la livraison (contrat §2.39).
 
 ## Demande du 2026-11-10 — une livraison se voit au prochain chargement (décision 899)
 
@@ -19371,7 +19378,13 @@ T4.
   hors du registre ; pgTAP `0166` **18/18**, rouge contre trois mutations (corbeille comptée, affaire comptée deux fois,
   partage par une même organisation) ; suite pgTAP complète **154 fichiers, 5 205 assertions**. Poussée en avance de son
   unité (décision 904) : rien ne l'appelle encore ;
-- reste : T2 (webapp, design system, unitaires, API), T3 (seed, E2E, captures, manuel), T4 (connecteur), T5 (production).
+- **T2 faite le 2026-11-10, vérifiée en développement** : la colonne « Réel sur prévu » de la liste (les deux lectures
+  attendues ensemble) et le bloc « Recettes avec cette organisation » de la fiche (`lib/recettes-organisation.ts`,
+  `app/RecettesOrganisation.tsx`) ; unitaires **46/46** sur les quatre fichiers touchés ; API `e2e/api/recettes-organisation.spec.ts`
+  **5/5** sous les jetons de l'administratrice et de la lectrice contre un oracle (rattachements posés par la vraie route
+  puis retirés), rouge contre une fonction sans `distinct` ; build ; captures à 1440, 1024, 768 et 390 px observées, sans
+  défilement horizontal de la page — les barres de la liste alignées en grille après la première capture (§5.97 révisé) ;
+- reste : T3 (seed §41, E2E souris et clavier, captures du manuel, manuel), T4 (connecteur), T5 (production).
 **DoD** : pgTAP de l'agrégat (droits : une affaire illisible ne compte pas ; plusieurs devises) ; unitaires ; API avec refus de
 droits ; E2E souris et clavier (fiche, liste) ; outil du connecteur et `verify-mcp.sh` ; seed (une organisation avec prévu et
 réel dans deux devises, une sans recette) ; captures aux quatre paliers ; manuel.

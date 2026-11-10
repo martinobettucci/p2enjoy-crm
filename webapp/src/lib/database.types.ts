@@ -2744,10 +2744,13 @@ export type Database = {
           attempts: number
           bcc_addrs: string[]
           body_text: string
+          cancelled_at: string | null
+          cancelled_by: string | null
           card_id: string | null
           cc_addrs: string[]
           created_at: string
           created_by: string | null
+          from_address: string | null
           id: string
           identity_id: string
           in_reply_to_message_id: string | null
@@ -2769,10 +2772,13 @@ export type Database = {
           attempts?: number
           bcc_addrs?: string[]
           body_text: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           card_id?: string | null
           cc_addrs?: string[]
           created_at?: string
           created_by?: string | null
+          from_address?: string | null
           id?: string
           identity_id: string
           in_reply_to_message_id?: string | null
@@ -2794,10 +2800,13 @@ export type Database = {
           attempts?: number
           bcc_addrs?: string[]
           body_text?: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           card_id?: string | null
           cc_addrs?: string[]
           created_at?: string
           created_by?: string | null
+          from_address?: string | null
           id?: string
           identity_id?: string
           in_reply_to_message_id?: string | null
@@ -2815,6 +2824,13 @@ export type Database = {
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "mail_outbox_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "mail_outbox_card_id_fkey"
             columns: ["card_id"]
@@ -4717,6 +4733,7 @@ export type Database = {
         Args: { p_id: string; p_target: string }
         Returns: undefined
       }
+      cancel_outbound_email: { Args: { p_outbox_id: string }; Returns: string }
       cards_figees: {
         Args: never
         Returns: {
@@ -5293,6 +5310,23 @@ export type Database = {
         }
       }
       occupation_du_workflow: { Args: { p_workflow: string }; Returns: Json }
+      organization_revenue_totals: {
+        Args: { p_organization_id?: string }
+        Returns: {
+          actual_total: number
+          cards: number
+          currency: string
+          estimated_total: number
+          lines_without_actual: number
+          organization_id: string
+          revenue_lines: number
+          shared_cards: number
+        }[]
+      }
+      outbox_gestes_permis: {
+        Args: { p_envoi: Database["public"]["Tables"]["mail_outbox"]["Row"] }
+        Returns: boolean
+      }
       ouvrir_session_serveur: {
         Args: {
           p_admin_lelabs?: boolean
@@ -5650,6 +5684,7 @@ export type Database = {
         }
         Returns: Json
       }
+      retry_outbound_email: { Args: { p_outbox_id: string }; Returns: string }
       rotate_webhook_secret: { Args: { p_endpoint: string }; Returns: string }
       save_card_as_template: {
         Args: { p_name: string; p_placement: string }

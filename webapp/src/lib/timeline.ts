@@ -92,6 +92,10 @@ export const TYPES_EVENEMENT = [
 	// c'est l'oubli exact d'INC-207 et d'INC-220, où un type a vécu en base sans que le fil sache
 	// le nommer, et rendait « Événement ».
 	'mail_unclassified',
+	// `CRM-144` T1, docs/SPEC-mail-subsystem.md §28.3 — l'ANNULATION d'un envoi en file, écrite par
+	// `public.cancel_outbound_email` depuis la migration `0176`. Inscrite dans le même changement que l'écran qui la montre
+	// (T3) : l'oubli d'INC-207 et d'INC-220 ne se répète pas.
+	'mail_cancelled',
 	'snoozed',
 	'woken',
 	// `CRM-062` tranche 3b, docs/SPEC-relances.md §10.3.1 — la relance automatique, écrite par le
@@ -167,6 +171,9 @@ export const FAMILLE_PAR_TYPE: Readonly<Record<TypeEvenement, Famille>> = {
 	// l'utilisateur filtre sur « Discussion » — et ces deux lignes ne se lisent que l'une avec
 	// l'autre : l'une dit que le courrier est arrivé, l'autre qu'il est parti.
 	mail_unclassified: 'discussion',
+	// UN ENVOI ANNULÉ EST UNE PAROLE RETENUE, de la même conversation que `mail_sent` (docs/DESIGN_SYSTEM.md §5.98) : le
+	// filtre « Discussion » montre ce qui est parti et ce qui ne partira pas.
+	mail_cancelled: 'discussion',
 	// « Qu'est devenue cette affaire ? » est exactement la question à laquelle le sommeil et le
 	// réveil répondent. Une sixième bascule pour deux types contredirait le §5.11 (§16.11.5).
 	snoozed: 'cycle',
@@ -388,6 +395,9 @@ export function resoudreDetail(ligne: LigneEvenement, libelles: LibellesFil): De
 	// nulle part depuis cette card — ce n'est pas un libellé qui pourrait changer de sens demain,
 	// c'est la valeur même du fait, exactement comme la date du sommeil ou le retard d'une relance.
 	if (ligne.type === 'mail_unclassified') return { detail: texte(ligne.payload['subject']) }
+	// `CRM-144` (§28.3) : L'OBJET DE L'ENVOI ANNULÉ, lu dans le `payload` pour le même motif — l'envoi annulé n'est relu nulle
+	// part depuis la fiche, et son objet au moment de l'annulation est la valeur même du fait.
+	if (ligne.type === 'mail_cancelled') return { detail: texte(ligne.payload['subject']) }
 	// LE SEUL CAS OÙ LE FIL LIT UNE VALEUR DU `payload` plutôt qu'un libellé résolu, et l'écart est
 	// motivé (§16.11.5) : une DATE n'est pas un libellé qui pourrait changer de sens demain — c'est
 	// la valeur même du fait. `until` pour la mise en sommeil, `from` pour l'échéance abandonnée.

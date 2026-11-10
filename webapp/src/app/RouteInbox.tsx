@@ -48,6 +48,9 @@
 //       sans track ni channel (docs/DESIGN_SYSTEM.md §5.4 ; docs/SPEC-rattachements.md §7, décisions 657 et 818)
 // @spec CRM-137 (docs/BACKLOG.md) — le formulaire de classement porte le sélecteur cherchable et « Expéditeur connu »,
 //       à la place du `select` (docs/DESIGN_SYSTEM.md §5.94 ; docs/SPEC-mail-subsystem.md §26.3 ; décision 893)
+// @spec CRM-144 (docs/BACKLOG.md) — tranche T3 : les trois entrées de l'outbox dans la tête des dossiers, la vue d'un
+//       dossier d'envois à la place des panneaux de messages, son adresse `?envois=` (docs/DESIGN_SYSTEM.md §5.98 ;
+//       docs/SPEC-mail-subsystem.md §28.6) — les panneaux eux-mêmes vivent dans `OutboxInbox.tsx`
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import {
@@ -69,7 +72,7 @@ import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { SkeletonListe } from '../components/ui/Skeleton'
-import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
+import { EtatVide } from '../components/ui/States'
 import { t, type CleTraduction } from '../i18n'
 import type { ErreurDonnees, EtatAsync } from '../lib/async'
 import { motifVisible, proprietesCommande, useEcriturePermise } from '../lib/capacites'
@@ -124,6 +127,15 @@ import { objetDeReponse } from '../lib/envoi'
 import { PARAMETRE_BROUILLON, lireMailsPrepares, type MailPrepare } from '../lib/mails-prepares'
 import { clientCrm } from '../lib/supabase'
 import { FormulaireEnvoi } from './FormulaireEnvoi'
+import { EchecChargement, Panneau } from './PanneauInbox'
+import { EntreesEnvois, PanneauDetailEnvoi, PanneauListeEnvois, useEnvois } from './OutboxInbox'
+import {
+	PARAMETRE_ENVOIS,
+	dossierEnvoiDepuisAdresse,
+	lireComptesEnvois,
+	type ComptesEnvois,
+	type DossierEnvoi,
+} from '../lib/outbox'
 import { SelecteurClassement, lecteurBase } from './SelecteurClassement'
 import type { Candidate } from '../lib/candidats-classement'
 import { ListePiecesJointes } from './PiecesJointes'
@@ -150,72 +162,6 @@ const dateLisible = (iso: string): string =>
 		hour: '2-digit',
 		minute: '2-digit',
 	})
-
-/**
- * Enveloppe commune aux trois panneaux.
- *
- * `aria-labelledby` relie chaque région à son propre titre : trois régions anonymes seraient
- * indistinguables à la navigation par régions (docs/DESIGN_SYSTEM.md §10).
- */
-function Panneau({
-	id,
-	titre,
-	visible,
-	classe,
-	entete,
-	children,
-}: {
-	readonly id: string
-	readonly titre: string
-	readonly visible: boolean
-	readonly classe: string
-	readonly entete?: React.ReactNode
-	readonly children: React.ReactNode
-}) {
-	return (
-		<section
-			aria-labelledby={`${id}-titre`}
-			data-testid={`inbox-panneau-${id}`}
-			className={[visible ? 'flex' : 'hidden', 'lg:flex flex-col min-h-0', classe].join(' ')}
-		>
-			<div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border">
-				<h2 id={`${id}-titre`} className="text-sm font-medium text-text-2 uppercase tracking-wide">
-					{titre}
-				</h2>
-				{entete}
-			</div>
-			<div className="flex-1 min-h-0 overflow-y-auto">{children}</div>
-		</section>
-	)
-}
-
-/**
- * L'échec d'un chargement, présenté selon ce qu'il EST.
- *
- * UN REFUS N'EST PAS UNE PANNE, et lui offrir « Réessayer » serait promettre qu'un second essai
- * pourrait changer la réponse : le backend a répondu, et il a dit non. C'est le cas d'un visiteur
- * anonyme qui arrive sur cette adresse — la messagerie n'est pas publique, et l'écran le dit au
- * lieu d'afficher une erreur de chargement (docs/DESIGN_SYSTEM.md §5.8).
- */
-function EchecChargement({
-	erreur,
-	onReprise,
-}: {
-	readonly erreur: { readonly nature: string }
-	readonly onReprise: () => void
-}) {
-	if (erreur.nature === 'forbidden') {
-		return <EtatRefus titre={t('state.forbidden.title')} corps={t('state.forbidden.body')} />
-	}
-	return (
-		<EtatErreur
-			titre={t('inbox.error.title')}
-			corps={t('state.error.unknown')}
-			libelleReprise={t('state.error.retry')}
-			onReprise={onReprise}
-		/>
-	)
-}
 
 /**
  * Le texte d'un marquage refusé ou perdu (§18 bis.4). Il dit que l'état N'A PAS changé : l'écran ne l'a pas modifié, et
@@ -555,7 +501,15 @@ function PanneauDossiers({
 	onChoisirPrepares,
 	refEntreePrepares,
 	courrier,
+	envois,
 }: {
+	/** `CRM-144` T3 (§5.98) : les trois entrées de l'outbox, après « Mails préparés » et avant « Non classés ». */
+	readonly envois: {
+		readonly comptes: EtatAsync<ComptesEnvois>
+		readonly choisi: DossierEnvoi | null
+		readonly onChoisir: (dossier: DossierEnvoi) => void
+		readonly refs: Readonly<Record<DossierEnvoi, React.RefObject<HTMLButtonElement | null>>>
+	}
 	/** `CRM-139` (§5.96) : la case « Seulement moi », dans l'en-tête des dossiers. */
 	readonly courrier: {
 		readonly mode: ModeCourrier
@@ -620,6 +574,10 @@ function PanneauDossiers({
 								/>
 							</li>
 						) : null}
+					</ul>
+					{/* `CRM-144` T3 (§5.98) : l'outbox, toujours rendue, à zéro compris. */}
+					<EntreesEnvois comptes={envois.comptes} choisi={envois.choisi} onChoisir={envois.onChoisir} refs={envois.refs} />
+					<ul>
 						{/* « Non classés » reste affiché MÊME À ZÉRO : c'est l'entrée du travail de tri,
 						    et sa disparition ferait croire à une panne (§18.3). */}
 						<li>
@@ -628,7 +586,7 @@ function PanneauDossiers({
 								nombre={etat.donnees.nonClasses}
 								nonLus={etat.donnees.nonClassesNonLus}
 								profondeur={0}
-								choisi={!preparesChoisis && selection?.genre === 'non-classes'}
+								choisi={!preparesChoisis && envois.choisi === null && selection?.genre === 'non-classes'}
 								onChoisir={() => onChoisir({ genre: 'non-classes' })}
 							/>
 						</li>
@@ -2077,13 +2035,72 @@ export function RouteInbox() {
 		[fils],
 	)
 
+	// `CRM-144` T3 — L'OUTBOX (§5.98). Le dossier d'envois ouvert est une DÉSIGNATION de ce qui est montré, comme un dossier :
+	// il vit dans l'adresse, sous la clé `envois`, et un rechargement le garde. « Seulement moi » ne s'y applique pas.
+	const dossierEnvoi = dossierEnvoiDepuisAdresse(parametresUrl.get(PARAMETRE_ENVOIS))
+	const [idEnvoi, setIdEnvoi] = useState<string | null>(null)
+	const [comptesEnvois, setComptesEnvois] = useState<EtatAsync<ComptesEnvois>>({ statut: 'chargement' })
+	const relireComptesEnvois = useCallback(() => {
+		void lireComptesEnvois(clientCrm).then(setComptesEnvois)
+	}, [])
+	useEffect(() => {
+		relireComptesEnvois()
+	}, [relireComptesEnvois])
+	const envois = useEnvois(dossierEnvoi)
+	const refFile = useRef<HTMLButtonElement | null>(null)
+	const refEnvoyes = useRef<HTMLButtonElement | null>(null)
+	const refEchecs = useRef<HTMLButtonElement | null>(null)
+	const refsEnvois = useMemo(() => ({ file: refFile, envoyes: refEnvoyes, echecs: refEchecs }), [])
+	const quitterEnvois = useCallback(() => {
+		setIdEnvoi(null)
+		setParametresUrl((precedents) => {
+			if (!precedents.has(PARAMETRE_ENVOIS)) return precedents
+			const suivants = new URLSearchParams(precedents)
+			suivants.delete(PARAMETRE_ENVOIS)
+			return suivants
+		})
+	}, [setParametresUrl])
+	const choisirEnvois = useCallback(
+		(dossier: DossierEnvoi) => {
+			setPreparesChoisis(false)
+			setIdPrepare(null)
+			setSelection(null)
+			setIdOuvert(null)
+			setIdEnvoi(null)
+			setEtage('liste')
+			// Un geste de l'utilisateur : « Précédent » le défait.
+			setParametresUrl((precedents) => {
+				const suivants = new URLSearchParams(precedents)
+				suivants.set(PARAMETRE_ENVOIS, dossier)
+				return suivants
+			})
+			relireComptesEnvois()
+		},
+		[setParametresUrl, relireComptesEnvois],
+	)
+	// APRÈS UNE ANNULATION OU UNE REMISE EN FILE : la ligne quitte son dossier, le détail se referme, les comptes sont relus,
+	// et le focus va à l'entrée du dossier quitté (§5.13 : jamais sur un élément qui disparaît).
+	const apresGesteEnvoi = useCallback(
+		(geste: 'annule' | 'reessaye') => {
+			setAnnonce(geste === 'annule' ? t('outbox.annule') : t('outbox.reessaye'))
+			setIdEnvoi(null)
+			setEtage('liste')
+			envois.relire()
+			relireComptesEnvois()
+			if (dossierEnvoi !== null) refsEnvois[dossierEnvoi].current?.focus()
+		},
+		[envois, relireComptesEnvois, dossierEnvoi, refsEnvois],
+	)
+	const maintenantEnvois = useMemo(() => new Date(), [envois.etat])
+
 	const choisirPrepares = useCallback(() => {
+		quitterEnvois()
 		setPreparesChoisis(true)
 		setSelection(null)
 		setIdOuvert(null)
 		setIdPrepare(null)
 		setEtage('liste')
-	}, [])
+	}, [quitterEnvois])
 
 	// APRÈS UN ENVOI OU UN ÉCART, LA LISTE EST RELUE, LA RELECTURE SE REFERME, ET LE FOCUS VA À L'ENTRÉE si elle reste,
 	// sinon à l'état vide de la liste (§5.13 : jamais sur un élément qui disparaît).
@@ -2105,6 +2122,7 @@ export function RouteInbox() {
 
 	const choisirDossier = useCallback(
 		(choix: Selection) => {
+			quitterEnvois()
 			setPreparesChoisis(false)
 			setIdPrepare(null)
 			setSelection((precedent) => (MEME_SELECTION(precedent, choix) ? precedent : choix))
@@ -2113,7 +2131,7 @@ export function RouteInbox() {
 			setErreurLectureListe(null)
 			setErreurLectureMessage(null)
 		},
-		[],
+		[quitterEnvois],
 	)
 
 	const ouvrirMessage = useCallback((lu: MessageListe) => {
@@ -2221,8 +2239,38 @@ export function RouteInbox() {
 						onMode: changerModeCourrier,
 						onReprise: () => setEssaiPresence((n) => n + 1),
 					}}
+					envois={{ comptes: comptesEnvois, choisi: dossierEnvoi, onChoisir: choisirEnvois, refs: refsEnvois }}
 				/>
-				{preparesChoisis ? (
+				{dossierEnvoi !== null ? (
+					<>
+						<PanneauListeEnvois
+							dossier={dossierEnvoi}
+							etat={envois.etat}
+							idOuvert={idEnvoi}
+							maintenant={maintenantEnvois}
+							onOuvrir={(id) => {
+								setIdEnvoi(id)
+								setEtage('message')
+							}}
+							onRetour={() => setEtage('dossiers')}
+							onReprise={envois.relire}
+							onPlus={envois.plus}
+							visible={etage === 'liste'}
+						/>
+						<PanneauDetailEnvoi
+							dossier={dossierEnvoi}
+							etat={envois.etat}
+							idOuvert={idEnvoi}
+							onRetour={() => setEtage('liste')}
+							onFait={apresGesteEnvoi}
+							onRelire={() => {
+								envois.relire()
+								relireComptesEnvois()
+							}}
+							visible={etage === 'message'}
+						/>
+					</>
+				) : preparesChoisis ? (
 					<>
 						<PanneauListePrepares
 							etat={mailsPrepares}

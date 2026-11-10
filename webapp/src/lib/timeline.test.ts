@@ -1,6 +1,8 @@
 // @verifies CRM-112 (docs/BACKLOG.md) tranche T3.d — le détail d'une valeur commune (docs/DESIGN_SYSTEM.md §5.89)
 // @verifies CRM-111 (docs/BACKLOG.md) T7.4 — `attached` et `detached` nommés et rangés (docs/DESIGN_SYSTEM.md §5.84)
 // @verifies CRM-069 (docs/BACKLOG.md) — tranche T2 : la pose et le retrait d'une étiquette rangés dans la famille « Champs » (docs/SPEC-etiquettes-digest.md §2.2)
+// @verifies CRM-144 (docs/BACKLOG.md) — tranche T3 : `mail_cancelled` nommé, rangé dans « Discussion », son détail lu
+//           dans le `payload` (docs/DESIGN_SYSTEM.md §5.98 ; docs/SPEC-mail-subsystem.md §28.3)
 // @verifies CRM-044 (docs/BACKLOG.md) — fusion du fil, familles, filtres et résolution des libellés
 // @verifies CRM-062 (docs/BACKLOG.md) — tranche 3b : le vocabulaire à quatorze et le détail d'une
 //           relance (docs/SPEC-relances.md §10.3.1 ; docs/INCONSISTENCY_REPORT.md INC-207)
@@ -99,7 +101,9 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 	// du vocabulaire, aucune valeur jamais retirée, et les cinq familles restent cinq.
 	// RÉVISÉE PAR `CRM-068` T3a (décision 51) : `checklist_checked` et `checklist_unchecked`, écrits par la migration
 	// `0125`, portent le vocabulaire à VINGT-ET-UN, rangés dans « Champs » (décision 748, Q2) ; aucune famille nouvelle.
-	it('range les vingt-cinq types livrés dans exactement cinq familles d’événements', () => {
+	// RÉVISÉE PAR `CRM-144` T3 (décision 51) : `mail_cancelled`, écrit par la migration `0176`, porte le vocabulaire à
+	// VINGT-SIX, rangé dans « Discussion » avec les autres gestes de courrier ; aucune famille nouvelle.
+	it('range les vingt-six types livrés dans exactement cinq familles d’événements', () => {
 		// RÉVISÉE PAR `CRM-111` T7.4 (décision 51) : `attached` et `detached`, écrits par la migration `0148`, famille
 		// « Organisation », avec l'écran qui fait les deux gestes (docs/DESIGN_SYSTEM.md §5.84).
 		// RÉVISÉE PAR `CRM-069` T2 (décision 51) : `label_added` et `label_removed`, famille « Champs »
@@ -107,7 +111,7 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 		// RÉVISÉE, NON RETIRÉE (mécanisme de la décision 51) — DIX-NEUVIÈME type, `mail_unclassified`,
 		// livré par `CRM-055` tranche 2 (§16.5.3). Le compte est le garde-fou : il rougit à chaque
 		// extension et force à ranger le type neuf plutôt qu'à le laisser tomber sur le repli.
-		expect(TYPES_EVENEMENT).toHaveLength(25)
+		expect(TYPES_EVENEMENT).toHaveLength(26)
 		expect(FAMILLE_PAR_TYPE.attached).toBe('organisation')
 		expect(FAMILLE_PAR_TYPE.detached).toBe('organisation')
 		expect(FAMILLE_PAR_TYPE.label_added).toBe('champs')
@@ -175,14 +179,32 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 	// l'histoire d'un même message dès que l'utilisateur filtre sur « Discussion ».
 	// SIX FAMILLES DEPUIS `CRM-067` (décision 648, docs/DESIGN_SYSTEM.md §5.63) : « Activités » suit « Discussion », et
 	// AUCUN type d'événement n'y est rangé — elle ne compte que la troisième source, les activités consignées.
-	it('déclare six familles, dont la discussion que les TROIS gestes de courrier portent', () => {
+	// RÉVISÉE PAR `CRM-144` T3 : QUATRE gestes de courrier — l'annulation d'un envoi (`mail_cancelled`) est une parole
+	// retenue de la même conversation (docs/DESIGN_SYSTEM.md §5.98).
+	it('déclare six familles, dont la discussion que les QUATRE gestes de courrier portent', () => {
 		expect([...FAMILLES]).toEqual(['discussion', 'activites', 'etapes', 'champs', 'organisation', 'cycle'])
 		expect(TYPES_EVENEMENT.filter((type) => familleDe(type) === 'activites')).toEqual([])
 		expect(TYPES_EVENEMENT.filter((type) => familleDe(type) === 'discussion')).toEqual([
 			'mail_received',
 			'mail_sent',
 			'mail_unclassified',
+			'mail_cancelled',
 		])
+	})
+
+	it('`CRM-144` : le détail d’un envoi annulé est son objet, lu dans l’événement', () => {
+		const ligne = {
+			genre: 'evenement',
+			type: 'mail_cancelled',
+			payload: { outbox_id: '00000000-0000-4000-8000-000000000001', subject: 'Proposition commerciale' },
+		} as unknown as Parameters<typeof resoudreDetail>[0]
+		expect(resoudreDetail(ligne, { etapes: new Map(), champs: new Map() } as unknown as Parameters<typeof resoudreDetail>[1])).toEqual({
+			detail: 'Proposition commerciale',
+		})
+		const sansObjet = { ...ligne, payload: { outbox_id: '00000000-0000-4000-8000-000000000001' } } as typeof ligne
+		expect(resoudreDetail(sansObjet, { etapes: new Map(), champs: new Map() } as unknown as Parameters<typeof resoudreDetail>[1])).toEqual({
+			detail: null,
+		})
 	})
 
 	// Le repli est DOCUMENTÉ : la valeur vient du backend, et un type ne garantit jamais une

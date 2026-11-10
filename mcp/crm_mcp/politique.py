@@ -13,6 +13,7 @@
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T1 : le genre d'ancre `workflow` (docs/SPEC-mcp.md §9.2 quater, décision 656)
 # @spec CRM-111 (docs/BACKLOG.md) — tranche T9 : le genre d'ancre `placement` (docs/SPEC-mcp.md §9.2 quindecies, décision 826)
 # @spec CRM-128 (docs/BACKLOG.md) — tranche T3 : le genre d'ancre `draft`, un mail préparé (docs/SPEC-mails-prepares.md §5, décision 829)
+# @spec CRM-144 (docs/BACKLOG.md) — tranche T4 : le genre d'ancre `outbox`, un envoi de la file (docs/SPEC-mcp.md §9.2 undevicies)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.b : le genre d'ancre `activity` (docs/SPEC-mcp.md §9.2 ter, décision 655)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.a : l'ancre `autres` FACULTATIVE, permise si son argument vaut `None` par
 #       défaut, et pour elle seule (docs/SPEC-mcp.md §9.2 bis, décision 654)
@@ -113,6 +114,8 @@ RESOLUTIONS: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "attachment": ("mail_attachments", "message:mail_messages(workspace_id)", ("message", "workspace_id")),
     # `CRM-128` T3 : un mail préparé porte son espace ; la RLS ne le rend qu'à la personne (docs/SPEC-mails-prepares.md §5).
     "draft": ("mail_drafts", "workspace_id", ("workspace_id",)),
+    # `CRM-144` T4 : un envoi de la file porte son espace ; la RLS ne le rend qu'à qui lit son affaire (§9.2 undevicies).
+    "outbox": ("mail_outbox", "workspace_id", ("workspace_id",)),
     # `CRM-068` T5 : un point de checklist d'une affaire porte son espace (docs/SPEC-mcp.md §9.2 duodecies, décision 767).
     "card_checklist_item": ("card_checklist_items", "workspace_id", ("workspace_id",)),
     # Une occurrence de budget, résolue par son budget puis son track : tout identifiant passé à un outil est une ancre.
@@ -150,6 +153,7 @@ LIBELLES = {
     "message": "message",
     "attachment": "pièce jointe",
     "draft": "mail préparé",
+    "outbox": "envoi",
     "card_checklist_item": "point de checklist",
 }
 

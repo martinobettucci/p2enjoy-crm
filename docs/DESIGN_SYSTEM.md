@@ -8100,10 +8100,13 @@ spécifié par `docs/SPEC-mail-subsystem.md` §27 ; ces règles ne disent que de
   (« accessible : texte et `progressbar` », écrite avant cette lecture) : l'accessibilité est tenue par le texte, que la
   barre double à l'œil seulement (§1 : une couleur ne porte jamais seule une information).
 - **LA COLONNE « Réel sur prévu » DE LA LISTE** (§5.64, cinquième colonne, après « Contacts ») : une ligne par devise,
-  empilées comme au §5.60 (`flex flex-col items-end`, ordre alphabétique des codes, 4 px entre deux lignes) — **l'écart
-  au §5.9 que le §5.60 a déjà pris**, voulu pour la même raison. Chaque ligne : la barre, puis le texte « 163 000,00 sur
-  210 000,00 » en donnée technique (§2, chiffres tabulaires), puis le code devise **dans son propre élément**, 13 px
-  `--color-text-2` (§5.48, §5.60). Un réel inconnu : « Rien de saisi sur 72 000,00 », barre vide. Une part sans objet
+  empilées comme au §5.60 (ordre alphabétique des codes, 4 px entre deux lignes) — **l'écart au §5.9 que le §5.60 a
+  déjà pris**, voulu pour la même raison. **Chaque ligne est une grille `96px 1fr auto` qui occupe la largeur de la
+  cellule** : la barre au bord gauche, pour que toutes les barres de la colonne partent du même bord et se comparent d'une
+  organisation à l'autre ; puis le texte « 163 000,00 sur 210 000,00 », aligné à droite, en donnée technique (§2,
+  chiffres tabulaires) ; puis le code devise **dans son propre élément**, 13 px `--color-text-2` (§5.48, §5.60). *Révisé
+  le 2026-11-10 à la capture de T2* : empilées en `flex items-end`, les barres suivaient la longueur de leur texte et ne
+  se comparaient plus. Un réel inconnu : « Rien de saisi sur 72 000,00 », barre vide. Une part sans objet
   (prévu nul ou négatif) : le texte seul, et la place de la barre gardée vide pour que les textes restent alignés.
   **Une organisation sans recette laisse la cellule vide** (§5.9) : ni barre à zéro, ni « 0 sur 0 ».
 - **LE BLOC « Recettes avec cette organisation » DE LA FICHE** (§5.20) vient entre la liste de définitions et les contacts,
@@ -8190,7 +8193,8 @@ liste plate dans le deuxième, le détail dans le troisième.
   personne peut lire ; la case reste rendue et inchangée.
 - **DANS LE FIL DE L'AFFAIRE** (§5.11), le type **`mail_cancelled`** rejoint la famille **Discussion**, comme
   `mail_sent` : une ligne d'événement, pastille `--color-hover` et icône `Ban` en `--color-text-2` — un fait neutre —, le
-  libellé « Envoi annulé : {objet} », l'acteur nommé par la règle du §5.11. Aucune bascule nouvelle.
+  libellé « Envoi annulé » et, en détail, l'objet de l'envoi lu dans l'événement (le patron de `mail_unclassified`),
+  l'acteur nommé par la règle du §5.11. Aucune bascule nouvelle.
 - **SOUS `lg`**, la pile du §5.4 : entrée → liste → détail, « Retour » à chaque étage ; sous `md`, les boutons passent à la
   ligne, cibles conservées. `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
 - **Aucune couleur, aucun jeton nouveau ; trois icônes Lucide nouvelles, `Mails`, `MailWarning` et `Ban`**, chacune pour un

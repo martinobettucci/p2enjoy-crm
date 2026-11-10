@@ -1242,10 +1242,22 @@ type _vueDerivationColonnes = Expect<
 // La migration de `CRM-139` ajoute `concerns_me`, la colonne calculée « le message concerne l'appelant »
 // (docs/SPEC-mail-subsystem.md §27.2), que le générateur range aussi dans `mail_messages.Row`, comme `is_read`. CE QUI
 // ÉCHAPPE AU GÉNÉRATEUR : l'identité de service et celles des autres personnes ne comptent jamais. Le compte s'accroît de un.
+// `0176` de `CRM-144` TRANCHE T1 ajoute `cancel_outbound_email` (rend la date de l'annulation), `retry_outbound_email` (rend
+// l'identifiant de l'envoi) et `outbox_gestes_permis`, la colonne calculée « l'appelant peut annuler ou réessayer »
+// (docs/SPEC-mail-subsystem.md §28.3, §28.4, §28.6). CE QUI ÉCHAPPE AU GÉNÉRATEUR : les refus nommés, `outbox_not_found`
+// (404), `forbidden` (42501), `outbox_sending`, `outbox_sent`, `outbox_failed`, `outbox_cancelled`, `outbox_queued`,
+// `outbox_uncertain` (409), `card_not_available` (23514), `quota_exceeded` (23505). Le compte s'accroît de trois.
+// `0177` de `CRM-146` TRANCHE T1 ajoute `organization_revenue_totals` (docs/SPEC-recettes.md §12.3), régénérée ici par
+// `CRM-144` T3 ; CE QUI ÉCHAPPE AU GÉNÉRATEUR : `actual_total` est nul quand aucune ligne n'a de réel. Le compte s'accroît
+// de un.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'acknowledge_unscanned_attachment'
+    | 'cancel_outbound_email'
+    | 'retry_outbound_email'
+    | 'outbox_gestes_permis'
+    | 'organization_revenue_totals'
     | 'mail_attachments_to_rescan'
     | 'mail_attachment_record_scan'
     | 'mail_template_variables_espace'

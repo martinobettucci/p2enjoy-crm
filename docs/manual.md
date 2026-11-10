@@ -3453,6 +3453,46 @@ pour chaque mail que l'assistant vous a préparé sur cette affaire ; « Relire
 **Les relances automatiques ne passent pas par là** : une séquence armée depuis la fiche envoie ses paliers seule, comme
 avant ([chapitre 16](#enchainer-des-relances-les-sequences)).
 
+### 12.5 Suivre ses envois : en file, envoyés, échecs
+
+*Dans l'inbox, en tête des dossiers.* Un message que vous envoyez ne part pas à l'instant : il est **mis en file**, et le
+service d'envoi le remet au serveur de votre adresse d'expédition dans la minute. Trois entrées, sous « Mails préparés »
+et avant « Non classés », montrent ce qu'il en est, **pour toute l'équipe** : chacun voit les envois des affaires qu'il
+peut lire, les siens comme ceux de ses collègues. Le nombre à côté de chaque entrée dit combien d'envois elle contient ;
+« Échecs » porte en plus une pastille rouge tant qu'un envoi a échoué.
+
+- **« En file »** : les envois qui attendent leur départ, du plus proche au plus lointain. Chaque ligne dit l'heure
+  prévue, ou « au prochain passage » quand elle est passée. Un envoi qu'une panne a retardé dit aussi combien d'essais ont
+  eu lieu et pourquoi (« 2 essais — le serveur d'envoi est injoignable ») : le service réessaie seul, de plus en plus
+  espacé. Un envoi « En cours d'envoi » est en train de partir.
+- **« Envoyés »** : les envois partis, du plus récent au plus ancien, avec la date d'envoi. « Afficher plus » montre les
+  plus anciens.
+- **« Échecs »** : les envois que le service a renoncé à remettre, avec **le motif en toutes lettres** — par exemple « le
+  serveur d'envoi a refusé l'identifiant ou le mot de passe ». Un motif que le produit ne reconnaît pas se dit « cause non
+  reconnue ».
+
+**Choisir un envoi ouvre son détail** : les destinataires, la copie et la copie cachée s'il y en a, l'adresse
+d'expédition, l'auteur, l'affaire (le lien ouvre sa fiche), la date, le motif, puis le message.
+
+- **« Annuler l'envoi »** (dossier « En file ») demande une confirmation qui nomme l'objet : « Annuler l'envoi de
+  « … » ? Le message ne partira pas. » Confirmé, l'envoi quitte la file, et le fil de l'affaire garde une ligne
+  « Envoi annulé », avec son objet et la personne qui l'a annulé. « Garder en file », ou la touche Échap, renonce.
+- **« Réessayer »** (dossier « Échecs ») remet l'envoi en file aussitôt, sans confirmation, sous l'adresse d'expédition
+  choisie à l'origine. Corrigez d'abord la cause si elle dépend de vous — un mot de passe changé se met à jour dans
+  Réglages ▸ « Identités d'expédition » ([section 11.2](#les-adresses-d-expedition)).
+- **Un message en cours d'envoi ne s'annule plus** : il est déjà en train de partir.
+- **« Un premier essai a été interrompu : le message a pu partir »** : le service s'est arrêté pendant un envoi, et
+  personne ne peut savoir si le message est parti. Le produit refuse alors de l'annuler, plutôt que de vous dire
+  « annulé » d'un message que votre correspondant a peut-être reçu. Le service le réessaiera.
+
+**Qui peut annuler et réessayer.** L'auteur de l'envoi, et les administrateurs de l'espace de travail, à condition de
+pouvoir modifier l'affaire. Les autres voient l'envoi, et les boutons sont grisés avec une phrase qui le dit : « Seuls son
+auteur et les administrateurs de l'espace qui modifient l'affaire peuvent l'annuler ou le réessayer. » La règle est tenue
+par le serveur, quel que soit l'écran.
+
+**« Seulement moi » ne s'applique pas aux envois** : la case filtre le courrier reçu et classé ; les trois entrées
+montrent tous les envois que vous pouvez lire.
+
 ## 13. Consulter l'état de la messagerie
 
 **Où.** Barre latérale ▸ **Réglages** ▸ « État de la messagerie ».
@@ -6415,8 +6455,9 @@ Les dix familles, et ce que chacune couvre :
   administrateurs de l'espace ;
 - **Temps** : saisies de temps, et le coût du personnel en lecture ;
 - **Objectifs** : tableaux d'objectifs ;
-- **Messagerie** : lecture des fils ; préparer un email compte comme « ajouter », et l'envoi se fait toujours dans le
-  CRM, par vous ; classer un email dans une affaire compte comme « modifier ».
+- **Messagerie** : lecture des fils et des envois (en file, envoyés, échecs) ; préparer un email compte comme
+  « ajouter », et l'envoi se fait toujours dans le CRM, par vous ; classer un email dans une affaire, annuler un envoi en
+  file et réessayer un échec comptent comme « modifier ».
 
 Les quatre actions sont **Consulter**, **Ajouter**, **Modifier** et **Supprimer**. « Supprimer » place en corbeille ou
 archive, avec une seule exception : **retirer une étape ou une transition d'un workflow** (« Workflows ▸ Supprimer »)
@@ -6721,6 +6762,14 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     retrouvez dans la relecture, où vous pouvez en retirer.
   - *Consulter* (suite) : la liste de **vos** mails préparés qui attendent encore votre relecture ;
   - *Supprimer* : **écarter** un de vos mails préparés ; il ne partira jamais.
+  - *Consulter* (envois) : **les envois de l'espace**, dans l'une des trois boîtes de l'inbox — en file, envoyés, échecs
+    ([chapitre 12.5](#suivre-ses-envois-en-file-envoyes-echecs)) —, avec leurs destinataires, leur objet, l'adresse
+    d'expédition, l'auteur, l'heure prévue ou d'envoi, les essais et le motif d'un échec en toutes lettres ; jamais leur
+    texte ni leurs pièces jointes ;
+  - *Modifier* (envois) : **annuler un envoi en file**, et **réessayer un échec**. L'assistant vous demande de confirmer
+    avant d'annuler, car c'est définitif, et vous prévient avant de réessayer, car le message part. Seuls l'auteur d'un
+    envoi et les administrateurs de l'espace qui modifient l'affaire le peuvent ; un envoi en cours d'envoi, déjà parti,
+    ou dont un premier essai a été interrompu ne s'annule pas, et l'assistant vous dit pourquoi.
 
   **L'assistant n'envoie jamais rien.** Un mail préparé attend dans le CRM que **vous** le relisiez, le modifiiez si
   besoin et l'envoyiez vous-même : l'assistant vous donne le lien qui l'ouvre

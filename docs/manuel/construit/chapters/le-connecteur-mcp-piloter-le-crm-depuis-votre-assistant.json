@@ -375,7 +375,7 @@
 							},
 							{
 								"type": "text",
-								"text": " : lecture des fils ; préparer un email compte comme « ajouter », et l'envoi se fait toujours dans le\nCRM, par vous ; classer un email dans une affaire compte comme « modifier »."
+								"text": " : lecture des fils et des envois (en file, envoyés, échecs) ; préparer un email compte comme\n« ajouter », et l'envoi se fait toujours dans le CRM, par vous ; classer un email dans une affaire, annuler un envoi en\nfile et réessayer un échec comptent comme « modifier »."
 							}
 						]
 					}
@@ -3750,6 +3750,102 @@
 										{
 											"type": "text",
 											"text": " un de vos mails préparés ; il ne partira jamais."
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Consulter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " (envois) : "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "les envois de l'espace"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", dans l'une des trois boîtes de l'inbox — en file, envoyés, échecs\n("
+										},
+										{
+											"type": "link",
+											"target": {
+												"chapter": "l-inbox-lire-trier-et-repondre",
+												"anchor": "suivre-ses-envois-en-file-envoyes-echecs"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "chapitre 12.5"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ") —, avec leurs destinataires, leur objet, l'adresse\nd'expédition, l'auteur, l'heure prévue ou d'envoi, les essais et le motif d'un échec en toutes lettres ; jamais leur\ntexte ni leurs pièces jointes ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Modifier"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " (envois) : "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "annuler un envoi en file"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", et "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "réessayer un échec"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ". L'assistant vous demande de confirmer\navant d'annuler, car c'est définitif, et vous prévient avant de réessayer, car le message part. Seuls l'auteur d'un\nenvoi et les administrateurs de l'espace qui modifient l'affaire le peuvent ; un envoi en cours d'envoi, déjà parti,\nou dont un premier essai a été interrompu ne s'annule pas, et l'assistant vous dit pourquoi."
 										}
 									]
 								}

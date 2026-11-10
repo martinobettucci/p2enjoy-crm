@@ -63,6 +63,7 @@ import {
 	MailX,
 	Moon,
 	Send,
+	Ban,
 	Sparkles,
 	SquareCheck,
 	SquareDashed,
@@ -152,6 +153,8 @@ const PRESENTATION: Readonly<
 	// `CRM-058` §19.5 — INC-220. `Send` et non `Mail` : le §9 interdit qu'une icône serve deux
 	// objets, et la direction du courrier est précisément ce qui distingue ces deux lignes.
 	mail_sent: { cle: 'timeline.event.mail_sent', icone: Send, pastille: 'bg-brand-soft text-brand' },
+	// `CRM-144` T3 (docs/DESIGN_SYSTEM.md §5.98) : un fait neutre, l'icône `Ban` qui ne sert aucun autre objet.
+	mail_cancelled: { cle: 'timeline.event.mail_cancelled', icone: Ban, pastille: 'bg-hover text-text-2' },
 	// `CRM-055` tranche 2 §16.5.3 — le départ d'un message. `MailX` et non `Mail` : le §9 interdit
 	// qu'une icône serve deux objets, et c'est ce qui distingue cette ligne de son `mail_received`,
 	// qui reste juste au-dessus d'elle dans le fil. La pastille est NEUTRE et non `danger` : rien

@@ -19,6 +19,8 @@
 #       les consignes au modèle (docs/SPEC-mcp.md §9.2 sexdecies ; décision 846)
 # @spec CRM-128 (docs/BACKLOG.md) — tranche T3 : la consigne « le connecteur n'envoie jamais » et l'origine de la webapp remise
 #       à la messagerie pour le lien de relecture (docs/SPEC-mails-prepares.md §5, décision 829)
+# @spec CRM-144 (docs/BACKLOG.md) — tranche T4 : les trois outils de l'outbox enregistrés, famille `messagerie`
+#       (docs/SPEC-mcp.md §9.2 undevicies)
 # @spec docs/SPEC-mcp.md §2 (un service, un hôte, `/mcp`), §3 (mandataire OAuth, état chiffré), §6.2 (audit puis
 #       politique, avant l'outil), §11 (`/sante`, `/pret`) ; docs/JOURNAL.md décision 627 (D1, D5, D8)
 # @spec Modèle : `evoliz_mcp/application.py` (p2enjoy-evoliz, révision 80a3e27). Écarts : aucune administration
@@ -53,6 +55,7 @@ from crm_mcp.outils import (
     messagerie,
     objectifs,
     organisations,
+    outbox,
     recettes,
     reference,
     structure,
@@ -94,6 +97,8 @@ you see and change exactly what you could in the CRM web app, never more.
   crm_card_list by them. Administrators define them in the CRM, never through the connector.
 - Email: read crm_card_mail_list (then crm_mail_get) before replying. The connector never sends an email:
   crm_mail_prepare leaves it for the person to review and send in the CRM; give them its review_url.
+- Outbox: crm_mail_outbox_list shows queued, sent and failed emails. crm_mail_outbox_cancel is irreversible: confirm
+  first. crm_mail_outbox_retry sends the failed email again: say so before calling.
 - Outside your rights or the CRM's, a call is refused with "Introuvable ou hors de votre périmètre"
   (FR: not found or outside your perimeter), whether the object exists or not.
 - Lists are paginated: use limit (max 100) and offset.
@@ -211,6 +216,8 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
     # `CRM-104` T7 : la messagerie d'une affaire (docs/SPEC-mcp.md §9.2 decies).
     # `CRM-128` T3 : le connecteur prépare et n'envoie jamais ; le lien de relecture mène à la webapp.
     messagerie.ajouter(serveur, moteur, crm, reglages.origine_webapp)
+    # `CRM-144` T4 : l'outbox — lire la file, annuler un envoi, réessayer un échec (docs/SPEC-mcp.md §9.2 undevicies).
+    outbox.ajouter(serveur, moteur, crm)
     # L'ordre compte : l'audit enveloppe la politique, qui précède l'outil (docs/SPEC-mcp.md §6.2).
     serveur.add_middleware(AuditOutils(registre, reglages.taille_max_reponse))
     serveur.add_middleware(PolitiqueOutils(moteur))

@@ -903,11 +903,15 @@ dépôt ; `select pg_get_function_identity_arguments('public.inbox_arborescence'
 **Retour arrière** : reposer la webapp et l'image `mcp` précédentes, puis retirer les deux fonctions et reposer
 `inbox_arborescence()` de la `0154`, comme le dit `docs/SCHEMA.md`. Aucune donnée n'est touchée.
 
-### 2.39 `CRM-144`, décisions 898 et 906 — l'outbox : annuler, réessayer ; INC-354, la passe d'envoi au quota dépassé (À LIVRER : migration 176, seule pour T1 ; webapp et image `mcp` avec T3 et T4)
+### 2.39 `CRM-144`, décisions 898 et 906 — l'outbox : annuler, réessayer ; INC-354, la passe d'envoi au quota dépassé (À LIVRER : migration 176, puis la webapp de `main` et l'image `mcp`)
 
 `docs/SPEC-mail-subsystem.md` §28 ; `docs/SCHEMA.md` « Migration `0176` » ; `docs/INCONSISTENCY_REPORT.md` INC-354. **Hors du
-lot annoncé (0172 à 0175)** : la session de livraison décide si elle l'y ajoute. **La migration fonctionne seule** :
-aucun écran ni outil ne l'appelle avant T3 et T4, et l'image `mail-sync` est inchangée. Elle corrige **INC-354**, actif en
+lot annoncé (0172 à 0175)** : la session de livraison décide si elle l'y ajoute. **La migration d'abord, puis la webapp
+et l'image `mcp` de `main`** (T3 et T4, livrées en développement le 2026-11-10) : l'écran de l'outbox lit la colonne
+calculée `outbox_gestes_permis` et appelle `cancel_outbound_email` et `retry_outbound_email` ; une webapp sans la
+migration rendrait les trois dossiers d'envois en erreur — le reste de l'inbox fonctionnerait. Les trois outils
+`crm_mail_outbox_*` du connecteur dépendent de même de la migration. La migration seule reste sûre : sans la webapp, rien ne
+l'appelle. L'image `mail-sync` est inchangée. Elle corrige **INC-354**, actif en
 production : dès qu'une identité a dépassé son quota au moment d'envoyer, `reserver_envois` échoue en entier et **plus
 aucun envoi ne part**, de toutes les identités, tant que la ligne en cause reste due. Trois colonnes facultatives sur
 `mail_outbox` (la reprise de `from_address` met à jour chaque ligne de l'outbox, une fois), un type d'événement, quatre
@@ -917,18 +921,26 @@ fonctions nouvelles, trois reprises ; sans verrou notable au-delà de cette mise
 |---|---|---|---|
 | 1 | Appliquer la migration 176 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate`, instantané de VM pris |
 | 2 | Constater la passe d'envoi | session de livraison, en lecture seule | les journaux de `mail-sync` ne portent plus `column reference "attempts" is ambiguous` ; un envoi dû part |
+| 3 | Livrer la webapp de `main` | session de livraison, après le geste 1 | `scripts/spark/livrer.sh` (§3.1) |
+| 4 | Reconstruire `mcp` | session de livraison, après le geste 1 | `up -d --build --no-deps --wait mcp`, par `compose_prod` (§4) |
+| 5 | Constater l'outbox | responsable, Inbox | « En file », « Envoyés » et « Échecs » paraissent sous « Mails préparés », avec leurs comptes ; « Envoyés » liste les envois partis ; le détail d'un envoi s'ouvre |
+| 6 | Constater l'annulation (si un envoi est en file) | responsable | « Annuler l'envoi », confirmé : la ligne quitte « En file », et le fil de l'affaire porte « Envoi annulé » |
 
 **Vérification après la fenêtre**, en lecture seule : le registre gagne une ligne, l'empreinte de la 176 est égale au
 dépôt ; `select count(*) from mail_outbox o join mail_outbound_identities i on i.id = o.identity_id where o.from_address is null` rend 0.
 **Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0176` » ; reposer `reserver_envois` de sa définition
 précédente rétablit INC-354. Aucun envoi n'est perdu.
 
-### 2.40 `CRM-146` T1, décisions 900, 903 et 908 — le prévisionnel et le réel d'une organisation (À LIVRER : migration 177 ; **hors du lot annoncé, en avance de son unité**)
+### 2.40 `CRM-146` T1 et T2, décisions 900, 903 et 908 — le prévisionnel et le réel d'une organisation (À LIVRER : migration 177 ; **hors du lot annoncé ; la webapp de `main` en dépend depuis T2**)
 
 `docs/SPEC-recettes.md` §12.3 ; `docs/SCHEMA.md` « Migration `0177` ». Une fonction `security invoker`, aucune table,
-aucune colonne, aucune donnée, sans verrou notable. **Rien ne l'appelle encore** : la webapp (T2) et l'outil du
-connecteur (T4) viendront avec leurs tranches, et ce paragraphe dira alors l'ordre. Elle peut partir seule, ou attendre
-l'unité entière : la session de livraison décide du lot (décision 904). Aucune variable, aucun secret.
+aucune colonne, aucune donnée, sans verrou notable. Aucune variable, aucun secret.
+
+**L'ORDRE, DEPUIS T2 (2026-11-10) : LA 177 PART AVEC LA WEBAPP DE `main`, OU AVANT ELLE, JAMAIS APRÈS.** La liste des
+organisations lit `organization_revenue_totals()` à côté de `organizations` et attend les deux (`docs/SPEC-recettes.md`
+§12.4) : une webapp livrée sans la 177 rendrait l'état d'erreur de tout l'onglet « Organisations », et le bloc de la fiche
+le sien. Un lot qui livre la webapp d'un `main` postérieur à T2 emporte donc la 177. L'outil du connecteur (T4) viendra
+avec sa tranche.
 
 | # | Geste | Qui | Comment |
 |---|---|---|---|
@@ -941,11 +953,11 @@ n'est touchée.
 
 ## 3. Migrations en attente
 
-**La 177** (`CRM-146` T1, décisions 900, 903 et 908), *en attente, hors du lot annoncé* : `organization_revenue_totals`, le prévu et le réel d'une organisation par devise (`docs/SCHEMA.md` « Migration `0177` »). Une fonction, aucune donnée, sans verrou notable. **En avance de son unité** : rien ne l'appelle encore (§2.40). Aucun geste préalable du responsable.
+**La 177** (`CRM-146` T1, décisions 900, 903 et 908), *en attente, hors du lot annoncé* : `organization_revenue_totals`, le prévu et le réel d'une organisation par devise (`docs/SCHEMA.md` « Migration `0177` »). Une fonction, aucune donnée, sans verrou notable. **La webapp de `main` l'appelle depuis `CRM-146` T2 : elle part avec la webapp, ou avant elle, jamais après** (§2.40). Aucun geste préalable du responsable.
 
 **La 176** (`CRM-144`, décisions 898 et 906), *en attente, hors du lot annoncé* : annuler et réessayer un envoi,
 l'adresse d'expédition gardée, et la correction d'INC-354 (`docs/SCHEMA.md` « Migration `0176` »). **Seule** pour T1
-(§2.39). Aucun geste préalable du responsable.
+(§2.39), **puis la webapp de `main` et l'image `mcp`** (T3 et T4). Aucun geste préalable du responsable.
 
 **La 175** (`CRM-139`, décisions 879 et 902), *en attente* : `concerns_me` et `inbox_arborescence(p_only_me)`, le courrier qui concerne l'appelant (`docs/SCHEMA.md` « Migration `0175` »). Deux fonctions, aucune donnée, sans verrou notable. **Avec la webapp et l'image `mcp` de `main`, après elle** (§2.38). Aucun geste préalable du responsable.
 

@@ -432,6 +432,10 @@
 				{
 					"anchor": "relire-et-envoyer-un-mail-prepare-par-l-assistant",
 					"title": "12.4 Relire et envoyer un mail préparé par l'assistant"
+				},
+				{
+					"anchor": "suivre-ses-envois-en-file-envoyes-echecs",
+					"title": "12.5 Suivre ses envois : en file, envoyés, échecs"
 				}
 			]
 		},

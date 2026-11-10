@@ -3154,6 +3154,299 @@
 					"text": ")."
 				}
 			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "suivre-ses-envois-en-file-envoyes-echecs",
+			"content": [
+				{
+					"type": "text",
+					"text": "12.5 Suivre ses envois : en file, envoyés, échecs"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Dans l'inbox, en tête des dossiers."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un message que vous envoyez ne part pas à l'instant : il est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "mis en file"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et le\nservice d'envoi le remet au serveur de votre adresse d'expédition dans la minute. Trois entrées, sous « Mails préparés »\net avant « Non classés », montrent ce qu'il en est, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "pour toute l'équipe"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : chacun voit les envois des affaires qu'il\npeut lire, les siens comme ceux de ses collègues. Le nombre à côté de chaque entrée dit combien d'envois elle contient ;\n« Échecs » porte en plus une pastille rouge tant qu'un envoi a échoué."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« En file »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : les envois qui attendent leur départ, du plus proche au plus lointain. Chaque ligne dit l'heure\nprévue, ou « au prochain passage » quand elle est passée. Un envoi qu'une panne a retardé dit aussi combien d'essais ont\neu lieu et pourquoi (« 2 essais — le serveur d'envoi est injoignable ») : le service réessaie seul, de plus en plus\nespacé. Un envoi « En cours d'envoi » est en train de partir."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Envoyés »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : les envois partis, du plus récent au plus ancien, avec la date d'envoi. « Afficher plus » montre les\nplus anciens."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Échecs »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : les envois que le service a renoncé à remettre, avec "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "le motif en toutes lettres"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — par exemple « le\nserveur d'envoi a refusé l'identifiant ou le mot de passe ». Un motif que le produit ne reconnaît pas se dit « cause non\nreconnue »."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Choisir un envoi ouvre son détail"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : les destinataires, la copie et la copie cachée s'il y en a, l'adresse\nd'expédition, l'auteur, l'affaire (le lien ouvre sa fiche), la date, le motif, puis le message."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Annuler l'envoi »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " (dossier « En file ») demande une confirmation qui nomme l'objet : « Annuler l'envoi de\n« … » ? Le message ne partira pas. » Confirmé, l'envoi quitte la file, et le fil de l'affaire garde une ligne\n« Envoi annulé », avec son objet et la personne qui l'a annulé. « Garder en file », ou la touche Échap, renonce."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Réessayer »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " (dossier « Échecs ») remet l'envoi en file aussitôt, sans confirmation, sous l'adresse d'expédition\nchoisie à l'origine. Corrigez d'abord la cause si elle dépend de vous — un mot de passe changé se met à jour dans\nRéglages ▸ « Identités d'expédition » ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "les-boites-de-reception-et-les-adresses-d-expedition",
+									"anchor": "les-adresses-d-expedition"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 11.2"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Un message en cours d'envoi ne s'annule plus"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : il est déjà en train de partir."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Un premier essai a été interrompu : le message a pu partir »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le service s'est arrêté pendant un envoi, et\npersonne ne peut savoir si le message est parti. Le produit refuse alors de l'annuler, plutôt que de vous dire\n« annulé » d'un message que votre correspondant a peut-être reçu. Le service le réessaiera."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui peut annuler et réessayer."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " L'auteur de l'envoi, et les administrateurs de l'espace de travail, à condition de\npouvoir modifier l'affaire. Les autres voient l'envoi, et les boutons sont grisés avec une phrase qui le dit : « Seuls son\nauteur et les administrateurs de l'espace qui modifient l'affaire peuvent l'annuler ou le réessayer. » La règle est tenue\npar le serveur, quel que soit l'écran."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Seulement moi » ne s'applique pas aux envois"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : la case filtre le courrier reçu et classé ; les trois entrées\nmontrent tous les envois que vous pouvez lire."
+				}
+			]
 		}
 	]
 }
