@@ -40052,3 +40052,19 @@ désactivée (décisions 873, 874). **La campagne** : complète ; types et unita
 session c2 (`44f2474c`) — garde du manuel 168, 0133 vert à HEAD ; le reste INC-342, vert rejoué seul, ou hors du lot et
 renvoyé à la session 2f (`premier-lancement`, aléa sous charge non reproduit ; pgTAP 0037, INC-353).
 **Décision : oui, sans instantané** : un `pg_dump` avant. L'IMAP de la boîte de production reste refusé par Gandi (INC-349).
+
+### décision 895 — INC-353 : le champ `siret` du seed reçoit un identifiant stable, créé sous la clé de service
+
+*2026-11-10, session interactive 4891a451 (p2enjoy-crm-32, ex-2f), arbitrage du responsable (`AskUserQuestion`).*
+**Le problème** (INC-353) : la preuve 2 de `supabase/tests/0037_versionnement_workflows.test.sql` fige l'empreinte du
+workflow par défaut ; depuis `CRM-112` T8, sa composition porte l'exigence du champ `siret`, dont l'identifiant est
+aléatoire. L'empreinte change donc à chaque base neuve. Le seed crée ce champ sous le jeton de Camille, qui ne peut pas
+choisir un identifiant (`grant insert` par colonne sans `id`, migration `0152`).
+**Pistes présentées** : un identifiant fixe, sous la clé de service ; le test calcule l'empreinte au lieu de la figer (il ne
+détecterait plus un changement involontaire de la méthode) ; laisser ouvert.
+**Décision du responsable** : **un identifiant fixe, sous la clé de service**, pour le seul champ `siret` :
+`5eed0000-0000-4000-8000-00000000cf01`. C'est une exception nommée à la règle « comme l'écran » de `docs/SPEC-seed.md`
+§38.2 ; aucun droit de l'application ne change. La preuve 2 de `0037` est révisée sur la valeur mesurée après une base neuve.
+**MCP** : non, un seed. **Vérification** : seed sur base neuve puis rejoué (convergent), l'empreinte égale sur deux bases
+neuves successives ; `0037` vert ; les preuves du seed des champs de l'affaire rejouées.
+

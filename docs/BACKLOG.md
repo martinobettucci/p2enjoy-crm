@@ -17803,7 +17803,8 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       constat du responsable.
 - [@] **Tranche INC-353** — l'identifiant stable du champ `siret` dans le seed, pour que l'empreinte du workflow par défaut
       ne change plus à chaque base neuve ; la preuve 2 de `supabase/tests/0037_versionnement_workflows.test.sql` révisée sur
-      la valeur mesurée (`docs/SPEC-seed.md` §38.1, précision du 2026-11-10). Confiée par la session de livraison.
+      la valeur mesurée (`docs/SPEC-seed.md` §38.2, révisé le 2026-11-10 ; décision 895 : identifiant
+      `5eed0000-0000-4000-8000-00000000cf01`, créé sous la clé de service). Confiée par la session de livraison.
       *Prise en charge : session interactive 4891a451 (p2enjoy-crm-32, ex-2f) depuis 2026-11-10 13:02 UTC — état avant : [ ]*
 - [P] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de
       (**Livrée le 2026-11-05**, décision 852, révision `b9fa4d11`, image `mcp` reconstruite ; reste le constat du responsable.)

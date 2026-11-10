@@ -9102,8 +9102,9 @@ channel « Partenariats marques », **53** rattachements actifs). **Le diagnosti
   plongements.
 
 ### INC-353 — l'empreinte du workflow par défaut change à chaque seed : `0037` ne peut pas la figer
-**Ouverte le 2026-11-10.** Aucune correction décidée ; la preuve 2 de `supabase/tests/0037_versionnement_workflows.test.sql`
-reste rouge, sans révision de sa constante.
+**Ouverte le 2026-11-10.** Arbitrée le même jour (décision 895) : un identifiant stable pour `siret`, créé sous la clé de
+service ; correction portée par `CRM-112`, tranche INC-353. Jusque-là, la preuve 2 de
+`supabase/tests/0037_versionnement_workflows.test.sql` reste rouge, sans révision de sa constante.
 
 *Relevé par la session de livraison 4522fa9c (p2enjoy-crm-be), campagne du lot `CRM-135` sur un seed frais ; analysé par la
 session 4891a451 (p2enjoy-crm-2f).*

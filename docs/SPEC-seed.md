@@ -2928,7 +2928,13 @@ champ `siret` porte le défaut `common_field` (`docs/SPEC-ia.md` §14.11).
 Les champs, les valeurs, l'exigence et le modèle passent par PostgREST sous le jeton de Camille, comme l'écran les écrit
 (`webapp/src/lib/champs-communs.ts`, l'éditeur de workflows, `webapp/src/lib/modeles-emails.ts`) ; l'archivage par la
 mise à jour de `archived_at`. La suggestion naît par `functions/v1/ia/suggestions` avec l'en-tête `x-ia-simulateur`.
-Aucune écriture n'est faite sous la clé de service.
+Aucune écriture n'est faite sous la clé de service, **sauf une** : *révisé le 2026-11-10 (INC-353, décision 895, arbitrage du
+responsable)*, le champ `siret` est créé **sous la clé de service, avec l'identifiant stable
+`5eed0000-0000-4000-8000-00000000cf01`**. Il est exigé par le workflow par défaut, donc photographié dans sa composition :
+avec un identifiant aléatoire, l'empreinte de ce workflow changeait à chaque base neuve, et
+`supabase/tests/0037_versionnement_workflows.test.sql` ne pouvait pas la figer (`CLAUDE.md` §8 : des identifiants stables
+lorsque les tests en dépendent). Le jeton de Camille ne peut pas choisir un identifiant (`grant insert` par colonne, sans
+`id`, migration `0152`) ; aucun droit n'est changé pour cela. Les quatre autres champs restent créés sous son jeton.
 
 ### 38.3 Convergence et vérification
 
