@@ -39927,3 +39927,23 @@ restent en non analysées en production ».
 
 La spécification révise l'assertion « `skipped` non » (`e2e/api/inbox.spec.ts:159`), retournée et non retirée
 (décision 51). Elle rectifie aussi la note de la cellule (2 Gio).
+
+### décision 889 — `CRM-142` : le contrôle unique porte sur l'appelant, et laisse passer qui contournait déjà la RLS
+
+*2026-11-10, session interactive 4891a451 (p2enjoy-crm-2f), avant le code, sur trois exigences de la session de livraison
+(le contrôle sur `auth.uid()` de l'appelant ; `execute` retiré à `public` et `anon` ; un appel forgé sur un rattachement
+illisible ne divulgue rien, pas même son existence).*
+**Observation** : la vérification du seed lit les scores sous la clé de service (`supabase/seed/apply-seed.sh`, paliers de
+santé), et `supabase/tests/0110_scores_sante.test.sql` sous le propriétaire, sans jeton. Avant, la RLS ne s'appliquant pas à
+ces rôles, ils obtenaient la santé de tout rattachement ; un contrôle `app.can_read_channel` seul, `auth.uid()` étant nul,
+la leur rendrait vide. Mesuré dans une transaction annulée : dans une fonction `SECURITY DEFINER`, `current_setting('role')`
+rend le rôle de l'appelant (`authenticated`, `service_role`, `none` pour le propriétaire hors `SET ROLE`), pas celui du
+propriétaire.
+**Décision de conception** (`docs/SPEC-analytique.md` §13.10, `docs/SCHEMA.md` « Migration de `CRM-142` ») : le contrôle
+de channel est sauté quand le rôle de l'appelant (`current_setting('role')`, ou `session_user` hors `SET ROLE`) porte
+`rolbypassrls` ou `rolsuper` — il lisait déjà tout. C'est l'équivalence de la décision 888 étendue aux rôles privilégiés ;
+elle n'ouvre rien à un jeton d'utilisateur, qui ne peut pas changer son rôle. `execute` : `authenticated` et `service_role`,
+retiré à `public` et `anon`. Un rattachement illisible et un identifiant inconnu rendent le même ensemble vide.
+**Vérification** : pgTAP — l'équivalence sous `service_role` et sous le propriétaire, en plus des quatre profils ; le
+rattachement illisible d'un profil et l'identifiant inconnu indiscernables.
+

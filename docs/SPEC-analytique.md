@@ -830,6 +830,22 @@ pour `app.health_context` seule.
 3. le contrôle passé, elle lit l'étape, son nœud, l'affaire et le dernier contact (`app.health_last_contact`, appelée
    depuis la fonction, donc sous les droits de son propriétaire) **sans RLS**.
 
+*Précision du 2026-11-10, avant le code (décision 889)* — **qui est l'appelant** :
+- le contrôle porte sur **l'appelant**, jamais sur le propriétaire de la fonction : `app.can_read_channel` lit
+  `auth.uid()`, l'identité du jeton de la requête, que `SECURITY DEFINER` ne change pas ;
+- **un appelant qui contourne la RLS lisait tout, et lit tout** : la clé de service (`service_role`, `rolbypassrls`), et une
+  session directe du propriétaire (pgTAP, scripts d'exploitation) calculaient la santé de tout rattachement, la RLS ne
+  s'appliquant pas à eux. Le rôle de l'appelant se lit par `current_setting('role')` — que `SECURITY DEFINER` ne change pas,
+  mesuré le 2026-11-10 : `authenticated`, `service_role`, ou `none` hors `SET ROLE`, auquel cas `session_user` le donne ;
+  s'il porte `rolbypassrls` ou `rolsuper`, le contrôle de channel est sauté. Un jeton d'utilisateur ne peut pas changer ce
+  rôle (`SET ROLE` exige d'en être membre). Sans cela, la vérification du seed (sous la clé de service) et les preuves de
+  `0110_scores_sante` (sous le propriétaire) rendraient une santé vide — un changement de comportement que la décision 888
+  exclut ;
+- **`execute`** reste retiré à `public` et `anon`, accordé à `authenticated` (les écrans et le connecteur) et à
+  `service_role` (la vérification du seed) — les deux rôles qui l'appellent par les deux scores ;
+- **un appel forgé sur l'identifiant d'un rattachement illisible ne rend rien, et rien qui le distingue d'un identifiant
+  inconnu** : même ensemble vide, aucune erreur, aucun message.
+
 **Pourquoi les droits sont équivalents** :
 - *le rattachement est lisible* : l'appelant lit alors l'affaire (`cards_lecture` exige un rattachement dans un channel
   lisible), donc **toutes** ses activités et **tous** ses courriers (`app.can_read_card`), et l'étape et son nœud (il est
