@@ -1,3 +1,5 @@
+# @verifies CRM-133 (docs/BACKLOG.md) — tranche T3 : la description d'un nœud, rendue, envoyée nette, vide ou blanche à `null`
+#           (docs/SPEC-mcp.md §9.2 undecies, révisé ; docs/SPEC-workflow-engine.md §7 sexies.1)
 # @verifies CRM-118 (docs/BACKLOG.md) — tranche T2.d : les cinq outils du catalogue de nœuds, devant un CRM simulé
 # @verifies docs/SPEC-mcp.md §9.2 undecies (la liste T2.d, ses ancres et ses actions, l'archive seule destructive,
 #           `crm_channel_workflow_change` absent avant T1.b, les refus nommés), §9.3 ; docs/SPEC-workflow-engine.md §2.3
@@ -149,8 +151,24 @@ async def test_creer_envoie_ce_que_l_ecran_envoie(monde: Monde) -> None:
                                                    "color": "success", "default_probability": 0})
     assert monde.derniere()["corps"] == {
         "workspace_id": ESPACE_A, "key": "demo", "label": "Démo", "kind": "won", "color": "success",
-        "default_probability": 0, "default_stale_after_days": None, "position": None,
+        # `CRM-133` : sans description donnée, le nœud n'en porte pas (§7 sexies.1).
+        "default_probability": 0, "default_stale_after_days": None, "description": None, "position": None,
     }
+
+
+async def test_crm_133_la_description_du_noeud_lue_ecrite_et_retiree(monde: Monde) -> None:
+    lu = await monde.appel("crm_workflow_node_list", {"workspace": "atelier"})
+    assert "description" in monde.simule.lectures[-1]["select"] and all("description" in n for n in lu["nodes"])
+    await monde.appel("crm_workflow_node_create", {"workspace": "atelier", "key": "a-qualifier", "label": "À qualifier",
+                                                   "description": "  Le premier échange a eu lieu.\nQualifier le besoin.  "})
+    assert monde.derniere()["corps"]["description"] == "Le premier échange a eu lieu.\nQualifier le besoin."
+    await monde.appel("crm_workflow_node_update", {"node_id": N2, "description": "Relancé, en attente."})
+    assert monde.derniere()["corps"] == {"description": "Relancé, en attente."}
+    # Vide ou blanche, elle RETIRE la description ; absente, elle n'est pas touchée.
+    await monde.appel("crm_workflow_node_update", {"node_id": N2, "description": "   "})
+    assert monde.derniere()["corps"] == {"description": None}
+    await monde.appel("crm_workflow_node_update", {"node_id": N2, "label": "Relance"})
+    assert "description" not in monde.derniere()["corps"]
 
 
 async def test_modifier_garde_la_cle_et_distingue_null_de_zero(monde: Monde) -> None:

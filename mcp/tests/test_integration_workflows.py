@@ -1,3 +1,5 @@
+# @verifies CRM-133 (docs/BACKLOG.md) — tranche T3 : la description d'un nœud et la surcharge d'une étape, écrites puis relues
+#           sous l'administratrice, refusées par le CRM au business developer (docs/SPEC-mcp.md §9.2 undecies, révisé)
 # @verifies CRM-111 T2.4.5 (docs/BACKLOG.md) — l'affaire de la preuve est posée par son rattachement (migration 0134)
 # @verifies CRM-118 (docs/BACKLOG.md) — tranches T2.a à T2.d : les outils de la famille `workflows` contre le vrai Keycloak,
 #           la vraie base et le vrai service `mcp`, par le parcours OAuth réel
@@ -71,7 +73,17 @@ async def test_un_workflow_compose_par_l_administratrice_outil_par_outil():
             reglee = (await appeler("crm_workflow_step_update", {
                 "step_id": seconde["id"], "stale_after_days": 5, "reset": ["label", "probability"],
             }))["step"]
-            assert reglee["initial"] is True and reglee["overrides"] == {"label": None, "probability": None, "stale_after_days": 5}
+            assert reglee["initial"] is True and reglee["overrides"] == {
+                "label": None, "probability": None, "stale_after_days": 5, "description": None,
+            }
+            # `CRM-133` : la surcharge de description, écrite nette puis relue en base, et rendue comme description effective.
+            decrite = (await appeler("crm_workflow_step_update", {
+                "step_id": seconde["id"], "description_override": "  Le client a été relancé.  ",
+            }))["step"]
+            assert decrite["description"] == "Le client a été relancé." and decrite["overrides"]["description"] == "Le client a été relancé."
+            assert (await _service("GET", "/workflow_steps", params={"id": f"eq.{seconde['id']}", "select": "description_override"})).json() == [
+                {"description_override": "Le client a été relancé."}
+            ]
             initiales = (await _service("GET", "/workflow_steps", params={"workflow_id": f"eq.{wf}", "is_initial": "is.true", "select": "id"})).json()
             assert initiales == [{"id": seconde["id"]}]
 
@@ -343,7 +355,14 @@ async def test_le_catalogue_tenu_par_l_administratrice_outil_par_outil():
             assert "prospection" in {n["key"] for n in noeuds} and not any(n["archived"] for n in noeuds)
             cree = (await appeler("crm_workflow_node_create", {
                 "workspace": "p2enjoy", "key": CLE_NOEUD, "label": "Nœud MCP", "default_probability": 30,
+                "description": "Un nœud posé par le connecteur.",
             }))["node"]
+            # `CRM-133` : la description écrite, puis retirée par une chaîne blanche — relue en base les deux fois.
+            assert cree["description"] == "Un nœud posé par le connecteur."
+            await appeler("crm_workflow_node_update", {"node_id": cree["id"], "description": "  "})
+            assert (await _service("GET", "/workflow_nodes_catalog", params={"id": f"eq.{cree['id']}", "select": "description"})).json() == [
+                {"description": None}
+            ]
             await refuse("crm_workflow_node_create", {"workspace": "p2enjoy", "key": CLE_NOEUD, "label": "Doublon"}, "node_key_taken")
             modifie = (await appeler("crm_workflow_node_update", {
                 "node_id": cree["id"], "label": "Nœud MCP gagné", "kind": "won", "color": "success",
@@ -379,9 +398,12 @@ async def test_le_business_developer_lit_le_catalogue_sans_l_ecrire():
             with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
                 await client.call_tool("crm_workflow_node_update", {"node_id": PROSPECTION, "label": "Réécrit"})
             assert await _dernier_journal(DRISS[1]) == ("crm_workflow_node_update", "refus_crm")
-        assert (await _service("GET", "/workflow_nodes_catalog", params={"id": f"eq.{PROSPECTION}", "select": "label"})).json() == [
-            {"label": "Prospection"}
-        ]
+            # `CRM-133` : la description n'est pas plus ouverte que le libellé au business developer.
+            with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
+                await client.call_tool("crm_workflow_node_update", {"node_id": PROSPECTION, "description": "Réécrite"})
+            assert await _dernier_journal(DRISS[1]) == ("crm_workflow_node_update", "refus_crm")
+        lu = (await _service("GET", "/workflow_nodes_catalog", params={"id": f"eq.{PROSPECTION}", "select": "label,description"})).json()
+        assert lu[0]["label"] == "Prospection" and lu[0]["description"] != "Réécrite"
     finally:
         await _retirer(DRISS, cases)
         await _nettoyer_noeud()

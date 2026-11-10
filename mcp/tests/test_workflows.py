@@ -1,3 +1,5 @@
+# @verifies CRM-133 (docs/BACKLOG.md) — tranche T3 : la surcharge de description d'une étape, ajoutée, modifiée, retirée, et la
+#           description effective rendue (docs/SPEC-mcp.md §9.2 undecies, révisé ; docs/SPEC-workflow-engine.md §7 sexies.1)
 # @verifies CRM-118 (docs/BACKLOG.md) — tranche T2.a : les dix outils de la famille `workflows`, devant un CRM simulé
 # @verifies docs/SPEC-mcp.md §9.2 undecies (la liste T2.a, ses ancres et ses actions, les deux retraits destructifs,
 #           `crm_workflow_update` et `crm_workflow_archive` absents avant T1.b, les refus nommés), §9.1 (les écritures de
@@ -22,7 +24,7 @@ from crm_mcp.audit import AuditOutils
 from crm_mcp.crm import ClientCrm
 from crm_mcp.jeton_interne import Identite
 from crm_mcp.outils import reference, workflows
-from crm_mcp.outils.workflows import position_apres
+from crm_mcp.outils.workflows import COLONNES_ETAPE, etape_lue, position_apres
 from crm_mcp.politique import MoteurPolitique, PolitiqueOutils
 from crm_mcp.registre import Registre
 
@@ -215,6 +217,32 @@ async def test_ajouter_une_etape_omet_la_position_et_les_surcharges_absentes(mon
                                                       "label": " ", "require_comment": True})
     assert monde.derniere()["corps"] == {"workflow_id": WF_A, "workspace_id": ESPACE_A, "from_step_id": ETAPE_2,
                                          "to_step_id": ETAPE_3, "label": None, "require_comment": True}
+
+
+async def test_crm_133_la_surcharge_de_description_d_une_etape(monde: Monde) -> None:
+    # Ajoutée : nette ; blanche, elle n'est pas envoyée — l'étape naît sans surcharge et reprend le nœud (§7 sexies.1).
+    await monde.appel("crm_workflow_step_add", {"workflow_id": WF_A, "node_id": NOEUD_A, "description_override": "  Devis envoyé.  "})
+    assert monde.derniere()["corps"]["description_override"] == "Devis envoyé."
+    await monde.appel("crm_workflow_step_add", {"workflow_id": WF_A, "node_id": NOEUD_A, "description_override": "  "})
+    assert "description_override" not in monde.derniere()["corps"]
+    # Modifiée, puis retirée par une chaîne blanche ou par `reset`.
+    await monde.appel("crm_workflow_step_update", {"step_id": ETAPE_2, "description_override": "Le client discute le budget."})
+    assert monde.derniere()["corps"] == {"description_override": "Le client discute le budget."}
+    await monde.appel("crm_workflow_step_update", {"step_id": ETAPE_2, "description_override": " "})
+    assert monde.derniere()["corps"] == {"description_override": None}
+    await monde.appel("crm_workflow_step_update", {"step_id": ETAPE_2, "reset": ["description_override"]})
+    assert monde.derniere()["corps"] == {"description_override": None}
+    with pytest.raises(ToolError, match="both given and reset"):
+        await monde.appel("crm_workflow_step_update", {"step_id": ETAPE_2, "description_override": "x", "reset": ["description_override"]})
+
+
+def test_crm_133_la_description_effective_d_une_etape_lue() -> None:
+    noeud = {"key": "negociation", "label": "Négociation", "kind": "open", "description": "Du nœud."}
+    assert etape_lue({"id": "e", "noeud": noeud})["description"] == "Du nœud."
+    lue = etape_lue({"id": "e", "description_override": "De l'étape.", "noeud": noeud})
+    assert lue["description"] == "De l'étape." and lue["overrides"]["description"] == "De l'étape."
+    assert etape_lue({"id": "e", "description_override": "  ", "noeud": {**noeud, "description": None}})["description"] is None
+    assert "description_override" in COLONNES_ETAPE and "description)" in COLONNES_ETAPE
 
 
 async def test_modifier_une_etape_rend_au_catalogue_et_designe_l_initiale_dans_l_ordre(monde: Monde) -> None:

@@ -1,3 +1,5 @@
+# @spec CRM-133 (docs/BACKLOG.md) — tranche T3 : la description d'un nœud, lue et écrite ; vide ou blanche, elle part `null`
+#       (docs/SPEC-mcp.md §9.2 undecies, révisé ; docs/SPEC-workflow-engine.md §7 sexies.1, §7 sexies.4)
 # @spec CRM-118 (docs/BACKLOG.md) — tranche T2.d : le catalogue de nœuds, famille `workflows` (décisions 752, 754 et 756)
 # @spec docs/SPEC-mcp.md §9.2 undecies (la liste T2.d ; `crm_channel_workflow_change` attend T1.b et n'est pas déclaré ;
 #       le type d'un nœud se modifie, comme à l'écran), §9.1 (les tables de l'écran : `administration-catalogue.ts`),
@@ -24,7 +26,7 @@ from crm_mcp.crm import ClientCrm, Reponse
 from crm_mcp.outils.workflows import position_apres, refus_workflow
 from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable
 
-COLONNES_NOEUD = "id,key,label,kind,color,default_probability,default_stale_after_days,position,archived_at"
+COLONNES_NOEUD = "id,key,label,kind,color,default_probability,default_stale_after_days,position,archived_at,description"
 TYPES = Literal["open", "won", "lost"]
 COULEURS = Literal["brand", "success", "accent", "danger", "neutral"]
 #: La garde du §2.6 partage son code (`42501`) avec le refus d'accès ; seul son message la distingue (§2 bis.5).
@@ -57,7 +59,15 @@ def noeud_lu(n: dict[str, Any]) -> dict[str, Any]:
         "id": n["id"], "key": n["key"], "label": n["label"], "kind": n.get("kind"), "color": n.get("color"),
         "default_probability": n.get("default_probability"), "default_stale_after_days": n.get("default_stale_after_days"),
         "position": n.get("position"), "archived": n.get("archived_at") is not None,
+        "description": n.get("description"),
     }
+
+
+def description_envoyee(valeur: str) -> str | None:
+    """`CRM-133` (docs/SPEC-workflow-engine.md §7 sexies.1) : vide n'est pas une valeur — une chaîne vide ou blanche part
+    `null`, qui retire la description ; sinon, sans ses blancs de bord. La règle de `descriptionEnvoyee` de la webapp."""
+    nette = valeur.strip()
+    return nette or None
 
 
 def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
@@ -98,6 +108,9 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         color: Annotated[COULEURS, Field(description="One of the CRM's colors")] = "neutral",
         default_probability: Annotated[float | None, Field(ge=0, le=100)] = None,
         default_stale_after_days: Annotated[int | None, Field(ge=1)] = None,
+        description: Annotated[
+            str | None, Field(description="What the stage means for a deal; shown when hovering the step. Empty: none")
+        ] = None,
     ) -> dict[str, Any]:
         appel = appel_courant()
         # Comme `creerNoeud` : la position à `null`, le trigger place le nœud en fin de catalogue (§2.4).
@@ -106,6 +119,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             corps={
                 "workspace_id": appel.espace, "key": key.strip(), "label": label.strip(), "kind": kind, "color": color,
                 "default_probability": default_probability, "default_stale_after_days": default_stale_after_days,
+                "description": description_envoyee(description) if description is not None else None,
                 "position": None,
             },
         )
@@ -117,7 +131,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         Declaration(famille="workflows", action="ajouter", espace="workspace:workspace"),
         titre="Add a node to the catalogue",
         description="Adds a node to the catalogue, at the end: a key that never changes, a label, a kind, a color, an "
-        "optional default probability and reminder threshold. Reserved to administrators.",
+        "optional default probability, reminder threshold and description. Reserved to administrators.",
     )
 
     # --- modifier --------------------------------------------------------------------------------------------------
@@ -133,11 +147,18 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             list[Literal["default_probability", "default_stale_after_days"]] | None,
             Field(description="Defaults to clear: the node no longer states one"),
         ] = None,
+        description: Annotated[
+            str | None,
+            Field(description="New description, shown when hovering the step; an empty or blank string removes it"),
+        ] = None,
     ) -> dict[str, Any]:
         appel = appel_courant()
         effaces = set(reset or [])
         corps: dict[str, Any] = {k: v for k, v in (("label", label.strip() if label else None), ("kind", kind), ("color", color))
                                  if v is not None}
+        if description is not None:
+            # `CRM-133` : une chaîne vide ou blanche RETIRE la description (§7 sexies.1) ; absente, rien ne change.
+            corps["description"] = description_envoyee(description)
         for colonne, valeur in (("default_probability", default_probability),
                                 ("default_stale_after_days", default_stale_after_days)):
             if colonne in effaces and valeur is not None:
@@ -160,7 +181,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         crm_workflow_node_update,
         Declaration(famille="workflows", action="modifier", espace="node:node_id"),
         titre="Update a catalogue node",
-        description="Changes a node's label, kind, color or default probability and reminder threshold, as the catalogue "
+        description="Changes a node's label, kind, color, default probability, reminder threshold or description, as the catalogue "
         "screen does; the steps that instantiate it follow unless they override the value. Its key never changes.",
     )
 

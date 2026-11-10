@@ -1,3 +1,5 @@
+# @verifies CRM-133 (docs/BACKLOG.md) — tranche T3 : `crm_workflow_get` rend la surcharge de description et la description
+#           effective de chaque étape (docs/SPEC-mcp.md §9.2 undecies, révisé)
 # @verifies CRM-114 (docs/BACKLOG.md) tranche T4 — décision 666 : un résultat `organisation` filtré par `organizations`,
 #           et non plus par `contacts` (docs/SPEC-mcp.md §9.2 sexies)
 # @verifies CRM-104 (docs/BACKLOG.md) — tranche T1 : les douze outils de structure et la recherche de référence, devant un
@@ -193,6 +195,8 @@ async def test_le_workflow_nomme_ses_etapes_ses_transitions_et_les_champs_exiges
     assert [(e["name"], e["initial"], e["probability"], e["stale_after_days"]) for e in workflow["steps"]] == [
         ("Prospection", True, 10, 14), ("Négociation", False, 65, 5)
     ]
+    # `CRM-133` : chaque étape dit sa surcharge et la description qui s'applique ; aucune ici.
+    assert all(e["description_override"] is None and e["description"] is None for e in workflow["steps"])
     assert workflow["transitions"] == [{"from_step": "Prospection", "to_step": "Négociation", "label": "Négociation",
                                         "requires_comment": True, "required_fields": ["Budget estimé"]}]
     with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre : workflow"):

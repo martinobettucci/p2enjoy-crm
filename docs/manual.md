@@ -6604,20 +6604,22 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     ses champs, archivés compris, la visibilité de chaque champ à chaque étape, ce que chaque déplacement exige ; et, avant
     d'exiger un champ, **combien d'affaires en cours seraient concernées** ; les **versions** publiées d'un workflow, et la
     comparaison de deux versions, ou d'une copie avec le workflow dont elle vient ; enfin, avant une restauration, **le
-    plan** de ce qu'elle ferait des affaires — sans rien changer ; le **catalogue de nœuds**, dont les étapes sont faites.
-    Lire un workflow, étape par étape, demande « Structure ▸ Consulter » ;
+    plan** de ce qu'elle ferait des affaires — sans rien changer ; le **catalogue de nœuds**, dont les étapes sont faites,
+    avec la description de chaque nœud. Lire un workflow, étape par étape — avec la description qui s'applique à chacune —,
+    demande « Structure ▸ Consulter » ;
   - *Ajouter* : créer un workflow vide, pour tout l'espace ou pour un track — il reste un brouillon tant qu'il n'a pas
     d'étape initiale ; créer le **workflow de départ** dans un espace qui n'en a aucun, comme le panneau « Bien
-    démarrer » ; ajouter une étape à partir d'un nœud du catalogue, avec un libellé, une probabilité ou un seuil de
-    relance qui lui sont propres ; déclarer un déplacement d'une étape vers une autre, avec son libellé et un motif
+    démarrer » ; ajouter une étape à partir d'un nœud du catalogue, avec un libellé, une probabilité, un seuil de
+    relance ou une description qui lui sont propres ; déclarer un déplacement d'une étape vers une autre, avec son libellé et un motif
     exigé ; ajouter une question au formulaire — une clé, un libellé, l'un des quinze types, une aide, les choix d'une
     liste ou la devise d'un montant ; **publier une version** du workflow, avec une note ; **copier** un workflow global vers un track — la copie reprend
     ses étapes, ses déplacements et son formulaire, puis évolue seule ; ajouter un **nœud** au
-    catalogue ; ajouter un **point de checklist** à une étape — les affaires qui y entrent ensuite le reçoivent ;
+    catalogue, avec sa description ; ajouter un **point de checklist** à une étape — les affaires qui y entrent ensuite le reçoivent ;
   - *Modifier* : **renommer** un workflow, ou le **désigner par défaut** — il y en a toujours un seul, et il est global ;
     **changer le workflow d'un channel** : chaque étape occupée reçoit sa destination, rien n'est deviné, et si des
     réponses de formulaire seraient perdues, le CRM refuse et l'assistant doit vous le dire et obtenir votre accord ;
-    changer les valeurs propres d'une étape, ou les retirer pour reprendre celles du catalogue ; désigner
+    changer les valeurs propres d'une étape — sa description comprise —, ou les retirer pour reprendre celles du catalogue ;
+    changer la description d'un nœud du catalogue, ou la retirer ; désigner
     l'**étape initiale** ; changer l'ordre des étapes ; changer le libellé d'un déplacement, ou s'il exige un motif ;
     changer le libellé, l'aide, les choix ou la devise d'une question — **jamais sa clé ni son type** — et l'ordre des
     questions ; régler la visibilité d'une question à une étape (masquée, affichée, exigée, ou par défaut) ; **exiger une

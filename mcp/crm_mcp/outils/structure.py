@@ -1,3 +1,5 @@
+# @spec CRM-133 (docs/BACKLOG.md) — tranche T3 : `crm_workflow_get` rend la surcharge de description de chaque étape et sa
+#       description effective (docs/SPEC-mcp.md §9.2 undecies, révisé ; docs/SPEC-workflow-engine.md §7 sexies.4)
 # @spec CRM-114 (docs/BACKLOG.md) tranche T4 — un résultat `organisation` filtré par `organizations` (décision 666)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T1 : la famille `structure` et la recherche globale de référence (décision 656)
 # @spec docs/SPEC-mcp.md §9.2 quater (la liste fixée, les ancres, le genre `workflow`, ce que la tranche ne fait pas), §6.1
@@ -24,6 +26,7 @@ import re
 from crm_mcp.crm import ClientCrm, Reponse
 from crm_mcp.outils.affaires_ecriture import refus
 from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable
+from crm_mcp.outils.workflows import description_effective
 
 LIMITE_RECHERCHE = 50
 COLONNES_TRACK = "id,name,slug,description,color,icon,position,archived_at"
@@ -253,8 +256,8 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             "workflow_steps",
             {
                 "workflow_id": f"eq.{workflow_id}",
-                "select": "id,position,is_initial,probability_override,stale_after_days,"
-                "noeud:workflow_nodes_catalog(label,kind,default_probability,default_stale_after_days)",
+                "select": "id,position,is_initial,probability_override,stale_after_days,description_override,"
+                "noeud:workflow_nodes_catalog(label,kind,default_probability,default_stale_after_days,description)",
                 "order": "position.asc",
             },
             "workflow",
@@ -305,6 +308,11 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
                     "stale_after_days": e.get("stale_after_days")
                     if e.get("stale_after_days") is not None
                     else (e.get("noeud") or {}).get("default_stale_after_days"),
+                    # `CRM-133` (§7 sexies.1) : la surcharge propre à l'étape, et la description qui s'applique.
+                    "description_override": e.get("description_override"),
+                    "description": description_effective(
+                        e.get("description_override"), (e.get("noeud") or {}).get("description")
+                    ),
                 }
                 for e in etapes
             ],

@@ -1,3 +1,6 @@
+# @spec CRM-133 (docs/BACKLOG.md) — tranche T3 : la surcharge de description d'une étape, écrite par `crm_workflow_step_add`
+#       et `crm_workflow_step_update`, lue avec la description effective (docs/SPEC-mcp.md §9.2 undecies, révisé ;
+#       docs/SPEC-workflow-engine.md §7 sexies.1, §7 sexies.4)
 # @spec CRM-118 (docs/BACKLOG.md) — tranche T2.a : la famille `workflows`, le workflow, ses étapes et ses transitions
 #       (décisions 752, 754 et 756)
 # @spec docs/SPEC-mcp.md §9.2 undecies (la liste fixée T2.a, ses ancres, ses refus nommés ; le connecteur suit strictement
@@ -28,8 +31,8 @@ from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_cour
 
 COLONNES_WORKFLOW = "id,name,scope,track_id,is_default,archived_at,derived_from_workflow_id,track:tracks(name)"
 COLONNES_ETAPE = (
-    "id,workflow_id,position,is_initial,label_override,probability_override,stale_after_days,"
-    "noeud:workflow_nodes_catalog!workflow_steps_node_id_workspace_id_fkey(key,label,kind)"
+    "id,workflow_id,position,is_initial,label_override,probability_override,stale_after_days,description_override,"
+    "noeud:workflow_nodes_catalog!workflow_steps_node_id_workspace_id_fkey(key,label,kind,description)"
 )
 COLONNES_TRANSITION = "id,workflow_id,from_step_id,to_step_id,label,require_comment"
 
@@ -105,8 +108,19 @@ def etape_lue(e: dict[str, Any]) -> dict[str, Any]:
             "label": e.get("label_override"),
             "probability": e.get("probability_override"),
             "stale_after_days": e.get("stale_after_days"),
+            "description": e.get("description_override"),
         },
+        # `CRM-133` (§7 sexies.1) : la description EFFECTIVE — la surcharge, sinon celle du nœud ; `None` sans l'une ni l'autre.
+        "description": description_effective(e.get("description_override"), noeud.get("description")),
     }
+
+
+def description_effective(surcharge: Any, du_noeud: Any) -> str | None:
+    """`coalesce(description_override, node.description)` ; une valeur blanche vaut absence (`descriptionEffective`)."""
+    for valeur in (surcharge, du_noeud):
+        if isinstance(valeur, str) and valeur.strip():
+            return valeur
+    return None
 
 
 def transition_lue(t: dict[str, Any]) -> dict[str, Any]:
@@ -242,9 +256,15 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         label: Annotated[str | None, Field(description="Overrides the node's label", max_length=200)] = None,
         probability: Annotated[float | None, Field(description="Overrides the node's probability", ge=0, le=100)] = None,
         stale_after_days: Annotated[int | None, Field(description="Overrides the node's reminder threshold", ge=1)] = None,
+        description_override: Annotated[
+            str | None, Field(description="Overrides the node's description for this workflow; empty: the node's applies")
+        ] = None,
     ) -> dict[str, Any]:
         appel = appel_courant()
         corps: dict[str, Any] = {"workflow_id": workflow_id, "workspace_id": appel.espace, "node_id": node_id}
+        if description_override is not None and description_override.strip():
+            # `CRM-133` : une surcharge vide n'en est pas une (§7 sexies.1) ; l'étape naît sans, et reprend le nœud.
+            corps["description_override"] = description_override.strip()
         # La position est omise : le trigger place l'étape en fin de workflow (§3.6), comme `ajouterEtape`.
         for colonne, valeur in (("label_override", label.strip() if label else None),
                                 ("probability_override", probability), ("stale_after_days", stale_after_days)):
@@ -259,8 +279,8 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         Declaration(famille="workflows", action="ajouter", espace="workflow:workflow_id", autres=("node:node_id",)),
         titre="Add a step to a workflow",
         description=(
-            "Adds a step at the end of a workflow from a catalogue node, optionally overriding its label, probability or "
-            "reminder threshold. A node appears once per workflow."
+            "Adds a step at the end of a workflow from a catalogue node, optionally overriding its label, probability, "
+            "reminder threshold or description. A node appears once per workflow."
         ),
     )
 
@@ -307,14 +327,25 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         probability: Annotated[float | None, Field(description="New probability override", ge=0, le=100)] = None,
         stale_after_days: Annotated[int | None, Field(description="New reminder threshold override", ge=1)] = None,
         reset: Annotated[
-            list[Literal["label", "probability", "stale_after_days"]] | None,
+            list[Literal["label", "probability", "stale_after_days", "description_override"]] | None,
             Field(description="Overrides to drop: the step takes the catalogue node's value again"),
         ] = None,
         make_initial: Annotated[bool, Field(description="Make this the workflow's initial step")] = False,
+        description_override: Annotated[
+            str | None,
+            Field(description="New description override for this step; an empty or blank string drops it (the node's applies)"),
+        ] = None,
     ) -> dict[str, Any]:
         appel = appel_courant()
         effaces = set(reset or [])
         corps: dict[str, Any] = {}
+        # `CRM-133` (§7 sexies.1) : la surcharge de description ; vide ou blanche, ou dans `reset`, elle part `null`.
+        if "description_override" in effaces and description_override is not None:
+            raise ToolError("description_override is both given and reset; choose one.")
+        if "description_override" in effaces:
+            corps["description_override"] = None
+        elif description_override is not None:
+            corps["description_override"] = description_override.strip() or None
         for nom, colonne, valeur in (("label", "label_override", label), ("probability", "probability_override", probability),
                                      ("stale_after_days", "stale_after_days", stale_after_days)):
             if nom in effaces and valeur is not None:
@@ -355,7 +386,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         Declaration(famille="workflows", action="modifier", espace="step:step_id"),
         titre="Update a step",
         description=(
-            "Changes a step's label, probability or reminder threshold overrides, drops some of them (reset) so the "
+            "Changes a step's label, probability, reminder threshold or description overrides, drops some of them (reset) so the "
             "catalogue node's value applies, or makes it the initial step — the step a new affaire starts on."
         ),
     )

@@ -907,8 +907,10 @@ dépôt ; `select pg_get_function_identity_arguments('public.inbox_arborescence'
 
 **La 174, après la 173** (`CRM-133`, décisions 869, 870 et 882), *en attente* : la description d'un nœud et sa surcharge
 par l'étape (`docs/SCHEMA.md` « Migration `0174` ») — deux colonnes facultatives, cinq fonctions de composition reprises,
-deux déclencheurs d'audit recréés ; aucune donnée reprise. **À ne pas livrer avant la fin de l'unité** (écrans, connecteur,
-seed : tranches T2 à T4). Aucun geste préalable du responsable.
+deux déclencheurs d'audit recréés ; aucune donnée reprise. **En avance de son unité** (décision 904 : la session de
+livraison décide du lot) : la 174, la webapp de `main` (T2, les écrans) et l'**image `mcp`** à reconstruire (T3, les
+outils `workflows`) partent ensemble, la migration d'abord ; ils fonctionnent seuls — sans description posée, rien ne
+paraît. Le seed (T4) n'existe qu'en développement. Aucun geste préalable du responsable.
 
 **La 172** (`CRM-137`, décisions 877, 891 et 893), *en attente* : `classification_candidates`, les affaires candidates au classement d'un message (`docs/SCHEMA.md` « Migration `0172` »). Une fonction, aucune donnée, sans verrou notable. **Avec la webapp et l'image `mcp` de `main`, après elle** (§2.36). Aucun geste préalable du responsable.
 

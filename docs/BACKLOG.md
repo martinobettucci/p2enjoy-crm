@@ -18921,7 +18921,15 @@ d'étape, cases existantes ; au catalogue de `docs/SPEC-mcp.md` §9.2, dans une 
       et 390 ; deux défauts trouvés et corrigés — l'en-tête plus haut de 12 px, les espaces perdus sur la fiche
       (`docs/DESIGN_SYSTEM.md` §5.58). Manuel §3.6, §18, §19.3 (texte) ; les images, avec le seed, en T4. Lecture du design
       system par ses sections générales et celles des écrans touchés (décision 897). Sous-ensemble de ce périmètre.
-- [ ] **T3 — connecteur** : outils `workflows` et `crm_workflow_get` ; pytest, intégration, `verify-mcp.sh`.
+- [x] **T3 — connecteur**, vérifiée en développement le 2026-11-10 : `crm_workflow_node_list` rend la description ;
+      `crm_workflow_node_create` et `crm_workflow_node_update` l'écrivent (vide ou blanche : `null`) ;
+      `crm_workflow_step_add` et `crm_workflow_step_update` écrivent `description_override` (`reset` la retire) ;
+      `crm_workflow_get` et la lecture d'une étape rendent la surcharge et la description effective. Aucun outil, case ni
+      famille nouveaux. pytest du connecteur 346 (cas CRM-133 de `test_workflows`, `test_workflows_noeuds`,
+      `test_structure`) ; `scripts/verify-mcp.sh --rapide` 111 contrôles sans anomalie, intégration 92/92 en direct et à
+      travers le Caddy de la cellule (`test_integration_workflows.py` : écrite puis relue sous l'administratrice, refusée
+      par le CRM au business developer). Manuel §33 (famille « Workflows »). Sous-ensemble de ce périmètre. **Image `mcp`
+      modifiée.**
 - [ ] **T4 — seed, manuel, contrat** : description de « Prospection », surcharge de « Négociation » avant la copie ;
       `docs/SPEC-seed.md` ; manuel et images ; `docs/PROD_MIGRATIONS.md`.
 **DoD** : migration et pgTAP (surcharge, repli sur le nœud, droits) ; unitaires ; API ; E2E souris et clavier ; outils du
@@ -19300,8 +19308,9 @@ board ; INC-352 close sur le constat en production.
 l'espace qu'il a le droit de lire. Annuler et réessayer sont contrôlés côté serveur (droits, état de l'envoi : on n'annule pas
 un envoi parti, on ne réessaie qu'un échec).
 **MCP** : **oui, famille `messagerie`**, lecture (consulter) et actions annuler et réessayer (modifier) (décision 898).
-**Spécification** : à écrire avant le code — `docs/SPEC-mail-subsystem.md` (les états de `mail_outbox`, l'annulation, le
-nouvel essai, la course avec `mail-sync`), `docs/DESIGN_SYSTEM.md`, `docs/SPEC-mcp.md` §9.2, le manuel.
+**Spécification** : `docs/SPEC-mail-subsystem.md` §28, écrite le 2026-11-10 avant le code (décisions 898 et 906), cinq
+tranches (§28.12) ; `docs/SCHEMA.md` « Migration à numéroter au push — l'outbox » ; `docs/SPEC-mcp.md` §9.2 *undevicies* ; le
+design system et le manuel s'écrivent avec l'écran.
 **DoD** : pgTAP (droits, transitions d'état, course annulation contre départ) ; unitaires ; API avec refus de droits ; E2E
 souris et clavier (en file, annuler, envoyés, échec, réessayer) ; pytest `mail-sync` si l'annulation y touche ; outils du
 connecteur et `verify-mcp.sh` ; seed (un envoi en file, un envoyé, un échec) ; captures aux quatre paliers ; manuel ;

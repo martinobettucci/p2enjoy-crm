@@ -2447,7 +2447,7 @@
 										},
 										{
 											"type": "text",
-											"text": ", dont les étapes sont faites.\nLire un workflow, étape par étape, demande « Structure ▸ Consulter » ;"
+											"text": ", dont les étapes sont faites,\navec la description de chaque nœud. Lire un workflow, étape par étape — avec la description qui s'applique à chacune —,\ndemande « Structure ▸ Consulter » ;"
 										}
 									]
 								}
@@ -2480,7 +2480,7 @@
 										},
 										{
 											"type": "text",
-											"text": " dans un espace qui n'en a aucun, comme le panneau « Bien\ndémarrer » ; ajouter une étape à partir d'un nœud du catalogue, avec un libellé, une probabilité ou un seuil de\nrelance qui lui sont propres ; déclarer un déplacement d'une étape vers une autre, avec son libellé et un motif\nexigé ; ajouter une question au formulaire — une clé, un libellé, l'un des quinze types, une aide, les choix d'une\nliste ou la devise d'un montant ; "
+											"text": " dans un espace qui n'en a aucun, comme le panneau « Bien\ndémarrer » ; ajouter une étape à partir d'un nœud du catalogue, avec un libellé, une probabilité, un seuil de\nrelance ou une description qui lui sont propres ; déclarer un déplacement d'une étape vers une autre, avec son libellé et un motif\nexigé ; ajouter une question au formulaire — une clé, un libellé, l'un des quinze types, une aide, les choix d'une\nliste ou la devise d'un montant ; "
 										},
 										{
 											"type": "strong",
@@ -2519,7 +2519,7 @@
 										},
 										{
 											"type": "text",
-											"text": " au\ncatalogue ; ajouter un "
+											"text": " au\ncatalogue, avec sa description ; ajouter un "
 										},
 										{
 											"type": "strong",
@@ -2591,7 +2591,7 @@
 										},
 										{
 											"type": "text",
-											"text": " : chaque étape occupée reçoit sa destination, rien n'est deviné, et si des\nréponses de formulaire seraient perdues, le CRM refuse et l'assistant doit vous le dire et obtenir votre accord ;\nchanger les valeurs propres d'une étape, ou les retirer pour reprendre celles du catalogue ; désigner\nl'"
+											"text": " : chaque étape occupée reçoit sa destination, rien n'est deviné, et si des\nréponses de formulaire seraient perdues, le CRM refuse et l'assistant doit vous le dire et obtenir votre accord ;\nchanger les valeurs propres d'une étape — sa description comprise —, ou les retirer pour reprendre celles du catalogue ;\nchanger la description d'un nœud du catalogue, ou la retirer ; désigner\nl'"
 										},
 										{
 											"type": "strong",
