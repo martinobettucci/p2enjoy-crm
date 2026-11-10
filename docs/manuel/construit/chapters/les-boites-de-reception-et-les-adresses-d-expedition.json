@@ -303,7 +303,7 @@
 							},
 							{
 								"type": "text",
-								"text": " Une relève qui aboutit rend la boîte « Connectée », quelques instants après\nson enregistrement. Une relève refusée par le serveur la met « En erreur », avec sa cause. Une boîte « Non testée »\nne le reste donc que jusqu'au premier passage de la relève."
+								"text": " Une relève qui aboutit rend la boîte « Connectée », quelques instants après\nson enregistrement. Une relève refusée par le serveur la met en erreur, avec sa cause. Une boîte « Non testée »\nne le reste donc que jusqu'au premier passage de la relève."
 							}
 						]
 					}

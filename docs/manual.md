@@ -2911,7 +2911,7 @@ on configure une boîte avant d'en superviser la relève.
   « Connectée » obtenu avec l'ancien serveur ne dirait plus rien du nouveau. « Non testée » veut
   seulement dire qu'aucun essai n'a eu lieu depuis : la relève, elle, n'attend rien.
 - **La relève met aussi l'état à jour.** Une relève qui aboutit rend la boîte « Connectée », quelques instants après
-  son enregistrement. Une relève refusée par le serveur la met « En erreur », avec sa cause. Une boîte « Non testée »
+  son enregistrement. Une relève refusée par le serveur la met en erreur, avec sa cause. Une boîte « Non testée »
   ne le reste donc que jusqu'au premier passage de la relève.
 - **« Tester la connexion », sur chaque ligne, essaie la boîte tout de suite.** Le produit ouvre une
   vraie session avec le serveur, puis écrit le résultat sous la ligne — la connexion réussie, ou
@@ -3407,7 +3407,7 @@ superviser » plutôt qu'un tableau vide qui prétendrait avoir cherché sans ri
   « Erreur de protocole ». Le produit ne montre jamais le message technique brut renvoyé par votre
   serveur mail, qui peut contenir des détails de connexion.
 
-  L'incident est écrit **par la relève elle-même**, comme par le bouton « Tester la connexion » des réglages : une boîte
+  L'incident est écrit **par la relève elle-même**, comme par le test de connexion des réglages : une boîte
   que son fournisseur refuse paraît en échec dès le relevé suivant. Une relève qui aboutit efface l'incident.
 
 ![Une boîte « Jamais relevée »](manuel/images/consulter-l-etat-de-la-messagerie/jamais-relevee.jpg)

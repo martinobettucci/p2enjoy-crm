@@ -6,6 +6,8 @@
 -- @verifies CRM-127 (docs/BACKLOG.md) — tranche T2 : le compte de l'assertion 5 inclut ses deux fonctions (migration 0151)
 -- @verifies CRM-128 (docs/BACKLOG.md) — tranche T2 : le compte de l'assertion 5 inclut ses deux fonctions (migration 0162,
 --           docs/SPEC-mails-prepares.md §3.4, §3.5)
+-- @verifies CRM-135 (docs/BACKLOG.md) — le compte de l'assertion 5 inclut `mail_inbound_account_record_poll_failure`
+--           (migration 0170, docs/SPEC-mail-subsystem.md §24.3), et son témoin 5 bis la nomme
 -- @verifies docs/SPEC-refus-404.md §2, §3, §4 ; docs/JOURNAL.md décisions 762 et 797 ; CLAUDE.md §10
 --
 -- Le `rollback` final rend la base intacte.
@@ -14,7 +16,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(9);
+select plan(10);
 
 -- Le refus levé par une requête, tel que PostgREST le lit : SQLSTATE, message, détail.
 create or replace function pg_temp.refus(p_sql text) returns text[] language plpgsql as $$
@@ -65,8 +67,16 @@ select is(
 	-- `mail_inbound_account_record_sync` et `authorize_mail_connection_test` (docs/SPEC-mail-subsystem.md §23.2, §23.3).
 	-- RÉVISÉ PAR `CRM-112` T2.a (migration 0155), non relâché : `app.workflow_transition_required_common_fields_avant` refuse
 	-- une transition inconnue par ce chemin (`transition_not_found`, docs/SPEC-champs-communs.md §5).
-	32,
-	'5 — les vingt-sept fonctions « introuvable » de CRM-120, les deux de CRM-127, celle de CRM-112 et les deux de CRM-128 (`send_email_draft`, `discard_email_draft`), lèvent par `app.raise_http_error(404, …)`');
+	-- RÉVISÉ PAR `CRM-135` (migration 0170), non relâché : `mail_inbound_account_record_poll_failure` refuse un compte
+	-- inconnu par ce chemin (`account_not_found`, docs/SPEC-mail-subsystem.md §24.3). Le témoin 5 bis la nomme.
+	33,
+	'5 — les vingt-sept fonctions « introuvable » de CRM-120, les deux de CRM-127, celle de CRM-112, les deux de CRM-128 (`send_email_draft`, `discard_email_draft`) et celle de CRM-135 (`mail_inbound_account_record_poll_failure`) lèvent par `app.raise_http_error(404, …)`');
+
+select ok(
+	(select p.prosrc ~ 'app\.raise_http_error\(404, ''account_not_found''\)'
+	   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+	  where n.nspname = 'public' and p.proname = 'mail_inbound_account_record_poll_failure'),
+	'5 bis — témoin : `mail_inbound_account_record_poll_failure` (CRM-135) est l''une des 33, et refuse un compte inconnu par `app.raise_http_error(404, ''account_not_found'')`');
 
 select is(
 	(select array_agg(p.proname::text) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
