@@ -146,6 +146,17 @@ test('une affaire neuve : le refus du déplacement, la reprise, l’en-tête, le
 		await page.getByTestId('reprendre-saisie').click()
 		const exige = page.getByTestId('champ-lien-proposition')
 		await expect(exige).toHaveAttribute('data-exige', 'true')
+		// *Révisé par la campagne du 2026-11-10* : la fiche a grandi (les descriptions de `CRM-133` T2), et la reprise ne
+		// centre le champ qu'APRÈS la mise en page — mesuré : marqué exigé, il est encore à 1 486 px, hors de la fenêtre.
+		// L'image attend donc le geste de la partie (le focus sur le champ, puis son centrage), au lieu de saisir la page en
+		// plein défilement ; la garde de `illustrer` reste entière.
+		await expect(exige.locator('input, textarea, select').first()).toBeFocused()
+		await expect
+			.poll(async () => {
+				const boite = await exige.boundingBox()
+				return boite !== null && boite.y >= 0 && boite.y + boite.height <= 900
+			}, { message: 'le champ exigé est centré dans la fenêtre par la reprise' })
+			.toBe(true)
 		await illustrer(page, { chapitre: CHAPITRE, section: S.fiche, nom: 'exige-par-le-deplacement', cibles: [exige] })
 		await page.keyboard.type('https://p2enjoy.test/propositions/valdor')
 		await page.keyboard.press('Tab')
