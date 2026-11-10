@@ -40136,3 +40136,19 @@ barre (le réel sur le prévisionnel). Les montants ne comptent que les affaires
 calcul se fait côté serveur.
 **MCP** : **oui, famille existante `recettes`**, lecture seule — le prévisionnel et le réel d'une organisation.
 **Conséquences** : unité `CRM-146`, à spécifier avant le code.
+
+
+### décision 901 — `CRM-139` : le design system lu par ses sections générales et celles de l'inbox
+
+*2026-11-10, session interactive 152dd27d (p2enjoy-crm-a8), arbitrage du responsable (`AskUserQuestion`).*
+**Le problème** : celui de la décision 897. `docs/DESIGN_SYSTEM.md` compte 8 043 lignes, environ 160 000 jetons, et ne
+tient pas en une fois dans la mémoire de travail de l'agent. La décision 897 ne valait que pour `CRM-133` T2.
+**Pistes présentées** : les sections ciblées, comme la 897 ; une règle générale qui réviserait `CLAUDE.md` §4 ; tout lire
+par morceaux.
+**Décision du responsable** : **les sections ciblées**, en entier :
+- §1 à §4 et §6 à §12 ;
+- les sections de l'inbox : §5.4 et ses variantes, §5.3 quinquies et septies, §5.7 bis, §5.8 ;
+- les sections qu'elles citent.
+Le compte rendu de l'unité dit que la lecture n'était pas intégrale. Le diff d'interface reste vérifié contre ces sections
+avant le commit.
+**Portée** : `CRM-139` seulement ; la règle de `CLAUDE.md` n'est pas changée.
