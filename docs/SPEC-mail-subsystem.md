@@ -3510,6 +3510,20 @@ Les règles visuelles s'écrivent au `docs/DESIGN_SYSTEM.md` §5.94 avec l'écra
   pas mesurée sur une vraie boîte.
 - Aucun écran ne pose encore `disabled` (§24.1).
 
+### 25.11 Tranches
+
+*Écrit le 2026-11-10 à la reprise de l'unité (session c2), avant le code.* Chaque tranche est commitée et poussée vérifiée
+(décision 904).
+
+1. **T1, la base** : la migration du quota (`p_daily_quota_set`, §25.6) ; pgTAP (§25.9, ligne « pgTAP ») ; `docs/SCHEMA.md` ;
+   le contrat de déploiement.
+2. **T2, la liste des dossiers** : `folder_names` dans la sonde de `mail-sync` (§25.3), son relais par
+   `mail-connection-test` ; pytest et Deno ; le contrat (image `mail-sync`, fonction edge).
+3. **T3, les écrans** : l'historique au formulaire de la boîte (§25.4), le panneau « Dossiers relevés » (§25.5), le quota au
+   formulaire de l'identité (§25.6) ; le design system au premier paragraphe libre (lecture à décider par le responsable,
+   comme les décisions 901, 907 et 910) ; Vitest, API, E2E `ui` sur le vrai Stalwart, captures ; le manuel §11.
+4. **T4, le seed** (§25.8) et le contrat ; puis l'unité passe `[P]`.
+
 ## 26. Classer un mail : les affaires candidates, cherchables, l'expéditeur connu d'abord — `CRM-137`
 
 *Écrit le 2026-11-10 avant le code, après relecture intégrale de `docs/DESIGN_SYSTEM.md` le même jour. `docs/JOURNAL.md`
