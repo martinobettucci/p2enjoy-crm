@@ -148,6 +148,28 @@
 								"text": " — si la boîte est en échec, un texte compréhensible : « Authentification\nrefusée », « Hôte injoignable », « Connexion refusée », « Échec TLS », « Délai dépassé » ou\n« Erreur de protocole ». Le produit ne montre jamais le message technique brut renvoyé par votre\nserveur mail, qui peut contenir des détails de connexion."
 							}
 						]
+					},
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "L'incident est écrit "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "par la relève elle-même"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", comme par le bouton « Tester la connexion » des réglages : une boîte\nque son fournisseur refuse paraît en échec dès le relevé suivant. Une relève qui aboutit efface l'incident."
+							}
+						]
 					}
 				]
 			]
@@ -328,6 +350,46 @@
 							{
 								"type": "text",
 								"text": " : elle a lieu à intervalles réguliers, fixés à l'installation du CRM et non\ndepuis cet écran. Un message arrivé dans votre boîte paraît dans le CRM au passage suivant."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Après un mot de passe refusé, le CRM espace ses essais."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Il attend 5, puis 10, 20 et 40 minutes, puis une heure\nau plus, pour ne pas faire verrouiller la boîte par votre fournisseur. Enregistrer un nouveau mot de passe, ou réussir\nun test de connexion dans Réglages ▸ Comptes de messagerie entrante, relance la relève aussitôt."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun écran ne suspend une boîte."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Pour arrêter la relève d'une boîte, demandez-le à l'exploitant du CRM."
 							}
 						]
 					}

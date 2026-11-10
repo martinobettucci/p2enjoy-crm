@@ -13,7 +13,23 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### `CRM-135` — la veille de la messagerie dit pourquoi elle échoue, et sait s'arrêter (INC-349, décisions 873 et 874)
+
+- **Une relève en échec s'écrit sur la boîte** : `status = 'error'` et l'un des six codes en `last_error`, pour un refus
+  d'authentification, un hôte injoignable, un échec TLS, un délai, etc. Une relève allée au bout rend la boîte « Connectée »
+  et efface l'incident. L'écran « État de la messagerie » et les réglages des boîtes montrent donc le motif. Avant, une
+  boîte refusée par son fournisseur paraissait saine. Un échec de la base ou du service n'est pas écrit sur la boîte.
+- **Après un refus d'authentification**, la veille ne retente plus la boîte avant 5, 10, 20, 40 minutes, puis une heure
+  au plus. Un nouveau mot de passe ou un test réussi relance la relève aussitôt. Les pannes de transport se retentent
+  au tour suivant, comme avant.
+- **Une boîte `disabled` n'est plus relevée** par la veille. Aucun écran ne pose encore cette valeur.
+- **Le journal de `mail-sync`** porte le compte, le motif (code, classe d'exception, statut PostgREST) et les compteurs
+  de la veille. Il ne porte jamais un secret, un hôte ou un identifiant de connexion (`SAFE_FIELDS` allongée de champs
+  sûrs).
+- Migration **`0170`** : `mail_inbound_account_record_poll_failure`, nouvelle, et `mail_inbound_account_record_sync`,
+  reprise. Elle est à livrer **avec l'image `mail-sync`** (`docs/PROD_MIGRATIONS.md` §2.33).
+- Preuves : pytest (`tests/test_veille_echecs.py`), pgTAP (`0159`), E2E `mail` (`releve-echec-ecrite.spec.ts`) et `ui`
+  (`releve-en-echec.spec.ts`), `scripts/verify-mail-inbound.sh` §4 bis et ses dégradations.
 
 ## [Publié]
 

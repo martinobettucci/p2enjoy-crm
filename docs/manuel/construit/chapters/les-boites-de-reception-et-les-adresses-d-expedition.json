@@ -297,6 +297,26 @@
 								"content": [
 									{
 										"type": "text",
+										"text": "La relève met aussi l'état à jour."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Une relève qui aboutit rend la boîte « Connectée », quelques instants après\nson enregistrement. Une relève refusée par le serveur la met « En erreur », avec sa cause. Une boîte « Non testée »\nne le reste donc que jusqu'au premier passage de la relève."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
 										"text": "« Tester la connexion », sur chaque ligne, essaie la boîte tout de suite."
 									}
 								]

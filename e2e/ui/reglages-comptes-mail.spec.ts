@@ -108,8 +108,26 @@ test.describe('configuration des comptes entrants (docs/SPEC-mail-subsystem.md �
 		await expect(
 			page.getByTestId('ligne-compte-configuration').filter({ hasText: 'système' }).getByText('Aucune'),
 		).toBeVisible()
-		// Les trois comptes du seed n'ont jamais été éprouvés : leur pilule lit « Non testée » (CRM-127 T4, §23.5).
-		await expect(page.getByText('Non testée').first()).toBeVisible()
+		// La pilule de chaque ligne dit ce que la BASE porte, mot pour mot (§23.5). RÉVISÉE PAR `CRM-135` (§24.3) : cette
+		// assertion figeait « Non testée » sur les trois boîtes du seed, vraie tant qu'aucune relève n'écrivait `status`.
+		// La veille de développement relève désormais chaque boîte à la minute, et une relève allée au bout la rend `ok` :
+		// « Non testée » ne dure plus que jusqu'au premier tour. La garde ne se relâche pas : chaque ligne est confrontée au
+		// statut relu en base, et le témoin de « Non testée » est tenu par `tester-connexion.spec.ts` (après un
+		// enregistrement) et par `ReglagesComptesMail.test.tsx`.
+		const PILULES: Record<string, string> = { pending: 'Non testée', ok: 'Connectée', error: 'En erreur' }
+		const relues = await page.request.get(
+			`${URL_API}/rest/v1/mail_inbound_accounts?select=label,status&workspace_id=eq.${WORKSPACE}`,
+			{ headers: enTetesService() },
+		)
+		const boites = (await relues.json()) as { label: string; status: string }[]
+		expect(boites).toHaveLength(3)
+		for (const boite of boites) {
+			const pilule = PILULES[boite.status]
+			expect(pilule, `un libellé pour le statut « ${boite.status} »`).toBeDefined()
+			await expect(
+				page.getByTestId('ligne-compte-configuration').filter({ hasText: boite.label }).getByText(pilule!),
+			).toBeVisible()
+		}
 
 		// Le formulaire est REPLIÉ par défaut (§5.34).
 		await expect(page.getByTestId('formulaire-compte-mail')).toHaveCount(0)

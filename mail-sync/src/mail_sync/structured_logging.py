@@ -1,5 +1,7 @@
 # @spec CRM-051 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §12.5, docs/DAT.md §14 — JSONL
 # sans données sensibles ; ce commentaire de portée couvre le formateur et la configuration.
+# @spec CRM-135 (docs/BACKLOG.md) — `SAFE_FIELDS` admet le compte, le motif et les compteurs de la veille
+#       (docs/SPEC-mail-subsystem.md §24.2, docs/DAT.md §14 ; INC-349, décisions 873 et 874)
 
 from __future__ import annotations
 
@@ -23,6 +25,21 @@ SAFE_FIELDS: Final = (
     # jamais par son nom de fichier ni son texte.
     "attachment_id",
     "text_status",
+    # `CRM-135` (docs/SPEC-mail-subsystem.md §24.2) : la veille, et les lignes qui passaient déjà ces champs sans qu'ils
+    # sortent (INC-349). Chacun est sûr PAR CONSTRUCTION — un UUID interne, un code d'un vocabulaire fermé, un NOM de
+    # classe d'exception, un entier. Jamais le texte d'une exception : un serveur IMAP peut y recopier l'identifiant de
+    # connexion.
+    "account_id",
+    "error",
+    "panne",
+    "postgrest_status",
+    "releves",
+    "echecs",
+    "ignores",
+    "espaces",
+    "intervalle_secondes",
+    "refus_consecutifs",
+    "retry_in_seconds",
 )
 
 

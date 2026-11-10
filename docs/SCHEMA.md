@@ -2513,7 +2513,11 @@ elle.
 attente sont perdus : les lister avant. **Avec l'image `mcp` d'avant `CRM-128` T3** : sans la garde, son `crm_mail_send`
 enverrait de nouveau directement.
 
-### Migration `0171` — la relève écrit son échec et son succès (`CRM-135`, décisions 873 et 874 ; spécifiée le 2026-11-10, à écrire)
+### Migration `0170` — la relève écrit son échec et son succès (`CRM-135`, décisions 873 et 874 ; livrée en développement le 2026-11-10)
+
+*Numérotée `0170` au push, premier numéro libre sur `main` (arbitrage de la session de livraison du 2026-11-10 : une
+migration prend son numéro à son entrée sur `main`). Spécifiée d'abord sous `0171`, la `0170` étant alors réservée par
+`CRM-133`, qui reprendra le numéro libre à son push.*
 
 `docs/SPEC-mail-subsystem.md` §24.3 ; INC-349. Deux fonctions ; **aucune table, aucune colonne, aucune donnée.**
 **`public.mail_inbound_account_record_poll_failure(uuid, text) returns void`**, nouvelle, `security definer`,

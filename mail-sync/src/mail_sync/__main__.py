@@ -2,6 +2,7 @@
 # d'entrée unique du conteneur ; la portée couvre le chargement, les logs et l'écoute Uvicorn.
 # @spec CRM-059 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §20.10 — démarrage et arrêt de la
 #       boucle de veille ; `docs/JOURNAL.md` décision 341.
+# @spec CRM-135 (docs/BACKLOG.md) — la veille reçoit la traduction d'un échec (docs/SPEC-mail-subsystem.md §24.3, §24.4)
 # @spec CRM-074 (docs/BACKLOG.md) — tranche T2 : démarrage et arrêt de la boucle d'extraction des textes de pièces jointes
 #       (docs/SPEC-pieces-jointes.md §4.1), démarrée ici pour la même raison que la veille.
 #
@@ -19,6 +20,7 @@ import uvicorn
 from mail_sync.app import create_app
 from mail_sync.config import ConfigurationError, load_settings
 from mail_sync.extraction import PiloteExtraction, traiter_lot
+from mail_sync.ingestion import classer_echec_releve
 from mail_sync.postgrest import PostgrestClient
 from mail_sync.structured_logging import configure_logging, log_event
 from mail_sync.veille import CompteAVeiller, PiloteVeille
@@ -126,6 +128,8 @@ def main() -> int:
         source=_source_comptes(settings),
         relever=_relever_via_api_interne(settings, logger),
         logger=logger,
+        # `CRM-135` (§24.3, §24.4) : la même traduction que l'écriture de l'échec, pour le journal et l'espacement.
+        classer=classer_echec_releve,
     )
     pilote.demarrer()
     extraction = PiloteExtraction(executer=_extraire_un_lot(settings, logger), logger=logger)

@@ -763,7 +763,33 @@ Le manuel (chapitre 3, image `hors-d-un-track.jpg`) part avec la webapp. Le lot 
 
 **Retour arrière** : la webapp précédente ; aucune donnée n'est touchée.
 
+### 2.33 `CRM-135`, décisions 873 et 874 — la veille dit pourquoi elle échoue, l'écrit, espace les refus et ignore une boîte désactivée (À LIVRER : migration 170 et image `mail-sync`, ensemble)
+
+`docs/SPEC-mail-subsystem.md` §24 ; `docs/SCHEMA.md` « Migration `0170` » ; INC-349. **La migration 170 et l'image
+`mail-sync` de `main`, dans la même fenêtre, la migration d'abord** : l'image appelle
+`mail_inbound_account_record_poll_failure` à chaque relève en échec, et une image sans la migration journaliserait chaque
+échec en `releve_echec_non_ecrit` sans l'écrire. Aucune variable, aucun secret, aucune fonction edge, aucune webapp : les
+écrans lisent déjà `status` et `last_error`.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 170 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate`, instantané de VM pris |
+| 2 | Reconstruire `mail-sync` | session de livraison, après le geste 1 | `up -d --build --no-deps --wait mail-sync`, par `compose_prod` (§4) : `up -d` seul ne reconstruit pas l'image |
+| 3 | Constater le motif | responsable, Réglages ▸ État de la messagerie | tant que le fournisseur refuse l'IMAP de la boîte (INC-349), la ligne montre « Authentification refusée » en « Dernier incident », et les réglages la pilule « En erreur » |
+| 4 | Constater l'espacement et le journal | session de livraison, en lecture seule | `docker logs` de `mail-sync` : `veille_compte_echoue` porte `account_id`, `panne` (`LoginError`), `error` (`auth_failed`), `refus_consecutifs` et `retry_in_seconds`, sans hôte ni identifiant de connexion ; deux refus de la même boîte sont espacés de 5 puis 10 minutes, et non plus d'environ 70 s |
+
+**Vérification après la fenêtre**, en lecture seule : registre à **168** lignes, empreinte de la 170 égale au dépôt. `select status, last_error from public.mail_inbound_accounts`
+montre `error` et `auth_failed` pour la boîte refusée. **Suspendre une boîte** (§24.5) : aucun écran ne le fait. Sur
+instruction du responsable seulement, la session de livraison pose `status = 'disabled'` en base, et la veille cesse de
+la relever. **Retour arrière** : l'image `mail-sync` précédente, puis la migration retirée comme le dit `docs/SCHEMA.md`
+« Migration `0170` », dans cet ordre. Aucune donnée n'est perdue : `status` et `last_error` sont réécrits au prochain
+test ou à la prochaine relève.
+
 ## 3. Migrations en attente
+
+**La 170** (`CRM-135`, décisions 873 et 874), *en attente* : les deux fonctions de la relève en échec et réussie
+(`docs/SCHEMA.md` « Migration `0170` »). Aucune table, aucune colonne, aucune donnée, sans verrou notable. **Avec l'image
+`mail-sync` de `main`, après elle** (§2.33). Aucun geste préalable du responsable.
 
 **Aucune migration en attente depuis la seconde fenêtre du 2026-11-05** : la 169 a été appliquée avec la fonction `ia` et la
 webapp de `main` (révision `ae9888f9`, décision 854 ; §8), registre à **167** lignes.
@@ -1631,7 +1657,7 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | Service | Condition de redéploiement |
 |---|---|
 | `webapp` | À chaque changement d'interface — **et à chaque changement de `VITE_SUPABASE_URL` ou `VITE_SUPABASE_ANON_KEY`**, voir ci-dessous. **`CRM-092` T5** : la connexion passe par le seul SSO et l'échangeur de session, appelé par un chemin relatif que Caddy relaie déjà (`/functions/v1/*`) ; reconstruire avec `VITE_SSO_CLIENT_ID` au nouvel identifiant, et **seulement** avec les opérations de la reprise (§3) — une webapp neuve face à une base sans les migrations 74 à 76 ne connecterait personne |
-| `mail-sync` | À chaque changement du service de messagerie ou de ses dépendances. **`CRM-127` T2** : l'image de `main` date chaque relève par `mail_inbound_account_record_sync` — **reconstruire l'image dans la fenêtre de la migration 151, jamais avant elle** (§3) |
+| `mail-sync` | À chaque changement du service de messagerie ou de ses dépendances. **`CRM-127` T2** : l'image de `main` date chaque relève par `mail_inbound_account_record_sync` — **reconstruire l'image dans la fenêtre de la migration 151, jamais avant elle** (§3). **`CRM-135`** : l'image écrit l'échec d'une relève par `mail_inbound_account_record_poll_failure` — **reconstruire dans la fenêtre de la migration 170, après elle** (§2.33) |
 | Pile Supabase | À chaque changement de version épinglée d'un composant (tableau dans `docs/DAT.md` §3.7) |
 | `functions` | À chaque changement sous `supabase/functions/` ou de l'image Edge Runtime ; `CRM-016` impose un premier déploiement conjoint avec Kong. **`CRM-092` T3 et T3 bis (en attente de la reprise complète, §3)** : nouvelle fonction `session`, et le conteneur reçoit `JWT_SECRET`, `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID` et **`OIDC_CLIENT_SECRET`**, que le service principal ne remet qu'au worker `session` — la phrase « ne reçoit pas `JWT_SECRET` » plus bas est révisée par la décision 584. Recréer `functions` **après** la pose du secret par l'administrateur du realm et la correction de `SSO_OIDC_CLIENT_ID` (§2.3). **`CRM-127` T3** : nouvelle fonction `mail-connection-test` ; le conteneur reçoit `MAIL_SYNC_URL` (posée par `docker-compose.yml`) et `MAIL_SYNC_INTERNAL_TOKEN` (déjà au `.env` pour `mail-sync`), que le service principal ne remet qu'à ce worker — **recréer `functions` dans la fenêtre de la migration 151** |
 | `kong` | À chaque changement de `supabase/docker/volumes/api/kong.yml`, qui incrémente le label `com.p2enjoy.kong-config-revision` — **`crm-115`** depuis `CRM-115` T2 (Realtime joint par son alias réseau, §2.22) ; `crm-092` depuis `CRM-092` T6 : routes `/auth/v1/*` et `/.well-known/oauth-authorization-server` retirées, Kong répond 404 ; **INC-299** (décision 696, §2.21) : `KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT: 3` dans `docker-compose.yml` — la définition change, le `up` ordinaire recrée Kong |

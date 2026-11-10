@@ -18920,9 +18920,7 @@ désarchiver) ; outils du connecteur et `verify-mcp.sh` ; seed (un channel archi
 
 ## Demande du 2026-11-10 — la veille de `mail-sync` dit pourquoi elle échoue, et sait s'arrêter (décision 873, INC-349)
 
-### CRM-135 — La veille journalise ses échecs, les écrit, espace les refus d'authentification et ignore une boîte désactivée `[@]`
-
-*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-c2) depuis 2026-11-10 08:24 UTC — état avant : [ ] ; confiée par la session de livraison (be)*
+### CRM-135 — La veille journalise ses échecs, les écrit, espace les refus d'authentification et ignore une boîte désactivée `[P]`
 
 **Origine** : INC-349 (session d9) ; arbitrée le 2026-11-10 (décision 873).
 **Comportement attendu** : (i) le journal de la veille porte le compte, le motif et les compteurs, jamais un secret ni un
@@ -18930,11 +18928,22 @@ identifiant de connexion ; (ii) un échec écrit `status = 'error'` et `last_err
 les rend ; (iii) après un refus d'authentification, la boîte n'est plus retentée avant un délai croissant borné ; (iv) une
 boîte `disabled` n'est pas relevée.
 **MCP** : non (décision 873). **Spécification** : `docs/SPEC-mail-subsystem.md` §24 (et §20.10, §23.1 révisés),
-`docs/SCHEMA.md` « Migration `0171` », `docs/DAT.md` §14 ; choix de conception, décision 874. Le contrat (migration `0171`
+`docs/SCHEMA.md` « Migration `0170` », `docs/DAT.md` §14 ; choix de conception, décision 874. Le contrat (migration `0170`
 et image `mail-sync`, livrées ensemble) est écrit avec le code.
 **DoD** : pytest (journal sans secret, écriture de l'échec, espacement, boîte désactivée) ; preuve d'intégration contre la
 vraie base ; `verify-mail-*` concernés ; écran d'état (le motif paraît) en E2E ; contrat de déploiement ; INC-349 close
 sur ces points.
+**État (2026-11-10, session c2)** : implémentée et vérifiée en développement. Sous-ensemble du périmètre joué :
+- pytest : 319 tests, dont `tests/test_veille_echecs.py` (30) ;
+- pgTAP : 0159 (19 assertions) et 0139, révisée (27) ;
+- E2E `mail` : `releve-echec-ecrite`, `releve-datee` et `comptes-entrants`, 9 scénarios ;
+- E2E `ui` : `releve-en-echec`, `reglages-comptes-mail` (révisée), `etat-messagerie` et `tester-connexion`, 24 scénarios ;
+- E2E `manuel` : chapitre 13 (révisée) ;
+- `verify-mail-inbound.sh` : 65 contrôles, dont 6 dégradations de `CRM-135` ;
+- `verify-mail-resilience.sh` : 56 contrôles ;
+- captures `e2e/output/CRM-135/` 1440 et 390 observées.
+Ce n'est pas une campagne complète. **Reste** : la livraison de la migration 170 avec l'image `mail-sync`
+(`docs/PROD_MIGRATIONS.md` §2.33) et le constat du responsable. Limite nommée : aucun écran ne pose `disabled` (§24.1).
 
 
 ## Demande du 2026-11-10 — les réglages cachés de la messagerie, exposés à l'écran (décision 875)

@@ -10,6 +10,9 @@
 #           est appliquée côté backend et prouvée hors interface)
 # @verifies CRM-127 (docs/BACKLOG.md) — tranche T2 : la relève réelle date `last_sync_at` (docs/SPEC-mail-subsystem.md
 #           §23.2, INC-340, décision 816)
+# @verifies CRM-135 (docs/BACKLOG.md) — la relève écrit son échec et son succès, la veille dit pourquoi elle échoue, espace
+#           les refus et ignore une boîte désactivée (docs/SPEC-mail-subsystem.md §24.7 « Harnais », §24.3 à §24.5 ;
+#           docs/SCHEMA.md « Migration `0170` » ; INC-349, décisions 873 et 874) : section 4 bis, et ses dégradations au §6
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais prouve.
@@ -66,6 +69,14 @@ SONDE=mail-sync/src/mail_sync/imap_probe.py
 CLIENT=mail-sync/src/mail_sync/postgrest.py
 TEST_SONDE=mail-sync/tests/test_imap_probe.py
 SEED=supabase/seed/apply-seed.sh
+# `CRM-135` (§24.7).
+MIGRATION_ECHEC=supabase/migrations/0170_releve_echec_ecrit.sql
+TEST_SQL_ECHEC=supabase/tests/0159_releve_echec_ecrit.test.sql
+SPEC_MAIL_ECHEC=e2e/mail/releve-echec-ecrite.spec.ts
+VEILLE=mail-sync/src/mail_sync/veille.py
+INGESTION=mail-sync/src/mail_sync/ingestion.py
+JOURNAL_PY=mail-sync/src/mail_sync/structured_logging.py
+TEST_ECHECS=mail-sync/tests/test_veille_echecs.py
 # shellcheck source=scripts/lib/conteneur.sh
 source scripts/lib/conteneur.sh
 # @spec CRM-127 (docs/BACKLOG.md) T2, docs/JOURNAL.md décision 847 : pytest là où il peut tourner — `.venv`, hôte, ou
@@ -345,6 +356,65 @@ if [ "$RAPIDE" = false ]; then
 	fi
 fi
 
+# --- 4 bis. La relève en échec s'écrit, la veille le dit — `CRM-135` (§24.7) --------------------
+
+titre "4 bis. La relève en échec s'écrit, et la veille le dit (CRM-135)"
+
+for fichier in "$MIGRATION_ECHEC" "$VEILLE" "$INGESTION" "$JOURNAL_PY"; do
+	if grep -q '@spec CRM-135' "$fichier"; then
+		ok "$(basename "$fichier") porte son commentaire @spec CRM-135"
+	else
+		fail "$(basename "$fichier") ne cite pas CRM-135"
+	fi
+done
+for fichier in "$TEST_SQL_ECHEC" "$SPEC_MAIL_ECHEC" "$TEST_ECHECS"; do
+	if head -3 "$fichier" | grep -q '@verifies CRM-135'; then
+		ok "$(basename "$fichier") porte son commentaire @verifies CRM-135"
+	else
+		fail "$(basename "$fichier") ne cite pas CRM-135"
+	fi
+done
+
+# Le catalogue, pas le fichier : les deux fonctions sont `security definer` et réservées au service.
+droits=$(psql_db -c "select p.prosecdef,
+		has_function_privilege('service_role', p.oid, 'execute'),
+		has_function_privilege('authenticated', p.oid, 'execute'),
+		has_function_privilege('anon', p.oid, 'execute')
+	from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+	where n.nspname = 'public' and p.proname = 'mail_inbound_account_record_poll_failure'")
+if [ "$droits" = "t|t|f|f" ]; then
+	ok "\`mail_inbound_account_record_poll_failure\` est en base, security definer, réservée à service_role (§24.3)"
+else
+	fail "\`mail_inbound_account_record_poll_failure\` : « ${droits:-absente} » au lieu de « t|t|f|f » — la 0170 est-elle appliquée ?"
+fi
+
+if [ "$RAPIDE" = false ]; then
+	if npm run test:sql -- "$TEST_SQL_ECHEC" >"$TRAVAIL/pgtap-echec.log" 2>&1; then
+		assertions=$(grep -oE '[0-9]+ assertions' "$TRAVAIL/pgtap-echec.log" | head -1 | grep -oE '[0-9]+')
+		if [ "${assertions:-0}" -eq 19 ]; then
+			ok "suite pgTAP de la relève en échec — 19 assertions"
+		else
+			fail "suite pgTAP de la relève en échec verte mais ${assertions:-0} assertions au lieu de 19"
+		fi
+	else
+		fail_journal "la suite pgTAP de la relève en échec ÉCHOUE" "$TRAVAIL/pgtap-echec.log"
+	fi
+
+	# L'intégration contre la vraie base et le vrai service : un vrai refus de LOGIN s'écrit, le bon mot de passe remis
+	# rend la boîte `ok`, et `lire_comptes_a_veiller`, exécutée dans le conteneur, n'y rend pas une boîte `disabled`.
+	if E2E_PROJETS=mail npx playwright test --config e2e/playwright.config.ts --project=mail \
+		"$SPEC_MAIL_ECHEC" >"$TRAVAIL/mail-echec.log" 2>&1; then
+		passes=$(grep -oE '[0-9]+ passed' "$TRAVAIL/mail-echec.log" | tail -1 | grep -oE '[0-9]+')
+		if [ "${passes:-0}" -eq 2 ]; then
+			ok "intégration — un vrai refus s'écrit, le succès le rend, une boîte désactivée n'est pas lue (2 scénarios)"
+		else
+			fail "intégration verte mais ${passes:-0} scénarios au lieu de 2"
+		fi
+	else
+		fail_journal "l'intégration de la relève en échec ÉCHOUE" "$TRAVAIL/mail-echec.log"
+	fi
+fi
+
 # --- 5. Les preuves exécutables -----------------------------------------------------------------
 
 if [ "$RAPIDE" = false ]; then
@@ -479,12 +549,58 @@ if [ "$RAPIDE" = false ]; then
 	fi
 	rendre "$SONDE"
 
+	# `CRM-135` (§24.7) — chaque point a sa dégradation, jugée sur `tests/test_veille_echecs.py` par le code 1 de pytest
+	# seul (`juger_degradation_py`, décision 867).
+	# Jugée sur la suite 0159, qui porte ce refus : `degradation_sql` joue la suite 0024, qui ne connaît pas la fonction.
+	psql_db -c "grant execute on function public.mail_inbound_account_record_poll_failure(uuid, text) to authenticated" >/dev/null 2>&1
+	if npm run test:sql -- "$TEST_SQL_ECHEC" >"$TRAVAIL/degrade-echec.log" 2>&1; then
+		fail "dégradation NON VUE par la suite 0159 : l'écriture de l'échec ouverte à authenticated"
+	else
+		ok "dégradation vue par la suite 0159 : l'écriture de l'échec ouverte à authenticated"
+	fi
+	psql_db -c "revoke execute on function public.mail_inbound_account_record_poll_failure(uuid, text) from authenticated" >/dev/null 2>&1
+
+	degradation_py() {
+		local libelle=$1 fichier=$2 motif=$3 remplacement=$4 issue=0
+		sauvegarder "$fichier"
+		sed -i "s|$motif|$remplacement|" "$fichier"
+		if cmp -s "$fichier" "$SAUVEGARDES/$(printf '%s' "$fichier" | tr '/' '@')"; then
+			fail "dégradation INAPPLICABLE : « $libelle » — le motif ne désigne plus rien dans $fichier"
+			rendre "$fichier"
+			return
+		fi
+		juger_degradation_py "$TRAVAIL/degrade-echec-py.log" "$TEST_ECHECS" -q || issue=$?
+		case $issue in
+			0) ok "dégradation vue : $libelle" ;;
+			1) fail "dégradation NON VUE : $libelle" ;;
+			*) fail_journal "dégradation NON PROUVÉE : $libelle" "$TRAVAIL/degrade-echec-py.log" ;;
+		esac
+		rendre "$fichier"
+	}
+
+	degradation_py "la veille relève une boîte désactivée (§24.5)" "$VEILLE" \
+		'if compte.secret_present and compte.statut != STATUT_DESACTIVE' 'if compte.secret_present'
+	degradation_py "la source ne demande plus au serveur d'écarter les boîtes désactivées (§24.5)" \
+		mail-sync/src/mail_sync/postgrest.py '"&status=neq.disabled"' '""'
+	degradation_py "la relève en échec n'écrit plus rien sur la boîte (§24.3)" "$INGESTION" \
+		'_ecrire_echec(arguments, compte.account_id, code)' 'pass'
+	degradation_py "un refus d'authentification n'espace plus la boîte (§24.4)" "$VEILLE" \
+		'if code == CODE_ESPACE:' 'if False:'
+	degradation_py "le journal jette de nouveau le compte (§24.2, INC-349)" "$JOURNAL_PY" \
+		'^    "account_id",$' ''
+
 	titre "7. Restauration"
 
 	if npm run test:sql -- "$TEST_SQL" >"$TRAVAIL/restaure.log" 2>&1; then
 		ok "la suite pgTAP redevient verte après restauration"
 	else
 		fail_journal "la suite pgTAP reste ROUGE après restauration" "$TRAVAIL/restaure.log"
+	fi
+
+	if npm run test:sql -- "$TEST_SQL_ECHEC" >"$TRAVAIL/restaure-echec.log" 2>&1; then
+		ok "la suite pgTAP 0159 redevient verte après restauration"
+	else
+		fail_journal "la suite pgTAP 0159 reste ROUGE après restauration" "$TRAVAIL/restaure-echec.log"
 	fi
 
 	if pytest_mail_sync -q >"$TRAVAIL/restaure-py.log" 2>&1; then

@@ -227,10 +227,12 @@ class PostgrestClient:
         décision 343 : « aucune session précédente n'avait atteint ce point »).
         """
 
+        # `CRM-135` (§24.5) : une boîte `disabled` n'est pas demandée. `status` est lu pour l'espacement (§24.4).
         _, corps = self._rest(
             "GET",
             "/rest/v1/mail_inbound_accounts"
-            "?select=id,last_sync_at,secret_id"
+            "?select=id,last_sync_at,secret_id,status"
+            "&status=neq.disabled"
             "&order=last_sync_at.asc.nullsfirst",
         )
         lignes = json.loads(corps) if corps else []
@@ -242,6 +244,7 @@ class PostgrestClient:
                     identifiant=str(ligne["id"]),
                     derniere_releve=_horodatage(brut),
                     secret_present=ligne.get("secret_id") is not None,
+                    statut=str(ligne.get("status") or "pending"),
                 )
             )
         return comptes
@@ -527,10 +530,20 @@ class PostgrestClient:
         """Date une relève allée au bout — `CRM-127`, §23.2. Rend l'horodatage posé par la base.
 
         Distincte de `record_check` : « quand ai-je relevé » n'est pas « quand la connexion a-t-elle été
-        éprouvée » (§13.2), et `status` reste le constat du seul test.
+        éprouvée » (§13.2). *`CRM-135` (§24.3)* : la base rend aussi la boîte `ok` et efface `last_error`, sauf une ligne
+        `disabled`.
         """
 
         return self._rpc("mail_inbound_account_record_sync", {"p_account_id": account_id})
+
+    def record_poll_failure(self, account_id: str, error: str) -> None:
+        """Écrit l'échec d'une relève sur la boîte — `CRM-135`, §24.3 : `status = 'error'` et l'un des six codes.
+
+        Ni `last_checked_at` ni `last_sync_at` ne bougent : la première porte la garde de 30 s du test (§23.3), la seconde
+        la dernière relève réussie. La base laisse une ligne `disabled` intacte.
+        """
+
+        self._rpc("mail_inbound_account_record_poll_failure", {"p_account_id": account_id, "p_error": error})
 
     # --- Envoi sortant — `CRM-058` ------------------------------------------------------------
 

@@ -3223,7 +3223,7 @@ porte alors dans son texte.
 | `veille_compte_echoue` | `WARNING` | `account_id`, `panne`, `error` si l'échec est celui de la boîte (§24.3), `postgrest_status` si c'est la base ; avec `refus_consecutifs` et `retry_in_seconds` après un refus d'authentification |
 | `veille_source_indisponible` | `WARNING` | `panne`, `postgrest_status` |
 | `veille_tour_termine` | `INFO` | `releves`, `echecs`, `ignores`, `espaces` |
-| `releve_echec_non_ecrit` | `ERROR` | `account_id`, `error`, `postgrest_status` : l'échec n'a pas pu être écrit en base (§24.3) |
+| `releve_echec_non_ecrit` | `WARNING`, le niveau du journal de la relève | `account_id`, `error`, `panne`, `postgrest_status` : l'échec n'a pas pu être écrit en base (§24.3) |
 
 ### 24.3 (ii) L'échec et le succès d'une relève s'écrivent
 
@@ -3243,7 +3243,7 @@ d'origine** : la veille la compte et la journalise, `/poll` rend `502` comme ava
 l'échec n'est pas avalé : `releve_echec_non_ecrit` le dit, et c'est l'exception d'origine qui remonte, pas celle de
 l'écriture.
 
-**Deux fonctions de base, migration `0171`** (`docs/SCHEMA.md` « Migration `0171` ») :
+**Deux fonctions de base, migration `0170`** (`docs/SCHEMA.md` « Migration `0170` ») :
 
 - **`public.mail_inbound_account_record_poll_failure(p_account_id uuid, p_error text) returns void`** — nouvelle,
   `SECURITY DEFINER`, `search_path = ''`, exécutable par le seul `service_role`. Elle pose `status = 'error'` et
@@ -3299,7 +3299,13 @@ aussi.
 
 ### 24.6 Seed
 
-**Inchangé.** L'échec se reproduit par le véritable parcours, sans trace fabriquée (`CLAUDE.md` §8). Un mauvais mot de
+**Inchangé.** *Conséquence mesurée sur la pile de développement (sessions d9 et be, 2026-11-10)* : les trois boîtes du
+seed naissent `pending`. La veille les relève à la minute, et la première relève réussie les rend `ok`. « Non testée »
+ne dure donc que jusqu'au premier tour, et une preuve ne la suppose plus pour une boîte du seed :
+`e2e/ui/reglages-comptes-mail.spec.ts` confronte chaque pilule au statut relu en base. Le témoin de « Non testée » est
+tenu après un enregistrement (`e2e/ui/tester-connexion.spec.ts`) et par Vitest. `e2e/manuel/13-etat-messagerie.spec.ts`
+pose « Jamais relevée » sur la boîte de Driss, comme les incidents. L'échec se reproduit par le véritable parcours, sans
+trace fabriquée (`CLAUDE.md` §8). Un mauvais mot de
 passe est posé par `upsert_mail_inbound_account`, une relève a lieu, puis le bon mot de passe est remis. Les scénarios qui
 le font rendent la ligne dans son état d'origine. Une boîte `disabled` naît de même dans la preuve qui en a besoin, et y
 est rendue.
@@ -3310,8 +3316,8 @@ est rendue.
 |---|---|
 | pytest | **le journal** : une ligne de la veille porte `account_id`, `panne`, `error` et les compteurs ; un champ hors liste (hôte, identifiant de connexion, mot de passe) n'est jamais émis ; le texte d'un `LoginError` qui recopie l'identifiant de connexion n'apparaît nulle part. **Le classement** : refus de LOGIN → `auth_failed`, TLS, délai, hôte, refus de connexion, `PostgrestError` → `None`, exception inattendue → `None`. **L'écriture** : `relever_compte` écrit l'échec de la boîte puis relance l'exception d'origine ; n'écrit rien pour un échec de la base ; une écriture qui échoue est journalisée et n'efface pas l'exception d'origine. **L'espacement** : la suite 300, 600, 1 200, 2 400, 3 600, 3 600 ; une boîte espacée n'est pas relevée avant l'échéance et l'est après, horloge avancée sans dormir ; `pending` ou `ok` relu oublie l'espacement ; une panne de transport n'espace pas. **Disabled** : `ordonner_comptes` l'écarte et la compte en `ignores` |
 | pgTAP | `mail_inbound_account_record_poll_failure` : refusée à `anon` et à `authenticated` ; pose `error` et le code pour `service_role` sans toucher `last_checked_at` ni `last_sync_at` ; refuse un code hors des six ; laisse une ligne `disabled` intacte ; `account_not_found` sur un inconnu. `mail_inbound_account_record_sync` : pose `ok` et efface `last_error`, laisse `disabled` en l'état tout en datant |
-| Intégration (pytest contre la vraie base) | sur la pile de développement, une relève réelle d'une boîte du seed au mauvais mot de passe écrit `error` et `auth_failed`. Remise au bon mot de passe, la relève suivante écrit `ok`. `lire_comptes_a_veiller` n'y rend pas une boîte `disabled` |
-| Harnais | `scripts/verify-mail-resilience.sh` (la veille) et `scripts/verify-mail-inbound.sh` (la relève), rejoués verts. Chacun gagne la preuve de son point, avec sa dégradation : sans le filtre `disabled`, sans l'écriture de l'échec |
+| Intégration (contre la vraie base et le vrai service) | `e2e/mail/releve-echec-ecrite.spec.ts`. Sur la pile de développement, une relève réelle (`/poll`) d'une boîte du seed au mauvais mot de passe écrit `error` et `auth_failed`, sans toucher `last_checked_at`. Remise au bon mot de passe, la relève suivante écrit `ok`. `lire_comptes_a_veiller`, exécutée dans le conteneur du service, n'y rend pas une boîte `disabled`. *Précisé à l'écriture* : le projet `mail` plutôt que pytest. Aucune suite pytest du service n'atteint la pile, et le projet `mail` est le chemin déjà tracé vers le conteneur (`e2e/mail/releve-datee.spec.ts`) |
+| Harnais | `scripts/verify-mail-inbound.sh` gagne une section 4 bis : traçabilité, droits de la fonction en base, suite pgTAP 0159 et intégration. Son §6 gagne six dégradations : l'écriture ouverte à `authenticated`, sans le filtre `disabled` (dans le pilote, puis dans la requête), sans l'écriture de l'échec, sans l'espacement, sans `account_id` au journal. `scripts/verify-mail-resilience.sh` (la veille) est rejoué vert. *Précisé à l'écriture* : il est en cours de modification par `CRM-132`, et les preuves de `CRM-135` n'y sont pas ajoutées pour ne pas croiser ce chantier |
 | E2E `ui` | `/reglages/messagerie` : après une relève réelle au mauvais mot de passe, la boîte montre « Authentification refusée » en « Dernier incident », relu en base ; la ligne est rendue ensuite. Captures 1440 et 390 observées |
 
 ### 24.8 Limites nommées

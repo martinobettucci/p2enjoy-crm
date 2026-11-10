@@ -2,6 +2,8 @@
 -- @verifies CRM-127 (docs/BACKLOG.md) — tranche T2 : la relève écrit `last_sync_at`, et le droit de tester une connexion
 -- @verifies docs/SPEC-mail-subsystem.md §23.2 (`mail_inbound_account_record_sync`, réservée à `service_role`), §23.3
 --           (le droit d'écrire la ligne, `not_found` sans divulgation, `disabled`, garde de 30 s, `invalid_target`)
+-- @verifies CRM-135 (docs/BACKLOG.md) — assertion 6 révisée : la relève réussie rend la boîte `ok`
+--           (docs/SPEC-mail-subsystem.md §24.3, docs/SCHEMA.md « Migration `0170` »)
 -- @verifies docs/SCHEMA.md « Migration `0151` » ; docs/SPEC-permissions-rls.md §7, preuves de refus n° 7 et n° 11 ;
 --           docs/JOURNAL.md décision 816 ; INC-340
 --
@@ -110,10 +112,13 @@ select is(
 	now(),
 	'5 — last_sync_at est relue en base');
 
+-- RÉVISÉE PAR `CRM-135` (docs/SPEC-mail-subsystem.md §24.3, décision 873) : la relève allée au bout rend la boîte `ok`.
+-- L'assertion figeait l'ancien §23.1, où `status` restait le constat du seul test de connexion. Le détail du nouveau
+-- contrat (`disabled` intact, `last_error` effacée, l'échec écrit) est éprouvé par la suite 0159.
 select is(
 	(select status from public.mail_inbound_accounts where id = pg_temp.boite_driss()),
-	'pending',
-	'6 — la relève ne touche pas status : il reste le constat du test de connexion (§23.1)');
+	'ok',
+	'6 — la relève allée au bout rend la boîte ok (§24.3, révisant le §23.1)');
 
 select is(
 	pg_temp.refus($$ select public.mail_inbound_account_record_sync('c1270000-0000-4000-8000-0000000000ff') $$),

@@ -88,6 +88,16 @@ def _translate(exception: BaseException) -> str:
     return PROTOCOL_ERROR
 
 
+def traduire_panne(exception: BaseException) -> str:
+    """La traduction d'une panne en l'un des six codes, publique pour la relève — `CRM-135`, §24.3.
+
+    La relève en échec et le test de connexion disent la MÊME chose d'une même panne : un refus de LOGIN est
+    `auth_failed` des deux côtés, et l'écran ne peut pas montrer deux mots pour un seul constat.
+    """
+
+    return _translate(exception)
+
+
 def probe_inbound_account(
     *,
     host: str,

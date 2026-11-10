@@ -5,6 +5,8 @@
 // Les six incidents que le manuel nomme ne se rencontrent qu'en panne réelle d'un serveur de messagerie. Le scénario
 // les POSE tour à tour sur la boîte de Driss Lemoine, par la clé de service — comme `e2e/ui/etat-messagerie.spec.ts` —,
 // et rend ensuite à la boîte l'état exact qu'il lui avait lu.
+// @spec CRM-135 (docs/BACKLOG.md) — « Jamais relevée » est posée elle aussi sur la boîte de Driss : la veille relève chaque
+//       boîte du seed à la minute, et la relève réussie la date et la rend `ok` (docs/SPEC-mail-subsystem.md §24.3)
 
 import { expect, test } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -24,9 +26,13 @@ test('l’écran, et les six incidents d’une boîte', async ({ page, request }
 		await page.goto('/reglages/messagerie')
 		await expect(page.getByTestId('tableau-comptes-mail')).toBeVisible()
 		await illustrer(page, { chapitre: CHAPITRE, section: null, nom: 'etat-de-la-messagerie', cibles: [], pleinePage: true })
-		const systeme = page.getByTestId('ligne-compte-mail').filter({ hasText: 'système' })
-		await expect(systeme.getByText('Jamais relevée')).toBeVisible()
-		await illustrer(page, { chapitre: CHAPITRE, section: null, nom: 'jamais-relevee', cibles: [systeme] })
+		// La boîte système n'est plus « Jamais relevée » : la veille de développement la relève à la minute. L'état se pose
+		// donc, comme les incidents, sur la boîte de Driss, puis la boîte est rendue.
+		await service(request, 'patch', BOITE, { status: 'pending', last_error: null, last_sync_at: null })
+		await page.reload()
+		const jamais = page.getByTestId('ligne-compte-mail').filter({ hasText: 'Driss' })
+		await expect(jamais.getByText('Jamais relevée')).toBeVisible()
+		await illustrer(page, { chapitre: CHAPITRE, section: null, nom: 'jamais-relevee', cibles: [jamais] })
 
 		for (const code of INCIDENTS) {
 			await service(request, 'patch', BOITE, { status: 'error', last_error: code, last_sync_at: '2026-10-27T08:00:00Z' })

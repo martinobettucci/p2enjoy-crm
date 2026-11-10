@@ -39524,7 +39524,9 @@ un LOGIN refusé environ toutes les 70 s, et quatre défauts la rendent muette e
 
 *2026-11-10, session interactive d5b44a2d (p2enjoy-crm-c2). Unité confiée par la session de livraison (be). Elle applique la
 décision 873, et la spécification est écrite avant le code : `docs/SPEC-mail-subsystem.md` §24, `docs/SCHEMA.md`
-« Migration `0171` », `docs/DAT.md` §14.*
+« Migration `0171` », `docs/DAT.md` §14. *Renumérotée `0170` avant le push (arbitrage de la session de livraison, 2026-11-10 :
+une migration prend son numéro à son entrée sur `main`, le premier libre) ; les mentions de `0171` ci-dessous sont celles
+de la spécification d'origine.*
 
 **Problème** : la décision 873 nomme les quatre comportements et laisse ouverts leurs paramètres : quels champs entrent
 au journal, comment classer un échec, quel espacement et quand il cesse, où filtrer `disabled`.

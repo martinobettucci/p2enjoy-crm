@@ -8973,6 +8973,13 @@ la boîte, le même qu'en SMTP. Avec ces mêmes identifiants, depuis `mail-sync`
 passe, l'identifiant et le réseau de la cellule ne sont pas en cause. Le CRM ne relève qu'en IMAP (§4.5, §17, §20.6 bis :
 dossiers, copie dans `CRM/Affaires/…`, plages d'UID) ; aucune décision n'a écarté POP explicitement.
 
+**Défauts de produit (i) à (iii), et la boîte `disabled` relevée quand même (iv) : corrigés en développement par `CRM-135`**
+(décisions 873 et 874, `docs/SPEC-mail-subsystem.md` §24, 2026-11-10, session d5b44a2d). Le journal porte le compte, le
+motif et les compteurs. Une relève en échec écrit `error` et son code, et l'écran le montre. Un refus d'authentification
+espace la boîte de 5 minutes à une heure. Une boîte `disabled` n'est plus relevée. **À constater en production** avec la
+migration 170 et l'image `mail-sync` (`docs/PROD_MIGRATIONS.md` §2.33). Le refus IMAP du fournisseur (pistes d et e)
+reste ouvert : l'incident ne se ferme pas sur ces seuls points.
+
 ### INC-350 — hors d'un track, la coquille émet pour une lectrice un comptage du guide que `CRM-094` lui refuse
 **Close le 2026-11-10, corrigée par `CRM-131` (décision 876)** : unitaires, `e2e/ui/guide-flottant.spec.ts` (5/5, dont la
 lectrice), `accueil-channels`, `demarrage`, `channels`, verts.

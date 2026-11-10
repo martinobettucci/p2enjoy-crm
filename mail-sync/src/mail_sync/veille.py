@@ -4,6 +4,9 @@
 #       §20.10.4 (aucun chevauchement), §20.10.5 (zéro désactive), §20.10.6 (quels comptes)
 # @spec docs/SPEC-mail-subsystem.md §13.7 (un code, jamais le texte du serveur)
 # @spec docs/JOURNAL.md décision 341
+# @spec CRM-135 (docs/BACKLOG.md) — le journal dit le compte, le motif et les compteurs ; l'espacement après un refus
+#       d'authentification ; une boîte `disabled` n'est pas relevée (docs/SPEC-mail-subsystem.md §24.2, §24.4, §24.5 ;
+#       INC-349, décisions 873 et 874)
 #
 # CE MODULE SÉPARE CE QUI SE DÉCIDE DE CE QUI ATTEND, et ce n'est pas une préférence de style.
 # `CLAUDE.md` §18 proscrit la « temporisation arbitraire » : une preuve qui devrait dormir soixante
@@ -16,7 +19,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Callable, Iterable, Protocol, Sequence
 
@@ -36,6 +39,23 @@ INTERVALLE_MAXIMAL_SECONDES = 3_600
 #: veille », la relève restant déclenchable par l'API interne comme `CRM-054` l'a livrée.
 VEILLE_DESACTIVEE = 0
 
+#: `CRM-135` (§24.4) — le seul code espacé : un mot de passe refusé ne deviendra pas juste en attendant, et chaque essai
+#: est un LOGIN refusé de plus, qu'un fournisseur peut sanctionner. Les pannes de transport se retentent au tour suivant.
+CODE_ESPACE = "auth_failed"
+
+#: Première attente après un refus, puis doublée à chaque refus consécutif.
+ESPACEMENT_INITIAL_SECONDES = 300
+
+#: Le plafond est la borne haute de l'intervalle de veille : une boîte réparée chez le fournisseur, sans rien changer dans
+#: le CRM, est reprise dans l'heure.
+ESPACEMENT_MAXIMAL_SECONDES = INTERVALLE_MAXIMAL_SECONDES
+
+#: La valeur de `status` qui désactive une boîte : une décision d'exploitation (§13.2), que la veille respecte (§24.5).
+STATUT_DESACTIVE = "disabled"
+
+#: La seule valeur de `status` sous laquelle un espacement tient : tout autre constat l'oublie (§24.4).
+STATUT_EN_ERREUR = "error"
+
 
 @dataclass(frozen=True)
 class CompteAVeiller:
@@ -50,6 +70,9 @@ class CompteAVeiller:
     derniere_releve: datetime | None
     #: Un compte sans secret ne PEUT pas être relevé : la route `poll` rend déjà `409`.
     secret_present: bool
+    #: `status` tel que la base le rend — `CRM-135` : `disabled` écarte la boîte (§24.5), et tout autre statut
+    #: qu'`error` oublie son espacement (§24.4).
+    statut: str = "pending"
 
 
 class SourceComptes(Protocol):
@@ -98,7 +121,12 @@ def ordonner_comptes(comptes: Iterable[CompteAVeiller]) -> list[CompteAVeiller]:
     d'une exécution à l'autre paraîtrait incohérent sans l'être.
     """
 
-    retenus = [compte for compte in comptes if compte.secret_present]
+    # `CRM-135` (§24.5) : une boîte `disabled` est écartée ici aussi, même si la source la filtre déjà.
+    retenus = [
+        compte
+        for compte in comptes
+        if compte.secret_present and compte.statut != STATUT_DESACTIVE
+    ]
     return sorted(
         retenus,
         key=lambda compte: (
@@ -131,6 +159,65 @@ def delai_avant_prochain_tour(duree_du_tour: float, intervalle: int) -> float:
     return float(intervalle)
 
 
+def delai_apres_refus(refus_consecutifs: int) -> int:
+    """L'attente après le *n*-ième refus d'authentification consécutif — `CRM-135`, §24.4.
+
+    `min(300 × 2^(n−1), 3 600)` : 5, 10, 20, 40 minutes, puis une heure, sans fin. Pas de nombre maximal de
+    tentatives, à la différence de l'envoi (§20.3) : une boîte n'est jamais abandonnée, elle est seulement ménagée.
+    """
+
+    rang = max(refus_consecutifs, 1) - 1
+    return min(ESPACEMENT_INITIAL_SECONDES * (2**rang), ESPACEMENT_MAXIMAL_SECONDES)
+
+
+@dataclass(frozen=True)
+class Espacement:
+    """L'espacement d'une boîte après un refus d'authentification : combien de refus, et jusqu'à quand (§24.4)."""
+
+    refus_consecutifs: int
+    #: Sur l'horloge monotone du pilote.
+    echeance: float
+
+
+@dataclass
+class RegistreEspacements:
+    """Les espacements en cours, en mémoire du pilote — `CRM-135`, §24.4. Un redémarrage les oublie, et c'est dit."""
+
+    par_compte: dict[str, Espacement] = field(default_factory=dict)
+
+    def retenir(self, compte: CompteAVeiller, maintenant: float) -> bool:
+        """Vrai si la boîte doit attendre ; oublie l'espacement dès que la base dit autre chose qu'`error`.
+
+        `pending` (connexion modifiée, nouveau mot de passe) ou `ok` (test réussi) : la cause du refus a pu disparaître,
+        et la boîte est relevée au tour même.
+        """
+
+        espacement = self.par_compte.get(compte.identifiant)
+        if espacement is None:
+            return False
+        if compte.statut != STATUT_EN_ERREUR:
+            del self.par_compte[compte.identifiant]
+            return False
+        return maintenant < espacement.echeance
+
+    def refuser(self, identifiant: str, maintenant: float) -> Espacement:
+        precedent = self.par_compte.get(identifiant)
+        refus = (precedent.refus_consecutifs if precedent else 0) + 1
+        espacement = Espacement(refus_consecutifs=refus, echeance=maintenant + delai_apres_refus(refus))
+        self.par_compte[identifiant] = espacement
+        return espacement
+
+    def oublier(self, identifiant: str) -> None:
+        self.par_compte.pop(identifiant, None)
+
+    def restreindre(self, identifiants: set[str]) -> None:
+        """Oublie les comptes que la source ne rend plus (supprimés, désactivés) : le registre ne grossit pas."""
+
+        for identifiant in list(self.par_compte):
+            if identifiant not in identifiants:
+                del self.par_compte[identifiant]
+
+
 @dataclass(frozen=True)
 class ResultatTour:
     """Ce qu'un tour a fait, tel que le journal et les preuves l'observent."""
@@ -138,6 +225,8 @@ class ResultatTour:
     releves: int
     echecs: int
     ignores: int
+    #: `CRM-135` (§24.4) : les boîtes retenues par leur espacement, ni relevées ni comptées en `ignores`.
+    espaces: int = 0
 
 
 def executer_un_tour(
@@ -145,6 +234,9 @@ def executer_un_tour(
     source: SourceComptes,
     relever: Callable[[CompteAVeiller], None],
     journal: Callable[..., None],
+    classer: Callable[[BaseException], str | None] = lambda _erreur: None,
+    espacements: RegistreEspacements | None = None,
+    maintenant: float = 0.0,
 ) -> ResultatTour:
     """Relève chaque compte éligible, dans l'ordre, sans qu'un échec n'arrête le tour — §20.10.3.
 
@@ -156,35 +248,60 @@ def executer_un_tour(
     journalise l'identifiant du compte et le **type** de la panne. Le texte de l'exception n'est
     jamais journalisé — il peut porter un identifiant de connexion ou un mot de passe reflété par un
     serveur bavard (docs/SPEC-mail-subsystem.md §13.7).
+
+    *`CRM-135` (§24.2, §24.4)* : la ligne porte aussi `error`, le code que `classer` rend quand la boîte est en cause, et
+    `postgrest_status` quand c'est la base. `classer` est INJECTÉ — la traduction vit avec la relève (`ingestion`), et ce
+    module reste vérifiable sans IMAP. Un refus d'authentification espace la boîte dans `espacements`.
     """
 
+    registre = espacements if espacements is not None else RegistreEspacements()
     try:
         tous = list(source.lire_comptes_a_veiller())
     except Exception as erreur:  # noqa: BLE001
         # La source elle-même est indisponible : le tour n'a rien fait, et il le dit. Rendre un
         # tour « réussi à zéro compte » ferait passer une base injoignable pour un parc vide.
-        journal("veille_source_indisponible", panne=type(erreur).__name__)
+        journal(
+            "veille_source_indisponible",
+            panne=type(erreur).__name__,
+            postgrest_status=getattr(erreur, "status_code", None),
+        )
         return ResultatTour(releves=0, echecs=1, ignores=0)
 
     eligibles = ordonner_comptes(tous)
+    registre.restreindre({compte.identifiant for compte in eligibles})
     ignores = len(tous) - len(eligibles)
     releves = 0
     echecs = 0
+    espaces = 0
 
     for compte in eligibles:
+        if registre.retenir(compte, maintenant):
+            espaces += 1
+            continue
         try:
             relever(compte)
         except Exception as erreur:  # noqa: BLE001
             echecs += 1
-            journal(
-                "veille_compte_echoue",
-                account_id=compte.identifiant,
-                panne=type(erreur).__name__,
-            )
+            code = classer(erreur)
+            details: dict[str, object] = {
+                "account_id": compte.identifiant,
+                "panne": type(erreur).__name__,
+                "error": code,
+                "postgrest_status": getattr(erreur, "status_code", None),
+            }
+            if code == CODE_ESPACE:
+                espacement = registre.refuser(compte.identifiant, maintenant)
+                details["refus_consecutifs"] = espacement.refus_consecutifs
+                details["retry_in_seconds"] = delai_apres_refus(espacement.refus_consecutifs)
+            else:
+                # Une panne de transport ne dit rien du mot de passe : l'espacement d'un refus antérieur ne tient plus.
+                registre.oublier(compte.identifiant)
+            journal("veille_compte_echoue", **details)
         else:
+            registre.oublier(compte.identifiant)
             releves += 1
 
-    return ResultatTour(releves=releves, echecs=echecs, ignores=ignores)
+    return ResultatTour(releves=releves, echecs=echecs, ignores=ignores, espaces=espaces)
 
 
 class PiloteVeille:
@@ -203,6 +320,7 @@ class PiloteVeille:
         relever: Callable[[CompteAVeiller], None],
         logger: logging.Logger,
         horloge: Callable[[], float] | None = None,
+        classer: Callable[[BaseException], str | None] = lambda _erreur: None,
     ) -> None:
         self._intervalle = normaliser_intervalle(intervalle)
         self._source = source
@@ -210,6 +328,9 @@ class PiloteVeille:
         self._logger = logger
         # L'horloge est injectable pour que la preuve mesure l'échéance sans dépendre du temps réel.
         self._horloge = horloge or time.monotonic
+        # `CRM-135` (§24.4) : la traduction d'un échec en code, et les espacements, qui vivent avec le pilote.
+        self._classer = classer
+        self._espacements = RegistreEspacements()
         self._arret = threading.Event()
         self._fil: threading.Thread | None = None
 
@@ -248,6 +369,9 @@ class PiloteVeille:
                 source=self._source,
                 relever=self._relever,
                 journal=self._journal,
+                classer=self._classer,
+                espacements=self._espacements,
+                maintenant=debut,
             )
             duree = self._horloge() - debut
             log_event(
@@ -257,6 +381,7 @@ class PiloteVeille:
                 releves=resultat.releves,
                 echecs=resultat.echecs,
                 ignores=resultat.ignores,
+                espaces=resultat.espaces,
             )
             # L'attente part d'ICI, donc de la fin du tour (§20.10.4). `Event.wait` rend `True`
             # lorsqu'un arrêt est demandé, et la boucle s'achève sans attendre l'intervalle entier.

@@ -2109,12 +2109,11 @@
 			"libelles": [
 				"/",
 				"0",
-				"0 En attente d'envoi 0 Échecs définitifs Comptes de messagerie entrante Boîte Dernière relève réussie Dernier incident Boîte de Camille Aubert Jamais relevée Boîte de Driss Lemoine Jamais relevée Boîte système du workspace Jamais relevée",
+				"0 En attente d'envoi 0 Échecs définitifs Comptes de messagerie entrante Boîte Dernière relève réussie Dernier incident Boîte de Camille Aubert 10/11/2026 11:01 Boîte de Driss Lemoine 10/11/2026 11:01 Boîte système du workspace 10/11/2026 11:01",
 				"1",
+				"10/11/2026 11:01",
 				"Affaires figées",
 				"Aide",
-				"Aucun channel",
-				"Aucun channel Les channels apparaîtront ici une fois un track ouvert.",
 				"Barre latérale",
 				"Board",
 				"Board Inbox Contacts Objectifs Coûts Pilotage Rentabilité Temps Ma journée Affaires figées Réglages",
@@ -2136,11 +2135,11 @@
 				"Fil d'Ariane",
 				"Formation",
 				"Inbox",
-				"Jamais relevée",
 				"Ma journée",
 				"Navigation principale",
 				"Notifications — 1 non lue",
 				"Objectifs",
+				"Ouvrez un track pour voir ses channels",
 				"P2Enjoy CRM",
 				"P2Enjoy CRM Replier la barre latérale Board Inbox Contacts Objectifs Coûts Pilotage Rentabilité Temps Ma journée Affaires figées Réglages TRACKS Conseil & IA Missions de conseil et de mise en œuvre de l'intelligence artificielle : diagnostic, prototype, déploiement. Studio web Conception, développement et maintenance de sites et d'applications web. Formation",
 				"P2Enjoy SAS",
@@ -2249,7 +2248,7 @@
 			"section": null,
 			"pleinePage": false,
 			"libelles": [
-				"Boîte système du workspace",
+				"Boîte de Driss Lemoine",
 				"Jamais relevée"
 			]
 		},

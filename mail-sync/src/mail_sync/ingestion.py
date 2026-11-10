@@ -11,6 +11,8 @@
 #       §23.2, INC-340, décision 816)
 # @spec CRM-111 (docs/BACKLOG.md) — tranche T6.1 : le dossier d'une affaire est `CRM/Affaires/<titre> (<id court>)`, hors de
 #       l'arborescence ; plus aucun parent n'est inscrit (docs/SPEC-rattachements.md §7, décisions 657 et 818)
+# @spec CRM-135 (docs/BACKLOG.md) — `classer_echec_releve` et l'écriture de l'échec dans `relever_compte`
+#       (docs/SPEC-mail-subsystem.md §24.3, INC-349, décisions 873 et 874)
 #
 # CE MODULE ORCHESTRE, IL NE DÉCIDE PAS. L'analyse MIME vit dans `mime_analyse`, l'antivirus dans
 # `antivirus`, l'accès à la base dans `postgrest` : ce fichier enchaîne, et c'est tout. La
@@ -32,6 +34,7 @@ import threading
 from dataclasses import dataclass
 
 from imapclient import IMAPClient
+from imapclient.exceptions import IMAPClientError
 
 from mail_sync import antivirus
 from mail_sync.dossiers import (
@@ -48,7 +51,8 @@ from mail_sync.backfill import (
     planifier_dossier,
     retenir_lot,
 )
-from mail_sync.postgrest import PostgrestClient
+from mail_sync.imap_probe import traduire_panne
+from mail_sync.postgrest import PostgrestClient, PostgrestError
 
 
 #: Borne du nombre de renommages par relève. Elle n'est pas un réglage de confort : la liste des
@@ -241,11 +245,58 @@ def _verrou_du_compte(account_id: str) -> threading.Lock:
         return _VERROUS_PAR_COMPTE.setdefault(account_id, threading.Lock())
 
 
+def classer_echec_releve(erreur: BaseException) -> str | None:
+    """Le code de l'échec d'une relève quand LA BOÎTE est en cause, `None` sinon — `CRM-135`, §24.3.
+
+    `PostgrestError` d'abord, et l'ordre compte : c'est la BASE qui a failli, et `PostgrestError` n'est pas une
+    `OSError`, mais une sous-classe future pourrait l'être. Une erreur IMAP, TLS ou réseau reçoit le code du test de
+    connexion (§13.7). Tout le reste est un défaut du service : l'écrire en `protocol_error` ferait chercher chez le
+    fournisseur une panne qui est ici.
+    """
+
+    if isinstance(erreur, PostgrestError):
+        return None
+    if isinstance(erreur, (IMAPClientError, ssl.SSLError, OSError)):
+        return traduire_panne(erreur)
+    return None
+
+
 def relever_compte(*, compte, **arguments) -> ResultatReleve:  # type: ignore[no-untyped-def]
-    """Relève un compte une fois, après la relève en cours du même compte s'il y en a une (INC-266)."""
+    """Relève un compte une fois, après la relève en cours du même compte s'il y en a une (INC-266).
+
+    *`CRM-135` (§24.3)* : un échec de la boîte s'écrit sur la ligne, puis l'exception D'ORIGINE est relancée — la veille
+    la compte, `/poll` rend `502`. L'écriture vit ici pour couvrir les deux chemins, comme la datation (§23.2).
+    """
 
     with _verrou_du_compte(compte.account_id):
-        return _relever_compte(compte=compte, **arguments)
+        try:
+            return _relever_compte(compte=compte, **arguments)
+        except Exception as erreur:
+            code = classer_echec_releve(erreur)
+            if code is not None:
+                _ecrire_echec(arguments, compte.account_id, code)
+            raise
+
+
+def _ecrire_echec(arguments: dict, account_id: str, code: str) -> None:  # type: ignore[type-arg]
+    """Écrit l'échec ; une écriture qui échoue est DITE, et n'efface pas l'exception d'origine (§24.3).
+
+    L'`except Exception` est large parce que l'exception d'origine doit remonter quoi qu'il arrive ici : laisser
+    l'écriture lever la remplacerait, et le journal de la veille nommerait la panne de l'écriture au lieu de celle de
+    la boîte.
+    """
+
+    journal = arguments.get("journal") or (lambda _evenement, **_details: None)
+    try:
+        arguments["client_base"].record_poll_failure(account_id, code)
+    except Exception as ecriture:  # noqa: BLE001
+        journal(
+            "releve_echec_non_ecrit",
+            account_id=account_id,
+            error=code,
+            panne=type(ecriture).__name__,
+            postgrest_status=getattr(ecriture, "status_code", None),
+        )
 
 
 def _relever_compte(
