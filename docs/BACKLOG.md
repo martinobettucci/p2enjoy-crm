@@ -19363,8 +19363,14 @@ qu'un de ses contacts en fait partie, et pour les deux si ses contacts viennent 
 **Spécification** : écrite le 2026-11-10, avant le code (décisions 907 et 908) — `docs/SPEC-recettes.md` §12 (le lien,
 les grandeurs, `organization_revenue_totals`, la liste, la fiche, le découpage en cinq tranches T1 à T5, les preuves),
 `docs/DESIGN_SYSTEM.md` §5.97 (la barre, `aria-hidden`, le texte portant tout), `docs/SPEC-mcp.md` §9.2 *vicies*
-(`crm_organization_revenues`), `docs/SCHEMA.md` « Migration de `CRM-146` », `docs/SPEC-seed.md` §41, le manuel avec T3 et
+(`crm_organization_revenues`), `docs/SCHEMA.md` « Migration `0177` », `docs/SPEC-seed.md` §41, le manuel avec T3 et
 T4.
+**Avancement** (session a8) :
+- **T1 faite le 2026-11-10, vérifiée en développement** : migration `0177` (`organization_revenue_totals`), jouée à la main
+  hors du registre ; pgTAP `0166` **18/18**, rouge contre trois mutations (corbeille comptée, affaire comptée deux fois,
+  partage par une même organisation) ; suite pgTAP complète **154 fichiers, 5 205 assertions**. Poussée en avance de son
+  unité (décision 904) : rien ne l'appelle encore ;
+- reste : T2 (webapp, design system, unitaires, API), T3 (seed, E2E, captures, manuel), T4 (connecteur), T5 (production).
 **DoD** : pgTAP de l'agrégat (droits : une affaire illisible ne compte pas ; plusieurs devises) ; unitaires ; API avec refus de
 droits ; E2E souris et clavier (fiche, liste) ; outil du connecteur et `verify-mcp.sh` ; seed (une organisation avec prévu et
 réel dans deux devises, une sans recette) ; captures aux quatre paliers ; manuel.

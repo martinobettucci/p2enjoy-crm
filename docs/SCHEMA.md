@@ -2526,10 +2526,12 @@ elle.
 attente sont perdus : les lister avant. **Avec l'image `mcp` d'avant `CRM-128` T3** : sans la garde, son `crm_mail_send`
 enverrait de nouveau directement.
 
-### Migration de `CRM-146` — le prévisionnel et le réel d'une organisation (numéro pris au push ; spécifiée le 2026-11-10, à écrire)
+### Migration `0177` — le prévisionnel et le réel d'une organisation (`CRM-146` T1, décisions 900, 903 et 908 ; livrée en développement le 2026-11-10)
+
+*Numérotée `0177` au push, premier numéro libre sur `main` ; son pgTAP prend le `0166`.*
 
 `docs/SPEC-recettes.md` §12.3, décisions 900, 903 et 908. **Une fonction, aucune table, aucune colonne, aucune donnée,
-aucune politique.** `public.organization_revenue_totals(p_organization_id uuid default null) returns table
+aucune politique.** Ré-exécutable : la fonction est retirée avant d'être posée. `public.organization_revenue_totals(p_organization_id uuid default null) returns table
 (organization_id uuid, currency text, estimated_total numeric, actual_total numeric, cards integer, shared_cards integer,
 revenue_lines integer, lines_without_actual integer)`, `sql`, `stable`, `security invoker`, `search_path` vidé ; `execute`
 à `authenticated` et `service_role`, révoqué à `public` et `anon`.

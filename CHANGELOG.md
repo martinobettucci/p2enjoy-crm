@@ -13,6 +13,11 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-146` T1 — le prévisionnel et le réel d'une organisation, en base (décisions 900, 903 et 908)
+
+- **La base calcule, sous vos droits, ce qu'une organisation a prévu et encaissé** : `organization_revenue_totals`, une ligne par organisation et par devise (migration 177). Une affaire compte pour une organisation dès qu'un de ses contacts rattachés en fait partie ; une affaire illisible ne compte pas. Rien ne l'affiche encore : la fiche, la liste et le connecteur viennent avec les tranches suivantes.
+- Déploiement : `docs/PROD_MIGRATIONS.md`, la migration 177 seule, hors du lot annoncé.
+
 #### `CRM-144` — l'outbox : annuler un envoi en file, réessayer un échec (décisions 898 et 906) — tranche T1, la base
 
 - **Annuler et réessayer, contrôlés par la base** : `cancel_outbound_email` annule un envoi encore en file, `retry_outbound_email` remet en file un envoi échoué ; seuls l'auteur de l'envoi et les administrateurs de l'espace qui écrivent l'affaire le peuvent (migration 176). Un envoi parti, en cours, ou dont un premier essai a été interrompu (le message a pu partir) ne s'annule pas, et chaque refus est nommé.

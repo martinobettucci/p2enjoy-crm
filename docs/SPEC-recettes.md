@@ -461,7 +461,7 @@ temps est **non valorisé**, et des lignes non soldées pour l'onglet « À sais
 
 *Écrit le 2026-11-10, avant le code, sur les décisions 900, 903 et 907, et les choix de rédaction consignés en décision
 908 (`docs/JOURNAL.md`). Unité de backlog : `CRM-146` (`docs/BACKLOG.md`). Règles visuelles : `docs/DESIGN_SYSTEM.md`
-§5.97. Schéma : `docs/SCHEMA.md`, « Migration de `CRM-146` ». Connecteur : `docs/SPEC-mcp.md` §9.2 *vicies*. Jeu de
+§5.97. Schéma : `docs/SCHEMA.md`, « Migration `0177` ». Connecteur : `docs/SPEC-mcp.md` §9.2 *vicies*. Jeu de
 démonstration : `docs/SPEC-seed.md` §41.*
 
 Une organisation montre, **par devise**, ce qui est prévu et ce qui a été réellement saisi en recettes dans ses
@@ -595,7 +595,7 @@ Chaque tranche est poussée une fois vérifiée (décision 904).
 
 | Tranche | Contenu |
 |---|---|
-| **T1** | Migration (numéro pris au push) : `organization_revenue_totals` ; pgTAP ; contrat de déploiement |
+| **T1** | Migration `0177` : `organization_revenue_totals` ; pgTAP `0166` ; contrat de déploiement — *faite le 2026-11-10* |
 | **T2** | Webapp : la colonne de la liste, le bloc de la fiche, `docs/DESIGN_SYSTEM.md` §5.97 ; unitaires ; API par jetons réels |
 | **T3** | Seed §41 ; E2E souris et clavier ; captures aux quatre paliers ; manuel (le carnet) |
 | **T4** | Connecteur : `crm_organization_revenues` ; pytest unitaires et intégration ; `verify-mcp.sh` ; manuel §33 |

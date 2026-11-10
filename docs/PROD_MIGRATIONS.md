@@ -923,7 +923,25 @@ dépôt ; `select count(*) from mail_outbox o join mail_outbound_identities i on
 **Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0176` » ; reposer `reserver_envois` de sa définition
 précédente rétablit INC-354. Aucun envoi n'est perdu.
 
+### 2.40 `CRM-146` T1, décisions 900, 903 et 908 — le prévisionnel et le réel d'une organisation (À LIVRER : migration 177 ; **hors du lot annoncé, en avance de son unité**)
+
+`docs/SPEC-recettes.md` §12.3 ; `docs/SCHEMA.md` « Migration `0177` ». Une fonction `security invoker`, aucune table,
+aucune colonne, aucune donnée, sans verrou notable. **Rien ne l'appelle encore** : la webapp (T2) et l'outil du
+connecteur (T4) viendront avec leurs tranches, et ce paragraphe dira alors l'ordre. Elle peut partir seule, ou attendre
+l'unité entière : la session de livraison décide du lot (décision 904). Aucune variable, aucun secret.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 177 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate`, instantané de VM pris |
+
+**Vérification après la fenêtre**, en lecture seule : le registre gagne une ligne, l'empreinte de la 177 est égale au
+dépôt ; `select pg_get_function_identity_arguments('public.organization_revenue_totals'::regproc)` rend
+`p_organization_id uuid`. **Retour arrière** : `drop function public.organization_revenue_totals(uuid);`. Aucune donnée
+n'est touchée.
+
 ## 3. Migrations en attente
+
+**La 177** (`CRM-146` T1, décisions 900, 903 et 908), *en attente, hors du lot annoncé* : `organization_revenue_totals`, le prévu et le réel d'une organisation par devise (`docs/SCHEMA.md` « Migration `0177` »). Une fonction, aucune donnée, sans verrou notable. **En avance de son unité** : rien ne l'appelle encore (§2.40). Aucun geste préalable du responsable.
 
 **La 176** (`CRM-144`, décisions 898 et 906), *en attente, hors du lot annoncé* : annuler et réessayer un envoi,
 l'adresse d'expédition gardée, et la correction d'INC-354 (`docs/SCHEMA.md` « Migration `0176` »). **Seule** pour T1
