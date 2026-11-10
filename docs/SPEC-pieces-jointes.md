@@ -289,6 +289,13 @@ disponibles » de la décision 889, sont dépassés. La décision ne se réécri
   `database.clamav.net` en HTTPS. La sortie SMTP y est fermée (INC-349), et la sortie HTTPS n'est pas mesurée. Sans
   signatures, `clamd` ne démarre pas, et chaque pièce reste `skipped` : le produit échoue fermé, comme avant. Le contrat
   de déploiement prévoit la vérification et le recours, un miroir ou des fichiers CVD copiés.
+  *Mesuré le 2026-11-10 en lecture seule par la session de livraison, depuis la cellule* : `database.clamav.net` répond en
+  HTTPS en 27 ms, le réseau sort et le TLS passe. Mais un `curl` ordinaire reçoit `403` : le réseau de diffusion de ClamAV
+  filtre les clients qui ne sont pas `freshclam`, et ce filtre ne se contourne pas. **La seule preuve probante est
+  `freshclam` lui-même** : le contrat fait lancer, dans la fenêtre et avant le démarrage du service, l'image `clamav`
+  épinglée dans un **conteneur jetable** de la cellule, `freshclam` puis la présence de `daily.cvd` ou des `.cld`. Si
+  `freshclam` est refusé, le recours est un miroir privé ou des définitions déposées avec l'image, à arbitrer par le
+  responsable.
 - **Le disque** : l'image et les signatures pèsent de l'ordre de 650 Mo. Le contrat exige `df -h /` avant la livraison.
 - `docs/SPEC-deploiement-spark.md` §3.4 et §8, `docs/spark-notes/CONTRIBUTORS.md` et `README.md` §11 sont révisés avec le
   code.
