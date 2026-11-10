@@ -40324,7 +40324,9 @@ Le compte rendu de l'unité dit que la lecture n'était pas intégrale. Le diff 
 avant le commit.
 **Portée** : `CRM-144` seulement ; la règle de `CLAUDE.md` n'est pas changée.
 
-### décision 910 — `CRM-147` : où est la clé, constaté puis indiqué par le responsable
+### décision 911 — `CRM-147` : où est la clé, constaté puis indiqué par le responsable
+
+*Renumérotée de 910 en 911 : la décision 910 de `CRM-144` T3 a été poussée la première.*
 
 *2026-11-10, session interactive 4891a451 (p2enjoy-crm-32) ; complète la décision 909.*
 **Constaté en lecture seule sous `spark-docker`** (le compte que la décision 909 désigne) : `git ls-remote` vers le dépôt
