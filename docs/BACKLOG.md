@@ -18930,8 +18930,15 @@ d'étape, cases existantes ; au catalogue de `docs/SPEC-mcp.md` §9.2, dans une 
       travers le Caddy de la cellule (`test_integration_workflows.py` : écrite puis relue sous l'administratrice, refusée
       par le CRM au business developer). Manuel §33 (famille « Workflows »). Sous-ensemble de ce périmètre. **Image `mcp`
       modifiée.**
-- [ ] **T4 — seed, manuel, contrat** : description de « Prospection », surcharge de « Négociation » avant la copie ;
+- [~] **T4 — seed, manuel, contrat** : description de « Prospection », surcharge de « Négociation » avant la copie ;
       `docs/SPEC-seed.md` ; manuel et images ; `docs/PROD_MIGRATIONS.md`.
+      *Seed vérifié en développement le 2026-11-10* : `supabase/seed/apply-seed.sh` (§39, avant la copie ; relecture de la
+      copie) ; deux `./resetMe.sh` (accord des sessions a8, 75 et ee) : l'empreinte du workflow par défaut `038a7730…` sur
+      les deux, inchangée par un second passage, la copie non divergente ; `0037` révisée sur cette valeur, `0163` publie sa
+      propre version de base (le seed photographie désormais la surcharge) ; 57 suites pgTAP workflows et audit sans
+      échec ; `verify-seed.sh` 52 ; E2E `description-etapes` (comptes du seed), `infobulle-description` et `board` 39/39.
+      **Reste** : les images du manuel (§3.6, §18, §19) sur ces données ; le contrat (rien de neuf : le seed n'existe qu'en
+      développement).
 **DoD** : migration et pgTAP (surcharge, repli sur le nœud, droits) ; unitaires ; API ; E2E souris et clavier ; outils du
 connecteur et `verify-mcp.sh` ; seed (une description de nœud, une surcharge) ; captures aux quatre paliers ; manuel ;
 contrat de déploiement.

@@ -1,3 +1,4 @@
+-- @verifies CRM-133 (docs/BACKLOG.md) — tranche T4 : indépendante des descriptions que pose le seed (docs/SPEC-seed.md §39)
 -- @verifies CRM-133 (docs/BACKLOG.md) — tranche T1 : la description d'un nœud du catalogue et sa surcharge par l'étape —
 --           contraintes, repli sur le nœud, document de composition (la clé seulement si posée, l'empreinte d'avant gardée),
 --           copie, comparaisons, restauration, suggestion de l'assistant acceptée, audit nommé, droits d'écriture et de
@@ -30,6 +31,12 @@ $$;
 -- Les descriptions du seed (`docs/SPEC-seed.md`) sont retirées : chaque preuve part de deux colonnes nulles.
 update public.workflow_steps set description_override = null where workspace_id = '5eed0000-0000-4000-8000-000000000001';
 update public.workflow_nodes_catalog set description = null where workspace_id = '5eed0000-0000-4000-8000-000000000001';
+-- RÉVISÉ PAR `CRM-133` T4 (docs/SPEC-seed.md §39) : le seed pose la surcharge de « Négociation » AVANT de publier la
+-- version 1, qui la photographie. Les preuves 11 à 14 comparent et restaurent une version SANS la clé : la preuve publie
+-- donc sa propre version de base, une fois les descriptions du seed retirées, au lieu d'emprunter celle du seed.
+select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
+select public.publish_workflow_version('5eed0000-0000-4000-8000-000000000051', 'preuve CRM-133 — base sans surcharge');
+reset role;
 
 -- ------------------------------------------------------------------------------------------------------------------
 -- Le modèle (§7 sexies.1)

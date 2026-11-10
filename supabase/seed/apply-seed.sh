@@ -1411,6 +1411,32 @@ fi
 info "Source : ${#CHAMPS[@]} champs, ${#REGLES[@]} règles, 1 exigence et le SIRET exigé vers Signature — prête à copier"
 
 
+# CRM-133 T4 (docs/SPEC-seed.md §39, docs/SPEC-workflow-engine.md §7 sexies.6) : la description du nœud « Prospection » et
+# la surcharge de description de l'étape « Négociation » du workflow par défaut. POSÉES AVANT LA COPIE (section 7), comme
+# l'exigence du SIRET (décision 855) : la composition photographie la surcharge, et une surcharge écrite après la copie
+# ferait diverger la source au rejeu. Sous la clé de service, par la même mise à jour que les écrans de Réglages
+# (§39.2) ; chaque écriture n'a lieu que si la colonne diffère du texte attendu (§39.3) : le seed converge en deux passages.
+# Le nœud « Négociation » n'en porte AUCUNE : l'étape démontre une surcharge sans description de nœud, « Prospection » une
+# description de nœud sans surcharge (§39.1).
+NOEUD_PROSPECTION_DESC='5eed0000-0000-4000-8000-000000000041'
+ETAPE_NEGOCIATION_DESC='5eed0000-0000-4000-8000-000000000063'
+DESCRIPTION_PROSPECTION='Premier contact établi : le besoin du client reste à qualifier.'
+DESCRIPTION_NEGOCIATION='Proposition chiffrée envoyée : le client en discute les termes et le budget.'
+code=$(api GET "/rest/v1/workflow_nodes_catalog?select=description&id=eq.$NOEUD_PROSPECTION_DESC")
+attendu "$code" "lecture de la description du nœud « Prospection »" 200
+if [ "$(jq -r '.[0].description // ""' "$CORPS")" != "$DESCRIPTION_PROSPECTION" ]; then
+	code=$(api PATCH "/rest/v1/workflow_nodes_catalog?id=eq.$NOEUD_PROSPECTION_DESC" -H 'Prefer: return=minimal' \
+		-d "$(jq -nc --arg d "$DESCRIPTION_PROSPECTION" '{description: $d}')")
+	attendu "$code" "description du nœud « Prospection »" 204
+fi
+code=$(api GET "/rest/v1/workflow_steps?select=description_override&id=eq.$ETAPE_NEGOCIATION_DESC")
+attendu "$code" "lecture de la surcharge de description de « Négociation »" 200
+if [ "$(jq -r '.[0].description_override // ""' "$CORPS")" != "$DESCRIPTION_NEGOCIATION" ]; then
+	code=$(api PATCH "/rest/v1/workflow_steps?id=eq.$ETAPE_NEGOCIATION_DESC" -H 'Prefer: return=minimal' \
+		-d "$(jq -nc --arg d "$DESCRIPTION_NEGOCIATION" '{description_override: $d}')")
+	attendu "$code" "surcharge de description de l'étape « Négociation »" 204
+fi
+
 # --- 7. Copie vers un track — docs/SPEC-workflow-engine.md §4.10 --------------------------------
 # Cette section n'écrit **aucune** ligne directement : elle appelle `copy_workflow_to_track`, la
 # véritable fonction du produit, par la véritable route — l'appel RPC de l'API REST. `CLAUDE.md` §8
@@ -1682,6 +1708,15 @@ code=$(api PATCH "/rest/v1/workflows?id=eq.$WF_COPIE_ID" \
 attendu "$code" "convergence du nom, du défaut et de l'archivage de la copie" 200
 
 info "prospection suit $WF_COPIE_NOM — les cinq autres channels suivent le workflow global"
+
+# CRM-133 T4 (docs/SPEC-seed.md §39.3) : la copie porte la surcharge de « Négociation », posée avant elle. Une base seedée
+# avant CRM-133 a une copie faite SANS la surcharge : le seed ne la réécrit pas (la copie diverge alors de sa source) ; il
+# le dit, et `./resetMe.sh` la reconstruit — comme le SIRET d'avant la décision 895.
+code=$(api GET "/rest/v1/workflow_steps?workflow_id=eq.$WF_COPIE_ID&select=description_override,workflow_nodes_catalog(key)")
+attendu "$code" "lecture de la surcharge de description de la copie" 200
+[ "$(jq -r '.[] | select(.workflow_nodes_catalog.key == "negociation") | .description_override // ""' "$CORPS")" = "$DESCRIPTION_NEGOCIATION" ] \
+	|| warn "l'étape « Négociation » de la copie « $WF_COPIE_NOM » ne porte pas la surcharge de description : base seedée avant CRM-133 — la copie diverge de sa source ; ./resetMe.sh la reconstruit"
+info "Descriptions d'étape : le nœud « Prospection » décrit, l'étape « Négociation » surchargée, la copie aussi — CRM-133, docs/SPEC-seed.md §39"
 
 # --- 8. Vérification du formulaire réellement copié — CRM-018, décision 293 --------------------
 # Cette section ne fabrique aucune composition dérivée. Elle constate que le vrai geste de copie a

@@ -1,4 +1,5 @@
 -- @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : indépendante de l'exigence `siret` que pose le seed (docs/SPEC-seed.md §38)
+-- @verifies CRM-133 (docs/BACKLOG.md) — tranche T4 : l'empreinte du workflow par défaut photographie la surcharge de description du seed
 -- @verifies CRM-112 (docs/BACKLOG.md) — tranche INC-353 : l'empreinte du workflow par défaut stable d'une base neuve à l'autre (docs/SPEC-seed.md §38.2, décision 895)
 -- @verifies CRM-078 (docs/BACKLOG.md) — versionnement des workflows, première tranche : versions
 --            immuables et publication
@@ -84,7 +85,11 @@ select is(
 	-- l'identifiant du champ `siret`, aléatoire jusque-là, d'où une empreinte différente à chaque base neuve. Le seed le crée
 	-- désormais sous l'identifiant stable `5eed0000-0000-4000-8000-00000000cf01`. Valeur MESURÉE sur deux bases recréées
 	-- par `./resetMe.sh`, égale sur les deux et inchangée par un second passage du seed (mécanisme de la décision 51).
-	'1fae8349ea5542ab26d79966801aac7cd7470f15ccc0808a2a435bfda0298345',
+	-- RÉVISÉE PAR `CRM-133` T4 (docs/SPEC-seed.md §39, docs/SCHEMA.md « Migration `0174` »), LE 2026-11-10 : le seed surcharge
+	-- la description de l'étape « Négociation », et la composition photographie une surcharge POSÉE (le patron de la `0157`).
+	-- L'empreinte devait donc bouger ; celle qui n'aurait pas bougé aurait dit que la composition ne photographie pas la
+	-- surcharge. Valeur MESURÉE sur deux bases recréées, égale sur les deux, inchangée par un second passage du seed.
+	'038a773025841802bd608eb91cd6a9b2a8f1b70d4f0bbddb9f721f3dca808cf3',
 	'2 — empreinte du workflow par défaut, révisée par la composition et non par l''extraction');
 
 -- RÉVISÉE PAR L'ARBITRAGE DE LA DÉCISION 430, ET NON CONTOURNÉE (INC-122). Cette assertion citait

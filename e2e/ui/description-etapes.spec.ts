@@ -2,6 +2,8 @@
 //           Réglages ▸ Catalogue de nœuds et l'éditeur de workflows, lues sur le board et sur la fiche, à la souris et au
 //           clavier ; vidées, elles sont retirées (docs/SPEC-workflow-engine.md §7 sexies.1, §7 sexies.4)
 // @verifies docs/DESIGN_SYSTEM.md §5.15, §5.18, §5.58 (révisé : le bouton d'information d'une étape) ; CLAUDE.md §16
+// @verifies CRM-133 (docs/BACKLOG.md) — tranche T4 : le seed décrit le nœud « Prospection » et surcharge l'étape « Négociation »
+//           (docs/SPEC-seed.md §39.1), visibles sur le board
 //
 // LES DONNÉES DE LA PREUVE NE SONT PAS CELLES DU SEED DE `CRM-133` (T4, docs/SPEC-seed.md §39) : celui-ci décrira le nœud
 // « Prospection » et surchargera l'étape « Négociation ». La preuve écrit, par les écrans, la description du nœud
@@ -20,6 +22,9 @@ const BOARD = '/tracks/conseil-ia/grands-comptes'
 const AFFAIRE = 'Plateforme de billetterie — Musée des Confluences'
 const DESCRIPTION_NOEUD = 'Le client a été relancé : on attend son retour sur la proposition.'
 const DESCRIPTION_ETAPE = 'Le contrat est en relecture chez le client.\nSignature attendue sous huit jours.'
+// Le seed (docs/SPEC-seed.md §39.1) : le nœud « Prospection » décrit, l'étape « Négociation » surchargée.
+const SEED_PROSPECTION = 'Premier contact établi : le besoin du client reste à qualifier.'
+const SEED_NEGOCIATION = 'Proposition chiffrée envoyée : le client en discute les termes et le budget.'
 
 const bulle = (page: Page) => page.getByTestId('infobulle')
 
@@ -103,10 +108,15 @@ test.describe('la description d’une étape (CRM-133, §7 sexies)', () => {
 	test('à la souris : écrite par Réglages, lue sur le board et sur la fiche, vidée et retirée', async ({ page, request }) => {
 		await ecrireParLesEcrans(page, request)
 
-		// Le board : un bouton sur « Relance » (le nœud) et un sur « Signature » (la surcharge), aucun ailleurs.
+		// Le board : les deux boutons du seed — « Prospection » (le nœud), « Négociation » (la surcharge) —, plus ceux de la
+		// preuve sur « Relance » (le nœud) et « Signature » (la surcharge) ; aucun sur les trois autres colonnes.
 		await page.goto(BOARD)
 		const boutons = page.getByTestId('description-colonne')
-		await expect(boutons).toHaveCount(2)
+		await expect(boutons).toHaveCount(4)
+		await page.getByRole('button', { name: 'Description de l’étape Négociation' }).hover()
+		await expect(bulle(page)).toContainText(SEED_NEGOCIATION)
+		await page.getByRole('button', { name: 'Description de l’étape Prospection' }).hover()
+		await expect(bulle(page)).toContainText(SEED_PROSPECTION)
 		await page.getByRole('button', { name: 'Description de l’étape Relance' }).hover()
 		await expect(bulle(page)).toContainText('Relance')
 		await expect(bulle(page)).toContainText(DESCRIPTION_NOEUD)
@@ -136,7 +146,7 @@ test.describe('la description d’une étape (CRM-133, §7 sexies)', () => {
 		await page.getByTestId('valider-noeud').click()
 		await expect.poll(async () => (await lireEnBase(request)).noeud).toBeNull()
 		await page.goto(BOARD)
-		await expect(page.getByTestId('description-colonne')).toHaveCount(1)
+		await expect(page.getByTestId('description-colonne')).toHaveCount(3)
 		await expect(page.getByRole('button', { name: 'Description de l’étape Relance' })).toHaveCount(0)
 	})
 
