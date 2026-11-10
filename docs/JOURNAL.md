@@ -40304,3 +40304,22 @@ commande git qui la met en œuvre sans l'afficher (`git ls-remote`), sous `spark
 567 (« build sur le poste, la cellule n'a pas Node ») est révisée pour la livraison par condensé : le coût mémoire du build
 pendant la livraison est accepté et sera borné par la spécification.
 **MCP** : non (décision 905).
+
+### décision 910 — `CRM-144` T3 : le design system lu par ses sections générales et celles de l'inbox
+
+*2026-11-10, session interactive d5b44a2d (p2enjoy-crm-c2), arbitrage du responsable (`AskUserQuestion`), avant l'écran
+de l'outbox (`docs/SPEC-mail-subsystem.md` §28.6).*
+**Le problème** : celui des décisions 897, 901 et 907. `docs/DESIGN_SYSTEM.md` compte 8 084 lignes et ne tient pas en une
+fois dans la mémoire de travail de l'agent ; la décision 907 ne valait que pour `CRM-146`.
+**Pistes présentées** : les sections ciblées, comme la 901 et la 907 ; la lecture intégrale, par tranches, sur plusieurs
+reprises de contexte.
+**Décision du responsable** : **les sections ciblées**, en entier :
+- §1 à §4 et §6 à §12 ;
+- les sections de l'inbox : §5.4 à §5.4 sexies, §5.90 (les mails préparés), §5.94 (classer un mail), §5.95 (la pièce non
+  analysée), §5.96 (« Seulement moi ») ;
+- §5.5 (les boutons), §5.8 (les états), §5.11 (les familles du fil), §5.13 (la confirmation dans le flux), §5.59 (la
+  commande refusée par une capacité de la base) ;
+- les sections qu'elles citent.
+Le compte rendu de l'unité dit que la lecture n'était pas intégrale. Le diff d'interface reste vérifié contre ces sections
+avant le commit.
+**Portée** : `CRM-144` seulement ; la règle de `CLAUDE.md` n'est pas changée.
