@@ -1,4 +1,5 @@
 -- @verifies CRM-112 (docs/BACKLOG.md) — tranche T8 : indépendante de l'exigence `siret` que pose le seed (docs/SPEC-seed.md §38)
+-- @verifies CRM-112 (docs/BACKLOG.md) — tranche INC-353 : l'empreinte du workflow par défaut stable d'une base neuve à l'autre (docs/SPEC-seed.md §38.2, décision 895)
 -- @verifies CRM-078 (docs/BACKLOG.md) — versionnement des workflows, première tranche : versions
 --            immuables et publication
 -- @verifies docs/SPEC-workflow-engine.md §7 ter.2 (empreinte inchangée par l'extraction),
@@ -79,7 +80,11 @@ select has_function('app', 'workflow_composition_document', array['uuid'],
 select is(
 	app.workflow_composition_fingerprint('5eed0000-0000-4000-8000-000000000051'),
 	-- RÉVISÉE PAR `CRM-112` T8 (docs/SPEC-seed.md §38, décision 855) : la composition du seed porte l'exigence `siret`.
-	'7831734d43870046f376d65c0236e20fa39985d92ec981366043c2d1ff74d3c3',
+	-- RÉVISÉE PAR `CRM-112`, TRANCHE INC-353 (docs/SPEC-seed.md §38.2, décision 895), LE 2026-11-10 : l'exigence photographie
+	-- l'identifiant du champ `siret`, aléatoire jusque-là, d'où une empreinte différente à chaque base neuve. Le seed le crée
+	-- désormais sous l'identifiant stable `5eed0000-0000-4000-8000-00000000cf01`. Valeur MESURÉE sur deux bases recréées
+	-- par `./resetMe.sh`, égale sur les deux et inchangée par un second passage du seed (mécanisme de la décision 51).
+	'1fae8349ea5542ab26d79966801aac7cd7470f15ccc0808a2a435bfda0298345',
 	'2 — empreinte du workflow par défaut, révisée par la composition et non par l''extraction');
 
 -- RÉVISÉE PAR L'ARBITRAGE DE LA DÉCISION 430, ET NON CONTOURNÉE (INC-122). Cette assertion citait

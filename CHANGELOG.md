@@ -13,7 +13,12 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+#### `CRM-112`, tranche INC-353 — le champ « SIRET » du jeu de démonstration garde le même identifiant (décision 895)
+
+- **Développement seulement.** Le seed crée le champ de l'affaire `siret` sous un identifiant fixe, par la clé de service :
+  l'empreinte du workflow par défaut, qui l'inclut, est désormais la même d'une base neuve à l'autre, et la preuve pgTAP
+  `0037` qui la fige est de nouveau verte. Une base seedée avant ce changement le signale ; `./resetMe.sh` la reconstruit.
+  Rien à livrer.
 
 ## [Publié]
 

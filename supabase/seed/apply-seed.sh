@@ -1378,18 +1378,26 @@ attendu "$code" "inventaire exact des exigences source avant copie" 200
 JETON_ADMIN_6B=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
 [ -n "$JETON_ADMIN_6B" ] || die "connexion de l'administratrice seedée impossible : le champ de l'affaire « siret » se déclare
         sous son jeton (docs/SPEC-seed.md §38.2)."
+# INC-353 (décision 895, arbitrage du responsable) : `siret` est le seul champ de l'affaire créé SOUS LA CLÉ DE SERVICE,
+# avec un IDENTIFIANT STABLE. Il est exigé par le workflow par défaut, donc photographié dans sa composition : un
+# identifiant aléatoire changeait l'empreinte de ce workflow à chaque base neuve (`0037_versionnement_workflows`, preuve 2).
+# Le jeton de Camille ne peut pas choisir un identifiant (`grant insert` par colonne, sans `id`, migration 0152) ; aucun
+# droit n'est changé pour cela. Exception nommée à docs/SPEC-seed.md §38.2.
+CHAMP_SIRET_ATTENDU='5eed0000-0000-4000-8000-00000000cf01'
 code=$(api GET "/rest/v1/card_common_fields?select=id&workspace_id=eq.$WS_ID&key=eq.siret")
 attendu "$code" "lecture du champ de l'affaire « siret »" 200
 CHAMP_SIRET=$(jq -r '.[0].id // empty' "$CORPS")
 if [ -z "$CHAMP_SIRET" ]; then
-	code=$(curl -s -o "$CORPS" -w '%{http_code}' -X POST "$API/rest/v1/card_common_fields?select=id" \
-		-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_ADMIN_6B" -H 'Content-Type: application/json' \
-		-H 'Prefer: return=representation' \
-		-d "$(jq -nc --arg w "$WS_ID" '{workspace_id: $w, key: "siret", label: "SIRET", type: "text", options: {},
-			help_text: "Quatorze chiffres, sans espace", is_listed: true, position: 1}')")
+	code=$(api POST "/rest/v1/card_common_fields?select=id" -H 'Prefer: return=representation' \
+		-d "$(jq -nc --arg w "$WS_ID" --arg i "$CHAMP_SIRET_ATTENDU" '{id: $i, workspace_id: $w, key: "siret", label: "SIRET",
+			type: "text", options: {}, help_text: "Quatorze chiffres, sans espace", is_listed: true, position: 1}')")
 	attendu "$code" "déclaration du champ de l'affaire « siret »" 201
 	CHAMP_SIRET=$(jq -r '.[0].id' "$CORPS")
 fi
+# Une base seedée avant la décision 895 porte un `siret` d'identifiant aléatoire : le seed ne le réécrit pas (ses valeurs
+# et son exigence y sont attachées) ; il le dit, et `./resetMe.sh` reconstruit la base.
+[ "$CHAMP_SIRET" = "$CHAMP_SIRET_ATTENDU" ] \
+	|| warn "le champ « siret » porte l'identifiant $CHAMP_SIRET, et non $CHAMP_SIRET_ATTENDU : base seedée avant la décision 895 — l'empreinte du workflow par défaut n'est pas celle de pgTAP 0037 ; ./resetMe.sh la reconstruit"
 TRANSITION_SIGNATURE='5eed0000-0000-4000-8000-000000000073'
 code=$(api GET "/rest/v1/workflow_transition_required_common_fields?select=transition_id&transition_id=eq.$TRANSITION_SIGNATURE&common_field_id=eq.$CHAMP_SIRET")
 attendu "$code" "lecture de l'exigence du SIRET" 200

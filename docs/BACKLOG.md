@@ -17801,11 +17801,17 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
       API 23/23, ui 36/36 et 37/37, manuel 09a, 18, 23-33, 27-29, `verify-manual` 168 ; unitaires.
       **Reste** : la campagne complète, la livraison (le seed n'existe qu'en dev ; la webapp, le manuel et ses images), et le
       constat du responsable.
-- [@] **Tranche INC-353** — l'identifiant stable du champ `siret` dans le seed, pour que l'empreinte du workflow par défaut
+- [x] **Tranche INC-353** — l'identifiant stable du champ `siret` dans le seed, pour que l'empreinte du workflow par défaut
       ne change plus à chaque base neuve ; la preuve 2 de `supabase/tests/0037_versionnement_workflows.test.sql` révisée sur
       la valeur mesurée (`docs/SPEC-seed.md` §38.2, révisé le 2026-11-10 ; décision 895 : identifiant
       `5eed0000-0000-4000-8000-00000000cf01`, créé sous la clé de service). Confiée par la session de livraison.
-      *Prise en charge : session interactive 4891a451 (p2enjoy-crm-32, ex-2f) depuis 2026-11-10 13:02 UTC — état avant : [ ]*
+      *Vérifiée en développement le 2026-11-10* : `supabase/seed/apply-seed.sh` ; deux `./resetMe.sh` successifs (accord
+      des sessions a8 et 75), le champ `siret` à `…cf01` sur les deux, l'empreinte du workflow par défaut `1fae8349…` sur
+      les deux, et inchangée par un second passage du seed (convergent, sans avertissement). `0037` 31/31, preuve 2 révisée
+      sur cette valeur ; pgTAP des champs de l'affaire (`0133`, `0141`, `0144` à `0146`, `0148` à `0150`, `0152` à
+      `0158`) sans échec ; `e2e/ui/seed-champs-communs.spec.ts` et `fiche-champs-communs.spec.ts` 14/14 ;
+      `scripts/verify-seed.sh` 52 contrôles. Sous-ensemble de ce périmètre seulement (décision 830). **Le seed n'existe
+      qu'en développement : rien à livrer, aucune migration.** INC-353 close.
 - [P] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de
       (**Livrée le 2026-11-05**, décision 852, révision `b9fa4d11`, image `mcp` reconstruite ; reste le constat du responsable.)
       `crm_card_list` ; `docs/SPEC-mcp.md` §9.2.
