@@ -1,3 +1,6 @@
+// @spec CRM-136 (docs/BACKLOG.md) — tranche T3 : l'historique au formulaire, la commande et le panneau « Dossiers relevés »,
+//       son ouverture d'elle-même après la création d'une boîte (docs/SPEC-mail-subsystem.md §25.4, §25.5 ;
+//       docs/DESIGN_SYSTEM.md §5.99)
 // @spec CRM-088 (docs/BACKLOG.md) — écran de configuration des comptes entrants IMAP
 // @spec docs/SPEC-mail-subsystem.md §21.2 (l'adresse), §21.3 (ce qu'il lit), §21.4 (le
 //       formulaire), §21.5 (le mot de passe), §21.7 (les refus traduits), §21.8 (les états),
@@ -19,7 +22,8 @@
 //       docs/DESIGN_SYSTEM.md §5.93
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { PencilLine, Plus } from 'lucide-react'
+import { FolderTree, PencilLine, Plus } from 'lucide-react'
+import { PanneauDossiersReleves } from './DossiersReleves'
 import { Badge, type TonBadge } from '../components/ui/Badge'
 import { EtatErreur, EtatVide } from '../components/ui/States'
 import { LiveRegion } from '../components/ui/LiveRegion'
@@ -82,6 +86,8 @@ const REFUS: Readonly<Record<Exclude<IssueEnregistrement, 'enregistre'>, CleTrad
 	'securite-invalide': 'admin.mailAccounts.refusal.security',
 	'identifiant-invalide': 'admin.mailAccounts.refusal.username',
 	'proprietaire-non-membre': 'admin.mailAccounts.refusal.owner',
+	'historique-invalide': 'admin.mailAccounts.refusal.backfill',
+	'aucun-dossier': 'admin.mailAccounts.refusal.noFolder',
 	reseau: 'admin.mailAccounts.refusal.network',
 	inconnu: 'admin.mailAccounts.refusal.unknown',
 }
@@ -205,6 +211,11 @@ export function ReglagesComptesMail({
 	const origineFocus = useRef<HTMLButtonElement | null>(null)
 	/** Le retour du focus est DIFFÉRÉ d'un tour de rendu : la commande est démontée (§5.25). */
 	const focusARendre = useRef(false)
+	// `CRM-136` (§25.5) : le panneau « Dossiers relevés » ouvert, par l'identifiant de sa boîte ; celle à ouvrir d'elle-même
+	// après une création, dès que la liste relue la porte ; et la commande à qui rendre le focus.
+	const [panneau, setPanneau] = useState<string | null>(null)
+	const [panneauAOuvrir, setPanneauAOuvrir] = useState<string | null>(null)
+	const commandesDossiers = useRef<Map<string, HTMLButtonElement | null>>(new Map())
 
 	useEffect(() => {
 		if (client === null) return
@@ -248,6 +259,20 @@ export function ReglagesComptesMail({
 
 	const comptes = etat.statut === 'pret' ? etat.donnees : []
 
+	// LA « PREMIÈRE CONNEXION » (§25.5) : après la création d'une boîte, son panneau s'ouvre de lui-même, et c'est annoncé.
+	useEffect(() => {
+		if (panneauAOuvrir === null || !comptes.some((compte) => compte.id === panneauAOuvrir)) return
+		setPanneau(panneauAOuvrir)
+		setPanneauAOuvrir(null)
+		setAnnonce(t('admin.mailAccounts.folders.opened'))
+	}, [comptes, panneauAOuvrir])
+
+	const fermerPanneau = useCallback((id: string) => {
+		setPanneau(null)
+		// Le focus revient à la commande qui ouvre le panneau, au rendu suivant (§5.13).
+		requestAnimationFrame(() => commandesDossiers.current.get(id)?.focus())
+	}, [])
+
 	const ouvrir = useCallback(
 		(idProprietaire: string | null, depuis: HTMLButtonElement | null) => {
 			if (idWorkspace === null) return
@@ -278,6 +303,7 @@ export function ReglagesComptesMail({
 		if (client === null || saisie === null || enCours) return
 		setEnCours(true)
 		setRefus(null)
+		const creation = compteDe(comptes, saisie.idProprietaire) === undefined
 		const resultat = await enregistrerCompteEntrant(client, saisie)
 		setEnCours(false)
 		if (resultat.issue !== 'enregistre') {
@@ -288,10 +314,11 @@ export function ReglagesComptesMail({
 		setSaisie(null)
 		focusARendre.current = true
 		setAnnonce(t('admin.mailAccounts.saved'))
+		if (creation) setPanneauAOuvrir(resultat.idCompte)
 		// La liste est RELUE, jamais complétée localement (§5.21, §21.8) : la base a pu remettre
 		// l'état à `pending` et effacer le dernier incident, ce que la saisie ne sait pas.
 		recharger()
-	}, [client, enCours, recharger, saisie])
+	}, [client, comptes, enCours, recharger, saisie])
 
 	if (client === null) {
 		return (
@@ -375,6 +402,26 @@ export function ReglagesComptesMail({
 							test={tests.etats[compte.id]}
 							onTester={() => void tests.tester(compte.id)}
 							onConfigurer={(depuis) => ouvrir(compte.owner_id, depuis)}
+							panneauOuvert={panneau === compte.id}
+							refCommandeDossiers={(element) => commandesDossiers.current.set(compte.id, element)}
+							onDossiers={() => setPanneau(panneau === compte.id ? null : compte.id)}
+							panneau={
+								panneau === compte.id && idWorkspace !== null ? (
+									<PanneauDossiersReleves
+										client={client}
+										accesTest={accesTest}
+										idWorkspace={idWorkspace}
+										compte={compte}
+										refus={REFUS}
+										onFermer={() => fermerPanneau(compte.id)}
+										onEnregistre={() => {
+											setAnnonce(t('admin.mailAccounts.folders.saved'))
+											fermerPanneau(compte.id)
+											relireEnPlace()
+										}}
+									/>
+								) : null
+							}
 						/>
 					))}
 				</ul>
@@ -424,7 +471,16 @@ function LigneCompte({
 	test,
 	onTester,
 	onConfigurer,
+	panneauOuvert,
+	refCommandeDossiers,
+	onDossiers,
+	panneau,
 }: {
+	readonly panneauOuvert: boolean
+	readonly refCommandeDossiers: (element: HTMLButtonElement | null) => void
+	readonly onDossiers: () => void
+	/** Le panneau « Dossiers relevés » de cette ligne, rendu SOUS elle, dans le flux (§5.99). */
+	readonly panneau: React.ReactNode
 	readonly compte: CompteEntrant
 	/** Désactivée pendant un envoi, ou par une capacité refusée — et citant alors son motif. */
 	readonly commande: ProprietesCommande
@@ -468,7 +524,24 @@ function LigneCompte({
 			<span className="grow" />
 			{/* LES DEUX COMMANDES SE REPLIENT ENSEMBLE (§5.93) — défaut trouvé en regardant la capture à 1440 px : séparées,
 			    « Configurer » passait seul à la ligne suivante, et deux lignes voisines n'avaient plus la même hauteur. */}
-			<span className="flex items-center gap-1 shrink-0">
+			{/* `CRM-136` T3 (§5.99) : LE GROUPE DE COMMANDES PREND SA PROPRE RANGÉE ET SE REPLIE EN LUI-MÊME — défaut trouvé en
+			    regardant les captures : à trois commandes, « Configurer » était coupé à 390 px, et la liste des identités
+			    retrouvait des lignes de hauteurs différentes selon la longueur du libellé. Révise la rangée du §5.93. */}
+			<span className="basis-full flex flex-wrap items-center gap-1">
+				{/* `CRM-136` (§5.99) : « Dossiers relevés » AVANT « Tester la connexion », avec les propriétés de « Configurer ». */}
+				<button
+					type="button"
+					ref={refCommandeDossiers}
+					data-testid="dossiers-compte"
+					{...commande}
+					aria-expanded={panneauOuvert}
+					onClick={onDossiers}
+					aria-label={t('admin.mailAccounts.folders.aria', { boite: compte.label })}
+					className={CLASSES_BOUTON_DISCRET}
+				>
+					<FolderTree aria-hidden="true" className="size-4" />
+					{t('admin.mailAccounts.folders')}
+				</button>
 				<CommandeTestConnexion
 					nomLigne={compte.label}
 					etat={test}
@@ -489,6 +562,7 @@ function LigneCompte({
 				</button>
 			</span>
 			<VerdictTestConnexion etat={test} />
+			{panneau === null ? null : <div className="basis-full">{panneau}</div>}
 		</li>
 	)
 }
@@ -622,6 +696,20 @@ function FormulaireCompte({
 						}
 						className={CLASSES_CHAMP}
 					/>
+				</label>
+
+				{/* `CRM-136` (§25.4, §5.99) : l'historique, après les champs de connexion et avant le mot de passe ; ni `min` ni
+				    `max`, la borne de 0 à 120 vit en base (§5.3 ter). */}
+				<label className="flex flex-col gap-1 text-sm text-text-2">
+					{t('admin.mailAccounts.field.backfill')}
+					<input
+						type="number"
+						data-testid="champ-historique"
+						value={saisie.historique}
+						onChange={(evenement) => onChangement({ ...saisie, historique: evenement.target.value })}
+						className={[CLASSES_CHAMP, 'tabular-nums w-[12ch]'].join(' ')}
+					/>
+					<span className="text-sm text-text-3 max-w-[40ch]">{t('admin.mailAccounts.field.backfill.help')}</span>
 				</label>
 
 				<label className="flex flex-col gap-1 text-sm text-text-2">

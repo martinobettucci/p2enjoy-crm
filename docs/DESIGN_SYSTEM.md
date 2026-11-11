@@ -8246,4 +8246,9 @@ la ligne (§5.59).
   être un nombre entier, de 0 à 100 000. »
 - **SOUS `md`**, le panneau prend la largeur de la ligne et ses boutons passent à la ligne, cibles conservées ; `md` et
   jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
+- **LE GROUPE DE COMMANDES D'UNE LIGNE PREND TOUJOURS SA PROPRE RANGÉE, et s'y replie** (comptes et identités) — *défaut
+  trouvé en regardant les captures* (`CLAUDE.md` §16, 2026-11-11). À trois commandes, le groupe insécable du §5.93 coupait
+  « Configurer » à 390 px, et la liste des identités, où deux lignes portent un libellé plus court, retrouvait des lignes de
+  hauteurs différentes — le défaut que le §5.93 avait payé. Sous la ligne, toujours, le groupe donne à toutes les lignes la
+  même forme. *Révise la rangée du §5.93.*
 - **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `FolderTree`.**

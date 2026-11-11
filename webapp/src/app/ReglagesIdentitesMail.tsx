@@ -1,3 +1,5 @@
+// @spec CRM-136 (docs/BACKLOG.md) — tranche T3 : « Envois par jour, au plus » au formulaire de l'identité, vide = aucun plafond
+//       (docs/SPEC-mail-subsystem.md §25.6 ; docs/DESIGN_SYSTEM.md §5.99)
 // @spec CRM-089 (docs/BACKLOG.md) — écran de configuration des identités sortantes SMTP
 // @spec docs/SPEC-mail-subsystem.md §22.2 (l'adresse), §22.3 (ce qu'il lit), §22.4 (la clé est un
 //       TRIPLET), §22.5 (le formulaire), §22.6 (le mot de passe), §22.8 (les refus traduits),
@@ -89,6 +91,7 @@ const REFUS: Readonly<
 	'securite-invalide': 'admin.mailIdentities.refusal.security',
 	'identifiant-invalide': 'admin.mailIdentities.refusal.username',
 	'adresse-invalide': 'admin.mailIdentities.refusal.fromAddress',
+	'quota-invalide': 'admin.mailIdentities.refusal.quota',
 	'proprietaire-non-membre': 'admin.mailIdentities.refusal.owner',
 	reseau: 'admin.mailIdentities.refusal.network',
 	inconnu: 'admin.mailIdentities.refusal.unknown',
@@ -549,7 +552,10 @@ function LigneIdentite({
 			<span className="grow" />
 			{/* LES DEUX COMMANDES SE REPLIENT ENSEMBLE (§5.93) — défaut trouvé en regardant la capture à 1440 px : séparées,
 			    « Configurer » passait seul à la ligne suivante, et deux lignes voisines n'avaient plus la même hauteur. */}
-			<span className="flex items-center gap-1 shrink-0">
+			{/* `CRM-136` T3 (§5.99) : LE GROUPE DE COMMANDES PREND SA PROPRE RANGÉE ET SE REPLIE EN LUI-MÊME — défaut trouvé en
+			    regardant les captures : à trois commandes, « Configurer » était coupé à 390 px, et la liste des identités
+			    retrouvait des lignes de hauteurs différentes selon la longueur du libellé. Révise la rangée du §5.93. */}
+			<span className="basis-full flex flex-wrap items-center gap-1">
 				<CommandeTestConnexion
 					nomLigne={identite.from_address}
 					etat={test}
@@ -704,6 +710,20 @@ function FormulaireIdentite({
 					<span className="text-sm text-text-3 max-w-[44ch]">
 						{t('admin.mailIdentities.field.signature.help')}
 					</span>
+				</label>
+
+				{/* `CRM-136` (§25.6, §5.99) : le plafond, après la signature ; ni `min` ni `max`, la borne vit en base. VIDE veut
+				    dire « aucun plafond », et le texte d'aide dit les trois sens. */}
+				<label className={CLASSES_ETIQUETTE}>
+					{t('admin.mailIdentities.field.quota')}
+					<input
+						type="number"
+						data-testid="champ-quota-identite"
+						value={saisie.quota}
+						onChange={(evenement) => onChangement({ ...saisie, quota: evenement.target.value })}
+						className={[CLASSES_CHAMP, 'tabular-nums w-[14ch]'].join(' ')}
+					/>
+					<span className="text-sm text-text-3 max-w-[44ch]">{t('admin.mailIdentities.field.quota.help')}</span>
 				</label>
 
 				<label className={CLASSES_ETIQUETTE}>

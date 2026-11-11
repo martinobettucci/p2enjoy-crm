@@ -1,3 +1,4 @@
+// @verifies CRM-136 (docs/BACKLOG.md) — tranche T3 : « Dossiers relevés » avant « Tester la connexion » (§5.99)
 // @verifies CRM-088 (docs/BACKLOG.md) — écran de configuration des comptes entrants IMAP
 // @verifies docs/SPEC-mail-subsystem.md §21.3 (ce que l'écran lit), §21.4 (le formulaire et son
 //           sélecteur), §21.5 (le mot de passe n'est jamais affiché, un champ vide conserve),
@@ -484,12 +485,14 @@ describe('ReglagesComptesMail — « Tester la connexion » (CRM-127 T4)', () =>
 	const ligne = (id: string) => document.querySelector(`[data-compte="${id}"]`) as HTMLElement
 	const commandeDe = (id: string) => ligne(id).querySelector('[data-testid="tester-connexion"]') as HTMLButtonElement
 
+	// RÉVISÉE PAR `CRM-136` T3 (décision 51), non relâchée : « Dossiers relevés » précède désormais « Tester la connexion »
+	// (docs/DESIGN_SYSTEM.md §5.99) ; l'ordre des deux commandes d'origine est inchangé.
 	it('chaque ligne porte « Tester la connexion », nommée par sa boîte, AVANT « Configurer »', async () => {
 		const { c } = clientRelu([COMPTES])
 		monterTest(c, accesRetenu().acces)
 		await screen.findAllByTestId('tester-connexion')
 		const boutons = [...ligne('c-1').querySelectorAll('button')].map((b) => b.getAttribute('data-testid'))
-		expect(boutons).toEqual(['tester-connexion', 'configurer-compte'])
+		expect(boutons).toEqual(['dossiers-compte', 'tester-connexion', 'configurer-compte'])
 		expect(commandeDe('c-1').getAttribute('aria-label')).toBe('Tester la connexion de Boîte de Camille Aubert')
 		expect(commandeDe('c-1').textContent).toBe('Tester la connexion')
 	})

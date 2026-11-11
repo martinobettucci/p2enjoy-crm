@@ -1,3 +1,5 @@
+// @spec CRM-136 (docs/BACKLOG.md) — tranche T3 : le quota journalier lu, montré et écrit, « aucun plafond » compris
+//       (docs/SPEC-mail-subsystem.md §25.6 ; docs/DESIGN_SYSTEM.md §5.99)
 // @spec CRM-089 (docs/BACKLOG.md) — configuration des identités sortantes SMTP
 // @spec docs/SPEC-mail-subsystem.md §22.3 (ce que l'écran lit), §22.4 (la clé est un TRIPLET),
 //       §22.5 (les champs du formulaire), §22.6 (un mot de passe vide est OMIS), §22.7 (le
@@ -51,6 +53,7 @@ type IdentiteSortanteLue = Pick<
 	| 'from_name'
 	| 'signature_text'
 	| 'is_default'
+	| 'daily_quota'
 	| 'status'
 	| 'last_error'
 	| 'last_checked_at'
@@ -64,8 +67,8 @@ type IdentiteSortanteLue = Pick<
  * l'administratrice** (§22.7). Une requête qui la nommerait ferait échouer la lecture entière de
  * l'écran pour tout le monde.
  *
- * `daily_quota` en est absente : l'écran ne l'affiche pas plus qu'il ne l'écrit (§22.1). Ne pas
- * lire ce qu'on ne montre pas est la même discipline que ne pas envoyer ce qu'on ne modifie pas.
+ * `daily_quota` Y EST ENTRÉE AVEC `CRM-136` T3 (§25.6) : la migration `0178` l'a rendue effaçable, et l'écran la montre et
+ * l'écrit désormais. Elle en était absente tant qu'un champ ne savait pas revenir à « aucun plafond » (§22.1).
  *
  * `signature_text` Y EST ENTRÉE AVEC `CRM-063` TRANCHE 3, et la RÉCIPROQUE de cette discipline
  * l'impose : l'écran ne peut pas proposer de MODIFIER une signature sans montrer celle qui est
@@ -75,7 +78,7 @@ type IdentiteSortanteLue = Pick<
  */
 const COLONNES_IDENTITE = 'id, label, owner_id' as const
 const COLONNES_CONNEXION = 'smtp_host, smtp_port, smtp_security, smtp_username' as const
-const COLONNES_EXPEDITION = 'from_address, from_name, signature_text, is_default' as const
+const COLONNES_EXPEDITION = 'from_address, from_name, signature_text, is_default, daily_quota' as const
 const COLONNES_ETAT = 'status, last_error, last_checked_at' as const
 /**
  * LE PROPRIÉTAIRE EST NOMMÉ PAR SA CLÉ ÉTRANGÈRE (décision 805, INC-335) : la liste d'une administratrice porte
@@ -198,6 +201,8 @@ export type SaisieIdentiteSortante = {
 	readonly parDefaut: boolean
 	/** Vide = le mot de passe enregistré est CONSERVÉ, et le paramètre n'est pas envoyé (§22.6). */
 	readonly motDePasse: string
+	/** `CRM-136` (§25.6) : le plafond d'envois par jour. VIDE = « aucun plafond », envoyé `null`. Une chaîne, comme le port. */
+	readonly quota: string
 }
 
 /**
@@ -230,6 +235,8 @@ export type IssueEnregistrementIdentite =
 	| 'adresse-invalide'
 	/** `23514`, `owner_not_member` : le propriétaire n'est pas membre du workspace. */
 	| 'proprietaire-non-membre'
+	/** `CRM-136` (§25.6) : `23514`, contrainte `mail_outbound_identities_quota_borne`, 0 à 100 000. */
+	| 'quota-invalide'
 	/** Aucune réponse : la requête n'a jamais abouti. */
 	| 'reseau'
 	/** Tout le reste. L'interface ne prétend pas savoir, et ne recopie pas le serveur. */
@@ -267,13 +274,14 @@ export function classerEnregistrementIdentite(
 	if (message.includes('mail_outbound_identities_securite')) return 'securite-invalide'
 	if (message.includes('mail_outbound_identities_username_borne')) return 'identifiant-invalide'
 	if (message.includes('mail_outbound_identities_from_address')) return 'adresse-invalide'
+	if (message.includes('mail_outbound_identities_quota_borne') || message.includes('daily_quota')) return 'quota-invalide'
 	// Le port absent (`23502`, message nommant la colonne) et le port non entier (`22P02`, message
 	// ne nommant que le TYPE) sont deux refus de la MÊME saisie, mesurés §22.7. Les distinguer à
 	// l'écran ferait deux phrases pour un seul champ à corriger.
 	//
-	// L'ATTRIBUTION EST ENCORE PLUS ÉTROITE QU'AU §21.7 : `p_smtp_port` est le SEUL entier que ce
-	// module envoie, `p_daily_quota` n'étant jamais transmis (§22.1). C'est une propriété de
-	// l'appel, pas une devinette sur la prose du serveur.
+	// L'ATTRIBUTION RESTE ÉTROITE : depuis `CRM-136`, ce module envoie aussi `p_daily_quota`, mais toujours comme un nombre ou
+	// `null` (`Number.parseInt`) — jamais une chaîne à convertir. Un `22P02` ne peut donc venir que du port. C'est une
+	// propriété de l'appel, pas une devinette sur la prose du serveur.
 	if (message.includes('smtp_port')) return 'port-invalide'
 	if (message.includes('invalid input syntax for type integer')) return 'port-invalide'
 	// Un appelant sans session reçoit `permission denied for function …` sous `401` — mesuré : le
@@ -298,8 +306,9 @@ export type ResultatEnregistrementIdentite =
  *   INEFFAÇABLE, tandis qu'une chaîne vide est une valeur et l'écrase. Mesuré dans les deux sens ;
  * - **`p_owner_id` est OMIS pour l'identité de service**, et vaut alors son défaut `null` (§22.5).
  *
- * `p_daily_quota` n'est JAMAIS envoyé : son `coalesce` le rend ineffaçable, et un champ d'écran
- * qui ne sait pas revenir en arrière est un piège (§22.1).
+ * **`p_daily_quota` EST TOUJOURS ENVOYÉ, AVEC `p_daily_quota_set = true`** (`CRM-136`, §25.6) : la migration `0178` l'a
+ * rendu effaçable, et un formulaire qui montre la valeur et la renvoie ne peut pas l'écraser par erreur. Vide part `null` —
+ * le retour à « aucun plafond ».
  *
  * **`p_signature_text` EST TOUJOURS ENVOYÉ, y compris vide, ET C'EST UN CHANGEMENT DE RÈGLE**
  * (`CRM-063` tranche 3, §10.4). Il rejoint `p_from_name` et quitte la famille de `p_daily_quota` :
@@ -324,6 +333,9 @@ export function argumentsEnregistrementIdentite(
 		p_from_name: saisie.nomExpediteur,
 		p_signature_text: saisie.signature,
 		p_is_default: saisie.parDefaut,
+		// `NaN` (une saisie non numérique) se sérialise `null`, comme le vide : la base n'a jamais de chaîne à convertir.
+		p_daily_quota: saisie.quota.trim() === '' ? null : Number.parseInt(saisie.quota, 10),
+		p_daily_quota_set: true,
 	}
 	if (saisie.idProprietaire !== null) arguments_['p_owner_id'] = saisie.idProprietaire
 	if (saisie.motDePasse !== '') arguments_['p_password'] = saisie.motDePasse
@@ -390,6 +402,8 @@ export function saisieDepuisIdentite(
 			signature: '',
 			parDefaut: true,
 			motDePasse: '',
+			// Une identité neuve n'a pas de plafond, le défaut de la table (§25.6).
+			quota: '',
 		}
 	}
 	return {
@@ -409,6 +423,8 @@ export function saisieDepuisIdentite(
 		signature: identite.signature_text ?? '',
 		parDefaut: identite.is_default,
 		motDePasse: '',
+		// Un type ne garantit jamais une valeur (docs/SPEC-types.md) : tout ce qui n'est pas un nombre se lit « aucun plafond ».
+		quota: typeof identite.daily_quota === 'number' ? String(identite.daily_quota) : '',
 	}
 }
 

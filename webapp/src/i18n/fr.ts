@@ -3244,6 +3244,21 @@ export const fr = {
 		"Le propriétaire de cette boîte n'est pas membre de l'espace de travail.",
 	'admin.mailAccounts.refusal.network':
 		"L'enregistrement n'a pas abouti : le serveur n'a pas répondu.",
+	// `CRM-136` T3 — l'historique et les dossiers relevés (docs/DESIGN_SYSTEM.md §5.99).
+	'admin.mailAccounts.refusal.backfill': 'L’historique doit être un nombre entier de mois, de 0 à 120.',
+	'admin.mailAccounts.refusal.noFolder': 'Choisissez au moins un dossier.',
+	'admin.mailAccounts.field.backfill': 'Historique relevé, en mois',
+	'admin.mailAccounts.field.backfill.help':
+		'0 relève le courrier reçu depuis le branchement de la boîte, et rien d’avant. Un nombre de mois fait descendre l’historique par lots, du plus récent au plus ancien, au fil des relèves.',
+	'admin.mailAccounts.folders': 'Dossiers relevés',
+	'admin.mailAccounts.folders.aria': 'Dossiers relevés de {boite}',
+	'admin.mailAccounts.folders.legend': 'Dossiers relevés de {boite}',
+	'admin.mailAccounts.folders.reading': 'Lecture des dossiers…',
+	'admin.mailAccounts.folders.retry': 'Réessayer',
+	'admin.mailAccounts.folders.absent': 'absent de la boîte',
+	'admin.mailAccounts.folders.absent.aria': '{dossier}, absent de la boîte',
+	'admin.mailAccounts.folders.saved': 'Dossiers relevés enregistrés',
+	'admin.mailAccounts.folders.opened': 'Choisissez les dossiers relevés de la nouvelle boîte',
 	'admin.mailAccounts.refusal.unknown':
 		"L'enregistrement a été refusé, et la cause n'est pas reconnue par le produit.",
 
@@ -3339,6 +3354,10 @@ export const fr = {
 	'admin.mailIdentities.refusal.security': "Le mode de sécurité n'est pas reconnu.",
 	'admin.mailIdentities.refusal.username':
 		"L'identifiant est obligatoire, et ne dépasse pas 320 caractères.",
+	// `CRM-136` T3 — le quota journalier (docs/DESIGN_SYSTEM.md §5.99).
+	'admin.mailIdentities.refusal.quota': 'Le plafond doit être un nombre entier, de 0 à 100 000.',
+	'admin.mailIdentities.field.quota': 'Envois par jour, au plus',
+	'admin.mailIdentities.field.quota.help': 'Vide : aucun plafond. 0 : aucun envoi depuis cette adresse. Un nombre : le plafond d’envois par jour.',
 	'admin.mailIdentities.refusal.fromAddress':
 		"L'adresse d'expédition doit être une adresse électronique, de la forme nom@domaine.test.",
 	'admin.mailIdentities.refusal.owner':

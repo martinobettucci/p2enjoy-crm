@@ -1,3 +1,5 @@
+// @spec CRM-136 (docs/BACKLOG.md) — tranche T3 : le succès d'un test porte les dossiers de la boîte, s'ils sont rendus
+//       (docs/SPEC-mail-subsystem.md §25.3, §25.5)
 // @spec CRM-127 (docs/BACKLOG.md) — tranche T4 : ce que le bouton « Tester la connexion » envoie, et ce qu'il comprend
 // @spec docs/SPEC-mail-subsystem.md §23.4 (la fonction edge `mail-connection-test` et ses codes), §23.5 (le verdict et
 //       les refus traduits, jamais le code brut) ; docs/SPEC-webapp.md §6.4 (une panne n'est jamais un succès) ;
@@ -27,7 +29,8 @@ export function estCodeIncident(code: unknown): code is CodeIncident {
 
 /** Ce que l'écran sait dire après un test (§23.5). */
 export type IssueTest =
-	| { readonly type: 'reussi' }
+	/** `CRM-136` (§25.3) : `dossiers`, les dossiers sélectionnables d'une boîte entrante, quand la fonction les rend. */
+	| { readonly type: 'reussi'; readonly dossiers?: readonly string[] }
 	| { readonly type: 'echoue'; readonly incident: CodeIncident | null }
 	| { readonly type: 'refuse'; readonly motif: MotifRefusTest }
 
@@ -59,7 +62,13 @@ export async function issueDepuisReponse(reponse: Response): Promise<IssueTest> 
 		return { type: 'refuse', motif: 'service' }
 	}
 	if (reponse.status === 200) {
-		if (corps.status === 'ok') return { type: 'reussi' }
+		if (corps.status === 'ok') {
+			const noms = corps.folder_names
+			// Une liste mal formée n'est pas une liste : l'issue reste un succès, sans dossiers (§25.3).
+			return Array.isArray(noms) && noms.every((nom) => typeof nom === 'string')
+				? { type: 'reussi', dossiers: noms as string[] }
+				: { type: 'reussi' }
+		}
 		if (corps.status === 'error') return { type: 'echoue', incident: estCodeIncident(corps.error) ? corps.error : null }
 		return { type: 'refuse', motif: 'service' }
 	}

@@ -1,3 +1,4 @@
+// @verifies CRM-136 (docs/BACKLOG.md) — tranche T3 : le quota lu et toujours envoyé avec son drapeau (§25.6)
 // @verifies CRM-089 (docs/BACKLOG.md) — écran de configuration des identités sortantes SMTP
 // @verifies docs/SPEC-mail-subsystem.md §22.3 (ce que l'écran lit), §22.4 (la clé est un TRIPLET,
 //           et changer l'adresse déclare une seconde identité), §22.5 (le formulaire et son
@@ -195,13 +196,14 @@ describe('ReglagesIdentitesMail — la liste', () => {
 
 	// PREUVE DE REFUS N° 6, côté écran : citer `secret_id` rendrait `403` même à l'administratrice,
 	// et la liste entière disparaîtrait (§22.3, §22.7).
-	it('ne demande jamais `secret_id`, ni le quota, ni la signature', async () => {
+	// RÉVISÉE PAR `CRM-136` T3 (décision 51), non relâchée : le quota, devenu effaçable (`0178`), est lu (§25.6).
+	it('ne demande jamais `secret_id`, et lit le quota et la signature', async () => {
 		let colonnes = ''
 		monter(client({ espionLecture: (c) => (colonnes = c) }))
 
 		await screen.findByTestId('liste-identites-mail')
 		expect(colonnes).not.toContain('secret_id')
-		expect(colonnes).not.toContain('daily_quota')
+		expect(colonnes).toContain('daily_quota')
 		// `CRM-063` §10.6 — la signature, elle, EST demandée depuis la tranche 3 : l'écran ne peut
 		// pas proposer de la modifier sans montrer celle qui est enregistrée. L'assertion qui
 		// exigeait son absence est RÉVISÉE en celle qui exige sa présence, jamais retirée.
@@ -393,9 +395,12 @@ describe('ReglagesIdentitesMail — l’enregistrement', () => {
 		await waitFor(() => expect(recu['p_workspace_id']).toBe(WORKSPACE))
 		expect('p_password' in recu).toBe(false)
 		expect('p_from_name' in recu).toBe(true)
-		expect('p_daily_quota' in recu).toBe(false)
+		// RÉVISÉ PAR `CRM-136` T3 (décision 51) : le quota est TOUJOURS envoyé, avec son drapeau (§25.6) ; l'identité de la
+		// preuve n'a pas de plafond, et le champ vide renvoie « aucun plafond », sans rien écraser.
+		expect('p_daily_quota' in recu).toBe(true)
+		expect(recu['p_daily_quota_set']).toBe(true)
 		// `CRM-063` §10.4 — la signature est TOUJOURS envoyée depuis que la migration 58 l'a rendue
-		// effaçable. Elle a quitté la famille du quota, qui n'a pas bougé.
+		// effaçable.
 		expect('p_signature_text' in recu).toBe(true)
 	})
 

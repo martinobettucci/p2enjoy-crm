@@ -377,6 +377,107 @@
 								"content": [
 									{
 										"type": "text",
+										"text": "L'historique relevé se règle au formulaire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", en mois. À 0, la relève prend le courrier reçu depuis le\nbranchement de la boîte, et rien d'avant. Un nombre de mois fait descendre l'historique "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "par lots"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", du plus récent au\nplus ancien, au fil des relèves : un historique profond arrive en plusieurs passages. La valeur va de 0 à 120 ; au-delà,\nle produit refuse et dit pourquoi. Réduire l'historique ne retire rien de ce qui a déjà été relevé."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "image",
+			"src": "les-boites-de-reception-et-les-adresses-d-expedition/historique.jpg",
+			"alt": "Le formulaire d'une boîte et son champ « Historique relevé, en mois »",
+			"width": 330,
+			"height": 182
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Dossiers relevés », sur chaque ligne, choisit les dossiers de la boîte que le produit relève."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Le produit se\nconnecte à la boîte pour lire la liste réelle de ses dossiers — c'est un test de connexion, avec la même attente de\ntrente secondes —, puis propose une case par dossier, les sous-dossiers en retrait. Les dossiers déjà relevés sont\ncochés. Les dossiers que le produit crée lui-même pour ranger les affaires n'y paraissent pas. Cochez, décochez, puis\nenregistrez ; il faut au moins un dossier. Un dossier relevé que la boîte n'a plus reste dans la liste, coché et marqué\nabsent : à vous de le décocher. Décocher un dossier arrête sa relève, sans retirer les messages déjà relevés ; le recocher\nreprend où elle s'était arrêtée."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "À la création d'une boîte"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", ce choix s'ouvre de lui-même sous la nouvelle ligne, une fois la boîte enregistrée."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "image",
+			"src": "les-boites-de-reception-et-les-adresses-d-expedition/dossiers-releves.jpg",
+			"alt": "Les dossiers réels d'une boîte, INBOX et Junk Mail cochés, et le bouton « Enregistrer »",
+			"width": 1023,
+			"height": 374
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
 										"text": "Ce que l'écran n'offre pas"
 									}
 								]
@@ -396,7 +497,7 @@
 							},
 							{
 								"type": "text",
-								"text": " de\nboîte ; aucun réglage des dossiers relevés ni de la profondeur d'historique, que l'écran ne touche\njamais."
+								"text": " de\nboîte ; aucun réglage du style de classement des dossiers."
 							}
 						]
 					}
@@ -1064,7 +1165,7 @@
 							},
 							{
 								"type": "text",
-								"text": " ;\naucun réglage du "
+								"text": ". Le "
 							},
 							{
 								"type": "strong",
@@ -1077,7 +1178,7 @@
 							},
 							{
 								"type": "text",
-								"text": " d'envois (voir plus bas). La\n"
+								"text": "\nd'envois se règle au formulaire (voir plus bas). La\n"
 							},
 							{
 								"type": "strong",
@@ -1274,7 +1375,49 @@
 				},
 				{
 					"type": "text",
-					"text": " Par défaut, elle n'en a aucun, et l'écran ne le règle pas.\nQuand un plafond est atteint, tout nouveau message est refusé au moment où vous l'envoyez — « Cette adresse\nd'expédition a atteint son plafond du jour. » — et le compte repart au jour suivant, compté en temps universel. Les messages déjà en attente\nd'envoi comptent : le plafond protège le serveur d'envoi, pas une statistique."
+					"text": " Par défaut, elle n'en a aucun. Il se règle au formulaire de\nl'adresse, dans le champ des envois par jour : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "vide"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", aucun plafond ; "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "0"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", aucun envoi depuis cette adresse ; un\nnombre, le plafond du jour, jusqu'à 100 000. Vider le champ retire le plafond."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "les-boites-de-reception-et-les-adresses-d-expedition/plafond.jpg",
+			"alt": "Le formulaire d'une adresse et son champ « Envois par jour, au plus »",
+			"width": 360,
+			"height": 204
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Quand un plafond est atteint, tout nouveau message est refusé au moment où vous l'envoyez — « Cette adresse\nd'expédition a atteint son plafond du jour. » — et le compte repart au jour suivant, compté en temps universel. Les messages déjà en attente\nd'envoi comptent : le plafond protège le serveur d'envoi, pas une statistique."
 				}
 			]
 		},

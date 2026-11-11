@@ -19006,8 +19006,13 @@ Ce n'est pas une campagne complète. **Reste** : la livraison de la migration 17
 assertions, suite complète 155 fichiers, 5221 assertions ; `docs/SCHEMA.md`, contrat §2.41. **T2 implémentée et vérifiée en
 développement** — `folder_names` dans la sonde de `mail-sync` (sans `\Noselect` ni la racine `CRM`), relayé par
 `mail-connection-test` pour une boîte entrante seulement ; pytest 334, Vitest de la fonction 42, `e2e/api/tester-connexion`
-7/7 contre le vrai Stalwart ; contrat §2.41. Restent T3 (les écrans, lecture ciblée du design system, décision 914) et T4 (le
-seed).
+7/7 contre le vrai Stalwart ; contrat §2.41. **T3 implémentée et vérifiée en développement** (lecture ciblée du design
+system, décision 914 ; `docs/DESIGN_SYSTEM.md` §5.99) — l'historique au formulaire de la boîte, le panneau « Dossiers
+relevés » (`DossiersReleves.tsx`), le plafond au formulaire de l'identité, le groupe de commandes de ligne sur sa rangée
+(défaut vu en capture) ; Vitest 5616 dont 8 du panneau, gardes révisées non relâchées ; `e2e/api/releve-quota` 2/2 ;
+`e2e/ui/releve-quota` 8/8 sur le vrai Stalwart (cocher « Sent Items », une vraie relève relève trois dossiers), souris,
+clavier, quatre paliers, captures observées ; le manuel §11.1 et §11.2 et leurs trois images. Reste T4 (le seed), puis
+`[P]`.
 
 **Origine** : question du responsable sur l'historique non relevé en production ; arbitrée le 2026-11-10 (décision 875).
 **Comportement attendu** :

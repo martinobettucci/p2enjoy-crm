@@ -6,6 +6,8 @@
 //       chaque ligne nomme son propriétaire (docs/SPEC-mail-subsystem.md §22.14 ; docs/manual.md §11.2)
 // @spec CRM-127 (docs/BACKLOG.md) — tranche T4 : l'image d'une boîte testée, son verdict sous la ligne
 //       (docs/SPEC-mail-subsystem.md §23.5 ; docs/DESIGN_SYSTEM.md §5.93 ; docs/manual.md §11.1)
+// @spec CRM-136 (docs/BACKLOG.md) — tranche T3 : les images de l'historique, des dossiers relevés et du plafond
+//       (docs/SPEC-mail-subsystem.md §25.4 à §25.6 ; docs/DESIGN_SYSTEM.md §5.99 ; docs/manual.md §11.1, §11.2)
 //
 // Les boîtes et les identités sont celles du seed. Deux états sont posés par la clé de service et rendus tels qu'ils
 // ont été lus : une boîte « Connectée », et le plafond du jour d'une adresse d'expédition ramené à zéro le temps d'un
@@ -72,6 +74,44 @@ test('une boîte testée : le verdict sous la ligne', async ({ page, request }) 
 		await illustrer(page, { chapitre: CHAPITRE, section: BOITES, nom: 'tester-une-boite', cibles: [ligne] })
 	} finally {
 		await service(request, 'patch', BOITE_SYSTEME, avant)
+	}
+})
+
+// `CRM-136` T3 : rien n'est enregistré — l'image montre le champ, le panneau, le plafond, et chaque formulaire est annulé.
+// Le panneau est un test de connexion : la garde de trente secondes est levée par la clé de service, puis l'état rendu.
+const BOITE_CAMILLE = `mail_inbound_accounts?label=eq.${encodeURIComponent('Boîte de Camille Aubert')}`
+test('l’historique, les dossiers relevés et le plafond', async ({ page, request }) => {
+	test.setTimeout(90_000)
+	const [avant] = await lireService<{ last_checked_at: string | null }[]>(request, `${BOITE_CAMILLE}&select=last_checked_at`)
+	if (avant === undefined) throw new Error('la boîte de Camille est absente du seed')
+	await service(request, 'patch', BOITE_CAMILLE, { last_checked_at: null })
+	try {
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto('/reglages/comptes-mail')
+		const ligne = page.getByTestId('ligne-compte-configuration').filter({ hasText: 'Boîte de Camille Aubert' })
+		await ligne.getByTestId('configurer-compte').click()
+		const champ = page.getByTestId('champ-historique')
+		await expect(champ).toBeVisible()
+		// L'ÉTIQUETTE ENTIÈRE, libellé et texte d'aide compris : le seul champ ne dirait pas ce qu'il règle.
+		await illustrer(page, { chapitre: CHAPITRE, section: BOITES, nom: 'historique', cibles: [page.locator('label', { has: champ })] })
+		await page.getByTestId('annuler-compte-mail').click()
+		await ligne.getByTestId('dossiers-compte').click()
+		const panneau = page.getByTestId('panneau-dossiers-releves')
+		await expect(panneau.getByTestId('case-dossier').first()).toBeVisible({ timeout: 60_000 })
+		await illustrer(page, {
+			chapitre: CHAPITRE,
+			section: BOITES,
+			nom: 'dossiers-releves',
+			cibles: [ligne.getByTestId('dossiers-compte'), panneau.getByTestId('dossiers-cases'), panneau.getByTestId('enregistrer-dossiers')],
+		})
+		await panneau.getByTestId('annuler-dossiers').click()
+		await page.goto('/reglages/identites-mail')
+		await page.getByTestId('configurer-identite').first().click()
+		const plafond = page.getByTestId('champ-quota-identite')
+		await expect(plafond).toBeVisible()
+		await illustrer(page, { chapitre: CHAPITRE, section: ADRESSES, nom: 'plafond', cibles: [page.locator('label', { has: plafond })] })
+	} finally {
+		await service(request, 'patch', BOITE_CAMILLE, avant)
 	}
 })
 

@@ -23,10 +23,19 @@ d'exécuter le code attendu.
 - Déploiement : `docs/PROD_MIGRATIONS.md` §2.42 — deux gestes préalables, puis la première livraison par condensé, sur
   instruction du responsable. Aucune migration.
 
-#### `CRM-136` — historique, dossiers relevés et quota d'envoi réglables à l'écran (décisions 875, 884 et 885) — tranches T1 et T2
+#### `CRM-136` — historique, dossiers relevés et quota d'envoi réglables à l'écran (décisions 875, 884 et 885) — tranches T1 à T3
 
 - **Le quota journalier d'une identité redevient effaçable** : la fonction d'écriture des identités d'expédition accepte un drapeau qui écrit le quota tel quel, « aucun plafond » compris (migration 178). Sans le drapeau, le quota est conservé comme avant ; l'écran qui l'emploiera arrive avec la tranche des écrans.
+- **Réglages ▸ Comptes de messagerie entrante** : le formulaire d'une boîte règle l'historique relevé, en mois (0 à 120) ; « Dossiers relevés », sur chaque ligne, lit les vrais dossiers de la boîte et propose de cocher ceux que le produit relève, un dossier disparu restant visible pour être décoché ; ce choix s'ouvre de lui-même après la création d'une boîte.
+- **Réglages ▸ Identités d'expédition** : le formulaire règle le plafond d'envois par jour ; vide, aucun plafond.
+- **Les commandes de chaque ligne de ces deux écrans passent sous la ligne**, pour que les lignes gardent la même hauteur et que rien ne soit coupé sur un petit écran.
 - **Le test de connexion d'une boîte rend la liste de ses dossiers** (le service de messagerie et la fonction qui le relaie), sans les dossiers qu'on ne peut pas ouvrir ni ceux que le CRM crée lui-même : l'écran qui proposera de choisir les dossiers relevés arrive avec la tranche des écrans.
+
+#### `CRM-146` T3 — le prévisionnel et le réel d'une organisation, dans le jeu de démonstration et le manuel
+
+- **Le jeu de démonstration montre le prévu et le réel d'une organisation** : Vertigo Conseil en deux devises, l'affaire en euros partagée avec Atelier Lumen, Sogexia sans recette. Trois contacts du fichier de salon sont rattachés à deux affaires qui portent des recettes.
+- **Le manuel, au chapitre du carnet**, décrit la colonne « Réel sur prévu » et le bloc « Recettes avec cette organisation », avec une image nouvelle.
+- Aucune migration.
 
 #### `CRM-146` T2 — le prévisionnel et le réel d'une organisation, à l'écran
 

@@ -2933,9 +2933,26 @@ on configure une boîte avant d'en superviser la relève.
   passe enregistré non plus — le message dit quoi faire.
 - **Une boîte en erreur dit pourquoi**, à côté de sa pastille d'état, avec les mots du tableau
   ci-dessous.
+- **L'historique relevé se règle au formulaire**, en mois. À 0, la relève prend le courrier reçu depuis le
+  branchement de la boîte, et rien d'avant. Un nombre de mois fait descendre l'historique **par lots**, du plus récent au
+  plus ancien, au fil des relèves : un historique profond arrive en plusieurs passages. La valeur va de 0 à 120 ; au-delà,
+  le produit refuse et dit pourquoi. Réduire l'historique ne retire rien de ce qui a déjà été relevé.
+
+![Le formulaire d'une boîte et son champ « Historique relevé, en mois »](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/historique.jpg)
+
+- **« Dossiers relevés », sur chaque ligne, choisit les dossiers de la boîte que le produit relève.** Le produit se
+  connecte à la boîte pour lire la liste réelle de ses dossiers — c'est un test de connexion, avec la même attente de
+  trente secondes —, puis propose une case par dossier, les sous-dossiers en retrait. Les dossiers déjà relevés sont
+  cochés. Les dossiers que le produit crée lui-même pour ranger les affaires n'y paraissent pas. Cochez, décochez, puis
+  enregistrez ; il faut au moins un dossier. Un dossier relevé que la boîte n'a plus reste dans la liste, coché et marqué
+  absent : à vous de le décocher. Décocher un dossier arrête sa relève, sans retirer les messages déjà relevés ; le recocher
+  reprend où elle s'était arrêtée.
+- **À la création d'une boîte**, ce choix s'ouvre de lui-même sous la nouvelle ligne, une fois la boîte enregistrée.
+
+![Les dossiers réels d'une boîte, INBOX et Junk Mail cochés, et le bouton « Enregistrer »](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/dossiers-releves.jpg)
+
 - **Ce que l'écran n'offre pas**, et c'est écrit plutôt que suggéré : aucune **suppression** de
-  boîte ; aucun réglage des dossiers relevés ni de la profondeur d'historique, que l'écran ne touche
-  jamais.
+  boîte ; aucun réglage du style de classement des dossiers.
 
 ![Une boîte testée : sous sa ligne, le verdict « Connexion réussie. », et l'état « Connectée »](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/tester-une-boite.jpg)
 
@@ -3018,8 +3035,8 @@ de la messagerie » : on reçoit avant d'expédier, et on configure avant de sup
   de réception : une vraie session avec le serveur d'envoi, sans envoyer de message, puis le résultat
   sous la ligne. Les mêmes règles valent — le droit de configurer, trente secondes entre deux essais,
   la cause d'une erreur écrite à côté de la pastille d'état.
-- **Ce que l'écran n'offre pas**, et c'est écrit plutôt que suggéré : aucune **suppression** ;
-  aucun réglage du **plafond quotidien** d'envois (voir plus bas). La
+- **Ce que l'écran n'offre pas**, et c'est écrit plutôt que suggéré : aucune **suppression**. Le **plafond quotidien**
+  d'envois se règle au formulaire (voir plus bas). La
   **signature**, elle, se règle sur ce même écran ([chapitre 15](#signer-les-messages-expedies-depuis-une-identite)).
 
 ![Le formulaire d'une adresse d'expédition, avec la case « Identité par défaut de cette personne » cochée](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/configurer-une-adresse.jpg)
@@ -3046,7 +3063,12 @@ de suite, plutôt que d'échouer plus tard, à l'envoi, sur un compte annoncé c
 aucun message** : il ouvre une session avec le serveur d'envoi, s'authentifie, et referme. Les
 causes d'échec affichées sont les mêmes que celles du [chapitre 11.1](#les-boites-de-reception-declarees).
 
-**Une adresse peut porter un plafond d'envois quotidien.** Par défaut, elle n'en a aucun, et l'écran ne le règle pas.
+**Une adresse peut porter un plafond d'envois quotidien.** Par défaut, elle n'en a aucun. Il se règle au formulaire de
+l'adresse, dans le champ des envois par jour : **vide**, aucun plafond ; **0**, aucun envoi depuis cette adresse ; un
+nombre, le plafond du jour, jusqu'à 100 000. Vider le champ retire le plafond.
+
+![Le formulaire d'une adresse et son champ « Envois par jour, au plus »](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/plafond.jpg)
+
 Quand un plafond est atteint, tout nouveau message est refusé au moment où vous l'envoyez — « Cette adresse
 d'expédition a atteint son plafond du jour. » — et le compte repart au jour suivant, compté en temps universel. Les messages déjà en attente
 d'envoi comptent : le plafond protège le serveur d'envoi, pas une statistique.

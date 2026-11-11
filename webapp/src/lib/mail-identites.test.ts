@@ -1,3 +1,5 @@
+// @verifies CRM-136 (docs/BACKLOG.md) — tranche T3 : le quota lu, envoyé avec son drapeau, vide = aucun plafond, sa borne
+//           classée (docs/SPEC-mail-subsystem.md §25.6)
 // @verifies CRM-089 (docs/BACKLOG.md) — configuration des identités sortantes SMTP
 // @verifies docs/SPEC-mail-subsystem.md §22.3 (les colonnes demandées, et les trois qui ne le sont
 //           jamais), §22.4 (la clé est un TRIPLET), §22.5 (ce que le formulaire envoie, et les
@@ -49,6 +51,7 @@ const SAISIE: SaisieIdentiteSortante = {
 	signature: '',
 	parDefaut: true,
 	motDePasse: '',
+	quota: '',
 }
 
 const IDENTITE: IdentiteSortante = {
@@ -63,6 +66,7 @@ const IDENTITE: IdentiteSortante = {
 	from_name: null,
 	signature_text: null,
 	is_default: true,
+	daily_quota: null,
 	status: 'pending',
 	last_error: null,
 	last_checked_at: null,
@@ -144,9 +148,11 @@ describe('lecture des identités sortantes — §22.3', () => {
 	// ne peut pas proposer de modifier une signature sans montrer celle qui est enregistrée. La
 	// colonne est donc désormais LUE, et l'assertion qui l'interdisait est remplacée par celle qui
 	// l'exige, plus bas.
-	it('ne demande JAMAIS `secret_id`, ni le quota', () => {
+	// RÉVISÉE PAR `CRM-136` T3 (décision 51), non relâchée : le quota, devenu effaçable (`0178`), est désormais lu et montré
+	// (§25.6) ; `secret_id` reste interdit.
+	it('ne demande JAMAIS `secret_id`, et lit le quota', () => {
 		expect(COLONNES_IDENTITE_SORTANTE).not.toContain('secret_id')
-		expect(COLONNES_IDENTITE_SORTANTE).not.toContain('daily_quota')
+		expect(COLONNES_IDENTITE_SORTANTE).toContain('daily_quota')
 	})
 
 	it('demande bien les colonnes que l’écran affiche', () => {
@@ -231,12 +237,24 @@ describe('les arguments envoyés — §22.5, §22.6', () => {
 	// cette famille. La migration 58 a remplacé son `coalesce` par trois états — omis conserve,
 	// vide EFFACE, rempli écrit (§10.4) —, si bien que le champ sait revenir en arrière. Le quota,
 	// lui, n'a pas bougé.
-	it('n’envoie JAMAIS `p_daily_quota`', () => {
-		const arguments_ = argumentsEnregistrementIdentite({
-			...SAISIE,
-			motDePasse: 'x',
-		}) as Record<string, unknown>
-		expect('p_daily_quota' in arguments_).toBe(false)
+	// RÉVISÉE PAR `CRM-136` T3 (décision 51), non relâchée — LA RÈGLE S'INVERSE, et c'est la migration `0178` qui le permet :
+	// le quota est TOUJOURS envoyé, avec `p_daily_quota_set = true`, si bien qu'un formulaire qui montre la valeur et la
+	// renvoie ne peut pas l'écraser par erreur ; VIDE part `null`, le retour à « aucun plafond » (§25.6).
+	it('envoie TOUJOURS `p_daily_quota` avec son drapeau, vide valant « aucun plafond »', () => {
+		const plafond = argumentsEnregistrementIdentite({ ...SAISIE, quota: '200' }) as Record<string, unknown>
+		expect(plafond['p_daily_quota']).toBe(200)
+		expect(plafond['p_daily_quota_set']).toBe(true)
+		const vide = argumentsEnregistrementIdentite({ ...SAISIE, quota: '  ' }) as Record<string, unknown>
+		expect(vide['p_daily_quota']).toBeNull()
+		expect(vide['p_daily_quota_set']).toBe(true)
+		const zero = argumentsEnregistrementIdentite({ ...SAISIE, quota: '0' }) as Record<string, unknown>
+		expect(zero['p_daily_quota']).toBe(0)
+	})
+
+	it('`CRM-136` : le refus de la borne du quota est classé, et une identité sans plafond se saisit vide', () => {
+		expect(classerEnregistrementIdentite(400, 'new row violates check constraint "mail_outbound_identities_quota_borne"')).toBe('quota-invalide')
+		expect(saisieDepuisIdentite(WORKSPACE, DRISS, { ...IDENTITE, daily_quota: null }).quota).toBe('')
+		expect(saisieDepuisIdentite(WORKSPACE, DRISS, { ...IDENTITE, daily_quota: 200 }).quota).toBe('200')
 	})
 
 	// LA CONTRE-ÉPREUVE DE LA RÈGLE PRÉCÉDENTE, et elle est indispensable : « toujours envoyé, y

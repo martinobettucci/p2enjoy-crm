@@ -1,3 +1,5 @@
+// @spec CRM-136 (docs/BACKLOG.md) — tranche T3 : l'historique au formulaire, les dossiers relevés lus et écrits, leurs refus
+//       (docs/SPEC-mail-subsystem.md §25.4, §25.5)
 // @spec CRM-088 (docs/BACKLOG.md) — configuration des comptes entrants IMAP
 // @spec docs/SPEC-mail-subsystem.md §21.3 (ce que l'écran lit), §21.4 (les champs du formulaire),
 //       §21.5 (un mot de passe vide est OMIS), §21.6 (le contrat mesuré), §21.7 (dictionnaire
@@ -35,6 +37,8 @@ export type CompteEntrant = Pick<
 	| 'status'
 	| 'last_error'
 	| 'last_checked_at'
+	| 'watch_folders'
+	| 'backfill_months'
 >
 
 /**
@@ -48,13 +52,16 @@ export type CompteEntrant = Pick<
 const COLONNES_IDENTITE = 'id, label, owner_id' as const
 const COLONNES_CONNEXION = 'imap_host, imap_port, imap_security, imap_username' as const
 const COLONNES_ETAT = 'status, last_error, last_checked_at' as const
+// `CRM-136` (§25.4, §25.5) : deux réglages de relève, couverts par le `GRANT SELECT` de `0022`. `folder_style` n'est jamais
+// lu (décision 885).
+const COLONNES_RELEVE = 'watch_folders, backfill_months' as const
 
 // LA COMPOSITION EST UN GABARIT `as const`, ET NON UNE CONCATÉNATION : `supabase-js` type la
 // réponse à partir du **littéral** passé à `select`, et un `'a' + 'b'` élargit le type à `string`,
 // ce qui ferait retomber la ligne rendue sur `GenericStringError`. Le gabarit conserve le type
 // littéral, donc la vérification des colonnes par le compilateur — sans aucune conversion de type.
 export const COLONNES_COMPTE_ENTRANT =
-	`${COLONNES_IDENTITE}, ${COLONNES_CONNEXION}, ${COLONNES_ETAT}` as const
+	`${COLONNES_IDENTITE}, ${COLONNES_CONNEXION}, ${COLONNES_ETAT}, ${COLONNES_RELEVE}` as const
 
 /**
  * Les comptes entrants visibles par l'appelant, triés par boîte.
@@ -130,6 +137,8 @@ export type SaisieCompteEntrant = {
 	readonly identifiant: string
 	/** Vide = le mot de passe enregistré est CONSERVÉ, et le paramètre n'est pas envoyé (§21.5). */
 	readonly motDePasse: string
+	/** `CRM-136` (§25.4) : l'historique relevé, en mois — une CHAÎNE, comme le port, convertie ici et jugée par la base. */
+	readonly historique: string
 }
 
 /**
@@ -160,6 +169,10 @@ export type IssueEnregistrement =
 	| 'identifiant-invalide'
 	/** `23514`, `owner_not_member` : le propriétaire n'est pas membre du workspace. */
 	| 'proprietaire-non-membre'
+	/** `CRM-136` (§25.4) : `23514` sur `mail_inbound_accounts_backfill_borne`, `23502` sur la colonne absente. */
+	| 'historique-invalide'
+	/** `CRM-136` (§25.5) : `23514` sur `mail_inbound_accounts_watch_folders_non_vide`, aucun dossier coché. */
+	| 'aucun-dossier'
 	/** Aucune réponse : la requête n'a jamais abouti. */
 	| 'reseau'
 	/** Tout le reste. L'interface ne prétend pas savoir, et ne recopie pas le serveur. */
@@ -197,13 +210,15 @@ export function classerEnregistrement(
 	if (message.includes('mail_inbound_accounts_port_borne')) return 'port-invalide'
 	if (message.includes('mail_inbound_accounts_securite')) return 'securite-invalide'
 	if (message.includes('mail_inbound_accounts_username_borne')) return 'identifiant-invalide'
+	if (message.includes('mail_inbound_accounts_backfill_borne') || message.includes('backfill_months')) return 'historique-invalide'
+	if (message.includes('mail_inbound_accounts_watch_folders_non_vide') || message.includes('watch_folders')) return 'aucun-dossier'
 	// Le port absent (`23502`, message nommant la colonne) et le port non entier (`22P02`, message
 	// ne nommant que le TYPE) sont deux refus de la MÊME saisie, mesurés §21.6. Les distinguer à
 	// l'écran ferait deux phrases pour un seul champ à corriger.
 	//
-	// LE SECOND EST ATTRIBUÉ AU PORT PARCE QU'IL NE PEUT DÉSIGNER QUE LUI : des paramètres que ce
-	// module envoie, `p_imap_port` est le seul entier — les trois autres arguments entiers de la
-	// fonction (`p_backfill_months`) ne sont jamais transmis (§21.1). L'attribution est donc une
+	// LE SECOND EST ATTRIBUÉ AU PORT PARCE QU'IL NE PEUT DÉSIGNER QUE LUI : depuis `CRM-136`, ce module envoie aussi
+	// `p_backfill_months`, mais toujours comme un nombre ou `null` (`Number.parseInt`, dont le `NaN` se sérialise `null`) —
+	// jamais une chaîne que PostgreSQL aurait à convertir. Un `22P02` ne peut donc venir que du port. L'attribution reste une
 	// propriété de l'appel, pas une devinette sur la prose du serveur.
 	if (message.includes('imap_port')) return 'port-invalide'
 	if (message.includes('invalid input syntax for type integer')) return 'port-invalide'
@@ -245,6 +260,9 @@ export function argumentsEnregistrement(
 		p_imap_security: saisie.securite,
 		p_imap_username: saisie.identifiant,
 	}
+	// `CRM-136` (§25.4) : l'historique est envoyé ; `p_folder_style` ne l'est jamais (décision 885), si bien que la
+	// fonction garde sa valeur. Vide, `NaN` part en `null` : la fonction conserve l'historique en place.
+	arguments_['p_backfill_months'] = Number.parseInt(saisie.historique, 10)
 	if (saisie.idProprietaire !== null) arguments_['p_owner_id'] = saisie.idProprietaire
 	if (saisie.motDePasse !== '') arguments_['p_password'] = saisie.motDePasse
 	return arguments_ as Database['public']['Functions']['upsert_mail_inbound_account']['Args']
@@ -305,6 +323,8 @@ export function saisieDepuisCompte(
 			securite: 'none',
 			identifiant: '',
 			motDePasse: '',
+			// Le défaut de la table pour une boîte à créer (§25.4).
+			historique: '0',
 		}
 	}
 	return {
@@ -316,6 +336,7 @@ export function saisieDepuisCompte(
 		securite: compte.imap_security,
 		identifiant: compte.imap_username,
 		motDePasse: '',
+		historique: typeof compte.backfill_months === 'number' ? String(compte.backfill_months) : '0',
 	}
 }
 
@@ -332,3 +353,69 @@ export function compteDe(
 ): CompteEntrant | undefined {
 	return comptes.find((compte) => compte.owner_id === idProprietaire)
 }
+
+// ---------------------------------------------------------------------------------------------
+// `CRM-136` — les dossiers relevés (§25.5)
+// ---------------------------------------------------------------------------------------------
+
+/** Une case du panneau : un dossier, son niveau dans la hiérarchie, et s'il manque à la boîte. */
+export type CaseDossier = {
+	readonly nom: string
+	/** Le dernier segment du chemin, celui qu'on lit ; le chemin entier reste le nom accessible. */
+	readonly libelle: string
+	readonly niveau: number
+	readonly absent: boolean
+}
+
+/**
+ * Les cases du panneau, dans l'ordre du serveur, puis les dossiers déjà relevés que la boîte n'a plus (§25.5). Le séparateur
+ * de la hiérarchie n'est pas rendu par la sonde : `/` et `.` sont les deux que les serveurs emploient, et le niveau sert au
+ * seul retrait — un nom mal découpé reste lisible en entier.
+ */
+export function casesDossiers(noms: readonly string[], releves: readonly string[]): readonly CaseDossier[] {
+	const separateur = noms.some((nom) => nom.includes('/')) ? '/' : noms.some((nom) => nom.includes('.')) ? '.' : '/'
+	const decouper = (nom: string, absent: boolean): CaseDossier => {
+		const segments = nom.split(separateur)
+		return { nom, libelle: segments[segments.length - 1] || nom, niveau: Math.min(segments.length - 1, 2), absent }
+	}
+	return [
+		...noms.map((nom) => decouper(nom, false)),
+		...(releves ?? []).filter((nom) => !noms.includes(nom)).map((nom) => ({ ...decouper(nom, true), niveau: 0 })),
+	]
+}
+
+/**
+ * Écrit les dossiers relevés d'une boîte : la fonction d'écriture habituelle, les autres paramètres repris de la ligne, sans
+ * mot de passe (§21.5) ; l'historique n'est pas envoyé, la fonction le garde. Une liste vide part telle quelle : c'est la
+ * base qui refuse (`aucun-dossier`).
+ */
+export async function enregistrerDossiers(
+	client: ClientCrm,
+	idWorkspace: string,
+	compte: CompteEntrant,
+	dossiers: readonly string[],
+): Promise<ResultatEnregistrement> {
+	try {
+		const arguments_: Record<string, unknown> = {
+			p_workspace_id: idWorkspace,
+			p_label: compte.label,
+			p_imap_host: compte.imap_host,
+			p_imap_port: compte.imap_port,
+			p_imap_security: compte.imap_security,
+			p_imap_username: compte.imap_username,
+			p_watch_folders: [...dossiers],
+		}
+		if (compte.owner_id !== null) arguments_['p_owner_id'] = compte.owner_id
+		const reponse = await client.rpc(
+			'upsert_mail_inbound_account',
+			arguments_ as Database['public']['Functions']['upsert_mail_inbound_account']['Args'],
+		)
+		const issue = classerEnregistrement(reponse.status, reponse.error === null ? null : reponse.error.message)
+		if (issue !== 'enregistre') return { issue }
+		if (typeof reponse.data !== 'string' || reponse.data === '') return { issue: 'inconnu' }
+		return { issue, idCompte: reponse.data }
+	} catch {
+		return { issue: 'reseau' }
+	}
+}
+

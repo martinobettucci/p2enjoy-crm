@@ -1,3 +1,5 @@
+// @verifies CRM-136 (docs/BACKLOG.md) — tranche T3 : l'historique lu et envoyé, les dossiers relevés lus, jamais le style
+//           (docs/SPEC-mail-subsystem.md §25.4, §25.5)
 // @verifies CRM-088 (docs/BACKLOG.md) — configuration des comptes entrants IMAP
 // @verifies docs/SPEC-mail-subsystem.md §21.3 (les colonnes demandées, et celle qui ne l'est
 //           jamais), §21.4 (ce que le formulaire envoie), §21.5 (un mot de passe vide est OMIS),
@@ -39,6 +41,7 @@ const SAISIE: SaisieCompteEntrant = {
 	securite: 'none',
 	identifiant: 'admin@p2enjoy.test',
 	motDePasse: '',
+	historique: '3',
 }
 
 const COMPTE: CompteEntrant = {
@@ -52,6 +55,8 @@ const COMPTE: CompteEntrant = {
 	status: 'pending',
 	last_error: null,
 	last_checked_at: null,
+	watch_folders: ['INBOX'],
+	backfill_months: 0,
 }
 
 type Reponse = { data: unknown; error: { message: string } | null; status: number }
@@ -109,11 +114,13 @@ describe('lecture des comptes entrants — §21.3', () => {
 	// PREUVE DE REFUS N° 6, côté client : la colonne révoquée n'est jamais demandée. Sans cette
 	// assertion, l'ajouter par mégarde ferait échouer la lecture ENTIÈRE de l'écran en `403`, et
 	// pour tout le monde — l'écran ne montrerait plus rien.
-	it('ne demande JAMAIS `secret_id`, ni les trois paramètres d’ingestion', () => {
+	// RÉVISÉE PAR `CRM-136` T3 (décision 51), non relâchée : l'écran lit désormais les dossiers relevés et l'historique
+	// (§25.4, §25.5) ; `secret_id` reste interdit, et `folder_style` n'est jamais lu (décision 885).
+	it('ne demande JAMAIS `secret_id` ni `folder_style`, et lit les dossiers relevés et l’historique', () => {
 		expect(COLONNES_COMPTE_ENTRANT).not.toContain('secret_id')
-		expect(COLONNES_COMPTE_ENTRANT).not.toContain('watch_folders')
 		expect(COLONNES_COMPTE_ENTRANT).not.toContain('folder_style')
-		expect(COLONNES_COMPTE_ENTRANT).not.toContain('backfill_months')
+		expect(COLONNES_COMPTE_ENTRANT).toContain('watch_folders')
+		expect(COLONNES_COMPTE_ENTRANT).toContain('backfill_months')
 	})
 
 	it('rend un état d’erreur classé, jamais une liste vide, quand la requête échoue', async () => {
@@ -171,12 +178,17 @@ describe('ce que le formulaire envoie — §21.4, §21.5', () => {
 		expect(JSON.parse(JSON.stringify(arguments_))['p_imap_port']).toBeNull()
 	})
 
-	it('n’envoie JAMAIS les trois paramètres d’ingestion, que la fonction laisse alors en place', () => {
+	// RÉVISÉE PAR `CRM-136` T3 (décision 51), non relâchée : le formulaire envoie l'historique (§25.4) ; il n'envoie jamais
+	// le style (décision 885), ni les dossiers, qui se choisissent dans le panneau (§25.5).
+	it('envoie l’historique, et jamais le style ni les dossiers, que la fonction laisse alors en place', () => {
 		const arguments_ = argumentsEnregistrement(SAISIE) as Record<string, unknown>
 
+		expect(arguments_['p_backfill_months']).toBe(3)
 		expect(Object.hasOwn(arguments_, 'p_watch_folders')).toBe(false)
 		expect(Object.hasOwn(arguments_, 'p_folder_style')).toBe(false)
-		expect(Object.hasOwn(arguments_, 'p_backfill_months')).toBe(false)
+		// Un historique vide part `null` : la fonction le garde en place, rien n'est écrasé par un champ laissé vide.
+		const vide = argumentsEnregistrement({ ...SAISIE, historique: '' }) as Record<string, unknown>
+		expect(JSON.parse(JSON.stringify(vide))['p_backfill_months']).toBeNull()
 	})
 })
 

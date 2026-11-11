@@ -9995,6 +9995,45 @@
 			]
 		},
 		{
+			"fichier": "les-boites-de-reception-et-les-adresses-d-expedition/dossiers-releves.jpg",
+			"largeur": 1023,
+			"hauteur": 374,
+			"chapitre": "les-boites-de-reception-et-les-adresses-d-expedition",
+			"section": "les-boites-de-reception-declarees",
+			"pleinePage": false,
+			"libelles": [
+				"Annuler",
+				"Configurer",
+				"Configurer la boîte Boîte de Camille Aubert",
+				"Deleted Items",
+				"Dossiers relevés",
+				"Dossiers relevés Tester la connexion Configurer",
+				"Dossiers relevés de Boîte de Camille Aubert",
+				"Drafts",
+				"Enregistrer",
+				"INBOX",
+				"Junk Mail",
+				"Sent Items",
+				"Tester la connexion",
+				"Tester la connexion de Boîte de Camille Aubert",
+				"on"
+			]
+		},
+		{
+			"fichier": "les-boites-de-reception-et-les-adresses-d-expedition/historique.jpg",
+			"largeur": 330,
+			"hauteur": 182,
+			"chapitre": "les-boites-de-reception-et-les-adresses-d-expedition",
+			"section": "les-boites-de-reception-declarees",
+			"pleinePage": false,
+			"libelles": [
+				"0",
+				"0 relève le courrier reçu depuis le branchement de la boîte, et rien d'avant. Un nombre de mois fait descendre l'historique par lots, du plus récent au plus ancien, au fil des relèves.",
+				"Historique relevé, en mois",
+				"Historique relevé, en mois 0 relève le courrier reçu depuis le branchement de la boîte, et rien d'avant. Un nombre de mois fait descendre l'historique par lots, du plus récent au plus ancien, au fil des relèves."
+			]
+		},
+		{
 			"fichier": "les-boites-de-reception-et-les-adresses-d-expedition/liste-des-adresses.jpg",
 			"largeur": 1062,
 			"hauteur": 325,
@@ -10088,6 +10127,19 @@
 				"Proposition commerciale — lot 2",
 				"adresse@exemple.fr, autre@exemple.fr",
 				"dsi@sogexia.example"
+			]
+		},
+		{
+			"fichier": "les-boites-de-reception-et-les-adresses-d-expedition/plafond.jpg",
+			"largeur": 360,
+			"hauteur": 204,
+			"chapitre": "les-boites-de-reception-et-les-adresses-d-expedition",
+			"section": "les-adresses-d-expedition",
+			"pleinePage": false,
+			"libelles": [
+				"Envois par jour, au plus",
+				"Envois par jour, au plus Vide : aucun plafond. 0 : aucun envoi depuis cette adresse. Un nombre : le plafond d'envois par jour.",
+				"Vide : aucun plafond. 0 : aucun envoi depuis cette adresse. Un nombre : le plafond d'envois par jour."
 			]
 		},
 		{
