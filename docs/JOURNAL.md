@@ -40410,3 +40410,22 @@ Le compte rendu de l'unité dit que la lecture n'était pas intégrale. Le diff 
 avant le commit.
 **Portée** : `CRM-134` seulement ; la règle de `CLAUDE.md` n'est pas changée.
 **MCP** : déjà tranché (décision 871) — famille `structure`, cases existantes.
+
+
+### décision 917 — `CRM-138` : les six points que la décision 878 laissait à la spécification
+
+*2026-11-11, session interactive 4891a451 (p2enjoy-crm-32), arbitrages du responsable (`AskUserQuestion`), avant la
+spécification ; complète la décision 878.*
+- **Qui efface** : **qui peut l'écrire** — classé dans une affaire, qui peut écrire sur cette affaire ; non classé, qui peut
+  écrire sur la boîte qui l'a reçu ; la règle du classement d'aujourd'hui. Écartés : la boîte seulement ; les
+  administrateurs seulement.
+- **La portée d'« Effacer »** : **le message ouvert** ; les autres messages du même fil restent. Écarté : tout le fil.
+- **Où le restaurer** : **un dossier « Corbeille » dans l'inbox**, avec « Restaurer » sur le message. Écartés : une section
+  de l'écran Corbeille existant ; les deux.
+- **La boîte IMAP ne répond pas, la case cochée** : **le message part dans la corbeille du CRM tout de suite** ; le
+  déplacement IMAP est **réessayé par `mail-sync`**, et son état (en attente, fait, échec) se voit sur le message. Écartés :
+  tout refuser ; signaler l'échec sans nouvel essai.
+- **La purge** : **30 jours**, la durée de la corbeille des affaires, lue au même endroit (`app.trash_retention`).
+- **Ce que montre le fil de l'affaire** : le message quitte le fil, et **une ligne « Message effacé par X »** le remplace,
+  comme « Envoi annulé par X » dans l'outbox. Écarté : qu'il disparaisse sans trace.
+**MCP** : oui, famille `messagerie`, cases existantes (décision 878).
