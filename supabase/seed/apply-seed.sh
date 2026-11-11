@@ -3176,8 +3176,10 @@ for msgid in "$MSGID_NON_CLASSE" "$MSGID_SUGGERE"; do
 	code=$(api_admin POST /rest/v1/rpc/mark_message_unread -d "{\"p_message_id\":\"$id_non_lu\"}")
 	attendu "$code" "remise à non lu de <$msgid> pour le compte administrateur" 200
 done
+# RÉVISÉ par `CRM-138` T5 (docs/SPEC-seed.md §45) : un message EN CORBEILLE n'est plus dans l'inbox (§29.4), et le
+# courrier non classé que le §45 efface n'est pas compté — mesuré au second passage, où il existe déjà ici.
 non_lus_admin=$(psql_seed -c "select count(*) from public.mail_messages m
-                               where m.card_id is null and m.direction = 'inbound'
+                               where m.card_id is null and m.direction = 'inbound' and m.deleted_at is null
                                  and not exists (select 1 from public.mail_message_reads r
                                                   where r.message_id = m.id
                                                     and r.user_id = '5eed0000-0000-4000-8000-000000000011');" | tr -d ' ')
@@ -3553,6 +3555,155 @@ etat_html=$(curl -s "$API/rest/v1/mail_attachments?select=filename,content_id,av
 [ "$etat_html" = "logo-sogexia.png:$CID_LOGO_HTML:clean" ] \
 	|| die "l'image intégrée du courrier « $OBJET_HTML » n'est pas dans l'état attendu : « $etat_html » (attendu « logo-sogexia.png:$CID_LOGO_HTML:clean »). La migration de content_id est-elle appliquée, mail-sync reconstruit, l'antivirus démarré ?"
 info "Courrier HTML : « $OBJET_HTML », non classé, un lien, une image distante, une image intégrée saine — CRM-140, docs/SPEC-seed.md §44"
+
+# --- La corbeille de l'inbox : effacé avec sa boîte, effacé puis restauré — CRM-138 T5, docs/SPEC-seed.md §45 ----------
+# @spec CRM-138 (docs/BACKLOG.md) — tranche T5 : deux courriers RÉELLEMENT soumis par Léo Marchand et relevés par mail-sync,
+#       puis effacés et restaurés par `delete_message` et `restore_message` sous le jeton de Camille, comme l'écran ; le
+#       déplacement dans la corbeille de la boîte fait par le vrai mail-sync contre Stalwart (route `trash-moves/flush`)
+#       (docs/SPEC-mail-subsystem.md §29.9 ; docs/SPEC-seed.md §45 ; CLAUDE.md §8)
+#
+# LE COURRIER RESTAURÉ PART DE LA BOÎTE DE DRISS, comme les autres courriers classés du seed : il reste visible, et un
+# expéditeur de `sogexia.example` aurait fait grandir la recherche « sogexia » (le défaut du §44, réparé par 7745a15a).
+# Camille OUVRE le message avant de l'effacer, comme à l'écran : il est marqué lu sous son jeton, et ses non-lus ne
+# changent pas.
+# REJOUABLE : des `Message-ID` fixes ; un message déjà effacé ne l'est pas deux fois ; la restauration ne se rejoue pas si
+# le fil de l'affaire porte déjà son « Message restauré ».
+MSGID_CORBEILLE_BOITE='seed-corbeille-boite@sogexia.example'
+MSGID_CORBEILLE_RESTAURE='seed-corbeille-restaure@p2enjoy.test'
+OBJET_CORBEILLE_BOITE='Offre de partenariat — salon Numérique Lyon'
+OBJET_CORBEILLE_RESTAURE='Billetterie — calendrier des expositions 2027'
+CAMILLE_CORBEILLE=5eed0000-0000-4000-8000-000000000011
+
+service_get() { # $1 = chemin et requête
+	curl -s "$API/rest/v1/$1" -H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY"
+}
+message_corbeille() { # $1 = Message-ID sans chevrons
+	service_get "mail_messages?select=id,card_id,deleted_at,deleted_by&rfc822_message_id=eq.%3C$1%3E"
+}
+relever_compte() { # $1 = compte entrant
+	docker compose exec -T -e JETON="$MAIL_SYNC_TOKEN" -e COMPTE="$1" mail-sync python -c '
+import os, urllib.error, urllib.request
+r = urllib.request.Request("http://localhost:8080/internal/v1/inbound-accounts/" + os.environ["COMPTE"] + "/poll",
+                           data=b"", method="POST")
+r.add_header("Authorization", "Bearer " + os.environ["JETON"])
+try:
+    with urllib.request.urlopen(r, timeout=300) as s:
+        print(s.read().decode(), end="")
+except urllib.error.HTTPError as e:
+    print(e.read().decode(), end="")
+' 2>/dev/null
+}
+
+CARD_BILLETTERIE_CORBEILLE=$(service_get "cards?select=id,email_local_part&title=eq.$(jq -rn --arg t 'Plateforme de billetterie — Musée des Confluences' '$t|@uri')")
+CARD_BILLETTERIE_ID=$(echo "$CARD_BILLETTERIE_CORBEILLE" | jq -r '.[0].id // empty')
+CARD_BILLETTERIE_LOCAL=$(echo "$CARD_BILLETTERIE_CORBEILLE" | jq -r '.[0].email_local_part // empty')
+[ -n "$CARD_BILLETTERIE_ID" ] && [ -n "$CARD_BILLETTERIE_LOCAL" ] \
+	|| die "l'affaire « Plateforme de billetterie — Musée des Confluences » ou son adresse est absente : le §45 en dépend."
+compte_camille=$(service_get "mail_inbound_accounts?select=id&owner_id=eq.$CAMILLE_CORBEILLE&order=created_at&limit=1" | jq -r '.[0].id // empty')
+[ -n "$compte_camille" ] || die "la boîte de Camille est absente : le §2.17 la pose avant le §45."
+
+if [ "$(message_corbeille "$MSGID_CORBEILLE_BOITE" | jq -r 'length')" = 0 ] \
+	|| [ "$(message_corbeille "$MSGID_CORBEILLE_RESTAURE" | jq -r 'length')" = 0 ]; then
+	envoi_corbeille=$(docker compose exec -T \
+		-e DEST_BOITE="admin@$PERSONAL_DOMAIN" -e DEST_CARD="$CARD_BILLETTERIE_LOCAL@$INBOUND_DOMAIN" \
+		-e MDP="$MAILBOX_PASSWORD" -e EXPEDITEUR="$CORRESPONDANT" \
+		-e MSGID_BOITE="$MSGID_CORBEILLE_BOITE" -e MSGID_RESTAURE="$MSGID_CORBEILLE_RESTAURE" \
+		-e OBJET_BOITE="$OBJET_CORBEILLE_BOITE" -e OBJET_RESTAURE="$OBJET_CORBEILLE_RESTAURE" \
+		mail-sync python -c '
+import os, smtplib
+from email.message import EmailMessage
+from email.utils import formataddr
+
+def composer(destinataire, identifiant, objet, corps):
+    message = EmailMessage()
+    message["From"] = formataddr(("Léo Marchand", os.environ["EXPEDITEUR"]))
+    message["To"] = destinataire
+    message["Subject"] = objet
+    message["Message-ID"] = "<" + identifiant + ">"
+    message.set_content(corps)
+    return message
+
+session = smtplib.SMTP("stalwart", 587, timeout=60)
+session.ehlo()
+session.login(os.environ["EXPEDITEUR"], os.environ["MDP"])
+session.send_message(composer(os.environ["DEST_BOITE"], os.environ["MSGID_BOITE"], os.environ["OBJET_BOITE"],
+    "Bonjour,\n\nSogexia sera présente au salon Numérique Lyon et cherche des partenaires pour son stand. Seriez-vous "
+    "intéressés ?\n\nBien cordialement,\nLéo Marchand"))
+session.quit()
+interne = composer(os.environ["DEST_CARD"], os.environ["MSGID_RESTAURE"], os.environ["OBJET_RESTAURE"],
+    "Bonjour,\n\nVoici le calendrier des expositions 2027, pour caler l’ouverture de la billetterie en ligne.\n\n"
+    "Bien à vous,\nDriss Lemoine")
+interne.replace_header("From", formataddr(("Driss Lemoine", "bizdev@p2enjoy.test")))
+session = smtplib.SMTP("stalwart", 587, timeout=60)
+session.ehlo()
+session.login("bizdev@p2enjoy.test", os.environ["MDP"])
+session.send_message(interne)
+session.quit()
+print("envoyes")
+' 2>&1) || die "l'envoi des courriers de la corbeille a échoué : « $envoi_corbeille »"
+	[ "${envoi_corbeille##*$'\n'}" = "envoyes" ] || die "l'envoi des courriers de la corbeille n'a rien confirmé : « $envoi_corbeille »"
+	for _tentative in 1 2 3 4 5 6 7 8 9 10; do
+		relever_compte "$compte_camille" >/dev/null
+		relever_boite >/dev/null
+		[ "$(message_corbeille "$MSGID_CORBEILLE_BOITE" | jq -r 'length')" = 1 ] \
+			&& [ "$(message_corbeille "$MSGID_CORBEILLE_RESTAURE" | jq -r 'length')" = 1 ] && break
+		sleep 3
+	done
+fi
+[ "$(message_corbeille "$MSGID_CORBEILLE_BOITE" | jq -r 'length')" = 1 ] \
+	|| die "le courrier « $OBJET_CORBEILLE_BOITE » n'est pas arrivé dans la boîte de Camille : mail-sync et Stalwart tournent-ils ?"
+[ "$(message_corbeille "$MSGID_CORBEILLE_RESTAURE" | jq -r '.[0].card_id // empty')" = "$CARD_BILLETTERIE_ID" ] \
+	|| die "le courrier « $OBJET_CORBEILLE_RESTAURE » devait être classé dans l'affaire du Musée des Confluences : $(message_corbeille "$MSGID_CORBEILLE_RESTAURE" | jq -c '.')"
+ID_CORBEILLE_BOITE=$(message_corbeille "$MSGID_CORBEILLE_BOITE" | jq -r '.[0].id')
+ID_CORBEILLE_RESTAURE=$(message_corbeille "$MSGID_CORBEILLE_RESTAURE" | jq -r '.[0].id')
+
+JETON_CAMILLE_CORBEILLE=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+[ -n "$JETON_CAMILLE_CORBEILLE" ] || die "connexion de Camille impossible : le §45 efface et restaure sous son jeton."
+rpc_camille() { # $1 = fonction, $2 = corps JSON
+	curl -s -o "$CORPS" -w '%{http_code}' -X POST "$API/rest/v1/rpc/$1" \
+		-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_CAMILLE_CORBEILLE" -H 'Content-Type: application/json' -d "$2"
+}
+
+# 1. EFFACÉ AVEC LA CASE, puis déplacé par le vrai mail-sync dans la corbeille de la boîte de Camille.
+if [ "$(message_corbeille "$MSGID_CORBEILLE_BOITE" | jq -r '.[0].deleted_at // empty')" = "" ]; then
+	code=$(rpc_camille delete_message "$(jq -nc --arg m "$ID_CORBEILLE_BOITE" '{p_message_id: $m, p_also_mailbox: true}')")
+	attendu "$code" "effacement avec la case de « $OBJET_CORBEILLE_BOITE » (§45)" 200
+fi
+for _tentative in 1 2 3 4 5; do
+	[ "$(service_get "mail_trash_moves?select=state&message_id=eq.$ID_CORBEILLE_BOITE" | jq -r 'map(.state) | join(",")')" = "done" ] && break
+	docker compose exec -T -e JETON="$MAIL_SYNC_TOKEN" mail-sync python -c '
+import os, urllib.request
+r = urllib.request.Request("http://localhost:8080/internal/v1/trash-moves/flush", data=b"", method="POST")
+r.add_header("Authorization", "Bearer " + os.environ["JETON"])
+urllib.request.urlopen(r, timeout=180).read()
+' >/dev/null 2>&1 || true
+	sleep 2
+done
+deplacement_corbeille=$(service_get "mail_trash_moves?select=state,last_error&message_id=eq.$ID_CORBEILLE_BOITE" | jq -c '.')
+[ "$(echo "$deplacement_corbeille" | jq -r 'map(.state) | join(",")')" = "done" ] \
+	|| die "le déplacement de « $OBJET_CORBEILLE_BOITE » dans la corbeille de la boîte n'est pas fait : $deplacement_corbeille. Les migrations 180 et 181 sont-elles appliquées, l'image mail-sync reconstruite, Stalwart démarré ?"
+[ "$(message_corbeille "$MSGID_CORBEILLE_BOITE" | jq -r '.[0].deleted_by // empty')" = "$CAMILLE_CORBEILLE" ] \
+	|| die "« $OBJET_CORBEILLE_BOITE » devait être effacé par Camille (§45)."
+
+# 2. EFFACÉ SANS LA CASE, PUIS RESTAURÉ : le fil de l'affaire raconte les deux gestes, une seule fois.
+evenements_corbeille() { # $1 = type
+	service_get "card_events?select=id&card_id=eq.$CARD_BILLETTERIE_ID&type=eq.$1&payload->>message_id=eq.$ID_CORBEILLE_RESTAURE" | jq -r 'length'
+}
+if [ "$(evenements_corbeille mail_restored)" = 0 ]; then
+	if [ "$(message_corbeille "$MSGID_CORBEILLE_RESTAURE" | jq -r '.[0].deleted_at // empty')" = "" ]; then
+		code=$(rpc_camille mark_messages_read "$(jq -nc --arg m "$ID_CORBEILLE_RESTAURE" '{p_message_ids: [$m]}')")
+		attendu "$code" "lecture par Camille de « $OBJET_CORBEILLE_RESTAURE » avant son effacement (§45)" 200
+		code=$(rpc_camille delete_message "$(jq -nc --arg m "$ID_CORBEILLE_RESTAURE" '{p_message_id: $m}')")
+		attendu "$code" "effacement sans la case de « $OBJET_CORBEILLE_RESTAURE » (§45)" 200
+	fi
+	code=$(rpc_camille restore_message "$(jq -nc --arg m "$ID_CORBEILLE_RESTAURE" '{p_message_id: $m}')")
+	attendu "$code" "restauration de « $OBJET_CORBEILLE_RESTAURE » (§45)" 200
+fi
+[ "$(message_corbeille "$MSGID_CORBEILLE_RESTAURE" | jq -r '.[0].deleted_at // empty')" = "" ] \
+	|| die "« $OBJET_CORBEILLE_RESTAURE » devait être restauré (§45)."
+[ "$(evenements_corbeille mail_deleted)" = 1 ] && [ "$(evenements_corbeille mail_restored)" = 1 ] \
+	|| die "le fil de l'affaire du Musée des Confluences doit porter UN « Message effacé » et UN « Message restauré » pour « $OBJET_CORBEILLE_RESTAURE » — mesuré : $(evenements_corbeille mail_deleted) et $(evenements_corbeille mail_restored) (§45)."
+info "Corbeille de l'inbox : « $OBJET_CORBEILLE_BOITE » effacé avec la case et déplacé dans la corbeille de la boîte ; « $OBJET_CORBEILLE_RESTAURE » effacé puis restauré dans son affaire — CRM-138, docs/SPEC-seed.md §45"
 
 total_evenements=$(curl -s "$API/rest/v1/card_events?select=id" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')

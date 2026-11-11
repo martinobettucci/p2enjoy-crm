@@ -87,8 +87,12 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');  -- Camille, ad
 -- RÉVISÉ par `CRM-140` T4 (décision 51), non relâché : un septième, « Invitation — journée partenaires Sogexia », le courrier
 -- HTML que Léo Marchand adresse à la boîte système (docs/SPEC-seed.md §44). Il reste NON CLASSÉ : « Non classés » en compte
 -- donc trois, tous non lus pour Camille.
-select is((select count(*) from public.mail_messages m where not public.is_read(m)), 7::bigint,
-	'11 — au départ, les sept messages reçus sont non lus pour Camille : aucune lecture fabriquée');
+-- RÉVISÉ par `CRM-138` T5 (décision 51), non relâché : un huitième, « Billetterie — calendrier des expositions 2027 », classé
+-- dans l'affaire du Musée des Confluences, effacé puis restauré (docs/SPEC-seed.md §45) ; ses lectures sont effacées plus
+-- haut comme toutes les autres. Le courrier que le §45 efface AVEC sa boîte n'est pas compté : en corbeille, la politique de
+-- lecture l'exclut (docs/SPEC-mail-subsystem.md §29.4). « Non classés » reste à trois.
+select is((select count(*) from public.mail_messages m where not public.is_read(m)), 8::bigint,
+	'11 — au départ, les huit messages reçus sont non lus pour Camille : aucune lecture fabriquée');
 select is((select unread_count from public.inbox_arborescence() where card_id is null), 3::bigint,
 	'12 — « Non classés » : trois non lus pour Camille');
 select is((select nombre from public.inbox_arborescence() where card_id is null), 3::bigint,

@@ -3135,17 +3135,19 @@ remplace ce serveur par l'interception réseau (`e2e/ui/corps-html.spec.ts`).
 
 ## 45. La corbeille de l'inbox : un message effacé avec sa boîte, un message effacé puis restauré — `CRM-138` T5 (`docs/SPEC-mail-subsystem.md` §29.9)
 
-*Écrit le 2026-11-11, avant le code.* Deux courriers **réellement soumis** en SMTP par Léo Marchand, le correspondant local
-du §2.19, **réellement relevés** par `mail-sync`, puis effacés et restaurés par `delete_message` et `restore_message` **sous
+*Écrit le 2026-11-11, avant le code ; précisé à son écriture.* Deux courriers **réellement soumis** en SMTP — le premier
+par Léo Marchand, le correspondant local du §2.19, le second par Driss depuis `bizdev@`, comme les autres courriers classés
+du seed (le second reste visible, et un expéditeur de `sogexia.example` aurait fait grandir la recherche « sogexia », le
+défaut du §44) —, **réellement relevés** par `mail-sync`, puis effacés et restaurés par `delete_message` et `restore_message` **sous
 le jeton de Camille**, comme l'écran (`CLAUDE.md` §8). Le déplacement IMAP est **fait par le vrai `mail-sync`** contre le
 Stalwart de développement, par sa route interne `trash-moves/flush`.
 
 | Élément | Le message effacé avec la case | Le message effacé puis restauré |
 |---|---|---|
 | Objet | « Offre de partenariat — salon Numérique Lyon » | « Billetterie — calendrier des expositions 2027 » |
-| `Message-ID` | `<seed-corbeille-boite@sogexia.example>` | `<seed-corbeille-restaure@sogexia.example>` |
+| `Message-ID` | `<seed-corbeille-boite@sogexia.example>` | `<seed-corbeille-restaure@p2enjoy.test>` |
 | Destinataire | `admin@`, la boîte de Camille : il reste **non classé** | l'adresse de l'affaire « Plateforme de billetterie — Musée des Confluences » : il y est **classé** |
-| Geste | effacé **avec** « L'effacer aussi dans la boîte mail » | effacé **sans** la case, puis restauré |
+| Geste | effacé **avec** « L'effacer aussi dans la boîte mail » | ouvert (donc lu par Camille), effacé **sans** la case, puis restauré |
 | État final | dans la corbeille de l'inbox de Camille, effacement définitif à 30 jours ; déplacé dans « Deleted Items » de sa boîte (`mail_trash_moves` `done`) | dans l'affaire ; son fil porte « Message effacé » puis « Message restauré », par Camille |
 
 **Rejouable** : un `Message-ID` fixe — le seed n'envoie rien qu'il ne trouve déjà ; un message déjà effacé n'est pas

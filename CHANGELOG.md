@@ -49,7 +49,10 @@ d'exécuter le code attendu.
   (`crm_mail_set_read`), mettre en sommeil ou réveiller (`crm_mail_snooze`), effacer (`crm_mail_delete`, case
   « Supprimer », avec l'option boîte mail), restaurer (`crm_mail_restore`) et lire la corbeille (`crm_mail_trash_list`). Un
   message effacé n'étant plus lisible, sa restauration se résout par une fonction de la base (migration **182**). Image
-  `mcp` à reconstruire. *Le seed, le manuel et les images suivent avec la tranche T5.*
+  `mcp` à reconstruire.
+- **Dans le seed (T5)** : un courrier non classé de la boîte de Camille, effacé avec sa boîte et déplacé par le vrai
+  `mail-sync` ; un courrier classé dans « Plateforme de billetterie — Musée des Confluences », effacé puis restauré
+  (`docs/SPEC-seed.md` §45). *Le manuel et ses images suivent.*
 
 #### `CRM-140` — le corps HTML d'un mail rendu dans un cadre confiné, ses images distantes sur demande (décisions 881 et 918)
 

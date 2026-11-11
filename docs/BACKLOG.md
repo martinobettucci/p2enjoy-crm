@@ -19188,7 +19188,10 @@ reste sinon) ; E2E souris et clavier (non lu, sommeil, effacer, annuler, restaur
       `trashed_message:message_id`, résolue par `trashed_message_workspace` (migration `0182`, `docs/SCHEMA.md`) — §29.8
       précisé.
 - [ ] **T5 — seed, manuel, contrat** (§29.9) ; images ; `docs/PROD_MIGRATIONS.md`. *Seed spécifié avant le code
-      (2026-11-11)* : `docs/SPEC-seed.md` §45.
+      (2026-11-11)* : `docs/SPEC-seed.md` §45. **Seed fait** le 2026-11-11 (`apply-seed.sh`, section §45) : trois passages,
+      le troisième sans rien renvoyer ni réécrire ; la garde des non-classés non lus et deux preuves révisées, non relâchées
+      (pgTAP `0095` n°11 à huit, l'oracle de `0164` sans la corbeille) ; pgTAP complet 159 fichiers, 5272 assertions, aucune
+      anomalie. Reste : le manuel et ses images.
 
 
 ## Demande du 2026-11-10 — l'inbox, par défaut, ne montre que mes mails (décision 879)

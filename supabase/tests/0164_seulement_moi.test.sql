@@ -52,11 +52,15 @@ select m.id, a.id, 'INBOX', 139000 + row_number() over (order by m.rfc822_messag
 
 -- L'ORACLE INDÉPENDANT des compteurs : ce que l'administratrice devrait voir sous le filtre, calculé par la clé de
 -- propriétaire sur ses deux adresses écrites en clair, sans `concerns_me`.
+-- RÉVISÉ par `CRM-138` T5 (décision 51), non relâché : un message EN CORBEILLE n'est vu nulle part
+-- (docs/SPEC-mail-subsystem.md §29.4), et l'oracle, qui lit en propriétaire sous aucune politique, l'écarte comme l'écran —
+-- le seed en efface un adressé à `admin@` (docs/SPEC-seed.md §45).
 create temp table pg_temp.attendu as
 select m.card_id, count(*)::bigint as nombre
   from public.mail_messages m
  where array['admin@p2enjoy.test', 'camille.sonde139@p2enjoy.test']
        && (m.to_addresses || m.cc_addresses || m.bcc_addresses || array[lower(m.from_address)])
+   and m.deleted_at is null
  group by m.card_id;
 grant select on pg_temp.attendu to authenticated;
 
