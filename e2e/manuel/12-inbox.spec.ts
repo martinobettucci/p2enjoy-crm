@@ -18,6 +18,10 @@
 // @spec CRM-138 (docs/BACKLOG.md) — tranche T5 : la rangée de boutons du message ouvert (« mettre-le-fil-en-sommeil »,
 //       nom gardé), « effacer-un-message » (la confirmation dans le flux, ouverte puis annulée) et « corbeille » (le courrier
 //       que le seed efface avec sa boîte, déplacé) — docs/DESIGN_SYSTEM.md §5.102 ; docs/SPEC-seed.md §45
+// @spec CRM-141 (docs/BACKLOG.md) — tranche T6 : les images des pastilles — « pastilles-dans-la-liste » et
+//       « pastilles-d-un-message » (section 12.2), « pastilles-des-mails », « pastille-archivee » et « fiche-d-une-pastille » (section 12.6) — sur la
+//       correction du seed (docs/DESIGN_SYSTEM.md §5.103 ; docs/SPEC-mail-subsystem.md §31.7 ; docs/SPEC-seed.md §46) ;
+//       rien n'est posé, retiré ni créé : la liste et la fiche sont ouvertes puis refermées
 // @spec CRM-143 (docs/BACKLOG.md) — tranche T4 : l'image « piece-non-analysee » de la section 12.1 — « Télécharger quand
 //       même » et son avertissement (docs/DESIGN_SYSTEM.md §5.95 ; docs/SPEC-pieces-jointes.md §17.4)
 //
@@ -189,6 +193,9 @@ test('une pièce non analysée : « Télécharger quand même » et son avertiss
 		await ligne.getByTestId('telecharger-quand-meme').click()
 		const avertissement = ligne.getByTestId('avertissement-piece')
 		await expect(avertissement).toBeVisible()
+		// `CRM-141` T6 : la ligne des pastilles et la rangée de cinq boutons, sur deux lignes, abaissent la pièce ; le panneau
+		// du message défile en lui-même, et la pièce est amenée en tête de la vue pour que l'avertissement y tienne.
+		await ligne.evaluate((noeud) => noeud.scrollIntoView({ block: 'start' }))
 		await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'piece-non-analysee', cibles: [ligne, avertissement] })
 		await ligne.getByTestId('annuler-risque').click()
 	} finally {
@@ -465,3 +472,61 @@ test('suivre ses envois : « Échecs » et « Réessayer », puis « En file » 
 	}
 })
 
+
+// `CRM-141` T6 : les pastilles d'un mail — la liste et son filtre, la liste à cocher d'un message, puis les réglages et la
+// fiche d'une pastille. Tout est ouvert puis refermé : rien n'est posé ni créé.
+test('les pastilles : dans la liste, sur un message, et dans les réglages', async ({ page, request }) => {
+	// Le message corrigé à la main par le seed (§46) — et non la réponse « Re: », que la ligne du fil ouvrirait.
+	const [corrige] = await lireService<{ id: string }[]>(
+		request,
+		`mail_messages?select=id&rfc822_message_id=eq.${encodeURIComponent('<seed-inbox-classe@p2enjoy.test>')}`,
+	)
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto(`/inbox?courrier=tous&message=${corrige!.id}`)
+	await expect(page.getByTestId('inbox-message-ouvert')).toContainText('Demande de devis — refonte')
+	const filtre = liste(page).getByTestId('inbox-filtre-pastille')
+	await expect(liste(page).getByTestId('inbox-pastilles-ligne').first()).toBeVisible()
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: LIRE,
+		nom: 'pastilles-dans-la-liste',
+		cibles: [filtre, liste(page).getByTestId('inbox-message').first()],
+	})
+	await page.getByTestId('inbox-pastilles').click()
+	const panneau = page.getByTestId('inbox-panneau-pastilles')
+	await expect(panneau).toContainText('retirée à la main')
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: LIRE,
+		nom: 'pastilles-d-un-message',
+		cibles: [page.getByTestId('inbox-pastilles-message'), panneau],
+	})
+	await page.getByTestId('inbox-pastilles-fermer').click()
+	await expect(panneau).toBeHidden()
+
+	const REGLAGES = 'definir-les-pastilles-des-mails'
+	await page.goto('/reglages/pastilles-mails')
+	const ecran = page.getByTestId('reglages-pastilles-mail')
+	await expect(ecran.getByTestId('ligne-pastille-mail').first()).toBeVisible()
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: REGLAGES,
+		nom: 'pastilles-des-mails',
+		cibles: [page.getByTestId('nouvelle-pastille'), ecran.getByTestId('ligne-pastille-mail').first()],
+	})
+	// Newsletter, archivée par le seed (§46), sous la case : sa mention et son seul bouton.
+	await page.getByTestId('pastilles-archivees').check()
+	const archivee = ecran.getByTestId('ligne-pastille-mail').filter({ hasText: 'Newsletter' })
+	await expect(archivee).toContainText('Archivée')
+	await archivee.evaluate((noeud) => noeud.scrollIntoView({ block: 'center' }))
+	await illustrer(page, { chapitre: CHAPITRE, section: REGLAGES, nom: 'pastille-archivee', cibles: [archivee] })
+	await page.getByTestId('pastilles-archivees').uncheck()
+	await page.getByRole('button', { name: 'Modifier la pastille Lead' }).click()
+	const fiche = page.getByTestId('fiche-pastille-mail')
+	await expect(fiche).toBeVisible()
+	// La fiche s'ouvre à la place de la ligne, plus bas que la fenêtre ne la montre : elle est amenée en tête de la vue.
+	await fiche.evaluate((noeud) => noeud.scrollIntoView({ block: 'start' }))
+	await illustrer(page, { chapitre: CHAPITRE, section: REGLAGES, nom: 'fiche-d-une-pastille', cibles: [fiche] })
+	await fiche.getByTestId('pastille-annuler').click()
+	await expect(fiche).toBeHidden()
+})

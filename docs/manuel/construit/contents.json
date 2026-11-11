@@ -436,6 +436,10 @@
 				{
 					"anchor": "suivre-ses-envois-en-file-envoyes-echecs",
 					"title": "12.5 Suivre ses envois : en file, envoyés, échecs"
+				},
+				{
+					"anchor": "definir-les-pastilles-des-mails",
+					"title": "12.6 Définir les pastilles des mails"
 				}
 			]
 		},

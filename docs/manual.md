@@ -3343,8 +3343,9 @@ La plupart des messages n'en portent aucune, et c'est normal : la règle demande
 Entrée ouvre. Le dossier retenu et le message ouvert sont annoncés aux lecteurs d'écran, et pas
 seulement signalés par une couleur.
 
-**Mettre un message en sommeil.** Sous l'en-tête du message ouvert, une rangée de trois boutons porte, dans cet ordre,
-« **Mettre le message en sommeil** », « Marquer comme non lu » et « **Effacer** ». Le premier ouvre un petit panneau :
+**Mettre un message en sommeil.** Sous l'en-tête du message ouvert, une rangée de boutons porte, dans cet ordre,
+« **Mettre le message en sommeil** », « Marquer comme non lu », « **Réévaluer les pastilles** », « **Pastilles** » et
+« **Effacer** » ; les deux boutons des pastilles sont décrits plus bas. Le premier ouvre un petit panneau :
 quatre échéances usuelles — demain, dans trois jours, la semaine prochaine, le mois prochain — ou une échéance de
 votre choix. Le message dort **avec ses réponses** : toute la conversation dort. Une fois le message endormi :
 
@@ -3358,7 +3359,7 @@ votre choix. Le message dort **avec ses réponses** : toute la conversation dort
   reconnaissables à leur pastille. Si un dossier ne contient plus que des messages endormis, la liste
   vous le dit et vous propose la case au lieu d'un vide muet.
 
-![La rangée de boutons du message ouvert : « Mettre le message en sommeil », « Marquer comme non lu », « Effacer »](manuel/images/l-inbox-lire-trier-et-repondre/mettre-le-fil-en-sommeil.jpg)
+![La rangée de boutons du message ouvert : « Mettre le message en sommeil », « Marquer comme non lu », « Réévaluer les pastilles », « Pastilles », « Effacer »](manuel/images/l-inbox-lire-trier-et-repondre/mettre-le-fil-en-sommeil.jpg)
 
 ![Le panneau « Jusqu'à quand ? » : quatre échéances usuelles, une autre échéance, « Mettre le message en sommeil » et « Annuler »](manuel/images/l-inbox-lire-trier-et-repondre/jusqu-a-quand.jpg)
 
@@ -3373,6 +3374,38 @@ geste. C'est exactement ce que fait déjà la case « Afficher les affaires en s
 de la vue liste d'un channel.
 
 ![La case « Afficher les affaires en sommeil » du tableau d'un channel](manuel/images/l-inbox-lire-trier-et-repondre/afficher-les-affaires-en-sommeil.jpg)
+
+**Les pastilles : trier d'un regard.** L'assistant IA du CRM lit chaque mail reçu et lui pose des **pastilles** —
+« Spam », « Lead », « Devis / commande », « Facture / paiement », etc. — selon le **descriptif** de chacune
+([section 12.6](#definir-les-pastilles-des-mails)). Il ne lit que l'**objet**, l'**expéditeur** et le **début du texte**
+(2 000 caractères), jamais une pièce jointe. Un mail neuf est évalué dans la minute environ ; les mails déjà reçus le
+sont aussi, en tâche de fond, après les nouveaux, ce qui peut prendre plusieurs heures sur une grosse boîte. Les mails que
+vous envoyez ne sont pas évalués.
+
+- **Dans la liste**, chaque conversation montre sous son objet jusqu'à **trois pastilles** — celles de son dernier
+  message —, puis « +n » quand il y en a davantage ; survolez « +n » pour lire les autres.
+- **Le filtre « Pastille »**, en tête de la liste, ne garde que les messages qui portent la pastille choisie, dans le
+  dossier ouvert. Les pastilles archivées y figurent, suivies de « (archivée) ». Le filtre se retient dans l'adresse de
+  la page. Si aucun message ne la porte, la liste le dit et propose « **Toutes les pastilles** », qui l'efface.
+- **Dans le message ouvert**, ses pastilles viennent sous l'en-tête ; le survol de chacune dit qui l'a posée, l'IA ou
+  une personne. Tant que l'IA ne l'a pas lu, la même ligne dit que les pastilles sont en attente d'évaluation ; si elle
+  n'a pas pu, après plusieurs essais, elle dit en rouge que les pastilles n'ont pas pu être évaluées.
+- **« Réévaluer les pastilles »** redemande à l'IA de lire le message, sans confirmation. Elle ne défait **jamais** un
+  choix fait à la main. Elle est absente d'un mail envoyé.
+- **« Pastilles »** ouvre, sous la rangée, la liste des pastilles de l'espace à **cocher ou décocher**. Chaque case
+  écrit aussitôt ; à côté, un mot dit l'origine : posée par l'IA, « posée à la main » ou « retirée à la main ». **Un
+  choix fait à la main l'emporte toujours** : une réévaluation ne remet pas une pastille que vous avez retirée, ni ne
+  retire celle que vous avez posée. Une pastille archivée encore posée sur le message apparaît en dernier : elle se
+  décoche, mais ne se recoche pas. « Fermer » ou Échap referment la liste ; ouvrir la confirmation d'« Effacer » la
+  referme aussi.
+
+Poser, retirer et réévaluer sont réservés aux **administrateurs** et aux **business developers** de l'espace. Les
+autres voient les pastilles et la liste, boutons et cases grisés, avec un bandeau qui dit pourquoi. Sans assistant IA
+configuré, rien n'est envoyé : les mails attendent, et vous pouvez toujours poser les pastilles à la main.
+
+![La liste d'un dossier : le filtre « Pastille » en tête, et sous l'objet de chaque conversation ses pastilles](manuel/images/l-inbox-lire-trier-et-repondre/pastilles-dans-la-liste.jpg)
+
+![La liste « Pastilles de ce message », ouverte sous la rangée de boutons : les cases, et l'origine de chaque pastille posée ou retirée](manuel/images/l-inbox-lire-trier-et-repondre/pastilles-d-un-message.jpg)
 
 **Effacer un message.** « **Effacer** », dans la rangée de boutons, ne détruit rien tout de suite : il ouvre, sous la
 rangée, une confirmation qui nomme le message et rappelle combien de jours vous pourrez le restaurer. Le curseur s'y pose
@@ -3601,6 +3634,38 @@ par le serveur, quel que soit l'écran.
 
 **« Seulement moi » ne s'applique pas aux envois** : la case filtre le courrier reçu et classé ; les trois entrées
 montrent tous les envois que vous pouvez lire.
+
+### 12.6 Définir les pastilles des mails
+
+*Réglages ▸ Pastilles des mails.*
+
+Cet écran liste les pastilles que l'IA peut poser sur les mails reçus ([section 12.2](#l-inbox-lire-et-trier-le-courrier-recu)).
+Chaque espace de travail en reçoit **neuf par défaut** : Spam, Lead, Devis / commande, Facture / paiement, Support
+client, Partenariat, Recrutement, Newsletter et Administratif. Chaque ligne montre la pastille, puis son **descriptif** :
+c'est le texte que l'IA lit pour décider si un mail porte la pastille. Un bon descriptif dit quels mails sont concernés,
+en une ou deux phrases.
+
+![Réglages ▸ Pastilles des mails : chaque pastille et son descriptif, « Nouvelle pastille » et « Afficher les archivées »](manuel/images/l-inbox-lire-trier-et-repondre/pastilles-des-mails.jpg)
+
+- **« Nouvelle pastille »** ouvre la fiche dans la page : un **Nom** (40 caractères au plus, unique dans l'espace, sans
+  tenir compte des majuscules), une **Couleur** parmi cinq, et le **Descriptif pour l'IA** (500 caractères au plus).
+  « Modifier » rouvre la même fiche. Un nom déjà pris est refusé sous les champs ; s'il appartient à une pastille
+  archivée, le message vous invite à cocher « Afficher les archivées » pour la retrouver et la désarchiver.
+- **« Archiver »** demande une confirmation, dans la ligne : une pastille archivée **n'est plus posée**, ni par l'IA ni à
+  la main, mais **elle reste affichée sur les mails qui la portent**, marquée archivée, et le filtre de l'inbox la
+  propose encore. Rien n'est supprimé.
+- **« Afficher les archivées »** les ramène en fin de liste, avec la mention « Archivée » et le seul bouton
+  « **Désarchiver** », qui la rend aussitôt, sans confirmation.
+
+![Une pastille archivée, « Newsletter », en fin de liste : la mention « Archivée » et « Désarchiver »](manuel/images/l-inbox-lire-trier-et-repondre/pastille-archivee.jpg)
+
+![La fiche d'une pastille : Nom, Couleur et Descriptif pour l'IA, avec son aide](manuel/images/l-inbox-lire-trier-et-repondre/fiche-d-une-pastille.jpg)
+
+Tous les membres de l'espace lisent cet écran : chacun peut savoir ce que l'IA cherche. Seuls les **administrateurs**
+créent, modifient et archivent ; les autres voient les boutons grisés, avec un bandeau qui dit pourquoi
+([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). Une modification vaut pour les mails
+évalués **ensuite** : les pastilles déjà posées ne changent pas d'elles-mêmes, et « Réévaluer les pastilles » relance un
+message précis. Tout se fait au clavier.
 
 ## 13. Consulter l'état de la messagerie
 
@@ -6575,7 +6640,8 @@ Les dix familles, et ce que chacune couvre :
 - **Messagerie** : lecture des fils, des envois (en file, envoyés, échecs) et de la corbeille de l'inbox ; préparer un
   email compte comme « ajouter », et l'envoi se fait toujours dans le CRM, par vous ; classer un email dans une affaire,
   le marquer lu ou non lu, le mettre en sommeil, le restaurer, annuler un envoi en file et réessayer un échec comptent
-  comme « modifier » ; effacer un email compte comme « supprimer ».
+  comme « modifier » ; effacer un email compte comme « supprimer ». Lire les pastilles d'un email compte comme
+  « consulter », et en poser ou en retirer comme « modifier ».
 
 Les quatre actions sont **Consulter**, **Ajouter**, **Modifier** et **Supprimer**. « Supprimer » place en corbeille ou
 archive, avec une seule exception : **retirer une étape ou une transition d'un workflow** (« Workflows ▸ Supprimer »)
@@ -6901,6 +6967,13 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     appartient ;
   - *Consulter* (corbeille) : **la corbeille de l'inbox** que vous voyez, avec l'auteur et la date de chaque effacement,
     la date d'effacement définitif et l'état du déplacement dans la boîte ; jamais le texte des emails.
+  - *Consulter* (pastilles) : **les pastilles de l'espace** et leur descriptif, celui que l'IA du CRM lit pour décider
+    ([section 12.6](#definir-les-pastilles-des-mails)) ; avec un email, les pastilles qu'il porte, qui les a posées (l'IA
+    ou une personne), et si l'IA du CRM l'a déjà évalué ;
+  - *Modifier* (pastilles) : **poser ou retirer une pastille** sur un email. L'assistant **juge lui-même**, à partir de
+    l'email et des descriptifs : il ne demande rien à l'IA du CRM, et ne peut pas lui demander de réévaluer. Son choix
+    compte comme un choix fait à la main : l'IA du CRM ne le défait jamais. Réservé aux administrateurs et aux business
+    developers de l'espace, comme à l'écran ; une pastille archivée se retire, mais ne se pose plus.
 
   **L'assistant n'envoie jamais rien.** Un mail préparé attend dans le CRM que **vous** le relisiez, le modifiiez si
   besoin et l'envoyiez vous-même : l'assistant vous donne le lien qui l'ouvre

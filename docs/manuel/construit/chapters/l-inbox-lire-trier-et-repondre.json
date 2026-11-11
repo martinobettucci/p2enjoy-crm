@@ -593,14 +593,14 @@
 			"src": "l-inbox-lire-trier-et-repondre/seulement-moi.jpg",
 			"alt": "La case « Seulement moi », cochée : seul le dossier de l'affaire où vous avez écrit est compté",
 			"width": 295,
-			"height": 243
+			"height": 372
 		},
 		{
 			"type": "image",
 			"src": "l-inbox-lire-trier-et-repondre/seulement-moi-vide.jpg",
 			"alt": "« Non classés » sous la case : « Aucun message de ce dossier ne vous concerne », et « Afficher tout le courrier »",
 			"width": 391,
-			"height": 330
+			"height": 331
 		},
 		{
 			"type": "paragraph",
@@ -1418,14 +1418,14 @@
 			"src": "l-inbox-lire-trier-et-repondre/apercu-pdf.jpg",
 			"alt": "L'aperçu d'un PDF sous la pièce : le lecteur du navigateur, puis le texte extrait",
 			"width": 536,
-			"height": 1116
+			"height": 1115
 		},
 		{
 			"type": "image",
 			"src": "l-inbox-lire-trier-et-repondre/apercu-texte-extrait.jpg",
 			"alt": "L'aperçu d'un document Word : son texte extrait et « Copier le texte »",
 			"width": 536,
-			"height": 407
+			"height": 406
 		},
 		{
 			"type": "paragraph",
@@ -1454,7 +1454,7 @@
 			"src": "l-inbox-lire-trier-et-repondre/aucun-texte-lisible.jpg",
 			"alt": "Un document numérisé : « Aucun texte lisible : le document est sans doute numérisé. »",
 			"width": 536,
-			"height": 931
+			"height": 947
 		},
 		{
 			"type": "paragraph",
@@ -1973,7 +1973,7 @@
 				},
 				{
 					"type": "text",
-					"text": " Sous l'en-tête du message ouvert, une rangée de trois boutons porte, dans cet ordre,\n« "
+					"text": " Sous l'en-tête du message ouvert, une rangée de boutons porte, dans cet ordre,\n« "
 				},
 				{
 					"type": "strong",
@@ -1986,7 +1986,33 @@
 				},
 				{
 					"type": "text",
-					"text": " », « Marquer comme non lu » et « "
+					"text": " », « Marquer comme non lu », « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réévaluer les pastilles"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " », « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Pastilles"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " » et\n« "
 				},
 				{
 					"type": "strong",
@@ -1999,7 +2025,7 @@
 				},
 				{
 					"type": "text",
-					"text": " ». Le premier ouvre un petit panneau :\nquatre échéances usuelles — demain, dans trois jours, la semaine prochaine, le mois prochain — ou une échéance de\nvotre choix. Le message dort "
+					"text": " » ; les deux boutons des pastilles sont décrits plus bas. Le premier ouvre un petit panneau :\nquatre échéances usuelles — demain, dans trois jours, la semaine prochaine, le mois prochain — ou une échéance de\nvotre choix. Le message dort "
 				},
 				{
 					"type": "strong",
@@ -2135,7 +2161,7 @@
 		{
 			"type": "image",
 			"src": "l-inbox-lire-trier-et-repondre/mettre-le-fil-en-sommeil.jpg",
-			"alt": "La rangée de boutons du message ouvert : « Mettre le message en sommeil », « Marquer comme non lu », « Effacer »",
+			"alt": "La rangée de boutons du message ouvert : « Mettre le message en sommeil », « Marquer comme non lu », « Réévaluer les pastilles », « Pastilles », « Effacer »",
 			"width": 536,
 			"height": 121
 		},
@@ -2144,7 +2170,7 @@
 			"src": "l-inbox-lire-trier-et-repondre/jusqu-a-quand.jpg",
 			"alt": "Le panneau « Jusqu'à quand ? » : quatre échéances usuelles, une autre échéance, « Mettre le message en sommeil » et « Annuler »",
 			"width": 536,
-			"height": 248
+			"height": 247
 		},
 		{
 			"type": "paragraph",
@@ -2205,6 +2231,327 @@
 			"alt": "La case « Afficher les affaires en sommeil » du tableau d'un channel",
 			"width": 280,
 			"height": 72
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les pastilles : trier d'un regard."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " L'assistant IA du CRM lit chaque mail reçu et lui pose des "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "pastilles"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " —\n« Spam », « Lead », « Devis / commande », « Facture / paiement », etc. — selon le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "descriptif"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de chacune\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-inbox-lire-trier-et-repondre",
+						"anchor": "definir-les-pastilles-des-mails"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 12.6"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Il ne lit que l'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "objet"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", l'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "expéditeur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "début du texte"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\n(2 000 caractères), jamais une pièce jointe. Un mail neuf est évalué dans la minute environ ; les mails déjà reçus le\nsont aussi, en tâche de fond, après les nouveaux, ce qui peut prendre plusieurs heures sur une grosse boîte. Les mails que\nvous envoyez ne sont pas évalués."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Dans la liste"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", chaque conversation montre sous son objet jusqu'à "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "trois pastilles"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — celles de son dernier\nmessage —, puis « +n » quand il y en a davantage ; survolez « +n » pour lire les autres."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Le filtre « Pastille »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", en tête de la liste, ne garde que les messages qui portent la pastille choisie, dans le\ndossier ouvert. Les pastilles archivées y figurent, suivies de « (archivée) ». Le filtre se retient dans l'adresse de\nla page. Si aucun message ne la porte, la liste le dit et propose « "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Toutes les pastilles"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " », qui l'efface."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Dans le message ouvert"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", ses pastilles viennent sous l'en-tête ; le survol de chacune dit qui l'a posée, l'IA ou\nune personne. Tant que l'IA ne l'a pas lu, la même ligne dit que les pastilles sont en attente d'évaluation ; si elle\nn'a pas pu, après plusieurs essais, elle dit en rouge que les pastilles n'ont pas pu être évaluées."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Réévaluer les pastilles »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " redemande à l'IA de lire le message, sans confirmation. Elle ne défait "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "jamais"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " un\nchoix fait à la main. Elle est absente d'un mail envoyé."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Pastilles »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ouvre, sous la rangée, la liste des pastilles de l'espace à "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "cocher ou décocher"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Chaque case\nécrit aussitôt ; à côté, un mot dit l'origine : posée par l'IA, « posée à la main » ou « retirée à la main ». "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Un\nchoix fait à la main l'emporte toujours"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : une réévaluation ne remet pas une pastille que vous avez retirée, ni ne\nretire celle que vous avez posée. Une pastille archivée encore posée sur le message apparaît en dernier : elle se\ndécoche, mais ne se recoche pas. « Fermer » ou Échap referment la liste ; ouvrir la confirmation d'« Effacer » la\nreferme aussi."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Poser, retirer et réévaluer sont réservés aux "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et aux "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "business developers"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'espace. Les\nautres voient les pastilles et la liste, boutons et cases grisés, avec un bandeau qui dit pourquoi. Sans assistant IA\nconfiguré, rien n'est envoyé : les mails attendent, et vous pouvez toujours poser les pastilles à la main."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/pastilles-dans-la-liste.jpg",
+			"alt": "La liste d'un dossier : le filtre « Pastille » en tête, et sous l'objet de chaque conversation ses pastilles",
+			"width": 391,
+			"height": 185
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/pastilles-d-un-message.jpg",
+			"alt": "La liste « Pastilles de ce message », ouverte sous la rangée de boutons : les cases, et l'origine de chaque pastille posée ou retirée",
+			"width": 536,
+			"height": 610
 		},
 		{
 			"type": "paragraph",
@@ -2542,7 +2889,7 @@
 			"src": "l-inbox-lire-trier-et-repondre/confirmer-le-retrait.jpg",
 			"alt": "La confirmation du retrait : rien n'est supprimé, vous pourriez cesser de voir le message ; « Retirer » et « Annuler »",
 			"width": 536,
-			"height": 170
+			"height": 182
 		},
 		{
 			"type": "paragraph",
@@ -2644,7 +2991,7 @@
 			"src": "l-inbox-lire-trier-et-repondre/pieces-dans-l-historique.jpg",
 			"alt": "Les pièces d'un message sous sa ligne de l'historique, l'aperçu d'un classeur ouvert",
 			"width": 519,
-			"height": 622
+			"height": 623
 		},
 		{
 			"type": "paragraph",
@@ -3730,7 +4077,7 @@
 			"src": "l-inbox-lire-trier-et-repondre/outbox-echecs.jpg",
 			"alt": "Les trois entrées « En file », « Envoyés » et « Échecs », un envoi en échec avec son motif, et « Réessayer »",
 			"width": 800,
-			"height": 490
+			"height": 426
 		},
 		{
 			"type": "paragraph",
@@ -3907,6 +4254,301 @@
 				{
 					"type": "text",
 					"text": " : la case filtre le courrier reçu et classé ; les trois entrées\nmontrent tous les envois que vous pouvez lire."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "definir-les-pastilles-des-mails",
+			"content": [
+				{
+					"type": "text",
+					"text": "12.6 Définir les pastilles des mails"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages ▸ Pastilles des mails."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Cet écran liste les pastilles que l'IA peut poser sur les mails reçus ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-inbox-lire-trier-et-repondre",
+						"anchor": "l-inbox-lire-et-trier-le-courrier-recu"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 12.2"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ").\nChaque espace de travail en reçoit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "neuf par défaut"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : Spam, Lead, Devis / commande, Facture / paiement, Support\nclient, Partenariat, Recrutement, Newsletter et Administratif. Chaque ligne montre la pastille, puis son "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "descriptif"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " :\nc'est le texte que l'IA lit pour décider si un mail porte la pastille. Un bon descriptif dit quels mails sont concernés,\nen une ou deux phrases."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/pastilles-des-mails.jpg",
+			"alt": "Réglages ▸ Pastilles des mails : chaque pastille et son descriptif, « Nouvelle pastille » et « Afficher les archivées »",
+			"width": 924,
+			"height": 183
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Nouvelle pastille »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ouvre la fiche dans la page : un "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Nom"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " (40 caractères au plus, unique dans l'espace, sans\ntenir compte des majuscules), une "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Couleur"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " parmi cinq, et le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Descriptif pour l'IA"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " (500 caractères au plus).\n« Modifier » rouvre la même fiche. Un nom déjà pris est refusé sous les champs ; s'il appartient à une pastille\narchivée, le message vous invite à cocher « Afficher les archivées » pour la retrouver et la désarchiver."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Archiver »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " demande une confirmation, dans la ligne : une pastille archivée "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "n'est plus posée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", ni par l'IA ni à\nla main, mais "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "elle reste affichée sur les mails qui la portent"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", marquée archivée, et le filtre de l'inbox la\npropose encore. Rien n'est supprimé."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Afficher les archivées »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " les ramène en fin de liste, avec la mention « Archivée » et le seul bouton\n« "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Désarchiver"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " », qui la rend aussitôt, sans confirmation."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/pastille-archivee.jpg",
+			"alt": "Une pastille archivée, « Newsletter », en fin de liste : la mention « Archivée » et « Désarchiver »",
+			"width": 923,
+			"height": 125
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/fiche-d-une-pastille.jpg",
+			"alt": "La fiche d'une pastille : Nom, Couleur et Descriptif pour l'IA, avec son aide",
+			"width": 899,
+			"height": 427
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Tous les membres de l'espace lisent cet écran : chacun peut savoir ce que l'IA cherche. Seuls les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\ncréent, modifient et archivent ; les autres voient les boutons grisés, avec un bandeau qui dit pourquoi\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Une modification vaut pour les mails\névalués "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ensuite"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : les pastilles déjà posées ne changent pas d'elles-mêmes, et « Réévaluer les pastilles » relance un\nmessage précis. Tout se fait au clavier."
 				}
 			]
 		}

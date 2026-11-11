@@ -13,6 +13,10 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-141` T6 — le manuel des pastilles
+
+- **Le manuel explique les pastilles** : leur place dans l'inbox, le filtre, la correction à la main et la réévaluation (§12.2), l'écran Réglages ▸ Pastilles des mails (§12.6, nouvelle section) et ce que l'assistant connecté peut en faire (§33). La rangée de boutons du message ouvert y est décrite avec ses cinq boutons.
+
 #### `CRM-141` T5 — les pastilles dans le connecteur MCP
 
 - **Un assistant connecté lit et pose les pastilles d'un mail** : il lit les pastilles de l'espace et le texte qui décrit chacune, voit celles qu'un mail porte et si l'IA du CRM l'a déjà évalué, puis en pose ou en retire, comme une personne dans l'inbox. Son choix compte comme un choix fait à la main : l'IA du CRM ne le défait jamais. Il n'utilise pas l'IA du CRM : il juge lui-même. Réservé à qui édite l'espace, dans la famille « Messagerie » du connecteur.

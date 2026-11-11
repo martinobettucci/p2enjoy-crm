@@ -19302,8 +19302,7 @@ nettoyage, `cid:` et la migration de `content_id`, le seed, les preuves, quatre 
 
 ## Demande du 2026-11-10 — le LLM pré-trie les mails en pastilles configurables (décision 883)
 
-### CRM-141 — Pastilles de mail posées par le LLM, définies dans les réglages, réévaluables, corrigeables à la main `[@]`
-*Prise en charge : session interactive 152dd27d (p2enjoy-crm-a8) depuis 2026-11-11 09:36 UTC — état avant : [ ] ; confiée par la session de livraison (ee), en file pour 32*
+### CRM-141 — Pastilles de mail posées par le LLM, définies dans les réglages, réévaluables, corrigeables à la main `[P]`
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 883).
 **Comportement attendu** :
@@ -19372,7 +19371,21 @@ est archivée et reste sur les mails (926) ; un filtre par pastille (926) ; les 
   ne défait pas la pose, la matrice qui ferme la pose, la lectrice refusée par la base malgré la matrice ouverte, le
   journal ; avec `test_integration_messagerie.py` et `…_corbeille.py`) ; la preuve inscrite dans `verify-mcp.sh`, que la
   campagne complète rejoue ; contrat §2.48 (la webapp et l'image après la 183) ;
-- reste : T6 (le manuel), T7 (production).
+- **T6 faite le 2026-11-11, vérifiée en développement** : le manuel — §12.2 (les pastilles dans la liste, le filtre, le
+  message ouvert, « Réévaluer les pastilles », « Pastilles » ; la rangée de cinq boutons, phrase et image révisées, relevé
+  par ea), §12.6 nouvelle (Réglages ▸ Pastilles des mails), §33.1 et §33.5 (la famille « Messagerie » du connecteur) ;
+  cinq images nouvelles et le chapitre 12 régénéré par `e2e/manuel/12-inbox.spec.ts` (12/12 ; l'image
+  « piece-non-analysee » amenée en tête de vue, la rangée l'ayant abaissée) ; `manuel:verifier` 0 avertissement,
+  `verify-manual.sh` 168 contrôles sans anomalie ; images observées ;
+- **[P] — ce qui reste au responsable et à la session de livraison** :
+  - **une clé LeLabs valide** pour le poste de développement : le serveur rend `401` « clé API invalide ou désactivée »
+    (constaté le 2026-11-11) ; la preuve P3 contre le vrai modèle (`e2e/api/pastilles-evaluation.spec.ts`) reste sautée
+    jusque-là, et le débit réel n'est pas mesuré ;
+  - **la livraison, dans l'ordre du contrat** : migration 183 (§2.46), migration 184 et la fonction `ia` (§2.47), puis la
+    webapp et l'image `mcp` (§2.48) — **la webapp de T4 exige la 183** ; la campagne complète, dont `verify-mcp.sh`
+    entier, est celle de la session de livraison ;
+  - **le constat en production** : la passe évalue (des `done` apparaissent), le rattrapage avance, l'inbox montre les
+    pilules, et la clé de production est acceptée par LeLabs.
 **DoD** :
 - unitaires : contrôle de la sortie du modèle, clés inconnues rejetées ;
 - pgTAP : RLS, administrateurs seuls sur les pastilles, la main prime, les défauts ;

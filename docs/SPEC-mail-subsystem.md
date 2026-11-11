@@ -4610,5 +4610,5 @@ Chaque tranche est poussée une fois vérifiée.
 | **T3** | L'écran Réglages ▸ Pastilles des mails ; unitaires ; API ; E2E ; captures — *faite le 2026-11-11* |
 | **T4** | L'inbox : les pastilles dans la liste, le filtre, le message ouvert, « Pastilles » et « Réévaluer les pastilles » ; unitaires ; E2E ; captures — *faite le 2026-11-11* |
 | **T5** | Le connecteur : trois outils ; pytest ; `verify-mcp.sh` — *faite le 2026-11-11* |
-| **T6** | Le manuel : l'inbox et les réglages de la messagerie, avec leurs images |
+| **T6** | Le manuel : l'inbox et les réglages de la messagerie, avec leurs images — *faite le 2026-11-11* |
 | **T7** | Production, par la session de livraison, sur instruction du responsable : deux migrations, la fonction `ia`, la webapp, l'image `mcp` ; le rattrapage observé |

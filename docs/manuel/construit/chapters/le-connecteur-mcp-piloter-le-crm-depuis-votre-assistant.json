@@ -375,7 +375,7 @@
 							},
 							{
 								"type": "text",
-								"text": " : lecture des fils, des envois (en file, envoyés, échecs) et de la corbeille de l'inbox ; préparer un\nemail compte comme « ajouter », et l'envoi se fait toujours dans le CRM, par vous ; classer un email dans une affaire,\nle marquer lu ou non lu, le mettre en sommeil, le restaurer, annuler un envoi en file et réessayer un échec comptent\ncomme « modifier » ; effacer un email compte comme « supprimer »."
+								"text": " : lecture des fils, des envois (en file, envoyés, échecs) et de la corbeille de l'inbox ; préparer un\nemail compte comme « ajouter », et l'envoi se fait toujours dans le CRM, par vous ; classer un email dans une affaire,\nle marquer lu ou non lu, le mettre en sommeil, le restaurer, annuler un envoi en file et réessayer un échec comptent\ncomme « modifier » ; effacer un email compte comme « supprimer ». Lire les pastilles d'un email compte comme\n« consulter », et en poser ou en retirer comme « modifier »."
 							}
 						]
 					}
@@ -4044,6 +4044,102 @@
 										{
 											"type": "text",
 											"text": " que vous voyez, avec l'auteur et la date de chaque effacement,\nla date d'effacement définitif et l'état du déplacement dans la boîte ; jamais le texte des emails."
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Consulter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " (pastilles) : "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "les pastilles de l'espace"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " et leur descriptif, celui que l'IA du CRM lit pour décider\n("
+										},
+										{
+											"type": "link",
+											"target": {
+												"chapter": "l-inbox-lire-trier-et-repondre",
+												"anchor": "definir-les-pastilles-des-mails"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "section 12.6"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ") ; avec un email, les pastilles qu'il porte, qui les a posées (l'IA\nou une personne), et si l'IA du CRM l'a déjà évalué ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Modifier"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " (pastilles) : "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "poser ou retirer une pastille"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " sur un email. L'assistant "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "juge lui-même"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", à partir de\nl'email et des descriptifs : il ne demande rien à l'IA du CRM, et ne peut pas lui demander de réévaluer. Son choix\ncompte comme un choix fait à la main : l'IA du CRM ne le défait jamais. Réservé aux administrateurs et aux business\ndevelopers de l'espace, comme à l'écran ; une pastille archivée se retire, mais ne se pose plus."
 										}
 									]
 								}
