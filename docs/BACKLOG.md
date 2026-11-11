@@ -19162,7 +19162,9 @@ responsable.
 
 ## Demande du 2026-11-10 — rendre les liens, et les images à la demande (décision 881)
 
-### CRM-140 — Le corps d'un mail HTML rendu confiné, liens cliquables, images distantes derrière « Afficher les images » `[ ]`
+### CRM-140 — Le corps d'un mail HTML rendu confiné, liens cliquables, images distantes derrière « Afficher les images » `[@]`
+
+*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-c2) depuis 2026-11-11 00:58 UTC — état avant : [ ] ; confiée par la session de livraison (ee), après CRM-136*
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 881).
 **Comportement attendu** :
