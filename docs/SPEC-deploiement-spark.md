@@ -278,6 +278,58 @@ connecteur MCP, `docs/SPEC-mcp.md` §2.2) — que tout changement
 de `kong.yml` ou de `caddy/routes.caddy` incrémente dans le même commit : Compose voit une définition
 différente et recrée le conteneur au `up` ordinaire. `scripts/verify-spark.sh` exige les deux labels.
 
+### 5.1 bis Livrer un condensé choisi, récupéré par git dans la cellule — `CRM-147` (décisions 905, 909, 911, 912 et 915)
+
+*Écrit le 2026-11-11, avant le code.* **Le défaut** : le §5.1 livre toujours le `HEAD` du poste et bâtit la webapp dans son
+arbre de travail ; une livraison emporte donc tout `main`, unités inachevées comprises. **La règle** : la session de
+livraison **choisit un condensé** — le dernier commit d'un lot stable —, la cellule le **récupère elle-même par git**, avec
+sa propre clé, et **tout** ce qui part vient de ce condensé : code, migrations, images, webapp, `REVISION`.
+
+**Usage** : `scripts/spark/livrer.sh --revision <condensé> [-- options de runProd.sh]`. **Le condensé est obligatoire**
+(décision 915) : sans lui, le script refuse avant tout geste. `--archive-seule` (§5.1, amorçage d'une cellule) reste à part.
+
+**Sur le poste**, avant tout geste dans la cellule :
+1. `git fetch origin`, puis le condensé est résolu en un commit (`git rev-parse --verify <condensé>^{commit}`) et doit être
+   **contenu dans `origin/main`** (`git merge-base --is-ancestor`) : sinon, refus nommé. L'arbre de travail du poste n'est
+   plus livré : il n'est plus exigé propre, et il n'est jamais lu pour la livraison.
+2. Les images dérivées (Realtime, MinIO, §3.5) se bâtissent **depuis le condensé** : `git archive <condensé>` extrait dans
+   un répertoire jetable du poste, jamais un worktree (`CLAUDE.md` §13), puis effacé.
+
+**Dans la cellule, sous `spark-docker`** (jamais root, décision 909) :
+1. **La clé d'hôte de GitHub est épinglée** dans `~/.ssh/known_hosts` (son empreinte publiée), et git s'y connecte en
+   `StrictHostKeyChecking=yes` : le script **vérifie** l'épinglage (`ssh-keygen -F github.com`) et refuse s'il manque ; il
+   ne l'écrit jamais lui-même. La clé de clonage (`~/.ssh/id_ed25519`, posée par le responsable, décision 912) n'est jamais
+   lue, affichée ni journalisée : seules des commandes git la mettent en œuvre.
+2. **`/srv/crm` est le clone** (décision 915). *La première fois*, s'il n'est pas un dépôt : `git init`, remote
+   `git@github.com:martinobettucci/p2enjoy-crm.git`, `git fetch origin` ; les fichiers que le condensé a supprimés depuis la
+   révision déployée (`REVISION`) sont retirés comme au §5.1 ; puis `git checkout --detach --force <condensé>`, qui remplace
+   les fichiers suivis par ceux du condensé et **ne touche à aucun fichier non suivi**. *Les fois suivantes* : `git fetch
+   origin`, condensé contenu dans `origin/main` (même contrôle que sur le poste), puis `git checkout --detach <condensé>`
+   **sans** `--force` : un fichier suivi modifié dans la cellule fait refuser la livraison, et le script le nomme
+   (`git status --porcelain --untracked-files=no`) au lieu de l'écraser.
+3. **Les données ne sont jamais au dépôt** : avant tout `checkout`, le script vérifie que `supabase/docker/volumes/db/data`,
+   `webapp/dist` et `REVISION` sont ignorés par git (`git check-ignore`) et refuse sinon. **Interdits** dans la cellule :
+   `git clean`, `git reset --hard`, `git stash` — un dépôt de travail côtoie les données de la base.
+4. **La webapp se bâtit dans la cellule** (décision 909), depuis le condensé extrait : un conteneur jetable de l'image du
+   build (`node:24-alpine`, celle de `webapp/Dockerfile`), borné (`--memory 2g`, `--cpus 2`), lit le clone en lecture
+   seule, installe les dépendances (`npm ci`) et bâtit avec les quatre variables publiques de `/etc/spark/env` (§5.1,
+   point 2) ; le résultat remplace le **contenu** de `/srv/crm/webapp/dist` (Caddy en monte le répertoire). Le build
+   demande **l'accès de la cellule au registre npm** : constaté par la session de livraison avant la première livraison
+   par condensé ; s'il est refusé, le recours est une décision du responsable.
+5. `REVISION` reçoit le condensé complet, puis `./runProd.sh --spark` est lancé, avec les options passées après `--`.
+
+**Retour arrière** : `livrer.sh --revision <condensé antérieur>`. Les migrations ne se défont pas par ce geste : leur retour
+arrière reste celui du contrat (`docs/PROD_MIGRATIONS.md`).
+
+**Gestes préalables**, à la première livraison par condensé (`docs/PROD_MIGRATIONS.md`) : épingler la clé d'hôte de GitHub
+pour `spark-docker` ; constater l'accès au registre npm depuis la cellule. **Connecteur MCP** : non (décision 905).
+
+**Preuves** (`scripts/verify-spark.sh`, cellule simulée) : un dépôt nu local tient lieu d'`origin` ; une livraison d'un
+condensé **ancien**, puis d'un **récent** (un fichier supprimé entre les deux est retiré, un fichier non suivi « de
+données » est intact, `REVISION` vaut le condensé) ; refus sans `--revision`, pour un condensé absent d'`origin/main`, pour
+un fichier suivi modifié dans la cellule, et pour une clé d'hôte non épinglée ; aucune commande `git clean`, `reset --hard`
+ni `stash` dans le script.
+
 ### 5.2 Le premier déploiement : `--premier-deploiement`
 
 La fenêtre de migration exige la confirmation d'un instantané de VM (décision 489). Sur une base

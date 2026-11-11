@@ -19427,8 +19427,9 @@ projet ; une livraison ne doit plus emporter tout `HEAD`.
 clone ou met à jour le dépôt avec sa propre clé, se place sur le condensé, et la suite (migrations, images, webapp, `REVISION`)
 part de ce condensé ; la webapp est bâtie depuis le condensé, jamais depuis l'arbre de travail du poste ; refus net si le
 condensé est absent ou si la cellule n'a pas accès. Aucune clé n'est lue, copiée ni journalisée.
-**MCP** : non. **Spécification** : `docs/SPEC-deploiement-spark.md` (le chemin de la clé et l'utilisateur, établis avec le
-responsable ; le répertoire du clone ; le retour arrière vers un condensé antérieur), le contrat de déploiement.
+**MCP** : non. **Spécification** : `docs/SPEC-deploiement-spark.md` §5.1 bis, écrite le 2026-11-11 avant le code
+(décisions 909, 911, 912 et 915 : la clé de `spark-docker`, `/srv/crm` devient le clone, le condensé obligatoire, la webapp
+bâtie dans la cellule), le contrat de déploiement.
 **DoD** : `verify-spark.sh` (une livraison à blanc d'un condensé ancien, puis récent, dans une cellule simulée) ; une première
 livraison réelle d'un condensé choisi, sur instruction du responsable ; le README et le DAT.
 

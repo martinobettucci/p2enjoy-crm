@@ -40381,3 +40381,14 @@ ne valait que pour `CRM-144`.
 Le compte rendu de l'unité dit que la lecture n'était pas intégrale. Le diff d'interface reste vérifié contre ces sections
 avant le commit.
 **Portée** : `CRM-136` seulement ; la règle de `CLAUDE.md` n'est pas changée.
+
+### décision 915 — `CRM-147` : `/srv/crm` devient le clone ; le condensé est obligatoire
+
+*2026-11-11, session interactive 4891a451 (p2enjoy-crm-32), arbitrages du responsable (`AskUserQuestion`), avant la
+spécification ; complète les décisions 905, 909, 911 et 912.*
+**Q1 — où vit le dépôt git dans la cellule** : **`/srv/crm` devient le clone**. Écarté : un clone à part (`/srv/crm-depot`)
+dont le condensé serait extrait par-dessus `/srv/crm`. Conséquence assumée : un dépôt de travail côtoie les données de la
+base ; la spécification borne donc les gestes git permis (ni `git clean`, ni `reset --hard`, aucune donnée suivie).
+**Q2 — le condensé** : **obligatoire**. Sans `--revision <condensé>`, `livrer.sh` refuse : une livraison ne peut plus
+emporter tout `main` par inadvertance, ce qui est la raison de l'unité. `--archive-seule` (amorçage) reste à part.
+**MCP** : non (décision 905).
