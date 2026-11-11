@@ -19187,7 +19187,8 @@ reste sinon) ; E2E souris et clavier (non lu, sommeil, effacer, annuler, restaur
       (2026-11-11)* : les contrats (`docs/SPEC-mcp.md` §9.2, CRM-138) ; l'ancre de `crm_mail_restore` est
       `trashed_message:message_id`, résolue par `trashed_message_workspace` (migration `0182`, `docs/SCHEMA.md`) — §29.8
       précisé.
-- [ ] **T5 — seed, manuel, contrat** (§29.9) ; images ; `docs/PROD_MIGRATIONS.md`.
+- [ ] **T5 — seed, manuel, contrat** (§29.9) ; images ; `docs/PROD_MIGRATIONS.md`. *Seed spécifié avant le code
+      (2026-11-11)* : `docs/SPEC-seed.md` §45.
 
 
 ## Demande du 2026-11-10 — l'inbox, par défaut, ne montre que mes mails (décision 879)

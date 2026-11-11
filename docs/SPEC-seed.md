@@ -3132,3 +3132,29 @@ dans la boîte système (`CLAUDE.md` §8). Il reste **non classé** et ne touche
 **Ce que le jeu démontre** : le cadre, le bandeau « Afficher les images », l'image intégrée affichée sans clic, le
 nettoyage sur un vrai courrier. L'image distante reste absente sur la pile de développement même après le clic. L'E2E
 remplace ce serveur par l'interception réseau (`e2e/ui/corps-html.spec.ts`).
+
+## 45. La corbeille de l'inbox : un message effacé avec sa boîte, un message effacé puis restauré — `CRM-138` T5 (`docs/SPEC-mail-subsystem.md` §29.9)
+
+*Écrit le 2026-11-11, avant le code.* Deux courriers **réellement soumis** en SMTP par Léo Marchand, le correspondant local
+du §2.19, **réellement relevés** par `mail-sync`, puis effacés et restaurés par `delete_message` et `restore_message` **sous
+le jeton de Camille**, comme l'écran (`CLAUDE.md` §8). Le déplacement IMAP est **fait par le vrai `mail-sync`** contre le
+Stalwart de développement, par sa route interne `trash-moves/flush`.
+
+| Élément | Le message effacé avec la case | Le message effacé puis restauré |
+|---|---|---|
+| Objet | « Offre de partenariat — salon Numérique Lyon » | « Billetterie — calendrier des expositions 2027 » |
+| `Message-ID` | `<seed-corbeille-boite@sogexia.example>` | `<seed-corbeille-restaure@sogexia.example>` |
+| Destinataire | `admin@`, la boîte de Camille : il reste **non classé** | l'adresse de l'affaire « Plateforme de billetterie — Musée des Confluences » : il y est **classé** |
+| Geste | effacé **avec** « L'effacer aussi dans la boîte mail » | effacé **sans** la case, puis restauré |
+| État final | dans la corbeille de l'inbox de Camille, effacement définitif à 30 jours ; déplacé dans « Deleted Items » de sa boîte (`mail_trash_moves` `done`) | dans l'affaire ; son fil porte « Message effacé » puis « Message restauré », par Camille |
+
+**Rejouable** : un `Message-ID` fixe — le seed n'envoie rien qu'il ne trouve déjà ; un message déjà effacé n'est pas
+effacé deux fois, et la restauration ne se rejoue pas si le fil porte déjà « Message restauré ».
+
+**Les gardes du seed** : le premier message est effacé (`deleted_by` Camille) et son déplacement est `done` ; le second
+n'est pas effacé, et le fil de l'affaire porte un `mail_deleted` et un `mail_restored` pour lui. Une garde qui échoue arrête
+le seed et nomme les migrations 180 et 181, `mail-sync` et Stalwart.
+
+**Ce que le jeu démontre** : le dossier « Corbeille » non vide pour Camille, avec « Déplacé dans la corbeille de la
+boîte » ; une affaire dont le fil raconte un effacement et une restauration. Driss et Farida ont une corbeille vide : ils
+n'ont rien effacé et n'administrent pas l'espace (décision 707).
