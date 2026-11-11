@@ -3217,7 +3217,7 @@ son bord gauche et à son objet en gras ; un lecteur d'écran l'annonce par « N
 conversation la marque lue tout entière**, tous ses messages compris, et la pastille du dossier
 baisse d'autant. Trois gestes complètent cela :
 
-- dans l'en-tête du message ouvert, le bouton à l'enveloppe fermée, « **Marquer comme non lu** »,
+- dans la rangée de boutons sous l'en-tête du message ouvert, « **Marquer comme non lu** », à côté du sommeil,
   rend la conversation non lue — le message reste affiché, et il ne se remarque pas lu tant que vous
   ne l'avez pas rouvert. Le même bouton propose ensuite « **Marquer comme lu** » ;
 - en tête de la liste, « **Tout marquer comme lu** » marque lues les conversations affichées. Il
@@ -3343,27 +3343,27 @@ La plupart des messages n'en portent aucune, et c'est normal : la règle demande
 Entrée ouvre. Le dossier retenu et le message ouvert sont annoncés aux lecteurs d'écran, et pas
 seulement signalés par une couleur.
 
-**Mettre un fil en sommeil.** Un **fil** rassemble les messages d'une même conversation. Sous
-l'en-tête du message ouvert, « Mettre le fil en sommeil » ouvre un petit panneau : quatre échéances
-usuelles — demain, dans trois jours, la semaine prochaine, le mois prochain — ou une échéance de
-votre choix. Une fois le fil endormi :
+**Mettre un message en sommeil.** Sous l'en-tête du message ouvert, une rangée de trois boutons porte, dans cet ordre,
+« **Mettre le message en sommeil** », « Marquer comme non lu » et « **Effacer** ». Le premier ouvre un petit panneau :
+quatre échéances usuelles — demain, dans trois jours, la semaine prochaine, le mois prochain — ou une échéance de
+votre choix. Le message dort **avec ses réponses** : toute la conversation dort. Une fois le message endormi :
 
 - la conversation **entière disparaît de la liste** tant que l'échéance n'est pas passée — tous
   ses messages, pas seulement celui que la ligne montrait. Le message que vous êtes en train de
   lire, lui, reste affiché : rien ne disparaît sous votre doigt ;
 - une **pastille** portant une petite lune et la date rappelle jusqu'à quand il dort, **une fois**
   sur la ligne de la conversation, et dans l'en-tête du message ;
-- « **Réveiller le fil** » le ramène immédiatement, sans confirmation ;
-- la case « **Afficher les fils en sommeil** », en haut de la liste, les fait tous réapparaître,
-  reconnaissables à leur pastille. Si un dossier ne contient plus que des fils endormis, la liste
+- « **Réveiller le message** » le ramène immédiatement, avec ses réponses, sans confirmation ;
+- la case « **Afficher les messages en sommeil** », en haut de la liste, les fait tous réapparaître,
+  reconnaissables à leur pastille. Si un dossier ne contient plus que des messages endormis, la liste
   vous le dit et vous propose la case au lieu d'un vide muet.
 
-![Le bouton « Mettre le fil en sommeil », sous l'en-tête du message](manuel/images/l-inbox-lire-trier-et-repondre/mettre-le-fil-en-sommeil.jpg)
+![La rangée de boutons du message ouvert : « Mettre le message en sommeil », « Marquer comme non lu », « Effacer »](manuel/images/l-inbox-lire-trier-et-repondre/mettre-le-fil-en-sommeil.jpg)
 
-![Le panneau « Jusqu'à quand ? » : quatre échéances usuelles, une autre échéance, « Mettre le fil en sommeil » et « Annuler »](manuel/images/l-inbox-lire-trier-et-repondre/jusqu-a-quand.jpg)
+![Le panneau « Jusqu'à quand ? » : quatre échéances usuelles, une autre échéance, « Mettre le message en sommeil » et « Annuler »](manuel/images/l-inbox-lire-trier-et-repondre/jusqu-a-quand.jpg)
 
-Le sommeil est **partagé** : un fil endormi l'est pour toute personne qui le voit. Il n'a pas besoin
-d'être réveillé à la main — une échéance passée n'est plus un sommeil, et le fil revient tout seul.
+Le sommeil est **partagé** : un message endormi l'est pour toute personne qui le voit. Il n'a pas besoin
+d'être réveillé à la main — une échéance passée n'est plus un sommeil, et le message revient tout seul.
 Une échéance déjà passée est refusée, avec son motif écrit sous le champ.
 
 **La case se retient dans l'adresse de la page** : vous pouvez recharger la page, la mettre en favori ou en envoyer
@@ -3373,6 +3373,35 @@ geste. C'est exactement ce que fait déjà la case « Afficher les affaires en s
 de la vue liste d'un channel.
 
 ![La case « Afficher les affaires en sommeil » du tableau d'un channel](manuel/images/l-inbox-lire-trier-et-repondre/afficher-les-affaires-en-sommeil.jpg)
+
+**Effacer un message.** « **Effacer** », dans la rangée de boutons, ne détruit rien tout de suite : il ouvre, sous la
+rangée, une confirmation qui nomme le message et rappelle combien de jours vous pourrez le restaurer. Le curseur s'y pose
+sur « Annuler », et la touche Échap referme sans rien faire. Le second bouton « **Effacer** », rouge, met le message dans la
+**corbeille de l'inbox** : il disparaît de la liste, de l'affaire et de la recherche, et ne compte plus nulle part. Seul le
+message ouvert est effacé : les autres messages de la conversation restent. Peut effacer qui peut écrire sur le message :
+sur son affaire s'il est classé, sur une boîte où il est arrivé sinon — sa titulaire, ou un administrateur de l'espace.
+
+**Effacer aussi dans votre boîte mail.** Quand le message est arrivé dans une boîte que vous pouvez écrire, la
+confirmation porte une case de plus, « **L'effacer aussi dans la boîte mail (le déplacer dans sa corbeille)** », décochée
+à chaque fois. Cochée, le CRM déplace aussi le message dans le dossier corbeille de cette boîte, chez votre fournisseur de
+messagerie, dans la minute ; une boîte qui ne répond pas est réessayée. **Restaurer ne l'en ressortira pas** : la case le
+dit sous son libellé. Quand aucune boîte du message ne vous appartient, la case n'apparaît pas du tout.
+
+![La confirmation « Effacer » sous la rangée de boutons : le message nommé, la durée de restauration, la case de la boîte mail, « Annuler » et « Effacer »](manuel/images/l-inbox-lire-trier-et-repondre/effacer-un-message.jpg)
+
+**La corbeille de l'inbox.** L'entrée « **Corbeille** », la dernière des dossiers, liste les messages effacés que vous
+pouvez voir : **ceux que vous avez effacés vous-même**, ou **tous ceux de l'espace** si vous l'administrez — la phrase en
+tête de la liste vous le rappelle. Chaque ligne dit qui l'a effacé et quand, la date de son **effacement définitif**, et,
+si vous avez coché la case, l'état du déplacement dans votre boîte : « Déplacé dans la corbeille de la boîte » quand
+il est fait, sinon un déplacement en attente, ou impossible, avec sa raison. « **Restaurer** » le remet où il était, sans
+confirmation : dans son affaire, ou dans « Non classés ». Passé le délai — trente jours, celui de la corbeille des
+affaires —, le message est effacé définitivement, avec ses pièces jointes. La corbeille se retient dans l'adresse de la
+page.
+
+![La corbeille de l'inbox : un message effacé, son auteur, sa date d'effacement définitif, son déplacement dans la boîte, et « Restaurer »](manuel/images/l-inbox-lire-trier-et-repondre/corbeille.jpg)
+
+Dans l'historique d'une affaire, un message effacé laisse la ligne « **Message effacé** », avec son objet et la personne
+qui l'a effacé ; restauré, il revient, suivi de la ligne « **Message restauré** ». Tout se fait au clavier.
 
 **Retirer un message d'une affaire.** Un message rangé dans la mauvaise affaire n'y reste pas.
 Sous le message ouvert, en bas et séparée du reste, la commande « **Retirer de l'affaire** »
@@ -6543,9 +6572,10 @@ Les dix familles, et ce que chacune couvre :
   administrateurs de l'espace ; le prévisionnel et le réel d'une organisation ;
 - **Temps** : saisies de temps, et le coût du personnel en lecture ;
 - **Objectifs** : tableaux d'objectifs ;
-- **Messagerie** : lecture des fils et des envois (en file, envoyés, échecs) ; préparer un email compte comme
-  « ajouter », et l'envoi se fait toujours dans le CRM, par vous ; classer un email dans une affaire, annuler un envoi en
-  file et réessayer un échec comptent comme « modifier ».
+- **Messagerie** : lecture des fils, des envois (en file, envoyés, échecs) et de la corbeille de l'inbox ; préparer un
+  email compte comme « ajouter », et l'envoi se fait toujours dans le CRM, par vous ; classer un email dans une affaire,
+  le marquer lu ou non lu, le mettre en sommeil, le restaurer, annuler un envoi en file et réessayer un échec comptent
+  comme « modifier » ; effacer un email compte comme « supprimer ».
 
 Les quatre actions sont **Consulter**, **Ajouter**, **Modifier** et **Supprimer**. « Supprimer » place en corbeille ou
 archive, avec une seule exception : **retirer une étape ou une transition d'un workflow** (« Workflows ▸ Supprimer »)
@@ -6840,8 +6870,8 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     alors enregistrée, comme celle que vous donnez à l'écran avant de télécharger une telle pièce ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)).
     Une pièce reconnue dangereuse, en cours d'analyse ou trop volumineuse ne se lit jamais. Quand
     l'expéditeur n'a écrit qu'en HTML, l'assistant en reçoit le texte, et il le sait ; l'écran, lui, montre la mise en forme. Chaque email dit
-    aussi s'il est **lu ou non lu pour vous** ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)) ; le lire par l'assistant ne le marque pas lu, et aucun outil
-    ne change cet état. Sur votre demande, l'assistant peut ne lister que les emails **qui vous concernent**, comme la case
+    aussi s'il est **lu ou non lu pour vous** ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)) ; le lire par l'assistant ne le marque pas lu :
+    seul l'outil qui marque lu ou non lu, ci-dessous, change cet état. Sur votre demande, l'assistant peut ne lister que les emails **qui vous concernent**, comme la case
     de l'inbox ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)) ; sinon, il lit le courrier entier de l'affaire ;
   - *Consulter* (classement) : **les affaires où ranger un email**, comme le formulaire de classement de l'inbox
     ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)) — d'abord celles dont un contact porte l'adresse de
@@ -6862,6 +6892,15 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     avant d'annuler, car c'est définitif, et vous prévient avant de réessayer, car le message part. Seuls l'auteur d'un
     envoi et les administrateurs de l'espace qui modifient l'affaire le peuvent ; un envoi en cours d'envoi, déjà parti,
     ou dont un premier essai a été interrompu ne s'annule pas, et l'assistant vous dit pourquoi.
+  - *Modifier* (inbox) : **marquer un email lu ou non lu** pour vous seul ; le **mettre en sommeil** jusqu'à une date, avec
+    ses réponses, ou le **réveiller** ; **restaurer** un email de la corbeille — l'un des vôtres, ou n'importe lequel de
+    l'espace si vous l'administrez ;
+  - *Supprimer* (inbox) : **effacer un email** vers la corbeille de l'inbox, comme à l'écran
+    ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)). L'assistant vous demande de confirmer avant, et vous
+    demande aussi s'il doit l'effacer dans votre boîte mail ; la base le refuse si aucune boîte du message ne vous
+    appartient ;
+  - *Consulter* (corbeille) : **la corbeille de l'inbox** que vous voyez, avec l'auteur et la date de chaque effacement,
+    la date d'effacement définitif et l'état du déplacement dans la boîte ; jamais le texte des emails.
 
   **L'assistant n'envoie jamais rien.** Un mail préparé attend dans le CRM que **vous** le relisiez, le modifiiez si
   besoin et l'envoyiez vous-même : l'assistant vous donne le lien qui l'ouvre
@@ -6876,7 +6915,7 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
 ### 33.6 Ce que le connecteur n'offre pas
 
 Toutes les familles ont leurs outils. Restent des gestes de l'écran : **envoyer** — l'assistant prépare, joint des fichiers,
-mais c'est vous qui envoyez ; **retirer un email de son affaire, ou mettre un fil en sommeil**, dans la boîte de réception ;
+mais c'est vous qui envoyez ; **retirer un email de son affaire**, dans la boîte de réception ;
 **les modèles et les séquences** de relance.
 
 ## 34. Les webhooks : prévenir vos autres outils

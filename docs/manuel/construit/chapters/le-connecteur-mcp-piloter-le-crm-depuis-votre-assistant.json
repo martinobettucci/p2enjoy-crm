@@ -375,7 +375,7 @@
 							},
 							{
 								"type": "text",
-								"text": " : lecture des fils et des envois (en file, envoyés, échecs) ; préparer un email compte comme\n« ajouter », et l'envoi se fait toujours dans le CRM, par vous ; classer un email dans une affaire, annuler un envoi en\nfile et réessayer un échec comptent comme « modifier »."
+								"text": " : lecture des fils, des envois (en file, envoyés, échecs) et de la corbeille de l'inbox ; préparer un\nemail compte comme « ajouter », et l'envoi se fait toujours dans le CRM, par vous ; classer un email dans une affaire,\nle marquer lu ou non lu, le mettre en sommeil, le restaurer, annuler un envoi en file et réessayer un échec comptent\ncomme « modifier » ; effacer un email compte comme « supprimer »."
 							}
 						]
 					}
@@ -3541,7 +3541,7 @@
 										},
 										{
 											"type": "text",
-											"text": ") ; le lire par l'assistant ne le marque pas lu, et aucun outil\nne change cet état. Sur votre demande, l'assistant peut ne lister que les emails "
+											"text": ") ; le lire par l'assistant ne le marque pas lu :\nseul l'outil qui marque lu ou non lu, ci-dessous, change cet état. Sur votre demande, l'assistant peut ne lister que les emails "
 										},
 										{
 											"type": "strong",
@@ -3892,6 +3892,161 @@
 										}
 									]
 								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Modifier"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " (inbox) : "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "marquer un email lu ou non lu"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " pour vous seul ; le "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "mettre en sommeil"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " jusqu'à une date, avec\nses réponses, ou le "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "réveiller"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " ; "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "restaurer"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " un email de la corbeille — l'un des vôtres, ou n'importe lequel de\nl'espace si vous l'administrez ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Supprimer"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " (inbox) : "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "effacer un email"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " vers la corbeille de l'inbox, comme à l'écran\n("
+										},
+										{
+											"type": "link",
+											"target": {
+												"chapter": "l-inbox-lire-trier-et-repondre",
+												"anchor": "l-inbox-lire-et-trier-le-courrier-recu"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "chapitre 12.2"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": "). L'assistant vous demande de confirmer avant, et vous\ndemande aussi s'il doit l'effacer dans votre boîte mail ; la base le refuse si aucune boîte du message ne vous\nappartient ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Consulter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " (corbeille) : "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "la corbeille de l'inbox"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " que vous voyez, avec l'auteur et la date de chaque effacement,\nla date d'effacement définitif et l'état du déplacement dans la boîte ; jamais le texte des emails."
+										}
+									]
+								}
 							]
 						]
 					},
@@ -3995,7 +4150,7 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "retirer un email de son affaire, ou mettre un fil en sommeil"
+							"text": "retirer un email de son affaire"
 						}
 					]
 				},

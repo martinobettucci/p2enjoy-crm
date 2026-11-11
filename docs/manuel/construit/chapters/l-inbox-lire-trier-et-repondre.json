@@ -857,7 +857,7 @@
 						"content": [
 							{
 								"type": "text",
-								"text": "dans l'en-tête du message ouvert, le bouton à l'enveloppe fermée, « "
+								"text": "dans la rangée de boutons sous l'en-tête du message ouvert, « "
 							},
 							{
 								"type": "strong",
@@ -870,7 +870,7 @@
 							},
 							{
 								"type": "text",
-								"text": " »,\nrend la conversation non lue — le message reste affiché, et il ne se remarque pas lu tant que vous\nne l'avez pas rouvert. Le même bouton propose ensuite « "
+								"text": " », à côté du sommeil,\nrend la conversation non lue — le message reste affiché, et il ne se remarque pas lu tant que vous\nne l'avez pas rouvert. Le même bouton propose ensuite « "
 							},
 							{
 								"type": "strong",
@@ -1967,26 +1967,52 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "Mettre un fil en sommeil."
+							"text": "Mettre un message en sommeil."
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " Un "
+					"text": " Sous l'en-tête du message ouvert, une rangée de trois boutons porte, dans cet ordre,\n« "
 				},
 				{
 					"type": "strong",
 					"content": [
 						{
 							"type": "text",
-							"text": "fil"
+							"text": "Mettre le message en sommeil"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " rassemble les messages d'une même conversation. Sous\nl'en-tête du message ouvert, « Mettre le fil en sommeil » ouvre un petit panneau : quatre échéances\nusuelles — demain, dans trois jours, la semaine prochaine, le mois prochain — ou une échéance de\nvotre choix. Une fois le fil endormi :"
+					"text": " », « Marquer comme non lu » et « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Effacer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ». Le premier ouvre un petit panneau :\nquatre échéances usuelles — demain, dans trois jours, la semaine prochaine, le mois prochain — ou une échéance de\nvotre choix. Le message dort "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "avec ses réponses"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : toute la conversation dort. Une fois le message endormi :"
 				}
 			]
 		},
@@ -2069,13 +2095,13 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "Réveiller le fil"
+										"text": "Réveiller le message"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " » le ramène immédiatement, sans confirmation ;"
+								"text": " » le ramène immédiatement, avec ses réponses, sans confirmation ;"
 							}
 						]
 					}
@@ -2093,13 +2119,13 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "Afficher les fils en sommeil"
+										"text": "Afficher les messages en sommeil"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " », en haut de la liste, les fait tous réapparaître,\nreconnaissables à leur pastille. Si un dossier ne contient plus que des fils endormis, la liste\nvous le dit et vous propose la case au lieu d'un vide muet."
+								"text": " », en haut de la liste, les fait tous réapparaître,\nreconnaissables à leur pastille. Si un dossier ne contient plus que des messages endormis, la liste\nvous le dit et vous propose la case au lieu d'un vide muet."
 							}
 						]
 					}
@@ -2109,14 +2135,14 @@
 		{
 			"type": "image",
 			"src": "l-inbox-lire-trier-et-repondre/mettre-le-fil-en-sommeil.jpg",
-			"alt": "Le bouton « Mettre le fil en sommeil », sous l'en-tête du message",
-			"width": 219,
-			"height": 73
+			"alt": "La rangée de boutons du message ouvert : « Mettre le message en sommeil », « Marquer comme non lu », « Effacer »",
+			"width": 536,
+			"height": 121
 		},
 		{
 			"type": "image",
 			"src": "l-inbox-lire-trier-et-repondre/jusqu-a-quand.jpg",
-			"alt": "Le panneau « Jusqu'à quand ? » : quatre échéances usuelles, une autre échéance, « Mettre le fil en sommeil » et « Annuler »",
+			"alt": "Le panneau « Jusqu'à quand ? » : quatre échéances usuelles, une autre échéance, « Mettre le message en sommeil » et « Annuler »",
 			"width": 536,
 			"height": 248
 		},
@@ -2138,7 +2164,7 @@
 				},
 				{
 					"type": "text",
-					"text": " : un fil endormi l'est pour toute personne qui le voit. Il n'a pas besoin\nd'être réveillé à la main — une échéance passée n'est plus un sommeil, et le fil revient tout seul.\nUne échéance déjà passée est refusée, avec son motif écrit sous le champ."
+					"text": " : un message endormi l'est pour toute personne qui le voit. Il n'a pas besoin\nd'être réveillé à la main — une échéance passée n'est plus un sommeil, et le message revient tout seul.\nUne échéance déjà passée est refusée, avec son motif écrit sous le champ."
 				}
 			]
 		},
@@ -2179,6 +2205,239 @@
 			"alt": "La case « Afficher les affaires en sommeil » du tableau d'un channel",
 			"width": 280,
 			"height": 72
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Effacer un message."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Effacer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " », dans la rangée de boutons, ne détruit rien tout de suite : il ouvre, sous la\nrangée, une confirmation qui nomme le message et rappelle combien de jours vous pourrez le restaurer. Le curseur s'y pose\nsur « Annuler », et la touche Échap referme sans rien faire. Le second bouton « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Effacer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " », rouge, met le message dans la\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "corbeille de l'inbox"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : il disparaît de la liste, de l'affaire et de la recherche, et ne compte plus nulle part. Seul le\nmessage ouvert est effacé : les autres messages de la conversation restent. Peut effacer qui peut écrire sur le message :\nsur son affaire s'il est classé, sur une boîte où il est arrivé sinon — sa titulaire, ou un administrateur de l'espace."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Effacer aussi dans votre boîte mail."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Quand le message est arrivé dans une boîte que vous pouvez écrire, la\nconfirmation porte une case de plus, « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'effacer aussi dans la boîte mail (le déplacer dans sa corbeille)"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " », décochée\nà chaque fois. Cochée, le CRM déplace aussi le message dans le dossier corbeille de cette boîte, chez votre fournisseur de\nmessagerie, dans la minute ; une boîte qui ne répond pas est réessayée. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Restaurer ne l'en ressortira pas"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : la case le\ndit sous son libellé. Quand aucune boîte du message ne vous appartient, la case n'apparaît pas du tout."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/effacer-un-message.jpg",
+			"alt": "La confirmation « Effacer » sous la rangée de boutons : le message nommé, la durée de restauration, la case de la boîte mail, « Annuler » et « Effacer »",
+			"width": 536,
+			"height": 275
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "La corbeille de l'inbox."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " L'entrée « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Corbeille"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " », la dernière des dossiers, liste les messages effacés que vous\npouvez voir : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ceux que vous avez effacés vous-même"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", ou "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tous ceux de l'espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " si vous l'administrez — la phrase en\ntête de la liste vous le rappelle. Chaque ligne dit qui l'a effacé et quand, la date de son "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "effacement définitif"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et,\nsi vous avez coché la case, l'état du déplacement dans votre boîte : « Déplacé dans la corbeille de la boîte » quand\nil est fait, sinon un déplacement en attente, ou impossible, avec sa raison. « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Restaurer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " » le remet où il était, sans\nconfirmation : dans son affaire, ou dans « Non classés ». Passé le délai — trente jours, celui de la corbeille des\naffaires —, le message est effacé définitivement, avec ses pièces jointes. La corbeille se retient dans l'adresse de la\npage."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/corbeille.jpg",
+			"alt": "La corbeille de l'inbox : un message effacé, son auteur, sa date d'effacement définitif, son déplacement dans la boîte, et « Restaurer »",
+			"width": 1192,
+			"height": 476
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Dans l'historique d'une affaire, un message effacé laisse la ligne « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Message effacé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " », avec son objet et la personne\nqui l'a effacé ; restauré, il revient, suivi de la ligne « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Message restauré"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ». Tout se fait au clavier."
+				}
+			]
 		},
 		{
 			"type": "paragraph",

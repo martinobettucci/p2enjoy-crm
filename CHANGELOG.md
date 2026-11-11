@@ -29,7 +29,7 @@ d'exécuter le code attendu.
 - Les mêmes droits que dans Réglages ▸ Tracks et channels : seuls les administrateurs de l'espace archivent et désarchivent ; les autres membres voient les archivés et des commandes grisées, avec leur motif.
 - Aucune migration : la webapp seule (`docs/PROD_MIGRATIONS.md` §2.44).
 
-#### `CRM-138` — effacer un message vers la corbeille de l'inbox, la boîte mail en option (décisions 878, 917, 920 et 921) — *tranches T1 à T4, l'unité en cours*
+#### `CRM-138` — effacer un message vers la corbeille de l'inbox, la boîte mail en option (décisions 878, 917, 920 et 921) — *tranches T1 à T5*
 
 - **En base (T1)** : un message peut être mis à la corbeille (`delete_message`) par qui peut l'écrire, restauré
   (`restore_message`), et lu dans sa corbeille visible (`trashed_messages`) — ce qu'on a effacé soi-même, tout l'espace pour
@@ -52,7 +52,10 @@ d'exécuter le code attendu.
   `mcp` à reconstruire.
 - **Dans le seed (T5)** : un courrier non classé de la boîte de Camille, effacé avec sa boîte et déplacé par le vrai
   `mail-sync` ; un courrier classé dans « Plateforme de billetterie — Musée des Confluences », effacé puis restauré
-  (`docs/SPEC-seed.md` §45). *Le manuel et ses images suivent.*
+  (`docs/SPEC-seed.md` §45).
+- **Dans le manuel (T5)** : §12.2 (la rangée de boutons, le sommeil d'un message, « Effacer », la case de la boîte mail,
+  la corbeille, l'historique) et §33 (les outils de l'inbox) ; cinq images du chapitre 12, dont deux nouvelles,
+  « effacer-un-message » et « corbeille ». Contrat de déploiement §2.45.
 
 #### `CRM-140` — le corps HTML d'un mail rendu dans un cadre confiné, ses images distantes sur demande (décisions 881 et 918)
 

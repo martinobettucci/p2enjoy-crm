@@ -15,6 +15,9 @@
 //       docs/SPEC-seed.md §42 ; décision 913)
 // @spec CRM-140 (docs/BACKLOG.md) — tranche T4 : l'image « afficher-les-images » de la section 12.2 — le courrier HTML du
 //       seed dans son cadre, le bandeau et son bouton, images bloquées (docs/DESIGN_SYSTEM.md §5.100 ; docs/SPEC-seed.md §44)
+// @spec CRM-138 (docs/BACKLOG.md) — tranche T5 : la rangée de boutons du message ouvert (« mettre-le-fil-en-sommeil »,
+//       nom gardé), « effacer-un-message » (la confirmation dans le flux, ouverte puis annulée) et « corbeille » (le courrier
+//       que le seed efface avec sa boîte, déplacé) — docs/DESIGN_SYSTEM.md §5.102 ; docs/SPEC-seed.md §45
 // @spec CRM-143 (docs/BACKLOG.md) — tranche T4 : l'image « piece-non-analysee » de la section 12.1 — « Télécharger quand
 //       même » et son avertissement (docs/DESIGN_SYSTEM.md §5.95 ; docs/SPEC-pieces-jointes.md §17.4)
 //
@@ -57,8 +60,10 @@ test('l’inbox : les dossiers, un fil, le classement', async ({ page }) => {
 	await expect(dossiers(page)).toBeVisible()
 	// L'image d'ouverture montre un dossier déplié et un message lu : les trois panneaux remplis.
 	await dossiers(page).getByRole('button', { name: /Non classés/ }).click()
-	await liste(page).getByTestId('inbox-message').first().click()
-	await expect(page.getByTestId('inbox-message-ouvert')).toBeVisible()
+	// UN MESSAGE EN TEXTE, NOMMÉ (`CRM-138`) : le premier de la liste est devenu le courrier HTML du §44, dont le cadre
+	// confiné ne se peint pas à temps pour une image pleine page.
+	await liste(page).getByTestId('inbox-message').filter({ hasText: 'Point d’avancement — migration ERP' }).click()
+	await expect(page.getByTestId('inbox-message-ouvert')).toContainText('Où en sommes-nous du chantier de migration')
 	await illustrer(page, { chapitre: CHAPITRE, section: null, nom: 'inbox', cibles: [], pleinePage: true })
 	await illustrer(page, {
 		chapitre: CHAPITRE,
@@ -72,8 +77,15 @@ test('l’inbox : les dossiers, un fil, le classement', async ({ page }) => {
 	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'messages-de-ce-fil', cibles: [ouvert.getByRole('region', { name: 'Choisir un message du fil' })] })
 	await illustrer(page, { chapitre: CHAPITRE, section: ECRIRE, nom: 'repondre', cibles: [page.getByTestId('envoi-ouvrir')] })
 
-	// Le sommeil d'un fil : le bouton, puis le panneau qui le remplace, montré puis refermé.
-	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'mettre-le-fil-en-sommeil', cibles: [page.getByTestId('fil-endormir')] })
+	// `CRM-138` : la rangée de boutons — le sommeil, la lecture, « Effacer » (§5.102) ; l'image garde son nom.
+	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'mettre-le-fil-en-sommeil', cibles: [page.getByTestId('inbox-commandes-message')] })
+	// « Effacer » : la confirmation dans le flux, montrée puis annulée — rien n'est effacé.
+	await page.getByTestId('inbox-effacer').click()
+	const effacement = page.getByTestId('inbox-effacer-confirmation')
+	await expect(effacement).toBeVisible()
+	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'effacer-un-message', cibles: [effacement] })
+	await effacement.getByRole('button', { name: 'Annuler', exact: true }).click()
+	await expect(effacement).toBeHidden()
 	await page.getByTestId('fil-endormir').click()
 	const panneau = page.getByTestId('fil-panneau')
 	await expect(panneau).toBeVisible()
@@ -87,6 +99,9 @@ test('l’inbox : les dossiers, un fil, le classement', async ({ page }) => {
 	await retirer.click()
 	const confirmation = page.getByTestId('inbox-retrait-confirmation')
 	await expect(confirmation).toBeVisible()
+	// CENTRÉE AVANT L'IMAGE (`CRM-138`) : la rangée de boutons allonge l'en-tête du message, et la confirmation, au bas du
+	// panneau, sortait de la fenêtre — `scrollIntoViewIfNeeded` ne fait défiler que le minimum.
+	await confirmation.evaluate((element) => element.scrollIntoView({ block: 'center' }))
 	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'confirmer-le-retrait', cibles: [confirmation] })
 	await confirmation.getByRole('button', { name: 'Annuler', exact: true }).click()
 	await expect(confirmation).toBeHidden()
@@ -106,6 +121,26 @@ test('l’inbox : les dossiers, un fil, le classement', async ({ page }) => {
 	const telecharger = page.getByTestId('inbox-message-ouvert').getByRole('button', { name: /Télécharger/ }).first()
 	await expect(telecharger).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'telecharger', cibles: [piece, telecharger] })
+})
+
+// `CRM-138` T5 : la corbeille de l'inbox, avec le courrier que le seed efface avec sa boîte (docs/SPEC-seed.md §45) — son
+// auteur, sa date d'effacement définitif, son déplacement fait, et « Restaurer », qui n'est pas appuyé.
+test('la corbeille de l’inbox : un message effacé avec sa boîte, et « Restaurer »', async ({ page }) => {
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto('/inbox?courrier=tous')
+	await dossiers(page).getByTestId('inbox-corbeille').click()
+	const ligne = page.getByTestId('inbox-corbeille-ligne').filter({ hasText: 'Offre de partenariat — salon Numérique Lyon' })
+	await expect(ligne).toContainText('Déplacé dans la corbeille de la boîte')
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: LIRE,
+		nom: 'corbeille',
+		cibles: [
+			dossiers(page).getByTestId('inbox-corbeille'),
+			page.getByTestId('inbox-panneau-corbeille').getByText(/Un message reste \d+ jours dans la corbeille/),
+			ligne,
+		],
+	})
 })
 
 // `CRM-143` T4 (docs/DESIGN_SYSTEM.md §5.95) : une pièce non analysée. Le seed n'en porte pas — elle naît sans antivirus, et

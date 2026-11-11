@@ -19121,8 +19121,10 @@ responsable.
 
 ## Demande du 2026-11-10 — non lu visible, « message » plutôt que « fil », et effacer un mail (décision 878)
 
-### CRM-138 — Mails : « Marquer comme non lu » libellé près du sommeil, « message » au lieu de « fil », et effacer avec confirmation (corbeille du CRM, boîte IMAP en option) `[@]`
-*Prise en charge : session interactive 4891a451 (p2enjoy-crm-32) depuis 2026-11-11 00:29 UTC — état avant : [ ] ; confiée par la session de livraison (ee)*
+### CRM-138 — Mails : « Marquer comme non lu » libellé près du sommeil, « message » au lieu de « fil », et effacer avec confirmation (corbeille du CRM, boîte IMAP en option) `[P]`
+**État (2026-11-11)** : les cinq tranches vérifiées en développement (ci-dessous). **Reste** : la livraison du lot suivant
+(contrat `docs/PROD_MIGRATIONS.md` §2.45 : migrations 180, 181 et 182 dans l'ordre, images `mail-sync` et `mcp`, la webapp)
+et le constat du responsable en production (gestes 5 et 6 du §2.45).
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 878).
 **Comportement attendu** :
@@ -19187,7 +19189,11 @@ reste sinon) ; E2E souris et clavier (non lu, sommeil, effacer, annuler, restaur
       (2026-11-11)* : les contrats (`docs/SPEC-mcp.md` §9.2, CRM-138) ; l'ancre de `crm_mail_restore` est
       `trashed_message:message_id`, résolue par `trashed_message_workspace` (migration `0182`, `docs/SCHEMA.md`) — §29.8
       précisé.
-- [ ] **T5 — seed, manuel, contrat** (§29.9) ; images ; `docs/PROD_MIGRATIONS.md`. *Seed spécifié avant le code
+- [x] **T5 — seed, manuel, contrat** (§29.9) ; images ; `docs/PROD_MIGRATIONS.md`. **Manuel fait** le 2026-11-11 :
+      `docs/manual.md` §12.2 et §33 ; `e2e/manuel/12-inbox.spec.ts` 11/11 (la rangée de boutons, « effacer-un-message »,
+      « corbeille », l'image d'ouverture sur un message en texte, la confirmation du retrait centrée) ; cinq images observées
+      et leurs entrées au manifeste, prises seules sur HEAD (les autres hunks de l'arbre sont des sous-produits de preuves) ;
+      chapitres construits 12 et 33 ; `manuel:verifier` à jour, `verify-manual` 168 contrôles sans anomalie ; contrat §2.45. *Seed spécifié avant le code
       (2026-11-11)* : `docs/SPEC-seed.md` §45. **Seed fait** le 2026-11-11 (`apply-seed.sh`, section §45) : trois passages,
       le troisième sans rien renvoyer ni réécrire ; la garde des non-classés non lus et deux preuves révisées, non relâchées
       (pgTAP `0095` n°11 à huit, l'oracle de `0164` sans la corbeille) ; pgTAP complet 159 fichiers, 5272 assertions, aucune

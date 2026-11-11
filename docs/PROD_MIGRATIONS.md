@@ -1051,6 +1051,24 @@ de `main` postérieure à T1 suffit, dans n'importe quel ordre avec les autres g
 
 **Retour arrière** : la webapp précédente ; aucune donnée n'est touchée, un channel archivé par ce geste l'est comme par
 Réglages, et s'y désarchive.
+
+### 2.45 `CRM-138` T1 à T5, décisions 878, 917, 920 et 921 — effacer un message : la corbeille de l'inbox, la boîte mail en option, « non lu » et le sommeil à portée, les outils du connecteur (À LIVRER : migrations 180, 181 et 182, images `mail-sync` et `mcp`, la webapp de `main` ; **lot suivant, annoncé par la session de livraison**)
+
+`docs/SPEC-mail-subsystem.md` §29 ; `docs/SCHEMA.md` « Migration `0180` », « `0181` », « `0182` ». **Aucune variable, aucun
+secret** : la purge et le déplacement IMAP tournent dans `mail-sync`, avec ses réglages existants. L'ordre compte (§3).
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la 180, puis la 181, puis la 182 | session de livraison | par le runner, dans l'ordre (§3) ; aucune donnée reprise |
+| 2 | Reconstruire l'image `mail-sync` (T2) | session de livraison | `up -d --build --no-deps --wait mail-sync`, par `compose_prod` (§4), **après la 180** |
+| 3 | Livrer la webapp de `main` (T3) | session de livraison | avec le lot, **après la 181** — une webapp sans elle ne lit plus le message ouvert |
+| 4 | Reconstruire l'image `mcp` (T4) | session de livraison | `up -d --build --no-deps --wait mcp`, **après la 182** : cinq outils paraissent sous « Messagerie », sans case nouvelle |
+| 5 | Constater l'écran | responsable, sur un message de test | ouvrir un message : la rangée « Mettre le message en sommeil », « Marquer comme non lu », « Effacer » ; « Effacer », puis « Annuler » ; « Effacer » pour de bon : il quitte la liste et paraît dans « Corbeille » ; « Restaurer » : il revient |
+| 6 | Constater la boîte mail | responsable, sur un message de test de **sa** boîte | effacer avec « L'effacer aussi dans la boîte mail » : dans la minute, la ligne de la corbeille dit « Déplacé dans la corbeille de la boîte », et le message est dans la corbeille de sa messagerie |
+
+**Retour arrière** : la webapp, `mail-sync` et `mcp` précédents ; les migrations se défont dans l'ordre inverse (`docs/SCHEMA.md`,
+« Retour arrière » de chacune). Un message effacé redevient alors visible ; un déplacement déjà fait dans une boîte n'est pas
+défait.
 ## 3. Migrations en attente
 
 **La 182, après la 181** (`CRM-138` T4), *en attente* : `trashed_message_workspace(uuid)`, l'espace d'un message de la
