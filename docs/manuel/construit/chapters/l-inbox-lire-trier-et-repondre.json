@@ -291,7 +291,41 @@
 				},
 				{
 					"type": "text",
-					"text": " « Non classés » vient toujours en premier, même quand il est vide : c'est\nl'entrée du travail de tri. Vient ensuite "
+					"text": " En tête viennent les entrées de vos envois — « En file », « Envoyés », « Échecs »\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-inbox-lire-trier-et-repondre",
+						"anchor": "suivre-ses-envois-en-file-envoyes-echecs"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 12.5"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") —, précédées de « Mails préparés » quand l'assistant vous en a\npréparé ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-inbox-lire-trier-et-repondre",
+						"anchor": "relire-et-envoyer-un-mail-prepare-par-l-assistant"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 12.4"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). « Non classés » ouvre ensuite le courrier\nreçu, toujours, même quand il est vide : c'est l'entrée du travail de tri. Vient ensuite "
 				},
 				{
 					"type": "strong",
@@ -358,9 +392,9 @@
 		{
 			"type": "image",
 			"src": "l-inbox-lire-trier-et-repondre/dossiers.jpg",
-			"alt": "L'entrée Inbox de la barre latérale et le dossier « Non classés », en tête des dossiers",
+			"alt": "L'entrée Inbox de la barre latérale et le dossier « Non classés », en tête du courrier reçu",
 			"width": 543,
-			"height": 176
+			"height": 305
 		},
 		{
 			"type": "paragraph",
@@ -2223,7 +2257,7 @@
 			"src": "l-inbox-lire-trier-et-repondre/message-recu.jpg",
 			"alt": "La ligne « Message reçu » dans l'historique de l'affaire",
 			"width": 519,
-			"height": 100
+			"height": 99
 		},
 		{
 			"type": "paragraph",

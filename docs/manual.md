@@ -3092,8 +3092,10 @@ L'inbox montre **trois panneaux** : les dossiers à gauche, la liste des message
 message lui-même à droite. Sous 1024 px de large, les trois deviennent une **pile** : on descend
 d'un panneau au suivant, et un bouton « Retour » remonte d'un cran.
 
-**Les dossiers.** « Non classés » vient toujours en premier, même quand il est vide : c'est
-l'entrée du travail de tri. Vient ensuite **« Affaires »**, qui liste par titre les affaires portant du courrier ; une
+**Les dossiers.** En tête viennent les entrées de vos envois — « En file », « Envoyés », « Échecs »
+([section 12.5](#suivre-ses-envois-en-file-envoyes-echecs)) —, précédées de « Mails préparés » quand l'assistant vous en a
+préparé ([section 12.4](#relire-et-envoyer-un-mail-prepare-par-l-assistant)). « Non classés » ouvre ensuite le courrier
+reçu, toujours, même quand il est vide : c'est l'entrée du travail de tri. Vient ensuite **« Affaires »**, qui liste par titre les affaires portant du courrier ; une
 affaire rattachée à plusieurs channels n'y paraît qu'une fois, et ses messages vivent dans un seul dossier, sous
 `CRM/Affaires` dans la boîte. **Une affaire sans courrier n'apparaît pas** : l'inbox est une vue du
 courrier reçu, pas une seconde copie du board. Chaque ligne affiche le nombre de messages **que
@@ -3101,7 +3103,7 @@ vous pouvez voir**, ce qui explique que deux personnes n'y lisent pas les mêmes
 dossier contient des messages que vous n'avez pas encore lus, une **pastille bleue** en donne le
 nombre, juste avant ce total, et le nom du dossier passe en gras.
 
-![L'entrée Inbox de la barre latérale et le dossier « Non classés », en tête des dossiers](manuel/images/l-inbox-lire-trier-et-repondre/dossiers.jpg)
+![L'entrée Inbox de la barre latérale et le dossier « Non classés », en tête du courrier reçu](manuel/images/l-inbox-lire-trier-et-repondre/dossiers.jpg)
 
 **Seulement moi.** Au-dessus des dossiers, la case « **Seulement moi** » est cochée quand vous ouvrez l'inbox. Elle ne
 montre alors que le courrier qui **vous concerne** : les messages adressés à l'une de **vos adresses d'expédition** (en

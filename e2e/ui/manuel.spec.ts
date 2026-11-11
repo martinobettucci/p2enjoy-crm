@@ -1,3 +1,4 @@
+// @verifies CRM-144 (docs/BACKLOG.md) — tranche T3 : les entrées de l'outbox avant « Non classés » (docs/DESIGN_SYSTEM.md §5.98)
 // @verifies CRM-047 (docs/BACKLOG.md) — Definition of Done du manuel utilisateur du chunk 3
 // @verifies docs/SPEC-manual.md §3.1 (les libellés cités sont les libellés réels), §5 (les huit
 //           adresses du parcours et leur jeu de captures), §7.1 (preuve d'interface)
@@ -104,9 +105,15 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await page.goto('/inbox?courrier=tous')
 
+		// RÉVISÉ PAR `CRM-144` T3 (décision 51), non relâché : les trois entrées de l'outbox — « En file », « Envoyés »,
+		// « Échecs » — précèdent désormais « Non classés » (docs/DESIGN_SYSTEM.md §5.98, docs/manual.md §12.2). L'ordre RÉEL
+		// est vérifié entrée par entrée, et « Non classés » reste la première entrée du courrier reçu, à zéro sans panne.
 		const dossiers = page.getByRole('navigation', { name: 'Dossiers de la messagerie' }).getByRole('button')
-		await expect(dossiers.first()).toContainText(LIBELLES.nonClasses)
-		await expect(dossiers.first()).toContainText('0')
+		await expect(dossiers.nth(0)).toContainText('En file')
+		await expect(dossiers.nth(1)).toContainText('Envoyés')
+		await expect(dossiers.nth(2)).toContainText('Échecs')
+		await expect(dossiers.nth(3)).toContainText(LIBELLES.nonClasses)
+		await expect(dossiers.nth(3)).toContainText('0')
 		await expect(page.getByTestId('etat-refus')).toHaveCount(0)
 		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
 		await capturer(page, 'manuel-inbox-1440', UNITE)
