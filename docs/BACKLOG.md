@@ -19118,6 +19118,17 @@ responsable.
 E2E `mail` sur le vrai serveur IMAP de dev (le message arrive dans la corbeille de la boîte quand la case est cochée, il y
 reste sinon) ; E2E souris et clavier (non lu, sommeil, effacer, annuler, restaurer) ; outils du connecteur et
 `verify-mcp.sh` ; seed ; captures aux quatre paliers ; manuel ; contrat de déploiement.
+**Découpage** (2026-11-11, avec la spécification) :
+- [ ] **T1 — base** : migration (colonnes, déclencheur, `mail_trash_moves`, les quatre fonctions de la personne et les
+      quatre de `service_role`, la politique et les quinze fonctions du §29.4, le dossier « Corbeille », les deux types
+      d'événement) ; pgTAP ; API (refus par jeton réel).
+- [ ] **T2 — `mail-sync`** : le déplacement IMAP (§29.5) et la purge (§29.6) ; la route interne ; pytest ; E2E `mail` contre
+      le vrai serveur IMAP de dev.
+- [ ] **T3 — écrans** (`docs/DESIGN_SYSTEM.md` §5.102) : rangée de commandes, confirmation, dossier « Corbeille »,
+      restaurer, lignes du fil ; unitaires ; E2E souris et clavier ; captures aux quatre paliers.
+- [ ] **T4 — connecteur** : les cinq outils (§29.8) ; pytest, intégration, `verify-mcp.sh`.
+- [ ] **T5 — seed, manuel, contrat** (§29.9) ; images ; `docs/PROD_MIGRATIONS.md`.
+
 
 ## Demande du 2026-11-10 — l'inbox, par défaut, ne montre que mes mails (décision 879)
 
