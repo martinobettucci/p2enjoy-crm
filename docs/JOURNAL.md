@@ -40603,3 +40603,24 @@ spécification.
 118, pgTAP 159 fichiers, build et garde du manuel 168 verts ; unitaires 5 738 sur 5 739, ui 1 217 sur 1 221, api 1 350 sur
 1 353, manuel 154 sur 155 — tous verts rejoués seuls ou INC-342. **Aucun défaut du lot.** Captures : 309, observées
 (`08cc9091`). **Décision : oui, sans instantané**, un `pg_dump` avant. **Livrée** à `08cc9091` (contrat §8, seconde fenêtre du 2026-11-11).
+
+### décision 926 — `CRM-141` : pose à la main par qui lit le mail et édite l'espace ; une pastille supprimée est archivée et reste sur les mails ; un filtre par pastille ; le design system lu par sections ciblées
+
+*2026-11-11, session interactive (p2enjoy-crm-a4), arbitrage du responsable (`AskUserQuestion`), avant la
+spécification de l'unité (décisions 883, 923 et 924).*
+**Q1 — qui pose ou retire une pastille à la main**, à l'écran comme par l'assistant connecté : *présentés* : qui lit le
+mail et édite l'espace ; tout membre qui lit le mail ; qui peut classer le mail. **Retenu : qui voit le message et édite
+l'espace** (administrateurs et business developers, la capacité `edition` de l'espace) ; une lectrice voit les pastilles
+et la commande grisée, avec son motif. La règle est tenue en base (`CLAUDE.md` §10).
+**Q2 — supprimer une pastille** : *présentés* : elle quitte tous les mails ; elle est archivée et reste sur les mails.
+**Retenu : l'archivage.** Une pastille « supprimée » n'est plus proposée, ni posée par le LLM, ni posable à la main ; elle
+reste affichée, avec la mention « archivée », sur les mails qui la portaient. Le geste des réglages est donc un
+archivage, réversible, et non une destruction.
+**Q3 — le filtre** : *présentés* : un filtre par pastille dès cette unité ; plus tard. **Retenu : un filtre par pastille
+dans la liste de l'inbox**, dès `CRM-141`.
+**Q4 — le design system** : *présentées* : les sections ciblées ; la lecture intégrale. **Retenu : les sections
+ciblées**, en entier : §1 à §4 et §6 à §12 ; l'inbox §5.4 à §5.4 quinquies, §5.98, §5.100 ; les badges §5.6 et §12.5 ;
+les réglages et formulaires §5.7, §5.13, §5.34, §5.68, §5.59 ; §5.5, §5.8 ; et les sections qu'elles citent. Le compte
+rendu de l'unité dit que la lecture n'était pas intégrale ; le diff d'interface reste vérifié contre ces sections avant
+le commit. **Portée** : `CRM-141` seulement ; la règle de `CLAUDE.md` n'est pas changée.
+**Tranché par la spécification, sans question** : les mails **envoyés** ne sont pas évalués (décision 883, par défaut).
