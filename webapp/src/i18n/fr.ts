@@ -216,9 +216,15 @@ export const fr = {
 	'inbox.message.cc': 'Copie',
 	'inbox.message.received': 'Reçu le',
 	'inbox.message.empty.body': 'Ce message ne comporte aucun texte.',
-	// Le corps réduit depuis du HTML est ANNONCÉ : l'utilisateur doit savoir que la mise en forme
-	// de l'expéditeur n'est pas affichée, et pourquoi (§18.4).
-	'inbox.message.reduced': 'Mise en forme retirée : ce message est affiché en texte seul.',
+	// `CRM-140` (docs/SPEC-mail-subsystem.md §30, docs/DESIGN_SYSTEM.md §5.100) : le HTML s'affiche dans un cadre isolé, et
+	// la phrase « mise en forme retirée » disparaît avec la réduction qu'elle annonçait.
+	'inbox.message.html.frameTitle': 'Contenu du message',
+	'inbox.message.html.imagesBlocked':
+		'Les images distantes de ce message sont bloquées : les afficher préviendrait l’expéditeur que vous l’avez ouvert.',
+	'inbox.message.html.showImages': 'Afficher les images',
+	'inbox.message.html.imagesShown': 'Images affichées pour ce message.',
+	'inbox.message.html.preparing': 'Préparation du message…',
+	'inbox.message.html.cidUnavailable': 'image intégrée indisponible',
 	'inbox.message.card': 'Classé dans',
 	'inbox.message.unclassified': 'Ce message n’est classé dans aucune affaire.',
 	'inbox.attachments.title': 'Pièces jointes',

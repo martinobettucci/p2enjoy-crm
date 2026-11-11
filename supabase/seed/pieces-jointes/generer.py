@@ -175,6 +175,8 @@ FICHIERS = {
     ]]),
     "plan-signe-scanne.pdf": pdf([[]]),
     "maquette-accueil.png": png(480, 300),
+    # `CRM-140` (docs/SPEC-seed.md §44) : le logo de signature du courrier HTML, cité par `cid:` dans son corps.
+    "logo-sogexia.png": png(96, 32),
     "cahier-des-charges.docx": docx([
         "Cahier des charges — Refonte du monitoring",
         "Objectif : remplacer les alertes par courriel par un tableau de bord partagé.",

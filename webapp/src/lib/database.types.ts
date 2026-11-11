@@ -2170,6 +2170,7 @@ export type Database = {
           av_skip_reason: string | null
           av_status: string
           card_id: string | null
+          content_id: string | null
           created_at: string
           extracted_text: string | null
           filename: string
@@ -2190,6 +2191,7 @@ export type Database = {
           av_skip_reason?: string | null
           av_status?: string
           card_id?: string | null
+          content_id?: string | null
           created_at?: string
           extracted_text?: string | null
           filename: string
@@ -2210,6 +2212,7 @@ export type Database = {
           av_skip_reason?: string | null
           av_status?: string
           card_id?: string | null
+          content_id?: string | null
           created_at?: string
           extracted_text?: string | null
           filename?: string

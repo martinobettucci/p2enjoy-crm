@@ -18,7 +18,7 @@ import type { PieceJointe } from '../lib/inbox'
 import type { ClientCrm } from '../lib/supabase'
 import { ListePiecesJointes } from './PiecesJointes'
 
-const BASE = { raisonNonAnalyse: null, recueLe: '2026-11-10T08:00:00Z', confirmee: false } as const
+const BASE = { raisonNonAnalyse: null, recueLe: '2026-11-10T08:00:00Z', confirmee: false, contentId: null } as const
 const NON_ANALYSEE: PieceJointe = {
 	id: 'p6',
 	nom: 'releve.pdf',
@@ -29,6 +29,7 @@ const NON_ANALYSEE: PieceJointe = {
 	raisonNonAnalyse: 'scanner_unavailable',
 	recueLe: '2026-11-10T08:00:00Z',
 	confirmee: false,
+	contentId: null,
 }
 const LOURDE: PieceJointe = { ...NON_ANALYSEE, id: 'p7', nom: 'video.mov', chemin: 'w/m/7', raisonNonAnalyse: 'too_large' }
 const PDF: PieceJointe = { id: 'p1', nom: 'devis.pdf', type: 'application/pdf', taille: 2048, chemin: 'w/m/1', statutAnalyse: 'clean', ...BASE }

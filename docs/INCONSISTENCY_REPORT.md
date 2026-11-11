@@ -9172,3 +9172,20 @@ file et l'envoi.
 ligne dans les journaux de `p2enjoy-mail-sync`. **Le défaut est LATENT, non actif** : aucun envoi n'est bloqué
 aujourd'hui, et il frappera au premier quota atteint entre la mise en file et l'envoi. La `0176` part avec le prochain
 lot, en avance de `CRM-144` (session de livraison). L'incohérence reste ouverte jusqu'à sa livraison constatée.
+
+### INC-355 — `scripts/verify-mail-inbox.sh` attend une seule politique sur `storage.objects`, la base en porte cinq
+**Ouverte le 2026-11-11.** *Relevée par la session d5b44a2d (p2enjoy-crm-c2), en rejouant le harnais pour `CRM-140` T3.*
+
+**Le constat, mesuré en développement.** Le contrôle « storage.objects porte EXACTEMENT une politique » échoue : la base
+en porte cinq, `mail_attachments_objets_lecture` (`CRM-057`, la seule que le contrôle visait), `mail_outbound_attachments_depot`,
+`_lecture` et `_retrait` (`CRM-058` tranche 2, les pièces d'un envoi), et `manual_select` (`CRM-117`, le manuel). Les 47
+autres contrôles du harnais sont verts, dont les nouveaux contrôles du cadre de `CRM-140`.
+
+**La cause.** La garde a été écrite pour `CRM-057`, quand le bucket `mail-attachments` était le seul à porter une politique.
+Les deux unités suivantes ont ajouté les leurs sans réviser ce compte. Ce qu'elle veut empêcher reste juste : une politique
+trop large ouvrirait tout le stockage (§18.5).
+
+**Ce qui n'est pas fait, et pourquoi.** La garde n'est ni relâchée ni réécrite au passage de `CRM-140`, qui ne touche aucune
+politique de stockage. La révision naturelle (décision 51) compterait les politiques **par bucket** et fixerait la liste
+exacte des cinq, chacune bornée à son bucket. Elle relève d'une tranche de maintenance des harnais, ou d'une décision du
+responsable sur l'unité qui la porte.

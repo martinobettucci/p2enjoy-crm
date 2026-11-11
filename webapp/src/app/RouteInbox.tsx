@@ -48,6 +48,8 @@
 //       sans track ni channel (docs/DESIGN_SYSTEM.md §5.4 ; docs/SPEC-rattachements.md §7, décisions 657 et 818)
 // @spec CRM-137 (docs/BACKLOG.md) — le formulaire de classement porte le sélecteur cherchable et « Expéditeur connu »,
 //       à la place du `select` (docs/DESIGN_SYSTEM.md §5.94 ; docs/SPEC-mail-subsystem.md §26.3 ; décision 893)
+// @spec CRM-140 (docs/BACKLOG.md) — tranche T3 : le corps du message ouvert rendu par `CorpsMessage`, monté avec la clé du
+//       message (docs/SPEC-mail-subsystem.md §30.5, §30.8 ; docs/DESIGN_SYSTEM.md §5.100)
 // @spec CRM-144 (docs/BACKLOG.md) — tranche T3 : les trois entrées de l'outbox dans la tête des dossiers, la vue d'un
 //       dossier d'envois à la place des panneaux de messages, son adresse `?envois=` (docs/DESIGN_SYSTEM.md §5.98 ;
 //       docs/SPEC-mail-subsystem.md §28.6) — les panneaux eux-mêmes vivent dans `OutboxInbox.tsx`
@@ -139,6 +141,7 @@ import {
 import { SelecteurClassement, lecteurBase } from './SelecteurClassement'
 import type { Candidate } from '../lib/candidats-classement'
 import { ListePiecesJointes } from './PiecesJointes'
+import { CorpsMessage } from './CorpsMessage'
 import { CaseSeulementMoi, ExplicationSeulementMoi, VideSeulementMoi } from './SeulementMoi'
 import { useAuthentification } from './Authentification'
 import {
@@ -1741,18 +1744,16 @@ function PanneauMessage({
 						onOuvrir={onOuvrir}
 					/>
 
-					{etat.donnees.corpsReduitDepuisHtml ? (
-						<p className="text-sm text-text-3">{t('inbox.message.reduced')}</p>
-					) : null}
-					{/* LE CORPS EST DU TEXTE, ET RIEN D'AUTRE. Aucun `dangerouslySetInnerHTML` : le HTML
-					    d'un expéditeur inconnu lui offrirait scripts, images distantes et pistage à
-					    l'ouverture (§18.4). */}
-					<p
-						data-testid="inbox-corps"
-						className="whitespace-pre-wrap break-words text-ink"
-					>
-						{etat.donnees.corps === '' ? t('inbox.message.empty.body') : etat.donnees.corps}
-					</p>
+					{/* `CRM-140` (§30, docs/DESIGN_SYSTEM.md §5.100) : le HTML dans un cadre isolé, le texte sinon. Aucun
+					    `dangerouslySetInnerHTML` : le HTML de l'expéditeur n'atteint jamais le DOM de l'écran. La CLÉ du
+					    message rend « Afficher les images » à son premier état à chaque message ouvert. */}
+					<CorpsMessage
+						key={etat.donnees.id}
+						html={etat.donnees.corpsHtml}
+						texte={etat.donnees.corps}
+						pieces={etat.donnees.pieces}
+						client={clientCrm}
+					/>
 
 					{etat.donnees.pieces.length > 0 ? (
 						<section>

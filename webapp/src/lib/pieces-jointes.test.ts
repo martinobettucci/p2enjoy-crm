@@ -94,12 +94,12 @@ describe('lireTextePiece', () => {
 describe('lirePiecesDesMessages', () => {
 	it('groupe les pièces par message, dans l’ordre du nom, lues par les messages de l’affaire', async () => {
 		const appels: string[] = []
-		const LU = { av_skip_reason: null, created_at: '2026-11-10T08:00:00Z', mail_attachment_risk_acknowledgments: [] }
+		const LU = { av_skip_reason: null, created_at: '2026-11-10T08:00:00Z', content_id: null, mail_attachment_risk_acknowledgments: [] }
 		const lignes = [
 			{ id: 'a', message_id: 'm1', filename: 'a.pdf', mime_type: 'application/pdf', size_bytes: 3, storage_path: 's/a', av_status: 'clean', ...LU },
 			{
 				id: 'b', message_id: 'm2', filename: 'b.png', mime_type: 'image/png', size_bytes: 4, storage_path: 's/b', av_status: 'skipped',
-				av_skip_reason: 'scanner_unavailable', created_at: '2026-11-10T08:00:00Z', mail_attachment_risk_acknowledgments: [{ user_id: 'u' }],
+				av_skip_reason: 'scanner_unavailable', created_at: '2026-11-10T08:00:00Z', content_id: 'logo@p2enjoy', mail_attachment_risk_acknowledgments: [{ user_id: 'u' }],
 			},
 			{ id: 'c', message_id: 'm1', filename: 'c.docx', mime_type: 'application/zip', size_bytes: 5, storage_path: 's/c', av_status: 'clean', ...LU },
 		]
@@ -109,7 +109,7 @@ describe('lirePiecesDesMessages', () => {
 		// CRM-143 : la raison, la réception et la confirmation DE LA PERSONNE (la RLS ne rend que les siennes).
 		expect(parMessage.get('m2')![0]).toEqual({
 			id: 'b', nom: 'b.png', type: 'image/png', taille: 4, chemin: 's/b', statutAnalyse: 'skipped',
-			raisonNonAnalyse: 'scanner_unavailable', recueLe: '2026-11-10T08:00:00Z', confirmee: true,
+			raisonNonAnalyse: 'scanner_unavailable', recueLe: '2026-11-10T08:00:00Z', confirmee: true, contentId: 'logo@p2enjoy',
 		})
 		expect(parMessage.get('m1')![0]!.confirmee).toBe(false)
 		expect(appels).toContain('in:message_id,m1,m2')

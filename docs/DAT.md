@@ -121,6 +121,21 @@ React 19 + Vite 8 + TypeScript + Tailwind 4. Responsabilités :
   (`docs/SPEC-cards.md` §13.9).
 - Aucune règle d'autorisation propre : l'interface masque ce que le backend refuserait, mais le
   refus fait toujours autorité.
+- **Le rendu du HTML d'un courrier** (`CRM-140`, `docs/SPEC-mail-subsystem.md` §30, décisions 881 et 918). Le HTML d'un
+  expéditeur n'atteint jamais le DOM de l'application. Trois barrières indépendantes le confinent :
+  1. **le bac à sable** : un `<iframe srcdoc>` sans `allow-scripts` ni `allow-same-origin`. Aucun script ne s'exécute, et
+     l'origine opaque retire au courrier cookies, stockage et jeton de session ; seuls `allow-popups` et
+     `allow-popups-to-escape-sandbox` laissent un lien ouvrir un onglet ordinaire ;
+  2. **la politique de contenu** posée en tête du document servi : `default-src 'none'`, des images `data:` seules tant
+     que « Afficher les images » n'a pas été choisi, puis `https:` et `http:` pour ce seul message. Une image distante
+     est donc bloquée avant sa requête, et le pistage à l'ouverture avec elle ;
+  3. **le nettoyage** par DOMPurify, dans le navigateur, au moment de l'affichage, sans rien réécrire en base. Il retire
+     scripts, formulaires, `meta`, `base`, cadres, SVG et gestionnaires `on*`, réécrit chaque lien en
+     `target="_blank" rel="noopener noreferrer"` et déplace les images distantes hors de `src`.
+  Les images intégrées (`cid:`) sont lues sous la session par la politique de stockage `0029` (pièce saine, message
+  lisible), puis posées en `data:` au type forcé. La colonne `mail_attachments.content_id` (migration `0179`) les
+  relie au corps. Le choix « Afficher les images » ne vit que dans l'état de l'écran : rien n'est stocké sur l'appareil
+  (`CLAUDE.md` §11).
 
 Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src/features/<domaine>`
 (board, card, inbox, workflow, réglages), `src/components/ui` (composants du design system),
@@ -1575,6 +1590,7 @@ livraison contre une cellule simulée, avec leurs dégradations.
 | Tailwind 4 | Jetons et utilitaires | Un seul bloc `@theme` satisfait `docs/DESIGN_SYSTEM.md` §11, sans fichier de configuration JavaScript |
 | `marked` 18.1.1 | Analyse du Markdown du manuel, **à la construction seulement** (`scripts/manuel/construire.mjs`, `CRM-117`) | Mesuré le 2026-10-26 (`CLAUDE.md` §19) : licence MIT, aucune dépendance, aucune vulnérabilité connue (`npm audit`), maintenu (versions mensuelles), version publiée depuis deux semaines et épinglée exactement ; dépendance de développement, absente du paquet de la webapp ; seul son analyseur lexical est employé, jamais sa sortie HTML (décision 750) |
 | React Router 8 | Routage | Nommé par ce document dès l'origine |
+| `dompurify` 3.4.17 | Nettoyage du HTML d'un courrier avant son cadre (`CRM-140`, décision 918) | Mesuré le 2026-11-11 (`CLAUDE.md` §19) : double licence MPL-2.0 ou Apache-2.0, maintenu (versions mensuelles), version publiée le 2026-10-12 et épinglée exactement, une seule dépendance (`@types/trusted-types`), aucune vulnérabilité connue (`npm audit`). Défense en profondeur : le bac à sable et la politique de contenu restent la barrière (§3.1) |
 | `@supabase/supabase-js` | Accès aux données | Typé par le schéma généré ; réessaie **trois fois** une lecture en échec (1 s, 2 s, 4 s) — mesuré |
 | IMAPClient 3.1.0 | Connexions UID/IDLE et manipulation future des dossiers (`CRM-052`/`CRM-054`) | BSD-3-Clause, maintenu, Python 3.13 ; choisi par `CRM-051` mais installé seulement avec son premier consommateur ; contexte TLS vérificateur explicite |
 | FastMCP 4.0.11 (SDK MCP 2.3.0) | Serveur MCP distant et mandataire OAuth du connecteur (`CRM-102`) | Apache-2.0, maintenu ; déjà en production dans le connecteur Evoliz du même responsable ; le mandataire s'appuie sur des points internes, d'où la version épinglée et les tests rejoués à chaque montée (`docs/SPEC-mcp.md` §14) |

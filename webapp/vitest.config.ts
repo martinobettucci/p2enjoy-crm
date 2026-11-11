@@ -57,6 +57,10 @@ export default defineConfig({
 			VITE_SSO_ISSUER: '',
 			VITE_SSO_CLIENT_ID: '',
 		},
+		// `CRM-140` (docs/DESIGN_SYSTEM.md §12.7) : le cadre d'un courrier LIT les valeurs des jetons dans la source de
+		// `tokens.css`, importée en `?raw`. Vitest rend vide toute feuille qu'il ne traite pas ; celle-ci est donc traitée,
+		// et elle seule, pour que la preuve lise le fichier que le build embarque.
+		css: { include: [/styles\/tokens\.css/] },
 		restoreMocks: true,
 		// LE DÉLAI PAR DÉFAUT DE VITEST — 5 s — EST TROP COURT POUR CE HARNAIS, ET C'EST MESURÉ.
 		// `npm run test:unit` monte 28 fichiers de composants React sous jsdom, en parallèle, et

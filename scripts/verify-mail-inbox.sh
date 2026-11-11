@@ -5,6 +5,9 @@
 #           §18.5 (la pièce saine, et elle seule)
 # @verifies docs/SPEC-permissions-rls.md §5, §7.2 preuve de refus n° 9 RÉVISÉE
 # @verifies docs/SPEC-seed.md §2.19 ; docs/JOURNAL.md décision 327 ; CLAUDE.md §16
+# @verifies CRM-140 (docs/BACKLOG.md) — tranche T3 : les preuves de l'absence RETOURNÉES, non retirées
+#           (docs/SPEC-mail-subsystem.md §30.10) — l'écran n'injecte toujours rien dans son DOM, le cadre ne porte ni
+#           `allow-scripts` ni `allow-same-origin`, le document servi commence par sa politique de contenu
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais prouve.
@@ -22,8 +25,9 @@
 # ---------------------------------------------------------------------------------------------
 # AUCUN ENVOI depuis l'inbox : répondre appartient à `CRM-058`. L'écran montre le courrier reçu.
 #
-# AUCUN RENDU HTML : le corps affiché est du texte, et l'absence est FIGÉE par une preuve, non
-# commentée. Un rendu confiné exige un bac à sable et ses propres preuves.
+# ~~AUCUN RENDU HTML~~ — RÉVISÉ par `CRM-140` (§30.10) : le HTML s'affiche dans un cadre confiné, et ce harnais vérifie
+# sur le CODE ce qui le confine. Le parcours réseau — aucune requête avant « Afficher les images » — est prouvé par
+# `e2e/ui/corps-html.spec.ts`.
 #
 # AUCUN RÔLE DE TRI : un membre ordinaire ne voit aucun message non classé. L'absence est figée
 # par une assertion pgTAP et par un scénario d'API.
@@ -44,6 +48,9 @@ TEST_SQL=supabase/tests/0029_inbox_globale.test.sql
 SPEC_API=e2e/api/inbox.spec.ts
 SPEC_UI=e2e/ui/inbox.spec.ts
 MODULE=webapp/src/lib/inbox.ts
+# `CRM-140` (§30.3, §30.10) : le composant du corps et le module du nettoyage et du document servi.
+CORPS=webapp/src/app/CorpsMessage.tsx
+NETTOYAGE=webapp/src/lib/corps-html.ts
 TEST_MODULE=webapp/src/lib/inbox.test.ts
 ECRAN=webapp/src/app/RouteInbox.tsx
 CAPTURES=docs/captures/CRM-057
@@ -212,16 +219,37 @@ titre "4. Ce que l'écran ne fait JAMAIS"
 # ouverte aux scripts, aux images distantes et au pistage à l'ouverture.
 # LE MOTIF PORTE SON `=` : sans lui, le commentaire qui explique l'interdiction déclencherait
 # l'alerte, et le contrôle mesurerait sa propre documentation.
-if grep -rq 'dangerouslySetInnerHTML=' "$ECRAN" "$MODULE"; then
-	fail "l'inbox injecte du HTML dans le DOM : le §18.4 l'interdit"
+if grep -rq 'dangerouslySetInnerHTML=' "$ECRAN" "$MODULE" "$CORPS" "$NETTOYAGE"; then
+	fail "l'inbox injecte du HTML dans le DOM de l'écran : le §30.3 l'interdit"
 else
-	ok "aucun `dangerouslySetInnerHTML` : le corps affiché est du texte"
+	ok "aucun \`dangerouslySetInnerHTML\` : le HTML d'un expéditeur n'atteint pas le DOM de l'écran (§30.10)"
 fi
 
 if grep -q 'body_html' "$MODULE"; then
-	ok "le HTML est LU — pour être réduit en texte, non pour être rendu"
+	ok "le HTML est LU — pour être nettoyé et servi au cadre (§30.2)"
 else
-	fail "le module ne lit plus `body_html` : un message qui n'a que du HTML serait affiché vide"
+	fail "le module ne lit plus \`body_html\` : un message qui n'a que du HTML serait affiché vide"
+fi
+
+# LE CADRE NE PORTE QUE SES DEUX DROITS (§30.3). Le motif lit la constante que le composant pose, et la refuse si elle
+# gagne un droit de trop : un `allow-scripts` ou un `allow-same-origin` rendrait au courrier l'exécution ou l'origine.
+bac=$(sed -n "s/^export const BAC_A_SABLE = '\([^']*\)'.*/\1/p" "$CORPS")
+if [ "$bac" = 'allow-popups allow-popups-to-escape-sandbox' ] && grep -q 'sandbox={BAC_A_SABLE}' "$CORPS"; then
+	ok "le cadre porte exactement « $bac »"
+else
+	fail "le bac à sable du cadre n'est pas celui du §30.3 : « $bac »"
+fi
+# Les COMMENTAIRES sont écartés : celui qui explique l'interdiction la nomme, et le contrôle ne mesure pas sa documentation.
+if cat "$CORPS" "$NETTOYAGE" | grep -vE '^[[:space:]]*(//|\*|/\*\*)' | grep -qE 'allow-(scripts|same-origin|forms|top-navigation|modals)'; then
+	fail "un droit interdit du bac à sable figure dans le code du corps (§30.3)"
+else
+	ok "ni allow-scripts, ni allow-same-origin, ni allow-forms, ni allow-top-navigation, ni allow-modals"
+fi
+if grep -q "'<!doctype html><html><head><meta charset=\"utf-8\">' +" "$NETTOYAGE" \
+	&& grep -q 'meta http-equiv="Content-Security-Policy"' "$NETTOYAGE"; then
+	ok "le document servi commence par sa politique de contenu (§30.3)"
+else
+	fail "le document servi au cadre ne commence plus par sa politique de contenu (§30.3)"
 fi
 
 titre "5. Captures observées aux quatre paliers"

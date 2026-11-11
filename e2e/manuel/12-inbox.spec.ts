@@ -13,6 +13,8 @@
 // @spec CRM-144 (docs/BACKLOG.md) — tranche T5 : les images de la section 12.5 — « Échecs » et « Réessayer » sur l'échec du
 //       seed, « En file » et la confirmation d'annulation sur un envoi posé par la vraie voie (docs/DESIGN_SYSTEM.md §5.98 ;
 //       docs/SPEC-seed.md §42 ; décision 913)
+// @spec CRM-140 (docs/BACKLOG.md) — tranche T4 : l'image « afficher-les-images » de la section 12.2 — le courrier HTML du
+//       seed dans son cadre, le bandeau et son bouton, images bloquées (docs/DESIGN_SYSTEM.md §5.100 ; docs/SPEC-seed.md §44)
 // @spec CRM-143 (docs/BACKLOG.md) — tranche T4 : l'image « piece-non-analysee » de la section 12.1 — « Télécharger quand
 //       même » et son avertissement (docs/DESIGN_SYSTEM.md §5.95 ; docs/SPEC-pieces-jointes.md §17.4)
 //
@@ -110,6 +112,16 @@ test('l’inbox : les dossiers, un fil, le classement', async ({ page }) => {
 // la reprise la rendrait saine dans le quart d'heure (docs/SPEC-pieces-jointes.md §17.8) : l'image la pose sur un message du
 // seed, son objet réellement déposé par la clé de service, puis la retire. L'avertissement est ouvert puis annulé : aucune
 // confirmation n'est enregistrée.
+test('un courrier mis en forme : son cadre, et le bandeau « Afficher les images »', async ({ page }) => {
+	await connecterAvecLeLabs(page, ADMIN)
+	await ouvrir(page, /Non classés/, 'Invitation — journée partenaires Sogexia')
+	// LE CADRE ENTIER NE TIENT PAS dans l'image avec le bandeau (il mesure 70 % de la fenêtre) : l'image cite le bandeau et
+	// le titre du courrier, rendu DANS le cadre.
+	const titre = page.frameLocator('[data-testid="inbox-corps-cadre"]').getByRole('heading', { name: /Journée partenaires Sogexia/ })
+	await expect(titre).toBeVisible()
+	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'afficher-les-images', cibles: [page.getByTestId('bandeau-images'), titre] })
+})
+
 test('une pièce non analysée : « Télécharger quand même » et son avertissement', async ({ page, request }) => {
 	test.setTimeout(90_000)
 	const [message] = await lireService<{ id: string; card_id: string | null }[]>(

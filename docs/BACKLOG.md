@@ -19180,9 +19180,22 @@ responsable.
 
 ## Demande du 2026-11-10 — rendre les liens, et les images à la demande (décision 881)
 
-### CRM-140 — Le corps d'un mail HTML rendu confiné, liens cliquables, images distantes derrière « Afficher les images » `[@]`
+### CRM-140 — Le corps d'un mail HTML rendu confiné, liens cliquables, images distantes derrière « Afficher les images » `[P]`
 
-*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-c2) depuis 2026-11-11 00:58 UTC — état avant : [ ] ; confiée par la session de livraison (ee), après CRM-136*
+*État (2026-11-11, session c2)* : **implémentée et vérifiée en développement, les quatre tranches** (décisions 881 et
+918 ; `docs/SPEC-mail-subsystem.md` §30 ; lecture ciblée du design system, `docs/DESIGN_SYSTEM.md` §5.100 et §12.7).
+**T1** — migration `0179` (`mail_attachments.content_id`), pgTAP `0168` 9 assertions ; `mail-sync` relève le `Content-ID`
+et garde l'image intégrée sans nom, pytest 350 dont 16 nouveaux. **T2** — `dompurify` 3.4.17 (DAT §15), `corps-html.ts` :
+nettoyage, document du cadre et politique de contenu, jetons lus dans `tokens.css` ; Vitest 38. **T3** — `CorpsMessage`
+(cadre `allow-popups allow-popups-to-escape-sandbox` seul, bandeau, phrase d'état au focus, attente des images `cid:`,
+texte aux liens), Vitest 10 ; `e2e/ui/corps-html` 7/7 : aucune requête vers l'hôte de l'image avant le clic (interception
+réseau), la requête après, le message rouvert repart bloqué, l'image `cid:` sans clic, le lien sans `opener` ni référent,
+clavier, quatre paliers, captures observées (deux défauts vus et corrigés : l'espace insécable du bandeau, la coupure
+d'adresse) ; inbox, fils, « Seulement moi » et suggestion 32/32 ; `verify-mail-inbox.sh` 47/48, l'échec restant étant une
+garde périmée sans lien (INC-355). **T4** — le seed §44 (un courrier HTML réellement soumis et relevé, ses gardes), le
+manuel §12.2 et son image, chapitre 33 ; `verify-manual` 168 contrôles sans anomalie. Suite unitaire 5716, pgTAP 157
+fichiers dont 3 gardes globales rouges par la `0180` de `CRM-138`, révisées par elle. **Reste** : la livraison (contrat
+§2.43 : migration 179, `mail-sync`, webapp), et le constat du responsable en production.
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 881).
 **Comportement attendu** :

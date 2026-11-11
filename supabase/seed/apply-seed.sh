@@ -3470,6 +3470,90 @@ attendu_statuts='eicar-test.txt:infected:- enregistrement-reunion.mov:skipped:to
 	|| die "les pièces du courrier « $OBJET_STATUTS » ne sont pas dans l'état attendu : « $etat_statuts » (attendu « $attendu_statuts »). L'antivirus local est-il démarré ?"
 info "Pièces jointes : « $OBJET_STATUTS » reçu sur ${CARD_ENVOI_SEED: -4}, une pièce infectée, une trop volumineuse"
 
+# --- Un courrier HTML : un lien, une image distante, une image intégrée, trois pièges — CRM-140 T4, docs/SPEC-seed.md §44 --
+# @spec CRM-140 (docs/BACKLOG.md) — tranche T4 : le corps HTML se démontre sur un courrier RÉELLEMENT soumis puis relevé —
+#       un lien `https://`, une image distante sur un hôte réservé aux tests, une image intégrée `cid:` analysée par
+#       l'antivirus, et un lien `javascript:`, un `onclick` et un `<script>` que le nettoyage retire
+#       (docs/SPEC-mail-subsystem.md §30.9 ; docs/SPEC-seed.md §44 ; CLAUDE.md §8)
+#
+# L'EXPÉDITEUR EST LÉO MARCHAND, LE CORRESPONDANT LOCAL DU §2.19 : un principal n'expédie que depuis ses propres adresses
+# (§18.7). Le destinataire est la boîte système : le courrier reste NON CLASSÉ, lisible par l'administratrice, et ne touche
+# le fil d'aucune affaire. L'hôte `images.partenaire-demo.test` ne se résout pas (RFC 2606) : même après « Afficher les
+# images », l'image distante reste absente sur la pile de développement ; l'E2E le remplace par l'interception réseau.
+MSGID_HTML='seed-corps-html@p2enjoy.test'
+OBJET_HTML='Invitation — journée partenaires Sogexia'
+CID_LOGO_HTML='logo-sogexia@sogexia.example'
+
+message_html() {
+	curl -s "$API/rest/v1/mail_messages?select=id,card_id,body_html&rfc822_message_id=eq.%3C$MSGID_HTML%3E" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY"
+}
+
+if [ "$(message_html | jq -r 'length')" = 0 ]; then
+	envoi_html=$(docker compose exec -T \
+		-e DEST="systeme@$INBOUND_DOMAIN" -e MDP="$MAILBOX_PASSWORD" -e MSGID="$MSGID_HTML" -e OBJET="$OBJET_HTML" \
+		-e EXPEDITEUR="$CORRESPONDANT" -e CID="$CID_LOGO_HTML" \
+		-e LOGO="$(base64 -w0 "$DOSSIER_PIECES/logo-sogexia.png")" \
+		mail-sync python -c '
+import base64, os, smtplib
+from email.message import EmailMessage
+from email.utils import formataddr
+
+message = EmailMessage()
+message["From"] = formataddr(("Léo Marchand", os.environ["EXPEDITEUR"]))
+message["To"] = os.environ["DEST"]
+message["Subject"] = os.environ["OBJET"]
+message["Message-ID"] = "<" + os.environ["MSGID"] + ">"
+message.set_content(
+    "Bonjour,\n\nNous serions ravis de vous accueillir à notre journée partenaires, le jeudi 26 novembre. Le programme "
+    "et l’inscription sont en ligne : https://sogexia.example/journee-partenaires\n\nBien cordialement,\nLéo Marchand")
+message.add_alternative(
+    "<html><head><style>.titre{color:navy;font-size:20px}</style></head><body>"
+    "<h1 class=\"titre\">Journée partenaires Sogexia — jeudi 26 novembre</h1>"
+    "<p>Bonjour,</p>"
+    "<p>Nous serions ravis de vous accueillir à notre journée partenaires. Le programme et l’inscription sont en ligne : "
+    "<a href=\"https://sogexia.example/journee-partenaires\">programme et inscription</a>.</p>"
+    "<p><img src=\"https://images.partenaire-demo.test/journee-partenaires.png\" alt=\"Affiche de la journée partenaires\" "
+    "width=\"480\"></p>"
+    "<p onclick=\"alert(1)\">Pour confirmer votre venue, <a href=\"javascript:alert(1)\">répondez ici</a> ou écrivez-nous.</p>"
+    "<script>document.title = \"piège\"</script>"
+    "<p>Bien cordialement,<br>Léo Marchand<br><img src=\"cid:" + os.environ["CID"] + "\" alt=\"Sogexia\"></p>"
+    "</body></html>",
+    subtype="html")
+message.get_payload()[1].add_related(
+    base64.b64decode(os.environ["LOGO"]), maintype="image", subtype="png", cid="<" + os.environ["CID"] + ">",
+    filename="logo-sogexia.png")
+session = smtplib.SMTP("stalwart", 587, timeout=60)
+session.ehlo()
+session.login(os.environ["EXPEDITEUR"], os.environ["MDP"])
+session.send_message(message)
+session.quit()
+print("envoye")
+' 2>&1) || die "l'envoi du courrier HTML a échoué : « $envoi_html »"
+	[ "${envoi_html##*$'\n'}" = "envoye" ] || die "l'envoi du courrier HTML n'a rien confirmé : « $envoi_html »"
+	for _tentative in 1 2 3 4 5 6 7 8 9 10; do
+		relever_boite >/dev/null
+		[ "$(message_html | jq -r 'length')" = 1 ] && break
+		sleep 3
+	done
+fi
+# LES GARDES : non classé ; le HTML relevé tel qu'envoyé, pièges compris (c'est l'ÉCRAN qui nettoie, jamais la base) ; la
+# pièce intégrée saine, avec son `Content-ID` sans chevrons.
+[ "$(message_html | jq -r 'length')" = 1 ] || die "le courrier « $OBJET_HTML » n'est pas arrivé en base : la boîte système a-t-elle été relevée ?"
+[ "$(message_html | jq -r '.[0].card_id // "aucune"')" = "aucune" ] \
+	|| die "le courrier « $OBJET_HTML » devait rester non classé : $(message_html | jq -c '.[0].card_id')"
+corps_html=$(message_html | jq -r '.[0].body_html // empty')
+for fragment in 'https://sogexia.example/journee-partenaires' 'https://images.partenaire-demo.test/journee-partenaires.png' \
+	"cid:$CID_LOGO_HTML" 'javascript:alert(1)' '<script>'; do
+	case "$corps_html" in *"$fragment"*) ;; *) die "le HTML du courrier « $OBJET_HTML » ne porte pas « $fragment » (docs/SPEC-seed.md §44)." ;; esac
+done
+etat_html=$(curl -s "$API/rest/v1/mail_attachments?select=filename,content_id,av_status&message_id=eq.$(message_html | jq -r '.[0].id')" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+	| jq -r 'map(.filename + ":" + (.content_id // "-") + ":" + .av_status) | join(" ")')
+[ "$etat_html" = "logo-sogexia.png:$CID_LOGO_HTML:clean" ] \
+	|| die "l'image intégrée du courrier « $OBJET_HTML » n'est pas dans l'état attendu : « $etat_html » (attendu « logo-sogexia.png:$CID_LOGO_HTML:clean »). La migration de content_id est-elle appliquée, mail-sync reconstruit, l'antivirus démarré ?"
+info "Courrier HTML : « $OBJET_HTML », non classé, un lien, une image distante, une image intégrée saine — CRM-140, docs/SPEC-seed.md §44"
+
 total_evenements=$(curl -s "$API/rest/v1/card_events?select=id" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 info "Événements : $total_evenements, tous écrits par les triggers — le seed ne peut PAS en forger un"

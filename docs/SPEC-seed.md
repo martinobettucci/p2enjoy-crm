@@ -3109,3 +3109,26 @@ par les vrais chemins : rien n'est écrit dans `mail_outbox` à la main.
   nommant la cause sinon.
 - **Les preuves qui supposaient aucun plafond nulle part** sont révisées, non relâchées (décision 51) : le crochet de
   `e2e/manuel/11-boites-identites.spec.ts` rend désormais les deux états.
+
+## 44. Un courrier HTML : un lien, une image distante, une image intégrée, trois pièges — `CRM-140` T4 (`docs/SPEC-mail-subsystem.md` §30.9)
+
+Un courrier **réellement soumis** en SMTP par Léo Marchand, le correspondant local du §2.19, puis **réellement relevé**
+dans la boîte système (`CLAUDE.md` §8). Il reste **non classé** et ne touche le fil d'aucune affaire.
+
+| Élément | Valeur |
+|---|---|
+| Objet | « Invitation — journée partenaires Sogexia » |
+| `Message-ID` | `<seed-corps-html@p2enjoy.test>`, fixe : rejouer le seed n'envoie rien de plus |
+| Forme | `multipart/alternative` : un texte, et un HTML en `multipart/related` avec son image |
+| Lien | `https://sogexia.example/journee-partenaires`, dans le HTML et dans le texte |
+| Image distante | `https://images.partenaire-demo.test/journee-partenaires.png` : hôte réservé aux tests (RFC 2606), qui ne se résout pas |
+| Image intégrée | `logo-sogexia.png` (96 × 32, engendrée par `supabase/seed/pieces-jointes/generer.py`), `Content-ID` `logo-sogexia@sogexia.example`, analysée saine |
+| Pièges | un lien `javascript:`, un `onclick`, un `<script>` : la base les garde tels quels, l'écran les retire (§30.4) |
+
+**Les gardes du seed** : le courrier est en base et non classé ; son HTML porte le lien, l'image distante, la référence
+`cid:` et les deux pièges ; sa seule pièce est `logo-sogexia.png`, avec son `Content-ID` sans chevrons, en statut
+`clean`. Une garde qui échoue arrête le seed et nomme la migration, `mail-sync` et l'antivirus.
+
+**Ce que le jeu démontre** : le cadre, le bandeau « Afficher les images », l'image intégrée affichée sans clic, le
+nettoyage sur un vrai courrier. L'image distante reste absente sur la pile de développement même après le clic. L'E2E
+remplace ce serveur par l'interception réseau (`e2e/ui/corps-html.spec.ts`).

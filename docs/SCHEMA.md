@@ -3364,7 +3364,7 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
 - **Retour arrière** : retirer les fonctions nouvelles, reposer les quinze fonctions et la politique de leur migration
   d'origine, puis `mail_trash_moves` et les deux colonnes — un message en corbeille redevient visible.
 
-### Migration de `CRM-140` — le `Content-ID` d'une pièce jointe (numéro pris au push ; spécifiée le 2026-11-11, à écrire)
+### Migration `0179` — le `Content-ID` d'une pièce jointe — `CRM-140` T1 (`0179_mail_attachments_content_id.sql`, écrite le 2026-11-11)
 
 `docs/SPEC-mail-subsystem.md` §30.6 ; décisions 881 et 918.
 - `mail_attachments.content_id text null`, le `Content-ID` de la partie sans ses chevrons ; contrainte nommée

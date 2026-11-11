@@ -3498,7 +3498,7 @@
 										},
 										{
 											"type": "text",
-											"text": ").\nUne pièce reconnue dangereuse, en cours d'analyse ou trop volumineuse ne se lit jamais. Quand\nl'expéditeur n'a écrit qu'en HTML, le texte en est extrait comme à l'écran, et l'assistant le sait. Chaque email dit\naussi s'il est "
+											"text": ").\nUne pièce reconnue dangereuse, en cours d'analyse ou trop volumineuse ne se lit jamais. Quand\nl'expéditeur n'a écrit qu'en HTML, l'assistant en reçoit le texte, et il le sait ; l'écran, lui, montre la mise en forme. Chaque email dit\naussi s'il est "
 										},
 										{
 											"type": "strong",

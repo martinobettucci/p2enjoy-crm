@@ -1,3 +1,5 @@
+# @spec CRM-140 (docs/BACKLOG.md) — tranche T1 : le `Content-ID` d'une partie relevé, et l'image intégrée sans nom gardée comme
+#       pièce (docs/SPEC-mail-subsystem.md §30.6 ; docs/SCHEMA.md « Migration `0179` » ; décision 918)
 # @spec CRM-069 (docs/BACKLOG.md) — tranche T6 : le CRM n'ingère pas ses propres courriels (docs/SPEC-etiquettes-digest.md §5.3 bis,
 #       INC-321, décision 780)
 # @spec CRM-054 (docs/BACKLOG.md) — analyse MIME, empreinte de repli, assainissement des noms
@@ -34,8 +36,13 @@ NOM_DE_REPLI = "piece-jointe"
 #: affiché, et un nom sans borne est une promesse qu'aucune couche ne tient.
 NOM_MAX_OCTETS = 255
 
+#: `CRM-140` (§30.6) : la borne d'un `Content-ID`, celle de la contrainte `mail_attachments_content_id_borne`. Au-delà,
+#: l'identifiant n'est pas gardé — la pièce l'est, et une image `cid:` qui la désignerait montre la mention.
+CONTENT_ID_MAX = 255
+
 _CARACTERES_INTERDITS = re.compile(r"[\x00-\x1f\x7f/\\]")
 _ESPACES = re.compile(r"\s+")
+_CONTROLES = re.compile(r"[\x00-\x1f\x7f]")
 
 
 @dataclass(frozen=True)
@@ -46,6 +53,8 @@ class PieceJointe:
     original_name: str | None
     mime_type: str
     contenu: bytes
+    #: `CRM-140` (§30.6) : le `Content-ID` de la partie, sans chevrons — ce qu'une image `cid:` du corps désigne.
+    content_id: str | None = None
 
     @property
     def sha256(self) -> str:
@@ -104,6 +113,25 @@ def assainir_nom(nom: str | None) -> str:
     # dépasse 255 octets, et c'est la limite réelle des systèmes de fichiers.
     encode = nettoye.encode("utf-8")[:NOM_MAX_OCTETS]
     return encode.decode("utf-8", errors="ignore") or NOM_DE_REPLI
+
+
+def normaliser_content_id(valeur: object) -> str | None:
+    """Le `Content-ID` d'une partie, sans blancs ni chevrons, ou `None` s'il est vide ou dépasse la borne (§30.6).
+
+    La casse est GARDÉE : c'est l'écran qui compare sans elle, et la base conserve ce que le message a écrit.
+    """
+
+    if valeur is None:
+        return None
+    nettoye = str(valeur).strip()
+    if nettoye.startswith("<"):
+        nettoye = nettoye[1:]
+    if nettoye.endswith(">"):
+        nettoye = nettoye[:-1]
+    nettoye = nettoye.strip()
+    if not nettoye or len(nettoye) > CONTENT_ID_MAX or _CONTROLES.search(nettoye):
+        return None
+    return nettoye
 
 
 def empreinte_de_repli(
@@ -166,13 +194,18 @@ def analyser(brut: bytes) -> MessageAnalyse:
         nom = partie.get_filename()
         disposition = (partie.get_content_disposition() or "").lower()
         contenu = partie.get_payload(decode=True) or b""
-        if nom or disposition == "attachment":
+        content_id = normaliser_content_id(partie.get("Content-ID"))
+        # `CRM-140` (§30.6) : une IMAGE intégrée sans nom ni disposition `attachment` — un logo de signature, une image
+        # collée — est gardée comme pièce, pour que le corps la retrouve par son `Content-ID`. Elle était perdue avant.
+        integree = content_id is not None and partie.get_content_maintype() == "image"
+        if nom or disposition == "attachment" or integree:
             pieces.append(
                 PieceJointe(
                     filename=assainir_nom(nom),
                     original_name=nom,
                     mime_type=type_par_contenu(contenu, partie.get_content_type()),
                     contenu=contenu,
+                    content_id=content_id,
                 )
             )
         elif partie.get_content_type() == "text/plain" and corps_texte is None:

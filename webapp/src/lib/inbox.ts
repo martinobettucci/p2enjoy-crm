@@ -107,6 +107,8 @@ export type PieceJointe = {
 	readonly recueLe: string
 	/** `CRM-143` : la personne a confirmé le risque de cette pièce non analysée — une ligne que la base porte. */
 	readonly confirmee: boolean
+	/** `CRM-140` : le `Content-ID` de la partie, sans chevrons — ce qu'une image `cid:` du corps désigne (§30.6). */
+	readonly contentId: string | null
 }
 
 /**
@@ -115,7 +117,7 @@ export type PieceJointe = {
  * §17.3).
  */
 export const COLONNES_PIECE =
-	'id, filename, mime_type, size_bytes, storage_path, av_status, av_skip_reason, created_at, mail_attachment_risk_acknowledgments(user_id)' as const
+	'id, filename, mime_type, size_bytes, storage_path, av_status, av_skip_reason, created_at, content_id, mail_attachment_risk_acknowledgments(user_id)' as const
 
 type LignePiece = {
 	readonly id: string
@@ -126,6 +128,7 @@ type LignePiece = {
 	readonly av_status: string
 	readonly av_skip_reason: string | null
 	readonly created_at: string
+	readonly content_id: string | null
 	readonly mail_attachment_risk_acknowledgments: readonly unknown[] | null
 }
 
@@ -141,6 +144,7 @@ export function pieceDepuisLigne(ligne: LignePiece): PieceJointe {
 		raisonNonAnalyse: ligne.av_skip_reason,
 		recueLe: ligne.created_at,
 		confirmee: (ligne.mail_attachment_risk_acknowledgments?.length ?? 0) > 0,
+		contentId: ligne.content_id,
 	}
 }
 
@@ -150,8 +154,10 @@ export type MessageComplet = MessageListe & {
 	/** La copie cachée d'un message envoyé — toujours vide pour un message reçu (§19 bis.2 point 2). */
 	readonly copiesCachees: readonly string[]
 	readonly corps: string
-	/** Vrai lorsque le corps affiché a été RÉDUIT depuis du HTML (§18.4) : l'écran le dit. */
+	/** Vrai lorsque le corps texte a été RÉDUIT depuis du HTML (§18.4) : c'est alors le repli du cadre, non sa source. */
 	readonly corpsReduitDepuisHtml: boolean
+	/** `CRM-140` (§30.2) : le HTML reçu, que le panneau nettoie et sert à son cadre ; `null` pour un message sans HTML. */
+	readonly corpsHtml: string | null
 	readonly pieces: readonly PieceJointe[]
 	/**
 	 * L'affaire SUGGÉRÉE par la règle 3 du classement (docs/SPEC-contacts.md §8.1, §8.8).
@@ -500,6 +506,7 @@ export async function lireMessage(client: ClientCrm | null, id: string): Promise
 			copiesCachees: ligne.bcc_addresses ?? [],
 			corps,
 			corpsReduitDepuisHtml: reduitDepuisHtml,
+			corpsHtml: ligne.body_html !== null && ligne.body_html.trim() !== '' ? ligne.body_html : null,
 			suggestionCardId: ligne.suggested_card_id,
 			pieces: pieces.data.map(pieceDepuisLigne),
 		})

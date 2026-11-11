@@ -40497,3 +40497,21 @@ disait « une fenêtre de confirmation » ; le design system confirme toujours d
 responsable choisit le flux** : un bloc sous la rangée de commandes du message ouvert, avec la phrase, la case « l'effacer
 aussi dans la boîte mail » et les deux boutons. Écartée : une fenêtre modale, qui aurait été le premier écart du produit.
 `docs/DESIGN_SYSTEM.md` §5.102, `docs/SPEC-mail-subsystem.md` §29.1.
+
+### `CRM-140` — constats de l'implémentation, 2026-11-11 (session c2)
+
+*Aucune décision nouvelle : ce que l'implémentation a mesuré, pour que la conversation n'en soit pas la seule trace.*
+- **Les jetons du cadre** : la recopie de six valeurs dans le module heurtait la preuve qui interdit l'hexadécimal hors de
+  `tokens.css`. Le module les lit dans la source de `tokens.css` (import `?raw`), et Vitest traite cette seule feuille
+  (`docs/DESIGN_SYSTEM.md` §12.7, révisé avant le code).
+- **Le message « Blocked script execution in 'about:srcdoc' »** : mesuré par une sonde isolée, il naît du capteur
+  d'instantanés de la trace Playwright, que Chromium bloque dans le cadre sans `allow-scripts`, et de rien d'autre ; sans
+  trace, le cadre ne journalise rien. Il est consommé, nommé et seul (`ERREUR_TRACE_CADRE_ISOLE`, `e2e/ui/fixtures.ts`) ;
+  la trace en cas d'échec est gardée.
+- **Le runner de développement a appliqué la `0180` de `CRM-138` avec la `0179`** : le fichier était dans l'arbre la minute
+  où il a tourné. Sans dommage, et 32 l'a confirmé (version testée, empreinte tenue au registre) ; les trois gardes globales
+  pgTAP qu'elle rougit sont révisées par sa T1.
+- **INC-355** : `verify-mail-inbox.sh` attend une seule politique sur `storage.objects`, la base en porte cinq depuis
+  `CRM-058` T2 et `CRM-117`. Consignée, non résolue au passage.
+- **Le courrier du seed en développement** porte « l inscription » dans son texte : la première version du seed, envoyée
+  avant la correction de l'apostrophe. Le `Message-ID` fixe empêche un renvoi ; une base recréée aura le texte corrigé.

@@ -1003,22 +1003,125 @@
 				},
 				{
 					"type": "text",
-					"text": " L'expéditeur, les destinataires et la date d'arrivée sont affichés en tête,\npuis le corps du message. "
+					"text": " L'expéditeur, les destinataires et la date d'arrivée sont affichés en tête,\npuis le corps du message. Un message "
 				},
 				{
 					"type": "strong",
 					"content": [
 						{
 							"type": "text",
-							"text": "Le corps est toujours affiché en texte"
+							"text": "mis en forme"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": ", jamais avec la mise en forme\nde l'expéditeur : un courrier venu de l'extérieur ne doit pas pouvoir exécuter quoi que ce soit\ndans votre navigateur, ni charger d'images qui signaleraient l'ouverture de votre message. Quand un\nmessage n'a été envoyé qu'en HTML, le produit vous le dit et n'en affiche que le texte."
+					"text": " par son expéditeur s'affiche avec sa mise en\nforme, dans un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "cadre isolé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " du reste de l'écran, qui a sa propre barre de défilement. Rien de ce\nqu'il contient ne peut s'exécuter dans votre navigateur ; ses formulaires sont retirés ; ses liens\ns'ouvrent dans un nouvel onglet, sans indiquer au site visité d'où vous venez. Un message écrit en\ntexte seul s'affiche tel quel, et ses adresses web sont des liens."
 				}
 			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les images distantes."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Les images qu'un message va chercher sur un serveur extérieur sont\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "bloquées"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : les charger préviendrait l'expéditeur que vous avez ouvert son message. Un bandeau le\ndit au-dessus du message, avec le bouton « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Afficher les images"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ». Il les charge "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "pour ce message\nseulement"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le message suivant que vous ouvrez, ou celui-ci quand vous y revenez, repart bloqué. Les\nimages "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "intégrées"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " au message, un logo de signature par exemple, s'affichent sans attendre, une fois\nanalysées par l'antivirus. Celle qui ne peut pas l'être est remplacée par la mention "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "image intégrée\nindisponible"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/afficher-les-images.jpg",
+			"alt": "Un courrier mis en forme dans son cadre, et le bandeau « Afficher les images » au-dessus",
+			"width": 536,
+			"height": 207
 		},
 		{
 			"type": "paragraph",

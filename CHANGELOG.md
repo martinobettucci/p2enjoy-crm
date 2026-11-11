@@ -13,6 +13,19 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-140` — le corps HTML d'un mail rendu dans un cadre confiné, ses images distantes sur demande (décisions 881 et 918)
+
+- **L'inbox affiche la mise en forme d'un courrier HTML**, dans un cadre isolé qui défile en lui-même : aucun script,
+  aucun formulaire, liens ouverts dans un nouvel onglet sans référent. Le HTML est nettoyé par DOMPurify (dépendance
+  nouvelle, `docs/DAT.md` §15) et le cadre porte sa propre politique de contenu.
+- **Les images distantes sont bloquées** jusqu'à « Afficher les images », qui vaut pour le message ouvert seulement. Les
+  images intégrées (`cid:`) s'affichent sans attendre lorsque leur pièce est saine.
+- **Un message sans HTML** garde son texte, et ses adresses web deviennent des liens.
+- **`mail-sync`** relève le `Content-ID` des pièces et garde l'image intégrée sans nom, qu'il perdait jusqu'ici
+  (migration 0179).
+- Seed : un courrier HTML réellement soumis et relevé (`docs/SPEC-seed.md` §44). Manuel : §12.2.
+- Déploiement : `docs/PROD_MIGRATIONS.md` §2.43.
+
 #### `CRM-147` — une livraison prend un condensé choisi, récupéré par git dans la cellule (décisions 905, 909, 911, 912 et 915)
 
 - **`scripts/spark/livrer.sh --revision <condensé>`**, obligatoire : une livraison n'emporte plus tout `main`. Le condensé

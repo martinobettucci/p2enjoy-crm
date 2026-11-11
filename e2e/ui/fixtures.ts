@@ -2,6 +2,8 @@
 // @verifies docs/SPEC-webapp.md §12.3, §14 ; docs/JOURNAL.md décision 248
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §4 (parcours), §8.5, §13 — la fixture
 //           `connecterAvecLeLabs`, seule porte d'entrée des specs d'interface
+// @verifies CRM-140 (docs/BACKLOG.md) — tranche T3 : `consommerTraceCadreIsole`, le seul message que l'instrumentation de
+//           Playwright fait journaliser par un cadre sans `allow-scripts` (docs/SPEC-mail-subsystem.md §30.3, §30.11)
 // @verifies CRM-001 tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — `estUnCompte`, la forme d'un compte vue du navigateur
 
 import { expect, test as base, type Page, type Request } from '@playwright/test'
@@ -68,6 +70,24 @@ export function surveillerConsole(page: Page): string[] {
  * l'utilisateur. Rien n'est filtré globalement : un statut, un nombre ou un ordre différent
  * échoue ici, et toute anomalie postérieure reste disponible pour le verdict final.
  */
+/**
+ * `CRM-140` (§30.3) : LE MESSAGE QUE LA TRACE DE PLAYWRIGHT FAIT NAÎTRE, NON L'APPLICATION. MESURÉ le 2026-11-11 par une
+ * sonde isolée : le même cadre `sandbox` sans `allow-scripts` ne journalise RIEN sans trace, et journalise ce message une
+ * fois par document chargé dès que `tracing.start({ snapshots: true })` est actif — le capteur d'instantanés injecte un
+ * script dans chaque cadre, et Chromium le bloque. La configuration garde la trace en cas d'échec (`retain-on-failure`) :
+ * la couper retirerait le diagnostic. Le message est donc consommé, NOMMÉ, et seul : toute autre anomalie reste fatale.
+ */
+export const ERREUR_TRACE_CADRE_ISOLE =
+	"console.error: Blocked script execution in 'about:srcdoc' because the document's frame is sandboxed and the 'allow-scripts' permission is not set."
+
+/** Retire les occurrences de `ERREUR_TRACE_CADRE_ISOLE`, et laisse toute autre anomalie au contrôle de fin de test. */
+export function consommerTraceCadreIsole(page: Page): void {
+	const anomalies = ANOMALIES_PAR_PAGE.get(page) ?? []
+	const autres = anomalies.filter((anomalie) => anomalie !== ERREUR_TRACE_CADRE_ISOLE)
+	anomalies.length = 0
+	anomalies.push(...autres)
+}
+
 export function autoriserErreursConsole(page: Page, attendues: readonly string[]): void {
 	const anomalies = ANOMALIES_PAR_PAGE.get(page) ?? []
 	expect(anomalies, 'les seules erreurs console sont celles que le scénario vient de vérifier').toEqual(

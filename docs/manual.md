@@ -3214,10 +3214,21 @@ qui n'a pas été enregistré. L'état de lecture n'est pas partagé avec votre 
 lire un message dans le CRM ne le marque pas lu dans votre boîte, et inversement.
 
 **Lire un message.** L'expéditeur, les destinataires et la date d'arrivée sont affichés en tête,
-puis le corps du message. **Le corps est toujours affiché en texte**, jamais avec la mise en forme
-de l'expéditeur : un courrier venu de l'extérieur ne doit pas pouvoir exécuter quoi que ce soit
-dans votre navigateur, ni charger d'images qui signaleraient l'ouverture de votre message. Quand un
-message n'a été envoyé qu'en HTML, le produit vous le dit et n'en affiche que le texte.
+puis le corps du message. Un message **mis en forme** par son expéditeur s'affiche avec sa mise en
+forme, dans un **cadre isolé** du reste de l'écran, qui a sa propre barre de défilement. Rien de ce
+qu'il contient ne peut s'exécuter dans votre navigateur ; ses formulaires sont retirés ; ses liens
+s'ouvrent dans un nouvel onglet, sans indiquer au site visité d'où vous venez. Un message écrit en
+texte seul s'affiche tel quel, et ses adresses web sont des liens.
+
+**Les images distantes.** Les images qu'un message va chercher sur un serveur extérieur sont
+**bloquées** : les charger préviendrait l'expéditeur que vous avez ouvert son message. Un bandeau le
+dit au-dessus du message, avec le bouton « **Afficher les images** ». Il les charge **pour ce message
+seulement** : le message suivant que vous ouvrez, ou celui-ci quand vous y revenez, repart bloqué. Les
+images **intégrées** au message, un logo de signature par exemple, s'affichent sans attendre, une fois
+analysées par l'antivirus. Celle qui ne peut pas l'être est remplacée par la mention *image intégrée
+indisponible*.
+
+![Un courrier mis en forme dans son cadre, et le bandeau « Afficher les images » au-dessus](manuel/images/l-inbox-lire-trier-et-repondre/afficher-les-images.jpg)
 
 **Les pièces jointes.** Une pièce déclarée saine porte un bouton « Télécharger ». Une pièce en
 cours d'analyse ou écartée par l'antivirus n'en a **pas** : son état est écrit en toutes lettres à
@@ -6804,7 +6815,7 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     pu analyser**, il ne la lit que si vous le lui demandez après qu'il vous a prévenu du risque : votre confirmation est
     alors enregistrée, comme celle que vous donnez à l'écran avant de télécharger une telle pièce ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)).
     Une pièce reconnue dangereuse, en cours d'analyse ou trop volumineuse ne se lit jamais. Quand
-    l'expéditeur n'a écrit qu'en HTML, le texte en est extrait comme à l'écran, et l'assistant le sait. Chaque email dit
+    l'expéditeur n'a écrit qu'en HTML, l'assistant en reçoit le texte, et il le sait ; l'écran, lui, montre la mise en forme. Chaque email dit
     aussi s'il est **lu ou non lu pour vous** ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)) ; le lire par l'assistant ne le marque pas lu, et aucun outil
     ne change cet état. Sur votre demande, l'assistant peut ne lister que les emails **qui vous concernent**, comme la case
     de l'inbox ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)) ; sinon, il lit le courrier entier de l'affaire ;

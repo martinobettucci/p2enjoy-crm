@@ -13,6 +13,8 @@
 #       l'arborescence ; plus aucun parent n'est inscrit (docs/SPEC-rattachements.md §7, décisions 657 et 818)
 # @spec CRM-143 (docs/BACKLOG.md) — tranche T2 : la raison d'une pièce `skipped`, `too_large` ou `scanner_unavailable`
 #       (docs/SPEC-pieces-jointes.md §17.3, décision 892)
+# @spec CRM-140 (docs/BACKLOG.md) — tranche T1 : le `Content-ID` d'une pièce écrit avec elle, `_content_id`
+#       (docs/SPEC-mail-subsystem.md §30.6)
 # @spec CRM-135 (docs/BACKLOG.md) — `classer_echec_releve` et l'écriture de l'échec dans `relever_compte`
 #       (docs/SPEC-mail-subsystem.md §24.3, INC-349, décisions 873 et 874)
 #
@@ -101,6 +103,13 @@ def chemin_de_depot(workspace_id: str, message_id: str, sha256: str) -> str:
     """
 
     return f"{workspace_id}/{message_id}/{sha256}"
+
+
+def _content_id(piece) -> dict[str, str]:  # type: ignore[no-untyped-def]
+    """`CRM-140` (§30.6) : le `Content-ID` d'une pièce, s'il existe. Une pièce sans lui n'envoie PAS la colonne : un message
+    sans image intégrée s'écrit donc comme avant, même devant une base où la migration de `content_id` manquerait."""
+
+    return {"content_id": piece.content_id} if piece.content_id else {}
 
 
 def _connecter(compte, timeout: float) -> IMAPClient:  # type: ignore[no-untyped-def]
@@ -482,6 +491,7 @@ def _relever_compte(
                             av_status=antivirus.SKIPPED,
                             # `CRM-143` (§17.3) : trop volumineuse, jamais déposée — rien que la reprise puisse analyser.
                             av_skip_reason="too_large",
+                            **_content_id(piece),
                         )
                         continue
 
@@ -506,6 +516,7 @@ def _relever_compte(
                         # `CRM-143` (§17.3) : un `skipped` ici est un antivirus muet ; la pièce est déposée, la reprise
                         # l'analysera quand il répondra.
                         **({"av_skip_reason": "scanner_unavailable"} if verdict.statut == antivirus.SKIPPED else {}),
+                        **_content_id(piece),
                     )
             # LA PROGRESSION N'EST ÉTENDUE QU'APRÈS le traitement du dossier, et avec les UID
             # RÉELLEMENT rapatriés — `imap.fetch` peut en rendre moins que demandé si un message a

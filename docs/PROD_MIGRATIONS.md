@@ -1001,7 +1001,32 @@ suivies — ne sont pas touchées.
 **Retour arrière** : `livrer.sh --revision <condensé antérieur>` ; les migrations ne se défont pas par ce geste (leurs propres
 procédures). Avant la conversion, `--archive-seule` reste l'amorçage d'une cellule neuve.
 
+### 2.43 `CRM-140`, décisions 881 et 918 — le corps HTML d'un mail dans un cadre confiné (À LIVRER : migration 179, image `mail-sync`, webapp ; **hors du lot annoncé**)
+
+`docs/SPEC-mail-subsystem.md` §30 ; `docs/SCHEMA.md` « Migration `0179` ». Une colonne facultative, sans donnée à
+reprendre et sans verrou notable. Aucune variable, aucun secret.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 179 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate`, instantané de VM pris |
+| 2 | Reconstruire `mail-sync` | session de livraison | `up -d --build --no-deps --wait mail-sync`, par `compose_prod` (§4), **après** la migration |
+| 3 | Livrer la webapp | session de livraison | le chemin ordinaire de la webapp (§4) ; elle embarque `dompurify` |
+| 4 | Constater le rendu | responsable, Inbox | ouvrir un courrier mis en forme : il s'affiche dans son cadre ; s'il porte des images distantes, le bandeau « Afficher les images » paraît, et le clic les charge pour ce message seulement |
+
+**L'ordre compte entre les gestes 1 et 2** : `mail-sync` n'envoie `content_id` que pour une pièce qui en porte un, mais une
+telle pièce, écrite devant une base sans la colonne, ferait refuser l'enregistrement de la pièce. La webapp, elle, lit
+la colonne : elle se livre **après** la migration, comme toute webapp qui lit une colonne nouvelle.
+**Vérification après la fenêtre**, en lecture seule : le registre gagne une ligne, et l'empreinte de la 179 est
+égale à celle du dépôt ; `select count(*) from information_schema.columns where table_name = 'mail_attachments' and
+column_name = 'content_id'` rend 1.
+**Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0179` ». Les messages relevés avant la migration
+n'ont pas de `content_id` ; leurs images `cid:` montrent la mention « indisponible » (§30.12).
+
 ## 3. Migrations en attente
+
+**La 179** (`CRM-140` T1, décisions 881 et 918), *en attente, hors du lot annoncé* : la colonne
+`mail_attachments.content_id` (`docs/SCHEMA.md` « Migration `0179` »). Seule (§2.43). **Avant `mail-sync` et la
+webapp de `CRM-140`.** Aucun geste préalable du responsable.
 
 **La 178** (`CRM-136` T1), *en attente, hors du lot annoncé* : `p_daily_quota_set` sur `upsert_mail_outbound_identity`
 (`docs/SCHEMA.md` « Migration `0178` »). Seule (§2.41). Aucun geste préalable du responsable.
