@@ -6191,6 +6191,7 @@ export type Database = {
         }
         Returns: string
       }
+      verify_label_dispatch: { Args: { p_secret: string }; Returns: boolean }
       verify_webhook_dispatch: { Args: { p_secret: string }; Returns: boolean }
       wake_card: {
         Args: { p_placement: string }

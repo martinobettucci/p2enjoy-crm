@@ -13,6 +13,11 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-141` T2 — l'évaluation des pastilles par le modèle de l'assistant IA
+
+- **Chaque mail reçu est évalué en tâche de fond** : chaque minute, le CRM passe au modèle de son assistant IA les mails en attente, un par un, et lui fait choisir leurs pastilles parmi celles de l'espace. Seuls l'objet, l'expéditeur et le début du texte (2 000 caractères) lui sont envoyés, jamais une pièce jointe. Une pastille inventée par le modèle est écartée ; un choix fait à la main n'est jamais défait. Sans assistant configuré, rien n'est envoyé et les mails attendent. Rien ne s'affiche encore : l'écran vient avec les tranches suivantes.
+- Déploiement : `docs/PROD_MIGRATIONS.md` §2.47, la migration 184 et la fonction `ia`.
+
 #### `CRM-141` T1 — les pastilles d'un mail, en base (décisions 883, 923, 924 et 926)
 
 - **La base sait porter des pastilles sur les mails** (migration 183) : neuf pastilles par défaut dans chaque espace (Spam, Lead, Devis / commande, Facture / paiement, Support client, Partenariat, Recrutement, Newsletter, Administratif), les pastilles d'un message — une pose ou un retrait à la main n'est jamais défait par une réévaluation —, et une file d'évaluation où chaque mail reçu entre, ainsi que tous les mails reçus existants. Rien ne les évalue encore ni ne les affiche : l'évaluation, l'écran et le connecteur viennent avec les tranches suivantes.

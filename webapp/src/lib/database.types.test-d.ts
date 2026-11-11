@@ -1,5 +1,5 @@
-// @verifies CRM-141 (docs/BACKLOG.md) — tranche T1 : les trois tables et les quatre fonctions des pastilles d'un mail dans les
-//           types générés (docs/SPEC-mail-subsystem.md §31.2 à §31.5)
+// @verifies CRM-141 (docs/BACKLOG.md) — tranches T1 et T2 : les trois tables et les cinq fonctions des pastilles d'un mail dans
+//           les types générés (docs/SPEC-mail-subsystem.md §31.2 à §31.5 ; docs/SPEC-ia.md §15.4)
 // @verifies CRM-123 (docs/BACKLOG.md) — tranche T2 : `platform_regenerate_card_addresses` au témoin des fonctions (docs/SPEC-cards.md §3.6 point 7)
 // @verifies CRM-073 (docs/BACKLOG.md) — tranche T1 : les deux tables et les cinq fonctions des webhooks aux témoins (docs/SPEC-webhooks.md §4)
 // @verifies CRM-071 (docs/BACKLOG.md) — tranche T6 : `import_cards` au témoin des fonctions (docs/SPEC-vues-import-export.md §6.3 bis)
@@ -1279,9 +1279,12 @@ type _vueDerivationColonnes = Expect<
 // réservées à la clé de service, `claim_label_evaluations` et `record_label_evaluation` (docs/SPEC-mail-subsystem.md §31.4,
 // §31.5). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `p_error` ne vaut que l'un des quatre motifs ; les refus nommés, `message_not_found`
 // et `label_not_found` (404), `forbidden` (42501), `label_archived` et `outbound_message` (22023). Le compte s'accroît de quatre.
+// `0184` de la TRANCHE T2 ajoute `verify_label_dispatch`, réservée à la clé de service : la base dit si le secret d'appel de
+// la passe est le bon (docs/SPEC-ia.md §15.4). Le compte s'accroît de un.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'verify_label_dispatch'
     | 'set_message_label'
     | 'request_label_evaluation'
     | 'claim_label_evaluations'

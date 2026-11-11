@@ -8,6 +8,8 @@
 # @spec CRM-113 tranche T5 — l'étape du scénario `catalogue` porte `label` et `probability` (décision 679)
 # @spec CRM-112 (docs/BACKLOG.md) — tranche T7 : le scénario `champ_commun`, un champ `siret` qui reprend un champ de
 #       l'affaire de l'espace (docs/SPEC-ia.md §14.11, décision 851)
+# @spec CRM-141 (docs/BACKLOG.md) — tranche T2 : les scénarios `pastilles` — déterministe, lu dans la demande, avec une clé
+#       inconnue que la fonction doit rejeter — et `panne` — un `500` à chaque génération (docs/SPEC-ia.md §15.5)
 #
 # Bibliothèque standard seule. Le scénario voyage comme clé — `Bearer simule-<scénario>` —, là où le serveur
 # réel attend la sienne : la fonction `ia` n'a qu'un chemin d'appel, et ce sont les preuves qui choisissent.
@@ -15,6 +17,8 @@
 # autorisée pour cette clé », `/api/tags` qui sert `gemma4:e2b`, `/api/chat` à sortie structurée.
 
 import json
+import re
+import unicodedata
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 MODELE = "gemma4:e2b"
@@ -146,6 +150,31 @@ def modification(messages):
     return json.dumps(cible, ensure_ascii=False)
 
 
+# `CRM-141` T2 : les scénarios dont la réponse se calcule, et celui qui tombe en panne.
+SCENARIOS_CALCULES = {"modification", "pastilles", "panne"}
+
+
+def _sans_accents(texte):
+    return "".join(c for c in unicodedata.normalize("NFD", texte.lower()) if unicodedata.category(c) != "Mn")
+
+
+def pastilles(messages):
+    """Rend la clé de chaque pastille dont un mot du NOM (quatre lettres au moins) paraît dans l'objet ou le texte du
+    mail, sans accents ni casse — plus `p99`, une clé que la demande n'a jamais posée et que la fonction doit rejeter
+    (docs/SPEC-ia.md §15.3, §15.5). Le simulateur lit la demande telle que la fonction l'écrit."""
+    demande = "\n".join(m.get("content", "") for m in messages if m.get("role") == "user")
+    lignes = re.findall(r"^- (p\d+) : (.+?) — ", demande, re.M)
+    mail = demande.split("\nMail :\n", 1)[1] if "\nMail :\n" in demande else ""
+    objet = re.search(r"^Objet : (.*)$", mail, re.M)
+    texte = mail.split("\nTexte :\n", 1)[1] if "\nTexte :\n" in mail else ""
+    cible = _sans_accents((objet.group(1) if objet else "") + " " + texte)
+    cles = [
+        cle for cle, nom in lignes
+        if any(len(mot) >= 4 and mot in cible for mot in re.findall(r"\w+", _sans_accents(nom)))
+    ]
+    return json.dumps({"pastilles": cles + ["p99"]}, ensure_ascii=False)
+
+
 class Simulateur(BaseHTTPRequestHandler):
     def _repondre(self, statut, corps):
         donnees = json.dumps(corps, ensure_ascii=False).encode("utf-8")
@@ -163,7 +192,7 @@ class Simulateur(BaseHTTPRequestHandler):
             return None
         cle = autorisation[7:].strip()
         scenario = cle[len("simule-"):] if cle.startswith("simule-") else ""
-        if scenario == "cle_refusee" or (scenario not in CONTENUS and scenario != "modification"):
+        if scenario == "cle_refusee" or (scenario not in CONTENUS and scenario not in SCENARIOS_CALCULES):
             self._repondre(403, {"error": "origine non autorisée pour cette clé"})
             return None
         return scenario
@@ -191,11 +220,20 @@ class Simulateur(BaseHTTPRequestHandler):
         if corps.get("stream") is not False or not isinstance(corps.get("format"), dict):
             self._repondre(400, {"error": "sortie structurée attendue"})
             return
+        if scenario == "panne":
+            self._repondre(500, {"error": "panne simulée"})
+            return
+        if scenario == "modification":
+            contenu = modification(corps.get("messages", []))
+        elif scenario == "pastilles":
+            contenu = pastilles(corps.get("messages", []))
+        else:
+            contenu = CONTENUS[scenario]
         self._repondre(200, {
             "model": corps.get("model", MODELE),
             "message": {
                 "role": "assistant",
-                "content": modification(corps.get("messages", [])) if scenario == "modification" else CONTENUS[scenario],
+                "content": contenu,
             },
             "done": True,
             "prompt_eval_count": 537,

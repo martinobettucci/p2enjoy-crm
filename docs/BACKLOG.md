@@ -19334,7 +19334,16 @@ est archivée et reste sur les mails (926) ; un filtre par pastille (926) ; les 
   politiques, `0133` : 42 fonctions) ; suite pgTAP complète **160 fichiers, 5 308 assertions** ; types régénérés et leurs
   inventaires (`database.types.test-d.ts`) ; Vitest **236 fichiers, 5 739 tests** ; API complète 1 351 passent, deux
   échecs hors du périmètre (`inbox-lecture`, INC-342 ; `webhooks-remise`, vert au rejeu) ; contrat §2.46 ;
-- reste : T2 (l'évaluation), T3 (les réglages), T4 (l'inbox), T5 (le connecteur), T6 (le manuel), T7 (production).
+- **T2 faite le 2026-11-11, vérifiée en développement** : la migration `0184` (le secret d'appel, `verify_label_dispatch`, la
+  tâche `pg_cron`), la route `POST /ia/pastilles/evaluer` et la passe de la fonction `ia` (`pastilles.ts`), les scénarios
+  `pastilles` et `panne` du simulateur, le seed §46 ; Vitest **237 fichiers, 5 758 tests**, dont `pastilles.test.ts` (la
+  demande, le contrôle de la sortie, la passe, la route) ; la chaîne entière constatée en développement — `pg_cron`, `pg_net`,
+  la fonction, le simulateur, la clôture : huit mails du seed évalués, le journal sans contenu ; API
+  `e2e/api/pastilles-evaluation.spec.ts` **2/2** (le secret exigé derrière Kong, la tâche de la minute, un retrait manuel
+  qui tient) ; pgTAP complet **160 fichiers** au vert après une assertion de la `0172` rendue indépendante du seed ; le seed
+  converge sur deux passages. **Limite** : la preuve contre le vrai modèle (P3) est sautée — le serveur de LeLabs refuse la
+  clé depuis l'origine actuelle du poste (`cle_refusee`) ; elle demande au responsable d'autoriser l'origine ;
+- reste : T3 (les réglages), T4 (l'inbox), T5 (le connecteur), T6 (le manuel), T7 (production).
 **DoD** :
 - unitaires : contrôle de la sortie du modèle, clés inconnues rejetées ;
 - pgTAP : RLS, administrateurs seuls sur les pastilles, la main prime, les défauts ;

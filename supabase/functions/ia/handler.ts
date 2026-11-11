@@ -12,6 +12,9 @@
 //       vivante relue avec le jeton de l'appelant AVANT la création, l'occupation et la portée au modèle, le
 //       schéma d'une modification) ; docs/JOURNAL.md décision 620
 // @spec CLAUDE.md §10 (le refus d'un non-administrateur vient de la base), §20 (journaux sans contenu)
+// @spec CRM-141 (docs/BACKLOG.md) — tranche T2 : la route `POST /ia/pastilles/evaluer`, appelée par `pg_cron` avec le
+//       secret que la base fait vérifier ; la passe bornée à 100 s, une évaluation à la fois, arrêtée au premier échec ;
+//       le mode dégradé sans rien prendre (docs/SPEC-ia.md §15.4 ; docs/SPEC-mail-subsystem.md §31.5)
 //
 // Gestionnaire pur : la base, le modèle, l'horloge et le battement sont injectés. La base autorise
 // l'appelant avec son propre jeton AVANT tout appel au modèle ; la génération se mène ensuite dans le flux
@@ -28,6 +31,7 @@ import {
 	type PorteeDeModification,
 } from './consignes.ts'
 import type { EchecGeneration, Etat, Generation, Message } from './ollama.ts'
+import { BUDGET_PASSE_MS, controlerSortie, demandeDePastilles, type MessageAEvaluer } from './pastilles.ts'
 import { mettreEnForme, SCHEMA_MODIFICATION, SCHEMA_WORKFLOW, type Defaut, type Proposition } from './proposition.ts'
 
 export const LONGUEUR_MAX = 4_000
@@ -91,6 +95,76 @@ export type DependancesIa = {
 	readonly battementMs: number
 	maintenantMs(): number
 	journaliser(evenement: Record<string, unknown>): void
+	/** `CRM-141` T2 — la base dit si le secret d'appel de la passe est le bon (`verify_label_dispatch`). */
+	verifierDispatch(secret: string): Promise<boolean>
+	/** Prend une évaluation due, sous la clé de service (`claim_label_evaluations`), ou `null` s'il n'y en a pas. */
+	prendreEvaluation(): Promise<MessageAEvaluer | null>
+	/** Clôt une évaluation : les pastilles rendues, ou l'échec nommé (`record_label_evaluation`). */
+	cloreEvaluation(messageId: string, ids: readonly string[] | null, echec: EchecGeneration | null): Promise<void>
+	/** Une génération bornée à 30 s, à température 0 (docs/SPEC-ia.md §15.2). */
+	genererPastilles(cible: Cible, messages: readonly Message[], schema: unknown): Promise<Generation>
+}
+
+/** L'en-tête qui porte le secret d'appel de la passe des pastilles (`CRM-141` T2). */
+export const EN_TETE_DISPATCH_PASTILLES = 'x-pastilles-dispatch'
+
+/** Ce que rend une passe : des comptes, jamais un contenu (docs/SPEC-ia.md §15.4). */
+export type BilanPasse = {
+	readonly evalues: number
+	readonly echecs: number
+	readonly rejetees: number
+	readonly raison?: string
+}
+
+/**
+ * La passe des pastilles — `CRM-141` T2, docs/SPEC-ia.md §15.4. Rien n'est pris quand l'assistant est indisponible : les
+ * messages restent en attente. Sinon, une évaluation à la fois, tant que le budget de 100 s n'est pas épuisé ; un échec
+ * s'écrit sur son message et ARRÊTE la passe — l'espacement de la base reprend la main. Aucune nouvelle tentative ici.
+ */
+export async function passePastilles(d: DependancesIa, cible: Cible | null): Promise<BilanPasse> {
+	if (cible === null) {
+		d.journaliser({ evenement: 'passe_pastilles', raison: 'cle_absente' })
+		return { evalues: 0, echecs: 0, rejetees: 0, raison: 'cle_absente' }
+	}
+	const etat = await d.lireEtat(cible, d.configuration.modele)
+	if (!etat.disponible) {
+		d.journaliser({ evenement: 'passe_pastilles', raison: etat.raison, simulee: cible.simulee })
+		return { evalues: 0, echecs: 0, rejetees: 0, raison: etat.raison }
+	}
+	const debut = d.maintenantMs()
+	let evalues = 0
+	let echecs = 0
+	let rejetees = 0
+	while (d.maintenantMs() - debut < BUDGET_PASSE_MS) {
+		const message = await d.prendreEvaluation()
+		if (message === null) break
+		// Un espace sans pastille active : rien à demander au modèle, le mail n'en porte aucune.
+		if (message.labels.length === 0) {
+			await d.cloreEvaluation(message.message_id, [], null)
+			evalues += 1
+			continue
+		}
+		const demande = demandeDePastilles(message)
+		const generation = await d.genererPastilles(cible, demande.messages, demande.schema)
+		const sortie = generation.ok ? controlerSortie(generation.contenu, demande.cles) : null
+		if (sortie === null) {
+			await d.cloreEvaluation(message.message_id, null, generation.ok ? 'reponse_invalide' : generation.echec)
+			echecs += 1
+			break
+		}
+		await d.cloreEvaluation(message.message_id, sortie.ids, null)
+		evalues += 1
+		rejetees += sortie.rejetees
+	}
+	d.journaliser({
+		evenement: 'passe_pastilles',
+		evalues,
+		echecs,
+		cles_rejetees: rejetees,
+		duree_ms: Math.max(0, d.maintenantMs() - debut),
+		simulee: cible.simulee,
+	})
+	return { evalues, echecs, rejetees }
 }
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' }
@@ -243,6 +317,15 @@ export async function traiterIa(requete: Request, d: DependancesIa): Promise<Res
 	// Le routeur principal transmet `/ia/…` : le premier segment est le nom de la fonction.
 	const [, route, id, action] = chemin
 	const cible = cibleDe(d.configuration, requete.headers)
+
+	// `CRM-141` T2 : la passe des pastilles. Aucun navigateur ne l'appelle : `pg_cron`, sur le réseau interne, avec le
+	// secret d'appel que la base vérifie (docs/SPEC-ia.md §15.4).
+	if (route === 'pastilles' && id === 'evaluer' && chemin.length === 3) {
+		if (requete.method !== 'POST') return repondre(405, { erreur: 'methode_refusee' }, { allow: 'POST' })
+		const secret = requete.headers.get(EN_TETE_DISPATCH_PASTILLES)?.trim() ?? ''
+		if (secret === '' || !(await d.verifierDispatch(secret))) return repondre(401, { erreur: 'dispatch_refuse' })
+		return repondre(200, await passePastilles(d, cible))
+	}
 
 	if (route === 'etat' && id === undefined) {
 		if (requete.method !== 'GET') return repondre(405, { erreur: 'methode_refusee' }, { allow: 'GET' })

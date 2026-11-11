@@ -2,6 +2,8 @@
 // @spec docs/SPEC-ia.md §3 (usage : sortie structurée, température basse, borne de 120 s, aucune
 //       nouvelle tentative ; refus traduits), §11.3 (état : raisons `cle_refusee`, `serveur_injoignable`,
 //       `modele_absent`), §11.4 (codes d'échec) ; docs/JOURNAL.md décision 617
+// @spec CRM-141 (docs/BACKLOG.md) — tranche T2 : la température est un paramètre — 0 pour l'évaluation des pastilles,
+//       0,2 par défaut pour l'assistant de conception, inchangé (docs/SPEC-ia.md §15.2)
 //
 // Module pur : `fetch` et les bornes sont injectés, ce qui rend chaque refus prouvable sans réseau. Aucun
 // message brut du serveur ni du modèle ne ressort : seulement un code stable.
@@ -90,6 +92,7 @@ export async function generer(
 	requete: Fetch,
 	maintenantMs: () => number = () => Date.now(),
 	borneMs = BORNE_GENERATION_MS,
+	temperature = TEMPERATURE,
 ): Promise<Generation> {
 	const debut = maintenantMs()
 	let reponse: Response
@@ -101,7 +104,7 @@ export async function generer(
 				model: modele,
 				stream: false,
 				format: schema,
-				options: { num_ctx: contexte, temperature: TEMPERATURE },
+				options: { num_ctx: contexte, temperature },
 				messages,
 			}),
 			signal: AbortSignal.timeout(borneMs),

@@ -117,6 +117,11 @@ function banc(options: {
 		battementMs: options.battementMs ?? 60_000,
 		maintenantMs: () => Date.parse('2026-10-02T12:00:00Z'),
 		journaliser: (e) => void b.journal.push(JSON.stringify(e)),
+		// `CRM-141` T2 : la passe des pastilles a son propre banc (`pastilles.test.ts`) ; ici, des valeurs neutres.
+		verifierDispatch: async () => false,
+		prendreEvaluation: async () => null,
+		cloreEvaluation: async () => {},
+		genererPastilles: async () => ({ ok: false, echec: 'serveur_injoignable' }),
 	}
 	return b
 }

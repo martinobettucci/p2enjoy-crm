@@ -6406,3 +6406,106 @@ info "workflows : scripts/verify-workflows.sh — copie : scripts/verify-copie-w
 info "champs de formulaire : scripts/verify-champs-formulaire.sh — cards : scripts/verify-cards.sh"
 info "commentaires : scripts/verify-commentaires.sh — jeu de démonstration : scripts/verify-seed-demo.sh"
 info "identités et memberships : scripts/verify-identites.sh"
+# --- Les pastilles d'un mail : évaluées par le vrai chemin, corrigées à la main, une en échec — CRM-141 T2, docs/SPEC-seed.md §46
+# @spec CRM-141 (docs/BACKLOG.md) — tranche T2 : les messages reçus du seed évalués par la VRAIE passe de la fonction `ia`,
+#       appelée par sa route avec le secret d'appel et le scénario `pastilles` du simulateur ; une correction à la main par
+#       `set_message_label` sous le jeton de Camille ; une pastille archivée encore portée ; un message en échec, que le
+#       scénario `panne` fait échouer cinq fois (docs/SPEC-mail-subsystem.md §31.9 ; docs/SPEC-seed.md §46 ; CLAUDE.md §8)
+#
+# LE SIMULATEUR, ET JAMAIS LE SERVEUR RÉEL : le secret de développement `p2enjoy-pastilles-simulateur` fait porter à
+# l'appel de `pg_cron` l'en-tête `x-ia-simulateur: pastilles` (migration `0184`). Il est posé ICI, avant toute passe : sans
+# lui, la cadence viserait le serveur de LeLabs que `OLLAMA_HOST` désigne en développement.
+# AUCUNE LIGNE `llm` N'EST ÉCRITE À LA MAIN : la base inscrit chaque mail reçu dans la file, la passe l'évalue.
+# L'ÉCHEC EST PRODUIT, PAS FABRIQUÉ : cinq passes réelles contre le scénario `panne`. Seule l'attente de l'espacement est
+# abrégée — `next_attempt_at` ramené à maintenant entre deux passes —, faute de quoi le seed attendrait plus de deux heures.
+# REJOUABLE : la correction et la pose sont des choix manuels idempotents ; l'archivage n'est posé qu'une fois ; un message
+# déjà en échec n'est pas rejoué.
+echo
+say "8 quatertricies. Pastilles des mails"
+psql_seed -c "do \$\$ begin
+	if not exists (select 1 from vault.secrets where name = 'p2enjoy-pastilles-simulateur') then
+		perform vault.create_secret('pastilles', 'p2enjoy-pastilles-simulateur',
+			'Développement seulement : la passe des pastilles vise le simulateur (CRM-141, docs/SPEC-mail-subsystem.md §31.5)');
+	end if;
+end \$\$;" >/dev/null
+SECRET_PASTILLES=$(psql_seed -c "select decrypted_secret from vault.decrypted_secrets where name = 'p2enjoy-pastilles-dispatch'")
+[ -n "$SECRET_PASTILLES" ] || die "le secret d'appel des pastilles est absent : la migration 0184 est-elle appliquée ?"
+passe_pastilles() { # $1 = scénario du simulateur ; rend le bilan de la passe
+	curl -s -X POST "$API/functions/v1/ia/pastilles/evaluer" -H "apikey: $ANON_KEY" \
+		-H "x-pastilles-dispatch: $SECRET_PASTILLES" -H "x-ia-simulateur: $1"
+}
+pastilles_en_attente() {
+	psql_seed -c "select count(*) from public.mail_label_evaluations e join public.mail_messages m on m.id = e.message_id
+	              where e.state = 'pending' and m.deleted_at is null and m.workspace_id = '$WS_ID'"
+}
+message_par_msgid() { # $1 = Message-ID sans chevrons
+	psql_seed -c "select id from public.mail_messages where rfc822_message_id = '<$1>' and workspace_id = '$WS_ID'"
+}
+pastille_par_nom() { # $1 = nom
+	psql_seed -c "select id from public.mail_labels where workspace_id = '$WS_ID' and name = '$1'"
+}
+
+# 1. La file du seed, évaluée par la vraie passe. Plusieurs appels si la file dépasse une passe.
+for _ in 1 2 3 4 5; do
+	[ "$(pastilles_en_attente)" = "0" ] && break
+	bilan=$(passe_pastilles pastilles)
+	echo "$bilan" | jq -e '.evalues >= 0' >/dev/null 2>&1 || die "la passe des pastilles n'a pas répondu : $bilan
+        La fonction « ia » et le simulateur « ollama-simule » sont-ils démarrés ? (docs/SPEC-ia.md §15.4)"
+done
+
+JETON_PASTILLES=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+[ -n "$JETON_PASTILLES" ] || die "connexion de l'administratrice impossible : les corrections du §46 s'écrivent sous son jeton."
+poser_pastille() { # $1 = message, $2 = pastille, $3 = true | false
+	code=$(api_jeton "$JETON_PASTILLES" POST /rest/v1/rpc/set_message_label \
+		-d "$(jq -nc --arg m "$1" --arg l "$2" --argjson a "$3" '{p_message_id: $m, p_label_id: $l, p_applied: $a}')")
+	attendu "$code" "pose à la main d'une pastille (§46)" 200 204
+}
+
+# 2. Une correction à la main : « Demande de devis — refonte » perd « Devis / commande » et gagne « Lead ».
+MSG_DEVIS=$(message_par_msgid 'seed-inbox-classe@p2enjoy.test')
+[ -n "$MSG_DEVIS" ] || die "le message « Demande de devis — refonte » est absent : le §46 en dépend."
+poser_pastille "$MSG_DEVIS" "$(pastille_par_nom 'Devis / commande')" false
+poser_pastille "$MSG_DEVIS" "$(pastille_par_nom 'Lead')" true
+
+# 3. Une pastille archivée encore portée : « Newsletter », posée à la main sur l'invitation, puis archivée.
+MSG_INVITATION=$(message_par_msgid 'seed-corps-html@p2enjoy.test')
+PASTILLE_NEWSLETTER=$(pastille_par_nom 'Newsletter')
+[ -n "$MSG_INVITATION" ] && [ -n "$PASTILLE_NEWSLETTER" ] || die "l'invitation du §44 ou la pastille « Newsletter » est absente."
+if [ "$(psql_seed -c "select archived_at is null from public.mail_labels where id = '$PASTILLE_NEWSLETTER'")" = "t" ]; then
+	poser_pastille "$MSG_INVITATION" "$PASTILLE_NEWSLETTER" true
+	code=$(api_jeton "$JETON_PASTILLES" PATCH "/rest/v1/mail_labels?id=eq.$PASTILLE_NEWSLETTER" \
+		-H 'Prefer: return=minimal' -d "{\"archived_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}")
+	attendu "$code" "archivage de la pastille « Newsletter » (§46)" 204
+fi
+
+# 4. Un message en échec : « Candidature spontanée », cinq passes contre le scénario `panne`. La passe ne prend que ce qui
+#    est dû ; tout le reste est fait, et la demande le remet en tête. Joué hors de la fin de minute, où `pg_cron` passerait.
+MSG_CANDIDATURE=$(message_par_msgid 'seed-inbox-non-classe@p2enjoy.test')
+[ -n "$MSG_CANDIDATURE" ] || die "le message « Candidature spontanée » est absent : le §46 en dépend."
+if [ "$(psql_seed -c "select state from public.mail_label_evaluations where message_id = '$MSG_CANDIDATURE'")" != "failed" ]; then
+	while [ "$(date -u +%S | sed 's/^0//')" -ge 40 ]; do sleep 1; done
+	code=$(api_jeton "$JETON_PASTILLES" POST /rest/v1/rpc/request_label_evaluation -d "{\"p_message_id\": \"$MSG_CANDIDATURE\"}")
+	attendu "$code" "demande de réévaluation (§46)" 200 204
+	for _ in 1 2 3 4 5; do
+		passe_pastilles panne >/dev/null
+		psql_seed -c "update public.mail_label_evaluations set next_attempt_at = now()
+		              where message_id = '$MSG_CANDIDATURE' and state = 'pending'" >/dev/null
+	done
+fi
+
+# 5. Le constat, sous la clé de propriétaire.
+CONSTAT=$(psql_seed -c "select
+	(select count(*) from public.mail_label_evaluations e join public.mail_messages m on m.id = e.message_id
+	  where m.workspace_id = '$WS_ID' and m.deleted_at is null and e.state = 'done') || '|' ||
+	(select state from public.mail_label_evaluations where message_id = '$MSG_CANDIDATURE') || '|' ||
+	(select count(*) from public.mail_message_labels where message_id = '$MSG_DEVIS' and source = 'manual') || '|' ||
+	(select count(*) from public.mail_message_labels x join public.mail_labels l on l.id = x.label_id
+	  where x.message_id = '$MSG_INVITATION' and x.applied and l.archived_at is not null) || '|' ||
+	(select count(*) from public.mail_message_labels x join public.mail_messages m on m.id = x.message_id
+	  where m.workspace_id = '$WS_ID' and x.source = 'llm')")
+IFS='|' read -r PASTILLES_FAITES PASTILLES_ECHEC PASTILLES_MAIN PASTILLES_ARCHIVEE PASTILLES_LLM <<< "$CONSTAT"
+[ "$PASTILLES_ECHEC" = "failed" ] || die "« Candidature spontanée » devait finir en échec (§46) — mesuré : $PASTILLES_ECHEC."
+[ "$PASTILLES_MAIN" = "2" ] || die "« Demande de devis — refonte » doit porter deux choix manuels (§46) — mesuré : $PASTILLES_MAIN."
+[ "$PASTILLES_ARCHIVEE" = "1" ] || die "l'invitation doit porter la pastille archivée « Newsletter » (§46) — mesuré : $PASTILLES_ARCHIVEE."
+[ "$PASTILLES_LLM" -ge 1 ] || die "aucune pastille posée par la passe : la fonction « ia » vise-t-elle le simulateur ? (§46)"
+info "Pastilles des mails : $PASTILLES_FAITES messages évalués par la vraie passe ($PASTILLES_LLM pastilles de l'IA), une correction à la main, « Newsletter » archivée et portée, « Candidature spontanée » en échec — docs/SPEC-seed.md §46"

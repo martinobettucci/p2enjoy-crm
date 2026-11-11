@@ -7,6 +7,9 @@
 //       calculés), §12.6 (la dernière révision relue avec ses défauts) ; décision 618
 // @spec CRM-097 tranche T3.b — docs/SPEC-ia.md §13.2 et §13.5 (la composition vivante et l'occupation, lues par les
 //       deux RPC `security invoker` avec le jeton de l'appelant) ; décision 620
+// @spec CRM-141 (docs/BACKLOG.md) — tranche T2 : la passe des pastilles, sous la clé de service seule — le secret
+//       d'appel vérifié par la base, la prise et la clôture d'une évaluation par ses fonctions (docs/SPEC-ia.md §15.4 ;
+//       docs/SPEC-mail-subsystem.md §31.5)
 //
 // Tout passe par PostgREST, comme un client : aucune connexion directe à PostgreSQL. Avec le jeton de
 // l'appelant, c'est la RLS qui répond ; la clé de service ne sert qu'à écrire l'issue d'une génération
@@ -16,6 +19,7 @@ import { lireConfiguration } from './configuration.ts'
 import type { DependancesIa, ResultatCreation, Suggestion } from './handler.ts'
 import type { Defaut } from './proposition.ts'
 import { generer, lireEtat } from './ollama.ts'
+import { BORNE_PASTILLE_MS, type MessageAEvaluer, type Pastille } from './pastilles.ts'
 
 type Fetch = (url: string, init?: RequestInit) => Promise<Response>
 type LireEnv = (nom: string) => string | undefined
@@ -189,6 +193,46 @@ export function creerDependances(
 				signal: signal(),
 			})
 		},
+
+		// `CRM-141` T2 — la passe des pastilles. La clé de service ne choisit rien : la base prend, la base clôt.
+		async verifierDispatch(secret) {
+			const reponse = await requete(rest('rpc/verify_label_dispatch'), {
+				method: 'POST',
+				headers: commeService({ accept: 'application/json' }),
+				body: JSON.stringify({ p_secret: secret }),
+				signal: signal(),
+			})
+			return reponse.ok && (await reponse.json()) === true
+		},
+
+		async prendreEvaluation() {
+			const reponse = await requete(rest('rpc/claim_label_evaluations'), {
+				method: 'POST',
+				headers: commeService({ accept: 'application/json' }),
+				body: JSON.stringify({ p_limit: 1 }),
+				signal: signal(),
+			})
+			const [ligne] = await lignes<Omit<MessageAEvaluer, 'labels'> & { labels: unknown }>(reponse)
+			if (ligne === undefined) return null
+			const labels = Array.isArray(ligne.labels)
+				? (ligne.labels as Pastille[]).filter(
+						(l) => typeof l?.id === 'string' && typeof l.name === 'string' && typeof l.description === 'string',
+					)
+				: []
+			return { ...ligne, labels }
+		},
+
+		async cloreEvaluation(messageId, ids, echec) {
+			await requete(rest('rpc/record_label_evaluation'), {
+				method: 'POST',
+				headers: commeService({ prefer: 'return=minimal' }),
+				body: JSON.stringify({ p_message_id: messageId, p_label_ids: ids, p_error: echec }),
+				signal: signal(),
+			})
+		},
+
+		genererPastilles: (cible, messages, schema) =>
+			generer(cible, configuration.modele, configuration.contexte, messages, schema, requete, maintenantMs, BORNE_PASTILLE_MS, 0),
 
 		lireEtat: (cible, modele) => lireEtat(cible, modele, requete),
 		generer: (cible, messages, schema) =>

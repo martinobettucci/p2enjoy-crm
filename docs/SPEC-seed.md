@@ -3160,3 +3160,32 @@ le seed et nomme les migrations 180 et 181, `mail-sync` et Stalwart.
 **Ce que le jeu démontre** : le dossier « Corbeille » non vide pour Camille, avec « Déplacé dans la corbeille de la
 boîte » ; une affaire dont le fil raconte un effacement et une restauration. Driss et Farida ont une corbeille vide : ils
 n'ont rien effacé et n'administrent pas l'espace (décision 707).
+
+## 46. Les pastilles des mails : évaluées par la vraie passe, corrigées à la main, une archivée, une en échec — `CRM-141` T2 (`docs/SPEC-mail-subsystem.md` §31.9)
+
+*Écrit le 2026-11-11 avec le code de T2 (décisions 883, 923 et 926).* Section `8 quatertricies`, la dernière du script : tous
+les mails du seed existent alors.
+
+- **Le simulateur, et jamais le serveur réel** : le seed pose d'abord, dans Vault, le secret de développement
+  `p2enjoy-pastilles-simulateur` (valeur `pastilles`), qui fait porter à l'appel de `pg_cron` l'en-tête `x-ia-simulateur`
+  (migration `0184`). Sans lui, la cadence viserait le serveur de LeLabs que `OLLAMA_HOST` désigne en développement.
+- **La file, évaluée par la vraie passe** : la base a inscrit chaque mail reçu ; le seed appelle la route `POST
+  /ia/pastilles/evaluer` avec le secret d'appel et le scénario `pastilles`, jusqu'à ce que la file soit vide. **Aucune ligne
+  `llm` n'est écrite à la main.** Mesuré : « Devis / commande » posée par l'IA sur trois mails.
+- **Une correction à la main**, par `set_message_label` sous le jeton de Camille : « Demande de devis — refonte » perd
+  « Devis / commande » (retrait manuel) et gagne « Lead ».
+- **Une pastille archivée encore portée** : « Newsletter », posée à la main sur « Invitation — journée partenaires
+  Sogexia » (le §44), puis archivée par Camille.
+- **Un message en échec** : « Candidature spontanée », remis en tête par `request_label_evaluation`, puis évalué cinq fois
+  contre le scénario `panne` ; l'échec vient des vraies passes, seule l'attente de l'espacement est abrégée
+  (`next_attempt_at` ramené à maintenant), faute de quoi le seed attendrait plus de deux heures. Le geste est joué hors de
+  la fin de minute, où `pg_cron` passerait avec le scénario `pastilles`.
+- **Rejouable** : les choix manuels sont idempotents ; l'archivage n'est posé qu'une fois ; un message déjà en échec n'est
+  pas rejoué. **Mesuré** : deux passages successifs rendent le même état.
+- **Le seed constate** l'échec, les deux choix manuels, la pastille archivée portée et au moins une pastille de l'IA, et
+  s'arrête en nommant la cause sinon. Un mail mis à la corbeille (le §45) n'est ni évalué ni compté.
+
+**Ce que le jeu démontre** : des mails pastillés par l'IA dans la liste ; un mail corrigé à la main, dont la réévaluation
+ne défait rien ; une pastille archivée affichée comme telle ; un mail dont l'évaluation a échoué, et le bouton qui la
+relance.
+

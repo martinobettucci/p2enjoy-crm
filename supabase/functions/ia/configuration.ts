@@ -3,6 +3,7 @@
 //       instrumentation du seul développement) ; docs/JOURNAL.md décision 617 ; tranche T3.b : le scénario
 //       `modification` (docs/SPEC-ia.md §13.5, décision 620)
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T7 : le scénario `champ_commun` du simulateur (docs/SPEC-ia.md §14.11, décision 851)
+// @spec CRM-141 (docs/BACKLOG.md) — tranche T2 : les scénarios `pastilles` et `panne` du simulateur (docs/SPEC-ia.md §15.5)
 //
 // Module pur. La clé n'est lue qu'ici et ne ressort que dans l'en-tête `Authorization` de l'appel au
 // serveur : aucune réponse ni aucun journal ne la porte.
@@ -26,6 +27,9 @@ export const SCENARIOS_SIMULATEUR = [
 	'modification',
 	'catalogue',
 	'champ_commun',
+	// `CRM-141` T2 (docs/SPEC-ia.md §15.5) : `pastilles`, déterministe ; `panne`, un `500` à chaque génération.
+	'pastilles',
+	'panne',
 ] as const
 
 export type ConfigurationIa = {

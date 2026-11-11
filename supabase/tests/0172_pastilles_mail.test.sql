@@ -49,12 +49,13 @@ create or replace function pg_temp.pastille(p_nom text, p_espace uuid default '5
 returns uuid language sql as $$ select id from public.mail_labels where workspace_id = p_espace and name = p_nom $$;
 
 -- 1–5. Les défauts, la file, l'unicité.
-select results_eq(
-	$$select name from public.mail_labels where workspace_id = '5eed0000-0000-4000-8000-000000000001' and archived_at is null
-	   order by name$$,
+-- Les neuf défauts sont PRÉSENTS, actifs ou archivés : le seed du §46 archive « Newsletter » (docs/SPEC-seed.md §46), et
+-- une preuve qui exigerait neuf actives dépendrait de l'état du seed.
+select set_has(
+	$$select name from public.mail_labels where workspace_id = '5eed0000-0000-4000-8000-000000000001'$$,
 	$$values ('Administratif'), ('Devis / commande'), ('Facture / paiement'), ('Lead'), ('Newsletter'), ('Partenariat'),
 	         ('Recrutement'), ('Spam'), ('Support client')$$,
-	'1 — les neuf pastilles par défaut de l''espace du seed');
+	'1 — les neuf pastilles par défaut de l''espace du seed sont présentes');
 select is((select count(*)::int from public.mail_labels where workspace_id = :'autre'), 9,
 	'2 — un espace créé reçoit ses neuf défauts');
 select results_eq(

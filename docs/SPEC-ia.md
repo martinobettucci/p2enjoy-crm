@@ -1027,6 +1027,10 @@ réévaluation par `public.request_label_evaluation`, et la passe suivante s'en 
 La réponse de la route ne porte que des comptes. Aucune nouvelle tentative dans la passe : l'espacement de la base s'en
 charge.
 
+*Précisé à l'écriture du code (T2)* : la route est aussi atteignable derrière Kong (`/functions/v1/ia/pastilles/evaluer`),
+comme toute fonction ; le secret y est exigé de même, et une preuve le mesure. La température devient un paramètre du
+client Ollama — 0 ici, 0,2 inchangé pour l'assistant de conception.
+
 ### 15.5 Le simulateur
 
 Deux scénarios s'ajoutent au §11.6, atteints comme les autres par `x-ia-simulateur` et `IA_SIMULATEUR_HOST` (le

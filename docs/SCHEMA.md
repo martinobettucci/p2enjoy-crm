@@ -3348,6 +3348,21 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
    cards actives exige un plan de remappage. Comportement par défaut retenu : archivage refusé
    tant que des cards s'y trouvent.
 
+### Migration `0184` — la cadence de l'évaluation des pastilles — `CRM-141` T2 (`0184_cadence_pastilles.sql` ; `docs/SPEC-mail-subsystem.md` §31.5)
+
+*Écrit le 2026-11-11 avec le code (décisions 883 et 923).* Le patron de la migration `0140` (les webhooks), repris.
+
+- **Le secret d'appel** `p2enjoy-pastilles-dispatch`, tiré au hasard dans Vault à la première application ;
+  `public.verify_label_dispatch(text) returns boolean`, `SECURITY DEFINER`, exécutable par `service_role` seul.
+- **Le réveil** `app.pastilles_reveiller()` : si une évaluation est due (en attente, échéance passée, sans réservation
+  vivante, message hors corbeille), un `net.http_post` vers `http://functions:9000/ia/pastilles/evaluer` avec le secret,
+  borné à 150 s ; sinon rien. **En développement seulement**, si le secret `p2enjoy-pastilles-simulateur` existe — le seed
+  le pose —, l'appel porte aussi `x-ia-simulateur` avec sa valeur.
+- **La tâche** `pg_cron` `p2enjoy-pastilles-evaluation`, chaque minute.
+
+**Retour arrière** : `select cron.unschedule('p2enjoy-pastilles-evaluation')`, puis supprimer les deux fonctions ; le
+secret peut rester dans Vault. Aucune donnée n'est touchée.
+
 ### Migration `0183` — les pastilles d'un mail — `CRM-141` T1 (`0183_pastilles_mail.sql` ; `docs/SPEC-mail-subsystem.md` §31)
 
 *Écrit le 2026-11-11, avant le code (décisions 883, 923, 924 et 926).* Les colonnes et les contraintes des trois tables

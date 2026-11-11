@@ -1087,7 +1087,47 @@ dépôt ; `select count(*) from public.mail_labels` vaut neuf fois le nombre d'e
 from public.mail_label_evaluations group by 1, 2` rend les mails reçus existants en `pending`, priorité 1.
 **Retour arrière** : supprimer les deux déclencheurs, les quatre fonctions et les trois tables (dans l'ordre inverse de
 leurs dépendances) ; aucune donnée existante n'est touchée.
+
+### 2.47 `CRM-141` T2, décisions 883 et 923 — l'évaluation des pastilles par le modèle (À LIVRER : migration 184, la fonction `ia` ; **après la 183, hors du lot annoncé**)
+
+`docs/SPEC-mail-subsystem.md` §31.5 ; `docs/SPEC-ia.md` §15 ; `docs/SCHEMA.md` « Migration `0184` ». **Aucune variable, aucun
+secret à poser** : `OLLAMA_HOST`, `OLLAMA_API_KEY` et `OLLAMA_MODEL` sont ceux de l'assistant IA, déjà en production ; le
+secret d'appel est tiré par la migration dans Vault.
+
+**Ce qui part vers le serveur réel, à quel débit, sous quel plafond** (question de la session de livraison) :
+- **Oui, en production, la passe appelle le serveur Ollama de LeLabs** — le seul qu'elle connaisse : aucun simulateur n'y
+  existe (ni la variable `IA_SIMULATEUR_HOST`, ni le secret `p2enjoy-pastilles-simulateur`). **Aucun modèle n'est chargé
+  dans la cellule** : sa mémoire de 8 Go ne porte que la tâche `pg_cron`, un worker de la fonction `ia` par minute et des
+  requêtes HTTP.
+- **Le plafond** : une passe par minute, **une évaluation à la fois** (jamais deux en vol), qui s'arrête de prendre après
+  **100 s** ; chaque évaluation est bornée à **30 s** ; un échec arrête la passe et espace la suivante (1 min, 5 min,
+  30 min, 2 h ; état `failed` au cinquième). Sans évaluation due, la tâche n'appelle rien.
+- **Le débit** : non mesuré contre le serveur réel — il refuse aujourd'hui la clé depuis l'origine du poste de
+  développement (`cle_refusee`). **Estimation**, sur la mesure du §3 de `docs/SPEC-ia.md` (environ vingt jetons de sortie
+  par seconde ; une réponse de pastilles en compte une dizaine, pour un millier en entrée) : quelques secondes par mail,
+  soit **une dizaine à une vingtaine de mails par minute**. **Le rattrapage de tous les mails existants** (décision 923),
+  inscrit par la 183, part dès la 184 appliquée ; sur une grosse boîte, il dure des heures, et les mails neufs passent
+  devant lui.
+- **Ce qui est envoyé** : l'objet, l'expéditeur et 2 000 caractères du texte de chaque mail reçu ; jamais une pièce
+  jointe (`docs/SPEC-ia.md` §15.1). C'est un envoi de données de la messagerie vers LeLabs, voulu par le responsable
+  (décision 883).
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 184, **après la 183** | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate`, instantané de VM pris |
+| 2 | Recréer `functions` (la route `pastilles/evaluer`) | session de livraison | `up -d --force-recreate --no-deps --wait functions` (§4) |
+| 3 | Constater la passe | session de livraison, en lecture seule | dans les minutes qui suivent : `select state, count(*) from public.mail_label_evaluations group by 1` voit des `done` apparaître ; le journal de `functions` porte `passe_pastilles` avec des comptes |
+
+*Ordre* : la 184 sans la fonction à jour fait appeler une route que l'ancienne fonction ne connaît pas — `404` sans
+effet, la file attend ; la fonction sans la 184 n'est jamais appelée. Les deux gestes se suivent dans la même fenêtre.
+**Retour arrière** : `select cron.unschedule('p2enjoy-pastilles-evaluation')` arrête tout appel au serveur réel, sans rien
+défaire de ce qui a été évalué ; puis la fonction précédente.
 ## 3. Migrations en attente
+
+**La 184, après la 183** (`CRM-141` T2, décisions 883 et 923), *en attente, hors du lot annoncé* : la cadence de
+l'évaluation des pastilles (`docs/SCHEMA.md` « Migration `0184` ») — le secret d'appel, `verify_label_dispatch`, la tâche
+`pg_cron`. **Avec la fonction `ia` de `CRM-141` T2** (§2.47). Elle fait appeler le serveur Ollama réel en production :
+débit et plafond au §2.47. Aucun geste préalable du responsable.
 
 **La 183** (`CRM-141` T1, décisions 883, 923, 924 et 926), *en attente, hors du lot annoncé* : les pastilles d'un mail
 (`docs/SCHEMA.md` « Migration `0183` ») — trois tables, quatre fonctions, deux déclencheurs, les neuf pastilles par défaut
