@@ -2,6 +2,8 @@
 //           offerte selon la capacité et décochée à chaque ouverture, l'appel envoyé, le refus dans le bloc), la liste de la
 //           corbeille (l'auteur et la date inconnus nommés, l'état du déplacement en toutes lettres, « Restaurer » sans
 //           confirmation et son refus dans la ligne)
+// @verifies CRM-141 (docs/BACKLOG.md) — tranche T4 : la confirmation et le panneau « Pastilles » s'excluent, hors effacement
+//           en vol (docs/DESIGN_SYSTEM.md §5.103)
 // @verifies docs/DESIGN_SYSTEM.md §5.102, §5.16, §5.13 ; docs/SPEC-mail-subsystem.md §29.1, §29.3 à §29.5 ; décision 921
 //
 // Les composants sont réellement montés et interrogés par leur rôle accessible ; le client ne simule que la fonction de la
@@ -117,6 +119,36 @@ describe('« Effacer » et sa confirmation dans le flux (§5.102)', () => {
 		expect(refus.textContent).toContain('effacez-le sans cocher la case')
 		expect(screen.getByRole('group', { name: 'Effacer ce message' })).not.toBeNull()
 		expect(onEfface).not.toHaveBeenCalled()
+	})
+
+	// `CRM-141` T4 (§5.103) : le panneau « Pastilles » referme la confirmation, SAUF pendant un effacement en vol — son refus
+	// atterrirait sinon sur un bloc fermé, et l'écran tairait l'échec (relevé par la session ea).
+	it('CRM-141 : le panneau « Pastilles » referme la confirmation, jamais pendant un effacement en vol', async () => {
+		let rendre: (valeur: unknown) => void = () => {}
+		injecte.rpc = () => new Promise((resoudre) => (rendre = resoudre))
+		const proprietes = {
+			idMessage: 'm1',
+			objet: 'Devis signé',
+			effacableDansBoite: false,
+			retention: RETENTION,
+			commandes: null,
+			onEfface: vi.fn(),
+		}
+		const onConfirmationOuverte = vi.fn()
+		const { rerender } = render(
+			<RangeeCommandesMessage {...proprietes} refermerConfirmation={0} onConfirmationOuverte={onConfirmationOuverte} />,
+		)
+		await userEvent.click(screen.getByRole('button', { name: 'Effacer' }))
+		expect(onConfirmationOuverte).toHaveBeenCalledTimes(1)
+		rerender(<RangeeCommandesMessage {...proprietes} refermerConfirmation={1} onConfirmationOuverte={onConfirmationOuverte} />)
+		expect(screen.queryByRole('group', { name: 'Effacer ce message' })).toBeNull()
+
+		await userEvent.click(screen.getByRole('button', { name: 'Effacer' }))
+		await userEvent.click(screen.getByTestId('inbox-effacer-confirmer'))
+		rerender(<RangeeCommandesMessage {...proprietes} refermerConfirmation={2} onConfirmationOuverte={onConfirmationOuverte} />)
+		expect(screen.getByRole('group', { name: 'Effacer ce message' })).not.toBeNull()
+		rendre({ data: null, error: { message: 'boom' }, status: 500 })
+		expect(await screen.findByRole('alert')).toBeTruthy()
 	})
 })
 

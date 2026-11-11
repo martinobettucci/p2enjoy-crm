@@ -97,7 +97,14 @@ test('à la souris : non lu libellé, sommeil en mots, effacer puis annuler, eff
 
 	// LA RANGÉE : le sommeil, puis la lecture, puis « Effacer » — trois boutons libellés (§5.102).
 	const rangee = page.getByTestId('inbox-commandes-message')
-	await expect(rangee.getByRole('button')).toHaveText(['Mettre le message en sommeil', 'Marquer comme non lu', 'Effacer'])
+	// `CRM-141` T4 (docs/DESIGN_SYSTEM.md §5.103) : « Réévaluer les pastilles » et « Pastilles » après la lecture, avant « Effacer ».
+	await expect(rangee.getByRole('button')).toHaveText([
+		'Mettre le message en sommeil',
+		'Marquer comme non lu',
+		'Réévaluer les pastilles',
+		'Pastilles',
+		'Effacer',
+	])
 	await capturer(page, 'inbox-commandes-xl-1440', UNITE)
 	await rangee.getByRole('button', { name: 'Marquer comme non lu' }).click()
 	await expect(rangee.getByRole('button', { name: 'Marquer comme lu' })).toBeVisible()

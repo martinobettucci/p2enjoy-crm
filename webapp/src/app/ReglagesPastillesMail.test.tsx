@@ -19,9 +19,9 @@ import { ReglagesPastillesMail } from './ReglagesPastillesMail'
 afterEach(cleanup)
 
 const LUES = [
-	{ id: 'p-spam', name: 'Spam', color: 'danger', description: 'Courrier indésirable.', archived_at: null },
-	{ id: 'p-lead', name: 'Lead', color: 'success', description: 'Un prospect intéressé.', archived_at: null },
-	{ id: 'p-news', name: 'Newsletter', color: 'neutral', description: 'Une lettre d’information.', archived_at: '2026-11-11T09:00:00Z' },
+	{ workspace_id: 'ws-1', id: 'p-spam', name: 'Spam', color: 'danger', description: 'Courrier indésirable.', archived_at: null },
+	{ workspace_id: 'ws-1', id: 'p-lead', name: 'Lead', color: 'success', description: 'Un prospect intéressé.', archived_at: null },
+	{ workspace_id: 'ws-1', id: 'p-news', name: 'Newsletter', color: 'neutral', description: 'Une lettre d’information.', archived_at: '2026-11-11T09:00:00Z' },
 ]
 
 type Ecriture = { methode: string; valeur: unknown }

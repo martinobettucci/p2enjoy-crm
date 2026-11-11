@@ -4552,7 +4552,10 @@ L'apparence : `docs/DESIGN_SYSTEM.md` §5.103.
   L'écran est lisible par tout membre ; ses commandes sont éteintes avec leur motif pour qui n'administre pas l'espace.
 - **Dans la liste des mails** : les pastilles **posées** du fil — celles de son dernier message —, et un filtre par
   pastille dans l'en-tête de la liste, porté par l'adresse (clé `pastille`). Le filtre montre les fils dont un message
-  porte la pastille, posée ; il se combine avec le dossier choisi.
+  porte la pastille, posée ; il se combine avec le dossier choisi. *Précision à l'écriture de T4* : comme « Seulement
+  moi » (§27.3), le filtre porte sur les **messages** — la requête embarque `mail_message_labels!inner` —, et le
+  groupement en fils se fait sur les messages retenus ; la ligne d'un fil filtré montre donc son dernier message qui porte
+  la pastille. Une valeur mal formée dans l'adresse vaut l'absence de filtre.
 - **Dans le message ouvert** : ses pastilles posées, avec leur origine (« posée par l'IA », « posée à la main ») ;
   l'état d'évaluation quand il n'est pas `done` ; « Réévaluer les pastilles » dans la rangée de commandes, à côté du
   sommeil et de « Marquer comme non lu » ; et « Pastilles », qui ouvre dans le flux la liste des pastilles actives à
@@ -4605,7 +4608,7 @@ Chaque tranche est poussée une fois vérifiée.
 | **T1** | Migration : les trois tables, la RLS, `set_message_label`, `request_label_evaluation`, `claim_label_evaluations`, `record_label_evaluation`, les défauts et leur déclencheur, le déclencheur d'entrée dans la file et le rattrapage ; pgTAP ; `docs/SCHEMA.md` ; contrat de déploiement — *faite le 2026-11-11, migration `0183`* |
 | **T2** | L'évaluation : la route `POST /ia/pastilles/evaluer` de la fonction `ia`, le scénario `pastilles` du simulateur, `verify_label_dispatch` et la cadence `pg_cron` (seconde migration) ; unitaires ; preuve d'intégration contre le simulateur et le vrai modèle ; le seed — *faite le 2026-11-11, migration `0184` ; la preuve contre le vrai modèle n'a pas pu être jouée : le serveur de LeLabs refuse la clé du poste, `401` « clé API invalide ou désactivée » (`cle_refusee`)* |
 | **T3** | L'écran Réglages ▸ Pastilles des mails ; unitaires ; API ; E2E ; captures — *faite le 2026-11-11* |
-| **T4** | L'inbox : les pastilles dans la liste, le filtre, le message ouvert, « Pastilles » et « Réévaluer les pastilles » ; unitaires ; E2E ; captures |
+| **T4** | L'inbox : les pastilles dans la liste, le filtre, le message ouvert, « Pastilles » et « Réévaluer les pastilles » ; unitaires ; E2E ; captures — *faite le 2026-11-11* |
 | **T5** | Le connecteur : trois outils ; pytest ; `verify-mcp.sh` |
 | **T6** | Le manuel : l'inbox et les réglages de la messagerie, avec leurs images |
 | **T7** | Production, par la session de livraison, sur instruction du responsable : deux migrations, la fonction `ia`, la webapp, l'image `mcp` ; le rattrapage observé |

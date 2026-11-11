@@ -8461,7 +8461,8 @@ d'une liste de l'espace se lisent de la même façon d'un écran à l'autre (§5
 - **LE FILTRE « Pastille »** : un `select` natif libellé (§5.7), option vide « Toutes les pastilles », puis les pastilles
   actives dans l'ordre du nom, puis les archivées, suffixées « (archivée) » — on retrouve ainsi les mails d'une pastille
   qu'on vient de retirer. Il vit dans la **rangée d'action en tête de la liste** (§5.4 quinquies), à gauche, « Tout
-  marquer comme lu » restant à droite ; sous `md`, la rangée passe à la ligne. Il est porté par l'adresse (`pastille`). Un
+  marquer comme lu » restant à droite ; sous `md`, la rangée passe à la ligne. Il n'est rendu que si l'espace a au moins
+  une pastille lisible. Il est porté par l'adresse (`pastille`). Un
   filtre qui ne trouve rien rend l'état vide de la liste, qui nomme la pastille filtrée et le geste qui l'efface :
   « Aucun message ne porte la pastille « {nom} » dans ce dossier. », avec « Toutes les pastilles » (§5.51).
 - **DANS LE MESSAGE OUVERT** : les pastilles posées viennent **sous l'en-tête**, avant la rangée de commandes, sur une
@@ -8479,8 +8480,11 @@ d'une liste de l'espace se lisent de la même façon d'un écran à l'autre (§5
     `fieldset` « Pastilles de ce message », une case native de 24 px par pastille active, la pilule pour libellé, suivie
     en 13 px `--color-text-2` de son origine quand elle est posée ou retirée (« posée par l'IA », « posée à la main »,
     « retirée à la main ») ; puis les archivées encore posées, qui se décochent seulement. **Chaque case écrit au clic**
-    et revient si la base refuse, son refus écrit dessous, `role="alert"`. « Fermer » et `Échap` referment, le focus
-    revient à « Pastilles ». Ce panneau et la confirmation d'« Effacer » s'excluent : en ouvrir un referme l'autre.
+    et revient si la base refuse, son refus écrit dessous, `role="alert"`. **Pendant l'appel, la case reste active**,
+    `aria-busy`, un second clic ignoré : la désactiver lui ferait perdre le focus, et `Échap` n'atteindrait plus le
+    panneau (constaté par la preuve au clavier de T4). « Fermer » et `Échap` referment, le focus revient à « Pastilles ».
+    Ce panneau et la confirmation d'« Effacer » s'excluent : en ouvrir un referme l'autre — **sauf un effacement en vol**,
+    dont la confirmation reste ouverte pour dire un refus éventuel (relevé par la session ea, 2026-11-11).
 - **LES COMMANDES REFUSÉES** (§5.59) : « Réévaluer les pastilles » et les cases suivent la capacité d'**éditer l'espace**
   (`edition`), pas celle d'écrire une affaire — la règle de la décision 926. Refusée, elles sont `disabled`, lisibles,
   jamais masquées ; le motif générique de l'édition, posé une fois en tête du panneau, et porté par la description

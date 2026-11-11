@@ -13,6 +13,11 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-141` T4 — les pastilles dans l'inbox
+
+- **Les pastilles se voient et se corrigent dans l'inbox** : chaque fil montre jusqu'à trois pastilles sous son objet ; un filtre « Pastille » en tête de la liste ne garde que les messages qui la portent. Le message ouvert dit ses pastilles, qui les a posées (l'IA ou une personne) et si l'évaluation est en attente ou a échoué. « Réévaluer les pastilles » relance l'IA ; « Pastilles » ouvre la liste à cocher, et un choix fait à la main n'est jamais défait par l'IA. Les lecteurs voient tout, mais les commandes sont inactives.
+- Déploiement : la webapp seule.
+
 #### `CRM-141` T3 — Réglages ▸ Pastilles des mails
 
 - **Un nouvel écran, Réglages ▸ Pastilles des mails**, liste les pastilles de l'espace avec le descriptif que l'IA lit pour décider. L'administrateur en crée (nom, couleur, descriptif), les modifie, les archive — une archivée n'est plus posée, mais reste sur les mails qui la portent — et les désarchive. Tout membre consulte l'écran ; les autres voient les commandes inactives, avec le motif.

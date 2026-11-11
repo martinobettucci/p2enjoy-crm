@@ -19353,7 +19353,18 @@ est archivée et reste sur les mails (926) ; un filtre par pastille (926) ; les 
   modifie, archive, désarchive ; aucune suppression ; business developer et lectrice lisent et sont refusés ; nom pris par
   une archivée `23505` ; bornes `23514` ; l'anonyme ne lit rien) ; UI `e2e/ui/pastilles-reglages.spec.ts` **4/4** (souris,
   clavier, lecture seule, quatre paliers) ; dix captures `docs/captures/CRM-141/` observées ;
-- reste : T4 (l'inbox), T5 (le connecteur), T6 (le manuel), T7 (production).
+- **T4 faite le 2026-11-11, vérifiée en développement** : les pastilles dans l'inbox — la ligne d'un fil (trois au plus,
+  puis « +n »), le filtre « Pastille » porté par l'adresse et son vide, le message ouvert (pastilles et origine, état
+  d'évaluation, « Réévaluer les pastilles », le panneau « Pastilles » et ses cases) ; `PastillesInbox.tsx`,
+  `lib/pastilles-message.ts`, la lecture de la liste (`COLONNES_LISTE_INBOX`, `…_FILTREE`) ; la confirmation
+  d'« Effacer » et le panneau s'excluent, hors effacement en vol (cas relevé par ea) ; Vitest `pastilles-message.test.ts`
+  **15**, `PastillesInbox.test.tsx` **13**, `inbox.test.ts` (+2), `CorbeilleInbox.test.tsx` (+1, rouge sans la garde) ;
+  API `e2e/api/pastilles-inbox.spec.ts` **4/4** (pose et retrait manuels signés, le filtre tel que la webapp le demande,
+  `label_archived`, `label_not_found`, `message_not_found`, `outbound_message`, la lectrice `403` sur un message qu'elle
+  lit et `404` sur un autre) ; UI `e2e/ui/pastilles-inbox.spec.ts` **7/7** (souris, clavier, filtre, seed, lectrice,
+  quatre paliers) ; captures observées ; un défaut trouvé par la preuve au clavier et corrigé (la case désactivée en vol
+  perdait le focus) ;
+- reste : T5 (le connecteur), T6 (le manuel), T7 (production).
 **DoD** :
 - unitaires : contrôle de la sortie du modèle, clés inconnues rejetées ;
 - pgTAP : RLS, administrateurs seuls sur les pastilles, la main prime, les défauts ;

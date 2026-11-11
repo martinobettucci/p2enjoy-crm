@@ -52,6 +52,24 @@ export function PastilleEtiquette({
 }
 
 /**
+ * La pilule neutre « +{n} » qui clôt une rangée bornée : son nom accessible et son infobulle énumèrent les masquées (§5.73).
+ * Partagée par les étiquettes d'une affaire et les pastilles d'un mail (`CRM-141` T4, §5.103).
+ */
+export function PastilleReste({ n, noms, nomAccessible }: { readonly n: number; readonly noms: string; readonly nomAccessible: string }) {
+	return (
+		<span
+			data-testid="pastille-etiquettes-reste"
+			role="img"
+			aria-label={nomAccessible}
+			title={noms}
+			className={`${CLASSES} ${TEINTES.neutral}`}
+		>
+			+{n}
+		</span>
+	)
+}
+
+/**
  * Les pastilles d'une affaire. `plafond` borne leur nombre — trois sur la carte du board (§5.73) — et la dernière pastille,
  * neutre, dit combien restent, et lesquelles, dans son nom accessible et son infobulle. Aucune étiquette : rien n'est rendu.
  */
@@ -77,15 +95,7 @@ export function PastillesEtiquettes({
 			))}
 			{masquees.length === 0 ? null : (
 				<li>
-					<span
-						data-testid="pastille-etiquettes-reste"
-						role="img"
-						aria-label={t('labels.more.aria', { n: String(masquees.length), noms: reste })}
-						title={reste}
-						className={`${CLASSES} ${TEINTES.neutral}`}
-					>
-						+{masquees.length}
-					</span>
+					<PastilleReste n={masquees.length} noms={reste} nomAccessible={t('labels.more.aria', { n: String(masquees.length), noms: reste })} />
 				</li>
 			)}
 		</ul>

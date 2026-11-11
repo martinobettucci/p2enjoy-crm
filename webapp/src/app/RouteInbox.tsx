@@ -82,7 +82,7 @@ import { SkeletonListe } from '../components/ui/Skeleton'
 import { EtatVide } from '../components/ui/States'
 import { t, type CleTraduction } from '../i18n'
 import type { ErreurDonnees, EtatAsync } from '../lib/async'
-import { motifVisible, proprietesCommande, useEcriturePermise } from '../lib/capacites'
+import { motifVisible, proprietesCommande, useEcriturePermise, type Capacite } from '../lib/capacites'
 import {
 	MEME_SELECTION,
 	classerMessage,
@@ -154,6 +154,17 @@ import {
 } from '../lib/corbeille-inbox'
 import { lireRetentionCorbeille } from '../lib/corbeille'
 import { useContexteEspace } from './ContexteEspace'
+import {
+	CLE_URL_PASTILLE,
+	FiltrePastille,
+	PastillesLigne,
+	PastillesMessageOuvert,
+	VidePastille,
+	catalogueOuVide,
+	lirePastilleFiltre,
+	useCataloguePastilles,
+	type CataloguePastilles,
+} from './PastillesInbox'
 import type { Candidate } from '../lib/candidats-classement'
 import { ListePiecesJointes } from './PiecesJointes'
 import { CorpsMessage } from './CorpsMessage'
@@ -689,7 +700,15 @@ function PanneauListe({
 	erreurMarquage,
 	filtreCourrier,
 	onToutAfficher,
+	catalogue,
+	pastille,
+	onPastille,
 }: {
+	/** `CRM-141` T4 (§31.7) : le catalogue des pastilles lisibles, pour les pilules des lignes et le filtre. */
+	readonly catalogue: CataloguePastilles
+	/** Le filtre « Pastille » en vigueur, lu dans l'adresse ; `null` sans filtre. */
+	readonly pastille: string | null
+	readonly onPastille: (id: string | null) => void
 	/** `CRM-139` (§27.4) : le filtre « Seulement moi » s'applique-t-il à cette liste ? */
 	readonly filtreCourrier: boolean
 	/** Le geste du vide sous le filtre : décocher la case. */
@@ -735,6 +754,30 @@ function PanneauListe({
 	// « TOUT MARQUER COMME LU » PORTE SUR LES FILS AFFICHÉS, et il est absent quand aucun n'est non lu (§5.4
 	// quinquies) : un geste sans effet possible ne s'offre pas.
 	const nonLusAffiches = idsNonLus(compose.visibles.flatMap((fil) => fil.messages))
+	// `CRM-141` T4 — LA RANGÉE D'ACTION EN TÊTE DE LA LISTE (§5.4 quinquies, §5.103) : le filtre « Pastille » à gauche,
+	// « Tout marquer comme lu » à droite ; elle passe à la ligne sous `md`. Le filtre RESTE RENDU sur une liste vide : il est
+	// la cause possible de ce vide (§5.3 septies).
+	const rangeeAction =
+		selection !== null && etat.statut === 'pret' && (catalogue.size > 0 || nonLusAffiches.length > 0) ? (
+			<div
+				className="flex flex-wrap items-center justify-between gap-2 px-3 py-1 border-b border-border"
+				data-testid="inbox-rangee-action"
+			>
+				<FiltrePastille catalogue={catalogue} valeur={pastille} onChange={onPastille} />
+				{nonLusAffiches.length > 0 ? (
+					<Button
+						variante="discret"
+						taille="compacte"
+						className="ml-auto"
+						data-testid="inbox-tout-marquer-lu"
+						onClick={() => onToutMarquer(nonLusAffiches)}
+					>
+						<CheckCheck aria-hidden="true" size={16} />
+						{t('inbox.read.markAll')}
+					</Button>
+				) : null}
+			</div>
+		) : null
 	return (
 		<Panneau
 			id="liste"
@@ -774,6 +817,7 @@ function PanneauListe({
 			{selection !== null && etat.statut === 'erreur' ? (
 				<EchecChargement erreur={etat.erreur} onReprise={onReprise} />
 			) : null}
+			{rangeeAction}
 			{selection !== null && etat.statut === 'pret' ? (
 				compose.visibles.length === 0 ? (
 					// L'ÉTAT VIDE NE MENT PAS, ET SANS REQUÊTE SUPPLÉMENTAIRE (§16.15.5 point 2) :
@@ -792,6 +836,9 @@ function PanneauListe({
 								/>
 							}
 						/>
+					) : pastille !== null ? (
+						// `CRM-141` T4 (§5.103) : un vide sous le filtre « Pastille » nomme la pastille et porte le geste qui l'efface.
+						<VidePastille nom={catalogue.get(pastille)?.nom ?? ''} onToutes={() => onPastille(null)} />
 					) : filtreCourrier ? (
 						// `CRM-139` (§5.96) : un vide sous le filtre porte le geste qui le lève. Le sommeil, jugé après le filtre,
 						// garde son propre vide ci-dessus.
@@ -801,22 +848,9 @@ function PanneauListe({
 					)
 				) : (
 					<>
-						{/* « TOUT MARQUER COMME LU » VIT DANS UNE RANGÉE D'ACTION EN TÊTE DE LA LISTE, ET NON DANS L'EN-TÊTE
-						    (§5.4 quinquies) — défaut vu en capture : à 360 px, le titre, ce bouton et la bascule de sommeil
-						    ne tenaient pas sur une ligne, et les deux libellés passaient sur deux et trois lignes. */}
-						{nonLusAffiches.length > 0 ? (
-							<div className="flex justify-end px-3 py-1 border-b border-border">
-								<Button
-									variante="discret"
-									taille="compacte"
-									data-testid="inbox-tout-marquer-lu"
-									onClick={() => onToutMarquer(nonLusAffiches)}
-								>
-									<CheckCheck aria-hidden="true" size={16} />
-									{t('inbox.read.markAll')}
-								</Button>
-							</div>
-						) : null}
+						{/* « TOUT MARQUER COMME LU » VIT DANS LA RANGÉE D'ACTION EN TÊTE DE LA LISTE, ET NON DANS L'EN-TÊTE
+						    (§5.4 quinquies) — défaut vu en capture : à 360 px, le titre, ce bouton et la bascule de sommeil ne
+						    tenaient pas sur une ligne. La rangée est rendue plus haut (`rangeeAction`), avec le filtre « Pastille ». */}
 						{/* LA LISTE ÉNUMÈRE DES FILS (§16.16.3), et son nom accessible le dit : le
 						    laisser annoncer « Messages du dossier » ferait parcourir des messages à
 						    un lecteur d'écran là où l'écran présente des fils. */}
@@ -882,6 +916,8 @@ function PanneauListe({
 													</span>
 												) : null}
 											</span>
+											{/* `CRM-141` T4 (§5.103) : les pastilles posées du DERNIER message du fil, sous l'objet. */}
+											<PastillesLigne ids={fil.dernier.pastilles ?? []} catalogue={catalogue} />
 											<span className="flex items-center gap-2 text-sm text-text-3">
 												<span className="truncate">{dateLisible(fil.dernier.recuLe)}</span>
 												{/* LA PASTILLE EST CELLE DU BOARD, RÉEMPLOYÉE SANS COPIE
@@ -1657,7 +1693,14 @@ function PanneauMessage({
 	erreurMarquage,
 	retention,
 	onEfface,
+	catalogue,
+	edition,
+	onAnnonce,
 }: {
+	/** `CRM-141` T4 (§31.7) : le catalogue des pastilles, la capacité d'éditer l'espace, et la région vivante. */
+	readonly catalogue: CataloguePastilles
+	readonly edition: Capacite
+	readonly onAnnonce: (texte: string) => void
 	/** `CRM-138` T3 : la rétention de la corbeille, lue en base, que la confirmation d'« Effacer » cite. */
 	readonly retention: EtatAsync<number>
 	/** `CRM-138` T3 : le message vient d'être mis à la corbeille. */
@@ -1685,6 +1728,8 @@ function PanneauMessage({
 			? echeanceFil(fils, etat.donnees.workspaceId, etat.donnees.cleFil, maintenant)
 			: null
 	const idAffiche = etat.statut === 'pret' && etat.donnees !== null ? etat.donnees.id : null
+	// Le message ouvert, nommé pour les rappels qui ne gardent pas le rétrécissement de `etat` (`CRM-141` T4).
+	const donneesOuvertes = etat.statut === 'pret' ? etat.donnees : null
 	return (
 		<Panneau
 			id="message"
@@ -1743,37 +1788,51 @@ function PanneauMessage({
 						    Le geste de sommeil vit dans le message ouvert (§16.15.6) ; le message ouvert n'est jamais masqué par
 						    le filtre (§16.15.5). Montée avec la clé du message : la confirmation d'« Effacer » se referme et sa
 						    case se décoche d'un message à l'autre. */}
+						{/* `CRM-141` T4 (§5.103) : la ligne des pastilles et de l'état d'évaluation vient avant la rangée ; « Réévaluer
+						    les pastilles » et « Pastilles » s'y placent après la lecture, avant « Effacer » ; le panneau, dessous. */}
 						<div className="pt-1">
-							<RangeeCommandesMessage
+							<PastillesMessageOuvert
 								key={etat.donnees.id}
 								idMessage={etat.donnees.id}
-								objet={etat.donnees.objet}
-								effacableDansBoite={etat.donnees.effacableDansBoite}
-								retention={retention}
-								onEfface={() => onEfface(idAffiche ?? '')}
-								commandes={
-									<>
-										<GesteSommeilFil
-											workspaceId={etat.donnees.workspaceId}
-											cle={etat.donnees.cleFil}
-											echeance={echeance}
-											onFait={onSommeil}
-										/>
-										{/* `CRM-138` (§5.102, révise le §5.4 quinquies) : un BOUTON LIBELLÉ secondaire compact, qui garde
-										    son icône. Absent tant que l'état n'est pas connu — un bouton qui ne sait pas ce qu'il
-										    bascule ne s'offre pas. */}
-										{lu === null || idAffiche === null ? null : (
-											<Button
-												taille="compacte"
-												data-testid="inbox-basculer-lecture"
-												onClick={() => onBasculerLecture(idAffiche, lu)}
-											>
-												{lu ? <Mail aria-hidden="true" size={16} /> : <MailOpen aria-hidden="true" size={16} />}
-												{lu ? t('inbox.read.markUnread') : t('inbox.read.markRead')}
-											</Button>
-										)}
-									</>
-								}
+								idEspace={etat.donnees.workspaceId}
+								envoye={etat.donnees.envoye}
+								catalogue={catalogue}
+								edition={edition}
+								onAnnonce={onAnnonce}
+								rangee={(pastilles) =>
+									donneesOuvertes === null ? null : (
+									<RangeeCommandesMessage
+										key={donneesOuvertes.id}
+										idMessage={donneesOuvertes.id}
+										objet={donneesOuvertes.objet}
+										effacableDansBoite={donneesOuvertes.effacableDansBoite}
+										retention={retention}
+										onEfface={() => onEfface(idAffiche ?? '')}
+										refermerConfirmation={pastilles.refermerConfirmation}
+										onConfirmationOuverte={pastilles.onConfirmationOuverte}
+										commandes={
+											<>
+												<GesteSommeilFil
+													workspaceId={donneesOuvertes.workspaceId}
+													cle={donneesOuvertes.cleFil}
+													echeance={echeance}
+													onFait={onSommeil}
+												/>
+												{lu === null || idAffiche === null ? null : (
+													<Button
+														taille="compacte"
+														data-testid="inbox-basculer-lecture"
+														onClick={() => onBasculerLecture(idAffiche, lu)}
+													>
+														{lu ? <Mail aria-hidden="true" size={16} /> : <MailOpen aria-hidden="true" size={16} />}
+														{lu ? t('inbox.read.markUnread') : t('inbox.read.markRead')}
+													</Button>
+												)}
+												{pastilles.commandes}
+											</>
+										}
+									/>
+								)}
 							/>
 						</div>
 						{erreurMarquage !== null ? (
@@ -2048,7 +2107,22 @@ export function RouteInbox() {
 	}, [filtreCourrier, setParametresUrl])
 
 	const arbre = useArborescence(clientCrm, filtreCourrier)
-	const liste = useMessages(clientCrm, selection, filtreCourrier)
+	// `CRM-141` T4 — LE FILTRE « PASTILLE » ENTRE DANS L'ADRESSE (§31.7, clé `pastille`) : un contrôle de l'écran, comme
+	// `sommeil`. Une valeur mal formée vaut l'absence de filtre ; le choisir est un geste, que « Précédent » défait.
+	const pastilleFiltre = lirePastilleFiltre(parametresUrl.get(CLE_URL_PASTILLE))
+	const changerPastille = useCallback(
+		(id: string | null) => {
+			setParametresUrl((precedents) => {
+				const suivants = new URLSearchParams(precedents)
+				if (id === null) suivants.delete(CLE_URL_PASTILLE)
+				else suivants.set(CLE_URL_PASTILLE, id)
+				return suivants
+			})
+		},
+		[setParametresUrl],
+	)
+	const catalogue = catalogueOuVide(useCataloguePastilles())
+	const liste = useMessages(clientCrm, selection, filtreCourrier, pastilleFiltre)
 	const message = useMessage(clientCrm, idOuvert)
 	const fils = useFilsEndormis(clientCrm)
 
@@ -2504,6 +2578,9 @@ export function RouteInbox() {
 					erreurMarquage={erreurLectureListe}
 					filtreCourrier={filtreCourrier === true}
 					onToutAfficher={() => changerModeCourrier('tous')}
+					catalogue={catalogue}
+					pastille={pastilleFiltre}
+					onPastille={changerPastille}
 				/>
 				<PanneauMessage
 					etat={message.etat}
@@ -2522,6 +2599,9 @@ export function RouteInbox() {
 					erreurMarquage={erreurLectureMessage}
 					retention={retention}
 					onEfface={apresEffacement}
+					catalogue={catalogue}
+					edition={capacites.edition}
+					onAnnonce={setAnnonce}
 				/>
 					</>
 				)}

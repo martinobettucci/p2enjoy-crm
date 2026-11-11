@@ -48,6 +48,7 @@ function espion(reponse: unknown | (() => never)) {
 
 const ligne = (id: string, name: string, archived_at: string | null = null, color = 'primary') => ({
 	id,
+	workspace_id: 'ws-1',
 	name,
 	color,
 	description: `Descriptif de ${name}`,
@@ -75,6 +76,7 @@ describe('projeterPastillesMail', () => {
 		const [p] = projeterPastillesMail([ligne('a', 'X', null, 'fuchsia')])
 		expect(p!.couleur).toBe('neutral')
 		expect(p!.descriptif).toBe('Descriptif de X')
+		expect(p!.idEspace).toBe('ws-1')
 	})
 })
 
@@ -87,7 +89,7 @@ describe('lirePastillesMail', () => {
 			{ methode: 'select', args: [COLONNES_PASTILLE_MAIL] },
 			{ methode: 'eq', args: ['workspace_id', 'ws-1'] },
 		])
-		expect(COLONNES_PASTILLE_MAIL).toBe('id, name, color, description, archived_at')
+		expect(COLONNES_PASTILLE_MAIL).toBe('id, workspace_id, name, color, description, archived_at')
 		expect(etat.statut).toBe('pret')
 		if (etat.statut === 'pret') expect(etat.donnees[0]!.archivee).toBe(true)
 	})

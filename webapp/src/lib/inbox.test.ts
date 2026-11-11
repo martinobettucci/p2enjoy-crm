@@ -1,4 +1,6 @@
 // @verifies CRM-057 (docs/BACKLOG.md) — inbox globale : arbre, réduction du HTML, requêtes, refus
+// @verifies CRM-141 (docs/BACKLOG.md) — tranche T4 : la liste embarque les pastilles posées, le filtre `pastille` —
+//           docs/SPEC-mail-subsystem.md §31.7 ; docs/DESIGN_SYSTEM.md §5.103
 // @verifies docs/SPEC-mail-subsystem.md §18.3 (l'arborescence ne montre que ce qui porte du
 //           courrier, et « Non classés » reste), §18.4 (le HTML n'est jamais affiché), §18.8
 // @verifies docs/DESIGN_SYSTEM.md §5.4 (inbox) ; docs/SPEC-webapp.md §6.4
@@ -21,6 +23,8 @@
 import { describe, expect, it } from 'vitest'
 import {
 	COLONNES_LISTE,
+	COLONNES_LISTE_INBOX,
+	COLONNES_LISTE_INBOX_FILTREE,
 	COLONNES_MESSAGE,
 	MEME_SELECTION,
 	MARQUAGE_MAX,
@@ -275,7 +279,9 @@ describe('les lectures', () => {
 		await lireMessages(client, { genre: 'non-classes' })
 
 		expect(appel.table).toBe('mail_messages')
-		expect(appel.colonnes).toBe(COLONNES_LISTE)
+		// `CRM-141` T4 : la liste de l'inbox embarque les pastilles du message dans la même requête.
+		expect(appel.colonnes).toBe(COLONNES_LISTE_INBOX)
+		expect(COLONNES_LISTE_INBOX).toBe(`${COLONNES_LISTE}, pastilles:mail_message_labels(label_id, applied)`)
 		expect(appel.nuls).toEqual(['card_id'])
 		expect(appel.egalites).toEqual([])
 		// `received_at` PUIS `id`, décroissants : sans le second, l'ordre n'est pas total.
@@ -284,6 +290,40 @@ describe('les lectures', () => {
 			['id', false],
 		])
 		expect(appel.limite).toBe(MESSAGES_PAR_PAGE)
+	})
+
+	it('CRM-141 T4 : le filtre « Pastille » retient les messages qui la portent POSÉE, sans amputer leurs pilules', async () => {
+		const { client, appel } = clientEspion({ data: [], error: null, status: 200 })
+		await lireMessages(client, { genre: 'card', cardId: 'c1' }, false, 'p-lead')
+		expect(appel.colonnes).toBe(COLONNES_LISTE_INBOX_FILTREE)
+		// Deux embarquements sous deux alias : l'un `!inner`, qui filtre ; l'autre, qui garde toutes les pilules.
+		expect(COLONNES_LISTE_INBOX_FILTREE).toBe(
+			`${COLONNES_LISTE_INBOX}, filtre_pastille:mail_message_labels!inner(label_id, applied)`,
+		)
+		expect(appel.egalites).toEqual([
+			['filtre_pastille.label_id', 'p-lead'],
+			['filtre_pastille.applied', true],
+			['card_id', 'c1'],
+		])
+	})
+
+	it('CRM-141 T4 : une ligne porte les identifiants de ses pastilles POSÉES, jamais une retirée à la main', async () => {
+		const { client } = clientEspion({
+			data: [
+				{
+					...ligne(),
+					pastilles: [
+						{ label_id: 'p-lead', applied: true },
+						{ label_id: 'p-devis', applied: false },
+					],
+				},
+				{ ...ligne({ id: 'm2' }), pastilles: null },
+			],
+			error: null,
+			status: 200,
+		})
+		const etat = await lireMessages(client, { genre: 'non-classes' })
+		expect(etat.statut === 'pret' && etat.donnees.messages.map((m) => m.pastilles)).toEqual([['p-lead'], []])
 	})
 
 	it('filtre un dossier de card sur son identifiant', async () => {

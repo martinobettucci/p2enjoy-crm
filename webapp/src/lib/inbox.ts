@@ -22,6 +22,8 @@
 // @spec CRM-111 T2.4.1 (docs/BACKLOG.md) — le classement situe l'affaire par son plus ancien rattachement (docs/SPEC-rattachements.md §5)
 // @spec CRM-111 T6.1 (docs/BACKLOG.md) — l'arbre : les non classés, puis le nœud « Affaires » (docs/SPEC-rattachements.md §7,
 //       décisions 657 et 818 ; docs/DESIGN_SYSTEM.md §5.4, « Les affaires hors de l'arborescence »)
+// @spec CRM-141 (docs/BACKLOG.md) — tranche T4 : la liste lit les pastilles posées de chaque message, et le filtre
+//       `pastille` retient les messages qui la portent — docs/SPEC-mail-subsystem.md §31.7 ; docs/DESIGN_SYSTEM.md §5.103
 //
 // Ce module ne rend rien : il **lit, réduit et classe**. La séparation est ce qui rend la
 // réduction du HTML, la construction de l'arbre et la classification des refus vérifiables
@@ -35,6 +37,7 @@ import { classerErreur, enChargement, enErreur, pret, type ErreurDonnees, type E
 import type { Database } from './database.types'
 import { premierRattachement } from './rattachements'
 import { cleFil, lireFilsEndormis, type FilsEndormis } from './sommeil-fil'
+import { idsPosees } from './pastilles-message'
 import type { ClientCrm } from './supabase'
 
 /**
@@ -77,7 +80,22 @@ export const COLONNES_LISTE =
 // `bcc_addresses` — `CRM-058` tranche 2 §19 bis.2 point 2 : la copie cachée d'un message ENVOYÉ, lisible dans l'affaire.
 // `mailbox_trash_permitted` — `CRM-138` T3 (§29.1, migration `0181`) : la capacité d'effacer aussi le message dans sa boîte
 // mail, rendue par la base avec la ligne, et lue ici seulement : la case de la confirmation ne vit que sur le message ouvert.
-export const COLONNES_MESSAGE = `${COLONNES_LISTE}, to_addresses, cc_addresses, bcc_addresses, body_text, body_html, sent_at, suggested_card_id, mailbox_trash_permitted`
+/**
+ * `CRM-141` T4 — les colonnes de la LISTE de l'inbox : celles de `COLONNES_LISTE`, et les pastilles du message, embarquées
+ * dans la même requête (docs/SPEC-mail-subsystem.md §31.7). Une seule chaîne littérale, pour la même raison que plus haut.
+ * `COLONNES_LISTE` reste sans elles : la timeline d'une affaire et les autres lecteurs n'en montrent aucune.
+ */
+export const COLONNES_LISTE_INBOX =
+	'id, workspace_id, card_id, classification, subject, from_address, from_name, received_at, references_ids, rfc822_message_id, is_read, pastilles:mail_message_labels(label_id, applied)'
+
+/**
+ * `CRM-141` T4 — la même liste, FILTRÉE par une pastille posée : un second embarquement, `!inner`, sous un autre alias, qui
+ * ne retient que les messages portant la pastille, sans amputer les pilules affichées de la ligne.
+ */
+export const COLONNES_LISTE_INBOX_FILTREE =
+	'id, workspace_id, card_id, classification, subject, from_address, from_name, received_at, references_ids, rfc822_message_id, is_read, pastilles:mail_message_labels(label_id, applied), filtre_pastille:mail_message_labels!inner(label_id, applied)'
+
+export const COLONNES_MESSAGE = `${COLONNES_LISTE}, to_addresses, cc_addresses, bcc_addresses, body_text, body_html, sent_at, suggested_card_id, mailbox_trash_permitted, direction`
 
 type LigneMessage = Database['public']['Tables']['mail_messages']['Row']
 
@@ -96,6 +114,11 @@ export type MessageListe = {
 	readonly recuLe: string
 	/** Lu PAR L'APPELANT (§18 bis.2) ; un message envoyé l'est toujours. */
 	readonly lu: boolean
+	/**
+	 * `CRM-141` T4 : les pastilles POSÉES du message, par identifiant (§31.7). Présentes sur les lignes de la liste de
+	 * l'inbox seulement ; absentes ailleurs, où aucune surface ne les montre.
+	 */
+	readonly pastilles?: readonly string[]
 }
 
 export type PieceJointe = {
@@ -175,6 +198,8 @@ export type MessageComplet = MessageListe & {
 	 * quand elle l'a rendu vrai ; une valeur absente vaut `false` — la case n'est alors pas offerte, et la base refuserait.
 	 */
 	readonly effacableDansBoite: boolean
+	/** `CRM-141` T4 (§31.4) : un mail envoyé n'est pas évalué — ni état ni « Réévaluer les pastilles ». */
+	readonly envoye: boolean
 }
 
 /** Objet de repli, jamais une chaîne vide : une ligne sans intitulé serait un trou dans la liste. */
@@ -468,10 +493,20 @@ export async function lireMessages(
 	client: ClientCrm | null,
 	selection: Selection,
 	seulementMoi = false,
+	pastille: string | null = null,
 ): Promise<EtatAsync<PageMessages>> {
 	if (client === null) return enErreur(CONFIGURATION_ABSENTE)
 	try {
-		const base = client.from('mail_messages').select(COLONNES_LISTE)
+		// `CRM-141` T4 (§31.7) : le filtre par pastille porte, comme `seulementMoi`, sur les MESSAGES — ceux qui portent la
+		// pastille, POSÉE ; il se combine avec le dossier choisi.
+		const base =
+			pastille === null
+				? client.from('mail_messages').select(COLONNES_LISTE_INBOX)
+				: client
+						.from('mail_messages')
+						.select(COLONNES_LISTE_INBOX_FILTREE)
+						.eq('filtre_pastille.label_id', pastille)
+						.eq('filtre_pastille.applied', true)
 		const dossier =
 			selection.genre === 'non-classes' ? base.is('card_id', null) : base.eq('card_id', selection.cardId)
 		const filtree = seulementMoi ? dossier.eq('concerns_me', true) : dossier
@@ -482,7 +517,7 @@ export async function lireMessages(
 			.order('id', { ascending: false })
 			.limit(MESSAGES_PAR_PAGE)
 		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
-		const messages = reponse.data.map(projeterMessage)
+		const messages = reponse.data.map((ligne) => ({ ...projeterMessage(ligne), pastilles: idsPosees(ligne.pastilles) }))
 		return pret({ messages, tronquee: messages.length === MESSAGES_PAR_PAGE })
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
@@ -518,6 +553,7 @@ export async function lireMessage(client: ClientCrm | null, id: string): Promise
 			corpsHtml: ligne.body_html !== null && ligne.body_html.trim() !== '' ? ligne.body_html : null,
 			suggestionCardId: ligne.suggested_card_id,
 			effacableDansBoite: ligne.mailbox_trash_permitted === true,
+			envoye: ligne.direction === 'outbound',
 			pieces: pieces.data.map(pieceDepuisLigne),
 		})
 	} catch (cause) {
@@ -812,6 +848,7 @@ export function useMessages(
 	client: ClientCrm | null,
 	selection: Selection | null,
 	seulementMoi: boolean | null = false,
+	pastille: string | null = null,
 ): Relecture<PageMessages> {
 	const cle = selection === null ? '' : selection.genre === 'card' ? selection.cardId : 'non-classes'
 	return useLecture(
@@ -820,8 +857,8 @@ export function useMessages(
 				? pret({ messages: [], tronquee: false })
 				: seulementMoi === null
 					? EN_ATTENTE
-					: lireMessages(client, selection, seulementMoi),
-		[client, cle, seulementMoi],
+					: lireMessages(client, selection, seulementMoi, pastille),
+		[client, cle, seulementMoi, pastille],
 	)
 }
 

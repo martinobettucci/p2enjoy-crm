@@ -1,5 +1,7 @@
 // @spec CRM-141 (docs/BACKLOG.md) — tranche T3 : lire les pastilles des mails de l'espace, les écrire (administrateur),
 //       les archiver ; classer les refus
+// @spec CRM-141 (docs/BACKLOG.md) — tranche T4 : le catalogue de l'inbox, toutes les pastilles lisibles avec leur espace
+//       (docs/SPEC-mail-subsystem.md §31.7)
 // @spec docs/SPEC-mail-subsystem.md §31.2 (`mail_labels` : nom de 1 à 40, unique archivées comprises ; un des cinq jetons ;
 //       un descriptif de 1 à 500), §31.3 (lecture par tout membre, écriture par l'administrateur), §31.7 (l'écran) ;
 //       docs/DESIGN_SYSTEM.md §5.103 ; CLAUDE.md §10 — ce module ne décide AUCUN droit : il écrit, et la base tranche
@@ -12,7 +14,7 @@ import { COULEURS_ETIQUETTE, couleurEtiquette } from './etiquettes'
 import type { ClientCrm } from './supabase'
 
 /** Colonnes réellement demandées. Exportées pour que les tests éprouvent la requête émise. */
-export const COLONNES_PASTILLE_MAIL = 'id, name, color, description, archived_at'
+export const COLONNES_PASTILLE_MAIL = 'id, workspace_id, name, color, description, archived_at'
 
 /** Les cinq couleurs sont celles des étiquettes et des tracks : un seul jeu de jetons (§5.103, §5.68). */
 export const COULEURS_PASTILLE_MAIL: readonly CouleurNoeud[] = COULEURS_ETIQUETTE
@@ -23,6 +25,7 @@ export const LONGUEUR_DESCRIPTIF_PASTILLE = 500
 
 export type PastilleMailLue = {
 	readonly id: string
+	readonly workspace_id: string
 	readonly name: string
 	readonly color: string
 	readonly description: string
@@ -31,6 +34,8 @@ export type PastilleMailLue = {
 
 export type PastilleMail = {
 	readonly id: string
+	/** L'espace de la pastille : le panneau d'un message ne propose que celles de l'espace du message (`CRM-141` T4). */
+	readonly idEspace: string
 	readonly nom: string
 	readonly couleur: CouleurNoeud
 	readonly descriptif: string
@@ -45,6 +50,7 @@ export function projeterPastillesMail(lignes: readonly (PastilleMailLue | null |
 		.filter((l): l is PastilleMailLue => l !== null && l !== undefined)
 		.map((l) => ({
 			id: l.id,
+			idEspace: l.workspace_id,
 			nom: l.name,
 			couleur: couleurEtiquette(l.color),
 			descriptif: l.description,
@@ -59,6 +65,21 @@ export async function lirePastillesMail(client: ClientCrm, idWorkspace: string):
 		const reponse = await client.from('mail_labels').select(COLONNES_PASTILLE_MAIL).eq('workspace_id', idWorkspace)
 		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
 		return pret(projeterPastillesMail((reponse.data ?? []) as readonly PastilleMailLue[]))
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/**
+ * `CRM-141` T4 — le catalogue de l'inbox : TOUTES les pastilles lisibles, archivées comprises, de tous les espaces dont
+ * on est membre (la RLS les borne). L'inbox montre le courrier de chacun d'eux, et une archivée reste affichée.
+ */
+export async function lireCataloguePastillesMail(client: ClientCrm): Promise<EtatAsync<ReadonlyMap<string, PastilleMail>>> {
+	try {
+		const reponse = await client.from('mail_labels').select(COLONNES_PASTILLE_MAIL)
+		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
+		const pastilles = projeterPastillesMail((reponse.data ?? []) as readonly PastilleMailLue[])
+		return pret(new Map(pastilles.map((p) => [p.id, p])))
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}

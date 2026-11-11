@@ -1,3 +1,5 @@
+// @spec CRM-141 (docs/BACKLOG.md) — tranche T4 : la confirmation d'« Effacer » et le panneau « Pastilles » s'excluent
+//       (docs/DESIGN_SYSTEM.md §5.103)
 // @spec CRM-138 (docs/BACKLOG.md) — tranche T3 : la corbeille de l'inbox — « Effacer » dans la rangée de commandes du message
 //       ouvert et sa confirmation dans le flux, la case « boîte mail » offerte selon la capacité rendue par la base, l'entrée
 //       de tête « Corbeille », sa liste plate avec l'état du déplacement IMAP et « Restaurer » sans confirmation
@@ -74,7 +76,15 @@ export function RangeeCommandesMessage({
 	retention,
 	commandes,
 	onEfface,
+	refermerConfirmation = 0,
+	onConfirmationOuverte,
 }: {
+	/**
+	 * `CRM-141` T4 (docs/DESIGN_SYSTEM.md §5.103) : le panneau « Pastilles » et cette confirmation s'excluent. Chaque
+	 * changement de ce compteur referme la confirmation ; son ouverture le signale par `onConfirmationOuverte`.
+	 */
+	readonly refermerConfirmation?: number
+	readonly onConfirmationOuverte?: () => void
 	readonly idMessage: string
 	readonly objet: string
 	/** La capacité rendue par la base ; seule `true` rend la case (§29.1). */
@@ -91,6 +101,14 @@ export function RangeeCommandesMessage({
 	const refAnnuler = useRef<HTMLButtonElement | null>(null)
 	const idQuestion = useId()
 	const idAide = useId()
+
+	// UN EFFACEMENT EN VOL N'EST PAS REFERMÉ : son refus éventuel atterrirait sur un bloc fermé, et l'écran tairait l'échec.
+	useEffect(() => {
+		if (refermerConfirmation === 0 || enVol) return
+		setOuverte(false)
+		setRefus(null)
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- seul le compteur déclenche ; `enVol` est lu à cet instant
+	}, [refermerConfirmation])
 
 	// LE FOCUS ENTRE SUR « Annuler » (§5.102) : la touche Entrée d'un geste trop rapide n'efface rien.
 	useEffect(() => {
@@ -134,6 +152,7 @@ export function RangeeCommandesMessage({
 						// DÉCOCHÉE À CHAQUE OUVERTURE (§5.102) : effacer dans la boîte se décide à chaque fois.
 						setAussiBoite(false)
 						setOuverte(true)
+						onConfirmationOuverte?.()
 					}}
 					data-testid="inbox-effacer"
 				>
