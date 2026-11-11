@@ -6,6 +6,7 @@
 //       chaque ligne nomme son propriétaire (docs/SPEC-mail-subsystem.md §22.14 ; docs/manual.md §11.2)
 // @spec CRM-127 (docs/BACKLOG.md) — tranche T4 : l'image d'une boîte testée, son verdict sous la ligne
 //       (docs/SPEC-mail-subsystem.md §23.5 ; docs/DESIGN_SYSTEM.md §5.93 ; docs/manual.md §11.1)
+// @spec CRM-136 (docs/BACKLOG.md) — tranche T4 : le hook rend les plafonds du seed (Driss à 200, docs/SPEC-seed.md §43)
 // @spec CRM-136 (docs/BACKLOG.md) — tranche T3 : les images de l'historique, des dossiers relevés et du plafond
 //       (docs/SPEC-mail-subsystem.md §25.4 à §25.6 ; docs/DESIGN_SYSTEM.md §5.99 ; docs/manual.md §11.1, §11.2)
 //
@@ -129,10 +130,14 @@ test('les adresses d’expédition : la liste et la configuration', async ({ pag
 })
 
 // Le plafond est rendu au seed même quand le test dépasse son délai : son `finally` ne joue alors plus utilement (le
-// contexte de requête est fermé), le hook si. Le seed ne plafonne aucune adresse (`daily_quota` nul, migration 0033).
+// contexte de requête est fermé), le hook si. RÉVISÉ PAR `CRM-136` T4 (décision 51) : le seed plafonne désormais l'identité
+// de Driss à 200 envois par jour, les autres n'en ont aucun (docs/SPEC-seed.md §43) — le hook rend ces deux états.
 const OBJET_PLAFOND = 'Proposition commerciale — lot 2'
 test.afterEach(async ({ request }) => {
 	await service(request, 'patch', `mail_outbound_identities?workspace_id=eq.${WORKSPACE_SEED}`, { daily_quota: null })
+	await service(request, 'patch', `mail_outbound_identities?owner_id=eq.5eed0000-0000-4000-8000-000000000012&is_default=is.true`, {
+		daily_quota: 200,
+	})
 	await service(request, 'delete', `mail_outbox?subject=eq.${encodeURIComponent(OBJET_PLAFOND)}`)
 })
 

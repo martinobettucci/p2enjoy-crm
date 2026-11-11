@@ -18998,9 +18998,7 @@ Ce n'est pas une campagne complète. **Reste** : la livraison de la migration 17
 
 ## Demande du 2026-11-10 — les réglages cachés de la messagerie, exposés à l'écran (décision 875)
 
-### CRM-136 — Historique, dossiers relevés (choisis parmi ceux de la boîte), style de classement et quota d'envoi réglables à l'écran `[@]`
-
-*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-c2) depuis 2026-11-10 22:31 UTC — état avant : [~] ; confiée par la session de livraison (ee), après CRM-144*
+### CRM-136 — Historique, dossiers relevés (choisis parmi ceux de la boîte), style de classement et quota d'envoi réglables à l'écran `[P]`
 
 *État (2026-11-10, session c2)* : spécifiée et arbitrée (décisions 884 et 885), quatre tranches (`docs/SPEC-mail-subsystem.md`
 §25.11). **T1 implémentée et vérifiée en développement** — migration `0178` (`p_daily_quota_set`), pgTAP `0167` 16
@@ -19012,8 +19010,15 @@ system, décision 914 ; `docs/DESIGN_SYSTEM.md` §5.99) — l'historique au form
 relevés » (`DossiersReleves.tsx`), le plafond au formulaire de l'identité, le groupe de commandes de ligne sur sa rangée
 (défaut vu en capture) ; Vitest 5616 dont 8 du panneau, gardes révisées non relâchées ; `e2e/api/releve-quota` 2/2 ;
 `e2e/ui/releve-quota` 8/8 sur le vrai Stalwart (cocher « Sent Items », une vraie relève relève trois dossiers), souris,
-clavier, quatre paliers, captures observées ; le manuel §11.1 et §11.2 et leurs trois images. Reste T4 (le seed), puis
-`[P]`.
+clavier, quatre paliers, captures observées ; le manuel §11.1 et §11.2 et leurs trois images. **T4 implémentée et vérifiée
+en développement** (`docs/SPEC-seed.md` §43) — la boîte de Camille à trois mois d'historique, l'identité de Driss
+plafonnée à 200, par les fonctions d'écriture, constatés par le seed ; reset et `verify-seed.sh` 52 contrôles ; pgTAP
+complet 155 fichiers, 5221 assertions ; le crochet du manuel chapitre 11 rend les deux états (révisé, décision 51) ;
+`verify-mail-identites.sh` aligné sur ses dix scénarios nommés, avec un témoin (l'écart venait de `CRM-063` tranche 3,
+16eb6006) ; les images du chapitre 11 renouvelées et observées, `verify-manual` sans anomalie dans ces chapitres. Un
+échec isolé de `e2e/mail/resilience.spec.ts`, au premier lot après le reset, ne s'est pas reproduit en quatre lots, ni avec
+un envoi parasite dû dans la même passe. **`[P]`** : reste la livraison (contrat §2.41 : la migration 178, l'image
+`mail-sync`, le service `functions`, la webapp) et le constat du responsable en production.
 
 **Origine** : question du responsable sur l'historique non relevé en production ; arbitrée le 2026-11-10 (décision 875).
 **Comportement attendu** :

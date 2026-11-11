@@ -3483,7 +3483,8 @@ Les règles visuelles sont au `docs/DESIGN_SYSTEM.md` §5.99, écrites le 2026-1
 
 ### 25.8 Seed
 
-- La boîte de Camille porte `backfill_months = 3`, pour qu'un historique non nul se voie dans le formulaire.
+- La boîte de Camille porte `backfill_months = 3`, pour qu'un historique non nul se voie dans le formulaire
+  (`docs/SPEC-seed.md` §43).
 - L'identité de Driss porte un plafond, `daily_quota = 200`. Les autres restent sans plafond, pour que les deux états se
   voient.
 - Les valeurs sont posées par les fonctions d'écriture, comme le reste du seed (§13.8). Elles sont vérifiées contre les

@@ -2586,15 +2586,18 @@ PERSONAL_DOMAIN=$(env_get "$ENV_FILE" MAIL_DEV_PERSONAL_DOMAIN)
 [ -n "$MAILBOX_PASSWORD" ] || die "STALWART_MAILBOX_PASSWORD est absente : les comptes entrants ne
         peuvent pas être configurés par le vrai chemin d'écriture."
 
-# `label|owner_id|imap_username` — l'ordre suit celui du §2.17.
+# `label|owner_id|imap_username|backfill_months` — l'ordre suit celui du §2.17.
+# `CRM-136` T4 (docs/SPEC-seed.md §43, docs/SPEC-mail-subsystem.md §25.8) : la boîte de Camille porte TROIS MOIS
+# d'historique, pour qu'un historique non nul se voie au formulaire ; les deux autres gardent 0, le défaut de la table. Le
+# reset détruit aussi le volume de Stalwart (`down -v`) : la boîte ne contient aucun courrier d'avant le seed.
 COMPTES_ENTRANTS=(
-	"Boîte système du workspace||systeme@$INBOUND_DOMAIN"
-	"Boîte de Camille Aubert|5eed0000-0000-4000-8000-000000000011|admin@$PERSONAL_DOMAIN"
-	"Boîte de Driss Lemoine|5eed0000-0000-4000-8000-000000000012|bizdev@$PERSONAL_DOMAIN"
+	"Boîte système du workspace||systeme@$INBOUND_DOMAIN|0"
+	"Boîte de Camille Aubert|5eed0000-0000-4000-8000-000000000011|admin@$PERSONAL_DOMAIN|3"
+	"Boîte de Driss Lemoine|5eed0000-0000-4000-8000-000000000012|bizdev@$PERSONAL_DOMAIN|0"
 )
 
 for entree in "${COMPTES_ENTRANTS[@]}"; do
-	IFS='|' read -r mc_label mc_owner mc_user <<< "$entree"
+	IFS='|' read -r mc_label mc_owner mc_user mc_historique <<< "$entree"
 	# LES DEUX DOSSIERS SONT SURVEILLÉS, ET LE MOTIF EST MESURÉ (docs/SPEC-mail-subsystem.md
 	# §15.4) : sur cette pile, un message venant de l'extérieur sans authentification est classé
 	# dans « Junk Mail », et un worker aveugle à ce dossier ne verrait jamais arriver le courrier
@@ -2602,11 +2605,11 @@ for entree in "${COMPTES_ENTRANTS[@]}"; do
 	# produit puisse faire à la place de quelqu'un, et le seed montre ce qu'un exploitant tranche.
 	code=$(api_admin POST /rest/v1/rpc/upsert_mail_inbound_account \
 		-d "$(jq -nc --arg ws "$WS_ID" --arg l "$mc_label" --arg u "$mc_user" \
-		         --arg p "$MAILBOX_PASSWORD" --arg o "$mc_owner" \
+		         --arg p "$MAILBOX_PASSWORD" --arg o "$mc_owner" --argjson h "$mc_historique" \
 		      '{p_workspace_id: $ws, p_label: $l, p_imap_host: "stalwart", p_imap_port: 143,
 		        p_imap_security: "none", p_imap_username: $u, p_password: $p,
 		        p_owner_id: (if $o == "" then null else $o end),
-		        p_watch_folders: ["INBOX", "Junk Mail"]}')")
+		        p_watch_folders: ["INBOX", "Junk Mail"], p_backfill_months: $h}')")
 	attendu "$code" "configuration du compte entrant « $mc_label »" 200
 done
 
@@ -2638,15 +2641,18 @@ info "Comptes entrants : $comptes_entrants, dont la boîte système — secrets 
 # La signature de Driss porte DEUX lignes : une signature d'une seule ligne ne dirait rien de la
 # conservation des retours à la ligne, que le §10.3 garantit et qu'une preuve mesure.
 
-# `label|owner_id|smtp_username|from_address|signature`
+# `label|owner_id|smtp_username|from_address|signature|daily_quota`
+# `CRM-136` T4 (docs/SPEC-seed.md §43, docs/SPEC-mail-subsystem.md §25.8) : l'identité de Driss porte un PLAFOND de 200
+# envois par jour, les autres aucun (vide) — les deux états se voient au formulaire. Le plafond est posé par la fonction
+# d'écriture avec son drapeau (`p_daily_quota_set`, migration `0178`), et un vide y écrit « aucun plafond ».
 IDENTITES_SORTANTES=(
-	"Identité de service||systeme@$INBOUND_DOMAIN|systeme@$INBOUND_DOMAIN|"
-	"Envoi de Driss Lemoine|5eed0000-0000-4000-8000-000000000012|bizdev@$PERSONAL_DOMAIN|contact@$PERSONAL_DOMAIN|Driss Lemoine — Business developer\\nP2Enjoy SAS"
-	"Envoi de Camille Aubert|5eed0000-0000-4000-8000-000000000011|admin@$PERSONAL_DOMAIN|admin@$PERSONAL_DOMAIN|"
+	"Identité de service||systeme@$INBOUND_DOMAIN|systeme@$INBOUND_DOMAIN||"
+	"Envoi de Driss Lemoine|5eed0000-0000-4000-8000-000000000012|bizdev@$PERSONAL_DOMAIN|contact@$PERSONAL_DOMAIN|Driss Lemoine — Business developer\\nP2Enjoy SAS|200"
+	"Envoi de Camille Aubert|5eed0000-0000-4000-8000-000000000011|admin@$PERSONAL_DOMAIN|admin@$PERSONAL_DOMAIN||"
 )
 
 for entree in "${IDENTITES_SORTANTES[@]}"; do
-	IFS='|' read -r mi_label mi_owner mi_user mi_from mi_signature <<< "$entree"
+	IFS='|' read -r mi_label mi_owner mi_user mi_from mi_signature mi_quota <<< "$entree"
 	# LE RETOUR À LA LIGNE EST ÉCHAPPÉ DANS LA TABLE, ET C'EST MESURÉ : `read` s'arrête au premier
 	# saut de ligne, si bien qu'une signature écrite sur deux lignes dans le tableau arrivait
 	# TRONQUÉE à sa première — la garde de deux lignes plus bas l'a dénoncé. `printf %b` restitue le
@@ -2654,11 +2660,12 @@ for entree in "${IDENTITES_SORTANTES[@]}"; do
 	mi_signature=$(printf '%b' "$mi_signature")
 	code=$(api_admin POST /rest/v1/rpc/upsert_mail_outbound_identity \
 		-d "$(jq -nc --arg ws "$WS_ID" --arg l "$mi_label" --arg u "$mi_user" --arg f "$mi_from" \
-		         --arg p "$MAILBOX_PASSWORD" --arg o "$mi_owner" --arg s "$mi_signature" \
+		         --arg p "$MAILBOX_PASSWORD" --arg o "$mi_owner" --arg s "$mi_signature" --arg q "$mi_quota" \
 		      '{p_workspace_id: $ws, p_label: $l, p_smtp_host: "stalwart", p_smtp_port: 587,
 		        p_smtp_security: "none", p_smtp_username: $u, p_from_address: $f, p_password: $p,
 		        p_owner_id: (if $o == "" then null else $o end), p_signature_text: $s,
-		        p_is_default: true}')")
+		        p_is_default: true,
+		        p_daily_quota: (if $q == "" then null else ($q | tonumber) end), p_daily_quota_set: true}')")
 	attendu "$code" "configuration de l'identité sortante « $mi_label »" 200
 done
 
@@ -2687,6 +2694,14 @@ identites_sortantes=$(curl -s "$API/rest/v1/mail_outbound_identities?select=id&f
 [ "$identites_sortantes" = "${#IDENTITES_SORTANTES[@]}" ] || die "identités sortantes :
         $identites_sortantes lignes au lieu de ${#IDENTITES_SORTANTES[@]} — le rejeu a dupliqué."
 info "Identités sortantes : $identites_sortantes ; Driss reçoit sur bizdev@ et expédie depuis contact@ ; Camille expédie depuis admin@"
+# `CRM-136` T4 (§43) : LES DEUX ÉTATS DU PLAFOND SONT CONSTATÉS, et non supposés — Driss à 200, les autres sans plafond.
+plafonds=$(curl -s "$API/rest/v1/mail_outbound_identities?select=from_address,daily_quota&from_address=in.(contact@$PERSONAL_DOMAIN,admin@$PERSONAL_DOMAIN,systeme@$INBOUND_DOMAIN)&order=from_address" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -c '[.[].daily_quota]')
+[ "$plafonds" = '[null,200,null]' ] || die "plafonds des identités : $plafonds au lieu de [null,200,null] (admin@, contact@, systeme@) — docs/SPEC-seed.md §43."
+historique=$(curl -s "$API/rest/v1/mail_inbound_accounts?select=backfill_months&owner_id=eq.5eed0000-0000-4000-8000-000000000011" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].backfill_months')
+[ "$historique" = 3 ] || die "historique de la boîte de Camille : $historique au lieu de 3 — docs/SPEC-seed.md §43."
+info "Relève et plafond (CRM-136) : la boîte de Camille relève trois mois d'historique ; Driss expédie au plus 200 messages par jour"
 info "Signatures : une identité signe (Driss, deux lignes), l'identité de service ne signe pas"
 
 # --- 8 octies bis. L'ancienneté dans l'étape est RAFRAÎCHIE — CLAUDE.md §8 -------------------

@@ -3095,3 +3095,17 @@ par les vrais chemins : rien n'est écrit dans `mail_outbox` à la main.
 - **Rejouable** : un envoi déjà présent sous son objet n'est pas refait. **Le seed constate** les trois états et la ligne
   `mail_cancelled`, et s'arrête en nommant la cause sinon.
 - **Les preuves qui comptent les identités du seed** passent de trois à cinq, révisées, non relâchées (décision 51).
+
+## 43. L'historique d'une boîte et le plafond d'une identité — `CRM-136` T4 (`docs/SPEC-mail-subsystem.md` §25.8)
+
+*Écrit le 2026-11-11, à la tranche du seed.* Les deux états de chaque réglage se voient à l'écran.
+- **La boîte de Camille porte trois mois d'historique** (`backfill_months = 3`) ; la boîte système et celle de Driss gardent
+  `0`, le défaut de la table. Le reset détruit aussi le volume de Stalwart (`down -v`) : la boîte ne contient aucun
+  courrier d'avant le seed, et l'historique n'en relève donc aucun de plus.
+- **L'identité de Driss porte un plafond de 200 envois par jour** ; celle de Camille et celle du service n'en ont aucun.
+- **Par les fonctions d'écriture** : la valeur part dans le même appel que le reste de la boîte (`p_backfill_months`) ou de
+  l'identité (`p_daily_quota` avec `p_daily_quota_set`, migration `0178`), comme le reste du §22.
+- **Le seed constate** les plafonds `[null, 200, null]` (admin@, contact@, systeme@) et l'historique `3`, et s'arrête en
+  nommant la cause sinon.
+- **Les preuves qui supposaient aucun plafond nulle part** sont révisées, non relâchées (décision 51) : le crochet de
+  `e2e/manuel/11-boites-identites.spec.ts` rend désormais les deux états.

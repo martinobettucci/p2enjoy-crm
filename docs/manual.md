@@ -2924,7 +2924,7 @@ on configure une boîte avant d'en superviser la relève.
 
 ![La liste des réglages : « Comptes de messagerie entrante » vient avant « État de la messagerie »](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/reglages-boites.jpg)
 
-![La liste des boîtes : serveur, sécurité, identifiant, état « Non testée » ou « Connectée », puis « Tester la connexion » et « Configurer » sur chaque ligne](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/liste-des-boites.jpg)
+![La liste des boîtes : serveur, sécurité, identifiant, état « Non testée » ou « Connectée », puis « Dossiers relevés », « Tester la connexion » et « Configurer » sous chaque ligne](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/liste-des-boites.jpg)
 
 - **Choisissez d'abord la boîte visée.** La liste propose les boîtes que vous voyez, plus celle que
   vous pouvez créer — la vôtre si vous n'en avez pas encore, et la boîte système de l'espace de

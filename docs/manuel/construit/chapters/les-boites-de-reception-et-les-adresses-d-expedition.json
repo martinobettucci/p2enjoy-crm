@@ -156,9 +156,9 @@
 		{
 			"type": "image",
 			"src": "les-boites-de-reception-et-les-adresses-d-expedition/liste-des-boites.jpg",
-			"alt": "La liste des boîtes : serveur, sécurité, identifiant, état « Non testée » ou « Connectée », puis « Tester la connexion » et « Configurer » sur chaque ligne",
+			"alt": "La liste des boîtes : serveur, sécurité, identifiant, état « Non testée » ou « Connectée », puis « Dossiers relevés », « Tester la connexion » et « Configurer » sous chaque ligne",
 			"width": 1062,
-			"height": 205
+			"height": 325
 		},
 		{
 			"type": "list",
@@ -509,14 +509,14 @@
 			"src": "les-boites-de-reception-et-les-adresses-d-expedition/tester-une-boite.jpg",
 			"alt": "Une boîte testée : sous sa ligne, le verdict « Connexion réussie. », et l'état « Connectée »",
 			"width": 1060,
-			"height": 121
+			"height": 161
 		},
 		{
 			"type": "image",
 			"src": "les-boites-de-reception-et-les-adresses-d-expedition/configurer-une-boite.jpg",
 			"alt": "Le formulaire d'une boîte : boîte visée, libellé, serveur, port, sécurité, identifiant, mot de passe vide, « Enregistrer »",
 			"width": 1062,
-			"height": 327
+			"height": 368
 		},
 		{
 			"type": "paragraph",
@@ -860,7 +860,7 @@
 			"src": "les-boites-de-reception-et-les-adresses-d-expedition/liste-des-adresses.jpg",
 			"alt": "La liste des adresses d'expédition : chaque adresse, ses pastilles « Par défaut » et « Signature », son serveur, « Tester la connexion » et « Configurer »",
 			"width": 1062,
-			"height": 325
+			"height": 519
 		},
 		{
 			"type": "list",

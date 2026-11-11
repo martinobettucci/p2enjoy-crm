@@ -333,11 +333,40 @@ if [ "$RAPIDE" = false ]; then
 	pkill -f "[v]ite" 2>/dev/null || true
 	if E2E_PROJETS=ui npx playwright test --config e2e/playwright.config.ts --project=ui \
 		"$SPEC_UI" >"$TRAVAIL/ui.log" 2>&1; then
+		# RÉVISÉ PAR `CRM-136` T3 (décision 51), non relâché : le compte attendait 9 scénarios depuis `CRM-089` (cinq, plus les
+		# quatre paliers), et `CRM-063` tranche 3 (16eb6006, 2026-08-25) en a ajouté un dixième — la signature — sans le
+		# reporter ici : le harnais rougissait sur son propre compte. Les dix scénarios sont désormais NOMMÉS, et chacun doit
+		# être passé ; un témoin vérifie que chaque nom attendu existe encore dans la spec, pour qu'un renommage ne rende pas
+		# la vérification complaisante.
 		passes=$(grep -oE '[0-9]+ passed' "$TRAVAIL/ui.log" | tail -1 | grep -oE '[0-9]+')
-		if [ "${passes:-0}" -eq 9 ]; then
-			ok "preuve d'interface — 9 scénarios, console vierge"
+		scenarios=(
+			"l’administratrice atteint l’écran depuis les réglages et voit les deux identités"
+			"elle modifie le libellé SANS toucher au mot de passe, et la liste est relue"
+			"elle écrit une signature, la voit dans la liste, puis la VIDE et la voit disparaître"
+			"changer l’adresse d’expédition fait apparaître une SECONDE identité"
+			"une adresse d’expédition non conforme est REFUSÉE, et l’écran écrit une phrase du produit"
+			"une lectrice sans identité voit l’état vide, AVEC le geste qui le comble"
+			"xl-1440 : la liste et le formulaire restent lisibles"
+			"lg-1152 : la liste et le formulaire restent lisibles"
+			"md-900 : la liste et le formulaire restent lisibles"
+			"sm-390 : la liste et le formulaire restent lisibles"
+		)
+		manquants=()
+		for scenario in "${scenarios[@]}"; do
+			grep -F "✓" "$TRAVAIL/ui.log" | grep -qF "$scenario" || manquants+=("$scenario")
+		done
+		# LE TÉMOIN : les six titres fixes sont lus dans la spec elle-même, et la boucle des paliers aussi.
+		absents_spec=()
+		for scenario in "${scenarios[@]:0:6}"; do
+			grep -qF "$scenario" "$SPEC_UI" || absents_spec+=("$scenario")
+		done
+		grep -qF '${palier.nom} : la liste et le formulaire restent lisibles' "$SPEC_UI" || absents_spec+=("la boucle des paliers")
+		if [ "${#absents_spec[@]}" -gt 0 ]; then
+			fail "témoin : la spec ne porte plus ${absents_spec[*]} — la liste des scénarios du harnais est périmée"
+		elif [ "${passes:-0}" -eq "${#scenarios[@]}" ] && [ "${#manquants[@]}" -eq 0 ]; then
+			ok "preuve d'interface — les ${#scenarios[@]} scénarios nommés, chacun passé, console vierge"
 		else
-			fail "preuve d'interface verte mais ${passes:-0} scénarios au lieu de 9"
+			fail "preuve d'interface verte mais ${passes:-0} scénarios au lieu de ${#scenarios[@]}${manquants:+ ; non passés : ${manquants[*]}}"
 		fi
 	else
 		fail_journal "la preuve d'interface ÉCHOUE" "$TRAVAIL/ui.log"
