@@ -975,6 +975,25 @@ dépôt ; `select pg_get_function_identity_arguments('public.upsert_mail_outboun
 `p_daily_quota_set boolean`.
 **Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0178` ».
 
+### 2.42 `CRM-147`, décisions 905, 909, 911, 912 et 915 — livrer un condensé choisi, récupéré par git dans la cellule (À LIVRER : `scripts/spark/livrer.sh` ; aucune migration, aucune image)
+
+`docs/SPEC-deploiement-spark.md` §5.1 bis. **Aucune migration, aucune image, aucune variable, aucun secret au dépôt.** Le
+changement est l'outil de livraison lui-même : `livrer.sh` exige `--revision <condensé>`, et la cellule récupère ce condensé
+par git avec la clé de `spark-docker` (posée par le responsable, décision 912). **La première livraison par condensé
+convertit `/srv/crm` en clone** (décision 915) : les fichiers suivis prennent leur état du condensé, les données — non
+suivies — ne sont pas touchées.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Épingler la clé d'hôte de GitHub pour `spark-docker` | responsable, ou session de livraison sur son instruction | ajouter à `~/.ssh/known_hosts` de `spark-docker` la ligne `github.com` de l'empreinte **publiée par GitHub** (vérifiée contre sa page officielle), jamais par une première connexion acceptée à l'aveugle ; `livrer.sh` refuse tant qu'elle manque |
+| 2 | Constater l'accès au registre npm depuis la cellule | session de livraison, avant la première livraison par condensé | sous `spark-docker`, un conteneur jetable `node:24-alpine` qui interroge le registre (`npm ping`) ; refusé, le recours est une décision du responsable (miroir, ou build sur le poste) |
+| 3 | Première livraison par condensé | session de livraison, sur instruction du responsable, dans une fenêtre | `scripts/spark/livrer.sh --revision <condensé>` ; `pg_dump` avant, comme pour toute fenêtre |
+| 4 | Vérifier en lecture seule | session de livraison | `git -C /srv/crm rev-parse HEAD` et `REVISION` égaux au condensé ; `git -C /srv/crm status --porcelain --untracked-files=no` vide ; la webapp sert l'`index-*.js` du build (§2.37) |
+| 5 | Constater | responsable | la livraison suivante d'un lot ne porte que le condensé choisi |
+
+**Retour arrière** : `livrer.sh --revision <condensé antérieur>` ; les migrations ne se défont pas par ce geste (leurs propres
+procédures). Avant la conversion, `--archive-seule` reste l'amorçage d'une cellule neuve.
+
 ## 3. Migrations en attente
 
 **La 178** (`CRM-136` T1), *en attente, hors du lot annoncé* : `p_daily_quota_set` sur `upsert_mail_outbound_identity`

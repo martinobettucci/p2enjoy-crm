@@ -48,6 +48,8 @@ supabase/docker/volumes/functions/deno_cache/
 supabase/docker/volumes/snippets/*
 !supabase/docker/volumes/snippets/.gitkeep
 /volumes/
+# CRM-147 (docs/SPEC-deploiement-spark.md §5.1 bis) : la révision livrée, écrite par `livrer.sh` dans le clone de la cellule.
+/REVISION
 mail-data/
 clamav-data/
 caddy/.letsencrypt/

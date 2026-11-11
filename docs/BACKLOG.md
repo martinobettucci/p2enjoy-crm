@@ -19418,8 +19418,7 @@ réel dans deux devises, une sans recette) ; captures aux quatre paliers ; manue
 
 ## Demande du 2026-11-10 — livrer une révision précise par git, depuis la cellule (décision 905)
 
-### CRM-147 — `livrer.sh` livre un condensé choisi, récupéré par git dans la cellule `[@]`
-*Prise en charge : session interactive 4891a451 (p2enjoy-crm-32) depuis 2026-11-10 22:37 UTC — état avant : [ ] ; confiée par la session de livraison (ee)*
+### CRM-147 — `livrer.sh` livre un condensé choisi, récupéré par git dans la cellule `[P]`
 
 **Origine** : indication du responsable, le 2026-11-10 (décision 905) : la clé privée de la cellule est autorisée à cloner le
 projet ; une livraison ne doit plus emporter tout `HEAD`.
@@ -19432,4 +19431,13 @@ condensé est absent ou si la cellule n'a pas accès. Aucune clé n'est lue, cop
 bâtie dans la cellule), le contrat de déploiement.
 **DoD** : `verify-spark.sh` (une livraison à blanc d'un condensé ancien, puis récent, dans une cellule simulée) ; une première
 livraison réelle d'un condensé choisi, sur instruction du responsable ; le README et le DAT.
-
+**État (2026-11-11, session 32)** : implémentée et vérifiée en développement, en cellule simulée. `scripts/spark/livrer.sh`
+(`--revision` obligatoire, résolu et contenu dans `origin/main` ; dans la cellule, sous `spark-docker` : clé d'hôte de GitHub
+vérifiée, `/srv/crm` converti en clone à la première livraison, `checkout --detach` sans `--force` ensuite, le condensé ne
+suivant aucun chemin de données ; webapp bâtie dans un conteneur `node:24-alpine` borné ; images dérivées depuis
+`git archive` du condensé) ; `.gitignore` (`/REVISION`). `scripts/verify-spark.sh` 141 vérifications, aucune anomalie, dont
+29 sur la livraison : sans condensé, nom de branche, adresses, condensé hors `main`, clé d'hôte non épinglée, condensé ancien
+puis récent (fichier retiré, données intactes, `REVISION`), build borné et ses variables, fichier suivi modifié, build en
+échec, aucun `git clean`. Constaté en lecture seule : `spark-docker` lit le dépôt avec sa clé (décision 912). README, DAT,
+spécification, contrat §2.42, changelog. **Reste**, sur instruction du responsable : les deux gestes préalables (clé d'hôte
+de GitHub épinglée, accès au registre npm), puis la première livraison réelle par condensé, par la session de livraison.

@@ -19,6 +19,8 @@
 #           docs/JOURNAL.md décision 889 : ClamAV épinglé, borné, sans port, signatures en volume, visé par mail-sync
 # @verifies CRM-145 (docs/BACKLOG.md) — docs/SPEC-deploiement-spark.md §3.2 bis ; docs/JOURNAL.md décision 899 : les en-têtes
 #           `Cache-Control` réels de la webapp, lus sur un Caddy jetable de la cellule ; révision de routes `crm-145`
+# @verifies CRM-147 (docs/BACKLOG.md) — docs/SPEC-deploiement-spark.md §5.1 bis ; décisions 909 et 915 : le condensé obligatoire,
+#           le clone de la cellule, la webapp bâtie dans la cellule, les refus, les données intactes (cellule simulée)
 # @verifies docs/SPEC-deploiement-spark.md §5.1 ; docs/JOURNAL.md décision 603 — la cellule est jointe
 #           par ses IP, jamais par un alias : livrer.sh et verifier.sh refusent un nom d'hôte
 #
@@ -864,19 +866,26 @@ L="$WORK/l"
 mkdir -p "$L/bin" "$L/cellule/etc"
 # Le clone porte l'état COURANT du poste — fichiers suivis et nouveaux —, committé dans le clone
 # seul : le harnais éprouve ce qui va être livré, pas le dernier commit. Son « origin » est lui-même,
-# pour que la garde « HEAD dans origin/main » porte sur ce clone et jamais sur le dépôt réel.
+# pour que la garde « condensé dans origin/main » porte sur ce clone et jamais sur le dépôt réel.
+# CRM-147 (§5.1 bis) : un dépôt NU local tient lieu du dépôt GitHub que la cellule clone (SPARK_DEPOT).
 git clone -q --no-hardlinks "$REPO_ROOT" "$L/clone" 2>/dev/null
 ( cd "$REPO_ROOT" && git ls-files -co --exclude-standard -z | tar --null -T - -cf - 2>/dev/null ) \
 	| tar -x -C "$L/clone"
 ( cd "$L/clone" && git config user.email verify@exemple.tld && git config user.name verify \
 	&& git config core.hooksPath /dev/null && git add -A && git commit -q -m "état du poste" --allow-empty \
 	&& git remote set-url origin "$L/clone" && git fetch -q origin )
+git clone -q --bare "$L/clone" "$L/origine.git" 2>/dev/null
+publier_origine() { git -C "$L/clone" fetch -q origin && git -C "$L/clone" push -q "$L/origine.git" HEAD:main; }
 fichiers_conformes "$L/injecte"
 cp "$L/injecte/env" "$L/cellule/etc/env"
+# La clé d'hôte de GitHub épinglée pour spark-docker, ou non (geste préalable, §5.1 bis) : une ligne d'exemple suffit à
+# `ssh-keygen -F`, aucune connexion n'étant faite au dépôt nu local.
+printf 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl\n' > "$L/hotes-epingles"
+: > "$L/hotes-vides"
 # Faux ssh : exécute localement la commande distante, /etc/spark/env étant redirigé vers la cellule
 # simulée. Il journalise chaque commande reçue. L'image Realtime de la cellule est celle qu'étiquette
 # $L/image-cellule, quand il existe ; un `docker load` n'est pas exécuté mais consigné.
-cat > "$L/bin/ssh" <<EOF
+cat > "$L/bin/ssh" <<FAUX_SSH
 #!/usr/bin/env bash
 commande="\${@: -1}"
 printf '%s\n' "\$*" >> "$L/ssh-args.log"
@@ -888,18 +897,50 @@ case "\$commande" in
 	*"docker load"*) commande="cat >/dev/null; echo chargement >> '$L/charges.log'" ;;
 esac
 exec bash -c "\$commande"
-EOF
-# Faux npm : consigne les variables reçues par le build et produit un index.html.
-cat > "$L/bin/npm" <<EOF
+FAUX_SSH
+# Faux docker, pour le seul `docker run` du build de la webapp DANS LA CELLULE (§5.1 bis) : il consigne les variables
+# reçues, les bornes et l'image, et produit un index.html dans le répertoire monté. Tout autre appel va au vrai docker.
+VRAI_DOCKER=$(command -v docker || echo /bin/false)
+cat > "$L/bin/docker" <<FAUX_DOCKER
 #!/usr/bin/env bash
-env | grep '^VITE_' | sort > "$L/build.env"
-mkdir -p webapp/dist && echo "<!doctype html><title>build \$(date +%s%N)</title>" > webapp/dist/index.html
-EOF
-chmod +x "$L/bin/ssh" "$L/bin/npm"
+if [ "\$1" = run ]; then
+	shift; source=""; : > "$L/build.env"
+	while [ \$# -gt 0 ]; do case "\$1" in
+		-e) printf '%s\n' "\$2" >> "$L/build.env"; shift 2 ;;
+		-v) source="\${2%%:*}"; shift 2 ;;
+		--memory|--cpus|-w) printf '%s %s\n' "\$1" "\$2" >> "$L/docker-run.log"; shift 2 ;;
+		--rm) shift ;;
+		*) printf 'image %s\n' "\$1" >> "$L/docker-run.log"; break ;;
+	esac; done
+	[ -f "$L/build-echoue" ] && exit 1
+	mkdir -p "\$source/webapp/dist" && echo "<!doctype html><title>build \$(date +%s%N)</title>" > "\$source/webapp/dist/index.html"
+	exit 0
+fi
+exec "$VRAI_DOCKER" "\$@"
+FAUX_DOCKER
+chmod +x "$L/bin/ssh" "$L/bin/docker"
 # Adresses de DOCUMENTATION (RFC 5737), jamais celles de la cellule réelle : aucune n'entre au dépôt.
-livrer() { ( cd "$L/clone" && PATH="$L/bin:$PATH" SPARK_REPERTOIRE="$L/cellule/srv" \
-	SPARK_SSH_HOTE="${HOTE_ESSAI-192.0.2.10}" SPARK_SSH_REBOND="${REBOND_ESSAI-ubuntu@192.0.2.1}" \
-	./scripts/spark/livrer.sh --sans-lancer "$@" 2>&1 ); }
+#   livrer [--sans-revision | --archive-seule] [options…] — le condensé est CONDENSE_ESSAI, ou HEAD du clone.
+livrer() {
+	local revision=(--revision "${CONDENSE_ESSAI:-$(git -C "$L/clone" rev-parse HEAD)}")
+	case "${1:-}" in
+		--sans-revision) revision=(); shift ;;
+		--archive-seule) revision=() ;;
+	esac
+	( cd "$L/clone" && PATH="$L/bin:$PATH" SPARK_REPERTOIRE="$L/cellule/srv" SPARK_DEPOT="$L/origine.git" \
+		SPARK_HOTES_CONNUS="${CONNUS_ESSAI-$L/hotes-epingles}" \
+		SPARK_SSH_HOTE="${HOTE_ESSAI-192.0.2.10}" SPARK_SSH_REBOND="${REBOND_ESSAI-ubuntu@192.0.2.1}" \
+		./scripts/spark/livrer.sh --sans-lancer "${revision[@]}" "$@" 2>&1 ); }
+
+# CRM-147 (décision 915) : le condensé est obligatoire, et refusé avant tout ssh.
+rm -f "$L/ssh-args.log"
+out=$(livrer --sans-revision)
+case "$out" in *"le condensé est obligatoire"*) [ ! -e "$L/ssh-args.log" ] && ok "sans --revision : refus avant tout ssh" \
+		|| fail "sans --revision : refusé, mais ssh a été appelé" ;;
+	*) fail "sans --revision accepté : $(printf '%s' "$out" | tail -n 1)" ;; esac
+out=$(CONDENSE_ESSAI=main livrer)
+case "$out" in *"un condensé hexadécimal est attendu"*) ok "--revision main : refusé, un nom de branche n'est pas un condensé" ;;
+	*) fail "--revision main accepté : $(printf '%s' "$out" | tail -n 1)" ;; esac
 
 # La cellule est jointe par ses IP, jamais par un alias (décision 603) : les trois refus précèdent
 # tout geste distant, et l'appel accepté porte le rebond par `-J`.
@@ -923,33 +964,72 @@ mkdir -p "$L/cellule/srv"
 mv "$L/cellule/etc/env" "$L/cellule/etc/env.attente"
 if out=$(livrer --archive-seule); then
 	[ -f "$L/cellule/srv/scripts/spark/proposer.sh" ] && [ ! -e "$L/build.env" ] && [ ! -e "$L/cellule/srv/webapp/dist/index.html" ] \
-		&& ok "--archive-seule : dépôt livré sans variables importées, sans build ni webapp" \
-		|| fail "--archive-seule a construit ou n'a rien livré"
+		&& [ ! -d "$L/cellule/srv/.git" ] \
+		&& ok "--archive-seule : dépôt livré sans variables importées, sans build, sans clone ni webapp" \
+		|| fail "--archive-seule a construit, cloné, ou n'a rien livré"
 else
 	fail "--archive-seule refusé sans variables : $(printf '%s' "$out" | tail -n 2 | tr '\n' ' ')"
 fi
 mv "$L/cellule/etc/env.attente" "$L/cellule/etc/env"
-mkdir -p "$L/cellule/srv/webapp/dist" && echo perime > "$L/cellule/srv/webapp/dist/perime.js"
-if out=$(livrer); then
-	ok "première livraison aboutie"
+
+# Les données de la cellule : un fichier NON SUIVI sous le répertoire de la base, que nul geste git ne doit toucher.
+mkdir -p "$L/cellule/srv/supabase/docker/volumes/db/data" "$L/cellule/srv/webapp/dist"
+echo donnees > "$L/cellule/srv/supabase/docker/volumes/db/data/PG_VERSION"
+echo perime > "$L/cellule/srv/webapp/dist/perime.js"
+
+# Un condensé absent d'origin/main est refusé sur le poste, avant tout geste dans la cellule.
+( cd "$L/clone" && git checkout -q -b hors-main && git commit -q --allow-empty -m "hors main" )
+hors=$(git -C "$L/clone" rev-parse HEAD)
+git -C "$L/clone" checkout -q main
+out=$(CONDENSE_ESSAI=$hors livrer)
+case "$out" in *"n'est pas dans origin/main"*) [ ! -d "$L/cellule/srv/.git" ] && ok "condensé absent d'origin/main : refusé, la cellule intacte" \
+		|| fail "condensé hors main : refusé, mais la cellule a été convertie" ;;
+	*) fail "condensé hors main accepté : $(printf '%s' "$out" | tail -n 1)" ;; esac
+
+# La clé d'hôte de GitHub non épinglée : refus dans la cellule, avant toute récupération.
+out=$(CONNUS_ESSAI="$L/hotes-vides" livrer)
+case "$out" in *"clé d'hôte de GitHub n'est pas épinglée"*) [ ! -d "$L/cellule/srv/.git" ] \
+		&& ok "clé d'hôte de GitHub non épinglée : refus, aucun clone créé" || fail "clé d'hôte non épinglée : refusé, mais un clone est créé" ;;
+	*) fail "clé d'hôte non épinglée acceptée : $(printf '%s' "$out" | tail -n 1)" ;; esac
+
+# Un condensé ANCIEN d'abord, puis le RÉCENT (§5.1 bis, preuves) : l'ancien est le parent du HEAD du clone.
+( cd "$L/clone" && git rm -q docs/SSO.md && git commit -q -m "retrait" ) && publier_origine
+ancien=$(git -C "$L/clone" rev-parse HEAD~1)
+recent=$(git -C "$L/clone" rev-parse HEAD)
+if out=$(CONDENSE_ESSAI=$ancien livrer); then
+	ok "livraison d'un condensé ancien aboutie (première conversion)"
 	grep -q -- "-J ubuntu@192.0.2.1 spark-docker@192.0.2.10 " "$L/ssh-args.log" \
 		&& ok "ssh reçoit le rebond par -J et la cellule par leurs IP, sans aucun alias" \
 		|| fail "arguments ssh : $(head -n 1 "$L/ssh-args.log")"
-	[ "$(cat "$L/cellule/srv/REVISION")" = "$(git -C "$L/clone" rev-parse HEAD)" ] && ok "REVISION = HEAD livré" || fail "REVISION erronée"
-	[ -f "$L/cellule/srv/runProd.sh" ] && [ -f "$L/cellule/srv/docker-compose.spark.yml" ] && ok "archive extraite dans le répertoire de l'application" || fail "archive non extraite"
+	[ -d "$L/cellule/srv/.git" ] && [ "$(git -C "$L/cellule/srv" rev-parse HEAD)" = "$ancien" ] \
+		&& ok "le répertoire de l'application est devenu le clone, placé sur le condensé ancien" || fail "clone absent ou mal placé"
+	[ "$(cat "$L/cellule/srv/REVISION")" = "$ancien" ] && ok "REVISION = condensé livré" || fail "REVISION erronée"
+	[ -f "$L/cellule/srv/docs/SSO.md" ] && ok "le condensé ancien porte encore le fichier que le récent retire" || fail "fichier du condensé ancien absent"
 	[ ! -e "$L/cellule/srv/webapp/dist/perime.js" ] && [ -f "$L/cellule/srv/webapp/dist/index.html" ] \
-		&& ok "contenu de webapp/dist remplacé, le répertoire monté conservé" || fail "webapp/dist non remplacé"
+		&& ok "contenu de webapp/dist remplacé par le build de la cellule, le répertoire monté conservé" || fail "webapp/dist non remplacé"
 	grep -q "^VITE_SUPABASE_URL=https://crm.exemple.tld$" "$L/build.env" \
 		&& grep -q "^VITE_SUPABASE_ANON_KEY=$(env_get "$L/injecte/env" ANON_KEY)$" "$L/build.env" \
 		&& grep -q "^VITE_SSO_ISSUER=https://oauth.exemple.tld/realms/lelabs$" "$L/build.env" \
 		&& grep -q "^VITE_SSO_CLIENT_ID=lelabs-crm-serveur$" "$L/build.env" \
-		&& ok "le build a reçu les variables publiques relues dans la cellule" || fail "variables du build : $(tr '\n' ' ' < "$L/build.env")"
+		&& ok "le build de la cellule a reçu les variables publiques relues dans la cellule" || fail "variables du build : $(tr '\n' ' ' < "$L/build.env")"
 	grep -q 'JWT_SECRET\|SERVICE_ROLE_KEY' "$L/build.env" && fail "un secret a atteint le build" || ok "aucun secret dans le build"
+	grep -q -- "--memory 2g" "$L/docker-run.log" && grep -q -- "--cpus 2" "$L/docker-run.log" && grep -q "image node:24-alpine" "$L/docker-run.log" \
+		&& ok "le build de la cellule est borné (2 Go, 2 cœurs), sur l'image de webapp/Dockerfile" || fail "build non borné : $(tr '\n' ' ' < "$L/docker-run.log")"
 	grep -q "docker image inspect .*$etiquette_minio_livrer" "$L/ssh.log" \
 		&& ok "la livraison compare aussi l'image MinIO dérivée à celle de la cellule (INC-329)" \
 		|| fail "la livraison ignore l'image MinIO dérivée"
 else
-	fail "première livraison refusée : $(printf '%s' "$out" | tail -n 3 | tr '\n' ' ')"
+	fail "livraison du condensé ancien refusée : $(printf '%s' "$out" | tail -n 3 | tr '\n' ' ')"
+fi
+if out=$(CONDENSE_ESSAI=$recent livrer); then
+	[ "$(git -C "$L/cellule/srv" rev-parse HEAD)" = "$recent" ] && [ "$(cat "$L/cellule/srv/REVISION")" = "$recent" ] \
+		&& ok "livraison du condensé récent : le clone et REVISION y sont" || fail "condensé récent mal placé"
+	[ ! -e "$L/cellule/srv/docs/SSO.md" ] && ok "fichier supprimé par le condensé récent retiré par git dans la cellule" \
+		|| fail "fichier supprimé laissé dans la cellule"
+	[ "$(cat "$L/cellule/srv/supabase/docker/volumes/db/data/PG_VERSION")" = donnees ] \
+		&& ok "les données non suivies de la cellule sont intactes" || fail "données de la cellule touchées"
+else
+	fail "livraison du condensé récent refusée : $(printf '%s' "$out" | tail -n 3 | tr '\n' ' ')"
 fi
 # L'image Realtime n'est transférée que si son CONTENU diffère de celui de la cellule (décision 577) :
 # une reconstruction change l'identifiant, jamais les couches ni la configuration.
@@ -973,20 +1053,27 @@ if docker info >/dev/null 2>&1; then
 else
 	skip "démon Docker indisponible : comparaison de l'image Realtime non éprouvée"
 fi
-( cd "$L/clone" && git rm -q docs/SSO.md && git commit -q -m "retrait" )
-if out=$(livrer); then
-	[ ! -e "$L/cellule/srv/docs/SSO.md" ] && ok "seconde livraison : fichier supprimé par Git retiré dans la cellule" \
-		|| fail "fichier supprimé laissé dans la cellule"
-else
-	fail "seconde livraison refusée : $(printf '%s' "$out" | tail -n 2 | tr '\n' ' ')"
-fi
-echo modifie >> "$L/clone/README.md"
+# Un fichier SUIVI modifié dans la cellule : la livraison refuse et le nomme, sans l'écraser.
+echo modifie >> "$L/cellule/srv/README.md"
 out=$(livrer)
-case "$out" in *"modifications"*) ok "arbre modifié : livraison refusée" ;; *) fail "arbre modifié accepté" ;; esac
-git -C "$L/clone" checkout -q README.md
+case "$out" in *"fichiers suivis sont modifiés dans la cellule"*"README.md"*) grep -q modifie "$L/cellule/srv/README.md" \
+		&& ok "fichier suivi modifié dans la cellule : refus nommé, rien d'écrasé" || fail "fichier modifié écrasé" ;;
+	*) fail "fichier suivi modifié accepté : $(printf '%s' "$out" | tail -n 1)" ;; esac
+git -C "$L/cellule/srv" checkout -q -- README.md
+# Un build en échec dans la cellule : la livraison s'arrête, REVISION inchangée.
+touch "$L/build-echoue"
+avant=$(cat "$L/cellule/srv/REVISION")
+out=$(livrer)
+case "$out" in *"build de la webapp dans la cellule en échec"*) [ "$(cat "$L/cellule/srv/REVISION")" = "$avant" ] \
+		&& ok "build en échec dans la cellule : livraison interrompue, REVISION inchangée" || fail "build en échec : REVISION changée" ;;
+	*) fail "build en échec accepté : $(printf '%s' "$out" | tail -n 1)" ;; esac
+rm -f "$L/build-echoue"
 sed -i '/^SSO_OIDC_CLIENT_ID=/d' "$L/cellule/etc/env"
 out=$(livrer)
 case "$out" in *"SSO_OIDC_CLIENT_ID absente"*) ok "variable publique non importée : refus nommé" ;; *) fail "variable manquante : $(printf '%s' "$out" | tail -n 1)" ;; esac
+# Jamais dans la cellule : `git clean`, `git reset --hard`, `git stash` — un dépôt de travail y côtoie les données.
+grep -v '^\s*#' scripts/spark/livrer.sh | grep -qE 'git clean|reset --hard|git stash' \
+	&& fail "livrer.sh emploie git clean, reset --hard ou stash" || ok "livrer.sh n'emploie ni git clean, ni reset --hard, ni stash"
 
 # --- 7. Dégradations ---------------------------------------------------------------------------------
 

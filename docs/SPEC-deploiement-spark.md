@@ -249,6 +249,10 @@ propositions **sous** le bloc posé par le plan de contrôle dans `/etc/spark/en
 
 ### 5.1 Depuis le poste : `scripts/spark/livrer.sh`
 
+*Révisé par `CRM-147` (§5.1 bis) : la livraison prend désormais un condensé choisi, que la cellule récupère par git, et la
+webapp se bâtit dans la cellule. Les points ci-dessous ne valent plus que pour `--archive-seule` (amorçage) ; les points 2
+et 6, la règle des adresses IP et les labels de révision valent toujours.*
+
 1. Refuse un arbre de travail modifié et un `HEAD` absent d'`origin/main` : la cellule exécute du
    code **poussé**, jamais un état local. **La cellule est jointe par ses adresses IP, jamais par un
    alias** (décision 603, règle du responsable) : `SPARK_SSH_HOTE` porte l'IP de la cellule et est
@@ -307,8 +311,11 @@ sa propre clé, et **tout** ce qui part vient de ce condensé : code, migrations
    origin`, condensé contenu dans `origin/main` (même contrôle que sur le poste), puis `git checkout --detach <condensé>`
    **sans** `--force` : un fichier suivi modifié dans la cellule fait refuser la livraison, et le script le nomme
    (`git status --porcelain --untracked-files=no`) au lieu de l'écraser.
-3. **Les données ne sont jamais au dépôt** : avant tout `checkout`, le script vérifie que `supabase/docker/volumes/db/data`,
-   `webapp/dist` et `REVISION` sont ignorés par git (`git check-ignore`) et refuse sinon. **Interdits** dans la cellule :
+3. **Les données ne sont jamais au dépôt** : avant tout `checkout`, le script vérifie que **le condensé ne suit aucun**
+   des chemins `supabase/docker/volumes/db/data`, `supabase/docker/volumes/storage`, `webapp/dist` et `REVISION`
+   (`git ls-tree`) et refuse sinon. *Précisé à la mise en œuvre (2026-11-11)* : un `checkout` ne touche jamais un fichier
+   **non suivi**, et le `.gitignore` présent sur le disque à la première conversion est celui de l'ancienne révision —
+   `git check-ignore` n'y prouvait rien. `REVISION` est ajouté au `.gitignore`. **Interdits** dans la cellule :
    `git clean`, `git reset --hard`, `git stash` — un dépôt de travail côtoie les données de la base.
 4. **La webapp se bâtit dans la cellule** (décision 909), depuis le condensé extrait : un conteneur jetable de l'image du
    build (`node:24-alpine`, celle de `webapp/Dockerfile`), borné (`--memory 2g`, `--cpus 2`), lit le clone en lecture

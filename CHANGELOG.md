@@ -13,6 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-147` — une livraison prend un condensé choisi, récupéré par git dans la cellule (décisions 905, 909, 911, 912 et 915)
+
+- **`scripts/spark/livrer.sh --revision <condensé>`**, obligatoire : une livraison n'emporte plus tout `main`. Le condensé
+  doit être dans `origin/main`. Dans la cellule, `/srv/crm` devient le clone git, mis à jour par `spark-docker` avec sa
+  propre clé et placé sur le condensé ; un fichier suivi modifié dans la cellule fait refuser au lieu d'être écrasé, et
+  les données, non suivies, ne sont jamais touchées. La webapp se bâtit **dans la cellule**, dans un conteneur borné ; les
+  images dérivées, depuis le condensé. La clé d'hôte de GitHub doit être épinglée (geste préalable).
+- Déploiement : `docs/PROD_MIGRATIONS.md` §2.42 — deux gestes préalables, puis la première livraison par condensé, sur
+  instruction du responsable. Aucune migration.
+
 #### `CRM-136` — historique, dossiers relevés et quota d'envoi réglables à l'écran (décisions 875, 884 et 885) — tranches T1 et T2
 
 - **Le quota journalier d'une identité redevient effaçable** : la fonction d'écriture des identités d'expédition accepte un drapeau qui écrit le quota tel quel, « aucun plafond » compris (migration 178). Sans le drapeau, le quota est conservé comme avant ; l'écran qui l'emploiera arrive avec la tranche des écrans.

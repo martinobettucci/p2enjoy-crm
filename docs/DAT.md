@@ -1279,8 +1279,11 @@ Dans la cellule, **aucun `.env` n'est écrit** : `./runProd.sh --spark` fusionne
 résultat aux mêmes gardes. `env_file` n'est **pas** posé sur chaque service, contrairement au
 gabarit du dossier de cellule : il remettrait tous les secrets à tous les conteneurs, quand
 l'interpolation remet à chacun ce qu'il consomme — répartition figée par `scripts/verify-spark.sh`.
-La webapp est construite **sur le poste qui livre** (`scripts/spark/livrer.sh`), la cellule n'ayant
-pas Node. **Realtime y tourne sur une image dérivée** : la cellule ne dispose que de 65 536 UID, et
+La webapp est construite **dans la cellule** depuis `CRM-147` (décision 909 ; `docs/SPEC-deploiement-spark.md` §5.1 bis) :
+la livraison prend un **condensé choisi** (`livrer.sh --revision`, obligatoire), `/srv/crm` est le clone git de la
+cellule, que `spark-docker` met à jour avec sa propre clé et place sur le condensé (`checkout --detach`, jamais
+`git clean` ni `reset --hard`), et la webapp se bâtit dans un conteneur jetable `node:24-alpine` borné à 2 Go et 2
+cœurs. *Avant `CRM-147`, elle l'était sur le poste, la cellule n'ayant pas Node.* **Realtime y tourne sur une image dérivée** : la cellule ne dispose que de 65 536 UID, et
 ni les fichiers que l'image d'origine attribue à `nobody` (65534), ni le `sudo -u nobody` de ses
 migrations n'y fonctionnent. L'image dérivée renumérote `nobody` en 64000, en une seule couche ;
 elle est construite sur le poste et chargée dans la cellule (décisions 571 et 575).
@@ -1518,7 +1521,7 @@ désigne `P2ENJOY_ENV_FILE`.
 | `runProd.sh [--spark] --migrate --premier-deploiement` | Premier déploiement : services du runner seuls, mesure, migration, PostgREST recréé, pile entière. **Livré — `CRM-090`** | Refusé sans `--migrate` ; refusé si le schéma `public` porte une seule table |
 | `scripts/spark/proposer.sh` | Dans la cellule : dépose sous le bloc du plan de contrôle les propositions de variables, de secrets — tirés sur place, jamais affichés — et de route | Refus si `JWT_SECRET` est déjà en service, si une proposition attend encore une décision, ou si le port est inférieur à 1024 |
 | `scripts/spark/amorcer-espace.sh` | Dans la cellule : premier espace de travail et l'**attente** de son administrateur, par la clé de service ; aucun compte n'est créé — la personne devient administratrice à sa première connexion LeLabs (`CRM-092` T4, `docs/SPEC-session-sso.md` §12) ; un espace qui a déjà un administrateur n'est pas touché ; idempotent | Profil `prod` exigé ; opération d'exploitation, sur instruction explicite |
-| `scripts/spark/livrer.sh` | Depuis le poste : build de la webapp avec les variables publiques relues dans la cellule, `git archive` par-dessus `/srv/crm`, contenu de `webapp/dist` remplacé, `REVISION`, puis `./runProd.sh --spark` | Arbre propre ; `HEAD` dans `origin/main` ; répertoire de l'application préparé par `root` ; variables publiques importées ; fichiers supprimés par Git retirés dans la cellule |
+| `scripts/spark/livrer.sh` | Depuis le poste, `--revision <condensé>` obligatoire (`CRM-147`) : la cellule récupère le condensé par git dans son clone `/srv/crm`, bâtit la webapp dans un conteneur borné avec les variables publiques relues dans la cellule, remplace le contenu de `webapp/dist`, écrit `REVISION`, puis `./runProd.sh --spark` ; images dérivées bâties depuis le condensé | Condensé dans `origin/main` ; clé d'hôte de GitHub épinglée pour `spark-docker` ; répertoire de l'application préparé par `root` ; variables publiques importées ; aucun fichier suivi modifié dans la cellule ; le condensé ne suit aucun chemin de données |
 | `runProd.sh --migrate` | Ouvre la fenêtre de migration : force la recréation du `migrations-runner` qui applique le répertoire et émet `notify pgrst, 'reload schema'` une seule fois en fin de passage réussi. **Livré — `CRM-087`** | Les gardes de `runProd.sh`, plus la **confirmation que l'instantané de VM est pris** (« oui » demandé au terminal, `--instantane-verifie` hors terminal) ; la surcharge de `APPLY_MIGRATIONS` vaut pour la seule invocation et n'écrit jamais dans `.env` |
 | `resetMe.sh` | Détruit la base et les volumes locaux, redémarre à froid, rejoue migrations et seed | Environnement complet ; profil `dev` ; confirmation explicite (`--yes` hors terminal interactif) |
 | `supabase/seed/apply-seed.sh` | Applique le seed socle par les API réelles ; convergent, ne détruit rien | Environnement complet ; profil `dev` ; pile démarrée |
