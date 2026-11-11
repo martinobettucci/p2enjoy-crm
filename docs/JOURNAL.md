@@ -40488,3 +40488,12 @@ manuel) s'écrit sur ces trois réponses, avant le code.
 décision 897, pour cette unité : lus en entier, §1 à §4 et §6 à §12, puis les sections de l'inbox et de la corbeille —
 §5.3 septies, §5.4 à §5.4 quinquies, §5.16, §5.96 et §5.98. Le compte rendu dit que la lecture n'était pas intégrale ; la
 vérification du diff d'interface contre ces sections reste exigée. **Portée** : `CRM-138` seulement ; `CLAUDE.md` inchangé.
+
+
+### décision 921 — `CRM-138` : la confirmation d'« Effacer » vit dans le flux, pas dans une fenêtre modale
+
+*2026-11-11, session interactive 4891a451 (p2enjoy-crm-32), arbitrage du responsable (`AskUserQuestion`).* La décision 878
+disait « une fenêtre de confirmation » ; le design system confirme toujours dans le flux (§5.13, §5.4 quater, §5.98). **Le
+responsable choisit le flux** : un bloc sous la rangée de commandes du message ouvert, avec la phrase, la case « l'effacer
+aussi dans la boîte mail » et les deux boutons. Écartée : une fenêtre modale, qui aurait été le premier écart du produit.
+`docs/DESIGN_SYSTEM.md` §5.102, `docs/SPEC-mail-subsystem.md` §29.1.

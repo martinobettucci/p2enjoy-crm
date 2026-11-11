@@ -3992,7 +3992,7 @@ Dans le message ouvert de l'inbox (`docs/DESIGN_SYSTEM.md` §5.99) :
 - un bouton **libellé** « Marquer comme non lu » ou « Marquer comme lu », **à côté** du bouton de sommeil, remplace l'icône
   seule (`inbox-basculer-lecture`) ; l'état lu reste **personnel** (`mail_message_reads`, `CRM-063`) ;
 - le sommeil se dit avec **« message »** au lieu de « fil » (`docs/SPEC-cards.md` §16.14.7) ;
-- **« Effacer »** ouvre une **fenêtre de confirmation** qui nomme le message (objet, expéditeur). Elle porte la case
+- **« Effacer »** ouvre une **confirmation dans le flux** (décision 921) qui nomme le message. Elle porte la case
   **« L'effacer aussi dans la boîte mail (le déplacer dans sa corbeille) »**, décochée par défaut, **offerte seulement si la
   personne peut écrire au moins une des boîtes où le message figure** (§29.3) ;
 - un dossier **« Corbeille »** dans l'inbox liste les messages effacés que la personne peut voir là (§29.4), avec la date

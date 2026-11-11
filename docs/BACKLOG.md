@@ -19105,7 +19105,7 @@ responsable.
 **MCP** : **oui, famille `messagerie`**, cases existantes (décision 878) : marquer non lu, mettre en sommeil, effacer.
 **Spécification** : écrite le 2026-11-11 avant le code (décisions 878 et 917) — `docs/SPEC-mail-subsystem.md` §29,
 `docs/SPEC-cards.md` §16.14.11, `docs/SCHEMA.md` « Migration de `CRM-138` », `docs/SPEC-mcp.md` §9.2 (CRM-138) ;
-`docs/DESIGN_SYSTEM.md` à écrire avant les écrans. Elle couvre :
+`docs/DESIGN_SYSTEM.md` §5.102 (décisions 920 et 921). Elle couvre :
 - `docs/SPEC-mail-subsystem.md`, avec une section nouvelle : la corbeille des messages, qui peut effacer, ce que voit
   l'affaire, la purge, le déplacement IMAP par `mail-sync` sous une route interne et un relais sous autorisation ;
 - `docs/SPEC-cards.md` §16.14 et suivants (le vocabulaire du sommeil) ;

@@ -8366,3 +8366,66 @@ l'air.
   - La confirmation et chaque ligne du panneau ont leur état en cours : la commande est `disabled` pendant l'écriture.
 - **Aucune couleur, aucun jeton nouveau.** Les icônes `Archive`, `ArchiveRestore` et `ChevronDown` sont déjà employées par
   le produit.
+
+### 5.102 Le message ouvert : « Marquer comme non lu » libellé, le sommeil en mots, « Effacer » et le dossier « Corbeille » — `CRM-138`
+
+*Écrit le 2026-11-11, avant le code. Lecture ciblée du document, décidée par le responsable (décision 920) : §1 à §4, §6 à
+§12, §5.3 septies, §5.4 à §5.4 quinquies, §5.16, §5.96 et §5.98.* Ce que l'écran lit, envoie et refuse est spécifié par
+`docs/SPEC-mail-subsystem.md` §29 ; ces règles ne disent que de quoi il a l'air.
+
+- **UNE RANGÉE DE COMMANDES DANS L'EN-TÊTE DU MESSAGE OUVERT**, dans cet ordre : le sommeil (§5.3 septies, inchangé dans sa
+  forme), puis **« Marquer comme non lu »** ou **« Marquer comme lu »**, puis **« Effacer »**. *Révise le §5.4 quinquies*
+  (décision 878) : l'icône seule `Mail` / `MailOpen` devient un **bouton libellé** secondaire compact, qui garde son icône
+  (§9 : elle accompagne, elle ne remplace plus). Sous `md`, la rangée passe à la ligne, cibles de 40 px conservées (§8).
+- **LE SOMMEIL DIT « message »** (`docs/SPEC-cards.md` §16.14.11) : « Mettre le message en sommeil », « Réveiller le
+  message », et l'annonce « Message mis en sommeil, avec ses réponses. » — le fil entier dort, et la phrase le dit sans
+  employer le mot. La bascule devient « Afficher les messages en sommeil ».
+- **« Effacer » EST UN BOUTON SECONDAIRE COMPACT, icône `Trash2`** — celle de la mise à la corbeille partout dans le produit,
+  le même geste (§9). Il n'est pas destructif d'aspect : il **ouvre** la confirmation, il ne détruit rien.
+- **LA CONFIRMATION VIT DANS LE FLUX, SOUS LA RANGÉE DE COMMANDES, JAMAIS EN MODALE** — la règle du §5.13, du §5.4 quater et
+  de « Annuler l'envoi » (§5.98), confirmée par le responsable (décision 921) alors que la décision 878 disait « une
+  fenêtre ». Un bloc bordé `--color-border`, `--radius-sm`, rembourrage 12 px, `role="group"` nommé « Effacer ce message ».
+  Il **nomme le message** — « Effacer « {objet} » ? » —, puis dit en une phrase : « Il ira dans la corbeille de l'inbox,
+  d'où vous pourrez le restaurer pendant {n} jours. » — {n} **lu en base** (`trash_retention_days()`, comme au §5.16). Le
+  focus entre sur « Annuler » et revient à « Effacer » à l'abandon ; `Échap` abandonne.
+- **LA CASE « L'effacer aussi dans la boîte mail »**, native, 24 px, libellé pour cible étendue (§5.96), suivie de l'aide en
+  13 px `--color-text-2` reliée par `aria-describedby` : « Le message sera déplacé dans la corbeille de la boîte qui l'a
+  reçu. Restaurer ne l'en ressortira pas. » **Décochée à chaque ouverture.** **Elle n'est rendue que si la base dit que la
+  personne peut écrire au moins une boîte où le message figure** — une capacité rendue sur le message, jamais un rôle lu
+  (§5.59) ; sinon, elle est **absente**, et non désactivée : il n'y a pas de boîte à nommer, et la base refuse de toute
+  façon (`no_writable_mailbox`).
+- **LES DEUX BOUTONS DE LA CONFIRMATION** : « Annuler » (secondaire) et **« Effacer »** (**destructif**, `Trash2`) — la mise à la
+  corbeille est le geste destructif de ce panneau (§6). Pendant l'appel, ils sont inactifs, et le bouton appuyé dit
+  « Effacement… », `aria-busy`. Un refus se dit **dans le bloc**, `role="alert"`, `--color-danger-soft` /
+  `--color-danger-on-soft`, par un dictionnaire fermé — introuvable, refusé, aucune boîte inscriptible, réseau, inconnu —,
+  et le bloc reste ouvert.
+- **L'ISSUE** : le bloc se referme, le message quitte la liste (le message ouvert se referme sur l'état « absence de
+  sélection », §5.4), la région vivante dit « Message mis à la corbeille. », et le focus va à la ligne suivante de la
+  liste, ou à l'entrée du dossier si la liste est vide (§5.13 : jamais sur un élément qui disparaît). Les comptes sont
+  relus.
+- **LE DOSSIER « Corbeille »**, entrée de tête du premier panneau, **la dernière**, après « Non classés » et l'arborescence,
+  séparée par une bordure haute `--color-border` : le patron `BoutonDossier`, icône `Trash2`, son compte en
+  `--color-text-3` (§5.4), sans pastille de non-lus — une corbeille n'attend aucun geste. Toujours rendue, à zéro compris.
+  Son état vit dans l'adresse sous la clé `corbeille` (valeur `oui`), une désignation de ce qui est montré (§5.36).
+- **LA LISTE DE LA CORBEILLE**, la liste plate du §5.18 et non le tableau du §5.16 — elle vit dans le deuxième panneau de
+  l'inbox, et une ligne s'y lit comme une ligne de message. Une ligne porte l'objet (`font-medium`), l'expéditeur, puis en
+  13 px `--color-text-2` « Effacé le {date} par {auteur} » (« Auteur inconnu » si détaché, §5.16) et « Effacement
+  définitif le {date} » (« Inconnue » sans rétention lue, §5.16), puis, s'il y a un déplacement IMAP, son état en toutes
+  lettres : « Déplacé dans la corbeille de la boîte », « Déplacement en attente », « Déplacement impossible : {motif} » —
+  ce dernier en `--color-danger-on-soft` précédé de `TriangleAlert` en `aria-hidden` (§1 : le mot porte l'état).
+  **« Restaurer »**, secondaire compact, icône `ArchiveRestore` — celle de la restauration au §5.16, le même geste —,
+  **sans confirmation** (§5.16 : le geste qui répare), sur chaque ligne. Un refus se dit dans la ligne, `role="alert"` ;
+  le succès quitte la ligne et dit « Message restauré. » en `role="status"`.
+- **UNE PHRASE EN TÊTE DE LA LISTE**, en 13 px `--color-text-2`, au-dessus des lignes et de l'état vide (§5.16) : « Un
+  message reste {n} jours dans la corbeille, puis il est effacé définitivement. », et pour qui n'administre pas l'espace,
+  « Vous voyez les messages que vous avez effacés. » — la capacité d'administrer rendue par la base (§5.59). **L'état vide**
+  « La corbeille est vide. » n'offre aucune action (§5.16).
+- **DANS LE FIL DE L'AFFAIRE** (§5.11), les types **`mail_deleted`** et **`mail_restored`** rejoignent la famille
+  **Discussion**, comme `mail_cancelled` (§5.98) : une ligne d'événement, pastille `--color-hover`, icône `Trash2` ou
+  `ArchiveRestore` en `--color-text-2` — des faits neutres —, les libellés **« Message effacé »** et **« Message
+  restauré »**, en détail l'objet lu dans l'événement, et l'acteur par la règle du §5.11 (« … par X »).
+- **SOUS `lg`**, la pile du §5.4 vaut pour la corbeille comme pour tout dossier ; sous `md`, les boutons de la confirmation
+  passent l'un sous l'autre, le destructif en dernier. La page ne défile jamais horizontalement
+  (§7).
+- **Aucune couleur, aucun jeton nouveau ; aucune icône nouvelle** : `Trash2`, `ArchiveRestore` et `TriangleAlert` sont
+  réemployées pour le même objet et le même geste.
