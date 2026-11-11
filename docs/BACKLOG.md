@@ -18958,6 +18958,8 @@ board et sur la fiche, et par un assistant connecté.
 
 ### CRM-134 — Archiver un channel depuis la vue, et le retrouver dans un groupe « Archivés » replié `[P]`
 
+**Livrée le 2026-11-11** (décision 925, révision `08cc9091`) ; reste le constat du responsable.
+
 **Origine** : demande du responsable, le 2026-11-09 ; arbitrée le même jour (décision 871).
 **Comportement attendu** : un bouton « Archiver » sur le channel là où on le voit ; le channel quitte la vue principale
 sans être supprimé ; un groupe « Archivés » replié au bout de la liste se déplie d'un clic, montre les channels archivés
@@ -19122,6 +19124,8 @@ responsable.
 ## Demande du 2026-11-10 — non lu visible, « message » plutôt que « fil », et effacer un mail (décision 878)
 
 ### CRM-138 — Mails : « Marquer comme non lu » libellé près du sommeil, « message » au lieu de « fil », et effacer avec confirmation (corbeille du CRM, boîte IMAP en option) `[P]`
+
+**Livrée le 2026-11-11** (décision 925, révision `08cc9091`) ; reste le constat du responsable.
 **État (2026-11-11)** : les cinq tranches vérifiées en développement (ci-dessous). **Reste** : la livraison du lot suivant
 (contrat `docs/PROD_MIGRATIONS.md` §2.45 : migrations 180, 181 et 182 dans l'ordre, images `mail-sync` et `mcp`, la webapp)
 et le constat du responsable en production (gestes 5 et 6 du §2.45).
@@ -19252,6 +19256,8 @@ responsable.
 ## Demande du 2026-11-10 — rendre les liens, et les images à la demande (décision 881)
 
 ### CRM-140 — Le corps d'un mail HTML rendu confiné, liens cliquables, images distantes derrière « Afficher les images » `[P]`
+
+**Livrée le 2026-11-11** (décision 925, révision `08cc9091`) ; reste le constat du responsable.
 
 *État (2026-11-11, session c2)* : **implémentée et vérifiée en développement, les quatre tranches** (décisions 881 et
 918 ; `docs/SPEC-mail-subsystem.md` §30 ; lecture ciblée du design system, `docs/DESIGN_SYSTEM.md` §5.100 et §12.7).

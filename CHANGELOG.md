@@ -13,6 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-11 (seconde fenêtre) — migrations 179 à 182, les images `mail-sync` et `mcp`, la webapp et le manuel
+
+Cellule Spark `crm`, révision `08cc9091` (décision 925, sans nouvel instantané, un `pg_dump -Fc` avant). **Vérifié** :
+registre à 180 lignes, la dernière `0182_espace_message_corbeille.sql` ; `mail-sync` et `mcp` reconstruits, sains ;
+`verifier.sh` 34/35 (INC-277). Le constat fonctionnel du responsable reste à faire.
+
 #### `CRM-134` T3 — le manuel : archiver un channel depuis sa vue
 
 - Le manuel, au tableau d'un channel, explique « Archiver le channel », sa confirmation, le groupe « Archivés » au bout des onglets et « Désarchiver », avec trois images ; le chapitre de l'arborescence y renvoie.
@@ -71,8 +81,6 @@ d'exécuter le code attendu.
   ce terme rend cinq lignes à l'administratrice, et non plus quatre (`docs/SPEC-recherche.md` M19, révisé). Manuel : §12.2,
   et l'image du §4.2.
 - Déploiement : `docs/PROD_MIGRATIONS.md` §2.43.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-11 — migrations 172 à 178, ClamAV, les images `mail-sync` et `mcp`, `functions`, la webapp, Caddy et le manuel
 

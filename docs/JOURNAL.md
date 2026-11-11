@@ -40602,4 +40602,4 @@ spécification.
 **La campagne** : complète à `a6717431`, la base de développement égale à `main` (180 migrations) ; types, mail 55/55, mcp
 118, pgTAP 159 fichiers, build et garde du manuel 168 verts ; unitaires 5 738 sur 5 739, ui 1 217 sur 1 221, api 1 350 sur
 1 353, manuel 154 sur 155 — tous verts rejoués seuls ou INC-342. **Aucun défaut du lot.** Captures : 309, observées
-(`08cc9091`). **Décision : oui, sans instantané**, un `pg_dump` avant.
+(`08cc9091`). **Décision : oui, sans instantané**, un `pg_dump` avant. **Livrée** à `08cc9091` (contrat §8, seconde fenêtre du 2026-11-11).
