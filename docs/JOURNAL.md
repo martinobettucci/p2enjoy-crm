@@ -40548,3 +40548,8 @@ modifiaient) : unitaires 5 622/5 622, garde du manuel 168, manuel 14-16, 23-33 e
 `rendu-modeles-emails` 11/11. Captures renouvelées : 115, observées (`727645a2`).
 **Décision : oui, sans instantané**, un `pg_dump` avant. **Et** le responsable charge la session de livraison d'épingler la
 clé d'hôte de GitHub pour `spark-docker` (contrat §2.42, geste 1), comparée à l'empreinte publiée par GitHub.
+**Deux arbitrages pendant la fenêtre** : la cellule compte **8 Go**, non les 16 que disaient le contrat et la
+spécification — **livrer sur 8 Go** (`clamav` plafonné à 4 Gio ; mesuré ensuite : 948 Mio au repos, 1,85 Gio au
+rechargement) ; `~/.ssh` de `spark-docker` appartient à root — **épingler la clé dans un fichier de `spark-docker`**
+(`~/.config/p2enjoy-crm/known_hosts`), passé par `SPARK_HOTES_CONNUS` ; écartée : la ligne posée par le responsable en
+root. **Livrée** à `8ada0ab9` (contrat §8, 2026-11-11).

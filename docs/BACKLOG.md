@@ -18893,6 +18893,8 @@ Rien à livrer : outillage et documentation.
 
 ### CRM-133 — Une description sur le nœud du catalogue, surchargeable par l'étape d'un workflow `[P]`
 
+**Livrée le 2026-11-11** (décision 922, révision `8ada0ab9`, la première par condensé) ; reste le constat du responsable.
+
 **Origine** : un assistant connecté n'a pas pu enregistrer la description d'une étape (« À qualifier ») ; arbitrée le
 2026-11-07 (décision 869).
 **Comportement attendu** : le nœud du catalogue porte une description facultative ; une étape peut la surcharger, comme son
@@ -19027,6 +19029,8 @@ Ce n'est pas une campagne complète. **Reste** : la livraison de la migration 17
 
 ### CRM-136 — Historique, dossiers relevés (choisis parmi ceux de la boîte), style de classement et quota d'envoi réglables à l'écran `[P]`
 
+**Livrée le 2026-11-11** (décision 922, révision `8ada0ab9`, la première par condensé) ; reste le constat du responsable.
+
 *État (2026-11-10, session c2)* : spécifiée et arbitrée (décisions 884 et 885), quatre tranches (`docs/SPEC-mail-subsystem.md`
 §25.11). **T1 implémentée et vérifiée en développement** — migration `0178` (`p_daily_quota_set`), pgTAP `0167` 16
 assertions, suite complète 155 fichiers, 5221 assertions ; `docs/SCHEMA.md`, contrat §2.41. **T2 implémentée et vérifiée en
@@ -19073,6 +19077,8 @@ seed, le choix est relevé) ; seed ; captures aux quatre paliers ; manuel ; cont
 ## Demande du 2026-11-10 — classer un mail sans parcourir des centaines d'affaires (décision 877)
 
 ### CRM-137 — Classer un mail : un sélecteur d'affaire cherchable, filtré par défaut sur l'expéditeur connu `[P]`
+
+**Livrée le 2026-11-11** (décision 922, révision `8ada0ab9`, la première par condensé) ; reste le constat du responsable.
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 877).
 **Comportement attendu** : dans le formulaire de classement de l'inbox, un sélecteur cherchable (titre, chemin) remplace la
@@ -19187,6 +19193,8 @@ reste sinon) ; E2E souris et clavier (non lu, sommeil, effacer, annuler, restaur
 ## Demande du 2026-11-10 — l'inbox, par défaut, ne montre que mes mails (décision 879)
 
 ### CRM-139 — Inbox : une case « Seulement moi », cochée par défaut, sur les adresses d'expédition personnelles `[P]`
+
+**Livrée le 2026-11-11** (décision 922, révision `8ada0ab9`, la première par condensé) ; reste le constat du responsable.
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 879).
 **Comportement attendu** :
@@ -19350,6 +19358,8 @@ board ; INC-352 close sur le constat en production.
 
 ### CRM-143 — Pièces jointes : ClamAV en production, repli confirmé pour une pièce non analysée, reprise des pièces déjà reçues, pièces jointes depuis le connecteur `[P]`
 
+**Livrée le 2026-11-11** (décision 922, révision `8ada0ab9`, la première par condensé) ; reste le constat du responsable.
+
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 889).
 **Comportement attendu** :
 - (i) ClamAV tourne dans la cellule de production, sous un plafond mémoire mesuré, et analyse les pièces reçues ;
@@ -19422,6 +19432,8 @@ board ; INC-352 close sur le constat en production.
 
 ### CRM-144 — L'outbox : en file (annuler), envoyés, échecs (réessayer), pour toute l'équipe `[P]`
 
+**Livrée le 2026-11-11** (décision 922, révision `8ada0ab9`, la première par condensé) ; reste le constat du responsable.
+
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 898).
 **Comportement attendu** : dans la messagerie, un dossier « En file » (heure prévue ; annuler avant le départ), un dossier
 « Envoyés » (date, identité d'expédition, affaire), les échecs avec leur motif et « Réessayer » ; chacun voit les envois de
@@ -19465,6 +19477,8 @@ ligne ; pgTAP complet 154 fichiers, 5205 assertions ; les images du manuel §12.
 
 ### CRM-145 — `Cache-Control` sur la webapp : `index.html` revalidé, `/assets/` immuable `[P]`
 
+**Livrée le 2026-11-11** (décision 922, révision `8ada0ab9`, la première par condensé) ; reste le constat du responsable.
+
 **Origine** : le responsable ne voyait pas les livraisons récentes ; `caddy/routes.caddy` n'envoie aucun `Cache-Control` sur
 `index.html` (décision 899), **prioritaire**.
 **Comportement attendu** : `index.html` et toute route de l'application monopage servis avec `Cache-Control: no-cache` ; les
@@ -19485,6 +19499,8 @@ constatés sur la route publique, et le constat du responsable.
 ## Demande du 2026-11-10 — le prévisionnel et le réel d'une organisation (décision 900)
 
 ### CRM-146 — L'organisation montre son prévisionnel et son réel ; la liste, une barre de progression par devise `[P]`
+
+**Livrée le 2026-11-11** (décision 922, révision `8ada0ab9`, la première par condensé) ; reste le constat du responsable.
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 900).
 **Comportement attendu** : la fiche d'une organisation montre, par devise, le prévisionnel (somme des recettes prévues de ses
@@ -19536,6 +19552,8 @@ réel dans deux devises, une sans recette) ; captures aux quatre paliers ; manue
 ## Demande du 2026-11-10 — livrer une révision précise par git, depuis la cellule (décision 905)
 
 ### CRM-147 — `livrer.sh` livre un condensé choisi, récupéré par git dans la cellule `[P]`
+
+**Livrée le 2026-11-11** (décision 922, révision `8ada0ab9`, la première par condensé) ; reste le constat du responsable.
 
 **Origine** : indication du responsable, le 2026-11-10 (décision 905) : la clé privée de la cellule est autorisée à cloner le
 projet ; une livraison ne doit plus emporter tout `HEAD`.

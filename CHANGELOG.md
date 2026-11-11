@@ -66,6 +66,16 @@ d'exécuter le code attendu.
   et l'image du §4.2.
 - Déploiement : `docs/PROD_MIGRATIONS.md` §2.43.
 
+## [Publié]
+
+### Déployé en production, 2026-11-11 — migrations 172 à 178, ClamAV, les images `mail-sync` et `mcp`, `functions`, la webapp, Caddy et le manuel
+
+Cellule Spark `crm`, révision `8ada0ab9`, **la première livrée par condensé** (`CRM-147`, décision 922, sans nouvel
+instantané, un `pg_dump -Fc` avant). **Vérifié** : registre à 176 lignes, la dernière `0178_quota_identite_effacable.sql` ;
+`/srv/crm` clone propre sur le condensé ; ClamAV sain (pic de 1,85 Gio au rechargement, plafond 4 Gio), 16 pièces reprises,
+toutes saines ; en-têtes `Cache-Control` lus ; `verifier.sh` 34/35 (INC-277). Le constat fonctionnel du responsable reste à
+faire ; la page demande **un rechargement forcé, une seule fois**.
+
 #### `CRM-147` — une livraison prend un condensé choisi, récupéré par git dans la cellule (décisions 905, 909, 911, 912 et 915)
 
 - **`scripts/spark/livrer.sh --revision <condensé>`**, obligatoire : une livraison n'emporte plus tout `main`. Le condensé
@@ -177,8 +187,6 @@ d'exécuter le code attendu.
 - **ClamAV est déclaré dans la cellule de production** (`docker-compose.spark.yml`) : image épinglée, plafond de 4 Go, signatures dans un volume ; `scripts/verify-spark.sh` le contrôle. La cellule compte 16 Go depuis le 2026-11-10.
 - **Le jeu de démonstration montre une pièce par statut** : un courrier porte l'échantillon EICAR, jugé infecté par l'antivirus, et une pièce trop volumineuse, non conservée.
 - Déploiement : `docs/PROD_MIGRATIONS.md` §2.35 — la preuve de `freshclam`, la migration 173, puis `clamav`, puis les images `mail-sync` et `mcp`, puis la webapp.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-10 (troisième fenêtre) — migration 171
 
