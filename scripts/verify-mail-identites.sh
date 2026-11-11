@@ -399,12 +399,12 @@ degrader_module "p_from_name OMIS quand il est vide — un nom deviendrait ineff
 	"		p_from_name: saisie.nomExpediteur," \
 	"		...(saisie.nomExpediteur === '' ? {} : { p_from_name: saisie.nomExpediteur })," \
 
-# LE QUOTA APPARTIENT À `CRM-058`, QUI LE CONSOMME. L'envoyer depuis cet écran l'écraserait, et
-# `coalesce` interdit tout retour à `NULL` : la valeur serait perdue sans recours (§22.1).
-degrader_module "p_daily_quota ENVOYÉ — le quota que CRM-058 consomme serait écrasé (§22.1)" \
-	"		p_is_default: saisie.parDefaut," \
-	"		p_is_default: saisie.parDefaut,
-		p_daily_quota: 0,"
+# RÉVISÉE PAR `CRM-136` T3 (décision 51), non relâchée — LA RÈGLE S'EST INVERSÉE : la migration `0178` a rendu le quota
+# effaçable, et l'écran l'envoie désormais TOUJOURS, avec `p_daily_quota_set = true` (§25.6). Le défaut à voir est donc
+# l'omission du drapeau : sans lui, vider le champ ne rendrait jamais « aucun plafond », et l'écran mentirait.
+degrader_module "p_daily_quota_set OMIS — vider le champ ne rendrait plus « aucun plafond » (§25.6)" \
+	"		p_daily_quota_set: true," \
+	""
 
 # `secret_id` DEMANDÉE FERAIT ÉCHOUER LA LECTURE ENTIÈRE, y compris pour l'administratrice —
 # mesuré (§22.3, §22.7), et c'est plus dur encore que pour les comptes entrants.
