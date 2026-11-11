@@ -1521,3 +1521,20 @@ fonctionnalités antérieures à cette règle, ou celles pour lesquelles la ques
 `crm_mail_set_read`, `crm_mail_snooze` (`modifier`), `crm_mail_delete` (`supprimer`, destructif), `crm_mail_restore`
 (`modifier`) et `crm_mail_trash_list` (`consulter`), tels que `docs/SPEC-mail-subsystem.md` §29.8 les décrit, sous le jeton de
 la personne.
+
+*Précisé avant le code de T4 (2026-11-11)* — les contrats :
+- `crm_mail_set_read(message_id, read)`, ancre `message:message_id` : `read` vrai appelle `mark_messages_read([id])`, faux
+  `mark_message_unread(id)` ; rend `{message_id, read}`. L'état est personnel.
+- `crm_mail_snooze(message_id, until)`, ancre `message:message_id` : lit le message (son espace et sa clé de fil), puis
+  `snooze_thread(workspace, thread_key, until)` ; `until` absent réveille (`wake_thread`). Rend `{message_id, snoozed_until}`
+  (nul au réveil) et `thread` : tout le fil dort, avec ses réponses. Refus nommés : `snooze_date_in_past`,
+  `snooze_date_required`, `thread_not_found` (introuvable).
+- `crm_mail_delete(message_id, also_mailbox=false)`, ancre `message:message_id`, action `supprimer`, `destructiveHint` :
+  `delete_message` ; rend `{message_id, deleted_at, mailbox_moves}` et la durée de restauration. Refus nommés : `forbidden`,
+  `no_writable_mailbox`, `message_not_found` (introuvable).
+- `crm_mail_restore(workspace, message_id)`, **ancre `workspace:workspace`** (un message effacé n'est plus lisible, §29.8
+  précisé) : le message doit figurer dans `trashed_messages(workspace)`, sinon le refus uniforme ; puis `restore_message` ;
+  rend `{message_id, cancelled_moves}`.
+- `crm_mail_trash_list(workspace)`, ancre `workspace:workspace` : `trashed_messages` ; une ligne par message — objet,
+  expéditeur, affaire, date et auteur de l'effacement, date d'effacement définitif, `can_restore`, l'état du déplacement
+  IMAP (`none`, `pending`, `done`, `failed`, avec le motif en code et en phrase). Jamais le corps.
