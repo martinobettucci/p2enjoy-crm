@@ -8,6 +8,8 @@
 //       porte son `workspace_id`
 // @spec CRM-105 (docs/BACKLOG.md) — `description` lue pour l'infobulle de l'onglet : docs/SPEC-channels.md §5,
 //       docs/DESIGN_SYSTEM.md §5.58 (décision 629)
+// @spec CRM-134 (docs/BACKLOG.md) tranche T1 — les archivés du track lus dans la même requête que les onglets, puis
+//       séparés (docs/SPEC-channels.md §11.1 ; décisions 871 et 919)
 //
 // `public.channels` porte, depuis `CRM-021`, une politique de lecture réservée aux membres du
 // workspace. Sans session les deux requêtes rendent `200` et `[]` ; avec la session restaurée par
@@ -60,6 +62,13 @@ export type TrackOuvert = Pick<
 // @spec CRM-116 (docs/BACKLOG.md) — `color` rejoint la lecture : la pastille de l'onglet (docs/SPEC-channels.md §5,
 //       docs/DESIGN_SYSTEM.md §5.68 ; décision 729).
 export const COLONNES_CHANNEL = 'id, name, slug, position, workflow_id, description, color'
+
+/**
+ * Les colonnes de la lecture de la barre — `CRM-134` (docs/SPEC-channels.md §11.1) : celles d'un channel, plus
+ * `archived_at`, qui SÉPARE les onglets du groupe « Archivés » et n'est jamais affichée. `COLONNES_CHANNEL` garde son
+ * sens : ce que la barre et le board savent d'un channel.
+ */
+export const COLONNES_CHANNEL_BARRE = `${COLONNES_CHANNEL}, archived_at`
 export const COLONNES_TRACK_OUVERT = 'id, name, slug, workspace_id'
 
 /**
@@ -73,7 +82,33 @@ export const COLONNES_TRACK_OUVERT = 'id, name, slug, workspace_id'
  */
 export type ContenuTrack = {
 	readonly track: TrackOuvert | null
+	/** Les channels NON archivés : les onglets, la résolution du channel ouvert, l'état vide. */
 	readonly channels: readonly Channel[]
+	/** `CRM-134` — les archivés du track, dans le même ordre, pour le seul groupe « Archivés » (§11.1). */
+	readonly archives: readonly Channel[]
+}
+
+/** Les channels d'un track, séparés par leur archivage (docs/SPEC-channels.md §11.1). */
+export type ChannelsDuTrack = {
+	readonly channels: readonly Channel[]
+	readonly archives: readonly Channel[]
+}
+
+/**
+ * Sépare les lignes lues en channels actifs et archivés, dans l'ordre reçu — celui de la requête.
+ *
+ * `archived_at` absent compte pour « non archivé » : une ligne qui ne porte pas la colonne — une réponse substituée par
+ * une preuve, un cache de schéma périmé — reste un onglet, comme avant `CRM-134`, plutôt que de disparaître. La colonne
+ * n'est pas recopiée dans le channel rendu : rien ne l'affiche.
+ */
+export function separerChannels(lignes: readonly (Channel & { readonly archived_at?: string | null })[]): ChannelsDuTrack {
+	const channels: Channel[] = []
+	const archives: Channel[] = []
+	for (const { archived_at: archive, ...channel } of lignes) {
+		if (archive === null || archive === undefined) channels.push(channel)
+		else archives.push(channel)
+	}
+	return { channels, archives }
 }
 
 /**
@@ -111,7 +146,13 @@ export async function lireTrackParSlug(
 }
 
 /**
- * Les channels **non archivés et non mis à la corbeille** d'un track, dans l'ordre des onglets.
+ * Les channels **non mis à la corbeille** d'un track, dans l'ordre des onglets, séparés en actifs et archivés.
+ *
+ * RÉVISÉ PAR `CRM-134` (docs/SPEC-channels.md §11.1) : le filtre `archived_at=is.null` est retiré, et la même requête
+ * rapporte les archivés du track pour le groupe « Archivés » de la barre. Une seule lecture, et non une seconde à
+ * l'ouverture du groupe : il dit son compte avant d'être déplié, et la même donnée n'est lue qu'une fois (§5.4). Les
+ * onglets restent les NON archivés : un channel archivé n'est pas résolu par la route, son adresse rend l'état
+ * « choisissez un channel », comme avant.
  *
  * L'ENFANT D'UN PARENT EN CORBEILLE EST INACCESSIBLE SANS ÊTRE HORODATÉ (docs/SPEC-corbeille.md
  * §3.3), et c'est ici que cette règle se réalise plutôt que par une descente d'horodatage : cette
@@ -131,20 +172,19 @@ export async function lireTrackParSlug(
 export async function lireChannels(
 	client: ClientCrm,
 	trackId: string,
-): Promise<EtatAsync<readonly Channel[]>> {
+): Promise<EtatAsync<ChannelsDuTrack>> {
 	try {
 		const reponse = await client
 			.from('channels')
-			.select(COLONNES_CHANNEL)
+			.select(COLONNES_CHANNEL_BARRE)
 			.eq('track_id', trackId)
-			.is('archived_at', null)
 			.is('deleted_at', null)
 			.order('position')
 			.order('name')
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}
-		return pret(reponse.data)
+		return pret(separerChannels(reponse.data))
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}
@@ -169,6 +209,16 @@ export function projeterChannels(etat: EtatAsync<ContenuTrack>): EtatAsync<reado
 	if (etat.statut === 'chargement') return enChargement()
 	return enErreur(etat.erreur)
 }
+
+/**
+ * Les archivés du track, pour le groupe « Archivés » de la barre — `CRM-134` (docs/SPEC-channels.md §11.3). Vide tant
+ * que le contenu n'est pas prêt : le groupe ne paraît qu'avec la lecture, et l'échec est porté par la zone principale.
+ */
+export function projeterArchives(etat: EtatAsync<ContenuTrack>): readonly Channel[] {
+	return etat.statut === 'pret' ? etat.donnees.archives : AUCUN_ARCHIVE
+}
+
+const AUCUN_ARCHIVE: readonly Channel[] = []
 
 /**
  * Charge le contenu de la route d'un track : le track, puis ses channels.
@@ -205,7 +255,7 @@ export function useContenuTrack(
 			}
 			const track = resultatTrack.donnees
 			if (track === null) {
-				setEtat(pret({ track: null, channels: [] }))
+				setEtat(pret({ track: null, channels: [], archives: [] }))
 				return
 			}
 			const resultatChannels = await lireChannels(client, track.id)
@@ -214,7 +264,7 @@ export function useContenuTrack(
 				setEtat(resultatChannels)
 				return
 			}
-			setEtat(pret({ track, channels: resultatChannels.donnees }))
+			setEtat(pret({ track, ...resultatChannels.donnees }))
 		})()
 	}, [client, slug, tentative])
 

@@ -65,6 +65,11 @@ export type ProprietesAppShell = {
 	 * track : la barre affiche alors son état vide, comme depuis `CRM-007`.
 	 */
 	readonly etatChannels?: EtatAsync<readonly Channel[]>
+	/**
+	 * `CRM-134` — les archivés du track courant, lus avec ses onglets, pour le groupe « Archivés » de la barre
+	 * (docs/SPEC-channels.md §11.3). Absents hors d'une route de track.
+	 */
+	readonly archivesChannels?: readonly Channel[]
 	readonly onRechargerChannels?: () => void
 	/** Slug du track porteur, pour construire l'adresse de chaque onglet. */
 	readonly slugTrack?: string
@@ -76,6 +81,7 @@ export function AppShell({
 	titreRoute,
 	ancetres = AUCUN_ANCETRE,
 	etatChannels,
+	archivesChannels,
 	onRechargerChannels,
 	slugTrack,
 	children,
@@ -189,6 +195,7 @@ export function AppShell({
 					<TabBar
 						etat={etatChannels}
 						slugTrack={slugTrack}
+						{...(archivesChannels === undefined ? {} : { archives: archivesChannels })}
 						{...(slugTrack === undefined && sessionOuverte ? { presenceHorsTrack } : {})}
 					/>
 					<main id={ID_CONTENU} tabIndex={-1} className="flex-1 min-w-0 p-4 overflow-x-auto">

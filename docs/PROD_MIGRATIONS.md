@@ -1022,6 +1022,20 @@ column_name = 'content_id'` rend 1.
 **Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0179` ». Les messages relevés avant la migration
 n'ont pas de `content_id` ; leurs images `cid:` montrent la mention « indisponible » (§30.12).
 
+
+### 2.44 `CRM-134` T1, décisions 871 et 919 — archiver un channel depuis sa vue, le groupe « Archivés » (À LIVRER : la webapp de `main` ; **hors du lot annoncé**)
+
+`docs/SPEC-channels.md` §11. **Aucune migration, aucune fonction, aucune variable, aucun secret** : l'écriture est celle de
+Réglages (`archived_at`, sous la politique existante), et la lecture de la barre retire son filtre d'archivage. La webapp
+de `main` postérieure à T1 suffit, dans n'importe quel ordre avec les autres gestes.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer la webapp de `main` | session de livraison | avec le lot qui l'emporte |
+| 2 | Constater le geste | responsable, sur un channel de test | « Archiver le channel », confirmer : l'onglet part, « Archivés (1) » paraît ; le déplier, « Désarchiver » : l'onglet revient |
+
+**Retour arrière** : la webapp précédente ; aucune donnée n'est touchée, un channel archivé par ce geste l'est comme par
+Réglages, et s'y désarchive.
 ## 3. Migrations en attente
 
 **La 180, après la 179** (`CRM-138` T1, décisions 878 et 917), *en attente* : effacer un message (`docs/SCHEMA.md` « Migration

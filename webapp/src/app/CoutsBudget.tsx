@@ -32,7 +32,7 @@ import { Link, useParams } from 'react-router'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t, type CleTraduction } from '../i18n'
-import { projeterChannels, useContenuTrack } from '../lib/channels'
+import { projeterArchives, projeterChannels, useContenuTrack } from '../lib/channels'
 import { ancetresBudget } from '../lib/fil-ariane'
 import { enChargement, type EtatAsync } from '../lib/async'
 import {
@@ -80,6 +80,7 @@ export function CoutsBudget() {
 			{...(nomBudget === null ? {} : { titreRoute: nomBudget })}
 			ancetres={ancetresBudget(etat.statut === 'pret' ? etat.donnees.track : null)}
 			etatChannels={projeterChannels(etat)}
+			archivesChannels={projeterArchives(etat)}
 			onRechargerChannels={recharger}
 			{...(slugTrack === undefined ? {} : { slugTrack })}
 		>

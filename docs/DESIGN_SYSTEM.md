@@ -8321,7 +8321,8 @@ l'air.
   - Sous 768 px, `flex-wrap` la fait passer sous la bascule, alignée à gauche. La page ne défile jamais (§7).
 - **LA CONFIRMATION EST CELLE DE RÉGLAGES, RÉEMPLOYÉE** (§5.13 ; décision 919).
   - Le composant `ConfirmationArchivage` quitte `AdministrationArborescence.tsx` pour être partagé, avec le corps en
-    paramètre.
+    paramètre. *Précisé à l'écriture du code (T1)* : la fermeture par `Échap` est une option que la vue du channel
+    demande ; Réglages ne la demande pas, et son comportement ne change pas.
   - Sa forme ne change pas : surface `--color-surface`, `--radius-lg`, bordure `--color-border`, rembourrage 16 px ; la
     question en `font-medium` ; le corps en `--text-sm` `--color-text-2` ; « Archiver », plein, aux jetons de danger, puis
     « Annuler », secondaire.
@@ -8336,10 +8337,12 @@ l'air.
   - Ce n'est **pas un onglet** : aucune bordure basse, jamais `aria-current`. Texte `--color-text-2`, survol
     `--color-hover`, `--radius-sm`, hauteur `--size-target`, `whitespace-nowrap`.
   - Son libellé est « Archivés (n) » : le compte dit ce que le dépliage montrera. Il est précédé de l'icône `Archive`
-    16 px `aria-hidden` et suivi du chevron `ChevronDown` 16 px `aria-hidden`, tourné de 180° une fois déplié, sans
-    transition sous `prefers-reduced-motion`.
-  - Sur la vue d'un track, c'est un `button` qui porte `aria-expanded` et `aria-controls`. Ailleurs, c'est un lien, sans
-    chevron ni `aria-expanded`.
+    16 px `aria-hidden` et suivi d'un chevron 16 px `aria-hidden` : `ChevronRight` replié, `ChevronDown` déplié, sans
+    rotation. *Précisé à l'écriture du code (T1)* : c'est la convention des dossiers de l'inbox ; la rotation d'abord
+    écrite aurait introduit une seconde grammaire du dépliage.
+  - Sur la vue d'un track, c'est un `button` qui porte `aria-expanded`, et `aria-controls` une fois déplié — le panneau
+    n'existe qu'alors, et la référence ne désigne jamais un élément absent. Ailleurs, c'est un lien, sans chevron ni
+    `aria-expanded`.
   - Il est absent quand le track n'a aucun archivé (`docs/SPEC-channels.md` §11.3).
 - **LE PANNEAU DES ARCHIVÉS.**
   - Il s'ouvre **en tête de la zone principale**, sous la barre, au-dessus du formulaire du §5.55 quand celui-ci est

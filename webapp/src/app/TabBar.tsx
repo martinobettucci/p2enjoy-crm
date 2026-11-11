@@ -50,12 +50,22 @@
 //       décisions 866 et 868)
 // @spec CRM-105 (docs/BACKLOG.md) — la description d'un channel en infobulle sous son onglet
 //       (docs/DESIGN_SYSTEM.md §5.58, docs/SPEC-channels.md §5, décision 629)
+// @spec CRM-134 (docs/BACKLOG.md) tranche T1 — le groupe « Archivés » de la barre, après les onglets et avant
+//       « Nouveau channel » : un bouton qui déplie le panneau sur la vue d'un track, un lien ailleurs ; absent sans archivé
+//       (docs/SPEC-channels.md §11.3 ; docs/DESIGN_SYSTEM.md §5.101 ; décision 919)
 
-import { Link, NavLink, useLocation } from 'react-router'
-import { ChartColumn, Plus } from 'lucide-react'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router'
+import { Archive, ChartColumn, ChevronDown, ChevronRight, Plus } from 'lucide-react'
 import { Infobulle } from '../components/ui/Infobulle'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
+import {
+	archivesDepliees,
+	cheminArchivesTrack,
+	groupeEstUnBouton,
+	ID_PANNEAU_ARCHIVES,
+	rechercheAvecArchives,
+} from '../lib/archives-channels'
 import type { EtatAsync } from '../lib/async'
 import type { Channel } from '../lib/channels'
 import type { PresenceChannels } from '../lib/demarrage'
@@ -86,9 +96,16 @@ export type ProprietesTabBar = {
 	 * sans session : la barre garde « Aucun channel », comme depuis `CRM-007`.
 	 */
 	readonly presenceHorsTrack?: PresenceChannels
+	/**
+	 * `CRM-134` — les archivés du track, lus avec ses onglets (docs/SPEC-channels.md §11.1). Vide ou absent : pas de
+	 * groupe « Archivés ».
+	 */
+	readonly archives?: readonly Channel[]
 }
 
-export function TabBar({ etat, slugTrack, presenceHorsTrack }: ProprietesTabBar) {
+const AUCUN_ARCHIVE: readonly Channel[] = []
+
+export function TabBar({ etat, slugTrack, presenceHorsTrack, archives = AUCUN_ARCHIVE }: ProprietesTabBar) {
 	return (
 		<div
 			data-testid="barre-onglets"
@@ -97,12 +114,12 @@ export function TabBar({ etat, slugTrack, presenceHorsTrack }: ProprietesTabBar)
 			// sans indication ». Défaut vu sur la capture à 390 px (docs/DESIGN_SYSTEM.md §12.6).
 			className="flex items-center gap-2 px-4 bg-bg border-b border-border overflow-x-auto indique-debordement-x"
 		>
-			<Contenu etat={etat} slugTrack={slugTrack} presenceHorsTrack={presenceHorsTrack} />
+			<Contenu etat={etat} slugTrack={slugTrack} presenceHorsTrack={presenceHorsTrack} archives={archives} />
 		</div>
 	)
 }
 
-function Contenu({ etat, slugTrack, presenceHorsTrack }: ProprietesTabBar) {
+function Contenu({ etat, slugTrack, presenceHorsTrack, archives = AUCUN_ARCHIVE }: ProprietesTabBar) {
 	if (etat?.statut === 'chargement') {
 		return (
 			<div className="py-2">
@@ -150,6 +167,7 @@ function Contenu({ etat, slugTrack, presenceHorsTrack }: ProprietesTabBar) {
 					</span>
 					<span className="sr-only">{t('tabs.empty.hint')}</span>
 				</div>
+				<GroupeArchives slugTrack={slugTrack} archives={archives} />
 				<CommandeNouveauChannel slugTrack={slugTrack} />
 				<EntreesTransversesTrack slugTrack={slugTrack} />
 			</>
@@ -213,9 +231,64 @@ function Contenu({ etat, slugTrack, presenceHorsTrack }: ProprietesTabBar) {
 				))}
 			</ul>
 			</nav>
+			<GroupeArchives slugTrack={slugTrack} archives={archives} />
 			<CommandeNouveauChannel slugTrack={slugTrack} />
 			<EntreesTransversesTrack slugTrack={slugTrack} />
 		</>
+	)
+}
+
+/** La forme commune du groupe, bouton ou lien : la commande du §5.55, sans bordure basse ni `aria-current`. */
+const CLASSES_GROUPE_ARCHIVES = [
+	'shrink-0 inline-flex items-center gap-2 px-3 whitespace-nowrap rounded-sm',
+	'min-h-[var(--size-target)] text-text-2 hover:bg-hover',
+	'transition-colors duration-[var(--transition-duration-fast)]',
+].join(' ')
+
+/**
+ * « Archivés (n) » — `CRM-134`, docs/SPEC-channels.md §11.3, docs/DESIGN_SYSTEM.md §5.101.
+ *
+ * CE N'EST PAS UN ONGLET : il porte sur la liste des channels, dont il est la fin, comme « Nouveau channel » qu'il
+ * précède. Sur la vue d'un track, un BOUTON qui déplie le panneau en écrivant `archives=1` dans l'adresse — une
+ * préférence d'écran, ni cookie ni stockage (`CLAUDE.md` §11) — et qui porte `aria-expanded`. Ailleurs — la fiche d'une
+ * affaire, les coûts —, la vue qui rend le panneau n'est pas là : un LIEN vers la racine du track, groupe déplié.
+ * Absent sans archivé : « Archivés (0) » serait une commande sans objet.
+ *
+ * Il est rendu à TOUS les rôles : voir les archivés est une lecture, que la base consent à tout membre qui lit le track.
+ */
+function GroupeArchives({ slugTrack, archives }: { readonly slugTrack: string; readonly archives: readonly Channel[] }) {
+	const { pathname, search } = useLocation()
+	const navigate = useNavigate()
+	if (archives.length === 0) return null
+	const libelle = t('tabs.archives', { nombre: String(archives.length) })
+	if (!groupeEstUnBouton(pathname)) {
+		return (
+			<Link to={cheminArchivesTrack(slugTrack)} data-testid="groupe-archives" className={CLASSES_GROUPE_ARCHIVES}>
+				<Archive aria-hidden="true" size={16} strokeWidth={2} className="shrink-0" />
+				{libelle}
+			</Link>
+		)
+	}
+	const deplie = archivesDepliees(new URLSearchParams(search))
+	// Le chevron suit la convention des dossiers de l'inbox : à droite replié, vers le bas déplié, sans rotation.
+	const Chevron = deplie ? ChevronDown : ChevronRight
+	return (
+		<button
+			type="button"
+			data-testid="groupe-archives"
+			aria-expanded={deplie}
+			// Le panneau n'existe que déplié : la référence ne désigne jamais un élément absent.
+			{...(deplie ? { 'aria-controls': ID_PANNEAU_ARCHIVES } : {})}
+			onClick={() => {
+				const recherche = rechercheAvecArchives(search, !deplie)
+				navigate({ pathname, search: recherche === '' ? '' : `?${recherche}` })
+			}}
+			className={CLASSES_GROUPE_ARCHIVES}
+		>
+			<Archive aria-hidden="true" size={16} strokeWidth={2} className="shrink-0" />
+			{libelle}
+			<Chevron aria-hidden="true" size={16} strokeWidth={2} className="shrink-0" />
+		</button>
 	)
 }
 

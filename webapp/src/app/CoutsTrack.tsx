@@ -33,7 +33,7 @@ import { Link, useParams } from 'react-router'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t, type CleTraduction } from '../i18n'
-import { projeterChannels, useContenuTrack } from '../lib/channels'
+import { projeterArchives, projeterChannels, useContenuTrack } from '../lib/channels'
 import { enChargement, type EtatAsync } from '../lib/async'
 import { lireHistogrammeTrack, type HistogrammeDevise } from '../lib/couts-ecrans'
 import { ancetresCoutsTrack } from '../lib/fil-ariane'
@@ -72,6 +72,7 @@ export function CoutsTrack() {
 			cleTitreRoute={CLE_TITRE_COUTS}
 			ancetres={ancetresCoutsTrack(track)}
 			etatChannels={projeterChannels(etat)}
+			archivesChannels={projeterArchives(etat)}
 			onRechargerChannels={recharger}
 			{...(slugTrack === undefined ? {} : { slugTrack })}
 		>

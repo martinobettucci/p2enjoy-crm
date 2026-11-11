@@ -18968,6 +18968,18 @@ panneau, désarchiver, les droits, le découpage en quatre tranches T1 à T4, le
 (la commande sur la barre d'outils du channel, la confirmation de Réglages partagée, le groupe, le panneau),
 `docs/SPEC-mcp.md` §9.2 *unvicies* (`crm_channel_archive`, action `supprimer`), le manuel avec T2 et T3. Aucune migration ;
 le seed porte déjà un channel archivé (`…033`).
+**Avancement** (session a8) :
+- **T1 faite le 2026-11-11, vérifiée en développement** : la lecture de la barre rapporte les archivés (`lireChannels`,
+  `separerChannels`, `projeterArchives`), le groupe « Archivés (n) » de la barre d'onglets (`TabBar.tsx`), « Archiver le
+  channel » et sa confirmation dans le flux, le panneau et « Désarchiver » (`ArchivageChannel.tsx`), la confirmation de
+  Réglages partagée (`ConfirmationArchivage.tsx`), la suite dans la route (`RouteTrack.tsx` : le channel suivant, à défaut
+  le précédent, l'annonce, le focus) ; Vitest 234 fichiers, 5716 tests (dont les fichiers nouveaux `archives-channels.test.ts`,
+  `ArchivageChannel.test.tsx`, `ConfirmationArchivage.test.tsx`), rouges contre deux mutations (un « zéro ligne » pris pour
+  une réussite, les archivés laissés dans les onglets) ; API `e2e/api/channels-archivage.spec.ts` 8/8 ; E2E UI
+  `e2e/ui/channels-archivage.spec.ts` 8/8 (souris, clavier, la lectrice, quatre paliers), et les preuves voisines
+  UI 49/49 (channels, formulaire, arborescence de Réglages, nouveau channel) et API 47/47 (channels, arborescence, droits d’interface, couleurs) ; deux assertions de la requête des channels révisées, non relâchées (décision 51) ; build ; captures
+  observées ;
+- reste : T2 (connecteur), T3 (manuel), T4 (production).
 **DoD** : unitaires ; API (droits : refus pour qui ne peut pas archiver) ; E2E souris et clavier (archiver, déplier,
 désarchiver) ; outils du connecteur et `verify-mcp.sh` ; seed (un channel archivé) ; captures aux quatre paliers ; manuel.
 

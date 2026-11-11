@@ -2,6 +2,8 @@
 //       l'administration de l'espace ; déplier et consulter restent offerts (docs/SPEC-droits-interface.md §2.2, §3, §5 ;
 //       docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-075 (docs/BACKLOG.md) — écran d'administration des tracks et des channels
+// @spec CRM-134 (docs/BACKLOG.md) tranche T1 — la confirmation d'archivage, partagée avec la vue du channel
+//       (`ConfirmationArchivage.tsx` ; docs/SPEC-channels.md §11.2)
 // @spec CRM-084 (docs/BACKLOG.md) — budgets, tranche 2 : la table des budgets d'un track vit sous sa
 //       ligne dépliée, `docs/SPEC-costs.md` §4.1 (« Administration des budgets — dans le track.
 //       Sous l'administration de l'arborescence »). Le bloc lui-même est `BlocBudgetsTrack.tsx`.
@@ -92,6 +94,7 @@ import {
 	type CibleEnumeration,
 } from '../lib/corbeille'
 import { BlocBudgetsTrack } from './BlocBudgetsTrack'
+import { ConfirmationArchivage } from './ConfirmationArchivage'
 import { AlerteRefus, ChampTexte, texteRefus } from './ElementsFormulaireAdmin'
 import { FormulaireChannel, type SaisieChannel } from './FormulaireChannel'
 import { PanneauChangementWorkflow } from './PanneauChangementWorkflow'
@@ -279,52 +282,7 @@ function FormulaireTrack({
 	)
 }
 
-// ---------------------------------------------------------------------------------------------
-// Confirmation d'archivage — dans le flux du document, jamais une modale (§3.2)
-// ---------------------------------------------------------------------------------------------
-
-function ConfirmationArchivage({
-	question,
-	refus,
-	enCours,
-	onConfirmer,
-	onAnnuler,
-}: {
-	readonly question: string
-	readonly refus: string | null
-	readonly enCours: boolean
-	readonly onConfirmer: () => void
-	readonly onAnnuler: () => void
-}) {
-	const premier = useRef<HTMLButtonElement>(null)
-	useEffect(() => {
-		premier.current?.focus()
-	}, [])
-	return (
-		<div
-			data-testid="confirmation-archivage"
-			className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-4"
-		>
-			<p className="font-medium">{question}</p>
-			<p className="text-sm text-text-2">{t('admin.archive.confirm.body')}</p>
-			{refus === null ? null : <AlerteRefus message={refus} />}
-			<div className="flex gap-2">
-				<button
-					ref={premier}
-					type="button"
-					disabled={enCours}
-					onClick={onConfirmer}
-					className="inline-flex items-center justify-center gap-2 min-h-[var(--size-target)] rounded-sm px-4 font-medium bg-danger text-white hover:opacity-90 disabled:opacity-70"
-				>
-					{t('admin.archive.confirm.action')}
-				</button>
-				<Button variante="secondaire" onClick={onAnnuler}>
-					{t('admin.action.cancel')}
-				</Button>
-			</div>
-		</div>
-	)
-}
+// La confirmation d'archivage vit dans `ConfirmationArchivage.tsx` depuis `CRM-134` : la vue du channel la partage.
 
 // ---------------------------------------------------------------------------------------------
 // Confirmation de mise à la corbeille — CRM-077, docs/SPEC-corbeille.md §4 bis.3
@@ -1070,6 +1028,7 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 								{ouverture.type === 'archivage-track' && ouverture.id === track.id ? (
 									<div className="px-3 pb-3">
 										<ConfirmationArchivage
+											corps={t('admin.archive.confirm.body')}
 											question={t('admin.archive.confirm.track', { nom: track.name })}
 											refus={refus}
 											enCours={enCours}
@@ -1405,6 +1364,7 @@ function ListeChannels({
 							) : null}
 							{ouverture.type === 'archivage-channel' && ouverture.id === channel.id ? (
 								<ConfirmationArchivage
+									corps={t('admin.archive.confirm.body')}
 									question={t('admin.archive.confirm.channel', { nom: channel.name })}
 									refus={refus}
 									enCours={enCours}

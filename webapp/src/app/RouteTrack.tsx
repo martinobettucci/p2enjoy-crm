@@ -6,6 +6,9 @@
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : la liste reçoit le catalogue d'étiquettes pour son filtre (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — le board et la liste lisent la capacité d'écrire sur le channel et la
 //       fournissent à leurs commandes (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
+// @spec CRM-134 (docs/BACKLOG.md) tranche T1 — « Archiver le channel » sur la barre d'outils du channel ouvert, le
+//       panneau des archivés en tête de la zone principale, et ce que la vue fait après : le channel suivant, l'annonce,
+//       le focus (docs/SPEC-channels.md §11.2, §11.3 ; docs/DESIGN_SYSTEM.md §5.101 ; décision 919)
 // @spec CRM-021 (docs/BACKLOG.md) — route d'un track : ses onglets et le contenu d'un channel
 // @spec CRM-041 (docs/BACKLOG.md) — le board d'un channel ouvert
 // @spec CRM-042 (docs/BACKLOG.md) — la vue liste du même channel, seconde lecture du même contenu
@@ -57,6 +60,13 @@ import { SkeletonListe } from '../components/ui/Skeleton'
 import { t, type CleTraduction } from '../i18n'
 import { composerBoard, useContenuBoard, type CardBoard, type EtapeBoard } from '../lib/board'
 import { projeterChannels, useContenuTrack, type Channel, type TrackOuvert } from '../lib/channels'
+import {
+	archivesDepliees,
+	channelApresArchivage,
+	focusApresDesarchivage,
+	rechercheAvecArchives,
+} from '../lib/archives-channels'
+import { BarreOutilsChannel, PanneauArchives } from './ArchivageChannel'
 import { ancetresChannel } from '../lib/fil-ariane'
 import { PARAM_NOUVEAU_CHANNEL, VALEUR_NOUVEAU_CHANNEL_TRACK } from '../lib/nouveau-channel'
 import {
@@ -118,7 +128,9 @@ export function RouteTrack({ vue = 'board' }: { readonly vue?: VueChannel } = {}
 	const { etat, recharger } = useContenuTrack(clientCrm, slugTrack)
 
 	const track = etat.statut === 'pret' ? etat.donnees.track : null
-	const channels = etat.statut === 'pret' ? etat.donnees.channels : []
+	const channels = etat.statut === 'pret' ? etat.donnees.channels : AUCUN_CHANNEL
+	// `CRM-134` (§11.1) : les archivés du track, lus dans la même requête que ses onglets.
+	const archives = etat.statut === 'pret' ? etat.donnees.archives : AUCUN_CHANNEL
 	// La projection vit dans `webapp/src/lib/channels.ts` depuis que la route d'une card la fait
 	// elle aussi (décision 167) : recopiée, elle aurait fini par diverger.
 	const etatChannels = projeterChannels(etat)
@@ -132,17 +144,27 @@ export function RouteTrack({ vue = 'board' }: { readonly vue?: VueChannel } = {}
 	// rendu qui le referme. La commande de la barre d'onglets ne reparaît qu'une fois les paramètres retirés, l'onglet
 	// du channel créé qu'une fois les channels relus : le focus attend l'un ou l'autre, sans temporisation.
 	const navigate = useNavigate()
-	const { key: cleAdresse } = useLocation()
+	const { key: cleAdresse, search: rechercheCourante } = useLocation()
 	const [annonce, setAnnonce] = useState('')
+	// `CRM-134` ajoute deux cibles : le groupe « Archivés », où un channel archivé est parti, et le « Désarchiver » voisin
+	// dans le panneau (§11.2, §11.3). Toutes attendent le rendu qui les monte, sans temporisation.
 	const [focusApres, setFocusApres] = useState<
-		{ readonly cible: 'commande' } | { readonly cible: 'onglet'; readonly slug: string } | null
+		| { readonly cible: 'commande' }
+		| { readonly cible: 'onglet'; readonly slug: string }
+		| { readonly cible: 'archives' }
+		| { readonly cible: 'desarchiver'; readonly id: string }
+		| null
 	>(null)
 	useEffect(() => {
 		if (focusApres === null) return
 		const selecteur =
 			focusApres.cible === 'commande'
 				? '[data-testid="commande-nouveau-channel"]'
-				: `[data-testid="onglet-channel"][data-slug="${focusApres.slug}"]`
+				: focusApres.cible === 'archives'
+					? '[data-testid="groupe-archives"]'
+					: focusApres.cible === 'desarchiver'
+						? `[data-testid="desarchiver-channel"][data-id="${focusApres.id}"]`
+						: `[data-testid="onglet-channel"][data-slug="${focusApres.slug}"]`
 		const cible = document.querySelector<HTMLElement>(selecteur)
 		if (cible === null) return
 		cible.focus()
@@ -161,6 +183,41 @@ export function RouteTrack({ vue = 'board' }: { readonly vue?: VueChannel } = {}
 	)
 	const apresFermeture = useCallback(() => setFocusApres({ cible: 'commande' }), [])
 
+	// `CRM-134` (§11.2) — après un archivage : la vue passe au channel actif qui suivait, à défaut au précédent, à défaut
+	// à la racine du track ; dans la même vue, tableau ou liste. Les paramètres de la vue quittée ne suivent pas : ils
+	// portaient sur un autre channel.
+	const apresArchivage = useCallback(
+		(archive: Channel) => {
+			if (slugTrack === undefined) return
+			const suivant = channelApresArchivage(channels, archive.id)
+			navigate(
+				suivant === null
+					? `/tracks/${slugTrack}`
+					: `/tracks/${slugTrack}/${suivant.slug}${vue === 'liste' ? '/liste' : ''}`,
+			)
+			recharger()
+			setAnnonce(t('live.channel.archived', { nom: archive.name }))
+			setFocusApres({ cible: 'archives' })
+		},
+		[channels, navigate, recharger, slugTrack, vue],
+	)
+
+	// `CRM-134` (§11.3) — après un désarchivage : le focus au « Désarchiver » voisin ; le dernier rendu, à l'onglet du
+	// channel rendu, et le paramètre du groupe quitte l'adresse avec le panneau qu'il dépliait.
+	const apresDesarchivage = useCallback(
+		(rendu: Channel, archivesAvant: readonly Channel[]) => {
+			const focus = focusApresDesarchivage(archivesAvant, rendu)
+			if (focus.cible === 'onglet') {
+				const recherche = rechercheAvecArchives(rechercheCourante, false)
+				navigate({ search: recherche === '' ? '' : `?${recherche}` }, { replace: true })
+			}
+			recharger()
+			setAnnonce(t('live.channel.unarchived', { nom: rendu.name }))
+			setFocusApres(focus)
+		},
+		[navigate, recharger, rechercheCourante],
+	)
+
 	// Le titre est l'objet le plus profond que la route a lu : le channel ouvert, sinon le track (§5.1 bis).
 	const titre = channelOuvert?.name ?? track?.name
 
@@ -170,6 +227,7 @@ export function RouteTrack({ vue = 'board' }: { readonly vue?: VueChannel } = {}
 			{...(titre === undefined ? {} : { titreRoute: titre })}
 			ancetres={ancetresChannel(track, channelOuvert)}
 			etatChannels={etatChannels}
+			archivesChannels={archives}
 			onRechargerChannels={recharger}
 			{...(slugTrack === undefined ? {} : { slugTrack })}
 		>
@@ -180,6 +238,9 @@ export function RouteTrack({ vue = 'board' }: { readonly vue?: VueChannel } = {}
 				onChannelCree={apresCreation}
 				onFormulaireFerme={apresFermeture}
 				nombreChannels={channels.length}
+				archives={archives}
+				onArchive={apresArchivage}
+				onDesarchive={apresDesarchivage}
 				vue={vue}
 				channelDemande={slugChannel}
 				{...(channelOuvert === undefined ? {} : { channelOuvert })}
@@ -195,6 +256,9 @@ function ContenuTrack({
 	onChannelCree,
 	onFormulaireFerme,
 	nombreChannels,
+	archives,
+	onArchive,
+	onDesarchive,
 	channelDemande,
 	vue,
 	channelOuvert,
@@ -205,6 +269,9 @@ function ContenuTrack({
 	readonly onChannelCree: (slug: string, nom: string) => void
 	readonly onFormulaireFerme: () => void
 	readonly nombreChannels: number
+	readonly archives: readonly Channel[]
+	readonly onArchive: (channel: Channel) => void
+	readonly onDesarchive: (channel: Channel, archivesAvant: readonly Channel[]) => void
 	readonly channelDemande: string | undefined
 	readonly vue: VueChannel
 	readonly channelOuvert?: Channel
@@ -242,20 +309,34 @@ function ContenuTrack({
 			<ZoneNouveauChannel client={clientCrm} track={track} onCree={onChannelCree} onFerme={onFormulaireFerme} />
 		) : null
 
+	// `CRM-134` (§11.3) : le panneau des archivés, déplié par le groupe de la barre, en tête de la zone principale et
+	// au-dessus du formulaire « Nouveau channel ». Rendu dans TOUS les états d'un track trouvé — un track dont tous les
+	// channels sont archivés n'a plus d'onglet, et c'est là qu'on vient les rendre.
+	const panneauArchives =
+		archivesDepliees(parametresVue) && archives.length > 0 && clientCrm !== null ? (
+			<div className="px-4 pt-4">
+				<PanneauArchives client={clientCrm} archives={archives} onDesarchive={onDesarchive} />
+			</div>
+		) : null
+
 	if (nombreChannels === 0) {
 		// UN ÉTAT VIDE NOMME LE GESTE QUI LE COMBLE (INC-258, docs/DESIGN_SYSTEM.md §5.51). Depuis `CRM-100`, « Nouveau
 		// channel » vit dans la barre d'onglets de ce track : le geste étant sur l'écran même, le texte le nomme et
 		// aucun lien n'est ajouté (§5.51, deuxième règle). Le formulaire ouvert remplace l'état vide (§5.55).
 		return (
-			nouveauChannel ?? (
-				<EtatVide titre={t('route.track.nochannel.title')} corps={t('route.track.nochannel.body')} />
-			)
+			<>
+				{panneauArchives}
+				{nouveauChannel ?? (
+					<EtatVide titre={t('route.track.nochannel.title')} corps={t('route.track.nochannel.body')} />
+				)}
+			</>
 		)
 	}
 
 	if (channelDemande === undefined) {
 		return (
 			<>
+				{panneauArchives}
 				{nouveauChannel}
 				<EtatVide titre={t('route.track.pickchannel.title')} corps={t('route.track.pickchannel.body')} />
 			</>
@@ -268,6 +349,7 @@ function ContenuTrack({
 	if (channelOuvert === undefined || slugTrack === undefined) {
 		return (
 			<>
+				{panneauArchives}
 				{nouveauChannel}
 				<EtatVide titre={t('route.track.pickchannel.title')} corps={t('route.track.pickchannel.body')} />
 			</>
@@ -280,17 +362,27 @@ function ContenuTrack({
 	// (docs/DESIGN_SYSTEM.md §5.8, docs/SPEC-cards.md §12.8).
 	return (
 		<div className="flex flex-col min-w-0">
+			{panneauArchives}
 			{nouveauChannel}
 			<div className="px-4 pt-4">
-				{/* Le mode du sommeil est lu ICI, au-dessus des deux zones, parce que c'est ici que la
-				    bascule de vue le transporte (§16.12.4). Chaque zone le relit de l'adresse pour son
-				    propre compte : l'adresse est la seule source, et un état partagé la doublerait. */}
-				<BasculeVue
-					slugTrack={slugTrack}
-					slugChannel={channelOuvert.slug}
-					vue={vue}
-					modeSommeil={lireModeSommeil(parametresVue.get(CLE_URL_SOMMEIL))}
-				/>
+				{/* `CRM-134` (§11.2) : la bascule et « Archiver le channel » partagent la barre d'outils du channel ;
+				    la confirmation vient dessous. Remontée à chaque channel (`key`) : une confirmation ouverte ne
+				    survit pas au changement d'onglet. */}
+				<BarreOutilsOuBascule
+					cle={channelOuvert.id}
+					channel={channelOuvert}
+					onArchive={onArchive}
+				>
+					{/* Le mode du sommeil est lu ICI, au-dessus des deux zones, parce que c'est ici que la
+					    bascule de vue le transporte (§16.12.4). Chaque zone le relit de l'adresse pour son
+					    propre compte : l'adresse est la seule source, et un état partagé la doublerait. */}
+					<BasculeVue
+						slugTrack={slugTrack}
+						slugChannel={channelOuvert.slug}
+						vue={vue}
+						modeSommeil={lireModeSommeil(parametresVue.get(CLE_URL_SOMMEIL))}
+					/>
+				</BarreOutilsOuBascule>
 			</div>
 			<DroitChannel idChannel={channelOuvert.id}>
 				{vue === 'liste' ? (
@@ -300,6 +392,32 @@ function ContenuTrack({
 				)}
 			</DroitChannel>
 		</div>
+	)
+}
+
+/** Aucun channel : une seule instance, pour qu'une dépendance de `useCallback` ne change pas à chaque rendu. */
+const AUCUN_CHANNEL: readonly Channel[] = []
+
+/**
+ * La barre d'outils du channel (`CRM-134`, §11.2), ou la bascule seule sans client configuré : sans client, la route
+ * n'a rien lu, et l'on n'arrive pas jusqu'ici ; la garde évite d'écrire une branche que le typage ne voit pas.
+ */
+function BarreOutilsOuBascule({
+	cle,
+	channel,
+	onArchive,
+	children,
+}: {
+	readonly cle: string
+	readonly channel: Channel
+	readonly onArchive: (channel: Channel) => void
+	readonly children: ReactNode
+}) {
+	if (clientCrm === null) return <>{children}</>
+	return (
+		<BarreOutilsChannel key={cle} client={clientCrm} channel={channel} onArchive={onArchive}>
+			{children}
+		</BarreOutilsChannel>
 	)
 }
 

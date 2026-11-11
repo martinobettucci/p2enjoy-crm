@@ -736,7 +736,7 @@ Chaque tranche est poussée une fois vérifiée.
 
 | Tranche | Contenu |
 |---|---|
-| **T1** | Webapp : la lecture (§11.1), le groupe et le panneau, archiver et désarchiver, `docs/DESIGN_SYSTEM.md` §5.101 ; unitaires ; API par jetons réels ; E2E souris et clavier ; captures aux quatre paliers |
+| **T1** | Webapp : la lecture (§11.1), le groupe et le panneau, archiver et désarchiver, `docs/DESIGN_SYSTEM.md` §5.101 ; unitaires ; API par jetons réels ; E2E souris et clavier ; captures aux quatre paliers — *faite le 2026-11-11* |
 | **T2** | Connecteur : `crm_channel_archive` ; pytest unitaires et intégration ; `verify-mcp.sh` ; manuel §33 |
 | **T3** | Manuel : le tableau d'un channel et l'arborescence, avec leurs images |
 | **T4** | Production, par la session de livraison, sur instruction du responsable : la webapp et l'image `mcp` ; aucune migration |

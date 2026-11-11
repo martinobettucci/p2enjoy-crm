@@ -13,6 +13,13 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-134` T1 — archiver un channel depuis sa vue, et le retrouver dans « Archivés »
+
+- **« Archiver le channel »**, sur la barre d'outils du channel ouvert, à côté de « Tableau / Liste » : une confirmation dans la page nomme le channel et dit qu'il quitte les onglets pour tout l'espace, sans être supprimé. La vue passe au channel suivant.
+- **« Archivés (n) »**, au bout des onglets d'un track qui en a, déplie la liste de ses channels archivés ; chacun se désarchive d'un clic et reprend sa place dans les onglets.
+- Les mêmes droits que dans Réglages ▸ Tracks et channels : seuls les administrateurs de l'espace archivent et désarchivent ; les autres membres voient les archivés et des commandes grisées, avec leur motif.
+- Aucune migration : la webapp seule (`docs/PROD_MIGRATIONS.md` §2.44).
+
 #### `CRM-138` — effacer un message vers la corbeille de l'inbox, la boîte mail en option (décisions 878, 917, 920 et 921) — *tranche T1, l'unité en cours*
 
 - **En base (T1)** : un message peut être mis à la corbeille (`delete_message`) par qui peut l'écrire, restauré

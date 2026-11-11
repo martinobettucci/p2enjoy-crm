@@ -3819,6 +3819,20 @@ export const fr = {
 	'tabs.track.aria': 'Vues du track',
 	// CRM-100 (docs/SPEC-administration-arborescence.md §13.3, docs/DESIGN_SYSTEM.md §5.55).
 	'tabs.newChannel': 'Nouveau channel',
+
+	// CRM-134 T1 — archiver un channel depuis sa vue, et le groupe « Archivés » de la barre d'onglets
+	// (docs/SPEC-channels.md §11 ; docs/DESIGN_SYSTEM.md §5.101 ; décision 919). La mention « Archivé » d'une ligne du
+	// panneau réemploie `admin.tree.archived`, et la question de la confirmation `admin.archive.confirm.channel` : le
+	// même état et le même geste portent les mêmes mots que dans Réglages.
+	'tabs.archives': 'Archivés ({nombre})',
+	'channel.archive.action': 'Archiver le channel',
+	'channel.archive.confirm.body':
+		"Il quittera les onglets de ce track pour tout l'espace de travail, sans être supprimé : ses affaires restent intactes. Vous le retrouverez sous « Archivés », au bout des onglets, d'où il se désarchive.",
+	'channel.archives.title': 'Channels archivés de ce track',
+	'channel.archives.unarchive': 'Désarchiver',
+	'channel.archives.unarchive.aria': 'Désarchiver le channel {nom}',
+	'live.channel.archived': '« {nom} » est archivé ; vous le retrouvez sous « Archivés ».',
+	'live.channel.unarchived': '« {nom} » est désarchivé.',
 	'live.track.channel.created': 'Channel « {nom} » créé.',
 	// L'en-tête de la première colonne du tableau équivalent (§5.30) : sur cet écran, une paire de
 	// barres désigne un budget.

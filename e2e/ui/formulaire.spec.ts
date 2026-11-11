@@ -27,6 +27,8 @@
 // Ils **ne prouvent pas** le parcours « transition bloquée → saisie → transition réussie » que la
 // Definition of Done exige : il suppose une session et un contrôle de transition, dus par
 // `CRM-041`. C'est INC-062, et l'absence est nommée plutôt que maquillée.
+// @verifies CRM-134 (docs/BACKLOG.md) tranche T1 — la lecture des channels rapporte les archivés (docs/SPEC-channels.md §11.1 ;
+//           assertion révisée, décision 51)
 
 import { autoriserErreursConsole, connecterAvecLeLabs, ERREUR_RESSOURCE_HTTP, expect, test } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -596,7 +598,11 @@ test.describe('la coquille autour du formulaire (§4.6 bis)', () => {
 		expect(channels, 'les channels du track porteur sont demandés').toBeTruthy()
 		// Les trois exigences du §5 de docs/SPEC-channels.md sont portées par la requête elle-même.
 		expect(channels).toContain(`track_id=eq.${TRACK.id}`)
-		expect(channels).toContain('archived_at=is.null')
+		// RÉVISÉ PAR `CRM-134` T1 (décision 51) : la lecture rapporte les archivés du track, avec `archived_at`, pour le
+		// groupe « Archivés » ; la corbeille reste écartée (docs/SPEC-channels.md §11.1).
+		expect(channels).not.toContain('archived_at=is.null')
+		expect(decodeURIComponent(channels ?? '')).toMatch(/select=[^&]*archived_at/)
+		expect(channels).toContain('deleted_at=is.null')
 		expect(channels).toContain('order=position')
 	})
 

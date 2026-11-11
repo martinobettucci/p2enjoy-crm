@@ -97,7 +97,7 @@ import { Link, useParams, useSearchParams } from 'react-router'
 import { Button } from '../components/ui/Button'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { t, type CleTraduction } from '../i18n'
-import { projeterChannels, useContenuTrack } from '../lib/channels'
+import { projeterArchives, projeterChannels, useContenuTrack } from '../lib/channels'
 import { ancetresAffaire } from '../lib/fil-ariane'
 import { mettreCardALaCorbeille, type NatureRefusGeste } from '../lib/corbeille'
 import { BlocRattachementsCard } from './BlocRattachementsCard'
@@ -198,6 +198,7 @@ export function RouteCard() {
 			{...(card === null ? {} : { titreRoute: card.title })}
 			ancetres={ancetres}
 			etatChannels={projeterChannels(etatTrack)}
+			archivesChannels={projeterArchives(etatTrack)}
 			onRechargerChannels={rechargerTrack}
 			{...(slugTrack === undefined ? {} : { slugTrack })}
 		>

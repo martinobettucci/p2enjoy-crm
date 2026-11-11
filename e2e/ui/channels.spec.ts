@@ -19,6 +19,8 @@
 // Le rendu chargé — onglets, ordre, onglet courant, patron ARIA — est éprouvé par
 // `webapp/src/app/TabBar.test.tsx`, qui monte le composant réel, et ici en substituant la
 // **réponse réseau**. Ni l'un ni l'autre n'est une session, et aucun n'est présenté comme telle.
+// @verifies CRM-134 (docs/BACKLOG.md) tranche T1 — la lecture des channels rapporte les archivés, `archived_at` demandée, la
+//           corbeille écartée (docs/SPEC-channels.md §11.1 ; assertion révisée, décision 51)
 
 import {
 	autoriserErreursConsole,
@@ -109,7 +111,11 @@ test.describe('la route d’un track interroge réellement le backend', () => {
 		expect(channels, 'les channels du track sont demandés').toBeTruthy()
 		// Le filtre est côté serveur, et l'ordre aussi (docs/SPEC-channels.md §5).
 		expect(channels).toContain('track_id=eq.t-1')
-		expect(channels).toContain('archived_at=is.null')
+		// RÉVISÉ PAR `CRM-134` T1 (décision 51) : la lecture rapporte désormais les archivés du track, avec
+		// `archived_at`, pour le groupe « Archivés » ; la corbeille reste écartée (docs/SPEC-channels.md §11.1).
+		expect(channels).not.toContain('archived_at=is.null')
+		expect(decodeURIComponent(channels ?? '')).toMatch(/select=[^&]*archived_at/)
+		expect(channels).toContain('deleted_at=is.null')
 		expect(channels).toContain('order=position')
 	})
 

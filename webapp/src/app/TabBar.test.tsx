@@ -14,13 +14,16 @@
 //           docs/DESIGN_SYSTEM.md §5.55 (après les channels, avant le filet ; ni bordure basse ni `aria-current`)
 // @verifies CRM-131 (docs/BACKLOG.md) — hors d'un track, « Aucun channel » seulement sans channel lisible, sinon
 //           « Ouvrez un track pour voir ses channels » ; docs/SPEC-channels.md §5.5, docs/DESIGN_SYSTEM.md §4, décision 868
+// @verifies CRM-134 (docs/BACKLOG.md) tranche T1 — le groupe « Archivés » : absent sans archivé, son compte, après les
+//           onglets et avant « Nouveau channel », un bouton `aria-expanded` qui écrit `archives=1` sur la vue d'un track,
+//           un lien vers la racine du track ailleurs ; docs/SPEC-channels.md §11.3, docs/DESIGN_SYSTEM.md §5.101
 //
 // Ces tests montent la **vraie** barre d'onglets et isolent ses états par leurs rôles accessibles.
 // Le parcours connecté réel atteint la même barre dans `e2e/ui/authentification.spec.ts`.
 
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { TabBar } from './TabBar'
 import { FournisseurEspace } from './ContexteEspace'
 import type { Capacite } from '../lib/capacites'
@@ -369,5 +372,85 @@ describe('barre d’onglets — la pastille de couleur (CRM-116)', () => {
 		const pastille = screen.getByTestId('pastille-channel')
 		expect(pastille.getAttribute('data-couleur')).toBe('neutral')
 		expect(pastille.className).toContain('bg-text-3')
+	})
+})
+
+describe('le groupe « Archivés » (CRM-134, docs/SPEC-channels.md §11.3)', () => {
+	const ARCHIVES: readonly Channel[] = [
+		{ id: 'c-3', name: "Appels d'offres", slug: 'appels-offres', position: 3, workflow_id: 'wf-1', description: null, color: 'accent' },
+	]
+
+	/** Montée sous un routeur dont l'adresse courante est relue, pour voir ce que le bouton y écrit. */
+	function monterAvecArchives(archives: readonly Channel[], adresse = '/tracks/conseil-ia/prospection') {
+		function Adresse() {
+			const { pathname, search } = useLocation()
+			return <output data-testid="adresse">{`${pathname}${search}`}</output>
+		}
+		return render(
+			<MemoryRouter initialEntries={[adresse]}>
+				<Routes>
+					<Route
+						path="*"
+						element={
+							<>
+								<TabBar etat={pret(CHANNELS)} slugTrack="conseil-ia" archives={archives} />
+								<Adresse />
+							</>
+						}
+					/>
+				</Routes>
+			</MemoryRouter>,
+		)
+	}
+
+	it('est ABSENT quand le track n’a aucun archivé — « Archivés (0) » serait une commande sans objet', () => {
+		monterAvecArchives([])
+		expect(screen.queryByTestId('groupe-archives')).toBeNull()
+	})
+
+	it('dit son compte, et vit APRÈS les onglets et AVANT « Nouveau channel »', () => {
+		monterAvecArchives(ARCHIVES)
+		const groupe = screen.getByTestId('groupe-archives')
+		expect(groupe.textContent).toBe(fr['tabs.archives'].replace('{nombre}', '1'))
+		const nav = screen.getByRole('navigation', { name: fr['tabs.aria'] })
+		const nouveau = screen.getByTestId('commande-nouveau-channel')
+		expect(nav.compareDocumentPosition(groupe) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+		expect(groupe.compareDocumentPosition(nouveau) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+		// Ce n'est pas un onglet : ni `aria-current`, ni bordure basse.
+		expect(groupe.hasAttribute('aria-current')).toBe(false)
+		expect(groupe.className).not.toContain('border-b-2')
+	})
+
+	it('sur la vue d’un track, un BOUTON qui déplie et replie par l’adresse, les autres paramètres conservés', () => {
+		monterAvecArchives(ARCHIVES, '/tracks/conseil-ia/prospection/liste?page=2')
+		const groupe = screen.getByTestId('groupe-archives')
+		expect(groupe.tagName).toBe('BUTTON')
+		expect(groupe.getAttribute('aria-expanded')).toBe('false')
+		expect(groupe.hasAttribute('aria-controls')).toBe(false)
+		fireEvent.click(groupe)
+		expect(screen.getByTestId('adresse').textContent).toBe('/tracks/conseil-ia/prospection/liste?page=2&archives=1')
+		const deplie = screen.getByTestId('groupe-archives')
+		expect(deplie.getAttribute('aria-expanded')).toBe('true')
+		expect(deplie.getAttribute('aria-controls')).toBe('panneau-archives-channels')
+		fireEvent.click(deplie)
+		expect(screen.getByTestId('adresse').textContent).toBe('/tracks/conseil-ia/prospection/liste?page=2')
+	})
+
+	it('hors de la vue d’un track — les coûts —, un LIEN vers la racine du track, groupe déplié', () => {
+		monterAvecArchives(ARCHIVES, '/tracks/conseil-ia/couts')
+		const groupe = screen.getByTestId('groupe-archives')
+		expect(groupe.tagName).toBe('A')
+		expect(groupe.getAttribute('href')).toBe('/tracks/conseil-ia?archives=1')
+		expect(groupe.hasAttribute('aria-expanded')).toBe(false)
+	})
+
+	it('est rendu aussi quand TOUS les channels du track sont archivés : c’est là qu’on vient les rendre', () => {
+		render(
+			<MemoryRouter initialEntries={['/tracks/conseil-ia']}>
+				<TabBar etat={pret([])} slugTrack="conseil-ia" archives={ARCHIVES} />
+			</MemoryRouter>,
+		)
+		expect(screen.getByTestId('onglets-vides')).toBeTruthy()
+		expect(screen.getByTestId('groupe-archives')).toBeTruthy()
 	})
 })

@@ -4,6 +4,8 @@
 // @verifies docs/SPEC-webapp.md §6.4 (contrat asynchrone), §7 (états systématiques)
 // @verifies CRM-100 (docs/BACKLOG.md) tranche T1 — docs/SPEC-administration-arborescence.md §13.3 (le track ouvert
 //           porte son `workspace_id`)
+// @verifies CRM-134 (docs/BACKLOG.md) tranche T1 — docs/SPEC-channels.md §11.1 : les archivés lus dans la MÊME requête que
+//           les onglets, puis séparés ; les onglets restent les non archivés
 //
 // Ce fichier éprouve **la requête réellement émise** autant que la valeur rendue. Motif : trois
 // exigences de `docs/SPEC-channels.md` §5 sont portées par la requête elle-même — le filtre sur
@@ -14,10 +16,13 @@ import { describe, expect, it } from 'vitest'
 import { enChargement, enErreur, pret } from './async'
 import {
 	COLONNES_CHANNEL,
+	COLONNES_CHANNEL_BARRE,
 	COLONNES_TRACK_OUVERT,
 	lireChannels,
 	lireTrackParSlug,
+	projeterArchives,
 	projeterChannels,
+	separerChannels,
 	type Channel,
 	type TrackOuvert,
 } from './channels'
@@ -127,19 +132,23 @@ describe('lireTrackParSlug', () => {
 })
 
 describe('lireChannels', () => {
-	it('filtre sur le track **côté serveur**, écarte les archivés et ordonne', async () => {
+	// RÉVISÉ PAR `CRM-134` T1 (décision 51) : la requête ÉCARTAIT les archivés ; elle les rapporte désormais, avec
+	// `archived_at`, pour le groupe « Archivés » de la barre (docs/SPEC-channels.md §11.1). Ce qui reste exigé est exigé
+	// au mot près : le track côté serveur, la corbeille écartée, l'ordre. La séparation est prouvée plus bas.
+	it('filtre sur le track **côté serveur**, écarte la corbeille, rapporte les archivés et ordonne', async () => {
 		const { client, appel } = clientEspion({ data: [CHANNEL], error: null, status: 200 })
 		await lireChannels(client, 't-1')
 
 		expect(appel.table).toBe('channels')
-		expect(appel.colonnes).toBe(COLONNES_CHANNEL)
+		expect(appel.colonnes).toBe(COLONNES_CHANNEL_BARRE)
+		expect(COLONNES_CHANNEL_BARRE).toBe(`${COLONNES_CHANNEL}, archived_at`)
 		// Le filtre est côté serveur : rapporter les channels de tous les tracks pour n'en
 		// afficher qu'une barre ferait transiter des lignes que l'écran ne montrera jamais.
 		expect(appel.egalites).toEqual([['track_id', 't-1']])
 		// @verifies CRM-077 — docs/SPEC-corbeille.md §3.3 : un channel en corbeille quitte la barre
 		// d'onglets. Ses enfants, eux, ne sont PAS horodatés — c'est ce filtre de liste, et non une
 		// descente d'horodatage, qui les rend inaccessibles.
-		expect(appel.nuls).toEqual(['archived_at', 'deleted_at'])
+		expect(appel.nuls).toEqual(['deleted_at'])
 		// `position` puis `name` : deux channels de même position ne doivent pas s'échanger d'un
 		// chargement à l'autre (docs/SPEC-channels.md §3).
 		expect(appel.tris).toEqual(['position', 'name'])
@@ -167,10 +176,12 @@ describe('lireChannels', () => {
 		expect(COLONNES_CHANNEL.split(', ')).toContain('color')
 	})
 
-	it('rend les channels consentis par le backend', async () => {
-		const { client } = clientEspion({ data: [CHANNEL], error: null, status: 200 })
+	it('rend les channels consentis par le backend, séparés : les archivés hors des onglets', async () => {
+		const archive = { ...CHANNEL, id: 'c-2', slug: 'appels-offres', archived_at: '2026-02-01T09:00:00Z' }
+		const { client } = clientEspion({ data: [{ ...CHANNEL, archived_at: null }, archive], error: null, status: 200 })
 		const etat = await lireChannels(client, 't-1')
-		expect(etat).toEqual({ statut: 'pret', donnees: [CHANNEL] })
+		const { archived_at: _horodatage, ...sansHorodatage } = archive
+		expect(etat).toEqual({ statut: 'pret', donnees: { channels: [CHANNEL], archives: [sansHorodatage] } })
 	})
 
 	it('rend un état **vide**, et non une erreur, quand la RLS ne consent rien', async () => {
@@ -178,7 +189,7 @@ describe('lireChannels', () => {
 		// c'est exactement ce que l'interface doit montrer (docs/SPEC-webapp.md §6.3).
 		const { client } = clientEspion({ data: [], error: null, status: 200 })
 		const etat = await lireChannels(client, 't-1')
-		expect(etat).toEqual({ statut: 'pret', donnees: [] })
+		expect(etat).toEqual({ statut: 'pret', donnees: { channels: [], archives: [] } })
 	})
 
 	it('classe une panne de transport comme réessayable', async () => {
@@ -193,15 +204,13 @@ describe('lireChannels', () => {
 			from: () => ({
 				select: () => ({
 					eq: () => ({
-						// Deux `is` enchaînés : l'archivage, puis la corbeille (CRM-077). Le double
-						// reflète la requête réelle.
+						// Un seul `is` depuis `CRM-134` : la corbeille (CRM-077). Le double reflète la requête
+						// réelle, qui rapporte désormais les archivés.
 						is: () => ({
-							is: () => ({
-								order: () => ({
-									order: () => {
-										throw new Error('socket fermée')
-									},
-								}),
+							order: () => ({
+								order: () => {
+									throw new Error('socket fermée')
+								},
 							}),
 						}),
 					}),
@@ -220,8 +229,9 @@ describe('lireChannels', () => {
 // @verifies CRM-037 (docs/BACKLOG.md) — la barre d'onglets d'une route de card
 // @verifies docs/SPEC-form-composer.md §4.6 bis ; docs/SPEC-channels.md §5.4
 describe('projeterChannels', () => {
-	it('rend les channels du track lorsque le contenu est prêt', () => {
-		expect(projeterChannels(pret({ track: TRACK, channels: [CHANNEL] }))).toEqual({
+	it('rend les channels du track lorsque le contenu est prêt — jamais ses archivés', () => {
+		const archive = { ...CHANNEL, id: 'c-2' }
+		expect(projeterChannels(pret({ track: TRACK, channels: [CHANNEL], archives: [archive] }))).toEqual({
 			statut: 'pret',
 			donnees: [CHANNEL],
 		})
@@ -230,7 +240,7 @@ describe('projeterChannels', () => {
 	it('rend un état **prêt et vide** quand le backend n’a consenti aucun track', () => {
 		// Un refus de lecture est zéro ligne, pas une erreur : la barre affiche son état vide, et
 		// la zone principale n'a rien à reprendre (docs/SPEC-form-composer.md §4.6 bis).
-		expect(projeterChannels(pret({ track: null, channels: [] }))).toEqual({
+		expect(projeterChannels(pret({ track: null, channels: [], archives: [] }))).toEqual({
 			statut: 'pret',
 			donnees: [],
 		})
@@ -245,5 +255,36 @@ describe('projeterChannels', () => {
 		// que CLAUDE.md §18 interdit. La coquille doit pouvoir le présenter et offrir une reprise.
 		const erreur = { nature: 'forbidden', detail: 'refusé' } as const
 		expect(projeterChannels(enErreur(erreur))).toEqual({ statut: 'erreur', erreur })
+	})
+})
+
+// @verifies CRM-134 (docs/BACKLOG.md) tranche T1 — docs/SPEC-channels.md §11.1 (la séparation), §11.3 (le groupe ne paraît
+//           qu'avec la lecture)
+describe('separerChannels', () => {
+	it('range par `archived_at`, dans l’ordre reçu, sans recopier la colonne', () => {
+		const a = { ...CHANNEL, id: 'a', archived_at: null }
+		const b = { ...CHANNEL, id: 'b', archived_at: '2026-11-11T10:00:00Z' }
+		const c = { ...CHANNEL, id: 'c', archived_at: null }
+		const d = { ...CHANNEL, id: 'd', archived_at: '2026-01-01T10:00:00Z' }
+		const { channels, archives } = separerChannels([a, b, c, d])
+		expect(channels.map((x) => x.id)).toEqual(['a', 'c'])
+		expect(archives.map((x) => x.id)).toEqual(['b', 'd'])
+		expect(Object.keys(archives[0]!)).not.toContain('archived_at')
+	})
+
+	it('une ligne SANS la colonne reste un onglet — jamais un archivé deviné', () => {
+		expect(separerChannels([CHANNEL])).toEqual({ channels: [CHANNEL], archives: [] })
+	})
+})
+
+describe('projeterArchives', () => {
+	it('rend les archivés quand le contenu est prêt', () => {
+		const archive = { ...CHANNEL, id: 'c-2' }
+		expect(projeterArchives(pret({ track: TRACK, channels: [CHANNEL], archives: [archive] }))).toEqual([archive])
+	})
+
+	it('ne rend rien pendant le chargement ni sur un échec : le groupe attend la lecture', () => {
+		expect(projeterArchives(enChargement())).toEqual([])
+		expect(projeterArchives(enErreur({ nature: 'network', detail: 'x' }))).toEqual([])
 	})
 })
