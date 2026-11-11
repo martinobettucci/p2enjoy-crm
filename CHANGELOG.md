@@ -29,7 +29,7 @@ d'exécuter le code attendu.
 - Les mêmes droits que dans Réglages ▸ Tracks et channels : seuls les administrateurs de l'espace archivent et désarchivent ; les autres membres voient les archivés et des commandes grisées, avec leur motif.
 - Aucune migration : la webapp seule (`docs/PROD_MIGRATIONS.md` §2.44).
 
-#### `CRM-138` — effacer un message vers la corbeille de l'inbox, la boîte mail en option (décisions 878, 917, 920 et 921) — *tranches T1 et T2, l'unité en cours*
+#### `CRM-138` — effacer un message vers la corbeille de l'inbox, la boîte mail en option (décisions 878, 917, 920 et 921) — *tranches T1 à T3, l'unité en cours*
 
 - **En base (T1)** : un message peut être mis à la corbeille (`delete_message`) par qui peut l'écrire, restauré
   (`restore_message`), et lu dans sa corbeille visible (`trashed_messages`) — ce qu'on a effacé soi-même, tout l'espace pour
@@ -37,8 +37,15 @@ d'exécuter le code attendu.
   confié à `mail-sync`, réessayé ; purge à 30 jours, journalisée. Migration **180**.
 - **Dans `mail-sync` (T2)** : chaque minute, le message effacé avec la case passe dans le dossier corbeille annoncé par la
   boîte ; une boîte muette est réessayée, jusqu'à dix fois. Chaque heure, les messages effacés depuis 30 jours sont purgés,
-  leurs pièces jointes comprises. Image `mail-sync` à reconstruire. *L'écran, le connecteur et le seed suivent avec les
-  tranches T3 à T5.*
+  leurs pièces jointes comprises. Image `mail-sync` à reconstruire.
+- **Dans l'inbox (T3)** : le message ouvert porte une rangée de trois boutons libellés — « Mettre le message en
+  sommeil », « Marquer comme non lu » (ou « lu »), qui remplace l'icône seule, et « Effacer ». Le sommeil dit désormais
+  « message » au lieu de « fil ». « Effacer » ouvre une confirmation sous la rangée, jamais une fenêtre ; la case
+  « L'effacer aussi dans la boîte mail » n'y paraît que si la base dit que la personne peut écrire une boîte où le
+  message figure (colonne calculée `mailbox_trash_permitted`, migration **181**). Un dossier « Corbeille », le dernier de
+  la tête, liste les messages effacés visibles, avec la date d'effacement définitif, l'état du déplacement dans la boîte
+  et « Restaurer ». Le fil d'une affaire porte « Message effacé » et « Message restauré ». *Le connecteur et le seed
+  suivent avec les tranches T4 et T5.*
 
 #### `CRM-140` — le corps HTML d'un mail rendu dans un cadre confiné, ses images distantes sur demande (décisions 881 et 918)
 

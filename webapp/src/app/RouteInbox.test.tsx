@@ -408,7 +408,8 @@ describe('RouteInbox — le paramètre `message` de l’adresse (§15)', () => {
 // assertions portent donc sur le COUPLE écran ↔ adresse, jamais sur la fonction seule.
 describe('RouteInbox — le mode d’affichage dans l’adresse (§16.17.1)', () => {
 	/** Le libellé de la bascule, écrit une fois : c'est le nom accessible que la case porte. */
-	const AFFICHER = 'Afficher les fils en sommeil'
+	// RÉVISÉ PAR `CRM-138` T3 (docs/SPEC-cards.md §16.14.11, décision 878) : les mots disent « message ».
+	const AFFICHER = 'Afficher les messages en sommeil'
 
 	async function ouvrirLeDossierDepuis(adresseInitiale: string) {
 		ouvrirParAdresse(adresseInitiale)

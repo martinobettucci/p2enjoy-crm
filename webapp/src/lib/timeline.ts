@@ -2,6 +2,8 @@
 //       de « champ de l'affaire » (docs/SPEC-champs-communs.md §7 ; docs/DESIGN_SYSTEM.md §5.89)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : « Étiquette posée » et « Étiquette retirée » dans le fil, famille « Champs » (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-044 (docs/BACKLOG.md) — lecture des événements et fusion du fil unifié
+// @spec CRM-138 (docs/BACKLOG.md) — tranche T3 : « Message effacé » et « Message restauré », famille Discussion, l'objet en
+//       détail (docs/SPEC-mail-subsystem.md §29.1 ; docs/DESIGN_SYSTEM.md §5.102)
 // @spec CRM-062 (docs/BACKLOG.md) — tranche 3b : la relance automatique NOMMÉE dans le fil
 //       (docs/SPEC-relances.md §10.3, §10.3.1 ; docs/INCONSISTENCY_REPORT.md INC-207)
 // @spec CRM-022 (docs/BACKLOG.md) — acteur embarqué et nommé quand il existe
@@ -96,6 +98,11 @@ export const TYPES_EVENEMENT = [
 	// `public.cancel_outbound_email` depuis la migration `0176`. Inscrite dans le même changement que l'écran qui la montre
 	// (T3) : l'oubli d'INC-207 et d'INC-220 ne se répète pas.
 	'mail_cancelled',
+	// `CRM-138`, docs/SPEC-mail-subsystem.md §29.3, §29.4 — le message mis à la corbeille de l'inbox et restauré, écrits par
+	// `public.delete_message` et `public.restore_message` depuis la migration `0180`. Inscrits avec l'écran qui les montre
+	// (T3) : l'oubli d'INC-207 et d'INC-220 ne se répète pas.
+	'mail_deleted',
+	'mail_restored',
 	'snoozed',
 	'woken',
 	// `CRM-062` tranche 3b, docs/SPEC-relances.md §10.3.1 — la relance automatique, écrite par le
@@ -174,6 +181,9 @@ export const FAMILLE_PAR_TYPE: Readonly<Record<TypeEvenement, Famille>> = {
 	// UN ENVOI ANNULÉ EST UNE PAROLE RETENUE, de la même conversation que `mail_sent` (docs/DESIGN_SYSTEM.md §5.98) : le
 	// filtre « Discussion » montre ce qui est parti et ce qui ne partira pas.
 	mail_cancelled: 'discussion',
+	// UN MESSAGE EFFACÉ OU RESTAURÉ APPARTIENT À LA MÊME CONVERSATION (docs/DESIGN_SYSTEM.md §5.102), comme `mail_cancelled`.
+	mail_deleted: 'discussion',
+	mail_restored: 'discussion',
 	// « Qu'est devenue cette affaire ? » est exactement la question à laquelle le sommeil et le
 	// réveil répondent. Une sixième bascule pour deux types contredirait le §5.11 (§16.11.5).
 	snoozed: 'cycle',
@@ -398,6 +408,9 @@ export function resoudreDetail(ligne: LigneEvenement, libelles: LibellesFil): De
 	// `CRM-144` (§28.3) : L'OBJET DE L'ENVOI ANNULÉ, lu dans le `payload` pour le même motif — l'envoi annulé n'est relu nulle
 	// part depuis la fiche, et son objet au moment de l'annulation est la valeur même du fait.
 	if (ligne.type === 'mail_cancelled') return { detail: texte(ligne.payload['subject']) }
+	// `CRM-138` (§29.3) : L'OBJET DU MESSAGE EFFACÉ OU RESTAURÉ, lu dans le `payload` pour le même motif — effacé, le message
+	// n'est plus lu nulle part, et son objet au moment du geste est la valeur même du fait.
+	if (ligne.type === 'mail_deleted' || ligne.type === 'mail_restored') return { detail: texte(ligne.payload['subject']) }
 	// LE SEUL CAS OÙ LE FIL LIT UNE VALEUR DU `payload` plutôt qu'un libellé résolu, et l'écart est
 	// motivé (§16.11.5) : une DATE n'est pas un libellé qui pourrait changer de sens demain — c'est
 	// la valeur même du fait. `until` pour la mise en sommeil, `from` pour l'échéance abandonnée.

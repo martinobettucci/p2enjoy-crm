@@ -193,17 +193,19 @@ export const fr = {
 	// docs/DESIGN_SYSTEM.md §5.3 septies.
 	// LES MENTIONS NOMMENT LE FIL, ET NON L'AFFAIRE : un même refus se formule d'une seule façon,
 	// mais il ne se trompe pas de sujet (§16.15.6).
-	'inbox.sleep.filter': 'Afficher les fils en sommeil',
-	'inbox.sleep.empty.title': 'Tous les messages de ce dossier sont dans des fils en sommeil',
+	// `CRM-138` (docs/SPEC-cards.md §16.14.11, décisions 878 et 917) : les mots disent « message » ; le fil entier dort
+	// toujours, et les annonces le disent par « avec ses réponses ».
+	'inbox.sleep.filter': 'Afficher les messages en sommeil',
+	'inbox.sleep.empty.title': 'Tous les messages de ce dossier sont en sommeil',
 	'inbox.sleep.empty.body':
-		'Cochez « Afficher les fils en sommeil » pour les retrouver, ou choisissez un autre dossier.',
-	'inbox.sleep.open': 'Mettre le fil en sommeil',
-	'inbox.sleep.wake': 'Réveiller le fil',
-	'inbox.sleep.announce.slept': 'Fil mis en sommeil.',
-	'inbox.sleep.announce.woken': 'Fil réveillé.',
+		'Cochez « Afficher les messages en sommeil » pour les retrouver, ou choisissez un autre dossier.',
+	'inbox.sleep.open': 'Mettre le message en sommeil',
+	'inbox.sleep.wake': 'Réveiller le message',
+	'inbox.sleep.announce.slept': 'Message mis en sommeil, avec ses réponses.',
+	'inbox.sleep.announce.woken': 'Message réveillé, avec ses réponses.',
 	// L'issue `refus` n'existe PAS ici, et c'est mesuré : `snooze_thread` n'oppose aucun
 	// `forbidden`, aucun droit d'écriture n'étant défini sur un fil (§16.14.4).
-	'inbox.sleep.refus.notfound': 'Ce fil n’est plus disponible.',
+	'inbox.sleep.refus.notfound': 'Ce message n’est plus disponible.',
 	'inbox.sleep.refus.required': 'Une échéance est nécessaire.',
 	'inbox.sleep.refus.past': 'L’échéance doit être future.',
 	'inbox.sleep.refus.network': 'La demande n’a pas abouti : réessayez.',
@@ -477,6 +479,9 @@ export const fr = {
 	'outbox.motif.worker_interrompu': 'un premier essai a été interrompu',
 	'outbox.motif.inconnu': 'cause non reconnue',
 	'timeline.event.mail_cancelled': 'Envoi annulé',
+	// `CRM-138` T3 (docs/DESIGN_SYSTEM.md §5.102) : famille Discussion, des faits neutres.
+	'timeline.event.mail_deleted': 'Message effacé',
+	'timeline.event.mail_restored': 'Message restauré',
 	// `CRM-128` T4 — les mails préparés (docs/DESIGN_SYSTEM.md §5.90). Ils ne sont jamais dits « envoyés ».
 	'mailsPrepares.entree': 'Mails préparés',
 	'mailsPrepares.entree.aria.one': 'Mails préparés : 1 en attente de relecture',
@@ -505,6 +510,61 @@ export const fr = {
 
 	'inbox.error.title': 'Messagerie indisponible',
 	'inbox.back.folders': 'Retour aux dossiers',
+	// `CRM-138` T3 — effacer le message ouvert, la corbeille de l'inbox, restaurer (docs/SPEC-mail-subsystem.md §29 ;
+	// docs/DESIGN_SYSTEM.md §5.102). La durée est LUE EN BASE (`trash_retention_days()`), jamais écrite ici.
+	'inbox.trash.delete': 'Effacer',
+	'inbox.trash.confirm.group': 'Effacer ce message',
+	// Espaces insécables autour des guillemets et fine insécable avant « ? » : vu en capture à 900 px, le « ? » partait
+	// seul sur sa ligne après un objet long.
+	'inbox.trash.confirm.question': 'Effacer «\u00a0{objet}\u00a0»\u202f?',
+	'inbox.trash.confirm.retention':
+		"Il ira dans la corbeille de l'inbox, d'où vous pourrez le restaurer pendant {n} jours.",
+	'inbox.trash.confirm.retentionUnknown': "Il ira dans la corbeille de l'inbox, d'où vous pourrez le restaurer.",
+	'inbox.trash.confirm.mailbox': "L'effacer aussi dans la boîte mail (le déplacer dans sa corbeille)",
+	'inbox.trash.confirm.mailboxHelp':
+		"Le message sera déplacé dans la corbeille de la boîte qui l'a reçu. Restaurer ne l'en ressortira pas.",
+	'inbox.trash.confirm.cancel': 'Annuler',
+	'inbox.trash.confirm.submit': 'Effacer',
+	'inbox.trash.confirm.pending': 'Effacement…',
+	'inbox.trash.announce.deleted': 'Message mis à la corbeille.',
+	'inbox.trash.refus.introuvable': "Ce message n'est plus disponible.",
+	'inbox.trash.refus.refuse': 'Vous ne pouvez pas effacer ce message.',
+	'inbox.trash.refus.aucune_boite':
+		'Vous ne pouvez écrire aucune boîte où figure ce message : effacez-le sans cocher la case.',
+	'inbox.trash.refus.reseau': "Le serveur n'a pas répondu : le message n'a pas été effacé.",
+	'inbox.trash.refus.inconnu': "Le message n'a pas pu être effacé.",
+	'inbox.trash.folder': 'Corbeille',
+	'inbox.trash.folder.aria.lecture': 'Corbeille',
+	'inbox.trash.folder.aria.one': 'Corbeille : 1 message',
+	'inbox.trash.folder.aria.many': 'Corbeille : {n} messages',
+	'inbox.trash.retention': 'Un message reste {n} jours dans la corbeille, puis il est effacé définitivement.',
+	'inbox.trash.personal': 'Vous voyez les messages que vous avez effacés.',
+	'inbox.trash.empty': 'La corbeille est vide.',
+	'inbox.trash.error': "La corbeille n'a pas pu être lue.",
+	'inbox.trash.list.aria': 'Messages de la corbeille',
+	'inbox.trash.deletedBy': 'Effacé le {date} par {auteur}',
+	'inbox.trash.unknownAuthor': 'Auteur inconnu',
+	'inbox.trash.purgeOn': 'Effacement définitif le {date}',
+	'inbox.trash.unknownDate': 'Inconnue',
+	'inbox.trash.move.done': 'Déplacé dans la corbeille de la boîte',
+	'inbox.trash.move.pending': 'Déplacement en attente',
+	'inbox.trash.move.failed': 'Déplacement impossible : {motif}',
+	'inbox.trash.motif.no_trash_folder': "la boîte n'annonce aucun dossier corbeille",
+	'inbox.trash.motif.move_unsupported': 'le serveur de la boîte ne sait pas déplacer un message',
+	'inbox.trash.motif.account_not_found': "la boîte n'est plus configurée",
+	'inbox.trash.motif.auth_failed': 'la connexion à la boîte a été refusée',
+	'inbox.trash.motif.timeout': "la boîte n'a pas répondu à temps",
+	'inbox.trash.motif.tls_failed': 'la connexion sécurisée à la boîte a échoué',
+	'inbox.trash.motif.connection_failed': 'la boîte est injoignable',
+	'inbox.trash.motif.inconnu': 'cause non reconnue',
+	'inbox.trash.restore': 'Restaurer',
+	'inbox.trash.restore.aria': 'Restaurer « {objet} »',
+	'inbox.trash.restore.pending': 'Restauration…',
+	'inbox.trash.announce.restored': 'Message restauré.',
+	'inbox.trash.restore.refus.introuvable': "Ce message n'est plus dans la corbeille.",
+	'inbox.trash.restore.refus.refuse': 'Vous ne pouvez pas restaurer ce message.',
+	'inbox.trash.restore.refus.reseau': "Le serveur n'a pas répondu : le message n'a pas été restauré.",
+	'inbox.trash.restore.refus.inconnu': "Le message n'a pas pu être restauré.",
 	'inbox.back.list': 'Retour aux messages',
 	// --- Carnet de contacts — CRM-060, docs/SPEC-contacts.md §10 ------------------------
 	'route.contacts.title': 'Contacts',

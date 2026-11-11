@@ -153,9 +153,14 @@ type Expect<T extends true> = T
 // `mail_attachment_risk_acknowledgments`, LIVRÉE PAR `CRM-143` T1 (migration `0173`) : la confirmation du risque d'une pièce
 // non analysée. CE QUI ÉCHAPPE AU GÉNÉRATEUR : la RLS ne rend que les siennes ; `authenticated` n'a que `SELECT` — la pose
 // passe par `acknowledge_unscanned_attachment` (docs/SPEC-pieces-jointes.md §17.3).
+// `mail_trash_moves`, LIVRÉE PAR `CRM-138` T1 (migration `0180`) : les déplacements IMAP d'un message effacé. CE QUI ÉCHAPPE
+// AU GÉNÉRATEUR : `state` est une liste fermée — `pending`, `done`, `failed`, `cancelled` — ; la RLS ne rend que les lignes
+// d'un message de la corbeille visible ; `authenticated` n'a que `SELECT` — tout passe par `delete_message`,
+// `restore_message` et, pour la clé de service, `trash_move_record` (docs/SPEC-mail-subsystem.md §29.2).
 type _tables = Expect<
   Equal<
     keyof Database['public']['Tables'],
+    | 'mail_trash_moves'
     | 'mail_attachment_risk_acknowledgments'
     | 'mail_drafts'
     | 'budget_occurrences'
@@ -1250,9 +1255,24 @@ type _vueDerivationColonnes = Expect<
 // `0177` de `CRM-146` TRANCHE T1 ajoute `organization_revenue_totals` (docs/SPEC-recettes.md §12.3), régénérée ici par
 // `CRM-144` T3 ; CE QUI ÉCHAPPE AU GÉNÉRATEUR : `actual_total` est nul quand aucune ligne n'a de réel. Le compte s'accroît
 // de un.
+// `0180` de `CRM-138` TRANCHE T1 ajoute `delete_message` (rend l'identifiant, la date et le nombre de déplacements demandés),
+// `restore_message` (rend les déplacements annulés), `trashed_messages` (la corbeille visible) et, réservées à la clé de
+// service, `trash_moves_to_process`, `trash_move_record`, `mail_messages_to_purge` et `purge_mail_message`
+// (docs/SPEC-mail-subsystem.md §29.3 à §29.6) ; `0181` de la TRANCHE T3 ajoute `mailbox_trash_permitted`, la colonne calculée
+// « l'appelant peut l'effacer aussi dans sa boîte mail » (§29.1). Les types n'avaient pas été régénérés à T1 : ils le sont à
+// T3. CE QUI ÉCHAPPE AU GÉNÉRATEUR : `p_outcome` ne vaut que `done`, `failed` ou `retry` ; les refus nommés,
+// `message_not_found` (404), `forbidden` (42501), `no_writable_mailbox` (22023). Le compte s'accroît de huit.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'delete_message'
+    | 'restore_message'
+    | 'trashed_messages'
+    | 'trash_moves_to_process'
+    | 'trash_move_record'
+    | 'mail_messages_to_purge'
+    | 'purge_mail_message'
+    | 'mailbox_trash_permitted'
     | 'acknowledge_unscanned_attachment'
     | 'cancel_outbound_email'
     | 'retry_outbound_email'

@@ -14,6 +14,8 @@
 // @spec CRM-060 (docs/BACKLOG.md) — sous-tranche 2 bis : la SURFACE de la suggestion,
 //       docs/SPEC-contacts.md §8.8.3 (ce que l'écran lit), §8.8.4 (les quatre états)
 // @spec docs/JOURNAL.md décision 327, décision 481
+// @spec CRM-138 (docs/BACKLOG.md) — tranche T3 : la capacité `mailbox_trash_permitted` lue avec le message ouvert
+//       (`effacableDansBoite`) ; docs/SPEC-mail-subsystem.md §29.1 ; docs/SCHEMA.md « Migration `0181` »
 // @spec CRM-057 (docs/BACKLOG.md) — tranche 2 : lu / non lu — docs/SPEC-mail-subsystem.md §18 bis.2 (état personnel,
 //       fil marqué lu à l'ouverture, total gardé), §18 bis.3 (`is_read`, `unread_count`, les deux fonctions), §18 bis.4 ;
 //       docs/DESIGN_SYSTEM.md §5.4 quinquies ; docs/JOURNAL.md décisions 715 et 716
@@ -73,7 +75,9 @@ export const COLONNES_LISTE =
  * part (§8.8.5), et demander une colonne qu'aucune surface ne rend laisserait croire qu'elle sert.
  */
 // `bcc_addresses` — `CRM-058` tranche 2 §19 bis.2 point 2 : la copie cachée d'un message ENVOYÉ, lisible dans l'affaire.
-export const COLONNES_MESSAGE = `${COLONNES_LISTE}, to_addresses, cc_addresses, bcc_addresses, body_text, body_html, sent_at, suggested_card_id`
+// `mailbox_trash_permitted` — `CRM-138` T3 (§29.1, migration `0181`) : la capacité d'effacer aussi le message dans sa boîte
+// mail, rendue par la base avec la ligne, et lue ici seulement : la case de la confirmation ne vit que sur le message ouvert.
+export const COLONNES_MESSAGE = `${COLONNES_LISTE}, to_addresses, cc_addresses, bcc_addresses, body_text, body_html, sent_at, suggested_card_id, mailbox_trash_permitted`
 
 type LigneMessage = Database['public']['Tables']['mail_messages']['Row']
 
@@ -166,6 +170,11 @@ export type MessageComplet = MessageListe & {
 	 * n'accorde aucun droit. Nulle lorsque la règle 3 ne s'est pas déclenchée — le cas ordinaire.
 	 */
 	readonly suggestionCardId: string | null
+	/**
+	 * `CRM-138` T3 (§29.1) : la base permet-elle d'effacer aussi ce message dans une de ses boîtes mail ? `true` seulement
+	 * quand elle l'a rendu vrai ; une valeur absente vaut `false` — la case n'est alors pas offerte, et la base refuserait.
+	 */
+	readonly effacableDansBoite: boolean
 }
 
 /** Objet de repli, jamais une chaîne vide : une ligne sans intitulé serait un trou dans la liste. */
@@ -508,6 +517,7 @@ export async function lireMessage(client: ClientCrm | null, id: string): Promise
 			corpsReduitDepuisHtml: reduitDepuisHtml,
 			corpsHtml: ligne.body_html !== null && ligne.body_html.trim() !== '' ? ligne.body_html : null,
 			suggestionCardId: ligne.suggested_card_id,
+			effacableDansBoite: ligne.mailbox_trash_permitted === true,
 			pieces: pieces.data.map(pieceDepuisLigne),
 		})
 	} catch (cause) {

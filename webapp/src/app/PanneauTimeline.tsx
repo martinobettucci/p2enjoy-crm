@@ -1,4 +1,6 @@
 // @spec CRM-074 (docs/BACKLOG.md) — tranche T3 : les pièces de chaque courrier sous sa ligne du fil, avec leur aperçu
+// @spec CRM-138 (docs/BACKLOG.md) — tranche T3 : « Message effacé » (`Trash2`) et « Message restauré » (`ArchiveRestore`),
+//       deux faits neutres de la famille Discussion (docs/DESIGN_SYSTEM.md §5.102 ; docs/SPEC-mail-subsystem.md §29.1)
 //       (docs/DESIGN_SYSTEM.md §5.80, docs/SPEC-pieces-jointes.md §5.1, décision 789)
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T6 : « Affaire créée par import » quand l'événement porte `source` (docs/DESIGN_SYSTEM.md §5.78)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : « Étiquette posée » et « Étiquette retirée » dans le fil, famille « Champs » (docs/DESIGN_SYSTEM.md §5.73)
@@ -155,6 +157,10 @@ const PRESENTATION: Readonly<
 	mail_sent: { cle: 'timeline.event.mail_sent', icone: Send, pastille: 'bg-brand-soft text-brand' },
 	// `CRM-144` T3 (docs/DESIGN_SYSTEM.md §5.98) : un fait neutre, l'icône `Ban` qui ne sert aucun autre objet.
 	mail_cancelled: { cle: 'timeline.event.mail_cancelled', icone: Ban, pastille: 'bg-hover text-text-2' },
+	// `CRM-138` T3 (docs/DESIGN_SYSTEM.md §5.102) : deux faits neutres, les icônes de la mise à la corbeille et de la
+	// restauration partout dans le produit — le même geste (§9).
+	mail_deleted: { cle: 'timeline.event.mail_deleted', icone: Trash2, pastille: 'bg-hover text-text-2' },
+	mail_restored: { cle: 'timeline.event.mail_restored', icone: ArchiveRestore, pastille: 'bg-hover text-text-2' },
 	// `CRM-055` tranche 2 §16.5.3 — le départ d'un message. `MailX` et non `Mail` : le §9 interdit
 	// qu'une icône serve deux objets, et c'est ce qui distingue cette ligne de son `mail_received`,
 	// qui reste juste au-dessus d'elle dans le fil. La pastille est NEUTRE et non `danger` : rien

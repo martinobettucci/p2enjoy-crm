@@ -168,13 +168,13 @@ test.describe('CRM-081 tranche 2 e — le sommeil d’un fil dans l’inbox', ()
 		await endormirLeFilDe(page, OBJET_SUGGERE)
 
 		// LE DOSSIER « Non classés » EST ALORS ENTIÈREMENT ENDORMI : la liste est vide, et l'état
-		// vide doit dire POURQUOI — « tous dans des fils en sommeil », et non « aucun message »
+		// vide doit dire POURQUOI — « tous en sommeil » (`CRM-138`, §16.14.11), et non « aucun message »
 		// (§16.15.5 point 2). Le message ouvert est refermé en changeant de dossier.
 		await page.goto('/inbox?courrier=tous')
 		const dossiers = page.getByTestId('inbox-panneau-dossiers')
 		await dossiers.getByRole('button', { name: /Non classés/ }).click()
 		const liste = page.getByTestId('inbox-panneau-liste')
-		await expect(liste.getByText('Tous les messages de ce dossier sont dans des fils en sommeil')).toBeVisible()
+		await expect(liste.getByText('Tous les messages de ce dossier sont en sommeil')).toBeVisible()
 		// L'ACTION N'EST PAS RÉPÉTÉE (§5.8, §5.3 septies) : UNE seule bascule dans le panneau, celle
 		// de l'état vide. Défaut vu en capture — l'en-tête et l'état vide portaient la même case à
 		// quelques centimètres l'une de l'autre — puis corrigé et figé ici.
@@ -270,7 +270,7 @@ test.describe('CRM-081 tranche 2 e — le sommeil d’un fil dans l’inbox', ()
 		const liste = page.getByTestId('inbox-panneau-liste')
 		await liste.getByText(OBJET_CLASSE).click()
 		await expect(page.getByTestId('inbox-message-ouvert')).toBeVisible()
-		// SON FIL EST ÉVEILLÉ : la commande est « Mettre le fil en sommeil », pas « Réveiller ».
+		// SON FIL EST ÉVEILLÉ : la commande est « Mettre le message en sommeil » (`CRM-138`, §16.14.11), pas « Réveiller ».
 		await expect(page.getByTestId('fil-endormir')).toBeVisible()
 		await expect(page.getByTestId('inbox-message-ouvert').getByTestId('pastille-sommeil')).toHaveCount(0)
 	})

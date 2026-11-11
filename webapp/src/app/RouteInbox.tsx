@@ -53,6 +53,11 @@
 // @spec CRM-144 (docs/BACKLOG.md) — tranche T3 : les trois entrées de l'outbox dans la tête des dossiers, la vue d'un
 //       dossier d'envois à la place des panneaux de messages, son adresse `?envois=` (docs/DESIGN_SYSTEM.md §5.98 ;
 //       docs/SPEC-mail-subsystem.md §28.6) — les panneaux eux-mêmes vivent dans `OutboxInbox.tsx`
+// @spec CRM-138 (docs/BACKLOG.md) — tranche T3 : la rangée de commandes du message ouvert — le sommeil, « Marquer comme non
+//       lu » libellé, « Effacer » —, l'entrée « Corbeille » en dernier dans la tête des dossiers, la corbeille à la place des
+//       panneaux de messages, son adresse `?corbeille=oui`, le focus après effacement et restauration (docs/DESIGN_SYSTEM.md
+//       §5.102, §5.4 quinquies révisé ; docs/SPEC-mail-subsystem.md §29.1 ; décisions 878, 917, 920 et 921) — les panneaux
+//       vivent dans `CorbeilleInbox.tsx`
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import {
@@ -139,6 +144,16 @@ import {
 	type DossierEnvoi,
 } from '../lib/outbox'
 import { SelecteurClassement, lecteurBase } from './SelecteurClassement'
+import { EntreeCorbeille, PanneauCorbeille, RangeeCommandesMessage } from './CorbeilleInbox'
+import {
+	PARAMETRE_CORBEILLE,
+	VALEUR_CORBEILLE,
+	corbeilleDepuisAdresse,
+	lireCorbeilleMessages,
+	type MessageEnCorbeille,
+} from '../lib/corbeille-inbox'
+import { lireRetentionCorbeille } from '../lib/corbeille'
+import { useContexteEspace } from './ContexteEspace'
 import type { Candidate } from '../lib/candidats-classement'
 import { ListePiecesJointes } from './PiecesJointes'
 import { CorpsMessage } from './CorpsMessage'
@@ -505,7 +520,15 @@ function PanneauDossiers({
 	refEntreePrepares,
 	courrier,
 	envois,
+	corbeille,
 }: {
+	/** `CRM-138` T3 (§5.102) : l'entrée « Corbeille », la dernière de la tête, toujours rendue. */
+	readonly corbeille: {
+		readonly nombre: number | null
+		readonly choisie: boolean
+		readonly onChoisir: () => void
+		readonly refBouton: React.RefObject<HTMLButtonElement | null>
+	}
 	/** `CRM-144` T3 (§5.98) : les trois entrées de l'outbox, après « Mails préparés » et avant « Non classés ». */
 	readonly envois: {
 		readonly comptes: EtatAsync<ComptesEnvois>
@@ -589,7 +612,9 @@ function PanneauDossiers({
 								nombre={etat.donnees.nonClasses}
 								nonLus={etat.donnees.nonClassesNonLus}
 								profondeur={0}
-								choisi={!preparesChoisis && envois.choisi === null && selection?.genre === 'non-classes'}
+								choisi={
+									!preparesChoisis && envois.choisi === null && !corbeille.choisie && selection?.genre === 'non-classes'
+								}
 								onChoisir={() => onChoisir({ genre: 'non-classes' })}
 							/>
 						</li>
@@ -631,6 +656,13 @@ function PanneauDossiers({
 							</li>
 						</ul>
 					)}
+					{/* `CRM-138` T3 (§5.102) : « Corbeille », la dernière, séparée par une bordure haute, à zéro compris. */}
+					<EntreeCorbeille
+						nombre={corbeille.nombre}
+						choisie={corbeille.choisie}
+						onChoisir={corbeille.onChoisir}
+						refBouton={corbeille.refBouton}
+					/>
 				</nav>
 			) : null}
 		</Panneau>
@@ -1487,7 +1519,9 @@ function GesteSommeilFil({
 	return (
 		<div
 			data-testid="fil-panneau"
-			className="flex flex-col gap-2 rounded-md border border-border p-3"
+			// `w-full` (`CRM-138`, §5.102) : ouvert dans la rangée de commandes, le panneau prend sa propre ligne, et les
+			// autres commandes passent dessous plutôt que de se serrer à côté de lui.
+			className="flex flex-col gap-2 rounded-md border border-border p-3 w-full"
 			// `Échap` REFERME EN RENDANT LE FOCUS À LA COMMANDE (§5.3 quater, sans changement) :
 			// un panneau qu'on ferme en perdant le focus oblige à retraverser l'écran au clavier.
 			onKeyDown={(evenement) => {
@@ -1621,7 +1655,13 @@ function PanneauMessage({
 	lu,
 	onBasculerLecture,
 	erreurMarquage,
+	retention,
+	onEfface,
 }: {
+	/** `CRM-138` T3 : la rétention de la corbeille, lue en base, que la confirmation d'« Effacer » cite. */
+	readonly retention: EtatAsync<number>
+	/** `CRM-138` T3 : le message vient d'être mis à la corbeille. */
+	readonly onEfface: (id: string) => void
 	readonly etat: EtatAsync<MessageComplet | null>
 	readonly onRetour: () => void
 	readonly onReprise: () => void
@@ -1670,29 +1710,7 @@ function PanneauMessage({
 			{etat.statut === 'pret' && etat.donnees !== null ? (
 				<article className="flex flex-col gap-4 p-4" data-testid="inbox-message-ouvert">
 					<header className="flex flex-col gap-1">
-						<div className="flex items-start gap-2">
-							<h3 className="text-h3 break-words flex-1 min-w-0">{etat.donnees.objet}</h3>
-							{/* LE BOUTON DES NOTIFICATIONS (§5.43), RÉEMPLOYÉ : icône seule, libellé en `aria-label` et en
-							    `title`. Absent tant que l'état n'est pas connu — un bouton qui ne sait pas ce qu'il
-							    bascule ne s'offre pas. */}
-							{lu === null || idAffiche === null ? null : (
-								<button
-									type="button"
-									data-testid="inbox-basculer-lecture"
-									onClick={() => onBasculerLecture(idAffiche, lu)}
-									title={lu ? t('inbox.read.markUnread') : t('inbox.read.markRead')}
-									aria-label={lu ? t('inbox.read.markUnread') : t('inbox.read.markRead')}
-									className="shrink-0 inline-flex items-center justify-center size-[var(--size-target)] rounded-sm text-text-2 hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-								>
-									{lu ? <Mail aria-hidden="true" size={16} /> : <MailOpen aria-hidden="true" size={16} />}
-								</button>
-							)}
-						</div>
-						{erreurMarquage !== null ? (
-							<p role="alert" data-testid="inbox-lecture-refus" className="text-sm text-danger">
-								{texteErreurLecture(erreurMarquage)}
-							</p>
-						) : null}
+						<h3 className="text-h3 break-words min-w-0">{etat.donnees.objet}</h3>
 						<p className="text-sm text-text-2 break-words">
 							{t('inbox.message.from')} : {etat.donnees.expediteur}
 						</p>
@@ -1721,18 +1739,48 @@ function PanneauMessage({
 							    l'état de son fil (§5.3 septies). */}
 							<PastilleSommeil enSommeil={echeance !== null} echeance={echeance} />
 						</p>
-						{/* LE GESTE VIT DANS LE MESSAGE OUVERT (§16.15.6). Le message ouvert n'est
-						    jamais masqué par le filtre : la ligne quitte la liste, le panneau reste
-						    — vider l'écran sous le geste de l'utilisateur serait le punir de
-						    l'avoir fait (§16.15.5). */}
+						{/* `CRM-138` T3 — UNE RANGÉE DE COMMANDES (§5.102), dans cet ordre : le sommeil, la lecture, « Effacer ».
+						    Le geste de sommeil vit dans le message ouvert (§16.15.6) ; le message ouvert n'est jamais masqué par
+						    le filtre (§16.15.5). Montée avec la clé du message : la confirmation d'« Effacer » se referme et sa
+						    case se décoche d'un message à l'autre. */}
 						<div className="pt-1">
-							<GesteSommeilFil
-								workspaceId={etat.donnees.workspaceId}
-								cle={etat.donnees.cleFil}
-								echeance={echeance}
-								onFait={onSommeil}
+							<RangeeCommandesMessage
+								key={etat.donnees.id}
+								idMessage={etat.donnees.id}
+								objet={etat.donnees.objet}
+								effacableDansBoite={etat.donnees.effacableDansBoite}
+								retention={retention}
+								onEfface={() => onEfface(idAffiche ?? '')}
+								commandes={
+									<>
+										<GesteSommeilFil
+											workspaceId={etat.donnees.workspaceId}
+											cle={etat.donnees.cleFil}
+											echeance={echeance}
+											onFait={onSommeil}
+										/>
+										{/* `CRM-138` (§5.102, révise le §5.4 quinquies) : un BOUTON LIBELLÉ secondaire compact, qui garde
+										    son icône. Absent tant que l'état n'est pas connu — un bouton qui ne sait pas ce qu'il
+										    bascule ne s'offre pas. */}
+										{lu === null || idAffiche === null ? null : (
+											<Button
+												taille="compacte"
+												data-testid="inbox-basculer-lecture"
+												onClick={() => onBasculerLecture(idAffiche, lu)}
+											>
+												{lu ? <Mail aria-hidden="true" size={16} /> : <MailOpen aria-hidden="true" size={16} />}
+												{lu ? t('inbox.read.markUnread') : t('inbox.read.markRead')}
+											</Button>
+										)}
+									</>
+								}
 							/>
 						</div>
+						{erreurMarquage !== null ? (
+							<p role="alert" data-testid="inbox-lecture-refus" className="text-sm text-danger">
+								{texteErreurLecture(erreurMarquage)}
+							</p>
+						) : null}
 					</header>
 
 					{/* LE SÉLECTEUR VIT SOUS L'EN-TÊTE (§5.4 bis), après le geste et avant le corps :
@@ -2052,12 +2100,15 @@ export function RouteInbox() {
 	const refEnvoyes = useRef<HTMLButtonElement | null>(null)
 	const refEchecs = useRef<HTMLButtonElement | null>(null)
 	const refsEnvois = useMemo(() => ({ file: refFile, envoyes: refEnvoyes, echecs: refEchecs }), [])
+	// `CRM-138` T3 : QUITTER UNE VUE ADRESSÉE quitte l'outbox ET la corbeille, en UNE écriture d'adresse — deux écritures
+	// fonctionnelles d'affilée partiraient du même état, et la seconde effacerait la première.
 	const quitterEnvois = useCallback(() => {
 		setIdEnvoi(null)
 		setParametresUrl((precedents) => {
-			if (!precedents.has(PARAMETRE_ENVOIS)) return precedents
+			if (!precedents.has(PARAMETRE_ENVOIS) && !precedents.has(PARAMETRE_CORBEILLE)) return precedents
 			const suivants = new URLSearchParams(precedents)
 			suivants.delete(PARAMETRE_ENVOIS)
+			suivants.delete(PARAMETRE_CORBEILLE)
 			return suivants
 		})
 	}, [setParametresUrl])
@@ -2073,6 +2124,7 @@ export function RouteInbox() {
 			setParametresUrl((precedents) => {
 				const suivants = new URLSearchParams(precedents)
 				suivants.set(PARAMETRE_ENVOIS, dossier)
+				suivants.delete(PARAMETRE_CORBEILLE)
 				return suivants
 			})
 			relireComptesEnvois()
@@ -2134,6 +2186,126 @@ export function RouteInbox() {
 		},
 		[quitterEnvois],
 	)
+
+	// =============================================================================================
+	// `CRM-138` T3 — LA CORBEILLE DE L'INBOX (docs/DESIGN_SYSTEM.md §5.102 ; docs/SPEC-mail-subsystem.md §29.1)
+	// =============================================================================================
+	//
+	// Le dossier ouvert est une DÉSIGNATION de ce qui est montré (§5.36) : il vit dans l'adresse, sous la clé `corbeille`,
+	// comme `envois`. La liste est ce que `trashed_messages` rend ; la rétention est LUE EN BASE ; la phrase « Vous voyez
+	// les messages que vous avez effacés » suit la capacité d'administrer rendue par la base (§5.59), jamais un rôle.
+	const { idWorkspace, capacites } = useContexteEspace()
+	const corbeilleChoisie = dossierEnvoi === null && corbeilleDepuisAdresse(parametresUrl.get(PARAMETRE_CORBEILLE))
+	const [corbeille, setCorbeille] = useState<EtatAsync<readonly MessageEnCorbeille[]>>({ statut: 'chargement' })
+	const relireCorbeille = useCallback(() => {
+		if (idWorkspace === null) return
+		void lireCorbeilleMessages(clientCrm, idWorkspace).then(setCorbeille)
+	}, [idWorkspace])
+	useEffect(() => {
+		relireCorbeille()
+	}, [relireCorbeille])
+	const [retention, setRetention] = useState<EtatAsync<number>>({ statut: 'chargement' })
+	useEffect(() => {
+		if (clientCrm === null) return
+		let vivant = true
+		void lireRetentionCorbeille(clientCrm).then((lue) => {
+			if (vivant) setRetention(lue)
+		})
+		return () => {
+			vivant = false
+		}
+	}, [])
+	const refEntreeCorbeille = useRef<HTMLButtonElement | null>(null)
+	const refVideCorbeille = useRef<HTMLDivElement | null>(null)
+	const refsLignesCorbeille = useRef<Map<string, HTMLLIElement>>(new Map())
+	const [mentionCorbeille, setMentionCorbeille] = useState('')
+	const choisirCorbeille = useCallback(() => {
+		setPreparesChoisis(false)
+		setIdPrepare(null)
+		setSelection(null)
+		setIdOuvert(null)
+		setIdEnvoi(null)
+		setMentionCorbeille('')
+		setEtage('liste')
+		// Un geste de l'utilisateur : « Précédent » le défait.
+		setParametresUrl((precedents) => {
+			const suivants = new URLSearchParams(precedents)
+			suivants.set(PARAMETRE_CORBEILLE, VALEUR_CORBEILLE)
+			suivants.delete(PARAMETRE_ENVOIS)
+			return suivants
+		})
+		relireCorbeille()
+	}, [setParametresUrl, relireCorbeille])
+
+	// APRÈS UNE RESTAURATION, LE FOCUS VA À LA LIGNE QUI A PRIS SA PLACE, sinon à la précédente, sinon à l'état vide
+	// (§5.13 : jamais sur un élément qui disparaît). Le rang est relevé AVANT la relecture, et appliqué à la liste relue.
+	const focusCorbeille = useRef<{ readonly rang: number; readonly avant: unknown } | null>(null)
+	const apresRestauration = useCallback(
+		(id: string) => {
+			const rang = corbeille.statut === 'pret' ? corbeille.donnees.findIndex((ligne) => ligne.id === id) : 0
+			focusCorbeille.current = { rang: Math.max(rang, 0), avant: corbeille }
+			setMentionCorbeille(t('inbox.trash.announce.restored'))
+			relireCorbeille()
+			arbre.recharger()
+			liste.recharger()
+		},
+		[corbeille, relireCorbeille, arbre, liste],
+	)
+	useEffect(() => {
+		const attente = focusCorbeille.current
+		if (attente === null || corbeille === attente.avant || corbeille.statut !== 'pret') return
+		focusCorbeille.current = null
+		const lignes = corbeille.donnees
+		if (lignes.length === 0) {
+			refVideCorbeille.current?.focus()
+			return
+		}
+		const cible = lignes[Math.min(attente.rang, lignes.length - 1)]
+		if (cible !== undefined) refsLignesCorbeille.current.get(cible.id)?.focus()
+	}, [corbeille])
+
+	// APRÈS UN EFFACEMENT (§5.102) : le message ouvert se referme sur l'état « absence de sélection », la région vivante
+	// le dit, les comptes sont relus, et le focus va à la ligne qui a pris la place de celle du message, ou à l'entrée du
+	// dossier si la liste est vide. Le rang de la ligne est relevé AVANT la relecture.
+	const focusApresEffacement = useRef<{ readonly rang: number; readonly avant: unknown } | null>(null)
+	const apresEffacement = useCallback(
+		(_id: string) => {
+			const lignes = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-testid="inbox-message"]'))
+			const rang = lignes.findIndex((ligne) => ligne.getAttribute('aria-current') === 'true')
+			focusApresEffacement.current = { rang: Math.max(rang, 0), avant: liste.etat }
+			setAnnonce(t('inbox.trash.announce.deleted'))
+			setIdOuvert(null)
+			setEtage('liste')
+			arbre.recharger()
+			liste.recharger()
+			relireCorbeille()
+		},
+		[arbre, liste, relireCorbeille],
+	)
+	useEffect(() => {
+		const attente = focusApresEffacement.current
+		if (attente === null || liste.etat === attente.avant || liste.etat.statut !== 'pret') return
+		focusApresEffacement.current = null
+		// LA LISTE RELUE EST RENDUE AVANT D'ÊTRE PARCOURUE : le cadre suivant porte ses lignes.
+		requestAnimationFrame(() => {
+			const lignes = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-testid="inbox-message"]'))
+			const cible = lignes[Math.min(attente.rang, lignes.length - 1)]
+			if (cible !== undefined) {
+				cible.focus()
+				return
+			}
+			const entree = document.querySelector<HTMLButtonElement>(
+				'[data-testid="inbox-panneau-dossiers"] button[aria-current="true"]',
+			)
+			// SOUS 1024 PX, L'ENTRÉE VIT DANS LE PANNEAU DES DOSSIERS, que la pile cache : on y remonte d'un cran.
+			if (entree !== null && entree.offsetParent === null) {
+				setEtage('dossiers')
+				requestAnimationFrame(() => entree.focus())
+				return
+			}
+			entree?.focus()
+		})
+	}, [liste.etat])
 
 	const ouvrirMessage = useCallback((lu: MessageListe) => {
 		filAMarquer.current = lu.id
@@ -2241,6 +2413,12 @@ export function RouteInbox() {
 						onReprise: () => setEssaiPresence((n) => n + 1),
 					}}
 					envois={{ comptes: comptesEnvois, choisi: dossierEnvoi, onChoisir: choisirEnvois, refs: refsEnvois }}
+					corbeille={{
+						nombre: corbeille.statut === 'pret' ? corbeille.donnees.length : null,
+						choisie: corbeilleChoisie,
+						onChoisir: choisirCorbeille,
+						refBouton: refEntreeCorbeille,
+					}}
 				/>
 				{dossierEnvoi !== null ? (
 					<>
@@ -2271,6 +2449,19 @@ export function RouteInbox() {
 							visible={etage === 'message'}
 						/>
 					</>
+				) : corbeilleChoisie ? (
+					<PanneauCorbeille
+						etat={corbeille}
+						retention={retention}
+						personnelle={capacites.administration === 'refusee'}
+						mention={mentionCorbeille}
+						onRestaure={apresRestauration}
+						onRetour={() => setEtage('dossiers')}
+						onReprise={relireCorbeille}
+						visible={etage === 'liste'}
+						refVide={refVideCorbeille}
+						refsLignes={refsLignesCorbeille}
+					/>
 				) : preparesChoisis ? (
 					<>
 						<PanneauListePrepares
@@ -2329,6 +2520,8 @@ export function RouteInbox() {
 					lu={luAffiche}
 					onBasculerLecture={basculerLecture}
 					erreurMarquage={erreurLectureMessage}
+					retention={retention}
+					onEfface={apresEffacement}
 				/>
 					</>
 				)}

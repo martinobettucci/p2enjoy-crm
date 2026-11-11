@@ -2562,6 +2562,8 @@ export type Database = {
           classified_at: string | null
           classified_by: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           direction: string
           filed_at: string | null
           from_address: string
@@ -2578,6 +2580,7 @@ export type Database = {
           workspace_id: string
           concerns_me: boolean | null
           is_read: boolean | null
+          mailbox_trash_permitted: boolean | null
         }
         Insert: {
           bcc_addresses?: string[]
@@ -2589,6 +2592,8 @@ export type Database = {
           classified_at?: string | null
           classified_by?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           direction?: string
           filed_at?: string | null
           from_address: string
@@ -2614,6 +2619,8 @@ export type Database = {
           classified_at?: string | null
           classified_by?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           direction?: string
           filed_at?: string | null
           from_address?: string
@@ -2640,6 +2647,13 @@ export type Database = {
           {
             foreignKeyName: "mail_messages_classified_by_fkey"
             columns: ["classified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_messages_deleted_by_fkey"
+            columns: ["deleted_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -3072,6 +3086,83 @@ export type Database = {
           },
           {
             foreignKeyName: "mail_thread_snoozes_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mail_trash_moves: {
+        Row: {
+          account_id: string
+          attempts: number
+          created_at: string
+          done_at: string | null
+          folder: string
+          id: string
+          last_error: string | null
+          message_id: string
+          next_attempt_at: string
+          requested_by: string | null
+          state: string
+          uid: number
+          workspace_id: string
+        }
+        Insert: {
+          account_id: string
+          attempts?: number
+          created_at?: string
+          done_at?: string | null
+          folder: string
+          id?: string
+          last_error?: string | null
+          message_id: string
+          next_attempt_at?: string
+          requested_by?: string | null
+          state?: string
+          uid: number
+          workspace_id: string
+        }
+        Update: {
+          account_id?: string
+          attempts?: number
+          created_at?: string
+          done_at?: string | null
+          folder?: string
+          id?: string
+          last_error?: string | null
+          message_id?: string
+          next_attempt_at?: string
+          requested_by?: string | null
+          state?: string
+          uid?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_trash_moves_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "mail_inbound_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_trash_moves_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "mail_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_trash_moves_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_trash_moves_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -4894,6 +4985,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      delete_message: {
+        Args: { p_also_mailbox?: boolean; p_message_id: string }
+        Returns: Json
+      }
       depots_envoi_abandonnes: {
         Args: { p_age?: string }
         Returns: {
@@ -5120,6 +5215,13 @@ export type Database = {
         Args: { p_account_id: string }
         Returns: string
       }
+      mail_messages_to_purge: {
+        Args: { p_limit?: number }
+        Returns: {
+          message_id: string
+          storage_paths: string[]
+        }[]
+      }
       mail_outbound_identity_credentials: {
         Args: { p_identity_id: string }
         Returns: {
@@ -5144,6 +5246,12 @@ export type Database = {
           label: string
           name: string
         }[]
+      }
+      mailbox_trash_permitted: {
+        Args: { "": Database["public"]["Tables"]["mail_messages"]["Row"] }
+        Returns: {
+          error: true
+        } & "the function public.mailbox_trash_permitted with parameter or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache"
       }
       mark_message_unread: { Args: { p_message_id: string }; Returns: boolean }
       mark_messages_read: { Args: { p_message_ids: string[] }; Returns: number }
@@ -5532,6 +5640,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      purge_mail_message: { Args: { p_message_id: string }; Returns: boolean }
       queue_outbound_email: {
         Args: {
           p_attachments?: Json
@@ -5679,6 +5788,7 @@ export type Database = {
           to_addrs: string[]
         }[]
       }
+      restore_message: { Args: { p_message_id: string }; Returns: Json }
       restore_workflow_version: {
         Args: {
           expected_live_fingerprint?: string
@@ -5814,7 +5924,41 @@ export type Database = {
           settled: boolean
         }[]
       }
+      trash_move_record: {
+        Args: { p_error?: string; p_move_id: string; p_outcome: string }
+        Returns: string
+      }
+      trash_moves_to_process: {
+        Args: { p_limit?: number }
+        Returns: {
+          account_id: string
+          attempts: number
+          folder: string
+          message_id: string
+          move_id: string
+          uid: number
+        }[]
+      }
       trash_retention_days: { Args: never; Returns: number }
+      trashed_messages: {
+        Args: { p_workspace_id: string }
+        Returns: {
+          can_restore: boolean
+          card_id: string
+          deleted_at: string
+          deleted_by: string
+          deleted_by_name: string
+          from_address: string
+          from_name: string
+          last_move_error: string
+          message_id: string
+          moves_done: number
+          moves_failed: number
+          moves_pending: number
+          purge_at: string
+          subject: string
+        }[]
+      }
       unclassify_message: { Args: { p_message_id: string }; Returns: string }
       upsert_mail_inbound_account: {
         Args: {

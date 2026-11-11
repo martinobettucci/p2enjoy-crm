@@ -1039,6 +1039,11 @@ de `main` postérieure à T1 suffit, dans n'importe quel ordre avec les autres g
 Réglages, et s'y désarchive.
 ## 3. Migrations en attente
 
+**La 181, après la 180** (`CRM-138` T3), *en attente* : la colonne calculée `mailbox_trash_permitted(mail_messages)`
+(`docs/SCHEMA.md` « Migration `0181` »). Une fonction, aucune donnée, sans verrou notable. **La webapp de `CRM-138` T3 la
+demande avec le message ouvert : elle part avec la webapp, ou avant elle, jamais après** — une webapp sans elle ne lit plus
+le message. La 180 peut partir seule ; la 181 ne part qu'avec ou après elle. Aucun geste préalable du responsable.
+
 **La 180, après la 179** (`CRM-138` T1, décisions 878 et 917), *en attente* : effacer un message (`docs/SCHEMA.md` « Migration
 `0180` ») — deux colonnes, une table, des fonctions, la politique de lecture de `mail_messages` reprise ; aucune donnée
 reprise. Sans écran ni `mail-sync` à jour, rien ne paraît. Aucun geste préalable du responsable. Elle n'efface rien : la

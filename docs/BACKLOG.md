@@ -19159,10 +19159,17 @@ reste sinon) ; E2E souris et clavier (non lu, sommeil, effacer, annuler, restaur
       `e2e/mail/corbeille.spec.ts` 1/1 contre Stalwart (avec la case, le message passe dans « Deleted Items », déplacement
       `done` ; sans elle, il reste dans INBOX). DAT. Sous-ensemble de ce périmètre. **Image `mail-sync` modifiée**, après la
       migration 180.
-- [ ] **T3 — écrans** (`docs/DESIGN_SYSTEM.md` §5.102) : rangée de commandes, confirmation, dossier « Corbeille »,
-      restaurer, lignes du fil ; unitaires ; E2E souris et clavier ; captures aux quatre paliers. *Précisé avant le code
-      (2026-11-11)* : la capacité de la case est la colonne calculée `mailbox_trash_permitted` (migration `0181`,
-      `docs/SCHEMA.md`), et sa preuve pgTAP ; la corbeille n'a pas de troisième panneau (§5.102).
+- [x] **T3 — écrans** (`docs/DESIGN_SYSTEM.md` §5.102), vérifiée en développement le 2026-11-11 : migration `0181`
+      (`mailbox_trash_permitted`, paramètre anonyme pour que les types la rangent dans `mail_messages.Row`) et
+      `supabase/tests/0170_capacite_corbeille_boite.test.sql` 6/6 ; types régénérés (`0180` et `0181`, témoin à jour) ;
+      `lib/corbeille-inbox.ts`, `app/CorbeilleInbox.tsx` (la rangée sommeil · lecture · « Effacer », la confirmation dans le
+      flux et sa case, l'entrée « Corbeille », sa liste et « Restaurer »), `RouteInbox.tsx` (l'adresse `?corbeille=oui`,
+      le focus après chaque geste), `mail_deleted` et `mail_restored` au fil, les textes du sommeil (§16.14.11). Vitest
+      complet 236 fichiers, 5739 tests ; E2E `e2e/ui/corbeille-inbox.spec.ts` 6/6 (souris, clavier, quatre paliers) et
+      voisines `inbox-lecture`, `groupement-fils` vertes ; `sommeil-fil` rouge sur un test, par le troisième fil non classé
+      du seed de `CRM-140` (SPEC-seed §44), signalé à la session qui la porte. Captures `docs/captures/CRM-138` observées.
+      Sous-ensemble de ce périmètre. *Précisé avant le code (2026-11-11)* : la capacité de la case est la colonne calculée
+      `mailbox_trash_permitted` (migration `0181`, `docs/SCHEMA.md`) ; la corbeille n'a pas de troisième panneau (§5.102).
 - [ ] **T4 — connecteur** : les cinq outils (§29.8) ; pytest, intégration, `verify-mcp.sh`.
 - [ ] **T5 — seed, manuel, contrat** (§29.9) ; images ; `docs/PROD_MIGRATIONS.md`.
 

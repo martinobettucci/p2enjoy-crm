@@ -1,6 +1,8 @@
 // @verifies CRM-112 (docs/BACKLOG.md) tranche T3.d — le détail d'une valeur commune (docs/DESIGN_SYSTEM.md §5.89)
 // @verifies CRM-111 (docs/BACKLOG.md) T7.4 — `attached` et `detached` nommés et rangés (docs/DESIGN_SYSTEM.md §5.84)
 // @verifies CRM-069 (docs/BACKLOG.md) — tranche T2 : la pose et le retrait d'une étiquette rangés dans la famille « Champs » (docs/SPEC-etiquettes-digest.md §2.2)
+// @verifies CRM-138 (docs/BACKLOG.md) — tranche T3 : `mail_deleted` et `mail_restored` nommés, rangés dans « Discussion »,
+//           leur détail lu (docs/DESIGN_SYSTEM.md §5.102 ; docs/SPEC-mail-subsystem.md §29.1)
 // @verifies CRM-144 (docs/BACKLOG.md) — tranche T3 : `mail_cancelled` nommé, rangé dans « Discussion », son détail lu
 //           dans le `payload` (docs/DESIGN_SYSTEM.md §5.98 ; docs/SPEC-mail-subsystem.md §28.3)
 // @verifies CRM-044 (docs/BACKLOG.md) — fusion du fil, familles, filtres et résolution des libellés
@@ -103,7 +105,9 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 	// `0125`, portent le vocabulaire à VINGT-ET-UN, rangés dans « Champs » (décision 748, Q2) ; aucune famille nouvelle.
 	// RÉVISÉE PAR `CRM-144` T3 (décision 51) : `mail_cancelled`, écrit par la migration `0176`, porte le vocabulaire à
 	// VINGT-SIX, rangé dans « Discussion » avec les autres gestes de courrier ; aucune famille nouvelle.
-	it('range les vingt-six types livrés dans exactement cinq familles d’événements', () => {
+	// RÉVISÉE PAR `CRM-138` T3 (décision 51) : `mail_deleted` et `mail_restored`, écrits par la migration `0180`, portent le
+	// vocabulaire à VINGT-HUIT, rangés dans « Discussion » ; aucune famille nouvelle.
+	it('range les vingt-huit types livrés dans exactement cinq familles d’événements', () => {
 		// RÉVISÉE PAR `CRM-111` T7.4 (décision 51) : `attached` et `detached`, écrits par la migration `0148`, famille
 		// « Organisation », avec l'écran qui fait les deux gestes (docs/DESIGN_SYSTEM.md §5.84).
 		// RÉVISÉE PAR `CRM-069` T2 (décision 51) : `label_added` et `label_removed`, famille « Champs »
@@ -111,7 +115,7 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 		// RÉVISÉE, NON RETIRÉE (mécanisme de la décision 51) — DIX-NEUVIÈME type, `mail_unclassified`,
 		// livré par `CRM-055` tranche 2 (§16.5.3). Le compte est le garde-fou : il rougit à chaque
 		// extension et force à ranger le type neuf plutôt qu'à le laisser tomber sur le repli.
-		expect(TYPES_EVENEMENT).toHaveLength(26)
+		expect(TYPES_EVENEMENT).toHaveLength(28)
 		expect(FAMILLE_PAR_TYPE.attached).toBe('organisation')
 		expect(FAMILLE_PAR_TYPE.detached).toBe('organisation')
 		expect(FAMILLE_PAR_TYPE.label_added).toBe('champs')
@@ -181,7 +185,9 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 	// AUCUN type d'événement n'y est rangé — elle ne compte que la troisième source, les activités consignées.
 	// RÉVISÉE PAR `CRM-144` T3 : QUATRE gestes de courrier — l'annulation d'un envoi (`mail_cancelled`) est une parole
 	// retenue de la même conversation (docs/DESIGN_SYSTEM.md §5.98).
-	it('déclare six familles, dont la discussion que les QUATRE gestes de courrier portent', () => {
+	// RÉVISÉE PAR `CRM-138` T3 : SIX gestes de courrier — l'effacement et la restauration d'un message sont de la même
+	// conversation (docs/DESIGN_SYSTEM.md §5.102).
+	it('déclare six familles, dont la discussion que les SIX gestes de courrier portent', () => {
 		expect([...FAMILLES]).toEqual(['discussion', 'activites', 'etapes', 'champs', 'organisation', 'cycle'])
 		expect(TYPES_EVENEMENT.filter((type) => familleDe(type) === 'activites')).toEqual([])
 		expect(TYPES_EVENEMENT.filter((type) => familleDe(type) === 'discussion')).toEqual([
@@ -189,7 +195,24 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 			'mail_sent',
 			'mail_unclassified',
 			'mail_cancelled',
+			'mail_deleted',
+			'mail_restored',
 		])
+	})
+
+	it('`CRM-138` : le détail d’un message effacé ou restauré est son objet, lu dans l’événement', () => {
+		const contexte = { etapes: new Map(), champs: new Map() } as unknown as Parameters<typeof resoudreDetail>[1]
+		for (const type of ['mail_deleted', 'mail_restored'] as const) {
+			const ligne = {
+				genre: 'evenement',
+				type,
+				payload: { message_id: '00000000-0000-4000-8000-000000000002', subject: 'Devis signé' },
+			} as unknown as Parameters<typeof resoudreDetail>[0]
+			expect(resoudreDetail(ligne, contexte)).toEqual({ detail: 'Devis signé' })
+			const sansObjet = { ...ligne, payload: { message_id: '00000000-0000-4000-8000-000000000002' } } as typeof ligne
+			expect(resoudreDetail(sansObjet, contexte)).toEqual({ detail: null })
+			expect(familleDe(type)).toBe('discussion')
+		}
 	})
 
 	it('`CRM-144` : le détail d’un envoi annulé est son objet, lu dans l’événement', () => {

@@ -192,7 +192,7 @@ test.describe('CRM-081 tranche 2 f — le groupement des messages en fils', () =
 		await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: new RegExp(CARD_COURRIER) }).click()
 		await expect(liste.getByTestId('inbox-message')).toHaveCount(0)
 		await expect(
-			liste.getByText('Tous les messages de ce dossier sont dans des fils en sommeil'),
+			liste.getByText('Tous les messages de ce dossier sont en sommeil'),
 		).toBeVisible()
 		await capturer(page, 'groupement-fil-masque', UNITE)
 
