@@ -1,3 +1,4 @@
+# @spec CRM-138 (docs/BACKLOG.md) — tranche T2 : démarrage et arrêt des passes de la corbeille (docs/SPEC-mail-subsystem.md §29.5, §29.6)
 # @spec CRM-051 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §12.1, §12.2 et §12.5 — point
 # d'entrée unique du conteneur ; la portée couvre le chargement, les logs et l'écoute Uvicorn.
 # @spec CRM-059 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §20.10 — démarrage et arrêt de la
@@ -27,6 +28,7 @@ from mail_sync.postgrest import PostgrestClient
 from mail_sync.structured_logging import configure_logging, log_event
 from mail_sync.veille import CompteAVeiller, PiloteVeille
 from mail_sync.reprise import PiloteReprise
+from mail_sync.corbeille import PiloteCorbeille, executer_passes
 
 
 # `sysexits.h` : une configuration refusée n'est pas un plantage, c'est un contrat non tenu.
@@ -167,6 +169,10 @@ def main() -> int:
     # `CRM-143` (§17.5) : la reprise des pièces non analysées, démarrée ici pour la même raison que la veille.
     reprise = PiloteReprise(executer=_reprendre_un_lot(settings, logger), logger=logger)
     reprise.demarrer()
+    # `CRM-138` (§29.5, §29.6) : les déplacements vers la corbeille des boîtes, chaque minute, et la purge, chaque heure.
+    deplacements, purge = executer_passes(settings, logger)
+    corbeille = PiloteCorbeille(deplacer=deplacements, purger=purge, logger=logger)
+    corbeille.demarrer()
     try:
         uvicorn.run(
             application,
@@ -183,6 +189,7 @@ def main() -> int:
         pilote.arreter()
         extraction.arreter()
         reprise.arreter()
+        corbeille.arreter()
     return 0
 
 

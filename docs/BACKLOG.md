@@ -19141,8 +19141,14 @@ reste sinon) ; E2E souris et clavier (non lu, sommeil, effacer, annuler, restaur
       signalée) ; `e2e/api/corbeille-messages.spec.ts` 1/1 (refus par jetons réels, corbeille visible, restauration).
       Sous-ensemble de ce périmètre. **À livrer seule ou avec la suite de l'unité, au choix de la session de livraison :**
       sans écran, rien ne paraît (aucun message n'est effacé).
-- [ ] **T2 — `mail-sync`** : le déplacement IMAP (§29.5) et la purge (§29.6) ; la route interne ; pytest ; E2E `mail` contre
-      le vrai serveur IMAP de dev.
+- [x] **T2 — `mail-sync`**, vérifiée en développement le 2026-11-11 : `mail-sync/src/mail_sync/corbeille.py` (le lot des
+      déplacements — `\Trash` par le `LIST` étendu de la RFC 6154, MESURÉ nécessaire sur le serveur de dev, dont le `LIST`
+      simple ne rend aucun attribut ; `MOVE`, sinon `COPY` puis `UID EXPUNGE` ; l'UID absent ; la boîte muette réessayée —,
+      le lot de purge, le pilote), le client (`postgrest.py`), le démarrage (`__main__.py`), la route
+      `POST /internal/v1/trash-moves/flush` (`app.py`). pytest `tests/test_corbeille.py` 13, suite complète 363 ;
+      `e2e/mail/corbeille.spec.ts` 1/1 contre Stalwart (avec la case, le message passe dans « Deleted Items », déplacement
+      `done` ; sans elle, il reste dans INBOX). DAT. Sous-ensemble de ce périmètre. **Image `mail-sync` modifiée**, après la
+      migration 180.
 - [ ] **T3 — écrans** (`docs/DESIGN_SYSTEM.md` §5.102) : rangée de commandes, confirmation, dossier « Corbeille »,
       restaurer, lignes du fil ; unitaires ; E2E souris et clavier ; captures aux quatre paliers.
 - [ ] **T4 — connecteur** : les cinq outils (§29.8) ; pytest, intégration, `verify-mcp.sh`.

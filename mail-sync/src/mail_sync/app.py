@@ -1,3 +1,4 @@
+# @spec CRM-138 (docs/BACKLOG.md) — tranche T2 : la route interne des déplacements vers la corbeille (docs/SPEC-mail-subsystem.md §29.5)
 # @spec CRM-136 (docs/BACKLOG.md) — tranche T2 : la réponse du test d'une boîte entrante porte `folder_names`
 #       (docs/SPEC-mail-subsystem.md §25.3)
 # @spec CRM-069 (docs/BACKLOG.md) — tranche T6 : la relève rend les courriels automatiques écartés (`messages_skipped`,
@@ -100,6 +101,14 @@ class EnvoiResponse(StrictModel):
     rescheduled: int = 0
     #: Orphelins repris d'un worker mort (§20.4).
     orphans: int = 0
+
+
+class CorbeilleResponse(StrictModel):
+    """Ce qu'un lot de déplacements vers la corbeille a produit (`CRM-138` §29.5) — des comptes, jamais un nom de boîte."""
+
+    done: int
+    failed: int
+    retried: int
 
 
 class RepriseResponse(StrictModel):
@@ -685,6 +694,25 @@ def create_app(
             remaining=bilan.restees,
             scanner_unavailable=bilan.antivirus_muet,
         )
+
+    # --- La corbeille des messages — `CRM-138` (docs/SPEC-mail-subsystem.md §29.5) ---------------------------------------
+    #
+    # Le même lot que le pilote, à la demande : le chemin des preuves `mail`, et celui d'un exploitant pressé.
+    @application.post(
+        "/internal/v1/trash-moves/flush",
+        response_model=CorbeilleResponse,
+        dependencies=[Depends(require_internal_token)],
+    )
+    def flush_trash_moves(request: Request, limit: int = 20) -> CorbeilleResponse:
+        from mail_sync.corbeille import executer_passes
+
+        deplacements, _purge = executer_passes(request.app.state.settings, app_logger)
+        try:
+            bilan = deplacements(max(1, min(limit, 100)))
+        except PostgrestError as erreur:
+            log_event(app_logger, logging.ERROR, "corbeille_deplacements_echoues", postgrest_status=erreur.status_code)
+            raise HTTPException(status_code=502, detail="Base indisponible") from None
+        return CorbeilleResponse(done=bilan.faits, failed=bilan.echoues, retried=bilan.reessayes)
 
     @application.get(
         "/internal/v1/dev/checkpoint",

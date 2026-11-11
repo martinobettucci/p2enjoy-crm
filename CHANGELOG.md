@@ -20,13 +20,16 @@ d'exécuter le code attendu.
 - Les mêmes droits que dans Réglages ▸ Tracks et channels : seuls les administrateurs de l'espace archivent et désarchivent ; les autres membres voient les archivés et des commandes grisées, avec leur motif.
 - Aucune migration : la webapp seule (`docs/PROD_MIGRATIONS.md` §2.44).
 
-#### `CRM-138` — effacer un message vers la corbeille de l'inbox, la boîte mail en option (décisions 878, 917, 920 et 921) — *tranche T1, l'unité en cours*
+#### `CRM-138` — effacer un message vers la corbeille de l'inbox, la boîte mail en option (décisions 878, 917, 920 et 921) — *tranches T1 et T2, l'unité en cours*
 
 - **En base (T1)** : un message peut être mis à la corbeille (`delete_message`) par qui peut l'écrire, restauré
   (`restore_message`), et lu dans sa corbeille visible (`trashed_messages`) — ce qu'on a effacé soi-même, tout l'espace pour
   un administrateur. Effacé, il n'est plus lu nulle part. Avec la case, son déplacement dans la corbeille de la boîte est
-  confié à `mail-sync`, réessayé ; purge à 30 jours, journalisée. Migration **180**. *L'écran, `mail-sync`, le connecteur
-  et le seed suivent avec les tranches T2 à T5.*
+  confié à `mail-sync`, réessayé ; purge à 30 jours, journalisée. Migration **180**.
+- **Dans `mail-sync` (T2)** : chaque minute, le message effacé avec la case passe dans le dossier corbeille annoncé par la
+  boîte ; une boîte muette est réessayée, jusqu'à dix fois. Chaque heure, les messages effacés depuis 30 jours sont purgés,
+  leurs pièces jointes comprises. Image `mail-sync` à reconstruire. *L'écran, le connecteur et le seed suivent avec les
+  tranches T3 à T5.*
 
 #### `CRM-140` — le corps HTML d'un mail rendu dans un cadre confiné, ses images distantes sur demande (décisions 881 et 918)
 

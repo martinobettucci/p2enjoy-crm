@@ -1,3 +1,5 @@
+# @spec CRM-138 (docs/BACKLOG.md) — tranche T2 : les déplacements vers la corbeille d'une boîte et la purge des messages effacés
+#       (docs/SPEC-mail-subsystem.md §29.5, §29.6)
 # @spec CRM-069 (docs/BACKLOG.md) — tranche T6 : le CRM n'ingère pas ses propres courriels (docs/SPEC-etiquettes-digest.md §5.3 bis,
 #       INC-321, décision 780)
 # @spec CRM-052 (docs/BACKLOG.md) — accès du service aux comptes entrants
@@ -633,6 +635,47 @@ class PostgrestClient:
             raise PostgrestError(erreur.code) from None
         except urllib.error.URLError:
             raise PostgrestError(0) from None
+
+    # --- La corbeille des messages — `CRM-138` (docs/SPEC-mail-subsystem.md §29.5, §29.6) ---------------------------------
+
+    def deplacements_a_faire(self, limite: int = 20) -> list[dict[str, Any]]:
+        """Les déplacements IMAP échus, réservés pour ce lot (`for update skip locked`)."""
+
+        return list(self._rpc("trash_moves_to_process", {"p_limit": limite}) or [])
+
+    def enregistrer_deplacement(self, move_id: str, issue: str, erreur: str | None) -> str:
+        """L'issue d'un essai — `done`, `failed` ou `retry` ; rend l'état que la base retient."""
+
+        return str(self._rpc("trash_move_record", {"p_move_id": move_id, "p_outcome": issue, "p_error": erreur}))
+
+    def messages_a_purger(self, limite: int = 50) -> list[dict[str, Any]]:
+        """Les messages effacés depuis plus que la rétention, sans déplacement en attente, avec les objets de leurs pièces."""
+
+        return list(self._rpc("mail_messages_to_purge", {"p_limit": limite}) or [])
+
+    def supprimer_objet_piece(self, chemin: str) -> None:
+        """Efface un objet de `mail-attachments`. Déjà absent (`400`, `404`) : rien à faire ; toute autre erreur est une
+        panne (`PostgrestError`), et le message n'est pas purgé (§29.6)."""
+
+        requete = urllib.request.Request(
+            f"{self._base_url}/storage/v1/object/mail-attachments/{urllib.parse.quote(chemin)}",
+            method="DELETE",
+            headers={"apikey": self._key, "Authorization": f"Bearer {self._key}"},
+        )
+        try:
+            with urllib.request.urlopen(requete, timeout=self._timeout):
+                return None
+        except urllib.error.HTTPError as erreur:
+            if erreur.code in (400, 404):
+                return None
+            raise PostgrestError(erreur.code) from None
+        except urllib.error.URLError:
+            raise PostgrestError(0) from None
+
+    def purger_message(self, message_id: str) -> bool:
+        """Supprime la ligne d'un message effacé depuis plus que la rétention, et la journalise (`purge_mail_message`)."""
+
+        return bool(self._rpc("purge_mail_message", {"p_message_id": message_id}))
 
     def pieces_a_reprendre(self, limite: int = 20) -> list[dict[str, Any]]:
         """Les pièces non analysées, les plus anciennes d'abord — `CRM-143`, docs/SPEC-pieces-jointes.md §17.5."""
