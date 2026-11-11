@@ -3995,6 +3995,13 @@ Dans le message ouvert de l'inbox (`docs/DESIGN_SYSTEM.md` §5.99) :
 - **« Effacer »** ouvre une **confirmation dans le flux** (décision 921) qui nomme le message. Elle porte la case
   **« L'effacer aussi dans la boîte mail (le déplacer dans sa corbeille) »**, décochée par défaut, **offerte seulement si la
   personne peut écrire au moins une des boîtes où le message figure** (§29.3) ;
+  *précisé avant le code de T3 (2026-11-11)* : cette capacité est la **colonne calculée
+  `public.mailbox_trash_permitted(mail_messages)`** (migration `0181`), lue avec le message ouvert, le patron
+  d'`ecriture_permise` (`docs/SPEC-droits-interface.md` §2.1). Elle rend `app.peut_ecrire_boite_du_message`, la règle même
+  du point 4 du §29.3 : titulaire d'une boîte où le message figure, ou administrateur de l'espace de cette boîte. La case
+  n'est rendue que sur `true` ; sur `false`, sur une valeur absente ou sur un échec de lecture, elle est absente — il n'y a
+  pas de boîte à nommer, et la base refuse de toute façon (`no_writable_mailbox`). « Effacer » n'a pas de capacité propre :
+  la commande est toujours offerte, et son refus est traduit dans la confirmation ;
 - un dossier **« Corbeille »** dans l'inbox liste les messages effacés que la personne peut voir là (§29.4), avec la date
   d'effacement définitif, l'état du déplacement IMAP (§29.5) et **« Restaurer »** ;
 - dans le fil d'une affaire, un message effacé est remplacé par la ligne **« Message effacé par X »** ; restauré, il revient,

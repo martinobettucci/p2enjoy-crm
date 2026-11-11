@@ -19160,7 +19160,9 @@ reste sinon) ; E2E souris et clavier (non lu, sommeil, effacer, annuler, restaur
       `done` ; sans elle, il reste dans INBOX). DAT. Sous-ensemble de ce périmètre. **Image `mail-sync` modifiée**, après la
       migration 180.
 - [ ] **T3 — écrans** (`docs/DESIGN_SYSTEM.md` §5.102) : rangée de commandes, confirmation, dossier « Corbeille »,
-      restaurer, lignes du fil ; unitaires ; E2E souris et clavier ; captures aux quatre paliers.
+      restaurer, lignes du fil ; unitaires ; E2E souris et clavier ; captures aux quatre paliers. *Précisé avant le code
+      (2026-11-11)* : la capacité de la case est la colonne calculée `mailbox_trash_permitted` (migration `0181`,
+      `docs/SCHEMA.md`), et sa preuve pgTAP ; la corbeille n'a pas de troisième panneau (§5.102).
 - [ ] **T4 — connecteur** : les cinq outils (§29.8) ; pytest, intégration, `verify-mcp.sh`.
 - [ ] **T5 — seed, manuel, contrat** (§29.9) ; images ; `docs/PROD_MIGRATIONS.md`.
 

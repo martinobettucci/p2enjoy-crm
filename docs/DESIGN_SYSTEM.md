@@ -8430,6 +8430,10 @@ l'air.
   **Discussion**, comme `mail_cancelled` (§5.98) : une ligne d'événement, pastille `--color-hover`, icône `Trash2` ou
   `ArchiveRestore` en `--color-text-2` — des faits neutres —, les libellés **« Message effacé »** et **« Message
   restauré »**, en détail l'objet lu dans l'événement, et l'acteur par la règle du §5.11 (« … par X »).
+- **LA CORBEILLE N'A PAS DE TROISIÈME PANNEAU** (*précisé avant le code de T3, 2026-11-11*) : un message effacé ne s'ouvre
+  pas, il se restaure. Quand l'entrée est choisie, la liste prend la place des deuxième et troisième panneaux
+  (`flex-1`), plutôt que de laisser à côté d'elle un panneau « Aucun message ouvert » qui inviterait à un geste impossible.
+  Son en-tête porte « Retour aux dossiers » sous `lg`, comme toute liste.
 - **SOUS `lg`**, la pile du §5.4 vaut pour la corbeille comme pour tout dossier ; sous `md`, les boutons de la confirmation
   passent l'un sous l'autre, le destructif en dernier. La page ne défile jamais horizontalement
   (§7).

@@ -3348,6 +3348,15 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
    cards actives exige un plan de remappage. Comportement par défaut retenu : archivage refusé
    tant que des cards s'y trouvent.
 
+### Migration `0181` — la capacité « effacer aussi dans la boîte mail », rendue sur le message (`CRM-138` T3 ; spécifiée le 2026-11-11, avant le code)
+
+`docs/SPEC-mail-subsystem.md` §29.1 (précisé), §29.3 point 4 ; `docs/SPEC-droits-interface.md` §2.1 (le patron).
+- `public.mailbox_trash_permitted(m public.mail_messages) returns boolean`, colonne calculée `SECURITY INVOKER`, `stable` :
+  `app.peut_ecrire_boite_du_message(m.id)`. `execute` à `anon`, `authenticated`, `service_role`, pour le motif de la `0091`
+  (zéro ligne plutôt qu'une erreur de privilège).
+- Condition suffisante de refus, jamais nécessaire : `delete_message` refuse de toute façon (`no_writable_mailbox`).
+- **Retour arrière** : retirer la fonction ; une webapp antérieure ne la demande pas.
+
 ### Migration `0180` — effacer un message : la corbeille de l'inbox, le déplacement IMAP (`CRM-138` T1 ; spécifiée et écrite le 2026-11-11)
 
 `docs/SPEC-mail-subsystem.md` §29 ; décisions 878 et 917.
