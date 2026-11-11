@@ -19077,7 +19077,8 @@ responsable.
 
 ## Demande du 2026-11-10 — non lu visible, « message » plutôt que « fil », et effacer un mail (décision 878)
 
-### CRM-138 — Mails : « Marquer comme non lu » libellé près du sommeil, « message » au lieu de « fil », et effacer avec confirmation (corbeille du CRM, boîte IMAP en option) `[ ]`
+### CRM-138 — Mails : « Marquer comme non lu » libellé près du sommeil, « message » au lieu de « fil », et effacer avec confirmation (corbeille du CRM, boîte IMAP en option) `[@]`
+*Prise en charge : session interactive 4891a451 (p2enjoy-crm-32) depuis 2026-11-11 00:29 UTC — état avant : [ ] ; confiée par la session de livraison (ee)*
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 878).
 **Comportement attendu** :
