@@ -1024,6 +1024,11 @@ n'ont pas de `content_id` ; leurs images `cid:` montrent la mention « indisponi
 
 ## 3. Migrations en attente
 
+**La 180, après la 179** (`CRM-138` T1, décisions 878 et 917), *en attente* : effacer un message (`docs/SCHEMA.md` « Migration
+`0180` ») — deux colonnes, une table, des fonctions, la politique de lecture de `mail_messages` reprise ; aucune donnée
+reprise. Sans écran ni `mail-sync` à jour, rien ne paraît. Aucun geste préalable du responsable. Elle n'efface rien : la
+purge ne vise qu'un message effacé depuis 30 jours, et aucun ne l'est.
+
 **La 179** (`CRM-140` T1, décisions 881 et 918), *en attente, hors du lot annoncé* : la colonne
 `mail_attachments.content_id` (`docs/SCHEMA.md` « Migration `0179` »). Seule (§2.43). **Avant `mail-sync` et la
 webapp de `CRM-140`.** Aucun geste préalable du responsable.

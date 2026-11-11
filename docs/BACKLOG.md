@@ -19105,7 +19105,7 @@ responsable.
   Une case à cocher l'efface aussi dans la boîte IMAP, en le déplaçant dans la corbeille du serveur.
 **MCP** : **oui, famille `messagerie`**, cases existantes (décision 878) : marquer non lu, mettre en sommeil, effacer.
 **Spécification** : écrite le 2026-11-11 avant le code (décisions 878 et 917) — `docs/SPEC-mail-subsystem.md` §29,
-`docs/SPEC-cards.md` §16.14.11, `docs/SCHEMA.md` « Migration de `CRM-138` », `docs/SPEC-mcp.md` §9.2 (CRM-138) ;
+`docs/SPEC-cards.md` §16.14.11, `docs/SCHEMA.md` « Migration `0180` », `docs/SPEC-mcp.md` §9.2 (CRM-138) ;
 `docs/DESIGN_SYSTEM.md` §5.102 (décisions 920 et 921). Elle couvre :
 - `docs/SPEC-mail-subsystem.md`, avec une section nouvelle : la corbeille des messages, qui peut effacer, ce que voit
   l'affaire, la purge, le déplacement IMAP par `mail-sync` sous une route interne et un relais sous autorisation ;
@@ -19120,9 +19120,15 @@ E2E `mail` sur le vrai serveur IMAP de dev (le message arrive dans la corbeille 
 reste sinon) ; E2E souris et clavier (non lu, sommeil, effacer, annuler, restaurer) ; outils du connecteur et
 `verify-mcp.sh` ; seed ; captures aux quatre paliers ; manuel ; contrat de déploiement.
 **Découpage** (2026-11-11, avec la spécification) :
-- [ ] **T1 — base** : migration (colonnes, déclencheur, `mail_trash_moves`, les quatre fonctions de la personne et les
-      quatre de `service_role`, la politique et les quinze fonctions du §29.4, le dossier « Corbeille », les deux types
-      d'événement) ; pgTAP ; API (refus par jeton réel).
+- [x] **T1 — base**, vérifiée en développement le 2026-11-11 : migration `0180` (colonnes et déclencheur qui fige la date,
+      `mail_trash_moves`, `delete_message`, `restore_message`, `trashed_messages`, les quatre fonctions de `service_role`, la
+      politique et quatre fonctions `SECURITY DEFINER` filtrées — §29.4 précisé —, les types `mail_deleted` et
+      `mail_restored`, `mail_message` au journal d'audit) ; `supabase/tests/0169_effacer_message.test.sql` 30/30 ; gardes
+      globales révisées (`0016` à 197 politiques, `0019` à 28 types, `0133` à 39 fonctions « introuvable ») ; 53 suites pgTAP
+      de la messagerie, de la santé et des événements sans échec dû à la `0180` (`0095` rougie par le seed de `CRM-140`,
+      signalée) ; `e2e/api/corbeille-messages.spec.ts` 1/1 (refus par jetons réels, corbeille visible, restauration).
+      Sous-ensemble de ce périmètre. **À livrer seule ou avec la suite de l'unité, au choix de la session de livraison :**
+      sans écran, rien ne paraît (aucun message n'est effacé).
 - [ ] **T2 — `mail-sync`** : le déplacement IMAP (§29.5) et la purge (§29.6) ; la route interne ; pytest ; E2E `mail` contre
       le vrai serveur IMAP de dev.
 - [ ] **T3 — écrans** (`docs/DESIGN_SYSTEM.md` §5.102) : rangée de commandes, confirmation, dossier « Corbeille »,

@@ -3348,7 +3348,7 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
    cards actives exige un plan de remappage. Comportement par défaut retenu : archivage refusé
    tant que des cards s'y trouvent.
 
-### Migration de `CRM-138` — effacer un message : la corbeille de l'inbox, le déplacement IMAP (numéro pris au push ; spécifiée le 2026-11-11, à écrire)
+### Migration `0180` — effacer un message : la corbeille de l'inbox, le déplacement IMAP (`CRM-138` T1 ; spécifiée et écrite le 2026-11-11)
 
 `docs/SPEC-mail-subsystem.md` §29 ; décisions 878 et 917.
 - `mail_messages` : `deleted_at timestamptz`, `deleted_by uuid` (`profiles`, `on delete set null`) ; déclencheur qui pose
@@ -3358,11 +3358,13 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
 - `app.peut_ecrire_boite_du_message(uuid)` ; `public.delete_message(uuid, boolean)`, `public.restore_message(uuid)`,
   `public.trashed_messages(uuid)` (`SECURITY DEFINER`, `authenticated`) ; `public.trash_moves_to_process(int)`,
   `public.trash_move_record(...)`, `public.mail_messages_to_purge(int)`, `public.purge_mail_message(uuid)` (`service_role`).
-- La politique `mail_messages_lecture` exclut `deleted_at is not null` ; les quinze fonctions du §29.4 reçoivent le filtre ;
-  `inbox_arborescence` porte le dossier « Corbeille ».
+- La politique `mail_messages_lecture` exclut `deleted_at is not null` ; quatre fonctions `SECURITY DEFINER` reçoivent le
+  filtre (§29.4) — `app.peut_voir_message`, `app.health_last_contact`, `public.messages_a_ranger`, `public.prepare_email`.
+- `app.peut_ecrire_boite_du_message`, `app.peut_ecrire_message`, `app.message_en_corbeille_visible` (et `…_par_id`, pour la
+  politique de `mail_trash_moves`) ; le journal d'audit admet `mail_message` (purge, famille `retention`).
 - Types d'événement `mail_deleted` et `mail_restored` admis au fil de l'affaire.
-- **Retour arrière** : retirer les fonctions nouvelles, reposer les quinze fonctions et la politique de leur migration
-  d'origine, puis `mail_trash_moves` et les deux colonnes — un message en corbeille redevient visible.
+- **Retour arrière** : retirer les fonctions nouvelles, reposer les quatre fonctions et la politique de leur migration
+  d'origine, la contrainte de `card_events` et celle du journal d'audit de la `0176`, puis `mail_trash_moves` et les deux colonnes — un message en corbeille redevient visible.
 
 ### Migration `0179` — le `Content-ID` d'une pièce jointe — `CRM-140` T1 (`0179_mail_attachments_content_id.sql`, écrite le 2026-11-11)
 

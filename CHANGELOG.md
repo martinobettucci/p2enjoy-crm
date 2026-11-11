@@ -13,6 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-138` — effacer un message vers la corbeille de l'inbox, la boîte mail en option (décisions 878, 917, 920 et 921) — *tranche T1, l'unité en cours*
+
+- **En base (T1)** : un message peut être mis à la corbeille (`delete_message`) par qui peut l'écrire, restauré
+  (`restore_message`), et lu dans sa corbeille visible (`trashed_messages`) — ce qu'on a effacé soi-même, tout l'espace pour
+  un administrateur. Effacé, il n'est plus lu nulle part. Avec la case, son déplacement dans la corbeille de la boîte est
+  confié à `mail-sync`, réessayé ; purge à 30 jours, journalisée. Migration **180**. *L'écran, `mail-sync`, le connecteur
+  et le seed suivent avec les tranches T2 à T5.*
+
 #### `CRM-140` — le corps HTML d'un mail rendu dans un cadre confiné, ses images distantes sur demande (décisions 881 et 918)
 
 - **L'inbox affiche la mise en forme d'un courrier HTML**, dans un cadre isolé qui défile en lui-même : aucun script,

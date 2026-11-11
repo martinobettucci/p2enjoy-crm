@@ -1,3 +1,4 @@
+-- @verifies CRM-138 (docs/BACKLOG.md) — tranche T1 : le compte de l'assertion 5 inclut `delete_message` et `restore_message`
 -- @verifies CRM-112 (docs/BACKLOG.md) — tranche T2.a : le compte des levées « introuvable » révisé (décision 51), +1
 -- @verifies CRM-120 (docs/BACKLOG.md) — tranche T2 : les refus « introuvable » rendent 404 — la fonction qui lève,
 --           sa forme (SQLSTATE `PGRST`, code `P0002` et message inchangés dans le corps, statut dans le détail), ses
@@ -85,8 +86,11 @@ select is(
 	-- RÉVISÉ PAR `CRM-144` T1 (migration 0176), non relâché : `cancel_outbound_email` et `retry_outbound_email` refusent un
 	-- envoi inconnu, digest ou d'une affaire illisible par ce chemin (`outbox_not_found`, docs/SPEC-mail-subsystem.md
 	-- §28.3, §28.4). Les témoins 5 quinquies et 5 sexies les nomment.
-	37,
-	'5 — les vingt-sept fonctions « introuvable » de CRM-120, les deux de CRM-127, celle de CRM-112, les deux de CRM-128 (`send_email_draft`, `discard_email_draft`), celle de CRM-135 (`mail_inbound_account_record_poll_failure`), celle de CRM-137 (`classification_candidates`) et celle de CRM-143 (`acknowledge_unscanned_attachment`) et les deux de CRM-144 (`cancel_outbound_email`, `retry_outbound_email`) lèvent par `app.raise_http_error(404, …)`');
+	-- RÉVISÉ PAR `CRM-138` T1 (migration 0180), non relâché : `delete_message` et `restore_message` refusent un message
+	-- inconnu, illisible ou hors de la corbeille visible par ce chemin (`message_not_found`, docs/SPEC-mail-subsystem.md §29.3,
+	-- §29.4) ; `pgTAP 0169` les éprouve.
+	39,
+	'5 — les vingt-sept fonctions « introuvable » de CRM-120, les deux de CRM-127, celle de CRM-112, les deux de CRM-128 (`send_email_draft`, `discard_email_draft`), celle de CRM-135 (`mail_inbound_account_record_poll_failure`), celle de CRM-137 (`classification_candidates`) et celle de CRM-143 (`acknowledge_unscanned_attachment`) et les deux de CRM-144 (`cancel_outbound_email`, `retry_outbound_email`) et les deux de CRM-138 (`delete_message`, `restore_message`) lèvent par `app.raise_http_error(404, …)`');
 
 select ok(
 	(select p.prosrc ~ 'app\.raise_http_error\(404, ''account_not_found''\)'

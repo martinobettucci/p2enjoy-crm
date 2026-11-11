@@ -4032,19 +4032,24 @@ personne peut écrire : `id`, `workspace_id`, `message_id` (`on delete cascade`)
 ### 29.4 Ce qu'un message effacé n'est plus, et où il se voit
 
 - **La politique de lecture `mail_messages_lecture` exclut tout message en corbeille** : les fonctions `SECURITY INVOKER`
-  qui le lisent l'excluent d'elles-mêmes. Les fonctions **`SECURITY DEFINER`** qui lisent `mail_messages` reçoivent le filtre
-  explicitement, chacune prouvée par pgTAP : `app.fil_lisible`, `app.peut_voir_message`, `app.executer_sequences_relance`,
-  `app.trash_enumerate_cards`, `public.classer_message_automatiquement`, `public.classify_message`,
-  `public.export_contact`, `public.mark_messages_read`, `public.marquer_envoi_reussi`, `public.marquer_message_range`,
-  `public.messages_a_ranger`, `public.prepare_email`, `public.reserver_envois`, `public.unclassify_message`, et
-  `app.health_last_contact` sous `app.health_context` (`CRM-142`, `SECURITY DEFINER`). Un message effacé n'est donc ni
-  dans l'inbox, ni dans le fil de l'affaire, ni dans la recherche, ni compté (non lus, « à ranger », santé), ni
-  téléchargeable (ses pièces suivent `app.peut_voir_message`), ni proposé au classement.
+  qui le lisent l'excluent d'elles-mêmes (`inbox_arborescence`, la recherche, `is_read`, `concerns_me`,
+  `classification_candidates`). **Quatre fonctions `SECURITY DEFINER` reçoivent le filtre**, chacune prouvée par pgTAP :
+  `app.peut_voir_message` — la garde de classer, retirer, marquer lu, lire un fil et télécharger une pièce —,
+  `app.health_last_contact` sous `app.health_context` (`CRM-142`), `public.messages_a_ranger` (`mail-sync` ne range pas un
+  message effacé) et `public.prepare_email` (on ne répond pas à un message effacé). Un message effacé n'est donc ni dans
+  l'inbox, ni dans le fil de l'affaire, ni dans la recherche, ni compté (non lus, « à ranger », santé), ni téléchargeable,
+  ni proposé au classement.
+  *Précisé à l'écriture de la migration (2026-11-11)* : les autres fonctions `SECURITY DEFINER` qui lisent `mail_messages`
+  le **comptent à dessein**, parce qu'il existe encore en base — l'export RGPD d'un contact (`export_contact`), l'énumération
+  de ce qu'emporte la purge d'une affaire (`trash_enumerate_cards`), la détection d'une réponse par les séquences de relance
+  (`executer_sequences_relance`), la tenue des envois (`reserver_envois`, `marquer_envoi_reussi`,
+  `marquer_message_range`) et la classification d'un message **nouveau** par sa filiation
+  (`classer_message_automatiquement`). La liste de quinze fonctions écrite avant le code en surestimait le besoin.
 - **Le dossier « Corbeille »** se lit par `public.trashed_messages(p_workspace_id uuid)`, `SECURITY DEFINER` : la règle de
   la corbeille des affaires (décision 707) — **un membre y voit les messages qu'il a lui-même effacés, un administrateur
   ceux de tout l'espace** —, avec pour chacun l'objet, l'expéditeur, la date d'effacement, la date d'effacement définitif
-  (`deleted_at + app.trash_retention()`) et l'état agrégé des déplacements IMAP. `inbox_arborescence` y ajoute le dossier
-  « Corbeille » et son compte.
+  (`deleted_at + app.trash_retention()`) et l'état agrégé des déplacements IMAP. L'écran en tire le dossier « Corbeille »
+  et son compte ; `inbox_arborescence` n'est pas changée (précisé à l'écriture de la migration).
 - **Restaurer** : `public.restore_message(p_message_id uuid)`, `SECURITY DEFINER` : le message doit être dans la corbeille
   **visible** de la personne (ci-dessus) et la personne doit avoir le droit d'écrire (§29.3, point 2) ; sinon `404` puis
   `42501`. `deleted_at` et `deleted_by` repassent à `NULL` ; les déplacements encore **`pending` passent à `cancelled`** ;
@@ -4076,7 +4081,8 @@ La durée est celle de la corbeille des affaires, lue au même endroit, `app.tra
 heure au plus, `mail-sync` prend les messages dont `deleted_at < now() - app.trash_retention()` et dont aucun déplacement
 n'est `pending` (`public.mail_messages_to_purge(p_limit)`, `service_role`) ; pour chacun, il **efface les objets de ses pièces
 jointes** dans le bucket par l'API du stockage, puis appelle `public.purge_mail_message(p_message_id)` (`service_role`), qui
-journalise (`app.audit_record`, `purged`, `mail_message`, l'objet) et supprime la ligne — ses occurrences, lectures, pièces,
+journalise (`app.audit_record`, `purged`, `mail_message`, **sans l'objet** : un objet de courriel peut porter une donnée
+personnelle, et le journal survit au message) et supprime la ligne — ses occurrences, lectures, pièces,
 sommeils et déplacements suivent par cascade. Les lignes « Message effacé par X » du fil de l'affaire restent : le journal
 d'une affaire est immuable (`card_events`).
 
