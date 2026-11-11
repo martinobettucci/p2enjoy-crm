@@ -591,7 +591,7 @@ documentation, **avant** son code. Le catalogue ci-dessous est la cible.
 | Famille | Consulter | Ajouter | Modifier | Supprimer (corbeille ou archive) |
 |---|---|---|---|---|
 | référence | `crm_workspace_list`, `crm_search` (recherche globale ; chaque ligne est filtrée par la matrice de sa famille) | — | — | — |
-| `structure` | `crm_track_list`, `crm_track_get`, `crm_channel_list`, `crm_channel_get`, `crm_workflow_get` (étapes, transitions, champs exigés) | `crm_track_create`, `crm_channel_create` | `crm_track_update`, `crm_channel_update` | `crm_track_trash`, `crm_channel_trash` |
+| `structure` | `crm_track_list`, `crm_track_get`, `crm_channel_list`, `crm_channel_get`, `crm_workflow_get` (étapes, transitions, champs exigés) | `crm_track_create`, `crm_channel_create` | `crm_track_update`, `crm_channel_update` | `crm_track_trash`, `crm_channel_trash`, `crm_channel_archive` (archiver ou désarchiver, `CRM-134`, §9.2 *unvicies*) |
 | `affaires` | `crm_card_list` (par channel, étape, échéance), `crm_card_get` (champs, étape, contacts, prochaine action), `crm_card_timeline`, `crm_card_comment_list`, `crm_stale_card_list` (affaires figées), `crm_card_checklist_list` (§9.2 *duodecies*) | `crm_card_create`, `crm_card_comment_add` | `crm_card_update` (titre, champs, prochaine action, échéance), `crm_card_move` (étape, par `move_card`), `crm_card_move_to_channel`, `crm_card_snooze`, `crm_card_wake`, `crm_card_contact_link` (`aussi` : `contacts:consulter`), `crm_card_checklist_set` (§9.2 *duodecies*), `crm_card_label_set` (§9.2 *tredecies*) | `crm_card_trash` |
 | `contacts` — **livrée par `CRM-104` T3** (§9.2 *quinquies*) | `crm_contact_list`, `crm_contact_get` | `crm_contact_create` | `crm_contact_update` | — (le CRM ne sait que détruire, A4) |
 | `organizations` — **`CRM-114` T4** (§9.2 *sexies*) | `crm_organization_list`, `crm_organization_get` | `crm_organization_create` | `crm_organization_update` | — (décision 660) |
@@ -694,7 +694,8 @@ sont réservées par la base à qui administre l'espace ; l'outil traduit son re
 | `crm_channel_trash` | `supprimer`, `destructiveHint` | `channel:channel_id` | `PATCH channels set deleted_at` | idem |
 
 **Ce que la tranche ne fait pas.** Ni archiver ni réordonner un track ou un channel ; ni éditer un workflow, ni le
-publier, ni le restaurer ; ni le catalogue des nœuds. Ce sont des gestes d'écran d'administration. `crm_workflow_get`
+publier, ni le restaurer ; ni le catalogue des nœuds. *Révisé par `CRM-134` (décision 871) : archiver et désarchiver un
+channel entrent dans la famille, par `crm_channel_archive` (§9.2 *unvicies*).* Ce sont des gestes d'écran d'administration. `crm_workflow_get`
 dit ce qu'il faut savoir pour déplacer une affaire (`crm_card_move`).
 
 **Preuves** (§13) : pour chaque outil, contre la vraie base et un vrai client MCP — succès, refus par la matrice, refus
@@ -1315,6 +1316,23 @@ L'ancre `organisation`, qui existe (§9.2 *sexies*), situe l'espace.
 **Aucune case `aussi`** [choix de rédaction, décision 908] : l'outil ne rend aucune donnée de l'organisation, son nom
 compris — seulement des sommes de recettes, que la famille `recettes` garde. **La ligne « Recettes » de l'onglet
 « Connecteur MCP »** voit sa phrase de portée complétée : « … ; prévisionnel et réel d'une organisation ».
+
+### 9.2 unvicies Archiver ou désarchiver un channel — `CRM-134` (`docs/SPEC-channels.md` §11 ; décisions 871 et 919)
+
+*Écrit le 2026-11-11, avant le code.* **Famille `structure`, aucune case nouvelle** (décision 871). L'action est
+`supprimer`, comme pour `crm_goal_board_archive` et `crm_card_placement_archive` : c'est le « supprimer (corbeille ou
+archive) » du §6.1, jamais une purge, et le même outil défait le geste. **Sans `destructiveHint`** : le geste est
+réversible, et rien n'est perdu.
+
+| Outil | Action | Ancre | Ce qu'il appelle | Remarques |
+|---|---|---|---|---|
+| `crm_channel_archive` | `supprimer` | `channel:channel_id` | `PATCH channels set archived_at`, l'écriture de Réglages et de la vue (`archiverChannel`) | `archived` vaut `true` par défaut ; `false` désarchive. Rend `channel_id`, `name` et `archived`. Un channel déjà dans l'état demandé n'est pas réécrit, et l'outil le dit. Zéro ligne rendue est un refus du CRM : archiver un channel est réservé aux administrateurs de l'espace (`docs/SPEC-channels.md` §6.1), et l'outil le dit en ces termes. Un channel illisible reçoit le refus uniforme (§6.2) |
+
+**`crm_channel_list` et `crm_channel_get`** rendent déjà `archived` : rien ne change pour eux.
+
+**Preuves** (§13) : la déclaration (famille, action, ancre, pas de `destructiveHint`) ; contre la vraie base et un vrai
+client MCP, l'administratrice archive puis désarchive un channel, et la base le constate ; le refus par la matrice ; le
+refus du CRM pour un business developer dont la matrice est ouverte, la ligne relue inchangée ; le journal écrit.
 
 ### 9.3 Réponses
 

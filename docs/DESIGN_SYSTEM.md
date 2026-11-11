@@ -8252,3 +8252,68 @@ la ligne (§5.59).
   hauteurs différentes — le défaut que le §5.93 avait payé. Sous la ligne, toujours, le groupe donne à toutes les lignes la
   même forme. *Révise la rangée du §5.93.*
 - **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `FolderTree`.**
+
+### 5.101 Archiver un channel depuis sa vue, et le groupe « Archivés » de la barre d'onglets — `CRM-134`
+
+*Écrit le 2026-11-11, avant le code, après lecture des sections ciblées par la décision 916, non intégrale : §1 à §4, §6 à
+§12, §5.5, §5.5 bis, §5.8, §5.13, §5.29 bis, §5.55, §5.59, §5.68, §5.84.* Ce que les gestes écrivent et lisent est spécifié
+par `docs/SPEC-channels.md` §11. Les formes sont celles de la décision 919 ; ces règles ne disent que de quoi elles ont
+l'air.
+
+- **« ARCHIVER LE CHANNEL » SUR LA BARRE D'OUTILS DU CHANNEL.**
+  - La rangée de la bascule « Tableau / Liste » devient `flex flex-wrap items-center justify-between gap-2`, et la commande
+    y est **alignée à droite**.
+  - C'est un bouton secondaire compact (§5.5 : `--text-sm`, 8 px de rembourrage, hauteur `--size-target` conservée),
+    précédé de l'icône Lucide `Archive` 16 px `aria-hidden` ; jamais l'icône seule (§9).
+  - Elle n'est pas destructive : c'est elle **qui ouvre la confirmation** (§5.84).
+  - Sous 768 px, `flex-wrap` la fait passer sous la bascule, alignée à gauche. La page ne défile jamais (§7).
+- **LA CONFIRMATION EST CELLE DE RÉGLAGES, RÉEMPLOYÉE** (§5.13 ; décision 919).
+  - Le composant `ConfirmationArchivage` quitte `AdministrationArborescence.tsx` pour être partagé, avec le corps en
+    paramètre.
+  - Sa forme ne change pas : surface `--color-surface`, `--radius-lg`, bordure `--color-border`, rembourrage 16 px ; la
+    question en `font-medium` ; le corps en `--text-sm` `--color-text-2` ; « Archiver », plein, aux jetons de danger, puis
+    « Annuler », secondaire.
+  - Elle vit **dans le flux**, sous la barre d'outils et au-dessus du board ou de la liste ; jamais en modale.
+  - Le focus entre sur « Archiver ». `Échap` et « Annuler » la referment et rendent le focus à « Archiver le channel ».
+  - Le refus s'y écrit, avec `role="alert"` (`AlerteRefus`).
+  - Le corps est propre à ce geste, sous une clé nouvelle : il dit « pour tout l'espace », que les affaires restent
+    intactes, et nomme « Archivés », où retrouver le channel. Un texte nomme le geste qui montre l'objet (§5.29 bis).
+- **LE GROUPE « ARCHIVÉS » DE LA BARRE D'ONGLETS.**
+  - Il vit **après les onglets des channels, avant « Nouveau channel »** : il porte sur la liste des channels, dont il est
+    la fin, comme la commande du §5.55.
+  - Ce n'est **pas un onglet** : aucune bordure basse, jamais `aria-current`. Texte `--color-text-2`, survol
+    `--color-hover`, `--radius-sm`, hauteur `--size-target`, `whitespace-nowrap`.
+  - Son libellé est « Archivés (n) » : le compte dit ce que le dépliage montrera. Il est précédé de l'icône `Archive`
+    16 px `aria-hidden` et suivi du chevron `ChevronDown` 16 px `aria-hidden`, tourné de 180° une fois déplié, sans
+    transition sous `prefers-reduced-motion`.
+  - Sur la vue d'un track, c'est un `button` qui porte `aria-expanded` et `aria-controls`. Ailleurs, c'est un lien, sans
+    chevron ni `aria-expanded`.
+  - Il est absent quand le track n'a aucun archivé (`docs/SPEC-channels.md` §11.3).
+- **LE PANNEAU DES ARCHIVÉS.**
+  - Il s'ouvre **en tête de la zone principale**, sous la barre, au-dessus du formulaire du §5.55 quand celui-ci est
+    ouvert.
+  - Surface `--color-surface`, `--radius-lg`, bordure `--color-border`, rembourrage 16 px.
+  - Un titre `h2` au style `text-h3`, « Channels archivés de ce track », puis une liste `ul` / `li` aux lignes du §5.13 :
+    hauteur `--size-target`, bordure basse `--color-border`, aucune zébrure.
+  - Chaque ligne porte, dans l'ordre :
+    - la **pastille** du channel (§5.68, 8 px, `aria-hidden`) ;
+    - son **nom** en texte, **pas un lien** (§5.29 bis) ;
+    - la **mention textuelle « Archivé »**, en `--text-sm` `--color-text-2` (§5.13 : jamais une teinte seule) ;
+    - à droite, « Désarchiver » : secondaire compact, icône `ArchiveRestore` 16 px `aria-hidden`, nom accessible
+      « Désarchiver le channel {nom} ».
+  - Aucune confirmation (§5.29 bis). Un refus s'écrit dans la ligne, avec `role="alert"`.
+  - Sous 768 px, le nom passe à la ligne (`min-w-0`, `break-words`), et le bouton reste `shrink-0`.
+- **LES COMMANDES REFUSÉES** (capacité `administration` refusée, §5.59).
+  - « Archiver le channel » et chaque « Désarchiver » sont `disabled`, lisibles, jamais masquées.
+  - Dans le panneau, un motif `MotifLectureSeule` (`rights.readonly.administration`) se pose en tête, et chaque
+    « Désarchiver » le cite.
+  - Sur la barre d'outils, le motif est porté comme celui de « Nouveau channel » (§5.59 : description accessible et
+    infobulle du libellé), pour ne pas poser un bandeau sur chaque vue de channel.
+- **LES ANNONCES** passent par la région vivante de la route (§8) : « archivé » et « désarchivé », chacune nommant le
+  channel.
+- **LES ÉTATS.**
+  - Le groupe ne paraît qu'une fois la lecture de la barre prête. Pendant le chargement, la barre a son squelette ; en
+    erreur, la zone principale porte l'erreur commune (§5.8).
+  - La confirmation et chaque ligne du panneau ont leur état en cours : la commande est `disabled` pendant l'écriture.
+- **Aucune couleur, aucun jeton nouveau.** Les icônes `Archive`, `ArchiveRestore` et `ChevronDown` sont déjà employées par
+  le produit.

@@ -241,7 +241,8 @@ position ne doivent pas s'échanger d'un chargement à l'autre.
 
 `archived_at` non nul = channel archivé : **masqué, réversible**.
 
-- La barre d'onglets n'affiche que les channels **non archivés** (`archived_at is null`).
+- La barre d'onglets n'affiche que les channels **non archivés** (`archived_at is null`). *Depuis `CRM-134` (§11), elle lit
+  aussi les archivés du track, dans la même lecture, pour son groupe « Archivés » ; ses onglets restent les non archivés.*
 - L'archivage et le désarchivage sont de simples `UPDATE`, donc réservés aux administrateurs.
 - **La suppression physique n'est pas exposée** : `DELETE` n'est accordé ni à `anon` ni à
   `authenticated`. Le refus est mesuré au §7, ligne *i*. Même position que pour les tracks
@@ -618,3 +619,124 @@ constate le retour au vert.
 6. **Aucune limite de nombre de channels par track** n'est posée côté serveur. La barre défile.
 7. **L'archivage d'un track ne cascade pas sur ses channels** (§4) : choix motivé, mais il signifie
    qu'un désarchivage de track fait réapparaître exactement les channels qui étaient visibles avant.
+
+## 11. Archiver un channel depuis sa vue, et le groupe « Archivés » — `CRM-134`
+
+*Écrit le 2026-11-11, avant le code (décisions 871, 916 et 919).* C'est l'archivage de Réglages ▸ Tracks et channels (§4 ;
+`docs/SPEC-administration-arborescence.md` §6.3) : même colonne, même écriture, même politique. Seul l'accès change. Le
+geste vit sur la vue du channel, et les archivés d'un track se retrouvent au bout de sa barre d'onglets. **Aucune
+migration, aucune fonction, aucune politique nouvelle.** L'apparence : `docs/DESIGN_SYSTEM.md` §5.101.
+
+### 11.1 Ce que la barre lit : les archivés du track, dans la même lecture
+
+`lireChannels` (§5) **retire le filtre `archived_at=is.null`** et ajoute `archived_at` à ses colonnes ; `deleted_at=is.null`
+reste. La même requête, filtrée sur le track, rend les channels actifs et archivés, et le module les sépare :
+
+- `channels`, les non archivés, **au sens inchangé** : la barre d'onglets, la résolution du channel ouvert (`RouteTrack`,
+  `RouteCard`), le compte de l'état vide ;
+- `archives`, les archivés, dans le même ordre (`position`, puis le nom), pour le seul groupe « Archivés ».
+
+**Une seule lecture**, et non une seconde à l'ouverture du groupe : le groupe dit son compte avant d'être déplié, et la
+règle du §5.4 vaut ici (la même donnée, lue une fois). Le volume est celui d'un track. **Un channel archivé reste
+inatteignable par son adresse** : il n'est pas dans `channels`, et la route rend l'état « choisissez un channel » (§5.1),
+comme aujourd'hui. Aucune route nouvelle (décision 919).
+
+### 11.2 Archiver depuis la vue du channel
+
+- **La commande** « Archiver le channel » vit sur la barre d'outils du channel ouvert, la rangée de la bascule
+  « Tableau / Liste ». Elle n'existe que sur la route d'un channel : ni sur la fiche d'une affaire, ni sur l'écran des
+  coûts.
+- **Elle ouvre une confirmation dans le flux** (décision 919), sous cette rangée. La confirmation nomme le channel
+  (`admin.archive.confirm.channel`, réemployée) et dit trois choses : il quittera les onglets du track **pour tout
+  l'espace**, il n'est pas supprimé et ses affaires restent intactes, on le retrouve sous « Archivés ». Elle porte
+  « Archiver » et « Annuler » ; `Échap` la referme.
+- **L'écriture est celle de Réglages** : `archiverChannel(client, id, true)` (`webapp/src/lib/administration-arborescence.ts`),
+  soit `PATCH /rest/v1/channels?id=eq.<id>`, avec `archived_at` horodaté par le client. C'est la même approximation,
+  nommée au §6.3 de la spécification de l'arborescence. Les issues :
+  - `applique` : la réussite ;
+  - `sans-effet` (zéro ligne : la politique `USING` a filtré la ligne) et `refus` : le refus s'écrit **dans la
+    confirmation**, qui reste ouverte.
+- **Après la réussite** :
+  - la route relit le contenu du track ;
+  - la vue passe au channel **actif qui suivait** l'archivé dans l'ordre des onglets, à défaut à celui qui le précédait, à
+    défaut à la racine du track (état « aucun channel ») ;
+  - la région vivante annonce « « {nom} » est archivé ; vous le retrouvez sous « Archivés ». » ;
+  - le focus va à la commande « Archivés » de la barre, là où le channel est parti.
+
+### 11.3 Le groupe « Archivés » et le désarchivage
+
+- **Le groupe n'est rendu que si le track a au moins un channel archivé lisible.** Un « Archivés (0) » serait une commande
+  sans objet. Il vit dans la barre d'onglets, après les onglets des channels et avant « Nouveau channel ».
+- **Sur la route du track ou d'un channel**, c'est un `button` qui porte `aria-expanded` et déplie un panneau en tête de la
+  zone principale. L'état déplié est un paramètre de l'adresse, `archives=1`, comme `nouveau-channel=1`
+  (`docs/SPEC-administration-arborescence.md` §13.3). C'est une préférence d'écran : ni cookie, ni stockage
+  (`CLAUDE.md` §11). **Ailleurs** (fiche d'une affaire, coûts du track), c'est un lien vers la racine du track, groupe
+  déplié.
+- **Le panneau** liste les archivés. Chacun montre sa pastille, son nom et la mention « Archivé », **non cliquables**
+  (décision 919), et porte « Désarchiver ».
+- **Désarchiver** n'ouvre aucune confirmation (§6.3 de l'arborescence) : `archiverChannel(client, id, false)`. Après la
+  réussite :
+  - la route relit, et le channel reprend sa place dans les onglets, sa `position` étant intacte ;
+  - l'annonce dit « « {nom} » est désarchivé. » ;
+  - le focus va au « Désarchiver » suivant du panneau, à défaut au précédent ;
+  - quand le dernier archivé est désarchivé, le panneau et le groupe disparaissent, et le focus va à l'onglet du channel
+    rendu.
+
+  Un refus s'écrit dans sa ligne.
+
+### 11.4 Droits
+
+Les droits sont inchangés (§6.1). L'`UPDATE` est réservé à l'administrateur de l'espace, par la politique (`USING` et
+`WITH CHECK`). Tout membre qui lit le track **voit** le groupe et ses archivés, par le `SELECT` de `app.can_read_channel`.
+
+Pour qui n'administre pas l'espace (la capacité `administration` de `workspaces`, `docs/SPEC-droits-interface.md` §2),
+« Archiver le channel » et « Désarchiver » sont **rendues désactivées avec leur motif** (`rights.readonly.administration`,
+`docs/DESIGN_SYSTEM.md` §5.59), jamais masquées. La base refuse de toute façon, et la preuve le mesure par requête directe.
+
+### 11.5 Connecteur MCP
+
+**Oui, famille `structure`, cases existantes** (décision 871) : l'outil `crm_channel_archive`, action `supprimer`
+(`docs/SPEC-mcp.md` §9.2 *unvicies*).
+
+### 11.6 Seed
+
+Le seed ne change pas. `…033`, « Appels d'offres », est archivé dans « Conseil & IA » (§8) : le groupe paraît donc sur ce
+track, avec un channel, sans donnée nouvelle. Les preuves qui archivent ou désarchivent posent leur propre état et le
+rendent.
+
+### 11.7 Preuves
+
+- **Unitaires** (Vitest) :
+  - la séparation des channels actifs et archivés ;
+  - le choix du channel après un archivage : le suivant, le précédent, aucun ;
+  - la barre : le groupe absent sans archivé, présent avec son compte, `aria-expanded`, le lien hors de la vue d'un
+    track ;
+  - la confirmation : le focus, `Échap`, le refus écrit ;
+  - le panneau : désarchiver, le focus ;
+  - les commandes éteintes avec leur motif ;
+  - les textes par clés.
+- **API** (`e2e/api`) :
+  - sous le jeton de l'administratrice, archiver puis désarchiver un channel : une ligne rendue ;
+  - sous ceux d'un business developer et de la lectrice, l'`UPDATE` ne rend **aucune ligne**, et la clé de service relit
+    la ligne inchangée ;
+  - la lectrice lit les archivés.
+- **E2E** (Playwright) :
+  - à la souris et au clavier, archiver avec confirmation, et l'annuler : le channel quitte les onglets, la vue passe au
+    suivant, le groupe le montre ;
+  - déplier, désarchiver : l'onglet revient ;
+  - la lectrice voit le groupe, et des commandes éteintes avec leur motif ;
+  - quatre paliers sans défilement horizontal de la page ; captures observées.
+- **Connecteur** (pytest) : la déclaration ; contre la vraie base, archiver et désarchiver, le refus par la matrice, le
+  refus du CRM pour un business developer, le journal ; `verify-mcp.sh`.
+- **Manuel** : le chapitre du tableau d'un channel, et celui de l'arborescence.
+
+### 11.8 Découpage
+
+Chaque tranche est poussée une fois vérifiée.
+
+| Tranche | Contenu |
+|---|---|
+| **T1** | Webapp : la lecture (§11.1), le groupe et le panneau, archiver et désarchiver, `docs/DESIGN_SYSTEM.md` §5.101 ; unitaires ; API par jetons réels ; E2E souris et clavier ; captures aux quatre paliers |
+| **T2** | Connecteur : `crm_channel_archive` ; pytest unitaires et intégration ; `verify-mcp.sh` ; manuel §33 |
+| **T3** | Manuel : le tableau d'un channel et l'arborescence, avec leurs images |
+| **T4** | Production, par la session de livraison, sur instruction du responsable : la webapp et l'image `mcp` ; aucune migration |

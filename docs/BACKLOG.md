@@ -18961,8 +18961,12 @@ board et sur la fiche, et par un assistant connecté.
 sans être supprimé ; un groupe « Archivés » replié au bout de la liste se déplie d'un clic, montre les channels archivés
 et permet de les désarchiver. Même donnée et mêmes droits que l'archivage de Réglages ▸ Tracks et channels.
 **MCP** : **oui, famille `structure`** (décision 871) — archiver et désarchiver un channel, cases existantes.
-**Spécification** : à écrire avant le code — `docs/DESIGN_SYSTEM.md` (le bouton, la confirmation, le groupe replié),
-`docs/SPEC-channels.md`, `docs/SPEC-mcp.md` §9.2, le manuel.
+**Spécification** : écrite le 2026-11-11, avant le code (décisions 916 et 919) — `docs/SPEC-channels.md` §11 (la lecture
+des archivés dans la même requête, archiver depuis la vue avec confirmation dans le flux, le groupe « Archivés » et son
+panneau, désarchiver, les droits, le découpage en quatre tranches T1 à T4, les preuves), `docs/DESIGN_SYSTEM.md` §5.101
+(la commande sur la barre d'outils du channel, la confirmation de Réglages partagée, le groupe, le panneau),
+`docs/SPEC-mcp.md` §9.2 *unvicies* (`crm_channel_archive`, action `supprimer`), le manuel avec T2 et T3. Aucune migration ;
+le seed porte déjà un channel archivé (`…033`).
 **DoD** : unitaires ; API (droits : refus pour qui ne peut pas archiver) ; E2E souris et clavier (archiver, déplier,
 désarchiver) ; outils du connecteur et `verify-mcp.sh` ; seed (un channel archivé) ; captures aux quatre paliers ; manuel.
 
