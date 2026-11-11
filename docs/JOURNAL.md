@@ -40480,3 +40480,11 @@ affaires, on le désarchive. Aucune route nouvelle.
 **MCP** : inchangé (décision 871) — famille `structure`, cases existantes.
 **Conséquences** : la spécification de `CRM-134` (`docs/SPEC-channels.md`, `docs/DESIGN_SYSTEM.md`, `docs/SPEC-mcp.md`, le
 manuel) s'écrit sur ces trois réponses, avant le code.
+
+
+### décision 920 — `CRM-138` : le design system lu par ses sections générales et celles de l'inbox
+
+*2026-11-11, session interactive 4891a451 (p2enjoy-crm-32), arbitrage du responsable (`AskUserQuestion`).* La règle de la
+décision 897, pour cette unité : lus en entier, §1 à §4 et §6 à §12, puis les sections de l'inbox et de la corbeille —
+§5.3 septies, §5.4 à §5.4 quinquies, §5.16, §5.96 et §5.98. Le compte rendu dit que la lecture n'était pas intégrale ; la
+vérification du diff d'interface contre ces sections reste exigée. **Portée** : `CRM-138` seulement ; `CLAUDE.md` inchangé.
