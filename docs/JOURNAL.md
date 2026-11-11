@@ -40460,3 +40460,23 @@ plus faible.
 Le compte rendu de l'unité dit que la lecture n'était pas intégrale. Le diff d'interface reste vérifié contre ces sections
 avant le commit. Cette décision vaut pour `CRM-140` seulement ; la règle de `CLAUDE.md` n'est pas changée.
 **MCP** : non (décision 881). Le connecteur rend le corps en texte et n'affiche rien.
+
+### décision 919 — `CRM-134` : « Archiver le channel » sur la barre d'outils du channel, confirmé dans le flux ; le groupe « Archivés » montre le nom et « Désarchiver »
+
+*2026-11-11, session interactive 152dd27d (p2enjoy-crm-a8), arbitrage du responsable (`AskUserQuestion`), avant la
+spécification de l'unité (décision 871 pour la demande, 916 pour la lecture du design system).*
+**Le problème** : la décision 871 dit le geste — « Archiver » sur le channel là où on le voit, un groupe « Archivés »
+replié au bout de la liste — sans en fixer la forme. Trois points restaient ouverts.
+**Q1 — la place du bouton** : *présentées* : sur la barre d'outils du channel (la rangée « Tableau / Liste ») ; dans la
+barre d'onglets, après « Nouveau channel ». **Retenue : la barre d'outils du channel**, alignée à droite — le bouton agit
+sur le channel ouvert, et la barre d'onglets reste une barre de liens (`docs/DESIGN_SYSTEM.md` §12.1).
+**Q2 — la confirmation** : *présentées* : un clic sans confirmation, réversible ; une confirmation dans le flux, comme
+Réglages ▸ Tracks et channels. **Retenue : la confirmation dans le flux** — elle nomme le channel et dit qu'il sera masqué
+pour tout l'espace ; « Archiver » et « Annuler ». Le même geste a la même forme dans les deux écrans (§5.13, §5.29 bis).
+**Q3 — le groupe déplié** : *présentées* : le nom et « Désarchiver », non cliquable ; le nom cliquable vers le board de
+l'archivé, avec un bandeau. **Retenue : le nom, sa pastille et la mention « Archivé », non cliquables, et « Désarchiver »
+sans confirmation** (§5.29 bis : un archivé n'est pas un lien ; la reprise défait et ne coûte rien). Pour revoir ses
+affaires, on le désarchive. Aucune route nouvelle.
+**MCP** : inchangé (décision 871) — famille `structure`, cases existantes.
+**Conséquences** : la spécification de `CRM-134` (`docs/SPEC-channels.md`, `docs/DESIGN_SYSTEM.md`, `docs/SPEC-mcp.md`, le
+manuel) s'écrit sur ces trois réponses, avant le code.
