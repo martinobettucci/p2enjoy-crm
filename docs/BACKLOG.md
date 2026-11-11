@@ -19179,9 +19179,9 @@ responsable.
 **MCP** : **non** (décision 881).
 **Arbitrages** (décision 918) : DOMPurify ; les images `cid:` affichées, avec une colonne `content_id` posée par migration
 et relevée par `mail-sync` ; le cadre strict défile en lui-même ; le design system lu par sections ciblées.
-**Spécification** : à écrire avant le code. Elle couvre `docs/SPEC-mail-subsystem.md` §18.4 révisé (bac à sable, CSP,
-nettoyage, `cid:`), `docs/DESIGN_SYSTEM.md` (le cadre, le bandeau des images), le manuel (inbox) et le DAT (sécurité du
-rendu).
+**Spécification** : `docs/SPEC-mail-subsystem.md` §30 (révise le §18.4) — le cadre et sa politique de contenu, le
+nettoyage, `cid:` et la migration de `content_id`, le seed, les preuves, quatre tranches. `docs/DESIGN_SYSTEM.md` §5.100
+(le cadre, le bandeau des images) est écrit avec T3, le manuel (inbox) et le DAT (sécurité du rendu) avec T4.
 **DoD** :
 - unitaires, dont le nettoyage : scripts, gestionnaires `on*`, `javascript:`, formulaires, `meta refresh` ;
 - E2E souris et clavier :

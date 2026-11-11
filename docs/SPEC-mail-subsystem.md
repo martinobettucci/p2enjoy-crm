@@ -1510,7 +1510,11 @@ une panne.
 **Le compte affiché est celui des messages visibles**, non celui des messages existants : deux
 utilisateurs voient deux nombres différents, et c'est la conséquence directe du §18.1.
 
-### 18.4 Le HTML d'un expéditeur ne s'affiche jamais
+### 18.4 Le HTML d'un expéditeur ne s'affiche jamais — RÉVISÉ par le §30 (`CRM-140`, décision 881)
+
+> **Révisé le 2026-11-11.** Le rendu confiné que la dernière phrase réservait à une autre unité est livré par `CRM-140` :
+> bac à sable, politique de contenu et nettoyage (§30). L'écran n'injecte toujours aucun HTML dans son propre DOM, et les
+> preuves qui figeaient l'absence sont retournées (§30.10). Le texte qui suit est conservé tel qu'il a été écrit.
 
 `mail_messages` conserve `body_text` **et** `body_html`. L'inbox affiche le premier. Lorsqu'un
 message n'a que du HTML, le corps est réduit à du texte **dans le client**, balises retirées.
@@ -1596,7 +1600,7 @@ double visibilité exigée par la Definition of Done.
 ### 18.9 Limites nommées
 
 - **Aucun envoi depuis l'inbox** : répondre appartient à `CRM-058`. L'écran montre le courrier reçu.
-- **Aucun rendu HTML** (§18.4), et l'absence est figée.
+- ~~**Aucun rendu HTML** (§18.4), et l'absence est figée.~~ — **livré par `CRM-140`** (décision 881), §30.
 - ~~**Aucune notion de lu / non lu**~~ — **à livrer par la tranche 2** (décision 707), §18 bis.
 - **Aucun rôle de tri** (§18.1) : un membre ordinaire ne voit aucun non classé.
 - **Aucune suppression de message** depuis l'écran : la purge relève d'une unité RGPD.
@@ -4109,3 +4113,256 @@ contre le serveur de dev), et un message **classé** dans « Plateforme de bille
 | E2E `mail` | contre le vrai serveur IMAP de dev : la case cochée, le message arrive dans la corbeille de la boîte ; non cochée, il reste dans son dossier |
 | E2E `ui` | souris et clavier : non lu et lu, sommeil, effacer puis annuler, effacer, retrouver dans « Corbeille », restaurer ; la ligne du fil de l'affaire |
 | Connecteur | pytest des cinq outils, intégration, `verify-mcp.sh` |
+
+---
+
+## 30. Le corps HTML d'un mail rendu dans un cadre confiné, liens cliquables, images distantes sur demande — `CRM-140`
+
+*Demande du responsable du 2026-11-10, arbitrée le même jour (décision 881) ; forme arbitrée le 2026-11-11 (décision 918).*
+**Ce paragraphe révise le §18.4**, qui posait l'absence du rendu HTML et la figeait par une assertion. Sa dernière phrase
+annonçait déjà la condition du rendu : « un bac à sable, une politique de contenu dédiée et ses propres preuves ». L'unité
+pose ces trois éléments. Les preuves qui figeaient l'absence sont **retournées, non retirées** (§30.10, décision 51).
+
+### 30.1 Ce que l'unité livre, et ce qu'elle ne livre pas
+
+**Elle livre**, dans le panneau de lecture de l'inbox (§18.3), pour tout message de `mail_messages`, reçu ou envoyé :
+- le corps HTML rendu dans un **cadre isolé** : aucun script, aucun formulaire, aucune navigation de l'écran ;
+- des **liens cliquables**, qui s'ouvrent dans un nouvel onglet, sans référent ;
+- des **images distantes bloquées**, avec un bandeau et le bouton « Afficher les images », qui vaut **pour ce message
+  seulement** ;
+- les **images intégrées** (`cid:`), affichées sans attendre lorsque leur pièce est saine (décision 918, Q2) ;
+- pour un message **sans HTML**, son texte, dont les adresses web deviennent des liens.
+
+**Elle ne livre pas** :
+- un rendu HTML ailleurs que dans le panneau de lecture. La timeline d'une affaire n'affiche que l'objet et l'expéditeur
+  (§18.6), l'outbox montre le corps texte de l'envoi (§28.6), et le formulaire d'envoi compose du texte (§19) ;
+- un HTML **composé** par le CRM : l'envoi reste en texte ;
+- une mémoire du choix « Afficher les images », ni par expéditeur ni par message. Le choix vit le temps où le message est
+  ouvert, et rien n'est stocké sur l'appareil (`CLAUDE.md` §11) ;
+- **le connecteur MCP** (décision 881) : il rend le corps en texte, et n'affiche rien.
+
+### 30.2 Le choix du corps
+
+| `body_html` | `body_text` | Ce que montre le panneau |
+|---|---|---|
+| non vide | quelconque | le **cadre** (§30.3), nourri du HTML nettoyé (§30.4) |
+| vide ou absent | non vide | le **texte**, adresses web en liens (§30.7) |
+| vide ou absent | vide ou absent | la phrase du corps vide (inchangée) |
+
+Le HTML est préféré au texte quand les deux existent : c'est la forme que l'expéditeur a composée et que son destinataire
+lit dans tout client de messagerie. La phrase « corps réduit depuis le HTML » (`inbox.message.reduced`) disparaît de
+l'écran, puisque le HTML n'est plus réduit pour y être lu. `reduireHtmlEnTexte` reste pour ses autres usages, et ses tests
+restent en place.
+
+**Un HTML que le nettoyage vide** (rien de visible ne reste, par exemple un message fait d'un seul script) se rabat sur le
+texte s'il existe, sinon sur la phrase du corps vide. Le cadre n'est jamais montré vide.
+
+### 30.3 Le cadre : bac à sable et politique de contenu
+
+Le HTML nettoyé est servi par `srcdoc` dans un `<iframe>` **qui ne porte que** :
+
+```
+sandbox="allow-popups allow-popups-to-escape-sandbox"
+referrerpolicy="no-referrer"
+title="Contenu du message"   (clé i18n)
+```
+
+- **Ni `allow-scripts`** : aucun script ne s'exécute, quelle que soit sa forme (balise, gestionnaire `on*`, `javascript:`).
+- **Ni `allow-same-origin`** (décision 918, Q3) : le cadre a une origine opaque. Il ne lit ni les cookies, ni le stockage,
+  ni le jeton de session de l'application. L'écran ne peut donc pas mesurer sa hauteur : le cadre a une hauteur fixe et
+  **défile en lui-même** (§30.8).
+- **Ni `allow-forms`, ni `allow-top-navigation`, ni `allow-modals`** : aucun formulaire ne s'envoie, et le message ne peut
+  ni remplacer l'écran ni ouvrir une boîte de dialogue.
+- **`allow-popups` et `allow-popups-to-escape-sandbox`** : un lien ouvre un onglet **ordinaire**, et non un onglet qui
+  hériterait du bac à sable et casserait le site visité.
+
+Le document servi est construit par le CRM, jamais repris de l'expéditeur. Il commence par la politique de contenu :
+
+```html
+<!doctype html><html><head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="POLITIQUE">
+<meta name="referrer" content="no-referrer">
+<base target="_blank">
+<style>/* la feuille de base, §30.8 */</style>
+</head><body>HTML NETTOYÉ</body></html>
+```
+
+**La politique de contenu**, selon l'état des images :
+
+| État | `POLITIQUE` |
+|---|---|
+| images bloquées (par défaut) | `default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'` |
+| « Afficher les images » activé | la même, avec `img-src data: https: http:` |
+
+- `default-src 'none'` interdit tout le reste : scripts, polices, feuilles distantes (`@import`), cadres imbriqués, médias,
+  requêtes réseau.
+- `img-src data:` laisse passer les images intégrées (§30.6), qui arrivent en `data:`. Les images distantes, et les fonds
+  `url(...)` des styles, sont bloquées **avant la requête**.
+- La politique est **une seconde barrière, indépendante du nettoyage**. Le nettoyage (§30.4) retire déjà les adresses des
+  images distantes. Si une adresse lui échappait, la politique bloquerait sa requête.
+
+### 30.4 Le nettoyage — DOMPurify
+
+DOMPurify (décision 918, Q1 ; licence MPL-2.0 ou Apache-2.0) nettoie le HTML **dans le navigateur, au moment de
+l'affichage**. Rien n'est réécrit en base : `body_html` reste le HTML reçu. Le module du CRM fixe la configuration, et ses
+tests la figent.
+
+**Retiré, avec son contenu** :
+- `script`, `noscript`, `template` ;
+- `iframe`, `frame`, `frameset`, `object`, `embed`, `applet` ;
+- `form`, `input`, `button`, `select`, `option`, `textarea` ;
+- `meta` (dont `meta http-equiv="refresh"`), `base`, `link` ;
+- `audio`, `video`, `source`, `track`, `picture` ;
+- `svg` et `math` : leurs espaces de noms sont la voie connue des contournements.
+
+**Gardé** : la mise en forme d'un courrier, soit les titres, paragraphes, listes, tableaux, `img`, `a`, `span`, `div`,
+`font`, `center`, ainsi que `style` en balise et en attribut. Les courriers reposent sur eux, et la politique de contenu
+leur interdit tout chargement distant.
+
+**Attributs** :
+- tout attribut `on*` est retiré (la configuration par défaut de DOMPurify, que le test vérifie) ;
+- `srcset`, `ping`, `formaction`, `action`, `background` (l'image de fond d'un tableau ancien) et `poster` sont retirés ;
+- **sur `a`** :
+  - `href` n'est gardé que pour les schémas `http:`, `https:` et `mailto:`. Tout autre schéma (`javascript:`, `data:`,
+    `vbscript:`, `file:`), une adresse relative ou une ancre seule (`#…`) perd son `href`, et le texte reste en texte ;
+  - le crochet pose `target="_blank"` et `rel="noopener noreferrer"` sur **chaque** lien gardé, que l'expéditeur l'ait
+    écrit ou non ;
+- **sur `img`** :
+  - `src` en `http:` ou `https:` est **déplacé** dans `data-crm-src` : c'est une image distante bloquée, et le module la
+    compte ;
+  - `src` en `cid:` est résolu (§30.6) ;
+  - tout autre `src` est retiré, y compris un `data:` venu de l'expéditeur. Une image intégrée n'arrive que par sa pièce,
+    analysée par ClamAV.
+
+**« Afficher les images »** reconstruit le document à partir du même HTML nettoyé : `data-crm-src` est rendu à `src`, et la
+politique passe à l'état « affiché » (§30.3). Le nettoyage n'est jamais relâché, et les liens restent ce qu'ils étaient.
+
+### 30.5 Le bandeau des images distantes
+
+Le bandeau ne paraît que si le nettoyage a compté **au moins une** image distante (`data-crm-src`). Il dit, en une phrase,
+pourquoi les images sont bloquées : leur chargement prévient l'expéditeur que le message a été ouvert. Il porte le bouton
+« Afficher les images ».
+
+- Le choix vaut **pour le message ouvert**. Ouvrir un autre message, ou revenir à celui-ci après l'avoir quitté, repart
+  bloqué. L'état est attaché à l'identifiant du message dans l'écran, et rien n'est stocké.
+- Après le clic, le bandeau devient une phrase d'état, « Images affichées pour ce message », annoncée par `role="status"`.
+  Le focus revient sur cette phrase, pour qu'une personne au clavier ne le perde pas avec le bouton.
+- Un fond `url(...)` dans un style n'est pas compté, mais il est bloqué par la politique de contenu et suit le même clic.
+  Un message qui n'a **que** des fonds distants ne montre donc pas de bandeau ; ses fonds restent bloqués. C'est une
+  limite nommée (§30.12).
+
+### 30.6 Les images intégrées (`cid:`)
+
+**Le modèle** — migration `mail_attachments_content_id` (numéro pris au push, comme celle de `CRM-138`) :
+- `mail_attachments.content_id text null` : le `Content-ID` de la partie, **sans** ses chevrons, borné à 255 caractères
+  par une contrainte nommée ;
+- aucune politique nouvelle. La colonne se lit sous la RLS de la pièce (§18.1, `CRM-054`), et son fichier sous la
+  politique de stockage de la migration `0029` (pièce saine, message lisible, §18.5).
+
+**`mail-sync`** (`mime_analyse.analyser`) :
+- relève le `Content-ID` de toute partie gardée comme pièce ;
+- **garde aussi** une partie `image/*` qui porte un `Content-ID` sans nom ni disposition `attachment`. Elle était perdue
+  jusqu'ici (mesuré le 2026-11-11, décision 918). Son nom de repli est celui des pièces sans nom (`NOM_DE_REPLI`) ;
+- la pièce suit le chemin de toutes les autres : dépôt, ClamAV, statut.
+
+**L'écran** :
+- résout chaque `src="cid:X"` contre les pièces du message dont `content_id` vaut `X`. La comparaison ignore la casse et
+  les chevrons ; si plusieurs pièces portent le même identifiant, la première par nom l'emporte ;
+- lit le fichier sous la session, par le chemin de l'aperçu (`lireFichierPiece`, `CRM-074`) ;
+- le pose en `data:`, avec le type **forcé** depuis la liste fermée des images de l'aperçu (`image/png`, `image/jpeg`,
+  `image/gif`, `image/webp`), jamais repris du fichier.
+
+L'image ne s'affiche que si sa pièce est **saine** (`clean`), d'un type de cette liste, et d'au plus **5 Mo**. Sinon, elle
+est remplacée par une mention, « image intégrée indisponible », et par son texte alternatif s'il existe. Les images
+intégrées sont lues **avant** de montrer le cadre, avec une phrase d'attente : la reconstruire au fil des lectures ferait
+sauter le défilement.
+
+Les images intégrées s'affichent **sans** « Afficher les images » : leur lecture est une requête au stockage du CRM, sous
+la session, et rien ne part chez l'expéditeur. Elles **restent dans la liste des pièces jointes** du message, comme
+aujourd'hui une image intégrée qui porte un nom (§30.12).
+
+### 30.7 Le message sans HTML : des adresses web cliquables
+
+Le texte reste rendu par React, sans aucune injection de HTML. Seules les adresses qui commencent par `http://` ou
+`https://` deviennent des liens. Elles s'arrêtent au premier blanc, et une ponctuation finale (`.`, `,`, `;`, `:`, `!`,
+`?`, `)`, `»`) n'en fait pas partie. Ces liens portent `target="_blank"` et `rel="noopener noreferrer"`. Une adresse
+`www.…` sans schéma reste du texte : deviner un schéma serait ouvrir un lien que l'expéditeur n'a pas écrit.
+
+### 30.8 L'écran
+
+La forme et les règles de `docs/DESIGN_SYSTEM.md` §5.100 s'appliquent : le cadre, le bandeau et la phrase d'attente.
+
+- Le cadre occupe la largeur du corps. Sa hauteur est fixe, `min(70vh, 720px)` et au moins 320 px, et il défile en
+  lui-même, à la verticale comme à l'horizontale lorsqu'un tableau dépasse. La page, elle, ne défile jamais à l'horizontale.
+- La feuille de base est écrite par le CRM : fond blanc, encre `#0D0D0D`, la police système, `img { max-width: 100%; height:
+  auto }` et la coupure des mots longs. Le HTML de l'expéditeur garde la main sur sa propre mise en page.
+- Le clavier : `Tab` entre dans le cadre et en parcourt les liens, puis en sort vers la suite du panneau. Le cadre porte un
+  `title` lisible.
+
+### 30.9 Le seed
+
+Un message **réellement envoyé** par la soumission SMTP du seed (le chemin du §18.7), puis **réellement relevé**, sans
+trace fabriquée (`CLAUDE.md` §8). Il est en `multipart/related`, avec une alternative `text/plain` :
+- un **lien** `https://` ;
+- une **image distante** sur un hôte réservé aux tests, `https://images.partenaire-demo.test/…` (RFC 2606) ;
+- une **image intégrée** `cid:`, un petit PNG du dépôt ;
+- un **lien piégé** `javascript:`, un gestionnaire `onclick` et un `<script>`, pour que le nettoyage soit démontré sur le
+  courrier du seed et non seulement en test.
+
+Son `Message-ID` est fixe, comme ceux du §18.7. L'hôte `.test` ne se résout pas : sur la pile de développement, l'image
+distante reste absente même après « Afficher les images ». L'E2E remplace ce serveur par l'interception réseau de Playwright,
+qui répond une vraie image. C'est le seul double, et il tient la place d'un serveur extérieur impossible à joindre en local
+(`CLAUDE.md` §15).
+
+### 30.10 Les preuves de l'absence, retournées
+
+- `e2e/ui/inbox.spec.ts` (« le corps est du texte ») : le message en `text/plain` du seed reste affiché en texte. Le
+  message HTML du seed est rendu **dans le cadre**, et son HTML n'atteint pas le DOM de l'écran (aucun nœud du message
+  hors du cadre).
+- `scripts/verify-mail-inbox.sh` : le contrôle « aucun `dangerouslySetInnerHTML` » **reste**, puisque l'écran n'injecte
+  toujours rien dans son propre DOM. S'y ajoutent deux contrôles du code : le cadre ne porte ni `allow-scripts` ni
+  `allow-same-origin`, et le document servi commence par la politique de contenu.
+- `webapp/src/lib/inbox.test.ts` : la réduction du HTML en texte garde ses tests, puisque la fonction reste.
+
+### 30.11 Preuves exigées
+
+| Niveau | Preuve |
+|---|---|
+| Vitest, nettoyage | chaque vecteur retiré : `<script>`, `onerror`/`onclick`, `href="javascript:"` (et ses variantes de casse et d'espaces), `<form>` et ses champs, `<meta http-equiv="refresh">`, `<base>`, `<link>`, `<iframe>`, `<svg>` porteur de script ; `target`/`rel` posés sur chaque lien ; l'image distante déplacée et comptée ; un `data:` d'expéditeur retiré ; le HTML vidé se rabat sur le texte |
+| Vitest, document | la politique en tête, ses deux états ; `cid:` résolu, pièce non saine ou trop grande remplacée ; les adresses web du texte |
+| Vitest, écran | le cadre et ses attributs exacts ; le bandeau, le clic, la phrase d'état, le retour bloqué à l'ouverture d'un autre message |
+| pytest `mail-sync` | le `Content-ID` relevé ; l'image intégrée sans nom gardée ; une partie sans `Content-ID` inchangée |
+| pgTAP | la colonne, sa borne ; la RLS de la pièce inchangée (un membre sans droit sur le message ne lit pas le `content_id`) |
+| E2E `ui`, souris et clavier | le message HTML du seed : **aucune requête vers l'hôte de l'image avant le clic**, mesurée par l'interception réseau ; la requête part après le clic ; **le message suivant repart bloqué** ; l'image `cid:` affichée sans clic ; le lien ouvre un onglet avec `noopener` (pas d'`opener`) ; au clavier : `Tab` jusqu'au bouton, `Entrée`, le focus sur la phrase d'état, puis les liens du cadre |
+| Captures | les quatre paliers, le bandeau, après le clic, le message sans HTML aux liens |
+| Harnais | `scripts/verify-mail-inbox.sh` révisé (§30.10) |
+| Manuel | le chapitre de l'inbox : le message HTML, le bandeau, ce que fait « Afficher les images » |
+
+### 30.12 Limites nommées
+
+- Un **fond distant** (`url(...)` dans un style) n'est pas compté par le bandeau (§30.5). Il est bloqué par la politique,
+  et ne se débloque qu'avec le clic, lorsque le message a aussi une image distante.
+- Une image intégrée **reste listée** parmi les pièces jointes (§30.6).
+- Les messages relevés **avant** la migration n'ont pas de `content_id`. Leurs images `cid:` montrent la mention
+  « indisponible », et une image intégrée sans nom n'a jamais été gardée. Aucune relève rétroactive.
+- La hauteur du cadre ne s'ajuste pas au contenu (décision 918, Q3).
+- Les polices distantes sont toujours bloquées, même après le clic. Le message prend la police système.
+
+### 30.13 Contrat de déploiement
+
+- La migration de `content_id` (§30.6).
+- `mail-sync`, qui relève le `Content-ID`.
+- La webapp, avec la dépendance `dompurify`.
+- Aucune variable nouvelle.
+
+Le retour arrière est le suivant : la colonne est facultative, une webapp antérieure l'ignore, et un `mail-sync` antérieur
+ne l'écrit pas.
+
+### 30.14 Tranches
+
+1. **T1, le modèle** : la migration et pgTAP, puis `mail-sync` et pytest.
+2. **T2, le rendu** : la dépendance, le module de nettoyage et de document, et ses tests Vitest.
+3. **T3, l'écran** : le cadre, le bandeau, `cid:`, le texte aux liens ; le design system §5.100 ; l'E2E souris et clavier ;
+   les captures ; le harnais révisé.
+4. **T4, le seed et le manuel** : le message HTML du seed, sa garde, le manuel, le DAT (la sécurité du rendu).

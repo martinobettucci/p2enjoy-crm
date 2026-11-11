@@ -3363,3 +3363,11 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
 - Types d'événement `mail_deleted` et `mail_restored` admis au fil de l'affaire.
 - **Retour arrière** : retirer les fonctions nouvelles, reposer les quinze fonctions et la politique de leur migration
   d'origine, puis `mail_trash_moves` et les deux colonnes — un message en corbeille redevient visible.
+
+### Migration de `CRM-140` — le `Content-ID` d'une pièce jointe (numéro pris au push ; spécifiée le 2026-11-11, à écrire)
+
+`docs/SPEC-mail-subsystem.md` §30.6 ; décisions 881 et 918.
+- `mail_attachments.content_id text null`, le `Content-ID` de la partie sans ses chevrons ; contrainte nommée
+  `mail_attachments_content_id_borne` (1 à 255 caractères lorsqu'il est présent).
+- Aucune politique nouvelle : la colonne se lit sous la RLS de la pièce, son fichier sous la politique de stockage `0029`.
+- **Retour arrière** : retirer la colonne. Une webapp et un `mail-sync` antérieurs l'ignorent.
