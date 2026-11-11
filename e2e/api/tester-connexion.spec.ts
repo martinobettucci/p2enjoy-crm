@@ -1,3 +1,5 @@
+// @verifies CRM-136 (docs/BACKLOG.md) — tranche T2 : `folder_names` rendu par un vrai `LIST` pour une boîte, jamais pour une
+//           identité sortante (docs/SPEC-mail-subsystem.md §25.3)
 // @verifies CRM-127 (docs/BACKLOG.md) — tranches T2 et T3 : tester la connexion d'un compte de messagerie, hors interface
 // @verifies docs/SPEC-mail-subsystem.md §23.3 (le droit d'écrire la ligne, `not_found` sans divulgation, `disabled`, garde
 //           de 30 s), §23.4 (la fonction edge `mail-connection-test` : forme, session, relais vers `mail-sync`, verdict écrit
@@ -102,8 +104,12 @@ test.describe('mail-connection-test — ce que la pile consent', () => {
 		const systeme = await retenir(request, 'mail_inbound_accounts', 'owner_id=is.null')
 		const reponse = await appeler(request, { target: 'inbound', id: systeme.id }, jeton)
 		expect(reponse.status()).toBe(200)
-		const verdict = (await reponse.json()) as { status: string; error: string | null; checked_at: string }
+		const verdict = (await reponse.json()) as { status: string; error: string | null; checked_at: string; folder_names?: string[] }
 		expect(verdict).toMatchObject({ status: 'ok', error: null })
+		// `CRM-136` T2 (§25.3) : le vrai `LIST` de Stalwart rend les dossiers sélectionnables de la boîte — `INBOX` d'abord
+		// présent —, et jamais la racine `CRM` du produit ni ses descendants.
+		expect(verdict.folder_names, JSON.stringify(verdict)).toContain('INBOX')
+		expect((verdict.folder_names ?? []).some((nom) => nom === 'CRM' || nom.startsWith('CRM/'))).toBe(false)
 		const relue = await lire(request, 'mail_inbound_accounts', `id=eq.${systeme.id}`)
 		expect(relue.status).toBe('ok')
 		expect(relue.last_checked_at).not.toBeNull()
@@ -123,7 +129,10 @@ test.describe('mail-connection-test — ce que la pile consent', () => {
 		const sienne = await retenir(request, 'mail_outbound_identities', `owner_id=eq.${DRISS}`)
 		const reponse = await appeler(request, { target: 'outbound', id: sienne.id }, jeton)
 		expect(reponse.status()).toBe(200)
-		expect(await reponse.json()).toMatchObject({ status: 'ok', error: null })
+		const verdictSortant = (await reponse.json()) as Record<string, unknown>
+		expect(verdictSortant).toMatchObject({ status: 'ok', error: null })
+		// `CRM-136` T2 (§25.3) : la réponse d'une identité sortante est inchangée — aucun dossier.
+		expect('folder_names' in verdictSortant).toBe(false)
 		expect((await lire(request, 'mail_outbound_identities', `id=eq.${sienne.id}`)).status).toBe('ok')
 	})
 

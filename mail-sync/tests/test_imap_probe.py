@@ -1,3 +1,5 @@
+# @verifies CRM-136 (docs/BACKLOG.md) — tranche T2 : les dossiers sélectionnables rendus par la sonde, sans `\Noselect` ni la
+#           racine `CRM` du produit, dans l'ordre du serveur (docs/SPEC-mail-subsystem.md §25.3, §25.9 ligne « pytest »)
 # @verifies CRM-052 (docs/BACKLOG.md) — test de connexion d'un compte entrant
 # @verifies docs/SPEC-mail-subsystem.md §13.5 (le test de connexion), §13.6 (ce que le
 #           développement peut prouver), §13.7 (le message d'erreur est un CODE)
@@ -123,3 +125,28 @@ def test_le_verdict_ne_porte_que_des_codes_du_catalogue() -> None:
         "timeout",
         "protocol_error",
     }
+
+
+def test_les_dossiers_selectionnables_sans_noselect_ni_la_racine_du_produit() -> None:
+    """`CRM-136` (§25.3) : la forme exacte de `IMAPClient.list_folders()` — drapeaux en octets, délimiteur en octets, nom
+    décodé —, et le filtre dans l'ordre du serveur."""
+
+    rendus = [
+        ((b"\\HasNoChildren",), b"/", "INBOX"),
+        ((b"\\Noselect", b"\\HasChildren"), b"/", "Archives"),
+        ((b"\\HasNoChildren",), b"/", "Archives/2025"),
+        ((b"\\HasChildren",), b"/", "CRM"),
+        ((b"\\HasNoChildren",), b"/", "CRM/Affaires/Refonte (c1)"),
+        ((b"\\HasNoChildren",), b"/", "CRMement"),
+        ((b"\\Junk", b"\\HasNoChildren"), b"/", "Junk Mail"),
+        ((b"\\NOSELECT",), b".", "Public"),
+    ]
+    assert imap_probe.dossiers_selectionnables(rendus) == ("INBOX", "Archives/2025", "CRMement", "Junk Mail")
+
+
+def test_un_delimiteur_absent_ne_retire_que_la_racine_elle_meme() -> None:
+    assert imap_probe.dossiers_selectionnables([((), None, "CRM"), ((), None, "CRM-Archives")]) == ("CRM-Archives",)
+
+
+def test_un_verdict_en_echec_ne_porte_aucun_nom_de_dossier() -> None:
+    assert imap_probe.ProbeResult(ok=False, error=imap_probe.AUTH_FAILED).folder_names == ()

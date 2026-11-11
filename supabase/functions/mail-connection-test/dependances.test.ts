@@ -1,3 +1,5 @@
+// @verifies CRM-136 (docs/BACKLOG.md) — tranche T2 : `folder_names` lu s'il a sa forme, un corps sans lui reste lisible
+//           (docs/SPEC-mail-subsystem.md §25.3, §25.9 ligne « Deno »)
 // @verifies CRM-127 (docs/BACKLOG.md) — tranche T3 : les dépendances réelles de `mail-connection-test`
 // @verifies docs/SPEC-mail-subsystem.md §23.3 (le refus de la base lu sur son mot, jamais deviné), §23.4 (le jeton de
 //           l'appelant vers PostgREST, le jeton interne vers le seul `mail-sync`, chaque réponse du service ramenée à un
@@ -43,6 +45,21 @@ describe('lireAutorisation — le mot de la base (§23.3)', () => {
 })
 
 describe('lireRelais — la réponse du service (§23.4, point 4)', () => {
+	it('`CRM-136` : retient les dossiers d’une boîte, et ignore une liste mal formée', async () => {
+		const corps = { status: 'ok', error: null, folders: 2, checked_at: '2026-11-02T10:00:00Z', folder_names: ['INBOX', 'Junk Mail'] }
+		expect(await lireRelais(repondre(200, corps))).toEqual({
+			cas: 'verdict',
+			status: 'ok',
+			error: null,
+			checked_at: '2026-11-02T10:00:00Z',
+			folder_names: ['INBOX', 'Junk Mail'],
+		})
+		const mal = { ...corps, folder_names: ['INBOX', 3] }
+		expect(await lireRelais(repondre(200, mal))).toEqual({ cas: 'verdict', status: 'ok', error: null, checked_at: '2026-11-02T10:00:00Z' })
+		const nul = { ...corps, folder_names: null }
+		expect(await lireRelais(repondre(200, nul))).toEqual({ cas: 'verdict', status: 'ok', error: null, checked_at: '2026-11-02T10:00:00Z' })
+	})
+
 	it('rend le verdict', async () => {
 		const corps = { account_id: ID, status: 'ok', error: null, folders: 3, checked_at: '2026-11-02T10:00:00Z' }
 		expect(await lireRelais(repondre(200, corps))).toEqual({ cas: 'verdict', status: 'ok', error: null, checked_at: '2026-11-02T10:00:00Z' })

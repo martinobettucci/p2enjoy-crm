@@ -13,9 +13,10 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-#### `CRM-136` — historique, dossiers relevés et quota d'envoi réglables à l'écran (décisions 875, 884 et 885) — tranche T1, la base
+#### `CRM-136` — historique, dossiers relevés et quota d'envoi réglables à l'écran (décisions 875, 884 et 885) — tranches T1 et T2
 
 - **Le quota journalier d'une identité redevient effaçable** : la fonction d'écriture des identités d'expédition accepte un drapeau qui écrit le quota tel quel, « aucun plafond » compris (migration 178). Sans le drapeau, le quota est conservé comme avant ; l'écran qui l'emploiera arrive avec la tranche des écrans.
+- **Le test de connexion d'une boîte rend la liste de ses dossiers** (le service de messagerie et la fonction qui le relaie), sans les dossiers qu'on ne peut pas ouvrir ni ceux que le CRM crée lui-même : l'écran qui proposera de choisir les dossiers relevés arrive avec la tranche des écrans.
 
 #### `CRM-146` T2 — le prévisionnel et le réel d'une organisation, à l'écran
 

@@ -1,3 +1,5 @@
+# @spec CRM-136 (docs/BACKLOG.md) — tranche T2 : la sonde rend aussi les dossiers SÉLECTIONNABLES de la boîte (`folder_names`),
+#       sans `\Noselect` ni la racine `CRM` du produit, pour que l'écran propose de les relever (docs/SPEC-mail-subsystem.md §25.3)
 # @spec CRM-052 (docs/BACKLOG.md) — test de connexion réel d'un compte entrant
 # @spec docs/SPEC-mail-subsystem.md §13.5 (le test de connexion), §13.6 (ce que le développement
 #       peut prouver), §13.7 (le message d'erreur est un CODE), §10 arbitrage n° 1 (IMAPClient,
@@ -60,6 +62,9 @@ class ProbeResult:
     #: Nombre de dossiers rendus par `LIST`, quand la connexion aboutit. Il n'est pas décoratif :
     #: une session qui s'ouvre puis ne sait rien lister n'est pas une session utilisable.
     folders: int = 0
+    #: `CRM-136` (§25.3) : les noms des dossiers SÉLECTIONNABLES, dans l'ordre du serveur — ceux que l'écran propose de
+    #: relever. Ce sont des données de la boîte : jamais journalisés.
+    folder_names: tuple[str, ...] = ()
 
 
 def _translate(exception: BaseException) -> str:
@@ -96,6 +101,31 @@ def traduire_panne(exception: BaseException) -> str:
     """
 
     return _translate(exception)
+
+
+#: La racine des dossiers que le CRM crée lui-même (§4.5, `CRM/Affaires/…`) : leurs messages sont des COPIES faites par le
+#: produit, et les relever ne créerait que des occurrences en double.
+RACINE_DU_PRODUIT = "CRM"
+
+
+def _texte(valeur: object) -> str:
+    return valeur.decode("utf-8", "replace") if isinstance(valeur, bytes) else str(valeur)
+
+
+def dossiers_selectionnables(liste: list[tuple[object, object, object]]) -> tuple[str, ...]:
+    """Les noms que `LIST` a rendus, sans les dossiers `\\Noselect` (qu'on ne peut pas ouvrir) ni la racine du produit et ses
+    descendants (§25.3). L'ordre est celui du serveur."""
+
+    noms: list[str] = []
+    for drapeaux, delimiteur, nom in liste:
+        if any(_texte(drapeau).lower() == "\\noselect" for drapeau in (drapeaux or ())):
+            continue
+        texte = _texte(nom)
+        separateur = _texte(delimiteur) if delimiteur else ""
+        if texte == RACINE_DU_PRODUIT or (separateur and texte.startswith(RACINE_DU_PRODUIT + separateur)):
+            continue
+        noms.append(texte)
+    return tuple(noms)
 
 
 def probe_inbound_account(
@@ -139,7 +169,7 @@ def probe_inbound_account(
             client.starttls(ssl.create_default_context())
         client.login(username, password)
         folders = client.list_folders()
-        return ProbeResult(ok=True, folders=len(folders))
+        return ProbeResult(ok=True, folders=len(folders), folder_names=dossiers_selectionnables(folders))
     except (IMAPClientError, OSError, ssl.SSLError) as exception:
         return ProbeResult(ok=False, error=_translate(exception))
     finally:

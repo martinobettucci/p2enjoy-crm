@@ -1,3 +1,5 @@
+# @spec CRM-136 (docs/BACKLOG.md) — tranche T2 : la réponse du test d'une boîte entrante porte `folder_names`
+#       (docs/SPEC-mail-subsystem.md §25.3)
 # @spec CRM-069 (docs/BACKLOG.md) — tranche T6 : la relève rend les courriels automatiques écartés (`messages_skipped`,
 #       docs/SPEC-etiquettes-digest.md §5.3 bis)
 # @spec CRM-069 (docs/BACKLOG.md) — tranche T4 : le digest sans affaire — aucun `Reply-To`, le jeton `{site}` remplacé par `SITE_URL`
@@ -80,6 +82,8 @@ class ConnectionTestResponse(StrictModel):
     error: str | None
     folders: int
     checked_at: str
+    #: `CRM-136` (§25.3) : les dossiers sélectionnables d'une boîte ENTRANTE ; absents (`null`) pour une identité sortante.
+    folder_names: list[str] | None = None
 
 
 class EnvoiResponse(StrictModel):
@@ -349,6 +353,7 @@ def create_app(
             error=verdict.error,
             folders=verdict.folders,
             checked_at=str(horodatage),
+            folder_names=list(verdict.folder_names),
         )
 
     # =========================================================================================

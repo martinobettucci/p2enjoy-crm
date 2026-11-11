@@ -951,7 +951,7 @@ dépôt ; `select pg_get_function_identity_arguments('public.organization_revenu
 `p_organization_id uuid`. **Retour arrière** : `drop function public.organization_revenue_totals(uuid);`. Aucune donnée
 n'est touchée.
 
-### 2.41 `CRM-136` T1, décisions 875, 884 et 885 — le quota d'une identité effaçable (À LIVRER : migration 178 ; **hors du lot annoncé**)
+### 2.41 `CRM-136` T1 et T2, décisions 875, 884 et 885 — le quota d'une identité effaçable, la liste des dossiers d'une boîte (À LIVRER : migration 178, image `mail-sync`, service `functions` ; **hors du lot annoncé**)
 
 `docs/SPEC-mail-subsystem.md` §25.6 ; `docs/SCHEMA.md` « Migration `0178` ». **La migration fonctionne seule** : elle recrée
 `upsert_mail_outbound_identity` avec un paramètre de plus, faux par défaut, et la webapp actuelle, qui ne l'envoie pas,
@@ -962,6 +962,13 @@ verrou notable. Aucune variable, aucun secret.
 |---|---|---|---|
 | 1 | Appliquer la migration 178 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate`, instantané de VM pris |
 | 2 | Constater qu'une identité s'enregistre toujours | responsable, Réglages ▸ Identités d'expédition | modifier le libellé d'une identité et enregistrer : accepté, le quota inchangé |
+| 3 | Reconstruire `mail-sync` (T2) | session de livraison | `up -d --build --no-deps --wait mail-sync`, par `compose_prod` (§4) : le test d'une boîte rend `folder_names` |
+| 4 | Recréer `functions` (T2) | session de livraison | `up -d --force-recreate --no-deps --wait functions` (§4) : `mail-connection-test` relaie `folder_names` pour une boîte entrante |
+| 5 | Constater le test d'une boîte | responsable, Réglages ▸ Comptes de messagerie entrante | « Tester la connexion » : « Connexion réussie. », comme avant — aucun écran ne montre encore les dossiers (T3) |
+
+*T2 est rétrocompatible dans les deux sens* : une fonction edge à jour devant un `mail-sync` d'avant rend le verdict sans
+dossiers ; un `mail-sync` à jour devant une fonction d'avant voit le champ ignoré. Aucun ordre n'est donc imposé entre les
+gestes 3 et 4, ni avec la migration.
 
 **Vérification après la fenêtre**, en lecture seule : le registre gagne une ligne, l'empreinte de la 178 est égale au
 dépôt ; `select pg_get_function_identity_arguments('public.upsert_mail_outbound_identity'::regproc)` finit par

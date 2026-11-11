@@ -1,3 +1,5 @@
+// @spec CRM-136 (docs/BACKLOG.md) — tranche T2 : `folder_names` lu dans la réponse du service, s'il a sa forme
+//       (docs/SPEC-mail-subsystem.md §25.3)
 // @spec CRM-127 (docs/BACKLOG.md) — tranche T3 : les dépendances réelles de la fonction `mail-connection-test`
 // @spec docs/SPEC-mail-subsystem.md §23.3 (`authorize_mail_connection_test`, appelée par PostgREST avec le jeton de
 //       l'appelant), §23.4 (relais vers `MAIL_SYNC_URL` avec `MAIL_SYNC_INTERNAL_TOKEN`, borné à 40 s) ;
@@ -47,11 +49,17 @@ export async function lireRelais(reponse: Response): Promise<Relais> {
 	try {
 		const corps = (await reponse.json()) as Record<string, unknown>
 		if (typeof corps.status !== 'string' || typeof corps.checked_at !== 'string') return { cas: 'indisponible' }
+		// `CRM-136` (§25.3) : la liste n'est retenue que si elle a la forme attendue ; un corps qui ne la porte pas — une
+		// identité sortante, ou un service d'avant la tranche — reste un verdict lisible.
+		const noms = corps.folder_names
+		const dossiers =
+			Array.isArray(noms) && noms.every((nom) => typeof nom === 'string') ? { folder_names: noms as string[] } : {}
 		return {
 			cas: 'verdict',
 			status: corps.status,
 			error: typeof corps.error === 'string' ? corps.error : null,
 			checked_at: corps.checked_at,
+			...dossiers,
 		}
 	} catch {
 		return { cas: 'indisponible' }

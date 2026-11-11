@@ -1,3 +1,4 @@
+# @verifies CRM-136 (docs/BACKLOG.md) — tranche T2 : `folder_names` dans la réponse du test d'une boîte (§25.3)
 # @verifies CRM-051 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §12.3 à §12.6 — parcours API
 # nominal, autorisations, environnement et bornes ; la portée couvre tous les cas de ce fichier.
 
@@ -304,6 +305,24 @@ def test_un_test_de_connexion_reussi_ecrit_ok_et_rend_le_compte_de_dossiers(
     # nombre de dossiers est ce qui distingue les deux.
     assert corps["folders"] == 4
     assert faux.ecritures == [(COMPTE, "ok", None)]
+
+
+def test_le_test_d_une_boite_rend_ses_dossiers_selectionnables(
+    settings_factory, monkeypatch  # type: ignore[no-untyped-def]
+) -> None:
+    """`CRM-136` (§25.3) : la réponse porte `folder_names`, dans l'ordre de la sonde ; un échec n'en porte aucun."""
+
+    faux = FauxPostgrest(_identifiants())
+    _brancher(monkeypatch, faux, ProbeResult(ok=True, folders=3, folder_names=("INBOX", "Junk Mail")))
+    with TestClient(create_app(settings_factory())) as client:
+        reponse = client.post(f"/internal/v1/inbound-accounts/{COMPTE}/test", headers=AUTHORIZATION)
+    assert reponse.status_code == 200
+    assert reponse.json()["folder_names"] == ["INBOX", "Junk Mail"]
+
+    _brancher(monkeypatch, FauxPostgrest(_identifiants()), ProbeResult(ok=False, error="auth_failed"))
+    with TestClient(create_app(settings_factory())) as client:
+        reponse = client.post(f"/internal/v1/inbound-accounts/{COMPTE}/test", headers=AUTHORIZATION)
+    assert reponse.json()["folder_names"] == []
 
 
 def test_un_echec_ecrit_le_CODE_et_jamais_la_phrase_du_serveur(

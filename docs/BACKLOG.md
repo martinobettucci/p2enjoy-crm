@@ -19003,8 +19003,11 @@ Ce n'est pas une campagne complète. **Reste** : la livraison de la migration 17
 
 *État (2026-11-10, session c2)* : spécifiée et arbitrée (décisions 884 et 885), quatre tranches (`docs/SPEC-mail-subsystem.md`
 §25.11). **T1 implémentée et vérifiée en développement** — migration `0178` (`p_daily_quota_set`), pgTAP `0167` 16
-assertions, suite complète 155 fichiers, 5221 assertions ; `docs/SCHEMA.md`, contrat §2.41. Restent T2 (la liste des
-dossiers), T3 (les écrans), T4 (le seed).
+assertions, suite complète 155 fichiers, 5221 assertions ; `docs/SCHEMA.md`, contrat §2.41. **T2 implémentée et vérifiée en
+développement** — `folder_names` dans la sonde de `mail-sync` (sans `\Noselect` ni la racine `CRM`), relayé par
+`mail-connection-test` pour une boîte entrante seulement ; pytest 334, Vitest de la fonction 42, `e2e/api/tester-connexion`
+7/7 contre le vrai Stalwart ; contrat §2.41. Restent T3 (les écrans, lecture ciblée du design system, décision 914) et T4 (le
+seed).
 
 **Origine** : question du responsable sur l'historique non relevé en production ; arbitrée le 2026-11-10 (décision 875).
 **Comportement attendu** :

@@ -1,3 +1,5 @@
+// @verifies CRM-136 (docs/BACKLOG.md) — tranche T2 : `folder_names` relayé pour une boîte entrante, jamais pour une identité
+//           sortante (docs/SPEC-mail-subsystem.md §25.3, §25.9 ligne « Deno »)
 // @verifies CRM-127 (docs/BACKLOG.md) — tranche T3 : la fonction edge `mail-connection-test`
 // @verifies docs/SPEC-mail-subsystem.md §23.4 (chaque code rendu ; la base décide avant tout relais ; le journal ne
 //           porte ni jeton ni identifiant de connexion), §23.3 (les refus de la base) ;
@@ -27,6 +29,29 @@ const appel = (corps: unknown = { target: 'inbound', id: ID }, options: { method
 		headers: options.jeton === null ? {} : { authorization: `Bearer ${options.jeton ?? 'jeton-de-camille'}` },
 		body: (options.methode ?? 'POST') === 'POST' ? (typeof corps === 'string' ? corps : JSON.stringify(corps)) : undefined,
 	})
+
+describe('`CRM-136` — les dossiers relayés (§25.3)', () => {
+	const verdict: Relais = { cas: 'verdict', status: 'ok', error: null, checked_at: '2026-11-02T10:00:00Z', folder_names: ['INBOX', 'Archives/2025'] }
+
+	it('une boîte entrante reçoit ses dossiers', async () => {
+		const { deps } = dependances('ok', verdict)
+		const reponse = await traiterTestConnexion(appel({ target: 'inbound', id: ID }), deps)
+		expect(reponse.status).toBe(200)
+		expect(await reponse.json()).toEqual({ status: 'ok', error: null, checked_at: '2026-11-02T10:00:00Z', folder_names: ['INBOX', 'Archives/2025'] })
+	})
+
+	it('une identité sortante n’en reçoit jamais, même si le service en rendait', async () => {
+		const { deps } = dependances('ok', verdict)
+		const reponse = await traiterTestConnexion(appel({ target: 'outbound', id: ID }), deps)
+		expect(await reponse.json()).toEqual({ status: 'ok', error: null, checked_at: '2026-11-02T10:00:00Z' })
+	})
+
+	it('un verdict sans dossiers reste le verdict d’avant', async () => {
+		const { deps } = dependances()
+		const reponse = await traiterTestConnexion(appel({ target: 'inbound', id: ID }), deps)
+		expect(await reponse.json()).toEqual({ status: 'ok', error: null, checked_at: '2026-11-02T10:00:00Z' })
+	})
+})
 
 describe('mail-connection-test — la forme de la requête (§23.4, point 1 et 2)', () => {
 	it('refuse une autre méthode que POST par 405', async () => {

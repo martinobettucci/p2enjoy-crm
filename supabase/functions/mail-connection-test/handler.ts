@@ -1,3 +1,5 @@
+// @spec CRM-136 (docs/BACKLOG.md) — tranche T2 : le relais rend `folder_names` pour une boîte entrante, rien de plus pour une
+//       identité sortante (docs/SPEC-mail-subsystem.md §25.3)
 // @spec CRM-127 (docs/BACKLOG.md) — tranche T3 : la fonction edge `mail-connection-test`
 // @spec docs/SPEC-mail-subsystem.md §23.4 (forme, session, droit décidé par la base avec le jeton de l'appelant, relais
 //       vers `mail-sync`, codes rendus, journal sans jeton ni hôte), §23.3 (les refus de la base) ;
@@ -17,7 +19,14 @@ export type Autorisation = 'ok' | 'not_authenticated' | 'invalid_target' | 'not_
 
 /** Ce que `mail-sync` répond à la route de test (§13.5, §14.4), ramené à un cas. */
 export type Relais =
-	| { readonly cas: 'verdict'; readonly status: string; readonly error: string | null; readonly checked_at: string }
+	| {
+			readonly cas: 'verdict'
+			readonly status: string
+			readonly error: string | null
+			readonly checked_at: string
+			/** `CRM-136` (§25.3) : les dossiers sélectionnables d'une boîte entrante, quand le service les rend. */
+			readonly folder_names?: readonly string[]
+	  }
 	| { readonly cas: 'not_found' }
 	| { readonly cas: 'secret_missing' }
 	| { readonly cas: 'indisponible' }
@@ -88,7 +97,14 @@ export async function traiterTestConnexion(requete: Request, dependances: Depend
 	const relais = await dependances.relayer(demande.cible, demande.id)
 	switch (relais.cas) {
 		case 'verdict':
-			return rendre(200, { status: relais.status, error: relais.error, checked_at: relais.checked_at })
+			// `CRM-136` (§25.3) : les dossiers d'une boîte ENTRANTE sont relayés, sous le même droit ; la réponse d'une
+			// identité sortante est inchangée.
+			return rendre(200, {
+				status: relais.status,
+				error: relais.error,
+				checked_at: relais.checked_at,
+				...(demande.cible === 'inbound' && relais.folder_names !== undefined ? { folder_names: relais.folder_names } : {}),
+			})
 		case 'not_found':
 			return rendre(404, { error: 'not_found' })
 		case 'secret_missing':
