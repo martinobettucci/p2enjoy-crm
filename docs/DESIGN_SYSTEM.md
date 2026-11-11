@@ -8199,3 +8199,51 @@ liste plate dans le deuxième, le détail dans le troisième.
   ligne, cibles conservées. `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
 - **Aucune couleur, aucun jeton nouveau ; trois icônes Lucide nouvelles, `Mails`, `MailWarning` et `Ban`**, chacune pour un
   seul objet (§9) ; `Send` et `Redo2` sont réemployées pour le même objet et le même geste.
+
+### 5.99 L'historique et les dossiers relevés d'une boîte, le quota d'une identité — `CRM-136` T3
+
+*Écrit le 2026-11-11, avant le code. Lecture ciblée du document, décidée par le responsable (décision 914) : §1 à §4, §6 à
+§12, §5.14, §5.34, §5.35, §5.93, §5.5, §5.7 à §5.7 ter, §5.8, §5.13, §5.59, et ce qu'elles citent.* Ce que les écrans lisent,
+envoient et refusent est spécifié par `docs/SPEC-mail-subsystem.md` §25.3 à §25.6 ; ces règles ne disent que de quoi ils ont
+l'air. **Tout ce que les §5.34, §5.35 et §5.93 posent vaut sans être répété** — liste plate, formulaire dans le flux, une
+seule commande d'enregistrement, refus `role="alert"` sous les champs, commandes de ligne qui suivent la capacité d'écrire
+la ligne (§5.59).
+
+- **LE FORMULAIRE DE LA BOÎTE GAGNE UN CHAMP, « Historique relevé, en mois »**, après les champs de connexion et avant le
+  mot de passe : le gabarit du §5.7, un `input` numérique, **ni `min` ni `max`** — la borne de 0 à 120 vit en base, et c'est
+  elle qui refuse (§5.3 ter). Son texte d'aide dit ce que fait le nombre : « 0 relève le courrier reçu depuis le
+  branchement de la boîte, et rien d'avant. Un nombre de mois fait descendre l'historique par lots, du plus récent au plus
+  ancien, au fil des relèves. » Le refus de la borne est une phrase du dictionnaire : « L'historique doit être un nombre
+  entier de mois, de 0 à 120. »
+- **« Dossiers relevés » EST UNE COMMANDE DE LIGNE, AVANT « Tester la connexion »** : bouton discret compact (§5.5), icône
+  Lucide **`FolderTree`**, qui ne sert aucun autre objet (§9), nom accessible « Dossiers relevés de {boîte} ». Elle rejoint le
+  groupe des commandes de la ligne (§5.93), qui se replie d'un seul tenant, et reprend les propriétés de « Configurer » : le
+  droit est celui d'écrire la ligne (§5.59).
+- **LE PANNEAU S'OUVRE DANS LE FLUX, SOUS LA LIGNE** — la place du formulaire, jamais une modale (§5.13, §25.2 point 1). La
+  commande porte `aria-expanded` et reste montée. Un `fieldset` dont la légende est « Dossiers relevés de {boîte} ».
+  - **Pendant la lecture**, une région `role="status"` dit « Lecture des dossiers… » ; aucune case n'est rendue, et
+    « Enregistrer » est désactivé (un état de la saisie, jamais un droit, §5.50).
+  - **Au retour, une case par dossier**, la case native de 24 px sur une ligne de `--size-target`, son libellé pour cible
+    étendue (§5.7 bis), accent `--color-brand`. Le nom du dossier est une **donnée** (§10), rendu tel que le serveur le donne,
+    et la hiérarchie se lit par le **retrait** : un niveau par séparateur, 24 puis 48 px (§3), le dernier segment seul
+    écrit, le chemin entier dans le nom accessible. Une case est cochée si le dossier est déjà relevé.
+  - **Un dossier relevé que la boîte n'a plus** paraît en fin de liste, coché, suivi de la mention « absent de la boîte » en
+    13 px `--color-text-3` : on peut le décocher, rien ne le retire en silence.
+  - **Le test échoue ou est refusé** : aucune case ; la phrase du verdict ou du refus du §5.93 (même dictionnaire, même forme
+    `--color-danger-soft` / `--color-danger-on-soft`), puis « Réessayer », bouton secondaire compact. Les dossiers relevés
+    restent tels quels.
+  - **« Enregistrer »** (primaire) et **« Annuler »** (secondaire), sous les cases. Pendant l'envoi, « Enregistrement… »,
+    `aria-busy`. Aucune case cochée part telle quelle, et le refus de la base se lit sous les cases, `role="alert"` :
+    « Choisissez au moins un dossier. » Le succès referme le panneau, relit la liste sans squelette (§5.93) et l'annonce
+    dans la région vivante : « Dossiers relevés enregistrés ».
+  - **Le focus** entre sur la première case au retour de la lecture, et revient à la commande à la fermeture ; `Échap`
+    vaut « Annuler » (§5.13).
+  - **Après la création d'une boîte par le formulaire**, le panneau s'ouvre de lui-même sur la nouvelle ligne (§25.5) :
+    c'est la seule ouverture automatique, et elle est annoncée.
+- **LE FORMULAIRE DE L'IDENTITÉ GAGNE « Envois par jour, au plus »**, après la signature : un `input` numérique, ni `min`
+  ni `max`. **Vide veut dire « aucun plafond »**, et son texte d'aide dit les trois sens : « Vide : aucun plafond. 0 :
+  aucun envoi depuis cette adresse. Un nombre : le plafond d'envois par jour. » Le refus de la borne : « Le plafond doit
+  être un nombre entier, de 0 à 100 000. »
+- **SOUS `md`**, le panneau prend la largeur de la ligne et ses boutons passent à la ligne, cibles conservées ; `md` et
+  jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
+- **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `FolderTree`.**

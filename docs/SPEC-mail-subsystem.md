@@ -3455,7 +3455,8 @@ premier paragraphe libre à l'écriture de son écran.
   commande, à tout moment. Ce n'est pas un test silencieux : il est visible et annoncé. **Le §23.1 est révisé** : la
   création d'une boîte déclenche désormais un test, celui qui lit ses dossiers.
 
-Les règles visuelles s'écrivent au `docs/DESIGN_SYSTEM.md` §5.94 avec l'écran, après sa lecture intégrale (`CLAUDE.md` §4).
+Les règles visuelles sont au `docs/DESIGN_SYSTEM.md` §5.99, écrites le 2026-11-11 avant le code (lecture ciblée, décision
+914).
 
 ### 25.6 Le quota journalier d'une identité
 
