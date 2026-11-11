@@ -1767,6 +1767,8 @@ Les insertions passent par un `PUT ... eq.<id>` avec `Prefer: resolution=merge-d
 les rattachements par un `POST /rest/v1/card_contacts` avec la même en-tête sur la clé primaire
 `(card_id, contact_id)`. Le seed est **rejouable sans dédoublonnage** ; deux passages successifs
 laissent `organizations = 2`, `contacts = 3`, `card_contacts = 2`, `leo_cards = 1`, mesuré.
+*Révisé par `CRM-146` T3 (décision 51)* : `card_contacts = 2` se compte sur les rattachements des contacts de cette
+section ; le §41 en ajoute trois autres, à des contacts importés.
 
 ### 11.4 Preuves exigées
 
@@ -3047,6 +3049,19 @@ jamais par la clé de service :
 - **Convergence** : un rattachement existant n'est pas recréé (la clé `(card_id, contact_id)`).
 - **Le seed constate** ensuite, sous le jeton de l'administratrice, que `organization_revenue_totals()` rend deux devises
   pour Vertigo Conseil et rien pour Sogexia ; il s'arrête en nommant la cause sinon.
+
+*Précisé à l'écriture du code (`CRM-146` T3, 2026-11-11).*
+- **Section `8 tricies bis`, juste après l'import du carnet** (`8 tricies`, §33) : les trois contacts viennent du fichier
+  de salon, avec des identifiants tirés par l'import ; ils sont **lus par leur adresse**. Les rattachements s'écrivent sous
+  le jeton de l'administratrice, qui écrit les deux affaires, avec `Prefer: resolution=ignore-duplicates` ; aucun rôle.
+  Le constat vérifie aussi que l'affaire en euros de Vertigo Conseil compte pour une autre organisation (`shared_cards`
+  = 1).
+- **Le compte du §11.3 est révisé, non relâché** (décision 51) : il porte sur les rattachements **des contacts du §11**,
+  toujours deux ; ceux du §41 arrivent plus loin et seraient déjà là au rejeu.
+- **Les preuves qui figeaient « deux rattachements » sont révisées de même** : les cinq cas « le seed est rendu INTACT » de
+  `e2e/api/contacts.spec.ts` comparent les deux d'origine à l'identifiant près et les trois du §41 par le nom du contact ;
+  l'assertion 13 de `supabase/tests/0166_recettes_organisation.test.sql`, qui supposait qu'aucune organisation du seed
+  n'avait de recette, porte sur les quatre organisations de sa sonde.
 
 ## 42. L'outbox : un envoi en file après une panne, un échec, un annulé — `CRM-144` T5 (`docs/SPEC-mail-subsystem.md` §28.10)
 

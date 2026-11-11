@@ -47,6 +47,50 @@ const SEED_ONZE_CONTACTS = [
 	'Thomas Garnier',
 ]
 
+// RÉVISÉ par `CRM-146` T3 (décision 51) : le seed rattache trois contacts de son fichier de salon à deux affaires à
+// recettes (docs/SPEC-seed.md §41), sans rôle. Leurs identifiants ne sont pas stables (l'import les tire) : ils sont lus
+// par le nom du contact. Les deux rattachements d'origine (§11) restent comparés à l'identifiant près.
+// @verifies CRM-146 (docs/BACKLOG.md) — tranche T3 ; docs/SPEC-seed.md §41 (les trois rattachements du seed)
+const CARD_SOCLE_VERTUO = '5eed0000-0000-4000-8000-0000000000cd'
+const CARD_FORMATION_DATA_IA = '5eed0000-0000-4000-8000-0000000000c7'
+const RATTACHEMENTS_SEED_41 = [
+	{ card_id: CARD_SOCLE_VERTUO, contact: 'Marc Lefort', role: null },
+	{ card_id: CARD_FORMATION_DATA_IA, contact: 'Nadia Benali', role: null },
+	{ card_id: CARD_SOCLE_VERTUO, contact: 'Thomas Garnier', role: null },
+]
+
+/**
+ * Les rattachements présents, séparés en deux : ceux des contacts semés à identifiant stable (§11), triés par contact, et
+ * ceux du §41, triés par nom. Lus sous les en-têtes donnés — la clé de service, ou le jeton d'un profil qui lit tout.
+ */
+async function lireRattachementsDuSeed(
+	request: APIRequestContext,
+	enTetes: Record<string, string>,
+): Promise<{
+	origine: Array<{ card_id: string; contact_id: string; role: string | null }>
+	du41: Array<{ card_id: string; contact: string; role: string | null }>
+}> {
+	const reponse = await request.get(
+		'/rest/v1/card_contacts?select=card_id,contact_id,role,contacts(full_name)&order=contact_id',
+		{ headers: enTetes },
+	)
+	expect(reponse.status()).toBe(200)
+	const lignes = (await reponse.json()) as Array<{
+		card_id: string
+		contact_id: string
+		role: string | null
+		contacts: { full_name: string }
+	}>
+	const stable = (l: { contact_id: string }) => l.contact_id.startsWith('5eed0000-')
+	return {
+		origine: lignes.filter(stable).map(({ card_id, contact_id, role }) => ({ card_id, contact_id, role })),
+		du41: lignes
+			.filter((l) => !stable(l))
+			.map((l) => ({ card_id: l.card_id, contact: l.contacts.full_name, role: l.role }))
+			.sort((a, b) => a.contact.localeCompare(b.contact, 'fr')),
+	}
+}
+
 type Sonde = {
 	organizationsSupprimees: string[]
 	contactsSupprimes: string[]
@@ -918,7 +962,7 @@ test.describe('CRM-060 sous-tranche 4f — la fiche d’un contact (docs/SPEC-co
 		}
 	})
 
-	test('le SEED est rendu INTACT après 4f : onze contacts, deux rattachements', async ({
+	test('le SEED est rendu INTACT après 4f : onze contacts, deux rattachements d’origine et trois du §41', async ({
 		request,
 	}) => {
 		const contacts = (await (
@@ -929,13 +973,11 @@ test.describe('CRM-060 sous-tranche 4f — la fiche d’un contact (docs/SPEC-co
 		// Révisé par `CRM-072` T3 : le contact anonymisé du seed (docs/SPEC-seed.md §26). Puis par `CRM-071` T5 (décision 51) :
 		// les sept contacts que le seed importe (§33).
 		expect(contacts.map((c) => c.full_name)).toEqual(SEED_ONZE_CONTACTS)
-		const rattachements = (await (
-			await request.get('/rest/v1/card_contacts?select=contact_id,role', {
-				headers: enTetesService(),
-			})
-		).json()) as Array<{ role: string | null }>
-		expect(rattachements).toHaveLength(2)
-		expect(rattachements.map((r) => r.role).sort()).toEqual(['decideur', 'prescripteur'])
+		// Révisé par `CRM-146` T3 (décision 51) : les deux d'origine, et les trois du §41.
+		const { origine, du41 } = await lireRattachementsDuSeed(request, enTetesService())
+		expect(origine).toHaveLength(2)
+		expect(origine.map((r) => r.role).sort()).toEqual(['decideur', 'prescripteur'])
+		expect(du41).toEqual(RATTACHEMENTS_SEED_41)
 	})
 })
 
@@ -1509,14 +1551,12 @@ test.describe('CRM-060 4h — le rattachement d’une affaire depuis la fiche (�
 		}
 	})
 
-	test('le seed est rendu INTACT : deux rattachements, leurs valeurs d’origine', async ({
+	test('le seed est rendu INTACT : deux rattachements à leurs valeurs d’origine, et les trois du §41', async ({
 		request,
 	}) => {
-		const reponse = await request.get(
-			'/rest/v1/card_contacts?select=card_id,contact_id,role&order=contact_id',
-			{ headers: enTetesService() },
-		)
-		expect(await reponse.json()).toEqual([
+		// Révisé par `CRM-146` T3 (décision 51) : les trois rattachements du §41 aussi.
+		const { origine, du41 } = await lireRattachementsDuSeed(request, enTetesService())
+		expect(origine).toEqual([
 			{ card_id: CARD_ERP, contact_id: CONTACT_LEO, role: 'decideur' },
 			{
 				card_id: CARD_SEEDEE_4,
@@ -1524,6 +1564,7 @@ test.describe('CRM-060 4h — le rattachement d’une affaire depuis la fiche (�
 				role: 'prescripteur',
 			},
 		])
+		expect(du41).toEqual(RATTACHEMENTS_SEED_41)
 	})
 })
 
@@ -1750,14 +1791,13 @@ test.describe('CRM-060 4i — le détachement d’une affaire depuis la fiche (�
 	})
 
 	test('le seed est rendu INTACT après les mesures de détachement', async ({ request }) => {
-		const reponse = await request.get(
-			'/rest/v1/card_contacts?select=card_id,contact_id,role&order=contact_id',
-			{ headers: enTetesService() },
-		)
-		expect(await reponse.json()).toEqual([
+		// Révisé par `CRM-146` T3 (décision 51) : les trois rattachements du §41 aussi.
+		const { origine, du41 } = await lireRattachementsDuSeed(request, enTetesService())
+		expect(origine).toEqual([
 			{ card_id: CARD_ERP, contact_id: CONTACT_LEO, role: 'decideur' },
 			{ card_id: CARD_SEEDEE_4, contact_id: CONTACT_SOPHIE, role: 'prescripteur' },
 		])
+		expect(du41).toEqual(RATTACHEMENTS_SEED_41)
 	})
 })
 
@@ -2169,14 +2209,13 @@ test.describe('CRM-060 4j — la modification du rôle d’un rattachement (§19
 	})
 
 	test('le seed est rendu INTACT après les mesures de modification du rôle', async ({ request }) => {
-		const reponse = await request.get(
-			'/rest/v1/card_contacts?select=card_id,contact_id,role&order=contact_id',
-			{ headers: enTetesService() },
-		)
-		expect(await reponse.json()).toEqual([
+		// Révisé par `CRM-146` T3 (décision 51) : les trois rattachements du §41 aussi.
+		const { origine, du41 } = await lireRattachementsDuSeed(request, enTetesService())
+		expect(origine).toEqual([
 			{ card_id: CARD_ERP, contact_id: CONTACT_LEO, role: 'decideur' },
 			{ card_id: CARD_SEEDEE_4, contact_id: CONTACT_SOPHIE, role: 'prescripteur' },
 		])
+		expect(du41).toEqual(RATTACHEMENTS_SEED_41)
 	})
 })
 
@@ -2583,7 +2622,7 @@ test.describe('CRM-060 tranche 6 — la suppression d’un contact (§20.2)', ()
 		}
 	})
 
-	test('le seed est rendu INTACT : onze contacts, deux rattachements, sept organisations', async ({
+	test('le seed est rendu INTACT : onze contacts, deux rattachements d’origine et trois du §41, sept organisations', async ({
 		request,
 	}) => {
 		// GARDE DE CLÔTURE. Ces mesures créent et suppriment beaucoup ; une sonde oubliée ferait
@@ -2599,9 +2638,10 @@ test.describe('CRM-060 tranche 6 — la suppression d’un contact (§20.2)', ()
 			headers: enTetesAuthentifies(jeton),
 		})
 		expect((await organisations.json()) as unknown[]).toHaveLength(7)
-		const rattachements = await request.get('/rest/v1/card_contacts?select=card_id', {
-			headers: enTetesAuthentifies(jeton),
-		})
-		expect((await rattachements.json()) as unknown[]).toHaveLength(2)
+		// Révisé par `CRM-146` T3 (décision 51) : deux d'origine et trois du §41, sous le jeton de l'administratrice, qui lit
+		// les quatre affaires.
+		const { origine, du41 } = await lireRattachementsDuSeed(request, enTetesAuthentifies(jeton))
+		expect(origine).toHaveLength(2)
+		expect(du41).toEqual(RATTACHEMENTS_SEED_41)
 	})
 })

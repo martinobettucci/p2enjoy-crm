@@ -2103,7 +2103,10 @@ organizations_count=$(curl -s "$API/rest/v1/organizations?select=id&id=in.($orga
 # carnet que ce compte vérifie, et le rejeu le trouverait déjà là.
 contacts_count=$(curl -s "$API/rest/v1/contacts?select=id&id=neq.5eed0000-0000-4000-8000-0000000000a9&source=neq.import" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
-card_contacts_count=$(curl -s "$API/rest/v1/card_contacts?select=card_id" \
+# RÉVISÉ par `CRM-146` T3 (docs/SPEC-seed.md §41) : le §41 rattache trois contacts du fichier de salon à deux affaires,
+# plus loin ; au rejeu, ils seraient déjà là. Ce compte porte sur les rattachements SEMÉS ICI, par leurs contacts.
+contacts_rattaches=$(printf '%s\n' "${CARD_CONTACTS_SEED[@]}" | cut -d'|' -f2 | sort -u | paste -sd, -)
+card_contacts_count=$(curl -s "$API/rest/v1/card_contacts?select=card_id&contact_id=in.($contacts_rattaches)" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 [ "$organizations_count" = "${#ORGANIZATIONS_SEED[@]}" ] || die "organizations :
         $organizations_count lignes au lieu de ${#ORGANIZATIONS_SEED[@]} — le rejeu a dupliqué."
@@ -5565,6 +5568,48 @@ else
 fi
 IMP_COMPTE=$(psql_seed -c "select count(*) from public.contacts where workspace_id = '$CK_ESPACE' and source = 'import'")
 info "Import du carnet : $IMP_COMPTE contacts de source « import », depuis fichiers/contacts-salon.csv — docs/SPEC-seed.md §33"
+
+# --- 8 tricies bis. Le prévisionnel et le réel d'une organisation — CRM-146 T3, docs/SPEC-seed.md §41 -------------------
+# @spec CRM-146 (docs/BACKLOG.md) — tranche T3 : trois rattachements contact–affaire, posés par la vraie route
+#       (`POST /rest/v1/card_contacts`) sous le jeton de l'administratrice, qui écrit les deux affaires, puis le constat
+#       par `organization_revenue_totals()` sous le même jeton (docs/SPEC-seed.md §41 ; docs/SPEC-recettes.md §12.7)
+#
+# APRÈS L'IMPORT DU CARNET (8 tricies) : les trois contacts viennent du fichier de salon, et leurs identifiants ne sont pas
+# stables ; ils sont lus par leur adresse. Convergent : la clé `(card_id, contact_id)` et `resolution=ignore-duplicates`
+# ne recréent jamais un rattachement présent.
+echo
+say "8 tricies bis. Le prévisionnel et le réel d'une organisation"
+JETON_ADMIN_ORG=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+[ -n "$JETON_ADMIN_ORG" ] || die "connexion de l'administratrice impossible : les rattachements du §41 s'écrivent sous son jeton."
+ORG_RATTACHEMENTS=(
+	"marc.lefort@vertigo-conseil.example|5eed0000-0000-4000-8000-0000000000cd"
+	"nadia.benali@vertigo-conseil.example|5eed0000-0000-4000-8000-0000000000c7"
+	"thomas.garnier@atelier-lumen.example|5eed0000-0000-4000-8000-0000000000cd"
+)
+for entree in "${ORG_RATTACHEMENTS[@]}"; do
+	IFS='|' read -r or_email or_card <<< "$entree"
+	or_contact=$(psql_seed -c "select id from public.contacts where workspace_id = '$CK_ESPACE' and lower(email) = '$or_email'")
+	[ -n "$or_contact" ] || die "contact $or_email absent : l'import du carnet (8 tricies, §33) le pose avant le §41."
+	code=$(api_jeton "$JETON_ADMIN_ORG" POST /rest/v1/card_contacts \
+		-H 'Prefer: resolution=ignore-duplicates,return=minimal' \
+		-d "$(jq -nc --arg ws "$CK_ESPACE" --arg ci "$or_card" --arg co "$or_contact" '{workspace_id: $ws, card_id: $ci, contact_id: $co}')")
+	attendu "$code" "rattachement de $or_email à …${or_card: -3} (§41)" 201 200 204
+done
+
+# LE CONSTAT, sous le jeton de l'administratrice, par la fonction que l'écran appelle : Vertigo Conseil en deux devises,
+# son affaire en euros partagée avec Atelier Lumen ; Sogexia sans rien.
+code=$(api_jeton "$JETON_ADMIN_ORG" POST /rest/v1/rpc/organization_revenue_totals -d '{}')
+attendu "$code" "lecture de organization_revenue_totals (§41)" 200
+ORG_VERTIGO=$(psql_seed -c "select id from public.organizations where workspace_id = '$CK_ESPACE' and domain = 'vertigo-conseil.example'")
+ORG_SOGEXIA=$(psql_seed -c "select id from public.organizations where workspace_id = '$CK_ESPACE' and domain = 'sogexia.example'")
+[ -n "$ORG_VERTIGO" ] && [ -n "$ORG_SOGEXIA" ] || die "Vertigo Conseil ou Sogexia absente du carnet (§33, §11)."
+ORG_DEVISES=$(jq -r --arg o "$ORG_VERTIGO" '[.[] | select(.organization_id == $o) | .currency] | join(",")' "$CORPS")
+[ "$ORG_DEVISES" = "CHF,EUR" ] || die "Vertigo Conseil doit montrer CHF et EUR (§41) — mesuré : « $ORG_DEVISES »."
+ORG_PARTAGEE=$(jq -r --arg o "$ORG_VERTIGO" '[.[] | select(.organization_id == $o and .currency == "EUR") | .shared_cards][0] // 0' "$CORPS")
+[ "$ORG_PARTAGEE" = "1" ] || die "« Socle analytique — Vertuo » doit compter aussi pour Atelier Lumen (§41) — mesuré : $ORG_PARTAGEE."
+ORG_SOGEXIA_N=$(jq -r --arg o "$ORG_SOGEXIA" '[.[] | select(.organization_id == $o)] | length' "$CORPS")
+[ "$ORG_SOGEXIA_N" = "0" ] || die "Sogexia ne doit rien montrer (§41) — mesuré : $ORG_SOGEXIA_N ligne(s)."
+info "Recettes par organisation : Vertigo Conseil en CHF et EUR, l'affaire en euros partagée avec Atelier Lumen, Sogexia vide — docs/SPEC-seed.md §41"
 
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base

@@ -1,6 +1,8 @@
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.2 : les images du chapitre 10, « Le carnet de contacts »
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitre 10 ; docs/SPEC-contacts.md (le carnet, la fiche, la
 //       suppression), docs/SPEC-rattachements.md (rattacher, détacher, le rôle), docs/SPEC-audit.md §7 (le RGPD)
+// @spec CRM-146 (docs/BACKLOG.md) — tranche T3 : l'image du bloc « Recettes avec cette organisation » (docs/manual.md §10.10 ;
+//       docs/SPEC-recettes.md §12.5 ; docs/SPEC-seed.md §41) ; l'onglet des organisations porte la colonne « Réel sur prévu »
 //
 // Les contacts et les organisations sont ceux du seed : Léo Marchand, Sogexia, le contact déjà anonymisé. Les gestes qui
 // ne se défont pas — supprimer, anonymiser — portent sur un contact posé par la clé de service et retiré ensuite ; la
@@ -249,6 +251,15 @@ test('les organisations : la liste, la fiche, la modification', async ({ page })
 		section: 'l-onglet-organisations',
 		nom: 'onglet-organisations',
 		cibles: [page.getByTestId('ouvrir-creation-organisation'), page.getByTestId('tableau-organisations')],
+	})
+	// `CRM-146` T3 : le bloc des recettes, sur l'organisation que le seed §41 dote de deux devises et d'une affaire partagée.
+	await page.getByTestId('ligne-organisation').filter({ hasText: 'Vertigo Conseil' }).getByRole('link', { name: 'Vertigo Conseil' }).click()
+	await expect(page.getByTestId('tableau-recettes-organisation')).toBeVisible()
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: 'la-fiche-d-une-organisation',
+		nom: 'recettes-organisation',
+		cibles: [page.getByTestId('recettes-organisation')],
 	})
 	await page.goto(`/contacts/organisations/${SOGEXIA}`)
 	await expect(page.getByTestId('caracteristiques-organisation')).toBeVisible()

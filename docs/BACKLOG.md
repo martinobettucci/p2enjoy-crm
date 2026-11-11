@@ -19417,7 +19417,16 @@ T4.
   **5/5** sous les jetons de l'administratrice et de la lectrice contre un oracle (rattachements posés par la vraie route
   puis retirés), rouge contre une fonction sans `distinct` ; build ; captures à 1440, 1024, 768 et 390 px observées, sans
   défilement horizontal de la page — les barres de la liste alignées en grille après la première capture (§5.97 révisé) ;
-- reste : T3 (seed §41, E2E souris et clavier, captures du manuel, manuel), T4 (connecteur), T5 (production).
+- **T3 faite le 2026-11-11, vérifiée en développement** : seed §41 (section `8 tricies bis`, trois rattachements par la
+  vraie route sous le jeton de l'administratrice, constat par la fonction ; rejeu convergent) ; E2E UI
+  `e2e/ui/recettes-organisation.spec.ts` **8/8** (liste et fiche à la souris et au clavier, l'affaire partagée, le vide,
+  la lectrice qui ne lit que le CHF, quatre paliers sans défilement horizontal de la page), avec les preuves voisines
+  (organisations, contacts, contacts-affaire, connecteur-organisations) **80/80** ; captures observées ; manuel §10.9 et
+  §10.10 avec l'image `recettes-organisation.jpg`, chapitre 10 du projet manuel **8/8**, `manuel:verifier` à jour.
+  Révisées, non relâchées (décision 51) : les cinq cas « seed INTACT » de `e2e/api/contacts.spec.ts` et l'assertion 13 de
+  pgTAP `0166` (portée sur la sonde ; rouge contre une mutation du seuil). Suite pgTAP complète **155 fichiers, 5 221
+  assertions** ; API voisines vertes ;
+- reste : T4 (connecteur), T5 (production).
 **DoD** : pgTAP de l'agrégat (droits : une affaire illisible ne compte pas ; plusieurs devises) ; unitaires ; API avec refus de
 droits ; E2E souris et clavier (fiche, liste) ; outil du connecteur et `verify-mcp.sh` ; seed (une organisation avec prévu et
 réel dans deux devises, une sans recette) ; captures aux quatre paliers ; manuel.

@@ -2777,7 +2777,7 @@ texte d'aide — décideur, prescripteur, contact technique — ne sont que des 
 
 ### 10.9 L'onglet « Organisations »
 
-![L'onglet des organisations : leur nom, leur domaine, leur site web et leur nombre de contacts](manuel/images/le-carnet-de-contacts/onglet-organisations.jpg)
+![L'onglet des organisations : leur nom, leur domaine, leur site web, leur nombre de contacts et le réel de leurs recettes sur le prévu](manuel/images/le-carnet-de-contacts/onglet-organisations.jpg)
 
 ![Le bouton Modifier de la fiche d'une organisation](manuel/images/le-carnet-de-contacts/modifier-organisation.jpg)
 
@@ -2792,6 +2792,17 @@ L'onglet **Organisations** liste toutes les organisations de l'espace de travail
 | Domaine | Son domaine, par exemple `sogexia.example`, lorsqu'il est renseigné |
 | Site web | L'adresse de son site, lorsqu'elle est renseignée. Ici ce n'est pas un lien : la fiche le porte |
 | Contacts | Le nombre de contacts du carnet rattachés à l'organisation |
+| Réel sur prévu | Pour chaque devise, une barre et deux montants : ce qui a été réellement encaissé sur ce qui était prévu, par exemple « 163 000,00 sur 210 000,00 EUR ». « Rien de saisi sur 72 000,00 » quand aucun montant réel n'est encore saisi |
+
+**Les recettes d'une organisation** sont celles de ses affaires : une affaire compte pour une organisation dès qu'un
+**contact rattaché à l'affaire** appartient à cette organisation. Elle compte une seule fois, même si plusieurs de ses
+contacts en font partie ; si ses contacts viennent de deux organisations, elle compte pour les deux. Une affaire à la
+corbeille ne compte pas ; une affaire archivée, si. Les devises ne s'additionnent jamais : chacune a sa ligne. La barre
+ne change pas de couleur quand le réel dépasse le prévu ou reste bas — les montants disent tout. Une organisation sans
+recette laisse la cellule **vide**, sans barre.
+
+**Vous ne voyez que les affaires que vous pouvez lire** : deux personnes aux droits différents peuvent lire des montants
+différents pour la même organisation. Ce n'est pas une erreur.
 
 Comme partout dans le carnet, une valeur absente laisse la cellule **vide**. Sur un écran étroit, le
 tableau défile de côté dans son cadre ; la page, elle, ne défile jamais de côté. Lorsque l'espace ne
@@ -2808,18 +2819,27 @@ lecture seule, « Nouvelle organisation » et « Modifier » restent visibles ma
 
 ![La fiche d'une organisation : ses caractéristiques, puis ses contacts](manuel/images/le-carnet-de-contacts/fiche-organisation.jpg)
 
+![Le bloc « Recettes avec cette organisation » : le prévu, le réel et la part réalisée par devise, puis ce qui les fait compter](manuel/images/le-carnet-de-contacts/recettes-organisation.jpg)
+
 ![L'adresse d'une organisation qui n'existe pas](manuel/images/le-carnet-de-contacts/organisation-introuvable.jpg)
 
 Cliquer sur le nom d'une organisation, dans la colonne **Organisation** du carnet ou dans l'onglet
 **Organisations**, ouvre sa **fiche**.
 
-La fiche porte le **nom de l'organisation en titre**, puis deux blocs :
+La fiche porte le **nom de l'organisation en titre**, puis trois blocs :
 
 - **ce qui la caractérise** — son **domaine** (par exemple `sogexia.example`, celui qui sert à
   reconnaître ses adresses email) et son **site web**. Le site est un lien : il s'ouvre dans un
   **nouvel onglet**, et vous quittez alors l'application. Le domaine, lui, n'est pas un lien : ce
   n'est pas une adresse à visiter. Comme dans le carnet, une valeur absente laisse la place **vide**
   plutôt qu'un tiret ;
+- **les recettes avec cette organisation** — un tableau, une ligne par devise : le **prévu**, le **réel** et la part
+  réalisée (une barre et un pourcentage, qui peut dépasser 100 %). Sous le tableau, la fiche dit combien d'affaires
+  comptent, combien comptent aussi pour une autre organisation, combien de lignes de recette n'ont pas encore de réel
+  saisi, et rappelle que ces montants portent sur **les affaires que vous lisez, hors corbeille**. Les affaires comptent
+  comme dans l'onglet (voir la [section 10.9](#l-onglet-organisations)). Sans recette, la fiche le dit : « Aucune recette
+  prévue avec cette organisation. » Les recettes se saisissent sur la fiche d'une affaire, jamais ici. Si la lecture des
+  recettes échoue, seul ce bloc le dit, avec un bouton « Réessayer » ; le reste de la fiche reste affiché ;
 - **ses contacts** — un tableau à quatre colonnes : nom, fonction, email et téléphone. La colonne
   « Organisation » du carnet n'y figure pas, puisqu'elle répéterait le titre de la page. Lorsque
   l'organisation n'a **aucun contact rattaché**, la fiche le dit explicitement au lieu d'afficher un
@@ -2831,8 +2851,8 @@ carnet. C'est délibéré — distinguer ces cas révélerait à quelqu'un sans 
 existe.
 
 **Ce que la fiche ne fait pas.** Elle ne **supprime** pas une organisation — c'est délibéré : ses
-contacts perdraient leur organisation sans laisser de trace —, et elle ne montre pas les affaires de
-l'organisation. Le nom d'un contact, lui, est un lien vers sa fiche. Pour **modifier**
+contacts perdraient leur organisation sans laisser de trace —, et elle ne liste pas les affaires de
+l'organisation : le bloc des recettes en donne les sommes, pas le détail. Le nom d'un contact, lui, est un lien vers sa fiche. Pour **modifier**
 l'organisation, voir la [section 10.12](#modifier-une-organisation).
 
 ### 10.11 Créer une organisation

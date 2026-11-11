@@ -142,7 +142,12 @@ select results_eq(
 	    from public.organization_revenue_totals('01660000-0000-4000-8000-0000000000b1')$$,
 	$$values (2200.00::numeric, 400.00::numeric, 2, 1, 3)$$,
 	'12 — Beta sous Driss : D absente, E archivée présente');
-select ok((select bool_and(estimated_total < 9999) from public.organization_revenue_totals()),
+-- RÉVISÉ par `CRM-146` T3 : la mesure portait sur TOUTES les organisations, et supposait que le seed n'en dotait aucune de
+-- recettes ; le §41 de docs/SPEC-seed.md en dote Vertigo Conseil (210 000 EUR). Elle porte sur les quatre de la sonde, et
+-- reste décisive : si C comptait, Alpha dépasserait 9 999.
+select ok((select bool_and(estimated_total < 9999) from public.organization_revenue_totals()
+            where organization_id in ('01660000-0000-4000-8000-0000000000a1', '01660000-0000-4000-8000-0000000000b1',
+                                      '01660000-0000-4000-8000-0000000000c1', '01660000-0000-4000-8000-0000000000d1')),
 	'13 — sous Driss non plus, l''affaire à la corbeille ne compte nulle part');
 
 -- 14. Ce que la fonction rend est un sous-ensemble de ce que Driss lit : l'oracle par les tables, sous son jeton.

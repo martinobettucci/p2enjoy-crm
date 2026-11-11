@@ -14,7 +14,8 @@
 // interne n'est appelée, et l'écriture passe par le formulaire de l'écran.
 //
 // LE SEED EST RENDU INTACT, ET C'EST UNE CONTRAINTE DURE (§12.9) : `apply-seed.sh` compare
-// `card_contacts` à la taille de son propre tableau — DEUX —, et une garde exige en outre que Léo
+// `card_contacts` à la taille de son propre tableau — DEUX, compté sur ses propres contacts depuis `CRM-146` T3, le §41
+// de docs/SPEC-seed.md en ajoutant trois autres —, et une garde exige en outre que Léo
 // Marchand soit rattaché à EXACTEMENT UNE card active, état que la règle 3 du classement lit
 // (`CRM-055`). Le scénario d'écriture rattache donc Élise Fabre — que le seed ne rattache nulle
 // part — puis la DÉTACHE par le geste de l'écran. Le détachement n'est pas ici une commodité de

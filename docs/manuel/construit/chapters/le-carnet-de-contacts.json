@@ -3220,9 +3220,9 @@
 		{
 			"type": "image",
 			"src": "le-carnet-de-contacts/onglet-organisations.jpg",
-			"alt": "L'onglet des organisations : leur nom, leur domaine, leur site web et leur nombre de contacts",
+			"alt": "L'onglet des organisations : leur nom, leur domaine, leur site web, leur nombre de contacts et le réel de leurs recettes sur le prévu",
 			"width": 1192,
-			"height": 410
+			"height": 429
 		},
 		{
 			"type": "image",
@@ -3370,7 +3370,83 @@
 							"text": "Le nombre de contacts du carnet rattachés à l'organisation"
 						}
 					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Réel sur prévu"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Pour chaque devise, une barre et deux montants : ce qui a été réellement encaissé sur ce qui était prévu, par exemple « 163 000,00 sur 210 000,00 EUR ». « Rien de saisi sur 72 000,00 » quand aucun montant réel n'est encore saisi"
+						}
+					]
 				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les recettes d'une organisation"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " sont celles de ses affaires : une affaire compte pour une organisation dès qu'un\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "contact rattaché à l'affaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " appartient à cette organisation. Elle compte une seule fois, même si plusieurs de ses\ncontacts en font partie ; si ses contacts viennent de deux organisations, elle compte pour les deux. Une affaire à la\ncorbeille ne compte pas ; une affaire archivée, si. Les devises ne s'additionnent jamais : chacune a sa ligne. La barre\nne change pas de couleur quand le réel dépasse le prévu ou reste bas — les montants disent tout. Une organisation sans\nrecette laisse la cellule "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "vide"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sans barre."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Vous ne voyez que les affaires que vous pouvez lire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : deux personnes aux droits différents peuvent lire des montants\ndifférents pour la même organisation. Ce n'est pas une erreur."
+				}
 			]
 		},
 		{
@@ -3492,7 +3568,14 @@
 			"src": "le-carnet-de-contacts/fiche-organisation.jpg",
 			"alt": "La fiche d'une organisation : ses caractéristiques, puis ses contacts",
 			"width": 1192,
-			"height": 373
+			"height": 631
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/recettes-organisation.jpg",
+			"alt": "Le bloc « Recettes avec cette organisation » : le prévu, le réel et la part réalisée par devise, puis ce qui les fait compter",
+			"width": 1192,
+			"height": 268
 		},
 		{
 			"type": "image",
@@ -3567,7 +3650,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", puis deux blocs :"
+					"text": ", puis trois blocs :"
 				}
 			]
 		},
@@ -3665,6 +3748,82 @@
 								"content": [
 									{
 										"type": "text",
+										"text": "les recettes avec cette organisation"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — un tableau, une ligne par devise : le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "prévu"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "réel"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et la part\nréalisée (une barre et un pourcentage, qui peut dépasser 100 %). Sous le tableau, la fiche dit combien d'affaires\ncomptent, combien comptent aussi pour une autre organisation, combien de lignes de recette n'ont pas encore de réel\nsaisi, et rappelle que ces montants portent sur "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "les affaires que vous lisez, hors corbeille"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Les affaires comptent\ncomme dans l'onglet (voir la "
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "le-carnet-de-contacts",
+									"anchor": "l-onglet-organisations"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 10.9"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "). Sans recette, la fiche le dit : « Aucune recette\nprévue avec cette organisation. » Les recettes se saisissent sur la fiche d'une affaire, jamais ici. Si la lecture des\nrecettes échoue, seul ce bloc le dit, avec un bouton « Réessayer » ; le reste de la fiche reste affiché ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
 										"text": "ses contacts"
 									}
 								]
@@ -3736,7 +3895,7 @@
 				},
 				{
 					"type": "text",
-					"text": " pas une organisation — c'est délibéré : ses\ncontacts perdraient leur organisation sans laisser de trace —, et elle ne montre pas les affaires de\nl'organisation. Le nom d'un contact, lui, est un lien vers sa fiche. Pour "
+					"text": " pas une organisation — c'est délibéré : ses\ncontacts perdraient leur organisation sans laisser de trace —, et elle ne liste pas les affaires de\nl'organisation : le bloc des recettes en donne les sommes, pas le détail. Le nom d'un contact, lui, est un lien vers sa fiche. Pour "
 				},
 				{
 					"type": "strong",
