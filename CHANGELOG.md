@@ -13,10 +13,15 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-141` T5 — les pastilles dans le connecteur MCP
+
+- **Un assistant connecté lit et pose les pastilles d'un mail** : il lit les pastilles de l'espace et le texte qui décrit chacune, voit celles qu'un mail porte et si l'IA du CRM l'a déjà évalué, puis en pose ou en retire, comme une personne dans l'inbox. Son choix compte comme un choix fait à la main : l'IA du CRM ne le défait jamais. Il n'utilise pas l'IA du CRM : il juge lui-même. Réservé à qui édite l'espace, dans la famille « Messagerie » du connecteur.
+- Déploiement : l'image `mcp`, après la migration 183 (`docs/PROD_MIGRATIONS.md` §2.48).
+
 #### `CRM-141` T4 — les pastilles dans l'inbox
 
 - **Les pastilles se voient et se corrigent dans l'inbox** : chaque fil montre jusqu'à trois pastilles sous son objet ; un filtre « Pastille » en tête de la liste ne garde que les messages qui la portent. Le message ouvert dit ses pastilles, qui les a posées (l'IA ou une personne) et si l'évaluation est en attente ou a échoué. « Réévaluer les pastilles » relance l'IA ; « Pastilles » ouvre la liste à cocher, et un choix fait à la main n'est jamais défait par l'IA. Les lecteurs voient tout, mais les commandes sont inactives.
-- Déploiement : la webapp seule.
+- Déploiement : la webapp, après la migration 183 (`docs/PROD_MIGRATIONS.md` §2.48).
 
 #### `CRM-141` T3 — Réglages ▸ Pastilles des mails
 

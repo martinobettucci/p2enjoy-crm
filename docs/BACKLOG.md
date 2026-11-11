@@ -19364,7 +19364,15 @@ est archivée et reste sur les mails (926) ; un filtre par pastille (926) ; les 
   lit et `404` sur un autre) ; UI `e2e/ui/pastilles-inbox.spec.ts` **7/7** (souris, clavier, filtre, seed, lectrice,
   quatre paliers) ; captures observées ; un défaut trouvé par la preuve au clavier et corrigé (la case désactivée en vol
   perdait le focus) ;
-- reste : T5 (le connecteur), T6 (le manuel), T7 (production).
+- **T5 faite le 2026-11-11, vérifiée en développement** : le connecteur — `crm_mail_label_list` (`consulter`, le
+  descriptif de chaque pastille, les archivées en dernier), `crm_mail_label_set` (`modifier`, par `set_message_label`,
+  refus nommés), `crm_mail_get` qui rend `labels` et `labels_state`, l'ancre `mail_label` ; pytest unitaires **403**
+  (dont `test_messagerie_pastilles.py`), intégration ciblée **21/21** contre le vrai Keycloak, la vraie base et le service
+  `mcp` reconstruit (`test_integration_messagerie_pastilles.py` : pose et retrait constatés `manual`, une réévaluation qui
+  ne défait pas la pose, la matrice qui ferme la pose, la lectrice refusée par la base malgré la matrice ouverte, le
+  journal ; avec `test_integration_messagerie.py` et `…_corbeille.py`) ; la preuve inscrite dans `verify-mcp.sh`, que la
+  campagne complète rejoue ; contrat §2.48 (la webapp et l'image après la 183) ;
+- reste : T6 (le manuel), T7 (production).
 **DoD** :
 - unitaires : contrôle de la sortie du modèle, clés inconnues rejetées ;
 - pgTAP : RLS, administrateurs seuls sur les pastilles, la main prime, les défauts ;

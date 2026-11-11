@@ -72,6 +72,10 @@ PIECE_ENORME = "a0000000-0000-4000-8000-0000000000f4"
 PIECE_ORPHELINE = "a0000000-0000-4000-8000-0000000000f5"
 PIECE_NON_ANALYSEE = "a0000000-0000-4000-8000-0000000000f6"
 PIECE_LOURDE = "a0000000-0000-4000-8000-0000000000f7"
+#: `CRM-141` T5 : deux pastilles de l'espace, l'une archivée, et ce que porte le message texte.
+PASTILLE_LEAD = "a0000000-0000-4000-8000-0000000000b1"
+PASTILLE_NEWS = "a0000000-0000-4000-8000-0000000000b2"
+PASTILLE_DEVIS = "a0000000-0000-4000-8000-0000000000b3"
 OCTETS_PDF = b"%PDF-1.4 devis"
 OCTETS_PNG = b"\x89PNG\r\n\x1a\nimage"
 
@@ -92,6 +96,16 @@ class CrmMessagerie(CrmSimule):
         self.depots: list[tuple[str, str, bytes, str, str]] = []
         self.refus_depot: int | None = None
         self.retraits: list[list[str]] = []
+        # `CRM-141` T5 : les lignes de `mail_message_labels` du message texte — l'une posée par le LLM, une archivée posée
+        # à la main, une retirée à la main.
+        self.poses: list[dict[str, Any]] = [
+            {"message_id": MESSAGE_TEXTE, "label_id": PASTILLE_LEAD, "source": "llm", "applied": True,
+             "pastille": {"name": "Lead", "archived_at": None}},
+            {"message_id": MESSAGE_TEXTE, "label_id": PASTILLE_NEWS, "source": "manual", "applied": True,
+             "pastille": {"name": "Newsletter", "archived_at": "2026-11-11T09:00:00Z"}},
+            {"message_id": MESSAGE_TEXTE, "label_id": PASTILLE_DEVIS, "source": "manual", "applied": False,
+             "pastille": {"name": "devis", "archived_at": None}},
+        ]
         self.identites = [
             {"id": "id-thomas", "workspace_id": ESPACE_A, "label": "Thomas", "from_address": "Thomas@Atelier.test",
              "owner_id": "sujet-thomas"},
@@ -170,7 +184,8 @@ class CrmMessagerie(CrmSimule):
 
     async def table_messagerie(self, requete: Request) -> Response:
         nom = requete.path_params["table"]
-        if nom not in ("mail_messages", "mail_outbound_identities", "cards", "mail_attachments", "mail_drafts"):
+        if nom not in ("mail_messages", "mail_outbound_identities", "cards", "mail_attachments", "mail_drafts",
+                       "mail_labels", "mail_message_labels", "mail_label_evaluations"):
             return await self.table(requete)
         if self._personne(requete) is None:
             return JSONResponse({"message": "JWT invalide"}, status_code=401)
@@ -184,10 +199,26 @@ class CrmMessagerie(CrmSimule):
             lignes = self.pieces()
         elif nom == "mail_drafts":
             lignes = self.brouillons()
+        elif nom == "mail_labels":
+            lignes = self.pastilles()
+        elif nom == "mail_message_labels":
+            lignes = self.poses
+        elif nom == "mail_label_evaluations":
+            lignes = [{"message_id": MESSAGE_TEXTE, "workspace_id": ESPACE_A, "state": "done"}]
         else:
             lignes = self.identites
         filtres = {k: v.removeprefix("eq.") for k, v in parametres.items() if v.startswith("eq.")}
         return JSONResponse([l for l in lignes if all(str(l.get(k)) == v for k, v in filtres.items() if k in l)])
+
+    def pastilles(self) -> list[dict[str, Any]]:
+        return [
+            {"id": PASTILLE_NEWS, "workspace_id": ESPACE_A, "name": "Newsletter", "color": "neutral",
+             "description": "Une lettre d'information.", "archived_at": "2026-11-11T09:00:00Z"},
+            {"id": PASTILLE_LEAD, "workspace_id": ESPACE_A, "name": "Lead", "color": "success",
+             "description": "Un prospect.", "archived_at": None},
+            {"id": PASTILLE_DEVIS, "workspace_id": ESPACE_A, "name": "devis", "color": "brand",
+             "description": "Une demande de devis.", "archived_at": None},
+        ]
 
     def brouillons(self) -> list[dict[str, Any]]:
         return [
@@ -241,10 +272,11 @@ class CrmMessagerie(CrmSimule):
 
 
 class Monde:
-    def __init__(self) -> None:
+    def __init__(self, simule: CrmMessagerie | None = None, extensions: tuple[Any, ...] = ()) -> None:
+        """`simule` et `extensions` (`CRM-141` T5) : un CRM simulé augmenté, et d'autres modules d'outils à inscrire."""
         import httpx2
 
-        self.simule = CrmMessagerie()
+        self.simule = simule if simule is not None else CrmMessagerie()
         self.crm = ClientCrm("http://kong:8000", CLE_ANONYME, CLE_SERVICE,
                              transport=httpx2.ASGITransport(app=self.simule.application()))
         self.moteur = MoteurPolitique(registre=Registre(self.crm, ()), crm=self.crm, jwt_secret=SECRET,
@@ -252,6 +284,8 @@ class Monde:
         self.mcp = FastMCP("test")
         reference.ajouter(self.mcp, self.moteur, self.crm)
         messagerie.ajouter(self.mcp, self.moteur, self.crm, WEBAPP)
+        for module in extensions:
+            module.ajouter(self.mcp, self.moteur, self.crm)
         self.mcp.add_middleware(AuditOutils(self.moteur.registre, 200_000))
         self.mcp.add_middleware(PolitiqueOutils(self.moteur))
         self.simule.membres = {"sujet-thomas": {ESPACE_A: "editor"}}

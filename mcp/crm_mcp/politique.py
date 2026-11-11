@@ -17,6 +17,7 @@
 # @spec CRM-111 (docs/BACKLOG.md) — tranche T9 : le genre d'ancre `placement` (docs/SPEC-mcp.md §9.2 quindecies, décision 826)
 # @spec CRM-128 (docs/BACKLOG.md) — tranche T3 : le genre d'ancre `draft`, un mail préparé (docs/SPEC-mails-prepares.md §5, décision 829)
 # @spec CRM-144 (docs/BACKLOG.md) — tranche T4 : le genre d'ancre `outbox`, un envoi de la file (docs/SPEC-mcp.md §9.2 undevicies)
+# @spec CRM-141 (docs/BACKLOG.md) — tranche T5 : le genre d'ancre `mail_label`, une pastille de mail (docs/SPEC-mcp.md §9.2 duovicies)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.b : le genre d'ancre `activity` (docs/SPEC-mcp.md §9.2 ter, décision 655)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.a : l'ancre `autres` FACULTATIVE, permise si son argument vaut `None` par
 #       défaut, et pour elle seule (docs/SPEC-mcp.md §9.2 bis, décision 654)
@@ -121,6 +122,8 @@ RESOLUTIONS: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "outbox": ("mail_outbox", "workspace_id", ("workspace_id",)),
     # `CRM-068` T5 : un point de checklist d'une affaire porte son espace (docs/SPEC-mcp.md §9.2 duodecies, décision 767).
     "card_checklist_item": ("card_checklist_items", "workspace_id", ("workspace_id",)),
+    # `CRM-141` T5 : une pastille de mail porte son espace (docs/SPEC-mcp.md §9.2 duovicies).
+    "mail_label": ("mail_labels", "workspace_id", ("workspace_id",)),
     # Une occurrence de budget, résolue par son budget puis son track : tout identifiant passé à un outil est une ancre.
     "occurrence": (
         "budget_occurrences",
@@ -165,6 +168,7 @@ LIBELLES = {
     "draft": "mail préparé",
     "outbox": "envoi",
     "card_checklist_item": "point de checklist",
+    "mail_label": "pastille de mail",
 }
 
 _UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")

@@ -57,6 +57,7 @@ from crm_mcp.outils import (
     contacts,
     messagerie,
     messagerie_corbeille,
+    messagerie_pastilles,
     objectifs,
     organisations,
     outbox,
@@ -227,6 +228,8 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
     outbox.ajouter(serveur, moteur, crm)
     # `CRM-138` T4 : lu / non lu, sommeil, effacer, restaurer, lire la corbeille (docs/SPEC-mcp.md §9.2, CRM-138).
     messagerie_corbeille.ajouter(serveur, moteur, crm)
+    # `CRM-141` T5 : les pastilles d'un mail — lire celles de l'espace, poser ou retirer (docs/SPEC-mcp.md §9.2 duovicies).
+    messagerie_pastilles.ajouter(serveur, moteur, crm)
     # L'ordre compte : l'audit enveloppe la politique, qui précède l'outil (docs/SPEC-mcp.md §6.2).
     serveur.add_middleware(AuditOutils(registre, reglages.taille_max_reponse))
     serveur.add_middleware(PolitiqueOutils(moteur))

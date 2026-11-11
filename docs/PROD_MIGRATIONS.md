@@ -1123,6 +1123,25 @@ secret d'appel est tiré par la migration dans Vault.
 effet, la file attend ; la fonction sans la 184 n'est jamais appelée. Les deux gestes se suivent dans la même fenêtre.
 **Retour arrière** : `select cron.unschedule('p2enjoy-pastilles-evaluation')` arrête tout appel au serveur réel, sans rien
 défaire de ce qui a été évalué ; puis la fonction précédente.
+
+### 2.48 `CRM-141` T3, T4 et T5 — les écrans et le connecteur des pastilles (À LIVRER : la webapp, l'image `mcp` ; **après la 183, hors du lot annoncé**)
+
+`docs/SPEC-mail-subsystem.md` §31.7, §31.8 ; `docs/SPEC-mcp.md` §9.2 duovicies. **Aucune migration nouvelle, aucune
+variable, aucun secret.** Réglages ▸ Pastilles des mails (T3) ; les pastilles dans l'inbox (T4) ; `crm_mail_label_list`,
+`crm_mail_label_set` et `crm_mail_get` révisé (T5), famille « Messagerie », cases existantes.
+
+**LA WEBAPP DE T4 EXIGE LA 183** : la liste de l'inbox embarque `mail_message_labels` dans sa requête. Servie avant la 183,
+cette requête est refusée par PostgREST (relation inconnue), et **la liste de l'inbox ne se charge plus**. De même,
+l'image `mcp` de T5 sans la 183 fait échouer `crm_mail_get`.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Constater la 183 appliquée | session de livraison, en lecture seule | `select to_regclass('public.mail_message_labels')` non nul |
+| 2 | Livrer la webapp | session de livraison | bâtie dans la cellule (§4) |
+| 3 | Reconstruire l'image `mcp` | session de livraison | `up -d --build --no-deps --wait mcp` (§4) |
+| 4 | Constater | session de livraison, en lecture seule | Réglages ▸ Pastilles des mails liste les neuf pastilles ; l'inbox se charge, et un mail évalué porte ses pilules ; `tools/list` du connecteur nomme `crm_mail_label_set` pour un compte qui a la case `modifier` de la messagerie |
+
+**Retour arrière** : la webapp et l'image précédentes ; rien n'est écrit en base par la livraison.
 ## 3. Migrations en attente
 
 **La 184, après la 183** (`CRM-141` T2, décisions 883 et 923), *en attente, hors du lot annoncé* : la cadence de

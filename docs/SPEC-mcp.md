@@ -1359,6 +1359,12 @@ dit ce que la famille couvre.
 poser et retirer (la base constate la ligne `manual`), une réévaluation qui ne défait pas la pose de l'assistant, le
 refus par la matrice, le refus du CRM pour la lectrice malgré la case ouverte, le journal écrit.
 
+*Écrit au code de T5 (2026-11-11)* : le module `mcp/crm_mcp/outils/messagerie_pastilles.py`. `crm_mail_label_set` rend,
+après la pose ou le retrait, les pastilles que le message porte alors (la forme de `labels` de `crm_mail_get`). `labels`
+ne nomme que les pastilles **posées** : une ligne retirée à la main n'y figure pas. Un refus `message_not_found` est le
+refus uniforme (« Introuvable ou hors de votre périmètre »). La preuve d'intégration joue la réévaluation comme la passe :
+la prise (`claimed_at`), puis `record_label_evaluation` sous la clé de service.
+
 ### 9.3 Réponses
 
 - **Forme.** Un JSON structuré, avec les identifiants **et** les libellés utiles : nom du track,

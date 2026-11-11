@@ -24,6 +24,8 @@
 #       décisions 877, 891 et 893
 # @spec CRM-139 (docs/BACKLOG.md) — « Seulement moi » : `only_me` sur `crm_card_mail_list`, faux par défaut, par la colonne
 #       calculée `concerns_me` ; docs/SPEC-mcp.md §9.2 duodevicies ; docs/SPEC-mail-subsystem.md §27 ; décisions 879 et 902
+# @spec CRM-141 (docs/BACKLOG.md) — tranche T5 : `crm_mail_get` rend `labels` et `labels_state` (docs/SPEC-mcp.md §9.2
+#       duovicies, révisée ; décision 924)
 # @spec CRM-143 (docs/BACKLOG.md) — tranche T5 : les pièces non analysées dans le connecteur — trois statuts précis
 #       (`statut_piece`), `crm_mail_attachment_get` qui lit une pièce non analysée sur un accusé explicite
 #       (`acknowledge_unscanned`, la confirmation posée sous le jeton de la personne), et `crm_mail_prepare` qui joint des
@@ -56,6 +58,7 @@ from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
 from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable, traduire_refus
+from crm_mcp.outils.messagerie_pastilles import pastilles_du_message
 
 #: La longueur de l'extrait d'un message dans le fil (docs/SPEC-mcp.md §9.2 decies).
 LONGUEUR_EXTRAIT = 280
@@ -393,8 +396,10 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_w
         corps, depuis_html = corps_affichable(m.get("body_text"), m.get("body_html"))
         lu = message_lu(m)
         del lu["excerpt"]
+        # `CRM-141` T5 (§9.2 duovicies) : les pastilles posées et l'état de l'évaluation, sous le jeton de la personne.
+        pastilles = await pastilles_du_message(crm, appel.jeton, message_id)
         return {**lu, "card_id": m.get("card_id"), "classification": m.get("classification"), "body": corps,
-                "body_from_html": depuis_html}
+                "body_from_html": depuis_html, **pastilles}
 
     moteur.enregistrer(
         serveur,
@@ -405,7 +410,9 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_w
             "Reads one email: headers, the affaire it is filed in, and its text. When the sender wrote only HTML, the "
             "text is reduced from it as the web app does (body_from_html). Its attachments are listed (id, file name, "
             "type, size, status); read an available one with crm_mail_attachment_get. read tells whether the person has "
-            "read it in the inbox; reading it here does not mark it read."
+            "read it in the inbox; reading it here does not mark it read. labels are the labels (pastilles) it carries — "
+            "label_id, name, source (llm: put by the CRM's AI; manual: chosen by a person or an assistant) and archived —, "
+            "and labels_state tells whether the CRM's AI has evaluated it (pending, done, failed; null for a sent email)."
         ),
     )
 
