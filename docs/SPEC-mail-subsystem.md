@@ -4603,7 +4603,7 @@ Chaque tranche est poussée une fois vérifiée.
 | Tranche | Contenu |
 |---|---|
 | **T1** | Migration : les trois tables, la RLS, `set_message_label`, `request_label_evaluation`, `claim_label_evaluations`, `record_label_evaluation`, les défauts et leur déclencheur, le déclencheur d'entrée dans la file et le rattrapage ; pgTAP ; `docs/SCHEMA.md` ; contrat de déploiement — *faite le 2026-11-11, migration `0183`* |
-| **T2** | L'évaluation : la route `POST /ia/pastilles/evaluer` de la fonction `ia`, le scénario `pastilles` du simulateur, `verify_label_dispatch` et la cadence `pg_cron` (seconde migration) ; unitaires ; preuve d'intégration contre le simulateur et le vrai modèle ; le seed — *faite le 2026-11-11, migration `0184` ; la preuve contre le vrai modèle n'a pas pu être jouée : le serveur de LeLabs refuse la clé depuis l'origine actuelle du poste (`cle_refusee`)* |
+| **T2** | L'évaluation : la route `POST /ia/pastilles/evaluer` de la fonction `ia`, le scénario `pastilles` du simulateur, `verify_label_dispatch` et la cadence `pg_cron` (seconde migration) ; unitaires ; preuve d'intégration contre le simulateur et le vrai modèle ; le seed — *faite le 2026-11-11, migration `0184` ; la preuve contre le vrai modèle n'a pas pu être jouée : le serveur de LeLabs refuse la clé du poste, `401` « clé API invalide ou désactivée » (`cle_refusee`)* |
 | **T3** | L'écran Réglages ▸ Pastilles des mails ; unitaires ; API ; E2E ; captures — *faite le 2026-11-11* |
 | **T4** | L'inbox : les pastilles dans la liste, le filtre, le message ouvert, « Pastilles » et « Réévaluer les pastilles » ; unitaires ; E2E ; captures |
 | **T5** | Le connecteur : trois outils ; pytest ; `verify-mcp.sh` |

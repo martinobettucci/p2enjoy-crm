@@ -19342,7 +19342,10 @@ est archivée et reste sur les mails (926) ; un filtre par pastille (926) ; les 
   `e2e/api/pastilles-evaluation.spec.ts` **2/2** (le secret exigé derrière Kong, la tâche de la minute, un retrait manuel
   qui tient) ; pgTAP complet **160 fichiers** au vert après une assertion de la `0172` rendue indépendante du seed ; le seed
   converge sur deux passages. **Limite** : la preuve contre le vrai modèle (P3) est sautée — le serveur de LeLabs refuse la
-  clé depuis l'origine actuelle du poste (`cle_refusee`) ; elle demande au responsable d'autoriser l'origine ;
+  clé du poste de développement : `401` « clé API invalide ou désactivée » (`cle_refusee`), constaté le 2026-11-11 par un
+  appel direct à `/api/tags`, clé de 74 caractères présente dans `.env` et dans le conteneur `functions` ; *ce n'est pas un
+  refus d'origine (`403`), contrairement à ce qu'une première lecture avait écrit* ; elle demande au responsable une clé
+  valide ou la réactivation de celle du poste ;
 - **T3 faite le 2026-11-11, vérifiée en développement** : Réglages ▸ Pastilles des mails (`/reglages/pastilles-mails`,
   `ReglagesPastillesMail.tsx`, `lib/pastilles-mail.ts`), l'entrée de l'index après les séquences ; lisible par tout membre,
   commandes éteintes avec motif pour qui n'administre pas ; Vitest `pastilles-mail.test.ts` **17** et
