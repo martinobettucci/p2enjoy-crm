@@ -19286,7 +19286,8 @@ nettoyage, `cid:` et la migration de `content_id`, le seed, les preuves, quatre 
 
 ## Demande du 2026-11-10 — le LLM pré-trie les mails en pastilles configurables (décision 883)
 
-### CRM-141 — Pastilles de mail posées par le LLM, définies dans les réglages, réévaluables, corrigeables à la main `[ ]`
+### CRM-141 — Pastilles de mail posées par le LLM, définies dans les réglages, réévaluables, corrigeables à la main `[@]`
+*Prise en charge : session interactive 152dd27d (p2enjoy-crm-a8) depuis 2026-11-11 09:36 UTC — état avant : [ ] ; confiée par la session de livraison (ee), en file pour 32*
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 883).
 **Comportement attendu** :
