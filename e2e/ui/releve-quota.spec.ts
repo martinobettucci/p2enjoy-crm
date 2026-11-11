@@ -2,7 +2,8 @@
 //           liste les dossiers réels de la boîte de Camille, on coche « Sent Items », on enregistre, `watch_folders` est relu
 //           en base et une VRAIE relève relève un dossier de plus ; au clavier, le focus entre sur la première case et revient
 //           à la commande ; le formulaire règle l'historique ; une identité reçoit un plafond puis revient à « aucun plafond » ;
-//           captures aux quatre paliers
+//           captures aux quatre paliers ; chaque colonne que le formulaire d'identité écrit est rendue et relue (défaut
+//           de la campagne du 2026-11-11)
 // @verifies docs/SPEC-mail-subsystem.md §25.3 à §25.6, §25.9 (ligne « E2E ui ») ; docs/DESIGN_SYSTEM.md §5.99 ; CLAUDE.md §15,
 //           §16
 //
@@ -149,11 +150,24 @@ test('le formulaire de la boîte règle l’historique', async ({ page, request 
 	}
 })
 
+/**
+ * CHAQUE COLONNE QUE LE FORMULAIRE ÉCRIT (`webapp/src/lib/mail-identites.ts`, §22.5) : le formulaire envoie toujours
+ * `p_from_name` et `p_signature_text`, même vides, si bien qu'un enregistrement fait passer un `null` du seed à `''`.
+ * Défaut trouvé par la campagne complète du 2026-11-11 : seul le quota était rendu, et `from_name` restait `''`, ce qui
+ * rougissait `e2e/api/rendu-modeles-emails.spec.ts` et le chapitre 14-16 du manuel. Le mot de passe n'est pas écrit (champ
+ * laissé vide).
+ */
+const COLONNES_FORMULAIRE =
+	'label,smtp_host,smtp_port,smtp_security,smtp_username,from_address,from_name,signature_text,is_default,daily_quota'
+type IdentiteFormulaire = Record<string, unknown> & { id: string; daily_quota: number | null }
+
 test('une identité reçoit un plafond, puis revient à « aucun plafond »', async ({ page, request }) => {
 	const lire = async () =>
 		((await (
-			await request.get(rest(`mail_outbound_identities?select=id,daily_quota&owner_id=eq.${CAMILLE}&is_default=is.true`), { headers: enTetesService() })
-		).json()) as { id: string; daily_quota: number | null }[])[0]!
+			await request.get(rest(`mail_outbound_identities?select=id,${COLONNES_FORMULAIRE}&owner_id=eq.${CAMILLE}&is_default=is.true`), {
+				headers: enTetesService(),
+			})
+		).json()) as IdentiteFormulaire[])[0]!
 	const avant = await lire()
 	try {
 		await connecterAvecLeLabs(page, ADMIN)
@@ -175,10 +189,13 @@ test('une identité reçoit un plafond, puis revient à « aucun plafond »', as
 		await expect(page.getByTestId('formulaire-identite-mail')).toHaveCount(0)
 		expect((await lire()).daily_quota).toBeNull()
 	} finally {
-		await request.patch(rest(`mail_outbound_identities?id=eq.${avant.id}`), {
+		const { id, ...colonnes } = avant
+		await request.patch(rest(`mail_outbound_identities?id=eq.${id}`), {
 			headers: { ...enTetesService(), Prefer: 'return=minimal' },
-			data: { daily_quota: avant.daily_quota },
+			data: colonnes,
 		})
+		// LE RETRAIT EST CONSTATÉ : l'identité du seed est relue telle qu'avant, `from_name` nul compris.
+		expect(await lire(), 'l’identité du seed est rendue à son état d’avant').toEqual(avant)
 	}
 })
 
