@@ -19175,6 +19175,8 @@ responsable.
 - un message sans HTML garde son texte, et ses adresses web deviennent des liens ;
 - le §18.4 est révisé.
 **MCP** : **non** (décision 881).
+**Arbitrages** (décision 918) : DOMPurify ; les images `cid:` affichées, avec une colonne `content_id` posée par migration
+et relevée par `mail-sync` ; le cadre strict défile en lui-même ; le design system lu par sections ciblées.
 **Spécification** : à écrire avant le code. Elle couvre `docs/SPEC-mail-subsystem.md` §18.4 révisé (bac à sable, CSP,
 nettoyage, `cid:`), `docs/DESIGN_SYSTEM.md` (le cadre, le bandeau des images), le manuel (inbox) et le DAT (sécurité du
 rendu).

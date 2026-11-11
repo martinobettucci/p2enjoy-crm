@@ -40429,3 +40429,34 @@ spécification ; complète la décision 878.*
 - **Ce que montre le fil de l'affaire** : le message quitte le fil, et **une ligne « Message effacé par X »** le remplace,
   comme « Envoi annulé par X » dans l'outbox. Écarté : qu'il disparaisse sans trace.
 **MCP** : oui, famille `messagerie`, cases existantes (décision 878).
+
+### décision 918 — `CRM-140` : DOMPurify, les images `cid:` affichées, le cadre strict qui défile en lui-même
+
+*2026-11-11, session interactive d5b44a2d (p2enjoy-crm-c2), arbitrages du responsable (`AskUserQuestion`), avant la
+spécification ; complète la décision 881.*
+**Le problème** : la décision 881 demande un rendu HTML confiné. Quatre faits mesurés dans le dépôt le 2026-11-11
+contraignent la forme :
+- le projet n'a aucune bibliothèque de nettoyage du HTML (`webapp/package.json`) ;
+- `mail_attachments` n'a pas de colonne de `Content-ID` ;
+- `mail-sync` (`mime_analyse.py`, `analyser`) ne garde une partie que si elle a un nom de fichier ou la disposition
+  `attachment` : une image intégrée sans nom est perdue aujourd'hui ;
+- un cadre sans `allow-same-origin` a une origine opaque, et l'écran ne peut pas mesurer la hauteur de son contenu.
+**Q1 — le nettoyage du HTML** : **DOMPurify**. C'est la bibliothèque de référence, sous double licence MPL-2.0 ou
+Apache-2.0. La dépendance est nouvelle, et le DAT la documente (`CLAUDE.md` §19). Écarté : un nettoyeur maison par liste
+blanche, moins éprouvé. Le nettoyage est une défense en profondeur ; le bac à sable sans scripts et la politique de contenu
+restent la barrière.
+**Q2 — les images `cid:`** : **elles s'affichent**.
+- Une migration ajoute `content_id` aux pièces, et `mail-sync` le relève et garde l'image intégrée sans nom.
+- Le cadre montre l'image **si la pièce est saine**, sans attendre « Afficher les images », car rien ne part chez
+  l'expéditeur.
+- Écarté : une mention « image jointe » à la place de l'image.
+**Q3 — la hauteur du cadre** : **le cadre strict, sans `allow-same-origin`**. Il occupe la place du corps dans le panneau
+de lecture et défile en lui-même. Écarté : `allow-same-origin` sans scripts pour ajuster la hauteur, un isolement un cran
+plus faible.
+**Q4 — la lecture du design system** : **les sections ciblées**, en entier :
+- §1 à §4 et §6 à §12 ;
+- §5.4 à §5.4 sexies (l'inbox), §5.5 (boutons), §5.8 (états), §5.13 ;
+- les sections qu'elles citent.
+Le compte rendu de l'unité dit que la lecture n'était pas intégrale. Le diff d'interface reste vérifié contre ces sections
+avant le commit. Cette décision vaut pour `CRM-140` seulement ; la règle de `CLAUDE.md` n'est pas changée.
+**MCP** : non (décision 881). Le connecteur rend le corps en texte et n'affiche rien.
