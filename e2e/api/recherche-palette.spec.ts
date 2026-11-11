@@ -19,6 +19,8 @@
 // seed sort intact par construction, sans nettoyage à écrire — donc sans nettoyage qui puisse
 // échouer. C'est la discipline de `recherche-globale.spec.ts`, reprise sans changement.
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : M15 par le rattachement de l'affaire
+// @verifies CRM-140 (docs/BACKLOG.md) — tranche T4 : M19 révisé à cinq et trois par le courrier HTML du seed
+//           (docs/SPEC-recherche.md M19, docs/SPEC-seed.md §44)
 
 import { expect, test } from '@playwright/test'
 import {
@@ -223,14 +225,18 @@ test.describe('CRM-065 sous-tranche 2a — les résolutions d’adresse, hors in
 			await chercher(request, jetonViewer, TERME_ASYMETRIQUE)
 		).json()) as Ligne[]
 
-		expect(cotéAdmin).toHaveLength(4)
+		// CINQ ET TROIS — révisé le 2026-11-11 par `CRM-140` T4 (docs/SPEC-recherche.md M19) : le courrier HTML du seed
+		// (docs/SPEC-seed.md §44) porte « Sogexia », et il est non classé, donc invisible pour la lectrice.
+		expect(cotéAdmin).toHaveLength(5)
 		expect(cotéViewer).toHaveLength(3)
-		// L'affaire manquante est celle du track fermé à la lectrice — nommée, pour qu'un
-		// changement du seed fasse échouer la preuve au lieu de la rendre muette.
+		// Les deux lignes manquantes sont NOMMÉES, pour qu'un changement du seed fasse échouer la preuve au lieu de la
+		// rendre muette : l'affaire du track fermé à la lectrice, et le message d'une boîte qu'elle ne lit pas.
 		const titresAdmin = cotéAdmin.map((l) => l.titre)
 		const titresViewer = cotéViewer.map((l) => l.titre)
 		expect(titresAdmin).toContain('Migration ERP Sogexia')
 		expect(titresViewer).not.toContain('Migration ERP Sogexia')
+		expect(cotéAdmin.filter((l) => l.objet === 'message').map((l) => l.titre)).toEqual(['Invitation — journée partenaires Sogexia'])
+		expect(cotéViewer.filter((l) => l.objet === 'message')).toEqual([])
 
 		// Et la résolution suit : l'affaire fermée n'a pas d'adresse pour la lectrice, ce qui rend
 		// la ligne SANS LIEN du §13.4 — jamais une erreur, jamais une ligne masquée.

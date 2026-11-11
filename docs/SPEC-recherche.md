@@ -810,13 +810,19 @@ Terme `sogexia`, `p_limite=20`, **deux jetons réels** :
 
 | Appelante | Lignes | Objets rendus |
 |---|---|---|
-| `admin@p2enjoy.test` | **4** | organisation `Sogexia`, puis trois affaires |
+| `admin@p2enjoy.test` | **5** | le message `Invitation — journée partenaires Sogexia`, l'organisation `Sogexia`, puis trois affaires |
 | `viewer@p2enjoy.test` | **3** | organisation `Sogexia`, puis **deux** affaires |
 
 L'affaire manquante est `Migration ERP Sogexia`, du track `Grands comptes`, fermé à la lectrice
 (M6). Un **seul** terme exerce donc les cinq familles côté lecture et la RLS côté refus, dans la même
 frappe — c'est le terme que la preuve E2E de 2b emploie, et la contre-épreuve est le compte, jamais
 la seule présence : sans elle, un écran qui n'afficherait **rien** passerait le refus.
+
+**Révisé le 2026-11-11 par `CRM-140` T4** (`docs/SPEC-seed.md` §44). Le courrier HTML du seed porte « Sogexia » dans son
+objet et dans son corps : l'administratrice le trouve, la lectrice non, puisqu'il est non classé et qu'elle ne lit
+pas la boîte qui l'a reçu. Le compte passe donc de **4** à **5**, et l'asymétrie s'étend à la famille `message`.
+Ce message vient **en tête**, à égalité de rang avec l'organisation (1,4), parce que l'ordre départage par le titre
+(§ « order by » de `recherche_globale`, `0068`). La règle prouvée ne change pas.
 
 ## 12. Où la surface vit, et pourquoi
 

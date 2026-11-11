@@ -57,7 +57,9 @@ d'exécuter le code attendu.
 - **Un message sans HTML** garde son texte, et ses adresses web deviennent des liens.
 - **`mail-sync`** relève le `Content-ID` des pièces et garde l'image intégrée sans nom, qu'il perdait jusqu'ici
   (migration 0179).
-- Seed : un courrier HTML réellement soumis et relevé (`docs/SPEC-seed.md` §44). Manuel : §12.2.
+- Seed : un courrier HTML réellement soumis et relevé (`docs/SPEC-seed.md` §44). Il porte « Sogexia » : la recherche de
+  ce terme rend cinq lignes à l'administratrice, et non plus quatre (`docs/SPEC-recherche.md` M19, révisé). Manuel : §12.2,
+  et l'image du §4.2.
 - Déploiement : `docs/PROD_MIGRATIONS.md` §2.43.
 
 #### `CRM-147` — une livraison prend un condensé choisi, récupéré par git dans la cellule (décisions 905, 909, 911, 912 et 915)

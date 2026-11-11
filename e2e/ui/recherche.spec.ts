@@ -13,6 +13,8 @@
 // @verifies CRM-095 (docs/BACKLOG.md) — tranche T2 ter : la palette se referme quand le focus la quitte
 //           par `Tab` ou `Maj+Tab`, sans le rendre ; un clic dans le panneau garde le focus au champ
 //           (INC-260, décision 612 ; docs/SPEC-recherche.md §14.3 ; docs/DESIGN_SYSTEM.md §5.46)
+// @verifies CRM-140 (docs/BACKLOG.md) — tranche T4 : M19 révisé à cinq et trois par le courrier HTML du seed, qui vient en
+//           tête (docs/SPEC-recherche.md M19, docs/SPEC-seed.md §44)
 //
 // LE PARCOURS EST FAIT AU CLAVIER, comme un utilisateur réel : aucune fonction interne n'est
 // appelée, aucune réponse n'est substituée, et le navigateur obtient son jeton par le formulaire
@@ -157,22 +159,24 @@ test.describe('Ce que la liste rend, et pour qui (§13.4, M19)', () => {
 	 * Un seul terme exerce les familles côté lecture et la RLS côté refus. La contre-épreuve est
 	 * le COMPTE des deux côtés : sans elle, un écran qui n'afficherait rien passerait le refus.
 	 */
-	test('l’administratrice voit QUATRE résultats là où la lectrice en voit TROIS', async ({
+	test('l’administratrice voit CINQ résultats là où la lectrice en voit TROIS', async ({
 		page,
 	}) => {
 		await connecter(page, ADMIN)
 		await chercherAuClavier(page, TERME_ASYMETRIQUE)
-		await expect(page.getByTestId('resultat-recherche')).toHaveCount(4)
+		await expect(page.getByTestId('resultat-recherche')).toHaveCount(5)
 		await expect(page.getByText('Migration ERP Sogexia')).toBeVisible()
+		await expect(page.getByText('Invitation — journée partenaires Sogexia')).toBeVisible()
 	})
 
-	test('la lectrice en voit TROIS, et l’écran NE NOMME JAMAIS la quatrième', async ({ page }) => {
+	test('la lectrice en voit TROIS, et l’écran NE NOMME JAMAIS les deux autres', async ({ page }) => {
 		await connecter(page, VIEWER)
 		await chercherAuClavier(page, TERME_ASYMETRIQUE)
 		await expect(page.getByTestId('resultat-recherche')).toHaveCount(3)
 		// L'écran ne dit pas « une affaire vous est masquée » : c'est la règle de discrétion que le
 		// §5.33 et le §5.37 tiennent déjà, et la divulguer par la bande serait pire que la montrer.
 		await expect(page.getByText('Migration ERP Sogexia')).toHaveCount(0)
+		await expect(page.getByText('Invitation — journée partenaires Sogexia')).toHaveCount(0)
 		await expect(page.getByTestId('panneau-recherche')).not.toContainText('masqué')
 	})
 
@@ -183,9 +187,13 @@ test.describe('Ce que la liste rend, et pour qui (§13.4, M19)', () => {
 	}) => {
 		await connecter(page, ADMIN)
 		await chercherAuClavier(page, TERME_ASYMETRIQUE)
-		const premier = page.getByTestId('resultat-recherche').first()
-		await expect(premier).toHaveAttribute('data-famille', 'organisation')
-		await expect(premier).toContainText('Organisation')
+		// LE PREMIER EST LE MESSAGE DU SEED (`CRM-140`, M19 révisé) : même rang que l'organisation, titre départageant.
+		// Les deux lignes sont donc lues, chacune avec son mot.
+		const lignes = page.getByTestId('resultat-recherche')
+		await expect(lignes.first()).toHaveAttribute('data-famille', 'message')
+		await expect(lignes.first()).toContainText('Message')
+		await expect(lignes.nth(1)).toHaveAttribute('data-famille', 'organisation')
+		await expect(lignes.nth(1)).toContainText('Organisation')
 		// Le discriminant technique de la base n'atteint JAMAIS l'écran.
 		await expect(page.getByTestId('panneau-recherche')).not.toContainText('affaire ')
 	})
@@ -215,7 +223,7 @@ test.describe('La navigation clavier (§14.3)', () => {
 	test('les flèches déplacent le résultat actif SANS jamais sortir du champ', async ({ page }) => {
 		await connecter(page, ADMIN)
 		await chercherAuClavier(page, TERME_ASYMETRIQUE)
-		await expect(page.getByTestId('resultat-recherche')).toHaveCount(4)
+		await expect(page.getByTestId('resultat-recherche')).toHaveCount(5)
 
 		const champ = page.getByTestId('champ-recherche')
 		const lignes = page.getByTestId('resultat-recherche')
@@ -237,9 +245,9 @@ test.describe('La navigation clavier (§14.3)', () => {
 		await connecter(page, ADMIN)
 		await chercherAuClavier(page, TERME_ASYMETRIQUE)
 		const lignes = page.getByTestId('resultat-recherche')
-		await expect(lignes).toHaveCount(4)
+		await expect(lignes).toHaveCount(5)
 		await page.keyboard.press('ArrowUp')
-		await expect(lignes.nth(3)).toHaveAttribute('aria-selected', 'true')
+		await expect(lignes.nth(4)).toHaveAttribute('aria-selected', 'true')
 	})
 
 	// LE CHAMP EST UNE `combobox`, ET SA LIGNE ACTIVE EST DÉSIGNÉE PAR `aria-activedescendant` —
@@ -253,7 +261,7 @@ test.describe('La navigation clavier (§14.3)', () => {
 		// trouvé en l'exécutant : sans cette attente, `ArrowDown` arrive sur une liste vide, le
 		// gestionnaire sort sans rien faire — comme le §14.3 le demande —, et l'attribut est
 		// légitimement absent. La preuve mesurait alors son propre empressement.
-		await expect(page.getByTestId('resultat-recherche')).toHaveCount(4)
+		await expect(page.getByTestId('resultat-recherche')).toHaveCount(5)
 		await page.keyboard.press('ArrowDown')
 		const designe = await champ.getAttribute('aria-activedescendant')
 		expect(designe).toBeTruthy()
@@ -278,7 +286,7 @@ test.describe('La navigation clavier (§14.3)', () => {
 		await connecter(page, ADMIN)
 		const champ = page.getByTestId('champ-recherche')
 		await chercherAuClavier(page, TERME_ASYMETRIQUE)
-		await expect(page.getByTestId('resultat-recherche')).toHaveCount(4)
+		await expect(page.getByTestId('resultat-recherche')).toHaveCount(5)
 
 		await page.keyboard.press('Tab')
 		await expect(page.getByTestId('panneau-recherche')).toHaveCount(0)
@@ -302,7 +310,7 @@ test.describe('La navigation clavier (§14.3)', () => {
 		await connecter(page, ADMIN)
 		await chercherAuClavier(page, TERME_ASYMETRIQUE)
 		const lignes = page.getByTestId('resultat-recherche')
-		await expect(lignes).toHaveCount(4)
+		await expect(lignes).toHaveCount(5)
 		const cadre = await lignes.nth(1).boundingBox()
 		if (cadre === null) throw new Error('la deuxième ligne n’est pas rendue')
 		await page.mouse.move(cadre.x + cadre.width / 2, cadre.y + cadre.height / 2)

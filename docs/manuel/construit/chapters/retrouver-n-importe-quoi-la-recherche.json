@@ -206,9 +206,9 @@
 		{
 			"type": "image",
 			"src": "retrouver-n-importe-quoi-la-recherche/resultats.jpg",
-			"alt": "La palette de recherche ouverte sur « sogexia » : une affaire, une organisation et un commentaire, chacun avec sa famille écrite",
+			"alt": "La palette de recherche ouverte sur « sogexia » : un message, une organisation et trois affaires, chacun avec sa famille écrite",
 			"width": 479,
-			"height": 324
+			"height": 410
 		},
 		{
 			"type": "paragraph",
@@ -836,7 +836,7 @@
 			"src": "retrouver-n-importe-quoi-la-recherche/message-non-classe.jpg",
 			"alt": "L'inbox ouverte sur le dossier « Non classés », où mène un message trouvé par la recherche",
 			"width": 295,
-			"height": 98
+			"height": 279
 		},
 		{
 			"type": "paragraph",

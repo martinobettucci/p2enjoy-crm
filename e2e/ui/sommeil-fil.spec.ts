@@ -19,10 +19,13 @@
 // fichier suffit — et il s'exécute même si un scénario s'interrompt en cours de route.
 // @verifies CRM-139 (docs/BACKLOG.md) — l'inbox s'ouvre ici case « Seulement moi » décochée, `courrier=tous` : le sujet de ces
 //           preuves est ailleurs (docs/SPEC-mail-subsystem.md §27.5)
+// @verifies CRM-140 (docs/BACKLOG.md) — le troisième fil non classé du seed (docs/SPEC-seed.md §44) est endormi avec les deux
+//           autres pour atteindre l'état vide du dossier : la règle prouvée est inchangée
 
 import {
 	autoriserErreursConsole,
 	connecterAvecLeLabs,
+	consommerTraceCadreIsole,
 	ERREUR_RESSOURCE_HTTP,
 	expect,
 	test,
@@ -40,6 +43,9 @@ const OBJET_NON_CLASSE = 'Candidature spontanée'
 // ne porte plus UN fil mais DEUX, chacun d'un seul message. Ce que ces preuves visaient reste vrai
 // et reste prouvé — c'est leur façon de le viser qui supposait un dossier d'une seule ligne.
 const OBJET_SUGGERE = 'Point d’avancement — migration ERP'
+// LE TROISIÈME — `CRM-140` T4, `docs/SPEC-seed.md` §44 : le courrier HTML du seed, non classé lui aussi. Il a révisé UN
+// scénario, celui qui endort le dossier entier pour en atteindre l'état vide (révisé le 2026-11-11).
+const OBJET_HTML = 'Invitation — journée partenaires Sogexia'
 const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 /** Le dossier du message classé : l'affaire dans laquelle la relève l'a rangé (seed §9.2). */
 const CARD_COURRIER = 'Refonte du site vitrine'
@@ -164,8 +170,14 @@ test.describe('CRM-081 tranche 2 e — le sommeil d’un fil dans l’inbox', ()
 		// (`docs/SPEC-seed.md` §2.19). Ce que la preuve vise est l'état vide DÛ AU SOMMEIL, et un
 		// dossier dont une ligne reste éveillée n'est pas vide : il faut donc endormir les deux
 		// pour atteindre l'état que le §16.15.5 point 2 décrit. La règle est inchangée.
+		// TROIS FILS DEPUIS LE 2026-11-11 : le courrier HTML de `CRM-140` (`docs/SPEC-seed.md` §44) est non classé, et
+		// s'il restait éveillé le dossier ne serait jamais vide. Il est endormi lui aussi, pour la même raison.
 		await endormirLeFilDe(page, OBJET_NON_CLASSE)
 		await endormirLeFilDe(page, OBJET_SUGGERE)
+		await endormirLeFilDe(page, OBJET_HTML)
+		// OUVRIR CE COURRIER REND SON CADRE ISOLÉ, et l'instrumentation de Playwright y fait journaliser son seul message
+		// connu (`e2e/ui/fixtures.ts`, `CRM-140`) : il est consommé ici, nommé ; toute autre anomalie reste au contrôle.
+		consommerTraceCadreIsole(page)
 
 		// LE DOSSIER « Non classés » EST ALORS ENTIÈREMENT ENDORMI : la liste est vide, et l'état
 		// vide doit dire POURQUOI — « tous en sommeil » (`CRM-138`, §16.14.11), et non « aucun message »

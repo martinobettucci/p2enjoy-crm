@@ -40515,6 +40515,18 @@ aussi dans la boîte mail » et les deux boutons. Écartée : une fenêtre modal
   `CRM-058` T2 et `CRM-117`. Consignée, non résolue au passage.
 - **Le courrier du seed en développement** porte « l inscription » dans son texte : la première version du seed, envoyée
   avant la correction de l'apostrophe. Le `Message-ID` fixe empêche un renvoi ; une base recréée aura le texte corrigé.
+- **Le troisième fil non classé du seed a fait rougir trois preuves d'autres unités**, signalées par 32 puis mesurées ici. Le
+  courrier du §44 porte « Sogexia » dans son objet et son corps, et il est non classé :
+  - `e2e/ui/sommeil-fil.spec.ts` (`CRM-081`) endormait les deux fils de « Non classés » pour en atteindre l'état vide. Il
+    endort désormais aussi le troisième, et consomme le message de la trace du cadre isolé qu'ouvrir ce courrier produit ;
+  - M19 de `docs/SPEC-recherche.md` (`CRM-065`) passe de **4 à 5** lignes pour l'administratrice, la lectrice restant à
+    **3**. Le message vient en tête, à rang égal avec l'organisation, départagé par le titre. Les comptes sont révisés,
+    non relâchés : `e2e/api/recherche-palette.spec.ts` nomme le message absent pour la lectrice ;
+  - l'image `resultats.jpg` du manuel (§4.2), et son texte alternatif, ont été rendus au nouvel état.
+  Le choix inverse, retirer « Sogexia » du courrier du seed, a été écarté. Il aurait fallu recréer la base de développement
+  partagée, et le précédent du dépôt, quand le seed grandit, est de réviser les comptes (`CRM-060` sous-tranche 2 bis,
+  2026-08-20). Le défaut avait échappé à la session : son sous-ensemble E2E pour `CRM-140` ne couvrait ni la recherche ni
+  le sommeil.
 
 ### décision 922 — livrer le lot de huit unités à la révision `8ada0ab9`, la première par condensé, sans instantané
 

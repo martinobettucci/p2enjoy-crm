@@ -548,7 +548,7 @@ sélectionné, prêt à être remplacé. Pour refermer, appuyez sur **`Échap`**
 
 ### 4.2 Ce qu'elle cherche
 
-![La palette de recherche ouverte sur « sogexia » : une affaire, une organisation et un commentaire, chacun avec sa famille écrite](manuel/images/retrouver-n-importe-quoi-la-recherche/resultats.jpg)
+![La palette de recherche ouverte sur « sogexia » : un message, une organisation et trois affaires, chacun avec sa famille écrite](manuel/images/retrouver-n-importe-quoi-la-recherche/resultats.jpg)
 
 Cinq familles d'objets, dans la même frappe :
 
