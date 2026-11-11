@@ -3468,6 +3468,26 @@ Chaque refus **relit la ligne** pour la constater inchangée (décision 70).
 **Ce qui restera dû sur `CRM-081` après la tranche 2 c** : la **surface** du sommeil de fil —
 groupement des messages en fils dans l'inbox, pastille, geste et filtre. L'unité demeure `[~]`.
 
+##### 16.14.11 « Message » au lieu de « fil » — `CRM-138` (décisions 878 et 917)
+
+*Écrit le 2026-11-11, avant le code.* Le responsable ne veut plus lire « fil » dans l'inbox. **Le sommeil reste celui du
+fil** (`snooze_thread`, la clé de fil du §16.14.2) : tout le fil dort. Seuls les mots changent, et ils ne trompent pas sur un
+fil de plusieurs messages : le message ouvert dort **« avec ses réponses »**.
+
+| Clé | Avant | Après |
+|---|---|---|
+| `inbox.sleep.open` | Mettre le fil en sommeil | Mettre le message en sommeil |
+| `inbox.sleep.wake` | Réveiller le fil | Réveiller le message |
+| `inbox.sleep.announce.slept` | Fil mis en sommeil. | Message mis en sommeil, avec ses réponses. |
+| `inbox.sleep.announce.woken` | Fil réveillé. | Message réveillé, avec ses réponses. |
+| `inbox.sleep.refus.notfound` | Ce fil n'est plus disponible. | Ce message n'est plus disponible. |
+| `inbox.sleep.filter` | Afficher les fils en sommeil | Afficher les messages en sommeil |
+| `inbox.sleep.empty.title` | Tous les messages de ce dossier sont dans des fils en sommeil | Tous les messages de ce dossier sont en sommeil |
+
+Les autres textes du sommeil de l'inbox suivent la même règle. La liste des fils de l'inbox (`inbox.thread.*`, « Messages de
+ce fil ») n'est pas un texte du sommeil et n'est pas touchée par la décision 878. Aucune fonction, aucune colonne, aucun
+contrat d'API ne change.
+
 #### 16.15 Tranche 2 e — la SURFACE du sommeil de fil dans l'inbox
 
 Le §16.14.7 nomme quatre manques laissés par la tranche 2 c : aucune pastille, aucun geste, aucun

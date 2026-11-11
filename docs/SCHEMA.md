@@ -3347,3 +3347,19 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
 3. **Archivage d'un nœud utilisé.** L'archivage d'un nœud du catalogue encore référencé par des
    cards actives exige un plan de remappage. Comportement par défaut retenu : archivage refusé
    tant que des cards s'y trouvent.
+
+### Migration de `CRM-138` — effacer un message : la corbeille de l'inbox, le déplacement IMAP (numéro pris au push ; spécifiée le 2026-11-11, à écrire)
+
+`docs/SPEC-mail-subsystem.md` §29 ; décisions 878 et 917.
+- `mail_messages` : `deleted_at timestamptz`, `deleted_by uuid` (`profiles`, `on delete set null`) ; déclencheur qui pose
+  `now()` et `auth.uid()` au passage en corbeille et les fige ; index partiel sur `deleted_at` non nul.
+- Table `mail_trash_moves` (§29.2) : `state` fermé (`pending`, `done`, `failed`, `cancelled`), `attempts >= 0`, clés
+  étrangères en cascade vers le message et la boîte ; RLS en lecture seule, aucune écriture pour `authenticated`.
+- `app.peut_ecrire_boite_du_message(uuid)` ; `public.delete_message(uuid, boolean)`, `public.restore_message(uuid)`,
+  `public.trashed_messages(uuid)` (`SECURITY DEFINER`, `authenticated`) ; `public.trash_moves_to_process(int)`,
+  `public.trash_move_record(...)`, `public.mail_messages_to_purge(int)`, `public.purge_mail_message(uuid)` (`service_role`).
+- La politique `mail_messages_lecture` exclut `deleted_at is not null` ; les quinze fonctions du §29.4 reçoivent le filtre ;
+  `inbox_arborescence` porte le dossier « Corbeille ».
+- Types d'événement `mail_deleted` et `mail_restored` admis au fil de l'affaire.
+- **Retour arrière** : retirer les fonctions nouvelles, reposer les quinze fonctions et la politique de leur migration
+  d'origine, puis `mail_trash_moves` et les deux colonnes — un message en corbeille redevient visible.

@@ -1495,3 +1495,9 @@ la première. Une famille nouvelle entraîne la migration de la liste fermée (�
 « Connecteur MCP » (§8.1), comme pour `recettes`. L'inventaire du point 1 ne couvre donc que les
 fonctionnalités antérieures à cette règle, ou celles pour lesquelles la question n'a pas été posée.
 
+### 9.2 Effacer, restaurer, lire et endormir un message — `CRM-138` (décisions 878 et 917)
+
+**Famille `messagerie`, existante** ; aucune case ni famille nouvelle, aucune migration de la matrice. Cinq outils,
+`crm_mail_set_read`, `crm_mail_snooze` (`modifier`), `crm_mail_delete` (`supprimer`, destructif), `crm_mail_restore`
+(`modifier`) et `crm_mail_trash_list` (`consulter`), tels que `docs/SPEC-mail-subsystem.md` §29.8 les décrit, sous le jeton de
+la personne.

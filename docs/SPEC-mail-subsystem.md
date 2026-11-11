@@ -3975,3 +3975,137 @@ défaut ; les gardes qui comptent les identités du seed sont révisées, non re
 3. **T3, l'écran** : les trois dossiers, l'API, l'E2E `ui`, les captures, le design system, le manuel.
 4. **T4, le connecteur** : les trois outils, `verify-mcp.sh`, `docs/SPEC-mcp.md`.
 5. **T5, le seed**.
+
+## 29. Effacer un message : la corbeille de l'inbox, la boîte IMAP en option ; « non lu » et « sommeil » à portée — `CRM-138`
+
+*Écrit le 2026-11-11, avant le code (décisions 878 et 917).* **Origine** : le responsable ne trouvait ni « non lu » (une
+icône seule), ni le sommeil (« Mettre le fil en sommeil », sous l'en-tête), et ne pouvait pas effacer un mail. **Connecteur
+MCP** : oui, famille `messagerie`, cases existantes (§29.8).
+
+### 29.1 Ce que voit la personne
+
+Dans le message ouvert de l'inbox (`docs/DESIGN_SYSTEM.md` §5.99) :
+- un bouton **libellé** « Marquer comme non lu » ou « Marquer comme lu », **à côté** du bouton de sommeil, remplace l'icône
+  seule (`inbox-basculer-lecture`) ; l'état lu reste **personnel** (`mail_message_reads`, `CRM-063`) ;
+- le sommeil se dit avec **« message »** au lieu de « fil » (`docs/SPEC-cards.md` §16.14.7) ;
+- **« Effacer »** ouvre une **fenêtre de confirmation** qui nomme le message (objet, expéditeur). Elle porte la case
+  **« L'effacer aussi dans la boîte mail (le déplacer dans sa corbeille) »**, décochée par défaut, **offerte seulement si la
+  personne peut écrire au moins une des boîtes où le message figure** (§29.3) ;
+- un dossier **« Corbeille »** dans l'inbox liste les messages effacés que la personne peut voir là (§29.4), avec la date
+  d'effacement définitif, l'état du déplacement IMAP (§29.5) et **« Restaurer »** ;
+- dans le fil d'une affaire, un message effacé est remplacé par la ligne **« Message effacé par X »** ; restauré, il revient,
+  suivi de la ligne **« Message restauré par X »** (décision 917).
+
+### 29.2 Le modèle
+
+`mail_messages` reçoit **`deleted_at timestamptz`** et **`deleted_by uuid`** (vers `profiles`, `on delete set null`). Comme
+pour la corbeille des affaires (`docs/SPEC-corbeille.md` §8.1), un déclencheur pose `deleted_at := now()` et `deleted_by :=
+auth.uid()` au passage de `NULL` à une valeur, et les **fige** tant que le message reste en corbeille : un client ne choisit
+jamais la date qui décide de la purge.
+
+Une table nouvelle, **`mail_trash_moves`**, porte un déplacement IMAP **par occurrence** du message dans une boîte que la
+personne peut écrire : `id`, `workspace_id`, `message_id` (`on delete cascade`), `account_id` (`on delete cascade`),
+`folder`, `uid`, `state` (`pending`, `done`, `failed`, `cancelled`), `attempts` (≥ 0), `next_attempt_at`, `last_error`
+(motif lisible, jamais un secret), `requested_by`, `created_at`, `done_at`. RLS : lecture par qui voit le message en corbeille
+(§29.4) ; **aucune écriture** pour `authenticated` ; `service_role` (`mail-sync`) l'avance par des fonctions dédiées.
+
+### 29.3 Effacer : `public.delete_message(p_message_id uuid, p_also_mailbox boolean default false)`
+
+`SECURITY DEFINER`, `search_path` vide, `authenticated` seulement. Dans cet ordre :
+1. non connecté : `42501` ; message inconnu **ou illisible** : `404 message_not_found` (indiscernables) ;
+2. **le droit d'écrire** (décision 917) : classé dans une affaire, `app.can_write_card(card_id)` ; non classé,
+   `app.peut_ecrire_boite_du_message(id)` — titulaire d'une boîte où il figure, ou administrateur de l'espace (la règle de
+   lecture des boîtes, `app.boite_du_message_lisible`). Sinon `42501 forbidden` ;
+3. déjà en corbeille : rien ne change, la fonction rend l'état (**idempotente**, aucun second événement) ;
+4. `p_also_mailbox` : une ligne `pending` dans `mail_trash_moves` pour **chaque occurrence dans une boîte que la personne
+   peut écrire** ; s'il n'y en a aucune, **`22023 no_writable_mailbox`**, avant toute écriture — l'écran n'offre pas la case
+   dans ce cas, la base le refuse quand même ;
+5. `deleted_at`, `deleted_by` posés ; classé, l'événement **`mail_deleted`** (`message_id`, `subject`) est écrit au fil de
+   l'affaire par `app.card_event_ecrire`.
+
+**La portée est le message ouvert** (décision 917) : les autres messages du même fil restent.
+
+### 29.4 Ce qu'un message effacé n'est plus, et où il se voit
+
+- **La politique de lecture `mail_messages_lecture` exclut tout message en corbeille** : les fonctions `SECURITY INVOKER`
+  qui le lisent l'excluent d'elles-mêmes. Les fonctions **`SECURITY DEFINER`** qui lisent `mail_messages` reçoivent le filtre
+  explicitement, chacune prouvée par pgTAP : `app.fil_lisible`, `app.peut_voir_message`, `app.executer_sequences_relance`,
+  `app.trash_enumerate_cards`, `public.classer_message_automatiquement`, `public.classify_message`,
+  `public.export_contact`, `public.mark_messages_read`, `public.marquer_envoi_reussi`, `public.marquer_message_range`,
+  `public.messages_a_ranger`, `public.prepare_email`, `public.reserver_envois`, `public.unclassify_message`, et
+  `app.health_last_contact` sous `app.health_context` (`CRM-142`, `SECURITY DEFINER`). Un message effacé n'est donc ni
+  dans l'inbox, ni dans le fil de l'affaire, ni dans la recherche, ni compté (non lus, « à ranger », santé), ni
+  téléchargeable (ses pièces suivent `app.peut_voir_message`), ni proposé au classement.
+- **Le dossier « Corbeille »** se lit par `public.trashed_messages(p_workspace_id uuid)`, `SECURITY DEFINER` : la règle de
+  la corbeille des affaires (décision 707) — **un membre y voit les messages qu'il a lui-même effacés, un administrateur
+  ceux de tout l'espace** —, avec pour chacun l'objet, l'expéditeur, la date d'effacement, la date d'effacement définitif
+  (`deleted_at + app.trash_retention()`) et l'état agrégé des déplacements IMAP. `inbox_arborescence` y ajoute le dossier
+  « Corbeille » et son compte.
+- **Restaurer** : `public.restore_message(p_message_id uuid)`, `SECURITY DEFINER` : le message doit être dans la corbeille
+  **visible** de la personne (ci-dessus) et la personne doit avoir le droit d'écrire (§29.3, point 2) ; sinon `404` puis
+  `42501`. `deleted_at` et `deleted_by` repassent à `NULL` ; les déplacements encore **`pending` passent à `cancelled`** ;
+  un déplacement **`done` n'est pas défait** (le message reste dans la corbeille du serveur, et le dit) ; classé,
+  l'événement **`mail_restored`** est écrit. Un message dont l'affaire a été mise en corbeille entre-temps revient **tel
+  quel**, classé, et se lit comme tout message d'une affaire en corbeille.
+
+### 29.5 Le déplacement dans la corbeille de la boîte, par `mail-sync`
+
+À chaque passe de veille, et sur la route interne **`POST /internal/v1/trash-moves/flush`** (jeton interne, comme
+`/internal/v1/outbox/flush`), `mail-sync` prend les déplacements `pending` dont `next_attempt_at` est échu
+(`public.trash_moves_to_process(p_limit)`, `service_role`, verrou `for update skip locked`), et pour chacun :
+1. se connecte à la boîte avec ses identifiants (jamais journalisés) ;
+2. cherche le dossier annoncé **`\Trash`** (RFC 6154, `LIST` étendu) ; aucun : **`failed`, `no_trash_folder`** ;
+3. dans le dossier de l'occurrence, `UID MOVE` (RFC 6851) vers ce dossier ; sans `MOVE`, `UID COPY` puis `\Deleted` et
+   `UID EXPUNGE` (UIDPLUS) ; sans l'un ni l'autre : **`failed`, `move_unsupported`** ;
+4. un UID absent du dossier — déjà déplacé ou effacé sur le serveur — est **`done`** avec la note `absent_from_folder` ;
+5. succès : **`done`**, `done_at`, et l'occurrence quitte la table `mail_message_occurrences` pour ce dossier ;
+6. boîte injoignable, refus d'authentification, délai dépassé : `attempts + 1`, **nouvel essai** à 1, 5, 15, 60, puis 240
+   minutes ; au **dixième** essai, **`failed`**, `last_error` lisible (`public.trash_move_record(...)`, `service_role`).
+
+Le message est déjà dans la corbeille du CRM : un déplacement en attente ou échoué ne le ramène jamais (décision 917). L'état
+se lit sur le message du dossier « Corbeille » : « Déplacé dans la corbeille de la boîte », « Déplacement en attente »,
+« Déplacement impossible : {motif} ».
+
+### 29.6 L'effacement définitif, à 30 jours
+
+La durée est celle de la corbeille des affaires, lue au même endroit, `app.trash_retention()` (décision 917). Une fois par
+heure au plus, `mail-sync` prend les messages dont `deleted_at < now() - app.trash_retention()` et dont aucun déplacement
+n'est `pending` (`public.mail_messages_to_purge(p_limit)`, `service_role`) ; pour chacun, il **efface les objets de ses pièces
+jointes** dans le bucket par l'API du stockage, puis appelle `public.purge_mail_message(p_message_id)` (`service_role`), qui
+journalise (`app.audit_record`, `purged`, `mail_message`, l'objet) et supprime la ligne — ses occurrences, lectures, pièces,
+sommeils et déplacements suivent par cascade. Les lignes « Message effacé par X » du fil de l'affaire restent : le journal
+d'une affaire est immuable (`card_events`).
+
+### 29.7 Le sommeil, en mots
+
+Voir `docs/SPEC-cards.md` §16.14.7. Rien ne change au sommeil lui-même : il reste celui du fil (`snooze_thread`).
+
+### 29.8 Le connecteur MCP — famille `messagerie`, cases existantes (décision 878)
+
+| Outil | Action | Ancre | Ce qu'il fait |
+|---|---|---|---|
+| `crm_mail_set_read` | `modifier` | `message:message_id` | marque le message lu ou non lu **pour la personne** (`mark_messages_read`, `mark_message_unread`) |
+| `crm_mail_snooze` | `modifier` | `message:message_id` | met le message en sommeil jusqu'à une date, ou le réveille (`snooze_thread`, `wake_thread`) |
+| `crm_mail_delete` | `supprimer` | `message:message_id` | l'efface (`delete_message`), avec `also_mailbox` ; outil **destructif** |
+| `crm_mail_restore` | `modifier` | `message:message_id` | le restaure (`restore_message`) |
+| `crm_mail_trash_list` | `consulter` | `workspace:workspace` | la corbeille visible de la personne (`trashed_messages`) |
+
+Tous agissent **sous le jeton de la personne** : la base décide (§29.3, §29.4). Aucune famille ni case nouvelle.
+
+### 29.9 Le seed
+
+Un message **non classé** de la boîte de Camille effacé **avec** la case (son déplacement IMAP fait par le vrai `mail-sync`
+contre le serveur de dev), et un message **classé** dans « Plateforme de billetterie — Musée des Confluences » effacé
+**sans** la case puis **restauré** — le fil de l'affaire porte les deux lignes. Effacés par `delete_message` et
+`restore_message` sous le jeton de Camille, comme l'écran.
+
+### 29.10 Preuves exigées
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | colonnes, déclencheur qui fige la date ; chaque refus de `delete_message` et `restore_message` dans l'ordre ; la politique et **chacune** des fonctions du §29.4 excluent un message effacé ; la règle de visibilité de la corbeille (le sien, l'administrateur) ; `mail_trash_moves` sans écriture pour `authenticated` ; la restauration qui annule les `pending` ; la purge, réservée à `service_role`, et son journal |
+| pytest (`mail-sync`) | `MOVE`, `COPY`+`EXPUNGE`, `\Trash` absent, UID absent, l'espacement des essais et le dixième, aucun secret au journal |
+| API | refus par jeton réel : le business developer qui ne peut pas écrire l'affaire, la lectrice, un autre membre pour la boîte d'autrui, la case sans boîte inscriptible |
+| E2E `mail` | contre le vrai serveur IMAP de dev : la case cochée, le message arrive dans la corbeille de la boîte ; non cochée, il reste dans son dossier |
+| E2E `ui` | souris et clavier : non lu et lu, sommeil, effacer puis annuler, effacer, retrouver dans « Corbeille », restaurer ; la ligne du fil de l'affaire |
+| Connecteur | pytest des cinq outils, intégration, `verify-mcp.sh` |
