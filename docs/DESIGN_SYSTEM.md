@@ -8439,3 +8439,65 @@ l'air.
   (§7).
 - **Aucune couleur, aucun jeton nouveau ; aucune icône nouvelle** : `Trash2`, `ArchiveRestore` et `TriangleAlert` sont
   réemployées pour le même objet et le même geste.
+
+### 5.103 Les pastilles d'un mail : dans la liste, le message ouvert, le filtre, et Réglages ▸ Pastilles des mails — `CRM-141`
+
+*Écrit le 2026-11-11, avant le code, après lecture des sections ciblées par la décision 926, non intégrale : §1 à §4, §6 à
+§12, §5.4 à §5.4 quinquies, §5.5 à §5.8, §5.13, §5.29 bis, §5.34, §5.59, §5.68, §5.73, §5.100, §5.102.* Ce que les écrans
+lisent, écrivent et refusent est spécifié par `docs/SPEC-mail-subsystem.md` §31 ; ces règles ne disent que de quoi ils ont
+l'air. **La grammaire est celle des étiquettes d'une affaire (§5.73), reprise sans écart** : deux données colorées tirées
+d'une liste de l'espace se lisent de la même façon d'un écran à l'autre (§5.29 bis).
+
+- **LA PASTILLE** est la pilule compacte des étiquettes (§5.73), le même composant : `rounded-full`, `text-xs`,
+  `font-medium`, le **point de tête** puis le nom, aux jetons doux de la couleur de la pastille (§12.5). Une pastille
+  **archivée** garde sa pilule ; son nom accessible et son infobulle disent « {nom}, pastille archivée ». **L'origine**
+  — posée par l'IA, posée à la main — n'est pas une teinte : elle se dit en mots dans le panneau (plus bas), et dans le
+  nom accessible et l'infobulle de la pilule du message ouvert (« {nom}, posée par l'IA »).
+- **DANS LA LISTE DES MAILS** — *écart assumé au §5.4 ter, « aucune suggestion dans la liste »* : le responsable veut les
+  pastilles visibles dans la liste (décision 883), c'est leur raison d'être — trier d'un regard. Elles viennent **sous
+  l'objet** de la ligne du fil, sur une ligne `flex-wrap gap-1`, **trois au plus** dans l'ordre du nom, puis une pilule
+  neutre « +{n} » dont le nom accessible et l'infobulle énumèrent les autres (§5.73). Une ligne sans pastille n'a pas de
+  ligne vide. Le nom accessible du bouton de la ligne énumère les pastilles après l'objet.
+- **LE FILTRE « Pastille »** : un `select` natif libellé (§5.7), option vide « Toutes les pastilles », puis les pastilles
+  actives dans l'ordre du nom, puis les archivées, suffixées « (archivée) » — on retrouve ainsi les mails d'une pastille
+  qu'on vient de retirer. Il vit dans la **rangée d'action en tête de la liste** (§5.4 quinquies), à gauche, « Tout
+  marquer comme lu » restant à droite ; sous `md`, la rangée passe à la ligne. Il est porté par l'adresse (`pastille`). Un
+  filtre qui ne trouve rien rend l'état vide de la liste, qui nomme la pastille filtrée et le geste qui l'efface :
+  « Aucun message ne porte la pastille « {nom} » dans ce dossier. », avec « Toutes les pastilles » (§5.51).
+- **DANS LE MESSAGE OUVERT** : les pastilles posées viennent **sous l'en-tête**, avant la rangée de commandes, sur une
+  ligne `flex-wrap gap-1` ; aucune ligne s'il n'y en a pas. **L'état d'évaluation**, quand il n'est pas « faite », se dit
+  sur cette même ligne, en 13 px : « Pastilles en attente d'évaluation » en `--color-text-2` ; « Les pastilles n'ont pas
+  pu être évaluées » en `--color-danger-on-soft`, précédé de `TriangleAlert` `aria-hidden` (§1 : le mot porte l'état).
+- **DEUX COMMANDES DANS LA RANGÉE DU MESSAGE OUVERT** (§5.102), **après « Marquer comme non lu », avant « Effacer »** —
+  la décision 883 les veut à côté de « non lu » et du sommeil :
+  - **« Réévaluer les pastilles »**, secondaire compacte, icône `Sparkles` — celle d'un fait que le produit établit
+    lui-même (§5.4 ter). **Aucune confirmation** : elle ne retire aucun choix manuel. Pendant l'appel, inactive et
+    `aria-busy` ; l'issue est annoncée dans la région vivante, « Réévaluation demandée. », et la ligne d'état passe à
+    « en attente ». **Absente sur un mail envoyé**, qui n'est pas évalué : un geste sans objet ne s'offre pas.
+  - **« Pastilles »**, secondaire compacte, icône `Tags` — celle de la commande « Étiquettes » (§5.73), le même geste sur
+    un objet voisin —, avec `aria-expanded`. Elle ouvre **dans le flux**, sous la rangée, le panneau du §5.73 : un
+    `fieldset` « Pastilles de ce message », une case native de 24 px par pastille active, la pilule pour libellé, suivie
+    en 13 px `--color-text-2` de son origine quand elle est posée ou retirée (« posée par l'IA », « posée à la main »,
+    « retirée à la main ») ; puis les archivées encore posées, qui se décochent seulement. **Chaque case écrit au clic**
+    et revient si la base refuse, son refus écrit dessous, `role="alert"`. « Fermer » et `Échap` referment, le focus
+    revient à « Pastilles ». Ce panneau et la confirmation d'« Effacer » s'excluent : en ouvrir un referme l'autre.
+- **LES COMMANDES REFUSÉES** (§5.59) : « Réévaluer les pastilles » et les cases suivent la capacité d'**éditer l'espace**
+  (`edition`), pas celle d'écrire une affaire — la règle de la décision 926. Refusée, elles sont `disabled`, lisibles,
+  jamais masquées ; le motif générique de l'édition, posé une fois en tête du panneau, et porté par la description
+  accessible de « Réévaluer les pastilles ». Le panneau s'ouvre quand même, pour lire l'origine des pastilles.
+- **RÉGLAGES ▸ PASTILLES DES MAILS**, dans l'index des réglages de la messagerie : la forme de Réglages ▸ Étiquettes
+  (§5.73), reprise. Une liste plate ; chaque ligne porte la pilule pour aperçu, puis le **descriptif** en 13 px
+  `--color-text-2`, sur toute la largeur, à la ligne si besoin ; une ligne archivée porte la mention textuelle
+  « Archivée » (§5.13) et ne garde que « Désarchiver » (§5.29 bis). « Modifier » et « Archiver », discrets compacts.
+  « Nouvelle pastille », primaire, ouvre la fiche **dans le flux** : « Nom », « Couleur » — le sélecteur du §5.68 —, et
+  **« Descriptif pour l'IA »**, une zone de texte de 4 lignes, avec son aide en 13 px `--color-text-3` : « Le modèle lit ce
+  texte pour décider si un mail porte cette pastille. Décrivez les mails concernés. » « Enregistrer » et « Annuler ».
+  **« Archiver » ouvre une confirmation dans le flux** (§5.13), qui nomme la pastille et dit : « Elle ne sera plus posée,
+  ni par l'IA ni à la main. Les mails qui la portent la garderont, marquée archivée. » « Afficher les archivées » (§5.29
+  bis). Un nom pris est refusé sous les champs, et nomme « Afficher les archivées » quand il est pris par une archivée
+  (§5.29 bis). L'entrée de l'index et l'écran suivent la capacité d'administrer l'espace (§5.59). États (§5.8) :
+  squelette, erreur avec « Réessayer », et l'état vide « Aucune pastille. » avec « Nouvelle pastille ».
+- **RESPONSIVE** (§7) : les pilules passent à la ligne, jamais tronquées ; le panneau et la fiche prennent la largeur ;
+  la page ne défile jamais horizontalement.
+- **Aucune couleur, aucun jeton nouveau ; aucune icône nouvelle** : `Tags`, `Sparkles` et `TriangleAlert` sont réemployées
+  pour le même sens.

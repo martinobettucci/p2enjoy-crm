@@ -66,7 +66,9 @@ est mal configuré » ; réseau ou délai dépassé — « l'assistant ne répon
 **Ce qui est envoyé au modèle, et rien d'autre** : la demande et la consigne de l'administrateur, la
 dernière révision, et la configuration utile **lue sous ses droits** — catalogue de nœuds, workflow ciblé,
 types de champs admis, et, pour un remappage, le **nombre** d'affaires par étape. **Jamais** une affaire, un
-contact, un message, une valeur de champ ni une donnée personnelle du CRM. Le serveur est opéré par LeLabs ;
+contact, un message, une valeur de champ ni une donnée personnelle du CRM. *Révisé par `CRM-141` (§15, décision 883) : pour
+l'évaluation des pastilles d'un mail reçu — et pour elle seule —, l'objet, l'expéditeur et le début du texte de ce mail
+sont envoyés.* Le serveur est opéré par LeLabs ;
 l'écran rappelle de ne pas coller de données personnelles dans une demande. Les journaux de la fonction
 portent durée, jetons et statut, **jamais** le texte d'une demande ni la clé.
 
@@ -967,3 +969,77 @@ l'affaire `siret` : le seed le fait (`CRM-112` T8, `docs/SPEC-champs-communs.md`
 - le manuel, au chapitre du générateur ;
 - le seed : une suggestion du scénario `champ_commun` en revue, passée par la vraie fonction. Elle entre avec le champ
   `siret` du seed, en T8.
+
+## 15. `CRM-141` — les pastilles d'un mail : ce que le modèle reçoit, ce qu'on croit de sa réponse (écrit le 2026-11-11, avant son code)
+
+*Décisions 883, 923, 924 et 926.* La file, les droits et l'écran : `docs/SPEC-mail-subsystem.md` §31. Ce paragraphe dit
+ce que la fonction `ia` envoie au modèle pour un mail, et ce qu'elle accepte en retour.
+
+### 15.1 Un changement de ce qui sort vers le modèle — voulu, et borné
+
+Le §3 disait : « **jamais** une affaire, un contact, un message ». **`CRM-141` l'ouvre, sur la demande du responsable**
+(décision 883) : le contenu d'un mail **reçu** est désormais envoyé au serveur Ollama de LeLabs, pour cette seule
+évaluation. Le reste du §3 vaut toujours pour l'assistant de conception.
+
+**Ce qui est envoyé pour un mail, et rien d'autre** (décision 923) :
+- l'**objet** ;
+- l'**adresse et le nom de l'expéditeur** ;
+- le **début du texte** du mail, **tronqué à 2 000 caractères** : `body_text` ; à défaut, le texte tiré de `body_html`
+  (balises retirées, entités décodées, blancs resserrés) ;
+- la **liste des pastilles actives** de l'espace — pour chacune, une clé courte de la demande (`p1`, `p2`…), son nom et
+  son descriptif.
+
+**Jamais** : une pièce jointe, ni son nom ; les destinataires ; l'affaire où le mail est classé ; un autre message du fil ;
+un identifiant de la base. Les journaux de la fonction portent la durée, les jetons, le nombre de pastilles rendues et de
+clés rejetées — **jamais** un objet, une adresse, un texte ni une pastille (`CLAUDE.md` §20).
+
+### 15.2 La demande
+
+`POST /api/chat`, `stream` désactivé, **température 0**, sortie structurée par schéma JSON :
+`{ "pastilles": [ clé, … ] }`, où chaque clé est une **énumération** des clés de la demande, sans doublon, et le tableau
+peut être vide. La consigne dit au modèle de n'attribuer une pastille que si son descriptif correspond au mail, d'en
+attribuer plusieurs si plusieurs correspondent, et aucune sinon. **Une évaluation est bornée à 30 s.**
+
+### 15.3 La sortie n'est jamais crue
+
+Comme au §2 : la forme est vérifiée avant tout usage.
+- Un JSON hors schéma, ou illisible : échec `reponse_invalide`.
+- **Une clé inconnue est rejetée** — elle n'est pas devinée ni rapprochée d'une autre — et comptée dans le journal ; les
+  clés connues de la même réponse sont gardées.
+- Les doublons tombent.
+- Les clés gardées sont traduites en identifiants de pastilles **par la fonction**, puis la base les **restreint encore**
+  aux pastilles actives de l'espace du message (`docs/SPEC-mail-subsystem.md` §31.5) : deux contrôles, comme pour
+  l'assistant de conception.
+
+### 15.4 La route, et le mode dégradé
+
+`POST /ia/pastilles/evaluer` — appelée par `pg_cron` sur le réseau interne, avec le secret que
+`public.verify_label_dispatch` fait vérifier ; sans lui, `401`. Elle ne sert **aucun** navigateur : l'écran demande une
+réévaluation par `public.request_label_evaluation`, et la passe suivante s'en charge.
+
+| Situation | Ce que fait la passe |
+|---|---|
+| Clé absente (`cle_absente`) | rien n'est pris ; `200` `{evalues: 0, raison: "cle_absente"}` ; les messages restent `pending` |
+| Serveur injoignable ou clé refusée, avant la première évaluation | idem, `raison` `serveur_injoignable` ou `cle_refusee` |
+| Délai dépassé, réponse invalide, panne en cours de passe | l'échec est écrit sur le message (`last_error`), l'espacement s'applique, la passe s'arrête là |
+| Réussite | la passe continue tant que son budget de 100 s n'est pas épuisé |
+
+La réponse de la route ne porte que des comptes. Aucune nouvelle tentative dans la passe : l'espacement de la base s'en
+charge.
+
+### 15.5 Le simulateur
+
+Deux scénarios s'ajoutent au §11.6, atteints comme les autres par `x-ia-simulateur` et `IA_SIMULATEUR_HOST` (le
+développement seul) :
+- **`pastilles`** — déterministe : le simulateur lit dans la demande la liste des pastilles et le texte du mail, et rend
+  la clé de chaque pastille dont le **nom** apparaît dans l'objet ou le texte (sans accents ni casse), plus une clé
+  **inconnue** (`p99`) que la fonction doit rejeter ;
+- **`panne`** — `500` à chaque appel, pour l'espacement des échecs et l'état `failed`.
+
+### 15.6 Preuves
+
+Unitaires de la fonction : la demande construite (troncature, texte tiré du HTML, aucune pièce jointe, aucun
+destinataire), le contrôle de la sortie (clé inconnue rejetée et comptée, doublons, JSON hors schéma), la borne de 30 s
+et le budget de 100 s par bornes injectées, le secret exigé, le journal sans contenu, l'en-tête du simulateur ignoré sans
+`IA_SIMULATEUR_HOST`. Intégration : la passe entière contre le simulateur sur la vraie base ; puis contre le vrai serveur
+quand il est joignable, sur un message de démonstration (`CLAUDE.md` §15).

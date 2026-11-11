@@ -4392,3 +4392,220 @@ ne l'écrit pas.
 3. **T3, l'écran** : le cadre, le bandeau, `cid:`, le texte aux liens ; le design system §5.100 ; l'E2E souris et clavier ;
    les captures ; le harnais révisé.
 4. **T4, le seed et le manuel** : le message HTML du seed, sa garde, le manuel, le DAT (la sécurité du rendu).
+
+## 31. Les pastilles d'un mail : posées par le LLM du CRM, réévaluables, corrigeables à la main — `CRM-141`
+
+*Écrit le 2026-11-11, avant le code (décisions 883, 923, 924 et 926).* Le CRM passe chaque mail reçu au modèle de son
+assistant IA (`docs/SPEC-ia.md` §3), qui lui attribue zéro, une ou plusieurs **pastilles** prises dans une liste propre à
+l'espace. Les pastilles se voient dans la liste des mails et dans le message ouvert, se filtrent, se corrigent à la main,
+et la main prime toujours. L'apparence : `docs/DESIGN_SYSTEM.md` §5.103 ; l'appel au modèle : `docs/SPEC-ia.md` §15 ; le
+connecteur : `docs/SPEC-mcp.md` §9.2 *duovicies*.
+
+### 31.1 Ce que l'unité livre, et ce qu'elle ne livre pas
+
+**Livre** : les pastilles de l'espace et leurs défauts ; une file d'évaluation en base, cadencée par `pg_cron` ; l'appel
+au modèle par la fonction `ia` ; la pose et le retrait à la main ; le bouton « Réévaluer les pastilles » ; les pastilles
+dans la liste, dans le message ouvert, et un filtre par pastille ; l'écran Réglages ▸ Pastilles des mails ; trois outils
+du connecteur ; le seed ; le manuel.
+
+**Ne livre pas** :
+- **les mails envoyés** ne sont pas évalués (décision 926) ; seuls les messages `direction = 'inbound'` entrent dans la
+  file ;
+- **aucune pièce jointe** n'est envoyée au modèle, ni son nom (décision 883) ;
+- **le connecteur ne passe jamais par le LLM du CRM** : l'assistant connecté juge lui-même (décision 924) ;
+- **aucune règle d'affaire** ne dépend d'une pastille : elle classe pour l'œil, elle ne déclenche rien.
+
+### 31.2 Le modèle
+
+Noms anglais (`docs/DAT.md` §12 bis, décision 658). La migration et son numéro : `docs/SCHEMA.md`, « Migration —
+`CRM-141` T1 ».
+
+**`public.mail_labels`** — les pastilles de l'espace :
+
+| Colonne | Type | Contrainte |
+|---|---|---|
+| `id` | `uuid` | PK |
+| `workspace_id` | `uuid` | FK `workspaces`, `on delete cascade` |
+| `name` | `text` | 1 à 40 caractères après `btrim` |
+| `color` | `text` | un des cinq jetons (`brand`, `success`, `accent`, `danger`, `neutral`), défaut `neutral` |
+| `description` | `text` | 1 à 500 caractères après `btrim` : ce que le modèle lit pour décider |
+| `archived_at` | `timestamptz` | nul : active |
+| `created_at`, `updated_at` | `timestamptz` | |
+| `created_by` | `uuid` | FK `profiles`, `on delete set null` |
+
+Unicité de `(workspace_id, lower(btrim(name)))`, **archivées comprises** : une pastille archivée garde son nom, et le
+refus de doublon nomme la case « Afficher les archivées » (`docs/DESIGN_SYSTEM.md` §5.29 bis, règle générale). **Aucune
+destruction** : `DELETE` n'est accordé à personne par l'API ; le geste des réglages est un archivage (décision 926).
+
+**`public.mail_message_labels`** — les pastilles d'un message :
+
+| Colonne | Type | Contrainte |
+|---|---|---|
+| `message_id` | `uuid` | FK `mail_messages`, `on delete cascade` |
+| `label_id` | `uuid` | FK `mail_labels`, `on delete cascade` |
+| `workspace_id` | `uuid` | celui du message et de la pastille (vérifié par la fonction d'écriture) |
+| `source` | `text` | `llm` ou `manual` |
+| `applied` | `boolean` | vrai : posée ; faux : **retirée à la main** |
+| `set_by` | `uuid` | FK `profiles`, nul pour `llm` |
+| `set_at` | `timestamptz` | |
+
+PK `(message_id, label_id)`. `CHECK (applied or source = 'manual')` : seule la main retire. **Une ligne `manual`
+est un choix que la réévaluation ne touche jamais**, qu'il pose (`applied`) ou retire (`not applied`) — c'est ainsi que
+« la main prime » se tient en base, sans mémoire à côté.
+
+**`public.mail_label_evaluations`** — l'état d'évaluation d'un message, et la file :
+
+| Colonne | Type | Contrainte |
+|---|---|---|
+| `message_id` | `uuid` | PK, FK `mail_messages`, `on delete cascade` |
+| `workspace_id` | `uuid` | |
+| `state` | `text` | `pending`, `done`, `failed` |
+| `priority` | `smallint` | `0` : un mail neuf ou une demande ; `1` : le rattrapage |
+| `requested_at` | `timestamptz` | |
+| `attempts` | `smallint` | essais depuis la dernière demande |
+| `next_attempt_at` | `timestamptz` | dû à partir de |
+| `leased_until` | `timestamptz` | réservé par une passe jusqu'à |
+| `last_error` | `text` | `delai_depasse`, `serveur_injoignable`, `cle_refusee`, `reponse_invalide` ; nul sinon |
+| `evaluated_at` | `timestamptz` | la dernière évaluation réussie |
+
+### 31.3 Qui lit, qui écrit
+
+| Geste | Qui | Où la règle est tenue |
+|---|---|---|
+| Lire les pastilles de l'espace | tout membre de l'espace | politique `SELECT` de `mail_labels` (`app.is_workspace_member`) |
+| Créer, modifier, archiver, désarchiver une pastille | administrateur de l'espace | politiques `INSERT` / `UPDATE` (`app.is_workspace_admin`, `USING` et `WITH CHECK`) |
+| Lire les pastilles d'un message et son état d'évaluation | qui voit le message | politiques `SELECT` (`app.peut_voir_message(message_id)`) |
+| Poser ou retirer à la main | qui voit le message **et édite l'espace** (administrateur, business developer) | `public.set_message_label`, `SECURITY DEFINER` (§31.4) |
+| Demander une réévaluation | idem | `public.request_label_evaluation`, `SECURITY DEFINER` (§31.4) |
+| Prendre et clore une évaluation | la clé de service seule | `claim_label_evaluations`, `record_label_evaluation` (§31.5) |
+
+Aucun privilège d'écriture directe sur `mail_message_labels` ni `mail_label_evaluations` n'est accordé à
+`authenticated` : tout passe par les fonctions. Une lectrice voit les pastilles et les commandes grisées, avec leur motif
+(décision 926 ; `docs/DESIGN_SYSTEM.md` §5.59).
+
+### 31.4 Les gestes d'une personne
+
+- **`public.set_message_label(p_message_id uuid, p_label_id uuid, p_applied boolean) returns void`** — pose
+  (`p_applied`) ou retire une pastille, **toujours comme un choix manuel** : la ligne devient `source = 'manual'`,
+  `applied = p_applied`, `set_by = auth.uid()`. Refus nommés : `message_not_found` (le message n'existe pas ou n'est pas
+  vu : un seul code, rien n'est divulgué), `forbidden` (l'appelant n'édite pas l'espace), `label_not_found` (pastille
+  absente ou d'un autre espace), `label_archived` (une pastille archivée ne se pose plus ; la **retirer** reste permis,
+  pour qu'un mail se débarrasse d'une pastille d'avant). Un message envoyé se pastille à la main comme un reçu : seule
+  l'évaluation automatique les écarte.
+- **`public.request_label_evaluation(p_message_id uuid) returns void`** — le bouton « Réévaluer les pastilles » : la
+  ligne d'évaluation repasse `pending`, `priority = 0`, `attempts = 0`, `next_attempt_at = now()`, `last_error` effacé.
+  Refus : `message_not_found`, `forbidden`, `outbound_message` (un mail envoyé n'est pas évalué). Une demande sur un
+  message déjà en attente le remonte en tête sans le dupliquer.
+
+### 31.5 La file et la passe d'évaluation — « la base décide, la fonction évalue, `pg_cron` cadence »
+
+Le patron des webhooks (`docs/DAT.md` §3.7 quinquies), repris parce que la fonction `ia` vit dans sa requête
+(`docs/SPEC-ia.md` §11.1) : une tâche de fond n'y survit pas, une passe bornée si.
+
+- **L'entrée dans la file** : un déclencheur `AFTER INSERT` sur `mail_messages` inscrit chaque message `inbound` en
+  `pending`, `priority = 0`. **À la migration**, tous les messages `inbound` existants, hors corbeille, sont inscrits en
+  `pending`, `priority = 1`, les plus récents d'abord (décision 923 : tous les mails existants). Un mail neuf passe donc
+  toujours devant le rattrapage.
+- **La cadence** : `pg_cron` appelle chaque minute, par `pg_net`, sur le réseau interne, la route `POST
+  /ia/pastilles/evaluer` de la fonction `ia` — **seulement si une évaluation est due**. L'appel porte un secret tiré au
+  hasard dans Vault, que la fonction fait vérifier par `public.verify_label_dispatch(p_secret text)` ; sans lui, `401`.
+- **La passe** : la fonction prend **une** évaluation due à la fois par `public.claim_label_evaluations(p_limit int)`
+  (verrou `for update skip locked`, ordre `priority`, puis `requested_at`, réservation de 5 minutes, essai compté), qui
+  rend le message — objet, expéditeur, `body_text`, `body_html` borné — et les pastilles **actives** de son espace ; elle
+  l'évalue (`docs/SPEC-ia.md` §15), le clôt par `public.record_label_evaluation`, et recommence **tant que sa passe n'a
+  pas dépassé 100 s** — sous la borne de 150 s du worker `ia`. Deux passes ne prennent jamais le même message.
+- **La clôture** — `public.record_label_evaluation(p_message_id uuid, p_label_ids uuid[], p_error text)`, clé de service :
+  - **réussite** (`p_error` nul) : les lignes `source = 'llm'` du message sont **remplacées** par les pastilles rendues,
+    **restreintes** aux pastilles actives de l'espace du message et **sans ligne `manual`** pour ce couple ; l'état passe
+    `done`, `evaluated_at = now()`. Une évaluation qui ne rend **aucune** pastille est une réussite : le mail n'en porte
+    pas ;
+  - **échec** : `attempts + 1`, `last_error`, et le prochain essai après 1 min, 5 min, 30 min, puis 2 h ; **au cinquième
+    échec**, l'état passe `failed` et le message attend le bouton. Une passe interrompue laisse sa réservation expirer :
+    le message est repris à la passe suivante.
+- **Le mode dégradé** : clé absente ou serveur injoignable (`docs/SPEC-ia.md` §15.4) — la passe ne prend rien quand
+  l'assistant se déclare indisponible ; les messages restent `pending`, **tous les gestes manuels restent entiers**, et
+  l'écran dit « Pastilles en attente d'évaluation ».
+- **Le débit**, mesuré à l'écriture du code et consigné : une évaluation courte prend quelques secondes au modèle ; une
+  passe d'une minute en traite donc une dizaine à une vingtaine. Le rattrapage de tous les mails existants peut durer des
+  heures, et c'est assumé (décision 923).
+- **La mémoire de la cellule** (8 Go) : **aucun modèle n'y est chargé** — le serveur Ollama est celui de LeLabs
+  (`docs/SPEC-ia.md` §3). La passe coûte un worker de la fonction `ia` par minute et des requêtes HTTP.
+- **En développement**, la cadence est la même ; un réglage de la base posé par le seed de développement seul fait porter
+  à l'appel de `pg_cron` l'en-tête `x-ia-simulateur: pastilles`, que la fonction ne suit que si `IA_SIMULATEUR_HOST` lui
+  est remise (`docs/SPEC-ia.md` §11.6) : la pile de développement évalue de façon déterministe, sans le serveur réel. En
+  production, ni le réglage ni la variable n'existent.
+
+### 31.6 Les pastilles par défaut
+
+La migration pose dans **chaque espace existant**, et un déclencheur `AFTER INSERT` sur `workspaces` dans **chaque espace
+créé**, neuf pastilles actives, avec un descriptif écrit pour le modèle (décision 883) : « Spam », « Lead », « Devis /
+commande », « Facture / paiement », « Support client », « Partenariat », « Recrutement », « Newsletter », « Administratif ».
+Leurs descriptifs et leurs couleurs sont fixés dans la migration et dans `docs/SCHEMA.md` ; les administrateurs les
+modifient comme les autres.
+
+### 31.7 L'écran
+
+L'apparence : `docs/DESIGN_SYSTEM.md` §5.103.
+
+- **Réglages ▸ Pastilles des mails** : la liste des pastilles — nom, couleur, descriptif —, « Nouvelle pastille »,
+  « Modifier », « Archiver » avec confirmation, « Désarchiver » sans confirmation, la case « Afficher les archivées ».
+  L'écran est lisible par tout membre ; ses commandes sont éteintes avec leur motif pour qui n'administre pas l'espace.
+- **Dans la liste des mails** : les pastilles **posées** du fil — celles de son dernier message —, et un filtre par
+  pastille dans l'en-tête de la liste, porté par l'adresse (clé `pastille`). Le filtre montre les fils dont un message
+  porte la pastille, posée ; il se combine avec le dossier choisi.
+- **Dans le message ouvert** : ses pastilles posées, avec leur origine (« posée par l'IA », « posée à la main ») ;
+  l'état d'évaluation quand il n'est pas `done` ; « Réévaluer les pastilles » dans la rangée de commandes, à côté du
+  sommeil et de « Marquer comme non lu » ; et « Pastilles », qui ouvre dans le flux la liste des pastilles actives à
+  cocher ou décocher — chaque case appelle `set_message_label`.
+- **Une pastille archivée** reste affichée sur les mails qui la portent, avec la mention « archivée » ; elle n'est plus
+  proposée à la pose, et le modèle ne la reçoit plus.
+
+### 31.8 Le connecteur
+
+**Oui, famille `messagerie`, cases existantes** (décisions 883, 923 et 924) : lire les pastilles de l'espace, lire les
+pastilles et le contenu d'un mail, poser et retirer une pastille — comme un choix manuel. **L'assistant connecté juge
+lui-même** ; aucun outil ne demande une réévaluation au LLM du CRM. Les outils : `docs/SPEC-mcp.md` §9.2 *duovicies*.
+
+### 31.9 Le seed
+
+- les neuf pastilles par défaut de l'espace du seed, posées par la migration ;
+- **des messages déjà évalués par le vrai chemin** : le seed de développement appelle la route de la passe avec le secret
+  et le scénario `pastilles` du simulateur ; aucune ligne `llm` n'est écrite à la main ;
+- **un message corrigé à la main** : une pastille retirée et une posée, par `set_message_label` sous le jeton de
+  l'administratrice ;
+- **un message en échec** : une évaluation que le scénario `panne` du simulateur fait échouer cinq fois, le reste de la
+  file la prenant ensuite ;
+- une pastille archivée, encore portée par un message.
+
+### 31.10 Preuves exigées
+
+- **pgTAP** : la RLS des trois tables (lecture par qui voit le message, écriture des pastilles par l'administrateur,
+  aucune écriture directe des deux autres) ; `set_message_label` et ses quatre refus, sous les trois profils du seed ; la
+  main prime — une réévaluation ne touche ni une pose ni un retrait manuels ; `record_label_evaluation` restreint aux
+  pastilles actives du même espace ; l'espacement des échecs et l'état `failed` au cinquième ; le verrou de
+  `claim_label_evaluations` ; les défauts dans un espace créé ; l'unicité du nom, archivées comprises ; un message
+  envoyé jamais inscrit.
+- **Unitaires** : la construction de la demande au modèle (troncature à 2 000 caractères, texte tiré du HTML quand
+  `body_text` manque, aucune pièce jointe) ; le contrôle de la sortie — une clé inconnue est rejetée et comptée, un JSON
+  hors schéma est `reponse_invalide`, les doublons tombent ; la passe bornée à 100 s ; le journal sans contenu ; l'écran
+  (pastilles, filtre, cases, bouton, états, commandes éteintes).
+- **API** (jetons réels) : poser, retirer, réévaluer sous l'administratrice et le business developer ; la lectrice
+  refusée ; un autre espace refusé ; la passe entière contre le simulateur, puis contre le vrai modèle quand il est
+  joignable (`CLAUDE.md` §15).
+- **E2E** souris et clavier : les réglages (créer, modifier, archiver, désarchiver, le refus de doublon) ; les pastilles
+  dans la liste et le filtre ; « Réévaluer » ; poser et retirer à la main ; la lectrice ; quatre paliers ; captures.
+- **Connecteur** : pytest unitaires et intégration ; `verify-mcp.sh`.
+
+### 31.11 Tranches
+
+Chaque tranche est poussée une fois vérifiée.
+
+| Tranche | Contenu |
+|---|---|
+| **T1** | Migration : les trois tables, la RLS, `set_message_label`, `request_label_evaluation`, `claim_label_evaluations`, `record_label_evaluation`, les défauts et leur déclencheur, le déclencheur d'entrée dans la file et le rattrapage ; pgTAP ; `docs/SCHEMA.md` ; contrat de déploiement |
+| **T2** | L'évaluation : la route `POST /ia/pastilles/evaluer` de la fonction `ia`, le scénario `pastilles` du simulateur, `verify_label_dispatch` et la cadence `pg_cron` (seconde migration) ; unitaires ; preuve d'intégration contre le simulateur et le vrai modèle ; le seed |
+| **T3** | L'écran Réglages ▸ Pastilles des mails ; unitaires ; API ; E2E ; captures |
+| **T4** | L'inbox : les pastilles dans la liste, le filtre, le message ouvert, « Pastilles » et « Réévaluer les pastilles » ; unitaires ; E2E ; captures |
+| **T5** | Le connecteur : trois outils ; pytest ; `verify-mcp.sh` |
+| **T6** | Le manuel : l'inbox et les réglages de la messagerie, avec leurs images |
+| **T7** | Production, par la session de livraison, sur instruction du responsable : deux migrations, la fonction `ia`, la webapp, l'image `mcp` ; le rattrapage observé |

@@ -3348,6 +3348,44 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
    cards actives exige un plan de remappage. Comportement par défaut retenu : archivage refusé
    tant que des cards s'y trouvent.
 
+### Migration — les pastilles d'un mail — `CRM-141` T1 (numéro pris au push ; `docs/SPEC-mail-subsystem.md` §31)
+
+*Écrit le 2026-11-11, avant le code (décisions 883, 923, 924 et 926).* Les colonnes et les contraintes des trois tables
+sont celles du §31.2 de `docs/SPEC-mail-subsystem.md` ; leurs règles d'accès, celles du §31.3.
+
+- **`public.mail_labels`**, **`public.mail_message_labels`**, **`public.mail_label_evaluations`** : RLS activée sur les
+  trois ; `SELECT` à `authenticated` (et `anon`, pour zéro ligne plutôt qu'une erreur de privilège) ; `INSERT` et
+  `UPDATE` de `mail_labels` aux administrateurs de l'espace ; **aucun** privilège d'écriture d'`authenticated` sur les
+  deux autres ; `DELETE` à personne par l'API.
+- **Fonctions** : `public.set_message_label(uuid, uuid, boolean)` et `public.request_label_evaluation(uuid)`, `SECURITY
+  DEFINER`, gardées par `app.peut_voir_message` et le rôle de l'espace du message (`admin`, `business_developer`) ;
+  `public.claim_label_evaluations(int)` et `public.record_label_evaluation(uuid, uuid[], text)`, `SECURITY DEFINER`,
+  exécutables par `service_role` seul.
+- **Déclencheurs** : l'entrée de chaque message `inbound` dans la file (`AFTER INSERT` sur `mail_messages`) ; les neuf
+  pastilles par défaut de chaque espace créé (`AFTER INSERT` sur `workspaces`) ; `updated_at` de `mail_labels`.
+- **Données** : les neuf pastilles par défaut dans chaque espace existant ; tous les messages `inbound` existants, hors
+  corbeille, inscrits en `pending`, `priority = 1` (décision 923).
+- **Index** : la file due — `(priority, requested_at)` sur `mail_label_evaluations` où `state = 'pending'` ; le filtre de
+  la liste — `(label_id, message_id)` sur `mail_message_labels` où `applied`.
+
+**Les pastilles par défaut** (décision 883), modifiables :
+
+| Nom | Couleur | Descriptif pour le modèle |
+|---|---|---|
+| Spam | `danger` | Courrier indésirable : publicité non sollicitée, arnaque, hameçonnage, message sans rapport avec l'activité. |
+| Lead | `success` | Un prospect qui s'intéresse à nos services : demande d'information, de rendez-vous ou de premier échange. |
+| Devis / commande | `brand` | Une demande de devis, l'acceptation d'un devis, un bon de commande ou la confirmation d'une commande. |
+| Facture / paiement | `accent` | Une facture reçue ou à émettre, une relance de paiement, un avis de virement ou une question de règlement. |
+| Support client | `brand` | Un client existant qui signale un problème, pose une question d'usage ou demande une assistance. |
+| Partenariat | `success` | Une proposition de partenariat, de collaboration, de sponsoring ou de co-production. |
+| Recrutement | `neutral` | Une candidature, une offre d'emploi, une demande de stage ou un échange avec un cabinet de recrutement. |
+| Newsletter | `neutral` | Une lettre d'information, une publication périodique ou un envoi groupé auquel on est abonné. |
+| Administratif | `neutral` | Une démarche administrative, juridique, fiscale ou sociale : impôts, banque, assurance, organismes publics. |
+
+**Retour arrière** : supprimer les déclencheurs, les quatre fonctions et les trois tables ; aucune table existante n'est
+modifiée. La seconde migration (`CRM-141` T2 : `verify_label_dispatch`, le secret dans Vault et la cadence `pg_cron`) est
+décrite avec sa tranche.
+
 ### Migration `0182` — l'espace d'un message de la corbeille, pour l'ancre du connecteur (`CRM-138` T4 ; spécifiée le 2026-11-11, avant le code)
 
 `docs/SPEC-mail-subsystem.md` §29.8 (précisé) ; `docs/SPEC-mcp.md` §9.2 (CRM-138).

@@ -19315,16 +19315,18 @@ nettoyage, `cid:` et la migration de `content_id`, le seed, les preuves, quatre 
 - (iii) les pastilles sont visibles dans la liste des mails et dans le message ouvert ;
 - (iv) le bouton « Réévaluer les pastilles », à côté de « non lu » et du sommeil, relance l'évaluation d'un message ;
 - (v) on pose ou on retire une pastille à la main, et la réévaluation ne revient jamais sur un choix manuel.
-**MCP** : **oui, famille `messagerie`**, cases existantes (décision 883) : lire les pastilles d'un mail, demander une
-réévaluation.
-**Spécification** : à écrire avant le code. Elle couvre :
-- `docs/SPEC-ia.md` : ce qui est envoyé au modèle, la sortie contrôlée, le mode dégradé ;
-- `docs/SPEC-mail-subsystem.md` : la file d'évaluation, les pastilles d'un message, les droits ;
-- `docs/SCHEMA.md` (migration) ;
-- `docs/DESIGN_SYSTEM.md` : la pastille, l'écran de réglages, le bouton ;
-- `docs/SPEC-mcp.md` §9.2 ;
-- le manuel ;
-- le contrat de déploiement : migration, fonction ou service, variables.
+**MCP** : **oui, famille `messagerie`**, cases existantes (décisions 883, 923 et 924) : lire les pastilles de l'espace, lire
+les pastilles et le contenu d'un mail, **poser et retirer** une pastille — comptées comme des choix manuels. L'assistant
+connecté juge lui-même ; aucun outil ne demande une réévaluation au LLM du CRM (décision 924, révisant la 883).
+**Spécification** : écrite le 2026-11-11, avant le code (décisions 923, 924 et 926) — `docs/SPEC-mail-subsystem.md` §31 (le
+modèle, les droits, la file et la passe d'évaluation, les défauts, l'écran, le seed, les preuves, le découpage en sept
+tranches T1 à T7) ; `docs/SPEC-ia.md` §15 (ce qui est envoyé au modèle, la sortie contrôlée, la route, le mode dégradé,
+le simulateur) ; `docs/SCHEMA.md` « Migration — les pastilles d'un mail » (les neuf défauts et leurs descriptifs) ;
+`docs/DESIGN_SYSTEM.md` §5.103 (la pastille, la liste, le filtre, le message ouvert, les réglages) ; `docs/SPEC-mcp.md`
+§9.2 *duovicies* (trois outils) ; le manuel avec T6 ; le contrat de déploiement avec T1 et T2.
+**Arbitrages** : tous les mails existants évalués à la mise en service (923) ; objet, expéditeur et 2 000 caractères
+envoyés au modèle (923) ; pose et réévaluation par qui voit le message et édite l'espace (926) ; une pastille supprimée
+est archivée et reste sur les mails (926) ; un filtre par pastille (926) ; les mails envoyés ne sont pas évalués.
 **DoD** :
 - unitaires : contrôle de la sortie du modèle, clés inconnues rejetées ;
 - pgTAP : RLS, administrateurs seuls sur les pastilles, la main prime, les défauts ;

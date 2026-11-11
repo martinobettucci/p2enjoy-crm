@@ -1336,6 +1336,29 @@ retirer un channel des onglets, et c'est le comportement voulu pour un geste qui
 client MCP, l'administratrice archive puis désarchive un channel, et la base le constate ; le refus par la matrice ; le
 refus du CRM pour un business developer dont la matrice est ouverte, la ligne relue inchangée ; le journal écrit.
 
+### 9.2 duovicies Les pastilles d'un mail — `CRM-141` (`docs/SPEC-mail-subsystem.md` §31 ; décisions 883, 923, 924 et 926)
+
+*Écrit le 2026-11-11, avant le code.* **Famille `messagerie`, aucune case nouvelle** (décisions 923 et 924). **L'assistant
+connecté juge lui-même** : il lit le mail et les pastilles de l'espace, puis pose ou retire ; **aucun outil ne transmet
+une demande au LLM du CRM**, ni ne demande une réévaluation.
+
+| Outil | Action | Ancre (et `autres`) | Ce qu'il appelle | Remarques |
+|---|---|---|---|---|
+| `crm_mail_label_list` | `consulter` | `workspace:workspace` | `mail_labels` | les pastilles de l'espace : identifiant, nom, couleur, **descriptif** — ce que le LLM du CRM lit pour décider, et que l'assistant lit pour la même raison —, `archived` ; les archivées en dernier |
+| `crm_mail_get` *(révisé)* | `consulter` | `message:message_id` | `mail_messages`, `mail_message_labels`, `mail_label_evaluations` | rend en plus `labels` — les pastilles **posées**, chacune avec `label_id`, `name`, `source` (`llm` ou `manual`) et `archived` — et `labels_state` (`pending`, `done`, `failed`, ou nul pour un mail envoyé) |
+| `crm_mail_label_set` | `modifier` | `message:message_id` ; `autres` : `mail_label:label_id` | `public.set_message_label` | `applied` vaut `true` par défaut ; `false` retire. **Un choix manuel** (décision 924) : la réévaluation par le LLM du CRM ne le défait jamais. Refus traduits : `forbidden` (« réservé à qui édite l'espace : administrateurs et business developers »), `label_archived`, `label_not_found`, `message_not_found` (le refus uniforme) |
+
+**Un genre d'ancre nouveau** : `mail_label` (`mail_labels`, qui porte son espace) ; le moteur exige que tout identifiant
+soit une ancre (§6.2).
+
+**La ligne « Messagerie » de l'onglet « Connecteur MCP » garde sa phrase de portée** : la grille n'a plus que 7 px de
+marge dans la fenêtre du manuel (`CRM-146`, révision `8ada0ab9`), et une ligne de plus la ferait déborder. Le manuel §33
+dit ce que la famille couvre.
+
+**Preuves** (§13) : la déclaration de chaque outil ; contre la vraie base et un vrai client MCP, lire les pastilles,
+poser et retirer (la base constate la ligne `manual`), une réévaluation qui ne défait pas la pose de l'assistant, le
+refus par la matrice, le refus du CRM pour la lectrice malgré la case ouverte, le journal écrit.
+
 ### 9.3 Réponses
 
 - **Forme.** Un JSON structuré, avec les identifiants **et** les libellés utiles : nom du track,
