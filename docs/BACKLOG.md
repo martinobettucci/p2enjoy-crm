@@ -19170,7 +19170,14 @@ reste sinon) ; E2E souris et clavier (non lu, sommeil, effacer, annuler, restaur
       du seed de `CRM-140` (SPEC-seed §44), signalé à la session qui la porte. Captures `docs/captures/CRM-138` observées.
       Sous-ensemble de ce périmètre. *Précisé avant le code (2026-11-11)* : la capacité de la case est la colonne calculée
       `mailbox_trash_permitted` (migration `0181`, `docs/SCHEMA.md`) ; la corbeille n'a pas de troisième panneau (§5.102).
-- [ ] **T4 — connecteur** : les cinq outils (§29.8) ; pytest, intégration, `verify-mcp.sh`. *Précisé avant le code
+- [x] **T4 — connecteur**, vérifiée en développement le 2026-11-11 : migration `0182` (`trashed_message_workspace`) et
+      `supabase/tests/0171_espace_message_corbeille.test.sql` 6/6 ; `mcp/crm_mcp/outils/messagerie_corbeille.py` (les cinq
+      outils), le résolveur par fonction (`RESOLUTIONS_RPC`, genre `trashed_message`), l'enregistrement et la consigne
+      (`application.py`) ; pytest `tests/test_messagerie_corbeille.py` 17, suite unitaire 393 ;
+      `tests/test_integration_messagerie_corbeille.py` 4 ; `scripts/verify-mcp.sh` 118 contrôles sans anomalie, intégration
+      103/103 en direct et à travers le Caddy de la cellule ; types régénérés (témoin à jour). Sous-ensemble de ce
+      périmètre. **Image `mcp` modifiée**, après la migration 182. Les cinq outils (§29.8) ; pytest, intégration,
+      `verify-mcp.sh`. *Précisé avant le code
       (2026-11-11)* : les contrats (`docs/SPEC-mcp.md` §9.2, CRM-138) ; l'ancre de `crm_mail_restore` est
       `trashed_message:message_id`, résolue par `trashed_message_workspace` (migration `0182`, `docs/SCHEMA.md`) — §29.8
       précisé.

@@ -5940,6 +5940,10 @@ export type Database = {
         }[]
       }
       trash_retention_days: { Args: never; Returns: number }
+      trashed_message_workspace: {
+        Args: { p_message_id: string }
+        Returns: string
+      }
       trashed_messages: {
         Args: { p_workspace_id: string }
         Returns: {

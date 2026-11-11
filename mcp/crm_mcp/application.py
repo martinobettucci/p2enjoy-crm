@@ -21,6 +21,9 @@
 #       à la messagerie pour le lien de relecture (docs/SPEC-mails-prepares.md §5, décision 829)
 # @spec CRM-144 (docs/BACKLOG.md) — tranche T4 : les trois outils de l'outbox enregistrés, famille `messagerie`
 #       (docs/SPEC-mcp.md §9.2 undevicies)
+# @spec CRM-138 (docs/BACKLOG.md) — tranche T4 : les cinq outils de lecture, de sommeil et de corbeille d'un message
+#       enregistrés, famille `messagerie`, et leur ligne dans les consignes au modèle (docs/SPEC-mcp.md §9.2, CRM-138 ;
+#       docs/SPEC-mail-subsystem.md §29.8)
 # @spec docs/SPEC-mcp.md §2 (un service, un hôte, `/mcp`), §3 (mandataire OAuth, état chiffré), §6.2 (audit puis
 #       politique, avant l'outil), §11 (`/sante`, `/pret`) ; docs/JOURNAL.md décision 627 (D1, D5, D8)
 # @spec Modèle : `evoliz_mcp/application.py` (p2enjoy-evoliz, révision 80a3e27). Écarts : aucune administration
@@ -53,6 +56,7 @@ from crm_mcp.outils import (
     champs_communs,
     contacts,
     messagerie,
+    messagerie_corbeille,
     objectifs,
     organisations,
     outbox,
@@ -99,6 +103,9 @@ you see and change exactly what you could in the CRM web app, never more.
   crm_mail_prepare leaves it for the person to review and send in the CRM; give them its review_url.
 - Outbox: crm_mail_outbox_list shows queued, sent and failed emails. crm_mail_outbox_cancel is irreversible: confirm
   first. crm_mail_outbox_retry sends the failed email again: say so before calling.
+- Inbox: crm_mail_set_read marks an email read or unread for the person; crm_mail_snooze puts it to sleep until a date
+  (with its replies), or wakes it. crm_mail_delete moves it to the inbox trash: confirm first, and ask before also_mailbox.
+  crm_mail_trash_list shows the trash; crm_mail_restore brings an email back.
 - Outside your rights or the CRM's, a call is refused with "Introuvable ou hors de votre périmètre"
   (FR: not found or outside your perimeter), whether the object exists or not.
 - Lists are paginated: use limit (max 100) and offset.
@@ -218,6 +225,8 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
     messagerie.ajouter(serveur, moteur, crm, reglages.origine_webapp)
     # `CRM-144` T4 : l'outbox — lire la file, annuler un envoi, réessayer un échec (docs/SPEC-mcp.md §9.2 undevicies).
     outbox.ajouter(serveur, moteur, crm)
+    # `CRM-138` T4 : lu / non lu, sommeil, effacer, restaurer, lire la corbeille (docs/SPEC-mcp.md §9.2, CRM-138).
+    messagerie_corbeille.ajouter(serveur, moteur, crm)
     # L'ordre compte : l'audit enveloppe la politique, qui précède l'outil (docs/SPEC-mcp.md §6.2).
     serveur.add_middleware(AuditOutils(registre, reglages.taille_max_reponse))
     serveur.add_middleware(PolitiqueOutils(moteur))

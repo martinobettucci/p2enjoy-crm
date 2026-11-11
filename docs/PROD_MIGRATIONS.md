@@ -1039,6 +1039,12 @@ de `main` postérieure à T1 suffit, dans n'importe quel ordre avec les autres g
 Réglages, et s'y désarchive.
 ## 3. Migrations en attente
 
+**La 182, après la 181** (`CRM-138` T4), *en attente* : `trashed_message_workspace(uuid)`, l'espace d'un message de la
+corbeille visible, que le connecteur appelle pour l'ancre de `crm_mail_restore` (`docs/SCHEMA.md` « Migration `0182` »). Une
+fonction, aucune donnée. **L'image `mcp` de `CRM-138` T4** (les cinq outils `crm_mail_set_read`, `crm_mail_snooze`,
+`crm_mail_delete`, `crm_mail_restore`, `crm_mail_trash_list`, famille « Messagerie », cases existantes) **se reconstruit
+après la 182** : sans elle, `crm_mail_restore` rend toujours « introuvable ». Aucun geste préalable du responsable.
+
 **La 181, après la 180** (`CRM-138` T3), *en attente* : la colonne calculée `mailbox_trash_permitted(mail_messages)`
 (`docs/SCHEMA.md` « Migration `0181` »). Une fonction, aucune donnée, sans verrou notable. **La webapp de `CRM-138` T3 la
 demande avec le message ouvert : elle part avec la webapp, ou avant elle, jamais après** — une webapp sans elle ne lit plus

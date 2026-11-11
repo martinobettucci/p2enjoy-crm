@@ -2,6 +2,9 @@
 # @spec CRM-108 (docs/BACKLOG.md) — tranche T4 : la famille `recettes`, les ancres `revenue` et `revenue_actual`
 #       (docs/SPEC-recettes.md §7, docs/SPEC-mcp.md §6.1, §9.1)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T7 : le genre d'ancre `message` (docs/SPEC-mcp.md §9.2 decies, décision 684)
+# @spec CRM-138 (docs/BACKLOG.md) — tranche T4 : le genre d'ancre `trashed_message`, résolu par une FONCTION de la base
+#       (`RESOLUTIONS_RPC`, `trashed_message_workspace`, migration 0182) ; docs/SPEC-mail-subsystem.md §29.8 précisé ;
+#       docs/SPEC-mcp.md §9.2 (CRM-138)
 # @spec CRM-068 (docs/BACKLOG.md) — tranche T5 : le genre d'ancre `card_checklist_item` (docs/SPEC-mcp.md §9.2 duodecies, décision 767)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T6 : le genre d'ancre `block` (docs/SPEC-mcp.md §9.2 nonies)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T4 : les genres d'ancre `cost`, `cost_actual` et `occurrence` (docs/SPEC-mcp.md §9.2 septies)
@@ -125,6 +128,12 @@ RESOLUTIONS: dict[str, tuple[str, str, tuple[str, ...]]] = {
         ("budget", "track", "workspace_id"),
     ),
 }
+#: `CRM-138` T4 (docs/SPEC-mail-subsystem.md §29.8 précisé, migration 0182) : les genres dont l'espace se lit par une
+#: FONCTION de la base, sous le jeton de la personne, faute d'une table qui les rende — un message effacé n'est plus lu par
+#: la politique de `mail_messages`. Fonction et nom de son argument ; elle rend l'espace, ou `NULL` (le refus uniforme).
+RESOLUTIONS_RPC: dict[str, tuple[str, str]] = {
+    "trashed_message": ("trashed_message_workspace", "p_message_id"),
+}
 #: Le libellé d'un objet dans un refus : le terme métier français.
 LIBELLES = {
     "workspace": "espace",
@@ -151,6 +160,7 @@ LIBELLES = {
     "occurrence": "occurrence de budget",
     "block": "bloc d'objectif",
     "message": "message",
+    "trashed_message": "message de la corbeille",
     "attachment": "pièce jointe",
     "draft": "mail préparé",
     "outbox": "envoi",
@@ -221,7 +231,7 @@ class Declaration:
         ancrees: set[str] = set()
         for ancre in self.ancres:
             genre, _, argument = ancre.partition(":")
-            if genre != "workspace" and genre not in RESOLUTIONS:
+            if genre != "workspace" and genre not in RESOLUTIONS and genre not in RESOLUTIONS_RPC:
                 defauts.append(f"genre d'ancre inconnu {genre!r}")
             if argument not in parametres:
                 defauts.append(f"ancre {ancre!r} : argument absent de la signature")
@@ -411,6 +421,13 @@ class MoteurPolitique:
             return str(lignes[0]["id"]), True, str(lignes[0]["slug"])
         if not _UUID.match(valeur):
             raise RefusCrm(introuvable(genre, valeur))
+        if genre in RESOLUTIONS_RPC:
+            fonction, argument_rpc = RESOLUTIONS_RPC[genre]
+            reponse = await self.crm.rpc(jeton, fonction, {argument_rpc: valeur}, idempotent=True)
+            espace_rpc = reponse.corps if reponse.reussie else None
+            if not isinstance(espace_rpc, str) or not _UUID.match(espace_rpc):
+                raise RefusCrm(introuvable(genre, valeur))
+            return espace_rpc, False, f"{genre}:{valeur}"
         table, selection, chemin = RESOLUTIONS[genre]
         reponse = await self.crm.lire(jeton, table, {"id": f"eq.{valeur}", "select": selection})
         lignes = reponse.corps if reponse.reussie and isinstance(reponse.corps, list) else []

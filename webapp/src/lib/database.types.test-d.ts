@@ -1262,9 +1262,13 @@ type _vueDerivationColonnes = Expect<
 // « l'appelant peut l'effacer aussi dans sa boîte mail » (§29.1). Les types n'avaient pas été régénérés à T1 : ils le sont à
 // T3. CE QUI ÉCHAPPE AU GÉNÉRATEUR : `p_outcome` ne vaut que `done`, `failed` ou `retry` ; les refus nommés,
 // `message_not_found` (404), `forbidden` (42501), `no_writable_mailbox` (22023). Le compte s'accroît de huit.
+// `0182` de la TRANCHE T4 ajoute `trashed_message_workspace`, l'espace d'un message de la corbeille visible pour l'ancre du
+// connecteur (§29.8 précisé). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `NULL` pour un message inconnu, vivant ou hors de la corbeille
+// visible, indiscernables. Le compte s'accroît de un.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'trashed_message_workspace'
     | 'delete_message'
     | 'restore_message'
     | 'trashed_messages'
