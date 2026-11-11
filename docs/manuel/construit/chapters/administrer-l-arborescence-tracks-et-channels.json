@@ -897,6 +897,41 @@
 			"type": "paragraph",
 			"content": [
 				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un channel s'archive aussi depuis sa vue"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et s'y désarchive ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "le-tableau-kanban-d-un-channel"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 9.10"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") : c'est\nle même archivage, avec les mêmes droits. Un channel archivé ici paraît dans le groupe des archivés de son track, et\ninversement."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
 					"type": "text",
 					"text": "Si aucun workflow n'est affectable à ce track, l'écran vous le dit au lieu d'afficher un formulaire\nque le serveur refuserait. C'est le cas d'un espace neuf : le guide de démarrage pose alors le\nworkflow de départ en un geste ("
 				},

@@ -10,6 +10,9 @@
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T4.b : l'image « filtrer-sur-les-champs » de la section 9.11, le panneau des
 //       filtres de champ ouvert et rempli (docs/DESIGN_SYSTEM.md §5.92 ; docs/SPEC-champs-communs.md §8) ; quatre champs
 //       propres à l'image, posés puis retirés par la clé de service
+// @spec CRM-134 (docs/BACKLOG.md) — tranche T3 : les images « archiver-le-channel », « confirmer-l-archivage » et
+//       « channels-archives » de la section 9.10 (docs/SPEC-channels.md §11 ; docs/DESIGN_SYSTEM.md §5.101) ; rien n'est
+//       archivé : la confirmation est refermée par Échap, et le groupe montre l'archivé du seed, « Appels d'offres »
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
@@ -123,6 +126,25 @@ const PREFIXE_FILTRES = 'manuel-lf'
 async function retirerChampsFiltres(request: APIRequestContext): Promise<void> {
 	await service(request, 'delete', `card_common_fields?workspace_id=eq.${WORKSPACE_SEED}&key=like.${PREFIXE_FILTRES}*`)
 }
+
+test('le tableau : archiver le channel, et le retrouver dans « Archivés »', async ({ page }) => {
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto('/tracks/conseil-ia/prospection')
+	const commande = page.getByTestId('commande-archiver-channel')
+	await expect(commande).toBeEnabled()
+	await illustrer(page, { chapitre: CHAPITRE, section: S.board, nom: 'archiver-le-channel', cibles: [page.getByTestId('bascule-vue'), commande] })
+	await commande.click()
+	const confirmation = page.getByTestId('confirmation-archivage')
+	await expect(confirmation).toBeVisible()
+	await illustrer(page, { chapitre: CHAPITRE, section: S.board, nom: 'confirmer-l-archivage', cibles: [confirmation] })
+	await page.keyboard.press('Escape')
+	await expect(confirmation).toHaveCount(0)
+	const groupe = page.getByTestId('groupe-archives')
+	await groupe.click()
+	const panneau = page.getByTestId('panneau-archives')
+	await expect(panneau.getByTestId('ligne-channel-archive')).toContainText("Appels d'offres")
+	await illustrer(page, { chapitre: CHAPITRE, section: S.board, nom: 'channels-archives', cibles: [groupe, panneau] })
+})
 
 test('la vue liste : filtrer sur les champs de l’affaire', async ({ page, request }) => {
 	await retirerChampsFiltres(request)

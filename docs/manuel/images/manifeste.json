@@ -2867,6 +2867,21 @@
 			]
 		},
 		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/archiver-le-channel.jpg",
+			"largeur": 1160,
+			"hauteur": 72,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "le-tableau-kanban-d-un-channel",
+			"pleinePage": false,
+			"libelles": [
+				"Archiver le channel",
+				"Liste",
+				"Tableau",
+				"Tableau Liste",
+				"Vue du channel"
+			]
+		},
+		{
 			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/aucun-element-filtres.jpg",
 			"largeur": 519,
 			"hauteur": 249,
@@ -3065,6 +3080,33 @@
 			]
 		},
 		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/channels-archives.jpg",
+			"largeur": 1160,
+			"hauteur": 227,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "le-tableau-kanban-d-un-channel",
+			"pleinePage": false,
+			"libelles": [
+				"Appels d'offres",
+				"Appels d'offres Archivé",
+				"Appels d'offres Archivé Désarchiver",
+				"Archivé",
+				"Archivés (1)",
+				"Channels archivés de ce track",
+				"Channels du track courant",
+				"Coûts",
+				"Désarchiver",
+				"Désarchiver le channel Appels d'offres",
+				"Grands comptes",
+				"Grands comptes Clients stratégiques suivis par un interlocuteur dédié, sur des cycles de décision longs.",
+				"Nouveau channel",
+				"Prospection",
+				"Prospection Premiers contacts et pistes à qualifier avant toute proposition chiffrée.",
+				"Prospection Premiers contacts et pistes à qualifier avant toute proposition chiffrée. Grands comptes Clients stratégiques suivis par un interlocuteur dédié, sur des cycles de décision longs.",
+				"Vues du track"
+			]
+		},
+		{
 			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/checklist.jpg",
 			"largeur": 650,
 			"hauteur": 475,
@@ -3134,6 +3176,20 @@
 				"Elle sera retirée du board, de la vue liste et de la recherche sans être supprimée, et se restaure depuis la corbeille.",
 				"Mettre l'affaire « Refonte de l'intranet Valdor » à la corbeille ?",
 				"Mettre à la corbeille"
+			]
+		},
+		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/confirmer-l-archivage.jpg",
+			"largeur": 1160,
+			"hauteur": 186,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "le-tableau-kanban-d-un-channel",
+			"pleinePage": false,
+			"libelles": [
+				"Annuler",
+				"Archiver",
+				"Archiver le channel « Prospection » ?",
+				"Il quittera les onglets de ce track pour tout l'espace de travail, sans être supprimé : ses affaires restent intactes. Vous le retrouverez sous « Archivés », au bout des onglets, d'où il se désarchive."
 			]
 		},
 		{

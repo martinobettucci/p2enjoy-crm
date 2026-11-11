@@ -1788,6 +1788,24 @@ Pour un track que votre compte ne peut pas lire, cette adresse affiche « Track 
 le tableau réel est atteint et les déplacements consentis sont exécutables depuis le menu ou par
 glisser-déposer. Sans connexion, l'adresse mène à l'écran de connexion.
 
+**Archiver le channel, et le retrouver.** Sur la rangée « Tableau » / « Liste » d'un channel, le bouton
+« Archiver le channel » le retire des onglets de son track, pour tout l'espace de travail. Rien n'est supprimé : ses
+affaires restent intactes, et c'est le même archivage que dans l'arborescence ([section 17.2](#un-channel)). Une
+confirmation, sous la rangée, nomme le channel : « Archiver » le fait, « Annuler » ou la touche Échap y renonce. La vue
+passe ensuite au channel suivant.
+
+![Le bouton « Archiver le channel », à droite de la bascule « Tableau » / « Liste »](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/archiver-le-channel.jpg)
+
+![La confirmation : la question qui nomme le channel, ce que l'archivage fait, « Archiver » et « Annuler »](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/confirmer-l-archivage.jpg)
+
+Un track qui a des channels archivés porte, au bout de ses onglets, le groupe « Archivés (1) » : le nombre suit les
+channels archivés. Un clic le déplie sur le panneau « Channels archivés de ce track ». Chaque channel y est nommé, avec
+la mention « Archivé », et « Désarchiver » le rend aussitôt à sa place dans les onglets, sans confirmation. Un channel
+archivé ne s'ouvre pas : pour revoir ses affaires, désarchivez-le. Seuls les administrateurs de l'espace archivent et
+désarchivent ; pour les autres membres, les deux commandes restent visibles mais grisées, et l'écran dit pourquoi.
+
+![Le groupe « Archivés (1) » déplié : le panneau des channels archivés et « Désarchiver »](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/channels-archives.jpg)
+
 ### 9.11 La vue liste d'un channel
 
 ![La vue liste d'un channel : sa barre, ses filtres, le compte des affaires et le tableau](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/vue-liste.jpg)
@@ -4066,6 +4084,10 @@ Les mêmes six gestes s'appliquent, avec deux différences :
 couleurs, à la création comme en modification, et un nouveau channel est Gris tant que vous n'en choisissez pas
 d'autre. Elle s'affiche en **pastille** devant le nom de son onglet ([section 3.4](#les-onglets-d-un-track)) et en **pilule** dans
 l'arborescence. Elle aide à repérer un channel d'un coup d'œil ; elle ne remplace jamais son nom.
+
+**Un channel s'archive aussi depuis sa vue**, et s'y désarchive ([section 9.10](#le-tableau-kanban-d-un-channel)) : c'est
+le même archivage, avec les mêmes droits. Un channel archivé ici paraît dans le groupe des archivés de son track, et
+inversement.
 
 Si aucun workflow n'est affectable à ce track, l'écran vous le dit au lieu d'afficher un formulaire
 que le serveur refuserait. C'est le cas d'un espace neuf : le guide de démarrage pose alors le

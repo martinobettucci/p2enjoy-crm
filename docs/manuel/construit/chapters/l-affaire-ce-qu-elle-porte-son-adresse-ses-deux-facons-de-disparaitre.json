@@ -6037,6 +6037,71 @@
 			]
 		},
 		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Archiver le channel, et le retrouver."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Sur la rangée « Tableau » / « Liste » d'un channel, le bouton\n« Archiver le channel » le retire des onglets de son track, pour tout l'espace de travail. Rien n'est supprimé : ses\naffaires restent intactes, et c'est le même archivage que dans l'arborescence ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "administrer-l-arborescence-tracks-et-channels",
+						"anchor": "un-channel"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 17.2"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Une\nconfirmation, sous la rangée, nomme le channel : « Archiver » le fait, « Annuler » ou la touche Échap y renonce. La vue\npasse ensuite au channel suivant."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/archiver-le-channel.jpg",
+			"alt": "Le bouton « Archiver le channel », à droite de la bascule « Tableau » / « Liste »",
+			"width": 1160,
+			"height": 72
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/confirmer-l-archivage.jpg",
+			"alt": "La confirmation : la question qui nomme le channel, ce que l'archivage fait, « Archiver » et « Annuler »",
+			"width": 1160,
+			"height": 186
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un track qui a des channels archivés porte, au bout de ses onglets, le groupe « Archivés (1) » : le nombre suit les\nchannels archivés. Un clic le déplie sur le panneau « Channels archivés de ce track ». Chaque channel y est nommé, avec\nla mention « Archivé », et « Désarchiver » le rend aussitôt à sa place dans les onglets, sans confirmation. Un channel\narchivé ne s'ouvre pas : pour revoir ses affaires, désarchivez-le. Seuls les administrateurs de l'espace archivent et\ndésarchivent ; pour les autres membres, les deux commandes restent visibles mais grisées, et l'écran dit pourquoi."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/channels-archives.jpg",
+			"alt": "Le groupe « Archivés (1) » déplié : le panneau des channels archivés et « Désarchiver »",
+			"width": 1160,
+			"height": 227
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "la-vue-liste-d-un-channel",

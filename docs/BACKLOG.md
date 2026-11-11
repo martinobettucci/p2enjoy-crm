@@ -18954,8 +18954,7 @@ board et sur la fiche, et par un assistant connecté.
 
 ## Demande du 2026-11-09 — archiver un channel depuis la vue, le retrouver replié (décision 871)
 
-### CRM-134 — Archiver un channel depuis la vue, et le retrouver dans un groupe « Archivés » replié `[@]`
-*Prise en charge : session interactive 152dd27d (p2enjoy-crm-a8) depuis 2026-11-11 00:45 UTC — état avant : [ ] ; confiée par la session de livraison (ee)*
+### CRM-134 — Archiver un channel depuis la vue, et le retrouver dans un groupe « Archivés » replié `[P]`
 
 **Origine** : demande du responsable, le 2026-11-09 ; arbitrée le même jour (décision 871).
 **Comportement attendu** : un bouton « Archiver » sur le channel là où on le voit ; le channel quitte la vue principale
@@ -18985,7 +18984,12 @@ le seed porte déjà un channel archivé (`…033`).
   intégration 99/99 en direct et à travers le Caddy de la cellule (l'administratrice archive et désarchive, la
   base le constate ; le business developer refusé par le CRM malgré la case ouverte, la ligne relue inchangée ; la case
   fermée retire l'outil) ; manuel §33 ; §9.2 *unvicies* révisé (`destructiveHint`, exigé par le §9.1) ;
-- reste : T3 (manuel), T4 (production).
+- **T3 faite le 2026-11-11, vérifiée en développement** : le manuel §9.10 (« Archiver le channel, et le retrouver » :
+  la commande, la confirmation, le groupe « Archivés » et son panneau, les droits) et §17.2 (le renvoi), avec trois images
+  (« archiver-le-channel », « confirmer-l-archivage », « channels-archives ») produites par `e2e/manuel/09b-board-liste.spec.ts`,
+  sans rien archiver ; `manuel:verifier` à jour, `verify-manual.sh` 168 contrôles sans anomalie ;
+- reste : T4 (production) — `[P]`, voir `docs/PROD_MIGRATIONS.md` §2.44 : la webapp et l'image `mcp` de `main`, aucune
+  migration, puis le constat du responsable.
 **DoD** : unitaires ; API (droits : refus pour qui ne peut pas archiver) ; E2E souris et clavier (archiver, déplier,
 désarchiver) ; outils du connecteur et `verify-mcp.sh` ; seed (un channel archivé) ; captures aux quatre paliers ; manuel.
 

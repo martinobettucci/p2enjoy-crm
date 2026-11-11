@@ -13,6 +13,10 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-134` T3 — le manuel : archiver un channel depuis sa vue
+
+- Le manuel, au tableau d'un channel, explique « Archiver le channel », sa confirmation, le groupe « Archivés » au bout des onglets et « Désarchiver », avec trois images ; le chapitre de l'arborescence y renvoie.
+
 #### `CRM-134` T2 — archiver ou désarchiver un channel depuis le connecteur MCP
 
 - **Un assistant connecté peut archiver un channel, ou le désarchiver**, sous la case « Supprimer » de la famille « Structure ». Il demande confirmation avant de le faire. Comme à l'écran, seuls les administrateurs de l'espace y sont autorisés.
