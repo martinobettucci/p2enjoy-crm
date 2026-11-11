@@ -315,7 +315,7 @@
 							},
 							{
 								"type": "text",
-								"text": " : lignes de recette d'une affaire et leurs réels ; le rapport de rentabilité, réservé aux\nadministrateurs de l'espace ;"
+								"text": " : lignes de recette d'une affaire et leurs réels ; le rapport de rentabilité, réservé aux\nadministrateurs de l'espace ; le prévisionnel et le réel d'une organisation ;"
 							}
 						]
 					}
@@ -1219,7 +1219,37 @@
 										},
 										{
 											"type": "text",
-											"text": " d'un espace, qui demande aussi « Budgets ▸ Consulter » et « Temps ▸ Consulter »,\npuisqu'il montre les coûts et le coût du personnel. Le CRM le réserve aux administrateurs de l'espace : pour un\nautre membre, l'assistant reçoit un refus ;"
+											"text": " d'un espace, qui demande aussi « Budgets ▸ Consulter » et « Temps ▸ Consulter »,\npuisqu'il montre les coûts et le coût du personnel. Le CRM le réserve aux administrateurs de l'espace : pour un\nautre membre, l'assistant reçoit un refus ; le "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "prévisionnel et le réel d'une organisation"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", par devise, avec la\npart réalisée et le nombre d'affaires qui comptent — les mêmes sommes que le bloc « Recettes avec cette\norganisation » de sa fiche ("
+										},
+										{
+											"type": "link",
+											"target": {
+												"chapter": "le-carnet-de-contacts",
+												"anchor": "la-fiche-d-une-organisation"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "section 10.10"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": "), sur les affaires que vous lisez ;"
 										}
 									]
 								}

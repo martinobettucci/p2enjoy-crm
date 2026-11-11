@@ -19390,8 +19390,7 @@ constatés sur la route publique, et le constat du responsable.
 
 ## Demande du 2026-11-10 — le prévisionnel et le réel d'une organisation (décision 900)
 
-### CRM-146 — L'organisation montre son prévisionnel et son réel ; la liste, une barre de progression par devise `[@]`
-*Prise en charge : session interactive 152dd27d (p2enjoy-crm-a8) depuis 2026-11-10 17:16 UTC — état avant : [ ] ; confiée par la session de livraison (ee)*
+### CRM-146 — L'organisation montre son prévisionnel et son réel ; la liste, une barre de progression par devise `[P]`
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 900).
 **Comportement attendu** : la fiche d'une organisation montre, par devise, le prévisionnel (somme des recettes prévues de ses
@@ -19426,7 +19425,16 @@ T4.
   Révisées, non relâchées (décision 51) : les cinq cas « seed INTACT » de `e2e/api/contacts.spec.ts` et l'assertion 13 de
   pgTAP `0166` (portée sur la sonde ; rouge contre une mutation du seuil). Suite pgTAP complète **155 fichiers, 5 221
   assertions** ; API voisines vertes ;
-- reste : T4 (connecteur), T5 (production).
+- **T4 faite le 2026-11-11, vérifiée en développement** : l'outil `crm_organization_revenues` (famille `recettes`, action
+  `consulter`, ancre `organisation:organization_id`), qui rend par devise le prévu, le réel, la part réalisée et les
+  comptes, avec une note de lecture ; la part réalisée calculée par `rentabilite.part_realisee`, sur les **mêmes cas** que
+  la webapp (`mcp/tests/part_realisee_cas.json`, lu aussi par `webapp/src/lib/recettes-organisation.test.ts`, 16/16) ;
+  pytest unitaires **373**, rouges contre une part calculée sur un prévu négatif ; `verify-mcp.sh` **115 contrôles, aucune
+  anomalie**, intégration **98/98** en direct et à travers le Caddy de la cellule (Driss lit Vertigo Conseil en CHF et EUR,
+  appel journalisé ; la lectrice ne compte pas l'affaire qu'elle ne lit pas ; une organisation inconnue reçoit le refus
+  uniforme) ; la portée de la famille dans l'onglet « Connecteur MCP » et le manuel §33 ;
+- reste : T5 (production) — `[P]`, voir `docs/PROD_MIGRATIONS.md` §2.40 : la migration 177 et l'image `mcp` avec la
+  webapp de `main`, puis le constat du responsable.
 **DoD** : pgTAP de l'agrégat (droits : une affaire illisible ne compte pas ; plusieurs devises) ; unitaires ; API avec refus de
 droits ; E2E souris et clavier (fiche, liste) ; outil du connecteur et `verify-mcp.sh` ; seed (une organisation avec prévu et
 réel dans deux devises, une sans recette) ; captures aux quatre paliers ; manuel.

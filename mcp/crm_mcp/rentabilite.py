@@ -21,6 +21,17 @@ def au_centime(x: float) -> float:
     return math.floor(x * 100 + 0.5) / 100
 
 
+# @spec CRM-146 (docs/BACKLOG.md) — tranche T4 : la part réalisée d'une organisation, la même règle que
+#       webapp/src/lib/recettes-organisation.ts, prouvée par les mêmes cas (mcp/tests/part_realisee_cas.json) ;
+#       docs/SPEC-recettes.md §12.2 ; docs/SPEC-mcp.md §9.2 vicies
+def part_realisee(prevu: float, reel: float | None) -> float | None:
+    """Le réel sur le prévu, au dix-millième. SANS OBJET — `None` — quand le prévu est nul ou négatif ; un réel inconnu
+    vaut 0 ; la part peut dépasser 1."""
+    if not prevu > 0:
+        return None
+    return math.floor((reel or 0) / prevu * 10_000 + 0.5) / 10_000
+
+
 def _arrondi_dixieme(x: float) -> float:
     return math.floor(x * 10 + 0.5) / 10
 

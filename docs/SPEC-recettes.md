@@ -598,7 +598,7 @@ Chaque tranche est poussée une fois vérifiée (décision 904).
 | **T1** | Migration `0177` : `organization_revenue_totals` ; pgTAP `0166` ; contrat de déploiement — *faite le 2026-11-10* |
 | **T2** | Webapp : la colonne de la liste, le bloc de la fiche, `docs/DESIGN_SYSTEM.md` §5.97 ; unitaires ; API par jetons réels — *faite le 2026-11-10* |
 | **T3** | Seed §41 ; E2E souris et clavier ; captures aux quatre paliers ; manuel (le carnet) — *faite le 2026-11-11* |
-| **T4** | Connecteur : `crm_organization_revenues` ; pytest unitaires et intégration ; `verify-mcp.sh` ; manuel §33 |
+| **T4** | Connecteur : `crm_organization_revenues` ; pytest unitaires et intégration ; `verify-mcp.sh` ; manuel §33 — *faite le 2026-11-11* |
 | **T5** | Production, par la session de livraison, sur instruction du responsable |
 
 ### 12.10 Preuves

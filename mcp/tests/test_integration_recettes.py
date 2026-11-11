@@ -5,6 +5,9 @@
 #           journal écrit) ; docs/SPEC-mcp.md §6.2, §7.1, §13 (preuves par outil)
 # @verifies CRM-126 (docs/BACKLOG.md) — tranche T2 : docs/SPEC-recettes.md §4.4 et §7 révisés (décision 810) — la balance
 #           par devise de …0c7, l'affaire à plusieurs devises du seed (docs/SPEC-seed.md §21.1)
+# @verifies CRM-146 (docs/BACKLOG.md) — tranche T4 : `crm_organization_revenues` contre la vraie base, sur le seed §41 —
+#           docs/SPEC-mcp.md §9.2 vicies (succès et journal ; la lectrice ne compte pas l'affaire qu'elle ne lit pas ;
+#           organisation inconnue refusée uniformément) ; docs/SPEC-recettes.md §12.3, §12.10
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
 Le business developer porte la matrice du seed §21.4 — `recettes` consulter et ajouter, `budgets` et `temps` consulter.
@@ -33,6 +36,7 @@ INCONNUE = "5eed0000-0000-4000-8000-00000000ffff"
 OUTILS = (
     "crm_card_revenue_list", "crm_revenues_to_enter", "crm_profitability_report", "crm_card_revenue_add",
     "crm_card_revenue_actual_add", "crm_card_revenue_update", "crm_card_revenue_actual_update", "crm_card_revenue_settle",
+    "crm_organization_revenues",
 )
 
 
@@ -172,7 +176,7 @@ async def test_a_saisir_puis_corriger_et_solder_quand_la_matrice_ouvre_modifier(
 
 
 async def test_chaque_outil_est_ferme_par_la_matrice_puis_refuse_par_le_crm_malgre_la_matrice_ouverte():
-    """Pour CHACUN des huit outils (docs/SPEC-recettes.md §11) : la lectrice sans droit ne le voit pas ; matrice
+    """Pour CHACUN des neuf outils (docs/SPEC-recettes.md §11 ; le neuvième, `CRM-146` T4) : la lectrice sans droit ne le voit pas ; matrice
     entièrement ouverte, le CRM refuse — la RLS cache l'objet ou refuse l'écriture, la fonction n'est pas à elle — et le
     journal le nomme `refus_crm`. Aucune écriture n'aboutit : la ligne seedée est relue inchangée. Sans aucun droit, le
     compte resterait « en attente » (docs/SPEC-mcp.md §7.3) : une case d'une autre famille lui ouvre le connecteur."""
@@ -195,6 +199,7 @@ async def test_chaque_outil_est_ferme_par_la_matrice_puis_refuse_par_le_crm_malg
         "crm_card_revenue_update": {"revenue_id": LIGNE_SEEDEE, "estimated_amount": 1},
         "crm_card_revenue_actual_update": {"revenue_actual_id": reel, "amount": 1},
         "crm_card_revenue_settle": {"revenue_id": LIGNE_SEEDEE, "settled": True},
+        "crm_organization_revenues": {"organization_id": INCONNUE},
     }
     assert set(appels) == set(OUTILS)
     droits = [{"sub": FARIDA[1], "workspace_id": ESPACE_SEEDE, "famille": f, "action": a}
@@ -211,3 +216,45 @@ async def test_chaque_outil_est_ferme_par_la_matrice_puis_refuse_par_le_crm_malg
     finally:
         await _service("DELETE", "/mcp_droits", params={"sub": f"eq.{FARIDA[1]}"})
         await _nettoyer()
+
+
+# --- `CRM-146` T4 : le prévisionnel et le réel d'une organisation, sur le seed §41 ------------------------------------
+
+
+async def _organisation(domaine: str) -> str:
+    lignes = (await _service("GET", "/organizations", params={"domain": f"eq.{domaine}", "select": "id"})).json()
+    assert len(lignes) == 1, f"l'organisation {domaine} du seed (§33, §41)"
+    return lignes[0]["id"]
+
+
+async def test_les_recettes_de_vertigo_conseil_en_deux_devises_et_le_journal():
+    vertigo = await _organisation("vertigo-conseil.example")
+    async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+        resultat = (await client.call_tool("crm_organization_revenues", {"organization_id": vertigo})).structured_content
+    par_devise = {d["currency"]: d for d in resultat["by_currency"]}
+    assert list(par_devise) == ["CHF", "EUR"]
+    assert par_devise["CHF"] == {
+        "currency": "CHF", "estimated_total": 28000, "actual_total": 14000, "progress": 0.5, "cards": 1,
+        "shared_cards": 0, "revenue_lines": 1, "lines_without_actual": 0,
+    }
+    assert (par_devise["EUR"]["estimated_total"], par_devise["EUR"]["actual_total"]) == (210000, 163000)
+    assert (par_devise["EUR"]["progress"], par_devise["EUR"]["shared_cards"]) == (0.7762, 1)
+    assert await _dernier_journal(DRISS[1]) == ("crm_organization_revenues", "ok")
+
+
+async def test_la_lectrice_ne_compte_pas_l_affaire_qu_elle_ne_lit_pas():
+    """…0cd « Socle analytique — Vertuo » est hors de la portée de la lectrice : Vertigo Conseil ne lui rend que le CHF, et
+    Atelier Lumen, qui ne compte que par …0cd, rien."""
+    vertigo = await _organisation("vertigo-conseil.example")
+    lumen = await _organisation("atelier-lumen.example")
+    case = {"sub": FARIDA[1], "workspace_id": ESPACE_SEEDE, "famille": "recettes", "action": "consulter"}
+    assert (await _service("POST", "/mcp_droits", json=case)).status_code == 201
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(FARIDA)) as client:
+            await _attendre_visible(client, "crm_organization_revenues")
+            de_vertigo = (await client.call_tool("crm_organization_revenues", {"organization_id": vertigo})).structured_content
+            de_lumen = (await client.call_tool("crm_organization_revenues", {"organization_id": lumen})).structured_content
+        assert [d["currency"] for d in de_vertigo["by_currency"]] == ["CHF"]
+        assert de_lumen["by_currency"] == []
+    finally:
+        await _service("DELETE", "/mcp_droits", params={"sub": f"eq.{FARIDA[1]}"})

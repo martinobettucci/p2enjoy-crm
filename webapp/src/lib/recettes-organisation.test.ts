@@ -3,7 +3,11 @@
 //           réel inconnu ; les devises jamais additionnées), §12.3 (l'appel de `organization_revenue_totals`, avec ou sans
 //           `p_organization_id`), §12.5 (les mentions : des affaires, jamais comptées deux fois, et des lignes) ;
 //           docs/SPEC-types.md (une réponse non conforme est écartée et comptée)
+// @verifies CRM-146 (docs/BACKLOG.md) — tranche T4 : la part réalisée suit les cas de mcp/tests/part_realisee_cas.json, que
+//           le connecteur rejoue aussi (docs/SPEC-mcp.md §9.2 vicies) : une divergence rougit l'un des deux
 
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
 	largeurBarre,
@@ -46,6 +50,23 @@ describe('la part réalisée (§12.2)', () => {
 		expect(largeurBarre(0.776)).toBeCloseTo(77.6)
 		expect(pourcentageEntier(0.776)).toBe(78)
 		expect(pourcentageEntier(1.5)).toBe(150)
+	})
+})
+
+type CasPart = { nom: string; prevu: number; reel: number | null; part: number | null; pourcentage: number | null }
+const CAS_PART = (
+	JSON.parse(readFileSync(resolve(__dirname, '../../../mcp/tests/part_realisee_cas.json'), 'utf-8')) as { cas: CasPart[] }
+).cas
+
+describe('la part réalisée, par les cas partagés avec le connecteur', () => {
+	it.each(CAS_PART.map((c) => [c.nom, c] as const))('%s', (_nom, c) => {
+		const part = partRealisee(c.prevu, c.reel)
+		if (c.part === null) {
+			expect(part).toBeNull()
+			return
+		}
+		expect(part).toBeCloseTo(c.part, 4)
+		expect(pourcentageEntier(part as number)).toBe(c.pourcentage)
 	})
 })
 

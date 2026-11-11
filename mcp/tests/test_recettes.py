@@ -7,11 +7,17 @@
 #           rend une marge par devise, `multi_currency` et le taux vide d'une affaire mixte, la marge des totaux par devise
 # @verifies CRM-111 (docs/BACKLOG.md) — tranche T5.1 : une ligne par rattachement, `shared`, l'état du rattachement, et
 #           des totaux qui comptent une affaire partagée une fois (docs/SPEC-rattachements.md §6, §11 ; décision 643)
+# @verifies CRM-146 (docs/BACKLOG.md) — tranche T4 : `crm_organization_revenues` — docs/SPEC-mcp.md §9.2 vicies (famille
+#           `recettes`, `consulter`, ancre `organisation`, aucune case `aussi` ; `by_currency` vide sans recette ; refus
+#           uniforme hors périmètre) ; docs/SPEC-recettes.md §12.2 (la part réalisée, par les cas partagés avec la webapp,
+#           tests/part_realisee_cas.json)
 """Le CRM simulé étend celui de `conftest.py` avec les tables des recettes et la fonction de rentabilité ; la RLS y est
 réduite à « l'espace est lisible », la matrice est celle du simulateur partagé."""
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -28,6 +34,7 @@ from crm_mcp.jeton_interne import Identite
 from crm_mcp.outils import recettes, reference
 from crm_mcp.politique import MoteurPolitique, PolitiqueOutils
 from crm_mcp.registre import Registre
+from crm_mcp.rentabilite import part_realisee
 
 from .conftest import CLE_ANONYME, CLE_SERVICE, ESPACE_A, ESPACE_B, SECRET, CrmSimule
 
@@ -36,6 +43,9 @@ CARD_B = "c0000000-0000-4000-8000-0000000000c2"
 REV_A = "r0000000-0000-4000-8000-0000000000a1".replace("r", "e", 1)
 REV_SOLDEE = "e0000000-0000-4000-8000-0000000000a2"
 THOMAS = Identite("sujet-thomas", "thomas@exemple.test", "Thomas", True, False, 4_000_000_000)
+ORG_A = "0a000000-0000-4000-8000-0000000000a1"
+ORG_B = "0a000000-0000-4000-8000-0000000000b1"
+CAS_PART = json.loads((Path(__file__).parent / "part_realisee_cas.json").read_text(encoding="utf-8"))["cas"]
 
 OUTILS = {
     "crm_card_revenue_list",
@@ -46,6 +56,7 @@ OUTILS = {
     "crm_card_revenue_update",
     "crm_card_revenue_actual_update",
     "crm_card_revenue_settle",
+    "crm_organization_revenues",
 }
 
 
@@ -57,6 +68,9 @@ class CrmRecettes(CrmSimule):
         super().__init__()
         self.ecritures = []
         self.rapport = (200, [])
+        # `CRM-146` : ce que `organization_revenue_totals` rend, et les arguments reçus.
+        self.totaux: list[dict[str, Any]] = []
+        self.appels_totaux: list[dict[str, Any]] = []
 
     def _cards(self) -> list[dict[str, Any]]:
         return [
@@ -87,6 +101,11 @@ class CrmRecettes(CrmSimule):
         filtres = {k: v.removeprefix("eq.") for k, v in requete.query_params.items() if v.startswith("eq.")}
         if nom == "cards":
             lignes = [c for c in self._cards() if c["workspace_id"] in lisibles]
+        elif nom == "organizations":
+            lignes = [o for o in (
+                {"id": ORG_A, "name": "Vertigo", "workspace_id": ESPACE_A},
+                {"id": ORG_B, "name": "Ailleurs", "workspace_id": ESPACE_B},
+            ) if o["workspace_id"] in lisibles]
         elif nom == "card_revenues":
             lignes = [l for l in self._lignes() if l["card"]["workspace_id"] in lisibles]
             filtres.pop("cards.workspace_id", None)
@@ -101,6 +120,12 @@ class CrmRecettes(CrmSimule):
                 return JSONResponse({"message": "JWT invalide"}, status_code=401)
             statut, corps = self.rapport
             return JSONResponse(corps, status_code=statut)
+        if requete.path_params["fonction"] == "organization_revenue_totals":
+            if self._personne(requete) is None:
+                return JSONResponse({"message": "JWT invalide"}, status_code=401)
+            arguments = await requete.json()
+            self.appels_totaux.append(arguments)
+            return JSONResponse([t for t in self.totaux if t["organization_id"] == arguments.get("p_organization_id")])
         return await self.rpc(requete)
 
     def application(self) -> Starlette:
@@ -152,7 +177,8 @@ async def monde():
     await m.crm.fermer()
 
 
-async def test_les_huit_outils_sont_declares_et_aucun_ne_supprime(monde: Monde) -> None:
+# RÉVISÉ par `CRM-146` T4 : huit outils devenus neuf, `crm_organization_revenues` consulte.
+async def test_les_outils_sont_declares_et_aucun_ne_supprime(monde: Monde) -> None:
     declares = {n for n, d in monde.moteur.declarations.items() if d.famille == "recettes"}
     assert declares == OUTILS
     assert all(d.action != "supprimer" for n, d in monde.moteur.declarations.items() if n in OUTILS)
@@ -265,3 +291,59 @@ async def test_un_patch_ou_un_delete_sans_filtre_est_refuse_avant_tout_envoi(mon
         with pytest.raises(ValueError, match="sans filtre"):
             await monde.crm.ecrire("jeton", methode, "card_revenues", parametres={"select": "id"}, corps={"label": "x"})
     assert monde.simule.ecritures == []
+
+
+# --- `CRM-146` T4 : le prévisionnel et le réel d'une organisation ---------------------------------------------------
+
+
+def _total(**c: Any) -> dict[str, Any]:
+    return {"organization_id": ORG_A, "currency": "EUR", "estimated_total": 210000, "actual_total": 163000, "cards": 1,
+            "shared_cards": 1, "revenue_lines": 2, "lines_without_actual": 0, **c}
+
+
+async def test_les_recettes_d_une_organisation_sont_declarees_sans_case_aussi(monde: Monde) -> None:
+    declaration = monde.moteur.declarations["crm_organization_revenues"]
+    assert (declaration.famille, declaration.action, declaration.espace) == (
+        "recettes", "consulter", "organisation:organization_id"
+    )
+    assert not declaration.aussi
+    assert "crm_organization_revenues" not in await monde.outils()
+    monde.ouvrir(("recettes", "consulter"))
+    assert "crm_organization_revenues" in await monde.outils()
+
+
+async def test_les_recettes_d_une_organisation_par_devise_avec_la_part(monde: Monde) -> None:
+    monde.ouvrir(("recettes", "consulter"))
+    monde.simule.totaux = [
+        _total(),
+        _total(currency="CHF", estimated_total=28000, actual_total=None, cards=1, shared_cards=0, revenue_lines=1,
+               lines_without_actual=1),
+    ]
+    resultat = await monde.appel("crm_organization_revenues", {"organization_id": ORG_A})
+    assert monde.simule.appels_totaux == [{"p_organization_id": ORG_A}]
+    assert resultat["organization_id"] == ORG_A
+    assert "Currencies never add up" in resultat["note"]
+    assert resultat["by_currency"] == [
+        {"currency": "CHF", "estimated_total": 28000.0, "actual_total": None, "progress": 0.0, "cards": 1,
+         "shared_cards": 0, "revenue_lines": 1, "lines_without_actual": 1},
+        {"currency": "EUR", "estimated_total": 210000.0, "actual_total": 163000.0, "progress": 0.7762, "cards": 1,
+         "shared_cards": 1, "revenue_lines": 2, "lines_without_actual": 0},
+    ]
+
+
+async def test_une_organisation_sans_recette_rend_une_liste_vide(monde: Monde) -> None:
+    monde.ouvrir(("recettes", "consulter"))
+    resultat = await monde.appel("crm_organization_revenues", {"organization_id": ORG_A})
+    assert resultat["by_currency"] == []
+
+
+async def test_une_organisation_d_un_autre_espace_rend_le_refus_uniforme(monde: Monde) -> None:
+    monde.ouvrir(("recettes", "consulter"))
+    with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
+        await monde.appel("crm_organization_revenues", {"organization_id": ORG_B})
+    assert monde.simule.appels_totaux == []
+
+
+@pytest.mark.parametrize("cas", CAS_PART, ids=[c["nom"] for c in CAS_PART])
+def test_la_part_realisee_suit_les_cas_partages_avec_la_webapp(cas: dict[str, Any]) -> None:
+    assert part_realisee(cas["prevu"], cas["reel"]) == cas["part"]

@@ -6507,7 +6507,7 @@ Les dix familles, et ce que chacune couvre :
 - **Organisations** : les organisations du carnet, et leurs contacts en lecture ;
 - **Budgets** : budgets, occurrences, lignes de coût, réels ;
 - **Recettes** : lignes de recette d'une affaire et leurs réels ; le rapport de rentabilité, réservé aux
-  administrateurs de l'espace ;
+  administrateurs de l'espace ; le prévisionnel et le réel d'une organisation ;
 - **Temps** : saisies de temps, et le coût du personnel en lecture ;
 - **Objectifs** : tableaux d'objectifs ;
 - **Messagerie** : lecture des fils et des envois (en file, envoyés, échecs) ; préparer un email compte comme
@@ -6607,7 +6607,9 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   - *Consulter* : les lignes de recette d'une affaire ; les recettes réelles restant à saisir dans un espace ; le
     **rapport de rentabilité** d'un espace, qui demande aussi « Budgets ▸ Consulter » et « Temps ▸ Consulter »,
     puisqu'il montre les coûts et le coût du personnel. Le CRM le réserve aux administrateurs de l'espace : pour un
-    autre membre, l'assistant reçoit un refus ;
+    autre membre, l'assistant reçoit un refus ; le **prévisionnel et le réel d'une organisation**, par devise, avec la
+    part réalisée et le nombre d'affaires qui comptent — les mêmes sommes que le bloc « Recettes avec cette
+    organisation » de sa fiche ([section 10.10](#la-fiche-d-une-organisation)), sur les affaires que vous lisez ;
   - *Ajouter* : une ligne de recette, avec sa nature et son montant prévu, ou une recette réelle datée ;
   - *Modifier* : corriger une ligne ou une recette réelle, solder une ligne ou la rouvrir.
 

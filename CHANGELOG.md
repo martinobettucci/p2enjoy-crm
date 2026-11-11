@@ -31,6 +31,12 @@ d'exécuter le code attendu.
 - **Les commandes de chaque ligne de ces deux écrans passent sous la ligne**, pour que les lignes gardent la même hauteur et que rien ne soit coupé sur un petit écran.
 - **Le test de connexion d'une boîte rend la liste de ses dossiers** (le service de messagerie et la fonction qui le relaie), sans les dossiers qu'on ne peut pas ouvrir ni ceux que le CRM crée lui-même : l'écran qui proposera de choisir les dossiers relevés arrive avec la tranche des écrans.
 
+#### `CRM-146` T4 — le prévisionnel et le réel d'une organisation, dans le connecteur MCP
+
+- **Un assistant connecté peut lire le prévu et le réel d'une organisation**, par devise, avec la part réalisée et le nombre d'affaires qui comptent : l'outil `crm_organization_revenues`, dans la famille « Recettes », sous la case « Consulter ». Il ne compte que les affaires que la personne lit, comme l'écran.
+- L'onglet « Connecteur MCP » et le manuel (chapitre du connecteur) disent ce que la famille couvre désormais.
+- Déploiement : reconstruire l'image `mcp` (`docs/PROD_MIGRATIONS.md` §2.40). Aucune migration nouvelle.
+
 #### `CRM-146` T3 — le prévisionnel et le réel d'une organisation, dans le jeu de démonstration et le manuel
 
 - **Le jeu de démonstration montre le prévu et le réel d'une organisation** : Vertigo Conseil en deux devises, l'affaire en euros partagée avec Atelier Lumen, Sogexia sans recette. Trois contacts du fichier de salon sont rattachés à deux affaires qui portent des recettes.

@@ -1,0 +1,11 @@
+{
+  "_spec": "CRM-146 (docs/BACKLOG.md) — tranches T2 et T4 : les cas qui prouvent la part réalisée de docs/SPEC-recettes.md §12.2 (réel sur prévu ; sans objet sur un prévu nul ou négatif ; 0 sur un réel inconnu ; au-delà de 1), lus À LA FOIS par webapp/src/lib/recettes-organisation.test.ts et par mcp/tests/test_recettes.py. Une seule source de cas : l'écran et le connecteur appliquent la même règle, ou l'un des deux rougit.",
+  "cas": [
+    {"nom": "le réel sur le prévu", "prevu": 210000, "reel": 163000, "part": 0.7762, "pourcentage": 78},
+    {"nom": "la moitié", "prevu": 28000, "reel": 14000, "part": 0.5, "pourcentage": 50},
+    {"nom": "un réel inconnu vaut 0", "prevu": 72000, "reel": null, "part": 0, "pourcentage": 0},
+    {"nom": "un dépassement", "prevu": 100, "reel": 150, "part": 1.5, "pourcentage": 150},
+    {"nom": "un prévu nul : sans objet", "prevu": 0, "reel": 10, "part": null, "pourcentage": null},
+    {"nom": "un prévu négatif (un avoir) : sans objet", "prevu": -50, "reel": 10, "part": null, "pourcentage": null}
+  ]
+}

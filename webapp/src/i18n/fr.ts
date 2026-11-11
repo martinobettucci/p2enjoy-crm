@@ -5071,7 +5071,9 @@ export const fr = {
 	'platform.mcp.famille.budgets': 'Budgets',
 	'platform.mcp.famille.budgets.portee': 'Budgets, occurrences, lignes de coût, réels',
 	'platform.mcp.famille.recettes': 'Recettes',
-	'platform.mcp.famille.recettes.portee': 'Lignes de recette d’une affaire et leurs réels ; rapport de rentabilité, réservé aux administrateurs',
+	// CRM-146 T4 : la portée gagne le prévisionnel et le réel d'une organisation (docs/SPEC-mcp.md §9.2 vicies).
+	'platform.mcp.famille.recettes.portee':
+		'Lignes de recette d’une affaire et leurs réels ; rapport de rentabilité, réservé aux administrateurs ; prévisionnel et réel d’une organisation',
 	// --- CRM-108 : recettes d'une affaire et rentabilité (docs/SPEC-recettes.md §6, docs/DESIGN_SYSTEM.md §5.60) ---
 	'card.revenues.title': 'Recettes',
 	'card.revenues.aria': 'Lignes de recette de l’affaire « {titre} »',

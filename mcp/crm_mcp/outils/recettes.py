@@ -7,6 +7,9 @@
 #       §4.4 et §7 révisés (décision 810) : `multi_currency`, marge toujours calculée, `margin` des totaux par devise
 # @spec CRM-111 (docs/BACKLOG.md) — tranche T5.1 : `crm_profitability_report` rend une ligne par rattachement × devise,
 #       `shared`, et ses totaux comptent une affaire partagée une fois (docs/SPEC-rattachements.md §6, §11 ; décision 643)
+# @spec CRM-146 (docs/BACKLOG.md) — tranche T4 : `crm_organization_revenues`, le prévisionnel et le réel d'une organisation
+#       par devise — docs/SPEC-mcp.md §9.2 vicies (famille `recettes`, action `consulter`, ancre `organisation`, aucune
+#       case `aussi`) ; docs/SPEC-recettes.md §12.2, §12.3, §12.6 (décisions 900, 903 et 908)
 """Recettes d'une affaire et rentabilité, sous l'identité de la personne.
 
 Les mêmes tables et la même fonction que la webapp (`card_revenues`, `card_revenue_actuals`, `rentabilite_affaires`) ;
@@ -25,7 +28,7 @@ from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
 from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable, traduire_refus
-from crm_mcp.rentabilite import au_centime, calculer_rentabilite
+from crm_mcp.rentabilite import au_centime, calculer_rentabilite, part_realisee
 
 LIMITE_MAX = 100
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -96,6 +99,31 @@ def _montants(ligne: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+#: Ce que le modèle doit savoir pour lire les sommes d'une organisation (docs/SPEC-mcp.md §9.2 vicies).
+NOTE_ORGANISATION = (
+    "An affaire counts for an organization when one of the contacts attached to the affaire belongs to it: once per "
+    "organization, and for every organization of its contacts (shared_cards). Only affaires you can read, outside the "
+    "trash. Currencies never add up. actual_total null means no actual entered yet (not zero); progress is "
+    "actual/estimated, null when the estimate is zero or negative, and may exceed 1."
+)
+
+
+def _total_organisation(ligne: dict[str, Any]) -> dict[str, Any]:
+    """Une ligne de `organization_revenue_totals`, et la part réalisée calculée ici, jamais en base (§12.2)."""
+    prevu = float(ligne["estimated_total"])
+    reel = None if ligne.get("actual_total") is None else float(ligne["actual_total"])
+    return {
+        "currency": ligne["currency"],
+        "estimated_total": prevu,
+        "actual_total": reel,
+        "progress": part_realisee(prevu, reel),
+        "cards": int(ligne.get("cards") or 0),
+        "shared_cards": int(ligne.get("shared_cards") or 0),
+        "revenue_lines": int(ligne.get("revenue_lines") or 0),
+        "lines_without_actual": int(ligne.get("lines_without_actual") or 0),
+    }
+
+
 def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     # --- consulter -------------------------------------------------------------------------------------------------
 
@@ -130,6 +158,35 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             "Lists the revenue lines (FR: lignes de recette) of an affaire (card): label, estimated amount, actual amount "
             "(the sum of its actuals, kept by the CRM), settled state, and each actual (amount, received_on, label). "
             "Amounts are in the affaire's currency, returned once."
+        ),
+    )
+
+    async def crm_organization_revenues(
+        organization_id: Annotated[str, Field(description="The organization id, from crm_organization_list")],
+    ) -> dict[str, Any]:
+        appel = appel_courant()
+        reponse = await crm.rpc(
+            appel.jeton, "organization_revenue_totals", {"p_organization_id": organization_id}, idempotent=True
+        )
+        if not reponse.reussie or not isinstance(reponse.corps, list):
+            raise _refus(reponse, "organisation", organization_id)
+        lignes = [l for l in reponse.corps if l.get("organization_id") == organization_id]
+        return {
+            "organization_id": organization_id,
+            "note": NOTE_ORGANISATION,
+            "by_currency": [_total_organisation(l) for l in sorted(lignes, key=lambda l: str(l.get("currency")))],
+        }
+
+    moteur.enregistrer(
+        serveur,
+        crm_organization_revenues,
+        Declaration(famille="recettes", action="consulter", espace="organisation:organization_id"),
+        titre="Forecast and actual revenue of an organization (recettes)",
+        description=(
+            "Per currency, the forecast (FR: prévisionnel, sum of estimated revenue) and the actual revenue (FR: réel) "
+            "of the affaires that count for an organization, the progress (actual over forecast), the number of "
+            "affaires, of affaires shared with another organization, of revenue lines and of open lines without any "
+            "actual. An organization without revenue returns an empty by_currency."
         ),
     )
 

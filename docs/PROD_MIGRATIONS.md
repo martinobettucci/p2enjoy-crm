@@ -931,7 +931,7 @@ dépôt ; `select count(*) from mail_outbox o join mail_outbound_identities i on
 **Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0176` » ; reposer `reserver_envois` de sa définition
 précédente rétablit INC-354. Aucun envoi n'est perdu.
 
-### 2.40 `CRM-146` T1 et T2, décisions 900, 903 et 908 — le prévisionnel et le réel d'une organisation (À LIVRER : migration 177 ; **hors du lot annoncé ; la webapp de `main` en dépend depuis T2**)
+### 2.40 `CRM-146` T1 à T4, décisions 900, 903 et 908 — le prévisionnel et le réel d'une organisation (À LIVRER : migration 177, image `mcp` ; **hors du lot annoncé ; la webapp de `main` en dépend depuis T2, le connecteur de `main` depuis T4**)
 
 `docs/SPEC-recettes.md` §12.3 ; `docs/SCHEMA.md` « Migration `0177` ». Une fonction `security invoker`, aucune table,
 aucune colonne, aucune donnée, sans verrou notable. Aucune variable, aucun secret.
@@ -939,12 +939,19 @@ aucune colonne, aucune donnée, sans verrou notable. Aucune variable, aucun secr
 **L'ORDRE, DEPUIS T2 (2026-11-10) : LA 177 PART AVEC LA WEBAPP DE `main`, OU AVANT ELLE, JAMAIS APRÈS.** La liste des
 organisations lit `organization_revenue_totals()` à côté de `organizations` et attend les deux (`docs/SPEC-recettes.md`
 §12.4) : une webapp livrée sans la 177 rendrait l'état d'erreur de tout l'onglet « Organisations », et le bloc de la fiche
-le sien. Un lot qui livre la webapp d'un `main` postérieur à T2 emporte donc la 177. L'outil du connecteur (T4) viendra
-avec sa tranche.
+le sien. Un lot qui livre la webapp d'un `main` postérieur à T2 emporte donc la 177.
+
+**DEPUIS T4 (2026-11-11), L'IMAGE `mcp` DE `main` PORTE `crm_organization_revenues`**, qui appelle la même fonction : un
+connecteur livré sans la 177 rendrait une erreur sur cet outil seul, les autres intacts. La même règle vaut : la 177 part
+avec l'image `mcp`, ou avant elle. Aucune variable, aucun secret, aucune case nouvelle (famille `recettes`, action
+`consulter`, déjà en base).
 
 | # | Geste | Qui | Comment |
 |---|---|---|---|
 | 1 | Appliquer la migration 177 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate`, instantané de VM pris |
+| 2 | Reconstruire l'image `mcp` (T4) | session de livraison | `up -d --build --no-deps --wait mcp`, par `compose_prod` (§4) |
+| 3 | Constater l'écran | responsable, Contacts ▸ Organisations | la colonne « Réel sur prévu » et, sur la fiche d'une organisation à recettes, le bloc « Recettes avec cette organisation » |
+| 4 | Constater le connecteur | responsable, depuis son assistant | demander le prévisionnel et le réel d'une organisation : l'outil répond par devise, sous ses droits |
 
 **Vérification après la fenêtre**, en lecture seule : le registre gagne une ligne, l'empreinte de la 177 est égale au
 dépôt ; `select pg_get_function_identity_arguments('public.organization_revenue_totals'::regproc)` rend
