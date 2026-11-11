@@ -40553,3 +40553,22 @@ spécification — **livrer sur 8 Go** (`clamav` plafonné à 4 Gio ; mesuré en
 rechargement) ; `~/.ssh` de `spark-docker` appartient à root — **épingler la clé dans un fichier de `spark-docker`**
 (`~/.config/p2enjoy-crm/known_hosts`), passé par `SPARK_HOTES_CONNUS` ; écartée : la ligne posée par le responsable en
 root. **Livrée** à `8ada0ab9` (contrat §8, 2026-11-11).
+
+### décision 923 — `CRM-141` : le connecteur lit et réévalue, dans la famille messagerie ; le modèle reçoit l'objet, l'expéditeur et 2 000 caractères ; tous les mails existants sont évalués
+
+*2026-11-11, session interactive (p2enjoy-crm-a4, ex-a8), arbitrage du responsable (`AskUserQuestion`), avant la
+spécification de l'unité (décision 883 pour la demande).*
+**Les deux questions du connecteur MCP** (`CLAUDE.md`, « Toute fonctionnalité pose la question du connecteur MCP ») :
+- **Q1 — les gestes** : *présentées* : lire et réévaluer seulement ; aussi poser et retirer une pastille à la main.
+  **Retenu : lire les pastilles d'un mail et demander sa réévaluation, seulement.** Poser ou retirer à la main reste un
+  geste d'écran, comme la gestion des pastilles (décision 883).
+- **Q2 — la famille** : *présentées* : la famille existante `messagerie` ; une famille nouvelle `pastilles`. **Retenu :
+  `messagerie`, cases existantes** — lire sous « Consulter », réévaluer sous « Modifier ». Aucune migration de la matrice.
+**Ce qui est envoyé au modèle** : *présentées* : objet, expéditeur et 2 000 caractères ; objet et expéditeur seuls ;
+texte borné à 8 000 caractères. **Retenu : l'objet, l'adresse et le nom de l'expéditeur, et le début du texte du mail,
+tronqué à 2 000 caractères.** Jamais une pièce jointe (décision 883).
+**Le rattrapage à la mise en service** : *présentés* : les nouveaux et les 30 derniers jours (recommandé) ; les nouveaux
+seuls ; tous les mails existants. **Retenu : tous les mails existants**, au débit borné de la file. Conséquence assumée :
+sur une grosse boîte, le rattrapage dure des heures, voire des jours ; les mails nouveaux passent devant lui.
+**Conséquences** : la spécification de `CRM-141` (`docs/SPEC-mail-subsystem.md`, `docs/SPEC-ia.md`, `docs/SCHEMA.md`,
+`docs/DESIGN_SYSTEM.md`, `docs/SPEC-mcp.md` §9.2, le manuel, le contrat) s'écrit sur ces réponses, avant le code.
