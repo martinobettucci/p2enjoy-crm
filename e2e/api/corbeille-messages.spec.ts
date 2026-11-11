@@ -44,7 +44,7 @@ test.describe('la corbeille des messages — contrôlée par la base (CRM-138, �
 			},
 		})
 		expect(pose.status(), await pose.text()).toBe(201)
-		const [{ id: message }] = (await pose.json()) as { id: string }[]
+		const message = ((await pose.json()) as { id: string }[])[0]!.id
 		const occurrence = await request.post(`${URL_API}/rest/v1/mail_message_occurrences`, {
 			headers: enTetesService(),
 			data: { message_id: message, account_id: boites[0]!.id, folder: 'INBOX', uid: 990001 },
