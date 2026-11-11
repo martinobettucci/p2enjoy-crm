@@ -1104,7 +1104,7 @@ secret d'appel est tiré par la migration dans Vault.
   30 min, 2 h ; état `failed` au cinquième). Sans évaluation due, la tâche n'appelle rien.
 - **Le débit** : non mesuré contre le serveur réel — il refuse aujourd'hui la clé du poste de développement :
   `401` « clé API invalide ou désactivée » (`cle_refusee`, constaté le 2026-11-11). La clé de la production
-  et n'a pas été éprouvée. **Estimation**, sur la mesure du §3 de `docs/SPEC-ia.md` (environ vingt jetons de sortie
+  n'a pas été éprouvée depuis le poste. **Estimation**, sur la mesure du §3 de `docs/SPEC-ia.md` (environ vingt jetons de sortie
   par seconde ; une réponse de pastilles en compte une dizaine, pour un millier en entrée) : quelques secondes par mail,
   soit **une dizaine à une vingtaine de mails par minute**. **Le rattrapage de tous les mails existants** (décision 923),
   inscrit par la 183, part dès la 184 appliquée ; sur une grosse boîte, il dure des heures, et les mails neufs passent
