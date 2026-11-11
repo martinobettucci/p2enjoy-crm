@@ -3810,7 +3810,7 @@
 							},
 							{
 								"type": "text",
-								"text": "). Sans recette, la fiche le dit : « Aucune recette\nprévue avec cette organisation. » Les recettes se saisissent sur la fiche d'une affaire, jamais ici. Si la lecture des\nrecettes échoue, seul ce bloc le dit, avec un bouton « Réessayer » ; le reste de la fiche reste affiché ;"
+								"text": "). Sans recette, la fiche le dit : « Aucune recette\nprévue avec cette organisation. » Les recettes se saisissent sur la fiche d'une affaire, jamais ici. Si la lecture des\nrecettes échoue, seul ce bloc le dit et propose de relancer la lecture ; le reste de la fiche reste affiché ;"
 							}
 						]
 					}

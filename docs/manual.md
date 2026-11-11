@@ -2839,7 +2839,7 @@ La fiche porte le **nom de l'organisation en titre**, puis trois blocs :
   saisi, et rappelle que ces montants portent sur **les affaires que vous lisez, hors corbeille**. Les affaires comptent
   comme dans l'onglet (voir la [section 10.9](#l-onglet-organisations)). Sans recette, la fiche le dit : « Aucune recette
   prévue avec cette organisation. » Les recettes se saisissent sur la fiche d'une affaire, jamais ici. Si la lecture des
-  recettes échoue, seul ce bloc le dit, avec un bouton « Réessayer » ; le reste de la fiche reste affiché ;
+  recettes échoue, seul ce bloc le dit et propose de relancer la lecture ; le reste de la fiche reste affiché ;
 - **ses contacts** — un tableau à quatre colonnes : nom, fonction, email et téléphone. La colonne
   « Organisation » du carnet n'y figure pas, puisqu'elle répéterait le titre de la page. Lorsque
   l'organisation n'a **aucun contact rattaché**, la fiche le dit explicitement au lieu d'afficher un
@@ -6608,8 +6608,8 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     **rapport de rentabilité** d'un espace, qui demande aussi « Budgets ▸ Consulter » et « Temps ▸ Consulter »,
     puisqu'il montre les coûts et le coût du personnel. Le CRM le réserve aux administrateurs de l'espace : pour un
     autre membre, l'assistant reçoit un refus ; le **prévisionnel et le réel d'une organisation**, par devise, avec la
-    part réalisée et le nombre d'affaires qui comptent — les mêmes sommes que le bloc « Recettes avec cette
-    organisation » de sa fiche ([section 10.10](#la-fiche-d-une-organisation)), sur les affaires que vous lisez ;
+    part réalisée et le nombre d'affaires qui comptent — les mêmes sommes que le bloc des recettes de sa fiche
+    ([section 10.10](#la-fiche-d-une-organisation)), sur les affaires que vous lisez ;
   - *Ajouter* : une ligne de recette, avec sa nature et son montant prévu, ou une recette réelle datée ;
   - *Modifier* : corriger une ligne ou une recette réelle, solder une ligne ou la rouvrir.
 
