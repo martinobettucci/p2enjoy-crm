@@ -1321,8 +1321,10 @@ compris — seulement des sommes de recettes, que la famille `recettes` garde. *
 
 *Écrit le 2026-11-11, avant le code.* **Famille `structure`, aucune case nouvelle** (décision 871). L'action est
 `supprimer`, comme pour `crm_goal_board_archive` et `crm_card_placement_archive` : c'est le « supprimer (corbeille ou
-archive) » du §6.1, jamais une purge, et le même outil défait le geste. **Sans `destructiveHint`** : le geste est
-réversible, et rien n'est perdu.
+archive) » du §6.1, jamais une purge, et le même outil défait le geste. **Avec `destructiveHint`**, comme ses deux
+précédents. *Révisé à l'écriture du code (T2)* : la première rédaction disait « sans », ce que le §9.1 et le moteur
+de politique refusent (« une suppression porte `destructiveHint` ») ; l'assistant demande donc confirmation avant de
+retirer un channel des onglets, et c'est le comportement voulu pour un geste qui touche tout l'espace.
 
 | Outil | Action | Ancre | Ce qu'il appelle | Remarques |
 |---|---|---|---|---|
@@ -1330,7 +1332,7 @@ réversible, et rien n'est perdu.
 
 **`crm_channel_list` et `crm_channel_get`** rendent déjà `archived` : rien ne change pour eux.
 
-**Preuves** (§13) : la déclaration (famille, action, ancre, pas de `destructiveHint`) ; contre la vraie base et un vrai
+**Preuves** (§13) : la déclaration (famille, action, ancre, `destructiveHint`) ; contre la vraie base et un vrai
 client MCP, l'administratrice archive puis désarchive un channel, et la base le constate ; le refus par la matrice ; le
 refus du CRM pour un business developer dont la matrice est ouverte, la ligne relue inchangée ; le journal écrit.
 

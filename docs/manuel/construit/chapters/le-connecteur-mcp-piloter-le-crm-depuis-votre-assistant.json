@@ -2356,7 +2356,20 @@
 										},
 										{
 											"type": "text",
-											"text": " : mettre un track ou un channel à la corbeille."
+											"text": " : mettre un track ou un channel à la corbeille ; "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "archiver un channel"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", ou le désarchiver. Archivé, il\nquitte les onglets de son track pour tout l'espace et se retrouve sous « Archivés », ses affaires intactes. Comme à\nl'écran, le CRM le réserve aux administrateurs de l'espace, et votre assistant vous demande confirmation."
 										}
 									]
 								}

@@ -4,6 +4,9 @@
 #           journal écrit), §9.2 quater (recherche filtrée par la matrice, ni slug ni workflow modifiés)
 # @verifies CRM-112 (docs/BACKLOG.md) — tranche T6 : la recherche du connecteur trouve une affaire par un champ de
 #           l'affaire et rend l'extrait qui le nomme, famille `affaires` (docs/SPEC-champs-communs.md §10, décision 841)
+# @verifies CRM-134 (docs/BACKLOG.md) tranche T2 — `crm_channel_archive` contre la vraie base : l'administratrice archive puis
+#           désarchive, la base le constate ; le business developer est refusé par le CRM malgré la case ouverte, la ligne
+#           relue inchangée ; la case fermée retire l'outil (docs/SPEC-mcp.md §9.2 unvicies, §13 ; docs/SPEC-channels.md §11)
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
 L'administratrice (Camille) et le business developer reçoivent, par la clé de service, les cases de la preuve ; elles sont
@@ -80,6 +83,15 @@ async def test_l_arborescence_lue_creee_modifiee_et_mise_a_la_corbeille_par_l_ad
             await appeler("crm_channel_update", {"channel_id": canal["id"], "name": "Channel MCP renommé"})
             enBase = (await _service("GET", "/channels", params={"id": f"eq.{canal['id']}", "select": "name,workflow_id"})).json()
             assert enBase == [{"name": "Channel MCP renommé", "workflow_id": channel["workflow"]["id"]}]
+            # `CRM-134` T2 : archiver puis désarchiver le channel de la preuve ; la base le constate dans les deux sens.
+            archive = await appeler("crm_channel_archive", {"channel_id": canal["id"]})
+            assert archive == {"channel_id": canal["id"], "name": "Channel MCP renommé", "archived": True}
+            archivage = lambda: _service("GET", "/channels", params={"id": f"eq.{canal['id']}", "select": "archived_at"})
+            assert (await archivage()).json()[0]["archived_at"] is not None
+            deja = await appeler("crm_channel_archive", {"channel_id": canal["id"]})
+            assert "already archived" in deja["note"]
+            await appeler("crm_channel_archive", {"channel_id": canal["id"], "archived": False})
+            assert (await archivage()).json() == [{"archived_at": None}]
             await appeler("crm_channel_trash", {"channel_id": canal["id"]})
             await appeler("crm_track_trash", {"track_id": cree["id"]})
             assert (await _service("GET", "/tracks", params={"id": f"eq.{cree['id']}", "select": "deleted_by"})).json() == [
@@ -157,3 +169,23 @@ async def test_le_business_developer_est_refuse_par_le_crm_et_la_corbeille_ferme
     finally:
         await _retirer(DRISS, cases)
         await _nettoyer()
+
+
+async def test_archiver_un_channel_est_refuse_par_le_crm_au_business_developer_et_ferme_par_la_matrice():
+    """`CRM-134` T2 : la case `supprimer` ouverte, la base réserve l'archivage à l'administratrice ; fermée, l'outil part."""
+    cases = [("structure", "consulter"), ("structure", "supprimer")]
+    await _poser(DRISS, cases)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_visible(client, "crm_channel_archive")
+            with pytest.raises(ToolError, match="reserved to the administrators"):
+                await client.call_tool("crm_channel_archive", {"channel_id": GRANDS_COMPTES})
+            assert await _dernier_journal(DRISS[1]) == ("crm_channel_archive", "refus_crm")
+        assert (await _service("GET", "/channels", params={"id": f"eq.{GRANDS_COMPTES}", "select": "archived_at"})).json() == [
+            {"archived_at": None}
+        ]
+        await _retirer(DRISS, [("structure", "supprimer")])
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_outils(client, lambda noms: "crm_channel_archive" not in noms, "la case fermée retire l'outil")
+    finally:
+        await _retirer(DRISS, cases)

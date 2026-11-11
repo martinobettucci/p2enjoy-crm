@@ -8,6 +8,9 @@
 #           modifiés), §6.1 (recherche filtrée par la matrice de chaque famille), §9.1 (`destructiveHint` de la corbeille),
 #           §9.3 (refus traduits)
 # @verifies CRM-111 T2.4.2 (docs/BACKLOG.md) — le compte d'un channel porte sur ses rattachements actifs (docs/SPEC-rattachements.md §5, §11)
+# @verifies CRM-134 (docs/BACKLOG.md) tranche T2 — `crm_channel_archive` : la déclaration (`supprimer`, ancre `channel`,
+#           avec `destructiveHint`, §9.1), l'écriture d'`archived_at` dans les deux sens, l'état déjà atteint non réécrit, zéro ligne
+#           traduite en refus réservé aux administrateurs (docs/SPEC-mcp.md §9.2 unvicies ; docs/SPEC-channels.md §11)
 """Le CRM simulé rend l'arborescence d'un espace et une recherche qui mêle trois familles ; la RLS y est réduite à
 « l'espace est lisible ». La vraie base est éprouvée par `tests/test_integration_structure.py`."""
 
@@ -41,7 +44,7 @@ THOMAS = Identite("sujet-thomas", "thomas@exemple.test", "Thomas", True, False, 
 OUTILS = {
     "crm_search", "crm_track_list", "crm_track_get", "crm_channel_list", "crm_channel_get", "crm_workflow_get",
     "crm_track_create", "crm_channel_create", "crm_track_update", "crm_channel_update", "crm_track_trash",
-    "crm_channel_trash",
+    "crm_channel_trash", "crm_channel_archive",
 }
 
 
@@ -51,6 +54,8 @@ class CrmStructure(CrmSimule):
         self.ecritures: list[dict[str, Any]] = []
         self.lectures: list[tuple[str, dict[str, str]]] = []
         self.forcee: tuple[int, Any] | None = None
+        # `CRM-134` : l'archivage du channel simulé, pour l'état déjà atteint.
+        self.archive_channel: str | None = None
 
     def tracks(self) -> list[dict[str, Any]]:
         return [
@@ -78,7 +83,8 @@ class CrmStructure(CrmSimule):
         tables: dict[str, list[dict[str, Any]]] = {
             "tracks": [t for t in self.tracks() if t["workspace_id"] in lisibles],
             "channels": [{"id": CHANNEL_A, "workspace_id": ESPACE_A, "track_id": TRACK_A, "name": "Grands comptes",
-                          "slug": "gc", "description": None, "workflow_id": WORKFLOW_A, "position": 1, "archived_at": None,
+                          "slug": "gc", "description": None, "workflow_id": WORKFLOW_A, "position": 1,
+                          "archived_at": self.archive_channel,
                           "ecriture_permise": False, "workflow": {"id": WORKFLOW_A, "name": "Cycle"}}],
             "workflows": [{"id": WORKFLOW_A, "workspace_id": ESPACE_A, "name": "Cycle", "scope": "global",
                            "is_default": True, "archived_at": None},
@@ -166,6 +172,7 @@ async def monde():
 TOUT = tuple(("structure", a) for a in ("consulter", "ajouter", "modifier", "supprimer"))
 
 
+# RÉVISÉ par `CRM-134` T2 : douze outils devenus treize ; `crm_channel_archive` porte `destructiveHint` (§9.1).
 async def test_les_douze_outils_et_leurs_annotations(monde: Monde) -> None:
     assert OUTILS <= set(monde.moteur.declarations)
     assert monde.moteur.declarations["crm_search"].famille == "reference"
@@ -173,7 +180,9 @@ async def test_les_douze_outils_et_leurs_annotations(monde: Monde) -> None:
     assert monde.moteur.facultatives["crm_channel_list"] == frozenset({"track_id"})
     monde.ouvrir(*TOUT)
     outils = await monde.outils()
-    assert {n for n in OUTILS if outils[n].annotations.destructive_hint} == {"crm_track_trash", "crm_channel_trash"}
+    assert {n for n in OUTILS if outils[n].annotations.destructive_hint} == {
+        "crm_track_trash", "crm_channel_trash", "crm_channel_archive",
+    }
 
 
 async def test_la_recherche_ne_rend_que_les_familles_que_la_matrice_ouvre(monde: Monde) -> None:
@@ -257,3 +266,37 @@ def test_les_refus_de_contrainte_sont_nommes() -> None:
         "code": "23514", "message": 'new row for relation "tracks" violates check constraint "tracks_color_check"'
     }), "track", "t"))
     assert "Introuvable" in str(refus_structure(Reponse(403, {"code": "42501", "message": "denied"}), "track", "t"))
+
+
+async def test_archiver_un_channel_ecrit_archived_at_sous_la_case_supprimer(monde: Monde) -> None:
+    declaration = monde.moteur.declarations["crm_channel_archive"]
+    assert (declaration.famille, declaration.action, declaration.espace) == ("structure", "supprimer", "channel:channel_id")
+    monde.ouvrir(("structure", "consulter"))
+    assert "crm_channel_archive" not in await monde.outils()
+    monde.ouvrir(("structure", "supprimer"))
+    outil = (await monde.outils())["crm_channel_archive"]
+    assert outil.annotations.destructive_hint
+    resultat = await monde.appel("crm_channel_archive", {"channel_id": CHANNEL_A})
+    assert resultat == {"channel_id": CHANNEL_A, "name": "Grands comptes", "archived": True}
+    ecriture = monde.simule.ecritures[-1]
+    assert (ecriture["methode"], ecriture["table"], ecriture["parametres"]["id"]) == ("PATCH", "channels", f"eq.{CHANNEL_A}")
+    assert list(ecriture["corps"]) == ["archived_at"] and isinstance(ecriture["corps"]["archived_at"], str)
+
+
+async def test_desarchiver_ecrit_null_et_un_etat_deja_atteint_n_est_pas_reecrit(monde: Monde) -> None:
+    monde.ouvrir(("structure", "supprimer"))
+    resultat = await monde.appel("crm_channel_archive", {"channel_id": CHANNEL_A, "archived": False})
+    assert resultat["archived"] is False and "already active" in resultat["note"]
+    assert monde.simule.ecritures == []
+    monde.simule.archive_channel = "2026-11-11T10:00:00+00:00"
+    assert "already archived" in (await monde.appel("crm_channel_archive", {"channel_id": CHANNEL_A}))["note"]
+    assert monde.simule.ecritures == []
+    await monde.appel("crm_channel_archive", {"channel_id": CHANNEL_A, "archived": False})
+    assert monde.simule.ecritures[-1]["corps"] == {"archived_at": None}
+
+
+async def test_zero_ligne_a_l_archivage_est_le_refus_reserve_aux_administrateurs(monde: Monde) -> None:
+    monde.ouvrir(("structure", "supprimer"))
+    monde.simule.forcee = (200, [])
+    with pytest.raises(ToolError, match="reserved to the administrators"):
+        await monde.appel("crm_channel_archive", {"channel_id": CHANNEL_A})

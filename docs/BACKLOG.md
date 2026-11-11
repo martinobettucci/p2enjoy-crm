@@ -18979,7 +18979,13 @@ le seed porte déjà un channel archivé (`…033`).
   `e2e/ui/channels-archivage.spec.ts` 8/8 (souris, clavier, la lectrice, quatre paliers), et les preuves voisines
   UI 49/49 (channels, formulaire, arborescence de Réglages, nouveau channel) et API 47/47 (channels, arborescence, droits d’interface, couleurs) ; deux assertions de la requête des channels révisées, non relâchées (décision 51) ; build ; captures
   observées ;
-- reste : T2 (connecteur), T3 (manuel), T4 (production).
+- **T2 faite le 2026-11-11, vérifiée en développement** : l'outil `crm_channel_archive` (famille `structure`, action
+  `supprimer` avec `destructiveHint`, ancre `channel:channel_id`), qui lit l'état, ne réécrit pas un état déjà atteint, et
+  traduit zéro ligne en refus réservé aux administrateurs ; pytest unitaires 376 ; `verify-mcp.sh` 115 contrôles, aucune anomalie (un premier passage : un échec intermittent d’une preuve OAuth sans lien avec l’outil, test_connexion_longue_survit_a_la_fin_de_la_session_sso, vert au rejeu),
+  intégration 99/99 en direct et à travers le Caddy de la cellule (l'administratrice archive et désarchive, la
+  base le constate ; le business developer refusé par le CRM malgré la case ouverte, la ligne relue inchangée ; la case
+  fermée retire l'outil) ; manuel §33 ; §9.2 *unvicies* révisé (`destructiveHint`, exigé par le §9.1) ;
+- reste : T3 (manuel), T4 (production).
 **DoD** : unitaires ; API (droits : refus pour qui ne peut pas archiver) ; E2E souris et clavier (archiver, déplier,
 désarchiver) ; outils du connecteur et `verify-mcp.sh` ; seed (un channel archivé) ; captures aux quatre paliers ; manuel.
 

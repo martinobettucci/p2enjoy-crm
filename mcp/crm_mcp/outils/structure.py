@@ -6,6 +6,10 @@
 #       (`crm_search`, outil de référence filtré par la matrice), §9.1 (les tables et fonctions de la webapp :
 #       `administration-arborescence.ts`, `recherche.ts`), §9.3 ; docs/SPEC-recherche.md §6 (`recherche_globale`)
 # @spec CRM-111 T2.4.2 (docs/BACKLOG.md) — les affaires actives d'un channel sont ses rattachements actifs (docs/SPEC-rattachements.md §5, §11)
+# @spec CRM-134 (docs/BACKLOG.md) tranche T2 — `crm_channel_archive` : archiver ou désarchiver un channel, l'écriture de
+#       Réglages et de la vue, action `supprimer` avec `destructiveHint` (§9.1) ; un état déjà atteint n'est pas réécrit ; zéro
+#       ligne est le refus réservé aux administrateurs (docs/SPEC-mcp.md §9.2 unvicies ; docs/SPEC-channels.md §11 ;
+#       décisions 871 et 919)
 """Tracks, channels et workflows, et la recherche globale, sous l'identité de la personne.
 
 Les écritures sont celles de l'arborescence de la webapp ; la base les réserve à qui administre l'espace. La recherche
@@ -485,6 +489,59 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             corps={"deleted_at": datetime.now(UTC).isoformat()},
         )
         return {"trashed": une_ligne(reponse, "channel", channel_id), "note": "An administrator can restore it from the trash."}
+
+    async def crm_channel_archive(
+        channel_id: Annotated[str, Field(description="The channel id")],
+        archived: Annotated[
+            bool,
+            Field(description="true archives it: it leaves the tab bar, listed under « Archivés »; false brings it back"),
+        ] = True,
+    ) -> dict[str, Any]:
+        appel = appel_courant()
+        # `CRM-134` (§9.2 unvicies) : l'état est lu d'abord ; un channel déjà dans l'état demandé n'est pas réécrit.
+        channels = await lire(
+            appel.jeton, "channels", {"id": f"eq.{channel_id}", "select": "id,name,archived_at"}, "channel", channel_id
+        )
+        if len(channels) != 1:
+            raise RefusCrm(introuvable("channel", channel_id))
+        nom = channels[0]["name"]
+        if (channels[0].get("archived_at") is not None) == archived:
+            return {
+                "channel_id": channel_id,
+                "name": nom,
+                "archived": archived,
+                "note": "Nothing was written: the channel was already " + ("archived." if archived else "active."),
+            }
+        reponse = await crm.ecrire(
+            appel.jeton,
+            "PATCH",
+            "channels",
+            parametres={"id": f"eq.{channel_id}", "select": "id,name"},
+            corps={"archived_at": datetime.now(UTC).isoformat() if archived else None},
+        )
+        if not reponse.reussie:
+            raise refus_structure(reponse, "channel", channel_id)
+        if not isinstance(reponse.corps, list) or len(reponse.corps) != 1:
+            # Lisible mais non écrit : la politique de `channels` réserve l'écriture aux administrateurs de l'espace.
+            raise RefusCrm(
+                "Refusé par le CRM : archiving or unarchiving a channel is reserved to the administrators of its "
+                "workspace (FR: administrateurs de l'espace)."
+            )
+        return {"channel_id": channel_id, "name": nom, "archived": archived}
+
+    moteur.enregistrer(
+        serveur,
+        crm_channel_archive,
+        Declaration(famille="structure", action="supprimer", espace="channel:channel_id"),
+        titre="Archive or unarchive a channel",
+        description=(
+            "Archives a channel (it leaves the tab bar and is listed under « Archivés », its affaires untouched), or "
+            "brings it back with archived=false. Reversible; reserved to the administrators of the workspace."
+        ),
+        # Le §9.1 exige `destructiveHint` de tout archivage, comme pour `crm_goal_board_archive` et
+        # `crm_card_placement_archive` : l'assistant demande confirmation avant de retirer un channel des onglets.
+        destructif=True,
+    )
 
     moteur.enregistrer(
         serveur,

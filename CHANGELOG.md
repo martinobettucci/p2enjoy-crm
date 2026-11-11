@@ -13,6 +13,11 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-134` T2 — archiver ou désarchiver un channel depuis le connecteur MCP
+
+- **Un assistant connecté peut archiver un channel, ou le désarchiver**, sous la case « Supprimer » de la famille « Structure ». Il demande confirmation avant de le faire. Comme à l'écran, seuls les administrateurs de l'espace y sont autorisés.
+- Déploiement : reconstruire l'image `mcp` (`docs/PROD_MIGRATIONS.md` §2.44). Aucune migration.
+
 #### `CRM-134` T1 — archiver un channel depuis sa vue, et le retrouver dans « Archivés »
 
 - **« Archiver le channel »**, sur la barre d'outils du channel ouvert, à côté de « Tableau / Liste » : une confirmation dans la page nomme le channel et dit qu'il quitte les onglets pour tout l'espace, sans être supprimé. La vue passe au channel suivant.

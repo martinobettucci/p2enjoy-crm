@@ -6703,7 +6703,9 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   - *Modifier* : renommer un track ou un channel, changer sa description, la couleur ou l'icône d'un track. Le slug
     — l'adresse — ne change jamais ; changer le workflow d'un channel relève de la famille « Workflows », et choisir la
     couleur d'un channel reste un geste de l'écran ;
-  - *Supprimer* : mettre un track ou un channel à la corbeille.
+  - *Supprimer* : mettre un track ou un channel à la corbeille ; **archiver un channel**, ou le désarchiver. Archivé, il
+    quitte les onglets de son track pour tout l'espace et se retrouve sous « Archivés », ses affaires intactes. Comme à
+    l'écran, le CRM le réserve aux administrateurs de l'espace, et votre assistant vous demande confirmation.
 
   Le CRM réserve ces écritures aux administrateurs de l'espace : pour un autre membre, l'assistant reçoit un refus.
 
