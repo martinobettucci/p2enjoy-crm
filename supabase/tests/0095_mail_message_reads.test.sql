@@ -6,6 +6,8 @@
 --           (docs/SPEC-seed.md §35 ; révision du n° 11, décision 51)
 -- @verifies CRM-143 (docs/BACKLOG.md) — tranche T6 : le compte suit le courrier « Pièces à vérifier » du seed
 --           (docs/SPEC-seed.md §40 ; révision du n° 11, décision 51)
+-- @verifies CRM-140 (docs/BACKLOG.md) — tranche T4 : les comptes suivent le courrier HTML non classé du seed
+--           (docs/SPEC-seed.md §44 ; révision des n° 11 à 13, décision 51)
 --
 -- LA SUITE S'APPUIE SUR LE COURRIER DU SEED (§2.19), sans en fabriquer : Camille (admin) voit les quatre messages,
 -- Driss (business_developer) les deux classés seulement. LES COMPTES DE DOSSIER SONT BORNÉS À L'AFFAIRE DU FIL
@@ -82,12 +84,15 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');  -- Camille, ad
 -- Vertuo » et ses cinq pièces jointes (docs/SPEC-seed.md §35), que personne n'ouvre.
 -- RÉVISÉ par `CRM-143` T6 (décision 51), non relâché : un sixième, « Pièces à vérifier — monitoring Vertuo », l'échantillon
 -- EICAR et une pièce trop volumineuse (docs/SPEC-seed.md §40), que personne n'ouvre non plus.
-select is((select count(*) from public.mail_messages m where not public.is_read(m)), 6::bigint,
-	'11 — au départ, les six messages reçus sont non lus pour Camille : aucune lecture fabriquée');
-select is((select unread_count from public.inbox_arborescence() where card_id is null), 2::bigint,
-	'12 — « Non classés » : deux non lus pour Camille');
-select is((select nombre from public.inbox_arborescence() where card_id is null), 2::bigint,
-	'13 — et le TOTAL reste à deux (décision 716)');
+-- RÉVISÉ par `CRM-140` T4 (décision 51), non relâché : un septième, « Invitation — journée partenaires Sogexia », le courrier
+-- HTML que Léo Marchand adresse à la boîte système (docs/SPEC-seed.md §44). Il reste NON CLASSÉ : « Non classés » en compte
+-- donc trois, tous non lus pour Camille.
+select is((select count(*) from public.mail_messages m where not public.is_read(m)), 7::bigint,
+	'11 — au départ, les sept messages reçus sont non lus pour Camille : aucune lecture fabriquée');
+select is((select unread_count from public.inbox_arborescence() where card_id is null), 3::bigint,
+	'12 — « Non classés » : trois non lus pour Camille');
+select is((select nombre from public.inbox_arborescence() where card_id is null), 3::bigint,
+	'13 — et le TOTAL reste à trois (décision 716)');
 
 select is(public.mark_messages_read(array[(select valeur from pg_temp_ref where nom = 'classe'),
                                           (select valeur from pg_temp_ref where nom = 'reponse')]), 2,
