@@ -4293,10 +4293,12 @@ Le texte reste rendu par React, sans aucune injection de HTML. Seules les adress
 
 La forme et les règles de `docs/DESIGN_SYSTEM.md` §5.100 s'appliquent : le cadre, le bandeau et la phrase d'attente.
 
-- Le cadre occupe la largeur du corps. Sa hauteur est fixe, `min(70vh, 720px)` et au moins 320 px, et il défile en
-  lui-même, à la verticale comme à l'horizontale lorsqu'un tableau dépasse. La page, elle, ne défile jamais à l'horizontale.
-- La feuille de base est écrite par le CRM : fond blanc, encre `#0D0D0D`, la police système, `img { max-width: 100%; height:
-  auto }` et la coupure des mots longs. Le HTML de l'expéditeur garde la main sur sa propre mise en page.
+- Le cadre occupe la largeur du corps. Sa hauteur est fixe, celle du cadre du PDF (`docs/DESIGN_SYSTEM.md` §5.80) :
+  `min(70vh, 720px)`, `60vh` sous `md`. Il défile en lui-même, à la verticale comme à l'horizontale lorsqu'un tableau
+  dépasse. La page, elle, ne défile jamais à l'horizontale.
+- La feuille de base est écrite par le CRM, avec les valeurs des jetons (`docs/DESIGN_SYSTEM.md` §5.100, écart §12.7) :
+  fond `--color-surface`, texte `--color-text`, la pile `--font-sans`, `img { max-width: 100%; height: auto }` et la
+  coupure des mots longs. Le HTML de l'expéditeur garde la main sur sa propre mise en page.
 - Le clavier : `Tab` entre dans le cadre et en parcourt les liens, puis en sort vers la suite du panneau. Le cadre porte un
   `title` lisible.
 

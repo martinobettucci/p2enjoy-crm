@@ -558,6 +558,8 @@ proposée par le classement assisté, toujours présentée **comme une suggestio
   de ses messages **non lus** par celui qui regarde (§5.4 quinquies)*.
 - **Le corps du message est du texte**, jamais le HTML de l'expéditeur (§18.4). Il conserve ses
   retours à la ligne et se replie sur les mots longs plutôt que de déborder.
+  *Révisé par `CRM-140` (§5.100) : un message porteur de HTML le montre dans un cadre isolé ; la règle vaut pour un
+  message sans HTML.*
 - **Une pièce jointe non saine n'a pas de lien** : elle affiche son statut d'analyse en toutes
   lettres — « en cours d'analyse », « écartée par l'antivirus », « non analysée » — et le bouton de
   téléchargement est **absent**, non désactivé. Un bouton grisé promet ce que le serveur refusera.
@@ -3212,6 +3214,15 @@ hexadécimale n'entre dans un composant (§11).
 les trois portent la même classe, comme cette entrée l'annonçait les deux fois. Le board y ajoute
 `scroll-snap`, l'ancrage colonne par colonne que le §7 demande sous 768 px ; le tableau de la vue
 liste ne l'ajoute pas, faute de colonne sur laquelle s'ancrer (§5.9).
+
+### 12.7 Les valeurs des jetons recopiées dans le cadre d'un courrier — `CRM-140`, 2026-11-11
+
+Le §11 interdit l'hexadécimal dans un composant. Or le document du cadre du §5.100 a une **origine opaque**, voulue par la
+décision 918 : il ne lit ni le CSS ni les variables de l'application. Sa feuille de base porte donc les **valeurs** de six
+jetons (`--color-surface`, `--color-text`, `--color-text-2`, `--color-border`, `--font-sans`, `--radius-sm`). Elles sont
+écrites une seule fois, sous le nom de leur jeton (`JETONS_DU_CADRE`, `webapp/src/lib/corps-html.ts`), et **une preuve les
+compare à `webapp/src/styles/tokens.css`** : un jeton qui change fait échouer `corps-html.test.ts`, au lieu de laisser le
+cadre dériver en silence.
 
 Tout écart futur est consigné ici avec sa justification et sa date.
 
@@ -8252,6 +8263,44 @@ la ligne (§5.59).
   hauteurs différentes — le défaut que le §5.93 avait payé. Sous la ligne, toujours, le groupe donne à toutes les lignes la
   même forme. *Révise la rangée du §5.93.*
 - **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `FolderTree`.**
+
+### 5.100 Le corps HTML d'un mail dans son cadre, et le bandeau « Afficher les images » — `CRM-140`
+
+*Écrit le 2026-11-11, avant le code de l'écran, après la lecture des sections ciblées que la décision 918 a retenues
+(§1 à §4, §6 à §12, §5.4 à §5.4 sexies, §5.5, §5.8, §5.13, et §5.80 qu'elles citent).* Ce que le cadre sert, nettoie et
+bloque est spécifié par `docs/SPEC-mail-subsystem.md` §30 ; ces règles ne disent que de quoi il a l'air. **Révise la règle
+du §5.4** : « le corps du message est du texte » vaut désormais pour un message sans HTML.
+
+- **LE CADRE prend la place du corps** dans le panneau de lecture, sous le sélecteur de fil (§5.4 bis) et au-dessus des
+  pièces jointes. Il a la forme du cadre du PDF (§5.80) :
+  - toute la largeur de la colonne ;
+  - `min(70vh, 720px)` de haut, `60vh` sous `md` ;
+  - bordure `--color-border`, `--radius-sm`, fond `--color-surface`.
+  Il **défile en lui-même**, à la verticale comme à l'horizontale lorsqu'un tableau du courrier dépasse ; la page ne défile
+  jamais à l'horizontale (§7). Son `title` est « Contenu du message » (§8). Le §5.80 ne lui ajoute ni commande ni en-tête :
+  le courrier est l'objet, non une pièce.
+- **DANS LE CADRE, la feuille de base du CRM** : fond `--color-surface`, texte `--color-text` en 15 px et interligne 1,55,
+  la pile `--font-sans` (§2), marge 12 px, images bornées à la largeur. Le HTML de l'expéditeur garde la main sur sa mise
+  en page, ses couleurs et ses polices locales. Les valeurs y sont recopiées des jetons (écart §12.7).
+- **UNE IMAGE INTÉGRÉE INDISPONIBLE** devient, à sa place dans le courrier, une mention en 13 px `--color-text-2`, dans un
+  cadre pointillé `--color-border`, `--radius-sm`, rembourrage 4 × 8 px : « image intégrée indisponible », suivie de son
+  texte alternatif quand il existe. Ce n'est pas une erreur : aucune teinte de danger.
+- **LE BANDEAU DES IMAGES DISTANTES** se pose **au-dessus du cadre**, et seulement si le courrier en a. Il prend la carte
+  discrète du §5.4 ter, et non une alerte : bloquer n'est pas une panne. Il porte, dans cet ordre :
+  - l'icône Lucide `ImageOff`, décorative (§9) ;
+  - la phrase, en 13 px `--color-text-2` : « Les images distantes de ce message sont bloquées : les afficher préviendrait
+    l'expéditeur que vous l'avez ouvert. » ;
+  - le bouton **« Afficher les images »**, secondaire compact (§5.5), cible de 40 px conservée.
+  Sous `md`, le bouton passe sous la phrase.
+- **APRÈS LE CLIC**, la même carte porte la seule phrase « Images affichées pour ce message. », en `role="status"` et en
+  `tabIndex=-1`. **Le focus s'y pose**, puisque le bouton qui l'avait disparaît (§5.13). Ouvrir un autre message rend le
+  bandeau à son premier état.
+- **PENDANT LA LECTURE DES IMAGES INTÉGRÉES**, un squelette à la hauteur du cadre (§5.8 : squelettes, jamais de spinner),
+  accompagné de la phrase masquée « Préparation du message… » en `role="status"`.
+- **UN MESSAGE SANS HTML** garde son corps en texte (§5.4) : ses adresses `http(s)://` sont des liens `--color-brand`
+  soulignés, `rel="noopener noreferrer"`, ouverts dans un nouvel onglet, qui se replient comme le texte qu'ils coupent. La
+  phrase « corps réduit depuis le HTML » disparaît.
+- **Aucune couleur, aucun jeton nouveau. Une icône Lucide nouvelle, `ImageOff`**, qui ne sert aucun autre objet (§9).
 
 ### 5.101 Archiver un channel depuis sa vue, et le groupe « Archivés » de la barre d'onglets — `CRM-134`
 
