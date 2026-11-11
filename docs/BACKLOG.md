@@ -18953,7 +18953,8 @@ board et sur la fiche, et par un assistant connecté.
 
 ## Demande du 2026-11-09 — archiver un channel depuis la vue, le retrouver replié (décision 871)
 
-### CRM-134 — Archiver un channel depuis la vue, et le retrouver dans un groupe « Archivés » replié `[ ]`
+### CRM-134 — Archiver un channel depuis la vue, et le retrouver dans un groupe « Archivés » replié `[@]`
+*Prise en charge : session interactive 152dd27d (p2enjoy-crm-a8) depuis 2026-11-11 00:45 UTC — état avant : [ ] ; confiée par la session de livraison (ee)*
 
 **Origine** : demande du responsable, le 2026-11-09 ; arbitrée le même jour (décision 871).
 **Comportement attendu** : un bouton « Archiver » sur le channel là où on le voit ; le channel quitte la vue principale
