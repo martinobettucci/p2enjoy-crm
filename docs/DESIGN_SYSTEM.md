@@ -3215,14 +3215,17 @@ les trois portent la même classe, comme cette entrée l'annonçait les deux foi
 `scroll-snap`, l'ancrage colonne par colonne que le §7 demande sous 768 px ; le tableau de la vue
 liste ne l'ajoute pas, faute de colonne sur laquelle s'ancrer (§5.9).
 
-### 12.7 Les valeurs des jetons recopiées dans le cadre d'un courrier — `CRM-140`, 2026-11-11
+### 12.7 Les valeurs des jetons LUES dans `tokens.css` pour le cadre d'un courrier — `CRM-140`, 2026-11-11
 
-Le §11 interdit l'hexadécimal dans un composant. Or le document du cadre du §5.100 a une **origine opaque**, voulue par la
-décision 918 : il ne lit ni le CSS ni les variables de l'application. Sa feuille de base porte donc les **valeurs** de six
-jetons (`--color-surface`, `--color-text`, `--color-text-2`, `--color-border`, `--font-sans`, `--radius-sm`). Elles sont
-écrites une seule fois, sous le nom de leur jeton (`JETONS_DU_CADRE`, `webapp/src/lib/corps-html.ts`), et **une preuve les
-compare à `webapp/src/styles/tokens.css`** : un jeton qui change fait échouer `corps-html.test.ts`, au lieu de laisser le
-cadre dériver en silence.
+Le document du cadre du §5.100 a une **origine opaque**, voulue par la décision 918 : il ne lit ni le CSS ni les variables
+de l'application, et sa feuille de base doit donc porter des **valeurs**. Les recopier dans le module ferait entrer de
+l'hexadécimal hors du fichier des jetons, ce que le §11 interdit et que `i18n.test.ts` refuse. Le module **lit donc les
+six jetons** (`--color-surface`, `--color-text`, `--color-text-2`, `--color-border`, `--font-sans`, `--radius-sm`) **dans
+la source de `webapp/src/styles/tokens.css`**, embarquée au build par l'import `?raw` de Vite (`lireJetons`,
+`webapp/src/lib/corps-html.ts`).
+- Aucun jeton n'est dupliqué, et rien ne peut dériver.
+- Un jeton absent est une faute dite, jamais un cadre sans couleur.
+- Vitest traite cette seule feuille (`vitest.config.ts`, `css.include`), pour que la preuve lise ce que le build embarque.
 
 Tout écart futur est consigné ici avec sa justification et sa date.
 
@@ -8281,7 +8284,7 @@ du §5.4** : « le corps du message est du texte » vaut désormais pour un mess
   le courrier est l'objet, non une pièce.
 - **DANS LE CADRE, la feuille de base du CRM** : fond `--color-surface`, texte `--color-text` en 15 px et interligne 1,55,
   la pile `--font-sans` (§2), marge 12 px, images bornées à la largeur. Le HTML de l'expéditeur garde la main sur sa mise
-  en page, ses couleurs et ses polices locales. Les valeurs y sont recopiées des jetons (écart §12.7).
+  en page, ses couleurs et ses polices locales. Les valeurs sont lues dans `tokens.css` (écart §12.7).
 - **UNE IMAGE INTÉGRÉE INDISPONIBLE** devient, à sa place dans le courrier, une mention en 13 px `--color-text-2`, dans un
   cadre pointillé `--color-border`, `--radius-sm`, rembourrage 4 × 8 px : « image intégrée indisponible », suivie de son
   texte alternatif quand il existe. Ce n'est pas une erreur : aucune teinte de danger.
