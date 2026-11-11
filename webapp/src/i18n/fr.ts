@@ -4291,6 +4291,50 @@ export const fr = {
 	// docs/SPEC-modeles-emails.md §13, docs/DESIGN_SYSTEM.md §5.41.
 	'admin.sequences.title': 'Séquences de relance',
 	'admin.settings.index.sequences': 'Séquences de relance',
+
+	// CRM-141 T3 — Réglages ▸ Pastilles des mails (docs/SPEC-mail-subsystem.md §31.7 ; docs/DESIGN_SYSTEM.md §5.103).
+	'admin.settings.index.mailLabels': 'Pastilles des mails',
+	'admin.settings.index.mailLabels.body': "Les pastilles que l'IA pose sur les mails reçus, et ce qu'elle lit pour décider.",
+	'admin.mailLabels.title': 'Pastilles des mails',
+	'admin.mailLabels.intro':
+		"L'IA de l'assistant lit chaque mail reçu et lui pose les pastilles dont le descriptif lui correspond. Une pastille posée ou retirée à la main n'est jamais défaite par l'IA.",
+	'admin.mailLabels.noworkspace': "Aucun espace de travail n'est ouvert : les pastilles appartiennent à un espace.",
+	'admin.mailLabels.new': 'Nouvelle pastille',
+	'admin.mailLabels.showArchived': 'Afficher les archivées',
+	'admin.mailLabels.saved': 'Pastille « {nom} » enregistrée.',
+	'admin.mailLabels.archived.done': 'Pastille « {nom} » archivée.',
+	'admin.mailLabels.unarchived': 'Pastille « {nom} » désarchivée.',
+	'admin.mailLabels.archived': 'Archivée',
+	'admin.mailLabels.edit': 'Modifier',
+	'admin.mailLabels.edit.aria': 'Modifier la pastille {nom}',
+	'admin.mailLabels.archive': 'Archiver',
+	'admin.mailLabels.archive.aria': 'Archiver la pastille {nom}',
+	'admin.mailLabels.unarchive': 'Désarchiver',
+	'admin.mailLabels.unarchive.aria': 'Désarchiver la pastille {nom}',
+	'admin.mailLabels.archive.confirm': 'Archiver la pastille « {nom} » ?',
+	'admin.mailLabels.archive.confirm.body':
+		'Elle ne sera plus posée, ni par l’IA ni à la main. Les mails qui la portent la garderont, marquée archivée.',
+	'admin.mailLabels.error.title': 'Les pastilles n’ont pas pu être chargées',
+	'admin.mailLabels.empty.title': 'Aucune pastille.',
+	'admin.mailLabels.empty.body': 'Créez-en une avec « Nouvelle pastille » : l’IA la posera sur les mails que son descriptif décrit.',
+	'admin.mailLabels.form.new': 'Nouvelle pastille',
+	'admin.mailLabels.form.edit': 'Modifier la pastille',
+	'admin.mailLabels.field.name': 'Nom',
+	'admin.mailLabels.field.description': 'Descriptif pour l’IA',
+	'admin.mailLabels.field.description.help':
+		'Le modèle lit ce texte pour décider si un mail porte cette pastille. Décrivez les mails concernés.',
+	'admin.mailLabels.save': 'Enregistrer',
+	'admin.mailLabels.pending': 'Enregistrement…',
+	'admin.mailLabels.cancel': 'Annuler',
+	'admin.mailLabels.refus.nom': 'Une pastille porte déjà ce nom : choisissez-en un autre.',
+	'admin.mailLabels.refus.nomArchivee':
+		'Une pastille archivée porte déjà ce nom : cochez « Afficher les archivées » pour la retrouver et la désarchiver.',
+	'admin.mailLabels.refus.forme': 'Le nom (40 caractères au plus) et le descriptif (500 au plus) ne peuvent pas être vides.',
+	'admin.mailLabels.refus.forbidden': 'Seuls les administrateurs de l’espace modifient les pastilles.',
+	'admin.mailLabels.refus.sansEffet':
+		"Rien n'a été modifié : vous n'avez plus le droit d'écrire sur cette pastille, ou elle a disparu.",
+	'admin.mailLabels.refus.panne': "L'enregistrement a échoué. Réessayez.",
+	'mailLabels.pill.archived': '{nom}, pastille archivée',
 	'admin.settings.index.sequences.body':
 		'Enchaîner plusieurs modèles à des délais choisis, pour relancer une affaire qui ne répond plus.',
 	'admin.sequences.aria': 'Administration des séquences de relance',

@@ -19343,7 +19343,14 @@ est archivée et reste sur les mails (926) ; un filtre par pastille (926) ; les 
   qui tient) ; pgTAP complet **160 fichiers** au vert après une assertion de la `0172` rendue indépendante du seed ; le seed
   converge sur deux passages. **Limite** : la preuve contre le vrai modèle (P3) est sautée — le serveur de LeLabs refuse la
   clé depuis l'origine actuelle du poste (`cle_refusee`) ; elle demande au responsable d'autoriser l'origine ;
-- reste : T3 (les réglages), T4 (l'inbox), T5 (le connecteur), T6 (le manuel), T7 (production).
+- **T3 faite le 2026-11-11, vérifiée en développement** : Réglages ▸ Pastilles des mails (`/reglages/pastilles-mails`,
+  `ReglagesPastillesMail.tsx`, `lib/pastilles-mail.ts`), l'entrée de l'index après les séquences ; lisible par tout membre,
+  commandes éteintes avec motif pour qui n'administre pas ; Vitest `pastilles-mail.test.ts` **17** et
+  `ReglagesPastillesMail.test.tsx` **7** ; API `e2e/api/pastilles-reglages.spec.ts` **4/4** (l'administratrice crée,
+  modifie, archive, désarchive ; aucune suppression ; business developer et lectrice lisent et sont refusés ; nom pris par
+  une archivée `23505` ; bornes `23514` ; l'anonyme ne lit rien) ; UI `e2e/ui/pastilles-reglages.spec.ts` **4/4** (souris,
+  clavier, lecture seule, quatre paliers) ; dix captures `docs/captures/CRM-141/` observées ;
+- reste : T4 (l'inbox), T5 (le connecteur), T6 (le manuel), T7 (production).
 **DoD** :
 - unitaires : contrôle de la sortie du modèle, clés inconnues rejetées ;
 - pgTAP : RLS, administrateurs seuls sur les pastilles, la main prime, les défauts ;

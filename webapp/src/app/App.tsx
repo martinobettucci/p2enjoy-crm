@@ -1,3 +1,4 @@
+// @spec CRM-141 (docs/BACKLOG.md) — tranche T3 : la route de Réglages ▸ Pastilles des mails (docs/SPEC-mail-subsystem.md §31.7)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : Réglages ▸ Étiquettes, son adresse, sa route et son entrée d'index (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-007 (docs/BACKLOG.md) — racine applicative et routage
 // @spec CRM-009 (docs/BACKLOG.md) — route de connexion et restauration de session
@@ -42,6 +43,7 @@ import {
 	CHEMIN_PLATEFORME_MCP_COMPTE,
 	CHEMIN_PLATEFORME_SUPERADMINS,
 	CHEMIN_PLATEFORME_UTILISATEURS,
+	CHEMIN_ADMIN_PASTILLES_MAIL,
 } from './chemins'
 import type { VuePlateforme } from './Plateforme'
 import { GuideDemarrage } from './GuideDemarrage'
@@ -90,6 +92,7 @@ import {
 	CLE_TITRE_IDENTITES_MAIL,
 	CLE_TITRE_MODELES_MAIL,
 	CLE_TITRE_SEQUENCES_MAIL,
+	CLE_TITRE_PASTILLES_MAIL,
 	CLE_TITRE_ETAT_MESSAGERIE,
 	CLE_TITRE_INTROUVABLE,
 	CLE_TITRE_OBJECTIFS,
@@ -159,6 +162,10 @@ const ReglagesModelesEmails = lazy(async () => ({
  */
 const ReglagesSequencesRelance = lazy(async () => ({
 	default: (await import('./ReglagesSequencesRelance')).ReglagesSequencesRelance,
+}))
+// `CRM-141` T3 — Réglages ▸ Pastilles des mails (docs/SPEC-mail-subsystem.md §31.7).
+const ReglagesPastillesMail = lazy(async () => ({
+	default: (await import('./ReglagesPastillesMail')).ReglagesPastillesMail,
 }))
 /** La corbeille de `CRM-077`, chargée à la demande pour la même raison que les trois autres. */
 const Corbeille = lazy(async () => ({ default: (await import('./Corbeille')).Corbeille }))
@@ -557,6 +564,16 @@ function RoutesPages() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_SEQUENCES_MAIL}>
 							<ReglagesSequencesRelance />
+						</AppShell>
+					}
+				/>
+				{/* Les pastilles des mails — `CRM-141` T3. Après les séquences et avant l'état de la messagerie, comme dans
+				    l'index des réglages (docs/SPEC-mail-subsystem.md §31.7). */}
+				<Route
+					path={CHEMIN_ADMIN_PASTILLES_MAIL}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_PASTILLES_MAIL}>
+							<ReglagesPastillesMail />
 						</AppShell>
 					}
 				/>

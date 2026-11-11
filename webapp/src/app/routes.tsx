@@ -47,6 +47,7 @@ import {
 	CHEMIN_ADMIN_IDENTITES_MAIL,
 	CHEMIN_ADMIN_MODELES_MAIL,
 	CHEMIN_ADMIN_SEQUENCES_MAIL,
+	CHEMIN_ADMIN_PASTILLES_MAIL,
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CONTACTS,
 	CHEMIN_CORBEILLE,
@@ -228,6 +229,8 @@ export const CLE_TITRE_MODELES_MAIL: CleTraduction = 'admin.mailTemplates.title'
 
 /** Titre de l'administration des séquences de relance — `CRM-063`, sous-tranche 4c. */
 export const CLE_TITRE_SEQUENCES_MAIL: CleTraduction = 'admin.sequences.title'
+/** `CRM-141` T3 — Réglages ▸ Pastilles des mails (docs/SPEC-mail-subsystem.md §31.7). */
+export const CLE_TITRE_PASTILLES_MAIL: CleTraduction = 'admin.mailLabels.title'
 
 /**
  * Titre de la corbeille — `CRM-077`, même patron que les trois autres (docs/SPEC-corbeille.md §4.1).
@@ -623,6 +626,19 @@ export function IndexReglages() {
 						<span className="text-sm text-text-2">
 							{t('admin.settings.index.sequences.body')}
 						</span>
+					</Link>
+				</li>
+				{/* Les pastilles des mails viennent APRÈS les séquences et AVANT l'état — `CRM-141` T3,
+				    docs/SPEC-mail-subsystem.md §31.7 : on configure avant de superviser. Rendue à tout membre : l'écran se lit, et
+				    ses commandes suivent la capacité d'administrer (§5.103). */}
+				<li>
+					<Link
+						to={CHEMIN_ADMIN_PASTILLES_MAIL}
+						data-testid="entree-pastilles-mail"
+						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+					>
+						<span className="font-medium">{t('admin.settings.index.mailLabels')}</span>
+						<span className="text-sm text-text-2">{t('admin.settings.index.mailLabels.body')}</span>
 					</Link>
 				</li>
 				<li>

@@ -8495,8 +8495,14 @@ d'une liste de l'espace se lisent de la même façon d'un écran à l'autre (§5
   **« Archiver » ouvre une confirmation dans le flux** (§5.13), qui nomme la pastille et dit : « Elle ne sera plus posée,
   ni par l'IA ni à la main. Les mails qui la portent la garderont, marquée archivée. » « Afficher les archivées » (§5.29
   bis). Un nom pris est refusé sous les champs, et nomme « Afficher les archivées » quand il est pris par une archivée
-  (§5.29 bis). L'entrée de l'index et l'écran suivent la capacité d'administrer l'espace (§5.59). États (§5.8) :
-  squelette, erreur avec « Réessayer », et l'état vide « Aucune pastille. » avec « Nouvelle pastille ».
+  (§5.29 bis). **L'écran se lit par tout membre** (`docs/SPEC-mail-subsystem.md` §31.3) : l'entrée de l'index est un
+  lien pour chacun, car le descriptif dit ce que l'IA lit, et qui trie l'inbox doit pouvoir le consulter. **Ses commandes
+  suivent la capacité d'administrer l'espace** (§5.59) : refusée, « Nouvelle pastille », « Modifier » et « Archiver »
+  restent rendues, `disabled`, et le motif de lecture seule, posé en tête, est leur description accessible. États
+  (§5.8) : squelette, erreur avec « Réessayer », et l'état vide « Aucune pastille. » avec « Nouvelle pastille ».
+  *Deux écarts avec Réglages ▸ Étiquettes, assumés* (constatés à l'écriture de la tranche T3, 2026-11-11) : son entrée
+  est un texte pour qui n'administre pas, celle-ci un lien ; et une étiquette s'archive sans confirmation, une pastille
+  avec, parce que son archivage a un effet différé que la liste ne montre pas — l'IA cesse de la poser.
 - **RESPONSIVE** (§7) : les pilules passent à la ligne, jamais tronquées ; le panneau et la fiche prennent la largeur ;
   la page ne défile jamais horizontalement.
 - **Aucune couleur, aucun jeton nouveau ; aucune icône nouvelle** : `Tags`, `Sparkles` et `TriangleAlert` sont réemployées

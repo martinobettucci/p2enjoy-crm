@@ -3,6 +3,8 @@
 //       accessible ; trois au plus sur la carte, puis « +n »), §5.6, §1 ; docs/SPEC-etiquettes-digest.md §3
 //
 // LA COULEUR NE PORTE JAMAIS SEULE L'INFORMATION (§1) : la pastille écrit le nom, et son point de tête n'est qu'un repère.
+// @spec CRM-141 (docs/BACKLOG.md) — tranche T3 : la même pilule pour une pastille de mail (docs/DESIGN_SYSTEM.md §5.103 : la
+//       grammaire des étiquettes reprise sans écart), avec son propre nom accessible — « pastille archivée », l'origine
 
 import { t } from '../../i18n'
 import type { CouleurNoeud } from '../../lib/board'
@@ -26,8 +28,15 @@ const POINTS: Readonly<Record<CouleurNoeud, string>> = {
 
 const CLASSES = 'inline-flex max-w-full items-center gap-1 rounded-full px-2 py-[2px] text-xs font-medium'
 
-export function PastilleEtiquette({ etiquette }: { readonly etiquette: Pick<Etiquette, 'nom' | 'couleur' | 'archivee'> }) {
-	const nomAccessible = etiquette.archivee ? t('labels.pill.archived', { nom: etiquette.nom }) : undefined
+export function PastilleEtiquette({
+	etiquette,
+	nomAccessible: nomDonne,
+}: {
+	readonly etiquette: Pick<Etiquette, 'nom' | 'couleur' | 'archivee'>
+	/** Le nom accessible et l'infobulle, quand l'objet n'est pas une étiquette d'affaire (`CRM-141`). */
+	readonly nomAccessible?: string
+}) {
+	const nomAccessible = nomDonne ?? (etiquette.archivee ? t('labels.pill.archived', { nom: etiquette.nom }) : undefined)
 	return (
 		<span
 			data-testid="pastille-etiquette"

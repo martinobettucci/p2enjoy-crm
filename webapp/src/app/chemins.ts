@@ -175,6 +175,12 @@ export const CHEMIN_ADMIN_MODELES_MAIL = '/reglages/modeles-emails' as const
  */
 export const CHEMIN_ADMIN_SEQUENCES_MAIL = '/reglages/sequences-relance' as const
 
+/**
+ * Pastilles des mails — `CRM-141` T3, docs/SPEC-mail-subsystem.md §31.7 ; docs/DESIGN_SYSTEM.md §5.103. Après les séquences
+ * et avant l'état de la messagerie : on configure avant de superviser.
+ */
+export const CHEMIN_ADMIN_PASTILLES_MAIL = '/reglages/pastilles-mails' as const
+
 /** État de la messagerie — `CRM-059`. */
 export const CHEMIN_ETAT_MESSAGERIE = '/reglages/messagerie' as const
 

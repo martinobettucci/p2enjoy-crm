@@ -13,6 +13,11 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-141` T3 — Réglages ▸ Pastilles des mails
+
+- **Un nouvel écran, Réglages ▸ Pastilles des mails**, liste les pastilles de l'espace avec le descriptif que l'IA lit pour décider. L'administrateur en crée (nom, couleur, descriptif), les modifie, les archive — une archivée n'est plus posée, mais reste sur les mails qui la portent — et les désarchive. Tout membre consulte l'écran ; les autres voient les commandes inactives, avec le motif.
+- Déploiement : la webapp seule ; aucune migration nouvelle (les migrations 183 et 184 de T1 et T2).
+
 #### `CRM-141` T2 — l'évaluation des pastilles par le modèle de l'assistant IA
 
 - **Chaque mail reçu est évalué en tâche de fond** : chaque minute, le CRM passe au modèle de son assistant IA les mails en attente, un par un, et lui fait choisir leurs pastilles parmi celles de l'espace. Seuls l'objet, l'expéditeur et le début du texte (2 000 caractères) lui sont envoyés, jamais une pièce jointe. Une pastille inventée par le modèle est écartée ; un choix fait à la main n'est jamais défait. Sans assistant configuré, rien n'est envoyé et les mails attendent. Rien ne s'affiche encore : l'écran vient avec les tranches suivantes.
