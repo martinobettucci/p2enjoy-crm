@@ -18945,7 +18945,8 @@ d'étape, cases existantes ; au catalogue de `docs/SPEC-mcp.md` §9.2, dans une 
 connecteur et `verify-mcp.sh` ; seed (une description de nœud, une surcharge) ; captures aux quatre paliers ; manuel ;
 contrat de déploiement.
 **État (2026-11-10, session 32)** : implémentée et vérifiée en développement, tranches T1 à T4 ; les captures observées sont
-sous `e2e/output/CRM-133/`, leur copie versionnée (`docs/captures/CRM-133/`, `CAPTURES_UNITES`) suit dans un commit à part.
+sous `e2e/output/CRM-133/` ; leur copie versionnée (`docs/captures/CRM-133/`) a été renouvelée et committée par la campagne
+du lot de la session de livraison (`41246b51`).
 **Reste** : la livraison
 (la 174, la webapp et l'image `mcp`, déjà dans le lot de la session de livraison en avance de leur unité ; `docs/PROD_MIGRATIONS.md`
 §3), et le constat du responsable : la description d'un nœud et d'une étape saisie dans Réglages, lue au survol sur le
