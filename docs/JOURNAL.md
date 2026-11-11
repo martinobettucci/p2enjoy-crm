@@ -40572,3 +40572,23 @@ seuls ; tous les mails existants. **Retenu : tous les mails existants**, au déb
 sur une grosse boîte, le rattrapage dure des heures, voire des jours ; les mails nouveaux passent devant lui.
 **Conséquences** : la spécification de `CRM-141` (`docs/SPEC-mail-subsystem.md`, `docs/SPEC-ia.md`, `docs/SCHEMA.md`,
 `docs/DESIGN_SYSTEM.md`, `docs/SPEC-mcp.md` §9.2, le manuel, le contrat) s'écrit sur ces réponses, avant le code.
+
+### décision 924 — `CRM-141` : révision de la décision 923 — dans le connecteur, l'assistant juge lui-même ; il lit, pose et retire, comme à la main ; aucun outil de réévaluation
+
+*2026-11-11, session interactive (p2enjoy-crm-a4), précision du responsable puis arbitrage (`AskUserQuestion`), avant la
+spécification de l'unité.*
+**La précision du responsable** : « le mcp n'envoie pas la demande au llm, il lit les pastilles et le message puis
+utilise sa propre intelligence pour poser les pastilles ». La question 1 de la décision 923 opposait « lire et
+réévaluer » à « aussi poser et retirer » : elle supposait à tort que l'assistant connecté passerait par le LLM du CRM.
+**Décision du responsable** :
+- **les outils du connecteur** : lire les pastilles de l'espace et leurs descriptifs ; lire les pastilles et le contenu
+  d'un mail ; **poser et retirer une pastille** sur un mail. L'assistant connecté — Claude, ChatGPT — juge avec sa propre
+  intelligence ; le connecteur ne transmet rien au LLM du CRM ;
+- **une pastille posée ou retirée par l'assistant compte comme un choix manuel** : la réévaluation par le LLM du CRM ne
+  la défait jamais ; le journal du connecteur garde la trace de l'outil (choix recommandé) ;
+- **aucun outil « demander une réévaluation »** dans le connecteur : la réévaluation par le LLM du CRM reste un bouton
+  d'écran (choix recommandé).
+**Inchangé** (décision 923) : la famille `messagerie`, cases existantes — lire sous « Consulter », poser et retirer sous
+« Modifier » ; ce qui est envoyé au LLM du CRM ; le rattrapage de tous les mails existants.
+**Révise** la décision 923 (question 1) et la ligne « MCP » de `CRM-141` (`docs/BACKLOG.md`), réécrite avec la
+spécification.
