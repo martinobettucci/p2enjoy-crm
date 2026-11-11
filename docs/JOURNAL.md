@@ -40592,3 +40592,14 @@ réévaluer » à « aussi poser et retirer » : elle supposait à tort que l'as
 « Modifier » ; ce qui est envoyé au LLM du CRM ; le rattrapage de tous les mails existants.
 **Révise** la décision 923 (question 1) et la ligne « MCP » de `CRM-141` (`docs/BACKLOG.md`), réécrite avec la
 spécification.
+
+### décision 925 — livrer le lot `CRM-134`, `CRM-138` et `CRM-140` à la révision `08cc9091`, sans instantané
+
+*2026-11-11, session 4522fa9c (p2enjoy-crm-25, ex-ee, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : les migrations `0179` à `0182`, l'image `mail-sync` (après la 180), la webapp bâtie dans la cellule (après la
+181), l'image `mcp` (après la 182) — contrat §2.43 à §2.45 ; aucune variable, aucun secret. `08cc9091` porte le code de
+`a6717431`, où le lot a été arrêté, et des documents seulement.
+**La campagne** : complète à `a6717431`, la base de développement égale à `main` (180 migrations) ; types, mail 55/55, mcp
+118, pgTAP 159 fichiers, build et garde du manuel 168 verts ; unitaires 5 738 sur 5 739, ui 1 217 sur 1 221, api 1 350 sur
+1 353, manuel 154 sur 155 — tous verts rejoués seuls ou INC-342. **Aucun défaut du lot.** Captures : 309, observées
+(`08cc9091`). **Décision : oui, sans instantané**, un `pg_dump` avant.
