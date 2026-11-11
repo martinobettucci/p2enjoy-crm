@@ -4104,19 +4104,21 @@ Voir `docs/SPEC-cards.md` §16.14.7. Rien ne change au sommeil lui-même : il re
 | `crm_mail_set_read` | `modifier` | `message:message_id` | marque le message lu ou non lu **pour la personne** (`mark_messages_read`, `mark_message_unread`) |
 | `crm_mail_snooze` | `modifier` | `message:message_id` | met le message en sommeil jusqu'à une date, ou le réveille (`snooze_thread`, `wake_thread`) |
 | `crm_mail_delete` | `supprimer` | `message:message_id` | l'efface (`delete_message`), avec `also_mailbox` ; outil **destructif** |
-| `crm_mail_restore` | `modifier` | `workspace:workspace` | le restaure (`restore_message`) ; *précisé avant le code de T4* |
+| `crm_mail_restore` | `modifier` | `trashed_message:message_id` | le restaure (`restore_message`) ; *précisé avant le code de T4* |
 | `crm_mail_trash_list` | `consulter` | `workspace:workspace` | la corbeille visible de la personne (`trashed_messages`) |
 
 Tous agissent **sous le jeton de la personne** : la base décide (§29.3, §29.4). Aucune famille ni case nouvelle.
 
-*Précisé avant le code de T4 (2026-11-11).* **L'ancre de `crm_mail_restore` est l'espace, et non le message** : la politique
-du connecteur résout une ancre `message:` en lisant `mail_messages` sous le jeton de la personne, et un message effacé n'y
-est plus lisible (§29.4) — l'ancre écrite avant le code ne se résolvait jamais. L'outil prend `workspace` et `message_id`, et
-**vérifie que le message figure dans la corbeille visible de cet espace** (`trashed_messages(workspace)`) avant d'appeler
-`restore_message` : sans cette vérification, une case ouverte dans un espace servirait à restaurer un message d'un autre
-espace dont la case est fermée. Un message absent de cette corbeille rend le refus uniforme « introuvable ». `crm_mail_snooze`
-lit le message pour en tirer la clé de fil (`app.cle_fil` : le premier `References`, à défaut le `Message-ID`), la même que
-l'écran (`cleFil`).
+*Précisé avant le code de T4 (2026-11-11), révisé le même jour.* **L'ancre de `crm_mail_restore` est
+`trashed_message:message_id`**, et non `message:message_id` : la politique du connecteur résout une ancre `message:` en
+lisant `mail_messages` sous le jeton de la personne, et un message effacé n'y est plus lisible (§29.4) — l'ancre écrite avant
+le code ne se résolvait jamais. La nouvelle ancre se résout par une fonction de la base, **`public.trashed_message_workspace(
+p_message_id)`** (migration `0182`), qui rend l'espace du message **seulement s'il est dans la corbeille visible de la
+personne** (la règle de `trashed_messages`), et rien sinon : la matrice s'applique à l'espace réel du message, et un message
+absent rend le refus uniforme « introuvable ». *Écarté* : prendre l'espace en argument et vérifier la corbeille à part — la
+règle de complétude du connecteur (§9.1 de `docs/SPEC-mcp.md` : tout identifiant est une ancre résolue) l'interdit à juste
+titre. `crm_mail_snooze` lit le message pour en tirer la clé de fil (`app.cle_fil` : le premier `References`, à défaut le
+`Message-ID`), la même que l'écran (`cleFil`).
 
 ### 29.9 Le seed
 

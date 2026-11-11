@@ -1532,9 +1532,11 @@ la personne.
 - `crm_mail_delete(message_id, also_mailbox=false)`, ancre `message:message_id`, action `supprimer`, `destructiveHint` :
   `delete_message` ; rend `{message_id, deleted_at, mailbox_moves}` et la durée de restauration. Refus nommés : `forbidden`,
   `no_writable_mailbox`, `message_not_found` (introuvable).
-- `crm_mail_restore(workspace, message_id)`, **ancre `workspace:workspace`** (un message effacé n'est plus lisible, §29.8
-  précisé) : le message doit figurer dans `trashed_messages(workspace)`, sinon le refus uniforme ; puis `restore_message` ;
-  rend `{message_id, cancelled_moves}`.
+- `crm_mail_restore(message_id)`, **ancre `trashed_message:message_id`** (un message effacé n'est plus lisible, §29.8
+  précisé) : le genre d'ancre `trashed_message` se résout par une FONCTION de la base, `trashed_message_workspace`
+  (migration `0182`), sous le jeton de la personne — l'espace du message s'il est dans sa corbeille visible, rien sinon
+  (le refus uniforme). Le résolveur, qui ne lisait que des tables, apprend ce second mode (`RESOLUTIONS_RPC`). Puis
+  `restore_message` ; rend `{message_id, cancelled_moves}`.
 - `crm_mail_trash_list(workspace)`, ancre `workspace:workspace` : `trashed_messages` ; une ligne par message — objet,
   expéditeur, affaire, date et auteur de l'effacement, date d'effacement définitif, `can_restore`, l'état du déplacement
   IMAP (`none`, `pending`, `done`, `failed`, avec le motif en code et en phrase). Jamais le corps.

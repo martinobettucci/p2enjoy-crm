@@ -19171,8 +19171,9 @@ reste sinon) ; E2E souris et clavier (non lu, sommeil, effacer, annuler, restaur
       Sous-ensemble de ce périmètre. *Précisé avant le code (2026-11-11)* : la capacité de la case est la colonne calculée
       `mailbox_trash_permitted` (migration `0181`, `docs/SCHEMA.md`) ; la corbeille n'a pas de troisième panneau (§5.102).
 - [ ] **T4 — connecteur** : les cinq outils (§29.8) ; pytest, intégration, `verify-mcp.sh`. *Précisé avant le code
-      (2026-11-11)* : les contrats (`docs/SPEC-mcp.md` §9.2, CRM-138) ; l'ancre de `crm_mail_restore` est l'espace, avec la
-      vérification de la corbeille visible de cet espace (§29.8 précisé).
+      (2026-11-11)* : les contrats (`docs/SPEC-mcp.md` §9.2, CRM-138) ; l'ancre de `crm_mail_restore` est
+      `trashed_message:message_id`, résolue par `trashed_message_workspace` (migration `0182`, `docs/SCHEMA.md`) — §29.8
+      précisé.
 - [ ] **T5 — seed, manuel, contrat** (§29.9) ; images ; `docs/PROD_MIGRATIONS.md`.
 
 

@@ -3348,6 +3348,16 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
    cards actives exige un plan de remappage. Comportement par défaut retenu : archivage refusé
    tant que des cards s'y trouvent.
 
+### Migration `0182` — l'espace d'un message de la corbeille, pour l'ancre du connecteur (`CRM-138` T4 ; spécifiée le 2026-11-11, avant le code)
+
+`docs/SPEC-mail-subsystem.md` §29.8 (précisé) ; `docs/SPEC-mcp.md` §9.2 (CRM-138).
+- `public.trashed_message_workspace(p_message_id uuid) returns uuid`, `SECURITY DEFINER`, `stable`, `search_path` vide,
+  `authenticated` seulement : l'espace du message s'il est en corbeille ET visible de l'appelant
+  (`app.message_en_corbeille_visible`, la règle de `trashed_messages`) ; `NULL` sinon — inconnu, non effacé, ou effacé par un
+  autre sans administrer l'espace, indiscernables.
+- Aucune donnée ; ne révèle rien que `trashed_messages` ne rende déjà.
+- **Retour arrière** : retirer la fonction ; un connecteur antérieur ne l'appelle pas.
+
 ### Migration `0181` — la capacité « effacer aussi dans la boîte mail », rendue sur le message (`CRM-138` T3 ; spécifiée le 2026-11-11, avant le code)
 
 `docs/SPEC-mail-subsystem.md` §29.1 (précisé), §29.3 point 4 ; `docs/SPEC-droits-interface.md` §2.1 (le patron).
