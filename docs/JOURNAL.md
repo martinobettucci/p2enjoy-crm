@@ -40392,3 +40392,21 @@ base ; la spécification borne donc les gestes git permis (ni `git clean`, ni `r
 **Q2 — le condensé** : **obligatoire**. Sans `--revision <condensé>`, `livrer.sh` refuse : une livraison ne peut plus
 emporter tout `main` par inadvertance, ce qui est la raison de l'unité. `--archive-seule` (amorçage) reste à part.
 **MCP** : non (décision 905).
+
+### décision 916 — `CRM-134` : le design system lu par ses sections générales, celles de la barre d'onglets et de l'archivage
+
+*2026-11-11, session interactive 152dd27d (p2enjoy-crm-a8), arbitrage du responsable (`AskUserQuestion`), avant la
+spécification de l'unité.*
+**Le problème** : celui des décisions 897, 901, 907, 910 et 914. `docs/DESIGN_SYSTEM.md` dépasse 8 000 lignes (680 Ko) ;
+la décision 914 ne valait que pour `CRM-136`.
+**Pistes présentées** : les sections ciblées ; la lecture intégrale, par tranches.
+**Décision du responsable** : **les sections ciblées**, en entier :
+- §1 à §4 et §6 à §12, dont §12.1 (la barre d'onglets) et §12.6 (le débordement signalé) ;
+- §5.5 et §5.5 bis, §5.8 ;
+- §5.13 (l'archivage dans Réglages ▸ Tracks et channels, même donnée), §5.29 bis (une liste d'archivés), §5.55 (une
+  commande dans la barre d'onglets), §5.68 (la pastille de channel), §5.84 (une confirmation) ;
+- les sections qu'elles citent.
+Le compte rendu de l'unité dit que la lecture n'était pas intégrale. Le diff d'interface reste vérifié contre ces sections
+avant le commit.
+**Portée** : `CRM-134` seulement ; la règle de `CLAUDE.md` n'est pas changée.
+**MCP** : déjà tranché (décision 871) — famille `structure`, cases existantes.
