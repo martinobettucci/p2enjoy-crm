@@ -13,6 +13,11 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-141` T1 — les pastilles d'un mail, en base (décisions 883, 923, 924 et 926)
+
+- **La base sait porter des pastilles sur les mails** (migration 183) : neuf pastilles par défaut dans chaque espace (Spam, Lead, Devis / commande, Facture / paiement, Support client, Partenariat, Recrutement, Newsletter, Administratif), les pastilles d'un message — une pose ou un retrait à la main n'est jamais défait par une réévaluation —, et une file d'évaluation où chaque mail reçu entre, ainsi que tous les mails reçus existants. Rien ne les évalue encore ni ne les affiche : l'évaluation, l'écran et le connecteur viennent avec les tranches suivantes.
+- Déploiement : `docs/PROD_MIGRATIONS.md` §2.46, la migration 183 seule.
+
 _Rien à publier pour le moment._
 
 ## [Publié]

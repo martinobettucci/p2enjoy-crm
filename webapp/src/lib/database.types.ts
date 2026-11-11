@@ -2476,6 +2476,173 @@ export type Database = {
           },
         ]
       }
+      mail_label_evaluations: {
+        Row: {
+          attempts: number
+          claimed_at: string | null
+          evaluated_at: string | null
+          last_error: string | null
+          leased_until: string | null
+          message_id: string
+          next_attempt_at: string
+          priority: number
+          requested_at: string
+          state: string
+          workspace_id: string
+        }
+        Insert: {
+          attempts?: number
+          claimed_at?: string | null
+          evaluated_at?: string | null
+          last_error?: string | null
+          leased_until?: string | null
+          message_id: string
+          next_attempt_at?: string
+          priority?: number
+          requested_at?: string
+          state?: string
+          workspace_id: string
+        }
+        Update: {
+          attempts?: number
+          claimed_at?: string | null
+          evaluated_at?: string | null
+          last_error?: string | null
+          leased_until?: string | null
+          message_id?: string
+          next_attempt_at?: string
+          priority?: number
+          requested_at?: string
+          state?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_label_evaluations_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: true
+            referencedRelation: "mail_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_label_evaluations_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mail_labels: {
+        Row: {
+          archived_at: string | null
+          color: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          name: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          name: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_labels_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_labels_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mail_message_labels: {
+        Row: {
+          applied: boolean
+          label_id: string
+          message_id: string
+          set_at: string
+          set_by: string | null
+          source: string
+          workspace_id: string
+        }
+        Insert: {
+          applied?: boolean
+          label_id: string
+          message_id: string
+          set_at?: string
+          set_by?: string | null
+          source: string
+          workspace_id: string
+        }
+        Update: {
+          applied?: boolean
+          label_id?: string
+          message_id?: string
+          set_at?: string
+          set_by?: string | null
+          source?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_message_labels_label_id_fkey"
+            columns: ["label_id"]
+            isOneToOne: false
+            referencedRelation: "mail_labels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_message_labels_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "mail_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_message_labels_set_by_fkey"
+            columns: ["set_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_message_labels_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mail_message_occurrences: {
         Row: {
           account_id: string
@@ -4893,6 +5060,19 @@ export type Database = {
           storage_path: string
         }[]
       }
+      claim_label_evaluations: {
+        Args: { p_limit?: number }
+        Returns: {
+          body_html: string
+          body_text: string
+          from_address: string
+          from_name: string
+          labels: Json
+          message_id: string
+          subject: string
+          workspace_id: string
+        }[]
+      }
       claim_webhook_deliveries: {
         Args: { p_limit?: number }
         Returns: {
@@ -5684,6 +5864,10 @@ export type Database = {
         }
         Returns: string
       }
+      record_label_evaluation: {
+        Args: { p_error: string; p_label_ids: string[]; p_message_id: string }
+        Returns: undefined
+      }
       record_webhook_attempt: {
         Args: { p_delivery: string; p_error?: string; p_status_code: number }
         Returns: string
@@ -5765,6 +5949,10 @@ export type Database = {
         Args: { p_code: string; p_delai_secondes: number; p_outbox_id: string }
         Returns: number
       }
+      request_label_evaluation: {
+        Args: { p_message_id: string }
+        Returns: undefined
+      }
       reserver_envois: {
         Args: { p_limite?: number }
         Returns: {
@@ -5838,6 +6026,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      set_message_label: {
+        Args: { p_applied: boolean; p_label_id: string; p_message_id: string }
+        Returns: undefined
       }
       snooze_card: {
         Args: { p_placement: string; until: string }

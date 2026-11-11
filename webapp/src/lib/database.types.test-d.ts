@@ -1,3 +1,5 @@
+// @verifies CRM-141 (docs/BACKLOG.md) — tranche T1 : les trois tables et les quatre fonctions des pastilles d'un mail dans les
+//           types générés (docs/SPEC-mail-subsystem.md §31.2 à §31.5)
 // @verifies CRM-123 (docs/BACKLOG.md) — tranche T2 : `platform_regenerate_card_addresses` au témoin des fonctions (docs/SPEC-cards.md §3.6 point 7)
 // @verifies CRM-073 (docs/BACKLOG.md) — tranche T1 : les deux tables et les cinq fonctions des webhooks aux témoins (docs/SPEC-webhooks.md §4)
 // @verifies CRM-071 (docs/BACKLOG.md) — tranche T6 : `import_cards` au témoin des fonctions (docs/SPEC-vues-import-export.md §6.3 bis)
@@ -157,9 +159,17 @@ type Expect<T extends true> = T
 // AU GÉNÉRATEUR : `state` est une liste fermée — `pending`, `done`, `failed`, `cancelled` — ; la RLS ne rend que les lignes
 // d'un message de la corbeille visible ; `authenticated` n'a que `SELECT` — tout passe par `delete_message`,
 // `restore_message` et, pour la clé de service, `trash_move_record` (docs/SPEC-mail-subsystem.md §29.2).
+// `mail_labels`, `mail_message_labels` et `mail_label_evaluations`, LIVRÉES PAR `CRM-141` T1 (migration `0183`) : les
+// pastilles d'un mail. CE QUI ÉCHAPPE AU GÉNÉRATEUR : `color` est un des cinq jetons, `source` vaut `llm` ou `manual`, `state`
+// `pending`, `done` ou `failed`, `last_error` une liste fermée ; une ligne `llm` est toujours posée ; `authenticated` n'écrit
+// que `mail_labels` (administrateurs) — les deux autres passent par `set_message_label`, `request_label_evaluation` et la
+// passe (docs/SPEC-mail-subsystem.md §31.2, §31.3).
 type _tables = Expect<
   Equal<
     keyof Database['public']['Tables'],
+    | 'mail_labels'
+    | 'mail_message_labels'
+    | 'mail_label_evaluations'
     | 'mail_trash_moves'
     | 'mail_attachment_risk_acknowledgments'
     | 'mail_drafts'
@@ -1265,9 +1275,17 @@ type _vueDerivationColonnes = Expect<
 // `0182` de la TRANCHE T4 ajoute `trashed_message_workspace`, l'espace d'un message de la corbeille visible pour l'ancre du
 // connecteur (§29.8 précisé). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `NULL` pour un message inconnu, vivant ou hors de la corbeille
 // visible, indiscernables. Le compte s'accroît de un.
+// `0183` de `CRM-141` TRANCHE T1 ajoute `set_message_label` et `request_label_evaluation` (les gestes d'une personne) et,
+// réservées à la clé de service, `claim_label_evaluations` et `record_label_evaluation` (docs/SPEC-mail-subsystem.md §31.4,
+// §31.5). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `p_error` ne vaut que l'un des quatre motifs ; les refus nommés, `message_not_found`
+// et `label_not_found` (404), `forbidden` (42501), `label_archived` et `outbound_message` (22023). Le compte s'accroît de quatre.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'set_message_label'
+    | 'request_label_evaluation'
+    | 'claim_label_evaluations'
+    | 'record_label_evaluation'
     | 'trashed_message_workspace'
     | 'delete_message'
     | 'restore_message'

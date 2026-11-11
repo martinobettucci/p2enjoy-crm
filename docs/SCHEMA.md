@@ -3348,7 +3348,7 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
    cards actives exige un plan de remappage. Comportement par défaut retenu : archivage refusé
    tant que des cards s'y trouvent.
 
-### Migration — les pastilles d'un mail — `CRM-141` T1 (numéro pris au push ; `docs/SPEC-mail-subsystem.md` §31)
+### Migration `0183` — les pastilles d'un mail — `CRM-141` T1 (`0183_pastilles_mail.sql` ; `docs/SPEC-mail-subsystem.md` §31)
 
 *Écrit le 2026-11-11, avant le code (décisions 883, 923, 924 et 926).* Les colonnes et les contraintes des trois tables
 sont celles du §31.2 de `docs/SPEC-mail-subsystem.md` ; leurs règles d'accès, celles du §31.3.
@@ -3381,6 +3381,11 @@ sont celles du §31.2 de `docs/SPEC-mail-subsystem.md` ; leurs règles d'accès,
 | Recrutement | `neutral` | Une candidature, une offre d'emploi, une demande de stage ou un échange avec un cabinet de recrutement. |
 | Newsletter | `neutral` | Une lettre d'information, une publication périodique ou un envoi groupé auquel on est abonné. |
 | Administratif | `neutral` | Une démarche administrative, juridique, fiscale ou sociale : impôts, banque, assurance, organismes publics. |
+
+*Précisé à l'écriture du code* : une colonne `claimed_at` s'ajoute à `mail_label_evaluations` — l'heure de la prise —,
+pour qu'une demande reçue pendant une passe ne se perde pas à sa clôture ; la garde commune des deux gestes est
+`app.label_gesture_guard`. Les gardes de catalogue sont révisées, non relâchées : 202 politiques (`pgTAP 0016`) et 42
+fonctions « introuvable » (`pgTAP 0133`).
 
 **Retour arrière** : supprimer les déclencheurs, les quatre fonctions et les trois tables ; aucune table existante n'est
 modifiée. La seconde migration (`CRM-141` T2 : `verify_label_dispatch`, le secret dans Vault et la cadence `pg_cron`) est

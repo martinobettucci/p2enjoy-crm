@@ -19327,6 +19327,14 @@ le simulateur) ; `docs/SCHEMA.md` « Migration — les pastilles d'un mail » (l
 **Arbitrages** : tous les mails existants évalués à la mise en service (923) ; objet, expéditeur et 2 000 caractères
 envoyés au modèle (923) ; pose et réévaluation par qui voit le message et édite l'espace (926) ; une pastille supprimée
 est archivée et reste sur les mails (926) ; un filtre par pastille (926) ; les mails envoyés ne sont pas évalués.
+**Avancement** (session a4, ex-a8) :
+- **T1 faite le 2026-11-11, vérifiée en développement** : migration `0183` (les trois tables, la RLS, les quatre fonctions,
+  les défauts et le rattrapage), appliquée par le runner ; pgTAP `0172` **36/36**, rouge contre deux mutations (la clôture
+  qui écrase les choix manuels, la garde de rôle retirée) ; gardes de catalogue révisées, non relâchées (`0016` : 202
+  politiques, `0133` : 42 fonctions) ; suite pgTAP complète **160 fichiers, 5 308 assertions** ; types régénérés et leurs
+  inventaires (`database.types.test-d.ts`) ; Vitest **236 fichiers, 5 739 tests** ; API complète 1 351 passent, deux
+  échecs hors du périmètre (`inbox-lecture`, INC-342 ; `webhooks-remise`, vert au rejeu) ; contrat §2.46 ;
+- reste : T2 (l'évaluation), T3 (les réglages), T4 (l'inbox), T5 (le connecteur), T6 (le manuel), T7 (production).
 **DoD** :
 - unitaires : contrôle de la sortie du modèle, clés inconnues rejetées ;
 - pgTAP : RLS, administrateurs seuls sur les pastilles, la main prime, les défauts ;

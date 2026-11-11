@@ -4602,7 +4602,7 @@ Chaque tranche est poussée une fois vérifiée.
 
 | Tranche | Contenu |
 |---|---|
-| **T1** | Migration : les trois tables, la RLS, `set_message_label`, `request_label_evaluation`, `claim_label_evaluations`, `record_label_evaluation`, les défauts et leur déclencheur, le déclencheur d'entrée dans la file et le rattrapage ; pgTAP ; `docs/SCHEMA.md` ; contrat de déploiement |
+| **T1** | Migration : les trois tables, la RLS, `set_message_label`, `request_label_evaluation`, `claim_label_evaluations`, `record_label_evaluation`, les défauts et leur déclencheur, le déclencheur d'entrée dans la file et le rattrapage ; pgTAP ; `docs/SCHEMA.md` ; contrat de déploiement — *faite le 2026-11-11, migration `0183`* |
 | **T2** | L'évaluation : la route `POST /ia/pastilles/evaluer` de la fonction `ia`, le scénario `pastilles` du simulateur, `verify_label_dispatch` et la cadence `pg_cron` (seconde migration) ; unitaires ; preuve d'intégration contre le simulateur et le vrai modèle ; le seed |
 | **T3** | L'écran Réglages ▸ Pastilles des mails ; unitaires ; API ; E2E ; captures |
 | **T4** | L'inbox : les pastilles dans la liste, le filtre, le message ouvert, « Pastilles » et « Réévaluer les pastilles » ; unitaires ; E2E ; captures |

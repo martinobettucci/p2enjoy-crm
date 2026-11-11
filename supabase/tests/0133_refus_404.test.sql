@@ -20,6 +20,8 @@
 -- @verifies docs/SPEC-refus-404.md §2, §3, §4 ; docs/JOURNAL.md décisions 762 et 797 ; CLAUDE.md §10
 --
 -- Le `rollback` final rend la base intacte.
+-- @verifies CRM-141 (docs/BACKLOG.md) — tranche T1 : trois fonctions des pastilles lèvent leur « introuvable » par
+--           `app.raise_http_error(404, …)` (docs/SPEC-mail-subsystem.md §31.4, §31.5 ; inventaire révisé, décision 51)
 
 begin;
 
@@ -89,8 +91,11 @@ select is(
 	-- RÉVISÉ PAR `CRM-138` T1 (migration 0180), non relâché : `delete_message` et `restore_message` refusent un message
 	-- inconnu, illisible ou hors de la corbeille visible par ce chemin (`message_not_found`, docs/SPEC-mail-subsystem.md §29.3,
 	-- §29.4) ; `pgTAP 0169` les éprouve.
-	39,
-	'5 — les vingt-sept fonctions « introuvable » de CRM-120, les deux de CRM-127, celle de CRM-112, les deux de CRM-128 (`send_email_draft`, `discard_email_draft`), celle de CRM-135 (`mail_inbound_account_record_poll_failure`), celle de CRM-137 (`classification_candidates`) et celle de CRM-143 (`acknowledge_unscanned_attachment`) et les deux de CRM-144 (`cancel_outbound_email`, `retry_outbound_email`) et les deux de CRM-138 (`delete_message`, `restore_message`) lèvent par `app.raise_http_error(404, …)`');
+	-- RÉVISÉ PAR `CRM-141` T1 (migration 0183), non relâché : trois fonctions de plus lèvent par ce chemin —
+	-- `app.label_gesture_guard` (`message_not_found`), `set_message_label` (`label_not_found`) et
+	-- `record_label_evaluation` (`evaluation_not_found`) (docs/SPEC-mail-subsystem.md §31.4, §31.5) ; `pgTAP 0172` les éprouve.
+	42,
+	'5 — les vingt-sept fonctions « introuvable » de CRM-120, les deux de CRM-127, celle de CRM-112, les deux de CRM-128 (`send_email_draft`, `discard_email_draft`), celle de CRM-135 (`mail_inbound_account_record_poll_failure`), celle de CRM-137 (`classification_candidates`) et celle de CRM-143 (`acknowledge_unscanned_attachment`) et les deux de CRM-144 (`cancel_outbound_email`, `retry_outbound_email`) et les deux de CRM-138 (`delete_message`, `restore_message`) et les trois de CRM-141 (`app.label_gesture_guard`, `set_message_label`, `record_label_evaluation`) lèvent par `app.raise_http_error(404, …)`');
 
 select ok(
 	(select p.prosrc ~ 'app\.raise_http_error\(404, ''account_not_found''\)'

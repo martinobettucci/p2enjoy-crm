@@ -1069,9 +1069,32 @@ secret** : la purge et le déplacement IMAP tournent dans `mail-sync`, avec ses 
 **Retour arrière** : la webapp, `mail-sync` et `mcp` précédents ; les migrations se défont dans l'ordre inverse (`docs/SCHEMA.md`,
 « Retour arrière » de chacune). Un message effacé redevient alors visible ; un déplacement déjà fait dans une boîte n'est pas
 défait.
+
+### 2.46 `CRM-141` T1, décisions 883, 923, 924 et 926 — les pastilles d'un mail, en base (À LIVRER : migration 183 ; **hors du lot annoncé**)
+
+`docs/SPEC-mail-subsystem.md` §31 ; `docs/SCHEMA.md` « Migration `0183` ». **La migration fonctionne seule** : trois tables
+neuves, quatre fonctions, deux déclencheurs (l'arrivée d'un mail reçu, la création d'un espace), les neuf pastilles par
+défaut dans chaque espace et **tous les mails reçus existants inscrits en rattrapage** (décision 923). Aucune table
+existante n'est modifiée ; rien n'appelle encore le modèle — la cadence vient avec T2 —, si bien que la file attend sans
+effet. Aucune variable, aucun secret.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 183 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate`, instantané de VM pris |
+
+**Vérification après la fenêtre**, en lecture seule : le registre gagne une ligne, l'empreinte de la 183 est égale au
+dépôt ; `select count(*) from public.mail_labels` vaut neuf fois le nombre d'espaces ; `select state, priority, count(*)
+from public.mail_label_evaluations group by 1, 2` rend les mails reçus existants en `pending`, priorité 1.
+**Retour arrière** : supprimer les deux déclencheurs, les quatre fonctions et les trois tables (dans l'ordre inverse de
+leurs dépendances) ; aucune donnée existante n'est touchée.
 ## 3. Migrations en attente
 
-**Aucune migration en attente depuis la seconde fenêtre du 2026-11-11** : les 179 à 182 ont été appliquées par elle
+**La 183** (`CRM-141` T1, décisions 883, 923, 924 et 926), *en attente, hors du lot annoncé* : les pastilles d'un mail
+(`docs/SCHEMA.md` « Migration `0183` ») — trois tables, quatre fonctions, deux déclencheurs, les neuf pastilles par défaut
+et le rattrapage de tous les mails reçus existants. Seule (§2.46) ; elle n'appelle aucun modèle, et la file attend la
+cadence de T2. Aucun geste préalable du responsable.
+
+**Avant la 183, aucune migration en attente depuis la seconde fenêtre du 2026-11-11** : les 179 à 182 ont été appliquées par elle
 (révision `08cc9091`, décision 925), les 172 à 178 par la première (révision `8ada0ab9`, décision 922) ; registre à
 **180** lignes. *Historique de l'attente* — les paragraphes qui suivent, jusqu'à la 172, décrivent ces lots tels qu'ils
 attendaient.

@@ -1,3 +1,4 @@
+-- @verifies CRM-141 (docs/BACKLOG.md) — tranche T1 : les cinq politiques des pastilles d'un mail portent le compte à 202
 -- @verifies CRM-138 (docs/BACKLOG.md) — tranche T1 : la politique de lecture de `mail_trash_moves` porte le compte à 197
 -- @verifies CRM-143 (docs/BACKLOG.md) — tranche T1 : le recensement des politiques révisé (décision 51), +1, la lecture de ses
 --           propres confirmations de pièces non analysées (docs/SPEC-pieces-jointes.md §17.3)
@@ -243,8 +244,8 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	197,
-	'CENT QUATRE-VINGT-DIX-SEPT politiques dans `public`, et pas une de plus — 196 avant `CRM-138` T1, plus la lecture des déplacements IMAP d''un message effacé par qui le voit en corbeille (docs/SPEC-mail-subsystem.md §29.2, `mail_trash_moves_lecture`) ; aucune écriture directe des déplacements. Avant elle : 195 avant `CRM-143` T1, plus la lecture de ses propres confirmations de pièces non analysées (docs/SPEC-pieces-jointes.md §17.3, `mail_attachment_risk_acknowledgments_lecture`). Avant elle : 194 avant `CRM-128` tranche T2, plus la lecture des mails préparés par la personne seule (docs/SPEC-mails-prepares.md §3.2) : aucune écriture directe, toutes passent par les fonctions. Avant elle : 194, soit 191 avant `CRM-112` tranche T2.a, plus les '
+	202,
+	'DEUX CENT DEUX politiques dans `public`, et pas une de plus — 197 avant `CRM-141` T1, plus les CINQ des pastilles d''un mail (docs/SPEC-mail-subsystem.md §31.3) : la lecture des pastilles de l''espace par tout membre, leur création et leur modification par l''administrateur seul, et la lecture des pastilles d''un message et de son état d''évaluation par qui le voit. AUCUNE ÉCRITURE DIRECTE de ces deux dernières, et c''est un refus double : ni politique ni privilège — `set_message_label`, `request_label_evaluation` et la passe sont les seuls chemins ; aucune suppression d''une pastille, elle s''archive. Avant elles : 196 avant `CRM-138` T1, plus la lecture des déplacements IMAP d''un message effacé par qui le voit en corbeille (docs/SPEC-mail-subsystem.md §29.2, `mail_trash_moves_lecture`) ; aucune écriture directe des déplacements. Avant elle : 195 avant `CRM-143` T1, plus la lecture de ses propres confirmations de pièces non analysées (docs/SPEC-pieces-jointes.md §17.3, `mail_attachment_risk_acknowledgments_lecture`). Avant elle : 194 avant `CRM-128` tranche T2, plus la lecture des mails préparés par la personne seule (docs/SPEC-mails-prepares.md §3.2) : aucune écriture directe, toutes passent par les fonctions. Avant elle : 194, soit 191 avant `CRM-112` tranche T2.a, plus les '
 	'TROIS des exigences de champ commun (docs/SPEC-champs-communs.md §5, décision 819) : leur lecture par tout membre de '
 	'l''espace, leur pose et leur retrait par l''administrateur seul, comme les exigences de champ de workflow. Avant '
 	'elles : 191, soit 185 avant `CRM-112` tranche T1, plus les SIX '
