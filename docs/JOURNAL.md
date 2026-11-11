@@ -40515,3 +40515,24 @@ aussi dans la boîte mail » et les deux boutons. Écartée : une fenêtre modal
   `CRM-058` T2 et `CRM-117`. Consignée, non résolue au passage.
 - **Le courrier du seed en développement** porte « l inscription » dans son texte : la première version du seed, envoyée
   avant la correction de l'apostrophe. Le `Message-ID` fixe empêche un renvoi ; une base recréée aura le texte corrigé.
+
+### décision 922 — livrer le lot de huit unités à la révision `8ada0ab9`, la première par condensé, sans instantané
+
+*2026-11-11, session 4522fa9c (p2enjoy-crm-ee, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : `CRM-133`, `CRM-136`, `CRM-137`, `CRM-139`, `CRM-143`, `CRM-144`, `CRM-145` et `CRM-146`, unités entières ; les
+migrations `0172` à `0178`, clamav, les images `mail-sync` et `mcp`, `functions`, la webapp et les en-têtes de Caddy
+(contrat §2.35 à §2.41). **Hors du lot**, poussées après son arrêt : `CRM-140` (`0179`), `CRM-138` T1 et T2 (`0180`),
+`CRM-134`.
+**La campagne** : complète à `ad14e3bd` sur une base recréée depuis `main` ; types, mail 54/54, mcp 115, pgTAP 155 fichiers
+et build verts ; unitaires 5 621 sur 5 622, ui 1 193 sur 1 200, api 1 340 sur 1 344, manuel 148 sur 152, tous verts rejoués
+seuls ou INC-342, sauf **deux défauts du lot**, renvoyés et corrigés :
+- `CRM-136` (75, `5fd128b7`) : la preuve `releve-quota` rendait le plafond de l'identité, pas son `from_name`, que le
+  formulaire écrit vide (§22.5) ; `rendu-modeles-emails` 14 et l'aperçu de la séquence du manuel en rougissaient ;
+- `CRM-146` (a8, `8ada0ab9`) : la grille des droits du connecteur faisait 913 px pour une fenêtre de 900 dans le manuel ;
+  la portée de la famille Recettes, resserrée sur une ligne, la ramène à 893 px — **marge de 7 px**, la prochaine famille
+  obligera à découper l'image.
+**Revérifié sur une extraction propre de `8ada0ab9`** (`git archive`, hors de l'arbre partagé que d'autres sessions
+modifiaient) : unitaires 5 622/5 622, garde du manuel 168, manuel 14-16, 23-33 et 32-33 verts, `releve-quota` 8/8,
+`rendu-modeles-emails` 11/11. Captures renouvelées : 115, observées (`727645a2`).
+**Décision : oui, sans instantané**, un `pg_dump` avant. **Et** le responsable charge la session de livraison d'épingler la
+clé d'hôte de GitHub pour `spark-docker` (contrat §2.42, geste 1), comparée à l'empreinte publiée par GitHub.
