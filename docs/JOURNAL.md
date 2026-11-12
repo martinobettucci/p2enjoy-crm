@@ -40638,4 +40638,5 @@ fichier entier). **Aucun défaut du lot.** Captures : 189, observées (`1ccc1fbb
 la clé de production n'a jamais été éprouvée (celle du poste rend `401`) ; l'inbox ne se charge pas pendant la minute où
 la webapp nouvelle précède la 183.
 **Décision : oui, sans instantané**, un `pg_dump` avant ; **la passe reste active même si la clé est refusée** — elle espace
-ses essais après chaque échec ; écarté : l'arrêter par `cron.unschedule`.
+ses essais après chaque échec ; écarté : l'arrêter par `cron.unschedule`. **Livrée** à `1ccc1fbb` (contrat §8, 2026-11-12) ;
+**constaté** : la clé de production est refusée (`cle_refusee`, `simulee: false`), 49 évaluations restent `pending`.

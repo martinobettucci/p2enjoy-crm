@@ -13,6 +13,18 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-12 — migrations 183 et 184, la fonction `ia`, l'image `mcp`, la webapp et le manuel
+
+Cellule Spark `crm`, révision `1ccc1fbb` (décision 927, sans nouvel instantané, un `pg_dump -Fc` avant). **Vérifié** :
+registre à 182 lignes, la dernière `0184_cadence_pastilles.sql` ; neuf pastilles, la passe d'évaluation active ;
+`verifier.sh` 34/35 (INC-277). **La clé de LeLabs de la production est refusée** : les pastilles posées par le modèle
+n'aboutissent pas tant qu'elle n'est pas corrigée ; les pastilles à la main fonctionnent. Le constat du responsable reste à
+faire.
+
 #### `CRM-141` T6 — le manuel des pastilles
 
 - **Le manuel explique les pastilles** : leur place dans l'inbox, le filtre, la correction à la main et la réévaluation (§12.2), l'écran Réglages ▸ Pastilles des mails (§12.6, nouvelle section) et ce que l'assistant connecté peut en faire (§33). La rangée de boutons du message ouvert y est décrite avec ses cinq boutons.
@@ -41,10 +53,6 @@ d'exécuter le code attendu.
 
 - **La base sait porter des pastilles sur les mails** (migration 183) : neuf pastilles par défaut dans chaque espace (Spam, Lead, Devis / commande, Facture / paiement, Support client, Partenariat, Recrutement, Newsletter, Administratif), les pastilles d'un message — une pose ou un retrait à la main n'est jamais défait par une réévaluation —, et une file d'évaluation où chaque mail reçu entre, ainsi que tous les mails reçus existants. Rien ne les évalue encore ni ne les affiche : l'évaluation, l'écran et le connecteur viennent avec les tranches suivantes.
 - Déploiement : `docs/PROD_MIGRATIONS.md` §2.46, la migration 183 seule.
-
-_Rien à publier pour le moment._
-
-## [Publié]
 
 ### Déployé en production, 2026-11-11 (seconde fenêtre) — migrations 179 à 182, les images `mail-sync` et `mcp`, la webapp et le manuel
 
