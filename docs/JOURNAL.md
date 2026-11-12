@@ -40624,3 +40624,18 @@ les réglages et formulaires §5.7, §5.13, §5.34, §5.68, §5.59 ; §5.5, §5.
 rendu de l'unité dit que la lecture n'était pas intégrale ; le diff d'interface reste vérifié contre ces sections avant
 le commit. **Portée** : `CRM-141` seulement ; la règle de `CLAUDE.md` n'est pas changée.
 **Tranché par la spécification, sans question** : les mails **envoyés** ne sont pas évalués (décision 883, par défaut).
+
+### décision 927 — livrer `CRM-141` à la révision `1ccc1fbb`, sans instantané ; la passe des pastilles reste active même si la clé est refusée
+
+*2026-11-12, session 4522fa9c (p2enjoy-crm-25, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : les migrations `0183` puis `0184`, la fonction `ia` (`functions` recréé), la webapp bâtie dans la cellule et
+l'image `mcp` (contrat §2.46 à §2.48). `1ccc1fbb` porte le code de `8e562148`, où le lot a été arrêté, et des documents.
+**La campagne** : complète à `8e562148`, la base de développement égale à `main` (182 migrations) ; types, unitaires, mail
+55/55, mcp 121, pgTAP 160 fichiers, build et garde du manuel 168 verts ; ui 1 227 sur 1 230, api 1 358 sur 1 363, manuel
+155 sur 156 — INC-342, l'effet de minuit sur « Ma journée », ou vert rejoué seul (`premier-lancement` 4/4 deux fois, son
+fichier entier). **Aucun défaut du lot.** Captures : 189, observées (`1ccc1fbb`).
+**Présenté au responsable** : dès la 184, la passe appelle le vrai serveur de LeLabs et rattrape tous les mails existants ;
+la clé de production n'a jamais été éprouvée (celle du poste rend `401`) ; l'inbox ne se charge pas pendant la minute où
+la webapp nouvelle précède la 183.
+**Décision : oui, sans instantané**, un `pg_dump` avant ; **la passe reste active même si la clé est refusée** — elle espace
+ses essais après chaque échec ; écarté : l'arrêter par `cron.unschedule`.
