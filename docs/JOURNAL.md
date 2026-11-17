@@ -40769,3 +40769,14 @@ variable ; l'image `mcp` à livrer.
 - **connecteur MCP : oui, dans la famille existante `organisations`** (`consulter`), par `crm_organization_list` ; écarté :
   l'écran seul.
 **Conséquences** : `CRM-152`, à prendre par la première session libre.
+
+### décision 932 — `CRM-153` : un fil de commentaires sur l'organisation, comme les affaires ; plusieurs catégories définies en Réglages ; filtre par catégorie ; dans le connecteur
+
+*2026-11-17, session 4522fa9c (p2enjoy-crm-bb, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Décision** :
+- **les commentaires sont un fil, comme celui d'une affaire**, mentions @ et notifications comprises ; écartés : un fil
+  sans mentions, une note libre ;
+- **plusieurs catégories par organisation, définies par les administrateurs en Réglages** ; écartés : une seule catégorie,
+  un texte libre ;
+- **un filtre par catégorie dans la liste**, livré avec `CRM-152` (même session, dans l'ordre) ;
+- **connecteur MCP : oui, dans la famille existante `organisations`** ; écartés : une famille nouvelle, l'écran seul.

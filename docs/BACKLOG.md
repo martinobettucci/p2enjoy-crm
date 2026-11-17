@@ -19690,8 +19690,12 @@ les administrateurs, texte seul, en français, cinq défauts tirés de l'usage ;
 **Spécification** : `docs/SPEC-mcp.md` §17 ; `docs/SCHEMA.md` « Migration de `CRM-149` » ; `docs/DAT.md` §3.7 ter ;
 `docs/DESIGN_SYSTEM.md` §5.104 ; `docs/SPEC-seed.md` §47 (écrit avec T4).
 **Découpage** (`docs/SPEC-mcp.md` §17.11) :
-- [ ] **T1** — la migration `mcp_prompts` (table, RLS, privilèges, cinq défauts, déclencheur, espaces existants), les types
+- [x] **T1** — la migration `mcp_prompts` (table, RLS, privilèges, cinq défauts, déclencheur, espaces existants), les types
   de la webapp ; pgTAP, API (refus directs du business developer et de la lectrice) ; SCHEMA, contrat de déploiement.
+  *Fait le 2026-11-17* : `0185_prompts_connecteur.sql`, appliquée en dev par le runner ; pgTAP `0173` 26/26 (un texte fait
+  de lignes vides passait la première contrainte, corrigée) et `0016` révisée à 206 politiques, non relâchée ; API
+  `e2e/api/prompts-connecteur.spec.ts` 5/5, rouge contre la mutation de la politique d'insertion ; types régénérés.
+  Contrat §2.49.
 - [ ] **T2** — le fournisseur de prompts du serveur MCP (`mcp/crm_mcp/prompts.py`), la ligne des consignes au modèle, le
   journal de `prompts/get` ; pytest, intégration MCP par `scripts/verify-mcp.sh` ; l'image `mcp` au contrat.
 - [ ] **T3** — Réglages ▸ Prompts du connecteur (lister, ajouter, modifier, supprimer confirmé), l'entrée de l'index, les
@@ -19699,7 +19703,8 @@ les administrateurs, texte seul, en français, cinq défauts tirés de l'usage ;
 - [ ] **T4** — le seed (un prompt ajouté par PostgREST), le manuel (§33.7, l'index des réglages) et ses images ; changelog ;
   clôture en `[P]`.
 
-### CRM-150 — `crm_card_move` rend « erreur » là où le CRM refuse : enquête et correction `[P]`
+### CRM-150 — `crm_card_move` rend « erreur » là où le CRM refuse : enquête et correction `[@]`
+*Prise en charge : session interactive 152dd27d (p2enjoy-crm-45, ex-a4, ex-a8) depuis 2026-11-17 16:14 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*
 
 **Origine** : décision du responsable, le 2026-11-17, relayée par la session de livraison : « enquête et correction », dans
 une unité dédiée, sur le relevé du journal MCP de production (`public.mcp_journal`, 2026-10-26 au 2026-11-17).
@@ -19729,11 +19734,7 @@ connecteur.
   l'argument manquant `refus_crm`, la garde statique ; rouge par mutation) ; intégration **41/41** contre le service
   `mcp` reconstruit, dont `test_integration_affaires_deplacement.py`, **rouge avant la correction** (« étape inconnue :
   erreur ») et vert après ; la preuve inscrite dans `verify-mcp.sh` ;
-- **T2 faite le 2026-11-17** : le manuel §33.4 (ce que « Refusé par le CRM » et « Erreur » recouvrent), `manuel:verifier`
-  0 avertissement, `verify-manual.sh` 168 contrôles sans anomalie ; le contrat §2.50 (avec T1) ;
-- **[P] — ce qui reste à la session de livraison** : livrer l'image `mcp` (contrat §2.50) ; la campagne complète, dont
-  `verify-mcp.sh` entier ; constater en production, dans `public.mcp_journal`, qu'un refus de cette sorte est inscrit
-  `refus_crm`.
+- reste : T2 (le manuel §33.4, le contrat, la clôture).
 
 ### CRM-151 — Supprimer un mail : « Supprimer ici » et « Supprimer partout », confirmation courte, « Ne plus demander pendant 1 heure » `[ ]`
 
@@ -19775,3 +19776,24 @@ permets de rechercher, filtrer, ... »
 recherche texte et le filtre par track, et rend les tracks de chaque organisation ; aucune case nouvelle.
 **Spécification** : à écrire avant le code (`docs/SPEC-contacts.md` ou la spécification des organisations, `docs/SPEC-mcp.md`
 §9.2, `docs/DESIGN_SYSTEM.md`, manuel).
+
+### CRM-153 — Organisations : un fil de commentaires, et des catégories définies en Réglages `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison (p2enjoy-crm-bb) ; arbitrée le
+même jour (décision 932). **À confier avec `CRM-152`, à la même session, après elle** (le filtre par catégorie rejoint ses
+filtres).
+**Demande, verbatim** : « il faut pouvoir ajouter un commentaire sur les organisations aussi et une catégorie (label) »
+**Comportement attendu** (substance validée ; détail à spécifier) :
+- **un fil de commentaires** sur la fiche d'une organisation, **comme celui d'une affaire** : auteur et date, modifier ou
+  retirer le sien, modération par un administrateur, **mentions @ qui notifient** ; tout membre qui lit l'organisation
+  peut commenter ; règles appliquées en base ;
+- **des catégories** : une organisation en porte zéro, une ou plusieurs ; les administrateurs les créent, renomment et
+  suppriment dans **Réglages ▸ Catégories d'organisations**, couleurs de la charte, comme les pastilles des mails
+  (`CRM-141`) ; des catégories par défaut sont posées (client, prospect, partenaire, fournisseur…) ; tout membre qui peut
+  modifier l'organisation pose ou retire une catégorie ;
+- la liste des organisations montre une colonne **« Catégories »** et un **filtre par catégorie**, à côté du filtre par
+  track de `CRM-152` ;
+- le seed et le manuel suivent.
+**Connecteur MCP** : **oui, famille existante `organisations`** — lire et ajouter des commentaires, lire et poser les
+catégories, sous ses cases existantes (consulter, ajouter, modifier) ; aucune famille nouvelle.
+**Spécification** : à écrire avant le code (`docs/SCHEMA.md`, `docs/SPEC-mcp.md` §9.2, `docs/DESIGN_SYSTEM.md`, manuel).
