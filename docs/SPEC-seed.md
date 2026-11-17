@@ -3153,6 +3153,10 @@ Stalwart de développement, par sa route interne `trash-moves/flush`.
 **Rejouable** : un `Message-ID` fixe — le seed n'envoie rien qu'il ne trouve déjà ; un message déjà effacé n'est pas
 effacé deux fois, et la restauration ne se rejoue pas si le fil porte déjà « Message restauré ».
 
+**Sa place dans le script** : juste après les rattachements multiples (§36), qui créent l'affaire « Plateforme de
+billetterie — Musée des Confluences », et avant les pastilles (§46). Placée plus tôt, elle ne passait que sur une base déjà
+seedée (INC-358).
+
 **Les gardes du seed** : le premier message est effacé (`deleted_by` Camille) et son déplacement est `done` ; le second
 n'est pas effacé, et le fil de l'affaire porte un `mail_deleted` et un `mail_restored` pour lui. Une garde qui échoue arrête
 le seed et nomme les migrations 180 et 181, `mail-sync` et Stalwart.

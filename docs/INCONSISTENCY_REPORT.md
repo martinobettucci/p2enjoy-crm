@@ -9217,3 +9217,19 @@ l'affaire rend `erreur` ; tous les refus de la base rendent `refus_crm`.
 **Corrigée en développement le 2026-11-17** (`CRM-150` T1, révision `8f5632d9`) : l'étape inconnue est journalisée
 `refus_crm`, prouvée contre la vraie base par `test_integration_affaires_deplacement.py`, rouge avant. **À fermer** au
 constat en production (contrat §2.50).
+
+### INC-358 — le seed s'arrête au §45 sur une base remise à zéro : il lit une affaire que le §36 ne crée que plus loin
+**Ouverte le 2026-11-17.** *Relevée par la session d5b44a2d (p2enjoy-crm-f8) au `resetMe` demandé par la session de
+livraison (bb) ; correction confiée par elle.*
+
+**Le constat.** `./resetMe.sh --yes` applique les 183 migrations, puis le seed s'arrête : « l'affaire « Plateforme de
+billetterie — Musée des Confluences » ou son adresse est absente : le §45 en dépend. » Rien de ce qui suit n'est seedé.
+
+**La cause.** La section §45 (`CRM-138` T5, `eeeabdaa`, 2026-11-11) classe son courrier restauré dans cette affaire, et la
+cherchait par son titre en tête de bloc ; or l'affaire naît dans les rattachements multiples (§36, `CRM-111` T8,
+`5e69d818`), **2 500 lignes plus loin** dans `supabase/seed/apply-seed.sh`. Sur une base déjà seedée, l'affaire existait
+d'un passage antérieur, et le seed passait ; aucun `resetMe` n'avait été joué depuis `eeeabdaa`.
+
+**Corrigée en développement le 2026-11-17** : le bloc §45 est déplacé **sans changer son contenu**, juste après le §36 et
+avant le §25 ; il reste avant le §46, qui doit trouver tous les mails (`docs/SPEC-seed.md` §45, §46). Prouvée par un
+`resetMe` qui échoue avant et réussit après, puis un rejeu convergent. Seed seul : rien en production. **Close.**

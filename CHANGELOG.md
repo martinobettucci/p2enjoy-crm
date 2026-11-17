@@ -13,6 +13,13 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-138` — le seed repasse sur une base remise à zéro (INC-358)
+
+- **Le seed s'arrêtait au §45 après un `resetMe`** : la corbeille de l'inbox classe un courrier dans l'affaire « Plateforme
+  de billetterie — Musée des Confluences », que les rattachements multiples ne créent que plus loin. Le bloc est déplacé
+  après eux, sans changer son contenu ; sur une base déjà seedée, rien ne change.
+- Le seed seul ; rien en production.
+
 #### `CRM-148` — l'infobulle de description s'épingle, et un texte long s'y lit (décision 929)
 
 - **Un clic dans une infobulle de description l'épingle** : une croix paraît en haut à droite, et la bulle ne se ferme plus
