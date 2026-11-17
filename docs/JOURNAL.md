@@ -40808,3 +40808,26 @@ tranches.
   ouvre Réglages ▸ Arborescence sur le track ; écartés : l'une ou l'autre seule ;
 - **administrateurs de l'espace seuls**, comme l'arborescence ; écarté : tout membre qui écrit ;
 - **connecteur MCP : non**.
+
+### décision 936 — `CRM-152` : en base et paginée par « Afficher plus » ; « avec recettes » = au moins une ligne prévue ; plusieurs tracks = l'un d'eux ; pas de tri sur « Réel sur prévu »
+
+*2026-11-18, session 4891a451 (p2enjoy-crm-d7, ex-32), arbitrage du responsable (`AskUserQuestion`), après la décision 931.*
+**Le problème** : la décision 931 retient la substance — les tracks par les contacts, une recherche, deux filtres, un tri,
+le connecteur —, et laisse le détail à spécifier ; la liste lit aujourd'hui toutes les organisations d'un coup.
+**Décision** :
+- **la recherche, les filtres et le tri se font en base, paginés** : une fonction de liste, cinquante organisations par
+  page ; écarté : tout charger et filtrer dans l'écran, borné à mille ;
+- **la suite se charge par « Afficher plus »**, avec « 50 sur 132 » écrit — le patron des envois de l'outbox (§5.98) ;
+  écarté : des pages numérotées ;
+- **« avec recettes » : au moins une ligne de recette prévue**, réalisée ou non, sur une affaire liée par les contacts —
+  ce qui fait paraître la barre « Réel sur prévu » ; écarté : au moins un réel saisi ;
+- **plusieurs tracks cochés : l'un d'eux** — cocher plus élargit la liste ; écarté : tous ;
+- **aucun tri sur « Réel sur prévu »**, qui porte une barre par devise : tri par nom et par nombre de contacts ; écartés : le
+  meilleur taux, le prévu en euros ;
+- **lecture du design system** : sections ciblées — §1 à §4, §6 à §12, §5.9, §5.5 bis, §5.64, §5.92, §5.97, §5.98 et ce
+  qu'elles citent.
+**Tranché par la spécification, sans question** : la recherche porte sur le nom, le domaine et le site web, à la frappe ; les
+tracks d'une organisation excluent l'affaire à la corbeille, le rattachement archivé ou à la corbeille, le channel et le
+track archivés ou à la corbeille — la règle de la décision 931 —, alors que « avec recettes » suit `organization_revenue_totals`
+(une affaire archivée y compte, décision 903) ; filtres et tri vivent dans l'adresse, la page chargée non.
+**Conséquences** : `CRM-152`, quatre tranches (`docs/SPEC-organisations.md` §8) ; migration au prochain numéro libre.

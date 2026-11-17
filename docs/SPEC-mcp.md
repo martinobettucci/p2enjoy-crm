@@ -1551,6 +1551,18 @@ la première. Une famille nouvelle entraîne la migration de la liste fermée (�
 « Connecteur MCP » (§8.1), comme pour `recettes`. L'inventaire du point 1 ne couvre donc que les
 fonctionnalités antérieures à cette règle, ou celles pour lesquelles la question n'a pas été posée.
 
+### 9.2 tervicies Lister les organisations : la recherche, le filtre par track, leurs tracks — `CRM-152` (`docs/SPEC-organisations.md` §8 ; décisions 931 et 936)
+
+**Famille `organizations`, existante, action `consulter`** ; aucune case nouvelle, aucune migration de la matrice.
+`crm_organization_list(workspace, query, tracks, limit, offset)` appelle `organization_list` sous le jeton de la personne :
+- `query` cherche dans le nom, le domaine **et le site web** ;
+- **`tracks`**, nouveau, facultatif : une liste d'identifiants de track ; l'organisation est rattachée à l'un d'eux. Un
+  identifiant d'un autre espace ou illisible ne rend rien de plus ; ce n'est pas une ancre, la fonction filtre dans l'espace
+  de l'appel ;
+- chaque organisation rend ses **`tracks`** (`id`, `name`, `slug`), lus par `organization_tracks` ; la réponse rend
+  **`total`** à côté de `has_more` ;
+- ni filtre de recettes ni tri : la décision 931 n'en retient pas pour le connecteur.
+
 ### 9.2 Effacer, restaurer, lire et endormir un message — `CRM-138` (décisions 878 et 917)
 
 **Famille `messagerie`, existante** ; aucune case ni famille nouvelle, aucune migration de la matrice. Cinq outils,

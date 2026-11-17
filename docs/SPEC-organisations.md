@@ -111,3 +111,87 @@ pour `recettes` — la contrainte `mcp_droits_famille`, `public.mcp_autorise`, `
 | T3 | E2E, captures, seed, manuel, campagnes |
 | T4 | Les quatre outils MCP ; matrice et phrases de portée ; intégration et E2E du connecteur |
 | T5 | Livraison en production, sur instruction du responsable |
+
+## 8. Les tracks d'une organisation ; rechercher, filtrer et trier la liste — `CRM-152`
+
+*Écrit le 2026-11-18, avant le code (décisions 931 et 936).* **Connecteur MCP** : oui, famille existante `organizations`,
+action `consulter` (décision 931) — `crm_organization_list` gagne la recherche sur le site web, le filtre par track, et rend
+les tracks de chaque organisation ; aucune case nouvelle.
+
+### 8.1 Les tracks d'une organisation
+
+Une organisation est **rattachée à un track** quand l'un de ses contacts est lié (`card_contacts`) à une affaire placée dans
+un channel de ce track (décision 931). **Ne comptent pas** : l'affaire à la corbeille (`cards.deleted_at`), le rattachement
+archivé ou à la corbeille (`card_placements.archived_at`, `deleted_at`), le channel et le track archivés ou à la corbeille.
+**Seul ce que la personne lit compte** : la règle est en base, sous la RLS de chaque table traversée — une affaire, un
+channel ou un track illisible n'y entre pas, et rien ne trahit son existence.
+
+`public.organization_tracks(p_organization_ids uuid[])`, `SECURITY INVOKER`, `stable` : une ligne par couple organisation et
+track (`organization_id`, `track_id`, `name`, `slug`, `color`, `icon`), dans l'ordre des tracks de la barre latérale. Une
+organisation sans track ne rend aucune ligne.
+
+### 8.2 La liste, en base et paginée
+
+`public.organization_list(p_workspace_id uuid, p_search text default null, p_track_ids uuid[] default null, p_revenues text
+default 'all', p_sort text default 'name', p_descending boolean default false, p_limit integer default 50, p_offset integer
+default 0)`, `SECURITY INVOKER`, `stable` : les organisations de l'espace que la personne lit, avec `id`, `name`, `domain`,
+`website`, `contacts` (le nombre de contacts lus), `has_revenues`, et `total_count` (le nombre total qui répond aux filtres,
+pour écrire « 50 sur 132 »).
+- **`p_search`** : le nom, le domaine ou le site web contient le texte, sans casse ; les jokers `%` et `_` sont échappés ;
+  blanc ou absent, aucun filtre.
+- **`p_track_ids`** : rattachée à **l'un** des tracks donnés, par la règle du §8.1 (décision 936) ; vide ou absent, aucun
+  filtre.
+- **`p_revenues`** : `all` ; `with`, au moins une ligne de recette (`card_revenues`) sur une affaire hors corbeille liée par
+  les contacts — la règle de `organization_revenue_totals` (`docs/SPEC-recettes.md` §12.1 : une affaire archivée y compte) ;
+  `without`, aucune. Toute autre valeur : `22023 invalid_revenues_filter`.
+- **`p_sort`** : `name` ou `contacts` ; le départage est toujours le nom puis l'identifiant, pour un ordre total. Toute autre
+  valeur : `22023 invalid_sort`. **Aucun tri sur les recettes** (décision 936).
+- **`p_limit`** ramené entre 1 et 100 ; `p_offset` ≥ 0.
+
+### 8.3 L'écran — Contacts ▸ Organisations
+
+- **Une barre de recherche et de filtres** au-dessus du tableau : « Rechercher » (nom, domaine, site web), **à la frappe**,
+  avec un délai de 300 ms ; « Tracks », un choix multiple des tracks de l'espace ; « Recettes » : toutes, avec recettes,
+  sans recettes. « Effacer les filtres » paraît dès qu'un filtre est posé.
+- **Le tri** par les en-têtes « Nom » et « Contacts », ascendant puis descendant ; « Réel sur prévu » ne se trie pas.
+- **Une colonne « Tracks »** après « Nom » : les noms des tracks de l'organisation (§8.1).
+- **La pagination** : cinquante organisations, puis « Afficher plus » ajoute les cinquante suivantes ; « 50 sur 132 » est
+  écrit sous le tableau. Un changement de recherche, de filtre ou de tri repart de la première page.
+- **L'adresse porte les filtres et le tri** (`/contacts/organisations?q=…&tracks=…&recettes=avec&tri=contacts&sens=desc`),
+  le défaut n'étant jamais écrit ; une valeur inconnue est repliée sur le défaut. La page chargée n'y vit pas.
+- **Les totaux « Réel sur prévu »** restent lus par `organization_revenue_totals()`, une seule fois pour l'espace, à côté de
+  la page : leur volume est celui des organisations qui ont des recettes. *Compromis assumé* : non paginé ; à revoir si ce
+  volume croît (`CLAUDE.md` §21).
+- **La fiche d'une organisation** porte une ligne « Tracks » dans sa liste de définitions : chaque track en lien vers sa
+  vue ; aucun, la ligne dit « Aucun track ».
+- Les états : squelette au premier chargement ; erreur avec « Réessayer » ; vide de l'espace (§4, inchangé) ; vide sous les
+  filtres, « Aucune organisation ne correspond à ces filtres », avec « Effacer les filtres ».
+
+### 8.4 Le connecteur — `crm_organization_list`
+
+Il appelle `organization_list` sous le jeton de la personne. `query` cherche aussi dans le site web ; un argument nouveau,
+**`tracks`**, une liste d'identifiants de track (« l'un d'eux ») ; chaque organisation rend ses **`tracks`** (`id`, `name`,
+`slug`), et la réponse rend `total`. Pagination inchangée (`limit`, `offset`). Aucun filtre de recettes ni de tri dans le
+connecteur : la décision 931 n'en retient pas. Le détail est au `docs/SPEC-mcp.md` §9.2 *tervicies*.
+
+### 8.5 Preuves
+
+- **pgTAP** : la règle des tracks (contact lié, affaire à la corbeille, rattachement archivé, channel et track archivés, un
+  track illisible pour la lectrice) ; chaque filtre, le tri total, la pagination et `total_count` ; les deux refus `22023`.
+- **API** aux jetons réels : la lectrice ne voit que ce qu'elle lit ; le business developer et l'administratrice.
+- **Unitaires** : l'adresse (lecture, écriture, repli), la barre, le tri, « Afficher plus », la colonne et la fiche.
+- **E2E** souris et clavier : chercher, filtrer par track et par recettes, trier, afficher plus, recharger l'adresse ; la
+  fiche ; captures aux quatre paliers.
+- **Connecteur** : pytest, intégration, `verify-mcp.sh`.
+- **Seed** : il démontre déjà une organisation à plusieurs tracks, une sans track et une avec recettes ; le §8.5 le vérifie
+  et le seed s'étend si un cas manque.
+- **Manuel** : le chapitre du carnet, et le chapitre du connecteur.
+
+### 8.6 Tranches
+
+| Tranche | Contenu |
+|---|---|
+| T1 | Migration (`organization_tracks`, `organization_list`) ; pgTAP ; API ; types ; contrat |
+| T2 | Webapp : la barre, le tri, la colonne, « Afficher plus », l'adresse, la fiche ; design system §5.105 ; unitaires ; E2E ; captures |
+| T3 | Le connecteur : `crm_organization_list` ; pytest, intégration, `verify-mcp.sh` |
+| T4 | Seed vérifié, manuel, contrat ; puis `[P]` |

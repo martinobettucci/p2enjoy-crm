@@ -8628,3 +8628,40 @@ d'une liste de l'espace se lisent de la même façon d'un écran à l'autre (§5
 - **RESPONSIVE** (§7) : les commandes passent sous le titre sous `md` ; la fiche prend la largeur ; l'identifiant passe à
   la ligne sans être tronqué ; la page ne défile jamais horizontalement.
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : `Plus` et `TriangleAlert` sont réemployées.
+
+### 5.105 Les organisations : rechercher, filtrer, trier, « Afficher plus », et leurs tracks — `CRM-152`
+
+*Écrit le 2026-11-18, avant le code (décisions 931 et 936) ; lecture ciblée : §1 à §4, §6 à §12, §5.9, §5.5 bis, §5.64,
+§5.92, §5.97, §5.98.* Ce que la liste lit, filtre et trie est spécifié par `docs/SPEC-organisations.md` §8 ; ces règles ne
+disent que de quoi elle a l'air.
+
+- **UNE BARRE DE FILTRES AU-DESSUS DU TABLEAU** (§5.64), sous « Nouvelle organisation » : la forme de celle de la vue liste
+  (§5.9, §5.92) — des contrôles à **libellé visible** en 13 px `--color-text-2`, cibles de 40 px, `flex-wrap`, un sous
+  l'autre sous `md`.
+  - **« Rechercher »**, un champ `type="search"`, **sans bouton** : la liste suit la frappe après 300 ms. Une aide `sr-only`
+    dit « Nom, domaine ou site web ». C'est l'écart à la vue liste, dont la recherche attend sa validation : ici, chaque
+    requête est légère et paginée (décision 936).
+  - **« Tracks »**, un bouton secondaire qui déplie, **dans le flux, sous la barre**, un panneau de cases (le patron du
+    §5.92) : une case de 24 px par track de l'espace, son nom et sa pastille de couleur (§5.5 bis), dans l'ordre de la
+    barre latérale ; cocher filtre aussitôt — aucun « Appliquer ». Le bouton dit le nombre coché, « Tracks (2) », porte
+    `aria-expanded` et `aria-controls` ; `Échap` replie et rend le focus au bouton.
+  - **« Recettes »**, un `select` : « Toutes les organisations », « Avec recettes », « Sans recettes ».
+  - **« Effacer les filtres »**, bouton discret, paraît dès qu'un filtre est posé ; jamais en double avec l'état vide.
+- **LE TRI SUIT LE §5.9** : un `button` dans les en-têtes « Nom » et « Contacts », `aria-sort` sur le `th`, l'icône
+  `ArrowUp`, `ArrowDown` ou `ArrowUpDown` avec le libellé. « Réel sur prévu », « Tracks », « Domaine » et « Site web » ne se
+  trient pas (décision 936) : leur en-tête reste un texte.
+- **LA COLONNE « Tracks », APRÈS « Nom »** : les noms des tracks séparés par « · », une ligne en ellipse, la liste entière
+  en `title` (§5.9). Pas de pilules : une ligne de tableau se balaye, et des pilules en rangée tiendraient mal sur une ligne.
+  Sans track, la cellule est vide (§5.9).
+- **« AFFICHER PLUS » REMPLACE LA PAGINATION DU §5.9** (décision 936) — l'écart est voulu, le patron des envois (§5.98) :
+  sous le tableau, « 50 sur 132 » en 13 px `--color-text-2`, `tabular-nums`, puis le bouton secondaire compact « Afficher
+  plus », absent quand tout est rendu. Pendant la lecture, il dit « Chargement… », `aria-busy` ; les lignes s'ajoutent, le
+  focus reste sur lui, et la région vivante dit « 50 organisations de plus ». Une erreur s'écrit sous lui, `role="alert"`,
+  avec « Réessayer ».
+- **L'ÉTAT VIDE SOUS LES FILTRES** : « Aucune organisation ne correspond à ces filtres », avec « Effacer les filtres »
+  (§5.8) ; le vide de l'espace reste celui du §5.64.
+- **UNE RELECTURE NE VIDE PAS LE TABLEAU** : changer un filtre garde les lignes affichées, atténuées par `aria-busy` sur le
+  tableau, jusqu'à la réponse — aucun squelette au-delà du premier chargement (§5.64).
+- **LA FICHE PORTE UNE LIGNE « Tracks »** dans sa liste de définitions, après « Site web » : chaque track en **pilule** du
+  §5.5 bis, lien vers sa vue, `flex-wrap` ; aucun, « Aucun track » en 13 px `--color-text-2`.
+- **Aucune couleur, aucun jeton nouveau ; aucune icône nouvelle** : `ArrowUp`, `ArrowDown`, `ArrowUpDown` du §5.9.

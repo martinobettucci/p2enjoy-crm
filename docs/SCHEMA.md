@@ -3429,6 +3429,18 @@ fonctions « introuvable » (`pgTAP 0133`).
 modifiée. La seconde migration (`CRM-141` T2 : `verify_label_dispatch`, le secret dans Vault et la cadence `pg_cron`) est
 décrite avec sa tranche.
 
+### Migration — les tracks d'une organisation et la liste paginée (`CRM-152` T1 ; spécifiée le 2026-11-18, avant le code ; numéro pris au push)
+
+`docs/SPEC-organisations.md` §8.1, §8.2 ; décisions 931 et 936.
+- `public.organization_tracks(p_organization_ids uuid[])`, `SECURITY INVOKER`, `stable` : (`organization_id`, `track_id`,
+  `name`, `slug`, `color`, `icon`) — contact lié par `card_contacts` à une affaire hors corbeille, placée par un rattachement
+  ni archivé ni à la corbeille dans un channel puis un track ni archivés ni à la corbeille ; sous la RLS de chaque table.
+- `public.organization_list(p_workspace_id uuid, p_search text, p_track_ids uuid[], p_revenues text, p_sort text,
+  p_descending boolean, p_limit integer, p_offset integer)`, `SECURITY INVOKER`, `stable` : (`id`, `name`, `domain`,
+  `website`, `contacts`, `has_revenues`, `total_count`) ; refus `22023 invalid_revenues_filter`, `22023 invalid_sort`.
+- `execute` à `authenticated` seulement ; aucune table ni politique nouvelle.
+- **Retour arrière** : retirer les deux fonctions ; une webapp et un connecteur antérieurs ne les appellent pas.
+
 ### Migration `0182` — l'espace d'un message de la corbeille, pour l'ancre du connecteur (`CRM-138` T4 ; spécifiée le 2026-11-11, avant le code)
 
 `docs/SPEC-mail-subsystem.md` §29.8 (précisé) ; `docs/SPEC-mcp.md` §9.2 (CRM-138).
