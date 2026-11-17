@@ -4138,6 +4138,40 @@ contre le serveur de dev), et un message **classé** dans « Plateforme de bille
 | E2E `ui` | souris et clavier : non lu et lu, sommeil, effacer puis annuler, effacer, retrouver dans « Corbeille », restaurer ; la ligne du fil de l'affaire |
 | Connecteur | pytest des cinq outils, intégration, `verify-mcp.sh` |
 
+### 29.11 « Supprimer ici » et « Supprimer partout » — `CRM-151` (révise le §29.1)
+
+*Écrit le 2026-11-17, avant le code (décisions 928 et 934).* **Ce paragraphe remplace, dans le §29.1, « Effacer », sa
+confirmation et sa case « L'effacer aussi dans la boîte mail ».** La base est inchangée : les deux gestes appellent
+`public.delete_message` du §29.3, sans (« ici ») ou avec (« partout ») `p_also_mailbox`. **Connecteur MCP** : non —
+`crm_mail_delete` garde son outil et son option (décision 928).
+
+- **Deux commandes** dans la rangée du message ouvert, à la place d'« Effacer », après « Pastilles » : **« Supprimer
+  ici »** — le message va dans la corbeille de l'inbox du CRM seulement ; **« Supprimer partout »** — aussi déplacé dans
+  la corbeille de la boîte mail. « Supprimer partout » n'est **rendue que si `mailbox_trash_permitted` est vrai** (§29.1,
+  la case d'avant) : absente sinon, jamais désactivée.
+- **Chacune ouvre une confirmation courte**, dans le flux (décision 921), qui **rappelle l'effet choisi** et la durée de
+  restauration lue en base. Elle porte la case **« Ne plus demander pendant 1 heure »**, décochée à chaque ouverture.
+  Confirmer avec la case cochée **suspend la confirmation** des deux commandes pendant une heure.
+- **La suspension** est une préférence d'interface **limitée à l'onglet** (`sessionStorage`, `CLAUDE.md` §11, catégorie
+  2) : une seule clé, `p2enjoy.inbox.suppression.sans-confirmation`, dont la valeur est l'**échéance** (un instant ISO).
+  Posée au succès d'une suppression confirmée case cochée ; lue à chaque clic ; une échéance passée, une valeur illisible
+  ou un stockage indisponible valent **« confirmation demandée »** — le défaut sûr. Aucune écriture en base, aucune
+  migration ; un autre onglet ou un autre appareil redemande.
+- **Suspendue**, une commande supprime **au clic**, sans bloc : pendant l'appel, elle est inactive et `aria-busy` ; un
+  refus se dit **sous la rangée**, `role="alert"`, par le dictionnaire du §29.1. Sous la rangée, une mention dit
+  **« Sans confirmation jusqu'à {heure} »**, avec **« Redemander »**, qui efface la clé ; la mention disparaît d'elle-même
+  à l'échéance (décision 934).
+- **L'issue** est celle d'« Effacer » (§29.1) ; l'annonce dit **« Message supprimé ici. »** ou **« Message supprimé
+  partout. »**. La corbeille et le fil de l'affaire gardent « effacé » (décision 934).
+- **Ce qui ne change pas** : la portée (le message ouvert, §29.3), la restauration, le déplacement IMAP (§29.5),
+  l'exclusion de la confirmation et du panneau « Pastilles » (`CRM-141`, sauf pendant une suppression en vol).
+
+**Preuves** : unitaires — la mémoire (échéance, valeur illisible, stockage qui lève), les deux commandes et leur
+confirmation, la commande absente sans capacité, la suspension et « Redemander » ; E2E `ui` à la souris et au clavier, aux
+quatre paliers — supprimer ici avec confirmation, supprimer partout (le déplacement demandé en base), cocher la case puis
+supprimer sans confirmation, « Redemander », la commande absente pour qui n'écrit aucune boîte du message ; le manuel §12.2
+et ses images.
+
 ---
 
 ## 30. Le corps HTML d'un mail rendu dans un cadre confiné, liens cliquables, images distantes sur demande — `CRM-140`

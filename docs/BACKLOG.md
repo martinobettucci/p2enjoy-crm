@@ -19763,7 +19763,14 @@ pendant 1 heure. »
   heure ; `CLAUDE.md` §11) : aucun stockage persistant, aucune migration ; un autre onglet ou appareil redemande ;
 - la restauration depuis la corbeille de l'inbox (30 jours) reste inchangée.
 **Connecteur MCP** : **non** — `crm_mail_delete` garde son outil et son option de boîte mail (famille `messagerie`).
-**Spécification** : à écrire avant le code (`docs/SPEC-mail-subsystem.md` §29, `docs/DESIGN_SYSTEM.md` §5.102, manuel §12).
+**Spécification** : `docs/SPEC-mail-subsystem.md` §29.11 ; `docs/DESIGN_SYSTEM.md` §5.102 (révisé par `CRM-151`) ;
+`docs/JOURNAL.md` décisions 928 et 934 ; manuel §12.2.
+**Tranches** :
+- **T1** — la spécification (ce commit) ;
+- **T2** — les deux commandes, leur confirmation, la mémoire d'une heure et sa mention ; unitaires ; E2E `ui` souris et
+  clavier aux quatre paliers ; captures ; `corbeille-inbox.spec.ts` révisée ;
+- **T3** — le manuel §12.2 et ses images ; le contrat (la webapp) ; la clôture.
+**DoD** : unitaires ; E2E souris et clavier ; captures observées aux quatre paliers ; manuel vérifié ; contrat.
 
 ### CRM-152 — Organisations : les tracks de chaque organisation, par ses contacts ; recherche, filtres et tri de la liste `[ ]`
 

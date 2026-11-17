@@ -8475,6 +8475,27 @@ l'air.
   (§7).
 - **Aucune couleur, aucun jeton nouveau ; aucune icône nouvelle** : `Trash2`, `ArchiveRestore` et `TriangleAlert` sont
   réemployées pour le même objet et le même geste.
+- **RÉVISÉ PAR `CRM-151`** (*2026-11-17, avant le code ; décisions 928 et 934 ; lecture ciblée : §1 à §4, §6 à §12, §5.13,
+  §5.16, §5.4 à §5.4 quinquies, §5.96, §5.102, §5.103*). **« Effacer », sa confirmation et sa case sont remplacés** :
+  - **deux commandes**, secondaires compactes, icône `Trash2` toutes deux — le même geste, l'étendue dite par le libellé
+    (§9) : **« Supprimer ici »**, puis **« Supprimer partout »**, en fin de rangée, après « Pastilles » (§5.103). « Supprimer
+    partout » n'est **rendue que sur la capacité** rendue par la base (§5.59, la règle de la case d'avant) ;
+  - **la confirmation garde la forme de ce paragraphe** — dans le flux, sous la rangée, bloc bordé, `role="group"` nommé
+    « Supprimer ce message », focus sur « Annuler », `Échap` qui abandonne, refus dans le bloc —, et **rappelle l'effet** :
+    « Supprimer « {objet} » ici ? » puis « Il ira dans la corbeille de l'inbox, d'où vous pourrez le restaurer pendant {n}
+    jours. Votre boîte mail le garde. » ; « Supprimer « {objet} » partout ? » puis « Il ira dans la corbeille de l'inbox,
+    d'où vous pourrez le restaurer pendant {n} jours, et dans la corbeille de la boîte mail qui l'a reçu, d'où restaurer
+    ne le ressortira pas. » ;
+  - **la case « Ne plus demander pendant 1 heure »** prend la place de l'ancienne case, même forme (native, 24 px, libellé
+    pour cible étendue, §5.96), **sans aide** : son libellé dit tout ; décochée à chaque ouverture ;
+  - **les boutons du bloc** : « Annuler » et le destructif nommé comme la commande (« Supprimer ici », « Supprimer
+    partout »), `Trash2` ; pendant l'appel, « Suppression… », `aria-busy` ;
+  - **la suspension se dit** (décision 934) : sous la rangée, en 13 px `--color-text-2`, « Sans confirmation jusqu'à
+    {HH:MM} », suivie de **« Redemander »**, bouton discret compact ; la mention disparaît à l'échéance. Suspendues, les
+    deux commandes suppriment au clic ; un refus se dit alors sous la rangée, même forme que dans le bloc ;
+  - **l'annonce** : « Message supprimé ici. » ou « Message supprimé partout. » ; la corbeille et le fil gardent « effacé »
+    (décision 934 : le même geste, le manuel le dit) ;
+  - sous `md`, la rangée passe à la ligne, les deux commandes restant voisines ; aucune icône, aucun jeton nouveau.
 
 ### 5.103 Les pastilles d'un mail : dans la liste, le message ouvert, le filtre, et Réglages ▸ Pastilles des mails — `CRM-141`
 

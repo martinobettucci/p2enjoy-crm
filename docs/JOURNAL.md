@@ -40783,3 +40783,19 @@ variable ; l'image `mcp` à livrer.
   un texte libre ;
 - **un filtre par catégorie dans la liste**, livré avec `CRM-152` (même session, dans l'ordre) ;
 - **connecteur MCP : oui, dans la famille existante `organisations`** ; écartés : une famille nouvelle, l'écran seul.
+
+### décision 934 — `CRM-151` : le design system lu par sections ; la rangée dit quand la confirmation est suspendue ; « supprimer » sur les boutons et leur confirmation seulement
+
+*2026-11-17, session 152dd27d (p2enjoy-crm-45), arbitrages du responsable (`AskUserQuestion`), avant la spécification ; la
+substance est celle de la décision 928.*
+**Décisions** :
+- **le design system lu par sections ciblées**, pour `CRM-151` seulement : §1 à §4, §6 à §12, §5.13, §5.16, §5.4 à
+  §5.4 quinquies, §5.96, §5.102, §5.103 ; écarté : la lecture intégrale ;
+- **quand « Ne plus demander pendant 1 heure » est active, la rangée le dit** : sous elle, en petit, « Sans confirmation
+  jusqu'à {heure} », et « Redemander », qui rétablit la confirmation ; écarté : rien de visible ;
+- **« supprimer » sur les deux boutons, leur confirmation et leur annonce seulement** : la corbeille (« Effacé le … par
+  … ») et le fil de l'affaire (« Message effacé ») gardent « effacé », et le manuel dit que c'est le même geste ; écarté :
+  tout le vocabulaire.
+**Les deux questions du connecteur** : réglées par la décision 928 — non, `crm_mail_delete` est inchangé.
+**Conséquences** : `docs/SPEC-mail-subsystem.md` §29.11 ; `docs/DESIGN_SYSTEM.md` §5.102 révisé ; `CRM-151`, trois
+tranches.
