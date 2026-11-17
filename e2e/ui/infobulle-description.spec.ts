@@ -7,6 +7,8 @@
 // @verifies docs/SPEC-tracks.md §7, docs/SPEC-channels.md §5, docs/SPEC-workflow-engine.md §7.2,
 //           docs/SPEC-cards.md §12.3 (la description vient des lectures réelles, sans réponse substituée)
 // @verifies CLAUDE.md §16 (vérification visuelle) ; CRM-092, docs/SPEC-session-sso.md §13 (connexion réelle)
+// RÉVISÉ PAR `CRM-148` (décision 51), non relâché : la description est la région de texte `infobulle-texte`, qui défile seule
+//           sous le nom (docs/DESIGN_SYSTEM.md §5.58, « Épinglée ») ; le nom reste le premier paragraphe.
 //
 // Aucune réponse n'est substituée : la pile réelle et le seed rendent les descriptions. Le survol est celui
 // de la souris de Playwright, le clavier celui de `Tab` — la bulle ne s'ouvre qu'au focus CLAVIER, et un
@@ -82,7 +84,7 @@ test.describe('la pilule d’un track (barre latérale)', () => {
 		await conseil.hover()
 		await expect(bulle(page)).toBeVisible()
 		await expect(bulle(page).locator('p').first()).toHaveText('Conseil & IA')
-		await expect(bulle(page).locator('p').nth(1)).toHaveText(DESCRIPTION_TRACK)
+		await expect(bulle(page).getByTestId('infobulle-texte')).toHaveText(DESCRIPTION_TRACK)
 		const cadrePilule = await conseil.boundingBox()
 		const cadreBulle = await bulle(page).boundingBox()
 		expect(cadreBulle?.x ?? 0, 'la bulle est à droite de la pilule').toBeGreaterThan(
@@ -126,7 +128,7 @@ test.describe('l’onglet d’un channel', () => {
 		await page.goto(BOARD_GRANDS_COMPTES)
 		const grands = onglet(page, 'grands-comptes')
 		await grands.hover()
-		await expect(bulle(page).locator('p').nth(1)).toHaveText(DESCRIPTION_CHANNEL)
+		await expect(bulle(page).getByTestId('infobulle-texte')).toHaveText(DESCRIPTION_CHANNEL)
 		const cadreOnglet = await grands.boundingBox()
 		const cadreBulle = await bulle(page).boundingBox()
 		expect(cadreBulle?.y ?? 0, 'la bulle est sous l’onglet').toBeGreaterThan(
@@ -182,7 +184,7 @@ test.describe('le titre d’une affaire', () => {
 		await page.goto(BOARD_GRANDS_COMPTES)
 		await titreCarte(page, CARD_DECRITE).hover()
 		await expect(bulle(page).locator('p').first()).toHaveText('Migration ERP Sogexia')
-		const texte = await bulle(page).locator('p').nth(1).innerText()
+		const texte = await bulle(page).getByTestId('infobulle-texte').innerText()
 		expect(texte.split('\n'), 'deux lignes rendues').toHaveLength(2)
 		await attendreCadreDansLaFenetre(page)
 		await capturer(page, 'infobulle-carte-board-xl-1440', UNITE)

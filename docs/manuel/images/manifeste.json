@@ -13022,6 +13022,26 @@
 			]
 		},
 		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/infobulle-epinglee.jpg",
+			"largeur": 603,
+			"hauteur": 139,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "la-description-d-un-track-d-un-channel-ou-d-une-affaire-au-survol",
+			"pleinePage": false,
+			"libelles": [
+				"Actions",
+				"Actions Audit sécurité applicative",
+				"Conseil & IA",
+				"Conseil & IA Missions de conseil et de mise en œuvre de l'intelligence artificielle : diagnostic, prototype, déploiement.",
+				"Description de Conseil & IA",
+				"Fermer la description de Conseil & IA",
+				"Formation",
+				"Missions de conseil et de mise en œuvre de l'intelligence artificielle : diagnostic, prototype, déploiement.",
+				"Studio web",
+				"Studio web Conception, développement et maintenance de sites et d'applications web."
+			]
+		},
+		{
 			"fichier": "naviguer-barre-laterale-onglets-etats/infobulle.jpg",
 			"largeur": 603,
 			"hauteur": 135,

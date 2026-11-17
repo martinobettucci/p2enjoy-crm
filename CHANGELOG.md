@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-148` — l'infobulle de description s'épingle, et un texte long s'y lit (décision 929)
+
+- **Un clic dans une infobulle de description l'épingle** : une croix paraît en haut à droite, et la bulle ne se ferme plus
+  qu'à cette croix ou à `Échap` — ni quand la souris s'en va, ni à un clic ailleurs. Épinglée, elle suit son élément
+  quand la page défile. Au clavier, `Flèche bas` l'épingle et y place le curseur ; `Tab` passe à la croix.
+- **Son texte défile sans la refermer** : le défilement de la bulle elle-même la fermait, c'était la cause du défaut.
+- Pour toutes ces bulles : track, channel, affaire, étape, et la pastille « aussi rattachée ».
+- **Défaut corrigé au passage** : le texte masqué d'une description, dans une carte du board, faisait défiler la page
+  entière en largeur.
+- La webapp seule ; aucune migration (`docs/PROD_MIGRATIONS.md` §2.53).
+
 #### `CRM-149` T3 — Réglages ▸ Prompts du connecteur (décision 930)
 
 - **Un écran pour les prompts du connecteur**, dans les réglages, après « Webhooks » : chaque prompt avec son identifiant

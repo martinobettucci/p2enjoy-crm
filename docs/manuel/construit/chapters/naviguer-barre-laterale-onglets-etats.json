@@ -1984,7 +1984,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", puis la description, avec ses retours à la ligne ; une description très longue\ndéfile à l'intérieur. Vous pouvez y amener la souris pour la lire : elle reste ouverte tant que le pointeur est sur\nl'élément ou sur elle. "
+					"text": ", puis la description, avec ses retours à la ligne ; une description très longue\ndéfile à l'intérieur, sous le nom. Vous pouvez y amener la souris pour la lire : elle reste ouverte tant que le pointeur\nest sur l'élément ou sur elle. "
 				},
 				{
 					"type": "code",
@@ -1995,6 +1995,115 @@
 					"text": " la ferme ; un clic sur l'élément l'ouvre, sans laisser de bulle."
 				}
 			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Épingler la bulle pour lire une longue description."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "clic dans la bulle"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " l'épingle : une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "croix"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " paraît en haut\nà droite, et la bulle reste ouverte même quand la souris s'en va, que vous cliquez ailleurs ou que la page défile — elle\nsuit alors son élément. Faites défiler son texte à la molette, puis fermez-la par la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "croix"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ou par "
+				},
+				{
+					"type": "code",
+					"text": "Échap"
+				},
+				{
+					"type": "text",
+					"text": ". Au\nclavier, quand la bulle est ouverte sur l'élément atteint par "
+				},
+				{
+					"type": "code",
+					"text": "Tab"
+				},
+				{
+					"type": "text",
+					"text": ", la touche "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "code",
+							"text": "Flèche bas"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " l'épingle et y place le\ncurseur : les flèches font défiler le texte, "
+				},
+				{
+					"type": "code",
+					"text": "Tab"
+				},
+				{
+					"type": "text",
+					"text": " passe à la croix puis revient au texte, et "
+				},
+				{
+					"type": "code",
+					"text": "Échap"
+				},
+				{
+					"type": "text",
+					"text": " ferme la bulle en\nvous rendant à l'élément. Une seule bulle reste épinglée à la fois. Cela vaut pour toutes ces bulles : track, channel,\naffaire et étape."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/infobulle-epinglee.jpg",
+			"alt": "Une infobulle épinglée : le nom, la croix en haut à droite, et une description longue qui défile",
+			"width": 603,
+			"height": 139
 		},
 		{
 			"type": "paragraph",

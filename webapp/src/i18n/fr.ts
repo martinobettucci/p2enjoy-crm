@@ -540,6 +540,9 @@ export const fr = {
 
 	'inbox.error.title': 'Messagerie indisponible',
 	'inbox.back.folders': 'Retour aux dossiers',
+	// `CRM-148` (docs/DESIGN_SYSTEM.md §5.58, « Épinglée ») : la croix et le texte d'une infobulle de description épinglée.
+	'infobulle.fermer': 'Fermer la description de {titre}',
+	'infobulle.texte': 'Description de {titre}',
 	// `CRM-138` T3 — effacer le message ouvert, la corbeille de l'inbox, restaurer (docs/SPEC-mail-subsystem.md §29 ;
 	// docs/DESIGN_SYSTEM.md §5.102). La durée est LUE EN BASE (`trash_retention_days()`), jamais écrite ici.
 	'inbox.trash.delete': 'Effacer',

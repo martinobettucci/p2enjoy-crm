@@ -2,6 +2,10 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.58 (rien sans description ; le nom en tête puis la description ; au
 //           survol après le délai, au focus clavier sans délai, jamais au clic ; survolable ; `Échap` ;
 //           le lecteur d'écran n'attend pas la bulle), §5.3 bis (un `title` seul ne suffit pas)
+// @verifies CRM-148 (docs/BACKLOG.md) — la bulle épinglée : un clic dans elle ou `Flèche bas` l'épingle ; la croix et `Échap`
+//           la ferment et rendent le focus ; son texte défile sans la fermer ; épinglée, ni le pointeur qui part, ni la
+//           perte du focus, ni un clic ailleurs, ni le défilement de la page ne la ferment ; une seule épinglée
+//           (docs/DESIGN_SYSTEM.md §5.58, « Épinglée — CRM-148 » ; docs/JOURNAL.md décision 929)
 //
 // Le composant est monté autour d'un vrai lien, comme dans les quatre écrans. La POSITION n'est pas
 // éprouvée ici — jsdom ne mesure rien — : elle l'est par `webapp/src/lib/infobulle.test.ts` sur des
@@ -66,6 +70,12 @@ describe('sans description', () => {
 })
 
 describe('avec une description', () => {
+	it('`CRM-148` : le texte masqué est fixe, et ne fait jamais défiler la page depuis un conteneur défilant', () => {
+		monter(DESCRIPTION)
+		const id = lien().getAttribute('aria-describedby') ?? ''
+		expect(document.getElementById(id)?.style.position).toBe('fixed')
+	})
+
 	it('retire le `title` et cite un texte de description toujours présent', () => {
 		monter(DESCRIPTION)
 		expect(lien().hasAttribute('title')).toBe(false)
@@ -91,9 +101,9 @@ describe('avec une description', () => {
 		act(() => vi.advanceTimersByTime(DELAI_OUVERTURE_INFOBULLE))
 		const rendue = bulle()
 		expect(rendue?.getAttribute('aria-hidden')).toBe('true')
-		const paragraphes = rendue?.querySelectorAll('p') ?? []
-		expect(paragraphes[0]?.textContent).toBe('Grands comptes')
-		expect(paragraphes[1]?.textContent).toBe(DESCRIPTION)
+		// RÉVISÉ PAR `CRM-148` (décision 51), non relâché : la description est la région de texte qui défile seule, sous le nom.
+		expect(rendue?.querySelector('p')?.textContent).toBe('Grands comptes')
+		expect(rendue?.querySelector('[data-testid="infobulle-texte"]')?.textContent).toBe(DESCRIPTION)
 		// Rendue à la racine du document, hors des conteneurs défilants.
 		expect(rendue?.parentElement).toBe(document.body)
 	})
@@ -177,5 +187,137 @@ describe('avec une description', () => {
 		act(() => vi.advanceTimersByTime(DELAI_OUVERTURE_INFOBULLE))
 		fireEvent.scroll(window)
 		expect(bulle()).toBeNull()
+	})
+})
+
+describe('épinglée — CRM-148 (§5.58, décision 929)', () => {
+	const ouvrirAuSurvol = () => {
+		fireEvent.mouseEnter(lien())
+		act(() => vi.advanceTimersByTime(DELAI_OUVERTURE_INFOBULLE))
+		expect(bulle()).not.toBeNull()
+	}
+	const croix = () => screen.queryByRole('button', { name: 'Fermer la description de Grands comptes' })
+
+	it('son propre texte défile sans la fermer, épinglée ou non — la cause du défaut', () => {
+		monter(DESCRIPTION)
+		ouvrirAuSurvol()
+		fireEvent.scroll(screen.getByTestId('infobulle-texte'))
+		expect(bulle()).not.toBeNull()
+		expect(croix()).toBeNull()
+	})
+
+	it('un clic dans la bulle l’épingle : la croix paraît, et c’est un dialogue non modal nommé par l’objet', () => {
+		monter(DESCRIPTION)
+		ouvrirAuSurvol()
+		fireEvent.pointerDown(screen.getByTestId('infobulle-texte'))
+		const rendue = bulle()
+		expect(rendue?.getAttribute('data-epinglee')).toBe('true')
+		expect(rendue?.hasAttribute('aria-hidden')).toBe(false)
+		expect(screen.getByRole('dialog', { name: 'Grands comptes' })).toBe(rendue)
+		expect(croix()).not.toBeNull()
+		expect(screen.getByRole('region', { name: 'Description de Grands comptes' }).getAttribute('tabindex')).toBe('0')
+	})
+
+	it('épinglée, ni le pointeur qui part, ni la perte du focus, ni un clic ailleurs, ni le défilement ne la ferment', () => {
+		monter(DESCRIPTION)
+		ouvrirAuSurvol()
+		fireEvent.pointerDown(bulle()!)
+		fireEvent.mouseLeave(bulle()!)
+		fireEvent.mouseLeave(lien())
+		act(() => vi.advanceTimersByTime(1000))
+		fireEvent.blur(lien())
+		fireEvent.pointerDown(document.body)
+		fireEvent.scroll(window)
+		fireEvent.resize(window)
+		expect(bulle()?.getAttribute('data-epinglee')).toBe('true')
+	})
+
+	it('la croix la ferme et rend le focus à l’élément, sans la rouvrir', async () => {
+		simulerModaliteClavier()
+		monter(DESCRIPTION)
+		ouvrirAuSurvol()
+		fireEvent.pointerDown(bulle()!)
+		await userEvent.click(croix()!)
+		expect(bulle()).toBeNull()
+		expect(document.activeElement).toBe(lien())
+		act(() => vi.advanceTimersByTime(DELAI_OUVERTURE_INFOBULLE * 2))
+		expect(bulle()).toBeNull()
+	})
+
+	it('au clavier, `Flèche bas` l’épingle et y place le focus ; `Tab` va du texte à la croix et revient ; `Échap` ferme et rend le focus', async () => {
+		simulerModaliteClavier()
+		monter(DESCRIPTION)
+		await userEvent.tab()
+		expect(bulle()).not.toBeNull()
+		await userEvent.keyboard('{ArrowDown}')
+		const texte = screen.getByRole('region', { name: 'Description de Grands comptes' })
+		expect(document.activeElement).toBe(texte)
+		await userEvent.tab()
+		expect(document.activeElement).toBe(croix())
+		await userEvent.tab()
+		expect(document.activeElement).toBe(texte)
+		await userEvent.keyboard('{Escape}')
+		expect(bulle()).toBeNull()
+		expect(document.activeElement).toBe(lien())
+	})
+
+	it('`Flèche bas` ne fait rien quand la bulle est fermée', async () => {
+		monter(DESCRIPTION)
+		act(() => lien().focus())
+		await userEvent.keyboard('{ArrowDown}')
+		expect(bulle()).toBeNull()
+	})
+
+	it('un appui dans la bulle n’atteint pas les ancêtres de l’élément (une carte déplaçable du board)', () => {
+		const appuiAncetre = vi.fn()
+		render(
+			<div onPointerDown={appuiAncetre}>
+				<Infobulle titre="Carte" description="Description de la carte.">
+					{({ idDescription }) => (
+						<a href="/carte" aria-describedby={idDescription}>
+							Carte
+						</a>
+					)}
+				</Infobulle>
+			</div>,
+		)
+		fireEvent.mouseEnter(screen.getByRole('link', { name: 'Carte' }))
+		act(() => vi.advanceTimersByTime(DELAI_OUVERTURE_INFOBULLE))
+		fireEvent.pointerDown(screen.getByTestId('infobulle'))
+		expect(appuiAncetre).not.toHaveBeenCalled()
+		expect(screen.getByTestId('infobulle').getAttribute('data-epinglee')).toBe('true')
+	})
+
+	it('un appui sur l’élément la ferme, même épinglée : il navigue', () => {
+		monter(DESCRIPTION)
+		ouvrirAuSurvol()
+		fireEvent.pointerDown(bulle()!)
+		fireEvent.pointerDown(lien())
+		expect(bulle()).toBeNull()
+	})
+
+	it('une seule épinglée à la fois : en épingler une autre ferme la première', () => {
+		render(
+			<>
+				{['Premier', 'Second'].map((nom) => (
+					<Infobulle key={nom} titre={nom} description={`Description de ${nom.toLowerCase()}.`}>
+						{({ idDescription }) => (
+							<a href={`/${nom}`} aria-describedby={idDescription}>
+								{nom}
+							</a>
+						)}
+					</Infobulle>
+				))}
+			</>,
+		)
+		for (const nom of ['Premier', 'Second']) {
+			fireEvent.mouseEnter(screen.getByRole('link', { name: nom }))
+			act(() => vi.advanceTimersByTime(DELAI_OUVERTURE_INFOBULLE))
+			const ouvertes = screen.getAllByTestId('infobulle')
+			fireEvent.pointerDown(ouvertes[ouvertes.length - 1]!)
+		}
+		const restantes = screen.getAllByTestId('infobulle')
+		expect(restantes).toHaveLength(1)
+		expect(restantes[0]?.textContent).toContain('Second')
 	})
 })

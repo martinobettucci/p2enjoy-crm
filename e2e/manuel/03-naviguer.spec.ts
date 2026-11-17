@@ -1,5 +1,7 @@
 // @spec CRM-133 (docs/BACKLOG.md) — tranche T4 : l'image du bouton d'information d'une étape décrite par le seed (manuel §3.6 ;
 //       docs/SPEC-seed.md §39 ; docs/DESIGN_SYSTEM.md §5.58)
+// @spec CRM-148 (docs/BACKLOG.md) — l'image « infobulle-epinglee » du manuel §3.6 : la bulle du track épinglée, sa croix
+//       (docs/DESIGN_SYSTEM.md §5.58, « Épinglée »)
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.1 : les images du chapitre 3, « Naviguer : barre latérale, onglets, états »
 // @spec docs/SPEC-manual.md §11.1, §11.2, §13 (l'aide, ses états) ; docs/manual.md chapitre 3
 // @spec docs/DESIGN_SYSTEM.md §5.12 (la coquille), §5.62 (le fil d'Ariane), §5.69 (l'aide)
@@ -255,6 +257,30 @@ test('les commandes grisées d’une lectrice', async ({ page }) => {
 		nom: 'reglages-lectrice',
 		cibles: [entree.locator('xpath=ancestor::li[1]')],
 	})
+})
+
+// `CRM-148` (docs/DESIGN_SYSTEM.md §5.58, « Épinglée ») : un clic dans la bulle du track l'épingle, et la croix paraît. La bulle
+// est refermée par sa croix à la fin : rien ne reste épinglé.
+test('CRM-148 : la bulle épinglée, et sa croix', async ({ page }) => {
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto(BOARD)
+	const pilule = page.locator('[data-testid="entree-track"][data-slug="conseil-ia"]')
+	await pilule.hover()
+	const bulle = page.getByTestId('infobulle')
+	await expect(bulle).toBeVisible()
+	await page.getByTestId('infobulle-texte').click()
+	const croix = page.getByRole('button', { name: 'Fermer la description de Conseil & IA' })
+	await expect(croix).toBeVisible()
+	await page.mouse.move(1400, 880)
+	await expect(bulle).toBeVisible()
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: 'la-description-d-un-track-d-un-channel-ou-d-une-affaire-au-survol',
+		nom: 'infobulle-epinglee',
+		cibles: [pilule, bulle],
+	})
+	await croix.click()
+	await expect(bulle).toHaveCount(0)
 })
 
 test('CRM-133 : la description d’une étape, au survol de son bouton d’information', async ({ page }) => {

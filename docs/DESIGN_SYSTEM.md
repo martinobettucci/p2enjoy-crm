@@ -6254,6 +6254,13 @@ composant — track, channel, affaire, étape (§5.58 révisé par `CRM-133`) et
   l'élément sans le rouvrir.
 - **Limites révisées** : la limite clavier ci-dessus est levée (`Flèche bas`). Au toucher, rien ne change : la bulle ne
   paraît pas.
+- **LE TEXTE MASQUÉ EST FIXE, NON ABSOLU** — *défaut trouvé par la preuve de palier de `CRM-148` (2026-11-17), présent
+  depuis `CRM-105`*. Le texte `sr-only` de la description, rendu à côté de l'élément, est positionné en absolu par
+  `sr-only` ; dans une carte du board, sans ancêtre positionné, il s'échappait du conteneur défilant et faisait défiler la
+  **page** (1565 px de large pour une fenêtre de 900, à chaque palier). Il porte donc `position: fixed`, qui ne compte pas
+  dans le défilement du document et reste lu par les lecteurs d'écran. *Écarté* : l'enveloppe `relative` du §5.16, qui
+  ajouterait un élément — donc un écart de `gap` — dans les mises en page `flex` des appelants. La preuve de palier mesure
+  désormais la largeur de défilement de la page, bulle épinglée ouverte.
 - **Aucune couleur, aucun jeton nouveau ; une icône Lucide, `X`**, déjà employée pour retirer une pièce jointe (§5.4 sexies) :
   le même signe de fermeture d'une petite surface, que la demande nomme.
 

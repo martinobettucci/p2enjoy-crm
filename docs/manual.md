@@ -404,8 +404,18 @@ Quand une description existe, elle paraît dans une **infobulle** :
 ![L'infobulle d'un track survolé : son nom, puis sa description](manuel/images/naviguer-barre-laterale-onglets-etats/infobulle.jpg)
 
 La bulle écrit d'abord le **nom**, puis la description, avec ses retours à la ligne ; une description très longue
-défile à l'intérieur. Vous pouvez y amener la souris pour la lire : elle reste ouverte tant que le pointeur est sur
-l'élément ou sur elle. `Échap` la ferme ; un clic sur l'élément l'ouvre, sans laisser de bulle.
+défile à l'intérieur, sous le nom. Vous pouvez y amener la souris pour la lire : elle reste ouverte tant que le pointeur
+est sur l'élément ou sur elle. `Échap` la ferme ; un clic sur l'élément l'ouvre, sans laisser de bulle.
+
+**Épingler la bulle pour lire une longue description.** Un **clic dans la bulle** l'épingle : une **croix** paraît en haut
+à droite, et la bulle reste ouverte même quand la souris s'en va, que vous cliquez ailleurs ou que la page défile — elle
+suit alors son élément. Faites défiler son texte à la molette, puis fermez-la par la **croix** ou par `Échap`. Au
+clavier, quand la bulle est ouverte sur l'élément atteint par `Tab`, la touche **`Flèche bas`** l'épingle et y place le
+curseur : les flèches font défiler le texte, `Tab` passe à la croix puis revient au texte, et `Échap` ferme la bulle en
+vous rendant à l'élément. Une seule bulle reste épinglée à la fois. Cela vaut pour toutes ces bulles : track, channel,
+affaire et étape.
+
+![Une infobulle épinglée : le nom, la croix en haut à droite, et une description longue qui défile](manuel/images/naviguer-barre-laterale-onglets-etats/infobulle-epinglee.jpg)
 
 **Sans description, rien ne change** : aucune bulle, et le nom complet reste lisible au survol. Un lecteur d'écran
 annonce la description avec le nom de l'élément.

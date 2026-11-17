@@ -1215,6 +1215,19 @@ inconnue), le reste de l'application n'est pas touché. Elle se livre **après**
 
 **Retour arrière** : la webapp précédente ; rien n'est écrit en base par la livraison.
 
+
+### 2.53 `CRM-148`, décision 929 — l'infobulle de description épinglée (À LIVRER : la webapp de `main` ; **hors de tout lot annoncé**)
+
+`docs/DESIGN_SYSTEM.md` §5.58, « Épinglée — `CRM-148` ». **Aucune migration, aucune fonction, aucune variable, aucun
+secret** : le seul composant `Infobulle` de la webapp change.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer la webapp de `main` | session de livraison | avec le lot qui l'emporte |
+| 2 | Constater | responsable, sur un track ou un channel à description | survoler l'élément, cliquer dans la bulle : la croix paraît ; éloigner la souris, cliquer ailleurs : la bulle reste ; faire défiler son texte ; la croix la ferme. Au clavier : `Tab` jusqu'à l'élément, `Flèche bas`, `Échap` |
+
+**Retour arrière** : la webapp précédente ; rien n'est écrit en base.
+
 ## 3. Migrations en attente
 
 **La 185** (`CRM-149` T1, décision 930), *en attente, hors de tout lot annoncé* : les prompts du connecteur
