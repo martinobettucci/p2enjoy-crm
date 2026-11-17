@@ -40799,3 +40799,12 @@ substance est celle de la décision 928.*
 **Les deux questions du connecteur** : réglées par la décision 928 — non, `crm_mail_delete` est inchangé.
 **Conséquences** : `docs/SPEC-mail-subsystem.md` §29.11 ; `docs/DESIGN_SYSTEM.md` §5.102 révisé ; `CRM-151`, trois
 tranches.
+
+### décision 935 — `CRM-154` : glisser l'onglet d'un channel et « Réorganiser » vers l'arborescence ; administrateurs seuls ; pas de connecteur
+
+*2026-11-17, session 4522fa9c (p2enjoy-crm-bb, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Décision** :
+- **les deux formes** : le glisser-déposer des onglets (et son équivalent au clavier), et un bouton « Réorganiser » qui
+  ouvre Réglages ▸ Arborescence sur le track ; écartés : l'une ou l'autre seule ;
+- **administrateurs de l'espace seuls**, comme l'arborescence ; écarté : tout membre qui écrit ;
+- **connecteur MCP : non**.

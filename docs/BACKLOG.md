@@ -19660,9 +19660,8 @@ de GitHub épinglée, accès au registre npm), puis la première livraison réel
 
 ## Demande du 2026-11-17 — épingler l'infobulle de description pour lire un texte long
 
-### CRM-148 — Infobulle de description : un clic dedans l'épingle, elle ne se ferme plus qu'à sa croix, et un texte long y défile `[P]`
-**État (2026-11-17)** : vérifiée en développement (ci-dessous). **Reste** : la livraison de la webapp (contrat
-`docs/PROD_MIGRATIONS.md` §2.53) et le constat du responsable en production.
+### CRM-148 — Infobulle de description : un clic dedans l'épingle, elle ne se ferme plus qu'à sa croix, et un texte long y défile `[@]`
+*Prise en charge : session interactive 4891a451 (p2enjoy-crm-d7, ex-32) depuis 2026-11-17 15:50 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*
 
 **Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison : « les channels, le tracks, ils
 ont leur descriptifs qui s'affiche au survol mais s'il est long il est impossible a scroll car le hint se referme. Il
@@ -19679,16 +19678,6 @@ pastille « aussi rattachée »).
 recalage, une seule épinglée, le focus rendu) ; E2E souris et clavier sur un track, un channel et une étape à description
 longue ; captures aux quatre paliers ; manuel §3.6 et son image.
 **Découpage** : une tranche.
-**Fait le 2026-11-17** : `webapp/src/components/ui/Infobulle.tsx` (l'état épinglé, la croix, la région de texte, le dialogue
-non modal, `Flèche bas`, deux arrêts de `Tab`, le recalage au défilement, une seule épinglée, le défilement interne qui ne
-ferme plus ; et le texte masqué en `position: fixed`, défaut trouvé par la preuve de palier : il faisait défiler la page de
-1565 px depuis une carte du board) ; Vitest `Infobulle.test.tsx` 24 (rouge contre deux mutations : la garde du défilement
-interne, l'arrêt de propagation), suite complète 243 fichiers et 5 853 tests ; E2E `e2e/ui/infobulle-epinglee.spec.ts` 7/7
-(souris, clavier, étape, quatre paliers), voisines `infobulle-description` (sélecteur révisé, non relâché) et
-`description-etapes` 15/15 ; captures `docs/captures/CRM-148` observées ; manuel §3.6 et l'image « infobulle-epinglee »
-(`e2e/manuel/03-naviguer.spec.ts` 11/11), manuel construit, `verify-manual` 168 contrôles sans anomalie sur HEAD plus ce
-changement ; DESIGN_SYSTEM §5.58 (le texte masqué), changelog, contrat §2.53. Sous-ensemble de ce périmètre. Le port 4173
-était tenu par un serveur d'un autre projet (`4-120`), arrêté sur autorisation du responsable.
 
 ### CRM-149 — Les prompts du connecteur MCP : des parcours guidés, par espace, édités dans Réglages `[@]`
 *Prise en charge : session interactive d5b44a2d (p2enjoy-crm-f8, ex-a7, ex-75) depuis 2026-11-17 16:12 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*
@@ -19828,3 +19817,23 @@ filtres).
 **Connecteur MCP** : **oui, famille existante `organisations`** — lire et ajouter des commentaires, lire et poser les
 catégories, sous ses cases existantes (consulter, ajouter, modifier) ; aucune famille nouvelle.
 **Spécification** : à écrire avant le code (`docs/SCHEMA.md`, `docs/SPEC-mcp.md` §9.2, `docs/DESIGN_SYSTEM.md`, manuel).
+
+### CRM-154 — Réorganiser les channels depuis la vue d'un track : glisser l'onglet, et « Réorganiser » vers l'arborescence `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison (p2enjoy-crm-bb) ; arbitrée le
+même jour (décision 935).
+**Demande, verbatim** : « on doit pouvoir réorganiser l'ordre des channels directement depuis la vue des channels ou avoir
+un bouton qui amène à la page des réglages qui permet ça »
+**Existant** : Réglages ▸ Arborescence réordonne déjà par « Monter » et « Descendre » (`docs/DESIGN_SYSTEM.md`, commandes
+de réordonnancement), en écrivant `position` ligne à ligne (`docs/SPEC-tracks.md`, « le réordonnancement n'a pas de RPC
+dédiée » : une opération atomique deviendra nécessaire avec le glisser-déposer).
+**Comportement attendu** (substance validée ; détail à spécifier) :
+- dans la barre d'onglets d'un track, **un onglet de channel se fait glisser** pour changer l'ordre, avec un **équivalent
+  au clavier** ;
+- un bouton **« Réorganiser »** ouvre **Réglages ▸ Arborescence** sur ce track ;
+- **réservé aux administrateurs de l'espace**, règle appliquée en base ; les autres membres ne voient ni la poignée ni le
+  bouton ;
+- **une réorganisation atomique en base** (une fonction qui reçoit l'ordre d'une liste), employée aussi par l'arborescence.
+**Connecteur MCP** : **non** — le connecteur lit l'ordre et ne le change pas.
+**Spécification** : à écrire avant le code (`docs/SPEC-tracks.md`, `docs/SPEC-channels.md`, `docs/SCHEMA.md`,
+`docs/DESIGN_SYSTEM.md`, manuel).
