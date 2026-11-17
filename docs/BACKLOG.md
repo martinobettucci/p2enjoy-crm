@@ -19668,3 +19668,12 @@ ont leur descriptifs qui s'affiche au survol mais s'il est long il est impossibl
 faudrait rendre le baloon fixe si une fois affiché on clique dedans et il se ferme seulement si l'on clique sur le "x" en
 haut à droite qui apparait dans ce cas précis. »
 **Spécification** : à écrire avant le code (`docs/DESIGN_SYSTEM.md` §5.58, décision à consigner).
+
+### CRM-149 — Les prompts du connecteur MCP : des parcours guidés, par espace, édités dans Réglages `[@]`
+*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-f8, ex-a7, ex-75) depuis 2026-11-17 16:12 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*
+
+**Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison : « dans le MCP ajouter des
+prompts pour mieux guider l'usage du CRM et ces PROMPTS devraient être éditables via l'admin du CRM (éditer, ajouter,
+supprimer). Tu peux déjà mettre des prompts basés sur les apprentissages de l'usage actuel. »
+**Spécification** : à écrire avant le code (`docs/SPEC-mcp.md`, `docs/DAT.md`, `docs/SCHEMA.md`, `docs/DESIGN_SYSTEM.md`,
+décision à consigner).
