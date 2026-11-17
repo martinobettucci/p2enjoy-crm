@@ -19707,8 +19707,7 @@ les administrateurs, texte seul, en français, cinq défauts tirés de l'usage ;
 - [ ] **T4** — le seed (un prompt ajouté par PostgREST), le manuel (§33.7, l'index des réglages) et ses images ; changelog ;
   clôture en `[P]`.
 
-### CRM-150 — `crm_card_move` rend « erreur » là où le CRM refuse : enquête et correction `[@]`
-*Prise en charge : session interactive 152dd27d (p2enjoy-crm-45, ex-a4, ex-a8) depuis 2026-11-17 16:14 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*
+### CRM-150 — `crm_card_move` rend « erreur » là où le CRM refuse : enquête et correction `[P]`
 
 **Origine** : décision du responsable, le 2026-11-17, relayée par la session de livraison : « enquête et correction », dans
 une unité dédiée, sur le relevé du journal MCP de production (`public.mcp_journal`, 2026-10-26 au 2026-11-17).
@@ -19738,7 +19737,11 @@ connecteur.
   l'argument manquant `refus_crm`, la garde statique ; rouge par mutation) ; intégration **41/41** contre le service
   `mcp` reconstruit, dont `test_integration_affaires_deplacement.py`, **rouge avant la correction** (« étape inconnue :
   erreur ») et vert après ; la preuve inscrite dans `verify-mcp.sh` ;
-- reste : T2 (le manuel §33.4, le contrat, la clôture).
+- **T2 faite le 2026-11-17** : le manuel §33.4 (ce que « Refusé par le CRM » et « Erreur » recouvrent), `manuel:verifier`
+  0 avertissement, `verify-manual.sh` 168 contrôles sans anomalie ; le contrat §2.50 (avec T1) ;
+- **[P] — ce qui reste à la session de livraison** : livrer l'image `mcp` (contrat §2.50) ; la campagne complète, dont
+  `verify-mcp.sh` entier ; constater en production, dans `public.mcp_journal`, qu'un refus de cette sorte est inscrit
+  `refus_crm`.
 
 ### CRM-151 — Supprimer un mail : « Supprimer ici » et « Supprimer partout », confirmation courte, « Ne plus demander pendant 1 heure » `[@]`
 *Prise en charge : session interactive 152dd27d (p2enjoy-crm-45, ex-a4, ex-a8) depuis 2026-11-17 16:33 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*
