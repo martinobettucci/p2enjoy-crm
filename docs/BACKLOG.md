@@ -19677,3 +19677,10 @@ prompts pour mieux guider l'usage du CRM et ces PROMPTS devraient être éditabl
 supprimer). Tu peux déjà mettre des prompts basés sur les apprentissages de l'usage actuel. »
 **Spécification** : à écrire avant le code (`docs/SPEC-mcp.md`, `docs/DAT.md`, `docs/SCHEMA.md`, `docs/DESIGN_SYSTEM.md`,
 décision à consigner).
+
+### CRM-150 — `crm_card_move` rend « erreur » là où le CRM refuse : enquête et correction `[@]`
+*Prise en charge : session interactive 152dd27d (p2enjoy-crm-45, ex-a4, ex-a8) depuis 2026-11-17 16:14 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*
+
+**Origine** : décision du responsable, le 2026-11-17, relayée par la session de livraison : « enquête et correction », dans
+une unité dédiée, sur le relevé du journal MCP de production (`public.mcp_journal`, 2026-10-26 au 2026-11-17).
+**Spécification** : à écrire avant le code (décision à consigner).
