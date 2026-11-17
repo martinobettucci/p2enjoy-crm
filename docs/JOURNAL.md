@@ -40758,3 +40758,14 @@ une demande qu'il ne peut pas résoudre. Écarté : `crm_card_move` seul.
 connecteur ; elle ne crée ni outil, ni famille, ni case : les familles et les actions de la matrice sont inchangées.
 **Conséquences** : `CRM-150`, deux tranches (`docs/BACKLOG.md`) ; `docs/SPEC-mcp.md` §9.3 ; aucune migration, aucune
 variable ; l'image `mcp` à livrer.
+
+### décision 931 — `CRM-152` : les tracks d'une organisation par ses contacts ; recherche, filtre par track, avec ou sans recettes, tri ; dans le connecteur
+
+*2026-11-17, session 4522fa9c (p2enjoy-crm-bb, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Décision** :
+- **le rattachement passe par les contacts** : une organisation est rattachée à un track quand l'un de ses contacts est lié
+  à une affaire d'un channel de ce track ; écarté : y ajouter les affaires dont une recette vise l'organisation ;
+- **recherche texte, filtre par track, filtre avec ou sans recettes, tri par colonne**, tous retenus ;
+- **connecteur MCP : oui, dans la famille existante `organisations`** (`consulter`), par `crm_organization_list` ; écarté :
+  l'écran seul.
+**Conséquences** : `CRM-152`, à prendre par la première session libre.

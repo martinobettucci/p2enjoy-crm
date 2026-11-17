@@ -19743,3 +19743,23 @@ pendant 1 heure. »
 - la restauration depuis la corbeille de l'inbox (30 jours) reste inchangée.
 **Connecteur MCP** : **non** — `crm_mail_delete` garde son outil et son option de boîte mail (famille `messagerie`).
 **Spécification** : à écrire avant le code (`docs/SPEC-mail-subsystem.md` §29, `docs/DESIGN_SYSTEM.md` §5.102, manuel §12).
+
+### CRM-152 — Organisations : les tracks de chaque organisation, par ses contacts ; recherche, filtres et tri de la liste `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison (p2enjoy-crm-bb) ; arbitrée le
+même jour (décision 931). Prolonge la liste des organisations de `CRM-114` et `CRM-146`.
+**Demande, verbatim** : « la page des organisations montre aussi à quels tracks ils sont rattachés (leurs contacts) et
+permets de rechercher, filtrer, ... »
+**Comportement attendu** (substance validée ; détail à spécifier) :
+- une colonne **« Tracks »** dans Contacts ▸ Organisations, et sur la fiche d'une organisation : les tracks où **un contact
+  de l'organisation est lié à une affaire** d'un channel du track ; les affaires archivées ou à la corbeille ne comptent
+  pas ; seuls les tracks que la personne peut lire paraissent (règle appliquée en base) ;
+- une **recherche texte** à la frappe sur le nom, le domaine et le site web ;
+- un **filtre par track** (un ou plusieurs) ;
+- un filtre **avec ou sans recettes** (prévisionnel ou réel de `CRM-146`) ;
+- le **tri par colonne** (nom, contacts, réel sur prévu) ; filtres et tri vivent dans l'adresse de la page ;
+- la liste reste paginée ou bornée si le volume croît (`CLAUDE.md` §21).
+**Connecteur MCP** : **oui, famille existante `organisations`, action `consulter`** — `crm_organization_list` gagne la
+recherche texte et le filtre par track, et rend les tracks de chaque organisation ; aucune case nouvelle.
+**Spécification** : à écrire avant le code (`docs/SPEC-contacts.md` ou la spécification des organisations, `docs/SPEC-mcp.md`
+§9.2, `docs/DESIGN_SYSTEM.md`, manuel).
