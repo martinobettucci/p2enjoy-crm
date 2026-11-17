@@ -3178,8 +3178,12 @@ for msgid in "$MSGID_NON_CLASSE" "$MSGID_SUGGERE"; do
 done
 # RÉVISÉ par `CRM-138` T5 (docs/SPEC-seed.md §45) : un message EN CORBEILLE n'est plus dans l'inbox (§29.4), et le
 # courrier non classé que le §45 efface n'est pas compté — mesuré au second passage, où il existe déjà ici.
+# RÉVISÉ par INC-359 : la garde compte les DEUX messages qu'elle vient de remettre non lus, et eux seuls. Compter tous les
+# non-classés la rendait dépendante de l'ordre des sections : l'invitation HTML du §44, non classée et jamais ouverte par
+# le seed, naît plus loin — absente au premier passage, comptée au rejeu (3 au lieu de 2).
 non_lus_admin=$(psql_seed -c "select count(*) from public.mail_messages m
                                where m.card_id is null and m.direction = 'inbound' and m.deleted_at is null
+                                 and m.rfc822_message_id in ('<$MSGID_NON_CLASSE>', '<$MSGID_SUGGERE>')
                                  and not exists (select 1 from public.mail_message_reads r
                                                   where r.message_id = m.id
                                                     and r.user_id = '5eed0000-0000-4000-8000-000000000011');" | tr -d ' ')

@@ -13,6 +13,12 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### Le seed se rejoue sur une base remise à zéro (INC-359)
+
+- **Le second passage du seed s'arrêtait** sur « 3 non classé(s) non lu(s) au lieu de 2 » : la garde comptait aussi
+  l'invitation HTML du §44, créée plus loin dans le script. Elle compte désormais les deux messages qu'elle remet non lus.
+- Le seed seul ; rien en production.
+
 #### `CRM-138` — le seed repasse sur une base remise à zéro (INC-358)
 
 - **Le seed s'arrêtait au §45 après un `resetMe`** : la corbeille de l'inbox classe un courrier dans l'affaire « Plateforme

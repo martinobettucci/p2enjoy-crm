@@ -9233,3 +9233,21 @@ d'un passage antérieur, et le seed passait ; aucun `resetMe` n'avait été jou�
 **Corrigée en développement le 2026-11-17** : le bloc §45 est déplacé **sans changer son contenu**, juste après le §36 et
 avant le §25 ; il reste avant le §46, qui doit trouver tous les mails (`docs/SPEC-seed.md` §45, §46). Prouvée par un
 `resetMe` qui échoue avant et réussit après, puis un rejeu convergent. Seed seul : rien en production. **Close.**
+
+### INC-359 — le rejeu du seed s'arrête : la garde des non-classés non lus compte l'invitation HTML du §44
+**Ouverte le 2026-11-17.** *Relevée par la session d5b44a2d (p2enjoy-crm-f8) en prouvant INC-358 ; correction arbitrée par
+la session de livraison (bb).*
+
+**Le constat.** Sur une base remise à zéro, le premier passage du seed est vert ; le second s'arrête : « le compte
+administrateur a 3 non classé(s) non lu(s) au lieu de 2. » Le troisième message est « Invitation — journée partenaires
+Sogexia », le courrier HTML du §44.
+
+**La cause.** La garde de lecture (`supabase/seed/apply-seed.sh`, lecture du fil, `CRM-057` T2, `docs/SPEC-seed.md` §2.19 bis, révisée par `CRM-138`
+T5) comptait **tous** les non-classés non lus du compte administrateur. Le §44 (`CRM-140` T4, `b4bb6af8`) ajoute un
+non-classé que le seed n'ouvre pas, **plus loin** dans le script : absent au premier passage, compté au rejeu. Sur une base
+vieillie, les E2E de `CRM-140` l'avaient ouvert, donc marqué lu, et le défaut restait masqué.
+
+**Corrigée en développement le 2026-11-17** : la garde compte les **deux** messages qu'elle remet non lus
+(`seed-inbox-non-classe`, `seed-inbox-suggere`), et eux seuls. Elle prouve exactement ce qu'elle annonce, sans dépendre de
+l'ordre des sections, et ne relâche rien. Prouvée par un `resetMe` vert puis deux rejeux verts (rouges avant). Seed seul :
+rien en production. **Close.**
