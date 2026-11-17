@@ -6221,6 +6221,42 @@ montrent de la même façon.
 - **Aucune couleur, aucun jeton de couleur, aucune icône nouvelle.** Deux durées nouvelles, déclarées une fois dans le
   composant et nommées ici ; la surface emprunte au §5.49 son relief et au §5.43 sa largeur et sa règle de cadre.
 
+**ÉPINGLÉE — `CRM-148`** (*écrit le 2026-11-17, avant le code ; décision 929 ; lecture ciblée de ce document : §1 à §4,
+§6 à §12, §5.58, §5.43, §5.49, §5.5, §5.13*). Une description longue ne se lisait pas : la bulle écoutait le défilement de
+toute la page pour se fermer, et le défilement de son propre texte la fermait. Ces règles **révisent** « quand elle se
+ferme », « le lecteur d'écran n'attend pas la bulle » et la limite clavier ci-dessus, pour **toutes** les bulles du
+composant — track, channel, affaire, étape (§5.58 révisé par `CRM-133`) et pastille « aussi rattachée ».
+- **SON PROPRE TEXTE DÉFILE SANS LA FERMER**, épinglée ou non : un défilement dont la cible est dans la bulle ne la ferme ni
+  ne la déplace. Les autres défilements la ferment toujours quand elle n'est pas épinglée.
+- **UN CLIC DANS LA BULLE OUVERTE L'ÉPINGLE**, n'importe où dans elle. Épinglée, elle ne se ferme plus quand le pointeur
+  la quitte, ni à la perte du focus, ni à un clic hors d'elle : **seulement à sa croix et à `Échap`** (décision 929). Un
+  appui sur l'élément lui-même la ferme toujours, épinglée ou non — il navigue ou commence un glisser-déposer.
+- **LA CROIX** paraît **seulement** sur une bulle épinglée, en haut à droite, sur la ligne du nom : bouton discret (§5.5),
+  icône Lucide **`X`** 16 px dans une cible `--size-target` (§8), nom accessible « Fermer la description de {nom} ». Le nom
+  se replie à sa gauche ; la croix ne le recouvre jamais. Elle est la seule différence visible d'une bulle épinglée : même
+  surface, même relief, même largeur.
+- **ÉPINGLÉE, SEUL LE TEXTE DÉFILE** : le nom et la croix restent en tête, et le texte défile sous eux, dans la même hauteur
+  maximale de bulle. Le texte devient une région atteignable au clavier (`tabindex="0"`, nommée « Description de {nom} »),
+  que les flèches font défiler.
+- **ÉPINGLÉE, ELLE SUIT SON ÉLÉMENT** : au défilement de la page ou d'un conteneur, et au redimensionnement, elle se recale
+  sur lui par la même règle de position, toujours bornée à la fenêtre (16 px). Un élément sorti de la fenêtre laisse la
+  bulle à son bord.
+- **AU CLAVIER, `Flèche bas` L'ÉPINGLE** quand elle est ouverte sur l'élément qui a le focus, et place le focus dans son
+  texte. `Tab` va du texte à la croix et revient au texte — deux arrêts, sans en sortir ; `Échap` ou la croix la ferment
+  et **rendent le focus à l'élément**, sans la rouvrir. La touche ne fait rien d'autre sur ces éléments : aucun ne
+  l'emploie déjà.
+- **LE LECTEUR D'ÉCRAN** : épinglée, la bulle n'est plus `aria-hidden` ; c'est une boîte de dialogue **non modale**
+  (`role="dialog"`, nommée par le nom de l'objet), sans voile ni piège de focus au-delà de ses deux arrêts. Le focus qui y
+  entre l'annonce ; le texte `sr-only` de l'élément reste en place, ouverte ou non.
+- **UNE SEULE BULLE ÉPINGLÉE À LA FOIS** : en épingler une autre ferme la première. Survoler un autre élément y ouvre sa
+  bulle ordinaire, par-dessus.
+- **AU CLIC DE SOURIS, LE FOCUS NE BOUGE PAS** : épingler à la souris n'affiche aucun anneau ; la croix rend le focus à
+  l'élément sans le rouvrir.
+- **Limites révisées** : la limite clavier ci-dessus est levée (`Flèche bas`). Au toucher, rien ne change : la bulle ne
+  paraît pas.
+- **Aucune couleur, aucun jeton nouveau ; une icône Lucide, `X`**, déjà employée pour retirer une pièce jointe (§5.4 sexies) :
+  le même signe de fermeture d'une petite surface, que la demande nomme.
+
 ### 5.59 La commande refusée par une capacité de la base — `CRM-093`
 
 *Écrit le 2026-10-21, avant le code des écrans (décision 628 et sa précision), après relecture intégrale de ce document.*

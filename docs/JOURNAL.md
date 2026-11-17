@@ -40655,3 +40655,33 @@ ses essais après chaque échec ; écarté : l'arrêter par `cron.unschedule`. *
 - **pas de connecteur MCP** : `crm_mail_delete` inchangé.
 **Conséquences** : `CRM-151`, à prendre par la première session libre ; révise `CRM-138` §5.102 (décision 921 : la
 confirmation reste dans le flux).
+
+### décision 929 — `CRM-148` : un clic dans l'infobulle de description l'épingle ; elle ne se ferme plus qu'à sa croix ou à `Échap` ; épinglée, elle suit son élément ; au clavier, Flèche bas l'épingle ; toutes les infobulles du composant partagé
+
+*2026-11-17, session 4891a451 (p2enjoy-crm-d7, ex-32), arbitrage du responsable (`AskUserQuestion`), après les deux
+arbitrages relayés par la session de livraison (bb) et confirmés ici.*
+**Le problème** : « les channels, le tracks, ils ont leur descriptifs qui s'affiche au survol mais s'il est long il est
+impossible a scroll car le hint se referme ». **Observé dans le code** (`webapp/src/components/ui/Infobulle.tsx`) : la bulle
+défile déjà en elle-même au-delà de `min(50vh, 320px)` (`docs/DESIGN_SYSTEM.md` §5.58), mais elle écoute le défilement de
+TOUTE la page, en capture, pour se fermer — et le défilement de son propre texte la ferme aussitôt. C'est la cause du
+défaut ; s'y ajoute la limite assumée du §5.58 : au clavier, une bulle qui défile ne se fait pas défiler.
+**Décision** :
+- **connecteur MCP : non** (relayé, confirmé) — un comportement d'affichage ; la spécification le dit en une phrase ;
+- **portée : toutes les infobulles du composant partagé** (relayé, confirmé) — tracks, channels, affaires (carte et ligne),
+  étapes (CRM-133) et la pastille « aussi rattachée » : un seul composant, un seul comportement ; écarté : tracks et
+  channels seuls ;
+- **`Échap` ferme aussi une bulle épinglée** (WCAG 1.4.13, « masquable »), et le focus revient à l'élément ; écarté : la
+  croix seule ;
+- **épinglée, la bulle suit son élément** quand la page ou un conteneur défile, et se recale à la fenêtre redimensionnée,
+  bornée à la fenêtre ; son propre texte défile sans jamais la fermer ni la déplacer ; écartés : rester à sa place à
+  l'écran, se fermer ;
+- **au clavier, Flèche bas l'épingle** quand elle est ouverte sur l'élément qui a le focus, et y place le focus ; écarté :
+  aucun épinglage au clavier ;
+- **lecture du design system** : sections ciblées — §1 à §4, §6 à §12, §5.58, §5.43, §5.49, §5.5, §5.13 et ce qu'elles
+  citent.
+**Tranché par la spécification, sans question** : un clic **n'importe où dans la bulle ouverte** l'épingle ; un clic hors
+d'elle ne la ferme pas (« elle se ferme seulement si l'on clique sur le x ») ; une seule bulle épinglée à la fois — en
+épingler une autre ferme la première ; un appui sur l'élément lui-même ferme toujours la bulle, épinglée ou non, parce qu'il
+navigue ou commence un glisser-déposer.
+**Conséquences** : `CRM-148`, une tranche ; révise `docs/DESIGN_SYSTEM.md` §5.58 (« quand elle se ferme », « le lecteur
+d'écran », la limite clavier) et le manuel §3.6. Aucune migration, aucune fonction.

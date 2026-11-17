@@ -19667,7 +19667,17 @@ de GitHub épinglée, accès au registre npm), puis la première livraison réel
 ont leur descriptifs qui s'affiche au survol mais s'il est long il est impossible a scroll car le hint se referme. Il
 faudrait rendre le baloon fixe si une fois affiché on clique dedans et il se ferme seulement si l'on clique sur le "x" en
 haut à droite qui apparait dans ce cas précis. »
-**Spécification** : à écrire avant le code (`docs/DESIGN_SYSTEM.md` §5.58, décision à consigner).
+**Comportement attendu** : un clic dans la bulle ouverte l'épingle ; épinglée, elle ne se ferme qu'à sa croix (en haut à
+droite, qui n'apparaît qu'alors) ou à `Échap`, et un texte long y défile ; elle suit son élément quand la page défile ; au
+clavier, `Flèche bas` l'épingle. Pour toutes les infobulles du composant partagé (tracks, channels, affaires, étapes,
+pastille « aussi rattachée »).
+**MCP** : **non** (décision 929) — un comportement d'affichage, sans donnée ni geste nouveaux.
+**Spécification** : écrite le 2026-11-17 avant le code (décision 929) — `docs/DESIGN_SYSTEM.md` §5.58, « Épinglée —
+`CRM-148` » ; manuel §3.6. Aucune migration, aucune fonction, aucun texte de base.
+**DoD** : unitaires (épingler au clic et à `Flèche bas`, la croix et `Échap`, le défilement interne qui ne ferme pas, le
+recalage, une seule épinglée, le focus rendu) ; E2E souris et clavier sur un track, un channel et une étape à description
+longue ; captures aux quatre paliers ; manuel §3.6 et son image.
+**Découpage** : une tranche.
 
 ### CRM-149 — Les prompts du connecteur MCP : des parcours guidés, par espace, édités dans Réglages `[@]`
 *Prise en charge : session interactive d5b44a2d (p2enjoy-crm-f8, ex-a7, ex-75) depuis 2026-11-17 16:12 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*
