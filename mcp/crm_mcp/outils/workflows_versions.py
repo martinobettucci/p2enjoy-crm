@@ -7,7 +7,7 @@
 #       versions), §7 ter.12 (le plan de remappage), §7 ter.13 (la restauration transactionnelle, le plan rejoué),
 #       §7 ter.14.7 (les refus, dictionnaire fermé), §7 ter.14.8 (aucune empreinte vivante n'est transmise)
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
-#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
 """Les versions d'un workflow, sous l'identité de la personne.
 
 Chaque outil appelle la fonction que le bloc « Versions » de l'éditeur appelle pour le même geste. Publier, planifier

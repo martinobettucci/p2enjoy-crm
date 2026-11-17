@@ -2,7 +2,7 @@
 #           (docs/SPEC-mcp.md §7.1)
 # @verifies CRM-150 (docs/BACKLOG.md) — tranche T1 : un refus fait par le connecteur est journalisé `refus_crm` ; `erreur`
 #           ne garde que les pannes ; aucun refus d'argument ne reste une `ToolError` simple dans les outils
-# @verifies docs/SPEC-mcp.md §9.3 (« Un refus fait par le connecteur ») ; docs/JOURNAL.md décision 928 ; INC-357
+# @verifies docs/SPEC-mcp.md §9.3 (« Un refus fait par le connecteur ») ; docs/JOURNAL.md décision 933 ; INC-357
 """Le monde simulé de `test_affaires_ecriture.py` ; la vraie base est éprouvée par
 `tests/test_integration_affaires_deplacement.py`."""
 
@@ -20,7 +20,7 @@ from crm_mcp.politique import RefusArgument, RefusCrm
 from .test_affaires_ecriture import CARD_A, TOUT, Monde
 
 OUTILS = Path(__file__).resolve().parent.parent / "crm_mcp" / "outils"
-#: Les seules `ToolError` simples des outils : des pannes, que l'audit inscrit `erreur` (décision 928).
+#: Les seules `ToolError` simples des outils : des pannes, que l'audit inscrit `erreur` (décision 933).
 PANNES = {
     ("structure.py", "Le CRM n'a pas pu chercher (HTTP"),
     ("temps.py", "Your identity is unknown to the connector."),
@@ -72,7 +72,7 @@ async def test_un_argument_mal_forme_est_un_refus(monde: Monde) -> None:
 
 
 def test_aucun_refus_d_argument_ne_reste_une_tool_error_simple() -> None:
-    """La garde de la décision 928 : dans les outils, une `ToolError` simple n'est qu'une panne, nommée ici."""
+    """La garde de la décision 933 : dans les outils, une `ToolError` simple n'est qu'une panne, nommée ici."""
     trouvees: set[tuple[str, str]] = set()
     for fichier in sorted(OUTILS.glob("*.py")):
         for noeud in ast.walk(ast.parse(fichier.read_text(encoding="utf-8"))):

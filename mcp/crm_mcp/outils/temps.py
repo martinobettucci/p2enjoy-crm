@@ -5,7 +5,7 @@
 # @spec CRM-111 (docs/BACKLOG.md) — tranche T4.1 : `crm_time_report` rend `shared`, et ses totaux ne comptent qu'une fois
 #       une saisie partagée entre plusieurs channels (docs/SPEC-rattachements.md §6, §11 ; décision 814)
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
-#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
 """Le temps passé, sous l'identité de la personne : lire ses saisies et le rapport valorisé, poser une case.
 
 Les mêmes tables et la même fonction que la webapp (`saisies_temps`, `temps_valorise`) ; la base tient l'unicité de la

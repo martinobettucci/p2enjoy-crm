@@ -10,7 +10,7 @@
 #       §8, précision T4.d ; décisions 837 et 838 ; famille `affaires`, `consulter`) ; T4.c : personne et contact comme un
 #       choix, fichier renseigné ou vide (précision T4.c, décision 839)
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
-#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
 """Les vues sauvegardées d'un channel, lues sous l'identité de la personne.
 
 La RLS de `saved_views` ne rend que les vues privées de la personne et les vues de l'espace sur les channels qu'elle lit :

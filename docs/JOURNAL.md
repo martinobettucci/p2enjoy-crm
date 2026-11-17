@@ -40733,7 +40733,10 @@ actuel. »
 T3 l'écran de Réglages ; T4 le seed, le manuel et la clôture. Une migration (`0185`, numéro pris au push). Spécification :
 `docs/SPEC-mcp.md` §17 ; `docs/SCHEMA.md`, `docs/DAT.md` §3.7 ter, `docs/DESIGN_SYSTEM.md` §5.104.
 
-### décision 928 — `CRM-150` : un refus fait par le connecteur est journalisé « Refusé par le CRM », dans tous les outils
+### décision 933 — `CRM-150` : un refus fait par le connecteur est journalisé « Refusé par le CRM », dans tous les outils
+
+*Renumérotée : écrite d'abord sous le numéro 928, déjà pris par `CRM-151` ; corrigée le 2026-11-17 à la demande de la
+session de livraison (règle des numéros partagés).*
 
 *2026-11-17, session 152dd27d (p2enjoy-crm-45), sur une enquête décidée par le responsable et relayée par la session de
 livraison (bb) ; arbitrages du responsable (`AskUserQuestion`).*

@@ -10,7 +10,7 @@
 #       §7 bis.9 (les gestes de l'éditeur), §7 quater (le workflow de départ) ; docs/SPEC-administration-arborescence.md
 #       §6.2 (le déplacement en une écriture, le milieu de deux voisines)
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
-#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
 """Le workflow, ses étapes et ses transitions, écrits sous l'identité de la personne.
 
 Chaque outil fait l'écriture que l'éditeur de workflows de la webapp fait pour le même geste ; la base réserve ces

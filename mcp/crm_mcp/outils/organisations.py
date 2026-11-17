@@ -3,7 +3,7 @@
 #       écritures de l'onglet « Organisations » de la webapp, `organisations.ts`), §9.3 ; docs/SPEC-organisations.md §3
 #       (droits de la base, refus), §5 (la famille et ses outils)
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
-#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
 """Les organisations du carnet, sous l'identité de la personne : les lister, en lire une, en créer, en modifier.
 
 Les mêmes lectures que l'onglet « Organisations » et la fiche d'organisation, les mêmes écritures que leur formulaire.

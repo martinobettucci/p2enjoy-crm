@@ -7,7 +7,7 @@
 #       les points déjà copiés), §3.4 (seul un point de l'étape de départ s'exige), §4 ; docs/DESIGN_SYSTEM.md §5.70 bis
 #       et §5.18 (la position d'un point ajouté compte les archivés ; un point archivé ne se déplace pas)
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
-#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
 """Les points de checklist d'une étape, et ceux qu'une transition exige, écrits sous l'identité de la personne.
 
 Chaque outil fait l'écriture de `administration-checklists.ts`, la bibliothèque du bloc « Checklists des étapes » de

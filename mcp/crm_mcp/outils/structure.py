@@ -11,7 +11,7 @@
 #       ligne est le refus réservé aux administrateurs (docs/SPEC-mcp.md §9.2 unvicies ; docs/SPEC-channels.md §11 ;
 #       décisions 871 et 919)
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
-#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
 """Tracks, channels et workflows, et la recherche globale, sous l'identité de la personne.
 
 Les écritures sont celles de l'arborescence de la webapp ; la base les réserve à qui administre l'espace. La recherche

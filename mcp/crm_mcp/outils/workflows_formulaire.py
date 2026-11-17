@@ -8,7 +8,7 @@
 #       prévisualisation des effets) ; docs/SPEC-form-composer.md §2.2 à §2.7, §3.1 à §3.3 ;
 #       docs/SPEC-transition-required-fields.md §1, §2, §4
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
-#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
 """Le formulaire d'un workflow, écrit sous l'identité de la personne.
 
 Chaque outil fait l'écriture que l'éditeur de workflows fait pour le même geste ; la base réserve ces écritures à qui

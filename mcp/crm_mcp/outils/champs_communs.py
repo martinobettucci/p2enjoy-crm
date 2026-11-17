@@ -5,7 +5,7 @@
 # @spec CRM-104 (docs/BACKLOG.md) — le catalogue de la famille `affaires` (docs/SPEC-mcp.md §9.2 bis), où T9 inscrit
 #       `crm_common_field_list`
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
-#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
 """Les champs de l'affaire — champs communs de portée espace — sous l'identité de la personne.
 
 Le connecteur ne définit pas les champs : il les lit, lit et écrit leurs valeurs, et filtre les affaires. Les tables sont

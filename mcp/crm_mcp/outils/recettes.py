@@ -11,7 +11,7 @@
 #       par devise — docs/SPEC-mcp.md §9.2 vicies (famille `recettes`, action `consulter`, ancre `organisation`, aucune
 #       case `aussi`) ; docs/SPEC-recettes.md §12.2, §12.3, §12.6 (décisions 900, 903 et 908)
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
-#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
 """Recettes d'une affaire et rentabilité, sous l'identité de la personne.
 
 Les mêmes tables et la même fonction que la webapp (`card_revenues`, `card_revenue_actuals`, `rentabilite_affaires`) ;

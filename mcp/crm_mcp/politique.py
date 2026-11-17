@@ -18,7 +18,7 @@
 # @spec CRM-128 (docs/BACKLOG.md) — tranche T3 : le genre d'ancre `draft`, un mail préparé (docs/SPEC-mails-prepares.md §5, décision 829)
 # @spec CRM-144 (docs/BACKLOG.md) — tranche T4 : le genre d'ancre `outbox`, un envoi de la file (docs/SPEC-mcp.md §9.2 undevicies)
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : `RefusArgument`, le refus fait par le connecteur, journalisé `refus_crm`
-#       (docs/SPEC-mcp.md §9.3, décision 928)
+#       (docs/SPEC-mcp.md §9.3, décision 933)
 # @spec CRM-141 (docs/BACKLOG.md) — tranche T5 : le genre d'ancre `mail_label`, une pastille de mail (docs/SPEC-mcp.md §9.2 duovicies)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.b : le genre d'ancre `activity` (docs/SPEC-mcp.md §9.2 ter, décision 655)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.a : l'ancre `autres` FACULTATIVE, permise si son argument vaut `None` par
@@ -200,7 +200,7 @@ class RefusCrm(ToolError):
 
 class RefusArgument(RefusCrm):
     """Le connecteur refuse lui-même une demande qu'il ne peut pas résoudre : un nom inconnu ou ambigu, une clé inconnue,
-    une valeur mal formée, un argument exigé absent (`CRM-150`, décision 928, docs/SPEC-mcp.md §9.3). Journalisé
+    une valeur mal formée, un argument exigé absent (`CRM-150`, décision 933, docs/SPEC-mcp.md §9.3). Journalisé
     `refus_crm`, comme un refus de la base : `erreur` ne garde que les pannes."""
 
 

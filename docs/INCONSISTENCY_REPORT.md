@@ -9192,7 +9192,7 @@ responsable sur l'unité qui la porte.
 
 ### INC-356 — en production, `crm_card_list` et `crm_card_mine` tombaient en délai dépassé
 **Ouverte et close le 2026-11-17, sur la mesure.** *Relevée par la session de livraison (bb) dans le journal MCP de
-production, en lecture seule ; consignée par la session 152dd27d (p2enjoy-crm-45), décision 928.*
+production, en lecture seule ; consignée par la session 152dd27d (p2enjoy-crm-45), décision 933.*
 
 **Le constat.** Avant la `0171` (`CRM-142`, INC-352, livrée le 2026-11-10 vers 16 h UTC) : `crm_card_list` 54 erreurs sur
 375 appels (p50 1,1 s, p95 8,0 s), `crm_card_mine` 5 sur 14 (p95 8,0 s) ; toutes durent environ 8 s, le
@@ -9204,14 +9204,14 @@ comme le board. **Close** par la mesure : aucun code.
 
 ### INC-357 — `crm_card_move` journalise « erreur » quand l'assistant nomme une étape inconnue
 **Ouverte le 2026-11-17.** *Relevée par la session de livraison (bb) dans le journal MCP de production ; reproduite par la
-session 152dd27d (p2enjoy-crm-45), décision 928.*
+session 152dd27d (p2enjoy-crm-45), décision 933.*
 
 **Le constat.** 8 issues `erreur` sur 276 appels de `crm_card_move` (7 le 2026-11-07, 1 le 2026-11-10), en 174 à 222 ms ;
 les 6 `refus_crm` sont des refus métier. **Reproduit en développement** : seul un nom d'étape absent du workflow de
 l'affaire rend `erreur` ; tous les refus de la base rendent `refus_crm`.
 
 **La cause.** `choisir_par_nom` lève une `ToolError` simple ; l'audit (`AuditOutils`) inscrit `erreur` toute exception sans
-`issue_audit`. Le même chemin vaut pour les refus d'argument de tous les outils. **Correction décidée** (décision 928) :
+`issue_audit`. Le même chemin vaut pour les refus d'argument de tous les outils. **Correction décidée** (décision 933) :
 `CRM-150`, les refus du connecteur journalisés `refus_crm`.
 
 **Corrigée en développement le 2026-11-17** (`CRM-150` T1, révision `8f5632d9`) : l'étape inconnue est journalisée

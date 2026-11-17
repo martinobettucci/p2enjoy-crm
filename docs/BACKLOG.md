@@ -19708,17 +19708,17 @@ les administrateurs, texte seul, en français, cinq défauts tirés de l'usage ;
 
 **Origine** : décision du responsable, le 2026-11-17, relayée par la session de livraison : « enquête et correction », dans
 une unité dédiée, sur le relevé du journal MCP de production (`public.mcp_journal`, 2026-10-26 au 2026-11-17).
-**Spécification** : `docs/SPEC-mcp.md` §9.3 (« Un refus fait par le connecteur ») ; `docs/JOURNAL.md` décision 928 ;
+**Spécification** : `docs/SPEC-mcp.md` §9.3 (« Un refus fait par le connecteur ») ; `docs/JOURNAL.md` décision 933 ;
 INC-356 (close sur la mesure) et INC-357.
 **Le constat** : `crm_card_move` journalise `erreur` quand l'assistant nomme une étape absente du workflow de l'affaire ;
-reproduit en développement, c'est la seule cause (décision 928). Le même chemin vaut pour tous les refus d'argument du
+reproduit en développement, c'est la seule cause (décision 933). Le même chemin vaut pour tous les refus d'argument du
 connecteur.
 **Comportement attendu** :
 - une classe unique `RefusArgument` (sous-classe de `RefusCrm`, issue d'audit `refus_crm`), dans `crm_mcp/politique.py` ;
 - `choisir_par_nom` et chaque refus qu'un outil fait lui-même sur une demande irrésoluble la lèvent, avec le même
   message qu'aujourd'hui ;
 - `erreur` ne reste que pour les pannes (CRM en `5xx`, exception de l'outil) ;
-- aucune migration, aucun outil ni case nouveaux (les deux questions du connecteur : décision 928).
+- aucune migration, aucun outil ni case nouveaux (les deux questions du connecteur : décision 933).
 **Tranches** :
 - **T1** — la classe, son emploi dans tous les outils ; pytest unitaires (la garde : aucun `raise ToolError(` d'argument
   ne reste dans `crm_mcp/outils/`) ; l'intégration `test_integration_affaires_deplacement.py` (rouge avant la correction),

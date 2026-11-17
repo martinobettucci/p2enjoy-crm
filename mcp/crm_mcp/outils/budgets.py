@@ -4,7 +4,7 @@
 #       `budgets.ts`, `couts-ecrans.ts`, `card-costs.ts`, `reels-ligne.ts`, `couts-a-saisir.ts`), §9.3 ;
 #       docs/SPEC-costs.md §2.3 (ligne, occurrence, clôture), §2.3 bis (réels multiples, réel dérivé, ligne soldée)
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
-#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
 """Budgets et lignes de coût d'une affaire, sous l'identité de la personne.
 
 Les mêmes tables que la webapp (`budgets`, `budget_occurrences`, `card_costs`, `card_cost_actuals`) ; la base tient le

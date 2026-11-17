@@ -32,7 +32,7 @@
 #       fichiers (`attachments`, déposés sous le jeton de la personne) ; docs/SPEC-pieces-jointes.md §17.6 ;
 #       docs/SPEC-mcp.md §9.2 decies (révisée par CRM-143) ; décisions 889 et 892
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
-#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
 """La messagerie d'une affaire, sous l'identité de la personne : lire son fil, lire un message, PRÉPARER un email.
 
 Le connecteur n'envoie jamais (`CRM-128`, décision 829) : `public.prepare_email` écrit un mail préparé, que seule la

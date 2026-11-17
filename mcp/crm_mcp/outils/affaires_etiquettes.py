@@ -4,7 +4,7 @@
 #       archivé ; décisions 769 et 771), §9.1 (aucun chemin parallèle : la table que la fiche écrit), §9.3 ;
 #       docs/SPEC-etiquettes-digest.md §2.2, §4
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
-#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
 """Poser et retirer des étiquettes sur une affaire, sous l'identité de la personne.
 
 L'outil écrit `card_labels`, comme le panneau « Étiquettes » de la fiche : la RLS décide de qui écrit, et la base pose

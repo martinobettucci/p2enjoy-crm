@@ -1,6 +1,6 @@
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T2 : l'audit des appels d'outils et la garde de taille
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : des arguments que l'outil ne valide pas sont un refus, journalisé `refus_crm`,
-#       jamais une `erreur` (docs/SPEC-mcp.md §9.3, décision 928)
+#       jamais une `erreur` (docs/SPEC-mcp.md §9.3, décision 933)
 # @spec docs/SPEC-mcp.md §7.1 (`mcp_journal` : sujet, outil, espace, issue, durée — jamais un argument), §9.3 (garde de
 #       taille), §11 (une ligne par appel, à la sortie standard ET au journal ; jamais un jeton ni une adresse)
 # @spec Repris du connecteur Evoliz (p2enjoy-evoliz, `evoliz_mcp/audit.py`, révision 80a3e27). Écarts : la ligne part
@@ -41,7 +41,7 @@ def taille(resultat: Any) -> int:
 
 
 def issue_d_exception(erreur: Exception) -> str:
-    """L'issue d'un appel qui lève (décision 928) : celle que l'exception porte ; des arguments que la déclaration de l'outil
+    """L'issue d'un appel qui lève (décision 933) : celle que l'exception porte ; des arguments que la déclaration de l'outil
     refuse sont un refus fait par le connecteur, `refus_crm` ; le reste est une panne, `erreur`."""
     issue = getattr(erreur, "issue_audit", None)
     if issue:

@@ -1375,7 +1375,7 @@ la prise (`claimed_at`), puis `record_label_evaluation` sous la clé de service.
   `comment_required`, `channel ferme`, plafond de temps…) sont traduits en un message pour le modèle
   : le code et une phrase, jamais une pile ni un détail d'infrastructure. Un refus RLS (`42501`, ou
   une ligne absente) devient le refus uniforme (§6.2).
-- **Un refus fait par le connecteur** (`CRM-150`, décision 928). Quand un outil refuse lui-même une demande qu'il ne peut
+- **Un refus fait par le connecteur** (`CRM-150`, décision 933). Quand un outil refuse lui-même une demande qu'il ne peut
   pas résoudre — un nom inconnu ou ambigu (étape, membre, étiquette, pastille…), une clé de champ inconnue, une date ou une
   valeur mal formée, un argument manquant que l'outil exige —, il lève un **refus d'argument**, qui dit ce qui manque et,
   quand il le peut, les valeurs possibles. **Il est journalisé `refus_crm`** (« Refusé par le CRM »), comme un refus de la

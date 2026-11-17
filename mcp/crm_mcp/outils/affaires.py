@@ -19,7 +19,7 @@
 # @spec CRM-111 T2.4.2 (docs/BACKLOG.md) — la liste et « Ma journée » partent des RATTACHEMENTS ; la fiche lit l'affaire et
 #       les colonnes de son plus ancien rattachement ; contrats inchangés (docs/SPEC-rattachements.md §5, §11)
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
-#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
 """Lecture des affaires, sous l'identité de la personne.
 
 Les mêmes lectures que la webapp — la vue liste, la fiche, le fil unifié, « Ma journée », les affaires figées —, sous

@@ -1142,7 +1142,7 @@ l'image `mcp` de T5 sans la 183 fait échouer `crm_mail_get`.
 | 4 | Constater | session de livraison, en lecture seule | Réglages ▸ Pastilles des mails liste les neuf pastilles ; l'inbox se charge, et un mail évalué porte ses pilules ; `tools/list` du connecteur nomme `crm_mail_label_set` pour un compte qui a la case `modifier` de la messagerie |
 
 **Retour arrière** : la webapp et l'image précédentes ; rien n'est écrit en base par la livraison.
-### 2.50 `CRM-150`, décision 928 — les refus du connecteur journalisés « Refusé par le CRM » (À LIVRER : l'image `mcp` ; **hors de tout lot annoncé**)
+### 2.50 `CRM-150`, décision 933 — les refus du connecteur journalisés « Refusé par le CRM » (À LIVRER : l'image `mcp` ; **hors de tout lot annoncé**)
 
 `docs/SPEC-mcp.md` §9.3 ; INC-357. **Aucune migration, aucune variable, aucun secret** ; aucun outil, aucune case, aucune
 réponse ne change : seule l'issue que le journal inscrit pour un refus fait par le connecteur (nom inconnu, valeur mal

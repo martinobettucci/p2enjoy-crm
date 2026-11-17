@@ -7,7 +7,7 @@
 #       de deux voisines), §2.5 (`0` n'est pas `null`), §2.6 (la garde d'un nœud occupé), §2 bis (l'écran), §2 ter
 #       (le réordonnancement, archivés compris)
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
-#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
 """Le vocabulaire des workflows — le catalogue de nœuds —, écrit sous l'identité de la personne.
 
 Chaque outil fait l'écriture que l'écran « Catalogue de nœuds » fait pour le même geste ; la base réserve ces écritures

@@ -16,7 +16,7 @@
 # @verifies CRM-141 (docs/BACKLOG.md) — tranche T5 : l'intégration rejoue les deux outils des pastilles d'un mail et
 #           `crm_mail_get` révisé (docs/SPEC-mcp.md §9.2 duovicies)
 # @verifies CRM-150 (docs/BACKLOG.md) — tranche T1 : l'intégration rejoue l'issue d'audit de chaque refus d'un déplacement
-#           (docs/SPEC-mcp.md §9.3, décision 928)
+#           (docs/SPEC-mcp.md §9.3, décision 933)
 #
 # Rejoue les preuves du connecteur sur la pile de développement, puis DÉGRADE réellement le code, la base et l'aiguillage,
 # et exige que les preuves rougissent, avant de restaurer et de CONSTATER la restauration.

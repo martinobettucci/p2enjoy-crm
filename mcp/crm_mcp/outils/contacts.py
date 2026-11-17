@@ -4,7 +4,7 @@
 #       `contacts.ts`), §9.3 ; docs/SPEC-contacts.md §14 (création), §15 (fiche), §16 (modification)
 # @spec CRM-111 T2.4.2 (docs/BACKLOG.md) — une affaire liée est archivée quand tous ses rattachements le sont (docs/SPEC-rattachements.md §5, §11)
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
-#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
 """Le carnet de contacts, sous l'identité de la personne : lire, créer, modifier un contact.
 
 Les mêmes lectures que le carnet et la fiche d'un contact, les mêmes écritures que leurs formulaires. La base réserve

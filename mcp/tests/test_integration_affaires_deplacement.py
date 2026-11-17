@@ -3,7 +3,7 @@
 # @verifies CRM-150 (docs/BACKLOG.md) — l'issue d'audit de chaque refus d'un déplacement, contre le vrai Keycloak, la vraie
 #           base et le vrai service `mcp` : transition absente, motif exigé, champ exigé, checklist exigée, étape inconnue,
 #           rattachement archivé, affaire à la corbeille — jamais `erreur` pour un refus
-# @verifies docs/SPEC-mcp.md §9.3 (traduction des refus), §7.1 (`mcp_journal.issue`) ; docs/JOURNAL.md décision 928
+# @verifies docs/SPEC-mcp.md §9.3 (traduction des refus), §7.1 (`mcp_journal.issue`) ; docs/JOURNAL.md décision 933
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
 Le business developer reçoit les cases `affaires` (consulter, ajouter, modifier) ; les affaires créées par la preuve

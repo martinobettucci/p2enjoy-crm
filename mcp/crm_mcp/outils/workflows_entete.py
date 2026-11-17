@@ -7,7 +7,7 @@
 #       docs/SPEC-change-channel-workflow.md §2 (le mapping exhaustif, aucune source devinée), §3 (les refus), §5 (la
 #       perte explicite des réponses)
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
-#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
 """Les gestes de l'en-tête d'un workflow, et le changement de workflow d'un channel, sous l'identité de la personne.
 
 Chaque outil fait ce que l'écran fait pour le même geste — `entete-workflow.ts` et `changement-workflow-channel.ts` de la

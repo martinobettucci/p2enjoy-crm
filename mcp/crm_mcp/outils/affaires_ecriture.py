@@ -13,7 +13,7 @@
 #       `crm_card_placement_archive`, et `placement_id` facultatif sur les gestes d'un rattachement (docs/SPEC-mcp.md
 #       §9.2 quindecies, décision 826 ; docs/SPEC-rattachements.md §5, §11)
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
-#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
 """Écrire sur les affaires, sous l'identité de la personne.
 
 Chaque outil appelle la fonction ou la table que la webapp appelle pour le même geste ; la base garde ses règles —
