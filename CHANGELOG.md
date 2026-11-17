@@ -13,6 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-149` T1 — les prompts du connecteur, en base (décision 930)
+
+- **Une table des prompts par espace** (`mcp_prompts`, migration 185) : un identifiant, un titre, une description et un
+  texte. Tout membre les lit ; seuls les administrateurs de l'espace les ajoutent, les modifient et les suppriment — la
+  règle est tenue en base, et prouvée par des requêtes directes.
+- **Cinq prompts par défaut**, tirés de l'usage réel du connecteur, posés dans chaque espace existant et à la création d'un
+  espace : créer une affaire complète, faire le point, faire avancer, retrouver une affaire, enregistrer une recette réelle.
+- Rien n'est encore visible : le connecteur (T2) et l'écran de Réglages (T3) viennent ensuite. Déploiement :
+  `docs/PROD_MIGRATIONS.md` §2.49.
+
 #### `CRM-150` — le journal du connecteur ne compte plus comme « Erreur » une demande que l'assistant formule mal
 
 - **Une étape mal nommée n'est plus une erreur** : quand l'assistant demande de déplacer une affaire vers une étape qui
