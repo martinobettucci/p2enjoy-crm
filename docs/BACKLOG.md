@@ -19656,3 +19656,15 @@ puis récent (fichier retiré, données intactes, `REVISION`), build borné et s
 échec, aucun `git clean`. Constaté en lecture seule : `spark-docker` lit le dépôt avec sa clé (décision 912). README, DAT,
 spécification, contrat §2.42, changelog. **Reste**, sur instruction du responsable : les deux gestes préalables (clé d'hôte
 de GitHub épinglée, accès au registre npm), puis la première livraison réelle par condensé, par la session de livraison.
+
+
+## Demande du 2026-11-17 — épingler l'infobulle de description pour lire un texte long
+
+### CRM-148 — Infobulle de description : un clic dedans l'épingle, elle ne se ferme plus qu'à sa croix, et un texte long y défile `[@]`
+*Prise en charge : session interactive 4891a451 (p2enjoy-crm-d7, ex-32) depuis 2026-11-17 15:50 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*
+
+**Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison : « les channels, le tracks, ils
+ont leur descriptifs qui s'affiche au survol mais s'il est long il est impossible a scroll car le hint se referme. Il
+faudrait rendre le baloon fixe si une fois affiché on clique dedans et il se ferme seulement si l'on clique sur le "x" en
+haut à droite qui apparait dans ce cas précis. »
+**Spécification** : à écrire avant le code (`docs/DESIGN_SYSTEM.md` §5.58, décision à consigner).
