@@ -15,6 +15,8 @@
 #           corbeille d'un message (docs/SPEC-mcp.md §9.2, CRM-138 ; docs/SPEC-mail-subsystem.md §29.8)
 # @verifies CRM-141 (docs/BACKLOG.md) — tranche T5 : l'intégration rejoue les deux outils des pastilles d'un mail et
 #           `crm_mail_get` révisé (docs/SPEC-mcp.md §9.2 duovicies)
+# @verifies CRM-149 (docs/BACKLOG.md) — tranche T2 : l'intégration rejoue `prompts/list` et `prompts/get` ; le registre fermé
+#           se mesure sur ses trois tables nommées, `mcp_prompts` ayant ses politiques (docs/SPEC-mcp.md §17.5, §17.9)
 # @verifies CRM-150 (docs/BACKLOG.md) — tranche T1 : l'intégration rejoue l'issue d'audit de chaque refus d'un déplacement
 #           (docs/SPEC-mcp.md §9.3, décision 933)
 #
@@ -119,7 +121,7 @@ integration() { # integration <url du connecteur> [arguments pytest…]
 	local url=$1
 	shift
 	docker run --rm --network "$RESEAU" --env-file "$ENV_INTEGRATION" -e CRM_MCP_URL="$url" "$IMAGE" \
-		python -m pytest -q -p no:cacheprovider tests/test_integration_oauth.py tests/test_integration_recettes.py tests/test_integration_affaires.py tests/test_integration_affaires_ecriture.py tests/test_integration_affaires_checklists.py tests/test_integration_affaires_etiquettes.py tests/test_integration_champs_communs.py tests/test_integration_vues.py tests/test_integration_structure.py tests/test_integration_contacts.py tests/test_integration_organisations.py tests/test_integration_budgets.py tests/test_integration_temps.py tests/test_integration_objectifs.py tests/test_integration_messagerie.py tests/test_integration_workflows.py tests/test_integration_droits_fins.py tests/test_integration_outbox.py tests/test_integration_messagerie_corbeille.py tests/test_integration_messagerie_pastilles.py tests/test_integration_affaires_deplacement.py "$@" >"$TRAVAIL/integration.log" 2>&1
+		python -m pytest -q -p no:cacheprovider tests/test_integration_oauth.py tests/test_integration_recettes.py tests/test_integration_affaires.py tests/test_integration_affaires_ecriture.py tests/test_integration_affaires_checklists.py tests/test_integration_affaires_etiquettes.py tests/test_integration_champs_communs.py tests/test_integration_vues.py tests/test_integration_structure.py tests/test_integration_contacts.py tests/test_integration_organisations.py tests/test_integration_budgets.py tests/test_integration_temps.py tests/test_integration_objectifs.py tests/test_integration_messagerie.py tests/test_integration_workflows.py tests/test_integration_droits_fins.py tests/test_integration_outbox.py tests/test_integration_messagerie_corbeille.py tests/test_integration_messagerie_pastilles.py tests/test_integration_prompts.py tests/test_integration_affaires_deplacement.py "$@" >"$TRAVAIL/integration.log" 2>&1
 }
 caddy_de_la_cellule() { # caddy_de_la_cellule [hôte du connecteur]
 	docker rm -f "$CADDY" >/dev/null 2>&1 || true
@@ -155,7 +157,9 @@ done < <(
 titre '2. Le registre, mesuré'
 [ "$(psql_base -c "select count(*) from pg_class where oid in ('public.mcp_comptes'::regclass, 'public.mcp_droits'::regclass, 'public.mcp_journal'::regclass) and relrowsecurity")" = 3 ] \
 	&& ok 'RLS activée sur les trois tables du registre' || fail 'RLS absente d’une table du registre'
-[ "$(psql_base -c "select count(*) from pg_policies where tablename like 'mcp\_%'")" = 0 ] \
+# Les TROIS tables du registre, nommées : `mcp_prompts` (`CRM-149`, docs/SPEC-mcp.md §17.3) porte les siennes, et se lit
+# par tout membre de l'espace.
+[ "$(psql_base -c "select count(*) from pg_policies where tablename in ('mcp_comptes', 'mcp_droits', 'mcp_journal')")" = 0 ] \
 	&& ok 'aucune politique : le registre est fermé à l’API' || fail 'une politique ouvre le registre'
 [ "$(psql_base -c "select bool_or(has_table_privilege(r, t, p))::text from unnest(array['anon','authenticated']) r, unnest(array['public.mcp_comptes','public.mcp_droits','public.mcp_journal']) t, unnest(array['select','insert','update','delete']) p")" = false ] \
 	&& ok 'aucun privilège client sur le registre' || fail 'un rôle client garde un privilège sur le registre'

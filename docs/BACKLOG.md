@@ -19696,8 +19696,12 @@ les administrateurs, texte seul, en français, cinq défauts tirés de l'usage ;
   de lignes vides passait la première contrainte, corrigée) et `0016` révisée à 206 politiques, non relâchée ; API
   `e2e/api/prompts-connecteur.spec.ts` 5/5, rouge contre la mutation de la politique d'insertion ; types régénérés.
   Contrat §2.49.
-- [ ] **T2** — le fournisseur de prompts du serveur MCP (`mcp/crm_mcp/prompts.py`), la ligne des consignes au modèle, le
+- [x] **T2** — le fournisseur de prompts du serveur MCP (`mcp/crm_mcp/prompts.py`), la ligne des consignes au modèle, le
   journal de `prompts/get` ; pytest, intégration MCP par `scripts/verify-mcp.sh` ; l'image `mcp` au contrat.
+  *Fait le 2026-11-17* : un fournisseur FastMCP (`Provider`) ; pytest `test_prompts.py` 11/11, rouge contre trois mutations
+  (nom nu, compte sans droit, journal), suite unitaire 419 ; intégration `test_integration_prompts.py` 3/3 contre le vrai
+  Keycloak et la vraie base, par `scripts/verify-mcp.sh --rapide` (125 contrôles, aucune anomalie ; intégration 110/110 en
+  direct et à travers le Caddy de la cellule ; la preuve navigateur omise). Contrat §2.51.
 - [ ] **T3** — Réglages ▸ Prompts du connecteur (lister, ajouter, modifier, supprimer confirmé), l'entrée de l'index, les
   textes ; Vitest, E2E UI souris et clavier, quatre paliers, captures observées.
 - [ ] **T4** — le seed (un prompt ajouté par PostgREST), le manuel (§33.7, l'index des réglages) et ses images ; changelog ;

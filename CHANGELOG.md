@@ -13,6 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-149` T2 — les prompts dans le connecteur MCP (décision 930)
+
+- **Votre assistant propose des parcours guidés** : le connecteur annonce désormais des prompts, ceux de vos espaces. En
+  choisir un insère son texte dans la conversation, précédé du nom de l'espace, et l'assistant suit les étapes qu'il
+  décrit. Chaque prompt choisi est inscrit au journal des appels du connecteur.
+- Un prompt n'ouvre aucun droit : les outils qu'il nomme restent soumis à la matrice du connecteur et à vos droits dans
+  le CRM. Déploiement : l'image `mcp`, après la migration 185 (`docs/PROD_MIGRATIONS.md` §2.51).
+
 #### `CRM-149` T1 — les prompts du connecteur, en base (décision 930)
 
 - **Une table des prompts par espace** (`mcp_prompts`, migration 185) : un identifiant, un titre, une description et un

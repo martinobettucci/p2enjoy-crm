@@ -1186,6 +1186,22 @@ formée, argument manquant) passe de `erreur` à `refus_crm`.
 **Retour arrière** : l'image précédente ; rien n'est écrit en base par la livraison. Les lignes déjà inscrites ne sont pas
 reclassées : le relevé d'avant la livraison garde ses `erreur`.
 
+### 2.51 `CRM-149` T2, décision 930 — les prompts dans le connecteur MCP (À LIVRER : l'image `mcp` ; **hors de tout lot annoncé**)
+
+`docs/SPEC-mcp.md` §17.5. **Aucune migration nouvelle, aucune variable, aucun secret** ; aucune case de la matrice. Le
+serveur annonce la capacité `prompts` et lit `mcp_prompts` sous le jeton de la personne.
+
+**L'IMAGE EXIGE LA 185** : sans la table, `prompts/list` rend une liste vide (la lecture est refusée, l'assistant garde ses
+outils) ; elle se livre **après** la 185 (§2.49).
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Constater la 185 appliquée | session de livraison, en lecture seule | `select to_regclass('public.mcp_prompts')` non nul |
+| 2 | Reconstruire l'image `mcp` | session de livraison | `up -d --build --no-deps --wait mcp` (§4) |
+| 3 | Constater | responsable, dans Claude ou ChatGPT | le menu du connecteur propose les cinq prompts de l'espace ; en choisir un insère son texte, précédé de « Espace : … » ; le journal des appels du connecteur porte une ligne `prompt:<identifiant>` |
+
+**Retour arrière** : l'image précédente ; rien n'est écrit en base par la livraison.
+
 ## 3. Migrations en attente
 
 **La 185** (`CRM-149` T1, décision 930), *en attente, hors de tout lot annoncé* : les prompts du connecteur

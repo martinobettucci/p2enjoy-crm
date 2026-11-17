@@ -24,6 +24,8 @@
 # @spec CRM-138 (docs/BACKLOG.md) — tranche T4 : les cinq outils de lecture, de sommeil et de corbeille d'un message
 #       enregistrés, famille `messagerie`, et leur ligne dans les consignes au modèle (docs/SPEC-mcp.md §9.2, CRM-138 ;
 #       docs/SPEC-mail-subsystem.md §29.8)
+# @spec CRM-149 (docs/BACKLOG.md) — tranche T2 : le fournisseur des prompts de l'espace inscrit, et sa ligne dans les
+#       consignes au modèle (docs/SPEC-mcp.md §17.5 ; décision 930)
 # @spec docs/SPEC-mcp.md §2 (un service, un hôte, `/mcp`), §3 (mandataire OAuth, état chiffré), §6.2 (audit puis
 #       politique, avant l'outil), §11 (`/sante`, `/pret`) ; docs/JOURNAL.md décision 627 (D1, D5, D8)
 # @spec Modèle : `evoliz_mcp/application.py` (p2enjoy-evoliz, révision 80a3e27). Écarts : aucune administration
@@ -42,7 +44,7 @@ from mcp_types import Icon
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse
 
-from crm_mcp import pages
+from crm_mcp import pages, prompts
 from crm_mcp.audit import AuditOutils
 from crm_mcp.autorisation import MandataireLelabs, construire_stockage
 from crm_mcp.crm import ClientCrm, CrmIndisponible
@@ -88,6 +90,8 @@ you see and change exactly what you could in the CRM web app, never more.
   The tools offered depend on those rights; a right changed during the conversation reaches the tool list
   at the next connection.
 - Start with crm_workspace_list: it returns the workspaces open to you and the slug to pass as `workspace`.
+- Prompts: each workspace offers guided prompts (FR: prompts du connecteur), edited by its administrators in the CRM —
+  create a complete affaire, review one, move one forward, find one. A prompt names its workspace and the tools to call.
 - Affaires (cards): start with crm_card_list or crm_card_mine; crm_card_get gives the header, contacts and form
   answers; crm_card_timeline the history. Read crm_workflow_get before crm_card_move.
 - Workflows: read one with crm_workflow_get before changing it and tell the person what will change. Only declared
@@ -230,6 +234,8 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
     messagerie_corbeille.ajouter(serveur, moteur, crm)
     # `CRM-141` T5 : les pastilles d'un mail — lire celles de l'espace, poser ou retirer (docs/SPEC-mcp.md §9.2 duovicies).
     messagerie_pastilles.ajouter(serveur, moteur, crm)
+    # `CRM-149` T2 : les prompts de l'espace, lus sous le jeton de la personne (docs/SPEC-mcp.md §17.5).
+    prompts.ajouter(serveur, moteur, crm)
     # L'ordre compte : l'audit enveloppe la politique, qui précède l'outil (docs/SPEC-mcp.md §6.2).
     serveur.add_middleware(AuditOutils(registre, reglages.taille_max_reponse))
     serveur.add_middleware(PolitiqueOutils(moteur))

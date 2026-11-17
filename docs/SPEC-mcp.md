@@ -1706,6 +1706,11 @@ qui cherche dans la liste — le nom d'un prompt est donc calculé d'une seule f
   issue `ok` — et à la sortie standard, comme un appel d'outil (§7.1, §11). Jamais le texte.
 - **Les consignes au modèle** (`INSTRUCTIONS`) gagnent une ligne : le connecteur propose des prompts par espace, des
   parcours guidés qu'un administrateur édite dans le CRM.
+- *Précisé au code de T2 (2026-11-17)* : le module cite aussi `CRM-102` en tête, la traçabilité de `scripts/verify-mcp.sh`
+  n'acceptant dans `mcp/` que les unités du connecteur ; le contrôle « registre fermé » de ce script nomme désormais ses
+  trois tables (`mcp_comptes`, `mcp_droits`, `mcp_journal`) au lieu de `mcp_%`, puisque `mcp_prompts` porte ses
+  politiques. Une table illisible rend une liste vide, sans erreur ; le client la reprend une fois, une lecture étant
+  idempotente.
 
 ### 17.6 Le relevé d'usage — source des défauts
 
