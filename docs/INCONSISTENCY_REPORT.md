@@ -9253,8 +9253,9 @@ l'ordre des sections, et ne relâche rien. Prouvée par un `resetMe` vert puis d
 rien en production. **Close.**
 
 ### INC-360 — SPEC-seed dit les boîtes du seed « pending », la relève réelle les rend `ok` depuis la 0170
-**Ouverte le 2026-11-17.** *Relevée par la session d5b44a2d (p2enjoy-crm-f8) en rejouant le chapitre 11 du manuel sur une
-base remise à zéro (contrôle §11.4 de `scripts/verify-manual.sh` : « Non testée » citée sans image).*
+**Ouverte le 2026-11-17, fermée le 2026-11-18.** *Relevée par la session d5b44a2d (p2enjoy-crm-f8) en rejouant le
+chapitre 11 du manuel sur une base remise à zéro (contrôle §11.4 de `scripts/verify-manual.sh` : « Non testée » citée sans
+image). Confiée à la même session par la session de livraison (bb).*
 
 **Le constat.** `docs/SPEC-seed.md` §2.17 et §2.19 écrivent que le `status` des trois comptes entrants « reste `pending` »
 tant qu'aucun test de connexion n'a été exécuté. Depuis la migration `0170` (`CRM-135`, `b1a77d97`, décisions 873 et 874),
@@ -9268,3 +9269,16 @@ Camille le temps de l'image, par la clé de service, et lui rend l'état lu — 
 Driss. **Laissé ouvert** : la phrase de `docs/SPEC-seed.md` §2.17 et §2.19 est à réécrire selon le §24.3 (la relève rend
 `ok`) ; c'est une correction documentaire du seed (`CRM-052`, `CRM-055`), hors de `CRM-149`, à arbitrer par la session de
 livraison.
+
+**La correction (2026-11-18), documents seuls.** Relu en base sur la pile de développement : les trois comptes entrants
+du seed sont `ok`, sans `last_error`, avec une relève datée. Les trois identités sortantes restent `pending`, ce qui est
+juste, car la `0170` ne touche pas `mail_outbound_identities` : le §2.18 est donc laissé tel quel. Réécrits selon
+`docs/SPEC-mail-subsystem.md` §24.3 et §24.6 :
+- `docs/SPEC-seed.md` §2.17 : le statut naît `pending` et le seed ne le force jamais, mais la relève réelle le rend
+  `ok`. Le seed relève la boîte système et celle de Camille, la veille relève les trois. Une preuve qui doit montrer
+  « Non testée » pose cet état puis le rend ;
+- `docs/SPEC-seed.md` §2.19 : le statut des comptes est rendu `ok` par la relève, et non plus « reste `pending` » ;
+- `docs/SPEC-mail-subsystem.md` §18.7, même phrase périmée (« reste `pending` (§13.8) : la relève n'y touche pas »).
+
+Le comportement est inchangé : ni code, ni seed, ni test. Le passage historique de `docs/BACKLOG.md` (la Definition of
+Done de `CRM-052`) n'est pas réécrit, car il date l'état d'alors.

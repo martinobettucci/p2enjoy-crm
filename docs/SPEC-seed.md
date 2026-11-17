@@ -807,9 +807,16 @@ Les trois comptes visent `stalwart:143` en `none`. Le motif est mesuré et écri
 sous-système : le certificat local est auto-signé, et le produit refuse à raison de lui faire
 confiance. `starttls` n'est donc prouvable qu'en **refus** sur cette pile.
 
-Leur `status` reste `pending` tant qu'aucun test de connexion n'a été exécuté. Le seed ne le force
-jamais : un état `ok` sans connexion réelle serait exactement la trace fabriquée que `CLAUDE.md` §8
-proscrit.
+Leur `status` naît `pending`, et le seed ne le force jamais : un état `ok` sans connexion réelle serait exactement la
+trace fabriquée que `CLAUDE.md` §8 proscrit.
+
+**Révisé par INC-360 : la relève réelle rend les boîtes `ok`.** Depuis la migration `0170` (`CRM-135`,
+`docs/SPEC-mail-subsystem.md` §24.3 et §24.6), une relève réussie pose `status = 'ok'`. Le seed relève lui-même la boîte
+système (§2.19) et celle de Camille (§45), et la veille de `mail-sync` relève les trois boîtes à la minute, celle de
+Driss comprise. Sur une base remise à zéro, les trois sont donc « Connectée » au plus tard au premier tour de veille, et
+aucune ne reste « Non testée ». Cet `ok` est écrit par la relève, pas par le seed. Une preuve qui doit montrer « Non
+testée » pose l'état le temps de sa vérification, puis rend l'état qu'elle a lu
+(`e2e/manuel/11-boites-identites.spec.ts`).
 
 ### 2.18 Identités sortantes SMTP — ajoutées par `CRM-053`
 
@@ -893,7 +900,8 @@ coupé ne serait plus un contrat : il annoncerait une démonstration que l'écra
 faire.
 
 **Rien n'est forcé en base** : ni le classement, écrit par `classer_message_automatiquement` au
-cours de la relève, ni les occurrences, ni le statut des comptes, qui reste `pending` (§2.17). Le
+cours de la relève, ni les occurrences, ni le statut des comptes, que la relève
+réussie rend elle-même `ok` (§2.17, INC-360). Le
 seed n'écrit pas un message : il en **fait arriver** un.
 
 **Cette étape ajoute une dépendance, et elle est assumée** : sans Stalwart ni `mail-sync`, le seed

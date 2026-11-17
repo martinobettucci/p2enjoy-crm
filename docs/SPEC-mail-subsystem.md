@@ -1573,8 +1573,8 @@ déclenche **une relève réelle** — le chemin exact du produit, sans aucune t
 | « Candidature spontanée » | la boîte système uniquement | **non classé** |
 
 Leurs `Message-ID` sont **fixes** : rejouer le seed ne duplique rien, le dédoublonnage du §4.2 s'en
-charge, et les captures peuvent en dépendre. Le statut des comptes reste `pending` (§13.8) : la
-relève n'y touche pas.
+charge, et les captures peuvent en dépendre. Le seed ne force pas le statut des comptes.
+*Révisé par INC-360* : depuis la migration `0170`, une relève réussie le rend `ok` (§24.3, §24.6).
 
 **Mesuré le 2026-08-11, et cela contraint l'expéditeur** : Stalwart refuse un `From` qui
 n'appartient pas au principal authentifié — `501 5.5.4 You are not allowed to send from this
