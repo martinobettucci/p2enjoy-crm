@@ -19736,7 +19736,8 @@ connecteur.
   erreur ») et vert après ; la preuve inscrite dans `verify-mcp.sh` ;
 - reste : T2 (le manuel §33.4, le contrat, la clôture).
 
-### CRM-151 — Supprimer un mail : « Supprimer ici » et « Supprimer partout », confirmation courte, « Ne plus demander pendant 1 heure » `[ ]`
+### CRM-151 — Supprimer un mail : « Supprimer ici » et « Supprimer partout », confirmation courte, « Ne plus demander pendant 1 heure » `[@]`
+*Prise en charge : session interactive 152dd27d (p2enjoy-crm-45, ex-a4, ex-a8) depuis 2026-11-17 16:33 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*
 
 **Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison (p2enjoy-crm-bb) ; arbitrée le
 même jour (décision 928). Révise l'« Effacer » de `CRM-138` (décisions 878, 917, 921 ; `docs/DESIGN_SYSTEM.md` §5.102).
