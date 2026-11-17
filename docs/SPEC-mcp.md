@@ -1375,6 +1375,13 @@ la prise (`claimed_at`), puis `record_label_evaluation` sous la clé de service.
   `comment_required`, `channel ferme`, plafond de temps…) sont traduits en un message pour le modèle
   : le code et une phrase, jamais une pile ni un détail d'infrastructure. Un refus RLS (`42501`, ou
   une ligne absente) devient le refus uniforme (§6.2).
+- **Un refus fait par le connecteur** (`CRM-150`, décision 928). Quand un outil refuse lui-même une demande qu'il ne peut
+  pas résoudre — un nom inconnu ou ambigu (étape, membre, étiquette, pastille…), une clé de champ inconnue, une date ou une
+  valeur mal formée, un argument manquant que l'outil exige —, il lève un **refus d'argument**, qui dit ce qui manque et,
+  quand il le peut, les valeurs possibles. **Il est journalisé `refus_crm`** (« Refusé par le CRM »), comme un refus de la
+  base. **`erreur` ne garde que les pannes** : le CRM qui répond `5xx` ou ne répond pas, une exception de l'outil. Une
+  seule classe dans le code (`RefusArgument`, `crm_mcp/politique.py`), employée par tous les outils ; la contrainte de
+  `mcp_journal.issue` (§7.1) est inchangée.
 
 ## 10. Configuration
 

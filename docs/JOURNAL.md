@@ -40732,3 +40732,29 @@ actuel. »
 **Conséquences** : `CRM-149`, quatre tranches (`docs/BACKLOG.md`) : T1 la migration et ses preuves ; T2 le serveur MCP ;
 T3 l'écran de Réglages ; T4 le seed, le manuel et la clôture. Une migration (`0185`, numéro pris au push). Spécification :
 `docs/SPEC-mcp.md` §17 ; `docs/SCHEMA.md`, `docs/DAT.md` §3.7 ter, `docs/DESIGN_SYSTEM.md` §5.104.
+
+### décision 928 — `CRM-150` : un refus fait par le connecteur est journalisé « Refusé par le CRM », dans tous les outils
+
+*2026-11-17, session 152dd27d (p2enjoy-crm-45), sur une enquête décidée par le responsable et relayée par la session de
+livraison (bb) ; arbitrages du responsable (`AskUserQuestion`).*
+**L'arbitrage d'origine** : le responsable choisit « enquête et correction », dans une unité dédiée (`CRM-150`).
+**Le relevé** (journal MCP de production, `public.mcp_journal`, lecture seule, 2026-10-26 au 2026-11-17, par la session de
+livraison) : `crm_card_list` et `crm_card_mine` ne tombent plus en délai dépassé depuis la `0171` (INC-356, close sur la
+mesure) ; `crm_card_move` compte 8 issues `erreur` sur 276 appels (7 le 2026-11-07, 1 le 2026-11-10), en 174 à 222 ms, donc
+pas des délais dépassés (INC-357).
+**L'enquête, en développement** (`mcp/tests/test_integration_affaires_deplacement.py`, vrai Keycloak, vraie base, vrai
+service `mcp`) : transition absente, motif exigé, motif trop long, champ exigé, checklist exigée, rattachement archivé,
+affaire à la corbeille rendent tous `refus_crm`. **Seul un nom d'étape inconnu rend `erreur`** : la résolution du nom
+(`choisir_par_nom`) lève une `ToolError` simple, que l'audit inscrit `erreur` faute d'`issue_audit`. Le même mécanisme
+vaut pour tous les refus d'argument du connecteur (nom inconnu ou ambigu, clé inconnue, date mal formée…), environ 85.
+**Hypothèses écartées** : une vraie exception de l'outil ; un refus de la base mal classé.
+**Décision 1, le classement** : un refus fait par le connecteur sur une demande qu'il ne peut pas résoudre est journalisé
+**`refus_crm`** (« Refusé par le CRM »), comme un refus de la base ; « Erreur » ne garde que les pannes (CRM en `5xx`,
+exception). Écartés : une sixième issue `refus_argument` (migration de la contrainte, filtre de l'écran Plateforme,
+manuel) ; garder `erreur` en le documentant.
+**Décision 2, la portée** : **tous les outils** — une seule classe de refus d'argument, employée partout où un outil refuse
+une demande qu'il ne peut pas résoudre. Écarté : `crm_card_move` seul.
+**Les deux questions du connecteur** (consigne du responsable, décisions 627 et 659) : la correction **est** dans le
+connecteur ; elle ne crée ni outil, ni famille, ni case : les familles et les actions de la matrice sont inchangées.
+**Conséquences** : `CRM-150`, deux tranches (`docs/BACKLOG.md`) ; `docs/SPEC-mcp.md` §9.3 ; aucune migration, aucune
+variable ; l'image `mcp` à livrer.
