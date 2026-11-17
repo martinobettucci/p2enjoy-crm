@@ -1,3 +1,4 @@
+// @verifies CRM-149 (docs/BACKLOG.md) — tranche T1 : la table `mcp_prompts` au témoin des types générés (docs/SPEC-mcp.md §17.2)
 // @verifies CRM-141 (docs/BACKLOG.md) — tranches T1 et T2 : les trois tables et les cinq fonctions des pastilles d'un mail dans
 //           les types générés (docs/SPEC-mail-subsystem.md §31.2 à §31.5 ; docs/SPEC-ia.md §15.4)
 // @verifies CRM-123 (docs/BACKLOG.md) — tranche T2 : `platform_regenerate_card_addresses` au témoin des fonctions (docs/SPEC-cards.md §3.6 point 7)
@@ -164,9 +165,14 @@ type Expect<T extends true> = T
 // `pending`, `done` ou `failed`, `last_error` une liste fermée ; une ligne `llm` est toujours posée ; `authenticated` n'écrit
 // que `mail_labels` (administrateurs) — les deux autres passent par `set_message_label`, `request_label_evaluation` et la
 // passe (docs/SPEC-mail-subsystem.md §31.2, §31.3).
+// `mcp_prompts`, LIVRÉE PAR `CRM-149` T1 (migration `0185`) : les prompts du connecteur, par espace. CE QUI ÉCHAPPE AU
+// GÉNÉRATEUR : `key` suit `^[a-z0-9]+(-[a-z0-9]+)*$` (2 à 40) et est unique dans l'espace ; `created_by` et `updated_by`
+// sont posés par la base ; `authenticated` écrit `key`, `title`, `description` et `body` — l'administrateur seul, par la
+// RLS — et supprime (docs/SPEC-mcp.md §17.2, §17.3).
 type _tables = Expect<
   Equal<
     keyof Database['public']['Tables'],
+    | 'mcp_prompts'
     | 'mail_labels'
     | 'mail_message_labels'
     | 'mail_label_evaluations'
