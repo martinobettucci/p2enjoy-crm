@@ -545,21 +545,30 @@ export const fr = {
 	'infobulle.texte': 'Description de {titre}',
 	// `CRM-138` T3 — effacer le message ouvert, la corbeille de l'inbox, restaurer (docs/SPEC-mail-subsystem.md §29 ;
 	// docs/DESIGN_SYSTEM.md §5.102). La durée est LUE EN BASE (`trash_retention_days()`), jamais écrite ici.
-	'inbox.trash.delete': 'Effacer',
-	'inbox.trash.confirm.group': 'Effacer ce message',
+	// `CRM-151` (§29.11, docs/DESIGN_SYSTEM.md §5.102 révisé ; décisions 928 et 934) : « Supprimer ici » et « Supprimer
+	// partout » remplacent « Effacer » ; la corbeille et le fil de l'affaire gardent « effacé ».
+	'inbox.delete.here': 'Supprimer ici',
+	'inbox.delete.everywhere': 'Supprimer partout',
+	'inbox.delete.confirm.group': 'Supprimer ce message',
 	// Espaces insécables autour des guillemets et fine insécable avant « ? » : vu en capture à 900 px, le « ? » partait
-	// seul sur sa ligne après un objet long.
-	'inbox.trash.confirm.question': 'Effacer «\u00a0{objet}\u00a0»\u202f?',
-	'inbox.trash.confirm.retention':
-		"Il ira dans la corbeille de l'inbox, d'où vous pourrez le restaurer pendant {n} jours.",
-	'inbox.trash.confirm.retentionUnknown': "Il ira dans la corbeille de l'inbox, d'où vous pourrez le restaurer.",
-	'inbox.trash.confirm.mailbox': "L'effacer aussi dans la boîte mail (le déplacer dans sa corbeille)",
-	'inbox.trash.confirm.mailboxHelp':
-		"Le message sera déplacé dans la corbeille de la boîte qui l'a reçu. Restaurer ne l'en ressortira pas.",
+	// seul sur sa ligne après un objet long (`CRM-138`).
+	'inbox.delete.confirm.question.here': 'Supprimer «\u00a0{objet}\u00a0» ici\u202f?',
+	'inbox.delete.confirm.question.everywhere': 'Supprimer «\u00a0{objet}\u00a0» partout\u202f?',
+	'inbox.delete.confirm.effect.here':
+		"Il ira dans la corbeille de l'inbox, d'où vous pourrez le restaurer pendant {n} jours. Votre boîte mail le garde.",
+	'inbox.delete.confirm.effect.hereUnknown':
+		"Il ira dans la corbeille de l'inbox, d'où vous pourrez le restaurer. Votre boîte mail le garde.",
+	'inbox.delete.confirm.effect.everywhere':
+		"Il ira dans la corbeille de l'inbox, d'où vous pourrez le restaurer pendant {n} jours, et dans la corbeille de la boîte mail qui l'a reçu, d'où restaurer ne le ressortira pas.",
+	'inbox.delete.confirm.effect.everywhereUnknown':
+		"Il ira dans la corbeille de l'inbox, d'où vous pourrez le restaurer, et dans la corbeille de la boîte mail qui l'a reçu, d'où restaurer ne le ressortira pas.",
+	'inbox.delete.confirm.skip': 'Ne plus demander pendant 1 heure',
 	'inbox.trash.confirm.cancel': 'Annuler',
-	'inbox.trash.confirm.submit': 'Effacer',
-	'inbox.trash.confirm.pending': 'Effacement…',
-	'inbox.trash.announce.deleted': 'Message mis à la corbeille.',
+	'inbox.delete.confirm.pending': 'Suppression…',
+	'inbox.delete.suspended': 'Sans confirmation jusqu’à {heure}',
+	'inbox.delete.ask': 'Redemander',
+	'inbox.delete.announce.here': 'Message supprimé ici.',
+	'inbox.delete.announce.everywhere': 'Message supprimé partout.',
 	'inbox.trash.refus.introuvable': "Ce message n'est plus disponible.",
 	'inbox.trash.refus.refuse': 'Vous ne pouvez pas effacer ce message.',
 	'inbox.trash.refus.aucune_boite':

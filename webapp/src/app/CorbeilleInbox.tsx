@@ -1,3 +1,5 @@
+// @spec CRM-151 (docs/BACKLOG.md) — tranche T2 : « Supprimer ici » et « Supprimer partout » remplacent « Effacer », chacun
+//       confirmé, « Ne plus demander pendant 1 heure » (docs/SPEC-mail-subsystem.md §29.11 ; docs/DESIGN_SYSTEM.md §5.102)
 // @spec CRM-141 (docs/BACKLOG.md) — tranche T4 : la confirmation d'« Effacer » et le panneau « Pastilles » s'excluent
 //       (docs/DESIGN_SYSTEM.md §5.103)
 // @spec CRM-138 (docs/BACKLOG.md) — tranche T3 : la corbeille de l'inbox — « Effacer » dans la rangée de commandes du message
@@ -27,6 +29,12 @@ import {
 	type RefusCorbeille,
 } from '../lib/corbeille-inbox'
 import { clientCrm } from '../lib/supabase'
+import {
+	lireEcheance,
+	redemanderConfirmation,
+	stockageDeLOnglet,
+	suspendreConfirmation,
+} from '../lib/suppression-sans-confirmation'
 import { Panneau } from './PanneauInbox'
 
 const dateCourte = (iso: string): string => new Date(iso).toLocaleDateString('fr-FR', { dateStyle: 'short' })
@@ -61,14 +69,23 @@ const PHRASE_MOTIF: Readonly<Record<MotifDeplacement, CleTraduction>> = {
 }
 
 // =================================================================================================
-// Le message ouvert — la rangée de commandes et la confirmation d'« Effacer »
+// Le message ouvert — la rangée de commandes, « Supprimer ici », « Supprimer partout » et leur confirmation (`CRM-151`)
 // =================================================================================================
 
 /**
- * La rangée de commandes du message ouvert (§5.102) : `commandes` — le sommeil, puis la lecture —, puis « Effacer ». La
- * confirmation vit DANS LE FLUX, sous la rangée, jamais en modale (décision 921). Montée avec la clé du message, elle se
- * referme et décoche sa case d'un message à l'autre.
+ * La rangée de commandes du message ouvert (§5.102) : `commandes` — le sommeil, la lecture, les pastilles —, puis
+ * « Supprimer ici » et « Supprimer partout » (`CRM-151`, §29.11). Chacune ouvre une confirmation DANS LE FLUX, sous la
+ * rangée (décision 921), qui rappelle l'effet choisi ; sa case « Ne plus demander pendant 1 heure » suspend la confirmation
+ * des deux dans l'onglet. Montée avec la clé du message : la confirmation se referme d'un message à l'autre.
+ *
+ * @spec CRM-151 (docs/BACKLOG.md) — tranche T2 : docs/SPEC-mail-subsystem.md §29.11 ; docs/DESIGN_SYSTEM.md §5.102 révisé ;
+ *       docs/JOURNAL.md décisions 928 et 934
  */
+export type EtendueSuppression = 'ici' | 'partout'
+
+const heureCourte = (instant: Date): string =>
+	instant.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+
 export function RangeeCommandesMessage({
 	idMessage,
 	objet,
@@ -87,54 +104,134 @@ export function RangeeCommandesMessage({
 	readonly onConfirmationOuverte?: () => void
 	readonly idMessage: string
 	readonly objet: string
-	/** La capacité rendue par la base ; seule `true` rend la case (§29.1). */
+	/** La capacité rendue par la base ; seule `true` rend « Supprimer partout » (§29.11). */
 	readonly effacableDansBoite: boolean
 	readonly retention: EtatAsync<number>
 	readonly commandes: ReactNode
-	readonly onEfface: () => void
+	/** Le message vient d'être supprimé, ici ou partout : la route l'annonce et referme le message. */
+	readonly onEfface: (etendue: EtendueSuppression) => void
 }) {
-	const [ouverte, setOuverte] = useState(false)
-	const [aussiBoite, setAussiBoite] = useState(false)
-	const [enVol, setEnVol] = useState(false)
+	const [ouverte, setOuverte] = useState<EtendueSuppression | null>(null)
+	const [sansDemander, setSansDemander] = useState(false)
+	const [enVol, setEnVol] = useState<EtendueSuppression | null>(null)
 	const [refus, setRefus] = useState<RefusCorbeille | null>(null)
-	const refEffacer = useRef<HTMLButtonElement | null>(null)
+	// L'échéance de la suspension, lue dans l'onglet ; `null` : la confirmation est demandée (le défaut sûr, §29.11).
+	const [echeance, setEcheance] = useState<Date | null>(() => lireEcheance(stockageDeLOnglet(), new Date()))
+	const refIci = useRef<HTMLButtonElement | null>(null)
+	const refPartout = useRef<HTMLButtonElement | null>(null)
 	const refAnnuler = useRef<HTMLButtonElement | null>(null)
 	const idQuestion = useId()
-	const idAide = useId()
+	const idSuspension = useId()
 
-	// UN EFFACEMENT EN VOL N'EST PAS REFERMÉ : son refus éventuel atterrirait sur un bloc fermé, et l'écran tairait l'échec.
+	// UNE SUPPRESSION EN VOL N'EST PAS REFERMÉE : son refus éventuel atterrirait sur un bloc fermé, et l'écran tairait l'échec.
 	useEffect(() => {
-		if (refermerConfirmation === 0 || enVol) return
-		setOuverte(false)
+		if (refermerConfirmation === 0 || enVol !== null) return
+		setOuverte(null)
 		setRefus(null)
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- seul le compteur déclenche ; `enVol` est lu à cet instant
 	}, [refermerConfirmation])
 
-	// LE FOCUS ENTRE SUR « Annuler » (§5.102) : la touche Entrée d'un geste trop rapide n'efface rien.
+	// LE FOCUS ENTRE SUR « Annuler » (§5.102) : la touche Entrée d'un geste trop rapide ne supprime rien.
 	useEffect(() => {
-		if (ouverte) refAnnuler.current?.focus()
+		if (ouverte !== null) refAnnuler.current?.focus()
 	}, [ouverte])
 
+	// LA MENTION DISPARAÎT D'ELLE-MÊME À L'ÉCHÉANCE (décision 934) : l'échéance est relue au moment où elle tombe.
+	useEffect(() => {
+		if (echeance === null) return
+		const minuterie = window.setTimeout(
+			() => setEcheance(lireEcheance(stockageDeLOnglet(), new Date())),
+			Math.max(echeance.getTime() - Date.now(), 0) + 50,
+		)
+		return () => window.clearTimeout(minuterie)
+	}, [echeance])
+
+	const refDe = (etendue: EtendueSuppression) => (etendue === 'ici' ? refIci : refPartout)
+
 	const abandonner = useCallback(() => {
-		setOuverte(false)
+		const etendue = ouverte
+		setOuverte(null)
 		setRefus(null)
 		// LE FOCUS REVIENT À LA COMMANDE QUI A OUVERT LA CONFIRMATION (§5.13).
-		requestAnimationFrame(() => refEffacer.current?.focus())
-	}, [])
+		if (etendue !== null) requestAnimationFrame(() => refDe(etendue).current?.focus())
+	}, [ouverte])
+
+	const supprimer = useCallback(
+		async (etendue: EtendueSuppression): Promise<boolean> => {
+			setEnVol(etendue)
+			setRefus(null)
+			const resultat = await effacerMessage(clientCrm, idMessage, etendue === 'partout' && effacableDansBoite)
+			setEnVol(null)
+			if (resultat !== null) {
+				setRefus(resultat)
+				return false
+			}
+			return true
+		},
+		[effacableDansBoite, idMessage],
+	)
+
+	const commander = useCallback(
+		(etendue: EtendueSuppression) => {
+			setRefus(null)
+			// LA SUSPENSION EST RELUE À CHAQUE CLIC : une échéance passée entre deux rendus redemande (§29.11).
+			const active = lireEcheance(stockageDeLOnglet(), new Date())
+			setEcheance(active)
+			if (active !== null) {
+				void supprimer(etendue).then((reussie) => {
+					if (reussie) onEfface(etendue)
+				})
+				return
+			}
+			// DÉCOCHÉE À CHAQUE OUVERTURE (§5.102) : suspendre la confirmation se décide à chaque fois.
+			setSansDemander(false)
+			setOuverte(etendue)
+			onConfirmationOuverte?.()
+		},
+		[onConfirmationOuverte, onEfface, supprimer],
+	)
 
 	const confirmer = useCallback(async () => {
-		setEnVol(true)
-		setRefus(null)
-		const resultat = await effacerMessage(clientCrm, idMessage, effacableDansBoite && aussiBoite)
-		setEnVol(false)
-		if (resultat !== null) {
-			// LE BLOC RESTE OUVERT (§5.102) : il est le seul endroit où lire la cause.
-			setRefus(resultat)
-			return
-		}
-		setOuverte(false)
-		onEfface()
-	}, [aussiBoite, effacableDansBoite, idMessage, onEfface])
+		if (ouverte === null) return
+		const etendue = ouverte
+		// LE BLOC RESTE OUVERT SUR UN REFUS (§5.102) : il est le seul endroit où lire la cause.
+		if (!(await supprimer(etendue))) return
+		if (sansDemander) setEcheance(suspendreConfirmation(stockageDeLOnglet(), new Date()))
+		setOuverte(null)
+		onEfface(etendue)
+	}, [onEfface, ouverte, sansDemander, supprimer])
+
+	const redemander = useCallback(() => {
+		redemanderConfirmation(stockageDeLOnglet())
+		setEcheance(null)
+	}, [])
+
+	const commande = (etendue: EtendueSuppression) => (
+		<Button
+			ref={refDe(etendue)}
+			taille="compacte"
+			aria-expanded={echeance === null ? ouverte === etendue : undefined}
+			aria-describedby={echeance === null ? undefined : idSuspension}
+			aria-busy={enVol === etendue && ouverte === null ? 'true' : undefined}
+			disabled={enVol !== null}
+			onClick={() => commander(etendue)}
+			data-testid={etendue === 'ici' ? 'inbox-supprimer-ici' : 'inbox-supprimer-partout'}
+		>
+			<Trash2 aria-hidden="true" size={16} />
+			{t(etendue === 'ici' ? 'inbox.delete.here' : 'inbox.delete.everywhere')}
+		</Button>
+	)
+
+	const phraseDeRefus =
+		refus === null ? null : (
+			<p
+				role="alert"
+				data-testid="inbox-suppression-refus"
+				className="rounded-sm bg-danger-soft text-danger-on-soft px-3 py-2 text-sm"
+			>
+				{t(REFUS_EFFACEMENT[refus])}
+			</p>
+		)
 
 	return (
 		<div className="flex flex-col gap-2">
@@ -142,94 +239,90 @@ export function RangeeCommandesMessage({
 			    secondaire compacte ne s'étire pas (§5.3 septies). */}
 			<div className="flex flex-wrap items-start gap-2" data-testid="inbox-commandes-message">
 				{commandes}
-				<Button
-					ref={refEffacer}
-					taille="compacte"
-					aria-expanded={ouverte}
-					disabled={enVol}
-					onClick={() => {
-						setRefus(null)
-						// DÉCOCHÉE À CHAQUE OUVERTURE (§5.102) : effacer dans la boîte se décide à chaque fois.
-						setAussiBoite(false)
-						setOuverte(true)
-						onConfirmationOuverte?.()
-					}}
-					data-testid="inbox-effacer"
-				>
-					<Trash2 aria-hidden="true" size={16} />
-					{t('inbox.trash.delete')}
-				</Button>
+				{/* LES DEUX COMMANDES RESTENT VOISINES (§5.102 révisé) : groupées, elles passent à la ligne ensemble — vu en
+				    capture à 1440 px, la colonne du message étroite laissait « Supprimer partout » seule sur sa ligne. */}
+				<span className="flex flex-wrap items-start gap-2" data-testid="inbox-commandes-suppression">
+					{commande('ici')}
+					{/* ABSENTE, ET NON DÉSACTIVÉE, QUAND LA BASE NE L'OFFRE PAS (§29.11) : il n'y a pas de boîte à nommer. */}
+					{effacableDansBoite ? commande('partout') : null}
+				</span>
 			</div>
-			{ouverte ? (
+			{/* LA SUSPENSION SE DIT (décision 934) : ce qu'un clic fera, et le geste qui rétablit la confirmation. */}
+			{echeance !== null ? (
+				<p className="flex flex-wrap items-center gap-2 text-[13px] text-text-2" data-testid="inbox-suppression-suspendue">
+					<span id={idSuspension}>{t('inbox.delete.suspended', { heure: heureCourte(echeance) })}</span>
+					<Button variante="discret" taille="compacte" onClick={redemander} data-testid="inbox-suppression-redemander">
+						{t('inbox.delete.ask')}
+					</Button>
+				</p>
+			) : null}
+			{ouverte === null ? phraseDeRefus : null}
+			{ouverte !== null ? (
 				<div
 					role="group"
-					aria-label={t('inbox.trash.confirm.group')}
+					aria-label={t('inbox.delete.confirm.group')}
 					aria-describedby={idQuestion}
-					data-testid="inbox-effacer-confirmation"
+					data-testid="inbox-suppression-confirmation"
+					data-etendue={ouverte}
 					className="flex flex-col gap-3 rounded-sm border border-border p-3"
 					onKeyDown={(evenement) => {
-						if (evenement.key === 'Escape' && !enVol) {
+						if (evenement.key === 'Escape' && enVol === null) {
 							evenement.stopPropagation()
 							abandonner()
 						}
 					}}
 				>
 					<div id={idQuestion} className="flex flex-col gap-1">
-						<p className="font-medium break-words">{t('inbox.trash.confirm.question', { objet })}</p>
+						<p className="font-medium break-words">
+							{t(ouverte === 'ici' ? 'inbox.delete.confirm.question.here' : 'inbox.delete.confirm.question.everywhere', {
+								objet,
+							})}
+						</p>
 						<p className="text-sm text-text-2">
 							{retention.statut === 'pret'
-								? t('inbox.trash.confirm.retention', { n: String(retention.donnees) })
-								: t('inbox.trash.confirm.retentionUnknown')}
+								? t(ouverte === 'ici' ? 'inbox.delete.confirm.effect.here' : 'inbox.delete.confirm.effect.everywhere', {
+										n: String(retention.donnees),
+									})
+								: t(
+										ouverte === 'ici'
+											? 'inbox.delete.confirm.effect.hereUnknown'
+											: 'inbox.delete.confirm.effect.everywhereUnknown',
+									)}
 						</p>
 					</div>
-					{/* ABSENTE, ET NON DÉSACTIVÉE, QUAND LA BASE NE L'OFFRE PAS (§5.102) : il n'y a pas de boîte à nommer. */}
-					{effacableDansBoite ? (
-						<div className="flex flex-col gap-1">
-							<label className="inline-flex min-h-[var(--size-target)] items-center gap-2 cursor-pointer">
-								<input
-									type="checkbox"
-									data-testid="inbox-effacer-boite"
-									checked={aussiBoite}
-									disabled={enVol}
-									onChange={(evenement) => setAussiBoite(evenement.target.checked)}
-									aria-describedby={idAide}
-									className="size-6 shrink-0 accent-brand"
-								/>
-								{t('inbox.trash.confirm.mailbox')}
-							</label>
-							<p id={idAide} className="text-sm text-text-2">
-								{t('inbox.trash.confirm.mailboxHelp')}
-							</p>
-						</div>
-					) : null}
-					{refus !== null ? (
-						<p
-							role="alert"
-							data-testid="inbox-effacer-refus"
-							className="rounded-sm bg-danger-soft text-danger-on-soft px-3 py-2 text-sm"
-						>
-							{t(REFUS_EFFACEMENT[refus])}
-						</p>
-					) : null}
+					<label className="inline-flex min-h-[var(--size-target)] items-center gap-2 cursor-pointer">
+						<input
+							type="checkbox"
+							data-testid="inbox-suppression-sans-confirmation"
+							checked={sansDemander}
+							disabled={enVol !== null}
+							onChange={(evenement) => setSansDemander(evenement.target.checked)}
+							className="size-6 shrink-0 accent-brand"
+						/>
+						{t('inbox.delete.confirm.skip')}
+					</label>
+					{phraseDeRefus}
 					{/* SOUS `md`, L'UN SOUS L'AUTRE, LE DESTRUCTIF EN DERNIER (§5.102). */}
 					<div className="flex flex-col gap-2 md:flex-row">
 						<Button
 							ref={refAnnuler}
-							disabled={enVol}
+							disabled={enVol !== null}
 							onClick={abandonner}
-							data-testid="inbox-effacer-annuler"
+							data-testid="inbox-suppression-annuler"
 						>
 							{t('inbox.trash.confirm.cancel')}
 						</Button>
 						<Button
 							variante="destructif"
-							disabled={enVol}
-							aria-busy={enVol ? 'true' : undefined}
+							disabled={enVol !== null}
+							aria-busy={enVol !== null ? 'true' : undefined}
 							onClick={() => void confirmer()}
-							data-testid="inbox-effacer-confirmer"
+							data-testid="inbox-suppression-confirmer"
 						>
 							<Trash2 aria-hidden="true" size={16} />
-							{enVol ? t('inbox.trash.confirm.pending') : t('inbox.trash.confirm.submit')}
+							{enVol !== null
+								? t('inbox.delete.confirm.pending')
+								: t(ouverte === 'ici' ? 'inbox.delete.here' : 'inbox.delete.everywhere')}
 						</Button>
 					</div>
 				</div>

@@ -94,7 +94,7 @@ test.describe('les pastilles dans l’inbox (docs/DESIGN_SYSTEM.md §5.103)', ()
 		await expect(commande).toBeFocused()
 	})
 
-	test('à la souris : poser une pastille, la base la signe à la main ; la confirmation d’« Effacer » et le panneau s’excluent', async ({
+	test('à la souris : poser une pastille, la base la signe à la main ; la confirmation de « Supprimer ici » et le panneau s’excluent', async ({
 		page,
 		request,
 	}) => {
@@ -114,10 +114,10 @@ test.describe('les pastilles dans l’inbox (docs/DESIGN_SYSTEM.md §5.103)', ()
 		})
 		expect(await reponse.json()).toEqual([{ source: 'manual', applied: true }])
 
-		await ouvert.getByTestId('inbox-effacer').click()
+		await ouvert.getByTestId('inbox-supprimer-ici').click()
 		await expect(panneau).toHaveCount(0)
 		await ouvert.getByTestId('inbox-pastilles').click()
-		await expect(page.getByRole('group', { name: 'Effacer ce message' })).toHaveCount(0)
+		await expect(page.getByRole('group', { name: 'Supprimer ce message' })).toHaveCount(0)
 		await expect(panneau).toBeVisible()
 	})
 

@@ -19787,6 +19787,17 @@ pendant 1 heure. »
   clavier aux quatre paliers ; captures ; `corbeille-inbox.spec.ts` révisée ;
 - **T3** — le manuel §12.2 et ses images ; le contrat (la webapp) ; la clôture.
 **DoD** : unitaires ; E2E souris et clavier ; captures observées aux quatre paliers ; manuel vérifié ; contrat.
+**Avancement** :
+- **T1** — faite (`47115655`) ;
+- **T2** — faite : `RangeeCommandesMessage` (`webapp/src/app/CorbeilleInbox.tsx`), la mémoire d'une heure
+  (`webapp/src/lib/suppression-sans-confirmation.ts`), l'annonce (`RouteInbox.tsx`), les textes (`fr.ts`) ; Vitest 66 sur
+  le périmètre (la mémoire, les deux commandes, la confirmation, la suspension, « Redemander ») ; E2E `ui`
+  `corbeille-inbox` et `pastilles-inbox` 14/14 — souris, clavier (la commande « partout » absente pour le business
+  developer), « Ne plus demander pendant 1 heure » puis « Redemander », quatre paliers ; captures `docs/captures/CRM-151`
+  observées. **Défaut trouvé par la capture et corrigé** : à 1440 px, « Supprimer partout » partait seule sur sa ligne ;
+  les deux commandes sont groupées (`docs/DESIGN_SYSTEM.md` §5.102), et l'E2E des paliers le vérifie (rouge avant : 48 px
+  d'écart) ;
+- **T3** — à faire.
 
 ### CRM-152 — Organisations : les tracks de chaque organisation, par ses contacts ; recherche, filtres et tri de la liste `[@]`
 *Prise en charge : session interactive 4891a451 (p2enjoy-crm-d7, ex-32) depuis 2026-11-17 17:03 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*

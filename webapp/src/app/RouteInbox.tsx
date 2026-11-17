@@ -144,7 +144,7 @@ import {
 	type DossierEnvoi,
 } from '../lib/outbox'
 import { SelecteurClassement, lecteurBase } from './SelecteurClassement'
-import { EntreeCorbeille, PanneauCorbeille, RangeeCommandesMessage } from './CorbeilleInbox'
+import { EntreeCorbeille, PanneauCorbeille, RangeeCommandesMessage, type EtendueSuppression } from './CorbeilleInbox'
 import {
 	PARAMETRE_CORBEILLE,
 	VALEUR_CORBEILLE,
@@ -1704,7 +1704,8 @@ function PanneauMessage({
 	/** `CRM-138` T3 : la rétention de la corbeille, lue en base, que la confirmation d'« Effacer » cite. */
 	readonly retention: EtatAsync<number>
 	/** `CRM-138` T3 : le message vient d'être mis à la corbeille. */
-	readonly onEfface: (id: string) => void
+	/** `CRM-151` : supprimé ici ou partout, l'annonce le dit (§29.11). */
+	readonly onEfface: (id: string, etendue: EtendueSuppression) => void
 	readonly etat: EtatAsync<MessageComplet | null>
 	readonly onRetour: () => void
 	readonly onReprise: () => void
@@ -1807,7 +1808,7 @@ function PanneauMessage({
 										objet={donneesOuvertes.objet}
 										effacableDansBoite={donneesOuvertes.effacableDansBoite}
 										retention={retention}
-										onEfface={() => onEfface(idAffiche ?? '')}
+										onEfface={(etendue) => onEfface(idAffiche ?? '', etendue)}
 										refermerConfirmation={pastilles.refermerConfirmation}
 										onConfirmationOuverte={pastilles.onConfirmationOuverte}
 										commandes={
@@ -2343,11 +2344,11 @@ export function RouteInbox() {
 	// dossier si la liste est vide. Le rang de la ligne est relevé AVANT la relecture.
 	const focusApresEffacement = useRef<{ readonly rang: number; readonly avant: unknown } | null>(null)
 	const apresEffacement = useCallback(
-		(_id: string) => {
+		(_id: string, etendue: EtendueSuppression) => {
 			const lignes = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-testid="inbox-message"]'))
 			const rang = lignes.findIndex((ligne) => ligne.getAttribute('aria-current') === 'true')
 			focusApresEffacement.current = { rang: Math.max(rang, 0), avant: liste.etat }
-			setAnnonce(t('inbox.trash.announce.deleted'))
+			setAnnonce(t(etendue === 'ici' ? 'inbox.delete.announce.here' : 'inbox.delete.announce.everywhere'))
 			setIdOuvert(null)
 			setEtage('liste')
 			arbre.recharger()

@@ -8502,7 +8502,11 @@ l'air.
     deux commandes suppriment au clic ; un refus se dit alors sous la rangée, même forme que dans le bloc ;
   - **l'annonce** : « Message supprimé ici. » ou « Message supprimé partout. » ; la corbeille et le fil gardent « effacé »
     (décision 934 : le même geste, le manuel le dit) ;
-  - sous `md`, la rangée passe à la ligne, les deux commandes restant voisines ; aucune icône, aucun jeton nouveau.
+  - la rangée passe à la ligne dès que sa colonne manque de place — à 1440 px déjà, où le message n'a que la sienne —, et
+    **les deux commandes restent voisines** : elles forment un groupe qui passe à la ligne d'un bloc
+    (`inbox-commandes-suppression`), et ne se sépare que si une ligne entière ne le contient pas (vu en capture à
+    1440 px : « Supprimer partout » partait seule sur sa ligne ; l'E2E des quatre paliers le vérifie) ; aucune icône, aucun
+    jeton nouveau.
 
 ### 5.103 Les pastilles d'un mail : dans la liste, le message ouvert, le filtre, et Réglages ▸ Pastilles des mails — `CRM-141`
 

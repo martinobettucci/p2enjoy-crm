@@ -3,6 +3,10 @@
 //           « boîte mail » offerte à la titulaire de la boîte et absente pour qui n'en écrit aucune, le dossier « Corbeille »
 //           et « Restaurer », les lignes « Message effacé » et « Message restauré » au fil de l'affaire, l'adresse
 //           `?corbeille=oui`, et les captures aux quatre paliers
+// @verifies CRM-151 (docs/BACKLOG.md) — tranche T2 : « Supprimer ici » et « Supprimer partout » à la souris et au clavier,
+//           chacun confirmé en rappelant l'effet, « Supprimer partout » absente pour qui n'écrit aucune boîte, « Ne plus
+//           demander pendant 1 heure » puis la suppression sans confirmation, la mention et « Redemander », aux quatre paliers
+//           (docs/SPEC-mail-subsystem.md §29.11 ; docs/DESIGN_SYSTEM.md §5.102 révisé ; décisions 928 et 934)
 // @verifies docs/SPEC-mail-subsystem.md §29.1, §29.10 (ligne « E2E ui ») ; docs/DESIGN_SYSTEM.md §5.102, §5.13, §5.16 ;
 //           docs/SPEC-cards.md §16.14.11 ; décisions 878, 917 et 921 ; CLAUDE.md §15, §16
 //
@@ -17,7 +21,8 @@ import { connecterAvecLeLabs, expect, test } from './fixtures'
 import { PALIERS, capturer } from './captures'
 import { URL_API, enTetesService } from '../api/jetons'
 
-const UNITE = 'CRM-138'
+// Les captures montrent la rangée et la confirmation de `CRM-151`, qui remplacent celles de `CRM-138`.
+const UNITE = 'CRM-151'
 const ADMIN = 'admin@p2enjoy.test'
 const BIZDEV = 'bizdev@p2enjoy.test'
 const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
@@ -87,7 +92,7 @@ test.afterEach(async ({ request }) => {
 
 test.use({ viewport: { width: 1440, height: 900 } })
 
-test('à la souris : non lu libellé, sommeil en mots, effacer puis annuler, effacer avec la case, Corbeille, Restaurer', async ({
+test('à la souris : non lu libellé, sommeil en mots, supprimer ici puis annuler, supprimer partout, Corbeille, Restaurer', async ({
 	page,
 	request,
 }) => {
@@ -95,15 +100,16 @@ test('à la souris : non lu libellé, sommeil en mots, effacer puis annuler, eff
 	await connecterAvecLeLabs(page, ADMIN)
 	await ouvrirMessage(page, id)
 
-	// LA RANGÉE : le sommeil, puis la lecture, puis « Effacer » — trois boutons libellés (§5.102).
+	// LA RANGÉE : le sommeil, la lecture, les pastilles (`CRM-141`), puis « Supprimer ici » et « Supprimer partout »
+	// (`CRM-151`, §29.11) — Camille écrit la boîte du message : « partout » lui est offerte.
 	const rangee = page.getByTestId('inbox-commandes-message')
-	// `CRM-141` T4 (docs/DESIGN_SYSTEM.md §5.103) : « Réévaluer les pastilles » et « Pastilles » après la lecture, avant « Effacer ».
 	await expect(rangee.getByRole('button')).toHaveText([
 		'Mettre le message en sommeil',
 		'Marquer comme non lu',
 		'Réévaluer les pastilles',
 		'Pastilles',
-		'Effacer',
+		'Supprimer ici',
+		'Supprimer partout',
 	])
 	await capturer(page, 'inbox-commandes-xl-1440', UNITE)
 	await rangee.getByRole('button', { name: 'Marquer comme non lu' }).click()
@@ -111,28 +117,28 @@ test('à la souris : non lu libellé, sommeil en mots, effacer puis annuler, eff
 	await rangee.getByRole('button', { name: 'Marquer comme lu' }).click()
 	await expect(rangee.getByRole('button', { name: 'Marquer comme non lu' })).toBeVisible()
 
-	// EFFACER PUIS ANNULER : rien ne change en base.
-	await rangee.getByRole('button', { name: 'Effacer' }).click()
-	const confirmation = page.getByRole('group', { name: 'Effacer ce message' })
-	await expect(confirmation).toContainText(/Effacer «\s?Demande de devis à effacer\s?»\s?\?/)
-	await expect(confirmation).toContainText("d'où vous pourrez le restaurer pendant 30 jours")
-	const caseBoite = confirmation.getByRole('checkbox', { name: /L'effacer aussi dans la boîte mail/ })
-	await expect(caseBoite).not.toBeChecked()
+	// SUPPRIMER ICI PUIS ANNULER : la confirmation rappelle l'effet ; rien ne change en base.
+	await rangee.getByRole('button', { name: 'Supprimer ici' }).click()
+	const confirmation = page.getByRole('group', { name: 'Supprimer ce message' })
+	await expect(confirmation).toContainText(/Supprimer «\s?Demande de devis à effacer\s?» ici\s?\?/)
+	await expect(confirmation).toContainText("d'où vous pourrez le restaurer pendant 30 jours. Votre boîte mail le garde.")
+	await expect(confirmation.getByRole('checkbox', { name: 'Ne plus demander pendant 1 heure' })).not.toBeChecked()
 	await expect(confirmation.getByRole('button', { name: 'Annuler' })).toBeFocused()
-	await capturer(page, 'inbox-effacer-confirmation-xl-1440', UNITE)
+	await capturer(page, 'inbox-supprimer-ici-confirmation-xl-1440', UNITE)
 	await confirmation.getByRole('button', { name: 'Annuler' }).click()
 	await expect(confirmation).toHaveCount(0)
-	await expect(rangee.getByRole('button', { name: 'Effacer' })).toBeFocused()
+	await expect(rangee.getByRole('button', { name: 'Supprimer ici' })).toBeFocused()
 	expect((await etat(request, id))?.deleted_at).toBeNull()
 
-	// EFFACER AVEC LA CASE : le message quitte la liste, le panneau se referme, un déplacement est demandé.
-	await rangee.getByRole('button', { name: 'Effacer' }).click()
-	await confirmation.getByRole('checkbox', { name: /L'effacer aussi dans la boîte mail/ }).check()
-	await confirmation.getByRole('button', { name: 'Effacer' }).click()
+	// SUPPRIMER PARTOUT : l'effet dit la boîte ; le message quitte la liste, un déplacement est demandé.
+	await rangee.getByRole('button', { name: 'Supprimer partout' }).click()
+	await expect(confirmation).toContainText("et dans la corbeille de la boîte mail qui l'a reçu, d'où restaurer ne le ressortira pas.")
+	await capturer(page, 'inbox-supprimer-partout-confirmation-xl-1440', UNITE)
+	await confirmation.getByRole('button', { name: 'Supprimer partout' }).click()
 	await expect(page.getByTestId('inbox-message-ouvert')).toHaveCount(0)
 	await expect(page.getByText('Aucun message ouvert')).toBeVisible()
 	await expect(page.getByTestId('inbox-message').filter({ hasText: 'Demande de devis à effacer' })).toHaveCount(0)
-	await expect(page.getByRole('status').filter({ hasText: 'Message mis à la corbeille.' })).toHaveCount(1)
+	await expect(page.getByRole('status').filter({ hasText: 'Message supprimé partout.' })).toHaveCount(1)
 	const efface = await etat(request, id)
 	expect(efface?.deleted_at).not.toBeNull()
 	expect(efface?.deleted_by).toBe(CAMILLE)
@@ -167,7 +173,7 @@ test('à la souris : non lu libellé, sommeil en mots, effacer puis annuler, eff
 	await expect(page.getByTestId('inbox-message').filter({ hasText: 'Demande de devis à effacer' })).toHaveCount(1)
 })
 
-test('au clavier, pour qui lit l’affaire sans écrire la boîte : pas de case, Échap, effacer, le fil de l’affaire, restaurer', async ({
+test('au clavier, pour qui lit l’affaire sans écrire la boîte : pas de « Supprimer partout », Échap, supprimer ici, le fil, restaurer', async ({
 	page,
 	request,
 }) => {
@@ -176,13 +182,13 @@ test('au clavier, pour qui lit l’affaire sans écrire la boîte : pas de case,
 	await ouvrirMessage(page, id)
 	await expect(page.getByTestId('inbox-commandes-message').getByRole('button', { name: 'Mettre le message en sommeil' })).toBeVisible()
 
-	const effacer = page.getByTestId('inbox-effacer')
+	// DRISS N'ÉCRIT AUCUNE BOÎTE OÙ LE MESSAGE FIGURE : « Supprimer partout » est absente (la capacité de la base, §29.11).
+	await expect(page.getByTestId('inbox-supprimer-partout')).toHaveCount(0)
+	const effacer = page.getByTestId('inbox-supprimer-ici')
 	await effacer.focus()
 	await page.keyboard.press('Enter')
-	const confirmation = page.getByRole('group', { name: 'Effacer ce message' })
+	const confirmation = page.getByRole('group', { name: 'Supprimer ce message' })
 	await expect(confirmation.getByRole('button', { name: 'Annuler' })).toBeFocused()
-	// DRISS N'ÉCRIT AUCUNE BOÎTE OÙ LE MESSAGE FIGURE : la case est absente (la capacité rendue par la base, §29.1).
-	await expect(confirmation.getByRole('checkbox')).toHaveCount(0)
 	await page.keyboard.press('Escape')
 	await expect(confirmation).toHaveCount(0)
 	await expect(effacer).toBeFocused()
@@ -190,7 +196,7 @@ test('au clavier, pour qui lit l’affaire sans écrire la boîte : pas de case,
 	await page.keyboard.press('Enter')
 	await expect(confirmation.getByRole('button', { name: 'Annuler' })).toBeFocused()
 	await page.keyboard.press('Tab')
-	await expect(page.getByTestId('inbox-effacer-confirmer')).toBeFocused()
+	await expect(page.getByTestId('inbox-suppression-confirmer')).toBeFocused()
 	await page.keyboard.press('Enter')
 	await expect(page.getByTestId('inbox-message-ouvert')).toHaveCount(0)
 	// LE FOCUS NE VA JAMAIS SUR CE QUI DISPARAÎT (§5.13) : une ligne de la liste, ou l'entrée du dossier.
@@ -233,6 +239,46 @@ test('au clavier, pour qui lit l’affaire sans écrire la boîte : pas de case,
 	await expect(page.getByText(/Message restauré.*Compte rendu de réunion à effacer/).last()).toBeVisible()
 })
 
+test('« Ne plus demander pendant 1 heure » : la suppression suivante sans confirmation, la mention, puis « Redemander »', async ({
+	page,
+	request,
+}) => {
+	const premier = await poser(request, 'Relance à supprimer, première', false)
+	const second = await poser(request, 'Relance à supprimer, seconde', false)
+	const troisieme = await poser(request, 'Relance à supprimer, troisième', false)
+	await connecterAvecLeLabs(page, ADMIN)
+	await ouvrirMessage(page, premier)
+	await page.getByTestId('inbox-supprimer-ici').click()
+	const confirmation = page.getByRole('group', { name: 'Supprimer ce message' })
+	await confirmation.getByRole('checkbox', { name: 'Ne plus demander pendant 1 heure' }).check()
+	await confirmation.getByRole('button', { name: 'Supprimer ici' }).click()
+	await expect(page.getByRole('status').filter({ hasText: 'Message supprimé ici.' })).toHaveCount(1)
+	expect((await etat(request, premier))?.deleted_at).not.toBeNull()
+	expect(await deplacements(request, premier)).toEqual([])
+
+	// SUSPENDUE : la rangée le dit, et un clic supprime aussitôt — ici, « partout », avec le déplacement demandé.
+	await ouvrirMessage(page, second)
+	const mention = page.getByTestId('inbox-suppression-suspendue')
+	await expect(mention).toContainText(/Sans confirmation jusqu’à \d\d:\d\d/)
+	await capturer(page, 'inbox-suppression-suspendue-xl-1440', UNITE)
+	await page.getByTestId('inbox-supprimer-partout').click()
+	await expect(page.getByTestId('inbox-message-ouvert')).toHaveCount(0)
+	await expect(page.getByRole('group', { name: 'Supprimer ce message' })).toHaveCount(0)
+	expect((await etat(request, second))?.deleted_at).not.toBeNull()
+	expect((await deplacements(request, second)).length).toBe(1)
+
+	// « REDEMANDER » rétablit la confirmation ; la suspension vit dans l'onglet, la page rechargée la garde. Recharger
+	// AVANT d'ouvrir : l'ouverture retire `message` de l'adresse, un rechargement après reviendrait à la liste.
+	await page.reload()
+	await ouvrirMessage(page, troisieme)
+	await expect(page.getByTestId('inbox-suppression-suspendue')).toBeVisible()
+	await page.getByTestId('inbox-suppression-redemander').click()
+	await expect(page.getByTestId('inbox-suppression-suspendue')).toHaveCount(0)
+	await page.getByTestId('inbox-supprimer-ici').click()
+	await expect(page.getByRole('group', { name: 'Supprimer ce message' })).toBeVisible()
+	expect((await etat(request, troisieme))?.deleted_at).toBeNull()
+})
+
 test.describe('les quatre paliers', () => {
 	for (const palier of PALIERS) {
 		test(`palier ${palier.nom} : la rangée, la confirmation et la corbeille tiennent, sans défilement horizontal`, async ({
@@ -247,13 +293,17 @@ test.describe('les quatre paliers', () => {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			await connecterAvecLeLabs(page, ADMIN)
 			await ouvrirMessage(page, id)
-			await page.getByTestId('inbox-effacer').click()
-			await expect(page.getByTestId('inbox-effacer-confirmation')).toBeVisible()
-			await page.getByTestId('inbox-effacer-confirmation').scrollIntoViewIfNeeded()
+			// LES DEUX COMMANDES RESTENT VOISINES (§5.102 révisé) : sur la même ligne, à chaque palier.
+			const ici = await page.getByTestId('inbox-supprimer-ici').boundingBox()
+			const partout = await page.getByTestId('inbox-supprimer-partout').boundingBox()
+			expect(Math.abs(ici!.y - partout!.y), '« Supprimer ici » et « Supprimer partout » sur la même ligne').toBeLessThan(2)
+			await page.getByTestId('inbox-supprimer-partout').click()
+			await expect(page.getByTestId('inbox-suppression-confirmation')).toBeVisible()
+			await page.getByTestId('inbox-suppression-confirmation').scrollIntoViewIfNeeded()
 			await capturer(page, `inbox-palier-confirmation-${palier.nom}`, UNITE)
 			let largeurs = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth])
 			expect(largeurs[0], 'la page ne défile jamais horizontalement (§7)').toBeLessThanOrEqual(largeurs[1]!)
-			await page.getByTestId('inbox-effacer-confirmer').click()
+			await page.getByTestId('inbox-suppression-confirmer').click()
 			await expect(page.getByTestId('inbox-message-ouvert')).toHaveCount(0)
 
 			await page.goto('/inbox?courrier=tous&corbeille=oui')

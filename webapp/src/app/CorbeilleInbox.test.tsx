@@ -2,6 +2,9 @@
 //           offerte selon la capacité et décochée à chaque ouverture, l'appel envoyé, le refus dans le bloc), la liste de la
 //           corbeille (l'auteur et la date inconnus nommés, l'état du déplacement en toutes lettres, « Restaurer » sans
 //           confirmation et son refus dans la ligne)
+// @verifies CRM-151 (docs/BACKLOG.md) — tranche T2 : « Supprimer ici » et « Supprimer partout » — la commande absente sans
+//           capacité, la confirmation qui rappelle l'effet, la case d'une heure posée au seul succès, la suspension dite et
+//           « Redemander », le refus sous la rangée — docs/SPEC-mail-subsystem.md §29.11 ; docs/DESIGN_SYSTEM.md §5.102 révisé
 // @verifies CRM-141 (docs/BACKLOG.md) — tranche T4 : la confirmation et le panneau « Pastilles » s'excluent, hors effacement
 //           en vol (docs/DESIGN_SYSTEM.md §5.103)
 // @verifies docs/DESIGN_SYSTEM.md §5.102, §5.16, §5.13 ; docs/SPEC-mail-subsystem.md §29.1, §29.3 à §29.5 ; décision 921
@@ -12,7 +15,8 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createRef } from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { CLE_SUPPRESSION_SANS_CONFIRMATION } from '../lib/suppression-sans-confirmation'
 import type { ClientCrm } from '../lib/supabase'
 import type { MessageEnCorbeille } from '../lib/corbeille-inbox'
 
@@ -49,81 +53,105 @@ function monterRangee(effacableDansBoite: boolean, onEfface = vi.fn()) {
 	return onEfface
 }
 
-describe('« Effacer » et sa confirmation dans le flux (§5.102)', () => {
-	it('la commande suit le sommeil, ouvre une confirmation qui nomme le message, et le focus entre sur « Annuler »', async () => {
-		monterRangee(false)
-		const rangee = screen.getByTestId('inbox-commandes-message')
-		const boutons = Array.from(rangee.querySelectorAll('button')).map((bouton) => bouton.textContent)
-		expect(boutons).toEqual(['Mettre le message en sommeil', 'Effacer'])
-		await userEvent.click(screen.getByRole('button', { name: 'Effacer' }))
-		const groupe = screen.getByRole('group', { name: 'Effacer ce message' })
-		// Les espaces de la question sont insécables (`\s` les reconnaît) : le « ? » ne part jamais seul à la ligne.
-		expect(groupe.textContent).toMatch(/Effacer «\u00a0Devis signé\u00a0»\u202f\?/)
-		expect(groupe.textContent).toContain("d'où vous pourrez le restaurer pendant 30 jours")
-		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Annuler' }))
-	})
+const accepter = (appels: unknown[] = []) => {
+	injecte.rpc = async (fonction, corps) => {
+		appels.push([fonction, corps])
+		return { data: { message_id: 'm1' }, error: null, status: 200 }
+	}
+	return appels
+}
 
-	it('`Échap` abandonne et rend le focus à « Effacer »', async () => {
-		monterRangee(false)
-		await userEvent.click(screen.getByRole('button', { name: 'Effacer' }))
-		await userEvent.keyboard('{Escape}')
-		expect(screen.queryByRole('group', { name: 'Effacer ce message' })).toBeNull()
-		await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('inbox-effacer')))
-	})
+describe('« Supprimer ici » et « Supprimer partout » (§29.11, §5.102 révisé)', () => {
+	beforeEach(() => sessionStorage.clear())
 
-	it('sans la capacité rendue par la base, la case est ABSENTE, non désactivée', async () => {
-		monterRangee(false)
-		await userEvent.click(screen.getByRole('button', { name: 'Effacer' }))
-		expect(screen.queryByRole('checkbox')).toBeNull()
-	})
-
-	it('avec elle, la case est offerte, décochée, décrite, et décochée de nouveau à chaque ouverture', async () => {
+	it('les deux commandes suivent les autres ; « Supprimer partout » est ABSENTE sans la capacité de la base', () => {
 		monterRangee(true)
-		await userEvent.click(screen.getByRole('button', { name: 'Effacer' }))
-		const caseBoite = screen.getByRole<HTMLInputElement>('checkbox', { name: /L'effacer aussi dans la boîte mail/ })
-		expect(caseBoite.checked).toBe(false)
-		expect(caseBoite.getAttribute('aria-describedby')).not.toBeNull()
-		expect(document.getElementById(caseBoite.getAttribute('aria-describedby') ?? '')?.textContent).toContain(
-			"Restaurer ne l'en ressortira pas",
-		)
-		await userEvent.click(caseBoite)
-		expect(caseBoite.checked).toBe(true)
-		await userEvent.click(screen.getByRole('button', { name: 'Annuler' }))
-		await userEvent.click(screen.getByRole('button', { name: 'Effacer' }))
-		expect(screen.getByRole<HTMLInputElement>('checkbox', { name: /L'effacer aussi dans la boîte mail/ }).checked).toBe(false)
+		const boutons = Array.from(screen.getByTestId('inbox-commandes-message').querySelectorAll('button')).map((b) => b.textContent)
+		expect(boutons).toEqual(['Mettre le message en sommeil', 'Supprimer ici', 'Supprimer partout'])
+		cleanup()
+		monterRangee(false)
+		expect(screen.queryByRole('button', { name: 'Supprimer partout' })).toBeNull()
+		expect(screen.getByRole('button', { name: 'Supprimer ici' })).toBeTruthy()
 	})
 
-	it('confirmer envoie `delete_message` avec la case, puis rend la main à l’écran', async () => {
-		const appels: unknown[] = []
-		injecte.rpc = async (fonction, corps) => {
-			appels.push([fonction, corps])
-			return { data: { message_id: 'm1' }, error: null, status: 200 }
-		}
+	it('« Supprimer ici » : la confirmation rappelle l’effet, porte la case décochée, et le focus entre sur « Annuler »', async () => {
+		monterRangee(true)
+		await userEvent.click(screen.getByRole('button', { name: 'Supprimer ici' }))
+		const groupe = screen.getByRole('group', { name: 'Supprimer ce message' })
+		expect(groupe.textContent).toMatch(/Supprimer «\u00a0Devis signé\u00a0» ici\u202f\?/)
+		expect(groupe.textContent).toContain('pendant 30 jours. Votre boîte mail le garde.')
+		expect(screen.getByRole<HTMLInputElement>('checkbox', { name: 'Ne plus demander pendant 1 heure' }).checked).toBe(false)
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Annuler' }))
+		await userEvent.keyboard('{Escape}')
+		expect(screen.queryByRole('group', { name: 'Supprimer ce message' })).toBeNull()
+		await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('inbox-supprimer-ici')))
+	})
+
+	it('« Supprimer partout » envoie la boîte ; « Supprimer ici » ne l’envoie pas ; l’étendue est rendue à l’écran', async () => {
+		const appels = accepter()
 		const onEfface = monterRangee(true)
-		await userEvent.click(screen.getByRole('button', { name: 'Effacer' }))
-		await userEvent.click(screen.getByRole('checkbox'))
-		const groupe = screen.getByRole('group', { name: 'Effacer ce message' })
-		await userEvent.click(Array.from(groupe.querySelectorAll('button')).find((b) => b.textContent === 'Effacer')!)
-		await waitFor(() => expect(onEfface).toHaveBeenCalledTimes(1))
-		expect(appels).toEqual([['delete_message', { p_message_id: 'm1', p_also_mailbox: true }]])
-		expect(screen.queryByRole('group', { name: 'Effacer ce message' })).toBeNull()
+		await userEvent.click(screen.getByRole('button', { name: 'Supprimer partout' }))
+		const groupe = screen.getByRole('group', { name: 'Supprimer ce message' })
+		expect(groupe.textContent).toContain("d'où restaurer ne le ressortira pas")
+		await userEvent.click(screen.getByTestId('inbox-suppression-confirmer'))
+		await waitFor(() => expect(onEfface).toHaveBeenCalledWith('partout'))
+		await userEvent.click(screen.getByRole('button', { name: 'Supprimer ici' }))
+		await userEvent.click(screen.getByTestId('inbox-suppression-confirmer'))
+		await waitFor(() => expect(onEfface).toHaveBeenLastCalledWith('ici'))
+		expect(appels).toEqual([
+			['delete_message', { p_message_id: 'm1', p_also_mailbox: true }],
+			['delete_message', { p_message_id: 'm1', p_also_mailbox: false }],
+		])
 	})
 
-	it('un refus se dit DANS le bloc, qui reste ouvert, et rien n’est rendu à l’écran', async () => {
+	it('la case cochée suspend la confirmation : la rangée le dit, le clic suivant supprime aussitôt, « Redemander » la rétablit', async () => {
+		const appels = accepter()
+		const onEfface = monterRangee(true)
+		await userEvent.click(screen.getByRole('button', { name: 'Supprimer ici' }))
+		await userEvent.click(screen.getByRole('checkbox', { name: 'Ne plus demander pendant 1 heure' }))
+		await userEvent.click(screen.getByTestId('inbox-suppression-confirmer'))
+		await waitFor(() => expect(onEfface).toHaveBeenCalledTimes(1))
+		const mention = screen.getByTestId('inbox-suppression-suspendue')
+		expect(mention.textContent).toMatch(/Sans confirmation jusqu’à \d\d:\d\d/)
+		expect(sessionStorage.getItem(CLE_SUPPRESSION_SANS_CONFIRMATION)).not.toBeNull()
+		// La commande décrit ce qu'un clic fera.
+		expect(screen.getByTestId('inbox-supprimer-partout').getAttribute('aria-describedby')).not.toBeNull()
+
+		await userEvent.click(screen.getByRole('button', { name: 'Supprimer partout' }))
+		await waitFor(() => expect(onEfface).toHaveBeenLastCalledWith('partout'))
+		expect(screen.queryByRole('group', { name: 'Supprimer ce message' })).toBeNull()
+		expect(appels).toHaveLength(2)
+
+		await userEvent.click(screen.getByTestId('inbox-suppression-redemander'))
+		expect(screen.queryByTestId('inbox-suppression-suspendue')).toBeNull()
+		expect(sessionStorage.getItem(CLE_SUPPRESSION_SANS_CONFIRMATION)).toBeNull()
+		await userEvent.click(screen.getByRole('button', { name: 'Supprimer ici' }))
+		expect(screen.getByRole('group', { name: 'Supprimer ce message' })).toBeTruthy()
+	})
+
+	it('la case n’agit qu’au succès : un refus garde le bloc ouvert et ne suspend rien', async () => {
 		injecte.rpc = async () => ({ data: null, error: { message: 'no_writable_mailbox' }, status: 400 })
 		const onEfface = monterRangee(true)
-		await userEvent.click(screen.getByRole('button', { name: 'Effacer' }))
-		await userEvent.click(screen.getByRole('checkbox'))
-		await userEvent.click(screen.getByTestId('inbox-effacer-confirmer'))
-		const refus = await screen.findByRole('alert')
-		expect(refus.textContent).toContain('effacez-le sans cocher la case')
-		expect(screen.getByRole('group', { name: 'Effacer ce message' })).not.toBeNull()
+		await userEvent.click(screen.getByRole('button', { name: 'Supprimer partout' }))
+		await userEvent.click(screen.getByRole('checkbox', { name: 'Ne plus demander pendant 1 heure' }))
+		await userEvent.click(screen.getByTestId('inbox-suppression-confirmer'))
+		expect((await screen.findByRole('alert')).textContent).toBeTruthy()
+		expect(screen.getByRole('group', { name: 'Supprimer ce message' })).toBeTruthy()
+		expect(onEfface).not.toHaveBeenCalled()
+		expect(sessionStorage.getItem(CLE_SUPPRESSION_SANS_CONFIRMATION)).toBeNull()
+	})
+
+	it('suspendue, un refus se dit SOUS LA RANGÉE, et rien n’est rendu à l’écran', async () => {
+		sessionStorage.setItem(CLE_SUPPRESSION_SANS_CONFIRMATION, new Date(Date.now() + 30 * 60_000).toISOString())
+		injecte.rpc = async () => ({ data: null, error: { message: 'forbidden', code: '42501' }, status: 403 })
+		const onEfface = monterRangee(false)
+		await userEvent.click(screen.getByRole('button', { name: 'Supprimer ici' }))
+		expect((await screen.findByRole('alert')).getAttribute('data-testid')).toBe('inbox-suppression-refus')
+		expect(screen.queryByRole('group', { name: 'Supprimer ce message' })).toBeNull()
 		expect(onEfface).not.toHaveBeenCalled()
 	})
 
-	// `CRM-141` T4 (§5.103) : le panneau « Pastilles » referme la confirmation, SAUF pendant un effacement en vol — son refus
-	// atterrirait sinon sur un bloc fermé, et l'écran tairait l'échec (relevé par la session ea).
-	it('CRM-141 : le panneau « Pastilles » referme la confirmation, jamais pendant un effacement en vol', async () => {
+	it('CRM-141 : le panneau « Pastilles » referme la confirmation, jamais pendant une suppression en vol', async () => {
 		let rendre: (valeur: unknown) => void = () => {}
 		injecte.rpc = () => new Promise((resoudre) => (rendre = resoudre))
 		const proprietes = {
@@ -138,15 +166,15 @@ describe('« Effacer » et sa confirmation dans le flux (§5.102)', () => {
 		const { rerender } = render(
 			<RangeeCommandesMessage {...proprietes} refermerConfirmation={0} onConfirmationOuverte={onConfirmationOuverte} />,
 		)
-		await userEvent.click(screen.getByRole('button', { name: 'Effacer' }))
+		await userEvent.click(screen.getByRole('button', { name: 'Supprimer ici' }))
 		expect(onConfirmationOuverte).toHaveBeenCalledTimes(1)
 		rerender(<RangeeCommandesMessage {...proprietes} refermerConfirmation={1} onConfirmationOuverte={onConfirmationOuverte} />)
-		expect(screen.queryByRole('group', { name: 'Effacer ce message' })).toBeNull()
+		expect(screen.queryByRole('group', { name: 'Supprimer ce message' })).toBeNull()
 
-		await userEvent.click(screen.getByRole('button', { name: 'Effacer' }))
-		await userEvent.click(screen.getByTestId('inbox-effacer-confirmer'))
+		await userEvent.click(screen.getByRole('button', { name: 'Supprimer ici' }))
+		await userEvent.click(screen.getByTestId('inbox-suppression-confirmer'))
 		rerender(<RangeeCommandesMessage {...proprietes} refermerConfirmation={2} onConfirmationOuverte={onConfirmationOuverte} />)
-		expect(screen.getByRole('group', { name: 'Effacer ce message' })).not.toBeNull()
+		expect(screen.getByRole('group', { name: 'Supprimer ce message' })).not.toBeNull()
 		rendre({ data: null, error: { message: 'boom' }, status: 500 })
 		expect(await screen.findByRole('alert')).toBeTruthy()
 	})
