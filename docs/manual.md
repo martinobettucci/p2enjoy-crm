@@ -6723,6 +6723,12 @@ Chaque appel de l'assistant est inscrit, sans son contenu : la date, le compte, 
 retient une seule issue, et **« Entrées plus anciennes »** remonte le temps. La fiche d'un utilisateur montre ses
 propres appels.
 
+**« Refusé par le CRM »** couvre aussi une demande que le connecteur ne peut pas satisfaire telle quelle : une étape, un
+membre ou une étiquette dont le nom n'existe pas, une date mal formée, un champ inconnu, un renseignement manquant.
+L'assistant reçoit alors un message qui dit ce qui ne va pas et, quand il le peut, les valeurs possibles ; il peut
+reformuler sa demande. **« Erreur »** ne signale qu'une panne : le CRM qui n'a pas répondu, ou un incident du
+connecteur. Des erreurs répétées méritent d'être signalées ; des refus, en général, non.
+
 ### 33.5 Ce que l'assistant sait faire
 
 ![Les familles de la grille, chacune avec ce qu'elle couvre](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/familles.jpg)

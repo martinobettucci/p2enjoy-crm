@@ -1109,6 +1109,37 @@
 			]
 		},
 		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Refusé par le CRM »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " couvre aussi une demande que le connecteur ne peut pas satisfaire telle quelle : une étape, un\nmembre ou une étiquette dont le nom n'existe pas, une date mal formée, un champ inconnu, un renseignement manquant.\nL'assistant reçoit alors un message qui dit ce qui ne va pas et, quand il le peut, les valeurs possibles ; il peut\nreformuler sa demande. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Erreur »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ne signale qu'une panne : le CRM qui n'a pas répondu, ou un incident du\nconnecteur. Des erreurs répétées méritent d'être signalées ; des refus, en général, non."
+				}
+			]
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "ce-que-l-assistant-sait-faire",

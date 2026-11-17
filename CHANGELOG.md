@@ -18,7 +18,7 @@ d'exécuter le code attendu.
 - **Une étape mal nommée n'est plus une erreur** : quand l'assistant demande de déplacer une affaire vers une étape qui
   n'existe pas dans son workflow, ou se trompe dans un nom, une date ou un champ, le connecteur refuse en disant les
   valeurs possibles, et le journal des appels l'inscrit « Refusé par le CRM ». « Erreur » ne compte plus que les vraies
-  pannes.
+  pannes. Le manuel le dit (§33.4).
 - Déploiement : l'image `mcp` seule (`docs/PROD_MIGRATIONS.md` §2.50).
 
 ## [Publié]

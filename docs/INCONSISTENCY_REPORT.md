@@ -9213,3 +9213,7 @@ l'affaire rend `erreur` ; tous les refus de la base rendent `refus_crm`.
 **La cause.** `choisir_par_nom` lève une `ToolError` simple ; l'audit (`AuditOutils`) inscrit `erreur` toute exception sans
 `issue_audit`. Le même chemin vaut pour les refus d'argument de tous les outils. **Correction décidée** (décision 928) :
 `CRM-150`, les refus du connecteur journalisés `refus_crm`.
+
+**Corrigée en développement le 2026-11-17** (`CRM-150` T1, révision `8f5632d9`) : l'étape inconnue est journalisée
+`refus_crm`, prouvée contre la vraie base par `test_integration_affaires_deplacement.py`, rouge avant. **À fermer** au
+constat en production (contrat §2.50).
