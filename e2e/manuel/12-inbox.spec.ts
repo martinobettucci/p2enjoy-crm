@@ -18,6 +18,8 @@
 // @spec CRM-138 (docs/BACKLOG.md) — tranche T5 : la rangée de boutons du message ouvert (« mettre-le-fil-en-sommeil »,
 //       nom gardé), « effacer-un-message » (la confirmation dans le flux, ouverte puis annulée) et « corbeille » (le courrier
 //       que le seed efface avec sa boîte, déplacé) — docs/DESIGN_SYSTEM.md §5.102 ; docs/SPEC-seed.md §45
+// @spec CRM-151 (docs/BACKLOG.md) — tranche T3 : « effacer-un-message » montre la confirmation de « Supprimer partout », et
+//       « sans-confirmation » la mention et « Redemander » (docs/SPEC-mail-subsystem.md §29.11 ; docs/DESIGN_SYSTEM.md §5.102)
 // @spec CRM-141 (docs/BACKLOG.md) — tranche T6 : les images des pastilles — « pastilles-dans-la-liste » et
 //       « pastilles-d-un-message » (section 12.2), « pastilles-des-mails », « pastille-archivee » et « fiche-d-une-pastille » (section 12.6) — sur la
 //       correction du seed (docs/DESIGN_SYSTEM.md §5.103 ; docs/SPEC-mail-subsystem.md §31.7 ; docs/SPEC-seed.md §46) ;
@@ -81,15 +83,35 @@ test('l’inbox : les dossiers, un fil, le classement', async ({ page }) => {
 	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'messages-de-ce-fil', cibles: [ouvert.getByRole('region', { name: 'Choisir un message du fil' })] })
 	await illustrer(page, { chapitre: CHAPITRE, section: ECRIRE, nom: 'repondre', cibles: [page.getByTestId('envoi-ouvrir')] })
 
-	// `CRM-138` : la rangée de boutons — le sommeil, la lecture, « Effacer » (§5.102) ; l'image garde son nom.
+	// `CRM-138`, `CRM-141`, `CRM-151` : la rangée de boutons — le sommeil, la lecture, les pastilles, « Supprimer ici » et
+	// « Supprimer partout » (§5.102) ; l'image garde son nom.
 	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'mettre-le-fil-en-sommeil', cibles: [page.getByTestId('inbox-commandes-message')] })
-	// « Effacer » : la confirmation dans le flux, montrée puis annulée — rien n'est effacé.
-	await page.getByTestId('inbox-effacer').click()
-	const effacement = page.getByTestId('inbox-effacer-confirmation')
+	// `CRM-151` : « Supprimer partout » — sa confirmation dans le flux, montrée puis annulée ; rien n'est supprimé. L'image
+	// garde son nom (`effacer-un-message`).
+	await page.getByTestId('inbox-supprimer-partout').click()
+	const effacement = page.getByTestId('inbox-suppression-confirmation')
 	await expect(effacement).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'effacer-un-message', cibles: [effacement] })
 	await effacement.getByRole('button', { name: 'Annuler', exact: true }).click()
 	await expect(effacement).toBeHidden()
+	// `CRM-151` : la suspension, posée dans l'onglet par son échéance comme la case la pose (§29.11), puis retirée par
+	// « Redemander » — rien n'est supprimé ni écrit en base.
+	await page.evaluate(() =>
+		sessionStorage.setItem('p2enjoy.inbox.suppression.sans-confirmation', new Date(Date.now() + 45 * 60_000).toISOString()),
+	)
+	// Le rechargement revient à la liste (l'ouverture a retiré `message` de l'adresse) : le message est rouvert.
+	await page.reload()
+	await ouvrir(page, /Refonte du site vitrine/, 'Demande de devis — refonte')
+	const suspendue = page.getByTestId('inbox-suppression-suspendue')
+	await expect(suspendue).toBeVisible()
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: LIRE,
+		nom: 'sans-confirmation',
+		cibles: [page.getByTestId('inbox-supprimer-ici'), suspendue],
+	})
+	await suspendue.getByRole('button', { name: 'Redemander' }).click()
+	await expect(suspendue).toBeHidden()
 	await page.getByTestId('fil-endormir').click()
 	const panneau = page.getByTestId('fil-panneau')
 	await expect(panneau).toBeVisible()
@@ -99,6 +121,9 @@ test('l’inbox : les dossiers, un fil, le classement', async ({ page }) => {
 
 	// Retirer de l'affaire : le bouton, puis la confirmation qui le remplace, refermée par « Annuler ».
 	const retirer = page.getByRole('button', { name: 'Retirer de l’affaire' })
+	// CENTRÉ AVANT L'IMAGE (`CRM-151`) : rouvert après le rechargement, le message laisse le bouton au ras de la fenêtre, et
+	// `scrollIntoViewIfNeeded` l'y amène à une fraction de pixel près.
+	await retirer.evaluate((element) => element.scrollIntoView({ block: 'center' }))
 	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'retirer-de-l-affaire', cibles: [retirer] })
 	await retirer.click()
 	const confirmation = page.getByTestId('inbox-retrait-confirmation')

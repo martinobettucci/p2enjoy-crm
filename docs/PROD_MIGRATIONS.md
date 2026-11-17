@@ -1230,6 +1230,20 @@ secret** : le seul composant `Infobulle` de la webapp change.
 
 **Retour arrière** : la webapp précédente ; rien n'est écrit en base.
 
+### 2.54 `CRM-151`, décisions 928 et 934 — « Supprimer ici » et « Supprimer partout » (À LIVRER : la webapp de `main` ; **hors de tout lot annoncé**)
+
+`docs/SPEC-mail-subsystem.md` §29.11 ; `docs/DESIGN_SYSTEM.md` §5.102 (révisé par `CRM-151`). **Aucune migration, aucune
+fonction, aucune variable, aucun secret** : les deux gestes appellent `public.delete_message` comme « Effacer » le faisait,
+sans ou avec le déplacement dans la boîte ; le connecteur MCP ne change pas. La suspension d'une heure vit dans l'onglet
+du navigateur (`sessionStorage`), jamais en base.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer la webapp de `main` | session de livraison | avec le lot qui l'emporte |
+| 2 | Constater | responsable, sur un message de test de sa boîte | Inbox ▸ un message : « Supprimer ici » ouvre sa confirmation, « Annuler » la referme ; « Supprimer partout » rappelle le déplacement dans la boîte ; cocher « Ne plus demander pendant 1 heure » et supprimer : la rangée dit « Sans confirmation jusqu'à … », le message suivant se supprime au clic, « Redemander » rétablit la confirmation ; le message supprimé est dans « Corbeille » et se restaure |
+
+**Retour arrière** : la webapp précédente ; rien n'est écrit en base par la livraison.
+
 ## 3. Migrations en attente
 
 **La 185** (`CRM-149` T1, décision 930), *en attente, hors de tout lot annoncé* : les prompts du connecteur

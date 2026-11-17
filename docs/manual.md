@@ -3354,8 +3354,8 @@ Entrée ouvre. Le dossier retenu et le message ouvert sont annoncés aux lecteur
 seulement signalés par une couleur.
 
 **Mettre un message en sommeil.** Sous l'en-tête du message ouvert, une rangée de boutons porte, dans cet ordre,
-« **Mettre le message en sommeil** », « Marquer comme non lu », « **Réévaluer les pastilles** », « **Pastilles** » et
-« **Effacer** » ; les deux boutons des pastilles sont décrits plus bas. Le premier ouvre un petit panneau :
+« **Mettre le message en sommeil** », « Marquer comme non lu », « **Réévaluer les pastilles** », « **Pastilles** »,
+« **Supprimer ici** » et « **Supprimer partout** » ; les boutons des pastilles et de la suppression sont décrits plus bas. Le premier ouvre un petit panneau :
 quatre échéances usuelles — demain, dans trois jours, la semaine prochaine, le mois prochain — ou une échéance de
 votre choix. Le message dort **avec ses réponses** : toute la conversation dort. Une fois le message endormi :
 
@@ -3369,7 +3369,7 @@ votre choix. Le message dort **avec ses réponses** : toute la conversation dort
   reconnaissables à leur pastille. Si un dossier ne contient plus que des messages endormis, la liste
   vous le dit et vous propose la case au lieu d'un vide muet.
 
-![La rangée de boutons du message ouvert : « Mettre le message en sommeil », « Marquer comme non lu », « Réévaluer les pastilles », « Pastilles », « Effacer »](manuel/images/l-inbox-lire-trier-et-repondre/mettre-le-fil-en-sommeil.jpg)
+![La rangée de boutons du message ouvert : « Mettre le message en sommeil », « Marquer comme non lu », « Réévaluer les pastilles », « Pastilles », « Supprimer ici », « Supprimer partout »](manuel/images/l-inbox-lire-trier-et-repondre/mettre-le-fil-en-sommeil.jpg)
 
 ![Le panneau « Jusqu'à quand ? » : quatre échéances usuelles, une autre échéance, « Mettre le message en sommeil » et « Annuler »](manuel/images/l-inbox-lire-trier-et-repondre/jusqu-a-quand.jpg)
 
@@ -3406,8 +3406,8 @@ vous envoyez ne sont pas évalués.
   écrit aussitôt ; à côté, un mot dit l'origine : posée par l'IA, « posée à la main » ou « retirée à la main ». **Un
   choix fait à la main l'emporte toujours** : une réévaluation ne remet pas une pastille que vous avez retirée, ni ne
   retire celle que vous avez posée. Une pastille archivée encore posée sur le message apparaît en dernier : elle se
-  décoche, mais ne se recoche pas. « Fermer » ou Échap referment la liste ; ouvrir la confirmation d'« Effacer » la
-  referme aussi.
+  décoche, mais ne se recoche pas. « Fermer » ou Échap referment la liste ; ouvrir la confirmation de « Supprimer ici »
+  ou de « Supprimer partout » la referme aussi.
 
 Poser, retirer et réévaluer sont réservés aux **administrateurs** et aux **business developers** de l'espace. Les
 autres voient les pastilles et la liste, boutons et cases grisés, avec un bandeau qui dit pourquoi. Sans assistant IA
@@ -3417,25 +3417,36 @@ configuré, rien n'est envoyé : les mails attendent, et vous pouvez toujours po
 
 ![La liste « Pastilles de ce message », ouverte sous la rangée de boutons : les cases, et l'origine de chaque pastille posée ou retirée](manuel/images/l-inbox-lire-trier-et-repondre/pastilles-d-un-message.jpg)
 
-**Effacer un message.** « **Effacer** », dans la rangée de boutons, ne détruit rien tout de suite : il ouvre, sous la
-rangée, une confirmation qui nomme le message et rappelle combien de jours vous pourrez le restaurer. Le curseur s'y pose
-sur « Annuler », et la touche Échap referme sans rien faire. Le second bouton « **Effacer** », rouge, met le message dans la
-**corbeille de l'inbox** : il disparaît de la liste, de l'affaire et de la recherche, et ne compte plus nulle part. Seul le
-message ouvert est effacé : les autres messages de la conversation restent. Peut effacer qui peut écrire sur le message :
-sur son affaire s'il est classé, sur une boîte où il est arrivé sinon — sa titulaire, ou un administrateur de l'espace.
+**Supprimer un message.** Deux boutons de la rangée suppriment le message ouvert :
 
-**Effacer aussi dans votre boîte mail.** Quand le message est arrivé dans une boîte que vous pouvez écrire, la
-confirmation porte une case de plus, « **L'effacer aussi dans la boîte mail (le déplacer dans sa corbeille)** », décochée
-à chaque fois. Cochée, le CRM déplace aussi le message dans le dossier corbeille de cette boîte, chez votre fournisseur de
-messagerie, dans la minute ; une boîte qui ne répond pas est réessayée. **Restaurer ne l'en ressortira pas** : la case le
-dit sous son libellé. Quand aucune boîte du message ne vous appartient, la case n'apparaît pas du tout.
+- « **Supprimer ici** » le met dans la **corbeille de l'inbox** du CRM : il disparaît de la liste, de l'affaire et de la
+  recherche, et ne compte plus nulle part ; votre boîte mail, chez votre fournisseur de messagerie, le garde ;
+- « **Supprimer partout** » fait la même chose, et déplace **aussi** le message dans le dossier corbeille de la boîte mail
+  qui l'a reçu, dans la minute ; une boîte qui ne répond pas est réessayée. **Restaurer ne l'en ressortira pas.** Ce bouton
+  n'apparaît que si le message est arrivé dans une boîte que vous pouvez écrire : la vôtre, ou une boîte de l'espace si
+  vous l'administrez.
 
-![La confirmation « Effacer » sous la rangée de boutons : le message nommé, la durée de restauration, la case de la boîte mail, « Annuler » et « Effacer »](manuel/images/l-inbox-lire-trier-et-repondre/effacer-un-message.jpg)
+Chacun ouvre d'abord, sous la rangée, une **confirmation** qui nomme le message, rappelle ce que le bouton va faire et
+combien de jours vous pourrez le restaurer. Le curseur s'y pose sur « Annuler », et la touche Échap referme sans rien
+faire ; le second bouton, rouge, supprime. Seul le message ouvert est supprimé : les autres messages de la conversation
+restent. Peut supprimer qui peut écrire sur le message : sur son affaire s'il est classé, sur une boîte où il est arrivé
+sinon — sa titulaire, ou un administrateur de l'espace.
 
-**La corbeille de l'inbox.** L'entrée « **Corbeille** », la dernière des dossiers, liste les messages effacés que vous
-pouvez voir : **ceux que vous avez effacés vous-même**, ou **tous ceux de l'espace** si vous l'administrez — la phrase en
+![La confirmation de « Supprimer partout » sous la rangée de boutons : le message nommé, l'effet rappelé, la case « Ne plus demander pendant 1 heure », « Annuler » et « Supprimer partout »](manuel/images/l-inbox-lire-trier-et-repondre/effacer-un-message.jpg)
+
+**Ne plus demander pendant 1 heure.** La confirmation porte cette case, décochée à chaque fois. Cochée, la suppression
+suivante se fait, et pendant une heure les deux boutons suppriment **dès le clic**, sans confirmation. Sous la rangée, une
+mention le rappelle — « Sans confirmation jusqu'à 17:45 », par exemple — avec « **Redemander** », qui rétablit tout de
+suite la confirmation. Ce choix ne vaut que pour **l'onglet** du navigateur où vous l'avez fait : un autre onglet, un
+autre appareil ou la fermeture de l'onglet redemandent. Il n'est enregistré nulle part ailleurs.
+
+![La mention « Sans confirmation jusqu'à … » sous la rangée de boutons, et « Redemander »](manuel/images/l-inbox-lire-trier-et-repondre/sans-confirmation.jpg)
+
+
+**La corbeille de l'inbox.** L'entrée « **Corbeille** », la dernière des dossiers, liste les messages supprimés —
+« effacés », dit la corbeille, c'est le même geste — que vous pouvez voir : **ceux que vous avez effacés vous-même**, ou **tous ceux de l'espace** si vous l'administrez — la phrase en
 tête de la liste vous le rappelle. Chaque ligne dit qui l'a effacé et quand, la date de son **effacement définitif**, et,
-si vous avez coché la case, l'état du déplacement dans votre boîte : « Déplacé dans la corbeille de la boîte » quand
+si vous avez choisi « Supprimer partout », l'état du déplacement dans votre boîte : « Déplacé dans la corbeille de la boîte » quand
 il est fait, sinon un déplacement en attente, ou impossible, avec sa raison. « **Restaurer** » le remet où il était, sans
 confirmation : dans son affaire, ou dans « Non classés ». Passé le délai — trente jours, celui de la corbeille des
 affaires —, le message est effacé définitivement, avec ses pièces jointes. La corbeille se retient dans l'adresse de la

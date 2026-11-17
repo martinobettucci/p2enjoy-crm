@@ -19759,8 +19759,7 @@ connecteur.
   `verify-mcp.sh` entier ; constater en production, dans `public.mcp_journal`, qu'un refus de cette sorte est inscrit
   `refus_crm`.
 
-### CRM-151 — Supprimer un mail : « Supprimer ici » et « Supprimer partout », confirmation courte, « Ne plus demander pendant 1 heure » `[@]`
-*Prise en charge : session interactive 152dd27d (p2enjoy-crm-45, ex-a4, ex-a8) depuis 2026-11-17 16:33 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*
+### CRM-151 — Supprimer un mail : « Supprimer ici » et « Supprimer partout », confirmation courte, « Ne plus demander pendant 1 heure » `[P]`
 
 **Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison (p2enjoy-crm-bb) ; arbitrée le
 même jour (décision 928). Révise l'« Effacer » de `CRM-138` (décisions 878, 917, 921 ; `docs/DESIGN_SYSTEM.md` §5.102).
@@ -19797,7 +19796,10 @@ pendant 1 heure. »
   observées. **Défaut trouvé par la capture et corrigé** : à 1440 px, « Supprimer partout » partait seule sur sa ligne ;
   les deux commandes sont groupées (`docs/DESIGN_SYSTEM.md` §5.102), et l'E2E des paliers le vérifie (rouge avant : 48 px
   d'écart) ;
-- **T3** — à faire.
+- **T3** — faite : le manuel §12.2 (« Supprimer un message », « Ne plus demander pendant 1 heure », la corbeille, le
+  renvoi du panneau « Pastilles ») et ses images, dont `sans-confirmation.jpg`, nouvelle, observées ; `12-inbox.spec.ts`
+  12/12 ; manuel construit, `verify-manual` 168 contrôles sans anomalie ; contrat §2.54 ; changelog.
+**Reste** : livrer la webapp avec un lot, et le constat du responsable en production (contrat §2.54, geste 2).
 
 ### CRM-152 — Organisations : les tracks de chaque organisation, par ses contacts ; recherche, filtres et tri de la liste `[@]`
 *Prise en charge : session interactive 4891a451 (p2enjoy-crm-d7, ex-32) depuis 2026-11-17 17:03 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*

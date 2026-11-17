@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-151` — « Supprimer ici » et « Supprimer partout » (décisions 928 et 934)
+
+- **Deux boutons remplacent « Effacer »** sous un message ouvert : « Supprimer ici » le met dans la corbeille de l'inbox
+  du CRM, votre boîte mail le garde ; « Supprimer partout » le déplace aussi dans la corbeille de la boîte mail. Ce
+  second bouton n'apparaît que pour qui peut écrire la boîte.
+- **Chacun demande une confirmation courte**, qui rappelle ce qu'il va faire. Elle porte la case **« Ne plus demander
+  pendant 1 heure »** : cochée, les deux boutons suppriment au clic pendant une heure, dans cet onglet seulement. La rangée
+  le dit — « Sans confirmation jusqu'à 17:45 » — avec « Redemander ».
+- La corbeille, la restauration et le fil de l'affaire ne changent pas ; ils gardent le mot « effacé ».
+- La webapp seule ; aucune migration (`docs/PROD_MIGRATIONS.md` §2.54).
+
 #### Le seed se rejoue sur une base remise à zéro (INC-359)
 
 - **Le second passage du seed s'arrêtait** sur « 3 non classé(s) non lu(s) au lieu de 2 » : la garde comptait aussi
