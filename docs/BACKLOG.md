@@ -19854,7 +19854,8 @@ filtres).
 catégories, sous ses cases existantes (consulter, ajouter, modifier) ; aucune famille nouvelle.
 **Spécification** : à écrire avant le code (`docs/SCHEMA.md`, `docs/SPEC-mcp.md` §9.2, `docs/DESIGN_SYSTEM.md`, manuel).
 
-### CRM-154 — Réorganiser les channels depuis la vue d'un track : glisser l'onglet, et « Réorganiser » vers l'arborescence `[ ]`
+### CRM-154 — Réorganiser les channels depuis la vue d'un track : glisser l'onglet, et « Réorganiser » vers l'arborescence `[@]`
+*Prise en charge : session interactive 152dd27d (p2enjoy-crm-45, ex-a4, ex-a8) depuis 2026-11-17 23:20 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*
 
 **Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison (p2enjoy-crm-bb) ; arbitrée le
 même jour (décision 935).
