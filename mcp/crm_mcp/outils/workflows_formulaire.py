@@ -7,6 +7,8 @@
 #       défaut par retrait), §7 bis.12 (exiger un champ pour une transition : `POST` simple, retrait), §7 bis.13 (la
 #       prévisualisation des effets) ; docs/SPEC-form-composer.md §2.2 à §2.7, §3.1 à §3.3 ;
 #       docs/SPEC-transition-required-fields.md §1, §2, §4
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
 """Le formulaire d'un workflow, écrit sous l'identité de la personne.
 
 Chaque outil fait l'écriture que l'éditeur de workflows fait pour le même geste ; la base réserve ces écritures à qui
@@ -24,7 +26,7 @@ from pydantic import BaseModel, Field
 
 from crm_mcp.crm import ClientCrm, Reponse
 from crm_mcp.outils.workflows import position_apres, refus_workflow
-from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable
+from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable
 
 #: Les quinze types d'un champ (docs/SPEC-form-composer.md §2.3), dans l'ordre du sélecteur de l'éditeur.
 TYPES_CHAMP = Literal[
@@ -81,21 +83,21 @@ def options_du_type(type_: str, choix: list[Choix] | None, devise: str | None) -
     non vide, et la forme `{key, label}` comme l'unicité des clés ne sont tenues que par ce contrôle (§7 bis.10.4)."""
     if type_ in TYPES_A_CHOIX:
         if not choix:
-            raise ToolError(f"A {type_} field needs choices: a non-empty list of {{key, label}}.")
+            raise RefusArgument(f"A {type_} field needs choices: a non-empty list of {{key, label}}.")
         cles = [c.key.strip() for c in choix]
         if any(not c for c in cles) or any(not c.label.strip() for c in choix):
-            raise ToolError("Every choice needs a non-blank key and label.")
+            raise RefusArgument("Every choice needs a non-blank key and label.")
         if len(set(cles)) != len(cles):
-            raise ToolError("Two choices share the same key.")
+            raise RefusArgument("Two choices share the same key.")
         return {"choices": [{"key": c.key.strip(), "label": c.label.strip()} for c in choix]}
     if choix:
-        raise ToolError(f"A {type_} field takes no choices.")
+        raise RefusArgument(f"A {type_} field takes no choices.")
     if type_ == "money":
         if not devise or not devise.strip():
-            raise ToolError("A money field needs its currency, three letters such as EUR.")
+            raise RefusArgument("A money field needs its currency, three letters such as EUR.")
         return {"currency": devise.strip().upper()}
     if devise:
-        raise ToolError(f"A {type_} field takes no currency.")
+        raise RefusArgument(f"A {type_} field takes no currency.")
     return {}
 
 
@@ -213,7 +215,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     ) -> dict[str, Any]:
         appel = appel_courant()
         if (step_id is None) == (transition_id is None):
-            raise ToolError("Give exactly one of step_id or transition_id.")
+            raise RefusArgument("Give exactly one of step_id or transition_id.")
         arguments: dict[str, Any] = {"p_field_id": field_id}
         arguments["p_step_id" if step_id is not None else "p_transition_id"] = step_id or transition_id
         reponse = await crm.rpc(appel.jeton, "previsualiser_exigence", arguments, idempotent=True)
@@ -298,7 +300,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             champ = await lire_champ(appel.jeton, field_id)
             corps["options"] = options_du_type(str(champ["type"]), choices, currency)
         if not corps:
-            raise ToolError("Give label, help_text, choices or currency; a field's key and type never change.")
+            raise RefusArgument("Give label, help_text, choices or currency; a field's key and type never change.")
         reponse = await crm.ecrire(
             appel.jeton, "PATCH", "form_fields", parametres={"id": f"eq.{field_id}", "select": COLONNES_CHAMP}, corps=corps
         )
@@ -321,7 +323,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     ) -> dict[str, Any]:
         appel = appel_courant()
         if after_field_id == field_id:
-            raise ToolError("A field cannot be placed after itself.")
+            raise RefusArgument("A field cannot be placed after itself.")
         champ = await lire_champ(appel.jeton, field_id)
         # L'ordre affiché par l'éditeur compte les champs archivés : ils occupent leur place (§7 bis.10).
         voisins = [
@@ -334,7 +336,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if after_field_id is not None:
             rangs = [i for i, c in enumerate(voisins) if c["id"] == after_field_id]
             if not rangs:
-                raise ToolError("after_field_id is not a field of the same workflow.")
+                raise RefusArgument("after_field_id is not a field of the same workflow.")
             rang = rangs[0]
         position = position_apres([float(c["position"]) for c in voisins], rang)
         reponse = await crm.ecrire(

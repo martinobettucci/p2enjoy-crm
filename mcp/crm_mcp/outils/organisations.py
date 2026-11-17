@@ -2,6 +2,8 @@
 # @spec docs/SPEC-mcp.md §9.2 sexies (la liste fixée, les refus nommés, aucune suppression), §9.1 (les lectures et
 #       écritures de l'onglet « Organisations » de la webapp, `organisations.ts`), §9.3 ; docs/SPEC-organisations.md §3
 #       (droits de la base, refus), §5 (la famille et ses outils)
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
 """Les organisations du carnet, sous l'identité de la personne : les lister, en lire une, en créer, en modifier.
 
 Les mêmes lectures que l'onglet « Organisations » et la fiche d'organisation, les mêmes écritures que leur formulaire.
@@ -22,7 +24,7 @@ from crm_mcp.crm import ClientCrm, Reponse
 from crm_mcp.outils.affaires import nettoyer_texte
 from crm_mcp.outils.affaires_ecriture import refus
 from crm_mcp.outils.contacts import facultatif
-from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable
+from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable
 
 LIMITE_MAX = 100
 COLONNES_ORGANISATION = "id,name,domain,website"
@@ -175,7 +177,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if website is not None:
             corps["website"] = facultatif(website)
         if not corps:
-            raise ToolError("Give at least one field to change.")
+            raise RefusArgument("Give at least one field to change.")
         reponse = await crm.ecrire(
             appel.jeton,
             "PATCH",

@@ -12,6 +12,8 @@
 # @spec CRM-111 (docs/BACKLOG.md) — tranche T9 : `crm_card_attach`, `crm_card_placement_update`,
 #       `crm_card_placement_archive`, et `placement_id` facultatif sur les gestes d'un rattachement (docs/SPEC-mcp.md
 #       §9.2 quindecies, décision 826 ; docs/SPEC-rattachements.md §5, §11)
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
 """Écrire sur les affaires, sous l'identité de la personne.
 
 Chaque outil appelle la fonction ou la table que la webapp appelle pour le même geste ; la base garde ses règles —
@@ -40,7 +42,7 @@ from crm_mcp.outils.affaires import (
     rattachements_lisibles,
     resume_carte,
 )
-from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable, traduire_refus
+from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable, traduire_refus
 
 TYPES_ACTIVITE = ("call", "meeting", "visio")
 LONGUEUR_MAX_COMMENTAIRE = 10_000
@@ -128,8 +130,8 @@ def choisir_par_nom(candidats: list[dict[str, Any]], nom: str, quoi: str) -> str
         return str(trouves[0]["id"])
     possibles = ", ".join(sorted({str(c.get("nom")) for c in candidats if c.get("nom")}))
     if not trouves:
-        raise ToolError(f"No {quoi} named {nom!r}. Known: {possibles}.")
-    raise ToolError(f"Several {quoi}s are named {nom!r}; ask the user which one.")
+        raise RefusArgument(f"No {quoi} named {nom!r}. Known: {possibles}.")
+    raise RefusArgument(f"Several {quoi}s are named {nom!r}; ask the user which one.")
 
 
 def instant(valeur: str, nom: str) -> str:
@@ -139,9 +141,9 @@ def instant(valeur: str, nom: str) -> str:
             return date.fromisoformat(valeur).isoformat()
         lu = datetime.fromisoformat(valeur.replace("Z", "+00:00"))
     except ValueError as erreur:
-        raise ToolError(f"{nom} must be YYYY-MM-DD or an ISO 8601 instant with its offset.") from erreur
+        raise RefusArgument(f"{nom} must be YYYY-MM-DD or an ISO 8601 instant with its offset.") from erreur
     if lu.tzinfo is None:
-        raise ToolError(f"{nom} needs a time zone offset, e.g. 2026-10-23T14:00:00+02:00.")
+        raise RefusArgument(f"{nom} needs a time zone offset, e.g. 2026-10-23T14:00:00+02:00.")
     return lu.isoformat()
 
 
@@ -238,7 +240,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         champs = {str(c["key"]): c for c in await champs_du_workflow(jeton, rattache_lu["workflow_id"], card_id)}
         inconnues = sorted(set(reponses) - set(champs))
         if inconnues:
-            raise ToolError(f"Unknown field key(s): {', '.join(inconnues)}. Known: {', '.join(sorted(champs))}.")
+            raise RefusArgument(f"Unknown field key(s): {', '.join(inconnues)}. Known: {', '.join(sorted(champs))}.")
         for cle, valeur in reponses.items():
             reponse = await crm.ecrire(
                 jeton,
@@ -394,7 +396,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     ) -> dict[str, Any]:
         appel = appel_courant()
         if type not in TYPES_ACTIVITE:
-            raise ToolError("type must be call, meeting or visio.")
+            raise RefusArgument("type must be call, meeting or visio.")
         corps: dict[str, Any] = {
             "card_id": card_id,
             "type": type,
@@ -471,7 +473,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if owner is not None:
             rattache["owner_id"] = await responsable(appel.jeton, owner, "card", card_id)
         if not entete and not rattache and not answers and not common_fields:
-            raise ToolError("Give at least one field to change.")
+            raise RefusArgument("Give at least one field to change.")
         champs: list[dict[str, Any]] = []
         if common_fields:
             # `CRM-112` T9 : les clés sont jugées avant tout geste, pour ne jamais écrire l'en-tête à moitié.
@@ -658,7 +660,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if owner is not None:
             colonnes["owner_id"] = await responsable(appel.jeton, owner, "placement", placement_id)
         if not colonnes and not answers:
-            raise ToolError("Give at least one field to change.")
+            raise RefusArgument("Give at least one field to change.")
         await ecrire_bloc(appel.jeton, appel.espace, str(lus[0]["card_id"]), lus[0], colonnes, answers or {})
         return {"placement": await placement_resume(appel.jeton, placement_id)}
 
@@ -750,7 +752,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     ) -> dict[str, Any]:
         appel = appel_courant()
         if type is not None and type not in TYPES_ACTIVITE:
-            raise ToolError("type must be call, meeting or visio.")
+            raise RefusArgument("type must be call, meeting or visio.")
         corps: dict[str, Any] = {}
         for cle, valeur in (("type", type), ("subject", subject), ("duration_minutes", duration_minutes)):
             if valeur is not None:
@@ -760,7 +762,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if body is not None:
             corps["body"] = body.strip() or None
         if not corps and participant_contact_ids is None and participant_member_ids is None:
-            raise ToolError("Give at least one field to change.")
+            raise RefusArgument("Give at least one field to change.")
         colonnes = "id,type,occurred_at,subject,edited_at"
         if corps:
             reponse = await crm.ecrire(

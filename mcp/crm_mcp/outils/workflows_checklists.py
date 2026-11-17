@@ -6,6 +6,8 @@
 #       docs/SPEC-checklists.md §3.1 (l'archive : plus ajouté aux affaires qui entrent), §3.2 (un renommage ne touche pas
 #       les points déjà copiés), §3.4 (seul un point de l'étape de départ s'exige), §4 ; docs/DESIGN_SYSTEM.md §5.70 bis
 #       et §5.18 (la position d'un point ajouté compte les archivés ; un point archivé ne se déplace pas)
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
 """Les points de checklist d'une étape, et ceux qu'une transition exige, écrits sous l'identité de la personne.
 
 Chaque outil fait l'écriture de `administration-checklists.ts`, la bibliothèque du bloc « Checklists des étapes » de
@@ -24,7 +26,7 @@ from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
 from crm_mcp.outils.workflows import position_apres, refus_workflow
-from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable
+from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable
 
 COLONNES_POINT = "id,workflow_id,step_id,label,position,archived_at"
 #: La longueur d'un libellé, celle de `LONGUEUR_MAX_POINT_ETAPE` et de `workflow_step_checklist_items_label_check`.
@@ -89,7 +91,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     ) -> dict[str, Any]:
         appel = appel_courant()
         if not label.strip():
-            raise ToolError("The label cannot be blank.")
+            raise RefusArgument("The label cannot be blank.")
         etapes = await lire(appel.jeton, "workflow_steps", {"id": f"eq.{step_id}", "select": "id,workflow_id"}, "step", step_id)
         if len(etapes) != 1:
             raise RefusCrm(introuvable("step", step_id))
@@ -130,21 +132,21 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     ) -> dict[str, Any]:
         appel = appel_courant()
         if label is None and after_item_id is None and not move_to_top:
-            raise ToolError("Give a new label, after_item_id, or move_to_top.")
+            raise RefusArgument("Give a new label, after_item_id, or move_to_top.")
         if after_item_id is not None and move_to_top:
-            raise ToolError("after_item_id and move_to_top are exclusive; choose one.")
+            raise RefusArgument("after_item_id and move_to_top are exclusive; choose one.")
         corps: dict[str, Any] = {}
         if label is not None:
             if not label.strip():
-                raise ToolError("The label cannot be blank.")
+                raise RefusArgument("The label cannot be blank.")
             # Les points déjà copiés sur les affaires gardent leur libellé (docs/SPEC-checklists.md §3.2).
             corps["label"] = label.strip()
         if after_item_id is not None or move_to_top:
             if after_item_id == item_id:
-                raise ToolError("An item cannot be placed after itself.")
+                raise RefusArgument("An item cannot be placed after itself.")
             point = await lire_point(appel.jeton, item_id)
             if point.get("archived_at") is not None:
-                raise ToolError("An archived item does not move (it keeps its place).")
+                raise RefusArgument("An archived item does not move (it keeps its place).")
             # `deplacementPoint` : parmi les points NON archivés de l'étape, le point déplacé retiré.
             voisins = [
                 p for p in await lire(appel.jeton, "workflow_step_checklist_items", {
@@ -157,7 +159,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             if after_item_id is not None:
                 rangs = [i for i, p in enumerate(voisins) if p["id"] == after_item_id]
                 if not rangs:
-                    raise ToolError("after_item_id is not an active item of the same step.")
+                    raise RefusArgument("after_item_id is not an active item of the same step.")
                 rang = rangs[0]
             corps["position"] = position_apres([float(p["position"]) for p in voisins], rang)
         reponse = await crm.ecrire(

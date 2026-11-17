@@ -6,6 +6,8 @@
 #       §9.3 ; docs/SPEC-workflow-engine.md §2.2 (modèle), §2.3 (la clé stable, jamais modifiée), §2.4 (l'ordre, le milieu
 #       de deux voisines), §2.5 (`0` n'est pas `null`), §2.6 (la garde d'un nœud occupé), §2 bis (l'écran), §2 ter
 #       (le réordonnancement, archivés compris)
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
 """Le vocabulaire des workflows — le catalogue de nœuds —, écrit sous l'identité de la personne.
 
 Chaque outil fait l'écriture que l'écran « Catalogue de nœuds » fait pour le même geste ; la base réserve ces écritures
@@ -24,7 +26,7 @@ from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
 from crm_mcp.outils.workflows import position_apres, refus_workflow
-from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable
+from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable
 
 COLONNES_NOEUD = "id,key,label,kind,color,default_probability,default_stale_after_days,position,archived_at,description"
 TYPES = Literal["open", "won", "lost"]
@@ -162,14 +164,14 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         for colonne, valeur in (("default_probability", default_probability),
                                 ("default_stale_after_days", default_stale_after_days)):
             if colonne in effaces and valeur is not None:
-                raise ToolError(f"{colonne} is both given and reset; choose one.")
+                raise RefusArgument(f"{colonne} is both given and reset; choose one.")
             if colonne in effaces:
                 # Une valeur absente vaut « ne se prononce pas », jamais zéro (§2.5).
                 corps[colonne] = None
             elif valeur is not None:
                 corps[colonne] = valeur
         if not corps:
-            raise ToolError("Give a field to change or one to reset; a node's key never changes.")
+            raise RefusArgument("Give a field to change or one to reset; a node's key never changes.")
         reponse = await crm.ecrire(
             appel.jeton, "PATCH", "workflow_nodes_catalog", parametres={"id": f"eq.{node_id}", "select": COLONNES_NOEUD},
             corps=corps,
@@ -191,7 +193,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     ) -> dict[str, Any]:
         appel = appel_courant()
         if after_node_id == node_id:
-            raise ToolError("A node cannot be placed after itself.")
+            raise RefusArgument("A node cannot be placed after itself.")
         # La liste du calcul compte les nœuds archivés : ils occupent une place à l'œil (§2 ter.3).
         voisins = [n for n in await lire(appel.jeton, {
             "workspace_id": f"eq.{appel.espace}", "select": "id,position", "order": "position.asc,label.asc",
@@ -200,7 +202,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if after_node_id is not None:
             rangs = [i for i, n in enumerate(voisins) if n["id"] == after_node_id]
             if not rangs:
-                raise ToolError("after_node_id is not a node of the same catalogue.")
+                raise RefusArgument("after_node_id is not a node of the same catalogue.")
             rang = rangs[0]
         position = position_apres([float(n["position"]) for n in voisins], rang)
         reponse = await crm.ecrire(

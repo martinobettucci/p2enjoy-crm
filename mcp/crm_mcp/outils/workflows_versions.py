@@ -6,6 +6,8 @@
 #       copie à sa source), §4.6 (la vue `workflow_derivations`), §7 ter.5 (publier), §7 ter.11 (comparer deux
 #       versions), §7 ter.12 (le plan de remappage), §7 ter.13 (la restauration transactionnelle, le plan rejoué),
 #       §7 ter.14.7 (les refus, dictionnaire fermé), §7 ter.14.8 (aucune empreinte vivante n'est transmise)
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
 """Les versions d'un workflow, sous l'identité de la personne.
 
 Chaque outil appelle la fonction que le bloc « Versions » de l'éditeur appelle pour le même geste. Publier, planifier
@@ -22,7 +24,7 @@ from pydantic import BaseModel, Field
 
 from crm_mcp.crm import ClientCrm, Reponse
 from crm_mcp.outils.workflows import refus_workflow
-from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable
+from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable
 
 #: Les refus des quatre fonctions de version, tels que la base les écrit (`classerRefusVersion`, §7 ter.14.7). Les
 #: refus d'accès restent le refus uniforme ; les autres sont nommés.
@@ -140,7 +142,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         })
         lignes = derivation.corps if derivation.reussie and isinstance(derivation.corps, list) else []
         if not lignes:
-            raise ToolError("This workflow is not a copy of another workflow: there is no source to compare with.")
+            raise RefusArgument("This workflow is not a copy of another workflow: there is no source to compare with.")
         document = await appeler(appel.jeton, "compare_workflow_with_source", {"workflow_id": workflow_id},
                                  "workflow", workflow_id, lecture=True)
         source = lignes[0]

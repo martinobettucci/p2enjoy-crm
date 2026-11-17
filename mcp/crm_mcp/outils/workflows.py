@@ -9,6 +9,8 @@
 #       étape initiale, ordre, écriture réservée à l'administrateur, étape occupée), §3 bis (création), §7 bis.4 et
 #       §7 bis.9 (les gestes de l'éditeur), §7 quater (le workflow de départ) ; docs/SPEC-administration-arborescence.md
 #       §6.2 (le déplacement en une écriture, le milieu de deux voisines)
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
 """Le workflow, ses étapes et ses transitions, écrits sous l'identité de la personne.
 
 Chaque outil fait l'écriture que l'éditeur de workflows de la webapp fait pour le même geste ; la base réserve ces
@@ -27,7 +29,7 @@ from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
 from crm_mcp.outils.affaires_ecriture import refus
-from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable
+from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable
 
 COLONNES_WORKFLOW = "id,name,scope,track_id,is_default,archived_at,derived_from_workflow_id,track:tracks(name)"
 COLONNES_ETAPE = (
@@ -141,7 +143,7 @@ def position_apres(positions: list[float], rang: int | None) -> float:
     distinguer de ses voisines est refusée plutôt qu'écrite sans effet (`CLAUDE.md` §18)."""
     if rang is None:
         if not positions:
-            raise ToolError("Nothing to reorder: the step is alone in its workflow.")
+            raise RefusArgument("Nothing to reorder: the step is alone in its workflow.")
         premiere = positions[0]
         if premiere <= 0:
             raise RefusCrm("Refusé par le CRM : positions_indistinct — no position is free before the first step.")
@@ -341,7 +343,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         corps: dict[str, Any] = {}
         # `CRM-133` (§7 sexies.1) : la surcharge de description ; vide ou blanche, ou dans `reset`, elle part `null`.
         if "description_override" in effaces and description_override is not None:
-            raise ToolError("description_override is both given and reset; choose one.")
+            raise RefusArgument("description_override is both given and reset; choose one.")
         if "description_override" in effaces:
             corps["description_override"] = None
         elif description_override is not None:
@@ -349,14 +351,14 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         for nom, colonne, valeur in (("label", "label_override", label), ("probability", "probability_override", probability),
                                      ("stale_after_days", "stale_after_days", stale_after_days)):
             if nom in effaces and valeur is not None:
-                raise ToolError(f"{nom} is both given and reset; choose one.")
+                raise RefusArgument(f"{nom} is both given and reset; choose one.")
             if nom in effaces:
                 # `null` n'est pas `0` : il rend la valeur du catalogue (§2.5).
                 corps[colonne] = None
             elif valeur is not None:
                 corps[colonne] = valeur.strip() if isinstance(valeur, str) else valeur
         if not corps and not make_initial:
-            raise ToolError("Give an override to change, one to reset, or make_initial.")
+            raise RefusArgument("Give an override to change, one to reset, or make_initial.")
         if corps:
             reponse = await crm.ecrire(
                 appel.jeton, "PATCH", "workflow_steps", parametres={"id": f"eq.{step_id}", "select": "id"}, corps=corps
@@ -397,7 +399,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     ) -> dict[str, Any]:
         appel = appel_courant()
         if after_step_id == step_id:
-            raise ToolError("A step cannot be placed after itself.")
+            raise RefusArgument("A step cannot be placed after itself.")
         etape = await lire_etape(appel.jeton, step_id)
         voisines = [
             e for e in await lire(
@@ -411,7 +413,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if after_step_id is not None:
             rangs = [i for i, e in enumerate(voisines) if e["id"] == after_step_id]
             if not rangs:
-                raise ToolError("after_step_id is not a step of the same workflow.")
+                raise RefusArgument("after_step_id is not a step of the same workflow.")
             rang = rangs[0]
         position = position_apres([float(e["position"]) for e in voisines], rang)
         reponse = await crm.ecrire(
@@ -443,7 +445,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if require_comment is not None:
             corps["require_comment"] = require_comment
         if not corps:
-            raise ToolError("Give label and/or require_comment; a move's steps never change — remove it and declare another.")
+            raise RefusArgument("Give label and/or require_comment; a move's steps never change — remove it and declare another.")
         reponse = await crm.ecrire(
             appel.jeton, "PATCH", "workflow_transitions",
             parametres={"id": f"eq.{transition_id}", "select": COLONNES_TRANSITION}, corps=corps,

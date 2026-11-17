@@ -6,6 +6,8 @@
 #       gestes de l'en-tête), §7 quinquies.3 (le changement de workflow d'un channel), §4.2 et §4.3 (la copie) ;
 #       docs/SPEC-change-channel-workflow.md §2 (le mapping exhaustif, aucune source devinée), §3 (les refus), §5 (la
 #       perte explicite des réponses)
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
 """Les gestes de l'en-tête d'un workflow, et le changement de workflow d'un channel, sous l'identité de la personne.
 
 Chaque outil fait ce que l'écran fait pour le même geste — `entete-workflow.ts` et `changement-workflow-channel.ts` de la
@@ -25,7 +27,7 @@ from pydantic import BaseModel, Field
 from crm_mcp.crm import ClientCrm, Reponse
 from crm_mcp.outils.affaires_ecriture import refus
 from crm_mcp.outils.workflows import COLONNES_WORKFLOW, refus_workflow, une_ligne, workflow_lu
-from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable
+from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable
 
 #: Les refus de `set_default_workflow`, de la garde d'archivage et de `copy_workflow_to_track`
 #: (docs/SPEC-workflow-engine.md §7 quinquies.1, §4.3) — un refus d'accès reste le refus uniforme.
@@ -124,10 +126,10 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     ) -> dict[str, Any]:
         appel = appel_courant()
         if name is None and not make_default:
-            raise ToolError("Give a new name, or make_default=true.")
+            raise RefusArgument("Give a new name, or make_default=true.")
         if name is not None:
             if not name.strip():
-                raise ToolError("The name cannot be blank.")
+                raise RefusArgument("The name cannot be blank.")
             # Comme `renommerWorkflow` : le nom `trim`é (§3 bis.4).
             reponse = await crm.ecrire(
                 appel.jeton, "PATCH", "workflows",

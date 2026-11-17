@@ -10,6 +10,8 @@
 #       Réglages et de la vue, action `supprimer` avec `destructiveHint` (§9.1) ; un état déjà atteint n'est pas réécrit ; zéro
 #       ligne est le refus réservé aux administrateurs (docs/SPEC-mcp.md §9.2 unvicies ; docs/SPEC-channels.md §11 ;
 #       décisions 871 et 919)
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
 """Tracks, channels et workflows, et la recherche globale, sous l'identité de la personne.
 
 Les écritures sont celles de l'arborescence de la webapp ; la base les réserve à qui administre l'espace. La recherche
@@ -29,7 +31,7 @@ import re
 
 from crm_mcp.crm import ClientCrm, Reponse
 from crm_mcp.outils.affaires_ecriture import refus
-from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable
+from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable
 from crm_mcp.outils.workflows import description_effective
 
 LIMITE_RECHERCHE = 50
@@ -418,7 +420,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if description is not None:
             corps["description"] = description.strip() or None
         if not corps:
-            raise ToolError("Give at least one field to change; the slug never changes.")
+            raise RefusArgument("Give at least one field to change; the slug never changes.")
         reponse = await crm.ecrire(
             appel.jeton, "PATCH", "tracks", parametres={"id": f"eq.{track_id}", "select": COLONNES_TRACK}, corps=corps
         )
@@ -442,7 +444,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if description is not None:
             corps["description"] = description.strip() or None
         if not corps:
-            raise ToolError("Give name and/or description; the workflow changes only in the web app.")
+            raise RefusArgument("Give name and/or description; the workflow changes only in the web app.")
         reponse = await crm.ecrire(
             appel.jeton, "PATCH", "channels", parametres={"id": f"eq.{channel_id}", "select": COLONNES_CHANNEL}, corps=corps
         )

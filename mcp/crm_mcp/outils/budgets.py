@@ -3,6 +3,8 @@
 #       suppression, l'administration des budgets laissée à l'écran), §9.1 (les lectures et écritures de la webapp :
 #       `budgets.ts`, `couts-ecrans.ts`, `card-costs.ts`, `reels-ligne.ts`, `couts-a-saisir.ts`), §9.3 ;
 #       docs/SPEC-costs.md §2.3 (ligne, occurrence, clôture), §2.3 bis (réels multiples, réel dérivé, ligne soldée)
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
 """Budgets et lignes de coût d'une affaire, sous l'identité de la personne.
 
 Les mêmes tables que la webapp (`budgets`, `budget_occurrences`, `card_costs`, `card_cost_actuals`) ; la base tient le
@@ -21,7 +23,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
-from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable, traduire_refus
+from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable, traduire_refus
 from crm_mcp.rentabilite import au_centime
 
 LIMITE_MAX = 100
@@ -81,7 +83,7 @@ def _une_ligne(reponse: Reponse, genre: str, valeur: Any) -> dict[str, Any]:
 
 def _date(valeur: str | None, nom: str) -> str | None:
     if valeur is not None and not _DATE.match(valeur):
-        raise ToolError(f"{nom} must be a date YYYY-MM-DD.")
+        raise RefusArgument(f"{nom} must be a date YYYY-MM-DD.")
     return valeur
 
 
@@ -396,7 +398,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     ) -> dict[str, Any]:
         appel = appel_courant()
         if occurrence_id is not None and no_occurrence:
-            raise ToolError("Give occurrence_id or no_occurrence, not both.")
+            raise RefusArgument("Give occurrence_id or no_occurrence, not both.")
         corps: dict[str, Any] = {}
         if label is not None:
             corps["label"] = label.strip()
@@ -409,7 +411,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if no_occurrence:
             corps["occurrence_id"] = None
         if not corps:
-            raise ToolError("Give at least one field to change.")
+            raise RefusArgument("Give at least one field to change.")
         reponse = await crm.ecrire(
             appel.jeton,
             "PATCH",
@@ -450,7 +452,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if label is not None:
             corps["label"] = label.strip() or None
         if not corps:
-            raise ToolError("Give amount, spent_on and/or label.")
+            raise RefusArgument("Give amount, spent_on and/or label.")
         reponse = await crm.ecrire(
             appel.jeton,
             "PATCH",

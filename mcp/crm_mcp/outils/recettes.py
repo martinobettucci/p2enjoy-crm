@@ -10,6 +10,8 @@
 # @spec CRM-146 (docs/BACKLOG.md) — tranche T4 : `crm_organization_revenues`, le prévisionnel et le réel d'une organisation
 #       par devise — docs/SPEC-mcp.md §9.2 vicies (famille `recettes`, action `consulter`, ancre `organisation`, aucune
 #       case `aussi`) ; docs/SPEC-recettes.md §12.2, §12.3, §12.6 (décisions 900, 903 et 908)
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
 """Recettes d'une affaire et rentabilité, sous l'identité de la personne.
 
 Les mêmes tables et la même fonction que la webapp (`card_revenues`, `card_revenue_actuals`, `rentabilite_affaires`) ;
@@ -27,7 +29,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
-from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable, traduire_refus
+from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable, traduire_refus
 from crm_mcp.rentabilite import au_centime, calculer_rentabilite, part_realisee
 
 LIMITE_MAX = 100
@@ -73,7 +75,7 @@ def _date(valeur: str | None, nom: str) -> str | None:
     if valeur is None:
         return None
     if not _DATE.match(valeur):
-        raise ToolError(f"{nom} must be a date YYYY-MM-DD.")
+        raise RefusArgument(f"{nom} must be a date YYYY-MM-DD.")
     return valeur
 
 
@@ -246,7 +248,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     ) -> dict[str, Any]:
         appel = appel_courant()
         if state not in ETATS:
-            raise ToolError("state must be one of all, won, open, lost.")
+            raise RefusArgument("state must be one of all, won, open, lost.")
         arguments = {
             k: v
             for k, v in (("p_debut", _date(date_from, "date_from")), ("p_fin", _date(date_to, "date_to")))
@@ -400,7 +402,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         appel = appel_courant()
         corps = {k: v for k, v in (("label", label), ("estimated_amount", estimated_amount)) if v is not None}
         if not corps:
-            raise ToolError("Give label and/or estimated_amount.")
+            raise RefusArgument("Give label and/or estimated_amount.")
         reponse = await crm.ecrire(
             appel.jeton,
             "PATCH",
@@ -433,7 +435,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if label is not None:
             corps["label"] = label.strip() or None
         if not corps:
-            raise ToolError("Give amount, received_on and/or label.")
+            raise RefusArgument("Give amount, received_on and/or label.")
         reponse = await crm.ecrire(
             appel.jeton,
             "PATCH",

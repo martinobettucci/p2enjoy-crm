@@ -19690,12 +19690,8 @@ les administrateurs, texte seul, en français, cinq défauts tirés de l'usage ;
 **Spécification** : `docs/SPEC-mcp.md` §17 ; `docs/SCHEMA.md` « Migration de `CRM-149` » ; `docs/DAT.md` §3.7 ter ;
 `docs/DESIGN_SYSTEM.md` §5.104 ; `docs/SPEC-seed.md` §47 (écrit avec T4).
 **Découpage** (`docs/SPEC-mcp.md` §17.11) :
-- [x] **T1** — la migration `mcp_prompts` (table, RLS, privilèges, cinq défauts, déclencheur, espaces existants), les types
+- [ ] **T1** — la migration `mcp_prompts` (table, RLS, privilèges, cinq défauts, déclencheur, espaces existants), les types
   de la webapp ; pgTAP, API (refus directs du business developer et de la lectrice) ; SCHEMA, contrat de déploiement.
-  *Fait le 2026-11-17* : `0185_prompts_connecteur.sql`, appliquée en dev par le runner ; pgTAP `0173` 26/26 (un texte fait
-  de lignes vides passait la première contrainte, corrigée) et `0016` révisée à 206 politiques, non relâchée ; API
-  `e2e/api/prompts-connecteur.spec.ts` 5/5, rouge contre la mutation de la politique d'insertion ; types régénérés.
-  Contrat §2.49.
 - [ ] **T2** — le fournisseur de prompts du serveur MCP (`mcp/crm_mcp/prompts.py`), la ligne des consignes au modèle, le
   journal de `prompts/get` ; pytest, intégration MCP par `scripts/verify-mcp.sh` ; l'image `mcp` au contrat.
 - [ ] **T3** — Réglages ▸ Prompts du connecteur (lister, ajouter, modifier, supprimer confirmé), l'entrée de l'index, les
@@ -19726,6 +19722,15 @@ connecteur.
 - **T2** — le manuel §33.4 (ce que « Erreur » et « Refusé par le CRM » recouvrent) ; le contrat de déploiement (l'image
   `mcp`) ; la clôture.
 **DoD** : le test d'intégration rouge avant, vert après ; pytest unitaires et la garde ; le manuel vérifié ; le contrat.
+**Avancement** (session 45) :
+- **T1 faite le 2026-11-17, vérifiée en développement** : `RefusArgument` (`crm_mcp/politique.py`), levée par 81 refus de
+  19 modules d'outils, dont `choisir_par_nom` ; quatre `ToolError` simples gardées, des pannes nommées ; l'audit range
+  aussi en `refus_crm` les arguments que la déclaration d'un outil refuse (`ValidationError` de FastMCP, constatée par une
+  sonde) ; pytest unitaires **408** (dont `test_refus_argument.py`, 5 : l'étape inconnue `refus_crm`, la panne `erreur`,
+  l'argument manquant `refus_crm`, la garde statique ; rouge par mutation) ; intégration **41/41** contre le service
+  `mcp` reconstruit, dont `test_integration_affaires_deplacement.py`, **rouge avant la correction** (« étape inconnue :
+  erreur ») et vert après ; la preuve inscrite dans `verify-mcp.sh` ;
+- reste : T2 (le manuel §33.4, le contrat, la clôture).
 
 ### CRM-151 — Supprimer un mail : « Supprimer ici » et « Supprimer partout », confirmation courte, « Ne plus demander pendant 1 heure » `[ ]`
 

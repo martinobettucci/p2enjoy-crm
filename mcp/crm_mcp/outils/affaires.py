@@ -18,6 +18,8 @@
 #       (« Ma journée », `CRM-061`)
 # @spec CRM-111 T2.4.2 (docs/BACKLOG.md) — la liste et « Ma journée » partent des RATTACHEMENTS ; la fiche lit l'affaire et
 #       les colonnes de son plus ancien rattachement ; contrats inchangés (docs/SPEC-rattachements.md §5, §11)
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
 """Lecture des affaires, sous l'identité de la personne.
 
 Les mêmes lectures que la webapp — la vue liste, la fiche, le fil unifié, « Ma journée », les affaires figées —, sous
@@ -34,7 +36,6 @@ from typing import Annotated, Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastmcp import FastMCP
-from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
@@ -51,7 +52,7 @@ from crm_mcp.outils.vues import (
     noms_des_filtres,
     ordre,
 )
-from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable, traduire_refus
+from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable, traduire_refus
 
 LIMITE_MAX = 100
 ECHEANCES = ("overdue", "today", "week")
@@ -391,7 +392,7 @@ def _fuseau(nom: str) -> ZoneInfo:
     try:
         return ZoneInfo(nom)
     except (ZoneInfoNotFoundError, ValueError) as erreur:
-        raise ToolError("timezone must be an IANA name, e.g. Europe/Paris.") from erreur
+        raise RefusArgument("timezone must be an IANA name, e.g. Europe/Paris.") from erreur
 
 
 def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
@@ -424,7 +425,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     ) -> dict[str, Any]:
         appel = appel_courant()
         if due is not None and due not in ECHEANCES:
-            raise ToolError("due must be one of overdue, today, week.")
+            raise RefusArgument("due must be one of overdue, today, week.")
         maintenant = datetime.now(UTC)
         # `CRM-071` T3 (§9.2 quattuordecies) : la vue est résolue AVANT toute lecture des affaires ; son channel devient
         # celui de la liste, et un argument de l'appel sur la même dimension l'emporte sur elle.
@@ -483,7 +484,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             trouvees = [e for e in catalogue if str(e.get("name") or "").strip().casefold() == label.strip().casefold()]
             if not trouvees:
                 connues = ", ".join(sorted(str(e["name"]) for e in catalogue))
-                raise ToolError(f"No label named {label!r} in this workspace. Known: {connues}.")
+                raise RefusArgument(f"No label named {label!r} in this workspace. Known: {connues}.")
             colonnes = colonnes.replace(f"{ETIQUETTES})", f"{ETIQUETTES},filtre:card_labels!inner(label_id))")
             parametres["affaire.filtre.label_id"] = f"eq.{trouvees[0]['id']}"
         elif str(de_la_vue.get("label_id")) in noms_etiquettes:
@@ -874,7 +875,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     ) -> dict[str, Any]:
         appel = appel_courant()
         if scope not in PORTEES:
-            raise ToolError("scope must be mine or all.")
+            raise RefusArgument("scope must be mine or all.")
         maintenant = datetime.now(UTC)
         bornes = bornes_journee(maintenant, _fuseau(timezone))
         parametres = {

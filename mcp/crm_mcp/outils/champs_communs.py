@@ -4,6 +4,8 @@
 #       décisions 664, 837 et 846)
 # @spec CRM-104 (docs/BACKLOG.md) — le catalogue de la famille `affaires` (docs/SPEC-mcp.md §9.2 bis), où T9 inscrit
 #       `crm_common_field_list`
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
 """Les champs de l'affaire — champs communs de portée espace — sous l'identité de la personne.
 
 Le connecteur ne définit pas les champs : il les lit, lit et écrit leurs valeurs, et filtre les affaires. Les tables sont
@@ -21,7 +23,7 @@ from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
 from crm_mcp.outils.vues import conditions_filtres_communs
-from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable, traduire_refus
+from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable, traduire_refus
 
 COLONNES_CHAMP = "id,key,label,type,options,help_text,is_listed,position,archived_at"
 #: La forme de condition attendue par type, telle que le modèle doit l'écrire (docs/SPEC-champs-communs.md §8).
@@ -116,12 +118,12 @@ def controler_filtres(direct: dict[str, Any], actifs: dict[str, dict[str, Any]])
     for cle, condition in direct.items():
         champ = actifs.get(cle)
         if champ is None:
-            raise ToolError(f"Unknown or archived field key {cle!r}. Active keys: {_cles_connues(actifs)}.")
+            raise RefusArgument(f"Unknown or archived field key {cle!r}. Active keys: {_cles_connues(actifs)}.")
         if not isinstance(condition, dict):
-            raise ToolError(f"The condition for {cle!r} must be an object: {FORMES.get(str(champ['type']), '?')}.")
+            raise RefusArgument(f"The condition for {cle!r} must be an object: {FORMES.get(str(champ['type']), '?')}.")
         plongements, _ = conditions_filtres_communs({cle: condition}, {cle: champ})
         if not plongements:
-            raise ToolError(
+            raise RefusArgument(
                 f"The condition for {cle!r} does not fit its type {champ['type']}: give {FORMES.get(str(champ['type']), '?')}."
             )
         retenus[cle] = condition
@@ -135,7 +137,7 @@ def verifier_cles(valeurs: dict[str, Any], champs: list[dict[str, Any]]) -> dict
     actifs = {cle: c for cle, c in par_cle.items() if c.get("archived_at") is None}
     for cle in valeurs:
         if cle not in par_cle:
-            raise ToolError(f"Unknown field key {cle!r}. Active keys: {_cles_connues(actifs)}.")
+            raise RefusArgument(f"Unknown field key {cle!r}. Active keys: {_cles_connues(actifs)}.")
         if par_cle[cle].get("archived_at") is not None:
             raise RefusCrm(f"Refusé par le CRM : common_field_archived — {cle!r} is archived: its value is read-only.")
     return par_cle

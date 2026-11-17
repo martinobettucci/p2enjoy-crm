@@ -4,6 +4,8 @@
 #       webapp : `objectifs.ts`, `objectifs-ecriture.ts`), §9.3 ; docs/SPEC-goals.md §1 (l'avancement est manuel, jamais
 #       calculé), §2.3 (sens d'une flèche), §2.4 (une flèche relie deux blocs du même tableau), §4.1 (un bloc lié à un
 #       channel fermé est invisible)
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
 """Les canevas d'objectifs, sous l'identité de la personne : lire, ajouter un bloc ou une flèche, modifier un bloc,
 archiver un tableau.
 
@@ -22,7 +24,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
-from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable, traduire_refus
+from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable, traduire_refus
 
 #: La taille d'un bloc neuf posé par l'écran (`TAILLE_BLOC_NEUF` de `objectifs-ecriture.ts`), et l'écart laissé à droite.
 LARGEUR_BLOC, HAUTEUR_BLOC, ECART = 220, 120, 40
@@ -261,7 +263,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     ) -> dict[str, Any]:
         appel = appel_courant()
         if channel_id is not None and unlink_channel:
-            raise ToolError("Give channel_id or unlink_channel, not both.")
+            raise RefusArgument("Give channel_id or unlink_channel, not both.")
         corps: dict[str, Any] = {}
         if title is not None:
             corps["title"] = title.strip()
@@ -274,7 +276,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if unlink_channel:
             corps["channel_id"] = None
         if not corps:
-            raise ToolError("Give at least one field to change.")
+            raise RefusArgument("Give at least one field to change.")
         reponse = await crm.ecrire(
             appel.jeton,
             "PATCH",

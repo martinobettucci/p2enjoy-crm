@@ -31,6 +31,8 @@
 #       (`acknowledge_unscanned`, la confirmation posée sous le jeton de la personne), et `crm_mail_prepare` qui joint des
 #       fichiers (`attachments`, déposés sous le jeton de la personne) ; docs/SPEC-pieces-jointes.md §17.6 ;
 #       docs/SPEC-mcp.md §9.2 decies (révisée par CRM-143) ; décisions 889 et 892
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
 """La messagerie d'une affaire, sous l'identité de la personne : lire son fil, lire un message, PRÉPARER un email.
 
 Le connecteur n'envoie jamais (`CRM-128`, décision 829) : `public.prepare_email` écrit un mail préparé, que seule la
@@ -57,7 +59,7 @@ from mcp.types import BlobResourceContents, EmbeddedResource, ImageContent, Text
 from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
-from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable, traduire_refus
+from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable, traduire_refus
 from crm_mcp.outils.messagerie_pastilles import pastilles_du_message
 
 #: La longueur de l'extrait d'un message dans le fil (docs/SPEC-mcp.md §9.2 decies).
@@ -207,13 +209,13 @@ def pieces_a_joindre(entrees: list[dict[str, Any]]) -> list[tuple[str, bytes, st
     for rang, entree in enumerate(entrees, start=1):
         nom = str(entree.get("filename") or "").strip()
         if not nom:
-            raise ToolError(f"Attachment {rang}: give a filename.")
+            raise RefusArgument(f"Attachment {rang}: give a filename.")
         try:
             contenu = base64.b64decode(str(entree.get("content_base64") or ""), validate=True)
         except (binascii.Error, ValueError):
-            raise ToolError(f"Attachment {rang} ({nom}): content_base64 is not valid base64.") from None
+            raise RefusArgument(f"Attachment {rang} ({nom}): content_base64 is not valid base64.") from None
         if not contenu:
-            raise ToolError(f"Attachment {rang} ({nom}): the file is empty.")
+            raise RefusArgument(f"Attachment {rang} ({nom}): the file is empty.")
         total += len(contenu)
         if total > PIECES_OCTETS_MAX:
             raise RefusCrm("Refusé par le CRM : attachments_too_large — at most 10 MB of attachments per message.")
@@ -276,12 +278,12 @@ def choisir_identite(possibles: list[dict[str, Any]], adresse: str | None) -> di
             return par_defaut[0]
         if len(possibles) == 1:
             return possibles[0]
-        raise ToolError(f"Several sending identities are available and none is your default; give from_address, one of: {adresses}.")
+        raise RefusArgument(f"Several sending identities are available and none is your default; give from_address, one of: {adresses}.")
     voulue = adresse.strip().lower()
     for identite in possibles:
         if identite["from_address"].lower() == voulue:
             return identite
-    raise ToolError(f"Unknown sending address {adresse!r}; give one of: {adresses}.")
+    raise RefusArgument(f"Unknown sending address {adresse!r}; give one of: {adresses}.")
 
 
 def _refus_envoi(reponse: Reponse, valeur: str, genre: str = "card") -> ToolError:
@@ -628,7 +630,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_w
             if subject is None or not subject.strip():
                 subject = objet_de_reponse(origine.get("subject"))
         if subject is None or not subject.strip():
-            raise ToolError("Give a subject.")
+            raise RefusArgument("Give a subject.")
         identites = _lignes(
             await crm.lire(
                 appel.jeton,

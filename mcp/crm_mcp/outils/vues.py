@@ -9,6 +9,8 @@
 #       `crm_view_list`, appliqués par `crm_card_list(view=…)` comme la vue liste les applique (docs/SPEC-champs-communs.md
 #       §8, précision T4.d ; décisions 837 et 838 ; famille `affaires`, `consulter`) ; T4.c : personne et contact comme un
 #       choix, fichier renseigné ou vide (précision T4.c, décision 839)
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
 """Les vues sauvegardées d'un channel, lues sous l'identité de la personne.
 
 La RLS de `saved_views` ne rend que les vues privées de la personne et les vues de l'espace sur les channels qu'elle lit :
@@ -24,11 +26,10 @@ import unicodedata
 from typing import Annotated, Any
 
 from fastmcp import FastMCP
-from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from crm_mcp.crm import ClientCrm
-from crm_mcp.politique import Declaration, MoteurPolitique, appel_courant, traduire_refus
+from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, appel_courant, traduire_refus
 
 COLONNES_VUE = "id,name,channel_id,visibility,filters"
 #: Les tris de la vue liste (`webapp/src/lib/liste-cards.ts`, `TRIS`) et leur sens par défaut.
@@ -63,8 +64,8 @@ def choisir_vue(vues: list[dict[str, Any]], view: str) -> dict[str, Any]:
         return trouvees[0]
     connues = ", ".join(sorted({str(v["name"]) for v in vues})) or "none"
     if not trouvees:
-        raise ToolError(f"No saved view named {view!r} you can read here. Views: {connues}.")
-    raise ToolError(f"Several channels have a view named {view!r}: give channel_id, or the view id. Views: {connues}.")
+        raise RefusArgument(f"No saved view named {view!r} you can read here. Views: {connues}.")
+    raise RefusArgument(f"Several channels have a view named {view!r}: give channel_id, or the view id. Views: {connues}.")
 
 
 def filtres(vue: dict[str, Any]) -> dict[str, Any]:

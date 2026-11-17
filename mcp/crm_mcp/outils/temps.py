@@ -4,6 +4,8 @@
 #       `rapport-temps.ts`), §9.3 ; docs/SPEC-temps.md (la grille, le plafond journalier, `temps_valorise`)
 # @spec CRM-111 (docs/BACKLOG.md) — tranche T4.1 : `crm_time_report` rend `shared`, et ses totaux ne comptent qu'une fois
 #       une saisie partagée entre plusieurs channels (docs/SPEC-rattachements.md §6, §11 ; décision 814)
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
 """Le temps passé, sous l'identité de la personne : lire ses saisies et le rapport valorisé, poser une case.
 
 Les mêmes tables et la même fonction que la webapp (`saisies_temps`, `temps_valorise`) ; la base tient l'unicité de la
@@ -22,7 +24,7 @@ from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
 from crm_mcp.outils.affaires_ecriture import choisir_par_nom
-from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable, traduire_refus
+from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable, traduire_refus
 from crm_mcp.rentabilite import au_centime
 
 PERIODE_MAX_JOURS = 93
@@ -72,11 +74,11 @@ def periode(debut: str, fin: str) -> tuple[str, str]:
     try:
         d, f = date.fromisoformat(debut), date.fromisoformat(fin)
     except ValueError as erreur:
-        raise ToolError("date_from and date_to must be dates YYYY-MM-DD.") from erreur
+        raise RefusArgument("date_from and date_to must be dates YYYY-MM-DD.") from erreur
     if f < d:
-        raise ToolError("date_to must not be before date_from.")
+        raise RefusArgument("date_to must not be before date_from.")
     if (f - d).days >= PERIODE_MAX_JOURS:
-        raise ToolError(f"The period is limited to {PERIODE_MAX_JOURS} days.")
+        raise RefusArgument(f"The period is limited to {PERIODE_MAX_JOURS} days.")
     return d.isoformat(), f.isoformat()
 
 
@@ -84,7 +86,7 @@ def cible_unique(track_id: str | None, channel_id: str | None, card_id: str | No
     """La colonne et l'identifiant de l'unique cible donnée (`saisies_temps_cible_check`)."""
     donnees = [(c, v) for c, v in (("track_id", track_id), ("channel_id", channel_id), ("card_id", card_id)) if v]
     if len(donnees) != 1:
-        raise ToolError("Give exactly one target: track_id, channel_id or card_id.")
+        raise RefusArgument("Give exactly one target: track_id, channel_id or card_id.")
     return donnees[0]
 
 
@@ -128,7 +130,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         appel = appel_courant()
         debut, fin = periode(date_from, date_to)
         if everyone and person is not None:
-            raise ToolError("Give person or everyone, not both.")
+            raise RefusArgument("Give person or everyone, not both.")
         parametres = {
             "workspace_id": f"eq.{appel.espace}",
             "and": f"(jour.gte.{debut},jour.lte.{fin})",
@@ -255,9 +257,9 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     ) -> dict[str, Any]:
         appel = appel_courant()
         if minutes % 15 != 0:
-            raise ToolError("minutes must be a multiple of 15.")
+            raise RefusArgument("minutes must be a multiple of 15.")
         if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", day):
-            raise ToolError("day must be a date YYYY-MM-DD.")
+            raise RefusArgument("day must be a date YYYY-MM-DD.")
         colonne, cible = cible_unique(track_id, channel_id, card_id)
         qui = await personne(appel.jeton, appel.espace, appel.sujet, person, workspace)
         existante = await crm.lire(

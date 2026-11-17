@@ -3,6 +3,8 @@
 #       ne sait que détruire, A4 ; les organisations à `CRM-114`), §9.1 (les lectures et écritures du carnet de la webapp,
 #       `contacts.ts`), §9.3 ; docs/SPEC-contacts.md §14 (création), §15 (fiche), §16 (modification)
 # @spec CRM-111 T2.4.2 (docs/BACKLOG.md) — une affaire liée est archivée quand tous ses rattachements le sont (docs/SPEC-rattachements.md §5, §11)
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
+#       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 928)
 """Le carnet de contacts, sous l'identité de la personne : lire, créer, modifier un contact.
 
 Les mêmes lectures que le carnet et la fiche d'un contact, les mêmes écritures que leurs formulaires. La base réserve
@@ -21,7 +23,7 @@ from pydantic import Field
 from crm_mcp.crm import ClientCrm, Reponse
 from crm_mcp.outils.affaires import nettoyer_texte
 from crm_mcp.outils.affaires_ecriture import refus
-from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable
+from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable
 
 LIMITE_MAX = 100
 COLONNES_CONTACT = "id,full_name,email,phone,role_title,organization_id,organizations(id,name,domain)"
@@ -202,7 +204,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     ) -> dict[str, Any]:
         appel = appel_courant()
         if organization_id is not None and detach_organization:
-            raise ToolError("Give organization_id or detach_organization, not both.")
+            raise RefusArgument("Give organization_id or detach_organization, not both.")
         corps: dict[str, Any] = {}
         if full_name is not None:
             corps["full_name"] = full_name.strip()
@@ -214,7 +216,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if detach_organization:
             corps["organization_id"] = None
         if not corps:
-            raise ToolError("Give at least one field to change.")
+            raise RefusArgument("Give at least one field to change.")
         reponse = await crm.ecrire(
             appel.jeton, "PATCH", "contacts", parametres={"id": f"eq.{contact_id}", "select": COLONNES_CONTACT}, corps=corps
         )

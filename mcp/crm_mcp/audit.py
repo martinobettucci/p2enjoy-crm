@@ -1,4 +1,6 @@
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T2 : l'audit des appels d'outils et la garde de taille
+# @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : des arguments que l'outil ne valide pas sont un refus, journalisé `refus_crm`,
+#       jamais une `erreur` (docs/SPEC-mcp.md §9.3, décision 928)
 # @spec docs/SPEC-mcp.md §7.1 (`mcp_journal` : sujet, outil, espace, issue, durée — jamais un argument), §9.3 (garde de
 #       taille), §11 (une ligne par appel, à la sortie standard ET au journal ; jamais un jeton ni une adresse)
 # @spec Repris du connecteur Evoliz (p2enjoy-evoliz, `evoliz_mcp/audit.py`, révision 80a3e27). Écarts : la ligne part
@@ -16,7 +18,7 @@ import logging
 import time
 from typing import Any
 
-from fastmcp.exceptions import NotFoundError, ToolError
+from fastmcp.exceptions import NotFoundError, ToolError, ValidationError
 from fastmcp.server.middleware import Middleware, MiddlewareContext
 from fastmcp.tools.base import ToolResult
 
@@ -36,6 +38,15 @@ def taille(resultat: Any) -> int:
             len(texte) for bloc in resultat.content or [] if isinstance(texte := getattr(bloc, "text", None), str)
         )
     return len(json.dumps(resultat, ensure_ascii=False, default=str))
+
+
+def issue_d_exception(erreur: Exception) -> str:
+    """L'issue d'un appel qui lève (décision 928) : celle que l'exception porte ; des arguments que la déclaration de l'outil
+    refuse sont un refus fait par le connecteur, `refus_crm` ; le reste est une panne, `erreur`."""
+    issue = getattr(erreur, "issue_audit", None)
+    if issue:
+        return str(issue)
+    return "refus_crm" if isinstance(erreur, ValidationError) else "erreur"
 
 
 class AuditOutils(Middleware):
@@ -70,7 +81,7 @@ class AuditOutils(Middleware):
                 # Un outil inconnu ou fermé pour ce compte n'a pas de ligne : il n'existe pas pour lui.
                 raise
             except Exception as erreur:
-                await self._inscrire(appel, nom, getattr(erreur, "issue_audit", None) or "erreur", debut)
+                await self._inscrire(appel, nom, issue_d_exception(erreur), debut)
                 raise
             mesure = taille(resultat)
             if mesure > self.taille_max:
