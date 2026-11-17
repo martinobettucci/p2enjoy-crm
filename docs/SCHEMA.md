@@ -3348,6 +3348,27 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
    cards actives exige un plan de remappage. Comportement par défaut retenu : archivage refusé
    tant que des cards s'y trouvent.
 
+### Migration de `CRM-149` — les prompts du connecteur MCP (numéro pris au push ; spécifiée le 2026-11-17, à écrire)
+
+*Écrit le 2026-11-17, avant le code (décision 930).* Spécification : `docs/SPEC-mcp.md` §17.2 à §17.4.
+
+- **`public.mcp_prompts`** : `id`, `workspace_id` (FK `workspaces` `ON DELETE CASCADE`), `key` (`^[a-z0-9]+(-[a-z0-9]+)*$`,
+  2 à 40 caractères, unique par espace), `title` (1 à 80, resserré), `description` (1 à 300, resserré), `body` (1 à 8 000
+  une fois resserré), `created_at`, `updated_at` (`app.set_updated_at`), `created_by`, `updated_by` (FK `profiles`
+  `ON DELETE SET NULL`, posés par un déclencheur depuis `auth.uid()`).
+- **RLS** : lecture par tout membre (`app.is_workspace_member`) ; insertion, modification et suppression par
+  l'administrateur de l'espace (`app.is_workspace_admin`). **Privilèges** : `SELECT` à `anon` et `authenticated` ;
+  `INSERT (workspace_id, key, title, description, body)`, `UPDATE (key, title, description, body)` et `DELETE` à
+  `authenticated`.
+- **Les défauts** : `app.seed_default_mcp_prompts(uuid)`, `SECURITY DEFINER`, cinq lignes, `on conflict do nothing` ;
+  le déclencheur `workspaces_default_mcp_prompts` (`after insert on workspaces`) ; la migration l'appelle pour chaque
+  espace existant.
+- **Aucune ligne au journal d'audit** (décision 930), comme `mail_labels` et `card_labels`.
+
+**Retour arrière** : supprimer le déclencheur `workspaces_default_mcp_prompts`, les fonctions
+`app.seed_default_mcp_prompts`, `app.mcp_prompts_auteurs`, puis la table. Les prompts ajoutés ou modifiés par les
+administrateurs sont perdus : un `pg_dump` de la table d'abord, si on veut les garder.
+
 ### Migration `0184` — la cadence de l'évaluation des pastilles — `CRM-141` T2 (`0184_cadence_pastilles.sql` ; `docs/SPEC-mail-subsystem.md` §31.5)
 
 *Écrit le 2026-11-11 avec le code (décisions 883 et 923).* Le patron de la migration `0140` (les webhooks), repris.

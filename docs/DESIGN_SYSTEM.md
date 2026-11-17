@@ -8547,3 +8547,50 @@ d'une liste de l'espace se lisent de la même façon d'un écran à l'autre (§5
   la page ne défile jamais horizontalement.
 - **Aucune couleur, aucun jeton nouveau ; aucune icône nouvelle** : `Tags`, `Sparkles` et `TriangleAlert` sont réemployées
   pour le même sens.
+
+### 5.104 Réglages ▸ Prompts du connecteur — `CRM-149`
+
+*Écrit le 2026-11-17, avant le code, après lecture des sections ciblées par la décision 930, non intégrale : §1 à §4, §6 à
+§12, §5.5, §5.8, §5.13, §5.29 bis, §5.34, §5.59, §5.73, §5.103.* Ce que l'écran lit, écrit et refuse est spécifié par
+`docs/SPEC-mcp.md` §17 ; ces règles ne disent que de quoi il a l'air. **La forme est celle de Réglages ▸ Pastilles des mails
+(§5.103), reprise** : un catalogue de l'espace, lisible par tout membre, administré par l'administrateur.
+
+- **L'ENTRÉE DE L'INDEX** vient **après « Webhooks »** : les deux parlent aux outils qui agissent hors de l'écran. Un **lien
+  pour tout membre** — l'écran se lit : on y voit ce que l'assistant lit —, titre « Prompts du connecteur », corps
+  « Les parcours guidés que votre assistant propose : créer une affaire, faire le point, faire avancer… ».
+- **L'EN-TÊTE** : le titre `text-h3`, puis une phrase en 13 px `--color-text-2`, `max-w-[72ch]`, qui dit ce qu'est un
+  prompt et où il paraît : « Votre assistant (Claude, ChatGPT) propose ces textes depuis le connecteur MCP du CRM. Choisi,
+  un prompt est inséré dans la conversation comme votre message. »
+- **UNE LISTE PLATE** (`ul`, §5.13), dans l'ordre du titre. Chaque ligne porte le **titre** en `font-medium`, puis
+  l'**identifiant** en monospace 13 px `--color-text-2` — c'est le nom que l'assistant montre, une donnée technique (§2) —,
+  puis la **description** en 13 px `--color-text-2`, sur toute la largeur, à la ligne si besoin. Le texte n'est pas montré
+  dans la liste : il est long, et il s'ouvre avec « Modifier ». **« Modifier » et « Supprimer »**, discrets compacts,
+  toujours visibles (§5.13).
+- **« NOUVEAU PROMPT »**, primaire avec `Plus`, ouvre la fiche **dans le flux**, en tête de liste ; « Modifier » l'ouvre à la
+  place de la ligne. Quatre champs, chacun avec son libellé :
+  - **« Titre »**, une ligne, `max-w-[48ch]` ;
+  - **« Identifiant »**, une ligne en monospace, `max-w-[48ch]`, avec son aide en 13 px `--color-text-3` : « Lettres
+    minuscules, chiffres et tirets. C'est le nom que l'assistant affiche, par exemple creer-une-affaire. » ;
+  - **« Description »**, une zone de 2 lignes, `max-w-[72ch]`, aide : « Une phrase qui dit à quoi sert le prompt.
+    L'assistant et la personne la lisent dans la liste. » ;
+  - **« Texte du prompt »**, une zone de 12 lignes, `max-w-[72ch]`, aide : « Inséré dans la conversation comme le message de
+    la personne. Décrivez les étapes et nommez les outils du connecteur (crm_search, crm_card_get…). »
+  « Enregistrer » et « Annuler » ; `Échap` referme ; le focus entre dans « Titre » et revient à la commande qui a ouvert la
+  fiche (§5.13). Aucune garde de saisie ne double une contrainte de la base (§5.34) : les bornes sont des `maxLength`.
+- **« SUPPRIMER » OUVRE UNE CONFIRMATION DANS LE FLUX** (§5.13), sous la ligne : « Supprimer le prompt « {titre} » ? », et
+  « Il disparaît du connecteur pour tout l'espace. Il ne se restaure pas. » La confirmation est le composant partagé
+  `ConfirmationArchivage`, dont le bouton reçoit ici le libellé **« Supprimer »** (une propriété facultative, le libellé
+  d'archivage restant le défaut) : même surface, même bouton aux jetons de danger, même focus. `Échap` referme.
+- **LES REFUS** sont dits **sous les champs** de la fiche, ou dans la confirmation, `role="alert"`, aux jetons de danger
+  doux (§5.13) : « Un prompt de cet espace porte déjà cet identifiant. », « Vérifiez la forme : identifiant en lettres
+  minuscules, chiffres et tirets, de 2 à 40 caractères ; titre, description et texte non vides. », « Réservé aux
+  administrateurs de l'espace. ». La saisie est gardée, le focus revient au premier champ.
+- **LES COMMANDES REFUSÉES** (§5.59) : qui n'administre pas l'espace voit « Nouveau prompt », « Modifier » et « Supprimer »
+  rendues, `disabled`, et le motif générique de l'administration posé en tête, leur description accessible. Pendant la
+  lecture de la capacité, éteintes sans motif.
+- **ÉTATS** (§5.8) : squelette ; erreur avec « Réessayer » ; l'état vide « Aucun prompt. », « Ajoutez un parcours guidé
+  pour votre assistant. » ; l'enregistrement et la suppression annoncés dans une région vivante (« Prompt « {titre} »
+  enregistré. », « Prompt « {titre} » supprimé. »).
+- **RESPONSIVE** (§7) : les commandes passent sous le titre sous `md` ; la fiche prend la largeur ; l'identifiant passe à
+  la ligne sans être tronqué ; la page ne défile jamais horizontalement.
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : `Plus` et `TriangleAlert` sont réemployées.

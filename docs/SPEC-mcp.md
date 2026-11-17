@@ -1,7 +1,7 @@
 # Spécification — Le connecteur MCP du CRM
 
 Unités de backlog : `CRM-102` (socle : service, mandataire OAuth, connexion longue, registre),
-`CRM-103` (administration dans la webapp), `CRM-104` (outils, une tranche par famille) —
+`CRM-103` (administration dans la webapp), `CRM-104` (outils, une tranche par famille), `CRM-149` (les prompts, §17) —
 `docs/BACKLOG.md`.
 Décision : `docs/JOURNAL.md` 627 (arbitrages A1 à A4 du responsable, décisions techniques D1 à D8,
 2026-10-20).
@@ -1569,3 +1569,195 @@ la personne.
 - `crm_mail_trash_list(workspace)`, ancre `workspace:workspace` : `trashed_messages` ; une ligne par message — objet,
   expéditeur, affaire, date et auteur de l'effacement, date d'effacement définitif, `can_restore`, l'état du déplacement
   IMAP (`none`, `pending`, `done`, `failed`, avec le motif en code et en phrase). Jamais le corps.
+
+## 17. Les prompts du connecteur — `CRM-149` (décision 930)
+
+*Écrit le 2026-11-17, avant le code.* Un **prompt** MCP est un texte que l'assistant propose à la personne — dans Claude,
+par le menu du connecteur ou une commande `/` — et qu'il insère dans la conversation comme son message. Il ne fait rien
+par lui-même : il **guide** l'assistant vers les bons outils, dans le bon ordre.
+
+### 17.1 Ce que l'unité fait, et ce qu'elle ne fait pas
+
+- **Le serveur sert la capacité `prompts`** du protocole : `prompts/list` et `prompts/get`.
+- **Les prompts vivent par espace**, en base, et les **administrateurs de l'espace** les ajoutent, les modifient et les
+  suppriment dans **Réglages ▸ Prompts du connecteur** (`docs/DESIGN_SYSTEM.md` §5.104). Tout membre les lit.
+- **Cinq prompts par défaut** sont posés à la création d'un espace, et repris pour les espaces existants par la migration
+  (§17.4).
+- **Aucune case de la matrice** (§6.1), aucune famille nouvelle, aucune ligne dans l'onglet « Connecteur MCP » : un
+  prompt n'ouvre rien. Chaque outil qu'il fait appeler reste soumis aux droits de sa famille et à la RLS (décision 930).
+- **Texte seul** : un prompt ne déclare **aucun argument** (décision 930, Q2). L'assistant demande à la personne ce qui
+  manque (l'affaire, le montant…).
+- **Ce que l'unité ne fait pas** : aucun outil du connecteur ne lit ni n'écrit les prompts ; ils s'éditent à l'écran.
+
+### 17.2 Le modèle — `public.mcp_prompts` (migration `0185`, numéro pris au push ; `docs/SCHEMA.md`)
+
+| Colonne | Type | Règle |
+|---|---|---|
+| `id` | `uuid` | PK, `gen_random_uuid()` |
+| `workspace_id` | `uuid` | non nul, FK `workspaces` `ON DELETE CASCADE` ; absent des colonnes modifiables |
+| `key` | `text` | non nul ; `^[a-z0-9]+(-[a-z0-9]+)*$`, de 2 à 40 caractères ; **unique dans l'espace** — c'est le nom que l'assistant montre |
+| `title` | `text` | non nul, resserré, de 1 à 80 caractères |
+| `description` | `text` | non nul, resserré, de 1 à 300 caractères — ce que la liste des prompts montre, à la personne comme à l'assistant |
+| `body` | `text` | non nul, de 1 à 8 000 caractères une fois resserré — le texte inséré |
+| `created_at`, `updated_at` | `timestamptz` | non nuls ; `updated_at` par `app.set_updated_at()` |
+| `created_by`, `updated_by` | `uuid` | FK `profiles` `ON DELETE SET NULL` ; **posés par la base** (`auth.uid()`), jamais lus de la requête |
+
+Noms anglais (`docs/DAT.md` §12 bis, décision 658).
+
+### 17.3 Qui lit, qui écrit — en base (`CLAUDE.md` §10)
+
+| Geste | Qui | Où c'est tenu |
+|---|---|---|
+| Lire | **tout membre** de l'espace (`app.is_workspace_member`) ; `anon` lit zéro ligne | politique `mcp_prompts_lecture` |
+| Ajouter | administrateur de l'espace (`app.is_workspace_admin`) | politique `mcp_prompts_insertion`, privilège d'`INSERT` sur `workspace_id, key, title, description, body` |
+| Modifier | administrateur de l'espace | politique `mcp_prompts_maj`, privilège d'`UPDATE` sur `key, title, description, body` |
+| Supprimer | administrateur de l'espace | politique `mcp_prompts_suppression`, privilège `DELETE` |
+
+Un business developer ou une lectrice qui écrit **par une requête directe** est refusé : `42501` à l'insertion, zéro ligne
+à la modification et à la suppression. Le superadministrateur de la plateforme n'est administrateur d'un espace que s'il
+l'est déjà par la RLS (décision 597).
+
+**Supprimer détruit** (décision 930) : aucun objet ne référence un prompt. Un défaut supprimé ne revient pas.
+
+### 17.4 Les cinq défauts
+
+`app.seed_default_mcp_prompts(p_workspace_id uuid)`, `SECURITY DEFINER`, `search_path` vide, `EXECUTE` révoqué à `public` :
+insère les cinq lignes ci-dessous, `on conflict (workspace_id, key) do nothing`. Un déclencheur `after insert on workspaces`
+l'appelle pour chaque espace créé ; la migration l'appelle pour chaque espace existant. **Sources** : le relevé du §17.6, le
+§9.2 et le manuel §33.5. **En français** (décision 930, Q3). Le texte est le **contrat** : la migration le porte au mot près.
+
+**`creer-une-affaire`** — « Créer une affaire complète ». *Description* : « Crée une affaire avec son organisation, son
+contact, ses recettes et un commentaire de synthèse, sans doublon. » *Texte* :
+
+> Je veux créer une affaire complète dans le CRM.
+> 1. Demande-moi ce qui manque : le nom de l'affaire, le channel où la ranger, le client (organisation et contact) et les montants prévus.
+> 2. Avant toute création, cherche l'existant avec crm_search : l'organisation et le contact existent souvent déjà. Ne crée jamais de doublon.
+> 3. Trouve le channel avec crm_channel_list, puis crée l'affaire avec crm_card_create. Complète-la avec crm_card_update : champs, prochaine action, échéance. crm_common_field_list donne les champs de l'espace.
+> 4. S'ils manquent, crée l'organisation (crm_organization_create) et le contact (crm_contact_create), puis lie le contact à l'affaire avec crm_card_contact_link.
+> 5. Ajoute les recettes prévues avec crm_card_revenue_add. Un montant déjà encaissé s'enregistre avec crm_card_revenue_actual_add.
+> 6. Termine par un commentaire de synthèse (crm_card_comment_add), puis récapitule-moi ce que tu as créé.
+
+**`faire-le-point`** — « Faire le point sur une affaire ». *Description* : « Résume une affaire : étape, prochaine action,
+recettes prévues et réelles, derniers échanges, points d'attention. » *Texte* :
+
+> Fais le point sur une affaire.
+> 1. Si je ne t'ai pas dit laquelle, demande-le-moi, puis retrouve-la avec crm_search.
+> 2. Lis la fiche avec crm_card_get, les recettes avec crm_card_revenue_list, les commentaires avec crm_card_comment_list et l'historique avec crm_card_timeline. Les mails de l'affaire sont dans crm_card_mail_list.
+> 3. Rends-moi un résumé court : où en est l'affaire, ce qui est prévu et ce qui est réel pour les recettes, les derniers échanges, la prochaine action et son échéance, et ce qui te paraît à risque.
+> Ne modifie rien : c'est une lecture.
+
+**`faire-avancer`** — « Faire avancer une affaire ». *Description* : « Met l'affaire à jour, vérifie ce que l'étape suivante
+exige, la déplace avec votre accord et laisse un commentaire. » *Texte* :
+
+> Je veux faire avancer une affaire.
+> 1. Retrouve-la avec crm_search si besoin, puis lis-la avec crm_card_get.
+> 2. Lis son workflow avec crm_workflow_get : les transitions permises depuis l'étape actuelle, et les champs qu'elles exigent.
+> 3. Mets d'abord l'affaire à jour avec crm_card_update : les champs exigés, la prochaine action, l'échéance.
+> 4. Dis-moi vers quelle étape tu vas la déplacer et attends mon accord, puis déplace-la avec crm_card_move. Si le CRM refuse, explique-moi ce qui manque.
+> 5. Laisse un commentaire qui dit pourquoi l'affaire avance (crm_card_comment_add).
+
+**`retrouver-une-affaire`** — « Retrouver une affaire ». *Description* : « Retrouve une affaire par quelques mots, plutôt
+qu'en parcourant les listes. » *Texte* :
+
+> Retrouve une affaire.
+> 1. Commence par crm_search avec les mots que je te donne : le client, l'affaire, un contact. C'est le moyen le plus direct.
+> 2. Si plusieurs affaires correspondent, montre-les-moi avec leur channel et leur étape, et demande-moi laquelle.
+> 3. Si la recherche ne trouve rien, liste les channels avec crm_channel_list, puis les affaires d'un channel avec crm_card_list. crm_card_mine donne les affaires qui me sont confiées.
+> 4. Une fois l'affaire trouvée, lis-la avec crm_card_get.
+
+**`enregistrer-une-recette-reelle`** — « Enregistrer une recette réelle ». *Description* : « Enregistre un montant encaissé
+ou facturé sur la bonne ligne de recette d'une affaire. » *Texte* :
+
+> Je veux enregistrer une recette réelle : un montant encaissé ou facturé.
+> 1. Retrouve l'affaire avec crm_search, puis lis ses recettes avec crm_card_revenue_list.
+> 2. Choisis avec moi la ligne de recette concernée. Si aucune ne convient, propose d'en créer une avec crm_card_revenue_add.
+> 3. Enregistre le montant avec crm_card_revenue_actual_add : le montant, la date d'encaissement et, si besoin, un libellé comme un numéro de facture. La devise est celle de la ligne.
+> 4. Si la ligne est entièrement encaissée, propose de la marquer soldée avec crm_card_revenue_settle.
+> 5. Récapitule-moi ce qui a été enregistré, et ce qui reste attendu sur l'affaire.
+
+### 17.5 Le serveur — `mcp/crm_mcp/prompts.py`
+
+**Un fournisseur FastMCP** (`fastmcp.server.providers.Provider`, le mécanisme documenté de FastMCP 4 pour des composants
+lus à l'exécution), ajouté par `serveur.add_provider`. Il surcharge `_list_prompts` ; `_get_prompt` est celui de la classe,
+qui cherche dans la liste — le nom d'un prompt est donc calculé d'une seule façon.
+
+- **Qui** : l'identité du jeton LeLabs vérifié (`identite_de(get_access_token())`). Sans identité — un appel hors requête,
+  au démarrage —, la liste est vide. Le compte doit **pouvoir entrer** (`EtatCompte.peut_entrer` : un droit ou le
+  drapeau), comme pour un outil de référence (§6.1) ; sinon, la liste est vide.
+- **Quoi** : `mcp_prompts`, lus **sous le jeton interne** frappé pour cette requête (§5) — la RLS ne rend que les espaces
+  dont la personne est membre —, avec l'espace (`workspace:workspaces(slug,name)`), dans l'ordre du titre puis de
+  l'identifiant. Le jeton ne survit pas à la lecture. Une base injoignable rend une liste vide et une ligne de journal
+  `prompts_indisponibles` : l'assistant garde ses outils.
+- **Le nom MCP** : `key` quand cet identifiant n'existe que dans un seul des espaces lus ; sinon `key__slug` pour chacun,
+  et le titre reçoit « — {nom de l'espace} ». Le double soulignement ne peut pas apparaître dans un `key` : le nom reste
+  sans ambiguïté.
+- **`prompts/list`** rend, par prompt : `name`, `title`, `description`, aucun argument.
+- **`prompts/get`** rend **un message `user`** : une ligne d'en-tête, « Espace : {nom} (workspace : {slug}) », une ligne
+  vide, puis `body`. L'en-tête dit à l'assistant quel `workspace` passer aux outils, sans que l'administrateur l'écrive.
+  Un nom inconnu, ou devenu invisible, rend l'erreur de FastMCP pour un prompt inconnu.
+- **Le journal** : chaque `prompts/get` inscrit une ligne à `mcp_journal` — outil `prompt:<key>`, l'espace du prompt,
+  issue `ok` — et à la sortie standard, comme un appel d'outil (§7.1, §11). Jamais le texte.
+- **Les consignes au modèle** (`INSTRUCTIONS`) gagnent une ligne : le connecteur propose des prompts par espace, des
+  parcours guidés qu'un administrateur édite dans le CRM.
+
+### 17.6 Le relevé d'usage — source des défauts
+
+Relevé en lecture seule de `mcp_journal` en production par la session de livraison, le 2026-11-17 : **4 038 appels,
+2 comptes, du 2026-10-26 au 2026-11-17** ; aucun contenu ni identifiant.
+
+- **Les plus appelés** : `card_update` 682, `card_get` 599, `card_list` 406, `card_move` 276, `search` 215,
+  `card_contact_link` 210, `card_comment_add` 203, `card_revenue_list` 175, `card_create` 154, `card_comment_list` 145,
+  `organization_create` 107, `card_revenue_add` 100, `contact_create` 95, `contact_update` 86, `contact_list` 80.
+- **Les enchaînements** (moins de 10 min d'écart) : `card_get→card_update` 122, `card_create→card_update` 113,
+  `card_get↔card_revenue_list` 79 et 75, `card_update→comment_add` 71, `revenue_add↔contact_link` 50 et 48,
+  `card_list→card_get` 42, `card_update→card_move` 33, `search→card_get` 22, `channel_list→card_list` 20,
+  `revenue_add→revenue_actual_add` 19, `contact_list→organization_list` 17, `card_create→contact_create` 14,
+  `contact_create→contact_link` 14.
+- **Les parcours qui s'en déduisent** : créer une affaire complète ; faire le point ; faire avancer ; retrouver une affaire.
+  Le cinquième défaut, « enregistrer une recette réelle », vient de `card_revenue_actual_add` (43) et de
+  `revenue_add→revenue_actual_add`.
+- Les erreurs de `card_list` et `card_mine` du relevé étaient des délais, corrigés par la `0171` (2026-11-10) : les
+  prompts ne les contournent pas ; ils mènent à `crm_search` pour retrouver une affaire, parce que c'est l'usage.
+
+### 17.7 L'écran — Réglages ▸ Prompts du connecteur
+
+`/reglages/prompts-connecteur`, après « Webhooks » dans l'index des réglages. Un lien pour tout membre : on y lit ce que
+l'assistant lit. Les commandes suivent la capacité d'**administrer** l'espace, rendue par la base (§5.59). La forme est
+dans `docs/DESIGN_SYSTEM.md` §5.104 ; les refus de la base sont traduits sous les champs : identifiant déjà pris (`23505`),
+forme (`23514`), réservé aux administrateurs (`42501`, ou zéro ligne).
+
+### 17.8 Le seed
+
+Les cinq défauts de l'espace seedé viennent de la migration — le vrai chemin. Le seed (`docs/SPEC-seed.md` §47) **ajoute**
+un prompt propre à l'espace par PostgREST, sous le jeton de l'administratrice : « Préparer le comité du lundi »
+(`preparer-le-comite`), qui démontre un prompt ajouté.
+
+### 17.9 Preuves
+
+| Niveau | Ce qui est prouvé |
+|---|---|
+| **pgTAP** | la table, ses contraintes (forme de l'identifiant, bornes, unicité dans l'espace) ; les cinq défauts à la création d'un espace, et pour l'espace seedé ; la lecture par un membre, zéro ligne pour un non-membre et pour `anon` ; l'écriture par l'administrateur ; le refus en `42501` de l'insertion, et zéro ligne pour la modification et la suppression, par un business developer et une lectrice ; `workspace_id` non modifiable ; l'auteur posé par la base |
+| **API** (`e2e/api/prompts-connecteur.spec.ts`) | les mêmes refus par des **requêtes directes** à PostgREST, avec les vrais jetons de l'administratrice, du business developer et de la lectrice ; un non-membre ne lit rien |
+| **Vitest** | le module de lecture et d'écriture (requêtes émises, classement des refus) ; l'écran : liste, création, modification, suppression confirmée, refus traduits, commandes éteintes avec leur motif, états |
+| **pytest** (unitaires) | le fournisseur : liste vide sans identité ou sans droit ; nom nu ou suffixé du slug ; titre complété ; message rendu avec son en-tête ; ligne de journal à `prompts/get` ; base injoignable |
+| **Intégration MCP** (`mcp/tests/test_integration_prompts.py`, par `scripts/verify-mcp.sh`) | un vrai client MCP connecté par OAuth : `prompts/list` rend les défauts et le prompt du seed, `prompts/get` rend le texte et son en-tête ; un prompt modifié en base est relu au `prompts/get` suivant ; la ligne `prompt:<key>` au journal ; un compte non membre de l'espace ne le voit pas |
+| **E2E UI** (`e2e/ui/prompts-connecteur.spec.ts`) | ajouter, modifier, supprimer à la souris et au clavier ; le refus d'un identifiant pris ; la lectrice voit la liste et les commandes éteintes avec leur motif ; quatre paliers ; captures `docs/captures/CRM-149` observées |
+
+### 17.10 Limites connues
+
+- **Un prompt ne déclare pas d'arguments** (décision 930) : l'assistant demande ce qui manque.
+- **La liste des prompts est lue à chaque `prompts/list`** : le client MCP la garde jusqu'à sa prochaine connexion, comme
+  la liste des outils (§14).
+- **Aucune ligne au journal d'audit** pour un prompt modifié : l'auteur et la date de la dernière modification restent sur
+  la ligne (décision 930).
+- **Le texte n'est pas vérifié** : un prompt qui nomme un outil inexistant ou fermé à la personne guide mal, sans rien
+  ouvrir. L'aide de l'écran rappelle de nommer les outils `crm_…`.
+
+### 17.11 Découpage — tranches
+
+| Tranche | Contenu |
+|---|---|
+| **T1** | la migration (§17.2 à §17.4), les types de la webapp, pgTAP, l'API ; `docs/SCHEMA.md`, le contrat de déploiement |
+| **T2** | le fournisseur de prompts du serveur (§17.5), les consignes au modèle ; pytest et intégration MCP ; l'image `mcp` au contrat |
+| **T3** | l'écran (§17.7, `docs/DESIGN_SYSTEM.md` §5.104), son entrée dans l'index, les textes ; Vitest, E2E UI à la souris et au clavier, captures |
+| **T4** | le seed (§17.8), le manuel (§33.7 et l'index des réglages), ses images ; la clôture en `[P]` |

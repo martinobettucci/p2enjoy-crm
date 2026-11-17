@@ -772,6 +772,13 @@ déclencheur refuse toute insertion dans `mail_outbox` et `card_sequence_enrollm
 : la garde reconnaît le connecteur par les revendications que ses deux émetteurs de jetons, la fonction `session` et le
 connecteur, écrivent ; un troisième émetteur devrait être rangé par `app.via_connector`.
 
+**Il propose des prompts, par espace** (`CRM-149`, décision 930, `docs/SPEC-mcp.md` §17). Le serveur sert la capacité
+`prompts` du protocole par un **fournisseur FastMCP** (`mcp/crm_mcp/prompts.py`), qui lit `mcp_prompts` à chaque
+`prompts/list`, sous le jeton interne de la personne : la RLS ne rend que les espaces dont elle est membre. Les
+administrateurs de l'espace éditent ces textes dans Réglages ▸ Prompts du connecteur ; cinq défauts sont posés à la
+création d'un espace. Un prompt n'ouvre rien : il n'a aucune case dans la matrice, et chaque outil qu'il fait appeler
+reste soumis à la sienne. Chaque `prompts/get` est inscrit au journal du connecteur (`prompt:<identifiant>`).
+
 ### 3.7 quater Le manuel — bucket `manual` (`CRM-117` ; spécifié le 2026-10-26 avant le code, révisé à l'écriture, décision 751)
 
 *Décisions 736, 740, 750 et 751 ; `docs/SPEC-manual.md` partie II.* Le manuel utilisateur est lu dans la webapp, et

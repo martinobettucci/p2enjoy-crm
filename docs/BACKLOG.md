@@ -19685,8 +19685,19 @@ longue ; captures aux quatre paliers ; manuel §3.6 et son image.
 **Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison : « dans le MCP ajouter des
 prompts pour mieux guider l'usage du CRM et ces PROMPTS devraient être éditables via l'admin du CRM (éditer, ajouter,
 supprimer). Tu peux déjà mettre des prompts basés sur les apprentissages de l'usage actuel. »
-**Spécification** : à écrire avant le code (`docs/SPEC-mcp.md`, `docs/DAT.md`, `docs/SCHEMA.md`, `docs/DESIGN_SYSTEM.md`,
-décision à consigner).
+**Décision** : 930 (`docs/JOURNAL.md`) — les deux questions du connecteur (oui ; aucune famille, aucune case), l'espace et
+les administrateurs, texte seul, en français, cinq défauts tirés de l'usage ; design system par sections ciblées.
+**Spécification** : `docs/SPEC-mcp.md` §17 ; `docs/SCHEMA.md` « Migration de `CRM-149` » ; `docs/DAT.md` §3.7 ter ;
+`docs/DESIGN_SYSTEM.md` §5.104 ; `docs/SPEC-seed.md` §47 (écrit avec T4).
+**Découpage** (`docs/SPEC-mcp.md` §17.11) :
+- [ ] **T1** — la migration `mcp_prompts` (table, RLS, privilèges, cinq défauts, déclencheur, espaces existants), les types
+  de la webapp ; pgTAP, API (refus directs du business developer et de la lectrice) ; SCHEMA, contrat de déploiement.
+- [ ] **T2** — le fournisseur de prompts du serveur MCP (`mcp/crm_mcp/prompts.py`), la ligne des consignes au modèle, le
+  journal de `prompts/get` ; pytest, intégration MCP par `scripts/verify-mcp.sh` ; l'image `mcp` au contrat.
+- [ ] **T3** — Réglages ▸ Prompts du connecteur (lister, ajouter, modifier, supprimer confirmé), l'entrée de l'index, les
+  textes ; Vitest, E2E UI souris et clavier, quatre paliers, captures observées.
+- [ ] **T4** — le seed (un prompt ajouté par PostgREST), le manuel (§33.7, l'index des réglages) et ses images ; changelog ;
+  clôture en `[P]`.
 
 ### CRM-150 — `crm_card_move` rend « erreur » là où le CRM refuse : enquête et correction `[@]`
 *Prise en charge : session interactive 152dd27d (p2enjoy-crm-45, ex-a4, ex-a8) depuis 2026-11-17 16:14 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*

@@ -40685,3 +40685,50 @@ d'elle ne la ferme pas (« elle se ferme seulement si l'on clique sur le x ») ;
 navigue ou commence un glisser-déposer.
 **Conséquences** : `CRM-148`, une tranche ; révise `docs/DESIGN_SYSTEM.md` §5.58 (« quand elle se ferme », « le lecteur
 d'écran », la limite clavier) et le manuel §3.6. Aucune migration, aucune fonction.
+
+### décision 930 — `CRM-149` : les prompts du connecteur MCP, par espace, édités par les administrateurs dans Réglages ; texte seul, en français, cinq défauts tirés de l'usage
+
+*2026-11-17, session d5b44a2d (p2enjoy-crm-f8, ex-a7, ex-75). Trois arbitrages relayés par la session de livraison (bb),
+pris par le responsable (`AskUserQuestion`) ; quatre arbitrages pris ici (`AskUserQuestion`), avant la spécification.*
+**La demande** : « dans le MCP ajouter des prompts pour mieux guider l'usage du CRM et ces PROMPTS devraient être éditables
+via l'admin du CRM (éditer, ajouter, supprimer). Tu peux déjà mettre des prompts basés sur les apprentissages de l'usage
+actuel. »
+**Les deux questions du connecteur** (`CLAUDE.md`, « Toute fonctionnalité pose la question du connecteur MCP ») :
+1. **oui, dans le connecteur**, et c'est son objet : la capacité `prompts` du protocole, `prompts/list` et `prompts/get` ;
+2. **aucune famille, ni nouvelle ni existante** : aucune case de la matrice, aucune ligne dans l'onglet « Connecteur MCP ».
+   Un prompt ne fait rien : il guide l'assistant, et chaque outil qu'il fait appeler reste soumis aux droits de sa famille
+   et à la RLS. *Relayé par bb.*
+**Arbitrages relayés par bb** :
+- **les prompts vivent par espace** et sont édités par les **administrateurs de l'espace**, dans Réglages ▸ Prompts du
+  connecteur — ajouter, modifier, supprimer ; **tout membre les lit**, comme les pastilles. La règle est tenue en base
+  (RLS), prouvée par une requête directe ;
+- **les défauts** sont posés à la création d'un espace et repris pour les espaces existants par la migration. Leurs
+  sources : `docs/SPEC-mcp.md`, le manuel, et le relevé en lecture seule du journal MCP de production (4 038 appels,
+  2 comptes, du 2026-10-26 au 2026-11-17 ; aucun contenu ni identifiant), reproduit dans `docs/SPEC-mcp.md` §17.6.
+  *Précision de bb* : les erreurs de `crm_card_list` et `crm_card_mine` du relevé étaient des délais, corrigés par la
+  `0171` le 2026-11-10 (depuis : p95 793 ms et 515 ms, aucune erreur). Les prompts n'ont pas à contourner `crm_card_list` ;
+  guider vers `crm_search` pour retrouver une affaire reste juste, c'est l'usage observé.
+**Arbitrages pris ici** :
+- **Q1, le design system** : *présentées* : les sections ciblées ; la lecture intégrale par tranches (706 Ko). **Retenu :
+  les sections ciblées**, en entier : §1 à §4, §6 à §12, §5.5, §5.8, §5.13, §5.29 bis, §5.34, §5.59, §5.73 et §5.103, et
+  ce qu'elles citent. **Portée** : `CRM-149` seulement ; la règle de `CLAUDE.md` n'est pas changée ;
+- **Q2, les arguments** : *présentés* : texte seul ; arguments éditables (`{{nom}}`). **Retenu : texte seul** — un titre,
+  une description, un texte ; l'assistant demande à la personne ce qui manque ;
+- **Q3, la langue** : *présentées* : français ; anglais comme les descriptions d'outils (§9.1). **Retenu : français**,
+  la langue des administrateurs qui les éditent ; les noms d'outils restent tels quels ;
+- **Q4, les défauts** : *présentés* : cinq tirés de l'usage ; les quatre parcours seuls. **Retenu : cinq** — créer une
+  affaire complète, faire le point, faire avancer, retrouver une affaire, enregistrer une recette réelle.
+**Tranché par la spécification, sans question** :
+- **supprimer détruit**, après une confirmation dans le flux : aucun objet ne référence un prompt, à la différence d'une
+  pastille posée sur des mails (décision 926) ; un défaut supprimé ne revient pas ;
+- **un prompt n'est listé qu'à un compte qui peut entrer** (un droit ou le drapeau), comme les outils de référence
+  (§6.1), et seulement pour les espaces dont il est **membre** : c'est la RLS de la table, sous le jeton interne ;
+- **deux espaces, un même identifiant** : le nom MCP reçoit le slug de l'espace (`creer-une-affaire__p2enjoy`), et le
+  titre son nom ; un identifiant propre à un seul espace garde son nom nu ;
+- **chaque `prompts/get` est inscrit au journal du connecteur** (`mcp_journal`, outil `prompt:<identifiant>`) : c'est ce
+  journal qui a permis le relevé, et il dira si les prompts servent ;
+- **pas de ligne au journal d'audit** : comme les pastilles et les étiquettes, la table n'est pas une table de droits ;
+  l'auteur et la date de la dernière modification sont gardés sur la ligne.
+**Conséquences** : `CRM-149`, quatre tranches (`docs/BACKLOG.md`) : T1 la migration et ses preuves ; T2 le serveur MCP ;
+T3 l'écran de Réglages ; T4 le seed, le manuel et la clôture. Une migration (`0185`, numéro pris au push). Spécification :
+`docs/SPEC-mcp.md` §17 ; `docs/SCHEMA.md`, `docs/DAT.md` §3.7 ter, `docs/DESIGN_SYSTEM.md` §5.104.
