@@ -3,6 +3,8 @@
 // @spec CRM-134 (docs/BACKLOG.md) tranche T1 — la même confirmation, PARTAGÉE avec la vue du channel : le corps en
 //       paramètre, la fermeture par `Échap` à la demande (docs/SPEC-channels.md §11.2 ; docs/DESIGN_SYSTEM.md §5.101 ;
 //       décision 919 : « le même geste a la même forme dans les deux écrans »)
+// @spec CRM-149 (docs/BACKLOG.md) tranche T3 — la même confirmation pour supprimer un prompt du connecteur : le libellé du
+//       bouton en paramètre, celui d'archivage restant le défaut (docs/DESIGN_SYSTEM.md §5.104)
 //
 // Elle quitte `AdministrationArborescence.tsx` sans changer de forme : surface bordée, question en `font-medium`, corps
 // en 13 px secondaire, « Archiver » plein aux jetons de danger puis « Annuler ». Le focus entre sur « Archiver ».
@@ -20,6 +22,7 @@ export function ConfirmationArchivage({
 	onConfirmer,
 	onAnnuler,
 	fermerParEchap = false,
+	libelleAction,
 }: {
 	readonly question: string
 	/** Ce que le geste fait, dit à l'endroit où il se fait — Réglages et la vue du channel ne le disent pas pareil. */
@@ -33,6 +36,8 @@ export function ConfirmationArchivage({
 	 * confirmation n'en a jamais eu, et `CRM-134` ne change pas son comportement.
 	 */
 	readonly fermerParEchap?: boolean
+	/** Le libellé du bouton de danger — « Supprimer » pour un prompt (`CRM-149`) ; « Archiver » par défaut. */
+	readonly libelleAction?: string
 }) {
 	const premier = useRef<HTMLButtonElement>(null)
 	useEffect(() => {
@@ -60,7 +65,7 @@ export function ConfirmationArchivage({
 					onClick={onConfirmer}
 					className="inline-flex items-center justify-center gap-2 min-h-[var(--size-target)] rounded-sm px-4 font-medium bg-danger text-white hover:opacity-90 disabled:opacity-70"
 				>
-					{t('admin.archive.confirm.action')}
+					{libelleAction ?? t('admin.archive.confirm.action')}
 				</button>
 				<Button variante="secondaire" onClick={onAnnuler}>
 					{t('admin.action.cancel')}

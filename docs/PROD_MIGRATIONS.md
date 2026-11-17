@@ -1202,6 +1202,19 @@ outils) ; elle se livre **après** la 185 (§2.49).
 
 **Retour arrière** : l'image précédente ; rien n'est écrit en base par la livraison.
 
+### 2.52 `CRM-149` T3, décision 930 — Réglages ▸ Prompts du connecteur (À LIVRER : la webapp ; **hors de tout lot annoncé**)
+
+`docs/SPEC-mcp.md` §17.7 ; `docs/DESIGN_SYSTEM.md` §5.104. **Aucune migration nouvelle, aucune variable, aucun secret.**
+L'écran lit et écrit `mcp_prompts` : **la webapp exige la 185** — servie avant, l'écran rend son état d'erreur (relation
+inconnue), le reste de l'application n'est pas touché. Elle se livre **après** la 185 (§2.49).
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer la webapp | session de livraison | bâtie dans la cellule (§4) |
+| 2 | Constater | responsable | Réglages ▸ « Prompts du connecteur » liste les cinq prompts ; un administrateur en ajoute un, le modifie, le supprime ; un membre non administrateur voit les commandes inactives |
+
+**Retour arrière** : la webapp précédente ; rien n'est écrit en base par la livraison.
+
 ## 3. Migrations en attente
 
 **La 185** (`CRM-149` T1, décision 930), *en attente, hors de tout lot annoncé* : les prompts du connecteur

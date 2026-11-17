@@ -1,3 +1,4 @@
+// @spec CRM-149 (docs/BACKLOG.md) — tranche T3 : Réglages ▸ Prompts du connecteur, son adresse, son titre et son entrée d'index (docs/SPEC-mcp.md §17.7 ; docs/DESIGN_SYSTEM.md §5.104)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : Réglages ▸ Étiquettes, son adresse, sa route et son entrée d'index (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-007 (docs/BACKLOG.md) — routes de premier niveau et leur contenu
 // @spec CRM-075 (docs/BACKLOG.md) — index des réglages et route de l'administration
@@ -79,6 +80,7 @@ import {
 	CHEMIN_ADMIN_MODELES_AFFAIRES,
 	CHEMIN_ADMIN_ETIQUETTES,
 	CHEMIN_ADMIN_WEBHOOKS,
+	CHEMIN_ADMIN_PROMPTS_CONNECTEUR,
 } from './chemins'
 
 export {
@@ -120,6 +122,7 @@ export {
 	CHEMIN_ADMIN_MODELES_AFFAIRES,
 	CHEMIN_ADMIN_ETIQUETTES,
 	CHEMIN_ADMIN_WEBHOOKS,
+	CHEMIN_ADMIN_PROMPTS_CONNECTEUR,
 }
 
 /**
@@ -231,6 +234,8 @@ export const CLE_TITRE_MODELES_MAIL: CleTraduction = 'admin.mailTemplates.title'
 export const CLE_TITRE_SEQUENCES_MAIL: CleTraduction = 'admin.sequences.title'
 /** `CRM-141` T3 — Réglages ▸ Pastilles des mails (docs/SPEC-mail-subsystem.md §31.7). */
 export const CLE_TITRE_PASTILLES_MAIL: CleTraduction = 'admin.mailLabels.title'
+/** `CRM-149` T3 — Réglages ▸ Prompts du connecteur (docs/SPEC-mcp.md §17.7). */
+export const CLE_TITRE_PROMPTS_CONNECTEUR: CleTraduction = 'admin.mcpPrompts.title'
 
 /**
  * Titre de la corbeille — `CRM-077`, même patron que les trois autres (docs/SPEC-corbeille.md §4.1).
@@ -559,6 +564,19 @@ export function IndexReglages() {
 							<span className="text-sm text-text-2">{t('admin.settings.index.webhooks.body')}</span>
 						</Link>
 					)}
+				</li>
+				{/* Les prompts du connecteur viennent APRÈS les webhooks — `CRM-149` T3, docs/DESIGN_SYSTEM.md §5.104 : les deux
+				    parlent aux outils qui agissent hors de l'écran. Un lien pour tout membre : l'écran se lit, et ses commandes
+				    suivent la capacité d'administrer (§5.59). */}
+				<li>
+					<Link
+						to={CHEMIN_ADMIN_PROMPTS_CONNECTEUR}
+						data-testid="entree-prompts-connecteur"
+						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+					>
+						<span className="font-medium">{t('admin.settings.index.mcpPrompts')}</span>
+						<span className="text-sm text-text-2">{t('admin.settings.index.mcpPrompts.body')}</span>
+					</Link>
 				</li>
 				{/* Le catalogue vient APRÈS les workflows — `CRM-030`,
 				    docs/SPEC-workflow-engine.md §2 bis.2 : on découvre l'éditeur avant le

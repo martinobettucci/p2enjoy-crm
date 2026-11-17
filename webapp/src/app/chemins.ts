@@ -1,3 +1,4 @@
+// @spec CRM-149 (docs/BACKLOG.md) — tranche T3 : l'adresse de Réglages ▸ Prompts du connecteur (docs/SPEC-mcp.md §17.7)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : Réglages ▸ Étiquettes, son adresse, sa route et son entrée d'index (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-079 (docs/BACKLOG.md) — adresses des surfaces atteintes hors de `ROUTES`
 // @spec CRM-072 (docs/BACKLOG.md) — tranche T2 : l'adresse du journal d'audit (docs/SPEC-audit.md §8)
@@ -180,6 +181,12 @@ export const CHEMIN_ADMIN_SEQUENCES_MAIL = '/reglages/sequences-relance' as cons
  * et avant l'état de la messagerie : on configure avant de superviser.
  */
 export const CHEMIN_ADMIN_PASTILLES_MAIL = '/reglages/pastilles-mails' as const
+
+/**
+ * Prompts du connecteur — `CRM-149` T3, docs/SPEC-mcp.md §17.7 ; docs/DESIGN_SYSTEM.md §5.104. Après les webhooks : les deux
+ * parlent aux outils qui agissent hors de l'écran.
+ */
+export const CHEMIN_ADMIN_PROMPTS_CONNECTEUR = '/reglages/prompts-connecteur' as const
 
 /** État de la messagerie — `CRM-059`. */
 export const CHEMIN_ETAT_MESSAGERIE = '/reglages/messagerie' as const

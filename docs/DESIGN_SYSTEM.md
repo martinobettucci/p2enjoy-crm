@@ -8602,6 +8602,8 @@ d'une liste de l'espace se lisent de la même façon d'un écran à l'autre (§5
   « Il disparaît du connecteur pour tout l'espace. Il ne se restaure pas. » La confirmation est le composant partagé
   `ConfirmationArchivage`, dont le bouton reçoit ici le libellé **« Supprimer »** (une propriété facultative, le libellé
   d'archivage restant le défaut) : même surface, même bouton aux jetons de danger, même focus. `Échap` referme.
+  *Précisé au code de T3 (2026-11-17)* : **après une suppression, le focus va à « Nouveau prompt »** — la ligne disparaît
+  avec sa commande. Défaut trouvé par la preuve au clavier : le focus partait au bouton de la ligne, puis au document.
 - **LES REFUS** sont dits **sous les champs** de la fiche, ou dans la confirmation, `role="alert"`, aux jetons de danger
   doux (§5.13) : « Un prompt de cet espace porte déjà cet identifiant. », « Vérifiez la forme : identifiant en lettres
   minuscules, chiffres et tirets, de 2 à 40 caractères ; titre, description et texte non vides. », « Réservé aux

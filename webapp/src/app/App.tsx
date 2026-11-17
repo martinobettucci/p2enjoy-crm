@@ -1,4 +1,5 @@
 // @spec CRM-141 (docs/BACKLOG.md) — tranche T3 : la route de Réglages ▸ Pastilles des mails (docs/SPEC-mail-subsystem.md §31.7)
+// @spec CRM-149 (docs/BACKLOG.md) — tranche T3 : la route de Réglages ▸ Prompts du connecteur (docs/SPEC-mcp.md §17.7)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : Réglages ▸ Étiquettes, son adresse, sa route et son entrée d'index (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-007 (docs/BACKLOG.md) — racine applicative et routage
 // @spec CRM-009 (docs/BACKLOG.md) — route de connexion et restauration de session
@@ -44,6 +45,7 @@ import {
 	CHEMIN_PLATEFORME_SUPERADMINS,
 	CHEMIN_PLATEFORME_UTILISATEURS,
 	CHEMIN_ADMIN_PASTILLES_MAIL,
+	CHEMIN_ADMIN_PROMPTS_CONNECTEUR,
 } from './chemins'
 import type { VuePlateforme } from './Plateforme'
 import { GuideDemarrage } from './GuideDemarrage'
@@ -93,6 +95,7 @@ import {
 	CLE_TITRE_MODELES_MAIL,
 	CLE_TITRE_SEQUENCES_MAIL,
 	CLE_TITRE_PASTILLES_MAIL,
+	CLE_TITRE_PROMPTS_CONNECTEUR,
 	CLE_TITRE_ETAT_MESSAGERIE,
 	CLE_TITRE_INTROUVABLE,
 	CLE_TITRE_OBJECTIFS,
@@ -166,6 +169,10 @@ const ReglagesSequencesRelance = lazy(async () => ({
 // `CRM-141` T3 — Réglages ▸ Pastilles des mails (docs/SPEC-mail-subsystem.md §31.7).
 const ReglagesPastillesMail = lazy(async () => ({
 	default: (await import('./ReglagesPastillesMail')).ReglagesPastillesMail,
+}))
+// `CRM-149` T3 — Réglages ▸ Prompts du connecteur (docs/SPEC-mcp.md §17.7).
+const ReglagesPromptsConnecteur = lazy(async () => ({
+	default: (await import('./ReglagesPromptsConnecteur')).ReglagesPromptsConnecteur,
 }))
 /** La corbeille de `CRM-077`, chargée à la demande pour la même raison que les trois autres. */
 const Corbeille = lazy(async () => ({ default: (await import('./Corbeille')).Corbeille }))
@@ -508,6 +515,15 @@ function RoutesPages() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_WEBHOOKS}>
 							<ReglagesWebhooks />
+						</AppShell>
+					}
+				/>
+				{/* Réglages ▸ Prompts du connecteur — `CRM-149` T3. Déclarée APRÈS les webhooks, comme dans l'index (§5.104). */}
+				<Route
+					path={CHEMIN_ADMIN_PROMPTS_CONNECTEUR}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_PROMPTS_CONNECTEUR}>
+							<ReglagesPromptsConnecteur />
 						</AppShell>
 					}
 				/>

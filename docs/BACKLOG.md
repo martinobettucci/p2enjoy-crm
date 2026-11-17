@@ -19702,8 +19702,13 @@ les administrateurs, texte seul, en français, cinq défauts tirés de l'usage ;
   (nom nu, compte sans droit, journal), suite unitaire 419 ; intégration `test_integration_prompts.py` 3/3 contre le vrai
   Keycloak et la vraie base, par `scripts/verify-mcp.sh --rapide` (125 contrôles, aucune anomalie ; intégration 110/110 en
   direct et à travers le Caddy de la cellule ; la preuve navigateur omise). Contrat §2.51.
-- [ ] **T3** — Réglages ▸ Prompts du connecteur (lister, ajouter, modifier, supprimer confirmé), l'entrée de l'index, les
+- [x] **T3** — Réglages ▸ Prompts du connecteur (lister, ajouter, modifier, supprimer confirmé), l'entrée de l'index, les
   textes ; Vitest, E2E UI souris et clavier, quatre paliers, captures observées.
+  *Fait le 2026-11-17* : `ReglagesPromptsConnecteur.tsx`, `lib/prompts-connecteur.ts`, la route `/reglages/prompts-connecteur`
+  et son entrée d'index ; `ConfirmationArchivage` reçoit un libellé de bouton facultatif. Vitest 15 (écran 8, module 7),
+  suite complète 243 fichiers, 5 853 tests ; E2E UI `prompts-connecteur` 4/4 (souris, clavier, lectrice, quatre paliers) —
+  la preuve au clavier a trouvé le focus perdu après une suppression, corrigé, et la preuve Vitest qui le garde rougit sans
+  la correction ; tsc et build verts ; captures `docs/captures/CRM-149` observées (1440, 1024, 768, 390). Contrat §2.52.
 - [ ] **T4** — le seed (un prompt ajouté par PostgREST), le manuel (§33.7, l'index des réglages) et ses images ; changelog ;
   clôture en `[P]`.
 

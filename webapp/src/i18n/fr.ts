@@ -4365,6 +4365,50 @@ export const fr = {
 		"Rien n'a été modifié : vous n'avez plus le droit d'écrire sur cette pastille, ou elle a disparu.",
 	'admin.mailLabels.refus.panne': "L'enregistrement a échoué. Réessayez.",
 	'mailLabels.pill.archived': '{nom}, pastille archivée',
+	// CRM-149 T3 — Réglages ▸ Prompts du connecteur (docs/SPEC-mcp.md §17.7 ; docs/DESIGN_SYSTEM.md §5.104).
+	'admin.settings.index.mcpPrompts': 'Prompts du connecteur',
+	'admin.settings.index.mcpPrompts.body':
+		'Les parcours guidés que votre assistant propose : créer une affaire, faire le point, faire avancer…',
+	'admin.mcpPrompts.title': 'Prompts du connecteur',
+	'admin.mcpPrompts.intro':
+		'Votre assistant (Claude, ChatGPT) propose ces textes depuis le connecteur MCP du CRM. Choisi, un prompt est inséré dans la conversation comme votre message.',
+	'admin.mcpPrompts.noworkspace': "Aucun espace de travail n'est ouvert : les prompts appartiennent à un espace.",
+	'admin.mcpPrompts.new': 'Nouveau prompt',
+	'admin.mcpPrompts.saved': 'Prompt « {titre} » enregistré.',
+	'admin.mcpPrompts.deleted': 'Prompt « {titre} » supprimé.',
+	'admin.mcpPrompts.edit': 'Modifier',
+	'admin.mcpPrompts.edit.aria': 'Modifier le prompt {titre}',
+	'admin.mcpPrompts.delete': 'Supprimer',
+	'admin.mcpPrompts.delete.aria': 'Supprimer le prompt {titre}',
+	'admin.mcpPrompts.delete.confirm': 'Supprimer le prompt « {titre} » ?',
+	'admin.mcpPrompts.delete.confirm.body': 'Il disparaît du connecteur pour tout l’espace. Il ne se restaure pas.',
+	'admin.mcpPrompts.delete.confirm.action': 'Supprimer',
+	'admin.mcpPrompts.error.title': 'Les prompts n’ont pas pu être chargés',
+	'admin.mcpPrompts.empty.title': 'Aucun prompt.',
+	'admin.mcpPrompts.empty.body': 'Ajoutez un parcours guidé pour votre assistant.',
+	'admin.mcpPrompts.form.new': 'Nouveau prompt',
+	'admin.mcpPrompts.form.edit': 'Modifier le prompt',
+	'admin.mcpPrompts.field.title': 'Titre',
+	'admin.mcpPrompts.field.key': 'Identifiant',
+	'admin.mcpPrompts.field.key.help':
+		'Lettres minuscules, chiffres et tirets. C’est le nom que l’assistant affiche, par exemple creer-une-affaire.',
+	'admin.mcpPrompts.field.description': 'Description',
+	'admin.mcpPrompts.field.description.help':
+		'Une phrase qui dit à quoi sert le prompt. L’assistant et la personne la lisent dans la liste.',
+	'admin.mcpPrompts.field.body': 'Texte du prompt',
+	'admin.mcpPrompts.field.body.help':
+		'Inséré dans la conversation comme le message de la personne. Décrivez les étapes et nommez les outils du connecteur (crm_search, crm_card_get…).',
+	'admin.mcpPrompts.save': 'Enregistrer',
+	'admin.mcpPrompts.pending': 'Enregistrement…',
+	'admin.mcpPrompts.cancel': 'Annuler',
+	'admin.mcpPrompts.refus.cle': 'Un prompt de cet espace porte déjà cet identifiant.',
+	'admin.mcpPrompts.refus.forme':
+		'Vérifiez la forme : identifiant en lettres minuscules, chiffres et tirets, de 2 à 40 caractères ; titre, description et texte non vides.',
+	'admin.mcpPrompts.refus.forbidden': 'Réservé aux administrateurs de l’espace.',
+	'admin.mcpPrompts.refus.sansEffet':
+		"Rien n'a été modifié : vous n'avez plus le droit d'écrire sur ce prompt, ou il a disparu.",
+	'admin.mcpPrompts.refus.panne': "L'enregistrement a échoué. Réessayez.",
+	'admin.mcpPrompts.refus.suppression': 'La suppression a échoué. Réessayez.',
 	'admin.settings.index.sequences.body':
 		'Enchaîner plusieurs modèles à des délais choisis, pour relancer une affaire qui ne répond plus.',
 	'admin.sequences.aria': 'Administration des séquences de relance',

@@ -13,6 +13,13 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-149` T3 — Réglages ▸ Prompts du connecteur (décision 930)
+
+- **Un écran pour les prompts du connecteur**, dans les réglages, après « Webhooks » : chaque prompt avec son identifiant
+  et sa description. Les administrateurs de l'espace en ajoutent, les modifient et les suppriment (avec confirmation) ;
+  les autres membres les lisent, les commandes inactives et la raison dite.
+- Déploiement : la webapp, après la migration 185 (`docs/PROD_MIGRATIONS.md` §2.52).
+
 #### `CRM-149` T2 — les prompts dans le connecteur MCP (décision 930)
 
 - **Votre assistant propose des parcours guidés** : le connecteur annonce désormais des prompts, ceux de vos espaces. En
