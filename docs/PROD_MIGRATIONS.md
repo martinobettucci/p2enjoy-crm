@@ -1160,20 +1160,6 @@ la webapp (T3) qui la lisent se livrent **après** elle.
 **Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0185` » ; seuls les cinq défauts sont perdus tant que
 personne n'a édité de prompt.
 
-### 2.50 `CRM-150`, décision 928 — les refus du connecteur journalisés « Refusé par le CRM » (À LIVRER : l'image `mcp` ; **hors de tout lot annoncé**)
-
-`docs/SPEC-mcp.md` §9.3 ; INC-357. **Aucune migration, aucune variable, aucun secret** ; aucun outil, aucune case, aucune
-réponse ne change : seule l'issue que le journal inscrit pour un refus fait par le connecteur (nom inconnu, valeur mal
-formée, argument manquant) passe de `erreur` à `refus_crm`.
-
-| # | Geste | Qui | Comment |
-|---|---|---|---|
-| 1 | Reconstruire l'image `mcp` | session de livraison | `up -d --build --no-deps --wait mcp` (§4) |
-| 2 | Constater | session de livraison, en lecture seule | dans `public.mcp_journal`, après le premier appel refusé de cette sorte : `refus_crm`, non `erreur` ; les issues `erreur` qui restent sont des pannes |
-
-**Retour arrière** : l'image précédente ; rien n'est écrit en base par la livraison. Les lignes déjà inscrites ne sont pas
-reclassées : le relevé d'avant la livraison garde ses `erreur`.
-
 ### 2.50 `CRM-150`, décision 933 — les refus du connecteur journalisés « Refusé par le CRM » (À LIVRER : l'image `mcp` ; **hors de tout lot annoncé**)
 
 `docs/SPEC-mcp.md` §9.3 ; INC-357. **Aucune migration, aucune variable, aucun secret** ; aucun outil, aucune case, aucune
