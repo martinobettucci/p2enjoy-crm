@@ -40640,3 +40640,18 @@ la webapp nouvelle précède la 183.
 **Décision : oui, sans instantané**, un `pg_dump` avant ; **la passe reste active même si la clé est refusée** — elle espace
 ses essais après chaque échec ; écarté : l'arrêter par `cron.unschedule`. **Livrée** à `1ccc1fbb` (contrat §8, 2026-11-12) ;
 **constaté** : la clé de production est refusée (`cle_refusee`, `simulee: false`), 49 évaluations restent `pending`.
+
+### décision 928 — `CRM-151` : « Supprimer ici » et « Supprimer partout », chacun confirmé, « Ne plus demander pendant 1 heure » dans l'onglet
+
+*2026-11-17, session 4522fa9c (p2enjoy-crm-bb, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le problème** : la demande (« deux boutons […] remplace la fenêtre de confirmation. La fenêtre maintenant affiche une case
+à cocher qui supprime la fenêtre de confirmation pendant 1 heure ») admettait deux parcours.
+**Décision** :
+- **les boutons, puis la confirmation** : la rangée porte « Supprimer ici » et « Supprimer partout » ; chacun ouvre une
+  confirmation courte qui rappelle l'effet, avec la case « Ne plus demander pendant 1 heure » ; écarté : un seul bouton
+  dont la confirmation porterait les deux choix ;
+- **la mémoire d'une heure vit dans l'onglet** (`sessionStorage`), préférence d'interface sans stockage persistant ;
+  écarté : une échéance en base par personne ;
+- **pas de connecteur MCP** : `crm_mail_delete` inchangé.
+**Conséquences** : `CRM-151`, à prendre par la première session libre ; révise `CRM-138` §5.102 (décision 921 : la
+confirmation reste dans le flux).

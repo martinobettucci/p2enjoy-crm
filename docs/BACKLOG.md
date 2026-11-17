@@ -19684,3 +19684,24 @@ décision à consigner).
 **Origine** : décision du responsable, le 2026-11-17, relayée par la session de livraison : « enquête et correction », dans
 une unité dédiée, sur le relevé du journal MCP de production (`public.mcp_journal`, 2026-10-26 au 2026-11-17).
 **Spécification** : à écrire avant le code (décision à consigner).
+
+### CRM-151 — Supprimer un mail : « Supprimer ici » et « Supprimer partout », confirmation courte, « Ne plus demander pendant 1 heure » `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison (p2enjoy-crm-bb) ; arbitrée le
+même jour (décision 928). Révise l'« Effacer » de `CRM-138` (décisions 878, 917, 921 ; `docs/DESIGN_SYSTEM.md` §5.102).
+**Demande, verbatim** : « Le bouton "supprimer mail" devrait être deux boutons : supprimer ici et supprimer partout. Ceci
+remplace la fenêtre de confirmation. La fenêtre maintenant affiche une case à cocher qui supprime la fenêtre de confirmation
+pendant 1 heure. »
+**Comportement attendu** (substance validée ; détail à spécifier) :
+- la rangée du message ouvert porte **deux boutons** à la place d'« Effacer » : **« Supprimer ici »** (le message part dans
+  la corbeille de l'inbox du CRM seulement) et **« Supprimer partout »** (aussi déplacé dans la corbeille de la boîte mail,
+  offert selon la capacité de la boîte, comme l'actuelle case de `CRM-138`) ;
+- chacun ouvre une **confirmation courte**, dans le flux (décision 921), qui rappelle l'effet choisi ; elle **remplace**
+  l'actuelle confirmation et sa case « L'effacer aussi dans la boîte mail » ;
+- la confirmation porte la case **« Ne plus demander pendant 1 heure »** : cochée, les deux boutons suppriment directement,
+  sans confirmation, pendant une heure ;
+- cette mémoire est une **préférence d'interface limitée à la session du navigateur** (`sessionStorage`, échéance d'une
+  heure ; `CLAUDE.md` §11) : aucun stockage persistant, aucune migration ; un autre onglet ou appareil redemande ;
+- la restauration depuis la corbeille de l'inbox (30 jours) reste inchangée.
+**Connecteur MCP** : **non** — `crm_mail_delete` garde son outil et son option de boîte mail (famille `messagerie`).
+**Spécification** : à écrire avant le code (`docs/SPEC-mail-subsystem.md` §29, `docs/DESIGN_SYSTEM.md` §5.102, manuel §12).
