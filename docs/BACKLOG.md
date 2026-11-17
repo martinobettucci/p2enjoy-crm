@@ -19777,7 +19777,8 @@ pendant 1 heure. »
 - **T3** — le manuel §12.2 et ses images ; le contrat (la webapp) ; la clôture.
 **DoD** : unitaires ; E2E souris et clavier ; captures observées aux quatre paliers ; manuel vérifié ; contrat.
 
-### CRM-152 — Organisations : les tracks de chaque organisation, par ses contacts ; recherche, filtres et tri de la liste `[ ]`
+### CRM-152 — Organisations : les tracks de chaque organisation, par ses contacts ; recherche, filtres et tri de la liste `[@]`
+*Prise en charge : session interactive 4891a451 (p2enjoy-crm-d7, ex-32) depuis 2026-11-17 17:03 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*
 
 **Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison (p2enjoy-crm-bb) ; arbitrée le
 même jour (décision 931). Prolonge la liste des organisations de `CRM-114` et `CRM-146`.
