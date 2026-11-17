@@ -6517,3 +6517,34 @@ IFS='|' read -r PASTILLES_FAITES PASTILLES_ECHEC PASTILLES_MAIN PASTILLES_ARCHIV
 [ "$PASTILLES_ARCHIVEE" = "1" ] || die "l'invitation doit porter la pastille archivée « Newsletter » (§46) — mesuré : $PASTILLES_ARCHIVEE."
 [ "$PASTILLES_LLM" -ge 1 ] || die "aucune pastille posée par la passe : la fonction « ia » vise-t-elle le simulateur ? (§46)"
 info "Pastilles des mails : $PASTILLES_FAITES messages évalués par la vraie passe ($PASTILLES_LLM pastilles de l'IA), une correction à la main, « Newsletter » archivée et portée, « Candidature spontanée » en échec — docs/SPEC-seed.md §46"
+
+# =============================================================================================
+# 47. Les prompts du connecteur : les cinq défauts, et un prompt ajouté par l'administratrice — `CRM-149` T4
+# @spec CRM-149 (docs/BACKLOG.md) — tranche T4 : les défauts viennent de la migration 0185 (le vrai chemin) ; le seed AJOUTE
+#       un prompt par PostgREST, sous le jeton de l'administratrice, et constate les six (docs/SPEC-seed.md §47 ;
+#       docs/SPEC-mcp.md §17.4, §17.8 ; CLAUDE.md §8)
+# =============================================================================================
+
+JETON_PROMPTS=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+[ -n "$JETON_PROMPTS" ] || die "connexion de l'administratrice impossible : le prompt du §47 s'ajoute sous son jeton."
+if [ "$(psql_seed -c "select count(*) from public.mcp_prompts where workspace_id = '$WS_ID' and key = 'preparer-le-comite'")" = "0" ]; then
+	PROMPT_COMITE=$(jq -nc --arg ws "$WS_ID" '{
+		workspace_id: $ws,
+		key: "preparer-le-comite",
+		title: "Préparer le comité du lundi",
+		description: "Fait le tour des affaires à discuter au comité commercial du lundi, sans rien modifier.",
+		body: "Prépare le comité commercial du lundi.\n1. Liste mes affaires avec crm_card_mine, puis les affaires figées de l'\''espace avec crm_stale_card_list.\n2. Pour chacune, lis la fiche avec crm_card_get : étape, prochaine action, échéance.\n3. Rends-moi un tableau : affaire, étape, prochaine action, échéance, montant prévu, et ce qui bloque.\nNe modifie rien : c'\''est une préparation."
+	}')
+	code=$(api_jeton "$JETON_PROMPTS" POST /rest/v1/mcp_prompts -H 'Prefer: return=minimal' -d "$PROMPT_COMITE")
+	attendu "$code" "ajout du prompt « Préparer le comité du lundi » (§47)" 201
+fi
+
+CONSTAT_PROMPTS=$(psql_seed -c "select
+	(select count(*) from public.mcp_prompts where workspace_id = '$WS_ID' and key in ('creer-une-affaire', 'faire-le-point',
+	  'faire-avancer', 'retrouver-une-affaire', 'enregistrer-une-recette-reelle')) || '|' ||
+	(select count(*) from public.mcp_prompts where workspace_id = '$WS_ID' and key = 'preparer-le-comite'
+	  and created_by = '5eed0000-0000-4000-8000-000000000011')")
+IFS='|' read -r PROMPTS_DEFAUTS PROMPTS_AJOUTE <<< "$CONSTAT_PROMPTS"
+[ "$PROMPTS_DEFAUTS" = "5" ] || die "les cinq prompts par défaut manquent (§47) — mesuré : $PROMPTS_DEFAUTS. La migration 0185 est-elle appliquée ?"
+[ "$PROMPTS_AJOUTE" = "1" ] || die "le prompt « Préparer le comité du lundi » manque, ou son auteur n'est pas l'administratrice (§47)."
+info "Prompts du connecteur : les cinq défauts de la migration, et « Préparer le comité du lundi » ajouté par l'administratrice — docs/SPEC-seed.md §47"

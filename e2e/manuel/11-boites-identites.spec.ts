@@ -9,6 +9,10 @@
 // @spec CRM-136 (docs/BACKLOG.md) — tranche T4 : le hook rend les plafonds du seed (Driss à 200, docs/SPEC-seed.md §43)
 // @spec CRM-136 (docs/BACKLOG.md) — tranche T3 : les images de l'historique, des dossiers relevés et du plafond
 //       (docs/SPEC-mail-subsystem.md §25.4 à §25.6 ; docs/DESIGN_SYSTEM.md §5.99 ; docs/manual.md §11.1, §11.2)
+// @spec CRM-149 (docs/BACKLOG.md) — tranche T4 : l'index des réglages allongé par « Prompts du connecteur », la première
+//       cible des images de l'index est amenée en haut de la fenêtre (docs/SPEC-manual.md §11.2 ; docs/SPEC-mcp.md §17.7)
+// @spec INC-360 (docs/INCONSISTENCY_REPORT.md) — « Non testée » posée le temps de l'image : la relève réelle du seed rend
+//       les boîtes `ok` depuis la 0170 (docs/SPEC-mail-subsystem.md §24.3 ; docs/manual.md §11.1 ; SPEC-manual §11.4)
 //
 // Les boîtes et les identités sont celles du seed. Deux états sont posés par la clé de service et rendus tels qu'ils
 // ont été lus : une boîte « Connectée », et le plafond du jour d'une adresse d'expédition ramené à zéro le temps d'un
@@ -23,13 +27,20 @@ const BOITES = 'les-boites-de-reception-declarees'
 const ADRESSES = 'les-adresses-d-expedition'
 const BOITE_DRISS = `mail_inbound_accounts?label=eq.${encodeURIComponent('Boîte de Driss Lemoine')}`
 const BOITE_SYSTEME = 'mail_inbound_accounts?owner_id=is.null'
+const BOITE_CAMILLE = `mail_inbound_accounts?label=eq.${encodeURIComponent('Boîte de Camille Aubert')}`
 
 test('les réglages de la messagerie, dans leur ordre', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
 	await page.goto('/reglages')
 	const entree = (nom: string) => page.getByRole('link', { name: new RegExp(`^${nom}`) }).first()
 	// Une image par section, chacune sur son entrée : un nom ne sert qu'une fois par chapitre (`illustrer`).
+	// LA PREMIÈRE CIBLE EST AMENÉE EN HAUT DE LA FENÊTRE : l'index des réglages s'allonge (CRM-149 y ajoute « Prompts du
+	// connecteur »), et `scrollIntoViewIfNeeded` ne fait défiler que le minimum — la dernière cible tombait au ras du bas,
+	// hors de la fenêtre d'une fraction de pixel. Entre la première et la dernière, l'écart tient dans 900 px.
+	const enHaut = (nom: string) => entree(nom).evaluate((noeud) => noeud.scrollIntoView({ block: 'start' }))
+	await enHaut('Comptes de messagerie entrante')
 	await illustrer(page, { chapitre: CHAPITRE, section: BOITES, nom: 'reglages-boites', cibles: [entree('Comptes de messagerie entrante'), entree('État de la messagerie')] })
+	await enHaut('Identités d’expédition')
 	await illustrer(page, { chapitre: CHAPITRE, section: ADRESSES, nom: 'reglages-adresses', cibles: [entree('Identités d’expédition'), entree('État de la messagerie')] })
 })
 
@@ -39,12 +50,22 @@ test('les boîtes de réception : la liste, une boîte connectée, la configurat
 		`${BOITE_DRISS}&select=status,last_error,last_sync_at`,
 	)
 	if (avant === undefined) throw new Error('la boîte de Driss Lemoine est absente du seed')
+	// « NON TESTÉE » EST POSÉE, comme « Connectée » : depuis la migration 0170 (CRM-135), une relève réussie rend la boîte
+	// `ok`, et la relève réelle du seed les rend toutes « Connectée » sur une base fraîche (INC-360). La boîte de Camille
+	// porte le temps de l'image l'état d'une boîte jamais testée ni relevée, et retrouve ensuite celui qui lui a été lu.
+	const [avantCamille] = await lireService<{ status: string; last_error: string | null; last_sync_at: string | null }[]>(
+		request,
+		`${BOITE_CAMILLE}&select=status,last_error,last_sync_at`,
+	)
+	if (avantCamille === undefined) throw new Error('la boîte de Camille Aubert est absente du seed')
 	await service(request, 'patch', BOITE_DRISS, { status: 'ok', last_error: null, last_sync_at: '2026-10-27T08:00:00Z' })
+	await service(request, 'patch', BOITE_CAMILLE, { status: 'pending', last_error: null })
 	try {
 		await connecterAvecLeLabs(page, ADMIN)
 		await page.goto('/reglages/comptes-mail')
 		const liste = page.getByTestId('liste-comptes-mail')
 		await expect(liste).toContainText('Connectée')
+		await expect(liste).toContainText('Non testée')
 		await illustrer(page, { chapitre: CHAPITRE, section: null, nom: 'comptes-de-messagerie', cibles: [], pleinePage: true })
 		await illustrer(page, { chapitre: CHAPITRE, section: BOITES, nom: 'liste-des-boites', cibles: [liste] })
 		await page.getByTestId('configurer-compte').first().click()
@@ -53,6 +74,7 @@ test('les boîtes de réception : la liste, une boîte connectée, la configurat
 		await illustrer(page, { chapitre: CHAPITRE, section: BOITES, nom: 'configurer-une-boite', cibles: [formulaire] })
 	} finally {
 		await service(request, 'patch', BOITE_DRISS, avant)
+		await service(request, 'patch', BOITE_CAMILLE, avantCamille)
 	}
 })
 
@@ -80,7 +102,6 @@ test('une boîte testée : le verdict sous la ligne', async ({ page, request }) 
 
 // `CRM-136` T3 : rien n'est enregistré — l'image montre le champ, le panneau, le plafond, et chaque formulaire est annulé.
 // Le panneau est un test de connexion : la garde de trente secondes est levée par la clé de service, puis l'état rendu.
-const BOITE_CAMILLE = `mail_inbound_accounts?label=eq.${encodeURIComponent('Boîte de Camille Aubert')}`
 test('l’historique, les dossiers relevés et le plafond', async ({ page, request }) => {
 	test.setTimeout(90_000)
 	const [avant] = await lireService<{ last_checked_at: string | null }[]>(request, `${BOITE_CAMILLE}&select=last_checked_at`)

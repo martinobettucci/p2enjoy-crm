@@ -19690,8 +19690,7 @@ interne, l'arrêt de propagation), suite complète 243 fichiers et 5 853 tests ;
 changement ; DESIGN_SYSTEM §5.58 (le texte masqué), changelog, contrat §2.53. Sous-ensemble de ce périmètre. Le port 4173
 était tenu par un serveur d'un autre projet (`4-120`), arrêté sur autorisation du responsable.
 
-### CRM-149 — Les prompts du connecteur MCP : des parcours guidés, par espace, édités dans Réglages `[@]`
-*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-f8, ex-a7, ex-75) depuis 2026-11-17 16:12 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*
+### CRM-149 — Les prompts du connecteur MCP : des parcours guidés, par espace, édités dans Réglages `[P]`
 
 **Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison : « dans le MCP ajouter des
 prompts pour mieux guider l'usage du CRM et ces PROMPTS devraient être éditables via l'admin du CRM (éditer, ajouter,
@@ -19720,8 +19719,20 @@ les administrateurs, texte seul, en français, cinq défauts tirés de l'usage ;
   suite complète 243 fichiers, 5 853 tests ; E2E UI `prompts-connecteur` 4/4 (souris, clavier, lectrice, quatre paliers) —
   la preuve au clavier a trouvé le focus perdu après une suppression, corrigé, et la preuve Vitest qui le garde rougit sans
   la correction ; tsc et build verts ; captures `docs/captures/CRM-149` observées (1440, 1024, 768, 390). Contrat §2.52.
-- [ ] **T4** — le seed (un prompt ajouté par PostgREST), le manuel (§33.7, l'index des réglages) et ses images ; changelog ;
+- [x] **T4** — le seed (un prompt ajouté par PostgREST), le manuel (§33.7, l'index des réglages) et ses images ; changelog ;
   clôture en `[P]`.
+  *Fait le 2026-11-17* : seed §47 — « Préparer le comité du lundi » ajouté sous le jeton de l'administratrice par la vraie
+  route, les cinq défauts et leur auteur gardés ; vert sur base remise à zéro, puis rejoué convergent (après INC-358 et
+  INC-359). Manuel §33.7 « Les prompts : des parcours guidés » et la ligne du §33.6 ; images `prompts-du-connecteur` et
+  `prompt-fiche` (`e2e/manuel/33b-prompts-connecteur.spec.ts`) observées. L'entrée de l'index allongeait les Réglages :
+  l'image `reglages-boites` du chapitre 11 sortait de la fenêtre — la première cible est amenée en haut ; au même
+  rejeu, `corps-d-une-remise` (chapitre 34, historique allongé par une base fraîche) et « Non testée » (INC-360, laissée
+  ouverte) sont corrigés dans leurs specs. Chapitres 11, 33 et 34 du projet manuel 12/12 puis 6/6, `manuel:construire` et
+  `manuel:verifier` à jour (34 chapitres), `verify-manual.sh` 168 contrôles sans anomalie.
+
+**État** (2026-11-17) : `[P]` — implémentée et vérifiée en développement, tranche par tranche. Restent la livraison, sur
+instruction du responsable, et son constat : la 185 (contrat §2.49), puis l'image `mcp` (§2.51), puis la webapp et le
+manuel publié (§2.52), dans cet ordre.
 
 ### CRM-150 — `crm_card_move` rend « erreur » là où le CRM refuse : enquête et correction `[P]`
 

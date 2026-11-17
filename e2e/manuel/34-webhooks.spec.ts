@@ -1,6 +1,9 @@
 // @spec CRM-073 (docs/BACKLOG.md) — tranche T3 : les images du chapitre 34, « Les webhooks : prévenir vos autres outils »
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitre 34 ; docs/DESIGN_SYSTEM.md §5.79 ; docs/SPEC-seed.md §34
 //       (les trois webhooks semés et leurs remises)
+// @spec INC-358 (docs/INCONSISTENCY_REPORT.md) — sur une base remise à zéro, l'historique de « Tableur commercial » porte
+//       aussi les remises des affaires du §36 : la ligne dont on montre le corps est amenée en haut de la fenêtre
+//       (docs/SPEC-manual.md §11.2 ; docs/SPEC-seed.md §34, §36)
 //
 // Les webhooks jetables du scénario portent le préfixe `tst-crm073` et sont retirés après chaque test. L'échec d'une remise
 // — cinq essais épuisés — ne se rencontre qu'après deux heures et demie de refus réels : le scénario le POSE sur la remise
@@ -122,6 +125,10 @@ test('l’historique des remises : réussies, en attente, échouée, et le corps
 		})
 		const derniere = historique.getByTestId('ligne-remise').last()
 		await derniere.getByRole('button', { name: /Voir le corps/ }).click()
+		// LA LIGNE EST AMENÉE EN HAUT DE LA FENÊTRE : sur une base remise à zéro, « Tableur commercial » (tout l'espace) porte
+		// aussi les remises des affaires que le seed crée après le §34 — l'historique s'allonge, et `scrollIntoViewIfNeeded`
+		// laissait le corps au ras du bas, hors de la fenêtre. La ligne et son corps tiennent ensemble dans 1300 px.
+		await derniere.evaluate((noeud) => noeud.scrollIntoView({ block: 'start' }))
 		await illustrer(page, { chapitre: CHAPITRE, section, nom: 'corps-d-une-remise', cibles: [derniere, historique.getByTestId('corps-remise')] })
 		await historique.getByRole('button', { name: 'Fermer l’historique' }).click()
 

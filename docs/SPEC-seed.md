@@ -3193,3 +3193,25 @@ les mails du seed existent alors.
 ne défait rien ; une pastille archivée affichée comme telle ; un mail dont l'évaluation a échoué, et le bouton qui la
 relance.
 
+
+## 47. Les prompts du connecteur : les cinq défauts, et un prompt ajouté par l'administratrice — `CRM-149` T4 (`docs/SPEC-mcp.md` §17.8)
+
+**Les cinq défauts** de l'espace seedé viennent de la migration `0185`, qui les pose pour chaque espace existant : le vrai
+chemin, sans rien d'écrit par le seed (`CLAUDE.md` §8). Ce sont ceux du `docs/SPEC-mcp.md` §17.4.
+
+**Un prompt ajouté**, par PostgREST, **sous le jeton de l'administratrice** (Camille), comme l'écran l'ajoute :
+
+| Champ | Valeur |
+|---|---|
+| Identifiant | `preparer-le-comite` |
+| Titre | « Préparer le comité du lundi » |
+| Description | « Fait le tour des affaires à discuter au comité commercial du lundi, sans rien modifier. » |
+| Texte | quatre lignes : `crm_card_mine` et `crm_stale_card_list`, puis `crm_card_get` pour chacune, puis un tableau, et « Ne modifie rien » |
+
+**Rejouable** : le prompt n'est ajouté que s'il manque ; un rejeu n'écrit rien.
+
+**Les gardes du seed** : les cinq défauts sont présents ; le prompt ajouté l'est, et son auteur est l'administratrice. Une
+garde qui échoue arrête le seed et nomme la migration `0185`.
+
+**Ce que le jeu démontre** : Réglages ▸ Prompts du connecteur avec six prompts, dont un propre à l'espace ; dans un client
+MCP connecté, les mêmes six, et le prompt ajouté rendu avec son en-tête d'espace.

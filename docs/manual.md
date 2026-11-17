@@ -7016,7 +7016,50 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
 
 Toutes les familles ont leurs outils. Restent des gestes de l'écran : **envoyer** — l'assistant prépare, joint des fichiers,
 mais c'est vous qui envoyez ; **retirer un email de son affaire**, dans la boîte de réception ;
-**les modèles et les séquences** de relance.
+**les modèles et les séquences** de relance ; **les prompts du connecteur**, qui se modifient dans les réglages (§33.7).
+
+### 33.7 Les prompts : des parcours guidés
+
+![Réglages ▸ Prompts du connecteur : chaque prompt, son identifiant et sa description, « Modifier » et « Supprimer »](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/prompts-du-connecteur.jpg)
+
+Le connecteur propose à votre assistant des **prompts** : des textes prêts à l'emploi qui décrivent un parcours dans le
+CRM, étape par étape, et nomment les outils à appeler. Dans Claude, ils paraissent dans le menu du connecteur, ou en
+tapant « / » ; dans ChatGPT, là où l'application propose ceux d'un connecteur. En choisir un insère son texte dans la
+conversation, comme si vous l'aviez tapé, précédé du nom de votre espace. Complétez-le si besoin — l'affaire, le montant —,
+puis envoyez : l'assistant suit les étapes, et vous demande ce qui lui manque.
+
+**Cinq prompts sont proposés d'emblée** dans chaque espace, tirés de l'usage réel du connecteur :
+
+- **Créer une affaire complète** — l'affaire, son organisation et son contact (sans doublon), ses recettes prévues, et un
+  commentaire de synthèse ;
+- **Faire le point sur une affaire** — étape, prochaine action, recettes prévues et réelles, derniers échanges, points
+  d'attention ; une lecture, qui ne modifie rien ;
+- **Faire avancer une affaire** — la mettre à jour, vérifier ce que l'étape suivante exige, la déplacer **avec votre
+  accord**, et laisser un commentaire ;
+- **Retrouver une affaire** — par quelques mots, plutôt qu'en parcourant les listes ;
+- **Enregistrer une recette réelle** — un montant encaissé ou facturé, sur la bonne ligne de recette.
+
+**Un prompt n'ouvre aucun droit.** Les outils qu'il nomme restent soumis à la grille du connecteur (§33.3) et à vos droits
+dans le CRM : un prompt qui fait créer une affaire n'aboutit que si vous pouvez la créer. Chaque prompt choisi est inscrit
+au journal des appels (§33.4), sous le nom « prompt: » suivi de son identifiant.
+
+**Les modifier.** Barre latérale ▸ **Réglages** ▸ « Prompts du connecteur ». Tout membre de l'espace y lit les prompts ;
+seuls les **administrateurs de l'espace** en ajoutent (« Nouveau prompt »), les modifient (« Modifier ») et les suppriment
+(« Supprimer », après une confirmation : un prompt supprimé ne se restaure pas, même un prompt d'origine). Pour les
+autres, les boutons restent visibles mais inactifs, et un bandeau en dit la raison. Un prompt a quatre champs :
+
+- **Titre** — ce que la liste montre ;
+- **Identifiant** — en lettres minuscules, chiffres et tirets, de 2 à 40 caractères, unique dans l'espace : c'est le nom
+  que l'assistant affiche, par exemple `creer-une-affaire` ;
+- **Description** — une phrase qui dit à quoi sert le prompt ; l'assistant et vous la lisez dans la liste ;
+- **Texte du prompt** — ce qui est inséré dans la conversation. Décrivez les étapes et nommez les outils du connecteur
+  (`crm_search`, `crm_card_get`…).
+
+![La fiche d'un prompt : titre, identifiant, description et texte, avec leurs aides](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/prompt-fiche.jpg)
+
+Un texte modifié vaut dès le prompt suivant que vous choisissez ; la **liste** des prompts de votre assistant, elle, se
+met à jour à sa prochaine connexion au connecteur. Si vous êtes membre de plusieurs espaces dont les prompts portent le
+même identifiant, l'assistant les distingue par le nom de l'espace, ajouté à leur titre.
 
 ## 34. Les webhooks : prévenir vos autres outils
 

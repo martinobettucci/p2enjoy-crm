@@ -1042,6 +1042,10 @@
 				{
 					"anchor": "ce-que-le-connecteur-n-offre-pas",
 					"title": "33.6 Ce que le connecteur n'offre pas"
+				},
+				{
+					"anchor": "les-prompts-des-parcours-guides",
+					"title": "33.7 Les prompts : des parcours guidés"
 				}
 			]
 		},

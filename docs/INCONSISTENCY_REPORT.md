@@ -9251,3 +9251,20 @@ vieillie, les E2E de `CRM-140` l'avaient ouvert, donc marqué lu, et le défaut 
 (`seed-inbox-non-classe`, `seed-inbox-suggere`), et eux seuls. Elle prouve exactement ce qu'elle annonce, sans dépendre de
 l'ordre des sections, et ne relâche rien. Prouvée par un `resetMe` vert puis deux rejeux verts (rouges avant). Seed seul :
 rien en production. **Close.**
+
+### INC-360 — SPEC-seed dit les boîtes du seed « pending », la relève réelle les rend `ok` depuis la 0170
+**Ouverte le 2026-11-17.** *Relevée par la session d5b44a2d (p2enjoy-crm-f8) en rejouant le chapitre 11 du manuel sur une
+base remise à zéro (contrôle §11.4 de `scripts/verify-manual.sh` : « Non testée » citée sans image).*
+
+**Le constat.** `docs/SPEC-seed.md` §2.17 et §2.19 écrivent que le `status` des trois comptes entrants « reste `pending` »
+tant qu'aucun test de connexion n'a été exécuté. Depuis la migration `0170` (`CRM-135`, `b1a77d97`, décisions 873 et 874),
+`mail_inbound_account_record_sync` rend la boîte `ok` à chaque relève réussie (`docs/SPEC-mail-subsystem.md` §24.3). Le
+seed relève réellement les boîtes de Camille et du système : sur une base fraîche, les trois boîtes sont « Connectée », et
+aucune n'est plus « Non testée ». L'image `liste-des-boites` d'avant avait été prise sur une base vieillie, antérieure à
+la 0170.
+
+**Ce qui est fait.** Le manuel n'attend pas : `e2e/manuel/11-boites-identites.spec.ts` pose « Non testée » sur la boîte de
+Camille le temps de l'image, par la clé de service, et lui rend l'état lu — comme il pose déjà « Connectée » sur celle de
+Driss. **Laissé ouvert** : la phrase de `docs/SPEC-seed.md` §2.17 et §2.19 est à réécrire selon le §24.3 (la relève rend
+`ok`) ; c'est une correction documentaire du seed (`CRM-052`, `CRM-055`), hors de `CRM-149`, à arbitrer par la session de
+livraison.

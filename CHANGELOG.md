@@ -48,6 +48,14 @@ d'exécuter le code attendu.
   entière en largeur.
 - La webapp seule ; aucune migration (`docs/PROD_MIGRATIONS.md` §2.53).
 
+#### `CRM-149` T4 — les prompts dans le seed et le manuel (décision 930)
+
+- **Le seed** ajoute un sixième prompt, « Préparer le comité du lundi », comme un administrateur l'écrirait.
+- **Le manuel** explique les prompts au §33.7 (« Les prompts : des parcours guidés »), avec deux images : la liste et la
+  fiche d'un prompt. Les images du chapitre 11 et du chapitre 34 que l'index allongé ou une base fraîche faisaient sortir de
+  la fenêtre sont reprises.
+- Le seed et le manuel seuls ; le manuel part avec sa publication (`docs/PROD_MIGRATIONS.md` §2.52).
+
 #### `CRM-149` T3 — Réglages ▸ Prompts du connecteur (décision 930)
 
 - **Un écran pour les prompts du connecteur**, dans les réglages, après « Webhooks » : chaque prompt avec son identifiant

@@ -1200,6 +1200,7 @@ inconnue), le reste de l'application n'est pas touché. Elle se livre **après**
 |---|---|---|---|
 | 1 | Livrer la webapp | session de livraison | bâtie dans la cellule (§4) |
 | 2 | Constater | responsable | Réglages ▸ « Prompts du connecteur » liste les cinq prompts ; un administrateur en ajoute un, le modifie, le supprime ; un membre non administrateur voit les commandes inactives |
+| 3 | Publier le manuel | session de livraison | `scripts/manuel/publier.sh`, après la fenêtre, comme à chaque livraison : il porte le §33.7 et ses deux images (`CRM-149` T4) |
 
 **Retour arrière** : la webapp précédente ; rien n'est écrit en base par la livraison.
 

@@ -4296,7 +4296,400 @@
 				},
 				{
 					"type": "text",
-					"text": " de relance."
+					"text": " de relance ; "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "les prompts du connecteur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", qui se modifient dans les réglages (§33.7)."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-prompts-des-parcours-guides",
+			"content": [
+				{
+					"type": "text",
+					"text": "33.7 Les prompts : des parcours guidés"
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/prompts-du-connecteur.jpg",
+			"alt": "Réglages ▸ Prompts du connecteur : chaque prompt, son identifiant et sa description, « Modifier » et « Supprimer »",
+			"width": 925,
+			"height": 761
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le connecteur propose à votre assistant des "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "prompts"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : des textes prêts à l'emploi qui décrivent un parcours dans le\nCRM, étape par étape, et nomment les outils à appeler. Dans Claude, ils paraissent dans le menu du connecteur, ou en\ntapant « / » ; dans ChatGPT, là où l'application propose ceux d'un connecteur. En choisir un insère son texte dans la\nconversation, comme si vous l'aviez tapé, précédé du nom de votre espace. Complétez-le si besoin — l'affaire, le montant —,\npuis envoyez : l'assistant suit les étapes, et vous demande ce qui lui manque."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Cinq prompts sont proposés d'emblée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " dans chaque espace, tirés de l'usage réel du connecteur :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Créer une affaire complète"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — l'affaire, son organisation et son contact (sans doublon), ses recettes prévues, et un\ncommentaire de synthèse ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Faire le point sur une affaire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — étape, prochaine action, recettes prévues et réelles, derniers échanges, points\nd'attention ; une lecture, qui ne modifie rien ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Faire avancer une affaire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — la mettre à jour, vérifier ce que l'étape suivante exige, la déplacer "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "avec votre\naccord"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", et laisser un commentaire ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Retrouver une affaire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — par quelques mots, plutôt qu'en parcourant les listes ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Enregistrer une recette réelle"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — un montant encaissé ou facturé, sur la bonne ligne de recette."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un prompt n'ouvre aucun droit."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Les outils qu'il nomme restent soumis à la grille du connecteur (§33.3) et à vos droits\ndans le CRM : un prompt qui fait créer une affaire n'aboutit que si vous pouvez la créer. Chaque prompt choisi est inscrit\nau journal des appels (§33.4), sous le nom « prompt: » suivi de son identifiant."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les modifier."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Barre latérale ▸ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ▸ « Prompts du connecteur ». Tout membre de l'espace y lit les prompts ;\nseuls les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs de l'espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " en ajoutent (« Nouveau prompt »), les modifient (« Modifier ») et les suppriment\n(« Supprimer », après une confirmation : un prompt supprimé ne se restaure pas, même un prompt d'origine). Pour les\nautres, les boutons restent visibles mais inactifs, et un bandeau en dit la raison. Un prompt a quatre champs :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Titre"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — ce que la liste montre ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Identifiant"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — en lettres minuscules, chiffres et tirets, de 2 à 40 caractères, unique dans l'espace : c'est le nom\nque l'assistant affiche, par exemple "
+							},
+							{
+								"type": "code",
+								"text": "creer-une-affaire"
+							},
+							{
+								"type": "text",
+								"text": " ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Description"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — une phrase qui dit à quoi sert le prompt ; l'assistant et vous la lisez dans la liste ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Texte du prompt"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — ce qui est inséré dans la conversation. Décrivez les étapes et nommez les outils du connecteur\n("
+							},
+							{
+								"type": "code",
+								"text": "crm_search"
+							},
+							{
+								"type": "text",
+								"text": ", "
+							},
+							{
+								"type": "code",
+								"text": "crm_card_get"
+							},
+							{
+								"type": "text",
+								"text": "…)."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/prompt-fiche.jpg",
+			"alt": "La fiche d'un prompt : titre, identifiant, description et texte, avec leurs aides",
+			"width": 899,
+			"height": 789
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un texte modifié vaut dès le prompt suivant que vous choisissez ; la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "liste"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " des prompts de votre assistant, elle, se\nmet à jour à sa prochaine connexion au connecteur. Si vous êtes membre de plusieurs espaces dont les prompts portent le\nmême identifiant, l'assistant les distingue par le nom de l'espace, ajouté à leur titre."
 				}
 			]
 		}
