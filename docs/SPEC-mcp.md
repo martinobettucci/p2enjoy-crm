@@ -1596,7 +1596,7 @@ par lui-même : il **guide** l'assistant vers les bons outils, dans le bon ordre
   manque (l'affaire, le montant…).
 - **Ce que l'unité ne fait pas** : aucun outil du connecteur ne lit ni n'écrit les prompts ; ils s'éditent à l'écran.
 
-### 17.2 Le modèle — `public.mcp_prompts` (migration `0185`, numéro pris au push ; `docs/SCHEMA.md`)
+### 17.2 Le modèle — `public.mcp_prompts` (migration `0185` ; `docs/SCHEMA.md`)
 
 | Colonne | Type | Règle |
 |---|---|---|
@@ -1605,7 +1605,7 @@ par lui-même : il **guide** l'assistant vers les bons outils, dans le bon ordre
 | `key` | `text` | non nul ; `^[a-z0-9]+(-[a-z0-9]+)*$`, de 2 à 40 caractères ; **unique dans l'espace** — c'est le nom que l'assistant montre |
 | `title` | `text` | non nul, resserré, de 1 à 80 caractères |
 | `description` | `text` | non nul, resserré, de 1 à 300 caractères — ce que la liste des prompts montre, à la personne comme à l'assistant |
-| `body` | `text` | non nul, de 1 à 8 000 caractères une fois resserré — le texte inséré |
+| `body` | `text` | non nul, de 1 à 8 000 caractères une fois resserré des blancs et des fins de ligne — le texte inséré |
 | `created_at`, `updated_at` | `timestamptz` | non nuls ; `updated_at` par `app.set_updated_at()` |
 | `created_by`, `updated_by` | `uuid` | FK `profiles` `ON DELETE SET NULL` ; **posés par la base** (`auth.uid()`), jamais lus de la requête |
 

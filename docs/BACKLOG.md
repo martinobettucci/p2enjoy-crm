@@ -19690,8 +19690,12 @@ les administrateurs, texte seul, en français, cinq défauts tirés de l'usage ;
 **Spécification** : `docs/SPEC-mcp.md` §17 ; `docs/SCHEMA.md` « Migration de `CRM-149` » ; `docs/DAT.md` §3.7 ter ;
 `docs/DESIGN_SYSTEM.md` §5.104 ; `docs/SPEC-seed.md` §47 (écrit avec T4).
 **Découpage** (`docs/SPEC-mcp.md` §17.11) :
-- [ ] **T1** — la migration `mcp_prompts` (table, RLS, privilèges, cinq défauts, déclencheur, espaces existants), les types
+- [x] **T1** — la migration `mcp_prompts` (table, RLS, privilèges, cinq défauts, déclencheur, espaces existants), les types
   de la webapp ; pgTAP, API (refus directs du business developer et de la lectrice) ; SCHEMA, contrat de déploiement.
+  *Fait le 2026-11-17* : `0185_prompts_connecteur.sql`, appliquée en dev par le runner ; pgTAP `0173` 26/26 (un texte fait
+  de lignes vides passait la première contrainte, corrigée) et `0016` révisée à 206 politiques, non relâchée ; API
+  `e2e/api/prompts-connecteur.spec.ts` 5/5, rouge contre la mutation de la politique d'insertion ; types régénérés.
+  Contrat §2.49.
 - [ ] **T2** — le fournisseur de prompts du serveur MCP (`mcp/crm_mcp/prompts.py`), la ligne des consignes au modèle, le
   journal de `prompts/get` ; pytest, intégration MCP par `scripts/verify-mcp.sh` ; l'image `mcp` au contrat.
 - [ ] **T3** — Réglages ▸ Prompts du connecteur (lister, ajouter, modifier, supprimer confirmé), l'entrée de l'index, les

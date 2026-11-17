@@ -1142,9 +1142,45 @@ l'image `mcp` de T5 sans la 183 fait échouer `crm_mail_get`.
 | 4 | Constater | session de livraison, en lecture seule | Réglages ▸ Pastilles des mails liste les neuf pastilles ; l'inbox se charge, et un mail évalué porte ses pilules ; `tools/list` du connecteur nomme `crm_mail_label_set` pour un compte qui a la case `modifier` de la messagerie |
 
 **Retour arrière** : la webapp et l'image précédentes ; rien n'est écrit en base par la livraison.
+
+### 2.49 `CRM-149` T1, décision 930 — les prompts du connecteur MCP, en base (À LIVRER : migration 185 ; **hors de tout lot annoncé**)
+
+`docs/SPEC-mcp.md` §17.2 à §17.4 ; `docs/SCHEMA.md` « Migration `0185` ». Une table nouvelle, `mcp_prompts`, ses quatre
+politiques, deux fonctions et un déclencheur sur `workspaces` ; **aucune table existante modifiée**, aucun verrou notable.
+Elle pose les cinq prompts par défaut dans chaque espace existant. Aucune variable, aucun secret.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 185 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate` |
+| 2 | Constater | session de livraison, en lecture seule | le registre gagne une ligne, l'empreinte de la 185 égale celle du dépôt ; `select workspace_id, count(*) from public.mcp_prompts group by 1` rend 5 par espace |
+
+**Seule, elle ne change rien de visible** : ni la webapp ni le connecteur ne lisent encore la table. L'image `mcp` (T2) et
+la webapp (T3) qui la lisent se livrent **après** elle.
+**Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0185` » ; seuls les cinq défauts sont perdus tant que
+personne n'a édité de prompt.
+
+### 2.50 `CRM-150`, décision 928 — les refus du connecteur journalisés « Refusé par le CRM » (À LIVRER : l'image `mcp` ; **hors de tout lot annoncé**)
+
+`docs/SPEC-mcp.md` §9.3 ; INC-357. **Aucune migration, aucune variable, aucun secret** ; aucun outil, aucune case, aucune
+réponse ne change : seule l'issue que le journal inscrit pour un refus fait par le connecteur (nom inconnu, valeur mal
+formée, argument manquant) passe de `erreur` à `refus_crm`.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Reconstruire l'image `mcp` | session de livraison | `up -d --build --no-deps --wait mcp` (§4) |
+| 2 | Constater | session de livraison, en lecture seule | dans `public.mcp_journal`, après le premier appel refusé de cette sorte : `refus_crm`, non `erreur` ; les issues `erreur` qui restent sont des pannes |
+
+**Retour arrière** : l'image précédente ; rien n'est écrit en base par la livraison. Les lignes déjà inscrites ne sont pas
+reclassées : le relevé d'avant la livraison garde ses `erreur`.
+
 ## 3. Migrations en attente
 
-**Aucune migration en attente depuis la fenêtre du 2026-11-12** : la 183 et la 184 ont été appliquées par elle (révision
+**La 185** (`CRM-149` T1, décision 930), *en attente, hors de tout lot annoncé* : les prompts du connecteur
+(`docs/SCHEMA.md` « Migration `0185` ») — une table, quatre politiques, deux fonctions, un déclencheur, et les cinq
+défauts de chaque espace existant. Seule (§2.49). **Avant l'image `mcp` de T2 et la webapp de T3.** Aucun geste préalable
+du responsable.
+
+**Avant la 185, aucune migration en attente depuis la fenêtre du 2026-11-12** : la 183 et la 184 ont été appliquées par elle (révision
 `1ccc1fbb`, décision 927) ; registre à **182** lignes. *Historique de l'attente* — les deux paragraphes qui suivent
 décrivent ce lot tel qu'il attendait.
 

@@ -3348,14 +3348,16 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
    cards actives exige un plan de remappage. Comportement par défaut retenu : archivage refusé
    tant que des cards s'y trouvent.
 
-### Migration de `CRM-149` — les prompts du connecteur MCP (numéro pris au push ; spécifiée le 2026-11-17, à écrire)
+### Migration `0185` — les prompts du connecteur MCP — `CRM-149` T1 (`0185_prompts_connecteur.sql` ; écrite le 2026-11-17)
 
 *Écrit le 2026-11-17, avant le code (décision 930).* Spécification : `docs/SPEC-mcp.md` §17.2 à §17.4.
 
 - **`public.mcp_prompts`** : `id`, `workspace_id` (FK `workspaces` `ON DELETE CASCADE`), `key` (`^[a-z0-9]+(-[a-z0-9]+)*$`,
   2 à 40 caractères, unique par espace), `title` (1 à 80, resserré), `description` (1 à 300, resserré), `body` (1 à 8 000
   une fois resserré), `created_at`, `updated_at` (`app.set_updated_at`), `created_by`, `updated_by` (FK `profiles`
-  `ON DELETE SET NULL`, posés par un déclencheur depuis `auth.uid()`).
+  `ON DELETE SET NULL`, posés par un déclencheur depuis `auth.uid()`). *Précisé au code* : `body` est resserré des
+  blancs **et des fins de ligne** (`btrim(body, E' \t\r\n')`) — un texte fait de lignes vides est vide, ce que la
+  preuve pgTAP a trouvé ; `created_by` ne change jamais après l'insertion.
 - **RLS** : lecture par tout membre (`app.is_workspace_member`) ; insertion, modification et suppression par
   l'administrateur de l'espace (`app.is_workspace_admin`). **Privilèges** : `SELECT` à `anon` et `authenticated` ;
   `INSERT (workspace_id, key, title, description, body)`, `UPDATE (key, title, description, body)` et `DELETE` à
