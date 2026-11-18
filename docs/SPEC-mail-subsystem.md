@@ -4886,7 +4886,8 @@ la barre). Le comportement :
   suspension ne vaut pas pour les actions groupées.
 - **Pendant les appels**, la confirmation est inactive et `aria-busy`, et la barre de progression des paquets (§32.5 bis)
   dit l'avancement. **Le compte rendu** se dit dans une région vivante et
-  sous la barre : « {d} messages classés dans {affaire}. » ; s'il y a des refus, **« {k} refusés : »** suivi de chaque
+  sous la barre : l'action nommée, puis « Fait : {d} messages. » (*précisé au code de T3*, `docs/DESIGN_SYSTEM.md` §5.109 : une
+  phrase par action demandait d'accorder un participe au nombre) ; s'il y a des refus, **« {k} refusés : »** suivi de chaque
   motif traduit et de son nombre (« 2 — vous ne pouvez pas écrire dans cette affaire »). Un échec entier dit que **rien
   n'a changé**.
 - **Après l'action**, la liste, l'arborescence et leurs compteurs sont relus.

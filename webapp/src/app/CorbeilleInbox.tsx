@@ -1,4 +1,6 @@
 // @spec CRM-151 (docs/BACKLOG.md) — tranche T2 : « Supprimer ici » et « Supprimer partout » remplacent « Effacer », chacun
+// @spec CRM-156 (docs/BACKLOG.md) — tranche T3 : la case par message de la corbeille et la barre de sa sélection, qui
+//       restaure (docs/DESIGN_SYSTEM.md §5.109 ; docs/SPEC-mail-subsystem.md §32.6)
 //       confirmé, « Ne plus demander pendant 1 heure » (docs/SPEC-mail-subsystem.md §29.11 ; docs/DESIGN_SYSTEM.md §5.102)
 // @spec CRM-141 (docs/BACKLOG.md) — tranche T4 : la confirmation d'« Effacer » et le panneau « Pastilles » s'excluent
 //       (docs/DESIGN_SYSTEM.md §5.103)
@@ -36,6 +38,7 @@ import {
 	suspendreConfirmation,
 } from '../lib/suppression-sans-confirmation'
 import { Panneau } from './PanneauInbox'
+import { CaseSelection } from './ActionsGroupeesInbox'
 
 const dateCourte = (iso: string): string => new Date(iso).toLocaleDateString('fr-FR', { dateStyle: 'short' })
 
@@ -417,7 +420,11 @@ function LigneCorbeille({
 	message,
 	onRestaure,
 	refLigne,
+	cochee,
+	onCocher,
 }: {
+	readonly cochee: boolean
+	readonly onCocher: () => void
 	readonly message: MessageEnCorbeille
 	readonly onRestaure: (id: string) => void
 	readonly refLigne: (element: HTMLLIElement | null) => void
@@ -441,8 +448,15 @@ function LigneCorbeille({
 			tabIndex={-1}
 			data-testid="inbox-corbeille-ligne"
 			data-message={message.id}
-			className="flex flex-col gap-1 border-b border-border px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand"
+			className="flex items-start border-b border-border focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand"
 		>
+			{/* `CRM-156` T3 (§5.109) : une case par MESSAGE, dans la ligne, avant l'objet. */}
+			<CaseSelection
+				cochee={cochee}
+				onBasculer={onCocher}
+				libelle={t('inbox.bulk.case.message', { objet: message.objet })}
+			/>
+			<div className="flex flex-1 min-w-0 flex-col gap-1 pr-3 py-2">
 			<span className="font-medium break-words">{message.objet}</span>
 			<span className="text-sm text-text-2 break-words">{message.expediteur}</span>
 			<span className="text-sm text-text-2">
@@ -480,6 +494,7 @@ function LigneCorbeille({
 					{enVol ? t('inbox.trash.restore.pending') : t('inbox.trash.restore')}
 				</Button>
 			</div>
+			</div>
 		</li>
 	)
 }
@@ -489,6 +504,8 @@ function LigneCorbeille({
  * s'ouvre pas, il se restaure. La phrase de rétention et, pour qui n'administre pas l'espace, celle de la portée, en tête,
  * au-dessus des lignes et de l'état vide (§5.16).
  */
+const AUCUNE_COCHEE: ReadonlySet<string> = new Set()
+
 export function PanneauCorbeille({
 	etat,
 	retention,
@@ -500,7 +517,15 @@ export function PanneauCorbeille({
 	visible,
 	refVide,
 	refsLignes,
+	cochees = AUCUNE_COCHEE,
+	onCocher = () => undefined,
+	actions = null,
 }: {
+	/** `CRM-156` T3 (§5.109) : les messages cochés, et le geste qui coche ou décoche. */
+	readonly cochees?: ReadonlySet<string>
+	readonly onCocher?: (id: string) => void
+	/** `CRM-156` T3 : la barre, la confirmation et le compte rendu de la sélection, posés en tête de la liste. */
+	readonly actions?: React.ReactNode
 	readonly etat: EtatAsync<readonly MessageEnCorbeille[]>
 	readonly retention: EtatAsync<number>
 	/** Vrai quand la base rend refusée l'administration de l'espace : la personne ne voit que ses messages. */
@@ -536,6 +561,7 @@ export function PanneauCorbeille({
 					{mention}
 				</p>
 			</div>
+			{actions}
 			{etat.statut === 'chargement' ? <SkeletonListe lignes={3} libelle={t('state.loading.aria')} /> : null}
 			{etat.statut === 'erreur' ? (
 				<div role="alert">
@@ -560,6 +586,8 @@ export function PanneauCorbeille({
 							key={message.id}
 							message={message}
 							onRestaure={onRestaure}
+							cochee={cochees.has(message.id)}
+							onCocher={() => onCocher(message.id)}
 							refLigne={(element) => {
 								if (element === null) refsLignes.current.delete(message.id)
 								else refsLignes.current.set(message.id, element)

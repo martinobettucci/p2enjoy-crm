@@ -1,4 +1,6 @@
 // @verifies CRM-081 (docs/BACKLOG.md) — sommeil des fils et des cards, tranche 2 f : LE GROUPEMENT
+// @verifies CRM-156 (docs/BACKLOG.md) — tranche T3 : la ligne d'un fil porte sa case de sélection, et le liseré non lu passe
+//           sur la ligne entière (docs/DESIGN_SYSTEM.md §5.109)
 // @verifies docs/SPEC-cards.md §16.16.3 (la liste énumère des fils, le badge n'apparaît qu'au-delà
 //           de un), §16.16.4 (ouvrir un fil ouvre son message le plus récent, le sélecteur existe
 //           au-delà d'un message et pas en deçà, `aria-current` porté par le FIL du message
@@ -587,7 +589,8 @@ describe('RouteInbox — lu / non lu (§18 bis)', () => {
 
 		const [ligneFil] = await screen.findAllByTestId('inbox-message')
 		expect(ligneFil?.getAttribute('data-non-lu')).toBe('true')
-		expect(ligneFil?.className).toContain('border-l-brand')
+		// `CRM-156` T3 (§5.109) : le liseré porte sur la LIGNE entière, case de sélection comprise, et non plus sur son bouton.
+		expect(ligneFil?.closest('li')?.className).toContain('border-l-brand')
 		expect(ligneFil?.textContent ?? '').toMatch(/^Non lu, /)
 	})
 

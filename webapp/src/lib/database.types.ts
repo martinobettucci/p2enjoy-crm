@@ -2245,6 +2245,42 @@ export type Database = {
           },
         ]
       }
+      mail_blocked_senders: {
+        Row: {
+          address: string
+          blocked_by: string | null
+          created_at: string
+          workspace_id: string
+        }
+        Insert: {
+          address: string
+          blocked_by?: string | null
+          created_at?: string
+          workspace_id: string
+        }
+        Update: {
+          address?: string
+          blocked_by?: string | null
+          created_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_blocked_senders_blocked_by_fkey"
+            columns: ["blocked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_blocked_senders_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mail_drafts: {
         Row: {
           attachments: Json
@@ -2714,6 +2750,59 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mail_message_transfers: {
+        Row: {
+          created_at: string
+          message_id: string
+          recipient_id: string
+          transferred_by: string | null
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          message_id: string
+          recipient_id: string
+          transferred_by?: string | null
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          message_id?: string
+          recipient_id?: string
+          transferred_by?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_message_transfers_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "mail_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_message_transfers_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_message_transfers_transferred_by_fkey"
+            columns: ["transferred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_message_transfers_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -5260,6 +5349,14 @@ export type Database = {
         Args: { p_id: string; p_target: string }
         Returns: undefined
       }
+      block_sender: {
+        Args: { p_address: string; p_workspace_id: string }
+        Returns: Json
+      }
+      blocked_sender_impact: {
+        Args: { p_address: string; p_workspace_id: string }
+        Returns: number
+      }
       cancel_outbound_email: { Args: { p_outbox_id: string }; Returns: string }
       cards_figees: {
         Args: never
@@ -5569,7 +5666,12 @@ export type Database = {
         }[]
       }
       import_contacts: {
-        Args: { p_dry_run?: boolean; p_rows: Json; p_workspace: string }
+        Args: {
+          p_dry_run?: boolean
+          p_rows: Json
+          p_source?: string
+          p_workspace: string
+        }
         Returns: {
           code: string
           contact_id: string
@@ -5590,6 +5692,28 @@ export type Database = {
           track_id: string
           track_name: string
           unread_count: number
+        }[]
+      }
+      inbox_bulk_apply: {
+        Args: { p_action: string; p_argument?: Json; p_scope: Json }
+        Returns: Json
+      }
+      inbox_bulk_count: {
+        Args: { p_scope: Json }
+        Returns: {
+          message_count: number
+          thread_count: number
+        }[]
+      }
+      inbox_bulk_unknown_senders: {
+        Args: { p_scope: Json }
+        Returns: {
+          address: string
+          message_count: number
+          suggested_name: string
+          suggested_organization_id: string
+          suggested_organization_name: string
+          workspace_id: string
         }[]
       }
       inscrire_attente: {
@@ -6176,6 +6300,10 @@ export type Database = {
         Args: { ligne: Database["public"]["Tables"]["card_costs"]["Row"] }
         Returns: boolean
       }
+      remove_message_transfer: {
+        Args: { p_message_id: string; p_recipient_id: string }
+        Returns: boolean
+      }
       render_mail_template_sample: {
         Args: { p_template_id: string }
         Returns: {
@@ -6400,6 +6528,10 @@ export type Database = {
           track_id: string
         }[]
       }
+      transfer_message: {
+        Args: { p_message_id: string; p_recipient_id: string }
+        Returns: boolean
+      }
       trash_blocking_costs: {
         Args: { p_track: string }
         Returns: {
@@ -6457,6 +6589,10 @@ export type Database = {
           purge_at: string
           subject: string
         }[]
+      }
+      unblock_sender: {
+        Args: { p_address: string; p_workspace_id: string }
+        Returns: boolean
       }
       unclassify_message: { Args: { p_message_id: string }; Returns: string }
       upsert_mail_inbound_account: {

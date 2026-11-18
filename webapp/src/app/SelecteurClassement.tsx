@@ -1,4 +1,6 @@
 // @spec CRM-137 (docs/BACKLOG.md) — classer un mail : le sélecteur d'affaire cherchable et la case « Expéditeur connu »
+// @spec CRM-156 (docs/BACKLOG.md) — tranche T3 : la case peut s'ouvrir décochée, pour le classement groupé
+//       (docs/DESIGN_SYSTEM.md §5.109)
 // @spec docs/DESIGN_SYSTEM.md §5.94 (la forme : la combobox de la palette, la case, la liste, le choix retenu, les vides,
 //       les annonces), §5.46 (le patron de la combobox), §5.7 bis (la case) ; docs/SPEC-mail-subsystem.md §26.3 (le
 //       comportement : case cochée à chaque ouverture, 200 ms de repos, réponse périmée ignorée, présélection unique,
@@ -50,6 +52,7 @@ export function SelecteurClassement({
 	onEchap,
 	champ,
 	lire,
+	connuesInitial = true,
 }: {
 	readonly messageId: string
 	/** L'adresse de l'expéditeur, telle que le message la porte. */
@@ -62,9 +65,14 @@ export function SelecteurClassement({
 	readonly champ: React.RefObject<HTMLInputElement | null>
 	/** Le lecteur, injectable pour les preuves sans navigateur ; par défaut, la base. */
 	readonly lire: Lecteur
+	/**
+	 * `CRM-156` T3 (docs/DESIGN_SYSTEM.md §5.109) : l'état de la case « Expéditeur connu » à l'ouverture — cochée par
+	 * défaut (§5.94) ; décochée pour un classement groupé, dont la sélection mêle des expéditeurs.
+	 */
+	readonly connuesInitial?: boolean
 }) {
 	// La case repart cochée à chaque montage : son état n'est gardé nulle part (`CLAUDE.md` §11).
-	const [connues, setConnues] = useState(true)
+	const [connues, setConnues] = useState(connuesInitial)
 	const [terme, setTerme] = useState('')
 	const [termeApplique, setTermeApplique] = useState('')
 	const [essai, setEssai] = useState(0)

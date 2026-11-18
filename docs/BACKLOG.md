@@ -20129,8 +20129,18 @@ s'écrire en parallèle, l'écran se coordonne avec la session qui porte `CRM-15
   `mail_transfer`, `0127` la signature d'`import_contacts`, `0133` 44 levées 404) ; API
   `e2e/api/transfert-blocage-inbox.spec.ts` sous les trois jetons ; E2E `mail` `e2e/mail/expediteur-bloque.spec.ts` (un
   mail réellement déposé et relevé arrive en corbeille) ; DAT §4.3, SPEC-notifications §52, contrat §2.60 ;
-- [ ] **T3** — l'écran de la sélection : cases, « Tout sélectionner », barre, confirmations, comptes rendus, corbeille ;
-  DESIGN_SYSTEM §5.109 ; Vitest ; E2E `ui` ; captures ;
+- [x] **T3** — l'écran de la sélection : cases, « Tout sélectionner », barre, confirmations, comptes rendus, corbeille ;
+  DESIGN_SYSTEM §5.109 ; Vitest ; E2E `ui` ; captures. *Fait le 2026-11-18* : DESIGN_SYSTEM §5.109 écrit avant le code
+  (9eeec2db, relecture intégrale) ; `lib/actions-groupees.ts` (la description de la portée, le compte, l'action enchaînée
+  par paquets, le compte rendu additionné) et `ActionsGroupeesInbox.tsx` (la case hors du bouton de la ligne, la rangée et
+  « Tout sélectionner » sous un filtre explicite, la barre et son `select`, une confirmation par action avec son argument —
+  le sélecteur d'affaire de `CRM-137`, la pastille, l'échéance —, la jauge des paquets, le compte rendu des faits et des
+  refus, l'interruption) ; la corbeille, une case par message et « Restaurer » ; défaut trouvé par la preuve unitaire et
+  corrigé : le focus rendu au `select` encore désactivé retombait sur le document ; types régénérés et témoins de types
+  étendus (deux tables, huit fonctions) ; Vitest 23 nouveaux tests (11 de la bibliothèque, 12 du composant), suite complète
+  252 fichiers et 6 010 tests verts avant ces ajouts ; E2E `ui` `actions-groupees-inbox` 4/4 (souris, tout le filtre et
+  suppression puis restauration en corbeille, clavier, quatre paliers), périmètre inbox rejoué 65/65 dont
+  `filtres-rapides-pastilles` de `CRM-155` ; captures `docs/captures/CRM-156/` observées ;
 - [ ] **T4** — l'écran des ajouts : filtre par expéditeur, transfert, notification, blocage et Réglages ▸ Expéditeurs
   bloqués, liste à vérifier des contacts ; Vitest ; E2E `ui` ; captures ;
 - [ ] **T5** — seed, manuel §12 et images, contrat, changelog ; `[P]`.

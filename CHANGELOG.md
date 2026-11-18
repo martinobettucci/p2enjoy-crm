@@ -31,6 +31,15 @@ d'exécuter le code attendu.
   `messagerie`, case « Consulter », aucune case nouvelle. Manuel §33.5 ; `docs/SPEC-mcp.md` §9.2 duovicies.
 - `CRM-155` T3 : le seed vérifié sans ajout ; contrat de déploiement §2.61 (webapp et image `mcp`, aucune migration).
 
+### `CRM-156` T3 — l'écran des actions groupées de l'inbox
+
+- Une **case par fil** dans la liste de l'inbox, et par message dans la corbeille. **« Tout sélectionner »** sous un filtre
+  explicite (une pastille, « Seulement moi ») : tous les fils du filtre, au-delà de la page, comptés en base.
+- Une **barre d'actions groupées** : marquer comme lu ou non lu, classer dans une affaire, retirer de l'affaire, poser ou
+  retirer une pastille, réévaluer, mettre en sommeil, réveiller, supprimer ici ou partout ; « Restaurer » dans la corbeille.
+  Chaque action ouvre une **confirmation** qui dit les nombres ; l'action se fait par paquets, avec une jauge, et un
+  **compte rendu** dit ce qui a été fait et ce qui a été refusé, motif par motif.
+
 ### `CRM-156` T2 — transférer un mail, bloquer un expéditeur, créer des contacts depuis l'inbox, en base (migration 190)
 
 - **Transférer à un membre** (`transfer_message`, et l'action groupée `transfer`) : aucun envoi ; le membre lit les mails

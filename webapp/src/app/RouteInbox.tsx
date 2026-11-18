@@ -64,7 +64,6 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import {
-	CheckCheck,
 	ChevronDown,
 	ChevronRight,
 	Inbox,
@@ -147,6 +146,8 @@ import {
 	type DossierEnvoi,
 } from '../lib/outbox'
 import { SelecteurClassement, lecteurBase } from './SelecteurClassement'
+import { ActionsGroupees, CaseSelection } from './ActionsGroupeesInbox'
+import { aUnFiltreExplicite, type FilCoche, type PorteeGroupee } from '../lib/actions-groupees'
 import { EntreeCorbeille, PanneauCorbeille, RangeeCommandesMessage, type EtendueSuppression } from './CorbeilleInbox'
 import {
 	PARAMETRE_CORBEILLE,
@@ -688,6 +689,25 @@ function PanneauDossiers({
 // Panneau 2 — la liste
 // =================================================================================================
 
+/** Ce qu'une ligne de fil dit d'elle à la sélection. */
+type FilRef = { readonly cle: string; readonly workspaceId: string; readonly cleFil: string }
+
+/** `CRM-156` T3 (§5.109) : ce que la liste reçoit de la sélection groupée. */
+type GroupeListe = {
+	/** Les fils cochés à la main, par la clé de la ligne. */
+	readonly cochees: ReadonlyMap<string, FilCoche>
+	readonly toutLeFiltre: boolean
+	/** Coche ou décoche un fil ; sous « tout le filtre », décocher garde les AUTRES fils visibles, cochés à la main. */
+	readonly onCocher: (fil: FilRef, visibles: readonly FilRef[]) => void
+	readonly onToutSelectionner: () => void
+	readonly onDeselectionner: () => void
+	/** La portée sans ses fils : le dossier, les filtres, le sommeil. */
+	readonly portee: Omit<PorteeGroupee, 'fils'>
+	readonly edition: Capacite
+	readonly retention: number | null
+	readonly onTermine: () => void
+}
+
 function PanneauListe({
 	etat,
 	selection,
@@ -708,7 +728,13 @@ function PanneauListe({
 	idEspace,
 	pastilles,
 	onPastilles,
+	groupe,
 }: {
+	/**
+	 * `CRM-156` T3 (§5.109) : la sélection et les actions groupées — les fils cochés, « tout le filtre », la portée, la
+	 * capacité d'éditer, la rétention, et le geste qui suit l'issue.
+	 */
+	readonly groupe: GroupeListe
 	/** `CRM-141` T4 (§31.7) : le catalogue des pastilles lisibles, pour les pilules des lignes et le filtre. */
 	readonly catalogue: CataloguePastilles
 	/** `CRM-155` (§31.12.1) : l'espace courant, dont les pastilles font les filtres rapides. */
@@ -770,25 +796,40 @@ function PanneauListe({
 		) : null
 	// `CRM-141` T4 — LA RANGÉE D'ACTION EN TÊTE DE LA LISTE (§5.4 quinquies) : « Tout marquer comme lu » à droite.
 	// `CRM-155` (§5.108) : elle ne porte plus que des commandes — le filtre vit dans son bloc, au-dessus.
+	// `CRM-156` T3 (§5.109) : elle porte aussi « Tout sélectionner » sous un filtre explicite, et devient la barre d'actions
+	// groupées dès qu'une sélection existe ; la confirmation et le compte rendu se posent sous elle, dans le flux.
+	const premierFil = compose.visibles[0]
 	const rangeeAction =
-		selection !== null && etat.statut === 'pret' && nonLusAffiches.length > 0 ? (
-			<div
-				className="flex flex-wrap items-center justify-between gap-2 px-3 py-1 border-b border-border"
-				data-testid="inbox-rangee-action"
-			>
-				{nonLusAffiches.length > 0 ? (
-					<Button
-						variante="discret"
-						taille="compacte"
-						className="ml-auto"
-						data-testid="inbox-tout-marquer-lu"
-						onClick={() => onToutMarquer(nonLusAffiches)}
-					>
-						<CheckCheck aria-hidden="true" size={16} />
-						{t('inbox.read.markAll')}
-					</Button>
-				) : null}
-			</div>
+		selection !== null && etat.statut === 'pret' ? (
+			<ActionsGroupees
+				nonLusAffiches={nonLusAffiches}
+				onToutMarquer={onToutMarquer}
+				filtreExplicite={aUnFiltreExplicite(groupe.portee) && compose.visibles.length > 0}
+				selection={
+					groupe.toutLeFiltre
+						? { genre: 'tout' }
+						: groupe.cochees.size > 0
+							? { genre: 'fils', nombre: groupe.cochees.size }
+							: { genre: 'aucune' }
+				}
+				onToutSelectionner={groupe.onToutSelectionner}
+				onDeselectionner={groupe.onDeselectionner}
+				portee={{
+					...groupe.portee,
+					fils: groupe.toutLeFiltre ? null : [...groupe.cochees.values()],
+				}}
+				dansUneAffaire={selection.genre === 'card'}
+				edition={groupe.edition}
+				catalogue={catalogue}
+				idEspace={idEspace}
+				ancre={
+					premierFil === undefined
+						? null
+						: { messageId: premierFil.dernier.id, expediteur: premierFil.dernier.expediteur }
+				}
+				retention={groupe.retention}
+				onTermine={groupe.onTermine}
+			/>
 		) : null
 	return (
 		<Panneau
@@ -886,8 +927,25 @@ function PanneauListe({
 								// UN FIL EST NON LU DÈS QU'UN DE SES MESSAGES L'EST (§18 bis.2 point 4) : le liseré et la
 								// graisse de la ligne non lue des notifications (§5.4 quinquies), et un MOT pour le §1.
 								const nonLu = filEstNonLu(fil.messages)
+								// `CRM-156` T3 (§5.109) : LA CASE EST HORS DU BOUTON DE LA LIGNE — un contrôle ne s'imbrique pas dans un
+								// autre (§5.106) ; la ligne devient une rangée, le bouton prend le reste. Sous « tout le filtre », chaque
+								// case visible est cochée : le filtre entier est désigné.
+								const cochee = groupe.toutLeFiltre || groupe.cochees.has(fil.cle)
 								return (
-									<li key={fil.cle}>
+									<li
+										key={fil.cle}
+										className={[
+											'flex items-stretch border-b border-border',
+											// LE LISERÉ ET LE FOND PORTENT SUR LA LIGNE ENTIÈRE, case comprise (§5.4 quinquies, §5.109).
+											choisi ? 'bg-brand-soft' : 'hover:bg-hover',
+											nonLu ? 'border-l-[3px] border-l-brand' : '',
+										].join(' ')}
+									>
+										<CaseSelection
+											cochee={cochee}
+											onBasculer={() => groupe.onCocher(fil, compose.visibles)}
+											libelle={t('inbox.bulk.case.fil', { objet: fil.dernier.objet })}
+										/>
 										<button
 											type="button"
 											data-testid="inbox-message"
@@ -899,11 +957,9 @@ function PanneauListe({
 											// qu'on a cliquée.
 											onClick={() => onOuvrir(fil.dernier)}
 											className={[
-												'w-full text-left px-3 py-2 border-b border-border',
+												'flex-1 min-w-0 text-left pr-3 py-2',
 												'min-h-[var(--size-target)]',
 												'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand',
-												choisi ? 'bg-brand-soft' : 'hover:bg-hover',
-												nonLu ? 'border-l-[3px] border-l-brand' : '',
 											].join(' ')}
 										>
 											{nonLu ? <span className="sr-only">{t('inbox.read.unreadPrefix')}</span> : null}
@@ -2154,6 +2210,36 @@ export function RouteInbox() {
 	const message = useMessage(clientCrm, idOuvert)
 	const fils = useFilsEndormis(clientCrm)
 
+	// `CRM-156` T3 (§5.109, §32.6) — LA SÉLECTION GROUPÉE. Elle vit tant que le dossier et les filtres ne changent pas :
+	// changer de dossier, de pastille, de « Seulement moi » ou de mode de sommeil la vide. Elle n'est gardée nulle part
+	// (`CLAUDE.md` §11).
+	const [cochees, setCochees] = useState<ReadonlyMap<string, FilCoche>>(() => new Map())
+	const [toutLeFiltre, setToutLeFiltre] = useState(false)
+	/** `CRM-156` T3 : les messages cochés dans la corbeille (§5.109). */
+	const [cocheesCorbeille, setCocheesCorbeille] = useState<ReadonlySet<string>>(() => new Set())
+	const cleSelectionGroupee = JSON.stringify([selection, pastillesFiltre, filtreCourrier, mode])
+	useEffect(() => {
+		setCochees(new Map())
+		setToutLeFiltre(false)
+	}, [cleSelectionGroupee])
+	const cocherFil = useCallback(
+		(fil: FilRef, visibles: readonly FilRef[]) => {
+			const versCoche = (f: FilRef): FilCoche => ({ workspaceId: f.workspaceId, cleFil: f.cleFil })
+			if (toutLeFiltre) {
+				setToutLeFiltre(false)
+				setCochees(new Map(visibles.filter((f) => f.cle !== fil.cle).map((f) => [f.cle, versCoche(f)])))
+				return
+			}
+			setCochees((precedentes) => {
+				const suivantes = new Map(precedentes)
+				if (suivantes.has(fil.cle)) suivantes.delete(fil.cle)
+				else suivantes.set(fil.cle, versCoche(fil))
+				return suivantes
+			})
+		},
+		[toutLeFiltre],
+	)
+
 	// UN SEUL INSTANT PAR RENDU DE LISTE, partagé par le filtre, les pastilles de ligne et celle du
 	// message ouvert (§16.15.4). Il est recalculé quand la liste ou l'état des fils est relu — donc
 	// après chaque geste —, jamais à chaque ligne : sinon une échéance franchie pendant le rendu
@@ -2298,6 +2384,10 @@ export function RouteInbox() {
 	// les messages que vous avez effacés » suit la capacité d'administrer rendue par la base (§5.59), jamais un rôle.
 	const { idWorkspace, capacites } = useContexteEspace()
 	const corbeilleChoisie = dossierEnvoi === null && corbeilleDepuisAdresse(parametresUrl.get(PARAMETRE_CORBEILLE))
+	// `CRM-156` T3 : quitter la corbeille vide sa sélection (§5.109).
+	useEffect(() => {
+		if (!corbeilleChoisie) setCocheesCorbeille(new Set())
+	}, [corbeilleChoisie])
 	const [corbeille, setCorbeille] = useState<EtatAsync<readonly MessageEnCorbeille[]>>({ statut: 'chargement' })
 	const relireCorbeille = useCallback(() => {
 		if (idWorkspace === null) return
@@ -2563,6 +2653,49 @@ export function RouteInbox() {
 						visible={etage === 'liste'}
 						refVide={refVideCorbeille}
 						refsLignes={refsLignesCorbeille}
+						cochees={cocheesCorbeille}
+						onCocher={(id) =>
+							setCocheesCorbeille((precedentes) => {
+								const suivantes = new Set(precedentes)
+								if (suivantes.has(id)) suivantes.delete(id)
+								else suivantes.add(id)
+								return suivantes
+							})
+						}
+						actions={
+							<ActionsGroupees
+								nonLusAffiches={[]}
+								onToutMarquer={() => undefined}
+								filtreExplicite={false}
+								selection={
+									cocheesCorbeille.size > 0 ? { genre: 'fils', nombre: cocheesCorbeille.size } : { genre: 'aucune' }
+								}
+								onToutSelectionner={() => undefined}
+								onDeselectionner={() => setCocheesCorbeille(new Set())}
+								portee={{
+									dossier: { genre: 'corbeille' },
+									seulementMoi: false,
+									pastilles: [],
+									expediteur: null,
+									sommeilVisible: true,
+									fils: null,
+									messages: [...cocheesCorbeille],
+								}}
+								dansUneAffaire={false}
+								dansLaCorbeille
+								edition={capacites.edition}
+								catalogue={catalogue}
+								idEspace={idEspaceCourant}
+								ancre={null}
+								retention={retention.statut === 'pret' ? retention.donnees : null}
+								onTermine={() => {
+									setCocheesCorbeille(new Set())
+									relireCorbeille()
+									arbre.recharger()
+									liste.recharger()
+								}}
+							/>
+						}
 					/>
 				) : preparesChoisis ? (
 					<>
@@ -2610,6 +2743,38 @@ export function RouteInbox() {
 					idEspace={idEspaceCourant}
 					pastilles={pastillesFiltre ?? []}
 					onPastilles={changerPastilles}
+					groupe={{
+						cochees,
+						toutLeFiltre,
+						onCocher: cocherFil,
+						onToutSelectionner: () => {
+							setCochees(new Map())
+							setToutLeFiltre(true)
+						},
+						onDeselectionner: () => {
+							setCochees(new Map())
+							setToutLeFiltre(false)
+						},
+						portee: {
+							dossier:
+								selection !== null && selection.genre === 'card'
+									? { genre: 'card', cardId: selection.cardId }
+									: { genre: 'non-classes' },
+							seulementMoi: filtreCourrier === true,
+							pastilles: pastillesFiltre ?? [],
+							expediteur: null,
+							sommeilVisible: mode === 'visibles',
+						},
+						edition: capacites.edition,
+						retention: retention.statut === 'pret' ? retention.donnees : null,
+						onTermine: () => {
+							setCochees(new Map())
+							setToutLeFiltre(false)
+							arbre.recharger()
+							liste.recharger()
+							fils.recharger()
+						},
+					}}
 				/>
 				<PanneauMessage
 					etat={message.etat}

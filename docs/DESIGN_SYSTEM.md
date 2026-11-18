@@ -8882,13 +8882,19 @@ contacts — sont écrits avec T4, dans ce paragraphe.
   5 000 », en 13 px `--color-text-2`, `tabular-nums`, dans une région `role="status"`. Aucune annulation : une action
   groupée ne s'annule pas (décision 945).
 - **LE COMPTE RENDU** remplace la confirmation, à la même place, et reste jusqu'au geste suivant ou à « Fermer » (discret
-  compact) : en `role="status"`, la phrase de l'issue — « 7 messages marqués comme lus. », « 2 fils mis en sommeil. » —,
+  compact) : en `role="status"`, un titre `h3` qui nomme l'action — « Marquer comme lu » —, puis l'issue, « Fait : 7
+  messages. » ou « Fait : 2 fils. » pour le sommeil — *précisé au code* : une phrase par action, « 7 messages marqués comme
+  lus. », demandait d'accorder le participe au nombre, ce que le §10 ne construit pas ; le titre et « Fait : » le portent —,
   puis, s'il y a des refus, « {k} refusés : » suivi d'une liste, une ligne par motif, son nombre et sa phrase traduite par
   le dictionnaire de l'action unitaire, en 13 px `--color-text-2` : un refus d'un message n'est pas une panne de l'écran.
   **Un paquet en échec** (une panne) passe le bloc en alerte, `role="alert"`, `--color-danger-soft` /
   `--color-danger-on-soft` : « Action interrompue : {d} messages traités avant l'arrêt ; le reste n'a pas changé. ». Après
   l'issue, la sélection est vidée, la liste et l'arborescence sont relues sans squelette (§5.29 tranche 2 c), et le focus
   va au titre du compte rendu (`tabIndex=-1`) : la barre qui le portait a disparu (§5.13).
+- **LE RETOUR DU FOCUS APRÈS « Annuler » EST DIFFÉRÉ D'UN TOUR DE RENDU** (§5.25) — *trouvé par la preuve unitaire* : pendant
+  la confirmation, le `select` est désactivé et refusait le focus, qui retombait sur le document.
+- **LE LISERÉ « non lu » ET LE FOND DU FIL OUVERT PORTENT SUR LA LIGNE ENTIÈRE**, case comprise (§5.4 quinquies) : posés sur
+  le seul bouton, le liseré serait tombé entre la case et le texte.
 - **DANS LA CORBEILLE** (§5.102), une case par **message**, de même forme, dans la ligne, avant l'objet ; « Tout
   sélectionner » n'y existe pas (aucun filtre) ; la barre porte le compte, « Désélectionner » et **« Restaurer »**
   (secondaire compact, `ArchiveRestore`), qui ouvre la même confirmation, non destructive (§5.16 : le geste qui répare).

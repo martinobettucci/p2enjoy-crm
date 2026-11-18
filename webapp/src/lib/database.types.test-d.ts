@@ -171,9 +171,15 @@ type Expect<T extends true> = T
 // GÉNÉRATEUR : `key` suit `^[a-z0-9]+(-[a-z0-9]+)*$` (2 à 40) et est unique dans l'espace ; `created_by` et `updated_by`
 // sont posés par la base ; `authenticated` écrit `key`, `title`, `description` et `body` — l'administrateur seul, par la
 // RLS — et supprime (docs/SPEC-mcp.md §17.2, §17.3).
+// `mail_message_transfers` et `mail_blocked_senders`, LIVRÉES PAR `CRM-156` T2 (migration `0190`) : le transfert d'un mail
+// à un membre, et les expéditeurs bloqués d'un espace. CE QUI ÉCHAPPE AU GÉNÉRATEUR : `authenticated` ne les écrit pas — les
+// fonctions `transfer_message`, `remove_message_transfer`, `block_sender` et `unblock_sender` sont les seuls chemins ;
+// `address` est en minuscules, sans blancs (docs/SPEC-mail-subsystem.md §32.7, §32.8).
 type _tables = Expect<
   Equal<
     keyof Database['public']['Tables'],
+    | 'mail_message_transfers'
+    | 'mail_blocked_senders'
     | 'mcp_prompts'
     | 'mail_labels'
     | 'mail_message_labels'
@@ -1311,9 +1317,23 @@ type _vueDerivationColonnes = Expect<
 // `channel_order_incomplete` (23514), `channel_reorder_forbidden` (42501). Le compte s'accroît de un.
 // `0188` de CRM-153, TRANCHE T1, REMPLACE `organization_list` : elle gagne `p_category_ids`, en dernier, l'une des catégories
 // données, archivées comprises (docs/SPEC-organisations.md §9.1). L'ancienne signature est retirée. Le compte ne change pas.
+// `0189` de CRM-156, TRANCHE T1, ajoute `inbox_bulk_count` et `inbox_bulk_apply`, SECURITY DEFINER : compter puis agir sur une
+// sélection de l'inbox, par paquets de 2 000 (docs/SPEC-mail-subsystem.md §32.4 à §32.5 bis). CE QUI ÉCHAPPE AU GÉNÉRATEUR :
+// la forme de `p_scope` et de `p_argument`, le refus `filter_required` sans filtre explicite. `0190`, TRANCHE T2, ajoute
+// `transfer_message`, `remove_message_transfer`, `blocked_sender_impact`, `block_sender`, `unblock_sender` et
+// `inbox_bulk_unknown_senders` (§32.7, §32.8, §32.10), et remplace `import_contacts` (`p_source` en dernier). Le compte
+// s'accroît de huit.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'inbox_bulk_count'
+    | 'inbox_bulk_apply'
+    | 'transfer_message'
+    | 'remove_message_transfer'
+    | 'blocked_sender_impact'
+    | 'block_sender'
+    | 'unblock_sender'
+    | 'inbox_bulk_unknown_senders'
     | 'reorder_channels'
     | 'organization_list'
     | 'organization_tracks'
