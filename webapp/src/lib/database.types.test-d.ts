@@ -1287,9 +1287,16 @@ type _vueDerivationColonnes = Expect<
 // et `label_not_found` (404), `forbidden` (42501), `label_archived` et `outbound_message` (22023). Le compte s'accroît de quatre.
 // `0184` de la TRANCHE T2 ajoute `verify_label_dispatch`, réservée à la clé de service : la base dit si le secret d'appel de
 // la passe est le bon (docs/SPEC-ia.md §15.4). Le compte s'accroît de un.
+// `0186` de CRM-152, TRANCHE T1, ajoute `organization_tracks` et `organization_list`, toutes deux SECURITY INVOKER : les
+// tracks d'une organisation par ses contacts, et la liste en base, recherchée, filtrée, triée et paginée
+// (docs/SPEC-organisations.md §8.1, §8.2). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `domain` et `website` peuvent être nuls ;
+// `p_revenues` vaut `all`, `with` ou `without`, `p_sort` vaut `name` ou `contacts` ; les refus `invalid_revenues_filter` et
+// `invalid_sort` (22023). Le compte s'accroît de deux.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'organization_list'
+    | 'organization_tracks'
     | 'verify_label_dispatch'
     | 'set_message_label'
     | 'request_label_evaluation'

@@ -5662,6 +5662,27 @@ export type Database = {
         }
       }
       occupation_du_workflow: { Args: { p_workflow: string }; Returns: Json }
+      organization_list: {
+        Args: {
+          p_descending?: boolean
+          p_limit?: number
+          p_offset?: number
+          p_revenues?: string
+          p_search?: string
+          p_sort?: string
+          p_track_ids?: string[]
+          p_workspace_id: string
+        }
+        Returns: {
+          contacts: number
+          domain: string
+          has_revenues: boolean
+          id: string
+          name: string
+          total_count: number
+          website: string
+        }[]
+      }
       organization_revenue_totals: {
         Args: { p_organization_id?: string }
         Returns: {
@@ -5673,6 +5694,17 @@ export type Database = {
           organization_id: string
           revenue_lines: number
           shared_cards: number
+        }[]
+      }
+      organization_tracks: {
+        Args: { p_organization_ids: string[] }
+        Returns: {
+          color: string
+          icon: string
+          name: string
+          organization_id: string
+          slug: string
+          track_id: string
         }[]
       }
       outbox_gestes_permis: {

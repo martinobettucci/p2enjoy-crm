@@ -13,7 +13,15 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+#### `CRM-152` T1 — les tracks d'une organisation et la liste paginée, en base (décisions 931 et 936)
+
+- **Deux fonctions nouvelles** préparent l'écran Organisations et le connecteur. La première rend les tracks de chaque
+  organisation, rattachée à un track par un de ses contacts lié à une affaire d'un channel du track. La seconde rend la
+  liste cherchée, filtrée par track et par recettes, triée par nom ou par contacts, page par page, avec le total.
+- Une affaire à la corbeille, un rattachement, un channel ou un track archivés ne comptent pas ; chacun ne voit que ce
+  qu'il lit.
+- Rien ne change encore à l'écran : la webapp (T2) et le connecteur (T3) suivent. Migration 186
+  (`docs/PROD_MIGRATIONS.md` §2.55).
 
 ## [Publié]
 

@@ -3348,6 +3348,19 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
    cards actives exige un plan de remappage. Comportement par défaut retenu : archivage refusé
    tant que des cards s'y trouvent.
 
+### Migration `0186` — les tracks d'une organisation et la liste paginée — `CRM-152` T1 (`0186_liste_organisations.sql` ; spécifiée le 2026-11-18, avant le code ; écrite le 2026-11-18)
+
+`docs/SPEC-organisations.md` §8.1, §8.2 ; décisions 931 et 936.
+- `public.organization_tracks(p_organization_ids uuid[])`, `SECURITY INVOKER`, `stable` : (`organization_id`, `track_id`,
+  `name`, `slug`, `color`, `icon`) — contact lié par `card_contacts` à une affaire hors corbeille, placée par un rattachement
+  ni archivé ni à la corbeille dans un channel puis un track ni archivés ni à la corbeille ; sous la RLS de chaque table.
+- `public.organization_list(p_workspace_id uuid, p_search text, p_track_ids uuid[], p_revenues text, p_sort text,
+  p_descending boolean, p_limit integer, p_offset integer)`, `SECURITY INVOKER`, `stable` : (`id`, `name`, `domain`,
+  `website`, `contacts`, `has_revenues`, `total_count`) ; refus `22023 invalid_revenues_filter`, `22023 invalid_sort`.
+- `contacts` compte les contacts que l'appelant lit ; `has_revenues` ignore une affaire à la corbeille.
+- `execute` à `authenticated` seulement ; aucune table ni politique nouvelle.
+- **Retour arrière** : retirer les deux fonctions ; une webapp et un connecteur antérieurs ne les appellent pas.
+
 ### Migration `0187` — réorganiser les channels d'un track — `CRM-154` T2 (`0187_reorganiser_channels.sql` ; spécifiée le 2026-11-18, avant le code)
 
 *Écrit le 2026-11-18, avant le code (décisions 935 et 938).* Spécification : `docs/SPEC-administration-arborescence.md`
@@ -3445,18 +3458,6 @@ fonctions « introuvable » (`pgTAP 0133`).
 **Retour arrière** : supprimer les déclencheurs, les quatre fonctions et les trois tables ; aucune table existante n'est
 modifiée. La seconde migration (`CRM-141` T2 : `verify_label_dispatch`, le secret dans Vault et la cadence `pg_cron`) est
 décrite avec sa tranche.
-
-### Migration — les tracks d'une organisation et la liste paginée (`CRM-152` T1 ; spécifiée le 2026-11-18, avant le code ; numéro pris au push)
-
-`docs/SPEC-organisations.md` §8.1, §8.2 ; décisions 931 et 936.
-- `public.organization_tracks(p_organization_ids uuid[])`, `SECURITY INVOKER`, `stable` : (`organization_id`, `track_id`,
-  `name`, `slug`, `color`, `icon`) — contact lié par `card_contacts` à une affaire hors corbeille, placée par un rattachement
-  ni archivé ni à la corbeille dans un channel puis un track ni archivés ni à la corbeille ; sous la RLS de chaque table.
-- `public.organization_list(p_workspace_id uuid, p_search text, p_track_ids uuid[], p_revenues text, p_sort text,
-  p_descending boolean, p_limit integer, p_offset integer)`, `SECURITY INVOKER`, `stable` : (`id`, `name`, `domain`,
-  `website`, `contacts`, `has_revenues`, `total_count`) ; refus `22023 invalid_revenues_filter`, `22023 invalid_sort`.
-- `execute` à `authenticated` seulement ; aucune table ni politique nouvelle.
-- **Retour arrière** : retirer les deux fonctions ; une webapp et un connecteur antérieurs ne les appellent pas.
 
 ### Migration `0182` — l'espace d'un message de la corbeille, pour l'ancre du connecteur (`CRM-138` T4 ; spécifiée le 2026-11-11, avant le code)
 

@@ -1229,9 +1229,28 @@ du navigateur (`sessionStorage`), jamais en base.
 
 **Retour arrière** : la webapp précédente ; rien n'est écrit en base par la livraison.
 
+### 2.55 `CRM-152` T1, décisions 931 et 936 — les tracks d'une organisation et la liste paginée, en base (À LIVRER : migration 186 ; **hors de tout lot annoncé**)
+
+`docs/SPEC-organisations.md` §8.1, §8.2 ; `docs/SCHEMA.md` « Migration `0186` ». Deux fonctions `SECURITY INVOKER`,
+`organization_tracks` et `organization_list` ; **aucune table, aucune politique, aucune donnée**, aucun verrou notable.
+Aucune variable, aucun secret.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 186 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate` |
+| 2 | Constater | session de livraison, en lecture seule | le registre gagne une ligne, l'empreinte de la 186 égale celle du dépôt ; `select to_regprocedure('public.organization_list(uuid, text, uuid[], text, text, boolean, integer, integer)')` non nul |
+
+**Seule, elle ne change rien de visible** : la webapp (T2) et l'image `mcp` (T3) qui l'appellent se livrent **avec ou
+après** elle, jamais avant.
+**Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0186` » : retirer les deux fonctions, ce qui n'efface rien.
+
 ## 3. Migrations en attente
 
-**Aucune migration en attente depuis la fenêtre du 2026-11-18** : la 185 a été appliquée par elle (révision `499cb253`, décision 937) ; registre à **183** lignes. *Historique de l'attente* — le paragraphe qui suit décrit la 185 telle qu'elle attendait.
+**La 186** (`CRM-152` T1, décisions 931 et 936), *en attente, hors de tout lot annoncé* : les tracks d'une organisation
+et la liste paginée (`docs/SCHEMA.md` « Migration `0186` ») — deux fonctions, aucune donnée. Seule (§2.55).
+**Avant ou avec la webapp de T2 et l'image `mcp` de T3.** Aucun geste préalable du responsable.
+
+**Avant la 186, aucune migration en attente depuis la fenêtre du 2026-11-18** : la 185 a été appliquée par elle (révision `499cb253`, décision 937) ; registre à **183** lignes. *Historique de l'attente* — le paragraphe qui suit décrit la 185 telle qu'elle attendait.
 
 **La 185** (`CRM-149` T1, décision 930), *appliquée le 2026-11-18* : les prompts du connecteur
 (`docs/SCHEMA.md` « Migration `0185` ») — une table, quatre politiques, deux fonctions, un déclencheur, et les cinq

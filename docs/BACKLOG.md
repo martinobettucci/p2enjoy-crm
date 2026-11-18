@@ -19840,13 +19840,17 @@ permets de rechercher, filtrer, ... »
 **Connecteur MCP** : **oui, famille existante `organisations`, action `consulter`** — `crm_organization_list` gagne la
 recherche texte et le filtre par track, et rend les tracks de chaque organisation ; aucune case nouvelle.
 **Spécification** : écrite le 2026-11-18 avant le code (décisions 931 et 936) — `docs/SPEC-organisations.md` §8,
-`docs/DESIGN_SYSTEM.md` §5.105, `docs/SCHEMA.md` (migration au prochain numéro libre), `docs/SPEC-mcp.md` §9.2 *tervicies* ;
+`docs/DESIGN_SYSTEM.md` §5.105, `docs/SCHEMA.md` « Migration `0186` », `docs/SPEC-mcp.md` §9.2 *tervicies* ;
 manuel. En base et paginée par « Afficher plus » ; « avec recettes » = au moins une ligne prévue ; plusieurs tracks = l'un
 d'eux ; pas de tri sur « Réel sur prévu ».
 **DoD** : pgTAP ; API par jetons réels ; unitaires ; E2E souris et clavier ; captures aux quatre paliers ; connecteur
 (pytest, intégration, `verify-mcp.sh`) ; seed vérifié ; manuel ; contrat.
 **Découpage** (2026-11-18, avec la spécification) :
-- [ ] **T1 — base** : `organization_tracks`, `organization_list` ; pgTAP ; API ; types ; contrat.
+- [x] **T1 — base** : `organization_tracks`, `organization_list` ; pgTAP ; API ; types ; contrat. *Faite le 2026-11-18* :
+      migration `0186_liste_organisations.sql` ; pgTAP `0174` (22 assertions, rouge contre six mutations : affaire à la
+      corbeille, rattachement, channel et track archivés, jokers non échappés, recette d'une affaire à la corbeille) ; API
+      `e2e/api/liste-organisations.spec.ts` (7 tests, l'oracle refait sous le jeton de chacun des trois profils) ; types et
+      témoin ; contrat §2.55. Suite pgTAP entière : 162 fichiers, 5356 assertions sans anomalie.
 - [ ] **T2 — écran** : la barre, le tri, la colonne « Tracks », « Afficher plus », l'adresse, la fiche ; unitaires ; E2E ;
       captures.
 - [ ] **T3 — connecteur** : `crm_organization_list` ; pytest, intégration, `verify-mcp.sh`.
