@@ -19884,10 +19884,11 @@ filtres).
 **Comportement attendu** (substance validée ; détail à spécifier) :
 - **un fil de commentaires** sur la fiche d'une organisation, **comme celui d'une affaire** : auteur et date, modifier ou
   retirer le sien, modération par un administrateur, **mentions @ qui notifient** ; tout membre qui lit l'organisation
-  peut commenter ; règles appliquées en base ;
+  peut commenter ; règles appliquées en base ; *révisé par la décision 939* : commente qui peut modifier l'organisation,
+  comme sur une affaire — la lectrice lit sans écrire ;
 - **des catégories** : une organisation en porte zéro, une ou plusieurs ; les administrateurs les créent, renomment et
   suppriment dans **Réglages ▸ Catégories d'organisations**, couleurs de la charte, comme les pastilles des mails
-  (`CRM-141`) ; des catégories par défaut sont posées (client, prospect, partenaire, fournisseur…) ; tout membre qui peut
+  (`CRM-141`) ; *révisé par la décision 939* : aucune catégorie par défaut, et « supprimer » archive ; tout membre qui peut
   modifier l'organisation pose ou retire une catégorie ;
 - la liste des organisations montre une colonne **« Catégories »** et un **filtre par catégorie**, à côté du filtre par
   track de `CRM-152` ;

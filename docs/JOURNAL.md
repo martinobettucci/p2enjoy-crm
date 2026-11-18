@@ -40875,3 +40875,23 @@ réservé désactivé avec son motif, jamais masqué, et laisse les écrans d'ad
 `docs/DESIGN_SYSTEM.md` §5.106 ; `docs/SPEC-channels.md` §1.2 et §10, `docs/SPEC-tracks.md` §10 ; `CRM-154`, cinq
 tranches. La poignée absente pour qui n'administre pas est un **écart borné** au §5.59 (« jamais masquée ») : glisser n'a
 pas de forme désactivée, et le lien « Réorganiser » garde le geste visible et son motif.
+
+### décision 939 — `CRM-153` : commenter comme une affaire ; une catégorie supprimée est archivée ; aucune catégorie par défaut ; le design system lu par sections
+
+*2026-11-18, session 4891a451 (p2enjoy-crm-d7), arbitrages du responsable (`AskUserQuestion`), avant la spécification ; la
+substance est celle de la décision 932.*
+**Décisions** :
+- **commente qui peut modifier l'organisation** — le business developer et l'administrateur de l'espace —, comme sur une
+  affaire (`card_comments_insertion` : qui écrit l'affaire) ; la lectrice lit le fil sans écrire ; écarté : tout membre qui
+  lit l'organisation, lectrice comprise (la phrase du backlog est révisée) ;
+- **« supprimer » une catégorie l'archive**, comme une étiquette ou une pastille de mail : elle ne se pose plus, reste
+  affichée « archivée » sur les organisations qui la portent, et se désarchive ; écarté : la suppression définitive ;
+- **aucune catégorie par défaut** : le catalogue naît vide, les administrateurs le remplissent ; écartés : les quatre
+  (client, prospect, partenaire, fournisseur), six ; la phrase du backlog sur les défauts est révisée ;
+- **le design system lu par sections ciblées**, pour `CRM-153` seulement : §1 à §4, §6 à §12, les sections du fil d'une
+  affaire, des étiquettes, des pastilles des mails, des organisations (§5.64, §5.97, §5.105) et des Réglages ; écartée : la
+  lecture intégrale.
+**Les deux questions du connecteur** : réglées par la décision 932 — oui, famille existante `organisations` (consulter,
+ajouter, modifier), aucune famille nouvelle.
+**Conséquences** : la spécification de `CRM-153` s'écrit sur ces bases, avant le code ; le seed devra poser lui-même les
+catégories qu'il démontre, par la vraie route.
