@@ -29,6 +29,7 @@ d'exécuter le code attendu.
 - `crm_card_mail_list` gagne l'argument `labels` : les mails qui portent l'une des pastilles données, posée ; un
   identifiant mal formé est refusé par l'outil. Chaque mail rendu dit ses pastilles posées (`labels`). Famille
   `messagerie`, case « Consulter », aucune case nouvelle. Manuel §33.5 ; `docs/SPEC-mcp.md` §9.2 duovicies.
+- `CRM-155` T3 : le seed vérifié sans ajout ; contrat de déploiement §2.61 (webapp et image `mcp`, aucune migration).
 
 ### `CRM-156` T2 — transférer un mail, bloquer un expéditeur, créer des contacts depuis l'inbox, en base (migration 190)
 

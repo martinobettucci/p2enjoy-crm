@@ -19990,8 +19990,7 @@ souris et clavier ; captures observées aux quatre paliers ; manuel vérifié ; 
 **Reste** : livrer la migration 187 puis la webapp avec un lot (contrat §2.56 et §2.57), et le constat du responsable en
 production (§2.57, geste 2).
 
-### CRM-155 — Inbox : les pastilles en filtres rapides (bascule), les pastilles archivées dans un volet replié `[@]`
-*Prise en charge : session interactive 152dd27d (p2enjoy-crm-c7, ex-45, ex-a8) depuis 2026-11-18 20:50 UTC — état avant : [ ] ; confiée par la session de livraison (e3)*
+### CRM-155 — Inbox : les pastilles en filtres rapides (bascule), les pastilles archivées dans un volet replié `[P]`
 
 **Origine** : demande du responsable, le 2026-11-18, relayée par la session de livraison (p2enjoy-crm-e3, ex-bb) ; arbitrée le
 même jour (décision 943).
@@ -20040,7 +20039,12 @@ message dans le connecteur ; design system lu par sections ciblées) : `docs/SPE
   `verify-mcp.sh` 126 contrôles avec un échec ponctuel sur `test_integration_organisations` en direct (la même suite verte
   à travers le Caddy), puis `--rapide` 125 contrôles sans anomalie, 111/111 en direct et à travers le Caddy ; service `mcp`
   de dev reconstruit ; manuel §33.5 (la ligne « Consulter (pastilles) »), verify-manual 168 sans anomalie.
-- [ ] **T3** — le chapitre du connecteur au manuel ; le seed vérifié ; le contrat ; `[P]` (le manuel §12.2 est fait en T1).
+- [x] **T3** — le chapitre du connecteur au manuel ; le seed vérifié ; le contrat ; `[P]` (le manuel §12.2 est fait en T1).
+  *Faite le 2026-11-18* : le manuel §33.5 est passé avec T2 ; **le seed vérifié sans ajout** — « Newsletter », archivée,
+  portée par l'invitation non classée (docs/SPEC-seed.md §46), filtre en API et à l'écran (volet ouvert d'office), et les
+  pastilles posées du seed suffisent aux preuves, qui posent leurs propres mails ; contrat §2.61 (webapp et image `mcp`,
+  aucune migration ; deux gestes de constat du responsable). **L'unité passe `[P]`** : il reste la livraison, par la
+  session de livraison, et le constat du responsable.
 
 ### CRM-156 — Inbox : opérations groupées sur une sélection de mails `[@]`
 

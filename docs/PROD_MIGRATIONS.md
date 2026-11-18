@@ -1334,6 +1334,24 @@ pgTAP `0127` et l'E2E de l'import, rejoués sur la 190. Les écrans (T3, T4) se 
 **Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0190` » ; les transferts et blocages saisis entre-temps sont
 perdus — un `pg_dump` des deux tables d'abord ; les mails mis à la corbeille par un blocage y restent, restaurables.
 
+### 2.61 `CRM-155` T1 et T2, décisions 943 et 948 — les pastilles en filtres rapides dans l'inbox, et le filtre du connecteur (EN ATTENTE)
+
+`docs/SPEC-mail-subsystem.md` §31.12 ; `docs/DESIGN_SYSTEM.md` §5.108 ; `docs/SPEC-mcp.md` §9.2 *duovicies* (révisé).
+**Aucune migration, aucune variable, aucun secret** : le filtre lit `mail_messages` et `mail_message_labels` sous la RLS
+de `CRM-141` (migrations 183 et 184, livrées). Le connecteur garde sa matrice : famille `messagerie`, case « Consulter ».
+**Indépendante du lot `CRM-156`** : elle se livre seule ou avec lui ; si `CRM-156` T3 (l'écran) part dans le même lot, la
+webapp de `main` porte les deux.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer la webapp de `main` | session de livraison | avec le lot qui l'emporte |
+| 2 | Reconstruire l'image `mcp` | session de livraison | avec la webapp, comme au §4 (`mcp`) ; sans elle, `crm_card_mail_list` n'a pas l'argument `labels` et ses mails ne disent pas leurs pastilles |
+| 3 | Constater, à l'écran | responsable, dans l'inbox, un dossier qui a des mails à pastilles | « Filtrer par pastille » en tête de la liste ; un clic sur une pastille la teinte et filtre ; une seconde pastille élargit la liste (l'une ou l'autre) ; « Pastilles archivées » se déplie ; « Toutes les pastilles » efface ; au clavier, `Tab` puis `Espace` ; l'adresse garde le filtre au rechargement |
+| 4 | Constater, au connecteur | responsable, depuis son assistant | demander les mails d'une affaire « qui portent la pastille Lead » : la réponse ne garde que ceux-là, et chaque mail dit ses pastilles |
+
+**Retour arrière** : la webapp et l'image `mcp` précédentes ; aucune donnée n'est écrite. Une adresse à plusieurs
+`pastille` ouverte par la webapp précédente n'en lit que la première valeur (`get`) — rien ne casse.
+
 ## 3. Migrations en attente
 
 **La 190** (`CRM-156` T2, décisions 945 et 947), *en attente* : le transfert, le blocage d'un expéditeur et la source des
