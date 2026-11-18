@@ -20021,11 +20021,21 @@ vérifié (une pastille archivée portée par un mail) ; manuel vérifié ; cont
 message dans le connecteur ; design system lu par sections ciblées) : `docs/SPEC-mail-subsystem.md` §31.12,
 `docs/DESIGN_SYSTEM.md` §5.108, `docs/SPEC-mcp.md` §9.2 *duovicies* (révisé). Aucune migration.
 **Tranches** (§31.12.7) :
-- [ ] **T1** — l'écran : lecture à plusieurs pastilles, adresse en liste, bloc des filtres rapides et volet, vide ;
-  unitaires ; API ; E2E souris et clavier, quatre paliers ; captures.
+- [x] **T1** — l'écran : lecture à plusieurs pastilles, adresse en liste, bloc des filtres rapides et volet, vide ;
+  unitaires ; API ; E2E souris et clavier, quatre paliers ; captures. *Faite le 2026-11-18* : `inbox.ts` (`in` sur
+  l'embarquement filtrant), `PastillesInbox.tsx` (`FiltresPastilles`, `VidePastilles`, la lecture de l'adresse),
+  `RouteInbox.tsx` (le bloc au-dessus de la rangée d'action, la liste qui attend le catalogue) ; unitaires 69 (inbox,
+  PastillesInbox) et suite webapp 5 964 ; API `filtres-rapides-pastilles` 3/3 ; E2E `filtres-rapides-pastilles` 5/5
+  (souris, clavier, archivée à l'arrivée, adresse retouchée, vide à une et deux pastilles, quatre paliers),
+  `pastilles-inbox` révisé 7/7, sous-ensemble inbox 59/59 ; captures `docs/captures/CRM-155` observées (une capture prise
+  pendant la transition de 150 ms montrait une bascule active à mi-chemin : la preuve attend la fin des transitions) et
+  trois de `CRM-141` renouvelées ; **le manuel §12.2 et son image `pastilles-dans-la-liste`, avancés depuis T3** (le texte
+  ne pouvait pas décrire la liste déroulante retirée), 12-inbox 12/12, verify-manual 168 contrôles sans anomalie ; le
+  vide à une pastille passe aux espaces insécables (§5.51). Les sondes des trois specs s'effacent par préfixe (un worker
+  relancé après un échec vidait la liste en mémoire, relevé par la session fc).
 - [ ] **T2** — le connecteur : `labels` sur `crm_card_mail_list`, les pastilles de chaque message ; pytest ;
   intégration ; `verify-mcp.sh`.
-- [ ] **T3** — le manuel §12.2 et ses images ; le seed vérifié ; le contrat ; `[P]`.
+- [ ] **T3** — le chapitre du connecteur au manuel ; le seed vérifié ; le contrat ; `[P]` (le manuel §12.2 est fait en T1).
 
 ### CRM-156 — Inbox : opérations groupées sur une sélection de mails `[@]`
 

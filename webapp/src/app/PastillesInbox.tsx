@@ -5,13 +5,19 @@
 //       §5.73 (la grammaire des étiquettes reprise), §5.102 (la rangée de commandes), §5.59 (commandes refusées), §5.8 ;
 //       docs/JOURNAL.md décisions 883, 924 et 926 ; CLAUDE.md §10 — l'écran n'accorde aucun droit : la base tranche
 //
+// @spec CRM-155 (docs/BACKLOG.md) — tranche T1 : les pastilles en FILTRES RAPIDES — une bascule par pastille active de
+//       l'espace courant, plusieurs en OU, le volet « Pastilles archivées » replié par défaut, « Toutes les pastilles »,
+//       la clé `pastille` en liste nettoyée, et le vide à plusieurs pastilles
+// @spec docs/SPEC-mail-subsystem.md §31.12.1, §31.12.3, §31.12.4 ; docs/DESIGN_SYSTEM.md §5.108 (la bascule du §5.11) ;
+//       docs/JOURNAL.md décisions 943 et 948
+//
 // LA COULEUR NE PORTE JAMAIS SEULE L'INFORMATION (§1) : chaque pilule écrit son nom, l'origine se dit en mots.
 
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
-import { Sparkles, Tags, TriangleAlert } from 'lucide-react'
+import { ChevronDown, ChevronRight, Sparkles, Tags, TriangleAlert } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
-import { PastilleEtiquette, PastilleReste } from '../components/ui/PastilleEtiquette'
+import { POINTS, PastilleEtiquette, PastilleReste } from '../components/ui/PastilleEtiquette'
 import { EtatVide } from '../components/ui/States'
 import { t, type CleTraduction } from '../i18n'
 import { enChargement, type EtatAsync } from '../lib/async'
@@ -28,14 +34,58 @@ import {
 } from '../lib/pastilles-message'
 import { clientCrm } from '../lib/supabase'
 
-/** La clé d'adresse du filtre « Pastille » (§31.7) : un contrôle de l'écran, qui reste dans l'adresse. */
+/**
+ * La clé d'adresse du filtre (§31.7) : un contrôle de l'écran, qui reste dans l'adresse. `CRM-155` (§31.12.3) : elle se
+ * RÉPÈTE, une valeur par pastille active ; une adresse à une seule valeur, celle de `CRM-141`, reste valide.
+ */
 export const CLE_URL_PASTILLE = 'pastille'
 
 const FORME_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-/** La valeur lue dans l'adresse ; une valeur mal formée — une adresse retouchée — vaut l'absence de filtre. */
-export const lirePastilleFiltre = (valeur: string | null): string | null =>
-	valeur !== null && FORME_UUID.test(valeur) ? valeur.toLowerCase() : null
+/** Les pastilles de l'espace courant, actives puis archivées, chacune dans l'ordre du nom (le catalogue est déjà trié). */
+export function pastillesDeLEspace(
+	catalogue: CataloguePastilles,
+	idEspace: string | null,
+): { readonly actives: readonly PastilleMail[]; readonly archivees: readonly PastilleMail[] } {
+	const deLEspace = idEspace === null ? [] : [...catalogue.values()].filter((p) => p.idEspace === idEspace)
+	return { actives: deLEspace.filter((p) => !p.archivee), archivees: deLEspace.filter((p) => p.archivee) }
+}
+
+/**
+ * Le filtre lu dans l'adresse (§31.12.3) : chaque valeur qui n'a pas la forme d'un `uuid`, ou qui n'est pas une pastille de
+ * l'espace courant — active ou archivée —, est IGNORÉE, une à une ; les doublons tombent ; l'ordre de l'adresse est gardé.
+ * Une liste vide : aucun filtre.
+ */
+export function lirePastillesFiltre(
+	valeurs: readonly string[],
+	catalogue: CataloguePastilles,
+	idEspace: string | null,
+): readonly string[] {
+	const retenues: string[] = []
+	for (const valeur of valeurs) {
+		if (!FORME_UUID.test(valeur)) continue
+		const id = valeur.toLowerCase()
+		if (catalogue.get(id)?.idEspace !== idEspace || idEspace === null || retenues.includes(id)) continue
+		retenues.push(id)
+	}
+	return retenues
+}
+
+/** L'adresse porte-t-elle au moins une valeur bien formée ? Tant que le catalogue n'est pas lu, la liste attend. */
+export const adresseDemandeUnFiltre = (valeurs: readonly string[]): boolean => valeurs.some((v) => FORME_UUID.test(v))
+
+/** Une bascule : la pastille entre dans le filtre, ou en sort (§31.12.2). */
+export const basculerDansFiltre = (filtre: readonly string[], id: string): readonly string[] =>
+	filtre.includes(id) ? filtre.filter((autre) => autre !== id) : [...filtre, id]
+
+/**
+ * Les noms entre guillemets, en disjonction — « « Lead » ou « Spam » » —, par `Intl.ListFormat` et jamais par
+ * concaténation (`CLAUDE.md` §23). Les guillemets encadrent le nom d'espaces insécables (§5.51).
+ */
+export function nomsEnDisjonction(noms: readonly string[]): string {
+	const cites = noms.map((nom) => `«\u00a0${nom}\u00a0»`)
+	return new Intl.ListFormat('fr', { style: 'long', type: 'disjunction' }).format(cites)
+}
 
 /** Trois pastilles au plus sur une ligne de la liste, puis « +n » (§5.103, §5.73). */
 export const PLAFOND_PASTILLES_LIGNE = 3
@@ -99,53 +149,179 @@ export function PastillesLigne({ ids, catalogue }: { readonly ids: readonly stri
 }
 
 /**
- * Le filtre « Pastille » (§5.103) : un `select` natif libellé ; les actives dans l'ordre du nom, puis les archivées,
- * suffixées — on retrouve ainsi les mails d'une pastille qu'on vient de retirer. Absent sans catalogue lu ou vide.
+ * Une bascule de pastille (§5.108) : la bascule de la barre de filtres du fil (§5.11), reprise sans écart — un bouton
+ * `aria-pressed`, jamais une case —, avec le point de tête de la pastille (§5.73).
  */
-export function FiltrePastille({
-	catalogue,
-	valeur,
-	onChange,
+function BasculePastille({
+	pastille,
+	active,
+	onBasculer,
+	refBouton,
 }: {
-	readonly catalogue: CataloguePastilles
-	readonly valeur: string | null
-	readonly onChange: (id: string | null) => void
+	readonly pastille: PastilleMail
+	readonly active: boolean
+	readonly onBasculer: () => void
+	readonly refBouton?: (element: HTMLButtonElement | null) => void
 }) {
-	const id = useId()
-	if (catalogue.size === 0) return null
-	// Le catalogue est déjà trié : les actives d'abord, puis les archivées, chacune dans l'ordre du nom.
-	const pastilles = [...catalogue.values()]
+	const archive = nomArchive(pastille)
 	return (
-		<span className="flex items-center gap-2 min-w-0">
-			<label htmlFor={id} className="text-sm text-text-2 shrink-0">
-				{t('inbox.labels.filter')}
-			</label>
-			<select
-				id={id}
-				data-testid="inbox-filtre-pastille"
-				value={valeur ?? ''}
-				onChange={(evenement) => onChange(evenement.target.value === '' ? null : evenement.target.value)}
-				className="min-h-[var(--size-target)] min-w-0 max-w-[16rem] rounded-lg border border-border bg-surface px-2 text-sm text-ink"
-			>
-				<option value="">{t('inbox.labels.filter.all')}</option>
-				{pastilles.map((p) => (
-					<option key={p.id} value={p.id}>
-						{p.archivee ? t('inbox.labels.filter.archived', { nom: p.nom }) : p.nom}
-					</option>
-				))}
-			</select>
-		</span>
+		<button
+			ref={refBouton}
+			type="button"
+			data-testid="inbox-bascule-pastille"
+			data-pastille={pastille.id}
+			aria-pressed={active}
+			aria-label={archive}
+			title={archive}
+			onClick={onBasculer}
+			className={`inline-flex items-center gap-2 min-h-[var(--size-target)] max-w-full rounded-full border px-3 text-sm transition-colors duration-[var(--transition-duration-fast)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+				active
+					? 'border-brand bg-brand-soft text-brand font-medium'
+					: 'border-border bg-surface text-text-2 hover:bg-hover'
+			}`}
+		>
+			<span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${POINTS[pastille.couleur]}`} />
+			<span className="min-w-0 break-words text-left">{pastille.nom}</span>
+		</button>
 	)
 }
 
-/** Le vide d'un filtre qui ne trouve rien : il nomme la pastille, et porte le geste qui l'efface (§5.103, §5.51). */
-export function VidePastille({ nom, onToutes }: { readonly nom: string; readonly onToutes: () => void }) {
+/**
+ * Les FILTRES RAPIDES (§5.108, §31.12.1) : « Filtrer par pastille », une bascule par pastille active de l'espace courant,
+ * toutes visibles et à la ligne ; le volet « Pastilles archivées », replié par défaut et ouvert d'office quand l'adresse
+ * active une archivée ; « Toutes les pastilles » quand une bascule est active. Absent sans pastille dans l'espace courant.
+ */
+export function FiltresPastilles({
+	catalogue,
+	idEspace,
+	filtre,
+	onChange,
+}: {
+	readonly catalogue: CataloguePastilles
+	readonly idEspace: string | null
+	/** Le filtre en vigueur, déjà nettoyé (`lirePastillesFiltre`). */
+	readonly filtre: readonly string[]
+	readonly onChange: (filtre: readonly string[]) => void
+}) {
+	const idTitre = useId()
+	const idVolet = useId()
+	const { actives, archivees } = pastillesDeLEspace(catalogue, idEspace)
+	// OUVERT D'OFFICE À L'ARRIVÉE sur une archivée active : un filtre en vigueur n'est jamais caché (§31.12.1). Ensuite,
+	// c'est la personne qui décide ; l'état n'entre ni dans l'adresse ni dans un stockage (`CLAUDE.md` §11).
+	const archiveeActiveALArrivee = archivees.some((p) => filtre.includes(p.id))
+	const [voletOuvert, setVoletOuvert] = useState(archiveeActiveALArrivee)
+	const [ouvertureFaite, setOuvertureFaite] = useState(archiveeActiveALArrivee)
+	// Le catalogue peut arriver après le premier rendu : l'ouverture d'office se fait une fois, à sa première lecture.
+	useEffect(() => {
+		if (ouvertureFaite || !archiveeActiveALArrivee) return
+		setVoletOuvert(true)
+		setOuvertureFaite(true)
+	}, [archiveeActiveALArrivee, ouvertureFaite])
+	const premiereBascule = useRef<HTMLButtonElement | null>(null)
+
+	if (actives.length === 0 && archivees.length === 0) return null
+	const basculer = (id: string) => onChange(basculerDansFiltre(filtre, id))
+	return (
+		<div
+			role="group"
+			aria-labelledby={idTitre}
+			data-testid="inbox-filtres-pastilles"
+			className="flex flex-col gap-2 px-3 py-2 border-b border-border"
+		>
+			<span id={idTitre} className="text-[13px] text-text-2">
+				{t('inbox.labels.filter')}
+			</span>
+			{actives.length === 0 ? null : (
+				<div className="flex flex-wrap gap-2 min-w-0">
+					{actives.map((p, rang) => (
+						<BasculePastille
+							key={p.id}
+							pastille={p}
+							active={filtre.includes(p.id)}
+							onBasculer={() => basculer(p.id)}
+							refBouton={
+								rang === 0
+									? (element) => {
+											premiereBascule.current = element
+										}
+									: undefined
+							}
+						/>
+					))}
+				</div>
+			)}
+			{archivees.length === 0 && filtre.length === 0 ? null : (
+				<div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
+					{archivees.length === 0 ? (
+						<span />
+					) : (
+						<Button
+							variante="discret"
+							taille="compacte"
+							data-testid="inbox-volet-archivees"
+							aria-expanded={voletOuvert}
+							aria-controls={voletOuvert ? idVolet : undefined}
+							onClick={() => {
+								setVoletOuvert((ouvert) => !ouvert)
+								setOuvertureFaite(true)
+							}}
+						>
+							{voletOuvert ? (
+								<ChevronDown aria-hidden="true" size={16} />
+							) : (
+								<ChevronRight aria-hidden="true" size={16} />
+							)}
+							{t('inbox.labels.filter.archivedPanel', { n: String(archivees.length) })}
+						</Button>
+					)}
+					{filtre.length === 0 ? null : (
+						<Button
+							variante="discret"
+							taille="compacte"
+							data-testid="inbox-filtre-pastille-toutes"
+							onClick={() => {
+								onChange([])
+								// La commande disparaît avec le filtre : le focus passe à la première bascule (§5.108).
+								requestAnimationFrame(() => premiereBascule.current?.focus())
+							}}
+						>
+							{t('inbox.labels.filter.all')}
+						</Button>
+					)}
+				</div>
+			)}
+			{voletOuvert && archivees.length > 0 ? (
+				<div
+					id={idVolet}
+					role="group"
+					aria-label={t('inbox.labels.filter.archivedGroup')}
+					data-testid="inbox-volet-archivees-contenu"
+					className="flex flex-wrap gap-2 min-w-0"
+				>
+					{archivees.map((p) => (
+						<BasculePastille key={p.id} pastille={p} active={filtre.includes(p.id)} onBasculer={() => basculer(p.id)} />
+					))}
+				</div>
+			) : null}
+		</div>
+	)
+}
+
+/**
+ * Le vide d'un filtre qui ne trouve rien : il nomme la ou les pastilles, et porte le geste qui l'efface (§5.103, §5.108,
+ * §5.51).
+ */
+export function VidePastilles({ noms, onToutes }: { readonly noms: readonly string[]; readonly onToutes: () => void }) {
 	return (
 		<EtatVide
-			titre={t('inbox.labels.filter.empty.title', { nom })}
+			titre={
+				noms.length === 1
+					? t('inbox.labels.filter.empty.title', { nom: noms[0] ?? '' })
+					: t('inbox.labels.filter.empty.titleMany', { noms: nomsEnDisjonction(noms) })
+			}
 			corps={t('inbox.labels.filter.empty.body')}
 			action={
-				<Button taille="compacte" data-testid="inbox-filtre-pastille-toutes" onClick={onToutes}>
+				<Button taille="compacte" data-testid="inbox-filtre-pastille-toutes-vide" onClick={onToutes}>
 					{t('inbox.labels.filter.all')}
 				</Button>
 			}

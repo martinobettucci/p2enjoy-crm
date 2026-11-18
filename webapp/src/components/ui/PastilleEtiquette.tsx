@@ -18,7 +18,10 @@ const TEINTES: Readonly<Record<CouleurNoeud, string>> = {
 	neutral: 'bg-hover text-text-2',
 }
 
-const POINTS: Readonly<Record<CouleurNoeud, string>> = {
+// @spec CRM-155 (docs/BACKLOG.md) tranche T1 — le point de tête est exporté pour la bascule de pastille de l'inbox
+//       (docs/DESIGN_SYSTEM.md §5.108)
+/** Le point de tête, par couleur. */
+export const POINTS: Readonly<Record<CouleurNoeud, string>> = {
 	brand: 'bg-brand',
 	success: 'bg-success',
 	accent: 'bg-accent',

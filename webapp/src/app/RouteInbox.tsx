@@ -58,6 +58,9 @@
 //       panneaux de messages, son adresse `?corbeille=oui`, le focus après effacement et restauration (docs/DESIGN_SYSTEM.md
 //       §5.102, §5.4 quinquies révisé ; docs/SPEC-mail-subsystem.md §29.1 ; décisions 878, 917, 920 et 921) — les panneaux
 //       vivent dans `CorbeilleInbox.tsx`
+// @spec CRM-155 (docs/BACKLOG.md) — tranche T1 : les filtres rapides par pastille en tête de la liste, au-dessus de la
+//       rangée d'action ; la clé `pastille` répétée, nettoyée pour l'espace courant, la liste qui attend le catalogue ; le
+//       vide à plusieurs pastilles (docs/SPEC-mail-subsystem.md §31.12 ; docs/DESIGN_SYSTEM.md §5.108 ; décision 948)
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import {
@@ -156,12 +159,13 @@ import { lireRetentionCorbeille } from '../lib/corbeille'
 import { useContexteEspace } from './ContexteEspace'
 import {
 	CLE_URL_PASTILLE,
-	FiltrePastille,
+	FiltresPastilles,
 	PastillesLigne,
 	PastillesMessageOuvert,
-	VidePastille,
+	VidePastilles,
+	adresseDemandeUnFiltre,
+	lirePastillesFiltre,
 	catalogueOuVide,
-	lirePastilleFiltre,
 	useCataloguePastilles,
 	type CataloguePastilles,
 } from './PastillesInbox'
@@ -701,14 +705,17 @@ function PanneauListe({
 	filtreCourrier,
 	onToutAfficher,
 	catalogue,
-	pastille,
-	onPastille,
+	idEspace,
+	pastilles,
+	onPastilles,
 }: {
 	/** `CRM-141` T4 (§31.7) : le catalogue des pastilles lisibles, pour les pilules des lignes et le filtre. */
 	readonly catalogue: CataloguePastilles
-	/** Le filtre « Pastille » en vigueur, lu dans l'adresse ; `null` sans filtre. */
-	readonly pastille: string | null
-	readonly onPastille: (id: string | null) => void
+	/** `CRM-155` (§31.12.1) : l'espace courant, dont les pastilles font les filtres rapides. */
+	readonly idEspace: string | null
+	/** `CRM-155` : les pastilles du filtre, lues dans l'adresse et nettoyées ; vide sans filtre. */
+	readonly pastilles: readonly string[]
+	readonly onPastilles: (pastilles: readonly string[]) => void
 	/** `CRM-139` (§27.4) : le filtre « Seulement moi » s'applique-t-il à cette liste ? */
 	readonly filtreCourrier: boolean
 	/** Le geste du vide sous le filtre : décocher la case. */
@@ -754,16 +761,21 @@ function PanneauListe({
 	// « TOUT MARQUER COMME LU » PORTE SUR LES FILS AFFICHÉS, et il est absent quand aucun n'est non lu (§5.4
 	// quinquies) : un geste sans effet possible ne s'offre pas.
 	const nonLusAffiches = idsNonLus(compose.visibles.flatMap((fil) => fil.messages))
-	// `CRM-141` T4 — LA RANGÉE D'ACTION EN TÊTE DE LA LISTE (§5.4 quinquies, §5.103) : le filtre « Pastille » à gauche,
-	// « Tout marquer comme lu » à droite ; elle passe à la ligne sous `md`. Le filtre RESTE RENDU sur une liste vide : il est
-	// la cause possible de ce vide (§5.3 septies).
+	// `CRM-155` — LES FILTRES RAPIDES, UN BLOC À PART EN TÊTE DE LA LISTE (§5.108, §31.12.1), au-dessus de la rangée
+	// d'action. Ils RESTENT RENDUS sur une liste vide, en chargement ou en erreur : ils sont la cause possible de ce vide
+	// (§5.3 septies). Le composant ne rend rien si l'espace courant n'a aucune pastille.
+	const filtresRapides =
+		selection !== null ? (
+			<FiltresPastilles catalogue={catalogue} idEspace={idEspace} filtre={pastilles} onChange={onPastilles} />
+		) : null
+	// `CRM-141` T4 — LA RANGÉE D'ACTION EN TÊTE DE LA LISTE (§5.4 quinquies) : « Tout marquer comme lu » à droite.
+	// `CRM-155` (§5.108) : elle ne porte plus que des commandes — le filtre vit dans son bloc, au-dessus.
 	const rangeeAction =
-		selection !== null && etat.statut === 'pret' && (catalogue.size > 0 || nonLusAffiches.length > 0) ? (
+		selection !== null && etat.statut === 'pret' && nonLusAffiches.length > 0 ? (
 			<div
 				className="flex flex-wrap items-center justify-between gap-2 px-3 py-1 border-b border-border"
 				data-testid="inbox-rangee-action"
 			>
-				<FiltrePastille catalogue={catalogue} valeur={pastille} onChange={onPastille} />
 				{nonLusAffiches.length > 0 ? (
 					<Button
 						variante="discret"
@@ -817,6 +829,7 @@ function PanneauListe({
 			{selection !== null && etat.statut === 'erreur' ? (
 				<EchecChargement erreur={etat.erreur} onReprise={onReprise} />
 			) : null}
+			{filtresRapides}
 			{rangeeAction}
 			{selection !== null && etat.statut === 'pret' ? (
 				compose.visibles.length === 0 ? (
@@ -836,9 +849,13 @@ function PanneauListe({
 								/>
 							}
 						/>
-					) : pastille !== null ? (
-						// `CRM-141` T4 (§5.103) : un vide sous le filtre « Pastille » nomme la pastille et porte le geste qui l'efface.
-						<VidePastille nom={catalogue.get(pastille)?.nom ?? ''} onToutes={() => onPastille(null)} />
+					) : pastilles.length > 0 ? (
+						// `CRM-141` T4, `CRM-155` (§5.108) : un vide sous le filtre nomme la ou les pastilles et porte le geste qui
+						// l'efface.
+						<VidePastilles
+							noms={pastilles.map((id) => catalogue.get(id)?.nom ?? '')}
+							onToutes={() => onPastilles([])}
+						/>
 					) : filtreCourrier ? (
 						// `CRM-139` (§5.96) : un vide sous le filtre porte le geste qui le lève. Le sommeil, jugé après le filtre,
 						// garde son propre vide ci-dessus.
@@ -850,7 +867,7 @@ function PanneauListe({
 					<>
 						{/* « TOUT MARQUER COMME LU » VIT DANS LA RANGÉE D'ACTION EN TÊTE DE LA LISTE, ET NON DANS L'EN-TÊTE
 						    (§5.4 quinquies) — défaut vu en capture : à 360 px, le titre, ce bouton et la bascule de sommeil ne
-						    tenaient pas sur une ligne. La rangée est rendue plus haut (`rangeeAction`), avec le filtre « Pastille ». */}
+						    tenaient pas sur une ligne. La rangée est rendue plus haut (`rangeeAction`), sous les filtres rapides (`CRM-155`). */}
 						{/* LA LISTE ÉNUMÈRE DES FILS (§16.16.3), et son nom accessible le dit : le
 						    laisser annoncer « Messages du dossier » ferait parcourir des messages à
 						    un lecteur d'écran là où l'écran présente des fils. */}
@@ -2108,22 +2125,32 @@ export function RouteInbox() {
 	}, [filtreCourrier, setParametresUrl])
 
 	const arbre = useArborescence(clientCrm, filtreCourrier)
-	// `CRM-141` T4 — LE FILTRE « PASTILLE » ENTRE DANS L'ADRESSE (§31.7, clé `pastille`) : un contrôle de l'écran, comme
-	// `sommeil`. Une valeur mal formée vaut l'absence de filtre ; le choisir est un geste, que « Précédent » défait.
-	const pastilleFiltre = lirePastilleFiltre(parametresUrl.get(CLE_URL_PASTILLE))
-	const changerPastille = useCallback(
-		(id: string | null) => {
+	// `CRM-141` T4 — LE FILTRE PAR PASTILLE ENTRE DANS L'ADRESSE (§31.7, clé `pastille`) : un contrôle de l'écran, comme
+	// `sommeil` ; chaque geste est une entrée d'historique, que « Précédent » défait. `CRM-155` (§31.12.3) : la clé se
+	// RÉPÈTE, une valeur par pastille ; une valeur mal formée, ou qui n'est pas une pastille de l'ESPACE COURANT, est
+	// ignorée. Tant que le catalogue n'est pas lu, une adresse qui demande un filtre fait ATTENDRE la liste (`null`) : la
+	// montrer d'abord sans filtre ferait voir des fils que le filtre retire aussitôt.
+	const { idWorkspace: idEspaceCourant } = useContexteEspace()
+	const etatCatalogue = useCataloguePastilles()
+	const catalogue = catalogueOuVide(etatCatalogue)
+	const valeursPastille = parametresUrl.getAll(CLE_URL_PASTILLE)
+	const pastillesFiltre: readonly string[] | null = !adresseDemandeUnFiltre(valeursPastille)
+		? []
+		: etatCatalogue.statut === 'chargement'
+			? null
+			: lirePastillesFiltre(valeursPastille, catalogue, idEspaceCourant)
+	const changerPastilles = useCallback(
+		(ids: readonly string[]) => {
 			setParametresUrl((precedents) => {
 				const suivants = new URLSearchParams(precedents)
-				if (id === null) suivants.delete(CLE_URL_PASTILLE)
-				else suivants.set(CLE_URL_PASTILLE, id)
+				suivants.delete(CLE_URL_PASTILLE)
+				for (const id of ids) suivants.append(CLE_URL_PASTILLE, id)
 				return suivants
 			})
 		},
 		[setParametresUrl],
 	)
-	const catalogue = catalogueOuVide(useCataloguePastilles())
-	const liste = useMessages(clientCrm, selection, filtreCourrier, pastilleFiltre)
+	const liste = useMessages(clientCrm, selection, filtreCourrier, pastillesFiltre)
 	const message = useMessage(clientCrm, idOuvert)
 	const fils = useFilsEndormis(clientCrm)
 
@@ -2580,8 +2607,9 @@ export function RouteInbox() {
 					filtreCourrier={filtreCourrier === true}
 					onToutAfficher={() => changerModeCourrier('tous')}
 					catalogue={catalogue}
-					pastille={pastilleFiltre}
-					onPastille={changerPastille}
+					idEspace={idEspaceCourant}
+					pastilles={pastillesFiltre ?? []}
+					onPastilles={changerPastilles}
 				/>
 				<PanneauMessage
 					etat={message.etat}

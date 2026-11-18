@@ -198,10 +198,14 @@ export const fr = {
 	'inbox.sleep.filter': 'Afficher les messages en sommeil',
 	// `CRM-141` T4 — les pastilles d'un mail dans l'inbox (docs/DESIGN_SYSTEM.md §5.103, docs/SPEC-mail-subsystem.md §31.7).
 	'inbox.labels.more.aria': '{n} autres pastilles : {noms}',
-	'inbox.labels.filter': 'Pastille',
+	// @spec CRM-155 (docs/BACKLOG.md) T1, docs/DESIGN_SYSTEM.md §5.108 — les filtres rapides : le titre du bloc, le volet
+	//       des archivées, son groupe, le vide à plusieurs pastilles
+	'inbox.labels.filter': 'Filtrer par pastille',
 	'inbox.labels.filter.all': 'Toutes les pastilles',
-	'inbox.labels.filter.archived': '{nom} (archivée)',
-	'inbox.labels.filter.empty.title': 'Aucun message ne porte la pastille « {nom} » dans ce dossier.',
+	'inbox.labels.filter.archivedPanel': 'Pastilles archivées ({n})',
+	'inbox.labels.filter.archivedGroup': 'Pastilles archivées',
+	'inbox.labels.filter.empty.title': 'Aucun message ne porte la pastille « {nom} » dans ce dossier.',
+	'inbox.labels.filter.empty.titleMany': 'Aucun message ne porte l’une des pastilles {noms} dans ce dossier.',
 	'inbox.labels.filter.empty.body': 'Choisissez « Toutes les pastilles » pour revoir tout le dossier.',
 	'inbox.labels.origin.llm': "posée par l'IA",
 	'inbox.labels.origin.manual': 'posée à la main',

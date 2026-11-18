@@ -24,6 +24,8 @@
 //       décisions 657 et 818 ; docs/DESIGN_SYSTEM.md §5.4, « Les affaires hors de l'arborescence »)
 // @spec CRM-141 (docs/BACKLOG.md) — tranche T4 : la liste lit les pastilles posées de chaque message, et le filtre
 //       `pastille` retient les messages qui la portent — docs/SPEC-mail-subsystem.md §31.7 ; docs/DESIGN_SYSTEM.md §5.103
+// @spec CRM-155 (docs/BACKLOG.md) — tranche T1 : le filtre prend PLUSIEURS pastilles, en OU — les messages qui portent au
+//       moins l'une d'elles, posée (docs/SPEC-mail-subsystem.md §31.12.2 ; décisions 943 et 948)
 //
 // Ce module ne rend rien : il **lit, réduit et classe**. La séparation est ce qui rend la
 // réduction du HTML, la construction de l'arbre et la classification des refus vérifiables
@@ -90,7 +92,9 @@ export const COLONNES_LISTE_INBOX =
 
 /**
  * `CRM-141` T4 — la même liste, FILTRÉE par une pastille posée : un second embarquement, `!inner`, sous un autre alias, qui
- * ne retient que les messages portant la pastille, sans amputer les pilules affichées de la ligne.
+ * ne retient que les messages portant la pastille, sans amputer les pilules affichées de la ligne. `CRM-155` (§31.12.2) :
+ * l'embarquement retient l'une des pastilles demandées (`in`) — PostgREST rend une ligne par message, quel que soit le
+ * nombre de pastilles qui le retiennent.
  */
 export const COLONNES_LISTE_INBOX_FILTREE =
 	'id, workspace_id, card_id, classification, subject, from_address, from_name, received_at, references_ids, rfc822_message_id, is_read, pastilles:mail_message_labels(label_id, applied), filtre_pastille:mail_message_labels!inner(label_id, applied)'
@@ -493,19 +497,20 @@ export async function lireMessages(
 	client: ClientCrm | null,
 	selection: Selection,
 	seulementMoi = false,
-	pastille: string | null = null,
+	pastilles: readonly string[] = [],
 ): Promise<EtatAsync<PageMessages>> {
 	if (client === null) return enErreur(CONFIGURATION_ABSENTE)
 	try {
 		// `CRM-141` T4 (§31.7) : le filtre par pastille porte, comme `seulementMoi`, sur les MESSAGES — ceux qui portent la
-		// pastille, POSÉE ; il se combine avec le dossier choisi.
+		// pastille, POSÉE ; il se combine avec le dossier choisi. `CRM-155` (§31.12.2) : plusieurs pastilles, en OU ; aucune,
+		// aucun filtre.
 		const base =
-			pastille === null
+			pastilles.length === 0
 				? client.from('mail_messages').select(COLONNES_LISTE_INBOX)
 				: client
 						.from('mail_messages')
 						.select(COLONNES_LISTE_INBOX_FILTREE)
-						.eq('filtre_pastille.label_id', pastille)
+						.in('filtre_pastille.label_id', [...pastilles])
 						.eq('filtre_pastille.applied', true)
 		const dossier =
 			selection.genre === 'non-classes' ? base.is('card_id', null) : base.eq('card_id', selection.cardId)
@@ -848,17 +853,21 @@ export function useMessages(
 	client: ClientCrm | null,
 	selection: Selection | null,
 	seulementMoi: boolean | null = false,
-	pastille: string | null = null,
+	/** `CRM-155` : les pastilles du filtre ; `null` tant qu'elles ne sont pas connues — la lecture attend (§31.12.3). */
+	pastilles: readonly string[] | null = [],
 ): Relecture<PageMessages> {
 	const cle = selection === null ? '' : selection.genre === 'card' ? selection.cardId : 'non-classes'
+	// Une clé de dépendance stable : la liste est recréée à chaque rendu, ses valeurs non ; `useLecture` relit la dernière
+	// fonction de chargement, qui porte donc les pastilles courantes.
+	const clePastilles = pastilles === null ? null : pastilles.join(',')
 	return useLecture(
 		async () =>
 			selection === null
 				? pret({ messages: [], tronquee: false })
-				: seulementMoi === null
+				: seulementMoi === null || pastilles === null
 					? EN_ATTENTE
-					: lireMessages(client, selection, seulementMoi, pastille),
-		[client, cle, seulementMoi, pastille],
+					: lireMessages(client, selection, seulementMoi, pastilles),
+		[client, cle, seulementMoi, clePastilles],
 	)
 }
 

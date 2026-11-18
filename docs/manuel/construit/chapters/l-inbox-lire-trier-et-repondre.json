@@ -2392,26 +2392,91 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "Le filtre « Pastille »"
+										"text": "Les filtres rapides"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": ", en tête de la liste, ne garde que les messages qui portent la pastille choisie, dans le\ndossier ouvert. Les pastilles archivées y figurent, suivies de « (archivée) ». Le filtre se retient dans l'adresse de\nla page. Si aucun message ne la porte, la liste le dit et propose « "
+								"text": ", en tête de la liste, sous « "
 							},
 							{
 								"type": "strong",
 								"content": [
 									{
 										"type": "text",
-										"text": "Toutes les pastilles"
+										"text": "Filtrer par pastille"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " », qui l'efface."
+								"text": " » : un bouton par pastille de l'espace\nouvert. Un clic l'active — il se teinte en bleu —, un second le désactive. Avec "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "plusieurs"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " pastilles actives, la\nliste garde les messages qui portent "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "l'une ou l'autre"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Les pastilles archivées sont rangées sous « "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Pastilles\narchivées"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " », replié : un clic le déplie, pour retrouver les mails d'une pastille qu'on a retirée. « "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Toutes les\npastilles"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " » désactive tout d'un coup. Au clavier, Tab mène d'un bouton à l'autre, Espace ou Entrée l'active ou le\ndésactive. Le filtre porte sur le dossier ouvert, se retient dans l'adresse de la page — le bouton Précédent du\nnavigateur défait le dernier choix —, et ne propose que les pastilles de l'espace ouvert : changez d'espace pour\nfiltrer les mails d'un autre. Si aucun message ne porte les pastilles choisies, la liste le dit et propose « "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Toutes\nles pastilles"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " »."
 							}
 						]
 					}
@@ -2555,9 +2620,9 @@
 		{
 			"type": "image",
 			"src": "l-inbox-lire-trier-et-repondre/pastilles-dans-la-liste.jpg",
-			"alt": "La liste d'un dossier : le filtre « Pastille » en tête, et sous l'objet de chaque conversation ses pastilles",
+			"alt": "La liste d'un dossier : les filtres rapides « Filtrer par pastille » en tête, une pastille active, « Pastilles archivées » déplié et « Toutes les pastilles », et sous l'objet de chaque conversation ses pastilles",
 			"width": 391,
-			"height": 185
+			"height": 465
 		},
 		{
 			"type": "image",

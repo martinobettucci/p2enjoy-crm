@@ -1,4 +1,6 @@
 // @verifies CRM-057 (docs/BACKLOG.md) — inbox globale : arbre, réduction du HTML, requêtes, refus
+// @verifies CRM-155 (docs/BACKLOG.md) — tranche T1 : le filtre à plusieurs pastilles, en OU (`in`), posées seulement —
+//           docs/SPEC-mail-subsystem.md §31.12.2
 // @verifies CRM-141 (docs/BACKLOG.md) — tranche T4 : la liste embarque les pastilles posées, le filtre `pastille` —
 //           docs/SPEC-mail-subsystem.md §31.7 ; docs/DESIGN_SYSTEM.md §5.103
 // @verifies docs/SPEC-mail-subsystem.md §18.3 (l'arborescence ne montre que ce qui porte du
@@ -218,6 +220,8 @@ type Appel = {
 	table?: string
 	colonnes?: string
 	egalites: [string, unknown][]
+	/** `CRM-155` : les filtres `in` émis. */
+	parmi?: [string, unknown[]][]
 	nuls: string[]
 	tris: [string, boolean | undefined][]
 	limite?: number
@@ -232,6 +236,10 @@ function clientEspion(reponse: Reponse): { client: ClientCrm; appel: Appel } {
 	const chaine = {
 		eq: (colonne: string, valeur: unknown) => {
 			appel.egalites.push([colonne, valeur])
+			return chaine
+		},
+		in: (colonne: string, valeurs: unknown[]) => {
+			appel.parmi = [...(appel.parmi ?? []), [colonne, valeurs]]
 			return chaine
 		},
 		is: (colonne: string) => {
@@ -292,19 +300,29 @@ describe('les lectures', () => {
 		expect(appel.limite).toBe(MESSAGES_PAR_PAGE)
 	})
 
-	it('CRM-141 T4 : le filtre « Pastille » retient les messages qui la portent POSÉE, sans amputer leurs pilules', async () => {
+	it('CRM-155 T1 (§31.12.2) : le filtre retient les messages qui portent L’UNE des pastilles, POSÉE, sans amputer leurs pilules', async () => {
 		const { client, appel } = clientEspion({ data: [], error: null, status: 200 })
-		await lireMessages(client, { genre: 'card', cardId: 'c1' }, false, 'p-lead')
+		await lireMessages(client, { genre: 'card', cardId: 'c1' }, false, ['p-lead', 'p-spam'])
 		expect(appel.colonnes).toBe(COLONNES_LISTE_INBOX_FILTREE)
 		// Deux embarquements sous deux alias : l'un `!inner`, qui filtre ; l'autre, qui garde toutes les pilules.
 		expect(COLONNES_LISTE_INBOX_FILTREE).toBe(
 			`${COLONNES_LISTE_INBOX}, filtre_pastille:mail_message_labels!inner(label_id, applied)`,
 		)
+		expect(appel.parmi).toEqual([['filtre_pastille.label_id', ['p-lead', 'p-spam']]])
 		expect(appel.egalites).toEqual([
-			['filtre_pastille.label_id', 'p-lead'],
 			['filtre_pastille.applied', true],
 			['card_id', 'c1'],
 		])
+	})
+
+	it('CRM-155 T1 : une seule pastille passe par le même `in` ; aucune, aucun embarquement filtrant', async () => {
+		const une = clientEspion({ data: [], error: null, status: 200 })
+		await lireMessages(une.client, { genre: 'non-classes' }, false, ['p-lead'])
+		expect(une.appel.parmi).toEqual([['filtre_pastille.label_id', ['p-lead']]])
+		const aucune = clientEspion({ data: [], error: null, status: 200 })
+		await lireMessages(aucune.client, { genre: 'non-classes' }, false, [])
+		expect(aucune.appel.colonnes).toBe(COLONNES_LISTE_INBOX)
+		expect(aucune.appel.parmi).toBeUndefined()
 	})
 
 	it('CRM-141 T4 : une ligne porte les identifiants de ses pastilles POSÉES, jamais une retirée à la main', async () => {

@@ -1,4 +1,6 @@
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.3 : les images du chapitre 12, « L'inbox : lire, trier et répondre »
+// @spec CRM-155 (docs/BACKLOG.md) — tranche T1 : l'image « pastilles-dans-la-liste » montre les filtres rapides
+//       (docs/SPEC-mail-subsystem.md §31.12 ; docs/DESIGN_SYSTEM.md §5.108 ; docs/manual.md §12.2)
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitre 12 ; docs/SPEC-mail-subsystem.md §19 (l'envoi, les
 //       pièces jointes), §20 (l'inbox, le classement, la suggestion, le sommeil des fils)
 // @spec CRM-074 (docs/BACKLOG.md) — tranche T3 : les images de l'aperçu d'une pièce jointe (docs/DESIGN_SYSTEM.md §5.80,
@@ -498,6 +500,7 @@ test('suivre ses envois : « Échecs » et « Réessayer », puis « En file » 
 })
 
 
+// `CRM-155` T1 : les filtres rapides remplacent le filtre « Pastille » (docs/SPEC-mail-subsystem.md §31.12).
 // `CRM-141` T6 : les pastilles d'un mail — la liste et son filtre, la liste à cocher d'un message, puis les réglages et la
 // fiche d'une pastille. Tout est ouvert puis refermé : rien n'est posé ni créé.
 test('les pastilles : dans la liste, sur un message, et dans les réglages', async ({ page, request }) => {
@@ -509,14 +512,22 @@ test('les pastilles : dans la liste, sur un message, et dans les réglages', asy
 	await connecterAvecLeLabs(page, ADMIN)
 	await page.goto(`/inbox?courrier=tous&message=${corrige!.id}`)
 	await expect(page.getByTestId('inbox-message-ouvert')).toContainText('Demande de devis — refonte')
-	const filtre = liste(page).getByTestId('inbox-filtre-pastille')
+	// `CRM-155` (§5.108) : les filtres rapides — une pastille active, le volet des archivées déplié, « Toutes les
+	// pastilles » ; l'adresse seule change, rien n'est écrit. Ils sont désactivés après l'image.
+	const filtres = liste(page).getByTestId('inbox-filtres-pastilles')
 	await expect(liste(page).getByTestId('inbox-pastilles-ligne').first()).toBeVisible()
+	await filtres.getByRole('button', { name: 'Devis / commande', exact: true }).click()
+	await expect(filtres.getByRole('button', { name: 'Devis / commande', exact: true })).toHaveAttribute('aria-pressed', 'true')
+	await filtres.getByTestId('inbox-volet-archivees').click()
+	await expect(filtres.getByRole('button', { name: 'Newsletter, pastille archivée' })).toBeVisible()
+	await filtres.evaluate((bloc) => Promise.all(bloc.getAnimations({ subtree: true }).map((a) => a.finished)))
 	await illustrer(page, {
 		chapitre: CHAPITRE,
 		section: LIRE,
 		nom: 'pastilles-dans-la-liste',
-		cibles: [filtre, liste(page).getByTestId('inbox-message').first()],
+		cibles: [filtres, liste(page).getByTestId('inbox-message').first()],
 	})
+	await filtres.getByRole('button', { name: 'Toutes les pastilles' }).click()
 	await page.getByTestId('inbox-pastilles').click()
 	const panneau = page.getByTestId('inbox-panneau-pastilles')
 	await expect(panneau).toContainText('retirée à la main')

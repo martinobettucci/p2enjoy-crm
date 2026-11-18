@@ -3435,9 +3435,15 @@ vous envoyez ne sont pas évalués.
 
 - **Dans la liste**, chaque conversation montre sous son objet jusqu'à **trois pastilles** — celles de son dernier
   message —, puis « +n » quand il y en a davantage ; survolez « +n » pour lire les autres.
-- **Le filtre « Pastille »**, en tête de la liste, ne garde que les messages qui portent la pastille choisie, dans le
-  dossier ouvert. Les pastilles archivées y figurent, suivies de « (archivée) ». Le filtre se retient dans l'adresse de
-  la page. Si aucun message ne la porte, la liste le dit et propose « **Toutes les pastilles** », qui l'efface.
+- **Les filtres rapides**, en tête de la liste, sous « **Filtrer par pastille** » : un bouton par pastille de l'espace
+  ouvert. Un clic l'active — il se teinte en bleu —, un second le désactive. Avec **plusieurs** pastilles actives, la
+  liste garde les messages qui portent **l'une ou l'autre**. Les pastilles archivées sont rangées sous « **Pastilles
+  archivées** », replié : un clic le déplie, pour retrouver les mails d'une pastille qu'on a retirée. « **Toutes les
+  pastilles** » désactive tout d'un coup. Au clavier, Tab mène d'un bouton à l'autre, Espace ou Entrée l'active ou le
+  désactive. Le filtre porte sur le dossier ouvert, se retient dans l'adresse de la page — le bouton Précédent du
+  navigateur défait le dernier choix —, et ne propose que les pastilles de l'espace ouvert : changez d'espace pour
+  filtrer les mails d'un autre. Si aucun message ne porte les pastilles choisies, la liste le dit et propose « **Toutes
+  les pastilles** ».
 - **Dans le message ouvert**, ses pastilles viennent sous l'en-tête ; le survol de chacune dit qui l'a posée, l'IA ou
   une personne. Tant que l'IA ne l'a pas lu, la même ligne dit que les pastilles sont en attente d'évaluation ; si elle
   n'a pas pu, après plusieurs essais, elle dit en rouge que les pastilles n'ont pas pu être évaluées.
@@ -3454,7 +3460,7 @@ Poser, retirer et réévaluer sont réservés aux **administrateurs** et aux **b
 autres voient les pastilles et la liste, boutons et cases grisés, avec un bandeau qui dit pourquoi. Sans assistant IA
 configuré, rien n'est envoyé : les mails attendent, et vous pouvez toujours poser les pastilles à la main.
 
-![La liste d'un dossier : le filtre « Pastille » en tête, et sous l'objet de chaque conversation ses pastilles](manuel/images/l-inbox-lire-trier-et-repondre/pastilles-dans-la-liste.jpg)
+![La liste d'un dossier : les filtres rapides « Filtrer par pastille » en tête, une pastille active, « Pastilles archivées » déplié et « Toutes les pastilles », et sous l'objet de chaque conversation ses pastilles](manuel/images/l-inbox-lire-trier-et-repondre/pastilles-dans-la-liste.jpg)
 
 ![La liste « Pastilles de ce message », ouverte sous la rangée de boutons : les cases, et l'origine de chaque pastille posée ou retirée](manuel/images/l-inbox-lire-trier-et-repondre/pastilles-d-un-message.jpg)
 

@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-155` T1 — les pastilles en filtres rapides dans l'inbox (décisions 943 et 948)
+
+- En tête de la liste des mails, « Filtrer par pastille » : un bouton à bascule par pastille active de l'espace courant,
+  toutes visibles et à la ligne, à la souris et au clavier. Plusieurs pastilles actives se combinent en OU : la liste garde
+  les messages qui portent l'une d'elles, posée. Les filtres rapides remplacent la liste déroulante « Pastille ».
+- Les pastilles archivées sont dans un volet « Pastilles archivées », replié par défaut, ouvert d'office quand l'adresse
+  en active une ; « Toutes les pastilles » désactive tout.
+- La clé d'adresse `pastille` se répète, une valeur par pastille ; une valeur mal formée ou d'un autre espace est ignorée.
+  Le vide nomme la ou les pastilles. Aucune migration.
+- Manuel §12.2 et son image ; `docs/DESIGN_SYSTEM.md` §5.108 ; `docs/SPEC-mail-subsystem.md` §31.12.
+
 ### `CRM-156` T1 — les actions groupées de l'inbox, en base (migration 189)
 
 - `inbox_bulk_count` compte les fils et les messages d'une sélection ; `inbox_bulk_apply` y applique une action —

@@ -2,6 +2,7 @@
 //           de fil, le filtre « Pastille » porté par l'adresse et son état vide, le message ouvert (pastilles et origine,
 //           état d'évaluation, « Réévaluer les pastilles », le panneau « Pastilles » et ses cases), à la souris et au
 //           clavier, la lectrice refusée, et les quatre paliers
+// @verifies CRM-155 (docs/BACKLOG.md) — tranche T1 : le filtre de ce scénario passe par les bascules (§5.108)
 // @verifies docs/SPEC-mail-subsystem.md §31.4, §31.7 ; docs/DESIGN_SYSTEM.md §5.103, §5.102, §5.59 ; docs/SPEC-seed.md §46
 //           (la correction à la main, Newsletter archivée et portée, Candidature spontanée en échec) ; CLAUDE.md §10, §16
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du SSO
@@ -63,7 +64,10 @@ async function pastille(request: APIRequestContext, nom: string): Promise<string
 test.use({ viewport: { width: 1440, height: 1000 } })
 
 test.afterAll(async ({ request }) => {
-	for (const id of crees) await request.delete(rest(`mail_messages?id=eq.${id}`), { headers: enTetesService() })
+	// PAR PRÉFIXE, et non par la liste `crees` : après un échec, Playwright relance le worker, et `afterAll` y tourne avec
+	// une liste vide — trois sondes étaient ainsi restées en base (relevé par la session fc, 2026-11-18).
+	const prefixe = encodeURIComponent('<tst-crm141-ui-*')
+	await request.delete(`${URL_API}/rest/v1/mail_messages?rfc822_message_id=like.${prefixe}`, { headers: enTetesService() })
 })
 
 test.describe('les pastilles dans l’inbox (docs/DESIGN_SYSTEM.md §5.103)', () => {
@@ -147,7 +151,10 @@ test.describe('les pastilles dans l’inbox (docs/DESIGN_SYSTEM.md §5.103)', ()
 		await expect(commande).toBeFocused()
 	})
 
-	test('le filtre « Pastille » : l’adresse le porte, une archivée sans mail dans le dossier rend le vide qui l’efface', async ({
+	// RÉVISÉ par `CRM-155` (2026-11-18, §5.108) : la liste déroulante a cédé la place aux filtres rapides ; ce scénario garde
+	// sa preuve — l'adresse, une archivée qui rend le vide — avec les bascules. Les filtres rapides eux-mêmes sont prouvés
+	// par `e2e/ui/filtres-rapides-pastilles.spec.ts`.
+	test('le filtre par pastille : l’adresse le porte, une archivée sans mail dans le dossier rend le vide qui l’efface', async ({
 		page,
 		request,
 	}) => {
@@ -155,18 +162,20 @@ test.describe('les pastilles dans l’inbox (docs/DESIGN_SYSTEM.md §5.103)', ()
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
 		await page.goto(`/inbox?courrier=tous&message=${corrige}`)
 		const liste = page.getByTestId('inbox-panneau-liste')
-		const filtre = liste.getByLabel('Pastille')
-		await filtre.selectOption({ label: 'Devis / commande' })
+		const filtres = liste.getByRole('group', { name: 'Filtrer par pastille' })
+		await filtres.getByRole('button', { name: 'Devis / commande', exact: true }).click()
 		await expect(page).toHaveURL(/pastille=/)
 		const lignes = liste.getByTestId('inbox-message')
 		await expect(lignes.first()).toBeVisible()
 		for (const ligne of await lignes.all()) await expect(ligne.getByTestId('inbox-pastilles-ligne')).toBeVisible()
 		await capturer(page, 'pastilles-inbox-filtre-1440', UNITE)
 
-		await filtre.selectOption({ label: 'Newsletter (archivée)' })
+		await filtres.getByRole('button', { name: 'Devis / commande', exact: true }).click()
+		await filtres.getByTestId('inbox-volet-archivees').click()
+		await filtres.getByRole('button', { name: 'Newsletter, pastille archivée' }).click()
 		await expect(liste.getByText('Aucun message ne porte la pastille « Newsletter » dans ce dossier.')).toBeVisible()
 		await capturer(page, 'pastilles-inbox-filtre-vide-1440', UNITE)
-		await liste.getByTestId('inbox-filtre-pastille-toutes').click()
+		await liste.getByTestId('inbox-filtre-pastille-toutes-vide').click()
 		await expect(page).not.toHaveURL(/pastille=/)
 		await expect(lignes.first()).toBeVisible()
 	})
@@ -217,7 +226,7 @@ test.describe('les pastilles dans l’inbox (docs/DESIGN_SYSTEM.md §5.103)', ()
 		await page.setViewportSize({ width: 390, height: 780 })
 		await page.getByRole('button', { name: 'Retour aux messages' }).click()
 		const liste = page.getByTestId('inbox-panneau-liste')
-		await expect(liste.getByLabel('Pastille')).toBeVisible()
+		await expect(liste.getByRole('group', { name: 'Filtrer par pastille' })).toBeVisible()
 		const debordement = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
 		expect(debordement).toBeLessThanOrEqual(0)
 		await capturer(page, 'pastilles-inbox-liste-sm-390', UNITE)

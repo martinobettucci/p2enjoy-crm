@@ -1,5 +1,5 @@
 // @verifies CRM-141 (docs/BACKLOG.md) — tranche T4 : les pastilles dans l'inbox — la ligne d'un fil (trois au plus, puis
-//           « +n » qui nomme les masquées), le filtre « Pastille » (actives, puis archivées suffixées), le message ouvert
+//           « +n » qui nomme les masquées), le message ouvert
 //           (pastilles et origine en mots, état d'évaluation, « Réévaluer les pastilles » absente d'un envoyé, le panneau
 //           et ses cases qui écrivent au clic et reviennent au refus, `Échap`, la commande refusée avec son motif, et
 //           l'exclusion avec la confirmation d'« Effacer »)
@@ -43,7 +43,16 @@ vi.mock('../lib/supabase', () => ({
 	},
 }))
 
-const { FiltrePastille, PastillesLigne, PastillesMessageOuvert } = await import('./PastillesInbox')
+const {
+	FiltresPastilles,
+	PastillesLigne,
+	PastillesMessageOuvert,
+	VidePastilles,
+	adresseDemandeUnFiltre,
+	basculerDansFiltre,
+	lirePastillesFiltre,
+	nomsEnDisjonction,
+} = await import('./PastillesInbox')
 
 afterEach(() => {
 	cleanup()
@@ -98,32 +107,157 @@ describe('la ligne d’un fil (§5.103)', () => {
 	})
 })
 
-describe('le filtre « Pastille » (§5.103)', () => {
-	it('« Toutes les pastilles », les actives, puis les archivées suffixées ; le choix et son effacement', async () => {
-		const onChange = vi.fn()
-		const actives = [...CATALOGUE.values()].filter((x) => !x.archivee)
-		const archivees = [...CATALOGUE.values()].filter((x) => x.archivee)
-		render(<FiltrePastille catalogue={new Map([...actives, ...archivees].map((x) => [x.id, x]))} valeur={null} onChange={onChange} />)
-		const select = screen.getByLabelText('Pastille') as HTMLSelectElement
-		expect([...select.options].map((o) => o.textContent)).toEqual([
-			'Toutes les pastilles',
-			'Administratif',
-			'Devis / commande',
-			'Lead',
-			'Spam',
-			'Autre espace',
-			'Newsletter (archivée)',
-			'Ancienne (archivée)',
-		])
-		await userEvent.selectOptions(select, 'p-lead')
-		expect(onChange).toHaveBeenLastCalledWith('p-lead')
-		await userEvent.selectOptions(select, '')
-		expect(onChange).toHaveBeenLastCalledWith(null)
+// @verifies CRM-155 (docs/BACKLOG.md) — tranche T1 : les filtres rapides — l'adresse lue et nettoyée (liste, doublons,
+//           valeurs mal formées ou d'un autre espace), la bascule, les bascules `aria-pressed` de l'espace courant, le volet
+//           des archivées replié puis ouvert d'office, « Toutes les pastilles » et le focus, le vide à une et à plusieurs
+//           pastilles (docs/SPEC-mail-subsystem.md §31.12.1, §31.12.3, §31.12.4 ; docs/DESIGN_SYSTEM.md §5.108)
+const U = (n: number) => `00000000-0000-4000-8000-0000000001${String(n).padStart(2, '0')}`
+const CATALOGUE_UUID = new Map(
+	[
+		p(U(1), 'Administratif'),
+		p(U(2), 'Lead'),
+		p(U(3), 'Spam'),
+		p(U(4), 'Autre espace', false, 'ws-2'),
+		p(U(5), 'Newsletter', true),
+	].map((x) => [x.id, x]),
+)
+
+describe('l’adresse du filtre (§31.12.3)', () => {
+	it('une liste : l’ordre gardé, les doublons tombent, la casse est ramenée', () => {
+		expect(lirePastillesFiltre([U(3), U(2), U(3).toUpperCase()], CATALOGUE_UUID, 'ws-1')).toEqual([U(3), U(2)])
 	})
 
-	it('sans catalogue, aucun filtre', () => {
-		const { container } = render(<FiltrePastille catalogue={new Map()} valeur={null} onChange={vi.fn()} />)
+	it('une valeur mal formée, d’un autre espace ou inconnue est ignorée, une à une ; une archivée de l’espace compte', () => {
+		expect(lirePastillesFiltre(['x', U(4), U(99), U(5), U(1)], CATALOGUE_UUID, 'ws-1')).toEqual([U(5), U(1)])
+		expect(lirePastillesFiltre(['x', U(4)], CATALOGUE_UUID, 'ws-1')).toEqual([])
+	})
+
+	it('sans espace courant, aucun filtre ; une adresse à une seule valeur (`CRM-141`) reste valide', () => {
+		expect(lirePastillesFiltre([U(2)], CATALOGUE_UUID, null)).toEqual([])
+		expect(lirePastillesFiltre([U(2)], CATALOGUE_UUID, 'ws-1')).toEqual([U(2)])
+	})
+
+	it('la liste attend le catalogue seulement si l’adresse porte une valeur bien formée', () => {
+		expect(adresseDemandeUnFiltre([])).toBe(false)
+		expect(adresseDemandeUnFiltre(['x'])).toBe(false)
+		expect(adresseDemandeUnFiltre(['x', U(2)])).toBe(true)
+	})
+
+	it('une bascule ajoute ou retire', () => {
+		expect(basculerDansFiltre([U(1)], U(2))).toEqual([U(1), U(2)])
+		expect(basculerDansFiltre([U(1), U(2)], U(1))).toEqual([U(2)])
+	})
+
+	it('les noms en disjonction, entre guillemets à espaces insécables', () => {
+		expect(nomsEnDisjonction(['Lead', 'Spam'])).toBe('« Lead » ou « Spam »')
+		expect(nomsEnDisjonction(['A', 'B', 'C'])).toBe('« A », « B » ou « C »')
+	})
+})
+
+function monterFiltres(filtreInitial: readonly string[] = [], catalogue = CATALOGUE_UUID) {
+	const onChange = vi.fn()
+	const rendu = render(<FiltresPastilles catalogue={catalogue} idEspace="ws-1" filtre={filtreInitial} onChange={onChange} />)
+	return { onChange, rendu }
+}
+
+const bascules = () => screen.getAllByTestId('inbox-bascule-pastille')
+
+describe('les filtres rapides (§5.108)', () => {
+	it('« Filtrer par pastille » nomme le groupe ; une bascule par ACTIVE de l’espace courant, dans l’ordre du nom, toutes éteintes', () => {
+		monterFiltres()
+		const groupe = screen.getByRole('group', { name: 'Filtrer par pastille' })
+		const boutons = within(groupe).getAllByRole('button', { pressed: false })
+		expect(boutons.map((b) => b.textContent)).toEqual(['Administratif', 'Lead', 'Spam'])
+		expect(bascules().map((b) => b.getAttribute('aria-pressed'))).toEqual(['false', 'false', 'false'])
+		expect(screen.queryByText('Autre espace')).toBeNull()
+		expect(screen.queryByTestId('inbox-filtre-pastille-toutes')).toBeNull()
+	})
+
+	it('cliquer bascule : la pastille entre dans le filtre ; une active se dit `aria-pressed` et sort au clic', async () => {
+		const { onChange, rendu } = monterFiltres()
+		await userEvent.click(screen.getByRole('button', { name: 'Lead' }))
+		expect(onChange).toHaveBeenLastCalledWith([U(2)])
+		rendu.rerender(<FiltresPastilles catalogue={CATALOGUE_UUID} idEspace="ws-1" filtre={[U(2), U(3)]} onChange={onChange} />)
+		expect(screen.getByRole('button', { name: 'Lead' }).getAttribute('aria-pressed')).toBe('true')
+		expect(screen.getByRole('button', { name: 'Spam' }).getAttribute('aria-pressed')).toBe('true')
+		await userEvent.click(screen.getByRole('button', { name: 'Lead' }))
+		expect(onChange).toHaveBeenLastCalledWith([U(3)])
+	})
+
+	it('au clavier : `Espace` et `Entrée` basculent, le focus reste sur la bascule', async () => {
+		const { onChange } = monterFiltres()
+		await userEvent.tab()
+		expect(document.activeElement?.textContent).toBe('Administratif')
+		await userEvent.keyboard(' ')
+		expect(onChange).toHaveBeenLastCalledWith([U(1)])
+		await userEvent.tab()
+		await userEvent.keyboard('{Enter}')
+		expect(onChange).toHaveBeenLastCalledWith([U(2)])
+		expect(document.activeElement?.textContent).toBe('Lead')
+	})
+
+	it('le volet des archivées : replié par défaut, il déplie un groupe nommé ; chaque archivée le dit dans son nom', async () => {
+		const { onChange } = monterFiltres()
+		const volet = screen.getByRole('button', { name: 'Pastilles archivées (1)' })
+		expect(volet.getAttribute('aria-expanded')).toBe('false')
+		expect(screen.queryByText('Newsletter')).toBeNull()
+		await userEvent.click(volet)
+		expect(volet.getAttribute('aria-expanded')).toBe('true')
+		const groupe = screen.getByRole('group', { name: 'Pastilles archivées' })
+		expect(volet.getAttribute('aria-controls')).toBe(groupe.id)
+		const archivee = within(groupe).getByRole('button', { name: 'Newsletter, pastille archivée' })
+		await userEvent.click(archivee)
+		expect(onChange).toHaveBeenLastCalledWith([U(5)])
+	})
+
+	it('ouvert d’office quand l’adresse active une archivée', () => {
+		monterFiltres([U(5)])
+		expect(screen.getByRole('button', { name: 'Pastilles archivées (1)' }).getAttribute('aria-expanded')).toBe('true')
+		expect(screen.getByRole('button', { name: 'Newsletter, pastille archivée' }).getAttribute('aria-pressed')).toBe('true')
+	})
+
+	it('ouvert d’office aussi quand le catalogue arrive après le premier rendu', () => {
+		const onChange = vi.fn()
+		const { rerender } = render(<FiltresPastilles catalogue={new Map()} idEspace="ws-1" filtre={[]} onChange={onChange} />)
+		rerender(<FiltresPastilles catalogue={CATALOGUE_UUID} idEspace="ws-1" filtre={[U(5)]} onChange={onChange} />)
+		expect(screen.getByRole('button', { name: 'Pastilles archivées (1)' }).getAttribute('aria-expanded')).toBe('true')
+	})
+
+	it('aucun volet sans archivée dans l’espace ; aucun bloc sans pastille dans l’espace courant', () => {
+		const sansArchivee = new Map([...CATALOGUE_UUID].filter(([, x]) => !x.archivee))
+		monterFiltres([], sansArchivee)
+		expect(screen.queryByTestId('inbox-volet-archivees')).toBeNull()
+		cleanup()
+		const { container } = render(
+			<FiltresPastilles catalogue={CATALOGUE_UUID} idEspace="ws-3" filtre={[]} onChange={vi.fn()} />,
+		)
 		expect(container.innerHTML).toBe('')
+		cleanup()
+		const vide = render(<FiltresPastilles catalogue={new Map()} idEspace="ws-1" filtre={[]} onChange={vi.fn()} />)
+		expect(vide.container.innerHTML).toBe('')
+	})
+
+	it('« Toutes les pastilles » : rendue sous un filtre, elle le vide et rend le focus à la première bascule', async () => {
+		const { onChange } = monterFiltres([U(3)])
+		await userEvent.click(screen.getByRole('button', { name: 'Toutes les pastilles' }))
+		expect(onChange).toHaveBeenLastCalledWith([])
+		await waitFor(() => expect(document.activeElement?.textContent).toBe('Administratif'))
+	})
+})
+
+describe('le vide sous le filtre (§5.108)', () => {
+	it('une pastille : le texte de `CRM-141` ; plusieurs : « l’une des pastilles », en disjonction ; le geste efface', async () => {
+		const onToutes = vi.fn()
+		render(<VidePastilles noms={['Lead']} onToutes={onToutes} />)
+		expect(screen.getByText('Aucun message ne porte la pastille « Lead » dans ce dossier.')).toBeTruthy()
+		cleanup()
+		render(<VidePastilles noms={['Lead', 'Spam']} onToutes={onToutes} />)
+		// Testing Library ramène l'espace insécable à une espace : le texte exact se lit sur le nœud.
+		expect(screen.getByText(/l’une des pastilles/).textContent).toBe(
+			'Aucun message ne porte l’une des pastilles «\u00a0Lead\u00a0» ou «\u00a0Spam\u00a0» dans ce dossier.',
+		)
+		await userEvent.click(screen.getByRole('button', { name: 'Toutes les pastilles' }))
+		expect(onToutes).toHaveBeenCalledTimes(1)
 	})
 })
 
