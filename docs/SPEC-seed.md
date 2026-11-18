@@ -3244,3 +3244,29 @@ MCP connecté, les mêmes six, et le prompt ajouté rendu avec son en-tête d'es
   retire après chaque test. *Limite nommée.*
 - Les preuves qui s'appuient sur ce tableau : pgTAP `0174`, `e2e/api/liste-organisations.spec.ts`,
   `e2e/ui/organisations-recherche.spec.ts`, `mcp/tests/test_integration_organisations.py`.
+
+## 49. L'inbox : un mail transféré, un expéditeur bloqué, un expéditeur inconnu — `CRM-156` T5 (`docs/SPEC-mail-subsystem.md` §32.12)
+
+*Écrit le 2026-11-18, avant le code de T5 (décisions 945 et 947).* La section est placée **avant le §46**, comme le §45 :
+la passe des pastilles doit trouver le mail qu'elle dépose. Tout passe par les vrais chemins : les mails sont **déposés
+dans la boîte de Camille** (`admin@`) par IMAP, sur le serveur de développement, et **relevés par la vraie relève** de
+`mail-sync` ; les gestes sont les RPC de l'écran, **sous le jeton de Camille**.
+
+| Message-ID | De | Objet | Ce qu'il démontre |
+|---|---|---|---|
+| `seed-inbox-inconnu@atelier-lumen.example` | Nora Nouveau `<nora.nouveau@atelier-lumen.example>` | Demande d'information — formation IA | **un expéditeur inconnu** : aucun contact de cette adresse ; « Créer des contacts » propose « Nora Nouveau » et l'organisation **Atelier Lumen**, tirée du domaine. **Transféré par Camille à Driss** (`transfer_message`) : Driss le lit dans son « Seulement moi », et sa cloche porte « Camille Aubert vous a transféré 1 mail » |
+| `seed-bloque-avant@promo-flash.example` | Promo Flash `<offres@promo-flash.example>` | Promo flash : -50 % sur vos licences | **reçu avant le blocage**, puis mis à la corbeille par `block_sender` |
+| `seed-bloque-apres@promo-flash.example` | Promo Flash `<offres@promo-flash.example>` | Dernière chance : -60 % sur vos licences | **déposé et relevé après le blocage** : il naît en corbeille, au nom de Camille, ni classé ni lu |
+
+- **Le blocage** : `offres@promo-flash.example`, bloqué par Camille (`block_sender`) ; Réglages ▸ Expéditeurs bloqués en
+  porte une ligne. Il n'est **jamais** levé par le seed.
+- **Rejouable** : des `Message-ID` fixes ; un mail déjà en base n'est pas redéposé ; le transfert et le blocage ne sont
+  écrits que s'ils manquent. Un rejeu après un déblocage à l'écran rebloque l'adresse : le seed rend son état.
+- **Le constat**, sous la clé de propriétaire : le transfert à Driss existe, avec **une** notification `mail_transfer` ;
+  l'adresse est bloquée ; les deux mails de « Promo Flash » sont en corbeille, effacés par Camille ; aucun contact ne
+  porte l'adresse de Nora.
+- **Ce que le seed ne fait pas** : il ne crée pas le contact de Nora (la liste à vérifier doit rester à démontrer), et les
+  actions groupées ne laissent pas de trace propre — leurs effets sont ceux des gestes unitaires (§32.12).
+- **Ce que cela change ailleurs** : la boîte de Camille compte un non classé de plus, sa corbeille deux mails de plus ;
+  Driss voit un mail de plus sous « Seulement moi ». Les preuves qui comptent ces dossiers sont rejouées avec le seed.
+
