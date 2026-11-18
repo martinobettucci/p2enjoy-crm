@@ -3348,6 +3348,54 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
    cards actives exige un plan de remappage. Comportement par défaut retenu : archivage refusé
    tant que des cards s'y trouvent.
 
+### Migration — les actions groupées de l'inbox — `CRM-156` T1 (numéro pris après synchronisation, à l'écriture ; spécifiée le 2026-11-18, avant le code)
+
+*Écrit le 2026-11-18, avant le code (décisions 944 et 946).* Spécification : `docs/SPEC-mail-subsystem.md` §32.2 à §32.5.
+**Aucune table, aucune colonne.** Trois fonctions :
+
+- **`app.inbox_scope_messages(p_scope jsonb)`** — `SECURITY DEFINER`, `search_path` vide, non exposée : valide la
+  description (§32.2 ; `22023 invalid_scope`, `22023 filter_required`) et rend les messages de la portée que l'appelant
+  voit — `id`, `workspace_id`, la clé de fil `app.cle_fil(references_ids, rfc822_message_id)`, `direction`.
+- **`public.inbox_bulk_count(p_scope jsonb) returns table(thread_count integer, message_count integer)`** —
+  `SECURITY DEFINER`, `STABLE`, `search_path` vide ; `EXECUTE` à `authenticated` seul.
+- **`public.inbox_bulk_apply(p_scope jsonb, p_action text, p_argument jsonb default '{}') returns jsonb`** —
+  `SECURITY DEFINER`, `search_path` vide ; `EXECUTE` à `authenticated` seul. Appelle les fonctions unitaires
+  (`classify_message`, `unclassify_message`, `delete_message`, `restore_message`, `mark_messages_read`,
+  `mark_message_unread`, `snooze_thread`, `wake_thread`, `set_message_label`, `request_label_evaluation`), chacune dans un
+  bloc qui capte ses refus nommés (§32.5).
+
+**Retour arrière** : supprimer les trois fonctions ; aucune donnée n'est perdue.
+
+### Migration — transfert, blocage d'un expéditeur, contacts depuis les expéditeurs — `CRM-156` T2 (numéro pris après synchronisation, à l'écriture ; spécifiée le 2026-11-18, avant le code)
+
+*Écrit le 2026-11-18, avant le code (décisions 945 et 947).* Spécification : `docs/SPEC-mail-subsystem.md` §32.7, §32.8,
+§32.10.
+
+- **`public.mail_message_transfers`** : `message_id` (FK `mail_messages` `ON DELETE CASCADE`), `recipient_id` (FK
+  `profiles` `ON DELETE CASCADE`), `workspace_id` (FK `workspaces` `ON DELETE CASCADE` ; celui du message, posé par la
+  fonction), `transferred_by` (FK `profiles` `ON DELETE SET NULL`), `created_at`. PK `(message_id, recipient_id)`. RLS :
+  lecture par qui voit le message (`app.peut_voir_message`) ; **aucun privilège d'écriture** à `authenticated`.
+- **`app.message_transfere_a_moi(uuid)`** ; **la politique `mail_messages_lecture`**, **`app.peut_voir_message`** et
+  **`public.concerns_me`** gagnent la voie du transfert (§32.7).
+- **`public.transfer_message(uuid, uuid) returns boolean`**, **`app.transferer_message(uuid, uuid, boolean)`**,
+  **`public.remove_message_transfer(uuid, uuid) returns boolean`** ; l'action `transfer` de `inbox_bulk_apply`.
+- **`notifications.type`** et **`notification_preferences.type`** : la liste fermée gagne **`mail_transfer`**.
+- **`public.mail_blocked_senders`** : `workspace_id` (FK `workspaces` `ON DELETE CASCADE`), `address`
+  (`CHECK (address = lower(btrim(address)))` et la forme d'adresse de `contacts_email_check`), `blocked_by` (FK
+  `profiles` `ON DELETE SET NULL`), `created_at`. PK `(workspace_id, address)`. RLS : lecture par tout membre de l'espace ;
+  aucun privilège d'écriture à `authenticated`.
+- **`public.blocked_sender_impact(uuid, text) returns integer`**, **`public.block_sender(uuid, text) returns jsonb`**,
+  **`public.unblock_sender(uuid, text) returns boolean`** ; le déclencheur **`mail_messages_expediteur_bloque`**
+  (`BEFORE INSERT` sur `mail_messages`) ; le classement automatique et la file des pastilles écartent un message reçu en
+  corbeille.
+- **`public.inbox_bulk_unknown_senders(p_scope jsonb)`** ; **`public.import_contacts`** gagne `p_source text default
+  'import'` (`import` ou `email`), l'ancienne signature remplacée, ses droits rendus.
+
+**Retour arrière** : supprimer le déclencheur et les fonctions nouvelles ; rendre aux politiques et aux fonctions
+modifiées leur définition de la migration précédente ; rendre à `import_contacts` sa signature ; retirer `mail_transfer`
+des deux listes fermées après avoir supprimé ses notifications et préférences ; supprimer les deux tables. Les transferts
+et les blocages sont perdus — les mails mis à la corbeille par un blocage y restent, restaurables.
+
 ### Migration `0188` — les commentaires et les catégories d'une organisation — `CRM-153` T1 (`0188_commentaires_categories_organisations.sql` ; spécifiée le 2026-11-18, avant le code ; écrite le 2026-11-18)
 
 `docs/SPEC-organisations.md` §9.1, §9.2 ; décisions 932, 939 et 942.

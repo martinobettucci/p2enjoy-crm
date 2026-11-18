@@ -4646,3 +4646,309 @@ Chaque tranche est poussée une fois vérifiée.
 | **T5** | Le connecteur : trois outils ; pytest ; `verify-mcp.sh` — *faite le 2026-11-11* |
 | **T6** | Le manuel : l'inbox et les réglages de la messagerie, avec leurs images — *faite le 2026-11-11* |
 | **T7** | Production, par la session de livraison, sur instruction du responsable : deux migrations, la fonction `ia`, la webapp, l'image `mcp` ; le rattrapage observé |
+
+---
+
+## 32. Les opérations groupées de l'inbox : sélectionner des fils, agir sur tous d'un coup ; transférer, bloquer, créer des contacts — `CRM-156`
+
+*Écrit le 2026-11-18, avant le code (décisions 944, 945, 946 et 947).* **Origine** : « dans le inbox il nous faut aussi les
+bulk ops donc tout select (jamais sans au moins un filtre) puis bulk assign delete archive ... » — « assign » veut dire
+classer dans une affaire, « archive » veut dire le sommeil existant. **Connecteur MCP** : **non**, écran seul ;
+l'assistant garde ses outils message par message (décisions 944 et 945). La question ne se repose pas.
+
+### 32.1 Ce que l'unité livre, et ce qu'elle ne livre pas
+
+**Elle livre**, dans l'inbox :
+- une **case par fil** dans la liste des mails, et une **case par message** dans le dossier « Corbeille » ;
+- **« Tout sélectionner »**, offert **seulement sous un filtre explicite** (§32.3), qui prend **tous** les fils du filtre,
+  au-delà de la page affichée ;
+- une **barre d'actions groupées** : classer dans une affaire, déclasser, supprimer ici, supprimer partout, restaurer
+  (dans la corbeille), marquer lu, marquer non lu, mettre en sommeil, réveiller, poser une pastille, retirer une pastille,
+  réévaluer les pastilles, **transférer à un membre**, **créer des contacts** depuis les expéditeurs inconnus, et **bloquer
+  l'expéditeur** quand le seul filtre actif est un expéditeur précis ;
+- un **filtre par expéditeur** (§32.9), qui manquait à l'inbox ;
+- **le transfert à un membre** comme action unitaire aussi, dans le message ouvert (§32.7) ;
+- **Réglages ▸ Expéditeurs bloqués**, où un administrateur débloque (§32.8).
+
+**Elle ne livre pas** : l'export d'une sélection ; l'annulation d'une opération groupée (« les gens qui utilisent le CRM
+doivent savoir ce qu'ils font », décision 945) ; un outil du connecteur ; une recherche propre à l'inbox (la recherche
+globale reste celle de `docs/SPEC-recherche.md`) ; le blocage d'un domaine entier (un expéditeur est une adresse exacte).
+
+### 32.2 La portée : ce qu'un fil coché désigne (décision 946)
+
+**Un fil coché agit sur les messages que la liste montre** : les messages du fil qui répondent **au dossier et aux filtres
+actifs**. Sous le filtre « Spam », un fil de trois messages dont un seul porte la pastille n'agit que sur ce message.
+Sans filtre, ce sont tous les messages du fil dans le dossier. La règle est la même pour un fil coché à la main et pour
+« Tout sélectionner ».
+
+**La portée se calcule en base, jamais d'après la page.** La liste ne charge que cinquante messages (`MESSAGES_PAR_PAGE`)
+et l'écran groupe en fils ce qu'il a reçu (`grouperEnFils`, `docs/SPEC-cards.md` §16.16.3). Un fil peut donc avoir, dans
+le dossier, des messages que la page ne porte pas : ils sont dans la portée. L'écran envoie **une description** de la
+portée — le dossier, les filtres, et la liste des fils cochés ou « tous » —, et la base en tire les messages.
+
+**La description** — un objet JSON, le même pour compter et pour agir :
+
+| Clé | Valeur | Sens |
+|---|---|---|
+| `folder` | `unclassified`, `card` ou `trash` | le dossier : « Non classés », une affaire, la corbeille |
+| `card_id` | `uuid` | l'affaire, quand `folder = card` |
+| `only_me` | `boolean` | « Seulement moi » **appliqué** (`concerns_me`, §27.3) |
+| `label_ids` | `uuid[]` | les pastilles actives : un message est retenu s'il porte **l'une d'elles**, posée (`applied`), la règle de `CRM-155` (décision 943) |
+| `sender` | `text` | le filtre par expéditeur (§32.9) : l'adresse, comparée sans casse ni blancs |
+| `snoozed` | `hidden` ou `shown` | le mode de sommeil de la liste : `hidden` écarte les fils en sommeil, comme l'écran (`filtre-sommeil.ts`) |
+| `threads` | tableau de `{workspace_id, thread_key}`, ou `null` | les fils cochés ; `null` veut dire **tous les fils du filtre** |
+| `message_ids` | `uuid[]` | dans la corbeille seulement : les messages cochés |
+
+Les messages retenus sont ceux que l'appelant **voit** (`app.peut_voir_message`, le juge de toutes les actions
+unitaires ; dans la corbeille, `app.message_en_corbeille_visible`), dans le dossier, qui passent chaque filtre présent,
+et dont le fil — le couple `(workspace_id, app.cle_fil(references_ids, rfc822_message_id))`, jamais la chaîne seule
+(`docs/SPEC-cards.md` §16.15.3) — est dans `threads` quand `threads` n'est pas nul.
+
+### 32.3 « Tout sélectionner » exige un filtre explicite, et la base le tient
+
+**Un filtre explicite** (décision 944) : une pastille au moins (`label_ids` non vide), « Seulement moi » **appliqué**
+(`only_me = true`), ou un expéditeur (`sender`). **Le dossier seul ne suffit pas**, ni le mode de sommeil. Il n'y a pas
+de recherche dans l'inbox aujourd'hui ; si elle vient, elle entre dans cette liste par une révision de ce paragraphe.
+
+- **L'écran** n'affiche « Tout sélectionner » que sous un filtre explicite. Cocher les fils un à un reste **toujours**
+  possible, filtre ou non.
+- **La base refuse** une description où `threads` est nul sans filtre explicite : **`22023 filter_required`**, avant toute
+  lecture. Le contrôle de l'écran n'est qu'une aide (`CLAUDE.md` §10).
+- **Conséquence connue** : « Seulement moi » est le mode **par défaut** de l'inbox (§27.4) pour qui a une identité
+  d'expédition. Pour cette personne, « Tout sélectionner » est donc offert dès l'ouverture, sur le courrier qui la
+  concerne. C'est la lettre de la décision 944, qui range « Seulement moi » parmi les filtres explicites.
+- **Dans la corbeille**, aucun filtre n'existe : on n'y coche que message par message, et `threads` n'y a pas de sens
+  (`message_ids` le remplace, et il est requis).
+
+### 32.4 Compter avant d'agir : `public.inbox_bulk_count(p_scope jsonb)`
+
+`SECURITY DEFINER`, `search_path` vide, `authenticated` seulement. Rend **`thread_count`** et **`message_count`** pour la
+description. Mêmes refus que l'action (§32.5, points 1 à 3). L'écran l'appelle :
+- quand « Tout sélectionner » est activé : la barre dit **« {n} fils sélectionnés ({m} messages) — tout le filtre »** ;
+- à l'ouverture de chaque confirmation (§32.6), pour la sélection à la main comme pour « tout » : le nombre annoncé est
+  celui de la base au moment de confirmer, jamais un compte de la page.
+
+### 32.5 Agir : `public.inbox_bulk_apply(p_scope jsonb, p_action text, p_argument jsonb default '{}')`
+
+`SECURITY DEFINER`, `search_path` vide, `authenticated` seulement. **Une seule transaction** : la portée est calculée une
+fois, puis chaque message — ou chaque fil, pour le sommeil — passe par **la fonction unitaire elle-même**, dans un bloc qui
+capte son refus. Les règles sont donc **exactement** celles de l'action unitaire (décision 944), et non une copie qui
+pourrait diverger.
+
+1. non connecté : `42501 not_authenticated` ;
+2. description mal formée — dossier inconnu, `card_id` absent pour `card`, `message_ids` absent pour `trash`, une valeur
+   d'un mauvais type : **`22023 invalid_scope`** ;
+3. `threads` nul sans filtre explicite : **`22023 filter_required`** (§32.3) ;
+4. action inconnue, ou argument manquant ou mal formé : **`22023 invalid_action`** ; action interdite dans ce dossier —
+   restaurer hors de la corbeille, toute autre action dans la corbeille, déclasser hors d'une affaire : **`22023
+   action_not_allowed_here`** ;
+5. pour chaque élément, la fonction unitaire ; un refus **nommé** est compté sous son code, et l'élément reste tel quel ;
+   une erreur **non nommée** (une panne) fait échouer l'appel entier, et **rien n'est écrit** — la transaction est
+   défaite ;
+6. **le compte rendu** : `{"threads": n, "messages": m, "done": d, "refused": {"<code>": k, ...}}`.
+
+| `p_action` | `p_argument` | La fonction unitaire | Ce qui compte comme fait |
+|---|---|---|---|
+| `classify` | `{"card_id": uuid}` | `classify_message` (§16.3, §18.2) | le message est dans l'affaire, y compris s'il y était déjà |
+| `unclassify` | — | `unclassify_message` (§16.5) | le message est non classé |
+| `delete` | `{"also_mailbox": boolean}` | `delete_message` (§29.3, §29.11) | le message est en corbeille ; sans boîte inscriptible avec `also_mailbox`, refus `no_writable_mailbox` pour ce message |
+| `restore` | — | `restore_message` (§29.4) | le message est sorti de la corbeille |
+| `mark_read` | — | `mark_messages_read`, par paquets de 200 (§18 bis) | le message reçu est lu ; un message envoyé n'a pas d'état de lecture et n'est pas compté |
+| `mark_unread` | — | `mark_message_unread` | le message n'est plus lu |
+| `snooze` | `{"until": timestamptz}` | `snooze_thread`, **par fil** (`docs/SPEC-cards.md` §16.14) | le fil dort jusqu'à l'échéance |
+| `wake` | — | `wake_thread`, par fil | le fil est éveillé |
+| `set_label` | `{"label_id": uuid, "applied": boolean}` | `set_message_label` (§31.4) | la pastille est posée ou retirée, à la main |
+| `request_label_evaluation` | — | `request_label_evaluation` (§31.4) | le message reçu est remis dans la file ; un envoyé est refusé `outbound_message` |
+| `transfer` | `{"recipient_id": uuid}` | `app.transferer_message` (§32.7) | le message est transféré au membre |
+
+**Le sommeil porte sur des fils**, parce que c'est son objet (`mail_thread_snoozes`) : la portée y est l'ensemble des fils
+qui ont au moins un message retenu, et `done` compte des fils. Les autres actions comptent des messages.
+
+**Les codes de refus** sont ceux des fonctions unitaires — `forbidden`, `message_not_found`, `card_not_available`,
+`no_writable_mailbox`, `label_not_found`, `label_archived`, `outbound_message`, `thread_not_found`,
+`snooze_date_in_past`, `recipient_not_member`, `self_transfer` —, et l'écran les traduit par le dictionnaire de l'action
+unitaire, au pluriel (§32.6).
+
+**Aucun plafond** (décision 946) : tous les messages de la portée, quel qu'en soit le nombre. **La limite technique** est le
+délai de 8 secondes que la pile pose sur le rôle `authenticated` (`statement_timeout`). T1 **mesure** le débit de chaque
+action sur une portée de 5 000 messages et l'écrit ici. Si une sélection réaliste le dépasse, l'appel échoue entier (point
+5), l'écran le dit, et la question revient au responsable : elle n'est pas résolue en silence par un découpage côté écran.
+
+### 32.6 L'écran de la sélection
+
+L'apparence est écrite au `docs/DESIGN_SYSTEM.md` §5.109, avant le code de l'écran, sur l'en-tête que `CRM-155` réorganise
+(§31.12 : le bloc `inbox-filtres-pastilles`, puis la rangée `inbox-rangee-action`, qui accueille « Tout sélectionner » et
+la barre). Le comportement :
+
+- **La case d'un fil**, à gauche de sa ligne, nommée par l'objet du fil (« Sélectionner le fil {objet} »). Cocher ne
+  l'ouvre pas ; ouvrir ne le coche pas. Au clavier, la case est atteinte par Tab et basculée par Espace.
+- **La sélection vit tant que le dossier et les filtres ne changent pas** : changer de dossier, de pastille, de « Seulement
+  moi », d'expéditeur ou de mode de sommeil la vide. Elle est aussi vidée après une action réussie. Elle n'est pas
+  persistée (aucun stockage, `CLAUDE.md` §11).
+- **La barre** apparaît dès qu'un fil est coché, ou que « Tout sélectionner » est actif. Elle dit le nombre (« 3 fils
+  sélectionnés », ou celui du §32.4), porte **« Désélectionner »**, et les commandes permises dans ce dossier (§32.5, point
+  4). Une commande que la personne ne peut pas exercer — une lectrice, pour tout sauf lu, non lu, sommeil et réveil — est
+  **éteinte avec son motif** (`docs/SPEC-droits-interface.md`, `docs/DESIGN_SYSTEM.md` §5.59), et la base refuse de toute
+  façon.
+- **Chaque action ouvre une confirmation courte, dans le flux** (décision 946 ; décision 921 pour la forme) : elle nomme
+  l'action, rappelle **le nombre de fils et de messages** lu par `inbox_bulk_count`, et porte l'argument de l'action quand
+  il y en a un — l'affaire (le sélecteur cherchable de `CRM-137`), l'échéance du sommeil (les choix usuels du sommeil
+  unitaire), la pastille, le membre. **La case « Ne plus demander pendant 1 heure » de `CRM-151` n'y figure pas** : la
+  suspension ne vaut pas pour les actions groupées.
+- **Pendant l'appel**, la confirmation est inactive et `aria-busy`. **Le compte rendu** se dit dans une région vivante et
+  sous la barre : « {d} messages classés dans {affaire}. » ; s'il y a des refus, **« {k} refusés : »** suivi de chaque
+  motif traduit et de son nombre (« 2 — vous ne pouvez pas écrire dans cette affaire »). Un échec entier dit que **rien
+  n'a changé**.
+- **Après l'action**, la liste, l'arborescence et leurs compteurs sont relus.
+- **Dans la corbeille**, la case est par message, et la seule action est « Restaurer ».
+
+### 32.7 Transférer à un membre (décisions 945 et 947)
+
+**Aucun mail n'est envoyé** : le transfert est une écriture en base. Il **ouvre la lecture** des messages transférés au
+membre choisi, les fait apparaître dans **son** inbox « Seulement moi », et les laisse chez l'auteur.
+
+**Le modèle** — `public.mail_message_transfers` : `message_id` (FK `mail_messages`, `on delete cascade`), `recipient_id`
+(FK `profiles`, `on delete cascade`), `workspace_id` (celui du message), `transferred_by` (FK `profiles`, `on delete set
+null`), `created_at`. PK `(message_id, recipient_id)`. Aucun privilège d'écriture directe pour `authenticated` : tout passe
+par les fonctions.
+
+**Ce que le transfert ouvre** — une règle d'accès nouvelle, tenue en base :
+- `app.message_transfere_a_moi(p_message_id)` : un transfert du message vers l'appelant existe ;
+- **la politique `mail_messages_lecture`** et **`app.peut_voir_message`** gagnent cette troisième voie, à côté de
+  l'affaire lisible et de la boîte lisible ; un message en corbeille reste invisible par les trois ;
+- **`public.concerns_me`** retient aussi un message transféré à l'appelant : il apparaît dans son « Seulement moi », dans
+  la liste et dans les compteurs de l'arborescence (§27.3) ;
+- **exactement les messages transférés** (décision 947) : une réponse arrivée plus tard dans le même fil n'est pas
+  ouverte, sauf nouveau transfert. Le fil se lit donc, chez le destinataire, avec les seuls messages qu'il voit (`CRM-081`
+  le permet déjà : chacun voit le compte de ce qu'il lit) ;
+- **ce que le destinataire peut faire** suit les règles existantes, sans rien d'autre : lire, marquer lu ou non lu,
+  endormir le fil (`app.fil_lisible`), télécharger une pièce ; classer dans une affaire **qu'il peut écrire** ; poser une
+  pastille s'il édite l'espace. **Il ne peut pas supprimer** un message non classé transféré : supprimer exige d'écrire
+  une boîte où il figure (§29.3), et le transfert n'en donne pas le droit.
+- T2 relit **chaque voie de lecture** qui ne passe pas par `app.peut_voir_message` — les pièces jointes et leur stockage,
+  les fonctions `SECURITY DEFINER` du §29.4 — et écrit ici celles qui suivent le transfert et celles qui ne le suivent pas,
+  chacune prouvée par pgTAP.
+
+**Les fonctions** :
+- **`public.transfer_message(p_message_id uuid, p_recipient_id uuid) returns boolean`** — le geste unitaire. Dans cet
+  ordre : non connecté `42501` ; message inconnu, en corbeille ou non vu : `404 message_not_found` ; l'appelant n'édite pas
+  l'espace du message (ni administrateur, ni business developer, décision 947) : `42501 forbidden` ; le destinataire n'est
+  pas membre de cet espace : `22023 recipient_not_member` ; le destinataire est l'appelant : `22023 self_transfer`. Déjà
+  transféré à ce membre : rien ne change, `false`, **aucune seconde notification**. Sinon la ligne est écrite, la
+  notification aussi, et la fonction rend `true`.
+- **`app.transferer_message(p_message_id, p_recipient_id, p_notifier boolean)`** — le corps commun ; l'action groupée
+  l'appelle sans notifier, puis écrit **une seule notification** pour l'appel entier (« Camille Aubert vous a transféré
+  3 mails »), et seulement si un transfert au moins a été écrit.
+- **`public.remove_message_transfer(p_message_id uuid, p_recipient_id uuid) returns boolean`** — retirer : permis à
+  **l'auteur** du transfert et à **son destinataire**, et à eux seuls ; sinon `42501 forbidden` ; un transfert inconnu,
+  ou dont l'appelant ne voit pas le message : `404 transfer_not_found`. Retirer referme la voie de lecture qu'il ouvrait,
+  et seulement celle-là.
+
+**La notification** : un type nouveau, **`mail_transfer`**, ajouté à la liste fermée de `notifications.type` et de
+`notification_preferences.type` ; il se coupe dans les préférences de notification comme `mention` ; sa charge porte le
+nombre de mails, l'auteur et le premier message, et l'ouvrir mène à ce message dans l'inbox (`?message=`, §15 de
+`docs/SPEC-recherche.md`). Ni affaire ni organisation n'en est le sujet.
+
+**L'écran** : dans le message ouvert, la ligne **« Transféré à {membre} par {auteur}, le {date} »** pour chaque transfert
+que la personne voit, avec **« Retirer »** pour l'auteur et le destinataire ; la commande **« Transférer »** dans la rangée
+de commandes du message ouvert (le geste unitaire), qui ouvre dans le flux le choix du membre ; et la même action dans la
+barre groupée. Le choix du membre propose les membres de l'espace du message, sans l'appelant.
+
+### 32.8 Bloquer un expéditeur (décisions 945 et 947)
+
+**Le modèle** — `public.mail_blocked_senders` : `workspace_id` (FK `workspaces`, `on delete cascade`), `address`
+(`lower(btrim(...))`, forme d'adresse vérifiée), `blocked_by` (FK `profiles`, `on delete set null`), `created_at`. PK
+`(workspace_id, address)`. Lecture par tout membre de l'espace ; aucune écriture directe pour `authenticated`.
+
+**Qui** : un **administrateur** de l'espace, pour **toutes les boîtes** de l'espace (décision 947).
+
+**Les fonctions** :
+- **`public.blocked_sender_impact(p_workspace_id uuid, p_address text) returns integer`** — le nombre de mails reçus de
+  cette adresse, hors corbeille, dans l'espace : celui que la double confirmation annonce. Administrateur seulement.
+- **`public.block_sender(p_workspace_id uuid, p_address text) returns jsonb`** — non connecté `42501` ; non
+  administrateur `42501 forbidden` ; adresse mal formée `22023 invalid_address`. Écrit la ligne (déjà bloqué : la ligne
+  reste, sans erreur), puis **met à la corbeille de l'inbox** chaque mail **reçu** de l'adresse encore hors corbeille,
+  dans tout l'espace, par le corps de `delete_message` **sans** déplacement IMAP — l'événement `mail_deleted` au fil des
+  affaires compris, `deleted_by` étant l'administrateur. Rend `{"trashed": n}`.
+- **`public.unblock_sender(p_workspace_id uuid, p_address text) returns boolean`** — administrateur seulement ; retire la
+  ligne. **Les mails déjà mis à la corbeille y restent** : ils se restaurent un par un ou par la sélection de la corbeille,
+  jusqu'à leur effacement définitif (§29.6).
+
+**À la réception** : un déclencheur `BEFORE INSERT` sur `mail_messages` pose `deleted_at = now()` et `deleted_by =
+blocked_by` sur un message **reçu** dont l'adresse d'expédition est bloquée dans son espace. Le message existe donc,
+directement en corbeille : la relève reste idempotente (§4.2), et le §29.4 s'applique en entier — il n'est ni dans
+l'inbox, ni compté, ni classé, ni proposé. T2 vérifie et écrit ici que **le classement automatique** et **la file des
+pastilles** l'écartent, et le prouve par pgTAP. Un message **envoyé** n'est jamais bloqué.
+
+**L'écran** :
+- **« Bloquer l'expéditeur »** est offert dans la barre **seulement quand le seul filtre actif est un expéditeur** (ni
+  pastille, ni « Seulement moi » appliqué) et que la personne administre l'espace. Il agit sur **l'expéditeur**, pas sur
+  la sélection.
+- **La double confirmation** : la première annonce l'adresse et **le nombre de mails** (`blocked_sender_impact`), et dit
+  que ses prochains mails iront aussi à la corbeille ; la seconde demande de confirmer le blocage de cette adresse,
+  nommée. Le compte rendu dit le nombre mis à la corbeille.
+- **Réglages ▸ Expéditeurs bloqués** : la liste — adresse, qui a bloqué, quand —, lisible par tout membre ;
+  **« Débloquer »** avec une confirmation courte, pour l'administrateur seul, éteint avec son motif pour les autres. Une
+  entrée nouvelle dans l'index des Réglages.
+
+### 32.9 Le filtre par expéditeur
+
+- **La clé d'adresse `expediteur`**, une adresse ; une valeur sans `@` est ignorée, comme une pastille mal formée (§31.7).
+  Il se combine avec le dossier et les autres filtres, et porte sur les **messages** dont `from_address` est cette adresse,
+  sans casse ni blancs ; les fils se groupent ensuite sur ce qui reste, comme pour les pastilles.
+- **Le poser** : la commande **« Filtrer sur cet expéditeur »** à côté de l'expéditeur, dans le message ouvert. **Le
+  retirer** : la pilule **« Expéditeur : {adresse} »** dans l'en-tête de la liste, et son bouton de retrait. Sa place exacte
+  est écrite au §5.109, avec la session qui porte `CRM-155`.
+- C'est un **filtre explicite** (§32.3).
+
+### 32.10 Créer des contacts depuis les expéditeurs inconnus (décision 945)
+
+- **Les expéditeurs inconnus de la sélection** : `public.inbox_bulk_unknown_senders(p_scope jsonb)` rend, pour les
+  messages **reçus** de la portée, chaque adresse d'expédition **sans contact** de même adresse dans l'espace du message
+  (`lower(email)`, l'unicité de `contacts`), avec `workspace_id`, le nom proposé (le `from_name` du message le plus récent
+  de l'adresse, à défaut la partie locale de l'adresse), l'organisation proposée (celle de l'espace dont `domain` est le
+  domaine de l'adresse, s'il y en a une, sinon rien) et le nombre de messages. Mêmes refus de portée que le §32.5.
+- **La liste à vérifier** s'ouvre dans le flux : une ligne par adresse, **cochée** par défaut, avec le nom et
+  l'organisation **modifiables** (l'organisation est un nom : une organisation existante de ce nom est reprise, sinon elle
+  est créée, la règle de l'import). « Créer {n} contacts » ne crée que les lignes cochées.
+- **La création passe par `public.import_contacts`** (`docs/SPEC-vues-import-export.md` §6.2), le chemin de l'import, avec
+  ses droits (administrateur, business developer), ses refus et ses codes d'issue (`duplicate_email`, `invalid_email`,
+  `name_required`, …) — un contact créé entre-temps par quelqu'un d'autre est donc refusé comme doublon, sans erreur. La
+  fonction gagne **`p_source text default 'import'`**, qui accepte `import` ou `email` : ces contacts naissent avec
+  **`source = 'email'`**, la valeur que le modèle prévoit pour eux (`docs/SPEC-contacts.md`). Un appel par espace.
+- **Le compte rendu** reprend celui de l'import : créés, refusés avec leur motif.
+
+### 32.11 Les migrations
+
+`docs/SCHEMA.md`, « Migration — `CRM-156` T1 » et « Migration — `CRM-156` T2 ». Les numéros se prennent après
+synchronisation, à l'écriture de chaque migration.
+
+### 32.12 Seed
+
+T5 ajoute, par les vraies fonctions et sous les vrais jetons : un **transfert** de Camille à Driss d'un mail non classé
+(Driss le voit dans son « Seulement moi » ; la notification existe) ; un **expéditeur bloqué** par Camille, avec un mail
+déjà reçu passé à la corbeille et un mail **relevé après** le blocage, arrivé directement en corbeille par la vraie relève ;
+et un expéditeur **inconnu** qui fait apparaître la liste à vérifier. Les actions groupées elles-mêmes ne laissent pas de
+trace propre à démontrer : leurs effets sont ceux des actions unitaires.
+
+### 32.13 Preuves exigées
+
+| Niveau | Preuves |
+|---|---|
+| pgTAP | la portée : chaque filtre, leur combinaison, les fils, le sommeil, la corbeille, et ce que l'appelant ne voit pas ; `filter_required`, `invalid_scope`, `invalid_action`, `action_not_allowed_here` ; chaque action et son compte rendu ; une sélection mixte (permis et refusés) ; une panne qui défait tout ; le transfert : ses refus dans l'ordre, la lecture ouverte et refermée, `concerns_me`, la notification unique, aucune seconde ; le blocage : réservé à l'administrateur, les reçus mis à la corbeille, la réception bloquée, ni classée ni évaluée ; le déblocage ; les inconnus ; `import_contacts` et sa source |
+| API | sous les vrais jetons : la lectrice refusée pour classer et supprimer, permise pour lu et sommeil ; le business developer refusé sur une affaire qu'il n'écrit pas, dans une sélection mixte ; « tout » sans filtre refusé ; le transfert et son retrait par l'auteur, par le destinataire, refusé à un tiers ; le blocage refusé à un non-administrateur |
+| Mesure | le débit de chaque action sur 5 000 messages, contre le délai de 8 s (§32.5) |
+| Unitaires | la description de portée tirée de l'adresse et de la sélection ; la barre et ses commandes selon le dossier et les droits ; les comptes rendus et leurs pluriels ; la clé `expediteur` |
+| E2E `ui` | souris et clavier, aux quatre paliers : cocher, « Tout sélectionner » sous un filtre et son absence sans filtre, chaque famille d'action avec sa confirmation et son compte rendu, une sélection mixte, la corbeille ; le filtre par expéditeur ; transférer et retirer ; bloquer avec la double confirmation, débloquer ; créer des contacts depuis la liste à vérifier |
+| E2E `mail` | un mail d'un expéditeur bloqué, relevé par la vraie relève, arrive en corbeille |
+| Manuel | §12 : la sélection, la barre, le transfert, le filtre par expéditeur et le blocage ; les réglages ; leurs images |
+
+### 32.14 Tranches
+
+| Tranche | Contenu |
+|---|---|
+| **T1** | La base des actions groupées : la portée, `inbox_bulk_count`, `inbox_bulk_apply` pour les actions existantes ; pgTAP ; API ; la mesure du débit |
+| **T2** | La base des ajouts : le transfert (table, lecture ouverte, `concerns_me`, notification, fonctions), le blocage (table, fonctions, réception), les inconnus et `import_contacts(p_source)`, l'action `transfer` ; pgTAP ; API ; E2E `mail` du blocage |
+| **T3** | L'écran de la sélection : les cases, « Tout sélectionner », la barre, les confirmations, les comptes rendus, la corbeille ; `docs/DESIGN_SYSTEM.md` §5.109 ; Vitest ; E2E `ui` ; captures |
+| **T4** | L'écran des ajouts : le filtre par expéditeur, le transfert dans le message ouvert et dans la barre, la notification, le blocage et Réglages ▸ Expéditeurs bloqués, la liste à vérifier des contacts ; Vitest ; E2E `ui` ; captures |
+| **T5** | Le seed, le manuel §12 et ses images, le contrat de déploiement, le changelog ; l'unité passe `[P]` |

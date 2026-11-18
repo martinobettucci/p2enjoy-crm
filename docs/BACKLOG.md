@@ -20059,7 +20059,18 @@ voit **exactement les mails transférés** (la lecture lui est ouverte en base),
 **administrateur bloque** un expéditeur, pour **toutes les boîtes de l'espace**, et le débloque dans les réglages.
 **Dépend de** : `CRM-155` (les filtres rapides par pastilles, qui ouvrent « Tout sélectionner ») ; la spécification peut
 s'écrire en parallèle, l'écran se coordonne avec la session qui porte `CRM-155`.
-**Spécification** : à écrire avant le code — `docs/SPEC-mail-subsystem.md` (section nouvelle) ; `docs/SCHEMA.md` (les
-fonctions groupées) ; `docs/DESIGN_SYSTEM.md` (sélection, barre d'actions groupées) ; manuel §12.
+**Spécification** : **écrite le 2026-11-18, avant le code** — `docs/SPEC-mail-subsystem.md` §32 ; `docs/SCHEMA.md`,
+« Migration — `CRM-156` T1 » et « T2 » ; `docs/DESIGN_SYSTEM.md` §5.109 écrit avant le code de T3, sur l'en-tête de `CRM-155`
+(coordonné avec la session c7) ; manuel §12 en T5.
+**Tranches** (`docs/SPEC-mail-subsystem.md` §32.14) :
+- [ ] **T1** — la base des actions groupées : la portée, `inbox_bulk_count`, `inbox_bulk_apply` pour les actions
+  existantes ; pgTAP ; API ; la mesure du débit contre le délai de 8 s ;
+- [ ] **T2** — la base des ajouts : transfert (lecture ouverte, `concerns_me`, notification `mail_transfer`), blocage
+  (réception en corbeille), expéditeurs inconnus et `import_contacts(p_source)` ; pgTAP ; API ; E2E `mail` ;
+- [ ] **T3** — l'écran de la sélection : cases, « Tout sélectionner », barre, confirmations, comptes rendus, corbeille ;
+  DESIGN_SYSTEM §5.109 ; Vitest ; E2E `ui` ; captures ;
+- [ ] **T4** — l'écran des ajouts : filtre par expéditeur, transfert, notification, blocage et Réglages ▸ Expéditeurs
+  bloqués, liste à vérifier des contacts ; Vitest ; E2E `ui` ; captures ;
+- [ ] **T5** — seed, manuel §12 et images, contrat, changelog ; `[P]`.
 **DoD** : pgTAP des fonctions groupées ; preuve d'API avec les vrais jetons (refus du profil sans droit, sélection mixte) ;
 unitaires ; E2E souris et clavier aux quatre paliers ; captures observées ; seed vérifié ; manuel vérifié ; contrat.
