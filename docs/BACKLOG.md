@@ -19893,7 +19893,7 @@ filtres).
   suppriment dans **Réglages ▸ Catégories d'organisations**, couleurs de la charte, comme les pastilles des mails
   (`CRM-141`) ; *révisé par la décision 939* : aucune catégorie par défaut, et « supprimer » archive ; tout membre qui peut
   modifier l'organisation pose ou retire une catégorie ;
-- la liste des organisations montre une colonne **« Catégories »** et un **filtre par catégorie**, à côté du filtre par
+- la liste des organisations montre les catégories *sous le nom de chaque organisation (décision 942, au lieu d'une colonne)* et un **filtre par catégorie**, à côté du filtre par
   track de `CRM-152` ;
 - le seed et le manuel suivent.
 **Connecteur MCP** : **oui, famille existante `organisations`** — lire et ajouter des commentaires, lire et poser les

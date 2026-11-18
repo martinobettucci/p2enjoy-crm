@@ -40928,3 +40928,13 @@ image `mcp`, manuel (contrat §2.55 à §2.57).
 **Exécutée le 2026-11-18** : `pg_dump` relu (3 358 entrées), `livrer.sh --revision 249813f1…` (webapp bâtie dans la
 cellule, migrations 186 et 187), `mcp` reconstruit, manuel publié ; registre à 185, `verifier.sh` 34/35 (INC-277) ;
 contrat §2.55 à §2.57 LIVRÉES, §3 et §8, changelog en [Publié], backlog ; verrou levé. Reste le constat du responsable.
+
+### décision 942 — `CRM-153` : les catégories d'une organisation sous son nom, dans la liste ; pas de colonne de plus
+
+*2026-11-18, session 4891a451 (p2enjoy-crm-d7), arbitrage du responsable (`AskUserQuestion`), avant la spécification.*
+**Question** : le backlog prévoyait une colonne « Catégories » dans la liste des organisations ; une sixième colonne
+referait déborder le tableau que la décision 940 vient de faire tenir de 900 à 1440 px.
+**Décision** : **les catégories vont dans la cellule « Nom », sous le lien** — trois pilules au plus, puis « +n » qui
+énumère les autres ; aucune colonne de plus. Écartée : une colonne à part, qui resserrait les autres et tronquait davantage.
+**Conséquences** : la phrase du backlog sur la colonne est révisée ; `docs/DESIGN_SYSTEM.md` le dira à la spécification de
+l'écran. Le filtre par catégorie, lui, reste dans la barre, à côté de « Tracks ».
