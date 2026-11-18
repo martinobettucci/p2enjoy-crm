@@ -24,6 +24,12 @@ d'exécuter le code attendu.
   Le vide nomme la ou les pastilles. Aucune migration.
 - Manuel §12.2 et son image ; `docs/DESIGN_SYSTEM.md` §5.108 ; `docs/SPEC-mail-subsystem.md` §31.12.
 
+### `CRM-155` T2 — le connecteur filtre les mails d'une affaire par pastilles
+
+- `crm_card_mail_list` gagne l'argument `labels` : les mails qui portent l'une des pastilles données, posée ; un
+  identifiant mal formé est refusé par l'outil. Chaque mail rendu dit ses pastilles posées (`labels`). Famille
+  `messagerie`, case « Consulter », aucune case nouvelle. Manuel §33.5 ; `docs/SPEC-mcp.md` §9.2 duovicies.
+
 ### `CRM-156` T2 — transférer un mail, bloquer un expéditeur, créer des contacts depuis l'inbox, en base (migration 190)
 
 - **Transférer à un membre** (`transfer_message`, et l'action groupée `transfer`) : aucun envoi ; le membre lit les mails

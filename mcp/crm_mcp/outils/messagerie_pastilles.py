@@ -4,6 +4,9 @@
 #       `public.set_message_label` : toujours un choix manuel), et la lecture des pastilles posées que `crm_mail_get` rend
 # @spec docs/SPEC-mcp.md §9.2 duovicies (famille `messagerie`, aucune case nouvelle ; ancre nouvelle `mail_label` ; refus
 #       traduits), §9.1, §9.3 ; docs/SPEC-mail-subsystem.md §31.4, §31.8 ; docs/JOURNAL.md décisions 923, 924 et 926
+# @spec CRM-155 (docs/BACKLOG.md) — tranche T2 : le filtre `labels` de `crm_card_mail_list` (`pastilles_du_filtre`) et
+#       les pastilles de chaque message de la liste (`EMBARQUEMENT_PASTILLES`, `posees_lues`) — docs/SPEC-mcp.md §9.2
+#       duovicies (révisé) ; docs/SPEC-mail-subsystem.md §31.12.5 ; décisions 943 et 948
 """Les pastilles d'un mail, sous l'identité de la personne.
 
 L'assistant connecté JUGE LUI-MÊME (décision 924) : il lit le mail et les pastilles de l'espace — leur descriptif est ce
@@ -13,13 +16,22 @@ une réévaluation. Une pose ou un retrait est un choix manuel, que la réévalu
 
 from __future__ import annotations
 
+import re
 from typing import Annotated, Any
 
 from fastmcp import FastMCP
 from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
-from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable, traduire_refus
+from crm_mcp.politique import (
+    Declaration,
+    MoteurPolitique,
+    RefusArgument,
+    RefusCrm,
+    appel_courant,
+    introuvable,
+    traduire_refus,
+)
 
 #: Les refus nommés de `public.set_message_label` (docs/SPEC-mail-subsystem.md §31.4), en phrases pour le modèle.
 REFUS_PASTILLE = {
@@ -29,6 +41,29 @@ REFUS_PASTILLE = {
 }
 
 COLONNES_PASTILLE = "id,name,color,description,archived_at"
+
+#: `CRM-155` : les pastilles d'un message, embarquées dans la lecture d'une liste — la forme que `posees_lues` lit.
+EMBARQUEMENT_PASTILLES = "pastilles:mail_message_labels(label_id,source,applied,pastille:mail_labels(name,archived_at))"
+#: `CRM-155` : l'embarquement qui FILTRE, sous son propre alias, pour ne pas amputer les pastilles rendues (la règle de
+#: l'inbox, docs/SPEC-mail-subsystem.md §31.12.2).
+EMBARQUEMENT_FILTRE = "filtre_pastille:mail_message_labels!inner(label_id)"
+#: Au plus tant de pastilles dans un filtre : bien au-delà des pastilles d'un espace, en deçà d'une liste forgée.
+PASTILLES_MAX = 50
+_UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
+
+def pastilles_du_filtre(labels: list[str] | None) -> list[str] | None:
+    """Les identifiants du filtre `labels`, dédoublonnés et en minuscules ; `None` sans filtre (absent ou vide). Un
+    identifiant mal formé est refusé par l'outil, nommé, sans appel (§9.3). Ce ne sont pas des ancres — le précédent de
+    `tracks` (§9.2 tervicies) : une pastille d'un autre espace ou illisible ne retient rien, et rien n'est divulgué."""
+    if not labels:
+        return None
+    mal_formes = [l for l in labels if not _UUID.match(l.strip())]
+    if mal_formes:
+        raise RefusArgument(
+            f"labels must be label ids from crm_mail_label_list; not an id: {', '.join(map(repr, mal_formes[:3]))}."
+        )
+    return list(dict.fromkeys(l.strip().lower() for l in labels))
 
 
 def pastille_lue(ligne: dict[str, Any]) -> dict[str, Any]:

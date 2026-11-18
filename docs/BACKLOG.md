@@ -20033,8 +20033,13 @@ message dans le connecteur ; design system lu par sections ciblées) : `docs/SPE
   ne pouvait pas décrire la liste déroulante retirée), 12-inbox 12/12, verify-manual 168 contrôles sans anomalie ; le
   vide à une pastille passe aux espaces insécables (§5.51). Les sondes des trois specs s'effacent par préfixe (un worker
   relancé après un échec vidait la liste en mémoire, relevé par la session fc).
-- [ ] **T2** — le connecteur : `labels` sur `crm_card_mail_list`, les pastilles de chaque message ; pytest ;
-  intégration ; `verify-mcp.sh`.
+- [x] **T2** — le connecteur : `labels` sur `crm_card_mail_list`, les pastilles de chaque message ; pytest ;
+  intégration ; `verify-mcp.sh`. *Faite le 2026-11-18* : pytest unitaires 428 (cinq nouveaux, un révisé : la colonne
+  `is_read` n'est plus la dernière du `select`) ; intégration nouvelle contre la vraie base (OU, chaque message une
+  fois, la retirée à la main qui ne retient rien, les pastilles rendues, le refus d'argument journalisé) ;
+  `verify-mcp.sh` 126 contrôles avec un échec ponctuel sur `test_integration_organisations` en direct (la même suite verte
+  à travers le Caddy), puis `--rapide` 125 contrôles sans anomalie, 111/111 en direct et à travers le Caddy ; service `mcp`
+  de dev reconstruit ; manuel §33.5 (la ligne « Consulter (pastilles) »), verify-manual 168 sans anomalie.
 - [ ] **T3** — le chapitre du connecteur au manuel ; le seed vérifié ; le contrat ; `[P]` (le manuel §12.2 est fait en T1).
 
 ### CRM-156 — Inbox : opérations groupées sur une sélection de mails `[@]`

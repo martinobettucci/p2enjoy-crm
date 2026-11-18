@@ -1369,6 +1369,11 @@ refus par la matrice, le refus du CRM pour la lectrice malgré la case ouverte, 
 - **chaque message rendu porte `labels`**, ses pastilles posées, sous la forme de `crm_mail_get` (`label_id`, `name`,
   `source`, `archived`) — l'assistant voit pourquoi un message est retenu sans relire chaque mail (décision 948).
 
+*Précisé au code (T2, 2026-11-18)* : l'embarquement qui filtre porte l'alias `filtre_pastille` (`!inner`, `label_id in`,
+`applied is true`), celui des pastilles rendues l'alias `pastilles` — la même séparation que l'inbox, pour ne pas amputer
+les pastilles rendues. Les fonctions vivent dans `mcp/crm_mcp/outils/messagerie_pastilles.py` (`pastilles_du_filtre`,
+`EMBARQUEMENT_PASTILLES`, `EMBARQUEMENT_FILTRE`). Un refus d'argument est journalisé `refus_crm`.
+
 *Écrit au code de T5 (2026-11-11)* : le module `mcp/crm_mcp/outils/messagerie_pastilles.py`. `crm_mail_label_set` rend,
 après la pose ou le retrait, les pastilles que le message porte alors (la forme de `labels` de `crm_mail_get`). `labels`
 ne nomme que les pastilles **posées** : une ligne retirée à la main n'y figure pas. Un refus `message_not_found` est le

@@ -7051,7 +7051,9 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     la date d'effacement définitif et l'état du déplacement dans la boîte ; jamais le texte des emails.
   - *Consulter* (pastilles) : **les pastilles de l'espace** et leur descriptif, celui que l'IA du CRM lit pour décider
     ([section 12.6](#definir-les-pastilles-des-mails)) ; avec un email, les pastilles qu'il porte, qui les a posées (l'IA
-    ou une personne), et si l'IA du CRM l'a déjà évalué ;
+    ou une personne), et si l'IA du CRM l'a déjà évalué. Dans la liste des emails d'une affaire, chaque email dit ses
+    pastilles, et l'assistant peut ne garder que ceux qui portent **l'une des pastilles** que vous nommez, comme les
+    filtres rapides de l'inbox ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)) ;
   - *Modifier* (pastilles) : **poser ou retirer une pastille** sur un email. L'assistant **juge lui-même**, à partir de
     l'email et des descriptifs : il ne demande rien à l'IA du CRM, et ne peut pas lui demander de réévaluer. Son choix
     compte comme un choix fait à la main : l'IA du CRM ne le défait jamais. Réservé aux administrateurs et aux business

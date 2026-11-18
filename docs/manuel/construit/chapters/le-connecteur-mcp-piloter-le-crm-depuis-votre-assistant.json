@@ -4124,7 +4124,37 @@
 										},
 										{
 											"type": "text",
-											"text": ") ; avec un email, les pastilles qu'il porte, qui les a posées (l'IA\nou une personne), et si l'IA du CRM l'a déjà évalué ;"
+											"text": ") ; avec un email, les pastilles qu'il porte, qui les a posées (l'IA\nou une personne), et si l'IA du CRM l'a déjà évalué. Dans la liste des emails d'une affaire, chaque email dit ses\npastilles, et l'assistant peut ne garder que ceux qui portent "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "l'une des pastilles"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " que vous nommez, comme les\nfiltres rapides de l'inbox ("
+										},
+										{
+											"type": "link",
+											"target": {
+												"chapter": "l-inbox-lire-trier-et-repondre",
+												"anchor": "l-inbox-lire-et-trier-le-courrier-recu"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "chapitre 12.2"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ") ;"
 										}
 									]
 								}

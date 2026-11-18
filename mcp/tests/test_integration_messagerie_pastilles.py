@@ -5,6 +5,10 @@
 #           matrice qui ferme la pose sans la case `modifier`, la lectrice refusée par le CRM malgré la matrice ouverte, le
 #           journal écrit
 # @verifies docs/SPEC-mcp.md §9.2 duovicies, §13 ; docs/SPEC-mail-subsystem.md §31.4, §31.5 ; docs/JOURNAL.md décision 924
+# @verifies CRM-155 (docs/BACKLOG.md) — tranche T2 : `labels` sur `crm_card_mail_list` contre la vraie base — l'une des
+#           pastilles, en OU, chaque message une fois, la retirée à la main qui ne retient rien, les pastilles de chaque
+#           message rendues, l'identifiant mal formé refusé et journalisé `refus_crm` (docs/SPEC-mcp.md §9.2 duovicies,
+#           révisé ; docs/SPEC-mail-subsystem.md §31.12.5)
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
 La preuve pose ses propres messages sous la clé de service — l'un dans c1, que Driss écrit, l'autre dans c7, que la
@@ -142,3 +146,56 @@ async def test_la_lectrice_est_refusee_par_le_crm_malgre_la_matrice_ouverte():
     finally:
         await _retirer(FARIDA, posees)
         await _nettoyer()
+
+
+async def _poser_message_neutre(card: str) -> str:
+    """Un message sans aucun mot d'un nom de pastille : le simulateur de la passe ne lui en pose aucune."""
+    service = {"apikey": CLE_SERVICE, "Authorization": f"Bearer {CLE_SERVICE}", "Prefer": "return=representation"}
+    async with httpx2.AsyncClient(timeout=10) as http:
+        pose = await http.post(f"{API}/rest/v1/mail_messages", headers=service, json={
+            "workspace_id": ESPACE, "rfc822_message_id": f"<{MARQUE}-{uuid.uuid4()}@exemple.test>", "card_id": card,
+            "classification": "manual", "direction": "inbound", "from_address": "client@exemple.test",
+            "subject": "Preuve connecteur CRM-155", "body_text": "Bonjour, une question."})
+        assert pose.status_code == 201, pose.text
+        return pose.json()[0]["id"]
+
+
+async def test_crm_155_la_liste_filtre_par_pastilles_en_ou_et_rend_les_pastilles_de_chaque_message():
+    await _nettoyer()
+    avec_spam = await _poser_message_neutre(CARD_C1)
+    avec_lead = await _poser_message_neutre(CARD_C1)
+    retiree = await _poser_message_neutre(CARD_C1)
+    sans = await _poser_message_neutre(CARD_C1)
+    spam, lead = await _pastille("Spam"), await _pastille("Lead")
+    posees = await _manquantes(DRISS, CASES)
+    await _poser(DRISS, posees)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_visible(client, "crm_mail_label_set")
+            for message, pastille in ((avec_spam, spam), (avec_lead, lead), (retiree, lead)):
+                await client.call_tool("crm_mail_label_set", {"message_id": message, "label_id": pastille})
+            await client.call_tool("crm_mail_label_set", {"message_id": retiree, "label_id": lead, "applied": False})
+            mes = {avec_spam, avec_lead, retiree, sans}
+
+            async def lister(labels: list[str] | None) -> list[dict]:
+                arguments = {"card_id": CARD_C1, "limit": 100} | ({} if labels is None else {"labels": labels})
+                rendu = (await client.call_tool("crm_card_mail_list", arguments)).structured_content
+                return [m for m in rendu["messages"] if m["id"] in mes]
+
+            tous = {m["id"]: m for m in await lister(None)}
+            assert set(tous) == mes
+            assert tous[avec_spam]["labels"] == [{"label_id": spam, "name": "Spam", "source": "manual", "archived": False}]
+            assert tous[retiree]["labels"] == [] and tous[sans]["labels"] == []
+
+            union = [m["id"] for m in await lister([spam, lead])]
+            assert sorted(union) == sorted([avec_spam, avec_lead]), "l'une des pastilles, chaque message une fois"
+            assert [m["id"] for m in await lister([lead.upper()])] == [avec_lead]
+            assert await _dernier_journal(DRISS[1]) == ("crm_card_mail_list", "ok")
+
+            with pytest.raises(ToolError, match="labels must be label ids"):
+                await client.call_tool("crm_card_mail_list", {"card_id": CARD_C1, "labels": ["Spam"]})
+            assert await _dernier_journal(DRISS[1]) == ("crm_card_mail_list", "refus_crm")
+    finally:
+        await _retirer(DRISS, posees)
+        await _nettoyer()
+

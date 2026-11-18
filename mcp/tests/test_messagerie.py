@@ -24,6 +24,8 @@
 #           confirmation posée sous le jeton de la personne AVANT la lecture ; `crm_mail_prepare` qui joint des fichiers
 #           — décodés et bornés avant tout dépôt, déposés sous le jeton au chemin `<espace>/<personne>/<aléa>/<nom>`, leurs
 #           chemins passés à `prepare_email`, retirés si rien n'est préparé (docs/SPEC-pieces-jointes.md §17.6)
+# @verifies CRM-155 (docs/BACKLOG.md) — tranche T2 : `labels` sur `crm_card_mail_list` et les pastilles de chaque message
+#           (voir les preuves en fin de fichier)
 # @verifies CRM-139 (docs/BACKLOG.md) — `only_me` sur `crm_card_mail_list` : faux par défaut, vrai il demande la
 #           colonne calculée `concerns_me` à la base, et sans identité personnelle la réponse vide le dit ;
 #           docs/SPEC-mcp.md §9.2 duodevicies ; docs/SPEC-mail-subsystem.md §27.2 ; décision 902
@@ -195,6 +197,17 @@ class CrmMessagerie(CrmSimule):
             lignes = [{"id": CARD, "workspace_id": ESPACE_A}, {"id": AUTRE_CARD, "workspace_id": ESPACE_A}]
         elif nom == "mail_messages":
             lignes = self.messages()
+            # `CRM-155` : l'embarquement des pastilles et le filtre, comme PostgREST les rend — chaque message porte ses
+            # lignes ; l'embarquement `!inner` ne garde que les messages dont une ligne POSÉE est l'une des demandées.
+            if "pastilles:mail_message_labels" in parametres.get("select", ""):
+                lignes = [{**m, "pastilles": [p for p in self.poses if p["message_id"] == m["id"]]} for m in lignes]
+            demandees = parametres.get("filtre_pastille.label_id", "")
+            if demandees.startswith("in.("):
+                ids = set(demandees.removeprefix("in.(").removesuffix(")").split(","))
+                lignes = [
+                    m for m in lignes
+                    if any(p["applied"] and p["label_id"] in ids for p in self.poses if p["message_id"] == m["id"])
+                ]
         elif nom == "mail_attachments":
             lignes = self.pieces()
         elif nom == "mail_drafts":
@@ -481,7 +494,9 @@ async def test_l_etat_lu_est_rendu_par_les_deux_lectures_sans_marquer(monde: Mon
     fil = await monde.appel("crm_card_mail_list", {"card_id": CARD, "limit": 2})
     assert [(m["id"], m["read"]) for m in fil["messages"]] == [(MESSAGE_TEXTE, False), (MESSAGE_HTML, True)]
     lecture = next(p for n, p in monde.simule.lectures if n == "mail_messages" and "order" in p)
-    assert lecture["select"].endswith(",is_read")
+    # RÉVISÉ par `CRM-155` T2 (2026-11-18) : l'embarquement des pastilles suit désormais les colonnes du fil ; la preuve
+    # porte sur la colonne demandée, non sur sa place en fin de liste.
+    assert ",is_read," in lecture["select"]
     assert (await monde.appel("crm_mail_get", {"message_id": MESSAGE_TEXTE}))["read"] is False
     # UNE VALEUR ABSENTE N'EST PAS « LU » : le message d'une autre affaire ne porte pas `is_read` dans le simulé.
     assert (await monde.appel("crm_mail_get", {"message_id": MESSAGE_AILLEURS}))["read"] is False
@@ -792,3 +807,52 @@ async def test_only_me_vide_avec_une_identite_ne_dit_rien_de_plus(monde: Monde) 
     fil = await monde.appel("crm_card_mail_list", {"card_id": CARD, "only_me": True})
     assert fil["messages"] == []
     assert fil["note"].startswith("Read an attachment")
+
+
+# @verifies CRM-155 (docs/BACKLOG.md) — tranche T2 : `labels` sur `crm_card_mail_list` — la base filtre par l'embarquement
+#           `!inner` (l'une des pastilles, posée), les identifiants dédoublonnés, un identifiant mal formé refusé sans
+#           appel, aucun filtre par défaut ni sur une liste vide ; chaque message rend ses pastilles POSÉES
+#           (docs/SPEC-mcp.md §9.2 duovicies, révisé ; docs/SPEC-mail-subsystem.md §31.12.5 ; décision 948)
+async def test_sans_labels_aucun_filtre_et_chaque_message_rend_ses_pastilles_posees(monde: Monde) -> None:
+    fil = await monde.appel("crm_card_mail_list", {"card_id": CARD})
+    lecture = next(p for n, p in monde.simule.lectures if n == "mail_messages" and "order" in p)
+    assert "filtre_pastille.label_id" not in lecture
+    assert "!inner" not in lecture["select"]
+    assert "pastilles:mail_message_labels(label_id,source,applied,pastille:mail_labels(name,archived_at))" in lecture["select"]
+    par_id = {m["id"]: m for m in fil["messages"]}
+    # La retirée à la main n'y est pas ; l'archivée posée le dit ; l'ordre est celui du nom.
+    assert par_id[MESSAGE_TEXTE]["labels"] == [
+        {"label_id": PASTILLE_LEAD, "name": "Lead", "source": "llm", "archived": False},
+        {"label_id": PASTILLE_NEWS, "name": "Newsletter", "source": "manual", "archived": True},
+    ]
+    assert all(m["labels"] == [] for i, m in par_id.items() if i != MESSAGE_TEXTE)
+
+
+async def test_labels_filtre_par_la_base_en_ou_sur_les_pastilles_posees(monde: Monde) -> None:
+    fil = await monde.appel(
+        "crm_card_mail_list", {"card_id": CARD, "labels": [PASTILLE_NEWS.upper(), PASTILLE_LEAD, PASTILLE_NEWS]}
+    )
+    lecture = next(p for n, p in monde.simule.lectures if n == "mail_messages" and "order" in p)
+    # LE FILTRE EST CELUI DE LA BASE : l'embarquement `!inner` sous son alias, `in`, posées seulement.
+    assert "filtre_pastille:mail_message_labels!inner(label_id)" in lecture["select"]
+    assert lecture["filtre_pastille.label_id"] == f"in.({PASTILLE_NEWS},{PASTILLE_LEAD})"
+    assert lecture["filtre_pastille.applied"] == "is.true"
+    assert [m["id"] for m in fil["messages"]] == [MESSAGE_TEXTE]
+
+
+async def test_une_pastille_seulement_retiree_ne_retient_rien(monde: Monde) -> None:
+    fil = await monde.appel("crm_card_mail_list", {"card_id": CARD, "labels": [PASTILLE_DEVIS]})
+    assert fil["messages"] == []
+
+
+async def test_une_liste_vide_vaut_l_absence_de_filtre(monde: Monde) -> None:
+    await monde.appel("crm_card_mail_list", {"card_id": CARD, "labels": []})
+    lecture = next(p for n, p in monde.simule.lectures if n == "mail_messages" and "order" in p)
+    assert "filtre_pastille.label_id" not in lecture
+
+
+async def test_un_identifiant_de_pastille_mal_forme_est_refuse_sans_appel(monde: Monde) -> None:
+    with pytest.raises(ToolError, match="labels must be label ids from crm_mail_label_list; not an id: 'Lead'"):
+        await monde.appel("crm_card_mail_list", {"card_id": CARD, "labels": ["Lead", PASTILLE_LEAD]})
+    assert not [n for n, p in monde.simule.lectures if n == "mail_messages"]
+

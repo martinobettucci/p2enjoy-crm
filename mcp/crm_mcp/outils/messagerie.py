@@ -33,6 +33,9 @@
 #       docs/SPEC-mcp.md §9.2 decies (révisée par CRM-143) ; décisions 889 et 892
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
 #       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
+# @spec CRM-155 (docs/BACKLOG.md) — tranche T2 : `labels` sur `crm_card_mail_list` — les messages qui portent l'une des
+#       pastilles, posée (OU) — et les pastilles posées de chaque message rendu (docs/SPEC-mcp.md §9.2 duovicies, révisé ;
+#       docs/SPEC-mail-subsystem.md §31.12.5 ; décisions 943 et 948)
 """La messagerie d'une affaire, sous l'identité de la personne : lire son fil, lire un message, PRÉPARER un email.
 
 Le connecteur n'envoie jamais (`CRM-128`, décision 829) : `public.prepare_email` écrit un mail préparé, que seule la
@@ -60,7 +63,14 @@ from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
 from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable, traduire_refus
-from crm_mcp.outils.messagerie_pastilles import pastilles_du_message
+from crm_mcp.outils.messagerie_pastilles import (
+    EMBARQUEMENT_FILTRE,
+    EMBARQUEMENT_PASTILLES,
+    PASTILLES_MAX,
+    pastilles_du_filtre,
+    pastilles_du_message,
+    posees_lues,
+)
 
 #: La longueur de l'extrait d'un message dans le fil (docs/SPEC-mcp.md §9.2 decies).
 LONGUEUR_EXTRAIT = 280
@@ -342,13 +352,26 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_w
                 )
             ),
         ] = False,
+        labels: Annotated[
+            list[str] | None,
+            Field(
+                description=(
+                    "Optional label (pastille) ids, from crm_mail_label_list: keeps the emails that carry ANY of them. "
+                    "Empty or absent: no filter."
+                ),
+                max_length=PASTILLES_MAX,
+            ),
+        ] = None,
     ) -> dict[str, Any]:
         appel = appel_courant()
+        # `CRM-155` : refusé par l'outil avant tout appel quand un identifiant est mal formé (§9.3).
+        filtre = pastilles_du_filtre(labels)
         # Ordre total, terminé par `id` : deux messages reçus dans la même milliseconde ne changent pas de place d'une
         # page à l'autre (décision 185).
         parametres = {
             "card_id": f"eq.{card_id}",
-            "select": COLONNES_FIL,
+            # `CRM-155` : les pastilles de chaque message, embarquées ; le filtre, sous son propre alias.
+            "select": f"{COLONNES_FIL},{EMBARQUEMENT_PASTILLES}" + ("" if filtre is None else f",{EMBARQUEMENT_FILTRE}"),
             "order": "received_at.asc,id.asc",
             "limit": str(limit),
             "offset": str(offset),
@@ -356,9 +379,13 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_w
         if only_me:
             # `CRM-139` : la colonne calculée de la base, sous les droits de la personne (§27.2) ; rien n'est filtré ici.
             parametres["concerns_me"] = "is.true"
+        if filtre is not None:
+            # `CRM-155` (§31.12.2) : l'une des pastilles, POSÉE ; PostgREST rend une ligne par message.
+            parametres["filtre_pastille.label_id"] = f"in.({','.join(filtre)})"
+            parametres["filtre_pastille.applied"] = "is.true"
         lignes = _lignes(await crm.lire(appel.jeton, "mail_messages", parametres), "card", card_id)
         resultat: dict[str, Any] = {
-            "messages": [message_lu(m) for m in lignes],
+            "messages": [{**message_lu(m), "labels": posees_lues(m.get("pastilles") or [])} for m in lignes],
             "note": "Read an attachment whose status is available with crm_mail_attachment_get.",
             "limit": limit,
             "offset": offset,
@@ -381,7 +408,8 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_w
             "Lists the emails filed in an affaire (card), oldest first: direction, dates, sender, recipients, subject, a "
             "short excerpt, its attachments (id, file name, type, size and status — never their content) and whether the "
             "person has read it in the inbox (read; reading here does not mark it). only_me keeps the emails addressed to "
-            "or sent by one of the person's personal sending addresses. Read one in full with crm_mail_get, and an "
+            "or sent by one of the person's personal sending addresses. labels keeps the emails that carry any of the given "
+            "labels (pastilles); each email returns the labels it carries. Read one in full with crm_mail_get, and an "
             "available attachment with crm_mail_attachment_get."
         ),
     )
