@@ -9299,3 +9299,20 @@ notifications, pas dans le résumé.
 organisation, avec un lien vers sa fiche ? Si oui, une tranche de `CRM-153`, ou une unité à part, révisera la fonction du
 résumé et ses preuves.
 
+### INC-362 — la cellule « Nom » de la liste devait porter deux lignes ; à 17 %, trois catégories en font jusqu'à quatre
+**Ouverte le 2026-11-18.** *Relevée par la session 4891a451 (p2enjoy-crm-ed) en regardant les captures de `CRM-153` T4
+(`docs/captures/CRM-153/liste-categories-1280.jpg`, `liste-filtre-categories-1440.jpg`).*
+
+**Le constat.** `docs/DESIGN_SYSTEM.md` §5.107 (décision 942) pose les catégories sous le nom, trois au plus puis « +n »,
+la cellule « Nom » portant **deux lignes**. Le partage des colonnes de la décision 940 (§5.105) donne à « Nom » 17 % de la
+largeur, soit environ 170 px à 1280 px : trois pilules n'y tiennent pas sur une ligne, et la ligne `flex-wrap` les empile
+— jusqu'à quatre lignes pour une organisation qui porte trois catégories et un « +n ». Le tableau tient toujours dans son
+cadre, de 900 à 1440 px, et rien n'est tronqué ni perdu ; seule la hauteur de la rangée grandit.
+
+**Ce qui est fait.** Rien de plus que la règle écrite : les pilules passent à la ligne, aucune colonne n'est changée.
+L'écart est nommé au §5.107.
+
+**L'arbitrage demandé au responsable.** Garder ce repli (la rangée grandit), ou élargir « Nom » au détriment d'une autre
+colonne — par exemple « Domaine et site web », dont les valeurs se tronquent avec leur `title` — ce qui révise le partage
+de la décision 940 ?
+

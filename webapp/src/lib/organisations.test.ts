@@ -5,6 +5,9 @@
 // @verifies CRM-152 (docs/BACKLOG.md) — tranche T2 : l'adresse lue et écrite (le défaut jamais écrit, une valeur inconnue
 //           repliée, un track mal formé ignoré), les arguments de `organization_list`, la page et ses tracks en deux appels
 //           (docs/SPEC-organisations.md §8.1 à §8.3 ; docs/JOURNAL.md décision 936)
+// @verifies CRM-153 (docs/BACKLOG.md) — tranche T4 : la clé `categories` de l'adresse, l'argument `p_category_ids`, et les
+//           catégories de la page en un troisième appel, groupées et projetées (docs/SPEC-organisations.md §9.1, §9.3).
+//           Les objets de paramètres et les comptes d'appels ci-dessous sont RÉVISÉS le 2026-11-18 pour la clé nouvelle.
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -83,15 +86,15 @@ describe('l’adresse de l’onglet (§8.3)', () => {
 
 	it('lit chaque clé ; une valeur inconnue est repliée, un track mal formé ou répété ignoré', () => {
 		const lu = lireParametresOrganisations(new URLSearchParams(
-			`q=%20vertigo%20&tracks=${T1},pas-un-uuid,${T2.toUpperCase()},${T1}&recettes=avec&tri=contacts&sens=desc`))
-		expect(lu).toEqual({ recherche: 'vertigo', tracks: [T1, T2], recettes: 'avec', tri: 'contacts', sens: 'desc' })
+			`q=%20vertigo%20&tracks=${T1},pas-un-uuid,${T2.toUpperCase()},${T1}&categories=${T2},faux,${T2}&recettes=avec&tri=contacts&sens=desc`))
+		expect(lu).toEqual({ recherche: 'vertigo', tracks: [T1, T2], categories: [T2], recettes: 'avec', tri: 'contacts', sens: 'desc' })
 		expect(lireParametresOrganisations(new URLSearchParams('recettes=peut-etre&tri=recettes&sens=haut'))).toEqual(
 			PARAMETRES_ORGANISATIONS_PAR_DEFAUT)
 	})
 
 	it('le défaut n’est jamais écrit ; les clés étrangères sont gardées ; l’aller-retour est fidèle', () => {
 		expect(ecrireParametresOrganisations(PARAMETRES_ORGANISATIONS_PAR_DEFAUT).toString()).toBe('')
-		const parametres = { recherche: 'lumen', tracks: [T1, T2], recettes: 'sans', tri: 'contacts', sens: 'desc' } as const
+		const parametres = { recherche: 'lumen', tracks: [T1, T2], categories: [T2], recettes: 'sans', tri: 'contacts', sens: 'desc' } as const
 		const ecrite = ecrireParametresOrganisations(parametres, new URLSearchParams('autre=1&q=ancienne'))
 		expect(ecrite.get('autre')).toBe('1')
 		expect(ecrite.getAll('q')).toEqual(['lumen'])
@@ -104,7 +107,8 @@ describe('l’adresse de l’onglet (§8.3)', () => {
 		expect(filtresOrganisationsPoses({ ...PARAMETRES_ORGANISATIONS_PAR_DEFAUT, recherche: 'a' })).toBe(true)
 		expect(filtresOrganisationsPoses({ ...PARAMETRES_ORGANISATIONS_PAR_DEFAUT, tracks: [T1] })).toBe(true)
 		expect(filtresOrganisationsPoses({ ...PARAMETRES_ORGANISATIONS_PAR_DEFAUT, recettes: 'avec' })).toBe(true)
-		expect(sansFiltresOrganisations({ recherche: 'a', tracks: [T1], recettes: 'avec', tri: 'contacts', sens: 'desc' })).toEqual(
+		expect(filtresOrganisationsPoses({ ...PARAMETRES_ORGANISATIONS_PAR_DEFAUT, categories: [T2] })).toBe(true)
+		expect(sansFiltresOrganisations({ recherche: 'a', tracks: [T1], categories: [T2], recettes: 'avec', tri: 'contacts', sens: 'desc' })).toEqual(
 			{ ...PARAMETRES_ORGANISATIONS_PAR_DEFAUT, tri: 'contacts', sens: 'desc' })
 	})
 })
@@ -112,18 +116,21 @@ describe('l’adresse de l’onglet (§8.3)', () => {
 describe('les arguments de `organization_list` (§8.2)', () => {
 	it('le défaut : tout, par nom ascendant, cinquante à partir du décalage', () => {
 		expect(argumentsListeOrganisations('ws', PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 50)).toEqual({
-			p_workspace_id: 'ws', p_search: undefined, p_track_ids: undefined, p_revenues: 'all', p_sort: 'name',
+			p_workspace_id: 'ws', p_search: undefined, p_track_ids: undefined, p_category_ids: undefined, p_revenues: 'all', p_sort: 'name',
 			p_descending: false, p_limit: 50, p_offset: 50,
 		})
 	})
 	it('chaque filtre et le tri traduits dans les valeurs de la base', () => {
-		expect(argumentsListeOrganisations('ws', { recherche: ' 100% ', tracks: [T1], recettes: 'sans', tri: 'contacts', sens: 'desc' }, 0))
-			.toMatchObject({ p_search: '100%', p_track_ids: [T1], p_revenues: 'without', p_sort: 'contacts', p_descending: true })
+		expect(argumentsListeOrganisations('ws', { recherche: ' 100% ', tracks: [T1], categories: [T2], recettes: 'sans', tri: 'contacts', sens: 'desc' }, 0))
+			.toMatchObject({ p_search: '100%', p_track_ids: [T1], p_category_ids: [T2], p_revenues: 'without', p_sort: 'contacts', p_descending: true })
 		expect(argumentsListeOrganisations('ws', { ...PARAMETRES_ORGANISATIONS_PAR_DEFAUT, recettes: 'avec' }, 0).p_revenues).toBe('with')
 	})
 })
 
-/** Un client dont `rpc` répond selon la fonction appelée, et qui garde chaque appel. */
+/**
+ * Un client dont `rpc` répond selon la fonction appelée, et qui garde chaque appel. *Révisé le 2026-11-18 (`CRM-153` T4)* :
+ * la lecture des catégories passe par `from('organization_category_links')`, notée sous ce nom, avec ses identifiants.
+ */
 function doubleRpc(reponses: Record<string, Reponse>) {
 	const appels: [string, unknown][] = []
 	const client = {
@@ -132,6 +139,15 @@ function doubleRpc(reponses: Record<string, Reponse>) {
 			const r = reponses[nom] ?? { data: [] }
 			return Promise.resolve({ data: r.data ?? null, error: r.error ?? null, status: r.status ?? 200 })
 		},
+		from: (table: string) => ({
+			select: () => ({
+				in: (_colonne: string, ids: unknown) => {
+					appels.push([table, ids])
+					const r = reponses[table] ?? { data: [] }
+					return Promise.resolve({ data: r.data ?? null, error: r.error ?? null, status: r.status ?? 200 })
+				},
+			}),
+		}),
 	} as unknown as ClientCrm
 	return { client, appels }
 }
@@ -141,7 +157,7 @@ const LIGNE = (id: string, name: string, extra: object = {}) => ({
 })
 
 describe('lirePageOrganisations', () => {
-	it('deux appels, pas un par ligne : la page, puis les tracks de ses organisations, groupés dans l’ordre rendu', async () => {
+	it('trois appels, pas un par ligne : la page, puis les tracks et les catégories de ses organisations', async () => {
 		const { client, appels } = doubleRpc({
 			organization_list: { data: [LIGNE('o1', 'Atelier Lumen', { has_revenues: true }), LIGNE('o2', 'Comptoir Vasseur')] },
 			organization_tracks: { data: [
@@ -150,13 +166,31 @@ describe('lirePageOrganisations', () => {
 			] },
 		})
 		const etat = await lirePageOrganisations(client, 'ws', PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)
-		expect(appels.map(([nom]) => nom)).toEqual(['organization_list', 'organization_tracks'])
+		expect(appels.map(([nom]) => nom)).toEqual(['organization_list', 'organization_tracks', 'organization_category_links'])
 		expect(appels[1]?.[1]).toEqual({ p_organization_ids: ['o1', 'o2'] })
+		expect(appels[2]?.[1]).toEqual(['o1', 'o2'])
 		expect(etat).toMatchObject({ statut: 'pret', donnees: { total: 132 } })
 		if (etat.statut !== 'pret') throw new Error('page attendue')
 		expect(etat.donnees.organisations.map((o) => [o.name, o.aRecettes, o.tracks.map((t) => t.slug)])).toEqual([
 			['Atelier Lumen', true, ['conseil-ia', 'formation']],
 			['Comptoir Vasseur', false, []],
+		])
+	})
+
+	it('les catégories de chaque organisation, groupées, actives puis archivées, chacune par nom', async () => {
+		const { client } = doubleRpc({
+			organization_list: { data: [LIGNE('o1', 'Atelier Lumen'), LIGNE('o2', 'Comptoir Vasseur')] },
+			organization_category_links: { data: [
+				{ organization_id: 'o1', categorie: { id: 'c3', name: 'Ancien client', color: 'neutral', archived_at: '2026-11-18T00:00:00Z' } },
+				{ organization_id: 'o1', categorie: { id: 'c2', name: 'Partenaire', color: 'success', archived_at: null } },
+				{ organization_id: 'o1', categorie: { id: 'c1', name: 'Client', color: 'brand', archived_at: null } },
+			] },
+		})
+		const etat = await lirePageOrganisations(client, 'ws', PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)
+		if (etat.statut !== 'pret') throw new Error('page attendue')
+		expect(etat.donnees.organisations.map((o) => o.categories.map((c) => c.nom))).toEqual([
+			['Client', 'Partenaire', 'Ancien client'],
+			[],
 		])
 	})
 

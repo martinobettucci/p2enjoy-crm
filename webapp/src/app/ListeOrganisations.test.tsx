@@ -11,6 +11,11 @@
 //           « Afficher plus », « 2 sur 3 », l'annonce, le focus, l'échec et sa reprise ; l'adresse lue et écrite, un track
 //           inconnu replié ; une relecture qui garde les lignes ; le vide sous les filtres (docs/SPEC-organisations.md
 //           §8.2, §8.3 ; docs/DESIGN_SYSTEM.md §5.105 ; docs/JOURNAL.md décision 936)
+// @verifies CRM-153 (docs/BACKLOG.md) — tranche T4 : les catégories sous le nom (trois au plus, puis « +n » qui énumère
+//           les autres) ; le filtre « Catégories » (rendu seulement avec un catalogue, cocher filtre aussitôt, `categories=`
+//           dans l'adresse, l'archivée suffixée, une catégorie inconnue retirée) ; un seul panneau à la fois
+//           (docs/SPEC-organisations.md §9.3 ; docs/DESIGN_SYSTEM.md §5.107 ; décision 942). Le double est RÉVISÉ le
+//           2026-11-18 : il sert les poses (`.in()`) et le catalogue des catégories.
 
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -57,13 +62,15 @@ function double({
 	insertion = { data: [{ id: 'neuve' }], status: 201 } as Reponse,
 	totaux = [{ data: [TOTAL_SOGEXIA] }] as (Reponse | 'jamais')[],
 	tracksDe = { o2: [CONSEIL], o3: [CONSEIL, FORMATION] } as Record<string, string[]>,
+	catalogue = [] as readonly { id: string; name: string; color: string; archived_at: string | null }[],
+	categoriesDe = {} as Record<string, string[]>,
 } = {}) {
 	const ecritures: unknown[] = []
 	const appelsTotaux: unknown[] = []
 	const appelsListe: Args[] = []
 	const chaine = (r: Reponse) => {
 		const c: Record<string, unknown> = {
-			select: () => c, order: () => c, eq: () => c, is: () => c,
+			select: () => c, order: () => c, eq: () => c, is: () => c, in: () => c,
 			then: (resoudre: (v: unknown) => unknown) =>
 				Promise.resolve({ data: r.data ?? null, error: r.error ?? null, status: r.status ?? 200 }).then(resoudre),
 		}
@@ -76,7 +83,19 @@ function double({
 	const client = {
 		from: (table: string) => ({
 			select: () => chaine(
-				table === 'workspaces' ? { data: [{ id: 'ws', name: 'P2Enjoy', slug: 'p2enjoy' }] } : table === 'tracks' ? { data: TRACKS } : { data: [] },
+				table === 'workspaces'
+					? { data: [{ id: 'ws', name: 'P2Enjoy', slug: 'p2enjoy' }] }
+					: table === 'tracks'
+						? { data: TRACKS }
+						: table === 'organization_categories'
+							? { data: catalogue }
+							: table === 'organization_category_links'
+								? {
+										data: Object.entries(categoriesDe).flatMap(([o, ids]) =>
+											ids.map((id) => ({ organization_id: o, categorie: catalogue.find((c) => c.id === id) ?? null })),
+										),
+									}
+								: { data: [] },
 			),
 			insert: (charge: unknown) => { ecritures.push(charge); return chaine(insertion) },
 		}),
@@ -350,5 +369,70 @@ describe('l’onglet « Organisations » (docs/DESIGN_SYSTEM.md §5.64, §5.105)
 		expect((commande as HTMLButtonElement).disabled).toBe(true)
 		const motif = commande.getAttribute('aria-describedby')
 		expect(document.getElementById(motif ?? '')?.textContent).toBe(fr['rights.readonly.edition'])
+	})
+})
+
+const CAT = (n: number) => `5eed0000-0000-4000-8000-0000000001${String(n).padStart(2, '0')}`
+const CATALOGUE = [
+	{ id: CAT(1), name: 'Client', color: 'brand', archived_at: null },
+	{ id: CAT(2), name: 'Fournisseur', color: 'accent', archived_at: null },
+	{ id: CAT(3), name: 'Partenaire', color: 'success', archived_at: null },
+	{ id: CAT(4), name: 'Prospect', color: 'neutral', archived_at: null },
+	{ id: CAT(5), name: 'Ancien client', color: 'danger', archived_at: '2026-11-18T00:00:00Z' },
+]
+
+describe('les catégories dans la liste (`CRM-153` T4, docs/DESIGN_SYSTEM.md §5.107)', () => {
+	it('sous le nom : trois pilules au plus, puis « +n » qui énumère les autres ; sans catégorie, aucune ligne', async () => {
+		monter(double({ catalogue: CATALOGUE, categoriesDe: { o2: [CAT(5), CAT(4), CAT(3), CAT(2), CAT(1)] } }).client)
+		const [comptoir, sogexia] = await screen.findAllByTestId('ligne-organisation')
+		expect(within(comptoir!).queryByTestId('categories-sous-nom')).toBeNull()
+		const liste = within(sogexia!).getByTestId('categories-sous-nom')
+		expect(within(liste).getAllByTestId('pastille-etiquette').map((p) => p.textContent)).toEqual(['Client', 'Fournisseur', 'Partenaire'])
+		const reste = within(liste).getByTestId('pastille-etiquettes-reste')
+		expect(reste.textContent).toBe('+2')
+		expect(reste.getAttribute('aria-label')).toBe('2 autres catégories : Prospect, Ancien client')
+		// Le nom reste le premier lien de la cellule, toujours tronqué en ellipse.
+		expect(within(sogexia!).getByTestId('lien-fiche-organisation').parentElement!.className).toContain('truncate')
+	})
+
+	it('le filtre n’est pas rendu sans catalogue ; avec, cocher filtre aussitôt et l’écrit dans l’adresse', async () => {
+		monter(double().client)
+		await screen.findAllByTestId('ligne-organisation')
+		expect(screen.queryByTestId('ouvrir-filtre-categories')).toBeNull()
+		cleanup()
+		const { client, appelsListe } = double({ catalogue: CATALOGUE })
+		monter(client)
+		const bouton = await screen.findByTestId('ouvrir-filtre-categories')
+		await userEvent.click(bouton)
+		const panneau = screen.getByTestId('panneau-filtre-categories')
+		expect(within(panneau).getAllByRole('checkbox').map((c) => c.closest('label')!.textContent)).toEqual([
+			'Client', 'Fournisseur', 'Partenaire', 'Prospect', 'Ancien client (archivée)',
+		])
+		await userEvent.click(within(panneau).getByRole('checkbox', { name: 'Ancien client (archivée)' }))
+		await waitFor(() => expect(derniers(appelsListe)['p_category_ids']).toEqual([CAT(5)]))
+		expect(adresse().get('categories')).toBe(CAT(5))
+		expect(bouton.textContent).toBe('Catégories (1)')
+		await userEvent.keyboard('{Escape}')
+		expect(screen.queryByTestId('panneau-filtre-categories')).toBeNull()
+		expect(document.activeElement).toBe(bouton)
+	})
+
+	it('un seul panneau à la fois : ouvrir « Catégories » replie « Tracks »', async () => {
+		monter(double({ catalogue: CATALOGUE }).client)
+		await userEvent.click(await screen.findByTestId('ouvrir-filtre-tracks'))
+		expect(screen.getByTestId('panneau-filtre-tracks')).toBeTruthy()
+		await userEvent.click(screen.getByTestId('ouvrir-filtre-categories'))
+		expect(screen.queryByTestId('panneau-filtre-tracks')).toBeNull()
+		expect(screen.getByTestId('panneau-filtre-categories')).toBeTruthy()
+	})
+
+	it('l’adresse chargée pose le filtre ; une catégorie inconnue en est retirée, l’archivée gardée', async () => {
+		const inconnue = '5eed0000-0000-4000-8000-0000000009ff'
+		const { client, appelsListe } = double({ catalogue: CATALOGUE })
+		monter(client, { adresse: `/contacts/organisations?categories=${CAT(5)},${inconnue}` })
+		await screen.findAllByTestId('ligne-organisation')
+		await waitFor(() => expect(adresse().get('categories')).toBe(CAT(5)))
+		await waitFor(() => expect(derniers(appelsListe)['p_category_ids']).toEqual([CAT(5)]))
+		expect(screen.getByTestId('ouvrir-filtre-categories').textContent).toBe('Catégories (1)')
 	})
 })

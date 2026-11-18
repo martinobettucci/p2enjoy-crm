@@ -4549,6 +4549,16 @@ export const fr = {
 	'notifications.mention.organization': '{auteur} vous a mentionné à propos de {organisation}',
 	'notifications.mention.organization.anonymous': 'Vous avez été mentionné à propos de {organisation}',
 	'notifications.item.openOrganization': 'Ouvrir la fiche de {organisation}',
+	// CRM-153 T4 — la liste : les catégories sous le nom, le filtre « Catégories » (docs/DESIGN_SYSTEM.md §5.107).
+	'organizations.categories.aria': 'Catégories',
+	'organizations.categories.more.aria': '{n} autres catégories : {noms}',
+	'organizations.categories.more.aria.one': 'Une autre catégorie : {noms}',
+	'organizations.filter.categories': 'Catégories',
+	'organizations.filter.categories.count': 'Catégories ({nombre})',
+	'organizations.filter.categories.legend': 'Organisations qui portent l’une de ces catégories',
+	'organizations.filter.categories.loading': 'Chargement des catégories…',
+	'organizations.filter.categories.error': 'Les catégories n’ont pas pu être lues.',
+	'organizations.filter.categories.archived': '{nom} (archivée)',
 	// CRM-149 T3 — Réglages ▸ Prompts du connecteur (docs/SPEC-mcp.md §17.7 ; docs/DESIGN_SYSTEM.md §5.104).
 	'admin.settings.index.mcpPrompts': 'Prompts du connecteur',
 	'admin.settings.index.mcpPrompts.body':

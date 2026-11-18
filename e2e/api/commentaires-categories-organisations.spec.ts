@@ -62,10 +62,17 @@ function enTetes(profil: Profil, retour = true): Record<string, string> {
 	}
 }
 
+/** Le premier élément d'une réponse, ou un échec qui le dit : une liste vide n'est jamais lue comme `undefined`. */
+function premier<T>(liste: readonly T[]): T {
+	const tete = liste[0]
+	if (tete === undefined) throw new Error('réponse vide : une ligne était attendue')
+	return tete
+}
+
 async function vertigo(request: APIRequestContext): Promise<string> {
 	const r = await request.get(`${URL_API}/rest/v1/organizations?select=id&name=eq.Vertigo%20Conseil`,
 		{ headers: enTetesAuthentifies(jetons.admin) })
-	return ((await r.json()) as { id: string }[])[0].id
+	return premier((await r.json()) as { id: string }[]).id
 }
 
 async function creerCategorie(request: APIRequestContext, nom: string, profil: Profil = 'admin') {
@@ -91,7 +98,7 @@ async function commenter(request: APIRequestContext, profil: Profil, organisatio
 test('le catalogue : l\'administratrice crée et archive ; le business developer et la lectrice ne le touchent pas', async ({ request }) => {
 	const cree = await creerCategorie(request, `${PREFIXE} Partenaire`)
 	expect(cree.status()).toBe(201)
-	const [categorie] = (await cree.json()) as { id: string; created_by: string }[]
+	const categorie = premier((await cree.json()) as { id: string; created_by: string }[])
 	expect(categorie.created_by).toBe(CAMILLE)
 
 	expect((await creerCategorie(request, `${PREFIXE} partenaire`)).status(), 'unique sans casse').toBe(409)
@@ -112,7 +119,7 @@ test('le catalogue : l\'administratrice crée et archive ; le business developer
 	const archive = await request.patch(`${URL_API}/rest/v1/organization_categories?id=eq.${categorie.id}`, {
 		headers: enTetes('admin'), data: { archived_at: '2000-01-01T00:00:00Z' },
 	})
-	const [archivee] = (await archive.json()) as { archived_at: string }[]
+	const archivee = premier((await archive.json()) as { archived_at: string }[])
 	expect(new Date(archivee.archived_at).getFullYear(), 'l\'heure d\'archivage est celle de la base').toBeGreaterThan(2000)
 	const supprime = await request.delete(`${URL_API}/rest/v1/organization_categories?id=eq.${categorie.id}`,
 		{ headers: enTetes('admin') })
@@ -121,8 +128,8 @@ test('le catalogue : l\'administratrice crée et archive ; le business developer
 
 test('la pose : le business developer pose et retire, la lectrice non ; une archivée ne se pose plus mais filtre', async ({ request }) => {
 	const organisation = await vertigo(request)
-	const [active] = (await (await creerCategorie(request, `${PREFIXE} Active`)).json()) as { id: string }[]
-	const [ancienne] = (await (await creerCategorie(request, `${PREFIXE} Ancienne`)).json()) as { id: string }[]
+	const active = premier((await (await creerCategorie(request, `${PREFIXE} Active`)).json()) as { id: string }[])
+	const ancienne = premier((await (await creerCategorie(request, `${PREFIXE} Ancienne`)).json()) as { id: string }[])
 
 	expect((await poser(request, 'viewer', organisation, active.id)).status(), 'la lectrice ne pose pas').toBe(403)
 	expect((await poser(request, 'bizdev', organisation, active.id)).status()).toBe(201)
@@ -169,7 +176,7 @@ test('le fil : commenter, mentionner, notifier ; la lectrice lit sans écrire ; 
 
 	const r = await commenter(request, 'bizdev', organisation, 'Point avec la direction')
 	expect(r.status()).toBe(201)
-	const [commentaire] = (await r.json()) as { id: string; author_id: string; workspace_id: string }[]
+	const commentaire = premier((await r.json()) as { id: string; author_id: string; workspace_id: string }[])
 	expect([commentaire.author_id, commentaire.workspace_id]).toEqual([DRISS, ESPACE])
 
 	const mention = await request.post(`${URL_API}/rest/v1/organization_comment_mentions`, {
@@ -187,7 +194,7 @@ test('le fil : commenter, mentionner, notifier ; la lectrice lit sans écrire ; 
 		{ headers: enTetesAuthentifies(jetons[profil]) })).json()) as {
 		id: string; type: string; subject_card_id: string | null; subject_organization_id: string; payload: { author_id: string }
 	}[]
-	const [notification] = await boite('viewer')
+	const notification = premier(await boite('viewer'))
 	expect(notification).toMatchObject({ type: 'mention', subject_card_id: null, subject_organization_id: organisation,
 		payload: { author_id: DRISS } })
 	expect(await boite('bizdev'), 'l\'auteur qui se mentionne n\'est pas notifié').toHaveLength(0)
@@ -208,7 +215,7 @@ test('le fil : commenter, mentionner, notifier ; la lectrice lit sans écrire ; 
 	const modere = await request.patch(`${URL_API}/rest/v1/organization_comments?id=eq.${commentaire.id}`, {
 		headers: enTetes('admin'), data: { deleted_at: new Date().toISOString() },
 	})
-	const [tombe] = (await modere.json()) as { body: string; deleted_by: string }[]
+	const tombe = premier((await modere.json()) as { body: string; deleted_by: string }[])
 	expect(tombe).toMatchObject({ body: '', deleted_by: CAMILLE })
 	const apres = await request.patch(`${URL_API}/rest/v1/organization_comments?id=eq.${commentaire.id}`, {
 		headers: enTetes('bizdev'), data: { body: `${PREFIXE} ressuscité` },

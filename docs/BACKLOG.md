@@ -19932,7 +19932,15 @@ non-régression du tableau à 1280 px ; connecteur (pytest, intégration, `verif
       quand une archivée décochée quittait le panneau. Commentaires, gestes, mentions, notifications, contacts et
       organisations rejoués : 120/121, un échec intermittent de `mentions-composeur` (« le compte survit au repli »),
       12/12 au passage suivant. Captures `docs/captures/CRM-153/fiche-*` observées.
-- [ ] **T4 — la liste** : les catégories sous le nom, le filtre, l'adresse ; unitaires ; E2E ; captures.
+- [x] **T4 — la liste** : les catégories sous le nom, le filtre, l'adresse ; unitaires ; E2E ; captures. *Faite le
+      2026-11-18* : `lib/organisations.ts` (la clé `categories`, `p_category_ids`, les catégories de la page en un troisième
+      appel), `ListeOrganisations.tsx` (trois pilules sous le nom puis « +n », le filtre « Catégories » après « Tracks », un
+      seul panneau à la fois). Unitaires 24 + 23, `organisations.test.ts` et `ListeOrganisations.test.tsx` révisés et
+      datés (la clé nouvelle, le double qui sert les poses), rouge sous mutation (le plafond de trois). E2E
+      `e2e/ui/organisations-categories-liste.spec.ts` 2/2 — clavier, adresse, archivée qui filtre, 900 à 1440 px dont
+      1280 — avec `organisations-recherche`, `organisations` et `contacts` : 77/77. Captures `liste-*` observées ; INC-362
+      ouvert (la rangée grandit au-delà de deux lignes). *Au passage* : `e2e/api/commentaires-categories-organisations.spec.ts`
+      (T1) ne passait pas le contrôle des types de la racine (27 erreurs, signalées par c7) — corrigé par `premier()`, 3/3.
 - [ ] **T5 — connecteur** ; pytest, intégration, `verify-mcp.sh`.
 - [ ] **T6 — seed, manuel, contrat** ; puis `[P]`.
 

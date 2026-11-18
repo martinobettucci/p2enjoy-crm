@@ -8,7 +8,15 @@
 // Ce module ne rend rien : il lit, écrit et traduit. La normalisation de la saisie et le classement des refus y sont
 // vérifiables sans navigateur.
 
+// @spec CRM-153 (docs/BACKLOG.md) — tranche T4 : les catégories de chaque organisation d'une page (un appel de plus, comme
+//       les tracks), le filtre `categories` de l'adresse et son argument `p_category_ids` (docs/SPEC-organisations.md §9.1,
+//       §9.3 ; docs/DESIGN_SYSTEM.md §5.107 ; décision 942)
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
+import {
+	projeterCategoriesOrganisations,
+	type CategorieOrganisation,
+	type CategorieOrganisationLue,
+} from './categories-organisations'
 import type { ClientCrm } from './supabase'
 
 // @spec CRM-152 (docs/BACKLOG.md) — tranche T2 : la liste lue en base, page par page (`organization_list`), et les tracks de
@@ -33,6 +41,8 @@ export type OrganisationListee = {
 	readonly contacts: number
 	readonly aRecettes: boolean
 	readonly tracks: readonly TrackDOrganisation[]
+	/** `CRM-153` T4 : ses catégories, actives puis archivées, chacune dans l'ordre du nom. */
+	readonly categories: readonly CategorieOrganisation[]
 }
 
 export type FiltreRecettes = 'toutes' | 'avec' | 'sans'
@@ -43,6 +53,8 @@ export type SensTriOrganisations = 'asc' | 'desc'
 export type ParametresOrganisations = {
 	readonly recherche: string
 	readonly tracks: readonly string[]
+	/** `CRM-153` T4 : l'organisation porte l'une de ces catégories, archivées comprises (§9.1). */
+	readonly categories: readonly string[]
 	readonly recettes: FiltreRecettes
 	readonly tri: TriOrganisations
 	readonly sens: SensTriOrganisations
@@ -51,6 +63,7 @@ export type ParametresOrganisations = {
 export const PARAMETRES_ORGANISATIONS_PAR_DEFAUT: ParametresOrganisations = {
 	recherche: '',
 	tracks: [],
+	categories: [],
 	recettes: 'toutes',
 	tri: 'nom',
 	sens: 'asc',
@@ -60,7 +73,22 @@ export const PARAMETRES_ORGANISATIONS_PAR_DEFAUT: ParametresOrganisations = {
 export const TAILLE_PAGE_ORGANISATIONS = 50
 
 /** Les clés de l'adresse — `/contacts/organisations?q=…&tracks=…&recettes=avec&tri=contacts&sens=desc`. */
-export const CLES_ADRESSE_ORGANISATIONS = { recherche: 'q', tracks: 'tracks', recettes: 'recettes', tri: 'tri', sens: 'sens' } as const
+export const CLES_ADRESSE_ORGANISATIONS = {
+	recherche: 'q',
+	tracks: 'tracks',
+	categories: 'categories',
+	recettes: 'recettes',
+	tri: 'tri',
+	sens: 'sens',
+} as const
+
+/** Une liste d'identifiants de l'adresse, nettoyée : minuscules, forme d'uuid, sans doublon (la règle de `tracks`). */
+function identifiantsDeLAdresse(valeur: string | null): readonly string[] {
+	return (valeur ?? '')
+		.split(',')
+		.map((id) => id.trim().toLowerCase())
+		.filter((id, rang, tous) => FORME_UUID.test(id) && tous.indexOf(id) === rang)
+}
 
 const FORME_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -69,13 +97,10 @@ export function lireParametresOrganisations(adresse: URLSearchParams): Parametre
 	const recettes = adresse.get(CLES_ADRESSE_ORGANISATIONS.recettes)
 	const tri = adresse.get(CLES_ADRESSE_ORGANISATIONS.tri)
 	const sens = adresse.get(CLES_ADRESSE_ORGANISATIONS.sens)
-	const tracks = (adresse.get(CLES_ADRESSE_ORGANISATIONS.tracks) ?? '')
-		.split(',')
-		.map((id) => id.trim().toLowerCase())
-		.filter((id, rang, tous) => FORME_UUID.test(id) && tous.indexOf(id) === rang)
 	return {
 		recherche: (adresse.get(CLES_ADRESSE_ORGANISATIONS.recherche) ?? '').trim(),
-		tracks,
+		tracks: identifiantsDeLAdresse(adresse.get(CLES_ADRESSE_ORGANISATIONS.tracks)),
+		categories: identifiantsDeLAdresse(adresse.get(CLES_ADRESSE_ORGANISATIONS.categories)),
 		recettes: recettes === 'avec' || recettes === 'sans' ? recettes : 'toutes',
 		tri: tri === 'contacts' ? 'contacts' : 'nom',
 		sens: sens === 'desc' ? 'desc' : 'asc',
@@ -95,6 +120,7 @@ export function ecrireParametresOrganisations(
 	const recherche = parametres.recherche.trim()
 	if (recherche !== '') adresse.set(CLES_ADRESSE_ORGANISATIONS.recherche, recherche)
 	if (parametres.tracks.length > 0) adresse.set(CLES_ADRESSE_ORGANISATIONS.tracks, parametres.tracks.join(','))
+	if (parametres.categories.length > 0) adresse.set(CLES_ADRESSE_ORGANISATIONS.categories, parametres.categories.join(','))
 	if (parametres.recettes !== 'toutes') adresse.set(CLES_ADRESSE_ORGANISATIONS.recettes, parametres.recettes)
 	if (parametres.tri !== 'nom') adresse.set(CLES_ADRESSE_ORGANISATIONS.tri, parametres.tri)
 	if (parametres.sens !== 'asc') adresse.set(CLES_ADRESSE_ORGANISATIONS.sens, parametres.sens)
@@ -103,7 +129,12 @@ export function ecrireParametresOrganisations(
 
 /** Un filtre est posé : « Effacer les filtres » paraît. Le tri n'est pas un filtre. */
 export function filtresOrganisationsPoses(parametres: ParametresOrganisations): boolean {
-	return parametres.recherche.trim() !== '' || parametres.tracks.length > 0 || parametres.recettes !== 'toutes'
+	return (
+		parametres.recherche.trim() !== '' ||
+		parametres.tracks.length > 0 ||
+		parametres.categories.length > 0 ||
+		parametres.recettes !== 'toutes'
+	)
 }
 
 /** Les paramètres sans leurs filtres, le tri gardé. */
@@ -126,6 +157,7 @@ export function argumentsListeOrganisations(
 		p_workspace_id: idWorkspace,
 		p_search: recherche === '' ? undefined : recherche,
 		p_track_ids: parametres.tracks.length === 0 ? undefined : [...parametres.tracks],
+		p_category_ids: parametres.categories.length === 0 ? undefined : [...parametres.categories],
 		p_revenues: VALEUR_RECETTES[parametres.recettes],
 		p_sort: VALEUR_TRI[parametres.tri],
 		p_descending: parametres.sens === 'desc',
@@ -170,6 +202,32 @@ async function lireTracksParOrganisation(
 }
 
 /**
+ * `CRM-153` T4 — les catégories de chaque organisation donnée, par leurs poses embarquant le catalogue : un appel, comme
+ * les tracks (§9.1). Chaque groupe est projeté dans l'ordre du catalogue — actives puis archivées, par nom.
+ */
+async function lireCategoriesParOrganisation(
+	client: ClientCrm,
+	ids: readonly string[],
+): Promise<EtatAsync<ReadonlyMap<string, readonly CategorieOrganisation[]>>> {
+	if (ids.length === 0) return pret(new Map())
+	const reponse = await client
+		.from('organization_category_links')
+		.select('organization_id, categorie:organization_categories(id, name, color, archived_at)')
+		.in('organization_id', [...ids])
+	if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
+	const bruts = new Map<string, (CategorieOrganisationLue | null)[]>()
+	for (const ligne of (reponse.data ?? []) as unknown as readonly {
+		readonly organization_id: string
+		readonly categorie: CategorieOrganisationLue | null
+	}[]) {
+		const groupe = bruts.get(ligne.organization_id) ?? []
+		groupe.push(ligne.categorie)
+		bruts.set(ligne.organization_id, groupe)
+	}
+	return pret(new Map([...bruts].map(([id, lignes]) => [id, projeterCategoriesOrganisations(lignes)])))
+}
+
+/**
  * Lit une page de la liste, puis les tracks de ses organisations : DEUX APPELS, PAS UN PAR LIGNE. Le total est celui que
  * la base compte au-delà de la page ; une page vide le rend nul.
  */
@@ -186,6 +244,10 @@ export async function lirePageOrganisations(
 		const tracks = await lireTracksParOrganisation(client, lignes.map((ligne) => ligne.id))
 		if (tracks.statut === 'erreur') return enErreur(tracks.erreur)
 		if (tracks.statut !== 'pret') return enChargement()
+		// `CRM-153` T4 : un troisième appel, les catégories de la page — jamais un par ligne.
+		const categories = await lireCategoriesParOrganisation(client, lignes.map((ligne) => ligne.id))
+		if (categories.statut === 'erreur') return enErreur(categories.erreur)
+		if (categories.statut !== 'pret') return enChargement()
 		return pret({
 			organisations: lignes.map((ligne) => ({
 				id: ligne.id,
@@ -195,6 +257,7 @@ export async function lirePageOrganisations(
 				contacts: ligne.contacts,
 				aRecettes: ligne.has_revenues,
 				tracks: tracks.donnees.get(ligne.id) ?? [],
+				categories: categories.donnees.get(ligne.id) ?? [],
 			})),
 			total: lignes[0]?.total_count ?? 0,
 		})

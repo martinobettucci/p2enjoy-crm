@@ -8743,6 +8743,14 @@ disent que de quoi ils ont l'air. **La grammaire est celle des étiquettes d'une
 - **LE FILTRE « Catégories »** : le bouton et le panneau de cases du filtre « Tracks » (§5.105), après lui ; « Catégories
   ({n}) » quand des cases sont cochées ; les archivées suivent les actives, suffixées « (archivée) ». Il n'est rendu que si
   l'espace a au moins une catégorie, ou qu'un filtre posé par l'adresse doit pouvoir se retirer.
+  *Précisé à l'écriture du code (T4, 2026-11-18, captures `docs/captures/CRM-153/liste-*`)* :
+  - **un seul panneau ouvert à la fois** (§5.28) : ouvrir « Catégories » replie « Tracks », et inversement ; `Échap` rend
+    le focus au bouton du panneau replié ;
+  - **une catégorie inconnue de l'adresse en est retirée**, comme un track inconnu ; une archivée reste et filtre ;
+  - **le nom accessible de « +n » s'accorde par clé** (§10) : « Une autre catégorie : … », « 2 autres catégories : … » ;
+  - **constaté, soumis au responsable (INC-362)** : à 17 % de la largeur (décision 940), trois pilules ne tiennent pas sur
+    une ligne et passent à la ligne — la rangée grandit jusqu'à quatre lignes au lieu de deux. Le tableau tient dans son
+    cadre de 900 à 1440 px, 1280 compris, et rien n'est tronqué.
 - **SUR LA FICHE** : une ligne « Catégories » dans la liste de définitions, après « Tracks », les pilules en `flex-wrap` ;
   aucune, « Aucune catégorie » en 13 px `--color-text-2`. Sous elle, la commande **« Catégories »**, secondaire compacte,
   icône `Tags`, `aria-expanded`, qui ouvre **dans le flux** le panneau du §5.73 : un `fieldset` « Catégories de cette

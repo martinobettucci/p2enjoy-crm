@@ -16,6 +16,10 @@
 // L'écran ne calcule aucun droit : il lit la capacité que la base rend (`edition_permise`) pour éteindre la commande, et
 // traduit le refus de la base si elle survient malgré tout. Il ne filtre ni ne trie rien lui-même : la base le fait.
 
+// @spec CRM-153 (docs/BACKLOG.md) — tranche T4 : les catégories SOUS LE NOM, trois pilules au plus puis « +n » ; le filtre
+//       « Catégories » après « Tracks », le même bouton et le même panneau de cases, `categories=` dans l'adresse
+//       (docs/SPEC-organisations.md §9.3 ; docs/DESIGN_SYSTEM.md §5.107 ; décision 942). Aucune colonne de plus : le
+//       tableau tient toujours dans son cadre (décision 940).
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
@@ -24,6 +28,7 @@ import { LiveRegion } from '../components/ui/LiveRegion'
 import { EtatErreur, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
+import { PastilleEtiquette, PastilleReste } from '../components/ui/PastilleEtiquette'
 import { t, type CleTraduction } from '../i18n'
 import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
 import { motifVisible, proprietesCommande } from '../lib/capacites'
@@ -40,6 +45,7 @@ import {
 	type ParametresOrganisations,
 	type TriOrganisations,
 } from '../lib/organisations'
+import { lireCategoriesOrganisations, type CategorieOrganisation } from '../lib/categories-organisations'
 import { lireTotauxOrganisations, type TotauxParOrganisation } from '../lib/recettes-organisation'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useTracks, type Track } from '../lib/tracks'
@@ -119,6 +125,21 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 	const idWorkspace = espaces.etat.statut === 'pret' ? (espaces.etat.donnees[0]?.id ?? null) : null
 	const cleParametres = JSON.stringify(parametres)
 
+	// `CRM-153` T4 — LE CATALOGUE DES CATÉGORIES, pour le filtre (§5.107) : lu une fois pour l'espace, et relu sur reprise.
+	const [catalogue, setCatalogue] = useState<EtatAsync<readonly CategorieOrganisation[]>>(enChargement)
+	const [tentativeCatalogue, setTentativeCatalogue] = useState(0)
+	useEffect(() => {
+		if (client === null || idWorkspace === null) return
+		let actuel = true
+		setCatalogue(enChargement())
+		void lireCategoriesOrganisations(client, idWorkspace).then((lu) => {
+			if (actuel) setCatalogue(lu)
+		})
+		return () => {
+			actuel = false
+		}
+	}, [client, idWorkspace, tentativeCatalogue])
+
 	const changer = useCallback(
 		(suivants: ParametresOrganisations) => {
 			setAdresse((precedente) => ecrireParametresOrganisations(suivants, precedente), { replace: true })
@@ -159,6 +180,14 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 		const gardes = parametres.tracks.filter((id) => connus.has(id))
 		if (gardes.length !== parametres.tracks.length) changer({ ...parametres, tracks: gardes })
 	}, [tracksEspace.etat, parametres, changer])
+
+	// UNE CATÉGORIE INCONNUE DE L'ADRESSE EST REPLIÉE de même (`CRM-153` T4) ; une archivée reste connue, et filtre (§9.1).
+	useEffect(() => {
+		if (catalogue.statut !== 'pret' || parametres.categories.length === 0) return
+		const connues = new Set(catalogue.donnees.map((categorie) => categorie.id))
+		const gardees = parametres.categories.filter((id) => connues.has(id))
+		if (gardees.length !== parametres.categories.length) changer({ ...parametres, categories: gardees })
+	}, [catalogue, parametres, changer])
 
 	useEffect(() => {
 		if (ouvert || !focusARendre) return
@@ -280,6 +309,8 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 						parametres={parametres}
 						tracks={tracksEspace.etat}
 						onRechargerTracks={tracksEspace.recharger}
+						categories={catalogue}
+						onRechargerCategories={() => setTentativeCatalogue((n) => n + 1)}
 						offrirEffacement={filtre && !videFiltre}
 						onParametres={changer}
 						onEffacer={effacer}
@@ -331,10 +362,15 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 											const noms = organisation.tracks.map((track) => track.name).join(' · ')
 											return (
 												<tr key={organisation.id} data-testid="ligne-organisation" data-organisation={organisation.id} className="border-b border-border hover:bg-hover">
-													<td className={CLASSES_CELLULE} title={organisation.name}>
-														<Link to={cheminOrganisation(organisation.id)} className="text-brand hover:underline" data-testid="lien-fiche-organisation">
-															{organisation.name}
-														</Link>
+													{/* `CRM-153` T4 (§5.107, décision 942) : la cellule « Nom » porte DEUX LIGNES — le nom, toujours
+													    tronqué en ellipse, puis ses catégories ; sans catégorie, aucune ligne vide. */}
+													<td className="px-3 py-1 min-h-[var(--size-target)]">
+														<span className="block truncate" title={organisation.name}>
+															<Link to={cheminOrganisation(organisation.id)} className="text-brand hover:underline" data-testid="lien-fiche-organisation">
+																{organisation.name}
+															</Link>
+														</span>
+														<CategoriesSousNom categories={organisation.categories} />
 													</td>
 													<td className={`${CLASSES_CELLULE} text-text-2`} data-testid="cellule-tracks" {...(noms === '' ? {} : { title: noms })}>
 														{noms}
@@ -453,6 +489,8 @@ function BarreFiltresOrganisations({
 	parametres,
 	tracks,
 	onRechargerTracks,
+	categories,
+	onRechargerCategories,
 	offrirEffacement,
 	onParametres,
 	onEffacer,
@@ -460,6 +498,8 @@ function BarreFiltresOrganisations({
 	readonly parametres: ParametresOrganisations
 	readonly tracks: EtatAsync<readonly Track[]>
 	readonly onRechargerTracks: () => void
+	readonly categories: EtatAsync<readonly CategorieOrganisation[]>
+	readonly onRechargerCategories: () => void
 	readonly offrirEffacement: boolean
 	readonly onParametres: (parametres: ParametresOrganisations) => void
 	readonly onEffacer: () => void
@@ -468,8 +508,12 @@ function BarreFiltresOrganisations({
 	const idAideRecherche = useId()
 	const idRecettes = useId()
 	const idPanneau = useId()
+	const idPanneauCategories = useId()
 	const boutonTracks = useRef<HTMLButtonElement>(null)
-	const [panneauOuvert, setPanneauOuvert] = useState(false)
+	const boutonCategories = useRef<HTMLButtonElement>(null)
+	// UN SEUL PANNEAU OUVERT À LA FOIS (§5.28) : « Tracks » ou « Catégories » (`CRM-153` T4).
+	const [panneau, setPanneau] = useState<'tracks' | 'categories' | null>(null)
+	const panneauOuvert = panneau === 'tracks'
 	const [saisie, setSaisie] = useState(parametres.recherche)
 	const parametresCourants = useRef(parametres)
 	parametresCourants.current = parametres
@@ -481,6 +525,11 @@ function BarreFiltresOrganisations({
 	// remis à son ancienne valeur par React juste après le clic, le temps que la transition aboutisse — la case cochée se
 	// décochait sous la souris.
 	const [tracksCoches, setTracksCoches] = useState<readonly string[]>(parametres.tracks)
+	const [categoriesCochees, setCategoriesCochees] = useState<readonly string[]>(parametres.categories)
+	const cleCategories = parametres.categories.join(',')
+	useEffect(() => {
+		setCategoriesCochees(cleCategories === '' ? [] : cleCategories.split(','))
+	}, [cleCategories])
 	const [recettesChoisies, setRecettesChoisies] = useState<FiltreRecettes>(parametres.recettes)
 	const cleTracks = parametres.tracks.join(',')
 	useEffect(() => {
@@ -507,8 +556,9 @@ function BarreFiltresOrganisations({
 	}, [saisie, onParametres])
 
 	const replier = () => {
-		setPanneauOuvert(false)
-		boutonTracks.current?.focus()
+		const bouton = panneau === 'categories' ? boutonCategories : boutonTracks
+		setPanneau(null)
+		bouton.current?.focus()
 	}
 	const surTouchePanneau = (evenement: KeyboardEvent<HTMLElement>) => {
 		if (evenement.key !== 'Escape') return
@@ -521,6 +571,20 @@ function BarreFiltresOrganisations({
 		onParametres({ ...parametresCourants.current, tracks: suivants })
 	}
 	const coches = tracksCoches.length
+	const basculerCategorie = (id: string, cochee: boolean) => {
+		const suivantes = cochee
+			? [...categoriesCochees.filter((autre) => autre !== id), id]
+			: categoriesCochees.filter((autre) => autre !== id)
+		setCategoriesCochees(suivantes)
+		onParametres({ ...parametresCourants.current, categories: suivantes })
+	}
+	// LE FILTRE N'EST RENDU QUE S'IL A UN OBJET (§5.107) : l'espace porte au moins une catégorie, ou l'adresse en filtre une,
+	// qu'il faut pouvoir retirer. Pendant la lecture du catalogue, il attend ; en erreur, il est rendu, et son panneau le dit.
+	const filtreCategories =
+		parametres.categories.length > 0 ||
+		categories.statut === 'erreur' ||
+		(categories.statut === 'pret' && categories.donnees.length > 0)
+	const cochees = categoriesCochees.length
 
 	return (
 		<div className="flex flex-col gap-3">
@@ -553,13 +617,30 @@ function BarreFiltresOrganisations({
 					data-testid="ouvrir-filtre-tracks"
 					aria-expanded={panneauOuvert}
 					aria-controls={idPanneau}
-					onClick={() => setPanneauOuvert((ouvert) => !ouvert)}
+					onClick={() => setPanneau((ouvert) => (ouvert === 'tracks' ? null : 'tracks'))}
 					onKeyDown={(evenement) => {
 						if (evenement.key === 'Escape' && panneauOuvert) replier()
 					}}
 				>
 					{coches === 0 ? t('organizations.filter.tracks') : t('organizations.filter.tracks.count', { nombre: String(coches) })}
 				</Button>
+
+				{filtreCategories ? (
+					<Button
+						ref={boutonCategories}
+						data-testid="ouvrir-filtre-categories"
+						aria-expanded={panneau === 'categories'}
+						aria-controls={idPanneauCategories}
+						onClick={() => setPanneau((ouvert) => (ouvert === 'categories' ? null : 'categories'))}
+						onKeyDown={(evenement) => {
+							if (evenement.key === 'Escape' && panneau === 'categories') replier()
+						}}
+					>
+						{cochees === 0
+							? t('organizations.filter.categories')
+							: t('organizations.filter.categories.count', { nombre: String(cochees) })}
+					</Button>
+				) : null}
 
 				<div className="flex flex-col gap-1">
 					<label htmlFor={idRecettes} className="text-sm text-text-2">
@@ -630,6 +711,92 @@ function BarreFiltresOrganisations({
 					</fieldset>
 				</div>
 			) : null}
+
+			{panneau === 'categories' ? (
+				<div
+					id={idPanneauCategories}
+					data-testid="panneau-filtre-categories"
+					onKeyDown={surTouchePanneau}
+					className="rounded-md border border-border bg-surface p-4"
+				>
+					<fieldset className="flex flex-col gap-2">
+						<legend className="text-sm text-text-2 mb-2">{t('organizations.filter.categories.legend')}</legend>
+						{categories.statut === 'chargement' ? (
+							<p className="text-sm text-text-2">{t('organizations.filter.categories.loading')}</p>
+						) : categories.statut === 'erreur' ? (
+							<div role="alert" className="flex flex-wrap items-center gap-3 text-sm text-danger">
+								{t('organizations.filter.categories.error')}
+								<Button taille="compacte" variante="discret" onClick={onRechargerCategories}>
+									{t('organizations.filter.tracks.retry')}
+								</Button>
+							</div>
+						) : (
+							// Les actives d'abord, puis les archivées, suffixées « (archivée) » : on retrouve les organisations d'une
+							// catégorie qu'on vient d'archiver (§9.1). Le catalogue est déjà dans cet ordre.
+							<div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(16rem,1fr))]">
+								{categories.donnees.map((categorie) => (
+									<label key={categorie.id} className="flex items-center gap-3 min-h-[var(--size-target)] cursor-pointer">
+										<input
+											type="checkbox"
+											data-testid="case-filtre-categorie"
+											data-categorie={categorie.id}
+											checked={categoriesCochees.includes(categorie.id)}
+											onChange={(evenement) => basculerCategorie(categorie.id, evenement.target.checked)}
+											className="size-6 shrink-0 accent-brand"
+										/>
+										<span aria-hidden="true" className={`size-3 rounded-full shrink-0 ${classesPastille(categorie.couleur)}`} />
+										<span className="truncate">
+											{categorie.archivee
+												? t('organizations.filter.categories.archived', { nom: categorie.nom })
+												: categorie.nom}
+										</span>
+									</label>
+								))}
+							</div>
+						)}
+					</fieldset>
+				</div>
+			) : null}
 		</div>
+	)
+}
+
+/** Le plafond de la ligne des catégories sous le nom (§5.107, la règle de la carte du board, §5.73). */
+const PLAFOND_CATEGORIES = 3
+
+/**
+ * `CRM-153` T4 — les catégories SOUS LE NOM (décision 942) : trois pilules au plus, dans l'ordre du catalogue, puis une
+ * pilule neutre « +n » dont le nom accessible et l'infobulle énumèrent les autres. Aucune catégorie : rien n'est rendu.
+ */
+function CategoriesSousNom({ categories }: { readonly categories: readonly CategorieOrganisation[] }) {
+	if (categories.length === 0) return null
+	const visibles = categories.slice(0, PLAFOND_CATEGORIES)
+	const masquees = categories.slice(PLAFOND_CATEGORIES)
+	const reste = masquees.map((categorie) => categorie.nom).join(', ')
+	return (
+		<ul data-testid="categories-sous-nom" aria-label={t('organizations.categories.aria')} className="flex flex-wrap gap-1 min-w-0 pb-1">
+			{visibles.map((categorie) => (
+				<li key={categorie.id} className="min-w-0">
+					<PastilleEtiquette
+						etiquette={categorie}
+						{...(categorie.archivee ? { nomAccessible: t('orgCategories.pill.archived', { nom: categorie.nom }) } : {})}
+					/>
+				</li>
+			))}
+			{masquees.length === 0 ? null : (
+				<li>
+					<PastilleReste
+						n={masquees.length}
+						noms={reste}
+						// L'accord se fait par clé (§10) : « 1 autres catégories » est faux.
+						nomAccessible={
+							masquees.length === 1
+								? t('organizations.categories.more.aria.one', { noms: reste })
+								: t('organizations.categories.more.aria', { n: String(masquees.length), noms: reste })
+						}
+					/>
+				</li>
+			)}
+		</ul>
 	)
 }

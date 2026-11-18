@@ -62,6 +62,15 @@ d'exécuter le code attendu.
 - Par paquets de 2 000 messages, avec un curseur, sous le délai de 8 s de la base (décision 949). Aucun écran ne
   l'appelle encore (T3).
 
+### `CRM-153` T4 — les catégories dans la liste des organisations
+
+- Sous le nom de chaque organisation, ses catégories : trois au plus, puis « +n », qui nomme les autres
+  (`docs/DESIGN_SYSTEM.md` §5.107, décision 942). Aucune colonne de plus : le tableau tient toujours dans son cadre.
+- Le filtre « Catégories », après « Tracks » : un panneau de cases ; une organisation qui porte l'une des catégories
+  cochées reste. Les catégories archivées filtrent encore. L'adresse porte `categories=`.
+- Preuves : unitaires ; E2E `e2e/ui/organisations-categories-liste.spec.ts` ; captures. INC-362 ouvert (hauteur des
+  rangées). La preuve d'API de T1 passe désormais le contrôle des types de la racine.
+
 ### `CRM-153` T3 — la fiche d'une organisation : ses catégories et son fil de commentaires
 
 - **La ligne « Catégories »**, après « Tracks » : les pilules (une archivée le dit) et la commande « Catégories », qui ouvre
