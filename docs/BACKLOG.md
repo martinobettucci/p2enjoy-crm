@@ -20066,6 +20066,9 @@ courte qui rappelle le nombre de fils et de messages, sans la suspension d'une h
 **Arbitrages des ajouts** (décision 947) : transfèrent les **administrateurs et business developers** ; le destinataire
 voit **exactement les mails transférés** (la lecture lui est ouverte en base), pas les réponses à venir ; seul un
 **administrateur bloque** un expéditeur, pour **toutes les boîtes de l'espace**, et le débloque dans les réglages.
+**Grand volume** (décision 949, après mesure : supprimer 5 000 messages prend 8,2 s, au-delà du délai de 8 s) : l'écran
+envoie la sélection **par paquets de 2 000** messages (2 000 fils pour le sommeil), chacun traité en base d'un seul coup,
+avec une barre de progression ; le compte rendu additionne les paquets ; un paquet en échec laisse les précédents faits.
 **Dépend de** : `CRM-155` (les filtres rapides par pastilles, qui ouvrent « Tout sélectionner ») ; la spécification peut
 s'écrire en parallèle, l'écran se coordonne avec la session qui porte `CRM-155`.
 **Spécification** : **écrite le 2026-11-18, avant le code** — `docs/SPEC-mail-subsystem.md` §32 ; `docs/SCHEMA.md`,

@@ -41061,3 +41061,23 @@ valeur mal formée ou d'un autre espace est ignorée, une à une ; le volet s'ou
 fc (`CRM-156`), qui reprend la règle du OU en base pour « Tout sélectionner » et garde la rangée d'action.
 **Conséquences** : `docs/SPEC-mail-subsystem.md` §31.12, `docs/DESIGN_SYSTEM.md` §5.108, `docs/SPEC-mcp.md` §9.2
 *duovicies* révisé ; trois tranches au backlog ; aucune migration.
+
+### décision 949 — `CRM-156` : les actions groupées par paquets de 2 000, après la mesure du délai de 8 s
+
+*2026-11-18, session d5b44a2d (p2enjoy-crm-fc, ex-f8), qui porte `CRM-156` ; arbitrage du responsable (`AskUserQuestion`),
+sur la mesure que la spécification exigeait (`docs/SPEC-mail-subsystem.md` §32.5).*
+**Problème** : la pile coupe toute requête du rôle `authenticated` au-delà de 8 s (`statement_timeout`). Sans plafond
+(décision 946), une très grande sélection pouvait le dépasser.
+**Mesure** (base de développement, 5 000 messages non classés de la boîte de Driss, un seul appel sous son jeton,
+transaction défaite) : compter 1,4 s ; marquer lu 2,8 s ; non lu 3,3 s ; poser une pastille 4,4 s ; réévaluer 4,3 s ;
+endormir 3,7 s et réveiller 3,6 s (5 000 fils) ; classer 7,6 s, reclasser dans la même affaire 6,4 s ; **supprimer
+8,2 s**. Une suppression groupée de plus de 4 800 messages environ échouait donc entière.
+**Solutions envisagées** : (1) des paquets, chacun traité en base d'un seul coup ; (2) un seul appel, avec une limite de
+fait et le message « affinez le filtre » ; (3) allonger le délai de la base pour ces actions, ce qui touche la
+configuration commune et la production.
+**Décision du responsable** : **(1), des paquets de 2 000 messages au plus** — 2 000 fils pour le sommeil —, chacun
+traité en base d'un seul coup ; l'écran enchaîne les paquets avec une **barre de progression**, et le compte rendu
+**additionne** les paquets. Si un paquet échoue, **les précédents restent faits**, et le compte rendu le dit. Aucune limite
+de taille.
+**Conséquences** : la portée gagne un curseur (`after`) et l'action rend le suivant (`next`) ; `docs/SPEC-mail-subsystem.md`
+§32.5 et §32.6 révisés ; la migration de T1 l'écrit avant d'être poussée.

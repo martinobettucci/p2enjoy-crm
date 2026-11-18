@@ -4800,10 +4800,10 @@ description. Mêmes refus que l'action (§32.5, points 1 à 3). L'écran l'appel
 
 ### 32.5 Agir : `public.inbox_bulk_apply(p_scope jsonb, p_action text, p_argument jsonb default '{}')`
 
-`SECURITY DEFINER`, `search_path` vide, `authenticated` seulement. **Une seule transaction** : la portée est calculée une
-fois, puis chaque message — ou chaque fil, pour le sommeil — passe par **la fonction unitaire elle-même**, dans un bloc qui
-capte son refus. Les règles sont donc **exactement** celles de l'action unitaire (décision 944), et non une copie qui
-pourrait diverger.
+`SECURITY DEFINER`, `search_path` vide, `authenticated` seulement. **Un appel traite un paquet** (§32.5 bis), dans une
+seule transaction : la portée est calculée, puis chaque message du paquet — ou chaque fil, pour le sommeil — passe par
+**la fonction unitaire elle-même**, dans un bloc qui capte son refus. Les règles sont donc **exactement** celles de l'action
+unitaire (décision 944), et non une copie qui pourrait diverger.
 
 1. non connecté : `42501 not_authenticated` ;
 2. description mal formée — dossier inconnu, `card_id` absent pour `card`, `message_ids` absent pour `trash`, une valeur
@@ -4815,7 +4815,8 @@ pourrait diverger.
 5. pour chaque élément, la fonction unitaire ; un refus **nommé** est compté sous son code, et l'élément reste tel quel ;
    une erreur **non nommée** (une panne) fait échouer l'appel entier, et **rien n'est écrit** — la transaction est
    défaite ;
-6. **le compte rendu** : `{"threads": n, "messages": m, "done": d, "refused": {"<code>": k, ...}}`.
+6. **le compte rendu du paquet** : `{"threads": n, "messages": m, "done": d, "refused": {"<code>": k, ...}, "next": c}` —
+   `threads` et `messages` comptent le paquet, `next` est le curseur du paquet suivant, nul après le dernier.
 
 | `p_action` | `p_argument` | La fonction unitaire | Ce qui compte comme fait |
 |---|---|---|---|
@@ -4840,9 +4841,27 @@ qui ont au moins un message retenu, et `done` compte des fils. Les autres action
 unitaire, au pluriel (§32.6).
 
 **Aucun plafond** (décision 946) : tous les messages de la portée, quel qu'en soit le nombre. **La limite technique** est le
-délai de 8 secondes que la pile pose sur le rôle `authenticated` (`statement_timeout`). T1 **mesure** le débit de chaque
-action sur une portée de 5 000 messages et l'écrit ici. Si une sélection réaliste le dépasse, l'appel échoue entier (point
-5), l'écran le dit, et la question revient au responsable : elle n'est pas résolue en silence par un découpage côté écran.
+délai de 8 secondes que la pile pose sur le rôle `authenticated` (`statement_timeout`).
+
+### 32.5 bis Les paquets (décision 949)
+
+**La mesure** (T1, base de développement, 5 000 messages, un seul appel sous le jeton de Driss) : compter 1,4 s ; marquer
+lu 2,8 s ; non lu 3,3 s ; poser une pastille 4,4 s ; réévaluer 4,3 s ; endormir 3,7 s et réveiller 3,6 s (5 000 fils) ;
+classer 7,6 s ; **supprimer 8,2 s**, au-delà du délai. Le responsable a choisi les paquets.
+
+- **Un paquet** compte **2 000 messages** au plus, pris dans l'ordre de leur identifiant ; pour le sommeil, **2 000 fils**
+  au plus, pris dans l'ordre de `(workspace_id, thread_key)`. Chaque paquet est traité en base d'un seul coup, en une
+  transaction, sous le délai (supprimer 2 000 messages : environ 3,3 s).
+- **Le curseur** : la description gagne **`after`** — l'identifiant du dernier message traité, ou, pour le sommeil, le
+  couple `[workspace_id, thread_key]` du dernier fil —, et l'appel rend **`next`**, la valeur à passer au paquet suivant,
+  nulle après le dernier. Un curseur d'une mauvaise forme : `22023 invalid_scope`. Le curseur suit l'identifiant, non un
+  rang : un message qu'un paquet a classé ou supprimé quitte la portée sans décaler les suivants.
+- **L'écran** enchaîne les paquets jusqu'à `next` nul, montre **une barre de progression** (messages traités sur le nombre
+  annoncé par `inbox_bulk_count`) et **additionne** les comptes rendus. Un mail arrivé pendant l'opération et qui répond à
+  la portée peut entrer dans un paquet suivant : c'est la portée lue au moment de chaque paquet.
+- **Un paquet en échec** (une panne, ou le délai dépassé) : ce paquet est défait, **les précédents restent faits**, les
+  suivants ne partent pas, et le compte rendu le dit — « Action interrompue : {d} messages traités avant l'arrêt ; le reste
+  n'a pas changé. »
 
 ### 32.6 L'écran de la sélection
 
@@ -4865,7 +4884,8 @@ la barre). Le comportement :
   il y en a un — l'affaire (le sélecteur cherchable de `CRM-137`), l'échéance du sommeil (les choix usuels du sommeil
   unitaire), la pastille, le membre. **La case « Ne plus demander pendant 1 heure » de `CRM-151` n'y figure pas** : la
   suspension ne vaut pas pour les actions groupées.
-- **Pendant l'appel**, la confirmation est inactive et `aria-busy`. **Le compte rendu** se dit dans une région vivante et
+- **Pendant les appels**, la confirmation est inactive et `aria-busy`, et la barre de progression des paquets (§32.5 bis)
+  dit l'avancement. **Le compte rendu** se dit dans une région vivante et
   sous la barre : « {d} messages classés dans {affaire}. » ; s'il y a des refus, **« {k} refusés : »** suivi de chaque
   motif traduit et de son nombre (« 2 — vous ne pouvez pas écrire dans cette affaire »). Un échec entier dit que **rien
   n'a changé**.
@@ -5007,7 +5027,7 @@ trace propre à démontrer : leurs effets sont ceux des actions unitaires.
 |---|---|
 | pgTAP | la portée : chaque filtre, leur combinaison, les fils, le sommeil, la corbeille, et ce que l'appelant ne voit pas ; `filter_required`, `invalid_scope`, `invalid_action`, `action_not_allowed_here` ; chaque action et son compte rendu ; une sélection mixte (permis et refusés) ; une panne qui défait tout ; le transfert : ses refus dans l'ordre, la lecture ouverte et refermée, `concerns_me`, la notification unique, aucune seconde ; le blocage : réservé à l'administrateur, les reçus mis à la corbeille, la réception bloquée, ni classée ni évaluée ; le déblocage ; les inconnus ; `import_contacts` et sa source |
 | API | sous les vrais jetons : la lectrice refusée pour classer et supprimer, permise pour lu et sommeil ; le business developer refusé sur une affaire qu'il n'écrit pas, dans une sélection mixte ; « tout » sans filtre refusé ; le transfert et son retrait par l'auteur, par le destinataire, refusé à un tiers ; le blocage refusé à un non-administrateur |
-| Mesure | le débit de chaque action sur 5 000 messages, contre le délai de 8 s (§32.5) |
+| Mesure | le débit de chaque action sur 5 000 messages, contre le délai de 8 s — faite en T1 (§32.5 bis) ; un paquet de 2 000 sous le délai |
 | Unitaires | la description de portée tirée de l'adresse et de la sélection ; la barre et ses commandes selon le dossier et les droits ; les comptes rendus et leurs pluriels ; la clé `expediteur` |
 | E2E `ui` | souris et clavier, aux quatre paliers : cocher, « Tout sélectionner » sous un filtre et son absence sans filtre, chaque famille d'action avec sa confirmation et son compte rendu, une sélection mixte, la corbeille ; le filtre par expéditeur ; transférer et retirer ; bloquer avec la double confirmation, débloquer ; créer des contacts depuis la liste à vérifier |
 | E2E `mail` | un mail d'un expéditeur bloqué, relevé par la vraie relève, arrive en corbeille |
