@@ -3348,6 +3348,23 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
    cards actives exige un plan de remappage. Comportement par défaut retenu : archivage refusé
    tant que des cards s'y trouvent.
 
+### Migration `0187` — réorganiser les channels d'un track — `CRM-154` T2 (`0187_reorganiser_channels.sql` ; spécifiée le 2026-11-18, avant le code)
+
+*Écrit le 2026-11-18, avant le code (décisions 935 et 938).* Spécification : `docs/SPEC-administration-arborescence.md`
+§15.2.
+
+- **`public.reorder_channels(p_track_id uuid, p_channel_ids uuid[]) returns integer`**, `plpgsql`, `volatile`,
+  `security invoker`, `set search_path = ''` : les channels actifs du track (`archived_at` et `deleted_at` nuls) reçoivent
+  les positions 1 à n dans l'ordre du tableau, en une instruction ; elle rend n.
+- **Refus** : `channel_order_required`, `channel_order_duplicated`, `channel_order_incomplete` (`23514`) ;
+  `channel_reorder_forbidden` (`42501`) quand la politique `channels_maj_admin` a écarté une ligne — l'appel est annulé
+  en entier.
+- **Aucune table, colonne, contrainte, politique ni déclencheur** n'est modifié. **Privilèges** : `execute` retiré à
+  `public` et `anon`, accordé à `authenticated` et `service_role`.
+
+**Retour arrière** : `drop function public.reorder_channels(uuid, uuid[])`. Les positions déjà écrites restent valides
+(des entiers dans une colonne `numeric`) ; l'arborescence d'avant les relit sans conversion.
+
 ### Migration `0185` — les prompts du connecteur MCP — `CRM-149` T1 (`0185_prompts_connecteur.sql` ; écrite le 2026-11-17)
 
 *Écrit le 2026-11-17, avant le code (décision 930).* Spécification : `docs/SPEC-mcp.md` §17.2 à §17.4.

@@ -46,7 +46,7 @@ liste, et celui auquel les droits fins de `channel_members` se rattachent.
 | `app.can_read_channel` et `app.can_write_channel`, donc la restriction par droit fin | Deux des quatre fonctions différées par INC-013, dont l'arbitrage appartient au responsable et **reste ouvert**. La politique de lecture livrée ici s'arrête au **rôle de workspace** ; voir §6.3 et `docs/INCONSISTENCY_REPORT.md` **INC-030** |
 | Toute **interface de création, de renommage, de réordonnancement ou d'archivage** d'un channel | Aucun écran d'administration n'est encore rattaché à cette unité. Le CRUD est livré et prouvé **par l'API**, ce que `CLAUDE.md` §10 exige de toute façon |
 | Le **contenu** d'un channel — board, vue liste, cards | `CRM-040` à `CRM-042`. La route d'un track affiche ses onglets et l'état vide de la zone principale, pas un board fantôme |
-| Le **glisser-déposer de réordonnancement** des onglets | Même motif que pour les tracks : réordonner, c'est écrire `position`. Une RPC atomique deviendra nécessaire avec `CRM-041` |
+| Le **glisser-déposer de réordonnancement** des onglets | Même motif que pour les tracks : réordonner, c'est écrire `position`. Une RPC atomique deviendra nécessaire avec `CRM-041` — **livré par `CRM-154`** (décisions 935 et 938) : `public.reorder_channels` et la poignée de l'onglet, `docs/SPEC-administration-arborescence.md` §15 |
 
 ## 2. Modèle de données
 
@@ -615,7 +615,8 @@ constate le retour au vert.
    route d'un track affiche donc son état « introuvable ».
 4. **Les droits fins sont appliqués depuis `CRM-012`** (§6.3) — INC-030 close. Ce qui reste dû
    est `app.can_read_card`, différée jusqu'à `CRM-040`.
-5. **Le réordonnancement des onglets n'a pas de RPC dédiée** : réordonner, c'est écrire `position`.
+5. ~~**Le réordonnancement des onglets n'a pas de RPC dédiée** : réordonner, c'est écrire `position`.~~ **Levée par
+   `CRM-154`** : `public.reorder_channels` (migration `0187`, `docs/SPEC-administration-arborescence.md` §15.2).
 6. **Aucune limite de nombre de channels par track** n'est posée côté serveur. La barre défile.
 7. **L'archivage d'un track ne cascade pas sur ses channels** (§4) : choix motivé, mais il signifie
    qu'un désarchivage de track fait réapparaître exactement les channels qui étaient visibles avant.

@@ -660,3 +660,149 @@ sélecteur (rendu, valeur initiale, flèches, repli d'une valeur inconnue), des 
 pastille ; E2E à la souris et au clavier sur les deux formulaires de channel et sur celui de track, la pastille relue
 sur l'onglet, la lectrice sans formulaire, quatre paliers ; captures observées ; seed ; manuel, chapitre 5 et section
 3.2 ter.
+
+## 15. Réorganiser les channels depuis la vue d'un track — `CRM-154`, décisions 935 et 938
+
+*Écrit le 2026-11-18, avant le code.* Les règles visuelles sont au `docs/DESIGN_SYSTEM.md` §5.106 ; la migration au
+`docs/SCHEMA.md` « Migration `0187` ».
+
+### 15.1 Objet, et ce que ce chapitre ne livre pas
+
+Trois choses :
+1. **une réorganisation atomique en base**, `public.reorder_channels` : elle reçoit l'ordre d'une liste et le transcrit en
+   positions, en une instruction (§15.2) ;
+2. **dans la barre d'onglets d'un track**, un onglet de channel **se glisse** pour changer l'ordre, avec un **mode
+   déplacement au clavier**, pour qui administre l'espace ; et un lien **« Réorganiser »**, rendu à tous, qui ouvre
+   Réglages ▸ Arborescence **sur ce track** (§15.4) ;
+3. **l'arborescence emploie la même fonction** pour « Monter » et « Descendre » sur les channels (§15.3).
+
+**Connecteur MCP : non** (décision 935) — le connecteur lit l'ordre des channels et ne le change pas.
+
+**Hors périmètre** : l'ordre des **tracks** — barre latérale et arborescence gardent l'index fractionnaire du §6.2, et la
+limite 2 du §11 reste vraie pour eux ; le glisser-déposer sur un écran tactile (§15.7, limite 2).
+
+### 15.2 La base : `public.reorder_channels` — migration `0187`
+
+```
+public.reorder_channels(p_track_id uuid, p_channel_ids uuid[]) returns integer
+```
+
+Le patron est celui de `public.reordonner_paliers_sequence` (migration `0062`, `docs/SPEC-modeles-emails.md` §13.3), à
+une différence près, motivée au point (d).
+
+- **Elle prend un ORDRE, pas des positions** : l'écran envoie la liste qu'il affiche, la base la transcrit. Une fonction
+  qui prendrait « ce channel monte d'un cran » devrait relire l'état courant, et deux appels concurrents liraient le même.
+- **La liste est celle des channels ACTIFS du track** : ni archivés (`archived_at`), ni à la corbeille (`deleted_at`) —
+  ceux que la barre d'onglets montre, et ceux que l'arborescence laisse réordonner (§6.4). Un channel archivé ou à la
+  corbeille **garde sa position** ; désarchivé ou restauré, il reprend sa place numérique, l'égalité se départageant par
+  le nom (`docs/SPEC-channels.md` §3).
+- **`security invoker`** : les politiques de `channels` font tout le tri — `channels_maj_admin` réserve l'écriture à
+  l'administrateur de l'espace. Aucune règle d'accès n'est réécrite dans la fonction.
+- **Les refus**, dans cet ordre :
+  - (a) `channel_order_required` (`23514`) — une liste nulle ou vide ;
+  - (b) `channel_order_duplicated` (`23514`) — un identifiant présent deux fois ;
+  - (c) `channel_order_incomplete` (`23514`) — la liste n'est pas **exactement** l'ensemble des channels actifs du track
+    **lisibles par l'appelant** : un channel en trop, en moins, d'un autre track, archivé, à la corbeille, ou un track
+    inconnu ou illisible — le même refus, qui ne révèle pas ce qui existe ;
+  - (d) `channel_reorder_forbidden` (`42501`) — l'instruction a repositionné **moins** de channels que la liste n'en
+    nomme : la politique d'écriture a refusé. **La fonction lève, et l'appel entier est annulé** — aucune position n'a
+    changé. *Écart à la migration `0062`*, qui rend `0` : ici, un ordre partiellement appliqué serait pire qu'un refus, et
+    l'écran lit un refus nommé (`403` par la route) au lieu d'interpréter un zéro.
+- **Une seule instruction** : `update … from unnest(p_channel_ids) with ordinality`, positions **1 à n** dans l'ordre reçu,
+  la garde `track_id = p_track_id and archived_at is null and deleted_at is null` reposée dans le `where`. Aucun
+  `set constraints` : `position` n'a pas de contrainte d'unicité. Elle rend **n**.
+- **Aucune ligne au journal d'audit**, comme aujourd'hui : `channels_audit_configuration` ne surveille pas `position`
+  (migration `0115`). `updated_at` avance pour chaque channel repositionné (`channels_set_updated_at`).
+- **Concurrence** : deux administrateurs qui réordonnent en même temps — le dernier appel l'emporte, chacun étant
+  complet ; un channel créé, archivé ou retiré entre l'affichage et le geste fait tomber le refus (c), et l'écran relit.
+- **Privilèges** : `revoke all … from public, anon` ; `grant execute … to authenticated, service_role`.
+
+### 15.3 L'arborescence emploie la même fonction
+
+- **« Monter » et « Descendre » sur un channel** envoient `reorder_channels` avec la liste des channels actifs du track,
+  **dans l'ordre affiché après le déplacement**. Les commandes sur un **track** sont inchangées (§6.2).
+- **La limite 2 du §11 est levée pour les channels** : deux positions égales, ou une première position nulle ou négative,
+  ne bloquent plus un déplacement — la fonction renumérote de 1 à n. Le refus nommé du §6.2 ne s'applique plus qu'aux
+  tracks. Le manuel §17.3 le dit.
+- **Les refus** rejoignent le dictionnaire du §9 : `42501` reprend le texte du refus d'administration ; `23514`
+  (`channel_order_incomplete`) dit « La liste des channels a changé entre-temps : elle a été relue. », et la liste est
+  relue ; (a) et (b) ne sont pas atteignables depuis l'écran, et tombent sur le texte d'erreur générique.
+- **L'adresse `?track=<id du track>`** ouvre l'écran sur ce track : une fois les tracks lus, il est **déplié**, amené dans la
+  fenêtre, et son bouton de dépliage reçoit le focus ; le paramètre quitte alors l'adresse (remplacement, sans entrée
+  d'historique). Si le track n'est pas dans la liste lue — archivé et masqué, retiré, illisible —, le paramètre quitte
+  l'adresse et rien ne s'ouvre, comme au §13.6. La validation est une fonction pure (un `uuid`, rien d'autre).
+
+### 15.4 La barre d'onglets d'un track
+
+**« Réorganiser »** — un **lien**, rendu **à tous** (décision 938), après « Nouveau channel » et avant le filet des
+entrées transverses (§13.3) ; il mène à `/reglages/arborescence?track=<id du track>`. Il n'est rendu que si le track a **au
+moins deux** channels actifs : avec un seul, il n'y a pas d'ordre à changer. Pour qui n'administre pas, l'arborescence se
+consulte en lecture seule, ses commandes éteintes avec leur motif (`docs/SPEC-droits-interface.md` §3).
+
+**La poignée** — un `button` sur chaque onglet de channel, avant sa pastille, nommé « Déplacer « {channel} » ». Elle est
+rendue :
+- quand la capacité **administrer l'espace** (`administration_permise`, `docs/SPEC-droits-interface.md` §2.2) est
+  **permise**, ou que sa lecture a **échoué** — un défaut de lecture ne prive pas un administrateur de son geste (§4 de
+  cette spécification-là) ; la base refusera si besoin ;
+- **pas pendant la lecture** de la capacité, et **pas quand elle est refusée** : glisser n'a pas de forme désactivée, et le
+  lien « Réorganiser » garde le geste visible (écart borné, décision 938) ;
+- **pas sur un écran tactile** sans pointeur fin (`(hover: hover) and (pointer: fine)`) : le glisser-déposer natif n'y
+  fonctionne pas ; « Réorganiser » y est le chemin (§15.7, limite 2) ;
+- **pas quand le track a un seul channel actif**.
+
+**À la souris** — le glisser commence **sur la poignée seulement** ; le lien de l'onglet garde son comportement. Pendant le
+glisser, un repère d'insertion dit où l'onglet sera posé ; il ne dépend pas de `dragleave` (`docs/DESIGN_SYSTEM.md`
+§5.2 bis). Poser l'onglet **ailleurs que sur sa place** applique le nouvel ordre **à l'écran tout de suite** (optimiste,
+`docs/DESIGN_SYSTEM.md` §6), puis appelle `reorder_channels` avec la liste entière.
+
+**Au clavier** — la poignée **saisit** l'onglet (`Espace` ou `Entrée`) : elle passe en `aria-pressed="true"`, et l'annonce
+dit « « {channel} » saisi, rang {rang} sur {n}. Flèches gauche et droite pour le déplacer, Entrée pour le poser,
+Échap pour annuler. ». `←` et `→` le déplacent d'un rang, `Début` et `Fin` aux extrémités, **à l'écran seulement**, chaque
+pas annoncé (« rang {rang} sur {n} ») ; le focus suit la poignée. `Entrée` ou `Espace` **pose** : si l'ordre a changé,
+l'appel part ; sinon, rien. `Échap`, ou le focus qui quitte la poignée, **annule** : l'ordre d'avant revient, annoncé
+« Déplacement annulé. ».
+
+**L'appel** — un seul à la fois : pendant l'appel, les poignées sont désactivées et la barre porte `aria-busy`.
+- **Succès** : les channels du track sont **relus** (l'ordre affiché vient de la base, sans squelette) ; l'annonce dit
+  « « {channel} » placé au rang {rang} sur {n}. » ; le focus reste sur la poignée de l'onglet déplacé.
+- **Refus** : l'ordre d'avant revient, et le refus s'écrit **sous la barre**, `role="alert"` — `42501` : « Seul un
+  administrateur de cet espace de travail peut réorganiser les channels. » ; `23514` : « La liste des channels a changé
+  entre-temps : elle a été relue. », avec relecture ; une panne : le texte d'erreur générique. Le message s'efface au
+  geste suivant ou en quittant le track. La capacité est relue (`docs/SPEC-droits-interface.md` §4).
+
+**Ce qui ne change pas** : les onglets restent des **liens** (`docs/DESIGN_SYSTEM.md` §12.1) — aucun `tablist` ; l'ordre
+des cards, l'onglet ouvert, l'adresse.
+
+### 15.5 Les données de démonstration
+
+Le seed donne déjà plusieurs channels à chaque track de démonstration : la poignée, le lien et l'arborescence s'y
+démontrent sans ajout. Les preuves qui réordonnent **rétablissent l'ordre du seed** à la fin, par la même fonction.
+
+### 15.6 Preuves attendues
+
+| Preuve | Où |
+|---|---|
+| L'ordre après un déplacement (souris et clavier), le mode clavier (saisir, déplacer, poser, annuler, bornes), le classement des refus, la validation de `?track=` | Vitest, `webapp/src/lib/reorganisation-channels.test.ts` et les composants |
+| La fonction : succès (n rendu, positions 1 à n), les trois refus `23514`, `42501` pour le business developer et la lectrice **positions inchangées**, archivé et à la corbeille exclus, channel d'un autre track, `anon` sans `execute` | pgTAP `0175` |
+| La règle par la route, **avec les vrais jetons** : administratrice acceptée, business developer et lectrice refusés (`403`), positions relues inchangées | `e2e/api/reorganiser-channels.spec.ts` |
+| La barre : glisser à la souris, le mode clavier, l'ordre relu après rechargement, le refus traduit, aucune poignée pour la lectrice et « Réorganiser » qui mène à l'arborescence dépliée, quatre paliers | `e2e/ui/reorganiser-channels.spec.ts`, captures `docs/captures/CRM-154` |
+| L'arborescence : « Monter » et « Descendre » d'un channel par la fonction, `?track=` | `e2e/ui/administration-arborescence.spec.ts` révisée |
+| Le manuel §3.4 et §17.2, §17.3 | `e2e/manuel/03-naviguer.spec.ts`, `e2e/manuel/17-arborescence.spec.ts`, `verify-manual` |
+
+### 15.7 Limites connues
+
+1. **L'ordre des tracks** garde l'index fractionnaire et sa limite (§6.2, §11.2).
+2. **Pas de glisser-déposer sur un écran tactile** : la poignée n'y est pas rendue ; « Réorganiser » mène à l'arborescence,
+   dont « Monter » et « Descendre » se touchent.
+3. **Une autre session ouverte** sur le même track garde l'ancien ordre jusqu'à sa prochaine lecture ; aucune mise à jour
+   en temps réel n'est ajoutée.
+4. **Le dernier ordre enregistré l'emporte** quand deux administrateurs réordonnent en même temps (§15.2).
+
+### 15.8 Découpage en tranches
+
+- **T1** — cette spécification et ses documents ;
+- **T2** — la migration `0187`, pgTAP `0175`, la preuve d'API, les types ;
+- **T3** — l'arborescence par la fonction, `?track=` ; unitaires ; E2E ;
+- **T4** — la barre d'onglets : la poignée, la souris, le clavier, « Réorganiser » ; unitaires ; E2E souris et clavier
+  aux quatre paliers ; captures ;
+- **T5** — le manuel §3.4, §17.2, §17.3 et leurs images ; le contrat ; la clôture.

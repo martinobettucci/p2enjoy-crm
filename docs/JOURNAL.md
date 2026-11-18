@@ -40848,3 +40848,26 @@ sur « Ma journée » (campagne passée minuit), `premier-lancement` en série (
 le seed §47 en ajoute un sixième ; rejoué : 161 fichiers, 5 334 assertions sans anomalie. Captures : 250 renouvelées,
 observées (`68dd2215`).
 **Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `499cb253`.
+
+### décision 938 — `CRM-154` : « Réorganiser » reste un lien pour tous ; un mode déplacement au clavier ; le design system lu par sections
+
+*2026-11-18, session 152dd27d (p2enjoy-crm-45), arbitrages du responsable (`AskUserQuestion`), avant la spécification ; la
+substance est celle de la décision 935.*
+**Le problème** : le backlog de `CRM-154` voulait que les autres membres ne voient « ni la poignée ni le bouton » ; la règle
+du produit (`CRM-093`, `docs/SPEC-droits-interface.md` §3, `docs/DESIGN_SYSTEM.md` §5.59, décision 628) rend un geste
+réservé désactivé avec son motif, jamais masqué, et laisse les écrans d'administration se consulter en lecture seule.
+**Décisions** :
+- **pour qui n'administre pas l'espace** : les onglets ne se glissent pas — aucune poignée —, et **« Réorganiser » reste un
+  lien** vers Réglages ▸ Arborescence, qui se consulte en lecture seule, ses commandes éteintes avec leur motif (`CRM-093`
+  T4) ; écartés : « Réorganiser » désactivé avec motif, et rien de visible ;
+- **au clavier, un mode déplacement** : sur chaque onglet, une poignée focusable « Déplacer « … » » (administrateurs
+  seuls) ; `Espace` ou `Entrée` la saisit, `←` et `→` la déplacent, `Début` et `Fin` aux extrémités, `Espace` ou
+  `Entrée` la pose, `Échap` annule ; chaque étape est annoncée ; écartés : un raccourci `Alt`+`Maj`+flèche, et le seul
+  passage par l'arborescence ;
+- **le design system lu par sections ciblées**, pour `CRM-154` seulement : §1 à §4, §5.1 à §5.2 bis, §5.8, §5.13, §5.55,
+  §5.59, §6 à §12 ; écartée : la lecture intégrale.
+**Les deux questions du connecteur** : réglées par la décision 935 — non ; le connecteur lit l'ordre et ne le change pas.
+**Conséquences** : `docs/SPEC-administration-arborescence.md` §15 ; `docs/SCHEMA.md` « Migration `0187` » ;
+`docs/DESIGN_SYSTEM.md` §5.106 ; `docs/SPEC-channels.md` §1.2 et §10, `docs/SPEC-tracks.md` §10 ; `CRM-154`, cinq
+tranches. La poignée absente pour qui n'administre pas est un **écart borné** au §5.59 (« jamais masquée ») : glisser n'a
+pas de forme désactivée, et le lien « Réorganiser » garde le geste visible et son motif.

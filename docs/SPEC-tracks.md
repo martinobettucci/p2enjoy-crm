@@ -320,7 +320,8 @@ restaure et constate le retour au vert.
 3. **Les droits fins ne sont pas appliqués** (§5.3, INC-024) — `CRM-012`.
 4. **Le réordonnancement n'a pas de RPC dédiée** : réordonner, c'est écrire `position`. Une
    opération atomique de réordonnancement de liste deviendra nécessaire avec le glisser-déposer,
-   qui relève de `CRM-041`.
+   qui relève de `CRM-041`. *Précisé par `CRM-154` (2026-11-18)* : les **channels** en ont désormais une,
+   `public.reorder_channels` (`docs/SPEC-administration-arborescence.md` §15.2) ; les **tracks** n'en ont toujours pas.
 5. **Aucune limite de nombre de tracks par workspace** n'est posée. La barre latérale défile ; une
    pagination n'aurait pas de sens à cette échelle, mais rien ne borne le nombre côté serveur.
 6. **`icon` n'est pas validé contre Lucide** en base (§2.4). Un nom inexistant est accepté puis

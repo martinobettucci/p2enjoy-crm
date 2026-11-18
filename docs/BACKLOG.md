@@ -19882,5 +19882,19 @@ dédiée » : une opération atomique deviendra nécessaire avec le glisser-dép
   bouton ;
 - **une réorganisation atomique en base** (une fonction qui reçoit l'ordre d'une liste), employée aussi par l'arborescence.
 **Connecteur MCP** : **non** — le connecteur lit l'ordre et ne le change pas.
-**Spécification** : à écrire avant le code (`docs/SPEC-tracks.md`, `docs/SPEC-channels.md`, `docs/SCHEMA.md`,
-`docs/DESIGN_SYSTEM.md`, manuel).
+**Spécification** : `docs/SPEC-administration-arborescence.md` §15 ; `docs/SCHEMA.md` « Migration `0187` » ;
+`docs/DESIGN_SYSTEM.md` §5.106 ; `docs/SPEC-channels.md` §1.2 et §10 ; `docs/SPEC-tracks.md` §10 ; `docs/JOURNAL.md`
+décisions 935 et 938 ; manuel §3.4, §17.2 et §17.3.
+**Précisé par la décision 938** : pour qui n'administre pas, aucune poignée, mais **« Réorganiser » reste un lien**
+vers l'arborescence en lecture seule (la règle de `CRM-093`) ; au clavier, un **mode déplacement** sur la poignée.
+**Tranches** :
+- **T1** — la spécification (ce commit) ;
+- **T2** — la migration `0187` (`public.reorder_channels`), pgTAP `0175`, `e2e/api/reorganiser-channels.spec.ts` avec les
+  vrais jetons, les types ;
+- **T3** — l'arborescence : « Monter » et « Descendre » d'un channel par la fonction, l'adresse `?track=` ; unitaires ;
+  E2E ;
+- **T4** — la barre d'onglets : la poignée, le glisser, le mode clavier, « Réorganiser » ; unitaires ; E2E souris et clavier
+  aux quatre paliers ; captures ;
+- **T5** — le manuel §3.4, §17.2, §17.3 et leurs images ; le contrat (migration `0187` et la webapp) ; la clôture.
+**DoD** : pgTAP et preuve d'API avec les vrais jetons (refus du business developer et de la lectrice) ; unitaires ; E2E
+souris et clavier ; captures observées aux quatre paliers ; manuel vérifié ; contrat.

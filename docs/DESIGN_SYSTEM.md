@@ -8665,3 +8665,41 @@ disent que de quoi elle a l'air.
 - **LA FICHE PORTE UNE LIGNE « Tracks »** dans sa liste de définitions, après « Site web » : chaque track en **pilule** du
   §5.5 bis, lien vers sa vue, `flex-wrap` ; aucun, « Aucun track » en 13 px `--color-text-2`.
 - **Aucune couleur, aucun jeton nouveau ; aucune icône nouvelle** : `ArrowUp`, `ArrowDown`, `ArrowUpDown` du §5.9.
+
+### 5.106 Réorganiser les channels depuis la barre d'onglets — `CRM-154`
+
+*Écrit le 2026-11-18, avant le code (décisions 935 et 938 ; lecture ciblée : §1 à §4, §5.1 à §5.2 bis, §5.8,
+§5.13, §5.55, §5.59, §6 à §12).* Ce que les gestes envoient est spécifié par `docs/SPEC-administration-arborescence.md`
+§15 ; ces règles ne disent que de quoi ils ont l'air.
+
+- **« Réorganiser »** a la forme de « Nouveau channel » (§5.55) : un **lien**, pas un onglet — aucune bordure basse,
+  jamais `aria-current` —, icône Lucide `ArrowLeftRight` 16 px `aria-hidden` suivie du libellé, texte `--color-text-2`,
+  survol `--color-hover`, `--radius-sm`, hauteur `--size-target`. Il suit « Nouveau channel », avant le filet des entrées
+  transverses (§4). Rendu à tous (décision 938) ; absent quand le track a moins de deux channels.
+- **La poignée** est un `button` discret dans l'élément de liste de l'onglet, **avant** le lien — jamais dedans (un
+  élément interactif ne s'imbrique pas dans un autre) : icône `GripVertical` 16 px `aria-hidden`, `--color-text-3`, cible
+  **40 × 40 px** (§8), survol `--color-hover`, curseur `grab` (`grabbing` pendant le glisser), focus visible (§8). Son nom
+  accessible dit le geste et l'objet : « Déplacer « {channel} » ». **Toujours visible** quand elle est rendue, jamais au
+  survol seul (§5.13). La bordure basse de l'onglet actif reste sous le **lien**, la poignée n'en porte pas (§12.1).
+- **Saisie au clavier** : la poignée saisie porte `aria-pressed="true"` et un fond `--color-brand-soft`, l'icône
+  `--color-brand` ; l'onglet saisi garde son libellé et sa bordure — l'état ne repose pas sur la seule couleur, l'annonce
+  et `aria-pressed` le portent aussi (§1, §8). Les consignes sont une description `sr-only` liée par `aria-describedby`.
+- **Pendant un glisser à la souris**, l'onglet tiré garde sa place, atténué par un fond `--color-hover` (jamais une
+  opacité qui rendrait son texte illisible) ; **le repère d'insertion** est un trait vertical de 2 px `--color-brand`,
+  pleine hauteur de la barre, entre deux onglets. L'état de survol est **unique pour la barre** et la fin du glisser
+  l'éteint — la règle mesurée du §5.2 bis, tenue ici pour la même raison.
+- **Pendant l'appel**, les poignées sont désactivées (lisibles, §8) et la barre porte `aria-busy` ; aucune animation de
+  chargement.
+- **Le refus** s'écrit **sous la barre**, sur une ligne : alerte `--color-danger-soft` / `--color-danger-on-soft`,
+  `--radius-sm`, rembourrage `--spacing-2` `--spacing-3`, `role="alert"`, icône `TriangleAlert` 16 px `aria-hidden` ; il
+  s'efface au geste suivant ou en quittant le track.
+- **Les annonces** passent par la région vivante de la barre (§8) : saisi, chaque rang, posé, annulé, enregistré.
+- **Responsive** : la barre défile déjà dans son conteneur (§12.6) ; la poignée ajoute 40 px par onglet, et la barre
+  porte toujours `.indique-debordement-x`. **Sur un écran tactile** (`(hover: hover) and (pointer: fine)` faux), la
+  poignée n'est pas rendue ; « Réorganiser » l'est.
+- **Écart borné au §5.59** (décision 938) : pour qui n'administre pas, la poignée **n'est pas rendue**, au lieu d'être
+  désactivée — un glisser n'a pas de forme désactivée — ; le lien « Réorganiser », rendu à tous, garde le geste visible,
+  et l'arborescence dit le motif.
+- **Dans l'arborescence**, `?track=` déplie le track demandé et pose le focus sur son bouton de dépliage (§5.13) ; aucune
+  règle visuelle nouvelle.
+- **Aucune couleur, aucun jeton nouveau** ; deux icônes nouvelles dans ces écrans, `ArrowLeftRight` et `GripVertical`.
