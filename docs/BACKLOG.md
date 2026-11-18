@@ -19941,7 +19941,14 @@ non-régression du tableau à 1280 px ; connecteur (pytest, intégration, `verif
       1280 — avec `organisations-recherche`, `organisations` et `contacts` : 77/77. Captures `liste-*` observées ; INC-362
       ouvert (la rangée grandit au-delà de deux lignes). *Au passage* : `e2e/api/commentaires-categories-organisations.spec.ts`
       (T1) ne passait pas le contrôle des types de la racine (27 erreurs, signalées par c7) — corrigé par `premier()`, 3/3.
-- [ ] **T5 — connecteur** ; pytest, intégration, `verify-mcp.sh`.
+- [x] **T5 — connecteur** ; pytest, intégration, `verify-mcp.sh`. *Faite le 2026-11-18* :
+      `mcp/crm_mcp/outils/organisations.py` — `categories` dans `crm_organization_list` (filtre et rendu) et
+      `crm_organization_get` ; `crm_organization_category_list`, `crm_organization_comment_list`,
+      `crm_organization_comment_add`, `crm_organization_categories_set`, sous les cases existantes (décision 932).
+      pytest `test_organisations.py` 14/14 (attentes existantes révisées et datées), suite unitaire 433 ; intégration
+      `test_integration_organisations.py` 5/5 sur la vraie base (l'archivée nommée, la mention qui notifie, la lectrice
+      refusée par le CRM) ; `verify-mcp.sh` vert de bout en bout (113 en direct et par le Caddy, interface 8/8, témoins).
+      `docs/SPEC-mcp.md` §9.2 *quatervicies* précisé (formes rendues, `mentions`, refus nommés).
 - [ ] **T6 — seed, manuel, contrat** ; puis `[P]`.
 
 ### CRM-154 — Réorganiser les channels depuis la vue d'un track : glisser l'onglet, et « Réorganiser » vers l'arborescence `[P]`

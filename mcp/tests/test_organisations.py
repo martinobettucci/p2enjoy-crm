@@ -5,6 +5,11 @@
 #           `organization_tracks` — la recherche aussi dans le site web, l'un des tracks, les tracks de chaque
 #           organisation, `total` et `has_more`, un identifiant de track mal formé refusé par l'outil (docs/SPEC-mcp.md §9.2
 #           tervicies ; docs/SPEC-organisations.md §8.4)
+# @verifies CRM-153 (docs/BACKLOG.md) — tranche T5 : `categories` dans la liste (filtre et rendu) et la fiche ; le catalogue ;
+#           le fil (ordre, pierre tombale, modération dite) ; publier sans l'espace, les mentions une à une et leur refus
+#           nommé ; retirer puis poser, l'archivée nommée (docs/SPEC-mcp.md §9.2 quatervicies ; docs/SPEC-organisations.md
+#           §9.4). Les attentes des tests existants sont RÉVISÉES le 2026-11-18 : la liste et la fiche rendent `categories`,
+#           l'appel porte `p_category_ids`, la famille compte huit outils.
 """Le CRM simulé rend deux organisations, l'une d'un autre espace ; la vraie base est éprouvée par
 `tests/test_integration_organisations.py`."""
 
@@ -45,7 +50,24 @@ LISTE = [
 ]
 NOMS_TRACKS = {TRACK_IA: ("Conseil & IA", "conseil-ia"), TRACK_FORMATION: ("Formation", "formation")}
 THOMAS = Identite("sujet-thomas", "thomas@exemple.test", "Thomas", True, False, 4_000_000_000)
-OUTILS = {"crm_organization_list", "crm_organization_get", "crm_organization_create", "crm_organization_update"}
+OUTILS = {
+    "crm_organization_list", "crm_organization_get", "crm_organization_create", "crm_organization_update",
+    "crm_organization_category_list", "crm_organization_comment_list", "crm_organization_comment_add",
+    "crm_organization_categories_set",
+}
+CAT_CLIENT = "a0000000-0000-4000-8000-0000000000d1"
+CAT_ANCIEN = "a0000000-0000-4000-8000-0000000000d2"
+CAT_PARTENAIRE = "a0000000-0000-4000-8000-0000000000d3"
+CAT_B = "b0000000-0000-4000-8000-0000000000d9"
+#: Le catalogue : deux actives et une archivée dans l'espace A, une dans l'espace B.
+CATALOGUE = [
+    {"id": CAT_PARTENAIRE, "workspace_id": ESPACE_A, "name": "Partenaire", "archived_at": None},
+    {"id": CAT_CLIENT, "workspace_id": ESPACE_A, "name": "Client", "archived_at": None},
+    {"id": CAT_ANCIEN, "workspace_id": ESPACE_A, "name": "Ancien client", "archived_at": "2026-11-18T00:00:00Z"},
+    {"id": CAT_B, "workspace_id": ESPACE_B, "name": "Ailleurs", "archived_at": None},
+]
+REFUSEE = "a0000000-0000-4000-8000-0000000000e9"
+MEMBRE = "a0000000-0000-4000-8000-0000000000e1"
 
 
 class CrmOrganisations(CrmSimule):
@@ -55,6 +77,17 @@ class CrmOrganisations(CrmSimule):
         self.lectures: list[dict[str, str]] = []
         self.forcee: tuple[int, Any] | None = None
         self.appels_rpc: list[tuple[str, dict[str, Any]]] = []
+        # `CRM-153` T5 : les poses, le fil et les écritures sur les tables nouvelles.
+        self.poses: set[tuple[str, str]] = {(ORG_A, CAT_CLIENT), (ORG_A, CAT_ANCIEN)}
+        self.commentaires: list[dict[str, Any]] = [
+            {"id": "cm-2", "organization_id": ORG_A, "body": "Relance faite.", "author_id": "p-thomas",
+             "created_at": "2026-11-18T10:00:00Z", "edited_at": "2026-11-18T10:05:00Z", "deleted_at": None,
+             "deleted_by": None, "auteur": {"full_name": "Thomas"}},
+            {"id": "cm-1", "organization_id": ORG_A, "body": "", "author_id": "p-driss",
+             "created_at": "2026-11-18T09:00:00Z", "edited_at": None, "deleted_at": "2026-11-18T11:00:00Z",
+             "deleted_by": "p-camille", "auteur": {"full_name": "Driss"}},
+        ]
+        self.ecritures_t5: list[dict[str, Any]] = []
 
     async def rpc(self, requete: Request) -> Response:
         """`organization_list` et `organization_tracks` comme la base les rend, sous la lecture de la personne ; le reste
@@ -87,7 +120,62 @@ class CrmOrganisations(CrmSimule):
             for o in page
         ])
 
+    async def table_t5(self, requete: Request) -> Response:
+        """`CRM-153` T5 — le catalogue, les poses, le fil et les mentions, comme la base les rend sous la lecture de la
+        personne ; les refus que la 0188 lève, nommés."""
+        nom = requete.path_params["table"]
+        personne = self._personne(requete)
+        if personne is None:
+            return JSONResponse({"message": "JWT invalide"}, status_code=401)
+        lisibles = self._lisibles(personne)
+        parametres = dict(requete.query_params)
+        espace_de = {o["id"]: o["workspace_id"] for o in LISTE}
+        if requete.method != "GET":
+            corps = await requete.json() if requete.method == "POST" else None
+            self.ecritures_t5.append({"table": nom, "methode": requete.method, "parametres": parametres, "corps": corps})
+            if nom == "organization_comments":
+                return JSONResponse([{"id": "cm-neuf", "body": corps["body"], "created_at": "2026-11-18T12:00:00Z"}], status_code=201)
+            if nom == "organization_comment_mentions":
+                if corps["profile_id"] == REFUSEE:
+                    return JSONResponse({"code": "P0001", "message": "mention_destinataire_sans_acces"}, status_code=400)
+                return JSONResponse([{"profile_id": corps["profile_id"]}], status_code=201)
+            if requete.method == "POST":
+                categorie = next(c for c in CATALOGUE if c["id"] == corps["category_id"])
+                if categorie["archived_at"] is not None:
+                    return JSONResponse({"code": "22023", "message": "category_archived"}, status_code=400)
+                self.poses.add((corps["organization_id"], corps["category_id"]))
+                return JSONResponse([{"category_id": corps["category_id"]}], status_code=201)
+            couple = (parametres["organization_id"].removeprefix("eq."), parametres["category_id"].removeprefix("eq."))
+            if couple not in self.poses:
+                return JSONResponse([])
+            self.poses.discard(couple)
+            return JSONResponse([{"category_id": couple[1]}])
+        if nom == "organization_categories":
+            espace = parametres["workspace_id"].removeprefix("eq.")
+            return JSONResponse([
+                {k: c[k] for k in ("id", "name", "archived_at")} for c in CATALOGUE
+                if c["workspace_id"] == espace and espace in lisibles
+            ])
+        if nom == "organization_category_links":
+            ids = parametres["organization_id"].removeprefix("in.(").removesuffix(")").split(",")
+            return JSONResponse([
+                {"organization_id": o, "categorie": {k: c[k] for k in ("id", "name", "archived_at")}}
+                for (o, cat) in sorted(self.poses) if o in ids and espace_de.get(o) in lisibles
+                for c in CATALOGUE if c["id"] == cat
+            ])
+        organisation = parametres["organization_id"].removeprefix("eq.")
+        lignes = sorted(
+            (c for c in self.commentaires if c["organization_id"] == organisation and espace_de.get(organisation) in lisibles),
+            key=lambda c: (c["created_at"], c["id"]),
+        )
+        debut = int(parametres.get("offset", "0"))
+        return JSONResponse(lignes[debut:debut + int(parametres.get("limit", "1000"))])
+
     async def table_organisations(self, requete: Request) -> Response:
+        if requete.path_params["table"] in (
+            "organization_categories", "organization_category_links", "organization_comments", "organization_comment_mentions",
+        ):
+            return await self.table_t5(requete)
         if requete.path_params["table"] != "organizations":
             return await self.table(requete)
         personne = self._personne(requete)
@@ -118,7 +206,7 @@ class CrmOrganisations(CrmSimule):
     def application(self) -> Starlette:
         return Starlette(routes=[
             Route("/rest/v1/rpc/{fonction}", self.rpc, methods=["POST"]),
-            Route("/rest/v1/{table}", self.table_organisations, methods=["GET", "POST", "PATCH"]),
+            Route("/rest/v1/{table}", self.table_organisations, methods=["GET", "POST", "PATCH", "DELETE"]),
         ])
 
 
@@ -153,12 +241,17 @@ async def monde():
 
 
 async def test_quatre_outils_aucune_suppression(monde: Monde) -> None:
+    # RÉVISÉ le 2026-11-18 (`CRM-153` T5) : huit outils, sous les trois cases existantes ; toujours aucune suppression.
     declares = {n: (d.action, d.espace) for n, d in monde.moteur.declarations.items() if d.famille == "organizations"}
     assert declares == {
         "crm_organization_list": ("consulter", "workspace:workspace"),
         "crm_organization_get": ("consulter", "organisation:organization_id"),
         "crm_organization_create": ("ajouter", "workspace:workspace"),
         "crm_organization_update": ("modifier", "organisation:organization_id"),
+        "crm_organization_category_list": ("consulter", "workspace:workspace"),
+        "crm_organization_comment_list": ("consulter", "organisation:organization_id"),
+        "crm_organization_comment_add": ("ajouter", "organisation:organization_id"),
+        "crm_organization_categories_set": ("modifier", "organisation:organization_id"),
     }
     assert set(declares) == OUTILS
 
@@ -166,13 +259,15 @@ async def test_quatre_outils_aucune_suppression(monde: Monde) -> None:
 async def test_la_liste_lit_la_base_puis_les_tracks_et_rend_le_total(monde: Monde) -> None:
     resultat = await monde.appel("crm_organization_list", {"workspace": "atelier", "limit": 1})
     assert monde.simule.appels_rpc == [
-        ("organization_list", {"p_workspace_id": ESPACE_A, "p_search": None, "p_track_ids": None, "p_limit": 1,
-                               "p_offset": 0}),
+        ("organization_list", {"p_workspace_id": ESPACE_A, "p_search": None, "p_track_ids": None,
+                               "p_category_ids": None, "p_limit": 1, "p_offset": 0}),
         ("organization_tracks", {"p_organization_ids": [ORG_A]}),
     ]
     assert resultat == {"offset": 0, "total": 2, "has_more": True, "organizations": [
         {"id": ORG_A, "name": "Sogexia", "domain": "sogexia.example", "website": None, "contacts": 2,
-         "tracks": [{"id": TRACK_IA, "name": "Conseil & IA", "slug": "conseil-ia"}]},
+         "tracks": [{"id": TRACK_IA, "name": "Conseil & IA", "slug": "conseil-ia"}],
+         "categories": [{"id": CAT_CLIENT, "name": "Client", "archived": False},
+                        {"id": CAT_ANCIEN, "name": "Ancien client", "archived": True}]},
     ]}
     suite = await monde.appel("crm_organization_list", {"workspace": "atelier", "limit": 1, "offset": 1})
     assert suite["has_more"] is False and [o["name"] for o in suite["organizations"]] == ["Vertigo"]
@@ -241,3 +336,77 @@ async def test_domaine_pris_forme_et_zero_ligne_sont_des_refus(monde: Monde) -> 
     monde.simule.forcee = (200, [])
     with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre : organisation"):
         await monde.appel("crm_organization_update", {"organization_id": ORG_A, "name": "y"})
+
+
+# --- `CRM-153` T5 : catégories et fil ----------------------------------------------------------------------------------
+
+
+async def test_la_liste_filtre_par_categorie_et_la_fiche_rend_ses_categories(monde: Monde) -> None:
+    await monde.appel("crm_organization_list", {"workspace": "atelier", "categories": [CAT_ANCIEN.upper(), CAT_ANCIEN]})
+    assert monde.simule.appels_rpc[0][1]["p_category_ids"] == [CAT_ANCIEN]
+    with pytest.raises(ToolError, match="categories must be category ids from crm_organization_category_list"):
+        await monde.appel("crm_organization_list", {"workspace": "atelier", "categories": ["client"]})
+    fiche = await monde.appel("crm_organization_get", {"organization_id": ORG_A})
+    assert fiche["categories"] == [
+        {"id": CAT_CLIENT, "name": "Client", "archived": False},
+        {"id": CAT_ANCIEN, "name": "Ancien client", "archived": True},
+    ]
+
+
+async def test_le_catalogue_actives_par_nom_puis_archivees_jamais_l_autre_espace(monde: Monde) -> None:
+    resultat = await monde.appel("crm_organization_category_list", {"workspace": "atelier"})
+    assert resultat == {"categories": [
+        {"id": CAT_CLIENT, "name": "Client", "archived": False},
+        {"id": CAT_PARTENAIRE, "name": "Partenaire", "archived": False},
+        {"id": CAT_ANCIEN, "name": "Ancien client", "archived": True},
+    ]}
+
+
+async def test_le_fil_dans_l_ordre_pierre_tombale_sans_corps_et_moderation_dite(monde: Monde) -> None:
+    resultat = await monde.appel("crm_organization_comment_list", {"organization_id": ORG_A, "limit": 1})
+    assert resultat["has_more"] is True
+    assert resultat["comments"] == [{
+        "id": "cm-1", "author": {"id": "p-driss", "name": "Driss"}, "body": None, "created_at": "2026-11-18T09:00:00Z",
+        "edited_at": None, "deleted": True, "moderated": True,
+    }]
+    suite = await monde.appel("crm_organization_comment_list", {"organization_id": ORG_A, "offset": 1})
+    assert suite["has_more"] is False and suite["comments"][0]["body"] == "Relance faite."
+    with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre : organisation"):
+        await monde.appel("crm_organization_comment_list", {"organization_id": ORG_B})
+
+
+async def test_commenter_sans_l_espace_puis_mentions_une_a_une_le_refus_nomme(monde: Monde) -> None:
+    resultat = await monde.appel(
+        "crm_organization_comment_add", {"organization_id": ORG_A, "body": "Bonjour", "mentions": [MEMBRE, REFUSEE]}
+    )
+    publication, mention_ok, mention_refusee = monde.simule.ecritures_t5
+    assert publication["corps"] == {"organization_id": ORG_A, "body": "Bonjour"}
+    assert mention_ok["corps"] == {"comment_id": "cm-neuf", "profile_id": MEMBRE}
+    assert mention_refusee["table"] == "organization_comment_mentions"
+    assert resultat["comment"]["id"] == "cm-neuf"
+    assert resultat["mentions"] == [
+        {"profile_id": MEMBRE, "ok": True},
+        {"profile_id": REFUSEE, "ok": False, "refused": "mention_destinataire_sans_acces"},
+    ]
+    with pytest.raises(ToolError, match="mentions must be profile ids of workspace members"):
+        await monde.appel("crm_organization_comment_add", {"organization_id": ORG_A, "body": "x", "mentions": ["Camille"]})
+
+
+async def test_retirer_puis_poser_l_archivee_nommee_et_les_categories_obtenues(monde: Monde) -> None:
+    resultat = await monde.appel(
+        "crm_organization_categories_set",
+        {"organization_id": ORG_A, "add": [CAT_PARTENAIRE, CAT_ANCIEN], "remove": [CAT_ANCIEN]},
+    )
+    assert [(e["methode"], e["table"]) for e in monde.simule.ecritures_t5] == [
+        ("DELETE", "organization_category_links"),
+        ("POST", "organization_category_links"),
+        ("POST", "organization_category_links"),
+    ]
+    assert resultat == {
+        "categories": [{"id": CAT_CLIENT, "name": "Client", "archived": False},
+                       {"id": CAT_PARTENAIRE, "name": "Partenaire", "archived": False}],
+        "refused": [{"id": CAT_ANCIEN, "action": "add", "refused": "category_archived"}],
+    }
+    with pytest.raises(ToolError, match="at least one category id"):
+        await monde.appel("crm_organization_categories_set", {"organization_id": ORG_A})
+

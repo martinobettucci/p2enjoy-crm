@@ -1598,6 +1598,20 @@ nombre de contacts lus ; `has_revenues` n'est pas rendu.
 - `crm_organization_categories_set(organization_id, add, remove)` — `modifier`, ancre `organisation:organization_id` :
   retire puis pose ; une catégorie archivée à poser est nommée (`category_archived`) ; rend les catégories obtenues.
 - **Ni modification ni suppression d'un commentaire, ni administration du catalogue** par le connecteur.
+- *Précisé à l'écriture du code (T5, 2026-11-18)* :
+  - **les formes rendues** : une catégorie `{id, name, archived}`, actives par nom puis archivées ; un commentaire
+    `{id, author: {id, name}, body, created_at, edited_at, deleted, moderated}` — `body` nul et `moderated` vrai quand un
+    tiers a posé la pierre tombale ; le fil, `{offset, has_more, comments}` ;
+  - **`mentions`** : des identifiants de profil de membres de l'espace — aucun outil ne liste les membres ; les auteurs
+    que rend `crm_organization_comment_list` en sont. Chaque mention rend `{profile_id, ok}`, et `refused` sur un refus ;
+  - **`crm_organization_categories_set`** rend `{categories, refused}` : les catégories que l'organisation porte après
+    l'appel, et chaque refus `{id, action, refused}` — `category_archived`, `already_set`, `forbidden`, ou
+    `not_set_or_forbidden` pour un retrait sans effet (zéro ligne) ;
+  - **l'organisation est lue d'abord** par `crm_organization_comment_list` et `crm_organization_categories_set` : inconnue
+    ou illisible, le refus uniforme, jamais un fil vide ;
+  - **ni l'espace ni l'auteur ne sont envoyés** à l'insertion d'un commentaire, d'une mention ou d'une pose : la 0188 ne les
+    accorde pas, le déclencheur pose l'espace et la base l'auteur ;
+  - **un identifiant mal formé** (`categories`, `add`, `remove`, `mentions`) est refusé par l'outil, nommé, comme `tracks`.
 
 ### 9.2 Effacer, restaurer, lire et endormir un message — `CRM-138` (décisions 878 et 917)
 

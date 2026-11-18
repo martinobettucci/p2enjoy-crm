@@ -62,6 +62,18 @@ d'exécuter le code attendu.
 - Par paquets de 2 000 messages, avec un curseur, sous le délai de 8 s de la base (décision 949). Aucun écran ne
   l'appelle encore (T3).
 
+### `CRM-153` T5 — le connecteur : catégories et commentaires d'une organisation
+
+- `crm_organization_list` filtre par catégorie et rend les catégories de chaque organisation ; `crm_organization_get`
+  aussi (`docs/SPEC-mcp.md` §9.2 *quatervicies*).
+- Quatre outils, sous les cases existantes de la famille `organizations` :
+  - `crm_organization_category_list` : le catalogue ;
+  - `crm_organization_comment_list` : le fil ;
+  - `crm_organization_comment_add` : commenter et mentionner ;
+  - `crm_organization_categories_set` : poser et retirer.
+- Ni modification ni suppression d'un commentaire, ni administration du catalogue par le connecteur.
+- À livrer : l'image `mcp` (aucune migration de plus que la 0188).
+
 ### `CRM-153` T4 — les catégories dans la liste des organisations
 
 - Sous le nom de chaque organisation, ses catégories : trois au plus, puis « +n », qui nomme les autres
