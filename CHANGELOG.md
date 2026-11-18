@@ -62,6 +62,12 @@ d'exécuter le code attendu.
 - **La liste montre cinquante organisations**, puis « Afficher plus » ; « 50 sur 132 » est écrit dessous. Recherche,
   filtres et tri vivent dans l'adresse : un lien partagé ou une page rechargée les retrouve.
 
+#### `CRM-152` T3 — le connecteur liste les organisations avec leurs tracks (décisions 931 et 936)
+
+- **`crm_organization_list`** cherche aussi dans le site web, filtre par track (l'un de ceux donnés), rend les tracks de
+  chaque organisation et le total. Famille « Organisations », case « consulter » : aucune case nouvelle. Image `mcp`
+  (`docs/PROD_MIGRATIONS.md` §2.55).
+
 ## [Publié]
 
 ### Déployé en production, 2026-11-18 — la migration 185, l'image `mcp`, la webapp et le manuel

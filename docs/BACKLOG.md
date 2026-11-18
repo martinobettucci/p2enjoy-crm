@@ -19859,7 +19859,11 @@ d'eux ; pas de tri sur « Réel sur prévu ».
       `docs/captures/CRM-152`, observées. *Trouvé par la preuve E2E* : le routeur applique l'adresse dans une transition,
       et une case tenue par l'adresse seule se décochait sous la souris — cases et recettes portent un état local qui la
       suit.
-- [ ] **T3 — connecteur** : `crm_organization_list` ; pytest, intégration, `verify-mcp.sh`.
+- [x] **T3 — connecteur** : `crm_organization_list` ; pytest, intégration, `verify-mcp.sh`. *Faite le 2026-11-18* :
+      l'outil appelle `organization_list` puis `organization_tracks` ; pytest `tests/test_organisations.py` (9, dont cinq
+      nouveaux : les deux appels et le total, le site web, l'un des tracks dédoublonné, la page vide sans second appel,
+      le track mal formé refusé sans appel), suite unitaire 423 ; intégration `test_integration_organisations.py`
+      révisée (tracks, filtre, site web, total) par `verify-mcp.sh`.
 - [ ] **T4 — seed vérifié, manuel, contrat** ; puis `[P]`.
 
 ### CRM-153 — Organisations : un fil de commentaires, et des catégories définies en Réglages `[ ]`

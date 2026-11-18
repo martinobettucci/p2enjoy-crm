@@ -1563,6 +1563,11 @@ fonctionnalités antérieures à cette règle, ou celles pour lesquelles la ques
   **`total`** à côté de `has_more` ;
 - ni filtre de recettes ni tri : la décision 931 n'en retient pas pour le connecteur.
 
+*Précisé au code (T3, 2026-11-18)* : un identifiant de `tracks` mal formé est refusé par l'outil (`RefusArgument`, journalisé
+`refus_crm`, §9.3), sans appel ; les identifiants sont dédoublonnés, cinquante au plus. `query` n'est plus nettoyée de ses
+caractères spéciaux : la fonction l'échappe, « 100% » cherche « 100% ». `has_more` se déduit de `total`. `contacts` reste le
+nombre de contacts lus ; `has_revenues` n'est pas rendu.
+
 ### 9.2 Effacer, restaurer, lire et endormir un message — `CRM-138` (décisions 878 et 917)
 
 **Famille `messagerie`, existante** ; aucune case ni famille nouvelle, aucune migration de la matrice. Cinq outils,

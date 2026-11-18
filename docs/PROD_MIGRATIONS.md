@@ -1242,7 +1242,9 @@ Aucune variable, aucun secret.
 
 **Seule, elle ne change rien de visible** : la webapp (T2) et l'image `mcp` (T3) qui l'appellent se livrent **avec ou
 après** elle, jamais avant. **La webapp de T2 est écrite** (2026-11-18) : livrée avant la 186, l'onglet « Organisations »
-rendrait l'erreur de l'onglet.
+rendrait l'erreur de l'onglet. **L'image `mcp` de T3 aussi** (2026-11-18) : `crm_organization_list` appelle les deux
+fonctions ; reconstruite avant la 186, l'outil rendrait un refus. Geste : `up -d --build --no-deps --wait mcp` (§4), puis
+constater qu'un `crm_organization_list` rend `total` et les `tracks` de chaque organisation.
 **Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0186` » : retirer les deux fonctions, ce qui n'efface rien.
 
 ### 2.56 `CRM-154` T2, décisions 935 et 938 — réorganiser les channels d'un track, en base (À LIVRER : migration 187 ; **hors de tout lot annoncé**)

@@ -3,6 +3,9 @@
 # @verifies docs/SPEC-mcp.md §13 (par outil : succès, refus par la matrice, refus par le CRM malgré la matrice ouverte,
 #           journal écrit), §9.2 sexies (dont la décision 666 : `crm_search` filtre les organisations par leur famille) ;
 #           docs/SPEC-organisations.md §3, §5
+# @verifies CRM-152 (docs/BACKLOG.md) — tranche T3 : `crm_organization_list` sur la vraie base — les tracks de chaque
+#           organisation par ses contacts, le filtre par track (l'un d'eux), la recherche dans le site web, `total`
+#           (docs/SPEC-mcp.md §9.2 tervicies ; docs/SPEC-organisations.md §8.1, §8.4)
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
 Les cases de la preuve sont posées par la clé de service et retirées à la fin ; l'organisation créée est effacée."""
@@ -18,6 +21,7 @@ from .test_integration_oauth import ESPACE_SEEDE, FARIDA, MCP, _service, pytestm
 from .test_integration_recettes import DRISS, _attendre_outils, _attendre_visible, _dernier_journal, _jeton
 
 VASSEUR = "5eed0000-0000-4000-8000-000000000083"
+FORMATION = "5eed0000-0000-4000-8000-000000000023"
 SOGEXIA = "5eed0000-0000-4000-8000-000000000081"
 NOM = "Organisation MCP intégration"
 CASES = [("organizations", a) for a in ("consulter", "ajouter", "modifier")]
@@ -41,8 +45,18 @@ async def test_lister_lire_creer_et_modifier_une_organisation():
 
             liste = await appeler("crm_organization_list", {"workspace": "p2enjoy"})
             par_id = {o["id"]: o for o in liste["organizations"]}
+            # RÉVISÉE par `CRM-152` T3 : chaque organisation rend ses tracks — aucun pour une organisation sans contact.
             assert par_id[VASSEUR] == {"id": VASSEUR, "name": "Comptoir Vasseur", "domain": "comptoir-vasseur.example",
-                                       "website": None, "contacts": 0}
+                                       "website": None, "contacts": 0, "tracks": []}
+            assert liste["total"] == len(liste["organizations"]) and liste["has_more"] is False
+            vertigo = next(o for o in liste["organizations"] if o["name"] == "Vertigo Conseil")
+            assert [t["slug"] for t in vertigo["tracks"]] == ["conseil-ia", "formation"]
+            assert [t["slug"] for t in par_id[SOGEXIA]["tracks"]] == ["conseil-ia"]
+            # `CRM-152` : l'un des tracks donnés, et la recherche dans le site web.
+            par_track = await appeler("crm_organization_list", {"workspace": "p2enjoy", "tracks": [FORMATION]})
+            assert [o["name"] for o in par_track["organizations"]] == ["Vertigo Conseil"] and par_track["total"] == 1
+            par_site = await appeler("crm_organization_list", {"workspace": "p2enjoy", "query": "www.sogexia"})
+            assert [o["id"] for o in par_site["organizations"]] == [SOGEXIA]
             # Deux depuis CRM-071 T5 (décision 51) : Lucas Fontaine, importé par le seed (docs/SPEC-seed.md §33), rejoint Léo.
             assert par_id[SOGEXIA]["contacts"] == 2
             assert [o["id"] for o in (await appeler("crm_organization_list", {"workspace": "p2enjoy", "query": "vasseur"}))["organizations"]] == [VASSEUR]

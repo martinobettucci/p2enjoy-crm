@@ -4,6 +4,10 @@
 #       (droits de la base, refus), §5 (la famille et ses outils)
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
 #       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
+# @spec CRM-152 (docs/BACKLOG.md) — tranche T3 : `crm_organization_list` appelle `organization_list` puis
+#       `organization_tracks`, la lecture de l'onglet de la webapp — `query` cherche aussi dans le site web, `tracks` filtre
+#       sur l'un d'eux, chaque organisation rend ses tracks, la réponse rend `total` (docs/SPEC-mcp.md §9.2 tervicies ;
+#       docs/SPEC-organisations.md §8.1, §8.2, §8.4 ; décisions 931 et 936)
 """Les organisations du carnet, sous l'identité de la personne : les lister, en lire une, en créer, en modifier.
 
 Les mêmes lectures que l'onglet « Organisations » et la fiche d'organisation, les mêmes écritures que leur formulaire.
@@ -21,16 +25,27 @@ from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
-from crm_mcp.outils.affaires import nettoyer_texte
 from crm_mcp.outils.affaires_ecriture import refus
 from crm_mcp.outils.contacts import facultatif
 from crm_mcp.politique import Declaration, MoteurPolitique, RefusArgument, RefusCrm, appel_courant, introuvable
 
 LIMITE_MAX = 100
 COLONNES_ORGANISATION = "id,name,domain,website"
-#: Le compte embarqué de PostgREST, lu sous la même RLS que la ligne : celui de l'onglet de la webapp.
-COLONNES_LISTE = f"{COLONNES_ORGANISATION},contacts(count)"
 COLONNES_FICHE = f"{COLONNES_ORGANISATION},contacts(id,full_name,role_title,email,phone)"
+#: Au plus tant de tracks dans un filtre : bien au-delà des tracks d'un espace, en deçà d'une liste forgée.
+TRACKS_MAX = 50
+_UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
+
+def tracks_du_filtre(tracks: list[str] | None) -> list[str] | None:
+    """Les identifiants du filtre, dédoublonnés ; un identifiant mal formé est refusé par l'outil, nommé (§9.3). Ce ne
+    sont pas des ancres : la fonction filtre dans l'espace de l'appel, et un track d'ailleurs ne rend rien de plus."""
+    if not tracks:
+        return None
+    mal_formes = [t for t in tracks if not _UUID.match(t.strip())]
+    if mal_formes:
+        raise RefusArgument(f"tracks must be track ids from crm_track_list; not an id: {', '.join(map(repr, mal_formes[:3]))}.")
+    return list(dict.fromkeys(t.strip().lower() for t in tracks))
 
 
 def refus_organisation(reponse: Reponse, genre: str, valeur: Any) -> ToolError:
@@ -68,30 +83,59 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
 
     async def crm_organization_list(
         workspace: Annotated[str, Field(description="Workspace id or slug, from crm_workspace_list")],
-        query: Annotated[str | None, Field(description="Optional words of the name or domain", max_length=100)] = None,
+        query: Annotated[
+            str | None, Field(description="Optional words of the name, domain or website", max_length=100)
+        ] = None,
+        tracks: Annotated[
+            list[str] | None,
+            Field(
+                description="Optional track ids, from crm_track_list: keeps the organizations attached to ANY of them, "
+                "through a contact linked to a deal of the track",
+                max_length=TRACKS_MAX,
+            ),
+        ] = None,
         limit: Annotated[int, Field(ge=1, le=LIMITE_MAX)] = 50,
         offset: Annotated[int, Field(ge=0)] = 0,
     ) -> dict[str, Any]:
         appel = appel_courant()
-        parametres = {
-            "workspace_id": f"eq.{appel.espace}",
-            "select": COLONNES_LISTE,
-            "order": "name.asc,id.asc",
-            "limit": str(limit + 1),
-            "offset": str(offset),
-        }
-        texte = nettoyer_texte(query or "")
-        if texte:
-            parametres["or"] = f"(name.ilike.*{texte}*,domain.ilike.*{texte}*)"
-        reponse = await crm.lire(appel.jeton, "organizations", parametres)
+        texte = (query or "").strip()
+        filtre = tracks_du_filtre(tracks)
+        # LA LECTURE DE L'ONGLET : `organization_list` cherche, filtre et compte en base, sous la RLS de la personne ; la
+        # recherche y est échappée, elle n'a pas à être nettoyée ici.
+        reponse = await crm.rpc(
+            appel.jeton,
+            "organization_list",
+            {
+                "p_workspace_id": appel.espace,
+                "p_search": texte or None,
+                "p_track_ids": filtre,
+                "p_limit": limit,
+                "p_offset": offset,
+            },
+            idempotent=True,
+        )
         if not reponse.reussie or not isinstance(reponse.corps, list):
             raise refus_organisation(reponse, "workspace", workspace)
+        lignes = reponse.corps
+        total = int(lignes[0]["total_count"]) if lignes else 0
+        tracks_de: dict[str, list[dict[str, Any]]] = {}
+        if lignes:
+            lus = await crm.rpc(
+                appel.jeton, "organization_tracks", {"p_organization_ids": [o["id"] for o in lignes]}, idempotent=True
+            )
+            if not lus.reussie or not isinstance(lus.corps, list):
+                raise refus_organisation(lus, "workspace", workspace)
+            for t in lus.corps:
+                tracks_de.setdefault(t["organization_id"], []).append(
+                    {"id": t["track_id"], "name": t["name"], "slug": t["slug"]}
+                )
         return {
             "offset": offset,
-            "has_more": len(reponse.corps) > limit,
+            "total": total,
+            "has_more": offset + len(lignes) < total,
             "organizations": [
-                {**organisation_lue(o), "contacts": ((o.get("contacts") or [{}])[0] or {}).get("count", 0)}
-                for o in reponse.corps[:limit]
+                {**organisation_lue(o), "contacts": o.get("contacts", 0), "tracks": tracks_de.get(o["id"], [])}
+                for o in lignes
             ],
         }
 
@@ -101,8 +145,9 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         Declaration(famille="organizations", action="consulter", espace="workspace:workspace"),
         titre="List organizations",
         description=(
-            "Lists the organizations of a workspace's address book, by name: domain, website and number of contacts, "
-            "including organizations without any contact. Filter: words of the name or domain. Paginated."
+            "Lists the organizations of a workspace's address book, by name: domain, website, number of contacts and "
+            "tracks (where a contact of the organization is linked to a deal), including organizations without any "
+            "contact. Filters: words of the name, domain or website; track ids (any of them). Paginated, with the total."
         ),
     )
 
