@@ -20054,6 +20054,9 @@ sommeil** (réponses du responsable).
 **Arbitrages avant la spécification** (décision 946) : un fil coché agit sur **les messages que la liste montre** (dossier
 et filtres actifs) ; **aucun plafond** au nombre de messages ; **toutes** les actions groupées ouvrent une confirmation
 courte qui rappelle le nombre de fils et de messages, sans la suspension d'une heure de `CRM-151`.
+**Arbitrages des ajouts** (décision 947) : transfèrent les **administrateurs et business developers** ; le destinataire
+voit **exactement les mails transférés** (la lecture lui est ouverte en base), pas les réponses à venir ; seul un
+**administrateur bloque** un expéditeur, pour **toutes les boîtes de l'espace**, et le débloque dans les réglages.
 **Dépend de** : `CRM-155` (les filtres rapides par pastilles, qui ouvrent « Tout sélectionner ») ; la spécification peut
 s'écrire en parallèle, l'écran se coordonne avec la session qui porte `CRM-155`.
 **Spécification** : à écrire avant le code — `docs/SPEC-mail-subsystem.md` (section nouvelle) ; `docs/SCHEMA.md` (les

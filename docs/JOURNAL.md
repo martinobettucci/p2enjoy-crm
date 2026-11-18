@@ -41016,3 +41016,24 @@ au plus par appel), `mark_message_unread`, `snooze_thread` et `wake_thread` (par
 les pastilles (`CRM-155`) et « Seulement moi », et le filtre par expéditeur que la décision 945 ajoute.
 **Conséquences** : la spécification de `CRM-156` (`docs/SPEC-mail-subsystem.md`, section nouvelle) s'écrit sur ces
 réponses, avec les ajouts de la décision 945.
+
+### décision 947 — `CRM-156` : qui transfère, ce que voit le destinataire du transfert, qui bloque un expéditeur
+
+*2026-11-18, session d5b44a2d (p2enjoy-crm-fc, ex-f8), qui porte `CRM-156` ; arbitrage du responsable (`AskUserQuestion`),
+avant la spécification des ajouts de la décision 945.*
+**Observation qui pose la deuxième question** (relue en base) : un mail non classé n'est lisible que par le titulaire d'une
+boîte où il figure et par les administrateurs de l'espace (`mail_messages_lecture`, `app.peut_voir_message`,
+`app.boite_du_message_lisible`). Pour qu'un mail transféré apparaisse dans l'inbox « Seulement moi » du membre choisi, le
+transfert doit lui en **ouvrir la lecture** : c'est une règle d'accès nouvelle, tenue en base.
+**Questions et réponses** :
+- *Qui peut transférer ?* — **Les administrateurs et les business developers** de l'espace, ceux qui l'éditent, comme pour
+  poser une pastille ; une lectrice voit la commande éteinte avec son motif, et la base refuse. *Écarté* : tout membre qui
+  voit le mail.
+- *Que voit le destinataire du transfert ?* — **Exactement les mails transférés**, ceux que la liste montrait (décision
+  946). Une réponse arrivée plus tard dans le fil ne lui est pas ouverte, sauf nouveau transfert. *Écarté* : le fil, suite
+  comprise.
+- *Qui bloque un expéditeur, et où ?* — **Un administrateur, pour toutes les boîtes de l'espace** ; le déblocage se fait
+  dans les réglages, par un administrateur. *Écartés* : chacun pour ses boîtes ; les éditeurs pour tout l'espace.
+**Conséquences** : la spécification de `CRM-156` écrit la lecture ouverte par un transfert dans la politique de lecture
+des messages et dans `app.peut_voir_message`, avec ses preuves pgTAP et d'API sous les vrais jetons ; le blocage est une
+écriture réservée à l'administrateur, appliquée en base à la réception.
