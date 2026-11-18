@@ -1229,23 +1229,24 @@ du navigateur (`sessionStorage`), jamais en base.
 
 **Retour arrière** : la webapp précédente ; rien n'est écrit en base par la livraison.
 
-### 2.55 `CRM-152` T1, décisions 931 et 936 — les tracks d'une organisation et la liste paginée, en base (À LIVRER : migration 186 ; **hors de tout lot annoncé**)
+### 2.55 `CRM-152` T1 à T4, décisions 931 et 936 — les tracks d'une organisation ; rechercher, filtrer et trier la liste (À LIVRER : migration 186, webapp, image `mcp`, manuel ; **hors de tout lot annoncé**)
 
-`docs/SPEC-organisations.md` §8.1, §8.2 ; `docs/SCHEMA.md` « Migration `0186` ». Deux fonctions `SECURITY INVOKER`,
-`organization_tracks` et `organization_list` ; **aucune table, aucune politique, aucune donnée**, aucun verrou notable.
-Aucune variable, aucun secret.
+`docs/SPEC-organisations.md` §8 ; `docs/SCHEMA.md` « Migration `0186` » ; `docs/SPEC-mcp.md` §9.2 *tervicies*. Deux
+fonctions `SECURITY INVOKER`, `organization_tracks` et `organization_list` ; **aucune table, aucune politique, aucune
+donnée**, aucun verrou notable. Aucune variable, aucun secret ; aucune case nouvelle dans la matrice du connecteur.
 
 | # | Geste | Qui | Comment |
 |---|---|---|---|
 | 1 | Appliquer la migration 186 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate` |
 | 2 | Constater | session de livraison, en lecture seule | le registre gagne une ligne, l'empreinte de la 186 égale celle du dépôt ; `select to_regprocedure('public.organization_list(uuid, text, uuid[], text, text, boolean, integer, integer)')` non nul |
+| 3 | Livrer la webapp et le manuel | session de livraison | **après le geste 1**, avec le lot qui les emporte (§4) |
+| 4 | Reconstruire l'image `mcp` | session de livraison | **après le geste 1** : `up -d --build --no-deps --wait mcp` (§4) |
+| 5 | Constater | responsable | Contacts ▸ Organisations : la colonne « Tracks » ; taper quelques lettres d'un nom dans « Rechercher » ne garde que les organisations qui les contiennent ; « Tracks », cocher un track ; « Recettes » ▸ « Avec recettes » ; trier par « Contacts » ; recharger la page : filtres et tri restent ; la fiche d'une organisation porte la ligne « Tracks » ; depuis l'assistant, `crm_organization_list` rend les tracks et le total |
 
-**Seule, elle ne change rien de visible** : la webapp (T2) et l'image `mcp` (T3) qui l'appellent se livrent **avec ou
-après** elle, jamais avant. **La webapp de T2 est écrite** (2026-11-18) : livrée avant la 186, l'onglet « Organisations »
-rendrait l'erreur de l'onglet. **L'image `mcp` de T3 aussi** (2026-11-18) : `crm_organization_list` appelle les deux
-fonctions ; reconstruite avant la 186, l'outil rendrait un refus. Geste : `up -d --build --no-deps --wait mcp` (§4), puis
-constater qu'un `crm_organization_list` rend `total` et les `tracks` de chaque organisation.
-**Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0186` » : retirer les deux fonctions, ce qui n'efface rien.
+**L'ordre compte** : la webapp ou l'image `mcp` livrées avant la 186 appelleraient des fonctions absentes — l'onglet
+« Organisations » rendrait son erreur, l'outil un refus.
+**Retour arrière** : la webapp et l'image précédentes ; la 186 peut rester (deux fonctions, rien d'autre), ou se retirer
+comme le dit `docs/SCHEMA.md` « Migration `0186` ».
 
 ### 2.56 `CRM-154` T2, décisions 935 et 938 — réorganiser les channels d'un track, en base (À LIVRER : migration 187 ; **hors de tout lot annoncé**)
 

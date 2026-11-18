@@ -19821,8 +19821,12 @@ pendant 1 heure. »
   12/12 ; manuel construit, `verify-manual` 168 contrôles sans anomalie ; contrat §2.54 ; changelog.
 **Reste** : livrer la webapp avec un lot, et le constat du responsable en production (contrat §2.54, geste 2).
 
-### CRM-152 — Organisations : les tracks de chaque organisation, par ses contacts ; recherche, filtres et tri de la liste `[@]`
-*Prise en charge : session interactive 4891a451 (p2enjoy-crm-d7, ex-32) depuis 2026-11-17 17:03 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*
+### CRM-152 — Organisations : les tracks de chaque organisation, par ses contacts ; recherche, filtres et tri de la liste `[P]`
+
+**État (2026-11-18)** : vérifiée en développement, T1 à T4 (ci-dessous). **Reste** : la livraison — migration 186, webapp,
+image `mcp`, manuel — et le constat du responsable (`docs/PROD_MIGRATIONS.md` §2.55, geste 5). *Limite nommée* : à 1280 px
+et moins, la sixième colonne (« Réel sur prévu ») déborde dans le cadre du tableau, qui défile de côté (§12.6) ; à 1440 px,
+tout tient (`docs/DESIGN_SYSTEM.md` §5.105).
 
 **Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison (p2enjoy-crm-bb) ; arbitrée le
 même jour (décision 931). Prolonge la liste des organisations de `CRM-114` et `CRM-146`.
@@ -19864,7 +19868,11 @@ d'eux ; pas de tri sur « Réel sur prévu ».
       nouveaux : les deux appels et le total, le site web, l'un des tracks dédoublonné, la page vide sans second appel,
       le track mal formé refusé sans appel), suite unitaire 423 ; intégration `test_integration_organisations.py`
       révisée (tracks, filtre, site web, total) par `verify-mcp.sh`.
-- [ ] **T4 — seed vérifié, manuel, contrat** ; puis `[P]`.
+- [x] **T4 — seed vérifié, manuel, contrat** ; puis `[P]`. *Faite le 2026-11-18* : seed vérifié sans ajout
+      (`docs/SPEC-seed.md` §48, « Afficher plus » démontré par l'E2E, limite nommée) ; manuel §10.9 (barre, tri, colonne,
+      « Afficher plus », adresse), §10.10 (la ligne « Tracks ») et chapitre du connecteur ; images `onglet-organisations`,
+      `fiche-organisation` renouvelées et `filtrer-organisations` nouvelle, observées ; `e2e/manuel/10-carnet.spec.ts` 8/8,
+      `verify-manual.sh` 168 contrôles sans anomalie ; contrat §2.55 réécrit pour l'unité entière.
 
 ### CRM-153 — Organisations : un fil de commentaires, et des catégories définies en Réglages `[ ]`
 

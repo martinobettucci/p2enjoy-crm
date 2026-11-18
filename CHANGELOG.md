@@ -67,6 +67,8 @@ d'exécuter le code attendu.
 - **`crm_organization_list`** cherche aussi dans le site web, filtre par track (l'un de ceux donnés), rend les tracks de
   chaque organisation et le total. Famille « Organisations », case « consulter » : aucune case nouvelle. Image `mcp`
   (`docs/PROD_MIGRATIONS.md` §2.55).
+- **Le manuel** (`CRM-152` T4) décrit la barre, le tri, la colonne et la ligne « Tracks », « Afficher plus » et l'adresse
+  (§10.9, §10.10), et l'outil du connecteur ; une image nouvelle montre le panneau « Tracks ».
 
 ## [Publié]
 

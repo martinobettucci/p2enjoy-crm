@@ -3220,9 +3220,16 @@
 		{
 			"type": "image",
 			"src": "le-carnet-de-contacts/onglet-organisations.jpg",
-			"alt": "L'onglet des organisations : leur nom, leur domaine, leur site web, leur nombre de contacts et le réel de leurs recettes sur le prévu",
+			"alt": "L'onglet des organisations : la barre de recherche et de filtres, puis leur nom, leurs tracks, leur domaine, leur site web, leur nombre de contacts et le réel de leurs recettes sur le prévu",
 			"width": 1192,
-			"height": 429
+			"height": 510
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/filtrer-organisations.jpg",
+			"alt": "Le panneau « Tracks » déplié sous la barre, une case cochée : seules les organisations rattachées à ce track restent",
+			"width": 1192,
+			"height": 303
 		},
 		{
 			"type": "image",
@@ -3318,6 +3325,33 @@
 						{
 							"type": "text",
 							"text": " : il ouvre sa fiche"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Tracks"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Les tracks auxquels l'organisation est rattachée, séparés par « · » : un track y paraît dès qu'"
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "un contact de l'organisation est lié à une affaire"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " d'un channel de ce track. Une affaire à la corbeille, un rattachement, un channel ou un track archivés ne comptent pas. Vide quand aucun ne compte"
 						}
 					]
 				],
@@ -3445,7 +3479,305 @@
 				},
 				{
 					"type": "text",
-					"text": " : deux personnes aux droits différents peuvent lire des montants\ndifférents pour la même organisation. Ce n'est pas une erreur."
+					"text": " : deux personnes aux droits différents peuvent lire des montants\ndifférents pour la même organisation. Ce n'est pas une erreur. Il en va de même des "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tracks"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : un track ne paraît que\npar une affaire que vous lisez."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Rechercher et filtrer."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une barre au-dessus du tableau porte quatre commandes, qui agissent aussitôt, sans bouton de\nvalidation :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Rechercher"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : tapez quelques lettres ; la liste ne garde que les organisations dont le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "nom"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "domaine"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ou le\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "site web"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " les contient, sans tenir compte des majuscules. Elle suit votre frappe après un court instant ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Tracks"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le bouton déplie, sous la barre, une case par track de l'espace. Cocher un track ne garde que les\norganisations qui lui sont rattachées ; en cocher plusieurs garde celles qui sont rattachées à "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "l'un d'eux"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Le\nbouton dit combien sont cochés, par exemple « Tracks (2) ». La touche Échap replie le panneau ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Recettes"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : toutes les organisations, celles "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "avec recettes"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " (au moins une recette prévue sur une de leurs\naffaires), ou celles "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "sans recettes"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Effacer les filtres"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " paraît dès qu'un filtre est posé, et les retire tous ; le tri reste."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Lorsqu'aucune organisation ne répond aux filtres, l'onglet le dit en toutes lettres, et propose d'effacer les filtres."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Trier."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Cliquez sur l'en-tête "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Nom"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ou "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Contacts"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : la liste se range dans l'ordre croissant, puis décroissant au\nsecond clic ; une flèche dans l'en-tête dit le sens. À égalité, le nom départage. Les autres colonnes ne se trient pas."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Cinquante à la fois."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " L'onglet montre cinquante organisations ; sous le tableau, « 50 sur 132 » dit combien répondent\nen tout, et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Afficher plus"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ajoute les cinquante suivantes. Changer la recherche, un filtre ou le tri repart des\ncinquante premières."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'adresse garde vos choix."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " La recherche, les filtres et le tri s'inscrivent dans l'adresse de la page : un lien copié\nou une page rechargée retrouvent la même liste."
 				}
 			]
 		},
@@ -3568,7 +3900,7 @@
 			"src": "le-carnet-de-contacts/fiche-organisation.jpg",
 			"alt": "La fiche d'une organisation : ses caractéristiques, puis ses contacts",
 			"width": 1192,
-			"height": 631
+			"height": 711
 		},
 		{
 			"type": "image",
@@ -3734,7 +4066,37 @@
 							},
 							{
 								"type": "text",
-								"text": "\nplutôt qu'un tiret ;"
+								"text": "\nplutôt qu'un tiret. Dessous, la ligne "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Tracks"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " montre les tracks de l'organisation (comptés comme dans l'onglet,\nvoir la "
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "le-carnet-de-contacts",
+									"anchor": "l-onglet-organisations"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 10.9"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "), chacun en pastille de sa couleur : un clic ouvre le track. Sans\ntrack, la ligne le dit en toutes lettres ;"
 							}
 						]
 					}

@@ -3,6 +3,9 @@
 //       suppression), docs/SPEC-rattachements.md (rattacher, détacher, le rôle), docs/SPEC-audit.md §7 (le RGPD)
 // @spec CRM-146 (docs/BACKLOG.md) — tranche T3 : l'image du bloc « Recettes avec cette organisation » (docs/manual.md §10.10 ;
 //       docs/SPEC-recettes.md §12.5 ; docs/SPEC-seed.md §41) ; l'onglet des organisations porte la colonne « Réel sur prévu »
+// @spec CRM-152 (docs/BACKLOG.md) — tranche T4 : l'onglet des organisations porte la barre et la colonne « Tracks » ; l'image
+//       nouvelle du panneau « Tracks » déplié, un track coché ; la fiche porte la ligne « Tracks » (docs/manual.md §10.9,
+//       §10.10 ; docs/SPEC-organisations.md §8.3 ; docs/DESIGN_SYSTEM.md §5.105 ; docs/SPEC-seed.md §48)
 //
 // Les contacts et les organisations sont ceux du seed : Léo Marchand, Sogexia, le contact déjà anonymisé. Les gestes qui
 // ne se défont pas — supprimer, anonymiser — portent sur un contact posé par la clé de service et retiré ensuite ; la
@@ -252,6 +255,17 @@ test('les organisations : la liste, la fiche, la modification', async ({ page })
 		nom: 'onglet-organisations',
 		cibles: [page.getByTestId('ouvrir-creation-organisation'), page.getByTestId('tableau-organisations')],
 	})
+	// `CRM-152` T4 : le panneau « Tracks » déplié, « Formation » coché — seule Vertigo Conseil y est rattachée (seed §48).
+	await page.getByTestId('ouvrir-filtre-tracks').click()
+	await page.getByRole('checkbox', { name: 'Formation' }).check()
+	await expect(page.getByTestId('lien-fiche-organisation')).toHaveText(['Vertigo Conseil'])
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: 'l-onglet-organisations',
+		nom: 'filtrer-organisations',
+		cibles: [page.getByTestId('ouvrir-filtre-tracks'), page.getByTestId('panneau-filtre-tracks'), page.getByTestId('tableau-organisations')],
+	})
+	await page.goto('/contacts/organisations')
 	// `CRM-146` T3 : le bloc des recettes, sur l'organisation que le seed §41 dote de deux devises et d'une affaire partagée.
 	await page.getByTestId('ligne-organisation').filter({ hasText: 'Vertigo Conseil' }).getByRole('link', { name: 'Vertigo Conseil' }).click()
 	await expect(page.getByTestId('tableau-recettes-organisation')).toBeVisible()

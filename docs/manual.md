@@ -2816,7 +2816,9 @@ texte d'aide — décideur, prescripteur, contact technique — ne sont que des 
 
 ### 10.9 L'onglet « Organisations »
 
-![L'onglet des organisations : leur nom, leur domaine, leur site web, leur nombre de contacts et le réel de leurs recettes sur le prévu](manuel/images/le-carnet-de-contacts/onglet-organisations.jpg)
+![L'onglet des organisations : la barre de recherche et de filtres, puis leur nom, leurs tracks, leur domaine, leur site web, leur nombre de contacts et le réel de leurs recettes sur le prévu](manuel/images/le-carnet-de-contacts/onglet-organisations.jpg)
+
+![Le panneau « Tracks » déplié sous la barre, une case cochée : seules les organisations rattachées à ce track restent](manuel/images/le-carnet-de-contacts/filtrer-organisations.jpg)
 
 ![Le bouton Modifier de la fiche d'une organisation](manuel/images/le-carnet-de-contacts/modifier-organisation.jpg)
 
@@ -2828,6 +2830,7 @@ L'onglet **Organisations** liste toutes les organisations de l'espace de travail
 | Colonne | Ce qu'elle porte |
 |---|---|
 | Nom | Le nom de l'organisation. **C'est un lien** : il ouvre sa fiche |
+| Tracks | Les tracks auxquels l'organisation est rattachée, séparés par « · » : un track y paraît dès qu'**un contact de l'organisation est lié à une affaire** d'un channel de ce track. Une affaire à la corbeille, un rattachement, un channel ou un track archivés ne comptent pas. Vide quand aucun ne compte |
 | Domaine | Son domaine, par exemple `sogexia.example`, lorsqu'il est renseigné |
 | Site web | L'adresse de son site, lorsqu'elle est renseignée. Ici ce n'est pas un lien : la fiche le porte |
 | Contacts | Le nombre de contacts du carnet rattachés à l'organisation |
@@ -2841,7 +2844,32 @@ ne change pas de couleur quand le réel dépasse le prévu ou reste bas — les 
 recette laisse la cellule **vide**, sans barre.
 
 **Vous ne voyez que les affaires que vous pouvez lire** : deux personnes aux droits différents peuvent lire des montants
-différents pour la même organisation. Ce n'est pas une erreur.
+différents pour la même organisation. Ce n'est pas une erreur. Il en va de même des **tracks** : un track ne paraît que
+par une affaire que vous lisez.
+
+**Rechercher et filtrer.** Une barre au-dessus du tableau porte quatre commandes, qui agissent aussitôt, sans bouton de
+validation :
+
+- **Rechercher** : tapez quelques lettres ; la liste ne garde que les organisations dont le **nom**, le **domaine** ou le
+  **site web** les contient, sans tenir compte des majuscules. Elle suit votre frappe après un court instant ;
+- **Tracks** : le bouton déplie, sous la barre, une case par track de l'espace. Cocher un track ne garde que les
+  organisations qui lui sont rattachées ; en cocher plusieurs garde celles qui sont rattachées à **l'un d'eux**. Le
+  bouton dit combien sont cochés, par exemple « Tracks (2) ». La touche Échap replie le panneau ;
+- **Recettes** : toutes les organisations, celles **avec recettes** (au moins une recette prévue sur une de leurs
+  affaires), ou celles **sans recettes** ;
+- **Effacer les filtres** paraît dès qu'un filtre est posé, et les retire tous ; le tri reste.
+
+Lorsqu'aucune organisation ne répond aux filtres, l'onglet le dit en toutes lettres, et propose d'effacer les filtres.
+
+**Trier.** Cliquez sur l'en-tête **Nom** ou **Contacts** : la liste se range dans l'ordre croissant, puis décroissant au
+second clic ; une flèche dans l'en-tête dit le sens. À égalité, le nom départage. Les autres colonnes ne se trient pas.
+
+**Cinquante à la fois.** L'onglet montre cinquante organisations ; sous le tableau, « 50 sur 132 » dit combien répondent
+en tout, et **Afficher plus** ajoute les cinquante suivantes. Changer la recherche, un filtre ou le tri repart des
+cinquante premières.
+
+**L'adresse garde vos choix.** La recherche, les filtres et le tri s'inscrivent dans l'adresse de la page : un lien copié
+ou une page rechargée retrouvent la même liste.
 
 Comme partout dans le carnet, une valeur absente laisse la cellule **vide**. Sur un écran étroit, le
 tableau défile de côté dans son cadre ; la page, elle, ne défile jamais de côté. Lorsque l'espace ne
@@ -2871,7 +2899,9 @@ La fiche porte le **nom de l'organisation en titre**, puis trois blocs :
   reconnaître ses adresses email) et son **site web**. Le site est un lien : il s'ouvre dans un
   **nouvel onglet**, et vous quittez alors l'application. Le domaine, lui, n'est pas un lien : ce
   n'est pas une adresse à visiter. Comme dans le carnet, une valeur absente laisse la place **vide**
-  plutôt qu'un tiret ;
+  plutôt qu'un tiret. Dessous, la ligne **Tracks** montre les tracks de l'organisation (comptés comme dans l'onglet,
+  voir la [section 10.9](#l-onglet-organisations)), chacun en pastille de sa couleur : un clic ouvre le track. Sans
+  track, la ligne le dit en toutes lettres ;
 - **les recettes avec cette organisation** — un tableau, une ligne par devise : le **prévu**, le **réel** et la part
   réalisée (une barre et un pourcentage, qui peut dépasser 100 %). Sous le tableau, la fiche dit combien d'affaires
   comptent, combien comptent aussi pour une autre organisation, combien de lignes de recette n'ont pas encore de réel
@@ -6926,8 +6956,9 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   l'organisation d'un contact fait partie du contact ; les organisations elles-mêmes sont la famille suivante.
 
 - **Organisations** :
-  - *Consulter* : lister les organisations du carnet, par mots du nom ou du domaine, avec le nombre de contacts de
-    chacune — y compris celles qui n'en ont aucun ; lire la fiche d'une organisation, avec ses contacts ;
+  - *Consulter* : lister les organisations du carnet, par mots du nom, du domaine ou du site web, ou par track (l'un de
+    ceux donnés), avec le nombre de contacts et les tracks de chacune, et leur nombre total — y compris celles qui n'ont
+    aucun contact ; lire la fiche d'une organisation, avec ses contacts ;
   - *Ajouter* : créer une organisation — un nom, et un domaine et un site web facultatifs. Le domaine est enregistré en
     minuscules, et il est unique dans l'espace : un domaine déjà pris est refusé ;
   - *Modifier* : changer son nom, son domaine ou son site web ; une valeur vide efface le domaine ou le site.

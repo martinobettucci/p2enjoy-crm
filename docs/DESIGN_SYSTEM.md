@@ -8659,6 +8659,9 @@ disent que de quoi elle a l'air.
   focus reste sur lui, et la région vivante dit « 50 organisations de plus ». Une erreur s'écrit sous lui, `role="alert"`,
   avec « Réessayer ». *Précisé au code (T2)* : quand la dernière page le fait disparaître, le focus passe au lien de la
   première organisation ajoutée, jamais au corps du document.
+- *Constaté en capture (T2, T4)* : à 1440 px, les six colonnes tiennent ; à 1280 px et moins, la sixième, « Réel sur
+  prévu », déborde dans le cadre du tableau, qui défile de côté avec son indice (§12.6) — la page, elle, ne défile pas.
+  *Limite nommée*, à arbitrer si elle gêne.
 - **L'ÉTAT VIDE SOUS LES FILTRES** : « Aucune organisation ne correspond à ces filtres », avec « Effacer les filtres »
   (§5.8) ; le vide de l'espace reste celui du §5.64.
 - **UNE RELECTURE NE VIDE PAS LE TABLEAU** : changer un filtre garde les lignes affichées, atténuées par `aria-busy` sur le

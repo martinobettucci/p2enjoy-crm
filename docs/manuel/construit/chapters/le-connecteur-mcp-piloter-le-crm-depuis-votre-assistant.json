@@ -3002,7 +3002,7 @@
 										},
 										{
 											"type": "text",
-											"text": " : lister les organisations du carnet, par mots du nom ou du domaine, avec le nombre de contacts de\nchacune — y compris celles qui n'en ont aucun ; lire la fiche d'une organisation, avec ses contacts ;"
+											"text": " : lister les organisations du carnet, par mots du nom, du domaine ou du site web, ou par track (l'un de\nceux donnés), avec le nombre de contacts et les tracks de chacune, et leur nombre total — y compris celles qui n'ont\naucun contact ; lire la fiche d'une organisation, avec ses contacts ;"
 										}
 									]
 								}

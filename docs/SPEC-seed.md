@@ -3223,3 +3223,24 @@ garde qui échoue arrête le seed et nomme la migration `0185`.
 
 **Ce que le jeu démontre** : Réglages ▸ Prompts du connecteur avec six prompts, dont un propre à l'espace ; dans un client
 MCP connecté, les mêmes six, et le prompt ajouté rendu avec son en-tête d'espace.
+
+## 48. Les tracks d'une organisation — `CRM-152` T4 (`docs/SPEC-organisations.md` §8.5)
+
+*Vérifié le 2026-11-18 ; aucune donnée ajoutée.* Le jeu démontre déjà ce que `CRM-152` montre, par les rattachements du
+§11 et du §41 :
+
+| Organisation | Tracks (administratrice) | Ce que l'écran montre |
+|---|---|---|
+| Vertigo Conseil | Conseil & IA, Formation | **deux tracks** ; avec recettes ; la lectrice n'y voit que « Formation » |
+| Atelier Lumen | Conseil & IA | un track, par l'affaire partagée du §41 ; avec recettes |
+| Sogexia | Conseil & IA | un track, par « Migration ERP Sogexia » ; sans recette |
+| Comptoir Vasseur, Imprimerie Duval | aucun | **aucun contact** ; « Aucun track » sur la fiche |
+| Studio Meunier, Ville d'Annecy | aucun | un contact, lié à aucune affaire |
+
+- **Le tri par contacts** a ses égalités (trois organisations à deux contacts) : le nom départage, comme le §8.2 le veut.
+- **« Afficher plus » n'est pas démontré par le seed** : il faudrait plus de cinquante organisations, qui encombreraient le
+  carnet de démonstration et défigureraient les preuves qui comptent ses sept organisations. La preuve E2E
+  (`e2e/ui/organisations-recherche.spec.ts`) pose cinquante-cinq organisations préfixées par la clé de service et les
+  retire après chaque test. *Limite nommée.*
+- Les preuves qui s'appuient sur ce tableau : pgTAP `0174`, `e2e/api/liste-organisations.spec.ts`,
+  `e2e/ui/organisations-recherche.spec.ts`, `mcp/tests/test_integration_organisations.py`.
