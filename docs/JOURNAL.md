@@ -40913,3 +40913,15 @@ Manuel rendu à sa source, garde 168, API 9/9. Captures : 281 renouvelées, obse
 **Question** : livrer à `2758f56e`, avec la limite signalée par d7 (à 1280 px, la colonne « Réel sur prévu » déborde dans le
 cadre du tableau des organisations) ? **Décision : corriger le débordement d'abord.** `CRM-152` le corrige (d7) ; la session
 de livraison rejoue son périmètre et les captures, puis repropose. Le verrou reste posé.
+
+### décision 941 — livrer le lot CRM-152 et CRM-154 à la révision `249813f1`
+
+*2026-11-18, session 4522fa9c (p2enjoy-crm-bb, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Après la décision 940** : d7 a corrigé le débordement du tableau des organisations (`249813f1`) — il mesurait 1 231 px
+sur la liste entière et débordait à tous les paliers ; colonnes fixes, « Domaine et site web » en une colonne, montants
+empilés au-dessus de la barre, largeur minimale 864 px (défilement dans le cadre à 390 px, jamais la page). Rejoué par la
+session de livraison : types, unitaires 5 918/5 918, `organisations-recherche`, `organisations`, `recettes-organisation`,
+`contacts` et `connecteur-organisations` 84/84, manuel chapitre 10 8/8, garde du manuel 168 ; captures sans écart,
+observées à 1280 et 900 px.
+**Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `249813f1` : migrations 186 et 187, webapp,
+image `mcp`, manuel (contrat §2.55 à §2.57).
