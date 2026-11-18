@@ -18,6 +18,8 @@
 //           se connectent ou sont convertis, aucune page n'étant rendue sans session (décision 601)
 // @verifies CRM-093 (docs/BACKLOG.md) — les cas m (modification) et h, j (suppression) de la lectrice révisés : la commande refusée est
 //            éteinte avec son motif (docs/SPEC-droits-interface.md §3, §5)
+// @verifies CRM-152 (docs/BACKLOG.md) — tranche T2 : la fiche d'organisation porte la ligne « Tracks » ; l'assertion du
+//           seul lien du bloc est révisée pour écarter ses pilules (docs/SPEC-organisations.md §8.3 ; DESIGN_SYSTEM §5.105)
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, et la navigation passe par la BARRE LATÉRALE, jamais par un `goto` sur
@@ -278,7 +280,11 @@ test.describe("fiche d'organisation (docs/SPEC-contacts.md §11)", () => {
 		const caracteristiques = page.getByTestId('caracteristiques-organisation')
 		await expect(caracteristiques).toContainText('sogexia.example')
 		// Un SEUL lien dans le bloc : le domaine n'en est pas un (§11.5).
-		await expect(caracteristiques.locator('a')).toHaveCount(1)
+		// ASSERTION RÉVISÉE le 2026-11-18 — `CRM-152` T2 : la liste de définitions porte désormais la ligne « Tracks », dont
+		// chaque pilule est un lien vers son track (docs/SPEC-organisations.md §8.3 ; docs/DESIGN_SYSTEM.md §5.105). La preuve
+		// garde son objet — le domaine n'est pas un lien, le site en est un — en écartant les pilules, qu'elle compte à part.
+		await expect(caracteristiques.locator('a:not([data-testid="pilule-track-organisation"])')).toHaveCount(1)
+		await expect(caracteristiques.getByTestId('pilule-track-organisation')).toHaveText(['Conseil & IA'])
 
 		// ASSERTION RÉVISÉE le 2026-08-19 — sous-tranche 4f, §15.6. Elle exigeait `toHaveCount(0)` :
 		// il n'existait pas de fiche de contact, et un lien y aurait été mort (§11.8). La
