@@ -3410,6 +3410,22 @@ modifiées leur définition de la migration précédente ; rendre à `import_con
 des deux listes fermées après avoir supprimé ses notifications et préférences ; supprimer les deux tables. Les transferts
 et les blocages sont perdus — les mails mis à la corbeille par un blocage y restent, restaurables.
 
+### Migration `0191` — la préférence des transferts de mails s'écrit — `CRM-156` T4 (`0191_preference_transfert_mails.sql` ; écrite le 2026-11-18)
+
+**Le défaut.** La `0190` a ouvert `mail_transfer` dans les deux listes fermées (`notifications_type_check`,
+`notification_preferences_type_check`), mais `public.definir_preference_notification` (`0067`), l'unique chemin d'écriture
+d'une préférence (`docs/SPEC-notifications.md` §46.3), tient sa propre liste écrite en dur — `p_type not in ('mention')`.
+La case « Recevoir les transferts de mails » (`docs/DESIGN_SYSTEM.md` §5.109 bis) aurait reçu `preference_type_inconnu`.
+Trouvé en branchant cette case ; prouvé par la pgTAP `0178`, assertions 39 et 40, rouges avant la migration.
+
+**Ce qui change.** `definir_preference_notification` est redéfinie (`create or replace`), le refus nommé portant sur la
+liste ('mention', 'mail_transfer') — le miroir des deux `check`. Le reste du corps est celui de la `0067`. Ni table, ni
+colonne, ni politique, ni donnée. L'ACL est redite (`revoke` de `public` et `anon`, `execute` à `authenticated` et
+`service_role`).
+
+**Exige** la `0190`. **Retour arrière** : rejouer le corps de la `0067` ; les lignes `mail_transfer` déjà écrites restent
+valides au regard du `check`, et la lecture (`app.notification_consentie`) les applique toujours.
+
 ### Migration `0188` — les commentaires et les catégories d'une organisation — `CRM-153` T1 (`0188_commentaires_categories_organisations.sql` ; spécifiée le 2026-11-18, avant le code ; écrite le 2026-11-18)
 
 `docs/SPEC-organisations.md` §9.1, §9.2 ; décisions 932, 939 et 942.

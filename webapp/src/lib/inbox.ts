@@ -1,4 +1,5 @@
 // @spec CRM-057 (docs/BACKLOG.md) — inbox globale : arborescence, liste, message, classement
+// @spec CRM-156 (docs/BACKLOG.md) — tranche T4 : la liste lit le filtre par expéditeur (docs/SPEC-mail-subsystem.md §32.9)
 // @spec docs/SPEC-mail-subsystem.md §18.1 (qui voit quoi), §18.3 (les trois panneaux), §18.4 (le
 //       HTML d'un expéditeur ne s'affiche jamais), §18.5 (la pièce jointe saine), §18.6 (le
 //       message dans la card)
@@ -41,6 +42,7 @@ import { premierRattachement } from './rattachements'
 import { cleFil, lireFilsEndormis, type FilsEndormis } from './sommeil-fil'
 import { idsPosees } from './pastilles-message'
 import type { ClientCrm } from './supabase'
+import { motifExpediteur } from './filtre-expediteur'
 
 /**
  * Un client absent n'est pas une panne réseau : c'est une configuration incomplète, et la nommer
@@ -498,6 +500,8 @@ export async function lireMessages(
 	selection: Selection,
 	seulementMoi = false,
 	pastilles: readonly string[] = [],
+	/** `CRM-156` T4 (§32.9) : l'adresse du filtre par expéditeur, déjà lue par `lireExpediteurFiltre` ; `null` sans filtre. */
+	expediteur: string | null = null,
 ): Promise<EtatAsync<PageMessages>> {
 	if (client === null) return enErreur(CONFIGURATION_ABSENTE)
 	try {
@@ -514,7 +518,9 @@ export async function lireMessages(
 						.eq('filtre_pastille.applied', true)
 		const dossier =
 			selection.genre === 'non-classes' ? base.is('card_id', null) : base.eq('card_id', selection.cardId)
-		const filtree = seulementMoi ? dossier.eq('concerns_me', true) : dossier
+		const moi = seulementMoi ? dossier.eq('concerns_me', true) : dossier
+		// `CRM-156` T4 : le filtre par expéditeur porte lui aussi sur les MESSAGES, sans casse (§32.9).
+		const filtree = expediteur === null ? moi : moi.ilike('from_address', motifExpediteur(expediteur))
 		// L'ordre est TOTAL, terminé par `id` : deux messages reçus dans la même milliseconde
 		// suffisent à rendre l'affichage instable d'un rechargement à l'autre (décision 185).
 		const reponse = await filtree
@@ -855,6 +861,8 @@ export function useMessages(
 	seulementMoi: boolean | null = false,
 	/** `CRM-155` : les pastilles du filtre ; `null` tant qu'elles ne sont pas connues — la lecture attend (§31.12.3). */
 	pastilles: readonly string[] | null = [],
+	/** `CRM-156` T4 (§32.9) : l'adresse du filtre par expéditeur ; `null` sans filtre. */
+	expediteur: string | null = null,
 ): Relecture<PageMessages> {
 	const cle = selection === null ? '' : selection.genre === 'card' ? selection.cardId : 'non-classes'
 	// Une clé de dépendance stable : la liste est recréée à chaque rendu, ses valeurs non ; `useLecture` relit la dernière
@@ -866,8 +874,8 @@ export function useMessages(
 				? pret({ messages: [], tronquee: false })
 				: seulementMoi === null || pastilles === null
 					? EN_ATTENTE
-					: lireMessages(client, selection, seulementMoi, pastilles),
-		[client, cle, seulementMoi, clePastilles],
+					: lireMessages(client, selection, seulementMoi, pastilles, expediteur),
+		[client, cle, seulementMoi, clePastilles, expediteur],
 	)
 }
 

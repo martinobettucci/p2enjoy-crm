@@ -1,3 +1,4 @@
+// @spec CRM-156 (docs/BACKLOG.md) — tranche T4 : Réglages ▸ Expéditeurs bloqués, son titre et son entrée d'index, après les pastilles des mails (docs/DESIGN_SYSTEM.md §5.109 bis)
 // @spec CRM-149 (docs/BACKLOG.md) — tranche T3 : Réglages ▸ Prompts du connecteur, son adresse, son titre et son entrée d'index (docs/SPEC-mcp.md §17.7 ; docs/DESIGN_SYSTEM.md §5.104)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : Réglages ▸ Étiquettes, son adresse, sa route et son entrée d'index (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-007 (docs/BACKLOG.md) — routes de premier niveau et leur contenu
@@ -49,6 +50,7 @@ import {
 	CHEMIN_ADMIN_MODELES_MAIL,
 	CHEMIN_ADMIN_SEQUENCES_MAIL,
 	CHEMIN_ADMIN_PASTILLES_MAIL,
+	CHEMIN_ADMIN_EXPEDITEURS_BLOQUES,
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_CONTACTS,
 	CHEMIN_CORBEILLE,
@@ -236,6 +238,8 @@ export const CLE_TITRE_MODELES_MAIL: CleTraduction = 'admin.mailTemplates.title'
 export const CLE_TITRE_SEQUENCES_MAIL: CleTraduction = 'admin.sequences.title'
 /** `CRM-141` T3 — Réglages ▸ Pastilles des mails (docs/SPEC-mail-subsystem.md §31.7). */
 export const CLE_TITRE_PASTILLES_MAIL: CleTraduction = 'admin.mailLabels.title'
+/** `CRM-156` T4 — Réglages ▸ Expéditeurs bloqués (docs/SPEC-mail-subsystem.md §32.8). */
+export const CLE_TITRE_EXPEDITEURS_BLOQUES: CleTraduction = 'admin.blockedSenders.title'
 /** `CRM-149` T3 — Réglages ▸ Prompts du connecteur (docs/SPEC-mcp.md §17.7). */
 export const CLE_TITRE_PROMPTS_CONNECTEUR: CleTraduction = 'admin.mcpPrompts.title'
 
@@ -675,6 +679,18 @@ export function IndexReglages() {
 					>
 						<span className="font-medium">{t('admin.settings.index.mailLabels')}</span>
 						<span className="text-sm text-text-2">{t('admin.settings.index.mailLabels.body')}</span>
+					</Link>
+				</li>
+				{/* Les expéditeurs bloqués viennent APRÈS les pastilles des mails — `CRM-156` T4, docs/DESIGN_SYSTEM.md §5.109 bis.
+				    Un lien pour tout membre : la liste se lit ; débloquer suit la capacité d'administrer. */}
+				<li>
+					<Link
+						to={CHEMIN_ADMIN_EXPEDITEURS_BLOQUES}
+						data-testid="entree-expediteurs-bloques"
+						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+					>
+						<span className="font-medium">{t('admin.settings.index.blockedSenders')}</span>
+						<span className="text-sm text-text-2">{t('admin.settings.index.blockedSenders.body')}</span>
 					</Link>
 				</li>
 				<li>

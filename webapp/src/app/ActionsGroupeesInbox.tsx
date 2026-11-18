@@ -4,14 +4,20 @@
 // @spec docs/DESIGN_SYSTEM.md §5.109 ; docs/SPEC-mail-subsystem.md §32.3 à §32.6 ; docs/JOURNAL.md décisions 944, 946 et
 //       949 ; docs/DESIGN_SYSTEM.md §5.59 (une option refusée par une capacité), §5.94 (le sélecteur d'affaire réemployé),
 //       §5.3 septies (le panneau d'échéance réemployé), §5.29 (la jauge), §5.13 (dans le flux, le focus)
+// @spec CRM-156 (docs/BACKLOG.md) — tranche T4 : la ligne du filtre par expéditeur et son vide ; l'option « Transférer à un
+//       membre » et son `select` ; « Bloquer l'expéditeur » sous le seul filtre expéditeur, sa double confirmation et son
+//       bilan ; « Créer des contacts », la liste à vérifier et son compte rendu
+// @spec docs/DESIGN_SYSTEM.md §5.109 bis ; docs/SPEC-mail-subsystem.md §32.7 à §32.10 ; docs/JOURNAL.md décisions 945 et
+//       947 ; docs/DESIGN_SYSTEM.md §5.77 (les mots de l'import repris)
 //
 // AUCUN DROIT N'EST APPLIQUÉ ICI : la base calcule la portée parmi ce que la personne voit et passe chaque message par sa
 // fonction unitaire (`CLAUDE.md` §10). Une capacité refusée éteint une option avec son mot ; tout le reste se dit dans le
 // compte rendu.
 
 import { useEffect, useId, useRef, useState } from 'react'
-import { ArchiveRestore, CheckCheck, Trash2 } from 'lucide-react'
+import { ArchiveRestore, CheckCheck, ShieldBan, Trash2, X } from 'lucide-react'
 import { Button } from '../components/ui/Button'
+import { EtatVide } from '../components/ui/States'
 import { CLE_PRESET_SOMMEIL } from '../components/ui/Sommeil'
 import { t, type CleTraduction } from '../i18n'
 import type { Capacite } from '../lib/capacites'
@@ -30,6 +36,15 @@ import { ECHEANCES_USUELLES, echeanceSaisie, echeanceUsuelle } from '../lib/somm
 import { clientCrm } from '../lib/supabase'
 import type { CataloguePastilles } from './PastillesInbox'
 import { SelecteurClassement, lecteurBase } from './SelecteurClassement'
+import { SelectMembre } from './TransfertInbox'
+import {
+	bloquerExpediteur,
+	compterImpactBlocage,
+	creerContacts,
+	lireExpediteursInconnus,
+	type ExpediteurInconnu,
+	type IssueContact,
+} from '../lib/transferts-inbox'
 
 /** Les options du `select` « Action » (§5.109). */
 export type ChoixAction =
@@ -45,6 +60,8 @@ export type ChoixAction =
 	| 'delete_here'
 	| 'delete_everywhere'
 	| 'restore'
+	| 'transfer'
+	| 'contacts'
 
 const LIBELLE_OPTION: Readonly<Record<ChoixAction, CleTraduction>> = {
 	mark_read: 'inbox.bulk.option.mark_read',
@@ -59,9 +76,12 @@ const LIBELLE_OPTION: Readonly<Record<ChoixAction, CleTraduction>> = {
 	delete_here: 'inbox.bulk.option.delete_here',
 	delete_everywhere: 'inbox.bulk.option.delete_everywhere',
 	restore: 'inbox.bulk.option.restore',
+	transfer: 'inbox.bulk.option.transfer',
+	contacts: 'inbox.bulk.option.contacts',
 }
 
-const QUESTION: Readonly<Record<ChoixAction, CleTraduction>> = {
+/** « Créer des contacts » n'a pas de question : sa liste à vérifier remplace la confirmation (§5.109 bis). */
+const QUESTION: Readonly<Record<Exclude<ChoixAction, 'contacts'>, CleTraduction>> = {
 	mark_read: 'inbox.bulk.question.mark_read',
 	mark_unread: 'inbox.bulk.question.mark_unread',
 	classify: 'inbox.bulk.question.classify',
@@ -74,6 +94,7 @@ const QUESTION: Readonly<Record<ChoixAction, CleTraduction>> = {
 	delete_here: 'inbox.bulk.question.delete_here',
 	delete_everywhere: 'inbox.bulk.question.delete_everywhere',
 	restore: 'inbox.bulk.question.restore',
+	transfer: 'inbox.bulk.question.transfer',
 }
 
 /** Les refus nommés de la base (§32.5), traduits par le dictionnaire de l'action unitaire, au pluriel (§32.6). */
@@ -88,6 +109,8 @@ const MOTIF_REFUS: Readonly<Record<string, CleTraduction>> = {
 	thread_not_found: 'inbox.bulk.refus.thread_not_found',
 	snooze_date_in_past: 'inbox.bulk.refus.snooze_date_in_past',
 	snooze_date_required: 'inbox.bulk.refus.snooze_date_required',
+	recipient_not_member: 'inbox.bulk.refus.recipient_not_member',
+	self_transfer: 'inbox.bulk.refus.self_transfer',
 }
 
 /** Les groupes du `select` et leur ordre (§5.109). */
@@ -96,11 +119,14 @@ const GROUPES: readonly { readonly titre: CleTraduction; readonly options: reado
 	{ titre: 'inbox.bulk.groupe.classement', options: ['classify', 'unclassify'] },
 	{ titre: 'inbox.bulk.groupe.pastilles', options: ['label_on', 'label_off', 'reevaluate'] },
 	{ titre: 'inbox.bulk.groupe.sommeil', options: ['snooze', 'wake'] },
+	// `CRM-156` T4 (§5.109 bis) : le geste qui partage, puis celui qui crée, avant ceux qui retirent.
+	{ titre: 'inbox.bulk.groupe.partage', options: ['transfer'] },
+	{ titre: 'inbox.bulk.groupe.contacts', options: ['contacts'] },
 	{ titre: 'inbox.bulk.groupe.suppression', options: ['delete_here', 'delete_everywhere'] },
 ]
 
-/** Les actions qui suivent la capacité d'ÉDITER l'espace (§5.103, décision 926). */
-const SUIT_L_EDITION: ReadonlySet<ChoixAction> = new Set(['label_on', 'label_off', 'reevaluate'])
+/** Les actions qui suivent la capacité d'ÉDITER l'espace (§5.103, décision 926 ; §5.109 bis pour le transfert et les contacts). */
+const SUIT_L_EDITION: ReadonlySet<ChoixAction> = new Set(['label_on', 'label_off', 'reevaluate', 'transfer', 'contacts'])
 
 /** Le nombre de fils et de messages, accordé par clé (§10). */
 export function textePortee(compte: ComptePortee): string {
@@ -113,6 +139,42 @@ export function textePortee(compte: ComptePortee): string {
 const texteMessages = (n: number): string =>
 	n === 1 ? t('inbox.bulk.messages.un') : t('inbox.bulk.messages.plusieurs', { n: String(n) })
 const texteFils = (n: number): string => (n === 1 ? t('inbox.bulk.fils.un') : t('inbox.bulk.fils.plusieurs', { n: String(n) }))
+
+// =================================================================================================
+// Le filtre par expéditeur — §5.109 bis (`CRM-156` T4)
+// =================================================================================================
+
+/** La ligne qui montre le filtre par expéditeur et le retire, sous les filtres rapides (§5.109 bis). */
+export function FiltreExpediteur({ adresse, onRetirer }: { readonly adresse: string; readonly onRetirer: () => void }) {
+	return (
+		<div
+			className="flex flex-wrap items-center gap-2 px-3 py-2 border-b border-border"
+			data-testid="inbox-filtre-expediteur"
+		>
+			<span className="text-sm text-text-2">{t('inbox.sender.label')}</span>
+			<code className="text-sm break-all">{adresse}</code>
+			<Button variante="discret" taille="compacte" data-testid="inbox-filtre-expediteur-retirer" onClick={onRetirer}>
+				<X aria-hidden="true" size={16} />
+				{t('inbox.sender.remove')}
+			</Button>
+		</div>
+	)
+}
+
+/** Le vide sous le filtre par expéditeur, qui le nomme et porte le geste qui le retire (§5.51). */
+export function VideExpediteur({ adresse, onRetirer }: { readonly adresse: string; readonly onRetirer: () => void }) {
+	return (
+		<EtatVide
+			titre={t('inbox.sender.empty', { adresse })}
+			corps=""
+			action={
+				<Button taille="compacte" data-testid="inbox-filtre-expediteur-vide" onClick={onRetirer}>
+					{t('inbox.sender.remove')}
+				</Button>
+			}
+		/>
+	)
+}
 
 // =================================================================================================
 // La case d'un fil — §5.109
@@ -167,7 +229,16 @@ export function ActionsGroupees({
 	ancre,
 	retention,
 	onTermine,
+	idMoi = null,
+	administration = 'inconnue',
+	onBloque,
 }: {
+	/** `CRM-156` T4 (§5.109 bis) : la personne, exceptée des membres à qui transférer. */
+	readonly idMoi?: string | null
+	/** `CRM-156` T4 : la capacité d'administrer l'espace (§5.59) — elle seule rend « Bloquer l'expéditeur ». */
+	readonly administration?: Capacite
+	/** `CRM-156` T4 : l'expéditeur est bloqué ; l'appelant retire le filtre, relit la liste et rend le bilan. */
+	readonly onBloque?: (adresse: string, corbeille: number) => void
 	/** « Tout marquer comme lu » (§5.4 quinquies), gardé dans la rangée ; vide dans la corbeille. */
 	readonly nonLusAffiches: readonly string[]
 	readonly onToutMarquer: (ids: readonly string[]) => void
@@ -193,7 +264,13 @@ export function ActionsGroupees({
 }) {
 	const [choix, setChoix] = useState<ChoixAction | ''>('')
 	const [ouverte, setOuverte] = useState<ChoixAction | null>(null)
-	const [compteRendu, setCompteRendu] = useState<{ readonly action: ChoixAction; readonly compte: CompteRendu } | null>(null)
+	const [compteRendu, setCompteRendu] = useState<
+		| { readonly genre: 'action'; readonly action: ChoixAction; readonly compte: CompteRendu }
+		| { readonly genre: 'contacts'; readonly issues: readonly IssueContact[] }
+		| null
+	>(null)
+	const [blocage, setBlocage] = useState(false)
+	const refBloquer = useRef<HTMLButtonElement | null>(null)
 	const refSelect = useRef<HTMLSelectElement | null>(null)
 	const refRestaurer = useRef<HTMLButtonElement | null>(null)
 	const refTitreCompteRendu = useRef<HTMLHeadingElement | null>(null)
@@ -243,8 +320,42 @@ export function ActionsGroupees({
 			}))
 	const refusee = (option: ChoixAction) => SUIT_L_EDITION.has(option) && edition === 'refusee'
 
+	// `CRM-156` T4 (§5.109 bis) — « BLOQUER L'EXPÉDITEUR » N'EXISTE QUE SOUS LE SEUL FILTRE EXPÉDITEUR, et quand la base
+	// consent l'administration de l'espace : un geste qui vise l'expéditeur du filtre n'a pas d'objet sans lui.
+	const adresseBloquable =
+		!dansLaCorbeille &&
+		idEspace !== null &&
+		administration === 'permise' &&
+		portee.expediteur !== null &&
+		portee.expediteur.trim() !== '' &&
+		portee.pastilles.length === 0 &&
+		!portee.seulementMoi
+			? portee.expediteur.trim()
+			: null
+	const commandeBloquer =
+		adresseBloquable === null ? null : (
+			<Button
+				ref={refBloquer}
+				variante="discret"
+				taille="compacte"
+				className="ml-auto"
+				data-testid="inbox-bloquer-expediteur"
+				disabled={blocage || ouverte !== null}
+				onClick={() => {
+					setCompteRendu(null)
+					setBlocage(true)
+				}}
+			>
+				<ShieldBan aria-hidden="true" size={16} />
+				{t('inbox.block.command')}
+			</Button>
+		)
+
 	const rangeeVisible =
-		avecSelection || ouverte !== null || (!dansLaCorbeille && (filtreExplicite || nonLusAffiches.length > 0))
+		avecSelection ||
+		ouverte !== null ||
+		adresseBloquable !== null ||
+		(!dansLaCorbeille && (filtreExplicite || nonLusAffiches.length > 0))
 
 	return (
 		<>
@@ -340,6 +451,7 @@ export function ActionsGroupees({
 								</Button>
 							</div>
 							)}
+							{commandeBloquer}
 						</>
 					) : (
 						<>
@@ -368,13 +480,43 @@ export function ActionsGroupees({
 									{t('inbox.read.markAll')}
 								</Button>
 							) : null}
+							{commandeBloquer}
 						</>
 					)}
 				</div>
 			) : null}
-			{ouverte !== null ? (
+			{blocage && adresseBloquable !== null && idEspace !== null ? (
+				<BlocageExpediteur
+					idEspace={idEspace}
+					adresse={adresseBloquable}
+					onAnnuler={() => {
+						setBlocage(false)
+						requestAnimationFrame(() => refBloquer.current?.focus())
+					}}
+					onIssue={(corbeille) => {
+						setBlocage(false)
+						onBloque?.(adresseBloquable, corbeille)
+					}}
+				/>
+			) : null}
+			{ouverte === 'contacts' ? (
+				<ContactsAVerifier
+					portee={portee}
+					onAnnuler={() => {
+						setOuverte(null)
+						setRendreFocus(true)
+					}}
+					onIssue={(issues) => {
+						setOuverte(null)
+						setChoix('')
+						setCompteRendu({ genre: 'contacts', issues })
+						onTermine()
+					}}
+				/>
+			) : ouverte !== null ? (
 				<ConfirmationGroupee
 					action={ouverte}
+					idMoi={idMoi}
 					portee={portee}
 					catalogue={catalogue}
 					idEspace={idEspace}
@@ -387,18 +529,20 @@ export function ActionsGroupees({
 					onIssue={(compte) => {
 						setOuverte(null)
 						setChoix('')
-						setCompteRendu({ action: ouverte, compte })
+						setCompteRendu({ genre: 'action', action: ouverte, compte })
 						onTermine()
 					}}
 				/>
 			) : null}
-			{compteRendu !== null ? (
+			{compteRendu?.genre === 'action' ? (
 				<BlocCompteRendu
 					action={compteRendu.action}
 					compte={compteRendu.compte}
 					refTitre={refTitreCompteRendu}
 					onFermer={() => setCompteRendu(null)}
 				/>
+			) : compteRendu?.genre === 'contacts' ? (
+				<BilanContacts issues={compteRendu.issues} refTitre={refTitreCompteRendu} onFermer={() => setCompteRendu(null)} />
 			) : null}
 		</>
 	)
@@ -407,7 +551,12 @@ export function ActionsGroupees({
 /** L'action de la base, construite de l'option et de l'argument choisi. */
 function actionDe(
 	choix: ChoixAction,
-	argument: { readonly affaire: Candidate | null; readonly pastille: string; readonly jusqua: string | null },
+	argument: {
+		readonly affaire: Candidate | null
+		readonly pastille: string
+		readonly jusqua: string | null
+		readonly destinataire: string
+	},
 ): ActionGroupee | null {
 	switch (choix) {
 		case 'mark_read':
@@ -429,11 +578,16 @@ function actionDe(
 			return { genre: 'delete', partout: false }
 		case 'delete_everywhere':
 			return { genre: 'delete', partout: true }
+		case 'transfer':
+			return argument.destinataire === '' ? null : { genre: 'transfer', destinataire: argument.destinataire }
+		case 'contacts':
+			return null
 	}
 }
 
 function ConfirmationGroupee({
 	action,
+	idMoi,
 	portee,
 	catalogue,
 	idEspace,
@@ -442,7 +596,8 @@ function ConfirmationGroupee({
 	onAnnuler,
 	onIssue,
 }: {
-	readonly action: ChoixAction
+	readonly action: Exclude<ChoixAction, 'contacts'>
+	readonly idMoi: string | null
 	readonly portee: PorteeGroupee
 	readonly catalogue: CataloguePastilles
 	readonly idEspace: string | null
@@ -455,6 +610,7 @@ function ConfirmationGroupee({
 	const [essai, setEssai] = useState(0)
 	const [affaire, setAffaire] = useState<Candidate | null>(null)
 	const [pastille, setPastille] = useState('')
+	const [destinataire, setDestinataire] = useState('')
 	const [jusqua, setJusqua] = useState<string | null>(null)
 	const [usuelle, setUsuelle] = useState<string | null>(null)
 	const [saisie, setSaisie] = useState('')
@@ -481,12 +637,13 @@ function ConfirmationGroupee({
 	// LE FOCUS ENTRE sur le premier contrôle de l'argument, à défaut sur « Annuler » (§5.109, §5.13).
 	useEffect(() => {
 		if (action === 'classify') refChamp.current?.focus()
+		else if (action === 'transfer') return // le `select` « Membre » prend le focus dès que les membres sont lus
 		else if (refPremier.current !== null) refPremier.current.focus()
 		else refAnnuler.current?.focus()
 	}, [action])
 
 	const destructif = action === 'delete_here' || action === 'delete_everywhere'
-	const actionPrete = actionDe(action, { affaire, pastille, jusqua })
+	const actionPrete = actionDe(action, { affaire, pastille, jusqua, destinataire })
 	const vol = enCours !== null
 	const comptePret = compte.statut === 'pret' ? compte.donnees : null
 
@@ -590,6 +747,17 @@ function ConfirmationGroupee({
 						))}
 					</select>
 				</div>
+			) : null}
+
+			{action === 'transfer' ? (
+				<SelectMembre
+					idEspace={idEspace}
+					idMoi={idMoi}
+					valeur={destinataire}
+					onChange={setDestinataire}
+					desactive={vol}
+					focusAuChargement
+				/>
 			) : null}
 
 			{action === 'snooze' ? (
@@ -725,6 +893,461 @@ function BlocCompteRendu({
 						))}
 					</ul>
 				</>
+			) : null}
+			<div>
+				<Button variante="discret" taille="compacte" onClick={onFermer}>
+					{t('inbox.bulk.fermer')}
+				</Button>
+			</div>
+		</div>
+	)
+}
+
+// =================================================================================================
+// Bloquer l'expéditeur — §5.109 bis (`CRM-156` T4, §32.8)
+// =================================================================================================
+
+/** Le nombre accordé par clé (§10) : 0, 1, ou plusieurs. */
+const accord = (n: number, cles: readonly [CleTraduction, CleTraduction, CleTraduction]): string =>
+	n === 0 ? t(cles[0]) : n === 1 ? t(cles[1]) : t(cles[2], { n: String(n) })
+
+/**
+ * La double confirmation du blocage, dans le flux sous la rangée (§5.13) : le premier bloc dit ce qui ira à la corbeille,
+ * nombre lu en base ; le second confirme, destructif. Le focus entre sur « Annuler » à chaque étape.
+ */
+function BlocageExpediteur({
+	idEspace,
+	adresse,
+	onAnnuler,
+	onIssue,
+}: {
+	readonly idEspace: string
+	readonly adresse: string
+	readonly onAnnuler: () => void
+	readonly onIssue: (corbeille: number) => void
+}) {
+	const [etape, setEtape] = useState<1 | 2>(1)
+	const [impact, setImpact] = useState<EtatAsync<number>>({ statut: 'chargement' })
+	const [essai, setEssai] = useState(0)
+	const [enVol, setEnVol] = useState(false)
+	const [refus, setRefus] = useState<CleTraduction | null>(null)
+	const refAnnuler = useRef<HTMLButtonElement | null>(null)
+	const idTitre = useId()
+
+	useEffect(() => {
+		let vivant = true
+		setImpact({ statut: 'chargement' })
+		void compterImpactBlocage(clientCrm, idEspace, adresse).then((lu) => {
+			if (vivant) setImpact(lu)
+		})
+		return () => {
+			vivant = false
+		}
+	}, [idEspace, adresse, essai])
+
+	useEffect(() => {
+		refAnnuler.current?.focus()
+	}, [etape])
+
+	const bloquer = async () => {
+		if (enVol) return
+		setEnVol(true)
+		setRefus(null)
+		const issue = await bloquerExpediteur(clientCrm, idEspace, adresse)
+		setEnVol(false)
+		if ('corbeille' in issue) {
+			onIssue(issue.corbeille)
+			return
+		}
+		setRefus(
+			issue.detail.includes('invalid_address')
+				? 'inbox.block.refus.invalid'
+				: issue.nature === 'forbidden' || issue.detail.includes('forbidden')
+					? 'inbox.block.refus.forbidden'
+					: issue.nature === 'network'
+						? 'inbox.block.refus.reseau'
+						: 'inbox.block.refus.inconnu',
+		)
+	}
+
+	return (
+		<div
+			role="group"
+			aria-labelledby={idTitre}
+			data-testid="inbox-blocage"
+			className="mx-3 my-2 rounded-sm border border-border p-3 flex flex-col gap-3"
+			onKeyDown={(evenement) => {
+				if (evenement.key === 'Escape' && !enVol) {
+					evenement.stopPropagation()
+					onAnnuler()
+				}
+			}}
+		>
+			<p id={idTitre} className="font-medium text-ink break-words">
+				{etape === 1 ? t('inbox.block.question', { adresse }) : t('inbox.block.confirmQuestion', { adresse })}
+			</p>
+			{etape === 1 ? (
+				impact.statut === 'chargement' ? (
+					<p role="status" className="text-sm text-text-2">
+						{t('inbox.block.impact.loading')}
+					</p>
+				) : impact.statut === 'erreur' ? (
+					<div role="alert" className="flex flex-wrap items-center gap-2 rounded-sm bg-danger-soft px-3 py-2 text-sm text-danger-on-soft">
+						<span>{t('inbox.block.impact.error')}</span>
+						<Button variante="discret" taille="compacte" onClick={() => setEssai((n) => n + 1)}>
+							{t('inbox.bulk.reessayer')}
+						</Button>
+					</div>
+				) : (
+					<p className="text-sm text-text-2" data-testid="inbox-blocage-impact">
+						{accord(impact.donnees, ['inbox.block.impact.0', 'inbox.block.impact.1', 'inbox.block.impact.n'])}
+					</p>
+				)
+			) : null}
+			{refus !== null ? (
+				<p role="alert" className="text-sm text-danger" data-testid="inbox-blocage-refus">
+					{t(refus)}
+				</p>
+			) : null}
+			<div className="flex flex-col md:flex-row md:flex-wrap gap-2">
+				<Button ref={refAnnuler} variante="secondaire" taille="compacte" disabled={enVol} onClick={onAnnuler}>
+					{t('inbox.block.cancel')}
+				</Button>
+				{etape === 1 ? (
+					<Button
+						variante="secondaire"
+						taille="compacte"
+						data-testid="inbox-blocage-continuer"
+						disabled={impact.statut !== 'pret'}
+						onClick={() => setEtape(2)}
+					>
+						{t('inbox.block.continue')}
+					</Button>
+				) : (
+					<Button
+						variante="destructif"
+						taille="compacte"
+						data-testid="inbox-blocage-confirmer"
+						disabled={enVol}
+						aria-busy={enVol || undefined}
+						onClick={() => void bloquer()}
+					>
+						<ShieldBan aria-hidden="true" size={16} />
+						{enVol ? t('inbox.block.busy') : t('inbox.block.confirm', { adresse })}
+					</Button>
+				)}
+			</div>
+		</div>
+	)
+}
+
+/**
+ * Le bilan du blocage, titré « Bloquer l'expéditeur » (§5.109 bis). Rendu par la liste, hors de la rangée : le filtre est
+ * retiré et la liste relue, et la rangée qui portait la commande n'existe plus.
+ */
+export function BilanBlocage({ corbeille, onFermer }: { readonly corbeille: number; readonly onFermer: () => void }) {
+	const refTitre = useRef<HTMLHeadingElement | null>(null)
+	useEffect(() => {
+		refTitre.current?.focus()
+	}, [])
+	return (
+		<div role="status" data-testid="inbox-bilan-blocage" className="mx-3 my-2 rounded-sm border border-border p-3 flex flex-col gap-1 text-sm text-ink">
+			<h3 ref={refTitre} tabIndex={-1} className="font-medium">
+				{t('inbox.block.command')}
+			</h3>
+			<p data-testid="inbox-bilan-blocage-fait">
+				{accord(corbeille, ['inbox.block.done.0', 'inbox.block.done.1', 'inbox.block.done.n'])}
+			</p>
+			<div>
+				<Button variante="discret" taille="compacte" onClick={onFermer}>
+					{t('inbox.bulk.fermer')}
+				</Button>
+			</div>
+		</div>
+	)
+}
+
+// =================================================================================================
+// Créer des contacts — §5.109 bis (`CRM-156` T4, §32.10)
+// =================================================================================================
+
+type LigneContact = { readonly cochee: boolean; readonly nom: string; readonly organisation: string }
+
+/** La liste à vérifier, qui remplace la confirmation : une ligne par expéditeur inconnu, cochée, préremplie. */
+function ContactsAVerifier({
+	portee,
+	onAnnuler,
+	onIssue,
+}: {
+	readonly portee: PorteeGroupee
+	readonly onAnnuler: () => void
+	readonly onIssue: (issues: readonly IssueContact[]) => void
+}) {
+	const [inconnus, setInconnus] = useState<EtatAsync<readonly ExpediteurInconnu[]>>({ statut: 'chargement' })
+	const [essai, setEssai] = useState(0)
+	const [lignes, setLignes] = useState<ReadonlyMap<string, LigneContact>>(new Map())
+	const [enVol, setEnVol] = useState(false)
+	const [panne, setPanne] = useState(false)
+	const refAnnuler = useRef<HTMLButtonElement | null>(null)
+	const refPremiere = useRef<HTMLInputElement | null>(null)
+	const idLegende = useId()
+	const idAide = useId()
+
+	useEffect(() => {
+		let vivant = true
+		setInconnus({ statut: 'chargement' })
+		void lireExpediteursInconnus(clientCrm, portee).then((lu) => {
+			if (!vivant) return
+			setInconnus(lu)
+			if (lu.statut === 'pret')
+				setLignes(
+					new Map(
+						lu.donnees.map((inconnu) => [
+							cleContact(inconnu),
+							{ cochee: true, nom: inconnu.nom, organisation: inconnu.organisation ?? '' },
+						]),
+					),
+				)
+		})
+		return () => {
+			vivant = false
+		}
+		// La portée est figée par l'ouverture, comme pour la confirmation.
+	}, [essai])
+
+	// LE FOCUS ENTRE sur la première case, à défaut sur « Annuler » (§5.13).
+	const pret = inconnus.statut === 'pret'
+	useEffect(() => {
+		if (!pret) return
+		if (refPremiere.current !== null) refPremiere.current.focus()
+		else refAnnuler.current?.focus()
+	}, [pret])
+
+	const modifier = (cle: string, changement: Partial<LigneContact>) =>
+		setLignes((avant) => {
+			const ligne = avant.get(cle)
+			return ligne === undefined ? avant : new Map(avant).set(cle, { ...ligne, ...changement })
+		})
+
+	const liste = inconnus.statut === 'pret' ? inconnus.donnees : []
+	const cochees = liste.filter((inconnu) => lignes.get(cleContact(inconnu))?.cochee === true)
+
+	const creer = async () => {
+		if (cochees.length === 0 || enVol) return
+		setEnVol(true)
+		setPanne(false)
+		const issue = await creerContacts(
+			clientCrm,
+			cochees.map((inconnu) => {
+				const ligne = lignes.get(cleContact(inconnu))
+				return {
+					idEspace: inconnu.idEspace,
+					adresse: inconnu.adresse,
+					nom: ligne?.nom ?? inconnu.nom,
+					organisation: ligne?.organisation ?? '',
+				}
+			}),
+		)
+		setEnVol(false)
+		if ('nature' in issue) {
+			setPanne(true)
+			return
+		}
+		onIssue(issue)
+	}
+
+	return (
+		<div
+			data-testid="inbox-contacts-verifier"
+			className="mx-3 my-2 rounded-sm border border-border p-3 flex flex-col gap-3"
+			onKeyDown={(evenement) => {
+				if (evenement.key === 'Escape' && !enVol) {
+					evenement.stopPropagation()
+					onAnnuler()
+				}
+			}}
+		>
+			{inconnus.statut === 'chargement' ? (
+				<p role="status" className="text-sm text-text-2">
+					{t('inbox.contacts.loading')}
+				</p>
+			) : inconnus.statut === 'erreur' ? (
+				<div role="alert" className="flex flex-wrap items-center gap-2 rounded-sm bg-danger-soft px-3 py-2 text-sm text-danger-on-soft">
+					<span>{t('inbox.contacts.error')}</span>
+					<Button variante="discret" taille="compacte" onClick={() => setEssai((n) => n + 1)}>
+						{t('inbox.bulk.reessayer')}
+					</Button>
+				</div>
+			) : liste.length === 0 ? (
+				<p className="text-sm text-ink" data-testid="inbox-contacts-aucun">
+					{t('inbox.contacts.none')}
+				</p>
+			) : (
+				<fieldset className="flex flex-col gap-3" disabled={enVol} aria-describedby={idAide}>
+					<legend id={idLegende} className="font-medium text-ink mb-1">
+						{t('inbox.contacts.legend')}
+					</legend>
+					<p id={idAide} className="text-sm text-text-2">
+						{t('inbox.contacts.organization.help')}
+					</p>
+					<ul className="flex flex-col gap-3">
+						{liste.map((inconnu, rang) => {
+							const cle = cleContact(inconnu)
+							const ligne = lignes.get(cle) ?? { cochee: false, nom: '', organisation: '' }
+							return (
+								<li key={cle} className="flex flex-col gap-2 border-b border-border pb-3 last:border-b-0 last:pb-0" data-testid="inbox-contact-ligne">
+									{/* LA CASE RESTE À CÔTÉ DE L'ADRESSE (défaut vu en capture, colonne de liste étroite) : l'adresse et son
+									    nombre de mails se replient dans leur propre colonne, jamais sous la case. */}
+									<div className="flex items-start gap-2">
+										<input
+											type="checkbox"
+											className="size-6 shrink-0 accent-brand"
+											ref={rang === 0 ? refPremiere : undefined}
+											checked={ligne.cochee}
+											aria-label={t('inbox.contacts.case', { adresse: inconnu.adresse })}
+											onChange={() => modifier(cle, { cochee: !ligne.cochee })}
+										/>
+										<span className="flex min-w-0 flex-col">
+											<code className="text-sm break-all">{inconnu.adresse}</code>
+											<span className="text-[13px] text-text-2">
+												{inconnu.mails === 1
+													? t('inbox.contacts.mails.1')
+													: t('inbox.contacts.mails.n', { n: String(inconnu.mails) })}
+											</span>
+										</span>
+									</div>
+									<div className="flex flex-col md:flex-row gap-2">
+										<ChampContact
+											libelle={t('inbox.contacts.name')}
+											valeur={ligne.nom}
+											onChange={(nom) => modifier(cle, { nom })}
+											testid="inbox-contact-nom"
+										/>
+										<ChampContact
+											libelle={t('inbox.contacts.organization')}
+											valeur={ligne.organisation}
+											onChange={(organisation) => modifier(cle, { organisation })}
+											testid="inbox-contact-organisation"
+										/>
+									</div>
+								</li>
+							)
+						})}
+					</ul>
+				</fieldset>
+			)}
+			{panne ? (
+				<p role="alert" className="text-sm text-danger" data-testid="inbox-contacts-panne">
+					{t('inbox.contacts.panne')}
+				</p>
+			) : null}
+			<div className="flex flex-col md:flex-row md:flex-wrap gap-2">
+				<Button ref={refAnnuler} variante="secondaire" taille="compacte" disabled={enVol} onClick={onAnnuler}>
+					{t('inbox.bulk.annuler')}
+				</Button>
+				{liste.length > 0 ? (
+					<Button
+						variante="primaire"
+						taille="compacte"
+						data-testid="inbox-contacts-creer"
+						disabled={cochees.length === 0 || enVol}
+						aria-busy={enVol || undefined}
+						onClick={() => void creer()}
+					>
+						{enVol
+							? t('inbox.contacts.busy')
+							: cochees.length === 0
+								? t('inbox.contacts.create.0')
+								: cochees.length === 1
+									? t('inbox.contacts.create.1')
+									: t('inbox.contacts.create.n', { n: String(cochees.length) })}
+					</Button>
+				) : null}
+			</div>
+		</div>
+	)
+}
+
+const cleContact = (inconnu: ExpediteurInconnu): string => `${inconnu.idEspace}|${inconnu.adresse}`
+
+function ChampContact({
+	libelle,
+	valeur,
+	onChange,
+	testid,
+}: {
+	readonly libelle: string
+	readonly valeur: string
+	readonly onChange: (valeur: string) => void
+	readonly testid: string
+}) {
+	const id = useId()
+	return (
+		<div className="flex flex-col gap-1 flex-1 min-w-0">
+			<label htmlFor={id} className="text-sm text-text-2">
+				{libelle}
+			</label>
+			<input
+				id={id}
+				type="text"
+				data-testid={testid}
+				className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-2 text-sm w-full"
+				value={valeur}
+				onChange={(evenement) => onChange(evenement.target.value)}
+			/>
+		</div>
+	)
+}
+
+/** Les motifs de refus de l'import (§5.77), repris tels quels. */
+const MOTIF_CONTACT: Readonly<Record<string, CleTraduction>> = {
+	duplicate_email: 'import.motif.duplicate_email',
+	duplicate_organization: 'import.motif.duplicate_organization',
+	name_required: 'import.motif.name_required',
+	invalid_email: 'import.motif.invalid_email',
+	invalid_domain: 'import.motif.invalid_domain',
+	invalid_website: 'import.motif.invalid_website',
+	forbidden: 'import.motif.forbidden',
+}
+
+/** Le compte rendu de la création, avec les mots de l'import (§5.77) : créés, ignorés, refusés, puis chaque refus. */
+function BilanContacts({
+	issues,
+	refTitre,
+	onFermer,
+}: {
+	readonly issues: readonly IssueContact[]
+	readonly refTitre: React.RefObject<HTMLHeadingElement | null>
+	readonly onFermer: () => void
+}) {
+	const nombre = (issue: IssueContact['issue']) => issues.filter((ligne) => ligne.issue === issue).length
+	const crees = nombre('created')
+	const ignores = nombre('skipped')
+	const refuses = issues.filter((ligne) => ligne.issue === 'refused')
+	const plur = (n: number, un: CleTraduction, plusieurs: CleTraduction) => (n === 1 ? t(un) : t(plusieurs, { n: String(n) }))
+	return (
+		<div role="status" data-testid="inbox-compte-rendu" className="mx-3 my-2 rounded-sm border border-border p-3 flex flex-col gap-1 text-sm text-ink">
+			<h3 ref={refTitre} tabIndex={-1} className="font-medium">
+				{t('inbox.bulk.option.contacts')}
+			</h3>
+			<p data-testid="inbox-compte-rendu-fait">
+				{t('inbox.contacts.bilan', {
+					crees: plur(crees, 'inbox.contacts.bilan.crees.1', 'inbox.contacts.bilan.crees.n'),
+					ignores: plur(ignores, 'inbox.contacts.bilan.ignores.1', 'inbox.contacts.bilan.ignores.n'),
+					refuses: plur(refuses.length, 'inbox.contacts.bilan.refuses.1', 'inbox.contacts.bilan.refuses.n'),
+				})}
+			</p>
+			{refuses.length > 0 ? (
+				<ul className="list-disc pl-6 text-text-2" data-testid="inbox-compte-rendu-refus">
+					{refuses.map((ligne) => (
+						<li key={ligne.adresse}>
+							{t('inbox.contacts.refus.ligne', {
+								adresse: ligne.adresse,
+								motif: t((ligne.code !== null ? MOTIF_CONTACT[ligne.code] : undefined) ?? 'import.motif.unknown'),
+							})}
+						</li>
+					))}
+				</ul>
 			) : null}
 			<div>
 				<Button variante="discret" taille="compacte" onClick={onFermer}>

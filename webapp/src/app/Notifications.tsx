@@ -1,3 +1,6 @@
+// @spec CRM-156 (docs/BACKLOG.md) — tranche T4 : la ligne `mail_transfer` — « {auteur} vous a transféré 1 mail / {n} mails »,
+//       puis l'objet du premier mail en lien vers `/inbox?message=` ; ni pilule d'affaire ni d'organisation
+//       (docs/DESIGN_SYSTEM.md §5.109 bis, §5.43 ; docs/SPEC-notifications.md §52)
 // @spec CRM-153 (docs/BACKLOG.md) — tranche T3 : la mention dans le fil d'une organisation — « {auteur} vous a mentionné à
 //       propos de {organisation} », le lien vers sa fiche à l'ancre du commentaire (docs/SPEC-organisations.md §9.3 ;
 //       docs/DESIGN_SYSTEM.md §5.107)
@@ -347,6 +350,15 @@ function CorpsPanneau({
 	)
 }
 
+/** `CRM-156` T4 : la phrase d'un transfert, accordée par clé (§10). */
+function phraseTransfert(auteur: string | null, nombre: number): string {
+	if (auteur === null)
+		return nombre === 1
+			? t('notifications.transfer.anonymous.1')
+			: t('notifications.transfer.anonymous.n', { n: String(nombre) })
+	return nombre === 1 ? t('notifications.transfer.1', { auteur }) : t('notifications.transfer.n', { auteur, n: String(nombre) })
+}
+
 function LigneNotification({
 	notification,
 	onMarquer,
@@ -388,7 +400,10 @@ function LigneNotification({
 					].join(' ')}
 				>
 					{/* `CRM-153` T3 : une mention sur une organisation nomme l'organisation dans la phrase (§5.107). */}
-					{notification.nomOrganisation !== null
+					{/* `CRM-156` T4 : un transfert dit son nombre de mails, accordé par clé (§10). */}
+					{notification.transfert !== undefined
+						? phraseTransfert(auteur?.full_name ?? null, notification.transfert.nombre)
+						: notification.nomOrganisation !== null
 						? auteur === null
 							? t('notifications.mention.organization.anonymous', { organisation: notification.nomOrganisation })
 							: t('notifications.mention.organization', { auteur: auteur.full_name, organisation: notification.nomOrganisation })
@@ -442,6 +457,24 @@ function LigneNotification({
 					className="block truncate text-sm text-brand font-medium hover:underline"
 				>
 					{notification.nomOrganisation}
+				</Link>
+			)}
+			{/* `CRM-156` T4 : le lien d'un transfert est l'objet du premier mail ; il ouvre l'inbox sur ce message (§5.109 bis). */}
+			{notification.transfert === undefined ? null : notification.adresse === null ? (
+				<span className="block truncate text-sm text-text-2">
+					{notification.transfert.objet ?? t('notifications.transfer.noSubject')}
+				</span>
+			) : (
+				<Link
+					to={notification.adresse}
+					data-testid="notification-lien"
+					title={notification.transfert.objet ?? undefined}
+					aria-label={t('notifications.item.openMail', {
+						objet: notification.transfert.objet ?? t('notifications.transfer.noSubject'),
+					})}
+					className="block truncate text-sm text-brand font-medium hover:underline"
+				>
+					{notification.transfert.objet ?? t('notifications.transfer.noSubject')}
 				</Link>
 			)}
 			{notification.titreAffaire === null ? null : notification.adresse === null ? (

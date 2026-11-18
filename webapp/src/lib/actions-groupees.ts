@@ -3,6 +3,7 @@
 // @spec docs/SPEC-mail-subsystem.md §32.2 (la description), §32.3 (le filtre explicite), §32.4 (compter), §32.5 (agir),
 //       §32.5 bis (les paquets, le curseur, l'échec d'un paquet) ; docs/DESIGN_SYSTEM.md §5.109 ; docs/JOURNAL.md
 //       décisions 944, 946 et 949
+// @spec CRM-156 tranche T4 : l'action `transfer` et son argument — docs/SPEC-mail-subsystem.md §32.7 ; décisions 945 et 947
 //
 // Ce module ne rend rien : il DÉCRIT et APPELLE. Aucun droit n'y est appliqué — la base calcule la portée parmi ce que la
 // personne voit, refuse « tout le filtre » sans filtre explicite, et passe chaque message par sa fonction unitaire
@@ -75,6 +76,8 @@ export type ActionGroupee =
 	| { readonly genre: 'request_label_evaluation' }
 	| { readonly genre: 'delete'; readonly partout: boolean }
 	| { readonly genre: 'restore' }
+	/** `CRM-156` T4 (§32.7) : un transfert au membre, sans aucun envoi. */
+	| { readonly genre: 'transfer'; readonly destinataire: string }
 
 /** Le nom de l'action pour la base, et son argument (`p_action`, `p_argument`). */
 export function appelAction(action: ActionGroupee): { readonly p_action: string; readonly p_argument: { [cle: string]: Json } } {
@@ -87,6 +90,8 @@ export function appelAction(action: ActionGroupee): { readonly p_action: string;
 			return { p_action: 'set_label', p_argument: { label_id: action.pastille, applied: action.posee } }
 		case 'delete':
 			return { p_action: 'delete', p_argument: { also_mailbox: action.partout } }
+		case 'transfer':
+			return { p_action: 'transfer', p_argument: { recipient_id: action.destinataire } }
 		default:
 			return { p_action: action.genre, p_argument: {} }
 	}

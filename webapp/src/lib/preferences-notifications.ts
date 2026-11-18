@@ -34,7 +34,8 @@ import type { ClientCrm } from './supabase'
  * les trois dans le même changement, et un oubli ici rendrait une case que la base refuse, ou
  * cacherait un type qu'elle produit.
  */
-export const TYPES_PREFERENCE = ['mention'] as const
+// `CRM-156` T4 (docs/SPEC-notifications.md §52 ; migration `0190`) : `mail_transfer` entre dans les trois listes.
+export const TYPES_PREFERENCE = ['mention', 'mail_transfer'] as const
 
 export type TypePreference = (typeof TYPES_PREFERENCE)[number]
 

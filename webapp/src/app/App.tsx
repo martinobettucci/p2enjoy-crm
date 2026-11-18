@@ -1,3 +1,4 @@
+// @spec CRM-156 (docs/BACKLOG.md) — tranche T4 : la route de Réglages ▸ Expéditeurs bloqués (docs/DESIGN_SYSTEM.md §5.109 bis)
 // @spec CRM-141 (docs/BACKLOG.md) — tranche T3 : la route de Réglages ▸ Pastilles des mails (docs/SPEC-mail-subsystem.md §31.7)
 // @spec CRM-149 (docs/BACKLOG.md) — tranche T3 : la route de Réglages ▸ Prompts du connecteur (docs/SPEC-mcp.md §17.7)
 // @spec CRM-153 (docs/BACKLOG.md) — tranche T2 : la route de Réglages ▸ Catégories d'organisations (docs/SPEC-organisations.md §9.3)
@@ -46,6 +47,7 @@ import {
 	CHEMIN_PLATEFORME_SUPERADMINS,
 	CHEMIN_PLATEFORME_UTILISATEURS,
 	CHEMIN_ADMIN_PASTILLES_MAIL,
+	CHEMIN_ADMIN_EXPEDITEURS_BLOQUES,
 	CHEMIN_ADMIN_PROMPTS_CONNECTEUR,
 } from './chemins'
 import type { VuePlateforme } from './Plateforme'
@@ -98,6 +100,7 @@ import {
 	CLE_TITRE_MODELES_MAIL,
 	CLE_TITRE_SEQUENCES_MAIL,
 	CLE_TITRE_PASTILLES_MAIL,
+	CLE_TITRE_EXPEDITEURS_BLOQUES,
 	CLE_TITRE_PROMPTS_CONNECTEUR,
 	CLE_TITRE_ETAT_MESSAGERIE,
 	CLE_TITRE_INTROUVABLE,
@@ -172,6 +175,10 @@ const ReglagesSequencesRelance = lazy(async () => ({
 // `CRM-141` T3 — Réglages ▸ Pastilles des mails (docs/SPEC-mail-subsystem.md §31.7).
 const ReglagesPastillesMail = lazy(async () => ({
 	default: (await import('./ReglagesPastillesMail')).ReglagesPastillesMail,
+}))
+// `CRM-156` T4 — Réglages ▸ Expéditeurs bloqués (docs/SPEC-mail-subsystem.md §32.8).
+const ReglagesExpediteursBloques = lazy(async () => ({
+	default: (await import('./ReglagesExpediteursBloques')).ReglagesExpediteursBloques,
 }))
 // `CRM-149` T3 — Réglages ▸ Prompts du connecteur (docs/SPEC-mcp.md §17.7).
 const ReglagesPromptsConnecteur = lazy(async () => ({
@@ -606,6 +613,15 @@ function RoutesPages() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_PASTILLES_MAIL}>
 							<ReglagesPastillesMail />
+						</AppShell>
+					}
+				/>
+				{/* `CRM-156` T4 — Réglages ▸ Expéditeurs bloqués, après les pastilles des mails comme dans l'index (§5.109 bis). */}
+				<Route
+					path={CHEMIN_ADMIN_EXPEDITEURS_BLOQUES}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_EXPEDITEURS_BLOQUES}>
+							<ReglagesExpediteursBloques />
 						</AppShell>
 					}
 				/>

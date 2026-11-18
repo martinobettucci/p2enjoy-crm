@@ -5,6 +5,8 @@
 --           expéditeurs inconnus et la source des contacts créés
 -- @verifies docs/SPEC-mail-subsystem.md §32.7, §32.8, §32.10 ; docs/SCHEMA.md « Migration `0190` » ; docs/JOURNAL.md
 --           décisions 945 et 947 ; CLAUDE.md §10 (la règle prouvée par la base, sous les vrais rôles)
+-- @verifies CRM-156 tranche T4 : la préférence `mail_transfer` s'écrit — docs/SCHEMA.md « Migration `0191` » ;
+--           docs/SPEC-notifications.md §52 ; docs/DESIGN_SYSTEM.md §5.109 bis
 --
 -- LA SONDE, posée sous la clé de propriétaire et défaite par le `rollback` final :
 -- - dans la boîte de Camille (`admin@`, administratrice), non classés, que Driss ne lit pas : `x1` et `x2` de
@@ -18,7 +20,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(38);
+select plan(40);
 
 create or replace function pg_temp.endosser(utilisateur uuid) returns void language plpgsql as $$
 begin
@@ -191,6 +193,15 @@ select * from public.import_contacts(:'espace',
 	'[{"full_name": "Nora Nouveau", "email": "nouveau@atelier-lumen.example", "organization_name": "Atelier Lumen"}]', false, 'email');
 select is((select c.source from issue_import r join public.contacts c on c.id = r.contact_id), 'email',
 	'38 — le contact créé depuis l''inbox naît avec la source `email`');
+
+-- 39–40. `CRM-156` T4 (migration `0191`) : la préférence « Recevoir les transferts de mails » s'écrit par l'unique chemin,
+-- et retient ce que la personne a décidé. Défaut trouvé à l'écran : la RPC de `0067` refusait tout type hors « mention ».
+reset role;
+select pg_temp.endosser(:'driss');
+select lives_ok($$ select public.definir_preference_notification('mail_transfer', false) $$,
+	'39 — `definir_preference_notification` accepte `mail_transfer`');
+select is((select in_app from public.notification_preferences where type = 'mail_transfer'), false,
+	'40 — la décision retenue est celle de l''appelant : il ne reçoit plus les transferts');
 
 select * from finish();
 rollback;

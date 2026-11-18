@@ -67,6 +67,7 @@ import {
 	ChevronDown,
 	ChevronRight,
 	Inbox,
+	ListFilter,
 	Mail,
 	MailCheck,
 	MailOpen,
@@ -146,9 +147,11 @@ import {
 	type DossierEnvoi,
 } from '../lib/outbox'
 import { SelecteurClassement, lecteurBase } from './SelecteurClassement'
-import { ActionsGroupees, CaseSelection } from './ActionsGroupeesInbox'
+import { ActionsGroupees, BilanBlocage, CaseSelection, FiltreExpediteur, VideExpediteur } from './ActionsGroupeesInbox'
+import { CLE_URL_EXPEDITEUR, lireExpediteurFiltre } from '../lib/filtre-expediteur'
 import { aUnFiltreExplicite, type FilCoche, type PorteeGroupee } from '../lib/actions-groupees'
 import { EntreeCorbeille, PanneauCorbeille, RangeeCommandesMessage, type EtendueSuppression } from './CorbeilleInbox'
+import { TransfertDuMessage } from './TransfertInbox'
 import {
 	PARAMETRE_CORBEILLE,
 	VALEUR_CORBEILLE,
@@ -706,6 +709,13 @@ type GroupeListe = {
 	readonly edition: Capacite
 	readonly retention: number | null
 	readonly onTermine: () => void
+	/** `CRM-156` T4 (§5.109 bis) : la personne (exceptée des membres à qui transférer), la capacité d'administrer qui rend
+	 *  « Bloquer l'expéditeur », le geste qui suit le blocage, et son bilan rendu hors de la rangée. */
+	readonly idMoi: string | null
+	readonly administration: Capacite
+	readonly onBloque: (adresse: string, corbeille: number) => void
+	readonly bilanBlocage: number | null
+	readonly onFermerBilanBlocage: () => void
 }
 
 function PanneauListe({
@@ -729,7 +739,12 @@ function PanneauListe({
 	pastilles,
 	onPastilles,
 	groupe,
+	expediteur,
+	onExpediteur,
 }: {
+	/** `CRM-156` T4 (§32.9) : l'adresse du filtre par expéditeur, et le geste qui le retire. */
+	readonly expediteur: string | null
+	readonly onExpediteur: (adresse: string | null) => void
 	/**
 	 * `CRM-156` T3 (§5.109) : la sélection et les actions groupées — les fils cochés, « tout le filtre », la portée, la
 	 * capacité d'éditer, la rétention, et le geste qui suit l'issue.
@@ -829,6 +844,9 @@ function PanneauListe({
 				}
 				retention={groupe.retention}
 				onTermine={groupe.onTermine}
+				idMoi={groupe.idMoi}
+				administration={groupe.administration}
+				onBloque={groupe.onBloque}
 			/>
 		) : null
 	return (
@@ -871,7 +889,14 @@ function PanneauListe({
 				<EchecChargement erreur={etat.erreur} onReprise={onReprise} />
 			) : null}
 			{filtresRapides}
+			{selection !== null && expediteur !== null ? (
+				<FiltreExpediteur adresse={expediteur} onRetirer={() => onExpediteur(null)} />
+			) : null}
 			{rangeeAction}
+			{/* `CRM-156` T4 (§5.109 bis) : le bilan du blocage survit au retrait du filtre et à la relecture de la liste. */}
+			{selection !== null && groupe.bilanBlocage !== null ? (
+				<BilanBlocage corbeille={groupe.bilanBlocage} onFermer={groupe.onFermerBilanBlocage} />
+			) : null}
 			{selection !== null && etat.statut === 'pret' ? (
 				compose.visibles.length === 0 ? (
 					// L'ÉTAT VIDE NE MENT PAS, ET SANS REQUÊTE SUPPLÉMENTAIRE (§16.15.5 point 2) :
@@ -897,6 +922,9 @@ function PanneauListe({
 							noms={pastilles.map((id) => catalogue.get(id)?.nom ?? '')}
 							onToutes={() => onPastilles([])}
 						/>
+					) : expediteur !== null ? (
+						// `CRM-156` T4 (§5.109 bis) : un vide sous le filtre par expéditeur le nomme et porte le geste qui le retire.
+						<VideExpediteur adresse={expediteur} onRetirer={() => onExpediteur(null)} />
 					) : filtreCourrier ? (
 						// `CRM-139` (§5.96) : un vide sous le filtre porte le geste qui le lève. Le sommeil, jugé après le filtre,
 						// garde son propre vide ci-dessus.
@@ -1769,7 +1797,13 @@ function PanneauMessage({
 	catalogue,
 	edition,
 	onAnnonce,
+	onFiltrerExpediteur,
+	idMoi,
 }: {
+	/** `CRM-156` T4 (§5.109 bis) : poser le filtre par expéditeur depuis le message ouvert. */
+	readonly onFiltrerExpediteur: (adresse: string) => void
+	/** `CRM-156` T4 (§5.109 bis) : la personne, exceptée des membres à qui transférer ; elle retire ses transferts. */
+	readonly idMoi: string | null
 	/** `CRM-141` T4 (§31.7) : le catalogue des pastilles, la capacité d'éditer l'espace, et la région vivante. */
 	readonly catalogue: CataloguePastilles
 	readonly edition: Capacite
@@ -1833,6 +1867,20 @@ function PanneauMessage({
 						<p className="text-sm text-text-2 break-words">
 							{t('inbox.message.from')} : {etat.donnees.expediteur}
 						</p>
+						{/* `CRM-156` T4 (§5.109 bis) : la commande qui pose le filtre par expéditeur, après la ligne « De ». */}
+						<div>
+							<Button
+								variante="discret"
+								taille="compacte"
+								data-testid="inbox-filtrer-expediteur"
+								onClick={() => {
+									if (etat.statut === 'pret' && etat.donnees !== null) onFiltrerExpediteur(etat.donnees.expediteurAdresse)
+								}}
+							>
+								<ListFilter aria-hidden="true" size={16} />
+								{t('inbox.sender.filter')}
+							</Button>
+						</div>
 						{etat.donnees.destinataires.length > 0 ? (
 							<p className="text-sm text-text-2 break-words">
 								{t('inbox.message.to')} : {etat.donnees.destinataires.join(', ')}
@@ -1864,17 +1912,32 @@ function PanneauMessage({
 						    case se décoche d'un message à l'autre. */}
 						{/* `CRM-141` T4 (§5.103) : la ligne des pastilles et de l'état d'évaluation vient avant la rangée ; « Réévaluer
 						    les pastilles » et « Pastilles » s'y placent après la lecture, avant « Effacer » ; le panneau, dessous. */}
+						{/* `CRM-156` T4 (§5.109 bis) : « Transférer » après « Pastilles », avant les suppressions ; son bloc sous la
+						    rangée s'exclut avec le panneau « Pastilles » et la confirmation de suppression ; les transferts, sous la
+						    ligne des pastilles. */}
 						<div className="pt-1">
-							<PastillesMessageOuvert
+							<TransfertDuMessage
 								key={etat.donnees.id}
 								idMessage={etat.donnees.id}
 								idEspace={etat.donnees.workspaceId}
-								envoye={etat.donnees.envoye}
+								idMoi={idMoi}
+								edition={edition}
+								onAnnonce={onAnnonce}
+								enfants={(transfert) =>
+									donneesOuvertes === null ? null : (
+							<PastillesMessageOuvert
+								idMessage={donneesOuvertes.id}
+								idEspace={donneesOuvertes.workspaceId}
+								envoye={donneesOuvertes.envoye}
 								catalogue={catalogue}
 								edition={edition}
 								onAnnonce={onAnnonce}
+								refermer={transfert.refermerAutres}
+								onPanneauOuvert={transfert.fermer}
+								apresLigne={transfert.liste}
 								rangee={(pastilles) =>
 									donneesOuvertes === null ? null : (
+									<>
 									<RangeeCommandesMessage
 										key={donneesOuvertes.id}
 										idMessage={donneesOuvertes.id}
@@ -1882,8 +1945,11 @@ function PanneauMessage({
 										effacableDansBoite={donneesOuvertes.effacableDansBoite}
 										retention={retention}
 										onEfface={(etendue) => onEfface(idAffiche ?? '', etendue)}
-										refermerConfirmation={pastilles.refermerConfirmation}
-										onConfirmationOuverte={pastilles.onConfirmationOuverte}
+										refermerConfirmation={pastilles.refermerConfirmation + transfert.refermerAutres}
+										onConfirmationOuverte={() => {
+											pastilles.onConfirmationOuverte()
+											transfert.fermer()
+										}}
 										commandes={
 											<>
 												<GesteSommeilFil
@@ -1903,9 +1969,14 @@ function PanneauMessage({
 													</Button>
 												)}
 												{pastilles.commandes}
+												{transfert.commande}
 											</>
 										}
 									/>
+									{transfert.panneau}
+									</>
+								)}
+							/>
 								)}
 							/>
 						</div>
@@ -2206,7 +2277,23 @@ export function RouteInbox() {
 		},
 		[setParametresUrl],
 	)
-	const liste = useMessages(clientCrm, selection, filtreCourrier, pastillesFiltre)
+	// `CRM-156` T4 (§32.9) — LE FILTRE PAR EXPÉDITEUR, dans l'adresse sous la clé `expediteur` ; une valeur mal formée est
+	// ignorée. Un geste de l'utilisateur : « Précédent » le défait.
+	const expediteurFiltre = lireExpediteurFiltre(parametresUrl.get(CLE_URL_EXPEDITEUR))
+	const changerExpediteur = useCallback(
+		(adresse: string | null) => {
+			setParametresUrl((precedents) => {
+				const suivants = new URLSearchParams(precedents)
+				if (adresse === null) suivants.delete(CLE_URL_EXPEDITEUR)
+				else suivants.set(CLE_URL_EXPEDITEUR, adresse)
+				return suivants
+			})
+		},
+		[setParametresUrl],
+	)
+	const liste = useMessages(clientCrm, selection, filtreCourrier, pastillesFiltre, expediteurFiltre)
+	// `CRM-156` T4 (§5.109 bis) : le bilan du dernier blocage, jusqu'à ce qu'on le ferme.
+	const [bilanBlocage, setBilanBlocage] = useState<number | null>(null)
 	const message = useMessage(clientCrm, idOuvert)
 	const fils = useFilsEndormis(clientCrm)
 
@@ -2217,7 +2304,7 @@ export function RouteInbox() {
 	const [toutLeFiltre, setToutLeFiltre] = useState(false)
 	/** `CRM-156` T3 : les messages cochés dans la corbeille (§5.109). */
 	const [cocheesCorbeille, setCocheesCorbeille] = useState<ReadonlySet<string>>(() => new Set())
-	const cleSelectionGroupee = JSON.stringify([selection, pastillesFiltre, filtreCourrier, mode])
+	const cleSelectionGroupee = JSON.stringify([selection, pastillesFiltre, filtreCourrier, mode, expediteurFiltre])
 	useEffect(() => {
 		setCochees(new Map())
 		setToutLeFiltre(false)
@@ -2743,6 +2830,8 @@ export function RouteInbox() {
 					idEspace={idEspaceCourant}
 					pastilles={pastillesFiltre ?? []}
 					onPastilles={changerPastilles}
+					expediteur={expediteurFiltre}
+					onExpediteur={changerExpediteur}
 					groupe={{
 						cochees,
 						toutLeFiltre,
@@ -2762,7 +2851,7 @@ export function RouteInbox() {
 									: { genre: 'non-classes' },
 							seulementMoi: filtreCourrier === true,
 							pastilles: pastillesFiltre ?? [],
-							expediteur: null,
+							expediteur: expediteurFiltre,
 							sommeilVisible: mode === 'visibles',
 						},
 						edition: capacites.edition,
@@ -2774,6 +2863,18 @@ export function RouteInbox() {
 							liste.recharger()
 							fils.recharger()
 						},
+						idMoi: idUtilisateur,
+						administration: capacites.administration,
+						onBloque: (_adresse, corbeille) => {
+							// LE FILTRE EST RETIRÉ, LA LISTE RELUE (§5.109 bis) ; le bilan se lit au-dessus de la liste.
+							setBilanBlocage(corbeille)
+							changerExpediteur(null)
+							arbre.recharger()
+							liste.recharger()
+							relireCorbeille()
+						},
+						bilanBlocage,
+						onFermerBilanBlocage: () => setBilanBlocage(null),
 					}}
 				/>
 				<PanneauMessage
@@ -2796,6 +2897,8 @@ export function RouteInbox() {
 					catalogue={catalogue}
 					edition={capacites.edition}
 					onAnnonce={setAnnonce}
+					onFiltrerExpediteur={(adresse) => changerExpediteur(adresse)}
+					idMoi={idUtilisateur}
 				/>
 					</>
 				)}

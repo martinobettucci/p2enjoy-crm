@@ -2828,3 +2828,11 @@ classé n'a pas d'affaire, et la contrainte `notifications_single_subject_check`
 producteur n'est pas un déclencheur mais la fonction de transfert elle-même (`app.notifier_transfert`) : **une**
 notification par appel — un transfert unitaire, ou un paquet de l'action groupée —, et aucune pour un transfert qui
 existait déjà. La préférence « in-app » se règle pour ce type comme pour `mention` (`app.notification_consentie`).
+
+*Précisé le 2026-11-18 avec `CRM-156` T4 (migration `0191`).* La préférence s'écrit par l'unique chemin du §46.3,
+`definir_preference_notification`, dont la liste fermée porte désormais `mention` **et** `mail_transfer` — la `0190`
+l'avait oubliée, et la case de l'écran était refusée. **La lecture** : la boîte lit l'auteur d'un transfert par
+`payload.author_id`, dans une **troisième** lecture de `profiles`, non bloquante comme la seconde (§24.1) : son échec rend
+la ligne sans auteur, jamais la boîte en erreur. Aucune lecture de commentaire ne part pour un transfert. **Le rendu**
+(`docs/DESIGN_SYSTEM.md` §5.109 bis) : « {auteur} vous a transféré 1 mail » ou « {n} mails », puis l'objet du premier en
+lien vers `/inbox?message={message_id}` ; une charge utile amputée rend la ligne sans lien ni auteur.

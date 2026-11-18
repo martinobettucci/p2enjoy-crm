@@ -11,6 +11,9 @@
 // @spec docs/SPEC-mail-subsystem.md §31.12.1, §31.12.3, §31.12.4 ; docs/DESIGN_SYSTEM.md §5.108 (la bascule du §5.11) ;
 //       docs/JOURNAL.md décisions 943 et 948
 //
+// @spec CRM-156 (docs/BACKLOG.md) — tranche T4 : le panneau « Pastilles » s'exclut avec le bloc « Transférer ce message »,
+//       et les transferts se lisent sous la ligne des pastilles — docs/DESIGN_SYSTEM.md §5.109 bis
+//
 // LA COULEUR NE PORTE JAMAIS SEULE L'INFORMATION (§1) : chaque pilule écrit son nom, l'origine se dit en mots.
 
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
@@ -373,7 +376,18 @@ export function PastillesMessageOuvert({
 	edition,
 	onAnnonce,
 	rangee,
+	refermer: refermerExterne = 0,
+	onPanneauOuvert,
+	apresLigne = null,
 }: {
+	/**
+	 * `CRM-156` T4 (docs/DESIGN_SYSTEM.md §5.109 bis) : le bloc « Transférer ce message » s'exclut avec ce panneau. Chaque
+	 * changement de ce compteur le referme ; son ouverture le signale par `onPanneauOuvert`.
+	 */
+	readonly refermer?: number
+	readonly onPanneauOuvert?: () => void
+	/** `CRM-156` T4 : les transferts du message, sous la ligne des pastilles et avant la rangée. */
+	readonly apresLigne?: ReactNode
 	readonly idMessage: string
 	readonly idEspace: string
 	/** Un mail envoyé n'est pas évalué : ni état ni « Réévaluer les pastilles » ; il se pastille à la main (§31.4). */
@@ -414,6 +428,13 @@ export function PastillesMessageOuvert({
 	useEffect(() => {
 		if (ouvert) refPanneau.current?.querySelector<HTMLInputElement>('input[type="checkbox"]:not(:disabled)')?.focus()
 	}, [ouvert])
+
+	// `CRM-156` T4 : un autre bloc s'ouvre — le panneau se referme, sans voler le focus.
+	useEffect(() => {
+		if (refermerExterne === 0) return
+		setOuvert(false)
+		setRefusCase(null)
+	}, [refermerExterne])
 
 	const fermer = useCallback(() => {
 		setOuvert(false)
@@ -506,6 +527,7 @@ export function PastillesMessageOuvert({
 					}
 					setOuvert(true)
 					setRefermer((n) => n + 1)
+					onPanneauOuvert?.()
 				}}
 			>
 				<Tags aria-hidden="true" size={16} />
@@ -550,6 +572,8 @@ export function PastillesMessageOuvert({
 					) : null}
 				</div>
 			) : null}
+
+			{apresLigne}
 
 			{rangee({ commandes, refermerConfirmation: refermer, onConfirmationOuverte: () => setOuvert(false) })}
 

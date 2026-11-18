@@ -1,3 +1,5 @@
+// @verifies CRM-156 (docs/BACKLOG.md) — tranche T4 : `mail_transfer` s'écrit par `definir_preference_notification`
+//           (docs/SCHEMA.md « Migration `0191` » ; docs/SPEC-notifications.md §52)
 // @verifies CRM-064 (docs/BACKLOG.md) — @mentions, notifications et préférences, TRANCHE 4
 // @verifies docs/SPEC-notifications.md §47 (les dix-sept lignes du contrat d'API), §43.1 (la
 //           préférence d'autrui est INOBSERVABLE), §43.4 (l'absence de ligne vaut consentement),
@@ -56,7 +58,8 @@ async function enBase(
 async function remettreEnEtat(
 	requete: import('@playwright/test').APIRequestContext,
 ): Promise<void> {
-	const reponse = await requete.delete(`${URL_API}${PREFERENCES}?type=eq.mention`, {
+	// `CRM-156` T4 : les deux types fermés, `mail_transfer` compris (migration `0191`).
+	const reponse = await requete.delete(`${URL_API}${PREFERENCES}?type=in.(mention,mail_transfer)`, {
 		headers: enTetesService(),
 	})
 	expect([200, 204]).toContain(reponse.status())
@@ -313,6 +316,18 @@ test.describe('CRM-064 tranche 4 — les préférences de notification, contrat 
 		expect(corps['code']).toBe('P0001')
 		expect(corps['message']).toBe('preference_type_inconnu')
 		expect(await enBase(requete, PREFERENCES, 'select=*')).toHaveLength(0)
+	})
+
+	// `CRM-156` T4 (migration `0191`) — `mail_transfer` S'ÉCRIT par le même chemin, et la ligne est retirée ensuite.
+	test('le type `mail_transfer` s’écrit par la RPC, et la base retient la décision (§52)', async () => {
+		const reponse = await requete.post(`${URL_API}${RPC}`, {
+			headers: { ...enTetesAuthentifies(jetonDriss), 'Content-Type': 'application/json' },
+			data: { p_type: 'mail_transfer', p_in_app: false },
+		})
+		expect(reponse.status(), await reponse.text()).toBe(200)
+		expect(((await reponse.json()) as Record<string, unknown>)['in_app']).toBe(false)
+		const retenues = (await enBase(requete, PREFERENCES, 'select=type,in_app')) as { type: string; in_app: boolean }[]
+		expect(retenues.filter((ligne) => ligne.type === 'mail_transfer')).toEqual([{ type: 'mail_transfer', in_app: false }])
 	})
 
 	// LIGNE *p* — LA CLÉ DE SERVICE EST REFUSÉE, ET C'EST VOULU. Elle contourne la RLS mais n'a

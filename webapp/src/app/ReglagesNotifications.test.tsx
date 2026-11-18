@@ -1,3 +1,5 @@
+// @verifies CRM-156 (docs/BACKLOG.md) — tranche T4 : la case « Recevoir les transferts de mails », sous celle des mentions,
+//           cochée par défaut (docs/DESIGN_SYSTEM.md §5.109 bis, §5.45)
 // @verifies CRM-069 (docs/BACKLOG.md) — tranche T5 : la case du récapitulatif quotidien, décochée par défaut, au nom de l'espace
 //           courant ; ses écritures et son refus (docs/DESIGN_SYSTEM.md §5.74, docs/SPEC-etiquettes-digest.md §5.1)
 // @verifies CRM-064 (docs/BACKLOG.md) — tranche 4 : les préférences
@@ -111,7 +113,11 @@ describe('l’écran des préférences de notification (§5.45)', () => {
 		render(<ReglagesNotifications client={client} />)
 
 		await screen.findByRole('checkbox', { name: /Recevoir les mentions/ })
-		expect(screen.getAllByRole('checkbox')).toHaveLength(1)
+		// `CRM-156` T4 : la case des transferts, sous celle des mentions, cochée par défaut (§5.109 bis).
+		const cases = screen.getAllByRole('checkbox')
+		expect(cases).toHaveLength(2)
+		expect(screen.getByRole('checkbox', { name: /Recevoir les transferts de mails/ })).toBe(cases[1])
+		expect((cases[1] as HTMLInputElement).checked).toBe(true)
 		expect(screen.queryByText(/email/i)).toBeNull()
 		expect(screen.queryByText(/résumé quotidien/i)).toBeNull()
 	})

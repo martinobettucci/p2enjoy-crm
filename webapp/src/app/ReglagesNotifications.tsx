@@ -1,3 +1,5 @@
+// @spec CRM-156 (docs/BACKLOG.md) — tranche T4 : la case « Recevoir les transferts de mails », sous celle des mentions
+//       (docs/DESIGN_SYSTEM.md §5.109 bis, §5.45 ; docs/SPEC-notifications.md §52)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T5 : le second `fieldset`, « Par email » — la case du récapitulatif quotidien de
 //       l'espace courant, décochée par défaut (docs/DESIGN_SYSTEM.md §5.74 ; docs/SPEC-etiquettes-digest.md §5.1)
 // @spec CRM-064 (docs/BACKLOG.md) — tranche 4 : les préférences
@@ -53,6 +55,11 @@ const LIBELLES: Readonly<
 	mention: {
 		titre: 'settings.notifications.type.mention',
 		corps: 'settings.notifications.type.mention.body',
+	},
+	// `CRM-156` T4 (docs/DESIGN_SYSTEM.md §5.109 bis, §5.45) : sous celle des mentions, cochée par défaut.
+	mail_transfer: {
+		titre: 'settings.notifications.type.mail_transfer',
+		corps: 'settings.notifications.type.mail_transfer.body',
 	},
 }
 

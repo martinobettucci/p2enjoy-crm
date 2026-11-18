@@ -20156,8 +20156,31 @@ s'écrire en parallèle, l'écran se coordonne avec la session qui porte `CRM-15
   252 fichiers et 6 010 tests verts avant ces ajouts ; E2E `ui` `actions-groupees-inbox` 4/4 (souris, tout le filtre et
   suppression puis restauration en corbeille, clavier, quatre paliers), périmètre inbox rejoué 65/65 dont
   `filtres-rapides-pastilles` de `CRM-155` ; captures `docs/captures/CRM-156/` observées ;
-- [ ] **T4** — l'écran des ajouts : filtre par expéditeur, transfert, notification, blocage et Réglages ▸ Expéditeurs
-  bloqués, liste à vérifier des contacts ; Vitest ; E2E `ui` ; captures ;
+- [x] **T4** — l'écran des ajouts : filtre par expéditeur, transfert, notification, blocage et Réglages ▸ Expéditeurs
+  bloqués, liste à vérifier des contacts ; Vitest ; E2E `ui` ; captures. *Fait le 2026-11-18* : DESIGN_SYSTEM §5.109 bis
+  écrit avant le code (f9a38d36) ; `lib/filtre-expediteur.ts` (la clé `expediteur`, le motif sans joker) et la commande
+  « Filtrer sur cet expéditeur », la ligne du filtre et son vide ; `TransfertInbox.tsx` (la commande « Transférer » après
+  « Pastilles », le bloc exclusif avec le panneau « Pastilles » et la confirmation de suppression, le `select` « Membre »
+  partagé avec la barre groupée, les transferts lus et « Retirer » pour l'auteur et le destinataire) ; dans la barre,
+  « Transférer à un membre » (groupe « Partage ») et « Créer des contacts » (groupe « Contacts », la liste à vérifier et le
+  compte rendu de l'import) ; « Bloquer l'expéditeur » sous le seul filtre expéditeur et l'administration consentie, la
+  double confirmation, le bilan rendu au-dessus de la liste (le filtre retiré la relit) ; Réglages ▸ Expéditeurs bloqués
+  (route, index après « Pastilles des mails », confirmation courte, « Débloquer » primaire et sans icône) ; la
+  notification `mail_transfer` (l'auteur lu par une troisième lecture non bloquante de `profiles`, le lien
+  `/inbox?message=`) et la case « Recevoir les transferts de mails ». **Défaut trouvé en branchant cette case et corrigé
+  par la migration `0191`** : `definir_preference_notification` (`0067`) refusait tout type hors « mention » — pgTAP
+  `0178` assertions 39 et 40 rouges avant, vertes après ; contrat §2.60 étendu. **Défaut vu en capture et corrigé** : dans
+  la colonne de liste, la case d'un expéditeur inconnu tombait seule sur sa ligne et l'adresse se coupait au milieu.
+  Gardes révisées (décision 51) : la rangée du message ouvert (`corbeille-inbox`, « Transférer »), les préférences
+  (`ReglagesNotifications`, `preferences-notifications` unitaire, UI et API — la remise en état couvre les deux types).
+  Vitest 41 nouveaux tests (bibliothèque du filtre 4, barre 9, transfert 7, notification 5, Réglages 6, préférences
+  révisés), suite complète 258 fichiers et 6 081 tests verts ; pgTAP `0178` 40/40, `0064`, `0016` verts ; E2E `ui`
+  `transfert-blocage-inbox` 5/5 (souris : filtre et transfert ; le destinataire : notification, ouverture, retrait ;
+  clavier : blocage et déblocage ; contacts ; quatre paliers), périmètre inbox, notifications et préférences rejoué 65/65
+  `ui` dont `filtres-rapides-pastilles` de `CRM-155`, API 47/48 — l'échec, `inbox-lecture` « le compte des non lus suit
+  l'appelant », vient de lectures de Camille laissées sur des mails d'affaire du seed par une exécution antérieure
+  (02:37–02:52 UTC), hors de cette tranche, signalé à la session de livraison ; build vert ; captures
+  `docs/captures/CRM-156/` observées ;
 - [ ] **T5** — seed, manuel §12 et images, contrat, changelog ; `[P]`.
 **DoD** : pgTAP des fonctions groupées ; preuve d'API avec les vrais jetons (refus du profil sans droit, sélection mixte) ;
 unitaires ; E2E souris et clavier aux quatre paliers ; captures observées ; seed vérifié ; manuel vérifié ; contrat.

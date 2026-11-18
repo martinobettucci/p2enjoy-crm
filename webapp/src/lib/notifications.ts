@@ -30,6 +30,10 @@
 // lecture rend `200` et zéro ligne — l'état vide ordinaire du §5.8, jamais un refus à mettre en
 // scène.
 
+// @spec CRM-156 (docs/BACKLOG.md) — tranche T4 : la notification `mail_transfer` — l'auteur lu par `payload.author_id`, le
+//       nombre de mails, l'objet du premier et son adresse `/inbox?message=` ; ni affaire ni organisation
+//       (docs/SPEC-notifications.md §52 ; docs/DESIGN_SYSTEM.md §5.109 bis, §5.43 ; docs/SPEC-mail-subsystem.md §32.7)
+
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
 import {
@@ -40,7 +44,7 @@ import {
 	filtreCanalNotifications,
 	nomCanalNotifications,
 } from './colonnes-notifications'
-import type { ProfilAffiche } from './identites'
+import { COLONNES_PROFIL_AFFICHE, type ProfilAffiche } from './identites'
 import { channelDuPremierRattachement } from './rattachements'
 import type { ClientCrm } from './supabase'
 import { LIMITE_COMPTE, OPTIONS_COMPTE } from './compter'
@@ -123,6 +127,14 @@ export type NotificationAffichee = {
 	readonly extrait: string | null
 	/** `CRM-153` T3 : le nom de l'organisation d'une mention sur sa fiche, `null` pour une mention d'affaire. */
 	readonly nomOrganisation: string | null
+	/** `CRM-156` T4 : un transfert de mails — leur nombre et l'objet du premier ; absent pour une mention. */
+	readonly transfert?: { readonly nombre: number; readonly objet: string | null }
+}
+
+/** `CRM-156` T4 : l'auteur d'un transfert, lu dans la charge utile ; `null` s'il manque ou est mal formé. */
+export function auteurTransfert(payload: LigneNotificationLue['payload']): string | null {
+	const valeur = payload?.['author_id']
+	return typeof valeur === 'string' && valeur.length > 0 ? valeur : null
 }
 
 /**
@@ -178,7 +190,31 @@ export function adresseChannelNotification(card: LigneNotificationLue['cards']):
 export function apparier(
 	ligne: LigneNotificationLue,
 	commentaires: ReadonlyMap<string, LigneCommentaireCite>,
+	profils: ReadonlyMap<string, ProfilAffiche> = new Map(),
 ): NotificationAffichee {
+	// `CRM-156` T4 — UN TRANSFERT DE MAILS (§52) : ni affaire, ni organisation, ni commentaire ; le lien est l'objet du
+	// premier mail et mène à l'inbox, message ouvert. Une charge utile amputée rend la ligne sans lien ni auteur.
+	if (ligne.type === 'mail_transfer') {
+		const payload = ligne.payload ?? {}
+		const idMessage = typeof payload['message_id'] === 'string' ? payload['message_id'] : null
+		const nombre = typeof payload['count'] === 'number' && payload['count'] > 0 ? payload['count'] : 1
+		const objet = typeof payload['subject'] === 'string' && payload['subject'].trim() !== '' ? payload['subject'] : null
+		const idAuteur = auteurTransfert(ligne.payload)
+		return {
+			id: ligne.id,
+			lue: ligne.read_at !== null,
+			date: ligne.created_at,
+			titreAffaire: null,
+			adresse: idMessage === null ? null : `/inbox?message=${encodeURIComponent(idMessage)}`,
+			adresseChannel: null,
+			nomTrack: null,
+			nomChannel: null,
+			auteur: idAuteur === null ? null : (profils.get(idAuteur) ?? null),
+			extrait: null,
+			nomOrganisation: null,
+			transfert: { nombre, objet },
+		}
+	}
 	const base = adresseChannelNotification(ligne.cards)
 	const idCommentaire = idCommentaireCite(ligne.payload)
 	const commentaire = idCommentaire === null ? undefined : commentaires.get(idCommentaire)
@@ -307,8 +343,24 @@ export async function lireBoite(client: ClientCrm): Promise<EtatAsync<BoiteLue>>
 			}
 		}
 
+		// `CRM-156` T4 : les auteurs des transferts, en une troisième lecture, NON BLOQUANTE comme la seconde — son échec rend
+		// la ligne sans auteur, jamais la boîte en erreur. Aucune lecture quand aucun transfert n'est rendu.
+		const profils = new Map<string, ProfilAffiche>()
+		const auteurs = [
+			...new Set(
+				lignes
+					.filter((ligne) => ligne.type === 'mail_transfer')
+					.map((ligne) => auteurTransfert(ligne.payload))
+					.filter((identifiant): identifiant is string => identifiant !== null),
+			),
+		]
+		if (auteurs.length > 0) {
+			const lus = await client.from('profiles').select(COLONNES_PROFIL_AFFICHE).in('id', auteurs)
+			if (lus.error === null) for (const profil of lus.data ?? []) profils.set(profil.id, profil)
+		}
+
 		return pret({
-			notifications: lignes.map((ligne) => apparier(ligne, commentaires)),
+			notifications: lignes.map((ligne) => apparier(ligne, commentaires, profils)),
 			nonLues: await compterNonLues(client),
 			tronquee: lignes.length >= BORNE_LISTE,
 		})

@@ -1,3 +1,4 @@
+// @spec CRM-156 (docs/BACKLOG.md) — tranche T4 : l'adresse de Réglages ▸ Expéditeurs bloqués (docs/DESIGN_SYSTEM.md §5.109 bis)
 // @spec CRM-149 (docs/BACKLOG.md) — tranche T3 : l'adresse de Réglages ▸ Prompts du connecteur (docs/SPEC-mcp.md §17.7)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : Réglages ▸ Étiquettes, son adresse, sa route et son entrée d'index (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-079 (docs/BACKLOG.md) — adresses des surfaces atteintes hors de `ROUTES`
@@ -188,6 +189,12 @@ export const CHEMIN_ADMIN_SEQUENCES_MAIL = '/reglages/sequences-relance' as cons
  * et avant l'état de la messagerie : on configure avant de superviser.
  */
 export const CHEMIN_ADMIN_PASTILLES_MAIL = '/reglages/pastilles-mails' as const
+
+/**
+ * Expéditeurs bloqués — `CRM-156` T4, docs/SPEC-mail-subsystem.md §32.8 ; docs/DESIGN_SYSTEM.md §5.109 bis. Après les
+ * pastilles des mails : on y lit pourquoi des mails vont droit à la corbeille.
+ */
+export const CHEMIN_ADMIN_EXPEDITEURS_BLOQUES = '/reglages/expediteurs-bloques' as const
 
 /**
  * Prompts du connecteur — `CRM-149` T3, docs/SPEC-mcp.md §17.7 ; docs/DESIGN_SYSTEM.md §5.104. Après les webhooks : les deux

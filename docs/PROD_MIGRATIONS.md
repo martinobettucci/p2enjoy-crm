@@ -1334,6 +1334,17 @@ pgTAP `0127` et l'E2E de l'import, rejoués sur la 190. Les écrans (T3, T4) se 
 **Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0190` » ; les transferts et blocages saisis entre-temps sont
 perdus — un `pg_dump` des deux tables d'abord ; les mails mis à la corbeille par un blocage y restent, restaurables.
 
+**La 191 s'y joint** (`CRM-156` T4, `docs/SCHEMA.md` « Migration `0191` ») : `definir_preference_notification` accepte
+`mail_transfer` — sans elle, la case « Recevoir les transferts de mails » de Réglages ▸ Notifications est refusée à
+l'écriture. Une fonction redéfinie, aucune donnée, aucun verrou durable. **Exige la 190 ; se livre avec la webapp de T4.**
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 3 | Appliquer la migration 191, après la 190 | session de livraison, dans la même fenêtre | `./runProd.sh --migrate` |
+| 4 | Constater | session de livraison, en lecture seule | le registre gagne une ligne, l'empreinte de la 191 égale celle du dépôt ; `select prosrc like '%mail_transfer%' from pg_proc where oid = 'public.definir_preference_notification(text, boolean)'::regprocedure` vaut vrai |
+
+**Retour arrière de la 191** : rejouer le corps de la `0067` ; rien n'est perdu.
+
 ### 2.61 `CRM-155` T1 et T2, décisions 943 et 948 — les pastilles en filtres rapides dans l'inbox, et le filtre du connecteur (EN ATTENTE)
 
 `docs/SPEC-mail-subsystem.md` §31.12 ; `docs/DESIGN_SYSTEM.md` §5.108 ; `docs/SPEC-mcp.md` §9.2 *duovicies* (révisé).
@@ -1353,6 +1364,10 @@ webapp de `main` porte les deux.
 `pastille` ouverte par la webapp précédente n'en lit que la première valeur (`get`) — rien ne casse.
 
 ## 3. Migrations en attente
+
+**La 191** (`CRM-156` T4), *en attente* : `definir_preference_notification` accepte `mail_transfer`
+(`docs/SCHEMA.md` « Migration `0191` ») — une fonction redéfinie, aucune donnée. **Après la 190** (§2.60). **Avec la
+webapp de T4.** Aucun geste préalable du responsable.
 
 **La 190** (`CRM-156` T2, décisions 945 et 947), *en attente* : le transfert, le blocage d'un expéditeur et la source des
 contacts créés depuis l'inbox (`docs/SCHEMA.md` « Migration `0190` ») — deux tables, la lecture des messages réécrite,

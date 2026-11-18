@@ -1,3 +1,5 @@
+// @verifies CRM-156 (docs/BACKLOG.md) — tranche T4 : la garde du §42.1 révisée — la case « Recevoir les transferts de mails »
+//           (docs/DESIGN_SYSTEM.md §5.109 bis ; docs/SPEC-notifications.md §52)
 // @verifies CRM-064 (docs/BACKLOG.md) — tranche 4 : les préférences, sur session réelle
 // @verifies CRM-069 (docs/BACKLOG.md) — tranche T5 : la garde du §42.1 révisée — le récapitulatif, seul canal sortant
 //           (docs/SPEC-etiquettes-digest.md §5.1 ; docs/SPEC-notifications.md §42.1, révision du 2026-10-28)
@@ -123,11 +125,15 @@ test.describe('L’écran des préférences (docs/DESIGN_SYSTEM.md §5.45)', () 
 		// (décision 51 : une garde se révise, jamais ne se retire) : le récapitulatif quotidien EXISTE,
 		// sous « Par email », et c'est le SEUL canal sortant — une seule case dans l'application, une
 		// seule par email, aucun email par notification.
-		await expect(page.getByRole('group', { name: 'Ce que vous recevez dans l\'application' }).getByRole('checkbox')).toHaveCount(1)
+		// Révisée par `CRM-156` T4 (§5.109 bis) : la case des transferts de mails, sous celle des mentions, cochée par défaut.
+		const dansApplication = page.getByRole('group', { name: 'Ce que vous recevez dans l\'application' }).getByRole('checkbox')
+		await expect(dansApplication).toHaveCount(2)
+		await expect(dansApplication.nth(1)).toHaveAccessibleName(/Recevoir les transferts de mails/)
+		await expect(dansApplication.nth(1)).toBeChecked()
 		const parEmail = page.getByTestId('fieldset-digest')
 		await expect(parEmail.getByRole('checkbox')).toHaveCount(1)
 		await expect(parEmail.getByRole('checkbox')).toHaveAccessibleName(/Recevoir chaque matin le récapitulatif de/)
-		await expect(page.getByRole('checkbox')).toHaveCount(2)
+		await expect(page.getByRole('checkbox')).toHaveCount(3)
 		await expect(page.getByText(/email/i)).toHaveCount(1)
 		await expect(page.getByText(/résumé quotidien/i)).toHaveCount(0)
 

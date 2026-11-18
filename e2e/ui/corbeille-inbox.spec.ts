@@ -1,3 +1,5 @@
+// @verifies CRM-156 (docs/BACKLOG.md) — tranche T4 : la rangée révisée — « Transférer » après « Pastilles », avant les
+//           suppressions (docs/DESIGN_SYSTEM.md §5.109 bis ; décision 51 : une garde se révise)
 // @verifies CRM-138 (docs/BACKLOG.md) — tranche T3 : l'inbox à la souris et au clavier — « Marquer comme non lu » libellé
 //           près du sommeil, le sommeil dit « message », « Effacer » confirmé dans le flux (annuler, puis effacer), la case
 //           « boîte mail » offerte à la titulaire de la boîte et absente pour qui n'en écrit aucune, le dossier « Corbeille »
@@ -100,14 +102,16 @@ test('à la souris : non lu libellé, sommeil en mots, supprimer ici puis annule
 	await connecterAvecLeLabs(page, ADMIN)
 	await ouvrirMessage(page, id)
 
-	// LA RANGÉE : le sommeil, la lecture, les pastilles (`CRM-141`), puis « Supprimer ici » et « Supprimer partout »
-	// (`CRM-151`, §29.11) — Camille écrit la boîte du message : « partout » lui est offerte.
+	// LA RANGÉE : le sommeil, la lecture, les pastilles (`CRM-141`), « Transférer » (`CRM-156` T4, §5.109 bis : le geste qui
+	// partage précède ceux qui retirent), puis « Supprimer ici » et « Supprimer partout » (`CRM-151`, §29.11) — Camille écrit
+	// la boîte du message : « partout » lui est offerte.
 	const rangee = page.getByTestId('inbox-commandes-message')
 	await expect(rangee.getByRole('button')).toHaveText([
 		'Mettre le message en sommeil',
 		'Marquer comme non lu',
 		'Réévaluer les pastilles',
 		'Pastilles',
+		'Transférer',
 		'Supprimer ici',
 		'Supprimer partout',
 	])

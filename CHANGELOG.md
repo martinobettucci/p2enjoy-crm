@@ -31,6 +31,23 @@ d'exécuter le code attendu.
   `messagerie`, case « Consulter », aucune case nouvelle. Manuel §33.5 ; `docs/SPEC-mcp.md` §9.2 duovicies.
 - `CRM-155` T3 : le seed vérifié sans ajout ; contrat de déploiement §2.61 (webapp et image `mcp`, aucune migration).
 
+### `CRM-156` T4 — filtrer sur un expéditeur, transférer, bloquer, créer des contacts depuis l'inbox (migration 191)
+
+- Dans un message ouvert, « Filtrer sur cet expéditeur » ne montre plus que ses mails ; une ligne sous les filtres rapides
+  nomme l'adresse et la retire. Un filtre par expéditeur ouvre « Tout sélectionner ».
+- « Transférer », après « Pastilles » : on choisit un membre de l'espace, il lit ce mail et le retrouve sous « Seulement
+  moi » ; aucun mail n'est envoyé. Les transferts se lisent sous les pastilles du message, et l'auteur comme le
+  destinataire peuvent les retirer. Dans la barre groupée, « Transférer à un membre ».
+- Le destinataire reçoit la notification « {auteur} vous a transféré 1 mail » (ou « {n} mails »), dont l'objet ouvre le
+  mail ; Réglages ▸ Notifications gagne « Recevoir les transferts de mails ».
+- Sous le seul filtre d'un expéditeur, un administrateur peut « Bloquer l'expéditeur » : deux confirmations, ses mails
+  reçus vont à la corbeille de l'inbox, et les prochains y arriveront directement. Réglages ▸ Expéditeurs bloqués liste
+  les adresses, qui les a bloquées et quand, et « Débloquer ».
+- Dans la barre groupée, « Créer des contacts » : la liste des expéditeurs inconnus de la sélection, nom et organisation
+  préremplis, à vérifier avant de créer ; le compte rendu reprend les mots de l'import.
+- Migration 191 : la préférence « Recevoir les transferts de mails » s'enregistre (la fonction d'écriture des
+  préférences refusait ce type).
+
 ### `CRM-156` T3 — l'écran des actions groupées de l'inbox
 
 - Une **case par fil** dans la liste de l'inbox, et par message dans la corbeille. **« Tout sélectionner »** sous un filtre

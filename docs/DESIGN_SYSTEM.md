@@ -8981,3 +8981,11 @@ règles ne disent que de quoi ils ont l'air. Tout ce que le §5.109 pose vaut sa
 - **SOUS `md`**, toutes ces lignes se replient, cibles conservées ; la page ne défile jamais horizontalement (§7).
 - **Aucune couleur, aucun jeton nouveau. Trois icônes Lucide nouvelles — `ListFilter`, `Forward`, `ShieldBan`** —, chacune pour
   un seul objet (§9) ; `X` est reprise pour retirer.
+- *Précisé le 2026-11-18 avec le code de T4, sur les captures observées.*
+  - **Le bilan du blocage se rend au-dessus de la liste**, sous la rangée, et non dans la rangée : le filtre retiré relit
+    la liste, et la rangée qui portait la commande disparaît avec lui. Son titre prend le focus (§5.13).
+  - **Une date dans une phrase reste une donnée technique** (§2) : « Transféré à … le {date} » et « Bloqué par … le
+    {date} » rendent la date dans un `<time>` monospace à chiffres tabulaires, la phrase restant une seule clé de
+    traduction — jamais deux morceaux concaténés (§10).
+  - **La ligne d'un expéditeur inconnu** garde sa case à côté de l'adresse : l'adresse et son nombre de mails se replient
+    dans leur propre colonne. Défaut vu en capture : dans la colonne de liste, la case tombait seule sur sa ligne.

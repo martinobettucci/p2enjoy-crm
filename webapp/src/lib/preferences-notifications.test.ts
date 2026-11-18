@@ -1,3 +1,5 @@
+// @verifies CRM-156 (docs/BACKLOG.md) — tranche T4 : la liste des types gagne `mail_transfer`, au défaut « je reçois »
+//           (docs/SPEC-notifications.md §52 ; docs/DESIGN_SYSTEM.md §5.109 bis ; migration `0191`)
 // @verifies CRM-064 (docs/BACKLOG.md) — tranche 4 : les préférences
 // @verifies docs/SPEC-notifications.md §42.1 (il n'y a qu'un canal, et la liste des types est
 //           fermée), §43.4 (l'absence de ligne vaut consentement), §46.3 (la RPC, unique chemin
@@ -65,8 +67,9 @@ describe('la liste des types (§42.1)', () => {
 	// ELLE EST FERMÉE, ET C'EST LE MIROIR DU `check` DE LA MIGRATION. Trois endroits portent la
 	// même valeur — la table `notifications`, la table `notification_preferences`, et cette
 	// constante —, et un écart entre eux rendrait une case que la base refuse.
-	it('ne contient QUE « mention », comme le `check` fermé de la base', () => {
-		expect(TYPES_PREFERENCE).toEqual(['mention'])
+	// `CRM-156` T4 : `mail_transfer` y entre, comme dans les deux `check` (`0190`) et dans la RPC (`0191`).
+	it('ne contient QUE « mention » et « mail_transfer », comme le `check` fermé de la base', () => {
+		expect(TYPES_PREFERENCE).toEqual(['mention', 'mail_transfer'])
 	})
 
 	it('reconnaît « mention » et rejette tout le reste', () => {
@@ -81,13 +84,18 @@ describe('le défaut « je reçois » (§43.4)', () => {
 	// `app.notification_consentie`, tenue par la suite pgTAP. Les deux doivent dire la même chose ;
 	// c'est pourquoi elles sont éprouvées séparément plutôt que supposées d'accord.
 	it('rend une case COCHÉE quand AUCUNE ligne n’existe', () => {
-		expect(appliquerPreferences([])).toEqual([{ type: 'mention', recevoirDansApplication: true }])
+		expect(appliquerPreferences([])).toEqual([{ type: 'mention', recevoirDansApplication: true }, { type: 'mail_transfer', recevoirDansApplication: true }])
 	})
 
 	it('rend une case DÉCOCHÉE quand la ligne dit faux', () => {
 		expect(appliquerPreferences([{ type: 'mention', in_app: false }])).toEqual([
 			{ type: 'mention', recevoirDansApplication: false },
+			{ type: 'mail_transfer', recevoirDansApplication: true },
 		])
+		expect(appliquerPreferences([{ type: 'mail_transfer', in_app: false }])[1]).toEqual({
+			type: 'mail_transfer',
+			recevoirDansApplication: false,
+		})
 	})
 
 	// UN TYPE INCONNU NE PEUT VENIR QUE D'UNE BASE EN AVANCE SUR CETTE VERSION. Lui fabriquer une
@@ -97,8 +105,7 @@ describe('le défaut « je reçois » (§43.4)', () => {
 			{ type: 'mention', in_app: false },
 			{ type: 'echeance', in_app: false },
 		])
-		expect(rendu).toHaveLength(1)
-		expect(rendu[0]?.type).toBe('mention')
+		expect(rendu.map((ligne) => ligne.type)).toEqual(['mention', 'mail_transfer'])
 	})
 })
 
@@ -122,7 +129,7 @@ describe('la lecture des préférences (§46.1)', () => {
 
 		expect(etat.statut).toBe('pret')
 		if (etat.statut !== 'pret') throw new Error('état inattendu')
-		expect(etat.donnees).toEqual([{ type: 'mention', recevoirDansApplication: true }])
+		expect(etat.donnees).toEqual([{ type: 'mention', recevoirDansApplication: true }, { type: 'mail_transfer', recevoirDansApplication: true }])
 	})
 
 	it('rend un état d’ERREUR quand la requête échoue', async () => {
