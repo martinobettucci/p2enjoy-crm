@@ -19920,8 +19920,18 @@ non-régression du tableau à 1280 px ; connecteur (pytest, intégration, `verif
       lectrice éteinte avec le motif, quatre paliers avec la hauteur des lignes mesurée ; aide, démarrage, membres,
       pastilles et étiquettes rejoués verts ; captures `docs/captures/CRM-153/categories-reglages-*` observées. L'entrée de
       l'aide (`aide-ecrans.ts`) et le manuel suivent avec T6.
-- [ ] **T3 — la fiche** : la ligne « Catégories » et son panneau, le fil de commentaires, la notification qui y mène ;
-      unitaires ; E2E ; captures.
+- [x] **T3 — la fiche** : la ligne « Catégories » et son panneau, le fil de commentaires, la notification qui y mène ;
+      unitaires ; E2E ; captures. *Faite le 2026-11-18* : `CategoriesOrganisation.tsx`, `CommentairesOrganisation.tsx`,
+      `lib/commentaires-organisation.ts` ; le commentaire et le sélecteur de mentions sortis de `PanneauTimeline.tsx` dans
+      `CommentaireFil.tsx`, sans changement de rendu ; les gestes d'auteur et les mentions en paramètre de table ; la
+      notification d'organisation (`lib/notifications.ts`, `Notifications.tsx`). Unitaires 6 + 7 + 15 + 4, rouges sous
+      deux mutations (l'ancre, l'appelant exclu des mentionnables), le fil d'une affaire inchangé (916 au total sur le
+      sous-ensemble) ; `FicheOrganisation.test.tsx` révisé et daté (l'espion par table, « Catégories » après « Tracks »).
+      E2E `e2e/ui/organisation-fiche-commentaires.spec.ts` 4/4 — clavier, souris, notification, modération, lectrice,
+      quatre paliers ; elle a trouvé deux défauts, corrigés : la mention envoyait l'espace (`403`), et le focus se perdait
+      quand une archivée décochée quittait le panneau. Commentaires, gestes, mentions, notifications, contacts et
+      organisations rejoués : 120/121, un échec intermittent de `mentions-composeur` (« le compte survit au repli »),
+      12/12 au passage suivant. Captures `docs/captures/CRM-153/fiche-*` observées.
 - [ ] **T4 — la liste** : les catégories sous le nom, le filtre, l'adresse ; unitaires ; E2E ; captures.
 - [ ] **T5 — connecteur** ; pytest, intégration, `verify-mcp.sh`.
 - [ ] **T6 — seed, manuel, contrat** ; puis `[P]`.

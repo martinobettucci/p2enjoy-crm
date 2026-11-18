@@ -1,3 +1,6 @@
+// @spec CRM-153 (docs/BACKLOG.md) — tranche T3 : la mention dans le fil d'une organisation — « {auteur} vous a mentionné à
+//       propos de {organisation} », le lien vers sa fiche à l'ancre du commentaire (docs/SPEC-organisations.md §9.3 ;
+//       docs/DESIGN_SYSTEM.md §5.107)
 // @spec CRM-064 (docs/BACKLOG.md) — tranche 3a : la cloche, son compteur et le panneau
 // @spec docs/DESIGN_SYSTEM.md §5.43 (cette surface), §5.18 (liste plate), §5.29 (pilule de
 //       channel), §5.10 (avatar 24 px et date absolue), §5.1 (le liseré), §5.5 (variantes),
@@ -384,9 +387,14 @@ function LigneNotification({
 						notification.lue ? 'text-text-2' : 'text-ink font-medium',
 					].join(' ')}
 				>
-					{auteur === null
-						? t('notifications.mention.anonymous')
-						: t('notifications.mention.author', { auteur: auteur.full_name })}
+					{/* `CRM-153` T3 : une mention sur une organisation nomme l'organisation dans la phrase (§5.107). */}
+					{notification.nomOrganisation !== null
+						? auteur === null
+							? t('notifications.mention.organization.anonymous', { organisation: notification.nomOrganisation })
+							: t('notifications.mention.organization', { auteur: auteur.full_name, organisation: notification.nomOrganisation })
+						: auteur === null
+							? t('notifications.mention.anonymous')
+							: t('notifications.mention.author', { auteur: auteur.full_name })}
 				</span>
 				<time
 					dateTime={notification.date}
@@ -419,6 +427,23 @@ function LigneNotification({
 			  §5.13). Sans adresse lisible, aucun lien n'est rendu — un lien vers une adresse
 			  incomplète mènerait à un écran que l'utilisateur croirait cassé (§5.32).
 			*/}
+			{/* `CRM-153` T3 : le lien d'une mention sur une organisation est son nom, et il mène à sa fiche, à l'ancre du
+			    commentaire (§5.107). Sans adresse lisible, le nom reste un texte, comme le titre d'une affaire. */}
+			{notification.nomOrganisation === null ? null : notification.adresse === null ? (
+				<span className="block truncate text-sm text-text-2" title={notification.nomOrganisation}>
+					{notification.nomOrganisation}
+				</span>
+			) : (
+				<Link
+					to={notification.adresse}
+					data-testid="notification-lien"
+					title={notification.nomOrganisation}
+					aria-label={t('notifications.item.openOrganization', { organisation: notification.nomOrganisation })}
+					className="block truncate text-sm text-brand font-medium hover:underline"
+				>
+					{notification.nomOrganisation}
+				</Link>
+			)}
 			{notification.titreAffaire === null ? null : notification.adresse === null ? (
 				<span className="block truncate text-sm text-text-2" title={notification.titreAffaire}>
 					{notification.titreAffaire}

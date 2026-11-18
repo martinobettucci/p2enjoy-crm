@@ -1,4 +1,6 @@
 // @spec CRM-064 (docs/BACKLOG.md) — sous-tranche 3b : l'émission
+// @spec CRM-153 (docs/BACKLOG.md) — tranche T3 : la table des mentions en paramètre, pour le fil d'une organisation
+//       (docs/SPEC-organisations.md §9.2)
 // @spec docs/SPEC-notifications.md §34 (d'où vient la liste du sélecteur), §34.2 (la RPC et son
 //       refus à zéro ligne), §34.3 (l'appelant n'est pas dans sa propre liste), §35.1 (la mesure
 //       qui décide : le POST groupé est tout ou rien), §35.2 (un POST par mention, séquentiel),
@@ -130,6 +132,12 @@ export function classerRefusMention(
 	return { nature: 'unknown', detail }
 }
 
+/**
+ * `CRM-153` T3 — les mentions d'un commentaire d'affaire, ou d'un commentaire d'organisation
+ * (docs/SPEC-organisations.md §9.2) : deux tables de même forme, aux mêmes refus nommés.
+ */
+export type TableMentions = 'card_comment_mentions' | 'organization_comment_mentions'
+
 /** L'issue d'UNE mention, attribuée à la personne qu'elle désignait. */
 export type IssueMention =
 	| { readonly personne: PersonneMentionnable; readonly statut: 'posee' }
@@ -154,13 +162,17 @@ async function poserUneMention(
 	idCommentaire: string,
 	idWorkspace: string,
 	personne: PersonneMentionnable,
+	table: TableMentions,
 ): Promise<IssueMention> {
 	try {
-		const reponse = await client.from('card_comment_mentions').insert({
-			comment_id: idCommentaire,
-			profile_id: personne.id,
-			workspace_id: idWorkspace,
-		})
+		// L'ESPACE N'EST ENVOYÉ QUE POUR UNE AFFAIRE (`CRM-153` T3). La 0188 n'accorde l'insertion d'une mention
+		// d'organisation que sur `comment_id` et `profile_id` — le déclencheur pose l'espace —, et l'envoyer y vaut un `403`
+		// (trouvé par la preuve E2E). Le type généré exige la colonne : l'assertion porte sur le type, jamais sur la règle.
+		const reponse = await client.from(table).insert(
+			(table === 'card_comment_mentions'
+				? { comment_id: idCommentaire, profile_id: personne.id, workspace_id: idWorkspace }
+				: { comment_id: idCommentaire, profile_id: personne.id }) as never,
+		)
 		if (reponse.error !== null) {
 			const refus = classerRefusMention(reponse.status, reponse.error.code, reponse.error.message)
 			return { personne, statut: 'refus', nature: refus.nature, detail: refus.detail }
@@ -198,10 +210,11 @@ export async function poserMentions(
 	idCommentaire: string,
 	idWorkspace: string,
 	personnes: readonly PersonneMentionnable[],
+	table: TableMentions = 'card_comment_mentions',
 ): Promise<readonly IssueMention[]> {
 	const issues: IssueMention[] = []
 	for (const personne of personnes) {
-		issues.push(await poserUneMention(client, idCommentaire, idWorkspace, personne))
+		issues.push(await poserUneMention(client, idCommentaire, idWorkspace, personne, table))
 	}
 	return issues
 }

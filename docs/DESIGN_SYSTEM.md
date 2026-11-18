@@ -8773,6 +8773,15 @@ disent que de quoi ils ont l'air. **La grammaire est celle des étiquettes d'une
     paliers mesure la hauteur des lignes.
 - **LA NOTIFICATION** : la ligne de la boîte (§5.45) reprend celle d'une mention d'affaire, le sujet étant l'organisation :
   « {auteur} vous a mentionné à propos de {organisation} ».
+  *Précisé à l'écriture du code (T3, 2026-11-18, captures `docs/captures/CRM-153/fiche-*`, `notification-organisation-1440`)* :
+  - **la ligne de la notification** porte, sous l'extrait, le nom de l'organisation en lien vers sa fiche — à la place du
+    titre de l'affaire —, et aucune pilule « Track › Channel » : une organisation n'en a pas ;
+  - **décocher une catégorie archivée la retire du panneau**, et le focus revient à la première case, à défaut à
+    « Fermer » — laissé sur le document, `Échap` ne refermait plus le panneau (trouvé par la preuve E2E au clavier) ;
+  - **la commande « Catégories » étant éteinte quand la base refuse l'édition**, le panneau ne s'ouvre pas : la ligne
+    garde ses pilules, et la commande cite le motif de la fiche ;
+  - **le sélecteur de mentions dit, vide, « Personne d'autre n'est membre de cet espace. »** : son texte nomme l'objet
+    commenté (propriété `cleVide`, l'affaire gardant le sien).
 - **Aucune couleur, aucun jeton, aucune icône nouveaux** : `Tags` est réemployée pour le même geste.
 
 ### 5.108 Les pastilles en filtres rapides dans l'inbox — `CRM-155`

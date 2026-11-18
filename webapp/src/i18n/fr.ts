@@ -4436,6 +4436,32 @@ export const fr = {
 		"Rien n'a été modifié : vous n'avez plus le droit d'écrire sur cette catégorie, ou elle a disparu.",
 	'admin.orgCategories.refus.panne': "L'enregistrement a échoué. Réessayez.",
 	'orgCategories.pill.archived': '{nom}, catégorie archivée',
+	// CRM-153 T3 — la fiche d'une organisation : la ligne « Catégories » et son panneau, le fil de commentaires
+	// (docs/SPEC-organisations.md §9.3 ; docs/DESIGN_SYSTEM.md §5.107).
+	'organization.field.categories': 'Catégories',
+	'organization.categories.none': 'Aucune catégorie',
+	'organization.categories.error': 'Les catégories n’ont pas pu être lues.',
+	'organization.categories.open': 'Catégories',
+	'organization.categories.legend': 'Catégories de cette organisation',
+	'organization.categories.loading': 'Chargement des catégories…',
+	'organization.categories.catalogError': 'Le catalogue des catégories n’a pas pu être lu.',
+	'organization.categories.empty': 'Aucune catégorie dans cet espace.',
+	'organization.categories.empty.link': 'Préparer les catégories',
+	'organization.categories.close': 'Fermer',
+	'organization.categories.refus.archivee': 'Cette catégorie est archivée : elle ne se pose plus.',
+	'organization.categories.refus.forbidden': 'Vous ne pouvez pas modifier les catégories de cette organisation.',
+	'organization.categories.refus.panne': 'La catégorie n’a pas pu être enregistrée. Réessayez.',
+	'organization.comments.title': 'Commentaires',
+	'organization.comments.error': 'Les commentaires n’ont pas pu être chargés',
+	'organization.comments.empty': 'Aucun commentaire pour le moment.',
+	'organization.comments.sansEffet':
+		"Ce commentaire n'est plus le vôtre, ou vous ne modifiez plus cette organisation : rien n'a été modifié.",
+	'organization.comments.refus.forbidden': 'Vous ne pouvez pas commenter cette organisation. Votre texte est conservé ci-dessus.',
+	'organization.comments.mentions.refus.destinataire': 'cette personne ne peut pas lire cette organisation.',
+	'organization.comments.mentions.empty': 'Personne d’autre n’est membre de cet espace.',
+	'notifications.mention.organization': '{auteur} vous a mentionné à propos de {organisation}',
+	'notifications.mention.organization.anonymous': 'Vous avez été mentionné à propos de {organisation}',
+	'notifications.item.openOrganization': 'Ouvrir la fiche de {organisation}',
 	// CRM-149 T3 — Réglages ▸ Prompts du connecteur (docs/SPEC-mcp.md §17.7 ; docs/DESIGN_SYSTEM.md §5.104).
 	'admin.settings.index.mcpPrompts': 'Prompts du connecteur',
 	'admin.settings.index.mcpPrompts.body':

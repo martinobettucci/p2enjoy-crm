@@ -1,4 +1,6 @@
 // @spec CRM-043 (docs/BACKLOG.md) — lecture, publication et flux du fil de commentaires
+// @spec CRM-153 (docs/BACKLOG.md) — tranche T3 : la table des gestes d'auteur en paramètre, pour le fil d'une
+//       organisation (docs/SPEC-organisations.md §9.2)
 // @spec CRM-022 (docs/BACKLOG.md) — auteur embarqué et compte supprimé détaché
 // @spec CRM-064 (docs/BACKLOG.md) — sous-tranche 3b : `publierCommentaire` rend l'identifiant de la
 //       ligne créée, sans lequel aucune mention ne peut être posée
@@ -330,8 +332,9 @@ export async function modifierCommentaire(
 	client: ClientCrm,
 	idCommentaire: string,
 	corps: string,
+	table: TableCommentaires = 'card_comments',
 ): Promise<ResultatGeste> {
-	return await appliquerGeste(client, idCommentaire, { body: corps })
+	return await appliquerGeste(client, idCommentaire, { body: corps }, table)
 }
 
 /**
@@ -348,23 +351,38 @@ export async function modifierCommentaire(
 export async function supprimerCommentaire(
 	client: ClientCrm,
 	idCommentaire: string,
+	table: TableCommentaires = 'card_comments',
 ): Promise<ResultatGeste> {
-	return await appliquerGeste(client, idCommentaire, {
-		body: '',
-		deleted_at: new Date().toISOString(),
-	})
+	return await appliquerGeste(
+		client,
+		idCommentaire,
+		{
+			body: '',
+			deleted_at: new Date().toISOString(),
+		},
+		table,
+	)
 }
+
+/**
+ * `CRM-153` T3 — les deux fils de commentaires du produit, celui d'une affaire et celui d'une organisation
+ * (docs/SPEC-organisations.md §9.2). Leurs tables ont la même forme et les mêmes déclencheurs, si bien que les deux
+ * gestes d'auteur s'écrivent une seule fois ; l'affaire reste la table par défaut, et aucun appelant existant ne change.
+ */
+export type TableCommentaires = 'card_comments' | 'organization_comments'
 
 async function appliquerGeste(
 	client: ClientCrm,
 	idCommentaire: string,
-	valeurs: Partial<Database['public']['Tables']['card_comments']['Update']>,
+	// Les seules colonnes qu'un geste d'auteur écrit, communes aux deux tables.
+	valeurs: { readonly body: string; readonly deleted_at?: string },
+	table: TableCommentaires,
 ): Promise<ResultatGeste> {
 	try {
 		// `select('id')` n'est pas décoratif : sans lui, PostgREST ne rend aucun corps et le
 		// filtrage silencieux du `USING` — ligne *j* — serait indiscernable d'une modification.
 		const reponse = await client
-			.from('card_comments')
+			.from(table)
 			.update(valeurs)
 			.eq('id', idCommentaire)
 			.select('id')

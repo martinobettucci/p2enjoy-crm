@@ -288,6 +288,15 @@ anglais (`docs/DAT.md` §12 bis).
   règle de `tracks`).
 - **La boîte des notifications** : une mention dans le fil d'une organisation dit « {auteur} vous a mentionné à propos de
   {organisation} » et mène à la fiche, ancre `#commentaire-{id}`.
+- *Précisé à l'écriture du code (T3, 2026-11-18)* :
+  - **les mentionnables d'une organisation** sont les membres de l'espace, moins l'appelant — tous lisent l'organisation
+    (§9.2) ; aucune fonction dédiée : la base ne rend que les membres des espaces dont on est membre, et le déclencheur des
+    mentions refuse un destinataire qui ne lit pas l'organisation ;
+  - **la mention et le commentaire s'insèrent sans l'espace** : la 0188 n'accorde l'insertion que sur `comment_id` et
+    `profile_id` (mentions), `organization_id`, `author_id` et `body` (commentaires), `organization_id` et `category_id`
+    (poses) ; le déclencheur pose l'espace. Envoyer l'espace vaut un `403` (trouvé par la preuve E2E) ;
+  - **le commentaire et le sélecteur de mentions sont ceux du fil d'une affaire**, sortis de `PanneauTimeline.tsx` dans
+    `CommentaireFil.tsx` sans changement de rendu ; les gestes d'auteur et les mentions prennent leur table en paramètre.
 
 ### 9.4 Le connecteur — famille `organisations`, cases existantes (décision 932)
 

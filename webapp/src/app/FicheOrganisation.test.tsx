@@ -1,4 +1,5 @@
 // @verifies CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranche 4b
+// @verifies CRM-153 (docs/BACKLOG.md) — tranche T3 : la ligne « Catégories » après « Tracks » (révisions datées du 2026-11-18)
 // @verifies docs/SPEC-contacts.md §11.5 (de quoi l'écran a l'air : deux zones, le site en lien,
 //           le domaine en texte), §11.8 (limites nommées : le contact ne mène nulle part),
 //           §11.9 (contrat de comportement, cas a à h)
@@ -287,9 +288,17 @@ function clientModifiable(lectures: unknown[][], miseAJour: { data?: unknown; er
 			return Promise.resolve({ data: donnees, error: null, status: 200 }).then(resoudre)
 		},
 	}
+	// RÉVISÉ le 2026-11-18 (`CRM-153` T3) : la fiche lit désormais aussi ses catégories et son fil de commentaires, chacun
+	// de son côté. Seule la lecture de l'ORGANISATION est comptée et servie depuis `lectures` ; les deux autres rendent un
+	// vide — le patron que cet espion servait à toutes les tables les aurait fait puiser dans la suite de l'organisation.
+	const vide = {
+		eq: () => vide,
+		order: () => vide,
+		then: (resoudre: (v: unknown) => unknown) => Promise.resolve({ data: [], error: null, status: 200 }).then(resoudre),
+	}
 	const client = {
-		from: () => ({
-			select: () => lecture,
+		from: (table: string) => ({
+			select: () => (table === 'organizations' ? lecture : vide),
 			update: (charge: unknown) => {
 				const patch = { charge, filtres: [] as string[] }
 				patchs.push(patch)
@@ -427,7 +436,12 @@ describe('la ligne « Tracks » (CRM-152, §8.3)', () => {
 		])
 		expect(appels).toEqual([{ p_organization_ids: [ID_SOGEXIA] }])
 		const termes = within(screen.getByTestId('caracteristiques-organisation')).getAllByRole('term').map((t) => t.textContent)
-		expect(termes.slice(-2)).toEqual([fr['organization.field.website'], fr['organization.field.tracks']])
+		// RÉVISÉ le 2026-11-18 (`CRM-153` T3, docs/DESIGN_SYSTEM.md §5.107) : « Catégories » suit désormais « Tracks ».
+		expect(termes.slice(-3)).toEqual([
+			fr['organization.field.website'],
+			fr['organization.field.tracks'],
+			fr['organization.field.categories'],
+		])
 	})
 
 	it('aucun track : la ligne dit « Aucun track »', async () => {

@@ -44,8 +44,10 @@
 //
 // `CRM-111` T2.4.1 : le channel de l'affaire est celui de son PLUS ANCIEN rattachement, plongé par la clé du rattachement
 // (`card_placements_channel_fk`) ; `lireBoite` ramène la ligne à sa forme d'avant (`channelDuPremierRattachement`).
+// `CRM-153` T3 — le sujet ORGANISATION (docs/SPEC-organisations.md §9.2) : l'organisation s'embarque par la clé composite
+// `notifications_subject_organization_fkey (subject_organization_id, workspace_id)`, son nom suffit à la ligne.
 export const COLONNES_NOTIFICATION =
-	'id, type, read_at, created_at, subject_card_id, payload, ' +
+	'id, type, read_at, created_at, subject_card_id, subject_organization_id, payload, organizations(id, name), ' +
 	'cards(id, title, card_placements!card_placements_card_fk(id, created_at, channels!card_placements_channel_fk(slug, name, tracks(slug, name))))'
 
 /**
@@ -67,6 +69,11 @@ export const COLONNES_NOTIFICATION =
 export const COLONNES_COMMENTAIRE_MENTION =
 	'id, body, deleted_at, author_id, ' +
 	'auteur:profiles!card_comments_author_id_fkey(id, full_name, avatar_url)'
+
+/** `CRM-153` T3 — le commentaire d'organisation cité par une notification : la même forme, sa propre clé d'auteur. */
+export const COLONNES_COMMENTAIRE_MENTION_ORGANISATION =
+	'id, body, deleted_at, author_id, ' +
+	'auteur:profiles!organization_comments_author_id_fkey(id, full_name, avatar_url)'
 
 /**
  * Nombre maximal de notifications lues par le panneau (§26.5).

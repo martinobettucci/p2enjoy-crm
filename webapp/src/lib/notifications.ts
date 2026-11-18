@@ -9,6 +9,9 @@
 // @spec docs/JOURNAL.md décisions 195 (le temps réel mesuré), 201 (le flux déclenche la lecture,
 //       il ne la remplace pas), 315 (le rang est pris par lecture)
 // @spec CRM-001 (docs/BACKLOG.md) tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
+// @spec CRM-153 (docs/BACKLOG.md) — tranche T3 : la mention dans le fil d'une organisation — son sujet, son commentaire cité
+//       lu dans `organization_comments`, et l'adresse de la fiche à l'ancre du commentaire (docs/SPEC-organisations.md §9.2,
+//       §9.3 ; docs/DESIGN_SYSTEM.md §5.107)
 // @spec CRM-111 T2.4.1 (docs/BACKLOG.md) — la boîte ramène l'affaire plongée à la forme d'avant (docs/SPEC-rattachements.md §5)
 //
 // Ce module ne rend rien : il **lit, écrit et écoute**. La séparation est ce qui rend l'ordre de la
@@ -32,6 +35,7 @@ import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './a
 import {
 	BORNE_LISTE,
 	COLONNES_COMMENTAIRE_MENTION,
+	COLONNES_COMMENTAIRE_MENTION_ORGANISATION,
 	COLONNES_NOTIFICATION,
 	filtreCanalNotifications,
 	nomCanalNotifications,
@@ -71,6 +75,9 @@ export type LigneNotificationLue = {
 	readonly read_at: string | null
 	readonly created_at: string
 	readonly subject_card_id: string | null
+	/** `CRM-153` T3 : le sujet d'une mention dans le fil d'une organisation ; jamais posé avec `subject_card_id`. */
+	readonly subject_organization_id?: string | null
+	readonly organizations?: { readonly id: string; readonly name: string } | null
 	/**
 	 * La charge utile, qui ne porte **que de quoi désigner** (§13.4). Elle est lue comme un objet
 	 * d'inconnues plutôt que typée : c'est un `jsonb`, et le type généré ne dit rien de sa forme.
@@ -114,6 +121,8 @@ export type NotificationAffichee = {
 	readonly auteur: ProfilAffiche | null
 	/** Le propos, ou `null` sur la ligne dégradée. Jamais une chaîne vide. */
 	readonly extrait: string | null
+	/** `CRM-153` T3 : le nom de l'organisation d'une mention sur sa fiche, `null` pour une mention d'affaire. */
+	readonly nomOrganisation: string | null
 }
 
 /**
@@ -179,6 +188,28 @@ export function apparier(
 	// dirait à l'écran ce que le §24.3 refuse de dire.
 	const lisible = commentaire !== undefined && commentaire.deleted_at === null
 	const corps = lisible ? commentaire.body : ''
+	// `CRM-153` T3 — UNE MENTION SUR UNE ORGANISATION mène à sa fiche, à l'ancre du commentaire (§9.3). Sans organisation
+	// lisible, aucune adresse : un lien vers une fiche introuvable serait une commande morte (§5.43).
+	const idOrganisation = ligne.subject_organization_id ?? null
+	if (idOrganisation !== null) {
+		const nomOrganisation = ligne.organizations?.name ?? null
+		return {
+			id: ligne.id,
+			lue: ligne.read_at !== null,
+			date: ligne.created_at,
+			titreAffaire: null,
+			adresse:
+				nomOrganisation === null
+					? null
+					: `/contacts/organisations/${idOrganisation}${idCommentaire === null ? '' : `#commentaire-${idCommentaire}`}`,
+			adresseChannel: null,
+			nomTrack: null,
+			nomChannel: null,
+			auteur: lisible ? commentaire.auteur : null,
+			extrait: corps.length > 0 ? corps : null,
+			nomOrganisation,
+		}
+	}
 	return {
 		id: ligne.id,
 		lue: ligne.read_at !== null,
@@ -193,6 +224,7 @@ export function apparier(
 		nomChannel: ligne.cards?.channels?.name ?? null,
 		auteur: lisible ? commentaire.auteur : null,
 		extrait: corps.length > 0 ? corps : null,
+		nomOrganisation: null,
 	}
 }
 
@@ -251,21 +283,25 @@ export async function lireBoite(client: ClientCrm): Promise<EtatAsync<BoiteLue>>
 			cards: ligne.cards === null ? null : channelDuPremierRattachement(ligne.cards),
 		})) as readonly LigneNotificationLue[]
 
-		const idsCites = [
+		// Les commentaires cités vivent dans DEUX tables selon le sujet (`CRM-153` T3) : une lecture par table, et seulement
+		// s'il y a quelque chose à y lire.
+		const cites = (surOrganisation: boolean) => [
 			...new Set(
 				lignes
+					.filter((ligne) => (ligne.subject_organization_id != null) === surOrganisation)
 					.map((ligne) => idCommentaireCite(ligne.payload))
 					.filter((identifiant): identifiant is string => identifiant !== null),
 			),
 		]
 		const commentaires = new Map<string, LigneCommentaireCite>()
-		if (idsCites.length > 0) {
-			const cites = await client
-				.from('card_comments')
-				.select(COLONNES_COMMENTAIRE_MENTION)
-				.in('id', idsCites)
-			if (cites.error === null) {
-				for (const commentaire of (cites.data ?? []) as unknown as readonly LigneCommentaireCite[]) {
+		for (const [table, colonnes, ids] of [
+			['card_comments', COLONNES_COMMENTAIRE_MENTION, cites(false)],
+			['organization_comments', COLONNES_COMMENTAIRE_MENTION_ORGANISATION, cites(true)],
+		] as const) {
+			if (ids.length === 0) continue
+			const lus = await client.from(table).select(colonnes).in('id', ids)
+			if (lus.error === null) {
+				for (const commentaire of (lus.data ?? []) as unknown as readonly LigneCommentaireCite[]) {
 					commentaires.set(commentaire.id, commentaire)
 				}
 			}

@@ -53,6 +53,18 @@ d'exécuter le code attendu.
 - Par paquets de 2 000 messages, avec un curseur, sous le délai de 8 s de la base (décision 949). Aucun écran ne
   l'appelle encore (T3).
 
+### `CRM-153` T3 — la fiche d'une organisation : ses catégories et son fil de commentaires
+
+- **La ligne « Catégories »**, après « Tracks » : les pilules (une archivée le dit) et la commande « Catégories », qui ouvre
+  un panneau de cases (`docs/SPEC-organisations.md` §9.3, `docs/DESIGN_SYSTEM.md` §5.107). Les catégories archivées
+  encore posées se décochent seulement. Business developer et administrateur posent et retirent.
+- **Le bloc « Commentaires »**, après les contacts : le fil d'une affaire, réemployé — mentions, correction, modération,
+  pierres tombales. La lectrice lit, le composeur éteint avec le motif.
+- **Une mention notifie** : « {auteur} vous a mentionné à propos de {organisation} », qui mène au commentaire sur la fiche.
+- Le commentaire et le sélecteur de mentions sont désormais partagés (`CommentaireFil.tsx`), sans changement pour le fil
+  d'une affaire.
+- Preuves : unitaires ; E2E `e2e/ui/organisation-fiche-commentaires.spec.ts` ; captures `docs/captures/CRM-153/`.
+
 ### `CRM-153` T2 — Réglages ▸ Catégories d'organisations
 
 - Un écran de réglages, `/reglages/categories-organisations`, juste après « Étiquettes » dans l'index

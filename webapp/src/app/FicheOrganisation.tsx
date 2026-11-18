@@ -37,6 +37,10 @@
 // @spec CRM-152 (docs/BACKLOG.md) — tranche T2 : la ligne « Tracks » de la liste de définitions, après « Site web » —
 //       chaque track en pilule, lien vers sa vue ; aucun, « Aucun track » (docs/SPEC-organisations.md §8.1, §8.3 ;
 //       docs/DESIGN_SYSTEM.md §5.105, §5.5 bis). Elle lit elle-même, et son échec laisse la fiche rendue.
+//
+// @spec CRM-153 (docs/BACKLOG.md) — tranche T3 : la ligne « Catégories » après « Tracks », avec sa commande et son panneau
+//       de cases, et le bloc « Commentaires » après les contacts (docs/SPEC-organisations.md §9.3 ; docs/DESIGN_SYSTEM.md
+//       §5.107). Chacun lit lui-même et porte ses états ; tous deux suivent la capacité d'éditer l'espace (§5.59).
 
 import { ExternalLink, PencilLine } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -53,6 +57,9 @@ import { motifVisible, proprietesCommande } from '../lib/capacites'
 import { lireTracksDOrganisation, modifierOrganisation, type TrackDOrganisation } from '../lib/organisations'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { AppShell } from './AppShell'
+import { useAuthentification } from './Authentification'
+import { LigneCategories } from './CategoriesOrganisation'
+import { BlocCommentairesOrganisation } from './CommentairesOrganisation'
 import { useContexteEspace } from './ContexteEspace'
 import { FormulaireOrganisation } from './FormulaireOrganisation'
 import { BlocRecettesOrganisation } from './RecettesOrganisation'
@@ -213,7 +220,9 @@ type ProprietesContenu = {
 }
 
 function ContenuFiche({ client, etat, organisation, onReprise, onModifiee }: ProprietesContenu) {
-	const { capacites } = useContexteEspace()
+	const { capacites, idWorkspace, estAdmin } = useContexteEspace()
+	const authentification = useAuthentification()
+	const idUtilisateur = authentification.etat.statut === 'authentifie' ? authentification.etat.utilisateur.id : null
 	const [enEdition, setEnEdition] = useState(false)
 	const [focusARendre, setFocusARendre] = useState(false)
 	const commande = useRef<HTMLButtonElement>(null)
@@ -330,6 +339,13 @@ function ContenuFiche({ client, etat, organisation, onReprise, onModifiee }: Pro
 					</dd>
 				</div>
 				<LigneTracks client={client} idOrganisation={organisation.id} />
+				<LigneCategories
+					client={client}
+					idOrganisation={organisation.id}
+					idWorkspace={idWorkspace}
+					edition={capacites.edition}
+					idMotif={ID_MOTIF_FICHE}
+				/>
 			</dl>
 			<Button
 				{...proprietesCommande(capacites.edition, ID_MOTIF_FICHE)}
@@ -433,6 +449,17 @@ function ContenuFiche({ client, etat, organisation, onReprise, onModifiee }: Pro
 					</div>
 				)}
 			</section>
+
+			{/* CRM-153 T3 — LE FIL DE COMMENTAIRES, après les contacts (docs/DESIGN_SYSTEM.md §5.107). */}
+			<BlocCommentairesOrganisation
+				client={client}
+				idOrganisation={organisation.id}
+				idWorkspace={idWorkspace}
+				idUtilisateur={idUtilisateur}
+				estAdmin={estAdmin}
+				edition={capacites.edition}
+				idMotif={ID_MOTIF_FICHE}
+			/>
 		</section>
 	)
 }
