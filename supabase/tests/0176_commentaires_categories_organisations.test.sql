@@ -8,6 +8,10 @@
 --
 -- Sur le seed : Camille administratrice (…011), Driss business developer (…012), Farida lectrice (…013) ; Vertigo Conseil
 -- et Sogexia (…081). Les écritures de la preuve vivent dans une transaction annulée.
+--
+-- Révisé le 2026-11-19 (CRM-153 T6) : le seed §50 pose désormais un catalogue (« Client », « Partenaire »…), des poses et
+-- un fil sur Vertigo Conseil. La preuve nomme ses catégories « … 0176 » et ne compte plus que ce qu'elle pose elle-même —
+-- ses catégories, ses poses, son commentaire —, au lieu de supposer un catalogue et un fil vides.
 
 begin;
 
@@ -70,14 +74,14 @@ select ok(not has_function_privilege('anon', 'public.organization_list(uuid, tex
 -- ------------------------------------------------------------------------------------------------------------------
 select pg_temp.endosser(pg_temp.id('camille'));
 with i as (insert into public.organization_categories (workspace_id, name, color)
-            values (pg_temp.id('espace'), '  Partenaire  ', 'brand') returning id)
+            values (pg_temp.id('espace'), '  Partenaire 0176  ', 'brand') returning id)
 select pg_temp.garder('partenaire', id) from i;
 with i as (insert into public.organization_categories (workspace_id, name, color)
-            values (pg_temp.id('espace'), 'Client', 'success') returning id)
+            values (pg_temp.id('espace'), 'Client 0176', 'success') returning id)
 select pg_temp.garder('client', id) from i;
 select is((select name || '|' || created_by::text from public.organization_categories where id = pg_temp.id('partenaire')),
-	'Partenaire|' || pg_temp.id('camille')::text, '5 — l''administratrice crée une catégorie : nom rogné, auteur posé');
-select throws_ok($$ insert into public.organization_categories (workspace_id, name) values (pg_temp.id('espace'), 'PARTENAIRE') $$,
+	'Partenaire 0176|' || pg_temp.id('camille')::text, '5 — l''administratrice crée une catégorie : nom rogné, auteur posé');
+select throws_ok($$ insert into public.organization_categories (workspace_id, name) values (pg_temp.id('espace'), 'PARTENAIRE 0176') $$,
 	'23505', null, '6 — le nom est unique dans l''espace, sans casse');
 select throws_ok($$ insert into public.organization_categories (workspace_id, name) values (pg_temp.id('espace'), repeat('x', 41)) $$,
 	'23514', null, '7 — 40 caractères au plus');
@@ -90,7 +94,7 @@ select throws_ok($$ delete from public.organization_categories where id = pg_tem
 reset role;
 
 select pg_temp.endosser(pg_temp.id('driss'));
-select throws_ok($$ insert into public.organization_categories (workspace_id, name) values (pg_temp.id('espace'), 'Fournisseur') $$,
+select throws_ok($$ insert into public.organization_categories (workspace_id, name) values (pg_temp.id('espace'), 'Fournisseur 0176') $$,
 	'42501', null, '11 — le business developer ne crée pas de catégorie');
 with m as (update public.organization_categories set name = 'Renommée' where id = pg_temp.id('client') returning 1)
 select is((select count(*)::int from m), 0, '12 — ni ne la renomme : aucune ligne touchée');
@@ -102,7 +106,8 @@ insert into public.organization_category_links (organization_id, category_id) va
 reset role;
 
 select pg_temp.endosser(pg_temp.id('farida'));
-select is((select count(*)::int from public.organization_categories where workspace_id = pg_temp.id('espace')),
+select is((select count(*)::int from public.organization_categories
+            where workspace_id = pg_temp.id('espace') and id in (pg_temp.id('partenaire'), pg_temp.id('client'))),
 	2, '13 — la lectrice lit le catalogue');
 select is((select count(*)::int from public.organization_categories where id = '0c176000-0000-4000-8000-0000000000c1'),
 	0, '14 — elle ne lit pas celui d''un autre espace');
@@ -112,7 +117,7 @@ select pg_temp.endosser(pg_temp.id('camille'));
 update public.organization_categories set archived_at = '2000-01-01' where id = pg_temp.id('client');
 select is((select archived_at from public.organization_categories where id = pg_temp.id('client')),
 	now(), '15 — l''administratrice archive : l''heure est celle de la base, la date envoyée est ignorée');
-select throws_ok($$ insert into public.organization_categories (workspace_id, name) values (pg_temp.id('espace'), 'client') $$,
+select throws_ok($$ insert into public.organization_categories (workspace_id, name) values (pg_temp.id('espace'), 'client 0176') $$,
 	'23505', null, '16 — une catégorie archivée garde son nom : l''unicité la compte');
 reset role;
 
@@ -152,7 +157,8 @@ select throws_ok($$ insert into public.organization_category_links (organization
 	'42501', null, '22 — la lectrice ne pose pas');
 with m as (delete from public.organization_category_links where organization_id = pg_temp.id('vertigo') returning 1)
 select is((select count(*)::int from m), 0, '23 — ni ne retire');
-select is((select count(*)::int from public.organization_category_links where organization_id = pg_temp.id('vertigo')),
+select is((select count(*)::int from public.organization_category_links
+            where organization_id = pg_temp.id('vertigo') and category_id in (pg_temp.id('partenaire'), pg_temp.id('client'))),
 	2, '24 — mais elle lit les poses');
 -- Le filtre (§9.1) : l'une des catégories données, archivées comprises ; vide, aucun filtre.
 select is(pg_temp.noms(array[pg_temp.id('partenaire')]), 'Vertigo Conseil', '25 — le filtre rend les organisations de la catégorie');
@@ -190,7 +196,8 @@ select throws_ok($$ update public.organization_comments set organization_id = pg
 select pg_temp.endosser(pg_temp.id('farida'));
 select throws_ok($$ insert into public.organization_comments (organization_id, body) values (pg_temp.id('vertigo'), 'Lectrice') $$,
 	'42501', null, '34 — la lectrice ne commente pas');
-select is((select count(*)::int from public.organization_comments where organization_id = pg_temp.id('vertigo')),
+select is((select count(*)::int from public.organization_comments
+            where organization_id = pg_temp.id('vertigo') and id = pg_temp.id('commentaire')),
 	1, '35 — mais elle lit le fil');
 with m as (update public.organization_comments set deleted_at = now() where id = pg_temp.id('commentaire') returning 1)
 select is((select count(*)::int from m), 0, '36 — et ne supprime pas le commentaire d''un autre');

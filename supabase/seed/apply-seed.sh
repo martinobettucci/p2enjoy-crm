@@ -6548,3 +6548,93 @@ IFS='|' read -r PROMPTS_DEFAUTS PROMPTS_AJOUTE <<< "$CONSTAT_PROMPTS"
 [ "$PROMPTS_DEFAUTS" = "5" ] || die "les cinq prompts par défaut manquent (§47) — mesuré : $PROMPTS_DEFAUTS. La migration 0185 est-elle appliquée ?"
 [ "$PROMPTS_AJOUTE" = "1" ] || die "le prompt « Préparer le comité du lundi » manque, ou son auteur n'est pas l'administratrice (§47)."
 info "Prompts du connecteur : les cinq défauts de la migration, et « Préparer le comité du lundi » ajouté par l'administratrice — docs/SPEC-seed.md §47"
+
+# =============================================================================================
+# 50. Les catégories et le fil d'une organisation — `CRM-153` T6
+# @spec CRM-153 (docs/BACKLOG.md) — tranche T6 : le catalogue créé par l'administratrice, les poses par le business
+#       developer, une catégorie archivée après sa pose, et le fil de Vertigo Conseil — une mention qui notifie, un
+#       commentaire corrigé, un commentaire retiré par la modération —, tout sous les jetons des personnes, par PostgREST
+#       (docs/SPEC-seed.md §50 ; docs/SPEC-organisations.md §9.5 ; CLAUDE.md §8)
+# =============================================================================================
+
+JETON_CAT_ADMIN=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+JETON_CAT_BIZDEV=$(sso_jeton_interne "$API" "$ANON_KEY" 'bizdev@p2enjoy.test' || true)
+[ -n "$JETON_CAT_ADMIN" ] && [ -n "$JETON_CAT_BIZDEV" ] || die "connexion d'un compte seedé impossible : les catégories et le
+        fil du §50 s'écrivent sous les jetons des personnes."
+ORG_VERTIGO=$(psql_seed -c "select id from public.organizations where workspace_id = '$WS_ID' and name = 'Vertigo Conseil'")
+ORG_LUMEN=$(psql_seed -c "select id from public.organizations where workspace_id = '$WS_ID' and name = 'Atelier Lumen'")
+ORG_DUVAL=$(psql_seed -c "select id from public.organizations where workspace_id = '$WS_ID' and name = 'Imprimerie Duval'")
+[ -n "$ORG_VERTIGO" ] && [ -n "$ORG_LUMEN" ] && [ -n "$ORG_DUVAL" ] || die "Vertigo Conseil, Atelier Lumen et Imprimerie Duval
+        sont attendues avant le §50 (docs/SPEC-seed.md §11, §41)."
+
+# Une catégorie, créée par l'administratrice ; rend son identifiant.
+categorie_seed() { # $1 = nom, $2 = couleur
+	local corps
+	corps=$(jq -nc --arg ws "$WS_ID" --arg nom "$1" --arg couleur "$2" '{workspace_id: $ws, name: $nom, color: $couleur}')
+	attendu "$(api_jeton "$JETON_CAT_ADMIN" POST '/rest/v1/organization_categories?select=id' -H 'Prefer: return=representation' -d "$corps")" \
+		"création de la catégorie « $1 » (§50)" 201
+	jq -r '.[0].id' "$CORPS"
+}
+# Une pose, par le business developer.
+pose_seed() { # $1 = organisation, $2 = catégorie, $3 = libellé
+	local corps
+	corps=$(jq -nc --arg o "$1" --arg c "$2" '{organization_id: $o, category_id: $c}')
+	attendu "$(api_jeton "$JETON_CAT_BIZDEV" POST /rest/v1/organization_category_links -H 'Prefer: return=minimal' -d "$corps")" \
+		"pose de « $3 » (§50)" 201
+}
+# Un commentaire sur Vertigo Conseil, sous le jeton donné ; rend son identifiant.
+commentaire_seed() { # $1 = jeton, $2 = corps
+	local corps
+	corps=$(jq -nc --arg o "$ORG_VERTIGO" --arg b "$2" '{organization_id: $o, body: $b}')
+	attendu "$(api_jeton "$1" POST '/rest/v1/organization_comments?select=id' -H 'Prefer: return=representation' -d "$corps")" \
+		"commentaire « $2 » sur Vertigo Conseil (§50)" 201
+	jq -r '.[0].id' "$CORPS"
+}
+
+if [ "$(psql_seed -c "select count(*) from public.organization_categories where workspace_id = '$WS_ID' and name = 'Client'")" = "0" ]; then
+	CAT_CLIENT=$(categorie_seed 'Client' brand)
+	CAT_PARTENAIRE=$(categorie_seed 'Partenaire' success)
+	CAT_FOURNISSEUR=$(categorie_seed 'Fournisseur' accent)
+	CAT_ANCIEN=$(categorie_seed 'Ancien client' neutral)
+	pose_seed "$ORG_VERTIGO" "$CAT_CLIENT" 'Client sur Vertigo Conseil'
+	pose_seed "$ORG_VERTIGO" "$CAT_PARTENAIRE" 'Partenaire sur Vertigo Conseil'
+	pose_seed "$ORG_LUMEN" "$CAT_CLIENT" 'Client sur Atelier Lumen'
+	pose_seed "$ORG_LUMEN" "$CAT_ANCIEN" 'Ancien client sur Atelier Lumen'
+	pose_seed "$ORG_DUVAL" "$CAT_FOURNISSEUR" 'Fournisseur sur Imprimerie Duval'
+	# ARCHIVÉE APRÈS SA POSE : une archivée ne se pose plus, mais reste sur qui la porte (docs/SPEC-organisations.md §9.1).
+	attendu "$(api_jeton "$JETON_CAT_ADMIN" PATCH "/rest/v1/organization_categories?id=eq.$CAT_ANCIEN" -H 'Prefer: return=minimal' \
+		-d "$(jq -nc --arg t "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{archived_at: $t}')")" "archivage d'« Ancien client » (§50)" 204
+
+	# Le fil de Vertigo Conseil : une mention qui notifie, un commentaire corrigé, un commentaire retiré par la modération.
+	COM_DEMO=$(commentaire_seed "$JETON_CAT_BIZDEV" 'Leur DSI veut une démonstration avant la fin du mois.')
+	attendu "$(api_jeton "$JETON_CAT_BIZDEV" POST /rest/v1/organization_comment_mentions -H 'Prefer: return=minimal' \
+		-d "$(jq -nc --arg c "$COM_DEMO" --arg p "$CAMILLE_ID" '{comment_id: $c, profile_id: $p}')")" "mention de Camille (§50)" 201
+	COM_CALE=$(commentaire_seed "$JETON_CAT_ADMIN" 'Je la cale avec eux la semaine prochaine.')
+	attendu "$(api_jeton "$JETON_CAT_ADMIN" PATCH "/rest/v1/organization_comments?id=eq.$COM_CALE" -H 'Prefer: return=minimal' \
+		-d '{"body": "Je la cale avec eux mardi."}')" "correction du commentaire de Camille (§50)" 204
+	COM_DOUBLON=$(commentaire_seed "$JETON_CAT_BIZDEV" 'Doublon, à ignorer.')
+	attendu "$(api_jeton "$JETON_CAT_ADMIN" PATCH "/rest/v1/organization_comments?id=eq.$COM_DOUBLON" -H 'Prefer: return=minimal' \
+		-d "$(jq -nc --arg t "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{body: "", deleted_at: $t}')")" "modération du doublon par Camille (§50)" 204
+fi
+
+CONSTAT_CAT=$(psql_seed -c "select
+	(select count(*) from public.organization_categories where workspace_id = '$WS_ID' and name in ('Client', 'Partenaire',
+	  'Fournisseur', 'Ancien client') and created_by = '$CAMILLE_ID') || '|' ||
+	(select count(*) from public.organization_categories where workspace_id = '$WS_ID' and name = 'Ancien client'
+	  and archived_at is not null) || '|' ||
+	(select count(*) from public.organization_category_links l join public.organization_categories c on c.id = l.category_id
+	  where c.workspace_id = '$WS_ID' and l.created_by = '5eed0000-0000-4000-8000-000000000012') || '|' ||
+	(select count(*) from public.organization_comments where organization_id = '$ORG_VERTIGO') || '|' ||
+	(select count(*) from public.organization_comments where organization_id = '$ORG_VERTIGO' and edited_at is not null
+	  and deleted_at is null) || '|' ||
+	(select count(*) from public.organization_comments where organization_id = '$ORG_VERTIGO' and deleted_by = '$CAMILLE_ID'
+	  and author_id <> '$CAMILLE_ID') || '|' ||
+	(select count(*) from public.notifications where recipient_id = '$CAMILLE_ID' and subject_organization_id = '$ORG_VERTIGO')")
+IFS='|' read -r CAT_CREEES CAT_ARCHIVEE CAT_POSES CAT_COMMENTAIRES CAT_CORRIGE CAT_MODERE CAT_NOTIFIEE <<< "$CONSTAT_CAT"
+[ "$CAT_CREEES" = "4" ] || die "les quatre catégories de l'administratrice manquent (§50) — mesuré : $CAT_CREEES. La migration 0188 est-elle appliquée ?"
+[ "$CAT_ARCHIVEE" = "1" ] || die "« Ancien client » doit être archivée (§50)."
+[ "$CAT_POSES" = "5" ] || die "les cinq poses du business developer manquent (§50) — mesuré : $CAT_POSES."
+[ "$CAT_COMMENTAIRES" = "3" ] && [ "$CAT_CORRIGE" = "1" ] && [ "$CAT_MODERE" = "1" ] || die "le fil de Vertigo Conseil n'a pas sa
+        forme (§50) — commentaires $CAT_COMMENTAIRES, corrigé $CAT_CORRIGE, modéré $CAT_MODERE."
+[ "$CAT_NOTIFIEE" = "1" ] || die "la mention de Camille sur Vertigo Conseil n'a pas notifié (§50) — mesuré : $CAT_NOTIFIEE."
+info "Organisations : quatre catégories (une archivée encore portée), cinq poses, et le fil de Vertigo Conseil — une mention qui notifie, un commentaire corrigé, un retiré par la modération — docs/SPEC-seed.md §50"

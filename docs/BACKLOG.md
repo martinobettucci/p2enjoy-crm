@@ -19877,8 +19877,12 @@ d'eux ; pas de tri sur « Réel sur prévu ».
       `fiche-organisation` renouvelées et `filtrer-organisations` nouvelle, observées ; `e2e/manuel/10-carnet.spec.ts` 8/8,
       `verify-manual.sh` 168 contrôles sans anomalie ; contrat §2.55 réécrit pour l'unité entière.
 
-### CRM-153 — Organisations : un fil de commentaires, et des catégories définies en Réglages `[@]`
-*Prise en charge : session interactive 4891a451 (p2enjoy-crm-ed, ex-d7, ex-32) depuis 2026-11-18 01:48 UTC, redite après la relance des sessions le 2026-11-18 17:40 UTC — état avant : [ ] ; confiée par la session de livraison (bb, désormais e3), après CRM-152 (décision 932)*
+### CRM-153 — Organisations : un fil de commentaires, et des catégories définies en Réglages `[P]`
+
+**Implémentée et vérifiée en développement le 2026-11-19** ; reste la livraison, sur instruction du responsable, par la
+session de livraison, et son constat en production (`docs/PROD_MIGRATIONS.md` §2.58, gestes 1 à 5). Arbitrages en
+attente, sans effet sur la livraison : INC-361 (le résumé quotidien et les mentions d'organisation), INC-362 (la hauteur
+d'une rangée de la liste).
 
 **Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison (p2enjoy-crm-bb) ; arbitrée le
 même jour (décision 932). **À confier avec `CRM-152`, à la même session, après elle** (le filtre par catégorie rejoint ses
@@ -19949,7 +19953,21 @@ non-régression du tableau à 1280 px ; connecteur (pytest, intégration, `verif
       `test_integration_organisations.py` 5/5 sur la vraie base (l'archivée nommée, la mention qui notifie, la lectrice
       refusée par le CRM) ; `verify-mcp.sh` vert de bout en bout (113 en direct et par le Caddy, interface 8/8, témoins).
       `docs/SPEC-mcp.md` §9.2 *quatervicies* précisé (formes rendues, `mentions`, refus nommés).
-- [ ] **T6 — seed, manuel, contrat** ; puis `[P]`.
+- [x] **T6 — seed, manuel, contrat** ; puis `[P]`. *Faite le 2026-11-19* : seed `docs/SPEC-seed.md` §50 et
+      `supabase/seed/apply-seed.sh` section 50 — quatre catégories (« Ancien client » archivée après sa pose), cinq poses
+      par Driss sur Vertigo Conseil, Atelier Lumen et Imprimerie Duval, le fil de Vertigo (une mention de Camille, un
+      commentaire corrigé, un autre modéré), par la vraie API sous les jetons des personnes ; joué deux fois avec le §49
+      (par fc), base constatée. Manuel : §5.2 (la mention d'organisation), §10.9 (le filtre et les catégories sous le nom),
+      §10.10 (la ligne « Catégories », le fil), §10.13 et §10.14 nouvelles ; sept images produites par
+      `e2e/manuel/10-carnet.spec.ts` et `05-notifications.spec.ts` et observées, les images de l'onglet, du filtre des
+      tracks, de la fiche et des recettes régénérées sur le seed ; `verify-manual.sh` vert (168 contrôles) ; l'aide de
+      l'écran (`aide-ecrans.ts`). La description de « Recevoir les mentions » nomme l'organisation (même préférence,
+      `docs/SPEC-organisations.md` §9.2). Preuves voisines rejouées sur le seed : unitaires 895/895, quatre contrôles de
+      types à 0, E2E de la liste, de la fiche et des réglages 10/10, API 3/3, intégration du connecteur 5/5 ; pgTAP
+      `0176` révisé et daté (il comptait tout le catalogue et le fil de Vertigo, que le seed peuple désormais : il ne
+      compte plus que ce qu'il pose) et `0062` révisé et daté (le seed livre des mentions d'affaire, filtrées comme la
+      garde d'`apply-seed.sh`, décision 51) ; suite pgTAP complète : `0029` et `0095` restent rouges sur le §49, portés
+      par fc. Contrat §2.58 : la webapp, le manuel, l'image `mcp`, le constat du responsable.
 
 ### CRM-154 — Réorganiser les channels depuis la vue d'un track : glisser l'onglet, et « Réorganiser » vers l'arborescence `[P]`
 

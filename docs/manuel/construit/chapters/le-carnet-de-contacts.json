@@ -3222,7 +3222,7 @@
 			"src": "le-carnet-de-contacts/onglet-organisations.jpg",
 			"alt": "L'onglet des organisations : la barre de recherche et de filtres, puis leur nom, leurs tracks, leur domaine et leur site web, leur nombre de contacts et le réel de leurs recettes sur le prévu",
 			"width": 1192,
-			"height": 581
+			"height": 604
 		},
 		{
 			"type": "image",
@@ -3606,6 +3606,69 @@
 								"content": [
 									{
 										"type": "text",
+										"text": "Catégories"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le bouton paraît dès que l'espace a des catégories ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "le-carnet-de-contacts",
+									"anchor": "definir-les-categories-d-organisations"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 10.13"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ").\nIl déplie, sous la barre, une case par catégorie, les archivées en dernier, suivies de la mention "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "(archivée)"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Cocher une\ncatégorie ne garde que les organisations qui la portent ; en cocher plusieurs garde celles qui portent "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "l'une\nd'elles"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Une catégorie archivée filtre encore : vous retrouvez ainsi les organisations qui la portent. Un seul\npanneau est ouvert à la fois : ouvrir celui-ci replie celui des tracks ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
 										"text": "Recettes"
 									}
 								]
@@ -3673,6 +3736,57 @@
 					"text": "Lorsqu'aucune organisation ne répond aux filtres, l'onglet le dit en toutes lettres, et propose d'effacer les filtres."
 				}
 			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les catégories sous le nom."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Sous le nom de chaque organisation, ses catégories, chacune en pastille de sa couleur :\ntrois au plus, puis une pastille "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "+1"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "+2"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "… qui nomme les autres au survol. Une organisation sans catégorie n'a\nqu'une ligne."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/filtrer-categories.jpg",
+			"alt": "Le panneau « Catégories » déplié, « Client » coché : les organisations qui portent cette catégorie, leurs catégories sous leur nom",
+			"width": 1192,
+			"height": 382
 		},
 		{
 			"type": "paragraph",
@@ -3886,7 +4000,7 @@
 			"src": "le-carnet-de-contacts/fiche-organisation.jpg",
 			"alt": "La fiche d'une organisation : ses caractéristiques, puis ses contacts",
 			"width": 1192,
-			"height": 711
+			"height": 840
 		},
 		{
 			"type": "image",
@@ -4082,7 +4196,33 @@
 							},
 							{
 								"type": "text",
-								"text": "), chacun en pastille de sa couleur : un clic ouvre le track. Sans\ntrack, la ligne le dit en toutes lettres ;"
+								"text": "), chacun en pastille de sa couleur : un clic ouvre le track. Sans\ntrack, la ligne le dit en toutes lettres. Puis la ligne "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Catégories"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " montre ses catégories, les archivées en dernier ;\nsans catégorie, elle le dit. Le bouton « Catégories » ouvre, juste dessous, une case par catégorie : "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "cocher pose la\ncatégorie, décocher la retire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", aussitôt, sans bouton de validation. Une catégorie archivée encore posée se décoche,\nmais ne se coche plus. « Fermer » ou Échap replie les cases ;"
 							}
 						]
 					}
@@ -4191,12 +4331,56 @@
 							},
 							{
 								"type": "text",
-								"text": ", la fiche le dit explicitement au lieu d'afficher un\ntableau vide."
+								"text": ", la fiche le dit explicitement au lieu d'afficher un\ntableau vide ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "ses commentaires"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — le fil de l'organisation, comme celui d'une affaire : voir la\n"
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "le-carnet-de-contacts",
+									"anchor": "commenter-une-organisation"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 10.14"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
 							}
 						]
 					}
 				]
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/fiche-categories.jpg",
+			"alt": "La ligne « Catégories » de la fiche, et ses cases dépliées : les catégories posées sont cochées",
+			"width": 409,
+			"height": 374
 		},
 		{
 			"type": "paragraph",
@@ -4274,6 +4458,50 @@
 				{
 					"type": "text",
 					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui pose les catégories."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Poser et retirer une catégorie est ouvert aux "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et aux "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "business\ndevelopers"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ; pour une lectrice, le bouton est grisé, avec le motif écrit en tête de la fiche. Le serveur applique la\nmême règle."
 				}
 			]
 		},
@@ -4685,6 +4913,491 @@
 				{
 					"type": "text",
 					"text": " le domaine ou le site web l'efface. « Enregistrer » relit\nla fiche à jour, et l'annonce « Organisation enregistrée » le confirme ; « Annuler » rend la fiche\nsans rien écrire. Les refus sont ceux de la création."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "definir-les-categories-d-organisations",
+			"content": [
+				{
+					"type": "text",
+					"text": "10.13 Définir les catégories d'organisations"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages ▸ Catégories d'organisations"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", juste après les étiquettes dans l'index des réglages, tient la liste des\ncatégories de l'espace : client, partenaire, fournisseur… Une organisation en porte autant qu'il le faut."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/reglages-categories.jpg",
+			"alt": "Réglages, Catégories d'organisations : la liste des catégories de l'espace, avec leurs commandes",
+			"width": 925,
+			"height": 353
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Nouvelle catégorie »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ouvre une fiche dans la page : le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "nom"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", jusqu'à quarante caractères, et la "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "couleur"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", à\nchoisir parmi « Bleu », « Vert », « Jaune », « Rouge » et « Gris ». « Enregistrer » la crée ; « Annuler » ou Échap\nreferme sans rien écrire."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Modifier »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " change le nom ou la couleur ; les organisations qui la portent suivent aussitôt."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Archiver »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " retire la catégorie des propositions, sans confirmation : les organisations qui la portent la gardent,\nmarquée comme archivée, et le filtre de la liste la propose encore. "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Afficher les archivées »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " la ramène dans la\nliste, avec la mention « Archivée » et la seule commande "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Désarchiver »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Rien n'est jamais effacé."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Deux catégories ne portent jamais "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "le même nom"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", majuscules et archivées comprises : l'écran le dit sous le champ,\ngarde votre saisie, et vous renvoie à « Afficher les archivées » quand c'est une archivée qui porte ce nom."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/nouvelle-categorie.jpg",
+			"alt": "La fiche d'une nouvelle catégorie : son nom et sa couleur, à choisir parmi cinq",
+			"width": 925,
+			"height": 255
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/categorie-archivee.jpg",
+			"alt": "Les catégories archivées affichées : l'archivée ne garde que la commande qui la désarchive",
+			"width": 923,
+			"height": 309
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui peut le faire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Tout membre de l'espace lit cet écran. Créer, modifier, archiver et désarchiver sont réservés aux\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs de l'espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : pour les autres, les commandes restent visibles mais grisées, avec le motif écrit en tête\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Le serveur applique la même règle."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "commenter-une-organisation",
+			"content": [
+				{
+					"type": "text",
+					"text": "10.14 Commenter une organisation"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le bloc "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Commentaires"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", en bas de la fiche d'une organisation, est un fil de discussion "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "comme celui d'une affaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "vos-notifications-savoir-qu-on-vous-a-nomme",
+						"anchor": "mentionner-quelqu-un-dans-un-commentaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 5.5"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") : le plus ancien en haut, la zone d'écriture en bas."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/commentaires-organisation.jpg",
+			"alt": "Le fil de commentaires d'une organisation : un commentaire modifié, un autre retiré par la modération, la zone d'écriture et le bouton Mentionner",
+			"width": 1192,
+			"height": 562
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Écrire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : tapez votre texte, puis « Publier ». Le texte est enregistré tel quel, sans mise en forme."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Mentionner"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : « Mentionner » déplie la liste des membres de l'espace ; cochez ceux à prévenir. Chacun reçoit une\nnotification qui nomme l'organisation et mène droit au commentaire sur la fiche\n("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "vos-notifications-savoir-qu-on-vous-a-nomme",
+									"anchor": "ce-que-le-panneau-montre"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 5.2"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "). Si une mention est refusée, le commentaire reste publié, et l'écran nomme\nla personne qui n'a pas été prévenue."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Corriger ou supprimer le sien"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : survolez votre commentaire, ou atteignez-le au clavier ; "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Modifier"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Supprimer"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " paraissent. Un commentaire corrigé porte la mention « modifié ». Un commentaire supprimé garde sa place,\nsans texte."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Modérer"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : un administrateur peut supprimer le commentaire de quelqu'un d'autre, jamais le réécrire. Le fil dit\nalors « Commentaire retiré par la modération », sans nommer qui l'a retiré."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui peut écrire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Commenter est ouvert aux "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et aux "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "business developers"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'espace. Une\nlectrice lit le fil ; la zone d'écriture et ses boutons sont grisés pour elle, avec le motif écrit en tête de la fiche. Le\nserveur applique la même règle. Le fil ne se met pas à jour tout seul : un commentaire d'un collègue paraît quand vous\nrouvrez ou rechargez la fiche."
 				}
 			]
 		}

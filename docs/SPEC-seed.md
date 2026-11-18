@@ -3270,3 +3270,32 @@ dans la boîte de Camille** (`admin@`) par IMAP, sur le serveur de développemen
 - **Ce que cela change ailleurs** : la boîte de Camille compte un non classé de plus, sa corbeille deux mails de plus ;
   Driss voit un mail de plus sous « Seulement moi ». Les preuves qui comptent ces dossiers sont rejouées avec le seed.
 
+
+## 50. Les catégories et le fil d'une organisation — `CRM-153` T6 (`docs/SPEC-organisations.md` §9.5)
+
+*Écrit le 2026-11-18, avant le code de T6.* Tout passe par les vrais chemins (`CLAUDE.md` §8) : le catalogue est créé par
+**l'administratrice** (`admin@`) sous son jeton, par PostgREST ; les poses par **le business developer** (`bizdev@`) ; le fil
+par les deux, sous leurs jetons. La mention notifie par le vrai déclencheur de la 0188 ; la modération est le vrai geste de
+l'écran (la pierre tombale posée par un tiers).
+
+| Catégorie | Couleur | État | Posée sur |
+|---|---|---|---|
+| Client | Bleu | active | Vertigo Conseil, Atelier Lumen |
+| Partenaire | Vert | active | Vertigo Conseil |
+| Fournisseur | Jaune | active | Imprimerie Duval |
+| Ancien client | Gris | **archivée après sa pose** | Atelier Lumen — l'archivée encore portée, qui filtre et se retire |
+
+**Le fil de Vertigo Conseil**, dans cet ordre :
+1. **Driss** : « Leur DSI veut une démonstration avant la fin du mois. » — **mentionne Camille** : sa cloche porte « Driss
+   Lemoine vous a mentionné à propos de Vertigo Conseil » ;
+2. **Camille** : « Je la cale avec eux la semaine prochaine. », puis **corrigé** en « Je la cale avec eux mardi. » — la
+   mention « modifié » ;
+3. **Driss** : « Doublon, à ignorer. » — **retiré par Camille** : « Commentaire retiré par la modération ».
+
+- **Les organisations visées évitent celles des preuves** : Sogexia et Studio Meunier (`e2e/ui/organisations-categories-
+  liste.spec.ts`, `e2e/ui/organisation-fiche-commentaires.spec.ts`) et Comptoir Vasseur
+  (`mcp/tests/test_integration_organisations.py`) ne portent aucune catégorie ni aucun commentaire du seed : ces preuves
+  figent leurs catégories et leur fil.
+- **Ce que cela change ailleurs** : la cloche de Camille compte une notification de plus ; la liste des organisations montre
+  des pilules sous trois noms, et le filtre « Catégories » paraît.
+- La section est **idempotente** : elle ne crée rien si le catalogue porte déjà « Client », et constate l'état attendu.

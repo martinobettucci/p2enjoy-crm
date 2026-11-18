@@ -1,3 +1,5 @@
+// @spec CRM-153 (docs/BACKLOG.md) — tranche T6 : Réglages ▸ Catégories d'organisations mène à la section 10.13 du manuel
+//       (docs/SPEC-organisations.md §9.3 ; docs/DESIGN_SYSTEM.md §5.107)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : Réglages ▸ Étiquettes mène à sa section (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-068 (docs/BACKLOG.md) — tranche T4b1 : Réglages ▸ Modèles d'affaires mène à sa section (docs/DESIGN_SYSTEM.md §5.71)
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T3.a : Réglages ▸ Champs de l'affaire mène à la section 18.16 (docs/DESIGN_SYSTEM.md §5.86)
@@ -26,6 +28,7 @@ import {
 	CHEMIN_ADMIN_MODELES_MAIL,
 	CHEMIN_ADMIN_SEQUENCES_MAIL,
 	CHEMIN_ADMIN_ETIQUETTES,
+	CHEMIN_ADMIN_CATEGORIES_ORGANISATIONS,
 	CHEMIN_ADMIN_MODELES_AFFAIRES,
 	CHEMIN_ADMIN_WEBHOOKS,
 	CHEMIN_ADMIN_CHAMPS_AFFAIRE,
@@ -91,6 +94,7 @@ export const ECRANS_AIDE: ReadonlyArray<readonly [motif: string, cible: CibleAid
 	// `CRM-068` T4b1 : Réglages ▸ Modèles d'affaires, décrit par la dernière section du chapitre des workflows.
 	// `CRM-069` T2 : Réglages ▸ Étiquettes, décrit par la section des étiquettes de l'affaire.
 	[CHEMIN_ADMIN_ETIQUETTES, { chapitre: AFFAIRE, section: 'les-etiquettes-d-une-affaire' }],
+	[CHEMIN_ADMIN_CATEGORIES_ORGANISATIONS, { chapitre: 'le-carnet-de-contacts', section: 'definir-les-categories-d-organisations' }],
 	[CHEMIN_ADMIN_MODELES_AFFAIRES, { chapitre: 'composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire', section: 'preparer-des-modeles-d-affaires' }],
 	[CHEMIN_ADMIN_CATALOGUE, { chapitre: 'le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows' }],
 	[CHEMIN_ADMIN_COMPTES_MAIL, { chapitre: BOITES, section: 'les-boites-de-reception-declarees' }],

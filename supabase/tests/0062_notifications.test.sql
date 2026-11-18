@@ -13,6 +13,10 @@
 -- @verifies CLAUDE.md §10 (une règle d'accès se prouve hors interface)
 -- @verifies CRM-153 (docs/BACKLOG.md) — tranche T1 : la neuvième colonne, `subject_organization_id`
 --            (docs/SPEC-notifications.md §51) ; révisé le 2026-11-18
+-- @verifies CRM-153 (docs/BACKLOG.md) — tranche T6 : révisé le 2026-11-19 — les assertions 41 et 42 ne comptent plus que
+--            les mentions sur une AFFAIRE (`type = 'mention' and subject_card_id is not null`) : le seed §49 livre un
+--            transfert de mail et le §50 une mention sur une organisation, que leurs propres preuves tiennent (même
+--            filtre que la garde « 8 quinquies ter » d'apply-seed.sh, décision 51)
 --
 -- CE QUE CETTE SUITE PROUVE, ET CE QU'ELLE NE REPROUVE PAS.
 --
@@ -482,7 +486,8 @@ select is(
 	(select array_agg(p.full_name::text order by p.full_name::text)
 	   from public.notifications n
 	   join public.profiles p on p.id = n.recipient_id
-	  where n.payload->>'comment_id' <> pg_temp.c_libre()::text),
+	  where n.payload->>'comment_id' <> pg_temp.c_libre()::text
+	    and n.type = 'mention' and n.subject_card_id is not null),
 	array['Camille Aubert', 'Driss Lemoine'],
 	'CRM-064 §19 — le seed livre DEUX notifications, PRODUITES par ses deux mentions et non '
 	'posées, et la LECTRICE n''en porte aucune : aucune mention ne la désigne, la règle '
@@ -490,7 +495,8 @@ select is(
 
 select is(
 	(select count(*)::int from public.notifications n
-	  where n.payload->>'comment_id' <> pg_temp.c_libre()::text and n.read_at is null),
+	  where n.payload->>'comment_id' <> pg_temp.c_libre()::text and n.read_at is null
+	    and n.type = 'mention' and n.subject_card_id is not null),
 	2,
 	'CRM-064 §19 — les deux notifications du seed sont NON LUES : une notification naît non lue, '
 	'et le compteur de la tranche 3 s''appuie dessus');

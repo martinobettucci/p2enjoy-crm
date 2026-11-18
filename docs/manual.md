@@ -699,6 +699,12 @@ Chaque ligne porte :
 - **le dossier**, en pastille « Track › Channel », qui mène au channel ;
 - **la date et l'heure**, absolues.
 
+**Une mention sur une organisation** se lit autrement : « Driss Lemoine vous a mentionné à propos de Vertigo Conseil ».
+La ligne porte le nom de l'organisation, en lien vers sa fiche, qui s'ouvre **sur le commentaire** ; elle n'a pas de
+pastille de dossier.
+
+![Une mention dans le fil d'une organisation : la ligne nomme l'organisation, dont le nom mène à sa fiche](manuel/images/vos-notifications-savoir-qu-on-vous-a-nomme/mention-organisation.jpg)
+
 Une **ligne non lue** porte un liseré bleu à gauche et son libellé en gras. L'ordre est celui de
 l'arrivée : **le plus récent en haut**. C'est l'inverse du fil de discussion d'une affaire, où la
 conversation se lit dans le sens où elle s'est tenue ; une boîte de réception, elle, se lit en
@@ -2854,11 +2860,22 @@ validation :
 - **Tracks** : le bouton déplie, sous la barre, une case par track de l'espace. Cocher un track ne garde que les
   organisations qui lui sont rattachées ; en cocher plusieurs garde celles qui sont rattachées à **l'un d'eux**. Le
   bouton dit combien sont cochés, par exemple « Tracks (2) ». La touche Échap replie le panneau ;
+- **Catégories** : le bouton paraît dès que l'espace a des catégories ([section 10.13](#definir-les-categories-d-organisations)).
+  Il déplie, sous la barre, une case par catégorie, les archivées en dernier, suivies de la mention *(archivée)*. Cocher une
+  catégorie ne garde que les organisations qui la portent ; en cocher plusieurs garde celles qui portent **l'une
+  d'elles**. Une catégorie archivée filtre encore : vous retrouvez ainsi les organisations qui la portent. Un seul
+  panneau est ouvert à la fois : ouvrir celui-ci replie celui des tracks ;
 - **Recettes** : toutes les organisations, celles **avec recettes** (au moins une recette prévue sur une de leurs
   affaires), ou celles **sans recettes** ;
 - **Effacer les filtres** paraît dès qu'un filtre est posé, et les retire tous ; le tri reste.
 
 Lorsqu'aucune organisation ne répond aux filtres, l'onglet le dit en toutes lettres, et propose d'effacer les filtres.
+
+**Les catégories sous le nom.** Sous le nom de chaque organisation, ses catégories, chacune en pastille de sa couleur :
+trois au plus, puis une pastille *+1*, *+2*… qui nomme les autres au survol. Une organisation sans catégorie n'a
+qu'une ligne.
+
+![Le panneau « Catégories » déplié, « Client » coché : les organisations qui portent cette catégorie, leurs catégories sous leur nom](manuel/images/le-carnet-de-contacts/filtrer-categories.jpg)
 
 **Trier.** Cliquez sur l'en-tête **Nom** ou **Contacts** : la liste se range dans l'ordre croissant, puis décroissant au
 second clic ; une flèche dans l'en-tête dit le sens. À égalité, le nom départage. Les autres colonnes ne se trient pas.
@@ -2901,7 +2918,10 @@ La fiche porte le **nom de l'organisation en titre**, puis trois blocs :
   n'est pas une adresse à visiter. Comme dans le carnet, une valeur absente laisse la place **vide**
   plutôt qu'un tiret. Dessous, la ligne **Tracks** montre les tracks de l'organisation (comptés comme dans l'onglet,
   voir la [section 10.9](#l-onglet-organisations)), chacun en pastille de sa couleur : un clic ouvre le track. Sans
-  track, la ligne le dit en toutes lettres ;
+  track, la ligne le dit en toutes lettres. Puis la ligne **Catégories** montre ses catégories, les archivées en dernier ;
+  sans catégorie, elle le dit. Le bouton « Catégories » ouvre, juste dessous, une case par catégorie : **cocher pose la
+  catégorie, décocher la retire**, aussitôt, sans bouton de validation. Une catégorie archivée encore posée se décoche,
+  mais ne se coche plus. « Fermer » ou Échap replie les cases ;
 - **les recettes avec cette organisation** — un tableau, une ligne par devise : le **prévu**, le **réel** et la part
   réalisée (une barre et un pourcentage, qui peut dépasser 100 %). Sous le tableau, la fiche dit combien d'affaires
   comptent, combien comptent aussi pour une autre organisation, combien de lignes de recette n'ont pas encore de réel
@@ -2912,7 +2932,11 @@ La fiche porte le **nom de l'organisation en titre**, puis trois blocs :
 - **ses contacts** — un tableau à quatre colonnes : nom, fonction, email et téléphone. La colonne
   « Organisation » du carnet n'y figure pas, puisqu'elle répéterait le titre de la page. Lorsque
   l'organisation n'a **aucun contact rattaché**, la fiche le dit explicitement au lieu d'afficher un
-  tableau vide.
+  tableau vide ;
+- **ses commentaires** — le fil de l'organisation, comme celui d'une affaire : voir la
+  [section 10.14](#commenter-une-organisation).
+
+![La ligne « Catégories » de la fiche, et ses cases dépliées : les catégories posées sont cochées](manuel/images/le-carnet-de-contacts/fiche-categories.jpg)
 
 **Une adresse inconnue, une organisation supprimée ou une organisation que vous n'avez pas le droit
 de lire donnent toutes le même écran** : « Organisation introuvable », avec un bouton de retour au
@@ -2923,6 +2947,10 @@ existe.
 contacts perdraient leur organisation sans laisser de trace —, et elle ne liste pas les affaires de
 l'organisation : le bloc des recettes en donne les sommes, pas le détail. Le nom d'un contact, lui, est un lien vers sa fiche. Pour **modifier**
 l'organisation, voir la [section 10.12](#modifier-une-organisation).
+
+**Qui pose les catégories.** Poser et retirer une catégorie est ouvert aux **administrateurs** et aux **business
+developers** ; pour une lectrice, le bouton est grisé, avec le motif écrit en tête de la fiche. Le serveur applique la
+même règle.
 
 ### 10.11 Créer une organisation
 
@@ -2970,6 +2998,54 @@ Sur la fiche d'une organisation, le bouton **« Modifier »** remplace les carac
 même formulaire, **prérempli**. **Vider** le domaine ou le site web l'efface. « Enregistrer » relit
 la fiche à jour, et l'annonce « Organisation enregistrée » le confirme ; « Annuler » rend la fiche
 sans rien écrire. Les refus sont ceux de la création.
+
+### 10.13 Définir les catégories d'organisations
+
+**Réglages ▸ Catégories d'organisations**, juste après les étiquettes dans l'index des réglages, tient la liste des
+catégories de l'espace : client, partenaire, fournisseur… Une organisation en porte autant qu'il le faut.
+
+![Réglages, Catégories d'organisations : la liste des catégories de l'espace, avec leurs commandes](manuel/images/le-carnet-de-contacts/reglages-categories.jpg)
+
+- **« Nouvelle catégorie »** ouvre une fiche dans la page : le **nom**, jusqu'à quarante caractères, et la **couleur**, à
+  choisir parmi « Bleu », « Vert », « Jaune », « Rouge » et « Gris ». « Enregistrer » la crée ; « Annuler » ou Échap
+  referme sans rien écrire.
+- **« Modifier »** change le nom ou la couleur ; les organisations qui la portent suivent aussitôt.
+- **« Archiver »** retire la catégorie des propositions, sans confirmation : les organisations qui la portent la gardent,
+  marquée comme archivée, et le filtre de la liste la propose encore. **« Afficher les archivées »** la ramène dans la
+  liste, avec la mention « Archivée » et la seule commande **« Désarchiver »**. Rien n'est jamais effacé.
+- Deux catégories ne portent jamais **le même nom**, majuscules et archivées comprises : l'écran le dit sous le champ,
+  garde votre saisie, et vous renvoie à « Afficher les archivées » quand c'est une archivée qui porte ce nom.
+
+![La fiche d'une nouvelle catégorie : son nom et sa couleur, à choisir parmi cinq](manuel/images/le-carnet-de-contacts/nouvelle-categorie.jpg)
+
+![Les catégories archivées affichées : l'archivée ne garde que la commande qui la désarchive](manuel/images/le-carnet-de-contacts/categorie-archivee.jpg)
+
+**Qui peut le faire.** Tout membre de l'espace lit cet écran. Créer, modifier, archiver et désarchiver sont réservés aux
+**administrateurs de l'espace** : pour les autres, les commandes restent visibles mais grisées, avec le motif écrit en tête
+([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). Le serveur applique la même règle.
+
+### 10.14 Commenter une organisation
+
+Le bloc **Commentaires**, en bas de la fiche d'une organisation, est un fil de discussion **comme celui d'une affaire**
+([section 5.5](#mentionner-quelqu-un-dans-un-commentaire)) : le plus ancien en haut, la zone d'écriture en bas.
+
+![Le fil de commentaires d'une organisation : un commentaire modifié, un autre retiré par la modération, la zone d'écriture et le bouton Mentionner](manuel/images/le-carnet-de-contacts/commentaires-organisation.jpg)
+
+- **Écrire** : tapez votre texte, puis « Publier ». Le texte est enregistré tel quel, sans mise en forme.
+- **Mentionner** : « Mentionner » déplie la liste des membres de l'espace ; cochez ceux à prévenir. Chacun reçoit une
+  notification qui nomme l'organisation et mène droit au commentaire sur la fiche
+  ([section 5.2](#ce-que-le-panneau-montre)). Si une mention est refusée, le commentaire reste publié, et l'écran nomme
+  la personne qui n'a pas été prévenue.
+- **Corriger ou supprimer le sien** : survolez votre commentaire, ou atteignez-le au clavier ; **Modifier** et
+  **Supprimer** paraissent. Un commentaire corrigé porte la mention « modifié ». Un commentaire supprimé garde sa place,
+  sans texte.
+- **Modérer** : un administrateur peut supprimer le commentaire de quelqu'un d'autre, jamais le réécrire. Le fil dit
+  alors « Commentaire retiré par la modération », sans nommer qui l'a retiré.
+
+**Qui peut écrire.** Commenter est ouvert aux **administrateurs** et aux **business developers** de l'espace. Une
+lectrice lit le fil ; la zone d'écriture et ses boutons sont grisés pour elle, avec le motif écrit en tête de la fiche. Le
+serveur applique la même règle. Le fil ne se met pas à jour tout seul : un commentaire d'un collègue paraît quand vous
+rouvrez ou rechargez la fiche.
 
 ## 11. Les boîtes de réception et les adresses d'expédition
 

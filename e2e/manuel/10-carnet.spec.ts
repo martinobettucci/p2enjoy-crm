@@ -6,6 +6,11 @@
 // @spec CRM-152 (docs/BACKLOG.md) — tranche T4 : l'onglet des organisations porte la barre et la colonne « Tracks » ; l'image
 //       nouvelle du panneau « Tracks » déplié, un track coché ; la fiche porte la ligne « Tracks » (docs/manual.md §10.9,
 //       §10.10 ; docs/SPEC-organisations.md §8.3 ; docs/DESIGN_SYSTEM.md §5.105 ; docs/SPEC-seed.md §48)
+// @spec CRM-153 (docs/BACKLOG.md) — tranche T6 : les images des catégories et des commentaires d'une organisation — le filtre
+//       « Catégories » de l'onglet, la ligne « Catégories » de la fiche et ses cases, le fil de Vertigo Conseil, l'écran
+//       Réglages ▸ Catégories d'organisations, la fiche d'une nouvelle catégorie (refermée sans rien écrire), l'archivée
+//       (docs/manual.md §10.9, §10.10, §10.13, §10.14 ; docs/SPEC-organisations.md §9 ; docs/DESIGN_SYSTEM.md §5.107 ;
+//       docs/SPEC-seed.md §50)
 //
 // Les contacts et les organisations sont ceux du seed : Léo Marchand, Sogexia, le contact déjà anonymisé. Les gestes qui
 // ne se défont pas — supprimer, anonymiser — portent sur un contact posé par la clé de service et retiré ensuite ; la
@@ -340,4 +345,62 @@ test('la lectrice : les commandes du carnet grisées', async ({ page }) => {
 	await page.goto(`/contacts/organisations/${SOGEXIA}`)
 	await expect(page.getByTestId('modifier-organisation')).toBeDisabled()
 	await illustrer(page, { chapitre: CHAPITRE, section: 'l-onglet-organisations', nom: 'lectrice', cibles: [page.getByTestId('modifier-organisation')] })
+})
+
+// `CRM-153` T6 : rien n'est écrit — les catégories, les poses et le fil sont ceux du seed §50 ; la fiche d'une nouvelle
+// catégorie est refermée par « Annuler ».
+test('les catégories et les commentaires d’une organisation', async ({ page }) => {
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto('/contacts/organisations')
+	await page.getByTestId('ouvrir-filtre-categories').click()
+	await page.getByTestId('panneau-filtre-categories').getByRole('checkbox', { name: 'Client', exact: true }).check()
+	await expect(page.getByTestId('lien-fiche-organisation')).toHaveCount(2)
+	await expect(page.getByTestId('ligne-organisation').filter({ hasText: 'Vertigo Conseil' }).getByTestId('categories-sous-nom')).toBeVisible()
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: 'l-onglet-organisations',
+		nom: 'filtrer-categories',
+		cibles: [page.getByTestId('ouvrir-filtre-categories'), page.getByTestId('panneau-filtre-categories'), page.getByTestId('tableau-organisations')],
+	})
+
+	await page.getByTestId('ligne-organisation').filter({ hasText: 'Vertigo Conseil' }).getByRole('link', { name: 'Vertigo Conseil' }).click()
+	await page.getByTestId('commande-categories-organisation').click()
+	const cases = page.getByTestId('panneau-categories-organisation')
+	await expect(cases.getByRole('checkbox', { name: 'Partenaire' })).toBeChecked()
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: 'la-fiche-d-une-organisation',
+		nom: 'fiche-categories',
+		cibles: [page.getByTestId('categories-organisation'), cases],
+	})
+	await page.getByTestId('categories-organisation-fermer').click()
+
+	const fil = page.getByTestId('commentaires-organisation')
+	await expect(fil.getByTestId('commentaire')).toHaveCount(3)
+	await expect(fil).toContainText('Commentaire retiré par la modération')
+	// Les gestes de l'auteur paraissent au survol : le sien est survolé, et l'image attend la fin de la transition.
+	const sien = fil.getByTestId('commentaire').filter({ hasText: 'Je la cale avec eux mardi.' })
+	await sien.hover()
+	await expect(sien.getByTestId('actions-commentaire')).toHaveCSS('opacity', '1')
+	await illustrer(page, { chapitre: CHAPITRE, section: 'commenter-une-organisation', nom: 'commentaires-organisation', cibles: [fil] })
+
+	await page.goto('/reglages/categories-organisations')
+	const reglages = page.getByTestId('reglages-categories-organisations')
+	await expect(reglages.getByTestId('ligne-categorie-organisation')).toHaveCount(3)
+	await illustrer(page, { chapitre: CHAPITRE, section: 'definir-les-categories-d-organisations', nom: 'reglages-categories', cibles: [reglages] })
+	await page.getByTestId('nouvelle-categorie').click()
+	const fiche = page.getByTestId('fiche-categorie-organisation')
+	await fiche.getByTestId('categorie-nom').fill('Prospect')
+	await illustrer(page, { chapitre: CHAPITRE, section: 'definir-les-categories-d-organisations', nom: 'nouvelle-categorie', cibles: [fiche] })
+	await fiche.getByTestId('categorie-annuler').click()
+	await expect(fiche).toHaveCount(0)
+	await page.getByTestId('categories-archivees').check()
+	const archivee = reglages.getByTestId('ligne-categorie-organisation').filter({ hasText: 'Ancien client' })
+	await expect(archivee).toContainText('Archivée')
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: 'definir-les-categories-d-organisations',
+		nom: 'categorie-archivee',
+		cibles: [page.getByTestId('categories-archivees'), archivee],
+	})
 })

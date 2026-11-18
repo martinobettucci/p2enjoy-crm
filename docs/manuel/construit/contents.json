@@ -396,6 +396,14 @@
 				{
 					"anchor": "modifier-une-organisation",
 					"title": "10.12 Modifier une organisation"
+				},
+				{
+					"anchor": "definir-les-categories-d-organisations",
+					"title": "10.13 Définir les catégories d'organisations"
+				},
+				{
+					"anchor": "commenter-une-organisation",
+					"title": "10.14 Commenter une organisation"
 				}
 			]
 		},

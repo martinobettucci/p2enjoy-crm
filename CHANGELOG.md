@@ -79,6 +79,15 @@ d'exécuter le code attendu.
 - Par paquets de 2 000 messages, avec un curseur, sous le délai de 8 s de la base (décision 949). Aucun écran ne
   l'appelle encore (T3).
 
+### `CRM-153` T6 — le seed, le manuel et le contrat des catégories et commentaires d'une organisation
+
+- Le seed de développement pose quatre catégories, dont une archivée, sur trois organisations, et un fil sur Vertigo
+  Conseil : une mention, un commentaire corrigé, un autre modéré (`docs/SPEC-seed.md` §50).
+- Le manuel décrit le filtre « Catégories », les catégories sous le nom et sur la fiche, Réglages ▸ Catégories
+  d'organisations (§10.13), le fil d'une organisation (§10.14) et la mention qui y mène (§5.2), avec sept images.
+- Réglages ▸ Notifications : « Recevoir les mentions » couvre aussi les mentions sur une organisation, et le dit.
+- À livrer : la migration 0188, puis la webapp, le manuel et l'image `mcp` (`docs/PROD_MIGRATIONS.md` §2.58).
+
 ### `CRM-153` T5 — le connecteur : catégories et commentaires d'une organisation
 
 - `crm_organization_list` filtre par catégorie et rend les catégories de chaque organisation ; `crm_organization_get`

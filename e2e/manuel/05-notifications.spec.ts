@@ -1,6 +1,8 @@
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.1 : les images du chapitre 5, « Vos notifications »
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitre 5 ; docs/SPEC-notifications.md §26 (la cloche, le
 //       panneau, le marquage), §42 (les préférences)
+// @spec CRM-153 (docs/BACKLOG.md) — tranche T6 : l'image d'une mention dans le fil d'une organisation, que Camille Aubert
+//       reçoit de Driss Lemoine (docs/manual.md §5.2 ; docs/SPEC-organisations.md §9.2 ; docs/SPEC-seed.md §50)
 //
 // Les notifications montrées sont celles du seed : Driss Lemoine en porte une, de Camille Aubert, non lue. Trois états
 // demandent un geste, et chacun est défait dans le même scénario :
@@ -101,4 +103,14 @@ test('choisir ce que vous recevez', async ({ page, request }) => {
 		// rend l'état du seed — aucune ligne.
 		await service(request, 'delete', 'notification_preferences?profile_id=eq.5eed0000-0000-4000-8000-000000000012&type=eq.mention')
 	}
+})
+
+test('une mention dans le fil d’une organisation', async ({ page }) => {
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto('/')
+	await page.getByTestId('cloche-notifications').click()
+	const ligne = page.getByTestId('notification').filter({ hasText: 'à propos de Vertigo Conseil' })
+	await expect(ligne).toContainText('Driss Lemoine vous a mentionné à propos de Vertigo Conseil')
+	await immobile(page, 'panneau-notifications')
+	await illustrer(page, { chapitre: CHAPITRE, section: 'ce-que-le-panneau-montre', nom: 'mention-organisation', cibles: [ligne] })
 })

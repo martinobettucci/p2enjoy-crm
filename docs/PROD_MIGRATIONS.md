@@ -1276,9 +1276,9 @@ aucune variable, aucun secret** ; le connecteur MCP ne change pas. **Jamais avan
 
 **Retour arrière** : la webapp précédente ; l'ordre posé reste valide pour elle (des positions entières).
 
-### 2.58 `CRM-153` T1, décisions 932, 939 et 942 — les catégories et le fil de commentaires d'une organisation, en base (EN ATTENTE)
+### 2.58 `CRM-153` T1 à T6, décisions 932, 939 et 942 — les catégories et le fil de commentaires d'une organisation : la base, les écrans, le connecteur (EN ATTENTE)
 
-`docs/SPEC-organisations.md` §9.1, §9.2 ; `docs/SCHEMA.md` « Migration `0188` » ; `docs/SPEC-notifications.md` §51. Quatre
+`docs/SPEC-organisations.md` §9.1 à §9.5 ; `docs/SPEC-mcp.md` §9.2 *quatervicies* ; `docs/SCHEMA.md` « Migration `0188` » ; `docs/SPEC-notifications.md` §51. Quatre
 tables (`organization_categories`, `organization_category_links`, `organization_comments`,
 `organization_comment_mentions`), treize politiques, quatre fonctions du schéma `app` et cinq déclencheurs ; la colonne
 `notifications.subject_organization_id`, sa clé et un `check` ; les deux politiques des notifications remplacées ;
@@ -1290,11 +1290,17 @@ variable, aucun secret ; aucune case nouvelle dans la matrice du connecteur (fam
 |---|---|---|---|
 | 1 | Appliquer la migration 188 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate` |
 | 2 | Constater | session de livraison, en lecture seule | le registre gagne une ligne, l'empreinte de la 188 égale celle du dépôt ; `select to_regprocedure('public.organization_list(uuid, text, uuid[], text, text, boolean, integer, integer, uuid[])')` non nul, l'ancienne signature nulle ; `select count(*) from public.organization_categories` vaut 0 |
+| 3 | Livrer la webapp et le manuel | session de livraison | **après le geste 1**, avec le lot qui les emporte (§4) : Réglages ▸ Catégories d'organisations (T2), la fiche (T3), la liste (T4), le manuel §5.2, §10.9, §10.10, §10.13, §10.14 (T6) |
+| 4 | Reconstruire l'image `mcp` | session de livraison | **après le geste 1** : `up -d --build --no-deps --wait mcp` (§4) — les quatre outils de T5 |
+| 5 | Constater | responsable | Réglages ▸ Catégories d'organisations : « Nouvelle catégorie », en créer une ; la fiche d'une organisation : « Catégories », la cocher — elle paraît sous le nom dans la liste ; « Catégories » de la liste ne garde que les organisations qui la portent ; écrire un commentaire qui mentionne un collègue : sa cloche dit « … vous a mentionné à propos de … » et mène au commentaire ; archiver la catégorie : elle reste sur l'organisation, marquée archivée ; depuis l'assistant, `crm_organization_category_list` et `crm_organization_comment_list` |
 
 **Seule, elle ne change rien de visible** : la webapp et l'image `mcp` livrées continuent d'appeler `organization_list`
 par arguments nommés, sans `p_category_ids` — preuve : l'E2E `liste-organisations` et l'intégration du connecteur, rejoués
-sur la 188. Les écrans (T2 à T4) et les outils (T5) se livrent **avec ou après** elle, jamais avant.
-**Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0188` » ; les catégories et commentaires saisis
+sur la 188. Les écrans (T2 à T4) et les outils (T5) se livrent **avec ou après** elle, jamais avant : sans elle, la fiche,
+la liste et les outils rendraient leur erreur. **Aucune donnée n'est posée en production** : le seed §50 ne vit qu'en
+développement ; le catalogue de production naît vide, et l'équipe le remplit.
+**Retour arrière** : la webapp et l'image `mcp` précédentes ; puis, s'il le faut, la 188 comme le dit `docs/SCHEMA.md`
+« Migration `0188` » ; les catégories et commentaires saisis
 entre-temps sont perdus — un `pg_dump` des quatre tables d'abord.
 
 ### 2.59 `CRM-156` T1, décisions 944, 946 et 949 — les actions groupées de l'inbox, en base (EN ATTENTE)

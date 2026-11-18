@@ -347,6 +347,44 @@
 			"type": "paragraph",
 			"content": [
 				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une mention sur une organisation"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " se lit autrement : « Driss Lemoine vous a mentionné à propos de Vertigo Conseil ».\nLa ligne porte le nom de l'organisation, en lien vers sa fiche, qui s'ouvre "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "sur le commentaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ; elle n'a pas de\npastille de dossier."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "vos-notifications-savoir-qu-on-vous-a-nomme/mention-organisation.jpg",
+			"alt": "Une mention dans le fil d'une organisation : la ligne nomme l'organisation, dont le nom mène à sa fiche",
+			"width": 374,
+			"height": 222
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
 					"type": "text",
 					"text": "Une "
 				},

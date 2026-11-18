@@ -2216,7 +2216,7 @@ export const fr = {
 
 	'settings.notifications.type.mention': 'Recevoir les mentions',
 	'settings.notifications.type.mention.body':
-		"Quand quelqu'un vous nomme dans le commentaire d'une affaire.",
+		"Quand quelqu'un vous nomme dans un commentaire, sur une affaire ou sur une organisation.",
 	'settings.notifications.type.mail_transfer': 'Recevoir les transferts de mails',
 	'settings.notifications.type.mail_transfer.body': 'Quand un membre vous transfère des mails de l’inbox.',
 
