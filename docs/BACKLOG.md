@@ -19874,7 +19874,8 @@ d'eux ; pas de tri sur « Réel sur prévu ».
       `fiche-organisation` renouvelées et `filtrer-organisations` nouvelle, observées ; `e2e/manuel/10-carnet.spec.ts` 8/8,
       `verify-manual.sh` 168 contrôles sans anomalie ; contrat §2.55 réécrit pour l'unité entière.
 
-### CRM-153 — Organisations : un fil de commentaires, et des catégories définies en Réglages `[ ]`
+### CRM-153 — Organisations : un fil de commentaires, et des catégories définies en Réglages `[@]`
+*Prise en charge : session interactive 4891a451 (p2enjoy-crm-d7, ex-32) depuis 2026-11-18 01:48 UTC — état avant : [ ] ; confiée par la session de livraison (bb), après CRM-152 (décision 932)*
 
 **Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison (p2enjoy-crm-bb) ; arbitrée le
 même jour (décision 932). **À confier avec `CRM-152`, à la même session, après elle** (le filtre par catégorie rejoint ses
