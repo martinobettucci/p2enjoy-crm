@@ -461,7 +461,7 @@
 				},
 				{
 					"type": "text",
-					"text": " se lit ainsi : « Camille Aubert vous a transféré 1 mail » — ou « 3 mails », quand\nplusieurs vous sont transférés d'un coup —, puis l'"
+					"text": " se lit ainsi : « Camille Aubert vous a transféré 1 mail » — la ligne dit le nombre de\nmails quand plusieurs vous sont transférés d'un coup —, puis l'"
 				},
 				{
 					"type": "strong",

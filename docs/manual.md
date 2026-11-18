@@ -716,8 +716,8 @@ lien, mais sans auteur ni extrait. Le produit ne dit alors ni que le message a �
 vous n'y avez plus accès : les deux causes sont indistinguables, et les nommer divulguerait la
 seconde.
 
-**Un mail qu'on vous transfère** se lit ainsi : « Camille Aubert vous a transféré 1 mail » — ou « 3 mails », quand
-plusieurs vous sont transférés d'un coup —, puis l'**objet** du premier, en lien : il ouvre l'inbox sur ce mail
+**Un mail qu'on vous transfère** se lit ainsi : « Camille Aubert vous a transféré 1 mail » — la ligne dit le nombre de
+mails quand plusieurs vous sont transférés d'un coup —, puis l'**objet** du premier, en lien : il ouvre l'inbox sur ce mail
 ([section 12.2](#l-inbox-lire-et-trier-le-courrier-recu)). La ligne n'a ni affaire ni pastille de dossier.
 
 ![Un transfert de mail dans le panneau : « … vous a transféré 1 mail », et l'objet du mail en lien](manuel/images/vos-notifications-savoir-qu-on-vous-a-nomme/transfert-de-mail.jpg)
@@ -3621,8 +3621,8 @@ choisissez un **membre** de l'espace, puis « Transférer ». Aucun email n'est 
 message dans le CRM**, il le retrouve sous « Seulement moi », et une notification le prévient
 ([section 5.2](#ce-que-le-panneau-montre)). Sous les pastilles du message, une ligne par transfert dit à qui, par qui
 et quand ; « **Retirer** » l'annule — seuls celui qui a transféré et celui qui a reçu le voient. Transfèrent les
-administrateurs et les business developers ; dans la barre groupée, « Transférer à un membre » fait de même pour toute
-une sélection, avec une seule notification.
+administrateurs et les business developers ; dans la barre groupée, l'action de transfert fait de même pour toute une
+sélection, avec une seule notification.
 
 ![« Transférer » : le bloc ouvert et son menu « Membre », et la ligne d'un transfert déjà fait, avec « Retirer »](manuel/images/l-inbox-lire-trier-et-repondre/transferer-un-message.jpg)
 
@@ -3638,7 +3638,7 @@ Expéditeurs bloqués ([section 12.7](#les-expediteurs-bloques)).
 **Créer des contacts depuis les expéditeurs inconnus.** Dans la barre groupée, « **Créer des contacts** » ouvre la liste
 des expéditeurs de la sélection qui **ne sont pas encore des contacts**, chacun coché, avec son nom et, si le domaine de
 son adresse est celui d'une organisation du carnet, cette organisation. Vérifiez, corrigez, décochez ce qui ne doit pas
-l'être, puis « Créer ». Le compte rendu dit combien de contacts sont créés, ignorés — déjà présents — ou refusés, et
+l'être, puis « Créer 1 contact » — le bouton compte les lignes cochées. Le compte rendu dit combien de contacts sont créés, ignorés — déjà présents — ou refusés, et
 pourquoi ; c'est le même chemin que l'import du carnet. Si tous les expéditeurs sont déjà des contacts, la liste le dit.
 
 ![La liste à vérifier : l'expéditrice inconnue cochée, son nom et l'organisation tirée de son domaine, puis « Créer 1 contact »](manuel/images/l-inbox-lire-trier-et-repondre/creer-des-contacts.jpg)

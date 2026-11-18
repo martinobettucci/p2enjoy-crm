@@ -3306,7 +3306,7 @@
 				},
 				{
 					"type": "text",
-					"text": " » l'annule — seuls celui qui a transféré et celui qui a reçu le voient. Transfèrent les\nadministrateurs et les business developers ; dans la barre groupée, « Transférer à un membre » fait de même pour toute\nune sélection, avec une seule notification."
+					"text": " » l'annule — seuls celui qui a transféré et celui qui a reçu le voient. Transfèrent les\nadministrateurs et les business developers ; dans la barre groupée, l'action de transfert fait de même pour toute une\nsélection, avec une seule notification."
 				}
 			]
 		},
@@ -3451,7 +3451,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", chacun coché, avec son nom et, si le domaine de\nson adresse est celui d'une organisation du carnet, cette organisation. Vérifiez, corrigez, décochez ce qui ne doit pas\nl'être, puis « Créer ». Le compte rendu dit combien de contacts sont créés, ignorés — déjà présents — ou refusés, et\npourquoi ; c'est le même chemin que l'import du carnet. Si tous les expéditeurs sont déjà des contacts, la liste le dit."
+					"text": ", chacun coché, avec son nom et, si le domaine de\nson adresse est celui d'une organisation du carnet, cette organisation. Vérifiez, corrigez, décochez ce qui ne doit pas\nl'être, puis « Créer 1 contact » — le bouton compte les lignes cochées. Le compte rendu dit combien de contacts sont créés, ignorés — déjà présents — ou refusés, et\npourquoi ; c'est le même chemin que l'import du carnet. Si tous les expéditeurs sont déjà des contacts, la liste le dit."
 				}
 			]
 		},
