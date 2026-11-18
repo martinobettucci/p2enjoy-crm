@@ -1,3 +1,5 @@
+// @verifies CRM-156 (docs/BACKLOG.md) — tranche T5 : les lectures restreintes aux mentions d'affaire (décision 51) — le seed
+//           §49 ajoute un transfert, le §50 une mention d'organisation (docs/SPEC-seed.md §49, §50)
 // @verifies CRM-064 (docs/BACKLOG.md) — tranche 3a : ce que la surface de réception lit, et le
 //            temps réel comme SURFACE D'AUTORISATION
 // @verifies docs/SPEC-notifications.md §27 (les sept lignes du contrat de la tranche 3a),
@@ -34,6 +36,10 @@ import {
 } from './jetons'
 
 const NOTIFICATIONS = '/rest/v1/notifications'
+// `CRM-156` T5 (décision 51, 2026-11-19) : ces preuves portent sur les MENTIONS D'AFFAIRE du seed. Le seed §49 y ajoute un
+// transfert de mail (`mail_transfer`, pour Driss), le §50 une mention d'organisation (pour Camille, `CRM-153`) : chaque
+// lecture de la table est restreinte aux mentions d'affaire, comme la garde « 8 quinquies ter » du seed.
+const MENTIONS_AFFAIRE = 'type=eq.mention&subject_card_id=not.is.null'
 const COMMENTAIRES = '/rest/v1/card_comments'
 const MENTIONS = '/rest/v1/card_comment_mentions'
 
@@ -81,7 +87,7 @@ test.describe('Ce que la surface lit — §24.1', () => {
 		request,
 	}) => {
 		const reponse = await request.get(
-			`${URL_API}${NOTIFICATIONS}?select=${encodeURIComponent(COLONNES_NOTIFICATION)}&order=created_at.desc&limit=20`,
+			`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=${encodeURIComponent(COLONNES_NOTIFICATION)}&order=created_at.desc&limit=20`,
 			{ headers: enTetesAuthentifies(jetonBizdev) },
 		)
 		expect(reponse.status()).toBe(200)
@@ -110,7 +116,7 @@ test.describe('Ce que la surface lit — §24.1', () => {
 	test('s — le compteur de non-lues se lit dans l’en-tête, sans ramener une ligne', async ({
 		request,
 	}) => {
-		const reponse = await request.head(`${URL_API}${NOTIFICATIONS}?select=id&read_at=is.null`, {
+		const reponse = await request.head(`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=id&read_at=is.null`, {
 			headers: { ...enTetesAuthentifies(jetonBizdev), Prefer: 'count=exact' },
 		})
 		expect(reponse.status()).toBe(200)
@@ -147,20 +153,20 @@ test.describe('Ce que la surface lit — §24.1', () => {
 	// erreur (§16.1). C'est la ligne b du §17, reprise ici parce que la surface l'exerce à chaque
 	// ouverture : la cloche de Camille ne doit jamais montrer celle de Driss.
 	test('la boîte de chacun est la sienne, et Farida n’en a aucune', async ({ request }) => {
-		const deCamille = await request.get(`${URL_API}${NOTIFICATIONS}?select=recipient_id`, {
+		const deCamille = await request.get(`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=recipient_id`, {
 			headers: enTetesAuthentifies(jetonAdmin),
 		})
 		expect(deCamille.status()).toBe(200)
 		const lignesCamille = (await deCamille.json()) as { recipient_id: string }[]
 		expect(lignesCamille.map((une) => une.recipient_id)).toEqual([ADMIN])
 
-		const deFarida = await request.get(`${URL_API}${NOTIFICATIONS}?select=id`, {
+		const deFarida = await request.get(`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=id`, {
 			headers: enTetesAuthentifies(jetonViewer),
 		})
 		expect(deFarida.status()).toBe(200)
 		expect(await deFarida.json()).toEqual([])
 
-		const anonyme = await request.get(`${URL_API}${NOTIFICATIONS}?select=id`, {
+		const anonyme = await request.get(`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=id`, {
 			headers: enTetesAnonymes(),
 		})
 		expect(anonyme.status()).toBe(200)
@@ -352,7 +358,7 @@ test.describe('L’état du produit après la suite — décision 501', () => {
 		request,
 	}) => {
 		const reponse = await request.get(
-			`${URL_API}${NOTIFICATIONS}?select=id,recipient_id,read_at,payload&order=created_at.asc`,
+			`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=id,recipient_id,read_at,payload&order=created_at.asc`,
 			{ headers: enTetesService() },
 		)
 		expect(reponse.status()).toBe(200)

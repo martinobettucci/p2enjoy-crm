@@ -47,6 +47,8 @@
 #       docs/DESIGN_SYSTEM.md §5.58 (décision 629)
 # @spec CRM-111 T2.4.3 (docs/BACKLOG.md) — les lectures et mises à jour de rattachement passent par card_placements,
 #       sous la clé de service (décision 746, migration 124) ; docs/SPEC-rattachements.md §12
+# @spec CRM-156 (docs/BACKLOG.md) — tranche T5 : l'inbox — un mail transféré, un expéditeur bloqué, un expéditeur inconnu,
+#       par la vraie relève et les RPC de l'écran (docs/SPEC-seed.md §49 ; docs/SPEC-mail-subsystem.md §32.12)
 # @spec INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — Camille reçoit une identité personnelle, et
 #       l'envoi de démonstration part d'elle : l'identité de service ne s'emprunte plus ; docs/SPEC-seed.md §2.18,
 #       docs/SPEC-mail-subsystem.md §14.2 et §22.14
@@ -2410,13 +2412,17 @@ reprovoquer_notification '5eed0000-0000-4000-8000-0000000000d2' \
 # LA GARDE MESURE LE RÉSULTAT, ELLE NE LE SUPPOSE PAS. Si le trigger cessait de produire, ou s'il
 # produisait pour la mauvaise personne, ou s'il produisait une notification déjà lue, chacune de
 # ces trois lignes le dirait — et c'est tout l'intérêt d'une garde qui compte plutôt qu'annonce.
-notifications_posees=$(curl -s "$API/rest/v1/notifications?select=id" \
+# RÉVISÉE par `CRM-156` T5 (décision 51 : une garde se révise, jamais ne se retire) : elle compte les notifications de CETTE
+# section — les mentions d'affaire. Le §49 (un transfert de mail) et le §50 (une mention d'organisation) en produisent
+# d'autres, qu'un rejeu trouve déjà là ; compter toute la table faisait échouer le seed rejoué.
+FILTRE_MENTIONS_AFFAIRES='type=eq.mention&subject_card_id=not.is.null'
+notifications_posees=$(curl -s "$API/rest/v1/notifications?select=id&$FILTRE_MENTIONS_AFFAIRES" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 [ "$notifications_posees" = '2' ] || die "le seed devait laisser DEUX notifications, il en compte
         « $notifications_posees » — docs/SPEC-notifications.md §19. Une notification se PRODUIT :
         si le compte est nul, le trigger notifications_apres_mention ne s'exécute plus."
 
-notifications_non_lues=$(curl -s "$API/rest/v1/notifications?select=id&read_at=is.null" \
+notifications_non_lues=$(curl -s "$API/rest/v1/notifications?select=id&read_at=is.null&$FILTRE_MENTIONS_AFFAIRES" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 [ "$notifications_non_lues" = '2' ] || die "les deux notifications du seed doivent être NON LUES
         (« $notifications_non_lues » l'est/le sont) : une notification naît non lue, et le
@@ -6414,6 +6420,109 @@ info "workflows : scripts/verify-workflows.sh — copie : scripts/verify-copie-w
 info "champs de formulaire : scripts/verify-champs-formulaire.sh — cards : scripts/verify-cards.sh"
 info "commentaires : scripts/verify-commentaires.sh — jeu de démonstration : scripts/verify-seed-demo.sh"
 info "identités et memberships : scripts/verify-identites.sh"
+# --- L'inbox : un mail transféré, un expéditeur bloqué, un expéditeur inconnu — CRM-156 T5, docs/SPEC-seed.md §49 ---------
+# @spec CRM-156 (docs/BACKLOG.md) — tranche T5 : trois mails DÉPOSÉS par IMAP dans la boîte système et RELEVÉS par la vraie
+#       relève de mail-sync ; le transfert à Driss et le blocage écrits par `transfer_message` et `block_sender` sous le
+#       jeton de Camille, comme l'écran (docs/SPEC-mail-subsystem.md §32.12 ; docs/SPEC-seed.md §49 ; CLAUDE.md §8)
+#
+# AVANT LE §46, comme le §45 : la passe des pastilles doit trouver le mail de Nora.
+# LA BOÎTE SYSTÈME, comme le §44, et non celle de Camille : un mail adressé à `admin@` « concerne » Camille, et son
+# « Seulement moi » cesserait de montrer le vide de « Non classés » que `CRM-139` démontre (mesuré : `seulement-moi.spec`).
+# L'administratrice le lit comme tout non classé de l'espace ; Driss, par le transfert. Le second mail de « Promo Flash » est
+# déposé APRÈS le blocage : il naît en corbeille par le déclencheur de réception, jamais par un geste du seed.
+# REJOUABLE : des `Message-ID` fixes ; un mail présent n'est pas redéposé ; le transfert et le blocage ne s'écrivent que
+# s'ils manquent. Le contact de Nora n'est JAMAIS créé : la liste à vérifier doit rester à démontrer.
+MSGID_INCONNU='seed-inbox-inconnu@atelier-lumen.example'
+MSGID_BLOQUE_AVANT='seed-bloque-avant@promo-flash.example'
+MSGID_BLOQUE_APRES='seed-bloque-apres@promo-flash.example'
+ADRESSE_BLOQUEE='offres@promo-flash.example'
+DRISS_INBOX=5eed0000-0000-4000-8000-000000000012
+
+deposer_imap() { # $1 = De (formaté), $2 = Message-ID sans chevrons, $3 = objet, $4 = corps
+	docker compose exec -T -e ADRESSE="systeme@$INBOUND_DOMAIN" -e MOT="$MAILBOX_PASSWORD" \
+		-e DE="$1" -e MID="<$2>" -e OBJET="$3" -e CORPS_MAIL="$4" mail-sync python -c '
+import email.utils, imaplib, os, time
+from email.message import EmailMessage
+message = EmailMessage()
+message["From"] = os.environ["DE"]
+message["To"] = os.environ["ADRESSE"]
+message["Subject"] = os.environ["OBJET"]
+message["Message-ID"] = os.environ["MID"]
+message["Date"] = email.utils.formatdate()
+message.set_content(os.environ["CORPS_MAIL"])
+m = imaplib.IMAP4("stalwart", 143)
+m.login(os.environ["ADRESSE"], os.environ["MOT"])
+m.append("INBOX", "", imaplib.Time2Internaldate(time.time()), message.as_bytes())
+m.logout()
+print("depose")
+' 2>&1
+}
+deposer_puis_relever() { # mêmes arguments ; dépose si absent, relève jusqu'à l'arrivée
+	if [ "$(message_corbeille "$2" | jq -r 'length')" = 0 ]; then
+		depot=$(deposer_imap "$1" "$2" "$3" "$4") || die "le dépôt IMAP de « $3 » a échoué : « $depot »"
+		[ "${depot##*$'\n'}" = "depose" ] || die "le dépôt IMAP de « $3 » n'a rien confirmé : « $depot »"
+		for _tentative in 1 2 3 4 5 6 7 8 9 10; do
+			relever_boite >/dev/null
+			[ "$(message_corbeille "$2" | jq -r 'length')" = 1 ] && break
+			sleep 3
+		done
+	fi
+	[ "$(message_corbeille "$2" | jq -r 'length')" = 1 ] \
+		|| die "« $3 » n'est pas arrivé dans la boîte système par la relève : mail-sync et Stalwart tournent-ils ? (§49)"
+}
+
+echo
+say "8 tertricies bis. Inbox : transfert, blocage, expéditeur inconnu (CRM-156)"
+JETON_INBOX=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+[ -n "$JETON_INBOX" ] || die "connexion de Camille impossible : le §49 transfère et bloque sous son jeton."
+
+# 1. L'expéditeur inconnu, transféré à Driss.
+deposer_puis_relever 'Nora Nouveau <nora.nouveau@atelier-lumen.example>' "$MSGID_INCONNU" \
+	"Demande d'information — formation IA" \
+	"Bonjour,
+
+Nous aimerions former notre équipe de six personnes aux usages de l'IA générative. Proposez-vous une formation sur deux jours, au premier trimestre ?
+
+Bien cordialement,
+Nora Nouveau — Atelier Lumen"
+ID_INCONNU=$(message_corbeille "$MSGID_INCONNU" | jq -r '.[0].id')
+if [ "$(service_get "mail_message_transfers?select=recipient_id&message_id=eq.$ID_INCONNU&recipient_id=eq.$DRISS_INBOX" | jq -r 'length')" = 0 ]; then
+	code=$(api_jeton "$JETON_INBOX" POST /rest/v1/rpc/transfer_message \
+		-d "$(jq -nc --arg m "$ID_INCONNU" --arg d "$DRISS_INBOX" '{p_message_id: $m, p_recipient_id: $d}')")
+	attendu "$code" "transfert à Driss de « Demande d'information — formation IA » (§49)" 200 204
+fi
+
+# 2. L'expéditeur bloqué : un mail reçu avant, le blocage, un mail relevé après.
+deposer_puis_relever 'Promo Flash <offres@promo-flash.example>' "$MSGID_BLOQUE_AVANT" \
+	'Promo flash : -50 % sur vos licences' \
+	"Profitez de -50 % sur toutes nos licences, jusqu'à dimanche minuit."
+if [ "$(service_get "mail_blocked_senders?select=address&workspace_id=eq.$WS_ID&address=eq.$ADRESSE_BLOQUEE" | jq -r 'length')" = 0 ]; then
+	code=$(api_jeton "$JETON_INBOX" POST /rest/v1/rpc/block_sender \
+		-d "$(jq -nc --arg w "$WS_ID" --arg a "$ADRESSE_BLOQUEE" '{p_workspace_id: $w, p_address: $a}')")
+	attendu "$code" "blocage de $ADRESSE_BLOQUEE par Camille (§49)" 200
+fi
+deposer_puis_relever 'Promo Flash <offres@promo-flash.example>' "$MSGID_BLOQUE_APRES" \
+	'Dernière chance : -60 % sur vos licences' \
+	"Dernière chance : -60 % sur toutes nos licences, ce soir seulement."
+
+# 3. Le constat, sous la clé de propriétaire.
+CONSTAT_INBOX=$(psql_seed -c "select
+	(select count(*) from public.mail_message_transfers where message_id = '$ID_INCONNU' and recipient_id = '$DRISS_INBOX'
+	  and transferred_by = '$CAMILLE_CORBEILLE') || '|' ||
+	(select count(*) from public.notifications where type = 'mail_transfer' and recipient_id = '$DRISS_INBOX'
+	  and payload->>'message_id' = '$ID_INCONNU') || '|' ||
+	(select count(*) from public.mail_blocked_senders where workspace_id = '$WS_ID' and address = '$ADRESSE_BLOQUEE') || '|' ||
+	(select count(*) from public.mail_messages where rfc822_message_id in ('<$MSGID_BLOQUE_AVANT>', '<$MSGID_BLOQUE_APRES>')
+	  and deleted_at is not null and deleted_by = '$CAMILLE_CORBEILLE' and card_id is null) || '|' ||
+	(select count(*) from public.contacts where workspace_id = '$WS_ID' and lower(email) = 'nora.nouveau@atelier-lumen.example')")
+IFS='|' read -r INBOX_TRANSFERT INBOX_NOTIFICATION INBOX_BLOCAGE INBOX_CORBEILLE INBOX_CONTACT <<< "$CONSTAT_INBOX"
+[ "$INBOX_TRANSFERT" = "1" ] || die "le transfert de Camille à Driss manque (§49) — mesuré : $INBOX_TRANSFERT."
+[ "$INBOX_NOTIFICATION" = "1" ] || die "Driss doit avoir UNE notification de transfert (§49) — mesuré : $INBOX_NOTIFICATION."
+[ "$INBOX_BLOCAGE" = "1" ] || die "$ADRESSE_BLOQUEE doit être bloquée (§49) — mesuré : $INBOX_BLOCAGE."
+[ "$INBOX_CORBEILLE" = "2" ] || die "les deux mails de « Promo Flash » doivent être en corbeille, effacés par Camille, non classés (§49) — mesuré : $INBOX_CORBEILLE."
+[ "$INBOX_CONTACT" = "0" ] || die "Nora Nouveau ne doit pas être un contact : la liste à vérifier doit rester à démontrer (§49)."
+info "Inbox : « Demande d'information — formation IA » de Nora Nouveau, expéditrice inconnue, transférée à Driss ; $ADRESSE_BLOQUEE bloquée, un mail mis à la corbeille et un relevé directement en corbeille — docs/SPEC-seed.md §49"
+
 # --- Les pastilles d'un mail : évaluées par le vrai chemin, corrigées à la main, une en échec — CRM-141 T2, docs/SPEC-seed.md §46
 # @spec CRM-141 (docs/BACKLOG.md) — tranche T2 : les messages reçus du seed évalués par la VRAIE passe de la fonction `ia`,
 #       appelée par sa route avec le secret d'appel et le scénario `pastilles` du simulateur ; une correction à la main par

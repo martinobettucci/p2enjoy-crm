@@ -1,10 +1,14 @@
+// @spec CRM-156 (docs/BACKLOG.md) — tranche T5 : le chapitre 5 révisé (décision 51) — la cloche de Driss compte aussi le
+//       transfert du seed §49, la mention est nommée dans le panneau ; « recevoir-les-mentions » montre la case des
+//       transferts (docs/manual.md §5.2, §5.6 ; docs/SPEC-seed.md §49)
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.1 : les images du chapitre 5, « Vos notifications »
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitre 5 ; docs/SPEC-notifications.md §26 (la cloche, le
 //       panneau, le marquage), §42 (les préférences)
 // @spec CRM-153 (docs/BACKLOG.md) — tranche T6 : l'image d'une mention dans le fil d'une organisation, que Camille Aubert
 //       reçoit de Driss Lemoine (docs/manual.md §5.2 ; docs/SPEC-organisations.md §9.2 ; docs/SPEC-seed.md §50)
 //
-// Les notifications montrées sont celles du seed : Driss Lemoine en porte une, de Camille Aubert, non lue. Trois états
+// Les notifications montrées sont celles du seed : Driss Lemoine en porte deux, non lues — la mention de Camille Aubert, et
+// le transfert d'un mail (seed §49, `CRM-156` T5). Trois états
 // demandent un geste, et chacun est défait dans le même scénario :
 // - la cloche qui n'a pas pu compter s'annonce « Notifications » : son compte est COUPÉ au niveau du réseau ;
 // - « Aucune notification n'a été modifiée » : la notification change de destinataire, par la clé de service, entre
@@ -21,7 +25,8 @@ test('la cloche dans l’en-tête, et la cloche qui n’a pas pu compter', async
 	await connecterAvecLeLabs(page, BIZDEV)
 	await page.goto('/')
 	const cloche = page.getByTestId('cloche-notifications')
-	await expect(page.getByTestId('compteur-notifications')).toHaveText('1')
+	// `CRM-156` T5 (décision 51) : Driss porte deux non-lues — sa mention, et le transfert du seed §49.
+	await expect(page.getByTestId('compteur-notifications')).toHaveText('2')
 	await illustrer(page, {
 		chapitre: CHAPITRE,
 		section: null,
@@ -44,17 +49,19 @@ test('le panneau, et un marquage resté sans effet', async ({ page, request }) =
 	await page.goto('/')
 	await page.getByTestId('cloche-notifications').click()
 	const panneau = page.getByTestId('panneau-notifications')
-	await expect(page.getByTestId('notification').first()).toContainText('Camille Aubert vous a mentionné')
+	// `CRM-156` T5 : la mention est nommée — le transfert du seed §49, plus récent, est en tête du panneau.
+	const mention = page.getByTestId('notification').filter({ hasText: 'Camille Aubert vous a mentionné' })
+	await expect(mention).toBeVisible()
 	await immobile(page, 'panneau-notifications')
 	await illustrer(page, { chapitre: CHAPITRE, section: 'ce-que-le-panneau-montre', nom: 'panneau', cibles: [panneau] })
 
 	const [driss] = await lireService<{ id: string }[]>(request, `profiles?full_name=eq.${encodeURIComponent('Driss Lemoine')}&select=id`)
 	const [farida] = await lireService<{ id: string }[]>(request, `profiles?full_name=eq.${encodeURIComponent('Farida Nowak')}&select=id`)
-	const [notification] = await lireService<{ id: string }[]>(request, `notifications?recipient_id=eq.${driss?.id}&select=id`)
+	const [notification] = await lireService<{ id: string }[]>(request, `notifications?recipient_id=eq.${driss?.id}&type=eq.mention&select=id`)
 	if (driss === undefined || farida === undefined || notification === undefined) throw new Error('le seed des notifications est absent')
 	await service(request, 'patch', `notifications?id=eq.${notification.id}`, { recipient_id: farida.id })
 	try {
-		await page.getByRole('button', { name: 'Marquer comme lue' }).first().click()
+		await mention.getByRole('button', { name: 'Marquer comme lue' }).click()
 		const message = page.getByTestId('message-marquage')
 		await expect(message).toContainText('Aucune notification n’a été modifiée')
 		await illustrer(page, {

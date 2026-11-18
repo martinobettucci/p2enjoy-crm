@@ -1,3 +1,5 @@
+// @verifies CRM-156 (docs/BACKLOG.md) — tranche T5 : le non classé transféré à Driss par le seed §49, seul lisible (décision
+//           51 ; docs/SPEC-mail-subsystem.md §32.7 ; docs/SPEC-seed.md §49)
 // @verifies CRM-057 (docs/BACKLOG.md) — contrat d'API de l'inbox globale
 // @verifies docs/SPEC-mail-subsystem.md §18.1 (la visibilité suit la boîte), §18.2 (classer exige
 //           les deux droits), §18.3 (les compteurs sont ceux de l'appelant), §18.5 (la pièce saine)
@@ -66,12 +68,16 @@ test.describe('inbox globale — qui voit quoi, hors interface', () => {
 		const lignes = await messageParIdentifiant(request, entetes, MSGID_NON_CLASSE)
 		expect(lignes).toHaveLength(0)
 
+		// RÉVISÉ par `CRM-156` T5 (décision 51, 2026-11-19) : le seed §49 transfère à Driss UN non classé. Un transfert ouvre
+		// la lecture de ce mail (§32.7), il ne crée pas de rôle de tri : Driss ne lit QUE lui, et c'est celui du §49.
 		const tousLesNonClasses = await request.get(
-			`${URL_API}/rest/v1/mail_messages?select=id&card_id=is.null`,
+			`${URL_API}/rest/v1/mail_messages?select=rfc822_message_id&card_id=is.null`,
 			{ headers: entetes },
 		)
 		expect(tousLesNonClasses.status()).toBe(200)
-		expect((await tousLesNonClasses.json()) as unknown[]).toHaveLength(0)
+		expect((await tousLesNonClasses.json()) as unknown[]).toEqual([
+			{ rfc822_message_id: '<seed-inbox-inconnu@atelier-lumen.example>' },
+		])
 	})
 
 	test('le message CLASSÉ, lui, est lisible par qui lit sa card', async ({ request }) => {
@@ -110,7 +116,8 @@ test.describe('inbox globale — l’arborescence', () => {
 		const nonClasses = (lignes: Ligne[]) => lignes.find((ligne) => ligne.card_id === null)?.nombre ?? -1
 		// La ligne des non classés existe TOUJOURS, même à zéro : c'est l'entrée du travail de tri.
 		expect(nonClasses(admin)).toBeGreaterThanOrEqual(1)
-		expect(nonClasses(membre)).toBe(0)
+		// RÉVISÉ par `CRM-156` T5 (décision 51) : le seul non classé de Driss est celui qu'on lui a transféré (seed §49).
+		expect(nonClasses(membre)).toBe(1)
 		// Le membre voit néanmoins le courrier CLASSÉ des cards qu'il lit : deux titres différents.
 		expect(membre.filter((ligne) => ligne.card_id !== null).length).toBeGreaterThanOrEqual(1)
 	})

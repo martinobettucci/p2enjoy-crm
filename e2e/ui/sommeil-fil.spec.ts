@@ -1,3 +1,5 @@
+// @verifies CRM-156 (docs/BACKLOG.md) — tranche T5 : le quatrième fil non classé du seed §49 endormi (décision 51 ;
+//           docs/SPEC-seed.md §49)
 // @verifies CRM-081 (docs/BACKLOG.md) — sommeil des fils et des cards, tranche 2 e : la SURFACE
 // @verifies docs/SPEC-cards.md §16.15.4 (la pastille et son instant), §16.15.5 (le filtre de
 //           composition, l'état vide qui ne ment pas, le message ouvert jamais masqué),
@@ -46,6 +48,7 @@ const OBJET_SUGGERE = 'Point d’avancement — migration ERP'
 // LE TROISIÈME — `CRM-140` T4, `docs/SPEC-seed.md` §44 : le courrier HTML du seed, non classé lui aussi. Il a révisé UN
 // scénario, celui qui endort le dossier entier pour en atteindre l'état vide (révisé le 2026-11-11).
 const OBJET_HTML = 'Invitation — journée partenaires Sogexia'
+const OBJET_NORA = "Demande d'information — formation IA"
 const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 /** Le dossier du message classé : l'affaire dans laquelle la relève l'a rangé (seed §9.2). */
 const CARD_COURRIER = 'Refonte du site vitrine'
@@ -175,6 +178,9 @@ test.describe('CRM-081 tranche 2 e — le sommeil d’un fil dans l’inbox', ()
 		await endormirLeFilDe(page, OBJET_NON_CLASSE)
 		await endormirLeFilDe(page, OBJET_SUGGERE)
 		await endormirLeFilDe(page, OBJET_HTML)
+		// QUATRE FILS DEPUIS LE 2026-11-19 (`CRM-156` T5, décision 51) : le mail de Nora Nouveau, non classé dans la boîte
+		// système (docs/SPEC-seed.md §49). Il est endormi lui aussi, pour la même raison.
+		await endormirLeFilDe(page, OBJET_NORA)
 		// OUVRIR CE COURRIER REND SON CADRE ISOLÉ, et l'instrumentation de Playwright y fait journaliser son seul message
 		// connu (`e2e/ui/fixtures.ts`, `CRM-140`) : il est consommé ici, nommé ; toute autre anomalie reste au contrôle.
 		consommerTraceCadreIsole(page)

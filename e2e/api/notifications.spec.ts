@@ -1,3 +1,5 @@
+// @verifies CRM-156 (docs/BACKLOG.md) — tranche T5 : les lectures restreintes aux mentions d'affaire (décision 51) — le seed
+//           §49 ajoute un transfert, le §50 une mention d'organisation (docs/SPEC-seed.md §49, §50)
 // @verifies CRM-064 (docs/BACKLOG.md) — @mentions, notifications et préférences, TRANCHE 2
 // @verifies docs/SPEC-notifications.md §17 (les seize lignes du contrat d'API), §14 (la
 //           production, l'auto-mention écartée, la survivance au retrait de la mention), §15
@@ -21,6 +23,10 @@ import { expect, request as requetePlaywright, test } from '@playwright/test'
 import { CLE_ANONYME, CLE_SERVICE, URL_API, enTetesAnonymes, enTetesAuthentifies, jetonDe } from './jetons'
 
 const NOTIFICATIONS = '/rest/v1/notifications'
+// `CRM-156` T5 (décision 51, 2026-11-19) : ces preuves portent sur les MENTIONS D'AFFAIRE du seed. Le seed §49 y ajoute un
+// transfert de mail (`mail_transfer`, pour Driss), le §50 une mention d'organisation (pour Camille, `CRM-153`) : chaque
+// lecture de la table est restreinte aux mentions d'affaire, comme la garde « 8 quinquies ter » du seed.
+const MENTIONS_AFFAIRE = 'type=eq.mention&subject_card_id=not.is.null'
 const MENTIONS = '/rest/v1/card_comment_mentions'
 
 /** Les trois profils du seed — `docs/SPEC-seed.md` §2.3. */
@@ -73,7 +79,7 @@ async function enBase(
 	requete: import('@playwright/test').APIRequestContext,
 	filtre: string,
 ): Promise<Array<Record<string, unknown>>> {
-	const reponse = await requete.get(`${URL_API}${NOTIFICATIONS}?${filtre}`, {
+	const reponse = await requete.get(`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&${filtre}`, {
 		headers: enTetesService(),
 	})
 	expect(reponse.status()).toBe(200)
@@ -106,7 +112,7 @@ test.describe('CRM-064 tranche 2 — le contrat d’API de la notification', () 
 	// -------------------------------------------------------------------------------------------
 
 	test('a et b — chacun ne lit QUE ses propres notifications', async ({ request }) => {
-		const pourDriss = await request.get(`${URL_API}${NOTIFICATIONS}?select=recipient_id,type`, {
+		const pourDriss = await request.get(`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=recipient_id,type`, {
 			headers: enTetesAuthentifies(driss),
 		})
 		expect(pourDriss.status()).toBe(200)
@@ -118,7 +124,7 @@ test.describe('CRM-064 tranche 2 — le contrat d’API de la notification', () 
 				'sienne (docs/SPEC-notifications.md §16.1)',
 		).toBe(true)
 
-		const pourCamille = await request.get(`${URL_API}${NOTIFICATIONS}?select=recipient_id`, {
+		const pourCamille = await request.get(`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=recipient_id`, {
 			headers: enTetesAuthentifies(camille),
 		})
 		expect(pourCamille.status()).toBe(200)
@@ -134,7 +140,7 @@ test.describe('CRM-064 tranche 2 — le contrat d’API de la notification', () 
 	test('c — la lectrice n’en a aucune, et c’est ZÉRO LIGNE, jamais une erreur', async ({
 		request,
 	}) => {
-		const reponse = await request.get(`${URL_API}${NOTIFICATIONS}?select=id`, {
+		const reponse = await request.get(`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=id`, {
 			headers: enTetesAuthentifies(farida),
 		})
 		expect(reponse.status()).toBe(200)
@@ -151,7 +157,7 @@ test.describe('CRM-064 tranche 2 — le contrat d’API de la notification', () 
 	})
 
 	test('d — l’anonyme reçoit 200 [], et non une erreur de privilège', async ({ request }) => {
-		const reponse = await request.get(`${URL_API}${NOTIFICATIONS}?select=id`, {
+		const reponse = await request.get(`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=id`, {
 			headers: enTetesAnonymes(),
 		})
 		expect(
@@ -219,7 +225,7 @@ test.describe('CRM-064 tranche 2 — le contrat d’API de la notification', () 
 
 		// Le compteur suit — ligne *m*.
 		const compteur = await request.get(
-			`${URL_API}${NOTIFICATIONS}?select=id&read_at=is.null`,
+			`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=id&read_at=is.null`,
 			{ headers: enTetesAuthentifies(driss) },
 		)
 		expect(compteur.status()).toBe(200)
@@ -350,7 +356,7 @@ test.describe('CRM-064 tranche 2 — le contrat d’API de la notification', () 
 		// Et le destinataire la voit RÉELLEMENT, par la vraie route : la produire sans la rendre
 		// lisible ne servirait à rien, et seule cette lecture-ci le prouve.
 		const vueParDriss = await request.get(
-			`${URL_API}${NOTIFICATIONS}?select=id&payload->>comment_id=eq.${D3_LIBRE}`,
+			`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=id&payload->>comment_id=eq.${D3_LIBRE}`,
 			{ headers: enTetesAuthentifies(driss) },
 		)
 		expect(vueParDriss.status()).toBe(200)
@@ -413,7 +419,7 @@ test.describe('CRM-064 tranche 2 — le contrat d’API de la notification', () 
 			// LA REMISE EN ÉTAT EST CONSTATÉE, non supposée : c'est la leçon de la décision 501,
 			// une preuve qui laisse ses sondes en base faisant rougir la suivante.
 			const restantes = await contexte.get(
-				`${URL_API}${NOTIFICATIONS}?select=id,read_at`,
+				`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=id,read_at`,
 				{ headers: enTetesService() },
 			)
 			const lignes = (await restantes.json()) as Array<{ read_at: string | null }>

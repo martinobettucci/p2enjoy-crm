@@ -185,9 +185,9 @@
 		{
 			"type": "image",
 			"src": "vos-notifications-savoir-qu-on-vous-a-nomme/panneau.jpg",
-			"alt": "Le panneau des notifications : « Camille Aubert vous a mentionné », l'extrait, l'affaire et sa pastille de dossier",
+			"alt": "Le panneau des notifications : un transfert de mail en tête, puis « Camille Aubert vous a mentionné », l'extrait, l'affaire et sa pastille de dossier",
 			"width": 376,
-			"height": 260
+			"height": 386
 		},
 		{
 			"type": "paragraph",
@@ -448,6 +448,61 @@
 			]
 		},
 		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un mail qu'on vous transfère"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " se lit ainsi : « Camille Aubert vous a transféré 1 mail » — ou « 3 mails », quand\nplusieurs vous sont transférés d'un coup —, puis l'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "objet"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " du premier, en lien : il ouvre l'inbox sur ce mail\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-inbox-lire-trier-et-repondre",
+						"anchor": "l-inbox-lire-et-trier-le-courrier-recu"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 12.2"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). La ligne n'a ni affaire ni pastille de dossier."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "vos-notifications-savoir-qu-on-vous-a-nomme/transfert-de-mail.jpg",
+			"alt": "Un transfert de mail dans le panneau : « … vous a transféré 1 mail », et l'objet du mail en lien",
+			"width": 374,
+			"height": 158
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "marquer-lu-et-marquer-non-lu",
@@ -525,7 +580,7 @@
 			"src": "vos-notifications-savoir-qu-on-vous-a-nomme/marquage-sans-effet.jpg",
 			"alt": "Un marquage resté sans effet : « Aucune notification n'a été modifiée » sous la ligne",
 			"width": 376,
-			"height": 264
+			"height": 292
 		},
 		{
 			"type": "heading",
@@ -632,7 +687,7 @@
 			"src": "vos-notifications-savoir-qu-on-vous-a-nomme/mentionner.jpg",
 			"alt": "La commande « Mentionner » sous le fil d'une affaire, et la liste des personnes qu'elle ouvre",
 			"width": 519,
-			"height": 158
+			"height": 145
 		},
 		{
 			"type": "paragraph",
@@ -851,7 +906,20 @@
 				},
 				{
 					"type": "text",
-					"text": ", cochée par défaut. Aujourd'hui il n'y en a qu'une :\n« Recevoir les mentions ». Décochez-la, et les mentions cessent d'arriver dans votre cloche — le\ncompteur tombe, le panneau se vide, et rien ne s'affiche plus en direct."
+					"text": ", cochée par défaut. Il y en a deux : « Recevoir les mentions » et, dessous,\n« "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Recevoir les transferts de mails"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " », quand un membre vous transfère des mails de l'inbox. Décochez-en une, et ce\ntype cesse d'arriver dans votre cloche — le compteur tombe, le panneau le masque, et rien ne s'affiche plus en direct."
 				}
 			]
 		},
@@ -920,9 +988,9 @@
 		{
 			"type": "image",
 			"src": "vos-notifications-savoir-qu-on-vous-a-nomme/recevoir-les-mentions.jpg",
-			"alt": "Réglages ▸ Notifications : la case « Recevoir les mentions » et la confirmation « Enregistré »",
+			"alt": "Réglages ▸ Notifications : la case « Recevoir les mentions » décochée et la confirmation « Enregistré », puis la case « Recevoir les transferts de mails »",
 			"width": 633,
-			"height": 339
+			"height": 431
 		},
 		{
 			"type": "paragraph",

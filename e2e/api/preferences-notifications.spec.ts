@@ -1,3 +1,5 @@
+// @verifies CRM-156 (docs/BACKLOG.md) — tranche T5 : les lectures restreintes aux mentions d'affaire (décision 51) — le seed
+//           §49 ajoute un transfert, le §50 une mention d'organisation (docs/SPEC-seed.md §49, §50)
 // @verifies CRM-156 (docs/BACKLOG.md) — tranche T4 : `mail_transfer` s'écrit par `definir_preference_notification`
 //           (docs/SCHEMA.md « Migration `0191` » ; docs/SPEC-notifications.md §52)
 // @verifies CRM-064 (docs/BACKLOG.md) — @mentions, notifications et préférences, TRANCHE 4
@@ -33,6 +35,10 @@ import { CLE_ANONYME, CLE_SERVICE, URL_API, enTetesAnonymes, enTetesAuthentifies
 
 const PREFERENCES = '/rest/v1/notification_preferences'
 const NOTIFICATIONS = '/rest/v1/notifications'
+// `CRM-156` T5 (décision 51, 2026-11-19) : ces preuves portent sur les MENTIONS D'AFFAIRE du seed. Le seed §49 y ajoute un
+// transfert de mail (`mail_transfer`, pour Driss), le §50 une mention d'organisation (pour Camille, `CRM-153`) : chaque
+// lecture de la table est restreinte aux mentions d'affaire, comme la garde « 8 quinquies ter » du seed.
+const MENTIONS_AFFAIRE = 'type=eq.mention&subject_card_id=not.is.null'
 const RPC = '/rest/v1/rpc/definir_preference_notification'
 
 /** Les trois profils du seed — `docs/SPEC-seed.md` §2.3. */
@@ -112,7 +118,7 @@ test.describe('CRM-064 tranche 4 — les préférences de notification, contrat 
 			['Driss', jetonDriss, 1],
 			['Farida', jetonFarida, 0],
 		] as const) {
-			const reponse = await requete.get(`${URL_API}${NOTIFICATIONS}?select=id`, {
+			const reponse = await requete.get(`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=id`, {
 				headers: enTetesAuthentifies(jeton),
 			})
 			expect(reponse.status(), `${nom} lit ses notifications`).toBe(200)
@@ -138,7 +144,7 @@ test.describe('CRM-064 tranche 4 — les préférences de notification, contrat 
 		expect(typeof ligne['updated_at']).toBe('string')
 
 		// *b* — la liste
-		const liste = await requete.get(`${URL_API}${NOTIFICATIONS}?select=id`, {
+		const liste = await requete.get(`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=id`, {
 			headers: enTetesAuthentifies(jetonDriss),
 		})
 		expect(liste.status()).toBe(200)
@@ -146,14 +152,14 @@ test.describe('CRM-064 tranche 4 — les préférences de notification, contrat 
 
 		// *c* — le compteur. Il suit SANS QUE PERSONNE NE L'AIT PROGRAMMÉ : il lit la même table
 		// sous la même politique, et c'est le sens de « la règle n'a qu'une seule écriture ».
-		const compteur = await requete.get(`${URL_API}${NOTIFICATIONS}?select=id&read_at=is.null`, {
+		const compteur = await requete.get(`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=id&read_at=is.null`, {
 			headers: { ...enTetesAuthentifies(jetonDriss), Prefer: 'count=exact', Range: '0-0' },
 		})
 		expect(compteur.headers()['content-range']).toBe('*/0')
 
 		// *d* — LA LIGNE EST TOUJOURS LÀ. C'est l'assertion qui distingue cette tranche de celle
 		// qu'on n'a pas écrite.
-		const enSilence = await enBase(requete, NOTIFICATIONS, `select=id&recipient_id=eq.${DRISS}`)
+		const enSilence = await enBase(requete, NOTIFICATIONS, `${MENTIONS_AFFAIRE}&select=id&recipient_id=eq.${DRISS}`)
 		expect(enSilence).toHaveLength(1)
 	})
 
@@ -166,7 +172,7 @@ test.describe('CRM-064 tranche 4 — les préférences de notification, contrat 
 			data: { p_type: 'mention', p_in_app: false },
 		})
 
-		const liste = await requete.get(`${URL_API}${NOTIFICATIONS}?select=id`, {
+		const liste = await requete.get(`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=id`, {
 			headers: enTetesAuthentifies(jetonCamille),
 		})
 		expect(liste.status()).toBe(200)
@@ -178,7 +184,7 @@ test.describe('CRM-064 tranche 4 — les préférences de notification, contrat 
 	// refus de lecture se mesure comme ZÉRO LIGNE et non comme une erreur ». La cause est
 	// mécanique : PostgREST écrit son `UPDATE` avec `RETURNING`, que la politique `SELECT` filtre.
 	test('une notification masquée ne peut plus être marquée lue, et le refus est zéro ligne (§44.1)', async () => {
-		const avant = await enBase(requete, NOTIFICATIONS, `select=id,read_at&recipient_id=eq.${DRISS}`)
+		const avant = await enBase(requete, NOTIFICATIONS, `${MENTIONS_AFFAIRE}&select=id,read_at&recipient_id=eq.${DRISS}`)
 		const identifiant = avant[0]?.['id']
 		expect(typeof identifiant).toBe('string')
 		expect(avant[0]?.['read_at']).toBeNull()
@@ -194,7 +200,7 @@ test.describe('CRM-064 tranche 4 — les préférences de notification, contrat 
 		})
 		expect(marquage.status(), 'le refus est un 204 sans effet, jamais une erreur').toBe(204)
 
-		const apres = await enBase(requete, NOTIFICATIONS, `select=read_at&id=eq.${String(identifiant)}`)
+		const apres = await enBase(requete, NOTIFICATIONS, `${MENTIONS_AFFAIRE}&select=read_at&id=eq.${String(identifiant)}`)
 		expect(apres[0]?.['read_at'], 'aucune ligne n’a été touchée').toBeNull()
 	})
 
@@ -212,7 +218,7 @@ test.describe('CRM-064 tranche 4 — les préférences de notification, contrat 
 		expect(retabli.status(), 'la RPC est IDEMPOTENTE : aucun 409 sur la même clé').toBe(200)
 		expect(((await retabli.json()) as Record<string, unknown>)['in_app']).toBe(true)
 
-		const liste = await requete.get(`${URL_API}${NOTIFICATIONS}?select=id,read_at`, {
+		const liste = await requete.get(`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=id,read_at`, {
 			headers: enTetesAuthentifies(jetonDriss),
 		})
 		const lignes = (await liste.json()) as Array<Record<string, unknown>>
@@ -354,7 +360,7 @@ test.describe('CRM-064 tranche 4 — les préférences de notification, contrat 
 		})
 		expect(ecriture.status()).toBe(200)
 
-		const liste = await requete.get(`${URL_API}${NOTIFICATIONS}?select=id`, {
+		const liste = await requete.get(`${URL_API}${NOTIFICATIONS}?${MENTIONS_AFFAIRE}&select=id`, {
 			headers: enTetesAuthentifies(jetonFarida),
 		})
 		expect(liste.status()).toBe(200)
@@ -368,7 +374,7 @@ test.describe('CRM-064 tranche 4 — les préférences de notification, contrat 
 		await remettreEnEtat(requete)
 		expect(await enBase(requete, PREFERENCES, 'select=*')).toHaveLength(0)
 
-		const notifications = await enBase(requete, NOTIFICATIONS, 'select=id,recipient_id,read_at')
+		const notifications = await enBase(requete, NOTIFICATIONS, `${MENTIONS_AFFAIRE}&select=id,recipient_id,read_at`)
 		expect(notifications).toHaveLength(2)
 		expect(notifications.every((ligne) => ligne['read_at'] === null)).toBe(true)
 		expect(notifications.map((ligne) => ligne['recipient_id']).sort()).toEqual([CAMILLE, DRISS].sort())

@@ -26,6 +26,11 @@
 //       « pastilles-d-un-message » (section 12.2), « pastilles-des-mails », « pastille-archivee » et « fiche-d-une-pastille » (section 12.6) — sur la
 //       correction du seed (docs/DESIGN_SYSTEM.md §5.103 ; docs/SPEC-mail-subsystem.md §31.7 ; docs/SPEC-seed.md §46) ;
 //       rien n'est posé, retiré ni créé : la liste et la fiche sont ouvertes puis refermées
+// @spec CRM-156 (docs/BACKLOG.md) — tranche T5 : les images des actions groupées et des ajouts de l'inbox — « actions-groupees »,
+//       « confirmation-groupee », « filtre-expediteur », « transferer-un-message », « bloquer-un-expediteur »,
+//       « creer-des-contacts » (section 12.2), « expediteurs-bloques » (section 12.7), et « transfert-de-mail » du
+//       chapitre 5 (section 5.2), sur les données du §49 du seed ; chaque geste est ouvert puis annulé, rien n'est écrit
+//       (docs/DESIGN_SYSTEM.md §5.109, §5.109 bis ; docs/SPEC-mail-subsystem.md §32.13 ; docs/SPEC-seed.md §49)
 // @spec CRM-143 (docs/BACKLOG.md) — tranche T4 : l'image « piece-non-analysee » de la section 12.1 — « Télécharger quand
 //       même » et son avertissement (docs/DESIGN_SYSTEM.md §5.95 ; docs/SPEC-pieces-jointes.md §17.4)
 //
@@ -41,7 +46,7 @@ import { expect, test, type Page } from '@playwright/test'
 import { conteneur } from '../conteneur'
 import { lireEnv } from '../env'
 import { illustrer } from './illustrer'
-import { ADMIN, AFFAIRE_SOGEXIA, WORKSPACE_SEED, connecterAvecLeLabs, lireService, rest, retenir, service } from './outils'
+import { ADMIN, AFFAIRE_SOGEXIA, BIZDEV, WORKSPACE_SEED, connecterAvecLeLabs, lireService, rest, retenir, service } from './outils'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 
 // LE CHROMIUM COMPLET, et non le « headless shell » : seul le premier porte le lecteur PDF du navigateur, que l'image de
@@ -565,4 +570,105 @@ test('les pastilles : dans la liste, sur un message, et dans les réglages', asy
 	await illustrer(page, { chapitre: CHAPITRE, section: REGLAGES, nom: 'fiche-d-une-pastille', cibles: [fiche] })
 	await fiche.getByTestId('pastille-annuler').click()
 	await expect(fiche).toBeHidden()
+})
+
+test('les actions groupées, le filtre par expéditeur, le transfert, le blocage et les contacts (CRM-156)', async ({ page, request }) => {
+	// Le mail de Nora Nouveau, expéditrice inconnue, transféré par Camille à Driss (seed §49).
+	const [nora] = await lireService<{ id: string }[]>(
+		request,
+		`mail_messages?select=id&rfc822_message_id=eq.${encodeURIComponent('<seed-inbox-inconnu@atelier-lumen.example>')}`,
+	)
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto(`/inbox?courrier=tous&message=${nora!.id}`)
+	await expect(page.getByTestId('inbox-message-ouvert')).toContainText('Nora Nouveau')
+
+	// 1. Deux conversations cochées, puis la confirmation d'une action — annulée.
+	const ligneDe = (objet: string) =>
+		liste(page).locator('li').filter({ has: page.getByTestId('inbox-message').filter({ hasText: objet }) })
+	await ligneDe('formation IA').getByTestId('inbox-case-fil').check()
+	await ligneDe('Candidature spontanée').getByTestId('inbox-case-fil').check()
+	await expect(page.getByTestId('inbox-selection-compte')).toHaveText('2 fils sélectionnés')
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: LIRE,
+		nom: 'actions-groupees',
+		cibles: [page.getByTestId('inbox-rangee-action'), ligneDe('formation IA').getByTestId('inbox-case-fil')],
+	})
+	await page.getByTestId('inbox-action-groupee').selectOption('mark_unread')
+	await page.getByTestId('inbox-action-continuer').click()
+	const confirmation = page.getByTestId('inbox-confirmation-groupee')
+	await expect(confirmation).toContainText('Marquer comme non lus 2 fils')
+	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'confirmation-groupee', cibles: [confirmation] })
+	await confirmation.getByRole('button', { name: 'Annuler' }).click()
+
+	// 2. La liste à vérifier des contacts, sur la seule conversation de Nora — annulée.
+	await ligneDe('Candidature spontanée').getByTestId('inbox-case-fil').uncheck()
+	await page.getByTestId('inbox-action-groupee').selectOption('contacts')
+	await page.getByTestId('inbox-action-continuer').click()
+	const verification = page.getByTestId('inbox-contacts-verifier')
+	await expect(verification.getByTestId('inbox-contact-organisation')).toHaveValue('Atelier Lumen')
+	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'creer-des-contacts', cibles: [verification] })
+	await verification.getByRole('button', { name: 'Annuler' }).click()
+	await page.getByTestId('inbox-deselectionner').click()
+
+	// 3. Le transfert déjà fait par le seed, et le bloc « Transférer » ouvert — annulé.
+	await page.getByTestId('inbox-transferer').click()
+	const bloc = page.getByTestId('inbox-transfert-bloc')
+	await expect(bloc.getByTestId('inbox-transfert-membre')).toBeEnabled()
+	await expect(page.getByTestId('inbox-transferts')).toContainText('Transféré à Driss Lemoine par Camille Aubert')
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: LIRE,
+		nom: 'transferer-un-message',
+		cibles: [page.getByTestId('inbox-transferts'), bloc],
+	})
+	await bloc.getByRole('button', { name: 'Annuler' }).click()
+
+	// 4. Le filtre sur l'expéditeur de « Point d'avancement — migration ERP », puis la première confirmation du blocage — annulée.
+	const [leo] = await lireService<{ id: string }[]>(
+		request,
+		`mail_messages?select=id&rfc822_message_id=eq.${encodeURIComponent('<seed-inbox-suggere@sogexia.example>')}`,
+	)
+	await page.goto(`/inbox?courrier=tous&message=${leo!.id}`)
+	await page.getByTestId('inbox-filtrer-expediteur').click()
+	const filtre = page.getByTestId('inbox-filtre-expediteur')
+	await expect(filtre).toContainText('leo.marchand@sogexia.example')
+	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'filtre-expediteur', cibles: [filtre, liste(page).getByTestId('inbox-message').first()] })
+	await page.getByTestId('inbox-bloquer-expediteur').click()
+	const blocage = page.getByTestId('inbox-blocage')
+	await expect(page.getByTestId('inbox-blocage-impact')).toBeVisible()
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: LIRE,
+		nom: 'bloquer-un-expediteur',
+		cibles: [page.getByTestId('inbox-bloquer-expediteur'), blocage],
+	})
+	await blocage.getByRole('button', { name: 'Annuler' }).click()
+	await page.getByTestId('inbox-filtre-expediteur-retirer').click()
+
+	// 5. Réglages ▸ Expéditeurs bloqués : l'adresse bloquée par le seed.
+	await page.goto('/reglages/expediteurs-bloques')
+	const ecran = page.getByTestId('reglages-expediteurs-bloques')
+	await expect(ecran.getByTestId('ligne-expediteur-bloque').filter({ hasText: 'offres@promo-flash.example' })).toBeVisible()
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: 'les-expediteurs-bloques',
+		nom: 'expediteurs-bloques',
+		cibles: [ecran.getByTestId('ligne-expediteur-bloque').first()],
+	})
+})
+
+test('le transfert reçu, dans la cloche de Driss (CRM-156)', async ({ page }) => {
+	// L'image du chapitre 5 est produite ici, avec les données du §49 : le transfert est un fait de l'inbox.
+	await connecterAvecLeLabs(page, BIZDEV)
+	await page.goto('/')
+	await page.getByTestId('cloche-notifications').click()
+	const ligne = page.getByTestId('panneau-notifications').getByTestId('notification').filter({ hasText: 'vous a transféré 1 mail' })
+	await expect(ligne).toContainText("Demande d'information — formation IA")
+	await illustrer(page, {
+		chapitre: 'vos-notifications-savoir-qu-on-vous-a-nomme',
+		section: 'ce-que-le-panneau-montre',
+		nom: 'transfert-de-mail',
+		cibles: [ligne],
+	})
 })

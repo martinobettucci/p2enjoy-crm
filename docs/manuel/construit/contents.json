@@ -448,6 +448,10 @@
 				{
 					"anchor": "definir-les-pastilles-des-mails",
 					"title": "12.6 Définir les pastilles des mails"
+				},
+				{
+					"anchor": "les-expediteurs-bloques",
+					"title": "12.7 Les expéditeurs bloqués"
 				}
 			]
 		},

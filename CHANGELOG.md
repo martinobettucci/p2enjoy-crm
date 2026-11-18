@@ -31,6 +31,15 @@ d'exécuter le code attendu.
   `messagerie`, case « Consulter », aucune case nouvelle. Manuel §33.5 ; `docs/SPEC-mcp.md` §9.2 duovicies.
 - `CRM-155` T3 : le seed vérifié sans ajout ; contrat de déploiement §2.61 (webapp et image `mcp`, aucune migration).
 
+### `CRM-156` T5 — les données de démonstration et le manuel des actions groupées
+
+- Les données de démonstration portent un mail de « Nora Nouveau », expéditrice inconnue d'Atelier Lumen, transféré par
+  Camille à Driss, et l'adresse « offres@promo-flash.example » bloquée, avec deux mails dans la corbeille de l'inbox : un
+  reçu avant le blocage, un relevé après. Tous passent par la vraie relève et les gestes de l'écran.
+- Le manuel décrit les actions groupées, le filtre par expéditeur, le transfert, le blocage et la création de contacts
+  (section 12.2), Réglages ▸ Expéditeurs bloqués (section 12.7), la notification d'un transfert (section 5.2) et sa
+  préférence (section 5.6), avec leurs images.
+
 ### `CRM-156` T4 — filtrer sur un expéditeur, transférer, bloquer, créer des contacts depuis l'inbox (migration 191)
 
 - Dans un message ouvert, « Filtrer sur cet expéditeur » ne montre plus que ses mails ; une ligne sous les filtres rapides

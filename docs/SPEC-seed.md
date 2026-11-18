@@ -3249,8 +3249,10 @@ MCP connecté, les mêmes six, et le prompt ajouté rendu avec son en-tête d'es
 
 *Écrit le 2026-11-18, avant le code de T5 (décisions 945 et 947).* La section est placée **avant le §46**, comme le §45 :
 la passe des pastilles doit trouver le mail qu'elle dépose. Tout passe par les vrais chemins : les mails sont **déposés
-dans la boîte de Camille** (`admin@`) par IMAP, sur le serveur de développement, et **relevés par la vraie relève** de
-`mail-sync` ; les gestes sont les RPC de l'écran, **sous le jeton de Camille**.
+dans la boîte système** (`systeme@`) par IMAP, sur le serveur de développement, et **relevés par la vraie relève** de
+`mail-sync` ; les gestes sont les RPC de l'écran, **sous le jeton de Camille**. *Précisé le 2026-11-19 avec le code* : la
+boîte système, comme le §44, et non celle de Camille — un mail adressé à `admin@` « concerne » Camille, et son « Seulement
+moi » cesserait de montrer le vide de « Non classés » que `CRM-139` démontre (mesuré : `e2e/ui/seulement-moi.spec.ts`).
 
 | Message-ID | De | Objet | Ce qu'il démontre |
 |---|---|---|---|
@@ -3267,8 +3269,11 @@ dans la boîte de Camille** (`admin@`) par IMAP, sur le serveur de développemen
   porte l'adresse de Nora.
 - **Ce que le seed ne fait pas** : il ne crée pas le contact de Nora (la liste à vérifier doit rester à démontrer), et les
   actions groupées ne laissent pas de trace propre — leurs effets sont ceux des gestes unitaires (§32.12).
-- **Ce que cela change ailleurs** : la boîte de Camille compte un non classé de plus, sa corbeille deux mails de plus ;
-  Driss voit un mail de plus sous « Seulement moi ». Les preuves qui comptent ces dossiers sont rejouées avec le seed.
+- **Ce que cela change ailleurs** : « Non classés » compte un fil de plus pour l'administratrice (hors « Seulement moi »),
+  la corbeille de l'inbox deux mails de plus ; Driss voit un mail de plus sous « Seulement moi », et sa cloche une
+  notification non lue de plus. Les preuves qui comptent ces dossiers ou cette cloche sont révisées avec le seed
+  (décision 51) : pgTAP `0029` (n° 9) et `0095` (n° 11 à 13), la garde « 8 quinquies ter » du seed, et les E2E de la
+  cloche, des préférences et du sommeil d'un fil.
 
 
 ## 50. Les catégories et le fil d'une organisation — `CRM-153` T6 (`docs/SPEC-organisations.md` §9.5)

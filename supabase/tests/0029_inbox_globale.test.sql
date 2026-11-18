@@ -1,3 +1,5 @@
+-- @verifies CRM-156 (docs/BACKLOG.md) — tranche T5 : assertion 9 révisée, le mail transféré par le seed §49 exclu
+--           (docs/SPEC-mail-subsystem.md §32.7 ; docs/SPEC-seed.md §49)
 -- @verifies CRM-057 (docs/BACKLOG.md) — inbox globale : qui voit un message non classé
 -- @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : assertion révisée par les migrations 106 et 107 (docs/SPEC-mail-subsystem.md §19 bis.3)
 -- @verifies CRM-117 (docs/BACKLOG.md) — tranche T2 : assertion 20 révisée par la migration 127 (docs/SPEC-manual.md §14.1)
@@ -103,10 +105,15 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000012');  -- Driss, busi
 -- L'ABSENCE DE RÔLE DE TRI EST FIGÉE ICI, ET NON COMMENTÉE. Le jour où un tel rôle existera, cette
 -- assertion deviendra ROUGE et désignera la preuve à réécrire — mécanisme de la décision 51. La
 -- retirer alors, plutôt que la réviser, effacerait la limite en même temps que sa cause.
+-- RÉVISÉE par `CRM-156` T5 (décision 51, 2026-11-19) : le seed §49 transfère à Driss un non classé de la boîte de Camille.
+-- Un transfert ouvre la lecture de CE mail (§32.7), il ne crée pas de rôle de tri : hors des mails qu'on lui a transférés,
+-- Driss ne voit toujours aucun non classé.
 select is(
-	(select count(*) from public.mail_messages m where m.card_id is null),
+	(select count(*) from public.mail_messages m where m.card_id is null
+	   and not exists (select 1 from public.mail_message_transfers t
+	                    where t.message_id = m.id and t.recipient_id = '5eed0000-0000-4000-8000-000000000012')),
 	0::bigint,
-	'9 — ABSENCE FIGÉE : un membre ordinaire ne voit AUCUN non classé, faute de rôle de tri (§18.1)');
+	'9 — ABSENCE FIGÉE : un membre ordinaire ne voit AUCUN non classé, faute de rôle de tri (§18.1), hors ceux qu''on lui a transférés (§32.7)');
 
 select ok(
 	not app.peut_voir_message((select valeur::uuid from pg_temp_ref where nom = 'non_classe')),

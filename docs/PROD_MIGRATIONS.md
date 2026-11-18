@@ -1351,6 +1351,16 @@ l'écriture. Une fonction redéfinie, aucune donnée, aucun verrou durable. **Ex
 
 **Retour arrière de la 191** : rejouer le corps de la `0067` ; rien n'est perdu.
 
+**L'écran de `CRM-156` (T3, T4) se livre dans la même fenêtre, après les 189 à 191**, avec la webapp ; le seed n'y est
+pour rien (il ne touche jamais la production). Aucune variable, aucun secret, aucun service nouveau.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 5 | Livrer la webapp | session de livraison, dans la même fenêtre | la livraison ordinaire de la webapp (§3.1) |
+| 6 | Constater, à l'écran | responsable, en production | dans l'inbox : cocher deux conversations, « Marquer comme non lu », la confirmation compte, le compte rendu dit le fait ; « Filtrer sur cet expéditeur » sur un mail, puis « Retirer le filtre » ; « Transférer » un mail à un membre, qui le voit sous « Seulement moi » et reçoit la notification ; Réglages ▸ Notifications porte « Recevoir les transferts de mails » et l'enregistre ; Réglages ▸ Expéditeurs bloqués s'ouvre (vide). **Ne pas bloquer d'adresse réelle pour constater** : le blocage vaut pour tout l'espace |
+
+**Retour arrière de l'écran** : la webapp précédente ; les transferts écrits restent lisibles par leur destinataire.
+
 ### 2.61 `CRM-155` T1 et T2, décisions 943 et 948 — les pastilles en filtres rapides dans l'inbox, et le filtre du connecteur (EN ATTENTE)
 
 `docs/SPEC-mail-subsystem.md` §31.12 ; `docs/DESIGN_SYSTEM.md` §5.108 ; `docs/SPEC-mcp.md` §9.2 *duovicies* (révisé).

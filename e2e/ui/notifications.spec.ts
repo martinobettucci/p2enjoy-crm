@@ -1,3 +1,5 @@
+// @verifies CRM-156 (docs/BACKLOG.md) — tranche T5 : les comptes révisés (décision 51) — Driss porte aussi le transfert du
+//           seed §49, Camille la mention d'organisation du §50 ; les lignes visées sont nommées (docs/SPEC-seed.md §49, §50)
 // @verifies CRM-064 (docs/BACKLOG.md) — tranche 3a : la cloche et le panneau, sur session réelle
 // @verifies docs/SPEC-notifications.md §23.1 (la place dans l'en-tête), §23.2 (ni modale ni
 //           route), §24.3 (ce que la ligne rend), §26.1 (le compteur), §26.4 (le marquage et ses
@@ -51,14 +53,16 @@ test.describe('La cloche et son compteur (docs/SPEC-notifications.md §26.1)', (
 
 	// LE NOM ACCESSIBLE PORTE LE COMPTE EXACT, accordé par clé : « 1 non lue », jamais
 	// « 1 non lues » (§10 du design system).
-	test('la cloche de Driss annonce sa seule non-lue, et son compteur la dessine', async ({
+	// RÉVISÉ par `CRM-156` T5 (décision 51, 2026-11-19) : Driss porte DEUX non-lues — sa mention, et le transfert du seed
+	// §49 (docs/SPEC-seed.md §49). La cloche compte les deux, et l'accord passe au pluriel.
+	test('la cloche de Driss annonce ses deux non-lues, et son compteur les dessine', async ({
 		page,
 	}) => {
 		await connecter(page, BIZDEV)
 		const cloche = page.getByTestId('cloche-notifications')
 		await expect(cloche).toBeVisible()
-		await expect(cloche).toHaveAccessibleName('Notifications — 1 non lue')
-		await expect(page.getByTestId('compteur-notifications')).toHaveText('1')
+		await expect(cloche).toHaveAccessibleName('Notifications — 2 non lues')
+		await expect(page.getByTestId('compteur-notifications')).toHaveText('2')
 	})
 
 	// LA BOÎTE DE FARIDA EST VIDE, ET C'EST UN PROFIL RÉEL DU SEED : l'état vide s'exerce sans
@@ -98,17 +102,18 @@ test.describe('Le panneau et sa ligne (docs/SPEC-notifications.md §23.2, §24.3
 		// derrière lui. C'est tout le motif du choix.
 		await expect(page).not.toHaveURL(/notifications/)
 
-		const ligne = page.getByTestId('notification').first()
+		// `CRM-156` T5 : la ligne de la MENTION, nommée — le transfert du seed §49, plus récent, est en tête.
+		const ligne = page.getByTestId('notification').filter({ hasText: 'vous a mentionné' })
 		await expect(ligne).toContainText('Camille Aubert vous a mentionné')
-		await expect(page.getByTestId('notification-extrait').first()).toContainText(
+		await expect(ligne.getByTestId('notification-extrait')).toContainText(
 			'La DSI a confirmé le périmètre',
 		)
 		// L'ÉTAT DE LECTURE SE REND PAR LA FORME (§26.2) : la ligne du seed est non lue.
 		await expect(ligne).toHaveAttribute('data-lue', 'non')
 
-		const lien = page.getByTestId('notification-lien').first()
+		const lien = ligne.getByTestId('notification-lien')
 		await expect(lien).toHaveAccessibleName('Ouvrir Refonte du site vitrine')
-		await expect(page.getByTestId('notification-pilule').first()).toHaveAccessibleName(
+		await expect(ligne.getByTestId('notification-pilule')).toHaveAccessibleName(
 			'Ouvrir Conseil & IA › Grands comptes',
 		)
 		// AUCUNE TRONCATURE sur une boîte d'une ligne : elle ne s'écrit que lorsque la lecture
@@ -121,11 +126,11 @@ test.describe('Le panneau et sa ligne (docs/SPEC-notifications.md §23.2, §24.3
 	test('le lien ouvre l’affaire, et ne marque PAS la notification', async ({ page }) => {
 		await connecter(page, BIZDEV)
 		await page.getByTestId('cloche-notifications').click()
-		await page.getByTestId('notification-lien').first().click()
+		await page.getByTestId('notification').filter({ hasText: 'vous a mentionné' }).getByTestId('notification-lien').click()
 
 		await expect(page).toHaveURL(/\/tracks\/conseil-ia\/grands-comptes\/cards\//)
-		// LE COMPTEUR N'A PAS BOUGÉ : la notification est toujours non lue.
-		await expect(page.getByTestId('compteur-notifications')).toHaveText('1')
+		// LE COMPTEUR N'A PAS BOUGÉ : la notification est toujours non lue (deux depuis le §49, `CRM-156` T5).
+		await expect(page.getByTestId('compteur-notifications')).toHaveText('2')
 	})
 
 	// LE PANNEAU SE FERME PAR ÉCHAP, EN RENDANT LE FOCUS À LA CLOCHE (§5.43, §5.29 tranche 2 g).
@@ -161,19 +166,22 @@ test.describe('Le marquage, dans les deux sens (docs/SPEC-notifications.md §26.
 	// LE GESTE EST DÉFAIT DANS LE MÊME SCÉNARIO : le seed sort intact (§28). C'est aussi ce qui
 	// éprouve le SECOND sens, qui n'est pas un ornement — on ouvre une notification par mégarde.
 	test('marquer lu éteint le compteur, marquer non lu le ramène', async ({ page }) => {
+		// RÉVISÉ par `CRM-156` T5 (décision 51, 2026-11-19) : Camille porte DEUX non-lues — sa mention d'affaire, et la
+		// mention d'organisation du seed §50 (`CRM-153`). La preuve marque la mention d'affaire, nommée par sa pilule : le
+		// compteur passe de deux à un, puis revient à deux.
 		await connecter(page, ADMIN)
 		const cloche = page.getByTestId('cloche-notifications')
-		await expect(page.getByTestId('compteur-notifications')).toHaveText('1')
+		await expect(page.getByTestId('compteur-notifications')).toHaveText('2')
 		await cloche.click()
 
-		const ligne = page.getByTestId('notification').first()
+		const ligne = page.getByTestId('notification').filter({ has: page.getByTestId('notification-pilule') })
 		await expect(ligne).toHaveAttribute('data-lue', 'non')
 
-		await page.getByRole('button', { name: 'Marquer comme lue' }).click()
+		await ligne.getByRole('button', { name: 'Marquer comme lue' }).click()
 		await expect(ligne).toHaveAttribute('data-lue', 'oui')
-		// LE COMPTEUR DISPARAÎT À ZÉRO (§26.1), et le nom accessible suit.
-		await expect(page.getByTestId('compteur-notifications')).toHaveCount(0)
-		await expect(cloche).toHaveAccessibleName('Notifications — aucune non lue')
+		// LE COMPTEUR DESCEND (§26.1), et le nom accessible suit.
+		await expect(page.getByTestId('compteur-notifications')).toHaveText('1')
+		await expect(cloche).toHaveAccessibleName('Notifications — 1 non lue')
 		// SUR UN SUCCÈS, AUCUN MESSAGE : la ligne porte son nouvel état, et elle EST la
 		// confirmation (§5.7 ter du design system).
 		await expect(page.getByTestId('message-marquage')).toHaveCount(0)
@@ -181,10 +189,10 @@ test.describe('Le marquage, dans les deux sens (docs/SPEC-notifications.md §26.
 		await capturer(page, 'notifications-panneau-lue-xl-1440', UNITE)
 
 		// LE SECOND SENS, ET LE SEED EST RENDU INTACT.
-		await page.getByRole('button', { name: 'Marquer comme non lue' }).click()
+		await ligne.getByRole('button', { name: 'Marquer comme non lue' }).click()
 		await expect(ligne).toHaveAttribute('data-lue', 'non')
-		await expect(page.getByTestId('compteur-notifications')).toHaveText('1')
-		await expect(cloche).toHaveAccessibleName('Notifications — 1 non lue')
+		await expect(page.getByTestId('compteur-notifications')).toHaveText('2')
+		await expect(cloche).toHaveAccessibleName('Notifications — 2 non lues')
 	})
 })
 

@@ -1,3 +1,5 @@
+// @verifies CRM-156 (docs/BACKLOG.md) — tranche T5 : les comptes révisés (décision 51) — Driss porte aussi le transfert du
+//           seed §49 ; couper les mentions ne masque que les mentions (docs/SPEC-seed.md §49 ; docs/SPEC-notifications.md §44)
 // @verifies CRM-156 (docs/BACKLOG.md) — tranche T4 : la garde du §42.1 révisée — la case « Recevoir les transferts de mails »
 //           (docs/DESIGN_SYSTEM.md §5.109 bis ; docs/SPEC-notifications.md §52)
 // @verifies CRM-064 (docs/BACKLOG.md) — tranche 4 : les préférences, sur session réelle
@@ -149,8 +151,9 @@ test.describe('L’écran des préférences (docs/DESIGN_SYSTEM.md §5.45)', () 
 	}) => {
 		await connecter(page, BIZDEV)
 
-		// L'ÉTAT DE DÉPART EST MESURÉ, PAS SUPPOSÉ : Driss porte UNE non-lue (§48 bis).
-		await expect(page.getByTestId('compteur-notifications')).toHaveText('1')
+		// L'ÉTAT DE DÉPART EST MESURÉ, PAS SUPPOSÉ : Driss porte DEUX non-lues — sa mention (§48 bis) et le transfert du seed
+		// §49 (`CRM-156` T5, révisé par la décision 51).
+		await expect(page.getByTestId('compteur-notifications')).toHaveText('2')
 
 		await page.goto(ADRESSE)
 		await laCase(page).click()
@@ -159,9 +162,11 @@ test.describe('L’écran des préférences (docs/DESIGN_SYSTEM.md §5.45)', () 
 
 		// LE COMPTEUR DE L'EN-TÊTE TOMBE, et c'est la politique qui l'a fait — aucune ligne de
 		// l'écran des réglages ne connaît la cloche.
-		await expect(page.getByTestId('compteur-notifications')).toHaveCount(0)
+		// LE TRANSFERT RESTE COMPTÉ (`CRM-156` T5) : couper un type ne masque que ce type, et la preuve le dit désormais
+		// par ses deux bouts — le compteur descend de deux à un, il ne disparaît pas.
+		await expect(page.getByTestId('compteur-notifications')).toHaveText('1')
 		await expect(page.getByTestId('cloche-notifications')).toHaveAccessibleName(
-			'Notifications — aucune non lue',
+			'Notifications — 1 non lue',
 		)
 
 		await laCase(page).click()
@@ -169,7 +174,7 @@ test.describe('L’écran des préférences (docs/DESIGN_SYSTEM.md §5.45)', () 
 
 		// RÉTABLIR REND L'ÉTAT D'AVANT, non lu : c'est la raison d'être du filtrage à la lecture
 		// (§44). Filtré à la production, ce scénario ne rendrait RIEN.
-		await expect(page.getByTestId('compteur-notifications')).toHaveText('1')
+		await expect(page.getByTestId('compteur-notifications')).toHaveText('2')
 	})
 
 	// LE PANNEAU LUI-MÊME SE VIDE, et pas seulement le compteur : la liste lit la même table sous
@@ -185,12 +190,14 @@ test.describe('L’écran des préférences (docs/DESIGN_SYSTEM.md §5.45)', () 
 		await expect(panneau).toBeVisible()
 		// L'ÉTAT VIDE DU PANNEAU EST CELUI D'UNE BOÎTE SAINE, jamais une panne : c'est le §26.7,
 		// et couper ne change pas sa nature.
-		await expect(panneau.getByRole('listitem')).toHaveCount(0)
+		// `CRM-156` T5 (décision 51) : la mention quitte le panneau, le transfert du seed §49 y reste.
+		await expect(panneau.getByRole('listitem').filter({ hasText: 'vous a mentionné' })).toHaveCount(0)
+		await expect(panneau.getByRole('listitem')).toHaveCount(1)
 		await page.keyboard.press('Escape')
 
 		await retablir(page)
 		await page.getByTestId('cloche-notifications').click()
-		await expect(page.getByTestId('panneau-notifications').getByRole('listitem')).toHaveCount(1)
+		await expect(page.getByTestId('panneau-notifications').getByRole('listitem')).toHaveCount(2)
 		await page.keyboard.press('Escape')
 	})
 
@@ -276,6 +283,6 @@ test.describe('L’écran des préférences (docs/DESIGN_SYSTEM.md §5.45)', () 
 		await connecter(page, BIZDEV)
 		await page.goto(ADRESSE)
 		await retablir(page)
-		await expect(page.getByTestId('compteur-notifications')).toHaveText('1')
+		await expect(page.getByTestId('compteur-notifications')).toHaveText('2')
 	})
 })

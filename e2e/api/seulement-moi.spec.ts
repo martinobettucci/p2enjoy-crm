@@ -1,3 +1,5 @@
+// @verifies CRM-156 (docs/BACKLOG.md) — tranche T5 : l'oracle de « Seulement moi » ajoute la voie du transfert (décision 51 ;
+//           docs/SPEC-mail-subsystem.md §32.7 ; docs/SPEC-seed.md §49)
 // @verifies CRM-144 (docs/BACKLOG.md) — tranche T5 : les deux identités de démonstration de Camille comptées
 //           (docs/SPEC-seed.md §42 ; décision 913)
 // @verifies CRM-139 (docs/BACKLOG.md) — « Seulement moi » hors interface, avec les jetons réels : `concerns_me` et
@@ -154,7 +156,15 @@ test.describe('« Seulement moi » : `concerns_me` et `inbox_arborescence(p_only
 		const adresses = await adressesDe(request, DRISS.id)
 		const tout = await lus(request, jeton, false)
 		const filtre = await lus(request, jeton, true)
-		expect(tries(filtre)).toEqual(tries(tout.filter((m) => concerne(m, adresses))))
+		// RÉVISÉ par `CRM-156` T5 (décision 51, 2026-11-19) : un mail TRANSFÉRÉ le concerne aussi (§32.7) — le seed §49 lui
+		// en transfère un. L'oracle ajoute cette voie, lue sous la clé de service.
+		const transferes = new Set(
+			(await service<{ message_id: string }[]>(request, `mail_message_transfers?select=message_id&recipient_id=eq.${DRISS.id}`)).map(
+				(t) => t.message_id,
+			),
+		)
+		expect(transferes.size, 'le seed §49 transfère un mail à Driss').toBeGreaterThan(0)
+		expect(tries(filtre)).toEqual(tries(tout.filter((m) => concerne(m, adresses) || transferes.has(m.id))))
 		const deCamille = tout.filter((m) => m.from_address === CAMILLE.adresse)
 		expect(deCamille.length, 'il lit au moins un envoi de Camille').toBeGreaterThan(0)
 		expect(filtre.some((m) => m.from_address === CAMILLE.adresse)).toBe(false)

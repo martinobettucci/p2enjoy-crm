@@ -1,3 +1,5 @@
+-- @verifies CRM-156 (docs/BACKLOG.md) — tranche T5 : les comptes de départ suivent le mail de Nora Nouveau du seed
+--           (docs/SPEC-seed.md §49 ; révision des n° 11 à 13, décision 51)
 -- @verifies CRM-057 (docs/BACKLOG.md) — tranche 2 : lu / non lu dans l'inbox
 -- @verifies docs/SPEC-mail-subsystem.md §18 bis.2 (état personnel, courrier reçu seul, total gardé), §18 bis.3 (la table,
 --           sa RLS, `mark_messages_read`, `mark_message_unread`, `is_read`, `unread_count`) ; docs/SCHEMA.md
@@ -91,12 +93,16 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');  -- Camille, ad
 -- dans l'affaire du Musée des Confluences, effacé puis restauré (docs/SPEC-seed.md §45) ; ses lectures sont effacées plus
 -- haut comme toutes les autres. Le courrier que le §45 efface AVEC sa boîte n'est pas compté : en corbeille, la politique de
 -- lecture l'exclut (docs/SPEC-mail-subsystem.md §29.4). « Non classés » reste à trois.
-select is((select count(*) from public.mail_messages m where not public.is_read(m)), 8::bigint,
-	'11 — au départ, les huit messages reçus sont non lus pour Camille : aucune lecture fabriquée');
-select is((select unread_count from public.inbox_arborescence() where card_id is null), 3::bigint,
-	'12 — « Non classés » : trois non lus pour Camille');
-select is((select nombre from public.inbox_arborescence() where card_id is null), 3::bigint,
-	'13 — et le TOTAL reste à trois (décision 716)');
+-- RÉVISÉ par `CRM-156` T5 (décision 51, 2026-11-19), non relâché : un neuvième, « Demande d'information — formation IA »,
+-- de Nora Nouveau, NON CLASSÉ dans la boîte de Camille et transféré à Driss (docs/SPEC-seed.md §49) : « Non classés » en
+-- compte quatre, tous non lus pour Camille. Les deux mails de « Promo Flash » ne comptent pas : en corbeille, la politique
+-- de lecture les exclut, comme celui du §45.
+select is((select count(*) from public.mail_messages m where not public.is_read(m)), 9::bigint,
+	'11 — au départ, les neuf messages reçus sont non lus pour Camille : aucune lecture fabriquée');
+select is((select unread_count from public.inbox_arborescence() where card_id is null), 4::bigint,
+	'12 — « Non classés » : quatre non lus pour Camille');
+select is((select nombre from public.inbox_arborescence() where card_id is null), 4::bigint,
+	'13 — et le TOTAL reste à quatre (décision 716)');
 
 select is(public.mark_messages_read(array[(select valeur from pg_temp_ref where nom = 'classe'),
                                           (select valeur from pg_temp_ref where nom = 'reponse')]), 2,

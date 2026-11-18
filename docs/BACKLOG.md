@@ -20089,9 +20089,9 @@ message dans le connecteur ; design system lu par sections ciblées) : `docs/SPE
   aucune migration ; deux gestes de constat du responsable). **L'unité passe `[P]`** : il reste la livraison, par la
   session de livraison, et le constat du responsable.
 
-### CRM-156 — Inbox : opérations groupées sur une sélection de mails `[@]`
+### CRM-156 — Inbox : opérations groupées sur une sélection de mails `[P]`
 
-*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-fc, ex-f8) depuis 2026-11-18 21:00 UTC — état avant : [ ] ; confiée par la session de livraison (e3)*
+*Implémentée et vérifiée en développement le 2026-11-19 ; reste la livraison (migrations 189 à 191 et la webapp, `docs/PROD_MIGRATIONS.md` §2.59 et §2.60) et le constat du responsable en production (§2.60, geste 6).*
 
 **Origine** : demande du responsable, le 2026-11-18, relayée par la session de livraison (p2enjoy-crm-e3, ex-bb) ; arbitrée le
 même jour (décision 944).
@@ -20199,6 +20199,22 @@ s'écrire en parallèle, l'écran se coordonne avec la session qui porte `CRM-15
   l'appelant », vient de lectures de Camille laissées sur des mails d'affaire du seed par une exécution antérieure
   (02:37–02:52 UTC), hors de cette tranche, signalé à la session de livraison ; build vert ; captures
   `docs/captures/CRM-156/` observées ;
-- [ ] **T5** — seed, manuel §12 et images, contrat, changelog ; `[P]`.
+- [x] **T5** — seed, manuel §12 et images, contrat, changelog ; `[P]`. *Fait le 2026-11-19* : SPEC-seed §49 écrit avant le
+  code (e8dbe1d6) ; section du seed placée avant le §46 — un mail de Nora Nouveau (expéditrice inconnue, Atelier Lumen)
+  transféré par Camille à Driss, `offres@promo-flash.example` bloquée avec un mail reçu avant et un relevé après, déposés
+  par IMAP dans la **boîte système** et relevés par la vraie relève, gestes par les RPC sous le jeton de Camille ; la
+  boîte système et non celle de Camille, mesuré : un mail adressé à `admin@` cassait le vide « Seulement moi » de
+  `CRM-139` ; seed rejoué trois fois, vert et convergent ; la garde « 8 quinquies ter » du seed comptait toute la table
+  `notifications` et rougissait au rejeu — révisée (décision 51) sur les mentions d'affaire. Preuves révisées par le
+  §49 (décision 51) : pgTAP `0029` (n° 9) et `0095` (n° 11 à 13) ; E2E `ui` de la cloche, des préférences et du sommeil
+  d'un fil ; API `inbox`, `seulement-moi` (l'oracle gagne la voie du transfert), et les lectures de `notifications`,
+  `notifications-surface` et `preferences-notifications` restreintes aux mentions d'affaire (le §50 de `CRM-153` y
+  ajoutait aussi une ligne) ; manuel chapitre 5. Manuel : §12.2 (actions groupées, filtre par expéditeur, transfert,
+  blocage, contacts), §12.7 nouvelle (Réglages ▸ Expéditeurs bloqués), §5.2 et §5.6 (le transfert reçu, sa
+  préférence) ; neuf images nouvelles et les images changées observées, le bruit de ré-encodage remis à HEAD ;
+  `manuel:verifier` à jour. pgTAP complet 166 fichiers et 5 508 assertions verts ; périmètre `ui` 118/119 (un échec
+  sous charge de `corbeille-inbox` au clavier, vert seul) ; périmètre API vert hors `inbox-lecture:106` (INC-342) ;
+  contrat §2.60 (gestes 5 et 6 : la webapp et le constat du responsable) ; changelog. *Hors tranche, signalé* :
+  `scripts/verify-seed-demo.sh` lit encore `cards.current_step_id` (chantier `CRM-111` T2.4.4).
 **DoD** : pgTAP des fonctions groupées ; preuve d'API avec les vrais jetons (refus du profil sans droit, sélection mixte) ;
 unitaires ; E2E souris et clavier aux quatre paliers ; captures observées ; seed vérifié ; manuel vérifié ; contrat.

@@ -1768,7 +1768,7 @@
 			"src": "l-inbox-lire-trier-et-repondre/suggestion-de-classement.jpg",
 			"alt": "L'encadré « Suggestion de classement » : l'affaire proposée, sa raison et « Classer dans cette affaire », au-dessus de « Classer dans une affaire »",
 			"width": 536,
-			"height": 251
+			"height": 233
 		},
 		{
 			"type": "paragraph",
@@ -2622,14 +2622,14 @@
 			"src": "l-inbox-lire-trier-et-repondre/pastilles-dans-la-liste.jpg",
 			"alt": "La liste d'un dossier : les filtres rapides « Filtrer par pastille » en tête, une pastille active, « Pastilles archivées » déplié et « Toutes les pastilles », et sous l'objet de chaque conversation ses pastilles",
 			"width": 391,
-			"height": 465
+			"height": 513
 		},
 		{
 			"type": "image",
 			"src": "l-inbox-lire-trier-et-repondre/pastilles-d-un-message.jpg",
 			"alt": "La liste « Pastilles de ce message », ouverte sous la rangée de boutons : les cases, et l'origine de chaque pastille posée ou retirée",
 			"width": 536,
-			"height": 649
+			"height": 605
 		},
 		{
 			"type": "paragraph",
@@ -2924,7 +2924,7 @@
 			"src": "l-inbox-lire-trier-et-repondre/corbeille.jpg",
 			"alt": "La corbeille de l'inbox : un message effacé, son auteur, sa date d'effacement définitif, son déplacement dans la boîte, et « Restaurer »",
 			"width": 1192,
-			"height": 476
+			"height": 556
 		},
 		{
 			"type": "paragraph",
@@ -2958,6 +2958,516 @@
 				{
 					"type": "text",
 					"text": " ». Tout se fait au clavier."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Agir sur plusieurs conversations à la fois."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Chaque ligne de la liste porte, à gauche, une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "case"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : cochez-en une\nou plusieurs — cocher n'ouvre pas la conversation. En tête de la liste, le nombre de conversations cochées s'affiche, avec\n« "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Désélectionner"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " », un menu "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Action »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Continuer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ». Les actions sont celles d'un message, regroupées :\nmarquer comme lu ou non lu ; classer dans une affaire ou en retirer ; poser, retirer une pastille ou réévaluer les\npastilles ; mettre en sommeil ou réveiller ; transférer à un membre ; créer des contacts ; supprimer ici ou partout. Une\naction que votre rôle ne permet pas reste dans le menu, grisée, avec la mention « non permis »."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/actions-groupees.jpg",
+			"alt": "La barre des actions groupées : « 2 fils sélectionnés », « Désélectionner », le menu « Action » et « Continuer », et la case cochée d'une conversation",
+			"width": 391,
+			"height": 182
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Rien ne se fait sans confirmation."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " « Continuer » ouvre, sous la barre, une confirmation qui "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "compte"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ce qui sera\ntouché — « Marquer comme non lus 2 fils (2 messages) ? » — et demande ce qu'il faut : l'affaire, la pastille, l'échéance\ndu sommeil ou le membre. Une coche vaut pour "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tous les messages de la conversation"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " que la liste montre. Une fois\nconfirmé, une jauge suit l'avancement, puis un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "compte rendu"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " dit ce qui a été fait, et, s'il y en a, combien de\nmessages ont été refusés et pourquoi — un message que vos droits ne vous laissent pas modifier, par exemple. Échap\nreferme la confirmation sans rien faire."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/confirmation-groupee.jpg",
+			"alt": "La confirmation d'une action groupée : ce qui sera touché, compté, puis « Annuler » et le bouton de l'action",
+			"width": 367,
+			"height": 158
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Tout sélectionner »."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Quand un filtre est posé — une pastille, « Seulement moi » ou un expéditeur —, la ligne de\ntête propose « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Tout sélectionner"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " » : toutes les conversations du filtre, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "y compris celles que la liste n'affiche\npas"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Le nombre exact est compté et affiché avant d'agir. Sans filtre, le bouton n'apparaît pas : un dossier entier ne\nse sélectionne pas d'un clic. Dans la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "corbeille"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", chaque message a sa case, et « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Restaurer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " » restaure la\nsélection."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Filtrer sur un expéditeur."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Dans l'en-tête d'un message ouvert, sous « De : », « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Filtrer sur cet expéditeur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " » ne\ngarde dans la liste que les messages de cette adresse. Une ligne sous les filtres rapides le rappelle — « Expéditeur : »\net l'adresse — avec « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Retirer le filtre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ». Le filtre se retient dans l'adresse de la page."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/filtre-expediteur.jpg",
+			"alt": "Le filtre sur un expéditeur : la ligne « Expéditeur : » et « Retirer le filtre », la liste réduite à ses messages",
+			"width": 391,
+			"height": 273
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Transférer un message à un membre."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Transférer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " », dans la rangée de boutons du message ouvert, ouvre un bloc :\nchoisissez un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "membre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'espace, puis « Transférer ». Aucun email n'est envoyé : le membre peut désormais "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "lire ce\nmessage dans le CRM"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", il le retrouve sous « Seulement moi », et une notification le prévient\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "vos-notifications-savoir-qu-on-vous-a-nomme",
+						"anchor": "ce-que-le-panneau-montre"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 5.2"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Sous les pastilles du message, une ligne par transfert dit à qui, par qui\net quand ; « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Retirer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " » l'annule — seuls celui qui a transféré et celui qui a reçu le voient. Transfèrent les\nadministrateurs et les business developers ; dans la barre groupée, « Transférer à un membre » fait de même pour toute\nune sélection, avec une seule notification."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/transferer-un-message.jpg",
+			"alt": "« Transférer » : le bloc ouvert et son menu « Membre », et la ligne d'un transfert déjà fait, avec « Retirer »",
+			"width": 536,
+			"height": 432
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Bloquer un expéditeur."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Quand le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "seul"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " filtre posé est un expéditeur, un administrateur voit « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Bloquer\nl'expéditeur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " » au bout de la ligne de tête. Le blocage vaut pour "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tout l'espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et se confirme deux fois : la\npremière fois dit combien de mails reçus de cette adresse iront à la corbeille de l'inbox ; la seconde, en rouge,\nbloque. Ses mails déjà reçus passent à la corbeille, et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ses prochains mails y arrivent directement"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sans être classés\nni lus. Rien n'est détruit : ils restent restaurables pendant le délai de la corbeille. On débloque dans Réglages ▸\nExpéditeurs bloqués ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-inbox-lire-trier-et-repondre",
+						"anchor": "les-expediteurs-bloques"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 12.7"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/bloquer-un-expediteur.jpg",
+			"alt": "La première confirmation du blocage : l'adresse, le nombre de mails qui iront à la corbeille, « Annuler » et « Continuer »",
+			"width": 367,
+			"height": 280
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Créer des contacts depuis les expéditeurs inconnus."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Dans la barre groupée, « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Créer des contacts"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " » ouvre la liste\ndes expéditeurs de la sélection qui "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ne sont pas encore des contacts"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", chacun coché, avec son nom et, si le domaine de\nson adresse est celui d'une organisation du carnet, cette organisation. Vérifiez, corrigez, décochez ce qui ne doit pas\nl'être, puis « Créer ». Le compte rendu dit combien de contacts sont créés, ignorés — déjà présents — ou refusés, et\npourquoi ; c'est le même chemin que l'import du carnet. Si tous les expéditeurs sont déjà des contacts, la liste le dit."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/creer-des-contacts.jpg",
+			"alt": "La liste à vérifier : l'expéditrice inconnue cochée, son nom et l'organisation tirée de son domaine, puis « Créer 1 contact »",
+			"width": 367,
+			"height": 303
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Tout cela se fait au clavier : la case se coche à l'Espace, le menu se parcourt aux flèches, et chaque confirmation rend\nla main à ce qui l'a ouverte."
 				}
 			]
 		},
@@ -3587,7 +4097,7 @@
 			"src": "l-inbox-lire-trier-et-repondre/repondre.jpg",
 			"alt": "Le bouton « Répondre » d'un message rangé dans une affaire",
 			"width": 536,
-			"height": 73
+			"height": 67
 		},
 		{
 			"type": "paragraph",
@@ -4252,7 +4762,7 @@
 			"src": "l-inbox-lire-trier-et-repondre/outbox-echecs.jpg",
 			"alt": "Les trois entrées « En file », « Envoyés » et « Échecs », un envoi en échec avec son motif, et « Réessayer »",
 			"width": 800,
-			"height": 490
+			"height": 426
 		},
 		{
 			"type": "paragraph",
@@ -4724,6 +5234,142 @@
 				{
 					"type": "text",
 					"text": " : les pastilles déjà posées ne changent pas d'elles-mêmes, et « Réévaluer les pastilles » relance un\nmessage précis. Tout se fait au clavier."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-expediteurs-bloques",
+			"content": [
+				{
+					"type": "text",
+					"text": "12.7 Les expéditeurs bloqués"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages ▸ Expéditeurs bloqués."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Cet écran liste les adresses bloquées de l'espace ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-inbox-lire-trier-et-repondre",
+						"anchor": "l-inbox-lire-et-trier-le-courrier-recu"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 12.2"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") : chaque\nligne porte l'adresse, puis "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "qui l'a bloquée et quand"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Les mails de ces adresses vont directement à la corbeille de\nl'inbox."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/expediteurs-bloques.jpg",
+			"alt": "Réglages ▸ Expéditeurs bloqués : l'adresse, « Bloqué par … le … » et « Débloquer »",
+			"width": 923,
+			"height": 102
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "« "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Débloquer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " » ouvre une confirmation courte, sous la ligne : les prochains mails de l'adresse arriveront de nouveau\ndans l'inbox ; "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ceux qui sont déjà dans la corbeille y restent"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — restaurez-les depuis la corbeille si vous en avez\nbesoin. Tous les membres lisent cet écran ; seuls les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " débloquent, les autres voient le bouton grisé,\navec un bandeau qui dit pourquoi ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). On ne\nbloque pas d'ici, mais depuis l'inbox. Tout se fait au clavier."
 				}
 			]
 		}

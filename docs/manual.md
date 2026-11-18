@@ -685,7 +685,7 @@ qui afficherait « 12 » sur douze messages tous lus ne dirait rien d'utile.
 
 ### 5.2 Ce que le panneau montre
 
-![Le panneau des notifications : « Camille Aubert vous a mentionné », l'extrait, l'affaire et sa pastille de dossier](manuel/images/vos-notifications-savoir-qu-on-vous-a-nomme/panneau.jpg)
+![Le panneau des notifications : un transfert de mail en tête, puis « Camille Aubert vous a mentionné », l'extrait, l'affaire et sa pastille de dossier](manuel/images/vos-notifications-savoir-qu-on-vous-a-nomme/panneau.jpg)
 
 Un clic — ou `Entrée` au clavier — ouvre le panneau **sous la cloche**, sans quitter l'écran où
 vous êtes. `Échap`, un clic à l'extérieur, ou « Fermer les notifications » le referment ; le focus
@@ -715,6 +715,12 @@ sauterait au moment où vous la marquez vous la ferait perdre de vue.
 lien, mais sans auteur ni extrait. Le produit ne dit alors ni que le message a été supprimé, ni que
 vous n'y avez plus accès : les deux causes sont indistinguables, et les nommer divulguerait la
 seconde.
+
+**Un mail qu'on vous transfère** se lit ainsi : « Camille Aubert vous a transféré 1 mail » — ou « 3 mails », quand
+plusieurs vous sont transférés d'un coup —, puis l'**objet** du premier, en lien : il ouvre l'inbox sur ce mail
+([section 12.2](#l-inbox-lire-et-trier-le-courrier-recu)). La ligne n'a ni affaire ni pastille de dossier.
+
+![Un transfert de mail dans le panneau : « … vous a transféré 1 mail », et l'objet du mail en lien](manuel/images/vos-notifications-savoir-qu-on-vous-a-nomme/transfert-de-mail.jpg)
 
 ### 5.3 Marquer lu, et marquer non lu
 
@@ -777,9 +783,9 @@ C'est **votre** réglage : personne d'autre ne le voit, pas même l'administratr
 travail. C'est aussi la seule section des réglages qui règle votre compte plutôt que l'espace, et
 c'est pourquoi elle vient en dernier dans la liste.
 
-**Une case par type de notification**, cochée par défaut. Aujourd'hui il n'y en a qu'une :
-« Recevoir les mentions ». Décochez-la, et les mentions cessent d'arriver dans votre cloche — le
-compteur tombe, le panneau se vide, et rien ne s'affiche plus en direct.
+**Une case par type de notification**, cochée par défaut. Il y en a deux : « Recevoir les mentions » et, dessous,
+« **Recevoir les transferts de mails** », quand un membre vous transfère des mails de l'inbox. Décochez-en une, et ce
+type cesse d'arriver dans votre cloche — le compteur tombe, le panneau le masque, et rien ne s'affiche plus en direct.
 
 **Rien n'est supprimé.** Les notifications continuent d'être produites et conservées : elles sont
 simplement **masquées** tant que la case est décochée. Recochez-la, et tout revient — non lu, dans
@@ -789,7 +795,7 @@ l'ordre, exactement comme avant. C'est la différence entre couper le son et jet
 « Enregistré » sous elle. Elle ne se coche qu'**après** la confirmation du serveur : ce que vous
 voyez est ce que le produit a réellement retenu, jamais ce qu'il a cru envoyer.
 
-![Réglages ▸ Notifications : la case « Recevoir les mentions » et la confirmation « Enregistré »](manuel/images/vos-notifications-savoir-qu-on-vous-a-nomme/recevoir-les-mentions.jpg)
+![Réglages ▸ Notifications : la case « Recevoir les mentions » décochée et la confirmation « Enregistré », puis la case « Recevoir les transferts de mails »](manuel/images/vos-notifications-savoir-qu-on-vous-a-nomme/recevoir-les-mentions.jpg)
 
 **Une chose à savoir**, parce qu'elle surprend : tant qu'un type est décoché, vous ne pouvez pas
 marquer lues les notifications de ce type. Vous ne les voyez pas, donc vous ne les marquez pas ;
@@ -3580,6 +3586,66 @@ page.
 Dans l'historique d'une affaire, un message effacé laisse la ligne « **Message effacé** », avec son objet et la personne
 qui l'a effacé ; restauré, il revient, suivi de la ligne « **Message restauré** ». Tout se fait au clavier.
 
+**Agir sur plusieurs conversations à la fois.** Chaque ligne de la liste porte, à gauche, une **case** : cochez-en une
+ou plusieurs — cocher n'ouvre pas la conversation. En tête de la liste, le nombre de conversations cochées s'affiche, avec
+« **Désélectionner** », un menu **« Action »** et « **Continuer** ». Les actions sont celles d'un message, regroupées :
+marquer comme lu ou non lu ; classer dans une affaire ou en retirer ; poser, retirer une pastille ou réévaluer les
+pastilles ; mettre en sommeil ou réveiller ; transférer à un membre ; créer des contacts ; supprimer ici ou partout. Une
+action que votre rôle ne permet pas reste dans le menu, grisée, avec la mention « non permis ».
+
+![La barre des actions groupées : « 2 fils sélectionnés », « Désélectionner », le menu « Action » et « Continuer », et la case cochée d'une conversation](manuel/images/l-inbox-lire-trier-et-repondre/actions-groupees.jpg)
+
+**Rien ne se fait sans confirmation.** « Continuer » ouvre, sous la barre, une confirmation qui **compte** ce qui sera
+touché — « Marquer comme non lus 2 fils (2 messages) ? » — et demande ce qu'il faut : l'affaire, la pastille, l'échéance
+du sommeil ou le membre. Une coche vaut pour **tous les messages de la conversation** que la liste montre. Une fois
+confirmé, une jauge suit l'avancement, puis un **compte rendu** dit ce qui a été fait, et, s'il y en a, combien de
+messages ont été refusés et pourquoi — un message que vos droits ne vous laissent pas modifier, par exemple. Échap
+referme la confirmation sans rien faire.
+
+![La confirmation d'une action groupée : ce qui sera touché, compté, puis « Annuler » et le bouton de l'action](manuel/images/l-inbox-lire-trier-et-repondre/confirmation-groupee.jpg)
+
+**« Tout sélectionner ».** Quand un filtre est posé — une pastille, « Seulement moi » ou un expéditeur —, la ligne de
+tête propose « **Tout sélectionner** » : toutes les conversations du filtre, **y compris celles que la liste n'affiche
+pas**. Le nombre exact est compté et affiché avant d'agir. Sans filtre, le bouton n'apparaît pas : un dossier entier ne
+se sélectionne pas d'un clic. Dans la **corbeille**, chaque message a sa case, et « **Restaurer** » restaure la
+sélection.
+
+**Filtrer sur un expéditeur.** Dans l'en-tête d'un message ouvert, sous « De : », « **Filtrer sur cet expéditeur** » ne
+garde dans la liste que les messages de cette adresse. Une ligne sous les filtres rapides le rappelle — « Expéditeur : »
+et l'adresse — avec « **Retirer le filtre** ». Le filtre se retient dans l'adresse de la page.
+
+![Le filtre sur un expéditeur : la ligne « Expéditeur : » et « Retirer le filtre », la liste réduite à ses messages](manuel/images/l-inbox-lire-trier-et-repondre/filtre-expediteur.jpg)
+
+**Transférer un message à un membre.** « **Transférer** », dans la rangée de boutons du message ouvert, ouvre un bloc :
+choisissez un **membre** de l'espace, puis « Transférer ». Aucun email n'est envoyé : le membre peut désormais **lire ce
+message dans le CRM**, il le retrouve sous « Seulement moi », et une notification le prévient
+([section 5.2](#ce-que-le-panneau-montre)). Sous les pastilles du message, une ligne par transfert dit à qui, par qui
+et quand ; « **Retirer** » l'annule — seuls celui qui a transféré et celui qui a reçu le voient. Transfèrent les
+administrateurs et les business developers ; dans la barre groupée, « Transférer à un membre » fait de même pour toute
+une sélection, avec une seule notification.
+
+![« Transférer » : le bloc ouvert et son menu « Membre », et la ligne d'un transfert déjà fait, avec « Retirer »](manuel/images/l-inbox-lire-trier-et-repondre/transferer-un-message.jpg)
+
+**Bloquer un expéditeur.** Quand le **seul** filtre posé est un expéditeur, un administrateur voit « **Bloquer
+l'expéditeur** » au bout de la ligne de tête. Le blocage vaut pour **tout l'espace** et se confirme deux fois : la
+première fois dit combien de mails reçus de cette adresse iront à la corbeille de l'inbox ; la seconde, en rouge,
+bloque. Ses mails déjà reçus passent à la corbeille, et **ses prochains mails y arrivent directement**, sans être classés
+ni lus. Rien n'est détruit : ils restent restaurables pendant le délai de la corbeille. On débloque dans Réglages ▸
+Expéditeurs bloqués ([section 12.7](#les-expediteurs-bloques)).
+
+![La première confirmation du blocage : l'adresse, le nombre de mails qui iront à la corbeille, « Annuler » et « Continuer »](manuel/images/l-inbox-lire-trier-et-repondre/bloquer-un-expediteur.jpg)
+
+**Créer des contacts depuis les expéditeurs inconnus.** Dans la barre groupée, « **Créer des contacts** » ouvre la liste
+des expéditeurs de la sélection qui **ne sont pas encore des contacts**, chacun coché, avec son nom et, si le domaine de
+son adresse est celui d'une organisation du carnet, cette organisation. Vérifiez, corrigez, décochez ce qui ne doit pas
+l'être, puis « Créer ». Le compte rendu dit combien de contacts sont créés, ignorés — déjà présents — ou refusés, et
+pourquoi ; c'est le même chemin que l'import du carnet. Si tous les expéditeurs sont déjà des contacts, la liste le dit.
+
+![La liste à vérifier : l'expéditrice inconnue cochée, son nom et l'organisation tirée de son domaine, puis « Créer 1 contact »](manuel/images/l-inbox-lire-trier-et-repondre/creer-des-contacts.jpg)
+
+Tout cela se fait au clavier : la case se coche à l'Espace, le menu se parcourt aux flèches, et chaque confirmation rend
+la main à ce qui l'a ouverte.
+
 **Retirer un message d'une affaire.** Un message rangé dans la mauvaise affaire n'y reste pas.
 Sous le message ouvert, en bas et séparée du reste, la commande « **Retirer de l'affaire** »
 demande d'abord confirmation. La confirmation dit deux choses, et elles comptent toutes les deux :
@@ -3810,6 +3876,22 @@ créent, modifient et archivent ; les autres voient les boutons grisés, avec un
 ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). Une modification vaut pour les mails
 évalués **ensuite** : les pastilles déjà posées ne changent pas d'elles-mêmes, et « Réévaluer les pastilles » relance un
 message précis. Tout se fait au clavier.
+
+### 12.7 Les expéditeurs bloqués
+
+*Réglages ▸ Expéditeurs bloqués.*
+
+Cet écran liste les adresses bloquées de l'espace ([section 12.2](#l-inbox-lire-et-trier-le-courrier-recu)) : chaque
+ligne porte l'adresse, puis **qui l'a bloquée et quand**. Les mails de ces adresses vont directement à la corbeille de
+l'inbox.
+
+![Réglages ▸ Expéditeurs bloqués : l'adresse, « Bloqué par … le … » et « Débloquer »](manuel/images/l-inbox-lire-trier-et-repondre/expediteurs-bloques.jpg)
+
+« **Débloquer** » ouvre une confirmation courte, sous la ligne : les prochains mails de l'adresse arriveront de nouveau
+dans l'inbox ; **ceux qui sont déjà dans la corbeille y restent** — restaurez-les depuis la corbeille si vous en avez
+besoin. Tous les membres lisent cet écran ; seuls les **administrateurs** débloquent, les autres voient le bouton grisé,
+avec un bandeau qui dit pourquoi ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). On ne
+bloque pas d'ici, mais depuis l'inbox. Tout se fait au clavier.
 
 ## 13. Consulter l'état de la messagerie
 
