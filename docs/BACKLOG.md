@@ -20010,3 +20010,34 @@ gagne un filtre par pastilles (plusieurs, en OU) ; aucune case nouvelle (`docs/S
 **DoD** : unitaires ; preuve d'API du filtre (plusieurs pastilles, archivées, valeur mal formée) avec les vrais jetons ;
 E2E souris et clavier aux quatre paliers ; captures observées ; connecteur (pytest, intégration, `verify-mcp.sh`) ; seed
 vérifié (une pastille archivée portée par un mail) ; manuel vérifié ; contrat.
+
+### CRM-156 — Inbox : opérations groupées sur une sélection de mails `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-18, relayée par la session de livraison (p2enjoy-crm-e3, ex-bb) ; arbitrée le
+même jour (décision 944).
+**Demande, verbatim** : « dans le inbox il nous faut aussi les bulk ops donc tout select (jamais sans au moins un filtre)
+puis bulk assign delete archive ... » — « assign » veut dire **classer dans une affaire**, « archive » veut dire **mettre en
+sommeil** (réponses du responsable).
+**Comportement attendu** (substance validée ; détail à spécifier) :
+- dans la liste des mails, **une case par fil** pour le sélectionner, à la souris et au clavier, toujours disponible ;
+- **« Tout sélectionner » n'existe que sous un filtre explicite** — une pastille (`CRM-155`), « Seulement moi », ou une
+  recherche s'il en existe une ; **le dossier seul ne suffit pas** ;
+- « Tout sélectionner » prend **tous les fils qui répondent au filtre**, même au-delà de la page affichée ; **le nombre est
+  annoncé avant d'agir**, et l'action se fait **en base, d'un seul coup** ;
+- les actions groupées de la première version :
+  - **classer dans une affaire** (une même affaire pour tous) ;
+  - **supprimer ici / supprimer partout** (`CRM-151`, avec leur confirmation courte) ;
+  - **marquer lu / non lu**, **mettre en sommeil / réveiller** ;
+  - **poser ou retirer une pastille** ;
+  - **réévaluer les pastilles** (remise dans la file du modèle) ;
+  - **restaurer** depuis la corbeille ;
+  - **déclasser d'une affaire** (dans le dossier d'une affaire : les fils redeviennent « Non classés ») ;
+- chaque action applique **les mêmes règles que l'action unitaire**, en base (droits, refus) ; une sélection mêlant des
+  fils permis et refusés dit ce qui a été fait et ce qui a été refusé.
+**Connecteur MCP** : **non** — écran seul ; l'assistant garde ses outils message par message (décision 944).
+**Dépend de** : `CRM-155` (les filtres rapides par pastilles, qui ouvrent « Tout sélectionner ») ; la spécification peut
+s'écrire en parallèle, l'écran se coordonne avec la session qui porte `CRM-155`.
+**Spécification** : à écrire avant le code — `docs/SPEC-mail-subsystem.md` (section nouvelle) ; `docs/SCHEMA.md` (les
+fonctions groupées) ; `docs/DESIGN_SYSTEM.md` (sélection, barre d'actions groupées) ; manuel §12.
+**DoD** : pgTAP des fonctions groupées ; preuve d'API avec les vrais jetons (refus du profil sans droit, sélection mixte) ;
+unitaires ; E2E souris et clavier aux quatre paliers ; captures observées ; seed vérifié ; manuel vérifié ; contrat.

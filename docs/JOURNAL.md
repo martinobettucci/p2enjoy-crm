@@ -40953,3 +40953,22 @@ les pastilles archivées plié par défaut ».
   défaut.
 **Conséquences** : unité `CRM-155` au backlog ; spécification à écrire avant le code ; confiée par la session de
 livraison à une session libre.
+
+### décision 944 — les opérations groupées de l'inbox (`CRM-156`)
+
+*2026-11-18, session 4522fa9c (p2enjoy-crm-e3, ex-bb, session de livraison), arbitrage du responsable (`AskUserQuestion`, deux
+tours).*
+**Demande** : « dans le inbox il nous faut aussi les bulk ops donc tout select (jamais sans au moins un filtre) puis bulk
+assign delete archive ... ».
+**Questions et réponses** :
+- *« assign » ?* — **classer dans une affaire**. *« archive » ?* — **le sommeil** existant (« oui pardon je voulais dire
+  sleep »), aucun concept d'archive nouveau.
+- *Les actions ?* — classer dans une affaire ; supprimer ici / partout ; lu, non lu, sommeil ; poser ou retirer une
+  pastille ; puis, aux idées proposées, **réévaluer les pastilles**, **restaurer depuis la corbeille**, **déclasser d'une
+  affaire**. Le responsable demande d'autres idées : elles lui sont proposées, hors de cette première version.
+- *Ce qui compte comme filtre ?* — **un filtre explicite** (pastille, « Seulement moi », recherche) ; le dossier seul ne
+  suffit pas ; cocher un à un reste toujours possible.
+- *La portée de « Tout sélectionner » ?* — **tous les fils du filtre**, au-delà de la page, nombre annoncé, action en base
+  d'un seul coup.
+- *Le connecteur MCP ?* — **Non**, écran seul.
+**Conséquences** : unité `CRM-156` au backlog, après `CRM-155` pour l'écran ; spécification avant le code.
