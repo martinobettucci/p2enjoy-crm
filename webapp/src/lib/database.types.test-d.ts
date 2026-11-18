@@ -1,3 +1,4 @@
+// @verifies CRM-154 (docs/BACKLOG.md) — tranche T2 : `reorder_channels` au témoin des fonctions (docs/SPEC-administration-arborescence.md §15.2)
 // @verifies CRM-149 (docs/BACKLOG.md) — tranche T1 : la table `mcp_prompts` au témoin des types générés (docs/SPEC-mcp.md §17.2)
 // @verifies CRM-141 (docs/BACKLOG.md) — tranches T1 et T2 : les trois tables et les cinq fonctions des pastilles d'un mail dans
 //           les types générés (docs/SPEC-mail-subsystem.md §31.2 à §31.5 ; docs/SPEC-ia.md §15.4)
@@ -1292,9 +1293,14 @@ type _vueDerivationColonnes = Expect<
 // (docs/SPEC-organisations.md §8.1, §8.2). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `domain` et `website` peuvent être nuls ;
 // `p_revenues` vaut `all`, `with` ou `without`, `p_sort` vaut `name` ou `contacts` ; les refus `invalid_revenues_filter` et
 // `invalid_sort` (22023). Le compte s'accroît de deux.
+// `0187` de CRM-154, TRANCHE T2, ajoute `reorder_channels`, SECURITY INVOKER : l'ordre des channels actifs d'un track, posé en
+// une instruction (docs/SPEC-administration-arborescence.md §15.2). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `p_channel_ids` doit être
+// exactement la liste des channels actifs du track ; les refus `channel_order_required`, `channel_order_duplicated` et
+// `channel_order_incomplete` (23514), `channel_reorder_forbidden` (42501). Le compte s'accroît de un.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'reorder_channels'
     | 'organization_list'
     | 'organization_tracks'
     | 'verify_label_dispatch'

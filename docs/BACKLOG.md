@@ -19911,3 +19911,11 @@ vers l'arborescence en lecture seule (la règle de `CRM-093`) ; au clavier, un *
 - **T5** — le manuel §3.4, §17.2, §17.3 et leurs images ; le contrat (migration `0187` et la webapp) ; la clôture.
 **DoD** : pgTAP et preuve d'API avec les vrais jetons (refus du business developer et de la lectrice) ; unitaires ; E2E
 souris et clavier ; captures observées aux quatre paliers ; manuel vérifié ; contrat.
+**Avancement** :
+- **T1** — faite (`73d1f6e3`) ;
+- **T2** — faite : `supabase/migrations/0187_reorganiser_channels.sql`, appliquée en dev par le runner ; pgTAP `0175`
+  25/25, rouge contre deux mutations (`security definer` : cinq assertions ; le refus (d) retiré : deux) ; API
+  `e2e/api/reorganiser-channels.spec.ts` 6/6 avec les vrais jetons (anonyme `401`, business developer et lectrice `403`,
+  liste incomplète `400`, chaque refus suivi d'une relecture ; l'ordre du seed reposé) ; types régénérés et témoin
+  (rouge sans la ligne) ; contrat §2.56 et §3, changelog ;
+- **T3** à **T5** — à faire.

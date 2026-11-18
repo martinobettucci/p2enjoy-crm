@@ -6030,6 +6030,10 @@ export type Database = {
           workspace_id: string
         }[]
       }
+      reorder_channels: {
+        Args: { p_channel_ids: string[]; p_track_id: string }
+        Returns: number
+      }
       reordonner_paliers_sequence: {
         Args: { p_paliers: string[]; p_sequence_id: string }
         Returns: number

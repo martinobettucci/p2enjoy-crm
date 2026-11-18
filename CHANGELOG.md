@@ -13,6 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-154` T2 — réorganiser les channels d'un track, en base (décisions 935 et 938)
+
+- **Une fonction nouvelle** pose d'un seul coup l'ordre des channels d'un track : elle reçoit la liste dans l'ordre voulu
+  et numérote les channels de 1 à n. Tout ou rien : une liste qui ne correspond pas aux channels actifs du track, ou un
+  appel par qui n'administre pas l'espace, est refusé sans qu'aucune position ne change.
+- Rien ne change encore à l'écran : l'arborescence (T3) et la barre d'onglets (T4) suivent. Migration 187
+  (`docs/PROD_MIGRATIONS.md` §2.56).
+
 #### `CRM-152` T1 — les tracks d'une organisation et la liste paginée, en base (décisions 931 et 936)
 
 - **Deux fonctions nouvelles** préparent l'écran Organisations et le connecteur. La première rend les tracks de chaque

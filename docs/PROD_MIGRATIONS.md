@@ -1244,7 +1244,26 @@ Aucune variable, aucun secret.
 après** elle, jamais avant.
 **Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0186` » : retirer les deux fonctions, ce qui n'efface rien.
 
+### 2.56 `CRM-154` T2, décisions 935 et 938 — réorganiser les channels d'un track, en base (À LIVRER : migration 187 ; **hors de tout lot annoncé**)
+
+`docs/SPEC-administration-arborescence.md` §15.2 ; `docs/SCHEMA.md` « Migration `0187` ». Une fonction `SECURITY INVOKER`,
+`reorder_channels` ; **aucune table, aucune politique, aucune donnée**, aucun verrou notable. Aucune variable, aucun
+secret.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 187 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate` |
+| 2 | Constater | session de livraison, en lecture seule | le registre gagne une ligne, l'empreinte de la 187 égale celle du dépôt ; `select to_regprocedure('public.reorder_channels(uuid, uuid[])')` non nul |
+
+**Seule, elle ne change rien de visible** : la webapp (T3, T4) qui l'appelle se livre **avec ou après** elle, jamais
+avant.
+**Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0187` » : retirer la fonction, ce qui n'efface rien.
+
 ## 3. Migrations en attente
+
+**La 187** (`CRM-154` T2, décisions 935 et 938), *en attente, hors de tout lot annoncé* : réorganiser les channels d'un
+track (`docs/SCHEMA.md` « Migration `0187` ») — une fonction, aucune donnée. Indépendante de la 186 (§2.56). **Avant ou
+avec la webapp de T3 et T4.** Aucun geste préalable du responsable.
 
 **La 186** (`CRM-152` T1, décisions 931 et 936), *en attente, hors de tout lot annoncé* : les tracks d'une organisation
 et la liste paginée (`docs/SCHEMA.md` « Migration `0186` ») — deux fonctions, aucune donnée. Seule (§2.55).
