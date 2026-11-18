@@ -1297,7 +1297,27 @@ sur la 188. Les écrans (T2 à T4) et les outils (T5) se livrent **avec ou aprè
 **Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0188` » ; les catégories et commentaires saisis
 entre-temps sont perdus — un `pg_dump` des quatre tables d'abord.
 
+### 2.59 `CRM-156` T1, décisions 944, 946 et 949 — les actions groupées de l'inbox, en base (EN ATTENTE)
+
+`docs/SPEC-mail-subsystem.md` §32.2 à §32.5 bis ; `docs/SCHEMA.md` « Migration `0189` ». **Aucune table, aucune colonne,
+aucune donnée** : quatre fonctions — `app.inbox_scope_messages`, `app.code_refus_unitaire`, `public.inbox_bulk_count`,
+`public.inbox_bulk_apply` —, `EXECUTE` des deux dernières à `authenticated` seul. Aucune variable, aucun secret ; pas de
+connecteur (décision 944).
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 189 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate` |
+| 2 | Constater | session de livraison, en lecture seule | le registre gagne une ligne, l'empreinte de la 189 égale celle du dépôt ; `select to_regprocedure('public.inbox_bulk_apply(jsonb, text, jsonb)')` et `select to_regprocedure('public.inbox_bulk_count(jsonb)')` non nuls ; `select has_function_privilege('anon', 'public.inbox_bulk_apply(jsonb, text, jsonb)', 'execute')` faux |
+
+**Seule, elle ne change rien de visible** : aucun écran ne l'appelle avant T3. Les écrans (T3, T4) se livrent **avec ou
+après** elle, jamais avant.
+**Retour arrière** : supprimer les quatre fonctions (`docs/SCHEMA.md` « Migration `0189` ») ; aucune donnée n'est perdue.
+
 ## 3. Migrations en attente
+
+**La 189** (`CRM-156` T1, décisions 944, 946 et 949), *en attente* : les actions groupées de l'inbox
+(`docs/SCHEMA.md` « Migration `0189` ») — quatre fonctions, aucune donnée. Indépendante de la 188 (§2.59). **Avant ou avec
+la webapp de T3 et T4.** Aucun geste préalable du responsable.
 
 **La 188** (`CRM-153` T1, décisions 932, 939 et 942), *en attente* : les catégories et le fil de commentaires d'une
 organisation (`docs/SCHEMA.md` « Migration `0188` ») — quatre tables, treize politiques, une colonne des notifications,

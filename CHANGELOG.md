@@ -13,6 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-156` T1 — les actions groupées de l'inbox, en base (migration 189)
+
+- `inbox_bulk_count` compte les fils et les messages d'une sélection ; `inbox_bulk_apply` y applique une action —
+  classer, déclasser, supprimer ici ou partout, restaurer, lu, non lu, sommeil, réveil, poser ou retirer une pastille,
+  réévaluer — en passant chaque message par la fonction unitaire, et rend les faits et les refus par motif.
+- La sélection se décrit par le dossier, les filtres et les fils cochés, ou « tout le filtre » : la base **refuse** « tout »
+  sans filtre explicite (`filter_required`) et ne retient que les messages que la personne voit.
+- Par paquets de 2 000 messages, avec un curseur, sous le délai de 8 s de la base (décision 949). Aucun écran ne
+  l'appelle encore (T3).
+
 ### `CRM-153` T2 — Réglages ▸ Catégories d'organisations
 
 - Un écran de réglages, `/reglages/categories-organisations`, juste après « Étiquettes » dans l'index

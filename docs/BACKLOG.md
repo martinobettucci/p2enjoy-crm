@@ -20082,8 +20082,14 @@ s'écrire en parallèle, l'écran se coordonne avec la session qui porte `CRM-15
 « Migration — `CRM-156` T1 » et « T2 » ; `docs/DESIGN_SYSTEM.md` §5.109 écrit avant le code de T3, sur l'en-tête de `CRM-155`
 (coordonné avec la session c7) ; manuel §12 en T5.
 **Tranches** (`docs/SPEC-mail-subsystem.md` §32.14) :
-- [ ] **T1** — la base des actions groupées : la portée, `inbox_bulk_count`, `inbox_bulk_apply` pour les actions
-  existantes ; pgTAP ; API ; la mesure du débit contre le délai de 8 s ;
+- [x] **T1** — la base des actions groupées : la portée, `inbox_bulk_count`, `inbox_bulk_apply` pour les actions
+  existantes ; pgTAP ; API ; la mesure du débit contre le délai de 8 s. *Fait le 2026-11-18* : migration `0189` (quatre
+  fonctions, aucune table) ; la mesure a conduit aux paquets de 2 000 (décision 949 : supprimer 5 000 messages prenait
+  8,2 s ; un paquet de 2 000, 3,2 s) ; pgTAP `0177` 41/41 (portée, filtres, fils, sommeil, corbeille, visibilité, chaque
+  action, sélection mixte, refus de forme, panne qui fait échouer l'appel, paquets et curseur) ; API
+  `e2e/api/actions-groupees-inbox.spec.ts` sous les trois jetons (anonyme refusé, « tout » sans filtre refusé, la lectrice
+  qui ne voit pas la boîte de Driss, classer refusé dans une affaire qu'il n'écrit pas, sélection mixte, la lectrice qui
+  marque lu sans pouvoir supprimer, curseur mal formé) ; contrat §2.59 ;
 - [ ] **T2** — la base des ajouts : transfert (lecture ouverte, `concerns_me`, notification `mail_transfer`), blocage
   (réception en corbeille), expéditeurs inconnus et `import_contacts(p_source)` ; pgTAP ; API ; E2E `mail` ;
 - [ ] **T3** — l'écran de la sélection : cases, « Tout sélectionner », barre, confirmations, comptes rendus, corbeille ;

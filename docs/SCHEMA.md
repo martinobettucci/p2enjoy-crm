@@ -3348,10 +3348,10 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
    cards actives exige un plan de remappage. Comportement par défaut retenu : archivage refusé
    tant que des cards s'y trouvent.
 
-### Migration — les actions groupées de l'inbox — `CRM-156` T1 (numéro pris après synchronisation, à l'écriture ; spécifiée le 2026-11-18, avant le code)
+### Migration `0189` — les actions groupées de l'inbox — `CRM-156` T1 (`0189_actions_groupees_inbox.sql` ; spécifiée le 2026-11-18, avant le code ; écrite le 2026-11-18)
 
-*Écrit le 2026-11-18, avant le code (décisions 944 et 946).* Spécification : `docs/SPEC-mail-subsystem.md` §32.2 à §32.5.
-**Aucune table, aucune colonne.** Trois fonctions :
+*Écrit le 2026-11-18, avant le code (décisions 944 et 946) ; révisé avec le code pour les paquets (décision 949).*
+Spécification : `docs/SPEC-mail-subsystem.md` §32.2 à §32.5 bis. **Aucune table, aucune colonne.** Quatre fonctions :
 
 - **`app.inbox_scope_messages(p_scope jsonb)`** — `SECURITY DEFINER`, `search_path` vide, non exposée : valide la
   description (§32.2 ; `22023 invalid_scope`, `22023 filter_required`) et rend les messages de la portée que l'appelant
@@ -3362,9 +3362,17 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
   `SECURITY DEFINER`, `search_path` vide ; `EXECUTE` à `authenticated` seul. Appelle les fonctions unitaires
   (`classify_message`, `unclassify_message`, `delete_message`, `restore_message`, `mark_messages_read`,
   `mark_message_unread`, `snooze_thread`, `wake_thread`, `set_message_label`, `request_label_evaluation`), chacune dans un
-  bloc qui capte ses refus nommés (§32.5).
+  bloc qui capte ses refus nommés (§32.5). **Un appel traite un paquet** de 2 000 messages au plus — 2 000 fils pour le
+  sommeil —, après le curseur `after` de la description, et rend `next` (§32.5 bis). Ses tables de travail sont
+  temporaires, détruites à la fin de la transaction.
+- **`app.code_refus_unitaire(text, text)`** — `IMMUTABLE`, non exposée : le code d'un refus nommé (la liste fermée du
+  §32.5, lue dans le message, ou dans le JSON de `app.raise_http_error`), `null` pour toute autre erreur — que l'action
+  relève alors, faisant échouer le paquet.
 
-**Retour arrière** : supprimer les trois fonctions ; aucune donnée n'est perdue.
+*Mesuré à l'écriture* : un appel unique sur 5 000 messages prenait jusqu'à 8,2 s (supprimer), au-delà du délai de 8 s
+du rôle `authenticated` ; un paquet de 2 000 prend 3,7 s pour classer et 3,2 s pour supprimer.
+
+**Retour arrière** : supprimer les quatre fonctions ; aucune donnée n'est perdue.
 
 ### Migration — transfert, blocage d'un expéditeur, contacts depuis les expéditeurs — `CRM-156` T2 (numéro pris après synchronisation, à l'écriture ; spécifiée le 2026-11-18, avant le code)
 

@@ -5010,8 +5010,8 @@ pastilles** l'écartent, et le prouve par pgTAP. Un message **envoyé** n'est ja
 
 ### 32.11 Les migrations
 
-`docs/SCHEMA.md`, « Migration — `CRM-156` T1 » et « Migration — `CRM-156` T2 ». Les numéros se prennent après
-synchronisation, à l'écriture de chaque migration.
+`docs/SCHEMA.md`, « Migration `0189` » (T1, écrite le 2026-11-18) et « Migration — `CRM-156` T2 ». Le numéro de T2 se
+prend après synchronisation, à l'écriture de la migration.
 
 ### 32.12 Seed
 
