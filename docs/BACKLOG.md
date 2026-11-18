@@ -20036,7 +20036,21 @@ sommeil** (réponses du responsable).
   - **déclasser d'une affaire** (dans le dossier d'une affaire : les fils redeviennent « Non classés ») ;
 - chaque action applique **les mêmes règles que l'action unitaire**, en base (droits, refus) ; une sélection mêlant des
   fils permis et refusés dit ce qui a été fait et ce qui a été refusé.
-**Connecteur MCP** : **non** — écran seul ; l'assistant garde ses outils message par message (décision 944).
+**Ajouts du responsable** (décision 945), dans la même unité :
+- **« Transférer à un membre »** : aucun mail n'est envoyé, c'est une écriture **en base** seulement. On choisit un membre
+  de l'espace ; les fils apparaissent alors **aussi** dans son inbox « Seulement moi » (\`concerns_me\` les retient), et
+  **restent** dans celle de l'auteur. Le membre reçoit **une notification** (« Camille vous a transféré 3 fils »). Le
+  transfert est **visible** dans le message ouvert (« Transféré à Driss par Camille, le … ») et **retirable** par
+  l'auteur ou le destinataire du transfert. Action unitaire et groupée.
+- **« Bloquer l'expéditeur »** : proposé **seulement quand le seul filtre actif est un expéditeur précis** — ce qui exige
+  un **filtre par expéditeur** dans l'inbox ; avec **une double confirmation**, qui annonce le nombre de mails touchés. Ses
+  mails **déjà reçus** et **ses prochains mails** vont **à la corbeille de l'inbox** (restaurables 30 jours) ; on le débloque
+  depuis les réglages.
+- **« Créer des contacts »** depuis les **expéditeurs inconnus** de la sélection : une **liste à vérifier d'abord** s'ouvre
+  (cocher, corriger le nom et l'organisation), puis la création.
+- Écartés par le responsable : l'export, et l'annulation d'une opération groupée (« les gens qui utilisent le CRM doivent
+  savoir ce qu'ils font »).
+**Connecteur MCP** : **non** — écran seul ; l'assistant garde ses outils message par message (décisions 944 et 945, les trois ajouts compris).
 **Dépend de** : `CRM-155` (les filtres rapides par pastilles, qui ouvrent « Tout sélectionner ») ; la spécification peut
 s'écrire en parallèle, l'écran se coordonne avec la session qui porte `CRM-155`.
 **Spécification** : à écrire avant le code — `docs/SPEC-mail-subsystem.md` (section nouvelle) ; `docs/SCHEMA.md` (les

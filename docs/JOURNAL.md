@@ -40972,3 +40972,22 @@ assign delete archive ... ».
   d'un seul coup.
 - *Le connecteur MCP ?* — **Non**, écran seul.
 **Conséquences** : unité `CRM-156` au backlog, après `CRM-155` pour l'écran ; spécification avant le code.
+
+### décision 945 — `CRM-156` gagne « Transférer à un membre », « Bloquer l'expéditeur » et « Créer des contacts »
+
+*2026-11-18, session 4522fa9c (p2enjoy-crm-e3, ex-bb, session de livraison), arbitrage du responsable (message, puis
+`AskUserQuestion`, deux tours).*
+**Le responsable, sur les idées proposées** : transférer, « intéressant, mais pas comme on pourrait le croire » — un
+changement en base seulement, le fil apparaît dans l'inbox « Seulement moi » du membre choisi ; exporter, non ; bloquer
+l'expéditeur, oui, affiché seulement quand le seul filtre est un expéditeur précis, avec double confirmation ; créer des
+contacts depuis les expéditeurs inconnus, oui ; annuler, non.
+**Réponses** :
+- *Transférer* : **les deux le voient** ; **une notification** au destinataire ; **visible et retirable** (auteur ou
+  destinataire du transfert).
+- *Bloquer* : les prochains mails **et les déjà reçus** vont **à la corbeille directe** de l'inbox ; déblocage dans les
+  réglages.
+- *Créer des contacts* : **une liste à vérifier d'abord**.
+- *Connecteur MCP* : **non**, écran seul.
+- *Découpage* : **dans `CRM-156`**, une seule unité livrée en une fois.
+**Conséquences** : `CRM-156` complétée au backlog ; un filtre par expéditeur entre dans l'inbox ; spécification avant le
+code (fc, ex-f8).
