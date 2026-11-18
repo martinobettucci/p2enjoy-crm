@@ -19661,6 +19661,9 @@ de GitHub épinglée, accès au registre npm), puis la première livraison réel
 ## Demande du 2026-11-17 — épingler l'infobulle de description pour lire un texte long
 
 ### CRM-148 — Infobulle de description : un clic dedans l'épingle, elle ne se ferme plus qu'à sa croix, et un texte long y défile `[P]`
+
+**Livrée le 2026-11-18** (décision 937, révision `499cb253`) ; reste le constat du responsable en production.
+
 **État (2026-11-17)** : vérifiée en développement (ci-dessous). **Reste** : la livraison de la webapp (contrat
 `docs/PROD_MIGRATIONS.md` §2.53) et le constat du responsable en production.
 
@@ -19691,6 +19694,8 @@ changement ; DESIGN_SYSTEM §5.58 (le texte masqué), changelog, contrat §2.53.
 était tenu par un serveur d'un autre projet (`4-120`), arrêté sur autorisation du responsable.
 
 ### CRM-149 — Les prompts du connecteur MCP : des parcours guidés, par espace, édités dans Réglages `[P]`
+
+**Livrée le 2026-11-18** (décision 937, révision `499cb253`) ; reste le constat du responsable en production.
 
 **Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison : « dans le MCP ajouter des
 prompts pour mieux guider l'usage du CRM et ces PROMPTS devraient être éditables via l'admin du CRM (éditer, ajouter,
@@ -19736,6 +19741,8 @@ manuel publié (§2.52), dans cet ordre.
 
 ### CRM-150 — `crm_card_move` rend « erreur » là où le CRM refuse : enquête et correction `[P]`
 
+**Livrée le 2026-11-18** (décision 937, révision `499cb253`) ; reste le constat du responsable en production.
+
 **Origine** : décision du responsable, le 2026-11-17, relayée par la session de livraison : « enquête et correction », dans
 une unité dédiée, sur le relevé du journal MCP de production (`public.mcp_journal`, 2026-10-26 au 2026-11-17).
 **Spécification** : `docs/SPEC-mcp.md` §9.3 (« Un refus fait par le connecteur ») ; `docs/JOURNAL.md` décision 933 ;
@@ -19771,6 +19778,8 @@ connecteur.
   `refus_crm`.
 
 ### CRM-151 — Supprimer un mail : « Supprimer ici » et « Supprimer partout », confirmation courte, « Ne plus demander pendant 1 heure » `[P]`
+
+**Livrée le 2026-11-18** (décision 937, révision `499cb253`) ; reste le constat du responsable en production.
 
 **Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison (p2enjoy-crm-bb) ; arbitrée le
 même jour (décision 928). Révise l'« Effacer » de `CRM-138` (décisions 878, 917, 921 ; `docs/DESIGN_SYSTEM.md` §5.102).

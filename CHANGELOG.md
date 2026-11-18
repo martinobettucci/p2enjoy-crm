@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-18 — la migration 185, l'image `mcp`, la webapp et le manuel
+
+Cellule Spark `crm`, révision `499cb253` (décision 937, un `pg_dump -Fc` avant). **Vérifié** : registre à 183 lignes, la
+dernière `0185_prompts_connecteur.sql` ; cinq prompts par défaut dans l'espace ; `mcp` reconstruit et sain ;
+`index-DU2KLNsA.js` servi ; `verifier.sh` 34/35 (INC-277) ; manuel publié (574 fichiers). Le constat du responsable reste à
+faire.
+
 #### `CRM-151` — « Supprimer ici » et « Supprimer partout » (décisions 928 et 934)
 
 - **Deux boutons remplacent « Effacer »** sous un message ouvert : « Supprimer ici » le met dans la corbeille de l'inbox
@@ -88,8 +99,6 @@ d'exécuter le code attendu.
   valeurs possibles, et le journal des appels l'inscrit « Refusé par le CRM ». « Erreur » ne compte plus que les vraies
   pannes. Le manuel le dit (§33.4).
 - Déploiement : l'image `mcp` seule (`docs/PROD_MIGRATIONS.md` §2.50).
-
-## [Publié]
 
 ### Déployé en production, 2026-11-12 — migrations 183 et 184, la fonction `ia`, l'image `mcp`, la webapp et le manuel
 

@@ -40848,6 +40848,10 @@ sur « Ma journée » (campagne passée minuit), `premier-lancement` en série (
 le seed §47 en ajoute un sixième ; rejoué : 161 fichiers, 5 334 assertions sans anomalie. Captures : 250 renouvelées,
 observées (`68dd2215`).
 **Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `499cb253`.
+**Exécutée le 2026-11-18** : `pg_dump` relu (3 332 entrées), `livrer.sh --revision 499cb253…` (webapp bâtie dans la
+cellule, migration 185), `mcp` reconstruit, manuel publié ; registre à 183, cinq prompts par défaut, `verifier.sh` 34/35
+(INC-277) ; contrat §2.49 à §2.54 LIVRÉES, §3 et §8, changelog en [Publié], backlog ; verrou levé. Reste le constat du
+responsable.
 
 ### décision 938 — `CRM-154` : « Réorganiser » reste un lien pour tous ; un mode déplacement au clavier ; le design system lu par sections
 
