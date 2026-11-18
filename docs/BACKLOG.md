@@ -20051,6 +20051,9 @@ sommeil** (réponses du responsable).
 - Écartés par le responsable : l'export, et l'annulation d'une opération groupée (« les gens qui utilisent le CRM doivent
   savoir ce qu'ils font »).
 **Connecteur MCP** : **non** — écran seul ; l'assistant garde ses outils message par message (décisions 944 et 945, les trois ajouts compris).
+**Arbitrages avant la spécification** (décision 946) : un fil coché agit sur **les messages que la liste montre** (dossier
+et filtres actifs) ; **aucun plafond** au nombre de messages ; **toutes** les actions groupées ouvrent une confirmation
+courte qui rappelle le nombre de fils et de messages, sans la suspension d'une heure de `CRM-151`.
 **Dépend de** : `CRM-155` (les filtres rapides par pastilles, qui ouvrent « Tout sélectionner ») ; la spécification peut
 s'écrire en parallèle, l'écran se coordonne avec la session qui porte `CRM-155`.
 **Spécification** : à écrire avant le code — `docs/SPEC-mail-subsystem.md` (section nouvelle) ; `docs/SCHEMA.md` (les

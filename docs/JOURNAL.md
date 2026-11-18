@@ -40991,3 +40991,28 @@ contacts depuis les expéditeurs inconnus, oui ; annuler, non.
 - *Découpage* : **dans `CRM-156`**, une seule unité livrée en une fois.
 **Conséquences** : `CRM-156` complétée au backlog ; un filtre par expéditeur entre dans l'inbox ; spécification avant le
 code (fc, ex-f8).
+
+### décision 946 — `CRM-156` : la portée d'un fil coché, aucun plafond, une confirmation pour chaque action groupée
+
+*2026-11-18, session d5b44a2d (p2enjoy-crm-fc, ex-f8), qui porte `CRM-156` ; arbitrage du responsable (`AskUserQuestion`),
+avant la spécification.*
+**Problème** : la décision 944 laisse ouverts trois points de comportement. La liste de l'inbox ne charge que cinquante
+messages, groupés en fils par l'écran ; « Tout sélectionner » doit donc se calculer en base. Les actions unitaires
+existantes portent sur le message ouvert (supprimer, classer, pastilles) ou sur le fil (sommeil, lecture à l'ouverture).
+**Questions et réponses** :
+- *Sur quels messages d'un fil coché l'action porte-t-elle ?* — **Ceux que la liste montre** : les messages du fil qui
+  répondent au dossier ET aux filtres actifs. Sous le filtre « Spam », un fil de trois messages dont un seul porte la
+  pastille n'agit que sur ce message. *Écarté* : tout le fil du dossier, le filtre ne servant qu'à trouver les fils.
+- *Un plafond au nombre de messages traités en une fois ?* — **Aucun** : tous les fils du filtre, quel qu'en soit le
+  nombre. *Écarté* : un plafond de 5 000 messages, refusé aussi par la base. La conséquence assumée : une très grande
+  sélection peut prendre du temps ; la spécification la mesure et le dit.
+- *Quelles actions groupées confirment ?* — **Toutes** : chaque action groupée ouvre une confirmation courte qui rappelle
+  le nombre de fils et de messages. *Écartés* : les suppressions seules, avec ou sans la case « Ne plus demander pendant
+  1 heure » de `CRM-151` ; la suspension d'une heure ne vaut donc pas pour les actions groupées.
+**Observations** (relues dans la base de développement, `pg_get_functiondef`) : chaque action unitaire est une fonction
+`SECURITY DEFINER` qui porte ses gardes — `classify_message`, `unclassify_message`, `mark_messages_read` (200 identifiants
+au plus par appel), `mark_message_unread`, `snooze_thread` et `wake_thread` (par fil), `delete_message`, `restore_message`,
+`set_message_label`, `request_label_evaluation`. L'inbox n'a pas de recherche propre : les filtres explicites sont donc
+les pastilles (`CRM-155`) et « Seulement moi », et le filtre par expéditeur que la décision 945 ajoute.
+**Conséquences** : la spécification de `CRM-156` (`docs/SPEC-mail-subsystem.md`, section nouvelle) s'écrit sur ces
+réponses, avec les ajouts de la décision 945.
