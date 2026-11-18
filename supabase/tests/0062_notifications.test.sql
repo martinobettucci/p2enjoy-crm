@@ -9,6 +9,8 @@
 --            ZÉRO LIGNE), §7
 -- @verifies docs/SCHEMA.md §8 ; docs/PROD_MIGRATIONS.md §3 (migration 64)
 -- @verifies CLAUDE.md §10 (une règle d'accès se prouve hors interface)
+-- @verifies CRM-153 (docs/BACKLOG.md) — tranche T1 : la neuvième colonne, `subject_organization_id`
+--            (docs/SPEC-notifications.md §51) ; révisé le 2026-11-18
 --
 -- CE QUE CETTE SUITE PROUVE, ET CE QU'ELLE NE REPROUVE PAS.
 --
@@ -96,8 +98,9 @@ select is(
 	  where a.attrelid = 'public.notifications'::regclass
 	    and a.attnum > 0 and not a.attisdropped),
 	array['id', 'workspace_id', 'recipient_id', 'type', 'subject_card_id', 'payload', 'read_at',
-	      'created_at'],
-	'CRM-064 §13.2 — HUIT colonnes et huit seulement. Aucune `updated_at` : `read_at` est la seule '
+	      'created_at', 'subject_organization_id'],
+	'CRM-064 §13.2, CRM-153 §51 — NEUF colonnes et neuf seulement : la neuvième, `subject_organization_id`, est le second '
+	'sujet possible (révisé le 2026-11-18, migration 0188). Aucune `updated_at` : `read_at` est la seule '
 	'mutation ouverte et porte sa propre date (INC-025)');
 
 select col_is_pk('public', 'notifications', array['id'],

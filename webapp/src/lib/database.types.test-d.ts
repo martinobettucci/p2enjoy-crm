@@ -1,3 +1,4 @@
+// @verifies CRM-153 (docs/BACKLOG.md) — tranche T1 : les quatre tables d'une organisation au témoin des tables, `organization_list` remplacée sans changer le compte (docs/SPEC-organisations.md §9.1, §9.2)
 // @verifies CRM-154 (docs/BACKLOG.md) — tranche T2 : `reorder_channels` au témoin des fonctions (docs/SPEC-administration-arborescence.md §15.2)
 // @verifies CRM-149 (docs/BACKLOG.md) — tranche T1 : la table `mcp_prompts` au témoin des types générés (docs/SPEC-mcp.md §17.2)
 // @verifies CRM-141 (docs/BACKLOG.md) — tranches T1 et T2 : les trois tables et les cinq fonctions des pastilles d'un mail dans
@@ -316,6 +317,17 @@ type _tables = Expect<
     // `app`, que PostgREST n'expose pas.
     | 'notification_preferences'
     | 'organizations'
+    // `0188` de `CRM-153` TRANCHE T1 ajoute les quatre tables d'une organisation (docs/SPEC-organisations.md §9.1, §9.2) et la
+    // colonne `notifications.subject_organization_id`. CE QUI ÉCHAPPE AU GÉNÉRATEUR : `Insert` et `Update` montrent toutes les
+    // colonnes, alors que des privilèges de colonne les bornent — `name`, `color` à la création d'une catégorie (et son
+    // espace), `name`, `color`, `archived_at` à sa modification ; `organization_id`, `category_id` à la pose ; `body`,
+    // `deleted_at` à la modification d'un commentaire ; aucune suppression d'une catégorie ni d'un commentaire. Les refus
+    // nommés `category_archived`, `category_other_workspace` (22023), `comment_deleted`, `comment_immutable_column`,
+    // `comment_moderation_limitee`, `mention_destinataire_sans_acces` (P0001) ne se lisent que dans le contrat d'API.
+    | 'organization_categories'
+    | 'organization_category_links'
+    | 'organization_comments'
+    | 'organization_comment_mentions'
     // `0089` de `CRM-101` TRANCHE T1 ajoute `plateforme_journal` et `superadmins` (docs/SPEC-plateforme.md §5, décision
     // 627). CE QUI ÉCHAPPE AU GÉNÉRATEUR : les deux tables sont FERMÉES à l'API — RLS sans politique, aucun privilège
     // client —, et `Row`, `Insert`, `Update` décrivent des gestes qu'aucun jeton de la webapp ne peut faire ; tout passe
@@ -1297,6 +1309,8 @@ type _vueDerivationColonnes = Expect<
 // une instruction (docs/SPEC-administration-arborescence.md §15.2). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `p_channel_ids` doit être
 // exactement la liste des channels actifs du track ; les refus `channel_order_required`, `channel_order_duplicated` et
 // `channel_order_incomplete` (23514), `channel_reorder_forbidden` (42501). Le compte s'accroît de un.
+// `0188` de CRM-153, TRANCHE T1, REMPLACE `organization_list` : elle gagne `p_category_ids`, en dernier, l'une des catégories
+// données, archivées comprises (docs/SPEC-organisations.md §9.1). L'ancienne signature est retirée. Le compte ne change pas.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],

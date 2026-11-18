@@ -1276,9 +1276,35 @@ aucune variable, aucun secret** ; le connecteur MCP ne change pas. **Jamais avan
 
 **Retour arrière** : la webapp précédente ; l'ordre posé reste valide pour elle (des positions entières).
 
+### 2.58 `CRM-153` T1, décisions 932, 939 et 942 — les catégories et le fil de commentaires d'une organisation, en base (EN ATTENTE)
+
+`docs/SPEC-organisations.md` §9.1, §9.2 ; `docs/SCHEMA.md` « Migration `0188` » ; `docs/SPEC-notifications.md` §51. Quatre
+tables (`organization_categories`, `organization_category_links`, `organization_comments`,
+`organization_comment_mentions`), treize politiques, quatre fonctions du schéma `app` et cinq déclencheurs ; la colonne
+`notifications.subject_organization_id`, sa clé et un `check` ; les deux politiques des notifications remplacées ;
+`organization_list` remplacée (`p_category_ids` en dernier). **Aucune donnée** : le catalogue naît vide (décision 939).
+Verrou bref sur `notifications` (une colonne nulle sans défaut, une contrainte vérifiée sur une table petite). Aucune
+variable, aucun secret ; aucune case nouvelle dans la matrice du connecteur (famille `organisations`, décision 932).
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 188 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate` |
+| 2 | Constater | session de livraison, en lecture seule | le registre gagne une ligne, l'empreinte de la 188 égale celle du dépôt ; `select to_regprocedure('public.organization_list(uuid, text, uuid[], text, text, boolean, integer, integer, uuid[])')` non nul, l'ancienne signature nulle ; `select count(*) from public.organization_categories` vaut 0 |
+
+**Seule, elle ne change rien de visible** : la webapp et l'image `mcp` livrées continuent d'appeler `organization_list`
+par arguments nommés, sans `p_category_ids` — preuve : l'E2E `liste-organisations` et l'intégration du connecteur, rejoués
+sur la 188. Les écrans (T2 à T4) et les outils (T5) se livrent **avec ou après** elle, jamais avant.
+**Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0188` » ; les catégories et commentaires saisis
+entre-temps sont perdus — un `pg_dump` des quatre tables d'abord.
+
 ## 3. Migrations en attente
 
-**Aucune migration en attente depuis la seconde fenêtre du 2026-11-18** : la 186 et la 187 ont été appliquées par elle (révision `249813f1`, décision 941) ; registre à **185** lignes. *Historique de l'attente* — les paragraphes qui suivent décrivent ces migrations telles qu'elles attendaient.
+**La 188** (`CRM-153` T1, décisions 932, 939 et 942), *en attente* : les catégories et le fil de commentaires d'une
+organisation (`docs/SCHEMA.md` « Migration `0188` ») — quatre tables, treize politiques, une colonne des notifications,
+`organization_list` remplacée ; aucune donnée. Seule (§2.58). **Avant ou avec la webapp de T2 à T4 et l'image `mcp` de
+T5.** Aucun geste préalable du responsable.
+
+**Avant la 188, aucune migration en attente depuis la seconde fenêtre du 2026-11-18** : la 186 et la 187 ont été appliquées par elle (révision `249813f1`, décision 941) ; registre à **185** lignes. *Historique de l'attente* — les paragraphes qui suivent décrivent ces migrations telles qu'elles attendaient.
 
 **La 187** (`CRM-154` T2, décisions 935 et 938), *appliquée le 2026-11-18* : réorganiser les channels d'un
 track (`docs/SCHEMA.md` « Migration `0187` ») — une fonction, aucune donnée. Indépendante de la 186 (§2.56). **Avant ou

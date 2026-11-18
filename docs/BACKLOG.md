@@ -19905,7 +19905,13 @@ l'archive ; aucune catégorie par défaut ; les catégories sous le nom dans la 
 **DoD** : pgTAP ; API par jetons réels ; unitaires ; E2E souris et clavier ; captures aux quatre paliers, dont la
 non-régression du tableau à 1280 px ; connecteur (pytest, intégration, `verify-mcp.sh`) ; seed ; manuel ; contrat.
 **Découpage** (2026-11-18, avec la spécification) :
-- [ ] **T1 — base** : migration 0188 ; pgTAP ; API ; types ; contrat.
+- [x] **T1 — base** : migration 0188 ; pgTAP ; API ; types ; contrat. *Faite le 2026-11-18* :
+      `supabase/migrations/0188_commentaires_categories_organisations.sql`, appliquée en dev par le runner ; pgTAP `0176`
+      46/46, rouge sous trois mutations (catégorie archivée posée, auto-mention notifiée, modération qui réécrit) ; `0016`
+      (219 politiques), `0062` (neuf colonnes) et `0174` (la signature) révisés et datés, suite pgTAP 164 fichiers verts ;
+      API `e2e/api/commentaires-categories-organisations.spec.ts` 3/3 aux jetons réels, avec `liste-organisations` 7/7 et
+      l'intégration organisations du connecteur 3/3 rejoués sur la 0188 ; types régénérés, témoin compilé ; contrat §2.58
+      et §3 ; INC-361 ouvert (résumé quotidien).
 - [ ] **T2 — Réglages ▸ Catégories d'organisations** ; unitaires ; E2E ; captures.
 - [ ] **T3 — la fiche** : la ligne « Catégories » et son panneau, le fil de commentaires, la notification qui y mène ;
       unitaires ; E2E ; captures.

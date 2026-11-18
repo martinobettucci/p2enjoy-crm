@@ -3348,7 +3348,7 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
    cards actives exige un plan de remappage. Comportement par défaut retenu : archivage refusé
    tant que des cards s'y trouvent.
 
-### Migration `0188` — les commentaires et les catégories d'une organisation — `CRM-153` T1 (`0188_commentaires_categories_organisations.sql` ; spécifiée le 2026-11-18, avant le code)
+### Migration `0188` — les commentaires et les catégories d'une organisation — `CRM-153` T1 (`0188_commentaires_categories_organisations.sql` ; spécifiée le 2026-11-18, avant le code ; écrite le 2026-11-18)
 
 `docs/SPEC-organisations.md` §9.1, §9.2 ; décisions 932, 939 et 942.
 - **`organization_categories`** : `id`, `workspace_id` (clé, `ON DELETE CASCADE`), `name` (rogné, 1 à 40), `color` (liste
@@ -3372,6 +3372,22 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
 - **Aucune donnée** : aucune catégorie par défaut (décision 939).
 - **Retour arrière** : retirer les quatre tables, la colonne et les fonctions, et rétablir `organization_list` de la `0186` ;
   les commentaires et catégories saisis entre-temps sont perdus — à dire avant.
+- *Précisé au code (2026-11-18)* :
+  - le nom d'une catégorie est rogné par le déclencheur `app.organization_categories_before_write` avant que l'index
+    unique `(workspace_id, lower(name))` ne le compare ; ce déclencheur pose aussi l'auteur et les horodatages, fige
+    l'espace, l'auteur et la création, et prend l'heure d'archivage de la base (une date envoyée est ignorée) ;
+  - une pose ou un commentaire sur une organisation que l'appelant ne lit pas est refusé `P0001 organization_not_found` ;
+    une catégorie que l'appelant ne lit pas reçoit le même refus qu'une catégorie d'un autre espace,
+    `category_other_workspace`, et rien ne trahit son existence ;
+  - `app.organization_of_comment(uuid)`, `SECURITY DEFINER`, sert aux politiques des mentions (la forme de
+    `app.card_du_commentaire`) ; la notification est écrite par `app.notifications_after_organization_mention` ;
+  - `subject_organization_id` est tenue par une clé composée `(subject_organization_id, workspace_id)` vers
+    `organizations (id, workspace_id)`, comme `subject_card_id` ; le `check` s'appelle `notifications_single_subject_check` ;
+  - privilèges de colonne : `INSERT (workspace_id, name, color)` et `UPDATE (name, color, archived_at)` sur le catalogue ;
+    `INSERT (organization_id, category_id)` et `DELETE` sur les poses ; `INSERT (organization_id, author_id, body)` et
+    `UPDATE (body, deleted_at)` sur le fil ; `INSERT (comment_id, profile_id)` et `DELETE` sur les mentions ;
+  - **ni journal d'audit ni recherche globale** pour le fil d'une organisation, que la spécification ne demande pas — à la
+    différence de `card_comments` ; **le résumé quotidien ne compte pas** les mentions d'une organisation (INC-361).
 
 ### Migration `0186` — les tracks d'une organisation et la liste paginée — `CRM-152` T1 (`0186_liste_organisations.sql` ; spécifiée le 2026-11-18, avant le code ; écrite le 2026-11-18)
 

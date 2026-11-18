@@ -13,7 +13,22 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### `CRM-153` T1 — les catégories et le fil de commentaires d'une organisation, en base
+
+- Migration `0188_commentaires_categories_organisations.sql` (`docs/SCHEMA.md` « Migration `0188` ») :
+  - le catalogue des catégories, géré par l'administrateur, vide à la naissance ; « supprimer » archive ;
+  - les poses, faites par le business developer et l'administrateur ; une catégorie archivée ne se pose plus, mais se
+    retire ;
+  - le fil de commentaires d'une organisation, comme celui d'une affaire : la lectrice lit sans écrire, l'administrateur
+    modère, une suppression laisse une pierre tombale ;
+  - les mentions, qui notifient par `notifications.subject_organization_id` ;
+  - le filtre `p_category_ids` de `organization_list`.
+- Preuves :
+  - pgTAP `0176` (46 assertions, rouge sous trois mutations) ; `0016`, `0062` et `0174` révisés et datés ;
+  - API `e2e/api/commentaires-categories-organisations.spec.ts` aux jetons réels des trois profils ;
+  - types régénérés et témoin.
+- Aucun écran encore : la webapp et le connecteur livrés continuent d'appeler la liste sans le nouveau paramètre.
+- Contrat §2.58 et §3 ; INC-361 (le résumé quotidien et les mentions d'une organisation) ouvert pour arbitrage.
 
 ## [Publié]
 

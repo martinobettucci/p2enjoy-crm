@@ -9282,3 +9282,20 @@ juste, car la `0170` ne touche pas `mail_outbound_identities` : le §2.18 est do
 
 Le comportement est inchangé : ni code, ni seed, ni test. Le passage historique de `docs/BACKLOG.md` (la Definition of
 Done de `CRM-052`) n'est pas réécrit, car il date l'état d'alors.
+
+### INC-361 — le résumé quotidien ne compte que les mentions d'une affaire ; celles d'une organisation lui échappent
+**Ouverte le 2026-11-18.** *Relevée par la session 4891a451 (p2enjoy-crm-ed) en écrivant la migration `0188` (`CRM-153`
+T1).*
+
+**Le constat.** La fonction du résumé quotidien (`0133_digest_quotidien.sql`) joint `notifications` à `cards` par
+`subject_card_id`. Une mention dans le fil d'une organisation (`docs/SPEC-notifications.md` §51) porte
+`subject_organization_id` et un `subject_card_id` nul : la jointure l'écarte, et le résumé ne la compte ni ne la cite.
+Ni `docs/SPEC-organisations.md` §9 ni `docs/SPEC-notifications.md` §51 ne disent si le résumé doit la reprendre.
+
+**Ce qui est fait.** Rien : le comportement reste celui-là. La mention d'une organisation paraît dans la boîte des
+notifications, pas dans le résumé.
+
+**L'arbitrage demandé au responsable.** Le résumé quotidien doit-il citer aussi les mentions non lues du fil d'une
+organisation, avec un lien vers sa fiche ? Si oui, une tranche de `CRM-153`, ou une unité à part, révisera la fonction du
+résumé et ses preuves.
+

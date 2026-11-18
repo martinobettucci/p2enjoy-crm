@@ -3538,6 +3538,7 @@ export type Database = {
           read_at: string | null
           recipient_id: string
           subject_card_id: string | null
+          subject_organization_id: string | null
           type: string
           workspace_id: string
         }
@@ -3548,6 +3549,7 @@ export type Database = {
           read_at?: string | null
           recipient_id: string
           subject_card_id?: string | null
+          subject_organization_id?: string | null
           type: string
           workspace_id: string
         }
@@ -3558,6 +3560,7 @@ export type Database = {
           read_at?: string | null
           recipient_id?: string
           subject_card_id?: string | null
+          subject_organization_id?: string | null
           type?: string
           workspace_id?: string
         }
@@ -3577,11 +3580,213 @@ export type Database = {
             referencedColumns: ["id", "workspace_id"]
           },
           {
+            foreignKeyName: "notifications_subject_organization_fkey"
+            columns: ["subject_organization_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
             foreignKeyName: "notifications_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_categories: {
+        Row: {
+          archived_at: string | null
+          color: string
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_categories_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_categories_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_category_links: {
+        Row: {
+          category_id: string
+          created_at: string
+          created_by: string | null
+          organization_id: string
+          workspace_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          organization_id: string
+          workspace_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          organization_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_category_links_category_fkey"
+            columns: ["category_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "organization_categories"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "organization_category_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_category_links_organization_fkey"
+            columns: ["organization_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id", "workspace_id"]
+          },
+        ]
+      }
+      organization_comment_mentions: {
+        Row: {
+          comment_id: string
+          created_at: string
+          profile_id: string
+          workspace_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          profile_id: string
+          workspace_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          profile_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_comment_mentions_comment_fkey"
+            columns: ["comment_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "organization_comments"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "organization_comment_mentions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_comment_mentions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_comments: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          edited_at: string | null
+          id: string
+          organization_id: string
+          workspace_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          edited_at?: string | null
+          id?: string
+          organization_id: string
+          workspace_id: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          edited_at?: string | null
+          id?: string
+          organization_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_comments_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_comments_organization_fkey"
+            columns: ["organization_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id", "workspace_id"]
           },
         ]
       }
@@ -5664,6 +5869,7 @@ export type Database = {
       occupation_du_workflow: { Args: { p_workflow: string }; Returns: Json }
       organization_list: {
         Args: {
+          p_category_ids?: string[]
           p_descending?: boolean
           p_limit?: number
           p_offset?: number
