@@ -8657,7 +8657,8 @@ disent que de quoi elle a l'air.
   sous le tableau, « 50 sur 132 » en 13 px `--color-text-2`, `tabular-nums`, puis le bouton secondaire compact « Afficher
   plus », absent quand tout est rendu. Pendant la lecture, il dit « Chargement… », `aria-busy` ; les lignes s'ajoutent, le
   focus reste sur lui, et la région vivante dit « 50 organisations de plus ». Une erreur s'écrit sous lui, `role="alert"`,
-  avec « Réessayer ».
+  avec « Réessayer ». *Précisé au code (T2)* : quand la dernière page le fait disparaître, le focus passe au lien de la
+  première organisation ajoutée, jamais au corps du document.
 - **L'ÉTAT VIDE SOUS LES FILTRES** : « Aucune organisation ne correspond à ces filtres », avec « Effacer les filtres »
   (§5.8) ; le vide de l'espace reste celui du §5.64.
 - **UNE RELECTURE NE VIDE PAS LE TABLEAU** : changer un filtre garde les lignes affichées, atténuées par `aria-busy` sur le

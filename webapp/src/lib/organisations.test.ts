@@ -2,15 +2,24 @@
 //           écritures
 // @verifies docs/SPEC-organisations.md §2 (ce qui est lu et écrit), §3 (dictionnaire fermé des refus ; zéro ligne est un
 //           refus) ; docs/DESIGN_SYSTEM.md §5.64 (domaine en minuscules, champ facultatif vidé effacé)
+// @verifies CRM-152 (docs/BACKLOG.md) — tranche T2 : l'adresse lue et écrite (le défaut jamais écrit, une valeur inconnue
+//           repliée, un track mal formé ignoré), les arguments de `organization_list`, la page et ses tracks en deux appels
+//           (docs/SPEC-organisations.md §8.1 à §8.3 ; docs/JOURNAL.md décision 936)
 
 import { describe, expect, it } from 'vitest'
 import {
-	COLONNES_ORGANISATION_LISTE,
+	PARAMETRES_ORGANISATIONS_PAR_DEFAUT,
+	argumentsListeOrganisations,
 	classerRefusOrganisation,
 	creerOrganisation,
-	lireOrganisations,
+	ecrireParametresOrganisations,
+	filtresOrganisationsPoses,
+	lireParametresOrganisations,
+	lirePageOrganisations,
+	lireTracksDOrganisation,
 	modifierOrganisation,
 	normaliserSaisieOrganisation,
+	sansFiltresOrganisations,
 } from './organisations'
 import type { ClientCrm } from './supabase'
 
@@ -64,24 +73,119 @@ describe('classerRefusOrganisation (docs/SPEC-organisations.md §3)', () => {
 	})
 })
 
-describe('lireOrganisations', () => {
-	it('demande le compte embarqué des contacts et rend un nombre, zéro compris', async () => {
-		const { client, appels } = double({ data: [
-			{ id: 'o1', name: 'Comptoir', domain: null, website: null, contacts: [{ count: 0 }] },
-			{ id: 'o2', name: 'Sogexia', domain: 'sogexia.example', website: 'https://s', contacts: [{ count: 3 }] },
-		] })
-		const etat = await lireOrganisations(client)
-		expect(appels[0]?.select).toBe(COLONNES_ORGANISATION_LISTE)
-		expect(appels[0]?.ordres).toEqual(['name', 'id'])
-		expect(etat).toEqual({ statut: 'pret', donnees: [
-			{ id: 'o1', name: 'Comptoir', domain: null, website: null, contacts: 0 },
-			{ id: 'o2', name: 'Sogexia', domain: 'sogexia.example', website: 'https://s', contacts: 3 },
-		] })
+const T1 = '5eed0000-0000-4000-8000-000000000021'
+const T2 = '5eed0000-0000-4000-8000-000000000023'
+
+describe('l’adresse de l’onglet (§8.3)', () => {
+	it('l’adresse nue est le défaut', () => {
+		expect(lireParametresOrganisations(new URLSearchParams())).toEqual(PARAMETRES_ORGANISATIONS_PAR_DEFAUT)
 	})
 
-	it('rend une erreur classée, jamais une liste vide trompeuse', async () => {
-		const { client } = double({ error: { message: 'refus' }, status: 403 })
-		expect(await lireOrganisations(client)).toMatchObject({ statut: 'erreur', erreur: { nature: 'forbidden' } })
+	it('lit chaque clé ; une valeur inconnue est repliée, un track mal formé ou répété ignoré', () => {
+		const lu = lireParametresOrganisations(new URLSearchParams(
+			`q=%20vertigo%20&tracks=${T1},pas-un-uuid,${T2.toUpperCase()},${T1}&recettes=avec&tri=contacts&sens=desc`))
+		expect(lu).toEqual({ recherche: 'vertigo', tracks: [T1, T2], recettes: 'avec', tri: 'contacts', sens: 'desc' })
+		expect(lireParametresOrganisations(new URLSearchParams('recettes=peut-etre&tri=recettes&sens=haut'))).toEqual(
+			PARAMETRES_ORGANISATIONS_PAR_DEFAUT)
+	})
+
+	it('le défaut n’est jamais écrit ; les clés étrangères sont gardées ; l’aller-retour est fidèle', () => {
+		expect(ecrireParametresOrganisations(PARAMETRES_ORGANISATIONS_PAR_DEFAUT).toString()).toBe('')
+		const parametres = { recherche: 'lumen', tracks: [T1, T2], recettes: 'sans', tri: 'contacts', sens: 'desc' } as const
+		const ecrite = ecrireParametresOrganisations(parametres, new URLSearchParams('autre=1&q=ancienne'))
+		expect(ecrite.get('autre')).toBe('1')
+		expect(ecrite.getAll('q')).toEqual(['lumen'])
+		expect(lireParametresOrganisations(ecrite)).toEqual(parametres)
+		expect(ecrireParametresOrganisations({ ...parametres, recherche: '   ' }).has('q')).toBe(false)
+	})
+
+	it('un filtre est posé par la recherche, un track ou les recettes — jamais par le tri ; effacer garde le tri', () => {
+		expect(filtresOrganisationsPoses({ ...PARAMETRES_ORGANISATIONS_PAR_DEFAUT, tri: 'contacts', sens: 'desc' })).toBe(false)
+		expect(filtresOrganisationsPoses({ ...PARAMETRES_ORGANISATIONS_PAR_DEFAUT, recherche: 'a' })).toBe(true)
+		expect(filtresOrganisationsPoses({ ...PARAMETRES_ORGANISATIONS_PAR_DEFAUT, tracks: [T1] })).toBe(true)
+		expect(filtresOrganisationsPoses({ ...PARAMETRES_ORGANISATIONS_PAR_DEFAUT, recettes: 'avec' })).toBe(true)
+		expect(sansFiltresOrganisations({ recherche: 'a', tracks: [T1], recettes: 'avec', tri: 'contacts', sens: 'desc' })).toEqual(
+			{ ...PARAMETRES_ORGANISATIONS_PAR_DEFAUT, tri: 'contacts', sens: 'desc' })
+	})
+})
+
+describe('les arguments de `organization_list` (§8.2)', () => {
+	it('le défaut : tout, par nom ascendant, cinquante à partir du décalage', () => {
+		expect(argumentsListeOrganisations('ws', PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 50)).toEqual({
+			p_workspace_id: 'ws', p_search: undefined, p_track_ids: undefined, p_revenues: 'all', p_sort: 'name',
+			p_descending: false, p_limit: 50, p_offset: 50,
+		})
+	})
+	it('chaque filtre et le tri traduits dans les valeurs de la base', () => {
+		expect(argumentsListeOrganisations('ws', { recherche: ' 100% ', tracks: [T1], recettes: 'sans', tri: 'contacts', sens: 'desc' }, 0))
+			.toMatchObject({ p_search: '100%', p_track_ids: [T1], p_revenues: 'without', p_sort: 'contacts', p_descending: true })
+		expect(argumentsListeOrganisations('ws', { ...PARAMETRES_ORGANISATIONS_PAR_DEFAUT, recettes: 'avec' }, 0).p_revenues).toBe('with')
+	})
+})
+
+/** Un client dont `rpc` répond selon la fonction appelée, et qui garde chaque appel. */
+function doubleRpc(reponses: Record<string, Reponse>) {
+	const appels: [string, unknown][] = []
+	const client = {
+		rpc: (nom: string, args: unknown) => {
+			appels.push([nom, args])
+			const r = reponses[nom] ?? { data: [] }
+			return Promise.resolve({ data: r.data ?? null, error: r.error ?? null, status: r.status ?? 200 })
+		},
+	} as unknown as ClientCrm
+	return { client, appels }
+}
+
+const LIGNE = (id: string, name: string, extra: object = {}) => ({
+	id, name, domain: null, website: null, contacts: 2, has_revenues: false, total_count: 132, ...extra,
+})
+
+describe('lirePageOrganisations', () => {
+	it('deux appels, pas un par ligne : la page, puis les tracks de ses organisations, groupés dans l’ordre rendu', async () => {
+		const { client, appels } = doubleRpc({
+			organization_list: { data: [LIGNE('o1', 'Atelier Lumen', { has_revenues: true }), LIGNE('o2', 'Comptoir Vasseur')] },
+			organization_tracks: { data: [
+				{ organization_id: 'o1', track_id: T1, name: 'Conseil IA', slug: 'conseil-ia', color: 'brand', icon: 'Brain' },
+				{ organization_id: 'o1', track_id: T2, name: 'Formation', slug: 'formation', color: 'success', icon: 'GraduationCap' },
+			] },
+		})
+		const etat = await lirePageOrganisations(client, 'ws', PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)
+		expect(appels.map(([nom]) => nom)).toEqual(['organization_list', 'organization_tracks'])
+		expect(appels[1]?.[1]).toEqual({ p_organization_ids: ['o1', 'o2'] })
+		expect(etat).toMatchObject({ statut: 'pret', donnees: { total: 132 } })
+		if (etat.statut !== 'pret') throw new Error('page attendue')
+		expect(etat.donnees.organisations.map((o) => [o.name, o.aRecettes, o.tracks.map((t) => t.slug)])).toEqual([
+			['Atelier Lumen', true, ['conseil-ia', 'formation']],
+			['Comptoir Vasseur', false, []],
+		])
+	})
+
+	it('une page vide : total nul, et aucun appel des tracks', async () => {
+		const { client, appels } = doubleRpc({ organization_list: { data: [] } })
+		expect(await lirePageOrganisations(client, 'ws', PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)).toEqual({
+			statut: 'pret', donnees: { organisations: [], total: 0 } })
+		expect(appels).toHaveLength(1)
+	})
+
+	it('un échec de l’un ou l’autre appel rend une erreur classée, jamais une liste vide trompeuse', async () => {
+		expect(await lirePageOrganisations(doubleRpc({ organization_list: { error: { message: 'refus' }, status: 403 } }).client,
+			'ws', PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)).toMatchObject({ statut: 'erreur', erreur: { nature: 'forbidden' } })
+		expect(await lirePageOrganisations(doubleRpc({
+			organization_list: { data: [LIGNE('o1', 'Atelier Lumen')] },
+			organization_tracks: { error: { message: 'boum' }, status: 500 },
+		}).client, 'ws', PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)).toMatchObject({ statut: 'erreur', erreur: { nature: 'unknown' } })
+	})
+})
+
+describe('lireTracksDOrganisation (la fiche)', () => {
+	it('les tracks de la seule organisation demandée ; aucun, une liste vide', async () => {
+		const { client, appels } = doubleRpc({ organization_tracks: { data: [
+			{ organization_id: 'o1', track_id: T2, name: 'Formation', slug: 'formation', color: 'success', icon: 'GraduationCap' },
+		] } })
+		expect(await lireTracksDOrganisation(client, 'o1')).toEqual({ statut: 'pret', donnees: [
+			{ id: T2, name: 'Formation', slug: 'formation', color: 'success', icon: 'GraduationCap' }] })
+		expect(appels).toEqual([['organization_tracks', { p_organization_ids: ['o1'] }]])
+		expect(await lireTracksDOrganisation(doubleRpc({}).client, 'o9')).toEqual({ statut: 'pret', donnees: [] })
 	})
 })
 

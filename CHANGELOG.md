@@ -38,8 +38,18 @@ d'exécuter le code attendu.
   liste cherchée, filtrée par track et par recettes, triée par nom ou par contacts, page par page, avec le total.
 - Une affaire à la corbeille, un rattachement, un channel ou un track archivés ne comptent pas ; chacun ne voit que ce
   qu'il lit.
-- Rien ne change encore à l'écran : la webapp (T2) et le connecteur (T3) suivent. Migration 186
-  (`docs/PROD_MIGRATIONS.md` §2.55).
+- Migration 186 (`docs/PROD_MIGRATIONS.md` §2.55).
+
+#### `CRM-152` T2 — rechercher, filtrer et trier les organisations ; leurs tracks (décisions 931 et 936)
+
+- **Contacts ▸ Organisations a une barre de filtres** : « Rechercher » dans le nom, le domaine et le site web, à la
+  frappe ; « Tracks », des cases pour ne garder que les organisations rattachées à l'un des tracks cochés ; « Recettes » :
+  toutes, avec ou sans ; « Effacer les filtres ».
+- **Les en-têtes « Nom » et « Contacts » trient** la liste, ascendant puis descendant.
+- **Une colonne « Tracks »**, après « Nom » : les tracks où un contact de l'organisation est lié à une affaire. La fiche
+  d'une organisation les montre aussi, chacun en lien vers sa vue.
+- **La liste montre cinquante organisations**, puis « Afficher plus » ; « 50 sur 132 » est écrit dessous. Recherche,
+  filtres et tri vivent dans l'adresse : un lien partagé ou une page rechargée les retrouve.
 
 ## [Publié]
 

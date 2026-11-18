@@ -5,6 +5,8 @@
 //           CLAUDE.md §16 (captures)
 // @verifies CRM-146 (docs/BACKLOG.md) — tranche T2 : le compte des contacts est lu dans SA cellule, la quatrième — la
 //           cinquième, « Réel sur prévu », est désormais la dernière (docs/SPEC-recettes.md §12.4)
+// @verifies CRM-152 (docs/BACKLOG.md) — tranche T2 : les index de cellule révisés, « Tracks » après « Nom »
+//           (docs/SPEC-organisations.md §8.3)
 //
 // Un VRAI client MCP crée une organisation au nom du business developer ; l'onglet « Organisations » de la webapp, sous le
 // même compte, la liste. Les cases posées pour la preuve, et l'organisation, sont retirées à la fin.
@@ -82,7 +84,8 @@ test('une organisation créée par le connecteur paraît dans l’onglet « Orga
 	const ligne = page.getByTestId('ligne-organisation').filter({ hasText: NOM })
 	await expect(ligne).toBeVisible()
 	await expect(ligne).toContainText('e2e-mcp-organisation.example')
-	// RÉVISÉE par `CRM-146` T2 : `last()` lisait le compte des contacts tant qu'il fermait la ligne.
-	await expect(ligne.locator('td').nth(3)).toHaveText('0')
+	// RÉVISÉE par `CRM-146` T2 : `last()` lisait le compte des contacts tant qu'il fermait la ligne. RÉVISÉE par `CRM-152`
+	// T2 : « Tracks » suit « Nom », le compte passe à la cinquième cellule.
+	await expect(ligne.locator('td').nth(4)).toHaveText('0')
 	await capturer(page, 'connecteur-organisation-onglet-1440', UNITE)
 })

@@ -159,6 +159,9 @@ pour écrire « 50 sur 132 »).
   écrit sous le tableau. Un changement de recherche, de filtre ou de tri repart de la première page.
 - **L'adresse porte les filtres et le tri** (`/contacts/organisations?q=…&tracks=…&recettes=avec&tri=contacts&sens=desc`),
   le défaut n'étant jamais écrit ; une valeur inconnue est repliée sur le défaut. La page chargée n'y vit pas.
+  *Précisé au code (T2)* : `tracks` porte les **identifiants** des tracks, séparés par des virgules — un slug se renomme,
+  un identifiant non ; un identifiant mal formé est ignoré à la lecture, et un identifiant bien formé qu'aucun track de
+  l'espace ne porte quitte l'adresse dès que les tracks sont lus. « Effacer les filtres » garde le tri.
 - **Les totaux « Réel sur prévu »** restent lus par `organization_revenue_totals()`, une seule fois pour l'espace, à côté de
   la page : leur volume est celui des organisations qui ont des recettes. *Compromis assumé* : non paginé ; à revoir si ce
   volume croît (`CLAUDE.md` §21).

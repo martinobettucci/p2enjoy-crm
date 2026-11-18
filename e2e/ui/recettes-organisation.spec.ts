@@ -5,6 +5,8 @@
 //           sans action) ; docs/SPEC-seed.md §41 ; docs/DESIGN_SYSTEM.md §5.97 (la barre `aria-hidden`, le texte porte
 //           tout), §7 (aucun défilement horizontal aux quatre paliers) ; CLAUDE.md §10 (la lectrice, par l'écran ; la requête
 //           directe est `e2e/api/recettes-organisation.spec.ts`), §16 (captures)
+// @verifies CRM-152 (docs/BACKLOG.md) — tranche T2 : les index de cellule révisés, « Tracks » après « Nom »
+//           (docs/SPEC-organisations.md §8.3)
 //
 // LE SEED EST LU, JAMAIS ÉCRIT : Vertigo Conseil porte « Socle analytique — Vertuo » (EUR, par Marc Lefort) et « Formation
 // Data & IA » (CHF, par Nadia Benali) ; « Socle analytique » compte aussi pour Atelier Lumen (par Thomas Garnier) ; Sogexia
@@ -18,7 +20,8 @@ const ADMIN = 'admin@p2enjoy.test'
 const VIEWER = 'viewer@p2enjoy.test'
 
 const ligne = (page: Page, nom: string) => page.getByTestId('ligne-organisation').filter({ hasText: nom })
-const cellule = (page: Page, nom: string) => ligne(page, nom).locator('td').nth(4)
+// RÉVISÉE par `CRM-152` T2 : « Tracks » suit « Nom », « Réel sur prévu » passe à la sixième cellule.
+const cellule = (page: Page, nom: string) => ligne(page, nom).locator('td').nth(5)
 // Les montants s'écrivent avec l'espace fine insécable du format français (U+202F) : `\s` la reconnaît.
 
 /** Tabule jusqu'au lien de ce nom : le parcours est fait au clavier, sans focalisation programmée. */

@@ -6,6 +6,8 @@
 //           §16 (captures)
 // @verifies CRM-146 (docs/BACKLOG.md) — tranche T2 : le compte des contacts est lu dans SA cellule, la quatrième — la
 //           cinquième, « Réel sur prévu », est désormais la dernière (docs/SPEC-recettes.md §12.4)
+// @verifies CRM-152 (docs/BACKLOG.md) — tranche T2 : les index de cellule révisés, « Tracks » après « Nom »
+//           (docs/SPEC-organisations.md §8.3)
 //
 // Les organisations du seed sont LUES ; ce fichier crée la sienne et l'efface par la clé de service, avant et après.
 
@@ -42,8 +44,9 @@ test.describe('l’onglet « Organisations » (docs/DESIGN_SYSTEM.md §5.64)', (
 		await expect(onglets(page).getByRole('link', { name: 'Organisations' })).toHaveAttribute('aria-current', 'page')
 		const vasseur = page.getByTestId('ligne-organisation').filter({ hasText: 'Comptoir Vasseur' })
 		await expect(vasseur).toContainText('comptoir-vasseur.example')
-		// RÉVISÉE par `CRM-146` T2 : `last()` lisait le compte des contacts tant qu'il fermait la ligne.
-		await expect(vasseur.locator('td').nth(3)).toHaveText('0')
+		// RÉVISÉE par `CRM-146` T2 : `last()` lisait le compte des contacts tant qu'il fermait la ligne. RÉVISÉE par `CRM-152`
+		// T2 : « Tracks » suit « Nom », le compte passe à la cinquième cellule.
+		await expect(vasseur.locator('td').nth(4)).toHaveText('0')
 		await capturer(page, 'organisations-liste-1440', UNITE)
 		await vasseur.getByRole('link', { name: 'Comptoir Vasseur' }).click()
 		await expect(page).toHaveURL(/\/contacts\/organisations\/5eed0000-0000-4000-8000-000000000083$/u)

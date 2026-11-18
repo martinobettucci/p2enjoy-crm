@@ -33,6 +33,10 @@
 // @spec CRM-146 (docs/BACKLOG.md) — tranche T2 : le bloc « Recettes avec cette organisation », entre ses caractéristiques
 //       et ses contacts (docs/SPEC-recettes.md §12.5 ; docs/DESIGN_SYSTEM.md §5.97). Il lit lui-même et porte ses propres
 //       états : son échec laisse la fiche rendue.
+//
+// @spec CRM-152 (docs/BACKLOG.md) — tranche T2 : la ligne « Tracks » de la liste de définitions, après « Site web » —
+//       chaque track en pilule, lien vers sa vue ; aucun, « Aucun track » (docs/SPEC-organisations.md §8.1, §8.3 ;
+//       docs/DESIGN_SYSTEM.md §5.105, §5.5 bis). Elle lit elle-même, et son échec laisse la fiche rendue.
 
 import { ExternalLink, PencilLine } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -46,13 +50,14 @@ import { t, type CleTraduction } from '../i18n'
 import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
 import { lireFicheOrganisation, type FicheOrganisationLue } from '../lib/contacts'
 import { motifVisible, proprietesCommande } from '../lib/capacites'
-import { modifierOrganisation } from '../lib/organisations'
+import { lireTracksDOrganisation, modifierOrganisation, type TrackDOrganisation } from '../lib/organisations'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { AppShell } from './AppShell'
 import { useContexteEspace } from './ContexteEspace'
 import { FormulaireOrganisation } from './FormulaireOrganisation'
 import { BlocRecettesOrganisation } from './RecettesOrganisation'
 import { CHEMIN_CONTACTS, cheminContact } from './chemins'
+import { classesPilule, iconeTrack } from './presentation-tracks'
 
 /** Cellule ordinaire du tableau des contacts — mêmes règles qu'au carnet (§5.9). */
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[28ch]'
@@ -324,6 +329,7 @@ function ContenuFiche({ client, etat, organisation, onReprise, onModifiee }: Pro
 						)}
 					</dd>
 				</div>
+				<LigneTracks client={client} idOrganisation={organisation.id} />
 			</dl>
 			<Button
 				{...proprietesCommande(capacites.edition, ID_MOTIF_FICHE)}
@@ -428,5 +434,55 @@ function ContenuFiche({ client, etat, organisation, onReprise, onModifiee }: Pro
 				)}
 			</section>
 		</section>
+	)
+}
+
+/**
+ * `CRM-152` (§8.3, §5.105) : les tracks de l'organisation, par ses contacts. Une pilule par track, lien vers sa vue, dans
+ * l'ordre de la barre latérale ; aucun, « Aucun track ». Pendant la lecture, la valeur reste vide (§5.9) ; son échec
+ * s'écrit dans la ligne seule.
+ */
+function LigneTracks({ client, idOrganisation }: { readonly client: ClientCrm; readonly idOrganisation: string }) {
+	const [etat, setEtat] = useState<EtatAsync<readonly TrackDOrganisation[]>>(enChargement)
+	useEffect(() => {
+		let actuel = true
+		setEtat(enChargement())
+		void lireTracksDOrganisation(client, idOrganisation).then((lu) => {
+			if (actuel) setEtat(lu)
+		})
+		return () => {
+			actuel = false
+		}
+	}, [client, idOrganisation])
+
+	return (
+		<div className="flex flex-col gap-1 md:col-span-2" data-testid="tracks-organisation">
+			<dt className="text-sm text-text-2">{t('organization.field.tracks')}</dt>
+			<dd className="min-h-[var(--size-target)] flex flex-wrap items-center gap-2">
+				{etat.statut === 'chargement' ? (
+					''
+				) : etat.statut === 'erreur' ? (
+					<span role="alert" className="text-sm text-danger">{t('organization.tracks.error')}</span>
+				) : etat.donnees.length === 0 ? (
+					<span className="text-sm text-text-2">{t('organization.tracks.none')}</span>
+				) : (
+					etat.donnees.map((track) => {
+						const Icone = iconeTrack(track.icon)
+						return (
+							<Link
+								key={track.id}
+								to={`/tracks/${track.slug}`}
+								data-testid="pilule-track-organisation"
+								data-slug={track.slug}
+								className={`inline-flex items-center gap-2 rounded-full px-3 min-h-[var(--size-target)] text-sm font-medium hover:underline ${classesPilule(track.color)}`}
+							>
+								<Icone aria-hidden="true" size={16} className="shrink-0" />
+								{track.name}
+							</Link>
+						)
+					})
+				)}
+			</dd>
+		</div>
 	)
 }

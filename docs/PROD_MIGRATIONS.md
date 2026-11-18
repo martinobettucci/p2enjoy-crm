@@ -1241,7 +1241,8 @@ Aucune variable, aucun secret.
 | 2 | Constater | session de livraison, en lecture seule | le registre gagne une ligne, l'empreinte de la 186 égale celle du dépôt ; `select to_regprocedure('public.organization_list(uuid, text, uuid[], text, text, boolean, integer, integer)')` non nul |
 
 **Seule, elle ne change rien de visible** : la webapp (T2) et l'image `mcp` (T3) qui l'appellent se livrent **avec ou
-après** elle, jamais avant.
+après** elle, jamais avant. **La webapp de T2 est écrite** (2026-11-18) : livrée avant la 186, l'onglet « Organisations »
+rendrait l'erreur de l'onglet.
 **Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0186` » : retirer les deux fonctions, ce qui n'efface rien.
 
 ### 2.56 `CRM-154` T2, décisions 935 et 938 — réorganiser les channels d'un track, en base (À LIVRER : migration 187 ; **hors de tout lot annoncé**)

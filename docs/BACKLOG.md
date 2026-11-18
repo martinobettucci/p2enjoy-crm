@@ -19851,8 +19851,14 @@ d'eux ; pas de tri sur « Réel sur prévu ».
       corbeille, rattachement, channel et track archivés, jokers non échappés, recette d'une affaire à la corbeille) ; API
       `e2e/api/liste-organisations.spec.ts` (7 tests, l'oracle refait sous le jeton de chacun des trois profils) ; types et
       témoin ; contrat §2.55. Suite pgTAP entière : 162 fichiers, 5356 assertions sans anomalie.
-- [ ] **T2 — écran** : la barre, le tri, la colonne « Tracks », « Afficher plus », l'adresse, la fiche ; unitaires ; E2E ;
-      captures.
+- [x] **T2 — écran** : la barre, le tri, la colonne « Tracks », « Afficher plus », l'adresse, la fiche ; unitaires ; E2E ;
+      captures. *Faite le 2026-11-18* : unitaires 23 (bibliothèque), 18 (liste, rouges contre trois mutations : tri qui ne
+      s'inverse plus, effacement en double, recherche sans délai), 18 (fiche) ; E2E `e2e/ui/organisations-recherche.spec.ts`
+      (10 : souris, clavier, adresse rechargée, tri, « Afficher plus » sur 55 organisations posées puis retirées, la
+      fiche, la lectrice, quatre paliers) et trois fichiers révisés pour la colonne nouvelle (16) ; captures
+      `docs/captures/CRM-152`, observées. *Trouvé par la preuve E2E* : le routeur applique l'adresse dans une transition,
+      et une case tenue par l'adresse seule se décochait sous la souris — cases et recettes portent un état local qui la
+      suit.
 - [ ] **T3 — connecteur** : `crm_organization_list` ; pytest, intégration, `verify-mcp.sh`.
 - [ ] **T4 — seed vérifié, manuel, contrat** ; puis `[P]`.
 

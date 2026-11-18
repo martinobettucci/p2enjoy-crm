@@ -16,6 +16,9 @@
 // @verifies CRM-146 (docs/BACKLOG.md) — tranche T2 : le bloc « Recettes avec cette organisation » entre les
 //           caractéristiques et les contacts, et son échec qui laisse la fiche rendue (docs/SPEC-recettes.md §12.5 ;
 //           docs/DESIGN_SYSTEM.md §5.97). Les doubles rendent les totaux par `rpc` : sans recette par défaut.
+// @verifies CRM-152 (docs/BACKLOG.md) — tranche T2 : la ligne « Tracks » après « Site web » — une pilule par track, lien
+//           vers sa vue, dans l'ordre rendu ; aucun, « Aucun track » ; son échec dit dans la ligne seule, la fiche rendue
+//           (docs/SPEC-organisations.md §8.1, §8.3 ; docs/DESIGN_SYSTEM.md §5.105)
 
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -139,8 +142,10 @@ describe("Fiche d'organisation", () => {
 		// LA RÈGLE PORTE SUR LA VALEUR, et l'assertion doit donc porter sur elle : chaque `dd` est
 		// VIDE — ni tiret, ni « — », ni « non renseigné » (§5.9, §5.20). Mesurer le texte du bloc
 		// entier confondrait les valeurs avec leurs libellés.
+		// RÉVISÉE par `CRM-152` T2 : une troisième valeur, « Tracks », suit le site web ; elle a sa propre règle (« Aucun
+		// track », éprouvée plus bas) — la règle d'ici porte sur le domaine et le site, les deux premières.
 		const valeurs = [...bloc.querySelectorAll('dd')].map((dd) => dd.textContent)
-		expect(valeurs).toEqual(['', ''])
+		expect(valeurs.slice(0, 2)).toEqual(['', ''])
 		// Les deux libellés restent rendus : c'est la VALEUR qui manque, pas le champ.
 		expect(bloc.textContent).toContain(fr['organization.field.domain'])
 		expect(bloc.textContent).toContain(fr['organization.field.website'])
@@ -384,5 +389,56 @@ describe('les recettes avec cette organisation (docs/SPEC-recettes.md §12.5)', 
 		expect(await within(bloc).findByRole('button', { name: fr['organization.revenues.error.retry'] })).toBeTruthy()
 		expect(screen.getByTestId('caracteristiques-organisation')).toBeTruthy()
 		expect(screen.getAllByTestId('ligne-contact-organisation')).toHaveLength(1)
+	})
+})
+
+describe('la ligne « Tracks » (CRM-152, §8.3)', () => {
+	/** La fiche de Sogexia, et `rpc` qui répond aux tracks comme donné, aux totaux par une liste vide. */
+	function clientAvecTracks(tracks: Reponse) {
+		const chaine = {
+			eq: () => chaine,
+			order: () => chaine,
+			then: (resoudre: (valeur: Reponse) => unknown) =>
+				Promise.resolve({ data: [SOGEXIA], error: null, status: 200 }).then(resoudre),
+		}
+		const appels: unknown[] = []
+		const rpc = (nom: string, args: unknown) => {
+			if (nom !== 'organization_tracks') return totauxVides()
+			appels.push(args)
+			return Promise.resolve(tracks)
+		}
+		return { client: { from: () => ({ select: () => chaine }), rpc } as unknown as ClientCrm, appels }
+	}
+
+	it('une pilule par track, lien vers sa vue, après « Site web »', async () => {
+		const { client, appels } = clientAvecTracks({
+			data: [
+				{ organization_id: ID_SOGEXIA, track_id: 't1', name: 'Conseil IA', slug: 'conseil-ia', color: 'brand', icon: 'Brain' },
+				{ organization_id: ID_SOGEXIA, track_id: 't3', name: 'Formation', slug: 'formation', color: 'success', icon: 'GraduationCap' },
+			],
+			error: null,
+			status: 200,
+		})
+		rendreA(ID_SOGEXIA, client)
+		const pilules = await screen.findAllByTestId('pilule-track-organisation')
+		expect(pilules.map((p) => [p.textContent, p.getAttribute('href')])).toEqual([
+			['Conseil IA', '/tracks/conseil-ia'],
+			['Formation', '/tracks/formation'],
+		])
+		expect(appels).toEqual([{ p_organization_ids: [ID_SOGEXIA] }])
+		const termes = within(screen.getByTestId('caracteristiques-organisation')).getAllByRole('term').map((t) => t.textContent)
+		expect(termes.slice(-2)).toEqual([fr['organization.field.website'], fr['organization.field.tracks']])
+	})
+
+	it('aucun track : la ligne dit « Aucun track »', async () => {
+		rendreA(ID_SOGEXIA, clientAvecTracks({ data: [], error: null, status: 200 }).client)
+		expect(await within(await screen.findByTestId('tracks-organisation')).findByText(fr['organization.tracks.none'])).toBeTruthy()
+	})
+
+	it('un échec s’écrit dans la ligne seule ; la fiche reste rendue', async () => {
+		rendreA(ID_SOGEXIA, clientAvecTracks({ data: null, error: { message: 'boum' }, status: 500 }).client)
+		const ligne = await screen.findByTestId('tracks-organisation')
+		await waitFor(() => expect(within(ligne).getByRole('alert').textContent).toBe(fr['organization.tracks.error']))
+		expect(screen.getByTestId('lien-site-organisation')).toBeTruthy()
 	})
 })
