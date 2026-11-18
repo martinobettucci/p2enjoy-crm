@@ -19982,3 +19982,30 @@ souris et clavier ; captures observées aux quatre paliers ; manuel vérifié ; 
   `verify-manual` sans anomalie ; contrat §2.57 (la webapp, avec ou après la 187), changelog.
 **Reste** : livrer la migration 187 puis la webapp avec un lot (contrat §2.56 et §2.57), et le constat du responsable en
 production (§2.57, geste 2).
+
+### CRM-155 — Inbox : les pastilles en filtres rapides (bascule), les pastilles archivées dans un volet replié `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-18, relayée par la session de livraison (p2enjoy-crm-e3, ex-bb) ; arbitrée le
+même jour (décision 943).
+**Demande, verbatim** : « le inbox, on affiche les pastilles comme filtres rapides (toggle on/off) et on peux déplier les
+filtre sur les pastilles archivées plié par défaut »
+**Existant** : un filtre **par une seule pastille**, en liste déroulante dans l'en-tête de la liste des mails, porté par
+l'adresse (clé `pastille`) ; le filtre porte sur les messages (`docs/SPEC-mail-subsystem.md` §31.7, `CRM-141` T4). Une
+pastille archivée reste affichée sur les mails qui la portent, avec la mention « archivée » (§31.7).
+**Comportement attendu** (substance validée ; détail à spécifier) :
+- les **pastilles actives** de l'espace s'affichent en **filtres rapides** dans l'en-tête de la liste des mails, chacune
+  **activable et désactivable** d'un clic (bascule) et au clavier ;
+- **plusieurs pastilles activées se combinent en OU** : la liste montre les fils dont un message porte **au moins une**
+  des pastilles activées ; aucune activée = aucun filtre ; le filtre se combine avec le dossier choisi, comme aujourd'hui ;
+- les **pastilles archivées** sont filtrables aussi, dans un **volet « Pastilles archivées » replié par défaut**, à
+  déplier ;
+- les filtres rapides **remplacent la liste déroulante « Pastille »** ;
+- la sélection vit dans l'adresse (la clé `pastille` devient une liste), une valeur mal formée vaut l'absence de filtre.
+**Connecteur MCP** : **oui, famille existante `messagerie`, action `consulter`** — la liste des mails du connecteur
+gagne un filtre par pastilles (plusieurs, en OU) ; aucune case nouvelle (`docs/SPEC-mcp.md` §6.1 ; outil à inscrire au
+§9.2).
+**Spécification** : à écrire avant le code — `docs/SPEC-mail-subsystem.md` §31.7 (révisé) ou section nouvelle ;
+`docs/DESIGN_SYSTEM.md` (filtres rapides en bascule, volet replié) ; `docs/SPEC-mcp.md` §9.2 ; manuel §12.2.
+**DoD** : unitaires ; preuve d'API du filtre (plusieurs pastilles, archivées, valeur mal formée) avec les vrais jetons ;
+E2E souris et clavier aux quatre paliers ; captures observées ; connecteur (pytest, intégration, `verify-mcp.sh`) ; seed
+vérifié (une pastille archivée portée par un mail) ; manuel vérifié ; contrat.

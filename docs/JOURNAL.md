@@ -40938,3 +40938,18 @@ referait déborder le tableau que la décision 940 vient de faire tenir de 900 �
 énumère les autres ; aucune colonne de plus. Écartée : une colonne à part, qui resserrait les autres et tronquait davantage.
 **Conséquences** : la phrase du backlog sur la colonne est révisée ; `docs/DESIGN_SYSTEM.md` le dira à la spécification de
 l'écran. Le filtre par catégorie, lui, reste dans la barre, à côté de « Tracks ».
+
+### décision 943 — les pastilles en filtres rapides dans l'inbox (`CRM-155`)
+
+*2026-11-18, session 4522fa9c (p2enjoy-crm-e3, ex-bb, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Demande** : « le inbox, on affiche les pastilles comme filtres rapides (toggle on/off) et on peux déplier les filtre sur
+les pastilles archivées plié par défaut ».
+**Questions et réponses** :
+- *Le connecteur MCP ?* — **Oui, famille existante `messagerie`** : la liste des mails du connecteur gagne le filtre par
+  pastilles, action `consulter`, aucune case nouvelle (consigne du responsable, décisions 627 et 659).
+- *Plusieurs pastilles activées ?* — **L'une d'elles (OU)** : les fils dont un message porte au moins une des pastilles
+  activées.
+- *La liste déroulante « Pastille » ?* — **Remplacée** par les filtres rapides ; les archivées dans un volet replié par
+  défaut.
+**Conséquences** : unité `CRM-155` au backlog ; spécification à écrire avant le code ; confiée par la session de
+livraison à une session libre.
