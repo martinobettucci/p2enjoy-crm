@@ -20011,7 +20011,9 @@ gagne un filtre par pastilles (plusieurs, en OU) ; aucune case nouvelle (`docs/S
 E2E souris et clavier aux quatre paliers ; captures observées ; connecteur (pytest, intégration, `verify-mcp.sh`) ; seed
 vérifié (une pastille archivée portée par un mail) ; manuel vérifié ; contrat.
 
-### CRM-156 — Inbox : opérations groupées sur une sélection de mails `[ ]`
+### CRM-156 — Inbox : opérations groupées sur une sélection de mails `[@]`
+
+*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-fc, ex-f8) depuis 2026-11-18 21:00 UTC — état avant : [ ] ; confiée par la session de livraison (e3)*
 
 **Origine** : demande du responsable, le 2026-11-18, relayée par la session de livraison (p2enjoy-crm-e3, ex-bb) ; arbitrée le
 même jour (décision 944).
