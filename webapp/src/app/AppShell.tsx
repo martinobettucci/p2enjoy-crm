@@ -1,6 +1,8 @@
 // @spec CRM-007 (docs/BACKLOG.md) — coquille de l'application
 // @spec docs/DESIGN_SYSTEM.md §4 (architecture des écrans), §5.8 (états), §7, §8
 // @spec docs/SPEC-webapp.md §5.1 (coquille), §7 (états), §9 (accessibilité), §11 (stockage)
+// @spec CRM-154 (docs/BACKLOG.md) tranche T4 — l'identifiant du track ouvert et la relecture, passés à la barre d'onglets
+//       (docs/SPEC-administration-arborescence.md §15.4)
 // @spec CRM-131 (docs/BACKLOG.md) — la mesure des channels lisibles, émise hors d'un track pour la barre d'onglets
 //       (docs/SPEC-channels.md §5.5 ; docs/DESIGN_SYSTEM.md §4 ; décision 868)
 // @spec CRM-094 (docs/BACKLOG.md) tranches T2 et T3 — l'espace courant et son rôle rendus par un contexte,
@@ -118,6 +120,12 @@ export function AppShell({
 	// l'accueil, émise ici seulement (docs/SPEC-channels.md §5.5). Sans session, aucune mesure, et la barre garde
 	// « Aucun channel ».
 	const sessionOuverte = etatSession.statut === 'authentifie'
+	// `CRM-154` (docs/SPEC-administration-arborescence.md §15.4) : l'identifiant du track ouvert, pris dans les tracks
+	// que la coquille lit déjà pour la barre latérale — la réorganisation et « Réorganiser » en ont besoin.
+	const idTrackOuvert =
+		slugTrack !== undefined && etatTracks.statut === 'pret'
+			? etatTracks.donnees.find((track) => track.slug === slugTrack)?.id
+			: undefined
 	const presenceHorsTrack = useMesureChannels(slugTrack === undefined && sessionOuverte ? clientCrm : null)
 
 	const toutRecharger = useCallback(() => {
@@ -197,6 +205,8 @@ export function AppShell({
 						slugTrack={slugTrack}
 						{...(archivesChannels === undefined ? {} : { archives: archivesChannels })}
 						{...(slugTrack === undefined && sessionOuverte ? { presenceHorsTrack } : {})}
+						{...(idTrackOuvert === undefined ? {} : { idTrack: idTrackOuvert })}
+						{...(onRechargerChannels === undefined ? {} : { onRelire: onRechargerChannels })}
 					/>
 					<main id={ID_CONTENU} tabIndex={-1} className="flex-1 min-w-0 p-4 overflow-x-auto">
 						{/* Le chargement des channels rejoint les deux autres : un échec ne doit pas

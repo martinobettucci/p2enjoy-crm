@@ -19930,4 +19930,13 @@ souris et clavier ; captures observées aux quatre paliers ; manuel vérifié ; 
   six nouveaux) ; E2E `administration-arborescence` 10/10 (positions 1 à n constatées en base, l'ordre du seed reposé
   par la fonction ; `?track=` connu et inconnu) ; API `administration-arborescence` et `reorganiser-channels` 22/22 ;
   manuel §17.3 révisé (texte seul) ; changelog ;
-- **T4** et **T5** — à faire.
+- **T4** — faite : la poignée de chaque onglet (`TabBar.tsx`, `OngletsChannels`), le glisser natif, le mode déplacement
+  au clavier, « Réorganiser », l'alerte de refus sous la barre ; l'identifiant du track passé par la coquille ; le module
+  porte le mode clavier et le rang de pose (Vitest 18) ; `TabBar.reorganisation.test.tsx` 10 ; E2E
+  `reorganiser-channels` 8/8 — souris (repère d'insertion, ordre en base, rechargement), clavier (Échap, Fin, Entrée,
+  focus suivi), lectrice sans poignée et « Réorganiser » vers l'arborescence en lecture seule, refus traduit (réponse
+  substituée nommée ; le refus réel est prouvé par l'API), quatre paliers (cible 40 × 40, aucun défilement de la page) ;
+  E2E voisins de la barre rejoués (163 verts ; `premier-lancement` en interférence parallèle, vert seul) ; captures
+  `docs/captures/CRM-154` observées — **défaut trouvé et corrigé** : la poignée saisie se confondait avec le focus, son
+  fond passe à `--color-brand-soft-strong` (§5.106) ;
+- **T5** — à faire.

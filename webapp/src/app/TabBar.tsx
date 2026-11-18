@@ -53,10 +53,15 @@
 // @spec CRM-134 (docs/BACKLOG.md) tranche T1 — le groupe « Archivés » de la barre, après les onglets et avant
 //       « Nouveau channel » : un bouton qui déplie le panneau sur la vue d'un track, un lien ailleurs ; absent sans archivé
 //       (docs/SPEC-channels.md §11.3 ; docs/DESIGN_SYSTEM.md §5.101 ; décision 919)
+// @spec CRM-154 (docs/BACKLOG.md) tranche T4 — réorganiser les channels depuis la barre : la poignée de chaque onglet (glisser
+//       à la souris, mode déplacement au clavier), « Réorganiser » vers l'arborescence, l'appel et ses refus sous la barre
+//       (docs/SPEC-administration-arborescence.md §15.4 ; docs/DESIGN_SYSTEM.md §5.106 ; décisions 935 et 938)
 
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type DragEvent, type KeyboardEvent } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router'
-import { Archive, ChartColumn, ChevronDown, ChevronRight, Plus } from 'lucide-react'
+import { Archive, ArrowLeftRight, ChartColumn, ChevronDown, ChevronRight, GripVertical, Plus, TriangleAlert } from 'lucide-react'
 import { Infobulle } from '../components/ui/Infobulle'
+import { LiveRegion } from '../components/ui/LiveRegion'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import {
@@ -67,7 +72,20 @@ import {
 	rechercheAvecArchives,
 } from '../lib/archives-channels'
 import type { EtatAsync } from '../lib/async'
-import type { Channel } from '../lib/channels'
+import { lireChannels, type Channel } from '../lib/channels'
+import {
+	cheminReorganiser,
+	deplacerSaisie,
+	insertionAuSurvol,
+	ordreApresPose,
+	ordreAPoser,
+	rangDePose,
+	rangSaisi,
+	reorganiserChannels,
+	saisir,
+	type Saisie,
+} from '../lib/reorganisation-channels'
+import { clientCrm } from '../lib/supabase'
 import type { PresenceChannels } from '../lib/demarrage'
 import {
 	PARAM_NOUVEAU_CHANNEL,
@@ -101,25 +119,70 @@ export type ProprietesTabBar = {
 	 * groupe « Archivés ».
 	 */
 	readonly archives?: readonly Channel[]
+	/** `CRM-154` — l'identifiant du track ouvert : la réorganisation et « Réorganiser » en ont besoin. */
+	readonly idTrack?: string
+	/** `CRM-154` — relire le contenu du track quand la liste des channels a changé entre-temps (§15.4). */
+	readonly onRelire?: () => void
 }
 
 const AUCUN_ARCHIVE: readonly Channel[] = []
 
-export function TabBar({ etat, slugTrack, presenceHorsTrack, archives = AUCUN_ARCHIVE }: ProprietesTabBar) {
+export function TabBar({
+	etat,
+	slugTrack,
+	presenceHorsTrack,
+	archives = AUCUN_ARCHIVE,
+	idTrack,
+	onRelire,
+}: ProprietesTabBar) {
+	// `CRM-154` (§15.4) : le refus d'une réorganisation s'écrit SOUS la barre, hors de son conteneur qui défile ; il
+	// s'efface au geste suivant ou en quittant le track.
+	const [refus, setRefus] = useState<string | null>(null)
+	useEffect(() => {
+		setRefus(null)
+	}, [slugTrack])
 	return (
-		<div
-			data-testid="barre-onglets"
-			// Le débordement se fait dans le conteneur, jamais dans la page
-			// (docs/DESIGN_SYSTEM.md §7), et il est **signalé** — §4 : « défilable, jamais tronqué
-			// sans indication ». Défaut vu sur la capture à 390 px (docs/DESIGN_SYSTEM.md §12.6).
-			className="flex items-center gap-2 px-4 bg-bg border-b border-border overflow-x-auto indique-debordement-x"
-		>
-			<Contenu etat={etat} slugTrack={slugTrack} presenceHorsTrack={presenceHorsTrack} archives={archives} />
-		</div>
+		<>
+			<div
+				data-testid="barre-onglets"
+				// Le débordement se fait dans le conteneur, jamais dans la page
+				// (docs/DESIGN_SYSTEM.md §7), et il est **signalé** — §4 : « défilable, jamais tronqué
+				// sans indication ». Défaut vu sur la capture à 390 px (docs/DESIGN_SYSTEM.md §12.6).
+				className="flex items-center gap-2 px-4 bg-bg border-b border-border overflow-x-auto indique-debordement-x"
+			>
+				<Contenu
+					etat={etat}
+					slugTrack={slugTrack}
+					presenceHorsTrack={presenceHorsTrack}
+					archives={archives}
+					{...(idTrack === undefined ? {} : { idTrack })}
+					{...(onRelire === undefined ? {} : { onRelire })}
+					onRefus={setRefus}
+				/>
+			</div>
+			{refus === null ? null : (
+				<p
+					role="alert"
+					data-testid="reorganisation-refus"
+					className="flex items-start gap-2 mx-4 mt-2 rounded-sm bg-danger-soft text-danger-on-soft px-3 py-2 text-sm"
+				>
+					<TriangleAlert aria-hidden="true" size={16} strokeWidth={2} className="shrink-0 mt-[2px]" />
+					<span>{refus}</span>
+				</p>
+			)}
+		</>
 	)
 }
 
-function Contenu({ etat, slugTrack, presenceHorsTrack, archives = AUCUN_ARCHIVE }: ProprietesTabBar) {
+function Contenu({
+	etat,
+	slugTrack,
+	presenceHorsTrack,
+	archives = AUCUN_ARCHIVE,
+	idTrack,
+	onRelire,
+	onRefus,
+}: ProprietesTabBar & { readonly onRefus: (refus: string | null) => void }) {
 	if (etat?.statut === 'chargement') {
 		return (
 			<div className="py-2">
@@ -185,56 +248,367 @@ function Contenu({ etat, slugTrack, presenceHorsTrack, archives = AUCUN_ARCHIVE 
 			    sur l'autre. La réponse d'une barre au manque de place est de DÉFILER dans son
 			    conteneur (`docs/DESIGN_SYSTEM.md` §7 et §12.6), ce que celui-ci fait déjà, et jamais
 			    d'écraser son contenu. */}
-			<nav aria-label={t('tabs.aria')} className="shrink-0">
-			<ul className="flex items-center gap-1">
-				{channels.map((channel) => (
-					<li key={channel.id}>
-						{/* L'infobulle porte le nom en tête et REMPLACE alors le `title` (§5.58). */}
-						<Infobulle titre={channel.name} description={channel.description}>
-						{({ idDescription }) => (
-						<NavLink
-							to={`/tracks/${slugTrack}/${channel.slug}`}
-							data-testid="onglet-channel"
-							data-slug={channel.slug}
-							title={idDescription === undefined ? channel.name : undefined}
-							aria-describedby={idDescription}
-							className={({ isActive }) =>
-								[
-									'inline-flex items-center px-3 whitespace-nowrap',
-									// Cible interactive ≥ 40 px (docs/DESIGN_SYSTEM.md §8).
-									'min-h-[var(--size-target)]',
-									// La bordure basse porte l'état actif **en plus** de la couleur : une
-									// information ne repose jamais sur la seule couleur (§1). Les deux
-									// états portent une bordure de même épaisseur, faute de quoi le texte
-									// se décalerait de deux pixels au changement d'onglet.
-									'border-b-2',
-									isActive
-										? 'border-brand text-brand font-medium'
-										: 'border-transparent text-text-2 hover:bg-hover',
-									'transition-colors duration-[var(--transition-duration-fast)]',
-								].join(' ')
-							}
-						>
-							{/* `CRM-116` (§5.68) : la pastille de la couleur du channel, `aria-hidden` — le nom porte l'information. Sa
-							    couleur ne change pas avec l'état actif, que la bordure basse et le texte portent seuls. */}
-							<span
-								aria-hidden="true"
-								data-testid="pastille-channel"
-								data-couleur={jetonCouleur(channel.color)}
-								className={`mr-[6px] size-2 shrink-0 rounded-full ${classesPastille(channel.color)}`}
-							/>
-							{channel.name}
-						</NavLink>
-						)}
-						</Infobulle>
-					</li>
-				))}
-			</ul>
-			</nav>
+			<OngletsChannels
+				channels={channels}
+				slugTrack={slugTrack}
+				{...(idTrack === undefined ? {} : { idTrack })}
+				{...(onRelire === undefined ? {} : { onRelire })}
+				onRefus={onRefus}
+			/>
 			<GroupeArchives slugTrack={slugTrack} archives={archives} />
 			<CommandeNouveauChannel slugTrack={slugTrack} />
+			{idTrack !== undefined && channels.length >= 2 ? <CommandeReorganiser idTrack={idTrack} /> : null}
 			<EntreesTransversesTrack slugTrack={slugTrack} />
 		</>
+	)
+}
+
+/**
+ * `CRM-154` (§15.4) — la poignée n'est rendue qu'avec un pointeur fin : le glisser-déposer natif ne fonctionne pas sur un
+ * écran tactile, où « Réorganiser » est le chemin. Sans `matchMedia` (une preuve hors navigateur), le pointeur est
+ * supposé fin.
+ */
+const REQUETE_POINTEUR_FIN = '(hover: hover) and (pointer: fine)'
+function usePointeurFin(): boolean {
+	const lire = () =>
+		typeof window === 'undefined' || typeof window.matchMedia !== 'function'
+			? true
+			: window.matchMedia(REQUETE_POINTEUR_FIN).matches
+	const [fin, setFin] = useState(lire)
+	useEffect(() => {
+		if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
+		const requete = window.matchMedia(REQUETE_POINTEUR_FIN)
+		const suivre = () => setFin(requete.matches)
+		requete.addEventListener('change', suivre)
+		return () => requete.removeEventListener('change', suivre)
+	}, [])
+	return fin
+}
+
+type ProprietesOnglets = {
+	readonly channels: readonly Channel[]
+	readonly slugTrack: string
+	readonly idTrack?: string
+	readonly onRelire?: () => void
+	readonly onRefus: (refus: string | null) => void
+}
+
+/**
+ * Les onglets des channels — `CRM-021`, et depuis `CRM-154` (§15.4) réorganisables par qui administre l'espace.
+ *
+ * L'ORDRE AFFICHÉ est celui de l'hôte, sauf pendant un geste (glisser, saisie au clavier, appel en vol) et après un succès :
+ * la barre relit alors elle-même l'ordre en base et le tient tant que l'hôte n'a pas relu sa liste — relire l'hôte
+ * remettrait toute la zone principale en squelette. Un ordre tenu ne vaut que pour la liste de l'hôte qu'il a vue.
+ */
+function OngletsChannels({ channels, slugTrack, idTrack, onRelire, onRefus }: ProprietesOnglets) {
+	const { capacites } = useContexteEspace()
+	const pointeurFin = usePointeurFin()
+	// Glisser n'a pas de forme désactivée : refusée ou en lecture, la capacité ne rend pas la poignée ; inconnue — un
+	// défaut de lecture —, elle la rend, la base refusant si besoin (docs/SPEC-droits-interface.md §4).
+	const reorganisable =
+		idTrack !== undefined &&
+		clientCrm !== null &&
+		pointeurFin &&
+		channels.length >= 2 &&
+		(capacites.administration === 'permise' || capacites.administration === 'inconnue')
+
+	const [tenu, setTenu] = useState<{ readonly base: readonly Channel[]; readonly ordre: readonly string[] } | null>(null)
+	const [saisie, setSaisie] = useState<Saisie | null>(null)
+	const [glisse, setGlisse] = useState<string | null>(null)
+	const [insertion, setInsertion] = useState<number | null>(null)
+	const [enVol, setEnVol] = useState(false)
+	const [annonce, setAnnonce] = useState('')
+	const poignees = useRef(new Map<string, HTMLButtonElement>())
+	const aRefocaliser = useRef<string | null>(null)
+	const idConsignes = useId()
+
+	const ordreHote = channels.map((channel) => channel.id)
+	const ordreTenu = tenu !== null && tenu.base === channels ? tenu.ordre : null
+	const ordreCourant = saisie?.ordre ?? ordreTenu ?? ordreHote
+	const parId = new Map(channels.map((channel) => [channel.id, channel]))
+	const affiches = ordreCourant.map((id) => parId.get(id)).filter((channel): channel is Channel => channel !== undefined)
+	const nom = (id: string) => parId.get(id)?.name ?? ''
+
+	// Le focus suit la poignée de l'onglet déplacé : un nœud déplacé dans le DOM perd le focus.
+	useLayoutEffect(() => {
+		const id = aRefocaliser.current
+		if (id === null) return
+		aRefocaliser.current = null
+		poignees.current.get(id)?.focus()
+	})
+
+	const poser = useCallback(
+		async (id: string, ordre: readonly string[], precedent: readonly string[]) => {
+			if (idTrack === undefined || clientCrm === null) return
+			const client = clientCrm
+			onRefus(null)
+			setTenu({ base: channels, ordre })
+			setEnVol(true)
+			aRefocaliser.current = id
+			const resultat = await reorganiserChannels(client, idTrack, ordre)
+			if (resultat.statut === 'refus') {
+				setTenu({ base: channels, ordre: precedent })
+				const nature = resultat.refus.nature
+				const texte =
+					nature === 'forbidden'
+						? t('tabs.move.refus.forbidden')
+						: nature === 'ordre-perime'
+							? t('tabs.move.refus.stale')
+							: t('tabs.move.refus.error')
+				onRefus(texte)
+				setAnnonce(texte)
+				setEnVol(false)
+				aRefocaliser.current = id
+				if (nature === 'ordre-perime') onRelire?.()
+				return
+			}
+			// L'ordre affiché vient de la base : relu, sans squelette.
+			const relu = await lireChannels(client, idTrack)
+			const ordreBase = relu.statut === 'pret' ? relu.donnees.channels.map((channel) => channel.id) : ordre
+			setTenu({ base: channels, ordre: ordreBase })
+			setAnnonce(
+				t('tabs.move.saved', {
+					channel: channels.find((channel) => channel.id === id)?.name ?? '',
+					rang: String(ordreBase.indexOf(id) + 1),
+					n: String(ordreBase.length),
+				}),
+			)
+			setEnVol(false)
+			aRefocaliser.current = id
+		},
+		[channels, idTrack, onRefus, onRelire],
+	)
+
+	const annuler = useCallback(
+		(id: string) => {
+			setSaisie(null)
+			setAnnonce(t('tabs.move.cancelled'))
+			aRefocaliser.current = id
+		},
+		[],
+	)
+
+	const auClavier = (evenement: KeyboardEvent<HTMLButtonElement>, id: string) => {
+		if (enVol) return
+		const touche = evenement.key
+		if (saisie === null) {
+			if (touche !== ' ' && touche !== 'Enter') return
+			evenement.preventDefault()
+			onRefus(null)
+			const nouvelle = saisir(ordreCourant, id)
+			setSaisie(nouvelle)
+			setAnnonce(
+				t('tabs.move.grabbed', { channel: nom(id), rang: String(rangSaisi(nouvelle)), n: String(nouvelle.ordre.length) }),
+			)
+			return
+		}
+		const pas =
+			touche === 'ArrowLeft' ? -1 : touche === 'ArrowRight' ? 1 : touche === 'Home' ? 'debut' : touche === 'End' ? 'fin' : null
+		if (pas !== null) {
+			evenement.preventDefault()
+			const suivante = deplacerSaisie(saisie, pas)
+			if (suivante !== saisie) {
+				aRefocaliser.current = id
+				setSaisie(suivante)
+				setAnnonce(t('tabs.move.rank', { rang: String(rangSaisi(suivante)), n: String(suivante.ordre.length) }))
+			}
+			return
+		}
+		if (touche === 'Escape') {
+			evenement.preventDefault()
+			annuler(id)
+			return
+		}
+		if (touche === ' ' || touche === 'Enter') {
+			evenement.preventDefault()
+			const ordre = ordreAPoser(saisie)
+			const depart = saisie.depart
+			setSaisie(null)
+			if (ordre === null) {
+				setAnnonce(t('tabs.move.cancelled'))
+				return
+			}
+			void poser(id, ordre, depart)
+		}
+	}
+
+	// Le glisser : un état de survol UNIQUE pour la barre, éteint à la fin du glisser (docs/DESIGN_SYSTEM.md §5.2 bis).
+	const survoler = (evenement: DragEvent<HTMLLIElement>, rang: number) => {
+		if (glisse === null) return
+		evenement.preventDefault()
+		evenement.dataTransfer.dropEffect = 'move'
+		const boite = evenement.currentTarget.getBoundingClientRect()
+		setInsertion(insertionAuSurvol(rang, evenement.clientX, boite.left, boite.width))
+	}
+	const deposer = (evenement: DragEvent<HTMLLIElement>) => {
+		if (glisse === null || insertion === null) return
+		evenement.preventDefault()
+		const id = glisse
+		const ordre = ordreApresPose(ordreCourant, id, rangDePose(ordreCourant, id, insertion))
+		setGlisse(null)
+		setInsertion(null)
+		if (ordre !== null) void poser(id, ordre, ordreCourant)
+	}
+
+	return (
+		<nav aria-label={t('tabs.aria')} aria-busy={enVol ? 'true' : undefined} className="shrink-0">
+			<LiveRegion libelle={t('live.tabs.aria')} message={annonce} />
+			{reorganisable ? (
+				<span id={idConsignes} className="sr-only">
+					{t('tabs.move.instructions')}
+				</span>
+			) : null}
+			<ul className="flex items-center gap-1">
+				{affiches.map((channel, rang) => {
+					const saisi = saisie?.id === channel.id
+					const tire = glisse === channel.id
+					return (
+						<li
+							key={channel.id}
+							data-testid="element-onglet"
+							data-slug={channel.slug}
+							className={['relative flex items-center rounded-sm', tire ? 'bg-hover' : ''].join(' ')}
+							{...(reorganisable
+								? {
+										onDragOver: (evenement: DragEvent<HTMLLIElement>) => survoler(evenement, rang),
+										onDrop: deposer,
+									}
+								: {})}
+						>
+							{/* LE REPÈRE D'INSERTION : un trait de 2 px `--color-brand`, pleine hauteur, avant l'onglet — ou après le
+							    dernier (§5.106). */}
+							{insertion === rang && glisse !== null ? <RepereInsertion cote="avant" /> : null}
+							{insertion === affiches.length && rang === affiches.length - 1 && glisse !== null ? (
+								<RepereInsertion cote="apres" />
+							) : null}
+							{reorganisable ? (
+								<button
+									type="button"
+									ref={(element) => {
+										if (element === null) poignees.current.delete(channel.id)
+										else poignees.current.set(channel.id, element)
+									}}
+									data-testid="poignee-onglet"
+									aria-label={t('tabs.move.handle', { channel: channel.name })}
+									aria-describedby={idConsignes}
+									aria-pressed={saisi ? 'true' : 'false'}
+									disabled={enVol}
+									draggable={!enVol}
+									onKeyDown={(evenement) => auClavier(evenement, channel.id)}
+									onBlur={() => {
+										// Le focus qui QUITTE la poignée annule ; un nœud déplacé, que l'effet refocalise, n'annule pas.
+										if (saisi && aRefocaliser.current !== channel.id) annuler(channel.id)
+									}}
+									onDragStart={(evenement) => {
+										onRefus(null)
+										setSaisie(null)
+										evenement.dataTransfer.effectAllowed = 'move'
+										evenement.dataTransfer.setData('text/plain', channel.id)
+										const element = evenement.currentTarget.closest('li')
+										if (element !== null) evenement.dataTransfer.setDragImage(element, 20, 20)
+										setGlisse(channel.id)
+									}}
+									onDragEnd={() => {
+										setGlisse(null)
+										setInsertion(null)
+									}}
+									className={[
+										'inline-flex items-center justify-center shrink-0 rounded-sm',
+										// Cible de 40 × 40 px (§8) : la hauteur du jeton, et la même largeur.
+										'min-h-[var(--size-target)] min-w-[var(--size-target)]',
+										// Saisie : le fond doux POUSSÉ À 22 % — vu en capture, celui à 10 % ne se détachait pas du fond teinté de la barre,
+										// et l'état se confondait avec le seul focus (docs/DESIGN_SYSTEM.md §1, §5.106).
+										saisi ? 'bg-brand-soft-strong text-brand' : 'text-text-3 hover:bg-hover',
+										tire ? 'cursor-grabbing' : 'cursor-grab',
+										'disabled:cursor-default',
+										'transition-colors duration-[var(--transition-duration-fast)]',
+									].join(' ')}
+								>
+									<GripVertical aria-hidden="true" size={16} strokeWidth={2} />
+								</button>
+							) : null}
+							{/* L'infobulle porte le nom en tête et REMPLACE alors le `title` (§5.58). */}
+							<Infobulle titre={channel.name} description={channel.description}>
+							{({ idDescription }) => (
+							<NavLink
+								to={`/tracks/${slugTrack}/${channel.slug}`}
+								data-testid="onglet-channel"
+								data-slug={channel.slug}
+								title={idDescription === undefined ? channel.name : undefined}
+								aria-describedby={idDescription}
+								// `CRM-154` : la poignée est la seule source d'un glisser ; le lien garde son comportement, mais ne se
+								// tire pas — sans quoi le navigateur tirerait son adresse au-dessus des onglets.
+								draggable={reorganisable ? false : undefined}
+								className={({ isActive }) =>
+									[
+										'inline-flex items-center px-3 whitespace-nowrap',
+										// Cible interactive ≥ 40 px (docs/DESIGN_SYSTEM.md §8).
+										'min-h-[var(--size-target)]',
+										// La bordure basse porte l'état actif **en plus** de la couleur : une
+										// information ne repose jamais sur la seule couleur (§1). Les deux
+										// états portent une bordure de même épaisseur, faute de quoi le texte
+										// se décalerait de deux pixels au changement d'onglet.
+										'border-b-2',
+										isActive
+											? 'border-brand text-brand font-medium'
+											: 'border-transparent text-text-2 hover:bg-hover',
+										'transition-colors duration-[var(--transition-duration-fast)]',
+									].join(' ')
+								}
+							>
+								{/* `CRM-116` (§5.68) : la pastille de la couleur du channel, `aria-hidden` — le nom porte l'information. Sa
+								    couleur ne change pas avec l'état actif, que la bordure basse et le texte portent seuls. */}
+								<span
+									aria-hidden="true"
+									data-testid="pastille-channel"
+									data-couleur={jetonCouleur(channel.color)}
+									className={`mr-[6px] size-2 shrink-0 rounded-full ${classesPastille(channel.color)}`}
+								/>
+								{channel.name}
+							</NavLink>
+							)}
+							</Infobulle>
+						</li>
+					)
+				})}
+			</ul>
+		</nav>
+	)
+}
+
+/** Le repère d'insertion d'un glisser (§5.106) : décoratif, l'annonce dit le résultat. */
+function RepereInsertion({ cote }: { readonly cote: 'avant' | 'apres' }) {
+	return (
+		<span
+			aria-hidden="true"
+			data-testid="repere-insertion"
+			className={[
+				'absolute top-0 bottom-0 w-[2px] bg-brand pointer-events-none',
+				cote === 'avant' ? 'left-0' : 'right-0',
+			].join(' ')}
+		/>
+	)
+}
+
+/**
+ * « Réorganiser » — `CRM-154`, §15.4, docs/DESIGN_SYSTEM.md §5.106. Un LIEN vers l'arborescence ouverte sur le track, de
+ * la forme de « Nouveau channel » ; rendu à TOUS (décision 938) : qui n'administre pas consulte l'arborescence en
+ * lecture seule, ses commandes éteintes avec leur motif.
+ */
+function CommandeReorganiser({ idTrack }: { readonly idTrack: string }) {
+	return (
+		<Link
+			to={cheminReorganiser(idTrack)}
+			data-testid="commande-reorganiser"
+			className={[
+				'shrink-0 inline-flex items-center gap-2 px-3 whitespace-nowrap rounded-sm',
+				'min-h-[var(--size-target)] text-text-2 hover:bg-hover',
+				'transition-colors duration-[var(--transition-duration-fast)]',
+			].join(' ')}
+		>
+			<ArrowLeftRight aria-hidden="true" size={16} strokeWidth={2} className="shrink-0" />
+			{t('tabs.reorganize')}
+		</Link>
 	)
 }
 

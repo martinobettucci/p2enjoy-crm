@@ -770,6 +770,14 @@ l'appel part ; sinon, rien. `Échap`, ou le focus qui quitte la poignée, **annu
   entre-temps : elle a été relue. », avec relecture ; une panne : le texte d'erreur générique. Le message s'efface au
   geste suivant ou en quittant le track. La capacité est relue (`docs/SPEC-droits-interface.md` §4).
 
+*Précisé au code (T4, 2026-11-18)* :
+- **la relecture d'un succès est faite par la barre elle-même** (`lireChannels`), et l'ordre relu est tenu tant que
+  l'écran hôte n'a pas relu sa liste : relire l'hôte remettrait toute la zone principale en squelette et remonterait le
+  board. Le refus `23514`, lui, fait relire l'hôte — la liste a changé, un channel peut être apparu ;
+- **la capacité est relue au prochain chargement de la coquille** : le contexte d'espace n'expose aucun relecteur, et en
+  ajouter un dépasserait l'unité ; un refus `42501` est de toute façon traduit sous la barre ;
+- l'identifiant du track vient des tracks que la coquille lit déjà pour la barre latérale ; aucune lecture de plus.
+
 **Ce qui ne change pas** : les onglets restent des **liens** (`docs/DESIGN_SYSTEM.md` §12.1) — aucun `tablist` ; l'ordre
 des cards, l'onglet ouvert, l'adresse.
 

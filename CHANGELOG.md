@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-154` T4 — réorganiser les channels depuis la barre d'onglets d'un track (décisions 935 et 938)
+
+- **Pour un administrateur de l'espace, chaque onglet de channel porte une poignée** : la tirer à la souris pose l'onglet
+  ailleurs, et l'ordre est enregistré pour tout l'espace. Au clavier, la poignée saisit l'onglet (Espace ou Entrée), les
+  flèches le déplacent, Entrée le pose, Échap annule ; chaque étape est annoncée.
+- **« Réorganiser »**, après « Nouveau channel », ouvre Réglages ▸ Arborescence sur ce track. Il est rendu à tous : qui
+  n'administre pas y consulte l'arborescence en lecture seule. Les autres membres n'ont pas de poignée.
+- Sur un écran tactile, la poignée n'est pas proposée : « Réorganiser » y est le chemin.
+- Un refus s'écrit sous la barre, et l'ordre d'avant revient. La webapp, avec ou après la migration 187
+  (`docs/PROD_MIGRATIONS.md` §2.56).
+
 #### `CRM-154` T3 — l'arborescence réordonne les channels d'un seul coup (décisions 935 et 938)
 
 - **« Monter » et « Descendre » sur un channel** enregistrent désormais l'ordre entier des channels du track, en une

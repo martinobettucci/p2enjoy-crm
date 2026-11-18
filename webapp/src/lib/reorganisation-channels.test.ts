@@ -7,11 +7,17 @@ import {
 	cheminReorganiser,
 	classerRefusReorganisation,
 	deplacementParOrdre,
+	deplacerSaisie,
+	insertionAuSurvol,
 	lireTrackDemande,
 	ordreApresDeplacement,
 	ordreApresPose,
+	ordreAPoser,
+	rangDePose,
+	rangSaisi,
 	reorganiserChannels,
 	sansTrackDemande,
+	saisir,
 } from './reorganisation-channels'
 import type { ClientCrm } from './supabase'
 
@@ -112,5 +118,56 @@ describe('l’appel (§15.2)', () => {
 		expect(refus).toEqual({ statut: 'refus', refus: { nature: 'ordre-perime', detail: 'channel_order_incomplete' } })
 		const qui_leve = { rpc: () => Promise.reject(new Error('Failed to fetch')) } as unknown as ClientCrm
 		expect((await reorganiserChannels(qui_leve, UUID, ['a'])).statut).toBe('refus')
+	})
+})
+
+// @verifies CRM-154 (docs/BACKLOG.md) — tranche T4 : le mode déplacement au clavier et le rang de pose d'un glisser
+//           (docs/SPEC-administration-arborescence.md §15.4 ; décision 938)
+describe('le mode déplacement au clavier (§15.4)', () => {
+	it('saisir ne bouge rien ; ← et → déplacent d’un rang ; Début et Fin vont aux extrémités', () => {
+		let saisie = saisir(IDS, 'b')
+		expect(rangSaisi(saisie)).toBe(2)
+		saisie = deplacerSaisie(saisie, 1)
+		expect(saisie.ordre).toEqual(['a', 'c', 'b', 'd'])
+		expect(rangSaisi(saisie)).toBe(3)
+		saisie = deplacerSaisie(saisie, 'fin')
+		expect(saisie.ordre).toEqual(['a', 'c', 'd', 'b'])
+		saisie = deplacerSaisie(saisie, 'debut')
+		expect(saisie.ordre).toEqual(['b', 'a', 'c', 'd'])
+		expect(saisie.depart).toEqual(IDS)
+	})
+
+	it('aux bornes, un pas ne change rien', () => {
+		const premier = saisir(IDS, 'a')
+		expect(deplacerSaisie(premier, -1)).toBe(premier)
+		const dernier = saisir(IDS, 'd')
+		expect(deplacerSaisie(dernier, 1)).toBe(dernier)
+	})
+
+	it('poser rend l’ordre à envoyer, ou null si l’onglet est revenu à sa place', () => {
+		const saisie = deplacerSaisie(saisir(IDS, 'b'), 1)
+		expect(ordreAPoser(saisie)).toEqual(['a', 'c', 'b', 'd'])
+		expect(ordreAPoser(deplacerSaisie(saisie, -1))).toBeNull()
+		expect(ordreAPoser(saisir(IDS, 'c'))).toBeNull()
+	})
+})
+
+describe('le glisser à la souris (§15.4)', () => {
+	it('le rang de pose compte l’onglet qui quitte sa place', () => {
+		// « a » tiré, repère avant « c » (insertion 2) : il se pose au rang 1, entre « b » et « c ».
+		expect(rangDePose(IDS, 'a', 2)).toBe(1)
+		expect(ordreApresPose(IDS, 'a', rangDePose(IDS, 'a', 2))).toEqual(['b', 'a', 'c', 'd'])
+		// « d » tiré, repère avant « a » : il se pose en tête.
+		expect(ordreApresPose(IDS, 'd', rangDePose(IDS, 'd', 0))).toEqual(['d', 'a', 'b', 'c'])
+		// « b » tiré, repère après le dernier (insertion 4) : il se pose en fin.
+		expect(ordreApresPose(IDS, 'b', rangDePose(IDS, 'b', 4))).toEqual(['a', 'c', 'd', 'b'])
+		// Repère juste avant ou juste après lui-même : rien ne change.
+		expect(ordreApresPose(IDS, 'b', rangDePose(IDS, 'b', 1))).toBeNull()
+		expect(ordreApresPose(IDS, 'b', rangDePose(IDS, 'b', 2))).toBeNull()
+	})
+
+	it('le repère passe après l’onglet survolé quand le pointeur en dépasse le milieu', () => {
+		expect(insertionAuSurvol(2, 149, 100, 100)).toBe(2)
+		expect(insertionAuSurvol(2, 151, 100, 100)).toBe(3)
 	})
 })

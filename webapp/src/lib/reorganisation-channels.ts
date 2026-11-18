@@ -121,3 +121,55 @@ export async function reorganiserChannels(
 		}
 	}
 }
+
+// ---------------------------------------------------------------------------------------------
+// La barre d'onglets — tranche T4, §15.4
+// ---------------------------------------------------------------------------------------------
+// @spec CRM-154 (docs/BACKLOG.md) tranche T4 — le mode déplacement au clavier et le rang de pose d'un glisser
+//       (docs/SPEC-administration-arborescence.md §15.4 ; docs/DESIGN_SYSTEM.md §5.106 ; décision 938)
+
+/** Un onglet saisi au clavier : l'ordre de départ, à rétablir sur « annuler », et l'ordre courant, à l'écran seulement. */
+export type Saisie = {
+	readonly id: string
+	readonly depart: readonly string[]
+	readonly ordre: readonly string[]
+}
+
+/** `Espace` ou `Entrée` sur la poignée : l'onglet est saisi, rien n'a encore bougé. */
+export function saisir(ordre: readonly string[], id: string): Saisie {
+	return { id, depart: ordre, ordre }
+}
+
+/** Un pas : `←` (-1), `→` (+1), `Début`, `Fin`. Aux bornes, l'ordre ne change pas. */
+export function deplacerSaisie(saisie: Saisie, pas: -1 | 1 | 'debut' | 'fin'): Saisie {
+	const rang = saisie.ordre.indexOf(saisie.id)
+	const cible = pas === 'debut' ? 0 : pas === 'fin' ? saisie.ordre.length - 1 : rang + pas
+	const ordre = ordreApresPose(saisie.ordre, saisie.id, cible)
+	return ordre === null ? saisie : { ...saisie, ordre }
+}
+
+/** Le rang de l'onglet saisi, compté depuis 1 — ce que l'annonce dit. */
+export function rangSaisi(saisie: Saisie): number {
+	return saisie.ordre.indexOf(saisie.id) + 1
+}
+
+/** `Entrée` ou `Espace` : l'ordre à envoyer, ou `null` si l'onglet est revenu à sa place — rien n'est envoyé. */
+export function ordreAPoser(saisie: Saisie): readonly string[] | null {
+	const identique =
+		saisie.ordre.length === saisie.depart.length && saisie.ordre.every((id, rang) => id === saisie.depart[rang])
+	return identique ? null : saisie.ordre
+}
+
+/**
+ * Le rang où poser `id` quand le repère d'insertion est AVANT l'onglet de rang `insertion` (0 à n, n étant « après le
+ * dernier ») : un repère placé après la position d'origine compte l'onglet tiré, qui quitte sa place.
+ */
+export function rangDePose(ids: readonly string[], id: string, insertion: number): number {
+	const rang = ids.indexOf(id)
+	return rang !== -1 && insertion > rang ? insertion - 1 : insertion
+}
+
+/** Le repère d'insertion d'un survol : avant l'onglet survolé, ou après lui si le pointeur en passe le milieu. */
+export function insertionAuSurvol(rangSurvole: number, xPointeur: number, gauche: number, largeur: number): number {
+	return xPointeur > gauche + largeur / 2 ? rangSurvole + 1 : rangSurvole
+}

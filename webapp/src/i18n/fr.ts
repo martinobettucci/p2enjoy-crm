@@ -3923,6 +3923,20 @@ export const fr = {
 	'tabs.track.aria': 'Vues du track',
 	// CRM-100 (docs/SPEC-administration-arborescence.md §13.3, docs/DESIGN_SYSTEM.md §5.55).
 	'tabs.newChannel': 'Nouveau channel',
+	// CRM-154 T4 (docs/SPEC-administration-arborescence.md §15.4, docs/DESIGN_SYSTEM.md §5.106 ; décisions 935 et 938).
+	'tabs.reorganize': 'Réorganiser',
+	'tabs.move.handle': 'Déplacer « {channel} »',
+	'tabs.move.instructions':
+		'Espace ou Entrée saisit l’onglet ; flèches gauche et droite, Début et Fin le déplacent ; Entrée le pose ; Échap annule.',
+	'tabs.move.grabbed':
+		'« {channel} » saisi, rang {rang} sur {n}. Flèches gauche et droite pour le déplacer, Entrée pour le poser, Échap pour annuler.',
+	'tabs.move.rank': 'Rang {rang} sur {n}.',
+	'tabs.move.cancelled': 'Déplacement annulé.',
+	'tabs.move.saved': '« {channel} » placé au rang {rang} sur {n}.',
+	'tabs.move.refus.forbidden': 'Seul un administrateur de cet espace de travail peut réorganiser les channels.',
+	'tabs.move.refus.stale': 'La liste des channels a changé entre-temps : elle a été relue.',
+	'tabs.move.refus.error': 'Le nouvel ordre n’a pas pu être enregistré. Réessayez.',
+	'live.tabs.aria': 'Annonces de la barre d’onglets',
 
 	// CRM-134 T1 — archiver un channel depuis sa vue, et le groupe « Archivés » de la barre d'onglets
 	// (docs/SPEC-channels.md §11 ; docs/DESIGN_SYSTEM.md §5.101 ; décision 919). La mention « Archivé » d'une ligne du

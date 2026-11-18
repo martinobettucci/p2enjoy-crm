@@ -8682,9 +8682,12 @@ disent que de quoi elle a l'air.
   **40 × 40 px** (§8), survol `--color-hover`, curseur `grab` (`grabbing` pendant le glisser), focus visible (§8). Son nom
   accessible dit le geste et l'objet : « Déplacer « {channel} » ». **Toujours visible** quand elle est rendue, jamais au
   survol seul (§5.13). La bordure basse de l'onglet actif reste sous le **lien**, la poignée n'en porte pas (§12.1).
-- **Saisie au clavier** : la poignée saisie porte `aria-pressed="true"` et un fond `--color-brand-soft`, l'icône
-  `--color-brand` ; l'onglet saisi garde son libellé et sa bordure — l'état ne repose pas sur la seule couleur, l'annonce
-  et `aria-pressed` le portent aussi (§1, §8). Les consignes sont une description `sr-only` liée par `aria-describedby`.
+- **Saisie au clavier** : la poignée saisie porte `aria-pressed="true"` et un fond `--color-brand-soft-strong`, l'icône
+  `--color-brand` — *révisé au code (T4), vu en capture* : le fond à 10 % (`--color-brand-soft`) ne se détachait pas du
+  fond teinté de la barre (`--color-bg`), et l'état se confondait avec le seul focus ; le 22 % est le jeton du §1 pour
+  un fond doux posé sur une surface déjà teintée. L'onglet saisi garde son libellé et sa bordure — l'état ne repose pas
+  sur la seule couleur, l'annonce et `aria-pressed` le portent aussi (§1, §8). Les consignes sont une description
+  `sr-only` liée par `aria-describedby`.
 - **Pendant un glisser à la souris**, l'onglet tiré garde sa place, atténué par un fond `--color-hover` (jamais une
   opacité qui rendrait son texte illisible) ; **le repère d'insertion** est un trait vertical de 2 px `--color-brand`,
   pleine hauteur de la barre, entre deux onglets. L'état de survol est **unique pour la barre** et la fin du glisser
