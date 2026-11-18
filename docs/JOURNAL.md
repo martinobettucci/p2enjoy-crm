@@ -40831,3 +40831,20 @@ tracks d'une organisation excluent l'affaire à la corbeille, le rattachement ar
 track archivés ou à la corbeille — la règle de la décision 931 —, alors que « avec recettes » suit `organization_revenue_totals`
 (une affaire archivée y compte, décision 903) ; filtres et tri vivent dans l'adresse, la page chargée non.
 **Conséquences** : `CRM-152`, quatre tranches (`docs/SPEC-organisations.md` §8) ; migration au prochain numéro libre.
+
+### décision 937 — livrer le lot CRM-148, CRM-149, CRM-150 et CRM-151 à la révision `499cb253`
+
+*2026-11-18, session 4522fa9c (p2enjoy-crm-bb, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : `CRM-148` (infobulle épinglée), `CRM-149` (prompts du connecteur, T1 à T4), `CRM-150` (erreurs de
+`crm_card_move`) et `CRM-151` (« Supprimer ici » et « Supprimer partout »), unités entières ; la migration `0185`, l'image
+`mcp`, la webapp et le manuel (contrat §2.49 à §2.54). **Hors du lot** : `CRM-152` T1 (`0186`, non commitée, d7) et
+`CRM-154` (45).
+**La campagne** : complète à `57d93f7e` sur une base remise à zéro (183 migrations, seed jusqu'au §47) ; types, unitaires
+5 859/5 859, mcp 126 contrôles et construction du manuel verts ; ui 1 238 sur 1 242, api 1 363 sur 1 368, mail 54 sur 55,
+manuel 157 sur 158, tous verts rejoués seuls ou connus : INC-342 (webhooks, `inbox-lecture`:106, manuel 34), l'effet minuit
+sur « Ma journée » (campagne passée minuit), `premier-lancement` en série (4/4 seul), `connecteur-organisations` et
+`corbeille` (interférences, verts seuls). Manuel rendu à sa source, republié en dev : garde 168 contrôles, API 9/9.
+**Un défaut du lot**, renvoyé et corrigé : `CRM-149` (f8, `499cb253`), le pgTAP 0173 test 11 comptait cinq prompts alors que
+le seed §47 en ajoute un sixième ; rejoué : 161 fichiers, 5 334 assertions sans anomalie. Captures : 250 renouvelées,
+observées (`68dd2215`).
+**Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `499cb253`.
