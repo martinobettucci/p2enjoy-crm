@@ -17,6 +17,8 @@
 // @verifies CRM-092 (docs/BACKLOG.md) — connexion par la vraie page du SSO (`connecterAvecLeLabs`)
 // @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
 //           (docs/SPEC-rattachements.md §3.2, §5)
+// @verifies CRM-154 (docs/BACKLOG.md) — tranche T4 : un track à un seul channel n'ajoute aucun arrêt de tabulation
+//           à la barre, ni poignée ni « Réorganiser » (docs/SPEC-administration-arborescence.md §15.4)
 //
 // POURQUOI CE FICHIER. Le responsable a relevé en production, le 2026-09-28, deux défauts que chaque
 // preuve partielle laissait passer : aucune affaire ne se crée depuis l'interface, et le lien d'un bloc
@@ -220,6 +222,15 @@ test.describe('le premier lancement complet, à la souris et au clavier', () => 
 		}
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await page.reload()
+		// `reload` rend la main à l'événement `load` ; la coquille et le board ne sont rendus qu'une fois la session
+		// lue, quelque 850 ms plus tard. Une tabulation pressée avant reste sur `body` et se perd : le parcours ne
+		// commence qu'une fois la commande rendue. Il compte alors 27 arrêts, de « Aller au contenu » à « Nouvelle
+		// affaire » (correction de 2026-11-18 : en campagne, après une remise à zéro, ces pertes dépassaient la marge
+		// des 80 tabulations).
+		await expect(page.getByTestId('nouvelle-affaire')).toBeVisible()
+		// `CRM-154` : un seul channel, rien à réorganiser — ni poignée ni « Réorganiser » sur le parcours (§15.4).
+		await expect(page.getByTestId('barre-onglets').getByTestId('poignee-onglet')).toHaveCount(0)
+		await expect(page.getByTestId('barre-onglets').getByTestId('commande-reorganiser')).toHaveCount(0)
 
 		// Au clavier seul : la commande de la barre, `Entrée`, le titre, `Entrée`.
 		await tabulerJusqua(page, 'nouvelle-affaire')
