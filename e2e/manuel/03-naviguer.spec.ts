@@ -5,6 +5,8 @@
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.1 : les images du chapitre 3, « Naviguer : barre latérale, onglets, états »
 // @spec docs/SPEC-manual.md §11.1, §11.2, §13 (l'aide, ses états) ; docs/manual.md chapitre 3
 // @spec docs/DESIGN_SYSTEM.md §5.12 (la coquille), §5.62 (le fil d'Ariane), §5.69 (l'aide)
+// @spec CRM-154 (docs/BACKLOG.md) — tranche T5 : les poignées et « Réorganiser » dans l'image de la barre, et l'image d'un onglet
+//       saisi au clavier (manuel §3.4 ; docs/SPEC-administration-arborescence.md §15.4 ; docs/DESIGN_SYSTEM.md §5.106)
 // @spec CRM-131 (docs/BACKLOG.md) — la barre hors d'un track (docs/SPEC-channels.md §5.5, décision 868)
 //
 // Trois écrans exigent un état que le seed ne porte pas, et le scénario le pose puis le retire, par la clé de service :
@@ -56,12 +58,33 @@ test('la disposition de l’écran, l’en-tête et la barre latérale', async (
 		// La barre entière dépasse la fenêtre : ses entrées, de « Board » au dernier track.
 		cibles: [page.getByRole('link', { name: 'Board', exact: true }), page.locator('[data-testid="entree-track"]').last()],
 	})
+	// `CRM-154` : l'administratrice voit les poignées des onglets et « Réorganiser », entre « Nouveau channel » et « Coûts ».
+	await expect(page.getByTestId('commande-reorganiser')).toBeVisible()
 	await illustrer(page, {
 		chapitre: CHAPITRE,
 		section: 'les-onglets-d-un-track',
 		nom: 'barre-d-onglets',
-		cibles: [page.getByTestId('commande-nouveau-channel'), page.getByTestId('onglet-couts-track')],
+		cibles: [
+			page.getByTestId('poignee-onglet').first(),
+			page.getByTestId('commande-nouveau-channel'),
+			page.getByTestId('commande-reorganiser'),
+			page.getByTestId('onglet-couts-track'),
+		],
 	})
+	// `CRM-154` : un onglet SAISI au clavier et déplacé d'un rang, puis ANNULÉ par Échap — rien n'est écrit en base.
+	const poigneeGrandsComptes = page.getByRole('button', { name: 'Déplacer « Grands comptes »' })
+	await poigneeGrandsComptes.focus()
+	await page.keyboard.press('Space')
+	await page.keyboard.press('ArrowLeft')
+	await expect(poigneeGrandsComptes).toHaveAttribute('aria-pressed', 'true')
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: 'les-onglets-d-un-track',
+		nom: 'deplacer-un-onglet',
+		cibles: [page.getByRole('navigation', { name: 'Channels du track courant' })],
+	})
+	await page.keyboard.press('Escape')
+	await expect(poigneeGrandsComptes).toHaveAttribute('aria-pressed', 'false')
 
 	// Hors d'un track, la barre d'onglets invite à en ouvrir un : l'administratrice lit des channels (`CRM-131`).
 	await page.goto('/inbox')

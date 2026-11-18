@@ -1260,6 +1260,19 @@ secret.
 avant.
 **Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0187` » : retirer la fonction, ce qui n'efface rien.
 
+### 2.57 `CRM-154` T3 et T4, décisions 935 et 938 — réorganiser les channels : l'arborescence et la barre d'onglets (À LIVRER : la webapp de `main`, avec ou après la migration 187 ; **hors de tout lot annoncé**)
+
+`docs/SPEC-administration-arborescence.md` §15.3, §15.4 ; `docs/DESIGN_SYSTEM.md` §5.106. **Aucune migration de plus,
+aucune variable, aucun secret** ; le connecteur MCP ne change pas. **Jamais avant la 187** (§2.56) : sans la fonction,
+« Monter » et « Descendre » d'un channel et la poignée seraient refusés.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer la webapp de `main` | session de livraison | avec le lot qui l'emporte, la 187 appliquée |
+| 2 | Constater | responsable, sur un track de plusieurs channels | tirer la poignée d'un onglet ailleurs : l'ordre change et tient au rechargement ; au clavier : `Tab` jusqu'à une poignée, `Espace`, `→`, `Entrée` ; `Échap` annule ; « Réorganiser » ouvre l'arborescence sur le track, déplié ; « Monter » d'un channel y fonctionne ; remettre l'ordre voulu |
+
+**Retour arrière** : la webapp précédente ; l'ordre posé reste valide pour elle (des positions entières).
+
 ## 3. Migrations en attente
 
 **La 187** (`CRM-154` T2, décisions 935 et 938), *en attente, hors de tout lot annoncé* : réorganiser les channels d'un

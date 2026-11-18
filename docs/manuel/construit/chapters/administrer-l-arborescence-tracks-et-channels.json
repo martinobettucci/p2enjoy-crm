@@ -785,7 +785,24 @@
 							},
 							{
 								"type": "text",
-								"text": ", pas dans l'espace de travail entier ;"
+								"text": ", pas dans l'espace de travail entier. Depuis la barre d'onglets d'un\ntrack, le lien Réorganiser ouvre cet écran sur ce track, déplié, le curseur posé sur lui\n("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "naviguer-barre-laterale-onglets-etats",
+									"anchor": "les-onglets-d-un-track"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 3.4"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ") ;"
 							}
 						]
 					}

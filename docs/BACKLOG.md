@@ -19883,8 +19883,7 @@ filtres).
 catégories, sous ses cases existantes (consulter, ajouter, modifier) ; aucune famille nouvelle.
 **Spécification** : à écrire avant le code (`docs/SCHEMA.md`, `docs/SPEC-mcp.md` §9.2, `docs/DESIGN_SYSTEM.md`, manuel).
 
-### CRM-154 — Réorganiser les channels depuis la vue d'un track : glisser l'onglet, et « Réorganiser » vers l'arborescence `[@]`
-*Prise en charge : session interactive 152dd27d (p2enjoy-crm-45, ex-a4, ex-a8) depuis 2026-11-17 23:20 UTC — état avant : [ ] ; confiée par la session de livraison (bb)*
+### CRM-154 — Réorganiser les channels depuis la vue d'un track : glisser l'onglet, et « Réorganiser » vers l'arborescence `[P]`
 
 **Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison (p2enjoy-crm-bb) ; arbitrée le
 même jour (décision 935).
@@ -19939,4 +19938,9 @@ souris et clavier ; captures observées aux quatre paliers ; manuel vérifié ; 
   E2E voisins de la barre rejoués (163 verts ; `premier-lancement` en interférence parallèle, vert seul) ; captures
   `docs/captures/CRM-154` observées — **défaut trouvé et corrigé** : la poignée saisie se confondait avec le focus, son
   fond passe à `--color-brand-soft-strong` (§5.106) ;
-- **T5** — à faire.
+- **T5** — faite : le manuel §3.4 (le geste, souris et clavier ; « Réorganiser » ; l'image `barre-d-onglets` refaite
+  avec les poignées et « Réorganiser », l'image nouvelle `deplacer-un-onglet`, un onglet saisi au clavier puis annulé)
+  et §17.2 (l'arrivée depuis la barre), images observées ; `03-naviguer.spec.ts` vert ; manuel construit et
+  `verify-manual` sans anomalie ; contrat §2.57 (la webapp, avec ou après la 187), changelog.
+**Reste** : livrer la migration 187 puis la webapp avec un lot (contrat §2.56 et §2.57), et le constat du responsable en
+production (§2.57, geste 2).

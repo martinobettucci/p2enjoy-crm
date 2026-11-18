@@ -344,10 +344,21 @@ Ouvrir un track affiche ses **channels** en onglets, juste sous l'en-tête. Le n
   dessous. **Créer** ouvre aussitôt le tableau du nouveau channel ; **Annuler** ou la touche `Échap` referment le
   formulaire sans rien créer. Un rechargement de la page garde le formulaire ouvert. Seul un administrateur de l'espace
   peut créer un channel : pour un autre compte, le refus s'écrit dans le formulaire, sa saisie conservée.
+- **Changer l'ordre des onglets** est réservé aux **administrateurs** de l'espace. Pour eux, chaque onglet porte à sa
+  gauche une **poignée** (six points). Tirez-la à la souris et posez l'onglet ailleurs : le nouvel ordre est enregistré
+  aussitôt, pour tout l'espace de travail. Au clavier, atteignez la poignée avec `Tab`, appuyez sur `Espace` ou `Entrée`
+  pour **saisir** l'onglet, déplacez-le avec les flèches gauche et droite (`Début` et `Fin` pour les extrémités), puis
+  `Entrée` pour le **poser** ou `Échap` pour **annuler** ; chaque étape est annoncée. Si l'enregistrement est refusé,
+  l'ordre d'avant revient et la raison s'écrit sous la barre. Sur un écran tactile, la poignée n'est pas proposée.
+- **« Réorganiser »**, après « Nouveau channel », ouvre l'administration de l'arborescence **sur ce track**, déplié
+  ([section 17.2](#un-channel)), dont les flèches changent aussi l'ordre. Il est proposé à **tous** : un membre qui
+  n'administre pas l'espace y lit l'ordre sans pouvoir le changer, et n'a pas de poignée dans la barre.
 - **« Coûts »**, en dernier, ouvre les coûts du track
   ([chapitre 24](#les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense)).
 
-![La barre d'onglets d'un track : les channels, puis « Nouveau channel » et « Coûts »](manuel/images/naviguer-barre-laterale-onglets-etats/barre-d-onglets.jpg)
+![La barre d'onglets d'un track : les channels et leurs poignées, puis « Nouveau channel », « Réorganiser » et « Coûts »](manuel/images/naviguer-barre-laterale-onglets-etats/barre-d-onglets.jpg)
+
+![Un onglet saisi au clavier : sa poignée surlignée, l'onglet déplacé d'un rang avant d'être posé](manuel/images/naviguer-barre-laterale-onglets-etats/deplacer-un-onglet.jpg)
 
 Le contenu d'un channel se lit de **deux façons**, et une bascule en haut de la page passe de l'une à l'autre : le
 **tableau kanban** ([section 9.10](#le-tableau-kanban-d-un-channel)), vue par défaut, et la **vue liste**
@@ -4187,7 +4198,9 @@ Dépliez un track avec le chevron : ses channels sont chargés à ce moment-là,
 
 Les mêmes six gestes s'appliquent, avec deux différences :
 
-- **L'ordre d'un channel se compte dans son track**, pas dans l'espace de travail entier ;
+- **L'ordre d'un channel se compte dans son track**, pas dans l'espace de travail entier. Depuis la barre d'onglets d'un
+  track, le lien Réorganiser ouvre cet écran sur ce track, déplié, le curseur posé sur lui
+  ([section 3.4](#les-onglets-d-un-track)) ;
 - **choisir un workflow est obligatoire.** La liste ne propose que les workflows réellement
   affectables : ceux de l'espace de travail entier, et ceux propres à ce track. Le workflow par
   défaut est présenté en tête et signalé comme tel, **mais il n'est pas coché** — le produit ne

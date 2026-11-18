@@ -22,7 +22,7 @@ d'exécuter le code attendu.
   n'administre pas y consulte l'arborescence en lecture seule. Les autres membres n'ont pas de poignée.
 - Sur un écran tactile, la poignée n'est pas proposée : « Réorganiser » y est le chemin.
 - Un refus s'écrit sous la barre, et l'ordre d'avant revient. La webapp, avec ou après la migration 187
-  (`docs/PROD_MIGRATIONS.md` §2.56).
+  (`docs/PROD_MIGRATIONS.md` §2.56, §2.57). Manuel §3.4 et §17.2.
 
 #### `CRM-154` T3 — l'arborescence réordonne les channels d'un seul coup (décisions 935 et 938)
 

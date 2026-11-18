@@ -1345,6 +1345,210 @@
 								"content": [
 									{
 										"type": "text",
+										"text": "Changer l'ordre des onglets"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " est réservé aux "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "administrateurs"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " de l'espace. Pour eux, chaque onglet porte à sa\ngauche une "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "poignée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " (six points). Tirez-la à la souris et posez l'onglet ailleurs : le nouvel ordre est enregistré\naussitôt, pour tout l'espace de travail. Au clavier, atteignez la poignée avec "
+							},
+							{
+								"type": "code",
+								"text": "Tab"
+							},
+							{
+								"type": "text",
+								"text": ", appuyez sur "
+							},
+							{
+								"type": "code",
+								"text": "Espace"
+							},
+							{
+								"type": "text",
+								"text": " ou "
+							},
+							{
+								"type": "code",
+								"text": "Entrée"
+							},
+							{
+								"type": "text",
+								"text": "\npour "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "saisir"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " l'onglet, déplacez-le avec les flèches gauche et droite ("
+							},
+							{
+								"type": "code",
+								"text": "Début"
+							},
+							{
+								"type": "text",
+								"text": " et "
+							},
+							{
+								"type": "code",
+								"text": "Fin"
+							},
+							{
+								"type": "text",
+								"text": " pour les extrémités), puis\n"
+							},
+							{
+								"type": "code",
+								"text": "Entrée"
+							},
+							{
+								"type": "text",
+								"text": " pour le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "poser"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ou "
+							},
+							{
+								"type": "code",
+								"text": "Échap"
+							},
+							{
+								"type": "text",
+								"text": " pour "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "annuler"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ; chaque étape est annoncée. Si l'enregistrement est refusé,\nl'ordre d'avant revient et la raison s'écrit sous la barre. Sur un écran tactile, la poignée n'est pas proposée."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Réorganiser »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", après « Nouveau channel », ouvre l'administration de l'arborescence "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "sur ce track"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", déplié\n("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "administrer-l-arborescence-tracks-et-channels",
+									"anchor": "un-channel"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 17.2"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "), dont les flèches changent aussi l'ordre. Il est proposé à "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "tous"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : un membre qui\nn'administre pas l'espace y lit l'ordre sans pouvoir le changer, et n'a pas de poignée dans la barre."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
 										"text": "« Coûts »"
 									}
 								]
@@ -1377,8 +1581,15 @@
 		{
 			"type": "image",
 			"src": "naviguer-barre-laterale-onglets-etats/barre-d-onglets.jpg",
-			"alt": "La barre d'onglets d'un track : les channels, puis « Nouveau channel » et « Coûts »",
-			"width": 313,
+			"alt": "La barre d'onglets d'un track : les channels et leurs poignées, puis « Nouveau channel », « Réorganiser » et « Coûts »",
+			"width": 982,
+			"height": 72
+		},
+		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/deplacer-un-onglet.jpg",
+			"alt": "Un onglet saisi au clavier : sa poignée surlignée, l'onglet déplacé d'un rang avant d'être posé",
+			"width": 392,
 			"height": 72
 		},
 		{
