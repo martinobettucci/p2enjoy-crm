@@ -19824,9 +19824,10 @@ pendant 1 heure. »
 ### CRM-152 — Organisations : les tracks de chaque organisation, par ses contacts ; recherche, filtres et tri de la liste `[P]`
 
 **État (2026-11-18)** : vérifiée en développement, T1 à T4 (ci-dessous). **Reste** : la livraison — migration 186, webapp,
-image `mcp`, manuel — et le constat du responsable (`docs/PROD_MIGRATIONS.md` §2.55, geste 5). *Limite nommée* : à 1280 px
-et moins, la sixième colonne (« Réel sur prévu ») déborde dans le cadre du tableau, qui défile de côté (§12.6) ; à 1440 px,
-tout tient (`docs/DESIGN_SYSTEM.md` §5.105).
+image `mcp`, manuel — et le constat du responsable (`docs/PROD_MIGRATIONS.md` §2.55, geste 5). *Le débordement à 1280 px*,
+d'abord nommé comme limite, est **corrigé** sur décision du responsable (décision 940, 2026-11-18) : colonnes de largeur
+fixe, « Domaine et site web » en une colonne, « Réel sur prévu » empilé ; le tableau tient de 900 à 1440 px, mesuré par
+l'E2E à chaque palier et à 1280 px (`docs/DESIGN_SYSTEM.md` §5.97, §5.105).
 
 **Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison (p2enjoy-crm-bb) ; arbitrée le
 même jour (décision 931). Prolonge la liste des organisations de `CRM-114` et `CRM-146`.

@@ -20,8 +20,9 @@ const ADMIN = 'admin@p2enjoy.test'
 const VIEWER = 'viewer@p2enjoy.test'
 
 const ligne = (page: Page, nom: string) => page.getByTestId('ligne-organisation').filter({ hasText: nom })
-// RÉVISÉE par `CRM-152` T2 : « Tracks » suit « Nom », « Réel sur prévu » passe à la sixième cellule.
-const cellule = (page: Page, nom: string) => ligne(page, nom).locator('td').nth(5)
+// RÉVISÉE par `CRM-152` T2 : « Tracks » suit « Nom », « Réel sur prévu » passe à la sixième cellule. RÉVISÉE par la
+// décision 940 : domaine et site partagent une cellule, « Réel sur prévu » est la cinquième.
+const cellule = (page: Page, nom: string) => ligne(page, nom).locator('td').nth(4)
 // Les montants s'écrivent avec l'espace fine insécable du format français (U+202F) : `\s` la reconnaît.
 
 /** Tabule jusqu'au lien de ce nom : le parcours est fait au clavier, sans focalisation programmée. */

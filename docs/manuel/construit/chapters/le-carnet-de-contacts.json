@@ -3220,16 +3220,16 @@
 		{
 			"type": "image",
 			"src": "le-carnet-de-contacts/onglet-organisations.jpg",
-			"alt": "L'onglet des organisations : la barre de recherche et de filtres, puis leur nom, leurs tracks, leur domaine, leur site web, leur nombre de contacts et le réel de leurs recettes sur le prévu",
+			"alt": "L'onglet des organisations : la barre de recherche et de filtres, puis leur nom, leurs tracks, leur domaine et leur site web, leur nombre de contacts et le réel de leurs recettes sur le prévu",
 			"width": 1192,
-			"height": 510
+			"height": 581
 		},
 		{
 			"type": "image",
 			"src": "le-carnet-de-contacts/filtrer-organisations.jpg",
 			"alt": "Le panneau « Tracks » déplié sous la barre, une case cochée : seules les organisations rattachées à ce track restent",
 			"width": 1192,
-			"height": 303
+			"height": 321
 		},
 		{
 			"type": "image",
@@ -3359,13 +3359,13 @@
 					[
 						{
 							"type": "text",
-							"text": "Domaine"
+							"text": "Domaine et site web"
 						}
 					],
 					[
 						{
 							"type": "text",
-							"text": "Son domaine, par exemple "
+							"text": "Sur une première ligne, son domaine, par exemple "
 						},
 						{
 							"type": "code",
@@ -3373,21 +3373,7 @@
 						},
 						{
 							"type": "text",
-							"text": ", lorsqu'il est renseigné"
-						}
-					]
-				],
-				[
-					[
-						{
-							"type": "text",
-							"text": "Site web"
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "L'adresse de son site, lorsqu'elle est renseignée. Ici ce n'est pas un lien : la fiche le porte"
+							"text": " ; sur une seconde, l'adresse de son site. Chacun n'apparaît que s'il est renseigné. Le site n'est pas un lien ici : la fiche le porte"
 						}
 					]
 				],
@@ -3415,7 +3401,7 @@
 					[
 						{
 							"type": "text",
-							"text": "Pour chaque devise, une barre et deux montants : ce qui a été réellement encaissé sur ce qui était prévu, par exemple « 163 000,00 sur 210 000,00 EUR ». « Rien de saisi sur 72 000,00 » quand aucun montant réel n'est encore saisi"
+							"text": "Pour chaque devise, deux montants et, dessous, une barre : ce qui a été réellement encaissé sur ce qui était prévu, par exemple « 163 000,00 sur 210 000,00 EUR ». « Rien de saisi sur 72 000,00 » quand aucun montant réel n'est encore saisi"
 						}
 					]
 				]
@@ -3799,7 +3785,7 @@
 				},
 				{
 					"type": "text",
-					"text": ". Sur un écran étroit, le\ntableau défile de côté dans son cadre ; la page, elle, ne défile jamais de côté. Lorsque l'espace ne\ncompte aucune organisation, l'onglet le dit, et le bouton « Nouvelle organisation » reste offert."
+					"text": ". Un texte trop long pour sa colonne se\ntermine par des points de suspension : survolez-le pour le lire en entier. Sur un téléphone, le tableau défile de côté dans son cadre ; la\npage, elle, ne défile jamais de côté. Lorsque l'espace ne\ncompte aucune organisation, l'onglet le dit, et le bouton « Nouvelle organisation » reste offert."
 				}
 			]
 		},

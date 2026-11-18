@@ -181,11 +181,24 @@ test.describe('Contacts ▸ Organisations : rechercher, filtrer, trier (docs/DES
 		await expect(lignes(page).filter({ hasText: 'Vertigo Conseil' }).getByTestId('cellule-tracks')).toHaveText('Formation')
 	})
 
-	test.describe('les quatre paliers', () => {
-		for (const palier of PALIERS) {
+	// RÉVISÉ par la décision 940 : le tableau débordait de son cadre dès 1440 px. Mesuré sur la liste ENTIÈRE, dont les
+	// domaines et les sites les plus longs : jusqu'à 900 px, le tableau tient dans son cadre ; à 390 px, sous sa largeur
+	// minimale, c'est le cadre qui défile (docs/DESIGN_SYSTEM.md §7, §12.6) — la page, jamais.
+	test.describe('les paliers, et 1280 px', () => {
+		for (const palier of [...PALIERS, { nom: 'xl-1280', largeur: 1280, hauteur: 720 }]) {
 			test(`palier ${palier.nom} : la barre, le panneau et le tableau tiennent sans défilement horizontal`, async ({ page }) => {
 				await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 				await connecterAvecLeLabs(page, ADMIN)
+				await page.goto('/contacts/organisations')
+				await expect(noms(page)).toHaveCount(7)
+				const { cadre, tableau } = await page.getByTestId('tableau-organisations').evaluate((t) => ({
+					cadre: (t.parentElement as HTMLElement).clientWidth,
+					tableau: t.scrollWidth,
+				}))
+				if (palier.largeur >= 900) expect(tableau, `le tableau tient dans son cadre à ${palier.largeur} px`).toBeLessThanOrEqual(cadre)
+				else expect(tableau, 'à 390 px, le cadre défile').toBeGreaterThan(cadre)
+				await sansDefilementHorizontal(page)
+				await capturer(page, `organisations-liste-${palier.nom}`, UNITE)
 				await page.goto(`/contacts/organisations?tracks=${FORMATION}`)
 				await expect(noms(page)).toHaveText(['Vertigo Conseil'])
 				await boutonTracks(page).click()

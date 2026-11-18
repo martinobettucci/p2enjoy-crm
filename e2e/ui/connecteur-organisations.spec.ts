@@ -85,7 +85,8 @@ test('une organisation créée par le connecteur paraît dans l’onglet « Orga
 	await expect(ligne).toBeVisible()
 	await expect(ligne).toContainText('e2e-mcp-organisation.example')
 	// RÉVISÉE par `CRM-146` T2 : `last()` lisait le compte des contacts tant qu'il fermait la ligne. RÉVISÉE par `CRM-152`
-	// T2 : « Tracks » suit « Nom », le compte passe à la cinquième cellule.
-	await expect(ligne.locator('td').nth(4)).toHaveText('0')
+	// T2 : « Tracks » suit « Nom », le compte passe à la cinquième cellule. RÉVISÉE par la décision 940 : domaine et site
+	// partagent une cellule, le compte revient à la quatrième.
+	await expect(ligne.locator('td').nth(3)).toHaveText('0')
 	await capturer(page, 'connecteur-organisation-onglet-1440', UNITE)
 })

@@ -123,17 +123,18 @@ const adresse = () => new URLSearchParams(screen.getByTestId('adresse').textCont
 const derniers = (appels: Args[]) => appels[appels.length - 1] ?? {}
 
 describe('l’onglet « Organisations » (docs/DESIGN_SYSTEM.md §5.64, §5.105)', () => {
-	// RÉVISÉE par `CRM-152` T2 : cinq colonnes devenues six, « Tracks » après « Nom » ; le compte des contacts est lu dans
-	// SA cellule, la cinquième.
-	it('rend un tableau à six colonnes ; le nom est le seul lien, zéro contact s’écrit 0, les tracks par « · »', async () => {
+	// RÉVISÉE par `CRM-152` T2 : cinq colonnes devenues six, « Tracks » après « Nom ». RÉVISÉE par `CRM-152` (décision 940) :
+	// « Domaine » et « Site web » partagent une cellule, sur deux lignes — cinq colonnes ; le compte des contacts est lu dans
+	// SA cellule, la quatrième.
+	it('rend un tableau à cinq colonnes ; le nom est le seul lien, zéro contact s’écrit 0, les tracks par « · »', async () => {
 		monter(double({ liste: pagineeDans([COMPTOIR, SOGEXIA, VERTIGO]) }).client)
 		const lignes = await screen.findAllByTestId('ligne-organisation')
 		expect(screen.getAllByRole('columnheader').map((c) => c.textContent)).toEqual([
-			fr['organizations.table.name'], fr['organizations.table.tracks'], fr['organizations.table.domain'],
-			fr['organizations.table.website'], fr['organizations.table.contacts'], fr['organizations.table.revenues'],
+			fr['organizations.table.name'], fr['organizations.table.tracks'], fr['organizations.table.web'],
+			fr['organizations.table.contacts'], fr['organizations.table.revenues'],
 		])
 		expect(within(lignes[0] as HTMLElement).getAllByRole('link').map((l) => l.textContent)).toEqual(['Comptoir Vasseur'])
-		expect((lignes[0] as HTMLElement).children[4]?.textContent).toBe('0')
+		expect((lignes[0] as HTMLElement).children[3]?.textContent).toBe('0')
 		const tracks = within(lignes[2] as HTMLElement).getByTestId('cellule-tracks')
 		expect(tracks.textContent).toBe('Conseil IA · Formation')
 		expect(tracks.getAttribute('title')).toBe('Conseil IA · Formation')
@@ -142,13 +143,24 @@ describe('l’onglet « Organisations » (docs/DESIGN_SYSTEM.md §5.64, §5.105)
 		expect(within(lignes[0] as HTMLElement).getByTestId('cellule-tracks').hasAttribute('title')).toBe(false)
 	})
 
+	it('le domaine et le site web partagent une cellule, chacun sur sa ligne et entier en `title` (décision 940)', async () => {
+		monter(double().client)
+		const lignes = await screen.findAllByTestId('ligne-organisation')
+		const sogexia = within(lignes[1] as HTMLElement).getByTestId('cellule-web')
+		expect(within(sogexia).getByTestId('domaine-organisation').textContent).toBe('sogexia.example')
+		expect(within(sogexia).getByTestId('site-organisation').getAttribute('title')).toBe('https://www.sogexia.example')
+		// Sans site, la ligne du site n'est pas rendue ; le tableau a des colonnes de largeur fixe.
+		expect(within(within(lignes[0] as HTMLElement).getByTestId('cellule-web')).queryByTestId('site-organisation')).toBeNull()
+		expect(screen.getByTestId('tableau-organisations').className).toContain('table-fixed')
+	})
+
 	it('la première page : cinquante, par nom ascendant, dans l’espace ; « Réel sur prévu » de l’organisation à recettes', async () => {
 		const { client, appelsTotaux, appelsListe } = double()
 		monter(client)
 		const lignes = await screen.findAllByTestId('ligne-organisation')
 		expect(appelsListe[0]).toMatchObject({ p_workspace_id: 'ws', p_revenues: 'all', p_sort: 'name', p_descending: false, p_limit: 50, p_offset: 0 })
 		expect(appelsTotaux).toEqual([['organization_revenue_totals', {}]])
-		expect((lignes[0] as HTMLElement).children[5]?.textContent).toBe('')
+		expect((lignes[0] as HTMLElement).children[4]?.textContent).toBe('')
 		expect(within(lignes[1] as HTMLElement).getByTestId('reel-sur-prevu').textContent).toContain('Rien de saisi sur')
 	})
 

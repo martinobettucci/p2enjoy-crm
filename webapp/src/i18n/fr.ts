@@ -5623,8 +5623,6 @@ export const fr = {
 	'organizations.aria': 'Organisations de l’espace',
 	'organizations.table.aria': 'Organisations de l’espace',
 	'organizations.table.name': 'Nom',
-	'organizations.table.domain': 'Domaine',
-	'organizations.table.website': 'Site web',
 	'organizations.table.contacts': 'Contacts',
 	// CRM-146 T2 : la colonne « Réel sur prévu » (docs/SPEC-recettes.md §12.4, docs/DESIGN_SYSTEM.md §5.97).
 	'organizations.table.revenues': 'Réel sur prévu',
@@ -5675,6 +5673,7 @@ export const fr = {
 	'organizations.filter.revenues.without': 'Sans recettes',
 	'organizations.filter.clear': 'Effacer les filtres',
 	'organizations.table.tracks': 'Tracks',
+	'organizations.table.web': 'Domaine et site web',
 	'organizations.empty.filtered.title': 'Aucune organisation ne correspond à ces filtres',
 	'organizations.more.count': '{affichees} sur {total}',
 	'organizations.more.button': 'Afficher plus',

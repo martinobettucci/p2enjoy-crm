@@ -2816,7 +2816,7 @@ texte d'aide — décideur, prescripteur, contact technique — ne sont que des 
 
 ### 10.9 L'onglet « Organisations »
 
-![L'onglet des organisations : la barre de recherche et de filtres, puis leur nom, leurs tracks, leur domaine, leur site web, leur nombre de contacts et le réel de leurs recettes sur le prévu](manuel/images/le-carnet-de-contacts/onglet-organisations.jpg)
+![L'onglet des organisations : la barre de recherche et de filtres, puis leur nom, leurs tracks, leur domaine et leur site web, leur nombre de contacts et le réel de leurs recettes sur le prévu](manuel/images/le-carnet-de-contacts/onglet-organisations.jpg)
 
 ![Le panneau « Tracks » déplié sous la barre, une case cochée : seules les organisations rattachées à ce track restent](manuel/images/le-carnet-de-contacts/filtrer-organisations.jpg)
 
@@ -2831,10 +2831,9 @@ L'onglet **Organisations** liste toutes les organisations de l'espace de travail
 |---|---|
 | Nom | Le nom de l'organisation. **C'est un lien** : il ouvre sa fiche |
 | Tracks | Les tracks auxquels l'organisation est rattachée, séparés par « · » : un track y paraît dès qu'**un contact de l'organisation est lié à une affaire** d'un channel de ce track. Une affaire à la corbeille, un rattachement, un channel ou un track archivés ne comptent pas. Vide quand aucun ne compte |
-| Domaine | Son domaine, par exemple `sogexia.example`, lorsqu'il est renseigné |
-| Site web | L'adresse de son site, lorsqu'elle est renseignée. Ici ce n'est pas un lien : la fiche le porte |
+| Domaine et site web | Sur une première ligne, son domaine, par exemple `sogexia.example` ; sur une seconde, l'adresse de son site. Chacun n'apparaît que s'il est renseigné. Le site n'est pas un lien ici : la fiche le porte |
 | Contacts | Le nombre de contacts du carnet rattachés à l'organisation |
-| Réel sur prévu | Pour chaque devise, une barre et deux montants : ce qui a été réellement encaissé sur ce qui était prévu, par exemple « 163 000,00 sur 210 000,00 EUR ». « Rien de saisi sur 72 000,00 » quand aucun montant réel n'est encore saisi |
+| Réel sur prévu | Pour chaque devise, deux montants et, dessous, une barre : ce qui a été réellement encaissé sur ce qui était prévu, par exemple « 163 000,00 sur 210 000,00 EUR ». « Rien de saisi sur 72 000,00 » quand aucun montant réel n'est encore saisi |
 
 **Les recettes d'une organisation** sont celles de ses affaires : une affaire compte pour une organisation dès qu'un
 **contact rattaché à l'affaire** appartient à cette organisation. Elle compte une seule fois, même si plusieurs de ses
@@ -2871,8 +2870,9 @@ cinquante premières.
 **L'adresse garde vos choix.** La recherche, les filtres et le tri s'inscrivent dans l'adresse de la page : un lien copié
 ou une page rechargée retrouvent la même liste.
 
-Comme partout dans le carnet, une valeur absente laisse la cellule **vide**. Sur un écran étroit, le
-tableau défile de côté dans son cadre ; la page, elle, ne défile jamais de côté. Lorsque l'espace ne
+Comme partout dans le carnet, une valeur absente laisse la cellule **vide**. Un texte trop long pour sa colonne se
+termine par des points de suspension : survolez-le pour le lire en entier. Sur un téléphone, le tableau défile de côté dans son cadre ; la
+page, elle, ne défile jamais de côté. Lorsque l'espace ne
 compte aucune organisation, l'onglet le dit, et le bouton « Nouvelle organisation » reste offert.
 
 **Qui voit quoi.** Tout membre de l'espace lit l'onglet. **Créer et modifier** une organisation sont

@@ -69,8 +69,11 @@ export function RouteOrganisations() {
 		</AppShell>
 	)
 }
-const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[32ch]'
-const CLASSES_CELLULE_TECHNIQUE = 'h-[var(--size-target)] px-3 text-right whitespace-nowrap max-w-[36ch] truncate'
+// `CRM-152` (décision 940) : LE TABLEAU A DES COLONNES DE LARGEUR FIXE (`table-fixed` et `colgroup`) — une cellule trop
+// longue se tronque, son texte entier en `title`, et le tableau ne déborde plus de son cadre : il tient de 900 à 1440 px ;
+// sous sa largeur minimale (864 px), à 390 px, il défile dans son cadre (docs/DESIGN_SYSTEM.md §7, §12.6, §5.105).
+const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate'
+const CLASSES_CELLULE_TECHNIQUE = 'h-[var(--size-target)] px-3 text-right whitespace-nowrap truncate'
 const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3'
 // Une cellule « Réel sur prévu » prend la hauteur de ses devises empilées, 40 px restant son minimum (§5.97, l'écart au
 // §5.9 du §5.60).
@@ -298,15 +301,21 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 									ref={tableau}
 									data-testid="tableau-organisations"
 									aria-busy={relecture}
-									className={['w-full border-collapse text-left', relecture ? 'opacity-60' : ''].join(' ')}
+									className={['w-full min-w-[54rem] table-fixed border-collapse text-left', relecture ? 'opacity-60' : ''].join(' ')}
 								>
 									<caption className="sr-only">{t('organizations.table.aria')}</caption>
+									<colgroup>
+										<col className="w-[17%]" />
+										<col className="w-[17%]" />
+										<col className="w-[25%]" />
+										<col className="w-[12%]" />
+										<col className="w-[29%]" />
+									</colgroup>
 									<thead>
 										<tr className="border-b border-border">
 											<EnTeteTriable cle="nom" libelle={t('organizations.table.name')} parametres={parametres} onParametres={changer} />
 											<th scope="col" className={CLASSES_ENTETE}>{t('organizations.table.tracks')}</th>
-											<th scope="col" className={`${CLASSES_ENTETE} text-right`}>{t('organizations.table.domain')}</th>
-											<th scope="col" className={`${CLASSES_ENTETE} text-right`}>{t('organizations.table.website')}</th>
+											<th scope="col" className={`${CLASSES_ENTETE} text-right`}>{t('organizations.table.web')}</th>
 											<EnTeteTriable
 												cle="contacts"
 												libelle={t('organizations.table.contacts')}
@@ -330,11 +339,21 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 													<td className={`${CLASSES_CELLULE} text-text-2`} data-testid="cellule-tracks" {...(noms === '' ? {} : { title: noms })}>
 														{noms}
 													</td>
-													<td className={CLASSES_CELLULE_TECHNIQUE}>
-														{organisation.domain === null ? '' : <code className="text-text-2">{organisation.domain}</code>}
-													</td>
-													<td className={CLASSES_CELLULE_TECHNIQUE}>
-														{organisation.website === null ? '' : <code className="text-text-2">{organisation.website}</code>}
+													{/* `CRM-152` (décision 940) : LE DOMAINE ET LE SITE WEB DANS UNE CELLULE, sur deux lignes — deux
+													    colonnes techniques côte à côte faisaient déborder le tableau. Chacun se tronque, entier en `title`. */}
+													<td className="px-3 py-1 text-right" data-testid="cellule-web">
+														<span className="flex min-h-[var(--size-target)] flex-col items-end justify-center">
+															{organisation.domain === null ? null : (
+																<code data-testid="domaine-organisation" className="block max-w-full truncate text-sm text-text-2" title={organisation.domain}>
+																	{organisation.domain}
+																</code>
+															)}
+															{organisation.website === null ? null : (
+																<code data-testid="site-organisation" className="block max-w-full truncate text-sm text-text-2" title={organisation.website}>
+																	{organisation.website}
+																</code>
+															)}
+														</span>
 													</td>
 													<td className={`${CLASSES_CELLULE_TECHNIQUE} tabular-nums`}>{organisation.contacts}</td>
 													<td className={CLASSES_CELLULE_RECETTES}>

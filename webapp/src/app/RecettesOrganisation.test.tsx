@@ -4,6 +4,8 @@
 //           (le tableau, les mentions conditionnelles, la portée, le vide sans action, l'erreur et sa reprise dans le bloc
 //           seul, le squelette) ; docs/DESIGN_SYSTEM.md §5.97 (la barre `aria-hidden`, bornée, absente d'une part sans
 //           objet ; le texte porte tout), §5.9, §5.8, §10 (accord par clé)
+// @verifies CRM-152 (docs/BACKLOG.md) — décision 940 : la cellule de la liste empile ses montants au-dessus d'une barre
+//           pleine largeur (docs/DESIGN_SYSTEM.md §5.97, §5.105)
 
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -55,7 +57,9 @@ describe('la cellule « Réel sur prévu » (§12.4)', () => {
 	it('une part sans objet n’a pas de barre, mais garde sa place', () => {
 		render(<ReelSurPrevu totaux={[total({ prevu: 0, reel: 10 })]} />)
 		expect(screen.queryByTestId('barre-recette')).toBeNull()
-		expect(screen.getByTestId('barre-recette-sans-objet').className).toContain('w-[96px]')
+		// RÉVISÉE le 2026-11-18 — `CRM-152` (décision 940) : dans la liste, la barre est sous les montants, sur toute la
+		// largeur de la cellule ; sa place vide aussi.
+		expect(screen.getByTestId('barre-recette-sans-objet').className).toContain('w-full')
 	})
 
 	it('sans recette, rien n’est rendu — ni barre à zéro, ni « 0 sur 0 »', () => {

@@ -59,6 +59,9 @@ d'exécuter le code attendu.
 - **Les en-têtes « Nom » et « Contacts » trient** la liste, ascendant puis descendant.
 - **Une colonne « Tracks »**, après « Nom » : les tracks où un contact de l'organisation est lié à une affaire. La fiche
   d'une organisation les montre aussi, chacun en lien vers sa vue.
+- **Le tableau tient dans l'écran** sans défiler, de 900 à 1440 px (décision 940) : le domaine et le site web partagent
+  une colonne, sur deux lignes ; « Réel sur prévu » montre ses montants au-dessus de sa barre ; un texte trop long se
+  termine par « … » et se lit en entier au survol.
 - **La liste montre cinquante organisations**, puis « Afficher plus » ; « 50 sur 132 » est écrit dessous. Recherche,
   filtres et tri vivent dans l'adresse : un lien partagé ou une page rechargée les retrouve.
 

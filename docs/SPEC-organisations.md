@@ -154,7 +154,9 @@ pour écrire « 50 sur 132 »).
   avec un délai de 300 ms ; « Tracks », un choix multiple des tracks de l'espace ; « Recettes » : toutes, avec recettes,
   sans recettes. « Effacer les filtres » paraît dès qu'un filtre est posé.
 - **Le tri** par les en-têtes « Nom » et « Contacts », ascendant puis descendant ; « Réel sur prévu » ne se trie pas.
-- **Une colonne « Tracks »** après « Nom » : les noms des tracks de l'organisation (§8.1).
+- **Une colonne « Tracks »** après « Nom » : les noms des tracks de l'organisation (§8.1). *Révisé par la décision 940* :
+  « Domaine » et « Site web » partagent une colonne, « Domaine et site web », et le tableau tient dans son cadre de 900 à
+  1440 px (`docs/DESIGN_SYSTEM.md` §5.105).
 - **La pagination** : cinquante organisations, puis « Afficher plus » ajoute les cinquante suivantes ; « 50 sur 132 » est
   écrit sous le tableau. Un changement de recherche, de filtre ou de tri repart de la première page.
 - **L'adresse porte les filtres et le tri** (`/contacts/organisations?q=…&tracks=…&recettes=avec&tri=contacts&sens=desc`),

@@ -8166,6 +8166,11 @@ spécifié par `docs/SPEC-mail-subsystem.md` §27 ; ces règles ne disent que de
   se comparaient plus. Un réel inconnu : « Rien de saisi sur 72 000,00 », barre vide. Une part sans objet
   (prévu nul ou négatif) : le texte seul, et la place de la barre gardée vide pour que les textes restent alignés.
   **Une organisation sans recette laisse la cellule vide** (§5.9) : ni barre à zéro, ni « 0 sur 0 ».
+  *Révisé par `CRM-152` (décision 940, 2026-11-18)* : **dans la liste, chaque ligne s'empile** — le texte et son code
+  devise au-dessus, alignés à droite en 13 px, puis la barre **sur toute la largeur de la cellule** (`w-full`). Les barres
+  partent toujours du même bord et ont toutes la même longueur : elles se comparent comme avant. La grille côte à côte
+  demandait 340 px, et le tableau débordait de son cadre dès 1280 px. La fiche (le bloc des recettes) garde sa barre de
+  96 px, en ligne.
 - **LE BLOC « Recettes avec cette organisation » DE LA FICHE** (§5.20) vient entre la liste de définitions et les contacts,
   titré comme eux (`h2` au style `text-h3`). C'est un **tableau du §5.9** — prévu et réel se comparent, le critère du
   §5.60 — : l'en-tête de ligne est le code devise (`th scope="row"`, aligné à gauche explicitement, §5.30), puis « Prévu »,
@@ -8659,9 +8664,17 @@ disent que de quoi elle a l'air.
   focus reste sur lui, et la région vivante dit « 50 organisations de plus ». Une erreur s'écrit sous lui, `role="alert"`,
   avec « Réessayer ». *Précisé au code (T2)* : quand la dernière page le fait disparaître, le focus passe au lien de la
   première organisation ajoutée, jamais au corps du document.
-- *Constaté en capture (T2, T4)* : à 1440 px, les six colonnes tiennent ; à 1280 px et moins, la sixième, « Réel sur
-  prévu », déborde dans le cadre du tableau, qui défile de côté avec son indice (§12.6) — la page, elle, ne défile pas.
-  *Limite nommée*, à arbitrer si elle gêne.
+- **LE TABLEAU TIENT DANS SON CADRE** (décision 940, 2026-11-18 ; *révise la limite constatée en capture à T2 et T4*, où il
+  débordait dès 1440 px sur la liste entière) :
+  - **des colonnes de largeur fixe** — `table-fixed` et un `colgroup` : Nom 17 %, Tracks 17 %, Domaine et site web 25 %,
+    Contacts 12 %, Réel sur prévu 29 % ; une cellule trop longue se tronque en ellipse, son texte entier en `title` (§5.9) ;
+  - **« Domaine » et « Site web » partagent une colonne**, « Domaine et site web » : le domaine puis le site, chacun sur sa
+    ligne, en `code` 13 px `--color-text-2`, alignés à droite (§2) ; une valeur absente n'a pas de ligne. Deux colonnes
+    techniques côte à côte prenaient 450 px. **Révise le §5.64** (« Domaine » et « Site web » en deux colonnes) ;
+  - **« Réel sur prévu » empile** ses montants au-dessus de sa barre (§5.97, révisé) ;
+  - **une largeur minimale de 864 px** (`min-w-[54rem]`) : de 900 à 1440 px, le tableau tient sans défiler ; à 390 px, il
+    défile dans son cadre, avec son indice (§7, §12.6) — la page, jamais. La preuve E2E le mesure à chaque palier et à
+    1280 px, sur la liste entière.
 - **L'ÉTAT VIDE SOUS LES FILTRES** : « Aucune organisation ne correspond à ces filtres », avec « Effacer les filtres »
   (§5.8) ; le vide de l'espace reste celui du §5.64.
 - **UNE RELECTURE NE VIDE PAS LE TABLEAU** : changer un filtre garde les lignes affichées, atténuées par `aria-busy` sur le

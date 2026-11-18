@@ -2,6 +2,8 @@
 //       « Recettes avec cette organisation » de sa fiche
 // @spec docs/SPEC-recettes.md §12.2 (la part réalisée), §12.4 (la colonne de la liste), §12.5 (le bloc de la fiche : le
 //       tableau, les mentions, le vide sans action, l'erreur et sa reprise dans le bloc seul, le squelette, aucun lien)
+// @spec CRM-152 (docs/BACKLOG.md) — décision 940 : la cellule de la liste empile ses montants au-dessus d'une barre pleine
+//       largeur, pour que le tableau tienne dans son cadre à 1280 px (docs/DESIGN_SYSTEM.md §5.97, §5.105)
 // @spec docs/DESIGN_SYSTEM.md §5.97 (la jauge du §5.29 réemployée, `aria-hidden`, sans couleur de jugement ; une ligne par
 //       devise empilée ; le code devise dans son propre élément), §5.9 (tableau, cellule vide), §5.30 (mentions), §5.60
 //       (surface bordée, une valeur par devise), §5.8 (états), §5.48 (la portée), §12.6 (débordement signalé), §10 (accord)
@@ -30,10 +32,13 @@ import { montantEnClair } from './BlocRentabiliteCard'
  * La jauge du §5.29, à largeur fixe pour que les barres d'une colonne se comparent. `part` nulle : la part est sans
  * objet, la place est gardée vide pour que les textes restent alignés (§5.97).
  */
-export function BarreRecette({ part }: { readonly part: number | null }) {
-	if (part === null) return <span aria-hidden="true" data-testid="barre-recette-sans-objet" className="w-[96px] shrink-0" />
+export function BarreRecette({ part, pleineLargeur = false }: { readonly part: number | null; readonly pleineLargeur?: boolean }) {
+	// `CRM-152` (décision 940) : la liste empile ses montants au-dessus d'une barre qui prend toute la largeur de la cellule ;
+	// la fiche garde sa barre de 96 px, en ligne.
+	const largeur = pleineLargeur ? 'w-full' : 'w-[96px]'
+	if (part === null) return <span aria-hidden="true" data-testid="barre-recette-sans-objet" className={`${largeur} shrink-0`} />
 	return (
-		<span aria-hidden="true" data-testid="barre-recette" className="w-[96px] shrink-0 h-[6px] rounded-full bg-brand-soft overflow-hidden">
+		<span aria-hidden="true" data-testid="barre-recette" className={`${largeur} shrink-0 h-[6px] rounded-full bg-brand-soft overflow-hidden`}>
 			<span data-testid="barre-recette-remplissage" className="block h-full bg-brand" style={{ width: `${largeurBarre(part)}%` }} />
 		</span>
 	)
@@ -50,24 +55,22 @@ function Code({ devise }: { readonly devise: string }) {
 export function ReelSurPrevu({ totaux }: { readonly totaux: readonly TotalDevise[] }) {
 	if (totaux.length === 0) return null
 	return (
-		// UNE GRILLE PAR LIGNE, LA BARRE AU BORD GAUCHE DE LA CELLULE : toutes les barres de la colonne partent du même
-		// bord et se comparent d'une organisation à l'autre ; le texte reste aligné à droite (constaté sur la capture
-		// du 2026-11-10 : en ligne, chaque barre suivait la longueur de son texte).
-		<span className="flex w-full flex-col gap-1">
+		// LA BARRE AU BORD GAUCHE DE LA CELLULE : toutes les barres de la colonne partent du même bord et se comparent d'une
+		// organisation à l'autre ; le texte reste aligné à droite (constaté sur la capture du 2026-11-10 : en ligne, chaque
+		// barre suivait la longueur de son texte). RÉVISÉ par `CRM-152` (décision 940) : les montants AU-DESSUS, la barre
+		// DESSOUS sur toute la largeur — la ligne côte à côte demandait 340 px, et le tableau débordait de son cadre à 1280 px.
+		<span className="flex w-full flex-col gap-2">
 			{totaux.map((total) => (
-				<span
-					key={total.devise}
-					data-testid="reel-sur-prevu"
-					data-devise={total.devise}
-					className="grid grid-cols-[96px_1fr_auto] items-center gap-2 whitespace-nowrap"
-				>
-					<BarreRecette part={partRealisee(total.prevu, total.reel)} />
-					<span className="text-right tabular-nums">
-						{total.reel === null
-							? t('organizations.revenues.noActual', { prevu: montantEnClair(total.prevu) })
-							: t('organizations.revenues.progress', { reel: montantEnClair(total.reel), prevu: montantEnClair(total.prevu) })}
+				<span key={total.devise} data-testid="reel-sur-prevu" data-devise={total.devise} className="flex flex-col gap-1">
+					<span className="flex items-baseline justify-end gap-2 whitespace-nowrap text-sm tabular-nums">
+						<span>
+							{total.reel === null
+								? t('organizations.revenues.noActual', { prevu: montantEnClair(total.prevu) })
+								: t('organizations.revenues.progress', { reel: montantEnClair(total.reel), prevu: montantEnClair(total.prevu) })}
+						</span>
+						<Code devise={total.devise} />
 					</span>
-					<Code devise={total.devise} />
+					<BarreRecette part={partRealisee(total.prevu, total.reel)} pleineLargeur />
 				</span>
 			))}
 		</span>
