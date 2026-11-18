@@ -1359,6 +1359,16 @@ dit ce que la famille couvre.
 poser et retirer (la base constate la ligne `manual`), une réévaluation qui ne défait pas la pose de l'assistant, le
 refus par la matrice, le refus du CRM pour la lectrice malgré la case ouverte, le journal écrit.
 
+*Révisé par `CRM-155` (2026-11-18, avant le code ; décisions 943 et 948 ; `docs/SPEC-mail-subsystem.md` §31.12)* —
+**famille `messagerie`, action `consulter`, aucune case nouvelle** :
+- `crm_card_mail_list` gagne l'argument facultatif **`labels`**, une liste d'identifiants de pastille : il ne rend que
+  les messages qui portent **au moins une** de ces pastilles, **posée** (OU, la règle de l'inbox). Ce n'est pas une
+  ancre — le précédent de `tracks` au §9.2 *tervicies* : un identifiant d'un autre espace ou illisible ne retient rien,
+  et rien n'est divulgué. Un identifiant mal formé est un refus d'argument (`RefusArgument`, §9.3), sans appel ; les
+  identifiants sont dédoublonnés, cinquante au plus. Une liste vide vaut l'absence de filtre ;
+- **chaque message rendu porte `labels`**, ses pastilles posées, sous la forme de `crm_mail_get` (`label_id`, `name`,
+  `source`, `archived`) — l'assistant voit pourquoi un message est retenu sans relire chaque mail (décision 948).
+
 *Écrit au code de T5 (2026-11-11)* : le module `mcp/crm_mcp/outils/messagerie_pastilles.py`. `crm_mail_label_set` rend,
 après la pose ou le retrait, les pastilles que le message porte alors (la forme de `labels` de `crm_mail_get`). `labels`
 ne nomme que les pastilles **posées** : une ligne retirée à la main n'y figure pas. Un refus `message_not_found` est le

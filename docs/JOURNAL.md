@@ -41037,3 +41037,27 @@ transfert doit lui en **ouvrir la lecture** : c'est une règle d'accès nouvelle
 **Conséquences** : la spécification de `CRM-156` écrit la lecture ouverte par un transfert dans la politique de lecture
 des messages et dans `app.peut_voir_message`, avec ses preuves pgTAP et d'API sous les vrais jetons ; le blocage est une
 écriture réservée à l'administrateur, appliquée en base à la réception.
+
+### décision 948 — `CRM-155` : la disposition des filtres rapides, l'espace courant seul, les pastilles de chaque mail du connecteur ; la lecture ciblée du design system
+
+*2026-11-18, session 152dd27d (p2enjoy-crm-c7, ex-45), arbitrage du responsable (`AskUserQuestion`, deux tours), avant la
+spécification.*
+**Contexte** : `CRM-155` (décision 943) laissait ouverts la disposition des bascules dans la colonne de 360 px, le cas
+d'une personne membre de plusieurs espaces — l'inbox montre les mails de tous ses espaces, et chaque espace a ses
+pastilles, « Spam » existant dans chacun —, et la forme de la réponse du connecteur.
+**Questions et réponses** :
+- *Comment afficher les bascules des pastilles actives ?* — **À la ligne** : toutes visibles, sur deux ou trois lignes.
+  *Écartés* : une ligne qui défile ; les cinq premières puis « +n ».
+- *Plusieurs espaces ?* — **L'espace courant seul** : les bascules sont celles de l'espace du sélecteur d'espace.
+  *Écartés* : la fusion par nom ; un groupe par espace. Conséquence assumée : on ne filtre par pastille que les mails de
+  l'espace courant ; la liste sans filtre montre toujours ceux de tous les espaces.
+- *Le connecteur rend-il les pastilles de chaque mail ?* — **Oui** : `crm_card_mail_list` rend `labels` par message,
+  sous la forme de `crm_mail_get`, en plus du filtre `labels`.
+- *Le design system (732 Ko) ?* — **Lecture par sections ciblées**, nommées dans l'en-tête du §5.108, pour `CRM-155`
+  seulement.
+**Décisions prises par la session, dans la spécification** : la clé `pastille` se répète (une valeur par pastille) ; une
+valeur mal formée ou d'un autre espace est ignorée, une à une ; le volet s'ouvre d'office sur une archivée active ;
+« Toutes les pastilles » paraît quand une bascule est active ; la bascule est celle du §5.11. Coordonné avec la session
+fc (`CRM-156`), qui reprend la règle du OU en base pour « Tout sélectionner » et garde la rangée d'action.
+**Conséquences** : `docs/SPEC-mail-subsystem.md` §31.12, `docs/DESIGN_SYSTEM.md` §5.108, `docs/SPEC-mcp.md` §9.2
+*duovicies* révisé ; trois tranches au backlog ; aucune migration.

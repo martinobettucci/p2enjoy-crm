@@ -20010,6 +20010,15 @@ gagne un filtre par pastilles (plusieurs, en OU) ; aucune case nouvelle (`docs/S
 **DoD** : unitaires ; preuve d'API du filtre (plusieurs pastilles, archivées, valeur mal formée) avec les vrais jetons ;
 E2E souris et clavier aux quatre paliers ; captures observées ; connecteur (pytest, intégration, `verify-mcp.sh`) ; seed
 vérifié (une pastille archivée portée par un mail) ; manuel vérifié ; contrat.
+**Spécifiée le 2026-11-18, avant le code** (décision 948 : bascules à la ligne, **espace courant seul**, `labels` par
+message dans le connecteur ; design system lu par sections ciblées) : `docs/SPEC-mail-subsystem.md` §31.12,
+`docs/DESIGN_SYSTEM.md` §5.108, `docs/SPEC-mcp.md` §9.2 *duovicies* (révisé). Aucune migration.
+**Tranches** (§31.12.7) :
+- [ ] **T1** — l'écran : lecture à plusieurs pastilles, adresse en liste, bloc des filtres rapides et volet, vide ;
+  unitaires ; API ; E2E souris et clavier, quatre paliers ; captures.
+- [ ] **T2** — le connecteur : `labels` sur `crm_card_mail_list`, les pastilles de chaque message ; pytest ;
+  intégration ; `verify-mcp.sh`.
+- [ ] **T3** — le manuel §12.2 et ses images ; le seed vérifié ; le contrat ; `[P]`.
 
 ### CRM-156 — Inbox : opérations groupées sur une sélection de mails `[@]`
 

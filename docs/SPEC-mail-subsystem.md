@@ -4590,6 +4590,8 @@ L'apparence : `docs/DESIGN_SYSTEM.md` §5.103.
   moi » (§27.3), le filtre porte sur les **messages** — la requête embarque `mail_message_labels!inner` —, et le
   groupement en fils se fait sur les messages retenus ; la ligne d'un fil filtré montre donc son dernier message qui porte
   la pastille. Une valeur mal formée dans l'adresse vaut l'absence de filtre.
+  *Révisé par `CRM-155` (§31.12, décisions 943 et 948)* : le filtre devient une rangée de **filtres rapides** en bascule,
+  plusieurs pastilles en OU, les archivées dans un volet replié ; la liste déroulante est retirée.
 - **Dans le message ouvert** : ses pastilles posées, avec leur origine (« posée par l'IA », « posée à la main ») ;
   l'état d'évaluation quand il n'est pas `done` ; « Réévaluer les pastilles » dans la rangée de commandes, à côté du
   sommeil et de « Marquer comme non lu » ; et « Pastilles », qui ouvre dans le flux la liste des pastilles actives à
@@ -4646,6 +4648,74 @@ Chaque tranche est poussée une fois vérifiée.
 | **T5** | Le connecteur : trois outils ; pytest ; `verify-mcp.sh` — *faite le 2026-11-11* |
 | **T6** | Le manuel : l'inbox et les réglages de la messagerie, avec leurs images — *faite le 2026-11-11* |
 | **T7** | Production, par la session de livraison, sur instruction du responsable : deux migrations, la fonction `ia`, la webapp, l'image `mcp` ; le rattrapage observé |
+
+### 31.12 Les pastilles en filtres rapides — `CRM-155`
+
+*Écrit le 2026-11-18, avant le code (décisions 943 et 948).* Révise le filtre du §31.7. **Aucune migration** : le filtre
+reste une lecture de `mail_messages` sous les droits de la personne, par la RLS existante (§31.3). L'apparence :
+`docs/DESIGN_SYSTEM.md` §5.108.
+
+**31.12.1 Ce que la personne voit.** En tête de la liste des mails, au-dessus de la rangée d'action, un bloc « Filtrer par
+pastille » :
+- **une bascule par pastille active de l'ESPACE COURANT** — celui du sélecteur d'espace (`ContexteEspace.idWorkspace`) —,
+  dans l'ordre du nom, à la souris et au clavier (décision 948 : *espace courant seul*). L'inbox continue de montrer les
+  mails de tous les espaces de la personne ; seul le filtre est borné à l'espace courant. Une pastille appartient à un
+  seul espace : un filtre actif ne retient donc que des mails de l'espace courant ;
+- **toutes les bascules sont visibles**, sur autant de lignes qu'il faut (décision 948 : *à la ligne*) ;
+- **un volet « Pastilles archivées », replié par défaut**, rendu seulement si l'espace courant a au moins une pastille
+  archivée ; déplié, il porte une bascule par pastille archivée, dans l'ordre du nom. Il s'ouvre de lui-même à
+  l'arrivée sur une adresse qui active une archivée : un filtre en vigueur n'est jamais caché à l'arrivée ;
+- **« Toutes les pastilles »**, qui désactive tout, rendue quand au moins une bascule est active ;
+- **aucun bloc** tant que le catalogue n'est pas lu, ou si l'espace courant n'a aucune pastille, ou sans espace courant ;
+  le bloc est rendu dès qu'un dossier est choisi, **y compris sur une liste vide** : il est la cause possible de ce vide.
+
+**31.12.2 La règle du filtre (décision 943).** Aucune bascule active : aucun filtre. Plusieurs : **OU** — la liste retient
+les **messages** qui portent **au moins une** des pastilles activées, **posée** (`mail_message_labels.applied`), puis
+groupe en fils les messages retenus (la précision de T4 au §31.7 tient : la ligne d'un fil filtré montre son dernier
+message retenu). Le filtre se combine avec le dossier choisi et avec « Seulement moi », comme avant. La requête embarque
+`mail_message_labels!inner` sous un alias propre au filtre, avec `label_id in (…)` et `applied = true` : PostgREST rend
+une seule ligne par message, quel que soit le nombre de pastilles qui le retiennent. Les pilules d'une ligne restent
+celles du dernier message retenu (§31.7), lues par l'autre embarquement.
+
+**31.12.3 L'adresse.** La clé `pastille` devient une **liste** : elle se **répète**, une valeur par pastille active
+(`?pastille=<uuid>&pastille=<uuid>`) ; une adresse à une seule valeur, celle de `CRM-141`, reste valide. À la lecture,
+chaque valeur qui n'a pas la forme d'un `uuid`, ou qui n'est pas une pastille de l'espace courant (active ou archivée),
+est **ignorée** ; les doublons tombent ; s'il ne reste rien, il n'y a pas de filtre. Une bascule réécrit la liste en ne
+gardant que les valeurs reconnues — une adresse retouchée se nettoie au premier geste. Chaque geste est une entrée
+d'historique, que « Précédent » défait (comme `CRM-141`). L'état du volet n'entre pas dans l'adresse ni dans un
+stockage : c'est un état d'écran (`CLAUDE.md` §11). La même règle est reprise en base par `CRM-156` pour la portée de
+« Tout sélectionner » (`label_ids`, §32).
+
+**31.12.4 Le vide.** Un filtre qui ne trouve rien rend l'état vide de la liste, qui nomme les pastilles filtrées et porte
+« Toutes les pastilles » (§5.51) : une seule, le texte de `CRM-141` ; plusieurs, « Aucun message ne porte l'une des
+pastilles « A » ou « B » dans ce dossier. », la liste des noms formée par `Intl.ListFormat` (`fr`, disjonction), jamais
+par concaténation (`CLAUDE.md` §23). Le vide du sommeil garde la priorité qu'il a aujourd'hui.
+
+**31.12.5 Le connecteur — oui, famille `messagerie`, action `consulter`, aucune case nouvelle** (décision 943 ;
+`docs/SPEC-mcp.md` §9.2 *duovicies*, révisé). `crm_card_mail_list` gagne l'argument facultatif **`labels`**, une liste
+d'identifiants de pastille, la même règle du OU sur les messages posés ; et **chaque message de la réponse rend ses
+pastilles posées**, `labels`, sous la forme de `crm_mail_get` (décision 948).
+
+**31.12.6 Preuves exigées.**
+- **Unitaires** : la lecture de l'adresse (liste, doublons, valeurs mal formées, valeurs d'un autre espace, compatibilité
+  à une valeur) ; la bascule qui réécrit la liste ; la requête émise (`in`, `applied`, l'alias) ; le bloc — bascules
+  `aria-pressed`, ordre, volet replié, ouvert d'office sur une archivée active, « Toutes les pastilles », absence sans
+  catalogue ; le vide à une et à plusieurs pastilles.
+- **API** (jetons réels, `e2e/api`) : la requête de l'écran sous l'administratrice — deux pastilles en OU rendent l'union,
+  une archivée filtre, une pastille posée puis **retirée à la main** ne retient pas le message ; la lectrice ne voit que
+  ce que la RLS lui ouvre.
+- **E2E** souris et clavier (`Tab`, `Espace`, `Entrée`) : activer, combiner, désactiver, le volet, « Toutes les
+  pastilles », l'adresse et « Précédent », le vide ; quatre paliers ; captures observées.
+- **Connecteur** : pytest, intégration contre la vraie base, `verify-mcp.sh`.
+- **Seed** : vérifié sans ajout attendu — une pastille archivée portée par un message existe (§31.9).
+
+**31.12.7 Tranches.**
+
+| Tranche | Contenu |
+|---|---|
+| **T1** | L'écran : la lecture à plusieurs pastilles, l'adresse en liste, le bloc des filtres rapides et le volet, le vide ; unitaires ; preuve d'API ; E2E souris et clavier, quatre paliers ; captures ; `docs/DESIGN_SYSTEM.md` §5.108 |
+| **T2** | Le connecteur : `labels` sur `crm_card_mail_list`, les pastilles de chaque message ; pytest ; intégration ; `verify-mcp.sh` |
+| **T3** | Le manuel §12.2 et ses images ; le seed vérifié ; le contrat de déploiement (webapp, image `mcp`, aucune migration) ; l'unité passe `[P]` |
 
 ---
 

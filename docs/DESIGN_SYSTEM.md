@@ -8538,6 +8538,7 @@ d'une liste de l'espace se lisent de la même façon d'un écran à l'autre (§5
   une pastille lisible. Il est porté par l'adresse (`pastille`). Un
   filtre qui ne trouve rien rend l'état vide de la liste, qui nomme la pastille filtrée et le geste qui l'efface :
   « Aucun message ne porte la pastille « {nom} » dans ce dossier. », avec « Toutes les pastilles » (§5.51).
+  *Remplacé par `CRM-155` (§5.108)* : la liste déroulante cède la place aux filtres rapides en bascule.
 - **DANS LE MESSAGE OUVERT** : les pastilles posées viennent **sous l'en-tête**, avant la rangée de commandes, sur une
   ligne `flex-wrap gap-1` ; aucune ligne s'il n'y en a pas. **L'état d'évaluation**, quand il n'est pas « faite », se dit
   sur cette même ligne, en 13 px : « Pastilles en attente d'évaluation » en `--color-text-2` ; « Les pastilles n'ont pas
@@ -8765,4 +8766,45 @@ disent que de quoi ils ont l'air. **La grammaire est celle des étiquettes d'une
 - **LA NOTIFICATION** : la ligne de la boîte (§5.45) reprend celle d'une mention d'affaire, le sujet étant l'organisation :
   « {auteur} vous a mentionné à propos de {organisation} ».
 - **Aucune couleur, aucun jeton, aucune icône nouveaux** : `Tags` est réemployée pour le même geste.
+
+### 5.108 Les pastilles en filtres rapides dans l'inbox — `CRM-155`
+
+*Écrit le 2026-11-18, avant le code, après lecture des sections ciblées par la décision 948, non intégrale : §1 à §4, §6 à
+§12, §5.3 quinquies, §5.4 à §5.4 quinquies, §5.5 à §5.8, §5.11, §5.29 bis, §5.51, §5.73, §5.103.* Ce que le filtre retient
+et ce que l'adresse porte est spécifié par `docs/SPEC-mail-subsystem.md` §31.12 ; ces règles ne disent que de quoi il a
+l'air. **Remplace le filtre « Pastille » du §5.103** (sa liste déroulante est retirée) ; le reste du §5.103 est inchangé.
+
+- **UN BLOC À PART, EN TÊTE DE LA LISTE**, au-dessus de la rangée d'action (§5.4 quinquies), séparé des fils par une
+  bordure basse `--color-border`, rembourrage 8 px vertical et 12 px horizontal, comme la rangée. Il ouvre sur son
+  libellé visible, « Filtrer par pastille », en 13 px `--color-text-2`, qui nomme le groupe (`role="group"`,
+  `aria-labelledby`). La rangée d'action ne garde que des commandes ; elle reste celle de « Tout marquer comme lu », et
+  de la sélection de `CRM-156` (§5.109).
+- **LA BASCULE DE PASTILLE est la bascule de la barre de filtres du fil (§5.11)**, reprise sans écart : un bouton
+  `aria-pressed`, jamais une case — il n'appartient à aucun formulaire et ne se soumet pas —, `rounded-full`, hauteur
+  `--size-target`, `text-sm`, rembourrage 12 px ; éteinte, bordure `--color-border` sur `--color-surface`, texte
+  `--color-text-2` ; active, `--color-brand-soft`, bordure et texte `--color-brand`, **graisse moyenne** — la teinte seule
+  ne distinguait pas assez les deux états (§5.11). Elle porte **le point de tête** de la pastille (§5.73, à la couleur
+  de la pastille) puis son nom : la couleur de la pastille la fait reconnaître, l'état se lit à la forme. **Toutes
+  éteintes à l'arrivée**, sauf celles que l'adresse active.
+- **À LA LIGNE, JAMAIS TRONQUÉES** (décision 948) : `flex-wrap gap-2`, toutes visibles ; neuf pastilles prennent trois
+  lignes dans la colonne de 360 px, et c'est assumé — un défilement horizontal cacherait des filtres, un « +n » en
+  ferait chercher.
+- **LE VOLET « PASTILLES ARCHIVÉES »**, sous les bascules : une commande discrète compacte, icône `ChevronRight`
+  repliée et `ChevronDown` dépliée (`aria-hidden`), libellé « Pastilles archivées ({n}) », `aria-expanded` et
+  `aria-controls`. **Replié par défaut** ; déplié, il porte un second groupe de bascules, de même forme, nommé
+  « Pastilles archivées », chaque nom accessible et infobulle disant « {nom}, pastille archivée » (§5.103). Absent si
+  l'espace n'a aucune archivée. Ouvert d'office à l'arrivée sur une adresse qui active une archivée.
+- **« TOUTES LES PASTILLES »**, discrète compacte, sur la ligne du volet, à droite ; rendue quand au moins une bascule est
+  active, absente sinon — un geste sans effet ne s'offre pas (§5.4 quinquies). Le focus passe alors à la première
+  bascule, pour ne pas se perdre avec la commande qui disparaît.
+- **LE VIDE** (§5.8, §5.51) : à une pastille, le texte du §5.103 ; à plusieurs, « Aucun message ne porte l'une des
+  pastilles « A » ou « B » dans ce dossier. », avec « Toutes les pastilles ». Les noms sont entre guillemets à espaces
+  insécables (§5.51).
+- **AU CLAVIER** : chaque bascule est un arrêt de `Tab` ; `Espace` et `Entrée` la basculent ; le focus reste dessus après
+  le geste, la liste se relit derrière. Aucune annonce de plus : `aria-pressed` dit l'état, et le compte de fils ne
+  change pas de nature.
+- **RESPONSIVE** (§7) : le bloc prend la largeur de la colonne, ou de l'écran dans la pile sous 1024 px ; la page ne
+  défile jamais horizontalement.
+- **Aucune couleur, aucun jeton, aucune icône nouveaux** : `ChevronRight` et `ChevronDown` portent déjà le dépliage
+  (§5.31 bis, §5.101) ; elles le portent ici aussi.
 
