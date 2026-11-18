@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-18 (seconde fenêtre) — les migrations 186 et 187, la webapp, l'image `mcp` et le manuel
+
+Cellule Spark `crm`, révision `249813f1` (décision 941, un `pg_dump -Fc` avant). **Vérifié** : registre à 185 lignes, la
+dernière `0187_reorganiser_channels.sql` ; `organization_list`, `organization_tracks` et `reorder_channels` présentes ; `mcp`
+reconstruit et sain ; `index-D9I9PlI9.js` servi ; `verifier.sh` 34/35 (INC-277) ; manuel publié (576 fichiers). Le tableau
+des organisations tient dans son cadre à tous les paliers (décision 940). Le constat du responsable reste à faire.
+
 #### `CRM-154` T4 — réorganiser les channels depuis la barre d'onglets d'un track (décisions 935 et 938)
 
 - **Pour un administrateur de l'espace, chaque onglet de channel porte une poignée** : la tirer à la souris pose l'onglet
@@ -72,8 +83,6 @@ d'exécuter le code attendu.
   (`docs/PROD_MIGRATIONS.md` §2.55).
 - **Le manuel** (`CRM-152` T4) décrit la barre, le tri, la colonne et la ligne « Tracks », « Afficher plus » et l'adresse
   (§10.9, §10.10), et l'outil du connecteur ; une image nouvelle montre le panneau « Tracks ».
-
-## [Publié]
 
 ### Déployé en production, 2026-11-18 — la migration 185, l'image `mcp`, la webapp et le manuel
 

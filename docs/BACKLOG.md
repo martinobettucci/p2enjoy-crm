@@ -19823,6 +19823,8 @@ pendant 1 heure. »
 
 ### CRM-152 — Organisations : les tracks de chaque organisation, par ses contacts ; recherche, filtres et tri de la liste `[P]`
 
+**Livrée le 2026-11-18** (décision 941, révision `249813f1`) ; reste le constat du responsable en production.
+
 **État (2026-11-18)** : vérifiée en développement, T1 à T4 (ci-dessous). **Reste** : la livraison — migration 186, webapp,
 image `mcp`, manuel — et le constat du responsable (`docs/PROD_MIGRATIONS.md` §2.55, geste 5). *Le débordement à 1280 px*,
 d'abord nommé comme limite, est **corrigé** sur décision du responsable (décision 940, 2026-11-18) : colonnes de largeur
@@ -19899,6 +19901,8 @@ catégories, sous ses cases existantes (consulter, ajouter, modifier) ; aucune f
 **Spécification** : à écrire avant le code (`docs/SCHEMA.md`, `docs/SPEC-mcp.md` §9.2, `docs/DESIGN_SYSTEM.md`, manuel).
 
 ### CRM-154 — Réorganiser les channels depuis la vue d'un track : glisser l'onglet, et « Réorganiser » vers l'arborescence `[P]`
+
+**Livrée le 2026-11-18** (décision 941, révision `249813f1`) ; reste le constat du responsable en production.
 
 **Origine** : demande du responsable, le 2026-11-17, relayée par la session de livraison (p2enjoy-crm-bb) ; arbitrée le
 même jour (décision 935).

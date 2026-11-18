@@ -40925,3 +40925,6 @@ session de livraison : types, unitaires 5 918/5 918, `organisations-recherche`, 
 observées à 1280 et 900 px.
 **Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `249813f1` : migrations 186 et 187, webapp,
 image `mcp`, manuel (contrat §2.55 à §2.57).
+**Exécutée le 2026-11-18** : `pg_dump` relu (3 358 entrées), `livrer.sh --revision 249813f1…` (webapp bâtie dans la
+cellule, migrations 186 et 187), `mcp` reconstruit, manuel publié ; registre à 185, `verifier.sh` 34/35 (INC-277) ;
+contrat §2.55 à §2.57 LIVRÉES, §3 et §8, changelog en [Publié], backlog ; verrou levé. Reste le constat du responsable.
