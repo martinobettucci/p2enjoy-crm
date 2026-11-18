@@ -2,6 +2,8 @@
 --           défauts pour l'espace du seed et pour un espace créé, la RLS sous les trois profils du seed (lecture par tout
 --           membre ; écriture, modification et suppression par l'administrateur seul), l'espace non modifiable, l'auteur
 --           posé par la base
+-- @verifies CRM-149 (docs/BACKLOG.md) — tranche T4 : le prompt que le seed ajoute (docs/SPEC-seed.md §47) est lu par la
+--           lectrice avec les défauts ; le compte du 11 ne suppose plus l'espace réduit aux cinq défauts
 -- @verifies docs/SPEC-mcp.md §17.2 à §17.4 ; docs/SCHEMA.md « Migration de `CRM-149` » ; docs/JOURNAL.md décision 930 ;
 --           CLAUDE.md §10 (la règle prouvée par la base, sous les vrais rôles)
 --
@@ -76,9 +78,13 @@ select is((select count(*)::int from public.mcp_prompts), 0, '10 — l''anonyme 
 reset role;
 
 -- 11–15. La lectrice : elle lit ceux de son espace, rien d'un autre ; elle n'écrit rien.
+-- LE 11 COMPARE À CE QUE LA BASE PORTE, PAS À UN NOMBRE (correctif de la campagne du lot, 2026-11-18) : l'espace du seed
+-- porte les cinq défauts ET le prompt que le seed ajoute (docs/SPEC-seed.md §47, « Préparer le comité du lundi »). Le
+-- compte est lu sous la clé de propriétaire, qui contourne la RLS ; la lectrice doit en lire autant, ni plus ni moins.
+select count(*)::int as prompts_espace from public.mcp_prompts where workspace_id = :'espace' \gset
 select pg_temp.endosser(:'lectrice');
-select is((select count(*)::int from public.mcp_prompts where workspace_id = :'espace'), 5,
-	'11 — la lectrice lit les prompts de son espace');
+select is((select count(*)::int from public.mcp_prompts where workspace_id = :'espace'), :prompts_espace,
+	'11 — la lectrice lit tous les prompts de son espace');
 select is((select count(*)::int from public.mcp_prompts where workspace_id = :'autre'), 0,
 	'12 — elle ne lit rien d''un espace dont elle n''est pas membre');
 select throws_ok(format($$insert into public.mcp_prompts (workspace_id, key, title, description, body)
