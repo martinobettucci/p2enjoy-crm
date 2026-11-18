@@ -1,5 +1,7 @@
 # Contrat de déploiement — P2Enjoy CRM
 
+*Session de livraison : session interactive 4522fa9c (p2enjoy-crm-bb, poste du responsable) depuis 2026-11-18 01:48 UTC (lot arrêté à `7de630c5`) — lot : les migrations 0186 et 0187, la webapp, l'image `mcp` et le manuel (`CRM-152` et `CRM-154`, unités entières ; contrat §2.55 à §2.57) ; à livrer par condensé ; campagne E2E complète avant la proposition.*
+
 Ce document décrit **ce qu'un humain doit appliquer** pour déployer ou mettre à jour la
 production. Il ne dérive jamais de l'état réel du projet : toute modification du schéma, des
 services déployés ou des variables d'environnement le met à jour **dans le même changement**.
