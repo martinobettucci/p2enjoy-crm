@@ -19983,7 +19983,8 @@ souris et clavier ; captures observées aux quatre paliers ; manuel vérifié ; 
 **Reste** : livrer la migration 187 puis la webapp avec un lot (contrat §2.56 et §2.57), et le constat du responsable en
 production (§2.57, geste 2).
 
-### CRM-155 — Inbox : les pastilles en filtres rapides (bascule), les pastilles archivées dans un volet replié `[ ]`
+### CRM-155 — Inbox : les pastilles en filtres rapides (bascule), les pastilles archivées dans un volet replié `[@]`
+*Prise en charge : session interactive 152dd27d (p2enjoy-crm-c7, ex-45, ex-a8) depuis 2026-11-18 20:50 UTC — état avant : [ ] ; confiée par la session de livraison (e3)*
 
 **Origine** : demande du responsable, le 2026-11-18, relayée par la session de livraison (p2enjoy-crm-e3, ex-bb) ; arbitrée le
 même jour (décision 943).
