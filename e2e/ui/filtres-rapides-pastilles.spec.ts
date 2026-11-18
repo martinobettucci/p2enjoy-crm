@@ -186,7 +186,9 @@ test.describe('les filtres rapides de l’inbox (docs/DESIGN_SYSTEM.md §5.108)'
 			rest(`mail_messages?select=id&subject=like.${encodeURIComponent('Invitation — journée partenaires*')}`),
 			{ headers: enTetesService() },
 		)
-		const [{ id: idInvitation }] = (await invitation.json()) as { id: string }[]
+		const [ligneInvitation] = (await invitation.json()) as { id: string }[]
+		expect(ligneInvitation?.id, 'le seed porte l’invitation non classée (docs/SPEC-seed.md §46)').toBeTruthy()
+		const idInvitation = ligneInvitation?.id ?? ''
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
 		// Une valeur mal formée, une inconnue, puis Newsletter : seule Newsletter compte.
 		await page.goto(
