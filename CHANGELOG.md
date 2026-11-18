@@ -13,6 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+#### `CRM-154` T3 — l'arborescence réordonne les channels d'un seul coup (décisions 935 et 938)
+
+- **« Monter » et « Descendre » sur un channel** enregistrent désormais l'ordre entier des channels du track, en une
+  fois. Une flèche de channel n'est plus jamais éteinte au milieu de la liste ; seule l'extrémité l'éteint.
+- Si un channel a été créé, archivé ou retiré entre-temps, le déplacement n'est pas fait : un message le dit, et la
+  liste est relue.
+- L'adresse `/reglages/arborescence?track=…` ouvre l'écran sur ce track, déplié, le curseur sur lui ; le bouton
+  « Réorganiser » de la barre d'onglets (T4) y mènera.
+- Les tracks ne changent pas. Manuel §17.3. La webapp, avec ou après la migration 187 (`docs/PROD_MIGRATIONS.md` §2.56).
+
 #### `CRM-154` T2 — réorganiser les channels d'un track, en base (décisions 935 et 938)
 
 - **Une fonction nouvelle** pose d'un seul coup l'ordre des channels d'un track : elle reçoit la liste dans l'ordre voulu

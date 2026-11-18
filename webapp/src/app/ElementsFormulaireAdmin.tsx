@@ -1,6 +1,7 @@
 // @spec CRM-075 (docs/BACKLOG.md) — les éléments des formulaires de l'arborescence : champ texte, alerte de refus,
 //       traduction des refus
 // @spec docs/SPEC-administration-arborescence.md §9 (les refus, et comment ils sont présentés)
+// @spec CRM-154 (docs/BACKLOG.md) tranche T3 — le refus `ordre-perime` (docs/SPEC-administration-arborescence.md §15.3)
 // @spec docs/DESIGN_SYSTEM.md §5.7 (champs), §5.13 (l'alerte de refus DANS le formulaire)
 // @spec CRM-100 (docs/BACKLOG.md) tranche T1 — docs/SPEC-administration-arborescence.md §13.2 : ces éléments
 //       quittent `AdministrationArborescence.tsx`, inchangés, parce que le formulaire de channel est désormais
@@ -27,6 +28,8 @@ export function texteRefus(refus: RefusEcriture): string {
 			return t('admin.refus.reference-absente')
 		case 'channel-occupe':
 			return t('admin.refus.channel-occupe')
+		case 'ordre-perime':
+			return t('admin.refus.ordre-perime')
 		case 'network':
 			return t('admin.refus.network')
 		case 'unknown':

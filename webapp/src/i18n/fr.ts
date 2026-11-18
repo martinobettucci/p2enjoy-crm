@@ -2106,6 +2106,8 @@ export const fr = {
 	'admin.tree.workflowChange.refus.inconnu': 'Le changement n’a pas abouti. Réessayez, ou rechargez l’écran.',
 	'admin.refus.channel-occupe':
 		'Ce channel porte des affaires : son workflow se change par la commande « Changer de workflow » de sa ligne, qui dit où va chaque affaire.',
+	// `CRM-154` (docs/SPEC-administration-arborescence.md §15.3) : la fonction a refusé une liste périmée ; l'écran relit.
+	'admin.refus.ordre-perime': 'La liste des channels a changé entre-temps : elle a été relue.',
 	'admin.tree.archived': 'Archivé',
 	'admin.tree.channels.aria': 'Channels du track {track}',
 

@@ -3,6 +3,9 @@
 //           channel (docs/SPEC-administration-arborescence.md §14 ; docs/DESIGN_SYSTEM.md §5.68)
 //           motif, dépliage offert (docs/SPEC-droits-interface.md §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-075 (docs/BACKLOG.md) — écran d'administration des tracks et des channels
+// @verifies CRM-154 (docs/BACKLOG.md) tranche T3 — « Monter » et « Descendre » d'un channel par `reorder_channels`, l'ordre
+//           entier des channels actifs ; positions égales qui ne bloquent plus ; le refus `ordre-perime` dit et relu ;
+//           `?track=` qui déplie et focalise, ou se retire (docs/SPEC-administration-arborescence.md §15.3)
 // @verifies CRM-118 (docs/BACKLOG.md) tranche T1.b — « Changer de workflow » sur la ligne d'un channel non archivé, son
 //           panneau sous la ligne, le focus rendu à la commande (docs/SPEC-workflow-engine.md §7 quinquies.3 ;
 //           docs/DESIGN_SYSTEM.md §5.72)
@@ -46,7 +49,7 @@ import type { ClientCrm } from '../lib/supabase'
 
 afterEach(cleanup)
 
-type Ecriture = { table: string; verbe: 'insert' | 'update'; charge: Record<string, unknown> }
+type Ecriture = { table: string; verbe: 'insert' | 'update' | 'rpc'; charge: Record<string, unknown> }
 
 const WORKSPACE = { id: 'ws-1', name: 'P2Enjoy', slug: 'p2enjoy' }
 
@@ -132,6 +135,8 @@ type Options = {
 	 * erreur et non en zéro — c'est ce qui donne son sujet à l'état « n'a pas pu être mesuré ».
 	 */
 	readonly compteCards?: number | null
+	/** `CRM-154` : la réponse de `reorder_channels` (par défaut, un succès qui rend le nombre de channels). */
+	readonly reponseRpc?: { data: unknown; error: { message: string; code?: string } | null; status: number }
 }
 
 /**
@@ -175,6 +180,11 @@ function clientFactice(options: Options = {}): { client: ClientCrm; ecritures: E
 	}
 
 	const client = {
+		// `CRM-154` (§15.3) : un channel se déplace par `reorder_channels` ; l'appel est enregistré comme une écriture.
+		rpc: (fonction: string, charge: Record<string, unknown>) => {
+			ecritures.push({ table: fonction, verbe: 'rpc', charge })
+			return Promise.resolve(options.reponseRpc ?? { data: 2, error: null, status: 200 })
+		},
 		from: (table: string) => ({
 			select: () => {
 				if (table === 'workspaces') return lecture(options.workspaces ?? [WORKSPACE])
@@ -854,7 +864,120 @@ describe('les channels (§3.2, §7)', () => {
 		await screen.findByText('Prospection')
 		await utilisateur.click(screen.getByRole('button', { name: 'Monter Grands comptes' }))
 		await waitFor(() => expect(ecritures).toHaveLength(1))
-		expect(ecritures[0]).toEqual({ table: 'channels', verbe: 'update', charge: { position: 0.5 } })
+		// `CRM-154` (§15.3) : UN appel, l'ordre ENTIER des channels actifs du track, plus aucune position calculée.
+		expect(ecritures[0]).toEqual({
+			table: 'reorder_channels',
+			verbe: 'rpc',
+			charge: { p_track_id: 't-1', p_channel_ids: ['c-2', 'c-1'] },
+		})
+	})
+
+	it('CRM-154 : deux positions ÉGALES ne bloquent plus le déplacement d’un channel (§15.3, limite 2 levée)', async () => {
+		const utilisateur = userEvent.setup()
+		const egales = CHANNELS.map((channel) => ({ ...channel, position: 1 }))
+		const { ecritures } = monter({ channels: egales })
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Déplier Conseil & IA' }))
+		await screen.findByText('Prospection')
+		const descendre = screen.getByRole('button', { name: 'Descendre Prospection' })
+		expect(descendre.hasAttribute('disabled')).toBe(false)
+		await utilisateur.click(descendre)
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]?.charge).toEqual({ p_track_id: 't-1', p_channel_ids: ['c-2', 'c-1'] })
+	})
+
+	it('CRM-154 : un channel ARCHIVÉ montré n’entre pas dans l’ordre envoyé (§15.2)', async () => {
+		const utilisateur = userEvent.setup()
+		const avecArchive = [
+			...CHANNELS,
+			{ ...CHANNELS[0], id: 'c-3', name: 'Ancien canal', slug: 'ancien', position: 3, archived_at: '2026-11-01T00:00:00Z' },
+		]
+		const { ecritures } = monter({ channels: avecArchive })
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Déplier Conseil & IA' }))
+		await screen.findByText('Ancien canal')
+		// « Grands comptes » est le dernier ACTIF : « Descendre » est éteint, même si un archivé le suit.
+		expect(screen.getByRole('button', { name: 'Descendre Grands comptes' }).hasAttribute('disabled')).toBe(true)
+		await utilisateur.click(screen.getByRole('button', { name: 'Monter Grands comptes' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]?.charge).toEqual({ p_track_id: 't-1', p_channel_ids: ['c-2', 'c-1'] })
+	})
+
+	it('CRM-154 : le refus `channel_order_incomplete` est dit, et la liste relue (§15.3)', async () => {
+		const utilisateur = userEvent.setup()
+		const { client, ecritures } = clientFactice({
+			reponseRpc: { data: null, error: { message: 'channel_order_incomplete', code: '23514' }, status: 400 },
+		})
+		let lecturesChannels = 0
+		const compteur = {
+			rpc: (client as unknown as { rpc: (...a: unknown[]) => unknown }).rpc,
+			from: (table: string) => {
+				if (table === 'channels') lecturesChannels += 1
+				return (client as unknown as { from: (nom: string) => unknown }).from(table)
+			},
+		} as unknown as ClientCrm
+		render(
+			<MemoryRouter initialEntries={['/reglages/arborescence']}>
+				<AdministrationArborescence client={compteur} />
+			</MemoryRouter>,
+		)
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Déplier Conseil & IA' }))
+		await screen.findByText('Prospection')
+		const avant = lecturesChannels
+		await utilisateur.click(screen.getByRole('button', { name: 'Monter Grands comptes' }))
+		expect(await screen.findByText('La liste des channels a changé entre-temps : elle a été relue.')).toBeTruthy()
+		expect(ecritures).toHaveLength(1)
+		await waitFor(() => expect(lecturesChannels).toBeGreaterThan(avant))
+	})
+
+	it('CRM-154 : le refus `42501` de la fonction est le refus d’administration (§15.3)', async () => {
+		const utilisateur = userEvent.setup()
+		monter({ reponseRpc: { data: null, error: { message: 'channel_reorder_forbidden', code: '42501' }, status: 403 } })
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Déplier Conseil & IA' }))
+		await screen.findByText('Prospection')
+		await utilisateur.click(screen.getByRole('button', { name: 'Monter Grands comptes' }))
+		expect(
+			await screen.findByText("Seul un administrateur de cet espace de travail peut modifier l'arborescence."),
+		).toBeTruthy()
+	})
+
+	describe('CRM-154 : l’adresse `?track=` (§15.3)', () => {
+		const UUID = '5eed0000-0000-4000-8000-000000000021'
+		const tracksUuid = () => [{ ...TRACKS[0], id: UUID }, ...TRACKS.slice(1)]
+		const channelsUuid = () => CHANNELS.map((channel) => ({ ...channel, track_id: UUID }))
+		// jsdom n'implémente pas `scrollIntoView` : un bouchon le temps de ce groupe, rendu ensuite.
+		const original = Element.prototype.scrollIntoView
+		beforeEach(() => {
+			Element.prototype.scrollIntoView = () => undefined
+		})
+		afterEach(() => {
+			Element.prototype.scrollIntoView = original
+		})
+
+		it('déplie le track demandé, pose le focus sur son dépliage, et retire le paramètre', async () => {
+			monter({ tracks: tracksUuid(), channels: channelsUuid() }, `/reglages/arborescence?track=${UUID}`)
+			const replier = await screen.findByRole('button', { name: 'Replier Conseil & IA' })
+			expect(replier.getAttribute('aria-expanded')).toBe('true')
+			expect(await screen.findByText('Prospection')).toBeTruthy()
+			await waitFor(() => expect(document.activeElement).toBe(replier))
+			await waitFor(() => expect(screen.getByTestId('sonde-adresse').textContent).toBe('/reglages/arborescence'))
+		})
+
+		it('un track INCONNU : rien ne s’ouvre, le paramètre quitte l’adresse', async () => {
+			monter({ tracks: tracksUuid(), channels: channelsUuid() }, '/reglages/arborescence?track=5eed0000-0000-4000-8000-0000000000ff')
+			await attendreTracks()
+			await waitFor(() => expect(screen.getByTestId('sonde-adresse').textContent).toBe('/reglages/arborescence'))
+			expect(screen.queryByRole('button', { name: /^Replier / })).toBeNull()
+		})
+
+		it('une valeur qui n’est pas un uuid n’est pas crue', async () => {
+			monter({}, '/reglages/arborescence?track=t-1')
+			await attendreTracks()
+			await waitFor(() => expect(screen.getByTestId('sonde-adresse').textContent).toBe('/reglages/arborescence'))
+			expect(screen.queryByRole('button', { name: /^Replier / })).toBeNull()
+		})
 	})
 
 	it('affiche l’état vide d’un track sans channel', async () => {

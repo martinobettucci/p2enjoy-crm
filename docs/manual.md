@@ -4250,10 +4250,15 @@ l'arborescence, celle-ci demande d'administrer l'espace de travail.
 
 ### 17.3 Quand un déplacement est indisponible sans être en bout de liste
 
-Il arrive qu'une flèche soit désactivée alors que la ligne n'est ni en tête ni en fin. L'infobulle
-l'explique : deux positions voisines sont **indistinctes**, et le déplacement ne changerait rien à
-l'ordre affiché. Le produit préfère le dire plutôt que d'écrire une valeur sans effet. Remettre une
-telle liste d'aplomb demande une renumérotation, qui n'est pas encore livrée.
+**Pour un channel, cela n'arrive plus** : chaque flèche enregistre l'ordre entier des channels du track, d'un seul coup,
+et les renumérote. Une flèche de channel n'est désactivée qu'en tête ou en fin de liste. Si
+quelqu'un a créé, archivé ou retiré un channel de ce track entre-temps, le déplacement n'est pas fait : un message dit
+que la liste a changé, et elle est relue — recommencez sur la liste à jour.
+
+**Pour un track**, il arrive encore qu'une flèche soit désactivée alors que la ligne n'est ni en tête ni en fin.
+L'infobulle l'explique : deux positions voisines sont **indistinctes**, et le déplacement ne changerait rien à l'ordre
+affiché. Le produit préfère le dire plutôt que d'écrire une valeur sans effet. Remettre une telle liste de tracks
+d'aplomb demande une renumérotation, qui n'est pas encore livrée pour les tracks.
 
 ### 17.4 Ce qui n'est pas encore là
 

@@ -19918,4 +19918,10 @@ souris et clavier ; captures observées aux quatre paliers ; manuel vérifié ; 
   `e2e/api/reorganiser-channels.spec.ts` 6/6 avec les vrais jetons (anonyme `401`, business developer et lectrice `403`,
   liste incomplète `400`, chaque refus suivi d'une relecture ; l'ordre du seed reposé) ; types régénérés et témoin
   (rouge sans la ligne) ; contrat §2.56 et §3, changelog ;
-- **T3** à **T5** — à faire.
+- **T3** — faite : « Monter » et « Descendre » d'un channel par `reorganiserChannels` (`webapp/src/lib/reorganisation-channels.ts`),
+  l'ordre entier des channels ACTIFS, la disponibilité par le seul rang ; le refus `ordre-perime` dit et relu ;
+  `?track=` (déplié, focus, paramètre retiré) ; `deplacerChannel` retiré ; Vitest — le module 13, l'écran 72 (dont
+  six nouveaux) ; E2E `administration-arborescence` 10/10 (positions 1 à n constatées en base, l'ordre du seed reposé
+  par la fonction ; `?track=` connu et inconnu) ; API `administration-arborescence` et `reorganiser-channels` 22/22 ;
+  manuel §17.3 révisé (texte seul) ; changelog ;
+- **T4** et **T5** — à faire.

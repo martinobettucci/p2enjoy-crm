@@ -1,4 +1,6 @@
 // @spec CRM-075 (docs/BACKLOG.md) — administration des tracks et des channels
+// @spec CRM-154 (docs/BACKLOG.md) tranche T3 — le refus `ordre-perime` de `public.reorder_channels`
+//       (docs/SPEC-administration-arborescence.md §15.3) ; son calcul vit dans `reorganisation-channels.ts`
 // @spec CRM-077 (docs/BACKLOG.md) — corbeille et restauration, septième tranche : le GESTE de mise
 //       à la corbeille d'un track et d'un channel, et le filtre que l'administration n'avait pas
 // @spec docs/SPEC-corbeille.md §3.1 (les trois états, indépendants), §3.3 (le geste ne descend pas),
@@ -365,7 +367,11 @@ export type RefusClasse = {
 }
 
 /** Un refus d'écriture d'arborescence : rangé par les codes, ou reconnu au nom de sa clé (`channel-occupe`). */
-export type RefusEcriture = RefusClasse | { readonly nature: 'channel-occupe'; readonly detail: string }
+export type RefusEcriture =
+	| RefusClasse
+	| { readonly nature: 'channel-occupe'; readonly detail: string }
+	/** `CRM-154` (§15.3) : `channel_order_incomplete` — la liste des channels a changé entre-temps ; l'écran relit. */
+	| { readonly nature: 'ordre-perime'; readonly detail: string }
 
 /**
  * Classe un refus d'écriture sur le **code PostgreSQL** d'abord, le **code HTTP** ensuite, et
@@ -660,13 +666,8 @@ export async function modifierChannel(
 	))
 }
 
-export async function deplacerChannel(
-	client: ClientCrm,
-	id: string,
-	position: number,
-): Promise<ResultatEcriture> {
-	return executer(() => client.from('channels').update({ position }).eq('id', id).select('id'))
-}
+// `deplacerChannel` (un `PATCH` de `position`) est retiré par `CRM-154` : un channel se déplace par
+// `reorganiserChannels` (`reorganisation-channels.ts`, docs/SPEC-administration-arborescence.md §15.3).
 
 export async function archiverChannel(
 	client: ClientCrm,

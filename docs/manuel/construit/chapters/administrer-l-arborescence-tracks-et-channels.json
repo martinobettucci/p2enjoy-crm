@@ -1297,8 +1297,35 @@
 			"type": "paragraph",
 			"content": [
 				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Pour un channel, cela n'arrive plus"
+						}
+					]
+				},
+				{
 					"type": "text",
-					"text": "Il arrive qu'une flèche soit désactivée alors que la ligne n'est ni en tête ni en fin. L'infobulle\nl'explique : deux positions voisines sont "
+					"text": " : chaque flèche enregistre l'ordre entier des channels du track, d'un seul coup,\net les renumérote. Une flèche de channel n'est désactivée qu'en tête ou en fin de liste. Si\nquelqu'un a créé, archivé ou retiré un channel de ce track entre-temps, le déplacement n'est pas fait : un message dit\nque la liste a changé, et elle est relue — recommencez sur la liste à jour."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Pour un track"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", il arrive encore qu'une flèche soit désactivée alors que la ligne n'est ni en tête ni en fin.\nL'infobulle l'explique : deux positions voisines sont "
 				},
 				{
 					"type": "strong",
@@ -1311,7 +1338,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", et le déplacement ne changerait rien à\nl'ordre affiché. Le produit préfère le dire plutôt que d'écrire une valeur sans effet. Remettre une\ntelle liste d'aplomb demande une renumérotation, qui n'est pas encore livrée."
+					"text": ", et le déplacement ne changerait rien à l'ordre\naffiché. Le produit préfère le dire plutôt que d'écrire une valeur sans effet. Remettre une telle liste de tracks\nd'aplomb demande une renumérotation, qui n'est pas encore livrée pour les tracks."
 				}
 			]
 		},

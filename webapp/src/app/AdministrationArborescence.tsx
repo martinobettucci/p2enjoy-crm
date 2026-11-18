@@ -1,6 +1,8 @@
 // @spec CRM-093 (docs/BACKLOG.md) tranche T3 — les commandes d'écriture désactivées avec leur motif quand la base refuse
 //       l'administration de l'espace ; déplier et consulter restent offerts (docs/SPEC-droits-interface.md §2.2, §3, §5 ;
 //       docs/DESIGN_SYSTEM.md §5.59)
+// @spec CRM-154 (docs/BACKLOG.md) tranche T3 — « Monter » et « Descendre » d'un channel par `public.reorder_channels`, et
+//       l'adresse `?track=` (docs/SPEC-administration-arborescence.md §15.3 ; docs/JOURNAL.md décisions 935 et 938)
 // @spec CRM-075 (docs/BACKLOG.md) — écran d'administration des tracks et des channels
 // @spec CRM-134 (docs/BACKLOG.md) tranche T1 — la confirmation d'archivage, partagée avec la vue du channel
 //       (`ConfirmationArchivage.tsx` ; docs/SPEC-channels.md §11.2)
@@ -69,7 +71,6 @@ import {
 	calculerDeplacement,
 	creerChannel,
 	creerTrack,
-	deplacerChannel,
 	deplacerTrack,
 	lireChannelsAdministrables,
 	lireTracksAdministrables,
@@ -82,12 +83,21 @@ import {
 	proposerSlug,
 	slugConforme,
 	type ChannelAdministrable,
+	type Deplacement,
 	type Ordonnable,
 	type ResultatEcriture,
 	type Sens,
 	type TrackAdministrable,
 	type WorkflowAffectable,
 } from '../lib/administration-arborescence'
+import {
+	deplacementParOrdre,
+	lireTrackDemande,
+	ordreApresDeplacement,
+	PARAM_TRACK,
+	reorganiserChannels,
+	sansTrackDemande,
+} from '../lib/reorganisation-channels'
 import {
 	composerEnumeration,
 	compterEnfantsInaccessibles,
@@ -397,6 +407,11 @@ type ProprietesCommandes = {
 	/** `CRM-118` T1.b : « Changer de workflow », sur la ligne d'un channel seulement (§7 quinquies.3). */
 	readonly onChangerWorkflow?: () => void
 	readonly changementOuvert?: boolean
+	/**
+	 * `CRM-154` (§15.3) : la disponibilité de « Monter » et « Descendre ». Un track garde l'index fractionnaire
+	 * (`calculerDeplacement`) ; un channel passe par `reorder_channels`, et seule l'extrémité l'éteint.
+	 */
+	readonly calculer?: (liste: readonly Ordonnable[], id: string, sens: Sens) => Deplacement
 }
 
 /**
@@ -417,6 +432,7 @@ function CommandesLigne({
 	onCorbeille,
 	onChangerWorkflow,
 	changementOuvert = false,
+	calculer = calculerDeplacement,
 }: ProprietesCommandes) {
 	const droit = useRefus()
 	/**
@@ -457,8 +473,8 @@ function CommandesLigne({
 		)
 	}
 
-	const peutMonter = calculerDeplacement(liste, id, 'monter')
-	const peutDescendre = calculerDeplacement(liste, id, 'descendre')
+	const peutMonter = calculer(liste, id, 'monter')
+	const peutDescendre = calculer(liste, id, 'descendre')
 
 	/**
 	 * Pourquoi la commande est indisponible — `docs/DESIGN_SYSTEM.md` §8 : « les états désactivés
@@ -671,6 +687,8 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 		async (resultat: ResultatEcriture, message: string, idTrack?: string) => {
 			if (resultat.statut === 'refus') {
 				setRefus(texteRefus(resultat.refus))
+				// `CRM-154` (§15.3) : la liste a changé entre-temps — elle est relue, le refus le dit.
+				if (resultat.refus.nature === 'ordre-perime' && idTrack !== undefined) await rechargerChannels(idTrack)
 				return
 			}
 			if (resultat.statut === 'sans-effet') {
@@ -731,20 +749,27 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 	const deplacer = useCallback(
 		(liste: readonly Ordonnable[], id: string, sens: Sens, estChannel: boolean, idTrack?: string) => {
 			if (client === null) return
+			// `CRM-154` (§15.3) : un CHANNEL se déplace par `reorder_channels`, avec l'ordre entier des channels actifs
+			// du track tel qu'il sera affiché — une écriture atomique, sans position calculée par l'écran.
+			if (estChannel) {
+				if (idTrack === undefined) return
+				const ordre = ordreApresDeplacement(
+					liste.map((element) => element.id),
+					id,
+					sens,
+				)
+				if (ordre === null) return
+				void executer(() => reorganiserChannels(client, idTrack, ordre), t('live.admin.moved'), idTrack)
+				return
+			}
 			const calcul = calculerDeplacement(liste, id, sens)
 			if (calcul.statut !== 'calcule') {
 				// L'écran NOMME le refus au lieu d'écrire une valeur sans effet (§6.2).
 				setRefus(t('admin.move.impossible'))
 				return
 			}
-			void executer(
-				() =>
-					estChannel
-						? deplacerChannel(client, id, calcul.position)
-						: deplacerTrack(client, id, calcul.position),
-				t('live.admin.moved'),
-				idTrack,
-			)
+			// Un TRACK garde l'index fractionnaire du §6.2 (§15.1, hors périmètre de `CRM-154`).
+			void executer(() => deplacerTrack(client, id, calcul.position), t('live.admin.moved'), idTrack)
 		},
 		[client, executer],
 	)
@@ -805,6 +830,35 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 		if (!deplies.includes(track.id)) basculerDepli(track.id)
 		ouvrirCreationChannel(track)
 	}, [tracks, parametres, setParametres, deplies, basculerDepli, ouvrirCreationChannel])
+
+	/**
+	 * `CRM-154` (docs/SPEC-administration-arborescence.md §15.3) — « Réorganiser », depuis la barre d'onglets d'un track.
+	 * `track=<id du track>` déplie ce track, l'amène dans la fenêtre et pose le focus sur son bouton de dépliage. Lu UNE
+	 * fois, quand les tracks sont lus ; le paramètre quitte alors l'adresse, sans entrée d'historique. Un track absent de
+	 * la liste lue — archivé et masqué, retiré, illisible — ou une valeur qui n'est pas un `uuid` : rien ne s'ouvre.
+	 */
+	const trackDemandeLu = useRef(false)
+	const [trackAFocaliser, setTrackAFocaliser] = useState<string | null>(null)
+	useEffect(() => {
+		if (trackDemandeLu.current || tracks.statut !== 'pret') return
+		if (parametres.get(PARAM_TRACK) === null) return
+		trackDemandeLu.current = true
+		const idTrack = lireTrackDemande(parametres)
+		const track = idTrack === null ? undefined : tracks.donnees.find((candidat) => candidat.id === idTrack)
+		setParametres((courants) => sansTrackDemande(courants), { replace: true })
+		if (track === undefined) return
+		if (!deplies.includes(track.id)) basculerDepli(track.id)
+		setTrackAFocaliser(track.id)
+	}, [tracks, parametres, setParametres, deplies, basculerDepli])
+	// Le focus, une fois le bouton rendu : différé d'un rendu, sans temporisation (la règle du §13.3).
+	useEffect(() => {
+		if (trackAFocaliser === null) return
+		const bouton = document.querySelector<HTMLButtonElement>(`[data-depli-track="${trackAFocaliser}"]`)
+		if (bouton === null) return
+		bouton.scrollIntoView({ block: 'start' })
+		bouton.focus()
+		setTrackAFocaliser(null)
+	}, [trackAFocaliser, deplies])
 
 	// Le formulaire refermé — création aboutie, « Annuler », autre geste ouvert — emporte ses paramètres (§13.6).
 	useEffect(() => {
@@ -931,6 +985,7 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 									<button
 										type="button"
 										aria-expanded={deplie}
+										data-depli-track={track.id}
 										onClick={() => basculerDepli(track.id)}
 										aria-label={
 											deplie
@@ -1293,6 +1348,10 @@ function ListeChannels({
 
 	const liste = etat.donnees
 
+	// `CRM-154` (§15.2, §15.3) : seuls les channels ACTIFS se réordonnent — la fonction reçoit leur liste exacte. Une
+	// ligne archivée, montrée par « Afficher les archivés », n'a pas de commande de déplacement (§6.4).
+	const actifs = liste.filter((channel) => channel.archived_at === null)
+
 	return (
 		<div className="pl-12 pr-3 pb-3 flex flex-col gap-2">
 			{/* Même correctif que la liste des tracks ci-dessus : conteneur dédié plutôt que de
@@ -1324,10 +1383,11 @@ function ListeChannels({
 								<span className="ml-auto flex items-center gap-1">
 									<CommandesLigne
 										nom={channel.name}
-										liste={liste}
+										liste={actifs}
 										id={channel.id}
 										archive={archive}
-										onDeplacer={(sens) => onDeplacer(liste, channel.id, sens)}
+										calculer={deplacementParOrdre}
+										onDeplacer={(sens) => onDeplacer(actifs, channel.id, sens)}
 										onModifier={() => onOuvrirEdition(channel)}
 										onArchiver={() => onArchiver(channel)}
 										onCorbeille={() => onCorbeille(channel)}

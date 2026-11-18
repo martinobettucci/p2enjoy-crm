@@ -1,4 +1,7 @@
 // @verifies CRM-075 (docs/BACKLOG.md) — administration des tracks et des channels, parcours d'interface
+// @verifies CRM-154 (docs/BACKLOG.md) tranche T3 — « Monter » d'un channel par `reorder_channels` (positions 1 à n
+//           constatées en base, l'ordre du seed reposé) ; `?track=` qui déplie le track et pose le focus
+//           (docs/SPEC-administration-arborescence.md §15.3)
 // @verifies docs/SPEC-administration-arborescence.md §5 (créer et renommer), §6 (réordonner et
 //           archiver), §7 (les channels), §3 (adresse et composition)
 // @verifies docs/DESIGN_SYSTEM.md §5.13 (cette surface), §7 (paliers), §8 (accessibilité)
@@ -113,6 +116,36 @@ async function supprimerParSlug(
 	slug: string,
 ): Promise<void> {
 	await request.delete(`${chemin}?slug=eq.${slug}`, { headers: enTetesService() })
+}
+
+/** `CRM-154` : « Formation » du seed, parent des channels de ce dossier. */
+const TRACK_FORMATION_ID = '5eed0000-0000-4000-8000-000000000023'
+
+/** Les positions des channels actifs de « Formation », dans leur ordre — lues avec la clé de service. */
+async function positionsFormation(request: import('@playwright/test').APIRequestContext): Promise<number[]> {
+	const reponse = await request.get(
+		`${CHEMIN_CHANNELS}?select=id,position&track_id=eq.${TRACK_FORMATION_ID}&archived_at=is.null&deleted_at=is.null&order=position,name`,
+		{ headers: enTetesService() },
+	)
+	return ((await reponse.json()) as { position: number }[]).map((ligne) => ligne.position)
+}
+
+/**
+ * `CRM-154` (§15.5) : la fonction renumérote de 1 à n, si bien que le channel du seed garde la position que le
+ * déplacement lui a donnée une fois le channel de la preuve purgé. L'ordre du seed est reposé PAR LA MÊME FONCTION,
+ * sur la liste restante, et la preuve rend la base telle qu'elle l'a trouvée.
+ */
+async function reposerOrdreFormation(request: import('@playwright/test').APIRequestContext): Promise<void> {
+	const reponse = await request.get(
+		`${CHEMIN_CHANNELS}?select=id&track_id=eq.${TRACK_FORMATION_ID}&archived_at=is.null&deleted_at=is.null&order=position,name`,
+		{ headers: enTetesService() },
+	)
+	const ids = ((await reponse.json()) as { id: string }[]).map((ligne) => ligne.id)
+	if (ids.length === 0) return
+	await request.post(`${URL_API}/rest/v1/rpc/reorder_channels`, {
+		headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+		data: { p_track_id: TRACK_FORMATION_ID, p_channel_ids: ids },
+	})
 }
 
 // -------------------------------------------------------------------------------------------
@@ -249,6 +282,8 @@ test.describe('les cinq gestes, à la souris (docs/SPEC-administration-arboresce
 			await expect
 				.poll(async () => ordreMonter(channels))
 				.toEqual([...avant.slice(0, -2), nomRenomme, voisine])
+			// `CRM-154` (§15.2) : la base a renuméroté les channels actifs du track de 1 à n — plus d'index fractionnaire.
+			expect(await positionsFormation(request)).toEqual(avant.map((_, rang) => rang + 1))
 
 			// --- Archiver ------------------------------------------------------------------------
 			await channels.getByRole('button', { name: `Archiver ${nomRenomme}` }).click()
@@ -266,6 +301,7 @@ test.describe('les cinq gestes, à la souris (docs/SPEC-administration-arboresce
 			await expect(ligneArchivee.getByText('Archivé')).toHaveCount(0)
 		} finally {
 			await supprimerParSlug(request, CHEMIN_CHANNELS, slug)
+			await reposerOrdreFormation(request)
 		}
 	})
 })
@@ -421,6 +457,7 @@ test.describe('les cinq gestes, au clavier (docs/DESIGN_SYSTEM.md §8, CLAUDE.md
 			await expect(ligneArchivee.getByText('Archivé')).toHaveCount(0)
 		} finally {
 			await supprimerParSlug(request, CHEMIN_CHANNELS, slug)
+			await reposerOrdreFormation(request)
 		}
 	})
 })
@@ -428,6 +465,29 @@ test.describe('les cinq gestes, au clavier (docs/DESIGN_SYSTEM.md §8, CLAUDE.md
 // -------------------------------------------------------------------------------------------
 // Paliers responsive (docs/DESIGN_SYSTEM.md §7) — même patron que `e2e/ui/etat-messagerie.spec.ts`
 // -------------------------------------------------------------------------------------------
+
+test.describe('CRM-154 : l’adresse `?track=` (docs/SPEC-administration-arborescence.md §15.3)', () => {
+	test('ouvre l’écran sur le track : déplié, focus sur son dépliage, le paramètre retiré', async ({ page }) => {
+		await connecter(page)
+		await page.goto(`/reglages/arborescence?track=${TRACK_FORMATION_ID}`)
+		const replier = page.getByRole('button', { name: `Replier ${TRACK_FORMATION_NOM}` })
+		await expect(replier).toHaveAttribute('aria-expanded', 'true')
+		await expect(listeChannels(page, TRACK_FORMATION_NOM)).toBeVisible()
+		await expect(replier).toBeFocused()
+		await expect(page).toHaveURL(/\/reglages\/arborescence$/)
+	})
+
+	test('un track inconnu : rien ne s’ouvre, le paramètre quitte l’adresse', async ({ page }) => {
+		await connecter(page)
+		await page.goto('/reglages/arborescence?track=5eed0000-0000-4000-8000-0000000000ff')
+		await expect(page.getByRole('button', { name: `Déplier ${TRACK_FORMATION_NOM}` })).toBeVisible()
+		await expect(page).toHaveURL(/\/reglages\/arborescence$/)
+		// Dans la région de l'arborescence : « Replier la barre latérale » n'est pas un track.
+		await expect(
+			page.getByRole('region', { name: "Tracks et channels de l'espace de travail" }).getByRole('button', { name: /^Replier / }),
+		).toHaveCount(0)
+	})
+})
 
 test.describe('paliers responsive', () => {
 	for (const palier of PALIERS) {
