@@ -8902,3 +8902,74 @@ contacts — sont écrits avec T4, dans ce paragraphe.
   largeur, et les boutons de la confirmation passent l'un sous l'autre, le destructif en dernier (§5.102). La page ne
   défile jamais horizontalement (§7).
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : `Trash2` et `ArchiveRestore` gardent leur geste (§5.102).
+
+### 5.109 bis Le filtre par expéditeur, le transfert, le blocage et les contacts depuis l'inbox — `CRM-156` T4
+
+*Écrit le 2026-11-18, avant le code, sur la relecture intégrale de ce document faite le même jour pour le §5.109 (décisions
+945 et 947).* Ce que les gestes envoient et refusent est spécifié par `docs/SPEC-mail-subsystem.md` §32.7 à §32.10 ; ces
+règles ne disent que de quoi ils ont l'air. Tout ce que le §5.109 pose vaut sans être répété.
+
+- **LE FILTRE PAR EXPÉDITEUR.**
+  - **Le poser** : dans l'en-tête du message ouvert, après la ligne « De : {adresse} », la commande **« Filtrer sur cet
+    expéditeur »**, discrète compacte, icône Lucide **`ListFilter`** — qui ne sert aucun autre objet (§9). Elle porte la clé
+    `expediteur` dans l'adresse et garde le dossier.
+  - **Le montrer et le retirer** : sous le bloc des filtres de `CRM-155` (§5.108), une ligne à part, rembourrage 8 × 12 px,
+    bordure basse `--color-border` : « Expéditeur : » en 13 px `--color-text-2`, puis l'adresse en `code` (§2), puis le
+    bouton discret compact **« Retirer le filtre »**, icône `X` (§5.58 : le signe de fermeture d'une petite surface). Le focus
+    passe ensuite à la commande « Tout sélectionner » si elle reste, sinon au titre de la liste.
+  - **Le vide sous ce filtre** : « Aucun message de « {adresse} » dans ce dossier. », avec « Retirer le filtre » (§5.51).
+- **LE TRANSFERT** (§32.7).
+  - **Dans le message ouvert** : **« Transférer »**, secondaire compacte, icône Lucide **`Forward`** — qui ne sert aucun autre
+    objet —, dans la rangée de commandes (§5.102), **après « Pastilles », avant les suppressions** : le geste qui partage
+    précède ceux qui retirent. Elle suit la capacité d'**éditer l'espace** (§5.59) et ouvre **dans le flux**, sous la rangée,
+    un bloc bordé, `role="group"` nommé « Transférer ce message » : un `select` « Membre » à libellé visible, option vide en
+    tête « Choisir un membre » (§5.22), les membres de l'espace du message par nom, la personne exceptée ; puis « Annuler »
+    et **« Transférer »** (primaire, désactivé tant qu'aucun membre n'est choisi, §5.50). `Échap` referme ; le focus entre
+    sur le `select` et revient à la commande. Il s'exclut avec le panneau « Pastilles » et les confirmations de suppression
+    (§5.103).
+  - **Les transferts du message** se lisent sous la ligne des pastilles, une ligne chacun en 13 px `--color-text-2` :
+    « Transféré à {membre} par {auteur}, le {date} », la date en donnée technique (§2) ; « Compte supprimé » pour un profil
+    détaché (§5.10). **« Retirer »**, discret compact, icône `X`, nom accessible « Retirer le transfert à {membre} », n'est
+    rendu que pour l'auteur et le destinataire — la règle de la base, rendue par la donnée lue, pas par un rôle (§5.10). Un
+    refus se dit sous la ligne, `role="alert"` ; le succès relit les transferts et s'annonce : « Transfert retiré. ».
+  - **Dans la barre groupée** : l'option « Transférer à un membre » dans un groupe « Partage », et le même `select` dans la
+    confirmation. Refusée par la capacité d'éditer, elle porte « — non permis » (§5.109).
+- **LA NOTIFICATION `mail_transfer`** (§5.43) : la ligne de la boîte porte l'avatar et le nom de l'auteur, puis « vous a
+  transféré 1 mail » ou « vous a transféré {n} mails » (accord par clé, §10), puis l'objet du premier mail en lien vers
+  `/inbox?message=` — le lien est le titre, jamais la ligne entière (§5.43). Ni pilule d'affaire, ni d'organisation : un
+  transfert n'en a pas. **Les préférences** (§5.45) gagnent la case « Recevoir les transferts de mails », sous celle des
+  mentions, cochée par défaut, la phrase « Quand un membre vous transfère des mails de l'inbox. ».
+- **BLOQUER L'EXPÉDITEUR** (§32.8).
+  - **La commande** vit dans la rangée d'action (§5.109), à droite, **seulement quand le seul filtre actif est un
+    expéditeur** et que la base consent l'administration de l'espace (§5.59) ; sinon elle n'est pas rendue — un geste qui
+    vise l'expéditeur du filtre n'a pas d'objet sans lui. Discrète compacte, icône Lucide **`ShieldBan`**, qui ne sert aucun
+    autre objet. Elle ne dépend pas d'une sélection : elle vise l'expéditeur, pas les fils cochés.
+  - **La double confirmation**, dans le flux, sous la rangée (§5.13). Premier bloc : « Bloquer {adresse} ? », puis « {n} mails
+    reçus de cette adresse iront à la corbeille de l'inbox, et ses prochains mails y arriveront directement. On le débloque
+    dans Réglages ▸ Expéditeurs bloqués. » — {n} lu en base (`blocked_sender_impact`), accordé par clé —, « Annuler » et
+    « Continuer » (secondaire). Second bloc, à la même place : « Confirmez le blocage de {adresse}. », « Annuler » et
+    **« Bloquer {adresse} »** (**destructif**, `ShieldBan`). Le focus entre sur « Annuler » à chaque étape.
+  - **L'issue** : le compte rendu du §5.109, titré « Bloquer l'expéditeur », « Fait : {n} mails mis à la corbeille. » ; le
+    filtre est retiré, la liste relue.
+- **RÉGLAGES ▸ EXPÉDITEURS BLOQUÉS**, après « Pastilles des mails » dans l'index : un lien pour tout membre — la liste se lit.
+  La forme de Réglages ▸ Prompts du connecteur (§5.104) : titre, phrase « Les mails de ces adresses vont directement à la
+  corbeille de l'inbox. », puis une liste plate — l'adresse en `code`, « Bloqué par {nom} le {date} » en 13 px
+  `--color-text-2`, et **« Débloquer »**, discret compact, **sans icône** — `ShieldCheck` porte « Plateforme » (§5.56), et
+  le §9 interdit qu'une icône serve deux objets. Il ouvre une confirmation courte dans le flux, sous la ligne : « Débloquer
+  {adresse} ? Ses prochains mails arriveront de nouveau dans l'inbox. Ceux qui sont déjà dans la corbeille y restent. »,
+  « Annuler » et « Débloquer » (primaire : le geste ne détruit rien, §5.16). Les commandes suivent la capacité
+  d'administrer (§5.59). Vide : « Aucun expéditeur bloqué. », sans action — on bloque depuis l'inbox (§5.51).
+- **CRÉER DES CONTACTS** (§32.10).
+  - **Dans la barre groupée** : l'option « Créer des contacts » dans un groupe « Contacts ». Refusée par la capacité d'éditer,
+    elle porte « — non permis ».
+  - **La liste à vérifier** remplace la confirmation, dans le flux : un `fieldset` « Expéditeurs inconnus de la sélection »,
+    une ligne par adresse — la case de 24 px **cochée** (§5.7 bis), l'adresse en `code`, le nombre de mails en 13 px
+    `--color-text-2`, puis deux champs à libellé visible sur la même ligne qui se replie sous `md` : **« Nom »**, prérempli, et
+    **« Organisation »**, prérempli du nom de l'organisation du domaine s'il y en a une, vide sinon, avec l'aide « Une
+    organisation de ce nom est reprise, sinon créée. ». « Annuler » et **« Créer {n} contacts »** (primaire, désactivé à zéro
+    case cochée). Aucun inconnu : « Tous les expéditeurs de la sélection sont déjà des contacts. », sans action.
+  - **Le compte rendu** reprend les mots de l'import (§5.77) : « {n} contacts créés ; {k} ignorés ; {r} refusés. », puis une
+    ligne par refus, l'adresse et son motif traduit.
+- **SOUS `md`**, toutes ces lignes se replient, cibles conservées ; la page ne défile jamais horizontalement (§7).
+- **Aucune couleur, aucun jeton nouveau. Trois icônes Lucide nouvelles — `ListFilter`, `Forward`, `ShieldBan`** —, chacune pour
+  un seul objet (§9) ; `X` est reprise pour retirer.
