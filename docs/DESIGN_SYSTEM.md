@@ -8816,3 +8816,74 @@ l'air. **Remplace le filtre « Pastille » du §5.103** (sa liste déroulante es
 - **Aucune couleur, aucun jeton, aucune icône nouveaux** : `ChevronRight` et `ChevronDown` portent déjà le dépliage
   (§5.31 bis, §5.101) ; elles le portent ici aussi.
 
+
+### 5.109 La sélection et les actions groupées de l'inbox — `CRM-156` T3
+
+*Écrit le 2026-11-18, avant le code, après relecture intégrale de ce document le même jour (décisions 944, 946 et 949).* Ce
+que la sélection désigne, ce que la base compte et fait est spécifié par `docs/SPEC-mail-subsystem.md` §32.2 à §32.6 ; ces
+règles ne disent que de quoi l'écran a l'air. Les ajouts de la décision 945 — filtre par expéditeur, transfert, blocage,
+contacts — sont écrits avec T4, dans ce paragraphe.
+
+- **UNE CASE PAR FIL, À GAUCHE DE SA LIGNE** : la case native de 24 px, accent `--color-brand` (§5.7 bis), dans la ligne du
+  fil mais **hors de son bouton** — un contrôle ne s'imbrique pas dans un autre (§5.106) ; la ligne devient une rangée
+  `flex`, la case centrée verticalement dans une cible de `--size-target` de large, le bouton du fil prenant le reste. Nom
+  accessible « Sélectionner le fil {objet} ». Cocher n'ouvre pas le fil ; ouvrir ne le coche pas. La ligne cochée garde son
+  aspect : la case dit l'état (§1), et le fond `--color-brand-soft` reste celui du fil **ouvert** (§5.4) — deux repères
+  pour deux choses.
+- **LA RANGÉE D'ACTION** (`inbox-rangee-action`, sous le bloc des filtres de `CRM-155`, §5.108) est rendue dès qu'elle porte
+  quelque chose : un fil non lu affiché (« Tout marquer comme lu », §5.4 quinquies), un filtre explicite (« Tout
+  sélectionner »), ou une sélection. **« Tout sélectionner »**, discret compact, à gauche, n'est rendu que sous un filtre
+  explicite — une pastille au moins, « Seulement moi » appliqué, plus tard l'expéditeur (§32.3) ; cocher un fil reste
+  toujours possible.
+- **AVEC UNE SÉLECTION, LA RANGÉE DEVIENT LA BARRE D'ACTIONS GROUPÉES**, à la même place, sur une ligne qui se replie :
+  - **le compte**, en 14 px `font-medium` `--color-ink`, dans une région `role="status"` : « 3 fils sélectionnés » (accord
+    par clé, §10) ; sous « Tout sélectionner », « Tout le filtre : 128 fils (412 messages) », lu en base
+    (`inbox_bulk_count`), « Comptage… » pendant la lecture ;
+  - **« Désélectionner »**, discret compact ;
+  - **un `select` « Action »** à libellé visible (§5.7), option vide en tête « Choisir une action », puis les actions en
+    `optgroup` traduits — « Lecture » (Marquer comme lu, Marquer comme non lu), « Classement » (Classer dans une affaire,
+    et dans le dossier d'une affaire, Retirer de l'affaire), « Pastilles » (Poser une pastille, Retirer une pastille,
+    Réévaluer les pastilles), « Sommeil » (Mettre en sommeil, Réveiller), « Suppression » (Supprimer ici, Supprimer
+    partout) — ; un `select` et non une rangée de boutons : onze commandes dans la colonne de 360 px prendraient cinq
+    lignes, et la liste se lirait sous elles ;
+  - **« Continuer »**, secondaire compact, désactivé tant qu'aucune action n'est choisie (un état de la saisie, §5.50). Le
+    choix seul n'ouvre rien : au clavier, les flèches parcourent un `select` fermé, et chaque pas ouvrirait un panneau.
+  - **Une action qu'une capacité refuse** (§5.59 ; les pastilles, la réévaluation suivent la capacité d'**éditer
+    l'espace**, §5.103) reste une option, **désactivée**, son libellé suivi de « — non permis » : une `option` native ne
+    porte ni teinte ni description, et le mot dit l'état (§5.26). Les refus que l'écran ne peut pas prévoir — une affaire
+    qu'on n'écrit pas, une boîte d'autrui — sont dits par le compte rendu.
+- **LA CONFIRMATION**, une pour chaque action (décision 946), **dans le flux, sous la barre**, au-dessus des fils — jamais en
+  modale (§5.13). Bloc bordé `--color-border`, `--radius-sm`, rembourrage 12 px, `role="group"` nommé par l'action. Il dit
+  la question avec les nombres lus en base — « Marquer comme lus 3 fils (7 messages) ? » —, porte l'argument quand l'action
+  en a un, puis « Annuler » (secondaire) et le bouton d'action (primaire ; **destructif** pour les deux suppressions, icône
+  `Trash2`, §5.102). La phrase de conséquence des suppressions reprend celles de `CRM-151` (§5.102) ; **la case « Ne plus
+  demander pendant 1 heure » n'y figure pas** (décision 946). Le focus entre sur le premier contrôle de l'argument, à
+  défaut sur « Annuler » ; `Échap` et « Annuler » referment et rendent le focus au `select`. Le comptage en échec se dit
+  dans le bloc, `role="alert"`, avec « Réessayer », et le bouton d'action reste désactivé : on ne confirme pas un nombre
+  qu'on n'a pas lu.
+  - **L'argument** : l'affaire, par le sélecteur cherchable de `CRM-137` (§5.94), sa case « Expéditeur connu » décochée à
+    l'ouverture — une sélection mêle des expéditeurs ; la pastille, un `select` des pastilles actives, option vide en tête
+    (§5.22) — pour « Retirer une pastille », les archivées aussi, suffixées « (archivée) » ; l'échéance du sommeil, les
+    quatre échéances usuelles en boutons discrets puis le champ d'échéance et son bouton — le panneau du sommeil d'un fil
+    (§5.3 septies), réemployé : choisir une échéance usuelle **la choisit** et ne confirme pas, le bouton d'action le
+    fait.
+- **PENDANT L'ACTION**, par paquets (décision 949) : les commandes du bloc sont inactives, le bouton d'action dit
+  « Traitement… », `aria-busy` ; sous lui, la **jauge** du §5.29 — 6 px, fond `--color-brand-soft`, remplissage
+  `--color-brand`, `aria-hidden`, largeur pleine —, et le texte qui porte tout (§5.97), « 2 000 messages traités sur
+  5 000 », en 13 px `--color-text-2`, `tabular-nums`, dans une région `role="status"`. Aucune annulation : une action
+  groupée ne s'annule pas (décision 945).
+- **LE COMPTE RENDU** remplace la confirmation, à la même place, et reste jusqu'au geste suivant ou à « Fermer » (discret
+  compact) : en `role="status"`, la phrase de l'issue — « 7 messages marqués comme lus. », « 2 fils mis en sommeil. » —,
+  puis, s'il y a des refus, « {k} refusés : » suivi d'une liste, une ligne par motif, son nombre et sa phrase traduite par
+  le dictionnaire de l'action unitaire, en 13 px `--color-text-2` : un refus d'un message n'est pas une panne de l'écran.
+  **Un paquet en échec** (une panne) passe le bloc en alerte, `role="alert"`, `--color-danger-soft` /
+  `--color-danger-on-soft` : « Action interrompue : {d} messages traités avant l'arrêt ; le reste n'a pas changé. ». Après
+  l'issue, la sélection est vidée, la liste et l'arborescence sont relues sans squelette (§5.29 tranche 2 c), et le focus
+  va au titre du compte rendu (`tabIndex=-1`) : la barre qui le portait a disparu (§5.13).
+- **DANS LA CORBEILLE** (§5.102), une case par **message**, de même forme, dans la ligne, avant l'objet ; « Tout
+  sélectionner » n'y existe pas (aucun filtre) ; la barre porte le compte, « Désélectionner » et **« Restaurer »**
+  (secondaire compact, `ArchiveRestore`), qui ouvre la même confirmation, non destructive (§5.16 : le geste qui répare).
+- **SOUS `lg`**, la pile du §5.4 garde la barre en tête de la liste ; sous `md`, la barre se replie, le `select` prend la
+  largeur, et les boutons de la confirmation passent l'un sous l'autre, le destructif en dernier (§5.102). La page ne
+  défile jamais horizontalement (§7).
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : `Trash2` et `ArchiveRestore` gardent leur geste (§5.102).
