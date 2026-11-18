@@ -1313,7 +1313,32 @@ connecteur (décision 944).
 après** elle, jamais avant.
 **Retour arrière** : supprimer les quatre fonctions (`docs/SCHEMA.md` « Migration `0189` ») ; aucune donnée n'est perdue.
 
+### 2.60 `CRM-156` T2, décisions 945 et 947 — transfert, blocage d'un expéditeur, contacts depuis l'inbox, en base (EN ATTENTE)
+
+`docs/SPEC-mail-subsystem.md` §32.7, §32.8, §32.10 ; `docs/SCHEMA.md` « Migration `0190` » ; `docs/SPEC-notifications.md`
+§52. Deux tables (`mail_message_transfers`, `mail_blocked_senders`), deux politiques, un déclencheur `BEFORE INSERT` sur
+`mail_messages` ; **la politique `mail_messages_lecture` et `app.peut_voir_message` réécrites** (la voie du transfert) ;
+`concerns_me` et `classer_message_automatiquement` reprises avec un ajout ; les listes fermées des types de notification
+gagnent `mail_transfer` ; `import_contacts` change de signature (`p_source`, défaut `import`) ; `inbox_bulk_apply` reprise
+avec l'action `transfer`. **Aucune donnée.** Verrou bref sur `mail_messages` (politique et déclencheur) et sur
+`notifications` (contrainte vérifiée). Aucune variable, aucun secret ; pas de connecteur (décision 945). **Exige la 189.**
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 190, après la 189 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate` |
+| 2 | Constater | session de livraison, en lecture seule | le registre gagne une ligne, l'empreinte de la 190 égale celle du dépôt ; `select to_regclass('public.mail_message_transfers')` et `select to_regclass('public.mail_blocked_senders')` non nuls ; `select to_regprocedure('public.import_contacts(uuid, jsonb, boolean, text)')` non nul, `select to_regprocedure('public.import_contacts(uuid, jsonb, boolean)')` nul ; `select count(*) from pg_policies where schemaname = 'public'` vaut le compte d'avant plus deux |
+
+**Seule, elle ne change rien de visible** : sans transfert ni blocage, la lecture des messages et « Seulement moi » rendent
+exactement ce qu'ils rendaient ; la webapp livrée appelle `import_contacts` par arguments nommés, sans `p_source` — preuve :
+pgTAP `0127` et l'E2E de l'import, rejoués sur la 190. Les écrans (T3, T4) se livrent **avec ou après** elle.
+**Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0190` » ; les transferts et blocages saisis entre-temps sont
+perdus — un `pg_dump` des deux tables d'abord ; les mails mis à la corbeille par un blocage y restent, restaurables.
+
 ## 3. Migrations en attente
+
+**La 190** (`CRM-156` T2, décisions 945 et 947), *en attente* : le transfert, le blocage d'un expéditeur et la source des
+contacts créés depuis l'inbox (`docs/SCHEMA.md` « Migration `0190` ») — deux tables, la lecture des messages réécrite,
+aucune donnée. **Après la 189** (§2.60). **Avant ou avec la webapp de T3 et T4.** Aucun geste préalable du responsable.
 
 **La 189** (`CRM-156` T1, décisions 944, 946 et 949), *en attente* : les actions groupées de l'inbox
 (`docs/SCHEMA.md` « Migration `0189` ») — quatre fonctions, aucune donnée. Indépendante de la 188 (§2.59). **Avant ou avec

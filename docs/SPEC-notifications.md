@@ -2817,3 +2817,14 @@ que par qui lit l'organisation (`app.can_read_organization`). Le producteur est 
 `organization_comment_mentions`, `SECURITY DEFINER`, la forme du §14. Le `payload` garde ses deux clés, `comment_id` et
 `author_id` : le sujet dit dans quelle table lire le commentaire.
 
+
+## 52. Le transfert d'un mail — `CRM-156` (`docs/SPEC-mail-subsystem.md` §32.7)
+
+*Écrit le 2026-11-18 avec la migration `0190` (décisions 945 et 947).* Un **second type** entre dans la liste fermée de
+`notifications.type` et de `notification_preferences.type` : **`mail_transfer`**, produit quand un membre transfère un ou
+plusieurs mails à un autre. Il n'a **aucun sujet** — ni `subject_card_id`, ni `subject_organization_id` : un mail non
+classé n'a pas d'affaire, et la contrainte `notifications_single_subject_check` reste vraie. Le `payload` porte `count`
+(le nombre de mails transférés par l'appel), `author_id`, `message_id` (le premier) et `subject` (son objet). Le
+producteur n'est pas un déclencheur mais la fonction de transfert elle-même (`app.notifier_transfert`) : **une**
+notification par appel — un transfert unitaire, ou un paquet de l'action groupée —, et aucune pour un transfert qui
+existait déjà. La préférence « in-app » se règle pour ce type comme pour `mention` (`app.notification_consentie`).

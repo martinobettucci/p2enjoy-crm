@@ -1,3 +1,5 @@
+-- @verifies CRM-156 (docs/BACKLOG.md) — tranche T2 : la préférence se règle aussi pour `mail_transfer`, la même liste fermée
+--           que `notifications_type_check` (docs/SPEC-mail-subsystem.md §32.7 ; révision de l'assertion 6, décision 51)
 -- @verifies CRM-064 (docs/BACKLOG.md) — @mentions, notifications et préférences, TRANCHE 4
 -- @verifies docs/SPEC-notifications.md §43 (le modèle et la clé naturelle), §43.1 (une table et
 --            non une colonne de `profiles`), §43.2 (les colonnes, le `check` fermé, la date
@@ -103,8 +105,8 @@ select is(
 	(select pg_catalog.pg_get_constraintdef(oid) from pg_catalog.pg_constraint
 	  where conrelid = 'public.notification_preferences'::regclass
 	    and conname  = 'notification_preferences_type_check'),
-	'CHECK ((type = ANY (ARRAY[''mention''::text])))',
-	'CRM-064 §43.2 — `check` FERMÉ sur « mention », et sous la MÊME forme normalisée que '
+	'CHECK ((type = ANY (ARRAY[''mention''::text, ''mail_transfer''::text])))',
+	'CRM-064 §43.2, révisé par CRM-156 T2 — `check` FERMÉ sur « mention » et « mail_transfer », et sous la MÊME forme normalisée que '
 	'`notifications_type_check` : une définition non normalisée ferait détruire puis reposer la '
 	'contrainte à chaque rejeu du répertoire. L''ouvrir aujourd''hui à des sources qui n''existent '
 	'pas serait l''anticipation que `CLAUDE.md` §1 interdit. La contrainte '

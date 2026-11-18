@@ -1,3 +1,5 @@
+-- @verifies CRM-156 (docs/BACKLOG.md) — tranche T2 : `import_contacts` gagne `p_source` (défaut `import`) ; ses droits et sa
+--           forme sont relus sous la nouvelle signature (docs/SPEC-mail-subsystem.md §32.10)
 -- @verifies CRM-071 (docs/BACKLOG.md) — tranche T5 : l'import des contacts et des organisations en base — la simulation qui
 --           ne laisse rien, les issues ligne par ligne, l'organisation retrouvée ou créée, le refus de la lectrice, le journal
 -- @verifies docs/SPEC-vues-import-export.md §6.2, §6.2 bis, §6.4, §6.5 ; docs/SPEC-audit.md §3 (la famille `import`) ;
@@ -45,9 +47,9 @@ grant select on pg_temp.lignes to authenticated;
 -- =============================================================================================
 
 select ok(
-	has_function_privilege('authenticated', 'public.import_contacts(uuid, jsonb, boolean)', 'EXECUTE')
-	and not has_function_privilege('anon', 'public.import_contacts(uuid, jsonb, boolean)', 'EXECUTE')
-	and (select prosecdef = false from pg_proc where oid = 'public.import_contacts(uuid, jsonb, boolean)'::regprocedure),
+	has_function_privilege('authenticated', 'public.import_contacts(uuid, jsonb, boolean, text)', 'EXECUTE')
+	and not has_function_privilege('anon', 'public.import_contacts(uuid, jsonb, boolean, text)', 'EXECUTE')
+	and (select prosecdef = false from pg_proc where oid = 'public.import_contacts(uuid, jsonb, boolean, text)'::regprocedure),
 	'1 — l''import est aux membres connectés, sous leur RLS, jamais à l''anonyme');
 
 -- =============================================================================================

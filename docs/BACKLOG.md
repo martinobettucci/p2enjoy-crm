@@ -20100,8 +20100,16 @@ s'écrire en parallèle, l'écran se coordonne avec la session qui porte `CRM-15
   `e2e/api/actions-groupees-inbox.spec.ts` sous les trois jetons (anonyme refusé, « tout » sans filtre refusé, la lectrice
   qui ne voit pas la boîte de Driss, classer refusé dans une affaire qu'il n'écrit pas, sélection mixte, la lectrice qui
   marque lu sans pouvoir supprimer, curseur mal formé) ; contrat §2.59 ;
-- [ ] **T2** — la base des ajouts : transfert (lecture ouverte, `concerns_me`, notification `mail_transfer`), blocage
-  (réception en corbeille), expéditeurs inconnus et `import_contacts(p_source)` ; pgTAP ; API ; E2E `mail` ;
+- [x] **T2** — la base des ajouts : transfert (lecture ouverte, `concerns_me`, notification `mail_transfer`), blocage
+  (réception en corbeille), expéditeurs inconnus et `import_contacts(p_source)` ; pgTAP ; API ; E2E `mail`. *Fait le
+  2026-11-18* : migration `0190` ; pgTAP `0178` 38/38 (le transfert et ses refus dans l'ordre, la lecture ouverte et
+  refermée, « Seulement moi », une seule notification, la suppression refusée au destinataire, le retrait par l'auteur
+  et le destinataire seuls, l'action groupée et sa notification unique ; le blocage réservé à l'administrateur, les reçus
+  en corbeille dans tout l'espace, la réception en corbeille ni classée ni évaluée, l'envoi épargné, le déblocage ; les
+  inconnus et la source `email`) ; cinq pgTAP révisés (décision 51 : `0016` 221 politiques, `0062` et `0064` le type
+  `mail_transfer`, `0127` la signature d'`import_contacts`, `0133` 44 levées 404) ; API
+  `e2e/api/transfert-blocage-inbox.spec.ts` sous les trois jetons ; E2E `mail` `e2e/mail/expediteur-bloque.spec.ts` (un
+  mail réellement déposé et relevé arrive en corbeille) ; DAT §4.3, SPEC-notifications §52, contrat §2.60 ;
 - [ ] **T3** — l'écran de la sélection : cases, « Tout sélectionner », barre, confirmations, comptes rendus, corbeille ;
   DESIGN_SYSTEM §5.109 ; Vitest ; E2E `ui` ; captures ;
 - [ ] **T4** — l'écran des ajouts : filtre par expéditeur, transfert, notification, blocage et Réglages ▸ Expéditeurs

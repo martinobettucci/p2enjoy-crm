@@ -3374,9 +3374,13 @@ du rôle `authenticated` ; un paquet de 2 000 prend 3,7 s pour classer et 3,2 s 
 
 **Retour arrière** : supprimer les quatre fonctions ; aucune donnée n'est perdue.
 
-### Migration — transfert, blocage d'un expéditeur, contacts depuis les expéditeurs — `CRM-156` T2 (numéro pris après synchronisation, à l'écriture ; spécifiée le 2026-11-18, avant le code)
+### Migration `0190` — transfert, blocage d'un expéditeur, contacts depuis les expéditeurs — `CRM-156` T2 (`0190_transfert_blocage_contacts_inbox.sql` ; spécifiée le 2026-11-18, avant le code ; écrite le 2026-11-18)
 
-*Écrit le 2026-11-18, avant le code (décisions 945 et 947).* Spécification : `docs/SPEC-mail-subsystem.md` §32.7, §32.8,
+*Écrit le 2026-11-18, avant le code (décisions 945 et 947) ; précisé avec le code.* Fonctions internes ajoutées à l'écriture :
+`app.notifier_transfert` (la notification, une par appel), `app.adresse_bloquable` (la forme stockée, ou `invalid_address`),
+`app.garde_blocage` (connecté, administrateur) ; `app.code_refus_unitaire` et `inbox_bulk_apply` repris de la `0189` avec
+`recipient_not_member`, `self_transfer` et l'action `transfer`. Deux politiques nouvelles (`mail_message_transfers_lecture`,
+`mail_blocked_senders_lecture`) : le compte de `public` passe à 221. Spécification : `docs/SPEC-mail-subsystem.md` §32.7, §32.8,
 §32.10.
 
 - **`public.mail_message_transfers`** : `message_id` (FK `mail_messages` `ON DELETE CASCADE`), `recipient_id` (FK
@@ -3387,7 +3391,9 @@ du rôle `authenticated` ; un paquet de 2 000 prend 3,7 s pour classer et 3,2 s 
   **`public.concerns_me`** gagnent la voie du transfert (§32.7).
 - **`public.transfer_message(uuid, uuid) returns boolean`**, **`app.transferer_message(uuid, uuid, boolean)`**,
   **`public.remove_message_transfer(uuid, uuid) returns boolean`** ; l'action `transfer` de `inbox_bulk_apply`.
-- **`notifications.type`** et **`notification_preferences.type`** : la liste fermée gagne **`mail_transfer`**.
+- **`notifications.type`** et **`notification_preferences.type`** : la liste fermée gagne **`mail_transfer`**
+  (`docs/SPEC-notifications.md` §52). Ni colonne ni sujet nouveau : `notifications_single_subject_check` et les politiques
+  des notifications sont inchangées.
 - **`public.mail_blocked_senders`** : `workspace_id` (FK `workspaces` `ON DELETE CASCADE`), `address`
   (`CHECK (address = lower(btrim(address)))` et la forme d'adresse de `contacts_email_check`), `blocked_by` (FK
   `profiles` `ON DELETE SET NULL`), `created_at`. PK `(workspace_id, address)`. RLS : lecture par tout membre de l'espace ;

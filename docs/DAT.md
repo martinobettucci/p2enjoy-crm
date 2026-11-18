@@ -965,6 +965,18 @@ sur un domaine existant. Le préfixe se règle donc sur ce que le serveur remet,
 déjà tirées. Le classement et le `Reply-To` composent l'adresse **stockée** : ils ne reconnaissent aucun motif, et le
 préfixe ne les touche pas.
 
+**Un expéditeur bloqué — `CRM-156`** (`docs/SPEC-mail-subsystem.md` §32.8, décisions 945 et 947). Un administrateur bloque
+une adresse pour tout l'espace (`mail_blocked_senders`). Un déclencheur `BEFORE INSERT` sur `mail_messages` fait naître en
+corbeille un mail reçu de cette adresse, au nom de qui a bloqué : la relève reste idempotente, `mail-sync` n'en sait rien,
+et le message n'est ni classé (`classer_message_automatiquement` écarte un message en corbeille), ni évalué (la file des
+pastilles ne prend pas un message en corbeille). Il se restaure comme tout message de la corbeille.
+
+**Qui lit un message — la troisième voie, `CRM-156`** (§32.7, décision 947). Un message se lit par qui lit son affaire, par
+qui lit une boîte où il figure (son titulaire, ou un administrateur de l'espace), et désormais par **le membre à qui il a
+été transféré** (`mail_message_transfers`, `app.message_transfere_a_moi`). La règle est écrite une fois, dans
+`app.peut_voir_message` et la politique `mail_messages_lecture`, et toutes les lectures dérivées la suivent : pièces
+jointes, pastilles, sommeil, `concerns_me`. Le transfert n'ouvre aucune écriture de la boîte.
+
 ### 4.4 Envoi d'un email
 
 L'interface n'envoie jamais directement. Elle appelle `queue_outbound_email(...)`, qui insère

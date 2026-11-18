@@ -4917,7 +4917,13 @@ par les fonctions.
   une boîte où il figure (§29.3), et le transfert n'en donne pas le droit.
 - T2 relit **chaque voie de lecture** qui ne passe pas par `app.peut_voir_message` — les pièces jointes et leur stockage,
   les fonctions `SECURITY DEFINER` du §29.4 — et écrit ici celles qui suivent le transfert et celles qui ne le suivent pas,
-  chacune prouvée par pgTAP.
+  chacune prouvée par pgTAP. *Relu à l'écriture de la migration `0190` (2026-11-18)* : les politiques de lecture de
+  `mail_attachments`, `mail_message_labels` et `mail_label_evaluations`, celle de `mail_thread_snoozes`
+  (`app.fil_lisible`) et le téléchargement d'une pièce (`app.piece_jointe_telechargeable`) passent **toutes** par
+  `app.peut_voir_message` : elles suivent le transfert sans changement. Seules `mail_messages_lecture` et
+  `app.peut_voir_message` portaient la règle en clair, et la migration les réécrit. **Ne suivent pas** le transfert, et
+  c'est voulu : les occurrences d'un message dans les boîtes (`mail_message_occurrences`, `mail_folder_map`), qui décrivent
+  la boîte et non le message, et l'écriture de la boîte (`app.peut_ecrire_boite_du_message`).
 
 **Les fonctions** :
 - **`public.transfer_message(p_message_id uuid, p_recipient_id uuid) returns boolean`** — le geste unitaire. Dans cet
@@ -4958,8 +4964,9 @@ barre groupée. Le choix du membre propose les membres de l'espace du message, s
 - **`public.block_sender(p_workspace_id uuid, p_address text) returns jsonb`** — non connecté `42501` ; non
   administrateur `42501 forbidden` ; adresse mal formée `22023 invalid_address`. Écrit la ligne (déjà bloqué : la ligne
   reste, sans erreur), puis **met à la corbeille de l'inbox** chaque mail **reçu** de l'adresse encore hors corbeille,
-  dans tout l'espace, par le corps de `delete_message` **sans** déplacement IMAP — l'événement `mail_deleted` au fil des
-  affaires compris, `deleted_by` étant l'administrateur. Rend `{"trashed": n}`.
+  dans tout l'espace, par `delete_message` **sans** déplacement IMAP — l'événement `mail_deleted` au fil des affaires
+  compris, `deleted_by` étant l'administrateur. Rend `{"address": a, "trashed": n, "refused": {"<code>": k}}` — un refus
+  nommé de `delete_message` est compté, comme dans l'action groupée (§32.5) ; pour un administrateur, il n'en vient pas.
 - **`public.unblock_sender(p_workspace_id uuid, p_address text) returns boolean`** — administrateur seulement ; retire la
   ligne. **Les mails déjà mis à la corbeille y restent** : ils se restaurent un par un ou par la sélection de la corbeille,
   jusqu'à leur effacement définitif (§29.6).
@@ -4968,7 +4975,10 @@ barre groupée. Le choix du membre propose les membres de l'espace du message, s
 blocked_by` sur un message **reçu** dont l'adresse d'expédition est bloquée dans son espace. Le message existe donc,
 directement en corbeille : la relève reste idempotente (§4.2), et le §29.4 s'applique en entier — il n'est ni dans
 l'inbox, ni compté, ni classé, ni proposé. T2 vérifie et écrit ici que **le classement automatique** et **la file des
-pastilles** l'écartent, et le prouve par pgTAP. Un message **envoyé** n'est jamais bloqué.
+pastilles** l'écartent, et le prouve par pgTAP. Un message **envoyé** n'est jamais bloqué. *Écrit avec la migration
+`0190`* : `classer_message_automatiquement` rend `null` pour un message en corbeille, sans classement, suggestion ni
+événement ; la file des pastilles l'**inscrit** comme tout reçu, mais `claim_label_evaluations` ne prend jamais un message
+en corbeille — un mail débloqué puis restauré sera donc évalué sans autre geste.
 
 **L'écran** :
 - **« Bloquer l'expéditeur »** est offert dans la barre **seulement quand le seul filtre actif est un expéditeur** (ni

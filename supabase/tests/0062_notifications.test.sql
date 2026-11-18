@@ -1,3 +1,5 @@
+-- @verifies CRM-156 (docs/BACKLOG.md) — tranche T2 : la liste fermée des types gagne `mail_transfer`, que le transfert d'un
+--           mail produit (docs/SPEC-mail-subsystem.md §32.7 ; révision de l'assertion 7, décision 51)
 -- @verifies CRM-064 (docs/BACKLOG.md) — @mentions, notifications et préférences, TRANCHE 2 :
 --            la notification
 -- @verifies docs/SPEC-notifications.md §13 (modèle, colonnes, `check` de `type`, clés étrangères,
@@ -130,8 +132,8 @@ select is(
 	(select pg_catalog.pg_get_constraintdef(c.oid) from pg_catalog.pg_constraint c
 	  where c.conrelid = 'public.notifications'::regclass
 	    and c.conname  = 'notifications_type_check'),
-	$$CHECK ((type = ANY (ARRAY['mention'::text])))$$,
-	'CRM-064 §13.3 — le `check` de `type` est FERMÉ sur la seule source que la tranche livre');
+	$$CHECK ((type = ANY (ARRAY['mention'::text, 'mail_transfer'::text])))$$,
+	'CRM-064 §13.3, révisé par CRM-156 T2 — le `check` de `type` est FERMÉ sur les deux sources livrées : la mention et le transfert d''un mail');
 
 select throws_ok(
 	format($$insert into public.notifications (workspace_id, recipient_id, type, subject_card_id)

@@ -24,6 +24,18 @@ d'exécuter le code attendu.
   Le vide nomme la ou les pastilles. Aucune migration.
 - Manuel §12.2 et son image ; `docs/DESIGN_SYSTEM.md` §5.108 ; `docs/SPEC-mail-subsystem.md` §31.12.
 
+### `CRM-156` T2 — transférer un mail, bloquer un expéditeur, créer des contacts depuis l'inbox, en base (migration 190)
+
+- **Transférer à un membre** (`transfer_message`, et l'action groupée `transfer`) : aucun envoi ; le membre lit les mails
+  transférés et les trouve dans son « Seulement moi » ; une notification `mail_transfer` par appel ; le transfert se
+  retire par son auteur ou son destinataire (`remove_message_transfer`). Seuls les administrateurs et business
+  developers transfèrent (décision 947).
+- **Bloquer un expéditeur** (`block_sender`, `unblock_sender`, `blocked_sender_impact`), réservé à l'administrateur, pour
+  tout l'espace : ses mails reçus vont à la corbeille de l'inbox, et les prochains y naissent, ni classés ni évalués.
+- **Les expéditeurs inconnus** d'une sélection (`inbox_bulk_unknown_senders`) ; `import_contacts` accepte `p_source`, et
+  les contacts créés depuis l'inbox naissent avec la source `email`.
+- Aucun écran ne les appelle encore (T4).
+
 ### `CRM-156` T1 — les actions groupées de l'inbox, en base (migration 189)
 
 - `inbox_bulk_count` compte les fils et les messages d'une sélection ; `inbox_bulk_apply` y applique une action —
