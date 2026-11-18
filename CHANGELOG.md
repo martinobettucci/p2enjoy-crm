@@ -13,6 +13,18 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-153` T2 — Réglages ▸ Catégories d'organisations
+
+- Un écran de réglages, `/reglages/categories-organisations`, juste après « Étiquettes » dans l'index
+  (`docs/SPEC-organisations.md` §9.3, `docs/DESIGN_SYSTEM.md` §5.107) :
+  - « Nouvelle catégorie », « Modifier », « Archiver » et « Désarchiver », ces deux derniers sans confirmation ;
+  - « Afficher les archivées » ; un nom pris par une archivée est refusé, et le refus nomme cette case ;
+  - tout membre lit l'écran ; qui n'administre pas l'espace voit les commandes éteintes, avec le motif.
+- Preuves : unitaires `categories-organisations.test.ts` et `ReglagesCategoriesOrganisations.test.tsx` ; E2E
+  `e2e/ui/categories-organisations-reglages.spec.ts` (souris, clavier, lectrice, quatre paliers) ; captures
+  `docs/captures/CRM-153/`.
+- Aucune migration de plus : l'écran écrit par la 0188 (T1).
+
 ### `CRM-153` T1 — les catégories et le fil de commentaires d'une organisation, en base
 
 - Migration `0188_commentaires_categories_organisations.sql` (`docs/SCHEMA.md` « Migration `0188` ») :

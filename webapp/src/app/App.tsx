@@ -1,5 +1,6 @@
 // @spec CRM-141 (docs/BACKLOG.md) — tranche T3 : la route de Réglages ▸ Pastilles des mails (docs/SPEC-mail-subsystem.md §31.7)
 // @spec CRM-149 (docs/BACKLOG.md) — tranche T3 : la route de Réglages ▸ Prompts du connecteur (docs/SPEC-mcp.md §17.7)
+// @spec CRM-153 (docs/BACKLOG.md) — tranche T2 : la route de Réglages ▸ Catégories d'organisations (docs/SPEC-organisations.md §9.3)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : Réglages ▸ Étiquettes, son adresse, sa route et son entrée d'index (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-007 (docs/BACKLOG.md) — racine applicative et routage
 // @spec CRM-009 (docs/BACKLOG.md) — route de connexion et restauration de session
@@ -61,6 +62,7 @@ import {
 	CHEMIN_ADMIN_CHAMPS_AFFAIRE,
 	CHEMIN_ADMIN_MODELES_AFFAIRES,
 	CHEMIN_ADMIN_ETIQUETTES,
+	CHEMIN_ADMIN_CATEGORIES_ORGANISATIONS,
 	CHEMIN_ADMIN_WEBHOOKS,
 	CHEMIN_REGLAGES_NOTIFICATIONS,
 	CHEMIN_COUTS_BUDGET,
@@ -87,6 +89,7 @@ import {
 	CLE_TITRE_CHAMPS_AFFAIRE,
 	CLE_TITRE_MODELES_AFFAIRES,
 	CLE_TITRE_ETIQUETTES,
+	CLE_TITRE_CATEGORIES_ORGANISATIONS,
 	CLE_TITRE_WEBHOOKS,
 	CLE_TITRE_REGLAGES_NOTIFICATIONS,
 	CLE_TITRE_DEMARRAGE,
@@ -199,6 +202,10 @@ const ReglagesModelesAffaires = lazy(async () => ({
 // `CRM-069` T2 — Réglages ▸ Étiquettes, chargé à la demande comme les autres écrans de réglages.
 const ReglagesEtiquettes = lazy(async () => ({
 	default: (await import('./ReglagesEtiquettes')).ReglagesEtiquettes,
+}))
+// `CRM-153` T2 — Réglages ▸ Catégories d'organisations, chargé à la demande comme les autres écrans de réglages.
+const ReglagesCategoriesOrganisations = lazy(async () => ({
+	default: (await import('./ReglagesCategoriesOrganisations')).ReglagesCategoriesOrganisations,
 }))
 // `CRM-073` T3 — Réglages ▸ Webhooks, chargé à la demande comme les autres écrans de réglages.
 const ReglagesWebhooks = lazy(async () => ({
@@ -506,6 +513,15 @@ function RoutesPages() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_ETIQUETTES}>
 							<ReglagesEtiquettes />
+						</AppShell>
+					}
+				/>
+				{/* Réglages ▸ Catégories d'organisations — `CRM-153` T2. Déclarée APRÈS les étiquettes, comme dans l'index (§5.107). */}
+				<Route
+					path={CHEMIN_ADMIN_CATEGORIES_ORGANISATIONS}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_CATEGORIES_ORGANISATIONS}>
+							<ReglagesCategoriesOrganisations />
 						</AppShell>
 					}
 				/>

@@ -4393,6 +4393,45 @@ export const fr = {
 		"Rien n'a été modifié : vous n'avez plus le droit d'écrire sur cette pastille, ou elle a disparu.",
 	'admin.mailLabels.refus.panne': "L'enregistrement a échoué. Réessayez.",
 	'mailLabels.pill.archived': '{nom}, pastille archivée',
+	// CRM-153 T2 — Réglages ▸ Catégories d'organisations (docs/SPEC-organisations.md §9.3 ; docs/DESIGN_SYSTEM.md §5.107).
+	// Textes nouveaux : les guillemets français encadrent leur contenu d'espaces insécables (§5.51).
+	'admin.settings.index.orgCategories': "Catégories d'organisations",
+	'admin.settings.index.orgCategories.body': 'Les catégories qui classent les organisations du carnet : client, partenaire, fournisseur…',
+	'admin.orgCategories.title': "Catégories d'organisations",
+	'admin.orgCategories.intro':
+		'Une organisation porte autant de catégories qu’il le faut. Une catégorie archivée ne se pose plus, mais reste affichée sur les organisations qui la portent.',
+	'admin.orgCategories.noworkspace': "Aucun espace de travail n'est ouvert : les catégories appartiennent à un espace.",
+	'admin.orgCategories.new': 'Nouvelle catégorie',
+	'admin.orgCategories.showArchived': 'Afficher les archivées',
+	'admin.orgCategories.saved': 'Catégorie « {nom} » enregistrée.',
+	'admin.orgCategories.archived.done': 'Catégorie « {nom} » archivée.',
+	'admin.orgCategories.unarchived': 'Catégorie « {nom} » désarchivée.',
+	'admin.orgCategories.archived': 'Archivée',
+	'admin.orgCategories.edit': 'Modifier',
+	'admin.orgCategories.edit.aria': 'Modifier la catégorie {nom}',
+	'admin.orgCategories.archive': 'Archiver',
+	'admin.orgCategories.archive.aria': 'Archiver la catégorie {nom}',
+	'admin.orgCategories.unarchive': 'Désarchiver',
+	'admin.orgCategories.unarchive.aria': 'Désarchiver la catégorie {nom}',
+	'admin.orgCategories.error.title': 'Les catégories n’ont pas pu être chargées',
+	'admin.orgCategories.empty.title': 'Aucune catégorie.',
+	'admin.orgCategories.empty.body':
+		'Créez-en une avec « Nouvelle catégorie » : elle se posera ensuite depuis la fiche d’une organisation.',
+	'admin.orgCategories.form.new': 'Nouvelle catégorie',
+	'admin.orgCategories.form.edit': 'Modifier la catégorie',
+	'admin.orgCategories.field.name': 'Nom',
+	'admin.orgCategories.save': 'Enregistrer',
+	'admin.orgCategories.pending': 'Enregistrement…',
+	'admin.orgCategories.cancel': 'Annuler',
+	'admin.orgCategories.refus.nom': 'Une catégorie porte déjà ce nom : choisissez-en un autre.',
+	'admin.orgCategories.refus.nomArchivee':
+		'Une catégorie archivée porte déjà ce nom : cochez « Afficher les archivées » pour la retrouver et la désarchiver.',
+	'admin.orgCategories.refus.forme': 'Le nom ne peut pas être vide, ni dépasser 40 caractères.',
+	'admin.orgCategories.refus.forbidden': 'Seuls les administrateurs de l’espace modifient les catégories.',
+	'admin.orgCategories.refus.sansEffet':
+		"Rien n'a été modifié : vous n'avez plus le droit d'écrire sur cette catégorie, ou elle a disparu.",
+	'admin.orgCategories.refus.panne': "L'enregistrement a échoué. Réessayez.",
+	'orgCategories.pill.archived': '{nom}, catégorie archivée',
 	// CRM-149 T3 — Réglages ▸ Prompts du connecteur (docs/SPEC-mcp.md §17.7 ; docs/DESIGN_SYSTEM.md §5.104).
 	'admin.settings.index.mcpPrompts': 'Prompts du connecteur',
 	'admin.settings.index.mcpPrompts.body':

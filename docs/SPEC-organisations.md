@@ -267,8 +267,10 @@ anglais (`docs/DAT.md` §12 bis).
 
 ### 9.3 Les écrans
 
-- **Réglages ▸ Catégories d'organisations** (`/reglages/categories-organisations`), dans le groupe « Espace » de l'index :
-  la forme de Réglages ▸ Étiquettes et ▸ Pastilles des mails, sans descriptif. Tout membre la lit ; ses commandes suivent
+- **Réglages ▸ Catégories d'organisations** (`/reglages/categories-organisations`), dans l'index des réglages :
+  la forme de Réglages ▸ Étiquettes et ▸ Pastilles des mails, sans descriptif. *Précisé à l'écriture du code (T2,
+  2026-11-18)* : l'index n'a pas de groupe « Espace » — c'est une liste unique —, et l'entrée vient **juste après
+  « Étiquettes »**, l'autre catalogue de l'espace qui classe un objet du travail ; c'est un lien pour tout membre. Tout membre la lit ; ses commandes suivent
   la capacité d'administrer (§5.59). « Nouvelle catégorie », « Modifier », « Archiver », « Désarchiver », « Afficher les
   archivées ». **Archiver ne demande pas de confirmation** (comme une étiquette : aucun effet différé).
 - **La fiche** :

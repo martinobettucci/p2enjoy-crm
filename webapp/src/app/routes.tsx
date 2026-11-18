@@ -79,6 +79,7 @@ import {
 	CHEMIN_ADMIN_CHAMPS_AFFAIRE,
 	CHEMIN_ADMIN_MODELES_AFFAIRES,
 	CHEMIN_ADMIN_ETIQUETTES,
+	CHEMIN_ADMIN_CATEGORIES_ORGANISATIONS,
 	CHEMIN_ADMIN_WEBHOOKS,
 	CHEMIN_ADMIN_PROMPTS_CONNECTEUR,
 } from './chemins'
@@ -121,6 +122,7 @@ export {
 	CHEMIN_ADMIN_CHAMPS_AFFAIRE,
 	CHEMIN_ADMIN_MODELES_AFFAIRES,
 	CHEMIN_ADMIN_ETIQUETTES,
+	CHEMIN_ADMIN_CATEGORIES_ORGANISATIONS,
 	CHEMIN_ADMIN_WEBHOOKS,
 	CHEMIN_ADMIN_PROMPTS_CONNECTEUR,
 }
@@ -260,6 +262,9 @@ export const CLE_TITRE_MODELES_AFFAIRES: CleTraduction = 'admin.cardTemplates.ti
 
 /** Titre de Réglages ▸ Étiquettes — `CRM-069` T2, docs/DESIGN_SYSTEM.md §5.73. */
 export const CLE_TITRE_ETIQUETTES: CleTraduction = 'admin.labels.title'
+
+/** Titre de Réglages ▸ Catégories d'organisations — `CRM-153` T2, docs/DESIGN_SYSTEM.md §5.107. */
+export const CLE_TITRE_CATEGORIES_ORGANISATIONS: CleTraduction = 'admin.orgCategories.title'
 
 /** Titre de Réglages ▸ Webhooks — `CRM-073` T3, docs/DESIGN_SYSTEM.md §5.79. */
 export const CLE_TITRE_WEBHOOKS: CleTraduction = 'admin.webhooks.title'
@@ -540,6 +545,19 @@ export function IndexReglages() {
 							<span className="text-sm text-text-2">{t('admin.settings.index.labels.body')}</span>
 						</Link>
 					)}
+				</li>
+				{/* Les catégories d'organisations viennent APRÈS les étiquettes — `CRM-153` T2, docs/SPEC-organisations.md §9.3 ;
+				    docs/DESIGN_SYSTEM.md §5.107 : deux catalogues de l'espace qui classent un objet du travail. Un lien pour tout
+				    membre : l'écran se lit, et ses commandes suivent la capacité d'administrer (§5.59). */}
+				<li>
+					<Link
+						to={CHEMIN_ADMIN_CATEGORIES_ORGANISATIONS}
+						data-testid="entree-categories-organisations"
+						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+					>
+						<span className="font-medium">{t('admin.settings.index.orgCategories')}</span>
+						<span className="text-sm text-text-2">{t('admin.settings.index.orgCategories.body')}</span>
+					</Link>
 				</li>
 				{/* Les webhooks viennent APRÈS les étiquettes — `CRM-073` T3, docs/DESIGN_SYSTEM.md §5.79 : réservés aux
 				    administrateurs, sous la même règle d'entrée (§5.59). */}

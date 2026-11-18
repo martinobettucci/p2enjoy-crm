@@ -8763,6 +8763,14 @@ disent que de quoi ils ont l'air. **La grammaire est celle des étiquettes d'une
   une étiquette : rien de différé. Un nom pris est refusé sous le champ, et nomme « Afficher les archivées » quand une
   archivée le porte. L'écran se lit par tout membre ; ses commandes suivent la capacité d'administrer (§5.59). Vide :
   « Aucune catégorie. », avec « Nouvelle catégorie ».
+  *Précisé à l'écriture du code (T2, 2026-11-18, captures `docs/captures/CRM-153/categories-reglages-*`)* :
+  - **l'entrée de l'index vient juste après « Étiquettes »**, un lien pour tout membre ;
+  - **le focus après un archivage** va à « Nouvelle catégorie », l'ancre qui survit (§5.29), quand la ligne quitte la
+    liste ; il reste sur la commande de la ligne quand celle-ci demeure (archivées affichées, ou désarchivage) ;
+  - **un refus d'archivage ou de désarchivage** se lit dans la ligne, `role="alert"` (§5.13) ;
+  - **sous `md`, les commandes d'une ligne prennent toujours leur propre rangée** : repliées au gré de la longueur du nom,
+    deux lignes voisines n'avaient plus la même hauteur (vu en capture à 390 px, la règle du §5.99) ; la preuve des
+    paliers mesure la hauteur des lignes.
 - **LA NOTIFICATION** : la ligne de la boîte (§5.45) reprend celle d'une mention d'affaire, le sujet étant l'organisation :
   « {auteur} vous a mentionné à propos de {organisation} ».
 - **Aucune couleur, aucun jeton, aucune icône nouveaux** : `Tags` est réemployée pour le même geste.

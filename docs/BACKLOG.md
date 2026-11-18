@@ -19912,7 +19912,14 @@ non-régression du tableau à 1280 px ; connecteur (pytest, intégration, `verif
       API `e2e/api/commentaires-categories-organisations.spec.ts` 3/3 aux jetons réels, avec `liste-organisations` 7/7 et
       l'intégration organisations du connecteur 3/3 rejoués sur la 0188 ; types régénérés, témoin compilé ; contrat §2.58
       et §3 ; INC-361 ouvert (résumé quotidien).
-- [ ] **T2 — Réglages ▸ Catégories d'organisations** ; unitaires ; E2E ; captures.
+- [x] **T2 — Réglages ▸ Catégories d'organisations** ; unitaires ; E2E ; captures. *Faite le 2026-11-18* :
+      `webapp/src/lib/categories-organisations.ts` (le catalogue, relu par T3 et T4) et
+      `webapp/src/app/ReglagesCategoriesOrganisations.tsx`, route `/reglages/categories-organisations`, entrée de l'index
+      après « Étiquettes », lien pour tout membre ; unitaires 16 + 11, rouges sous deux mutations (le focus rendu à
+      l'ancre, la rangée des commandes) ; E2E `e2e/ui/categories-organisations-reglages.spec.ts` 4/4, souris, clavier, la
+      lectrice éteinte avec le motif, quatre paliers avec la hauteur des lignes mesurée ; aide, démarrage, membres,
+      pastilles et étiquettes rejoués verts ; captures `docs/captures/CRM-153/categories-reglages-*` observées. L'entrée de
+      l'aide (`aide-ecrans.ts`) et le manuel suivent avec T6.
 - [ ] **T3 — la fiche** : la ligne « Catégories » et son panneau, le fil de commentaires, la notification qui y mène ;
       unitaires ; E2E ; captures.
 - [ ] **T4 — la liste** : les catégories sous le nom, le filtre, l'adresse ; unitaires ; E2E ; captures.
