@@ -40895,3 +40895,21 @@ substance est celle de la décision 932.*
 ajouter, modifier), aucune famille nouvelle.
 **Conséquences** : la spécification de `CRM-153` s'écrit sur ces bases, avant le code ; le seed devra poser lui-même les
 catégories qu'il démontre, par la vraie route.
+
+### décision 940 — corriger le débordement de « Réel sur prévu » à 1280 px avant de livrer le lot CRM-152 et CRM-154
+
+*2026-11-18, session 4522fa9c (p2enjoy-crm-bb, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : `CRM-152` (organisations : leurs tracks, recherche, filtres, tri, « Afficher plus », `crm_organization_list` ;
+migration `0186`) et `CRM-154` (réorganiser les channels ; migration `0187`), contrat §2.55 à §2.57, verrou `3803ca0d`.
+**La campagne** : complète à `3803ca0d` sur une base remise à zéro (`resetMe`, accord des trois sessions) ; types, unitaires
+5 917/5 917, sql 163 fichiers, mcp 126 contrôles, construction du manuel verts ; ui 1 257 sur 1 264, api 1 379 sur 1 381, mail
+54 sur 55, manuel 157 sur 158 — verts rejoués seuls (`connecteur-organisations`, `temps-fiche-affaire`, `corbeille`) ou connus
+(INC-342), sauf **deux défauts**, renvoyés et corrigés, tests seuls :
+- `premier-lancement`:182 (45, `b102915d`) : une course du test, qui tabulait avant le rendu de la coquille après
+  `reload` ; le parcours au clavier n'a pas grandi (27 arrêts) ;
+- `contacts.spec`:237 (d7, `3c27ac47`) : la ligne « Tracks » de la fiche (§5.105) ajoute ses pilules au bloc ; l'assertion
+  compte désormais un seul lien hors pilules.
+Manuel rendu à sa source, garde 168, API 9/9. Captures : 281 renouvelées, observées (`2758f56e`).
+**Question** : livrer à `2758f56e`, avec la limite signalée par d7 (à 1280 px, la colonne « Réel sur prévu » déborde dans le
+cadre du tableau des organisations) ? **Décision : corriger le débordement d'abord.** `CRM-152` le corrige (d7) ; la session
+de livraison rejoue son périmètre et les captures, puis repropose. Le verrou reste posé.
