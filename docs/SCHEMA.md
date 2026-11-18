@@ -3348,6 +3348,31 @@ Consignés également dans `docs/INCONSISTENCY_REPORT.md` :
    cards actives exige un plan de remappage. Comportement par défaut retenu : archivage refusé
    tant que des cards s'y trouvent.
 
+### Migration `0188` — les commentaires et les catégories d'une organisation — `CRM-153` T1 (`0188_commentaires_categories_organisations.sql` ; spécifiée le 2026-11-18, avant le code)
+
+`docs/SPEC-organisations.md` §9.1, §9.2 ; décisions 932, 939 et 942.
+- **`organization_categories`** : `id`, `workspace_id` (clé, `ON DELETE CASCADE`), `name` (rogné, 1 à 40), `color` (liste
+  fermée des étiquettes), `archived_at`, `created_by` (`ON DELETE SET NULL`), `created_at`, `updated_at` ; unique
+  `(workspace_id, lower(name))` ; `unique (id, workspace_id)` pour la clé composée des poses. RLS : lecture membre ;
+  `INSERT` et `UPDATE` administrateur ; aucun `DELETE`.
+- **`organization_category_links`** : `organization_id`, `category_id`, `workspace_id`, `created_by`, `created_at` ; clé
+  `(organization_id, category_id)` ; `(category_id, workspace_id)` vers le catalogue ; déclencheur `BEFORE INSERT`
+  (`category_archived`, `category_other_workspace`, 22023). RLS : lecture membre ; `INSERT` et `DELETE` business
+  developer et administrateur.
+- **`organization_comments`** : la forme de `card_comments` (`organization_id` au lieu de `card_id`), `body` de 1 à
+  10 000 ; déclencheurs `before_insert` et `before_update` (pierre tombale, colonnes figées, modération limitée). RLS :
+  lecture membre ; `INSERT` auteur et business developer ou administrateur ; `UPDATE` auteur qui le reste ; modération
+  administrateur.
+- **`organization_comment_mentions`** : la forme de `card_comment_mentions` ; déclencheur `BEFORE INSERT`
+  (`comment_not_found`, `comment_deleted`, `mention_destinataire_sans_acces`) ; `AFTER INSERT` qui notifie.
+- **`notifications.subject_organization_id`** (`uuid null`, `ON DELETE CASCADE`) ; `check` : au plus un sujet ; les
+  politiques de lecture et de marquage gagnent la clause du sujet organisation.
+- **Fonctions** : `app.can_read_organization(uuid)`, `app.can_write_organization(uuid)`,
+  `app.can_read_organization_for(uuid, uuid)` ; `organization_list` remplacée, avec `p_category_ids uuid[] default null`.
+- **Aucune donnée** : aucune catégorie par défaut (décision 939).
+- **Retour arrière** : retirer les quatre tables, la colonne et les fonctions, et rétablir `organization_list` de la `0186` ;
+  les commentaires et catégories saisis entre-temps sont perdus — à dire avant.
+
 ### Migration `0186` — les tracks d'une organisation et la liste paginée — `CRM-152` T1 (`0186_liste_organisations.sql` ; spécifiée le 2026-11-18, avant le code ; écrite le 2026-11-18)
 
 `docs/SPEC-organisations.md` §8.1, §8.2 ; décisions 931 et 936.

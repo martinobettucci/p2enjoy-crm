@@ -19898,7 +19898,20 @@ filtres).
 - le seed et le manuel suivent.
 **Connecteur MCP** : **oui, famille existante `organisations`** — lire et ajouter des commentaires, lire et poser les
 catégories, sous ses cases existantes (consulter, ajouter, modifier) ; aucune famille nouvelle.
-**Spécification** : à écrire avant le code (`docs/SCHEMA.md`, `docs/SPEC-mcp.md` §9.2, `docs/DESIGN_SYSTEM.md`, manuel).
+**Spécification** : écrite le 2026-11-18 avant le code (décisions 932, 939 et 942) — `docs/SPEC-organisations.md` §9,
+`docs/SCHEMA.md` « Migration `0188` », `docs/DESIGN_SYSTEM.md` §5.107, `docs/SPEC-mcp.md` §9.2 *quatervicies*,
+`docs/SPEC-notifications.md` §51 ; manuel. Commente qui peut modifier l'organisation ; « supprimer » une catégorie
+l'archive ; aucune catégorie par défaut ; les catégories sous le nom dans la liste.
+**DoD** : pgTAP ; API par jetons réels ; unitaires ; E2E souris et clavier ; captures aux quatre paliers, dont la
+non-régression du tableau à 1280 px ; connecteur (pytest, intégration, `verify-mcp.sh`) ; seed ; manuel ; contrat.
+**Découpage** (2026-11-18, avec la spécification) :
+- [ ] **T1 — base** : migration 0188 ; pgTAP ; API ; types ; contrat.
+- [ ] **T2 — Réglages ▸ Catégories d'organisations** ; unitaires ; E2E ; captures.
+- [ ] **T3 — la fiche** : la ligne « Catégories » et son panneau, le fil de commentaires, la notification qui y mène ;
+      unitaires ; E2E ; captures.
+- [ ] **T4 — la liste** : les catégories sous le nom, le filtre, l'adresse ; unitaires ; E2E ; captures.
+- [ ] **T5 — connecteur** ; pytest, intégration, `verify-mcp.sh`.
+- [ ] **T6 — seed, manuel, contrat** ; puis `[P]`.
 
 ### CRM-154 — Réorganiser les channels depuis la vue d'un track : glisser l'onglet, et « Réorganiser » vers l'arborescence `[P]`
 

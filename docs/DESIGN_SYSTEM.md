@@ -8723,3 +8723,46 @@ disent que de quoi elle a l'air.
 - **Dans l'arborescence**, `?track=` déplie le track demandé et pose le focus sur son bouton de dépliage (§5.13) ; aucune
   règle visuelle nouvelle.
 - **Aucune couleur, aucun jeton nouveau** ; deux icônes nouvelles dans ces écrans, `ArrowLeftRight` et `GripVertical`.
+
+### 5.107 Les catégories et le fil de commentaires d'une organisation — `CRM-153`
+
+*Écrit le 2026-11-18, avant le code ; lecture ciblée (décision 939) : §1 à §4, §6 à §12, §5.10, §5.44, §5.64, §5.73, §5.97,
+§5.103, §5.105.* Ce que les écrans lisent et écrivent est spécifié par `docs/SPEC-organisations.md` §9 ; ces règles ne
+disent que de quoi ils ont l'air. **La grammaire est celle des étiquettes d'une affaire (§5.73) et du fil d'une affaire
+(§5.10), reprise sans écart** (§5.29 bis).
+
+- **LA PILULE DE CATÉGORIE** est la pilule compacte des étiquettes (§5.73) : `rounded-full`, `text-xs`, `font-medium`, le
+  point de tête puis le nom, aux jetons doux de sa couleur. Archivée, elle garde sa pilule ; son nom accessible et son
+  infobulle disent « {nom}, catégorie archivée ».
+- **DANS LA LISTE** (décision 942) : **sous le nom**, dans la cellule « Nom », une ligne `flex-wrap gap-1` de **trois
+  pilules au plus**, dans l'ordre du nom, puis une pilule neutre « +{n} » dont le nom accessible et l'infobulle énumèrent
+  les autres (§5.73). Une organisation sans catégorie n'a pas de ligne vide. **Aucune colonne de plus** : le tableau tient
+  toujours de 900 à 1440 px (§5.105, décision 940) ; la cellule « Nom » perd sa troncature d'une ligne pour porter deux
+  lignes, le nom restant tronqué en ellipse.
+- **LE FILTRE « Catégories »** : le bouton et le panneau de cases du filtre « Tracks » (§5.105), après lui ; « Catégories
+  ({n}) » quand des cases sont cochées ; les archivées suivent les actives, suffixées « (archivée) ». Il n'est rendu que si
+  l'espace a au moins une catégorie, ou qu'un filtre posé par l'adresse doit pouvoir se retirer.
+- **SUR LA FICHE** : une ligne « Catégories » dans la liste de définitions, après « Tracks », les pilules en `flex-wrap` ;
+  aucune, « Aucune catégorie » en 13 px `--color-text-2`. Sous elle, la commande **« Catégories »**, secondaire compacte,
+  icône `Tags`, `aria-expanded`, qui ouvre **dans le flux** le panneau du §5.73 : un `fieldset` « Catégories de cette
+  organisation », une case native de 24 px par catégorie active, la pilule pour libellé, puis les archivées encore posées,
+  qui se décochent seulement. Chaque case écrit au clic, reste active et `aria-busy` pendant l'appel, revient si la base
+  refuse, son refus écrit dessous `role="alert"`. « Fermer » et `Échap` referment, le focus revient à la commande.
+  Refusée (§5.59), les cases sont `disabled`, le motif de l'édition en tête du panneau.
+- **LE FIL** : un bloc « Commentaires » après « Contacts », titre `h2` comme ses voisins. **Le panneau du §5.10 tel
+  quel** — ordre croissant, carte discrète, en-tête avatar, nom et date, « modifié », pierres tombales, actions de l'auteur
+  sur leur ligne, modération distincte, composeur en bas — et **le sélecteur de mentions du §5.44**. Un commentaire porte
+  l'ancre `commentaire-{id}` : la notification y mène, et le commentaire visé reçoit le focus. **Écart au §5.10** : le
+  composeur suit la capacité d'éditer l'espace (§5.59, plus récent que le §5.10) — refusé, il est rendu `disabled` avec le
+  motif, au lieu d'être offert puis refusé. États (§5.8) : squelette, erreur avec « Réessayer » dans le bloc seul, vide
+  « Aucun commentaire pour le moment. ».
+- **RÉGLAGES ▸ CATÉGORIES D'ORGANISATIONS** : la forme de Réglages ▸ Étiquettes (§5.73) et ▸ Pastilles des mails (§5.103),
+  **sans descriptif** ; « Nouvelle catégorie », primaire ; « Modifier », « Archiver », discrets compacts ; une archivée
+  porte « Archivée » et ne garde que « Désarchiver » ; « Afficher les archivées ». **Archiver sans confirmation**, comme
+  une étiquette : rien de différé. Un nom pris est refusé sous le champ, et nomme « Afficher les archivées » quand une
+  archivée le porte. L'écran se lit par tout membre ; ses commandes suivent la capacité d'administrer (§5.59). Vide :
+  « Aucune catégorie. », avec « Nouvelle catégorie ».
+- **LA NOTIFICATION** : la ligne de la boîte (§5.45) reprend celle d'une mention d'affaire, le sujet étant l'organisation :
+  « {auteur} vous a mentionné à propos de {organisation} ».
+- **Aucune couleur, aucun jeton, aucune icône nouveaux** : `Tags` est réemployée pour le même geste.
+

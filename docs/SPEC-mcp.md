@@ -1568,6 +1568,22 @@ fonctionnalités antérieures à cette règle, ou celles pour lesquelles la ques
 caractères spéciaux : la fonction l'échappe, « 100% » cherche « 100% ». `has_more` se déduit de `total`. `contacts` reste le
 nombre de contacts lus ; `has_revenues` n'est pas rendu.
 
+### 9.2 quatervicies Les catégories et les commentaires d'une organisation — `CRM-153` (`docs/SPEC-organisations.md` §9 ; décisions 932, 939 et 942)
+
+**Famille `organizations`, existante** ; aucune case nouvelle, aucune migration de la matrice.
+- `crm_organization_list` gagne **`categories`** (identifiants, l'une d'elles ; un mal formé refusé par l'outil, comme
+  `tracks`) ; chaque organisation rend `categories` (`id`, `name`, `archived`) ; `crm_organization_get` aussi.
+- `crm_organization_category_list(workspace)` — `consulter`, ancre `workspace:workspace` : le catalogue, par nom,
+  archivées comprises et marquées.
+- `crm_organization_comment_list(organization_id, limit, offset)` — `consulter`, ancre `organisation:organization_id` : le
+  fil dans l'ordre ; un commentaire supprimé rend `deleted: true` et aucun corps ; l'auteur par `id` et nom.
+- `crm_organization_comment_add(organization_id, body, mentions)` — `ajouter`, ancre `organisation:organization_id` :
+  publie sous le jeton de la personne (la lectrice est refusée par la base, `RefusCrm`), puis pose chaque mention ; la
+  réponse rend le commentaire et, par mention, `ok` ou le refus nommé (`mention_destinataire_sans_acces`).
+- `crm_organization_categories_set(organization_id, add, remove)` — `modifier`, ancre `organisation:organization_id` :
+  retire puis pose ; une catégorie archivée à poser est nommée (`category_archived`) ; rend les catégories obtenues.
+- **Ni modification ni suppression d'un commentaire, ni administration du catalogue** par le connecteur.
+
 ### 9.2 Effacer, restaurer, lire et endormir un message — `CRM-138` (décisions 878 et 917)
 
 **Famille `messagerie`, existante** ; aucune case ni famille nouvelle, aucune migration de la matrice. Cinq outils,

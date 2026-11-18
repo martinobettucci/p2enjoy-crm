@@ -2806,3 +2806,14 @@ fixture jetable que le parcours d'interface.
 | E2E d'interface | Les huit points *a* à *h* du §50.6, sur session réelle, sans aucune substitution réseau |
 | Visuel | Une capture de la liste **vide**, produite **et observée** (`CLAUDE.md` §16), qui complète les captures de liste peuplée du §40 |
 | Non-régression | `e2e/ui/demarrage.spec.ts` vert **après** le passage — c'est MA7 retournée en preuve —, et l'état du seed relu par la clé de service |
+
+## 51. Une mention dans le fil d'une organisation — `CRM-153` (`docs/SPEC-organisations.md` §9.2)
+
+*Écrit le 2026-11-18, avant le code.* Le §13.5 prévoyait qu'une notification désigne une affaire, ou rien. `CRM-153` lui
+donne un **second sujet possible** : `subject_organization_id`, colonne nouvelle, **jamais posée avec `subject_card_id`**
+(`check`). Le **type reste `mention`** — la préférence « Mentions » vaut quel que soit l'objet commenté, et la liste
+fermée des types ne change pas. La règle de lecture du §16.1 gagne la clause symétrique : un sujet organisation n'est lu
+que par qui lit l'organisation (`app.can_read_organization`). Le producteur est un déclencheur `AFTER INSERT` sur
+`organization_comment_mentions`, `SECURITY DEFINER`, la forme du §14. Le `payload` garde ses deux clés, `comment_id` et
+`author_id` : le sujet dit dans quelle table lire le commentaire.
+

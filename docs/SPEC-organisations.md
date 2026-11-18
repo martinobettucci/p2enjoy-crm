@@ -200,3 +200,129 @@ connecteur : la décision 931 n'en retient pas. Le détail est au `docs/SPEC-mcp
 | T2 | Webapp : la barre, le tri, la colonne, « Afficher plus », l'adresse, la fiche ; design system §5.105 ; unitaires ; E2E ; captures |
 | T3 | Le connecteur : `crm_organization_list` ; pytest, intégration, `verify-mcp.sh` |
 | T4 | Seed vérifié, manuel, contrat ; puis `[P]` |
+
+## 9. Les commentaires et les catégories d'une organisation — `CRM-153`
+
+*Écrit le 2026-11-18, avant le code. Décisions 932, 939 et 942 du responsable.* La substance : un fil de commentaires sur
+la fiche, **comme celui d'une affaire** (mentions et notifications comprises) ; des **catégories** définies par les
+administrateurs, plusieurs par organisation ; un filtre par catégorie dans la liste ; le connecteur. Objets nouveaux en
+anglais (`docs/DAT.md` §12 bis).
+
+### 9.1 Les catégories : le catalogue et leur pose
+
+- **`public.organization_categories`** (`id`, `workspace_id`, `name`, `color`, `archived_at`, `created_by`, `created_at`,
+  `updated_at`) : le catalogue de l'espace. `name` rogné, 1 à 40 caractères ; **unique par espace sans casse, archivées
+  comprises** (`(workspace_id, lower(name))`), comme une étiquette ou une pastille (§5.29 bis du design system) ; `color`
+  dans la liste fermée des étiquettes (`brand`, `success`, `accent`, `danger`, `neutral`).
+- **Aucune catégorie par défaut** (décision 939) : le catalogue naît vide ; aucune donnée n'est posée par la migration.
+- **« Supprimer » archive** (décision 939) : `archived_at` posé ; une catégorie archivée **ne se pose plus**, reste
+  affichée « archivée » sur les organisations qui la portent, **se retire** et **se désarchive**. Aucune suppression
+  physique : la politique `DELETE` n'existe pas.
+- **`public.organization_category_links`** (`organization_id`, `category_id`, `workspace_id`, `created_by`, `created_at`),
+  clé `(organization_id, category_id)` : la pose. Un déclencheur `BEFORE INSERT` vérifie que l'organisation et la
+  catégorie sont du même espace et pose `workspace_id`, `created_by`, `created_at` ; une catégorie archivée est refusée
+  (`22023 category_archived`), une catégorie d'un autre espace aussi (`22023 category_other_workspace`). Retirer est un
+  `DELETE` de la ligne, toujours permis à qui pose.
+- **Droits** (en base, `CLAUDE.md` §10) : tout membre de l'espace **lit** le catalogue et les poses ; **l'administrateur**
+  crée, renomme, recolore, archive et désarchive une catégorie (politiques `INSERT` et `UPDATE`,
+  `app.is_workspace_admin`) ; **qui peut modifier l'organisation** — le business developer et l'administrateur, la règle
+  de `organizations_maj_bizdev_admin` — **pose et retire** une catégorie.
+- **Le filtre de la liste** : `organization_list` gagne `p_category_ids uuid[] default null` — l'organisation porte **l'une**
+  des catégories données (la règle « l'un d'eux » des tracks, décision 936), archivées comprises, pour retrouver les
+  organisations d'une catégorie qu'on vient d'archiver. Vide ou absent, aucun filtre. L'ancienne signature est remplacée ;
+  un appel nommé sans `p_category_ids` garde son sens, et la webapp et le connecteur livrés continuent de l'appeler.
+- **Les catégories des organisations d'une page** se lisent par PostgREST sur `organization_category_links`, embarquant
+  `organization_categories` — un appel, comme les tracks : aucune fonction nouvelle.
+
+### 9.2 Les commentaires : le fil d'une organisation
+
+- **`public.organization_comments`** (`id`, `organization_id`, `workspace_id`, `author_id`, `body`, `created_at`,
+  `edited_at`, `deleted_at`, `deleted_by`) : **la forme de `card_comments`, reprise**. `body` de 1 à 10 000 caractères ;
+  `ON DELETE CASCADE` depuis l'organisation.
+- **Les déclencheurs reprennent ceux des affaires**, en anglais : `app.organization_comments_before_insert` (auteur =
+  appelant, `workspace_id` de l'organisation, horodatages posés par la base) ; `app.organization_comments_before_update` —
+  **la pierre tombale** : une suppression vide le corps, pose `deleted_at` et `deleted_by` ; un commentaire supprimé
+  n'est plus ni modifié ni restauré (`comment_deleted`) ; `id`, `organization_id`, `workspace_id`, `author_id` et
+  `created_at` sont figés (`comment_immutable_column`) ; **un tiers ne peut que supprimer**, jamais modifier
+  (`comment_moderation_limitee`, le code existant, gardé pour que la webapp traduise les deux fils de la même façon).
+- **Droits** (décision 939 : **comme une affaire**) : tout membre de l'espace **lit** le fil ; **commente qui peut modifier
+  l'organisation** — business developer et administrateur — et seulement en son nom (`author_id = auth.uid()`) ; l'auteur
+  modifie et supprime le sien tant qu'il garde ce droit ; **l'administrateur modère** (supprime le commentaire d'un tiers).
+  La lectrice lit sans écrire. Helpers nouveaux : `app.can_read_organization(uuid)`, `app.can_write_organization(uuid)`,
+  et `app.can_read_organization_for(uuid, profil)` pour les mentions.
+- **`public.organization_comment_mentions`** (`comment_id`, `profile_id`, `workspace_id`, `created_at`) : la forme de
+  `card_comment_mentions`. Le déclencheur `BEFORE INSERT` refuse un commentaire introuvable (`comment_not_found`) ou
+  supprimé (`comment_deleted`), et **un destinataire qui ne lit pas l'organisation** (`mention_destinataire_sans_acces`,
+  le code existant) — un membre de l'espace la lit toujours ; la lectrice est donc mentionnable. Seul l'auteur du
+  commentaire pose ses mentions.
+- **La notification** : un déclencheur `AFTER INSERT` sur `organization_comment_mentions`, `SECURITY DEFINER`, insère dans
+  `public.notifications` une ligne de **type `mention`** — le même type, donc la même préférence « Mentions » — avec
+  **`subject_organization_id`**, colonne nouvelle (`uuid null`, clé vers `organizations`, `ON DELETE CASCADE`), et
+  `payload = {comment_id, author_id}`. L'auteur qui se mentionne n'est pas notifié. Une notification désigne **au plus un
+  sujet** (`check` : `subject_card_id` et `subject_organization_id` ne sont jamais tous deux posés). Les politiques
+  `notifications_lecture` et `notifications_marquage` gagnent la clause `subject_organization_id is null or
+  app.can_read_organization(subject_organization_id)`.
+- **Le fil n'est pas publié au temps réel** : la fiche le relit après chaque geste ; un commentaire d'un collègue paraît au
+  prochain chargement. *Compromis assumé* : le fil d'une organisation est moins vif que celui d'une affaire.
+
+### 9.3 Les écrans
+
+- **Réglages ▸ Catégories d'organisations** (`/reglages/categories-organisations`), dans le groupe « Espace » de l'index :
+  la forme de Réglages ▸ Étiquettes et ▸ Pastilles des mails, sans descriptif. Tout membre la lit ; ses commandes suivent
+  la capacité d'administrer (§5.59). « Nouvelle catégorie », « Modifier », « Archiver », « Désarchiver », « Afficher les
+  archivées ». **Archiver ne demande pas de confirmation** (comme une étiquette : aucun effet différé).
+- **La fiche** :
+  - une ligne **« Catégories »** dans la liste de définitions, après « Tracks » : les pilules ; aucune, « Aucune
+    catégorie » ; la commande **« Catégories »** (icône `Tags`) ouvre dans le flux le panneau de cases du §5.73 — une case
+    par catégorie active, puis les archivées encore posées, qui se décochent seulement ; chaque case écrit au clic ; la
+    commande suit la capacité d'éditer (§5.59) ;
+  - un bloc **« Commentaires »**, après « Contacts » : le panneau du §5.10 — ordre croissant, composeur en bas, mentions
+    par le sélecteur du §5.44, « Modifier » et « Supprimer » pour l'auteur, « Supprimer » pour l'administrateur sur le
+    commentaire d'un tiers, pierres tombales. Le composeur suit la capacité d'éditer : refusé, il est rendu `disabled`
+    avec le motif.
+- **La liste** (décision 942) : les catégories **sous le nom**, dans la cellule « Nom » — trois pilules au plus, dans
+  l'ordre du nom, puis « +n » qui énumère les autres ; aucune colonne de plus. Le filtre **« Catégories »** rejoint la
+  barre, après « Tracks » : le même bouton et le même panneau de cases ; l'adresse porte `categories=` (identifiants, la
+  règle de `tracks`).
+- **La boîte des notifications** : une mention dans le fil d'une organisation dit « {auteur} vous a mentionné à propos de
+  {organisation} » et mène à la fiche, ancre `#commentaire-{id}`.
+
+### 9.4 Le connecteur — famille `organisations`, cases existantes (décision 932)
+
+- `crm_organization_list` : un argument `categories` (identifiants, l'une d'elles) ; chaque organisation rend ses
+  `categories` (`id`, `name`, `archived`) ;
+- `crm_organization_get` : rend `categories` ;
+- `crm_organization_category_list(workspace)` (`consulter`) : le catalogue, archivées comprises, marquées ;
+- `crm_organization_comment_list(organization_id, limit, offset)` (`consulter`) : le fil, dans l'ordre, pierres tombales
+  comprises (`deleted: true`, sans corps) ;
+- `crm_organization_comment_add(organization_id, body, mentions)` (`ajouter`) : `mentions` est une liste d'identifiants
+  de membres ; chaque mention refusée est nommée dans la réponse, le commentaire restant publié ;
+- `crm_organization_categories_set(organization_id, add, remove)` (`modifier`) : pose et retire ; une catégorie archivée
+  à poser est refusée, nommée.
+Ni modification ni suppression d'un commentaire, ni administration du catalogue par le connecteur : ni la demande ni la
+décision 932 ne les retiennent. Le détail est au `docs/SPEC-mcp.md` §9.2 *quatervicies*.
+
+### 9.5 Preuves
+
+- **pgTAP** : chaque refus nommé ; la pierre tombale ; la modération ; la lectrice qui lit sans commenter ni poser ; la
+  mention d'une lectrice ; la notification produite, et lue sous la règle du sujet ; une catégorie archivée qui ne se pose
+  plus mais se retire ; l'unicité sans casse ; le filtre `p_category_ids`.
+- **API** aux jetons réels : les mêmes règles, par la route, pour les trois profils.
+- **Unitaires** : la lecture et la projection du fil, la traduction des refus, les cases, la pilule « +n », l'adresse.
+- **E2E** souris et clavier : Réglages ▸ Catégories ; poser et retirer sur la fiche ; commenter, mentionner, modifier,
+  supprimer, modérer ; la notification qui mène à la fiche ; la liste et son filtre ; captures aux quatre paliers, dont la
+  non-régression du tableau à 1280 px (décision 940).
+- **Connecteur** : pytest, intégration, `verify-mcp.sh`.
+- **Seed** : des catégories posées par l'administratrice, par la vraie route, dont une archivée encore portée ; un fil sur
+  Vertigo Conseil — une mention qui notifie, un commentaire modifié, un commentaire retiré par la modération.
+
+### 9.6 Tranches
+
+| Tranche | Contenu |
+|---|---|
+| T1 | Migration 0188 (catalogue, poses, commentaires, mentions, notification, `organization_list`) ; pgTAP ; API ; types ; contrat |
+| T2 | Réglages ▸ Catégories d'organisations ; unitaires ; E2E ; captures |
+| T3 | La fiche : la ligne « Catégories » et son panneau, le fil de commentaires ; la notification qui y mène ; unitaires ; E2E ; captures |
+| T4 | La liste : les catégories sous le nom, le filtre, l'adresse ; unitaires ; E2E ; captures |
+| T5 | Le connecteur ; pytest, intégration, `verify-mcp.sh` |
+| T6 | Seed, manuel, contrat ; puis `[P]` |
