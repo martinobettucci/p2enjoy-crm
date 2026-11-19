@@ -41153,3 +41153,33 @@ la mesure de l'étape « identité d'envoi », et la conduite du formulaire d'en
 - *Le design system ?* — **Lecture par sections ciblées** pour `CRM-157` seulement : §1 à §4, §6 à §12 ; §5.4, §5.4 sexies,
   §5.5, §5.7, §5.8, §5.13, §5.14, §5.17, §5.49, §5.51, §5.56, §5.59, §5.90.
 **Conséquences** : la spécification de `CRM-157` les écrit avant le code ; connecteur MCP : non (décision 951).
+
+### décision 954 — `CRM-158` : la file d'envoi vidée par une boucle de `mail-sync`, toutes les trente secondes
+
+*2026-11-19, session d5b44a2d (p2enjoy-crm-fc), unité confiée par la session de livraison (e3). La décision 952 du
+responsable laisse le mécanisme « à spécifier ».* Spécification : `docs/SPEC-mail-subsystem.md` §34.
+**Problème** : rien n'appelle `POST /internal/v1/outbox/flush` en production ; aucun mail ne part (décision 952).
+**Observations** :
+- `mail-sync` porte déjà quatre pilotes (veille, extraction, reprise antivirus, corbeille), mais aucun pour l'envoi.
+  `CRM-058` avait renvoyé la cadence à `CRM-059`, qui n'a cadencé que la relève.
+- La corbeille **n'a pas** le même manque : `PiloteCorbeille` la cadence depuis `CRM-138` T2.
+- Un envoi au-delà du quota passe aussitôt `failed`. Un envoi dû qui vieillit dit donc que la boucle ne tourne pas.
+- `outbox_flushed` sort sans ses compteurs : ils manquent à `SAFE_FIELDS`.
+- Le §42 du seed prévoyait déjà des passes d'autres preuves : une preuve lit le sort de son envoi sur sa ligne.
+**Solutions envisagées** :
+1. Une tâche `pg_cron` qui appelle la route par `pg_net`, comme `p2enjoy-webhooks-remise`. Écartée : elle exige une
+   seconde copie de `MAIL_SYNC_INTERNAL_TOKEN` dans Vault, une migration et un chemin base → `mail-sync`, et n'enverrait
+   rien de plus quand le service est arrêté.
+2. Une boucle de `mail-sync`. **Retenue** : la forme des quatre autres, aucune migration, aucune variable, aucun secret.
+   La décision 261 laisse le SMTP à `mail-sync`.
+**Décision** :
+- `PiloteEnvoi`, une passe toutes les trente secondes, comptées depuis la fin de la précédente ; une passe pleine
+  enchaîne aussitôt. Trente secondes, et non soixante, pour qu'un envoi parte « dans la minute » (DoD, manuel §12.5).
+- La route et la boucle partagent `executer_passe`.
+- La supervision : `outbox_stale` au-delà de cinq minutes de retard, et le contrôle 10 du vérificateur de production
+  (`scripts/lib/file-envoi.sh`).
+- Les preuves qui comptaient sur leur propre passe lisent leur ligne (révisées, non relâchées, décision 51).
+**Conséquences** :
+- À la livraison, tout envoi déjà dû part dans la minute : le contrat fait relire la file avant.
+- Il faut reconstruire l'image `mail-sync`.
+- Ni pgTAP ni migration. Connecteur MCP : non (décision 952).

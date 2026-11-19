@@ -1379,6 +1379,28 @@ webapp de `main` porte les deux.
 **Retour arrière** : la webapp et l'image `mcp` précédentes ; aucune donnée n'est écrite. Une adresse à plusieurs
 `pastille` ouverte par la webapp précédente n'en lit que la première valeur (`get`) — rien ne casse.
 
+### 2.63 `CRM-158`, décisions 952 et 954 — la file d'envoi vidée par la boucle de `mail-sync` (à livrer avec le prochain lot)
+
+`docs/SPEC-mail-subsystem.md` §34. **Aucune migration, aucune variable, aucun secret** : le correctif est une boucle de
+`mail-sync` (`PiloteEnvoi`), qui vide la file toutes les trente secondes ; il suffit de **reconstruire l'image**. Aujourd'hui,
+rien ne vide la file en production, et aucun mail ne part (décision 952). **Pas d'envoi déclenché à la main** en attendant
+(décision 952). Indépendante des autres unités du lot.
+
+**À la reconstruction, tout envoi `queued` déjà dû part dans la première minute**, aussi ancien soit-il. Les deux mails de
+Thomas en sont l'objet. D'autres envois en file depuis longtemps (un digest, une relance) partiraient aussi : le geste 1 les
+fait voir **avant**.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Relire la file, avant la fenêtre | session de livraison, en lecture seule | `select id, status, subject, created_at, next_attempt_at, attempts from public.mail_outbox where status in ('queued', 'sending') order by created_at` dans le conteneur de la base. Au-delà des deux mails de Thomas, montrer la liste au responsable : un envoi qu'il ne veut plus voir partir est **annulé par son auteur**, depuis l'outbox (« En file », « Annuler »), avant le geste 2 |
+| 2 | Reconstruire `mail-sync` | session de livraison, dans la fenêtre | `up -d --build --no-deps --wait mail-sync`, par `compose_prod` (§4) : `up -d` seul ne reconstruit pas l'image |
+| 3 | Constater le démarrage | session de livraison, en lecture seule | `docker logs` de `mail-sync` : une ligne `outbox_loop_started` avec `intervalle_secondes` à 30, puis, dans la minute, `outbox_flushed` avec ses compteurs (`reserved`, `sent`) |
+| 4 | Constater le départ | session de livraison, en lecture seule, une minute après le geste 2 | la requête du geste 1 ne rend plus les deux mails de Thomas : ils sont `sent` (ou `failed` avec un code, si leur serveur d'envoi les refuse — à dire au responsable). `scripts/spark/verifier.sh --revision <condensé>` rend le contrôle 10 « OK » (aucun envoi dû depuis plus de cinq minutes, aucun orphelin) |
+| 5 | Constater, à l'écran | responsable, en production | Thomas reçoit ses deux mails ; l'inbox, « Envoyés », les montre ; un mail neuf mis en file depuis une affaire passe dans « Envoyés » en moins d'une minute |
+
+**Retour arrière** : l'image `mail-sync` précédente. La file cesse alors de se vider, comme avant la livraison ; rien n'est
+perdu, et les envois mis en file entre-temps attendent la livraison suivante.
+
 ## 3. Migrations en attente
 
 **Aucune migration en attente depuis la fenêtre du 2026-11-19** : la 188 à la 191 ont été appliquées par elle (révision `39662806`, décision 950) ; registre à **189** lignes. *Historique de l'attente* — les paragraphes qui suivent décrivent ces migrations telles qu'elles attendaient.
@@ -2360,7 +2382,7 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | Service | Condition de redéploiement |
 |---|---|
 | `webapp` | À chaque changement d'interface — **et à chaque changement de `VITE_SUPABASE_URL` ou `VITE_SUPABASE_ANON_KEY`**, voir ci-dessous. **`CRM-092` T5** : la connexion passe par le seul SSO et l'échangeur de session, appelé par un chemin relatif que Caddy relaie déjà (`/functions/v1/*`) ; reconstruire avec `VITE_SSO_CLIENT_ID` au nouvel identifiant, et **seulement** avec les opérations de la reprise (§3) — une webapp neuve face à une base sans les migrations 74 à 76 ne connecterait personne |
-| `mail-sync` | À chaque changement du service de messagerie ou de ses dépendances. **`CRM-127` T2** : l'image de `main` date chaque relève par `mail_inbound_account_record_sync` — **reconstruire l'image dans la fenêtre de la migration 151, jamais avant elle** (§3). **`CRM-135`** : l'image écrit l'échec d'une relève par `mail_inbound_account_record_poll_failure` — **reconstruire dans la fenêtre de la migration 170, après elle** (§2.33) ; **`CRM-143`** : l'image écrit `av_skip_reason` et reprend les pièces non analysées par `mail_attachments_to_rescan` et `mail_attachment_record_scan` — **reconstruire dans la fenêtre de la migration 173, après elle et après le démarrage de `clamav`** (§2.35) |
+| `mail-sync` | À chaque changement du service de messagerie ou de ses dépendances. **`CRM-127` T2** : l'image de `main` date chaque relève par `mail_inbound_account_record_sync` — **reconstruire l'image dans la fenêtre de la migration 151, jamais avant elle** (§3). **`CRM-135`** : l'image écrit l'échec d'une relève par `mail_inbound_account_record_poll_failure` — **reconstruire dans la fenêtre de la migration 170, après elle** (§2.33) ; **`CRM-143`** : l'image écrit `av_skip_reason` et reprend les pièces non analysées par `mail_attachments_to_rescan` et `mail_attachment_record_scan` — **reconstruire dans la fenêtre de la migration 173, après elle et après le démarrage de `clamav`** (§2.35) **`CRM-158`** (§2.63) : la boucle d'envoi — reconstruire l'image avec le prochain lot, après avoir relu la file : tout envoi déjà dû part dans la minute. |
 | Pile Supabase | À chaque changement de version épinglée d'un composant (tableau dans `docs/DAT.md` §3.7) |
 | `functions` | À chaque changement sous `supabase/functions/` ou de l'image Edge Runtime ; `CRM-016` impose un premier déploiement conjoint avec Kong. **`CRM-092` T3 et T3 bis (en attente de la reprise complète, §3)** : nouvelle fonction `session`, et le conteneur reçoit `JWT_SECRET`, `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID` et **`OIDC_CLIENT_SECRET`**, que le service principal ne remet qu'au worker `session` — la phrase « ne reçoit pas `JWT_SECRET` » plus bas est révisée par la décision 584. Recréer `functions` **après** la pose du secret par l'administrateur du realm et la correction de `SSO_OIDC_CLIENT_ID` (§2.3). **`CRM-127` T3** : nouvelle fonction `mail-connection-test` ; le conteneur reçoit `MAIL_SYNC_URL` (posée par `docker-compose.yml`) et `MAIL_SYNC_INTERNAL_TOKEN` (déjà au `.env` pour `mail-sync`), que le service principal ne remet qu'à ce worker — **recréer `functions` dans la fenêtre de la migration 151** |
 | `kong` | À chaque changement de `supabase/docker/volumes/api/kong.yml`, qui incrémente le label `com.p2enjoy.kong-config-revision` — **`crm-115`** depuis `CRM-115` T2 (Realtime joint par son alias réseau, §2.22) ; `crm-092` depuis `CRM-092` T6 : routes `/auth/v1/*` et `/.well-known/oauth-authorization-server` retirées, Kong répond 404 ; **INC-299** (décision 696, §2.21) : `KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT: 3` dans `docker-compose.yml` — la définition change, le `up` ordinaire recrée Kong |

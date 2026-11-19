@@ -174,7 +174,7 @@ l'utilisateur de retirer un message de sa boîte serait destructif.
 L'interface n'ouvre jamais de connexion SMTP. Elle appelle `queue_outbound_email(...)`, qui
 insère une ligne dans `mail_outbox` après vérification des droits.
 
-`smtp_worker` consomme la file :
+`smtp_worker` consomme la file, **toutes les trente secondes**, par la boucle d'envoi de `mail-sync` (§34, `CRM-158`) :
 
 1. sélection des messages `queued` dont `next_attempt_at` est échu, par ordre d'ancienneté ;
 2. vérification du quota journalier de l'identité ;
@@ -1777,6 +1777,10 @@ par message : un échec passe en `failed` et le **dit**, il ne feint pas d'avoir
 
 **La relève reste déclenchée** (§15.2) : le worker d'envoi l'est aussi, par une route interne. La
 veille permanente est une seule et même unité, `CRM-059`.
+
+*Révisé par `CRM-158` (§34, décision 954) : `CRM-059` n'a cadencé que la relève, et rien n'appelait la route d'envoi en
+production. La boucle d'envoi de `mail-sync` vide désormais la file toutes les trente secondes ; la route reste, pour les
+preuves.*
 
 ### 19.3 Deux colonnes que `mail_messages` n'avait pas
 
@@ -5155,3 +5159,154 @@ espace dans Plateforme ▸ Espaces.
 | **T1** | En base : la migration `0192`, pgTAP `0179`, `docs/SCHEMA.md`, les types ; la preuve d'API ; le contrat de déploiement |
 | **T2** | L'écran d'envoi : le classement des refus, l'avertissement et « Envoyer » éteint, le refus d'armer une relance ; unitaires ; E2E ; captures ; le manuel (l'envoi) |
 | **T3** | Le guide de démarrage (`docs/SPEC-onboarding.md` §11) ; unitaires ; E2E ; captures ; le manuel (le démarrage) ; l'unité passe `[P]` |
+
+## 34. La file d'envoi se vide seule : la boucle d'envoi de `mail-sync` — `CRM-158`
+
+*Écrit le 2026-11-19, avant le code (décisions 952 et 954).*
+
+### 34.1 Le défaut
+
+`CRM-058` a livré le worker d'envoi **déclenché** par une route interne (§19.2) : « la veille permanente est une seule
+et même unité, `CRM-059` ». `CRM-059` a livré la boucle de **relève** (§20.10), puis `CRM-074`, `CRM-143` et `CRM-138` ont
+ajouté les boucles de l'extraction, de la reprise antivirus et de la corbeille. **Aucune n'a cadencé l'envoi.** La route
+`POST /internal/v1/outbox/flush` n'est appelée que par les preuves et le seed. En production, rien ne l'appelle : aucune
+tâche `pg_cron`, aucune boucle, aucun service. Le constat du 2026-11-19 (décision 952) le montre : deux mails sont
+`queued` depuis 13:45 UTC, à zéro essai, et ne sont jamais réservés. **Aucun mail ne part.** Le manuel (§12.5) promet
+pourtant une remise « dans la minute ».
+
+### 34.2 Le mécanisme : une boucle de `mail-sync`, non une tâche `pg_cron`
+
+L'envoi est cadencé par un **cinquième pilote de `mail-sync`**, `PiloteEnvoi`. Il a la forme des quatre autres
+(§20.10.1) :
+- un fil d'arrière-plan piloté par un `threading.Event`, jamais `time.sleep` ;
+- démarré dans `__main__`, et non dans `create_app`, pour la raison du §20.10 ;
+- arrêté dans le `finally` du service.
+
+Le précédent de `p2enjoy-webhooks-remise` (`pg_cron` → `pg_net` → une fonction edge) **n'est pas repris**, pour trois
+raisons :
+1. **Le secret.** Les webhooks emploient un secret né dans Vault, que la fonction edge fait vérifier par la base. La
+   route d'envoi exige `MAIL_SYNC_INTERNAL_TOKEN`, un secret né dans l'environnement. Une tâche `pg_cron` devrait en
+   porter une seconde copie dans Vault, à faire tourner en deux endroits, et une migration de plus.
+2. **Le partage établi.** La décision 261 a sorti l'ordonnancement *métier* vers `pg_cron` (relances, digest, purges),
+   mais elle laisse IMAP et SMTP à `mail-sync`, parce qu'ils demandent des connexions longues (`docs/DAT.md` §3.3).
+   Cadencer le SMTP est le travail de `mail-sync`.
+3. **La panne.** Si `mail-sync` est arrêté, aucun envoi ne peut partir, quelle que soit l'horloge qui l'appelle. Une
+   tâche `pg_cron` qui frapperait un service mort n'enverrait rien de plus ; elle ajouterait seulement un chemin réseau
+   (base → `mail-sync`) et une erreur par minute.
+
+**Aucune migration, aucune variable d'environnement, aucun secret nouveau.**
+
+### 34.3 La cadence
+
+- **Trente secondes**, comptées à partir de la **fin** de la passe précédente : une passe ne se chevauche jamais avec
+  elle-même (§20.10.4). La décision 952 attend une file vidée « chaque minute », et la preuve exige qu'un envoi « parte
+  dans la minute ». Avec soixante secondes comptées depuis la fin d'une passe, l'attente dépasserait la minute dès que la
+  passe dure. Trente secondes tiennent la promesse du manuel (§12.5).
+- **Une passe pleine est suivie d'une autre sans attendre.** Une passe est pleine quand elle a réservé le lot entier, dix
+  envois. Un arriéré s'écoule ainsi au rythme du SMTP, puis la boucle retombe à son intervalle, comme l'extraction
+  (`CRM-074` §4.1).
+- **Une constante, non une variable**, comme l'extraction et la corbeille. Aucun environnement n'a besoin d'une file
+  muette. Une preuve qui veut garder un envoi « en file » le pose avec une échéance future (§34.7).
+- **Rien d'autre ne change.** Le backoff (§20.3) vit dans `next_attempt_at` : un envoi reprogrammé attend son délai, à
+  trente secondes près. La reprise des orphelins (§20.4) se fait au début de chaque passe, comme aujourd'hui, avec son
+  seuil de dix minutes. Le quota journalier reste tenu par `reserver_envois`.
+
+### 34.4 Le même chemin que la route
+
+La route et la boucle appellent **la même fonction**, `envoi.executer_passe`. Elle fait, dans l'ordre :
+1. la reprise des orphelins ;
+2. la réservation ;
+3. les envois ;
+4. la purge des dépôts abandonnés (§19 bis.2 point 8) ;
+5. la ligne `outbox_flushed`, avec ses compteurs.
+
+Un défaut corrigé d'un côté l'est donc des deux, comme la veille et la relève (§20.10).
+
+La route **reste**. Elle sert aux preuves, qui veulent décider du moment, et à un exploitant pressé. La boucle et la route
+ne prennent jamais le même envoi : la réservation est faite par la base, `for update skip locked`, puis l'envoi passe
+`sending` (§19.4).
+
+### 34.5 La boucle survit à tout, et le dit
+
+- **Au démarrage**, une ligne `outbox_loop_started` porte `intervalle_secondes`.
+- **Une passe en échec** journalise `outbox_loop_failed`, avec `postgrest_status` pour une base injoignable, ou `error`
+  (le nom de classe de l'exception, jamais son texte, §20.10.3) pour toute autre panne. La passe suivante rejoue, et le
+  fil ne s'arrête jamais.
+- **Les compteurs sortent enfin.** `reserved`, `sent`, `failed`, `rescheduled`, `orphans` et `count` entrent dans
+  `SAFE_FIELDS`. Ce sont des entiers, sûrs par construction. Aujourd'hui, `outbox_flushed` sort **sans ses chiffres** :
+  le formateur jette tout champ absent de la liste fermée (`docs/DAT.md` §14).
+
+### 34.6 La supervision dit si la file vieillit
+
+Un envoi `queued` dont l'échéance est passée devrait être réservé dans les trente secondes. Un envoi au-delà du quota
+passe aussitôt `failed` (`quota_exceeded`) : il ne reste jamais dû. Un envoi dû depuis plus de **cinq minutes** dit donc
+une seule chose : la boucle ne tourne pas, ou ne suit plus.
+
+- **Dans `mail-sync`** : après chaque passe, la boucle compte les envois `queued` dont l'échéance est dépassée de plus de
+  cinq minutes. S'il y en a, elle journalise `outbox_stale` en `WARNING`, avec `count` et `overdue_seconds`, l'âge du plus
+  ancien. La lecture passe par PostgREST, sous la clé de service, comme toute lecture du service.
+- **Dans le vérificateur de production** (`scripts/spark/verifier.sh`, contrôle 10, en lecture seule) : une requête dans
+  le conteneur de la base compte les envois `queued` dus depuis plus de cinq minutes, et les envois `sending` réservés
+  depuis plus de quinze minutes (un orphelin que la reprise aurait dû rendre). Zéro rend « OK ». Sinon, « ECHEC » nomme
+  les deux nombres et l'âge du plus ancien. Ce contrôle couvre le cas que le journal ne peut pas dire : un service
+  arrêté.
+- **L'écran d'état** (`/reglages/messagerie`, §20.11) garde son compteur « En attente d'envoi », inchangé.
+
+### 34.7 Ce que les preuves et le seed deviennent
+
+Avec une boucle active, une preuve qui vide la file **et compte sur le compte rendu de sa propre passe** devient
+aléatoire : la boucle a pu prendre l'envoi avant elle, et sa passe rend `0`. Le §42 de `docs/SPEC-seed.md` en tirait déjà
+la règle, écrite pour les passes d'autres preuves : une preuve lit **le sort de son envoi sur sa ligne**. Elle s'étend
+ici à toutes. Chaque garde concernée est **révisée, non relâchée** (décision 51) : la passe explicite reste, comme
+accélérateur, et la preuve attend ensuite que **sa ligne** atteigne l'état exigé, avec une borne de soixante secondes.
+
+| Preuve | Révision |
+|---|---|
+| `e2e/mail/envoi.spec.ts`, `envoi-pieces-jointes.spec.ts`, `digest.spec.ts` | `sent ≥ 1` de la passe → la ligne `sent` |
+| `e2e/mail/resilience.spec.ts` | la coupure posée **avant** la mise en file (sinon la boucle peut envoyer entre les deux) ; `rescheduled ≥ 1` → la ligne `queued`, `connection_refused`, un essai ; `orphans ≥ 1` → la ligne rendue à la file |
+| `e2e/ui/connecteur-messagerie.spec.ts`, `e2e/manuel/12-inbox.spec.ts` | même révision ; l'image du manuel attend la ligne reprogrammée |
+| `e2e/ui/envoi.spec.ts`, `e2e/api/envoi.spec.ts`, et toute preuve qui lit `queued` juste après une mise en file | `queued` → `queued`, `sending` ou `sent` : la mise en file est prouvée par la ligne, son départ par la suite |
+| `supabase/seed/apply-seed.sh` (§35, §42 du seed) | la passe reste, et le seed constate la ligne et l'archive au lieu des compteurs |
+
+Les preuves qui posent un envoi **avec une échéance future** (`e2e/ui/outbox.spec.ts`, `e2e/api/outbox.spec.ts`) ne
+changent pas : la boucle ne prend que les envois dus.
+
+### 34.8 Ce qui part à la livraison
+
+Au démarrage de la nouvelle image, **tout envoi `queued` déjà dû part dans la première minute**, aussi ancien soit-il.
+Les deux mails de Thomas en sont l'objet (décision 952). Le contrat (`docs/PROD_MIGRATIONS.md` §2.63) fait relire en
+lecture seule, **avant** la livraison, la liste des envois en file, avec leur âge. Un envoi que le responsable ne veut plus
+voir partir est annulé par son auteur depuis l'outbox (§28) avant la livraison. **Aucun envoi n'est déclenché à la main**
+(décision 952).
+
+### 34.9 La corbeille, la relève et le reste
+
+- **La corbeille n'a pas le même manque.** `trash-moves/flush` est déjà cadencée par `PiloteCorbeille` depuis
+  `CRM-138` T2 : les déplacements chaque minute, la purge chaque heure (§29.5, §29.6, `__main__.py`). Rien n'est à faire.
+- La relève (§20.10), l'extraction et la reprise antivirus ont aussi leurs boucles.
+- Le digest et les séquences mettent en file ; la boucle d'envoi les couvre.
+
+### 34.10 Le connecteur MCP
+
+**Non** (décision 952) : le connecteur met déjà en file comme l'écran, et c'est la file qui ne se vidait pas.
+
+### 34.11 Preuves
+
+| Niveau | Preuve |
+|---|---|
+| pytest | `PiloteEnvoi` : une passe dès le démarrage ; une passe pleine suivie d'une autre sans attendre ; sinon l'intervalle ; une exception absorbée et journalisée (`outbox_loop_failed`), le fil vivant ; l'arrêt interrompt l'attente ; `outbox_stale` au-delà de cinq minutes, rien en deçà. `executer_passe` : la purge des dépôts et la ligne `outbox_flushed` avec ses compteurs ; une base injoignable remonte à la route en `502`, comme aujourd'hui |
+| E2E `mail` | `e2e/mail/envoi-automatique.spec.ts`, fichier neuf : un envoi mis en file par `queue_outbound_email` sous le jeton de Camille, **sans aucun appel à la route**, passe `sent` dans les soixante secondes, et le message est dans la boîte Stalwart du destinataire |
+| E2E révisés | ceux du §34.7, rejoués avec la boucle active |
+| Vérificateur | la requête du contrôle 10 vit dans `scripts/lib/file-envoi.sh`, que `scripts/spark/verifier.sh` appelle. `scripts/verify-file-envoi.sh`, neuf, la joue contre la pile locale : témoin vert sur la file réelle ; un envoi vieilli et un orphelin posés **dans une transaction annulée** font chacun rougir le contrôle, qui les nomme |
+| pgTAP | aucun : pas de migration |
+| Production | le constat : les deux mails de Thomas passent `sent` dans la minute qui suit la livraison, et le vérificateur rend le contrôle 10 « OK » |
+
+### 34.12 Limites nommées
+
+- **`workers.smtp` de `/internal/v1/status` reste `waiting`**, l'état figé de `CRM-051`, comme `workers.imap`, que la
+  veille n'a pas davantage changé. Le rendre conforme est un autre sujet. La supervision passe par le journal et le
+  vérificateur (§34.6).
+- **Plusieurs instances de `mail-sync`** feraient chacune leur boucle, sans double envoi grâce au `skip locked`. L'assemblage
+  n'en démarre qu'une.
+- **Une seule tranche** : le pilote, ses preuves, les preuves révisées, le seed, le vérificateur et les documents forment
+  un seul changement cohérent.

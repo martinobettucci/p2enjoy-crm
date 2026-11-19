@@ -431,7 +431,7 @@ Seul composant autorisé à parler IMAP et SMTP. Quatre responsabilités, et l'e
 | Sous-composant | Rôle |
 |---|---|
 | `imap_worker` | Une connexion IDLE par compte entrant ; récupération, analyse, dédoublonnage, dépôt des pièces jointes, classement, création des dossiers imbriqués |
-| `smtp_worker` | Consommation de la file `mail_outbox` : envoi via l'identité SMTP de l'utilisateur, retry avec backoff, respect des quotas, archivage du message envoyé |
+| `smtp_worker` | Consommation de la file `mail_outbox` : envoi via l'identité SMTP de l'utilisateur, retry avec backoff, respect des quotas, archivage du message envoyé. **Cadencé par `PiloteEnvoi`** (`CRM-158`, décision 954) : une passe toutes les trente secondes, comptées depuis la fin de la précédente, une passe pleine (dix envois) enchaînant aussitôt ; la route `POST /internal/v1/outbox/flush` partage la même fonction (`envoi.executer_passe`) et reste pour les preuves. `outbox_stale` en `WARNING` quand un envoi dû attend depuis plus de cinq minutes ; le contrôle 10 du vérificateur de production lit la même chose dans la base (`docs/SPEC-mail-subsystem.md` §34) |
 | ~~`scheduler`~~ | **Retiré du périmètre** par la décision 261. Relances, séquences, digest, purge RGPD et recalcul du score de santé passent à `pg_cron` — `CRM-017` |
 | API interne | Test de connexion IMAP/SMTP, déclenchement d'un backfill, exposition de l'état de synchronisation, et endpoints réservés aux tests en environnement de développement |
 | `extraction` (`CRM-074` T2) | Texte des pièces jointes saines (PDF, Word, Excel, OpenDocument) : une boucle de trente secondes prend dix pièces par `claim_attachment_texts`, lit chacune au stockage sous la clé de service, extrait dans un **processus enfant** (`spawn`, 20 s de calcul, 512 Mo, 30 s de durée ; archive Office ≤ 1 000 entrées et 50 Mo décompressés) et rend le résultat par `record_attachment_text` ; route interne `POST /internal/v1/attachments/extract` pour le déclencher. Le journal nomme la pièce par son identifiant et son statut, jamais par son nom ni son texte (`docs/SPEC-pieces-jointes.md` §4) |
@@ -1591,6 +1591,8 @@ livraison contre une cellule simulée, avec leurs dégradations.
   recopier un identifiant de connexion. *`CRM-135`, `docs/SPEC-mail-subsystem.md` §24.2* : la veille y gagne le compte
   (`account_id`), le motif (`panne`, `error`, `postgrest_status`) et ses compteurs. Sans eux, INC-349 sortait
   « veille_compte_echoue » sans aucun détail.
+  *`CRM-158`, §34.5* : les compteurs de l'envoi (`reserved`, `sent`, `failed`, `rescheduled`, `orphans`, `count`) et
+  `overdue_seconds` y entrent ; `outbox_flushed` sortait sans eux.
 - **Une relève en échec s'écrit sur la boîte** (`status = 'error'`, `last_error`, `CRM-135`, §24.3), et une relève
   allée au bout la rend `ok`. L'écran d'état et les réglages la montrent sans lire le journal.
 - État de synchronisation par compte mail exposé dans l'interface : dernière synchronisation,

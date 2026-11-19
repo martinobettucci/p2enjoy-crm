@@ -3100,6 +3100,11 @@ par les vrais chemins : rien n'est écrit dans `mail_outbox` à la main.
   envoi en file le pose elle-même par la même voie (l'image du manuel §12.5 le fait). *Précisé à l'écriture du code* : une
   preuve qui compte les envois d'une passe le fait « au moins », et lit le sort du sien sur sa ligne
   (`e2e/mail/resilience.spec.ts`, révisée).
+  *Révisé par `CRM-158` (`docs/SPEC-mail-subsystem.md` §34.7, décision 954)* : la file se vide désormais **seule**, toutes
+  les trente secondes. L'envoi « en file » du seed est rejoué par la boucle dès son échéance, et passe en échec au cinquième
+  essai, en une heure et demie environ ; le seed le constate à l'instant du seed. Les passes du §35 et du §42 restent, comme
+  accélérateurs, mais le seed constate **la ligne** de chaque envoi (et l'archive au §35), jamais les compteurs de sa
+  propre passe : la boucle a pu le prendre avant elle.
 - **Rejouable** : un envoi déjà présent sous son objet n'est pas refait. **Le seed constate** les trois états et la ligne
   `mail_cancelled`, et s'arrête en nommant la cause sinon.
 - **Les preuves qui comptent les identités du seed** passent de trois à cinq, révisées, non relâchées (décision 51).

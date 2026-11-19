@@ -20286,7 +20286,14 @@ ou boucle de `mail-sync` — à spécifier) ; la même cadence pour `trash-moves
 la reprise des orphelins (§20) restent ceux d'aujourd'hui ; la supervision dit si la file vieillit.
 **Décision du responsable** : ne pas déclencher l'envoi à la main en production ; **livrer le correctif avec le prochain
 lot** ; connecteur MCP : **non** (le connecteur met déjà en file comme l'écran).
-**Spécification** : à écrire avant le code — `docs/SPEC-mail-subsystem.md` §5 et §20, `docs/SCHEMA.md` (si migration),
-`docs/DAT.md`, contrat (secret ou jeton interne si une tâche `pg_cron` l'emploie).
+**Spécification** : `docs/SPEC-mail-subsystem.md` §34 (§5 et §19.2 révisés), décision 954 — une **boucle de `mail-sync`**
+(`PiloteEnvoi`, trente secondes, une passe pleine enchaîne), et non une tâche `pg_cron` ; la route et la boucle partagent
+`executer_passe` ; `outbox_stale` et le contrôle 10 du vérificateur de production (`scripts/lib/file-envoi.sh`) disent si la
+file vieillit ; la corbeille est déjà cadencée (`PiloteCorbeille`, `CRM-138` T2). **Aucune migration, aucune variable,
+aucun secret.** `docs/DAT.md` §3.3 et §14 ; `docs/SPEC-seed.md` §42 (précision) ; contrat §2.63 (image `mail-sync` à
+reconstruire ; la file relue avant la livraison).
+**Plan** : une seule tranche (§34.12) — le pilote et ses preuves pytest ; `e2e/mail/envoi-automatique.spec.ts` (sans appel à
+la route) ; les preuves et le seed qui comptaient sur leur passe, révisés (§34.7) ; le contrôle 10 et
+`scripts/verify-file-envoi.sh` ; l'unité passe `[P]` avec le constat de production (les deux mails de Thomas partent).
 **DoD** : preuve que la file se vide **sans appel explicite** (E2E mail : un envoi mis en file part dans la minute) ;
 pgTAP si migration ; contrat ; constat en production (les deux mails de Thomas partent).
