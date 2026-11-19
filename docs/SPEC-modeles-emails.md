@@ -1745,6 +1745,7 @@ deviendrait une panne de l'autre.
 | `manual` | `public.interrompre_sequence_relance` |
 | `exhausted` | Le dernier palier de la séquence a été mis en file |
 | `identity_withdrawn` | La migration de la décision 805 (INC-335) : l'inscription était armée avec l'identité de service, qui n'est plus empruntable. Aucun autre chemin ne l'écrit. Ce n'est pas `manual`, qui affirmerait un geste humain qui n'a pas eu lieu |
+| `workspace_reply_domain_missing` | *`CRM-157`, décision 955* — le job, au moment d'un palier dû : l'espace n'a pas de domaine entrant, l'adresse de l'affaire ne se compose pas, et rien n'est mis en file (`docs/SPEC-mail-subsystem.md` §33.2 bis). La fiche le dit ; on réarme une fois le domaine réglé |
 
 **`card_ineligible` couvre QUATRE interruptions par UN prédicat, et aucune n'est réécrite ici.** Le
 §7.3 en nommait quatre — déplacement d'étape, sommeil, archivage, geste explicite — et les trois

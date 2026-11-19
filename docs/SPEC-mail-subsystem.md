@@ -5088,11 +5088,26 @@ destinataire) et **inutile** (la personne ne peut rien y faire). Aucun mail n'es
   super-administrateur, dans Plateforme ▸ Espaces (`public.plateforme_modifier_espace`, décision 953).
 - **Migration** `0192` : `create or replace` des deux fonctions, à l'identique hors le refus (`docs/SCHEMA.md`). Son
   retour arrière est la définition d'avant, que la migration cite.
-- **Limite nommée** : `app.executer_sequences_relance`, qui exécute les relances armées, compose la même adresse **sans
-  la contrôler** (lu dans sa définition le 2026-11-19) : une relance armée **avant** que le domaine ne soit retiré serait
-  mise en file avec un destinataire nul. Le cas est hors de cette unité — la décision 951 vise l'envoi d'une personne,
-  et le refus d'`armer_sequence_relance` empêche désormais d'armer sans domaine — ; il est signalé à la session de
-  livraison, voisin de `CRM-158` (la file d'envoi).
+
+### 33.2 bis Une relance due dans un espace sans domaine — ajout motivé par un défaut (décision 955)
+
+*Écrit le 2026-11-19, avant le code, à la demande de la session de livraison, qui garde le défaut dans cette unité.*
+`app.executer_sequences_relance` composait l'adresse de l'affaire **sans la contrôler** : sans domaine, `array[null]` a
+une longueur de 1, la contrainte `mail_outbox_destinataire` passe, et la relance partait en file avec un destinataire
+nul. Une relance armée avant que le domaine ne soit retiré — ou dans une base où il manquait déjà — y menait.
+
+- **Au passage du job**, avant de mettre un palier en file, l'adresse est composée et contrôlée. **L'espace n'a pas de
+  domaine** : l'inscription est **fermée** par le motif nouveau **`workspace_reply_domain_missing`** (`closed_reason`),
+  et rien n'est mis en file. **L'affaire n'a pas de partie locale** : le passage échoue comme avant, plutôt que
+  d'expédier dans le vide (le commentaire existant de la fonction, `CLAUDE.md` §18).
+- **Le motif est borné** : `card_sequence_enrollments_motif_borne` admet une sixième fin
+  (`docs/SPEC-modeles-emails.md` §12.7).
+- **La fiche de l'affaire le dit** : le bloc des relances (`BlocSequenceCard`) lit la dernière inscription du
+  rattachement ; quand aucune n'est active et que la dernière a été fermée par ce motif, il dit « La relance s'est
+  arrêtée : l'espace n'a pas de domaine d'adresses d'affaire, et les réponses ne reviendraient nulle part. Réarmez-la une
+  fois le domaine réglé. », au-dessus du geste d'armement.
+- **Les autres passages ne sont pas touchés** : une inscription fermée ne bloque pas les autres, et le compte rendu de la
+  fonction (le nombre de messages mis en file) reste celui des envois réels.
 
 ### 33.3 Les refus d'envoi, dits en clair, à l'écran
 
@@ -5144,7 +5159,8 @@ espace dans Plateforme ▸ Espaces.
 
 - **pgTAP** `0179` : le refus `workspace_reply_domain_missing` de `queue_outbound_email`, de `send_email_draft` et
   d'`armer_sequence_relance` dans un espace sans domaine ; l'ordre des contrôles (une affaire en corbeille sans domaine
-  reste `card_not_available`) ; rien ne change avec un domaine.
+  reste `card_not_available`) ; rien ne change avec un domaine ; **le job** ferme l'inscription due par
+  `workspace_reply_domain_missing` sans rien mettre en file, et laisse passer celle d'un espace qui a son domaine.
 - **API** (vrais jetons, espace jetable) : l'envoi refusé avec le nom ; le mail préparé refusé de même ; rien n'est écrit
   dans `mail_outbox`.
 - **Unitaires** : `classerRefusEnvoi` (chaque nom, le repli) ; la lecture de l'espace de l'affaire ; le formulaire —
@@ -5156,8 +5172,8 @@ espace dans Plateforme ▸ Espaces.
 
 | Tranche | Contenu |
 |---|---|
-| **T1** | En base : la migration `0192`, pgTAP `0179`, `docs/SCHEMA.md`, les types ; la preuve d'API ; le contrat de déploiement |
-| **T2** | L'écran d'envoi : le classement des refus, l'avertissement et « Envoyer » éteint, le refus d'armer une relance ; unitaires ; E2E ; captures ; le manuel (l'envoi) |
+| **T1** | En base : la migration `0192` (les refus, et la relance due fermée, §33.2 bis), pgTAP `0179`, `docs/SCHEMA.md`, les types ; la preuve d'API ; le contrat de déploiement |
+| **T2** | L'écran d'envoi : le classement des refus, l'avertissement et « Envoyer » éteint, le refus d'armer une relance et la relance arrêtée sur la fiche ; unitaires ; E2E ; captures ; le manuel (l'envoi) |
 | **T3** | Le guide de démarrage (`docs/SPEC-onboarding.md` §11) ; unitaires ; E2E ; captures ; le manuel (le démarrage) ; l'unité passe `[P]` |
 
 ## 34. La file d'envoi se vide seule : la boucle d'envoi de `mail-sync` — `CRM-158`
@@ -5232,8 +5248,9 @@ ne prennent jamais le même envoi : la réservation est faite par la base, `for 
 - **Une passe en échec** journalise `outbox_loop_failed`, avec `postgrest_status` pour une base injoignable, ou `error`
   (le nom de classe de l'exception, jamais son texte, §20.10.3) pour toute autre panne. La passe suivante rejoue, et le
   fil ne s'arrête jamais.
-- **Les compteurs sortent enfin.** `reserved`, `sent`, `failed`, `rescheduled`, `orphans` et `count` entrent dans
-  `SAFE_FIELDS`. Ce sont des entiers, sûrs par construction. Aujourd'hui, `outbox_flushed` sort **sans ses chiffres** :
+- **Les compteurs sortent enfin.** `reserved`, `sent`, `failed`, `rescheduled`, `orphans`, `count` et `overdue_seconds`
+  entrent dans `SAFE_FIELDS`, avec `outbox_id` (un UUID interne) et `code` (un code fermé du §13.7), que les lignes
+  `envoi_*` passaient déjà sans qu'ils sortent. Tous sont sûrs par construction. Aujourd'hui, `outbox_flushed` sort **sans ses chiffres** :
   le formateur jette tout champ absent de la liste fermée (`docs/DAT.md` §14).
 
 ### 34.6 La supervision dit si la file vieillit

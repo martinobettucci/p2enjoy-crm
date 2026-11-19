@@ -41183,3 +41183,16 @@ responsable laisse le mécanisme « à spécifier ».* Spécification : `docs/SP
 - À la livraison, tout envoi déjà dû part dans la minute : le contrat fait relire la file avant.
 - Il faut reconstruire l'image `mail-sync`.
 - Ni pgTAP ni migration. Connecteur MCP : non (décision 952).
+
+### décision 955 — `CRM-157` : une relance due dans un espace sans domaine arrête sa séquence
+
+*2026-11-19, session 152dd27d (p2enjoy-crm-c7, ex-45), arbitrage du responsable (`AskUserQuestion`), après une demande
+de la session de livraison (e3) de garder le défaut dans `CRM-157`.*
+**Défaut** (lu dans la définition, le 2026-11-19) : `app.executer_sequences_relance` compose l'adresse de l'affaire sans
+la contrôler. Sans domaine, `array[null]` a une longueur de 1 : la contrainte `mail_outbox_destinataire` passe, et la
+relance partirait en file avec un destinataire nul.
+**Question** : *une relance due dans un espace sans domaine ?* — **Arrêter la séquence** : l'inscription est fermée par
+un motif nouveau, `workspace_reply_domain_missing`, comme `identity_withdrawn` le fait pour une identité retirée ; rien ne
+part ; la fiche de l'affaire dit pourquoi ; on la réarme une fois le domaine réglé. *Écarté* : sauter et réessayer.
+**Conséquences** : `docs/SPEC-mail-subsystem.md` §33.2 bis ; `docs/SPEC-modeles-emails.md` §12.7 (une sixième fin) ; la
+migration `0192` élargit `card_sequence_enrollments_motif_borne` ; la tranche T1 de `CRM-157` le porte.

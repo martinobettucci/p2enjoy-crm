@@ -20259,12 +20259,14 @@ contrat.
 l'identité de la personne, « Envoyer » s'éteint avec son motif ; design system lu par sections ciblées) :
 `docs/SPEC-mail-subsystem.md` §33, `docs/SPEC-onboarding.md` §11, `docs/DESIGN_SYSTEM.md` §5.110. **Écart motivé avec
 la DoD** : le seed garde son espace unique (`CRM-005`) ; les preuves du refus montent un espace jetable sans domaine
-(§33.6). Connecteur : non (décision 951).
+(§33.6) — **la DoD se lit ainsi : « seed » vaut « espace jetable monté par les preuves »**, accepté par la session de
+livraison. Connecteur : non (décision 951).
 **Tranches** (§33.8) :
 - [ ] **T1** — en base : migration `0192` (`workspace_reply_domain_missing` dans `queue_outbound_email`, donc
-  `send_email_draft`, et `armer_sequence_relance`), pgTAP `0179`, `docs/SCHEMA.md`, types ; API ; contrat.
+  `send_email_draft`, et `armer_sequence_relance` ; **et la relance due fermée par ce motif**, §33.2 bis, décision 955,
+  ajout demandé par la session de livraison), pgTAP `0179`, `docs/SCHEMA.md`, types ; API ; contrat.
 - [ ] **T2** — l'écran d'envoi : les refus dits en clair, l'avertissement et « Envoyer » éteint, le refus d'armer une
-  relance ; unitaires ; E2E ; captures ; manuel (l'envoi).
+  relance, la relance arrêtée dite sur la fiche ; unitaires ; E2E ; captures ; manuel (l'envoi).
 - [ ] **T3** — le guide : trois étapes mail à la place de « Raccorder une boîte de réception » ; unitaires ; E2E ;
   captures ; manuel (le démarrage) ; `[P]`.
 
