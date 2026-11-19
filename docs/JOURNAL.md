@@ -41133,7 +41133,9 @@ et le seed ; aucune tâche planifiée ne la cadence en production.
 **Réponses** : ne pas déclencher l'envoi à la main ; le correctif avec le prochain lot ; connecteur MCP : non.
 **Conséquences** : `CRM-158` au backlog, confiée à une session libre ; les mails de Thomas partiront avec la livraison.
 
-### décision 952 — `CRM-157` : qui règle le domaine, quelle identité compte, « Envoyer » éteint ; la lecture ciblée du design system
+### décision 953 — `CRM-157` : qui règle le domaine, quelle identité compte, « Envoyer » éteint ; la lecture ciblée du design system
+
+*Renumérotée : poussée d'abord sous le numéro 952, déjà pris par la décision de `CRM-158`.*
 
 *2026-11-19, session 152dd27d (p2enjoy-crm-c7, ex-45), arbitrage du responsable (`AskUserQuestion`, deux tours), avant la
 spécification.*
