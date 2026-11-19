@@ -41081,3 +41081,23 @@ traité en base d'un seul coup ; l'écran enchaîne les paquets avec une **barre
 de taille.
 **Conséquences** : la portée gagne un curseur (`after`) et l'action rend le suivant (`next`) ; `docs/SPEC-mail-subsystem.md`
 §32.5 et §32.6 révisés ; la migration de T1 l'écrit avant d'être poussée.
+
+### décision 950 — livrer le lot CRM-153, CRM-155 et CRM-156 à la révision `39662806`
+
+*2026-11-19, session 4522fa9c (p2enjoy-crm-e3, ex-bb, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : `CRM-153` (catégories et fil de commentaires d'une organisation ; `0188`), `CRM-155` (les pastilles en
+filtres rapides ; webapp et `mcp`, sans migration) et `CRM-156` (opérations groupées de l'inbox, transfert, blocage d'un
+expéditeur, contacts depuis l'inbox ; `0189` à `0191`), unités entières ; contrat §2.58 à §2.61 ; verrou `9dd81fee`.
+**La campagne** : complète à `45a6ab5b` sur une base remise à zéro (accord des trois sessions) ; types, unitaires
+6 082/6 082, sql 166 fichiers et 5 508 assertions, mail 56/56, mcp 126 contrôles, construction du manuel verts ; ui 1 281 sur
+1 289, api 1 388 sur 1 391, manuel 160 sur 162 — verts rejoués seuls (`connecteur-organisations`, `corps-html`,
+`temps-fiche-affaire`) ou connus (INC-342), sauf **quatre défauts**, renvoyés et corrigés, tests et manuel seuls :
+- `CRM-156` (fc, `dbfd8e9b`) : `corbeille.spec` visait « Corbeille », que l'entrée « Expéditeurs bloqués » contient
+  aussi ; `mentions-composeur` (ui et api) comptait les notifications sans le transfert du §49 ; l'image
+  `reglages-boites` du chapitre 11 ne tenait plus dans la fenêtre (index des réglages allongé) ;
+- `CRM-153` (ed, `c289dce4`) : `organisations-recherche` au clavier, le filtre « Catégories » paraissant dès que l'espace
+  a des catégories (seed §50).
+Rejoués : 50/50 ui, 11/11 api, manuel 11 6/6, garde du manuel 168, types. Manuel rendu à sa source et republié en dev (API
+9/9). Captures : 278 renouvelées, observées (`39662806`).
+**Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `39662806` : migrations 188 à 191, webapp,
+image `mcp`, manuel.
