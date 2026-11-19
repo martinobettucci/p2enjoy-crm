@@ -5053,3 +5053,105 @@ trace propre à démontrer : leurs effets sont ceux des actions unitaires.
 | **T3** | L'écran de la sélection : les cases, « Tout sélectionner », la barre, les confirmations, les comptes rendus, la corbeille ; `docs/DESIGN_SYSTEM.md` §5.109 ; Vitest ; E2E `ui` ; captures |
 | **T4** | L'écran des ajouts : le filtre par expéditeur, le transfert dans le message ouvert et dans la barre, la notification, le blocage et Réglages ▸ Expéditeurs bloqués, la liste à vérifier des contacts ; Vitest ; E2E `ui` ; captures |
 | **T5** | Le seed, le manuel §12 et ses images, le contrat de déploiement, le changelog ; l'unité passe `[P]` |
+
+---
+
+## 33. Envoyer : un refus clair quand l'espace n'a pas de domaine d'adresses d'affaire — `CRM-157`
+
+*Écrit le 2026-11-19, avant le code (décisions 951 et 953).* Le guide de démarrage, l'autre moitié de l'unité, est
+spécifié par `docs/SPEC-onboarding.md` §11 ; l'apparence, par `docs/DESIGN_SYSTEM.md` §5.110.
+
+### 33.1 Le défaut
+
+Constaté en production le 2026-11-19, en lecture seule (décision 951) : l'espace n'a pas de domaine entrant
+(`workspaces.inbound_domain` nul). L'adresse de réponse d'une affaire, `<préfixe><jeton>@<domaine>`, ne se compose donc
+pas, et `public.queue_outbound_email` refuse tout envoi par `card_not_available` (`23514`) — le refus d'une affaire
+indisponible. L'écran le classe sous « invalide » avec les destinataires et le corps, et dit « Cette affaire ne peut pas
+recevoir de réponse, ou le message n'a pas de destinataire » : **faux** (l'affaire est disponible, le message a un
+destinataire) et **inutile** (la personne ne peut rien y faire). Aucun mail n'est parti de la production.
+
+### 33.2 Le refus nommé, en base
+
+- **`workspace_reply_domain_missing`** (`23514`) : l'espace de l'affaire n'a pas de domaine entrant. Il remplace
+  `card_not_available` **pour cette seule cause**, dans `public.queue_outbound_email` — donc aussi dans
+  `public.send_email_draft`, qui l'appelle — et dans `public.armer_sequence_relance`, qui compose la même adresse.
+- **L'ordre des contrôles ne change pas** : l'appelant, le droit d'écrire l'affaire (`forbidden`), l'identité
+  (`identity_not_available`), l'affaire disponible (`card_not_available`), **puis le domaine**, puis l'adresse de
+  l'affaire (`card_not_available`, une affaire sans partie locale), les destinataires, le corps, les pièces, le quota.
+  Une affaire en corbeille dans un espace sans domaine reste donc `card_not_available` : la cause la plus proche de la
+  personne est dite d'abord.
+- **Rien d'autre ne change** : aucune colonne, aucune politique, aucun droit. Le domaine reste réglé par un
+  super-administrateur, dans Plateforme ▸ Espaces (`public.plateforme_modifier_espace`, décision 953).
+- **Migration** `0192` : `create or replace` des deux fonctions, à l'identique hors le refus (`docs/SCHEMA.md`). Son
+  retour arrière est la définition d'avant, que la migration cite.
+- **Limite nommée** : `app.executer_sequences_relance`, qui exécute les relances armées, compose la même adresse **sans
+  la contrôler** (lu dans sa définition le 2026-11-19) : une relance armée **avant** que le domaine ne soit retiré serait
+  mise en file avec un destinataire nul. Le cas est hors de cette unité — la décision 951 vise l'envoi d'une personne,
+  et le refus d'`armer_sequence_relance` empêche désormais d'armer sans domaine — ; il est signalé à la session de
+  livraison, voisin de `CRM-158` (la file d'envoi).
+
+### 33.3 Les refus d'envoi, dits en clair, à l'écran
+
+`classerRefusEnvoi` (`webapp/src/lib/envoi.ts`) ne range plus tout `23514` sous « invalide ». Il reconnaît **le nom**
+du refus, écrit dans la migration et vérifié par pgTAP — jamais une phrase :
+
+| Refus de la base | Nature | Texte |
+|---|---|---|
+| `workspace_reply_domain_missing` | `domaine_absent` | « Aucun mail ne peut partir de cet espace pour l'instant : il n'a pas de domaine d'adresses d'affaire, et les réponses ne reviendraient nulle part. Un super-administrateur le règle dans Plateforme ▸ Espaces. » |
+| `card_not_available` | `affaire_indisponible` | « Cette affaire ne peut plus envoyer de mail : elle est en corbeille, n'est rangée dans aucun channel actif, ou appartient à un autre espace que l'adresse d'expédition choisie. » |
+| `recipient_required` | `destinataire_requis` | « Ajoutez au moins un destinataire. » |
+| `body_required` | `corps_requis` | « Le message est vide : écrivez-le avant de l'envoyer. » |
+| un autre `23514` | `invalide` | « Le message a été refusé par le CRM. Vérifiez-le, puis réessayez. » |
+
+Les autres natures (`forbidden`, `quota`, les pièces, `network`, `unknown`) ne changent pas. La relecture d'un mail
+préparé emploie le même dictionnaire (§5.90 du design system). Le refus d'**armer une relance** gagne sa nature
+`domaine-absent`, avec le même texte que `domaine_absent` ; `adresse-absente` garde le sien.
+
+### 33.4 Prévenir avant qu'on rédige
+
+Le formulaire d'envoi (`FormulaireEnvoi`, depuis la fiche, l'inbox et la relecture d'un mail préparé) lit, à son
+ouverture, **l'espace de l'affaire** : `cards` → `workspaces(slug, inbound_domain)`, sous la RLS de l'appelant (tout
+membre lit son espace). Puis :
+- **domaine présent** : rien ne change ;
+- **domaine absent** : un avertissement en tête du formulaire dit ce qui manque, pourquoi les envois sont impossibles et
+  qui le règle ; **« Envoyer »** (« Mettre en file » en relecture) est **éteint**, son motif étant cet avertissement
+  (décision 953). La rédaction reste possible : rien n'est perdu ;
+- **la personne est super-administratrice** (`public.est_superadmin`, la lecture de la coquille) : l'avertissement porte
+  le lien « Régler le domaine de l'espace », vers la fiche de l'espace dans Plateforme ▸ Espaces ; sinon, il le dit en
+  texte, sans lien (§5.59 du design system : un lien vers un écran refusé n'est pas offert) ;
+- **la lecture échoue** : rien n'est éteint, la base refusera, et le refus nommé sera dit (§5.59 : un défaut de lecture
+  ne prive d'aucun geste) ;
+- **pendant la lecture** : « Envoyer » est éteint sans motif, comme toute commande dont la capacité est en lecture.
+
+### 33.5 Le connecteur
+
+**Non** (décision 951) : `crm_mail_prepare` prépare et n'envoie jamais ; l'envoi se fait à l'écran, qui dit le refus.
+
+### 33.6 Les données de démonstration
+
+**Le seed n'est pas étendu d'un espace sans domaine**, et c'est un écart motivé avec la Definition of Done de l'unité :
+le seed porte **un seul espace** (`CRM-005`), invariant que `e2e/ui/premier-lancement.spec.ts` et d'autres preuves
+vérifient. Les preuves du refus montent un **espace jetable sans domaine** — le patron de `docs/SPEC-onboarding.md`
+§8 ter.2, déjà employé par le premier lancement — et le retirent à la fin : une affaire, une identité d'envoi à la
+personne, sous les vrais jetons. La démonstration manuelle du refus emprunte le même chemin : vider le domaine d'un
+espace dans Plateforme ▸ Espaces.
+
+### 33.7 Preuves exigées
+
+- **pgTAP** `0179` : le refus `workspace_reply_domain_missing` de `queue_outbound_email`, de `send_email_draft` et
+  d'`armer_sequence_relance` dans un espace sans domaine ; l'ordre des contrôles (une affaire en corbeille sans domaine
+  reste `card_not_available`) ; rien ne change avec un domaine.
+- **API** (vrais jetons, espace jetable) : l'envoi refusé avec le nom ; le mail préparé refusé de même ; rien n'est écrit
+  dans `mail_outbox`.
+- **Unitaires** : `classerRefusEnvoi` (chaque nom, le repli) ; la lecture de l'espace de l'affaire ; le formulaire —
+  avertissement, « Envoyer » éteint et décrit, le lien du super-administrateur, la lecture en échec qui n'éteint rien.
+- **E2E** souris et clavier, quatre paliers : le formulaire dans l'espace jetable (avertissement, commande éteinte, et
+  le refus nommé quand la lecture a été contournée) ; la relecture d'un mail préparé ; captures observées.
+
+### 33.8 Tranches
+
+| Tranche | Contenu |
+|---|---|
+| **T1** | En base : la migration `0192`, pgTAP `0179`, `docs/SCHEMA.md`, les types ; la preuve d'API ; le contrat de déploiement |
+| **T2** | L'écran d'envoi : le classement des refus, l'avertissement et « Envoyer » éteint, le refus d'armer une relance ; unitaires ; E2E ; captures ; le manuel (l'envoi) |
+| **T3** | Le guide de démarrage (`docs/SPEC-onboarding.md` §11) ; unitaires ; E2E ; captures ; le manuel (le démarrage) ; l'unité passe `[P]` |

@@ -8989,3 +8989,27 @@ règles ne disent que de quoi ils ont l'air. Tout ce que le §5.109 pose vaut sa
     traduction — jamais deux morceaux concaténés (§10).
   - **La ligne d'un expéditeur inconnu** garde sa case à côté de l'adresse : l'adresse et son nombre de mails se replient
     dans leur propre colonne. Défaut vu en capture : dans la colonne de liste, la case tombait seule sur sa ligne.
+
+### 5.110 L'envoi impossible sans domaine, et la messagerie dans le guide — `CRM-157`
+
+*Écrit le 2026-11-19, avant le code, après lecture des sections ciblées par la décision 953, non intégrale : §1 à §4, §6
+à §12 ; §5.4, §5.4 sexies, §5.5, §5.7, §5.8, §5.13, §5.14, §5.17, §5.49, §5.51, §5.56, §5.59, §5.90.* Ce que les écrans
+lisent et refusent est spécifié par `docs/SPEC-mail-subsystem.md` §33 et `docs/SPEC-onboarding.md` §11 ; ces règles ne
+disent que de quoi ils ont l'air.
+
+- **L'AVERTISSEMENT DU FORMULAIRE D'ENVOI** est le bandeau de consigne de la relecture d'un mail préparé (§5.90),
+  repris : `role="note"`, `--color-accent-soft` et `--color-accent-on-soft`, icône `TriangleAlert` `aria-hidden` — une
+  consigne, pas une erreur : la personne n'a rien fait de faux. Il vient **en tête du formulaire**, avant « Expédier
+  depuis », et ne se ferme pas : il dit un état de l'espace, qui demeure tant que le domaine manque. Pour un
+  super-administrateur, il porte le lien « Régler le domaine de l'espace » (§5.5, lien) ; pour les autres, la même phrase
+  sans lien (§5.59).
+- **« ENVOYER » ÉTEINT** (« Mettre en file » en relecture) suit la commande refusée du §5.59 : montée, `disabled`,
+  lisible, jamais masquée ; sa description accessible (`aria-describedby`) est l'avertissement. Les champs restent
+  actifs : on peut rédiger.
+- **LES REFUS D'ENVOI** se disent sous les boutons, `role="alert"`, la saisie conservée (§5.4 sexies, §5.90), avec leurs
+  textes propres (`docs/SPEC-mail-subsystem.md` §33.3). Aucun texte ne regroupe deux causes.
+- **LE GUIDE** (§5.17, §5.49) gagne trois lignes de la même forme, et perd « Raccorder une boîte de réception ». L'étape
+  du domaine porte son explication de l'alias dans son corps, en `--text-sm` comme les autres corps ; son action, pour
+  qui n'est pas super-administrateur, est rendue **en texte** à la place du lien (§5.59), sans icône de lien. L'adresse
+  d'exemple s'écrit en donnée technique (§2), monospace.
+- **Aucune couleur, aucun jeton, aucune icône nouveaux.**

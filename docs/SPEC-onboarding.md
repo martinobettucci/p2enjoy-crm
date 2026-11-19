@@ -599,3 +599,54 @@ channel —, où vit le bouton « Nouvelle affaire » (`docs/SPEC-cards.md` §18
 le board et créer l'affaire ». Sans channel, elle mène à l'arborescence, comme avant. La destination est
 lue une fois par mesure, sous la RLS de l'appelant ; son échec laisse le lien vers l'arborescence.
 
+## 11. Révision `CRM-157` — la messagerie en trois étapes (décisions 951 et 953)
+
+*Écrit le 2026-11-19, avant le code.* L'étape « Raccorder une boîte de réception » comptait **une boîte entrante
+quelconque** : elle se disait faite dans un espace où aucun mail ne pouvait partir (le défaut de
+`docs/SPEC-mail-subsystem.md` §33.1). Elle cède la place à **trois étapes**, qui disent chacune ce qu'il faut pour
+recevoir et envoyer. Les réglages restent où ils sont (décision 951) : le guide y mène, il ne les regroupe pas.
+
+### 11.1 Huit étapes
+
+| # | Clé | Mesure | Écran |
+|---|---|---|---|
+| 1 à 5 | `espace` … `affaire` | inchangées | inchangés |
+| 6 | `boite-systeme` | `mail_inbound_accounts` de l'**espace courant**, `owner_id is null`, `status = 'ok'` | Réglages ▸ Comptes entrants (`/reglages/comptes-mail`) |
+| 7 | `domaine` | `workspaces`, `id` = l'espace courant, `inbound_domain` non nul | Plateforme ▸ Espaces, la fiche de l'espace — **pour un super-administrateur seul** (décision 953) |
+| 8 | `identite` | `mail_outbound_identities` de l'espace courant, `owner_id` = la personne, `status = 'ok'` | Réglages ▸ Identités d'envoi (`/reglages/identites-mail`) |
+
+La progression s'écrit « N étapes sur 8 ». La clé `messagerie` disparaît.
+
+- **L'espace courant** est celui du sélecteur d'espace (`ContexteEspace.idWorkspace`) : ces trois réglages sont propres à
+  un espace, là où les cinq premières étapes comptent ce que la personne voit partout. Sans espace courant, ces trois
+  mesures ne sont pas émises et les étapes sont à faire — il n'y a aucun espace à régler.
+- **« testée avec succès »** : `status = 'ok'`, posé par « Tester la connexion » (`docs/SPEC-mail-subsystem.md` §23.5). Une
+  boîte saisie mais jamais testée, ou en échec, laisse l'étape à faire, et son texte dit de la tester.
+- **L'identité est celle de la personne qui regarde** (décision 953) : le guide mesure ce qu'elle peut régler elle-même.
+- **La boîte système ne se lit que par un administrateur** (`mail_inbound_accounts_lecture_admin`) : pour un autre
+  membre, l'étape reste à faire — la limite déjà nommée au §3.1 point 2, inchangée. Le guide flottant n'est rendu qu'aux
+  administrateurs (§10.2).
+- **Le super-administrateur** est lu par `public.est_superadmin`, la lecture de la coquille. Il décide d'un affichage,
+  jamais d'un droit : `plateforme_modifier_espace` garde son refus.
+
+### 11.2 Ce que disent les trois étapes
+
+- **Boîte système** — titre « Raccorder la boîte de réception de l'espace » ; corps : « La boîte système reçoit les
+  réponses à vos affaires. Saisissez-la, puis « Tester la connexion ». » ; à faire : « Aucune boîte système testée avec
+  succès pour cet espace. » ; action : « Ouvrir les comptes entrants ».
+- **Domaine** — titre « Régler le domaine des adresses d'affaire » ; corps : « Chaque affaire reçoit une adresse faite
+  du préfixe de l'espace, de huit caractères et du domaine : c-3p55qdgw@votre-domaine.fr. Chez l'hébergeur du domaine,
+  créez l'alias qui remet ces adresses à la boîte système, puis réglez le domaine et le préfixe de l'espace. Sans
+  domaine, aucun mail ne part. » ; à faire : « Cet espace n'a pas encore de domaine. » ; action, pour un
+  super-administrateur : « Régler le domaine de l'espace » ; sinon, en texte : « Un super-administrateur le règle dans
+  Plateforme ▸ Espaces. »
+- **Identité** — titre « Déclarer votre adresse d'expédition » ; corps : « Votre adresse d'expédition envoie vos mails :
+  déclarez son serveur d'envoi, puis « Tester la connexion ». » ; à faire : « Vous n'avez pas encore d'adresse
+  d'expédition testée avec succès dans cet espace. » ; action : « Ouvrir les identités d'envoi ».
+
+### 11.3 Preuves
+
+Unitaires : les trois filtres émis (espace courant, `owner_id`, `status`), sans espace courant aucune requête, le lien du
+domaine selon `est_superadmin`. E2E : le premier lancement (`e2e/ui/premier-lancement.spec.ts`) compte désormais « 5 sur
+8 » après la première affaire ; le guide de l'espace seedé, à la souris et au clavier, quatre paliers. Le harnais
+`scripts/verify-onboarding.sh` et ses comptes figés (§8 bis.1) suivent les huit étapes.

@@ -20255,6 +20255,18 @@ pas de préférence : retenu **non**, le guide étant un parcours d'administrati
 **DoD** : pgTAP du refus nommé ; preuve d'API avec les vrais jetons ; unitaires ; E2E souris et clavier aux quatre paliers
 (l'envoi refusé et son message, le guide) ; captures observées ; seed (un espace sans domaine, pour le refus) ; manuel ;
 contrat.
+**Spécifiée le 2026-11-19, avant le code** (décision 953 : le domaine reste au super-administrateur, l'étape mesure
+l'identité de la personne, « Envoyer » s'éteint avec son motif ; design system lu par sections ciblées) :
+`docs/SPEC-mail-subsystem.md` §33, `docs/SPEC-onboarding.md` §11, `docs/DESIGN_SYSTEM.md` §5.110. **Écart motivé avec
+la DoD** : le seed garde son espace unique (`CRM-005`) ; les preuves du refus montent un espace jetable sans domaine
+(§33.6). Connecteur : non (décision 951).
+**Tranches** (§33.8) :
+- [ ] **T1** — en base : migration `0192` (`workspace_reply_domain_missing` dans `queue_outbound_email`, donc
+  `send_email_draft`, et `armer_sequence_relance`), pgTAP `0179`, `docs/SCHEMA.md`, types ; API ; contrat.
+- [ ] **T2** — l'écran d'envoi : les refus dits en clair, l'avertissement et « Envoyer » éteint, le refus d'armer une
+  relance ; unitaires ; E2E ; captures ; manuel (l'envoi).
+- [ ] **T3** — le guide : trois étapes mail à la place de « Raccorder une boîte de réception » ; unitaires ; E2E ;
+  captures ; manuel (le démarrage) ; `[P]`.
 
 ### CRM-158 — La file d'envoi n'est vidée par rien en production : une tâche planifiée qui la vide chaque minute `[@]`
 
