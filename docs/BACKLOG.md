@@ -20262,9 +20262,14 @@ la DoD** : le seed garde son espace unique (`CRM-005`) ; les preuves du refus mo
 (§33.6) — **la DoD se lit ainsi : « seed » vaut « espace jetable monté par les preuves »**, accepté par la session de
 livraison. Connecteur : non (décision 951).
 **Tranches** (§33.8) :
-- [ ] **T1** — en base : migration `0192` (`workspace_reply_domain_missing` dans `queue_outbound_email`, donc
+- [x] **T1** — en base : migration `0192` (`workspace_reply_domain_missing` dans `queue_outbound_email`, donc
   `send_email_draft`, et `armer_sequence_relance` ; **et la relance due fermée par ce motif**, §33.2 bis, décision 955,
   ajout demandé par la session de livraison), pgTAP `0179`, `docs/SCHEMA.md`, types ; API ; contrat.
+  *Faite le 2026-11-19* : migration `0192` appliquée en dev par le runner ; pgTAP `0179` 16 assertions (huit rouges avant
+  la migration, dont la file au destinataire nul, prouvée par `unnest`), `0058` révisée et datée (assertion 27 : le refus
+  nommé), et `0016`, `0030`, `0056`, `0096`, `0151`, `0098`, `0147` vertes ; types inchangés ; API
+  `domaine-absent-envoi` 2/2 dans l'espace jetable (`e2e/api/espace-sans-domaine.ts`) ; `docs/SCHEMA.md`
+  « Migration `0192` », `docs/SPEC-modeles-emails.md` §12.4 (ligne g bis) ; contrat §2.62 et §3.
 - [ ] **T2** — l'écran d'envoi : les refus dits en clair, l'avertissement et « Envoyer » éteint, le refus d'armer une
   relance, la relance arrêtée dite sur la fiche ; unitaires ; E2E ; captures ; manuel (l'envoi).
 - [ ] **T3** — le guide : trois étapes mail à la place de « Raccorder une boîte de réception » ; unitaires ; E2E ;

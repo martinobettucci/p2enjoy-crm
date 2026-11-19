@@ -13,6 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-157` T1 — l'espace sans domaine refusé par son nom, et une relance due arrêtée (migration 192)
+
+- Sans domaine d'adresses d'affaire, `queue_outbound_email` (donc la mise en file d'un mail préparé) et
+  `armer_sequence_relance` refusent par `workspace_reply_domain_missing`, et non plus par `card_not_available`.
+- Une relance due dans un espace sans domaine ferme sa séquence (`closed_reason = workspace_reply_domain_missing`) au lieu
+  de partir en file avec un destinataire vide.
+- pgTAP `0179`, preuve d'API dans un espace jetable ; `docs/SPEC-mail-subsystem.md` §33.2 ; contrat §2.62.
+
 _Rien à publier pour le moment._
 
 ## [Publié]

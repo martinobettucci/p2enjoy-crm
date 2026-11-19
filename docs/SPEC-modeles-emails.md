@@ -1627,6 +1627,7 @@ public.armer_sequence_relance(p_card_id uuid, p_sequence_id uuid, p_identity_id 
 | d | La séquence ne porte **aucun palier** | `23514` `sequence_empty` | Une cadence vide n'enverrait jamais rien, et l'inscription serait un objet mort |
 | e | L'identité n'est pas empruntable par l'appelant | `42501` `identity_not_available` | Règle reprise **telle quelle** de `queue_outbound_email` : la sienne, et elle seule. L'identité de service ne l'est plus, administrateur compris (décision 805, INC-335) |
 | f | La card n'est pas figée au sens de `public.cards_figees()` | `23514` `card_not_stalled` | §12.2 |
+| g bis | *`CRM-157` (migration `0192`)* — l'espace de l'affaire **n'a pas de domaine entrant** | `23514` `workspace_reply_domain_missing` | Le refus de `queue_outbound_email`, au même rang : la cause est nommée, et l'écran la dit en clair (`docs/SPEC-mail-subsystem.md` §33.3) |
 | g | L'adresse de réponse de la card **ne se compose pas** | `23514` `card_not_available` | Reprise de `queue_outbound_email` : une relance dont la réponse ne reviendrait nulle part est pire qu'un refus. **Ce qui la fait tomber est mesuré au §12.4 bis, et ce n'est pas `email_local_part`** |
 | h | Une inscription **active** existe déjà sur cette card | `23505` `enrollment_exists` | L'index unique partiel du §12.3, opposé **avant** l'insertion pour que le refus porte un nom |
 

@@ -3410,6 +3410,30 @@ modifiées leur définition de la migration précédente ; rendre à `import_con
 des deux listes fermées après avoir supprimé ses notifications et préférences ; supprimer les deux tables. Les transferts
 et les blocages sont perdus — les mails mis à la corbeille par un blocage y restent, restaurables.
 
+### Migration `0192` — l'espace sans domaine a son refus nommé, et une relance due s'arrête — `CRM-157` T1 (`0192_domaine_absent_envoi.sql` ; spécifiée le 2026-11-19, avant le code ; écrite le 2026-11-19)
+
+`docs/SPEC-mail-subsystem.md` §33.2, §33.2 bis ; décisions 951, 953 et 955.
+
+**Le défaut.** Sans `workspaces.inbound_domain`, l'adresse de réponse d'une affaire ne se compose pas.
+`queue_outbound_email` le refusait par `card_not_available` — l'écran disait « affaire indisponible » ; et
+`app.executer_sequences_relance` ne contrôlait rien : `array[null]` a une longueur de 1, `mail_outbox_destinataire`
+passait, et une relance partait en file avec un destinataire nul. Prouvé par la pgTAP `0179`, huit assertions rouges avant
+la migration.
+
+**Ce qui change.**
+- `card_sequence_enrollments_motif_borne` admet une sixième fin, **`workspace_reply_domain_missing`** (élargie seulement
+  si elle ne l'est pas) ;
+- `public.queue_outbound_email` — donc `public.send_email_draft`, qui l'appelle — et `public.armer_sequence_relance`
+  refusent un espace sans domaine par **`workspace_reply_domain_missing`** (`23514`), au rang où tombait le
+  `card_not_available` du domaine : une affaire indisponible reste dite d'abord ;
+- `app.executer_sequences_relance` ferme l'inscription due d'un espace sans domaine par ce motif, sans rien mettre en file.
+
+Les trois corps sont repris de leur définition en vigueur (`0106`, `0149`, `0158`) hors ces lignes ; l'ACL est redite. Ni
+table, ni colonne, ni politique, ni donnée.
+
+**Retour arrière** : rejouer les trois définitions d'avant ; resserrer la contrainte exige qu'aucune inscription ne porte
+`workspace_reply_domain_missing`.
+
 ### Migration `0191` — la préférence des transferts de mails s'écrit — `CRM-156` T4 (`0191_preference_transfert_mails.sql` ; écrite le 2026-11-18)
 
 **Le défaut.** La `0190` a ouvert `mail_transfer` dans les deux listes fermées (`notifications_type_check`,

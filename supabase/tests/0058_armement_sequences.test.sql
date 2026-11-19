@@ -1,3 +1,5 @@
+-- @verifies CRM-157 (docs/BACKLOG.md) — tranche T1 : l'assertion 27 attend le refus nommé du domaine absent
+--           (docs/SPEC-mail-subsystem.md §33.2)
 -- @verifies CRM-144 (docs/BACKLOG.md) — tranche T5 : l'identité de Camille lue par défaut, le seed en portant trois
 --           (docs/SPEC-seed.md §42 ; décision 913)
 -- @verifies CRM-063 (docs/BACKLOG.md) — modèles d'emails, signatures, séquences de relance,
@@ -372,8 +374,10 @@ select throws_ok(
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
 	     current_setting('tests.identite_camille')::uuid) $$,
 	'23514',
-	'card_not_available',
-	'27. REFUS (g) — l''adresse de réponse ne se compose pas : `inbound_domain` nul (§12.4 bis)');
+	-- RÉVISÉE PAR `CRM-157` (2026-11-19, migration 0192, décision 951) : l'espace sans domaine a désormais son refus nommé,
+	-- `workspace_reply_domain_missing`, que l'écran dit en clair ; le montage et la condition sont inchangés.
+	'workspace_reply_domain_missing',
+	'27. REFUS (g bis) — l''adresse de réponse ne se compose pas : `inbound_domain` nul, nommé (§12.4 bis ; CRM-157)');
 
 select pg_temp.redevenir_proprietaire();
 update public.workspaces set inbound_domain = 'exemple.test'

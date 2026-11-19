@@ -1379,6 +1379,23 @@ webapp de `main` porte les deux.
 **Retour arrière** : la webapp et l'image `mcp` précédentes ; aucune donnée n'est écrite. Une adresse à plusieurs
 `pastille` ouverte par la webapp précédente n'en lit que la première valeur (`get`) — rien ne casse.
 
+### 2.62 `CRM-157` T1, décisions 951, 953 et 955 — l'espace sans domaine refusé par son nom, et une relance due arrêtée, en base (EN ATTENTE)
+
+`docs/SPEC-mail-subsystem.md` §33.2, §33.2 bis ; `docs/SCHEMA.md` « Migration `0192` ». Trois fonctions redéfinies, une
+contrainte élargie ; **aucune donnée, aucune variable, aucun secret**. Verrou bref sur `card_sequence_enrollments` (la
+contrainte vérifiée sur les lignes existantes).
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 192 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate` |
+| 2 | Constater | session de livraison, en lecture seule | le registre gagne une ligne, l'empreinte de la 192 égale celle du dépôt ; `select pg_get_constraintdef(oid) like '%workspace_reply_domain_missing%' from pg_constraint where conname = 'card_sequence_enrollments_motif_borne'` vrai ; `select prosrc like '%workspace_reply_domain_missing%' from pg_proc where proname = 'queue_outbound_email'` vrai |
+| 3 | Lire l'effet attendu | session de livraison, en lecture seule | `select id, slug from public.workspaces where inbound_domain is null` : les espaces dont l'envoi est désormais refusé **par son nom** (il l'était déjà, sous `card_not_available`) ; `select count(*) from public.card_sequence_enrollments e join public.workspaces w on w.id = e.workspace_id where e.status = 'active' and w.inbound_domain is null` : les relances que le prochain passage du job fermera au lieu de les mettre en file sans destinataire |
+
+**Seule, elle ne change rien de visible** à qui a un domaine. Sans domaine, l'écran livré dit encore son ancien texte
+jusqu'à la webapp de T2 — il classait déjà tout `23514` sous « invalide » —, mais plus aucune relance ne part sans
+destinataire. **Avant ou avec la webapp de T2 et T3.**
+**Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0192` ».
+
 ### 2.63 `CRM-158`, décisions 952 et 954 — la file d'envoi vidée par la boucle de `mail-sync` (à livrer avec le prochain lot)
 
 `docs/SPEC-mail-subsystem.md` §34. **Aucune migration, aucune variable, aucun secret** : le correctif est une boucle de
@@ -1402,6 +1419,10 @@ fait voir **avant**.
 perdu, et les envois mis en file entre-temps attendent la livraison suivante.
 
 ## 3. Migrations en attente
+
+**La 192** (`CRM-157` T1, décisions 951, 953 et 955), *en attente* : l'espace sans domaine refusé par son nom, et une
+relance due arrêtée (`docs/SCHEMA.md` « Migration `0192` ») — trois fonctions, une contrainte élargie, aucune donnée.
+Seule (§2.62). **Avant ou avec la webapp de T2 et T3.** Aucun geste préalable du responsable.
 
 **Aucune migration en attente depuis la fenêtre du 2026-11-19** : la 188 à la 191 ont été appliquées par elle (révision `39662806`, décision 950) ; registre à **189** lignes. *Historique de l'attente* — les paragraphes qui suivent décrivent ces migrations telles qu'elles attendaient.
 
