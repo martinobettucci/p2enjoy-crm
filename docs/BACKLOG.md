@@ -20256,7 +20256,9 @@ pas de préférence : retenu **non**, le guide étant un parcours d'administrati
 (l'envoi refusé et son message, le guide) ; captures observées ; seed (un espace sans domaine, pour le refus) ; manuel ;
 contrat.
 
-### CRM-158 — La file d'envoi n'est vidée par rien en production : une tâche planifiée qui la vide chaque minute `[ ]`
+### CRM-158 — La file d'envoi n'est vidée par rien en production : une tâche planifiée qui la vide chaque minute `[@]`
+
+*Prise en charge : p2enjoy-crm-fc depuis 2026-11-19 14:57 UTC — état avant : [ ] ; confiée par la session de livraison (e3)*
 
 **Origine** : relevé par la session de livraison (p2enjoy-crm-e3, ex-bb) le 2026-11-19, en suivant le signalement de Thomas
 (`CRM-157`), une fois le domaine entrant réglé ; arbitré le même jour (décision 952).
