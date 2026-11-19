@@ -1,6 +1,8 @@
 // @spec CRM-158 (docs/BACKLOG.md) — l'image « outbox-annuler » attend SA ligne reprogrammée, la boucle d'envoi active
 //       (docs/SPEC-mail-subsystem.md §34.7 ; décision 954)
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.3 : les images du chapitre 12, « L'inbox : lire, trier et répondre »
+// @spec CRM-157 (docs/BACKLOG.md) — tranche T2 : l'image « envoi-sans-domaine », dans un espace jetable sans domaine
+//       (docs/SPEC-mail-subsystem.md §33.4, §33.6 ; docs/manual.md §12.3)
 // @spec CRM-155 (docs/BACKLOG.md) — tranche T1 : l'image « pastilles-dans-la-liste » montre les filtres rapides
 //       (docs/SPEC-mail-subsystem.md §31.12 ; docs/DESIGN_SYSTEM.md §5.108 ; docs/manual.md §12.2)
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitre 12 ; docs/SPEC-mail-subsystem.md §19 (l'envoi, les
@@ -51,6 +53,7 @@ import { illustrer } from './illustrer'
 import { ADMIN, AFFAIRE_SOGEXIA, BIZDEV, WORKSPACE_SEED, connecterAvecLeLabs, lireService, rest, retenir, service } from './outils'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { attendreLeSort } from '../sort-envoi'
+import { demonterEspaceSansDomaine, monterEspaceSansDomaine } from '../api/espace-sans-domaine'
 
 // LE CHROMIUM COMPLET, et non le « headless shell » : seul le premier porte le lecteur PDF du navigateur, que l'image de
 // l'aperçu d'un PDF montre (`CRM-074` T3). Le choix vaut pour le fichier entier : Playwright ne le permet pas par groupe.
@@ -681,4 +684,26 @@ test('le transfert reçu, dans la cloche de Driss (CRM-156)', async ({ page }) =
 		nom: 'transfert-de-mail',
 		cibles: [ligne],
 	})
+})
+
+// `CRM-157` T2 : le formulaire d'envoi dans un espace sans domaine, monté pour l'image puis retiré — le seed garde son
+// espace unique (docs/SPEC-mail-subsystem.md §33.6). Rien n'est envoyé : « Mettre en file » est éteint.
+test('envoyer depuis un espace sans domaine : l’avertissement, « Mettre en file » éteint', async ({ page, request }) => {
+	const montage = await monterEspaceSansDomaine(request)
+	try {
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto(`/tracks/${montage.slugTrack}/${montage.slugChannel}/cards/${montage.idAffaire}`)
+		await page.getByTestId('envoi-ouvrir').click()
+		const note = page.getByTestId('envoi-domaine-absent')
+		await expect(note).toBeVisible()
+		await expect(page.getByTestId('envoi-valider')).toBeDisabled()
+		await illustrer(page, {
+			chapitre: CHAPITRE,
+			section: ECRIRE,
+			nom: 'envoi-sans-domaine',
+			cibles: [note, page.getByTestId('envoi-valider')],
+		})
+	} finally {
+		await demonterEspaceSansDomaine(request)
+	}
 })

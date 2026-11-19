@@ -5142,6 +5142,12 @@ membre lit son espace). Puis :
   ne prive d'aucun geste) ;
 - **pendant la lecture** : « Envoyer » est éteint sans motif, comme toute commande dont la capacité est en lecture.
 
+*Précisé au code (T2, 2026-11-19)* : la commande s'appelle **« Mettre en file »** dans les deux formes du formulaire —
+« Envoyer » désignait le geste, non son libellé —, et l'avertissement le nomme ainsi. **La phrase « Les réponses
+reviendront dans cette affaire… »**, écrite sous le formulaire, **se tait sans domaine** : elle contredirait
+l'avertissement (vu en capture). La lecture du domaine garde l'identifiant de l'espace même quand l'espace embarqué est
+illisible : le dépôt des pièces jointes en dépend.
+
 ### 33.5 Le connecteur
 
 **Non** (décision 951) : `crm_mail_prepare` prépare et n'envoie jamais ; l'envoi se fait à l'écran, qui dit le refus.

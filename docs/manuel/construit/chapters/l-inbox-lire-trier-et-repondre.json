@@ -4125,6 +4125,60 @@
 					"content": [
 						{
 							"type": "text",
+							"text": "Quand l'espace n'a pas de domaine d'adresses d'affaire, aucun mail ne part."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " L'adresse de retour de chaque affaire\nest faite du domaine de l'espace ; sans lui, les réponses ne reviendraient nulle part. Le formulaire le dit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "dès qu'il\ns'ouvre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", en tête, avant que vous rédigiez, et « Mettre en file » reste éteint. Vous pouvez écrire votre message : rien\nn'est perdu, et l'envoi redevient possible dès que le domaine est réglé. Seul un super-administrateur le règle, dans\nPlateforme ▸ Espaces ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "la-plateforme-espaces-membres-et-superadministrateurs"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 32"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") ; s'il ouvre lui-même ce\nformulaire, l'avertissement porte le lien vers la fiche de l'espace. Le même avertissement paraît quand vous relisez un\nmail préparé par l'assistant."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/envoi-sans-domaine.jpg",
+			"alt": "Le formulaire d'envoi dans un espace sans domaine : l'avertissement en tête, et « Mettre en file » éteint",
+			"width": 519,
+			"height": 696
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
 							"text": "« Mis en file » n'est pas « envoyé »."
 						}
 					]
@@ -4202,13 +4256,55 @@
 					[
 						{
 							"type": "text",
-							"text": "Cette affaire ne peut pas recevoir de réponse"
+							"text": "Aucun mail ne peut partir de cet espace pour l'instant"
 						}
 					],
 					[
 						{
 							"type": "text",
-							"text": "Elle est archivée ou en corbeille : la restaurer d'abord"
+							"text": "L'espace n'a pas de domaine d'adresses d'affaire : le demander à un super-administrateur"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Cette affaire ne peut plus envoyer de mail"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Elle est en corbeille, sans channel actif, ou d'un autre espace que l'adresse choisie : la restaurer, ou choisir une adresse de son espace"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Ajoutez au moins un destinataire"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Saisir une adresse"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Le message est vide"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Écrire le message"
 						}
 					]
 				],

@@ -909,6 +909,24 @@
 					"content": [
 						{
 							"type": "text",
+							"text": "L'espace doit avoir un domaine d'adresses d'affaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : sans lui, les réponses ne reviendraient nulle part, et le\nproduit refuse d'armer la relance en le disant. Seul un super-administrateur le règle."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
 							"text": "Une seule relance à la fois par affaire."
 						}
 					]
@@ -991,7 +1009,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Quatre choses la terminent, et trois d'entre elles ne vous demandent aucun geste :"
+					"text": "Cinq choses la terminent, et quatre d'entre elles ne vous demandent aucun geste :"
 				}
 			]
 		},
@@ -1075,12 +1093,39 @@
 							},
 							{
 								"type": "text",
-								"text": " depuis le bloc."
+								"text": " depuis le bloc ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "l'espace n'a plus de domaine d'adresses d'affaire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " quand un palier doit partir : rien ne part, et la relance\ns'arrête. Le bloc de la fiche le dit au-dessus de son geste ; une fois le domaine réglé, armez-la de nouveau."
 							}
 						]
 					}
 				]
 			]
+		},
+		{
+			"type": "image",
+			"src": "enchainer-des-relances-les-sequences/relance-arretee-sans-domaine.jpg",
+			"alt": "Le bloc « Relance automatique » d'une affaire dont la relance s'est arrêtée faute de domaine",
+			"width": 650,
+			"height": 427
 		},
 		{
 			"type": "heading",

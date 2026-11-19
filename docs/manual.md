@@ -3740,6 +3740,16 @@ pas d'adresse à laquelle votre correspondant pourrait répondre. Classez-le d'a
 le produit place dans chaque message qu'il envoie une adresse de retour qui pointe vers l'affaire.
 C'est écrit sous le formulaire, parce que cette adresse n'est pas la vôtre.
 
+**Quand l'espace n'a pas de domaine d'adresses d'affaire, aucun mail ne part.** L'adresse de retour de chaque affaire
+est faite du domaine de l'espace ; sans lui, les réponses ne reviendraient nulle part. Le formulaire le dit **dès qu'il
+s'ouvre**, en tête, avant que vous rédigiez, et « Mettre en file » reste éteint. Vous pouvez écrire votre message : rien
+n'est perdu, et l'envoi redevient possible dès que le domaine est réglé. Seul un super-administrateur le règle, dans
+Plateforme ▸ Espaces ([chapitre 32](#la-plateforme-espaces-membres-et-superadministrateurs)) ; s'il ouvre lui-même ce
+formulaire, l'avertissement porte le lien vers la fiche de l'espace. Le même avertissement paraît quand vous relisez un
+mail préparé par l'assistant.
+
+![Le formulaire d'envoi dans un espace sans domaine : l'avertissement en tête, et « Mettre en file » éteint](manuel/images/l-inbox-lire-trier-et-repondre/envoi-sans-domaine.jpg)
+
 **« Mis en file » n'est pas « envoyé ».** Le produit n'expédie pas au moment où vous validez : il
 inscrit votre message dans une file, qu'un service vide ensuite. Tant que ce service n'a pas parlé,
 le produit ne prétend pas que votre message est arrivé.
@@ -3750,7 +3760,10 @@ le produit ne prétend pas que votre message est arrivé.
 |---|---|
 | Vous ne pouvez pas écrire au nom de cette affaire | Demander le droit d'écriture sur son dossier |
 | Cette adresse d'expédition ne vous est pas attribuée | En choisir une autre dans la liste |
-| Cette affaire ne peut pas recevoir de réponse | Elle est archivée ou en corbeille : la restaurer d'abord |
+| Aucun mail ne peut partir de cet espace pour l'instant | L'espace n'a pas de domaine d'adresses d'affaire : le demander à un super-administrateur |
+| Cette affaire ne peut plus envoyer de mail | Elle est en corbeille, sans channel actif, ou d'un autre espace que l'adresse choisie : la restaurer, ou choisir une adresse de son espace |
+| Ajoutez au moins un destinataire | Saisir une adresse |
+| Le message est vide | Écrire le message |
 | Cette adresse a atteint son plafond du jour | Attendre le lendemain, ou demander un plafond plus haut |
 | Une pièce jointe n'est plus disponible | La retirer, puis la joindre de nouveau |
 | Les pièces jointes dépassent le plafond | Retirer des fichiers : 10 au plus, 10 Mo au total |
@@ -4265,6 +4278,9 @@ seuil de relance de cette étape ([chapitre 7](#les-affaires-figees-ce-qui-dort-
 dit : « Cette affaire n'a pas dépassé le seuil d'inactivité de son étape ». Faites avancer l'affaire,
 ou attendez — une relance automatique n'a de sens que sur une conversation qui s'est arrêtée.
 
+**L'espace doit avoir un domaine d'adresses d'affaire** : sans lui, les réponses ne reviendraient nulle part, et le
+produit refuse d'armer la relance en le disant. Seul un super-administrateur le règle.
+
 **Une seule relance à la fois par affaire.** Si une autre personne en a armé une entre-temps, le
 produit refuse la seconde plutôt que d'envoyer deux fois.
 
@@ -4278,7 +4294,7 @@ l'annonce qu'après avoir **vérifié** que la relance est bien close.
 
 ### 16.6 Ce qui arrête une relance, sans que vous ayez rien à faire
 
-Quatre choses la terminent, et trois d'entre elles ne vous demandent aucun geste :
+Cinq choses la terminent, et quatre d'entre elles ne vous demandent aucun geste :
 
 1. **une réponse du destinataire arrive sur l'affaire** — c'est la raison d'être de la cadence, et
    relancer quelqu'un qui vient de répondre est le seul défaut qu'un système de relance ne doit
@@ -4286,7 +4302,11 @@ Quatre choses la terminent, et trois d'entre elles ne vous demandent aucun geste
 2. **l'affaire cesse d'être figée** : vous la faites avancer d'une étape, vous la mettez en sommeil,
    vous l'archivez ou vous la mettez à la corbeille ;
 3. **le dernier palier est parti** : la cadence est épuisée ;
-4. **vous l'interrompez** depuis le bloc.
+4. **vous l'interrompez** depuis le bloc ;
+5. **l'espace n'a plus de domaine d'adresses d'affaire** quand un palier doit partir : rien ne part, et la relance
+   s'arrête. Le bloc de la fiche le dit au-dessus de son geste ; une fois le domaine réglé, armez-la de nouveau.
+
+![Le bloc « Relance automatique » d'une affaire dont la relance s'est arrêtée faute de domaine](manuel/images/enchainer-des-relances-les-sequences/relance-arretee-sans-domaine.jpg)
 
 ### 16.7 Ce qui n'est pas offert
 

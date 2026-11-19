@@ -23,9 +23,14 @@
 // », jamais « votre message est arrivé » — le worker n'a pas encore parlé.
 // @spec CRM-143 (docs/BACKLOG.md) — tranche T4 : la relecture d'un mail préparé précharge ses pièces, retirables, sans
 //       effacer l'objet que le mail préparé cite encore (docs/SPEC-pieces-jointes.md §17.6 ; docs/DESIGN_SYSTEM.md §5.95)
+// @spec CRM-157 (docs/BACKLOG.md) — tranche T2 : les refus d'envoi dits en clair, et l'espace sans domaine annoncé AVANT
+//       qu'on rédige — l'avertissement en tête du formulaire, « Envoyer » éteint avec ce motif, le lien du
+//       super-administrateur (docs/SPEC-mail-subsystem.md §33.3, §33.4 ; docs/DESIGN_SYSTEM.md §5.110, §5.59 ;
+//       décisions 951 et 953)
 
 import { useCallback, useEffect, useRef, useState, type DragEvent, type FormEvent } from 'react'
-import { Paperclip, Trash2, X } from 'lucide-react'
+import { Paperclip, Trash2, TriangleAlert, X } from 'lucide-react'
+import { Link } from 'react-router'
 import { Button } from '../components/ui/Button'
 import { t, type CleTraduction } from '../i18n'
 import {
@@ -36,13 +41,17 @@ import {
 	depassementPlafond,
 	deposerPiece,
 	identiteAPreselectionner,
+	lireDomaineDeLAffaire,
 	lireIdentitesDisponibles,
 	mettreEnFile,
 	retirerPiece,
 	tailleLisible,
+	type DomaineDeLAffaire,
 	type IdentiteEnvoi,
 	type NatureRefusEnvoi,
 } from '../lib/envoi'
+import { lireEstSuperadmin } from '../lib/plateforme'
+import { cheminFicheEspace } from './chemins'
 import { ecarterMailPrepare, envoyerMailPrepare, type MailPrepare, type RefusMailPrepare } from '../lib/mails-prepares'
 import { clientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
@@ -52,6 +61,10 @@ import { useRefus } from '../components/ui/RefusCommandes'
  *  clés mortes, défaut mesuré sur l'inbox de `CRM-057`. */
 const LIBELLE_REFUS: Readonly<Record<NatureRefusEnvoi, CleTraduction>> = {
 	forbidden: 'envoi.refus.forbidden',
+	domaine_absent: 'envoi.refus.domaine',
+	affaire_indisponible: 'envoi.refus.affaire',
+	destinataire_requis: 'envoi.refus.destinataire',
+	corps_requis: 'envoi.refus.corps',
 	invalide: 'envoi.refus.invalide',
 	quota: 'envoi.refus.quota',
 	piece_indisponible: 'envoi.refus.piece',
@@ -137,6 +150,9 @@ export function FormulaireEnvoi({
 	)
 	const [survol, setSurvol] = useState(false)
 	const [idEspace, setIdEspace] = useState<string | null>(null)
+	// `CRM-157` (§33.4) : le domaine de l'espace, lu avec lui — `null` pendant la lecture.
+	const [domaine, setDomaine] = useState<DomaineDeLAffaire | null>(null)
+	const [superadmin, setSuperadmin] = useState(false)
 	const champCci = useRef<HTMLInputElement | null>(null)
 	const selecteurFichiers = useRef<HTMLInputElement | null>(null)
 	const [envoi, setEnvoi] = useState(false)
@@ -149,15 +165,21 @@ export function FormulaireEnvoi({
 
 	// L'ESPACE DE L'AFFAIRE, premier segment du chemin de dépôt (§19 bis.2 point 5) : la politique de stockage ne laisse
 	// déposer que dans un espace dont on est membre, et la file vérifie que la pièce est de l'espace de l'affaire.
+	// `CRM-157` (§33.4) : LA MÊME LECTURE DIT AUSSI LE DOMAINE DE L'ESPACE. Absent, le formulaire prévient avant qu'on
+	// rédige ; inconnu (lecture en échec), rien n'est éteint, et la base dira son refus nommé (§5.59).
 	useEffect(() => {
-		if (!ouvert || clientCrm === null) return
+		if (!ouvert) return
 		let vivant = true
 		void (async () => {
-			try {
-				const reponse = await clientCrm.from('cards').select('workspace_id').eq('id', idCard).limit(1)
-				if (vivant && reponse.error === null) setIdEspace(reponse.data[0]?.workspace_id ?? null)
-			} catch {
-				// SANS ESPACE, « Joindre des fichiers » reste offert et le dépôt est refusé sur sa ligne : le refus est dit.
+			const lu = await lireDomaineDeLAffaire(clientCrm, idCard)
+			if (!vivant) return
+			setDomaine(lu)
+			// SANS ESPACE, « Joindre des fichiers » reste offert et le dépôt est refusé sur sa ligne : le refus est dit.
+			setIdEspace(lu.idEspace)
+			// LE LIEN VERS LE RÉGLAGE n'est offert qu'à qui peut le suivre : la base le dit (`est_superadmin`), jamais un rôle lu.
+			if (lu.statut === 'absent' && clientCrm !== null) {
+				const drapeau = await lireEstSuperadmin(clientCrm)
+				if (vivant) setSuperadmin(drapeau.statut === 'pret' && drapeau.donnees)
 			}
 		})()
 		return () => {
@@ -340,6 +362,9 @@ export function FormulaireEnvoi({
 	// PENDANT UN GESTE, TOUTES LES COMMANDES DU FORMULAIRE SONT INACTIVES (§5.52, §5.90) : deux gestes simultanés sur un
 	// même mail préparé ne diraient pas lequel l'a emporté.
 	const gesteEnVol = envoi || ecart
+	// `CRM-157` (§33.4, §5.59) : pendant la lecture du domaine, « Envoyer » est éteint SANS motif ; absent, il l'est AVEC.
+	const domaineAbsent = domaine?.statut === 'absent'
+	const domaineEnLecture = domaine === null
 
 	const plafond = depassementPlafond(pieces.map((piece) => piece.taille))
 	const depotEnCours = pieces.some((piece) => piece.etat === 'depot')
@@ -398,6 +423,32 @@ export function FormulaireEnvoi({
 			}}
 			data-testid="envoi-formulaire"
 		>
+			{/* `CRM-157` (§5.110) : L'AVERTISSEMENT EN TÊTE, une consigne et non une erreur — le bandeau de la relecture
+			    (§5.90). Il ne se ferme pas : il dit un état de l'espace, qui demeure tant que le domaine manque. */}
+			{domaineAbsent ? (
+				<div
+					id="envoi-domaine-absent"
+					role="note"
+					data-testid="envoi-domaine-absent"
+					className="flex items-start gap-2 rounded-sm bg-accent-soft px-3 py-2 text-sm text-accent-on-soft"
+				>
+					<TriangleAlert aria-hidden="true" size={16} className="mt-[2px] shrink-0" />
+					<p className="flex flex-col gap-1 min-w-0">
+						<span>{t('envoi.domaine.absent')}</span>
+						{superadmin && domaine?.slugEspace ? (
+							<Link
+								to={cheminFicheEspace(domaine.slugEspace)}
+								className="font-medium underline min-h-[var(--size-target)] inline-flex items-center"
+								data-testid="envoi-domaine-lien"
+							>
+								{t('envoi.domaine.lien')}
+							</Link>
+						) : (
+							<span>{t('envoi.domaine.qui')}</span>
+						)}
+					</p>
+				</div>
+			) : null}
 			<label htmlFor="envoi-identite" className="text-sm text-text-2">
 				{t('envoi.identity')}
 			</label>
@@ -593,11 +644,17 @@ export function FormulaireEnvoi({
 					{...droit}
 					variante="primaire"
 					type="submit"
-					disabled={droit.disabled === true || gesteEnVol || motifBlocage !== null}
+					disabled={
+						droit.disabled === true || gesteEnVol || motifBlocage !== null || domaineAbsent || domaineEnLecture
+					}
 					// LE MOTIF DE REFUS DE LA FICHE (§5.59) EST GARDÉ, et celui du blocage s'y ajoute : écraser le premier
-					// laisserait un bouton éteint sans dire pourquoi.
+					// laisserait un bouton éteint sans dire pourquoi. `CRM-157` : l'avertissement du domaine aussi.
 					aria-describedby={
-						[droit['aria-describedby'], motifBlocage === null ? undefined : 'envoi-blocage']
+						[
+							droit['aria-describedby'],
+							motifBlocage === null ? undefined : 'envoi-blocage',
+							domaineAbsent ? 'envoi-domaine-absent' : undefined,
+						]
 							.filter((id) => id !== undefined)
 							.join(' ') || undefined
 					}
@@ -652,7 +709,9 @@ export function FormulaireEnvoi({
 			) : null}
 			{/* L'ADRESSE DE RETOUR EST DITE, parce qu'elle n'est pas celle de l'expéditeur : les
 			    réponses reviendront dans l'affaire, et l'utilisateur doit le savoir (§5). */}
-			<p className="text-sm text-text-3">{t('envoi.replyto.hint')}</p>
+			{/* `CRM-157` (§33.4) : SANS DOMAINE, LA PROMESSE SE TAIT — les réponses ne reviendraient nulle part, et
+			    l'avertissement en tête le dit ; la laisser ferait dire au même formulaire deux choses contraires. */}
+			{domaineAbsent ? null : <p className="text-sm text-text-3">{t('envoi.replyto.hint')}</p>}
 		</form>
 	)
 }

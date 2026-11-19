@@ -1,3 +1,5 @@
+// @spec CRM-157 (docs/BACKLOG.md) — tranche T2 : l'image « relance-arretee-sans-domaine » (docs/SPEC-mail-subsystem.md §33.2 bis ;
+//       docs/manual.md §16.6), dans un espace jetable sans domaine
 // @spec CRM-158 (docs/BACKLOG.md) — la boucle d'envoi retenue pendant ces preuves, qui ne veulent aucun départ
 //       (docs/SPEC-mail-subsystem.md §34.7 bis ; décision 954)
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.3 : les images des chapitres 14, 15 et 16 — les modèles d'emails, la
@@ -18,6 +20,7 @@ import { enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { illustrer } from './illustrer'
 import { ADMIN, AFFAIRE_SOGEXIA, CHANNEL_GRANDS_COMPTES, WORKFLOW_GLOBAL, connecterAvecLeLabs, poserAffaire, rest, service } from './outils'
 import { libererLaBoucle, retenirLaBoucle } from '../sort-envoi'
+import { demonterEspaceSansDomaine, monterEspaceSansDomaine, poserRelanceArretee } from '../api/espace-sans-domaine'
 
 // `CRM-158` (docs/SPEC-mail-subsystem.md §34.7 bis) : ces preuves mettent en file des envois dus SANS vouloir qu'ils
 // partent ; la boucle d'envoi est retenue le temps du fichier, renouvelée avant chaque preuve, levée à la fin.
@@ -211,3 +214,24 @@ test('armer puis interrompre une relance sur une affaire figée', async ({ page,
 		await service(request, 'delete', `mail_outbox?card_id=eq.${AFFAIRE_FIGEE.id}&created_at=gte.${encodeURIComponent(debut)}`)
 	}
 })
+
+// `CRM-157` T2 : la relance arrêtée faute de domaine, dans un espace jetable — l'état que le job laisse (pgTAP `0179`).
+test('une relance arrêtée faute de domaine, dite sur la fiche', async ({ page, request }) => {
+	const montage = await monterEspaceSansDomaine(request)
+	try {
+		await poserRelanceArretee(request, montage)
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto(`/tracks/${montage.slugTrack}/${montage.slugChannel}/cards/${montage.idAffaire}`)
+		const bloc = page.getByTestId('bloc-sequence-card')
+		await expect(bloc.getByTestId('sequence-arretee-domaine')).toBeVisible()
+		await illustrer(page, {
+			chapitre: SEQUENCES,
+			section: 'ce-qui-arrete-une-relance-sans-que-vous-ayez-rien-a-faire',
+			nom: 'relance-arretee-sans-domaine',
+			cibles: [bloc],
+		})
+	} finally {
+		await demonterEspaceSansDomaine(request)
+	}
+})
+

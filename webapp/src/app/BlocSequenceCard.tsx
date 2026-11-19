@@ -1,5 +1,7 @@
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les commandes d'écriture lisent le refus de la fiche quand la base refuse
 //       l'écriture sur l'affaire (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
+// @spec CRM-157 (docs/BACKLOG.md) — tranche T2 : le refus d'armer dans un espace sans domaine, et la relance arrêtée faute
+//       de domaine dite au-dessus du geste d'armement (docs/SPEC-mail-subsystem.md §33.2 bis, §33.3 ; décision 955)
 // @spec CRM-063 (docs/BACKLOG.md) — modèles d'emails, signatures, séquences de relance,
 //       TRANCHE 4, SOUS-TRANCHE 4c : l'armement depuis l'affaire
 // @spec docs/SPEC-modeles-emails.md §13.8 (où le bloc vit, ses deux états, son dictionnaire fermé
@@ -37,6 +39,7 @@ import {
 	armerSequence,
 	interrompreSequence,
 	lireInscriptionActive,
+	lireRelanceArreteeFauteDeDomaine,
 	lireSequences,
 	type InscriptionSequence,
 	type IssueArmement,
@@ -59,6 +62,7 @@ const REFUS: Readonly<Record<Exclude<IssueArmement, 'arme'>, CleTraduction>> = {
 	'non-figee': 'card.sequence.refusal.notStalled',
 	'sequence-vide': 'card.sequence.refusal.emptySequence',
 	'sequence-indisponible': 'card.sequence.refusal.unavailableSequence',
+	'domaine-absent': 'card.sequence.refusal.noDomain',
 	'adresse-absente': 'card.sequence.refusal.noAddress',
 	'identite-refusee': 'card.sequence.refusal.identity',
 	refus: 'card.sequence.refusal.forbidden',
@@ -97,6 +101,8 @@ export function BlocSequenceCard({
 }: ProprietesBlocSequenceCard) {
 	const droit = useRefus()
 	const [inscription, setInscription] = useState<EtatAsync<InscriptionSequence | null>>(enChargement)
+	// `CRM-157` (§33.2 bis) : la dernière relance s'est-elle arrêtée faute de domaine ?
+	const [arreteeSansDomaine, setArreteeSansDomaine] = useState(false)
 	const [sequences, setSequences] = useState<readonly SequenceRelance[]>([])
 	const [identites, setIdentites] = useState<readonly IdentiteEnvoi[]>([])
 	const [idSequence, setIdSequence] = useState('')
@@ -137,9 +143,13 @@ export function BlocSequenceCard({
 		const rang = ++courant.current
 		setInscription(enChargement())
 		void (async () => {
-			const lue = await lireInscriptionActive(client, idCard)
+			const [lue, arretee] = await Promise.all([
+				lireInscriptionActive(client, idCard),
+				lireRelanceArreteeFauteDeDomaine(client, idCard),
+			])
 			if (rang !== courant.current) return
 			setInscription(lue)
+			setArreteeSansDomaine(arretee)
 		})()
 	}, [client, idCard, idUtilisateur, tentative])
 
@@ -284,6 +294,12 @@ export function BlocSequenceCard({
 				</div>
 			) : (
 				<div data-testid="sequence-armement" className="flex flex-col gap-3">
+					{/* `CRM-157` (§33.2 bis) : la relance s'est arrêtée faute de domaine — dit au-dessus du geste qui la réarme. */}
+					{arreteeSansDomaine ? (
+						<p data-testid="sequence-arretee-domaine" role="note" className="text-sm text-ink max-w-[72ch]">
+							{t('card.sequence.stopped.noDomain')}
+						</p>
+					) : null}
 					<p className="text-sm text-text-2 max-w-[72ch]">{t('card.sequence.help')}</p>
 					<p data-testid="sequence-vide" className="text-sm text-text-2">
 						{t('card.sequence.empty')}

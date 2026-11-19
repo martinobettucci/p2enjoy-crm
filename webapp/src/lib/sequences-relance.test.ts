@@ -27,6 +27,7 @@ import {
 	ajouterPalier,
 	armerSequence,
 	classerArmement,
+	lireRelanceArreteeFauteDeDomaine,
 	classerEcritureSequence,
 	COLONNES_INSCRIPTION,
 	COLONNES_PALIER,
@@ -718,3 +719,45 @@ describe('l’aperçu des paliers — CRM-125, §14.5', () => {
 		expect(modelesDistincts([palier('p1', 4, 'm2'), palier('p2', 6, 'm1'), palier('p3', 3, 'm2')])).toEqual(['m2', 'm1'])
 	})
 })
+
+// @verifies CRM-157 (docs/BACKLOG.md) — tranche T2 : le refus d'armer dans un espace sans domaine a son nom, et la
+//           dernière relance arrêtée faute de domaine est lue (docs/SPEC-mail-subsystem.md §33.2 bis, §33.3 ; décision 955)
+describe('l’espace sans domaine (CRM-157)', () => {
+	it('le refus d’armer est `domaine-absent`, distinct de l’adresse absente', () => {
+		expect(classerArmement(400, 'workspace_reply_domain_missing')).toBe('domaine-absent')
+		expect(classerArmement(400, 'card_not_available')).toBe('adresse-absente')
+	})
+
+	const client = (lignes: unknown[] | null, erreur: unknown = null, emis: unknown[] = []) =>
+		({
+			from: (table: string) => ({
+				select: (colonnes: string) => ({
+					eq: (colonne: string, valeur: string) => ({
+						order: (tri: string, options: unknown) => ({
+							limit: () => {
+								emis.push([table, colonnes, colonne, valeur, tri, options])
+								return Promise.resolve({ data: lignes, error: erreur })
+							},
+						}),
+					}),
+				}),
+			}),
+		}) as unknown as ClientCrm
+
+	it('seule la DERNIÈRE inscription compte, et seulement fermée faute de domaine', async () => {
+		const emis: unknown[] = []
+		expect(
+			await lireRelanceArreteeFauteDeDomaine(
+				client([{ status: 'closed', closed_reason: 'workspace_reply_domain_missing' }], null, emis),
+				'c1',
+			),
+		).toBe(true)
+		expect(emis).toEqual([['card_sequence_enrollments', 'status, closed_reason', 'card_id', 'c1', 'armed_at', { ascending: false }]])
+		expect(await lireRelanceArreteeFauteDeDomaine(client([{ status: 'closed', closed_reason: 'reply' }]), 'c1')).toBe(false)
+		expect(await lireRelanceArreteeFauteDeDomaine(client([{ status: 'active', closed_reason: null }]), 'c1')).toBe(false)
+		expect(await lireRelanceArreteeFauteDeDomaine(client([]), 'c1')).toBe(false)
+		// Une lecture en échec ne dit rien : la phrase est une aide.
+		expect(await lireRelanceArreteeFauteDeDomaine(client(null, { message: 'x' }), 'c1')).toBe(false)
+	})
+})
+

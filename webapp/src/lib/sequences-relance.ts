@@ -618,6 +618,32 @@ export async function lireInscriptionActive(
 	}
 }
 
+// @spec CRM-157 (docs/BACKLOG.md) — tranche T2 : la relance arrêtée faute de domaine, lue pour que la fiche le dise
+//       (docs/SPEC-mail-subsystem.md §33.2 bis ; docs/SPEC-modeles-emails.md §12.7 ; décision 955)
+/** Le motif de fermeture que le job pose quand l'espace n'a pas de domaine (`0192`). */
+export const MOTIF_DOMAINE_ABSENT = 'workspace_reply_domain_missing'
+
+/**
+ * La DERNIÈRE inscription de l'affaire a-t-elle été fermée faute de domaine ? La fiche le dit au-dessus du geste
+ * d'armement (§33.2 bis) ; une inscription plus récente, armée ou fermée autrement, l'efface. Un échec de lecture rend
+ * `false` : la phrase est une aide, son absence ne cache aucun geste.
+ */
+export async function lireRelanceArreteeFauteDeDomaine(client: ClientCrm, idCard: string): Promise<boolean> {
+	try {
+		const reponse = await client
+			.from('card_sequence_enrollments')
+			.select('status, closed_reason')
+			.eq('card_id', idCard)
+			.order('armed_at', { ascending: false })
+			.limit(1)
+		if (reponse.error !== null) return false
+		const derniere = reponse.data?.[0]
+		return derniere?.status === 'closed' && derniere.closed_reason === MOTIF_DOMAINE_ABSENT
+	} catch {
+		return false
+	}
+}
+
 /** Le dictionnaire fermé des refus de l'armement — §13.8, chaque ligne mesurée le 2026-08-26. */
 export type IssueArmement =
 	| 'arme'
@@ -629,6 +655,8 @@ export type IssueArmement =
 	| 'sequence-vide'
 	/** `400`, `23514`, `sequence_not_available` — refus (c). */
 	| 'sequence-indisponible'
+	/** `CRM-157` — `400`, `23514`, `workspace_reply_domain_missing` — refus (g bis) : l'espace n'a pas de domaine. */
+	| 'domaine-absent'
 	/** `400`, `23514`, `card_not_available` — refus (g). */
 	| 'adresse-absente'
 	/** `403`, `42501`, `identity_not_available` — refus (e). */
@@ -664,6 +692,8 @@ export function classerArmement(
 	if (message.includes('card_not_stalled')) return 'non-figee'
 	if (message.includes('sequence_empty')) return 'sequence-vide'
 	if (message.includes('sequence_not_available')) return 'sequence-indisponible'
+	// `CRM-157` (docs/SPEC-mail-subsystem.md §33.3) : le domaine absent a son nom, distinct de l'adresse de l'affaire.
+	if (message.includes('workspace_reply_domain_missing')) return 'domaine-absent'
 	if (message.includes('card_not_available')) return 'adresse-absente'
 	if (message.includes('identity_not_available')) return 'identite-refusee'
 	if (message.includes('forbidden')) return 'refus'

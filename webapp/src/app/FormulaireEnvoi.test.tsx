@@ -1,3 +1,7 @@
+// @verifies CRM-157 (docs/BACKLOG.md) — tranche T2 : l'espace sans domaine annoncé avant qu'on rédige — l'avertissement,
+//           « Mettre en file » éteint et décrit, le lien du seul super-administrateur, la lecture illisible qui n'éteint
+//           rien — et les refus de la file dits un par cause (docs/SPEC-mail-subsystem.md §33.3, §33.4 ;
+//           docs/DESIGN_SYSTEM.md §5.110)
 // @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : « Ajouter Cci », « Joindre des fichiers », le dépôt immédiat, le
 //           retrait, les plafonds qui éteignent l'envoi avec leur motif, l'annulation qui retire les dépôts
 // @verifies docs/SPEC-mail-subsystem.md §19 bis.2, §19 bis.5 ; docs/DESIGN_SYSTEM.md §5.4 sexies ; décisions 719 et 720
@@ -16,8 +20,16 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { MemoryRouter } from 'react-router'
 
-const injecte: { appels: Array<[string, ...unknown[]]>; identites: unknown[] } = { appels: [], identites: [] }
+const injecte: {
+	appels: Array<[string, ...unknown[]]>
+	identites: unknown[]
+	/** `CRM-157` : l'espace embarqué de l'affaire (`null` : illisible), le drapeau et le refus de la mise en file. */
+	espace: { slug: string; inbound_domain: string | null } | null
+	superadmin: boolean
+	refusFile: { code: string; message: string } | null
+} = { appels: [], identites: [], espace: null, superadmin: false, refusFile: null }
 
 /** Les identités du seed vues par une administratrice : le service, et deux des siennes, la seconde par défaut. */
 const IDENTITES_ADMINISTRATRICE = [
@@ -30,7 +42,8 @@ const client = {
 	from: (table: string) => ({
 		select: () => ({
 			eq: () => ({
-				limit: () => Promise.resolve({ data: [{ workspace_id: 'espace-1' }], error: null }),
+				limit: () =>
+					Promise.resolve({ data: [{ workspace_id: 'espace-1', workspaces: injecte.espace }], error: null }),
 			}),
 			order: () =>
 				Promise.resolve({
@@ -40,7 +53,9 @@ const client = {
 		}),
 	}),
 	rpc: (nom: string, args: unknown) => {
+		if (nom === 'est_superadmin') return Promise.resolve({ data: injecte.superadmin, error: null, status: 200 })
 		injecte.appels.push(['rpc', nom, args])
+		if (injecte.refusFile !== null) return Promise.resolve({ data: null, error: injecte.refusFile, status: 400 })
 		return Promise.resolve({ data: 'file-1', error: null, status: 200 })
 	},
 	storage: {
@@ -70,6 +85,9 @@ const { FormulaireEnvoi } = await import('./FormulaireEnvoi')
 beforeEach(() => {
 	injecte.appels = []
 	injecte.identites = IDENTITES_ADMINISTRATRICE
+	injecte.espace = { slug: 'p2enjoy', inbound_domain: 'crm.p2enjoy.test' }
+	injecte.superadmin = false
+	injecte.refusFile = null
 })
 afterEach(cleanup)
 
@@ -276,3 +294,66 @@ describe('FormulaireEnvoi — la relecture d’un mail préparé', () => {
 		await waitFor(() => expect(valeur(screen.getByRole('combobox'))).toBe('id-2'))
 	})
 })
+
+describe('FormulaireEnvoi — l’espace sans domaine (CRM-157, §33.4)', () => {
+	async function ouvrirDansUnRouteur() {
+		render(
+			<MemoryRouter>
+				<FormulaireEnvoi idCard="card-1" destinataire="client@exemple.fr" objet="Devis" />
+			</MemoryRouter>,
+		)
+		await userEvent.click(screen.getByTestId('envoi-ouvrir'))
+		await screen.findByRole('combobox')
+	}
+
+	it('prévient avant qu’on rédige : l’avertissement en tête, « Mettre en file » éteint et décrit par lui', async () => {
+		injecte.espace = { slug: 'crm', inbound_domain: null }
+		await ouvrirDansUnRouteur()
+		const note = await screen.findByRole('note')
+		expect(note.textContent).toContain('il n’a pas de domaine d’adresses d’affaire')
+		expect(note.textContent).toContain('Un super-administrateur le règle dans Plateforme ▸ Espaces.')
+		expect(screen.queryByTestId('envoi-domaine-lien')).toBeNull()
+		const valider = screen.getByTestId('envoi-valider')
+		expect(valider).toHaveProperty('disabled', true)
+		expect(valider.getAttribute('aria-describedby')).toContain('envoi-domaine-absent')
+		// La promesse du retour des réponses se tait : elle contredirait l'avertissement.
+		expect(screen.queryByText(/Les réponses reviendront dans cette affaire/)).toBeNull()
+		// ON PEUT RÉDIGER : rien n'est perdu.
+		await userEvent.type(screen.getByLabelText('Message'), 'Bonjour')
+		expect((screen.getByLabelText('Message') as HTMLTextAreaElement).value).toBe('Bonjour')
+	})
+
+	it('au super-administrateur, l’avertissement porte le lien vers la fiche de l’espace', async () => {
+		injecte.espace = { slug: 'crm', inbound_domain: null }
+		injecte.superadmin = true
+		await ouvrirDansUnRouteur()
+		const lien = await screen.findByTestId('envoi-domaine-lien')
+		expect(lien.getAttribute('href')).toBe('/plateforme/espaces/crm')
+		expect(lien.textContent).toBe('Régler le domaine de l’espace')
+	})
+
+	it('avec un domaine, aucun avertissement ; espace illisible, rien n’est éteint (§5.59)', async () => {
+		await ouvrirDansUnRouteur()
+		await waitFor(() => expect(screen.getByTestId('envoi-valider')).toHaveProperty('disabled', false))
+		expect(screen.queryByRole('note')).toBeNull()
+		cleanup()
+		injecte.espace = null
+		await ouvrirDansUnRouteur()
+		await waitFor(() => expect(screen.getByTestId('envoi-valider')).toHaveProperty('disabled', false))
+		expect(screen.queryByRole('note')).toBeNull()
+	})
+
+	it('le refus de la base est dit par sa cause, jamais « affaire indisponible » pour un domaine absent', async () => {
+		injecte.refusFile = { code: '23514', message: 'workspace_reply_domain_missing' }
+		await ouvrirDansUnRouteur()
+		await userEvent.type(screen.getByLabelText('Message'), 'Bonjour')
+		await waitFor(() => expect(screen.getByTestId('envoi-valider')).toHaveProperty('disabled', false))
+		await userEvent.click(screen.getByTestId('envoi-valider'))
+		expect((await screen.findByRole('alert')).textContent).toBe(
+			'Aucun mail ne peut partir de cet espace pour l’instant : il n’a pas de domaine d’adresses d’affaire, et les réponses ne reviendraient nulle part. Un super-administrateur le règle dans Plateforme ▸ Espaces.',
+		)
+		// LA SAISIE EST GARDÉE (§5.4 sexies).
+		expect((screen.getByLabelText('Message') as HTMLTextAreaElement).value).toBe('Bonjour')
+	})
+})
+

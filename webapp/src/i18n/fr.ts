@@ -588,7 +588,19 @@ export const fr = {
 	'envoi.file.aria': 'Confirmation d’envoi',
 	'envoi.replyto.hint': "Les réponses reviendront dans cette affaire, quelle que soit l'adresse de votre correspondant.",
 	'envoi.refus.forbidden': "Vous ne pouvez pas écrire au nom de cette affaire, ou emprunter cette adresse d'expédition.",
-	'envoi.refus.invalide': "Cette affaire ne peut pas recevoir de réponse, ou le message n'a pas de destinataire.",
+	// @spec CRM-157 (docs/BACKLOG.md) T2, docs/SPEC-mail-subsystem.md §33.3, §33.4 — les refus d'envoi dits en clair, un par
+	//       cause, et l'avertissement de l'espace sans domaine
+	'envoi.refus.domaine':
+		'Aucun mail ne peut partir de cet espace pour l’instant : il n’a pas de domaine d’adresses d’affaire, et les réponses ne reviendraient nulle part. Un super-administrateur le règle dans Plateforme ▸ Espaces.',
+	'envoi.refus.affaire':
+		'Cette affaire ne peut plus envoyer de mail : elle est en corbeille, n’est rangée dans aucun channel actif, ou appartient à un autre espace que l’adresse d’expédition choisie.',
+	'envoi.refus.destinataire': 'Ajoutez au moins un destinataire.',
+	'envoi.refus.corps': 'Le message est vide : écrivez-le avant de l’envoyer.',
+	'envoi.refus.invalide': 'Le message a été refusé par le CRM. Vérifiez-le, puis réessayez.',
+	'envoi.domaine.absent':
+		'Aucun mail ne peut partir de cet espace pour l’instant : il n’a pas de domaine d’adresses d’affaire, et les réponses ne reviendraient nulle part. Vous pouvez rédiger ; «\u00a0Mettre en file\u00a0» s’activera une fois le domaine réglé.',
+	'envoi.domaine.lien': 'Régler le domaine de l’espace',
+	'envoi.domaine.qui': 'Un super-administrateur le règle dans Plateforme ▸ Espaces.',
 	'envoi.refus.quota': "Cette adresse d'expédition a atteint son plafond du jour.",
 	'envoi.refus.network': "Le message n'a pas pu être mis en file. Vérifiez votre connexion, puis réessayez.",
 	'envoi.refus.unknown': "Le message n'a pas pu être mis en file.",
@@ -4848,6 +4860,11 @@ export const fr = {
 	'card.sequence.refusal.emptySequence':
 		'Cette séquence ne porte aucun palier et n’enverrait rien.',
 	'card.sequence.refusal.unavailableSequence': 'Cette séquence n’est pas disponible.',
+	// @spec CRM-157 (docs/BACKLOG.md) T2, docs/SPEC-mail-subsystem.md §33.2 bis, §33.3 — l'espace sans domaine, pour les relances
+	'card.sequence.refusal.noDomain':
+		'Aucune relance ne peut partir de cet espace pour l’instant : il n’a pas de domaine d’adresses d’affaire, et les réponses ne reviendraient nulle part. Un super-administrateur le règle dans Plateforme ▸ Espaces.',
+	'card.sequence.stopped.noDomain':
+		'La relance s’est arrêtée : l’espace n’a pas de domaine d’adresses d’affaire, et les réponses ne reviendraient nulle part. Réarmez-la une fois le domaine réglé.',
 	'card.sequence.refusal.noAddress':
 		'L’adresse de réponse de cette affaire ne se compose pas. Les réponses ne reviendraient nulle part.',
 	'card.sequence.refusal.identity':

@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-157` T2 — l'envoi impossible sans domaine, dit avant qu'on rédige ; les refus d'envoi dits en clair
+
+- Le formulaire d'envoi (et la relecture d'un mail préparé) prévient en tête quand l'espace n'a pas de domaine
+  d'adresses d'affaire : « Mettre en file » est éteint avec ce motif, la rédaction reste possible, et le
+  super-administrateur y trouve le lien vers la fiche de l'espace.
+- Les refus de la mise en file sont dits un par cause : le domaine absent, l'affaire indisponible, le destinataire
+  manquant, le message vide — et non plus « Cette affaire ne peut pas recevoir de réponse, ou le message n'a pas de
+  destinataire ».
+- Le refus d'armer une relance sans domaine a son texte ; une relance arrêtée faute de domaine est dite sur la fiche.
+- Manuel §12.3, §16.5, §16.6 ; `docs/DESIGN_SYSTEM.md` §5.110 ; `docs/SPEC-mail-subsystem.md` §33.3, §33.4.
+
 ### `CRM-158` — la file d'envoi se vide seule : la boucle d'envoi de `mail-sync`
 
 - **Défaut de production corrigé** (décision 952) : rien n'appelait la passe d'envoi, et aucun mail ne partait. `mail-sync`

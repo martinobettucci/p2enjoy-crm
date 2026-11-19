@@ -20270,8 +20270,16 @@ livraison. Connecteur : non (décision 951).
   nommé), et `0016`, `0030`, `0056`, `0096`, `0151`, `0098`, `0147` vertes ; types inchangés ; API
   `domaine-absent-envoi` 2/2 dans l'espace jetable (`e2e/api/espace-sans-domaine.ts`) ; `docs/SCHEMA.md`
   « Migration `0192` », `docs/SPEC-modeles-emails.md` §12.4 (ligne g bis) ; contrat §2.62 et §3.
-- [ ] **T2** — l'écran d'envoi : les refus dits en clair, l'avertissement et « Envoyer » éteint, le refus d'armer une
+- [x] **T2** — l'écran d'envoi : les refus dits en clair, l'avertissement et « Envoyer » éteint, le refus d'armer une
   relance, la relance arrêtée dite sur la fiche ; unitaires ; E2E ; captures ; manuel (l'envoi).
+  *Faite le 2026-11-19* : `envoi.ts` (les refus reconnus à leur nom, `lireDomaineDeLAffaire`), `FormulaireEnvoi.tsx`
+  (l'avertissement en tête, « Mettre en file » éteint et décrit, le lien du seul super-administrateur, la promesse du
+  retour des réponses tue sans domaine — vue en capture), `sequences-relance.ts` et `BlocSequenceCard.tsx` (le refus
+  d'armer, la relance arrêtée dite) ; unitaires 903 (dans l'état « origine + T2 »), suite webapp 6 091 ; E2E
+  `domaine-absent-envoi` 7/7 (souris, clavier, super-administrateur, refus nommé lecture contournée, relecture,
+  relance arrêtée, quatre paliers) dans l'espace jetable ; captures `docs/captures/CRM-157` observées ; manuel §12.3
+  (l'avertissement, quatre refus) et §16.5, §16.6 (le refus d'armer, la cinquième fin), deux images, verify-manual 168
+  sans anomalie ; types : les quatre configurations.
 - [ ] **T3** — le guide : trois étapes mail à la place de « Raccorder une boîte de réception » ; unitaires ; E2E ;
   captures ; manuel (le démarrage) ; `[P]`.
 

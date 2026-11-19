@@ -13,6 +13,9 @@
 // module ne fait donc qu'appeler la garde et classer ses refus — six, dont chacun demande à
 // l'utilisateur un geste différent.
 
+// @spec CRM-157 (docs/BACKLOG.md) — tranche T2 : les refus d'envoi dits en clair — le domaine absent, l'affaire
+//       indisponible, le destinataire, le corps, reconnus À LEUR NOM — et la lecture du domaine de l'espace de l'affaire,
+//       qui prévient avant qu'on rédige (docs/SPEC-mail-subsystem.md §33.3, §33.4 ; décisions 951 et 953)
 import { classerErreur, type ErreurDonnees } from './async'
 import type { ClientCrm } from './supabase'
 
@@ -94,7 +97,15 @@ export function identiteArmementAPreselectionner(
 export type NatureRefusEnvoi =
 	/** `42501` : ni le droit d'écrire sur l'affaire, ni le droit d'emprunter cette identité. */
 	| 'forbidden'
-	/** `23514` : affaire fermée, sans adresse, ou message sans destinataire. */
+	/** `CRM-157` — `workspace_reply_domain_missing` : l'espace n'a pas de domaine d'adresses d'affaire. */
+	| 'domaine_absent'
+	/** `CRM-157` — `card_not_available` : l'affaire en corbeille, sans channel actif, ou d'un autre espace que l'identité. */
+	| 'affaire_indisponible'
+	/** `CRM-157` — `recipient_required`. */
+	| 'destinataire_requis'
+	/** `CRM-157` — `body_required`. */
+	| 'corps_requis'
+	/** Un autre `23514`, que l'écran ne sait pas nommer : dit sans prétendre une cause. */
 	| 'invalide'
 	/** `23505` : le quota journalier de l'identité est atteint. */
 	| 'quota'
@@ -106,6 +117,48 @@ export type NatureRefusEnvoi =
 	| 'unknown'
 
 export type RefusEnvoi = { readonly nature: NatureRefusEnvoi; readonly detail: string }
+
+/** Les refus `23514` que l'écran nomme (`CRM-157`, §33.3) — un dictionnaire fermé ; le reste est « invalide ». */
+const NATURES_23514: Readonly<Record<string, NatureRefusEnvoi>> = {
+	workspace_reply_domain_missing: 'domaine_absent',
+	card_not_available: 'affaire_indisponible',
+	recipient_required: 'destinataire_requis',
+	body_required: 'corps_requis',
+}
+
+/**
+ * Le domaine de l'espace d'une affaire (`CRM-157`, §33.4), lu à l'ouverture du formulaire, sous la RLS de l'appelant :
+ * `present`, `absent` (l'envoi est impossible : le formulaire prévient et éteint « Envoyer »), ou `inconnu` — la lecture
+ * a échoué, et rien n'est éteint : la base refusera, et le refus nommé sera dit (§5.59).
+ */
+export type DomaineDeLAffaire = {
+	readonly statut: 'present' | 'absent' | 'inconnu'
+	/** L'espace de l'affaire, dès que la ligne est lue — les pièces jointes en ont besoin, domaine lisible ou non. */
+	readonly idEspace: string | null
+	/** Son identifiant court, pour le lien du super-administrateur ; `null` quand l'espace n'a pas pu être lu. */
+	readonly slugEspace: string | null
+}
+
+/** Les colonnes de la lecture : l'espace de l'affaire, son identifiant court et son domaine. Exportées pour la preuve. */
+export const COLONNES_DOMAINE_AFFAIRE = 'workspace_id, workspaces(slug, inbound_domain)'
+
+export async function lireDomaineDeLAffaire(client: ClientCrm | null, idCard: string): Promise<DomaineDeLAffaire> {
+	const inconnu: DomaineDeLAffaire = { statut: 'inconnu', idEspace: null, slugEspace: null }
+	if (client === null) return inconnu
+	try {
+		const reponse = await client.from('cards').select(COLONNES_DOMAINE_AFFAIRE).eq('id', idCard).limit(1)
+		if (reponse.error !== null) return inconnu
+		const ligne = reponse.data?.[0]
+		if (ligne === undefined) return inconnu
+		const espace = ligne.workspaces
+		// L'ESPACE EMBARQUÉ ILLISIBLE N'EST PAS UNE ABSENCE DE DOMAINE : « inconnu », qui n'éteint rien (§5.59).
+		if (espace === null || espace === undefined) return { statut: 'inconnu', idEspace: ligne.workspace_id, slugEspace: null }
+		const domaine = typeof espace.inbound_domain === 'string' ? espace.inbound_domain.trim() : ''
+		return { statut: domaine === '' ? 'absent' : 'present', idEspace: ligne.workspace_id, slugEspace: espace.slug }
+	} catch {
+		return inconnu
+	}
+}
 
 /**
  * Classe le refus d'une mise en file.
@@ -127,7 +180,12 @@ export function classerRefusEnvoi(
 	if (detail === 'too_many_attachments' || detail === 'attachments_too_large') {
 		return { nature: 'pieces_plafond', detail }
 	}
-	if (code === '23514') return { nature: 'invalide', detail }
+	// `CRM-157` (§33.3) : LES REFUS DE FORME SONT RECONNUS À LEUR NOM, écrit dans la migration et vérifié par pgTAP —
+	// jamais une phrase. Les ranger tous sous « invalide » faisait dire « affaire indisponible » à un espace sans domaine.
+	if (code === '23514') {
+		const nature = NATURES_23514[detail]
+		return { nature: nature ?? 'invalide', detail }
+	}
 	if (statutHttp === 401 || statutHttp === 403) return { nature: 'forbidden', detail }
 	if (statutHttp === undefined || statutHttp === 0) return { nature: 'network', detail }
 	return { nature: 'unknown', detail }

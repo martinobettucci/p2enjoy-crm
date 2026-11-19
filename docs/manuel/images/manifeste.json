@@ -2637,6 +2637,27 @@
 			]
 		},
 		{
+			"fichier": "enchainer-des-relances-les-sequences/relance-arretee-sans-domaine.jpg",
+			"largeur": 650,
+			"hauteur": 427,
+			"chapitre": "enchainer-des-relances-les-sequences",
+			"section": "ce-qui-arrete-une-relance-sans-que-vous-ayez-rien-a-faire",
+			"pleinePage": false,
+			"libelles": [
+				"Adresse d'expédition",
+				"Adresse d'expédition Choisissez une adresse Envoi de Camille — sonde 157 — camille@sonde-157.test Envoi de Camille Aubert — admin@p2enjoy.test Factures — mot de passe refusé — factures@p2enjoy.test Relances — serveur injoignable — relances@p2enjoy.test",
+				"Armer la relance",
+				"Aucune relance n'est armée sur cette affaire.",
+				"Choisissez une adresse",
+				"Choisissez une séquence",
+				"La relance s'est arrêtée : l'espace n'a pas de domaine d'adresses d'affaire, et les réponses ne reviendraient nulle part. Réarmez-la une fois le domaine réglé.",
+				"Relance automatique",
+				"Séquence",
+				"Séquence Choisissez une séquence Relance en trois temps Sonde 157 — relance",
+				"Une séquence enchaîne plusieurs modèles à des délais choisis. Elle s'arrête dès qu'une réponse arrive."
+			]
+		},
+		{
 			"fichier": "enchainer-des-relances-les-sequences/relance-automatique.jpg",
 			"largeur": 650,
 			"hauteur": 375,
@@ -5200,6 +5221,29 @@
 				"Proposition lot 2.pdf",
 				"Proposition lot 2.pdf 2,3 Mo Envoi du fichier…",
 				"Retirer Proposition lot 2.pdf"
+			]
+		},
+		{
+			"fichier": "l-inbox-lire-trier-et-repondre/envoi-sans-domaine.jpg",
+			"largeur": 519,
+			"hauteur": 696,
+			"chapitre": "l-inbox-lire-trier-et-repondre",
+			"section": "ecrire-et-repondre",
+			"pleinePage": false,
+			"libelles": [
+				"Ajouter Cci",
+				"Annuler",
+				"Aucun mail ne peut partir de cet espace pour l'instant : il n'a pas de domaine d'adresses d'affaire, et les réponses ne reviendraient nulle part. Vous pouvez rédiger ; « Mettre en file » s'activera une fois le domaine réglé.",
+				"Aucun mail ne peut partir de cet espace pour l'instant : il n'a pas de domaine d'adresses d'affaire, et les réponses ne reviendraient nulle part. Vous pouvez rédiger ; « Mettre en file » s'activera une fois le domaine réglé. Un super-administrateur le règle dans Plateforme ▸ Espaces.",
+				"Destinataires",
+				"Envoi de Camille — sonde 157 — camille@sonde-157.test",
+				"Expédier depuis",
+				"Joindre des fichiers",
+				"Message",
+				"Mettre en file",
+				"Objet",
+				"Un super-administrateur le règle dans Plateforme ▸ Espaces.",
+				"adresse@exemple.fr, autre@exemple.fr"
 			]
 		},
 		{

@@ -1,5 +1,6 @@
 // @spec CRM-157 (docs/BACKLOG.md) — tranche T1 : l'espace jetable sans domaine d'adresses d'affaire, monté par les preuves
 //       du refus au lieu d'un seed étendu (docs/SPEC-mail-subsystem.md §33.6 : le seed garde son espace unique, `CRM-005`)
+// @spec CRM-157 (docs/BACKLOG.md) — tranche T2 : `poserRelanceArretee`, l'état que le job laisse (§33.2 bis)
 // @spec docs/SPEC-mail-subsystem.md §33.2, §33.7 ; docs/SPEC-onboarding.md §8 ter.2 (le patron de l'espace neuf monté par
 //       une preuve) ; docs/JOURNAL.md décisions 951 et 953
 //
@@ -33,6 +34,8 @@ const json = (entetes: Record<string, string>) => ({ ...entetes, 'Content-Type':
 export async function demonterEspaceSansDomaine(requete: APIRequestContext): Promise<void> {
 	const filtre = `workspace_id=eq.${ESPACE_SANS_DOMAINE.id}`
 	for (const table of [
+		'card_sequence_enrollments',
+		'mail_sequences',
 		'mail_drafts',
 		'mail_outbox',
 		'cards',
@@ -124,4 +127,37 @@ export async function monterEspaceSansDomaine(requete: APIRequestContext): Promi
 	const idIdentite = ((await identite.json()) as { id: string }[])[0]!.id
 
 	return { idAffaire, idIdentite, titreAffaire, slugTrack, slugChannel }
+}
+
+/**
+ * Une inscription FERMÉE par le job faute de domaine, telle que `app.executer_sequences_relance` la laisse (pgTAP `0179`) :
+ * la preuve écran n'attend pas le passage quotidien du job, elle pose l'état qu'il produit — la fermeture elle-même est
+ * prouvée en base.
+ */
+export async function poserRelanceArretee(request: APIRequestContext, m: MontageSansDomaine): Promise<void> {
+	const service = { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=representation' }
+	const sequence = await request.post(rest('mail_sequences'), {
+		headers: service,
+		data: { workspace_id: ESPACE_SANS_DOMAINE.id, name: 'Sonde 157 — relance' },
+	})
+	expect(sequence.status(), await sequence.text()).toBe(201)
+	const idSequence = ((await sequence.json()) as { id: string }[])[0]!.id
+	const placement = await request.get(rest(`card_placements?card_id=eq.${m.idAffaire}&select=id`), { headers: enTetesService() })
+	const [rattachement] = (await placement.json()) as { id: string }[]
+	expect(rattachement?.id, 'l’affaire de l’espace jetable a son rattachement').toBeTruthy()
+	const idPlacement = rattachement?.id ?? ''
+	const inscription = await request.post(rest('card_sequence_enrollments'), {
+		headers: service,
+		data: {
+			workspace_id: ESPACE_SANS_DOMAINE.id,
+			card_id: m.idAffaire,
+			placement_id: idPlacement,
+			sequence_id: idSequence,
+			identity_id: m.idIdentite,
+			status: 'closed',
+			closed_reason: 'workspace_reply_domain_missing',
+			closed_at: new Date().toISOString(),
+		},
+	})
+	expect(inscription.status(), await inscription.text()).toBe(201)
 }

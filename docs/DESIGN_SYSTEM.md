@@ -9003,9 +9003,10 @@ disent que de quoi ils ont l'air.
   depuis », et ne se ferme pas : il dit un état de l'espace, qui demeure tant que le domaine manque. Pour un
   super-administrateur, il porte le lien « Régler le domaine de l'espace » (§5.5, lien) ; pour les autres, la même phrase
   sans lien (§5.59).
-- **« ENVOYER » ÉTEINT** (« Mettre en file » en relecture) suit la commande refusée du §5.59 : montée, `disabled`,
-  lisible, jamais masquée ; sa description accessible (`aria-describedby`) est l'avertissement. Les champs restent
-  actifs : on peut rédiger.
+- **« METTRE EN FILE » ÉTEINT** — *précisé au code : c'est le libellé de la commande dans les deux formes du formulaire* —
+  suit la commande refusée du §5.59 : montée, `disabled`, lisible, jamais masquée ; sa description accessible
+  (`aria-describedby`) est l'avertissement. Les champs restent actifs : on peut rédiger. **La phrase qui promet le retour
+  des réponses, sous le formulaire, se tait** sans domaine : elle contredisait l'avertissement, vu en capture.
 - **LES REFUS D'ENVOI** se disent sous les boutons, `role="alert"`, la saisie conservée (§5.4 sexies, §5.90), avec leurs
   textes propres (`docs/SPEC-mail-subsystem.md` §33.3). Aucun texte ne regroupe deux causes.
 - **LE GUIDE** (§5.17, §5.49) gagne trois lignes de la même forme, et perd « Raccorder une boîte de réception ». L'étape

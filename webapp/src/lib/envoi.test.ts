@@ -10,6 +10,8 @@
 
 import { describe, expect, it } from 'vitest'
 import {
+	COLONNES_DOMAINE_AFFAIRE,
+	lireDomaineDeLAffaire,
 	BUCKET_PIECES,
 	PIECES_MAX,
 	PIECES_OCTETS_MAX,
@@ -64,7 +66,19 @@ describe('le classement des refus de la file', () => {
 		expect(classerRefusEnvoi(400, '23514', 'attachment_not_available').nature).toBe('piece_indisponible')
 		expect(classerRefusEnvoi(400, '23514', 'too_many_attachments').nature).toBe('pieces_plafond')
 		expect(classerRefusEnvoi(400, '23514', 'attachments_too_large').nature).toBe('pieces_plafond')
-		expect(classerRefusEnvoi(400, '23514', 'card_not_available').nature).toBe('invalide')
+		// RÉVISÉE PAR `CRM-157` (2026-11-19, §33.3) : `card_not_available` a désormais sa nature propre ; seul un `23514`
+		// que l'écran ne sait pas nommer reste « invalide ».
+		expect(classerRefusEnvoi(400, '23514', 'card_not_available').nature).toBe('affaire_indisponible')
+		expect(classerRefusEnvoi(400, '23514', 'autre_refus').nature).toBe('invalide')
+	})
+
+	// @verifies CRM-157 (docs/BACKLOG.md) — tranche T2 : chaque refus de forme reconnu À SON NOM (§33.3)
+	it('CRM-157 : le domaine absent, l’affaire, le destinataire et le corps ont chacun leur nature', () => {
+		expect(classerRefusEnvoi(400, '23514', 'workspace_reply_domain_missing').nature).toBe('domaine_absent')
+		expect(classerRefusEnvoi(400, '23514', 'recipient_required').nature).toBe('destinataire_requis')
+		expect(classerRefusEnvoi(400, '23514', 'body_required').nature).toBe('corps_requis')
+		// Le nom seul ne suffit pas : un autre code ne devient pas un refus de forme.
+		expect(classerRefusEnvoi(403, '42501', 'workspace_reply_domain_missing').nature).toBe('forbidden')
 	})
 
 	it('garde le quota, le refus d’écriture et la panne de transport', () => {
@@ -217,3 +231,54 @@ describe('l’identité que le bloc d’armement présélectionne (décisions 80
 		expect(identiteArmementAPreselectionner(identites, null, null)).toBe('')
 	})
 })
+
+// @verifies CRM-157 (docs/BACKLOG.md) — tranche T2 : le domaine de l'espace de l'affaire, lu sous la RLS de l'appelant
+//           (docs/SPEC-mail-subsystem.md §33.4)
+describe('le domaine de l’espace d’une affaire (CRM-157, §33.4)', () => {
+	const client = (reponse: unknown, emis: unknown[] = []) =>
+		({
+			from: (table: string) => ({
+				select: (colonnes: string) => ({
+					eq: (colonne: string, valeur: string) => ({
+						limit: () => {
+							emis.push([table, colonnes, colonne, valeur])
+							return Promise.resolve(reponse)
+						},
+					}),
+				}),
+			}),
+		}) as unknown as ClientCrm
+
+	it('lit l’espace embarqué de l’affaire : présent, absent (nul ou blanc)', async () => {
+		const emis: unknown[] = []
+		const present = await lireDomaineDeLAffaire(
+			client({ data: [{ workspace_id: 'w', workspaces: { slug: 'crm', inbound_domain: 'crm.test' } }], error: null }, emis),
+			'c1',
+		)
+		expect(present).toEqual({ statut: 'present', idEspace: 'w', slugEspace: 'crm' })
+		expect(emis).toEqual([['cards', COLONNES_DOMAINE_AFFAIRE, 'id', 'c1']])
+		for (const domaine of [null, '  ']) {
+			const absent = await lireDomaineDeLAffaire(
+				client({ data: [{ workspace_id: 'w', workspaces: { slug: 'crm', inbound_domain: domaine } }], error: null }),
+				'c1',
+			)
+			expect(absent).toEqual({ statut: 'absent', idEspace: 'w', slugEspace: 'crm' })
+		}
+	})
+
+	it('illisible n’est pas absent : « inconnu », l’espace gardé quand la ligne l’est', async () => {
+		expect(await lireDomaineDeLAffaire(client({ data: [{ workspace_id: 'w', workspaces: null }], error: null }), 'c1')).toEqual(
+			{ statut: 'inconnu', idEspace: 'w', slugEspace: null },
+		)
+		expect(await lireDomaineDeLAffaire(client({ data: [], error: null }), 'c1')).toEqual({
+			statut: 'inconnu',
+			idEspace: null,
+			slugEspace: null,
+		})
+		expect(
+			await lireDomaineDeLAffaire(client({ data: null, error: { message: 'x' }, status: 500 }), 'c1'),
+		).toMatchObject({ statut: 'inconnu' })
+		expect(await lireDomaineDeLAffaire(null, 'c1')).toMatchObject({ statut: 'inconnu' })
+	})
+})
+
