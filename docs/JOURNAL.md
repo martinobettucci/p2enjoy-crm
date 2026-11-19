@@ -41132,3 +41132,22 @@ file depuis 13:45 UTC, jamais réservés ; la route `/internal/v1/outbox/flush` 
 et le seed ; aucune tâche planifiée ne la cadence en production.
 **Réponses** : ne pas déclencher l'envoi à la main ; le correctif avec le prochain lot ; connecteur MCP : non.
 **Conséquences** : `CRM-158` au backlog, confiée à une session libre ; les mails de Thomas partiront avec la livraison.
+
+### décision 952 — `CRM-157` : qui règle le domaine, quelle identité compte, « Envoyer » éteint ; la lecture ciblée du design system
+
+*2026-11-19, session 152dd27d (p2enjoy-crm-c7, ex-45), arbitrage du responsable (`AskUserQuestion`, deux tours), avant la
+spécification.*
+**Contexte** : `CRM-157` (décision 951) laissait à spécifier qui règle le domaine des adresses d'affaire depuis le guide,
+la mesure de l'étape « identité d'envoi », et la conduite du formulaire d'envoi quand l'espace n'a pas de domaine.
+**Questions et réponses** :
+- *Qui règle le domaine depuis le guide ?* — **Le super-administrateur seul**, comme aujourd'hui, dans Plateforme ▸
+  Espaces : aucun droit nouveau. L'étape explique le domaine, le préfixe et l'alias à créer chez l'hébergeur ; elle mène
+  un super-administrateur au réglage, et dit à un administrateur d'espace de le demander. *Écarté* : ouvrir le réglage à
+  l'administrateur de l'espace (fonction nouvelle).
+- *Quand l'étape « identité d'envoi » est-elle faite ?* — **La sienne** : dès que la personne qui regarde a une identité
+  d'envoi testée avec succès. *Écarté* : tous les membres qui envoient.
+- *« Envoyer » quand l'espace n'a pas de domaine ?* — **Prévenir et éteindre** : un avertissement en tête du formulaire,
+  « Envoyer » grisé avec ce motif (§5.59) ; la rédaction reste possible. *Écarté* : prévenir seulement.
+- *Le design system ?* — **Lecture par sections ciblées** pour `CRM-157` seulement : §1 à §4, §6 à §12 ; §5.4, §5.4 sexies,
+  §5.5, §5.7, §5.8, §5.13, §5.14, §5.17, §5.49, §5.51, §5.56, §5.59, §5.90.
+**Conséquences** : la spécification de `CRM-157` les écrit avant le code ; connecteur MCP : non (décision 951).
