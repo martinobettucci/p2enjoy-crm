@@ -19879,6 +19879,8 @@ d'eux ; pas de tri sur « Réel sur prévu ».
 
 ### CRM-153 — Organisations : un fil de commentaires, et des catégories définies en Réglages `[P]`
 
+**Livrée le 2026-11-19** (décision 950, révision `39662806`) ; reste le constat du responsable en production.
+
 **Implémentée et vérifiée en développement le 2026-11-19** ; reste la livraison, sur instruction du responsable, par la
 session de livraison, et son constat en production (`docs/PROD_MIGRATIONS.md` §2.58, gestes 1 à 5). Arbitrages en
 attente, sans effet sur la livraison : INC-361 (le résumé quotidien et les mentions d'organisation), INC-362 (la hauteur
@@ -20035,6 +20037,8 @@ production (§2.57, geste 2).
 
 ### CRM-155 — Inbox : les pastilles en filtres rapides (bascule), les pastilles archivées dans un volet replié `[P]`
 
+**Livrée le 2026-11-19** (décision 950, révision `39662806`) ; reste le constat du responsable en production.
+
 **Origine** : demande du responsable, le 2026-11-18, relayée par la session de livraison (p2enjoy-crm-e3, ex-bb) ; arbitrée le
 même jour (décision 943).
 **Demande, verbatim** : « le inbox, on affiche les pastilles comme filtres rapides (toggle on/off) et on peux déplier les
@@ -20090,6 +20094,8 @@ message dans le connecteur ; design system lu par sections ciblées) : `docs/SPE
   session de livraison, et le constat du responsable.
 
 ### CRM-156 — Inbox : opérations groupées sur une sélection de mails `[P]`
+
+**Livrée le 2026-11-19** (décision 950, révision `39662806`) ; reste le constat du responsable en production.
 
 *Implémentée et vérifiée en développement le 2026-11-19 ; reste la livraison (migrations 189 à 191 et la webapp, `docs/PROD_MIGRATIONS.md` §2.59 et §2.60) et le constat du responsable en production (§2.60, geste 6).*
 

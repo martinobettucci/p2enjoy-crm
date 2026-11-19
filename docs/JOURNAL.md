@@ -41101,3 +41101,10 @@ Rejoués : 50/50 ui, 11/11 api, manuel 11 6/6, garde du manuel 168, types. Manue
 9/9). Captures : 278 renouvelées, observées (`39662806`).
 **Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `39662806` : migrations 188 à 191, webapp,
 image `mcp`, manuel.
+**Exécutée le 2026-11-19** : `pg_dump` relu (3 367 entrées), `livrer.sh --revision 39662806…` (webapp bâtie dans la
+cellule, migrations 188 à 191), `mcp` reconstruit, manuel publié ; registre à 189, `verifier.sh` 34/35 (INC-277) ;
+contrat §2.58 à §2.61 LIVRÉES, §3 et §8, changelog en [Publié], backlog ; verrou levé. Reste le constat du responsable.
+**Relevé pendant la fenêtre** (signalement du responsable : Thomas n'arrive pas à envoyer) : l'espace `crm` n'a pas de
+domaine entrant en production ; `queue_outbound_email` refuse donc tout envoi par `card_not_available`, que l'écran rend
+« Cette affaire ne peut pas recevoir de réponse… ». Aucun envoi n'est jamais parti (`mail_outbox` vide). Geste du
+responsable : Plateforme ▸ Espaces ▸ « Modifier » (domaine entrant, préfixe), contrat §2.2.

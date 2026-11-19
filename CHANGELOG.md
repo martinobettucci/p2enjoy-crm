@@ -13,6 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-19 — les migrations 188 à 191, la webapp, l'image `mcp` et le manuel
+
+Cellule Spark `crm`, révision `39662806` (décision 950, un `pg_dump -Fc` avant). **Vérifié** : registre à 189 lignes, la
+dernière `0191_preference_transfert_mails.sql` ; `mcp` reconstruit et sain ; `index-BaBd0Cdn.js` servi ; `verifier.sh`
+34/35 (INC-277) ; manuel publié (591 fichiers). Le constat du responsable reste à faire.
+
 ### `CRM-155` T1 — les pastilles en filtres rapides dans l'inbox (décisions 943 et 948)
 
 - En tête de la liste des mails, « Filtrer par pastille » : un bouton à bascule par pastille active de l'espace courant,
@@ -158,8 +168,6 @@ d'exécuter le code attendu.
   - types régénérés et témoin.
 - Aucun écran encore : la webapp et le connecteur livrés continuent d'appeler la liste sans le nouveau paramètre.
 - Contrat §2.58 et §3 ; INC-361 (le résumé quotidien et les mentions d'une organisation) ouvert pour arbitrage.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-18 (seconde fenêtre) — les migrations 186 et 187, la webapp, l'image `mcp` et le manuel
 
