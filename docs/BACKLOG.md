@@ -20225,7 +20225,8 @@ s'écrire en parallèle, l'écran se coordonne avec la session qui porte `CRM-15
 **DoD** : pgTAP des fonctions groupées ; preuve d'API avec les vrais jetons (refus du profil sans droit, sélection mixte) ;
 unitaires ; E2E souris et clavier aux quatre paliers ; captures observées ; seed vérifié ; manuel vérifié ; contrat.
 
-### CRM-157 — Envoyer un mail : un refus clair quand l'espace n'a pas de domaine d'adresses d'affaire, et la messagerie dans le guide de démarrage `[ ]`
+### CRM-157 — Envoyer un mail : un refus clair quand l'espace n'a pas de domaine d'adresses d'affaire, et la messagerie dans le guide de démarrage `[@]`
+*Prise en charge : session interactive 152dd27d (p2enjoy-crm-c7, ex-45) depuis 2026-11-19 13:44 UTC — état avant : [ ] ; confiée par la session de livraison (e3)*
 
 **Origine** : signalement du responsable, le 2026-11-19 (« Thomas me dit qu'il n'arrive pas à envoyer des mails »), diagnostiqué
 par la session de livraison (p2enjoy-crm-e3, ex-bb) ; arbitré le même jour (décision 951).
