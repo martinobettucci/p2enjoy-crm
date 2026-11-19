@@ -1,3 +1,6 @@
+// @verifies CRM-157 (docs/BACKLOG.md) — tranche T3 : huit étapes ; la boîte système testée, le domaine, l'identité de la
+//           personne, mesurés dans l'espace courant ; sans contexte, aucune question ; l'identifiant court de l'espace
+//           et le drapeau du super-administrateur lus avec la mesure (docs/SPEC-onboarding.md §11.1)
 // @verifies CRM-079 (docs/BACKLOG.md) — guide de démarrage : la mesure des étapes
 // @verifies docs/SPEC-onboarding.md §2 (la progression est une mesure, jamais un drapeau),
 //           §3 (les étapes et leurs filtres), §3.2 (comptages indépendants),
@@ -37,8 +40,10 @@ import {
 	presenceMesuree,
 	useMesureChannels,
 	PROGRESSION_INITIALE,
+	lireSlugEspace,
 	resteUneEtape,
 	useApresWorkflowDeDepart,
+	useDemarrage,
 	type EtapeDemarrage,
 } from './demarrage'
 import { enChargement, enErreur, pret, type EtatAsync } from './async'
@@ -51,6 +56,9 @@ type Appel = {
 	readonly colonnes: string
 	readonly options: unknown
 	readonly nuls: [string, unknown][]
+	/** `CRM-157` : les colonnes non nulles et les égalités du comptage. */
+	readonly nonNuls: string[]
+	readonly egalites: [string, unknown][]
 	/** Borne `limit` du comptage : `LIMITE_COMPTE` (`compter.ts`). */
 	limite: number | null
 }
@@ -97,6 +105,7 @@ function espion(
 							lecture.nuls.push([colonne, valeur])
 							return lignes
 						},
+						eq: () => lignes,
 						order: (colonne: string) => {
 							lecture.tris.push(colonne)
 							return lignes
@@ -112,11 +121,19 @@ function espion(
 				const nuls: [string, unknown][] = []
 				const reponse = reponses[table]
 				if (reponse === undefined) throw new Error(`table non attendue : ${table}`)
-				const appel: Appel = { table, colonnes, options, nuls, limite: null }
+				const appel: Appel = { table, colonnes, options, nuls, nonNuls: [], egalites: [], limite: null }
 				appels.push(appel)
 				const chaine = {
 					is: (colonne: string, valeur: unknown) => {
 						nuls.push([colonne, valeur])
+						return chaine
+					},
+					not: (colonne: string) => {
+						appel.nonNuls.push(colonne)
+						return chaine
+					},
+					eq: (colonne: string, valeur: unknown) => {
+						appel.egalites.push([colonne, valeur])
 						return chaine
 					},
 					limit: (nombre: number) => {
@@ -142,17 +159,31 @@ const TOUTES_VIDES: Readonly<Record<string, ReponseCompte>> = {
 	channels: ok(0),
 	cards: ok(0),
 	mail_inbound_accounts: ok(0),
+	mail_outbound_identities: ok(0),
 }
 
+/** `CRM-157` : l'espace courant et la personne, sans lesquels les trois étapes de la messagerie ne posent aucune question. */
+const CONTEXTE = { idEspace: 'w-1', idUtilisateur: 'u-1' } as const
+
 describe('les six étapes et leurs filtres — docs/SPEC-onboarding.md §3 et §10.1', () => {
-	it('déclare exactement six étapes, le workflow AVANT le channel', () => {
+	// RÉVISÉ par `CRM-157` (2026-11-19, docs/SPEC-onboarding.md §11.1) : huit étapes — la messagerie en trois.
+	it('déclare exactement huit étapes, le workflow AVANT le channel, la messagerie en trois', () => {
 		// `CRM-094` : un channel exige un workflow ; dans un espace neuf, aucun n'existe (décision 606).
-		expect(CLES_ETAPES_DEMARRAGE).toEqual(['espace', 'track', 'workflow', 'channel', 'affaire', 'messagerie'])
+		expect(CLES_ETAPES_DEMARRAGE).toEqual([
+			'espace',
+			'track',
+			'workflow',
+			'channel',
+			'affaire',
+			'boite-systeme',
+			'domaine',
+			'identite',
+		])
 	})
 
-	it('interroge la table attendue pour chaque étape', async () => {
+	it('interroge la table attendue pour chaque étape, dans l’espace courant', async () => {
 		const { client, appels } = espion(TOUTES_VIDES)
-		await mesurerDemarrage(client)
+		await mesurerDemarrage(client, CONTEXTE)
 		expect(appels.map((appel) => appel.table)).toEqual([
 			'workspaces',
 			'tracks',
@@ -160,7 +191,36 @@ describe('les six étapes et leurs filtres — docs/SPEC-onboarding.md §3 et §
 			'channels',
 			'cards',
 			'mail_inbound_accounts',
+			'workspaces',
+			'mail_outbound_identities',
 		])
+	})
+
+	it('CRM-157 : sans espace courant ni personne, la messagerie ne pose aucune question — trois étapes à faire', async () => {
+		const { client, appels } = espion(TOUTES_VIDES)
+		const progression = await mesurerDemarrage(client)
+		expect(appels.map((appel) => appel.table)).toEqual(['workspaces', 'tracks', 'workflows', 'channels', 'cards'])
+		expect(progression.etapes.slice(5)).toEqual([
+			pret({ cle: 'boite-systeme', compte: 0 }),
+			pret({ cle: 'domaine', compte: 0 }),
+			pret({ cle: 'identite', compte: 0 }),
+		])
+	})
+
+	it('CRM-157 : la boîte SYSTÈME testée, le domaine non nul, l’identité DE LA PERSONNE testée, dans l’espace courant', async () => {
+		const { client, appels } = espion(TOUTES_VIDES)
+		await mesurerDemarrage(client, CONTEXTE)
+		const [boite, domaine, identite] = appels.slice(5)
+		expect(boite).toMatchObject({ nuls: [['owner_id', null]], egalites: [['status', 'ok'], ['workspace_id', 'w-1']] })
+		expect(domaine).toMatchObject({ nonNuls: ['inbound_domain'], egalites: [['id', 'w-1']] })
+		expect(identite).toMatchObject({
+			nuls: [],
+			egalites: [
+				['status', 'ok'],
+				['workspace_id', 'w-1'],
+				['owner_id', 'u-1'],
+			],
+		})
 	})
 
 	// RÉVISÉ par `CRM-001`, INC-299 (décision 700) : un compte est un `GET` borné à zéro ligne, plus un
@@ -205,15 +265,17 @@ describe('les six étapes et leurs filtres — docs/SPEC-onboarding.md §3 et §
 		expect(cards?.nuls).toEqual([['deleted_at', null]])
 	})
 
-	it('n’applique aucun filtre aux deux tables qui n’en portent pas', async () => {
+	// RÉVISÉ par `CRM-157` : l'étape « espace » reste sans filtre ; la boîte entrante, devenue la boîte SYSTÈME de l'espace
+	// courant, en porte désormais (preuve ci-dessus).
+	it('n’applique aucun filtre à l’étape « espace »', async () => {
 		const { client, appels } = espion(TOUTES_VIDES)
 		await mesurerDemarrage(client)
-		expect(appels.find((appel) => appel.table === 'workspaces')?.nuls).toEqual([])
-		expect(appels.find((appel) => appel.table === 'mail_inbound_accounts')?.nuls).toEqual([])
+		expect(appels.find((appel) => appel.table === 'workspaces')).toMatchObject({ nuls: [], nonNuls: [], egalites: [] })
 	})
 
 	it('déclare ses tables par le schéma, et le §3 les épingle', () => {
-		expect(FILTRES_ETAPES_DEMARRAGE.messagerie.table).toBe('mail_inbound_accounts')
+		expect(FILTRES_ETAPES_DEMARRAGE['boite-systeme'].table).toBe('mail_inbound_accounts')
+		expect(FILTRES_ETAPES_DEMARRAGE.identite.table).toBe('mail_outbound_identities')
 		expect(FILTRES_ETAPES_DEMARRAGE.affaire.table).toBe('cards')
 	})
 })
@@ -243,7 +305,7 @@ describe('ce qu’une réponse produit — docs/SPEC-onboarding.md §3.2 et §6.
 			...TOUTES_VIDES,
 			mail_inbound_accounts: { count: null, error: { message: 'refus' }, status: 401 },
 		})
-		const etat = await mesurerEtape(client, 'messagerie')
+		const etat = await mesurerEtape(client, 'boite-systeme', CONTEXTE)
 		expect(etat.statut === 'erreur' && etat.erreur.nature).toBe('forbidden')
 	})
 
@@ -261,7 +323,7 @@ describe('ce qu’une réponse produit — docs/SPEC-onboarding.md §3.2 et §6.
 		expect(etat.statut === 'erreur' && etat.erreur.nature).toBe('network')
 	})
 
-	it('rend les six états indépendants : une mesure refusée n’efface pas les cinq autres', async () => {
+	it('rend les huit états indépendants : une mesure refusée n’efface pas les sept autres', async () => {
 		const { client } = espion({
 			workspaces: ok(1),
 			tracks: ok(3),
@@ -269,8 +331,9 @@ describe('ce qu’une réponse produit — docs/SPEC-onboarding.md §3.2 et §6.
 			channels: ok(6),
 			cards: ok(14),
 			mail_inbound_accounts: { count: null, error: { message: 'refus' }, status: 401 },
+			mail_outbound_identities: ok(1),
 		})
-		const progression = await mesurerDemarrage(client)
+		const progression = await mesurerDemarrage(client, CONTEXTE)
 		expect(progression.etapes.map((etat) => etat.statut)).toEqual([
 			'pret',
 			'pret',
@@ -278,6 +341,8 @@ describe('ce qu’une réponse produit — docs/SPEC-onboarding.md §3.2 et §6.
 			'pret',
 			'pret',
 			'erreur',
+			'pret',
+			'pret',
 		])
 	})
 })
@@ -298,24 +363,24 @@ describe('les trois états d’une étape, et la décision de l’accueil', () =
 	})
 
 	it('compte les accomplies sans retirer du total celles qui ont échoué', () => {
-		const progression = { etapes: [accomplie, accomplie, aFaire, nonMesurable, aFaire], boardAffaire: null }
+		const progression = { etapes: [accomplie, accomplie, aFaire, nonMesurable, aFaire], boardAffaire: null, slugEspace: null, superadmin: false }
 		expect(compterAccomplies(progression)).toEqual({ accomplies: 2, total: 5 })
 	})
 
 	it('une étape non mesurable maintient le guide : le guide ne se retire pas sur une supposition', () => {
-		const progression = { etapes: [accomplie, accomplie, accomplie, accomplie, nonMesurable], boardAffaire: null }
+		const progression = { etapes: [accomplie, accomplie, accomplie, accomplie, nonMesurable], boardAffaire: null, slugEspace: null, superadmin: false }
 		expect(resteUneEtape(progression)).toBe(true)
 	})
 
-	it('six étapes accomplies retirent le guide de l’accueil', () => {
-		const progression = { etapes: Array.from({ length: 6 }, () => accomplie), boardAffaire: null }
+	it('huit étapes accomplies retirent le guide de l’accueil', () => {
+		const progression = { etapes: Array.from({ length: 8 }, () => accomplie), boardAffaire: null, slugEspace: null, superadmin: false }
 		expect(resteUneEtape(progression)).toBe(false)
 	})
 
-	it('l’état initial est CHARGEMENT sur les six étapes, jamais un accompli par défaut', () => {
+	it('l’état initial est CHARGEMENT sur les huit étapes, jamais un accompli par défaut', () => {
 		// Sans cet état, un rendu où `etapes` serait vide passerait pour « tout accompli » et
 		// l'accueil afficherait « aucun board » à qui en a (docs/SPEC-onboarding.md §4.2).
-		expect(PROGRESSION_INITIALE.etapes).toHaveLength(6)
+		expect(PROGRESSION_INITIALE.etapes).toHaveLength(8)
 		expect(PROGRESSION_INITIALE.boardAffaire).toBeNull()
 		expect(mesureEnCours(PROGRESSION_INITIALE)).toBe(true)
 		expect(resteUneEtape(PROGRESSION_INITIALE)).toBe(true)
@@ -329,7 +394,7 @@ describe('les trois états d’une étape, et la décision de l’accueil', () =
 			accomplie,
 			aFaire,
 		]
-		expect(mesureEnCours({ etapes: rendus, boardAffaire: null })).toBe(false)
+		expect(mesureEnCours({ etapes: rendus, boardAffaire: null, slugEspace: null, superadmin: false })).toBe(false)
 	})
 })
 
@@ -339,6 +404,8 @@ describe('la présence de channels lisibles — CRM-129, docs/SPEC-onboarding.md
 		return {
 			etapes: CLES_ETAPES_DEMARRAGE.map((cle) => (cle === 'channel' ? etat : pret<EtapeDemarrage>({ cle, compte: 1 }))),
 			boardAffaire: null,
+			slugEspace: null,
+			superadmin: false,
 		}
 	}
 
@@ -364,6 +431,8 @@ describe('la présence de channels lisibles — CRM-129, docs/SPEC-onboarding.md
 		const progression = {
 			etapes: CLES_ETAPES_DEMARRAGE.map((cle) => pret<EtapeDemarrage>({ cle, compte: cle === 'channel' ? 2 : 0 })),
 			boardAffaire: null,
+			slugEspace: null,
+			superadmin: false,
 		}
 		expect(presenceChannels(progression)).toBe('present')
 	})
@@ -597,3 +666,61 @@ describe('la destination de l’étape « affaire » — CRM-095, docs/SPEC-onbo
 		expect(progression.etapes.every((etat) => etat.statut === 'pret')).toBe(true)
 	})
 })
+
+// @verifies CRM-157 (docs/BACKLOG.md) — tranche T3 : ce que l'étape du domaine doit savoir pour mener au réglage
+describe('l’identifiant court de l’espace et le drapeau du super-administrateur (CRM-157, §11.1)', () => {
+	it('lit l’identifiant court de l’espace courant ; sans espace ou en échec, `null`', async () => {
+		const lu: unknown[] = []
+		const client = {
+			from: (table: string) => ({
+				select: (colonnes: string) => ({
+					eq: (colonne: string, valeur: string) => ({
+						limit: () => {
+							lu.push([table, colonnes, colonne, valeur])
+							return Promise.resolve({ data: [{ slug: 'crm' }], error: null })
+						},
+					}),
+				}),
+			}),
+		} as unknown as ClientCrm
+		expect(await lireSlugEspace(client, 'w-1')).toBe('crm')
+		expect(lu).toEqual([['workspaces', 'slug', 'id', 'w-1']])
+		expect(await lireSlugEspace(client, null)).toBeNull()
+		const enPanne = { from: () => ({ select: () => ({ eq: () => ({ limit: () => Promise.resolve({ data: null, error: { message: 'x' } }) }) }) }) } as unknown as ClientCrm
+		expect(await lireSlugEspace(enPanne, 'w-1')).toBeNull()
+	})
+
+	it('la mesure rend le drapeau que la base dit, et `false` quand elle ne le dit pas', async () => {
+		const { client } = espion(TOUTES_VIDES)
+		const sans = await mesurerDemarrage(client)
+		expect(sans.superadmin).toBe(false)
+		const avecRpc = { ...client, rpc: () => Promise.resolve({ data: true, error: null, status: 200 }) } as unknown as ClientCrm
+		expect((await mesurerDemarrage(avecRpc)).superadmin).toBe(true)
+	})
+})
+
+// @verifies CRM-157 (docs/BACKLOG.md) — tranche T3 : la mesure en deux moitiés — l'arrivée de l'espace courant ne refait que
+//           la messagerie ; un espace encore en lecture laisse la messagerie en chargement (docs/SPEC-onboarding.md §11.1)
+describe('la mesure en deux moitiés (CRM-157)', () => {
+	it('changer d’espace courant ne refait que la messagerie : les cinq premiers comptages ne repartent pas', async () => {
+		const { client, appels } = espion(TOUTES_VIDES)
+		const { result, rerender } = renderHook(({ contexte }) => useDemarrage(client, contexte), {
+			initialProps: { contexte: { idEspace: 'w-1', idUtilisateur: 'u-1' } as { idEspace: string; idUtilisateur: string } | null },
+		})
+		await waitFor(() => expect(mesureEnCours(result.current.progression)).toBe(false))
+		const tracksAvant = appels.filter((appel) => appel.table === 'tracks').length
+		rerender({ contexte: { idEspace: 'w-2', idUtilisateur: 'u-1' } })
+		await waitFor(() => expect(appels.filter((appel) => appel.table === 'mail_outbound_identities')).toHaveLength(2))
+		expect(appels.filter((appel) => appel.table === 'tracks')).toHaveLength(tracksAvant)
+	})
+
+	it('un espace encore en lecture (`null`) laisse la messagerie EN CHARGEMENT : rien n’est affirmé', async () => {
+		const { client, appels } = espion(TOUTES_VIDES)
+		const { result } = renderHook(() => useDemarrage(client, null))
+		await waitFor(() => expect(result.current.progression.etapes[4]?.statut).toBe('pret'))
+		expect(result.current.progression.etapes.slice(5).map((etat) => etat.statut)).toEqual(['chargement', 'chargement', 'chargement'])
+		expect(mesureEnCours(result.current.progression)).toBe(true)
+		expect(appels.some((appel) => appel.table === 'mail_inbound_accounts')).toBe(false)
+	})
+})
+

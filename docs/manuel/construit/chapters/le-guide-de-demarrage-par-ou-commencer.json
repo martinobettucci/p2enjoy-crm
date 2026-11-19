@@ -27,7 +27,7 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "six étapes"
+							"text": "huit étapes"
 						}
 					]
 				},
@@ -40,7 +40,7 @@
 		{
 			"type": "image",
 			"src": "le-guide-de-demarrage-par-ou-commencer/accueil-espace-neuf.jpg",
-			"alt": "L'accueil d'un espace neuf : le guide de démarrage et ses six étapes, une seule accomplie",
+			"alt": "L'accueil d'un espace neuf : le guide de démarrage et ses huit étapes, une seule accomplie",
 			"width": 1440,
 			"height": 900
 		},
@@ -49,7 +49,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Les six étapes, dans l'ordre :"
+					"text": "Les huit étapes, dans l'ordre :"
 				}
 			]
 		},
@@ -284,19 +284,110 @@
 					[
 						{
 							"type": "text",
-							"text": "Raccorder une boîte de réception"
+							"text": "Raccorder la boîte de réception de l'espace"
 						}
 					],
 					[
 						{
 							"type": "text",
-							"text": "Le courrier entrant se classe dans les affaires"
+							"text": "La boîte système reçoit les réponses à vos affaires, testée avec succès"
 						}
 					],
 					[
 						{
 							"type": "text",
-							"text": "Réglages ▸ État de la messagerie"
+							"text": "Réglages ▸ Comptes entrants ("
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "le-guide-de-demarrage-par-ou-commencer",
+								"anchor": "la-messagerie-en-trois-etapes"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "§2.6"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ")"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Régler le domaine des adresses d'affaire"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Les adresses des affaires se forment, les mails peuvent partir"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Plateforme ▸ Espaces, par un super-administrateur ("
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "le-guide-de-demarrage-par-ou-commencer",
+								"anchor": "la-messagerie-en-trois-etapes"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "§2.6"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ")"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Déclarer votre adresse d'expédition"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Vos mails partent de votre adresse, testée avec succès"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Réglages ▸ Identités d'envoi ("
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "le-guide-de-demarrage-par-ou-commencer",
+								"anchor": "la-messagerie-en-trois-etapes"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "§2.6"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ")"
 						}
 					]
 				]
@@ -526,14 +617,14 @@
 				},
 				{
 					"type": "text",
-					"text": " — à côté de son icône, et la\nprogression est une phrase, « 3 étape(s) sur 6 », jamais une barre seule."
+					"text": " — à côté de son icône, et la\nprogression est une phrase, « 3 étape(s) sur 8 », jamais une barre seule."
 				}
 			]
 		},
 		{
 			"type": "image",
 			"src": "le-guide-de-demarrage-par-ou-commencer/progression.jpg",
-			"alt": "La progression « 3 étape(s) sur 6 » et deux étapes marquées « Fait », chacune avec son lien",
+			"alt": "La progression « 3 étape(s) sur 8 » et deux étapes marquées « Fait », chacune avec son lien",
 			"width": 633,
 			"height": 504
 		},
@@ -579,7 +670,7 @@
 				},
 				{
 					"type": "text",
-					"text": " voit, jamais ce qui existe dans l'espace. Deux personnes\nn'ont donc pas nécessairement le même guide — un compte en lecture seule peut ne voir aucune boîte\nde réception là où l'espace en porte trois, et sa dernière étape restera « à faire ». Ce n'est pas\nun défaut d'affichage : ce sont ses droits, et le guide ne prétend jamais les contourner."
+					"text": " voit, jamais ce qui existe dans l'espace. Deux personnes\nn'ont donc pas nécessairement le même guide — un compte en lecture seule ne voit pas la boîte système\nde l'espace, et l'étape de la boîte restera « à faire » pour lui. Ce n'est pas\nun défaut d'affichage : ce sont ses droits, et le guide ne prétend jamais les contourner."
 				}
 			]
 		},
@@ -640,7 +731,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", ce qui relance\nréellement les six mesures. Les cinq autres étapes restent lisibles : une mesure manquante n'en\nefface aucune."
+					"text": ", ce qui relance\nréellement les huit mesures. Les sept autres étapes restent lisibles : une mesure manquante n'en\nefface aucune."
 				}
 			]
 		},
@@ -1164,14 +1255,14 @@
 				},
 				{
 					"type": "text",
-					"text": " en bas à droite de l'écran — « Démarrage · 2 sur 6 », ou « 2/6 »\nsur un téléphone. Les autres rôles gardent le guide sur l'accueil et dans les réglages."
+					"text": " en bas à droite de l'écran — « Démarrage · 2 sur 8 », ou « 2/8 »\nsur un téléphone. Les autres rôles gardent le guide sur l'accueil et dans les réglages."
 				}
 			]
 		},
 		{
 			"type": "image",
 			"src": "le-guide-de-demarrage-par-ou-commencer/pastille.jpg",
-			"alt": "La pastille du guide flottant, en bas à droite : « Démarrage · 2 sur 6 »",
+			"alt": "La pastille du guide flottant, en bas à droite : « Démarrage · 2 sur 8 »",
 			"width": 232,
 			"height": 72
 		},
@@ -1203,7 +1294,7 @@
 							},
 							{
 								"type": "text",
-								"text": " quand elle a le focus) déploie au-dessus\nd'elle un panneau avec les six étapes, leurs liens et le bouton du workflow de départ."
+								"text": " quand elle a le focus) déploie au-dessus\nd'elle un panneau avec les huit étapes, leurs liens et le bouton du workflow de départ."
 							}
 						]
 					}
@@ -1343,7 +1434,7 @@
 							},
 							{
 								"type": "text",
-								"text": " : une fois les six étapes accomplies. Il n'apparaît pas non plus sur\nl'accueil ni dans "
+								"text": " : une fois les huit étapes accomplies. Il n'apparaît pas non plus sur\nl'accueil ni dans "
 							},
 							{
 								"type": "strong",
@@ -1366,7 +1457,7 @@
 		{
 			"type": "image",
 			"src": "le-guide-de-demarrage-par-ou-commencer/panneau-ouvert.jpg",
-			"alt": "Le panneau du guide flottant ouvert au-dessus de sa pastille, avec les six étapes et le bouton qui le réduit",
+			"alt": "Le panneau du guide flottant ouvert au-dessus de sa pastille, avec les huit étapes et le bouton qui le réduit",
 			"width": 412,
 			"height": 640
 		},
@@ -1391,6 +1482,227 @@
 					"text": " la libère d'un geste."
 				}
 			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "la-messagerie-en-trois-etapes",
+			"content": [
+				{
+					"type": "text",
+					"text": "2.6 La messagerie en trois étapes"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Pour qu'un mail parte d'une affaire et que la réponse y revienne, trois réglages sont nécessaires. Le guide les mesure\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "dans l'espace ouvert"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — celui du sélecteur d'espace —, et chacune n'est faite que lorsque le réglage a été "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "testé\navec succès"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "La boîte de réception de l'espace."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " La boîte système reçoit les réponses à toutes les affaires. Saisissez-la dans\nRéglages ▸ Comptes entrants, puis testez la connexion ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "les-boites-de-reception-et-les-adresses-d-expedition"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 11"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ").\nC'est un geste d'administrateur."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Le domaine des adresses d'affaire."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Chaque affaire reçoit une adresse faite du préfixe de l'espace, de huit\ncaractères et du domaine. Chez l'hébergeur du domaine, il faut créer l'alias qui remet ces adresses à la boîte système ;\npuis un "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "super-administrateur"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " règle le domaine et le préfixe dans Plateforme ▸ Espaces\n("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "la-plateforme-espaces-membres-et-superadministrateurs"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 32"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "). Sans domaine, "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucun mail ne part"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le\nformulaire d'envoi le dit ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-inbox-lire-trier-et-repondre",
+									"anchor": "ecrire-et-repondre"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 12.3"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "). Un super-administrateur trouve dans le guide le lien\nvers la fiche de l'espace ; les autres y lisent qui le règle."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Votre adresse d'expédition."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Elle envoie "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "vos"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " mails : déclarez son serveur d'envoi dans Réglages ▸ Identités\nd'envoi, puis testez la connexion. Cette étape est "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "la vôtre"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : un collègue qui a la sienne ne la fait pas pour vous."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "image",
+			"src": "le-guide-de-demarrage-par-ou-commencer/etapes-messagerie.jpg",
+			"alt": "Les trois étapes de la messagerie dans un espace neuf : la boîte système, le domaine et l'adresse d'expédition, à faire",
+			"width": 631,
+			"height": 643
 		},
 		{
 			"type": "paragraph",

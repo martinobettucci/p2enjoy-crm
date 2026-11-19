@@ -15,6 +15,10 @@
 //       lue à part pour la barre d'onglets hors d'un track, par une ligne au plus et sans comptage du guide
 //       (`lirePresenceChannels`, `useMesureChannels`) ; `presenceMesuree` lit le compte de l'accueil
 // @spec CRM-001 (docs/BACKLOG.md) tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
+// @spec CRM-157 (docs/BACKLOG.md) — tranche T3 : la messagerie en trois étapes, mesurées dans l'ESPACE COURANT — la boîte
+//       système testée, le domaine des adresses d'affaire, l'identité d'envoi de la personne — et ce que l'étape du domaine
+//       doit savoir pour mener au réglage : l'identifiant court de l'espace et le drapeau du super-administrateur
+//       (docs/SPEC-onboarding.md §11 ; docs/DESIGN_SYSTEM.md §5.110 ; décisions 951 et 953)
 //
 // CE MODULE N'OUVRE AUCUNE POLITIQUE NOUVELLE. Chaque table est comptée sous la politique qui la
 // régit déjà — `tracks` (CRM-020), `channels` (CRM-021), `cards` (CRM-040), `workspaces` (CRM-022),
@@ -25,11 +29,12 @@
 // 9 affaires là où la base en porte 6 et 14. L'écran écrit donc ce que l'appelant voit, jamais ce
 // qui existe.
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
 import type { Database } from './database.types'
 import type { ClientCrm } from './supabase'
 import { LIMITE_COMPTE, OPTIONS_COMPTE } from './compter'
+import { lireEstSuperadmin } from './plateforme'
 
 /**
  * Les tables interrogeables, telles que le SCHÉMA les déclare — jamais une chaîne libre. Une table
@@ -42,7 +47,17 @@ type TableLisible = keyof Database['public']['Tables']
  * Les six étapes, dans l'ordre où elles se lisent (docs/SPEC-onboarding.md §3, §10.1). Le workflow
  * précède le channel depuis `CRM-094` : un channel en exige un, et un espace neuf n'en a aucun.
  */
-export const CLES_ETAPES_DEMARRAGE = ['espace', 'track', 'workflow', 'channel', 'affaire', 'messagerie'] as const
+export const CLES_ETAPES_DEMARRAGE = [
+	'espace',
+	'track',
+	'workflow',
+	'channel',
+	'affaire',
+	// `CRM-157` (§11.1) : la messagerie en trois étapes, à la place de « Raccorder une boîte de réception ».
+	'boite-systeme',
+	'domaine',
+	'identite',
+] as const
 
 export type CleEtapeDemarrage = (typeof CLES_ETAPES_DEMARRAGE)[number]
 
@@ -65,7 +80,19 @@ export type ProgressionDemarrage = {
 	 * sans channel, ou quand la lecture échoue : l'étape mène alors à l'arborescence, comme avant.
 	 */
 	readonly boardAffaire: string | null
+	/** `CRM-157` (§11.1) : l'identifiant court de l'espace courant, pour le lien du domaine ; `null` sans lecture. */
+	readonly slugEspace: string | null
+	/** `CRM-157` : la base dit-elle la personne super-administratrice ? Une aide d'affichage, jamais un droit. */
+	readonly superadmin: boolean
 }
+
+/**
+ * Ce que la mesure des trois étapes de la messagerie doit savoir (`CRM-157`, §11.1) : l'espace courant — celui du
+ * sélecteur d'espace — et la personne. Sans l'un ou l'autre, ces étapes ne posent aucune question : il n'y a rien à régler.
+ */
+export type ContexteMesure = { readonly idEspace: string | null; readonly idUtilisateur: string | null }
+
+const SANS_CONTEXTE: ContexteMesure = { idEspace: null, idUtilisateur: null }
 
 /**
  * Les filtres de chaque comptage, **repris des lectures existantes** et non réinventés :
@@ -75,16 +102,38 @@ export type ProgressionDemarrage = {
  *
  * Exportée pour que le test unitaire vérifie la requête réellement émise, comme `COLONNES_TRACK`.
  */
-export const FILTRES_ETAPES_DEMARRAGE: Readonly<
-	Record<CleEtapeDemarrage, { readonly table: TableLisible; readonly nuls: readonly string[] }>
-> = {
+export type FiltreEtape = {
+	readonly table: TableLisible
+	readonly nuls: readonly string[]
+	/** `CRM-157` : des colonnes non nulles (le domaine). */
+	readonly nonNuls?: readonly string[]
+	/** `CRM-157` : des égalités fixes (`status = 'ok'`). */
+	readonly egalites?: Readonly<Record<string, string>>
+	/** `CRM-157` : la colonne égale à l'espace courant. */
+	readonly espace?: string
+	/** `CRM-157` : la colonne égale à la personne. */
+	readonly proprietaire?: string
+}
+
+export const FILTRES_ETAPES_DEMARRAGE: Readonly<Record<CleEtapeDemarrage, FiltreEtape>> = {
 	espace: { table: 'workspaces', nuls: [] },
 	track: { table: 'tracks', nuls: ['archived_at', 'deleted_at'] },
 	// Un workflow s'archive et n'a pas de corbeille ; archivé, aucun channel ne peut plus le choisir.
 	workflow: { table: 'workflows', nuls: ['archived_at'] },
 	channel: { table: 'channels', nuls: ['archived_at', 'deleted_at'] },
 	affaire: { table: 'cards', nuls: ['deleted_at'] },
-	messagerie: { table: 'mail_inbound_accounts', nuls: [] },
+	// `CRM-157` (§11.1) : la boîte SYSTÈME (sans propriétaire) de l'espace courant, testée avec succès.
+	'boite-systeme': { table: 'mail_inbound_accounts', nuls: ['owner_id'], egalites: { status: 'ok' }, espace: 'workspace_id' },
+	// L'espace courant a un domaine d'adresses d'affaire.
+	domaine: { table: 'workspaces', nuls: [], nonNuls: ['inbound_domain'], espace: 'id' },
+	// L'identité d'envoi DE LA PERSONNE dans l'espace courant, testée avec succès (décision 953).
+	identite: {
+		table: 'mail_outbound_identities',
+		nuls: [],
+		egalites: { status: 'ok' },
+		espace: 'workspace_id',
+		proprietaire: 'owner_id',
+	},
 }
 
 /**
@@ -99,12 +148,28 @@ export const FILTRES_ETAPES_DEMARRAGE: Readonly<
 export async function mesurerEtape(
 	client: ClientCrm,
 	cle: CleEtapeDemarrage,
+	contexte: ContexteMesure = SANS_CONTEXTE,
 ): Promise<EtatAsync<EtapeDemarrage>> {
 	const filtre = FILTRES_ETAPES_DEMARRAGE[cle]
+	// `CRM-157` (§11.1) : SANS ESPACE COURANT OU SANS PERSONNE, aucune question — il n'y a rien à régler, l'étape est à
+	// faire. Ce zéro n'est pas inventé : aucun espace, aucune boîte, aucun domaine.
+	if ((filtre.espace !== undefined && contexte.idEspace === null) || (filtre.proprietaire !== undefined && contexte.idUtilisateur === null)) {
+		return pret({ cle, compte: 0 })
+	}
 	try {
 		let requete = client.from(filtre.table).select('id', OPTIONS_COMPTE)
 		for (const colonne of filtre.nuls) {
 			requete = requete.is(colonne, null)
+		}
+		for (const colonne of filtre.nonNuls ?? []) {
+			requete = requete.not(colonne, 'is', null)
+		}
+		for (const [colonne, valeur] of Object.entries(filtre.egalites ?? {})) {
+			requete = requete.eq(colonne, valeur)
+		}
+		if (filtre.espace !== undefined && contexte.idEspace !== null) requete = requete.eq(filtre.espace, contexte.idEspace)
+		if (filtre.proprietaire !== undefined && contexte.idUtilisateur !== null) {
+			requete = requete.eq(filtre.proprietaire, contexte.idUtilisateur)
 		}
 		const reponse = await requete.limit(LIMITE_COMPTE)
 		if (reponse.error !== null) {
@@ -126,12 +191,61 @@ export async function mesurerEtape(
  * track ferait passer un refus de lecture pour une absence, et l'écran n'aurait plus rien à dire de
  * l'étape qu'il n'a pas mesurée.
  */
-export async function mesurerDemarrage(client: ClientCrm): Promise<ProgressionDemarrage> {
-	const [etapes, boardAffaire] = await Promise.all([
-		Promise.all(CLES_ETAPES_DEMARRAGE.map((cle) => mesurerEtape(client, cle))),
+export async function mesurerDemarrage(
+	client: ClientCrm,
+	contexte: ContexteMesure = SANS_CONTEXTE,
+): Promise<ProgressionDemarrage> {
+	const [base, messagerie] = await Promise.all([mesurerBase(client), mesurerMessagerie(client, contexte)])
+	return { etapes: [...base.etapes, ...messagerie.etapes], boardAffaire: base.boardAffaire, slugEspace: messagerie.slugEspace, superadmin: base.superadmin }
+}
+
+/** `CRM-157` : les étapes qui ne dépendent pas de l'espace courant — de « espace » à « affaire ». */
+export const CLES_BASE: readonly CleEtapeDemarrage[] = CLES_ETAPES_DEMARRAGE.filter(
+	(cle) => FILTRES_ETAPES_DEMARRAGE[cle].espace === undefined,
+)
+/** `CRM-157` : les trois étapes de la messagerie, mesurées dans l'espace courant (§11.1). */
+export const CLES_MESSAGERIE: readonly CleEtapeDemarrage[] = CLES_ETAPES_DEMARRAGE.filter(
+	(cle) => FILTRES_ETAPES_DEMARRAGE[cle].espace !== undefined,
+)
+
+type MesureBase = {
+	readonly etapes: readonly EtatAsync<EtapeDemarrage>[]
+	readonly boardAffaire: string | null
+	readonly superadmin: boolean
+}
+type MesureMessagerie = { readonly etapes: readonly EtatAsync<EtapeDemarrage>[]; readonly slugEspace: string | null }
+
+/**
+ * `CRM-157` : la mesure se fait en DEUX moitiés. L'arrivée de l'espace courant ne refait que la seconde : sans cela, les
+ * cinq premiers comptages repartaient une seconde fois à chaque chargement (vu par `e2e/ui/demarrage.spec.ts`).
+ */
+export async function mesurerBase(client: ClientCrm): Promise<MesureBase> {
+	const [etapes, boardAffaire, superadmin] = await Promise.all([
+		Promise.all(CLES_BASE.map((cle) => mesurerEtape(client, cle))),
 		lireBoardAffaire(client),
+		lireEstSuperadmin(client).then((etat) => etat.statut === 'pret' && etat.donnees),
 	])
-	return { etapes, boardAffaire }
+	return { etapes, boardAffaire, superadmin }
+}
+
+export async function mesurerMessagerie(client: ClientCrm, contexte: ContexteMesure): Promise<MesureMessagerie> {
+	const [etapes, slugEspace] = await Promise.all([
+		Promise.all(CLES_MESSAGERIE.map((cle) => mesurerEtape(client, cle, contexte))),
+		lireSlugEspace(client, contexte.idEspace),
+	])
+	return { etapes, slugEspace }
+}
+
+/** L'identifiant court de l'espace courant (`CRM-157`) : un échec rend `null`, et l'étape garde son texte sans lien. */
+export async function lireSlugEspace(client: ClientCrm, idEspace: string | null): Promise<string | null> {
+	if (idEspace === null) return null
+	try {
+		const reponse = await client.from('workspaces').select('slug').eq('id', idEspace).limit(1)
+		if (reponse.error !== null) return null
+		return reponse.data?.[0]?.slug ?? null
+	} catch {
+		return null
+	}
 }
 
 /**
@@ -291,6 +405,8 @@ export function mesureEnCours(progression: ProgressionDemarrage): boolean {
 export const PROGRESSION_INITIALE: ProgressionDemarrage = {
 	etapes: CLES_ETAPES_DEMARRAGE.map(() => enChargement<EtapeDemarrage>()),
 	boardAffaire: null,
+	slugEspace: null,
+	superadmin: false,
 }
 
 /**
@@ -300,22 +416,55 @@ export const PROGRESSION_INITIALE: ProgressionDemarrage = {
  * Même garde que `useTracks` contre les réponses périmées : une réponse arrivée après le démontage
  * n'écrit pas, et une réponse plus ancienne n'écrase pas une plus récente.
  */
-export function useDemarrage(client: ClientCrm | null): {
+export function useDemarrage(
+	client: ClientCrm | null,
+	/** `CRM-157` : `null` tant que l'espace courant n'est pas lu — la messagerie reste alors en chargement (§11.1). */
+	contexte: ContexteMesure | null = SANS_CONTEXTE,
+): {
 	readonly progression: ProgressionDemarrage
 	readonly recharger: () => void
 } {
-	const [progression, setProgression] = useState<ProgressionDemarrage>(PROGRESSION_INITIALE)
+	const [base, setBase] = useState<MesureBase | null>(null)
+	const [messagerie, setMessagerie] = useState<MesureMessagerie | null>(null)
 	const [tentative, setTentative] = useState(0)
-	const courant = useRef(0)
+	const courantBase = useRef(0)
+	const courantMessagerie = useRef(0)
+	const connu = contexte !== null
+	const idEspace = contexte?.idEspace ?? null
+	const idUtilisateur = contexte?.idUtilisateur ?? null
 
 	useEffect(() => {
 		if (client === null) return
-		const rang = ++courant.current
-		setProgression(PROGRESSION_INITIALE)
-		void mesurerDemarrage(client).then((resultat) => {
-			if (rang === courant.current) setProgression(resultat)
+		const rang = ++courantBase.current
+		setBase(null)
+		void mesurerBase(client).then((resultat) => {
+			if (rang === courantBase.current) setBase(resultat)
 		})
 	}, [client, tentative])
+
+	// `CRM-157` : l'espace courant et la personne ne refont que la seconde moitié ; inconnus, rien n'est affirmé.
+	useEffect(() => {
+		const rang = ++courantMessagerie.current
+		setMessagerie(null)
+		if (client === null || !connu) return
+		void mesurerMessagerie(client, { idEspace, idUtilisateur }).then((resultat) => {
+			if (rang === courantMessagerie.current) setMessagerie(resultat)
+		})
+	}, [client, tentative, connu, idEspace, idUtilisateur])
+
+	// Une progression STABLE d'un rendu à l'autre : les écrans qui la gardent en mémoire (le guide flottant) la comparent.
+	const progression = useMemo<ProgressionDemarrage>(
+		() => ({
+			etapes: [
+				...(base?.etapes ?? CLES_BASE.map(() => enChargement<EtapeDemarrage>())),
+				...(messagerie?.etapes ?? CLES_MESSAGERIE.map(() => enChargement<EtapeDemarrage>())),
+			],
+			boardAffaire: base?.boardAffaire ?? null,
+			slugEspace: messagerie?.slugEspace ?? null,
+			superadmin: base?.superadmin ?? false,
+		}),
+		[base, messagerie],
+	)
 
 	const recharger = useCallback(() => {
 		setTentative((precedente) => precedente + 1)

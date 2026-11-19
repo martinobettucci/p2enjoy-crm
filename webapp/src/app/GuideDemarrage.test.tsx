@@ -10,6 +10,10 @@
 //           §7 (accessibilité : une `ol`, un mot et non une icône seule)
 // @verifies docs/DESIGN_SYSTEM.md §5.17 (cette surface)
 // @verifies CLAUDE.md §10 (aucun lien éteint d'après un rôle), §11 (rien hors de la session)
+// @verifies CRM-157 (docs/BACKLOG.md) — tranche T3 : huit étapes ; la boîte système (lien d'administration), le domaine
+//           (le lien vers la fiche de l'espace pour le seul super-administrateur, un texte sinon, l'adresse d'exemple),
+//           l'identité de la personne (un lien personnel, jamais éteint) (docs/SPEC-onboarding.md §11 ;
+//           docs/DESIGN_SYSTEM.md §5.110, §5.59)
 // @verifies CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.1 (six étapes), §10.3 (le
 //           geste « Créer le workflow de départ », rendu aux seuls administrateurs, ses issues — dont
 //           « existant », qui s'annonce sans alerte —, et le focus rendu au lien de sa ligne) ;
@@ -50,7 +54,13 @@ const SEED_ADMIN: Readonly<Record<string, ReponseCompte>> = {
 	channels: ok(6),
 	cards: ok(14),
 	mail_inbound_accounts: ok(3),
+	// `CRM-157` : le domaine de l'espace courant (lu sur `workspaces`, distingué par `not`) et l'identité de la personne.
+	'workspaces:domaine': ok(1),
+	mail_outbound_identities: ok(1),
 }
+
+/** `CRM-157` (§11.1) : l'espace courant et la personne, sans lesquels la messagerie ne se mesure pas. */
+const CONTEXTE = { idEspace: 'w', idUtilisateur: 'u-1' } as const
 
 /** Le seed réel vu par `viewer@p2enjoy.test` : la dernière étape lui paraît toujours à faire. */
 const SEED_VIEWER: Readonly<Record<string, ReponseCompte>> = {
@@ -58,6 +68,7 @@ const SEED_VIEWER: Readonly<Record<string, ReponseCompte>> = {
 	channels: ok(5),
 	cards: ok(9),
 	mail_inbound_accounts: ok(0),
+	mail_outbound_identities: ok(0),
 }
 
 /** Un espace de travail neuf : tout reste à faire. */
@@ -68,6 +79,8 @@ const NEUF: Readonly<Record<string, ReponseCompte>> = {
 	channels: ok(0),
 	cards: ok(0),
 	mail_inbound_accounts: ok(0),
+	'workspaces:domaine': ok(0),
+	mail_outbound_identities: ok(0),
 }
 
 /**
@@ -84,6 +97,7 @@ function client(
 				if (options === undefined) {
 					const lignes = {
 						is: () => lignes,
+						eq: () => lignes,
 						order: () => lignes,
 						limit: () => lignes,
 						then: (resoudre: (valeur: unknown) => unknown) =>
@@ -91,14 +105,22 @@ function client(
 					}
 					return lignes
 				}
-				const reponse = reponses[table]
-				if (reponse === undefined) throw new Error(`table non attendue : ${table}`)
+				// `CRM-157` : la mesure du domaine lit `workspaces` avec un `not` — elle prend la clé `workspaces:domaine`.
+				let domaine = false
 				// `limit` : un compte est un `GET` borné à zéro ligne (`compter.ts`, INC-299, décision 700).
 				const chaine = {
 					is: () => chaine,
+					eq: () => chaine,
+					not: () => {
+						domaine = true
+						return chaine
+					},
 					limit: () => chaine,
-					then: (resoudre: (valeur: ReponseCompte) => unknown) =>
-						Promise.resolve(reponse).then(resoudre),
+					then: (resoudre: (valeur: ReponseCompte) => unknown) => {
+						const reponse = reponses[domaine ? `${table}:domaine` : table]
+						if (reponse === undefined) throw new Error(`table non attendue : ${table}`)
+						return Promise.resolve(reponse).then(resoudre)
+					},
 				}
 				return chaine
 			},
@@ -111,18 +133,18 @@ function monter(element: React.ReactElement) {
 }
 
 describe('le guide, à son adresse — docs/SPEC-onboarding.md §4.1', () => {
-	it('rend les six étapes dans une liste ORDONNÉE', async () => {
+	it('rend les huit étapes dans une liste ORDONNÉE', async () => {
 		monter(<GuideDemarrage sessionOuverte client={client(NEUF)} />)
 		const liste = await screen.findByRole('list')
 		expect(liste.tagName).toBe('OL')
-		expect(await screen.findAllByRole('listitem')).toHaveLength(6)
+		expect(await screen.findAllByRole('listitem')).toHaveLength(8)
 	})
 
 	it('est rendu MÊME intégralement accompli : c’est ce qui le rend relançable', async () => {
-		monter(<GuideDemarrage sessionOuverte client={client(SEED_ADMIN)} />)
+		monter(<GuideDemarrage sessionOuverte contexteMesure={CONTEXTE} client={client(SEED_ADMIN)} />)
 		expect(await screen.findByTestId('guide-demarrage')).toBeTruthy()
 		await waitFor(() =>
-			expect(screen.getByTestId('progression-demarrage').textContent).toContain('6'),
+			expect(screen.getByTestId('progression-demarrage').textContent).toBe('8 étape(s) sur 8'),
 		)
 	})
 
@@ -198,13 +220,14 @@ describe('l’état d’une étape est un MOT — §6.2, docs/DESIGN_SYSTEM.md �
 		monter(
 			<GuideDemarrage
 			sessionOuverte
+				contexteMesure={CONTEXTE}
 				client={client({
 					...NEUF,
 					mail_inbound_accounts: { count: null, error: { message: 'refus' }, status: 401 },
 				})}
 			/>,
 		)
-		const ligne = await screen.findByTestId('etape-messagerie')
+		const ligne = await screen.findByTestId('etape-boite-systeme')
 		await waitFor(() =>
 			expect(ligne.textContent).toContain('Cette étape n’a pas pu être vérifiée'),
 		)
@@ -214,7 +237,7 @@ describe('l’état d’une étape est un MOT — §6.2, docs/DESIGN_SYSTEM.md �
 	it('n’éteint AUCUN lien, quel que soit l’état de l’étape — CLAUDE.md §10', async () => {
 		monter(<GuideDemarrage sessionOuverte client={client(SEED_VIEWER)} />)
 		await screen.findByTestId('guide-demarrage')
-		for (const cle of ['track', 'workflow', 'channel', 'affaire', 'messagerie']) {
+		for (const cle of ['track', 'workflow', 'channel', 'affaire', 'boite-systeme', 'identite']) {
 			const lien = await screen.findByTestId(`lien-${cle}`)
 			expect(lien.getAttribute('aria-disabled')).toBeNull()
 			expect(lien.getAttribute('href')).toBeTruthy()
@@ -234,11 +257,12 @@ describe('la progression s’écrit en toutes lettres — §7', () => {
 		expect(screen.getByTestId('progression-demarrage').textContent).toContain('Mesure des étapes')
 	})
 
-	it('écrit le compte et le total une fois les six mesures rendues', async () => {
-		monter(<GuideDemarrage sessionOuverte client={client(SEED_VIEWER)} />)
-		// admin : 6 sur 6 ; viewer : 5 sur 6, faute de voir une boîte entrante (§3.1, fait 2).
+	it('écrit le compte et le total une fois les huit mesures rendues', async () => {
+		monter(<GuideDemarrage sessionOuverte contexteMesure={CONTEXTE} client={client(SEED_VIEWER)} />)
+		// RÉVISÉ par `CRM-157` : admin, 8 sur 8 ; viewer, 6 sur 8 — elle ne voit pas la boîte système (§3.1, fait 2) et n'a
+		// pas d'adresse d'expédition à elle ; le domaine de l'espace, elle le lit.
 		await waitFor(() =>
-			expect(screen.getByTestId('progression-demarrage').textContent).toBe('5 étape(s) sur 6'),
+			expect(screen.getByTestId('progression-demarrage').textContent).toBe('6 étape(s) sur 8'),
 		)
 	})
 })
@@ -250,8 +274,8 @@ describe('l’accueil et sa décision — §4.2', () => {
 		expect(screen.getByTestId('masquer-guide')).toBeTruthy()
 	})
 
-	it('les six étapes accomplies, rend l’état NEUTRE, jamais l’état vide : la personne lit des channels — CRM-129', async () => {
-		monter(<AccueilDemarrage sessionOuverte client={client(SEED_ADMIN)} />)
+	it('les huit étapes accomplies, rend l’état NEUTRE, jamais l’état vide : la personne lit des channels — CRM-129', async () => {
+		monter(<AccueilDemarrage sessionOuverte contexteMesure={CONTEXTE} client={client(SEED_ADMIN)} />)
 		await waitFor(() => expect(screen.queryByTestId('guide-demarrage')).toBeNull())
 		const neutre = screen.getByTestId('accueil-choisir')
 		expect(screen.getByRole('heading').textContent).toBe(fr['route.board.pick.title'])
@@ -274,7 +298,7 @@ describe('l’accueil et sa décision — §4.2', () => {
 	})
 
 	it('masqué AVEC des channels lisibles, rend l’état neutre ET le chemin de retour — CRM-129', async () => {
-		// La lectrice du seed lit cinq channels, et l'étape « messagerie » lui reste à faire.
+		// La lectrice du seed lit cinq channels, et la boîte système lui reste à faire.
 		const utilisateur = userEvent.setup()
 		monter(<AccueilDemarrage sessionOuverte client={client(SEED_VIEWER)} />)
 		await utilisateur.click(await screen.findByTestId('masquer-guide'))
@@ -345,9 +369,9 @@ describe('ce que le guide N’ÉCRIT PAS sur l’appareil — CLAUDE.md §11', (
 	})
 
 	it('n’écrit AUCUNE progression : elle est mesurée, jamais mémorisée — §2', async () => {
-		monter(<GuideDemarrage sessionOuverte client={client(SEED_ADMIN)} />)
+		monter(<GuideDemarrage sessionOuverte contexteMesure={CONTEXTE} client={client(SEED_ADMIN)} />)
 		await waitFor(() =>
-			expect(screen.getByTestId('progression-demarrage').textContent).toBe('6 étape(s) sur 6'),
+			expect(screen.getByTestId('progression-demarrage').textContent).toBe('8 étape(s) sur 8'),
 		)
 		expect(globalThis.sessionStorage.length).toBe(0)
 		expect(globalThis.localStorage.length).toBe(0)
@@ -424,8 +448,8 @@ describe('aucune mesure sans session — docs/SPEC-onboarding.md §4.4', () => {
 		expect(screen.getByTestId('progression-demarrage').textContent).toBe(
 			'Mesure des étapes en cours',
 		)
-		// Aucun chiffre n'est écrit : « 0 étape sur 6 » serait une affirmation non mesurée.
-		expect(screen.getByTestId('progression-demarrage').textContent).not.toContain('sur 6')
+		// Aucun chiffre n'est écrit : « 0 étape sur 8 » serait une affirmation non mesurée.
+		expect(screen.getByTestId('progression-demarrage').textContent).not.toContain('sur 8')
 		expect(espion.appels(), 'aucune des six mesures n’est émise sans session').toBe(0)
 		expect(espion.lectures(), 'ni la destination de l’étape « affaire » (CRM-095)').toBe(0)
 	})
@@ -437,9 +461,10 @@ describe('aucune mesure sans session — docs/SPEC-onboarding.md §4.4', () => {
 		monter(<GuideDemarrage sessionOuverte client={espion.client} />)
 
 		await waitFor(() =>
-			expect(screen.getByTestId('progression-demarrage').textContent).toBe('0 étape(s) sur 6'),
+			expect(screen.getByTestId('progression-demarrage').textContent).toBe('0 étape(s) sur 8'),
 		)
-		expect(espion.appels(), 'les six tables sont interrogées, une fois chacune').toBe(6)
+		// RÉVISÉ par `CRM-157` : sans espace courant ni personne, les trois étapes de la messagerie ne posent aucune question.
+		expect(espion.appels(), 'les cinq premières tables sont interrogées, une fois chacune').toBe(5)
 		expect(espion.lectures(), 'et la destination de l’étape « affaire » est lue une fois (CRM-095)').toBe(1)
 	})
 })
@@ -463,7 +488,9 @@ describe('le workflow de départ, en un geste — docs/SPEC-onboarding.md §10.3
 			(client(reponses) as unknown as { from: (nom: string) => unknown }).from(table)
 		const client_ = {
 			from: (table: string) => lire(apres && table === 'workflows' ? { ...NEUF, workflows: ok(1) } : NEUF, table),
-			rpc: async () => {
+			rpc: async (nom: string) => {
+				// `CRM-157` : la mesure lit aussi `est_superadmin` ; seul le geste compte ici.
+				if (nom === 'est_superadmin') return { data: false, error: null, status: 200 }
 				appelsRpc += 1
 				const reponse = await reponseRpc
 				if (reponse.error === null) apres = true
@@ -531,7 +558,8 @@ describe('le workflow de départ, en un geste — docs/SPEC-onboarding.md §10.3
 		// re-mesure, elle, le trouve.
 		const client_ = {
 			from: (table: string) => lire(apres && table === 'workflows' ? { ...NEUF, workflows: ok(1) } : NEUF, table),
-			rpc: async () => {
+			rpc: async (nom: string) => {
+				if (nom === 'est_superadmin') return { data: false, error: null, status: 200 }
 				apres = true
 				return { data: null, error: { code: 'P0001', message: 'workflow existant' }, status: 400 }
 			},
@@ -600,7 +628,7 @@ describe('l’étape « affaire » mène au board du premier channel — CRM-095
 	it('aucun channel : le lien mène à l’arborescence, avec son libellé d’avant', async () => {
 		monter(<GuideDemarrage sessionOuverte client={client(NEUF)} />)
 		await waitFor(() =>
-			expect(screen.getByTestId('progression-demarrage').textContent).toBe('1 étape(s) sur 6'),
+			expect(screen.getByTestId('progression-demarrage').textContent).toBe('1 étape(s) sur 8'),
 		)
 		const lien = screen.getByTestId('lien-affaire')
 		expect(lien.getAttribute('href')).toBe('/reglages/arborescence')
@@ -611,7 +639,9 @@ describe('l’étape « affaire » mène au board du premier channel — CRM-095
 // --- CRM-093 — les liens d'administration quand la base la refuse (docs/DESIGN_SYSTEM.md §5.59) ------------------------
 
 describe('le guide quand la base refuse l’administration (CRM-093)', () => {
-	it('les liens des étapes d’administration deviennent des TEXTES qui citent le motif ; l’état de la messagerie reste un lien', async () => {
+	// RÉVISÉ par `CRM-157` : la boîte système est une étape d'administration ; l'identité de la personne, un geste
+	// personnel, reste un lien (§5.59).
+	it('les liens des étapes d’administration deviennent des TEXTES qui citent le motif ; l’identité de la personne reste un lien', async () => {
 		render(
 			<MemoryRouter>
 				<FournisseurEspace
@@ -624,12 +654,12 @@ describe('le guide quand la base refuse l’administration (CRM-093)', () => {
 		await screen.findByTestId('guide-demarrage')
 		const motif = screen.getByTestId('motif-lecture-seule')
 		expect(motif.textContent).toBe(fr['rights.readonly.administration'])
-		for (const cle of ['track', 'workflow', 'channel']) {
+		for (const cle of ['track', 'workflow', 'channel', 'boite-systeme']) {
 			const element = await screen.findByTestId(`lien-${cle}`)
 			expect(element.tagName, cle).toBe('SPAN')
 			expect(element.getAttribute('aria-describedby')).toBe(motif.id)
 		}
-		expect((await screen.findByTestId('lien-messagerie')).tagName).toBe('A')
+		expect((await screen.findByTestId('lien-identite')).tagName).toBe('A')
 	})
 
 	it('permise ou inconnue : les liens restent des liens, sans motif', async () => {
@@ -644,3 +674,33 @@ describe('le guide quand la base refuse l’administration (CRM-093)', () => {
 		expect(screen.queryByTestId('motif-lecture-seule')).toBeNull()
 	})
 })
+
+// @verifies CRM-157 (docs/BACKLOG.md) — tranche T3 : l'étape du domaine (docs/SPEC-onboarding.md §11.2 ; décision 953)
+describe('l’étape du domaine — CRM-157, §11.2', () => {
+	function avecSuperadmin(superadmin: boolean): ClientCrm {
+		const base = client(NEUF, [{ slug: 'p2enjoy' }]) as unknown as { from: (table: string) => unknown }
+		return { from: base.from, rpc: async () => ({ data: superadmin, error: null, status: 200 }) } as unknown as ClientCrm
+	}
+
+	it('dit le domaine, l’alias et l’adresse d’exemple en donnée technique ; sans être super-administrateur, un texte, pas de lien', async () => {
+		monter(<GuideDemarrage sessionOuverte contexteMesure={CONTEXTE} client={avecSuperadmin(false)} />)
+		const ligne = await screen.findByTestId('etape-domaine')
+		await waitFor(() => expect(ligne.textContent).toContain('Cet espace n’a pas encore de domaine.'))
+		expect(ligne.textContent).toContain('créez l’alias qui remet ces adresses à la boîte système')
+		expect(screen.getByTestId('exemple-domaine').tagName).toBe('CODE')
+		expect(screen.getByTestId('exemple-domaine').textContent).toBe('c-3p55qdgw@votre-domaine.fr')
+		expect(screen.queryByTestId('lien-domaine')).toBeNull()
+		expect(screen.getByTestId('sans-lien-domaine').textContent).toBe(
+			'Un super-administrateur le règle dans Plateforme ▸ Espaces.',
+		)
+	})
+
+	it('au super-administrateur, le lien mène à la fiche de l’espace courant', async () => {
+		monter(<GuideDemarrage sessionOuverte contexteMesure={CONTEXTE} client={avecSuperadmin(true)} />)
+		const lien = await screen.findByTestId('lien-domaine')
+		expect(lien.getAttribute('href')).toBe('/plateforme/espaces/p2enjoy')
+		expect(lien.textContent).toBe('Régler le domaine de l’espace')
+		expect(screen.queryByTestId('sans-lien-domaine')).toBeNull()
+	})
+})
+

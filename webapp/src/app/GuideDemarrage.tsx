@@ -4,6 +4,10 @@
 // @spec CRM-093 (docs/BACKLOG.md) tranche T3 — un lien d'étape qui mène à un geste d'administration refusé par la base
 //       est rendu en TEXTE citant le motif, posé une fois au-dessus de la liste (docs/SPEC-droits-interface.md §3, §5 ;
 //       docs/DESIGN_SYSTEM.md §5.59)
+// @spec CRM-157 (docs/BACKLOG.md) — tranche T3 : trois étapes mail à la place de « Raccorder une boîte de réception » —
+//       la boîte système testée, le domaine (le lien vers la fiche de l'espace pour le seul super-administrateur, un texte
+//       pour les autres, l'adresse d'exemple en donnée technique), l'identité d'envoi de la personne ; la mesure dans
+//       l'espace courant (docs/SPEC-onboarding.md §11 ; docs/DESIGN_SYSTEM.md §5.110, §5.59 ; décisions 951 et 953)
 // @spec CRM-079 (docs/BACKLOG.md) — guide de démarrage : l'écran
 // @spec docs/SPEC-onboarding.md §4 (où le guide vit), §4.4 (aucune mesure sans session),
 //       §5 (interruption et reprise),
@@ -44,12 +48,20 @@ import {
 	resteUneEtape,
 	useDemarrage,
 	type CleEtapeDemarrage,
+	type ContexteMesure,
 	type EtapeDemarrage,
 	type IssueWorkflowDepart,
 	type ProgressionDemarrage,
 } from '../lib/demarrage'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
-import { CHEMIN_ADMIN_ARBORESCENCE, CHEMIN_ADMIN_WORKFLOWS, CHEMIN_DEMARRAGE, CHEMIN_ETAT_MESSAGERIE } from './chemins'
+import {
+	CHEMIN_ADMIN_ARBORESCENCE,
+	CHEMIN_ADMIN_COMPTES_MAIL,
+	CHEMIN_ADMIN_IDENTITES_MAIL,
+	CHEMIN_ADMIN_WORKFLOWS,
+	CHEMIN_DEMARRAGE,
+	cheminFicheEspace,
+} from './chemins'
 import { useContexteEspace } from './ContexteEspace'
 import { useMasqueDemarrage } from './preferences'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
@@ -87,6 +99,13 @@ type DescriptionEtape = {
 	 * son lien devient un texte qui cite le motif : un lien vers un écran refusé est une commande morte (§5.59).
 	 */
 	readonly administration?: boolean
+	/**
+	 * `CRM-157` (§11.2) : le texte rendu À LA PLACE du lien quand la destination n'est pas offerte — le domaine, pour qui
+	 * n'est pas super-administrateur. Un texte, jamais un lien éteint (§5.59).
+	 */
+	readonly cleSansLien?: CleTraduction
+	/** `CRM-157` : une donnée technique écrite sous le corps, en monospace (§2) — l'adresse d'exemple du domaine. */
+	readonly cleExemple?: CleTraduction
 }
 
 export const ETAPES_DEMARRAGE: readonly DescriptionEtape[] = [
@@ -132,13 +151,33 @@ export const ETAPES_DEMARRAGE: readonly DescriptionEtape[] = [
 		cleAction: 'onboarding.step.affaire.action',
 		administration: true,
 	},
+	// `CRM-157` (§11.1, §11.2) : la messagerie en trois étapes, dans l'espace courant.
 	{
-		cle: 'messagerie',
-		cleTitre: 'onboarding.step.messagerie.title',
-		cleCorps: 'onboarding.step.messagerie.body',
-		cleVide: 'onboarding.step.messagerie.vide',
-		destination: CHEMIN_ETAT_MESSAGERIE,
-		cleAction: 'onboarding.step.messagerie.action',
+		cle: 'boite-systeme',
+		cleTitre: 'onboarding.step.boiteSysteme.title',
+		cleCorps: 'onboarding.step.boiteSysteme.body',
+		cleVide: 'onboarding.step.boiteSysteme.vide',
+		destination: CHEMIN_ADMIN_COMPTES_MAIL,
+		cleAction: 'onboarding.step.boiteSysteme.action',
+		administration: true,
+	},
+	{
+		// La destination dépend de la mesure : la fiche de l'espace, pour le seul super-administrateur (`descriptionMesuree`).
+		cle: 'domaine',
+		cleTitre: 'onboarding.step.domaine.title',
+		cleCorps: 'onboarding.step.domaine.body',
+		cleVide: 'onboarding.step.domaine.vide',
+		cleExemple: 'onboarding.step.domaine.exemple',
+		cleSansLien: 'onboarding.step.domaine.qui',
+	},
+	{
+		// Un geste PERSONNEL : sa propre adresse d'expédition ne dépend d'aucune capacité de l'espace (§5.59).
+		cle: 'identite',
+		cleTitre: 'onboarding.step.identite.title',
+		cleCorps: 'onboarding.step.identite.body',
+		cleVide: 'onboarding.step.identite.vide',
+		destination: CHEMIN_ADMIN_IDENTITES_MAIL,
+		cleAction: 'onboarding.step.identite.action',
 	},
 ]
 
@@ -149,7 +188,18 @@ export const ETAPES_DEMARRAGE: readonly DescriptionEtape[] = [
  * rend un — c'est là que vit « Nouvelle affaire » —, et à l'arborescence sinon, avec son libellé d'avant.
  * La table `ETAPES_DEMARRAGE` reste la source des cinq autres, sans exception.
  */
-export function descriptionMesuree(description: DescriptionEtape, boardAffaire: string | null): DescriptionEtape {
+export function descriptionMesuree(
+	description: DescriptionEtape,
+	boardAffaire: string | null,
+	domaine: { readonly slugEspace: string | null; readonly superadmin: boolean } = { slugEspace: null, superadmin: false },
+): DescriptionEtape {
+	// `CRM-157` (§11.2, décision 953) : le domaine mène à la fiche de l'espace pour le SEUL super-administrateur ; les
+	// autres lisent qui le règle. La règle reste celle de la base (`plateforme_modifier_espace`).
+	if (description.cle === 'domaine') {
+		return domaine.superadmin && domaine.slugEspace !== null
+			? { ...description, destination: cheminFicheEspace(domaine.slugEspace), cleAction: 'onboarding.step.domaine.action' }
+			: description
+	}
 	if (description.cle !== 'affaire' || boardAffaire === null) return description
 	// Le board n'est pas un écran d'administration : « Nouvelle affaire » y relève du channel (`CRM-093`).
 	return { ...description, destination: boardAffaire, cleAction: 'onboarding.step.affaire.action.board', administration: false }
@@ -243,7 +293,7 @@ export function ListeEtapesDemarrage({
 				{ETAPES_DEMARRAGE.map((description, rang) => (
 					<LigneEtape
 						key={description.cle}
-						description={descriptionMesuree(description, progression.boardAffaire)}
+						description={descriptionMesuree(description, progression.boardAffaire, progression)}
 						etat={progression.etapes[rang] ?? { statut: 'chargement' }}
 						onReprise={recharger}
 						capaciteAdministration={capacites.administration}
@@ -334,6 +384,11 @@ function LigneEtape({
 				<div className="flex flex-col gap-1 min-w-0">
 					<span className="font-medium">{t(description.cleTitre)}</span>
 					<span className="text-sm text-text-2">{t(description.cleCorps)}</span>
+					{description.cleExemple === undefined ? null : (
+						<code className="text-sm text-text-2 break-all" data-testid={`exemple-${description.cle}`}>
+							{t(description.cleExemple)}
+						</code>
+					)}
 					<StatutEtape etat={etat} cleVide={description.cleVide} onReprise={onReprise} />
 				</div>
 			</div>
@@ -349,7 +404,14 @@ function LigneEtape({
 					}}
 				/>
 			) : null}
-			{description.destination === undefined || description.cleAction === undefined ? null : description.administration ===
+			{description.destination === undefined || description.cleAction === undefined ? (
+				description.cleSansLien === undefined ? null : (
+					// `CRM-157` (§11.2) : à la place du lien, qui le règle — un texte, sans icône de lien (§5.110).
+					<span data-testid={`sans-lien-${description.cle}`} className="text-sm text-text-2">
+						{t(description.cleSansLien)}
+					</span>
+				)
+			) : description.administration ===
 					true && (capaciteAdministration === 'refusee' || capaciteAdministration === 'en-lecture') ? (
 				// LE LIEN DEVIENT UN TEXTE, à la même place et sous le même libellé, et cite le motif de la liste (§5.59) :
 				// un lien vers un écran dont le geste est refusé serait la commande morte du §5.10.
@@ -536,6 +598,11 @@ export type ProprietesSurfaceDemarrage = {
 	 * session n'est pas ouverte, AUCUNE mesure n'est émise.
 	 */
 	readonly sessionOuverte?: boolean
+	/**
+	 * `CRM-157` : l'espace courant et la personne, injectés par les preuves comme `sessionOuverte` ; l'application les lit
+	 * dans le contexte de l'espace et dans la session (`useContexteMesure`).
+	 */
+	readonly contexteMesure?: ContexteMesure
 }
 
 /**
@@ -550,15 +617,29 @@ function useSessionOuverte(declaree: boolean | undefined): boolean {
 	return declaree ?? etat.statut === 'authentifie'
 }
 
+/**
+ * `CRM-157` (§11.1) : l'espace courant et la personne, ce que les trois étapes de la messagerie mesurent. Partagé par les
+ * deux surfaces et par le guide flottant : une seule formulation.
+ */
+export function useContexteMesure(declare?: ContexteMesure): ContexteMesure | null {
+	const { idWorkspace, espaceLu } = useContexteEspace()
+	const { etat } = useAuthentification()
+	if (declare !== undefined) return declare
+	// Tant que la coquille lit les espaces, un `idWorkspace` nul ne dit pas « aucun espace » : rien n'est affirmé.
+	if (espaceLu === false) return null
+	return { idEspace: idWorkspace, idUtilisateur: etat.statut === 'authentifie' ? etat.utilisateur.id : null }
+}
+
 export function GuideDemarrage({
 	client = clientCrm,
 	sessionOuverte,
+	contexteMesure,
 }: ProprietesSurfaceDemarrage = {}) {
 	const ouverte = useSessionOuverte(sessionOuverte)
 	// `useDemarrage(null)` n'émet rien et laisse les étapes en chargement : c'est exactement ce
 	// que le §4.4 demande à `/demarrage` pour un visiteur sans session. L'adresse rend le guide
 	// QUAND MÊME — §4.1 est intact —, elle ne pose simplement aucune question à la base.
-	const { progression, recharger } = useDemarrage(ouverte ? client : null)
+	const { progression, recharger } = useDemarrage(ouverte ? client : null, useContexteMesure(contexteMesure))
 	const geste = useGesteDepart(client)
 	return <VueGuideDemarrage progression={progression} recharger={recharger} geste={geste} />
 }
@@ -582,9 +663,10 @@ export function GuideDemarrage({
 export function AccueilDemarrage({
 	client = clientCrm,
 	sessionOuverte,
+	contexteMesure,
 }: ProprietesSurfaceDemarrage = {}) {
 	const ouverte = useSessionOuverte(sessionOuverte)
-	const { progression, recharger } = useDemarrage(ouverte ? client : null)
+	const { progression, recharger } = useDemarrage(ouverte ? client : null, useContexteMesure(contexteMesure))
 	const { masque, masquer } = useMasqueDemarrage()
 	const geste = useGesteDepart(client)
 

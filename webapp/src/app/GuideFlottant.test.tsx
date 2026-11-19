@@ -1,3 +1,5 @@
+// @verifies CRM-157 (docs/BACKLOG.md) — tranche T3 : le guide flottant compte huit étapes ; tout accompli comprend la
+//           messagerie de l'espace courant (docs/SPEC-onboarding.md §11.1)
 // @verifies CRM-094 (docs/BACKLOG.md) tranche T3 — le guide flottant des administrateurs
 // @verifies docs/SPEC-onboarding.md §10.2 (pour qui, où, quand, deux formes, non modal, re-mesure),
 //           §10.3 (le geste tenu jusqu'à la re-mesure), §10.4 (stockage de session) ;
@@ -42,6 +44,9 @@ const TOUT_FAIT: Readonly<Record<string, ReponseCompte>> = {
 	channels: ok(6),
 	cards: ok(14),
 	mail_inbound_accounts: ok(3),
+	// `CRM-157` : la boîte système testée, le domaine (lu sur `workspaces`, distingué par `not`), l'identité de la personne.
+	'workspaces:domaine': ok(1),
+	mail_outbound_identities: ok(1),
 }
 
 function client(reponses: Readonly<Record<string, ReponseCompte>> | 'jamais'): ClientCrm {
@@ -49,12 +54,19 @@ function client(reponses: Readonly<Record<string, ReponseCompte>> | 'jamais'): C
 		from: (table: string) => ({
 			select: () => {
 				// `limit` : un compte est un `GET` borné à zéro ligne (`compter.ts`, INC-299, décision 700).
+				// `CRM-157` : la mesure du domaine lit `workspaces` avec un `not` — elle prend la clé `workspaces:domaine`.
+				let domaine = false
 				const chaine = {
 					is: () => chaine,
+					eq: () => chaine,
+					not: () => {
+						domaine = true
+						return chaine
+					},
 					limit: () => chaine,
 					then: (resoudre: (valeur: ReponseCompte) => unknown) => {
 						if (reponses === 'jamais') return new Promise(() => undefined)
-						const reponse = reponses[table]
+						const reponse = reponses[domaine ? `${table}:domaine` : table]
 						if (reponse === undefined) throw new Error(`table non attendue : ${table}`)
 						return Promise.resolve(reponse).then(resoudre)
 					},
@@ -69,7 +81,11 @@ const ADMIN = { idWorkspace: 'e0940000-0000-4000-8000-0000000000c1', estAdmin: t
 
 function monter(
 	reponses: Readonly<Record<string, ReponseCompte>> | 'jamais' | ClientCrm,
-	{ chemin = '/contacts', valeur = ADMIN }: { chemin?: string; valeur?: typeof ADMIN } = {},
+	{
+		chemin = '/contacts',
+		valeur = ADMIN,
+		contexteMesure,
+	}: { chemin?: string; valeur?: typeof ADMIN; contexteMesure?: { idEspace: string; idUtilisateur: string } } = {},
 ) {
 	const fourni = typeof reponses === 'object' && 'from' in reponses ? (reponses as ClientCrm) : null
 	return render(
@@ -78,6 +94,7 @@ function monter(
 				<main id="contenu-principal" tabIndex={-1}>
 					<GuideFlottant
 						sessionOuverte
+						contexteMesure={contexteMesure}
 						client={fourni ?? client(reponses as Readonly<Record<string, ReponseCompte>> | 'jamais')}
 					/>
 				</main>
@@ -92,7 +109,7 @@ describe('quand la pastille paraît — §10.2', () => {
 	it('paraît pour l’administratrice, avec la progression écrite en toutes lettres', async () => {
 		monter(NEUF)
 		await waitFor(() => expect(pastille()).toBeTruthy())
-		expect(pastille().textContent).toContain('Démarrage · 1 sur 6')
+		expect(pastille().textContent).toContain('Démarrage · 1 sur 8')
 		expect(pastille().getAttribute('aria-expanded')).toBe('false')
 		// Réduite, elle ne désigne aucun panneau qui n'existe pas.
 		expect(pastille().getAttribute('aria-controls')).toBeNull()
@@ -113,13 +130,14 @@ describe('quand la pastille paraît — §10.2', () => {
 		}
 	})
 
-	it('ne paraît PAS pendant la première mesure : « 0 sur 6 » dirait faux', () => {
+	it('ne paraît PAS pendant la première mesure : « 0 sur 8 » dirait faux', () => {
 		monter('jamais')
 		expect(screen.queryByTestId('pastille-guide-flottant')).toBeNull()
 	})
 
+	// RÉVISÉ par `CRM-157` : « tout accompli » comprend la messagerie, mesurée dans l'espace courant pour la personne.
 	it('disparaît une fois tout accompli', async () => {
-		monter(TOUT_FAIT)
+		monter(TOUT_FAIT, { contexteMesure: { idEspace: ADMIN.idWorkspace, idUtilisateur: 'u-1' } })
 		await new Promise((resoudre) => setTimeout(resoudre, 20))
 		expect(screen.queryByTestId('pastille-guide-flottant')).toBeNull()
 	})
@@ -147,8 +165,8 @@ describe('ouvrir, suivre un lien, revenir — le défaut relevé par le responsa
 		expect(pastille().getAttribute('aria-controls')).toBe(panneau.id)
 		await waitFor(() => expect(document.activeElement?.textContent).toBe('Démarrage'))
 		expect(globalThis.sessionStorage.getItem(CLE_PREFERENCE_GUIDE_FLOTTANT)).toBe('ouvert')
-		// Le panneau porte la liste du guide, telle quelle : six étapes.
-		expect(panneau.querySelectorAll('li')).toHaveLength(6)
+		// Le panneau porte la liste du guide, telle quelle : huit étapes depuis `CRM-157`.
+		expect(panneau.querySelectorAll('li')).toHaveLength(8)
 	})
 
 	it('remonté par un changement de page, il RESTE ouvert — sans voler le focus', async () => {
@@ -167,7 +185,9 @@ describe('ouvrir, suivre un lien, revenir — le défaut relevé par le responsa
 		const c = {
 			from: (table: string) =>
 				(client(apres ? 'jamais' : NEUF) as unknown as { from: (nom: string) => unknown }).from(table),
-			rpc: async () => {
+			rpc: async (nom: string) => {
+				// `CRM-157` : la mesure lit aussi `est_superadmin` ; seul le geste compte ici.
+				if (nom === 'est_superadmin') return { data: false, error: null, status: 200 }
 				appels += 1
 				apres = true
 				return { data: 'w', error: null, status: 200 }
@@ -216,8 +236,9 @@ describe('ouvrir, suivre un lien, revenir — le défaut relevé par le responsa
 		return {
 			client: {
 				from: (table: string) => {
-					// Une mesure compte les six tables, `workspaces` comprise, une fois chacune.
-					if (table === 'workspaces') mesures += 1
+					// Une mesure compte chaque table une fois ; `tracks` la marque. RÉVISÉ par `CRM-157` : `workspaces` est lue
+					// désormais trois fois par mesure (l'espace, le domaine, l'identifiant court de l'espace courant).
+					if (table === 'tracks') mesures += 1
 					return (client(comptes) as unknown as { from: (nom: string) => unknown }).from(table)
 				},
 			} as unknown as ClientCrm,
@@ -231,14 +252,14 @@ describe('ouvrir, suivre un lien, revenir — le défaut relevé par le responsa
 	it('une nouvelle page RE-MESURE, même quand la coquille n’est pas remontée (§10.2)', async () => {
 		const espion = clientCompte()
 		const routeur = monterSousRouteur('/reglages/arborescence', espion.client)
-		await waitFor(() => expect(pastille().textContent).toContain('1 sur 6'))
+		await waitFor(() => expect(pastille().textContent).toContain('1 sur 8'))
 		expect(espion.mesures()).toBe(1)
 		// Un track vient de naître sur l'arborescence ; l'administrateur passe à l'éditeur.
 		espion.poser({ ...NEUF, tracks: ok(1) })
 		await act(async () => {
 			await routeur.navigate('/reglages/workflows')
 		})
-		await waitFor(() => expect(pastille().textContent).toContain('2 sur 6'))
+		await waitFor(() => expect(pastille().textContent).toContain('2 sur 8'))
 		expect(espion.mesures()).toBe(2)
 	})
 
@@ -250,17 +271,17 @@ describe('ouvrir, suivre un lien, revenir — le défaut relevé par le responsa
 		await act(async () => {
 			await routeur.navigate('/contacts')
 		})
-		await waitFor(() => expect(pastille().textContent).toContain('1 sur 6'))
+		await waitFor(() => expect(pastille().textContent).toContain('1 sur 8'))
 		expect(espion.mesures()).toBe(1)
 	})
 
 	it('garde la dernière progression pendant la nouvelle mesure : aucun clignotement', async () => {
 		const { unmount } = monter(NEUF)
-		await waitFor(() => expect(pastille().textContent).toContain('1 sur 6'))
+		await waitFor(() => expect(pastille().textContent).toContain('1 sur 8'))
 		unmount()
 		// Nouvelle page : la mesure est en vol, et ne rendra jamais — la pastille reste pourtant là.
 		monter('jamais', { chemin: '/inbox' })
-		expect(pastille().textContent).toContain('1 sur 6')
+		expect(pastille().textContent).toContain('1 sur 8')
 	})
 })
 

@@ -98,12 +98,12 @@ compte LeLabs.
 ## 2. Le guide de démarrage : par où commencer
 
 À la première connexion, l'accueil ne montre aucun board — il n'y en a pas encore. Il montre à la
-place le **Guide de démarrage**, une liste de **six étapes** qui mènent chacune vers l'écran qui
+place le **Guide de démarrage**, une liste de **huit étapes** qui mènent chacune vers l'écran qui
 la réalise.
 
-![L'accueil d'un espace neuf : le guide de démarrage et ses six étapes, une seule accomplie](manuel/images/le-guide-de-demarrage-par-ou-commencer/accueil-espace-neuf.jpg)
+![L'accueil d'un espace neuf : le guide de démarrage et ses huit étapes, une seule accomplie](manuel/images/le-guide-de-demarrage-par-ou-commencer/accueil-espace-neuf.jpg)
 
-Les six étapes, dans l'ordre :
+Les huit étapes, dans l'ordre :
 
 | Étape | Ce qu'elle établit | Où elle se fait |
 |---|---|---|
@@ -112,7 +112,9 @@ Les six étapes, dans l'ordre :
 | Préparer un premier workflow | Les affaires ont des étapes à suivre | Réglages ▸ Workflows — ou, pour un administrateur, le bouton **Créer le workflow de départ** du guide ([§2.4](#le-workflow-de-depart-en-un-geste)) |
 | Ouvrir un channel dans ce track | Un onglet de travail existe sous ce track | **Nouveau channel**, dans la barre d'onglets du track ([chapitre 3.4](#les-onglets-d-un-track)), ou Réglages ▸ Arborescence |
 | Créer une première affaire | Un board a quelque chose à montrer | Le board du premier channel : dès qu'un channel existe, le lien **Ouvrir le board et créer l'affaire** y mène, et le bouton **Nouvelle affaire** crée l'affaire ([chapitre 9.10](#le-tableau-kanban-d-un-channel)). Sans channel, le lien mène à l'arborescence |
-| Raccorder une boîte de réception | Le courrier entrant se classe dans les affaires | Réglages ▸ État de la messagerie |
+| Raccorder la boîte de réception de l'espace | La boîte système reçoit les réponses à vos affaires, testée avec succès | Réglages ▸ Comptes entrants ([§2.6](#la-messagerie-en-trois-etapes)) |
+| Régler le domaine des adresses d'affaire | Les adresses des affaires se forment, les mails peuvent partir | Plateforme ▸ Espaces, par un super-administrateur ([§2.6](#la-messagerie-en-trois-etapes)) |
+| Déclarer votre adresse d'expédition | Vos mails partent de votre adresse, testée avec succès | Réglages ▸ Identités d'envoi ([§2.6](#la-messagerie-en-trois-etapes)) |
 
 **Le workflow vient avant le channel, et ce n'est pas un détail d'ordre** : un channel suit
 toujours un workflow, et un espace neuf n'en a **aucun**. Tant qu'il n'y en a pas, le formulaire
@@ -133,16 +135,16 @@ réellement, et en déduit l'état. Trois conséquences directes, et elles sont 
 - rien n'est enregistré sur votre appareil, et aucune progression n'est stockée sur le serveur.
 
 Chaque état est écrit **en toutes lettres** — *Fait*, *À faire* — à côté de son icône, et la
-progression est une phrase, « 3 étape(s) sur 6 », jamais une barre seule.
+progression est une phrase, « 3 étape(s) sur 8 », jamais une barre seule.
 
-![La progression « 3 étape(s) sur 6 » et deux étapes marquées « Fait », chacune avec son lien](manuel/images/le-guide-de-demarrage-par-ou-commencer/progression.jpg)
+![La progression « 3 étape(s) sur 8 » et deux étapes marquées « Fait », chacune avec son lien](manuel/images/le-guide-de-demarrage-par-ou-commencer/progression.jpg)
 
 ### 2.2 Ce que le guide dit exactement, et ce qu'il ne dit pas
 
 Une étape non accomplie écrit « **Vous n'en voyez aucun pour le moment** », et le mot est choisi :
 le guide rapporte ce que **votre compte** voit, jamais ce qui existe dans l'espace. Deux personnes
-n'ont donc pas nécessairement le même guide — un compte en lecture seule peut ne voir aucune boîte
-de réception là où l'espace en porte trois, et sa dernière étape restera « à faire ». Ce n'est pas
+n'ont donc pas nécessairement le même guide — un compte en lecture seule ne voit pas la boîte système
+de l'espace, et l'étape de la boîte restera « à faire » pour lui. Ce n'est pas
 un défaut d'affichage : ce sont ses droits, et le guide ne prétend jamais les contourner.
 
 Si vous n'administrez pas l'espace, les liens du guide vers un geste d'administration deviennent un texte
@@ -151,7 +153,7 @@ portent eux-mêmes leurs refus, et c'est là que vous les rencontrerez, expliqu�
 
 Lorsqu'une étape **n'a pas pu être mesurée** — une coupure réseau, une session expirée —, sa ligne
 le dit (« Cette étape n'a pas pu être vérifiée ») et propose de **réessayer**, ce qui relance
-réellement les six mesures. Les cinq autres étapes restent lisibles : une mesure manquante n'en
+réellement les huit mesures. Les sept autres étapes restent lisibles : une mesure manquante n'en
 efface aucune.
 
 ![Une étape dont la mesure a échoué : « Cette étape n'a pas pu être vérifiée », avec le bouton « Réessayer »](manuel/images/le-guide-de-demarrage-par-ou-commencer/etape-non-verifiee.jpg)
@@ -215,13 +217,13 @@ le nom déjà saisi.
 ### 2.5 Le guide flottant des administrateurs
 
 Pour un **administrateur**, le guide ne reste pas sur l'accueil : il le suit sur toutes les pages,
-sous la forme d'une **pastille** en bas à droite de l'écran — « Démarrage · 2 sur 6 », ou « 2/6 »
+sous la forme d'une **pastille** en bas à droite de l'écran — « Démarrage · 2 sur 8 », ou « 2/8 »
 sur un téléphone. Les autres rôles gardent le guide sur l'accueil et dans les réglages.
 
-![La pastille du guide flottant, en bas à droite : « Démarrage · 2 sur 6 »](manuel/images/le-guide-de-demarrage-par-ou-commencer/pastille.jpg)
+![La pastille du guide flottant, en bas à droite : « Démarrage · 2 sur 8 »](manuel/images/le-guide-de-demarrage-par-ou-commencer/pastille.jpg)
 
 - **L'ouvrir** : un clic sur la pastille (ou `Entrée` quand elle a le focus) déploie au-dessus
-  d'elle un panneau avec les six étapes, leurs liens et le bouton du workflow de départ.
+  d'elle un panneau avec les huit étapes, leurs liens et le bouton du workflow de départ.
 - **Suivre un lien ne le referme pas.** Vous pouvez aller créer votre track, revenir, ouvrir
   l'éditeur : le panneau reste ouvert, et la progression est **re-mesurée à chaque changement de
   page**, sans recharger.
@@ -230,13 +232,33 @@ sur un téléphone. Les autres rôles gardent le guide sur l'accueil et dans les
   l'onglet — c'est la même préférence que *Masquer le guide*.
 - **Ce qu'il retient** : ouvert ou réduit, pour la durée de l'onglet seulement ; rien d'autre, et
   rien de durable sur votre appareil.
-- **Quand il disparaît** : une fois les six étapes accomplies. Il n'apparaît pas non plus sur
+- **Quand il disparaît** : une fois les huit étapes accomplies. Il n'apparaît pas non plus sur
   l'accueil ni dans **Réglages ▸ Guide de démarrage**, qui montrent déjà le guide dans la page.
 
-![Le panneau du guide flottant ouvert au-dessus de sa pastille, avec les six étapes et le bouton qui le réduit](manuel/images/le-guide-de-demarrage-par-ou-commencer/panneau-ouvert.jpg)
+![Le panneau du guide flottant ouvert au-dessus de sa pastille, avec les huit étapes et le bouton qui le réduit](manuel/images/le-guide-de-demarrage-par-ou-commencer/panneau-ouvert.jpg)
 
 Le panneau n'est pas une fenêtre modale : le reste de la page reste utilisable, panneau ouvert. Il
 couvre en revanche la partie droite de l'écran ; **Réduire** la libère d'un geste.
+
+### 2.6 La messagerie en trois étapes
+
+Pour qu'un mail parte d'une affaire et que la réponse y revienne, trois réglages sont nécessaires. Le guide les mesure
+**dans l'espace ouvert** — celui du sélecteur d'espace —, et chacune n'est faite que lorsque le réglage a été **testé
+avec succès**.
+
+- **La boîte de réception de l'espace.** La boîte système reçoit les réponses à toutes les affaires. Saisissez-la dans
+  Réglages ▸ Comptes entrants, puis testez la connexion ([chapitre 11](#les-boites-de-reception-et-les-adresses-d-expedition)).
+  C'est un geste d'administrateur.
+- **Le domaine des adresses d'affaire.** Chaque affaire reçoit une adresse faite du préfixe de l'espace, de huit
+  caractères et du domaine. Chez l'hébergeur du domaine, il faut créer l'alias qui remet ces adresses à la boîte système ;
+  puis un **super-administrateur** règle le domaine et le préfixe dans Plateforme ▸ Espaces
+  ([chapitre 32](#la-plateforme-espaces-membres-et-superadministrateurs)). Sans domaine, **aucun mail ne part** : le
+  formulaire d'envoi le dit ([chapitre 12.3](#ecrire-et-repondre)). Un super-administrateur trouve dans le guide le lien
+  vers la fiche de l'espace ; les autres y lisent qui le règle.
+- **Votre adresse d'expédition.** Elle envoie **vos** mails : déclarez son serveur d'envoi dans Réglages ▸ Identités
+  d'envoi, puis testez la connexion. Cette étape est **la vôtre** : un collègue qui a la sienne ne la fait pas pour vous.
+
+![Les trois étapes de la messagerie dans un espace neuf : la boîte système, le domaine et l'adresse d'expédition, à faire](manuel/images/le-guide-de-demarrage-par-ou-commencer/etapes-messagerie.jpg)
 
 **Ce qui reste hors du guide.** Il **lit et renvoie**, à une exception près : le workflow de départ, qu'il pose en un
 geste. Il ne crée ni track, ni channel, ni affaire : ces écrans existent, et le guide y mène.

@@ -5,6 +5,8 @@
 //           §8 (ligne « Hors interface »), §9 (première limite connue)
 // @verifies docs/SPEC-seed.md §2.3 (les comptes du seed), §2.5 (les droits fins du `viewer`)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec les vrais jetons)
+// @verifies CRM-157 (docs/BACKLOG.md) — tranche T3 : les trois lectures de la messagerie, dans l'espace courant et pour la
+//           personne, sous les vrais jetons (docs/SPEC-onboarding.md §11.1 ; docs/SPEC-seed.md §51)
 // @verifies CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.1 : la sixième mesure,
 //           `workflows` vivants sous la politique existante (`workflows_lecture_membre`), hors interface
 //
@@ -34,6 +36,12 @@ import { CLE_ANONYME, URL_API, enTetesAnonymes, enTetesAuthentifies, jetonDe } f
 
 const ADMIN = 'admin@p2enjoy.test'
 const VIEWER = 'viewer@p2enjoy.test'
+// `CRM-157` (§11.1) : les trois étapes de la messagerie se mesurent dans l'ESPACE COURANT, pour la PERSONNE.
+const ESPACE = '5eed0000-0000-4000-8000-000000000001'
+const PERSONNES: Readonly<Record<string, string>> = {
+	[ADMIN]: '5eed0000-0000-4000-8000-000000000011',
+	[VIEWER]: '5eed0000-0000-4000-8000-000000000013',
+}
 
 /**
  * Les six lectures, RECOPIÉES DE LA SPÉCIFICATION §3 et §10.1 et non du module : une preuve qui importerait
@@ -49,12 +57,26 @@ const LECTURES = {
 	workflow: 'workflows?select=id&archived_at=is.null',
 	channel: 'channels?select=id&archived_at=is.null&deleted_at=is.null',
 	affaire: 'cards?select=id&deleted_at=is.null',
-	messagerie: 'mail_inbound_accounts?select=id',
+	// RÉVISÉ par `CRM-157` (§11.1) : la boîte SYSTÈME de l'espace courant, testée avec succès…
+	'boite-systeme': `mail_inbound_accounts?select=id&owner_id=is.null&status=eq.ok&workspace_id=eq.${ESPACE}`,
+	// … le domaine de l'espace courant…
+	domaine: `workspaces?select=id&inbound_domain=not.is.null&id=eq.${ESPACE}`,
+	// … et l'adresse d'expédition DE LA PERSONNE, testée avec succès (le propriétaire est ajouté par `compter`).
+	identite: `mail_outbound_identities?select=id&status=eq.ok&workspace_id=eq.${ESPACE}`,
 } as const
 
 type CleEtape = keyof typeof LECTURES
 
-const CLES: readonly CleEtape[] = ['espace', 'track', 'workflow', 'channel', 'affaire', 'messagerie']
+const CLES: readonly CleEtape[] = [
+	'espace',
+	'track',
+	'workflow',
+	'channel',
+	'affaire',
+	'boite-systeme',
+	'domaine',
+	'identite',
+]
 
 type Comptage = {
 	readonly statut: number
@@ -70,8 +92,10 @@ async function compter(
 	requete: APIRequestContext,
 	enTetes: Record<string, string>,
 	cle: CleEtape,
+	personne?: string,
 ): Promise<Comptage> {
-	const reponse = await requete.fetch(`${URL_API}/rest/v1/${LECTURES[cle]}`, {
+	const proprietaire = cle === 'identite' && personne !== undefined ? `&owner_id=eq.${PERSONNES[personne]}` : ''
+	const reponse = await requete.fetch(`${URL_API}/rest/v1/${LECTURES[cle]}${proprietaire}`, {
 		method: 'HEAD',
 		headers: { ...enTetes, Prefer: 'count=exact', Range: '0-0' },
 	})
@@ -88,31 +112,33 @@ async function total(
 	requete: APIRequestContext,
 	enTetes: Record<string, string>,
 	cle: CleEtape,
+	personne?: string,
 ): Promise<number> {
-	const mesure = await compter(requete, enTetes, cle)
+	const mesure = await compter(requete, enTetes, cle, personne)
 	expect([200, 206], `la mesure « ${cle} » doit aboutir`).toContain(mesure.statut)
 	expect(mesure.compte, `la mesure « ${cle} » doit rendre un total`).not.toBeNull()
 	return mesure.compte ?? -1
 }
 
 test.describe('guide de démarrage — les six comptages hors interface (docs/SPEC-onboarding.md §3, §10.1)', () => {
-	test('l’administratrice voit les six étapes accomplies, et chaque mesure aboutit', async ({
+	// RÉVISÉ par `CRM-157` : huit étapes ; l'adresse d'expédition de Camille est testée par le seed (§51).
+	test('l’administratrice voit les huit étapes accomplies, et chaque mesure aboutit', async ({
 		request,
 	}) => {
 		const enTetes = enTetesAuthentifies(await jetonDe(ADMIN))
 		for (const cle of CLES) {
-			const compte = await total(request, enTetes, cle)
+			const compte = await total(request, enTetes, cle, ADMIN)
 			expect(compte, `l'étape « ${cle} » est accomplie pour l'administratrice`).toBeGreaterThanOrEqual(1)
 		}
 	})
 
-	test('les six mesures sont INDÉPENDANTES : aucune n’est conditionnée à une autre (§3.2)', async ({
+	test('les huit mesures sont INDÉPENDANTES : aucune n’est conditionnée à une autre (§3.2)', async ({
 		request,
 	}) => {
 		// Le module émet les six en parallèle. Émises ensemble ici, elles aboutissent toutes :
 		// aucune ne dépend de l'ordre, et aucune n'exige qu'une autre l'ait précédée.
 		const enTetes = enTetesAuthentifies(await jetonDe(ADMIN))
-		const mesures = await Promise.all(CLES.map((cle) => compter(request, enTetes, cle)))
+		const mesures = await Promise.all(CLES.map((cle) => compter(request, enTetes, cle, ADMIN)))
 		for (const [rang, mesure] of mesures.entries()) {
 			expect([200, 206], `la mesure « ${CLES[rang]} » doit aboutir en parallèle`).toContain(mesure.statut)
 			expect(mesure.compte, `la mesure « ${CLES[rang]} » doit rendre son total`).not.toBeNull()
@@ -143,18 +169,22 @@ test.describe('guide de démarrage — les six comptages hors interface (docs/SP
 		}
 	})
 
-	test('la LECTRICE compte ZÉRO boîte entrante alors que trois existent (§3.1 fait 2, §9)', async ({
+	// RÉVISÉ par `CRM-157` : la boîte SYSTÈME, et l'adresse d'expédition de la lectrice, qu'elle n'a pas.
+	test('la LECTRICE compte ZÉRO boîte système alors qu’elle existe, et n’a pas d’adresse d’expédition (§3.1 fait 2, §9)', async ({
 		request,
 	}) => {
 		const admin = enTetesAuthentifies(await jetonDe(ADMIN))
 		const lectrice = enTetesAuthentifies(await jetonDe(VIEWER))
 
-		expect(await total(request, admin, 'messagerie'), 'le seed porte des boîtes entrantes').toBeGreaterThanOrEqual(1)
+		expect(await total(request, admin, 'boite-systeme'), 'le seed porte une boîte système testée').toBeGreaterThanOrEqual(1)
+		expect(await total(request, lectrice, 'identite', VIEWER), 'la lectrice n’a aucune adresse d’expédition').toBe(0)
+		// Le domaine de l'espace, elle le lit : tout membre lit son espace.
+		expect(await total(request, lectrice, 'domaine')).toBe(1)
 
 		// ZÉRO, et non un refus : la réponse ABOUTIT et rend un total nul. C'est le refus par
 		// défaut de la RLS (docs/SPEC-permissions-rls.md), qui rend `200` et zéro ligne — donc un
 		// état VIDE à l'écran, jamais un état d'erreur (`webapp/src/lib/async.ts`).
-		const mesure = await compter(request, lectrice, 'messagerie')
+		const mesure = await compter(request, lectrice, 'boite-systeme')
 		expect([200, 206]).toContain(mesure.statut)
 		expect(mesure.compte, 'l’étape des boîtes restera « À faire » pour la lectrice').toBe(0)
 
@@ -162,13 +192,14 @@ test.describe('guide de démarrage — les six comptages hors interface (docs/SP
 		// façon dont le guide interroge, la lectrice ne peut pas accomplir cette étape en lecture.
 	})
 
-	test('`mail_inbound_accounts` est la SEULE des six à refuser la clé anonyme (§3.1, fait 3)', async ({
+	// RÉVISÉ par `CRM-157` : `mail_outbound_identities` refuse aussi la clé anonyme — mesuré le 2026-11-19.
+	test('les boîtes et les identités sont les SEULES à refuser la clé anonyme (§3.1, fait 3)', async ({
 		request,
 	}) => {
 		// Les cinq autres rendent une réponse ABOUTIE et un total nul : `anon` a le privilège de
 		// lecture — `workflows` compris, mesuré le 2026-09-28 —, et c'est la politique qui ne lui
 		// accorde aucune ligne.
-		for (const cle of ['espace', 'track', 'workflow', 'channel', 'affaire'] as const) {
+		for (const cle of ['espace', 'track', 'workflow', 'channel', 'affaire', 'domaine'] as const) {
 			const mesure = await compter(request, enTetesAnonymes(), cle)
 			expect([200, 206], `${cle} doit aboutir pour l'anonyme`).toContain(mesure.statut)
 			expect(mesure.compte, `${cle} doit rendre zéro à l'anonyme`).toBe(0)
@@ -177,8 +208,10 @@ test.describe('guide de démarrage — les six comptages hors interface (docs/SP
 		// Celle des boîtes REFUSE, `anon` n'ayant aucun privilège sur cette table : PostgREST rend
 		// `401`. C'est le seul des six comptages qui peut porter l'écran à un état de refus —
 		// celui que `classerErreur` nomme `forbidden`, et qui n'offre AUCUNE reprise (§6.1).
-		const refus = await compter(request, enTetesAnonymes(), 'messagerie')
+		const refus = await compter(request, enTetesAnonymes(), 'boite-systeme')
 		expect(refus.statut, 'la clé anonyme n’a aucun privilège sur les boîtes entrantes').toBe(401)
+		const refusIdentite = await compter(request, enTetesAnonymes(), 'identite')
+		expect(refusIdentite.statut, 'ni sur les identités d’envoi').toBe(401)
 	})
 
 	test('une clé anonyme SANS apikey est refusée : le guide ne mesure rien sans session', async ({

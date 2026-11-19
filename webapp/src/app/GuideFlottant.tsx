@@ -1,3 +1,5 @@
+// @spec CRM-157 (docs/BACKLOG.md) — tranche T3 : le guide flottant mesure la messagerie dans l'espace courant
+//       (docs/SPEC-onboarding.md §11.1)
 // @spec CRM-094 (docs/BACKLOG.md) tranche T3 — le guide flottant des administrateurs
 // @spec docs/SPEC-onboarding.md §10.2 (pour qui, où, quand, deux formes, non modal, re-mesure à chaque
 //       page), §10.4 (stockage)
@@ -21,13 +23,14 @@ import {
 	mesureEnCours,
 	resteUneEtape,
 	useDemarrage,
+	type ContexteMesure,
 	type ProgressionDemarrage,
 } from '../lib/demarrage'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
 import { CHEMIN_DEMARRAGE } from './chemins'
 import { useContexteEspace } from './ContexteEspace'
-import { ListeEtapesDemarrage, Progression, useGesteDepart } from './GuideDemarrage'
+import { ListeEtapesDemarrage, Progression, useContexteMesure, useGesteDepart } from './GuideDemarrage'
 import { useFormeGuideFlottant, useMasqueDemarrage } from './preferences'
 
 /**
@@ -53,9 +56,11 @@ export type ProprietesGuideFlottant = {
 	readonly client?: ClientCrm | null
 	/** Point d'injection des preuves, comme pour le guide de la page ; l'application ne le pose pas. */
 	readonly sessionOuverte?: boolean
+	/** `CRM-157` : l'espace courant et la personne, injectés par les preuves (`useContexteMesure`). */
+	readonly contexteMesure?: ContexteMesure
 }
 
-export function GuideFlottant({ client = clientCrm, sessionOuverte }: ProprietesGuideFlottant = {}) {
+export function GuideFlottant({ client = clientCrm, sessionOuverte, contexteMesure }: ProprietesGuideFlottant = {}) {
 	const { etat } = useAuthentification()
 	const { estAdmin } = useContexteEspace()
 	const { pathname } = useLocation()
@@ -64,7 +69,8 @@ export function GuideFlottant({ client = clientCrm, sessionOuverte }: Proprietes
 	// deux mesures du même guide sur un même écran seraient deux requêtes pour une information.
 	const actif = ouverte && estAdmin && !rendLeGuideDansLaPage(pathname)
 
-	const { progression, recharger } = useDemarrage(actif ? client : null)
+	// `CRM-157` (§11.1) : les trois étapes de la messagerie se mesurent dans l'espace courant, pour la personne.
+	const { progression, recharger } = useDemarrage(actif ? client : null, useContexteMesure(contexteMesure))
 	const geste = useGesteDepart(actif ? client : null)
 
 	// Re-mesurer à CHAQUE changement de page (§10.2). Les routes de réglages rendent toutes la même

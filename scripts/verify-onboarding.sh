@@ -3,6 +3,8 @@
 # @verifies docs/SPEC-onboarding.md §8 (preuves attendues), §8 bis (contrat de CE harnais),
 #           §3 et §10.1 (les six étapes et leurs filtres), §3.2 (six comptages indépendants),
 #           §4.4 (aucune mesure sans session), §6.2 (les trois états d'une étape)
+# @verifies CRM-157 (docs/BACKLOG.md) — tranche T3 : les comptes figés suivent les huit étapes ; une septième dégradation,
+#           le filtre de la boîte système (docs/SPEC-onboarding.md §11.1)
 # @verifies CRM-094 (docs/BACKLOG.md) tranche T2 — la sixième étape, `workflow`, et la sixième
 #           dégradation qui attaque son filtre d'archivage (docs/SPEC-onboarding.md §8 bis.2)
 # @verifies docs/SPEC-test-harness.md §1 (un harnais qui rend vert sans rien exercer est pire
@@ -18,7 +20,7 @@
 #   3. Vitest : le module de mesure et l'écran, fichiers ET tests figés (décision 279) ;
 #   4. l'API : les trois faits du §3.1 hors interface, jetons réels des trois profils ;
 #   5. l'UI : clavier seul, mobile, masquage et reprise, console stricte ;
-#   6. le harnais est NON COMPLAISANT : six dégradations réelles des deux fichiers de l'unité
+#   6. le harnais est NON COMPLAISANT : sept dégradations réelles (six avant `CRM-157`) des deux fichiers de l'unité
 #      doivent faire rougir la suite unitaire, et la restauration est CONSTATÉE octet à octet.
 #
 # ---------------------------------------------------------------------------------------------
@@ -65,7 +67,8 @@ CAPTURES=docs/captures/CRM-079
 VITEST_FICHIERS_ATTENDUS=2
 # 62 depuis `CRM-094` (2026-09-28) : la sixième étape, le geste et ses issues, le signal aux écrans.
 # 69 depuis `1c42e16` (`CRM-001`, INC-299, décision 700), constaté le 2026-10-25 (décision 704).
-VITEST_TESTS_ATTENDUS=69
+# 91 depuis `CRM-157` T3 (2026-11-19) : huit étapes, la messagerie mesurée dans l'espace courant et en deux moitiés, le domaine.
+VITEST_TESTS_ATTENDUS=91
 API_SCENARIOS_ATTENDUS=6
 UI_SCENARIOS_ATTENDUS=11
 
@@ -219,7 +222,7 @@ else
 	fi
 fi
 
-titre "6. Non-complaisance — six dégradations réelles (§8 bis.2)"
+titre "6. Non-complaisance — sept dégradations réelles (§8 bis.2)"
 
 if npm run test:unit -- --run demarrage >"$TRAVAIL/temoin.log" 2>&1; then
 	ok "témoin : les deux suites de l'unité sont VERTES avant toute dégradation"
@@ -282,8 +285,8 @@ degrader "$LIB" \
 # console de l'écran d'arrivée du produit.
 degrader "$ECRAN" \
 	"la garde de session saute — l'accueil mesurerait sans session et salirait la console" \
-	"useDemarrage(ouverte ? client : null)" \
-	"useDemarrage(client)"
+	"useDemarrage(ouverte ? client : null," \
+	"useDemarrage(client,"
 
 # LE FILTRE D'ARCHIVAGE DES WORKFLOWS (§10.1, `CRM-094`) : sans lui, un workflow archivé — que
 # l'éditeur range et qu'aucun channel ne peut plus recevoir — accomplirait l'étape « Workflow », et
@@ -292,6 +295,13 @@ degrader "$LIB" \
 	"le filtre archived_at des workflows disparaît — un workflow archivé accomplirait l'étape" \
 	"table: 'workflows', nuls: \['archived_at'\] }" \
 	"table: 'workflows', nuls: [] }"
+
+# `CRM-157` (§11.1) : LA BOÎTE SYSTÈME, ET ELLE SEULE. Sans le filtre `owner_id is null`, la boîte personnelle d'un membre
+# accomplirait l'étape, et le guide dirait l'espace prêt à recevoir les réponses alors que rien ne les reçoit.
+degrader "$LIB" \
+	"le filtre de la boîte système disparaît — une boîte personnelle accomplirait l'étape" \
+	"nuls: \['owner_id'\]" \
+	"nuls: []"
 
 titre "7. Restauration CONSTATÉE, pas supposée"
 

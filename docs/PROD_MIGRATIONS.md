@@ -1418,6 +1418,21 @@ fait voir **avant**.
 **Retour arrière** : l'image `mail-sync` précédente. La file cesse alors de se vider, comme avant la livraison ; rien n'est
 perdu, et les envois mis en file entre-temps attendent la livraison suivante.
 
+### 2.64 `CRM-157` T2 et T3, décisions 951, 953 et 955 — l'envoi impossible dit avant qu'on rédige, et la messagerie dans le guide de démarrage (EN ATTENTE)
+
+`docs/SPEC-mail-subsystem.md` §33.3, §33.4 ; `docs/SPEC-onboarding.md` §11 ; `docs/DESIGN_SYSTEM.md` §5.110. **La webapp
+seule** : aucune migration de plus, aucune variable, aucun secret, aucun connecteur (décision 951). **Avec ou après la
+192** (§2.62) : sans elle, le refus d'un espace sans domaine reste `card_not_available`, que l'écran dit alors
+« affaire indisponible » au lieu du domaine absent ; rien ne casse.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer la webapp de `main` | session de livraison | avec le lot qui l'emporte, la 192 appliquée |
+| 2 | Constater, l'envoi | responsable | dans un espace **sans** domaine (s'il en reste un), « Écrire un message » sur une affaire : l'avertissement en tête, « Mettre en file » éteint, et le lien « Régler le domaine de l'espace » pour un super-administrateur ; dans un espace **avec** domaine, rien ne change, et un message vide est refusé par « Le message est vide : écrivez-le avant de l'envoyer. » |
+| 3 | Constater, le guide | responsable | Réglages ▸ Guide de démarrage : huit étapes ; la boîte système, le domaine et votre adresse d'expédition, « Fait » ou « À faire » selon l'espace ouvert ; à faire, l'étape dit où la régler |
+
+**Retour arrière** : la webapp précédente ; rien n'est écrit en base par ces écrans.
+
 ## 3. Migrations en attente
 
 **La 192** (`CRM-157` T1, décisions 951, 953 et 955), *en attente* : l'espace sans domaine refusé par son nom, et une

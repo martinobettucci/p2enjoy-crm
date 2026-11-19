@@ -17,6 +17,7 @@
 // @verifies CRM-092 (docs/BACKLOG.md) — connexion par la vraie page du SSO (`connecterAvecLeLabs`)
 // @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
 //           (docs/SPEC-rattachements.md §3.2, §5)
+// @verifies CRM-157 (docs/BACKLOG.md) — tranche T3 : le guide compte huit étapes après la première affaire
 // @verifies CRM-154 (docs/BACKLOG.md) — tranche T4 : un track à un seul channel n'ajoute aucun arrêt de tabulation
 //           à la barre, ni poignée ni « Réorganiser » (docs/SPEC-administration-arborescence.md §15.4)
 //
@@ -249,8 +250,9 @@ test.describe('le premier lancement complet, à la souris et au clavier', () => 
 		)
 		expect(affaires).toEqual([{ title: AFFAIRE, card_placements: [{ workflow_steps: { is_initial: true } }] }])
 
-		// Le guide la compte : cinq étapes sur six, seule la messagerie reste.
-		await expect(page.getByTestId('pastille-guide-flottant')).toContainText('5 sur 6')
+		// Le guide la compte : cinq étapes sur huit, seules les trois de la messagerie restent (RÉVISÉ par `CRM-157`,
+		// docs/SPEC-onboarding.md §11.1 : l'espace neuf n'a ni boîte système, ni domaine, ni adresse d'expédition).
+		await expect(page.getByTestId('pastille-guide-flottant')).toContainText('5 sur 8')
 		await capturer(page, 'premier-lancement-fiche-premiere-affaire-xl-1440', UNITE_AFFAIRE)
 	})
 

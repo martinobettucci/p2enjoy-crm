@@ -1,3 +1,6 @@
+// @verifies CRM-157 (docs/BACKLOG.md) — tranche T3 : huit étapes sur la vraie pile ; la messagerie faite pour l'administratrice,
+//           deux étapes à faire pour la lectrice, le domaine fait dans un espace neuf monté avec un domaine
+//           (docs/SPEC-onboarding.md §11 ; docs/SPEC-seed.md §51)
 // @verifies CRM-079 (docs/BACKLOG.md) — guide de démarrage : le parcours d'interface
 // @verifies docs/SPEC-onboarding.md §3.1 (les comptages mesurés, et l'écart du viewer),
 //           §4.1 (le guide est toujours rendu à son adresse), §4.2 (les quatre cas de l'accueil),
@@ -127,29 +130,32 @@ async function demonterEspaceNeuf(requete: APIRequestContext, compte: CompteNeuf
 }
 
 test.describe('CRM-079 — guide de démarrage', () => {
-	test('l’accueil rend le guide, et le seed accomplit les six étapes pour l’administratrice', async ({
+	// RÉVISÉ par `CRM-157` (2026-11-19, docs/SPEC-onboarding.md §11.1) : huit étapes ; la messagerie en trois, toutes faites
+	// pour l'administratrice — la boîte système relevée, le domaine de l'espace, son adresse testée (seed §51).
+	test('l’accueil rend le guide, et le seed accomplit les huit étapes pour l’administratrice', async ({
 		page,
 	}) => {
 		await connecter(page, ADMIN)
 		await page.goto('/demarrage')
 
-		// Les six étapes, dans une liste ORDONNÉE (§7, §10.1).
+		// Les huit étapes, dans une liste ORDONNÉE (§7, §10.1, §11.1).
 		const guide = page.getByTestId('guide-demarrage')
 		await expect(guide).toBeVisible()
-		await expect(guide.locator('ol > li')).toHaveCount(6)
+		await expect(guide.locator('ol > li')).toHaveCount(8)
 
 		// MESURÉ le 2026-08-15 : admin voit 1 workspace, 3 tracks, 6 channels, 14 affaires et
 		// 3 boîtes ; et le 2026-09-28 (`CRM-094`), 2 workflows. Les six étapes sont donc accomplies,
 		// et le compte l'écrit en toutes lettres.
-		await expect(page.getByTestId('progression-demarrage')).toHaveText('6 étape(s) sur 6')
-		for (const cle of ['espace', 'track', 'workflow', 'channel', 'affaire', 'messagerie']) {
+		await expect(page.getByTestId('progression-demarrage')).toHaveText('8 étape(s) sur 8')
+		for (const cle of ['espace', 'track', 'workflow', 'channel', 'affaire', 'boite-systeme', 'domaine', 'identite']) {
 			await expect(page.getByTestId(`etape-${cle}`)).toContainText('Fait')
 		}
 
 		await capturer(page, 'guide-accompli-1440', UNITE)
 	})
 
-	test('la lectrice voit la sixième étape à faire : le guide dit ce qu’ELLE voit', async ({
+	// RÉVISÉ par `CRM-157` : la lectrice ne voit pas la boîte système et n'a pas d'adresse d'expédition — deux étapes à faire.
+	test('la lectrice voit deux étapes de la messagerie à faire : le guide dit ce qu’ELLE voit', async ({
 		page,
 	}) => {
 		// C'est le fait 2 du §3.1, et il n'est pas un défaut : le comptage est borné par les droits
@@ -160,21 +166,24 @@ test.describe('CRM-079 — guide de démarrage', () => {
 
 		// Les workflows se lisent par tout membre (`workflows_lecture_membre`) : l'étape « Workflow »
 		// est accomplie pour elle aussi, mesuré le 2026-09-28.
-		await expect(page.getByTestId('progression-demarrage')).toHaveText('5 étape(s) sur 6')
+		await expect(page.getByTestId('progression-demarrage')).toHaveText('6 étape(s) sur 8')
 		await expect(page.getByTestId('etape-workflow')).toContainText('Fait')
-		await expect(page.getByTestId('etape-messagerie')).toContainText('À faire')
+		await expect(page.getByTestId('etape-domaine')).toContainText('Fait')
+		await expect(page.getByTestId('etape-boite-systeme')).toContainText('À faire')
+		await expect(page.getByTestId('etape-identite')).toContainText('À faire')
 		// La phrase d'absence n'accompagne QUE l'étape à faire : sur une étape accomplie, elle
 		// contredirait « Fait » (défaut trouvé sur `guide-viewer-1440.jpg`).
-		await expect(page.getByTestId('etape-messagerie')).toContainText(
-			'Vous n’en voyez aucune pour le moment.',
+		await expect(page.getByTestId('etape-boite-systeme')).toContainText(
+			'Aucune boîte système testée avec succès pour cet espace.',
 		)
 		await expect(page.getByTestId('etape-track')).not.toContainText('Vous n’en voyez aucun')
 
-		// AUCUN lien n'est éteint pour autant : l'écran visé porte son propre refus (§6.3).
-		await expect(page.getByTestId('lien-messagerie')).toHaveAttribute(
-			'href',
-			'/reglages/messagerie',
-		)
+		// Son adresse d'expédition est un geste PERSONNEL : le lien reste un lien (§5.59). La boîte système est un geste
+		// d'administration, que la base lui refuse : son lien devient un texte qui cite le motif (`CRM-093`).
+		await expect(page.getByTestId('lien-identite')).toHaveAttribute('href', '/reglages/identites-mail')
+		await expect(page.getByTestId('lien-boite-systeme')).toHaveAttribute('aria-disabled', 'true')
+		// Le domaine : elle n'est pas super-administratrice, elle lit qui le règle.
+		await expect(page.getByTestId('sans-lien-domaine')).toHaveText('Un super-administrateur le règle dans Plateforme ▸ Espaces.')
 
 		await capturer(page, 'guide-viewer-1440', UNITE)
 	})
@@ -327,10 +336,10 @@ test.describe('CRM-079 — guide de démarrage', () => {
 		await expect(page.getByTestId('lien-track')).toBeVisible()
 
 		// Les cinq autres mesures ont abouti : un échec n'efface pas ce que le guide a mesuré.
-		for (const cle of ['espace', 'workflow', 'channel', 'affaire', 'messagerie']) {
+		for (const cle of ['espace', 'workflow', 'channel', 'affaire', 'boite-systeme', 'domaine', 'identite']) {
 			await expect(page.getByTestId(`etape-${cle}`)).toContainText('Fait')
 		}
-		await expect(page.getByTestId('progression-demarrage')).toHaveText('5 étape(s) sur 6')
+		await expect(page.getByTestId('progression-demarrage')).toHaveText('7 étape(s) sur 8')
 
 		await capturer(page, 'guide-non-mesurable-1440', UNITE)
 
@@ -353,7 +362,7 @@ test.describe('CRM-079 — guide de démarrage', () => {
 		panne = false
 		await reprise.click()
 		await expect(ligne).toContainText('Fait', { timeout: 30_000 })
-		await expect(page.getByTestId('progression-demarrage')).toHaveText('6 étape(s) sur 6')
+		await expect(page.getByTestId('progression-demarrage')).toHaveText('8 étape(s) sur 8')
 		expect(echecs, 'aucune requête n’est abattue après le rétablissement').toBe(refusEmis)
 
 		// Les refus réseau volontaires sont CONSOMMÉS par égalité sur le message exact, et APRÈS
@@ -387,13 +396,16 @@ test.describe('CRM-079 — guide de démarrage', () => {
 			// MESURÉ le 2026-08-16 (§8 ter.1) : 1 workspace, et zéro track, channel, affaire et
 			// boîte ; zéro workflow aussi, mesuré en production le 2026-09-28 (décision 606). Une
 			// seule étape est accomplie, et c'est la connexion qui l'accomplit (§3).
-			await expect(page.getByTestId('progression-demarrage')).toHaveText('1 étape(s) sur 6')
+			// RÉVISÉ par `CRM-157` : l'espace neuf est monté avec un domaine ; l'étape du domaine est donc faite, les deux
+			// autres de la messagerie à faire.
+			await expect(page.getByTestId('progression-demarrage')).toHaveText('2 étape(s) sur 8')
 			await expect(page.getByTestId('etape-espace')).toContainText('Fait')
+			await expect(page.getByTestId('etape-domaine')).toContainText('Fait')
 
 			// Les cinq autres sont À FAIRE, et non « non mesurable » : la mesure des boîtes rend
 			// `200` et zéro pour une session ouverte, là où le `401` du §3.1 est celui de la clé
 			// ANONYME. C'est la distinction du §6.2, et rien ne l'éprouvait.
-			for (const cle of ['track', 'workflow', 'channel', 'affaire', 'messagerie']) {
+			for (const cle of ['track', 'workflow', 'channel', 'affaire', 'boite-systeme', 'identite']) {
 				const ligne = page.getByTestId(`etape-${cle}`)
 				await expect(ligne).toContainText('À faire')
 				await expect(ligne).not.toContainText('Cette étape n’a pas pu être vérifiée')
@@ -417,7 +429,7 @@ test.describe('CRM-079 — guide de démarrage', () => {
 
 			// Et le guide reste relançable à son adresse propre, dans le même état (§4.1).
 			await page.goto('/demarrage')
-			await expect(page.getByTestId('progression-demarrage')).toHaveText('1 étape(s) sur 6')
+			await expect(page.getByTestId('progression-demarrage')).toHaveText('2 étape(s) sur 8')
 		} finally {
 			await demonterEspaceNeuf(request, compte)
 		}

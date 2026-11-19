@@ -1,6 +1,8 @@
 // @spec CRM-007 (docs/BACKLOG.md) — coquille de l'application
 // @spec docs/DESIGN_SYSTEM.md §4 (architecture des écrans), §5.8 (états), §7, §8
 // @spec docs/SPEC-webapp.md §5.1 (coquille), §7 (états), §9 (accessibilité), §11 (stockage)
+// @spec CRM-157 (docs/BACKLOG.md) tranche T3 — `espaceLu` : le guide n'affirme rien de la messagerie tant que les espaces se
+//       lisent (docs/SPEC-onboarding.md §11.1)
 // @spec CRM-154 (docs/BACKLOG.md) tranche T4 — l'identifiant du track ouvert et la relecture, passés à la barre d'onglets
 //       (docs/SPEC-administration-arborescence.md §15.4)
 // @spec CRM-131 (docs/BACKLOG.md) — la mesure des channels lisibles, émise hors d'un track pour la barre d'onglets
@@ -111,7 +113,12 @@ export function AppShell({
 	// `CRM-093` — les capacités de l'espace, lues sur sa ligne (docs/SPEC-droits-interface.md §2.2) : une requête à
 	// part, pour qu'un défaut de lecture ne fasse jamais tomber la coquille, seulement l'aide d'interface.
 	const capacites = useCapacitesEspace(clientCrm, idWorkspace)
-	const contexteEspace = useMemo(() => ({ idWorkspace, estAdmin, capacites }), [idWorkspace, estAdmin, capacites])
+	// `CRM-157` : tant que les espaces se lisent, `idWorkspace` nul ne veut pas dire « aucun espace » — le guide attend.
+	const espaceLu = etat.statut !== 'chargement'
+	const contexteEspace = useMemo(
+		() => ({ idWorkspace, estAdmin, capacites, espaceLu }),
+		[idWorkspace, estAdmin, capacites, espaceLu],
+	)
 	// `CRM-101` — l'entrée « Plateforme » n'est rendue que si la base le dit (docs/DESIGN_SYSTEM.md §5.56) ;
 	// pendant la lecture et en cas d'échec, elle est absente.
 	const etatSuperadmin = useEstSuperadmin(clientCrm, idUtilisateur)

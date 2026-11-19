@@ -3309,3 +3309,20 @@ l'écran (la pierre tombale posée par un tiers).
 - **Ce que cela change ailleurs** : la cloche de Camille compte une notification de plus ; la liste des organisations montre
   des pilules sous trois noms, et le filtre « Catégories » paraît.
 - La section est **idempotente** : elle ne crée rien si le catalogue porte déjà « Client », et constate l'état attendu.
+
+## 51. L'adresse d'expédition de Camille, testée — `CRM-157` T3 (`docs/SPEC-onboarding.md` §11.1)
+
+*Écrit le 2026-11-19, avec le code.* L'étape « Déclarer votre adresse d'expédition » du guide se dit faite quand la
+personne a une identité d'envoi **testée avec succès** (`status = 'ok'`). Les identités du seed naissent `pending` et le
+seed ne force jamais cet état (§2.17) : sans ce paragraphe, l'étape resterait à faire pour tous.
+
+- Le seed **teste l'identité par défaut de Camille** par la fonction `mail-connection-test`, sous son jeton — le geste
+  « Tester la connexion » de Réglages ▸ Identités d'envoi (`docs/SPEC-mail-subsystem.md` §23.4). L'identité vise le
+  Stalwart de développement, où le test réussit (§23.6). C'est la fonction qui écrit `ok`.
+- **Celle de Driss reste `pending`** : l'étape est à faire pour lui, faite pour Camille — les deux états du guide.
+- **Rejoué**, le test n'est relancé que si l'identité n'est pas déjà `ok` : la garde de trente secondes (`too_soon`) ne
+  fait jamais échouer un second passage.
+- **La boîte système et le domaine** de l'espace sont déjà démontrés : la boîte système est relevée par le seed et rendue
+  `ok` par la relève (§2.17, INC-360), et l'espace porte `crm.p2enjoy.test`. **L'espace sans domaine** n'est pas seedé :
+  le seed garde son espace unique (`CRM-005`) ; les preuves montent un espace jetable (`docs/SPEC-mail-subsystem.md`
+  §33.6).

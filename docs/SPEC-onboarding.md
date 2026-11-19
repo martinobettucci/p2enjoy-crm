@@ -650,3 +650,20 @@ Unitaires : les trois filtres émis (espace courant, `owner_id`, `status`), sans
 domaine selon `est_superadmin`. E2E : le premier lancement (`e2e/ui/premier-lancement.spec.ts`) compte désormais « 5 sur
 8 » après la première affaire ; le guide de l'espace seedé, à la souris et au clavier, quatre paliers. Le harnais
 `scripts/verify-onboarding.sh` et ses comptes figés (§8 bis.1) suivent les huit étapes.
+
+### 11.4 Précisé au code (T3, 2026-11-19)
+
+- **La mesure se fait en deux moitiés.** Les cinq premières étapes ne dépendent pas de l'espace courant ; les trois de la
+  messagerie, si. Mesurées ensemble, l'arrivée de l'espace courant — quelques instants après la session — refaisait les
+  cinq premiers comptages : vu par `e2e/ui/demarrage.spec.ts`, où les requêtes abattues d'une panne simulée ne
+  correspondaient plus. L'arrivée de l'espace ne refait plus que la messagerie.
+- **Tant que la coquille lit les espaces, la messagerie reste en chargement.** Un `idWorkspace` nul y veut dire « pas
+  encore lu », non « aucun espace » : le contexte de l'espace porte désormais `espaceLu`. Sans cela, un administrateur
+  entièrement démarré aurait vu le guide paraître un instant sur l'accueil (cinq étapes sur huit), puis disparaître.
+- **La boîte système est une étape d'administration** : pour qui n'administre pas l'espace, son lien devient un texte
+  qui cite le motif (§5.59, `CRM-093`). **L'identité** est un geste personnel : son lien reste un lien pour tous.
+- **L'introduction du guide** dit « Huit étapes » ; l'entrée « Guide de démarrage » de l'index des réglages aussi.
+- **Le seed** démontre l'étape « identité » faite pour l'administratrice (`docs/SPEC-seed.md` §51) ; la lectrice voit la
+  boîte système et son adresse à faire, le domaine fait (six sur huit).
+- **Le harnais** `scripts/verify-onboarding.sh` fige 91 tests unitaires et ajoute une septième dégradation : sans le
+  filtre `owner_id is null`, une boîte personnelle accomplirait l'étape de la boîte système.

@@ -351,8 +351,8 @@
 				"Arborescence : tracks et channels Créer, renommer, réordonner et archiver les tracks et les channels de l'espace de travail.",
 				"Créer, renommer, réordonner et archiver les tracks et les channels de l'espace de travail.",
 				"Guide de démarrage",
-				"Guide de démarrage Les six étapes du premier lancement, et où chacune se fait. Consultable à tout moment.",
-				"Les six étapes du premier lancement, et où chacune se fait. Consultable à tout moment.",
+				"Guide de démarrage Les huit étapes du premier lancement, et où chacune se fait. Consultable à tout moment.",
+				"Les huit étapes du premier lancement, et où chacune se fait. Consultable à tout moment.",
 				"Sections de réglages"
 			]
 		},
@@ -9315,7 +9315,7 @@
 			"pleinePage": true,
 			"libelles": [
 				"/",
-				"1 étape(s) sur 6",
+				"1 étape(s) sur 8",
 				"Affaires figées",
 				"Aide",
 				"Aucun channel",
@@ -9336,6 +9336,7 @@
 				"Fait",
 				"Fil d'Ariane",
 				"Guide de démarrage",
+				"Huit étapes pour rendre le CRM utilisable. Chacune renvoie vers l'écran qui la réalise, et son état est mesuré à chaque affichage.",
 				"Inbox",
 				"Le cycle commercial type — Prospection, Relance, Négociation, Signature, Réalisation, Livré, Perdu —, que vous pourrez modifier ensuite dans l'éditeur.",
 				"Ma journée",
@@ -9360,7 +9361,6 @@
 				"Replier la barre latérale",
 				"Réglages",
 				"Se déconnecter",
-				"Six étapes pour rendre le CRM utilisable. Chacune renvoie vers l'écran qui la réalise, et son état est mesuré à chaque affichage.",
 				"TRACKS",
 				"Temps",
 				"Tracks",
@@ -9492,6 +9492,36 @@
 			]
 		},
 		{
+			"fichier": "le-guide-de-demarrage-par-ou-commencer/etapes-messagerie.jpg",
+			"largeur": 631,
+			"hauteur": 643,
+			"chapitre": "le-guide-de-demarrage-par-ou-commencer",
+			"section": "la-messagerie-en-trois-etapes",
+			"pleinePage": false,
+			"libelles": [
+				"Aucune boîte système testée avec succès pour cet espace.",
+				"Cet espace n'a pas encore de domaine.",
+				"Chaque affaire reçoit une adresse faite du préfixe de l'espace, de huit caractères et du domaine. Chez l'hébergeur du domaine, créez l'alias qui remet ces adresses à la boîte système, puis réglez le domaine et le préfixe de l'espace. Sans domaine, aucun mail ne part.",
+				"Déclarer votre adresse d'expédition",
+				"Déclarer votre adresse d'expédition Votre adresse d'expédition envoie vos mails : déclarez son serveur d'envoi, puis « Tester la connexion ». À faire Vous n'avez pas encore d'adresse d'expédition testée avec succès dans cet espace. Ouvrir les identités d'envoi",
+				"La boîte système reçoit les réponses à vos affaires. Saisissez-la, puis « Tester la connexion ».",
+				"Ouvrir les comptes entrants",
+				"Ouvrir les identités d'envoi",
+				"Raccorder la boîte de réception de l'espace",
+				"Raccorder la boîte de réception de l'espace La boîte système reçoit les réponses à vos affaires. Saisissez-la, puis « Tester la connexion ». À faire Aucune boîte système testée avec succès pour cet espace. Ouvrir les comptes entrants",
+				"Régler le domaine des adresses d'affaire",
+				"Régler le domaine des adresses d'affaire Chaque affaire reçoit une adresse faite du préfixe de l'espace, de huit caractères et du domaine. Chez l'hébergeur du domaine, créez l'alias qui remet ces adresses à la boîte système, puis réglez le domaine et le préfixe de l'espace. Sans domaine, aucun mail ne part. c-3p55qdgw@votre-domaine.fr À faire Cet espace n'a pas encore de domaine. Un super-administrateur le règle dans Plateforme ▸ Espaces.",
+				"Un super-administrateur le règle dans Plateforme ▸ Espaces.",
+				"Votre adresse d'expédition envoie vos mails : déclarez son serveur d'envoi, puis « Tester la connexion ».",
+				"Vous n'avez pas encore d'adresse d'expédition testée avec succès dans cet espace.",
+				"c-3p55qdgw@votre-domaine.fr",
+				"À faire",
+				"À faire Aucune boîte système testée avec succès pour cet espace.",
+				"À faire Cet espace n'a pas encore de domaine.",
+				"À faire Vous n'avez pas encore d'adresse d'expédition testée avec succès dans cet espace."
+			]
+		},
+		{
 			"fichier": "le-guide-de-demarrage-par-ou-commencer/masquer-le-guide.jpg",
 			"largeur": 633,
 			"hauteur": 73,
@@ -9510,12 +9540,12 @@
 			"section": "le-guide-flottant-des-administrateurs",
 			"pleinePage": false,
 			"libelles": [
-				"2 étape(s) sur 6",
+				"2 étape(s) sur 8",
 				"Créer le workflow de départ",
 				"Créer un premier track",
 				"Créer un premier track Un track regroupe des activités proches — un métier, un marché, une équipe. Fait Ouvrir l'administration de l'arborescence",
 				"Démarrage",
-				"Démarrage · 2 sur 6",
+				"Démarrage · 2 sur 8",
 				"Fait",
 				"Ouvrir l'administration de l'arborescence",
 				"Préparer un premier workflow",
@@ -9537,7 +9567,7 @@
 			"section": "le-guide-flottant-des-administrateurs",
 			"pleinePage": false,
 			"libelles": [
-				"Démarrage · 2 sur 6"
+				"Démarrage · 2 sur 8"
 			]
 		},
 		{
@@ -9548,7 +9578,7 @@
 			"section": "l-etat-d-une-etape-est-mesure-jamais-memorise",
 			"pleinePage": false,
 			"libelles": [
-				"3 étape(s) sur 6",
+				"3 étape(s) sur 8",
 				"Créer un premier track",
 				"Créer un premier track Un track regroupe des activités proches — un métier, un marché, une équipe. Fait Ouvrir l'administration de l'arborescence",
 				"Fait",

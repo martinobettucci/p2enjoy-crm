@@ -9012,5 +9012,8 @@ disent que de quoi ils ont l'air.
 - **LE GUIDE** (§5.17, §5.49) gagne trois lignes de la même forme, et perd « Raccorder une boîte de réception ». L'étape
   du domaine porte son explication de l'alias dans son corps, en `--text-sm` comme les autres corps ; son action, pour
   qui n'est pas super-administrateur, est rendue **en texte** à la place du lien (§5.59), sans icône de lien. L'adresse
-  d'exemple s'écrit en donnée technique (§2), monospace.
+  d'exemple s'écrit en donnée technique (§2), monospace. *Précisé au code* : le texte « Un super-administrateur le règle
+  dans Plateforme ▸ Espaces. » prend la place du lien, en `--text-sm` `--color-text-2`, au rang des liens des autres
+  étapes ; la boîte système suit la capacité d'administrer (son lien devient le texte du §5.59 pour qui ne l'a pas),
+  l'adresse d'expédition reste un lien pour tous.
 - **Aucune couleur, aucun jeton, aucune icône nouveaux.**

@@ -13,6 +13,15 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-157` T3 — la messagerie dans le guide de démarrage
+
+- Le guide passe à huit étapes : « Raccorder une boîte de réception » cède la place à la boîte de réception de l'espace
+  (testée), au domaine des adresses d'affaire (le lien vers la fiche de l'espace pour un super-administrateur, sinon qui
+  le règle, et l'alias à créer chez l'hébergeur expliqué) et à votre adresse d'expédition (testée), mesurés dans l'espace
+  ouvert.
+- La mesure ne repart plus en entier quand l'espace courant arrive ; tant qu'il se lit, la messagerie reste en chargement.
+- Seed §51 : l'adresse d'expédition de Camille testée par le vrai geste. Manuel §2 ; contrat §2.64.
+
 ### `CRM-157` T2 — l'envoi impossible sans domaine, dit avant qu'on rédige ; les refus d'envoi dits en clair
 
 - Le formulaire d'envoi (et la relecture d'un mail préparé) prévient en tête quand l'espace n'a pas de domaine

@@ -4001,11 +4001,11 @@ export const fr = {
 	// en porte 6 (§3.1 de la spécification). Écrire « aucun channel n'existe » serait faux.
 	'admin.settings.index.onboarding': 'Guide de démarrage',
 	'admin.settings.index.onboarding.body':
-		'Les six étapes du premier lancement, et où chacune se fait. Consultable à tout moment.',
+		'Les huit étapes du premier lancement, et où chacune se fait. Consultable à tout moment.',
 
 	'onboarding.title': 'Guide de démarrage',
 	'onboarding.intro':
-		'Six étapes pour rendre le CRM utilisable. Chacune renvoie vers l’écran qui la réalise, et son état est mesuré à chaque affichage.',
+		'Huit étapes pour rendre le CRM utilisable. Chacune renvoie vers l’écran qui la réalise, et son état est mesuré à chaque affichage.',
 	'onboarding.progress': '{faites} étape(s) sur {total}',
 	'onboarding.progress.loading': 'Mesure des étapes en cours',
 	'onboarding.hide': 'Masquer le guide',
@@ -4062,11 +4062,26 @@ export const fr = {
 	// `CRM-095` (docs/SPEC-onboarding.md §10.7) : dès qu'un channel existe, l'étape mène à son board, où
 	// vit « Nouvelle affaire » — l'impasse relevée (INC-256) tenait à l'absence de ce chemin.
 	'onboarding.step.affaire.action.board': 'Ouvrir le board et créer l’affaire',
-	'onboarding.step.messagerie.title': 'Raccorder une boîte de réception',
-	'onboarding.step.messagerie.body':
-		'Une boîte relevée classe le courrier entrant dans les affaires.',
-	'onboarding.step.messagerie.vide': 'Vous n’en voyez aucune pour le moment.',
-	'onboarding.step.messagerie.action': 'Voir l’état de la messagerie',
+	// @spec CRM-157 (docs/BACKLOG.md) T3, docs/SPEC-onboarding.md §11.2 — la messagerie en trois étapes. Textes nouveaux :
+	//       les guillemets encadrent leur contenu d'espaces insécables (§5.51).
+	'onboarding.step.boiteSysteme.title': 'Raccorder la boîte de réception de l’espace',
+	'onboarding.step.boiteSysteme.body':
+		'La boîte système reçoit les réponses à vos affaires. Saisissez-la, puis «\u00a0Tester la connexion\u00a0».',
+	'onboarding.step.boiteSysteme.vide': 'Aucune boîte système testée avec succès pour cet espace.',
+	'onboarding.step.boiteSysteme.action': 'Ouvrir les comptes entrants',
+	'onboarding.step.domaine.title': 'Régler le domaine des adresses d’affaire',
+	'onboarding.step.domaine.body':
+		'Chaque affaire reçoit une adresse faite du préfixe de l’espace, de huit caractères et du domaine. Chez l’hébergeur du domaine, créez l’alias qui remet ces adresses à la boîte système, puis réglez le domaine et le préfixe de l’espace. Sans domaine, aucun mail ne part.',
+	'onboarding.step.domaine.exemple': 'c-3p55qdgw@votre-domaine.fr',
+	'onboarding.step.domaine.vide': 'Cet espace n’a pas encore de domaine.',
+	'onboarding.step.domaine.action': 'Régler le domaine de l’espace',
+	'onboarding.step.domaine.qui': 'Un super-administrateur le règle dans Plateforme ▸ Espaces.',
+	'onboarding.step.identite.title': 'Déclarer votre adresse d’expédition',
+	'onboarding.step.identite.body':
+		'Votre adresse d’expédition envoie vos mails : déclarez son serveur d’envoi, puis «\u00a0Tester la connexion\u00a0».',
+	'onboarding.step.identite.vide':
+		'Vous n’avez pas encore d’adresse d’expédition testée avec succès dans cet espace.',
+	'onboarding.step.identite.action': 'Ouvrir les identités d’envoi',
 
 	'live.workflows.version.published': 'Version publiée',
 	'live.workflows.version.compared': 'Comparaison rendue',

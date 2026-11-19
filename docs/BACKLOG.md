@@ -20225,8 +20225,7 @@ s'écrire en parallèle, l'écran se coordonne avec la session qui porte `CRM-15
 **DoD** : pgTAP des fonctions groupées ; preuve d'API avec les vrais jetons (refus du profil sans droit, sélection mixte) ;
 unitaires ; E2E souris et clavier aux quatre paliers ; captures observées ; seed vérifié ; manuel vérifié ; contrat.
 
-### CRM-157 — Envoyer un mail : un refus clair quand l'espace n'a pas de domaine d'adresses d'affaire, et la messagerie dans le guide de démarrage `[@]`
-*Prise en charge : session interactive 152dd27d (p2enjoy-crm-c7, ex-45) depuis 2026-11-19 13:44 UTC — état avant : [ ] ; confiée par la session de livraison (e3)*
+### CRM-157 — Envoyer un mail : un refus clair quand l'espace n'a pas de domaine d'adresses d'affaire, et la messagerie dans le guide de démarrage `[P]`
 
 **Origine** : signalement du responsable, le 2026-11-19 (« Thomas me dit qu'il n'arrive pas à envoyer des mails »), diagnostiqué
 par la session de livraison (p2enjoy-crm-e3, ex-bb) ; arbitré le même jour (décision 951).
@@ -20280,8 +20279,17 @@ livraison. Connecteur : non (décision 951).
   relance arrêtée, quatre paliers) dans l'espace jetable ; captures `docs/captures/CRM-157` observées ; manuel §12.3
   (l'avertissement, quatre refus) et §16.5, §16.6 (le refus d'armer, la cinquième fin), deux images, verify-manual 168
   sans anomalie ; types : les quatre configurations.
-- [ ] **T3** — le guide : trois étapes mail à la place de « Raccorder une boîte de réception » ; unitaires ; E2E ;
+- [x] **T3** — le guide : trois étapes mail à la place de « Raccorder une boîte de réception » ; unitaires ; E2E ;
   captures ; manuel (le démarrage) ; `[P]`.
+  *Faite le 2026-11-19* : `demarrage.ts` (huit étapes ; la messagerie mesurée dans l'espace courant, en une seconde
+  moitié que l'arrivée de l'espace refait seule — la double mesure vue par l'E2E ; l'identifiant court de l'espace et
+  `est_superadmin`), `GuideDemarrage.tsx` (les trois lignes, le texte à la place du lien du domaine, l'adresse d'exemple
+  en monospace), `GuideFlottant.tsx`, `ContexteEspace` et `AppShell` (`espaceLu`) ; seed §51 (l'adresse de Camille
+  testée par `mail-connection-test`) ; unitaires du guide 91 et 17 (flottant), suite webapp ; API `demarrage` 6/6 ; E2E
+  `demarrage`, `guide-flottant`, `premier-lancement` 20/20 ; `verify-onboarding.sh` 30 contrôles, sept dégradations vues ;
+  captures `CRM-079`, `CRM-094`, `CRM-095` renouvelées et observées (l'introduction disait encore « Six étapes », corrigée) ;
+  manuel §2 (huit étapes, §2.6) et ses images, l'image de l'index des réglages ; contrat §2.64. **L'unité passe `[P]`** :
+  il reste la livraison (la 192, puis la webapp) et le constat du responsable.
 
 ### CRM-158 — La file d'envoi n'est vidée par rien en production : une tâche planifiée qui la vide chaque minute `[P]`
 

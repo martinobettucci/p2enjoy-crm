@@ -6764,3 +6764,27 @@ IFS='|' read -r CAT_CREEES CAT_ARCHIVEE CAT_POSES CAT_COMMENTAIRES CAT_CORRIGE C
         forme (§50) — commentaires $CAT_COMMENTAIRES, corrigé $CAT_CORRIGE, modéré $CAT_MODERE."
 [ "$CAT_NOTIFIEE" = "1" ] || die "la mention de Camille sur Vertigo Conseil n'a pas notifié (§50) — mesuré : $CAT_NOTIFIEE."
 info "Organisations : quatre catégories (une archivée encore portée), cinq poses, et le fil de Vertigo Conseil — une mention qui notifie, un commentaire corrigé, un retiré par la modération — docs/SPEC-seed.md §50"
+
+# --- L'adresse d'expédition de Camille, testée par le vrai geste — CRM-157 T3, docs/SPEC-seed.md §51 ----------------
+# @spec CRM-157 (docs/BACKLOG.md) — tranche T3 : l'étape « Déclarer votre adresse d'expédition » du guide se dit faite pour
+#       Camille et à faire pour Driss (docs/SPEC-onboarding.md §11.1 ; docs/SPEC-seed.md §51 ; CLAUDE.md §8)
+#
+# LE `status = 'ok'` N'EST JAMAIS POSÉ À LA MAIN (§2.17) : il est écrit par la fonction `mail-connection-test`, appelée
+# sous le jeton de Camille comme le fait « Tester la connexion » (docs/SPEC-mail-subsystem.md §23.4). L'identité vise le
+# Stalwart de développement, où le test réussit (§23.6). Rejoué, le test n'est relancé que si l'identité n'est pas déjà
+# `ok` : la garde de trente secondes (`too_soon`) ne fait donc jamais échouer un second passage.
+ID_IDENTITE_CAMILLE=$(psql_seed -c "select id from public.mail_outbound_identities
+	where workspace_id = '$WS_ID' and owner_id = '$CAMILLE_ID' and is_default")
+[ -n "$ID_IDENTITE_CAMILLE" ] || die "l'adresse d'expédition par défaut de Camille est absente : le §2.18 la pose avant le §51."
+if [ "$(psql_seed -c "select status from public.mail_outbound_identities where id = '$ID_IDENTITE_CAMILLE'")" != "ok" ]; then
+	JETON_CAMILLE_IDENTITE=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+	[ -n "$JETON_CAMILLE_IDENTITE" ] || die "connexion de Camille impossible : le §51 teste son adresse sous son jeton."
+	verdict_identite=$(curl -s -X POST "$API/functions/v1/mail-connection-test" \
+		-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_CAMILLE_IDENTITE" -H 'Content-Type: application/json' \
+		-d "$(jq -nc --arg id "$ID_IDENTITE_CAMILLE" '{target: "outbound", id: $id}')")
+	[ "$(jq -r '.status // empty' <<< "$verdict_identite")" = "ok" ] \
+		|| die "le test de l'adresse d'expédition de Camille a échoué (§51) : $verdict_identite — Stalwart et mail-sync tournent-ils ?"
+fi
+[ "$(psql_seed -c "select status from public.mail_outbound_identities where id = '$ID_IDENTITE_CAMILLE'")" = "ok" ] \
+	|| die "l'adresse d'expédition de Camille n'est pas « Connectée » après son test (§51)."
+info "Adresse d'expédition de Camille testée par « Tester la connexion » : l'étape « identité » du guide est faite pour elle, à faire pour Driss — docs/SPEC-seed.md §51"

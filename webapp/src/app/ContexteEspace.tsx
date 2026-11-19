@@ -1,3 +1,4 @@
+// @spec CRM-157 (docs/BACKLOG.md) tranche T3 — `espaceLu` (docs/SPEC-onboarding.md §11.1)
 // @spec CRM-094 (docs/BACKLOG.md) tranches T2 et T3 — l'espace courant et le rôle que la base y rend,
 //       tenus une fois par la coquille (docs/SPEC-onboarding.md §10.2, §10.3)
 // @spec CRM-092 (docs/BACKLOG.md) tranche T8 — `mon_role_espace`, le rôle que la base applique
@@ -23,6 +24,11 @@ export type ContexteEspace = {
 	 * lecture, `inconnue` sur un échec ou hors coquille — et `inconnue` n'éteint rien (§4 de la spécification).
 	 */
 	readonly capacites: CapacitesEspace
+	/**
+	 * `CRM-157` (docs/SPEC-onboarding.md §11.1) : faux tant que la coquille LIT les espaces — `idWorkspace` est alors nul
+	 * sans dire « aucun espace ». Absent hors de la coquille (une preuve qui monte un écran seul) : lu.
+	 */
+	readonly espaceLu?: boolean
 }
 
 /** Hors coquille — une preuve qui monte un composant seul —, aucun espace et aucun rôle. */

@@ -1,8 +1,10 @@
+// @spec CRM-157 (docs/BACKLOG.md) — tranche T3 : huit étapes, et l'image « etapes-messagerie » (docs/SPEC-onboarding.md
+//       §11 ; docs/manual.md §2.6)
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.1 : les images du chapitre 2, « Le guide de démarrage »
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitre 2 ; docs/SPEC-onboarding.md §8 ter (l'espace neuf,
 //       son montage et son démontage), §10 (le guide flottant)
 //
-// Le guide ne se voit à l'œuvre que dans un espace NEUF : le seed accomplit ses six étapes. Le scénario monte donc un
+// Le guide ne se voit à l'œuvre que dans un espace NEUF : le seed accomplit ses huit étapes pour l'administratrice. Le scénario monte donc un
 // espace vide et son administrateur, comme `e2e/ui/guide-flottant.spec.ts` (le workspace et l'attente par la clé de
 // service, le compte dans le Keycloak de développement, l'appartenance par la vraie connexion), fait naître le track, le
 // workflow et le channel PAR L'ÉCRAN, puis démonte tout et constate que la base est rendue à son unique espace seedé.
@@ -38,10 +40,21 @@ test.describe('dans un espace neuf', () => {
 		if (compte === null) throw new Error('montage absent')
 		await connecterAvecLeLabs(page, compte.adresse)
 
-		// L'accueil d'un espace neuf : le guide, une étape sur six.
+		// L'accueil d'un espace neuf : le guide, une étape sur huit (`CRM-157`).
 		await page.goto('/')
-		await expect(page.getByTestId('progression-demarrage')).toHaveText('1 étape(s) sur 6')
+		await expect(page.getByTestId('progression-demarrage')).toHaveText('1 étape(s) sur 8')
 		await illustrer(page, { chapitre: CHAPITRE, section: null, nom: 'accueil-espace-neuf', cibles: [], pleinePage: true })
+
+		// `CRM-157` : les trois étapes de la messagerie, à faire dans l'espace neuf — le domaine dit qui le règle.
+		await expect(page.getByTestId('sans-lien-domaine')).toBeVisible()
+		// Les trois lignes doivent tenir dans la fenêtre : la première en haut (vu sur la première image, coupée).
+		await page.getByTestId('etape-boite-systeme').evaluate((ligne) => ligne.scrollIntoView({ block: 'start' }))
+		await illustrer(page, {
+			chapitre: CHAPITRE,
+			section: 'la-messagerie-en-trois-etapes',
+			nom: 'etapes-messagerie',
+			cibles: [page.getByTestId('etape-boite-systeme'), page.getByTestId('etape-domaine'), page.getByTestId('etape-identite')],
+		})
 
 		// Le masquer, et le lien qui le rouvre.
 		await illustrer(page, {
@@ -51,7 +64,7 @@ test.describe('dans un espace neuf', () => {
 			cibles: [page.getByTestId('masquer-guide')],
 		})
 
-		// Le premier track naît par l'écran ; la pastille suit l'administratrice, deux étapes sur six.
+		// Le premier track naît par l'écran ; la pastille suit l'administratrice, deux étapes sur huit.
 		await page.getByTestId('lien-track').click()
 		await expect(page).toHaveURL(/\/reglages\/arborescence$/)
 		await page.getByRole('button', { name: 'Nouveau track' }).click()
@@ -61,7 +74,7 @@ test.describe('dans un espace neuf', () => {
 		await expect(formTrack).toBeHidden()
 		// La pastille se re-mesure au changement de page, pas à une création dans la page.
 		await page.reload()
-		await expect(pastille(page)).toHaveAccessibleName('Démarrage · 2 sur 6')
+		await expect(pastille(page)).toHaveAccessibleName('Démarrage · 2 sur 8')
 		await illustrer(page, {
 			chapitre: CHAPITRE,
 			section: 'le-guide-flottant-des-administrateurs',
@@ -104,7 +117,7 @@ test.describe('dans un espace neuf', () => {
 		await illustrer(page, { chapitre: CHAPITRE, section: 'le-workflow-de-depart-en-un-geste', nom: 'creation-en-cours', cibles: [etape] })
 		creation.liberer()
 		await expect(etape).toContainText('Fait')
-		await expect(page.getByTestId('progression-demarrage')).toHaveText('3 étape(s) sur 6')
+		await expect(page.getByTestId('progression-demarrage')).toHaveText('3 étape(s) sur 8')
 		await illustrer(page, {
 			chapitre: CHAPITRE,
 			section: 'l-etat-d-une-etape-est-mesure-jamais-memorise',

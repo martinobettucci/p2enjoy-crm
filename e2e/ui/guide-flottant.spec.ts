@@ -1,3 +1,5 @@
+// @verifies CRM-157 (docs/BACKLOG.md) — tranche T3 : le guide flottant compte huit étapes ; l'adresse d'expédition se
+//           suit depuis le panneau (docs/SPEC-onboarding.md §11.1)
 // @verifies CRM-094 (docs/BACKLOG.md) tranches T2 et T3 — le vrai premier lancement, dans un espace neuf
 // @verifies docs/SPEC-onboarding.md §10.1 (six étapes), §10.2 (la pastille : pour qui, où, quand, deux
 //           formes, un lien suivi ne la referme pas, re-mesure à chaque page), §10.3 (le geste, son focus,
@@ -144,18 +146,18 @@ test.describe('CRM-094 — le guide flottant, dans un espace neuf', () => {
 		await connecterAvecLeLabs(page, compte.adresse)
 
 		// 1. L'accueil rend le guide DANS la page : la pastille n'y paraît pas, le même contenu y serait
-		//    deux fois (§10.2, « Où »). Six étapes, une seule accomplie — par la connexion.
+		//    deux fois (§10.2, « Où »). Huit étapes depuis `CRM-157`, une seule accomplie — par la connexion.
 		await page.goto('/')
 		await expect(page.getByTestId('guide-demarrage')).toBeVisible()
-		await expect(page.getByTestId('progression-demarrage')).toHaveText('1 étape(s) sur 6')
-		await expect(page.getByTestId('guide-demarrage').locator('ol > li')).toHaveCount(6)
+		await expect(page.getByTestId('progression-demarrage')).toHaveText('1 étape(s) sur 8')
+		await expect(page.getByTestId('guide-demarrage').locator('ol > li')).toHaveCount(8)
 		await expect(pastille(page)).toHaveCount(0)
 		await capturer(page, 'accueil-espace-neuf-1440', UNITE)
 
 		// 2. « Quand on clique, on le perd » : on suit le lien d'une étape — le guide suit, en pastille.
 		await page.getByTestId('lien-track').click()
 		await expect(page).toHaveURL(/\/reglages\/arborescence$/)
-		await expect(pastille(page)).toHaveAccessibleName('Démarrage · 1 sur 6')
+		await expect(pastille(page)).toHaveAccessibleName('Démarrage · 1 sur 8')
 		await expect(pastille(page)).toHaveAttribute('aria-expanded', 'false')
 		await capturer(page, 'pastille-reduite-1440', UNITE)
 
@@ -163,8 +165,8 @@ test.describe('CRM-094 — le guide flottant, dans un espace neuf', () => {
 		await pastille(page).click()
 		await expect(panneau(page)).toBeVisible()
 		await expect(panneau(page).getByRole('heading', { name: 'Démarrage' })).toBeFocused()
-		await expect(panneau(page).locator('ol > li')).toHaveCount(6)
-		await expect(panneau(page).getByTestId('progression-demarrage')).toHaveText('1 étape(s) sur 6')
+		await expect(panneau(page).locator('ol > li')).toHaveCount(8)
+		await expect(panneau(page).getByTestId('progression-demarrage')).toHaveText('1 étape(s) sur 8')
 		await expect(panneau(page).getByTestId('etape-workflow')).toContainText('À faire')
 		expect(await page.evaluate((cle) => globalThis.sessionStorage.getItem(cle), CLE_FORME)).toBe('ouvert')
 		await capturerPanneau(page, 'panneau-ouvert-espace-neuf-1440')
@@ -199,14 +201,14 @@ test.describe('CRM-094 — le guide flottant, dans un espace neuf', () => {
 		await expect(page.getByTestId('bandeau-retour-channel')).toBeVisible()
 		await expect(page.getByText('Aucun workflow dans cet espace de travail')).toBeVisible()
 		await expect(panneau(page)).toBeVisible()
-		await expect(panneau(page).getByTestId('progression-demarrage')).toHaveText('2 étape(s) sur 6')
-		await expect(pastille(page)).toHaveAccessibleName('Démarrage · 2 sur 6')
+		await expect(panneau(page).getByTestId('progression-demarrage')).toHaveText('2 étape(s) sur 8')
+		await expect(pastille(page)).toHaveAccessibleName('Démarrage · 2 sur 8')
 		await capturerPanneau(page, 'editeur-vide-panneau-ouvert-1440')
 
 		// 7. Le geste, depuis le panneau, PAR-DESSUS l'éditeur (§10.3).
 		await panneau(page).getByTestId('creer-workflow-depart').click()
 		await expect(panneau(page).getByTestId('etape-workflow')).toContainText('Fait')
-		await expect(panneau(page).getByTestId('progression-demarrage')).toHaveText('3 étape(s) sur 6')
+		await expect(panneau(page).getByTestId('progression-demarrage')).toHaveText('3 étape(s) sur 8')
 		await expect(panneau(page).getByTestId('annonce-demarrage')).toHaveText('Workflow de départ créé')
 		await expect(panneau(page).getByTestId('creer-workflow-depart')).toHaveCount(0)
 		// Le bouton qui a agi a disparu : le focus est sur le lien de sa ligne, jamais sur le document.
@@ -231,7 +233,7 @@ test.describe('CRM-094 — le guide flottant, dans un espace neuf', () => {
 		await panneau(page).getByTestId('lien-channel').click()
 		await expect(page).toHaveURL(/\/reglages\/arborescence$/)
 		await expect(panneau(page)).toBeVisible()
-		await expect(panneau(page).getByTestId('progression-demarrage')).toHaveText('3 étape(s) sur 6')
+		await expect(panneau(page).getByTestId('progression-demarrage')).toHaveText('3 étape(s) sur 8')
 
 		// 9. Le premier channel NAÎT, sur le workflow posé — ce qui était impossible (décision 606).
 		await page.getByRole('button', { name: `Déplier ${TRACK.nom}` }).click()
@@ -253,11 +255,12 @@ test.describe('CRM-094 — le guide flottant, dans un espace neuf', () => {
 		).toEqual([{ slug: CHANNEL.slug, workflow_id: idWorkflow }])
 
 		// 10. Page suivante, sans rechargement : la progression est RE-MESURÉE — le channel compte.
-		await panneau(page).getByTestId('lien-messagerie').click()
-		await expect(page).toHaveURL(/\/reglages\/messagerie$/)
-		await expect(panneau(page).getByTestId('progression-demarrage')).toHaveText('4 étape(s) sur 6')
+		// RÉVISÉ par `CRM-157` : l'étape de la messagerie suivie est l'adresse d'expédition, un geste personnel.
+		await panneau(page).getByTestId('lien-identite').click()
+		await expect(page).toHaveURL(/\/reglages\/identites-mail$/)
+		await expect(panneau(page).getByTestId('progression-demarrage')).toHaveText('4 étape(s) sur 8')
 		await expect(panneau(page).getByTestId('etape-channel')).toContainText('Fait')
-		await expect(pastille(page)).toHaveAccessibleName('Démarrage · 4 sur 6')
+		await expect(pastille(page)).toHaveAccessibleName('Démarrage · 4 sur 8')
 		await capturerPanneau(page, 'panneau-remesure-1440')
 
 		// 11. Réduire rend le focus à la pastille, et efface la forme ; rien n'a touché `localStorage`.
@@ -277,7 +280,7 @@ test.describe('CRM-094 — le guide flottant, dans un espace neuf', () => {
 		if (compte === null) throw new Error('montage absent')
 		await connecterAvecLeLabs(page, compte.adresse)
 		await page.goto('/contacts')
-		await expect(pastille(page)).toHaveAccessibleName('Démarrage · 4 sur 6')
+		await expect(pastille(page)).toHaveAccessibleName('Démarrage · 4 sur 8')
 
 		// Du haut du document jusqu'à la pastille, à la tabulation : aucune souris.
 		await page.locator('body').press('Tab')
@@ -310,10 +313,10 @@ test.describe('CRM-094 — le guide flottant, dans un espace neuf', () => {
 			// L'éditeur, qui porte désormais le workflow posé et ses sept étapes : un écran CHARGÉ (§10.6).
 			await page.goto('/reglages/workflows')
 			await expect(page.getByTestId('ligne-etape').first()).toBeVisible()
-			await expect(pastille(page)).toHaveAccessibleName('Démarrage · 4 sur 6')
+			await expect(pastille(page)).toHaveAccessibleName('Démarrage · 4 sur 8')
 
-			// Sous `md`, le libellé visible se réduit à « 4/6 » — le nom accessible reste entier.
-			const court = pastille(page).getByText('4/6', { exact: true })
+			// Sous `md`, le libellé visible se réduit à « 4/8 » — le nom accessible reste entier.
+			const court = pastille(page).getByText('4/8', { exact: true })
 			if (palier.largeur < 768) await expect(court).toBeVisible()
 			else await expect(court).toBeHidden()
 
@@ -362,7 +365,8 @@ test.describe('CRM-094 — à qui la pastille ne paraît pas', () => {
 	 * tardive de l'accueil — `cards`, la plus lente — arrivait après la pose du compteur. Il compte donc
 	 * les requêtes ÉMISES après sa pose, et seulement leurs réponses, l'accueil s'étant tu d'abord.
 	 */
-	const TABLES_DU_GUIDE = /\/rest\/v1\/(workspaces|tracks|workflows|channels|cards|mail_inbound_accounts)\?/
+	// RÉVISÉ par `CRM-157` : la messagerie compte aussi les identités, et lit `workspaces` deux fois (l'espace, le domaine).
+	const TABLES_DU_GUIDE = /\/rest\/v1\/(workspaces|tracks|workflows|channels|cards|mail_inbound_accounts|mail_outbound_identities)\?/
 	async function compterMesures(page: Page): Promise<{ readonly emises: () => number; readonly rendues: () => number }> {
 		await page.waitForLoadState('networkidle')
 		const emises = new Set<Request>()
@@ -391,15 +395,15 @@ test.describe('CRM-094 — à qui la pastille ne paraît pas', () => {
 		expect(mesures.emises(), 'aucun comptage du guide pour un rôle qui ne voit pas la pastille').toBe(0)
 	})
 
-	test('l’administratrice du seed : six étapes accomplies, la pastille ne paraît pas', async ({ page }) => {
+	test('l’administratrice du seed : huit étapes accomplies, la pastille ne paraît pas', async ({ page }) => {
 		await connecterAvecLeLabs(page, ADMIN_SEED)
 		const mesures = await compterMesures(page)
 		await page.goto('/contacts')
-		// Les six comptages rendus, tous accomplis : rien n'est rendu — ni pendant, ni après (§10.2, « Quand »).
-		await expect.poll(() => mesures.rendues(), { timeout: 30_000 }).toBe(6)
+		// Les huit comptages rendus, tous accomplis : rien n'est rendu — ni pendant, ni après (§10.2, « Quand »).
+		await expect.poll(() => mesures.rendues(), { timeout: 30_000 }).toBe(8)
 		await page.waitForLoadState('networkidle')
 		await expect(pastille(page)).toHaveCount(0)
 		// Une seule mesure : le rôle résolu rend le guide actif, et il ne relance pas ce qui part déjà.
-		expect(mesures.emises()).toBe(6)
+		expect(mesures.emises()).toBe(8)
 	})
 })
