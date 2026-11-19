@@ -1,3 +1,5 @@
+// @verifies CRM-156 (docs/BACKLOG.md) — tranche T4 : le lien de la corbeille visé par son titre, l'index des Réglages
+//           portant « Expéditeurs bloqués », dont le descriptif nomme la corbeille de l'inbox (décision 51)
 // @verifies CRM-077 (docs/BACKLOG.md) — corbeille et restauration : le parcours d'interface
 // @verifies docs/SPEC-corbeille.md §3.4 (le refus nommé), §4.1 (l'adresse), §4.3 (l'auteur
 //           inconnu), §4.4 (l'énumération d'une entrée parente), §4.5 (les trois issues),
@@ -88,7 +90,10 @@ test.describe('corbeille (docs/SPEC-corbeille.md §4)', () => {
 
 		// Depuis l'index des réglages, par un geste réel — pas une navigation directe (§4.1).
 		await page.goto('/reglages')
-		await page.getByRole('link', { name: 'Corbeille' }).click()
+		// RÉVISÉ par `CRM-156` (décision 51, 2026-11-19) : l'entrée « Expéditeurs bloqués » dit dans son descriptif que ses
+		// mails vont « à la corbeille de l'inbox ». Le nom accessible d'une entrée est son titre suivi de son descriptif : le
+		// lien est visé par le DÉBUT de son nom, son titre.
+		await page.getByRole('link', { name: /^Corbeille/ }).click()
 		await expect(page).toHaveURL(/\/reglages\/corbeille$/)
 		await expect(page.getByRole('heading', { name: 'Corbeille' })).toBeVisible()
 
@@ -199,7 +204,8 @@ test.describe('corbeille (docs/SPEC-corbeille.md §4)', () => {
 		await page.goto('/reglages')
 
 		// Atteindre le lien de la corbeille à la tabulation, sans jamais cliquer.
-		const lien = page.getByRole('link', { name: 'Corbeille' })
+		// RÉVISÉ par `CRM-156` (décision 51) : le lien visé par son titre, au début de son nom — voir le premier scénario.
+		const lien = page.getByRole('link', { name: /^Corbeille/ })
 		await lien.focus()
 		await expect(lien).toBeFocused()
 		await page.keyboard.press('Enter')

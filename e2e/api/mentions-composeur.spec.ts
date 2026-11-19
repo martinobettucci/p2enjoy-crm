@@ -1,3 +1,5 @@
+// @verifies CRM-156 (docs/BACKLOG.md) — tranche T5 : la lecture finale restreinte aux mentions d'affaire (décision 51 ;
+//           docs/SPEC-seed.md §49, §50)
 // @verifies CRM-064 (docs/BACKLOG.md) — @mentions, notifications et préférences,
 //           SOUS-TRANCHE 3B : l'émission
 // @verifies docs/SPEC-notifications.md §37 (les dix lignes du contrat), §34.2 (la RPC et son refus
@@ -375,7 +377,10 @@ test.describe('CRM-064 sous-tranche 3b — le contrat d’API de l’émission',
 		const mentions = await request.get(`${URL_API}${MENTIONS}?select=comment_id`, {
 			headers: entetes,
 		})
-		const notifications = await request.get(`${URL_API}${NOTIFICATIONS}?select=id`, {
+		// RÉVISÉ par `CRM-156` T5 (décision 51, 2026-11-19) : les deux notifications de ce contrat sont les MENTIONS
+		// D'AFFAIRE du seed. Le §49 y ajoute un transfert de mail, le §50 une mention d'organisation (`CRM-153`) : la lecture
+		// est restreinte aux mentions d'affaire, comme la garde « 8 quinquies ter » du seed.
+		const notifications = await request.get(`${URL_API}${NOTIFICATIONS}?select=id&type=eq.mention&subject_card_id=not.is.null`, {
 			headers: entetes,
 		})
 

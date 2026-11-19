@@ -1,3 +1,5 @@
+// @spec CRM-156 (docs/BACKLOG.md) — tranche T5 : la fenêtre agrandie pour l'image « reglages-boites », l'index des réglages
+//       portant « Expéditeurs bloqués » (docs/DESIGN_SYSTEM.md §5.109 bis ; docs/SPEC-manual.md §11.4)
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.3 : les images du chapitre 11, « Les boîtes de réception et les adresses
 //       d'expédition »
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitre 11 ; docs/SPEC-mail-subsystem.md (les comptes
@@ -31,6 +33,10 @@ const BOITE_CAMILLE = `mail_inbound_accounts?label=eq.${encodeURIComponent('Boî
 
 test('les réglages de la messagerie, dans leur ordre', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
+	// LA FENÊTRE EST AGRANDIE LE TEMPS DES DEUX IMAGES, comme au chapitre 14 : l'index des réglages s'est encore allongé
+	// (`CRM-156` y ajoute « Expéditeurs bloqués », `CRM-153` « Catégories d'organisations »), et l'écart entre la première
+	// cible, amenée en haut, et « État de la messagerie » dépasse 900 px (campagne du 2026-11-19). Elle est rendue ensuite.
+	await page.setViewportSize({ width: 1440, height: 1200 })
 	await page.goto('/reglages')
 	const entree = (nom: string) => page.getByRole('link', { name: new RegExp(`^${nom}`) }).first()
 	// Une image par section, chacune sur son entrée : un nom ne sert qu'une fois par chapitre (`illustrer`).
@@ -42,6 +48,7 @@ test('les réglages de la messagerie, dans leur ordre', async ({ page }) => {
 	await illustrer(page, { chapitre: CHAPITRE, section: BOITES, nom: 'reglages-boites', cibles: [entree('Comptes de messagerie entrante'), entree('État de la messagerie')] })
 	await enHaut('Identités d’expédition')
 	await illustrer(page, { chapitre: CHAPITRE, section: ADRESSES, nom: 'reglages-adresses', cibles: [entree('Identités d’expédition'), entree('État de la messagerie')] })
+	await page.setViewportSize({ width: 1440, height: 900 })
 })
 
 test('les boîtes de réception : la liste, une boîte connectée, la configuration', async ({ page, request }) => {

@@ -1,3 +1,5 @@
+// @verifies CRM-156 (docs/BACKLOG.md) — tranche T5 : la cloche de Driss compte aussi le transfert du seed §49 (décision 51 ;
+//           docs/SPEC-seed.md §49)
 // @verifies CRM-064 (docs/BACKLOG.md) — sous-tranche 3b : le sélecteur de mentions, sur session
 //           réelle
 // @verifies docs/SPEC-notifications.md §36 (ce que l'écran rend, règle par règle), §36.3 (la liste
@@ -230,10 +232,12 @@ test.describe('Le parcours complet : mentionner, et voir la cloche du destinatai
 			const pageDriss = await contexte.newPage()
 			try {
 				await connecter(pageDriss, BIZDEV)
-				// Driss portait UNE notification non lue avant cette publication ; il en porte DEUX.
+				// Driss portait DEUX notifications non lues avant cette publication — sa mention, et le transfert du seed §49
+				// (`CRM-156` T5, révisé par la décision 51, 2026-11-19) ; il en porte TROIS. Le nom entier est attendu : un
+				// motif `/2/` passait aussi sur « 12 ».
 				await expect(pageDriss.getByTestId('cloche-notifications')).toHaveAttribute(
 					'aria-label',
-					/2/,
+					'Notifications — 3 non lues',
 				)
 			} finally {
 				await contexte.close()

@@ -151,7 +151,7 @@
 			"src": "les-boites-de-reception-et-les-adresses-d-expedition/reglages-boites.jpg",
 			"alt": "La liste des réglages : « Comptes de messagerie entrante » vient avant « État de la messagerie »",
 			"width": 545,
-			"height": 542
+			"height": 613
 		},
 		{
 			"type": "image",
@@ -853,7 +853,7 @@
 			"src": "les-boites-de-reception-et-les-adresses-d-expedition/reglages-adresses.jpg",
 			"alt": "L'entrée « Identités d'expédition » de la liste des réglages",
 			"width": 545,
-			"height": 451
+			"height": 521
 		},
 		{
 			"type": "image",
