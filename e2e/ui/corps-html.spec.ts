@@ -89,10 +89,11 @@ test('à la souris : rien ne part avant le clic, la requête part après, et le 
 	await expect(page.getByTestId('bandeau-images')).toContainText('Les images distantes de ce message sont bloquées')
 	await capturer(page, 'corps-html-bloque-xl-1440', UNITE)
 
-	const partie = page.waitForRequest((requete) => requete.url().includes(HOTE_IMAGE))
+	// LE COMPTE SE LIT PAR `expect.poll`, et non après `waitForRequest` : Playwright rend l'événement « requête » AVANT
+	// d'appeler le gestionnaire d'interception qui la compte (mesuré : 200 fois sur 200). Lu à l'instant, le compte n'était
+	// juste que si l'image partait pendant le `click()` — une course que la campagne du lot CRM-157 a perdue.
 	await page.getByTestId('afficher-images').click()
-	await partie
-	expect(requetes).toEqual([`https://${HOTE_IMAGE}/journee-partenaires.png`])
+	await expect.poll(() => requetes).toEqual([`https://${HOTE_IMAGE}/journee-partenaires.png`])
 	await expect(page.getByTestId('images-affichees')).toHaveText('Images affichées pour ce message.')
 	await expect
 		.poll(() => cadre(page).getByRole('img', { name: 'Affiche de la journée partenaires' }).evaluate((image: HTMLImageElement) => image.naturalWidth))
