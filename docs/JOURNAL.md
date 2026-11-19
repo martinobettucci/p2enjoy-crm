@@ -41108,3 +41108,18 @@ contrat §2.58 à §2.61 LIVRÉES, §3 et §8, changelog en [Publié], backlog ;
 domaine entrant en production ; `queue_outbound_email` refuse donc tout envoi par `card_not_available`, que l'écran rend
 « Cette affaire ne peut pas recevoir de réponse… ». Aucun envoi n'est jamais parti (`mail_outbox` vide). Geste du
 responsable : Plateforme ▸ Espaces ▸ « Modifier » (domaine entrant, préfixe), contrat §2.2.
+
+### décision 951 — un refus d'envoi clair, et la messagerie dans le guide de démarrage (`CRM-157`)
+
+*2026-11-19, session 4522fa9c (p2enjoy-crm-e3, ex-bb, session de livraison), signalement puis arbitrage du responsable
+(`AskUserQuestion`, trois tours).*
+**Signalement** : « Thomas me dit qu'il n'arrive pas à envoyer des mails », avec la capture du refus « Cette affaire ne peut
+pas recevoir de réponse, ou le message n'a pas de destinataire » sur un mail préparé.
+**Diagnostic, en lecture seule** : les deux mails préparés de Thomas sont valides (affaire disponible, identité à lui,
+destinataire, corps) ; l'espace `crm` n'a pas de domaine entrant, donc `queue_outbound_email` refuse par
+`card_not_available` ; `mail_outbox` est vide. La boîte système est `contact@p2enjoy.studio`, préfixe `c-`.
+**Réponses** : le responsable règle lui-même le domaine (« je pense avoir trouvé ») ; **le message d'erreur doit devenir
+clair** (une unité, écran seul) ; **pas de regroupement** des réglages mail (« mauvaise idée ») ; **le guide de démarrage**
+gagne la boîte entrante système, le domaine des affaires et l'identité d'envoi ; une seule unité ; connecteur : non (sans
+préférence du responsable pour le guide).
+**Conséquences** : `CRM-157` au backlog ; spécification avant le code.

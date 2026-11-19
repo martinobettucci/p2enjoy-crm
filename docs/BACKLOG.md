@@ -20224,3 +20224,33 @@ s'écrire en parallèle, l'écran se coordonne avec la session qui porte `CRM-15
   `scripts/verify-seed-demo.sh` lit encore `cards.current_step_id` (chantier `CRM-111` T2.4.4).
 **DoD** : pgTAP des fonctions groupées ; preuve d'API avec les vrais jetons (refus du profil sans droit, sélection mixte) ;
 unitaires ; E2E souris et clavier aux quatre paliers ; captures observées ; seed vérifié ; manuel vérifié ; contrat.
+
+### CRM-157 — Envoyer un mail : un refus clair quand l'espace n'a pas de domaine d'adresses d'affaire, et la messagerie dans le guide de démarrage `[ ]`
+
+**Origine** : signalement du responsable, le 2026-11-19 (« Thomas me dit qu'il n'arrive pas à envoyer des mails »), diagnostiqué
+par la session de livraison (p2enjoy-crm-e3, ex-bb) ; arbitré le même jour (décision 951).
+**Constat** (production, en lecture seule) : l'espace `crm` n'a pas de domaine entrant (`workspaces.inbound_domain` nul).
+L'adresse de réponse d'une affaire (`<préfixe><jeton>@<domaine>`) ne peut donc pas se former, et
+`queue_outbound_email` refuse tout envoi par `card_not_available` (`23514`). L'écran le rend « Cette affaire ne peut pas
+recevoir de réponse, ou le message n'a pas de destinataire » : **faux et inutile** pour la personne, qui ne peut rien y
+faire. Aucun mail n'est jamais parti de la production.
+**Demande du responsable** : « l'erreur affichée n'est pas claire », « pourquoi l'erreur est inutile et cryptique » ;
+regrouper les réglages mail, « non, laisse tomber, c'était une mauvaise idée » ; la configuration mail dans le guide de
+démarrage, « c'est une bonne idée ».
+**Comportement attendu** (substance validée ; détail à spécifier) :
+- **un refus nommé** quand l'espace n'a pas de domaine d'adresses d'affaire, distinct de l'affaire indisponible, du
+  destinataire manquant et du corps vide ; l'écran d'envoi (et la mise en file d'un mail préparé) dit **ce qui manque, et
+  qui peut le régler** ; il **prévient avant qu'on rédige**, et mène un administrateur vers le réglage ;
+- plus généralement, **les refus d'envoi regroupés sous « invalide » sont distingués** et dits en clair ;
+- **le guide de démarrage d'un espace** gagne trois étapes mail : **la boîte entrante système** (saisie et test de
+  connexion), **le domaine des adresses d'affaire** (domaine et préfixe, avec l'alias à créer chez l'hébergeur expliqué),
+  **l'identité d'envoi** de chaque membre (sa boîte SMTP) ;
+- **les réglages restent où ils sont** : le domaine et le préfixe dans Plateforme ▸ Espaces, les boîtes et les identités
+  dans Réglages ▸ Messagerie (pas de regroupement, décision 951). Qui règle le domaine depuis le guide est à spécifier.
+**Connecteur MCP** : **non** — écran seul pour le refus clair (réponse du responsable) ; pour le guide, le responsable n'a
+pas de préférence : retenu **non**, le guide étant un parcours d'administration à l'écran.
+**Spécification** : à écrire avant le code — `docs/SPEC-mail-subsystem.md` (refus d'envoi), `docs/SPEC-onboarding.md`
+(les étapes mail), `docs/DESIGN_SYSTEM.md`, manuel (envoi, démarrage).
+**DoD** : pgTAP du refus nommé ; preuve d'API avec les vrais jetons ; unitaires ; E2E souris et clavier aux quatre paliers
+(l'envoi refusé et son message, le guide) ; captures observées ; seed (un espace sans domaine, pour le refus) ; manuel ;
+contrat.
