@@ -41123,3 +41123,12 @@ clair** (une unité, écran seul) ; **pas de regroupement** des réglages mail (
 gagne la boîte entrante système, le domaine des affaires et l'identité d'envoi ; une seule unité ; connecteur : non (sans
 préférence du responsable pour le guide).
 **Conséquences** : `CRM-157` au backlog ; spécification avant le code.
+
+### décision 952 — la file d'envoi n'est vidée par rien en production (`CRM-158`)
+
+*2026-11-19, session 4522fa9c (p2enjoy-crm-e3, ex-bb, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Constat**, en lecture seule, après le réglage du domaine entrant par le responsable : les deux mails de Thomas sont en
+file depuis 13:45 UTC, jamais réservés ; la route `/internal/v1/outbox/flush` de `mail-sync` n'est appelée que par les tests
+et le seed ; aucune tâche planifiée ne la cadence en production.
+**Réponses** : ne pas déclencher l'envoi à la main ; le correctif avec le prochain lot ; connecteur MCP : non.
+**Conséquences** : `CRM-158` au backlog, confiée à une session libre ; les mails de Thomas partiront avec la livraison.

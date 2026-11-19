@@ -20225,8 +20225,7 @@ s'écrire en parallèle, l'écran se coordonne avec la session qui porte `CRM-15
 **DoD** : pgTAP des fonctions groupées ; preuve d'API avec les vrais jetons (refus du profil sans droit, sélection mixte) ;
 unitaires ; E2E souris et clavier aux quatre paliers ; captures observées ; seed vérifié ; manuel vérifié ; contrat.
 
-### CRM-157 — Envoyer un mail : un refus clair quand l'espace n'a pas de domaine d'adresses d'affaire, et la messagerie dans le guide de démarrage `[@]`
-*Prise en charge : session interactive 152dd27d (p2enjoy-crm-c7, ex-45) depuis 2026-11-19 13:44 UTC — état avant : [ ] ; confiée par la session de livraison (e3)*
+### CRM-157 — Envoyer un mail : un refus clair quand l'espace n'a pas de domaine d'adresses d'affaire, et la messagerie dans le guide de démarrage `[ ]`
 
 **Origine** : signalement du responsable, le 2026-11-19 (« Thomas me dit qu'il n'arrive pas à envoyer des mails »), diagnostiqué
 par la session de livraison (p2enjoy-crm-e3, ex-bb) ; arbitré le même jour (décision 951).
@@ -20255,3 +20254,24 @@ pas de préférence : retenu **non**, le guide étant un parcours d'administrati
 **DoD** : pgTAP du refus nommé ; preuve d'API avec les vrais jetons ; unitaires ; E2E souris et clavier aux quatre paliers
 (l'envoi refusé et son message, le guide) ; captures observées ; seed (un espace sans domaine, pour le refus) ; manuel ;
 contrat.
+
+### CRM-158 — La file d'envoi n'est vidée par rien en production : une tâche planifiée qui la vide chaque minute `[ ]`
+
+**Origine** : relevé par la session de livraison (p2enjoy-crm-e3, ex-bb) le 2026-11-19, en suivant le signalement de Thomas
+(`CRM-157`), une fois le domaine entrant réglé ; arbitré le même jour (décision 952).
+**Constat** (production, en lecture seule) : deux mails de Thomas sont `queued` depuis 13:45 UTC, `attempts` = 0, jamais
+réservés. `mail-sync` expose `POST /internal/v1/outbox/flush` (`vider_la_file`), mais **rien ne l'appelle en
+production** : seuls les tests E2E et `supabase/seed/apply-seed.sh` l'appellent ; aucune tâche `pg_cron` (la liste de
+`cron.job` relue), aucune boucle de `mail-sync`, aucun service de l'assemblage. La file est donc persistante… et jamais
+consommée : **aucun mail ne part**. Le §5 de `docs/SPEC-mail-subsystem.md` décrit un `smtp_worker` qui « consomme la file »,
+sans dire ce qui le cadence.
+**Comportement attendu** : la file d'envoi est vidée **chaque minute** en production comme en développement, par un
+mécanisme planifié du même ordre que `p2enjoy-webhooks-remise` (tâche `pg_cron` qui appelle la route interne avec son jeton,
+ou boucle de `mail-sync` — à spécifier) ; la même cadence pour `trash-moves/flush` si elle en manque aussi ; le backoff et
+la reprise des orphelins (§20) restent ceux d'aujourd'hui ; la supervision dit si la file vieillit.
+**Décision du responsable** : ne pas déclencher l'envoi à la main en production ; **livrer le correctif avec le prochain
+lot** ; connecteur MCP : **non** (le connecteur met déjà en file comme l'écran).
+**Spécification** : à écrire avant le code — `docs/SPEC-mail-subsystem.md` §5 et §20, `docs/SCHEMA.md` (si migration),
+`docs/DAT.md`, contrat (secret ou jeton interne si une tâche `pg_cron` l'emploie).
+**DoD** : preuve que la file se vide **sans appel explicite** (E2E mail : un envoi mis en file part dans la minute) ;
+pgTAP si migration ; contrat ; constat en production (les deux mails de Thomas partent).
