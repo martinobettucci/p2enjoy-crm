@@ -6,6 +6,8 @@
 //           55 », la fiche) ; docs/DESIGN_SYSTEM.md §5.105, §5.9 (`aria-sort`), §7 (aucun défilement horizontal aux quatre
 //           paliers) ; docs/JOURNAL.md décisions 931 et 936 ; CLAUDE.md §10 (la lectrice, par l'écran ; la requête directe
 //           est `e2e/api/liste-organisations.spec.ts`), §16 (captures)
+// @verifies CRM-153 (docs/BACKLOG.md) — tranche T4 : le bouton « Catégories » se place entre « Tracks » et « Recettes »
+//           dans l'ordre de tabulation (docs/DESIGN_SYSTEM.md §5.107) ; révisé le 2026-11-19
 //
 // LE SEED EST LU : Vertigo Conseil (Conseil & IA, Formation ; des recettes), Atelier Lumen et Sogexia (Conseil & IA), trois
 // organisations à deux contacts, Comptoir Vasseur sans contact. « Afficher plus » demande plus de cinquante organisations :
@@ -128,6 +130,10 @@ test.describe('Contacts ▸ Organisations : rechercher, filtrer, trier (docs/DES
 		await page.keyboard.press('Escape')
 		await expect(page.getByTestId('panneau-filtre-tracks')).toHaveCount(0)
 		await expect(boutonTracks(page)).toBeFocused()
+		// Révisé le 2026-11-19 (CRM-153 T4) : le seed §50 dote l'espace de catégories ; le bouton
+		// « Catégories » paraît donc, après « Tracks » et avant « Recettes » (docs/DESIGN_SYSTEM.md §5.107).
+		await page.keyboard.press('Tab')
+		await expect(page.getByTestId('ouvrir-filtre-categories')).toBeFocused()
 		await page.keyboard.press('Tab')
 		await expect(recettes(page)).toBeFocused()
 		await recettes(page).selectOption('avec')
