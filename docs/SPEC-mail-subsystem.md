@@ -5288,6 +5288,29 @@ accélérateur, et la preuve attend ensuite que **sa ligne** atteigne l'état ex
 Les preuves qui posent un envoi **avec une échéance future** (`e2e/ui/outbox.spec.ts`, `e2e/api/outbox.spec.ts`) ne
 changent pas : la boucle ne prend que les envois dus.
 
+#### 34.7 bis La retenue de la boucle, en développement seulement
+
+*Précisé le 2026-11-19, avant son code (décision 954), au recensement des preuves.* Une dizaine de preuves mettent en file
+un envoi dû **sans vouloir qu'il parte** : elles constatent la ligne, puis la suppriment. On les trouve dans
+`e2e/api/{envoi,envoi-pieces-jointes,mails-prepares,signature-identite,armement-sequences}`,
+`e2e/ui/{envoi,envoi-pieces-jointes,mails-prepares}` et `e2e/manuel/11-boites-identites`. Une à trois secondes
+séparent la mise en file de la suppression. Avec une passe toutes les trente secondes, la boucle en prendrait une par
+campagne ou presque. L'affaire du seed y gagnerait alors un message archivé et une ligne « Message envoyé », que rien ne
+peut effacer (`card_events` n'accorde d'écriture à personne). Une preuve qui compte les mails de l'affaire deviendrait
+aléatoire.
+
+Ces preuves **retiennent la boucle** le temps de leur scénario, par une instrumentation de test (`CLAUDE.md` §15) :
+- `POST /internal/v1/dev/outbox-loop/hold?seconds=<1..600>` retient la boucle jusqu'à l'échéance donnée.
+  `DELETE /internal/v1/dev/outbox-loop/hold` la libère.
+- Les deux routes exigent le jeton interne, et **rendent `404` hors du profil `dev`**, comme `dev/checkpoint` : en
+  production, la boucle ne peut pas être retenue.
+- **La retenue expire seule** : une preuve interrompue ne laisse jamais la file muette plus de dix minutes.
+- Retenue, la boucle **ne fait aucune passe et ne mesure rien**. La route `outbox/flush` reste servie : une preuve qui
+  veut un envoi le pousse elle-même.
+- La retenue vit **en mémoire**. Un redémarrage du service la lève.
+- Les preuves qui **veulent** un envoi ne retiennent rien. Si une autre session retient la boucle au même moment,
+  `envoi-automatique` échoue en nommant la cause.
+
 ### 34.8 Ce qui part à la livraison
 
 Au démarrage de la nouvelle image, **tout envoi `queued` déjà dû part dans la première minute**, aussi ancien soit-il.
@@ -5311,7 +5334,7 @@ voir partir est annulé par son auteur depuis l'outbox (§28) avant la livraison
 
 | Niveau | Preuve |
 |---|---|
-| pytest | `PiloteEnvoi` : une passe dès le démarrage ; une passe pleine suivie d'une autre sans attendre ; sinon l'intervalle ; une exception absorbée et journalisée (`outbox_loop_failed`), le fil vivant ; l'arrêt interrompt l'attente ; `outbox_stale` au-delà de cinq minutes, rien en deçà. `executer_passe` : la purge des dépôts et la ligne `outbox_flushed` avec ses compteurs ; une base injoignable remonte à la route en `502`, comme aujourd'hui |
+| pytest | La retenue (§34.7 bis) : la boucle retenue ne passe pas, libérée ou expirée elle reprend ; les deux routes en `404` hors de `dev`, `401` sans jeton. `PiloteEnvoi` : une passe dès le démarrage ; une passe pleine suivie d'une autre sans attendre ; sinon l'intervalle ; une exception absorbée et journalisée (`outbox_loop_failed`), le fil vivant ; l'arrêt interrompt l'attente ; `outbox_stale` au-delà de cinq minutes, rien en deçà. `executer_passe` : la purge des dépôts et la ligne `outbox_flushed` avec ses compteurs ; une base injoignable remonte à la route en `502`, comme aujourd'hui |
 | E2E `mail` | `e2e/mail/envoi-automatique.spec.ts`, fichier neuf : un envoi mis en file par `queue_outbound_email` sous le jeton de Camille, **sans aucun appel à la route**, passe `sent` dans les soixante secondes, et le message est dans la boîte Stalwart du destinataire |
 | E2E révisés | ceux du §34.7, rejoués avec la boucle active |
 | Vérificateur | la requête du contrôle 10 vit dans `scripts/lib/file-envoi.sh`, que `scripts/spark/verifier.sh` appelle. `scripts/verify-file-envoi.sh`, neuf, la joue contre la pile locale : témoin vert sur la file réelle ; un envoi vieilli et un orphelin posés **dans une transaction annulée** font chacun rougir le contrôle, qui les nomme |
