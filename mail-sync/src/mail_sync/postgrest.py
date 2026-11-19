@@ -15,6 +15,8 @@
 #       (docs/SPEC-pieces-jointes.md §3, §4.1)
 # @spec CRM-127 (docs/BACKLOG.md) — tranche T2 : la relève réussie écrit `last_sync_at` (docs/SPEC-mail-subsystem.md §23.2,
 #       INC-340, décision 816)
+# @spec CRM-158 (docs/BACKLOG.md) — la lecture des envois dus en retard, pour la supervision de la boucle d'envoi
+#       (docs/SPEC-mail-subsystem.md §34.6, décision 954)
 #
 # POURQUOI `urllib` ET NON UN CLIENT HTTP DE PLUS.
 #
@@ -686,6 +688,23 @@ class PostgrestClient:
         """Écrit le verdict de la reprise ; la base n'écrit que sur une pièce encore non analysée (§17.5)."""
 
         self._rpc("mail_attachment_record_scan", {"p_attachment_id": attachment_id, "p_status": statut})
+
+    def echeances_en_retard(self, avant: datetime, limite: int = 1000) -> list[datetime]:
+        """Les échéances des envois `queued` dus avant `avant`, la plus ancienne d'abord — `CRM-158` §34.6.
+
+        Seule l'échéance est lue : la supervision compte et date, elle ne nomme ni un objet ni un destinataire. La borne
+        de mille lignes suffit à dire « la file vieillit » ; au-delà, le compte dit « au moins mille ».
+        """
+
+        repere = urllib.parse.quote(avant.isoformat(), safe="")
+        _, corps = self._rest(
+            "GET",
+            "/rest/v1/mail_outbox?select=next_attempt_at&status=eq.queued"
+            f"&next_attempt_at=lt.{repere}&order=next_attempt_at.asc&limit={max(1, limite)}",
+        )
+        lignes = json.loads(corps) if corps else []
+        echeances = [_horodatage(ligne.get("next_attempt_at")) for ligne in lignes]
+        return [echeance for echeance in echeances if echeance is not None]
 
     def depots_envoi_abandonnes(self) -> list[str]:
         """Les dépôts à effacer (§19 bis.2 point 8) — la base dit lesquels, l'API de stockage les efface."""

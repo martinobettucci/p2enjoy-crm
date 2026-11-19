@@ -1,3 +1,5 @@
+// @spec CRM-158 (docs/BACKLOG.md) — la boucle d'envoi retenue pendant ces preuves, qui ne veulent aucun départ
+//       (docs/SPEC-mail-subsystem.md §34.7 bis ; décision 954)
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.3 : les images des chapitres 14, 15 et 16 — les modèles d'emails, la
 //       signature d'une identité, les séquences de relance
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitres 14, 15, 16 ; docs/SPEC-modeles-emails.md (les
@@ -15,6 +17,12 @@ import { expect, test } from '@playwright/test'
 import { enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { illustrer } from './illustrer'
 import { ADMIN, AFFAIRE_SOGEXIA, CHANNEL_GRANDS_COMPTES, WORKFLOW_GLOBAL, connecterAvecLeLabs, poserAffaire, rest, service } from './outils'
+import { libererLaBoucle, retenirLaBoucle } from '../sort-envoi'
+
+// `CRM-158` (docs/SPEC-mail-subsystem.md §34.7 bis) : ces preuves mettent en file des envois dus SANS vouloir qu'ils
+// partent ; la boucle d'envoi est retenue le temps du fichier, renouvelée avant chaque preuve, levée à la fin.
+test.beforeEach(() => retenirLaBoucle())
+test.afterAll(() => libererLaBoucle())
 
 const MODELES = 'ecrire-des-modeles-d-emails-et-les-previsualiser'
 const SIGNATURES = 'signer-les-messages-expedies-depuis-une-identite'

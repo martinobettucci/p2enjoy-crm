@@ -8,6 +8,8 @@
 # @spec docs/PROD_MIGRATIONS.md §2.4 (étape 6), §5 (vérifications après déploiement)
 # @spec docs/JOURNAL.md décision 576 (une route `clair` n'est publiée qu'en http://)
 # @spec docs/JOURNAL.md décision 603 — la cellule est jointe par ses IP, jamais par un alias
+# @spec CRM-158 (docs/BACKLOG.md) — le contrôle 10 : la file d'envoi ne vieillit pas (docs/SPEC-mail-subsystem.md §34.6 ;
+#       docs/PROD_MIGRATIONS.md §2.63 ; décision 954)
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T5 : les contrôles du connecteur MCP, faits à la main jusque-là
 #       (docs/SPEC-deploiement-spark.md §7, point 7 ; docs/PROD_MIGRATIONS.md §2.14, geste 5 ; décision 683)
 #
@@ -28,6 +30,8 @@
 #   9. le connecteur MCP : éteint sans conteneur si `CRM_MCP_HOTE` est vide ; sinon présent, aiguillé par Caddy,
 #      routé en tls et, par la route publique, `/pret`, `401` et `resource_metadata`, retour non listé refusé,
 #      `/plateforme` en 302 (scripts/lib/connecteur-mcp.sh).
+#  10. la file d'envoi ne vieillit pas : aucun envoi dû depuis plus de cinq minutes, aucun orphelin réservé depuis plus de
+#      quinze — une requête `select` dans le conteneur de la base (scripts/lib/file-envoi.sh).
 #
 # Usage :
 #   scripts/spark/verifier.sh [--revision <commit>]      défaut : HEAD du poste
@@ -44,6 +48,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib/env.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/spark-ssh.sh"
 # shellcheck source=../lib/connecteur-mcp.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/connecteur-mcp.sh"
+# shellcheck source=../lib/file-envoi.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/file-envoi.sh"
 set +e
 
 SPARK_REPERTOIRE="${SPARK_REPERTOIRE:-/srv/crm}"
@@ -164,6 +170,11 @@ esac
 
 # --- 9. Connecteur MCP -----------------------------------------------------------------------------
 verifier_connecteur_cellule "$HOTE_MCP" "$PORT" "$SITE" "$etats"
+
+# --- 10. File d'envoi ------------------------------------------------------------------------------
+# `CRM-158` (§34.6) : le seul cas que le journal de mail-sync ne peut pas dire — un service arrêté. Lecture seule.
+constat=$(file_envoi_juger "$(file_envoi_requete | distant "docker exec -i p2enjoy-db psql -U postgres -d postgres -qtAX -v ON_ERROR_STOP=1" 2>/dev/null)")
+if [ $? -eq 0 ]; then ok "$constat"; else echec "$constat"; fi
 
 echo
 if [ "$echecs" -gt 0 ]; then echo "Bilan : $controles contrôles, $echecs échec(s), $attentes en attente." >&2; exit 1; fi

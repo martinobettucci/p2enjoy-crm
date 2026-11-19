@@ -1591,8 +1591,8 @@ livraison contre une cellule simulée, avec leurs dégradations.
   recopier un identifiant de connexion. *`CRM-135`, `docs/SPEC-mail-subsystem.md` §24.2* : la veille y gagne le compte
   (`account_id`), le motif (`panne`, `error`, `postgrest_status`) et ses compteurs. Sans eux, INC-349 sortait
   « veille_compte_echoue » sans aucun détail.
-  *`CRM-158`, §34.5* : les compteurs de l'envoi (`reserved`, `sent`, `failed`, `rescheduled`, `orphans`, `count`) et
-  `overdue_seconds` y entrent ; `outbox_flushed` sortait sans eux.
+  *`CRM-158`, §34.5* : les compteurs de l'envoi (`reserved`, `sent`, `failed`, `rescheduled`, `orphans`, `count`),
+  `overdue_seconds`, `outbox_id` et `code` y entrent ; `outbox_flushed` sortait sans eux.
 - **Une relève en échec s'écrit sur la boîte** (`status = 'error'`, `last_error`, `CRM-135`, §24.3), et une relève
   allée au bout la rend `ok`. L'écran d'état et les réglages la montrent sans lire le journal.
 - État de synchronisation par compte mail exposé dans l'interface : dernière synchronisation,

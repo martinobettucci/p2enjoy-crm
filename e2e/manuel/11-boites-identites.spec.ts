@@ -1,3 +1,5 @@
+// @spec CRM-158 (docs/BACKLOG.md) — la boucle d'envoi retenue pendant ces preuves, qui ne veulent aucun départ
+//       (docs/SPEC-mail-subsystem.md §34.7 bis ; décision 954)
 // @spec CRM-156 (docs/BACKLOG.md) — tranche T5 : la fenêtre agrandie pour l'image « reglages-boites », l'index des réglages
 //       portant « Expéditeurs bloqués » (docs/DESIGN_SYSTEM.md §5.109 bis ; docs/SPEC-manual.md §11.4)
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.3 : les images du chapitre 11, « Les boîtes de réception et les adresses
@@ -23,6 +25,12 @@
 import { expect, test } from '@playwright/test'
 import { illustrer } from './illustrer'
 import { ADMIN, AFFAIRE_SOGEXIA, WORKSPACE_SEED, connecterAvecLeLabs, lireService, service } from './outils'
+import { libererLaBoucle, retenirLaBoucle } from '../sort-envoi'
+
+// `CRM-158` (docs/SPEC-mail-subsystem.md §34.7 bis) : ces preuves mettent en file des envois dus SANS vouloir qu'ils
+// partent ; la boucle d'envoi est retenue le temps du fichier, renouvelée avant chaque preuve, levée à la fin.
+test.beforeEach(() => retenirLaBoucle())
+test.afterAll(() => libererLaBoucle())
 
 const CHAPITRE = 'les-boites-de-reception-et-les-adresses-d-expedition'
 const BOITES = 'les-boites-de-reception-declarees'

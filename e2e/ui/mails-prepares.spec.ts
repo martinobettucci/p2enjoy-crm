@@ -1,3 +1,5 @@
+// @verifies CRM-158 (docs/BACKLOG.md) — la boucle d'envoi retenue pendant ces preuves, qui ne veulent aucun départ
+//           (docs/SPEC-mail-subsystem.md §34.7 bis ; décision 954)
 // @verifies CRM-128 (docs/BACKLOG.md) — tranche T4 : l'entrée « Mails préparés » de l'inbox, la liste, la relecture dans
 //           le formulaire d'envoi prérempli, la mise en file du contenu RELU (constatée en base), « Écarter » et sa
 //           confirmation, l'adresse `/inbox?brouillon=<id>`, l'encadré de la fiche, la personne seule
@@ -15,6 +17,12 @@
 import { connecterAvecLeLabs, expect, test } from './fixtures'
 import { capturer } from './captures'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
+import { libererLaBoucle, retenirLaBoucle } from '../sort-envoi'
+
+// `CRM-158` (docs/SPEC-mail-subsystem.md §34.7 bis) : ces preuves mettent en file des envois dus SANS vouloir qu'ils
+// partent ; la boucle d'envoi est retenue le temps du fichier, renouvelée avant chaque preuve, levée à la fin.
+test.beforeEach(() => retenirLaBoucle())
+test.afterAll(() => libererLaBoucle())
 
 const UNITE = 'CRM-128'
 const ADMIN = 'admin@p2enjoy.test'

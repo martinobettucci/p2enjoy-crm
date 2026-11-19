@@ -13,6 +13,24 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-158` — la file d'envoi se vide seule : la boucle d'envoi de `mail-sync`
+
+- **Défaut de production corrigé** (décision 952) : rien n'appelait la passe d'envoi, et aucun mail ne partait. `mail-sync`
+  vide désormais la file **toutes les trente secondes**, par une boucle démarrée avec le service (`PiloteEnvoi`, décision
+  954). Une passe pleine enchaîne aussitôt. Le backoff, la reprise des orphelins et le quota restent ceux d'avant.
+- La route `POST /internal/v1/outbox/flush` et la boucle font la même passe (`envoi.executer_passe`).
+- **La supervision dit si la file vieillit** :
+  - `outbox_stale` en `WARNING` au-delà de cinq minutes de retard ;
+  - un contrôle 10 dans `scripts/spark/verifier.sh` (`scripts/lib/file-envoi.sh`, éprouvé par
+    `scripts/verify-file-envoi.sh`) ;
+  - les compteurs de `outbox_flushed` et des lignes `envoi_*` sortent enfin au journal (`SAFE_FIELDS`).
+- En développement seulement, une route `dev/outbox-loop/hold` retient la boucle pour les preuves qui mettent en file sans
+  vouloir envoyer. Elle rend 404 hors de `dev` et expire seule en dix minutes au plus.
+- Les preuves et le seed qui comptaient sur leur propre passe lisent le sort de leur envoi sur sa ligne (décision 51).
+  `e2e/mail/envoi-automatique.spec.ts` prouve qu'un envoi part dans la minute, sans aucun appel à la route.
+- **Livraison** : aucune migration, aucune variable ; l'image `mail-sync` est à reconstruire, après avoir relu la file
+  (`docs/PROD_MIGRATIONS.md` §2.63).
+
 ### `CRM-157` T1 — l'espace sans domaine refusé par son nom, et une relance due arrêtée (migration 192)
 
 - Sans domaine d'adresses d'affaire, `queue_outbound_email` (donc la mise en file d'un mail préparé) et

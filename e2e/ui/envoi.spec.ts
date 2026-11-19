@@ -1,3 +1,5 @@
+// @verifies CRM-158 (docs/BACKLOG.md) — la boucle d'envoi retenue pendant ces preuves, qui ne veulent aucun départ
+//           (docs/SPEC-mail-subsystem.md §34.7 bis ; décision 954)
 // @verifies CRM-058 (docs/BACKLOG.md) — composer depuis la card et répondre depuis l'inbox
 // @verifies docs/SPEC-mail-subsystem.md §19.6 (le même chemin de code), §19.7 (preuves exigées)
 // @verifies docs/DESIGN_SYSTEM.md §5.8 (états), §10 (clavier) ; CLAUDE.md §16
@@ -16,6 +18,12 @@
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
 import { capturer } from './captures'
+import { libererLaBoucle, retenirLaBoucle } from '../sort-envoi'
+
+// `CRM-158` (docs/SPEC-mail-subsystem.md §34.7 bis) : ces preuves mettent en file des envois dus SANS vouloir qu'ils
+// partent ; la boucle d'envoi est retenue le temps du fichier, renouvelée avant chaque preuve, levée à la fin.
+test.beforeEach(() => retenirLaBoucle())
+test.afterAll(() => libererLaBoucle())
 
 const UNITE = 'CRM-058'
 const ADMIN = 'admin@p2enjoy.test'

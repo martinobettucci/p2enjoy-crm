@@ -1,3 +1,5 @@
+# @spec CRM-158 (docs/BACKLOG.md) — la route d'envoi appelle `executer_passe`, la passe de la boucle d'envoi
+#       (docs/SPEC-mail-subsystem.md §34.4, décision 954)
 # @spec CRM-138 (docs/BACKLOG.md) — tranche T2 : la route interne des déplacements vers la corbeille (docs/SPEC-mail-subsystem.md §29.5)
 # @spec CRM-136 (docs/BACKLOG.md) — tranche T2 : la réponse du test d'une boîte entrante porte `folder_names`
 #       (docs/SPEC-mail-subsystem.md §25.3)
@@ -21,13 +23,13 @@ import logging
 import re
 from uuid import UUID, uuid4
 
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict
 
 from mail_sync import __version__
 from mail_sync.config import Settings
-from mail_sync.envoi import vider_la_file
+from mail_sync.envoi import RETENUE_MAX_SECONDES, RetenueEnvoi, executer_passe
 from mail_sync.extraction import traiter_lot
 from mail_sync.reprise import reprendre_lot
 from mail_sync import antivirus
@@ -151,6 +153,12 @@ class ReleveResponse(StrictModel):
     messages_skipped: int = 0
 
 
+class RetenueResponse(StrictModel):
+    """`CRM-158` §34.7 bis : les secondes de retenue de la boucle d'envoi qui restent — zéro quand elle est libre."""
+
+    held_seconds: float
+
+
 class CheckpointResponse(StrictModel):
     checkpoint: UUID | None
 
@@ -205,6 +213,7 @@ def create_app(
     settings: Settings,
     store: StateStore | None = None,
     logger: logging.Logger | None = None,
+    retenue: RetenueEnvoi | None = None,
 ) -> FastAPI:
     state_store = store or StateStore(settings.MAIL_SYNC_STATE_PATH)
     app_logger = logger or logging.getLogger("mail-sync")
@@ -230,6 +239,8 @@ def create_app(
     )
     application.state.settings = settings
     application.state.store = state_store
+    # `CRM-158` §34.7 bis : la retenue partagée avec la boucle d'envoi de `__main__` ; une retenue neuve pour une preuve.
+    application.state.retenue_envoi = retenue or RetenueEnvoi()
 
     @application.middleware("http")
     async def security_and_observability(request: Request, call_next):  # type: ignore[no-untyped-def]
@@ -546,9 +557,9 @@ def create_app(
 
     # --- Envoi sortant — `CRM-058` ------------------------------------------------------------
     #
-    # ELLE EST DÉCLENCHÉE, COMME LA RELÈVE, et pour la même raison : une boucle permanente demande
-    # une supervision, un état visible et une reprise, que `CRM-059` revendique. Déclenchée, elle
-    # est observable et rejouable — ce qu'une preuve peut mesurer.
+    # ELLE ÉTAIT DÉCLENCHÉE SEULEMENT, et rien ne la déclenchait en production : `CRM-059` n'a cadencé que la relève.
+    # *Révisé par `CRM-158` (§34, décision 954)* : la boucle d'envoi (`PiloteEnvoi`, `__main__`) fait la même passe toutes
+    # les trente secondes ; la route reste, observable et rejouable — ce qu'une preuve peut mesurer.
     #
     # ELLE EST IDEMPOTENTE PAR CONSTRUCTION : la réservation `sending` est faite par la BASE dans
     # la même instruction que la lecture, si bien qu'une seconde passe ne reprend pas un envoi en
@@ -559,28 +570,10 @@ def create_app(
         dependencies=[Depends(require_internal_token)],
     )
     def flush_outbox(request: Request, limit: int = 10) -> EnvoiResponse:
-        settings_courants: Settings = request.app.state.settings
-        client = PostgrestClient(
-            settings_courants.SUPABASE_URL,
-            settings_courants.SERVICE_ROLE_KEY.get_secret_value(),
-            timeout=60.0,
-        )
-
+        # `CRM-158` (§34.4) : la MÊME passe que la boucle d'envoi — orphelins, réservation, envois, purge des dépôts
+        # abandonnés, ligne `outbox_flushed`. La route reste pour les preuves et pour un exploitant pressé.
         try:
-            resultat = vider_la_file(
-                client,
-                limite=max(1, min(limit, 100)),
-                delai=settings_courants.MAIL_SYNC_SMTP_TIMEOUT_SECONDS,
-                journal=lambda evenement, details: log_event(
-                    app_logger, logging.INFO, evenement, **details
-                ),
-                # `CRM-058` tranche 2 §19 bis.2 point 6 : l'antivirus des pièces envoyées, le même que celui de la
-                # relève. Injoignable — la production aujourd'hui —, il rend `skipped` et l'envoi part.
-                clamav_hote=settings_courants.CLAMAV_HOST,
-                clamav_port=settings_courants.CLAMAV_PORT,
-                # `CRM-069` T4 : l'adresse publique, pour les liens d'un digest (décision 772).
-                site_url=settings_courants.SITE_URL,
-            )
+            resultat = executer_passe(request.app.state.settings, app_logger, limite=limit)
         except PostgrestError as erreur:
             log_event(
                 app_logger,
@@ -590,31 +583,6 @@ def create_app(
             )
             raise HTTPException(status_code=502, detail="Base indisponible") from None
 
-        # LES DÉPÔTS ABANDONNÉS — `CRM-058` tranche 2 §19 bis.2 point 8 —, effacés à chaque vidage par l'API de
-        # stockage. Une purge qui échoue n'empêche pas l'envoi d'avoir eu lieu : elle est journalisée et se refera au
-        # vidage suivant.
-        try:
-            abandonnes = client.depots_envoi_abandonnes()
-            client.effacer_objets_envoi(abandonnes)
-            if abandonnes:
-                log_event(app_logger, logging.INFO, "outbound_attachments_purged", count=len(abandonnes))
-        except PostgrestError as erreur:
-            log_event(
-                app_logger,
-                logging.WARNING,
-                "outbound_attachments_purge_failed",
-                postgrest_status=erreur.status_code,
-            )
-
-        log_event(
-            app_logger,
-            logging.INFO,
-            "outbox_flushed",
-            reserved=resultat.reserves,
-            sent=resultat.envoyes,
-            failed=resultat.echoues,
-            rescheduled=resultat.reprogrammes,
-        )
         return EnvoiResponse(
             reserved=resultat.reserves,
             sent=resultat.envoyes,
@@ -731,6 +699,29 @@ def create_app(
     async def put_checkpoint(request: Request, body: CheckpointRequest) -> CheckpointResponse:
         state = request.app.state.store.set_dev_checkpoint(body.checkpoint)
         return CheckpointResponse(checkpoint=state.dev_checkpoint)
+
+    # --- La retenue de la boucle d'envoi — `CRM-158` §34.7 bis, en développement seulement ----------------------------
+    #
+    # Une preuve qui met en file un envoi dû SANS vouloir qu'il parte retient la boucle le temps de son scénario. Hors du
+    # profil `dev`, les deux routes rendent `404` : en production, la boucle ne peut pas être retenue.
+    @application.post(
+        "/internal/v1/dev/outbox-loop/hold",
+        response_model=RetenueResponse,
+        dependencies=[Depends(require_dev_internal_token)],
+    )
+    def hold_outbox_loop(
+        request: Request, seconds: int = Query(ge=1, le=int(RETENUE_MAX_SECONDES))
+    ) -> RetenueResponse:
+        return RetenueResponse(held_seconds=request.app.state.retenue_envoi.retenir(seconds))
+
+    @application.delete(
+        "/internal/v1/dev/outbox-loop/hold",
+        response_model=RetenueResponse,
+        dependencies=[Depends(require_dev_internal_token)],
+    )
+    def release_outbox_loop(request: Request) -> RetenueResponse:
+        request.app.state.retenue_envoi.liberer()
+        return RetenueResponse(held_seconds=0)
 
     return application
 

@@ -20275,9 +20275,7 @@ livraison. Connecteur : non (décision 951).
 - [ ] **T3** — le guide : trois étapes mail à la place de « Raccorder une boîte de réception » ; unitaires ; E2E ;
   captures ; manuel (le démarrage) ; `[P]`.
 
-### CRM-158 — La file d'envoi n'est vidée par rien en production : une tâche planifiée qui la vide chaque minute `[@]`
-
-*Prise en charge : p2enjoy-crm-fc depuis 2026-11-19 14:57 UTC — état avant : [ ] ; confiée par la session de livraison (e3)*
+### CRM-158 — La file d'envoi n'est vidée par rien en production : une tâche planifiée qui la vide chaque minute `[P]`
 
 **Origine** : relevé par la session de livraison (p2enjoy-crm-e3, ex-bb) le 2026-11-19, en suivant le signalement de Thomas
 (`CRM-157`), une fois le domaine entrant réglé ; arbitré le même jour (décision 952).
@@ -20302,5 +20300,26 @@ reconstruire ; la file relue avant la livraison).
 **Plan** : une seule tranche (§34.12) — le pilote et ses preuves pytest ; `e2e/mail/envoi-automatique.spec.ts` (sans appel à
 la route) ; les preuves et le seed qui comptaient sur leur passe, révisés (§34.7) ; le contrôle 10 et
 `scripts/verify-file-envoi.sh` ; l'unité passe `[P]` avec le constat de production (les deux mails de Thomas partent).
+**Implémentée et vérifiée en développement le 2026-11-19** (session p2enjoy-crm-6e, ex-fc) :
+- `PiloteEnvoi` et `executer_passe` (`mail-sync/src/mail_sync/envoi.py`), la retenue de développement, `outbox_stale`,
+  `SAFE_FIELDS` ;
+- pytest 378/378, dont `tests/test_boucle_envoi.py` 15/15 ;
+- l'image `mail-sync` reconstruite en dev : `outbox_loop_started` à 30 s, puis l'envoi en retard du seed repris dès la
+  première passe ;
+- `scripts/verify-file-envoi.sh` 6/6. Le témoin était **rouge avant** la reconstruction (un envoi dû depuis 14 h) et vert
+  après ;
+- E2E du périmètre :
+  - `mail` 6/6 : `envoi-automatique` (parti dans la minute, aucun appel à la route), `envoi`, `envoi-pieces-jointes`,
+    `digest`, `resilience` ×2 ;
+  - `api` 45/45 : `envoi`, `envoi-pieces-jointes`, `mails-prepares`, `signature-identite`, `armement-sequences`, `outbox` ;
+  - `ui` 23/23 : `envoi`, `envoi-pieces-jointes`, `mails-prepares`, `connecteur-messagerie`, `outbox` ;
+  - `manuel` 3/3, dont les images de l'outbox et des séquences, régénérées et regardées ; `manuel:verifier` à jour ;
+- typecheck vert ; le seed rejoué sans erreur.
+**Limites** :
+- Les branches de création du seed (§35, §42) ne se traversent qu'à un seed neuf ; le rejeu emprunte le chemin de
+  l'existant.
+- La campagne complète revient à la session de livraison (décision 830).
+**Reste** (contrat §2.63) : relire la file de production avant, reconstruire l'image `mail-sync` avec le prochain lot,
+constater le départ des deux mails de Thomas et le contrôle 10 « OK ».
 **DoD** : preuve que la file se vide **sans appel explicite** (E2E mail : un envoi mis en file part dans la minute) ;
 pgTAP si migration ; contrat ; constat en production (les deux mails de Thomas partent).

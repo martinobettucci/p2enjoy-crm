@@ -1,3 +1,5 @@
+// @verifies CRM-158 (docs/BACKLOG.md) — le départ lu sur la ligne de l'envoi, la boucle d'envoi active
+//           (docs/SPEC-mail-subsystem.md §34.7 ; décision 954)
 // @verifies CRM-144 (docs/BACKLOG.md) — tranche T5 : l'identité de Camille lue par défaut, le seed en portant trois
 //           (docs/SPEC-seed.md §42 ; décision 913)
 // @verifies CRM-058 (docs/BACKLOG.md) — l'aller-retour complet, sans aucune substitution
@@ -28,6 +30,7 @@ import { expect, test } from '@playwright/test'
 import { lireEnv, urlApi } from '../env'
 import { enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { instantaneDesBoites, rendreLesBoites, type Boite } from './menage'
+import { attendreLeSort } from '../sort-envoi'
 
 const CONTENEUR = conteneur('mail-sync')
 const IMAGE = 'python:3.13.13-slim-bookworm'
@@ -201,8 +204,10 @@ test.describe('envoi sortant — l’aller-retour complet', () => {
 			file = (await miseEnFile.json()) as string
 
 			// 2. LE WORKER SOUMET RÉELLEMENT.
-			const passe = viderLaFile()
-			expect(passe['sent'], `passe = ${JSON.stringify(passe)}`).toBeGreaterThanOrEqual(1)
+			// *Révisé par `CRM-158` (§34.7, décision 51), non relâché* : la boucle d'envoi a pu le prendre avant cette passe, qui
+			// reste un accélérateur ; le départ se lit sur SA ligne, `sent`, avant de regarder la boîte.
+			viderLaFile()
+			await attendreLeSort(request, file)
 
 			// 3. LE DESTINATAIRE A REÇU — dans sa vraie boîte, pas dans une table.
 			const entetes = entetesRecus(marqueur)

@@ -1,3 +1,5 @@
+// @verifies CRM-158 (docs/BACKLOG.md) — la boucle d'envoi retenue pendant ces preuves, qui ne veulent aucun départ
+//           (docs/SPEC-mail-subsystem.md §34.7 bis ; décision 954)
 // @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : copie cachée et pièces jointes dans le formulaire d'envoi, parcours
 //           d'écran complet
 // @verifies docs/SPEC-mail-subsystem.md §19 bis.2, §19 bis.5, §19 bis.7 (ligne « E2E ui ») ; docs/DESIGN_SYSTEM.md
@@ -11,6 +13,12 @@
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
+import { libererLaBoucle, retenirLaBoucle } from '../sort-envoi'
+
+// `CRM-158` (docs/SPEC-mail-subsystem.md §34.7 bis) : ces preuves mettent en file des envois dus SANS vouloir qu'ils
+// partent ; la boucle d'envoi est retenue le temps du fichier, renouvelée avant chaque preuve, levée à la fin.
+test.beforeEach(() => retenirLaBoucle())
+test.afterAll(() => libererLaBoucle())
 
 const UNITE = 'CRM-058'
 const ADMIN = 'admin@p2enjoy.test'

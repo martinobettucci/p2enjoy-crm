@@ -9,6 +9,8 @@
 # @spec docs/JOURNAL.md décisions 330 et 331
 # @spec CRM-058 (docs/BACKLOG.md) — tranche 2 : les pièces lues dans le stockage, l'antivirus, la copie d'archive déposée
 #       AVANT l'envoi, la copie cachée — docs/SPEC-mail-subsystem.md §19 bis.2 points 6 et 7, §19 bis.4 ; décisions 719, 720
+# @spec CRM-158 (docs/BACKLOG.md) — la boucle d'envoi : `executer_passe`, partagée par la route et par `PiloteEnvoi`, et la
+#       mesure du retard de la file (docs/SPEC-mail-subsystem.md §34.3 à §34.6 ; docs/JOURNAL.md décision 954)
 #
 # CE MODULE ORCHESTRE, IL NE DÉCIDE PAS. La garde est en base (`queue_outbound_email`), la
 # composition est dans `composition.py`, la traduction des pannes est dans `smtp_probe.py` : ici,
@@ -22,15 +24,20 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import smtplib
+import threading
+import time
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from typing import Any, Callable
 
 from . import antivirus
 from .backoff import decider
 from .composition import Envoi, PieceEnvoi, chaine_references, composer, destinataires, identifiant_message
-from .postgrest import PostgrestError
+from .postgrest import PostgrestClient, PostgrestError
 from .smtp_probe import classer_panne_smtp
+from .structured_logging import log_event
 
 Journal = Callable[[str, dict[str, Any]], None]
 
@@ -276,3 +283,189 @@ def vider_la_file(
         reprogrammes=reprogrammes,
         orphelins=orphelins,
     )
+
+
+# --- La boucle d'envoi — `CRM-158` (docs/SPEC-mail-subsystem.md §34) --------------------------------------------------
+
+#: §34.3 : trente secondes depuis la FIN de la passe précédente — un envoi part « dans la minute » même quand la passe dure.
+INTERVALLE_SECONDES = 30
+#: Le lot d'une passe, celui de la route par défaut. Une passe qui le remplit est suivie d'une autre sans attendre.
+LOT = 10
+#: §34.6 : un envoi dû depuis plus longtemps dit que la boucle ne tourne pas, ou ne suit plus.
+SEUIL_RETARD = timedelta(minutes=5)
+
+
+def executer_passe(settings: Any, logger: logging.Logger, limite: int = LOT) -> ResultatEnvoi:
+    """Une passe complète : orphelins, réservation, envois, purge des dépôts abandonnés, ligne `outbox_flushed` (§34.4).
+
+    LA ROUTE ET LA BOUCLE L'APPELLENT TOUTES DEUX : un défaut corrigé d'un côté l'est des deux. Une base injoignable
+    pendant la passe remonte en `PostgrestError` — la route la traduit en `502`, la boucle la journalise et rejoue.
+    """
+
+    client = PostgrestClient(settings.SUPABASE_URL, settings.SERVICE_ROLE_KEY.get_secret_value(), timeout=60.0)
+    resultat = vider_la_file(
+        client,
+        limite=max(1, min(limite, 100)),
+        delai=settings.MAIL_SYNC_SMTP_TIMEOUT_SECONDS,
+        journal=lambda evenement, details: log_event(logger, logging.INFO, evenement, **details),
+        # `CRM-058` tranche 2 §19 bis.2 point 6 : l'antivirus des pièces envoyées, le même que celui de la relève.
+        # Injoignable, il rend `skipped` et l'envoi part.
+        clamav_hote=settings.CLAMAV_HOST,
+        clamav_port=settings.CLAMAV_PORT,
+        # `CRM-069` T4 : l'adresse publique, pour les liens d'un digest (décision 772).
+        site_url=settings.SITE_URL,
+    )
+
+    # LES DÉPÔTS ABANDONNÉS — `CRM-058` tranche 2 §19 bis.2 point 8 —, effacés à chaque passe par l'API de stockage. Une
+    # purge qui échoue n'empêche pas l'envoi d'avoir eu lieu : elle est journalisée et se refera à la passe suivante.
+    try:
+        abandonnes = client.depots_envoi_abandonnes()
+        client.effacer_objets_envoi(abandonnes)
+        if abandonnes:
+            log_event(logger, logging.INFO, "outbound_attachments_purged", count=len(abandonnes))
+    except PostgrestError as erreur:
+        log_event(logger, logging.WARNING, "outbound_attachments_purge_failed", postgrest_status=erreur.status_code)
+
+    log_event(
+        logger,
+        logging.INFO,
+        "outbox_flushed",
+        reserved=resultat.reserves,
+        sent=resultat.envoyes,
+        failed=resultat.echoues,
+        rescheduled=resultat.reprogrammes,
+        orphans=resultat.orphelins,
+    )
+    return resultat
+
+
+def mesurer_retard(echeances: list[datetime], maintenant: datetime) -> tuple[int, int | None]:
+    """Combien d'envois dus en retard, et de combien de secondes pour le plus ancien (§34.6). Pure : sans base ni horloge."""
+
+    if not echeances:
+        return 0, None
+    return len(echeances), max(0, int((maintenant - min(echeances)).total_seconds()))
+
+
+def lire_retard(settings: Any, seuil: timedelta = SEUIL_RETARD) -> Callable[[], tuple[int, int | None]]:
+    """La mesure du retard contre la vraie base, avec un client neuf à chaque lecture."""
+
+    def lire() -> tuple[int, int | None]:
+        client = PostgrestClient(settings.SUPABASE_URL, settings.SERVICE_ROLE_KEY.get_secret_value(), timeout=30.0)
+        maintenant = datetime.now(UTC)
+        return mesurer_retard(client.echeances_en_retard(maintenant - seuil), maintenant)
+
+    return lire
+
+
+#: §34.7 bis : une retenue ne dure jamais plus de dix minutes.
+RETENUE_MAX_SECONDES = 600
+
+
+class RetenueEnvoi:
+    """La retenue de la boucle, en développement seulement (§34.7 bis) : une échéance en mémoire, qui expire seule.
+
+    L'horloge est `time.monotonic`, injectable : une preuve vérifie l'expiration sans dormir.
+    """
+
+    def __init__(self, horloge: Callable[[], float] | None = None) -> None:
+        self._horloge = horloge or time.monotonic
+        self._jusqua: float | None = None
+        self._verrou = threading.Lock()
+
+    def retenir(self, secondes: float) -> float:
+        """Retient la boucle `secondes` secondes, bornées à dix minutes ; rend la durée réellement retenue."""
+
+        duree = max(1.0, min(float(secondes), RETENUE_MAX_SECONDES))
+        with self._verrou:
+            self._jusqua = self._horloge() + duree
+        return duree
+
+    def liberer(self) -> None:
+        with self._verrou:
+            self._jusqua = None
+
+    def restante(self) -> float:
+        """Les secondes de retenue qui restent ; zéro quand la boucle est libre."""
+
+        with self._verrou:
+            if self._jusqua is None:
+                return 0.0
+            reste = self._jusqua - self._horloge()
+            if reste <= 0:
+                self._jusqua = None
+                return 0.0
+            return reste
+
+
+class PiloteEnvoi:
+    """La boucle du §34, sur le modèle de `PiloteExtraction` : un `threading.Event`, jamais `time.sleep`.
+
+    Une passe dès le démarrage, puis toutes les trente secondes depuis la fin de la précédente ; une passe pleine est
+    suivie d'une autre sans attendre. Elle survit à tout (§34.5) : une passe ratée se rejoue à la suivante.
+    """
+
+    def __init__(
+        self,
+        *,
+        executer: Callable[[], ResultatEnvoi],
+        mesurer: Callable[[], tuple[int, int | None]],
+        logger: logging.Logger,
+        intervalle: float = INTERVALLE_SECONDES,
+        limite: int = LOT,
+        retenue: RetenueEnvoi | None = None,
+    ) -> None:
+        self._executer = executer
+        self._mesurer = mesurer
+        self._retenue = retenue or RetenueEnvoi()
+        self._logger = logger
+        self._intervalle = intervalle
+        self._limite = limite
+        self._arret = threading.Event()
+        self._fil: threading.Thread | None = None
+
+    def demarrer(self) -> None:
+        log_event(self._logger, logging.INFO, "outbox_loop_started", intervalle_secondes=self._intervalle)
+        self._fil = threading.Thread(target=self._boucler, name="envoi", daemon=True)
+        self._fil.start()
+
+    def _boucler(self) -> None:
+        while not self._arret.is_set():
+            # §34.7 bis : retenue (en développement seulement), la boucle ne passe pas et ne mesure rien ; elle se
+            # réveille à la fin de la retenue, ou à son intervalle si celle-ci dure davantage.
+            reste = self._retenue.restante()
+            if reste > 0:
+                if self._arret.wait(min(reste, self._intervalle)):
+                    return
+                continue
+            plein = False
+            try:
+                plein = self._executer().reserves >= self._limite
+            except PostgrestError as erreur:
+                log_event(self._logger, logging.WARNING, "outbox_loop_failed", postgrest_status=erreur.status_code)
+            except Exception as erreur:  # noqa: BLE001 — la boucle survit à tout, et le dit (§34.5, §20.10.3)
+                log_event(self._logger, logging.ERROR, "outbox_loop_failed", error=type(erreur).__name__)
+            if not plein:
+                self._surveiller()
+            if self._arret.wait(0 if plein else self._intervalle):
+                return
+
+    def _surveiller(self) -> None:
+        """§34.6 : la file vieillit-elle ? Une lecture ratée n'arrête pas la boucle ; elle se refera au tour suivant."""
+
+        try:
+            nombre, retard = self._mesurer()
+        except PostgrestError as erreur:
+            log_event(self._logger, logging.WARNING, "outbox_loop_failed", postgrest_status=erreur.status_code)
+            return
+        except Exception as erreur:  # noqa: BLE001
+            log_event(self._logger, logging.ERROR, "outbox_loop_failed", error=type(erreur).__name__)
+            return
+        if nombre:
+            log_event(self._logger, logging.WARNING, "outbox_stale", count=nombre, overdue_seconds=retard)
+
+    def arreter(self, timeout: float = 5.0) -> None:
+        self._arret.set()
+        if self._fil is not None:
+            self._fil.join(timeout=timeout)
+            self._fil = None

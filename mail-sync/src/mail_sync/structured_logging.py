@@ -3,6 +3,7 @@
 # @spec CRM-135 (docs/BACKLOG.md) — `SAFE_FIELDS` admet le compte, le motif et les compteurs de la veille
 #       (docs/SPEC-mail-subsystem.md §24.2, docs/DAT.md §14 ; INC-349, décisions 873 et 874)
 # @spec CRM-143 (docs/BACKLOG.md) — tranche T2 : les compteurs de la reprise (docs/SPEC-pieces-jointes.md §17.5)
+# @spec CRM-158 (docs/BACKLOG.md) — les compteurs de l'envoi et le retard de la file (docs/SPEC-mail-subsystem.md §34.5, §34.6)
 
 from __future__ import annotations
 
@@ -46,6 +47,17 @@ SAFE_FIELDS: Final = (
     "saines",
     "infectees",
     "restees",
+    # `CRM-158` (docs/SPEC-mail-subsystem.md §34.5, §34.6) : la passe d'envoi et le retard de la file — des entiers, un UUID
+    # interne (`outbox_id`), un code d'un vocabulaire fermé (`code`, §13.7). `outbox_flushed` sortait sans ses compteurs.
+    "reserved",
+    "sent",
+    "failed",
+    "rescheduled",
+    "orphans",
+    "count",
+    "overdue_seconds",
+    "outbox_id",
+    "code",
 )
 
 

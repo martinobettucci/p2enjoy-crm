@@ -1,3 +1,5 @@
+// @verifies CRM-158 (docs/BACKLOG.md) — le départ lu sur la ligne de l'envoi, la boucle d'envoi active
+//           (docs/SPEC-mail-subsystem.md §34.7 ; décision 954)
 // @verifies CRM-069 (docs/BACKLOG.md) — tranche T5 : le récapitulatif quotidien jusqu'à la boîte de développement, sans
 //           aucune substitution — le vrai job, la vraie file, le vrai worker, la vraie boîte
 // @verifies docs/SPEC-etiquettes-digest.md §5.2 (le contenu, ses liens), §5.3 (l'identité de service, aucun `Reply-To`),
@@ -15,6 +17,7 @@ import { expect, test } from '@playwright/test'
 import { lireEnv, urlApi } from '../env'
 import { enTetesService } from '../api/jetons'
 import { instantaneDesBoites, rendreLesBoites, type Boite } from './menage'
+import { attendreLeSort } from '../sort-envoi'
 
 const IMAGE = 'python:3.13.13-slim-bookworm'
 const JETON = lireEnv('MAIL_SYNC_INTERNAL_TOKEN')
@@ -140,8 +143,10 @@ test.describe('le récapitulatif quotidien — du job à la boîte', () => {
 			expect(run!.status).toBe('queued')
 			file = run!.outbox_id
 
-			const passe = viderLaFile()
-			expect(passe['sent'], `passe = ${JSON.stringify(passe)}`).toBeGreaterThanOrEqual(1)
+			// *Révisé par `CRM-158` (§34.7, décision 51), non relâché* : la boucle d'envoi a pu le prendre avant cette passe, qui
+			// reste un accélérateur ; le départ se lit sur SA ligne.
+			viderLaFile()
+			await attendreLeSort(request, file)
 			const ligne = await request.get(`${URL_API}/rest/v1/mail_outbox?id=eq.${file}&select=status,kind,card_id`, { headers: service })
 			expect(await ligne.json()).toEqual([{ status: 'sent', kind: 'digest', card_id: null }])
 

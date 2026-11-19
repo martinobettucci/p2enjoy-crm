@@ -1,3 +1,5 @@
+// @spec CRM-158 (docs/BACKLOG.md) — l'image « outbox-annuler » attend SA ligne reprogrammée, la boucle d'envoi active
+//       (docs/SPEC-mail-subsystem.md §34.7 ; décision 954)
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.3 : les images du chapitre 12, « L'inbox : lire, trier et répondre »
 // @spec CRM-155 (docs/BACKLOG.md) — tranche T1 : l'image « pastilles-dans-la-liste » montre les filtres rapides
 //       (docs/SPEC-mail-subsystem.md §31.12 ; docs/DESIGN_SYSTEM.md §5.108 ; docs/manual.md §12.2)
@@ -48,6 +50,7 @@ import { lireEnv } from '../env'
 import { illustrer } from './illustrer'
 import { ADMIN, AFFAIRE_SOGEXIA, BIZDEV, WORKSPACE_SEED, connecterAvecLeLabs, lireService, rest, retenir, service } from './outils'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
+import { attendreLeSort } from '../sort-envoi'
 
 // LE CHROMIUM COMPLET, et non le « headless shell » : seul le premier porte le lecteur PDF du navigateur, que l'image de
 // l'aperçu d'un PDF montre (`CRM-074` T3). Le choix vaut pour le fichier entier : Playwright ne le permet pas par groupe.
@@ -467,13 +470,20 @@ test('suivre ses envois : « Échecs » et « Réessayer », puis « En file » 
 	const id = (await mise.json()) as string
 	try {
 		// UNE VRAIE PASSE DU WORKER le prend et le reprogramme : l'image montre un envoi retardé par une vraie panne.
-		const passe = passeDEnvoi()
-		expect(passe['rescheduled'], `passe = ${JSON.stringify(passe)}`).toBeGreaterThanOrEqual(1)
-		const [relu] = await lireService<{ status: string; attempts: number; last_error: string }[]>(
-			request,
-			`mail_outbox?select=status,attempts,last_error&id=eq.${id}`,
-		)
-		expect(relu).toEqual({ status: 'queued', attempts: 1, last_error: 'connection_refused' })
+		// *Révisé par `CRM-158` (§34.7, décision 51), non relâché* : la boucle d'envoi a pu faire cette tentative avant la
+		// passe, qui reste un accélérateur ; la tentative se lit sur SA ligne. Son échéance est ensuite reportée de dix
+		// minutes par la clé de service : la boucle la rejouerait sinon une minute plus tard, pendant la prise de l'image.
+		passeDEnvoi()
+		const relu = await attendreLeSort(request, id, { etats: ['queued'], condition: (ligne) => ligne.attempts >= 1 })
+		expect({ status: relu.status, attempts: relu.attempts, last_error: relu.last_error }).toEqual({
+			status: 'queued',
+			attempts: 1,
+			last_error: 'connection_refused',
+		})
+		await request.patch(rest(`mail_outbox?id=eq.${id}`), {
+			headers: { ...enTetesService(), Prefer: 'return=minimal' },
+			data: { next_attempt_at: new Date(Date.now() + 10 * 60_000).toISOString() },
+		})
 		await connecterAvecLeLabs(page, ADMIN)
 		await page.goto('/inbox?courrier=tous&envois=echecs')
 		const echec = page.getByTestId('inbox-envoi').filter({ hasText: "Facture d'acompte — monitoring" })

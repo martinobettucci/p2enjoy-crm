@@ -1,3 +1,5 @@
+// @verifies CRM-158 (docs/BACKLOG.md) — la boucle d'envoi retenue pendant ces preuves, qui ne veulent aucun départ
+//           (docs/SPEC-mail-subsystem.md §34.7 bis ; décision 954)
 // @verifies CRM-128 (docs/BACKLOG.md) — tranches T2 et T4 : les mails préparés par requête directe, sous les vrais jetons
 //           de session — préparer, lire (la personne seule), mettre en file le contenu relu, écarter ; les refus de
 //           l'autre personne (404), de la lectrice (`forbidden`) et d'un mail qui n'est plus en attente
@@ -9,6 +11,12 @@
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { libererLaBoucle, retenirLaBoucle } from '../sort-envoi'
+
+// `CRM-158` (docs/SPEC-mail-subsystem.md §34.7 bis) : ces preuves mettent en file des envois dus SANS vouloir qu'ils
+// partent ; la boucle d'envoi est retenue le temps du fichier, renouvelée avant chaque preuve, levée à la fin.
+test.beforeEach(() => retenirLaBoucle())
+test.afterAll(() => libererLaBoucle())
 
 const ADMIN = 'admin@p2enjoy.test'
 const BIZDEV = 'bizdev@p2enjoy.test'

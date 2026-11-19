@@ -1,3 +1,5 @@
+// @verifies CRM-158 (docs/BACKLOG.md) — la boucle d'envoi retenue pendant ces preuves, qui ne veulent aucun départ
+//           (docs/SPEC-mail-subsystem.md §34.7 bis ; décision 954)
 // @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : copie cachée et pièces jointes à l'envoi, contrat d'API hors interface
 // @verifies docs/SPEC-mail-subsystem.md §19 bis.2 (Cci dans la file, pièces prises sur l'ordinateur, 10 fichiers et
 //           10 Mo, bucket privé vérifié en base), §19 bis.3 (les trois refus, taille et type lus dans `storage.objects`,
@@ -12,6 +14,12 @@
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { CLE_ANONYME, URL_API, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { libererLaBoucle, retenirLaBoucle } from '../sort-envoi'
+
+// `CRM-158` (docs/SPEC-mail-subsystem.md §34.7 bis) : ces preuves mettent en file des envois dus SANS vouloir qu'ils
+// partent ; la boucle d'envoi est retenue le temps du fichier, renouvelée avant chaque preuve, levée à la fin.
+test.beforeEach(() => retenirLaBoucle())
+test.afterAll(() => libererLaBoucle())
 
 const CARD = '5eed0000-0000-4000-8000-0000000000c1'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'

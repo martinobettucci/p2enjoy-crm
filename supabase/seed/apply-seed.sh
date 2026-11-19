@@ -3235,7 +3235,15 @@ try:
 except urllib.error.HTTPError as e:
     print(e.read().decode(), end="")
 ' 2>/dev/null)
-	[ "$(echo "$passe" | jq -r '.sent // 0')" -ge 1 ] || die "le worker n'a pas soumis l'envoi de démonstration : $passe"
+	# `CRM-158` (docs/SPEC-mail-subsystem.md §34.7, SPEC-seed §42 révisé) : la boucle d'envoi a pu le soumettre avant cette
+	# passe, qui reste un accélérateur ; le seed attend SA ligne `sent` (soixante secondes au plus), jamais les compteurs.
+	for _ in $(seq 1 60); do
+		etat_envoi_seed=$(curl -s "$API/rest/v1/mail_outbox?select=status&card_id=eq.$CARD_ENVOI_SEED&subject=eq.$(jq -rn --arg s "$OBJET_ENVOI_SEED" '$s|@uri')" \
+			-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].status // empty')
+		[ "$etat_envoi_seed" = sent ] && break
+		sleep 1
+	done
+	[ "$etat_envoi_seed" = sent ] || die "le worker n'a pas soumis l'envoi de démonstration (« $etat_envoi_seed ») : $passe"
 fi
 archive_envoi=$(curl -s "$API/rest/v1/mail_messages?select=bcc_addresses,mail_attachments(filename)&direction=eq.outbound&card_id=eq.$CARD_ENVOI_SEED&subject=eq.$(jq -rn --arg s "$OBJET_ENVOI_SEED" '$s|@uri')" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY")
@@ -3307,6 +3315,15 @@ except urllib.error.HTTPError as e:
     print(e.read().decode(), end="")
 ' 2>/dev/null)
 	info "Outbox : passe du worker — $passe"
+fi
+# `CRM-158` (§34.7) : la boucle d'envoi a pu traiter les deux envois avant la passe du seed — ou les tenir `sending` à cet
+# instant. Le seed attend que chacun porte son motif (soixante secondes au plus) avant de constater.
+if [ "$OUTBOX_CREEE" = true ]; then
+	for _ in $(seq 1 60); do
+		etat_file=$(envoi_outbox "$OBJET_OUTBOX_FILE" | jq -r '.[0] | "\(.status):\(.last_error)"')
+		etat_echec=$(envoi_outbox "$OBJET_OUTBOX_ECHEC" | jq -r '.[0] | "\(.status):\(.last_error)"')
+		case "$etat_file:$etat_echec" in *:null:* | *:null) sleep 1 ;; *) break ;; esac
+	done
 fi
 # LE SEED CONSTATE les trois états QU'IL VIENT DE CRÉER. Au rejeu, les envois sont ceux d'une démonstration vivante : les
 # passes du worker ont pu rejouer l'envoi en file jusqu'à l'échec (cinq essais, §42), une personne a pu l'annuler ou

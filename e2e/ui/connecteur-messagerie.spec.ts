@@ -1,3 +1,5 @@
+// @verifies CRM-158 (docs/BACKLOG.md) — le départ lu sur la ligne de l'envoi, la boucle d'envoi active
+//           (docs/SPEC-mail-subsystem.md §34.7 ; décision 954)
 // @verifies CRM-104 (docs/BACKLOG.md) — tranche T7 : l'effet des outils de la famille `messagerie`, constaté dans la webapp
 // @verifies docs/SPEC-mcp.md §9.2 decies (« un email envoyé par le connecteur paraît dans le fil de l'affaire » :
 //           crm_card_mail_list puis crm_mail_send, par la file de l'écran) ; docs/SPEC-mail-subsystem.md §5 (le worker
@@ -27,6 +29,7 @@ import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
 import { lireEnv } from '../env'
 import { RETOUR_CLIENT, SessionMcp, echangerCode, preparerAutorisation } from '../mcp/client'
 import { instantaneDesBoites, rendreLesBoites, type Boite } from '../mail/menage'
+import { attendreLeSort } from '../sort-envoi'
 
 const UNITE = 'CRM-104'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
@@ -157,8 +160,10 @@ test('un email préparé par le connecteur, relu et mis en file dans le CRM, par
 		idEnvoi = prepare?.outbox_id
 
 		// LE WORKER SOUMET RÉELLEMENT : la ligne passe à `sent` et le message sortant est inscrit au fil.
-		const passe = viderLaFile()
-		expect(passe['sent'], `passe = ${JSON.stringify(passe)}`).toBeGreaterThanOrEqual(1)
+		// *Révisé par `CRM-158` (§34.7, décision 51), non relâché* : la boucle d'envoi a pu le prendre avant cette passe, qui
+		// reste un accélérateur ; le départ se lit sur SA ligne.
+		viderLaFile()
+		await attendreLeSort(request, idEnvoi!)
 		const [ligne] = (await (await request.get(rest(`mail_outbox?select=status,created_by&id=eq.${idEnvoi}`), { headers: enTetesService() })).json()) as { status: string; created_by: string }[]
 		expect(ligne).toEqual({ status: 'sent', created_by: ADMIN.sub })
 

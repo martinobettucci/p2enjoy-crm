@@ -1,3 +1,5 @@
+// @verifies CRM-158 (docs/BACKLOG.md) — la coupure et l'orphelin prouvés la boucle d'envoi active : le sort lu sur la ligne
+//           (docs/SPEC-mail-subsystem.md §34.7 ; décision 954)
 // @verifies CRM-144 (docs/BACKLOG.md) — tranche T5 : l'identité de Camille lue par défaut, le seed en portant trois
 //           (docs/SPEC-seed.md §42 ; décision 913)
 // @verifies CRM-059 (docs/BACKLOG.md) — « coupure SMTP simulée sans perte de message »
@@ -25,6 +27,7 @@ import { expect, test } from '@playwright/test'
 import { lireEnv, urlApi } from '../env'
 import { enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { instantaneDesBoites, rendreLesBoites, type Boite } from './menage'
+import { attendreLeSort } from '../sort-envoi'
 
 const CONTENEUR = conteneur('mail-sync')
 const IMAGE = 'python:3.13.13-slim-bookworm'
@@ -113,6 +116,18 @@ test.describe('résilience de l’envoi — une coupure ne perd rien', () => {
 			identite = service!.id
 			portOrigine = service!.smtp_port
 
+			// --- LA COUPURE ---------------------------------------------------------------------
+			// *Révisé par `CRM-158` (§34.7)* : la coupure est posée AVANT la mise en file — la boucle d'envoi, active, aurait
+			// pu soumettre le message entre les deux, au serveur encore joignable.
+			const coupure = await request.patch(
+				`${URL_API}/rest/v1/mail_outbound_identities?id=eq.${identite}`,
+				{
+					headers: { ...enTetesService(), Prefer: 'return=minimal' },
+					data: { smtp_port: PORT_FERME },
+				},
+			)
+			expect([200, 204]).toContain(coupure.status())
+
 			const miseEnFile = await request.post(`${URL_API}/rest/v1/rpc/queue_outbound_email`, {
 				headers: {
 					...enTetesAuthentifies(await jetonDe('admin@p2enjoy.test')),
@@ -129,42 +144,19 @@ test.describe('résilience de l’envoi — une coupure ne perd rien', () => {
 			expect(miseEnFile.status(), await miseEnFile.text()).toBe(200)
 			file = (await miseEnFile.json()) as string
 
-			// --- LA COUPURE ---------------------------------------------------------------------
-			const coupure = await request.patch(
-				`${URL_API}/rest/v1/mail_outbound_identities?id=eq.${identite}`,
-				{
-					headers: { ...enTetesService(), Prefer: 'return=minimal' },
-					data: { smtp_port: PORT_FERME },
-				},
-			)
-			expect([200, 204]).toContain(coupure.status())
-
 			// RÉVISÉ PAR `CRM-144` T5 (décision 913), non relâché : la passe peut porter AUSSI l'envoi de démonstration du seed,
-			// rejoué par le worker sur sa propre panne (docs/SPEC-seed.md §42). Ses compteurs disent donc « au moins » ; ce que
-			// la preuve exige de SON envoi — reprogrammé, compté, nommé, jamais en échec — est lu sur sa ligne juste après.
-			const passeEnPanne = viderLaFile()
-			expect(
-				passeEnPanne['rescheduled'],
-				`la passe en panne a rendu ${JSON.stringify(passeEnPanne)}`,
-			).toBeGreaterThanOrEqual(1)
-			expect(passeEnPanne['sent']).toBe(0)
-
-			const apresPanne = await request.get(
-				`${URL_API}/rest/v1/mail_outbox?select=status,attempts,last_error,next_attempt_at&id=eq.${file}`,
-				{ headers: enTetesService() },
-			)
-			const [enAttente] = (await apresPanne.json()) as {
-				status: string
-				attempts: number
-				last_error: string
-				next_attempt_at: string
-			}[]
+			// rejoué par le worker sur sa propre panne (docs/SPEC-seed.md §42). Ce que la preuve exige de SON envoi —
+			// reprogrammé, compté, nommé, jamais en échec — est lu sur sa ligne.
+			// *Révisé par `CRM-158` (§34.7, décision 51), non relâché* : la boucle d'envoi a pu faire cette tentative avant la
+			// passe, qui reste un accélérateur ; la preuve attend que SA ligne porte la tentative ratée.
+			viderLaFile()
+			const enAttente = await attendreLeSort(request, file, { etats: ['queued', 'failed'], condition: (ligne) => ligne.attempts >= 1 })
 			// LE MESSAGE N'EST NI PARTI, NI PERDU : il attend, sa tentative est comptée, et sa
 			// cause est nommée par un CODE.
 			expect(enAttente?.status).toBe('queued')
 			expect(enAttente?.attempts).toBe(1)
 			expect(enAttente?.last_error).toBe('connection_refused')
-			expect(new Date(enAttente!.next_attempt_at).getTime()).toBeGreaterThan(Date.now())
+			expect(new Date(enAttente.next_attempt_at!).getTime()).toBeGreaterThan(Date.now())
 
 			// --- LE RETOUR ----------------------------------------------------------------------
 			await request.patch(`${URL_API}/rest/v1/mail_outbound_identities?id=eq.${identite}`, {
@@ -179,18 +171,9 @@ test.describe('résilience de l’envoi — une coupure ne perd rien', () => {
 				data: { next_attempt_at: new Date(Date.now() - 1000).toISOString() },
 			})
 
-			const passeRetablie = viderLaFile()
-			// RÉVISÉ PAR `CRM-144` T5 (même motif) : au moins un envoi part, et la ligne dit que c'est le sien.
-			expect(
-				passeRetablie['sent'],
-				`la passe rétablie a rendu ${JSON.stringify(passeRetablie)}`,
-			).toBeGreaterThanOrEqual(1)
-
-			const apresRetour = await request.get(
-				`${URL_API}/rest/v1/mail_outbox?select=status,attempts&id=eq.${file}`,
-				{ headers: enTetesService() },
-			)
-			const [parti] = (await apresRetour.json()) as { status: string; attempts: number }[]
+			// RÉVISÉ PAR `CRM-144` T5 puis par `CRM-158` (§34.7) : la ligne dit que le sien est parti, quelle que soit la passe.
+			viderLaFile()
+			const parti = await attendreLeSort(request, file)
 			expect(parti?.status).toBe('sent')
 			// LA TENTATIVE PERDUE RESTE COMPTÉE : l'exploitant doit pouvoir lire qu'un envoi a
 			// d'abord échoué, même s'il a fini par partir.
@@ -245,8 +228,8 @@ test.describe('résilience de l’envoi — une coupure ne perd rien', () => {
 			// LA MORT DU WORKER EST SIMULÉE PAR SON EFFET, qui est le seul fait observable : une
 			// ligne restée `sending`, vieille de plus que le seuil. Tuer réellement un conteneur
 			// au bon millième de seconde ne prouverait rien de plus, et rien de reproductible.
-			const abandon = await request.patch(`${URL_API}/rest/v1/mail_outbox?id=eq.${file}`, {
-				headers: { ...enTetesService(), Prefer: 'return=minimal' },
+			const abandon = await request.patch(`${URL_API}/rest/v1/mail_outbox?id=eq.${file}&status=eq.queued`, {
+				headers: { ...enTetesService(), Prefer: 'return=representation' },
 				// `reserved_at`, ET NON `updated_at` : le trigger de la table remet la seconde à
 				// `now()` à chaque écriture, si bien que vieillir la ligne la rajeunissait —
 				// mesuré en écrivant cette preuve, et corrigé par une colonne dédiée (§20.4).
@@ -256,18 +239,15 @@ test.describe('résilience de l’envoi — une coupure ne perd rien', () => {
 				},
 			})
 			expect([200, 204]).toContain(abandon.status())
+			// *Révisé par `CRM-158` (§34.7)* : l'abandon ne vise qu'une ligne ENCORE en file — `status=eq.queued` ci-dessus.
+			// Si la boucle d'envoi l'avait déjà soumise, rien n'est vieilli, et la preuve le dit au lieu de prouver à faux.
+			expect(((await abandon.json()) as unknown[]).length, 'la boucle a envoyé le message avant son abandon simulé').toBe(1)
 
-			const passe = viderLaFile()
-			expect(passe['orphans'], `la passe a rendu ${JSON.stringify(passe)}`).toBeGreaterThanOrEqual(1)
-
-			// REPRIS ET PARTI DANS LA MÊME PASSE : l'orphelin est remis en file avant la
-			// réservation, sans quoi il aurait attendu la suivante.
-			const apres = await request.get(
-				`${URL_API}/rest/v1/mail_outbox?select=status&id=eq.${file}`,
-				{ headers: enTetesService() },
-			)
-			const [reprise] = (await apres.json()) as { status: string }[]
-			expect(reprise?.status).toBe('sent')
+			// REPRIS ET PARTI : l'orphelin est remis en file, sa tentative COMPTÉE (§20.4), puis soumis — par cette passe ou
+			// par la boucle (*révisé par `CRM-158`*, décision 51) ; l'essai compté prouve qu'il est passé par la reprise.
+			viderLaFile()
+			const reprise = await attendreLeSort(request, file, { condition: (ligne) => ligne.attempts >= 1 })
+			expect(reprise.status).toBe('sent')
 		} finally {
 			if (file !== undefined) {
 				await request.delete(`${URL_API}/rest/v1/mail_outbox?id=eq.${file}`, {

@@ -1,3 +1,5 @@
+# @spec CRM-158 (docs/BACKLOG.md) — démarrage et arrêt de la boucle d'envoi (docs/SPEC-mail-subsystem.md §34.2, §34.3 ;
+#       décision 954), démarrée ici pour la même raison que la veille.
 # @spec CRM-138 (docs/BACKLOG.md) — tranche T2 : démarrage et arrêt des passes de la corbeille (docs/SPEC-mail-subsystem.md §29.5, §29.6)
 # @spec CRM-051 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §12.1, §12.2 et §12.5 — point
 # d'entrée unique du conteneur ; la portée couvre le chargement, les logs et l'écoute Uvicorn.
@@ -29,6 +31,7 @@ from mail_sync.structured_logging import configure_logging, log_event
 from mail_sync.veille import CompteAVeiller, PiloteVeille
 from mail_sync.reprise import PiloteReprise
 from mail_sync.corbeille import PiloteCorbeille, executer_passes
+from mail_sync.envoi import PiloteEnvoi, RetenueEnvoi, executer_passe, lire_retard
 
 
 # `sysexits.h` : une configuration refusée n'est pas un plantage, c'est un contrat non tenu.
@@ -153,7 +156,9 @@ def main() -> int:
         return EXIT_CONFIGURATION
 
     logger = configure_logging(settings.MAIL_SYNC_LOG_LEVEL)
-    application = create_app(settings, logger=logger)
+    # `CRM-158` §34.7 bis : une seule retenue, partagée par la route de développement et la boucle d'envoi.
+    retenue_envoi = RetenueEnvoi()
+    application = create_app(settings, logger=logger, retenue=retenue_envoi)
 
     pilote = PiloteVeille(
         intervalle=settings.MAIL_SYNC_POLL_INTERVAL,
@@ -173,6 +178,14 @@ def main() -> int:
     deplacements, purge = executer_passes(settings, logger)
     corbeille = PiloteCorbeille(deplacer=deplacements, purger=purge, logger=logger)
     corbeille.demarrer()
+    # `CRM-158` (§34) : la file d'envoi, toutes les trente secondes — la même passe que la route `outbox/flush`.
+    envoi = PiloteEnvoi(
+        executer=lambda: executer_passe(settings, logger),
+        mesurer=lire_retard(settings),
+        logger=logger,
+        retenue=retenue_envoi,
+    )
+    envoi.demarrer()
     try:
         uvicorn.run(
             application,
@@ -190,6 +203,7 @@ def main() -> int:
         extraction.arreter()
         reprise.arreter()
         corbeille.arreter()
+        envoi.arreter()
     return 0
 
 
