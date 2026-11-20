@@ -41242,3 +41242,17 @@ la passerelle. Lecture seule de bout en bout : base de la passerelle ouverte en 
 passerelle ; le saisir dans la console du Spark (`OLLAMA_API_KEY`) et dans le `.env` du poste ; puis, sur instruction, la
 session de livraison recrée `functions` et constate `GET /functions/v1/ia/etat` → `disponible` ; la passe rattrape seule les
 mails `pending`. Aucun secret ne transite par le dépôt ni par un message.
+
+**Suite, le même jour, sur instruction du responsable** (« génère une nouvelle clef et la mettre ici en dev ET la suggérer
+dans le Spark de la prod ») :
+- la base de la passerelle sauvegardée avant tout (`gateway.pre-reissue-crm-20261120.db`, 9 clés relues), puis le secret de
+  « internal-crm » **réémis** par la fonction de la passerelle elle-même (`reissue_key`) : origines, modèles, API et
+  historique inchangés ; l'ancien secret, déjà mort, invalidé ;
+- le secret n'a transité que par un fichier `600` du poste, effacé ensuite ; jamais affiché ni committé ;
+- **développement** : `OLLAMA_API_KEY` remplacée dans `.env` (ignoré par git), `functions` recréé ; `/api/tags` rend `200`
+  et sert `gemma4:e2b` ;
+- **production** : la clé **proposée** dans `/run/spark/secrets.?`, sous la marque, avec son étiquette ; rien n'est appliqué.
+  Empreinte relue égale à celle de la passerelle. Le fichier vit en tmpfs : un redémarrage de la cellule la perd, à
+  redéposer alors ;
+- **reste** : le propriétaire importe la proposition en console ; puis, sur instruction, la session de livraison recrée
+  `functions` et constate `GET /functions/v1/ia/etat` → `disponible` et la reprise de la passe des pastilles.
