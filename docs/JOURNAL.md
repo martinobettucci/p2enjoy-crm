@@ -41280,5 +41280,5 @@ rapides — par un drapeau porté par chaque pastille, « au lieu de hardcoder �
 - **une mention discrète** des fils masqués sous la liste, dont le clic active la pastille ; écarté : aucun signal ;
 - **connecteur MCP** — question 1 : **oui, en lecture** (la liste des mails masque de même ; la liste des pastilles rend le
   drapeau ; aucun réglage par le connecteur) ; écartés : lecture et réglage ; non. Question 2 : **famille existante
-  `messagerie`**, action `consulter** ; écartée : une famille nouvelle.
+  `messagerie`**, action `consulter` ; écartée : une famille nouvelle.
 **Conséquences** : unité `CRM-159`, à prendre par une session de développement ; la spécification s'écrit avant le code.
