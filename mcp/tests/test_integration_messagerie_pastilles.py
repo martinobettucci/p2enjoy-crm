@@ -9,6 +9,9 @@
 #           pastilles, en OU, chaque message une fois, la retirée à la main qui ne retient rien, les pastilles de chaque
 #           message rendues, l'identifiant mal formé refusé et journalisé `refus_crm` (docs/SPEC-mcp.md §9.2 duovicies,
 #           révisé ; docs/SPEC-mail-subsystem.md §31.12.5)
+# @verifies CRM-159 (docs/BACKLOG.md) — tranche T3 : contre la vraie base, `crm_mail_label_list` rend Spam cachée, `crm_search`
+#           ne rend pas le mail masqué et le compte dans `hidden_mails`, `crm_card_mail_list` le garde (docs/SPEC-mcp.md §9.2
+#           duovicies, révisé ; docs/SPEC-mail-subsystem.md §31.13.7 ; décision 958)
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
 La preuve pose ses propres messages sous la clé de service — l'un dans c1, que Driss écrit, l'autre dans c7, que la
@@ -199,3 +202,40 @@ async def test_crm_155_la_liste_filtre_par_pastilles_en_ou_et_rend_les_pastilles
         await _retirer(DRISS, posees)
         await _nettoyer()
 
+
+async def test_crm159_spam_cachee_la_recherche_le_tait_et_le_compte_la_liste_de_l_affaire_le_garde():
+    await _nettoyer()
+    mot = "zelvor" + uuid.uuid4().hex[:6].translate(str.maketrans("0123456789", "ghijklmnop"))
+    service = {"apikey": CLE_SERVICE, "Authorization": f"Bearer {CLE_SERVICE}", "Prefer": "return=representation"}
+    async with httpx2.AsyncClient(timeout=10) as http:
+        pose = await http.post(f"{API}/rest/v1/mail_messages", headers=service, json={
+            "workspace_id": ESPACE, "rfc822_message_id": f"<{MARQUE}-{uuid.uuid4()}@exemple.test>", "card_id": CARD_C1,
+            "classification": "manual", "direction": "inbound", "from_address": "client@exemple.test",
+            "subject": f"Preuve connecteur {mot}", "body_text": "Bonjour."})
+        assert pose.status_code == 201, pose.text
+        message = pose.json()[0]["id"]
+    spam, lead = await _pastille("Spam"), await _pastille("Lead")
+    posees = await _manquantes(DRISS, CASES)
+    await _poser(DRISS, posees)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_visible(client, "crm_mail_label_set")
+            liste = (await client.call_tool("crm_mail_label_list", {"workspace": ESPACE})).structured_content
+            drapeaux = {p["id"]: p["hidden"] for p in liste["labels"]}
+            assert drapeaux[spam] is True and drapeaux[lead] is False, "Spam cachée d'office par la migration 0193"
+
+            avant = (await client.call_tool("crm_search", {"query": mot})).structured_content
+            assert [r["id"] for r in avant["results"]] == [message]
+            assert "hidden_mails" not in avant
+
+            await client.call_tool("crm_mail_label_set", {"message_id": message, "label_id": spam})
+            apres = (await client.call_tool("crm_search", {"query": mot})).structured_content
+            assert apres["results"] == []
+            assert apres["hidden_mails"] == [{"label_id": spam, "label_name": "Spam", "count": 1}]
+
+            # La liste d'une affaire ne masque rien, comme l'onglet Mails de la fiche (décision 958).
+            fil = (await client.call_tool("crm_card_mail_list", {"card_id": CARD_C1, "limit": 100})).structured_content
+            assert message in [m["id"] for m in fil["messages"]]
+    finally:
+        await _retirer(DRISS, posees)
+        await _nettoyer()

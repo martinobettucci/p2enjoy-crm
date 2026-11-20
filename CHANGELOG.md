@@ -24,6 +24,9 @@ d'exécuter le code attendu.
   pastille cachée porte l'icône `EyeOff` et le dit dans son nom accessible. Réglages ▸ Pastilles des mails : la case
   « Cacher ses mails dans l'inbox » et la mention « Cachée ». La palette de recherche dit « N mails masqués (Spam) » et
   mène à l'inbox, la pastille activée.
+- **CRM-159 T3 — le connecteur.** `crm_mail_label_list` rend `hidden` pour chaque pastille ; `crm_search` écarte les mails
+  des fils masqués et rend `hidden_mails`, leur compte par pastille, là où la matrice ouvre la messagerie.
+  `crm_card_mail_list` ne change pas, et aucun outil n'écrit le drapeau.
 
 ## [Publié]
 

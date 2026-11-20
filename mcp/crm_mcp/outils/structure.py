@@ -12,6 +12,9 @@
 #       décisions 871 et 919)
 # @spec CRM-150 (docs/BACKLOG.md) — tranche T1 : les refus que l'outil fait lui-même sont des `RefusArgument`, journalisés
 #       `refus_crm` (docs/SPEC-mcp.md §9.3, décision 933)
+# @spec CRM-159 (docs/BACKLOG.md) — tranche T3 : `crm_search` rend `hidden_mails`, les mails que le masquage a écartés par
+#       pastille cachée, restreints aux espaces où la matrice ouvre `consulter` sur `messagerie` — docs/SPEC-mcp.md §9.2
+#       duovicies (révisé) ; docs/SPEC-mail-subsystem.md §31.13.6, §31.13.7 ; décision 958
 """Tracks, channels et workflows, et la recherche globale, sous l'identité de la personne.
 
 Les écritures sont celles de l'arborescence de la webapp ; la base les réserve à qui administre l'espace. La recherche
@@ -134,7 +137,24 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
                     "kind": ligne["objet"], "id": ligne["id"], "workspace_id": espace, "title": ligne.get("titre"),
                     "subtitle": ligne.get("sous_titre"), "excerpt": ligne.get("extrait"),
                 })
-        return {"query": query, "results": resultats}
+        resultat: dict[str, Any] = {"query": query, "results": resultats}
+        # `CRM-159` (§31.13.6) : les mails masqués par une pastille cachée, par pastille, là où la matrice ouvre la
+        # messagerie — la règle de ses lignes `message`. Un compte illisible ne fait pas échouer la recherche.
+        masques = await crm.rpc(appel.jeton, "search_hidden_mail_counts", {"p_terme": query}, idempotent=True)
+        if masques.reussie and isinstance(masques.corps, list):
+            caches = []
+            for ligne in masques.corps:
+                espace = ligne.get("workspace_id")
+                if not isinstance(espace, str) or not ligne.get("mail_count"):
+                    continue
+                cle = (espace, "messagerie")
+                if cle not in ouvertes:
+                    ouvertes[cle] = await moteur.autorise(appel.jeton, espace, "messagerie", "consulter")
+                if ouvertes[cle]:
+                    caches.append({"label_id": ligne.get("label_id"), "label_name": ligne.get("label_name"), "count": ligne["mail_count"]})
+            if caches:
+                resultat["hidden_mails"] = caches
+        return resultat
 
     moteur.enregistrer(
         serveur,
@@ -143,7 +163,9 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         titre="Search the CRM (recherche)",
         description=(
             "Searches affaires, contacts, organisations, comments and messages, as the web app's search box. A result is "
-            "returned only where the connector may read its family (affaires, contacts, messagerie) in its workspace."
+            "returned only where the connector may read its family (affaires, contacts, messagerie) in its workspace. "
+            "Emails whose thread carries a hidden label (Spam by default) are left out, as in the web app; hidden_mails "
+            "counts them by label, where the connector may read the messagerie."
         ),
     )
 

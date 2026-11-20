@@ -20391,7 +20391,8 @@ corbeille de l'inbox, le message ouvert et les notifications ne masquent pas (§
 - [x] **T2** — l'écran : la lecture par `inbox_messages`, la mention, la bascule cachée, la case des réglages, la palette ;
   unitaires, E2E, captures ; *faite le 2026-11-20* (E2E `pastilles-cachees` 5/5 ; `filtres-rapides-pastilles`, UI et API, et
   `pastilles-inbox` API révisées) ;
-- [ ] **T3** — le connecteur : `hidden`, `hidden_mails` ; pytest, intégration, `verify-mcp.sh` ;
+- [x] **T3** — le connecteur : `hidden`, `hidden_mails` ; pytest, intégration, `verify-mcp.sh` ; *faite le 2026-11-20*
+  (pytest 436, `verify-mcp.sh` 126 contrôles) ;
 - [ ] **T4** — le seed §52, le manuel §12.2 et §12.6, le contrat ; l'unité passe `[P]`.
 
 ### CRM-160 — « Seulement moi » cache les réponses reçues à l'adresse d'une affaire : elles concernent qui a écrit dans le fil et le responsable de l'affaire `[@]`

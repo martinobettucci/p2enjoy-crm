@@ -5,6 +5,8 @@
 #           retrait par `set_message_label`, les refus nommés, et la matrice qui ferme sans la case `modifier`
 # @verifies docs/SPEC-mcp.md §9.2 duovicies, §6.2 (tout identifiant est une ancre), §9.3 ; docs/SPEC-mail-subsystem.md
 #           §31.4 ; docs/JOURNAL.md décision 924 (l'assistant juge seul ; aucun outil ne sollicite le LLM du CRM)
+# @verifies CRM-159 (docs/BACKLOG.md) — tranche T3 : `crm_mail_label_list` rend `hidden` ; aucun outil ne prend le drapeau
+#           en argument (docs/SPEC-mcp.md §9.2 duovicies, révisé ; docs/SPEC-mail-subsystem.md §31.13.7)
 """Le CRM simulé de `test_messagerie.py`, augmenté de `set_message_label` ; la vraie base est éprouvée par
 `tests/test_integration_messagerie_pastilles.py`."""
 
@@ -96,12 +98,22 @@ async def test_les_declarations(monde: MondePastilles) -> None:
 
 async def test_la_liste_rend_le_descriptif_et_les_archivees_en_dernier(monde: MondePastilles) -> None:
     lu = await monde.appel("crm_mail_label_list", {"workspace": ESPACE_A})
+    # `CRM-159` (§31.13.7) : chaque pastille rend `hidden` ; une valeur absente n'est jamais « cachée ».
     assert lu["labels"] == [
-        {"id": PASTILLE_DEVIS, "name": "devis", "color": "brand", "description": "Une demande de devis.", "archived": False},
-        {"id": PASTILLE_LEAD, "name": "Lead", "color": "success", "description": "Un prospect.", "archived": False},
+        {"id": PASTILLE_DEVIS, "name": "devis", "color": "brand", "description": "Une demande de devis.", "archived": False,
+         "hidden": False},
+        {"id": PASTILLE_LEAD, "name": "Lead", "color": "success", "description": "Un prospect.", "archived": False,
+         "hidden": False},
         {"id": PASTILLE_NEWS, "name": "Newsletter", "color": "neutral", "description": "Une lettre d'information.",
-         "archived": True},
+         "archived": True, "hidden": True},
     ]
+
+
+async def test_crm159_la_liste_demande_le_drapeau_et_aucun_outil_ne_l_ecrit(monde: MondePastilles) -> None:
+    assert messagerie_pastilles.COLONNES_PASTILLE.split(",")[-1] == "hidden"
+    outils = await monde.outils()
+    for nom, outil in outils.items():
+        assert "hidden" not in (outil.inputSchema or {}).get("properties", {}), nom
 
 
 async def test_crm_mail_get_rend_les_pastilles_posees_et_l_etat(monde: MondePastilles) -> None:

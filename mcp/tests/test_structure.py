@@ -11,6 +11,9 @@
 # @verifies CRM-134 (docs/BACKLOG.md) tranche T2 — `crm_channel_archive` : la déclaration (`supprimer`, ancre `channel`,
 #           avec `destructiveHint`, §9.1), l'écriture d'`archived_at` dans les deux sens, l'état déjà atteint non réécrit, zéro ligne
 #           traduite en refus réservé aux administrateurs (docs/SPEC-mcp.md §9.2 unvicies ; docs/SPEC-channels.md §11)
+# @verifies CRM-159 (docs/BACKLOG.md) — tranche T3 : `crm_search` rend `hidden_mails` là où la matrice ouvre la messagerie,
+#           le tait sinon, et une panne du compte ne fait pas échouer la recherche (docs/SPEC-mcp.md §9.2 duovicies, révisé ;
+#           docs/SPEC-mail-subsystem.md §31.13.6, §31.13.7)
 """Le CRM simulé rend l'arborescence d'un espace et une recherche qui mêle trois familles ; la RLS y est réduite à
 « l'espace est lisible ». La vraie base est éprouvée par `tests/test_integration_structure.py`."""
 
@@ -54,6 +57,8 @@ class CrmStructure(CrmSimule):
         self.ecritures: list[dict[str, Any]] = []
         self.lectures: list[tuple[str, dict[str, str]]] = []
         self.forcee: tuple[int, Any] | None = None
+        # `CRM-159` : le compte des mails masqués rend une panne quand la preuve le demande.
+        self.masques_en_panne = False
         # `CRM-134` : l'archivage du channel simulé, pour l'état déjà atteint.
         self.archive_channel: str | None = None
 
@@ -123,6 +128,14 @@ class CrmStructure(CrmSimule):
                 {"objet": "inconnu", "id": "z", "workspace_id": ESPACE_A, "titre": "?", "sous_titre": None,
                  "extrait": None, "rang": 0.1},
             ])
+        # `CRM-159` (§31.13.6) : les mails que le masquage a écartés, par pastille cachée.
+        if requete.path_params["fonction"] == "search_hidden_mail_counts":
+            if self.masques_en_panne:
+                return JSONResponse({"message": "boum"}, status_code=500)
+            return JSONResponse([
+                {"label_id": "p-spam", "workspace_id": ESPACE_A, "workspace_name": "A", "label_name": "Spam", "mail_count": 2},
+                {"label_id": "p-zero", "workspace_id": ESPACE_A, "workspace_name": "A", "label_name": "Zéro", "mail_count": 0},
+            ])
         return await self.rpc(requete)
 
     def application(self) -> Starlette:
@@ -183,6 +196,23 @@ async def test_les_douze_outils_et_leurs_annotations(monde: Monde) -> None:
     assert {n for n in OUTILS if outils[n].annotations.destructive_hint} == {
         "crm_track_trash", "crm_channel_trash", "crm_channel_archive",
     }
+
+
+async def test_crm159_la_recherche_rend_les_mails_masques_la_ou_la_messagerie_s_ouvre(monde: Monde) -> None:
+    monde.ouvrir(("affaires", "consulter"))
+    lu = await monde.appel("crm_search", {"query": "erp"})
+    assert "hidden_mails" not in lu, "sans la messagerie, rien n'est dit des mails"
+    monde.ouvrir(("messagerie", "consulter"))
+    lu = await monde.appel("crm_search", {"query": "erp"})
+    assert lu["hidden_mails"] == [{"label_id": "p-spam", "label_name": "Spam", "count": 2}]
+
+
+async def test_crm159_un_compte_illisible_ne_fait_pas_echouer_la_recherche(monde: Monde) -> None:
+    monde.ouvrir(("affaires", "consulter"), ("messagerie", "consulter"))
+    monde.simule.masques_en_panne = True
+    lu = await monde.appel("crm_search", {"query": "erp"})
+    assert [r["kind"] for r in lu["results"]] == ["affaire", "message"]
+    assert "hidden_mails" not in lu
 
 
 async def test_la_recherche_ne_rend_que_les_familles_que_la_matrice_ouvre(monde: Monde) -> None:

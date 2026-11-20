@@ -226,7 +226,9 @@ class CrmMessagerie(CrmSimule):
     def pastilles(self) -> list[dict[str, Any]]:
         return [
             {"id": PASTILLE_NEWS, "workspace_id": ESPACE_A, "name": "Newsletter", "color": "neutral",
-             "description": "Une lettre d'information.", "archived_at": "2026-11-11T09:00:00Z"},
+             "description": "Une lettre d'information.", "archived_at": "2026-11-11T09:00:00Z",
+             # `CRM-159` : une cachée, archivée — la liste des pastilles rend le drapeau.
+             "hidden": True},
             {"id": PASTILLE_LEAD, "workspace_id": ESPACE_A, "name": "Lead", "color": "success",
              "description": "Un prospect.", "archived_at": None},
             {"id": PASTILLE_DEVIS, "workspace_id": ESPACE_A, "name": "devis", "color": "brand",

@@ -7,6 +7,8 @@
 # @spec CRM-155 (docs/BACKLOG.md) — tranche T2 : le filtre `labels` de `crm_card_mail_list` (`pastilles_du_filtre`) et
 #       les pastilles de chaque message de la liste (`EMBARQUEMENT_PASTILLES`, `posees_lues`) — docs/SPEC-mcp.md §9.2
 #       duovicies (révisé) ; docs/SPEC-mail-subsystem.md §31.12.5 ; décisions 943 et 948
+# @spec CRM-159 (docs/BACKLOG.md) — tranche T3 : `crm_mail_label_list` rend le drapeau `hidden` ; aucun outil ne l'écrit —
+#       docs/SPEC-mcp.md §9.2 duovicies (révisé) ; docs/SPEC-mail-subsystem.md §31.13.7 ; décisions 957 et 958
 """Les pastilles d'un mail, sous l'identité de la personne.
 
 L'assistant connecté JUGE LUI-MÊME (décision 924) : il lit le mail et les pastilles de l'espace — leur descriptif est ce
@@ -40,7 +42,7 @@ REFUS_PASTILLE = {
     "label_not_found": "no such label in the workspace of this email; list them with crm_mail_label_list",
 }
 
-COLONNES_PASTILLE = "id,name,color,description,archived_at"
+COLONNES_PASTILLE = "id,name,color,description,archived_at,hidden"
 
 #: `CRM-155` : les pastilles d'un message, embarquées dans la lecture d'une liste — la forme que `posees_lues` lit.
 EMBARQUEMENT_PASTILLES = "pastilles:mail_message_labels(label_id,source,applied,pastille:mail_labels(name,archived_at))"
@@ -73,6 +75,8 @@ def pastille_lue(ligne: dict[str, Any]) -> dict[str, Any]:
         "color": ligne.get("color"),
         "description": ligne.get("description"),
         "archived": ligne.get("archived_at") is not None,
+        # `CRM-159` : vrai quand ses mails sont masqués dans l'inbox par défaut (§31.13.1) ; jamais vrai par défaut.
+        "hidden": ligne.get("hidden") is True,
     }
 
 
@@ -147,7 +151,9 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             "Lists the labels (pastilles) that can be put on the emails of a workspace: id, name, color, and the "
             "description — the text the CRM's own AI reads to decide whether an email carries the label; read it to decide "
             "the same way. Archived labels come last: they stay on the emails that carry them, but can no longer be put on "
-            "one. Read an email's labels with crm_mail_get; put or take one with crm_mail_label_set."
+            "one. hidden is true when the inbox hides the threads that carry the label (Spam by default) unless one selects "
+            "it; it is set in the web app's settings only. Read an email's labels with crm_mail_get; put or take one with "
+            "crm_mail_label_set."
         ),
     )
 
