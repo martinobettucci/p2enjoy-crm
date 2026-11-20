@@ -11,6 +11,8 @@
 //           tracks puis des channels, celui que le sous-titre nomme en tête (docs/SPEC-rattachements.md §9, décision 814)
 // @verifies CRM-112 T6 (docs/BACKLOG.md) — l'extrait d'une affaire trouvée par un champ de l'affaire est rendu tel que la
 //           base l'écrit (docs/SPEC-champs-communs.md §10 ; docs/SPEC-recherche.md §6.5 ; docs/DESIGN_SYSTEM.md §5.46)
+// @verifies CRM-159 (docs/BACKLOG.md) — tranche T2 : le compte des mails masqués part avec la recherche, ne la fait jamais
+//           échouer, et chaque pastille rend l'adresse qui l'active (docs/SPEC-mail-subsystem.md §31.13.6 ; décision 958)
 //
 // Ces tests portent sur la LOGIQUE, sans navigateur : c'est ce que la séparation du module rend
 // possible (§10.2). La pile réelle est éprouvée par `e2e/api/recherche-palette.spec.ts`, et la
@@ -22,6 +24,7 @@ import {
 	DELAI_FRAPPE_MS,
 	FAMILLES,
 	PARAMETRE_MESSAGE,
+	adresseFiltrePastille,
 	composerResultat,
 	creerSequenceur,
 	estFamilleConnue,
@@ -59,11 +62,22 @@ function clientDouble(options: {
 	readonly cards?: readonly unknown[]
 	readonly erreurCards?: boolean
 	readonly commentaires?: readonly unknown[]
+	/** `CRM-159` : les lignes de `search_hidden_mail_counts`, ou son refus. */
+	readonly masques?: readonly unknown[]
+	readonly erreurMasques?: boolean
 }) {
 	const appels: AppelEmis[] = []
 	const rpc: { nom?: string; arguments?: Record<string, unknown> } = {}
+	const masques: { arguments?: Record<string, unknown> } = {}
 	const client = {
 		rpc: (nom: string, args: Record<string, unknown>) => {
+			// `CRM-159` (§31.13.6) : le compte des mails masqués part avec la recherche ; il est tenu à part.
+			if (nom === 'search_hidden_mail_counts') {
+				masques.arguments = args
+				return options.erreurMasques === true
+					? Promise.resolve({ data: null, error: { message: 'boum' }, status: 500 })
+					: Promise.resolve({ data: options.masques ?? [], error: null, status: 200 })
+			}
 			rpc.nom = nom
 			rpc.arguments = args
 			if (options.erreurRpc !== undefined) {
@@ -90,7 +104,7 @@ function clientDouble(options: {
 			}),
 		}),
 	} as unknown as ClientCrm
-	return { client, appels, rpc }
+	return { client, appels, rpc, masques }
 }
 
 describe('l’appel à la RPC (§13.1, §14.2)', () => {
@@ -381,5 +395,33 @@ describe('LA GARDE D’ORDRE (§13.2), qui est la règle la plus importante du m
 		// une erreur ou simule un succès, celle-ci ne masque rien et n'affirme rien. Sa valeur est
 		// écrite dans la spécification, et cette assertion la tient.
 		expect(DELAI_FRAPPE_MS).toBe(200)
+	})
+})
+
+describe('CRM-159 — les mails masqués par une pastille cachée (docs/SPEC-mail-subsystem.md §31.13.6)', () => {
+	it('demande le compte avec le terme TEL QUEL, et rend chaque pastille avec l’adresse qui l’active', async () => {
+		const { client, masques } = clientDouble({
+			lignes: [],
+			masques: [
+				{ label_id: 'p-spam', workspace_id: 'ws-1', workspace_name: 'P2Enjoy', label_name: 'Spam', mail_count: 3 },
+				{ label_id: 'p-vide', workspace_id: 'ws-1', workspace_name: 'P2Enjoy', label_name: 'Vide', mail_count: 0 },
+			],
+		})
+		const etat = await rechercher(client, ' refonte ')
+		expect(masques.arguments).toEqual({ p_terme: ' refonte ' })
+		expect(etat.statut === 'pret' && etat.donnees.masques).toEqual([
+			{ idPastille: 'p-spam', nom: 'Spam', idEspace: 'ws-1', nomEspace: 'P2Enjoy', mails: 3, adresse: '/inbox?pastille=p-spam' },
+		])
+	})
+
+	it('un compte qui échoue ne fait pas échouer la recherche : aucune mention', async () => {
+		const { client } = clientDouble({ lignes: [], erreurMasques: true })
+		const etat = await rechercher(client, 'refonte')
+		expect(etat.statut).toBe('pret')
+		expect(etat.statut === 'pret' && etat.donnees.masques).toEqual([])
+	})
+
+	it('l’adresse active la pastille par la clé de l’inbox, échappée', () => {
+		expect(adresseFiltrePastille('a b')).toBe('/inbox?pastille=a%20b')
 	})
 })

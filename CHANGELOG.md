@@ -19,6 +19,11 @@ d'exécuter le code attendu.
   (`inbox_messages`), ses compteurs, la portée des actions groupées et la recherche globale que si l'une de ses pastilles
   cachées est activée dans les filtres ; une mention les compte (`inbox_hidden_counts`, `search_hidden_mail_counts`).
   La fiche d'une affaire, le message ouvert et la corbeille ne masquent rien.
+- **CRM-159 T2 — les pastilles cachées, à l'écran.** La liste de l'inbox est lue par la fonction de la base ; sous la
+  liste, « N fils masqués (Spam) » active la pastille d'un geste, et le focus passe à sa bascule. La bascule d'une
+  pastille cachée porte l'icône `EyeOff` et le dit dans son nom accessible. Réglages ▸ Pastilles des mails : la case
+  « Cacher ses mails dans l'inbox » et la mention « Cachée ». La palette de recherche dit « N mails masqués (Spam) » et
+  mène à l'inbox, la pastille activée.
 
 ## [Publié]
 

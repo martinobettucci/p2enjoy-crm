@@ -20388,8 +20388,9 @@ corbeille de l'inbox, le message ouvert et les notifications ne masquent pas (§
 **Tranches** (§31.13.10) :
 - [x] **T1** — migration `0193`, pgTAP, types, preuve d'API, SCHEMA, contrat ; *faite le 2026-11-20* (pgTAP `0180` 34
   assertions, `0177` révisée ; API `pastilles-cachees` 6/6 ; contrat §2.65) ;
-- [ ] **T2** — l'écran : la lecture par `inbox_messages`, la mention, la bascule cachée, la case des réglages, la palette ;
-  unitaires, E2E, captures ;
+- [x] **T2** — l'écran : la lecture par `inbox_messages`, la mention, la bascule cachée, la case des réglages, la palette ;
+  unitaires, E2E, captures ; *faite le 2026-11-20* (E2E `pastilles-cachees` 5/5 ; `filtres-rapides-pastilles`, UI et API, et
+  `pastilles-inbox` API révisées) ;
 - [ ] **T3** — le connecteur : `hidden`, `hidden_mails` ; pytest, intégration, `verify-mcp.sh` ;
 - [ ] **T4** — le seed §52, le manuel §12.2 et §12.6, le contrat ; l'unité passe `[P]`.
 

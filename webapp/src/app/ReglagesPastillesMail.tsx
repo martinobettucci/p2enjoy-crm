@@ -11,7 +11,10 @@
 // L'ÉCRAN EST LISIBLE PAR TOUT MEMBRE (§31.3) : on y lit ce que l'IA lit pour décider. Qui n'administre pas l'espace voit
 // les commandes, éteintes avec leur motif, jamais masquées (§5.59).
 
-import { Plus, TriangleAlert } from 'lucide-react'
+// @spec CRM-159 (docs/BACKLOG.md) — tranche T2 : la case « Cacher ses mails dans l'inbox » dans la fiche, et la mention
+//       « Cachée » d'une ligne — docs/SPEC-mail-subsystem.md §31.13.1 ; docs/DESIGN_SYSTEM.md §5.111 ; la base réserve le
+//       drapeau à qui administre (la politique `UPDATE` de `mail_labels`)
+import { EyeOff, Plus, TriangleAlert } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -224,6 +227,12 @@ export function ReglagesPastillesMail({ client = clientCrm }: ProprietesReglages
 												: {})}
 										/>
 										{/* La mention est TEXTUELLE, jamais une teinte seule (§5.13). */}
+										{pastille.cachee ? (
+											<span data-testid="pastille-cachee" className="inline-flex items-center gap-1 text-[13px] text-text-2">
+												<EyeOff aria-hidden="true" size={14} className="shrink-0" />
+												{t('admin.mailLabels.hidden')}
+											</span>
+										) : null}
 										{pastille.archivee ? <Badge ton="accent">{t('admin.mailLabels.archived')}</Badge> : null}
 									</span>
 									<span className="flex flex-wrap gap-1">
@@ -310,6 +319,8 @@ function FichePastille({
 	const [nom, setNom] = useState(pastille?.nom ?? '')
 	const [couleur, setCouleur] = useState<CouleurNoeud>(pastille?.couleur ?? 'neutral')
 	const [descriptif, setDescriptif] = useState(pastille?.descriptif ?? '')
+	// `CRM-159` : décochée dans une fiche neuve (§31.13.1).
+	const [cachee, setCachee] = useState(pastille?.cachee ?? false)
 	const [enCours, setEnCours] = useState(false)
 	const [refus, setRefus] = useState<string | null>(null)
 	const champNom = useRef<HTMLInputElement | null>(null)
@@ -322,7 +333,7 @@ function FichePastille({
 		if (enCours) return
 		setRefus(null)
 		setEnCours(true)
-		const saisie = { nom, couleur, descriptif }
+		const saisie = { nom, couleur, descriptif, cachee }
 		const issue =
 			pastille === null
 				? await creerPastilleMail(client, idWorkspace, saisie)
@@ -387,6 +398,26 @@ function FichePastille({
 				/>
 				<p id={`${id}-aide`} className="text-sm text-text-3">
 					{t('admin.mailLabels.field.description.help')}
+				</p>
+			</div>
+			{/* `CRM-159` (§5.111) : une case native de 24 px sur une ligne de cible, son libellé pour cible étendue (§5.7 bis). */}
+			<div className="flex flex-col gap-1 max-w-[72ch]">
+				<div className="flex items-center gap-2 min-h-[var(--size-target)]">
+					<input
+						id={`${id}-cachee`}
+						data-testid="pastille-cachee-case"
+						type="checkbox"
+						checked={cachee}
+						aria-describedby={`${id}-aide-cachee`}
+						onChange={(evenement) => setCachee(evenement.target.checked)}
+						className="size-6 shrink-0 accent-brand"
+					/>
+					<label htmlFor={`${id}-cachee`} className="text-base text-text">
+						{t('admin.mailLabels.field.hidden')}
+					</label>
+				</div>
+				<p id={`${id}-aide-cachee`} className="text-sm text-text-3">
+					{t('admin.mailLabels.field.hidden.help')}
 				</p>
 			</div>
 			{refus === null ? null : (

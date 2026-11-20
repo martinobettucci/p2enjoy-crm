@@ -124,6 +124,16 @@ function clientFactice(lireMessages: () => readonly unknown[]) {
 					? reponse(CARD)
 					: Promise.resolve({ data: null, error: { code: undefined, message: 'refus' }, status: refusRetrait })
 			}
+			// `CRM-159` (§31.13.4) : la liste passe par la fonction de la base, qui rend les lignes triées et bornées.
+			if (nom === 'inbox_messages') {
+				const chaine = {
+					select: () => chaine,
+					order: () => chaine,
+					then: (succes: (r: unknown) => unknown, echec?: (e: unknown) => unknown) => reponse(avecLecture()).then(succes, echec),
+				}
+				return chaine
+			}
+			if (nom === 'inbox_hidden_counts') return reponse([])
 			return nom === 'inbox_arborescence'
 				? reponse([
 						{

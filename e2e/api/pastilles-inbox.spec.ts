@@ -19,10 +19,6 @@ const DRISS = '5eed0000-0000-4000-8000-000000000012'
 const INCONNU = '00000000-0000-4000-8000-0000000000aa'
 const json = (entetes: Record<string, string>) => ({ ...entetes, 'Content-Type': 'application/json' })
 const suffixe = Date.now().toString(36)
-// La requête de la webapp, recopiée : le projet des E2E ne compile pas les modules de la webapp (`import.meta.env`). Sa
-// valeur est épinglée par `webapp/src/lib/inbox.test.ts`.
-const COLONNES_LISTE_INBOX_FILTREE =
-	'id, workspace_id, card_id, classification, subject, from_address, from_name, received_at, references_ids, rfc822_message_id, is_read, pastilles:mail_message_labels(label_id, applied), filtre_pastille:mail_message_labels!inner(label_id, applied)'
 const rpc = (nom: string) => `${URL_API}/rest/v1/rpc/${nom}`
 
 test.describe.configure({ mode: 'serial' })
@@ -92,12 +88,12 @@ test('le business developer pose puis retire une pastille : deux choix manuels, 
 	expect(await ligne(request, message, lead)).toEqual({ source: 'manual', applied: false, set_by: DRISS })
 
 	// Ce que la webapp demande pour le filtre « Pastille » : le message n'y est plus, une fois la pastille retirée.
+	// *Révisé par `CRM-159`* : la liste passe par `rpc/inbox_messages`, les pastilles en arguments (§31.13.4).
 	const filtre = async () => {
-		const reponse = await request.get(
-			`${URL_API}/rest/v1/mail_messages?select=${encodeURIComponent(COLONNES_LISTE_INBOX_FILTREE)}&id=eq.${message}` +
-				`&filtre_pastille.label_id=eq.${lead}&filtre_pastille.applied=eq.true`,
-			{ headers: enTetesAuthentifies(driss) },
-		)
+		const reponse = await request.post(`${rpc('inbox_messages')}?select=id&id=eq.${message}`, {
+			headers: json(enTetesAuthentifies(driss)),
+			data: { p_card_id: CARD_C1, p_label_ids: [lead], p_limit: 200 },
+		})
 		expect(reponse.status(), await reponse.text()).toBe(200)
 		return ((await reponse.json()) as { id: string }[]).map((m) => m.id)
 	}

@@ -9034,15 +9034,19 @@ Complète le §5.103 (les réglages) et le §5.108 (les filtres rapides), sans r
   icône du produit ne disait « caché ».
 - **LA CASE « CACHÉE », DANS LA FICHE D'UNE PASTILLE** (§5.103, création et modification), après « Descriptif pour
   l'IA », avant « Enregistrer » : une case native de 24 px sur une ligne de `--size-target` (§5.7 bis), libellée
-  **« Cacher ses mails dans l'inbox »**, avec son aide en 13 px `--color-text-3`, reliée par `aria-describedby` :
+  **« Cacher ses mails dans l'inbox »**, avec son aide en `text-sm` `--color-text-3` — *précisé au code* : la taille de
+  l'aide du descriptif, juste au-dessus —, reliée par `aria-describedby` :
   « Les fils qui portent cette pastille ne paraissent que si on l'active dans les filtres. Spam est cachée d'office. »
   **Décochée** dans une fiche neuve. Elle suit la capacité d'administrer l'espace, comme le reste de la fiche (§5.59).
 - **LA LIGNE D'UNE PASTILLE CACHÉE**, dans la liste des réglages : après la pilule, la mention textuelle **« Cachée »**
-  en 13 px `--color-text-2`, précédée d'`EyeOff` 14 px — la forme de la mention « Archivée » (§5.13), et les deux se
-  suivent quand une pastille est l'une et l'autre (« Cachée · Archivée »).
+  en 13 px `--color-text-2`, précédée d'`EyeOff` 14 px. *Précisé au code* : c'est un texte, et non le badge de
+  « Archivée » (§5.13) — « cachée » est un réglage en vigueur, pas un état d'usure ; une pastille à la fois cachée et
+  archivée porte les deux, la mention puis le badge.
 - **LA BASCULE D'UNE PASTILLE CACHÉE**, dans les filtres rapides (§5.108) : la même bascule, sans autre teinte ; `EyeOff`
   12 px **après** le nom, et le nom accessible et l'infobulle disent « {nom}, pastille cachée » (« {nom}, pastille cachée
   et archivée » dans le volet). Activée, elle a l'état actif du §5.108 : c'est la seule chose qui montre ses fils.
+  *Précisé au code* : une archivée qui **devient** active — par la mention — ouvre le volet « Pastilles archivées », pour
+  qu'un filtre en vigueur ne soit jamais caché (§5.108) ; refermer le volet reste le choix de la personne.
 - **LA MENTION SOUS LA LISTE** : après le dernier fil — ou sous l'état vide, qui garde son texte (§5.51) —, un bloc
   séparé des fils par une bordure haute `--color-border`, rembourrage 8 px vertical et 12 px horizontal. Une ligne par
   pastille, chacune **une commande discrète compacte** (§5.4 quinquies) : `EyeOff` 14 px puis « {n} fils masqués

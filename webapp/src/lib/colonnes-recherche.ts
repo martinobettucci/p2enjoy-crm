@@ -41,6 +41,13 @@ export const BORNE_PALETTE = 20
 export const PARAMETRE_MESSAGE = 'message'
 
 /**
+ * `CRM-159` (docs/SPEC-mail-subsystem.md §31.13.6) — le paramètre d'adresse qui ACTIVE une pastille dans les filtres
+ * rapides de l'inbox (§31.12.3). Arrêté ici pour la même raison que `PARAMETRE_MESSAGE` : la palette compose l'adresse
+ * d'une pastille cachée, `PastillesInbox.tsx` la lit (`CLE_URL_PASTILLE`), et aucun des deux ne recopie la chaîne.
+ */
+export const PARAMETRE_PASTILLE = 'pastille'
+
+/**
  * Colonnes de la résolution d'adresse d'une AFFAIRE — l'étape 2 du §13.1.
  *
  * LA RELATION EST NOMMÉE, ET C'EST MESURÉ (§11, M15). `cards` porte **deux** clés étrangères vers

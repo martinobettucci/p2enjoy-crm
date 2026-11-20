@@ -3,6 +3,8 @@
 //           l'état désactivé qui explique (aucune identité, échec et reprise), le vide sous le filtre et son action,
 //           l'adresse qui garde la case, et l'adresse d'un message caché qui la décoche
 // @verifies docs/SPEC-mail-subsystem.md §27.3, §27.4 ; docs/DESIGN_SYSTEM.md §5.96 ; docs/JOURNAL.md décision 902
+// @verifies CRM-159 (docs/BACKLOG.md) — tranche T2 : la liste est lue par `rpc/inbox_messages`, et « Seulement moi » y passe
+//           par `p_only_me` (docs/SPEC-mail-subsystem.md §31.13.4)
 //
 // Le filtre lui-même est calculé par la base, et prouvé par pgTAP et par l'E2E API : ces preuves éprouvent ce que
 // l'écran DEMANDE et ce qu'il REND. Le client factice retient chaque demande.
@@ -77,6 +79,20 @@ function requete(table: string, colonnes: string) {
 
 const CLIENT = {
 	rpc: (nom: string, args?: Record<string, unknown>) => {
+		// `CRM-159` (§31.13.4) : la liste passe par la fonction de la base ; ses arguments sont ses filtres.
+		if (nom === 'inbox_messages') {
+			const filtres = Object.entries(args ?? {})
+			const chaine: Record<string, unknown> = {
+				select: () => chaine,
+				order: () => chaine,
+				then: (succes: (r: Reponse) => unknown, echec: (e: unknown) => unknown) => {
+					etat.lecturesListe.push(filtres)
+					return Promise.resolve(ok(etat.messages)).then(succes, echec)
+				},
+			}
+			return chaine
+		}
+		if (nom === 'inbox_hidden_counts') return Promise.resolve(ok([]))
 		if (nom === 'inbox_arborescence') {
 			etat.appelsArbre.push(args)
 			return Promise.resolve(
@@ -142,7 +158,7 @@ describe('RouteInbox — « Seulement moi » (§27.4)', () => {
 		expect(caseMoi().checked).toBe(true)
 		await waitFor(() => expect(etat.appelsArbre).toContainEqual({ p_only_me: true }))
 		await userEvent.click(await screen.findByRole('button', { name: /Non classés/ }))
-		await waitFor(() => expect(etat.lecturesListe.at(-1)).toContainEqual(['concerns_me', true]))
+		await waitFor(() => expect(etat.lecturesListe.at(-1)).toContainEqual(['p_only_me', true]))
 		expect(screen.queryByTestId('inbox-seulement-moi-explication')).toBeNull()
 	})
 
@@ -154,7 +170,7 @@ describe('RouteInbox — « Seulement moi » (§27.4)', () => {
 		expect(caseMoi().checked).toBe(false)
 		expect(screen.getByTestId('adresse').textContent).toBe('?courrier=tous')
 		await waitFor(() => expect(etat.appelsArbre.at(-1)).toEqual({ p_only_me: false }))
-		await waitFor(() => expect(etat.lecturesListe.at(-1)).not.toContainEqual(['concerns_me', true]))
+		await waitFor(() => expect(etat.lecturesListe.at(-1)).toContainEqual(['p_only_me', false]))
 		// Recocher retire la clé : la vue par défaut reste l'adresse la plus courte.
 		await userEvent.click(caseMoi())
 		expect(screen.getByTestId('adresse').textContent).toBe('')

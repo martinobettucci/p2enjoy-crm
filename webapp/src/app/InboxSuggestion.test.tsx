@@ -85,6 +85,16 @@ function clientFactice() {
 	const reponse = (data: unknown) => Promise.resolve({ data, error: null, status: 200 })
 	return {
 		rpc: (nom: string, args?: Record<string, string>) => {
+			// `CRM-159` (§31.13.4) : la liste passe par la fonction de la base, qui rend les lignes triées et bornées.
+			if (nom === 'inbox_messages') {
+				const chaine = {
+					select: () => chaine,
+					order: () => chaine,
+					then: (succes: (r: unknown) => unknown, echec?: (e: unknown) => unknown) => reponse(messagesRendus).then(succes, echec),
+				}
+				return chaine
+			}
+			if (nom === 'inbox_hidden_counts') return reponse([])
 			if (nom === 'inbox_arborescence') {
 				return reponse([
 					{

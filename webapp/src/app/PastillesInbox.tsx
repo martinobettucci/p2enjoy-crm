@@ -16,8 +16,12 @@
 //
 // LA COULEUR NE PORTE JAMAIS SEULE L'INFORMATION (§1) : chaque pilule écrit son nom, l'origine se dit en mots.
 
+// @spec CRM-159 (docs/BACKLOG.md) — tranche T2 : les pastilles CACHÉES dans l'inbox — la bascule d'une cachée (`EyeOff`, son
+//       nom accessible), le focus qui la rejoint quand la mention l'active, le volet des archivées ouvert quand une archivée
+//       devient active, la mention des fils masqués sous la liste
+// @spec docs/SPEC-mail-subsystem.md §31.13.5 ; docs/DESIGN_SYSTEM.md §5.111 ; docs/JOURNAL.md décisions 957 et 958
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
-import { ChevronDown, ChevronRight, Sparkles, Tags, TriangleAlert } from 'lucide-react'
+import { ChevronDown, ChevronRight, EyeOff, Sparkles, Tags, TriangleAlert } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { POINTS, PastilleEtiquette, PastilleReste } from '../components/ui/PastilleEtiquette'
@@ -25,6 +29,7 @@ import { EtatVide } from '../components/ui/States'
 import { t, type CleTraduction } from '../i18n'
 import { enChargement, type EtatAsync } from '../lib/async'
 import type { Capacite } from '../lib/capacites'
+import type { FilsMasques } from '../lib/inbox'
 import { lireCataloguePastillesMail, type PastilleMail } from '../lib/pastilles-mail'
 import {
 	demanderReevaluation,
@@ -36,12 +41,13 @@ import {
 	type PoseDeMessage,
 } from '../lib/pastilles-message'
 import { clientCrm } from '../lib/supabase'
+import { PARAMETRE_PASTILLE } from '../lib/colonnes-recherche'
 
 /**
  * La clé d'adresse du filtre (§31.7) : un contrôle de l'écran, qui reste dans l'adresse. `CRM-155` (§31.12.3) : elle se
  * RÉPÈTE, une valeur par pastille active ; une adresse à une seule valeur, celle de `CRM-141`, reste valide.
  */
-export const CLE_URL_PASTILLE = 'pastille'
+export const CLE_URL_PASTILLE = PARAMETRE_PASTILLE
 
 const FORME_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -122,6 +128,12 @@ export const catalogueOuVide = (etat: EtatAsync<CataloguePastilles>): CatalogueP
 const nomArchive = (p: PastilleMail): string | undefined =>
 	p.archivee ? t('mailLabels.pill.archived', { nom: p.nom }) : undefined
 
+/** `CRM-159` (§5.111) : le nom d'une bascule de filtre — elle dit qu'une pastille est cachée, archivée, ou les deux. */
+const nomBascule = (p: PastilleMail): string | undefined =>
+	p.cachee
+		? t(p.archivee ? 'inbox.labels.filter.hiddenArchived' : 'inbox.labels.filter.hidden', { nom: p.nom })
+		: nomArchive(p)
+
 // =================================================================================================
 // La liste des mails
 // =================================================================================================
@@ -166,7 +178,7 @@ function BasculePastille({
 	readonly onBasculer: () => void
 	readonly refBouton?: (element: HTMLButtonElement | null) => void
 }) {
-	const archive = nomArchive(pastille)
+	const nom = nomBascule(pastille)
 	return (
 		<button
 			ref={refBouton}
@@ -174,8 +186,8 @@ function BasculePastille({
 			data-testid="inbox-bascule-pastille"
 			data-pastille={pastille.id}
 			aria-pressed={active}
-			aria-label={archive}
-			title={archive}
+			aria-label={nom}
+			title={nom}
 			onClick={onBasculer}
 			className={`inline-flex items-center gap-2 min-h-[var(--size-target)] max-w-full rounded-full border px-3 text-sm transition-colors duration-[var(--transition-duration-fast)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
 				active
@@ -185,6 +197,7 @@ function BasculePastille({
 		>
 			<span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${POINTS[pastille.couleur]}`} />
 			<span className="min-w-0 break-words text-left">{pastille.nom}</span>
+			{pastille.cachee ? <EyeOff aria-hidden="true" size={12} className="shrink-0" /> : null}
 		</button>
 	)
 }
@@ -199,12 +212,17 @@ export function FiltresPastilles({
 	idEspace,
 	filtre,
 	onChange,
+	focusPastille = null,
+	onFocusFait,
 }: {
 	readonly catalogue: CataloguePastilles
 	readonly idEspace: string | null
 	/** Le filtre en vigueur, déjà nettoyé (`lirePastillesFiltre`). */
 	readonly filtre: readonly string[]
 	readonly onChange: (filtre: readonly string[]) => void
+	/** `CRM-159` (§5.111) : la pastille que la mention vient d'activer — sa bascule prend le focus dès qu'elle est active. */
+	readonly focusPastille?: string | null
+	readonly onFocusFait?: () => void
 }) {
 	const idTitre = useId()
 	const idVolet = useId()
@@ -221,6 +239,28 @@ export function FiltresPastilles({
 		setOuvertureFaite(true)
 	}, [archiveeActiveALArrivee, ouvertureFaite])
 	const premiereBascule = useRef<HTMLButtonElement | null>(null)
+	// `CRM-159` : UNE ARCHIVÉE QUI DEVIENT ACTIVE OUVRE LE VOLET — la mention des fils masqués peut activer une cachée
+	// archivée, et un filtre en vigueur n'est jamais caché (§31.12.1). Seule une activation NOUVELLE l'ouvre : refermer le
+	// volet reste le choix de la personne.
+	const activesAvant = useRef<readonly string[]>(filtre)
+	useEffect(() => {
+		const nouvelles = filtre.filter((id) => !activesAvant.current.includes(id))
+		activesAvant.current = filtre
+		if (nouvelles.some((id) => archivees.some((p) => p.id === id))) setVoletOuvert(true)
+	}, [filtre, archivees])
+	const bascules = useRef(new Map<string, HTMLButtonElement>())
+	const refBascule = (id: string) => (element: HTMLButtonElement | null) => {
+		if (element === null) bascules.current.delete(id)
+		else bascules.current.set(id, element)
+	}
+	// Le focus rejoint la bascule ACTIVÉE par la mention, une fois rendue : la commande qui l'a activée disparaît (§5.111).
+	useEffect(() => {
+		if (focusPastille === null || !filtre.includes(focusPastille)) return
+		const bouton = bascules.current.get(focusPastille)
+		if (bouton === undefined) return
+		bouton.focus()
+		onFocusFait?.()
+	})
 
 	if (actives.length === 0 && archivees.length === 0) return null
 	const basculer = (id: string) => onChange(basculerDansFiltre(filtre, id))
@@ -242,13 +282,10 @@ export function FiltresPastilles({
 							pastille={p}
 							active={filtre.includes(p.id)}
 							onBasculer={() => basculer(p.id)}
-							refBouton={
-								rang === 0
-									? (element) => {
-											premiereBascule.current = element
-										}
-									: undefined
-							}
+							refBouton={(element) => {
+								if (rang === 0) premiereBascule.current = element
+								refBascule(p.id)(element)
+							}}
 						/>
 					))}
 				</div>
@@ -302,10 +339,60 @@ export function FiltresPastilles({
 					className="flex flex-wrap gap-2 min-w-0"
 				>
 					{archivees.map((p) => (
-						<BasculePastille key={p.id} pastille={p} active={filtre.includes(p.id)} onBasculer={() => basculer(p.id)} />
+						<BasculePastille
+							key={p.id}
+							pastille={p}
+							active={filtre.includes(p.id)}
+							onBasculer={() => basculer(p.id)}
+							refBouton={refBascule(p.id)}
+						/>
 					))}
 				</div>
 			) : null}
+		</div>
+	)
+}
+
+/**
+ * `CRM-159` (§31.13.5, §5.111) — LA MENTION DES FILS MASQUÉS, sous la liste : une commande discrète par pastille cachée qui
+ * masque des fils du dossier ; son geste active la pastille. Rien sans fil masqué ; une pastille absente du catalogue (pas
+ * encore lu, ou d'un autre espace) n'est pas nommée, donc pas offerte.
+ */
+export function MentionFilsMasques({
+	masques,
+	catalogue,
+	onActiver,
+}: {
+	readonly masques: readonly FilsMasques[]
+	readonly catalogue: CataloguePastilles
+	readonly onActiver: (idPastille: string) => void
+}) {
+	const lignes = masques.flatMap((m) => {
+		const pastille = catalogue.get(m.idPastille)
+		return pastille === undefined ? [] : [{ ...m, nom: pastille.nom }]
+	})
+	if (lignes.length === 0) return null
+	return (
+		<div data-testid="inbox-fils-masques" className="flex flex-col items-start gap-1 border-t border-border px-3 py-2">
+			{lignes.map((ligne) => (
+				<Button
+					key={ligne.idPastille}
+					variante="discret"
+					taille="compacte"
+					data-testid="inbox-fils-masques-pastille"
+					data-pastille={ligne.idPastille}
+					className="text-[13px] text-text-2 text-left"
+					onClick={() => onActiver(ligne.idPastille)}
+				>
+					<EyeOff aria-hidden="true" size={14} className="shrink-0" />
+					<span className="min-w-0 break-words">
+						{t(ligne.fils === 1 ? 'inbox.labels.hidden.one' : 'inbox.labels.hidden.many', {
+							n: String(ligne.fils),
+							nom: ligne.nom,
+						})}
+					</span>
+				</Button>
+			))}
 		</div>
 	)
 }

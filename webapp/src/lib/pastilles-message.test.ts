@@ -51,6 +51,7 @@ const pastille = (id: string, nom: string, archivee = false): PastilleMail => ({
 	couleur: 'brand',
 	descriptif: 'x',
 	archivee,
+	cachee: false,
 })
 
 describe('projeterPastillesDuMessage', () => {

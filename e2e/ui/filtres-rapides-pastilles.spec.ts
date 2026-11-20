@@ -10,6 +10,9 @@
 // la fin ; leurs pastilles sont posées par `set_message_label` sous le jeton de l'administratrice (le vrai geste). Aucun mot
 // d'un nom de pastille dans leurs objets : le simulateur ne leur en pose aucune. Le seed n'est que lu : « Newsletter »,
 // archivée, portée par l'invitation non classée (docs/SPEC-seed.md §46).
+//
+// *Révisé par `CRM-159` (2026-11-20)* : la seconde pastille de la preuve était « Spam », devenue cachée (migration `0193`,
+// docs/SPEC-mail-subsystem.md §31.13) — son mail ne paraîtrait plus sans filtre. « Recrutement », visible, garde l'intention.
 
 import { type APIRequestContext, type Page } from '@playwright/test'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
@@ -26,7 +29,7 @@ test.describe.configure({ mode: 'serial' })
 test.use({ viewport: { width: 1440, height: 1000 } })
 
 const crees: string[] = []
-const mails: { lead: string; spam: string; sans: string } = { lead: '', spam: '', sans: '' }
+const mails: { lead: string; recrutement: string; sans: string } = { lead: '', recrutement: '', sans: '' }
 const ids: Record<string, string> = {}
 
 async function poserMail(request: APIRequestContext, objet: string): Promise<string> {
@@ -54,11 +57,11 @@ test.beforeAll(async ({ request }) => {
 	for (const { id, name } of (await reponse.json()) as { id: string; name: string }[]) ids[name] = id
 	const camille = await jetonDe('admin@p2enjoy.test')
 	mails.lead = await poserMail(request, `ZZ 155 un ${suffixe}`)
-	mails.spam = await poserMail(request, `ZZ 155 deux ${suffixe}`)
+	mails.recrutement = await poserMail(request, `ZZ 155 deux ${suffixe}`)
 	mails.sans = await poserMail(request, `ZZ 155 trois ${suffixe}`)
 	for (const [message, label] of [
 		[mails.lead, ids['Lead']],
-		[mails.spam, ids['Spam']],
+		[mails.recrutement, ids['Recrutement']],
 	] as const) {
 		const pose = await request.post(rest('rpc/set_message_label'), {
 			headers: { ...enTetesAuthentifies(camille), 'Content-Type': 'application/json' },
@@ -124,9 +127,9 @@ test.describe('les filtres rapides de l’inbox (docs/DESIGN_SYSTEM.md §5.108)'
 		await expect(ligne(page, `ZZ 155 deux ${suffixe}`)).toHaveCount(0)
 		await expect(ligne(page, `ZZ 155 trois ${suffixe}`)).toHaveCount(0)
 
-		await bascule(page, 'Spam').click()
+		await bascule(page, 'Recrutement').click()
 		await expect(page).toHaveURL(/pastille=.*pastille=/)
-		expect(valeursAdresse(page)).toEqual([ids['Lead'], ids['Spam']])
+		expect(valeursAdresse(page)).toEqual([ids['Lead'], ids['Recrutement']])
 		await expect(ligne(page, `ZZ 155 un ${suffixe}`)).toBeVisible()
 		await expect(ligne(page, `ZZ 155 deux ${suffixe}`)).toBeVisible()
 		await expect(ligne(page, `ZZ 155 trois ${suffixe}`)).toHaveCount(0)
@@ -135,7 +138,7 @@ test.describe('les filtres rapides de l’inbox (docs/DESIGN_SYSTEM.md §5.108)'
 
 		// « Précédent » défait le dernier geste.
 		await page.goBack()
-		await expect(bascule(page, 'Spam')).toHaveAttribute('aria-pressed', 'false')
+		await expect(bascule(page, 'Recrutement')).toHaveAttribute('aria-pressed', 'false')
 		await expect(bascule(page, 'Lead')).toHaveAttribute('aria-pressed', 'true')
 		await expect(ligne(page, `ZZ 155 deux ${suffixe}`)).toHaveCount(0)
 
@@ -146,7 +149,7 @@ test.describe('les filtres rapides de l’inbox (docs/DESIGN_SYSTEM.md §5.108)'
 		await expect(filtres(page).getByRole('button', { name: 'Toutes les pastilles' })).toHaveCount(0)
 	})
 
-	test('au clavier : Tab jusqu’à « Spam », Espace ; le volet par Entrée, l’archivée par Entrée ; le focus reste sur la bascule', async ({
+	test('au clavier : Tab jusqu’à « Recrutement », Espace ; le volet par Entrée, l’archivée par Entrée ; le focus reste sur la bascule', async ({
 		page,
 	}) => {
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
@@ -155,16 +158,16 @@ test.describe('les filtres rapides de l’inbox (docs/DESIGN_SYSTEM.md §5.108)'
 		const premiere = filtres(page).getByTestId('inbox-bascule-pastille').first()
 		await premiere.focus()
 		const noms = await filtres(page).getByTestId('inbox-bascule-pastille').allTextContents()
-		for (let pas = 0; pas < noms.indexOf('Spam'); pas += 1) await page.keyboard.press('Tab')
-		await expect(bascule(page, 'Spam')).toBeFocused()
+		for (let pas = 0; pas < noms.indexOf('Recrutement'); pas += 1) await page.keyboard.press('Tab')
+		await expect(bascule(page, 'Recrutement')).toBeFocused()
 		await page.keyboard.press('Space')
-		await expect(bascule(page, 'Spam')).toHaveAttribute('aria-pressed', 'true')
-		await expect(bascule(page, 'Spam')).toBeFocused()
+		await expect(bascule(page, 'Recrutement')).toHaveAttribute('aria-pressed', 'true')
+		await expect(bascule(page, 'Recrutement')).toBeFocused()
 		await expect(ligne(page, `ZZ 155 deux ${suffixe}`)).toBeVisible()
 		await expect(ligne(page, `ZZ 155 trois ${suffixe}`)).toHaveCount(0)
 
 		// Après la dernière bascule active : le volet, puis « Toutes les pastilles ».
-		for (let pas = noms.indexOf('Spam'); pas < noms.length; pas += 1) await page.keyboard.press('Tab')
+		for (let pas = noms.indexOf('Recrutement'); pas < noms.length; pas += 1) await page.keyboard.press('Tab')
 		const volet = filtres(page).getByTestId('inbox-volet-archivees')
 		await expect(volet).toBeFocused()
 		await page.keyboard.press('Enter')
@@ -176,7 +179,7 @@ test.describe('les filtres rapides de l’inbox (docs/DESIGN_SYSTEM.md §5.108)'
 		await expect(archivee).toBeFocused()
 		await page.keyboard.press('Enter')
 		await expect(archivee).toHaveAttribute('aria-pressed', 'true')
-		expect(valeursAdresse(page)).toEqual([ids['Spam'], ids['Newsletter']])
+		expect(valeursAdresse(page)).toEqual([ids['Recrutement'], ids['Newsletter']])
 		await transitionsFinies(page)
 		await capturer(page, 'filtres-rapides-clavier-volet-1440', UNITE)
 	})
@@ -226,7 +229,7 @@ test.describe('les filtres rapides de l’inbox (docs/DESIGN_SYSTEM.md §5.108)'
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
 		for (const palier of PALIERS) {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
-			await page.goto(`/inbox?courrier=tous&message=${mails.lead}&pastille=${ids['Lead']}&pastille=${ids['Spam']}`)
+			await page.goto(`/inbox?courrier=tous&message=${mails.lead}&pastille=${ids['Lead']}&pastille=${ids['Recrutement']}`)
 			// Sous 1024 px, l'inbox est une pile : on remonte du message à la liste.
 			const retour = page.getByRole('button', { name: 'Retour aux messages' })
 			await expect(page.getByTestId('inbox-message-ouvert')).toBeVisible()

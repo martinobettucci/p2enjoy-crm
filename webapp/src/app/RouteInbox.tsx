@@ -100,6 +100,8 @@ import {
 	textePastille,
 	useArborescence,
 	useFilsEndormis,
+	useFilsMasques,
+	type FilsMasques,
 	useMessage,
 	useMessages,
 	type ArbreInbox,
@@ -164,6 +166,7 @@ import { useContexteEspace } from './ContexteEspace'
 import {
 	CLE_URL_PASTILLE,
 	FiltresPastilles,
+	MentionFilsMasques,
 	PastillesLigne,
 	PastillesMessageOuvert,
 	VidePastilles,
@@ -738,10 +741,13 @@ function PanneauListe({
 	idEspace,
 	pastilles,
 	onPastilles,
+	masques,
 	groupe,
 	expediteur,
 	onExpediteur,
 }: {
+	/** `CRM-159` (§31.13.5) : les fils masqués par une pastille cachée, sous les filtres de la liste ; vide tant qu'inconnu. */
+	readonly masques: readonly FilsMasques[]
 	/** `CRM-156` T4 (§32.9) : l'adresse du filtre par expéditeur, et le geste qui le retire. */
 	readonly expediteur: string | null
 	readonly onExpediteur: (adresse: string | null) => void
@@ -805,9 +811,18 @@ function PanneauListe({
 	// `CRM-155` — LES FILTRES RAPIDES, UN BLOC À PART EN TÊTE DE LA LISTE (§5.108, §31.12.1), au-dessus de la rangée
 	// d'action. Ils RESTENT RENDUS sur une liste vide, en chargement ou en erreur : ils sont la cause possible de ce vide
 	// (§5.3 septies). Le composant ne rend rien si l'espace courant n'a aucune pastille.
+	// `CRM-159` (§5.111) : la pastille que la mention vient d'activer ; sa bascule prendra le focus une fois active.
+	const [focusPastille, setFocusPastille] = useState<string | null>(null)
 	const filtresRapides =
 		selection !== null ? (
-			<FiltresPastilles catalogue={catalogue} idEspace={idEspace} filtre={pastilles} onChange={onPastilles} />
+			<FiltresPastilles
+				catalogue={catalogue}
+				idEspace={idEspace}
+				filtre={pastilles}
+				onChange={onPastilles}
+				focusPastille={focusPastille}
+				onFocusFait={() => setFocusPastille(null)}
+			/>
 		) : null
 	// `CRM-141` T4 — LA RANGÉE D'ACTION EN TÊTE DE LA LISTE (§5.4 quinquies) : « Tout marquer comme lu » à droite.
 	// `CRM-155` (§5.108) : elle ne porte plus que des commandes — le filtre vit dans son bloc, au-dessus.
@@ -1038,6 +1053,17 @@ function PanneauListe({
 						) : null}
 					</>
 				)
+			) : null}
+			{/* `CRM-159` (§31.13.5, §5.111) : sous la liste, ou sous son vide — le vide peut n'être que du masqué. */}
+			{selection !== null && etat.statut === 'pret' ? (
+				<MentionFilsMasques
+					masques={masques}
+					catalogue={catalogue}
+					onActiver={(id) => {
+						setFocusPastille(id)
+						onPastilles(pastilles.includes(id) ? pastilles : [...pastilles, id])
+					}}
+				/>
 			) : null}
 		</Panneau>
 	)
@@ -2292,6 +2318,16 @@ export function RouteInbox() {
 		[setParametresUrl],
 	)
 	const liste = useMessages(clientCrm, selection, filtreCourrier, pastillesFiltre, expediteurFiltre)
+	// `CRM-159` (§31.13.5) : la mention des fils masqués, relue avec la liste ; un échec ne rend rien (une aide).
+	const filsMasques = useFilsMasques(
+		clientCrm,
+		selection,
+		filtreCourrier,
+		pastillesFiltre,
+		expediteurFiltre,
+		mode === 'visibles',
+		liste.etat,
+	)
 	// `CRM-156` T4 (§5.109 bis) : le bilan du dernier blocage, jusqu'à ce qu'on le ferme.
 	const [bilanBlocage, setBilanBlocage] = useState<number | null>(null)
 	const message = useMessage(clientCrm, idOuvert)
@@ -2830,6 +2866,7 @@ export function RouteInbox() {
 					idEspace={idEspaceCourant}
 					pastilles={pastillesFiltre ?? []}
 					onPastilles={changerPastilles}
+					masques={filsMasques.etat.statut === 'pret' ? filsMasques.etat.donnees : []}
 					expediteur={expediteurFiltre}
 					onExpediteur={changerExpediteur}
 					groupe={{

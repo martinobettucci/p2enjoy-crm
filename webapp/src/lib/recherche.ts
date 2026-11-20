@@ -10,6 +10,8 @@
 // @spec docs/SPEC-types.md §4 (un type ne garantit jamais une valeur)
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T4.1 : l'adresse d'une affaire, par son premier rattachement dans l'ordre des
 //       tracks puis des channels ; docs/SPEC-rattachements.md §9 ; décision 814
+// @spec CRM-159 (docs/BACKLOG.md) — tranche T2 : les mails masqués par une pastille cachée, comptés à côté de la recherche
+//       (`search_hidden_mail_counts`) et l'adresse qui active la pastille — docs/SPEC-mail-subsystem.md §31.13.6 ; décision 958
 //
 // CE MODULE NE REND RIEN : IL LIT. La séparation est ce qui rend la garde d'ordre, le délai de
 // frappe, la résolution d'adresse et les cinq destinations vérifiables **sans navigateur** — c'est
@@ -37,6 +39,7 @@ import {
 	COLONNES_ADRESSE_AFFAIRE,
 	COLONNES_ADRESSE_COMMENTAIRE,
 	PARAMETRE_MESSAGE,
+	PARAMETRE_PASTILLE,
 } from './colonnes-recherche'
 import { premierDansLOrdreDesTracks } from './rattachements'
 import type { ClientCrm } from './supabase'
@@ -109,6 +112,54 @@ export type ResultatsRecherche = {
 	 * récentes » et du §5.15 pour « 3 affaires listées sur 13 ».
 	 */
 	readonly tronque: boolean
+	/**
+	 * `CRM-159` (docs/SPEC-mail-subsystem.md §31.13.6) : les mails que la recherche a écartés parce que leur fil est masqué
+	 * par une pastille cachée, par pastille. Vide quand il n'y en a pas, ou quand le compte n'a pas pu être lu — une aide,
+	 * qui ne fait jamais échouer la recherche.
+	 */
+	readonly masques: readonly MailsMasques[]
+}
+
+/** Une pastille cachée, son espace, et les mails qu'elle a écartés d'une recherche. */
+export type MailsMasques = {
+	readonly idPastille: string
+	readonly nom: string
+	readonly idEspace: string
+	readonly nomEspace: string
+	readonly mails: number
+	/** L'inbox, la pastille activée (§31.12.3). */
+	readonly adresse: string
+}
+
+/** `CRM-159` : l'adresse de l'inbox qui active une pastille dans les filtres rapides. */
+export function adresseFiltrePastille(idPastille: string): string {
+	return `${CHEMIN_INBOX}?${PARAMETRE_PASTILLE}=${encodeURIComponent(idPastille)}`
+}
+
+/** `CRM-159` (§31.13.6) : le compte des mails masqués. Un échec rend une liste vide : la recherche n'en dépend pas. */
+async function lireMailsMasques(client: ClientCrm, terme: string): Promise<readonly MailsMasques[]> {
+	try {
+		const reponse = await client.rpc('search_hidden_mail_counts', { p_terme: terme })
+		if (reponse.error !== null) return []
+		return ((reponse.data ?? []) as readonly {
+			label_id: string
+			workspace_id: string
+			workspace_name: string
+			label_name: string
+			mail_count: number
+		}[])
+			.filter((ligne) => ligne.mail_count > 0)
+			.map((ligne) => ({
+				idPastille: ligne.label_id,
+				nom: ligne.label_name,
+				idEspace: ligne.workspace_id,
+				nomEspace: ligne.workspace_name,
+				mails: ligne.mail_count,
+				adresse: adresseFiltrePastille(ligne.label_id),
+			}))
+	} catch {
+		return []
+	}
 }
 
 /**
@@ -322,7 +373,8 @@ export async function rechercher(
 	terme: string,
 	limite: number = BORNE_PALETTE,
 ): Promise<EtatAsync<ResultatsRecherche>> {
-	const lignes = await lireLignes(client, terme, limite)
+	// `CRM-159` : le compte des mails masqués part EN MÊME TEMPS que la recherche — il n'en dépend pas.
+	const [lignes, masques] = await Promise.all([lireLignes(client, terme, limite), lireMailsMasques(client, terme)])
 	if (lignes.statut !== 'pret') return lignes
 	const idsAffaires = lignes.donnees.filter((l) => l.objet === 'affaire').map((l) => l.id)
 	const idsCommentaires = lignes.donnees.filter((l) => l.objet === 'commentaire').map((l) => l.id)
@@ -335,6 +387,7 @@ export async function rechercher(
 			composerResultat(ligne, adressesAffaires, adressesCommentaires),
 		),
 		tronque: lignes.donnees.length >= limite,
+		masques,
 	})
 }
 

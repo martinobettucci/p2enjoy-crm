@@ -5,6 +5,8 @@
 // @spec docs/SPEC-mail-subsystem.md §31.2 (`mail_labels` : nom de 1 à 40, unique archivées comprises ; un des cinq jetons ;
 //       un descriptif de 1 à 500), §31.3 (lecture par tout membre, écriture par l'administrateur), §31.7 (l'écran) ;
 //       docs/DESIGN_SYSTEM.md §5.103 ; CLAUDE.md §10 — ce module ne décide AUCUN droit : il écrit, et la base tranche
+// @spec CRM-159 (docs/BACKLOG.md) — tranche T2 : le drapeau « cachée » lu, projeté et écrit avec la fiche
+//       (docs/SPEC-mail-subsystem.md §31.13.1 ; docs/DESIGN_SYSTEM.md §5.111) — la base le réserve à qui administre
 //
 // Ce module ne rend rien : il lit, écrit et classe les refus.
 
@@ -14,7 +16,7 @@ import { COULEURS_ETIQUETTE, couleurEtiquette } from './etiquettes'
 import type { ClientCrm } from './supabase'
 
 /** Colonnes réellement demandées. Exportées pour que les tests éprouvent la requête émise. */
-export const COLONNES_PASTILLE_MAIL = 'id, workspace_id, name, color, description, archived_at'
+export const COLONNES_PASTILLE_MAIL = 'id, workspace_id, name, color, description, archived_at, hidden'
 
 /** Les cinq couleurs sont celles des étiquettes et des tracks : un seul jeu de jetons (§5.103, §5.68). */
 export const COULEURS_PASTILLE_MAIL: readonly CouleurNoeud[] = COULEURS_ETIQUETTE
@@ -30,6 +32,7 @@ export type PastilleMailLue = {
 	readonly color: string
 	readonly description: string
 	readonly archived_at: string | null
+	readonly hidden: boolean
 }
 
 export type PastilleMail = {
@@ -40,6 +43,8 @@ export type PastilleMail = {
 	readonly couleur: CouleurNoeud
 	readonly descriptif: string
 	readonly archivee: boolean
+	/** `CRM-159` (§31.13.1) : ses fils ne paraissent dans l'inbox que si on l'active dans les filtres rapides. */
+	readonly cachee: boolean
 }
 
 const compare = (a: string, b: string): number => a.localeCompare(b, 'fr', { sensitivity: 'base' })
@@ -55,6 +60,7 @@ export function projeterPastillesMail(lignes: readonly (PastilleMailLue | null |
 			couleur: couleurEtiquette(l.color),
 			descriptif: l.description,
 			archivee: l.archived_at !== null,
+			cachee: l.hidden === true,
 		}))
 		.sort((a, b) => Number(a.archivee) - Number(b.archivee) || compare(a.nom, b.nom) || compare(a.id, b.id))
 }
@@ -133,7 +139,13 @@ async function executer(appel: () => PromiseLike<ReponseBrute>): Promise<IssuePa
 	}
 }
 
-export type SaisiePastilleMail = { readonly nom: string; readonly couleur: CouleurNoeud; readonly descriptif: string }
+export type SaisiePastilleMail = {
+	readonly nom: string
+	readonly couleur: CouleurNoeud
+	readonly descriptif: string
+	/** `CRM-159` : « Cacher ses mails dans l'inbox ». */
+	readonly cachee: boolean
+}
 
 /** Crée une pastille. L'auteur et les dates sont posés par la base. */
 export function creerPastilleMail(client: ClientCrm, idWorkspace: string, saisie: SaisiePastilleMail): Promise<IssuePastilleMail> {
@@ -145,6 +157,7 @@ export function creerPastilleMail(client: ClientCrm, idWorkspace: string, saisie
 				name: saisie.nom.trim(),
 				color: saisie.couleur,
 				description: saisie.descriptif.trim(),
+				hidden: saisie.cachee,
 			})
 			.select('id'),
 	)
@@ -154,7 +167,12 @@ export function modifierPastilleMail(client: ClientCrm, idPastille: string, sais
 	return executer(() =>
 		client
 			.from('mail_labels')
-			.update({ name: saisie.nom.trim(), color: saisie.couleur, description: saisie.descriptif.trim() })
+			.update({
+				name: saisie.nom.trim(),
+				color: saisie.couleur,
+				description: saisie.descriptif.trim(),
+				hidden: saisie.cachee,
+			})
 			.eq('id', idPastille)
 			.select('id'),
 	)

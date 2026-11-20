@@ -8,6 +8,10 @@
 // sont posées par `set_message_label` sous le jeton de l'administratrice — le vrai geste, une ligne `manual` que la passe
 // de la minute ne touche jamais. Leurs objets et leurs corps ne contiennent aucun mot d'un nom de pastille : le simulateur
 // de développement ne leur en pose aucune (`supabase/docker/ollama-simule/serveur.py`, scénario `pastilles`).
+//
+// *Révisé par `CRM-159` (2026-11-20)* : la lecture passe par `rpc/inbox_messages` (§31.13.4), comme la webapp ; la seconde
+// pastille était « Spam », devenue cachée — sous « Lead » seule, le message qui porte les deux serait masqué. « Recrutement »,
+// visible, garde l'intention.
 
 import { type APIRequestContext, expect, test } from '@playwright/test'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
@@ -18,10 +22,6 @@ const CARD_C1 = '5eed0000-0000-4000-8000-0000000000c1'
 const CARD_C7 = '5eed0000-0000-4000-8000-0000000000c7'
 const json = (entetes: Record<string, string>) => ({ ...entetes, 'Content-Type': 'application/json' })
 const suffixe = Date.now().toString(36)
-// La requête de la webapp, recopiée : le projet des E2E ne compile pas les modules de la webapp (`import.meta.env`). Sa
-// valeur est épinglée par `webapp/src/lib/inbox.test.ts`.
-const COLONNES_LISTE_INBOX_FILTREE =
-	'id, workspace_id, card_id, classification, subject, from_address, from_name, received_at, references_ids, rfc822_message_id, is_read, pastilles:mail_message_labels(label_id, applied), filtre_pastille:mail_message_labels!inner(label_id, applied)'
 const rest = (chemin: string) => `${URL_API}/rest/v1/${chemin}`
 
 test.describe.configure({ mode: 'serial' })
@@ -64,24 +64,32 @@ async function poser(request: APIRequestContext, jeton: string, message: string,
 	expect(reponse.status(), await reponse.text()).toBe(204)
 }
 
-/** La lecture de la webapp (§31.12.2) : `in` sur l'embarquement filtrant, `applied`, bornée ici aux messages donnés. */
+/**
+ * La lecture de la webapp (§31.12.2) — *révisée par `CRM-159`* : la liste passe par `rpc/inbox_messages`, qui porte les
+ * pastilles en arguments (§31.13.4). Lue dans « Non classés » et les deux dossiers où la preuve pose ses mails, bornée ici
+ * aux messages donnés.
+ */
 async function filtrer(
 	request: APIRequestContext,
 	jeton: string,
 	pastilles: readonly string[],
 	messages: readonly string[],
 ): Promise<string[]> {
-	const reponse = await request.get(
-		rest(
-			`mail_messages?select=${encodeURIComponent(COLONNES_LISTE_INBOX_FILTREE)}` +
-				`&id=in.(${messages.join(',')})` +
-				`&filtre_pastille.label_id=in.(${pastilles.join(',')})&filtre_pastille.applied=eq.true` +
-				'&order=received_at.desc,id.desc',
-		),
-		{ headers: enTetesAuthentifies(jeton) },
-	)
-	expect(reponse.status(), await reponse.text()).toBe(200)
-	return ((await reponse.json()) as { id: string }[]).map((m) => m.id)
+	const lignes: { id: string; received_at: string }[] = []
+	// « Non classés » (l'affaire omise), puis les deux affaires.
+	for (const dossier of [null, CARD_C1, CARD_C7]) {
+		const reponse = await request.post(rest('rpc/inbox_messages?select=id,received_at'), {
+			headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
+			data: { ...(dossier === null ? {} : { p_card_id: dossier }), p_label_ids: pastilles, p_limit: 200 },
+		})
+		expect(reponse.status(), await reponse.text()).toBe(200)
+		lignes.push(...((await reponse.json()) as { id: string; received_at: string }[]))
+	}
+	const voulus = new Set(messages)
+	return lignes
+		.filter((l) => voulus.has(l.id))
+		.sort((a, b) => b.received_at.localeCompare(a.received_at) || b.id.localeCompare(a.id))
+		.map((l) => l.id)
 }
 
 test.afterAll(async ({ request }) => {
@@ -96,27 +104,27 @@ test('deux pastilles en OU : l’union, chaque message une seule fois ; une past
 }) => {
 	const camille = await jetonDe('admin@p2enjoy.test')
 	const lead = await pastille(request, 'Lead')
-	const spam = await pastille(request, 'Spam')
+	const recrutement = await pastille(request, 'Recrutement')
 	const avecLead = await poserMail(request, `ZZ 155 un ${suffixe}`)
-	const avecSpam = await poserMail(request, `ZZ 155 deux ${suffixe}`)
+	const avecRecrutement = await poserMail(request, `ZZ 155 deux ${suffixe}`)
 	const avecLesDeux = await poserMail(request, `ZZ 155 trois ${suffixe}`)
 	const retiree = await poserMail(request, `ZZ 155 quatre ${suffixe}`)
 	const sans = await poserMail(request, `ZZ 155 cinq ${suffixe}`)
 	await poser(request, camille, avecLead, lead)
-	await poser(request, camille, avecSpam, spam)
+	await poser(request, camille, avecRecrutement, recrutement)
 	await poser(request, camille, avecLesDeux, lead)
-	await poser(request, camille, avecLesDeux, spam)
+	await poser(request, camille, avecLesDeux, recrutement)
 	await poser(request, camille, retiree, lead)
 	await poser(request, camille, retiree, lead, false)
-	const tous = [avecLead, avecSpam, avecLesDeux, retiree, sans]
+	const tous = [avecLead, avecRecrutement, avecLesDeux, retiree, sans]
 
-	const union = await filtrer(request, camille, [lead, spam], tous)
-	expect(new Set(union)).toEqual(new Set([avecLead, avecSpam, avecLesDeux]))
+	const union = await filtrer(request, camille, [lead, recrutement], tous)
+	expect(new Set(union)).toEqual(new Set([avecLead, avecRecrutement, avecLesDeux]))
 	// PostgREST rend UNE ligne par message, quel que soit le nombre de pastilles qui le retiennent (§31.12.2).
 	expect(union).toHaveLength(3)
 	// Une seule pastille : la même requête, la même règle.
 	expect(new Set(await filtrer(request, camille, [lead], tous))).toEqual(new Set([avecLead, avecLesDeux]))
-	expect(new Set(await filtrer(request, camille, [spam], tous))).toEqual(new Set([avecSpam, avecLesDeux]))
+	expect(new Set(await filtrer(request, camille, [recrutement], tous))).toEqual(new Set([avecRecrutement, avecLesDeux]))
 })
 
 test('une pastille archivée filtre : le message du seed qui porte « Newsletter » est retenu', async ({ request }) => {

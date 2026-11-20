@@ -27,6 +27,9 @@
 //       `pastille` retient les messages qui la portent — docs/SPEC-mail-subsystem.md §31.7 ; docs/DESIGN_SYSTEM.md §5.103
 // @spec CRM-155 (docs/BACKLOG.md) — tranche T1 : le filtre prend PLUSIEURS pastilles, en OU — les messages qui portent au
 //       moins l'une d'elles, posée (docs/SPEC-mail-subsystem.md §31.12.2 ; décisions 943 et 948)
+// @spec CRM-159 (docs/BACKLOG.md) — tranche T2 : la liste lue par `rpc/inbox_messages`, qui porte tous ses filtres et
+//       écarte les fils masqués par une pastille cachée ; la mention des fils masqués (`rpc/inbox_hidden_counts`) —
+//       docs/SPEC-mail-subsystem.md §31.13.4, §31.13.5 ; décisions 957 et 958
 //
 // Ce module ne rend rien : il **lit, réduit et classe**. La séparation est ce qui rend la
 // réduction du HTML, la construction de l'arbre et la classification des refus vérifiables
@@ -42,7 +45,6 @@ import { premierRattachement } from './rattachements'
 import { cleFil, lireFilsEndormis, type FilsEndormis } from './sommeil-fil'
 import { idsPosees } from './pastilles-message'
 import type { ClientCrm } from './supabase'
-import { motifExpediteur } from './filtre-expediteur'
 
 /**
  * Un client absent n'est pas une panne réseau : c'est une configuration incomplète, et la nommer
@@ -91,15 +93,6 @@ export const COLONNES_LISTE =
  */
 export const COLONNES_LISTE_INBOX =
 	'id, workspace_id, card_id, classification, subject, from_address, from_name, received_at, references_ids, rfc822_message_id, is_read, pastilles:mail_message_labels(label_id, applied)'
-
-/**
- * `CRM-141` T4 — la même liste, FILTRÉE par une pastille posée : un second embarquement, `!inner`, sous un autre alias, qui
- * ne retient que les messages portant la pastille, sans amputer les pilules affichées de la ligne. `CRM-155` (§31.12.2) :
- * l'embarquement retient l'une des pastilles demandées (`in`) — PostgREST rend une ligne par message, quel que soit le
- * nombre de pastilles qui le retiennent.
- */
-export const COLONNES_LISTE_INBOX_FILTREE =
-	'id, workspace_id, card_id, classification, subject, from_address, from_name, received_at, references_ids, rfc822_message_id, is_read, pastilles:mail_message_labels(label_id, applied), filtre_pastille:mail_message_labels!inner(label_id, applied)'
 
 export const COLONNES_MESSAGE = `${COLONNES_LISTE}, to_addresses, cc_addresses, bcc_addresses, body_text, body_html, sent_at, suggested_card_id, mailbox_trash_permitted, direction`
 
@@ -214,8 +207,7 @@ export const OBJET_ABSENT = '(sans objet)'
 const nomAffiche = (adresse: string, nom: string | null): string =>
 	nom !== null && nom.trim() !== '' ? `${nom.trim()} <${adresse}>` : adresse
 
-/** Projette une ligne de la base en une ligne de liste. */
-export function projeterMessage(ligne: Pick<
+type ChampsListe = Pick<
 	LigneMessage,
 	| 'id'
 	| 'workspace_id'
@@ -228,7 +220,15 @@ export function projeterMessage(ligne: Pick<
 	| 'references_ids'
 	| 'rfc822_message_id'
 	| 'is_read'
->): MessageListe {
+>
+
+/** `CRM-159` : une ligne de `rpc/inbox_messages` sous `COLONNES_LISTE_INBOX` — les champs de la liste et ses pilules. */
+type LigneListeInbox = ChampsListe & {
+	readonly pastilles: readonly { readonly label_id: string; readonly applied: boolean }[] | null
+}
+
+/** Projette une ligne de la base en une ligne de liste. */
+export function projeterMessage(ligne: ChampsListe): MessageListe {
 	return {
 		id: ligne.id,
 		workspaceId: ligne.workspace_id,
@@ -505,31 +505,77 @@ export async function lireMessages(
 ): Promise<EtatAsync<PageMessages>> {
 	if (client === null) return enErreur(CONFIGURATION_ABSENTE)
 	try {
-		// `CRM-141` T4 (§31.7) : le filtre par pastille porte, comme `seulementMoi`, sur les MESSAGES — ceux qui portent la
-		// pastille, POSÉE ; il se combine avec le dossier choisi. `CRM-155` (§31.12.2) : plusieurs pastilles, en OU ; aucune,
-		// aucun filtre.
-		const base =
-			pastilles.length === 0
-				? client.from('mail_messages').select(COLONNES_LISTE_INBOX)
-				: client
-						.from('mail_messages')
-						.select(COLONNES_LISTE_INBOX_FILTREE)
-						.in('filtre_pastille.label_id', [...pastilles])
-						.eq('filtre_pastille.applied', true)
-		const dossier =
-			selection.genre === 'non-classes' ? base.is('card_id', null) : base.eq('card_id', selection.cardId)
-		const moi = seulementMoi ? dossier.eq('concerns_me', true) : dossier
-		// `CRM-156` T4 : le filtre par expéditeur porte lui aussi sur les MESSAGES, sans casse (§32.9).
-		const filtree = expediteur === null ? moi : moi.ilike('from_address', motifExpediteur(expediteur))
-		// L'ordre est TOTAL, terminé par `id` : deux messages reçus dans la même milliseconde
-		// suffisent à rendre l'affichage instable d'un rechargement à l'autre (décision 185).
-		const reponse = await filtree
+		// `CRM-159` (§31.13.4) : la liste est lue par la FONCTION de la base, qui porte tous ses filtres — le dossier,
+		// « Seulement moi » (`concerns_me`), les pastilles en OU, l'expéditeur sans casse — et écarte les fils masqués par
+		// une pastille cachée, sauf si l'une d'elles est activée. Le filtre s'applique AVANT la limite : le client ne
+		// compose plus la règle. Les colonnes et l'embarquement des pilules sont ceux de `CRM-141` T4.
+		const reponse = await client
+			.rpc('inbox_messages', argumentsDeLaListe(selection, seulementMoi, pastilles, expediteur, MESSAGES_PAR_PAGE))
+			.select(COLONNES_LISTE_INBOX)
+			// L'ordre est TOTAL, terminé par `id` : deux messages reçus dans la même milliseconde
+			// suffisent à rendre l'affichage instable d'un rechargement à l'autre (décision 185).
 			.order('received_at', { ascending: false })
 			.order('id', { ascending: false })
-			.limit(MESSAGES_PAR_PAGE)
 		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
-		const messages = reponse.data.map((ligne) => ({ ...projeterMessage(ligne), pastilles: idsPosees(ligne.pastilles) }))
+		const lignes = (reponse.data ?? []) as unknown as readonly LigneListeInbox[]
+		const messages = lignes.map((ligne) => ({ ...projeterMessage(ligne), pastilles: idsPosees(ligne.pastilles) }))
 		return pret({ messages, tronquee: messages.length === MESSAGES_PAR_PAGE })
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/**
+ * Les arguments de `inbox_messages` et de `inbox_hidden_counts` (§31.13.4, §31.13.5) : les mêmes filtres, pour que la
+ * mention compte ce que la liste écarte. Un argument nul est OMIS — la base prend son défaut (« Non classés », aucun
+ * expéditeur).
+ */
+export function argumentsDeLaListe(
+	selection: Selection,
+	seulementMoi: boolean,
+	pastilles: readonly string[],
+	expediteur: string | null,
+	limite?: number,
+): {
+	p_card_id?: string
+	p_only_me: boolean
+	p_label_ids: string[]
+	p_sender?: string
+	p_limit?: number
+} {
+	return {
+		...(selection.genre === 'card' ? { p_card_id: selection.cardId } : {}),
+		p_only_me: seulementMoi,
+		p_label_ids: [...pastilles],
+		...(expediteur === null ? {} : { p_sender: expediteur }),
+		...(limite === undefined ? {} : { p_limit: limite }),
+	}
+}
+
+/** Une pastille cachée qui masque des fils du dossier, et combien (§31.13.5). */
+export type FilsMasques = { readonly idPastille: string; readonly fils: number }
+
+/**
+ * `CRM-159` (§31.13.5) — pour chaque pastille cachée non activée, les fils masqués du dossier, sous les mêmes filtres, qui
+ * paraîtraient si on l'activait ; dans l'ordre du nom, rendu par la base.
+ */
+export async function lireFilsMasques(
+	client: ClientCrm | null,
+	selection: Selection,
+	seulementMoi: boolean,
+	pastilles: readonly string[],
+	expediteur: string | null,
+	endormisMontres: boolean,
+): Promise<EtatAsync<readonly FilsMasques[]>> {
+	if (client === null) return enErreur(CONFIGURATION_ABSENTE)
+	try {
+		const reponse = await client.rpc('inbox_hidden_counts', {
+			...argumentsDeLaListe(selection, seulementMoi, pastilles, expediteur),
+			p_snoozed_shown: endormisMontres,
+		})
+		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
+		const lignes = (reponse.data ?? []) as readonly { label_id: string; thread_count: number }[]
+		return pret(lignes.filter((l) => l.thread_count > 0).map((l) => ({ idPastille: l.label_id, fils: l.thread_count })))
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}
@@ -876,6 +922,30 @@ export function useMessages(
 					? EN_ATTENTE
 					: lireMessages(client, selection, seulementMoi, pastilles, expediteur),
 		[client, cle, seulementMoi, clePastilles, expediteur],
+	)
+}
+
+/**
+ * `CRM-159` (§31.13.5) — la mention des fils masqués, sous les MÊMES filtres que la liste. Elle se relit avec la liste :
+ * `relue` est l'état de la liste, dont chaque relecture change l'identité — un geste qui relit la liste relit la mention.
+ */
+export function useFilsMasques(
+	client: ClientCrm | null,
+	selection: Selection | null,
+	seulementMoi: boolean | null,
+	pastilles: readonly string[] | null,
+	expediteur: string | null,
+	endormisMontres: boolean,
+	relue: unknown,
+): Relecture<readonly FilsMasques[]> {
+	const cle = selection === null ? '' : selection.genre === 'card' ? selection.cardId : 'non-classes'
+	const clePastilles = pastilles === null ? null : pastilles.join(',')
+	return useLecture(
+		async () =>
+			selection === null || seulementMoi === null || pastilles === null
+				? pret([])
+				: lireFilsMasques(client, selection, seulementMoi, pastilles, expediteur, endormisMontres),
+		[client, cle, seulementMoi, clePastilles, expediteur, endormisMontres, relue],
 	)
 }
 

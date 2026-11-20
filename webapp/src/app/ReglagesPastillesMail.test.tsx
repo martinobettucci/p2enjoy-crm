@@ -3,6 +3,9 @@
 //           désarchivage sans confirmation, les refus, l'écran lisible par tout membre et ses commandes éteintes avec motif
 // @verifies docs/SPEC-mail-subsystem.md §31.3, §31.7 ; docs/DESIGN_SYSTEM.md §5.103, §5.29 bis, §5.59, §5.8 ;
 //           docs/JOURNAL.md décision 926
+// @verifies CRM-159 (docs/BACKLOG.md) — tranche T2 : la case « Cacher ses mails dans l'inbox », décochée dans une fiche
+//           neuve, cochée pour Spam, écrite avec la fiche ; la mention « Cachée » d'une ligne (docs/SPEC-mail-subsystem.md
+//           §31.13.1 ; docs/DESIGN_SYSTEM.md §5.111)
 //
 // L'écran RÉEL est monté sur un client espion qui sert la liste et note chaque écriture. La pile réelle est éprouvée par
 // `e2e/ui/pastilles-reglages.spec.ts` et, pour les droits, par `e2e/api/pastilles-reglages.spec.ts`.
@@ -19,9 +22,9 @@ import { ReglagesPastillesMail } from './ReglagesPastillesMail'
 afterEach(cleanup)
 
 const LUES = [
-	{ workspace_id: 'ws-1', id: 'p-spam', name: 'Spam', color: 'danger', description: 'Courrier indésirable.', archived_at: null },
-	{ workspace_id: 'ws-1', id: 'p-lead', name: 'Lead', color: 'success', description: 'Un prospect intéressé.', archived_at: null },
-	{ workspace_id: 'ws-1', id: 'p-news', name: 'Newsletter', color: 'neutral', description: 'Une lettre d’information.', archived_at: '2026-11-11T09:00:00Z' },
+	{ workspace_id: 'ws-1', id: 'p-spam', name: 'Spam', color: 'danger', description: 'Courrier indésirable.', archived_at: null, hidden: true },
+	{ workspace_id: 'ws-1', id: 'p-lead', name: 'Lead', color: 'success', description: 'Un prospect intéressé.', archived_at: null, hidden: false },
+	{ workspace_id: 'ws-1', id: 'p-news', name: 'Newsletter', color: 'neutral', description: 'Une lettre d’information.', archived_at: '2026-11-11T09:00:00Z', hidden: false },
 ]
 
 type Ecriture = { methode: string; valeur: unknown }
@@ -82,12 +85,41 @@ describe('Réglages ▸ Pastilles des mails (docs/DESIGN_SYSTEM.md §5.103)', ()
 		await userEvent.type(screen.getByTestId('pastille-nom'), '  Youtube ')
 		await userEvent.click(screen.getByRole('radio', { name: /Rouge/ }))
 		await userEvent.type(screen.getByTestId('pastille-descriptif'), ' Toute demande pour la chaîne. ')
+		// `CRM-159` : la case est décochée dans une fiche neuve.
+		expect((screen.getByTestId('pastille-cachee-case') as HTMLInputElement).checked).toBe(false)
 		await userEvent.click(screen.getByTestId('pastille-enregistrer'))
 		await waitFor(() => expect(ecritures).toHaveLength(1))
 		expect(ecritures[0]).toEqual({
 			methode: 'insert',
-			valeur: { workspace_id: 'ws-1', name: 'Youtube', color: 'danger', description: 'Toute demande pour la chaîne.' },
+			valeur: {
+				workspace_id: 'ws-1',
+				name: 'Youtube',
+				color: 'danger',
+				description: 'Toute demande pour la chaîne.',
+				hidden: false,
+			},
 		})
+	})
+
+	it('CRM-159 : la ligne de Spam dit « Cachée » ; sa fiche porte la case cochée, décrite, et l’écrit décochée', async () => {
+		const { client: c, ecritures } = client()
+		monter(c)
+		const lignes = await screen.findAllByTestId('ligne-pastille-mail')
+		const [lead, spam] = lignes
+		expect(within(spam!).getByTestId('pastille-cachee').textContent).toBe(fr['admin.mailLabels.hidden'])
+		expect(within(lead!).queryByTestId('pastille-cachee')).toBeNull()
+		await userEvent.click(within(spam!).getByRole('button', { name: 'Modifier la pastille Spam' }))
+		const caseCachee = screen.getByLabelText(fr['admin.mailLabels.field.hidden']) as HTMLInputElement
+		expect(caseCachee.checked).toBe(true)
+		const aide = document.getElementById(caseCachee.getAttribute('aria-describedby') ?? '')
+		expect(aide?.textContent).toBe(fr['admin.mailLabels.field.hidden.help'])
+		// Au clavier : `Espace` décoche la case, comme une case native.
+		caseCachee.focus()
+		await userEvent.keyboard(' ')
+		expect(caseCachee.checked).toBe(false)
+		await userEvent.click(screen.getByTestId('pastille-enregistrer'))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]).toMatchObject({ methode: 'update', valeur: { name: 'Spam', hidden: false } })
 	})
 
 	it('un nom pris par une ARCHIVÉE : le refus nomme « Afficher les archivées », la saisie est gardée', async () => {

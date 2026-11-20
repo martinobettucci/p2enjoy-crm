@@ -379,6 +379,16 @@ export const fr = {
 	'inbox.labels.filter.empty.title': 'Aucun message ne porte la pastille « {nom} » dans ce dossier.',
 	'inbox.labels.filter.empty.titleMany': 'Aucun message ne porte l’une des pastilles {noms} dans ce dossier.',
 	'inbox.labels.filter.empty.body': 'Choisissez « Toutes les pastilles » pour revoir tout le dossier.',
+	// @spec CRM-159 (docs/BACKLOG.md) T2, docs/DESIGN_SYSTEM.md §5.111 — les pastilles cachées : la bascule, la mention des
+	//       fils masqués sous la liste et dans la palette, la case et la mention des réglages
+	'inbox.labels.filter.hidden': '{nom}, pastille cachée',
+	'inbox.labels.filter.hiddenArchived': '{nom}, pastille cachée et archivée',
+	'inbox.labels.hidden.one': '1 fil masqué ({nom})',
+	'inbox.labels.hidden.many': '{n} fils masqués ({nom})',
+	'search.hidden.one': '1 mail masqué ({nom})',
+	'search.hidden.many': '{n} mails masqués ({nom})',
+	'search.hidden.otherWorkspace.one': '1 mail masqué ({nom}, espace {espace})',
+	'search.hidden.otherWorkspace.many': '{n} mails masqués ({nom}, espace {espace})',
 	'inbox.labels.origin.llm': "posée par l'IA",
 	'inbox.labels.origin.manual': 'posée à la main',
 	'inbox.labels.origin.removed': 'retirée à la main',
@@ -4584,6 +4594,10 @@ export const fr = {
 	'admin.mailLabels.archived.done': 'Pastille « {nom} » archivée.',
 	'admin.mailLabels.unarchived': 'Pastille « {nom} » désarchivée.',
 	'admin.mailLabels.archived': 'Archivée',
+	'admin.mailLabels.hidden': 'Cachée',
+	'admin.mailLabels.field.hidden': 'Cacher ses mails dans l’inbox',
+	'admin.mailLabels.field.hidden.help':
+		'Les fils qui portent cette pastille ne paraissent que si on l’active dans les filtres. Spam est cachée d’office.',
 	'admin.mailLabels.edit': 'Modifier',
 	'admin.mailLabels.edit.aria': 'Modifier la pastille {nom}',
 	'admin.mailLabels.archive': 'Archiver',

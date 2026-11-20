@@ -1,6 +1,9 @@
 // @verifies CRM-057 (docs/BACKLOG.md) — inbox globale : arbre, réduction du HTML, requêtes, refus
 // @verifies CRM-155 (docs/BACKLOG.md) — tranche T1 : le filtre à plusieurs pastilles, en OU (`in`), posées seulement —
 //           docs/SPEC-mail-subsystem.md §31.12.2
+// @verifies CRM-159 (docs/BACKLOG.md) — tranche T2 : la liste lue par `rpc/inbox_messages` avec tous ses filtres pour
+//           arguments, la mention par `rpc/inbox_hidden_counts` sous les mêmes filtres — docs/SPEC-mail-subsystem.md
+//           §31.13.4, §31.13.5
 // @verifies CRM-141 (docs/BACKLOG.md) — tranche T4 : la liste embarque les pastilles posées, le filtre `pastille` —
 //           docs/SPEC-mail-subsystem.md §31.7 ; docs/DESIGN_SYSTEM.md §5.103
 // @verifies docs/SPEC-mail-subsystem.md §18.3 (l'arborescence ne montre que ce qui porte du
@@ -24,9 +27,9 @@
 
 import { describe, expect, it } from 'vitest'
 import {
+	argumentsDeLaListe,
 	COLONNES_LISTE,
 	COLONNES_LISTE_INBOX,
-	COLONNES_LISTE_INBOX_FILTREE,
 	COLONNES_MESSAGE,
 	MEME_SELECTION,
 	MARQUAGE_MAX,
@@ -39,6 +42,7 @@ import {
 	idsNonLus,
 	lireCheminCard,
 	lireArborescence,
+	lireFilsMasques,
 	lireMessages,
 	marquerLus,
 	marquerNonLu,
@@ -254,6 +258,11 @@ function clientEspion(reponse: Reponse): { client: ClientCrm; appel: Appel } {
 			appel.limite = valeur
 			return chaine
 		},
+		// `CRM-159` : `rpc(…).select(…)` — les colonnes de la liste, demandées sur le résultat de la fonction.
+		select: (colonnes: string) => {
+			appel.colonnes = colonnes
+			return chaine
+		},
 		then: (resoudre: (valeur: Reponse) => unknown) => Promise.resolve(reponse).then(resoudre),
 	}
 	const client = {
@@ -282,47 +291,50 @@ describe('les lectures', () => {
 		expect(appel.rpc).toBe('inbox_arborescence')
 	})
 
-	it('filtre les non classés sur l’ABSENCE de card, dans un ordre TOTAL et borné', async () => {
+	it('CRM-159 (§31.13.4) : les non classés sont lus par la FONCTION, ses filtres en arguments, dans un ordre TOTAL et borné', async () => {
 		const { client, appel } = clientEspion({ data: [], error: null, status: 200 })
 		await lireMessages(client, { genre: 'non-classes' })
 
-		expect(appel.table).toBe('mail_messages')
+		// La règle du masquage est en base : le client ne lit plus la table et ne compose plus le filtre.
+		expect(appel.table).toBeUndefined()
+		expect(appel.rpc).toBe('inbox_messages')
+		// « Non classés » : l'affaire est OMISE, la base prend son défaut ; la limite est celle de la page.
+		expect(appel.arguments).toEqual({ p_only_me: false, p_label_ids: [], p_limit: MESSAGES_PAR_PAGE })
 		// `CRM-141` T4 : la liste de l'inbox embarque les pastilles du message dans la même requête.
 		expect(appel.colonnes).toBe(COLONNES_LISTE_INBOX)
 		expect(COLONNES_LISTE_INBOX).toBe(`${COLONNES_LISTE}, pastilles:mail_message_labels(label_id, applied)`)
-		expect(appel.nuls).toEqual(['card_id'])
+		expect(appel.nuls).toEqual([])
 		expect(appel.egalites).toEqual([])
 		// `received_at` PUIS `id`, décroissants : sans le second, l'ordre n'est pas total.
 		expect(appel.tris).toEqual([
 			['received_at', false],
 			['id', false],
 		])
-		expect(appel.limite).toBe(MESSAGES_PAR_PAGE)
 	})
 
-	it('CRM-155 T1 (§31.12.2) : le filtre retient les messages qui portent L’UNE des pastilles, POSÉE, sans amputer leurs pilules', async () => {
+	it('CRM-155, CRM-159 : les pastilles du filtre, « Seulement moi », l’affaire et l’expéditeur passent en arguments', async () => {
 		const { client, appel } = clientEspion({ data: [], error: null, status: 200 })
-		await lireMessages(client, { genre: 'card', cardId: 'c1' }, false, ['p-lead', 'p-spam'])
-		expect(appel.colonnes).toBe(COLONNES_LISTE_INBOX_FILTREE)
-		// Deux embarquements sous deux alias : l'un `!inner`, qui filtre ; l'autre, qui garde toutes les pilules.
-		expect(COLONNES_LISTE_INBOX_FILTREE).toBe(
-			`${COLONNES_LISTE_INBOX}, filtre_pastille:mail_message_labels!inner(label_id, applied)`,
-		)
-		expect(appel.parmi).toEqual([['filtre_pastille.label_id', ['p-lead', 'p-spam']]])
-		expect(appel.egalites).toEqual([
-			['filtre_pastille.applied', true],
-			['card_id', 'c1'],
-		])
+		await lireMessages(client, { genre: 'card', cardId: 'c1' }, true, ['p-lead', 'p-spam'], 'nora@atelier.example')
+		expect(appel.arguments).toEqual({
+			p_card_id: 'c1',
+			p_only_me: true,
+			p_label_ids: ['p-lead', 'p-spam'],
+			p_sender: 'nora@atelier.example',
+			p_limit: MESSAGES_PAR_PAGE,
+		})
+		// Aucun embarquement filtrant : les pilules de la ligne ne sont jamais amputées.
+		expect(appel.colonnes).toBe(COLONNES_LISTE_INBOX)
+		expect(appel.parmi).toBeUndefined()
 	})
 
-	it('CRM-155 T1 : une seule pastille passe par le même `in` ; aucune, aucun embarquement filtrant', async () => {
-		const une = clientEspion({ data: [], error: null, status: 200 })
-		await lireMessages(une.client, { genre: 'non-classes' }, false, ['p-lead'])
-		expect(une.appel.parmi).toEqual([['filtre_pastille.label_id', ['p-lead']]])
-		const aucune = clientEspion({ data: [], error: null, status: 200 })
-		await lireMessages(aucune.client, { genre: 'non-classes' }, false, [])
-		expect(aucune.appel.colonnes).toBe(COLONNES_LISTE_INBOX)
-		expect(aucune.appel.parmi).toBeUndefined()
+	it('CRM-159 : la liste rendue est la page de la fonction, ses pilules lues', async () => {
+		const { client } = clientEspion({
+			data: [{ ...ligne(), pastilles: [{ label_id: 'p-spam', applied: true }] }],
+			error: null,
+			status: 200,
+		})
+		const etat = await lireMessages(client, { genre: 'non-classes' }, false, ['p-spam'])
+		expect(etat.statut === 'pret' && etat.donnees.messages.map((m) => m.pastilles)).toEqual([['p-spam']])
 	})
 
 	it('CRM-141 T4 : une ligne porte les identifiants de ses pastilles POSÉES, jamais une retirée à la main', async () => {
@@ -344,11 +356,43 @@ describe('les lectures', () => {
 		expect(etat.statut === 'pret' && etat.donnees.messages.map((m) => m.pastilles)).toEqual([['p-lead'], []])
 	})
 
-	it('filtre un dossier de card sur son identifiant', async () => {
+	it('lit un dossier de card par son identifiant, en argument', async () => {
 		const { client, appel } = clientEspion({ data: [], error: null, status: 200 })
 		await lireMessages(client, { genre: 'card', cardId: 'c1' })
-		expect(appel.egalites).toEqual([['card_id', 'c1']])
+		expect(appel.arguments).toMatchObject({ p_card_id: 'c1' })
+		expect(appel.egalites).toEqual([])
 		expect(appel.nuls).toEqual([])
+	})
+
+	it('CRM-159 (§31.13.5) : la mention lit les fils masqués sous les MÊMES filtres, sans limite, le sommeil dit', async () => {
+		const { client, appel } = clientEspion({
+			data: [
+				{ label_id: 'p-promo', thread_count: 1 },
+				{ label_id: 'p-spam', thread_count: 12 },
+				{ label_id: 'p-vide', thread_count: 0 },
+			],
+			error: null,
+			status: 200,
+		})
+		const etat = await lireFilsMasques(client, { genre: 'card', cardId: 'c1' }, false, ['p-lead'], null, true)
+		expect(appel.rpc).toBe('inbox_hidden_counts')
+		expect(appel.arguments).toEqual({ p_card_id: 'c1', p_only_me: false, p_label_ids: ['p-lead'], p_snoozed_shown: true })
+		// L'ordre est celui de la base (le nom) ; une ligne à zéro ne se dit pas.
+		expect(etat.statut === 'pret' && etat.donnees).toEqual([
+			{ idPastille: 'p-promo', fils: 1 },
+			{ idPastille: 'p-spam', fils: 12 },
+		])
+	})
+
+	it('CRM-159 : un refus de la mention est un état d’erreur, jamais une mention vide inventée', async () => {
+		const { client } = clientEspion({ data: null, error: { message: 'refusé' }, status: 500 })
+		const etat = await lireFilsMasques(client, { genre: 'non-classes' }, false, [], null, false)
+		expect(etat.statut).toBe('erreur')
+		expect((await lireFilsMasques(null, { genre: 'non-classes' }, false, [], null, false)).statut).toBe('erreur')
+	})
+
+	it('CRM-159 : les arguments omettent l’affaire des non classés, l’expéditeur absent et la limite non demandée', () => {
+		expect(argumentsDeLaListe({ genre: 'non-classes' }, false, [], null)).toEqual({ p_only_me: false, p_label_ids: [] })
 	})
 
 	// L'écran DIT qu'il tronque : une liste bornée en silence se lit comme une liste complète.

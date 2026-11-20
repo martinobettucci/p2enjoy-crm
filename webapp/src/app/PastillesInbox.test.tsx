@@ -4,6 +4,10 @@
 //           et ses cases qui écrivent au clic et reviennent au refus, `Échap`, la commande refusée avec son motif, et
 //           l'exclusion avec la confirmation d'« Effacer »)
 // @verifies docs/SPEC-mail-subsystem.md §31.4, §31.7 ; docs/DESIGN_SYSTEM.md §5.103, §5.73, §5.59 ; décision 926
+// @verifies CRM-159 (docs/BACKLOG.md) — tranche T2 : la bascule d'une pastille cachée (`EyeOff`, son nom accessible), la
+//           mention des fils masqués (rendue, au singulier, cliquée, absente), le focus qui rejoint la bascule activée, le
+//           volet des archivées ouvert par une activation nouvelle (docs/SPEC-mail-subsystem.md §31.13.5 ;
+//           docs/DESIGN_SYSTEM.md §5.111 ; décisions 957 et 958)
 //
 // Les composants RÉELS sont montés ; le client ne simule que les deux lectures et les deux fonctions de la base. La pile
 // réelle est éprouvée par `e2e/ui/pastilles-inbox.spec.ts`.
@@ -45,6 +49,7 @@ vi.mock('../lib/supabase', () => ({
 
 const {
 	FiltresPastilles,
+	MentionFilsMasques,
 	PastillesLigne,
 	PastillesMessageOuvert,
 	VidePastilles,
@@ -62,13 +67,14 @@ afterEach(() => {
 	injecte.reponseRpc = { error: null, status: 204 }
 })
 
-const p = (id: string, nom: string, archivee = false, idEspace = 'ws-1'): PastilleMail => ({
+const p = (id: string, nom: string, archivee = false, idEspace = 'ws-1', cachee = false): PastilleMail => ({
 	id,
 	idEspace,
 	nom,
 	couleur: 'brand',
 	descriptif: 'x',
 	archivee,
+	cachee,
 })
 
 const CATALOGUE = new Map(
@@ -418,5 +424,80 @@ describe('le message ouvert (§5.103)', () => {
 		// … et ouvrir la confirmation referme le panneau.
 		signaux.confirmation()
 		await waitFor(() => expect(screen.queryByTestId('inbox-panneau-pastilles')).toBeNull())
+	})
+})
+
+describe('CRM-159 — les pastilles cachées (docs/DESIGN_SYSTEM.md §5.111)', () => {
+	const CATALOGUE_CACHE = new Map(
+		[
+			p(U(2), 'Lead'),
+			p(U(3), 'Spam', false, 'ws-1', true),
+			p(U(6), 'Promo', true, 'ws-1', true),
+		].map((x) => [x.id, x]),
+	)
+
+	it('la bascule d’une cachée dit « pastille cachée » dans son nom et porte l’icône ; une visible non', () => {
+		monterFiltres([], CATALOGUE_CACHE)
+		const spam = screen.getByRole('button', { name: 'Spam, pastille cachée' })
+		expect(spam.getAttribute('title')).toBe('Spam, pastille cachée')
+		expect(spam.querySelector('svg[aria-hidden="true"]')).not.toBeNull()
+		const lead = screen.getByRole('button', { name: 'Lead' })
+		expect(lead.querySelector('svg')).toBeNull()
+	})
+
+	it('une cachée archivée le dit aussi ; une archivée qui DEVIENT active ouvre le volet', () => {
+		const { onChange, rendu } = monterFiltres([], CATALOGUE_CACHE)
+		expect(screen.queryByTestId('inbox-volet-archivees-contenu')).toBeNull()
+		rendu.rerender(<FiltresPastilles catalogue={CATALOGUE_CACHE} idEspace="ws-1" filtre={[U(6)]} onChange={onChange} />)
+		const volet = screen.getByTestId('inbox-volet-archivees-contenu')
+		expect(within(volet).getByRole('button', { name: 'Promo, pastille cachée et archivée' }).getAttribute('aria-pressed')).toBe(
+			'true',
+		)
+	})
+
+	it('le focus rejoint la bascule que la mention a activée, une fois active, puis rend la main', () => {
+		const onFocusFait = vi.fn()
+		const onChange = vi.fn()
+		const rendu = render(
+			<FiltresPastilles catalogue={CATALOGUE_CACHE} idEspace="ws-1" filtre={[]} onChange={onChange} focusPastille={U(3)} onFocusFait={onFocusFait} />,
+		)
+		// Pas encore active : le focus n'est pas déplacé.
+		expect(onFocusFait).not.toHaveBeenCalled()
+		rendu.rerender(
+			<FiltresPastilles catalogue={CATALOGUE_CACHE} idEspace="ws-1" filtre={[U(3)]} onChange={onChange} focusPastille={U(3)} onFocusFait={onFocusFait} />,
+		)
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Spam, pastille cachée' }))
+		expect(onFocusFait).toHaveBeenCalledTimes(1)
+	})
+
+	it('la mention : une ligne par pastille, au pluriel et au singulier ; son geste active la pastille', async () => {
+		const onActiver = vi.fn()
+		render(
+			<MentionFilsMasques
+				masques={[
+					{ idPastille: U(6), fils: 1 },
+					{ idPastille: U(3), fils: 12 },
+				]}
+				catalogue={CATALOGUE_CACHE}
+				onActiver={onActiver}
+			/>,
+		)
+		const lignes = screen.getAllByTestId('inbox-fils-masques-pastille')
+		expect(lignes.map((l) => l.textContent)).toEqual(['1 fil masqué (Promo)', '12 fils masqués (Spam)'])
+		await userEvent.click(lignes[1]!)
+		expect(onActiver).toHaveBeenLastCalledWith(U(3))
+		// Au clavier : `Entrée` sur la commande.
+		lignes[0]!.focus()
+		await userEvent.keyboard('{Enter}')
+		expect(onActiver).toHaveBeenLastCalledWith(U(6))
+	})
+
+	it('la mention n’est pas rendue sans fil masqué, ni pour une pastille que le catalogue ne connaît pas', () => {
+		const { container } = render(
+			<MentionFilsMasques masques={[{ idPastille: U(99), fils: 3 }]} catalogue={CATALOGUE_CACHE} onActiver={vi.fn()} />,
+		)
+		expect(container.innerHTML).toBe('')
+		render(<MentionFilsMasques masques={[]} catalogue={CATALOGUE_CACHE} onActiver={vi.fn()} />)
+		expect(screen.queryByTestId('inbox-fils-masques')).toBeNull()
 	})
 })

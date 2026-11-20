@@ -1,6 +1,8 @@
 // @verifies CRM-141 (docs/BACKLOG.md) — tranche T3 : la lecture des pastilles des mails (colonnes demandées, tri des
 //           actives avant les archivées), les écritures nettoyées, et le dictionnaire fermé des refus
 // @verifies docs/SPEC-mail-subsystem.md §31.2, §31.3, §31.7 ; docs/DESIGN_SYSTEM.md §5.103 ; docs/JOURNAL.md décision 926
+// @verifies CRM-159 (docs/BACKLOG.md) — tranche T2 : le drapeau `hidden` lu, projeté (`cachee`) et écrit avec la fiche
+//           (docs/SPEC-mail-subsystem.md §31.13.1 ; docs/DESIGN_SYSTEM.md §5.111)
 //
 // Les droits réels sont éprouvés contre la vraie base par `e2e/api/pastilles-reglages.spec.ts` (CLAUDE.md §10).
 
@@ -46,16 +48,28 @@ function espion(reponse: unknown | (() => never)) {
 	return { client, appels }
 }
 
-const ligne = (id: string, name: string, archived_at: string | null = null, color = 'primary') => ({
+const ligne = (id: string, name: string, archived_at: string | null = null, color = 'primary', hidden = false) => ({
 	id,
 	workspace_id: 'ws-1',
 	name,
 	color,
 	description: `Descriptif de ${name}`,
 	archived_at,
+	hidden,
 })
 
 describe('projeterPastillesMail', () => {
+	it('CRM-159 : le drapeau `hidden` devient `cachee` ; une valeur absente n’est pas « cachée »', () => {
+		// Triées par nom : Lead, puis Spam.
+		const [lead, spam] = projeterPastillesMail([ligne('a', 'Spam', null, 'danger', true), ligne('b', 'Lead')])
+		expect(spam?.cachee).toBe(true)
+		expect(lead?.cachee).toBe(false)
+		const sansColonne = { ...ligne('c', 'Ancienne'), hidden: undefined } as unknown as Parameters<
+			typeof projeterPastillesMail
+		>[0][number]
+		expect(projeterPastillesMail([sansColonne])[0]?.cachee).toBe(false)
+	})
+
 	it('les actives d’abord, puis les archivées, chacune dans l’ordre du nom sans casse ni accent', () => {
 		const projetees = projeterPastillesMail([
 			ligne('a', 'Spam'),
@@ -89,7 +103,7 @@ describe('lirePastillesMail', () => {
 			{ methode: 'select', args: [COLONNES_PASTILLE_MAIL] },
 			{ methode: 'eq', args: ['workspace_id', 'ws-1'] },
 		])
-		expect(COLONNES_PASTILLE_MAIL).toBe('id, workspace_id, name, color, description, archived_at')
+		expect(COLONNES_PASTILLE_MAIL).toBe('id, workspace_id, name, color, description, archived_at, hidden')
 		expect(etat.statut).toBe('pret')
 		if (etat.statut === 'pret') expect(etat.donnees[0]!.archivee).toBe(true)
 	})
@@ -110,20 +124,31 @@ describe('lirePastillesMail', () => {
 describe('les écritures', () => {
 	it('créer nettoie le nom et le descriptif, et ne pose ni auteur ni date : la base les pose', async () => {
 		const { client, appels } = espion({ data: [{ id: 'n' }], error: null, status: 201 })
-		const issue = await creerPastilleMail(client, 'ws-1', { nom: '  Youtube ', couleur: 'danger', descriptif: ' La chaîne. ' })
+		const issue = await creerPastilleMail(client, 'ws-1', {
+			nom: '  Youtube ',
+			couleur: 'danger',
+			descriptif: ' La chaîne. ',
+			cachee: true,
+		})
 		expect(issue).toEqual({ statut: 'applique' })
 		expect(appels.find((a) => a.methode === 'insert')!.args[0]).toEqual({
 			workspace_id: 'ws-1',
 			name: 'Youtube',
 			color: 'danger',
 			description: 'La chaîne.',
+			hidden: true,
 		})
 	})
 
 	it('modifier vise la pastille par son identifiant', async () => {
 		const { client, appels } = espion({ data: [{ id: 'p' }], error: null, status: 200 })
-		await modifierPastilleMail(client, 'p', { nom: 'Lead ', couleur: 'success', descriptif: 'Un prospect.' })
-		expect(appels.find((a) => a.methode === 'update')!.args[0]).toEqual({ name: 'Lead', color: 'success', description: 'Un prospect.' })
+		await modifierPastilleMail(client, 'p', { nom: 'Lead ', couleur: 'success', descriptif: 'Un prospect.', cachee: false })
+		expect(appels.find((a) => a.methode === 'update')!.args[0]).toEqual({
+			name: 'Lead',
+			color: 'success',
+			description: 'Un prospect.',
+			hidden: false,
+		})
 		expect(appels.find((a) => a.methode === 'eq')!.args).toEqual(['id', 'p'])
 	})
 
@@ -147,7 +172,7 @@ describe('les écritures', () => {
 				throw new Error('réseau coupé')
 			}).client,
 			'ws-1',
-			{ nom: 'X', couleur: 'neutral', descriptif: 'x' },
+			{ nom: 'X', couleur: 'neutral', descriptif: 'x', cachee: false },
 		)
 		expect(issue).toEqual({ statut: 'refus', nature: 'network' })
 	})

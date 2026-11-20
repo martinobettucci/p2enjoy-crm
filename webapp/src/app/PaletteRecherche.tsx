@@ -21,9 +21,13 @@
 // D'où `role="combobox"` et `aria-activedescendant`, le premier du produit — employé parce
 // qu'aucun autre patron ne tient les deux exigences à la fois.
 
-import { Search } from 'lucide-react'
+// @spec CRM-159 (docs/BACKLOG.md) — tranche T2 : sous les résultats, les mails masqués par une pastille cachée — un lien vers
+//       l'inbox, la pastille activée, pour une pastille de l'espace courant ; un texte qui nomme l'espace sinon
+//       (docs/SPEC-mail-subsystem.md §31.13.6 ; docs/DESIGN_SYSTEM.md §5.111 ; décision 958)
+import { EyeOff, Search } from 'lucide-react'
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { Button } from '../components/ui/Button'
 import { EtatErreur } from '../components/ui/States'
 import { t, type CleTraduction } from '../i18n'
 import type { EtatAsync } from '../lib/async'
@@ -33,11 +37,13 @@ import {
 	creerSequenceur,
 	rechercher,
 	type FamilleRecherche,
+	type MailsMasques,
 	type ResultatRecherche,
 	type ResultatsRecherche,
 } from '../lib/recherche'
 import { clientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
+import { useContexteEspace } from './ContexteEspace'
 
 /** Le libellé d'une famille, par clé de traduction — jamais le discriminant brut (§10). */
 const CLE_FAMILLE: Readonly<Record<FamilleRecherche, CleTraduction>> = {
@@ -211,16 +217,23 @@ export function PaletteRecherche({
 		return () => globalThis.clearTimeout(minuterie)
 	}, [terme, connecte, sequenceur, lancer])
 
-	const suivre = useCallback(
-		(resultat: ResultatRecherche | undefined) => {
-			if (resultat?.adresse == null) return
+	const aller = useCallback(
+		(adresse: string) => {
 			fermer(false)
 			setTerme('')
 			setEtat(null)
-			navigate(resultat.adresse)
+			navigate(adresse)
 		},
 		[fermer, navigate],
 	)
+	const suivre = useCallback(
+		(resultat: ResultatRecherche | undefined) => {
+			if (resultat?.adresse == null) return
+			aller(resultat.adresse)
+		},
+		[aller],
+	)
+	const { idWorkspace } = useContexteEspace()
 
 	const surToucheChamp = (evenement: React.KeyboardEvent<HTMLInputElement>) => {
 		if (evenement.key === 'Escape') {
@@ -432,6 +445,8 @@ export function PaletteRecherche({
 						onSurvol={setActif}
 						onSuivre={suivre}
 						onReprendre={() => lancer(terme.trim())}
+						idEspace={idWorkspace}
+						onAller={aller}
 					/>
 				</div>
 			) : null}
@@ -453,6 +468,8 @@ function CorpsPalette({
 	onSurvol,
 	onSuivre,
 	onReprendre,
+	idEspace,
+	onAller,
 }: {
 	readonly etat: EtatRecherche
 	readonly idListe: string
@@ -461,6 +478,9 @@ function CorpsPalette({
 	readonly onSurvol: (rang: number) => void
 	readonly onSuivre: (resultat: ResultatRecherche) => void
 	readonly onReprendre: () => void
+	/** `CRM-159` : l'espace courant — seule une pastille de cet espace s'active dans l'inbox (§31.12.1). */
+	readonly idEspace: string | null
+	readonly onAller: (adresse: string) => void
 }) {
 	if (etat === null) {
 		// L'ÉTAT D'ARRIVÉE N'EST PAS UN VIDE : la phrase dit ce que la recherche cherche, plutôt
@@ -497,9 +517,13 @@ function CorpsPalette({
 		// LE MESSAGE DIT QUE LA RECHERCHE A ABOUTI, pas qu'elle a échoué, et il n'offre AUCUNE
 		// action — l'écart au §5.8 que le §5.16, le §5.19, le §5.37 et le §5.43 prennent déjà.
 		return (
-			<p data-testid="recherche-vide" className="px-3 py-3 text-sm text-text-2">
-				{t('search.empty')}
-			</p>
+			<>
+				<p data-testid="recherche-vide" className="px-3 py-3 text-sm text-text-2">
+					{t('search.empty')}
+				</p>
+				{/* `CRM-159` : un vide peut n'être que du masqué — la mention le dit. */}
+				<MentionMailsMasques masques={etat.donnees.masques} idEspace={idEspace} onAller={onAller} />
+			</>
 		)
 	}
 	return (
@@ -527,7 +551,62 @@ function CorpsPalette({
 					{t('search.truncated', { compte: String(etat.donnees.resultats.length) })}
 				</p>
 			) : null}
+			<MentionMailsMasques masques={etat.donnees.masques} idEspace={idEspace} onAller={onAller} />
 		</>
+	)
+}
+
+/**
+ * `CRM-159` (§31.13.6, §5.111) — LES MAILS MASQUÉS, sous les résultats. Ce ne sont pas des résultats : hors de la
+ * `listbox`, hors de la navigation par les flèches, joints par `Tab`. Une pastille de l'espace courant mène à l'inbox, la
+ * pastille activée ; une pastille d'un autre espace se nomme avec son espace, sans lien — l'inbox ne l'activerait pas.
+ */
+export function MentionMailsMasques({
+	masques,
+	idEspace,
+	onAller,
+}: {
+	readonly masques: readonly MailsMasques[]
+	readonly idEspace: string | null
+	readonly onAller: (adresse: string) => void
+}) {
+	if (masques.length === 0) return null
+	return (
+		<div data-testid="recherche-mails-masques" className="flex flex-col items-start gap-1 border-t border-border px-3 py-2">
+			{masques.map((m) =>
+				m.idEspace === idEspace ? (
+					<Button
+						key={m.idPastille}
+						variante="discret"
+						taille="compacte"
+						data-testid="recherche-mails-masques-lien"
+						data-pastille={m.idPastille}
+						className="text-[13px] text-text-2 text-left"
+						onClick={() => onAller(m.adresse)}
+					>
+						<EyeOff aria-hidden="true" size={14} className="shrink-0" />
+						<span className="min-w-0 break-words">
+							{t(m.mails === 1 ? 'search.hidden.one' : 'search.hidden.many', { n: String(m.mails), nom: m.nom })}
+						</span>
+					</Button>
+				) : (
+					<p
+						key={m.idPastille}
+						data-testid="recherche-mails-masques-ailleurs"
+						className="flex items-center gap-2 px-3 min-h-[var(--size-target)] text-[13px] text-text-2"
+					>
+						<EyeOff aria-hidden="true" size={14} className="shrink-0" />
+						<span className="min-w-0 break-words">
+							{t(m.mails === 1 ? 'search.hidden.otherWorkspace.one' : 'search.hidden.otherWorkspace.many', {
+								n: String(m.mails),
+								nom: m.nom,
+								espace: m.nomEspace,
+							})}
+						</span>
+					</p>
+				),
+			)}
+		</div>
 	)
 }
 
