@@ -2490,6 +2490,82 @@
 								"content": [
 									{
 										"type": "text",
+										"text": "Les pastilles cachées."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Une pastille peut être "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "cachée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — « Spam » l'est d'office\n("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-inbox-lire-trier-et-repondre",
+									"anchor": "definir-les-pastilles-des-mails"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 12.6"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ") : les conversations qui la portent ne paraissent ni dans la liste, ni\ndans les compteurs des dossiers, ni dans la recherche, tant que vous ne l'activez pas dans les filtres rapides. Son\nbouton porte un "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "œil barré"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Sous la liste, une ligne compte ce qui est masqué, par exemple « "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "2 fils masqués\n(Spam)"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " » ; un clic active la pastille, et les conversations paraissent. Une conversation qui porte une pastille\ncachée et une autre — Spam et Lead — reste masquée sous « Lead » seule : il faut activer Spam. Activer une seule de\nses pastilles cachées suffit. La fiche d'une affaire montre toujours tous les mails qui y sont classés, et un message\nouvert par son lien s'ouvre toujours."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
 										"text": "Dans le message ouvert"
 									}
 								]
@@ -2623,6 +2699,13 @@
 			"alt": "La liste d'un dossier : les filtres rapides « Filtrer par pastille » en tête, une pastille active, « Pastilles archivées » déplié et « Toutes les pastilles », et sous l'objet de chaque conversation ses pastilles",
 			"width": 391,
 			"height": 513
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/fils-masques.jpg",
+			"alt": "Sous la liste des non classés, la ligne « 2 fils masqués (Spam) », précédée de l'œil barré",
+			"width": 391,
+			"height": 90
 		},
 		{
 			"type": "image",
@@ -5264,6 +5347,82 @@
 							}
 						]
 					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Cacher ses mails dans l'inbox »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", la case de la fiche, rend une pastille "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "cachée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : les conversations qui la\nportent ne paraissent dans l'inbox et dans la recherche que si on l'active dans les filtres rapides\n("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-inbox-lire-trier-et-repondre",
+									"anchor": "l-inbox-lire-et-trier-le-courrier-recu"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 12.2"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "). Elle est décochée pour une pastille nouvelle ; "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Spam"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " est\ncachée d'office, et vous pouvez la décocher. Une pastille cachée porte la mention « "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Cachée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " » dans la liste, et une\npastille cachée puis archivée masque encore ses mails."
+							}
+						]
+					}
 				]
 			]
 		},
@@ -5279,7 +5438,7 @@
 			"src": "l-inbox-lire-trier-et-repondre/fiche-d-une-pastille.jpg",
 			"alt": "La fiche d'une pastille : Nom, Couleur et Descriptif pour l'IA, avec son aide",
 			"width": 899,
-			"height": 427
+			"height": 515
 		},
 		{
 			"type": "paragraph",

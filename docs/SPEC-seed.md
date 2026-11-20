@@ -3342,8 +3342,14 @@ scénario `pastilles` du simulateur, qui pose une pastille dont un mot du nom pa
 | `seed-spam-seul@gains-express.example` | Gains Express `<promo@gains-express.example>` | Vous avez gagné un séjour de rêve | Spam | **masqué par défaut** : absent de « Non classés » et de ses compteurs ; « 1 fil masqué (Spam) » sous la liste, puis montré par « Spam » |
 | `seed-spam-lead@leadboost.example` | LeadBoost `<contact@leadboost.example>` | 10 000 leads qualifiés pour votre équipe | Spam, Lead | **le caché l'emporte** : absent sous « Lead », montré sous « Spam » |
 
-- Le texte du premier dit « spam » (« Ce message n'est pas un spam : vous recevez cette offre… »), celui du second
-  « spam » et « leads » : la règle du simulateur est lue telle qu'elle est (`supabase/docker/ollama-simule/serveur.py`).
+- Le texte du premier dit « spam » (« Ce message n'est pas un spam : vous avez été tiré au sort. Réclamez votre séjour
+  avant ce soir. »), celui du second « spam » et « leads » (« Ce n'est pas du spam : nous vendons des fichiers de leads
+  prêts à l'emploi, livrés sous 24 heures. ») — *précisé au code* ; aucun autre mot d'un nom de pastille : la règle du
+  simulateur est lue telle qu'elle est (`supabase/docker/ollama-simule/serveur.py`). Mesuré : Spam pour le premier, Lead et
+  Spam pour le second.
+- **Révisé avec lui** (décision 51) : la pgTAP `0180` mesure les fils Spam du seed avant son montage (n° 22, 23 et 30) ; la
+  palette du manuel cherche « séjour rêve » (image `mails-masques`, §4.6), et l'inbox montre « 2 fils masqués (Spam) » sous
+  les non classés (image `fils-masques`, §12.2).
 - **Rejouable** : des `Message-ID` fixes ; un mail déjà en base n'est pas redéposé.
 - **Le constat**, sous la clé de propriétaire : les deux mails existent hors corbeille, le premier porte Spam seule, le
   second Spam et Lead, posées par l'IA ; sinon le seed s'arrête en nommant la cause.

@@ -5267,13 +5267,14 @@
 		{
 			"fichier": "l-inbox-lire-trier-et-repondre/fiche-d-une-pastille.jpg",
 			"largeur": 899,
-			"hauteur": 427,
+			"hauteur": 515,
 			"chapitre": "l-inbox-lire-trier-et-repondre",
 			"section": "definir-les-pastilles-des-mails",
 			"pleinePage": false,
 			"libelles": [
 				"Annuler",
 				"Bleu",
+				"Cacher ses mails dans l'inbox",
 				"Couleur",
 				"Descriptif pour l'IA",
 				"Enregistrer",
@@ -5281,9 +5282,10 @@
 				"Jaune",
 				"Le modèle lit ce texte pour décider si un mail porte cette pastille. Décrivez les mails concernés.",
 				"Lead",
+				"Les fils qui portent cette pastille ne paraissent que si on l'active dans les filtres. Spam est cachée d'office.",
 				"Modifier la pastille",
 				"Nom",
-				"Nom Couleur Bleu Vert Jaune Rouge Gris Descriptif pour l'IA Le modèle lit ce texte pour décider si un mail porte cette pastille. Décrivez les mails concernés. Enregistrer Annuler",
+				"Nom Couleur Bleu Vert Jaune Rouge Gris Descriptif pour l'IA Le modèle lit ce texte pour décider si un mail porte cette pastille. Décrivez les mails concernés. Cacher ses mails dans l'inbox Les fils qui portent cette pastille ne paraissent que si on l'active dans les filtres. Spam est cachée d'office. Enregistrer Annuler",
 				"Rouge",
 				"Un prospect qui s'intéresse à nos services : demande d'information, de rendez-vous ou de premier échange.",
 				"Vert",
@@ -5291,7 +5293,19 @@
 				"brand",
 				"danger",
 				"neutral",
+				"on",
 				"success"
+			]
+		},
+		{
+			"fichier": "l-inbox-lire-trier-et-repondre/fils-masques.jpg",
+			"largeur": 391,
+			"hauteur": 90,
+			"chapitre": "l-inbox-lire-trier-et-repondre",
+			"section": "l-inbox-lire-et-trier-le-courrier-recu",
+			"pleinePage": false,
+			"libelles": [
+				"2 fils masqués (Spam)"
 			]
 		},
 		{
@@ -5780,7 +5794,7 @@
 			"section": "l-inbox-lire-et-trier-le-courrier-recu",
 			"pleinePage": false,
 			"libelles": [
-				"18/11/2026 02:50",
+				"19/11/2026 17:11",
 				"Administratif",
 				"Devis / commande",
 				"Facture / paiement",
@@ -5796,12 +5810,13 @@
 				"Re: Demande de devis — refonte",
 				"Recrutement",
 				"Spam",
+				"Spam, pastille cachée",
 				"Support client",
 				"Sélectionner le fil Re: Demande de devis — refonte",
 				"Tout sélectionner",
 				"Toutes les pastilles",
 				"bizdev@p2enjoy.test",
-				"bizdev@p2enjoy.test Re: Demande de devis — refonte Devis / commande 18/11/2026 02:50",
+				"bizdev@p2enjoy.test Re: Demande de devis — refonte Devis / commande 19/11/2026 17:11",
 				"on"
 			]
 		},
@@ -14016,6 +14031,30 @@
 			"libelles": [
 				"Ctrl+K",
 				"Rechercher…"
+			]
+		},
+		{
+			"fichier": "retrouver-n-importe-quoi-la-recherche/mails-masques.jpg",
+			"largeur": 479,
+			"hauteur": 180,
+			"chapitre": "retrouver-n-importe-quoi-la-recherche",
+			"section": "ce-que-la-recherche-affiche-et-ce-qu-elle-ne-fait-pas",
+			"pleinePage": false,
+			"libelles": [
+				"1 mail masqué (Spam)",
+				"2",
+				"Aide",
+				"Aucun résultat pour ce terme.",
+				"Aucun résultat pour ce terme. 1 mail masqué (Spam)",
+				"Camille Aubert",
+				"Coûts",
+				"Notifications — 2 non lues",
+				"Nouveau channel",
+				"Rechercher…",
+				"Réorganiser",
+				"Résultats de la recherche",
+				"Vues du track",
+				"séjour rêve"
 			]
 		},
 		{

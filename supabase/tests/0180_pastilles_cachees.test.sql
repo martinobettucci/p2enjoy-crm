@@ -7,9 +7,11 @@
 -- @verifies docs/SPEC-mail-subsystem.md §31.13.1 à §31.13.6 ; docs/SCHEMA.md « Migration `0193` » ;
 --           docs/JOURNAL.md décisions 957 et 958 ; CLAUDE.md §10
 --
--- LES POSES SONT ÉCRITES EN PROPRIÉTAIRE, DANS LA TRANSACTION DE LA PREUVE, QUI EST ANNULÉE : le seed ne porte encore aucun
--- mail Spam à cette tranche (le §52 du seed vient avec T4). Chaque refus et chaque masquage est précédé du témoin de son
--- montage. Les pastilles sont lues par leur nom : leurs identifiants ne sont pas stables d'un seed à l'autre.
+-- LES POSES SONT ÉCRITES EN PROPRIÉTAIRE, DANS LA TRANSACTION DE LA PREUVE, QUI EST ANNULÉE. Chaque refus et chaque masquage
+-- est précédé du témoin de son montage. Les pastilles sont lues par leur nom : leurs identifiants ne sont pas stables d'un
+-- seed à l'autre. *Révisé avec le seed §52 (T4, 2026-11-20, décision 51)* : « Non classés » porte déjà deux fils Spam du
+-- seed, masqués ; les comptes de la mention et de la portée sont donc mesurés AVANT le montage et la preuve y ajoute les
+-- siens.
 
 begin;
 
@@ -110,6 +112,11 @@ update public.mail_labels set hidden = false where id = pg_temp.id('pastille:lea
 
 select pg_temp.endosser(pg_temp.id('camille'));
 insert into pg_temp_ref select 'liste_avant', count(*)::text from public.inbox_messages();
+-- Les fils Spam du seed (§52), masqués avant toute pose de la preuve.
+insert into pg_temp_ref select 'spam_seed', coalesce((select thread_count from public.inbox_hidden_counts()
+                                                     where label_id = pg_temp.id('pastille:spam')), 0)::text;
+insert into pg_temp_ref select 'portee_seed', (select thread_count || ',' || message_count from public.inbox_bulk_count(
+	jsonb_build_object('folder', 'unclassified', 'label_ids', jsonb_build_array(pg_temp.ref('pastille:spam')))));
 select pg_temp.redevenir_proprietaire();
 
 select is(pg_temp.ref('liste_avant')::int, 4,
@@ -199,11 +206,11 @@ update public.mail_messages set deleted_at = null where id = pg_temp.id('c');
 select pg_temp.endosser(pg_temp.id('camille'));
 select results_eq(
 	$$select label_id, thread_count from public.inbox_hidden_counts()$$,
-	$$values (pg_temp.id('pastille:promo 159'), 1), (pg_temp.id('pastille:spam'), 3)$$,
-	'22 — sans filtre : Promo 159 masque un fil, Spam trois, dans l''ordre du nom');
+	$$values (pg_temp.id('pastille:promo 159'), 1), (pg_temp.id('pastille:spam'), pg_temp.ref('spam_seed')::int + 3)$$,
+	'22 — sans filtre : Promo 159 masque un fil, Spam trois de plus que le seed, dans l''ordre du nom');
 select results_eq(
 	$$select label_id, thread_count from public.inbox_hidden_counts(p_label_ids => array[pg_temp.id('pastille:lead')])$$,
-	$$values (pg_temp.id('pastille:promo 159'), 1), (pg_temp.id('pastille:spam'), 3)$$,
+	$$values (pg_temp.id('pastille:promo 159'), 1), (pg_temp.id('pastille:spam'), pg_temp.ref('spam_seed')::int + 3)$$,
 	'23 — sous « Lead » : ce que montrerait chaque pastille cachée ajoutée');
 select results_eq(
 	$$select label_id, thread_count from public.inbox_hidden_counts(p_label_ids => array[pg_temp.id('pastille:spam')])$$,
@@ -235,8 +242,8 @@ select results_eq(
 select results_eq(
 	$$select thread_count, message_count from public.inbox_bulk_count(
 		jsonb_build_object('folder', 'unclassified', 'label_ids', jsonb_build_array(pg_temp.ref('pastille:spam'))))$$,
-	$$values (3, 3)$$,
-	'30 — sous « Spam », les trois fils Spam sont dans la portée');
+	$$select split_part(pg_temp.ref('portee_seed'), ',', 1)::int + 3, split_part(pg_temp.ref('portee_seed'), ',', 2)::int + 3$$,
+	'30 — sous « Spam », les trois fils Spam de la preuve s''ajoutent à la portée');
 
 -- =============================================================================================
 -- 5. La recherche — §31.13.6

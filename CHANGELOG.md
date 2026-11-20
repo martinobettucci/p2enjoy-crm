@@ -27,6 +27,9 @@ d'exécuter le code attendu.
 - **CRM-159 T3 — le connecteur.** `crm_mail_label_list` rend `hidden` pour chaque pastille ; `crm_search` écarte les mails
   des fils masqués et rend `hidden_mails`, leur compte par pastille, là où la matrice ouvre la messagerie.
   `crm_card_mail_list` ne change pas, et aucun outil n'écrit le drapeau.
+- **CRM-159 T4 — le seed, le manuel et le contrat.** Seed §52 : deux mails déposés dans la boîte système, relevés et
+  pastillés par la vraie passe, l'un Spam, l'autre Spam et Lead. Manuel §4.6, §12.2 et §12.6, avec deux images nouvelles
+  et la fiche d'une pastille renouvelée. Contrat §2.65 : la migration 193, la webapp et l'image `mcp` dans la même fenêtre.
 
 ## [Publié]
 

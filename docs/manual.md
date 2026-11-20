@@ -674,6 +674,12 @@ nécessairement la même liste, et c'est voulu.
   pas d'historique de recherche.
 - **Aucun filtre par famille**, aucune suggestion, aucune correction de frappe.
 - **Aucune action sur un résultat** : la recherche mène, elle n'agit pas.
+- **Les mails d'une pastille cachée** — « Spam » par défaut ([section 12.6](#definir-les-pastilles-des-mails)) — ne
+  sortent pas parmi les résultats. Une ligne sous la liste les compte, par exemple « 1 mail masqué (Spam) », et mène
+  à l'inbox, la pastille activée. Pour une pastille d'un autre espace de travail, la ligne nomme l'espace et ne mène
+  nulle part : changez d'espace pour la retrouver.
+
+![La palette : « séjour rêve » ne trouve aucun résultat visible, et la ligne « 1 mail masqué (Spam) » le dit](manuel/images/retrouver-n-importe-quoi-la-recherche/mails-masques.jpg)
 - **Les tracks et les channels ne sont pas cherchés.** On les trouve par la navigation, qui les
   liste tous à l'écran.
 - **Un résultat dont l'écran n'est pas atteignable reste affiché**, marqué « Objet non
@@ -3548,6 +3554,14 @@ vous envoyez ne sont pas évalués.
   navigateur défait le dernier choix —, et ne propose que les pastilles de l'espace ouvert : changez d'espace pour
   filtrer les mails d'un autre. Si aucun message ne porte les pastilles choisies, la liste le dit et propose « **Toutes
   les pastilles** ».
+- **Les pastilles cachées.** Une pastille peut être **cachée** — « Spam » l'est d'office
+  ([section 12.6](#definir-les-pastilles-des-mails)) : les conversations qui la portent ne paraissent ni dans la liste, ni
+  dans les compteurs des dossiers, ni dans la recherche, tant que vous ne l'activez pas dans les filtres rapides. Son
+  bouton porte un **œil barré**. Sous la liste, une ligne compte ce qui est masqué, par exemple « **2 fils masqués
+  (Spam)** » ; un clic active la pastille, et les conversations paraissent. Une conversation qui porte une pastille
+  cachée et une autre — Spam et Lead — reste masquée sous « Lead » seule : il faut activer Spam. Activer une seule de
+  ses pastilles cachées suffit. La fiche d'une affaire montre toujours tous les mails qui y sont classés, et un message
+  ouvert par son lien s'ouvre toujours.
 - **Dans le message ouvert**, ses pastilles viennent sous l'en-tête ; le survol de chacune dit qui l'a posée, l'IA ou
   une personne. Tant que l'IA ne l'a pas lu, la même ligne dit que les pastilles sont en attente d'évaluation ; si elle
   n'a pas pu, après plusieurs essais, elle dit en rouge que les pastilles n'ont pas pu être évaluées.
@@ -3565,6 +3579,8 @@ autres voient les pastilles et la liste, boutons et cases grisés, avec un bande
 configuré, rien n'est envoyé : les mails attendent, et vous pouvez toujours poser les pastilles à la main.
 
 ![La liste d'un dossier : les filtres rapides « Filtrer par pastille » en tête, une pastille active, « Pastilles archivées » déplié et « Toutes les pastilles », et sous l'objet de chaque conversation ses pastilles](manuel/images/l-inbox-lire-trier-et-repondre/pastilles-dans-la-liste.jpg)
+
+![Sous la liste des non classés, la ligne « 2 fils masqués (Spam) », précédée de l'œil barré](manuel/images/l-inbox-lire-trier-et-repondre/fils-masques.jpg)
 
 ![La liste « Pastilles de ce message », ouverte sous la rangée de boutons : les cases, et l'origine de chaque pastille posée ou retirée](manuel/images/l-inbox-lire-trier-et-repondre/pastilles-d-un-message.jpg)
 
@@ -3901,6 +3917,11 @@ en une ou deux phrases.
   propose encore. Rien n'est supprimé.
 - **« Afficher les archivées »** les ramène en fin de liste, avec la mention « Archivée » et le seul bouton
   « **Désarchiver** », qui la rend aussitôt, sans confirmation.
+- **« Cacher ses mails dans l'inbox »**, la case de la fiche, rend une pastille **cachée** : les conversations qui la
+  portent ne paraissent dans l'inbox et dans la recherche que si on l'active dans les filtres rapides
+  ([section 12.2](#l-inbox-lire-et-trier-le-courrier-recu)). Elle est décochée pour une pastille nouvelle ; **Spam** est
+  cachée d'office, et vous pouvez la décocher. Une pastille cachée porte la mention « **Cachée** » dans la liste, et une
+  pastille cachée puis archivée masque encore ses mails.
 
 ![Une pastille archivée, « Newsletter », en fin de liste : la mention « Archivée » et « Désarchiver »](manuel/images/l-inbox-lire-trier-et-repondre/pastille-archivee.jpg)
 

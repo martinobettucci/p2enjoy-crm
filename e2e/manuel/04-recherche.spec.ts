@@ -1,6 +1,9 @@
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.1 : les images du chapitre 4, « Retrouver n'importe quoi : la recherche »
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitre 4 ; docs/SPEC-recherche.md §12 (la palette), §13 (les
 //       adresses des résultats)
+// @spec CRM-159 (docs/BACKLOG.md) — tranche T4 : l'image « mails-masques » (section 4.6) — « séjour rêve » ne trouve que le mail
+//       Spam du seed, masqué, et la palette le compte (docs/SPEC-mail-subsystem.md §31.13.6 ; docs/DESIGN_SYSTEM.md §5.111 ;
+//       docs/SPEC-seed.md §52)
 //
 // Les termes sont ceux de `e2e/ui/recherche.spec.ts` : « sogexia » trouve une affaire, une organisation et un commentaire
 // du seed ; « candidature » trouve un message de l'inbox, qui n'est classé dans aucune affaire.
@@ -40,4 +43,23 @@ test('un message trouvé mène à l’inbox, dans « Non classés »', async ({ 
 	const dossier = page.getByRole('button', { name: /Non classés/ })
 	await expect(dossier).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: 'la-parcourir-au-clavier-et-y-aller', nom: 'message-non-classe', cibles: [page.getByTestId('inbox-panneau-dossiers').getByRole('heading').first(), dossier] })
+})
+
+test('un mail masqué par une pastille cachée : la palette le compte', async ({ page }) => {
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto('/tracks/conseil-ia/grands-comptes')
+	const champ = page.getByTestId('champ-recherche')
+	await expect(champ).toBeVisible()
+	await page.keyboard.press('ControlOrMeta+k')
+	await expect(champ).toBeFocused()
+	// « Vous avez gagné un séjour de rêve », pastillé Spam par la passe du seed (§52) : masqué, il ne sort pas.
+	await page.keyboard.type('séjour rêve')
+	const panneau = page.getByTestId('panneau-recherche')
+	await expect(panneau.getByTestId('recherche-mails-masques-lien')).toHaveText('1 mail masqué (Spam)')
+	await illustrer(page, {
+		chapitre: CHAPITRE,
+		section: 'ce-que-la-recherche-affiche-et-ce-qu-elle-ne-fait-pas',
+		nom: 'mails-masques',
+		cibles: [champ, panneau],
+	})
 })

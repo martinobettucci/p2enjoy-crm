@@ -1040,6 +1040,57 @@
 								"content": [
 									{
 										"type": "text",
+										"text": "Les mails d'une pastille cachée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — « Spam » par défaut ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-inbox-lire-trier-et-repondre",
+									"anchor": "definir-les-pastilles-des-mails"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 12.6"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ") — ne\nsortent pas parmi les résultats. Une ligne sous la liste les compte, par exemple « 1 mail masqué (Spam) », et mène\nà l'inbox, la pastille activée. Pour une pastille d'un autre espace de travail, la ligne nomme l'espace et ne mène\nnulle part : changez d'espace pour la retrouver."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "image",
+			"src": "retrouver-n-importe-quoi-la-recherche/mails-masques.jpg",
+			"alt": "La palette : « séjour rêve » ne trouve aucun résultat visible, et la ligne « 1 mail masqué (Spam) » le dit",
+			"width": 479,
+			"height": 180
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
 										"text": "Les tracks et les channels ne sont pas cherchés."
 									}
 								]

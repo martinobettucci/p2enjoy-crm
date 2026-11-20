@@ -49,6 +49,8 @@
 #       sous la clé de service (décision 746, migration 124) ; docs/SPEC-rattachements.md §12
 # @spec CRM-156 (docs/BACKLOG.md) — tranche T5 : l'inbox — un mail transféré, un expéditeur bloqué, un expéditeur inconnu,
 #       par la vraie relève et les RPC de l'écran (docs/SPEC-seed.md §49 ; docs/SPEC-mail-subsystem.md §32.12)
+# @spec CRM-159 (docs/BACKLOG.md) — tranche T4 : deux mails Spam, l'un aussi Lead, déposés et relevés, pastillés par la vraie
+#       passe (docs/SPEC-seed.md §52 ; docs/SPEC-mail-subsystem.md §31.13.8)
 # @spec INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — Camille reçoit une identité personnelle, et
 #       l'envoi de démonstration part d'elle : l'identité de service ne s'emprunte plus ; docs/SPEC-seed.md §2.18,
 #       docs/SPEC-mail-subsystem.md §14.2 et §22.14
@@ -6540,6 +6542,27 @@ IFS='|' read -r INBOX_TRANSFERT INBOX_NOTIFICATION INBOX_BLOCAGE INBOX_CORBEILLE
 [ "$INBOX_CONTACT" = "0" ] || die "Nora Nouveau ne doit pas être un contact : la liste à vérifier doit rester à démontrer (§49)."
 info "Inbox : « Demande d'information — formation IA » de Nora Nouveau, expéditrice inconnue, transférée à Driss ; $ADRESSE_BLOQUEE bloquée, un mail mis à la corbeille et un relevé directement en corbeille — docs/SPEC-seed.md §49"
 
+# --- Deux mails Spam : l'un seul, l'autre aussi Lead — CRM-159 T4, docs/SPEC-seed.md §52 -------------------------------
+# @spec CRM-159 (docs/BACKLOG.md) — tranche T4 : deux mails DÉPOSÉS par IMAP dans la boîte système et RELEVÉS par la vraie
+#       relève, que la VRAIE passe du §46 pastille contre le scénario `pastilles` du simulateur — Spam pour l'un, Spam et
+#       Lead pour l'autre (docs/SPEC-mail-subsystem.md §31.13.8 ; docs/SPEC-seed.md §52 ; CLAUDE.md §8)
+#
+# AVANT LE §46, comme le §49 : la passe doit trouver ces mails. Le simulateur pose une pastille dont un mot du NOM (quatre
+# lettres au moins) paraît dans l'objet ou le texte : les textes disent « spam » et « leads », et aucun autre mot d'un nom de
+# pastille (`supabase/docker/ollama-simule/serveur.py`). AUCUN DRAPEAU N'EST POSÉ ICI : Spam est cachée par la migration 0193.
+# REJOUABLE : des `Message-ID` fixes ; un mail présent n'est pas redéposé.
+MSGID_SPAM_SEUL='seed-spam-seul@gains-express.example'
+MSGID_SPAM_LEAD='seed-spam-lead@leadboost.example'
+echo
+say "8 tertricies ter. Deux mails Spam (CRM-159)"
+deposer_puis_relever 'Gains Express <promo@gains-express.example>' "$MSGID_SPAM_SEUL" \
+	'Vous avez gagné un séjour de rêve' \
+	"Ce message n'est pas un spam : vous avez été tiré au sort. Réclamez votre séjour avant ce soir."
+deposer_puis_relever 'LeadBoost <contact@leadboost.example>' "$MSGID_SPAM_LEAD" \
+	'10 000 leads qualifiés pour votre équipe' \
+	"Ce n'est pas du spam : nous vendons des fichiers de leads prêts à l'emploi, livrés sous 24 heures."
+info "Deux mails Spam déposés et relevés dans la boîte système, pastillés par la passe du §46 — docs/SPEC-seed.md §52"
+
 # --- Les pastilles d'un mail : évaluées par le vrai chemin, corrigées à la main, une en échec — CRM-141 T2, docs/SPEC-seed.md §46
 # @spec CRM-141 (docs/BACKLOG.md) — tranche T2 : les messages reçus du seed évalués par la VRAIE passe de la fonction `ia`,
 #       appelée par sa route avec le secret d'appel et le scénario `pastilles` du simulateur ; une correction à la main par
@@ -6643,6 +6666,20 @@ IFS='|' read -r PASTILLES_FAITES PASTILLES_ECHEC PASTILLES_MAIN PASTILLES_ARCHIV
 [ "$PASTILLES_ARCHIVEE" = "1" ] || die "l'invitation doit porter la pastille archivée « Newsletter » (§46) — mesuré : $PASTILLES_ARCHIVEE."
 [ "$PASTILLES_LLM" -ge 1 ] || die "aucune pastille posée par la passe : la fonction « ia » vise-t-elle le simulateur ? (§46)"
 info "Pastilles des mails : $PASTILLES_FAITES messages évalués par la vraie passe ($PASTILLES_LLM pastilles de l'IA), une correction à la main, « Newsletter » archivée et portée, « Candidature spontanée » en échec — docs/SPEC-seed.md §46"
+
+# 6. `CRM-159` (§52) : le constat des deux mails Spam, pastillés par l'IA, et Spam cachée par la migration.
+pastilles_llm_de() { # $1 = Message-ID sans chevrons ; les pastilles posées par l'IA, dans l'ordre du nom
+	psql_seed -c "select coalesce(string_agg(l.name, ',' order by l.name), '') from public.mail_message_labels x
+	              join public.mail_labels l on l.id = x.label_id join public.mail_messages m on m.id = x.message_id
+	              where m.rfc822_message_id = '<$1>' and m.deleted_at is null and x.applied and x.source = 'llm'"
+}
+SPAM_SEUL=$(pastilles_llm_de "$MSGID_SPAM_SEUL")
+SPAM_LEAD=$(pastilles_llm_de "$MSGID_SPAM_LEAD")
+[ "$SPAM_SEUL" = "Spam" ] || die "« Vous avez gagné un séjour de rêve » doit porter Spam seule, posée par l'IA (§52) — mesuré : « $SPAM_SEUL »."
+[ "$SPAM_LEAD" = "Lead,Spam" ] || die "« 10 000 leads qualifiés » doit porter Lead et Spam, posées par l'IA (§52) — mesuré : « $SPAM_LEAD »."
+[ "$(psql_seed -c "select hidden from public.mail_labels where workspace_id = '$WS_ID' and name = 'Spam'")" = "t" ] \
+	|| die "la pastille Spam de l'espace doit être cachée : la migration 0193 est-elle appliquée ? (§52)"
+info "Mails Spam : « Vous avez gagné un séjour de rêve » (Spam), « 10 000 leads qualifiés » (Spam, Lead), Spam cachée — docs/SPEC-seed.md §52"
 
 # =============================================================================================
 # 47. Les prompts du connecteur : les cinq défauts, et un prompt ajouté par l'administratrice — `CRM-149` T4

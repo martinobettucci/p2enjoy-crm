@@ -20344,9 +20344,7 @@ constater le départ des deux mails de Thomas et le contrôle 10 « OK ».
 **DoD** : preuve que la file se vide **sans appel explicite** (E2E mail : un envoi mis en file part dans la minute) ;
 pgTAP si migration ; contrat ; constat en production (les deux mails de Thomas partent).
 
-### CRM-159 — Pastilles de mail « cachées » : leurs mails ne paraissent dans l'inbox que si l'on active la pastille `[@]`
-
-*Prise en charge : f9 (152dd27d) depuis 2026-11-20 19:56 UTC — état avant : [ ]*
+### CRM-159 — Pastilles de mail « cachées » : leurs mails ne paraissent dans l'inbox que si l'on active la pastille `[P]`
 
 **Origine** : demande du responsable, le 2026-11-20 ; arbitrée le même jour (décision 957).
 **Demande, verbatim** : « certaines catégorie sont cachées par défaut sauf si on les sélectionné explicitement. je pense au
@@ -20393,7 +20391,10 @@ corbeille de l'inbox, le message ouvert et les notifications ne masquent pas (§
   `pastilles-inbox` API révisées) ;
 - [x] **T3** — le connecteur : `hidden`, `hidden_mails` ; pytest, intégration, `verify-mcp.sh` ; *faite le 2026-11-20*
   (pytest 436, `verify-mcp.sh` 126 contrôles) ;
-- [ ] **T4** — le seed §52, le manuel §12.2 et §12.6, le contrat ; l'unité passe `[P]`.
+- [x] **T4** — le seed §52, le manuel §12.2 et §12.6, le contrat ; l'unité passe `[P]`. *Faite le 2026-11-20* (seed §52
+  constaté ; manuel §4.6, §12.2, §12.6, `verify-manual` 168 sans anomalie ; contrat §2.65).
+**À constater en production** (contrat §2.65, geste 7) : les fils Spam masqués et la mention ; « Spam » activée qui les
+montre ; « Cachée » et la case dans Réglages ▸ Pastilles des mails ; la palette qui dit les mails masqués.
 
 ### CRM-160 — « Seulement moi » cache les réponses reçues à l'adresse d'une affaire : elles concernent qui a écrit dans le fil et le responsable de l'affaire `[@]`
 *Prise en charge : session interactive d5b44a2d (p2enjoy-crm-6e) depuis 2026-11-20 20:06 UTC — état avant : [ ] ; confiée par la session de livraison (d5)*

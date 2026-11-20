@@ -30,6 +30,9 @@
 //       « pastilles-d-un-message » (section 12.2), « pastilles-des-mails », « pastille-archivee » et « fiche-d-une-pastille » (section 12.6) — sur la
 //       correction du seed (docs/DESIGN_SYSTEM.md §5.103 ; docs/SPEC-mail-subsystem.md §31.7 ; docs/SPEC-seed.md §46) ;
 //       rien n'est posé, retiré ni créé : la liste et la fiche sont ouvertes puis refermées
+// @spec CRM-159 (docs/BACKLOG.md) — tranche T4 : l'image « fils-masques » (section 12.2) — la mention sous les non classés, sur
+//       les deux mails Spam du seed (docs/DESIGN_SYSTEM.md §5.111 ; docs/SPEC-seed.md §52) ;
+//       « fiche-d-une-pastille » montre désormais la case « Cacher ses mails dans l'inbox »
 // @spec CRM-156 (docs/BACKLOG.md) — tranche T5 : les images des actions groupées et des ajouts de l'inbox — « actions-groupees »,
 //       « confirmation-groupee », « filtre-expediteur », « transferer-un-message », « bloquer-un-expediteur »,
 //       « creer-des-contacts » (section 12.2), « expediteurs-bloques » (section 12.7), et « transfert-de-mail » du
@@ -557,6 +560,19 @@ test('les pastilles : dans la liste, sur un message, et dans les réglages', asy
 	})
 	await page.getByTestId('inbox-pastilles-fermer').click()
 	await expect(panneau).toBeHidden()
+
+	// `CRM-159` (§5.111) : les fils masqués par Spam, sous la liste des non classés — les deux mails Spam du seed (§52).
+	const [invitation] = await lireService<{ id: string }[]>(
+		request,
+		`mail_messages?select=id&rfc822_message_id=eq.${encodeURIComponent('<seed-corps-html@p2enjoy.test>')}`,
+	)
+	await page.goto(`/inbox?courrier=tous&message=${invitation!.id}`)
+	const masques = liste(page).getByTestId('inbox-fils-masques')
+	await expect(masques).toContainText('fils masqués (Spam)')
+	// La mention seule : en bas d'une longue liste, elle ne tient pas dans la fenêtre avec les filtres rapides. Elle est
+	// amenée au centre de la vue, sa marge comprise.
+	await masques.evaluate((noeud) => noeud.scrollIntoView({ block: 'center' }))
+	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'fils-masques', cibles: [masques] })
 
 	const REGLAGES = 'definir-les-pastilles-des-mails'
 	await page.goto('/reglages/pastilles-mails')
