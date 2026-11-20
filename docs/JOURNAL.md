@@ -41196,3 +41196,20 @@ un motif nouveau, `workspace_reply_domain_missing`, comme `identity_withdrawn` l
 part ; la fiche de l'affaire dit pourquoi ; on la réarme une fois le domaine réglé. *Écarté* : sauter et réessayer.
 **Conséquences** : `docs/SPEC-mail-subsystem.md` §33.2 bis ; `docs/SPEC-modeles-emails.md` §12.7 (une sixième fin) ; la
 migration `0192` élargit `card_sequence_enrollments_motif_borne` ; la tranche T1 de `CRM-157` le porte.
+
+### décision 956 — livrer le lot CRM-157 et CRM-158 à la révision `3df3bd7e`
+
+*2026-11-20, session 4522fa9c (p2enjoy-crm-d5, ex-e3, ex-bb, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : `CRM-157` (refus d'envoi nommé sans domaine, relance due arrêtée, messagerie dans le guide de démarrage ;
+`0192`, webapp) et `CRM-158` (la file d'envoi vidée toutes les 30 s par la boucle de `mail-sync` ; l'image `mail-sync`),
+unités entières ; contrat §2.62 à §2.64 ; verrou `5c5bd641`.
+**La campagne** : complète à `5c5bd641` sur une base remise à zéro (accord des trois sessions ; les branches de création du
+seed §35 et §42 traversées) ; types, unitaires 6 099/6 099, sql 167 fichiers et 5 524 assertions, mail 57/57, mcp 126 contrôles,
+construction du manuel verts ; ui 1 292 sur 1 296, api 1 389 sur 1 393, manuel 163 sur 164 — verts rejoués seuls
+(`demarrage` api, état transitoire lu en parallèle ; `connecteur-organisations`, `temps-fiche-affaire`) ou connus
+(INC-342), sauf **un défaut**, renvoyé et corrigé : `corps-html`:95 (f9, `bda32430`), une course de la preuve (l'événement
+de requête rendu avant le gestionnaire qui la compte), corrigée par `expect.poll` ; rejoué 7/7 deux fois. Manuel rendu à sa
+source et republié en dev (garde 168, API 9/9). Captures : 131 renouvelées, observées (`3df3bd7e`).
+**La file de production**, relue en lecture seule avant la fenêtre : les deux seuls envois en attente sont ceux de Thomas
+(13:45 et 13:46 UTC le 2026-11-19), qui partiront à la reconstruction de `mail-sync`.
+**Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `3df3bd7e` : migration 192, webapp, `mail-sync`.
