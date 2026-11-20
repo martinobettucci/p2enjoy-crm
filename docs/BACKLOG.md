@@ -20382,7 +20382,8 @@ compteurs, recherche, refus d'une lectrice qui règle le drapeau) ; E2E UI souri
 combinaison, la mention et son clic) ; MCP (unitaire et intégration) ; seed (un mail Spam et un mail Spam + Lead) ;
 captures observées ; manuel ; contrat. La campagne complète revient à la session de livraison (décision 830).
 
-### CRM-160 — « Seulement moi » cache les réponses reçues à l'adresse d'une affaire : elles concernent qui a écrit dans le fil et le responsable de l'affaire `[ ]`
+### CRM-160 — « Seulement moi » cache les réponses reçues à l'adresse d'une affaire : elles concernent qui a écrit dans le fil et le responsable de l'affaire `[@]`
+*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-6e) depuis 2026-11-20 20:06 UTC — état avant : [ ] ; confiée par la session de livraison (d5)*
 
 **Origine** : question du responsable, le 2026-11-20 (« on risque pas de louper les emails qu'on reçoit en réponse ? ») ;
 défaut constaté et arbitré le même jour (décision 959).
