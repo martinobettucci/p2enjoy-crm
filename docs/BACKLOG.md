@@ -20381,3 +20381,33 @@ le manuel §12.2 et §12.6 ; le contrat de déploiement.
 compteurs, recherche, refus d'une lectrice qui règle le drapeau) ; E2E UI souris et clavier (la case, le masquage, la
 combinaison, la mention et son clic) ; MCP (unitaire et intégration) ; seed (un mail Spam et un mail Spam + Lead) ;
 captures observées ; manuel ; contrat. La campagne complète revient à la session de livraison (décision 830).
+
+### CRM-160 — « Seulement moi » cache les réponses reçues à l'adresse d'une affaire : elles concernent qui a écrit dans le fil et le responsable de l'affaire `[ ]`
+
+**Origine** : question du responsable, le 2026-11-20 (« on risque pas de louper les emails qu'on reçoit en réponse ? ») ;
+défaut constaté et arbitré le même jour (décision 959).
+**Le défaut** : un mail envoyé depuis une affaire porte l'adresse de l'affaire en `Reply-To` (§4.4, §5) ; la réponse du
+correspondant est donc adressée à cette seule adresse `c-*`. Or `public.concerns_me` (`0190`) ne retient un message que si
+une adresse **personnelle** de l'appelant figure en À, Cc, Cci ou expéditeur, ou s'il lui a été transféré. La réponse ne
+concerne donc **personne** : avec « Seulement moi », coché par défaut (`CRM-139`, §27), elle n'apparaît dans l'inbox de
+personne ; on ne la voit que sur la fiche de l'affaire ou en décochant la case. **Mesuré en production, en lecture seule,
+le 2026-11-20** : 5 des 12 mails reçus rattachés à une affaire n'ont aucune adresse personnelle en À, Cc ou Cci.
+**Comportement attendu** (décision 959) — un message **reçu** et **rattaché à une affaire** concerne aussi :
+- (i) **qui a écrit dans ce fil** : l'appelant a envoyé au moins un message du même fil (`app.cle_fil`) depuis l'une de
+  ses identités personnelles ;
+- (ii) **le responsable de l'affaire** (`cards.owner_id`), même s'il n'a rien écrit ;
+- les abonnés de l'affaire ne sont **pas** concernés pour autant ; **aucune notification** nouvelle : le mail paraît dans
+  « Seulement moi », non lu, et ses compteurs (`inbox_arborescence(p_only_me)`) suivent ;
+- ce n'est toujours **pas une règle d'accès** : la RLS ne change pas.
+**Connecteur MCP** : **oui, la même règle, famille existante `messagerie`, action `consulter`** (décision 959) — le
+filtre `only_me` de `crm_card_mail_list` emploie `concerns_me` et suit donc la règle corrigée ; aucun outil, aucune case
+nouvelle (`docs/SPEC-mcp.md` §6.1, §9.2 *duodevicies*).
+**Spécification** : à écrire avant le code — `docs/SPEC-mail-subsystem.md` §27.2 et §27.3 révisés ; `docs/SCHEMA.md`
+(la migration) ; le manuel (« Seulement moi ») ; le contrat de déploiement.
+**Coordination** : `CRM-159` (f9) touche la même lecture de l'inbox et ses compteurs ; la migration écrite la seconde
+reprend la définition de la première.
+**DoD** (`CLAUDE.md` §18) : un pgTAP **rouge avant la correction** (la réponse à l'adresse d'une affaire ne concerne
+personne), vert après, avec les cas (i), (ii), un tiers non concerné et un message non rattaché inchangé ; API (la liste
+et les compteurs « Seulement moi » d'Ali qui a écrit, du responsable, d'un tiers) ; E2E UI (la réponse visible dans
+« Seulement moi ») ; MCP (`only_me`) ; seed (une réponse reçue à l'adresse d'une affaire seule) ; manuel ; contrat. La
+campagne complète revient à la session de livraison (décision 830).

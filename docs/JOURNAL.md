@@ -41302,3 +41302,18 @@ Trois points que la décision 957 laissait ouverts, relevés à la lecture de l'
 **Conséquence tirée par la session, à la spécification** : « un fil coché agit sur les messages que la liste montre »
 (`docs/SPEC-mail-subsystem.md` §32.2) ; la portée des actions groupées et leur compte, calculés en base, suivent donc la
 même règle de masquage que la liste.
+
+### décision 959 — `CRM-160` : une réponse reçue dans une affaire concerne qui a écrit dans le fil et le responsable de l'affaire
+
+*2026-11-20, session 4522fa9c (p2enjoy-crm-d5, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le problème** : le responsable demande si « Seulement moi » fait manquer les réponses. **Oui** : la réponse à un mail
+envoyé depuis une affaire est adressée à l'adresse `c-*` du `Reply-To`, et `concerns_me` ne connaît que les adresses
+personnelles ; mesuré en production : 5 des 12 mails reçus rattachés ne concernent personne.
+**Décisions** :
+- un message reçu rattaché à une affaire concerne **qui a écrit dans ce fil** et **le responsable de l'affaire** ; écarté :
+  les abonnés de l'affaire ;
+- **aucune notification** nouvelle : l'inbox « Seulement moi » et ses compteurs suffisent ; écartée : une notification
+  « Réponse reçue » ;
+- **connecteur MCP** — question 1 : **oui, la même règle** (`only_me` de `crm_card_mail_list`) ; écarté : non. Question 2 :
+  **famille existante `messagerie`**, action `consulter` ; écartée : une famille nouvelle.
+**Conséquences** : unité `CRM-160`, un défaut à corriger par une session de développement, en coordination avec `CRM-159`.
