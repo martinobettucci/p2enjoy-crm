@@ -3356,3 +3356,31 @@ scénario `pastilles` du simulateur, qui pose une pastille dont un mot du nom pa
 - **Ce que cela change ailleurs** : « Non classés » garde ses compteurs (les deux fils sont masqués) ; la table
   `mail_messages` compte deux messages de plus, et la pastille Lead un mail de plus. Les preuves qui comptent les messages
   de la table, ou les mails d'une pastille, sont révisées avec le seed (décision 51).
+
+## 53. Une réponse reçue à la seule adresse d'une affaire — `CRM-160` (`docs/SPEC-mail-subsystem.md` §27.7)
+
+*Écrit le 2026-11-20, avant le code (décisions 959 et 960).* Le défaut de `CRM-160` ne se démontre qu'avec une réponse qui
+n'est adressée **qu'à** l'adresse `c-*` d'une affaire. Les mails reçus du §2.19 et du §35 le sont aussi, mais aucun ne
+répond à un envoi d'une personne : ils ne montrent que la règle (ii).
+
+- **Le message** : « Re: Proposition de refonte du monitoring (pièce jointe) », `Message-ID`
+  `<seed-reponse-affaire@p2enjoy.test>`. Il est expédié par Driss (`bizdev@p2enjoy.test`, le correspondant de
+  démonstration, INC-087) **à la seule adresse `c-*`** de « Refonte du monitoring — Vertuo » (`…d012`). Ses en-têtes
+  `In-Reply-To` et `References` portent le `Message-ID` **réel** de l'envoi du §2.19 *ter*, lu en base : ce message est donc
+  dans le fil de la proposition de Camille.
+- **Le vrai chemin** : la soumission SMTP authentifiée sur Stalwart et la relève de la boîte système par `mail-sync`, la
+  même fonction que le §2.19. Le message est classé par la règle 1, l'adresse de l'affaire. Rien n'est écrit en table à la
+  main (`CLAUDE.md` §8).
+- **La place** : avant le §46, comme le §49, pour que la passe des pastilles trouve ce mail.
+- **Ce qu'il démontre** :
+  - **Camille** n'est ni destinataire ni responsable de Vertuo, mais **la réponse la concerne** : elle a écrit dans le fil,
+    règle (i). Sous « Seulement moi », le dossier de Vertuo lui montre sa proposition et cette réponse ;
+  - **Driss** est concerné comme seul responsable de l'affaire, règle (ii) ;
+  - **la lectrice** n'est pas concernée.
+- **Rejouable** : le `Message-ID` est fixe, et un message déjà en base n'est pas redéposé.
+- **Le constat**, sous les jetons des trois personnes, par la colonne calculée `concerns_me` : vraie pour Camille et
+  pour Driss, et aucune ligne pour la lectrice.
+- **Ce que cela change ailleurs** : le dossier de Vertuo compte un message reçu de plus, pour tous. Les preuves qui comptent
+  ses messages sont révisées avec le seed (décision 51) et nommées dans `docs/BACKLOG.md`. La règle (ii) change aussi
+  « Seulement moi » pour les mails reçus déjà seedés dans des affaires : Driss les voit, et Camille celui de « Plateforme
+  de billetterie », dont elle est coresponsable (`docs/SPEC-mail-subsystem.md` §27.7.5).

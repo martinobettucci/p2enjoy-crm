@@ -1285,6 +1285,11 @@ l'inbox : celui qui liste des messages est `crm_card_mail_list` (§9.2 *decies*)
 
 **La ligne « Messagerie » de l'onglet « Connecteur MCP » ne change pas** : aucun outil n'est ajouté.
 
+*Révisé le 2026-11-20 par `CRM-160` (décisions 959 et 960).* `only_me` suit la règle élargie de `concerns_me` sans
+changement de code (`docs/SPEC-mail-subsystem.md` §27.7). Une réponse reçue dans un fil où la personne a écrit, ou dans
+une affaire dont elle est responsable d'un rattachement actif, est rendue. La **description** de l'outil le dit. La famille
+reste `messagerie`, l'action `consulter`, et aucune case n'est ajoutée.
+
 ### 9.2 undevicies L'outbox — `CRM-144` (`docs/SPEC-mail-subsystem.md` §28 ; décisions 898 et 906)
 
 *Écrit le 2026-11-10, avant le code.* **Famille `messagerie`, cases existantes** (décision 898) : lire en `consulter`,

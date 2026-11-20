@@ -20410,15 +20410,21 @@ le 2026-11-20** : 5 des 12 mails reçus rattachés à une affaire n'ont aucune a
 **Comportement attendu** (décision 959) — un message **reçu** et **rattaché à une affaire** concerne aussi :
 - (i) **qui a écrit dans ce fil** : l'appelant a envoyé au moins un message du même fil (`app.cle_fil`) depuis l'une de
   ses identités personnelles ;
-- (ii) **le responsable de l'affaire** (`cards.owner_id`), même s'il n'a rien écrit ;
+- (ii) **le responsable de l'affaire**, même s'il n'a rien écrit : *corrigé le 2026-11-20 (INC-363, décision 960)*, les
+  responsables de **tous ses rattachements non archivés** (`card_placements.owner_id`) — `cards.owner_id` n'existe plus
+  depuis `CRM-111` ;
 - les abonnés de l'affaire ne sont **pas** concernés pour autant ; **aucune notification** nouvelle : le mail paraît dans
   « Seulement moi », non lu, et ses compteurs (`inbox_arborescence(p_only_me)`) suivent ;
 - ce n'est toujours **pas une règle d'accès** : la RLS ne change pas.
 **Connecteur MCP** : **oui, la même règle, famille existante `messagerie`, action `consulter`** (décision 959) — le
 filtre `only_me` de `crm_card_mail_list` emploie `concerns_me` et suit donc la règle corrigée ; aucun outil, aucune case
 nouvelle (`docs/SPEC-mcp.md` §6.1, §9.2 *duodevicies*).
-**Spécification** : à écrire avant le code — `docs/SPEC-mail-subsystem.md` §27.2 et §27.3 révisés ; `docs/SCHEMA.md`
-(la migration) ; le manuel (« Seulement moi ») ; le contrat de déploiement.
+**Spécification** : écrite le 2026-11-20, avant le code — `docs/SPEC-mail-subsystem.md` §27.2 et §27.3 révisés, §27.7
+(la règle, la migration, le connecteur, les données, les preuves) ; `docs/SCHEMA.md` « Migration `0194` » ;
+`docs/SPEC-seed.md` §53 ; `docs/SPEC-mcp.md` §9.2 *duodevicies* (note de révision) ; le manuel et le contrat suivent avec
+le code.
+**Plan** : une seule tranche — la pgTAP `0181` rouge, puis la migration `0194`, les preuves révisées, le seed §53, la
+description de l'outil, le manuel et le contrat.
 **Coordination** : `CRM-159` (f9) touche la même lecture de l'inbox et ses compteurs ; la migration écrite la seconde
 reprend la définition de la première.
 **DoD** (`CLAUDE.md` §18) : un pgTAP **rouge avant la correction** (la réponse à l'adresse d'une affaire ne concerne

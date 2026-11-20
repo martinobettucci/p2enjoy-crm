@@ -3704,8 +3704,11 @@ public.concerns_me(public.mail_messages) returns boolean
   est égale à l'adresse d'une identité personnelle de l'appelant. La comparaison se fait par
   `lower(btrim(…))` des deux côtés. **Mesuré** : `mail-sync` stocke les adresses nues et en minuscules, sans la forme
   `Nom <adresse>` (`mime_analyse._adresses`). Une identité peut porter des majuscules, et la comparaison les ignore.
-- **Fausse** pour un appelant sans identité personnelle : rien ne le concerne. C'est l'écran qui, dans ce cas, n'applique
-  pas le filtre (§27.4).
+- **Vraie aussi**, depuis `CRM-160` (*révisé le 2026-11-20, décisions 959 et 960*), pour un message **reçu** et **rattaché
+  à une affaire** quand l'appelant **a écrit dans ce fil** ou **est responsable d'un rattachement actif de l'affaire**. La
+  règle et ses limites sont au §27.7.
+- **Fausse** pour un appelant sans identité personnelle, hors les deux cas du §27.7 : rien d'autre ne le concerne. C'est
+  l'écran qui, dans ce cas, n'applique pas le filtre (§27.4).
 - Le statut de l'identité (en erreur, non testée) ne compte pas : l'adresse reste celle de la personne.
 - `execute` à `authenticated` seul.
 
@@ -3717,7 +3720,8 @@ public.concerns_me(public.mail_messages) returns boolean
   qu'eux. Décocher rend le fil entier.
 - **Le filtre du sommeil** se compose après, inchangé (§16.15) : il juge les fils ainsi formés.
 - **L'arborescence** : `inbox_arborescence(p_only_me => true)` compte, pour chaque dossier, les seuls messages qui
-  concernent l'appelant, et leurs non-lus. Un dossier d'affaire sans aucun message qui le concerne **n'est pas rendu**,
+  concernent l'appelant, et leurs non-lus. *Révisé le 2026-11-20 par `CRM-160`* : la liste et les compteurs appellent
+  `concerns_me` et suivent donc d'eux-mêmes sa règle élargie (§27.7) ; aucune de ces lectures n'est redéfinie. Un dossier d'affaire sans aucun message qui le concerne **n'est pas rendu**,
   comme aujourd'hui un dossier sans message. « Non classés » reste toujours rendu, même à zéro. Sans argument, la fonction
   rend les compteurs d'avant : la signature change, pas le comportement des appelants existants.
 - **« Tout marquer comme lu »** porte sur les fils affichés (§18 bis.2), donc sur ce que le filtre laisse.
@@ -3786,6 +3790,108 @@ navigation du manuel) ne changent pas.
   vide sous le filtre et son action ; personne sans identité (case désactivée, explication, lien) ; adresse d'un message
   caché qui décoche la case ; captures aux quatre paliers.
 - **Connecteur** : `mcp/tests` (unitaires et intégration) et `scripts/verify-mcp.sh`.
+
+### 27.7 Les réponses reçues dans une affaire — `CRM-160`
+
+*Écrit le 2026-11-20, avant le code. `docs/JOURNAL.md` décisions 959 (l'arbitrage du responsable) et 960 (le responsable
+d'une affaire à plusieurs rattachements, INC-363).*
+
+#### 27.7.1 Le défaut
+
+Un mail envoyé depuis une affaire porte l'adresse de l'affaire en `Reply-To` (§4.4, §5). La réponse du correspondant est
+donc adressée à cette seule adresse `c-*`, qui n'est l'identité personnelle de personne. La règle du §27.2, telle que
+`0190` la définit, ne la retient pour personne : sous « Seulement moi », coché par défaut, la réponse n'est dans l'inbox de
+personne. **Mesuré en production, en lecture seule, le 2026-11-20** : 5 des 12 mails reçus rattachés à une affaire n'ont
+aucune adresse personnelle en À, Cc ou Cci.
+
+#### 27.7.2 La règle
+
+Un message `m` concerne aussi l'appelant quand les trois conditions suivantes sont réunies :
+- `m.direction = 'inbound'` : le message est **reçu** ; un envoi est déjà retenu par son expéditeur (§27.2) ;
+- `m.card_id is not null` : il est **rattaché à une affaire** ; un message non classé n'en relève pas ;
+- et l'un des deux cas suivants :
+  - **(i) l'appelant a écrit dans ce fil** : un message du même espace, de la même clé de fil
+    (`app.cle_fil(references_ids, rfc822_message_id)`, `docs/SPEC-cards.md` §16.14.2), a pour expéditeur
+    (`from_address`) l'adresse d'une identité **personnelle** de l'appelant, comparée par `lower(btrim(…))` comme au
+    §27.2. La direction de ce message ne compte pas, ni l'affaire où il est classé : c'est le fait d'avoir écrit dans le
+    fil qui compte ;
+  - **(ii) l'appelant est responsable de l'affaire** : il est le responsable (`card_placements.owner_id`) d'**au moins un
+    rattachement non archivé** (`archived_at is null`) de l'affaire du message (décision 960). Une affaire placée dans deux
+    channels a deux responsables, et la réponse concerne les deux.
+
+Ce qui ne change pas, et qui est nommé :
+- **les abonnés** de l'affaire ne sont pas concernés pour autant (décision 959) ;
+- **aucune notification** nouvelle : le mail paraît dans « Seulement moi », non lu, et ses compteurs suivent ;
+- **ce n'est pas une règle d'accès** (§27.1) : la RLS des messages ne change pas, et `concerns_me` reste
+  `security invoker`. Les lectures du fil et des rattachements se font **sous les droits de l'appelant**. Un message du fil
+  qu'il ne lit pas, parce qu'il est en corbeille ou dans une affaire qui ne lui est pas lisible, ne compte donc pas, et un
+  rattachement qu'il ne lit pas non plus ;
+- **l'identité de service** n'est toujours l'adresse de personne : un message expédié par elle ne fait écrire personne
+  dans le fil ;
+- **une personne sans identité personnelle** voit l'inbox entière, la case désactivée (§27.4). La règle (ii) ne change
+  pas cet écran ; elle vaut pour la colonne calculée et pour le connecteur.
+
+#### 27.7.3 La migration `0194`
+
+Une seule fonction est redéfinie : `public.concerns_me(public.mail_messages)`, par `create or replace`, sous la **même
+signature**. Son paramètre reste anonyme, et elle reste `sql`, `stable`, `security invoker`, `search_path` vidé. Son corps
+reprend celui de `0190`, les adresses et le transfert, et ajoute la disjonction du §27.7.2.
+
+Aucune autre lecture n'est redéfinie. `inbox_arborescence`, `app.inbox_scope_messages`, ainsi que `inbox_messages` et
+`inbox_hidden_counts` de `CRM-159`, appellent `concerns_me(m)` et suivent d'elles-mêmes (`0193`, `docs/SCHEMA.md`).
+
+Le fil est cherché par l'index `mail_messages_cle_fil_idx` (`workspace_id`, clé de fil). Les rattachements de l'affaire
+sont cherchés par leur index sur `card_id`. Les deux recherches ne sont faites que pour un message reçu et rattaché.
+
+**Retour arrière** : rejouer la définition de `0190`.
+
+#### 27.7.4 Le connecteur
+
+`crm_card_mail_list(only_me => true)` filtre par la colonne `concerns_me` (§9.2 *duodevicies* de `docs/SPEC-mcp.md`) et suit
+la règle sans changement de code. Sa **description** change seule : elle dit que `only_me` retient aussi les réponses
+reçues dans un fil où la personne a écrit, ou dans une affaire dont elle est responsable. La famille est `messagerie`,
+l'action `consulter` ; aucune case ni aucun outil nouveau (décision 959).
+
+#### 27.7.5 Données de développement
+
+`docs/SPEC-seed.md` §53 : une **vraie réponse**, adressée à la seule adresse `c-*` de « Refonte du monitoring — Vertuo »,
+qui répond à la proposition que Camille y a envoyée (`docs/SPEC-seed.md` §2.19 *ter*). Driss est le seul
+responsable de cette affaire.
+- La réponse concerne **Camille** par la règle (i), puisqu'elle a écrit dans le fil, et **Driss** par la règle (ii),
+  puisqu'il est responsable.
+- Elle ne concerne pas **la lectrice**, qui n'a pas d'identité.
+
+Les mails reçus déjà seedés dans des affaires suivent aussi la règle (ii), ce qui révise des comptes :
+- Driss les voit sous « Seulement moi » : il est responsable de `…00c1`, de `…d012` et de « Plateforme de billetterie » ;
+- Camille voit aussi le mail de « Plateforme de billetterie », dont elle est coresponsable.
+
+Les preuves qui comptent ces dossiers sont révisées avec la migration (décision 51), et chaque révision est nommée dans
+`docs/BACKLOG.md`.
+
+#### 27.7.6 Preuves
+
+- **pgTAP `0181`**, écrite et jouée **rouge avant la migration** (`CLAUDE.md` §18). Elle monte et défait ses sondes dans
+  sa transaction, et vérifie :
+  - un fil d'un envoi de Camille depuis une affaire de Driss, et sa réponse reçue adressée à la seule adresse `c-*` :
+    la réponse concerne Camille par (i) et Driss par (ii), mais pas la lectrice ;
+  - le cas (ii) seul : une affaire où Camille n'a rien écrit et dont elle est responsable par un second rattachement ;
+  - un rattachement **archivé** de Camille ne la fait pas concerner ;
+  - un message **non rattaché** du même fil reste comme avant ;
+  - un **envoi** n'est pas concerné par (ii) ;
+  - un écrit de l'**identité de service** ne compte pas ;
+  - un écrit **en corbeille** ne compte pas ;
+  - un administrateur n'est pas concerné par un fil où une autre personne a écrit ;
+  - la forme : `stable`, `security invoker`, l'anonyme refusé ;
+  - `inbox_arborescence(true)` compte la réponse dans le dossier de l'affaire.
+- **pgTAP `0164` révisée** : son n° 15 attendait qu'un message reçu dans `…00c1` ne concerne pas Driss, qui en est le
+  responsable. Il attend désormais l'inverse, et une sonde non rattachée garde ce qu'il prouvait (« le message adressé à
+  une autre personne ne le concerne pas »).
+- **API**, par jetons réels (`e2e/api/seulement-moi.spec.ts`) : la liste et les compteurs « Seulement moi » de Camille, qui
+  a écrit, de Driss, responsable, et de la lectrice ; la réponse seedée du §53 en est le sujet.
+- **E2E de l'interface** (`e2e/ui/seulement-moi.spec.ts`) : Camille, case cochée, voit la réponse du §53 dans le dossier
+  de Vertuo.
+- **Connecteur** : `mcp/tests/test_integration_messagerie.py`, `only_me` de Camille rend la réponse du §53.
+- **Le seed** : le constat du §53.
 
 ## 28. L'outbox : en file (annuler), envoyés, échecs (réessayer), pour toute l'équipe — `CRM-144`
 

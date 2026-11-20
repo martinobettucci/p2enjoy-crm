@@ -3410,6 +3410,24 @@ modifiées leur définition de la migration précédente ; rendre à `import_con
 des deux listes fermées après avoir supprimé ses notifications et préférences ; supprimer les deux tables. Les transferts
 et les blocages sont perdus — les mails mis à la corbeille par un blocage y restent, restaurables.
 
+### Migration `0194` — « Seulement moi » retient les réponses reçues dans une affaire — `CRM-160` (`0194_concerne_reponses_affaire.sql` ; spécifiée le 2026-11-20, avant le code)
+
+`docs/SPEC-mail-subsystem.md` §27.7 ; décisions 959 et 960 ; INC-363.
+
+- **`public.concerns_me(public.mail_messages)`** est redéfinie par `create or replace`, sous la même signature : paramètre
+  anonyme, `sql`, `stable`, `security invoker`, `search_path` vidé. Le corps de `0190` (les adresses personnelles, le
+  transfert) gagne une disjonction, pour un message **reçu** (`direction = 'inbound'`) et **rattaché** (`card_id` non nul) :
+  - (i) un message lisible du même espace et de la même clé de fil (`app.cle_fil`) a pour expéditeur une identité
+    personnelle de l'appelant ;
+  - (ii) l'appelant est le responsable d'un rattachement non archivé (`card_placements.owner_id`,
+    `archived_at is null`) de l'affaire.
+- **Aucune table, aucune colonne, aucune politique.** Aucune autre fonction n'est redéfinie : `inbox_arborescence`,
+  `app.inbox_scope_messages`, `inbox_messages` et `inbox_hidden_counts` (`0193`) appellent `concerns_me(m)`.
+- **Index** : `mail_messages_cle_fil_idx` (`0048`) sert le fil, `card_placements_card_channel_key` les rattachements ;
+  aucun index nouveau.
+- **Retour arrière** : rejouer la définition de `concerns_me` de `0190`.
+- **Preuves** : pgTAP `0181`, rouge avant la migration ; `0164` révisée (n° 15).
+
 ### Migration `0193` — les pastilles cachées : le drapeau, Spam cochée, la liste de l'inbox et la recherche masquées — `CRM-159` T1 (`0193_pastilles_cachees.sql` ; spécifiée le 2026-11-20, avant le code)
 
 `docs/SPEC-mail-subsystem.md` §31.13 ; décisions 957 et 958. *Renumérotée de `0194` en `0193` le 2026-11-20* : `CRM-160` (`concerns_me`) devait migrer en premier et prend `0194` ;

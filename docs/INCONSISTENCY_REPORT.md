@@ -9316,3 +9316,13 @@ L'écart est nommé au §5.107.
 colonne — par exemple « Domaine et site web », dont les valeurs se tronquent avec leur `title` — ce qui révise le partage
 de la décision 940 ?
 
+### INC-363 — `CRM-160` nomme `cards.owner_id`, une colonne retirée par `CRM-111`
+**Ouverte et close le 2026-11-20.** *Relevée par la session d5b44a2d (p2enjoy-crm-6e) en lisant le schéma avant la
+spécification de `CRM-160`.*
+
+**Le constat.** La décision 959 et l'unité `CRM-160` de `docs/BACKLOG.md` font concerner « le responsable de l'affaire
+(`cards.owner_id`) ». La migration `0134` (`CRM-111`) a retiré cette colonne : chaque rattachement porte son responsable
+(`card_placements.owner_id`), et une affaire placée dans deux channels en a deux.
+
+**L'arbitrage.** Demandé au responsable et rendu le 2026-11-20 (décision 960) : les responsables de **tous les
+rattachements non archivés**. `docs/SPEC-mail-subsystem.md` §27.7.2 l'écrit, et l'unité est corrigée.

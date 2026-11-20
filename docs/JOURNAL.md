@@ -41317,3 +41317,17 @@ personnelles ; mesuré en production : 5 des 12 mails reçus rattachés ne conce
 - **connecteur MCP** — question 1 : **oui, la même règle** (`only_me` de `crm_card_mail_list`) ; écarté : non. Question 2 :
   **famille existante `messagerie`**, action `consulter` ; écartée : une famille nouvelle.
 **Conséquences** : unité `CRM-160`, un défaut à corriger par une session de développement, en coordination avec `CRM-159`.
+
+### décision 960 — `CRM-160` : « le responsable de l'affaire », ce sont les responsables de tous ses rattachements non archivés
+
+*2026-11-20, session d5b44a2d (p2enjoy-crm-6e), arbitrage du responsable (`AskUserQuestion`) ; INC-363.*
+**Le problème** : la décision 959 et l'unité `CRM-160` nomment `cards.owner_id`. Cette colonne a quitté `cards` avec
+`CRM-111` (migration `0134`) : le responsable est porté par chaque rattachement (`card_placements.owner_id`). **Mesuré en
+développement** : deux affaires ont deux rattachements, et « Plateforme de billetterie » a deux responsables, Camille et
+Driss.
+**Les options présentées** : les responsables de tous les rattachements non archivés ; de tous les rattachements,
+archivés compris ; un seul rattachement, par exemple le premier créé.
+**Décision** : **les responsables de tous les rattachements non archivés** (`archived_at is null`) ; écartés : les
+rattachements archivés, et un responsable unique.
+**Conséquences** : `docs/SPEC-mail-subsystem.md` §27.7.2 (ii) ; INC-363 close ; la règle (ii) concerne aussi Camille pour le
+mail reçu de « Plateforme de billetterie » (§27.7.5).
