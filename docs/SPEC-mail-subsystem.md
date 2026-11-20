@@ -4596,6 +4596,8 @@ L'apparence : `docs/DESIGN_SYSTEM.md` §5.103.
   la pastille. Une valeur mal formée dans l'adresse vaut l'absence de filtre.
   *Révisé par `CRM-155` (§31.12, décisions 943 et 948)* : le filtre devient une rangée de **filtres rapides** en bascule,
   plusieurs pastilles en OU, les archivées dans un volet replié ; la liste déroulante est retirée.
+  *Révisé par `CRM-159` (§31.13, décisions 957 et 958)* : une pastille peut être **cachée** ; les fils qui la portent ne
+  paraissent que si on l'active, et une mention sous la liste les compte.
 - **Dans le message ouvert** : ses pastilles posées, avec leur origine (« posée par l'IA », « posée à la main ») ;
   l'état d'évaluation quand il n'est pas `done` ; « Réévaluer les pastilles » dans la rangée de commandes, à côté du
   sommeil et de « Marquer comme non lu » ; et « Pastilles », qui ouvre dans le flux la liste des pastilles actives à
@@ -4721,6 +4723,153 @@ pastilles posées**, `labels`, sous la forme de `crm_mail_get` (décision 948).
 | **T2** | Le connecteur : `labels` sur `crm_card_mail_list`, les pastilles de chaque message ; pytest ; intégration ; `verify-mcp.sh` |
 | **T3** | Le manuel §12.2 et ses images ; le seed vérifié ; le contrat de déploiement (webapp, image `mcp`, aucune migration) ; l'unité passe `[P]` |
 
+
+### 31.13 Les pastilles cachées — `CRM-159`
+
+*Écrit le 2026-11-20, avant le code (décisions 957 et 958).* **Origine** : « certaines catégories sont cachées par défaut
+sauf si on les sélectionne explicitement. je pense au cas de SPAM la pastille. mais au lieu de hardcoder, chaque pastille
+peut porter un flag "cachée" off par défaut ». L'apparence : `docs/DESIGN_SYSTEM.md` §5.111 ; le schéma :
+`docs/SCHEMA.md`, « Migration `0194` » ; le connecteur : `docs/SPEC-mcp.md` §9.2 *duovicies*, révisé.
+
+**31.13.1 Le drapeau.** `public.mail_labels` gagne **`hidden boolean not null default false`** : une pastille est
+**cachée** quand il est vrai. C'est une donnée, jamais un nom lu par le code : **aucune pastille n'est cachée par le code**.
+- **Qui le règle** : qui administre l'espace, par la politique `UPDATE` existante de `mail_labels`
+  (`app.is_workspace_admin`, `USING` et `WITH CHECK`, §31.3) — la même que pour le nom, la couleur et le descriptif. Aucun
+  privilège nouveau. Une lectrice ou un business developer qui écrit le drapeau par l'API est refusé par la base (`CLAUDE.md`
+  §10) ; il le lit, comme tout membre.
+- **Spam cachée d'office** (décision 957, point ii) : la migration coche le drapeau sur la pastille « Spam » de **chaque
+  espace existant** — reconnue par son nom, `lower(btrim(name)) = 'spam'`, le nom que les défauts lui donnent (§31.6) ;
+  une pastille que l'administrateur a renommée n'est pas retrouvée, et c'est assumé : elle n'est plus « la pastille par
+  défaut ». Les **espaces créés** reçoivent leur « Spam » cochée par le déclencheur des défauts (§31.6), redéfini. Les
+  huit autres défauts restent visibles. L'administrateur décoche comme il coche.
+- **Une pastille cachée et archivée masque encore** (décision 957, point iv) : l'archivage dit que l'IA ne la pose plus,
+  pas que ses mails redeviennent visibles. Ses mails se retrouvent par le volet « Pastilles archivées » (§31.12.1).
+
+**31.13.2 La règle de masquage (décisions 957 et 958).** Le masquage porte sur le **fil**, l'unité de la liste — le couple
+`(workspace_id, app.cle_fil(references_ids, rfc822_message_id))`, jamais la chaîne seule (`docs/SPEC-cards.md` §16.15.3).
+- **Les pastilles cachées d'un fil**, `H` : les pastilles cachées (archivées comprises) **posées** (`applied`) sur l'un de
+  ses messages hors corbeille (`deleted_at is null`) **que l'appelant voit** (`app.peut_voir_message`). Un message que la
+  personne ne voit pas ne masque rien pour elle, et ne lui révèle donc rien. Une pastille **retirée à la main** ne compte
+  pas.
+- **Les pastilles activées**, `A` : celles des filtres rapides (§31.12.2) ; vide sans filtre.
+- **Un fil est masqué** quand `H` n'est pas vide **et** qu'aucune pastille de `H` n'est dans `A`. **Une seule pastille
+  cachée activée suffit** à le montrer (décision 958) ; **le caché l'emporte** sur une pastille **visible** activée
+  (décision 957) : sous « Lead » seule, un fil Lead et Spam reste masqué ; sous « Spam », il paraît ; sous « Lead » et
+  « Spam », il paraît.
+- **Un fil masqué disparaît entièrement** : aucun de ses messages n'est rendu, même ceux qui ne portent pas la pastille.
+  Un fil montré suit ensuite la règle du filtre, inchangée (§31.12.2) : sous « Spam », la liste retient les messages qui
+  portent Spam.
+- **La règle est tenue en base** (décision 957, point vi ; `CLAUDE.md` §10), par deux fonctions internes, `SECURITY
+  DEFINER`, `search_path` vide, appelées par toutes les lectures concernées :
+  - `app.mail_thread_hidden_labels(p_workspace uuid, p_thread_key text) returns uuid[]` — `H`, chaque message passé par
+    `app.peut_voir_message` ;
+  - `app.mail_thread_masked(p_workspace uuid, p_thread_key text, p_active uuid[]) returns boolean` — la règle ci-dessus.
+  Ce n'est pas une règle d'accès : le message reste lisible par la RLS, ouvert par son adresse (`?message=`) ou depuis une
+  notification. C'est une règle de **lecture de la liste**, que le client ne compose pas.
+
+**31.13.3 La portée (décision 957, point iv).**
+
+| Lecture | Masquée ? | Comment |
+|---|---|---|
+| La liste de l'inbox — « Non classés » et le dossier d'une affaire | **oui**, `A` = les pastilles activées | `public.inbox_messages` (§31.13.4), qui remplace la lecture directe de `mail_messages` |
+| Les compteurs de l'arborescence (`nombre`, `unread_count`) | **oui**, `A` vide : ils comptent ce que la liste montre sans filtre | `public.inbox_arborescence`, redéfinie |
+| La portée des actions groupées et son compte (§32.2, §32.4) | **oui**, `A` = `label_ids` | `app.inbox_scope_messages`, redéfinie : « un fil coché agit sur les messages que la liste montre » (§32.2) |
+| La recherche globale (la palette et `crm_search`) | **oui**, `A` vide — **et elle le dit** (§31.13.6) | `public.recherche_globale`, redéfinie ; `public.search_hidden_mail_counts` |
+| L'onglet Mails de la fiche d'une affaire, `crm_card_mail_list` | **non** (décisions 957 et 958) | inchangés : ce qu'on y a classé reste visible |
+| Le message ouvert, son fil, une notification | **non** | inchangés : on y arrive par un geste qui désigne ce message |
+| La corbeille de l'inbox | **non** | inchangée : un message effacé se retrouve pour être restauré ; le masquage ne compte que les messages hors corbeille |
+
+**31.13.4 La lecture de la liste : `public.inbox_messages`.**
+
+`public.inbox_messages(p_card_id uuid default null, p_only_me boolean default false, p_label_ids uuid[] default '{}',
+p_sender text default null, p_limit integer default 50) returns setof public.mail_messages`, `language sql`, `stable`,
+**`SECURITY INVOKER`** — la RLS de `mail_messages` juge chaque ligne, comme la lecture directe qu'elle remplace —,
+`search_path` vide, `authenticated` seulement. Elle porte **tous les filtres de la liste**, pour que la règle s'applique
+avant la limite :
+- le dossier : `p_card_id` nul, « Non classés » (`card_id is null`) ; sinon le dossier de l'affaire ;
+- « Seulement moi » : `public.concerns_me(m)`, **appelée et jamais recopiée** (`CRM-160` la redéfinit, décision 959) ;
+- les pastilles : un message retenu porte l'une de `p_label_ids`, posée — la règle du OU (§31.12.2) ;
+- l'expéditeur : `lower(m.from_address) = lower(btrim(p_sender))`, l'égalité sans casse que la liste obtenait par `ilike`
+  sur un motif échappé (§32.9) ;
+- **le masquage**, `not app.mail_thread_masked(m.workspace_id, app.cle_fil(…), p_label_ids)` ;
+- l'ordre total `received_at desc, id desc` (décision 185) et la limite, bornée à 200 côté serveur.
+
+L'écran l'appelle par PostgREST (`rpc/inbox_messages`) avec la même liste de colonnes et les mêmes embarquements qu'avant
+(`COLONNES_LISTE_INBOX`) ; l'embarquement qui filtrait (`filtre_pastille!inner`) n'est plus nécessaire. Le groupement en
+fils, la page de cinquante et le sommeil restent ceux de l'écran (§32.2, `filtre-sommeil.ts`).
+
+**31.13.5 La mention des fils masqués (décision 957, point v).**
+
+`public.inbox_hidden_counts(p_card_id uuid default null, p_only_me boolean default false, p_label_ids uuid[] default
+'{}', p_sender text default null, p_snoozed_shown boolean default false) returns table (label_id uuid, thread_count
+integer)`, `SECURITY INVOKER`, `search_path` vide. Pour **chaque pastille cachée non activée** qui masque au moins un fil
+du dossier sous les mêmes filtres : le nombre de fils masqués qui la portent — ceux qui **paraîtraient si on l'activait**.
+Le compte des messages retenus suit la règle de la liste avec cette pastille ajoutée à `A` (un fil est compté si l'un de
+ses messages porterait l'une de `A ∪ {pastille}`, ou s'il n'y a aucun filtre). Un fil en sommeil n'est compté que si
+l'écran montre les fils en sommeil (`p_snoozed_shown`). Un fil qui porte deux pastilles cachées est compté sous chacune :
+activer l'une ou l'autre le montre (décision 958). L'ordre : le nom de la pastille.
+
+**L'écran** : sous la liste, une ligne « {n} fils masqués ({nom}) » par pastille rendue ; un clic **active la pastille**
+dans les filtres rapides — le même geste qu'une bascule, une entrée d'historique (§31.12.3) — et le fil paraît. Rendue
+aussi sous une liste vide : le vide peut n'être que du masqué. Rien n'est rendu quand aucun fil n'est masqué, ni tant que
+le compte n'est pas lu ; un compte qui échoue ne rend rien et ne bloque pas la liste (une aide, pas une donnée de la
+liste). Le dossier « Corbeille » n'en porte pas.
+
+**31.13.6 La recherche (décision 958).** `public.recherche_globale` écarte de sa famille `message` les messages dont le fil
+est masqué, `A` vide : on ne peut pas y activer une pastille. **Elle le dit** par une fonction voisine,
+`public.search_hidden_mail_counts(p_terme text) returns table (label_id uuid, workspace_id uuid, label_name text,
+mail_count integer)`, `SECURITY INVOKER` : pour chaque pastille cachée, le nombre de **messages** qui répondent au terme et
+que le masquage a écartés à cause d'elle (un message masqué par deux pastilles compte sous chacune). Le terme est lu **par
+la même fonction** que la recherche, `app.search_query(p_terme) returns tsquery` (nulle pour un terme vide ou fait de mots
+vides), extraite de `recherche_globale` sans changement de comportement — une copie de la découpe pourrait diverger. La
+borne de 50 lignes ne s'applique pas au compte : il dit tout ce qui a été écarté.
+- **La palette** ajoute, sous ses résultats, une ligne par pastille : « {n} mails masqués ({nom}) ». Pour une pastille de
+  l'**espace courant**, la ligne est un lien vers l'inbox, la pastille activée (`/inbox?pastille=<id>`) ; pour une
+  pastille d'un autre espace, elle nomme l'espace, sans lien — l'inbox ne filtre que par les pastilles de l'espace courant
+  (§31.12.1, décision 948), et un lien qui n'activerait rien serait faux.
+- **Le connecteur** rend ce compte (§31.13.7).
+
+**31.13.7 Le connecteur — oui, en lecture, famille `messagerie`, action `consulter`, aucune case nouvelle** (décisions 957
+et 958 ; `docs/SPEC-mcp.md` §9.2 *duovicies*, révisé) :
+- `crm_mail_label_list` rend **`hidden`** pour chaque pastille ;
+- `crm_search` : ses messages suivent `recherche_globale` (masqués) ; la réponse gagne **`hidden_mails`**, la liste de
+  `search_hidden_mail_counts` (`label_id`, `label_name`, `count`), **restreinte aux espaces où la matrice ouvre
+  `consulter` sur `messagerie`** — la règle qui filtre déjà ses lignes `message` ; absente quand elle est vide ;
+- `crm_card_mail_list` **ne change pas** : la liste d'une affaire ne masque rien (décision 958) ;
+- **le drapeau ne se règle pas par le connecteur** : aucun outil ne l'écrit.
+
+**31.13.8 Le seed** (`docs/SPEC-seed.md` §52) : deux mails déposés dans la boîte système et relevés par la vraie relève,
+évalués par la vraie passe contre le scénario `pastilles` du simulateur — **un mail Spam**, et **un mail Spam et Lead** ; la
+« Spam » du seed cochée par la migration. Ils démontrent la mention, le caché qui l'emporte sous « Lead », et le fil
+montré sous « Spam ».
+
+**31.13.9 Preuves exigées.**
+- **pgTAP** : la colonne et son défaut ; Spam cochée dans l'espace du seed et dans un espace créé, les huit autres non ;
+  le drapeau écrit par l'administratrice, refusé à la lectrice et au business developer ; `mail_thread_masked` (vide,
+  activée, visible activée seule, deux cachées et une activée, une archivée cachée, une retirée à la main, un message
+  invisible qui ne masque pas, la corbeille) ; `inbox_messages` (chaque filtre, le masquage avant la limite, l'ordre) ;
+  `inbox_hidden_counts` ; `inbox_arborescence` qui ne compte pas le masqué ; `inbox_scope_messages` et
+  `inbox_bulk_count` ; `recherche_globale` et `search_hidden_mail_counts` ; `app.search_query` égale à la découpe
+  d'avant (les pgTAP de la recherche restent vertes).
+- **Unitaires** (Vitest) : la lecture par `rpc/inbox_messages` et ses arguments ; la mention (rendue, cliquée, absente,
+  échec silencieux) ; la case « Cachée » des réglages, éteinte pour qui n'administre pas ; la mention « Cachée » d'une
+  ligne ; la bascule d'une pastille cachée ; la ligne de la palette, avec et sans lien.
+- **API** (jetons réels) : la liste, les compteurs et la recherche sous l'administratrice et la lectrice ; le refus de la
+  lectrice qui écrit le drapeau par PostgREST.
+- **E2E** souris et clavier : cocher et décocher « Cachée » ; le masquage par défaut de Spam ; « Lead » qui ne montre pas
+  le fil Spam et Lead ; « Spam » qui le montre ; la mention et son clic ; la palette et sa ligne ; quatre paliers ;
+  captures observées.
+- **Connecteur** : pytest unitaires et intégration contre la vraie base ; `verify-mcp.sh`.
+
+**31.13.10 Tranches.**
+
+| Tranche | Contenu |
+|---|---|
+| **T1** | Migration `0194` : la colonne, Spam cochée, le déclencheur des défauts, les deux fonctions de masquage, `inbox_messages`, `inbox_hidden_counts`, `inbox_arborescence`, `inbox_scope_messages`, `app.search_query`, `recherche_globale`, `search_hidden_mail_counts` ; pgTAP ; types ; preuve d'API ; `docs/SCHEMA.md` ; contrat de déploiement |
+| **T2** | L'écran : la lecture par `inbox_messages`, la mention sous la liste, la bascule d'une pastille cachée, la case « Cachée » des réglages, la ligne de la palette ; unitaires ; E2E souris et clavier, quatre paliers ; captures ; `docs/DESIGN_SYSTEM.md` §5.111 précisé au code |
+| **T3** | Le connecteur : `hidden` sur `crm_mail_label_list`, `hidden_mails` sur `crm_search` ; pytest ; intégration ; `verify-mcp.sh` |
+| **T4** | Le seed (§52), le manuel §12.2 et §12.6 et leurs images, le contrat (migration `0194`, webapp, image `mcp`) ; l'unité passe `[P]` |
+
 ---
 
 ## 32. Les opérations groupées de l'inbox : sélectionner des fils, agir sur tous d'un coup ; transférer, bloquer, créer des contacts — `CRM-156`
@@ -4754,6 +4903,9 @@ globale reste celle de `docs/SPEC-recherche.md`) ; le blocage d'un domaine entie
 actifs**. Sous le filtre « Spam », un fil de trois messages dont un seul porte la pastille n'agit que sur ce message.
 Sans filtre, ce sont tous les messages du fil dans le dossier. La règle est la même pour un fil coché à la main et pour
 « Tout sélectionner ».
+
+*Révisé par `CRM-159` (§31.13.3)* : un fil **masqué** par une pastille cachée n'est pas montré par la liste ; il n'est donc
+pas dans la portée, sauf si `label_ids` active l'une de ses pastilles cachées.
 
 **La portée se calcule en base, jamais d'après la page.** La liste ne charge que cinquante messages (`MESSAGES_PAR_PAGE`)
 et l'écran groupe en fils ce qu'il a reçu (`grouperEnFils`, `docs/SPEC-cards.md` §16.16.3). Un fil peut donc avoir, dans

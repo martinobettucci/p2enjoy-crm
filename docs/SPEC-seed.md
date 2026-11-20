@@ -3326,3 +3326,27 @@ seed ne force jamais cet état (§2.17) : sans ce paragraphe, l'étape resterait
   `ok` par la relève (§2.17, INC-360), et l'espace porte `crm.p2enjoy.test`. **L'espace sans domaine** n'est pas seedé :
   le seed garde son espace unique (`CRM-005`) ; les preuves montent un espace jetable (`docs/SPEC-mail-subsystem.md`
   §33.6).
+
+## 52. Deux mails Spam : l'un seul, l'autre aussi Lead — `CRM-159` T4 (`docs/SPEC-mail-subsystem.md` §31.13.8)
+
+*Écrit le 2026-11-20, avant le code (décisions 957 et 958).* La section est placée **avant le §46**, comme les §45 et §49 :
+la passe des pastilles doit trouver les mails qu'elle dépose. Tout passe par les vrais chemins : les mails sont **déposés
+dans la boîte système** par IMAP et **relevés par la vraie relève** de `mail-sync` (le patron du §49 : la boîte système,
+pour ne pas toucher au « Seulement moi » de Camille) ; leurs pastilles sont **posées par la vraie passe** contre le
+scénario `pastilles` du simulateur, qui pose une pastille dont un mot du nom paraît dans l'objet ou le texte. Aucune ligne
+`llm` n'est écrite à la main ; aucun drapeau n'est posé par le seed : la « Spam » de l'espace est cochée par la migration
+`0194`.
+
+| Message-ID | De | Objet | Pastilles attendues | Ce qu'il démontre |
+|---|---|---|---|---|
+| `seed-spam-seul@gains-express.example` | Gains Express `<promo@gains-express.example>` | Vous avez gagné un séjour de rêve | Spam | **masqué par défaut** : absent de « Non classés » et de ses compteurs ; « 1 fil masqué (Spam) » sous la liste, puis montré par « Spam » |
+| `seed-spam-lead@leadboost.example` | LeadBoost `<contact@leadboost.example>` | 10 000 leads qualifiés pour votre équipe | Spam, Lead | **le caché l'emporte** : absent sous « Lead », montré sous « Spam » |
+
+- Le texte du premier dit « spam » (« Ce message n'est pas un spam : vous recevez cette offre… »), celui du second
+  « spam » et « leads » : la règle du simulateur est lue telle qu'elle est (`supabase/docker/ollama-simule/serveur.py`).
+- **Rejouable** : des `Message-ID` fixes ; un mail déjà en base n'est pas redéposé.
+- **Le constat**, sous la clé de propriétaire : les deux mails existent hors corbeille, le premier porte Spam seule, le
+  second Spam et Lead, posées par l'IA ; sinon le seed s'arrête en nommant la cause.
+- **Ce que cela change ailleurs** : « Non classés » garde ses compteurs (les deux fils sont masqués) ; la table
+  `mail_messages` compte deux messages de plus, et la pastille Lead un mail de plus. Les preuves qui comptent les messages
+  de la table, ou les mails d'une pastille, sont révisées avec le seed (décision 51).

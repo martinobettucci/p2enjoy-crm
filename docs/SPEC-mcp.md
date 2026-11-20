@@ -1566,6 +1566,18 @@ la première. Une famille nouvelle entraîne la migration de la liste fermée (�
 « Connecteur MCP » (§8.1), comme pour `recettes`. L'inventaire du point 1 ne couvre donc que les
 fonctionnalités antérieures à cette règle, ou celles pour lesquelles la question n'a pas été posée.
 
+*Révisé par `CRM-159` (2026-11-20, avant le code ; décisions 957 et 958 ; `docs/SPEC-mail-subsystem.md` §31.13)* —
+**oui, en lecture, famille `messagerie`, action `consulter`, aucune case nouvelle** :
+- `crm_mail_label_list` rend **`hidden`** (booléen) pour chaque pastille : vrai quand ses mails sont masqués dans l'inbox
+  par défaut ;
+- `crm_search` : ses lignes `message` suivent `recherche_globale`, qui écarte les mails des fils masqués ; la réponse gagne
+  **`hidden_mails`**, une ligne par pastille cachée qui a écarté des mails répondant au terme (`label_id`, `label_name`,
+  `count`), **restreinte aux espaces où la matrice ouvre `consulter` sur `messagerie`** — la règle qui filtre déjà ses
+  lignes `message` ; la clé est absente quand il n'y a rien à dire ;
+- `crm_card_mail_list` **ne change pas** : la liste d'une affaire ne masque rien, comme l'onglet Mails de la fiche
+  (décision 958) ;
+- **aucun outil n'écrit le drapeau** : il se règle dans Réglages ▸ Pastilles des mails.
+
 ### 9.2 tervicies Lister les organisations : la recherche, le filtre par track, leurs tracks — `CRM-152` (`docs/SPEC-organisations.md` §8 ; décisions 931 et 936)
 
 **Famille `organizations`, existante, action `consulter`** ; aucune case nouvelle, aucune migration de la matrice.

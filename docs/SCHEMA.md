@@ -3410,6 +3410,27 @@ modifiées leur définition de la migration précédente ; rendre à `import_con
 des deux listes fermées après avoir supprimé ses notifications et préférences ; supprimer les deux tables. Les transferts
 et les blocages sont perdus — les mails mis à la corbeille par un blocage y restent, restaurables.
 
+### Migration `0194` — les pastilles cachées : le drapeau, Spam cochée, la liste de l'inbox et la recherche masquées — `CRM-159` T1 (`0194_pastilles_cachees.sql` ; spécifiée le 2026-11-20, avant le code)
+
+`docs/SPEC-mail-subsystem.md` §31.13 ; décisions 957 et 958. Le numéro `0193` est celui de `CRM-160` (`concerns_me`), qui
+migre en premier ; cette migration ne redéfinit pas `public.concerns_me`, elle l'appelle.
+
+- **`public.mail_labels.hidden`** `boolean not null default false` ; aucune politique nouvelle : la politique `UPDATE`
+  des administrateurs le couvre (§31.3).
+- **Spam cochée** : `update … set hidden = true where lower(btrim(name)) = 'spam'`, dans chaque espace ; le déclencheur
+  des défauts (`0183`) est redéfini pour poser « Spam » cachée dans un espace créé.
+- **Le masquage** : `app.mail_thread_hidden_labels(uuid, text) returns uuid[]` et `app.mail_thread_masked(uuid, text,
+  uuid[]) returns boolean`, `SECURITY DEFINER`, chaque message passé par `app.peut_voir_message` ; servis par l'index
+  `mail_messages_cle_fil_idx` (`0048`).
+- **Les lectures** : `public.inbox_messages(uuid, boolean, uuid[], text, integer) returns setof public.mail_messages` et
+  `public.inbox_hidden_counts(uuid, boolean, uuid[], text, boolean)`, `SECURITY INVOKER` ; `public.inbox_arborescence`
+  et `app.inbox_scope_messages` redéfinies, reprises de leur définition vivante (`0175`, `0189`) ;
+  `app.search_query(text) returns tsquery`, extraite de `public.recherche_globale` (reprise de `0168`), qui écarte les
+  messages des fils masqués ; `public.search_hidden_mail_counts(text)`. `authenticated` seulement sur les fonctions
+  publiques nouvelles.
+- **Retour arrière** : redéfinir les quatre fonctions reprises depuis leurs migrations d'origine, supprimer les fonctions
+  nouvelles, puis la colonne ; aucune donnée n'est perdue hors le drapeau lui-même.
+
 ### Migration `0192` — l'espace sans domaine a son refus nommé, et une relance due s'arrête — `CRM-157` T1 (`0192_domaine_absent_envoi.sql` ; spécifiée le 2026-11-19, avant le code ; écrite le 2026-11-19)
 
 `docs/SPEC-mail-subsystem.md` §33.2, §33.2 bis ; décisions 951, 953 et 955.

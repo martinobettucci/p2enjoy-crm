@@ -8581,6 +8581,8 @@ d'une liste de l'espace se lisent de la même façon d'un écran à l'autre (§5
   *Deux écarts avec Réglages ▸ Étiquettes, assumés* (constatés à l'écriture de la tranche T3, 2026-11-11) : son entrée
   est un texte pour qui n'administre pas, celle-ci un lien ; et une étiquette s'archive sans confirmation, une pastille
   avec, parce que son archivage a un effet différé que la liste ne montre pas — l'IA cesse de la poser.
+  *Complété par `CRM-159` (§5.111)* : la fiche porte la case « Cacher ses mails dans l'inbox », et la ligne d'une
+  pastille cachée la mention « Cachée ».
 - **RESPONSIVE** (§7) : les pilules passent à la ligne, jamais tronquées ; le panneau et la fiche prennent la largeur ;
   la page ne défile jamais horizontalement.
 - **Aucune couleur, aucun jeton nouveau ; aucune icône nouvelle** : `Tags`, `Sparkles` et `TriangleAlert` sont réemployées
@@ -8832,6 +8834,8 @@ l'air. **Remplace le filtre « Pastille » du §5.103** (sa liste déroulante es
   défile jamais horizontalement.
 - **Aucune couleur, aucun jeton, aucune icône nouveaux** : `ChevronRight` et `ChevronDown` portent déjà le dépliage
   (§5.31 bis, §5.101) ; elles le portent ici aussi.
+- *Complété par `CRM-159` (§5.111)* : la bascule d'une pastille **cachée** porte `EyeOff` et le dit dans son nom
+  accessible ; une mention sous la liste compte les fils masqués.
 
 
 ### 5.109 La sélection et les actions groupées de l'inbox — `CRM-156` T3
@@ -9017,3 +9021,40 @@ disent que de quoi ils ont l'air.
   étapes ; la boîte système suit la capacité d'administrer (son lien devient le texte du §5.59 pour qui ne l'a pas),
   l'adresse d'expédition reste un lien pour tous.
 - **Aucune couleur, aucun jeton, aucune icône nouveaux.**
+
+### 5.111 Les pastilles cachées : la case des réglages, la bascule, la mention sous la liste et dans la palette — `CRM-159`
+
+*Écrit le 2026-11-20, avant le code, après lecture des sections ciblées par la décision 958, non intégrale : §1 à §4, §6 à
+§12, §5.4 quinquies, §5.7, §5.7 bis, §5.8, §5.11, §5.13, §5.29 bis, §5.51, §5.59, §5.73, §5.103, §5.108.* Ce qui est
+masqué, compté et lu est spécifié par `docs/SPEC-mail-subsystem.md` §31.13 ; ces règles ne disent que de quoi il a l'air.
+Complète le §5.103 (les réglages) et le §5.108 (les filtres rapides), sans rien en retirer.
+
+- **UNE ICÔNE NOUVELLE, `EyeOff`** (Lucide, §9), pour un seul sens : **« ses mails sont masqués par défaut »**. Toujours
+  `aria-hidden`, toujours accompagnée d'un mot : l'icône ne porte jamais l'état seule (§1). Elle n'existait pas : aucune
+  icône du produit ne disait « caché ».
+- **LA CASE « CACHÉE », DANS LA FICHE D'UNE PASTILLE** (§5.103, création et modification), après « Descriptif pour
+  l'IA », avant « Enregistrer » : une case native de 24 px sur une ligne de `--size-target` (§5.7 bis), libellée
+  **« Cacher ses mails dans l'inbox »**, avec son aide en 13 px `--color-text-3`, reliée par `aria-describedby` :
+  « Les fils qui portent cette pastille ne paraissent que si on l'active dans les filtres. Spam est cachée d'office. »
+  **Décochée** dans une fiche neuve. Elle suit la capacité d'administrer l'espace, comme le reste de la fiche (§5.59).
+- **LA LIGNE D'UNE PASTILLE CACHÉE**, dans la liste des réglages : après la pilule, la mention textuelle **« Cachée »**
+  en 13 px `--color-text-2`, précédée d'`EyeOff` 14 px — la forme de la mention « Archivée » (§5.13), et les deux se
+  suivent quand une pastille est l'une et l'autre (« Cachée · Archivée »).
+- **LA BASCULE D'UNE PASTILLE CACHÉE**, dans les filtres rapides (§5.108) : la même bascule, sans autre teinte ; `EyeOff`
+  12 px **après** le nom, et le nom accessible et l'infobulle disent « {nom}, pastille cachée » (« {nom}, pastille cachée
+  et archivée » dans le volet). Activée, elle a l'état actif du §5.108 : c'est la seule chose qui montre ses fils.
+- **LA MENTION SOUS LA LISTE** : après le dernier fil — ou sous l'état vide, qui garde son texte (§5.51) —, un bloc
+  séparé des fils par une bordure haute `--color-border`, rembourrage 8 px vertical et 12 px horizontal. Une ligne par
+  pastille, chacune **une commande discrète compacte** (§5.4 quinquies) : `EyeOff` 14 px puis « {n} fils masqués
+  ({nom}) » (« 1 fil masqué ({nom}) » au singulier), en 13 px `--color-text-2`, le nom de la pastille entre parenthèses.
+  Le clic, `Entrée` ou `Espace` active la pastille ; **le focus passe à sa bascule**, désormais active, dans les filtres
+  rapides : la commande qui disparaît ne perd pas le focus. Le bloc n'est pas une région vivante : son compte se relit
+  avec la liste et ne s'annonce pas. Absent quand aucun fil n'est masqué. Discret parce que c'est la règle qui fonctionne,
+  pas une alerte : aucune couleur d'état.
+- **DANS LA PALETTE DE RECHERCHE** : sous les résultats, la même ligne au compte de mails — « {n} mails masqués ({nom}) »
+  —, `EyeOff` 14 px en tête. Pour une pastille de l'espace courant, c'est un lien vers l'inbox, la pastille activée, qui
+  ferme la palette ; pour une pastille d'un autre espace, un texte qui nomme l'espace, « {n} mails masqués ({nom}, espace
+  {espace}) », sans lien. Ces lignes ne sont pas des résultats : elles ne prennent pas part à la navigation par les
+  flèches de la liste des résultats, et se joignent par `Tab`.
+- **RESPONSIVE** (§7) : les lignes passent à la ligne, jamais tronquées ; la page ne défile jamais horizontalement.
+- **Aucune couleur, aucun jeton nouveaux ; une icône nouvelle**, `EyeOff`, pour le seul sens dit plus haut.
