@@ -41256,3 +41256,10 @@ dans le Spark de la prod ») :
   redéposer alors ;
 - **reste** : le propriétaire importe la proposition en console ; puis, sur instruction, la session de livraison recrée
   `functions` et constate `GET /functions/v1/ia/etat` → `disponible` et la reprise de la passe des pastilles.
+
+**Acceptée et constatée, le même soir, sur instruction du responsable** (« accepter les changements dans uniquement le
+Spark crm puis redémarrer l'instance et vérifier ») : la proposition `secrets` du seul Spark `crm` acceptée par l'API locale
+du plan de contrôle sur la Forge, la ligne cochée secret, la valeur relue et renvoyée sur la Forge même ; `functions` recréé
+plutôt que la cellule redémarrée — un conteneur garde l'environnement de sa création, un redémarrage de cellule aurait coupé
+le CRM sans faire prendre la clé ; constaté : passe `evalues: 5, echecs: 0, simulee: false`, `200` à la passerelle,
+225 évaluations encore `pending` en rattrapage, `verifier.sh` 35/36 (INC-277). Contrat §8.

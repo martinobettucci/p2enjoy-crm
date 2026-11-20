@@ -19304,7 +19304,7 @@ nettoyage, `cid:` et la migration de `content_id`, le seed, les preuves, quatre 
 
 ### CRM-141 — Pastilles de mail posées par le LLM, définies dans les réglages, réévaluables, corrigeables à la main `[P]`
 
-**Livrée le 2026-11-12** (décision 927, révision `1ccc1fbb`) ; **la clé de LeLabs de la production est refusée** (`cle_refusee`) : l'évaluation par le modèle n'aboutit pas avant sa correction ; reste le constat du responsable.
+**Livrée le 2026-11-12** (décision 927, révision `1ccc1fbb`) ; la clé de la production, refusée depuis la mise en service (réémise à la passerelle), **remplacée le 2026-11-20** : la passe évalue sur le vrai modèle (`echecs: 0`) et rattrape le stock ; reste le constat du responsable.
 
 **Origine** : demande du responsable, le 2026-11-10 ; arbitrée le même jour (décision 883).
 **Comportement attendu** :
