@@ -20227,6 +20227,8 @@ unitaires ; E2E souris et clavier aux quatre paliers ; captures observées ; see
 
 ### CRM-157 — Envoyer un mail : un refus clair quand l'espace n'a pas de domaine d'adresses d'affaire, et la messagerie dans le guide de démarrage `[P]`
 
+**Livrée le 2026-11-20** (décision 956, révision `3df3bd7e`) ; reste le constat du responsable en production.
+
 **Origine** : signalement du responsable, le 2026-11-19 (« Thomas me dit qu'il n'arrive pas à envoyer des mails »), diagnostiqué
 par la session de livraison (p2enjoy-crm-e3, ex-bb) ; arbitré le même jour (décision 951).
 **Constat** (production, en lecture seule) : l'espace `crm` n'a pas de domaine entrant (`workspaces.inbound_domain` nul).
@@ -20292,6 +20294,8 @@ livraison. Connecteur : non (décision 951).
   il reste la livraison (la 192, puis la webapp) et le constat du responsable.
 
 ### CRM-158 — La file d'envoi n'est vidée par rien en production : une tâche planifiée qui la vide chaque minute `[P]`
+
+**Livrée le 2026-11-20** (décision 956, révision `3df3bd7e`) ; reste le constat du responsable en production.
 
 **Origine** : relevé par la session de livraison (p2enjoy-crm-e3, ex-bb) le 2026-11-19, en suivant le signalement de Thomas
 (`CRM-157`), une fois le domaine entrant réglé ; arbitré le même jour (décision 952).

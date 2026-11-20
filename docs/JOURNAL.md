@@ -41213,3 +41213,7 @@ source et republié en dev (garde 168, API 9/9). Captures : 131 renouvelées, ob
 **La file de production**, relue en lecture seule avant la fenêtre : les deux seuls envois en attente sont ceux de Thomas
 (13:45 et 13:46 UTC le 2026-11-19), qui partiront à la reconstruction de `mail-sync`.
 **Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `3df3bd7e` : migration 192, webapp, `mail-sync`.
+**Exécutée le 2026-11-20** : `pg_dump` relu (3 543 entrées) ; la file relue juste avant (un seul envoi dû, celui de Thomas ;
+ses deux autres annulés par lui) ; `livrer.sh --revision 3df3bd7e…` (webapp bâtie dans la cellule, migration 192),
+`mail-sync` reconstruit — boucle démarrée, le mail de Thomas `sent` deux secondes après ; registre à 190, `verifier.sh` 35/36
+(INC-277), file à jour ; contrat §2.62 à §2.64 LIVRÉES, §3 et §8 (`950023e1`), changelog en [Publié], backlog ; verrou levé.

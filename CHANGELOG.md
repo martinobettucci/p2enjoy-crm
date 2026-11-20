@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-20 — la migration 192, la webapp, l'image `mail-sync` et le manuel
+
+Cellule Spark `crm`, révision `3df3bd7e` (décision 956, un `pg_dump -Fc` avant). **Vérifié** : registre à 190 lignes, la
+dernière `0192_domaine_absent_envoi.sql` ; `mail-sync` reconstruit, sa boucle d'envoi démarrée (30 s) ; le mail en attente de
+Thomas parti (`sent`), premier envoi réel de la production ; `index-B_4CryHK.js` servi ; `verifier.sh` 35/36 (INC-277), la
+file d'envoi à jour ; manuel publié (594 fichiers). Le constat du responsable reste à faire.
+
 ### `CRM-157` T3 — la messagerie dans le guide de démarrage
 
 - Le guide passe à huit étapes : « Raccorder une boîte de réception » cède la place à la boîte de réception de l'espace
@@ -58,10 +69,6 @@ d'exécuter le code attendu.
 - Une relance due dans un espace sans domaine ferme sa séquence (`closed_reason = workspace_reply_domain_missing`) au lieu
   de partir en file avec un destinataire vide.
 - pgTAP `0179`, preuve d'API dans un espace jetable ; `docs/SPEC-mail-subsystem.md` §33.2 ; contrat §2.62.
-
-_Rien à publier pour le moment._
-
-## [Publié]
 
 ### Déployé en production, 2026-11-19 — les migrations 188 à 191, la webapp, l'image `mcp` et le manuel
 
