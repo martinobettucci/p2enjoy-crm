@@ -1,3 +1,5 @@
+-- @verifies CRM-159 (docs/BACKLOG.md) — tranche T4 : les comptes de départ suivent les deux mails Spam du seed (§52), masqués
+--           dans « Non classés » (docs/SPEC-mail-subsystem.md §31.13.3)
 -- @verifies CRM-156 (docs/BACKLOG.md) — tranche T5 : les comptes de départ suivent le mail de Nora Nouveau du seed
 --           (docs/SPEC-seed.md §49 ; révision des n° 11 à 13, décision 51)
 -- @verifies CRM-057 (docs/BACKLOG.md) — tranche 2 : lu / non lu dans l'inbox
@@ -97,10 +99,14 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');  -- Camille, ad
 -- de Nora Nouveau, NON CLASSÉ dans la boîte de Camille et transféré à Driss (docs/SPEC-seed.md §49) : « Non classés » en
 -- compte quatre, tous non lus pour Camille. Les deux mails de « Promo Flash » ne comptent pas : en corbeille, la politique
 -- de lecture les exclut, comme celui du §45.
-select is((select count(*) from public.mail_messages m where not public.is_read(m)), 9::bigint,
-	'11 — au départ, les neuf messages reçus sont non lus pour Camille : aucune lecture fabriquée');
+-- RÉVISÉ par `CRM-159` T4 (décision 51, 2026-11-20), non relâché : un dixième et un onzième, les deux mails Spam du seed
+-- (docs/SPEC-seed.md §52), NON CLASSÉS dans la boîte système, non lus pour Camille. La table en compte donc onze ; mais
+-- leurs fils sont MASQUÉS par la pastille cachée Spam (docs/SPEC-mail-subsystem.md §31.13.3) : « Non classés » reste à
+-- quatre (n° 12 et 13) — les compteurs comptent ce que la liste montre sans filtre.
+select is((select count(*) from public.mail_messages m where not public.is_read(m)), 11::bigint,
+	'11 — au départ, les onze messages reçus sont non lus pour Camille : aucune lecture fabriquée');
 select is((select unread_count from public.inbox_arborescence() where card_id is null), 4::bigint,
-	'12 — « Non classés » : quatre non lus pour Camille');
+	'12 — « Non classés » : quatre non lus pour Camille, les deux fils Spam masqués');
 select is((select nombre from public.inbox_arborescence() where card_id is null), 4::bigint,
 	'13 — et le TOTAL reste à quatre (décision 716)');
 
