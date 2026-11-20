@@ -20344,7 +20344,9 @@ constater le départ des deux mails de Thomas et le contrôle 10 « OK ».
 **DoD** : preuve que la file se vide **sans appel explicite** (E2E mail : un envoi mis en file part dans la minute) ;
 pgTAP si migration ; contrat ; constat en production (les deux mails de Thomas partent).
 
-### CRM-159 — Pastilles de mail « cachées » : leurs mails ne paraissent dans l'inbox que si l'on active la pastille `[ ]`
+### CRM-159 — Pastilles de mail « cachées » : leurs mails ne paraissent dans l'inbox que si l'on active la pastille `[@]`
+
+*Prise en charge : f9 (152dd27d) depuis 2026-11-20 19:56 UTC — état avant : [ ]*
 
 **Origine** : demande du responsable, le 2026-11-20 ; arbitrée le même jour (décision 957).
 **Demande, verbatim** : « certaines catégorie sont cachées par défaut sauf si on les sélectionné explicitement. je pense au
