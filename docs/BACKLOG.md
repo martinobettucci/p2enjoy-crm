@@ -20343,3 +20343,39 @@ la route) ; les preuves et le seed qui comptaient sur leur passe, révisés (§3
 constater le départ des deux mails de Thomas et le contrôle 10 « OK ».
 **DoD** : preuve que la file se vide **sans appel explicite** (E2E mail : un envoi mis en file part dans la minute) ;
 pgTAP si migration ; contrat ; constat en production (les deux mails de Thomas partent).
+
+### CRM-159 — Pastilles de mail « cachées » : leurs mails ne paraissent dans l'inbox que si l'on active la pastille `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-20 ; arbitrée le même jour (décision 957).
+**Demande, verbatim** : « certaines catégorie sont cachées par défaut sauf si on les sélectionné explicitement. je pense au
+cas de SPAM la pastille. mais au lieu de hardcore, chaque pastille peut porter un flag "cachée" off par défaut et les mails
+recevant cette pastille sont donc non affichées sauf si on sélectionné specificament cette pastille dans les filtres
+rapides. »
+**Existant** : les pastilles d'un mail (`CRM-141`, `docs/SPEC-mail-subsystem.md` §31) et leurs filtres rapides en bascule,
+combinés en OU, les archivées dans un volet replié (`CRM-155`, §31.7 révisé).
+**Comportement attendu** (substance validée, décision 957 ; détail à spécifier) :
+- (i) **chaque pastille porte un drapeau « cachée »**, décoché par défaut, réglé par qui administre les pastilles dans
+  Réglages ▸ Pastilles des mails ; aucune pastille n'est cachée par le code : c'est une donnée ;
+- (ii) **la migration coche « cachée » sur la pastille par défaut « Spam »** des espaces existants et des espaces nouveaux ;
+  toutes les autres restent visibles ; l'administrateur peut décocher ;
+- (iii) **un fil dont un message porte une pastille cachée n'apparaît dans l'inbox que si cette pastille cachée est
+  elle-même activée** dans les filtres rapides ; **le caché l'emporte** : activer « Lead » ne montre pas un mail à la fois
+  Lead et Spam ; activer « Spam » le montre ;
+- (iv) **portée** : la liste de l'inbox **et ses compteurs de non-lus** ; la **recherche** de l'inbox obéit à la même règle ;
+  une pastille cachée **et archivée** continue de masquer ses mails ; **l'onglet Mails de la fiche d'une affaire n'est pas
+  concerné** : ce qu'on y a classé reste visible ;
+- (v) **une mention discrète** sous la liste signale les fils masqués (par exemple « 12 mails masqués (Spam) ») ; un clic
+  active la pastille correspondante ;
+- (vi) la règle est appliquée **côté base**, dans la lecture de la liste, pas seulement dans l'interface (`CLAUDE.md` §10).
+**Connecteur MCP** : **oui, en lecture, famille existante `messagerie`, action `consulter`** (décision 957) — la liste des
+mails du connecteur masque de même les mails des pastilles cachées, sauf filtre explicite sur cette pastille ;
+`crm_mail_label_list` rend le drapeau ; le drapeau ne se règle **pas** par le connecteur ; aucune case ni famille nouvelle
+(`docs/SPEC-mcp.md` §6.1 ; outil à inscrire au §9.2).
+**Spécification** : à écrire avant le code par la session qui prend l'unité — `docs/SPEC-mail-subsystem.md` §31 (le
+drapeau, la règle de masquage, les compteurs, la recherche, la mention) ; `docs/SCHEMA.md` (la colonne, la migration et
+Spam) ; `docs/DESIGN_SYSTEM.md` §5.103 (la case dans les réglages, la mention sous la liste) ; `docs/SPEC-mcp.md` §9.2 ;
+le manuel §12.2 et §12.6 ; le contrat de déploiement.
+**DoD** : migration et pgTAP (la règle en base, Spam cochée, le drapeau réservé à qui administre) ; Vitest ; API (liste,
+compteurs, recherche, refus d'une lectrice qui règle le drapeau) ; E2E UI souris et clavier (la case, le masquage, la
+combinaison, la mention et son clic) ; MCP (unitaire et intégration) ; seed (un mail Spam et un mail Spam + Lead) ;
+captures observées ; manuel ; contrat. La campagne complète revient à la session de livraison (décision 830).

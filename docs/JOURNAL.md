@@ -41263,3 +41263,22 @@ du plan de contrôle sur la Forge, la ligne cochée secret, la valeur relue et r
 plutôt que la cellule redémarrée — un conteneur garde l'environnement de sa création, un redémarrage de cellule aurait coupé
 le CRM sans faire prendre la clé ; constaté : passe `evalues: 5, echecs: 0, simulee: false`, `200` à la passerelle,
 225 évaluations encore `pending` en rattrapage, `verifier.sh` 35/36 (INC-277). Contrat §8.
+
+### décision 957 — `CRM-159` : une pastille de mail peut être « cachée » ; Spam cachée d'office ; le caché l'emporte
+
+*2026-11-20, session 4522fa9c (p2enjoy-crm-d5, session de livraison), arbitrages du responsable (`AskUserQuestion`), avant
+la spécification.*
+**La demande** : cacher par défaut les mails de certaines pastilles (Spam), sauf sélection explicite dans les filtres
+rapides — par un drapeau porté par chaque pastille, « au lieu de hardcoder ».
+**Décisions** :
+- **un drapeau « cachée » par pastille**, décoché par défaut, réglé dans Réglages ▸ Pastilles des mails ;
+- **Spam cachée d'office** par la migration, dans les espaces existants et nouveaux ; écarté : tout laisser visible ;
+- **le caché l'emporte** : un fil dont un message porte une pastille cachée n'apparaît que si cette pastille est activée ;
+  écarté : un filtre explicite sur une autre de ses pastilles le montre ;
+- **portée : la liste de l'inbox et ses compteurs de non-lus**, la recherche comprise ; une pastille cachée et archivée
+  masque encore ; **la fiche d'une affaire n'est pas concernée** ; écartés : l'inbox seule, sans les compteurs ; partout ;
+- **une mention discrète** des fils masqués sous la liste, dont le clic active la pastille ; écarté : aucun signal ;
+- **connecteur MCP** — question 1 : **oui, en lecture** (la liste des mails masque de même ; la liste des pastilles rend le
+  drapeau ; aucun réglage par le connecteur) ; écartés : lecture et réglage ; non. Question 2 : **famille existante
+  `messagerie`**, action `consulter** ; écartée : une famille nouvelle.
+**Conséquences** : unité `CRM-159`, à prendre par une session de développement ; la spécification s'écrit avant le code.
