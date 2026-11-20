@@ -1433,7 +1433,28 @@ seule** : aucune migration de plus, aucune variable, aucun secret, aucun connect
 
 **Retour arrière** : la webapp précédente ; rien n'est écrit en base par ces écrans.
 
+### 2.65 `CRM-159` T1, décisions 957 et 958 — les pastilles cachées en base : Spam cachée, la liste de l'inbox, ses compteurs et la recherche masqués (en attente)
+
+`docs/SPEC-mail-subsystem.md` §31.13 ; `docs/SCHEMA.md` « Migration `0193` ». Une colonne (`mail_labels.hidden`), une
+donnée (Spam cochée dans chaque espace), cinq fonctions nouvelles, cinq redéfinies ; **aucune variable, aucun secret**.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 193 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate` |
+| 2 | Constater | session de livraison, en lecture seule | le registre gagne une ligne, l'empreinte de la 193 égale celle du dépôt ; `select count(*) from public.mail_labels where hidden` égal au nombre d'espaces qui ont une pastille « Spam » (`select count(*) from public.mail_labels where lower(btrim(name)) = 'spam'`) ; `select to_regprocedure('public.inbox_messages(uuid,boolean,uuid[],text,integer)') is not null` vrai |
+| 3 | Lire l'effet attendu | session de livraison, en lecture seule | `select count(distinct (m.workspace_id, app.cle_fil(m.references_ids, m.rfc822_message_id))) from public.mail_message_labels x join public.mail_labels l on l.id = x.label_id and l.hidden join public.mail_messages m on m.id = x.message_id where x.applied and m.deleted_at is null` : les fils que l'inbox masquera par défaut (le spam que l'IA a déjà posé) |
+
+**Avec la webapp de T2, et non avant** : la 193 seule masque les fils Spam des compteurs et de la recherche, mais la liste de
+l'écran déjà livré lit encore la table et les montre — les compteurs ne compteraient plus ce que la liste affiche. Livrer
+la 193 et la webapp de T2 dans la même fenêtre. **Indépendante de la 194** (`CRM-160`), qui redéfinit `concerns_me` : la 193
+l'appelle.
+**Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0193` ».
+
 ## 3. Migrations en attente
+
+**La 193** (`CRM-159` T1, décisions 957 et 958) : les pastilles cachées (`docs/SCHEMA.md` « Migration `0193` ») — une
+colonne, Spam cochée, cinq fonctions nouvelles, cinq redéfinies. §2.65. **Avec la webapp de T2**, dans la même fenêtre.
+Indépendante de la 194. Aucun geste préalable du responsable.
 
 **Aucune migration en attente depuis la fenêtre du 2026-11-20** : la 192 a été appliquée par elle (révision `3df3bd7e`, décision 956) ; registre à **190** lignes. *Historique de l'attente* — le paragraphe qui suit décrit la 192 telle qu'elle attendait.
 

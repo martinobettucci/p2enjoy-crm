@@ -1323,9 +1323,17 @@ type _vueDerivationColonnes = Expect<
 // `transfer_message`, `remove_message_transfer`, `blocked_sender_impact`, `block_sender`, `unblock_sender` et
 // `inbox_bulk_unknown_senders` (§32.7, §32.8, §32.10), et remplace `import_contacts` (`p_source` en dernier). Le compte
 // s'accroît de huit.
+// `0193` de CRM-159, TRANCHE T1, ajoute `inbox_messages` et `inbox_hidden_counts`, SECURITY INVOKER : la liste de l'inbox
+// avec tous ses filtres et le masquage des fils d'une pastille cachée, et la mention qui les compte ; puis
+// `search_hidden_mail_counts`, les mails que la recherche a écartés (docs/SPEC-mail-subsystem.md §31.13.4 à §31.13.6). CE QUI
+// ÉCHAPPE AU GÉNÉRATEUR : `p_limit` est borné à 200 côté serveur ; la limite et l'ordre sont ceux de la base. Le compte
+// s'accroît de trois.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'inbox_messages'
+    | 'inbox_hidden_counts'
+    | 'search_hidden_mail_counts'
     | 'inbox_bulk_count'
     | 'inbox_bulk_apply'
     | 'transfer_message'

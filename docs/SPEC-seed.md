@@ -3335,7 +3335,7 @@ dans la boîte système** par IMAP et **relevés par la vraie relève** de `mail
 pour ne pas toucher au « Seulement moi » de Camille) ; leurs pastilles sont **posées par la vraie passe** contre le
 scénario `pastilles` du simulateur, qui pose une pastille dont un mot du nom paraît dans l'objet ou le texte. Aucune ligne
 `llm` n'est écrite à la main ; aucun drapeau n'est posé par le seed : la « Spam » de l'espace est cochée par la migration
-`0194`.
+`0193`.
 
 | Message-ID | De | Objet | Pastilles attendues | Ce qu'il démontre |
 |---|---|---|---|---|

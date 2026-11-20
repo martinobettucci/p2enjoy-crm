@@ -4729,7 +4729,7 @@ pastilles posées**, `labels`, sous la forme de `crm_mail_get` (décision 948).
 *Écrit le 2026-11-20, avant le code (décisions 957 et 958).* **Origine** : « certaines catégories sont cachées par défaut
 sauf si on les sélectionne explicitement. je pense au cas de SPAM la pastille. mais au lieu de hardcoder, chaque pastille
 peut porter un flag "cachée" off par défaut ». L'apparence : `docs/DESIGN_SYSTEM.md` §5.111 ; le schéma :
-`docs/SCHEMA.md`, « Migration `0194` » ; le connecteur : `docs/SPEC-mcp.md` §9.2 *duovicies*, révisé.
+`docs/SCHEMA.md`, « Migration `0193` » ; le connecteur : `docs/SPEC-mcp.md` §9.2 *duovicies*, révisé.
 
 **31.13.1 Le drapeau.** `public.mail_labels` gagne **`hidden boolean not null default false`** : une pastille est
 **cachée** quand il est vrai. C'est une donnée, jamais un nom lu par le code : **aucune pastille n'est cachée par le code**.
@@ -4759,11 +4759,12 @@ peut porter un flag "cachée" off par défaut ». L'apparence : `docs/DESIGN_SYS
 - **Un fil masqué disparaît entièrement** : aucun de ses messages n'est rendu, même ceux qui ne portent pas la pastille.
   Un fil montré suit ensuite la règle du filtre, inchangée (§31.12.2) : sous « Spam », la liste retient les messages qui
   portent Spam.
-- **La règle est tenue en base** (décision 957, point vi ; `CLAUDE.md` §10), par deux fonctions internes, `SECURITY
-  DEFINER`, `search_path` vide, appelées par toutes les lectures concernées :
-  - `app.mail_thread_hidden_labels(p_workspace uuid, p_thread_key text) returns uuid[]` — `H`, chaque message passé par
-    `app.peut_voir_message` ;
-  - `app.mail_thread_masked(p_workspace uuid, p_thread_key text, p_active uuid[]) returns boolean` — la règle ci-dessus.
+- **La règle est tenue en base** (décision 957, point vi ; `CLAUDE.md` §10), par une fonction interne, `SECURITY
+  DEFINER`, `search_path` vide, appelée par toutes les lectures concernées : *précisé au code de T1*,
+  `app.mail_hidden_threads() returns table (workspace_id uuid, thread_key text, hidden_label_ids uuid[])` — chaque fil
+  dont `H` n'est pas vide, avec `H`, chaque message passé par `app.peut_voir_message`. Chaque lecture la matérialise une
+  fois et écarte les fils où `H` ne croise pas `A` ; deux fonctions par fil, d'abord prévues, auraient fait un appel par
+  message.
   Ce n'est pas une règle d'accès : le message reste lisible par la RLS, ouvert par son adresse (`?message=`) ou depuis une
   notification. C'est une règle de **lecture de la liste**, que le client ne compose pas.
 
@@ -4817,8 +4818,8 @@ liste). Le dossier « Corbeille » n'en porte pas.
 
 **31.13.6 La recherche (décision 958).** `public.recherche_globale` écarte de sa famille `message` les messages dont le fil
 est masqué, `A` vide : on ne peut pas y activer une pastille. **Elle le dit** par une fonction voisine,
-`public.search_hidden_mail_counts(p_terme text) returns table (label_id uuid, workspace_id uuid, label_name text,
-mail_count integer)`, `SECURITY INVOKER` : pour chaque pastille cachée, le nombre de **messages** qui répondent au terme et
+`public.search_hidden_mail_counts(p_terme text) returns table (label_id uuid, workspace_id uuid, workspace_name text,
+label_name text, mail_count integer)` (*le nom de l'espace, précisé au code de T1*), `SECURITY INVOKER` : pour chaque pastille cachée, le nombre de **messages** qui répondent au terme et
 que le masquage a écartés à cause d'elle (un message masqué par deux pastilles compte sous chacune). Le terme est lu **par
 la même fonction** que la recherche, `app.search_query(p_terme) returns tsquery` (nulle pour un terme vide ou fait de mots
 vides), extraite de `recherche_globale` sans changement de comportement — une copie de la découpe pourrait diverger. La
@@ -4865,10 +4866,10 @@ montré sous « Spam ».
 
 | Tranche | Contenu |
 |---|---|
-| **T1** | Migration `0194` : la colonne, Spam cochée, le déclencheur des défauts, les deux fonctions de masquage, `inbox_messages`, `inbox_hidden_counts`, `inbox_arborescence`, `inbox_scope_messages`, `app.search_query`, `recherche_globale`, `search_hidden_mail_counts` ; pgTAP ; types ; preuve d'API ; `docs/SCHEMA.md` ; contrat de déploiement |
+| **T1** | Migration `0193` : la colonne, Spam cochée, le déclencheur des défauts, les deux fonctions de masquage, `inbox_messages`, `inbox_hidden_counts`, `inbox_arborescence`, `inbox_scope_messages`, `app.search_query`, `recherche_globale`, `search_hidden_mail_counts` ; pgTAP ; types ; preuve d'API ; `docs/SCHEMA.md` ; contrat de déploiement |
 | **T2** | L'écran : la lecture par `inbox_messages`, la mention sous la liste, la bascule d'une pastille cachée, la case « Cachée » des réglages, la ligne de la palette ; unitaires ; E2E souris et clavier, quatre paliers ; captures ; `docs/DESIGN_SYSTEM.md` §5.111 précisé au code |
 | **T3** | Le connecteur : `hidden` sur `crm_mail_label_list`, `hidden_mails` sur `crm_search` ; pytest ; intégration ; `verify-mcp.sh` |
-| **T4** | Le seed (§52), le manuel §12.2 et §12.6 et leurs images, le contrat (migration `0194`, webapp, image `mcp`) ; l'unité passe `[P]` |
+| **T4** | Le seed (§52), le manuel §12.2 et §12.6 et leurs images, le contrat (migration `0193`, webapp, image `mcp`) ; l'unité passe `[P]` |
 
 ---
 

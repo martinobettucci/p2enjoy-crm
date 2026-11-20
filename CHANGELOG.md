@@ -13,7 +13,12 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+- **CRM-159 T1 — les pastilles cachées, en base** (migration 193, décisions 957 et 958). Une pastille de mail porte un
+  drapeau « cachée » (`mail_labels.hidden`), réglé par qui administre l'espace ; « Spam » est cachée d'office dans chaque
+  espace existant et créé. Un fil dont un message porte une pastille cachée n'est rendu par la liste de l'inbox
+  (`inbox_messages`), ses compteurs, la portée des actions groupées et la recherche globale que si l'une de ses pastilles
+  cachées est activée dans les filtres ; une mention les compte (`inbox_hidden_counts`, `search_hidden_mail_counts`).
+  La fiche d'une affaire, le message ouvert et la corbeille ne masquent rien.
 
 ## [Publié]
 

@@ -11,7 +11,8 @@
 --   l'envoi `b2` qui lui répond (un second fil) ;
 -- - dans la boîte système, que Driss ne lit pas : `s1`, de `spam@` aussi ;
 -- - dans l'affaire `…c5`, que Driss et la lectrice lisent sans l'écrire : `k1`, de `spam@`.
--- `a1` seul porte la pastille « Spam », posée.
+-- `a1` seul porte la pastille « Lead », posée. *Révisé par `CRM-159` (2026-11-20)* : c'était « Spam », devenue cachée
+-- (`0193`, docs/SPEC-mail-subsystem.md §31.13) — elle masquerait les fils de la sonde ; « Lead », visible, garde l'intention.
 
 begin;
 
@@ -54,9 +55,9 @@ select m.id, a.id, 'INBOX', 156000 + row_number() over (order by m.rfc822_messag
 insert into public.mail_message_labels (message_id, label_id, workspace_id, source, applied, set_by, set_at)
 select m.id, l.id, :'espace', 'manual', true, :'admin', now()
   from public.mail_messages m, public.mail_labels l
- where m.rfc822_message_id = '<tst-156-a1@exemple.test>' and l.workspace_id = :'espace' and l.name = 'Spam';
+ where m.rfc822_message_id = '<tst-156-a1@exemple.test>' and l.workspace_id = :'espace' and l.name = 'Lead';
 
-select l.id as spam from public.mail_labels l where l.workspace_id = :'espace' and l.name = 'Spam' \gset
+select l.id as pastille from public.mail_labels l where l.workspace_id = :'espace' and l.name = 'Lead' \gset
 select id as a1 from public.mail_messages where rfc822_message_id = '<tst-156-a1@exemple.test>' \gset
 select id as a2 from public.mail_messages where rfc822_message_id = '<tst-156-a2@exemple.test>' \gset
 select id as b1 from public.mail_messages where rfc822_message_id = '<tst-156-b1@exemple.test>' \gset
@@ -101,7 +102,7 @@ select throws_ok(format('select public.inbox_bulk_apply(%L, %L)', :'fil_b', 'unc
 select is((select row(thread_count, message_count)::text from public.inbox_bulk_count(:'expediteur_spam')), '(1,2)',
 	'12 — l''expéditeur, sans casse ni blancs : un fil, deux messages ; `s1`, de la boîte système, n''est pas vu par Driss');
 select is((select row(thread_count, message_count)::text
-             from public.inbox_bulk_count(format('{"folder": "unclassified", "label_ids": ["%s"]}', :'spam')::jsonb)),
+             from public.inbox_bulk_count(format('{"folder": "unclassified", "label_ids": ["%s"]}', :'pastille')::jsonb)),
 	'(1,1)', '13 — la pastille : seul le message qui la porte, pas tout son fil (décision 946)');
 select is((select row(thread_count, message_count)::text from public.inbox_bulk_count(:'fil_b')), '(1,2)',
 	'14 — un fil coché sans filtre : ses messages du dossier, l''envoi compris');
@@ -128,9 +129,9 @@ select is((select state from public.mail_label_evaluations where message_id = :'
 	'21 — le reçu est en attente d''évaluation');
 
 -- 22–23. Poser une pastille sur un fil coché.
-select is(public.inbox_bulk_apply(:'fil_a', 'set_label', format('{"label_id": "%s", "applied": true}', :'spam')::jsonb) ->> 'done', '2',
-	'22 — poser « Spam » sur le fil coché : ses deux messages');
-select is((select count(*)::int from public.mail_message_labels where label_id = :'spam' and message_id in (:'a1', :'a2')
+select is(public.inbox_bulk_apply(:'fil_a', 'set_label', format('{"label_id": "%s", "applied": true}', :'pastille')::jsonb) ->> 'done', '2',
+	'22 — poser « Lead » sur le fil coché : ses deux messages');
+select is((select count(*)::int from public.mail_message_labels where label_id = :'pastille' and message_id in (:'a1', :'a2')
             and source = 'manual' and applied), 2, '23 — la pastille est posée à la main sur les deux');
 
 -- 24–25. Classer dans une affaire qu'il n'écrit pas : tout refusé, rien ne bouge.

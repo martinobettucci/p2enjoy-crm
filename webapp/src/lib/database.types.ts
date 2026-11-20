@@ -2576,6 +2576,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string
+          hidden: boolean
           id: string
           name: string
           updated_at: string
@@ -2587,6 +2588,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description: string
+          hidden?: boolean
           id?: string
           name: string
           updated_at?: string
@@ -2598,6 +2600,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string
+          hidden?: boolean
           id?: string
           name?: string
           updated_at?: string
@@ -5716,6 +5719,61 @@ export type Database = {
           workspace_id: string
         }[]
       }
+      inbox_hidden_counts: {
+        Args: {
+          p_card_id?: string
+          p_label_ids?: string[]
+          p_only_me?: boolean
+          p_sender?: string
+          p_snoozed_shown?: boolean
+        }
+        Returns: {
+          label_id: string
+          thread_count: number
+        }[]
+      }
+      inbox_messages: {
+        Args: {
+          p_card_id?: string
+          p_label_ids?: string[]
+          p_limit?: number
+          p_only_me?: boolean
+          p_sender?: string
+        }
+        Returns: {
+          bcc_addresses: string[]
+          body_html: string | null
+          body_text: string | null
+          card_id: string | null
+          cc_addresses: string[]
+          classification: string
+          classified_at: string | null
+          classified_by: string | null
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          direction: string
+          filed_at: string | null
+          from_address: string
+          from_name: string | null
+          id: string
+          received_at: string
+          references_ids: string[]
+          rfc822_message_id: string
+          sent_at: string | null
+          subject: string | null
+          suggested_at: string | null
+          suggested_card_id: string | null
+          to_addresses: string[]
+          workspace_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "mail_messages"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       inscrire_attente: {
         Args: { p_email: string; p_role: string; p_ws: string }
         Returns: string
@@ -6421,6 +6479,16 @@ export type Database = {
       save_card_as_template: {
         Args: { p_name: string; p_placement: string }
         Returns: string
+      }
+      search_hidden_mail_counts: {
+        Args: { p_terme: string }
+        Returns: {
+          label_id: string
+          label_name: string
+          mail_count: number
+          workspace_id: string
+          workspace_name: string
+        }[]
       }
       send_email_draft: {
         Args: {

@@ -20383,11 +20383,11 @@ combinaison, la mention et son clic) ; MCP (unitaire et intégration) ; seed (un
 captures observées ; manuel ; contrat. La campagne complète revient à la session de livraison (décision 830).
 **Spécifiée le 2026-11-20** (décision 958, arbitrages du responsable : une pastille cachée activée suffit ;
 `crm_card_mail_list` ne masque rien ; la recherche globale masque et le dit) : `docs/SPEC-mail-subsystem.md` §31.13 ;
-`docs/DESIGN_SYSTEM.md` §5.111 ; `docs/SCHEMA.md` « Migration `0194` » (`0193` est celle de `CRM-160`, qui migre en
-premier) ; `docs/SPEC-mcp.md` §9.2 *duovicies*, révisé ; `docs/SPEC-seed.md` §52. Précision de la spécification : la
+`docs/DESIGN_SYSTEM.md` §5.111 ; `docs/SCHEMA.md` « Migration `0193` » (renumérotée de `0194` : `CRM-160` prend `0194`) ; `docs/SPEC-mcp.md` §9.2 *duovicies*, révisé ; `docs/SPEC-seed.md` §52. Précision de la spécification : la
 corbeille de l'inbox, le message ouvert et les notifications ne masquent pas (§31.13.3).
 **Tranches** (§31.13.10) :
-- [ ] **T1** — migration `0194`, pgTAP, types, preuve d'API, SCHEMA, contrat ;
+- [x] **T1** — migration `0193`, pgTAP, types, preuve d'API, SCHEMA, contrat ; *faite le 2026-11-20* (pgTAP `0180` 34
+  assertions, `0177` révisée ; API `pastilles-cachees` 6/6 ; contrat §2.65) ;
 - [ ] **T2** — l'écran : la lecture par `inbox_messages`, la mention, la bascule cachée, la case des réglages, la palette ;
   unitaires, E2E, captures ;
 - [ ] **T3** — le connecteur : `hidden`, `hidden_mails` ; pytest, intégration, `verify-mcp.sh` ;

@@ -3410,24 +3410,32 @@ modifiées leur définition de la migration précédente ; rendre à `import_con
 des deux listes fermées après avoir supprimé ses notifications et préférences ; supprimer les deux tables. Les transferts
 et les blocages sont perdus — les mails mis à la corbeille par un blocage y restent, restaurables.
 
-### Migration `0194` — les pastilles cachées : le drapeau, Spam cochée, la liste de l'inbox et la recherche masquées — `CRM-159` T1 (`0194_pastilles_cachees.sql` ; spécifiée le 2026-11-20, avant le code)
+### Migration `0193` — les pastilles cachées : le drapeau, Spam cochée, la liste de l'inbox et la recherche masquées — `CRM-159` T1 (`0193_pastilles_cachees.sql` ; spécifiée le 2026-11-20, avant le code)
 
-`docs/SPEC-mail-subsystem.md` §31.13 ; décisions 957 et 958. Le numéro `0193` est celui de `CRM-160` (`concerns_me`), qui
-migre en premier ; cette migration ne redéfinit pas `public.concerns_me`, elle l'appelle.
+`docs/SPEC-mail-subsystem.md` §31.13 ; décisions 957 et 958. *Renumérotée de `0194` en `0193` le 2026-11-20* : `CRM-160` (`concerns_me`) devait migrer en premier et prend `0194` ;
+cette migration ne redéfinit pas `public.concerns_me`, elle l'appelle — l'ordre des deux est indifférent.
 
 - **`public.mail_labels.hidden`** `boolean not null default false` ; aucune politique nouvelle : la politique `UPDATE`
-  des administrateurs le couvre (§31.3).
+  des administrateurs le couvre (§31.3). *Précisé au code* : les privilèges de `mail_labels` sont posés colonne par
+  colonne (`0183`) ; la colonne reçoit `insert (hidden)` et `update (hidden)` pour `authenticated` — la politique juge la
+  ligne, et une lectrice qui écrit le drapeau ne touche rien (pgTAP `0180` n° 5).
 - **Spam cochée** : `update … set hidden = true where lower(btrim(name)) = 'spam'`, dans chaque espace ; le déclencheur
   des défauts (`0183`) est redéfini pour poser « Spam » cachée dans un espace créé.
-- **Le masquage** : `app.mail_thread_hidden_labels(uuid, text) returns uuid[]` et `app.mail_thread_masked(uuid, text,
-  uuid[]) returns boolean`, `SECURITY DEFINER`, chaque message passé par `app.peut_voir_message` ; servis par l'index
-  `mail_messages_cle_fil_idx` (`0048`).
+- **Le masquage** : *précisé au code*, une seule fonction ensembliste, `app.mail_hidden_threads() returns table
+  (workspace_id uuid, thread_key text, hidden_label_ids uuid[])`, `SECURITY DEFINER`, chaque message passé par
+  `app.peut_voir_message` — les fils qui portent une pastille cachée, avec ces pastilles. Chaque lecture la matérialise
+  une fois puis l'anti-joint, au lieu d'un appel par message : le nombre de fils de spam est petit devant l'inbox. Servie
+  par `mail_message_labels_filtre_idx` (`0183`). Les deux fonctions par fil d'abord prévues ne sont pas créées.
 - **Les lectures** : `public.inbox_messages(uuid, boolean, uuid[], text, integer) returns setof public.mail_messages` et
   `public.inbox_hidden_counts(uuid, boolean, uuid[], text, boolean)`, `SECURITY INVOKER` ; `public.inbox_arborescence`
   et `app.inbox_scope_messages` redéfinies, reprises de leur définition vivante (`0175`, `0189`) ;
   `app.search_query(text) returns tsquery`, extraite de `public.recherche_globale` (reprise de `0168`), qui écarte les
-  messages des fils masqués ; `public.search_hidden_mail_counts(text)`. `authenticated` seulement sur les fonctions
-  publiques nouvelles.
+  messages des fils masqués ; `public.search_hidden_mail_counts(text)`, qui rend aussi le nom de l'espace de chaque
+  pastille (la palette nomme celui d'une pastille étrangère à l'espace courant). `authenticated` seulement sur les
+  fonctions publiques nouvelles.
+- **Preuves** : pgTAP `0180` (34 assertions) ; `0177` révisée (« Lead » au lieu de « Spam », devenue cachée) ; les pgTAP
+  de la recherche, de l'arborescence, des pastilles et des actions groupées restent vertes ; API
+  `e2e/api/pastilles-cachees.spec.ts`.
 - **Retour arrière** : redéfinir les quatre fonctions reprises depuis leurs migrations d'origine, supprimer les fonctions
   nouvelles, puis la colonne ; aucune donnée n'est perdue hors le drapeau lui-même.
 
