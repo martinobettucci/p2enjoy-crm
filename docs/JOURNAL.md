@@ -41217,3 +41217,28 @@ source et republié en dev (garde 168, API 9/9). Captures : 131 renouvelées, ob
 ses deux autres annulés par lui) ; `livrer.sh --revision 3df3bd7e…` (webapp bâtie dans la cellule, migration 192),
 `mail-sync` reconstruit — boucle démarrée, le mail de Thomas `sent` deux secondes après ; registre à 190, `verifier.sh` 35/36
 (INC-277), file à jour ; contrat §2.62 à §2.64 LIVRÉES, §3 et §8 (`950023e1`), changelog en [Publié], backlog ; verrou levé.
+
+### `CRM-141` — diagnostic du refus de la clé de l'assistant IA, à la passerelle LLM de LeLabs (2026-11-20)
+
+*Session 4522fa9c (p2enjoy-crm-d5, session de livraison), sur demande du responsable, qui a ouvert l'accès à la machine de
+la passerelle. Lecture seule de bout en bout : base de la passerelle ouverte en `mode=ro`, aucune clé lue ni manipulée.*
+**Le problème** : depuis la livraison de `CRM-141` (2026-11-12), chaque passe des pastilles journalise `cle_refusee`
+(`simulee: false`) ; les évaluations restent `pending`. Côté CRM, `cle_refusee` couvre `401` et `403` sans les distinguer.
+**Observations** :
+- la cellule porte une `OLLAMA_API_KEY` de 74 caractères ; une sonde du serveur LLM avec cette clé, depuis la cellule, a
+  été refusée par le garde-fou de l'agent (elle aurait sorti le secret du conteneur) — non tentée autrement ;
+- la passerelle (un proxy devant Ollama, avec sa console d'administration) journalise chaque requête : **toutes** celles de
+  la cellule depuis le 2026-11-12 00:15 UTC sont des `401` sur `/api/tags` **sans clé reconnue** (`key_id` nul), environ
+  1 440 par jour ; l'adresse de la cellule est bien dans les origines autorisées, aucune origine n'est bannie ;
+- la clé « internal-crm » existe, est active, rattachée aux API `ollama` et `openai` et au modèle `gemma4:e2b` ; son
+  dernier usage réussi est le **2026-10-23 15:58 UTC** ;
+- son empreinte et son préfixe **diffèrent** de ceux de la sauvegarde de la passerelle du 2026-10-05 : la clé a été
+  **réémise** (« rotation », qui invalide aussitôt l'ancien secret), après le 2026-10-23 puisque le CRM s'en servait encore ;
+- avant `CRM-141`, le CRM n'interrogeait le serveur qu'à la demande d'un écran : la rotation est passée inaperçue jusqu'à la
+  passe de la minute.
+**Conclusion** : ce n'est ni le code, ni l'origine (`403`) : la cellule (et le poste de développement, `401` depuis le
+2026-11-11) présente l'**ancien secret** de « internal-crm ».
+**Remède, au responsable** : réémettre (ou relire, s'il l'a conservé) le secret de « internal-crm » dans la console de la
+passerelle ; le saisir dans la console du Spark (`OLLAMA_API_KEY`) et dans le `.env` du poste ; puis, sur instruction, la
+session de livraison recrée `functions` et constate `GET /functions/v1/ia/etat` → `disponible` ; la passe rattrape seule les
+mails `pending`. Aucun secret ne transite par le dépôt ni par un message.
