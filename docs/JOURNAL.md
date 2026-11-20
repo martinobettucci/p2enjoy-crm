@@ -41282,3 +41282,23 @@ rapides — par un drapeau porté par chaque pastille, « au lieu de hardcoder �
   drapeau ; aucun réglage par le connecteur) ; écartés : lecture et réglage ; non. Question 2 : **famille existante
   `messagerie`**, action `consulter` ; écartée : une famille nouvelle.
 **Conséquences** : unité `CRM-159`, à prendre par une session de développement ; la spécification s'écrit avant le code.
+
+### décision 958 — `CRM-159` : une pastille cachée activée suffit ; la liste d'une affaire du connecteur ne masque rien ; la recherche masque et le dit
+
+*2026-11-20, session 152dd27d (p2enjoy-crm-f9), arbitrages du responsable (`AskUserQuestion`), avant la spécification.*
+Trois points que la décision 957 laissait ouverts, relevés à la lecture de l'existant.
+**Décisions** :
+- **plusieurs pastilles cachées sur un fil** (par exemple Spam et une autre cachée) : **une seule activée suffit** à le
+  montrer ; écarté : exiger que chacune de ses pastilles cachées soit activée. « Le caché l'emporte » (décision 957) vaut
+  donc contre une pastille **visible** activée, pas entre deux cachées ;
+- **le connecteur** : sa seule liste de mails, `crm_card_mail_list`, est la liste **d'une affaire** ; elle **ne masque
+  rien**, comme l'onglet Mails de la fiche, que la décision 957 écarte du masquage ; écarté : la masquer quand même. Le
+  connecteur masque dans **`crm_search`**, et `crm_mail_label_list` rend le drapeau. Famille `messagerie`, action
+  `consulter`, inchangées ;
+- **la recherche globale** (la barre de la webapp et `crm_search`), qui n'a pas de filtres rapides : **les mails cachés ne
+  sortent pas parmi les résultats, et elle le dit** — une mention « N mails masqués (Spam) » mène à l'inbox, la pastille
+  activée ; le connecteur rend ce compte ; écartés : masqués en silence ; non masqués ;
+- **le design system** est lu par sections ciblées pour cette unité (comme les décisions 948 et 953).
+**Conséquence tirée par la session, à la spécification** : « un fil coché agit sur les messages que la liste montre »
+(`docs/SPEC-mail-subsystem.md` §32.2) ; la portée des actions groupées et leur compte, calculés en base, suivent donc la
+même règle de masquage que la liste.
