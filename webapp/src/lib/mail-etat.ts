@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T1 — les boîtes et la file sortante d'un espace (docs/SPEC-mail-subsystem.md §35.5 ;
+//       docs/SPEC-espace-courant.md §7)
 // @spec CRM-059 (docs/BACKLOG.md) — écran d'état de la messagerie
 // @spec docs/SPEC-mail-subsystem.md §20.7 (les faits montrés), §20.11 (l'écran, ce qu'il lit)
 // @spec docs/DESIGN_SYSTEM.md §5.14 (cette surface)
@@ -36,11 +38,14 @@ export const COLONNES_COMPTE_MAIL_ETAT = 'id, label, last_sync_at, status, last_
  */
 export async function lireComptesMailEtat(
 	client: ClientCrm,
+	/** `CRM-161` T1 (docs/SPEC-mail-subsystem.md §35.5) : les boîtes de cet espace seul. */
+	idWorkspace: string,
 ): Promise<EtatAsync<readonly CompteMailEtat[]>> {
 	try {
 		const reponse = await client
 			.from('mail_inbound_accounts')
 			.select(COLONNES_COMPTE_MAIL_ETAT)
+			.eq('workspace_id', idWorkspace)
 			.order('label')
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
@@ -67,15 +72,23 @@ export type CompteursFileSortante = {
  */
 export async function lireCompteursFileSortante(
 	client: ClientCrm,
+	/** `CRM-161` T1 (docs/SPEC-mail-subsystem.md §35.5) : la file sortante de cet espace seul. */
+	idWorkspace: string,
 ): Promise<EtatAsync<CompteursFileSortante>> {
 	try {
 		const [enAttente, echecs] = await Promise.all([
 			client
 				.from('mail_outbox')
 				.select('id', OPTIONS_COMPTE)
+				.eq('workspace_id', idWorkspace)
 				.in('status', ['queued', 'sending'])
 				.limit(LIMITE_COMPTE),
-			client.from('mail_outbox').select('id', OPTIONS_COMPTE).eq('status', 'failed').limit(LIMITE_COMPTE),
+			client
+				.from('mail_outbox')
+				.select('id', OPTIONS_COMPTE)
+				.eq('workspace_id', idWorkspace)
+				.eq('status', 'failed')
+				.limit(LIMITE_COMPTE),
 		])
 		if (enAttente.error !== null) {
 			return enErreur(classerErreur(enAttente.status, enAttente.error.message))

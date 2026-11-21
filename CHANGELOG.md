@@ -13,7 +13,13 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+- **`CRM-161` T1 — l'inbox d'un espace.** Un membre de plusieurs espaces voyait, dans « Non classés » et dans les compteurs de
+  l'inbox, les mails de tous ses espaces. La base ne rend plus que l'espace demandé :
+  - la liste, la mention des fils masqués et l'arborescence prennent l'espace, obligatoire (migration `0195`) ;
+  - les actions groupées l'exigent dans leur portée ;
+  - l'outbox, les mails préparés et l'état de la messagerie sont filtrés par espace ;
+  - une nouvelle lecture compte les non-lus de chaque espace, pour le menu des espaces à venir.
+  Rien ne change à l'écran pour un espace unique. Contrat §2.67 : la migration et la webapp partent dans la même fenêtre.
 
 ## [Publié]
 

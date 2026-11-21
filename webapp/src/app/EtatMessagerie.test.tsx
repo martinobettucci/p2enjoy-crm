@@ -13,6 +13,10 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { EtatMessagerie } from './EtatMessagerie'
 import type { ClientCrm } from '../lib/supabase'
+import { FournisseurEspace } from './ContexteEspace'
+// `CRM-161` T1 (docs/SPEC-mail-subsystem.md §35.6) : l'écran lit l'inbox de l'espace du contexte ; hors coquille, la
+// preuve le fournit — sans lui, les lectures attendent.
+const ESPACE_DE_TEST = { idWorkspace: 'ws-1', estAdmin: false } as const
 
 afterEach(cleanup)
 
@@ -31,14 +35,17 @@ function client({
 	return {
 		from: (table: string) => {
 			if (table === 'mail_inbound_accounts') {
-				return { select: () => ({ order: () => Promise.resolve(comptes) }) }
+				return { select: () => ({ eq: () => ({ order: () => Promise.resolve(comptes) }) }) }
 			}
 			if (table === 'mail_outbox') {
 				return {
 					// `limit` : un compte est un `GET` borné à zéro ligne (`compter.ts`, INC-299, décision 700).
+					// `CRM-161` T1 (§35.5) : chaque compte porte d'abord l'espace courant.
 					select: () => ({
-						in: () => ({ limit: () => Promise.resolve(enAttente) }),
-						eq: () => ({ limit: () => Promise.resolve(echecs) }),
+						eq: () => ({
+							in: () => ({ limit: () => Promise.resolve(enAttente) }),
+							eq: () => ({ limit: () => Promise.resolve(echecs) }),
+						}),
 					}),
 				}
 			}
@@ -75,7 +82,9 @@ describe('EtatMessagerie', () => {
 		})
 		render(
 			<MemoryRouter>
-				<EtatMessagerie client={c} />
+				<FournisseurEspace valeur={ESPACE_DE_TEST}>
+					<EtatMessagerie client={c} />
+				</FournisseurEspace>
 			</MemoryRouter>,
 		)
 		expect(screen.getByTestId('squelette')).toBeTruthy()
@@ -89,7 +98,9 @@ describe('EtatMessagerie', () => {
 		})
 		render(
 			<MemoryRouter>
-				<EtatMessagerie client={c} />
+				<FournisseurEspace valeur={ESPACE_DE_TEST}>
+					<EtatMessagerie client={c} />
+				</FournisseurEspace>
 			</MemoryRouter>,
 		)
 
@@ -117,7 +128,9 @@ describe('EtatMessagerie', () => {
 		})
 		render(
 			<MemoryRouter>
-				<EtatMessagerie client={c} />
+				<FournisseurEspace valeur={ESPACE_DE_TEST}>
+					<EtatMessagerie client={c} />
+				</FournisseurEspace>
 			</MemoryRouter>,
 		)
 		expect(await screen.findByTestId('tableau-comptes-mail')).toBeTruthy()
@@ -129,7 +142,9 @@ describe('EtatMessagerie', () => {
 		const c = client({ comptes: { data: [], error: null, status: 200 }, enAttente: OK, echecs: OK })
 		render(
 			<MemoryRouter>
-				<EtatMessagerie client={c} />
+				<FournisseurEspace valeur={ESPACE_DE_TEST}>
+					<EtatMessagerie client={c} />
+				</FournisseurEspace>
 			</MemoryRouter>,
 		)
 		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
@@ -143,7 +158,9 @@ describe('EtatMessagerie', () => {
 		})
 		render(
 			<MemoryRouter>
-				<EtatMessagerie client={c} />
+				<FournisseurEspace valeur={ESPACE_DE_TEST}>
+					<EtatMessagerie client={c} />
+				</FournisseurEspace>
 			</MemoryRouter>,
 		)
 		expect(await screen.findByTestId('etat-erreur')).toBeTruthy()

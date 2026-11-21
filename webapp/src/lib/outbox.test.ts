@@ -2,6 +2,8 @@
 //           chaque dossier dans son ordre et ses états, la pagination de « Envoyés », les comptes, la capacité lue sans
 //           jamais la deviner, le dictionnaire des motifs (code inconnu jamais brut), l'issue incertaine, le geste offert
 //           selon l'état, le classement des refus, et les deux appels `cancel_outbound_email` et `retry_outbound_email`
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T1 : la lecture porte le filtre de l'espace (`workspace_id`) —
+//           docs/SPEC-mail-subsystem.md §35.5
 // @verifies docs/SPEC-mail-subsystem.md §28.3, §28.4, §28.6, §28.7 ; docs/DESIGN_SYSTEM.md §5.98, §5.59 ; décision 906
 
 import { describe, expect, it } from 'vitest'
@@ -43,12 +45,23 @@ const LIGNE = {
 	auteur: { full_name: 'Driss Lemoine' },
 }
 
-type Appels = { table?: string; dans?: [string, unknown]; ordres: string[]; limite?: number; rpc?: [string, unknown] }
+type Appels = {
+	table?: string
+	dans?: [string, unknown]
+	egalites: [string, unknown][]
+	ordres: string[]
+	limite?: number
+	rpc?: [string, unknown]
+}
 
 function espion(reponse: { data?: unknown; error: { message: string } | null; status?: number; count?: number }) {
-	const appels: Appels = { ordres: [] }
+	const appels: Appels = { egalites: [], ordres: [] }
 	const requete = {
 		select: () => requete,
+		eq: (colonne: string, valeur: unknown) => {
+			appels.egalites.push([colonne, valeur])
+			return requete
+		},
 		in: (colonne: string, valeurs: unknown) => {
 			appels.dans = [colonne, valeurs]
 			return requete
@@ -123,8 +136,10 @@ describe('la ligne lue', () => {
 describe('lire un dossier (§28.6)', () => {
 	it('« En file » : queued et sending, du plus proche départ au plus lointain, sans borne', async () => {
 		const { client, appels } = espion({ data: [LIGNE], error: null })
-		const lu = await lireEnvois(client, 'file')
+		const lu = await lireEnvois(client, 'ws-1', 'file')
 		expect(appels.table).toBe('mail_outbox')
+		// `CRM-161` T1 (§35.5) : les envois de l'espace de l'inbox, et de lui seul.
+		expect(appels.egalites).toEqual([['workspace_id', 'ws-1']])
 		expect(appels.dans).toEqual(['status', ['queued', 'sending']])
 		expect(appels.ordres[0]).toBe('next_attempt_at')
 		expect(appels.limite).toBeUndefined()
@@ -134,7 +149,7 @@ describe('lire un dossier (§28.6)', () => {
 	it('« Envoyés » : sent, du plus récent, une ligne de plus que la page pour savoir s’il en reste', async () => {
 		const lignes = Array.from({ length: 3 }, (_, rang) => ({ ...LIGNE, id: `o${rang}`, status: 'sent' }))
 		const { client, appels } = espion({ data: lignes, error: null })
-		const lu = await lireEnvois(client, 'envoyes', 2)
+		const lu = await lireEnvois(client, 'ws-1', 'envoyes', 2)
 		expect(appels.dans).toEqual(['status', ['sent']])
 		expect(appels.ordres[0]).toBe('sent_at')
 		expect(appels.limite).toBe(3)
@@ -146,7 +161,7 @@ describe('lire un dossier (§28.6)', () => {
 
 	it('« Échecs » : failed, du plus récent (`updated_at`)', async () => {
 		const { client, appels } = espion({ data: [], error: null })
-		const lu = await lireEnvois(client, 'echecs')
+		const lu = await lireEnvois(client, 'ws-1', 'echecs')
 		expect(appels.dans).toEqual(['status', ['failed']])
 		expect(appels.ordres[0]).toBe('updated_at')
 		expect(lu).toEqual({ statut: 'pret', donnees: { envois: [], plusAnciens: false } })
@@ -154,15 +169,15 @@ describe('lire un dossier (§28.6)', () => {
 
 	it('une erreur de la base rend une erreur, jamais une liste vide', async () => {
 		const { client } = espion({ data: null, error: { message: 'permission denied' }, status: 403 })
-		expect((await lireEnvois(client, 'file')).statut).toBe('erreur')
-		expect((await lireEnvois(null, 'file')).statut).toBe('erreur')
+		expect((await lireEnvois(client, 'ws-1', 'file')).statut).toBe('erreur')
+		expect((await lireEnvois(null, 'ws-1', 'file')).statut).toBe('erreur')
 	})
 
 	it('les comptes des trois dossiers', async () => {
 		const { client } = espion({ data: null, error: null, count: 4 })
-		expect(await lireComptesEnvois(client)).toEqual({ statut: 'pret', donnees: { file: 4, envoyes: 4, echecs: 4 } })
+		expect(await lireComptesEnvois(client, 'ws-1')).toEqual({ statut: 'pret', donnees: { file: 4, envoyes: 4, echecs: 4 } })
 		const panne = espion({ data: null, error: { message: 'boom' }, status: 500 })
-		expect((await lireComptesEnvois(panne.client)).statut).toBe('erreur')
+		expect((await lireComptesEnvois(panne.client, 'ws-1')).statut).toBe('erreur')
 	})
 })
 

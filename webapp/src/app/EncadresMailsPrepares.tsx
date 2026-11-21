@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T1 — les mails préparés d'une affaire, lus par l'affaire (docs/SPEC-mail-subsystem.md §35.5 ;
+//       docs/SPEC-espace-courant.md §7)
 // @spec CRM-128 (docs/BACKLOG.md) — tranche T4 : sur la fiche d'une affaire, un encadré par mail préparé en attente de la
 //       personne, avec le lien « Relire et envoyer » vers la relecture de l'inbox — docs/SPEC-mails-prepares.md §6.2 ;
 //       docs/DESIGN_SYSTEM.md §5.90 (la carte discrète du §5.4 ter, un lien et non un bouton, §12.1) ; décision 829
@@ -17,7 +19,7 @@ export function EncadresMailsPrepares({ idCard }: { readonly idCard: string }) {
 	const [mails, setMails] = useState<readonly MailPrepare[]>([])
 	useEffect(() => {
 		let vivant = true
-		void lireMailsPrepares(clientCrm, idCard).then((etat) => {
+		void lireMailsPrepares(clientCrm, { idCard }).then((etat) => {
 			if (vivant) setMails(etat.statut === 'pret' ? etat.donnees : [])
 		})
 		return () => {

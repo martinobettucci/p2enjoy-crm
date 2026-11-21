@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T1 — la portée d'une action groupée porte l'espace (docs/SPEC-mail-subsystem.md §35.3 ;
+//       docs/SPEC-espace-courant.md §7)
 // @spec CRM-156 (docs/BACKLOG.md) — tranche T3 : les actions groupées de l'inbox, côté écran — la description de la portée
 //       envoyée à la base, le compte avant d'agir, l'action enchaînée par paquets, le compte rendu additionné et ses refus
 // @spec docs/SPEC-mail-subsystem.md §32.2 (la description), §32.3 (le filtre explicite), §32.4 (compter), §32.5 (agir),
@@ -24,6 +26,11 @@ export type DossierGroupe =
 
 /** Ce que la sélection désigne, tel que l'écran le connaît (§32.2). */
 export type PorteeGroupee = {
+	/**
+	 * `CRM-161` T1 (docs/SPEC-mail-subsystem.md §35.3) : l'espace de la portée, que la base exige ; `null` tant qu'il n'est
+	 * pas lu — la base refuse alors la portée (`invalid_scope`), elle n'agit jamais sur tous les espaces.
+	 */
+	readonly idWorkspace: string | null
 	readonly dossier: DossierGroupe
 	/** « Seulement moi » APPLIQUÉ (§27.4) : la case cochée ET une identité personnelle. */
 	readonly seulementMoi: boolean
@@ -47,6 +54,7 @@ export const aUnFiltreExplicite = (portee: Pick<PorteeGroupee, 'seulementMoi' | 
 export function descriptionPortee(portee: PorteeGroupee, apres: Json | null = null): { [cle: string]: Json } {
 	const dossier = portee.dossier
 	const description: { [cle: string]: Json } = {
+		workspace_id: portee.idWorkspace,
 		folder: dossier.genre === 'non-classes' ? 'unclassified' : dossier.genre === 'card' ? 'card' : 'trash',
 		only_me: portee.seulementMoi,
 		label_ids: [...portee.pastilles],

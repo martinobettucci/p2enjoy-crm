@@ -5685,7 +5685,7 @@ export type Database = {
         }[]
       }
       inbox_arborescence: {
-        Args: { p_only_me?: boolean }
+        Args: { p_only_me?: boolean; p_workspace_id: string }
         Returns: {
           card_id: string
           card_title: string
@@ -5726,6 +5726,7 @@ export type Database = {
           p_only_me?: boolean
           p_sender?: string
           p_snoozed_shown?: boolean
+          p_workspace_id: string
         }
         Returns: {
           label_id: string
@@ -5739,6 +5740,7 @@ export type Database = {
           p_limit?: number
           p_only_me?: boolean
           p_sender?: string
+          p_workspace_id: string
         }
         Returns: {
           bcc_addresses: string[]
@@ -5773,6 +5775,13 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      inbox_unread_by_workspace: {
+        Args: { p_only_me?: boolean }
+        Returns: {
+          unread_count: number
+          workspace_id: string
+        }[]
       }
       inscrire_attente: {
         Args: { p_email: string; p_role: string; p_ws: string }

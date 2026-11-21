@@ -1328,11 +1328,17 @@ type _vueDerivationColonnes = Expect<
 // `search_hidden_mail_counts`, les mails que la recherche a écartés (docs/SPEC-mail-subsystem.md §31.13.4 à §31.13.6). CE QUI
 // ÉCHAPPE AU GÉNÉRATEUR : `p_limit` est borné à 200 côté serveur ; la limite et l'ordre sont ceux de la base. Le compte
 // s'accroît de trois.
+// `0195` de CRM-161, TRANCHE T1, REMPLACE `inbox_messages`, `inbox_hidden_counts` et `inbox_arborescence` : elles gagnent
+// `p_workspace_id`, EN TÊTE et EXIGÉ ; les anciennes signatures sont retirées (docs/SPEC-mail-subsystem.md §35.2). Elle
+// ajoute `inbox_unread_by_workspace`, les non-lus de chaque espace (§35.4). CE QUI ÉCHAPPE AU GÉNÉRATEUR : le refus
+// `workspace_required` d'un espace nul ; la portée des actions groupées exige `workspace_id` (§35.3). Le compte s'accroît
+// d'une.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'inbox_messages'
     | 'inbox_hidden_counts'
+    | 'inbox_unread_by_workspace'
     | 'search_hidden_mail_counts'
     | 'inbox_bulk_count'
     | 'inbox_bulk_apply'
@@ -1563,11 +1569,11 @@ type _editionPermise = Expect<
   >
 >
 
-// L'arborescence de l'inbox ne prend qu'UN argument, facultatif : « seulement moi » (`CRM-139`,
-// docs/SPEC-mail-subsystem.md §27.3). Elle rend toujours ce que l'appelant voit, jamais ce qu'on lui demande de voir
-// (§18.3) : l'argument ne fait que RESTREINDRE l'affichage à son courrier.
+// L'arborescence de l'inbox prend « seulement moi », facultatif (`CRM-139`, docs/SPEC-mail-subsystem.md §27.3), et —
+// `CRM-161` T1 (§35.2) — l'espace, EXIGÉ. Elle rend toujours ce que l'appelant voit, jamais ce qu'on lui demande de voir
+// (§18.3) : les arguments ne font que RESTREINDRE l'affichage.
 type _signatureArborescence = Expect<
-  Equal<Database['public']['Functions']['inbox_arborescence']['Args'], { p_only_me?: boolean }>
+  Equal<Database['public']['Functions']['inbox_arborescence']['Args'], { p_only_me?: boolean; p_workspace_id: string }>
 >
 
 // La signature exposée au client TypeScript est celle du contrat d'API : `new_name` facultatif,

@@ -10,6 +10,8 @@
 -- - six messages : non classés, À sa première adresse et Cc sa seconde ; classés dans `…00c1`, Cci sa première adresse,
 --   puis expédié par elle ; À l'identité de service seule ; À l'identité de Driss (`…012`), dans `…00c1`, qu'il lit.
 -- La lectrice (`…013`) n'a aucune identité.
+-- Révisé le 2026-11-21 (`CRM-161` T1, docs/SPEC-mail-subsystem.md §35.8, décision 51) : les fonctions de l'inbox prennent
+--   l'espace (`p_workspace_id`, la portée `workspace_id`) ; la preuve passe celui du seed, sans changer ce qu'elle prouve.
 
 begin;
 
@@ -69,8 +71,8 @@ grant select on pg_temp.attendu to authenticated;
 select is((select provolatile::text || prosecdef::text from pg_proc where oid = 'public.concerns_me(public.mail_messages)'::regprocedure),
 	'sfalse', '1 — `concerns_me` est `stable` et `security invoker`');
 select ok(not has_function_privilege('anon', 'public.concerns_me(public.mail_messages)', 'execute')
-          and not has_function_privilege('anon', 'public.inbox_arborescence(boolean)', 'execute')
-          and has_function_privilege('authenticated', 'public.inbox_arborescence(boolean)', 'execute'),
+          and not has_function_privilege('anon', 'public.inbox_arborescence(uuid, boolean)', 'execute')
+          and has_function_privilege('authenticated', 'public.inbox_arborescence(uuid, boolean)', 'execute'),
 	'2 — l''anonyme n''exécute ni `concerns_me` ni `inbox_arborescence` ; `authenticated` exécute l''arborescence');
 
 select pg_temp.endosser(:'admin');
@@ -90,19 +92,19 @@ select ok(not (select public.concerns_me(m) from public.mail_messages m where rf
 	'8 — adressé à l''identité de Driss, qu''elle lit pourtant en administratrice : le message ne la concerne pas');
 
 -- 9–12. Les compteurs.
-select is((select nombre from public.inbox_arborescence(true) where card_id is null),
+select is((select nombre from public.inbox_arborescence('5eed0000-0000-4000-8000-000000000001', true) where card_id is null),
 	(select coalesce((select nombre from pg_temp.attendu where card_id is null), 0)),
 	'9 — « Non classés », filtre posé : le compte de ses seuls messages, égal à l''oracle');
-select is((select nombre from public.inbox_arborescence(true) where card_id = :'c1'),
+select is((select nombre from public.inbox_arborescence('5eed0000-0000-4000-8000-000000000001', true) where card_id = :'c1'),
 	(select nombre from pg_temp.attendu where card_id = :'c1'),
 	'10 — le dossier de `…00c1`, filtre posé : ses seuls messages, égal à l''oracle');
-select is((select unread_count from public.inbox_arborescence(true) where card_id is null),
+select is((select unread_count from public.inbox_arborescence('5eed0000-0000-4000-8000-000000000001', true) where card_id is null),
 	(select count(*) from public.mail_messages m where m.card_id is null and public.concerns_me(m) and not public.is_read(m)),
 	'11 — les non-lus de « Non classés » suivent le filtre');
-select set_eq('select * from public.inbox_arborescence()', 'select * from public.inbox_arborescence(false)',
-	'12 — l''appel sans argument rend exactement l''arborescence d''avant, filtre ôté');
-select ok((select nombre from public.inbox_arborescence() where card_id is null)
-          > (select nombre from public.inbox_arborescence(true) where card_id is null),
+select set_eq('select * from public.inbox_arborescence(''5eed0000-0000-4000-8000-000000000001'')', 'select * from public.inbox_arborescence(''5eed0000-0000-4000-8000-000000000001'', false)',
+	'12 — l''appel sans « Seulement moi » rend exactement l''arborescence d''avant, filtre ôté');
+select ok((select nombre from public.inbox_arborescence('5eed0000-0000-4000-8000-000000000001') where card_id is null)
+          > (select nombre from public.inbox_arborescence('5eed0000-0000-4000-8000-000000000001', true) where card_id is null),
 	'13 — témoin : le filtre retire réellement des messages de « Non classés »');
 
 reset role;

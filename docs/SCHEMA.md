@@ -3428,6 +3428,27 @@ et les blocages sont perdus — les mails mis à la corbeille par un blocage y r
 - **Retour arrière** : rejouer la définition de `concerns_me` de `0190`.
 - **Preuves** : pgTAP `0181`, rouge avant la migration ; `0164` révisée (n° 15).
 
+### Migration `0195` — l'inbox d'un espace — `CRM-161` T1 (`0195_inbox_espace.sql` ; spécifiée le 2026-11-21, avant le code)
+
+`docs/SPEC-mail-subsystem.md` §35 ; `docs/SPEC-espace-courant.md` §5, §7 ; décisions 965 et 967.
+
+- **`public.inbox_messages`**, **`public.inbox_hidden_counts`** et **`public.inbox_arborescence`** sont **remplacées** :
+  l'ancienne signature est supprimée (`drop function`), la nouvelle prend **`p_workspace_id uuid` en tête, sans défaut**. Nul,
+  elles lèvent `workspace_required` (`22023`). Chaque message rendu ou compté vérifie `m.workspace_id = p_workspace_id` ; le
+  reste du corps est celui de `0193`, à l'identique. Elles passent de `sql` à `plpgsql` pour le seul refus ; `stable`,
+  `security invoker`, `search_path` vidé ; `authenticated` (et `service_role` pour l'arborescence, comme avant).
+- **`app.inbox_scope_messages(jsonb)`** est redéfinie : la portée exige `workspace_id` (`invalid_scope` sinon), les trois
+  dossiers ne retiennent que cet espace, un fil nommé d'un autre espace lève `thread_other_workspace` (`22023`).
+  `inbox_bulk_count`, `inbox_bulk_apply`, `inbox_bulk_unknown_senders` ne changent pas.
+- **`public.inbox_unread_by_workspace(p_only_me boolean default false)`**, nouvelle : `(workspace_id, unread_count)` pour
+  chaque espace dont l'appelant est membre, `0` compris — la somme des non-lus de `inbox_arborescence`, appelée et non
+  recopiée ; `sql`, `stable`, `security invoker` ; `authenticated` seul.
+- **Aucune table, aucune colonne, aucune politique, aucun index.**
+- **Retour arrière** : supprimer les quatre fonctions publiques, puis rejouer les sections 3 à 6 de `0193`, avec la webapp
+  précédente.
+- **Preuves** : pgTAP `0182`, rouge avant la migration ; `0029`, `0095`, `0143`, `0164`, `0177`, `0178`, `0180`, `0181`
+  révisées (l'espace passé) ; API `e2e/api/inbox-espace.spec.ts`.
+
 ### Migration — `CRM-162` T1 : déplacer un track entier d'un espace à un autre (spécifiée le 2026-11-21, avant le code ; numéro pris à la poussée, après celle de `CRM-161`)
 
 `docs/SPEC-deplacement-track.md` ; décisions 964, 966 et 968.

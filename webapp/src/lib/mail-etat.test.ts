@@ -1,6 +1,8 @@
 // @verifies CRM-059 (docs/BACKLOG.md) — écran d'état de la messagerie
 // @verifies docs/SPEC-mail-subsystem.md §20.7 (les faits montrés), §20.11.2 (deux lectures,
 //           aucune règle nouvelle), §20.11.4 (dictionnaire fermé des six codes)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T1 : la lecture porte le filtre de l'espace (`workspace_id`) —
+//           docs/SPEC-mail-subsystem.md §35.5
 //
 // Comme `administration-arborescence.test.ts`, ce fichier éprouve la requête RÉELLEMENT émise,
 // pas seulement la valeur rendue : le filtre de la file sortante (`queued`/`sending` contre
@@ -24,11 +26,15 @@ type ReponseCompte = { count: number | null; error: { message: string } | null; 
 // Clients espions
 // ---------------------------------------------------------------------------------------------
 
-type AppelComptes = { table?: string; colonnes?: string; tris: [string, unknown?][] }
+type AppelComptes = { table?: string; colonnes?: string; egalites: [string, unknown][]; tris: [string, unknown?][] }
 
 function espionComptes(reponse: Reponse): { client: ClientCrm; appel: AppelComptes } {
-	const appel: AppelComptes = { tris: [] }
+	const appel: AppelComptes = { egalites: [], tris: [] }
 	const chaine = {
+		eq: (colonne: string, valeur: unknown) => {
+			appel.egalites.push([colonne, valeur])
+			return chaine
+		},
 		order: (colonne: string, options?: unknown) => {
 			appel.tris.push([colonne, options])
 			return chaine
@@ -55,6 +61,8 @@ type AppelCompteurs = {
 	options?: unknown
 	in?: [string, unknown]
 	eq?: [string, unknown]
+	/** `CRM-161` T1 (§35.5) : l'espace de chaque compte, posé avant le filtre d'état. */
+	espaces: unknown[]
 	/** Bornes `limit` posées, une par compte : `LIMITE_COMPTE` (`compter.ts`). */
 	limites: number[]
 }
@@ -64,7 +72,7 @@ function espionCompteurs(
 	enAttente: ReponseCompte,
 	echecs: ReponseCompte,
 ): { client: ClientCrm; appel: AppelCompteurs } {
-	const appel: AppelCompteurs = { limites: [] }
+	const appel: AppelCompteurs = { espaces: [], limites: [] }
 	const borner = (reponse: ReponseCompte) => ({
 		limit: (nombre: number) => {
 			appel.limites.push(nombre)
@@ -78,16 +86,21 @@ function espionCompteurs(
 				select: (colonnes: string, options?: unknown) => {
 					appel.colonnes = colonnes
 					appel.options = options
-					return {
+					const filtre = {
 						in: (colonne: string, valeur: unknown) => {
 							appel.in = [colonne, valeur]
 							return borner(enAttente)
 						},
-						eq: (colonne: string, valeur: unknown) => {
+						eq: (colonne: string, valeur: unknown): unknown => {
+							if (colonne === 'workspace_id') {
+								appel.espaces.push(valeur)
+								return filtre
+							}
 							appel.eq = [colonne, valeur]
 							return borner(echecs)
 						},
 					}
+					return filtre
 				},
 			}
 		},
@@ -117,8 +130,10 @@ const COMPTES_OK: Reponse = {
 describe('lireComptesMailEtat', () => {
 	it('lit la table, les colonnes et le tri attendus (§20.11.3)', async () => {
 		const { client, appel } = espionComptes(COMPTES_OK)
-		const resultat = await lireComptesMailEtat(client)
+		const resultat = await lireComptesMailEtat(client, 'ws-1')
 		expect(appel.table).toBe('mail_inbound_accounts')
+		// `CRM-161` T1 (§35.5) : les boîtes de l'espace courant, et de lui seul.
+		expect(appel.egalites).toEqual([['workspace_id', 'ws-1']])
 		expect(appel.colonnes).toBe(COLONNES_COMPTE_MAIL_ETAT)
 		expect(appel.tris).toEqual([['label', undefined]])
 		expect(resultat).toEqual({ statut: 'pret', donnees: COMPTES_OK.data })
@@ -126,13 +141,13 @@ describe('lireComptesMailEtat', () => {
 
 	it('classe un refus 403 en `forbidden`', async () => {
 		const { client } = espionComptes({ data: null, error: { message: 'denied' }, status: 403 })
-		const resultat = await lireComptesMailEtat(client)
+		const resultat = await lireComptesMailEtat(client, 'ws-1')
 		expect(resultat).toEqual({ statut: 'erreur', erreur: { nature: 'forbidden', detail: 'denied' } })
 	})
 
 	it('classe une exception de transport en `network`', async () => {
 		const client = clientQuiLeve(new TypeError('Failed to fetch'))
-		const resultat = await lireComptesMailEtat(client)
+		const resultat = await lireComptesMailEtat(client, 'ws-1')
 		expect(resultat).toEqual({
 			statut: 'erreur',
 			erreur: { nature: 'network', detail: 'Failed to fetch' },
@@ -150,11 +165,13 @@ describe('lireCompteursFileSortante', () => {
 			{ count: 3, error: null, status: 200 },
 			{ count: 1, error: null, status: 200 },
 		)
-		const resultat = await lireCompteursFileSortante(client)
+		const resultat = await lireCompteursFileSortante(client, 'ws-1')
 		expect(appel.table).toBe('mail_outbox')
 		// Deux `GET` bornés à zéro ligne, jamais un `HEAD` (INC-299, décision 700, `compter.ts`).
 		expect(appel.options).toEqual({ count: 'exact' })
 		expect(appel.limites).toEqual([0, 0])
+		// `CRM-161` T1 (§35.5) : les deux comptes portent l'espace courant.
+		expect(appel.espaces).toEqual(['ws-1', 'ws-1'])
 		expect(appel.in).toEqual(['status', ['queued', 'sending']])
 		expect(appel.eq).toEqual(['status', 'failed'])
 		expect(resultat).toEqual({
@@ -168,7 +185,7 @@ describe('lireCompteursFileSortante', () => {
 			{ count: 0, error: null, status: 200 },
 			{ count: 0, error: null, status: 200 },
 		)
-		const resultat = await lireCompteursFileSortante(client)
+		const resultat = await lireCompteursFileSortante(client, 'ws-1')
 		expect(resultat).toEqual({ statut: 'pret', donnees: { enAttente: 0, echecsDefinitifs: 0 } })
 	})
 
@@ -177,7 +194,7 @@ describe('lireCompteursFileSortante', () => {
 			{ count: null, error: { message: 'denied' }, status: 403 },
 			{ count: 0, error: null, status: 200 },
 		)
-		const resultat = await lireCompteursFileSortante(client)
+		const resultat = await lireCompteursFileSortante(client, 'ws-1')
 		expect(resultat).toEqual({ statut: 'erreur', erreur: { nature: 'forbidden', detail: 'denied' } })
 	})
 
@@ -186,7 +203,7 @@ describe('lireCompteursFileSortante', () => {
 			{ count: null, error: null, status: 200 },
 			{ count: 0, error: null, status: 200 },
 		)
-		const resultat = await lireCompteursFileSortante(client)
+		const resultat = await lireCompteursFileSortante(client, 'ws-1')
 		expect(resultat.statut).toBe('erreur')
 	})
 })

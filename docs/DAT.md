@@ -254,6 +254,14 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
   ligne de coût et la case « Soldé », dans la fiche d'une affaire ; l'onglet « À saisir » (`CoutsASaisir.tsx`,
   `couts-a-saisir.ts`) ajoute un réel et solde. **Le réel d'une ligne n'a qu'une écriture, en base** : la somme des
   réels, tenue par déclencheur ; l'interface affiche ce que la base relit, jamais une addition faite de son côté ;
+- **L'inbox d'un espace** (`CRM-161` T1, `docs/SPEC-mail-subsystem.md` §35, `docs/SPEC-espace-courant.md` §7) — les lectures
+  de l'inbox **prennent l'espace et n'en rendent pas d'autre** : `inbox_messages`, `inbox_hidden_counts` et
+  `inbox_arborescence` exigent `p_workspace_id` (`workspace_required`), la portée des actions groupées exige `workspace_id`,
+  l'outbox, les mails préparés et l'état de la messagerie portent `workspace_id=eq.` ; `inbox_unread_by_workspace` compte
+  les non-lus de chaque espace. La webapp passe `ContexteEspace.idWorkspace` et **attend** tant qu'il n'est pas lu.
+  **Compromis** : la RLS reste la règle d'accès, inchangée ; le cloisonnement est une restriction de la lecture, prouvée
+  par requête directe (pgTAP `0182`, `e2e/api/inbox-espace.spec.ts`), non une politique nouvelle — une politique par
+  espace courant exigerait que la base connaisse l'onglet, ce qu'elle ne peut pas ;
 - `src/app/ContexteEspace.tsx`, `src/app/GuideFlottant.tsx`, et le signal `p2enjoy:workflow-de-depart`
   de `src/lib/demarrage.ts` (`CRM-094`, `docs/SPEC-onboarding.md` §10) — la coquille lit **une fois**
   l'espace courant et le rôle que la base y rend (`mon_role_espace`), et les passe par un contexte au

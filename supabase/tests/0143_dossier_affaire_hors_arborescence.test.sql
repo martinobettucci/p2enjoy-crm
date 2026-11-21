@@ -4,6 +4,8 @@
 --           channels) ; docs/SPEC-mail-subsystem.md §4.5 ; docs/SCHEMA.md « Migration `0154` »
 --
 -- Sur le seed migré ; tout se joue dans une transaction annulée.
+-- Révisé le 2026-11-21 (`CRM-161` T1, docs/SPEC-mail-subsystem.md §35.8, décision 51) : les fonctions de l'inbox prennent
+--   l'espace (`p_workspace_id`, la portée `workspace_id`) ; la preuve passe celui du seed, sans changer ce qu'elle prouve.
 
 begin;
 
@@ -76,9 +78,9 @@ select is((select d.nouveau_chemin from public.dossiers_a_renommer((select id fr
 -- =============================================================================================
 
 select pg_temp.endosser(:'admin');
-select ok((select bool_and(track_id is null and channel_id is null) from public.inbox_arborescence()),
+select ok((select bool_and(track_id is null and channel_id is null) from public.inbox_arborescence('5eed0000-0000-4000-8000-000000000001')),
 	'aucune ligne de l''arbre ne porte plus de track ni de channel');
-select is((select count(*)::int from public.inbox_arborescence() where card_id = :'c4'),
+select is((select count(*)::int from public.inbox_arborescence('5eed0000-0000-4000-8000-000000000001') where card_id = :'c4'),
           (select least(count(*), 1)::int from public.mail_messages where card_id = :'c4'),
 	'une affaire partagée n''a qu''UNE ligne dans l''arbre, sous « Affaires »');
 

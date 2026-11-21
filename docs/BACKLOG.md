@@ -20513,10 +20513,18 @@ pgTAP et API par requête directe ; E2E souris et clavier sur un compte membre d
 deux espaces, avec des mails dans chacun ; captures observées ; manuel ; contrat. La campagne complète revient à la session de
 livraison (décision 830).
 **Tranches** (`docs/SPEC-espace-courant.md` §14) :
-- [ ] **T1 — La base : l'inbox d'un espace.** `inbox_messages`, `inbox_hidden_counts`, `inbox_arborescence` prennent
+- [P] **T1 — La base : l'inbox d'un espace.** `inbox_messages`, `inbox_hidden_counts`, `inbox_arborescence` prennent
   `p_workspace_id` (obligatoire, `workspace_required`), l'ancienne signature supprimée ; la portée des actions groupées exige
   l'espace (`thread_other_workspace`) ; `inbox_unread_by_workspace` ; l'outbox et l'état de la messagerie filtrés ; la webapp
   passe l'espace du contexte, sans changement visible ; pgTAP et API, rouges avant ; `docs/SPEC-mail-subsystem.md` §35.
+  **Implémentée et vérifiée en développement le 2026-11-21** (migration `0195`) :
+  - la preuve rouge : sur `0193`, « Non classés » mêlait « P2Enjoy SAS » et un second espace ; pgTAP `0182` rouge, puis 30/30 ;
+  - pgTAP complet 170/170 ; API de l'inbox 31/31 (dont `e2e/api/inbox-espace.spec.ts`) et `inbox-lecture` 9/9 sur un état de
+    lecture propre (une dérive de la campagne de la nuit, `docs/JOURNAL.md`) ; unitaires du périmètre 530/530 ; quatre
+    `tsc` ; build ; E2E d'écran de l'inbox 122/122 (21 specs) ;
+  - aucun changement visible : aucune capture nouvelle ;
+  - **ce que cette session n'a pas joué** : la campagne complète (décision 830).
+  Reste la livraison : `docs/PROD_MIGRATIONS.md` §2.67 — la migration et la webapp **dans la même fenêtre**.
 - [ ] **T2 — L'adresse et le menu des espaces.** `/:slugEspace/` pour l'inbox, les tracks et channels, les réglages ;
   anciennes adresses redirigées ; bascule ; menu et non-lus ; barre latérale et réglages sur l'espace de l'adresse ; seed
   (« Studio Lumen », un compte membre des deux) ; design system ; `goto` et images du manuel révisés dans la tranche.

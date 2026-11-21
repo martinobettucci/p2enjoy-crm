@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T1 — l'état de la messagerie de l'espace courant (docs/SPEC-mail-subsystem.md §35.5 ;
+//       docs/SPEC-espace-courant.md §7)
 // @spec CRM-059 (docs/BACKLOG.md) — écran d'état de la messagerie
 // @spec docs/SPEC-mail-subsystem.md §20.7 (les faits montrés), §20.11 (l'écran, ce qu'il lit et ne
 //       fait pas)
@@ -21,6 +23,7 @@ import {
 	type CompteursFileSortante,
 } from '../lib/mail-etat'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
+import { useContexteEspace } from './ContexteEspace'
 
 /** Le dictionnaire fermé du §20.11.4 : un code d'API n'est jamais affiché brut. */
 const CLES_INCIDENT: Readonly<Record<CodeIncidentMail, CleTraduction>> = {
@@ -71,14 +74,18 @@ export function EtatMessagerie({ client = clientCrm }: ProprietesEtatMessagerie 
 	// écraser un état plus récent — même garde que `AdministrationArborescence`.
 	const courant = useRef(0)
 
+	// `CRM-161` T1 (docs/SPEC-mail-subsystem.md §35.5) : l'état de la messagerie de l'espace courant ; sans espace lu, l'écran
+	// reste en chargement.
+	const { idWorkspace } = useContexteEspace()
+
 	useEffect(() => {
-		if (client === null) return
+		if (client === null || idWorkspace === null) return
 		const rang = ++courant.current
 		setEtat(enChargement())
 		void (async () => {
 			const [comptes, compteurs] = await Promise.all([
-				lireComptesMailEtat(client),
-				lireCompteursFileSortante(client),
+				lireComptesMailEtat(client, idWorkspace),
+				lireCompteursFileSortante(client, idWorkspace),
 			])
 			if (rang !== courant.current) return
 			// Le cas est traité par `statut === 'erreur'` puis `statut !== 'pret'`, jamais par la
@@ -97,7 +104,7 @@ export function EtatMessagerie({ client = clientCrm }: ProprietesEtatMessagerie 
 			if (compteurs.statut !== 'pret') return
 			setEtat(pret({ comptes: comptes.donnees, compteurs: compteurs.donnees }))
 		})()
-	}, [client, tentative])
+	}, [client, idWorkspace, tentative])
 
 	const reprendre = useCallback(() => setTentative((precedente) => precedente + 1), [])
 

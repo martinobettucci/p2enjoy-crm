@@ -43,6 +43,7 @@ afterEach(() => {
 })
 
 const PORTEE: PorteeGroupee = {
+	idWorkspace: 'w',
 	dossier: { genre: 'non-classes' },
 	seulementMoi: false,
 	pastilles: ['p1'],

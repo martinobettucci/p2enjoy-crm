@@ -7,6 +7,8 @@
 //
 // LES MAILS SONT PROPRES À LA PREUVE, posés par la clé de service dans « Refonte du site vitrine » (`…00c1`), et retirés à
 // la fin quoi qu'il arrive. Les gestes portent des lignes `manual`, que la passe de la minute ne touche jamais.
+// *Révisé le 2026-11-21 (`CRM-161` T1, docs/SPEC-mail-subsystem.md §35.8, décision 51)* : les fonctions de l'inbox prennent
+// l'espace (`p_workspace_id`, la portée `workspace_id`) ; la preuve passe celui du seed, sans changer ce qu'elle prouve.
 
 import { type APIRequestContext, expect, test } from '@playwright/test'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
@@ -92,7 +94,7 @@ test('le business developer pose puis retire une pastille : deux choix manuels, 
 	const filtre = async () => {
 		const reponse = await request.post(`${rpc('inbox_messages')}?select=id&id=eq.${message}`, {
 			headers: json(enTetesAuthentifies(driss)),
-			data: { p_card_id: CARD_C1, p_label_ids: [lead], p_limit: 200 },
+			data: { p_workspace_id: ESPACE, p_card_id: CARD_C1, p_label_ids: [lead], p_limit: 200 },
 		})
 		expect(reponse.status(), await reponse.text()).toBe(200)
 		return ((await reponse.json()) as { id: string }[]).map((m) => m.id)

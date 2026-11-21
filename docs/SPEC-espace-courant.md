@@ -254,8 +254,10 @@ X. ». Le menu des espaces le reflète.
 
 Une section nouvelle de `docs/SPEC-seed.md` (écrite en tranche T2, avec le premier écran qui en a besoin) :
 
-- un **second espace**, « Studio Lumen » (`studio-lumen`), trié **après** « P2Enjoy SAS » : l'espace par défaut reste
-  « P2Enjoy SAS », et les preuves existantes ne changent pas d'espace ;
+- un **second espace**, « Studio Lumen » (`studio-lumen`, `5eed0000-0000-4000-8000-000000002001`), trié **après**
+  « P2Enjoy SAS » : l'espace par défaut reste « P2Enjoy SAS », et les preuves existantes ne changent pas d'espace. **Accord
+  avec la session f9 (2026-11-21)** : `CRM-162` le **crée** dans son §54 du seed (`docs/SPEC-seed.md`), avec
+  `admin@p2enjoy.test` administratrice, et y pose ses homonymes ; `CRM-161` l'**enrichit** dans un §55, sans le recréer ;
 - **un compte membre des deux espaces**, administrateur dans les deux (le cas du responsable) ;
 - dans « Studio Lumen » : **un track, un channel, une affaire**, un mail **non classé** et un mail **dans l'affaire**, déposés par
   le vrai chemin (dépôt IMAP dans la boîte de l'espace, puis la vraie relève de `mail-sync`, patron du §49 et du §53), dont au

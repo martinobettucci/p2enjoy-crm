@@ -10,6 +10,8 @@
 // `set_message_label` sous le jeton de l'administratrice — le vrai geste. Leurs objets et leurs corps ne contiennent aucun
 // mot d'un nom de pastille : le simulateur de développement ne leur en pose aucune (le patron de
 // `filtres-rapides-pastilles.spec.ts`). Le mot de leur objet, tiré au hasard, ne répond qu'à eux dans la recherche.
+// *Révisé le 2026-11-21 (`CRM-161` T1, docs/SPEC-mail-subsystem.md §35.8, décision 51)* : les fonctions de l'inbox prennent
+// l'espace (`p_workspace_id`, la portée `workspace_id`) ; la preuve passe celui du seed, sans changer ce qu'elle prouve.
 
 import { type APIRequestContext, expect, test } from '@playwright/test'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
@@ -76,6 +78,7 @@ async function rpc<T>(request: APIRequestContext, jeton: string, fonction: strin
 /** La liste de l'inbox telle que la webapp la lit (§31.13.4), restreinte aux mails de la preuve. */
 async function liste(request: APIRequestContext, jeton: string, labels: readonly string[]): Promise<string[]> {
 	const lignes = await rpc<{ id: string }[]>(request, jeton, 'inbox_messages', {
+		p_workspace_id: ESPACE,
 		p_card_id: CARD_C1,
 		p_label_ids: labels,
 		p_limit: 200,
@@ -132,18 +135,27 @@ test('la mention compte les fils masqués, et les compteurs ne les comptent pas'
 	if (pastilles === null) throw new Error('montage absent')
 	const jeton = await jetonDe(ADMIN)
 	const mention = await rpc<{ label_id: string; thread_count: number }[]>(request, jeton, 'inbox_hidden_counts', {
+		p_workspace_id: ESPACE,
 		p_card_id: CARD_C1,
 	})
 	expect(mention).toContainEqual({ label_id: pastilles.spam, thread_count: 2 })
 	const sousSpam = await rpc<unknown[]>(request, jeton, 'inbox_hidden_counts', {
+		p_workspace_id: ESPACE,
 		p_card_id: CARD_C1,
 		p_label_ids: [pastilles.spam],
 	})
 	expect(sousSpam).toEqual([])
 
-	const arbre = await rpc<{ card_id: string | null; nombre: number }[]>(request, jeton, 'inbox_arborescence', { p_only_me: false })
+	const arbre = await rpc<{ card_id: string | null; nombre: number }[]>(request, jeton, 'inbox_arborescence', {
+		p_workspace_id: ESPACE,
+		p_only_me: false,
+	})
 	const dossier = arbre.find((ligne) => ligne.card_id === CARD_C1)
-	const montres = await rpc<unknown[]>(request, jeton, 'inbox_messages', { p_card_id: CARD_C1, p_limit: 200 })
+	const montres = await rpc<unknown[]>(request, jeton, 'inbox_messages', {
+		p_workspace_id: ESPACE,
+		p_card_id: CARD_C1,
+		p_limit: 200,
+	})
 	expect(dossier?.nombre, 'le dossier compte ce que la liste montre sans filtre').toBe(montres.length)
 })
 

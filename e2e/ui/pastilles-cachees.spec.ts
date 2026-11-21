@@ -11,6 +11,8 @@
 // la fin par leur préfixe ; leurs pastilles sont posées par `set_message_label` sous le jeton de l'administratrice. Le mot
 // de leur objet, tiré au hasard, ne répond qu'à eux dans la recherche. Le drapeau de « Lead », coché par la preuve des
 // réglages, est rendu à sa valeur à la fin quoi qu'il arrive.
+// *Révisé le 2026-11-21 (`CRM-161` T1, docs/SPEC-mail-subsystem.md §35.8, décision 51)* : les fonctions de l'inbox prennent
+// l'espace (`p_workspace_id`, la portée `workspace_id`) ; la preuve passe celui du seed, sans changer ce qu'elle prouve.
 
 import { type APIRequestContext, type Page } from '@playwright/test'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
@@ -101,7 +103,7 @@ async function ouvrirLeDossier(page: Page, pastilles: readonly string[] = []): P
 async function filsMasquesParLead(page: Page): Promise<number> {
 	const reponse = await page.request.post(rest('rpc/inbox_hidden_counts'), {
 		headers: json(enTetesAuthentifies(await jetonDe(ADMIN))),
-		data: { p_card_id: CARD_C1 },
+		data: { p_workspace_id: ESPACE, p_card_id: CARD_C1 },
 	})
 	const lignes = (await reponse.json()) as { label_id: string; thread_count: number }[]
 	return lignes.find((l) => l.label_id === ids['Lead'])?.thread_count ?? 0

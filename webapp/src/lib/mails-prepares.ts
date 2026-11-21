@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T1 — les mails préparés de l'inbox d'un espace, ou d'une affaire (docs/SPEC-mail-subsystem.md §35.5 ;
+//       docs/SPEC-espace-courant.md §7)
 // @spec CRM-128 (docs/BACKLOG.md) — tranche T4 : les mails préparés côté webapp — les lire (la personne seule, par la
 //       RLS), les envoyer avec le contenu relu (`send_email_draft`), les écarter (`discard_email_draft`), et le
 //       dictionnaire de leurs refus (docs/SPEC-mails-prepares.md §3.3 à §3.5, §6 ; docs/DESIGN_SYSTEM.md §5.90 ;
@@ -104,7 +106,11 @@ export function mailPrepareDepuisLigne(ligne: LigneMailPrepare): MailPrepare {
  */
 export async function lireMailsPrepares(
 	client: ClientCrm | null,
-	idCard?: string,
+	/**
+	 * `CRM-161` T1 (docs/SPEC-mail-subsystem.md §35.5) : les mails préparés de l'inbox d'un espace, ou ceux d'une affaire —
+	 * l'affaire porte son espace.
+	 */
+	portee: { readonly idWorkspace: string } | { readonly idCard: string },
 ): Promise<EtatAsync<readonly MailPrepare[]>> {
 	if (client === null) return enErreur(classerErreur(undefined, 'configuration_absente'))
 	try {
@@ -114,7 +120,7 @@ export async function lireMailsPrepares(
 			.eq('status', 'pending')
 			.order('created_at', { ascending: true })
 			.order('id', { ascending: true })
-		if (idCard !== undefined) requete = requete.eq('card_id', idCard)
+		requete = 'idCard' in portee ? requete.eq('card_id', portee.idCard) : requete.eq('workspace_id', portee.idWorkspace)
 		const reponse = await requete
 		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
 		return pret((reponse.data as unknown as LigneMailPrepare[]).map(mailPrepareDepuisLigne))

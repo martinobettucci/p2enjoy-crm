@@ -29,6 +29,10 @@ import { cleanup, render, screen, waitFor, within } from '@testing-library/react
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, useLocation } from 'react-router'
+import { FournisseurEspace } from './ContexteEspace'
+// `CRM-161` T1 (docs/SPEC-mail-subsystem.md §35.6) : l'écran lit l'inbox de l'espace du contexte ; hors coquille, la
+// preuve le fournit — sans lui, les lectures attendent.
+const ESPACE_DE_TEST = { idWorkspace: 'ws-1', estAdmin: false } as const
 
 const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 const CARD = '5eed0000-0000-4000-8000-0000000000c1'
@@ -211,7 +215,9 @@ afterEach(cleanup)
 async function ouvrirLeDossier() {
 	render(
 		<MemoryRouter>
-			<RouteInbox />
+			<FournisseurEspace valeur={ESPACE_DE_TEST}>
+				<RouteInbox />
+			</FournisseurEspace>
 		</MemoryRouter>,
 	)
 	const dossier = await screen.findByRole('button', { name: /Refonte du site vitrine/ })
@@ -307,7 +313,9 @@ function TemoinAdresse() {
 function ouvrirParAdresse(adresse: string) {
 	render(
 		<MemoryRouter initialEntries={[adresse]}>
-			<RouteInbox />
+			<FournisseurEspace valeur={ESPACE_DE_TEST}>
+				<RouteInbox />
+			</FournisseurEspace>
 			<TemoinAdresse />
 		</MemoryRouter>,
 	)
@@ -522,7 +530,9 @@ describe('RouteInbox — retirer un message de son affaire (§16.5.5)', () => {
 		messagesRendus = [NON_CLASSE]
 		render(
 			<MemoryRouter>
-				<RouteInbox />
+				<FournisseurEspace valeur={ESPACE_DE_TEST}>
+					<RouteInbox />
+				</FournisseurEspace>
 			</MemoryRouter>,
 		)
 		const dossiers = await screen.findAllByRole('button', { name: /Non classés/ })
@@ -586,7 +596,9 @@ describe('RouteInbox — lu / non lu (§18 bis)', () => {
 		preparer()
 		render(
 			<MemoryRouter>
-				<RouteInbox />
+				<FournisseurEspace valeur={ESPACE_DE_TEST}>
+					<RouteInbox />
+				</FournisseurEspace>
 			</MemoryRouter>,
 		)
 		// LE NOM DU DOSSIER PORTE LE COMPTE EXACT (§5.4 quinquies), la pastille visible étant `aria-hidden`.

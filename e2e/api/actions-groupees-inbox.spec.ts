@@ -9,6 +9,8 @@
 // `…c5`, que Driss et Farida (lectrice) lisent sans l'écrire. AUCUN CLASSEMENT RÉUSSI ici : il écrirait au journal
 // immuable d'une affaire du seed ; le succès de chaque action est prouvé par pgTAP, dans une transaction défaite
 // (`supabase/tests/0177_actions_groupees_inbox.test.sql`).
+// *Révisé le 2026-11-21 (`CRM-161` T1, docs/SPEC-mail-subsystem.md §35.8, décision 51)* : les fonctions de l'inbox prennent
+// l'espace (`p_workspace_id`, la portée `workspace_id`) ; la preuve passe celui du seed, sans changer ce qu'elle prouve.
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { CLE_ANONYME, URL_API, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
@@ -66,8 +68,8 @@ test.describe('les actions groupées de l’inbox — décidées par la base (CR
 			})
 			expect(occurrence.status(), await occurrence.text()).toBe(201)
 		}
-		const nonClasses = { folder: 'unclassified', sender: expediteur, snoozed: 'shown' }
-		const affaireC5 = { folder: 'card', card_id: C5, sender: expediteur, snoozed: 'shown' }
+		const nonClasses = { workspace_id: WORKSPACE, folder: 'unclassified', sender: expediteur, snoozed: 'shown' }
+		const affaireC5 = { workspace_id: WORKSPACE, folder: 'card', card_id: C5, sender: expediteur, snoozed: 'shown' }
 
 		try {
 			// L'anonyme n'appelle rien.
@@ -79,7 +81,7 @@ test.describe('les actions groupées de l’inbox — décidées par la base (CR
 
 			// « Tout le filtre » sans filtre explicite : refusé par la base, quel que soit l'écran.
 			const sansFiltre = await rpc(request, bizdev, 'inbox_bulk_apply', {
-				p_scope: { folder: 'unclassified', snoozed: 'shown' },
+				p_scope: { workspace_id: WORKSPACE, folder: 'unclassified', snoozed: 'shown' },
 				p_action: 'mark_read',
 			})
 			expect(sansFiltre.status(), await sansFiltre.text()).toBe(400)

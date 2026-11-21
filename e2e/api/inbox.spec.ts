@@ -17,6 +17,8 @@
 // LE COURRIER VIENT DU SEED (docs/SPEC-seed.md §2.19) : deux messages RÉELLEMENT reçus. Aucun
 // message n'est forgé ici — un message fabriqué prouverait le comportement d'une donnée qui
 // n'existe pas dans le produit.
+// *Révisé le 2026-11-21 (`CRM-161` T1, docs/SPEC-mail-subsystem.md §35.8, décision 51)* : les fonctions de l'inbox prennent
+// l'espace (`p_workspace_id`, la portée `workspace_id`) ; la preuve passe celui du seed, sans changer ce qu'elle prouve.
 
 import { expect, test } from '@playwright/test'
 import { URL_API, enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
@@ -104,7 +106,7 @@ test.describe('inbox globale — l’arborescence', () => {
 		const lire = async (entetes: Record<string, string>): Promise<Ligne[]> => {
 			const reponse = await request.post(`${URL_API}/rest/v1/rpc/inbox_arborescence`, {
 				headers: { ...entetes, 'Content-Type': 'application/json' },
-				data: {},
+				data: { p_workspace_id: WORKSPACE },
 			})
 			expect(reponse.status(), await reponse.text()).toBe(200)
 			return (await reponse.json()) as Ligne[]
@@ -125,7 +127,7 @@ test.describe('inbox globale — l’arborescence', () => {
 	test('un anonyme ne peut pas exécuter l’arborescence', async ({ request }) => {
 		const reponse = await request.post(`${URL_API}/rest/v1/rpc/inbox_arborescence`, {
 			headers: { ...enTetesAnonymes(), 'Content-Type': 'application/json' },
-			data: {},
+			data: { p_workspace_id: WORKSPACE },
 		})
 		expect([401, 403, 404]).toContain(reponse.status())
 	})

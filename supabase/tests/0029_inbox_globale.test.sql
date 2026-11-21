@@ -13,6 +13,8 @@
 -- LA SUITE S'APPUIE SUR LE COURRIER DU SEED (§2.19) : deux messages réellement reçus, l'un classé
 -- par la règle 1, l'autre non classé dans la boîte système. Elle ne les fabrique pas — un message
 -- forgé ici prouverait le comportement d'une donnée qui n'existe pas dans le produit.
+-- Révisé le 2026-11-21 (`CRM-161` T1, docs/SPEC-mail-subsystem.md §35.8, décision 51) : les fonctions de l'inbox prennent
+--   l'espace (`p_workspace_id`, la portée `workspace_id`) ; la preuve passe celui du seed, sans changer ce qu'elle prouve.
 
 begin;
 
@@ -68,8 +70,10 @@ select has_function('app', 'peut_voir_message', array['uuid'],
 
 -- RÉVISÉ PAR `CRM-139`, non relâché : l'arborescence prend un argument, `p_only_me`, faux par défaut, si bien qu'un
 -- appel sans argument rend toujours l'arborescence d'avant (docs/SPEC-mail-subsystem.md §27.3).
-select has_function('public', 'inbox_arborescence', array['boolean'],
-	'4 — l''arborescence de l''inbox existe, et ne prend qu''un argument, « seulement moi »');
+-- RÉVISÉ PAR `CRM-161` T1 (décision 51), non relâché : elle prend aussi l'espace, EN TÊTE et exigé
+-- (docs/SPEC-mail-subsystem.md §35.2) ; l'ancienne signature n'existe plus.
+select has_function('public', 'inbox_arborescence', array['uuid', 'boolean'],
+	'4 — l''arborescence de l''inbox existe, et prend l''espace puis « seulement moi »');
 
 -- `SECURITY INVOKER` : les compteurs sont ceux de l'APPELANT. Une fonction `DEFINER` aurait
 -- annoncé du courrier introuvable à qui n'y a pas droit (§18.3).
@@ -80,7 +84,7 @@ select is(
 	'5 — l''arborescence s''exécute avec les droits de l''APPELANT, jamais du définisseur');
 
 select ok(
-	not has_function_privilege('anon', 'public.inbox_arborescence(boolean)', 'execute'),
+	not has_function_privilege('anon', 'public.inbox_arborescence(uuid, boolean)', 'execute'),
 	'6 — l''anonyme ne peut pas l''exécuter');
 
 -- =============================================================================================

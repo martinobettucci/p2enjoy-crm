@@ -15,6 +15,8 @@
 -- - un envoi `bo` dont l'adresse d'expédition est `bloque@exemple.test` (un envoi n'est jamais bloqué) ;
 -- - deux expéditeurs pour les inconnus : `nouveau@atelier-lumen.example` (domaine d'une organisation du seed) et
 --   `ines.morel@atelier-lumen.example` (déjà un contact du seed).
+-- Révisé le 2026-11-21 (`CRM-161` T1, docs/SPEC-mail-subsystem.md §35.8, décision 51) : les fonctions de l'inbox prennent
+--   l'espace (`p_workspace_id`, la portée `workspace_id`) ; la preuve passe celui du seed, sans changer ce qu'elle prouve.
 
 begin;
 
@@ -119,7 +121,7 @@ select throws_ok(format('select public.remove_message_transfer(%L, %L)', :'k1', 
 
 -- 21–22. L'action groupée : une notification pour l'appel.
 select pg_temp.endosser(:'admin');
-select is(public.inbox_bulk_apply('{"folder": "unclassified", "sender": "tiers@exemple.test", "snoozed": "shown"}',
+select is(public.inbox_bulk_apply('{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "folder": "unclassified", "sender": "tiers@exemple.test", "snoozed": "shown"}',
                                   'transfer', format('{"recipient_id": "%s"}', :'driss')::jsonb) - 'next',
 	'{"threads": 2, "messages": 2, "done": 2, "refused": {}}'::jsonb, '21 — transférer deux mails à Driss en un appel');
 reset role;
@@ -181,7 +183,7 @@ select is((select string_agg(rfc822_message_id || '=' || (deleted_at is not null
 select pg_temp.endosser(:'admin');
 select is((select string_agg(address || '|' || suggested_name || '|' || coalesce(suggested_organization_name, '-'), ';' order by address)
              from public.inbox_bulk_unknown_senders(
-               '{"folder": "unclassified", "snoozed": "shown", "threads": [
+               '{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "folder": "unclassified", "snoozed": "shown", "threads": [
                   {"workspace_id": "5eed0000-0000-4000-8000-000000000001", "thread_key": "<tst-156t2-n1@exemple.test>"},
                   {"workspace_id": "5eed0000-0000-4000-8000-000000000001", "thread_key": "<tst-156t2-n2@exemple.test>"}]}')),
 	'nouveau@atelier-lumen.example|Nora Nouveau|Atelier Lumen',

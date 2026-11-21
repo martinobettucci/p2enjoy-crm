@@ -19,6 +19,8 @@
 -- Driss (business_developer) les deux classés seulement. LES COMPTES DE DOSSIER SONT BORNÉS À L'AFFAIRE DU FIL
 -- (« Refonte du site vitrine ») : le seed archive aussi un envoi sur une autre affaire (docs/SPEC-seed.md §2.19 ter). Les lectures sont REMISES À ZÉRO dans la transaction, pour
 -- que la suite ne dépende pas de ce que le seed ou une session a déjà lu ; le `rollback` final rend la base intacte.
+-- Révisé le 2026-11-21 (`CRM-161` T1, docs/SPEC-mail-subsystem.md §35.8, décision 51) : les fonctions de l'inbox prennent
+--   l'espace (`p_workspace_id`, la portée `workspace_id`) ; la preuve passe celui du seed, sans changer ce qu'elle prouve.
 
 begin;
 
@@ -110,9 +112,9 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');  -- Camille, ad
 -- lue pour Camille. « Non classés » ne change pas (n° 12 et 13).
 select is((select count(*) from public.mail_messages m where not public.is_read(m)), 12::bigint,
 	'11 — au départ, les douze messages reçus sont non lus pour Camille : aucune lecture fabriquée');
-select is((select unread_count from public.inbox_arborescence() where card_id is null), 4::bigint,
+select is((select unread_count from public.inbox_arborescence('5eed0000-0000-4000-8000-000000000001') where card_id is null), 4::bigint,
 	'12 — « Non classés » : quatre non lus pour Camille, les deux fils Spam masqués');
-select is((select nombre from public.inbox_arborescence() where card_id is null), 4::bigint,
+select is((select nombre from public.inbox_arborescence('5eed0000-0000-4000-8000-000000000001') where card_id is null), 4::bigint,
 	'13 — et le TOTAL reste à quatre (décision 716)');
 
 select is(public.mark_messages_read(array[(select valeur from pg_temp_ref where nom = 'classe'),
@@ -125,9 +127,9 @@ select is((select count(*) from public.mail_message_reads), 2::bigint,
 select ok((select public.is_read(m) from public.mail_messages m
             where m.id = (select valeur from pg_temp_ref where nom = 'classe')),
 	'17 — `is_read` rend vrai pour un message lu');
-select is((select sum(unread_count) from public.inbox_arborescence() where card_id = '5eed0000-0000-4000-8000-0000000000c1'), 0::numeric,
+select is((select sum(unread_count) from public.inbox_arborescence('5eed0000-0000-4000-8000-000000000001') where card_id = '5eed0000-0000-4000-8000-0000000000c1'), 0::numeric,
 	'18 — le dossier de l''affaire n''a plus de non lu pour Camille');
-select is((select sum(nombre) from public.inbox_arborescence() where card_id = '5eed0000-0000-4000-8000-0000000000c1'), 2::numeric,
+select is((select sum(nombre) from public.inbox_arborescence('5eed0000-0000-4000-8000-000000000001') where card_id = '5eed0000-0000-4000-8000-0000000000c1'), 2::numeric,
 	'19 — son total reste à deux');
 
 select throws_ok(
@@ -175,7 +177,7 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select is(public.mark_message_unread((select valeur from pg_temp_ref where nom = 'reponse')), true,
 	'28 — Camille remet la réponse non lue');
-select is((select sum(unread_count) from public.inbox_arborescence() where card_id = '5eed0000-0000-4000-8000-0000000000c1'), 1::numeric,
+select is((select sum(unread_count) from public.inbox_arborescence('5eed0000-0000-4000-8000-000000000001') where card_id = '5eed0000-0000-4000-8000-0000000000c1'), 1::numeric,
 	'29 — le dossier de l''affaire porte de nouveau un non lu');
 select is(public.mark_message_unread((select valeur from pg_temp_ref where nom = 'reponse')), false,
 	'30 — la remettre non lue une seconde fois ne retire rien');

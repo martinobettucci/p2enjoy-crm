@@ -2,6 +2,8 @@
 //           récent, par affaire), l'envoi avec le contenu relu par `send_email_draft`, l'écart par `discard_email_draft`,
 //           le classement de leurs refus et l'adresse de relecture
 // @verifies docs/SPEC-mails-prepares.md §3.4, §3.5, §6.1 ; docs/DESIGN_SYSTEM.md §5.90 ; décision 829
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T1 : les mails préparés de l'inbox d'un espace, ou d'une affaire —
+//           docs/SPEC-mail-subsystem.md §35.5
 // @verifies CRM-143 (docs/BACKLOG.md) — tranche T4 : les pièces d'un mail préparé, lues défensivement de
 //           `mail_drafts.attachments` (docs/SPEC-pieces-jointes.md §17.6)
 
@@ -61,16 +63,19 @@ function espion(reponse: { data?: unknown; error: { code?: string; message: stri
 describe('la lecture des mails préparés', () => {
 	it('lit les mails EN ATTENTE, du plus ancien au plus récent, et laisse la RLS dire à qui ils sont', async () => {
 		const { client, appels } = espion({ data: [LIGNE], error: null })
-		const etat = await lireMailsPrepares(client)
+		const etat = await lireMailsPrepares(client, { idWorkspace: 'ws-1' })
 		expect(etat).toEqual({ statut: 'pret', donnees: [mailPrepareDepuisLigne(LIGNE)] })
-		expect(appels.filtres).toEqual([['table', 'mail_drafts'], ['status', 'pending']])
+		// `CRM-161` T1 (§35.5) : ceux de l'inbox de l'espace courant, et de lui seul.
+		expect(appels.filtres).toEqual([['table', 'mail_drafts'], ['status', 'pending'], ['workspace_id', 'ws-1']])
 		expect(appels.ordres).toEqual(['created_at', 'id'])
 	})
 
 	it('filtre sur l’affaire quand elle est donnée', async () => {
 		const { client, appels } = espion({ data: [], error: null })
-		await lireMailsPrepares(client, 'c1')
+		await lireMailsPrepares(client, { idCard: 'c1' })
 		expect(appels.filtres).toContainEqual(['card_id', 'c1'])
+		// L'affaire porte son espace : aucun filtre d'espace en plus.
+		expect(appels.filtres.some(([colonne]) => colonne === 'workspace_id')).toBe(false)
 	})
 
 	it('rend la ligne dans la forme de l’écran, et n’attribue jamais au connecteur une origine inconnue', () => {
@@ -101,8 +106,8 @@ describe('la lecture des mails préparés', () => {
 
 	it('dit une panne de lecture comme une erreur, jamais comme une liste vide', async () => {
 		const { client } = espion({ data: null, error: { message: 'boom' }, status: 500 })
-		expect((await lireMailsPrepares(client)).statut).toBe('erreur')
-		expect((await lireMailsPrepares(null)).statut).toBe('erreur')
+		expect((await lireMailsPrepares(client, { idWorkspace: 'ws-1' })).statut).toBe('erreur')
+		expect((await lireMailsPrepares(null, { idWorkspace: 'ws-1' })).statut).toBe('erreur')
 	})
 })
 

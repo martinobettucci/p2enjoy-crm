@@ -12,6 +12,8 @@
 -- seed à l'autre. *Révisé avec le seed §52 (T4, 2026-11-20, décision 51)* : « Non classés » porte déjà deux fils Spam du
 -- seed, masqués ; les comptes de la mention et de la portée sont donc mesurés AVANT le montage et la preuve y ajoute les
 -- siens.
+-- Révisé le 2026-11-21 (`CRM-161` T1, docs/SPEC-mail-subsystem.md §35.8, décision 51) : les fonctions de l'inbox prennent
+--   l'espace (`p_workspace_id`, la portée `workspace_id`) ; la preuve passe celui du seed, sans changer ce qu'elle prouve.
 
 begin;
 
@@ -62,7 +64,7 @@ create or replace function pg_temp.id(n text) returns uuid language sql as $$
 $$;
 -- Les identifiants rendus par la liste de Camille, sous ses droits.
 create or replace function pg_temp.liste(p_pastilles text[] default '{}') returns uuid[] language sql as $$
-	select coalesce(array_agg(m.id), '{}') from public.inbox_messages(
+	select coalesce(array_agg(m.id), '{}') from public.inbox_messages('5eed0000-0000-4000-8000-000000000001', 
 		p_label_ids => (select coalesce(array_agg(pg_temp.id('pastille:' || p)), '{}') from unnest(p_pastilles) p)) m;
 $$;
 create or replace function pg_temp.poser(p_message text, p_pastille text) returns void language sql as $$
@@ -111,12 +113,12 @@ update public.mail_labels set hidden = false where id = pg_temp.id('pastille:lea
 -- =============================================================================================
 
 select pg_temp.endosser(pg_temp.id('camille'));
-insert into pg_temp_ref select 'liste_avant', count(*)::text from public.inbox_messages();
+insert into pg_temp_ref select 'liste_avant', count(*)::text from public.inbox_messages('5eed0000-0000-4000-8000-000000000001');
 -- Les fils Spam du seed (§52), masqués avant toute pose de la preuve.
-insert into pg_temp_ref select 'spam_seed', coalesce((select thread_count from public.inbox_hidden_counts()
+insert into pg_temp_ref select 'spam_seed', coalesce((select thread_count from public.inbox_hidden_counts('5eed0000-0000-4000-8000-000000000001')
                                                      where label_id = pg_temp.id('pastille:spam')), 0)::text;
 insert into pg_temp_ref select 'portee_seed', (select thread_count || ',' || message_count from public.inbox_bulk_count(
-	jsonb_build_object('folder', 'unclassified', 'label_ids', jsonb_build_array(pg_temp.ref('pastille:spam')))));
+	jsonb_build_object('workspace_id', '5eed0000-0000-4000-8000-000000000001', 'folder', 'unclassified', 'label_ids', jsonb_build_array(pg_temp.ref('pastille:spam')))));
 select pg_temp.redevenir_proprietaire();
 
 select is(pg_temp.ref('liste_avant')::int, 4,
@@ -137,16 +139,16 @@ select ok(pg_temp.id('b') = any (pg_temp.liste(array['lead', 'spam'])),
 	'11 — sous « Lead » et « Spam », le fil Spam et Lead paraît');
 
 -- L'ordre et la limite : le masquage s'applique AVANT la limite.
-select is((select array_agg(m.id) from public.inbox_messages(p_limit => 1) m),
-	(select array_agg(id) from (select m.id from public.inbox_messages() m limit 1) x),
+select is((select array_agg(m.id) from public.inbox_messages('5eed0000-0000-4000-8000-000000000001', p_limit => 1) m),
+	(select array_agg(id) from (select m.id from public.inbox_messages('5eed0000-0000-4000-8000-000000000001') m limit 1) x),
 	'12 — la limite rend le plus récent des messages NON masqués');
-select is((select count(*)::int from public.inbox_messages(p_limit => 1000)),
-	(select count(*)::int from public.inbox_messages(p_limit => 200)),
+select is((select count(*)::int from public.inbox_messages('5eed0000-0000-4000-8000-000000000001', p_limit => 1000)),
+	(select count(*)::int from public.inbox_messages('5eed0000-0000-4000-8000-000000000001', p_limit => 200)),
 	'13 — la limite est bornée à 200 côté serveur');
-select is((select array_agg(m.id) from public.inbox_messages(p_sender => ' NORA.NOUVEAU@atelier-lumen.example ') m),
+select is((select array_agg(m.id) from public.inbox_messages('5eed0000-0000-4000-8000-000000000001', p_sender => ' NORA.NOUVEAU@atelier-lumen.example ') m),
 	null::uuid[],
 	'14 — l''expéditeur sans casse ni blancs : le seul mail de Nora est masqué, rien ne sort');
-select is((select array_agg(m.id) from public.inbox_messages(p_label_ids => array[pg_temp.id('pastille:spam')],
+select is((select array_agg(m.id) from public.inbox_messages('5eed0000-0000-4000-8000-000000000001', p_label_ids => array[pg_temp.id('pastille:spam')],
 	                                                          p_sender => 'Nora.Nouveau@Atelier-Lumen.example') m),
 	array[pg_temp.id('a')],
 	'15 — sous « Spam », le filtre par expéditeur le retrouve');
@@ -205,23 +207,23 @@ update public.mail_messages set deleted_at = null where id = pg_temp.id('c');
 -- État : a (Spam), b (Spam, Lead), c (Spam, Promo archivée), d visible.
 select pg_temp.endosser(pg_temp.id('camille'));
 select results_eq(
-	$$select label_id, thread_count from public.inbox_hidden_counts()$$,
+	$$select label_id, thread_count from public.inbox_hidden_counts('5eed0000-0000-4000-8000-000000000001')$$,
 	$$values (pg_temp.id('pastille:promo 159'), 1), (pg_temp.id('pastille:spam'), pg_temp.ref('spam_seed')::int + 3)$$,
 	'22 — sans filtre : Promo 159 masque un fil, Spam trois de plus que le seed, dans l''ordre du nom');
 select results_eq(
-	$$select label_id, thread_count from public.inbox_hidden_counts(p_label_ids => array[pg_temp.id('pastille:lead')])$$,
+	$$select label_id, thread_count from public.inbox_hidden_counts('5eed0000-0000-4000-8000-000000000001', p_label_ids => array[pg_temp.id('pastille:lead')])$$,
 	$$values (pg_temp.id('pastille:promo 159'), 1), (pg_temp.id('pastille:spam'), pg_temp.ref('spam_seed')::int + 3)$$,
 	'23 — sous « Lead » : ce que montrerait chaque pastille cachée ajoutée');
 select results_eq(
-	$$select label_id, thread_count from public.inbox_hidden_counts(p_label_ids => array[pg_temp.id('pastille:spam')])$$,
+	$$select label_id, thread_count from public.inbox_hidden_counts('5eed0000-0000-4000-8000-000000000001', p_label_ids => array[pg_temp.id('pastille:spam')])$$,
 	$$select null::uuid, null::integer where false$$,
 	'24 — sous « Spam » : plus rien à dire — Promo 159 ne masque que le fil c, montré par Spam');
 select results_eq(
-	$$select label_id, thread_count from public.inbox_hidden_counts(p_sender => 'nora.nouveau@atelier-lumen.example')$$,
+	$$select label_id, thread_count from public.inbox_hidden_counts('5eed0000-0000-4000-8000-000000000001', p_sender => 'nora.nouveau@atelier-lumen.example')$$,
 	$$values (pg_temp.id('pastille:spam'), 1)$$,
 	'25 — la mention suit le filtre par expéditeur');
 select results_eq(
-	$$select label_id, thread_count from public.inbox_hidden_counts(p_card_id => '5eed0000-0000-4000-8000-0000000000c1')$$,
+	$$select label_id, thread_count from public.inbox_hidden_counts('5eed0000-0000-4000-8000-000000000001', p_card_id => '5eed0000-0000-4000-8000-0000000000c1')$$,
 	$$select null::uuid, null::integer where false$$,
 	'26 — le dossier d''une affaire sans fil masqué n''a pas de mention');
 
@@ -229,19 +231,19 @@ select results_eq(
 -- 4. Les compteurs et la portée — §31.13.3
 -- =============================================================================================
 
-select is((select nombre::int from public.inbox_arborescence(false) where card_id is null),
-	(select count(*)::int from public.inbox_messages(p_limit => 200)),
+select is((select nombre::int from public.inbox_arborescence('5eed0000-0000-4000-8000-000000000001', false) where card_id is null),
+	(select count(*)::int from public.inbox_messages('5eed0000-0000-4000-8000-000000000001', p_limit => 200)),
 	'27 — « Non classés » compte ce que la liste montre sans filtre');
-select is((select count(*)::int from public.inbox_arborescence(false) where card_id is null), 1,
+select is((select count(*)::int from public.inbox_arborescence('5eed0000-0000-4000-8000-000000000001', false) where card_id is null), 1,
 	'28 — la ligne des non classés existe toujours');
 select results_eq(
 	$$select thread_count, message_count from public.inbox_bulk_count(
-		jsonb_build_object('folder', 'unclassified', 'label_ids', jsonb_build_array(pg_temp.ref('pastille:lead'))))$$,
+		jsonb_build_object('workspace_id', '5eed0000-0000-4000-8000-000000000001', 'folder', 'unclassified', 'label_ids', jsonb_build_array(pg_temp.ref('pastille:lead'))))$$,
 	$$values (0, 0)$$,
 	'29 — « Tout sélectionner » sous « Lead » n''agit pas sur le fil masqué Spam et Lead');
 select results_eq(
 	$$select thread_count, message_count from public.inbox_bulk_count(
-		jsonb_build_object('folder', 'unclassified', 'label_ids', jsonb_build_array(pg_temp.ref('pastille:spam'))))$$,
+		jsonb_build_object('workspace_id', '5eed0000-0000-4000-8000-000000000001', 'folder', 'unclassified', 'label_ids', jsonb_build_array(pg_temp.ref('pastille:spam'))))$$,
 	$$select split_part(pg_temp.ref('portee_seed'), ',', 1)::int + 3, split_part(pg_temp.ref('portee_seed'), ',', 2)::int + 3$$,
 	'30 — sous « Spam », les trois fils Spam de la preuve s''ajoutent à la portée');
 

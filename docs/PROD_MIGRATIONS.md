@@ -1473,7 +1473,25 @@ l'appelle.
 comportement ; la webapp, l'image `mcp` et le manuel n'en changent que les textes.
 **Retour arrière** : rejouer la définition de `concerns_me` de la 190 (`docs/SCHEMA.md` « Migration `0194` »).
 
+### 2.67 `CRM-161` T1, décisions 965 et 967 — l'inbox d'un espace : la liste, ses compteurs et ses actions groupées ne lisent que l'espace demandé (EN ATTENTE)
+
+`docs/SPEC-mail-subsystem.md` §35 ; `docs/SCHEMA.md` « Migration `0195` ». Trois fonctions remplacées (l'ancienne signature
+supprimée), une redéfinie, une ajoutée ; **aucune table, aucune donnée, aucune variable, aucun secret**.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 195 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate` |
+| 2 | Livrer la webapp | session de livraison, **dans la même fenêtre** | la webapp bâtie à la révision du lot. **Indispensable** : la 195 supprime les anciennes signatures de `inbox_messages`, `inbox_hidden_counts` et `inbox_arborescence` ; une webapp antérieure ne lit plus l'inbox (`404`, `PGRST202`) tant que la nouvelle n'est pas servie |
+| 3 | Constater | session de livraison, en lecture seule | le registre gagne une ligne, l'empreinte de la 195 égale celle du dépôt ; `select count(*) from pg_proc where proname in ('inbox_messages','inbox_hidden_counts','inbox_arborescence') and pronamespace = 'public'::regnamespace` vaut **3** (une signature chacune) ; `inbox_unread_by_workspace` existe |
+| 4 | Constater | le responsable | dans l'inbox, rien ne change pour un espace unique ; un membre de plusieurs espaces ne voit plus, dans « Non classés », que les mails de l'espace courant (le premier par nom, jusqu'à la tranche T2) |
+
+**L'image `mcp` n'est pas concernée** : aucun outil n'appelle ces fonctions (`docs/SPEC-espace-courant.md` §6).
+**Retour arrière** : supprimer les quatre fonctions publiques de la 195, rejouer les sections 3 à 6 de la 193, et servir la
+webapp précédente dans la même fenêtre.
+
 ## 3. Migrations en attente
+
+**La 195** (`CRM-161` T1, décisions 965 et 967), **en attente** : l'inbox d'un espace (§2.67, `docs/SCHEMA.md` « Migration `0195` »). Elle part avec la webapp, dans la même fenêtre.
 
 **Aucune migration en attente depuis la fenêtre du 2026-11-21** : la 193 et la 194 ont été appliquées par elle (révision `dd9ac2c3`, décision 962) ; registre à **192** lignes. *Historique de l'attente* — les paragraphes qui suivent décrivent la 193 et la 194 telles qu'elles attendaient.
 

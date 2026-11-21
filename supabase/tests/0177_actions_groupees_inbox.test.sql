@@ -13,6 +13,8 @@
 -- - dans l'affaire `…c5`, que Driss et la lectrice lisent sans l'écrire : `k1`, de `spam@`.
 -- `a1` seul porte la pastille « Lead », posée. *Révisé par `CRM-159` (2026-11-20)* : c'était « Spam », devenue cachée
 -- (`0193`, docs/SPEC-mail-subsystem.md §31.13) — elle masquerait les fils de la sonde ; « Lead », visible, garde l'intention.
+-- Révisé le 2026-11-21 (`CRM-161` T1, docs/SPEC-mail-subsystem.md §35.8, décision 51) : les fonctions de l'inbox prennent
+--   l'espace (`p_workspace_id`, la portée `workspace_id`) ; la preuve passe celui du seed, sans changer ce qu'elle prouve.
 
 begin;
 
@@ -64,9 +66,9 @@ select id as b1 from public.mail_messages where rfc822_message_id = '<tst-156-b1
 select id as k1 from public.mail_messages where rfc822_message_id = '<tst-156-k1@exemple.test>' \gset
 
 -- Les descriptions de portée employées plus bas.
-\set expediteur_spam '{"folder": "unclassified", "sender": " SPAM@exemple.test ", "snoozed": "hidden"}'
-\set fil_b '{"folder": "unclassified", "snoozed": "hidden", "threads": [{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "thread_key": "<tst-156-b1@exemple.test>"}]}'
-\set fil_a '{"folder": "unclassified", "snoozed": "hidden", "threads": [{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "thread_key": "<tst-156-a1@exemple.test>"}]}'
+\set expediteur_spam '{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "folder": "unclassified", "sender": " SPAM@exemple.test ", "snoozed": "hidden"}'
+\set fil_b '{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "folder": "unclassified", "snoozed": "hidden", "threads": [{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "thread_key": "<tst-156-b1@exemple.test>"}]}'
+\set fil_a '{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "folder": "unclassified", "snoozed": "hidden", "threads": [{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "thread_key": "<tst-156-a1@exemple.test>"}]}'
 
 -- 1–3. La forme et les droits d'exécution.
 select ok(not has_function_privilege('anon', 'public.inbox_bulk_apply(jsonb, text, jsonb)', 'execute')
@@ -81,13 +83,13 @@ select ok(not has_function_privilege('authenticated', 'app.inbox_scope_messages(
 select pg_temp.endosser(:'driss');
 
 -- 4–8. Les refus de forme, avant toute lecture.
-select throws_ok($$select public.inbox_bulk_count('{"folder": "unclassified", "snoozed": "hidden"}')$$,
+select throws_ok($$select public.inbox_bulk_count('{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "folder": "unclassified", "snoozed": "hidden"}')$$,
 	'22023', 'filter_required', '4 — « tout le filtre » sans filtre explicite : refusé par la base (§32.3)');
-select throws_ok($$select public.inbox_bulk_count('{"folder": "dossier"}')$$,
+select throws_ok($$select public.inbox_bulk_count('{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "folder": "dossier"}')$$,
 	'22023', 'invalid_scope', '5 — un dossier inconnu : invalid_scope');
-select throws_ok($$select public.inbox_bulk_count('{"folder": "card", "only_me": true}')$$,
+select throws_ok($$select public.inbox_bulk_count('{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "folder": "card", "only_me": true}')$$,
 	'22023', 'invalid_scope', '6 — une affaire sans `card_id` : invalid_scope');
-select throws_ok($$select public.inbox_bulk_count('{"folder": "unclassified", "label_ids": ["pas-un-uuid"]}')$$,
+select throws_ok($$select public.inbox_bulk_count('{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "folder": "unclassified", "label_ids": ["pas-un-uuid"]}')$$,
 	'22023', 'invalid_scope', '7 — une pastille mal formée : invalid_scope');
 select throws_ok(format('select public.inbox_bulk_apply(%L, %L)', :'fil_b', 'archiver'),
 	'22023', 'invalid_action', '8 — une action inconnue : invalid_action');
@@ -102,15 +104,15 @@ select throws_ok(format('select public.inbox_bulk_apply(%L, %L)', :'fil_b', 'unc
 select is((select row(thread_count, message_count)::text from public.inbox_bulk_count(:'expediteur_spam')), '(1,2)',
 	'12 — l''expéditeur, sans casse ni blancs : un fil, deux messages ; `s1`, de la boîte système, n''est pas vu par Driss');
 select is((select row(thread_count, message_count)::text
-             from public.inbox_bulk_count(format('{"folder": "unclassified", "label_ids": ["%s"]}', :'pastille')::jsonb)),
+             from public.inbox_bulk_count(format('{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "folder": "unclassified", "label_ids": ["%s"]}', :'pastille')::jsonb)),
 	'(1,1)', '13 — la pastille : seul le message qui la porte, pas tout son fil (décision 946)');
 select is((select row(thread_count, message_count)::text from public.inbox_bulk_count(:'fil_b')), '(1,2)',
 	'14 — un fil coché sans filtre : ses messages du dossier, l''envoi compris');
 select is((select row(thread_count, message_count)::text
-             from public.inbox_bulk_count(format('{"folder": "card", "card_id": "%s", "sender": "spam@exemple.test"}', :'c5')::jsonb)),
+             from public.inbox_bulk_count(format('{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "folder": "card", "card_id": "%s", "sender": "spam@exemple.test"}', :'c5')::jsonb)),
 	'(1,1)', '15 — le dossier d''une affaire qu''il lit');
 select is((select row(thread_count, message_count)::text
-             from public.inbox_bulk_count('{"folder": "unclassified", "sender": "personne@exemple.test"}')), '(0,0)',
+             from public.inbox_bulk_count('{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "folder": "unclassified", "sender": "personne@exemple.test"}')), '(0,0)',
 	'16 — un filtre qui ne retient rien : zéro, sans erreur');
 
 -- 17–19. Lu, puis non lu : l'état de Driss.
@@ -158,16 +160,16 @@ select is((select count(*)::int from public.mail_messages where rfc822_message_i
              and deleted_by = :'driss'), 2,
 	'30 — ils sont en corbeille, effacés par Driss');
 select pg_temp.endosser(:'driss');
-select throws_ok(format('select public.inbox_bulk_apply(%L, %L)', '{"folder": "trash"}', 'restore'),
+select throws_ok(format('select public.inbox_bulk_apply(%L, %L)', '{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "folder": "trash"}', 'restore'),
 	'22023', 'invalid_scope', '31 — la corbeille exige les messages cochés');
-select is(public.inbox_bulk_apply(format('{"folder": "trash", "message_ids": ["%s"]}', :'b1')::jsonb, 'restore') ->> 'done', '1',
+select is(public.inbox_bulk_apply(format('{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "folder": "trash", "message_ids": ["%s"]}', :'b1')::jsonb, 'restore') ->> 'done', '1',
 	'32 — restaurer le message coché dans la corbeille');
 
 -- 33–34. La lectrice : non lu permis, classer refusé, par les mêmes règles que l'unité.
 select pg_temp.endosser(:'lectrice');
-select is(public.inbox_bulk_apply(format('{"folder": "card", "card_id": "%s", "sender": "spam@exemple.test"}', :'c5')::jsonb, 'mark_read') ->> 'done', '1',
+select is(public.inbox_bulk_apply(format('{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "folder": "card", "card_id": "%s", "sender": "spam@exemple.test"}', :'c5')::jsonb, 'mark_read') ->> 'done', '1',
 	'33 — la lectrice marque lu le message de l''affaire qu''elle lit');
-select is(public.inbox_bulk_apply(format('{"folder": "card", "card_id": "%s", "sender": "spam@exemple.test"}', :'c5')::jsonb,
+select is(public.inbox_bulk_apply(format('{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "folder": "card", "card_id": "%s", "sender": "spam@exemple.test"}', :'c5')::jsonb,
                                   'classify', format('{"card_id": "%s"}', :'c1')::jsonb) -> 'refused',
 	'{"forbidden": 1}'::jsonb, '34 — elle ne classe rien : `forbidden`');
 
@@ -201,7 +203,7 @@ select m.id, a.id, 'INBOX', 157000 + row_number() over (order by m.id)
   join public.mail_inbound_accounts a on a.imap_username = 'bizdev@p2enjoy.test'
  where m.rfc822_message_id like '<tst-156-masse-%';
 select pg_temp.endosser(:'driss');
-\set masse '{"folder": "unclassified", "sender": "masse@exemple.test", "snoozed": "shown"}'
+\set masse '{"workspace_id": "5eed0000-0000-4000-8000-000000000001", "folder": "unclassified", "sender": "masse@exemple.test", "snoozed": "shown"}'
 create temp table premier as select public.inbox_bulk_apply(:'masse', 'mark_read') as r;
 select is((select (r ->> 'messages')::int from premier), 2000,
 	'37 — le premier paquet porte 2 000 messages, pas un de plus');

@@ -23,6 +23,10 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
+import { FournisseurEspace } from './ContexteEspace'
+// `CRM-161` T1 (docs/SPEC-mail-subsystem.md §35.6) : l'écran lit l'inbox de l'espace du contexte ; hors coquille, la
+// preuve le fournit — sans lui, les lectures attendent.
+const ESPACE_DE_TEST = { idWorkspace: 'ws-1', estAdmin: false } as const
 
 const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 const CARD_SUGGEREE = '5eed0000-0000-4000-8000-0000000000c2'
@@ -213,7 +217,9 @@ afterEach(cleanup)
 async function ouvrirLeMessage() {
 	render(
 		<MemoryRouter>
-			<RouteInbox />
+			<FournisseurEspace valeur={ESPACE_DE_TEST}>
+				<RouteInbox />
+			</FournisseurEspace>
 		</MemoryRouter>,
 	)
 	await userEvent.click(await screen.findByRole('button', { name: /Non classés/ }))

@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T1 — l'outbox lue dans l'espace de l'inbox (docs/SPEC-mail-subsystem.md §35.5 ;
+//       docs/SPEC-espace-courant.md §7)
 // @spec CRM-144 (docs/BACKLOG.md) — tranche T3 : l'outbox côté webapp — lire les trois dossiers (« En file », « Envoyés »,
 //       « Échecs ») sous la RLS, leurs comptes, annuler un envoi en file (`cancel_outbound_email`), réessayer un échec
 //       (`retry_outbound_email`), le dictionnaire des motifs et celui des refus (docs/SPEC-mail-subsystem.md §28.2 à §28.7 ;
@@ -120,12 +122,18 @@ export type PageEnvois = { readonly envois: readonly EnvoiOutbox[]; readonly plu
  */
 export async function lireEnvois(
 	client: ClientCrm | null,
+	/** `CRM-161` T1 (docs/SPEC-mail-subsystem.md §35.5) : les envois de cet espace seul. */
+	idWorkspace: string,
 	dossier: DossierEnvoi,
 	limite: number = PAGE_ENVOYES,
 ): Promise<EtatAsync<PageEnvois>> {
 	if (client === null) return enErreur(classerErreur(undefined, 'configuration_absente'))
 	try {
-		let requete = client.from('mail_outbox').select(COLONNES).in('status', [...STATUTS[dossier]])
+		let requete = client
+			.from('mail_outbox')
+			.select(COLONNES)
+			.eq('workspace_id', idWorkspace)
+			.in('status', [...STATUTS[dossier]])
 		if (dossier === 'file') {
 			requete = requete.order('next_attempt_at', { ascending: true }).order('id', { ascending: true })
 		} else if (dossier === 'envoyes') {
@@ -149,7 +157,11 @@ export async function lireEnvois(
 /** Les comptes des trois dossiers, sous la RLS de la personne. */
 export type ComptesEnvois = Readonly<Record<DossierEnvoi, number>>
 
-export async function lireComptesEnvois(client: ClientCrm | null): Promise<EtatAsync<ComptesEnvois>> {
+export async function lireComptesEnvois(
+	client: ClientCrm | null,
+	/** `CRM-161` T1 (§35.5) : les comptes de cet espace seul. */
+	idWorkspace: string,
+): Promise<EtatAsync<ComptesEnvois>> {
 	if (client === null) return enErreur(classerErreur(undefined, 'configuration_absente'))
 	try {
 		const reponses = await Promise.all(
@@ -158,6 +170,7 @@ export async function lireComptesEnvois(client: ClientCrm | null): Promise<EtatA
 				client
 					.from('mail_outbox')
 					.select('id', OPTIONS_COMPTE)
+					.eq('workspace_id', idWorkspace)
 					.in('status', [...STATUTS[dossier]])
 					.limit(LIMITE_COMPTE),
 			),

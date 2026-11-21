@@ -13,6 +13,10 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, useLocation } from 'react-router'
+import { FournisseurEspace } from './ContexteEspace'
+// `CRM-161` T1 (docs/SPEC-mail-subsystem.md §35.6) : l'écran lit l'inbox de l'espace du contexte ; hors coquille, la
+// preuve le fournit — sans lui, les lectures attendent.
+const ESPACE_DE_TEST = { idWorkspace: 'ws-1', estAdmin: false } as const
 
 type Reponse = { data: unknown; error: { message: string } | null; status: number }
 const ok = (data: unknown): Reponse => ({ data, error: null, status: 200 })
@@ -133,7 +137,9 @@ function Adresse() {
 function monter(adresse = '/inbox') {
 	render(
 		<MemoryRouter initialEntries={[adresse]}>
-			<RouteInbox />
+			<FournisseurEspace valeur={ESPACE_DE_TEST}>
+				<RouteInbox />
+			</FournisseurEspace>
 			<Adresse />
 		</MemoryRouter>,
 	)
@@ -156,7 +162,7 @@ describe('RouteInbox — « Seulement moi » (§27.4)', () => {
 		monter()
 		await waitFor(() => expect(caseMoi().disabled).toBe(false))
 		expect(caseMoi().checked).toBe(true)
-		await waitFor(() => expect(etat.appelsArbre).toContainEqual({ p_only_me: true }))
+		await waitFor(() => expect(etat.appelsArbre).toContainEqual({ p_workspace_id: 'ws-1', p_only_me: true }))
 		await userEvent.click(await screen.findByRole('button', { name: /Non classés/ }))
 		await waitFor(() => expect(etat.lecturesListe.at(-1)).toContainEqual(['p_only_me', true]))
 		expect(screen.queryByTestId('inbox-seulement-moi-explication')).toBeNull()
@@ -169,7 +175,7 @@ describe('RouteInbox — « Seulement moi » (§27.4)', () => {
 		await userEvent.click(caseMoi())
 		expect(caseMoi().checked).toBe(false)
 		expect(screen.getByTestId('adresse').textContent).toBe('?courrier=tous')
-		await waitFor(() => expect(etat.appelsArbre.at(-1)).toEqual({ p_only_me: false }))
+		await waitFor(() => expect(etat.appelsArbre.at(-1)).toEqual({ p_workspace_id: 'ws-1', p_only_me: false }))
 		await waitFor(() => expect(etat.lecturesListe.at(-1)).toContainEqual(['p_only_me', false]))
 		// Recocher retire la clé : la vue par défaut reste l'adresse la plus courte.
 		await userEvent.click(caseMoi())
@@ -180,7 +186,7 @@ describe('RouteInbox — « Seulement moi » (§27.4)', () => {
 		monter('/inbox?courrier=tous')
 		await waitFor(() => expect(caseMoi().disabled).toBe(false))
 		expect(caseMoi().checked).toBe(false)
-		await waitFor(() => expect(etat.appelsArbre).toContainEqual({ p_only_me: false }))
+		await waitFor(() => expect(etat.appelsArbre).toContainEqual({ p_workspace_id: 'ws-1', p_only_me: false }))
 	})
 
 	it('PENDANT LA LECTURE DES IDENTITÉS, rien n’est demandé : on ne montre pas tout le courrier pour le retirer ensuite', async () => {
@@ -192,7 +198,7 @@ describe('RouteInbox — « Seulement moi » (§27.4)', () => {
 		expect(caseMoi().checked).toBe(true)
 		expect(etat.appelsArbre).toEqual([])
 		liberer(ok([{ id: 'ident-1' }]))
-		await waitFor(() => expect(etat.appelsArbre).toEqual([{ p_only_me: true }]))
+		await waitFor(() => expect(etat.appelsArbre).toEqual([{ p_workspace_id: 'ws-1', p_only_me: true }]))
 	})
 
 	it('SANS IDENTITÉ, la case est décochée, désactivée, et explique, avec le lien qui en ajoute une ; rien n’est filtré', async () => {
@@ -205,7 +211,7 @@ describe('RouteInbox — « Seulement moi » (§27.4)', () => {
 		expect(caseMoi().disabled).toBe(true)
 		expect(caseMoi().checked).toBe(false)
 		expect(caseMoi().getAttribute('aria-describedby')).toBe(explication.id)
-		await waitFor(() => expect(etat.appelsArbre).toEqual([{ p_only_me: false }]))
+		await waitFor(() => expect(etat.appelsArbre).toEqual([{ p_workspace_id: 'ws-1', p_only_me: false }]))
 	})
 
 	it('UN ÉCHEC DE LECTURE ne cache rien, le dit, et « Réessayer » relit les identités', async () => {
@@ -213,7 +219,7 @@ describe('RouteInbox — « Seulement moi » (§27.4)', () => {
 		monter()
 		const explication = await screen.findByTestId('inbox-seulement-moi-explication')
 		expect(explication.textContent).toContain('Vos adresses d’expédition n’ont pas pu être lues')
-		await waitFor(() => expect(etat.appelsArbre).toEqual([{ p_only_me: false }]))
+		await waitFor(() => expect(etat.appelsArbre).toEqual([{ p_workspace_id: 'ws-1', p_only_me: false }]))
 		etat.identites = () => Promise.resolve(ok([{ id: 'ident-1' }]))
 		await userEvent.click(screen.getByRole('button', { name: 'Réessayer' }))
 		await waitFor(() => expect(caseMoi().disabled).toBe(false))
@@ -246,7 +252,7 @@ describe('RouteInbox — « Seulement moi » (§27.4)', () => {
 	it('l’adresse d’un message qui me concerne ne touche pas à la case', async () => {
 		etat.concerne = true
 		monter('/inbox?message=msg-1')
-		await waitFor(() => expect(etat.appelsArbre).toContainEqual({ p_only_me: true }))
+		await waitFor(() => expect(etat.appelsArbre).toContainEqual({ p_workspace_id: 'ws-1', p_only_me: true }))
 		await waitFor(() => expect(screen.getByTestId('adresse').textContent).toBe(''))
 		expect(caseMoi().checked).toBe(true)
 	})

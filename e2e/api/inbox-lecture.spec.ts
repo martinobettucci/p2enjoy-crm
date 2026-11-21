@@ -9,10 +9,13 @@
 // L'ÉTAT DE DÉPART EST POSÉ, PUIS RENDU : les lectures des deux profils sur les messages du seed sont relevées par la clé
 // de service avant la série et réécrites telles quelles après. Les tests ne dépendent donc ni de ce que le seed a lu
 // (docs/SPEC-seed.md §2.19), ni de ce qu'une session d'écran a ouvert entre-temps.
+// *Révisé le 2026-11-21 (`CRM-161` T1, docs/SPEC-mail-subsystem.md §35.8, décision 51)* : les fonctions de l'inbox prennent
+// l'espace (`p_workspace_id`, la portée `workspace_id`) ; la preuve passe celui du seed, sans changer ce qu'elle prouve.
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { URL_API, enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
 
+const ESPACE = '5eed0000-0000-4000-8000-000000000001'
 const ADMIN = '5eed0000-0000-4000-8000-000000000011'
 const DRISS = '5eed0000-0000-4000-8000-000000000012'
 const MSGID = {
@@ -106,7 +109,10 @@ test.describe.serial('lu / non lu — hors interface (§18 bis)', () => {
 	test('le compte des non lus suit l’appelant, et le total reste (décision 716)', async ({ request }) => {
 		type Ligne = { card_id: string | null; nombre: number; unread_count: number }
 		const lire = async (entetes: Record<string, string>) => {
-			const reponse = await request.post(`${URL_API}/rest/v1/rpc/inbox_arborescence`, { headers: json(entetes), data: {} })
+			const reponse = await request.post(`${URL_API}/rest/v1/rpc/inbox_arborescence`, {
+				headers: json(entetes),
+				data: { p_workspace_id: ESPACE },
+			})
 			expect(reponse.status(), await reponse.text()).toBe(200)
 			return ((await reponse.json()) as Ligne[]).filter((ligne) => ligne.card_id !== null)
 		}

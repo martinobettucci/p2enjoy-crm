@@ -41489,3 +41489,27 @@ opaque et l'accès passe par la ligne `mail_attachments`, qui suit son message ;
 coût du personnel de l'espace de la saisie : changer l'espace d'une saisie la revalorise (décision 966). La décision 967
 (`CRM-161`) met l'espace en tête des adresses : un track déplacé change d'adresse, et la redirection des anciennes adresses
 est à vérifier avec la session qui porte `CRM-161`.
+
+### `CRM-161` T1 — l'inbox d'un espace, en base (journal d'implémentation)
+
+*2026-11-21, session 4891a451 (p2enjoy-crm-5f).*
+**Le problème** (`docs/SPEC-mail-subsystem.md` §35.1) : les fonctions de l'inbox ne prenaient aucun espace.
+**Observation, la preuve rouge** : dans une transaction annulée, un second espace dont Camille est administratrice, un mail
+non classé dans sa boîte ; sous le jeton de Camille, `inbox_messages()` rend les non classés de « P2Enjoy SAS + Sonde 161 », et
+« Non classés » de `inbox_arborescence()` en compte 5 au lieu de 4. La preuve `0182` est rouge sur `0193` (les signatures
+absentes), verte après la `0195` (30 assertions), jouée d'abord avec la migration dans une même transaction annulée.
+**Choix de réalisation** :
+- `p_workspace_id` **en tête et sans défaut**, l'ancienne signature supprimée : un appel oublié échoue (`404`, `PGRST202`) au
+  lieu de lire tous les espaces ; d'où `plpgsql` pour le seul refus `workspace_required` ;
+- `inbox_unread_by_workspace` **appelle** `inbox_arborescence` par espace, pour que les règles de compte n'aient qu'une
+  écriture ;
+- les lectures de table (outbox, mails préparés, état de la messagerie) portent `workspace_id=eq.` ; l'écran de l'état de la
+  messagerie filtre aussi ses boîtes (`lireComptesMailEtat`), pour que boîtes et file soient du même espace — précisé au
+  §35.5 ; les mails préparés d'une affaire se lisent par l'affaire ;
+- la webapp lit `ContexteEspace.idWorkspace` et attend tant qu'il est nul : aucune lecture ne part sans espace.
+**Vérifications** : pgTAP complet 170/170 (5 604 assertions) ; unitaires du périmètre 530/530 ; quatre `tsc` ; API de
+l'inbox 31/31 et `inbox-lecture` 9/9.
+**Une fragilité relevée, hors de l'unité** : `e2e/api/inbox-lecture.spec.ts` n° 3 compare la somme des non-lus de Camille et
+de Driss sur tout l'espace ; neuf lectures de Camille posées par la campagne de la nuit (00:40 à 01:45) la font échouer. Mises
+de côté le temps d'une exécution (9/9 alors), puis restaurées à l'identique ; sans rapport avec la `0195`, le seed n'ayant
+qu'un espace. Signalée à la session de livraison.

@@ -2,6 +2,8 @@
 //           traduction d'une action en appel, l'addition des paquets, l'enchaînement par curseur et l'arrêt sur un paquet
 //           en échec, le compte lu en base
 // @verifies docs/SPEC-mail-subsystem.md §32.2, §32.3, §32.4, §32.5, §32.5 bis ; docs/JOURNAL.md décisions 946 et 949
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T1 : la portée porte l'espace (`workspace_id`), nul tant qu'il n'est pas lu —
+//           docs/SPEC-mail-subsystem.md §35.3
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -18,6 +20,7 @@ import {
 import type { ClientCrm } from './supabase'
 
 const BASE: PorteeGroupee = {
+	idWorkspace: 'w1',
 	dossier: { genre: 'non-classes' },
 	seulementMoi: false,
 	pastilles: [],
@@ -51,6 +54,7 @@ describe('la description de la portée (§32.2)', () => {
 				fils: [{ workspaceId: 'w1', cleFil: '<a@x>' }],
 			}),
 		).toEqual({
+			workspace_id: 'w1',
 			folder: 'unclassified',
 			only_me: true,
 			label_ids: ['p1', 'p2'],
@@ -66,6 +70,11 @@ describe('la description de la portée (§32.2)', () => {
 		expect(description['card_id']).toBe('c1')
 		expect(description['sender']).toBe('a@b.fr')
 		expect(description['snoozed']).toBe('hidden')
+	})
+
+	it('CRM-161 T1 (§35.3) : la portée porte l’espace ; nul tant qu’il n’est pas lu, et la base la refuse alors', () => {
+		expect(descriptionPortee(BASE)['workspace_id']).toBe('w1')
+		expect(descriptionPortee({ ...BASE, idWorkspace: null })['workspace_id']).toBeNull()
 	})
 
 	it('la corbeille porte ses messages cochés ; le curseur du paquet entre sous `after`', () => {

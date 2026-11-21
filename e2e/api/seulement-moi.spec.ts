@@ -17,6 +17,8 @@
 // CE FICHIER ÉCRIT, ET DÉFAIT : le cas de PLUSIEURS identités est monté par la clé de service (une seconde identité de
 // Camille, et une identité prêtée à la lectrice), puis retiré en `afterAll`. Le seed n'en porte qu'une par personne, et
 // des preuves en comptent exactement trois (docs/SPEC-mail-subsystem.md §27.5).
+// *Révisé le 2026-11-21 (`CRM-161` T1, docs/SPEC-mail-subsystem.md §35.8, décision 51)* : les fonctions de l'inbox prennent
+// l'espace (`p_workspace_id`, la portée `workspace_id`) ; la preuve passe celui du seed, sans changer ce qu'elle prouve.
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { URL_API, enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
@@ -117,7 +119,7 @@ async function lus(request: APIRequestContext, jeton: string, filtre: boolean): 
 async function arbre(request: APIRequestContext, jeton: string, seulementMoi: boolean) {
 	const reponse = await request.post(`${URL_API}/rest/v1/rpc/inbox_arborescence`, {
 		headers: enTetesAuthentifies(jeton),
-		data: { p_only_me: seulementMoi },
+		data: { p_workspace_id: ESPACE, p_only_me: seulementMoi },
 	})
 	expect(reponse.status()).toBe(200)
 	return (await reponse.json()) as { card_id: string | null; nombre: number }[]
@@ -183,8 +185,11 @@ test.describe('« Seulement moi » : `concerns_me` et `inbox_arborescence(p_only
 		// « Non classés » est rendu même à zéro, et une affaire sans courrier qui la concerne n'a pas de ligne.
 		expect(lignes.some((l) => l.card_id === null)).toBe(true)
 		expect(lignes.filter((l) => l.card_id !== null).every((l) => l.nombre > 0)).toBe(true)
-		// Sans argument, l'arborescence d'avant.
-		const avant = await request.post(`${URL_API}/rest/v1/rpc/inbox_arborescence`, { headers: enTetesAuthentifies(jeton) })
+		// Sans « Seulement moi », l'arborescence d'avant.
+		const avant = await request.post(`${URL_API}/rest/v1/rpc/inbox_arborescence`, {
+			headers: enTetesAuthentifies(jeton),
+			data: { p_workspace_id: ESPACE },
+		})
 		expect(await avant.json()).toEqual(await arbre(request, jeton, false))
 	})
 
@@ -256,7 +261,7 @@ test.describe('« Seulement moi » : `concerns_me` et `inbox_arborescence(p_only
 	test('l’anonyme n’exécute pas l’arborescence', async ({ request }) => {
 		const reponse = await request.post(`${URL_API}/rest/v1/rpc/inbox_arborescence`, {
 			headers: enTetesAnonymes(),
-			data: { p_only_me: true },
+			data: { p_workspace_id: ESPACE, p_only_me: true },
 		})
 		expect([401, 403]).toContain(reponse.status())
 	})

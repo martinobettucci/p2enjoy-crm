@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T1 — toutes les lectures de l'inbox passent l'espace du contexte (docs/SPEC-mail-subsystem.md §35.6 ;
+//       docs/SPEC-espace-courant.md §7)
 // @spec CRM-057 (docs/BACKLOG.md) — inbox globale : trois panneaux, arborescence, non classés
 // @spec CRM-128 (docs/BACKLOG.md) — tranche T4 : l'entrée de tête « Mails préparés », leur liste du plus ancien au plus
 //       récent, la relecture dans le formulaire d'envoi prérempli, l'adresse `?brouillon=<id>` lue au montage et retirée
@@ -2079,6 +2081,9 @@ function PanneauMessage({
 // =================================================================================================
 
 export function RouteInbox() {
+	// `CRM-161` T1 (docs/SPEC-mail-subsystem.md §35.6) : l'espace dont l'écran lit l'inbox — toutes ses lectures le passent,
+	// et la base n'en rend pas d'autre. À cette tranche, c'est l'espace du contexte (le premier par nom).
+	const { idWorkspace: espaceInbox } = useContexteEspace()
 	const [selection, setSelection] = useState<Selection | null>(null)
 	const [idOuvert, setIdOuvert] = useState<string | null>(null)
 	const [etage, setEtage] = useState<Etage>('dossiers')
@@ -2091,8 +2096,9 @@ export function RouteInbox() {
 	const refEntreePrepares = useRef<HTMLButtonElement | null>(null)
 	const refVidePrepares = useRef<HTMLDivElement | null>(null)
 	const relirePrepares = useCallback(() => {
-		void lireMailsPrepares(clientCrm).then(setMailsPrepares)
-	}, [])
+		if (espaceInbox === null) return
+		void lireMailsPrepares(clientCrm, { idWorkspace: espaceInbox }).then(setMailsPrepares)
+	}, [espaceInbox])
 	useEffect(() => {
 		relirePrepares()
 	}, [relirePrepares])
@@ -2277,7 +2283,7 @@ export function RouteInbox() {
 		}
 	}, [filtreCourrier, setParametresUrl])
 
-	const arbre = useArborescence(clientCrm, filtreCourrier)
+	const arbre = useArborescence(clientCrm, espaceInbox, filtreCourrier)
 	// `CRM-141` T4 — LE FILTRE PAR PASTILLE ENTRE DANS L'ADRESSE (§31.7, clé `pastille`) : un contrôle de l'écran, comme
 	// `sommeil` ; chaque geste est une entrée d'historique, que « Précédent » défait. `CRM-155` (§31.12.3) : la clé se
 	// RÉPÈTE, une valeur par pastille ; une valeur mal formée, ou qui n'est pas une pastille de l'ESPACE COURANT, est
@@ -2317,10 +2323,11 @@ export function RouteInbox() {
 		},
 		[setParametresUrl],
 	)
-	const liste = useMessages(clientCrm, selection, filtreCourrier, pastillesFiltre, expediteurFiltre)
+	const liste = useMessages(clientCrm, espaceInbox, selection, filtreCourrier, pastillesFiltre, expediteurFiltre)
 	// `CRM-159` (§31.13.5) : la mention des fils masqués, relue avec la liste ; un échec ne rend rien (une aide).
 	const filsMasques = useFilsMasques(
 		clientCrm,
+		espaceInbox,
 		selection,
 		filtreCourrier,
 		pastillesFiltre,
@@ -2401,12 +2408,13 @@ export function RouteInbox() {
 	const [idEnvoi, setIdEnvoi] = useState<string | null>(null)
 	const [comptesEnvois, setComptesEnvois] = useState<EtatAsync<ComptesEnvois>>({ statut: 'chargement' })
 	const relireComptesEnvois = useCallback(() => {
-		void lireComptesEnvois(clientCrm).then(setComptesEnvois)
-	}, [])
+		if (espaceInbox === null) return
+		void lireComptesEnvois(clientCrm, espaceInbox).then(setComptesEnvois)
+	}, [espaceInbox])
 	useEffect(() => {
 		relireComptesEnvois()
 	}, [relireComptesEnvois])
-	const envois = useEnvois(dossierEnvoi)
+	const envois = useEnvois(espaceInbox, dossierEnvoi)
 	const refFile = useRef<HTMLButtonElement | null>(null)
 	const refEnvoyes = useRef<HTMLButtonElement | null>(null)
 	const refEchecs = useRef<HTMLButtonElement | null>(null)
@@ -2796,6 +2804,7 @@ export function RouteInbox() {
 								onToutSelectionner={() => undefined}
 								onDeselectionner={() => setCocheesCorbeille(new Set())}
 								portee={{
+									idWorkspace: espaceInbox,
 									dossier: { genre: 'corbeille' },
 									seulementMoi: false,
 									pastilles: [],
@@ -2882,6 +2891,7 @@ export function RouteInbox() {
 							setToutLeFiltre(false)
 						},
 						portee: {
+							idWorkspace: espaceInbox,
 							dossier:
 								selection !== null && selection.genre === 'card'
 									? { genre: 'card', cardId: selection.cardId }

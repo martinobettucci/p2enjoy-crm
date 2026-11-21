@@ -5664,8 +5664,11 @@ moi »). Un espace sans non-lu rend `0`. `SECURITY INVOKER` ; `authenticated` se
 
 ### 35.5 Les lectures de table de l'inbox
 
-`lireEnvois`, `lireComptesEnvois` (l'outbox), `lireMailsPrepares` (les mails préparés) et `lireCompteursFileSortante`
-(Réglages ▸ Messagerie) portent le filtre **`workspace_id=eq.<espace>`**. Aucune politique RLS n'est redéfinie.
+`lireEnvois`, `lireComptesEnvois` (l'outbox), `lireMailsPrepares` (les mails préparés de l'inbox), et, dans Réglages ▸
+Messagerie, `lireComptesMailEtat` et `lireCompteursFileSortante` portent le filtre **`workspace_id=eq.<espace>`** — l'écran
+de l'état de la messagerie montre ainsi les boîtes et la file d'un même espace. Les mails préparés d'une **affaire** (sa
+fiche) se lisent par l'affaire, qui porte son espace. Aucune politique RLS n'est redéfinie. *Précisé au code, le
+2026-11-21* : les boîtes de Réglages ▸ Messagerie et les mails préparés d'une affaire.
 
 ### 35.6 La webapp
 
@@ -5682,7 +5685,7 @@ mail entrant (`CRM-162`, session f9, les reprendra) ; le connecteur, qui n'appel
 
 ### 35.8 Les preuves
 
-- **pgTAP** `supabase/tests/0182_inbox_espace.test.sql` (numéro à prendre après synchronisation) : deux espaces posés dans la
+- **pgTAP** `supabase/tests/0182_inbox_espace.test.sql` : deux espaces posés dans la
   transaction, une personne membre des deux, un mail non classé et un mail d'affaire dans chacun ; **rouge sur les
   définitions de `0193`** (la liste d'un espace contient le mail de l'autre), puis vert : liste, mention des fils masqués,
   arborescence et portée d'action groupée ne rendent que l'espace demandé ; `workspace_required` ; l'ancienne signature
@@ -5692,7 +5695,9 @@ mail entrant (`CRM-162`, session f9, les reprendra) ; le connecteur, qui n'appel
   `rpc/inbox_messages` sans espace est refusé, avec l'un ne rend que lui ; `rpc/inbox_unread_by_workspace` compte les deux.
 - **Révisées** : les preuves qui appellent ces fonctions (`supabase/tests/0029`, `0063`, `0095`, `0143`, `0164`, `0177`,
   `0178`, `0180`, `0181` ; `e2e/api/actions-groupees-inbox`, `filtres-rapides-pastilles`, `inbox-lecture`, `inbox`,
-  `pastilles-cachees`, `pastilles-inbox`, `seulement-moi` ; `e2e/ui/pastilles-cachees` ; `scripts/verify-mail-inbox.sh`)
-  passent l'espace — sans changer ce qu'elles prouvent.
+  `pastilles-cachees`, `pastilles-inbox`, `seulement-moi` ; `e2e/ui/pastilles-cachees`) passent l'espace — sans changer ce
+  qu'elles prouvent ; `0029` n° 4 nomme la nouvelle signature. `scripts/verify-mail-inbox.sh` ne lit que l'existence de
+  `inbox_arborescence` : inchangé.
 - **Unitaires** : `lib/inbox.test.ts`, `lib/actions-groupees.test.ts`, `lib/outbox`, `lib/mail-etat`, `lib/mails-prepares` :
-  l'espace est passé à chaque lecture.
+  l'espace est passé à chaque lecture ; les écrans montés hors coquille (`RouteInbox`, `EtatMessagerie`) reçoivent l'espace
+  par `FournisseurEspace`.

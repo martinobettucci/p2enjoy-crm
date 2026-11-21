@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T1 — les envois de l'espace de l'inbox (docs/SPEC-mail-subsystem.md §35.5 ;
+//       docs/SPEC-espace-courant.md §7)
 // @spec CRM-144 (docs/BACKLOG.md) — tranche T3 : l'outbox dans l'inbox — les trois entrées de tête « En file », « Envoyés »,
 //       « Échecs », la liste de chaque dossier, le détail d'un envoi, « Annuler l'envoi » confirmé dans le flux,
 //       « Réessayer » sans confirmation, l'envoi en cours d'envoi et l'issue incertaine sans commande, les commandes selon
@@ -593,8 +595,11 @@ export function PanneauDetailEnvoi({
 	)
 }
 
-/** La lecture d'un dossier, sa page et sa relecture. */
-export function useEnvois(dossier: DossierEnvoi | null): {
+/**
+ * La lecture d'un dossier, sa page et sa relecture. `CRM-161` T1 (docs/SPEC-mail-subsystem.md §35.5) : les envois de
+ * l'espace de l'inbox seuls ; sans espace lu, la lecture attend.
+ */
+export function useEnvois(idWorkspace: string | null, dossier: DossierEnvoi | null): {
 	readonly etat: EtatAsync<PageEnvois>
 	readonly relire: () => void
 	readonly plus: () => void
@@ -606,17 +611,17 @@ export function useEnvois(dossier: DossierEnvoi | null): {
 		setLimite(PAGE_ENVOYES)
 	}, [dossier])
 	useEffect(() => {
-		if (dossier === null) return
+		if (dossier === null || idWorkspace === null) return
 		let vivant = true
 		// UNE RELECTURE N'EFFACE PAS LA LISTE QU'ELLE RELIT (§5.13) : le squelette ne paraît qu'au premier chargement d'un
 		// dossier.
-		void lireEnvois(clientCrm, dossier, limite).then((lu) => {
+		void lireEnvois(clientCrm, idWorkspace, dossier, limite).then((lu) => {
 			if (vivant) setEtat(lu)
 		})
 		return () => {
 			vivant = false
 		}
-	}, [dossier, limite, essai])
+	}, [idWorkspace, dossier, limite, essai])
 	useEffect(() => {
 		setEtat({ statut: 'chargement' })
 	}, [dossier])

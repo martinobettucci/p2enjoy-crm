@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T1 — la liste, la mention et l'arborescence lues dans l'espace passé (docs/SPEC-mail-subsystem.md §35.2, §35.6 ;
+//       docs/SPEC-espace-courant.md §7)
 // @spec CRM-057 (docs/BACKLOG.md) — inbox globale : arborescence, liste, message, classement
 // @spec CRM-156 (docs/BACKLOG.md) — tranche T4 : la liste lit le filtre par expéditeur (docs/SPEC-mail-subsystem.md §32.9)
 // @spec docs/SPEC-mail-subsystem.md §18.1 (qui voit quoi), §18.3 (les trois panneaux), §18.4 (le
@@ -477,11 +479,13 @@ export async function messageMeConcerne(client: ClientCrm | null, id: string): P
  */
 export async function lireArborescence(
 	client: ClientCrm | null,
+	/** `CRM-161` T1 (§35.2) : l'espace dont on lit l'inbox — la base n'en rend pas d'autre. */
+	idWorkspace: string,
 	seulementMoi = false,
 ): Promise<EtatAsync<ArbreInbox>> {
 	if (client === null) return enErreur(CONFIGURATION_ABSENTE)
 	try {
-		const reponse = await client.rpc('inbox_arborescence', { p_only_me: seulementMoi })
+		const reponse = await client.rpc('inbox_arborescence', { p_workspace_id: idWorkspace, p_only_me: seulementMoi })
 		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
 		return pret(construireArbre(reponse.data ?? []))
 	} catch (cause) {
@@ -497,6 +501,8 @@ export async function lireArborescence(
  */
 export async function lireMessages(
 	client: ClientCrm | null,
+	/** `CRM-161` T1 (§35.2) : l'espace dont on lit l'inbox. */
+	idWorkspace: string,
 	selection: Selection,
 	seulementMoi = false,
 	pastilles: readonly string[] = [],
@@ -510,7 +516,7 @@ export async function lireMessages(
 		// une pastille cachée, sauf si l'une d'elles est activée. Le filtre s'applique AVANT la limite : le client ne
 		// compose plus la règle. Les colonnes et l'embarquement des pilules sont ceux de `CRM-141` T4.
 		const reponse = await client
-			.rpc('inbox_messages', argumentsDeLaListe(selection, seulementMoi, pastilles, expediteur, MESSAGES_PAR_PAGE))
+			.rpc('inbox_messages', argumentsDeLaListe(idWorkspace, selection, seulementMoi, pastilles, expediteur, MESSAGES_PAR_PAGE))
 			.select(COLONNES_LISTE_INBOX)
 			// L'ordre est TOTAL, terminé par `id` : deux messages reçus dans la même milliseconde
 			// suffisent à rendre l'affichage instable d'un rechargement à l'autre (décision 185).
@@ -528,15 +534,17 @@ export async function lireMessages(
 /**
  * Les arguments de `inbox_messages` et de `inbox_hidden_counts` (§31.13.4, §31.13.5) : les mêmes filtres, pour que la
  * mention compte ce que la liste écarte. Un argument nul est OMIS — la base prend son défaut (« Non classés », aucun
- * expéditeur).
+ * expéditeur). `CRM-161` T1 (§35.2) : l'espace, lui, est toujours passé — la base le refuse absent.
  */
 export function argumentsDeLaListe(
+	idWorkspace: string,
 	selection: Selection,
 	seulementMoi: boolean,
 	pastilles: readonly string[],
 	expediteur: string | null,
 	limite?: number,
 ): {
+	p_workspace_id: string
 	p_card_id?: string
 	p_only_me: boolean
 	p_label_ids: string[]
@@ -544,6 +552,7 @@ export function argumentsDeLaListe(
 	p_limit?: number
 } {
 	return {
+		p_workspace_id: idWorkspace,
 		...(selection.genre === 'card' ? { p_card_id: selection.cardId } : {}),
 		p_only_me: seulementMoi,
 		p_label_ids: [...pastilles],
@@ -561,6 +570,8 @@ export type FilsMasques = { readonly idPastille: string; readonly fils: number }
  */
 export async function lireFilsMasques(
 	client: ClientCrm | null,
+	/** `CRM-161` T1 (§35.2) : l'espace dont on lit l'inbox. */
+	idWorkspace: string,
 	selection: Selection,
 	seulementMoi: boolean,
 	pastilles: readonly string[],
@@ -570,7 +581,7 @@ export async function lireFilsMasques(
 	if (client === null) return enErreur(CONFIGURATION_ABSENTE)
 	try {
 		const reponse = await client.rpc('inbox_hidden_counts', {
-			...argumentsDeLaListe(selection, seulementMoi, pastilles, expediteur),
+			...argumentsDeLaListe(idWorkspace, selection, seulementMoi, pastilles, expediteur),
 			p_snoozed_shown: endormisMontres,
 		})
 		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
@@ -894,15 +905,22 @@ const EN_ATTENTE = new Promise<never>(() => {})
  * `seulementMoi` à `null` (`CRM-139`, §27.4) : on ne sait pas encore si le filtre s'applique. L'arborescence reste en
  * chargement plutôt que de montrer un instant tout le courrier puis de le retirer.
  */
-export function useArborescence(client: ClientCrm | null, seulementMoi: boolean | null = false): Relecture<ArbreInbox> {
+export function useArborescence(
+	client: ClientCrm | null,
+	/** `CRM-161` T1 (§35.6) : `null` tant que l'espace n'est pas lu — la lecture attend, elle ne part pas sans lui. */
+	idWorkspace: string | null,
+	seulementMoi: boolean | null = false,
+): Relecture<ArbreInbox> {
 	return useLecture(
-		() => (seulementMoi === null ? EN_ATTENTE : lireArborescence(client, seulementMoi)),
-		[client, seulementMoi],
+		() => (seulementMoi === null || idWorkspace === null ? EN_ATTENTE : lireArborescence(client, idWorkspace, seulementMoi)),
+		[client, idWorkspace, seulementMoi],
 	)
 }
 
 export function useMessages(
 	client: ClientCrm | null,
+	/** `CRM-161` T1 (§35.6) : `null` tant que l'espace n'est pas lu — la lecture attend. */
+	idWorkspace: string | null,
 	selection: Selection | null,
 	seulementMoi: boolean | null = false,
 	/** `CRM-155` : les pastilles du filtre ; `null` tant qu'elles ne sont pas connues — la lecture attend (§31.12.3). */
@@ -918,10 +936,10 @@ export function useMessages(
 		async () =>
 			selection === null
 				? pret({ messages: [], tronquee: false })
-				: seulementMoi === null || pastilles === null
+				: seulementMoi === null || pastilles === null || idWorkspace === null
 					? EN_ATTENTE
-					: lireMessages(client, selection, seulementMoi, pastilles, expediteur),
-		[client, cle, seulementMoi, clePastilles, expediteur],
+					: lireMessages(client, idWorkspace, selection, seulementMoi, pastilles, expediteur),
+		[client, idWorkspace, cle, seulementMoi, clePastilles, expediteur],
 	)
 }
 
@@ -931,6 +949,8 @@ export function useMessages(
  */
 export function useFilsMasques(
 	client: ClientCrm | null,
+	/** `CRM-161` T1 (§35.6) : `null` tant que l'espace n'est pas lu. */
+	idWorkspace: string | null,
 	selection: Selection | null,
 	seulementMoi: boolean | null,
 	pastilles: readonly string[] | null,
@@ -942,10 +962,10 @@ export function useFilsMasques(
 	const clePastilles = pastilles === null ? null : pastilles.join(',')
 	return useLecture(
 		async () =>
-			selection === null || seulementMoi === null || pastilles === null
+			selection === null || seulementMoi === null || pastilles === null || idWorkspace === null
 				? pret([])
-				: lireFilsMasques(client, selection, seulementMoi, pastilles, expediteur, endormisMontres),
-		[client, cle, seulementMoi, clePastilles, expediteur, endormisMontres, relue],
+				: lireFilsMasques(client, idWorkspace, selection, seulementMoi, pastilles, expediteur, endormisMontres),
+		[client, idWorkspace, cle, seulementMoi, clePastilles, expediteur, endormisMontres, relue],
 	)
 }
 

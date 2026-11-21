@@ -12,6 +12,8 @@
 // *Révisé par `CRM-159` (2026-11-20)* : la lecture passe par `rpc/inbox_messages` (§31.13.4), comme la webapp ; la seconde
 // pastille était « Spam », devenue cachée — sous « Lead » seule, le message qui porte les deux serait masqué. « Recrutement »,
 // visible, garde l'intention.
+// *Révisé le 2026-11-21 (`CRM-161` T1, docs/SPEC-mail-subsystem.md §35.8, décision 51)* : les fonctions de l'inbox prennent
+// l'espace (`p_workspace_id`, la portée `workspace_id`) ; la preuve passe celui du seed, sans changer ce qu'elle prouve.
 
 import { type APIRequestContext, expect, test } from '@playwright/test'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
@@ -80,7 +82,12 @@ async function filtrer(
 	for (const dossier of [null, CARD_C1, CARD_C7]) {
 		const reponse = await request.post(rest('rpc/inbox_messages?select=id,received_at'), {
 			headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
-			data: { ...(dossier === null ? {} : { p_card_id: dossier }), p_label_ids: pastilles, p_limit: 200 },
+			data: {
+				p_workspace_id: ESPACE,
+				...(dossier === null ? {} : { p_card_id: dossier }),
+				p_label_ids: pastilles,
+				p_limit: 200,
+			},
 		})
 		expect(reponse.status(), await reponse.text()).toBe(200)
 		lignes.push(...((await reponse.json()) as { id: string; received_at: string }[]))

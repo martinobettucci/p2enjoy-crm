@@ -14,6 +14,8 @@
 -- - trois fils dans `…00c1` (Driss seul responsable), chacun d'un écrit puis d'une réponse reçue à l'adresse de l'affaire :
 --   écrit par l'identité de service ; écrit par Camille puis mis en corbeille ; écrit par Driss ;
 -- - pour finir, un second rattachement de `…00c1`, à Camille, puis archivé.
+-- Révisé le 2026-11-21 (`CRM-161` T1, docs/SPEC-mail-subsystem.md §35.8, décision 51) : les fonctions de l'inbox prennent
+--   l'espace (`p_workspace_id`, la portée `workspace_id`) ; la preuve passe celui du seed, sans changer ce qu'elle prouve.
 
 begin;
 
@@ -114,7 +116,7 @@ select ok(not pg_temp.concerne('<tst-160-c-reponse@exemple.test>'),
 	'7 — son écrit en corbeille ne compte pas : la réponse ne la concerne pas');
 select ok(not pg_temp.concerne('<tst-160-d-reponse@exemple.test>'),
 	'8 — un fil où Driss a écrit ne concerne pas l''administratrice, qui lit pourtant l''affaire');
-select is((select nombre from public.inbox_arborescence(true) where card_id = :'vertuo'),
+select is((select nombre from public.inbox_arborescence('5eed0000-0000-4000-8000-000000000001', true) where card_id = :'vertuo'),
 	(select nombre from pg_temp.attendu_vertuo),
 	'9 — le dossier de Vertuo, filtre posé : la réponse y est comptée, égal à l''oracle');
 
