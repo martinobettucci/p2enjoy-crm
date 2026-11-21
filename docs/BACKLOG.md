@@ -20586,6 +20586,15 @@ livraison (décision 830).
     et captures sur un compte de deux espaces, le manuel.
 - [ ] **T3 — Les pages globales.** Espace de provenance et filtre « Espace » ; les écrans qui lisaient le premier espace
   passent à tous ; les créations nomment l'espace courant de l'onglet.
+  **Relevés à reprendre dans T3** (*2026-11-21, session de livraison au constat du lot de T1 et T2 ; consignés par 5f*) :
+  - **Les non-lus de chaque espace sous `md`.** À 390 px, la section « Espaces » du repli du fil d'Ariane ne montre aucune
+    pastille de non-lus (capture `docs/captures/CRM-161/menu-espaces-sm-390.jpg`), alors que la décision 965 les veut au
+    sélecteur et que le menu à 1440 px les montre. Hypothèse à vérifier avant tout code : `SectionEspacesDuRepli` ne lit
+    `inbox_unread_by_workspace` qu'à son ouverture, et la capture précède la fin de cette lecture — défaut d'interface (une
+    lecture à l'ouverture) ou de preuve (la capture n'attend pas les non-lus), à trancher avec une preuve rouge.
+  - **Les identités d'expédition du formulaire d'envoi** : `FormulaireEnvoi` lit encore celles de la personne dans tous ses
+    espaces — limite nommée par la décision 975 (`docs/SPEC-espace-courant.md` §15.4 bis), sans effet tant qu'une personne
+    n'a d'identité que dans un espace.
 - [ ] **T4 — Le connecteur.** Audit outil par outil (`docs/SPEC-mcp.md` §9.2), lien préfixé de `crm_mail_prepare`.
 - [ ] **T5 — Le manuel et la livraison.** Chapitre « Changer d'espace », contrat, remise à la session de livraison.
 
