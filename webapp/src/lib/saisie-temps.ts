@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — un choix fait pour un objet d'un espace ne lit que cet espace
+//       (docs/SPEC-espace-courant.md §15.4 bis, « Les sélecteurs liés à un espace » ; décision 975)
 // @spec CRM-098 (docs/BACKLOG.md) — tranche T2 : lire et écrire le temps de la semaine
 // @spec docs/SPEC-temps.md §3.2 (une ligne par personne × jour × cible ; zéro supprime la ligne ; seules les minutes
 //       changent), §5 (les refus viennent de la base : plafond, droit), §6.1 (la semaine et la précédente ; tracks et
@@ -24,11 +26,17 @@ export const BORNE_RECHERCHE_AFFAIRE = 10
 const message = (cause: unknown) => (cause instanceof Error ? cause.message : String(cause))
 
 /** Les tracks lisibles et non archivés, chacun avec ses channels non archivés, dans l'ordre de l'arborescence. */
-export async function lireArbreTemps(client: ClientCrm): Promise<EtatAsync<readonly ArbreTrack[]>> {
+export async function lireArbreTemps(
+	client: ClientCrm,
+	/**
+	 * `CRM-161` T2.c (§15.4 bis, décision 975) : les tracks de l'espace des saisies seul — les clés composites
+	 * `(track_id, workspace_id)` refusent une saisie sur le track d'un autre espace ; omis, tout ce que la RLS rend.
+	 */
+	idWorkspace?: string,
+): Promise<EtatAsync<readonly ArbreTrack[]>> {
 	try {
-		const reponse = await client
-			.from('tracks')
-			.select(COLONNES_ARBRE)
+		const tous = client.from('tracks').select(COLONNES_ARBRE)
+		const reponse = await (idWorkspace === undefined ? tous : tous.eq('workspace_id', idWorkspace))
 			.is('archived_at', null)
 			.is('channels.archived_at', null)
 			.order('position')

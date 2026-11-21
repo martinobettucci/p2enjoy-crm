@@ -104,16 +104,22 @@ async function viderEspaceNeuf(requete: APIRequestContext, espace: EspaceNeuf): 
 	await service(requete, 'delete', `workspaces?id=eq.${espace.id}`)
 }
 
-/** Démonte l'espace et son compte, puis CONSTATE que la base est rendue à son unique espace seedé. */
+/**
+ * Démonte l'espace et son compte, puis CONSTATE que la base est rendue à ses espaces seedés. *Révisé le 2026-11-21 (`CRM-161`
+ * T2.b, docs/SPEC-seed.md §55, décision 51)* : le seed porte DEUX espaces, le sien et « Studio Lumen » (`studio-lumen`, dont
+ * l'identifiant est tiré par la fonction de plateforme) ; l'état rendu est exactement ces deux-là.
+ */
 export async function demonterEspaceNeuf(requete: APIRequestContext, espace: EspaceNeuf, compte: Compte | null): Promise<void> {
 	await viderEspaceNeuf(requete, espace)
 	if (compte !== null) {
 		await service(requete, 'delete', `profiles?id=eq.${compte.sub}`)
 		await supprimerCompte(compte.sub)
 	}
-	expect(await lireService<{ id: string }[]>(requete, 'workspaces?select=id'), 'la base est rendue à son espace seedé').toEqual([
-		{ id: WORKSPACE_SEED },
-	])
+	const restants = await lireService<{ id: string; slug: string }[]>(requete, 'workspaces?select=id,slug&order=slug')
+	expect(
+		restants.map((l) => (l.id === WORKSPACE_SEED ? 'seed' : l.slug)),
+		'la base est rendue à ses deux espaces seedés',
+	).toEqual(['seed', 'studio-lumen'])
 }
 
 /**

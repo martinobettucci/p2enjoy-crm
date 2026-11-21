@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — un choix fait pour un objet d'un espace ne lit que cet espace
+//       (docs/SPEC-espace-courant.md §15.4 bis, « Les sélecteurs liés à un espace » ; décision 975)
 // @spec CRM-098 (docs/BACKLOG.md) — tranche T2 : l'onglet « Saisie » de l'écran « Temps »
 // @spec docs/SPEC-temps.md §6.1 (la semaine et la précédente), §6.3 (le mode d'une journée, la case « En heures »),
 //       §7.1 (« Saisir pour », administrateurs), §7.2 (la matrice : lignes, colonnes, cellule qui s'enregistre seule,
@@ -201,7 +203,8 @@ export function SaisieTemps({ client, idWorkspace, idUtilisateur, estAdmin, aujo
 		setEtat(enChargement)
 		void (async () => {
 			const [arbre, saisies] = await Promise.all([
-				lireArbreTemps(client),
+				// `CRM-161` T2.c (décision 975) : les lignes de l'espace des saisies, les seules que la base accepte.
+				lireArbreTemps(client, idWorkspace),
 				lireSaisies(client, idWorkspace, personne, decalerJours(lundi, -7), decalerJours(lundi, 6)),
 			])
 			if (!courant) return

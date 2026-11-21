@@ -9,6 +9,8 @@ import { lireCatalogueAdministrable } from './administration-catalogue'
 import { lireCatalogueActif, lireTracksAffectables, lireWorkflowsAdministrables } from './administration-workflows'
 import { lireSuggestionsEnRevue } from './assistant-ia'
 import { lireContactsDuCarnet } from './contacts'
+import { lireIdentitesDisponibles } from './envoi'
+import { lireArbreTemps } from './saisie-temps'
 import { lireCorbeille } from './corbeille'
 import { lireEtiquettes } from './etiquettes'
 import { lireComptesEntrants } from './mail-comptes'
@@ -50,6 +52,9 @@ const LECTURES: readonly [string, (c: ClientCrm, w?: string) => Promise<unknown>
 	// Décision 975 : les choix faits pour un objet d'un espace — le formulaire et le bloc « Contacts » d'une affaire, l'aperçu.
 	['lireContactsDuCarnet', (c, w) => lireContactsDuCarnet(c, w)],
 	['lireAffairesPrevisualisation', (c, w) => lireAffairesPrevisualisation(c, w)],
+	// Les lignes de la grille de Temps et les identités du bloc « Relance automatique » (même règle, vues sur une image du manuel).
+	['lireArbreTemps', (c, w) => lireArbreTemps(c, w)],
+	['lireIdentitesDisponibles', (c, w) => lireIdentitesDisponibles(c, 'moi', w)],
 ]
 
 describe('les réglages ne lisent que l’espace de l’écran (§15.4 bis)', () => {

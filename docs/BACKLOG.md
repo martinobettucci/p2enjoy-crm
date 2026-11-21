@@ -20550,7 +20550,11 @@ livraison (décision 830).
     **Second défaut constaté par la campagne (décision 975), corrigé et vérifié le même jour** : les sélecteurs d'une affaire
     (formulaire, bloc « Contacts ») et de l'aperçu des modèles d'emails lisaient le carnet entier, et la base refusait ensuite
     un contact d'un autre espace ; ils lisent désormais l'espace de l'affaire ou du modèle. Preuves : `formulaire-selecteurs`
-    6/6, rouge avant (quatorze options pour douze) ; unitaires des lectures et des écrans touchés 286/286.
+    6/6, rouge avant (quatorze options pour douze) ; unitaires des lectures et des écrans touchés 286/286. **La même règle**,
+    vue sur deux images du manuel : la grille de Temps (les tracks de « Studio Lumen » offerts, que les clés composites des
+    saisies refusent) et le bloc « Relance automatique » (séquences et identités) lisent l'espace des saisies ou de
+    l'affaire — manuel `14-16` et `23-33` 19/19, temps et séquences en écran 49/49. Limite nommée : le formulaire d'envoi lit
+    encore les identités de tous les espaces (repris avec T3).
     **Défaut constaté par la campagne du lot (2026-11-21, décision 974), corrigé et vérifié le même jour** : la coquille rendait
     la page pendant la lecture des espaces ; un réglage lisait d'abord sans filtre, et Réglages ▸ Workflows ne relisait jamais
     (le défaut de « Studio Lumen » choisi sur `/p2enjoy/reglages/workflows`). La page ne se monte plus qu'une fois les espaces

@@ -473,6 +473,7 @@ function ContenuCard({
 				    définition une seule fois, et le refus `card_not_stalled` est TRADUIT. */}
 				<BlocSequenceCard
 					idCard={etat.donnees.card.id}
+					idWorkspace={etat.donnees.card.workspace_id}
 					rattachements={etat.donnees.card}
 					idResponsable={etat.donnees.card.profiles?.id ?? null}
 				/>

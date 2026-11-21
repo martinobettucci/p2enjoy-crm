@@ -41865,3 +41865,9 @@ essayée d'abord, contredisait la spécification : abandonnée. T3 rendra ces pa
 **Vérifications (décision 976)** : `e2e/ui/contacts.spec.ts` et `e2e/ui/pilotage.spec.ts` verts, assertions d'origine (rouges dans
 la campagne : treize contacts, sept lignes en euros) ; unitaire `dansLEspace` (un seul « Prospection », celui du seed) ; unitaires
 complets 6 244/6 244 ; les quatre `tsc`.
+**Suite de la décision 975** : deux images du manuel (`23-33` « journée trop longue », `14-16` « relance automatique »)
+sortaient de leur fenêtre. La grille de Temps listait les tracks de « Studio Lumen » sous l'espace du seed (vu sur l'image de
+la vidéo d'échec) — des lignes que les clés composites `(track_id, workspace_id)` des saisies refusent ; le bloc « Relance
+automatique » lisait les séquences et les identités de tous les espaces. Même règle, même correctif : `lireArbreTemps` et
+`lireIdentitesDisponibles` prennent l'espace, `BlocSequenceCard` reçoit celui de l'affaire. Vérifications : manuel 19/19, écran
+temps et séquences 49/49, unitaires des lectures étendus. Limite nommée au §15.4 bis : le formulaire d'envoi.

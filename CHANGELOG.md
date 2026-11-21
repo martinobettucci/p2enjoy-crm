@@ -58,7 +58,8 @@ d'exécuter le code attendu.
   lus, sous un squelette : elle s'affichait avant, et Réglages ▸ Workflows pouvait alors ouvrir le workflow par défaut d'un
   autre espace. Enfin, dans une affaire, les choix de contact (formulaire, bloc « Contacts ») et l'aperçu des
   modèles d'emails ne proposent plus que l'espace de l'affaire ou du modèle : un contact d'un autre espace y était offert,
-  puis refusé à l'enregistrement.
+  puis refusé à l'enregistrement. De même la grille de saisie du temps (les tracks d'un autre espace) et la relance
+  automatique d'une affaire (ses séquences et ses identités).
 - **`CRM-161` T2.b — le menu des espaces.** Pour qui est membre de plusieurs espaces, le premier niveau du fil d'Ariane
   devient un menu : l'espace ouvert coché, les messages non lus de chaque espace, un point bleu quand un autre espace en a.
   Choisir un espace mène à la même page dans l'autre espace (l'inbox depuis une affaire ou un track) ; le changement est

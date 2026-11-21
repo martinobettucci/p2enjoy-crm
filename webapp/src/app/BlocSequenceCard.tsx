@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — un choix fait pour un objet d'un espace ne lit que cet espace
+//       (docs/SPEC-espace-courant.md §15.4 bis, « Les sélecteurs liés à un espace » ; décision 975)
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les commandes d'écriture lisent le refus de la fiche quand la base refuse
 //       l'écriture sur l'affaire (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-157 (docs/BACKLOG.md) — tranche T2 : le refus d'armer dans un espace sans domaine, et la relance arrêtée faute
@@ -80,6 +82,8 @@ const CLASSES_ETIQUETTE = 'flex flex-col gap-1 text-sm text-text-2 min-w-0'
 
 export type ProprietesBlocSequenceCard = {
 	readonly idCard: string
+	/** `CRM-161` T2.c (§15.4 bis, décision 975) : l'espace de l'affaire — séquences et identités offertes y sont lues. */
+	readonly idWorkspace?: string
 	/**
 	 * Les rattachements de l'affaire (`CRM-111` T2.3.5) : l'armement désigne le plus ancien, calculé AU GESTE et non au
 	 * rendu — comme l'en-tête pour le sommeil. Le bloc s'affiche sans en avoir besoin.
@@ -95,6 +99,7 @@ export type ProprietesBlocSequenceCard = {
 
 export function BlocSequenceCard({
 	idCard,
+	idWorkspace,
 	rattachements,
 	idResponsable = null,
 	client = clientCrm,
@@ -159,14 +164,14 @@ export function BlocSequenceCard({
 		if (client === null || idUtilisateur === null) return
 		let vivant = true
 		void (async () => {
-			const lues = await lireSequences(client)
+			const lues = await lireSequences(client, idWorkspace)
 			if (vivant && lues.statut === 'pret') setSequences(lues.donnees)
 			// LE SÉLECTEUR D'IDENTITÉ RÉEMPLOIE `lireIdentitesDisponibles` DE `CRM-058`, et n'en écrit
 			// pas un second (§13.8). Ce module porte déjà le filtre mesuré — la RLS ouvre la lecture
 			// aux administrateurs sur TOUTES les identités du workspace, y compris celles de leurs
 			// collègues —, et `armer_sequence_relance` reprend telle quelle la règle d'emprunt de
 			// `queue_outbound_email`. Deux filtres pour une même règle divergeraient.
-			const disponibles = await lireIdentitesDisponibles(client, idUtilisateur)
+			const disponibles = await lireIdentitesDisponibles(client, idUtilisateur, idWorkspace)
 			if (!vivant) return
 			setIdentites(disponibles)
 			// LE RESPONSABLE QUI ARME VOIT SON IDENTITÉ PAR DÉFAUT PRÉSÉLECTIONNÉE (décisions 803 et 805) ; une autre
@@ -177,7 +182,7 @@ export function BlocSequenceCard({
 		return () => {
 			vivant = false
 		}
-	}, [client, idUtilisateur, idResponsable])
+	}, [client, idUtilisateur, idResponsable, idWorkspace])
 
 	const recharger = useCallback(() => setTentative((precedente) => precedente + 1), [])
 

@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — un choix fait pour un objet d'un espace ne lit que cet espace
+//       (docs/SPEC-espace-courant.md §15.4 bis, « Les sélecteurs liés à un espace » ; décision 975)
 // @spec CRM-058 (docs/BACKLOG.md) — composer et répondre depuis l'écran
 // @spec docs/SPEC-mail-subsystem.md §19.4 (les six refus), §19.6 (le même chemin de code)
 // @spec docs/DESIGN_SYSTEM.md §5.8 (états systématiques) ; docs/SPEC-webapp.md §6.4
@@ -48,13 +50,13 @@ export type IdentiteEnvoi = {
 export async function lireIdentitesDisponibles(
 	client: ClientCrm | null,
 	idUtilisateur: string | null,
+	/** `CRM-161` T2.c (§15.4 bis, décision 975) : celles de l'espace de l'affaire seul ; omis, tout ce que la RLS rend. */
+	idWorkspace?: string,
 ): Promise<readonly IdentiteEnvoi[]> {
 	if (client === null) return []
 	try {
-		const reponse = await client
-			.from('mail_outbound_identities')
-			.select('id, label, from_address, owner_id, is_default')
-			.order('label')
+		const toutes = client.from('mail_outbound_identities').select('id, label, from_address, owner_id, is_default')
+		const reponse = await (idWorkspace === undefined ? toutes : toutes.eq('workspace_id', idWorkspace)).order('label')
 		if (reponse.error !== null) return []
 		return reponse.data
 			.filter((ligne) => idUtilisateur !== null && ligne.owner_id === idUtilisateur)
