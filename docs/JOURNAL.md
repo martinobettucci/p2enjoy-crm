@@ -41347,3 +41347,19 @@ intégrale, et la phrase laissée inexacte.
 sections, aucune autre règle n'est touchée ; le §5.96 dit déjà que l'arborescence ne change pas de forme, et la règle (ii)
 ne fait que lui ajouter des dossiers à compter.
 
+
+### décision 962 — livrer le lot CRM-159 et CRM-160 à la révision `dd9ac2c3`
+
+*2026-11-21, session 4522fa9c (p2enjoy-crm-d5, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : `CRM-159` (pastilles cachées ; `0193`, webapp, `mcp`, manuel) et `CRM-160` (« Seulement moi » retient les
+réponses reçues dans une affaire ; `0194`, webapp, `mcp`, manuel), unités entières ; contrat §2.65 et §2.66 ; verrou
+`158c4d1e`, lot arrêté à `35f268be`.
+**La campagne** : complète à `35f268be` sur une base remise à zéro (accord des trois sessions ; un premier essai arrêté par
+le démarrage à froid de la fonction `ia`, plus de 10 s, le second sans erreur) : types, unitaires, mail, mcp, pgTAP et
+manuel verts ; ui 1 301/1 302, api 1 397/1 401, manuel 164/165 — tous INC-342 (`webhooks` ui et manuel 34,
+`inbox-lecture:106`) ou verts rejoués seuls (`demarrage` 6/6, `webhooks-remise` 2/2) ; garde du manuel 168 après
+restauration ; API manuel 9/9. **Aucun défaut du lot.** Captures : 201, observées (`dd9ac2c3`).
+**Présenté au responsable** : 16 mails pastillés Spam en production disparaissent de l'inbox (visibles en activant Spam) ;
+les réponses reçues dans une affaire paraissent dans « Seulement moi » de qui a écrit dans le fil et des responsables.
+**Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `dd9ac2c3` : migrations 193 et 194, webapp,
+`mcp`, manuel.
