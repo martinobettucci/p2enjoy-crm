@@ -225,9 +225,13 @@ qui ont des temps déplacés et pas de coût à l'arrivée.
   déplacement, écrite par la seule fonction de déplacement ; elle sert la redirection des adresses (§12). Lisible par
   `SELECT` sous la RLS de son track : qui lit le track lit ses déplacements ;
 - `plateforme_journal` : une ligne `track_moved`, l'acteur, l'espace de départ, la cible `{track_id, track_name, from, to,
-  counts, created}` ;
+  counts, created}` ; *précisé au code de T2* (migration `0198`) : la cible porte aussi `from_name` et `to_name`, les noms des
+  deux espaces au moment du geste ;
 - `card_events` : sur chaque affaire déplacée, `track_moved` (de l'espace, vers l'espace), qui paraît dans son historique ;
-- l'onglet « Journal » de la plateforme traduit le geste (« Track « {nom} » déplacé de {espace} vers {espace} »).
+  *précisé au code de T2* : la charge `{track, from, to, from_name, to_name}` ; l'historique dit « Déplacée avec son track »,
+  et en détail « « {track} » : {départ} → {arrivée} » ;
+- l'onglet « Journal » de la plateforme traduit le geste : « Track déplacé », et en détail « « {nom} » : {départ} →
+  {arrivée} » (*précisé au code de T2*, la forme des autres lignes du journal).
 
 ## 11. Le déplacement inverse
 
@@ -255,12 +259,15 @@ le track redirigé. Prouvé par un E2E après la livraison de `CRM-161`.
 L'apparence : `docs/DESIGN_SYSTEM.md` §5.112.
 
 - un bloc **« Tracks »** liste les tracks de l'espace (nom, nombre de channels et d'affaires) ; chaque ligne porte **« Déplacer
-  vers un autre espace »** ;
+  vers un autre espace »** ; *précisé au code de T2* : la liste est lue par `public.plateforme_tracks(p_ws)` (migration
+  `0198`), au super-administrateur seul, qui n'est pas membre de tous les espaces ; un track à la corbeille y paraît en
+  dernier, et son aperçu le refuse (§4) ;
 - le geste ouvre **dans le flux** : le choix de l'**espace d'arrivée**, puis l'**aperçu** (§5) — ce qui part, les
   référentiels réutilisés et créés, l'écart de coût et les personnes sans coût, l'adresse des affaires —, puis, **s'il n'y a
   aucun refus**, la **saisie du nom du track** et **« Déplacer le track »** ; s'il y a des refus, ils sont **listés**, et la
   commande n'est pas offerte ;
-- le succès dit ce qui a été déplacé et mène à la fiche de l'espace d'arrivée ;
+- le succès dit ce qui a été déplacé et mène à la fiche de l'espace d'arrivée — *précisé au code de T2* : la fiche de
+  départ reste affichée, le track quitte son tableau, et le message porte le lien « Ouvrir la fiche de {espace} » ;
 - un refus de la base (un geste concurrent entre l'aperçu et l'écriture) est rendu tel quel, avec sa liste.
 
 **Les objectifs** : un bloc qui cite un channel d'un autre espace l'affiche avec le nom de cet espace (décision 966).

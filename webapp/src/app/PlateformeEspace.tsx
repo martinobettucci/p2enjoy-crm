@@ -7,6 +7,8 @@
 // @spec CRM-123 tranche T3 — docs/SPEC-cards.md §3.6 (points 5, 7, 8 et 9) : le préfixe des adresses d'affaire dans
 //       « Modifier », et la section « Adresses des affaires » qui régénère ; docs/DESIGN_SYSTEM.md §5.56 (adresses des
 //       affaires), §5.40 (commande montée et désactivée pendant sa confirmation) ; docs/JOURNAL.md décision 804
+// @spec CRM-162 (docs/BACKLOG.md) — tranche T2 : le bloc « Tracks » et le déplacement d'un track, entre les attentes et la
+//       zone de danger (docs/SPEC-deplacement-track.md §13 ; docs/DESIGN_SYSTEM.md §5.112)
 //
 // LA FICHE EST RELUE APRÈS CHAQUE ÉCRITURE, JAMAIS COMPLÉTÉE LOCALEMENT (§5.21), et la relecture garde à l'écran ce
 // qu'elle relit (§5.29 tranche 2 c) : le squelette n'appartient qu'au premier chargement.
@@ -45,6 +47,7 @@ import { CHEMIN_PLATEFORME_ESPACES } from './chemins'
 import { CLES_AFFAIRES_ADRESSES, CLES_APPARTENANCES, CLES_ATTENTES, compter, texteRefus } from './presentation-plateforme'
 import { RecherchePersonne } from './RecherchePersonne'
 import { BlocAttentes } from './BlocAttentes'
+import { BlocTracks } from './PlateformeTracks'
 import {
 	BlocMessage,
 	CLASSES_CHAMP,
@@ -58,6 +61,8 @@ import type { EtatNavigationEspaces } from './PlateformeEspaces'
 
 type Fiche = {
 	readonly espace: EspacePlateforme
+	/** `CRM-162` : tous les espaces, pour le choix de l'arrivée d'un track déplacé. */
+	readonly espaces: readonly EspacePlateforme[]
 	readonly membres: readonly MembrePlateforme[]
 	readonly attentes: readonly AttentePlateforme[]
 }
@@ -76,6 +81,7 @@ type Ouverture =
 	| { readonly type: 'inviter' }
 	| { readonly type: 'regenerer' }
 	| { readonly type: 'supprimer' }
+	| { readonly type: 'deplacer'; readonly idTrack: string }
 	| null
 
 async function lireFiche(client: ClientCrm, slug: string): Promise<EtatFiche> {
@@ -88,7 +94,7 @@ async function lireFiche(client: ClientCrm, slug: string): Promise<EtatFiche> {
 	if (membres.statut === 'erreur') return membres
 	if (attentes.statut === 'erreur') return attentes
 	if (membres.statut !== 'pret' || attentes.statut !== 'pret') return { statut: 'chargement' }
-	return { statut: 'pret', fiche: { espace, membres: membres.donnees, attentes: attentes.donnees } }
+	return { statut: 'pret', fiche: { espace, espaces: espaces.donnees, membres: membres.donnees, attentes: attentes.donnees } }
 }
 
 export function PlateformeEspace({ client }: { readonly client: ClientCrm }) {
@@ -100,6 +106,7 @@ export function PlateformeEspace({ client }: { readonly client: ClientCrm }) {
 	const [messageAttentes, setMessageAttentes] = useState<Message>(null)
 	const [messageIdentite, setMessageIdentite] = useState<Message>(null)
 	const [messageAdresses, setMessageAdresses] = useState<Message>(null)
+	const [messageTracks, setMessageTracks] = useState<Message>(null)
 
 	useEffect(() => {
 		let vivant = true
@@ -138,13 +145,14 @@ export function PlateformeEspace({ client }: { readonly client: ClientCrm }) {
 		)
 	}
 
-	const { espace, membres, attentes } = etat.fiche
+	const { espace, espaces, membres, attentes } = etat.fiche
 	const ouvrir = (suivante: Ouverture) => {
 		setOuverture(suivante)
 		setMessageMembres(null)
 		setMessageAttentes(null)
 		setMessageIdentite(null)
 		setMessageAdresses(null)
+		setMessageTracks(null)
 	}
 
 	return (
@@ -209,6 +217,19 @@ export function PlateformeEspace({ client }: { readonly client: ClientCrm }) {
 				retirer={async (attente) =>
 					issueEnMessage(await retirerAttente(client, espace.id, attente.email), t('platform.attentes.retiree', { email: attente.email }))
 				}
+			/>
+			<BlocTracks
+				client={client}
+				espace={espace}
+				espaces={espaces}
+				ouvert={ouverture?.type === 'deplacer' ? ouverture.idTrack : null}
+				onOuvrir={(idTrack) => ouvrir({ type: 'deplacer', idTrack })}
+				onFermer={() => setOuverture(null)}
+				onDeplace={(texte) => {
+					setOuverture(null)
+					setMessageTracks({ ton: 'succes', texte })
+				}}
+				message={messageTracks}
 			/>
 			<ZoneDanger
 				client={client}

@@ -6346,6 +6346,17 @@ export type Database = {
         Args: { p_id: string; p_slug_confirme: string }
         Returns: undefined
       }
+      plateforme_tracks: {
+        Args: { p_ws: string }
+        Returns: {
+          cards: number
+          channels: number
+          id: string
+          name: string
+          slug: string
+          trashed: boolean
+        }[]
+      }
       plateforme_utilisateurs: {
         Args: { p_limite?: number; p_recherche?: string }
         Returns: {

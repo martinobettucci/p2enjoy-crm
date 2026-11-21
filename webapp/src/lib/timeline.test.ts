@@ -1,6 +1,8 @@
 // @verifies CRM-112 (docs/BACKLOG.md) tranche T3.d — le détail d'une valeur commune (docs/DESIGN_SYSTEM.md §5.89)
 // @verifies CRM-111 (docs/BACKLOG.md) T7.4 — `attached` et `detached` nommés et rangés (docs/DESIGN_SYSTEM.md §5.84)
 // @verifies CRM-069 (docs/BACKLOG.md) — tranche T2 : la pose et le retrait d'une étiquette rangés dans la famille « Champs » (docs/SPEC-etiquettes-digest.md §2.2)
+// @verifies CRM-162 (docs/BACKLOG.md) — tranche T2 : `track_moved` nommé, rangé dans « Organisation », son détail lu dans le
+//           `payload` (docs/SPEC-deplacement-track.md §10 ; docs/DESIGN_SYSTEM.md §5.112)
 // @verifies CRM-138 (docs/BACKLOG.md) — tranche T3 : `mail_deleted` et `mail_restored` nommés, rangés dans « Discussion »,
 //           leur détail lu (docs/DESIGN_SYSTEM.md §5.102 ; docs/SPEC-mail-subsystem.md §29.1)
 // @verifies CRM-144 (docs/BACKLOG.md) — tranche T3 : `mail_cancelled` nommé, rangé dans « Discussion », son détail lu
@@ -107,7 +109,9 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 	// VINGT-SIX, rangé dans « Discussion » avec les autres gestes de courrier ; aucune famille nouvelle.
 	// RÉVISÉE PAR `CRM-138` T3 (décision 51) : `mail_deleted` et `mail_restored`, écrits par la migration `0180`, portent le
 	// vocabulaire à VINGT-HUIT, rangés dans « Discussion » ; aucune famille nouvelle.
-	it('range les vingt-huit types livrés dans exactement cinq familles d’événements', () => {
+	it('range les vingt-neuf types livrés dans exactement cinq familles d’événements', () => {
+		// RÉVISÉE PAR `CRM-162` T2 (décision 51) : `track_moved`, écrit par `public.move_track` (migrations 0197, 0198),
+		// famille « Organisation », avec l'écran qui fait le geste (docs/DESIGN_SYSTEM.md §5.112).
 		// RÉVISÉE PAR `CRM-111` T7.4 (décision 51) : `attached` et `detached`, écrits par la migration `0148`, famille
 		// « Organisation », avec l'écran qui fait les deux gestes (docs/DESIGN_SYSTEM.md §5.84).
 		// RÉVISÉE PAR `CRM-069` T2 (décision 51) : `label_added` et `label_removed`, famille « Champs »
@@ -115,7 +119,8 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 		// RÉVISÉE, NON RETIRÉE (mécanisme de la décision 51) — DIX-NEUVIÈME type, `mail_unclassified`,
 		// livré par `CRM-055` tranche 2 (§16.5.3). Le compte est le garde-fou : il rougit à chaque
 		// extension et force à ranger le type neuf plutôt qu'à le laisser tomber sur le repli.
-		expect(TYPES_EVENEMENT).toHaveLength(28)
+		expect(TYPES_EVENEMENT).toHaveLength(29)
+		expect(FAMILLE_PAR_TYPE.track_moved).toBe('organisation')
 		expect(FAMILLE_PAR_TYPE.attached).toBe('organisation')
 		expect(FAMILLE_PAR_TYPE.detached).toBe('organisation')
 		expect(FAMILLE_PAR_TYPE.label_added).toBe('champs')
@@ -213,6 +218,17 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 			expect(resoudreDetail(sansObjet, contexte)).toEqual({ detail: null })
 			expect(familleDe(type)).toBe('discussion')
 		}
+	})
+
+	it('CRM-162 : `track_moved` dit le track et les deux espaces, lus dans le `payload` ; rangé dans « Organisation »', () => {
+		const contexte = { etapes: new Map(), champs: new Map() } as unknown as Parameters<typeof resoudreDetail>[1]
+		const ligne = {
+			genre: 'evenement',
+			type: 'track_moved',
+			payload: { track: 'Formation', from_name: 'P2Enjoy SAS', to_name: 'Studio Lumen' },
+		} as unknown as Parameters<typeof resoudreDetail>[0]
+		expect(resoudreDetail(ligne, contexte)).toEqual({ detail: '« Formation » : P2Enjoy SAS → Studio Lumen' })
+		expect(familleDe('track_moved')).toBe('organisation')
 	})
 
 	it('`CRM-144` : le détail d’un envoi annulé est son objet, lu dans l’événement', () => {

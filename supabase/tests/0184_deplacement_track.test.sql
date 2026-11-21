@@ -3,7 +3,9 @@
 --           (le track, ses channels, ses affaires et ce qui leur est rattaché changent d'espace ; budgets et membres
 --           suivent ; les référentiels réutilisés ou créés) ; l'ancienne adresse qui aboutit (règle 1 bis) ; le mail déjà
 --           présent à l'arrivée ; la redirection d'une adresse ; l'aller-retour qui rend l'état de départ
--- @verifies docs/SPEC-deplacement-track.md §2 à §12 ; docs/SCHEMA.md « Migration — `CRM-162` T1 » ; docs/JOURNAL.md
+-- @verifies CRM-162 (docs/BACKLOG.md) — tranche T2 : les tracks d'un espace lus par le seul super-administrateur
+--           (`plateforme_tracks`), et les noms des deux espaces dans l'événement et le journal (migration `0198`)
+-- @verifies docs/SPEC-deplacement-track.md §2 à §13 ; docs/SCHEMA.md « Migration — `CRM-162` T1 » ; docs/JOURNAL.md
 --           décisions 964, 966, 968, 969 et 972 ; CLAUDE.md §10 (le refus par requête directe)
 --
 -- L'ESPACE D'ARRIVÉE EST PROPRE À LA PREUVE (« Sonde 162 »), posé dans la transaction de la preuve, qui est annulée : la
@@ -14,7 +16,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(36);
+select plan(40);
 
 create or replace function pg_temp.endosser(utilisateur uuid)
 returns void language plpgsql as $$
@@ -201,6 +203,12 @@ select is((select count(*)::int from public.card_events where card_id = pg_temp.
 select is((select count(*)::int from public.card_common_field_values v
             where v.card_id = pg_temp.id('c7') and v.updated_by = pg_temp.id('sabine')), 0,
 	'29 — aucune ligne déplacée n''est attribuée au super-administrateur');
+select is((select payload ->> 'from_name' || ' → ' || (payload ->> 'to_name') from public.card_events
+            where card_id = pg_temp.id('c7') and type = 'track_moved' and created_at >= now()),
+	'P2Enjoy SAS → Sonde 162', '29 bis — l''événement porte le nom des deux espaces (migration 0198)');
+select is((select cible ->> 'from_name' || ' → ' || (cible ->> 'to_name') from public.plateforme_journal
+            where geste = 'track_moved' and cree_le = now()),
+	'P2Enjoy SAS → Sonde 162', '29 ter — le journal aussi');
 
 -- =============================================================================================
 -- 4. L'ancienne adresse aboutit (§8), la redirection (§12)
@@ -223,6 +231,17 @@ select pg_temp.redevenir_proprietaire();
 select pg_temp.endosser(pg_temp.id('sabine'));
 select is((select count(*)::int from public.track_current_address('p2enjoy', 'formation')), 0,
 	'33 — rien pour qui ne lit pas le track (la RLS de tracks)');
+select pg_temp.redevenir_proprietaire();
+
+select pg_temp.endosser(pg_temp.id('camille'));
+select throws_ok(format($$select * from public.plateforme_tracks(%L)$$, pg_temp.ref('arrivee')), '42501', null,
+	'33 bis — les tracks d''un espace, par la plateforme : super-administrateur seul');
+select pg_temp.redevenir_proprietaire();
+select pg_temp.endosser(pg_temp.id('sabine'));
+select results_eq(format($$select name, channels, cards from public.plateforme_tracks(%L) where id = %L$$,
+                         pg_temp.ref('arrivee'), pg_temp.ref('track')),
+	$$values ('Formation'::text, 1, 3)$$,
+	'33 ter — la super-administratrice lit le track déplacé, ses channels et ses affaires');
 select pg_temp.redevenir_proprietaire();
 
 -- =============================================================================================

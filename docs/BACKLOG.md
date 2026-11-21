@@ -20610,6 +20610,9 @@ la redirection d'un track déplacé passe par `public.track_current_address` (§
 - [x] **T1** — migration (alias, `track_moves`, aperçu, déplacement, redirection, règle 1 bis) ; pgTAP ; API ; SCHEMA, DAT ;
   contrat ; *faite le 2026-11-21* (migration `0197`, pgTAP `0184` 36 assertions, six pgTAP révisées, API `deplacement-track`
   4/4, contrat §2.69) ;
-- [ ] **T2** — l'écran (le bloc « Tracks », l'aperçu, la saisie, les refus, le journal, les objectifs) ; unitaires ; E2E ;
-  captures ;
+- [x] **T2** — l'écran (le bloc « Tracks », l'aperçu, la saisie, les refus, le journal, les objectifs) ; unitaires ; E2E ;
+  captures ; *faite le 2026-11-21* (migration `0198` : `plateforme_tracks`, les noms des espaces dans le journal ; pgTAP
+  `0184` 40 assertions ; unitaires `deplacement-track`, `PlateformeTracks`, et le journal, l'historique, les objectifs
+  révisés ; E2E `e2e/ui/deplacement-track.spec.ts` 6/6 — refus, souris, journal, historique, clavier, quatre paliers ;
+  captures observées `docs/captures/CRM-162/` ; `docs/DESIGN_SYSTEM.md` §5.112 précisé ; contrat §2.70) ;
 - [ ] **T3** — le seed §54, le manuel, le contrat, l'adresse redirigée (après `CRM-161`) ; l'unité passe `[P]`.

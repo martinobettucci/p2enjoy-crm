@@ -126,6 +126,9 @@ export const TYPES_EVENEMENT = [
 	// gestes (docs/DESIGN_SYSTEM.md §5.84) — sans quoi le fil les rendait « Événement », le défaut d'INC-207.
 	'attached',
 	'detached',
+	// `CRM-162` (migrations 0197, 0198) : le déplacement du track de l'affaire vers un autre espace, écrit par
+	// `public.move_track` ; nommé avec l'écran qui fait le geste (T2) — l'oubli d'INC-207 et d'INC-220 ne se répète pas.
+	'track_moved',
 ] as const
 
 export type TypeEvenement = (typeof TYPES_EVENEMENT)[number]
@@ -213,6 +216,7 @@ export const FAMILLE_PAR_TYPE: Readonly<Record<TypeEvenement, Famille>> = {
 	// « OÙ VIT CETTE AFFAIRE ? » : la question de l'organisation, qui porte déjà `channel_changed` (§5.11).
 	attached: 'organisation',
 	detached: 'organisation',
+	track_moved: 'organisation',
 }
 
 /**
@@ -411,6 +415,17 @@ export function resoudreDetail(ligne: LigneEvenement, libelles: LibellesFil): De
 	// `CRM-138` (§29.3) : L'OBJET DU MESSAGE EFFACÉ OU RESTAURÉ, lu dans le `payload` pour le même motif — effacé, le message
 	// n'est plus lu nulle part, et son objet au moment du geste est la valeur même du fait.
 	if (ligne.type === 'mail_deleted' || ligne.type === 'mail_restored') return { detail: texte(ligne.payload['subject']) }
+	// `CRM-162` (§10) : LE TRACK ET LES DEUX ESPACES, lus dans le `payload` pour le même motif — leurs noms au moment du geste
+	// sont la valeur même du fait (migration 0198).
+	if (ligne.type === 'track_moved') {
+		return {
+			detail: t('timeline.event.track_moved.detail', {
+				track: texte(ligne.payload['track']) ?? '',
+				depart: texte(ligne.payload['from_name']) ?? '',
+				arrivee: texte(ligne.payload['to_name']) ?? '',
+			}),
+		}
+	}
 	// LE SEUL CAS OÙ LE FIL LIT UNE VALEUR DU `payload` plutôt qu'un libellé résolu, et l'écart est
 	// motivé (§16.11.5) : une DATE n'est pas un libellé qui pourrait changer de sens demain — c'est
 	// la valeur même du fait. `until` pour la mise en sommeil, `from` pour l'échéance abandonnée.

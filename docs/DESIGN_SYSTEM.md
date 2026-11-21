@@ -1112,7 +1112,7 @@ s'ajoutent, elles ne les remplacent pas.
   | Discussion | commentaires | **aucune pastille** — un commentaire est une carte (§5.10), pas une ligne d'événement | — |
   | Étapes | `moved` | `--color-brand-soft`, icône `--color-brand` | `ArrowRightLeft` |
   | Champs | `field_changed` | `--color-hover`, icône `--color-text-2` | `PencilLine` |
-  | Organisation | `channel_changed`, `workflow_changed` | `--color-accent-soft` pour `channel_changed`, `--color-brand-soft` pour `workflow_changed` | `FolderSync`, `Workflow` |
+  | Organisation | `channel_changed`, `workflow_changed`, `track_moved` (`CRM-162`, §5.112) | `--color-accent-soft` pour `channel_changed`, `--color-brand-soft` pour `workflow_changed`, `--color-hover` pour `track_moved` | `FolderSync`, `Workflow`, `FolderSymlink` |
   | Cycle de vie | `created`, `assigned`, `archived`, `unarchived`, `trashed`, `restored` | `--color-success-soft` pour `created` et `restored`, `--color-accent-soft` pour `assigned` et `unarchived`, `--color-hover` pour `archived` et `trashed` | `Sparkles`, `UserRoundCog`, `Archive`, `ArchiveRestore`, `Trash2`, `RotateCcw` |
 
   La famille **Discussion** est la seule à ne porter ni pastille ni icône : ses lignes ne sont pas
@@ -9078,7 +9078,10 @@ plateforme vaut ici — dans le flux, aucune modale, un seul bloc ouvert à la f
 - **LE BLOC « TRACKS »**, dans la fiche d'un espace, **après les attentes et avant la zone de danger** : un tableau du §5.9 —
   nom, channels, affaires (comptes alignés à droite, chiffres tabulaires), commandes. Absent si l'espace n'a aucun track :
   l'état vide dit « Aucun track dans cet espace. » sans commande (rien à déplacer).
-- **« Déplacer vers un autre espace »**, discret compact, icône `ArrowRightLeft` — *icône nouvelle* (§9), pour ce seul sens.
+- **« Déplacer vers un autre espace »**, discret compact, icône `FolderSymlink` — *icône nouvelle* (§9), pour ce seul
+  sens. *Précisé au code* : `ArrowRightLeft`, d'abord écrite ici, porte déjà le changement d'étape d'une affaire (son
+  historique, le formulaire), et `MoveRight` un geste des objectifs ; `FolderSymlink`, qui ne sert aucun autre objet, les
+  remplace.
   Elle ouvre **sur une ligne à elle**, en `colSpan`, sous la ligne du track (§5.27), le bloc du déplacement ; la commande reste
   montée et devient désactivée tant qu'il est ouvert (§5.40).
 - **LE BLOC DU DÉPLACEMENT**, dans cet ordre :
@@ -9091,8 +9094,11 @@ plateforme vaut ici — dans le flux, aucune modale, un seul bloc ouvert à la f
        diffère par la casse) et « Créés à l'arrivée » ; une famille vide ne s'affiche pas ;
      - **« Temps et coûts »** : la valeur au départ, à l'arrivée, l'écart signé ; « Sans coût à l'arrivée : » suivie des
        personnes, s'il y en a ;
+     - *précisé au code* : **« Mails déjà présents à l'arrivée »**, s'il y en a (décision 972) — leur objet, et la règle en
+       une phrase : l'exemplaire d'arrivée est gardé ;
      - **« Adresses des affaires »** : « Elles passeront au domaine {domaine} ; l'ancienne adresse continue d'aboutir. »,
-       ou, sans domaine à l'arrivée, la même phrase que le bandeau du §5.110, en `role="note"` ;
+       ou, sans domaine à l'arrivée, une phrase propre en `role="note"` (*précisé au code* : elle dit que l'ancienne adresse
+       continue d'aboutir, ce que le bandeau du §5.110 ne dit pas) ;
   3. **les refus**, s'il y en a : un bandeau `role="alert"` en `--color-danger-soft` / `--color-danger-on-soft`, icône
      `TriangleAlert`, « Le track ne peut pas être déplacé : » puis **une liste par refus**, chacune titrée d'une phrase
      (« Affaires rattachées aussi à un autre track », « Personnes qui ne sont pas membres de {espace} », « Relances
@@ -9109,11 +9115,14 @@ plateforme vaut ici — dans le flux, aucune modale, un seul bloc ouvert à la f
 - **LE JOURNAL** (§5.56) traduit `track_moved` : « Track « {nom} » déplacé de {espace} vers {espace} ».
 - **LES OBJECTIFS** : un bloc qui cite un channel d'un autre espace que celui du tableau porte, après le nom du channel, le
   nom de cet espace en 13 px `--color-text-2` (« Grands comptes · Studio Lumen ») — un mot, pas une teinte (§1).
+  *Précisé au code* : la pilule du bloc lit l'espace du channel par l'imbrication (`workspaces`), et le compare à l'espace
+  courant, celui dont le tableau est lu.
 - **RESPONSIVE** (§7) : sous `md`, le tableau des tracks passe en liste empilée (§5.9) ; le bloc du déplacement prend la
   largeur ; les listes passent à la ligne, jamais tronquées.
 - **AU CLAVIER** : toutes les commandes sont des boutons et des champs natifs ; `Échap` referme le bloc et rend le focus à
   « Déplacer vers un autre espace » ; un refus ou un succès est annoncé par sa région.
-- **Aucune couleur, aucun jeton nouveaux ; une icône nouvelle**, `ArrowRightLeft`, pour le seul déplacement d'un track.
+- **Aucune couleur, aucun jeton nouveaux ; une icône nouvelle**, `FolderSymlink`, pour le seul déplacement d'un track — dans la
+  fiche d'un espace et dans l'historique d'une affaire (« Déplacée avec son track »).
 
 ### 5.113 Le menu des espaces : le premier niveau du fil d'Ariane, ses non-lus, la bascule annoncée — `CRM-161` T2.b
 

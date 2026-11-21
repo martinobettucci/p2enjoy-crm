@@ -1,3 +1,5 @@
+// @spec CRM-162 (docs/BACKLOG.md) tranche T2 — l'événement `track_moved` dans l'historique d'une affaire ;
+//       docs/SPEC-deplacement-track.md §10 ; docs/DESIGN_SYSTEM.md §5.112
 // @spec CRM-074 (docs/BACKLOG.md) — tranche T3 : les pièces de chaque courrier sous sa ligne du fil, avec leur aperçu
 // @spec CRM-138 (docs/BACKLOG.md) — tranche T3 : « Message effacé » (`Trash2`) et « Message restauré » (`ArchiveRestore`),
 //       deux faits neutres de la famille Discussion (docs/DESIGN_SYSTEM.md §5.102 ; docs/SPEC-mail-subsystem.md §29.1)
@@ -55,6 +57,7 @@ import {
 	UserRoundPen,
 	ArchiveRestore,
 	ArrowRightLeft,
+	FolderSymlink,
 	FolderInput,
 	FolderOutput,
 	FolderSync,
@@ -208,6 +211,8 @@ const PRESENTATION: Readonly<
 	// dossier, distinct de `FolderSync` (« Dossier changé ») et des commandes du bloc (§9 : une icône, un objet).
 	attached: { cle: 'timeline.event.attached', icone: FolderInput, pastille: 'bg-accent-soft text-ink' },
 	detached: { cle: 'timeline.event.detached', icone: FolderOutput, pastille: 'bg-hover text-text-3' },
+	// `CRM-162` (docs/DESIGN_SYSTEM.md §5.112) : le déplacement du track vers un autre espace.
+	track_moved: { cle: 'timeline.event.track_moved', icone: FolderSymlink, pastille: 'bg-hover text-text-2' },
 }
 
 /**

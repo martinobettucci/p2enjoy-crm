@@ -1,3 +1,5 @@
+// @spec CRM-162 (docs/BACKLOG.md) tranche T2 — le geste `track_moved`, « Track déplacé », et son détail accordé par clé ;
+//       docs/SPEC-deplacement-track.md §10 ; docs/DESIGN_SYSTEM.md §5.112
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le refus `identifiant_reserve` (§15.1) ; docs/SPEC-espace-courant.md
 // @spec CRM-101 (docs/BACKLOG.md) — tranche T3 : ce que l'écran de la plateforme écrit, et comment
 // @spec CRM-103 tranche T2 — docs/DESIGN_SYSTEM.md §5.56 (onglet « Connecteur MCP » : familles, actions et issues en MOT,
@@ -78,6 +80,7 @@ const CLES_GESTE: Readonly<Record<GesteJournal, CleTraduction>> = {
 	mcp_droits_poses: 'platform.journal.geste.mcp_droits_poses',
 	logs_purged: 'platform.journal.geste.logs_purged',
 	card_addresses_regenerated: 'platform.journal.geste.card_addresses_regenerated',
+	track_moved: 'platform.journal.geste.track_moved',
 }
 
 /** Le geste en MOT ; un geste inconnu laisse la cellule vide (§5.56). */
@@ -157,6 +160,13 @@ export function detailJournal(entree: EntreeJournal): string {
 			return t('platform.journal.detail.adressesRegenerees', {
 				adresses: compter(typeof c['count'] === 'number' ? c['count'] : 0, CLES_ADRESSES),
 				prefixe: chaine(c['card_address_prefix']),
+			})
+		// `CRM-162` (migration 0198) : le track et les deux espaces, par leur nom écrit au moment du geste.
+		case 'track_moved':
+			return t('platform.journal.detail.trackDeplace', {
+				nom: chaine(c['track_name']),
+				depart: chaine(c['from_name']),
+				arrivee: chaine(c['to_name']),
 			})
 		case null:
 			return ''

@@ -3466,6 +3466,24 @@ et les blocages sont perdus — les mails mis à la corbeille par un blocage y r
   `plateforme_creer_espace` de `0089`.
 - **Preuve** : pgTAP `0183`, rouge avant la migration ; `0084` inchangée et verte.
 
+### Migration `0198` — `CRM-162` T2 : ce que l'écran du déplacement lit et ce que le journal nomme (`0198_deplacement_track_ecran.sql` ; écrite le 2026-11-21, avec le code de l'écran)
+
+`docs/SPEC-deplacement-track.md` §10, §13 ; `docs/DESIGN_SYSTEM.md` §5.112.
+
+- **`public.plateforme_tracks(p_ws uuid) returns table (id uuid, name text, slug text, channels integer, cards integer,
+  trashed boolean)`**, `STABLE`, `SECURITY DEFINER`, `search_path` vide, `authenticated` seulement — les tracks d'un espace, le
+  nombre de leurs channels vivants et de leurs affaires distinctes, la corbeille en dernier. Super-administrateur seul
+  (`app.exiger_superadmin`) : il n'est pas membre de tous les espaces, et la RLS de `tracks` ne lui montrerait rien. Le patron
+  de `plateforme_membres`.
+- **`public.move_track`** redéfinie, reprise de `0197` : seule change l'écriture des **noms des deux espaces**
+  (`from_name`, `to_name`), ajoutés à la cible de la ligne `track_moved` de `plateforme_journal` et à la charge de
+  l'événement `track_moved` de chaque affaire — le journal et l'historique les affichent sans lire un espace que leur
+  lecteur ne voit peut-être pas.
+- **Preuves** : pgTAP `0184` (40 assertions, dont quatre nouvelles : la liste et son refus à qui n'est pas
+  super-administrateur, les noms dans le journal et dans l'événement) ; E2E `e2e/ui/deplacement-track.spec.ts`.
+- **Retour arrière** : supprimer `plateforme_tracks` ; redéfinir `move_track` depuis `0197` (les noms déjà écrits restent,
+  sans effet : l'écran lit un champ absent comme vide).
+
 ### Migration `0197` — `CRM-162` T1 : déplacer un track entier d'un espace à un autre (`0197_deplacement_track.sql` ; spécifiée le 2026-11-21, avant le code ; écrite le 2026-11-21)
 
 `docs/SPEC-deplacement-track.md` ; décisions 964, 966 et 968.

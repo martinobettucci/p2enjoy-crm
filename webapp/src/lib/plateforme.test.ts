@@ -12,6 +12,8 @@
 // @verifies CRM-123 (docs/BACKLOG.md) — tranche T3 : le préfixe et le décompte lus, le préfixe envoyé tel que saisi, la
 //           régénération et son nombre, l'exemple d'adresse, le refus `invalid_card_address_prefix` et le geste
 //           `card_addresses_regenerated` (docs/SPEC-cards.md §3.6 points 2, 5, 7 et 9 ; docs/DESIGN_SYSTEM.md §5.56)
+// @verifies CRM-162 (docs/BACKLOG.md) — tranche T2 : le geste `track_moved` du journal et son détail, le track et les deux
+//           espaces par leur nom (docs/SPEC-deplacement-track.md §10 ; docs/DESIGN_SYSTEM.md §5.112)
 
 import { describe, expect, it } from 'vitest'
 import { CLES_AFFAIRES_ADRESSES, CLES_APPARTENANCES, compter, detailJournal, libelleActeur, libelleGeste, texteRefus } from '../app/presentation-plateforme'
@@ -365,6 +367,11 @@ describe('adresses des affaires', () => {
 	it('nomme le geste de régénération et accorde son détail par clé', () => {
 		expect(libelleGeste('card_addresses_regenerated')).toBe('Adresses d’affaire régénérées')
 		expect(detailJournal(entree('card_addresses_regenerated', { card_address_prefix: 'app-', count: 12 }))).toBe('12 adresses au préfixe «\u00a0app-\u00a0»')
+		// `CRM-162` T2 : le déplacement d'un track, le track et les deux espaces par leur nom (migration 0198).
+		expect(libelleGeste('track_moved')).toBe('Track déplacé')
+		expect(detailJournal(entree('track_moved', { track_name: 'Formation', from_name: 'P2Enjoy SAS', to_name: 'Studio Lumen' }))).toBe(
+			'« Formation » : P2Enjoy SAS → Studio Lumen',
+		)
 		expect(detailJournal(entree('card_addresses_regenerated', { card_address_prefix: 'app-', count: 1 }))).toBe('1 adresse au préfixe «\u00a0app-\u00a0»')
 		expect(compter(1, CLES_AFFAIRES_ADRESSES)).toBe('une affaire')
 		expect(compter(3, CLES_AFFAIRES_ADRESSES)).toBe('3 affaires')

@@ -5,6 +5,8 @@
 //           §5.3 (flèches tracées entre les BORDS), §5.4 (états), §5.5 (équivalent textuel),
 //           §2.3 (les TROIS directions, jamais normalisées en deux)
 // @verifies docs/DESIGN_SYSTEM.md §5.29 (flèche pointillée sans libellé quand une extrémité manque)
+// @verifies CRM-162 (docs/BACKLOG.md) — tranche T2 : la destination d'un bloc porte l'espace de son channel — un channel
+//           déplacé garde le lien, et la pilule nomme son espace (docs/SPEC-deplacement-track.md §3.2 ; décision 966)
 //
 // CE FICHIER ÉPROUVE LA RÈGLE, PAS L'IMPLÉMENTATION. Le cas central est celui que la RLS produit
 // et que rien d'autre ne produit : une flèche dont l'un des deux blocs n'a PAS été rendu à
@@ -75,6 +77,7 @@ describe('destinationDepuisEmbarque', () => {
 			slug: 'refonte',
 			deleted_at: null,
 			tracks: { name: 'Studio web', slug: 'studio-web', deleted_at: null },
+			workspaces: { id: 'w1', name: 'P2Enjoy SAS' },
 		})
 		expect(destination).toEqual({
 			id: 'c1',
@@ -82,7 +85,13 @@ describe('destinationDepuisEmbarque', () => {
 			slug: 'refonte',
 			supprime: false,
 			track: { nom: 'Studio web', slug: 'studio-web', supprime: false },
+			espace: { id: 'w1', nom: 'P2Enjoy SAS' },
 		})
+	})
+
+	it('CRM-162 : sans espace embarqué, la destination n’en porte aucun', () => {
+		const destination = destinationDepuisEmbarque({ id: 'c1', name: 'N', slug: 's', deleted_at: null, tracks: null })
+		expect(destination?.espace).toBeNull()
 	})
 
 	it('accepte aussi la forme TABLEAU, plutôt que de la supposer impossible', () => {
@@ -105,6 +114,7 @@ describe('lienOuvrable et lienPerdu — §5.4', () => {
 		slug: 'refonte',
 		supprime: false,
 		track: { nom: 'Studio', slug: 'studio', supprime: false },
+		espace: null,
 	}
 
 	it('un bloc lié à une destination vivante est ouvrable, et n’affiche pas « lien perdu »', () => {

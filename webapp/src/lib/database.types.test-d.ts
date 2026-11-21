@@ -1343,9 +1343,12 @@ type _vueDerivationColonnes = Expect<
 // seul, et `track_current_address`, SECURITY INVOKER (docs/SPEC-deplacement-track.md §5, §6, §12). CE QUI ÉCHAPPE AU
 // GÉNÉRATEUR : la forme des `jsonb` rendus ; les refus `forbidden`, `track_not_found`, `workspace_not_found`,
 // `confirmation_mismatch` et `track_move_refused` (sa liste dans `details`). Le compte s'accroît de trois.
+// `0198` de CRM-162, TRANCHE T2, ajoute `plateforme_tracks`, SECURITY DEFINER, au super-administrateur seul : les tracks d'un
+// espace dont il n'est pas membre (docs/SPEC-deplacement-track.md §13). Le compte s'accroît d'une.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'plateforme_tracks'
     | 'track_move_preview'
     | 'move_track'
     | 'track_current_address'

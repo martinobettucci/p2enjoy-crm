@@ -1,3 +1,4 @@
+// @spec CRM-162 (docs/BACKLOG.md) tranche T2 — le geste `track_moved` du journal ; docs/SPEC-deplacement-track.md §10
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le refus `identifiant_reserve` dans le dictionnaire fermé (§15.1) ; docs/SPEC-espace-courant.md
 // @spec CRM-101 (docs/BACKLOG.md) — tranche T3 : les appels de l'écran de la plateforme et leurs refus
 // @spec docs/SPEC-plateforme.md §5.3 (`public.est_superadmin`, aide d'interface), §6 (les fonctions et le dictionnaire
@@ -407,6 +408,8 @@ export const GESTES_JOURNAL = [
 	'logs_purged',
 	// `CRM-123` (migration 0144) : la régénération des adresses d'affaire d'un espace (docs/SPEC-cards.md §3.6 point 7).
 	'card_addresses_regenerated',
+	// `CRM-162` (migrations 0197, 0198) : le déplacement d'un track d'un espace à un autre (docs/SPEC-deplacement-track.md §10).
+	'track_moved',
 ] as const
 export type GesteJournal = (typeof GESTES_JOURNAL)[number]
 

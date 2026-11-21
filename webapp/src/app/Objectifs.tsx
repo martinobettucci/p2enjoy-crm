@@ -1,3 +1,5 @@
+// @spec CRM-162 (docs/BACKLOG.md) tranche T2 — un bloc qui cite un channel d'un autre espace le nomme (décision 966) ;
+//       docs/SPEC-deplacement-track.md §13 ; docs/DESIGN_SYSTEM.md §5.112
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — les objectifs suivent l'espace courant de l'onglet, état intermédiaire jusqu'à T3 (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 1 : navigation, liste des
 //       tableaux, canevas rendu, flèches, équivalent textuel et ouverture du channel ;
@@ -2810,6 +2812,13 @@ function BlocCanevas({
 	const ouvrable = lienOuvrable(bloc)
 	const perdu = lienPerdu(bloc)
 	const destination = bloc.destination
+	// `CRM-162` (décision 966, docs/DESIGN_SYSTEM.md §5.112) : un channel déplacé dans un autre espace garde le lien du bloc,
+	// et la pilule nomme cet espace.
+	const { idWorkspace: idEspaceDuTableau } = useContexteEspace()
+	const autreEspace =
+		destination?.espace !== null && destination?.espace !== undefined && destination.espace.id !== idEspaceDuTableau
+			? destination.espace.nom
+			: null
 	const geometrie = geometrieDe(bloc)
 
 	const ancre = useRef<{
@@ -3029,6 +3038,11 @@ function BlocCanevas({
 							<span className="truncate">
 								{t('goals.block.pill', { track: destination.track.nom, channel: destination.nom })}
 							</span>
+							{autreEspace === null ? null : (
+								<span className="truncate text-[13px] text-text-2" data-testid="pilule-espace">
+									{t('goals.block.pill.espace', { espace: autreEspace })}
+								</span>
+							)}
 						</Link>
 					) : null}
 					{perdu ? (

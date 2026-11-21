@@ -1,3 +1,4 @@
+// @spec CRM-162 (docs/BACKLOG.md) tranche T2 — l'espace du channel d'un bloc (décision 966) ; docs/SPEC-deplacement-track.md §13
 // @spec CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 1 : lecture et composition
 // @spec docs/SPEC-goals.md §5.1 (liste des tableaux), §5.2 (canevas), §5.3 (flèches),
 //       §5.4 (états), §5.5 (accessibilité : liste textuelle équivalente)
@@ -50,6 +51,8 @@ export type DestinationBloc = {
 	readonly slug: string
 	readonly supprime: boolean
 	readonly track: { readonly nom: string; readonly slug: string; readonly supprime: boolean } | null
+	/** `CRM-162` (décision 966) : l'espace du channel — un channel déplacé vit dans un autre espace que le tableau. */
+	readonly espace: { readonly id: string; readonly nom: string } | null
 }
 
 /** Un bloc tel que le canevas le rend. */
@@ -123,7 +126,8 @@ export function ecritureConsentie(tableau: TableauCanevas | null): boolean {
  */
 export const COLONNES_BLOC =
 	'id, title, body, fill_percent, channel_id, pos_x, pos_y, width, height, color, ' +
-	'channels!goal_blocks_channel_id_fkey(id, name, slug, deleted_at, tracks(name, slug, deleted_at))'
+	'channels!goal_blocks_channel_id_fkey(id, name, slug, deleted_at, tracks(name, slug, deleted_at), ' +
+	'workspaces!channels_workspace_id_fkey(id, name))'
 
 export const COLONNES_FLECHE = 'id, source_block_id, target_block_id, direction, label'
 
@@ -140,6 +144,7 @@ type ChannelEmbarque = {
 	slug: string
 	deleted_at: string | null
 	tracks: { name: string; slug: string; deleted_at: string | null } | null
+	workspaces?: { id: string; name: string } | { id: string; name: string }[] | null
 }
 
 /**
@@ -152,6 +157,7 @@ export function destinationDepuisEmbarque(brut: unknown): DestinationBloc | null
 	const channel = (Array.isArray(brut) ? brut[0] : brut) as ChannelEmbarque | null | undefined
 	if (channel === null || channel === undefined) return null
 	const trackBrut = (Array.isArray(channel.tracks) ? channel.tracks[0] : channel.tracks) ?? null
+	const espaceBrut = (Array.isArray(channel.workspaces) ? channel.workspaces[0] : channel.workspaces) ?? null
 	return {
 		id: channel.id,
 		nom: channel.name,
@@ -161,6 +167,7 @@ export function destinationDepuisEmbarque(brut: unknown): DestinationBloc | null
 			trackBrut === null
 				? null
 				: { nom: trackBrut.name, slug: trackBrut.slug, supprime: trackBrut.deleted_at !== null },
+		espace: espaceBrut === null ? null : { id: espaceBrut.id, nom: espaceBrut.name },
 	}
 }
 

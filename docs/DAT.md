@@ -1288,6 +1288,11 @@ l'écran traduit alors le refus comme avant. Garde de source : `commandes-refuse
   passer le mail dans l'espace de l'affaire (`app.move_message_to_workspace`).
 - **La redirection d'une adresse de l'application** (décision 967, `CRM-161`) lit `track_moves` par
   `public.track_current_address`, sous la RLS du track.
+- **L'écran** (T2, *écrit le 2026-11-21*) : le bloc « Tracks » de la fiche d'un espace (`webapp/src/app/PlateformeTracks.tsx`)
+  lit `public.plateforme_tracks` (migration `0198`), puis l'aperçu, puis envoie `move_track` ; il ne calcule aucun droit
+  (`webapp/src/lib/deplacement-track.ts`) — la base tranche, et ses refus sont classés par un dictionnaire fermé. Le journal
+  de la plateforme et l'historique d'une affaire lisent les noms des deux espaces dans la ligne écrite, sans relire les
+  espaces.
 - **Compromis connus** : les référentiels créés à l'arrivée y restent après un retour ; un workflow commun non identique est
   copié sans ses versions publiées, ses modèles ni ses suggestions ; le geste verrouille le track, ses channels et ses
   affaires le temps de la transaction.

@@ -1525,6 +1525,23 @@ aucune variable, aucun secret**. Verrou bref sur les tables dont une contrainte 
 classement d'un mail entrant gagne la règle 1 bis, sans effet tant qu'aucun alias n'existe. **Avant ou avec la webapp de T2.**
 **Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0197` ».
 
+### 2.70 `CRM-162` T2 — l'écran du déplacement d'un track : Plateforme ▸ Espaces ▸ la fiche d'un espace (EN ATTENTE, avec le §2.69)
+
+`docs/SPEC-deplacement-track.md` §10, §13 ; `docs/DESIGN_SYSTEM.md` §5.112 ; `docs/SCHEMA.md` « Migration `0198` ». Une
+fonction nouvelle (`plateforme_tracks`), une reprise (`move_track`, qui écrit aussi les noms des deux espaces) ; la webapp.
+**Aucune donnée, aucune variable, aucun secret** ; l'image `mcp` n'est pas concernée (connecteur : non, décision 964).
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 198 | session de livraison, dans la fenêtre de la 197 (§3.1) | `./runProd.sh --migrate` ; **après la 197** |
+| 2 | Livrer la webapp | session de livraison | dans la même fenêtre : l'écran appelle `plateforme_tracks`, absente sans la 198 |
+| 3 | Constater | session de livraison, en lecture seule | le registre gagne une ligne, l'empreinte de la 198 égale celle du dépôt ; `select to_regprocedure('public.plateforme_tracks(uuid)') is not null` vrai ; la fiche d'un espace, sous le super-administrateur, montre le bloc « Tracks » ; **aucun déplacement n'est joué en production** pour constater |
+
+**Ce qui devient visible** : au seul super-administrateur, le bloc « Tracks » de la fiche d'un espace et sa commande
+« Déplacer vers un autre espace » ; le journal de la plateforme et l'historique d'une affaire savent dire un déplacement.
+Avec un seul espace en production, l'arrivée ne propose aucun choix. **Retour arrière** : la webapp précédente ; puis
+comme le dit `docs/SCHEMA.md` « Migration `0198` ».
+
 ## 3. Migrations en attente
 
 **La 195** (`CRM-161` T1, décisions 965 et 967), **en attente** : l'inbox d'un espace (§2.67, `docs/SCHEMA.md` « Migration `0195` »). Elle part avec la webapp, dans la même fenêtre.
@@ -1534,6 +1551,10 @@ classement d'un mail entrant gagne la règle 1 bis, sans effet tant qu'aucun ali
 **La 197** (`CRM-162` T1, décisions 964, 966, 968, 969 et 972), **en attente** : le déplacement d'un track entre espaces (§2.69,
 `docs/SCHEMA.md` « Migration `0197` »). **Après la 196.** Avant ou avec la webapp de `CRM-162` T2. Aucun geste préalable du
 responsable.
+
+**La 198** (`CRM-162` T2), **en attente** : l'écran du déplacement — la liste des tracks d'un espace pour le
+super-administrateur, les noms des espaces dans le journal (§2.70, `docs/SCHEMA.md` « Migration `0198` »). **Après la 197**,
+avec la webapp, dans la même fenêtre. Aucun geste préalable du responsable.
 
 **Aucune migration en attente depuis la fenêtre du 2026-11-21** : la 193 et la 194 ont été appliquées par elle (révision `dd9ac2c3`, décision 962) ; registre à **192** lignes. *Historique de l'attente* — les paragraphes qui suivent décrivent la 193 et la 194 telles qu'elles attendaient.
 
