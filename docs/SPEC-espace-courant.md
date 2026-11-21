@@ -464,8 +464,12 @@ reçoivent :
 | Formulaire d'une affaire (`FormulaireCard`) | `lireContactsDuCarnet` | celui de l'affaire |
 | Bloc « Contacts » d'une affaire (`BlocContactsCard`) | `lireContactsDuCarnet` | celui de l'affaire |
 | Réglages ▸ Modèles d'emails, l'aperçu | `lireContactsDuCarnet`, `lireAffairesPrevisualisation`, `lireIdentitesSortantes` | celui de l'écran |
+| Temps ▸ Saisie, les lignes de la grille (*ajoutée le 2026-11-21, vue sur une image du manuel*) | `lireArbreTemps` | celui des saisies (l'espace courant) — clés composites `(track_id, workspace_id)` |
+| Bloc « Relance automatique » d'une affaire (*idem*) | `lireSequences`, `lireIdentitesDisponibles` | celui de l'affaire |
 
-Le carnet (`Carnet`, page globale) garde sa lecture entière. **Preuves** : un unitaire par lecture (le filtre émis quand
+Le carnet (`Carnet`, page globale) garde sa lecture entière. **Limite connue** : le formulaire d'envoi (`FormulaireEnvoi`) lit encore les identités
+d'expédition de la personne dans tous ses espaces — il ne reçoit que l'affaire ; sans effet tant qu'une personne n'a
+d'identité que dans un espace (le cas du seed), il est repris avec T3. **Preuves** : un unitaire par lecture (le filtre émis quand
 l'espace est donné, aucun quand il est omis) ; `e2e/ui/formulaire-selecteurs.spec.ts` rouge avant (quatorze options sur une
 affaire du seed, deux de Lumen), vert après (douze) ; le bloc « Contacts » et l'aperçu, en unitaires d'écran.
 
