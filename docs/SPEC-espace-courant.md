@@ -397,6 +397,32 @@ les lignes des deux. Défaut **antérieur** à `CRM-161`, sans effet tant qu'il 
 sous-tranche **T2.c — les réglages ne lisent que l'espace de l'adresse**, avant T2.b (qui pose le second espace du seed) :
 chaque lecture de liste d'un réglage porte `workspace_id=eq.` ; preuve unitaire par écran et un E2E sur l'espace jetable.
 
+**Le détail de T2.c** (*écrit le 2026-11-21, avant son code*). Les lectures **de premier niveau** d'un écran de réglages — celles
+qui listent des objets de l'espace, et non les enfants d'un objet déjà désigné par son identifiant — prennent l'espace de
+l'écran (`idEspaceParmi`, §15.2) et portent `workspace_id=eq.` :
+
+| Module | Lecture | Écran |
+|---|---|---|
+| `etiquettes` | `lireEtiquettes` (option `idWorkspace`) | Réglages ▸ Étiquettes |
+| `administration-arborescence` | `lireTracksAdministrables` | Réglages ▸ Arborescence |
+| `administration-workflows` | `lireWorkflowsAdministrables`, `lireCatalogueActif`, `lireTracksAffectables` | Réglages ▸ Workflows |
+| `administration-catalogue` | `lireCatalogueAdministrable` | Réglages ▸ Catalogue |
+| `mail-comptes`, `mail-identites` | `lireComptesEntrants`, `lireIdentitesSortantes` | Réglages ▸ Boîtes, ▸ Identités |
+| `modeles-affaires` | `lireModeles` (option `idWorkspace`) | Réglages ▸ Modèles d'affaires |
+| `modeles-emails` | `lireModelesEmails` | Réglages ▸ Modèles d'emails |
+| `sequences-relance` | `lireSequences` | Réglages ▸ Séquences de relance |
+| `corbeille` | `lireCorbeille` | Réglages ▸ Corbeille |
+
+**Déjà filtrées** : catégories d'organisations, champs communs, coût du personnel, expéditeurs bloqués, journal d'audit,
+membres, pastilles des mails, prompts du connecteur, webhooks, consentement au résumé. **Hors de T2.c** : les préférences de
+notification (personnelles), le catalogue des pastilles lu par identifiant (`lireCataloguePastillesMail`, une table de
+correspondance), les lectures d'enfants par l'identifiant du parent.
+
+**Preuves** : un test unitaire par lecture (le filtre `workspace_id` est émis) ; un E2E (`e2e/ui/reglages-espace.spec.ts`) qui
+pose sous la clé de service un espace jetable dont Camille est administratrice, avec une étiquette et un track, et vérifie
+que Réglages ▸ Étiquettes et ▸ Arborescence de chaque espace ne montrent que les siens — **rouge avant**, la liste mêlant les
+deux espaces.
+
 ### 15.5 Les E2E de T2.a
 
 - Les `goto` vers une page d'un espace (436, dans 117 fichiers de `e2e/ui`, `e2e/manuel`, `e2e/mail`) sont révisés vers
