@@ -20622,7 +20622,9 @@ la redirection d'un track déplacé passe par `public.track_current_address` (§
 **À constater en production** (contrat §2.69 à §2.71) : sous le superadministrateur, le bloc « Tracks » de la fiche d'un espace,
 et sa commande ; le manuel §32.6 bis et ses images. Aucun déplacement n'y est joué.
 
-### CRM-163 — La passe des pastilles bloque la fonction `ia` : l'assistant et la passe suivante échouent à 10 s `[ ]`
+### CRM-163 — La passe des pastilles bloque la fonction `ia` : l'assistant et la passe suivante échouent à 10 s `[@]`
+
+*Prise en charge : f9 (152dd27d) depuis 2026-11-21 17:52 UTC — état avant : [ ]*
 
 **Origine** : défaut constaté le 2026-11-21 par la session de livraison en cherchant pourquoi la campagne bloquait (INC-364) ;
 arbitré le même jour (décision 973) : **une unité correctrice, dans le lot en cours** (CRM-161 T1+T2, CRM-162).
