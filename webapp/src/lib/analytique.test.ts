@@ -27,6 +27,7 @@ import {
 	previsionnel,
 	grouperParDevise,
 	replier,
+	dansLEspace,
 	restreindre,
 	tauxConversion,
 	type LigneEntonnoirLue,
@@ -73,6 +74,33 @@ const SEED: readonly LigneEntonnoirLue[] = [
 	ligne({ ...NOEUDS.livre, currency: 'EUR', affaires: 7, montant: 311000, montant_pondere: 311000 }),
 	ligne({ ...NOEUDS.perdu, currency: 'EUR', affaires: 1, montant: 31000, montant_pondere: 0 }),
 ]
+
+// @verifies CRM-161 (docs/BACKLOG.md) tranche T2.a — jusqu'à T3, le pilotage suit l'espace courant de l'onglet
+//           (docs/SPEC-espace-courant.md §15.2, décision 976)
+describe('dansLEspace — les lignes d’un espace, avant toute portée (CRM-161 T2.a, décision 976)', () => {
+	const lignes = [
+		ligne({ ...NOEUDS.prospection, workspace_id: 'w-seed', affaires: 13 }),
+		ligne({ ...NOEUDS.prospection, node_id: 'n1-lumen', workspace_id: 'w-lumen', affaires: 1 }),
+		ligne({ ...NOEUDS.relance, workspace_id: 'w-seed', affaires: 9 }),
+	]
+
+	it('ne rend que les lignes de l’espace donné : un seul « Prospection », celui du seed', () => {
+		expect(dansLEspace(lignes, 'w-seed').map((l) => [l.node_key, l.affaires])).toEqual([
+			['prospection', 13],
+			['relance', 9],
+		])
+	})
+
+	it('composé avec le repli, l’autre espace n’ajoute rien au nœud', () => {
+		const replies = replier(restreindre(dansLEspace(lignes, 'w-seed'), { type: 'workspace' }))
+		// Un seul nœud « Prospection » : celui de « Studio Lumen », de son propre catalogue, n'y est plus.
+		expect(replies.filter((n) => n.cle === 'prospection').map((n) => n.affaires)).toEqual([13])
+	})
+
+	it('sans espace mesuré (`null`), les lignes telles quelles', () => {
+		expect(dansLEspace(lignes, null)).toEqual(lignes)
+	})
+})
 
 describe('restreindre — les trois portées, par sommation (§5.2)', () => {
 	const lignes = [

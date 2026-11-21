@@ -44,6 +44,8 @@ function clientQuiRend(...reponses: Reponse[]): ClientCrm {
 	let rang = 0
 	const chaine = {
 		order: () => chaine,
+		// `CRM-161` T2.a (décision 976) : la liste lit l'espace courant (`eq('workspace_id', …)`).
+		eq: () => chaine,
 		then: (resoudre: (valeur: Reponse) => unknown) => {
 			const reponse = reponses[Math.min(rang, reponses.length - 1)]
 			rang += 1
@@ -185,7 +187,7 @@ describe('Carnet de contacts', () => {
 
 	it('rend des squelettes pendant la lecture, jamais un écran blanc — cas d du §10.6', () => {
 		const jamais = {
-			from: () => ({ select: () => ({ order: () => ({ then: () => new Promise(() => {}) }) }) }),
+			from: () => ({ select: () => ({ eq: () => ({ order: () => ({ then: () => new Promise(() => {}) }) }), order: () => ({ then: () => new Promise(() => {}) }) }) }),
 		} as unknown as ClientCrm
 		rendreCarnet(jamais)
 		expect(screen.getByLabelText(fr['state.loading.aria'])).toBeTruthy()
@@ -285,6 +287,8 @@ function clientCarnet(reponses: {
 							: reponses.contacts
 				const chaine = {
 					order: () => chaine,
+		// `CRM-161` T2.a (décision 976) : la liste lit l'espace courant (`eq('workspace_id', …)`).
+		eq: () => chaine,
 					then: (resoudre: (valeur: ReponseTable) => unknown) => Promise.resolve(reponse).then(resoudre),
 				}
 				return chaine

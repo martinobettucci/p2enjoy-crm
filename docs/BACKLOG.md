@@ -20530,10 +20530,11 @@ livraison (décision 830).
   - **ce que cette session n'a pas joué** : la campagne complète (décision 830).
   Reste la livraison : `docs/PROD_MIGRATIONS.md` §2.67 — la migration et la webapp **dans la même fenêtre**.
 - [ ] **T2 — L'adresse et le menu des espaces** (`docs/SPEC-espace-courant.md` §15 ; livrée avec T1 en un seul lot) :
-  - [@] **T2.a — l'adresse** : `/:slugEspace/` pour l'inbox, les tracks et channels, les réglages ; les slugs réservés ;
-    *Prise en charge : session 4891a451 (p2enjoy-crm-5f) depuis 2026-11-21 22:00 UTC — état avant : [P]*
-    **Écart constaté par la campagne (décision 976)** : `Carnet` (sa liste) et `Pilotage` (ses lignes) ne suivaient pas l'espace
-    courant de l'onglet que le §15.2 fixe jusqu'à T3.
+  - [P] **T2.a — l'adresse** : `/:slugEspace/` pour l'inbox, les tracks et channels, les réglages ; les slugs réservés ;
+    **Écart constaté par la campagne (décision 976), corrigé et vérifié le même jour** : `Carnet` (sa liste) et `Pilotage`
+    (ses lignes, restreintes à l'espace avant toute portée — `dansLEspace`) suivent l'espace courant de l'onglet, comme le §15.2
+    le fixe jusqu'à T3. Preuves : `contacts` et `pilotage` (S1 à S7) verts, leurs assertions inchangées — rouges dans la
+    campagne ; unitaires 6 244/6 244.
     l'espace courant tiré de l'adresse, ou de la mémoire vive de l'onglet sur une page globale ; les anciennes adresses
     redirigées ; la barre latérale et les écrans sur l'espace courant ; `chemins.ts` seul compositeur ; les `goto` révisés.
     **Implémentée et vérifiée en développement le 2026-11-21** (migration `0196`) : pgTAP `0183` rouge puis 7/7, pgTAP complet

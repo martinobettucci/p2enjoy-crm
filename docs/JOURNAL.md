@@ -41862,3 +41862,6 @@ courant de l'onglet jusqu'à T3 ; `ListeOrganisations` et `Objectifs` le font, m
 `Pilotage` choisit bien un espace pour son arbre de portées mais additionne, sous la portée « espace », les lignes de tous.
 **La décision** : appliquer le §15.2 tel qu'écrit — aucune règle nouvelle. Une révision des preuves à « onze plus deux »,
 essayée d'abord, contredisait la spécification : abandonnée. T3 rendra ces pages globales, l'espace de chaque ligne affiché.
+**Vérifications (décision 976)** : `e2e/ui/contacts.spec.ts` et `e2e/ui/pilotage.spec.ts` verts, assertions d'origine (rouges dans
+la campagne : treize contacts, sept lignes en euros) ; unitaire `dansLEspace` (un seul « Prospection », celui du seed) ; unitaires
+complets 6 244/6 244 ; les quatre `tsc`.

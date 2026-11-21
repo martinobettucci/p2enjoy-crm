@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — jusqu'à T3, la page suit l'espace courant de l'onglet
+//       (docs/SPEC-espace-courant.md §15.2 ; décision 976)
 // @spec CRM-066 (docs/BACKLOG.md) — analytique de conversion et prévisionnel pondéré,
 //       TRANCHE 2 b : le module qui lit l'agrégat et en dérive les deux grandeurs
 // @spec docs/SPEC-analytique.md §5.1 (les quatorze colonnes rendues, le grain, l'ordre),
@@ -117,6 +119,17 @@ function genreDe(valeur: string): GenreNoeud {
  * montant : il retire ce que la représentation flottante ajoute.
  */
 const auCentime = (valeur: number): number => Math.round(valeur * 100) / 100
+
+/**
+ * `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2, décision 976) : les lignes d'UN espace — jusqu'à T3, le pilotage suit
+ * l'espace courant de l'onglet. `null` (aucun espace mesuré) rend les lignes telles quelles : il n'y en a alors aucune.
+ */
+export function dansLEspace(
+	lignes: readonly LigneEntonnoirLue[],
+	idWorkspace: string | null,
+): readonly LigneEntonnoirLue[] {
+	return idWorkspace === null ? lignes : lignes.filter((ligne) => ligne.workspace_id === idWorkspace)
+}
 
 /**
  * Restreint les lignes à une portée — §5.2.

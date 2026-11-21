@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — jusqu'à T3, la page suit l'espace courant de l'onglet
+//       (docs/SPEC-espace-courant.md §15.2 ; décision 976)
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le carnet suit l'espace courant de l'onglet, état intermédiaire jusqu'à T3 (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T4 : « Exporter en CSV » le carnet, après « Nouveau contact » (docs/DESIGN_SYSTEM.md §5.76)
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T5 : « Importer un fichier » et son panneau, puis le carnet relu (docs/DESIGN_SYSTEM.md §5.77)
@@ -105,7 +107,8 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 		if (relectureDiscrete.current) relectureDiscrete.current = false
 		else setEtat(enChargement())
 		void (async () => {
-			const lu = await lireContactsDuCarnet(client)
+			// `CRM-161` T2.a (§15.2, décision 976) : jusqu'à T3, le carnet suit l'espace courant de l'onglet.
+			const lu = await lireContactsDuCarnet(client, idEspaceContexte ?? undefined)
 			if (rang !== courant.current) return
 			// La double garde est celle d'`EtatMessagerie` : la fonction de lecture ne rend jamais
 			// `chargement`, mais le type `EtatAsync` le porte structurellement, et seule cette
@@ -117,7 +120,7 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 			if (lu.statut !== 'pret') return
 			setEtat(pret(lu.donnees))
 		})()
-	}, [client, tentative])
+	}, [client, tentative, idEspaceContexte])
 
 	const reprendre = useCallback(() => setTentative((precedente) => precedente + 1), [])
 

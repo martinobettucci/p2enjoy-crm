@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — jusqu'à T3, la page suit l'espace courant de l'onglet
+//       (docs/SPEC-espace-courant.md §15.2 ; décision 976)
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le pilotage suit l'espace courant de l'onglet, état intermédiaire jusqu'à T3 (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-066 (docs/BACKLOG.md) — analytique de conversion et prévisionnel pondéré,
 //       TRANCHE 3 a : l'écran `/pilotage`, à portée workspace
@@ -59,6 +61,7 @@ import {
 	noeudsSansAffaire,
 	previsionnel,
 	replier,
+	dansLEspace,
 	restreindre,
 	tauxConversion,
 	type GenreNoeud,
@@ -291,7 +294,9 @@ export function Pilotage({ client = clientCrm }: ProprietesPilotage = {}) {
 	// taux et les deux compteurs d'absence sont calculés sur les lignes RESTREINTES, jamais sur les
 	// lignes lues : un prévisionnel d'espace de travail au-dessus d'un entonnoir de channel serait un
 	// écran qui ment sur ce qu'il montre.
-	const lignes = restreindre(etat.donnees, porteeAnalytique(portee, arbre))
+	// `CRM-161` T2.a (§15.2, décision 976) : l'espace d'abord, la portée ensuite — sans quoi la portée « espace » additionnait
+	// les lignes de tous les espaces de la personne.
+	const lignes = restreindre(dansLEspace(etat.donnees, idWorkspace), porteeAnalytique(portee, arbre))
 	const noeuds = replier(lignes)
 	const groupes = grouperParDevise(noeuds)
 	const previsions = previsionnel(lignes)
