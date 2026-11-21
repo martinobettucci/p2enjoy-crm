@@ -41638,3 +41638,17 @@ route globale (`contacts`, `aide`, `inbox`…) rendrait une adresse ambiguë.
 **Décision** : **validé** — la contrainte `workspaces_slug_not_reserved` (migration `0196`) et le refus `identifiant_reserve`
 de Plateforme ▸ Espaces restent tels que livrés en développement ; écarté : laisser tout slug et départager les adresses par
 l'ordre des routes.
+
+### décision 972 — `CRM-162` : un mail déjà présent à l'arrivée garde l'exemplaire d'arrivée ; « Studio Lumen » retrouvé par son adresse
+
+*2026-11-21, session 152dd27d (p2enjoy-crm-f9), arbitrage du responsable (`AskUserQuestion`), puis accord avec la session qui
+porte `CRM-161`, avant le code.*
+**Le problème** : la base n'admet qu'un exemplaire d'un mail par espace (`mail_messages_dedoublonnage`, l'espace et le
+`Message-ID`). Un mail d'une affaire déplacée peut exister déjà à l'arrivée — reçu aussi là-bas, en copie aux deux domaines.
+**Décision du responsable** : **garder l'exemplaire d'arrivée**. Il est classé dans l'affaire déplacée s'il n'est classé dans
+aucune affaire ; classé ailleurs, il y reste, et l'affaire déplacée ne le porte plus. L'exemplaire de départ est **retiré**,
+avec ses lignes propres (pastilles, lectures, transferts, pièces de ce message) ; l'aperçu liste ces mails. Écarté : refus et
+liste.
+**Le seed** (accord avec la session qui porte `CRM-161`) : « Studio Lumen » est créé par la fonction de la plateforme — qui
+tire son propre identifiant — et **retrouvé par son adresse** `studio-lumen` ; l'identifiant figé est abandonné, et les preuves
+visent l'adresse. La première des deux sections du seed poussée (§54 ou §55) le crée, de façon idempotente ; l'autre l'enrichit.

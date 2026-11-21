@@ -3394,10 +3394,11 @@ répond à un envoi d'une personne : ils ne montrent que la règle (ii).
 §55.* Le seed n'a eu qu'un espace jusque-là (`CRM-005`) ; le déplacement d'un track et le cloisonnement (`CRM-161`) en exigent
 un second.
 
-- **L'espace** : « Studio Lumen », adresse `studio-lumen`, identifiant `5eed0000-0000-4000-8000-000000002001` — il trie après
-  « P2Enjoy SAS », l'espace par défaut ne change pas ; **créé par la fonction de la plateforme**, sous le jeton du
-  super-administrateur du seed, comme l'écran Plateforme ▸ Espaces ; `admin@p2enjoy.test` en est l'administratrice ; le
-  créateur de l'espace (§54 ou §55, le premier poussé) le crée, l'autre l'enrichit.
+- **L'espace** : « Studio Lumen », adresse `studio-lumen` — il trie après « P2Enjoy SAS », l'espace par défaut ne change pas ;
+  **créé par la fonction de la plateforme** (`plateforme_creer_espace`, qui tire son identifiant), sous le jeton du
+  super-administrateur du seed, comme l'écran Plateforme ▸ Espaces, puis **retrouvé par son adresse** — aucun identifiant figé
+  (décision 972) ; `admin@p2enjoy.test` en est l'administratrice ; la première section poussée (§54 ou §55) le crée, de
+  façon idempotente, l'autre l'enrichit.
 - **Ses homonymes**, posés sous le jeton de l'administratrice par les vrais chemins : l'étiquette « Secteur public » ; le champ
   commun du même nom et du même type qu'un champ du premier espace, et un autre du même nom et d'un type différent ; un contact
   de même e-mail qu'un contact du premier espace ; une organisation de même domaine. Le reste n'a **pas** d'homonyme.

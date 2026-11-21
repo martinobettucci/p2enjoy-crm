@@ -50,7 +50,7 @@ réécrites selon §7.
 | `saisies_temps` | les temps saisis sur le track, ses channels et ses affaires | valorisés à l'arrivée (§9) |
 | `saved_views` | les vues enregistrées des channels | |
 | `webhook_endpoints`, `webhook_deliveries` | les webhooks limités à un channel déplacé, et leur historique | décision 968 ; un webhook de « tout l'espace » reste |
-| `mail_messages` | les mails classés dans les affaires déplacées | |
+| `mail_messages` | les mails classés dans les affaires déplacées | **un mail déjà présent à l'arrivée** (même `Message-ID`, décision 972) : l'exemplaire d'arrivée est gardé et classé dans l'affaire s'il n'est classé nulle part ; l'exemplaire de départ est retiré avec ses lignes propres ; l'aperçu les liste |
 | `mail_message_labels`, `mail_label_evaluations` | leurs pastilles et leur évaluation | `label_id` réécrit (§7.1) |
 | `mail_message_transfers`, `mail_trash_moves` | leurs transferts, leurs déplacements en corbeille | |
 | `mail_thread_snoozes` | le sommeil de leurs fils | la clé du fil ne change pas |
@@ -119,6 +119,8 @@ Un compte supprimé (référence nulle) ne compte pas.
   organisations, pastilles, séquences), deux listes — **réutilisés** (le nom au départ, le nom à l'arrivée) et **créés** ;
 - `costs` : la valeur des temps déplacés au coût du personnel du départ, puis de l'arrivée, l'écart, et les **personnes sans
   coût défini** à l'arrivée (une liste, pas un refus — décision 966) ;
+- `duplicates` : les mails déjà présents à l'arrivée (objet, date, l'affaire où l'exemplaire d'arrivée est classé, ou aucune),
+  et ce que le déplacement en fera (décision 972) ;
 - `addresses` : le domaine d'arrivée, et le nombre d'adresses d'affaires qui y prendront leur nouvelle forme ; **sans domaine
   à l'arrivée**, une mention, pas un refus : les affaires n'y auront d'adresse qu'une fois le domaine réglé, et l'ancienne
   continue d'aboutir (§8) ;
@@ -257,9 +259,9 @@ L'apparence : `docs/DESIGN_SYSTEM.md` §5.112.
 ## 14. Le seed
 
 Un **second espace** de démonstration, *accordé avec la session qui porte `CRM-161`*, qui l'enrichit pour le cloisonnement
-dans sa propre section : **« Studio Lumen »**, adresse `studio-lumen`, identifiant `5eed0000-0000-4000-8000-000000002001`
-(il trie après « P2Enjoy SAS » : l'espace par défaut ne change pas), **l'administratrice du seed** (`admin@p2enjoy.test`)
-administratrice des deux. Il est **créé par le §54 de `docs/SPEC-seed.md`** (cette unité), avec ses **homonymes** — une
+dans sa propre section : **« Studio Lumen »**, adresse `studio-lumen` — créé par la fonction de la plateforme et retrouvé par son adresse, sans
+identifiant figé (décision 972) ; il trie après « P2Enjoy SAS » : l'espace par défaut ne change pas —, **l'administratrice
+du seed** (`admin@p2enjoy.test`) administratrice des deux. Il est **créé par le §54 de `docs/SPEC-seed.md`** (cette unité), avec ses **homonymes** — une
 étiquette, un champ commun du même type, un autre d'un type différent, un contact par son e-mail, une organisation par son
 domaine — et sans homonyme pour le reste, pour que l'aperçu d'un track du seed montre les deux listes, et un refus.
 **Aucun déplacement n'est joué par le seed** : il reste un geste à démontrer. Tant que `CRM-161` n'est pas livrée, la barre
