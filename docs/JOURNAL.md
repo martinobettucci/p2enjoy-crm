@@ -41723,3 +41723,13 @@ et l'aperçu d'un déplacement lui nomment des tracks, des affaires, des personn
 des temps. Le comportement ne change pas ; le §32.1 et le DAT disent désormais l'exception. Soumis au responsable avec le
 compte rendu de l'unité.
 **Vérifications** : seed rejoué deux fois, sans doublon ; E2E `deplacement-track` 8/8 ; images du manuel observées.
+
+### décision 973 — `CRM-163` : la passe des pastilles ne doit plus bloquer la fonction `ia` ; corrigée dans le lot en cours
+
+*2026-11-21, session 4522fa9c (p2enjoy-crm-d5, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le problème** : en cherchant pourquoi la campagne du lot `CRM-161` T1+T2 et `CRM-162` bloquait (INC-364, le seed qui laissait
+la passe viser le serveur réel), la session a mesuré que la fonction `ia` traite un appel à la fois : une passe des pastilles
+longue fait échouer à 10 s l'assistant et la passe suivante — 11 échecs en 20 h en production.
+**Décisions** : **une unité correctrice, `CRM-163`, dans ce lot** — la campagne l'attend ; écartés : après ce lot ; ne rien faire.
+**Connecteur MCP** — question 1 : **non** ; question 2 : sans objet.
+**Conséquence** : le lot en cours devient `CRM-161` T1+T2, `CRM-162`, INC-364 (le seed) et `CRM-163`.

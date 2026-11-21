@@ -20621,3 +20621,27 @@ la redirection d'un track déplacé passe par `public.track_current_address` (§
   Vertigo Conseil ; contrat §2.71).
 **À constater en production** (contrat §2.69 à §2.71) : sous le superadministrateur, le bloc « Tracks » de la fiche d'un espace,
 et sa commande ; le manuel §32.6 bis et ses images. Aucun déplacement n'y est joué.
+
+### CRM-163 — La passe des pastilles bloque la fonction `ia` : l'assistant et la passe suivante échouent à 10 s `[ ]`
+
+**Origine** : défaut constaté le 2026-11-21 par la session de livraison en cherchant pourquoi la campagne bloquait (INC-364) ;
+arbitré le même jour (décision 973) : **une unité correctrice, dans le lot en cours** (CRM-161 T1+T2, CRM-162).
+**Le défaut** : la fonction `ia` ne traite qu'un appel à la fois. Pendant une passe des pastilles (`POST /ia/pastilles/evaluer`,
+déclenchée chaque minute par `pg_cron`), tout autre appel à `ia` échoue au bout de 10 s (`edge_request_failed`, `502
+function_unavailable`, `supabase/functions/main/index.ts`). **Mesuré** :
+- en production, en lecture seule : **11 échecs** d'appels à `ia` en 20 h depuis la clé valide du 2026-11-20 ; des passes de
+  30 s, et jusqu'à ~120 s pendant le rattrapage, quand la tâche suivante tombe sur la précédente ; tout appel de l'assistant
+  lancé pendant une passe échoue de même ;
+- en développement : `GET /functions/v1/ia/etat` rend 502 en 10,0 s tant qu'une passe de 119 s tourne, et répond dès qu'elle
+  finit.
+**Comportement attendu** : une passe des pastilles **ne doit jamais empêcher l'assistant de répondre**, ni une passe chevaucher la
+suivante. La voie (passes courtes et bornées dans le temps, exclusion d'une passe en cours, exécution séparée de l'assistant, ou
+autre) est l'objet de la spécification, qui mesure d'abord la concurrence réelle du runtime ; toute solution qui change ce que
+voit l'utilisateur est soumise au responsable.
+**Connecteur MCP** : **non** (décision 973) — correctif interne de la fonction `ia`.
+**Spécification** : à écrire avant le code — `docs/SPEC-ia.md` (la passe, la concurrence), `docs/SPEC-mail-subsystem.md` §31.5,
+`docs/SPEC-edge-functions.md` si le routeur change, le contrat.
+**DoD** (`CLAUDE.md` §18) : une preuve rouge avant (un appel à `ia` pendant une passe longue échoue), verte après ; la passe
+qui ne chevauche pas la suivante ; Vitest, API ; le contrat (fonction `functions` à recréer en production) ; constat en
+production : aucun `edge_request_failed` de `ia` sur une journée. La campagne complète revient à la session de livraison
+(décision 830).
