@@ -9328,7 +9328,7 @@ spécification de `CRM-160`.*
 rattachements non archivés**. `docs/SPEC-mail-subsystem.md` §27.7.2 l'écrit, et l'unité est corrigée.
 
 ### INC-364 — le secret du simulateur des pastilles n'est posé qu'au §46 du seed : avant lui, la passe vise le serveur réel
-**Ouverte le 2026-11-21.** *Relevée par la session de livraison (p2enjoy-crm-d5) pendant la campagne du lot `CRM-161` T1 et
+**Ouverte et close le 2026-11-21.** *Relevée par la session de livraison (p2enjoy-crm-d5) pendant la campagne du lot `CRM-161` T1 et
 T2 et `CRM-162` ; confiée à la session d5b44a2d (p2enjoy-crm-6e).*
 
 **Le constat.** `./resetMe.sh --yes` à `c2670b30` échoue trois fois de suite au §8 *octodecies* : « le simulateur de
@@ -9347,5 +9347,15 @@ passe **sans** l'en-tête, et la fonction vise le serveur réel de `OLLAMA_HOST`
 après la vérification que l'API répond et avant la première section qui puisse créer un mail. Le §46 ne le crée plus : il
 vérifie qu'il est là. Le développement ne vise donc jamais le serveur réel. La clé de `.env` n'est pas touchée.
 
-**Hors de cette correction**, soumis au responsable par la session de livraison : en production, la même passe longue fait
-échouer à 10 s les autres appels à `ia` (11 échecs en 20 h).
+**La preuve rouge**, gardée par la session de livraison (qui l'a mesurée) : à `c2670b30`, seed d'origine, **trois**
+`./resetMe.sh --yes` arrêtés au §8 *octodecies*, « raison lue : « » », `ia/etat` en 502 à 10,0 s. Au moment de l'échec : 8
+mails en base, le secret `p2enjoy-pastilles-simulateur` absent ; journal de `functions` : `passe_pastilles`,
+`simulee:false`, 119 s.
+
+**Hors de cette correction** : en production, la même passe longue fait échouer à 10 s les autres appels à `ia` (11 échecs
+en 20 h). Le responsable fait entrer ce correctif dans le même lot ; la session de livraison l'ouvre en `CRM-163`.
+
+**La preuve verte** (session 6e, avec la pile de dev cédée par la session de livraison) : deux `./resetMe.sh --yes`
+**de suite**, avec le correctif, à `8dc60ef1` : code 0 les deux fois, de 17:51 à 17:55 puis de 17:55 à 17:59 UTC. Le §8
+*octodecies* passe. Toutes les passes des pastilles du journal de `functions` visent le simulateur : 8, puis 7, toutes
+`simulee:true`, en quelques dizaines de millisecondes ; aucune `simulee:false`. La clé de `.env` n'a pas été touchée.

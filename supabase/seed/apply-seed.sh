@@ -119,6 +119,23 @@ if ! curl -sf -o /dev/null "$API/rest/v1/" \
 	die "l'API ne répond pas sur $API. Lancez ./runDev.sh, puis relancez le seed."
 fi
 
+# --- Le simulateur des pastilles, AVANT TOUT MAIL — INC-364, CRM-141 (docs/SPEC-seed.md §46 révisé) ---------------------
+# @spec CRM-141 (docs/BACKLOG.md), correctif INC-364 — le secret de développement `p2enjoy-pastilles-simulateur` fait porter
+#       `x-ia-simulateur: pastilles` à l'appel de `pg_cron` (migration `0184`, `app.pastilles_reveiller`). Il est posé ICI,
+#       en tête : chaque mail reçu entre dans la file des pastilles dès sa relève (§2.19), et la tâche tourne chaque minute.
+#       Posé plus tard (au §46, jusqu'au 2026-11-21), il laissait les premières passes viser le serveur réel de
+#       `OLLAMA_HOST`, deux minutes chacune, et les autres appels à `ia` échouaient à 10 s (docs/INCONSISTENCY_REPORT.md
+#       INC-364). La clé de `.env` n'est jamais lue ni touchée ici.
+docker exec -i "$(conteneur db)" psql -U postgres -d postgres -qtA -v ON_ERROR_STOP=1 -c "do \$\$ begin
+	if not exists (select 1 from vault.secrets where name = 'p2enjoy-pastilles-simulateur') then
+		perform vault.create_secret('pastilles', 'p2enjoy-pastilles-simulateur',
+			'Développement seulement : la passe des pastilles vise le simulateur (CRM-141, docs/SPEC-mail-subsystem.md §31.5)');
+	end if;
+end \$\$;" >/dev/null || die "le secret du simulateur des pastilles n'a pas pu être posé : la migration 0184 est-elle appliquée ?"
+[ "$(docker exec -i "$(conteneur db)" psql -U postgres -d postgres -qtA -c \
+	"select decrypted_secret from vault.decrypted_secrets where name = 'p2enjoy-pastilles-simulateur'")" = pastilles ] \
+	|| die "le secret du simulateur des pastilles ne vaut pas « pastilles » : la passe viserait le serveur réel (INC-364)."
+
 # --- Contrat du seed — docs/SPEC-seed.md §2 ----------------------------------------------------
 # Toute valeur ci-dessous est le contrat opposable au code. Elle ne se déduit d'aucune exécution :
 # elle est écrite ici et dans `docs/SPEC-seed.md`, et `scripts/verify-seed.sh` la vérifie.
@@ -6648,8 +6665,8 @@ info "Réponse à « $OBJET_ENVOI_SEED », adressée à la seule adresse de Vert
 #       scénario `panne` fait échouer cinq fois (docs/SPEC-mail-subsystem.md §31.9 ; docs/SPEC-seed.md §46 ; CLAUDE.md §8)
 #
 # LE SIMULATEUR, ET JAMAIS LE SERVEUR RÉEL : le secret de développement `p2enjoy-pastilles-simulateur` fait porter à
-# l'appel de `pg_cron` l'en-tête `x-ia-simulateur: pastilles` (migration `0184`). Il est posé ICI, avant toute passe : sans
-# lui, la cadence viserait le serveur de LeLabs que `OLLAMA_HOST` désigne en développement.
+# l'appel de `pg_cron` l'en-tête `x-ia-simulateur: pastilles` (migration `0184`). RÉVISÉ par INC-364 : il est posé EN TÊTE
+# du seed, avant tout mail ; cette section vérifie seulement qu'il est là.
 # AUCUNE LIGNE `llm` N'EST ÉCRITE À LA MAIN : la base inscrit chaque mail reçu dans la file, la passe l'évalue.
 # L'ÉCHEC EST PRODUIT, PAS FABRIQUÉ : cinq passes réelles contre le scénario `panne`. Seule l'attente de l'espacement est
 # abrégée — `next_attempt_at` ramené à maintenant entre deux passes —, faute de quoi le seed attendrait plus de deux heures.
@@ -6657,12 +6674,8 @@ info "Réponse à « $OBJET_ENVOI_SEED », adressée à la seule adresse de Vert
 # déjà en échec n'est pas rejoué.
 echo
 say "8 quatertricies. Pastilles des mails"
-psql_seed -c "do \$\$ begin
-	if not exists (select 1 from vault.secrets where name = 'p2enjoy-pastilles-simulateur') then
-		perform vault.create_secret('pastilles', 'p2enjoy-pastilles-simulateur',
-			'Développement seulement : la passe des pastilles vise le simulateur (CRM-141, docs/SPEC-mail-subsystem.md §31.5)');
-	end if;
-end \$\$;" >/dev/null
+[ "$(psql_seed -c "select decrypted_secret from vault.decrypted_secrets where name = 'p2enjoy-pastilles-simulateur'")" = pastilles ] \
+	|| die "le secret du simulateur des pastilles manque : il est posé en tête du seed (INC-364)."
 SECRET_PASTILLES=$(psql_seed -c "select decrypted_secret from vault.decrypted_secrets where name = 'p2enjoy-pastilles-dispatch'")
 [ -n "$SECRET_PASTILLES" ] || die "le secret d'appel des pastilles est absent : la migration 0184 est-elle appliquée ?"
 passe_pastilles() { # $1 = scénario du simulateur ; rend le bilan de la passe
