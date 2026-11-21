@@ -2251,13 +2251,14 @@ export function AdministrationWorkflows({
 	useEffect(() => {
 		if (client === null) return
 		let vivant = true
-		void lireSuggestionsEnRevue(client).then((lues) => {
+		// `CRM-161` T2.c (décision 974) : celles de l'espace de l'écran — la page ne se monte qu'une fois les espaces lus.
+		void lireSuggestionsEnRevue(client, espaceCourant ?? undefined).then((lues) => {
 			if (vivant) setSuggestionsIa(lues)
 		})
 		return () => {
 			vivant = false
 		}
-	}, [client, tentative, tentativeIa])
+	}, [client, tentative, tentativeIa, espaceCourant])
 
 	// Les suggestions qui font évoluer le workflow choisi — `CRM-097` T3 : relues avec lui, et par `tentativeIa`.
 	useEffect(() => {

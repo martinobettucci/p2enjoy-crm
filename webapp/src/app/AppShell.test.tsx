@@ -1,6 +1,8 @@
 // @verifies CRM-007 (docs/BACKLOG.md) — coquille : points de repère, états, préférences
 // @verifies docs/DESIGN_SYSTEM.md §4 (architecture), §5.8 (états), §8 (accessibilité)
 // @verifies docs/SPEC-webapp.md §5.1 (coquille), §7 (états), §9 (accessibilité), §11 (stockage)
+// @verifies CRM-161 (docs/BACKLOG.md) tranche T2.c — la page ne se monte qu'une fois les espaces lus, avec l'espace connu ;
+//           un squelette entre-temps (docs/SPEC-espace-courant.md §15.4 bis, décision 974 ; docs/DESIGN_SYSTEM.md §5.8)
 // @verifies INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : la coquille relit ses tracks au signal
 //           `p2enjoy:tracks-modifies`, sans squelette ni remontage de la page ; docs/DESIGN_SYSTEM.md §5.13
 //
@@ -8,12 +10,14 @@
 // existe : un test qui n'interrogerait que des classes CSS validerait une apparence sans rien
 // dire de l'utilisabilité.
 
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
+import { useEffect, useState } from 'react'
 import type { ClientCrm } from '../lib/supabase'
 import { EVENEMENT_TRACKS_MODIFIES, type Track } from '../lib/tracks'
 import type { Workspace } from '../lib/workspaces'
+import { useContexteEspace } from './ContexteEspace'
 
 const injecte = vi.hoisted(() => ({ client: null as ClientCrm | null }))
 
@@ -269,3 +273,52 @@ describe('INC-254 — la barre latérale suit les écritures de l’arborescence
 	})
 })
 
+describe('la page attend les espaces (CRM-161 T2.c, décision 974)', () => {
+	/** Une page qui note l'espace qu'elle voit À SON MONTAGE : c'est là que ses lectures partent. */
+	function PageQuiLit({ montages }: { readonly montages: (string | null)[] }) {
+		const { idWorkspace } = useContexteEspace()
+		const [vu] = useState(idWorkspace)
+		useEffect(() => {
+			montages.push(vu)
+		}, [montages, vu])
+		return <p>{'page montée'}</p>
+	}
+
+	it('pendant la lecture des espaces : un squelette, et la page n’est pas montée ; ensuite, une fois, avec l’espace', async () => {
+		let livrer: (reponse: Reponse) => void = () => undefined
+		const enAttente = new Promise<Reponse>((resoudre) => {
+			livrer = resoudre
+		})
+		const chaineEspaces = {
+			eq: () => chaineEspaces,
+			is: () => chaineEspaces,
+			order: () => chaineEspaces,
+			then: (resoudre: (valeur: Reponse) => unknown) => enAttente.then(resoudre),
+		}
+		const parDefaut = client([VIDE])
+		injecte.client = {
+			from: (table: string) => (table === 'workspaces' ? { select: () => chaineEspaces } : parDefaut.from(table as never)),
+		} as unknown as ClientCrm
+		const montages: (string | null)[] = []
+		render(
+			<MemoryRouter>
+				<AppShell cleTitreRoute="route.board.title">
+					<PageQuiLit montages={montages} />
+				</AppShell>
+			</MemoryRouter>,
+		)
+
+		const principal = screen.getByRole('main')
+		expect(within(principal).getByLabelText('Chargement en cours')).toBeTruthy()
+		expect(screen.queryByText('page montée')).toBeNull()
+		expect(montages).toEqual([])
+
+		await act(async () => {
+			livrer(UNE_LIGNE)
+			await enAttente
+		})
+		await waitFor(() => expect(screen.getByText('page montée')).toBeTruthy())
+		expect(montages).toEqual(['w-1'])
+		expect(within(principal).queryByLabelText('Chargement en cours')).toBeNull()
+	})
+})

@@ -1,11 +1,12 @@
 // @verifies CRM-161 (docs/BACKLOG.md) — tranche T2.c : chaque lecture de premier niveau d'un écran de réglages émet le filtre
 //           `workspace_id=eq.<espace>` quand l'espace est donné, et aucun quand il est omis
-// @verifies docs/SPEC-espace-courant.md §15.4 bis
+// @verifies docs/SPEC-espace-courant.md §15.4 bis ; docs/JOURNAL.md décision 974 (les suggestions de l'IA en revue)
 
 import { describe, expect, it } from 'vitest'
 import { lireTracksAdministrables } from './administration-arborescence'
 import { lireCatalogueAdministrable } from './administration-catalogue'
 import { lireCatalogueActif, lireTracksAffectables, lireWorkflowsAdministrables } from './administration-workflows'
+import { lireSuggestionsEnRevue } from './assistant-ia'
 import { lireCorbeille } from './corbeille'
 import { lireEtiquettes } from './etiquettes'
 import { lireComptesEntrants } from './mail-comptes'
@@ -42,6 +43,8 @@ const LECTURES: readonly [string, (c: ClientCrm, w?: string) => Promise<unknown>
 	['lireEtiquettes', (c, w) => lireEtiquettes(c, w === undefined ? {} : { idWorkspace: w })],
 	['lireModeles', (c, w) => lireModeles(c, w === undefined ? {} : { idWorkspace: w })],
 	['lireCorbeille', (c, w) => lireCorbeille(c, w)],
+	// Décision 974 : la lecture de premier niveau de Réglages ▸ Workflows que le tableau de T2.c avait omise.
+	['lireSuggestionsEnRevue', (c, w) => lireSuggestionsEnRevue(c, w)],
 ]
 
 describe('les réglages ne lisent que l’espace de l’écran (§15.4 bis)', () => {

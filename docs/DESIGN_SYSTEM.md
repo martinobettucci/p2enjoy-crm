@@ -954,6 +954,10 @@ Toute vue traite explicitement : chargement (squelettes, pas de spinner plein é
 (message et action), erreur (message compréhensible et action de reprise), et absence de droit
 (explication, pas une page blanche).
 
+*`CRM-161` T2.c, décision 974.* **La coquille fait attendre la page tant qu'elle lit les espaces** : la zone principale rend
+alors un squelette de liste (`SkeletonListe`, six lignes, « Chargement en cours »), à côté des squelettes du fil d'Ariane et
+des tracks de la barre ; la page se monte ensuite, l'espace connu. Une page montée avant lisait sans espace.
+
 ### 5.9 Tableau de données — `CRM-042`
 
 Premier tableau du produit, livré par la vue liste d'un channel. Le §4 l'annonçait — « board kanban

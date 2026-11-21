@@ -406,6 +406,7 @@ l'écran (`idEspaceParmi`, §15.2) et portent `workspace_id=eq.` :
 | `etiquettes` | `lireEtiquettes` (option `idWorkspace`) | Réglages ▸ Étiquettes |
 | `administration-arborescence` | `lireTracksAdministrables` | Réglages ▸ Arborescence |
 | `administration-workflows` | `lireWorkflowsAdministrables`, `lireCatalogueActif`, `lireTracksAffectables` | Réglages ▸ Workflows |
+| `assistant-ia` | `lireSuggestionsEnRevue` (*ajoutée par la décision 974 : omise du tableau, trouvée sur la capture de la preuve*) | Réglages ▸ Workflows |
 | `administration-catalogue` | `lireCatalogueAdministrable` | Réglages ▸ Catalogue |
 | `mail-comptes`, `mail-identites` | `lireComptesEntrants`, `lireIdentitesSortantes` | Réglages ▸ Boîtes, ▸ Identités |
 | `modeles-affaires` | `lireModeles` (option `idWorkspace`) | Réglages ▸ Modèles d'affaires |

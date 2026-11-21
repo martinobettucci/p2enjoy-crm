@@ -89,11 +89,14 @@ export function generationEnVol(suggestion: Pick<SuggestionEnRevue, 'generation_
 // ---------------------------------------------------------------------------------------------
 
 /** Les suggestions de création de workflow encore en revue, les plus récentes d'abord (§12.5). */
-export async function lireSuggestionsEnRevue(client: ClientCrm): Promise<EtatAsync<readonly SuggestionEnRevue[]>> {
+export async function lireSuggestionsEnRevue(
+	client: ClientCrm,
+	/** `CRM-161` T2.c (docs/SPEC-espace-courant.md §15.4 bis, décision 974) : celles de cet espace seul ; omis, tout ce que la RLS rend. */
+	idWorkspace?: string,
+): Promise<EtatAsync<readonly SuggestionEnRevue[]>> {
 	try {
-		const reponse = await client
-			.from('suggestions_ia')
-			.select(COLONNES_EN_REVUE)
+		const toutes = client.from('suggestions_ia').select(COLONNES_EN_REVUE)
+		const reponse = await (idWorkspace === undefined ? toutes : toutes.eq('workspace_id', idWorkspace))
 			.eq('statut', 'en_revue')
 			.is('workflow_id', null)
 			.order('created_at', { ascending: false })

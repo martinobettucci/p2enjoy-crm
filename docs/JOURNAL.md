@@ -41830,3 +41830,10 @@ les espaces lus**, un squelette entre-temps — une règle en un seul lieu, qui 
 d'espace : à chaque montage, l'espace est connu.
 **Les conséquences** : la première page d'un onglet attend la lecture des espaces (une requête), sous un squelette ; les
 suivantes non, la coquille restant montée. `docs/SPEC-espace-courant.md` §15.4 bis ; T2.c repasse `[~]` le temps du correctif.
+**Vérifications (décision 974)** : `e2e/ui/reglages-espace.spec.ts` — le cas Workflows rouge sur le code d'avant (« Atelier de
+la sonde 161 » choisi sur la page du seed), vert après ; la suggestion posée dans la sonde visible sur la page du seed sans le
+filtre (`lireSuggestionsEnRevue`, omise du tableau de T2.c, trouvée sur la capture de la preuve), absente après ; l'attente
+sous squelette observée en retenant la lecture des espaces (capture `coquille-attente-espaces-1440`) : 4/4. Unitaire de la
+coquille rouge sans le correctif, vert avec ; unitaires complets ; les quatre `tsc`. Specs d'écran que le défaut expliquait,
+vertes en sous-ensemble : `workflow-entete-changement`, `description-etapes`, `assistant-ia-modification` (quatre paliers),
+`mentions-composeur`, `seulement-moi`, `menu-espaces`.

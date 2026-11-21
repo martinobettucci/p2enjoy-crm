@@ -51,7 +51,10 @@ d'exécuter le code attendu.
   peut plus prendre pour nom court un mot que l'application emploie dans ses adresses (migration `0196`). Contrat §2.68.
 - **`CRM-161` T2.c — les réglages d'un espace ne montrent que lui.** Étiquettes, arborescence, workflows, catalogue, boîtes,
   identités, modèles d'affaires et d'emails, séquences de relance et corbeille ne listaient pas que l'espace ouvert : un
-  membre de plusieurs espaces y voyait les éléments de tous. Changer d'espace recharge la page entière.
+  membre de plusieurs espaces y voyait les éléments de tous. Changer d'espace recharge la page entière. Aussi les
+  suggestions de l'IA en revue, dans Réglages ▸ Workflows. À l'ouverture d'un onglet, la page attend que les espaces soient
+  lus, sous un squelette : elle s'affichait avant, et Réglages ▸ Workflows pouvait alors ouvrir le workflow par défaut d'un
+  autre espace.
 - **`CRM-161` T2.b — le menu des espaces.** Pour qui est membre de plusieurs espaces, le premier niveau du fil d'Ariane
   devient un menu : l'espace ouvert coché, les messages non lus de chaque espace, un point bleu quand un autre espace en a.
   Choisir un espace mène à la même page dans l'autre espace (l'inbox depuis une affaire ou un track) ; le changement est

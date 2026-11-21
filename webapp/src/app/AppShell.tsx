@@ -3,6 +3,8 @@
 // @spec CRM-007 (docs/BACKLOG.md) — coquille de l'application
 // @spec docs/DESIGN_SYSTEM.md §4 (architecture des écrans), §5.8 (états), §7, §8
 // @spec docs/SPEC-webapp.md §5.1 (coquille), §7 (états), §9 (accessibilité), §11 (stockage)
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — la page ne se monte qu'une fois les espaces lus, sous un squelette
+//       (docs/SPEC-espace-courant.md §15.4 bis, décision 974 ; docs/DESIGN_SYSTEM.md §5.8)
 // @spec CRM-157 (docs/BACKLOG.md) tranche T3 — `espaceLu` : le guide n'affirme rien de la messagerie tant que les espaces se
 //       lisent (docs/SPEC-onboarding.md §11.1)
 // @spec CRM-154 (docs/BACKLOG.md) tranche T4 — l'identifiant du track ouvert et la relecture, passés à la barre d'onglets
@@ -32,6 +34,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type React
 import { Link, useParams } from 'react-router'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import { SkipLink } from '../components/ui/SkipLink'
+import { SkeletonListe } from '../components/ui/Skeleton'
 import { EtatConfiguration, EtatErreur, EtatRefus } from '../components/ui/States'
 import { t, type CleTraduction } from '../i18n'
 import type { EtatAsync } from '../lib/async'
@@ -261,6 +264,7 @@ export function AppShell({
 							<EspaceIntrouvable premier={espaceChoisi.premier?.slug ?? null} />
 						) : (
 						<ZonePrincipale
+							espacesLus={espaceLu}
 							etats={
 								etatChannels === undefined
 									? [etat, etatTracks]
@@ -296,10 +300,13 @@ export function AppShell({
  * donc la zone principale, et la reprise les relance **tous**.
  */
 function ZonePrincipale({
+	espacesLus,
 	etats,
 	recharger,
 	contenu,
 }: {
+	/** `CRM-161` T2.c (décision 974) : faux tant que la coquille lit les espaces — la page attend alors. */
+	readonly espacesLus: boolean
 	readonly etats: readonly EtatAsync<unknown>[]
 	readonly recharger: () => void
 	readonly contenu: ReactNode
@@ -340,9 +347,16 @@ function ZonePrincipale({
 			/>
 		)
 	}
-	// `chargement` comme `pret` laissent la route rendre son propre contenu : la coquille
-	// n'a pas à décider à sa place, et les squelettes de chargement vivent là où la donnée
-	// est attendue — barre latérale et en-tête.
+	// `CRM-161` T2.c (docs/SPEC-espace-courant.md §15.4 bis, décision 974) : la page ne se monte qu'une fois les ESPACES
+	// lus. Montée plus tôt, elle partait avec un espace nul, et chacune de ses lectures sans filtre d'espace : sous la RLS,
+	// tous les espaces de la personne — Réglages ▸ Workflows y choisissait le défaut d'un autre espace, et ne relisait
+	// jamais. Entre-temps, un squelette (§5.8), jamais un écran blanc.
+	if (!espacesLus) {
+		return <SkeletonListe lignes={6} libelle={t('state.loading.aria')} className="max-w-[960px]" />
+	}
+	// Une fois les espaces lus, `chargement` comme `pret` des tracks et des channels laissent la route rendre son propre
+	// contenu : la coquille n'a pas à décider à sa place, et leurs squelettes vivent là où la donnée est attendue — barre
+	// latérale et en-tête.
 	return <>{contenu}</>
 }
 
