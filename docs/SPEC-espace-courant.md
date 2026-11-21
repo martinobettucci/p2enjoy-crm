@@ -458,6 +458,8 @@ l'espace X. », sans bandeau visuel persistant.
 
 ### 15.7 Le seed de T2.b
 
+*Précisé le 2026-11-21 : `docs/SPEC-seed.md` §55 ; l'espace est créé par la fonction de la plateforme et retrouvé par son slug (décision 972, accord avec la session f9) ; sa boîte système est une boîte Stalwart propre (`lumen@`).*
+
 `docs/SPEC-seed.md` §55, écrit avec T2.b : « Studio Lumen » est créé par le §54 de `CRM-162` (accord, §12) ; le §55 y pose
 le track, le channel, l'affaire, les deux mails déposés par IMAP et relevés (au moins un non lu), le contact, l'organisation,
 le tableau d'objectifs et la saisie de temps du §12. Si le §54 n'est pas encore poussé au moment de T2.b, le §55 crée

@@ -3406,3 +3406,32 @@ un second.
   réutilisés et créés, et un refus (le champ d'un autre type) ; le seed ne déplace rien.
 - *Précisé au code* : les noms exacts des homonymes, et les preuves révisées (décision 51) — la barre latérale d'un membre des
   deux espaces montre les tracks de l'un et de l'autre tant que `CRM-161` n'est pas livrée.
+
+## 55. « Studio Lumen » habité : de quoi montrer le cloisonnement — `CRM-161` T2.b (`docs/SPEC-espace-courant.md` §12)
+
+*Écrit le 2026-11-21, avant le code (décisions 965, 967 et 972), accordé avec la session qui porte `CRM-162` (§54).* Un membre de
+deux espaces, Camille (`admin@p2enjoy.test`), doit voir dans chacun SES tracks, SES mails, ses non-lus dans le menu des espaces,
+et sur les pages globales deux espaces de provenance.
+
+- **L'espace**, s'il manque — par son slug `studio-lumen` : **créé par `plateforme_creer_espace`** sous le jeton du
+  super-administrateur du seed (`plateforme@p2enjoy.test`), comme Plateforme ▸ Espaces, puis **Camille administratrice** par
+  `plateforme_poser_membre`. Le §54 l'enrichit sans le recréer (décision 972 : l'identifiant figé est abandonné ; l'espace se
+  retrouve par son slug).
+- **Sa boîte système** : une boîte Stalwart propre, `lumen@<domaine personnel>`, ajoutée à `stalwart/provision.sh` (le vrai
+  provisionnement, §11.4 de `docs/SPEC-mail-subsystem.md`), déclarée par `upsert_mail_inbound_account` sous le jeton de Camille,
+  propriétaire nul — la boîte système de l'espace.
+- **Sa structure**, sous le jeton de Camille, par les gestes de l'écran : le workflow de départ (`creer_workflow_de_depart`) ;
+  le track « Productions » (`productions`) ; le channel « Tournages » (`tournages`) ; l'affaire « Clip — Maison Arlo »
+  (`creer_affaire`).
+- **Ses mails**, déposés par IMAP dans `lumen@` puis relevés par la vraie relève de `mail-sync` (patron du §49) :
+  « Demande de devis — tournage d'un clip » (`<seed-lumen-devis@maison-arlo.example>`), **non classé et non lu** ; et
+  « Repérages : les lieux retenus » (`<seed-lumen-reperages@maison-arlo.example>`), **classé dans l'affaire** par
+  `classify_message` sous le jeton de Camille. Le menu des espaces montre donc « Studio Lumen » avec ses non-lus.
+- **Ce qui sert les pages globales** (T3) : le contact « Inès Arlo » (`ines@maison-arlo.example`), l'organisation « Maison
+  Arlo » (`maison-arlo.example`), le tableau d'objectifs « Saison 2027 », et une saisie de temps de Camille de 90 minutes sur le
+  track « Productions », à la date du jour du seed.
+- **Rejouable** : chaque objet est retrouvé par son nom ou son `Message-ID` avant d'être posé ; rien n'est dupliqué.
+- **Les contrôles du seed qui comptaient sur toute la base** (les comptes entrants, les tracks, …) sont **restreints à l'espace
+  du seed** dans le même changement : un second espace les ferait échouer au rejeu (décision 51).
+- **Les preuves révisées** : `e2e/ui/accueil-channels.spec.ts` exigeait une base à un seul espace ; elle cible désormais son
+  espace (demande de la session de livraison).
