@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-21 — les migrations 193 et 194, la webapp, l'image `mcp` et le manuel
+
+Cellule Spark `crm`, révision `dd9ac2c3` (décision 962, un `pg_dump -Fc` avant). **Vérifié** : registre à 192 lignes, la
+dernière `0194_concerne_reponses_affaire.sql` ; Spam cachée ; `concerns_me` lit `card_placements` ; `mcp` reconstruit et
+sain ; `index-CHZfFhR0.js` servi ; `verifier.sh` 35/36 (INC-277) ; manuel publié (596 fichiers). Le constat du responsable
+reste à faire.
+
 - **CRM-160 — « Seulement moi » montre les réponses reçues dans une affaire** (migration 194, décisions 959 et 960). La
   réponse à un mail envoyé depuis une affaire n'est adressée qu'à l'adresse de l'affaire : elle ne concernait personne, et
   la case cochée la cachait à tous. Un message reçu et rattaché à une affaire concerne désormais aussi qui a écrit dans sa
@@ -37,8 +48,6 @@ d'exécuter le code attendu.
 - **CRM-159 T4 — le seed, le manuel et le contrat.** Seed §52 : deux mails déposés dans la boîte système, relevés et
   pastillés par la vraie passe, l'un Spam, l'autre Spam et Lead. Manuel §4.6, §12.2 et §12.6, avec deux images nouvelles
   et la fiche d'une pastille renouvelée. Contrat §2.65 : la migration 193, la webapp et l'image `mcp` dans la même fenêtre.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-20 — la migration 192, la webapp, l'image `mail-sync` et le manuel
 

@@ -41363,3 +41363,7 @@ restauration ; API manuel 9/9. **Aucun défaut du lot.** Captures : 201, observ�
 les réponses reçues dans une affaire paraissent dans « Seulement moi » de qui a écrit dans le fil et des responsables.
 **Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `dd9ac2c3` : migrations 193 et 194, webapp,
 `mcp`, manuel.
+**Exécutée le 2026-11-21** : `pg_dump` relu (3 528 entrées) ; `livrer.sh --revision dd9ac2c3…` (webapp bâtie dans la cellule,
+migrations 193 et 194, image `mcp` reconstruite dans la fenêtre) ; registre à 192, Spam cachée, `concerns_me` lit
+`card_placements` ; `verifier.sh` 35/36 (INC-277) ; manuel publié ; contrat §2.65 et §2.66 LIVRÉES, §3 et §8, changelog en
+[Publié], backlog ; verrou levé.

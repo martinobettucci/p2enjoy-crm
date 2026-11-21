@@ -20346,6 +20346,8 @@ pgTAP si migration ; contrat ; constat en production (les deux mails de Thomas p
 
 ### CRM-159 — Pastilles de mail « cachées » : leurs mails ne paraissent dans l'inbox que si l'on active la pastille `[P]`
 
+**Livrée le 2026-11-21** (décision 962, révision `dd9ac2c3`) ; reste le constat du responsable en production.
+
 **Origine** : demande du responsable, le 2026-11-20 ; arbitrée le même jour (décision 957).
 **Demande, verbatim** : « certaines catégorie sont cachées par défaut sauf si on les sélectionné explicitement. je pense au
 cas de SPAM la pastille. mais au lieu de hardcore, chaque pastille peut porter un flag "cachée" off par défaut et les mails
@@ -20397,6 +20399,8 @@ corbeille de l'inbox, le message ouvert et les notifications ne masquent pas (§
 montre ; « Cachée » et la case dans Réglages ▸ Pastilles des mails ; la palette qui dit les mails masqués.
 
 ### CRM-160 — « Seulement moi » cache les réponses reçues à l'adresse d'une affaire : elles concernent qui a écrit dans le fil et le responsable de l'affaire `[P]`
+
+**Livrée le 2026-11-21** (décision 962, révision `dd9ac2c3`) ; reste le constat du responsable en production.
 
 **Origine** : question du responsable, le 2026-11-20 (« on risque pas de louper les emails qu'on reçoit en réponse ? ») ;
 défaut constaté et arbitré le même jour (décision 959).
