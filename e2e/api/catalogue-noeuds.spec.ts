@@ -139,7 +139,9 @@ test.describe('N1 — lecture (docs/SPEC-workflow-engine.md §2.8, lignes a, b, 
 			request,
 		}) => {
 			const jeton = await jetonDe(compte.adresse)
-			const reponse = await request.get(`${CHEMIN}?select=key`, {
+			// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : Camille administre aussi « Studio
+			// Lumen », dont le catalogue a ses propres huit nœuds ; la lecture nomme l'espace du seed, que ce contrat décrit.
+			const reponse = await request.get(`${CHEMIN}?select=key&workspace_id=eq.${WORKSPACE_SEED}`, {
 				headers: enTetesAuthentifies(jeton),
 			})
 
@@ -322,7 +324,7 @@ test.describe('N3 — mise à jour et archivage (lignes g, h, j)', () => {
 			request,
 		}) => {
 			const jeton = await jetonDe(compte.adresse)
-			const reponse = await request.patch(`${CHEMIN}?key=eq.prospection`, {
+			const reponse = await request.patch(`${CHEMIN}?workspace_id=eq.${WORKSPACE_SEED}&workspace_id=eq.${WORKSPACE_SEED}&key=eq.prospection`, {
 				headers: {
 					...enTetesAuthentifies(jeton),
 					'Content-Type': 'application/json',
@@ -339,7 +341,7 @@ test.describe('N3 — mise à jour et archivage (lignes g, h, j)', () => {
 
 			// Ce qui prouve le refus est l'état de la ligne, relu avec la clé de service.
 			const controle = await request.get(
-				`${CHEMIN}?select=key,label,archived_at&key=eq.prospection`,
+				`${CHEMIN}?select=key,label,archived_at&workspace_id=eq.${WORKSPACE_SEED}&key=eq.prospection`,
 				{ headers: enTetesService() },
 			)
 			const [noeud] = (await controle.json()) as Noeud[]
@@ -356,7 +358,7 @@ test.describe('N3 — mise à jour et archivage (lignes g, h, j)', () => {
 		// workflows que le produit livre ; la preuve y est acquise à ce niveau, les tables
 		// `workflows`, `workflow_steps` et `workflow_transitions` restant dues par `CRM-031`.
 		const jeton = await jetonDe(COMPTES_SEED[1].adresse)
-		const reponse = await request.patch(`${CHEMIN}?key=eq.negociation`, {
+		const reponse = await request.patch(`${CHEMIN}?workspace_id=eq.${WORKSPACE_SEED}&workspace_id=eq.${WORKSPACE_SEED}&key=eq.negociation`, {
 			headers: {
 				...enTetesAuthentifies(jeton),
 				'Content-Type': 'application/json',
@@ -368,7 +370,7 @@ test.describe('N3 — mise à jour et archivage (lignes g, h, j)', () => {
 		expect(await reponse.json()).toEqual([])
 
 		const controle = await request.get(
-			`${CHEMIN}?select=key,default_probability&key=eq.negociation`,
+			`${CHEMIN}?select=key,default_probability&workspace_id=eq.${WORKSPACE_SEED}&key=eq.negociation`,
 			{ headers: enTetesService() },
 		)
 		const [noeud] = (await controle.json()) as Noeud[]
@@ -415,7 +417,7 @@ test.describe('N4 — aucune suppression physique (ligne i)', () => {
 		request,
 	}) => {
 		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
-		const reponse = await request.delete(`${CHEMIN}?key=eq.prospection`, {
+		const reponse = await request.delete(`${CHEMIN}?workspace_id=eq.${WORKSPACE_SEED}&workspace_id=eq.${WORKSPACE_SEED}&key=eq.prospection`, {
 			headers: enTetesAuthentifies(jeton),
 		})
 
@@ -432,7 +434,7 @@ test.describe('N4 — aucune suppression physique (ligne i)', () => {
 		// l'entrée pourrait être close.
 		expect(corps.hint).toContain('GRANT DELETE')
 
-		const controle = await request.get(`${CHEMIN}?select=key&key=eq.prospection`, {
+		const controle = await request.get(`${CHEMIN}?select=key&workspace_id=eq.${WORKSPACE_SEED}&key=eq.prospection`, {
 			headers: enTetesService(),
 		})
 		expect(((await controle.json()) as Noeud[])[0]?.key).toBe('prospection')
@@ -529,7 +531,7 @@ test.describe("N6 — l'archivage d'un nœud occupé est refusé (§2.6, §2 bis
 		request,
 	}) => {
 		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
-		const reponse = await request.patch(`${CHEMIN}?key=eq.prospection`, {
+		const reponse = await request.patch(`${CHEMIN}?workspace_id=eq.${WORKSPACE_SEED}&workspace_id=eq.${WORKSPACE_SEED}&key=eq.prospection`, {
 			headers: {
 				...enTetesAuthentifies(jeton),
 				'Content-Type': 'application/json',
@@ -548,7 +550,7 @@ test.describe("N6 — l'archivage d'un nœud occupé est refusé (§2.6, §2 bis
 		expect(corps.message).toMatch(/\d+ card\(s\) active\(s\)/)
 
 		// LA LIGNE EST RELUE : le refus n'a rien archivé.
-		const relu = await request.get(`${CHEMIN}?key=eq.prospection&select=archived_at`, {
+		const relu = await request.get(`${CHEMIN}?workspace_id=eq.${WORKSPACE_SEED}&workspace_id=eq.${WORKSPACE_SEED}&key=eq.prospection&select=archived_at`, {
 			headers: enTetesAuthentifies(jeton),
 		})
 		expect(((await relu.json()) as { archived_at: string | null }[])[0]?.archived_at).toBeNull()
@@ -614,7 +616,7 @@ test.describe("N6 — l'archivage d'un nœud occupé est refusé (§2.6, §2 bis
 test.describe('N7 — réordonnancement (§2 ter.4)', () => {
 	/** Relit une position à la clé de service : elle constate l'état, elle ne prouve aucun refus. */
 	async function positionDe(requete: APIRequestContext, cle: string): Promise<number> {
-		const reponse = await requete.get(`${CHEMIN}?key=eq.${cle}&select=position`, {
+		const reponse = await requete.get(`${CHEMIN}?workspace_id=eq.${WORKSPACE_SEED}&key=eq.${cle}&select=position`, {
 			headers: enTetesService(),
 		})
 		const [ligne] = (await reponse.json()) as { position: number }[]
@@ -628,7 +630,7 @@ test.describe('N7 — réordonnancement (§2 ter.4)', () => {
 		cle: string,
 		position: number,
 	): Promise<void> {
-		await requete.patch(`${CHEMIN}?key=eq.${cle}`, {
+		await requete.patch(`${CHEMIN}?workspace_id=eq.${WORKSPACE_SEED}&key=eq.${cle}`, {
 			headers: { ...enTetesService(), 'Content-Type': 'application/json' },
 			data: { position },
 		})
@@ -640,7 +642,7 @@ test.describe('N7 — réordonnancement (§2 ter.4)', () => {
 		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
 		const initiale = await positionDe(request, 'relance')
 		try {
-			const reponse = await request.patch(`${CHEMIN}?key=eq.relance`, {
+			const reponse = await request.patch(`${CHEMIN}?workspace_id=eq.${WORKSPACE_SEED}&workspace_id=eq.${WORKSPACE_SEED}&key=eq.relance`, {
 				headers: {
 					...enTetesAuthentifies(jeton),
 					'Content-Type': 'application/json',
@@ -669,7 +671,7 @@ test.describe('N7 — réordonnancement (§2 ter.4)', () => {
 			// La contre-épreuve du bloc N6, sur LE MÊME nœud et avec LE MÊME jeton : l'archivage y est
 			// refusé en `403`, le déplacement passe en `200`. Les deux mesures côte à côte établissent
 			// que la garde discrimine sur la colonne écrite, et non sur l'occupation seule.
-			const reponse = await request.patch(`${CHEMIN}?key=eq.prospection`, {
+			const reponse = await request.patch(`${CHEMIN}?workspace_id=eq.${WORKSPACE_SEED}&workspace_id=eq.${WORKSPACE_SEED}&key=eq.prospection`, {
 				headers: {
 					...enTetesAuthentifies(jeton),
 					'Content-Type': 'application/json',
@@ -694,7 +696,7 @@ test.describe('N7 — réordonnancement (§2 ter.4)', () => {
 		const jeton = await jetonDe(COMPTES_SEED[2].adresse)
 		const initiale = await positionDe(request, 'negociation')
 
-		const reponse = await request.patch(`${CHEMIN}?key=eq.negociation`, {
+		const reponse = await request.patch(`${CHEMIN}?workspace_id=eq.${WORKSPACE_SEED}&workspace_id=eq.${WORKSPACE_SEED}&key=eq.negociation`, {
 			headers: {
 				...enTetesAuthentifies(jeton),
 				'Content-Type': 'application/json',

@@ -71,7 +71,7 @@ async function lireRattachementsDuSeed(
 	du41: Array<{ card_id: string; contact: string; role: string | null }>
 }> {
 	const reponse = await request.get(
-		'/rest/v1/card_contacts?select=card_id,contact_id,role,contacts(full_name)&order=contact_id',
+		`/rest/v1/card_contacts?workspace_id=eq.${WORKSPACE_SEED}&select=card_id,contact_id,role,contacts(full_name)&order=contact_id`,
 		{ headers: enTetes },
 	)
 	expect(reponse.status()).toBe(200)
@@ -731,7 +731,9 @@ test.describe('CRM-060 4e — les onze mesures de la création d’un contact (�
 	}) => {
 		// Ce scénario est la garde du §14.8 : les onze mesures écrivent, et une sonde oubliée
 		// fausserait tous les compteurs du dépôt — ceux du carnet, ceux des harnais, ceux du seed.
-		const relecture = await request.get('/rest/v1/contacts?select=full_name&order=full_name', {
+		// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §54 et §55, décision 51) : le seed porte un second espace, « Studio
+		// Lumen », avec ses contacts, ses organisations et ses rattachements ; la garde lit L'ESPACE DU SEED, que ces compteurs décrivent.
+		const relecture = await request.get(`/rest/v1/contacts?workspace_id=eq.${WORKSPACE_SEED}&select=full_name&order=full_name`, {
 			headers: enTetesService(),
 		})
 		const noms = ((await relecture.json()) as Array<{ full_name: string }>).map((c) => c.full_name)
@@ -966,7 +968,9 @@ test.describe('CRM-060 sous-tranche 4f — la fiche d’un contact (docs/SPEC-co
 		request,
 	}) => {
 		const contacts = (await (
-			await request.get('/rest/v1/contacts?select=full_name&order=full_name', {
+			// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §54 et §55, décision 51) : le seed porte un second espace, « Studio
+			// Lumen », avec ses contacts, ses organisations et ses rattachements ; la garde lit L'ESPACE DU SEED, que ces compteurs décrivent.
+			await request.get(`/rest/v1/contacts?workspace_id=eq.${WORKSPACE_SEED}&select=full_name&order=full_name`, {
 				headers: enTetesService(),
 			})
 		).json()) as Array<{ full_name: string }>
@@ -2628,13 +2632,15 @@ test.describe('CRM-060 tranche 6 — la suppression d’un contact (§20.2)', ()
 		// GARDE DE CLÔTURE. Ces mesures créent et suppriment beaucoup ; une sonde oubliée ferait
 		// dériver les compteurs d'autres harnais, et le défaut se lirait chez eux plutôt qu'ici.
 		const jeton = await jetonDe('admin@p2enjoy.test')
-		const contacts = await request.get('/rest/v1/contacts?select=id', {
+		// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §54 et §55, décision 51) : le seed porte un second espace, « Studio
+		// Lumen », avec ses contacts, ses organisations et ses rattachements ; la garde lit L'ESPACE DU SEED, que ces compteurs décrivent.
+		const contacts = await request.get(`/rest/v1/contacts?workspace_id=eq.${WORKSPACE_SEED}&select=id`, {
 			headers: enTetesAuthentifies(jeton),
 		})
 		// Quatre depuis `CRM-072` T3 : le contact anonymisé du seed (docs/SPEC-seed.md §26) — décision 51. Onze et sept
 		// organisations depuis `CRM-071` T5 (décision 51) : l'import du fichier de salon du seed (§33) en crée sept et quatre.
 		expect((await contacts.json()) as unknown[]).toHaveLength(SEED_ONZE_CONTACTS.length)
-		const organisations = await request.get('/rest/v1/organizations?select=id', {
+		const organisations = await request.get(`/rest/v1/organizations?workspace_id=eq.${WORKSPACE_SEED}&select=id`, {
 			headers: enTetesAuthentifies(jeton),
 		})
 		expect((await organisations.json()) as unknown[]).toHaveLength(7)

@@ -26,6 +26,9 @@ import { lireEnv, urlApi } from '../env'
 import { enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { instantaneDesBoites, rendreLesBoites, type Boite } from './menage'
 
+// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : « Studio Lumen », second espace du seed, a sa propre
+// boîte système ; « la » boîte système (et l'identité de service) se lit dans l'espace du seed, nommé par chaque filtre `owner_id=is.null`.
+
 const CONTENEUR = conteneur('mail-sync')
 const IMAGE = 'python:3.13.13-slim-bookworm'
 const JETON = lireEnv('MAIL_SYNC_INTERNAL_TOKEN')
@@ -161,7 +164,7 @@ test.describe('ingestion — un email réellement envoyé, relevé et analysé',
 		test.setTimeout(300_000)
 		const identifiant = `ingest-${Date.now()}`
 		const compteReponse = await request.get(
-			`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&select=id,watch_folders`,
+			`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&workspace_id=eq.5eed0000-0000-4000-8000-000000000001&select=id,watch_folders`,
 			{ headers: enTetesService() },
 		)
 		const [compte] = (await compteReponse.json()) as { id: string; watch_folders: string[] }[]
@@ -262,7 +265,7 @@ test.describe('ingestion — un email réellement envoyé, relevé et analysé',
 		expect(carte?.email_local_part).toBeDefined()
 
 		const compteReponse = await request.get(
-			`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&select=id`,
+			`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&workspace_id=eq.5eed0000-0000-4000-8000-000000000001&select=id`,
 			{ headers: enTetesService() },
 		)
 		const [compte] = (await compteReponse.json()) as { id: string }[]
@@ -321,7 +324,7 @@ test.describe('ingestion — un email réellement envoyé, relevé et analysé',
 			{ headers: enTetesService() },
 		)
 		const [carte] = (await cartes.json()) as { id: string; email_local_part: string }[]
-		const compteReponse = await request.get(`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&select=id`, {
+		const compteReponse = await request.get(`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&workspace_id=eq.5eed0000-0000-4000-8000-000000000001&select=id`, {
 			headers: enTetesService(),
 		})
 		const [compte] = (await compteReponse.json()) as { id: string }[]
@@ -398,7 +401,7 @@ except urllib.error.HTTPError as e:
 		).json()) as { id: string; email_local_part: string }[]
 		expect(adressesAvant.length).toBeGreaterThan(0)
 		const [compte] = (await (
-			await request.get(`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&select=id`, { headers: enTetesService() })
+			await request.get(`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&workspace_id=eq.5eed0000-0000-4000-8000-000000000001&select=id`, { headers: enTetesService() })
 		).json()) as { id: string }[]
 		const sabine = { ...enTetesAuthentifies(await jetonDe('plateforme@p2enjoy.test')), 'Content-Type': 'application/json' }
 

@@ -41787,3 +41787,29 @@ l'espace du seed, l'assertion reste à 46.
 **`connecteur-organisations`** : « Unknown tool » sous la campagne parallèle, vert rejoué seul — l'interférence connue des
 campagnes, non corrigée (consigne de la session de livraison).
 **Vérifications** : API `cards` et `colonnes-protegees` 86/86 ; pgTAP 0068 31/31 ; `connecteur-organisations` 1/1 seul.
+
+### Campagne du lot `CRM-161` T1+T2, `CRM-162`, INC-364, `CRM-163` — la part de la session 5f, API et mail (journal de correction)
+
+*2026-11-21, session 4891a451 (p2enjoy-crm-5f) ; partage convenu avec la session f9 (§54 et `CRM-162`/`CRM-163` pour elle).*
+**Le motif** : le seed porte un second espace, « Studio Lumen » (`docs/SPEC-seed.md` §55), que Camille administre, avec sa
+propre boîte système, son catalogue de huit nœuds, son workflow de départ, ses contacts et ses rattachements. Une preuve qui
+comptait « ce que Camille voit », ou qui prenait « la » boîte système (`owner_id=is.null`) ou « le » nœud d'une clé, lisait
+désormais aussi Lumen — ou le prenait à la place du seed.
+**Corrigé, chaque preuve nommant son espace (décision 51, aucune assertion relâchée)** : API `analytique` (l'entonnoir),
+`catalogue-noeuds` (les huit, et chaque nœud du seed lu ou écrit par sa clé), `channels`, `tracks`, `workflows` (les listes),
+`comptes-entrants` (les trois comptes, « la » boîte système — le rejeu de la ligne 198 rendait l'identifiant de celle de
+Lumen), `contacts` (les trois gardes « seed rendu intact » : contacts, organisations, rattachements), `preuves-refus` (la
+contre-épreuve des trois comptes, l'identité de service), `tester-connexion` (« la » boîte système et l'identité de service,
+d'où le 200 au lieu du 429). Par le même motif, même verts par la chance de l'ordre des lignes : API `classement`, `envoi`,
+`identites-sortantes` ; mail `comptes-entrants`, `dossiers`, `ingestion`, `roundcube-dossiers`, `envoi`,
+`identites-sortantes`, `releve-datee`.
+**`e2e/api/espace-solitaire.ts`** : son démontage constatait « l'unique workspace seedé » ; il constate désormais les deux
+espaces seedés, le seed et `studio-lumen`, et rien d'autre — la sonde partie (`mentions-composeur` ah, `workflow-depart`).
+**`demarrage` 125 et 173, constaté et non corrigé** : rouges dans la campagne, verts rejoués seuls (6/6). La garde de
+`comptes-entrants` (« le seed est rendu tel qu'il a été reçu ») réécrit le mot de passe de la boîte système, ce qui la remet
+`pending` jusqu'au prochain relevé de `mail-sync` (moins d'une minute, mesuré) ; `demarrage` compte une boîte système `ok`, et
+rougit s'il tombe dans cette fenêtre. Interférence d'ordre entre deux preuves, antérieure à `CRM-161` ; signalée à la session
+de livraison.
+**Vérifications** : API, quinze specs (les dix de la campagne, `workflow-depart`, `classement`, `envoi`,
+`identites-sortantes`) 313/315, les deux rouges étant `demarrage` dans la fenêtre ci-dessus, puis `demarrage` seul 6/6 ; mail,
+sept specs, 21/21 ; `tsc` du dépôt sans erreur.

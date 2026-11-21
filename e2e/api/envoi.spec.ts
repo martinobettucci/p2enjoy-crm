@@ -15,6 +15,9 @@ import { expect, test } from '@playwright/test'
 import { URL_API, enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
 import { libererLaBoucle, retenirLaBoucle } from '../sort-envoi'
 
+// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : « Studio Lumen », second espace du seed, a sa propre
+// boîte système ; « la » boîte système (et l'identité de service) se lit dans l'espace du seed, nommé par chaque filtre `owner_id=is.null`.
+
 // `CRM-158` (docs/SPEC-mail-subsystem.md §34.7 bis) : ces preuves mettent en file des envois dus SANS vouloir qu'ils
 // partent ; la boucle d'envoi est retenue le temps du fichier, renouvelée avant chaque preuve, levée à la fin.
 test.beforeEach(() => retenirLaBoucle())
@@ -28,7 +31,7 @@ async function identiteDeService(
 	request: import('@playwright/test').APIRequestContext,
 ): Promise<string> {
 	const reponse = await request.get(
-		`${URL_API}/rest/v1/mail_outbound_identities?select=id&owner_id=is.null&limit=1`,
+		`${URL_API}/rest/v1/mail_outbound_identities?select=id&owner_id=is.null&workspace_id=eq.5eed0000-0000-4000-8000-000000000001&limit=1`,
 		{ headers: enTetesService() },
 	)
 	const [ligne] = (await reponse.json()) as { id: string }[]

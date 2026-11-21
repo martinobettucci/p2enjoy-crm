@@ -8,6 +8,9 @@
 import { expect, test } from '@playwright/test'
 import { URL_API, enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
 
+// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : « Studio Lumen », second espace du seed, a sa propre
+// boîte système ; « la » boîte système (et l'identité de service) se lit dans l'espace du seed, nommé par chaque filtre `owner_id=is.null`.
+
 const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 // Card d'un channel que le `viewer` NE PEUT PAS écrire — c'est ce qui rend son refus mesurable.
 const CARD = '5eed0000-0000-4000-8000-0000000000c1'
@@ -43,7 +46,7 @@ async function poserOccurrence(
 	message: string,
 ): Promise<void> {
 	const comptes = await request.get(
-		`${URL_API}/rest/v1/mail_inbound_accounts?select=id&owner_id=is.null&limit=1`,
+		`${URL_API}/rest/v1/mail_inbound_accounts?select=id&owner_id=is.null&workspace_id=eq.5eed0000-0000-4000-8000-000000000001&limit=1`,
 		{ headers: enTetesService() },
 	)
 	const [compte] = (await comptes.json()) as { id: string }[]

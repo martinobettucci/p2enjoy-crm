@@ -585,7 +585,9 @@ test.describe('PREUVES N° 6 et N° 7 — le compte mail d’un autre, et son se
 
 		// Contre-épreuve : les trois comptes EXISTENT. Sans elle, « une seule ligne » prouverait
 		// aussi bien la RLS qu'un seed incomplet (décision 50).
-		const toutes = await lignes(request, '/rest/v1/mail_inbound_accounts?select=id', enTetesService())
+		// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : les trois de L'ESPACE DU SEED — « Studio
+		// Lumen » porte sa propre boîte système, que Driss, qui n'en est pas membre, ne lit pas davantage.
+		const toutes = await lignes(request, `/rest/v1/mail_inbound_accounts?select=id&workspace_id=eq.${WS_SEED}`, enTetesService())
 		expect(toutes).toHaveLength(3)
 	})
 
@@ -638,7 +640,8 @@ test.describe('PREUVE N° 12 — emprunter l’identité sortante d’autrui est
 		// L'identité de SERVICE du workspace : elle n'appartient à personne (`owner_id is null`) et
 		// ne s'emprunte plus du tout, administrateur compris (décision 805, INC-335). Relue en base plutôt que devinée.
 		const identites = await request.get(
-			'/rest/v1/mail_outbound_identities?select=id&owner_id=is.null&limit=1',
+			// Celle de l'espace du seed, nommé (`CRM-161` T2.b, décision 51) : l'identité de service d'un autre espace ne prouverait rien ici.
+			`/rest/v1/mail_outbound_identities?select=id&owner_id=is.null&workspace_id=eq.${WS_SEED}&limit=1`,
 			{ headers: enTetesService() },
 		)
 		const [service] = (await identites.json()) as { id: string }[]

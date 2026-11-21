@@ -26,6 +26,9 @@ import {
 } from './jetons'
 
 const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
+// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : le seed porte un second espace, « Studio Lumen »,
+// avec sa propre boîte système, et Camille l'administre ; chaque lecture de comptes qui en compte, ou de « la » boîte
+// système (`owner_id=is.null`), nomme l'espace du seed.
 const CAMILLE = '5eed0000-0000-4000-8000-000000000011'
 const DRISS = '5eed0000-0000-4000-8000-000000000012'
 const FARIDA = '5eed0000-0000-4000-8000-000000000013'
@@ -42,7 +45,7 @@ test.describe('comptes entrants IMAP — ce que la pile consent', () => {
 	test('l’administratrice voit les TROIS comptes du seed, la système comprise', async ({ request }) => {
 		const jeton = await jetonDe('admin@p2enjoy.test')
 		const reponse = await request.get(
-			`${URL_API}/rest/v1/mail_inbound_accounts?select=id,label,owner_id,status,last_error&order=label`,
+			`${URL_API}/rest/v1/mail_inbound_accounts?workspace_id=eq.${WORKSPACE}&select=id,label,owner_id,status,last_error&order=label`,
 			{ headers: enTetesAuthentifies(jeton) },
 		)
 
@@ -138,13 +141,13 @@ test.describe('comptes entrants IMAP — ce que la pile consent', () => {
 		expect(insertion.status()).toBe(403)
 
 		const majDirecte = await request.patch(
-			`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null`,
+			`${URL_API}/rest/v1/mail_inbound_accounts?workspace_id=eq.${WORKSPACE}&owner_id=is.null`,
 			{ headers: entetes, data: { status: 'ok' } },
 		)
 		expect(majDirecte.status()).toBe(403)
 
 		const suppression = await request.delete(
-			`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null`,
+			`${URL_API}/rest/v1/mail_inbound_accounts?workspace_id=eq.${WORKSPACE}&owner_id=is.null`,
 			{ headers: entetes },
 		)
 		expect(suppression.status()).toBe(403)
@@ -154,7 +157,7 @@ test.describe('comptes entrants IMAP — ce que la pile consent', () => {
 	test('la fonction qui déchiffre est refusée à un membre, et à un anonyme', async ({ request }) => {
 		const jeton = await jetonDe('admin@p2enjoy.test')
 		const compte = await request.get(
-			`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&select=id`,
+			`${URL_API}/rest/v1/mail_inbound_accounts?workspace_id=eq.${WORKSPACE}&owner_id=is.null&select=id`,
 			{ headers: enTetesAuthentifies(jeton) },
 		)
 		const [systeme] = (await compte.json()) as { id: string }[]
@@ -221,7 +224,7 @@ test.describe('comptes entrants IMAP — ce que la pile consent', () => {
 		// Le rejeu du geste légitime de l'administratrice ne duplique rien et ne perd pas le
 		// secret : c'est le contrat de convergence du §13.8.
 		const avant = await request.get(
-			`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&select=id,secret_id`,
+			`${URL_API}/rest/v1/mail_inbound_accounts?workspace_id=eq.${WORKSPACE}&owner_id=is.null&select=id,secret_id`,
 			{ headers: enTetesService() },
 		)
 		const [systemeAvant] = (await avant.json()) as { id: string; secret_id: string }[]
@@ -243,7 +246,7 @@ test.describe('comptes entrants IMAP — ce que la pile consent', () => {
 		expect(await rejeu.json()).toBe(systemeAvant?.id)
 
 		const apres = await request.get(
-			`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&select=id,secret_id`,
+			`${URL_API}/rest/v1/mail_inbound_accounts?workspace_id=eq.${WORKSPACE}&owner_id=is.null&select=id,secret_id`,
 			{ headers: enTetesService() },
 		)
 		const lignes = (await apres.json()) as { id: string; secret_id: string }[]
@@ -254,7 +257,7 @@ test.describe('comptes entrants IMAP — ce que la pile consent', () => {
 	test('un mot de passe fourni RÉÉCRIT le secret sans changer sa référence', async ({ request }) => {
 		const jetonAdmin = await jetonDe('admin@p2enjoy.test')
 		const avant = await request.get(
-			`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&select=id,secret_id`,
+			`${URL_API}/rest/v1/mail_inbound_accounts?workspace_id=eq.${WORKSPACE}&owner_id=is.null&select=id,secret_id`,
 			{ headers: enTetesService() },
 		)
 		const [systeme] = (await avant.json()) as { id: string; secret_id: string }[]
@@ -287,7 +290,7 @@ test.describe('comptes entrants IMAP — ce que la pile consent', () => {
 			// `vault.update_secret` conserve la référence : sans cela, chaque changement de mot de
 			// passe orphelinerait une ligne de `vault.secrets`.
 			const apres = await request.get(
-				`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&select=secret_id,status`,
+				`${URL_API}/rest/v1/mail_inbound_accounts?workspace_id=eq.${WORKSPACE}&owner_id=is.null&select=secret_id,status`,
 				{ headers: enTetesService() },
 			)
 			const [ligne] = (await apres.json()) as { secret_id: string; status: string }[]
@@ -377,7 +380,7 @@ test.describe('comptes entrants IMAP — ce que la pile consent', () => {
 		}
 
 		const apres = await request.get(
-			`${URL_API}/rest/v1/mail_inbound_accounts?select=id`,
+			`${URL_API}/rest/v1/mail_inbound_accounts?workspace_id=eq.${WORKSPACE}&select=id`,
 			{ headers: enTetesService() },
 		)
 		expect((await apres.json()) as unknown[]).toHaveLength(3)
@@ -405,7 +408,7 @@ test.describe('comptes entrants IMAP — ce que la pile consent', () => {
 		// CONTRE-ÉPREUVE : la boîte système n'a pas bougé. Sans elle, `403` prouverait le code de
 		// retour, pas l'absence d'écriture.
 		const systeme = await request.get(
-			`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&select=label`,
+			`${URL_API}/rest/v1/mail_inbound_accounts?workspace_id=eq.${WORKSPACE}&owner_id=is.null&select=label`,
 			{ headers: enTetesService() },
 		)
 		expect(((await systeme.json()) as { label: string }[])[0]?.label).toBe(
@@ -440,7 +443,7 @@ test.describe('comptes entrants IMAP — ce que la pile consent', () => {
 		expect(corps.code).toBe('23514')
 
 		const parService = await request.get(
-			`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&select=secret_id`,
+			`${URL_API}/rest/v1/mail_inbound_accounts?workspace_id=eq.${WORKSPACE}&owner_id=is.null&select=secret_id`,
 			{ headers: enTetesService() },
 		)
 		const [ligne] = (await parService.json()) as { secret_id: string }[]

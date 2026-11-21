@@ -139,7 +139,8 @@ test.describe('T1 — lecture (docs/SPEC-tracks.md §6, lignes b, c, d)', () => 
 	for (const compte of COMPTES_SEED.filter((c) => c.role !== 'viewer')) {
 		test(`lignes c et d — ${compte.role} lit les tracks de son workspace`, async ({ request }) => {
 			const jeton = await jetonDe(compte.adresse)
-			const reponse = await request.get(`${CHEMIN}?select=slug,position&order=position`, {
+			// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : la lecture nomme l'espace du seed ; Camille administre aussi « Studio Lumen ».
+			const reponse = await request.get(`${CHEMIN}?select=slug,position&workspace_id=eq.${WORKSPACE_SEED}&order=position`, {
 				headers: enTetesAuthentifies(jeton),
 			})
 
@@ -179,7 +180,8 @@ test.describe('T1 — lecture (docs/SPEC-tracks.md §6, lignes b, c, d)', () => 
 		// channel le rouvre — `scripts/verify-droits-fins.sh` et la suite pgTAP `0011` §6 bis
 		// prouvent qu'un track sans aucun channel lisible reste, lui, invisible.
 		const jeton = await jetonDe(COMPTES_SEED[2].adresse)
-		const reponse = await request.get(`${CHEMIN}?select=slug&order=position`, {
+		// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : la lecture nomme l'espace du seed ; Camille administre aussi « Studio Lumen ».
+		const reponse = await request.get(`${CHEMIN}?select=slug&workspace_id=eq.${WORKSPACE_SEED}&order=position`, {
 			headers: enTetesAuthentifies(jeton),
 		})
 
@@ -224,7 +226,8 @@ test.describe('T1 — lecture (docs/SPEC-tracks.md §6, lignes b, c, d)', () => 
 		expect((await lignesDroitFin.json()) as { access: string }[]).toEqual([{ access: 'none' }])
 
 		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
-		const reponse = await request.get(`${CHEMIN}?select=slug&order=position`, {
+		// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : la lecture nomme l'espace du seed ; Camille administre aussi « Studio Lumen ».
+		const reponse = await request.get(`${CHEMIN}?select=slug&workspace_id=eq.${WORKSPACE_SEED}&order=position`, {
 			headers: enTetesAuthentifies(jeton),
 		})
 		// RÉVISÉ PAR `CRM-077` : cinq depuis que le seed porte un track en corbeille. Ce que ce
@@ -245,7 +248,8 @@ test.describe('T1 — lecture (docs/SPEC-tracks.md §6, lignes b, c, d)', () => 
 		// troisième tranche a dû corriger dans `webapp/src/lib/tracks.ts`. La liste attendue est
 		// inchangée ; c'est le prédicat qui se précise.
 		const reponse = await request.get(
-			`${CHEMIN}?select=slug,position&archived_at=is.null&deleted_at=is.null&order=position,name`,
+			// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : la lecture nomme l'espace du seed ; Camille administre aussi « Studio Lumen ».
+			`${CHEMIN}?select=slug,position&archived_at=is.null&deleted_at=is.null&workspace_id=eq.${WORKSPACE_SEED}&order=position,name`,
 			{ headers: enTetesAuthentifies(jeton) },
 		)
 		const lignes = (await reponse.json()) as Track[]

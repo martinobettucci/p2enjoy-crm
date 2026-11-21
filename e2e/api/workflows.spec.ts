@@ -210,7 +210,8 @@ test.describe('W1 — lecture (§3.8, lignes a, b, c)', () => {
 	for (const compte of COMPTES_SEED) {
 		test(`ligne a — ${compte.role} lit le workflow de son workspace`, async ({ request }) => {
 			const jeton = await jetonDe(compte.adresse)
-			const reponse = await request.get(`${WF}?select=id,name,is_default`, {
+			// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : la lecture nomme l'espace du seed ; Camille administre aussi « Studio Lumen ».
+			const reponse = await request.get(`${WF}?select=id,name,is_default&workspace_id=eq.${WORKSPACE_SEED}`, {
 				headers: enTetesAuthentifies(jeton),
 			})
 			expect(reponse.status()).toBe(200)

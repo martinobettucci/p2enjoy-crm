@@ -17,6 +17,9 @@ import { CLE_ANONYME, URL_API, enTetesService, jetonDe } from './jetons'
 
 const CAMILLE = '5eed0000-0000-4000-8000-000000000011'
 const DRISS = '5eed0000-0000-4000-8000-000000000012'
+// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : « Studio Lumen » a sa propre boîte système, et
+// Camille l'administre ; « la » boîte système et « l' »identité de service sont celles de l'espace du seed, nommé ici.
+const SYSTEME_DU_SEED = 'owner_id=is.null&workspace_id=eq.5eed0000-0000-4000-8000-000000000001'
 const FONCTION = `${URL_API}/functions/v1/mail-connection-test`
 
 type Ligne = { id: string; status: string; last_error: string | null; last_checked_at: string | null }
@@ -64,7 +67,7 @@ test.describe('mail-connection-test — ce que la pile consent', () => {
 	})
 
 	test('sans session, la base refuse : 401, et aucun test n’a lieu', async ({ request }) => {
-		const systeme = await retenir(request, 'mail_inbound_accounts', 'owner_id=is.null')
+		const systeme = await retenir(request, 'mail_inbound_accounts', SYSTEME_DU_SEED)
 		const reponse = await appeler(request, { target: 'inbound', id: systeme.id }, null)
 		expect(reponse.status()).toBe(401)
 		expect(await reponse.json()).toEqual({ error: 'unauthorized' })
@@ -81,9 +84,9 @@ test.describe('mail-connection-test — ce que la pile consent', () => {
 		request,
 	}) => {
 		const jeton = await jetonDe('bizdev@p2enjoy.test')
-		const systeme = await retenir(request, 'mail_inbound_accounts', 'owner_id=is.null')
+		const systeme = await retenir(request, 'mail_inbound_accounts', SYSTEME_DU_SEED)
 		const camille = await retenir(request, 'mail_inbound_accounts', `owner_id=eq.${CAMILLE}`)
-		const service = await retenir(request, 'mail_outbound_identities', 'owner_id=is.null')
+		const service = await retenir(request, 'mail_outbound_identities', SYSTEME_DU_SEED)
 		for (const [cible, id] of [
 			['inbound', systeme.id],
 			['inbound', camille.id],
@@ -101,7 +104,7 @@ test.describe('mail-connection-test — ce que la pile consent', () => {
 		request,
 	}) => {
 		const jeton = await jetonDe('admin@p2enjoy.test')
-		const systeme = await retenir(request, 'mail_inbound_accounts', 'owner_id=is.null')
+		const systeme = await retenir(request, 'mail_inbound_accounts', SYSTEME_DU_SEED)
 		const reponse = await appeler(request, { target: 'inbound', id: systeme.id }, jeton)
 		expect(reponse.status()).toBe(200)
 		const verdict = (await reponse.json()) as { status: string; error: string | null; checked_at: string; folder_names?: string[] }
@@ -117,7 +120,7 @@ test.describe('mail-connection-test — ce que la pile consent', () => {
 
 	test('un second test dans les 30 secondes est refusé par 429', async ({ request }) => {
 		const jeton = await jetonDe('admin@p2enjoy.test')
-		const systeme = await lire(request, 'mail_inbound_accounts', 'owner_id=is.null')
+		const systeme = await lire(request, 'mail_inbound_accounts', SYSTEME_DU_SEED)
 		const reponse = await appeler(request, { target: 'inbound', id: systeme.id }, jeton)
 		expect(reponse.status()).toBe(429)
 		expect(await reponse.json()).toEqual({ error: 'too_soon' })

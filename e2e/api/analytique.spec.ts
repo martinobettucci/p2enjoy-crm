@@ -29,7 +29,9 @@
 import { expect, test } from '@playwright/test'
 import { enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
 
-const RPC = '/rest/v1/rpc/entonnoir_conversion'
+// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : le seed porte un second espace, « Studio Lumen »,
+// dont Camille est administratrice ; l'entonnoir est lu DANS L'ESPACE DU SEED, que toutes les mesures de ce fichier décrivent.
+const RPC = '/rest/v1/rpc/entonnoir_conversion?workspace_id=eq.5eed0000-0000-4000-8000-000000000001'
 const RPC_FIGEES = '/rest/v1/rpc/cards_figees'
 const ETAPES = '/rest/v1/workflow_steps'
 

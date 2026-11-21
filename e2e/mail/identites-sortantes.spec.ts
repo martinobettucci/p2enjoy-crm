@@ -15,6 +15,9 @@ import { expect, test } from '@playwright/test'
 import { lireEnv, urlApi } from '../env'
 import { CLE_ANONYME, MOT_DE_PASSE_SEED, enTetesService, jetonDe } from '../api/jetons'
 
+// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : « Studio Lumen », second espace du seed, a sa propre
+// boîte système ; « la » boîte système (et l'identité de service) se lit dans l'espace du seed, nommé par chaque filtre `owner_id=is.null`.
+
 const CONTENEUR = conteneur('mail-sync')
 const IMAGE_APPELANTE = 'python:3.13.13-slim-bookworm'
 const JETON = lireEnv('MAIL_SYNC_INTERNAL_TOKEN')
@@ -140,7 +143,7 @@ async function ecrire(
 
 test.describe('identités sortantes — la connexion SMTP est RÉELLEMENT ouverte', () => {
 	test('l’identité de service se connecte, et la base porte `ok`', async ({ request }) => {
-		const identite = await lireIdentite(request, 'owner_id=is.null')
+		const identite = await lireIdentite(request, 'owner_id=is.null&workspace_id=eq.5eed0000-0000-4000-8000-000000000001')
 
 		const reponse = testerIdentite(identite.id)
 		expect(reponse.code, reponse.corps).toBe(200)

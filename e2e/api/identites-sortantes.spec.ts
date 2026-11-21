@@ -24,6 +24,9 @@ import {
 	jetonDe,
 } from './jetons'
 
+// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : « Studio Lumen », second espace du seed, a sa propre
+// boîte système ; « la » boîte système (et l'identité de service) se lit dans l'espace du seed, nommé par chaque filtre `owner_id=is.null`.
+
 const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 const CAMILLE = '5eed0000-0000-4000-8000-000000000011'
 const DRISS = '5eed0000-0000-4000-8000-000000000012'
@@ -142,13 +145,13 @@ test.describe('identités sortantes — ce que la pile consent', () => {
 		expect(insertion.status()).toBe(403)
 
 		const maj = await request.patch(
-			`${URL_API}/rest/v1/mail_outbound_identities?owner_id=is.null`,
+			`${URL_API}/rest/v1/mail_outbound_identities?owner_id=is.null&workspace_id=eq.5eed0000-0000-4000-8000-000000000001`,
 			{ headers: entetes, data: { status: 'ok' } },
 		)
 		expect(maj.status()).toBe(403)
 
 		const service = await request.get(
-			`${URL_API}/rest/v1/mail_outbound_identities?owner_id=is.null&select=id`,
+			`${URL_API}/rest/v1/mail_outbound_identities?owner_id=is.null&workspace_id=eq.5eed0000-0000-4000-8000-000000000001&select=id`,
 			{ headers: enTetesService() },
 		)
 		const [identite] = (await service.json()) as { id: string }[]

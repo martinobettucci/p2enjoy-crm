@@ -17,6 +17,9 @@ import { expect, test } from '@playwright/test'
 import { urlApi } from '../env'
 import { enTetesService } from '../api/jetons'
 
+// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : « Studio Lumen », second espace du seed, a sa propre
+// boîte système ; « la » boîte système (et l'identité de service) se lit dans l'espace du seed, nommé par chaque filtre `owner_id=is.null`.
+
 /** La relève par la route interne, depuis le conteneur du service : le vrai chemin de la synchronisation (§15). */
 function relever(compte: string): void {
 	execFileSync(
@@ -43,7 +46,7 @@ sys.exit(0 if urllib.request.urlopen(requete, timeout=120).status == 200 else 1)
 test('une relève réelle de la boîte système date `last_sync_at` à l’horloge de la base, et garde ses bornes d’UID', async ({ request }) => {
 	test.setTimeout(150_000)
 	const reponse = await request.get(
-		`${urlApi()}/rest/v1/mail_inbound_accounts?select=id,last_sync_at&owner_id=is.null`,
+		`${urlApi()}/rest/v1/mail_inbound_accounts?select=id,last_sync_at&owner_id=is.null&workspace_id=eq.5eed0000-0000-4000-8000-000000000001`,
 		{ headers: enTetesService() },
 	)
 	expect(reponse.status()).toBe(200)

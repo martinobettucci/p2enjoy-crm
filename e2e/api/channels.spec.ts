@@ -176,7 +176,8 @@ test.describe('C1 — lecture (docs/SPEC-channels.md §7, lignes b, c, d)', () =
 			request,
 		}) => {
 			const jeton = await jetonDe(compte.adresse)
-			const reponse = await request.get(`${CHEMIN}?select=slug`, {
+			// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : la lecture nomme l'espace du seed ; Camille administre aussi « Studio Lumen ».
+			const reponse = await request.get(`${CHEMIN}?select=slug&workspace_id=eq.${WORKSPACE_SEED}`, {
 				headers: enTetesAuthentifies(jeton),
 			})
 
@@ -206,7 +207,8 @@ test.describe('C1 — lecture (docs/SPEC-channels.md §7, lignes b, c, d)', () =
 		// ses trois channels ; un droit fin de **channel** lui rouvre `prospection`, et lui seul.
 		// « Le plus spécifique gagne » vaut dans les deux sens (§3.1).
 		const jeton = await jetonDe(COMPTES_SEED[2].adresse)
-		const reponse = await request.get(`${CHEMIN}?select=slug&order=position`, {
+		// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : la lecture nomme l'espace du seed ; Camille administre aussi « Studio Lumen ».
+		const reponse = await request.get(`${CHEMIN}?select=slug&workspace_id=eq.${WORKSPACE_SEED}&order=position`, {
 			headers: enTetesAuthentifies(jeton),
 		})
 

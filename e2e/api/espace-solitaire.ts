@@ -182,13 +182,17 @@ export async function demonterEspaceSolitaire(
 
 	if (options.constater === false) return
 
-	const restants = await requete.get(`${URL_API}/rest/v1/workspaces?select=id`, {
+	// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : le seed porte DEUX espaces, le sien et
+	// « Studio Lumen » (`studio-lumen`, dont l'identifiant est tiré par la fonction de plateforme). L'état rendu est donc
+	// exactement ces deux-là — la sonde partie, rien d'autre de laissé —, mesuré sur l'identifiant du seed et le slug de Lumen.
+	const restants = await requete.get(`${URL_API}/rest/v1/workspaces?select=id,slug&order=slug`, {
 		headers: ENTETES_SERVICE,
 	})
 	expect(restants.status()).toBe(200)
+	const lignes = (await restants.json()) as Array<{ id: string; slug: string }>
 	expect(
-		(await restants.json()) as Array<{ id: string }>,
-		'la base doit être rendue à son unique workspace seedé (CRM-005) — sans quoi ' +
+		lignes.map((l) => (l.id === WORKSPACE_SEED ? 'seed' : l.slug)),
+		'la base doit être rendue à ses deux espaces seedés (CRM-005, docs/SPEC-seed.md §55) — sans quoi ' +
 			'e2e/ui/demarrage.spec.ts rougirait là où plus rien ne dirait pourquoi',
-	).toEqual([{ id: WORKSPACE_SEED }])
+	).toEqual(['seed', 'studio-lumen'])
 }

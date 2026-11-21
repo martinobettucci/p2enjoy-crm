@@ -24,6 +24,9 @@ import { capturer } from '../ui/captures'
 import { lireEnv, urlApi } from '../env'
 import { enTetesService } from '../api/jetons'
 
+// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : « Studio Lumen », second espace du seed, a sa propre
+// boîte système ; « la » boîte système (et l'identité de service) se lit dans l'espace du seed, nommé par chaque filtre `owner_id=is.null`.
+
 const URL_ROUNDCUBE = `http://127.0.0.1:${lireEnv('ROUNDCUBE_PORT')}/`
 const BOITE_SYSTEME = 'systeme@crm.p2enjoy.test'
 const MDP = lireEnv('STALWART_MAILBOX_PASSWORD')
@@ -101,7 +104,7 @@ test.describe('M6 — l’arborescence des cards se voit dans Roundcube', () => 
 		)
 		const [carte] = (await cartes.json()) as { id: string; email_local_part: string }[]
 		const comptes = await request.get(
-			`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&select=id`,
+			`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&workspace_id=eq.5eed0000-0000-4000-8000-000000000001&select=id`,
 			{ headers: enTetesService() },
 		)
 		const [compte] = (await comptes.json()) as { id: string }[]
