@@ -6,6 +6,8 @@
 //
 // Le champ de sonde porte la clé `sonde-112-mt-siret`, l'affaire le titre `tst-crm112-mt`, le modèle le nom `tst-crm112-mt` ;
 // la clé de service les pose et les retire après chaque scénario — retrait CONSTATÉ.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { randomUUID } from 'node:crypto'
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, connecterAvecLeLabs, expect, test, type APIRequestContext } from './fixtures'
@@ -74,7 +76,7 @@ test.use({ viewport: { width: 1440, height: 1000 } })
 test('la palette propose le champ, le modèle le cite, la prévisualisation rend sa valeur, l’archivage est refusé', async ({ page, request }) => {
 	await poser(request)
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/modeles-emails')
+	await page.goto('/p2enjoy/reglages/modeles-emails')
 	await page.getByTestId('ouvrir-modele').click()
 	await page.getByTestId('champ-nom-modele').fill(`${TITRE} relance`)
 	await page.getByTestId('champ-objet-modele').fill('Votre dossier')
@@ -102,7 +104,7 @@ test('la palette propose le champ, le modèle le cite, la prévisualisation rend
 	await capturer(page, 'modeles-champs-communs-rendu-xl-1440', UNITE)
 
 	// L'archivage du champ cité est refusé, et le refus nomme le modèle.
-	await page.goto('/reglages/champs')
+	await page.goto('/p2enjoy/reglages/champs')
 	await page.locator(`[data-champ="${CLE}"]`).getByRole('button', { name: /Archiver le champ/ }).click()
 	const confirmation = page.getByTestId('confirmation-archivage-champ-commun')
 	await confirmation.getByRole('button', { name: 'Archiver', exact: true }).click()

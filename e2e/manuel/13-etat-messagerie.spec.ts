@@ -7,6 +7,8 @@
 // et rend ensuite à la boîte l'état exact qu'il lui avait lu.
 // @spec CRM-135 (docs/BACKLOG.md) — « Jamais relevée » est posée elle aussi sur la boîte de Driss : la veille relève chaque
 //       boîte du seed à la minute, et la relève réussie la date et la rend `ok` (docs/SPEC-mail-subsystem.md §24.3)
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -23,7 +25,7 @@ test('l’écran, et les six incidents d’une boîte', async ({ page, request }
 	if (avant === undefined) throw new Error('la boîte de Driss Lemoine est absente du seed')
 	try {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/reglages/messagerie')
+		await page.goto('/p2enjoy/reglages/messagerie')
 		await expect(page.getByTestId('tableau-comptes-mail')).toBeVisible()
 		await illustrer(page, { chapitre: CHAPITRE, section: null, nom: 'etat-de-la-messagerie', cibles: [], pleinePage: true })
 		// La boîte système n'est plus « Jamais relevée » : la veille de développement la relève à la minute. L'état se pose
@@ -48,7 +50,7 @@ test('l’écran, et les six incidents d’une boîte', async ({ page, request }
 
 test('un membre sans boîte', async ({ page }) => {
 	await connecterAvecLeLabs(page, VIEWER)
-	await page.goto('/reglages/messagerie')
+	await page.goto('/p2enjoy/reglages/messagerie')
 	const vide = page.getByTestId('etat-vide')
 	await expect(vide).toContainText('Aucune boîte à superviser')
 	await illustrer(page, { chapitre: CHAPITRE, section: null, nom: 'aucune-boite', cibles: [vide] })

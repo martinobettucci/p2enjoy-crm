@@ -64,6 +64,8 @@ describe('classerRefus', () => {
 	it('reconnaît chaque code du dictionnaire par le message exact que la fonction lève', () => {
 		expect(classerRefus(403, 'reserve_aux_superadministrateurs')).toBe('reserve_aux_superadministrateurs')
 		expect(classerRefus(409, 'identifiant_pris')).toBe('identifiant_pris')
+		// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.1) : le slug d'une route globale.
+		expect(classerRefus(400, 'identifiant_reserve')).toBe('identifiant_reserve')
 		expect(classerRefus(400, 'last_workspace_admin')).toBe('last_workspace_admin')
 		expect(classerRefus(400, 'dernier_superadministrateur')).toBe('dernier_superadministrateur')
 	})

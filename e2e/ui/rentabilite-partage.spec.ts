@@ -4,6 +4,8 @@
 //
 // Une affaire JETABLE de `refonte` (track « Studio web »), posée par la clé de service avec une ligne de recette, que
 // l'administratrice rattache aussi à `maintenance` (même track) par `attach_card`. Elle est retirée après le scénario.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { randomUUID } from 'node:crypto'
 import { connecterAvecLeLabs, expect, test } from './fixtures'
@@ -67,7 +69,7 @@ test('une affaire partagée paraît sous ses deux channels, marquée, et le sous
 	await capturer(page, 'rentabilite-partage-xl-1440', UNITE)
 
 	// La fiche lit UNE affaire : son bloc « Rentabilité » rend ses montants une fois, sans marque ni mention.
-	await page.goto(`/tracks/studio-web/refonte/cards/${affaire}`)
+	await page.goto(`/p2enjoy/tracks/studio-web/refonte/cards/${affaire}`)
 	const bloc = page.getByTestId('bloc-rentabilite-card')
 	await expect(bloc).toBeVisible()
 	await expect(bloc.getByTestId('temps-partagee')).toHaveCount(0)

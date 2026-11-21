@@ -29,13 +29,15 @@
 // sont jamais touchés : `scripts/verify-commentaires.sh` les compte. Un `beforeEach` retire en
 // outre ce qu'une exécution INTERROMPUE aurait laissé, dont aucun `finally` ne s'est chargé —
 // INC-209, et le motif complet est écrit à sa place plus bas.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { CLE_SERVICE, URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { capturer } from './captures'
 
 const CARD = '5eed0000-0000-4000-8000-0000000000c2'
-const ADRESSE = `/tracks/conseil-ia/grands-comptes/cards/${CARD}`
+const ADRESSE = `/p2enjoy/tracks/conseil-ia/grands-comptes/cards/${CARD}`
 const ADMIN = 'admin@p2enjoy.test'
 const BIZDEV = 'bizdev@p2enjoy.test'
 
@@ -45,7 +47,7 @@ const PROFIL_DRISS = '5eed0000-0000-4000-8000-000000000012'
 
 /** La card du seed qui porte le commentaire RETIRÉ PAR LA MODÉRATION — `…0d4` sur `…0c4`. */
 const CARD_MODEREE = '5eed0000-0000-4000-8000-0000000000c4'
-const ADRESSE_MODEREE = `/tracks/studio-web/refonte/cards/${CARD_MODEREE}`
+const ADRESSE_MODEREE = `/p2enjoy/tracks/studio-web/refonte/cards/${CARD_MODEREE}`
 
 const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 

@@ -1489,9 +1489,31 @@ supprimée), une redéfinie, une ajoutée ; **aucune table, aucune donnée, aucu
 **Retour arrière** : supprimer les quatre fonctions publiques de la 195, rejouer les sections 3 à 6 de la 193, et servir la
 webapp précédente dans la même fenêtre.
 
+### 2.68 `CRM-161` T2.a, décision 967 — l'espace en tête des adresses de l'inbox, des tracks et des réglages ; les anciennes adresses redirigées (EN ATTENTE, avec le §2.67 dans un même lot)
+
+`docs/SPEC-espace-courant.md` §15 ; `docs/SCHEMA.md` « Migration `0196` ». Une contrainte, une fonction redéfinie ; **aucune
+table, aucune donnée, aucune variable, aucun secret**.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Relire les slugs | session de livraison, en lecture seule, juste avant la fenêtre | `select slug from public.workspaces where slug = any (array['aide','plateforme','contacts','objectifs','couts','pilotage','temps','rentabilite','ma-journee','affaires-figees','demarrage','connexion','auth','inbox','tracks','reglages'])` rend **zéro ligne**. *Constaté le 2026-11-21 : un espace, `crm`.* |
+| 2 | Appliquer la migration 196 | session de livraison, dans la fenêtre du §2.67 (§3.1) | `./runProd.sh --migrate` (la 195 et la 196 ensemble) |
+| 3 | Livrer la webapp | session de livraison, dans la même fenêtre | la webapp bâtie à la révision du lot |
+| 4 | Constater | session de livraison | `/inbox` mène à `/crm/inbox` ; un lien d'affaire du résumé quotidien (`/tracks/…/cards/…`) mène à `/crm/tracks/…/cards/…` |
+| 5 | Constater | le responsable | les adresses de l'inbox, des tracks et des réglages portent `crm` ; un ancien favori fonctionne encore |
+
+**L'état intermédiaire entre les deux lots** (accord de la session de livraison, 2026-11-21) : jusqu'à `CRM-161` T3, Carnet,
+Organisations, Objectifs et Pilotage suivent l'espace courant de l'onglet au lieu d'être globaux. Sans effet en production tant
+qu'elle n'a qu'un espace.
+**L'image `mcp` n'est pas concernée en T2.a** : `crm_mail_prepare` rend encore `/inbox?brouillon=…`, que la redirection sert
+(T4 la reprendra).
+**Retour arrière** : la webapp précédente ; la contrainte se retire sans perte (`docs/SCHEMA.md` « Migration `0196` »).
+
 ## 3. Migrations en attente
 
 **La 195** (`CRM-161` T1, décisions 965 et 967), **en attente** : l'inbox d'un espace (§2.67, `docs/SCHEMA.md` « Migration `0195` »). Elle part avec la webapp, dans la même fenêtre.
+
+**La 196** (`CRM-161` T2.a, décision 967), **en attente** : les slugs d'espace réservés (§2.68). Elle part avec la 195 et la webapp.
 
 **Aucune migration en attente depuis la fenêtre du 2026-11-21** : la 193 et la 194 ont été appliquées par elle (révision `dd9ac2c3`, décision 962) ; registre à **192** lignes. *Historique de l'attente* — les paragraphes qui suivent décrivent la 193 et la 194 telles qu'elles attendaient.
 

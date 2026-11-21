@@ -11,6 +11,8 @@
 // UN WORKFLOW JETABLE, ET NON CELUI DU SEED : une exigence posée sur le workflow par défaut bloquerait, le temps de la
 // preuve, tout déplacement que d'autres specs jouent sur la même pile. L'affaire naît par la vraie fonction
 // `creer_affaire` ; tout est retiré à la fin, par la clé de service.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { randomUUID } from 'node:crypto'
 import type { APIRequestContext } from '@playwright/test'
@@ -59,7 +61,7 @@ test.describe('le board refuse un déplacement dont la checklist n’est pas coc
 
 			await page.setViewportSize({ width: 1440, height: 900 })
 			await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-			await page.goto(`/tracks/${TRACK.slug}/${slugChannel}`)
+			await page.goto(`/p2enjoy/tracks/${TRACK.slug}/${slugChannel}`)
 			const laCarte = page.locator(`[data-testid="carte-card"][data-card="${carte}"]`)
 			const negociation = page.locator(`[data-testid="colonne"][data-etape="${ids.negociation}"]`)
 			await laCarte.dragTo(negociation)
@@ -115,7 +117,7 @@ test.describe('la checklist d’une affaire — la fiche et le board (docs/DESIG
 		const vauban = await affaireDuJeu(request, 'Atelier prompt — Lycée Vauban')
 		await page.setViewportSize({ width: 1440, height: 1100 })
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto(`/tracks/${STUDIO.slug}/${CHANNEL_CHECKLISTS.slug}/cards/${vauban}`)
+		await page.goto(`/p2enjoy/tracks/${STUDIO.slug}/${CHANNEL_CHECKLISTS.slug}/cards/${vauban}`)
 		const bloc = page.getByTestId('bloc-checklist-card')
 		await expect(bloc.getByTestId('checklist-compte')).toHaveText('2 sur 3')
 		const courante = bloc.getByTestId('checklist-etape-courante')
@@ -142,7 +144,7 @@ test.describe('la checklist d’une affaire — la fiche et le board (docs/DESIG
 	}) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await connecterAvecLeLabs(page, 'bizdev@p2enjoy.test')
-		await page.goto(`/tracks/${STUDIO.slug}/${CHANNEL_CHECKLISTS.slug}`)
+		await page.goto(`/p2enjoy/tracks/${STUDIO.slug}/${CHANNEL_CHECKLISTS.slug}`)
 		const carte = (titre: string) => page.getByTestId('carte-card').filter({ hasText: titre })
 		await expect(carte('Formation IA — Cerfrance').getByTestId('compte-checklist')).toContainText('1/2')
 		await expect(carte('Formation IA — Cerfrance').getByTestId('compte-checklist')).toContainText(
@@ -184,7 +186,7 @@ test.describe('la checklist d’une affaire — la fiche et le board (docs/DESIG
 		try {
 			await page.setViewportSize({ width: 1440, height: 1100 })
 			await connecterAvecLeLabs(page, 'bizdev@p2enjoy.test')
-			await page.goto(`/tracks/${STUDIO.slug}/${CHANNEL_CHECKLISTS.slug}/cards/${carte}`)
+			await page.goto(`/p2enjoy/tracks/${STUDIO.slug}/${CHANNEL_CHECKLISTS.slug}/cards/${carte}`)
 			const bloc = page.getByTestId('bloc-checklist-card')
 			await expect(bloc.getByTestId('checklist-compte')).toHaveText('0 sur 2')
 
@@ -226,7 +228,7 @@ test.describe('la checklist d’une affaire — la fiche et le board (docs/DESIG
 		const cerfrance = await affaireDuJeu(request, 'Formation IA — Cerfrance')
 		await page.setViewportSize({ width: 1440, height: 1100 })
 		await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
-		await page.goto(`/tracks/${STUDIO.slug}/${CHANNEL_CHECKLISTS.slug}/cards/${cerfrance}`)
+		await page.goto(`/p2enjoy/tracks/${STUDIO.slug}/${CHANNEL_CHECKLISTS.slug}/cards/${cerfrance}`)
 		const bloc = page.getByTestId('bloc-checklist-card')
 		await expect(bloc.getByTestId('checklist-compte')).toHaveText('1 sur 3')
 		await expect(bloc.getByRole('checkbox', { name: 'Décideur identifié' })).toBeDisabled()

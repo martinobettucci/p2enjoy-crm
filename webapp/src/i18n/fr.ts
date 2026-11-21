@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — « Espace introuvable », la redirection, le refus `identifiant_reserve` (§8.3, §15.1, §15.4) ; docs/SPEC-espace-courant.md
 // @spec CRM-007 (docs/BACKLOG.md) — dictionnaire des textes visibles
 // @spec CRM-009 (docs/BACKLOG.md) — textes de connexion, session et déconnexion
 // @spec CRM-091 (docs/BACKLOG.md) — textes de la connexion unique (docs/SPEC-auth.md §10.4)
@@ -52,6 +53,13 @@ export const fr = {
 	'header.breadcrumb.panel.aria': 'Chemin complet',
 	'header.workspace.unknown': 'Aucun workspace accessible',
 	'header.workspace.loading': 'Chargement du workspace',
+	// CRM-161 T2.a (docs/SPEC-espace-courant.md §8.3, §15.4) : un slug d'adresse qui ne nomme aucun espace lu ; la
+	// résolution d'une ancienne adresse.
+	'espace.introuvable.titre': 'Espace introuvable',
+	'espace.introuvable.corps':
+		"Cette adresse désigne un espace que vous ne pouvez pas ouvrir, ou qui n'existe pas. Vérifiez le lien, ou ouvrez l'un de vos espaces.",
+	'espace.introuvable.lien': 'Ouvrir mon premier espace',
+	'espace.redirection.chargement': "Ouverture de l'espace",
 	'header.auth.logout': 'Se déconnecter',
 	'header.auth.logout.error': "La déconnexion n'a pas abouti. Réessayez.",
 
@@ -5431,6 +5439,8 @@ export const fr = {
 	'platform.refus.adresse': 'Cette adresse n’est pas une adresse électronique valide.',
 	'platform.refus.confirmation': 'L’identifiant saisi ne correspond pas : l’espace n’a pas été supprimé.',
 	'platform.refus.identifiantPris': 'Cet identifiant court est déjà employé par un autre espace. Choisissez-en un autre.',
+	// CRM-161 T2.a (docs/SPEC-espace-courant.md §15.1) : l'identifiant court est en tête des adresses de l'espace.
+	'platform.refus.identifiantReserve': 'Ce nom d’adresse est réservé par l’application. Choisissez-en un autre.',
 	'platform.refus.dernierAdministrateur': 'Un espace garde au moins un administrateur : nommez-en un autre avant de changer ce rôle ou de retirer cette personne.',
 	'platform.refus.dernierSuperadmin': 'La plateforme garde au moins un superadministrateur : accordez le drapeau à quelqu’un d’autre d’abord.',
 	'platform.refus.reseau': 'Le serveur n’a pas répondu. Vérifiez votre connexion et réessayez.',

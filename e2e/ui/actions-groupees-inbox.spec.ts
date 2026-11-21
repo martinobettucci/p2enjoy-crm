@@ -10,6 +10,8 @@
 // et retirés à la fin par préfixe : un mail classé qu'on supprime ou restaure écrirait au journal immuable d'une affaire du
 // seed. Leur pastille est posée par `set_message_label` sous le jeton de Camille (le vrai geste), et c'est une pastille
 // qu'aucun mail non classé du seed ne porte : « tout le filtre » ne désigne alors que les mails de la preuve.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { type APIRequestContext, type Page } from '@playwright/test'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
@@ -110,7 +112,7 @@ test.describe('la sélection et les actions groupées (docs/DESIGN_SYSTEM.md §5
 		request,
 	}) => {
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto(`/inbox?courrier=tous&message=${mails[2]}`)
+		await page.goto(`/p2enjoy/inbox?courrier=tous&message=${mails[2]}`)
 		await expect(ligne(page, 2)).toBeVisible()
 		// Sans filtre explicite, « Tout sélectionner » n'existe pas (§32.3).
 		await expect(page.getByTestId('inbox-tout-selectionner')).toHaveCount(0)
@@ -137,7 +139,7 @@ test.describe('la sélection et les actions groupées (docs/DESIGN_SYSTEM.md §5
 		request,
 	}) => {
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto(`/inbox?courrier=tous&message=${mails[2]}&pastille=${pastille.id}`)
+		await page.goto(`/p2enjoy/inbox?courrier=tous&message=${mails[2]}&pastille=${pastille.id}`)
 		await expect(ligne(page, 0)).toBeVisible()
 		await page.getByTestId('inbox-tout-selectionner').click()
 		await expect(page.getByTestId('inbox-selection-compte')).toHaveText('Tout le filtre : 2 fils (2 messages)')
@@ -158,7 +160,7 @@ test.describe('la sélection et les actions groupées (docs/DESIGN_SYSTEM.md §5
 		expect(effaces).toHaveLength(2)
 
 		// La corbeille : une case par message, « Restaurer » direct.
-		await page.goto('/inbox?corbeille=oui')
+		await page.goto('/p2enjoy/inbox?corbeille=oui')
 		const corbeille = page.getByTestId('inbox-corbeille-liste')
 		for (const rang of [0, 1]) {
 			await corbeille
@@ -186,7 +188,7 @@ test.describe('la sélection et les actions groupées (docs/DESIGN_SYSTEM.md §5
 		request,
 	}) => {
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto(`/inbox?courrier=tous&message=${mails[2]}`)
+		await page.goto(`/p2enjoy/inbox?courrier=tous&message=${mails[2]}`)
 		await expect(ligne(page, 2)).toBeVisible()
 		await caseDe(page, 2).focus()
 		await page.keyboard.press('Space')
@@ -217,7 +219,7 @@ test.describe('la sélection et les actions groupées (docs/DESIGN_SYSTEM.md §5
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
 		for (const palier of PALIERS) {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
-			await page.goto(`/inbox?courrier=tous&message=${mails[2]}&pastille=${pastille.id}`)
+			await page.goto(`/p2enjoy/inbox?courrier=tous&message=${mails[2]}&pastille=${pastille.id}`)
 			await expect(page.getByTestId('inbox-message-ouvert')).toBeVisible()
 			// Sous 1024 px, l'inbox est une pile : on remonte du message à la liste.
 			const retour = page.getByRole('button', { name: 'Retour aux messages' })

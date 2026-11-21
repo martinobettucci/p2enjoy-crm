@@ -10,6 +10,8 @@
 //           seul tableau, …0c7 « Formation Data & IA » (CHF et EUR, docs/SPEC-seed.md §21.1) sur une ligne, une balance
 //           par devise, taux vide, sous-totaux et total en balance par devise ; la fiche de …0c7 ; docs/DESIGN_SYSTEM.md §5.60
 // @verifies CLAUDE.md §16 (captures aux quatre paliers, page jamais défilante horizontalement)
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
@@ -19,7 +21,7 @@ import { PALIERS, capturer } from './captures'
 const UNITE = 'CRM-108'
 const ADMIN = 'admin@p2enjoy.test'
 const BIZDEV = 'bizdev@p2enjoy.test'
-const FICHE = '/tracks/studio-web/refonte/cards/5eed0000-0000-4000-8000-0000000000c4'
+const FICHE = '/p2enjoy/tracks/studio-web/refonte/cards/5eed0000-0000-4000-8000-0000000000c4'
 const CARD = '5eed0000-0000-4000-8000-0000000000c4'
 const NATURE = 'Ligne E2E rentabilité'
 const FORMATION = '5eed0000-0000-4000-8000-0000000000c7'
@@ -128,7 +130,7 @@ test('l’administratrice lit la rentabilité dans la fiche et dans l’écran, 
 
 test('la fiche d’une affaire à plusieurs devises rend un seul tableau, une marge par devise, et aucun taux', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto(`/tracks/formation/inter-entreprises/cards/${FORMATION}`)
+	await page.goto(`/p2enjoy/tracks/formation/inter-entreprises/cards/${FORMATION}`)
 	const bloc = page.getByTestId('bloc-rentabilite-card')
 	await expect(bloc.getByTestId('rentab-marge').first()).toBeVisible()
 	await expect(bloc.getByRole('table')).toHaveCount(1)

@@ -8,6 +8,8 @@
 // véritable route REST, avec le jeton réel de l'administratrice, sur une affaire qui n'en porte aucun, et retirés par
 // le même chemin en fin de scénario, quoi qu'il arrive. Léo Marchand n'y est jamais employé : le seed garde qu'il soit
 // rattaché à exactement une affaire (`docs/SPEC-contacts.md` §5).
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesAuthentifies, jetonDe } from '../api/jetons'
@@ -31,7 +33,7 @@ const MODELE_RELANCE = 'Relance sans réponse'
 
 async function ouvrirPrevisualisation(page: Page, email: string, affaireAttendue = SOGEXIA) {
 	await connecterAvecLeLabs(page, email)
-	await page.goto('/reglages/modeles-emails')
+	await page.goto('/p2enjoy/reglages/modeles-emails')
 	await page
 		.getByTestId('ligne-modele-email')
 		.filter({ hasText: MODELE_RELANCE })

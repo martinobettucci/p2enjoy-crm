@@ -19,6 +19,8 @@
 // leur fil, jamais sur une affaire du seed. Deux refus exigent une concurrence : un rattachement posé entre l'ouverture
 // du formulaire et l'envoi, et un rôle retiré à Driss Lemoine entre l'ouverture et l'envoi — l'un et l'autre défaits.
 // « Le nom est requis. » n'est pas montré : « Créer » reste grisé tant que le nom est vide (SPEC-manual §11.3).
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -207,7 +209,7 @@ test('supprimer un contact rattaché, et la trace dans l’affaire', async ({ pa
 		await page.getByTestId('confirmer-suppression-contact').click()
 		await expect(page).toHaveURL(/\/contacts$/)
 
-		await page.goto('/tracks/conseil-ia/grands-comptes/cards/' + AUDIT.id)
+		await page.goto('/p2enjoy/tracks/conseil-ia/grands-comptes/cards/' + AUDIT.id)
 		const trace = page.getByText('Contact détaché', { exact: true }).last()
 		await expect(trace).toBeVisible()
 		await illustrer(page, { chapitre: CHAPITRE, section: 'supprimer-un-contact', nom: 'contact-detache', cibles: [trace.locator('xpath=ancestor::li[1]')] })
@@ -384,7 +386,7 @@ test('les catégories et les commentaires d’une organisation', async ({ page }
 	await expect(sien.getByTestId('actions-commentaire')).toHaveCSS('opacity', '1')
 	await illustrer(page, { chapitre: CHAPITRE, section: 'commenter-une-organisation', nom: 'commentaires-organisation', cibles: [fil] })
 
-	await page.goto('/reglages/categories-organisations')
+	await page.goto('/p2enjoy/reglages/categories-organisations')
 	const reglages = page.getByTestId('reglages-categories-organisations')
 	await expect(reglages.getByTestId('ligne-categorie-organisation')).toHaveCount(3)
 	await illustrer(page, { chapitre: CHAPITRE, section: 'definir-les-categories-d-organisations', nom: 'reglages-categories', cibles: [reglages] })

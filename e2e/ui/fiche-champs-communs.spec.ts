@@ -8,6 +8,8 @@
 // Les champs de sonde portent le préfixe `sonde-112-fc` ; l'affaire de sonde est posée à « Prospection », d'où la transition
 // « Relancer » (`…0071`) mène à « Relance ». La clé de service fait EXISTER le support ; chaque geste passe par la session
 // réelle. Après chaque scénario, elle retire l'affaire, l'exigence et les champs — retrait CONSTATÉ.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { randomUUID } from 'node:crypto'
 import {
@@ -32,7 +34,7 @@ const WORKFLOW = '5eed0000-0000-4000-8000-000000000051'
 const PROSPECTION = '5eed0000-0000-4000-8000-000000000061'
 const RELANCE = '5eed0000-0000-4000-8000-000000000062'
 const TRANSITION = '5eed0000-0000-4000-8000-000000000071'
-const BOARD = '/tracks/conseil-ia/grands-comptes'
+const BOARD = '/p2enjoy/tracks/conseil-ia/grands-comptes'
 const CLE = 'sonde-112-fc'
 const CLE_ARCHIVE = 'sonde-112-fc-ancien'
 const LIBELLE = 'SIRET (sonde fiche)'

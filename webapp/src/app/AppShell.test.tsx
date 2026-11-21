@@ -55,6 +55,8 @@ function client(reponses: readonly Reponse[], reponsesTracks?: readonly Reponse[
 
 	const constructeur = (table: string): unknown => {
 		const chaine = {
+			// `CRM-161` T2.a : les tracks de la barre sont filtrés par l'espace courant (`eq('workspace_id', …)`).
+			eq: () => chaine,
 			is: () => chaine,
 			order: () => chaine,
 			then: (resoudre: (valeur: Reponse) => unknown) => Promise.resolve(suivante(table)).then(resoudre),

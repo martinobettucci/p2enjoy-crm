@@ -7,15 +7,18 @@
 //
 // Les gestes écrivent : chaque modèle et chaque affaire de sonde porte le préfixe `ZZ 068`, et tout est retiré à la fin
 // par la clé de service. Les modèles du seed ne sont jamais modifiés.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { APIRequestContext } from '@playwright/test'
 import { URL_API, enTetesService } from '../api/jetons'
 import { capturer } from './captures'
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, connecterAvecLeLabs, expect, test } from './fixtures'
+import { dansUnEspace } from '../espace'
 
 const UNITE = 'CRM-068'
 const PREFIXE = 'ZZ 068'
-const REFONTE = '/tracks/studio-web/refonte'
+const REFONTE = '/p2enjoy/tracks/studio-web/refonte'
 const rest = (chemin: string) => `${URL_API}/rest/v1/${chemin}`
 const SONDES = `like.${encodeURIComponent(`${PREFIXE}*`)}`
 // Le titre d'une affaire née d'un modèle COMMENCE par le titre proposé : la sonde est cherchée partout dans le titre.
@@ -39,10 +42,10 @@ test.afterEach(async ({ request }) => {
 test.describe('Réglages ▸ Modèles d’affaires (docs/DESIGN_SYSTEM.md §5.71)', () => {
 	test('l’administratrice lit les modèles semés, en pose un, le modifie et l’archive', async ({ page, request }) => {
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		// L'entrée suit les workflows, et c'est un lien pour qui administre.
 		const entree = page.getByTestId('entree-modeles-affaires')
-		await expect(entree).toHaveAttribute('href', '/reglages/modeles-affaires')
+		await expect(entree).toHaveAttribute('href', dansUnEspace('/reglages/modeles-affaires'))
 		await entree.click()
 		const ecran = page.getByTestId('reglages-modeles-affaires')
 		const sections = ecran.getByTestId('modeles-workflow')
@@ -111,11 +114,11 @@ test.describe('Réglages ▸ Modèles d’affaires (docs/DESIGN_SYSTEM.md §5.71
 
 	test('la lectrice : l’entrée est un texte qui cite le motif, l’adresse directe dit « réservé »', async ({ page }) => {
 		await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		const entree = page.getByTestId('entree-modeles-affaires')
 		await expect(entree).toHaveAttribute('aria-disabled', 'true')
 		expect(await entree.evaluate((n) => n.tagName)).not.toBe('A')
-		await page.goto('/reglages/modeles-affaires')
+		await page.goto('/p2enjoy/reglages/modeles-affaires')
 		await expect(page.getByText('Réservé aux administrateurs')).toBeVisible()
 		await expect(page.getByTestId('nouveau-modele-affaire')).toHaveCount(0)
 	})
@@ -125,7 +128,7 @@ test.describe('Réglages ▸ Modèles d’affaires (docs/DESIGN_SYSTEM.md §5.71
 test.describe('les réponses d’un modèle (docs/DESIGN_SYSTEM.md §5.71 bis)', () => {
 	test('l’administratrice répond aux questions ; une adresse mal formée est refusée ; l’affaire née du modèle les porte', async ({ page, request }) => {
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto('/reglages/modeles-affaires')
+		await page.goto('/p2enjoy/reglages/modeles-affaires')
 		await page.getByTestId('nouveau-modele-affaire').click()
 		const fiche = page.getByTestId('fiche-modele-affaire')
 		await expect(fiche.getByLabel('Workflow')).toHaveValue('5eed0000-0000-4000-8000-000000000051')
@@ -212,7 +215,7 @@ test.describe('le modèle à la création d’une affaire (docs/DESIGN_SYSTEM.md
 	test('un channel dont le workflow n’a aucun modèle ne rend pas le `select`', async ({ page }) => {
 		await connecterAvecLeLabs(page, 'bizdev@p2enjoy.test')
 		// « Conseil & IA › Prospection » suit le workflow dérivé « Cycle commercial — Conseil IA », qui n'a aucun modèle.
-		await page.goto('/tracks/conseil-ia/prospection')
+		await page.goto('/p2enjoy/tracks/conseil-ia/prospection')
 		await page.getByTestId('nouvelle-affaire').click()
 		await expect(page.getByTestId('champ-titre-affaire')).toBeFocused()
 		await expect(page.getByTestId('select-modele-affaire')).toHaveCount(0)

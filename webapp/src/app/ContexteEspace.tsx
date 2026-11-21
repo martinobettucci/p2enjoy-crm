@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le slug de l'espace courant, la liste des espaces lus, et le crochet qui met
+//       un chemin dans l'espace courant (docs/SPEC-espace-courant.md §15.2, §15.3)
 // @spec CRM-157 (docs/BACKLOG.md) tranche T3 — `espaceLu` (docs/SPEC-onboarding.md §11.1)
 // @spec CRM-094 (docs/BACKLOG.md) tranches T2 et T3 — l'espace courant et le rôle que la base y rend,
 //       tenus une fois par la coquille (docs/SPEC-onboarding.md §10.2, §10.3)
@@ -11,8 +13,11 @@
 // `Carnet` et `Objectifs`. Elle y ajoute le rôle, et le rend à ses descendants : le guide de
 // démarrage et sa pastille en ont besoin, et le relire dans chacun doublerait les requêtes.
 
-import { createContext, useContext, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, type ReactNode } from 'react'
+import { useParams } from 'react-router'
 import { CAPACITES_INCONNUES, type CapacitesEspace } from '../lib/capacites'
+import type { Workspace } from '../lib/workspaces'
+import { cheminEspace, estPageDEspace } from './chemins'
 
 export type ContexteEspace = {
 	/** L'espace courant, `null` tant qu'il n'est pas lu ou qu'il n'y en a aucun. */
@@ -29,6 +34,13 @@ export type ContexteEspace = {
 	 * sans dire « aucun espace ». Absent hors de la coquille (une preuve qui monte un écran seul) : lu.
 	 */
 	readonly espaceLu?: boolean
+	/**
+	 * `CRM-161` T2.a (§15.2) : le slug de l'espace courant, pour composer les liens des pages d'un espace. Absent hors
+	 * coquille : les liens gardent alors leur ancienne adresse, que la redirection sert (§15.4).
+	 */
+	readonly slugEspace?: string | null
+	/** `CRM-161` T2.a (§15.3) : les espaces lus, par nom — le slug de l'espace d'une ressource se lit ici. */
+	readonly espaces?: readonly Workspace[]
 }
 
 /** Hors coquille — une preuve qui monte un composant seul —, aucun espace et aucun rôle. */
@@ -48,4 +60,25 @@ export function FournisseurEspace({
 
 export function useContexteEspace(): ContexteEspace {
 	return useContext(Contexte)
+}
+
+/**
+ * `CRM-161` T2.a (§15.3) — met un chemin d'une page d'un espace (`/inbox`, `/reglages/etiquettes`, `/tracks/…`) dans
+ * l'espace courant ; un chemin global (`/contacts`, `/objectifs`…) ou déjà préfixé reste tel quel. Sans espace connu, le chemin reste l'ancienne adresse, que la redirection résout (§15.4) : jamais un lien
+ * vers un autre espace.
+ */
+export function useVersEspace(): (chemin: string) => string {
+	// Un écran qui monte SA PROPRE coquille (la route d'un track, d'une affaire, des coûts d'un track) appelle ce crochet
+	// hors du fournisseur : le slug est alors celui de l'adresse. Sans lui, sa navigation passerait par l'ancienne adresse,
+	// et la redirection remonterait l'écran — l'annonce et le focus d'après le geste seraient perdus.
+	const { slugEspace: slugContexte } = useContexteEspace()
+	const { slugEspace: slugAdresse } = useParams()
+	const slugEspace = slugContexte ?? slugAdresse ?? null
+	return useCallback(
+		(chemin: string) =>
+			slugEspace === null || slugEspace === undefined || !estPageDEspace(chemin.split(/[?#]/)[0] ?? chemin)
+				? chemin
+				: cheminEspace(slugEspace, chemin),
+		[slugEspace],
+	)
 }

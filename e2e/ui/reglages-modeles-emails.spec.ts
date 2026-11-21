@@ -17,6 +17,8 @@
 // LE SEED EST RENDU TEL QU'IL A ÉTÉ REÇU — leçon d'INC-061. Les scénarios qui écrivent créent des
 // modèles PRÉFIXÉS, qu'ils retirent par le véritable chemin d'écriture et avec le jeton réel de
 // l'administratrice ; le compte des modèles du seed est relu à la fin de chacun.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	autoriserErreursConsole,
@@ -83,7 +85,7 @@ test.describe('administration des modèles d’emails (docs/SPEC-modeles-emails.
 		page,
 	}) => {
 		await connecter(page, ADMIN)
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 
 		// L'entrée vit APRÈS « Identités d'expédition » et AVANT « État de la messagerie » (§9.1) :
 		// on déclare l'expéditeur avant d'écrire le texte qu'il expédiera, et on configure avant de
@@ -126,7 +128,7 @@ test.describe('administration des modèles d’emails (docs/SPEC-modeles-emails.
 		page,
 	}) => {
 		await connecter(page, ADMIN)
-		await page.goto('/reglages/modeles-emails')
+		await page.goto('/p2enjoy/reglages/modeles-emails')
 
 		await page.getByTestId('ouvrir-modele').click()
 		const fiche = page.getByTestId('fiche-modele-email')
@@ -184,7 +186,7 @@ test.describe('administration des modèles d’emails (docs/SPEC-modeles-emails.
 		page,
 	}) => {
 		await connecter(page, ADMIN)
-		await page.goto('/reglages/modeles-emails')
+		await page.goto('/p2enjoy/reglages/modeles-emails')
 
 		await page.getByTestId('ouvrir-modele').click()
 		await page.keyboard.type(`${PREFIXE}-variable-inconnue`)
@@ -225,7 +227,7 @@ test.describe('administration des modèles d’emails (docs/SPEC-modeles-emails.
 		page,
 	}) => {
 		await connecter(page, ADMIN)
-		await page.goto('/reglages/modeles-emails')
+		await page.goto('/p2enjoy/reglages/modeles-emails')
 
 		await page
 			.getByTestId('ligne-modele-email')
@@ -309,7 +311,7 @@ test.describe('administration des modèles d’emails (docs/SPEC-modeles-emails.
 
 	test('elle supprime un modèle derrière une confirmation qui le NOMME', async ({ page }) => {
 		await connecter(page, ADMIN)
-		await page.goto('/reglages/modeles-emails')
+		await page.goto('/p2enjoy/reglages/modeles-emails')
 
 		// Le modèle supprimé est créé par cette preuve : supprimer un modèle du seed le priverait de
 		// ce qu'il doit démontrer.
@@ -374,7 +376,7 @@ test.describe('administration des modèles d’emails (docs/SPEC-modeles-emails.
 
 	test('la lectrice LIT les modèles ; « Modifier » est ÉTEINT, avec son motif (CRM-093)', async ({ page }) => {
 		await connecter(page, VIEWER)
-		await page.goto('/reglages/modeles-emails')
+		await page.goto('/p2enjoy/reglages/modeles-emails')
 
 		// La lectrice LIT : tout membre du workspace lit (§2.6).
 		await expect(page.getByTestId('ligne-modele-email')).toHaveCount(MODELES_DU_SEED)
@@ -409,7 +411,7 @@ for (const palier of PALIERS) {
 	}) => {
 		await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 		await connecter(page, ADMIN)
-		await page.goto('/reglages/modeles-emails')
+		await page.goto('/p2enjoy/reglages/modeles-emails')
 		await expect(page.getByTestId('liste-modeles-emails')).toBeVisible()
 
 		// LA PAGE NE DÉFILE JAMAIS HORIZONTALEMENT (§7) : c'est la règle que le §5.34 a déjà

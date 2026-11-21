@@ -47,6 +47,8 @@
 //     mais des lignes lisibles » du §4.8 réellement observable ;
 //   * la portée d'un track ne rend que ses budgets : DEUX lignes sur `studio-web`, UNE sur
 //     `conseil-ia`.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	autoriserErreursConsole,
@@ -65,8 +67,8 @@ const ADMIN = 'admin@p2enjoy.test'
 const VIEWER = 'viewer@p2enjoy.test'
 
 const CUMUL_A_SAISIR = '/couts?onglet=saisir'
-const TRACK_A_SAISIR = '/tracks/studio-web/couts?onglet=saisir'
-const TRACK_AUTRE = '/tracks/conseil-ia/couts?onglet=saisir'
+const TRACK_A_SAISIR = '/p2enjoy/tracks/studio-web/couts?onglet=saisir'
+const TRACK_AUTRE = '/p2enjoy/tracks/conseil-ia/couts?onglet=saisir'
 
 const LIGNE_BUDGET_CLOS = 'Impression plaquettes'
 const LIGNE_OUVERTE = 'Publicité'
@@ -274,7 +276,7 @@ test.describe('CRM-086 — onglet « À saisir » (docs/SPEC-costs.md §4.8)', (
 		// un filtre de clôture à la lecture de l'onglet — le mimétisme que le §4.8.1 redoute — les
 		// rendrait égaux, et ferait tomber cette assertion.
 		await connecter(page)
-		await page.goto('/tracks/studio-web/couts')
+		await page.goto('/p2enjoy/tracks/studio-web/couts')
 
 		// La mention du §4.4 est rendue SOUS l'histogramme, qui exclut les budgets clôturés (§4.2) :
 		// elle ne compte donc que « Publicité », sur `Publicité 2026`.
@@ -301,7 +303,7 @@ test.describe('CRM-086 — onglet « À saisir » (docs/SPEC-costs.md §4.8)', (
 		// en 1440 laisse la barre latérale dépliée par-dessus le contenu, et la capture montrerait
 		// alors l'artefact du redimensionnement plutôt que l'écran qu'un visiteur reçoit.
 		await page.setViewportSize({ width: 390, height: 780 })
-		await page.goto('/tracks/studio-web/couts')
+		await page.goto('/p2enjoy/tracks/studio-web/couts')
 		await expect(page.getByTestId('couts-portee-compteur')).toBeVisible()
 		const debordement = await page.evaluate(
 			() => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -408,7 +410,7 @@ test.describe('CRM-086 — onglet « À saisir » (docs/SPEC-costs.md §4.8)', (
 		// L'état « tous les coûts réels sont saisis » est capturé lui aussi : la Definition of Done le
 		// réclame nommément, et c'est une bonne nouvelle — pas un état vide en défaut (§4.8).
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.goto('/tracks/formation/couts?onglet=saisir')
+		await page.goto('/p2enjoy/tracks/formation/couts?onglet=saisir')
 		await expect(page.getByTestId('etat-vide')).toBeVisible()
 		await capturer(page, 'couts-a-saisir-tout-saisi-1440', UNITE)
 

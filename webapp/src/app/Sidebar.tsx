@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — la barre latérale mène dans l'espace courant (§15.2, §15.3) ; docs/SPEC-espace-courant.md
 // @spec CRM-007 (docs/BACKLOG.md) — barre latérale de la coquille
 // @spec docs/DESIGN_SYSTEM.md §4 (barre latérale, repli), §7 (paliers), §8 (clavier, cibles)
 // @spec docs/SPEC-webapp.md §5.1 (coquille), §8 (responsive), §9 (accessibilité)
@@ -18,7 +19,9 @@
 // offrir un bouton sans effet visible serait une commande morte.
 
 import { PanelLeftClose, PanelLeftOpen, ShieldCheck, X } from 'lucide-react'
-import { NavLink } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
+// l'espace courant.
+import { NavLienEspace as NavLink } from './LienEspace'
 import { Infobulle } from '../components/ui/Infobulle'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'

@@ -33,6 +33,8 @@
 // longues dans le seed (`docs/SPEC-seed.md` §9.11), les données longues et la seconde page se
 // prouvent contre la BASE : connexion réelle au clavier, adresse réelle, aucune route posée.
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la page lit les rattachements du channel (docs/SPEC-rattachements.md §8)
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	autoriserErreursConsole,
@@ -67,7 +69,7 @@ const ROUTE_WORKSPACES = '**/rest/v1/workspaces*'
 const TRACK = { id: '5eed0000-0000-4000-8000-000000000021', slug: 'conseil-ia', nom: 'Conseil IA' }
 const CHANNEL = { id: '5eed0000-0000-4000-8000-000000000032', slug: 'grands-comptes' }
 const WORKFLOW = '5eed0000-0000-4000-8000-000000000051'
-const BASE = `/tracks/${TRACK.slug}/${CHANNEL.slug}`
+const BASE = `/p2enjoy/tracks/${TRACK.slug}/${CHANNEL.slug}`
 const ADRESSE = `${BASE}/liste`
 
 /**
@@ -653,7 +655,7 @@ test.describe('la bascule entre les deux vues (§12.8)', () => {
 
 test.describe('les données longues et la seconde page, contre la pile réelle', () => {
 	/** Le channel de VOLUME du §9.11.1 : 27 cards actives, le seul du seed à avoir deux pages. */
-	const ADRESSE_VOLUME = '/tracks/studio-web/maintenance/liste'
+	const ADRESSE_VOLUME = '/p2enjoy/tracks/studio-web/maintenance/liste'
 	/** La card aux données longues du §9.11.4. Son titre commence par « A » : première page. */
 	const CARD_D001 = '5eed0000-0000-4000-8000-00000000d001'
 	/** Mesurés en base, et non recopiés d'un souvenir (§9.11.7, preuve n° 3). */
@@ -684,7 +686,7 @@ test.describe('les données longues et la seconde page, contre la pile réelle',
 	}) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await connecter(page)
-		await page.goto('/tracks/conseil-ia/grands-comptes/liste')
+		await page.goto('/p2enjoy/tracks/conseil-ia/grands-comptes/liste')
 		await expect(page.getByTestId('tableau-liste')).toBeVisible()
 
 		// La frappe et la soumission sont celles d'un utilisateur : aucun paramètre posé dans
@@ -848,7 +850,7 @@ test.describe('le parcours complet, à la souris et au clavier seuls', () => {
 
 		// 2. La pilule du track, désignée par son adresse et non par son rang : le seed en porte
 		//    plusieurs, et « la première » changerait de sens le jour où l'ordre changerait.
-		const pilule = page.locator(`[data-testid="entree-track"][href="/tracks/${TRACK}"]`)
+		const pilule = page.locator(`[data-testid="entree-track"][href="/p2enjoy/tracks/${TRACK}"]`)
 		await expect(pilule).toBeVisible()
 		await pilule.click()
 		await expect(page).toHaveURL(new RegExp(`/tracks/${TRACK}$`))
@@ -893,7 +895,7 @@ test.describe('le parcours complet, à la souris et au clavier seuls', () => {
 
 		// On avance à la tabulation jusqu'à la pilule du track : aucune souris, et l'élément
 		// réellement focalisé est vérifié avant d'être activé.
-		const pilule = page.locator(`[data-testid="entree-track"][href="/tracks/${TRACK}"]`)
+		const pilule = page.locator(`[data-testid="entree-track"][href="/p2enjoy/tracks/${TRACK}"]`)
 		await page.locator('body').press('Tab')
 		for (let saut = 0; saut < 60; saut += 1) {
 			if (await pilule.evaluate((noeud) => noeud === document.activeElement)) break

@@ -30,6 +30,8 @@
 //
 // Le nœud `qualification`, seul archivé du seed, sert au rétablissement — puis il est RÉARCHIVÉ à
 // la même date, pour que `scripts/verify-catalogue.sh` retrouve son huitième nœud archivé.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole } from './fixtures'
@@ -119,7 +121,7 @@ async function restituerPositions(page: Page, positions: Record<string, number>)
 }
 
 async function ouvrirCatalogue(page: Page): Promise<void> {
-	await page.goto('/reglages/catalogue')
+	await page.goto('/p2enjoy/reglages/catalogue')
 	await expect(page.getByTestId('liste-catalogue')).toBeVisible()
 }
 
@@ -166,7 +168,7 @@ test.describe('Administration du catalogue de nœuds — CRM-030', () => {
 
 	test("l'index des réglages y mène, et l'écran porte son titre (§2 bis.2)", async ({ page }) => {
 		await connecter(page)
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		await page.getByRole('link', { name: 'Catalogue de nœuds' }).click()
 		await expect(page).toHaveURL(/\/reglages\/catalogue$/)
 		await expect(page.getByRole('heading', { name: 'Catalogue de nœuds' })).toBeVisible()

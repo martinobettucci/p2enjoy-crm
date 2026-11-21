@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — les liens des cartes mènent dans l'espace courant (§15.3) ; docs/SPEC-espace-courant.md
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les gestes d'écriture lisent le refus du channel (docs/DESIGN_SYSTEM.md
 // @spec CRM-066 (docs/BACKLOG.md) — tranche 4 : les deux pastilles de santé sur la carte — docs/DESIGN_SYSTEM.md §5.65,
 //       docs/SPEC-analytique.md §13.6
@@ -43,7 +44,9 @@ import { PastilleAussiRattachee } from '../components/ui/AussiRattachee'
 import { PastillesEtiquettes } from '../components/ui/PastilleEtiquette'
 import { CalendarClock, Clock, GripVertical, Moon, SquareCheck, Sun, TriangleAlert } from 'lucide-react'
 import { useCallback, useId, useMemo, useState } from 'react'
-import { Link } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
+// l'espace courant.
+import { LienEspace as Link } from './LienEspace'
 import { Badge, type TonBadge } from '../components/ui/Badge'
 import { Avatar } from '../components/ui/Avatar'
 import { Button } from '../components/ui/Button'

@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'écran travaille dans l'espace de l'adresse (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-093 (docs/BACKLOG.md) tranche T3 — « Nouvelle séquence » et « Modifier » désactivés avec leur motif quand la
 //       base refuse l'édition de l'espace (docs/SPEC-droits-interface.md §2.2, §3, §5 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-063 (docs/BACKLOG.md) — modèles d'emails, signatures, séquences de relance,
@@ -63,6 +64,7 @@ import {
 } from './ApercuModeleExemple'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { motifVisible, proprietesCommande, type ProprietesCommande } from '../lib/capacites'
+import { idEspaceParmi } from '../lib/espace-onglet'
 
 /** Le motif de la surface, cité par ses commandes d'écriture quand la base refuse l'édition (CRM-093). */
 const ID_MOTIF_SEQUENCES = 'sequences-lecture-seule'
@@ -141,6 +143,8 @@ export function ReglagesSequencesRelance({
 	/** Le retour du focus est DIFFÉRÉ d'un tour de rendu : la commande est démontée (§5.25). */
 	const focusARendre = useRef(false)
 
+	// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) : l'espace de l'adresse, et non plus le premier de la liste.
+	const { idWorkspace: idEspaceContexte } = useContexteEspace()
 	useEffect(() => {
 		if (client === null) return
 		const rang = ++courant.current
@@ -153,12 +157,12 @@ export function ReglagesSequencesRelance({
 				return
 			}
 			if (espaces.statut !== 'pret') return
-			setIdWorkspace(espaces.donnees[0]?.id ?? null)
+			setIdWorkspace(idEspaceParmi(espaces.donnees, idEspaceContexte))
 			const lues = await lireSequences(client)
 			if (rang !== courant.current) return
 			setEtat(lues.statut === 'pret' ? pret(lues.donnees) : lues)
 		})()
-	}, [client, tentative])
+	}, [client, tentative, idEspaceContexte])
 
 	// LES MODÈLES SE CHARGENT UNE FOIS, ET LEUR ÉCHEC NE BLOQUE PAS L'ÉCRAN. Un sélecteur de modèle
 	// vide empêche d'ajouter un palier et le dit ; il n'empêche ni de lire, ni de renommer, ni de

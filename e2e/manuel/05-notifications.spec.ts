@@ -14,6 +14,8 @@
 // - « Aucune notification n'a été modifiée » : la notification change de destinataire, par la clé de service, entre
 //   l'ouverture du panneau et le geste — le cas même que le manuel décrit — puis lui est rendue ;
 // - « Enregistré » : la case des mentions est décochée, puis recochée.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -88,7 +90,7 @@ test('« Mentionner », sous le fil d’une affaire', async ({ page }) => {
 
 test('choisir ce que vous recevez', async ({ page, request }) => {
 	await connecterAvecLeLabs(page, BIZDEV)
-	await page.goto('/reglages/notifications')
+	await page.goto('/p2enjoy/reglages/notifications')
 	const laCase = page.getByRole('checkbox', { name: /Recevoir les mentions/ })
 	await expect(laCase).toBeChecked()
 	await laCase.click()

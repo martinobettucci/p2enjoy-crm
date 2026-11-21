@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'éditeur de workflows travaille dans l'espace de l'adresse ; ses liens y mènent (§15.2, §15.3) ; docs/SPEC-espace-courant.md
 // @spec CRM-112 (docs/BACKLOG.md) tranche T3.a — docs/DESIGN_SYSTEM.md §5.86 : la ligne d'un champ, son formulaire, l'éditeur de
 //       choix, le champ texte, l'alerte de refus et la confirmation de retrait vivent dans `ElementsChampAdmin.tsx`, partagés
 //       avec Réglages ▸ « Champs de l'affaire » ; leur rendu n'a pas changé.
@@ -74,7 +75,10 @@ import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { FournisseurRefus, useRefus } from '../components/ui/RefusCommandes'
 import { motifVisible, proprietesCommande } from '../lib/capacites'
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { useSearchParams } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
+// l'espace courant.
+import { LienEspace as Link } from './LienEspace'
 import {
 	ArrowDown,
 	ArrowLeft,
@@ -235,6 +239,7 @@ import {
 } from '../lib/assistant-ia'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { lireWorkspaces } from '../lib/workspaces'
+import { idEspaceParmi } from '../lib/espace-onglet'
 
 /** Le motif de l'éditeur, cité par ses commandes d'écriture quand la base refuse l'administration (CRM-093). */
 const ID_MOTIF_WORKFLOWS = 'workflows-lecture-seule'
@@ -2232,12 +2237,13 @@ export function AdministrationWorkflows({
 		void (async () => {
 			const espaces = await lireWorkspaces(client)
 			if (!vivant || espaces.statut !== 'pret') return
-			setIdWorkspace(espaces.donnees[0]?.id ?? null)
+			// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) : l'espace du contexte, et non plus le premier de la liste.
+			setIdWorkspace(idEspaceParmi(espaces.donnees, espaceCourant))
 		})()
 		return () => {
 			vivant = false
 		}
-	}, [client, tentative])
+	}, [client, tentative, espaceCourant])
 
 	// Les suggestions de l'IA en revue — `CRM-097` T2. Lues avec les workflows (même `tentative`), et relues seules
 	// par `tentativeIa`.

@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'index des réglages et ses entrées mènent dans l'espace courant (§15.3) ; docs/SPEC-espace-courant.md
 // @spec CRM-156 (docs/BACKLOG.md) — tranche T4 : Réglages ▸ Expéditeurs bloqués, son titre et son entrée d'index, après les pastilles des mails (docs/DESIGN_SYSTEM.md §5.109 bis)
 // @spec CRM-149 (docs/BACKLOG.md) — tranche T3 : Réglages ▸ Prompts du connecteur, son adresse, son titre et son entrée d'index (docs/SPEC-mcp.md §17.7 ; docs/DESIGN_SYSTEM.md §5.104)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : Réglages ▸ Étiquettes, son adresse, sa route et son entrée d'index (docs/DESIGN_SYSTEM.md §5.73)
@@ -23,7 +24,8 @@
 // Chaque route rend un **état explicite**, jamais une page blanche : tant que les données
 // n'existent pas, l'état vide est le contenu légitime de l'écran, et il nomme ce qui manque.
 
-import { Link } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : l'index des réglages et ses entrées mènent dans l'espace courant.
+import { LienEspace as Link } from './LienEspace'
 import { lazy } from 'react'
 import { EtatVide } from '../components/ui/States'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'

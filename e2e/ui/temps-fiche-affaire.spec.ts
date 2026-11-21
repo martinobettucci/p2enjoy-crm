@@ -8,6 +8,8 @@
 // une semaine de 2025 demanderait des dizaines de clics. Le seed ne pose du temps que sur des jours PASSÉS
 // (`docs/SPEC-seed.md` §17.1) : une semaine future est hors de toute fenêtre du jeu. Chaque scénario retire ce qu'il a
 // posé sur cette semaine, et le vérifie.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type APIRequestContext, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -23,8 +25,8 @@ const DRISS = '5eed0000-0000-4000-8000-000000000012'
 const MAINTENANCE = '5eed0000-0000-4000-8000-000000000035'
 const MGEN = '5eed0000-0000-4000-8000-0000000000cc'
 const NORDIS = '5eed0000-0000-4000-8000-0000000000cb'
-const FICHE_MGEN = `/tracks/studio-web/refonte/cards/${MGEN}`
-const FICHE_NORDIS = `/tracks/conseil-ia/prospection/cards/${NORDIS}`
+const FICHE_MGEN = `/p2enjoy/tracks/studio-web/refonte/cards/${MGEN}`
+const FICHE_NORDIS = `/p2enjoy/tracks/conseil-ia/prospection/cards/${NORDIS}`
 const TITRE_MGEN = 'Portail adhérents — MGEN Loire'
 
 // ---------------------------------------------------------------------------------------------

@@ -6,6 +6,8 @@
 //
 // Le champ de sonde porte la clé `sonde-112-ex` ; la transition « Prospection → Relance » (`…0071`) du workflow par défaut
 // est du seed. Après chaque scénario, la clé de service retire l'exigence puis le champ — retrait CONSTATÉ.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type APIRequestContext, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -51,7 +53,7 @@ async function poserChamp(request: APIRequestContext): Promise<string> {
 
 async function ouvrirEditeur(page: Page): Promise<void> {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/workflows')
+	await page.goto('/p2enjoy/reglages/workflows')
 	await page.getByRole('navigation', { name: 'Choisir un workflow' }).getByRole('button', { name: /^Cycle commercial standard/ }).click()
 }
 

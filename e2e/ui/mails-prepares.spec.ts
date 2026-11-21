@@ -13,6 +13,8 @@
 // a posé : ses mails préparés et les envois que la relecture a mis en file.
 // @verifies CRM-139 (docs/BACKLOG.md) — l'inbox s'ouvre ici case « Seulement moi » décochée, `courrier=tous` : le sujet de ces
 //           preuves est ailleurs (docs/SPEC-mail-subsystem.md §27.5)
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test } from './fixtures'
 import { capturer } from './captures'
@@ -28,7 +30,7 @@ const UNITE = 'CRM-128'
 const ADMIN = 'admin@p2enjoy.test'
 const BIZDEV = 'bizdev@p2enjoy.test'
 const AFFAIRE = '5eed0000-0000-4000-8000-0000000000c1'
-const CHEMIN_AFFAIRE = '/tracks/conseil-ia/grands-comptes/cards/' + AFFAIRE
+const CHEMIN_AFFAIRE = '/p2enjoy/tracks/conseil-ia/grands-comptes/cards/' + AFFAIRE
 const MARQUE = 'E2E CRM-128'
 
 const rest = (chemin: string) => `${URL_API}/rest/v1/${chemin}`
@@ -69,7 +71,7 @@ test.afterEach(async ({ request }) => {
 test('l’entrée « Mails préparés » mène à la relecture, et le contenu RELU part en file', async ({ page, request }) => {
 	const id = await preparer(request, 'Proposition à relire', { p_cc: ['copie@exterieur.test'] })
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/inbox?courrier=tous')
+	await page.goto('/p2enjoy/inbox?courrier=tous')
 	const entree = page.getByTestId('inbox-mails-prepares')
 	await expect(entree).toBeVisible()
 	await expect(entree).toHaveAccessibleName(/Mails préparés : \d+ en attente de relecture/)
@@ -104,7 +106,7 @@ test('l’entrée « Mails préparés » mène à la relecture, et le contenu RE
 test('« Écarter » confirme dans le flux, au clavier, et le mail ne part jamais', async ({ page, request }) => {
 	const id = await preparer(request, 'À écarter')
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto(`/inbox?brouillon=${id}`)
+	await page.goto(`/p2enjoy/inbox?brouillon=${id}`)
 	// L'ADRESSE EST UNE DESTINATION : elle ouvre la relecture, puis se retire.
 	await expect(page.getByTestId('inbox-relecture').getByLabel('Objet')).toHaveValue('À écarter')
 	await expect(page).not.toHaveURL(/brouillon=/)
@@ -130,14 +132,14 @@ test('l’adresse d’un mail qui n’est plus en attente, ou d’autrui, dit la
 	})
 	expect(ecart.status()).toBe(204)
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto(`/inbox?brouillon=${id}`)
+	await page.goto(`/p2enjoy/inbox?brouillon=${id}`)
 	await expect(page.getByTestId('inbox-relecture-plus-en-attente')).toContainText('n’est plus en attente')
 
 	// Driss ne voit pas le mail préparé de Camille : la même phrase, et aucune entrée.
 	const autre = await preparer(request, 'Le mail de Camille')
 	await page.context().clearCookies()
 	await connecterAvecLeLabs(page, BIZDEV)
-	await page.goto(`/inbox?brouillon=${autre}`)
+	await page.goto(`/p2enjoy/inbox?brouillon=${autre}`)
 	await expect(page.getByTestId('inbox-relecture-plus-en-attente')).toBeVisible()
 	await expect(page.getByTestId('inbox-mails-prepares')).toHaveCount(0)
 })
@@ -159,7 +161,7 @@ test('aux paliers de 900 et 1100 px, la relecture tient sans défilement horizon
 	await connecterAvecLeLabs(page, ADMIN)
 	for (const largeur of [900, 1100]) {
 		await page.setViewportSize({ width: largeur, height: 900 })
-		await page.goto(`/inbox?brouillon=${id}`)
+		await page.goto(`/p2enjoy/inbox?brouillon=${id}`)
 		await expect(page.getByTestId('inbox-relecture')).toBeVisible()
 		expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(largeur)
 		await capturer(page, `inbox-relecture-${largeur === 900 ? 'md' : 'lg'}-${largeur}`, UNITE)
@@ -170,7 +172,7 @@ test('à 390 px, la pile mène de l’entrée à la relecture sans défilement h
 	await preparer(request, 'Sur mobile')
 	await page.setViewportSize({ width: 390, height: 844 })
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/inbox?courrier=tous')
+	await page.goto('/p2enjoy/inbox?courrier=tous')
 	await page.getByTestId('inbox-mails-prepares').click()
 	await page.getByTestId('inbox-mail-prepare').filter({ hasText: 'Sur mobile' }).click()
 	const relecture = page.getByTestId('inbox-relecture')
@@ -204,7 +206,7 @@ test('la relecture précharge les pièces du mail préparé ; en retirer une ne 
 		}
 		const id = await preparer(request, 'Proposition avec pièces', { p_attachments: chemins })
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto(`/inbox?brouillon=${id}`)
+		await page.goto(`/p2enjoy/inbox?brouillon=${id}`)
 		const relecture = page.getByTestId('inbox-relecture')
 		const pieces = relecture.getByTestId('envoi-piece')
 		await expect(pieces).toHaveCount(2)

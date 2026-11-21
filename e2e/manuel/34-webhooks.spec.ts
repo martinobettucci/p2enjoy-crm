@@ -9,13 +9,15 @@
 // — cinq essais épuisés — ne se rencontre qu'après deux heures et demie de refus réels : le scénario le POSE sur la remise
 // en attente d'« Ancienne intégration », par la clé de service, comme `13-etat-messagerie.spec.ts` pose ses incidents, et
 // lui rend ensuite l'état exact qu'il lui avait lu.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test, type Page } from '@playwright/test'
 import { illustrer } from './illustrer'
 import { ADMIN, connecterAvecLeLabs, lireService, service } from './outils'
 
 const CHAPITRE = 'les-webhooks-prevenir-vos-autres-outils'
-const ECRAN = '/reglages/webhooks'
+const ECRAN = '/p2enjoy/reglages/webhooks'
 const ANCIENNE = `webhook_deliveries?endpoint_id=in.(${'{{id}}'})`
 
 type Remise = { id: string; status: string; attempts: number; next_attempt_at: string | null; last_status_code: number | null }

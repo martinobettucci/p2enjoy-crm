@@ -43,6 +43,8 @@
 // `supabase/tests/0011_droits_fins.test.sql` (71 assertions) et de `e2e/api/droits-fins.spec.ts`
 // (15 scénarios), qui l'éprouvent hors interface, comme `CLAUDE.md` §10 l'exige. Ce fichier
 // prouve que l'écran **obéit** à cette matrice, pas qu'elle est complète.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -159,7 +161,7 @@ test('l’adresse directe du track rend la même chose que le clic, et rien de p
 	// Ce scénario mesurait « Track introuvable » : c'était le symptôme le plus net d'INC-085, un
 	// droit accordé que même l'adresse exacte n'atteignait pas. Il mesure désormais que les deux
 	// chemins — le clic et l'adresse — mènent au même endroit, sans qu'aucun n'ouvre davantage.
-	await page.goto('/tracks/conseil-ia')
+	await page.goto('/p2enjoy/tracks/conseil-ia')
 
 	await expect(page.getByText('Track introuvable')).toHaveCount(0)
 
@@ -186,7 +188,7 @@ test('l’adresse directe du track rend la même chose que le clic, et rien de p
 	// (`webapp/src/app/RouteTrack.tsx`, docs/SPEC-permissions-rls.md §7) — distinguer les deux
 	// renseignerait sur l'existence d'un channel refusé. La preuve vérifie donc les deux moitiés
 	// de cette règle : l'écran neutre est rendu, et le nom du channel fermé n'apparaît nulle part.
-	await page.goto('/tracks/conseil-ia/grands-comptes')
+	await page.goto('/p2enjoy/tracks/conseil-ia/grands-comptes')
 	await expect(page.getByText('Choisissez un channel')).toBeVisible()
 	await expect(page.getByText('Grands comptes')).toHaveCount(0)
 

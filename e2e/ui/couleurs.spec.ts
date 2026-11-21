@@ -10,6 +10,8 @@
 // Aucune réponse n'est substituée : la pile réelle et le seed rendent les couleurs, et chaque écriture est relue en base
 // par la clé de service. Les objets du seed modifiés ici sont rendus à leur couleur après chaque scénario, et les
 // channels de sonde purgés — le seed ne garde aucune trace de ce fichier.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type APIRequestContext, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -59,7 +61,7 @@ test.describe('l’administratrice choisit les couleurs', () => {
 		page,
 		request,
 	}) => {
-		await page.goto('/reglages/arborescence')
+		await page.goto('/p2enjoy/reglages/arborescence')
 		await page.getByRole('button', { name: 'Modifier Formation' }).click()
 		const formulaire = page.getByTestId('formulaire-track')
 		await expect(groupe(page)).toBeVisible()
@@ -90,7 +92,7 @@ test.describe('l’administratrice choisit les couleurs', () => {
 	})
 
 	test('un channel se recolore depuis l’arborescence : pilule, puis pastille de l’onglet', async ({ page, request }) => {
-		await page.goto('/reglages/arborescence')
+		await page.goto('/p2enjoy/reglages/arborescence')
 		await page.getByRole('button', { name: 'Déplier Conseil & IA' }).click()
 		const prospection = page.locator('[data-testid="pilule-channel"]', { hasText: 'Prospection' })
 		await expect(prospection).toHaveAttribute('data-couleur', 'brand')
@@ -105,14 +107,14 @@ test.describe('l’administratrice choisit les couleurs', () => {
 		await expect.poll(() => couleurEnBase(request, 'channels', `id=eq.${CHANNEL_PROSPECTION}`)).toBe('success')
 		await expect(prospection).toHaveAttribute('data-couleur', 'success')
 
-		await page.goto('/tracks/conseil-ia/prospection')
+		await page.goto('/p2enjoy/tracks/conseil-ia/prospection')
 		await expect(pastille(page, 'prospection')).toHaveAttribute('data-couleur', 'success')
 		await expect(pastille(page, 'grands-comptes')).toHaveAttribute('data-couleur', 'success')
 		await capturer(page, 'onglets-pastilles-xl-1440', UNITE)
 	})
 
 	test('« Nouveau channel » de la barre d’onglets crée un channel de la couleur choisie', async ({ page, request }) => {
-		await page.goto('/tracks/formation?nouveau-channel=1')
+		await page.goto('/p2enjoy/tracks/formation?nouveau-channel=1')
 		const formulaire = page.getByTestId('formulaire-channel')
 		await formulaire.getByLabel('Nom').fill('Sonde 116 couleur')
 		await expect(formulaire.getByRole('radio', { name: 'Gris' })).toBeChecked()
@@ -127,7 +129,7 @@ test.describe('l’administratrice choisit les couleurs', () => {
 	})
 
 	test('la couleur choisie survit à l’aller-retour vers l’éditeur de workflows', async ({ page }) => {
-		await page.goto('/tracks/formation?nouveau-channel=1')
+		await page.goto('/p2enjoy/tracks/formation?nouveau-channel=1')
 		const formulaire = page.getByTestId('formulaire-channel')
 		await formulaire.getByLabel('Nom').fill('Sonde 116 retour')
 		await formulaire.getByRole('radio', { name: 'Vert' }).check()
@@ -144,7 +146,7 @@ test.describe('l’administratrice choisit les couleurs', () => {
 test('la lectrice voit les couleurs, sans formulaire pour les changer', async ({ page }) => {
 	await page.setViewportSize({ width: 1440, height: 900 })
 	await connecterAvecLeLabs(page, LECTRICE)
-	await page.goto('/tracks/conseil-ia/prospection')
+	await page.goto('/p2enjoy/tracks/conseil-ia/prospection')
 	await expect(pastille(page, 'prospection')).toHaveAttribute('data-couleur', 'brand')
 	// La barre d'onglets n'ouvre aucun formulaire à la lectrice : la commande est un texte inactif (CRM-093, §5.59).
 	await expect(page.getByTestId('commande-nouveau-channel')).toHaveAttribute('aria-disabled', 'true')
@@ -160,7 +162,7 @@ test.describe('paliers responsive (§7, §8)', () => {
 		}) => {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			await connecterAvecLeLabs(page, ADMIN)
-			await page.goto('/reglages/arborescence')
+			await page.goto('/p2enjoy/reglages/arborescence')
 			await page.getByRole('button', { name: 'Modifier Formation' }).click()
 			await expect(groupe(page)).toBeVisible()
 			const hauteurs = await groupe(page)

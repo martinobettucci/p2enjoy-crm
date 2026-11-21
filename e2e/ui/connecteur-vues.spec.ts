@@ -6,6 +6,8 @@
 // Le business developer reçoit la case « Affaires ▸ Consulter » ; son client MCP lit les vues de « Refonte de site » et liste
 // les affaires de « Mes négociations ». La webapp, sous le même compte, choisit la même vue. La case est retirée à la fin ;
 // aucune vue n'est écrite.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { Browser } from '@playwright/test'
 import { connecterAvecLeLabs, expect, test, type APIRequestContext } from './fixtures'
@@ -76,7 +78,7 @@ test('la vue « Mes négociations » rend les mêmes affaires au connecteur et �
 	expect(auConnecteur.length).toBeGreaterThan(0)
 
 	await connecterAvecLeLabs(page, DRISS.adresse)
-	await page.goto('/tracks/studio-web/refonte/liste')
+	await page.goto('/p2enjoy/tracks/studio-web/refonte/liste')
 	await page.getByRole('combobox', { name: 'Vue', exact: true }).selectOption({ label: 'Mes négociations' })
 	await expect(page).toHaveURL(/vue=/)
 	const lignes = page.getByTestId('ligne-card')

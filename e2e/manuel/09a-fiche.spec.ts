@@ -18,6 +18,8 @@
 // par la clé de service, comme `e2e/ui/parcours-transition.spec.ts`, et détruite à la fin — sauf le point libre de
 // Vauban, ajouté puis retiré par l'écran. Les refus « vos droits ont changé » naissent du rôle de Driss Lemoine abaissé
 // entre l'ouverture et le geste, puis rendu.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
@@ -38,13 +40,13 @@ const S = {
 	rattachements: 'rattacher-une-affaire-a-plusieurs-channels',
 } as const
 
-const GRANDS_COMPTES = '/tracks/conseil-ia/grands-comptes'
+const GRANDS_COMPTES = '/p2enjoy/tracks/conseil-ia/grands-comptes'
 const CHANNEL_GRANDS_COMPTES = '5eed0000-0000-4000-8000-000000000032'
 const WORKFLOW_GLOBAL = '5eed0000-0000-4000-8000-000000000051'
 const ETAPE_SIGNATURE = '5eed0000-0000-4000-8000-000000000064'
 const ARCHIVEE = `${GRANDS_COMPTES}/cards/5eed0000-0000-4000-8000-0000000000c8`
 const LEO = '5eed0000-0000-4000-8000-000000000091'
-const CHECKLISTS = '/tracks/studio-web/checklists'
+const CHECKLISTS = '/p2enjoy/tracks/studio-web/checklists'
 const ETAPE_NEGOCIATION_CHECKLISTS = '5eed0000-0000-4000-8000-0000000c6813'
 
 

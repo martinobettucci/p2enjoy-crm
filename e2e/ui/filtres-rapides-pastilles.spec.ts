@@ -13,6 +13,8 @@
 //
 // *Révisé par `CRM-159` (2026-11-20)* : la seconde pastille de la preuve était « Spam », devenue cachée (migration `0193`,
 // docs/SPEC-mail-subsystem.md §31.13) — son mail ne paraîtrait plus sans filtre. « Recrutement », visible, garde l'intention.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { type APIRequestContext, type Page } from '@playwright/test'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
@@ -110,7 +112,7 @@ test.describe('les filtres rapides de l’inbox (docs/DESIGN_SYSTEM.md §5.108)'
 		page,
 	}) => {
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto(`/inbox?courrier=tous&message=${mails.sans}`)
+		await page.goto(`/p2enjoy/inbox?courrier=tous&message=${mails.sans}`)
 		await expect(ligne(page, `ZZ 155 trois ${suffixe}`)).toBeVisible()
 		// Une bascule par pastille ACTIVE de l'espace courant, toutes éteintes ; l'archivée est dans le volet, replié.
 		const toutes = filtres(page).getByTestId('inbox-bascule-pastille')
@@ -153,7 +155,7 @@ test.describe('les filtres rapides de l’inbox (docs/DESIGN_SYSTEM.md §5.108)'
 		page,
 	}) => {
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto(`/inbox?courrier=tous&message=${mails.sans}`)
+		await page.goto(`/p2enjoy/inbox?courrier=tous&message=${mails.sans}`)
 		await expect(ligne(page, `ZZ 155 trois ${suffixe}`)).toBeVisible()
 		const premiere = filtres(page).getByTestId('inbox-bascule-pastille').first()
 		await premiere.focus()
@@ -195,7 +197,7 @@ test.describe('les filtres rapides de l’inbox (docs/DESIGN_SYSTEM.md §5.108)'
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
 		// Une valeur mal formée, une inconnue, puis Newsletter : seule Newsletter compte.
 		await page.goto(
-			`/inbox?courrier=tous&message=${idInvitation}&pastille=xyz&pastille=00000000-0000-4000-8000-0000000000aa&pastille=${ids['Newsletter']}`,
+			`/p2enjoy/inbox?courrier=tous&message=${idInvitation}&pastille=xyz&pastille=00000000-0000-4000-8000-0000000000aa&pastille=${ids['Newsletter']}`,
 		)
 		await expect(filtres(page).getByTestId('inbox-volet-archivees')).toHaveAttribute('aria-expanded', 'true')
 		await expect(bascule(page, 'Newsletter, pastille archivée')).toHaveAttribute('aria-pressed', 'true')
@@ -212,7 +214,7 @@ test.describe('les filtres rapides de l’inbox (docs/DESIGN_SYSTEM.md §5.108)'
 		expect(absentes.length, 'deux pastilles actives que le dossier ne porte pas').toBeGreaterThanOrEqual(2)
 		const [a, b] = absentes as [string, string]
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto(`/inbox?courrier=tous&message=${mails.sans}&pastille=${ids[a]}`)
+		await page.goto(`/p2enjoy/inbox?courrier=tous&message=${mails.sans}&pastille=${ids[a]}`)
 		await expect(liste(page).getByText(`Aucun message ne porte la pastille « ${a} » dans ce dossier.`)).toBeVisible()
 		await bascule(page, b).click()
 		await expect(liste(page).getByText(`Aucun message ne porte l’une des pastilles « ${a} » ou « ${b} » dans ce dossier.`)).toBeVisible()
@@ -229,7 +231,7 @@ test.describe('les filtres rapides de l’inbox (docs/DESIGN_SYSTEM.md §5.108)'
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
 		for (const palier of PALIERS) {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
-			await page.goto(`/inbox?courrier=tous&message=${mails.lead}&pastille=${ids['Lead']}&pastille=${ids['Recrutement']}`)
+			await page.goto(`/p2enjoy/inbox?courrier=tous&message=${mails.lead}&pastille=${ids['Lead']}&pastille=${ids['Recrutement']}`)
 			// Sous 1024 px, l'inbox est une pile : on remonte du message à la liste.
 			const retour = page.getByRole('button', { name: 'Retour aux messages' })
 			await expect(page.getByTestId('inbox-message-ouvert')).toBeVisible()

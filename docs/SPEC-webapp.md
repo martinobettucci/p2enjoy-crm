@@ -329,6 +329,10 @@ persistée et ne peut pas désigner une origine externe.
 
 ### 6.3 Ce que la coquille lit
 
+*`CRM-161` T2.a (`docs/SPEC-espace-courant.md` §15.2) : la coquille choisit **l'espace courant** — celui de l'adresse
+(`/:slugEspace/…`) sur une page d'un espace, le dernier de l'onglet sur une page globale, sinon le premier par nom — et ne
+lit plus que **les tracks de cet espace** pour la barre latérale.*
+
 La coquille lit `public.workspaces` pour nommer le contexte courant, et — depuis `CRM-020` —
 `public.tracks` pour remplir la barre latérale (`docs/SPEC-tracks.md` §7). **Mesuré à l'ouverture
 de cette spécification, hors interface :**

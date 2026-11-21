@@ -10,6 +10,8 @@
 // L'ESPACE EST JETABLE (`e2e/api/espace-sans-domaine.ts`) : le seed garde son espace unique (`CRM-005`). Sabine, la
 // superadministratrice du seed, n'est membre d'aucun espace ; elle y est ajoutée le temps de la preuve du lien, retirée
 // avec l'espace.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { type Page } from '@playwright/test'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
@@ -138,7 +140,7 @@ test.describe('envoyer depuis un espace sans domaine (docs/DESIGN_SYSTEM.md §5.
 		expect(prepare.status(), await prepare.text()).toBe(200)
 		const idBrouillon = (await prepare.json()) as string
 		await connecterAvecLeLabs(page, CAMILLE.adresse)
-		await page.goto(`/inbox?brouillon=${idBrouillon}`)
+		await page.goto(`/p2enjoy/inbox?brouillon=${idBrouillon}`)
 		await expect(page.getByTestId('envoi-domaine-absent')).toBeVisible()
 		await expect(page.getByTestId('envoi-valider')).toBeDisabled()
 		await capturer(page, 'relecture-sans-domaine-1440', UNITE)

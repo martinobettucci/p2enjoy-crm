@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — les liens et la navigation du bloc mènent dans l'espace courant (§15.3) ; docs/SPEC-espace-courant.md
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T7.2 : le bloc « Rattachements » de la fiche — une ligne par rattachement
 //       lisible, celui de la fiche marqué, les autres en liens vers leur adresse, archiver et désarchiver
 // @spec docs/SPEC-rattachements.md §5 (archiver, désarchiver), §8.1 (décision 823) ; docs/DESIGN_SYSTEM.md §5.82, §5.3 bis
@@ -19,7 +20,9 @@
 
 import { BoutonDescriptionEtape } from './BoutonDescriptionEtape'
 import { useEffect, useId, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
+// l'espace courant.
+import { LienEspace as Link, useNaviguerEspace as useNavigate } from './LienEspace'
 import { Archive, ArchiveRestore, Moon, Plus, TriangleAlert, Unlink } from 'lucide-react'
 import { useContexteEspace } from './ContexteEspace'
 import { useRefus } from '../components/ui/RefusCommandes'

@@ -20,6 +20,8 @@
 // `e2e/ui/administration-arborescence.spec.ts` le fait de ses tracks et de ses channels depuis
 // INC-099 (règle de la décision 362). Le nettoyage est fait AUSSI à l'entrée : une exécution tuée
 // avant son `finally` ne doit pas faire échouer la suivante.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole } from './fixtures'
@@ -95,7 +97,7 @@ async function replierTrack(page: Page, nomTrack: string): Promise<void> {
 test.describe('le sélecteur de workflow (docs/SPEC-workflow-engine.md §4.12.9.1)', () => {
 	test("un workflow de portée track n'est proposé que sous SON track", async ({ page }) => {
 		await connecter(page)
-		await page.goto('/reglages/arborescence')
+		await page.goto('/p2enjoy/reglages/arborescence')
 		await expect(page.getByRole('heading', { name: "Administration de l'arborescence" })).toBeVisible()
 
 		// --- Le track qui porte la copie de portée `track` -----------------------------------
@@ -195,7 +197,7 @@ test.describe('le refus quand la liste est périmée (docs/SPEC-workflow-engine.
 
 			// --- L'administrateur le voit, et le choisit --------------------------------------
 			await connecter(page)
-			await page.goto('/reglages/arborescence')
+			await page.goto('/p2enjoy/reglages/arborescence')
 			await ouvrirCreationChannel(page, TRACK_STUDIO)
 			const formulaire = page.getByTestId('formulaire-channel')
 			await expect.poll(async () => optionsWorkflow(page)).toEqual([

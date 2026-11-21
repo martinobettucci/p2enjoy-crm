@@ -7,6 +7,8 @@
 // l'administratrice rattache aussi à `grands-comptes` (track « Conseil & IA ») par `attach_card` ; le second
 // rattachement reçoit un montant de 4 321. Le modèle « Relance sans réponse » du seed cite `card.amount`. Elle est
 // retirée après le scénario.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { randomUUID } from 'node:crypto'
 import { connecterAvecLeLabs, expect, test } from './fixtures'
@@ -61,7 +63,7 @@ test('la prévisualisation rend le rattachement choisi d’une affaire partagée
 	expect(montant.status(), await montant.text()).toBe(204)
 
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/modeles-emails')
+	await page.goto('/p2enjoy/reglages/modeles-emails')
 	await page.getByTestId('ligne-modele-email').filter({ hasText: MODELE_RELANCE }).getByTestId('previsualiser-modele').click()
 	await expect(page.getByTestId('previsualisation-modele')).toBeVisible()
 	const rattachement = page.getByTestId('champ-rattachement-previsualisation')

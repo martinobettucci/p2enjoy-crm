@@ -28,12 +28,15 @@
 //
 // AUCUNE ÉCRITURE : le guide lit et renvoie. La base est donc rendue intacte sans aucune remise en
 // état — il n'y a rien à défaire.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, estUnCompte, expect, test, type APIRequestContext, type Page } from './fixtures'
 import { ERREUR_CONNEXION_REFUSEE, autoriserErreursConsole } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
 import { creerCompteJetable, supprimerCompte } from '../api/keycloak-dev'
 import { PALIERS, capturer } from './captures'
+import { dansUnEspace } from '../espace'
 
 const UNITE = 'CRM-079'
 const ADMIN = 'admin@p2enjoy.test'
@@ -180,7 +183,7 @@ test.describe('CRM-079 — guide de démarrage', () => {
 
 		// Son adresse d'expédition est un geste PERSONNEL : le lien reste un lien (§5.59). La boîte système est un geste
 		// d'administration, que la base lui refuse : son lien devient un texte qui cite le motif (`CRM-093`).
-		await expect(page.getByTestId('lien-identite')).toHaveAttribute('href', '/reglages/identites-mail')
+		await expect(page.getByTestId('lien-identite')).toHaveAttribute('href', dansUnEspace('/reglages/identites-mail'))
 		await expect(page.getByTestId('lien-boite-systeme')).toHaveAttribute('aria-disabled', 'true')
 		// Le domaine : elle n'est pas super-administratrice, elle lit qui le règle.
 		await expect(page.getByTestId('sans-lien-domaine')).toHaveText('Un super-administrateur le règle dans Plateforme ▸ Espaces.')
@@ -421,10 +424,7 @@ test.describe('CRM-079 — guide de démarrage', () => {
 
 			// Aucun lien n'est éteint, pas même sur un espace où rien n'existe encore (§6.3) : ce
 			// sont précisément les écrans qui font sortir de cet état.
-			await expect(page.getByTestId('lien-track')).toHaveAttribute(
-				'href',
-				'/reglages/arborescence',
-			)
+			await expect(page.getByTestId('lien-track')).toHaveAttribute('href', dansUnEspace('/reglages/arborescence'))
 			await capturer(page, 'guide-espace-neuf-1440', UNITE)
 
 			// Et le guide reste relançable à son adresse propre, dans le même état (§4.1).

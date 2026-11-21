@@ -7,16 +7,19 @@
 // Les gestes écrivent : les étiquettes de la preuve portent le préfixe `ZZ 069` et sont retirées à la fin. La pose se fait
 // sur une affaire jetable du même préfixe, retirée à la fin avec son fil : le fil est en ajout seul, même pour la clé de
 // service, et une pose sur une affaire du seed y laisserait ses lignes.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { APIRequestContext } from '@playwright/test'
 import { URL_API, enTetesService } from '../api/jetons'
 import { capturer } from './captures'
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, connecterAvecLeLabs, expect, test } from './fixtures'
 import { posterAffaire } from '../affaire'
+import { dansUnEspace } from '../espace'
 
 const UNITE = 'CRM-069'
 const PREFIXE = 'ZZ 069'
-const REFONTE = '/tracks/studio-web/refonte'
+const REFONTE = '/p2enjoy/tracks/studio-web/refonte'
 const LYON = '5eed0000-0000-4000-8000-0000000000c4'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
 // Le channel « Checklists » de Studio web, que Driss écrit, son workflow et son étape initiale (docs/SPEC-seed.md).
@@ -42,9 +45,9 @@ test.afterEach(async ({ request }) => {
 test.describe('Réglages ▸ Étiquettes (docs/DESIGN_SYSTEM.md §5.73)', () => {
 	test('l’administratrice lit le catalogue semé, pose une étiquette, voit un nom pris refusé, et l’archive', async ({ page, request }) => {
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		const entree = page.getByTestId('entree-etiquettes')
-		await expect(entree).toHaveAttribute('href', '/reglages/etiquettes')
+		await expect(entree).toHaveAttribute('href', dansUnEspace('/reglages/etiquettes'))
 		await entree.click()
 		const ecran = page.getByTestId('reglages-etiquettes')
 		await expect(ecran.getByTestId('ligne-etiquette')).toHaveText([/Partenaire/, /Prioritaire/, /Secteur public/])
@@ -111,7 +114,7 @@ test.describe('les étiquettes des affaires (docs/DESIGN_SYSTEM.md §5.73)', () 
 		expect(creee.status(), await creee.text()).toBe(201)
 		const jetable = ((await creee.json()) as { id: string }[])[0]!.id
 		await connecterAvecLeLabs(page, 'bizdev@p2enjoy.test')
-		await page.goto(`/tracks/studio-web/checklists/cards/${jetable}`)
+		await page.goto(`/p2enjoy/tracks/studio-web/checklists/cards/${jetable}`)
 		const commande = page.getByTestId('entete-card-etiquettes')
 		await commande.click()
 		const panneau = page.getByTestId('entete-card-panneau-etiquettes')
@@ -147,7 +150,7 @@ test.describe('les étiquettes des affaires (docs/DESIGN_SYSTEM.md §5.73)', () 
 		await page.goto(`${REFONTE}/cards/${LYON}`)
 		await expect(page.getByTestId('entete-card-etiquettes-pastilles').getByTestId('pastille-etiquette')).toHaveCount(4)
 		await expect(page.getByTestId('entete-card-etiquettes')).toBeDisabled()
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		await expect(page.getByTestId('entree-etiquettes')).toHaveAttribute('aria-disabled', 'true')
 	})
 })

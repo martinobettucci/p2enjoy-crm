@@ -21,6 +21,8 @@
 //   demeure, borné et toléré (`e2e/ui/suggestion-classement.spec.ts` le mesure).
 // @verifies CRM-139 (docs/BACKLOG.md) — l'inbox s'ouvre ici case « Seulement moi » décochée, `courrier=tous` : le sujet de ces
 //           preuves est ailleurs (docs/SPEC-mail-subsystem.md §27.5)
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -49,7 +51,7 @@ async function capturerLeFormulaire(page: Page, nom: string): Promise<void> {
 
 /** Ouvre un message non classé du seed, puis son formulaire de classement, par le chemin d'un utilisateur. */
 async function ouvrirLeFormulaire(page: Page, objet: string): Promise<void> {
-	await page.goto('/inbox?courrier=tous')
+	await page.goto('/p2enjoy/inbox?courrier=tous')
 	await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }).click()
 	await page.getByTestId('inbox-panneau-liste').getByTestId('inbox-message').filter({ hasText: objet }).click()
 	await expect(page.getByTestId('inbox-message-ouvert')).toBeVisible()

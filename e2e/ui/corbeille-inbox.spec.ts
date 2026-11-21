@@ -17,6 +17,8 @@
 // ÉTAT NE PEUT PAS DÉFAIRE, et qui est nommé plutôt que tu : les lignes `mail_deleted` et `mail_restored` écrites au fil de
 // c1 — `card_events` n'accorde aucune écriture, `service_role` compris (la règle de `outbox.spec.ts`). Les preuves cherchent
 // donc la leur, par son objet. L'inbox s'ouvre `courrier=tous` : « Seulement moi » n'est pas le sujet.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { APIRequestContext, Page } from '@playwright/test'
 import { connecterAvecLeLabs, expect, test } from './fixtures'
@@ -29,7 +31,7 @@ const ADMIN = 'admin@p2enjoy.test'
 const BIZDEV = 'bizdev@p2enjoy.test'
 const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 const AFFAIRE = '5eed0000-0000-4000-8000-0000000000c1'
-const CHEMIN_AFFAIRE = '/tracks/conseil-ia/grands-comptes/cards/' + AFFAIRE
+const CHEMIN_AFFAIRE = '/p2enjoy/tracks/conseil-ia/grands-comptes/cards/' + AFFAIRE
 const CAMILLE = '5eed0000-0000-4000-8000-000000000011'
 const MARQUE = 'e2e-crm138-ui'
 
@@ -82,7 +84,7 @@ async function deplacements(request: APIRequestContext, id: string): Promise<str
 
 async function ouvrirMessage(page: Page, id: string) {
 	// LA DESTINATION `message` (CRM-065) OUVRE LE MESSAGE DANS SON DOSSIER ; elle est retirée de l'adresse aussitôt.
-	await page.goto(`/inbox?courrier=tous&message=${id}`)
+	await page.goto(`/p2enjoy/inbox?courrier=tous&message=${id}`)
 	await expect(page.getByTestId('inbox-message-ouvert')).toBeVisible()
 }
 
@@ -223,7 +225,7 @@ test('au clavier, pour qui lit l’affaire sans écrire la boîte : pas de « Su
 	await capturer(page, 'fil-message-efface-xl-1440', UNITE)
 
 	// LA CORBEILLE AU CLAVIER : la phrase de portée pour qui n'administre pas, puis « Restaurer ».
-	await page.goto('/inbox?courrier=tous')
+	await page.goto('/p2enjoy/inbox?courrier=tous')
 	const entree = page.getByTestId('inbox-corbeille')
 	await entree.focus()
 	await page.keyboard.press('Enter')
@@ -310,7 +312,7 @@ test.describe('les quatre paliers', () => {
 			await page.getByTestId('inbox-suppression-confirmer').click()
 			await expect(page.getByTestId('inbox-message-ouvert')).toHaveCount(0)
 
-			await page.goto('/inbox?courrier=tous&corbeille=oui')
+			await page.goto('/p2enjoy/inbox?courrier=tous&corbeille=oui')
 			// SOUS 1024 PX, LA PILE S'OUVRE SUR LES DOSSIERS : l'entrée mène à la liste.
 			if (palier.largeur < 1024) await page.getByTestId('inbox-corbeille').click()
 			const ligne = page.locator(`[data-testid="inbox-corbeille-ligne"][data-message="${id}"]`)

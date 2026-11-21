@@ -24,6 +24,8 @@
 // préfixé `E2E Occurrences`, et le retire en épilogue par la clé de service — `on delete cascade`
 // emporte ses occurrences. Les deux occurrences seedées de « Publicité 2026 » sont LUES et jamais
 // écrites : elles sont le contrat que `CRM-085` et `CRM-086` mesurent.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	autoriserErreursConsole,
@@ -55,7 +57,7 @@ async function connecter(page: Page, email = ADMIN): Promise<void> {
 
 /** Ouvre l'administration de l'arborescence et déplie le track porteur des budgets. */
 async function ouvrirBudgetsDuTrack(page: Page): Promise<Locator> {
-	await page.goto('/reglages/arborescence')
+	await page.goto('/p2enjoy/reglages/arborescence')
 	await expect(page.getByRole('heading', { name: "Administration de l'arborescence" })).toBeVisible()
 	await page.getByRole('button', { name: `Déplier ${TRACK}` }).click()
 	const bloc = page.getByRole('region', { name: `Budgets du track ${TRACK}` })

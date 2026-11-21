@@ -79,7 +79,10 @@ import {
 	Sun,
 	TriangleAlert,
 } from 'lucide-react'
-import { Link, useSearchParams } from 'react-router'
+import { useSearchParams } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
+// l'espace courant.
+import { LienEspace as Link } from './LienEspace'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'

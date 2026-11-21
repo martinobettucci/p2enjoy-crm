@@ -19,6 +19,8 @@
 // trace. La restauration, qui publie un point de retour, n'est pas jouée par ces preuves : le
 // §7 ter.14.9 ne l'inscrit pas à la ligne « Interface », et son contrat est déjà éprouvé hors
 // interface par `e2e/api/restauration-version-workflow.spec.ts`.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole } from './fixtures'
@@ -33,7 +35,7 @@ async function connecter(page: Page, adresse: string): Promise<void> {
 }
 
 async function ouvrirEditeur(page: Page): Promise<void> {
-	await page.goto('/reglages')
+	await page.goto('/p2enjoy/reglages')
 	await page.getByRole('link', { name: /Workflows : étapes et composition/ }).click()
 	await expect(page).toHaveURL(/\/reglages\/workflows$/)
 	await expect(page.getByRole('heading', { name: 'Éditeur de workflows' })).toBeVisible()

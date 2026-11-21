@@ -11,6 +11,8 @@
 // Le repli est atteint par `Tab` et ouvert par `Entrée` : un focus posé par script ne prouverait rien du clavier.
 // @verifies INC-332 (docs/INCONSISTENCY_REPORT.md) — sous `md`, une seule ligne de commandes, le nom de la session en `sr-only`
 //           (docs/DESIGN_SYSTEM.md §12.2)
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { Locator } from '@playwright/test'
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
@@ -21,9 +23,9 @@ const ADMIN = 'admin@p2enjoy.test'
 const LECTRICE = 'viewer@p2enjoy.test'
 
 const WORKSPACE = 'P2Enjoy SAS'
-const AFFAIRE = '/tracks/conseil-ia/grands-comptes/cards/5eed0000-0000-4000-8000-0000000000c2'
-const AFFAIRE_LONGUE = '/tracks/studio-web/maintenance/cards/5eed0000-0000-4000-8000-00000000d002'
-const BUDGET = '/tracks/conseil-ia/couts/5eed0000-0000-4000-8000-0000000000c1'
+const AFFAIRE = '/p2enjoy/tracks/conseil-ia/grands-comptes/cards/5eed0000-0000-4000-8000-0000000000c2'
+const AFFAIRE_LONGUE = '/p2enjoy/tracks/studio-web/maintenance/cards/5eed0000-0000-4000-8000-00000000d002'
+const BUDGET = '/p2enjoy/tracks/conseil-ia/couts/5eed0000-0000-4000-8000-0000000000c1'
 
 const fil = (page: Page) => page.getByTestId('fil-ariane')
 const ligne = (page: Page) => fil(page).getByRole('list').first()
@@ -123,13 +125,13 @@ test.describe('le chemin d’une affaire, à 1440 px', () => {
 	})
 
 	test('la vue liste d’un channel a le même fil que son board', async ({ page }) => {
-		await page.goto('/tracks/studio-web/maintenance/liste')
+		await page.goto('/p2enjoy/tracks/studio-web/maintenance/liste')
 		await expect(titre(page)).toHaveText('Maintenance')
 		await expect.poll(() => niveauxVisibles(page)).toEqual([WORKSPACE, 'Studio web', 'Maintenance'])
 	})
 
 	test('les coûts d’un track, puis le détail d’un budget', async ({ page }) => {
-		await page.goto('/tracks/conseil-ia/couts')
+		await page.goto('/p2enjoy/tracks/conseil-ia/couts')
 		await expect(titre(page)).toHaveText('Coûts')
 		await expect.poll(() => niveauxVisibles(page)).toEqual([WORKSPACE, 'Conseil & IA', 'Coûts'])
 
@@ -147,7 +149,7 @@ test.describe('le chemin d’une affaire, à 1440 px', () => {
 	})
 
 	test('un slug inconnu n’est jamais affiché : aucun ancêtre, le titre de repli', async ({ page }) => {
-		await page.goto('/tracks/track-inexistant/canal-inexistant')
+		await page.goto('/p2enjoy/tracks/track-inexistant/canal-inexistant')
 		await expect(page.getByText('Track introuvable')).toBeVisible()
 		await expect(page.getByTestId('fil-ariane-ancetre')).toHaveCount(0)
 		await expect(fil(page)).not.toContainText('inexistant')
@@ -158,7 +160,7 @@ test('la lectrice : un channel refusé n’est nommé nulle part, son track lu r
 	await page.setViewportSize({ width: 1440, height: 900 })
 	await connecterAvecLeLabs(page, LECTRICE)
 
-	await page.goto('/tracks/conseil-ia/grands-comptes')
+	await page.goto('/p2enjoy/tracks/conseil-ia/grands-comptes')
 	await expect(page.getByText('Choisissez un channel')).toBeVisible()
 	// Sans channel lu, la route se lit comme celle du track : son nom est le titre, rien ne le précède.
 	await expect(titre(page)).toHaveText('Conseil & IA')

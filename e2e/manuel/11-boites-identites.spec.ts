@@ -21,6 +21,8 @@
 // Les boîtes et les identités sont celles du seed. Deux états sont posés par la clé de service et rendus tels qu'ils
 // ont été lus : une boîte « Connectée », et le plafond du jour d'une adresse d'expédition ramené à zéro le temps d'un
 // envoi — que le serveur refuse, si bien que rien n'entre dans la file.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -45,7 +47,7 @@ test('les réglages de la messagerie, dans leur ordre', async ({ page }) => {
 	// (`CRM-156` y ajoute « Expéditeurs bloqués », `CRM-153` « Catégories d'organisations »), et l'écart entre la première
 	// cible, amenée en haut, et « État de la messagerie » dépasse 900 px (campagne du 2026-11-19). Elle est rendue ensuite.
 	await page.setViewportSize({ width: 1440, height: 1200 })
-	await page.goto('/reglages')
+	await page.goto('/p2enjoy/reglages')
 	const entree = (nom: string) => page.getByRole('link', { name: new RegExp(`^${nom}`) }).first()
 	// Une image par section, chacune sur son entrée : un nom ne sert qu'une fois par chapitre (`illustrer`).
 	// LA PREMIÈRE CIBLE EST AMENÉE EN HAUT DE LA FENÊTRE : l'index des réglages s'allonge (CRM-149 y ajoute « Prompts du
@@ -77,7 +79,7 @@ test('les boîtes de réception : la liste, une boîte connectée, la configurat
 	await service(request, 'patch', BOITE_CAMILLE, { status: 'pending', last_error: null })
 	try {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/reglages/comptes-mail')
+		await page.goto('/p2enjoy/reglages/comptes-mail')
 		const liste = page.getByTestId('liste-comptes-mail')
 		await expect(liste).toContainText('Connectée')
 		await expect(liste).toContainText('Non testée')
@@ -105,7 +107,7 @@ test('une boîte testée : le verdict sous la ligne', async ({ page, request }) 
 	await service(request, 'patch', BOITE_SYSTEME, { last_checked_at: null })
 	try {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/reglages/comptes-mail')
+		await page.goto('/p2enjoy/reglages/comptes-mail')
 		const ligne = page.getByTestId('ligne-compte-configuration').filter({ hasText: 'Boîte système du workspace' })
 		await ligne.getByTestId('tester-connexion').click()
 		await expect(ligne.getByTestId('verdict-test-connexion')).toHaveText('Connexion réussie.', { timeout: 60_000 })
@@ -124,7 +126,7 @@ test('l’historique, les dossiers relevés et le plafond', async ({ page, reque
 	await service(request, 'patch', BOITE_CAMILLE, { last_checked_at: null })
 	try {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/reglages/comptes-mail')
+		await page.goto('/p2enjoy/reglages/comptes-mail')
 		const ligne = page.getByTestId('ligne-compte-configuration').filter({ hasText: 'Boîte de Camille Aubert' })
 		await ligne.getByTestId('configurer-compte').click()
 		const champ = page.getByTestId('champ-historique')
@@ -142,7 +144,7 @@ test('l’historique, les dossiers relevés et le plafond', async ({ page, reque
 			cibles: [ligne.getByTestId('dossiers-compte'), panneau.getByTestId('dossiers-cases'), panneau.getByTestId('enregistrer-dossiers')],
 		})
 		await panneau.getByTestId('annuler-dossiers').click()
-		await page.goto('/reglages/identites-mail')
+		await page.goto('/p2enjoy/reglages/identites-mail')
 		await page.getByTestId('configurer-identite').first().click()
 		const plafond = page.getByTestId('champ-quota-identite')
 		await expect(plafond).toBeVisible()
@@ -154,7 +156,7 @@ test('l’historique, les dossiers relevés et le plafond', async ({ page, reque
 
 test('les adresses d’expédition : la liste et la configuration', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/identites-mail')
+	await page.goto('/p2enjoy/reglages/identites-mail')
 	const liste = page.getByTestId('liste-identites-mail')
 	await expect(page.getByTestId('ligne-identite-mail').first()).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: ADRESSES, nom: 'liste-des-adresses', cibles: [liste] })

@@ -20,6 +20,8 @@
 // que l'écran emprunte, et avec le jeton RÉEL de son propriétaire — jamais avec la clé de
 // service, qui n'est le jeton de personne et que la fonction refuse en `not_authenticated`
 // (défaut trouvé en exécutant la suite jumelle, `CRM-088`).
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 // @verifies CRM-127 (docs/BACKLOG.md) — tranche T4 : `pending` se lit « Non testée » (docs/SPEC-mail-subsystem.md §23.5,
 //           docs/DESIGN_SYSTEM.md §5.93)
@@ -115,7 +117,7 @@ test.describe('configuration des identités sortantes (docs/SPEC-mail-subsystem.
 		page,
 	}) => {
 		await connecter(page, ADMIN)
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 
 		// L'entrée vit APRÈS « Comptes de messagerie entrante » et AVANT « État de la messagerie »
 		// (§22.2) : on reçoit avant d'expédier, et on configure avant de superviser. L'ordre est une
@@ -176,7 +178,7 @@ test.describe('configuration des identités sortantes (docs/SPEC-mail-subsystem.
 	}) => {
 		try {
 			await connecter(page, ADMIN)
-			await page.goto('/reglages/identites-mail')
+			await page.goto('/p2enjoy/reglages/identites-mail')
 
 			const ligne = page.getByTestId('ligne-identite-mail').filter({ hasText: ADRESSE_DRISS })
 			await ligne.getByTestId('configurer-identite').click()
@@ -233,7 +235,7 @@ test.describe('configuration des identités sortantes (docs/SPEC-mail-subsystem.
 	}) => {
 		try {
 			await connecter(page, BIZDEV)
-			await page.goto('/reglages/identites-mail')
+			await page.goto('/p2enjoy/reglages/identites-mail')
 
 			// La pilule de présence est allumée par le SEED, avant tout geste : c'est ce qui
 			// distingue « l'écran sait la rendre » de « l'écran sait rendre ce qu'il vient
@@ -297,7 +299,7 @@ test.describe('configuration des identités sortantes (docs/SPEC-mail-subsystem.
 	test('changer l’adresse d’expédition fait apparaître une SECONDE identité', async ({ page }) => {
 		try {
 			await connecter(page, BIZDEV)
-			await page.goto('/reglages/identites-mail')
+			await page.goto('/p2enjoy/reglages/identites-mail')
 			await expect(page.getByTestId('ligne-identite-mail')).toHaveCount(1)
 
 			await page.getByTestId('configurer-identite').click()
@@ -324,7 +326,7 @@ test.describe('configuration des identités sortantes (docs/SPEC-mail-subsystem.
 	}) => {
 		try {
 			await connecter(page, ADMIN)
-			await page.goto('/reglages/identites-mail')
+			await page.goto('/p2enjoy/reglages/identites-mail')
 
 			await page
 				.getByTestId('ligne-identite-mail')
@@ -369,7 +371,7 @@ test.describe('configuration des identités sortantes (docs/SPEC-mail-subsystem.
 		page,
 	}) => {
 		await connecter(page, VIEWER)
-		await page.goto('/reglages/identites-mail')
+		await page.goto('/p2enjoy/reglages/identites-mail')
 
 		await expect(page.getByTestId('etat-vide')).toBeVisible()
 		await expect(page.getByText('Aucune identité d’expédition')).toBeVisible()
@@ -409,7 +411,7 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7)', () => {
 		test(`${palier.nom} : la liste et le formulaire restent lisibles`, async ({ page }) => {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			await connecter(page, ADMIN)
-			await page.goto('/reglages/identites-mail')
+			await page.goto('/p2enjoy/reglages/identites-mail')
 			await expect(page.getByTestId('liste-identites-mail')).toBeVisible()
 
 			await page

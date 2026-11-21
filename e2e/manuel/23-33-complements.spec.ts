@@ -11,6 +11,8 @@
 // clé de service, avec le track et l'espace posés pour montrer un écran vide. Les refus du serveur sont obtenus par un
 // rôle retiré pendant que la page est ouverte (Farida Nowak administre le temps du test, l'espace gardant toujours un
 // administrateur), ou par une saisie que le serveur refuse sans rien écrire.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test, type APIRequestContext, type Locator, type Page } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -37,7 +39,7 @@ const RECETTES = 'les-recettes-d-une-affaire-et-sa-rentabilite'
 const PLATEFORME = 'la-plateforme-espaces-membres-et-superadministrateurs'
 const CONNECTEUR = 'le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant'
 const ETATS = 'les-etats-que-vous-pouvez-rencontrer'
-const FICHE = '/tracks/studio-web/refonte/cards/5eed0000-0000-4000-8000-0000000000c4'
+const FICHE = '/p2enjoy/tracks/studio-web/refonte/cards/5eed0000-0000-4000-8000-0000000000c4'
 const BUDGET_RECURRENT = '5eed0000-0000-4000-8000-0000000000c2'
 const BUDGET_CLOTURE = '5eed0000-0000-4000-8000-0000000000c3'
 const TRACK_VIDE = { id: 'e1230000-0000-4000-8000-0000000000a1', slug: 'partenariats-manuel' }
@@ -66,7 +68,7 @@ test.afterEach(async ({ request }) => {
 })
 
 async function ouvrirBudgets(page: Page): Promise<Locator> {
-	await page.goto('/reglages/arborescence')
+	await page.goto('/p2enjoy/reglages/arborescence')
 	await page.getByRole('button', { name: 'Déplier Studio web' }).click()
 	const bloc = page.getByRole('region', { name: 'Budgets du track Studio web' })
 	await expect(bloc).toBeVisible()
@@ -75,9 +77,9 @@ async function ouvrirBudgets(page: Page): Promise<Locator> {
 
 test('les budgets : où ils vivent, les occurrences, deux refus du serveur', async ({ page, request }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages')
+	await page.goto('/p2enjoy/reglages')
 	await illustrer(page, { chapitre: BUDGETS, section: null, nom: 'reglages', cibles: [page.getByRole('link', { name: /^Arborescence : tracks et channels/ })] })
-	await page.goto('/tracks/studio-web/couts')
+	await page.goto('/p2enjoy/tracks/studio-web/couts')
 	await illustrer(page, { chapitre: BUDGETS, section: null, nom: 'onglets-des-couts', cibles: [page.getByTestId('onglet-couts-track'), page.getByTestId('onglet-couts-saisir')] })
 	await illustrer(page, { chapitre: BUDGETS, section: 'les-occurrences-d-un-budget-recurrent', nom: 'onglet-a-saisir', cibles: [page.getByTestId('onglet-couts-saisir')] })
 
@@ -94,7 +96,7 @@ test('les budgets : où ils vivent, les occurrences, deux refus du serveur', asy
 	await illustrer(page, { chapitre: BUDGETS, section: 'les-occurrences-d-un-budget-recurrent', nom: 'occurrences-du-budget', cibles: [occurrences] })
 
 	// Rendre non récurrent un budget qui porte des occurrences : le serveur refuse, rien ne change.
-	await page.goto('/reglages/arborescence')
+	await page.goto('/p2enjoy/reglages/arborescence')
 	await page.getByRole('button', { name: 'Déplier Studio web' }).click()
 	const bloc2 = page.getByRole('region', { name: 'Budgets du track Studio web' })
 	await bloc2.getByRole('button', { name: /^Modifier le budget Publicité 2026/ }).click()
@@ -120,21 +122,21 @@ test('les budgets : où ils vivent, les occurrences, deux refus du serveur', asy
 test('les coûts d’un track : sans budget, sans dépense, refusés', async ({ page, request }) => {
 	await service(request, 'post', 'tracks', [{ id: TRACK_VIDE.id, workspace_id: WORKSPACE_SEED, name: 'Partenariats', slug: TRACK_VIDE.slug }])
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto(`/tracks/${TRACK_VIDE.slug}/couts`)
+	await page.goto(`/p2enjoy/tracks/${TRACK_VIDE.slug}/couts`)
 	const sansBudget = page.getByText('Aucun budget sur ce track').first()
 	await expect(sansBudget).toBeVisible()
 	await illustrer(page, { chapitre: COUTS_TRACK, section: ETATS, nom: 'aucun-budget', cibles: [sansBudget.locator('xpath=ancestor::*[.//p][1]')] })
 	// Un budget sans dépense sur ce track : l'écran des coûts, l'onglet « À saisir » et le détail le disent.
 	await service(request, 'post', 'budgets', [{ id: BUDGET_VIDE, track_id: TRACK_VIDE.id, name: 'Salon partenaires', currency: 'EUR' }])
-	await page.goto(`/tracks/${TRACK_VIDE.slug}/couts`)
+	await page.goto(`/p2enjoy/tracks/${TRACK_VIDE.slug}/couts`)
 	const sansDepense = page.getByText('Aucune dépense rattachée.').first()
 	await expect(sansDepense).toBeVisible()
 	await illustrer(page, { chapitre: COUTS_TRACK, section: ETATS, nom: 'aucune-depense', cibles: [sansDepense] })
-	await page.goto(`/tracks/${TRACK_VIDE.slug}/couts?onglet=saisir`)
+	await page.goto(`/p2enjoy/tracks/${TRACK_VIDE.slug}/couts?onglet=saisir`)
 	const tout = page.getByText('Tous les coûts réels sont saisis').first()
 	await expect(tout).toBeVisible()
 	await illustrer(page, { chapitre: A_SAISIR, section: 'ce-que-l-ecran-ecrit-quand-quelque-chose-ne-va-pas', nom: 'tout-est-saisi', cibles: [tout.locator('xpath=ancestor::*[.//p][1]')] })
-	await page.goto(`/tracks/${TRACK_VIDE.slug}/couts/${BUDGET_VIDE}`)
+	await page.goto(`/p2enjoy/tracks/${TRACK_VIDE.slug}/couts/${BUDGET_VIDE}`)
 	const detailVide = page.getByText('Aucune dépense rattachée.').first()
 	await expect(detailVide).toBeVisible()
 	await illustrer(page, { chapitre: DETAIL, section: ETATS, nom: 'aucune-depense', cibles: [detailVide] })
@@ -142,14 +144,14 @@ test('les coûts d’un track : sans budget, sans dépense, refusés', async ({ 
 
 test('les coûts d’un track fermé à une lectrice', async ({ page }) => {
 	await connecterAvecLeLabs(page, VIEWER)
-	await page.goto('/tracks/conseil-ia/couts')
+	await page.goto('/p2enjoy/tracks/conseil-ia/couts')
 	const refus = page.getByText('Accès refusé').first()
 	await si(refus, () => illustrer(page, { chapitre: COUTS_TRACK, section: ETATS, nom: 'acces-refuse', cibles: [refus.locator('xpath=ancestor::*[.//p][1]')] }))
 })
 
 test('le détail d’un budget : récurrent, clôturé, sans dépense', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto(`/tracks/studio-web/couts/${BUDGET_RECURRENT}`)
+	await page.goto(`/p2enjoy/tracks/studio-web/couts/${BUDGET_RECURRENT}`)
 	const filtre = page.getByLabel('Filtrer par occurrence')
 	await expect(filtre).toBeVisible()
 	await illustrer(page, { chapitre: DETAIL, section: null, nom: 'budget-recurrent', cibles: [page.getByRole('heading', { level: 1 }), page.getByRole('table').first()] })
@@ -174,7 +176,7 @@ test('le détail d’un budget : récurrent, clôturé, sans dépense', async ({
 	const inconnu = page.getByText('Auteur inconnu').first()
 	await si(inconnu, () => illustrer(page, { chapitre: DETAIL, section: ETATS, nom: 'auteur-inconnu', cibles: [inconnu.locator('xpath=ancestor::tr[1]')] }))
 
-	await page.goto(`/tracks/studio-web/couts/${BUDGET_CLOTURE}`)
+	await page.goto(`/p2enjoy/tracks/studio-web/couts/${BUDGET_CLOTURE}`)
 	const cloture = page.getByText(/^Budget clôturé —/).first()
 	await expect(cloture).toBeVisible()
 	await illustrer(page, { chapitre: DETAIL, section: ETATS, nom: 'budget-cloture', cibles: [cloture] })
@@ -200,7 +202,7 @@ test.describe('dans un espace sans budget', () => {
 
 test('l’onglet « À saisir » : le libellé, un réel enregistré, un track tout saisi, une ligne soldée', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/tracks/studio-web/couts?onglet=saisir')
+	await page.goto('/p2enjoy/tracks/studio-web/couts?onglet=saisir')
 	const ligne = page.getByTestId('couts-a-saisir-ligne').first()
 	await expect(ligne).toBeVisible()
 	const libelle = ligne.getByPlaceholder('Facture n° 42')
@@ -270,7 +272,7 @@ test('le temps : ajouter une affaire, une journée trop longue, le rapport de l�
 	await expect(rapport.getByText('Chargement en cours')).toHaveCount(0)
 	await illustrer(page, { chapitre: TEMPS, section: 'le-rapport-mensuel', nom: 'toute-l-equipe', cibles: [personne, rapport] })
 
-	await page.goto('/reglages/cout-personnel')
+	await page.goto('/p2enjoy/reglages/cout-personnel')
 	// Farida Nowak, dernière de la liste, n'a aucun coût : sa nouvelle version est ouverte, puis abandonnée.
 	await page.getByTestId('cout-personnel').getByRole('button', { name: 'Nouvelle version' }).last().click()
 	const calculer = page.getByRole('button', { name: 'Calculer depuis le coût mensuel' })
@@ -282,7 +284,7 @@ test('le temps : ajouter une affaire, une journée trop longue, le rapport de l�
 	await illustrer(page, { chapitre: TEMPS, section: 'regler-le-cout-du-personnel', nom: 'calcul', cibles: [calcul] })
 	await page.keyboard.press('Escape')
 
-	await page.goto('/tracks/studio-web/couts')
+	await page.goto('/p2enjoy/tracks/studio-web/couts')
 	const personnel = page.getByText('Coût du personnel', { exact: true }).first()
 	// Le mois précédent, que le seed remplit : l'image montre les trois commandes de la navigation de mois (INC-333).
 	const serie = page.getByTestId('personnel-track')
@@ -374,13 +376,13 @@ test('la plateforme et le connecteur : les commandes, les issues du journal des 
 
 test('« Nouvelle affaire », que l’assistant sait aussi poser', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/tracks/studio-web/refonte')
+	await page.goto('/p2enjoy/tracks/studio-web/refonte')
 	await illustrer(page, { chapitre: CONNECTEUR, section: 'ce-que-l-assistant-sait-faire', nom: 'nouvelle-affaire', cibles: [page.getByTestId('nouvelle-affaire')] })
 })
 
 test('le coût du personnel vu par un membre : « Votre temps »', async ({ page }) => {
 	await connecterAvecLeLabs(page, BIZDEV)
-	await page.goto('/tracks/studio-web/couts')
+	await page.goto('/p2enjoy/tracks/studio-web/couts')
 	const votre = page.getByText('Votre temps', { exact: true }).first()
 	await si(votre, () => illustrer(page, { chapitre: TEMPS, section: 'le-cout-du-personnel-a-cote-des-couts', nom: 'votre-temps', cibles: [votre] }))
 })

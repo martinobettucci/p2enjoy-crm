@@ -31,11 +31,14 @@
 // LES SCÉNARIOS SE SUIVENT DANS UN MÊME ESPACE NEUF, et c'est voulu : chacun reprend là où le précédent
 // laisse l'espace, comme le ferait l'administrateur — le track avant le channel, le channel avant
 // l'affaire. En série, un scénario en échec retient les suivants plutôt que de les faire échouer à tort.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type APIRequestContext, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
 import { creerCompteJetable, supprimerCompte } from '../api/keycloak-dev'
 import { PALIERS, capturer } from './captures'
+import { dansUnEspace } from '../espace'
 
 const UNITE = 'CRM-094'
 const UNITE_AFFAIRE = 'CRM-095'
@@ -134,13 +137,13 @@ async function poserWorkflowEtPremierChannel(page: Page): Promise<void> {
 	await page.getByTestId('panneau-guide-flottant').getByTestId('reduire-guide-flottant').click()
 
 	await page.getByTestId('barre-onglets').getByTestId('commande-nouveau-channel').click()
-	await expect(page).toHaveURL(`/tracks/${TRACK.slug}?nouveau-channel=1`)
+	await expect(page).toHaveURL(dansUnEspace(`/tracks/${TRACK.slug}?nouveau-channel=1`))
 	const formChannel = page.getByTestId('formulaire-channel')
 	await expect(formChannel.getByLabel('Nom')).toBeFocused()
 	await formChannel.getByLabel('Nom').fill(CHANNEL.nom)
 	await formChannel.getByLabel('Workflow').selectOption({ label: 'Cycle commercial (par défaut)' })
 	await formChannel.getByRole('button', { name: 'Créer' }).click()
-	await expect(page).toHaveURL(`/tracks/${TRACK.slug}/${CHANNEL.slug}`)
+	await expect(page).toHaveURL(dansUnEspace(`/tracks/${TRACK.slug}/${CHANNEL.slug}`))
 	await expect(formChannel).toBeHidden()
 	await expect(page.getByTestId('onglet-channel').filter({ hasText: CHANNEL.nom })).toBeFocused()
 }
@@ -167,7 +170,7 @@ test.describe('le premier lancement complet, à la souris et au clavier', () => 
 
 		// Ouvert depuis la barre latérale, comme le ferait l'administrateur qui vient de le créer.
 		await page.getByTestId('entree-track').filter({ hasText: TRACK.nom }).click()
-		await expect(page).toHaveURL(`/tracks/${TRACK.slug}`)
+		await expect(page).toHaveURL(dansUnEspace(`/tracks/${TRACK.slug}`))
 		const vide = page.getByTestId('etat-vide')
 		await expect(vide).toContainText('Aucun channel dans ce track')
 		await expect(vide).toContainText(
@@ -197,7 +200,7 @@ test.describe('le premier lancement complet, à la souris et au clavier', () => 
 		await page.getByTestId('guide-demarrage').getByTestId('etape-affaire').scrollIntoViewIfNeeded()
 		await capturer(page, 'premier-lancement-guide-affaire-xl-1440', UNITE_AFFAIRE)
 		await lien.click()
-		await expect(page).toHaveURL(`/tracks/${TRACK.slug}/${CHANNEL.slug}`)
+		await expect(page).toHaveURL(dansUnEspace(`/tracks/${TRACK.slug}/${CHANNEL.slug}`))
 
 		// Le board d'un channel sans affaire dit où la créer — et le bouton est là, au-dessus des colonnes.
 		await expect(page.getByTestId('etat-vide')).toContainText(
@@ -290,7 +293,7 @@ test.describe('le premier lancement complet, à la souris et au clavier', () => 
 		await expect(vide).not.toContainText("par l'API")
 		await capturer(page, 'premier-lancement-workflow-sans-etape-xl-1440', UNITE_AFFAIRE)
 		await vide.getByRole('link', { name: "Ouvrir l'éditeur de workflows" }).click()
-		await expect(page).toHaveURL('/reglages/workflows')
+		await expect(page).toHaveURL(dansUnEspace('/reglages/workflows'))
 	})
 
 	test('un bloc d’objectif LIÉ au premier channel garde son lien, à l’écran et après rechargement', async ({

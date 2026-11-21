@@ -14,6 +14,8 @@
 // `5eed` (INC-061, décision 199) — dans le channel de `…0cc`, à *Signature*, lui donne la valeur que l'arête exige
 // sous le jeton de l'administratrice, et lui fait franchir « Démarrer la réalisation » par la vraie RPC. Elle est
 // supprimée par son identifiant à la fin, et son absence constatée : la cascade emporte ses événements.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test } from './fixtures'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
@@ -122,7 +124,7 @@ test.describe('le fil nomme l’étape franchie comme le board (INC-301, sans su
 
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto(`/tracks/${lieu.track.slug}/${lieu.slug}/cards/${CARD_ESSAI}`)
+		await page.goto(`/p2enjoy/tracks/${lieu.track.slug}/${lieu.slug}/cards/${CARD_ESSAI}`)
 
 		const ligne = page.getByRole('listitem').filter({ hasText: 'Étape franchie' })
 		await expect(ligne).toHaveCount(1)

@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le refus `identifiant_reserve` dans le dictionnaire fermé (§15.1) ; docs/SPEC-espace-courant.md
 // @spec CRM-101 (docs/BACKLOG.md) — tranche T3 : les appels de l'écran de la plateforme et leurs refus
 // @spec docs/SPEC-plateforme.md §5.3 (`public.est_superadmin`, aide d'interface), §6 (les fonctions et le dictionnaire
 //       des refus), §7 (l'écran) ; docs/DESIGN_SYSTEM.md §5.56 ; docs/SCHEMA.md §1 bis
@@ -44,6 +45,8 @@ export const CODES_REFUS_PLATEFORME = [
 	'adresse_invalide',
 	'confirmation_incorrecte',
 	'identifiant_pris',
+	// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.1) : un slug qu'une route globale emploie.
+	'identifiant_reserve',
 	'last_workspace_admin',
 	'dernier_superadministrateur',
 	// `CRM-103` (docs/SPEC-mcp.md §8.2) : une matrice hors des familles et actions fermées, une issue inconnue.

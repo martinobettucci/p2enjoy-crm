@@ -35,6 +35,8 @@
 // se clôture (`docs/SPEC-costs.md` §3.2), et aucune assertion de ce fichier n'exerce une suppression
 // comme geste d'utilisateur. Clôturer ne suffirait pas ici : `supabase/tests/0048_budgets.test.sql`
 // compte les budgets du seed, et un résidu clôturé reste une ligne.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	ERREUR_RESSOURCE_HTTP,
@@ -74,7 +76,7 @@ async function connecter(page: Page, email = ADMIN): Promise<void> {
 
 /** Ouvre l'administration de l'arborescence et déplie le track porteur des budgets. */
 async function ouvrirBudgetsDuTrack(page: Page, nomTrack = TRACK): Promise<Locator> {
-	await page.goto('/reglages/arborescence')
+	await page.goto('/p2enjoy/reglages/arborescence')
 	await expect(page.getByRole('heading', { name: "Administration de l'arborescence" })).toBeVisible()
 	await page.getByRole('button', { name: `Déplier ${nomTrack}` }).click()
 	const bloc = page.getByRole('region', { name: `Budgets du track ${nomTrack}` })
@@ -338,7 +340,7 @@ test.describe("les gestes d'administration (docs/SPEC-costs.md §3.2, §4.1)", (
 			// l'onglet « À saisir » du §4.8, qui liste les lignes des budgets CLOS et rend leur champ
 			// actif. Sans cette dernière assertion, l'écran pourrait promettre ce que le produit ne
 			// tient pas.
-			await page.goto('/tracks/studio-web/couts?onglet=saisir')
+			await page.goto('/p2enjoy/tracks/studio-web/couts?onglet=saisir')
 			const ligne = page.getByTestId('couts-a-saisir-ligne').filter({ hasText: LIGNE })
 			await expect(ligne).toHaveCount(1)
 			await expect(ligne.getByTestId('couts-a-saisir-clos')).toBeVisible()

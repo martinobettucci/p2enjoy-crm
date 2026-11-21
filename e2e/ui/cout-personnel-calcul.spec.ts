@@ -6,6 +6,8 @@
 //
 // Les versions de preuve prennent effet en 2099 — une version en vigueur ne se retire jamais — sur Farida, qui n'a
 // aucune version au seed (sa première version peut porter toute date). Chaque scénario retire ce qu'il a posé.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type APIRequestContext, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -36,7 +38,7 @@ test.afterEach(async ({ request }) => {
 })
 
 async function ouvrirFormulaire(page: Page) {
-	await page.goto('/reglages/cout-personnel')
+	await page.goto('/p2enjoy/reglages/cout-personnel')
 	const carte = page.locator(`[data-testid="cout-personne"][data-personne="${FARIDA}"]`)
 	await carte.getByRole('button', { name: 'Nouvelle version' }).click()
 	return carte

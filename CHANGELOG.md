@@ -20,6 +20,11 @@ d'exécuter le code attendu.
   - l'outbox, les mails préparés et l'état de la messagerie sont filtrés par espace ;
   - une nouvelle lecture compte les non-lus de chaque espace, pour le menu des espaces à venir.
   Rien ne change à l'écran pour un espace unique. Contrat §2.67 : la migration et la webapp partent dans la même fenêtre.
+- **`CRM-161` T2.a — l'espace en tête des adresses.** Les adresses de l'inbox, des tracks et des réglages portent le nom
+  court de l'espace (`/crm/inbox`, `/crm/tracks/…`, `/crm/reglages/…`) : deux onglets travaillent sur deux espaces, chacun
+  avec sa barre latérale et son fil d'Ariane, sans rien stocker. Les anciennes adresses et les liens déjà envoyés mènent à
+  la même page, dans l'espace de leur ressource. Une adresse d'un espace inconnu dit « Espace introuvable ». Un espace ne
+  peut plus prendre pour nom court un mot que l'application emploie dans ses adresses (migration `0196`). Contrat §2.68.
 
 ## [Publié]
 

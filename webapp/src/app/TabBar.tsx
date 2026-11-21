@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — les onglets et leurs commandes mènent dans l'espace courant (§15.3) ; docs/SPEC-espace-courant.md
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — « Nouveau channel » rendu en texte citant son motif quand la base refuse
 //       l'administration (docs/SPEC-droits-interface.md §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-021 (docs/BACKLOG.md) — barre d'onglets : les channels du track courant
@@ -58,7 +59,10 @@
 //       (docs/SPEC-administration-arborescence.md §15.4 ; docs/DESIGN_SYSTEM.md §5.106 ; décisions 935 et 938)
 
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type DragEvent, type KeyboardEvent } from 'react'
-import { Link, NavLink, useLocation, useNavigate } from 'react-router'
+import { useLocation } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
+// l'espace courant.
+import { LienEspace as Link, NavLienEspace as NavLink, useNaviguerEspace as useNavigate } from './LienEspace'
 import { Archive, ArrowLeftRight, ChartColumn, ChevronDown, ChevronRight, GripVertical, Plus, TriangleAlert } from 'lucide-react'
 import { Infobulle } from '../components/ui/Infobulle'
 import { LiveRegion } from '../components/ui/LiveRegion'

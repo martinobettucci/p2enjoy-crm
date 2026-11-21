@@ -1,3 +1,4 @@
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T2.a : la vue d'un track reconnue sous le slug de son espace
 // @verifies CRM-116 (docs/BACKLOG.md) tranche T3 — la couleur voyage dans le brouillon (docs/SPEC-administration-arborescence.md
 //           §14.3)
 // @verifies CRM-100 (docs/BACKLOG.md) — tranche T1 : les adresses de « Nouveau channel » et de l'aller-retour
@@ -38,6 +39,9 @@ describe('estVueTrack — les adresses qui rendent le formulaire (§13.3)', () =
 		'/tracks/commercial/prospection',
 		'/tracks/commercial/prospection/liste',
 		'/tracks/studio-web/couts-annexes',
+		// `CRM-161` T2.a (docs/SPEC-espace-courant.md §8.1) : sous le slug de l'espace.
+		'/p2enjoy/tracks/commercial',
+		'/p2enjoy/tracks/commercial/prospection/liste',
 	])('%s est une vue de track', (chemin) => {
 		expect(estVueTrack(chemin)).toBe(true)
 	})
@@ -50,6 +54,8 @@ describe('estVueTrack — les adresses qui rendent le formulaire (§13.3)', () =
 		'/tracks/',
 		'/reglages/arborescence',
 		'/tracks/commercial/prospection/liste/autre',
+		'/p2enjoy/tracks/commercial/couts',
+		'/p2enjoy/reglages/arborescence',
 	])("%s n'en est pas une", (chemin) => {
 		expect(estVueTrack(chemin)).toBe(false)
 	})

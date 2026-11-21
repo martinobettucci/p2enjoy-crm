@@ -4,6 +4,8 @@
 //
 // Une affaire JETABLE de `refonte` (track « Studio web »), posée par la clé de service, que l'administratrice rattache
 // aussi à `grands-comptes` (track « Conseil & IA », fermé à la lectrice) par `attach_card`. Retirée après chaque scénario.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { randomUUID } from 'node:crypto'
 import { connecterAvecLeLabs, expect, test } from './fixtures'
@@ -48,7 +50,7 @@ test.afterEach(async ({ request }) => {
 
 test('sur le board, la carte porte « +1 », et le focus clavier nomme l’autre channel', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/tracks/studio-web/refonte')
+	await page.goto('/p2enjoy/tracks/studio-web/refonte')
 	const carte = page.locator(`[data-testid="carte-card"][data-card="${affaire}"]`)
 	const pastille = carte.getByTestId('pastille-aussi-rattachee')
 	await expect(pastille).toHaveText('+1')
@@ -63,13 +65,13 @@ test('sur le board, la carte porte « +1 », et le focus clavier nomme l’autre
 	await capturer(page, 'board-aussi-rattachee-xl-1440', UNITE)
 
 	// Le board de l'autre channel montre la même affaire, avec l'autre chemin.
-	await page.goto('/tracks/conseil-ia/grands-comptes')
+	await page.goto('/p2enjoy/tracks/conseil-ia/grands-comptes')
 	const ailleurs = page.locator(`[data-testid="carte-card"][data-card="${affaire}"]`).getByTestId('pastille-aussi-rattachee')
 	await expect(ailleurs).toHaveText('+1')
 
 	// Palier 390 : la carte garde sa largeur, la pastille passe à la ligne avec les autres.
 	await page.setViewportSize({ width: 390, height: 844 })
-	await page.goto('/tracks/studio-web/refonte')
+	await page.goto('/p2enjoy/tracks/studio-web/refonte')
 	await expect(pastille).toBeVisible()
 	await carte.scrollIntoViewIfNeeded()
 	await capturer(page, 'board-aussi-rattachee-sm-390', UNITE)
@@ -77,7 +79,7 @@ test('sur le board, la carte porte « +1 », et le focus clavier nomme l’autre
 
 test('dans la vue liste, la cellule « Affaire » porte la pastille sans changer la hauteur de la ligne', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/tracks/studio-web/refonte/liste')
+	await page.goto('/p2enjoy/tracks/studio-web/refonte/liste')
 	const ligne = page.locator(`[data-testid="ligne-card"][data-card="${affaire}"]`)
 	await expect(ligne.getByTestId('pastille-aussi-rattachee')).toHaveText('+1')
 	// Une ligne du seed sans pastille : la comparaison a lieu, elle n'est pas conditionnelle.
@@ -89,7 +91,7 @@ test('dans la vue liste, la cellule « Affaire » porte la pastille sans changer
 
 test('la lectrice, qui ne lit pas « Grands comptes », ne voit aucune pastille : rien ne lui révèle l’autre rattachement', async ({ page }) => {
 	await connecterAvecLeLabs(page, LECTRICE)
-	await page.goto('/tracks/studio-web/refonte')
+	await page.goto('/p2enjoy/tracks/studio-web/refonte')
 	const carte = page.locator(`[data-testid="carte-card"][data-card="${affaire}"]`)
 	await expect(carte).toBeVisible()
 	await expect(carte.getByTestId('pastille-aussi-rattachee')).toHaveCount(0)

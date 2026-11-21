@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le carnet suit l'espace courant de l'onglet, état intermédiaire jusqu'à T3 (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T4 : « Exporter en CSV » le carnet, après « Nouveau contact » (docs/DESIGN_SYSTEM.md §5.76)
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T5 : « Importer un fichier » et son panneau, puis le carnet relu (docs/DESIGN_SYSTEM.md §5.77)
 // @spec CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranche 4a :
@@ -50,6 +51,7 @@ import { CommandeExportCsv, type FichierPrepare } from './ExportCsv'
 import { CommandeImport, PanneauImport } from './ImportCsv'
 import { csvContacts, dateDuJour, exporterContacts } from '../lib/export-csv'
 import { motifVisible, proprietesCommande } from '../lib/capacites'
+import { idEspaceParmi } from '../lib/espace-onglet'
 
 /** Le motif du carnet, cité par sa commande de création quand la base refuse l'édition de l'espace. */
 const ID_MOTIF_CARNET = 'carnet-lecture-seule'
@@ -87,7 +89,7 @@ async function preparerExportContacts(client: ClientCrm, idWorkspace: string): P
 }
 
 export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
-	const { capacites } = useContexteEspace()
+	const { capacites, idWorkspace: idEspaceContexte } = useContexteEspace()
 	const [etat, setEtat] = useState<EtatAsync<readonly ContactDuCarnet[]>>(enChargement)
 	const [tentative, setTentative] = useState(0)
 	// Une réponse arrivée après le démontage, ou périmée par une nouvelle tentative, ne doit pas
@@ -216,7 +218,8 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 	const contacts = [...etat.donnees, ...ajoutes].sort((gauche, droite) =>
 		gauche.full_name.localeCompare(droite.full_name, 'fr'),
 	)
-	const idWorkspace = espaces.etat.statut === 'pret' ? (espaces.etat.donnees[0]?.id ?? null) : null
+	// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) — état intermédiaire jusqu'à T3 (§15.2) : l'espace du contexte, et non plus le premier de la liste.
+	const idWorkspace = espaces.etat.statut === 'pret' ? idEspaceParmi(espaces.etat.donnees, idEspaceContexte) : null
 	// `CRM-093` — la capacité d'éditer l'espace, rendue par la base sur sa ligne (§5.59) : refusée, la commande reste
 	// montée, désactivée, et cite le motif dit une fois en tête du carnet.
 	const commande = proprietesCommande(capacites.edition, ID_MOTIF_CARNET)

@@ -8,6 +8,8 @@
 //
 // Les gestes écrivent : les prompts de la preuve portent l'identifiant `zz-149-…` et sont retirés à la fin par la clé de
 // service. Aucun prompt par défaut n'est modifié.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { APIRequestContext } from '@playwright/test'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -16,7 +18,7 @@ import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, connecterAvecLeLabs, ex
 
 const UNITE = 'CRM-149'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
-const CHEMIN = '/reglages/prompts-connecteur'
+const CHEMIN = '/p2enjoy/reglages/prompts-connecteur'
 const rest = (chemin: string) => `${URL_API}/rest/v1/${chemin}`
 /** Les cinq défauts (docs/SPEC-mcp.md §17.4), dans l'ordre de leur titre. */
 const DEFAUTS = ['creer-une-affaire', 'enregistrer-une-recette-reelle', 'faire-avancer', 'faire-le-point', 'retrouver-une-affaire']
@@ -36,7 +38,7 @@ test.afterEach(async ({ request }) => {
 test.describe('Réglages ▸ Prompts du connecteur (docs/DESIGN_SYSTEM.md §5.104)', () => {
 	test('l’administratrice lit les défauts, ajoute un prompt à la souris, et voit un identifiant pris refusé', async ({ page, request }) => {
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		const entree = page.getByTestId('entree-prompts-connecteur')
 		await expect(entree).toHaveAttribute('href', CHEMIN)
 		await entree.click()
@@ -142,7 +144,7 @@ test.describe('Réglages ▸ Prompts du connecteur (docs/DESIGN_SYSTEM.md §5.10
 
 	test('la lectrice lit la liste ; ses commandes sont éteintes avec le motif', async ({ page }) => {
 		await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		await expect(page.getByTestId('entree-prompts-connecteur')).toHaveAttribute('href', CHEMIN)
 		await page.goto(CHEMIN)
 		await expect(page.getByTestId('ligne-prompt').filter({ hasText: 'faire-le-point' })).toBeVisible()

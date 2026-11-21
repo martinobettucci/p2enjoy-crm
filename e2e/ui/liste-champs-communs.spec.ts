@@ -10,6 +10,8 @@
 // « Grands comptes », retirée ensuite avec le champ — retrait CONSTATÉ. *Révisé par la campagne de livraison* : posée d'abord
 // sur une affaire du seed, la valeur laissait au fil de celle-ci ses `field_changed` (migration 0163), que le retrait de la
 // valeur n'emporte pas ; l'affaire de sonde les emporte avec elle.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { randomUUID } from 'node:crypto'
 import { connecterAvecLeLabs, expect, test, type APIRequestContext } from './fixtures'
@@ -24,7 +26,7 @@ const CHANNEL = '5eed0000-0000-4000-8000-000000000032'
 const WORKFLOW = '5eed0000-0000-4000-8000-000000000051'
 const PROSPECTION = '5eed0000-0000-4000-8000-000000000061'
 const TITRE = 'tst-crm112-lc'
-const LISTE = '/tracks/conseil-ia/grands-comptes/liste'
+const LISTE = '/p2enjoy/tracks/conseil-ia/grands-comptes/liste'
 const CLE = 'sonde-112-lc'
 const LIBELLE = 'Budget client (sonde)'
 
@@ -86,7 +88,7 @@ test.describe('Les champs de l’affaire en colonnes (docs/DESIGN_SYSTEM.md §5.
 		// sonde est attendue absente avant la case.
 		await expect(page.locator(`[data-testid="entete-commun"][data-champ="${CLE}"]`)).toHaveCount(0)
 
-		await page.goto('/reglages/champs')
+		await page.goto('/p2enjoy/reglages/champs')
 		await page.locator(`[data-champ="${CLE}"]`).getByRole('button', { name: /Modifier le champ/ }).click()
 		const caseListe = page.getByLabel('Afficher dans la liste des affaires')
 		await expect(caseListe).not.toBeChecked()
@@ -107,7 +109,7 @@ test.describe('Les champs de l’affaire en colonnes (docs/DESIGN_SYSTEM.md §5.
 
 	test('un type personne ne s’affiche pas en colonne : la case est refusée, avec sa raison', async ({ page }) => {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/reglages/champs')
+		await page.goto('/p2enjoy/reglages/champs')
 		await page.getByTestId('nouveau-champ-commun').click()
 		await page.getByLabel('Type').selectOption('user')
 		await expect(page.getByLabel('Afficher dans la liste des affaires')).toBeDisabled()

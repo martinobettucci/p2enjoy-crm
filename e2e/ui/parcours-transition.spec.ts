@@ -25,6 +25,8 @@
 // La card support est **fabriquée** avec la clé de service et détruite dans un `finally` : le seed
 // ne place aucune affaire à l'étape « Signature », et l'y placer appartiendrait à `CRM-046`
 // (§4 quater.2). Même motif que la preuve n° 3 de `CRM-014`, qui fabrique son second workspace.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	autoriserErreursConsole,
@@ -56,7 +58,7 @@ const CLE_CHAMP = 'lien-proposition'
 const LIBELLE_CHAMP = 'Lien vers la proposition'
 const VALEUR = 'https://p2enjoy.test/propositions/parcours-enchaine'
 
-const ROUTE_BOARD = '/tracks/conseil-ia/grands-comptes'
+const ROUTE_BOARD = '/p2enjoy/tracks/conseil-ia/grands-comptes'
 
 let jetonAdmin: string
 

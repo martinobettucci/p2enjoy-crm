@@ -10,6 +10,8 @@
 // (docs/SPEC-seed.md §2.19) : leur objet est RÉELLEMENT déposé par la clé de service — le dépôt est le fait du service — et
 // leur raison est posée par le déclencheur de la migration `0173`. Le scénario retire ce qu'il a créé, confirmations
 // comprises (cascade).
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { APIRequestContext } from '@playwright/test'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -100,7 +102,7 @@ async function confirmations(request: APIRequestContext, idPiece: string): Promi
 
 async function ouvrirLeMessage(page: Page, adresse: string, message: string): Promise<void> {
 	await connecterAvecLeLabs(page, adresse)
-	await page.goto(`/inbox?message=${message}`)
+	await page.goto(`/p2enjoy/inbox?message=${message}`)
 	await expect(page.getByTestId('inbox-message-ouvert')).toContainText('Demande de devis — refonte')
 }
 
@@ -165,7 +167,7 @@ test('à la souris : la raison, l’avertissement, l’annulation, puis la confi
 
 		// RELUE, LA LIGNE PORTE « Télécharger » : la confirmation vient de la base, pas de l'écran.
 		// L'ADRESSE ROUVERTE, et non rechargée : `?message=` se retire de l'adresse au montage (§5.90).
-		await page.goto(`/inbox?message=${creees.message}`)
+		await page.goto(`/p2enjoy/inbox?message=${creees.message}`)
 		await expect(piece(page, NON_ANALYSEE).getByTestId('telecharger-confirmee')).toBeVisible()
 	} finally {
 		await retirer(request, creees)

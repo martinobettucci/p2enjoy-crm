@@ -6,6 +6,8 @@
 // UN WORKFLOW JETABLE, et non celui du seed : les gestes de l'éditeur écrivent, et une preuve qui modifierait le
 // workflow par défaut ou celui de la démonstration fausserait les autres specs de la même pile. Tout est retiré à la fin,
 // par la clé de service.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { randomUUID } from 'node:crypto'
 import type { APIRequestContext } from '@playwright/test'
@@ -42,7 +44,7 @@ test.describe('l’éditeur des checklists (docs/DESIGN_SYSTEM.md §5.70 bis)', 
 
 			await page.setViewportSize({ width: 1440, height: 1100 })
 			await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-			await page.goto('/reglages/workflows')
+			await page.goto('/p2enjoy/reglages/workflows')
 			await page.getByRole('button', { name: new RegExp(`^${nom}`) }).click()
 			const bloc = page.getByTestId('bloc-checklists-etapes')
 			const prospection = bloc.locator(`[data-testid="checklist-etape"][data-etape="${ids.prospection}"]`)
@@ -119,7 +121,7 @@ test.describe('l’éditeur des checklists (docs/DESIGN_SYSTEM.md §5.70 bis)', 
 	test('la lectrice voit les checklists des étapes, commandes éteintes et lisibles', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 1100 })
 		await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
-		await page.goto('/reglages/workflows')
+		await page.goto('/p2enjoy/reglages/workflows')
 		await page.getByRole('button', { name: /^Cycle commercial — checklists/ }).click()
 		const bloc = page.getByTestId('bloc-checklists-etapes')
 		await expect(bloc.getByTestId('checklist-point-etape')).toHaveCount(3)

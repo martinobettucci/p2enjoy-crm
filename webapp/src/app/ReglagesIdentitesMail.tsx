@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'écran travaille dans l'espace de l'adresse (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-136 (docs/BACKLOG.md) — tranche T3 : « Envois par jour, au plus » au formulaire de l'identité, vide = aucun plafond
 //       (docs/SPEC-mail-subsystem.md §25.6 ; docs/DESIGN_SYSTEM.md §5.99)
 // @spec CRM-089 (docs/BACKLOG.md) — écran de configuration des identités sortantes SMTP
@@ -60,6 +61,7 @@ import {
 import { lireWorkspaces } from '../lib/workspaces'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
+import { idEspaceParmi } from '../lib/espace-onglet'
 
 /** Les quatre états de `mail_outbound_identities_statut`, chacun avec son mot et son ton (§5.35). */
 const ETATS: Readonly<
@@ -239,6 +241,8 @@ export function ReglagesIdentitesMail({
 	/** Le retour du focus est DIFFÉRÉ d'un tour de rendu : la commande est démontée (§5.25). */
 	const focusARendre = useRef(false)
 
+	// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) : l'espace de l'adresse, et non plus le premier de la liste.
+	const { idWorkspace: idEspaceContexte } = useContexteEspace()
 	useEffect(() => {
 		if (client === null) return
 		const rang = ++courant.current
@@ -251,12 +255,12 @@ export function ReglagesIdentitesMail({
 				return
 			}
 			if (espaces.statut !== 'pret') return
-			setIdWorkspace(espaces.donnees[0]?.id ?? null)
+			setIdWorkspace(idEspaceParmi(espaces.donnees, idEspaceContexte))
 			const lues = await lireIdentitesSortantes(client)
 			if (rang !== courant.current) return
 			setEtat(lues.statut === 'pret' ? pret(lues.donnees) : lues)
 		})()
-	}, [client, tentative])
+	}, [client, tentative, idEspaceContexte])
 
 	useEffect(() => {
 		if (saisie !== null || !focusARendre.current) return

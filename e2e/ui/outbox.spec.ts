@@ -11,6 +11,8 @@
 // REMISE EN ÉTAT NE PEUT PAS DÉFAIRE, et qui est nommé plutôt que tu : la ligne `mail_cancelled` écrite au fil de c1 par une
 // annulation réussie — `card_events` n'accorde aucun privilège d'écriture, `service_role` compris (`CRM-044`, la règle de
 // `declassement.spec.ts`). Les preuves ne comptent donc jamais ces lignes : elles cherchent la leur, par son objet. L'inbox s'ouvre `courrier=tous` : « Seulement moi » ne s'applique pas à l'outbox, et le sujet est ailleurs.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { APIRequestContext } from '@playwright/test'
 import { connecterAvecLeLabs, expect, test } from './fixtures'
@@ -22,7 +24,7 @@ const ADMIN = 'admin@p2enjoy.test'
 const BIZDEV = 'bizdev@p2enjoy.test'
 const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 const AFFAIRE = '5eed0000-0000-4000-8000-0000000000c1'
-const CHEMIN_AFFAIRE = '/tracks/conseil-ia/grands-comptes/cards/' + AFFAIRE
+const CHEMIN_AFFAIRE = '/p2enjoy/tracks/conseil-ia/grands-comptes/cards/' + AFFAIRE
 const CAMILLE = '5eed0000-0000-4000-8000-000000000011'
 const DRISS = '5eed0000-0000-4000-8000-000000000012'
 const MARQUE = 'E2E CRM-144'
@@ -77,7 +79,7 @@ test.use({ viewport: { width: 1440, height: 900 } })
 test('« En file » : annuler à la souris, confirmé dans le flux, constaté en base et au fil de l’affaire', async ({ page, request }) => {
 	const id = await poser(request, 'Proposition à annuler', 'queued', { motif: 'timeout', essais: 2 })
 	await connecterAvecLeLabs(page, BIZDEV)
-	await page.goto('/inbox?courrier=tous')
+	await page.goto('/p2enjoy/inbox?courrier=tous')
 	const entree = page.getByTestId('inbox-envois-file')
 	await expect(entree).toHaveAccessibleName(/En file\s:\s\d+\senvois?/)
 	await expect(page.getByTestId('inbox-envois-envoyes')).toBeVisible()
@@ -116,7 +118,7 @@ test('« En file » : annuler à la souris, confirmé dans le flux, constaté en
 test('au clavier : « Garder en file » et Échap rendent le focus à la commande, rien n’est annulé', async ({ page, request }) => {
 	const id = await poser(request, 'À garder en file', 'queued')
 	await connecterAvecLeLabs(page, BIZDEV)
-	await page.goto('/inbox?courrier=tous&envois=file')
+	await page.goto('/p2enjoy/inbox?courrier=tous&envois=file')
 	// L'ADRESSE GARDE LE DOSSIER : on arrive dans « En file ».
 	await expect(page.getByTestId('inbox-envois-file')).toHaveAttribute('aria-current', 'true')
 	const ligne = page.locator(`[data-testid="inbox-envoi"][data-envoi="${id}"]`)
@@ -147,7 +149,7 @@ test('« Échecs » : le motif en toutes lettres, « Réessayer » sans confirma
 	const inconnu = await poser(request, 'Envoi au motif inconnu', 'failed', { motif: 'smtp_421' })
 	const parti = await poser(request, 'Envoi parti', 'sent')
 	await connecterAvecLeLabs(page, BIZDEV)
-	await page.goto('/inbox?courrier=tous&envois=echecs')
+	await page.goto('/p2enjoy/inbox?courrier=tous&envois=echecs')
 	const entree = page.getByTestId('inbox-envois-echecs')
 	await expect(entree).toHaveAccessibleName(/Échecs\s:\s\d+\senvois?/)
 	const ligne = page.locator(`[data-testid="inbox-envoi"][data-envoi="${echec}"]`)
@@ -180,7 +182,7 @@ test('l’issue incertaine n’a pas de commande ; un collègue non administrate
 	const incertain = await poser(request, 'Premier essai interrompu', 'queued', { motif: 'worker_interrompu', essais: 1 })
 	const deCamille = await poser(request, 'Envoi de Camille', 'queued', { auteur: CAMILLE })
 	await connecterAvecLeLabs(page, BIZDEV)
-	await page.goto('/inbox?courrier=tous&envois=file')
+	await page.goto('/p2enjoy/inbox?courrier=tous&envois=file')
 	await page.locator(`[data-testid="inbox-envoi"][data-envoi="${incertain}"]`).click()
 	await expect(page.getByTestId('inbox-envoi-incertain')).toContainText(
 		'Un premier essai a été interrompu : le message a pu partir. Il ne peut pas être annulé.',
@@ -206,7 +208,7 @@ test.describe('les quatre paliers', () => {
 			})
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			await connecterAvecLeLabs(page, ADMIN)
-			await page.goto('/inbox?courrier=tous')
+			await page.goto('/p2enjoy/inbox?courrier=tous')
 			await page.getByTestId('inbox-envois-file').click()
 			const ligne = page.locator(`[data-testid="inbox-envoi"][data-envoi="${id}"]`)
 			await expect(ligne).toBeVisible()

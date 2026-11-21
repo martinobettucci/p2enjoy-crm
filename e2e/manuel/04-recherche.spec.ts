@@ -7,6 +7,8 @@
 //
 // Les termes sont ceux de `e2e/ui/recherche.spec.ts` : « sogexia » trouve une affaire, une organisation et un commentaire
 // du seed ; « candidature » trouve un message de l'inbox, qui n'est classé dans aucune affaire.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -16,7 +18,7 @@ const CHAPITRE = 'retrouver-n-importe-quoi-la-recherche'
 
 test('le champ, la palette et ses résultats', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/tracks/conseil-ia/grands-comptes')
+	await page.goto('/p2enjoy/tracks/conseil-ia/grands-comptes')
 	const champ = page.getByTestId('champ-recherche')
 	await expect(champ).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: 'l-ouvrir', nom: 'champ', cibles: [champ] })
@@ -32,7 +34,7 @@ test('le champ, la palette et ses résultats', async ({ page }) => {
 
 test('un message trouvé mène à l’inbox, dans « Non classés »', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/tracks/conseil-ia/grands-comptes')
+	await page.goto('/p2enjoy/tracks/conseil-ia/grands-comptes')
 	await expect(page.getByTestId('champ-recherche')).toBeVisible()
 	await page.keyboard.press('ControlOrMeta+k')
 	await expect(page.getByTestId('champ-recherche')).toBeFocused()
@@ -47,7 +49,7 @@ test('un message trouvé mène à l’inbox, dans « Non classés »', async ({ 
 
 test('un mail masqué par une pastille cachée : la palette le compte', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/tracks/conseil-ia/grands-comptes')
+	await page.goto('/p2enjoy/tracks/conseil-ia/grands-comptes')
 	const champ = page.getByTestId('champ-recherche')
 	await expect(champ).toBeVisible()
 	await page.keyboard.press('ControlOrMeta+k')

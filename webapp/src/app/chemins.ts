@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'espace en tête du chemin des pages d'un espace, les slugs réservés, les
+//       compositeurs d'adresse (docs/SPEC-espace-courant.md §8.1, §15.1, §15.3)
 // @spec CRM-156 (docs/BACKLOG.md) — tranche T4 : l'adresse de Réglages ▸ Expéditeurs bloqués (docs/DESIGN_SYSTEM.md §5.109 bis)
 // @spec CRM-149 (docs/BACKLOG.md) — tranche T3 : l'adresse de Réglages ▸ Prompts du connecteur (docs/SPEC-mcp.md §17.7)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : Réglages ▸ Étiquettes, son adresse, sa route et son entrée d'index (docs/DESIGN_SYSTEM.md §5.73)
@@ -18,7 +20,55 @@
 // @spec CRM-098 (docs/BACKLOG.md) — adresses de l'écran « Temps » et du coût du personnel (docs/SPEC-temps.md §7.1,
 //       §7.4)
 
-/** Adresse de l'inbox globale — `CRM-057`. */
+// =================================================================================================
+// `CRM-161` T2.a — L'ESPACE EN TÊTE DU CHEMIN DES PAGES D'UN ESPACE (docs/SPEC-espace-courant.md §8.1, §15.1, §15.3)
+// =================================================================================================
+//
+// LES CONSTANTES `CHEMIN_*` DES PAGES D'UN ESPACE RESTENT LE CHEMIN DANS L'ESPACE, SANS SON SLUG (`/inbox`,
+// `/reglages/etiquettes`, `/tracks/:slugTrack`…). La route réelle est `enEspace(CHEMIN_*)` ; un lien est
+// `cheminEspace(slug, chemin)`. L'ancienne adresse, sans slug, reste déclarée et redirige (§15.4) : un lien qui
+// l'emploierait encore aboutit dans l'espace courant de l'onglet, au prix d'un remplacement d'adresse.
+
+/** Le segment de l'espace, en tête du chemin d'une page d'un espace. */
+export const MOTIF_ESPACE = '/:slugEspace' as const
+
+/** La route d'une page d'un espace : son chemin, sous le segment de l'espace. */
+export const enEspace = (chemin: string): string => `${MOTIF_ESPACE}${chemin}`
+
+/** Un lien vers une page d'un espace : `/{slug}{chemin}`. `chemin` commence par `/`. */
+export const cheminEspace = (slugEspace: string, chemin: string): string =>
+	`/${encodeURIComponent(slugEspace)}${chemin}`
+
+/** Le premier segment des chemins d'un espace, que la redirection des anciennes adresses reconnaît (§15.4). */
+export const PREMIERS_SEGMENTS_D_ESPACE = ['inbox', 'tracks', 'reglages'] as const
+
+/** Vrai pour le chemin d'une page d'un espace (§8.1). */
+export const estPageDEspace = (chemin: string): boolean =>
+	PREMIERS_SEGMENTS_D_ESPACE.some((segment) => chemin === `/${segment}` || chemin.startsWith(`/${segment}/`))
+
+/** Les routes des anciennes adresses, que `RedirectionAncienneAdresse` résout (§15.4). */
+export const ANCIENNES_ADRESSES = ['/inbox', '/reglages', '/reglages/*', '/tracks/*'] as const
+
+/**
+ * Les slugs qu'un espace ne prend jamais (§15.1) — la contrainte `workspaces_slug_not_reserved` de la migration `0196`,
+ * recopiée ici pour la seule preuve qui la confronte aux routes (`chemins.test.ts`).
+ */
+export const SLUGS_RESERVES = [
+	'aide', 'plateforme', 'contacts', 'objectifs', 'couts', 'pilotage', 'temps', 'rentabilite', 'ma-journee',
+	'affaires-figees', 'demarrage', 'connexion', 'auth', 'inbox', 'tracks', 'reglages',
+] as const
+
+/** Le chemin d'un track, dans son espace. */
+export const cheminTrack = (slugTrack: string): string => `/tracks/${slugTrack}`
+/** Le board d'un channel. */
+export const cheminChannel = (slugTrack: string, slugChannel: string): string => `/tracks/${slugTrack}/${slugChannel}`
+/** La vue liste d'un channel. */
+export const cheminListe = (slugTrack: string, slugChannel: string): string => `/tracks/${slugTrack}/${slugChannel}/liste`
+/** Une affaire, ouverte depuis un de ses rattachements. */
+export const cheminAffaire = (slugTrack: string, slugChannel: string, idCard: string): string =>
+	`/tracks/${slugTrack}/${slugChannel}/cards/${idCard}`
+
+/** Adresse de l'inbox — `CRM-057` ; dans un espace depuis `CRM-161` (`cheminEspace(slug, CHEMIN_INBOX)`). */
 export const CHEMIN_INBOX = '/inbox' as const
 
 /**

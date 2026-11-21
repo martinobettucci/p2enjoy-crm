@@ -8,6 +8,8 @@
 //
 // LA PREUVE ÉCRIT, ET REND LE SEED INTACT : l'ordre de « Studio web » est reposé par la fonction elle-même, avec la clé
 // de service, après chaque test.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { autoriserErreursConsole, connecterAvecLeLabs, ERREUR_RESSOURCE_HTTP, expect, test, type Page } from './fixtures'
 import type { APIRequestContext, Locator } from '@playwright/test'
@@ -25,7 +27,7 @@ const ORDRE_DU_SEED = [
 	'5eed0000-0000-4000-8000-0000000c6841', // Checklists
 ]
 const NOMS_DU_SEED = ['Refonte de site', 'Maintenance', 'Checklists']
-const CHEMIN = '/tracks/studio-web/refonte'
+const CHEMIN = '/p2enjoy/tracks/studio-web/refonte'
 
 async function reposerOrdreDuSeed(request: APIRequestContext): Promise<void> {
 	const reponse = await request.post(`${URL_API}/rest/v1/rpc/reorder_channels`, {

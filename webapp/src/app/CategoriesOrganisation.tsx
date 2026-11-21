@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le lien vers les réglages mène dans l'espace courant (§15.3) ; docs/SPEC-espace-courant.md
 // @spec CRM-153 (docs/BACKLOG.md) — tranche T3 : la ligne « Catégories » de la fiche d'une organisation, ses pilules, et la
 //       commande « Catégories » qui ouvre dans le flux le panneau de cases — une case par catégorie active, puis les
 //       archivées encore posées, qui se décochent seulement ; chaque case écrit au clic, reste active pendant l'appel,
@@ -10,7 +11,9 @@
 
 import { Tags, TriangleAlert } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
-import { Link } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
+// l'espace courant.
+import { LienEspace as Link } from './LienEspace'
 import { Button } from '../components/ui/Button'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { PastilleEtiquette } from '../components/ui/PastilleEtiquette'

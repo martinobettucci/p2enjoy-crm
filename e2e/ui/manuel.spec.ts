@@ -30,6 +30,8 @@
 // card. Il MESURE la clôture d'INC-077 plutôt que de la déduire de la lecture d'un fichier.
 // @verifies CRM-139 (docs/BACKLOG.md) — l'inbox s'ouvre ici case « Seulement moi » décochée, `courrier=tous` : le sujet de ces
 //           preuves est ailleurs (docs/SPEC-mail-subsystem.md §27.5)
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	connecterAvecLeLabs,
@@ -103,7 +105,7 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 	// Plus aucun `401` à consommer : la console doit rester vierge.
 	test('/inbox ouvre « Non classés » en premier, à zéro sans panne (§12.2)', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.goto('/inbox?courrier=tous')
+		await page.goto('/p2enjoy/inbox?courrier=tous')
 
 		// RÉVISÉ PAR `CRM-144` T3 (décision 51), non relâché : les trois entrées de l'outbox — « En file », « Envoyés »,
 		// « Échecs » — précèdent désormais « Non classés » (docs/DESIGN_SYSTEM.md §5.98, docs/manual.md §12.2). L'ordre RÉEL
@@ -142,7 +144,7 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 	// l'index ne lit aucune donnée protégée.
 	test('/reglages rend l’index des sections que le manuel promet (§17)', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 
 		await expect(page.getByRole('heading', { name: LIBELLES.reglagesIndex })).toBeVisible()
 		await expect(
@@ -156,7 +158,7 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 	// le §3.5 promet le même message pour une adresse qui ne désigne aucun track.
 	test('une adresse qui ne désigne aucun track est « Track introuvable » (§3.5)', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.goto(`/tracks/${TRACK_INEXISTANT}`)
+		await page.goto(`/p2enjoy/tracks/${TRACK_INEXISTANT}`)
 
 		await expect(etatVide(page)).toContainText(LIBELLES.trackIntrouvable)
 		await expect(page.getByRole('link', { name: LIBELLES.retour })).toBeVisible()
@@ -166,7 +168,7 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 
 	test('le tableau kanban n’est jamais atteint, et le manuel le dit (§9.10)', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.goto(`/tracks/${TRACK_INEXISTANT}/${CHANNEL}`)
+		await page.goto(`/p2enjoy/tracks/${TRACK_INEXISTANT}/${CHANNEL}`)
 
 		await expect(etatVide(page)).toContainText(LIBELLES.trackIntrouvable)
 		await expect(page.getByTestId('board')).toHaveCount(0)
@@ -176,7 +178,7 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 
 	test('la vue liste non plus, pour la même cause (§9.11)', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.goto(`/tracks/${TRACK_INEXISTANT}/${CHANNEL}/liste`)
+		await page.goto(`/p2enjoy/tracks/${TRACK_INEXISTANT}/${CHANNEL}/liste`)
 
 		await expect(etatVide(page)).toContainText(LIBELLES.trackIntrouvable)
 		await expect(page.getByRole('table')).toHaveCount(0)
@@ -188,7 +190,7 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 		page,
 	}) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.goto(`/tracks/${TRACK}/${CHANNEL}/cards/${CARD}`)
+		await page.goto(`/p2enjoy/tracks/${TRACK}/${CHANNEL}/cards/${CARD}`)
 
 		await expect(etatVide(page)).toContainText(LIBELLES.cardIntrouvable)
 
@@ -307,7 +309,7 @@ test.describe('INC-077 — ce que le fil montre d’un changement de dossier', (
 			]),
 		)
 
-		await page.goto(`/tracks/${TRACK}/${CHANNEL}/cards/${CARD}`)
+		await page.goto(`/p2enjoy/tracks/${TRACK}/${CHANNEL}/cards/${CARD}`)
 
 		const fil = page.getByRole('region', { name: 'Fil de cette affaire' })
 		await expect(fil).toBeVisible()

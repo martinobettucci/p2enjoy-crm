@@ -23,6 +23,8 @@
 //           preuves est ailleurs (docs/SPEC-mail-subsystem.md §27.5)
 // @verifies CRM-140 (docs/BACKLOG.md) — le troisième fil non classé du seed (docs/SPEC-seed.md §44) est endormi avec les deux
 //           autres pour atteindre l'état vide du dossier : la règle prouvée est inchangée
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	autoriserErreursConsole,
@@ -63,7 +65,7 @@ async function connecter(page: Page): Promise<void> {
 
 /** Ouvre le dossier « Non classés » et son unique message. */
 async function ouvrirNonClasse(page: Page): Promise<void> {
-	await page.goto('/inbox?courrier=tous')
+	await page.goto('/p2enjoy/inbox?courrier=tous')
 	await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }).click()
 	await page.getByTestId('inbox-panneau-liste').getByText(OBJET_NON_CLASSE).click()
 	await expect(page.getByTestId('inbox-message-ouvert')).toBeVisible()
@@ -80,7 +82,7 @@ async function ouvrirNonClasse(page: Page): Promise<void> {
  * La règle éprouvée est inchangée : une ligne masquée par le sommeil revient par la bascule.
  */
 async function ouvrirNonClasseEndormi(page: Page): Promise<void> {
-	await page.goto('/inbox?courrier=tous')
+	await page.goto('/p2enjoy/inbox?courrier=tous')
 	await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }).click()
 	const liste = page.getByTestId('inbox-panneau-liste')
 	await expect(liste.getByText(OBJET_NON_CLASSE)).toHaveCount(0)
@@ -97,7 +99,7 @@ async function ouvrirNonClasseEndormi(page: Page): Promise<void> {
  * bougé ; c'est la donnée de démonstration qui en porte deux.
  */
 async function endormirLeFilDe(page: Page, objet: string): Promise<void> {
-	await page.goto('/inbox?courrier=tous')
+	await page.goto('/p2enjoy/inbox?courrier=tous')
 	await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }).click()
 	const liste = page.getByTestId('inbox-panneau-liste')
 	// LA BASCULE RAMÈNE LES LIGNES DÉJÀ ENDORMIES : sans elle, le second appel ne trouverait pas
@@ -160,7 +162,7 @@ test.describe('CRM-081 tranche 2 e — le sommeil d’un fil dans l’inbox', ()
 		await capturer(page, 'sommeil-fil-apres', UNITE)
 
 		// ELLE QUITTE LA LISTE AU GESTE SUIVANT, et c'est là que le masquage s'observe.
-		await page.goto('/inbox?courrier=tous')
+		await page.goto('/p2enjoy/inbox?courrier=tous')
 		await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }).click()
 		await expect(liste.getByText(OBJET_NON_CLASSE)).toHaveCount(0)
 
@@ -188,7 +190,7 @@ test.describe('CRM-081 tranche 2 e — le sommeil d’un fil dans l’inbox', ()
 		// LE DOSSIER « Non classés » EST ALORS ENTIÈREMENT ENDORMI : la liste est vide, et l'état
 		// vide doit dire POURQUOI — « tous en sommeil » (`CRM-138`, §16.14.11), et non « aucun message »
 		// (§16.15.5 point 2). Le message ouvert est refermé en changeant de dossier.
-		await page.goto('/inbox?courrier=tous')
+		await page.goto('/p2enjoy/inbox?courrier=tous')
 		const dossiers = page.getByTestId('inbox-panneau-dossiers')
 		await dossiers.getByRole('button', { name: /Non classés/ }).click()
 		const liste = page.getByTestId('inbox-panneau-liste')
@@ -282,7 +284,7 @@ test.describe('CRM-081 tranche 2 e — le sommeil d’un fil dans l’inbox', ()
 		await expect(page.getByTestId('fil-reveiller')).toBeVisible()
 
 		// Le message CLASSÉ vit dans le dossier de son affaire, et son fil est intact.
-		await page.goto('/inbox?courrier=tous')
+		await page.goto('/p2enjoy/inbox?courrier=tous')
 		const dossiers = page.getByTestId('inbox-panneau-dossiers')
 		await dossiers.getByRole('button', { name: new RegExp(CARD_COURRIER) }).click()
 		const liste = page.getByTestId('inbox-panneau-liste')
@@ -328,7 +330,7 @@ test.describe('CRM-081 tranche 2 e — le sommeil d’un fil dans l’inbox', ()
 		await connecter(page)
 		await endormirLeFilDe(page, OBJET_NON_CLASSE)
 
-		await page.goto('/inbox?courrier=tous')
+		await page.goto('/p2enjoy/inbox?courrier=tous')
 		const dossiers = page.getByTestId('inbox-panneau-dossiers')
 		await dossiers.getByRole('button', { name: /Non classés/ }).click()
 		const liste = page.getByTestId('inbox-panneau-liste')

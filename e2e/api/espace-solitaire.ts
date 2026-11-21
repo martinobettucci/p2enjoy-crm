@@ -28,6 +28,8 @@
 // porte qu'un espace — « la base doit être rendue à son unique workspace seedé (CRM-005) » —, et
 // cette assertion est juste, puisqu'elle protège l'écran du premier lancement. Toute preuve qui monte
 // cette fixture la démonte donc dans un `finally`, et CONSTATE l'état rendu au lieu de le supposer.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, type APIRequestContext } from '@playwright/test'
 import { CLE_SERVICE, URL_API } from './jetons'
@@ -61,7 +63,7 @@ export const ESPACE_SOLITAIRE = {
 } as const
 
 /** L'adresse de la fiche de l'affaire jetable, telle que la webapp la résout. */
-export const ADRESSE_CARD_SOLITAIRE = `/tracks/${ESPACE_SOLITAIRE.slugTrack}/${ESPACE_SOLITAIRE.slugChannel}/cards/${ESPACE_SOLITAIRE.card}`
+export const ADRESSE_CARD_SOLITAIRE = `/p2enjoy/tracks/${ESPACE_SOLITAIRE.slugTrack}/${ESPACE_SOLITAIRE.slugChannel}/cards/${ESPACE_SOLITAIRE.card}`
 
 const ENTETES_SERVICE = {
 	apikey: CLE_SERVICE,

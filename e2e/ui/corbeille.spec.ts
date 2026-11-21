@@ -31,6 +31,8 @@
 // track en corbeille par le geste réel de l'administratrice — celui-là même qu'emploie
 // `supabase/seed/apply-seed.sh` (docs/SPEC-seed.md §10.2) —, et le `finally` s'exécute même si une
 // assertion échoue. Sans cela, la deuxième exécution de cette suite partirait d'un seed différent.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole } from './fixtures'
@@ -89,7 +91,7 @@ test.describe('corbeille (docs/SPEC-corbeille.md §4)', () => {
 		await connecter(page, ADMIN)
 
 		// Depuis l'index des réglages, par un geste réel — pas une navigation directe (§4.1).
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		// RÉVISÉ par `CRM-156` (décision 51, 2026-11-19) : l'entrée « Expéditeurs bloqués » dit dans son descriptif que ses
 		// mails vont « à la corbeille de l'inbox ». Le nom accessible d'une entrée est son titre suivi de son descriptif : le
 		// lien est visé par le DÉBUT de son nom, son titre.
@@ -144,7 +146,7 @@ test.describe('corbeille (docs/SPEC-corbeille.md §4)', () => {
 		page,
 	}) => {
 		await connecter(page, ADMIN)
-		await page.goto('/reglages/corbeille')
+		await page.goto('/p2enjoy/reglages/corbeille')
 
 		const ligneChannel = page.getByTestId('ligne-corbeille').filter({ hasText: NOM_CHANNEL })
 		await ligneChannel.getByTestId('bouton-restaurer').click()
@@ -171,7 +173,7 @@ test.describe('corbeille (docs/SPEC-corbeille.md §4)', () => {
 	test('restaurer le track RÉUSSIT, la base le confirme, et la corbeille le perd', async ({ page }) => {
 		const jeton = await jetonDe(ADMIN)
 		await connecter(page, ADMIN)
-		await page.goto('/reglages/corbeille')
+		await page.goto('/p2enjoy/reglages/corbeille')
 		try {
 			const ligneTrack = page.getByTestId('ligne-corbeille').filter({ hasText: NOM_TRACK })
 			// En corbeille, le track n'est pas dans la barre latérale ; restauré, il y paraît sans
@@ -201,7 +203,7 @@ test.describe('corbeille (docs/SPEC-corbeille.md §4)', () => {
 
 	test('le parcours complet se fait AU CLAVIER SEUL, jusqu’au refus', async ({ page }) => {
 		await connecter(page, ADMIN)
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 
 		// Atteindre le lien de la corbeille à la tabulation, sans jamais cliquer.
 		// RÉVISÉ par `CRM-156` (décision 51) : le lien visé par son titre, au début de son nom — voir le premier scénario.
@@ -229,7 +231,7 @@ test.describe('corbeille (docs/SPEC-corbeille.md §4)', () => {
 		page,
 	}) => {
 		await connecter(page, VIEWER)
-		await page.goto('/reglages/corbeille')
+		await page.goto('/p2enjoy/reglages/corbeille')
 
 		// RÉVISÉ PAR LA DIXIÈME TRANCHE. Elle lisait le track et le channel du seed (§4.2) ; la corbeille personnelle
 		// les lui ferme, puisque c'est l'administratrice qui les a retirés. La frontière est la politique de lecture
@@ -264,7 +266,7 @@ test.describe('corbeille (docs/SPEC-corbeille.md §4)', () => {
 
 			await page.setViewportSize({ width: 1440, height: 900 })
 			await connecter(page, 'bizdev@p2enjoy.test')
-			await page.goto('/reglages/corbeille')
+			await page.goto('/p2enjoy/reglages/corbeille')
 			await expect(page.getByTestId('ligne-corbeille')).toHaveCount(1)
 			const ligne = page.getByTestId('ligne-corbeille')
 			await expect(ligne).toContainText('ZZ corbeille personnelle')
@@ -293,7 +295,7 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7)', () => {
 		test(`${palier.nom} : le tableau de la corbeille reste lisible`, async ({ page }) => {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			await connecter(page, ADMIN)
-			await page.goto('/reglages/corbeille')
+			await page.goto('/p2enjoy/reglages/corbeille')
 			await expect(page.getByTestId('tableau-corbeille')).toBeVisible()
 
 			// La page ne défile jamais horizontalement (§7) : c'est le conteneur du tableau qui le
@@ -322,7 +324,7 @@ test.describe("état vide (docs/DESIGN_SYSTEM.md §12.5)", () => {
 			route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
 		)
 		await connecter(page, ADMIN)
-		await page.goto('/reglages/corbeille')
+		await page.goto('/p2enjoy/reglages/corbeille')
 
 		await expect(page.getByTestId('etat-vide')).toBeVisible()
 		await expect(page.getByText('La corbeille est vide')).toBeVisible()
@@ -392,7 +394,7 @@ test.describe('le geste de mise à la corbeille (docs/SPEC-corbeille.md §4 bis)
 			expect(cree.status(), await cree.text()).toBe(201)
 
 			await connecter(page, ADMIN)
-			await page.goto('/reglages')
+			await page.goto('/p2enjoy/reglages')
 			await page.getByRole('link', { name: /Arborescence : tracks et channels/ }).click()
 			await expect(page).toHaveURL(/\/reglages\/arborescence$/)
 			await expect(
@@ -457,7 +459,7 @@ test.describe('le geste de mise à la corbeille (docs/SPEC-corbeille.md §4 bis)
 			await expect(administration.getByText(nomTrack, { exact: true })).toHaveCount(0)
 
 			// --- Il est dans la corbeille, avec son auteur --------------------------------------
-			await page.goto('/reglages/corbeille')
+			await page.goto('/p2enjoy/reglages/corbeille')
 			const ligne = page.getByRole('row', { name: new RegExp(nomTrack) })
 			await expect(ligne).toBeVisible()
 			await expect(ligne).toContainText('Track')
@@ -481,7 +483,7 @@ test.describe('le geste de mise à la corbeille (docs/SPEC-corbeille.md §4 bis)
 		try {
 			const id = await creerTrackJetable(page, slug, nom)
 			await connecter(page, ADMIN)
-			await page.goto('/reglages/arborescence')
+			await page.goto('/p2enjoy/reglages/arborescence')
 			// Portée limitée à la région d'administration : la barre latérale rend le même nom, et
 			// c'est celui de l'écran qui nous intéresse ici (décision 421, ci-dessus).
 			await expect(
@@ -536,7 +538,7 @@ test.describe('le geste de mise à la corbeille (docs/SPEC-corbeille.md §4 bis)
 			const idChannel = ((await cree.json()) as { id: string }[])[0]!.id
 
 			await connecter(page, ADMIN)
-			await page.goto('/reglages/arborescence')
+			await page.goto('/p2enjoy/reglages/arborescence')
 			await page.getByRole('button', { name: `Déplier ${nomTrack}` }).click()
 			await page.getByRole('button', { name: `Mettre ${nomChannel} à la corbeille` }).click()
 
@@ -575,7 +577,7 @@ test.describe('paliers responsive de la confirmation du geste (docs/DESIGN_SYSTE
 				await creerTrackJetable(page, slug, nom)
 				await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 				await connecter(page, ADMIN)
-				await page.goto('/reglages/arborescence')
+				await page.goto('/p2enjoy/reglages/arborescence')
 				await page.getByRole('button', { name: `Mettre ${nom} à la corbeille` }).click()
 				await expect(page.getByTestId('confirmation-corbeille')).toBeVisible()
 
@@ -817,7 +819,7 @@ test.describe('les dépenses qui bloquent l’effacement d’un track (docs/SPEC
 		try {
 			await page.setViewportSize({ width: 1440, height: 900 })
 			await connecter(page, ADMIN)
-			await page.goto('/reglages/corbeille')
+			await page.goto('/p2enjoy/reglages/corbeille')
 			const ligne = page.getByTestId('ligne-corbeille').filter({ hasText: 'ZZ track bloqué xl' })
 			await expect(ligne.getByTestId('pilule-bloque')).toContainText('Bloqué')
 			await ligne.getByTestId('bouton-reaffecter').click()
@@ -853,7 +855,7 @@ test.describe('les dépenses qui bloquent l’effacement d’un track (docs/SPEC
 		try {
 			await page.setViewportSize({ width: 390, height: 844 })
 			await connecter(page, ADMIN)
-			await page.goto('/reglages/corbeille')
+			await page.goto('/p2enjoy/reglages/corbeille')
 			const ligne = page.getByTestId('ligne-corbeille').filter({ hasText: 'ZZ track bloqué sm' })
 			const commande = ligne.getByTestId('bouton-reaffecter')
 			await commande.click()

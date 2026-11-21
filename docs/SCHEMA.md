@@ -3449,6 +3449,23 @@ et les blocages sont perdus — les mails mis à la corbeille par un blocage y r
 - **Preuves** : pgTAP `0182`, rouge avant la migration ; `0029`, `0095`, `0143`, `0164`, `0177`, `0178`, `0180`, `0181`
   révisées (l'espace passé) ; API `e2e/api/inbox-espace.spec.ts`.
 
+### Migration `0196` — les slugs d'espace réservés — `CRM-161` T2.a (`0196_slugs_espace_reserves.sql` ; spécifiée le 2026-11-21, avant le code)
+
+`docs/SPEC-espace-courant.md` §15.1 ; décision 967.
+
+- **`workspaces_slug_not_reserved`** : `check (slug <> all (array['aide', 'plateforme', 'contacts', 'objectifs', 'couts',
+  'pilotage', 'temps', 'rentabilite', 'ma-journee', 'affaires-figees', 'demarrage', 'connexion', 'auth', 'inbox', 'tracks',
+  'reglages']))` — l'espace est en tête du chemin des pages d'un espace ; un slug égal à un premier segment d'une route globale
+  rendrait une adresse ambiguë. Refus en `23514`.
+- **`public.plateforme_creer_espace`** (`0089`) est redéfinie, même signature : la violation de cette contrainte devient le
+  refus nommé **`identifiant_reserve`** (`23514`), que Plateforme ▸ Espaces dit en clair ; toute autre violation garde son
+  refus d'origine.
+- **Constaté avant** : développement, un espace (`p2enjoy`) ; production, un espace (`crm`, lu par la session de livraison le
+  2026-11-21, en lecture seule) ; aucun n'est réservé.
+- **Retour arrière** : `alter table public.workspaces drop constraint workspaces_slug_not_reserved;`, puis rejouer
+  `plateforme_creer_espace` de `0089`.
+- **Preuve** : pgTAP `0183`, rouge avant la migration ; `0084` inchangée et verte.
+
 ### Migration — `CRM-162` T1 : déplacer un track entier d'un espace à un autre (spécifiée le 2026-11-21, avant le code ; numéro pris à la poussée, après celle de `CRM-161`)
 
 `docs/SPEC-deplacement-track.md` ; décisions 964, 966 et 968.

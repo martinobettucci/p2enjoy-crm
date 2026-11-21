@@ -6,6 +6,8 @@
 //
 // Les vues de la preuve portent le préfixe `ZZ 071` et sont retirées à la fin, par la clé de service ; les deux vues du jeu
 // ne sont jamais écrites.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { APIRequestContext } from '@playwright/test'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -14,7 +16,7 @@ import { connecterAvecLeLabs, expect, test } from './fixtures'
 
 const UNITE = 'CRM-071'
 const PREFIXE = 'ZZ 071'
-const LISTE = '/tracks/studio-web/refonte/liste'
+const LISTE = '/p2enjoy/tracks/studio-web/refonte/liste'
 const REFONTE = '5eed0000-0000-4000-8000-000000000034'
 const NEGOCIATION = '5eed0000-0000-4000-8000-000000000063'
 const DRISS = '5eed0000-0000-4000-8000-000000000012'

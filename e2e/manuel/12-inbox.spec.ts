@@ -51,6 +51,8 @@
 // dès leur choix, sont retirés à la fin comme `e2e/ui/envoi-pieces-jointes.spec.ts` le fait.
 // @verifies CRM-139 (docs/BACKLOG.md) — l'inbox s'ouvre ici case « Seulement moi » décochée, `courrier=tous` : le sujet de ces
 //           preuves est ailleurs (docs/SPEC-mail-subsystem.md §27.5)
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { execFileSync } from 'node:child_process'
 import { expect, test, type Page } from '@playwright/test'
@@ -74,7 +76,7 @@ const dossiers = (page: Page) => page.getByTestId('inbox-panneau-dossiers')
 const liste = (page: Page) => page.getByTestId('inbox-panneau-liste')
 
 async function ouvrir(page: Page, dossier: RegExp, objet: string): Promise<void> {
-	await page.goto('/inbox?courrier=tous')
+	await page.goto('/p2enjoy/inbox?courrier=tous')
 	await dossiers(page).getByRole('button', { name: dossier }).click()
 	await liste(page).getByTestId('inbox-message').filter({ hasText: objet }).first().click()
 	await expect(page.getByTestId('inbox-message-ouvert')).toContainText(objet)
@@ -82,7 +84,7 @@ async function ouvrir(page: Page, dossier: RegExp, objet: string): Promise<void>
 
 test('l’inbox : les dossiers, un fil, le classement', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/inbox?courrier=tous')
+	await page.goto('/p2enjoy/inbox?courrier=tous')
 	await expect(dossiers(page)).toBeVisible()
 	// L'image d'ouverture montre un dossier déplié et un message lu : les trois panneaux remplis.
 	await dossiers(page).getByRole('button', { name: /Non classés/ }).click()
@@ -161,7 +163,7 @@ test('l’inbox : les dossiers, un fil, le classement', async ({ page }) => {
 	const recu = page.getByRole('listitem').filter({ hasText: /^\s*Message reçu/ }).first()
 	await expect(recu).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'message-recu', cibles: [recu] })
-	await page.goto('/tracks/conseil-ia/grands-comptes')
+	await page.goto('/p2enjoy/tracks/conseil-ia/grands-comptes')
 	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'afficher-les-affaires-en-sommeil', cibles: [page.getByTestId('barre-sommeil-board')] })
 
 	// Une pièce déclarée saine : la seule du seed, jointe au message envoyé sur « Refonte du monitoring ».
@@ -197,7 +199,7 @@ test('l’inbox : les dossiers, un fil, le classement', async ({ page }) => {
 // auteur, sa date d'effacement définitif, son déplacement fait, et « Restaurer », qui n'est pas appuyé.
 test('la corbeille de l’inbox : un message effacé avec sa boîte, et « Restaurer »', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/inbox?courrier=tous')
+	await page.goto('/p2enjoy/inbox?courrier=tous')
 	await dossiers(page).getByTestId('inbox-corbeille').click()
 	const ligne = page.getByTestId('inbox-corbeille-ligne').filter({ hasText: 'Offre de partenariat — salon Numérique Lyon' })
 	await expect(ligne).toContainText('Déplacé dans la corbeille de la boîte')
@@ -253,7 +255,7 @@ test('une pièce non analysée : « Télécharger quand même » et son avertiss
 			av_status: 'skipped',
 		})
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto(`/inbox?message=${message!.id}`)
+		await page.goto(`/p2enjoy/inbox?message=${message!.id}`)
 		await expect(page.getByTestId('inbox-message-ouvert')).toContainText('Demande de devis — refonte')
 		const ligne = page.getByTestId('inbox-message-ouvert').getByTestId('inbox-piece-jointe').filter({ hasText: 'releve-de-compte.pdf' })
 		await ligne.getByTestId('telecharger-quand-meme').click()
@@ -280,7 +282,7 @@ test('deux pièces sans bouton : l’infectée et la trop volumineuse', async ({
 	)
 	expect(message, 'le seed porte « Pièces à vérifier — monitoring Vertuo » (docs/SPEC-seed.md §40)').toBeDefined()
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto(`/inbox?message=${message!.id}`)
+	await page.goto(`/p2enjoy/inbox?message=${message!.id}`)
 	const ouvert = page.getByTestId('inbox-message-ouvert')
 	await expect(ouvert).toContainText('Pièces à vérifier — monitoring Vertuo')
 	const pieces = ouvert.getByTestId('pieces-jointes')
@@ -331,7 +333,7 @@ test.describe('l’aperçu d’une pièce jointe', () => {
 // elle est responsable l'est aussi — « Plateforme de billetterie » —, et le manuel le dit.
 test('seulement moi : la case cochée, et le seul courrier qui vous concerne', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/inbox')
+	await page.goto('/p2enjoy/inbox')
 	const caseMoi = page.getByTestId('inbox-seulement-moi')
 	await expect(caseMoi).toBeEnabled()
 	await expect(caseMoi).toBeChecked()
@@ -430,7 +432,7 @@ test('écrire depuis une affaire : la copie cachée, les pièces jointes', async
 test('relire un mail préparé : l’entrée, la liste, la relecture, puis l’encadré de la fiche', async ({ page }) => {
 	const SECTION = 'relire-et-envoyer-un-mail-prepare-par-l-assistant'
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/inbox?courrier=tous')
+	await page.goto('/p2enjoy/inbox?courrier=tous')
 	const entree = dossiers(page).getByTestId('inbox-mails-prepares')
 	await entree.click()
 	const ligne = page.getByTestId('inbox-mail-prepare').filter({ hasText: 'Billetterie : proposition de calendrier' })
@@ -445,7 +447,7 @@ test('relire un mail préparé : l’entrée, la liste, la relecture, puis l’e
 		nom: 'relire-un-mail-prepare',
 		cibles: [relecture.getByRole('note'), page.getByTestId('envoi-valider'), page.getByTestId('mail-prepare-ecarter')],
 	})
-	await page.goto('/tracks/conseil-ia/grands-comptes/cards/5eed0000-0000-4000-8000-0000000000c1')
+	await page.goto('/p2enjoy/tracks/conseil-ia/grands-comptes/cards/5eed0000-0000-4000-8000-0000000000c1')
 	const encadre = page.getByTestId('fiche-mail-prepare').filter({ hasText: 'Re: Demande de devis — refonte' })
 	await expect(encadre).toBeVisible()
 	await illustrer(page, {
@@ -518,7 +520,7 @@ test('suivre ses envois : « Échecs » et « Réessayer », puis « En file » 
 			data: { next_attempt_at: new Date(Date.now() + 10 * 60_000).toISOString() },
 		})
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/inbox?courrier=tous&envois=echecs')
+		await page.goto('/p2enjoy/inbox?courrier=tous&envois=echecs')
 		const echec = page.getByTestId('inbox-envoi').filter({ hasText: "Facture d'acompte — monitoring" })
 		await expect(echec).toContainText('le serveur d’envoi a refusé l’identifiant ou le mot de passe')
 		await echec.click()
@@ -558,7 +560,7 @@ test('les pastilles : dans la liste, sur un message, et dans les réglages', asy
 		`mail_messages?select=id&rfc822_message_id=eq.${encodeURIComponent('<seed-inbox-classe@p2enjoy.test>')}`,
 	)
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto(`/inbox?courrier=tous&message=${corrige!.id}`)
+	await page.goto(`/p2enjoy/inbox?courrier=tous&message=${corrige!.id}`)
 	await expect(page.getByTestId('inbox-message-ouvert')).toContainText('Demande de devis — refonte')
 	// `CRM-155` (§5.108) : les filtres rapides — une pastille active, le volet des archivées déplié, « Toutes les
 	// pastilles » ; l'adresse seule change, rien n'est écrit. Ils sont désactivés après l'image.
@@ -593,7 +595,7 @@ test('les pastilles : dans la liste, sur un message, et dans les réglages', asy
 		request,
 		`mail_messages?select=id&rfc822_message_id=eq.${encodeURIComponent('<seed-corps-html@p2enjoy.test>')}`,
 	)
-	await page.goto(`/inbox?courrier=tous&message=${invitation!.id}`)
+	await page.goto(`/p2enjoy/inbox?courrier=tous&message=${invitation!.id}`)
 	const masques = liste(page).getByTestId('inbox-fils-masques')
 	await expect(masques).toContainText('fils masqués (Spam)')
 	// La mention seule : en bas d'une longue liste, elle ne tient pas dans la fenêtre avec les filtres rapides. Elle est
@@ -602,7 +604,7 @@ test('les pastilles : dans la liste, sur un message, et dans les réglages', asy
 	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'fils-masques', cibles: [masques] })
 
 	const REGLAGES = 'definir-les-pastilles-des-mails'
-	await page.goto('/reglages/pastilles-mails')
+	await page.goto('/p2enjoy/reglages/pastilles-mails')
 	const ecran = page.getByTestId('reglages-pastilles-mail')
 	await expect(ecran.getByTestId('ligne-pastille-mail').first()).toBeVisible()
 	await illustrer(page, {
@@ -635,7 +637,7 @@ test('les actions groupées, le filtre par expéditeur, le transfert, le blocage
 		`mail_messages?select=id&rfc822_message_id=eq.${encodeURIComponent('<seed-inbox-inconnu@atelier-lumen.example>')}`,
 	)
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto(`/inbox?courrier=tous&message=${nora!.id}`)
+	await page.goto(`/p2enjoy/inbox?courrier=tous&message=${nora!.id}`)
 	await expect(page.getByTestId('inbox-message-ouvert')).toContainText('Nora Nouveau')
 
 	// 1. Deux conversations cochées, puis la confirmation d'une action — annulée.
@@ -685,7 +687,7 @@ test('les actions groupées, le filtre par expéditeur, le transfert, le blocage
 		request,
 		`mail_messages?select=id&rfc822_message_id=eq.${encodeURIComponent('<seed-inbox-suggere@sogexia.example>')}`,
 	)
-	await page.goto(`/inbox?courrier=tous&message=${leo!.id}`)
+	await page.goto(`/p2enjoy/inbox?courrier=tous&message=${leo!.id}`)
 	await page.getByTestId('inbox-filtrer-expediteur').click()
 	const filtre = page.getByTestId('inbox-filtre-expediteur')
 	await expect(filtre).toContainText('leo.marchand@sogexia.example')
@@ -703,7 +705,7 @@ test('les actions groupées, le filtre par expéditeur, le transfert, le blocage
 	await page.getByTestId('inbox-filtre-expediteur-retirer').click()
 
 	// 5. Réglages ▸ Expéditeurs bloqués : l'adresse bloquée par le seed.
-	await page.goto('/reglages/expediteurs-bloques')
+	await page.goto('/p2enjoy/reglages/expediteurs-bloques')
 	const ecran = page.getByTestId('reglages-expediteurs-bloques')
 	await expect(ecran.getByTestId('ligne-expediteur-bloque').filter({ hasText: 'offres@promo-flash.example' })).toBeVisible()
 	await illustrer(page, {
@@ -735,7 +737,7 @@ test('envoyer depuis un espace sans domaine : l’avertissement, « Mettre en fi
 	const montage = await monterEspaceSansDomaine(request)
 	try {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto(`/tracks/${montage.slugTrack}/${montage.slugChannel}/cards/${montage.idAffaire}`)
+		await page.goto(`/p2enjoy/tracks/${montage.slugTrack}/${montage.slugChannel}/cards/${montage.idAffaire}`)
 		await page.getByTestId('envoi-ouvrir').click()
 		const note = page.getByTestId('envoi-domaine-absent')
 		await expect(note).toBeVisible()

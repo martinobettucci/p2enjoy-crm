@@ -7,13 +7,15 @@
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du SSO
 //
 // Les webhooks de la preuve portent le préfixe `tst-crm073` et sont retirés à la fin, par la clé de service.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { URL_API, enTetesService } from '../api/jetons'
 import { capturer, PALIERS } from './captures'
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, connecterAvecLeLabs, expect, test } from './fixtures'
 
 const UNITE = 'CRM-073'
-const ECRAN = '/reglages/webhooks'
+const ECRAN = '/p2enjoy/reglages/webhooks'
 const rest = (chemin: string) => `${URL_API}/rest/v1/${chemin}`
 
 test.use({ viewport: { width: 1440, height: 1000 } })
@@ -150,7 +152,7 @@ test('une adresse en http:// est refusée par la base, sous les champs, la saisi
 
 test('la lectrice : l’entrée de l’index est éteinte, et l’écran ouvert par son adresse est réservé', async ({ page }) => {
 	await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
-	await page.goto('/reglages')
+	await page.goto('/p2enjoy/reglages')
 	const entree = page.getByTestId('entree-webhooks')
 	await expect(entree).toHaveAttribute('aria-disabled', 'true')
 	await page.goto(ECRAN)

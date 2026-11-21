@@ -12,6 +12,8 @@
 // SMTP puis relevé par le seed, la pièce intégrée analysée par l'antivirus local, le HTML nettoyé par l'écran.
 // Le corps TEXTE aux liens isole un état que le seed ne porte pas : une réponse SUBSTITUÉE, nommée ici, rend le même
 // courrier sans `body_html`, si bien que l'écran montre son alternative texte (§12.5 : un état rare, isolé et nommé).
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -64,7 +66,7 @@ test('à la souris : rien ne part avant le clic, la requête part après, et le 
 	const idHtml = await idDuMessage(page, MSGID_HTML)
 	const idAutre = await idDuMessage(page, MSGID_NON_CLASSE)
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto(`/inbox?courrier=tous&message=${idHtml}`)
+	await page.goto(`/p2enjoy/inbox?courrier=tous&message=${idHtml}`)
 	await attendreLeCourrier(page)
 
 	// LE CADRE : ses droits exacts, et le HTML hors du DOM de l'écran.
@@ -111,9 +113,9 @@ test('à la souris : rien ne part avant le clic, la requête part après, et le 
 	await onglet.close()
 
 	// UN AUTRE MESSAGE, PUIS LE RETOUR : le courrier repart bloqué, et AUCUNE requête de plus ne part.
-	await page.goto(`/inbox?courrier=tous&message=${idAutre}`)
+	await page.goto(`/p2enjoy/inbox?courrier=tous&message=${idAutre}`)
 	await expect(page.getByTestId('inbox-corps')).toContainText('candidature spontanée')
-	await page.goto(`/inbox?courrier=tous&message=${idHtml}`)
+	await page.goto(`/p2enjoy/inbox?courrier=tous&message=${idHtml}`)
 	await attendreLeCourrier(page)
 	await expect(page.getByTestId('afficher-images')).toBeVisible()
 	await expect(cadre(page).getByRole('img', { name: 'Sogexia' })).toHaveAttribute('src', /^data:/)
@@ -123,7 +125,7 @@ test('à la souris : rien ne part avant le clic, la requête part après, et le 
 test('au clavier : le bouton, la phrase d’état qui prend le focus, puis les liens du cadre', async ({ page }) => {
 	const requetes = await intercepterImages(page)
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto(`/inbox?courrier=tous&message=${await idDuMessage(page, MSGID_HTML)}`)
+	await page.goto(`/p2enjoy/inbox?courrier=tous&message=${await idDuMessage(page, MSGID_HTML)}`)
 	await attendreLeCourrier(page)
 
 	const bouton = page.getByTestId('afficher-images')
@@ -146,7 +148,7 @@ test('un corps sans HTML : ses adresses web sont des liens (réponse substituée
 		await route.fulfill({ response: reponse, json: lignes.map((ligne) => ('body_html' in ligne ? { ...ligne, body_html: null } : ligne)) })
 	})
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto(`/inbox?courrier=tous&message=${idHtml}`)
+	await page.goto(`/p2enjoy/inbox?courrier=tous&message=${idHtml}`)
 	const corps = page.getByTestId('inbox-corps')
 	await expect(corps).toContainText('Nous serions ravis de vous accueillir')
 	await expect(page.getByTestId('inbox-corps-cadre')).toHaveCount(0)
@@ -162,7 +164,7 @@ test.describe('les quatre paliers', () => {
 			await intercepterImages(page)
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			await connecterAvecLeLabs(page, ADMIN)
-			await page.goto(`/inbox?courrier=tous&message=${await idDuMessage(page, MSGID_HTML)}`)
+			await page.goto(`/p2enjoy/inbox?courrier=tous&message=${await idDuMessage(page, MSGID_HTML)}`)
 			await attendreLeCourrier(page)
 			await expect(page.getByTestId('afficher-images')).toBeVisible()
 			await page.getByTestId('bandeau-images').scrollIntoViewIfNeeded()

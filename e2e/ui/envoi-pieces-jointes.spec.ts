@@ -9,6 +9,8 @@
 // LE VRAI ÉCRAN SUR LA VRAIE PILE : le fichier choisi est déposé par l'API de stockage avec la session de Camille, puis
 // la mise en file passe par la vraie garde. Rien n'est envoyé — le worker n'est pas déclenché ici ; l'aller réel est
 // prouvé par `e2e/mail/envoi-pieces-jointes.spec.ts`. Chaque scénario retire ses lignes de file et ses dépôts.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -23,7 +25,7 @@ test.afterAll(() => libererLaBoucle())
 const UNITE = 'CRM-058'
 const ADMIN = 'admin@p2enjoy.test'
 const CARD = '5eed0000-0000-4000-8000-0000000000c1'
-const ADRESSE_CARD = `/tracks/conseil-ia/grands-comptes/cards/${CARD}`
+const ADRESSE_CARD = `/p2enjoy/tracks/conseil-ia/grands-comptes/cards/${CARD}`
 const PREFIXE = '5eed0000-0000-4000-8000-000000000001/5eed0000-0000-4000-8000-000000000011/'
 
 const fichier = (nom: string, octets: number, mimeType = 'text/plain') => ({

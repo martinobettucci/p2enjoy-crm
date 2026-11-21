@@ -13,6 +13,8 @@
 // `pending`, jamais relevés — donc l'INCIDENT MONTRÉ EST PRODUIT PAR LA CLÉ DE SERVICE, seul
 // chemin qui le peut (`mail_inbound_accounts` n'accorde aucune écriture à `authenticated`), et
 // RENDU AU SEED DANS LE `finally` — même discipline que `e2e/mail/resilience.spec.ts`.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { execFileSync } from 'node:child_process'
 import { conteneur } from '../conteneur'
@@ -95,7 +97,7 @@ test.describe('état de la messagerie (docs/SPEC-mail-subsystem.md §20.11)', ()
 		try {
 			await connecter(page, ADMIN)
 			// Depuis l'index des réglages, gestes réels — pas une navigation directe.
-			await page.goto('/reglages')
+			await page.goto('/p2enjoy/reglages')
 			await page.getByRole('link', { name: 'État de la messagerie' }).click()
 			await expect(page).toHaveURL(/\/reglages\/messagerie$/)
 			await expect(page.getByRole('heading', { name: 'État de la messagerie' })).toBeVisible()
@@ -129,7 +131,7 @@ test.describe('état de la messagerie (docs/SPEC-mail-subsystem.md §20.11)', ()
 
 	test('un membre sans boîte voit l’état vide, sans action offerte (§20.11.6)', async ({ page }) => {
 		await connecter(page, VIEWER)
-		await page.goto('/reglages/messagerie')
+		await page.goto('/p2enjoy/reglages/messagerie')
 		await expect(page.getByTestId('etat-vide')).toBeVisible()
 		await expect(page.getByText('Aucune boîte à superviser')).toBeVisible()
 	})
@@ -149,7 +151,7 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7)', () => {
 			await mettreDrissEnIncident(page)
 			try {
 				await connecter(page, ADMIN)
-				await page.goto('/reglages/messagerie')
+				await page.goto('/p2enjoy/reglages/messagerie')
 				await expect(page.getByTestId('tableau-comptes-mail')).toBeVisible()
 
 				// La page ne défile jamais horizontalement (§7) : c'est le conteneur du tableau qui

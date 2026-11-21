@@ -6,6 +6,8 @@
 // Les budgets, les occurrences et les dépenses sont ceux du seed — le track « Studio web » et son budget clôturé
 // « Salon du web 2025 ». Aucun budget n'est créé ni clôturé : les formulaires et les confirmations sont montrés puis
 // annulés.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test, type Page } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -17,7 +19,7 @@ const DETAIL = 'le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne'
 const CUMUL = 'les-couts-de-tout-l-espace-de-travail-un-cumul-par-track'
 
 async function ouvrirBudgets(page: Page) {
-	await page.goto('/reglages/arborescence')
+	await page.goto('/p2enjoy/reglages/arborescence')
 	await page.getByRole('button', { name: 'Déplier Studio web' }).click()
 	const bloc = page.getByRole('region', { name: 'Budgets du track Studio web' })
 	await expect(bloc).toBeVisible()
@@ -54,7 +56,7 @@ test('les budgets d’un track : la liste, les clôturés, la création, la clô
 
 test('les coûts d’un track, et leurs états', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/tracks/studio-web/couts')
+	await page.goto('/p2enjoy/tracks/studio-web/couts')
 	await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 	await illustrer(page, { chapitre: COUTS_TRACK, section: null, nom: 'couts-du-track', cibles: [], pleinePage: true })
 	const onglets = page.getByRole('tablist').or(page.getByRole('navigation', { name: /Coûts/ })).first()
@@ -65,10 +67,10 @@ test('les coûts d’un track, et leurs états', async ({ page }) => {
 		await illustrer(page, { chapitre: COUTS_TRACK, section: 'la-phrase-sous-le-graphique-et-pourquoi-elle-compte', nom: 'phrase', cibles: [phrase] })
 	await illustrer(page, { chapitre: COUTS_TRACK, section: 'ce-que-cet-ecran-ne-fait-pas', nom: 'onglet-couts', cibles: [page.getByTestId('onglet-couts-track')] })
 
-	await page.goto('/tracks/formation/couts')
+	await page.goto('/p2enjoy/tracks/formation/couts')
 	const vide = page.getByTestId('etat-vide').first()
 	if ((await vide.count()) > 0) await illustrer(page, { chapitre: COUTS_TRACK, section: 'les-etats-que-vous-pouvez-rencontrer', nom: 'sans-budget', cibles: [vide] })
-	await page.goto('/tracks/ce-track-nexiste-pas/couts')
+	await page.goto('/p2enjoy/tracks/ce-track-nexiste-pas/couts')
 	const introuvable = page.getByText('Track introuvable', { exact: true }).first()
 	await expect(introuvable).toBeVisible()
 	await illustrer(page, { chapitre: COUTS_TRACK, section: 'les-etats-que-vous-pouvez-rencontrer', nom: 'track-introuvable', cibles: [introuvable] })
@@ -76,11 +78,11 @@ test('les coûts d’un track, et leurs états', async ({ page }) => {
 
 test('le détail d’un budget, et ses états', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/tracks/studio-web/couts/5eed0000-0000-4000-8000-0000000000c2')
+	await page.goto('/p2enjoy/tracks/studio-web/couts/5eed0000-0000-4000-8000-0000000000c2')
 	await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 	await illustrer(page, { chapitre: DETAIL, section: null, nom: 'detail', cibles: [], pleinePage: true })
 	// Le filtre et le budget clôturé : `e2e/manuel/23-33-complements.spec.ts`.
-	await page.goto('/tracks/studio-web/couts/00000000-0000-4000-8000-000000000000')
+	await page.goto('/p2enjoy/tracks/studio-web/couts/00000000-0000-4000-8000-000000000000')
 	const introuvable = page.getByText('Budget introuvable', { exact: true }).first()
 	await expect(introuvable).toBeVisible()
 	await illustrer(page, { chapitre: DETAIL, section: 'les-etats-que-vous-pouvez-rencontrer', nom: 'budget-introuvable', cibles: [introuvable, page.getByRole('link', { name: 'Revenir aux coûts du track' })] })

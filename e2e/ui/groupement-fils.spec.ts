@@ -18,6 +18,8 @@
 // sans que la ligne perde son repère de sélection.
 // @verifies CRM-139 (docs/BACKLOG.md) — l'inbox s'ouvre ici case « Seulement moi » décochée, `courrier=tous` : le sujet de ces
 //           preuves est ailleurs (docs/SPEC-mail-subsystem.md §27.5)
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	autoriserErreursConsole,
@@ -55,7 +57,7 @@ async function connecter(page: Page): Promise<void> {
 
 /** Ouvre le dossier de la card qui porte le fil de deux messages. */
 async function ouvrirDossierDuFil(page: Page): Promise<void> {
-	await page.goto('/inbox?courrier=tous')
+	await page.goto('/p2enjoy/inbox?courrier=tous')
 	const dossiers = page.getByTestId('inbox-panneau-dossiers')
 	await dossiers.getByRole('button', { name: new RegExp(CARD_COURRIER) }).click()
 	await expect(page.getByTestId('inbox-panneau-liste').getByTestId('inbox-message')).toHaveCount(1)
@@ -146,7 +148,7 @@ test.describe('CRM-081 tranche 2 f — le groupement des messages en fils', () =
 		page,
 	}) => {
 		await connecter(page)
-		await page.goto('/inbox?courrier=tous')
+		await page.goto('/p2enjoy/inbox?courrier=tous')
 		await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }).click()
 
 		const liste = page.getByTestId('inbox-panneau-liste')
@@ -188,7 +190,7 @@ test.describe('CRM-081 tranche 2 f — le groupement des messages en fils', () =
 		// AU GESTE SUIVANT, LE FIL ENTIER QUITTE LA LISTE : ses DEUX messages, non seulement celui
 		// que la ligne montrait (§16.16.5). Le dossier est alors vide POUR CETTE RAISON, et l'état
 		// vide le dit.
-		await page.goto('/inbox?courrier=tous')
+		await page.goto('/p2enjoy/inbox?courrier=tous')
 		await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: new RegExp(CARD_COURRIER) }).click()
 		await expect(liste.getByTestId('inbox-message')).toHaveCount(0)
 		await expect(
@@ -216,7 +218,7 @@ test.describe('CRM-081 tranche 2 f — le groupement des messages en fils', () =
 
 		// RECHARGEMENT COMPLET : l'écran repart de la base, et non de son propre état. Un réveil qui
 		// n'aurait vécu qu'en mémoire se verrait ici.
-		await page.goto('/inbox?courrier=tous')
+		await page.goto('/p2enjoy/inbox?courrier=tous')
 		await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: new RegExp(CARD_COURRIER) }).click()
 		const liste = page.getByTestId('inbox-panneau-liste')
 		await expect(liste.getByTestId('inbox-message')).toHaveCount(1)

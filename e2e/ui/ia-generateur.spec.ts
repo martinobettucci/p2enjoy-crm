@@ -13,6 +13,8 @@
 // l'en-tête `x-ia-simulateur: catalogue`. Les suggestions créées portent un préfixe ; après chaque scénario, la clé de
 // service retire les workflows qu'elles ont créés, puis les suggestions — retrait CONSTATÉ. Le scénario ne crée aucun
 // nœud de catalogue une fois « negociation » rendu au catalogue ; la suggestion du seed n'est jamais décidée.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type APIRequestContext, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -20,7 +22,7 @@ import { URL_API, enTetesService } from '../api/jetons'
 
 const UNITE = 'CRM-113'
 const ADMIN = 'admin@p2enjoy.test'
-const EDITEUR = '/reglages/workflows'
+const EDITEUR = '/p2enjoy/reglages/workflows'
 const PREFIXE = 'Sonde 113 UI'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
 const DEMANDE_SEED = 'Un cycle de vente accompagné : premier contact, discussion commerciale'

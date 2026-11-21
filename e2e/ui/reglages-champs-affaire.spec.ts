@@ -9,6 +9,8 @@
 // Les champs de sonde portent le préfixe `sonde-112-r` ; l'exigence qui bloque l'archivage est posée par l'administratrice
 // elle-même, sur la transition `…0071` du seed. Après chaque scénario, la clé de service retire l'exigence puis les
 // champs — retrait CONSTATÉ.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	ERREUR_RESSOURCE_HTTP,
@@ -21,11 +23,12 @@ import {
 } from './fixtures'
 import { PALIERS, capturer } from './captures'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
+import { dansUnEspace } from '../espace'
 
 const UNITE = 'CRM-112'
 const ADMIN = 'admin@p2enjoy.test'
 const LECTRICE = 'viewer@p2enjoy.test'
-const ECRAN = '/reglages/champs'
+const ECRAN = '/p2enjoy/reglages/champs'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
 const TRANSITION = '5eed0000-0000-4000-8000-000000000071'
 const PREFIXE = 'sonde-112-r'
@@ -79,7 +82,7 @@ test.describe('Réglages ▸ Champs de l’affaire (docs/DESIGN_SYSTEM.md §5.86
 	test('déclarer, modifier, réordonner, archiver et restaurer ; l’archivage d’un champ exigé est refusé et nommé', async ({ page, request }) => {
 		const idSiret = await poserDeux(request)
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		await page.getByTestId('entree-champs-affaire').click()
 		await expect(page).toHaveURL(/\/reglages\/champs$/)
 		await expect(page.getByRole('heading', { level: 2, name: 'Champs de l’affaire' })).toBeVisible()
@@ -129,7 +132,7 @@ test.describe('Réglages ▸ Champs de l’affaire (docs/DESIGN_SYSTEM.md §5.86
 		// RÉVISÉ PAR `CRM-112` T5 (décision 51, §5.39) : le refus nomme tous les emplois — transitions et modèles d'email.
 		await expect(alerte).toContainText('Ce champ est employé')
 		await expect(alerte).toContainText('Cycle commercial standard')
-		await expect(confirmation.getByRole('link', { name: 'Ouvrir l’éditeur de workflows' })).toHaveAttribute('href', '/reglages/workflows')
+		await expect(confirmation.getByRole('link', { name: 'Ouvrir l’éditeur de workflows' })).toHaveAttribute('href', dansUnEspace('/reglages/workflows'))
 		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[400]])
 		await capturer(page, 'champs-affaire-refus-employe-xl-1440', UNITE)
 		await confirmation.getByRole('button', { name: 'Annuler' }).click()

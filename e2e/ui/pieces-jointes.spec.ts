@@ -10,6 +10,8 @@
 //
 // Le courrier vient du seed (§35) : réellement reçu, ses pièces analysées et leur texte extrait par la vraie chaîne. Le
 // scénario ne fait que lire : rien n'est écrit, rien n'est à rendre.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
@@ -31,7 +33,7 @@ async function ouvrirLeCourrier(page: Page): Promise<void> {
 	)
 	const [ligne] = (await reponse.json()) as { id: string }[]
 	expect(ligne?.id, `le seed porte ${MSGID} (docs/SPEC-seed.md §35)`).toBeTruthy()
-	await page.goto(`/inbox?message=${ligne?.id ?? ''}`)
+	await page.goto(`/p2enjoy/inbox?message=${ligne?.id ?? ''}`)
 	await expect(page.getByTestId('inbox-message-ouvert')).toContainText(OBJET)
 }
 

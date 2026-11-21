@@ -8,6 +8,8 @@
 // Les activités du seed sont LUES, jamais modifiées : la consignation et le retrait sont exercés sur une activité que ce
 // fichier crée et retire lui-même, puis efface par la clé de service — le filet de fin de fichier. Les refus de la base
 // aux jetons réels sont prouvés par `e2e/api/activites.spec.ts`.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	ERREUR_RESSOURCE_HTTP,
@@ -31,9 +33,9 @@ const SOGEXIA = {
 	adresse: '/tracks/conseil-ia/grands-comptes/cards/5eed0000-0000-4000-8000-0000000000c2',
 }
 /** « Refonte intranet Ville de Lyon » : la lectrice la lit sans l'écrire, et le seed n'y pose aucune activité. */
-const REFONTE = '/tracks/studio-web/refonte/cards/5eed0000-0000-4000-8000-0000000000c4'
+const REFONTE = '/p2enjoy/tracks/studio-web/refonte/cards/5eed0000-0000-4000-8000-0000000000c4'
 /** « Assistant IA support — Nordis » : la visio de Farida. */
-const NORDIS = '/tracks/conseil-ia/prospection/cards/5eed0000-0000-4000-8000-0000000000cb'
+const NORDIS = '/p2enjoy/tracks/conseil-ia/prospection/cards/5eed0000-0000-4000-8000-0000000000cb'
 const IDS_SEED = [
 	'5eed0000-0000-4000-8000-0000000a0c01',
 	'5eed0000-0000-4000-8000-0000000a0c02',

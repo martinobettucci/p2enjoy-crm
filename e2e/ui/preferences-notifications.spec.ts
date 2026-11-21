@@ -26,6 +26,8 @@
 // LE SEED SORT INTACT. Chaque scénario qui coupe RÉTABLIT dans le même scénario, et une dernière
 // assertion le constate : une préférence laissée à faux ferait rougir
 // `e2e/ui/notifications.spec.ts`, qui mesure une cloche à « 1 non lue ».
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { request as requetePlaywright } from '@playwright/test'
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
@@ -35,7 +37,7 @@ import { PALIERS, capturer } from './captures'
 const UNITE = 'CRM-064'
 const BIZDEV = 'bizdev@p2enjoy.test'
 const VIEWER = 'viewer@p2enjoy.test'
-const ADRESSE = '/reglages/notifications'
+const ADRESSE = '/p2enjoy/reglages/notifications'
 
 async function connecter(page: Page, email: string): Promise<void> {
 	await connecterAvecLeLabs(page, email)
@@ -96,7 +98,7 @@ test.describe('L’écran des préférences (docs/DESIGN_SYSTEM.md §5.45)', () 
 	// entrées au-dessus administrent l'instance, celle-ci règle le compte de qui la regarde.
 	test('l’index des réglages y mène, et l’entrée vient en dernier', async ({ page }) => {
 		await connecter(page, BIZDEV)
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 
 		const lien = page.getByRole('link', { name: /Notifications : ce que vous recevez/ })
 		await expect(lien).toBeVisible()

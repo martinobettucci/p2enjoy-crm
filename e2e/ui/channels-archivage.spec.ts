@@ -11,6 +11,8 @@
 // LES CHANNELS ARCHIVÉS PAR CES SCÉNARIOS SONT DES SONDES PROPRES AU FICHIER, créées par la clé de service dans
 // « Formation » et retirées à la fin quoi qu'il arrive : archiver un channel du seed ferait disparaître un onglet sous les
 // preuves qui tournent en même temps. Le seed n'est que LU : « Appels d'offres », archivé dans « Conseil & IA ».
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { APIRequestContext } from '@playwright/test'
 import { CLE_SERVICE, URL_API } from '../api/jetons'
@@ -82,7 +84,7 @@ test.describe('archiver depuis la vue, puis désarchiver (docs/SPEC-channels.md 
 		page,
 	}) => {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto(`/tracks/formation/${SONDE_A.slug}`)
+		await page.goto(`/p2enjoy/tracks/formation/${SONDE_A.slug}`)
 		await expect(onglet(page, SONDE_A.slug)).toHaveAttribute('aria-current', 'page')
 		// « Formation » n'a aucun archivé dans le seed : pas de groupe.
 		await expect(page.getByTestId('groupe-archives')).toHaveCount(0)
@@ -137,7 +139,7 @@ test.describe('archiver depuis la vue, puis désarchiver (docs/SPEC-channels.md 
 		page,
 	}) => {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto(`/tracks/formation/${SONDE_B.slug}`)
+		await page.goto(`/p2enjoy/tracks/formation/${SONDE_B.slug}`)
 		await expect(onglet(page, SONDE_B.slug)).toHaveAttribute('aria-current', 'page')
 
 		await tabulerJusqua(page, 'commande-archiver-channel')
@@ -182,7 +184,7 @@ test.describe('la lectrice (docs/SPEC-channels.md §11.4)', () => {
 		expect((await poser(true)).status()).toBe(204)
 		try {
 			await connecterAvecLeLabs(page, VIEWER)
-			await page.goto(`/tracks/formation/${SONDE_B.slug}`)
+			await page.goto(`/p2enjoy/tracks/formation/${SONDE_B.slug}`)
 			const commande = page.getByTestId('commande-archiver-channel')
 			await expect(commande).toBeDisabled()
 			await expect(commande).toHaveAttribute('aria-describedby', /.+/)
@@ -204,7 +206,7 @@ test.describe('la lectrice (docs/SPEC-channels.md §11.4)', () => {
 		page,
 	}) => {
 		await connecterAvecLeLabs(page, VIEWER)
-		await page.goto('/tracks/conseil-ia/prospection')
+		await page.goto('/p2enjoy/tracks/conseil-ia/prospection')
 		await expect(page.getByTestId('commande-archiver-channel')).toBeDisabled()
 		await expect(page.getByTestId('groupe-archives')).toHaveCount(0)
 	})
@@ -217,7 +219,7 @@ test.describe('les paliers (docs/DESIGN_SYSTEM.md §7)', () => {
 		}) => {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			await connecterAvecLeLabs(page, ADMIN)
-			await page.goto('/tracks/conseil-ia/prospection?archives=1')
+			await page.goto('/p2enjoy/tracks/conseil-ia/prospection?archives=1')
 			await expect(page.getByTestId('panneau-archives')).toBeVisible()
 			await page.getByTestId('commande-archiver-channel').click()
 			await expect(page.getByTestId('confirmation-archivage')).toBeVisible()

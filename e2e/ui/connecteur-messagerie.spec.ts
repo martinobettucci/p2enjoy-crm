@@ -18,6 +18,8 @@
 // chemin ; le fil de l'affaire, dans la webapp, nomme alors le message envoyé. Le ménage retire l'envoi, le message et
 // sa copie des deux boîtes, et les cases posées. L'événement `mail_sent` de la timeline, lui, reste : `card_events`
 // n'accorde d'écriture à personne (`CRM-044`), comme pour `e2e/mail/envoi.spec.ts`.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 // @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
 import { conteneur } from '../conteneur'
@@ -35,7 +37,7 @@ const UNITE = 'CRM-104'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
 const ADMIN = { adresse: 'admin@p2enjoy.test', sub: '5eed0000-0000-4000-8000-000000000011' }
 const CARD = '5eed0000-0000-4000-8000-0000000000c1'
-const BOARD = '/tracks/conseil-ia/grands-comptes'
+const BOARD = '/p2enjoy/tracks/conseil-ia/grands-comptes'
 const TITRE_CARD = 'Refonte du site vitrine'
 const DESTINATAIRE = 'bizdev@p2enjoy.test'
 const CASES: readonly [string, string][] = [

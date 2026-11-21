@@ -22,6 +22,8 @@
 // `mail_unclassified` écrit sur la card. `card_events` n'accorde AUCUN privilège d'écriture,
 // `service_role` compris (`CRM-044`) — l'historique ne se corrige pas. C'est exactement ce que le
 // scénario de classement de `inbox.spec.ts` constate déjà pour son `mail_received`.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -75,7 +77,7 @@ async function idDuMessage(page: Page, rfc822: string): Promise<string> {
  */
 async function ouvrirLeMessageClasse(page: Page): Promise<void> {
 	const identifiant = await idDuMessage(page, MSGID_CLASSE)
-	await page.goto(`/inbox?message=${identifiant}`)
+	await page.goto(`/p2enjoy/inbox?message=${identifiant}`)
 	await expect(page.getByTestId('inbox-message-ouvert')).toBeVisible()
 	await expect(page.getByTestId('inbox-message-ouvert')).toContainText(OBJET_CLASSE)
 	// LE FIL DU SEED PORTE DEUX MESSAGES : sans cette assertion, un sélecteur qui ouvrirait le
@@ -221,7 +223,7 @@ test.describe('déclassement d’un message (docs/SPEC-mail-subsystem.md §16.5)
 		// L'ADRESSE D'UNE CARD EXIGE SON TRACK ET SON CHANNEL (`webapp/src/app/routes.tsx`,
 		// `CHEMIN_CARD`) : `/cards/<id>` seul rend « Page introuvable ». Mesuré au premier échec de
 		// ce scénario, et corrigé plutôt que contourné.
-		await page.goto(`/tracks/${SLUG_TRACK}/${SLUG_CHANNEL}/cards/${CARD_COURRIER}`)
+		await page.goto(`/p2enjoy/tracks/${SLUG_TRACK}/${SLUG_CHANNEL}/cards/${CARD_COURRIER}`)
 		const fil = page.getByRole('region', { name: 'Fil de cette affaire' })
 		const ligneDepart = fil.getByText('Message retiré de l’affaire').first()
 		await expect(ligneDepart).toBeVisible()

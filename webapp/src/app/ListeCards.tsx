@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — les liens des lignes mènent dans l'espace courant (§15.3) ; docs/SPEC-espace-courant.md
 // @spec CRM-112 (docs/BACKLOG.md) tranche T4.b — le bouton « Champs de l'affaire » de la barre de filtres et son panneau, sous la
 //       barre ; « Effacer les filtres » les retire avec les autres (docs/DESIGN_SYSTEM.md §5.92)
 // @spec CRM-112 (docs/BACKLOG.md) tranche T4.a — une colonne par champ de l'affaire listé, après les colonnes natives
@@ -40,7 +41,9 @@ import type { Etiquette } from '../lib/etiquettes'
 import { ArrowDown, ArrowUp, ArrowUpDown, Search, SlidersHorizontal } from 'lucide-react'
 import { useId, useRef, useState, type ReactNode } from 'react'
 import { PanneauFiltresCommuns } from './PanneauFiltresCommuns'
-import { Link } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
+// l'espace courant.
+import { LienEspace as Link } from './LienEspace'
 import { Badge, type TonBadge } from '../components/ui/Badge'
 import { Avatar } from '../components/ui/Avatar'
 import { Button } from '../components/ui/Button'

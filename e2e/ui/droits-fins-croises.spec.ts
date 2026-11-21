@@ -8,6 +8,8 @@
 // Deux navigateurs ouverts en même temps : Camille, administratrice, pose le droit ; Driss, business developer, le subit.
 // Le seed ne pose aucun droit de Driss sur « Grands comptes » : chaque scénario part de là, et la clé de service le
 // constate à la fin.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { Browser, BrowserContext } from '@playwright/test'
 import { connecterAvecLeLabs, expect, surveillerConsole, test, type APIRequestContext, type Page } from './fixtures'
@@ -17,8 +19,8 @@ import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/je
 const UNITE = 'CRM-119'
 const DRISS = '5eed0000-0000-4000-8000-000000000012'
 const GRANDS_COMPTES = '5eed0000-0000-4000-8000-000000000032'
-const CHANNEL = '/tracks/conseil-ia/grands-comptes'
-const TRACK = '/tracks/conseil-ia'
+const CHANNEL = '/p2enjoy/tracks/conseil-ia/grands-comptes'
+const TRACK = '/p2enjoy/tracks/conseil-ia'
 const SOGEXIA = `${CHANNEL}/cards/5eed0000-0000-4000-8000-0000000000c2`
 const TITRE = 'Affaire E2E droits fins croisés'
 const MOTIF_LECTURE = /Vos droits ne vous permettent pas d’en modifier les affaires/
@@ -95,7 +97,7 @@ test('Aucun accès, puis Lecture, puis Hérité : l’écran de Driss suit chaqu
 		await expect(driss.page.getByTestId('nouvelle-affaire')).toBeEnabled()
 
 		await connecterAvecLeLabs(camille, 'admin@p2enjoy.test')
-		await camille.goto('/reglages/membres')
+		await camille.goto('/p2enjoy/reglages/membres')
 
 		// U1 — « Aucun accès ».
 		await poser(camille, 'none', 'Aucun accès')

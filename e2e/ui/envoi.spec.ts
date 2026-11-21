@@ -14,6 +14,8 @@
 // `e2e/mail/envoi.spec.ts`, qui soumet pour de bon.
 // @verifies CRM-139 (docs/BACKLOG.md) — l'inbox s'ouvre ici case « Seulement moi » décochée, `courrier=tous` : le sujet de ces
 //           preuves est ailleurs (docs/SPEC-mail-subsystem.md §27.5)
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -28,7 +30,7 @@ test.afterAll(() => libererLaBoucle())
 const UNITE = 'CRM-058'
 const ADMIN = 'admin@p2enjoy.test'
 const CARD = '5eed0000-0000-4000-8000-0000000000c1'
-const ADRESSE_CARD = `/tracks/conseil-ia/grands-comptes/cards/${CARD}`
+const ADRESSE_CARD = `/p2enjoy/tracks/conseil-ia/grands-comptes/cards/${CARD}`
 
 type LigneFile = {
 	id: string
@@ -110,7 +112,7 @@ test.describe('composer et répondre (docs/SPEC-mail-subsystem.md §19.6)', () =
 
 	test('depuis l’INBOX : répondre vise la même affaire et cite le message', async ({ page }) => {
 		await connecter(page)
-		await page.goto('/inbox?courrier=tous')
+		await page.goto('/p2enjoy/inbox?courrier=tous')
 
 		const objetLu = 'Demande de devis — refonte'
 		let objetReponse = ''
@@ -156,7 +158,7 @@ test.describe('composer et répondre (docs/SPEC-mail-subsystem.md §19.6)', () =
 
 	test('un message NON CLASSÉ n’offre pas de réponse : il n’a pas d’affaire', async ({ page }) => {
 		await connecter(page)
-		await page.goto('/inbox?courrier=tous')
+		await page.goto('/p2enjoy/inbox?courrier=tous')
 
 		await page
 			.getByTestId('inbox-panneau-dossiers')

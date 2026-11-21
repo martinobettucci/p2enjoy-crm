@@ -14,6 +14,8 @@
 // supprimé : les confirmations sont montrées puis annulées. La relance armée sur « Refonte intranet Ville de Lyon »
 // (affaire figée du seed) est interrompue aussitôt, et ses inscriptions retirées, comme `e2e/ui/armement-sequence.spec.ts`
 // le fait — une inscription active ferait partir de vrais messages.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test } from '@playwright/test'
 import { enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
@@ -34,7 +36,7 @@ const AFFAIRE_FIGEE = { id: '5eed0000-0000-4000-8000-0000000000c4', adresse: '/t
 
 test('les modèles d’emails : la liste, la création, la prévisualisation, la suppression', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/modeles-emails')
+	await page.goto('/p2enjoy/reglages/modeles-emails')
 	await expect(page.getByTestId('ligne-modele-email').first()).toBeVisible()
 	await illustrer(page, { chapitre: MODELES, section: null, nom: 'modeles-d-emails', cibles: [], pleinePage: true })
 	// Le bouton cède la place au formulaire : l'image pleine page de l'introduction le montre.
@@ -84,7 +86,7 @@ test('la prévisualisation d’une affaire rattachée à deux channels', async (
 		})
 		expect(rattache.status(), await rattache.text()).toBe(200)
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/reglages/modeles-emails')
+		await page.goto('/p2enjoy/reglages/modeles-emails')
 		await page.getByTestId('ligne-modele-email').filter({ hasText: 'Relance sans réponse' }).getByTestId('previsualiser-modele').click()
 		await page.getByTestId('champ-affaire-previsualisation').selectOption({ label: 'Portail partagé des adhérents' })
 		const rattachement = page.getByTestId('champ-rattachement-previsualisation')
@@ -108,7 +110,7 @@ test('la prévisualisation d’une affaire rattachée à deux channels', async (
 
 test('la signature d’une identité', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/identites-mail')
+	await page.goto('/p2enjoy/reglages/identites-mail')
 	await expect(page.getByTestId('ligne-identite-mail').first()).toBeVisible()
 	await illustrer(page, { chapitre: SIGNATURES, section: null, nom: 'identites-d-expedition', cibles: [page.getByRole('heading', { level: 1 }), page.getByTestId('configurer-identite').first()] })
 	// La pastille « Signature » d'une ligne de la liste, avant que le formulaire ne s'ouvre.
@@ -130,7 +132,7 @@ test('la signature d’une identité', async ({ page }) => {
 
 test('les séquences : la liste, une nouvelle, les paliers', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/sequences-relance')
+	await page.goto('/p2enjoy/reglages/sequences-relance')
 	await expect(page.getByTestId('ligne-sequence').first()).toBeVisible()
 	await illustrer(page, { chapitre: SEQUENCES, section: null, nom: 'sequences', cibles: [], pleinePage: true })
 	// Le bouton cède la place au formulaire : l'image pleine page de l'introduction le montre.
@@ -140,7 +142,7 @@ test('les séquences : la liste, une nouvelle, les paliers', async ({ page }) =>
 	await illustrer(page, { chapitre: SEQUENCES, section: 'ecrire-une-cadence', nom: 'nouvelle-sequence', cibles: [page.getByTestId('champ-nom-sequence'), differes] })
 	await page.keyboard.press('Escape')
 
-	await page.goto('/reglages/sequences-relance')
+	await page.goto('/p2enjoy/reglages/sequences-relance')
 	// `ouvrir-sequence` est « Nouvelle séquence » : une séquence existante s'ouvre par « Modifier ».
 	await page.getByTestId('modifier-sequence').first().click()
 	const fiche = page.getByTestId('fiche-sequence')
@@ -155,7 +157,7 @@ test('les séquences : la liste, une nouvelle, les paliers', async ({ page }) =>
 // rendu est simulé sur la seule route de la fonction, comme au chapitre 18 : rien n'est écrit.
 test('les séquences : l’aperçu d’un palier, de la séquence entière, et son échec', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/sequences-relance')
+	await page.goto('/p2enjoy/reglages/sequences-relance')
 	await page.getByTestId('ligne-sequence').filter({ hasText: 'Relance en trois temps' }).getByTestId('modifier-sequence').click()
 	const fiche = page.getByTestId('fiche-sequence')
 	const lignes = fiche.getByTestId('ligne-palier')
@@ -221,7 +223,7 @@ test('une relance arrêtée faute de domaine, dite sur la fiche', async ({ page,
 	try {
 		await poserRelanceArretee(request, montage)
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto(`/tracks/${montage.slugTrack}/${montage.slugChannel}/cards/${montage.idAffaire}`)
+		await page.goto(`/p2enjoy/tracks/${montage.slugTrack}/${montage.slugChannel}/cards/${montage.idAffaire}`)
 		const bloc = page.getByTestId('bloc-sequence-card')
 		await expect(bloc.getByTestId('sequence-arretee-domaine')).toBeVisible()
 		await illustrer(page, {

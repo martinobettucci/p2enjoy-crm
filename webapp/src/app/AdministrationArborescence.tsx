@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'arborescence travaille dans l'espace de l'adresse (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-093 (docs/BACKLOG.md) tranche T3 — les commandes d'écriture désactivées avec leur motif quand la base refuse
 //       l'administration de l'espace ; déplier et consulter restent offerts (docs/SPEC-droits-interface.md §2.2, §3, §5 ;
 //       docs/DESIGN_SYSTEM.md §5.59)
@@ -125,6 +126,7 @@ import { useContexteEspace } from './ContexteEspace'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { FournisseurRefus, useRefus } from '../components/ui/RefusCommandes'
 import { motifVisible, proprietesCommande } from '../lib/capacites'
+import { idEspaceParmi } from '../lib/espace-onglet'
 
 /** Le motif de l'écran, cité par ses commandes d'écriture quand la base refuse l'administration (CRM-093). */
 const ID_MOTIF_ARBORESCENCE = 'arborescence-lecture-seule'
@@ -565,7 +567,7 @@ export type ProprietesAdministration = {
 }
 
 export function AdministrationArborescence({ client = clientCrm }: ProprietesAdministration = {}) {
-	const { capacites } = useContexteEspace()
+	const { capacites, idWorkspace: idEspaceContexte } = useContexteEspace()
 	const droitAdministration = proprietesCommande(capacites.administration, ID_MOTIF_ARBORESCENCE)
 	const [inclureArchives, setInclureArchives] = useState(false)
 	const [idWorkspace, setIdWorkspace] = useState<string | null>(null)
@@ -617,13 +619,13 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 				return
 			}
 			if (espaces.statut !== 'pret') return
-			const premier = espaces.donnees[0]
-			setIdWorkspace(premier?.id ?? null)
+			// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) : l'espace du contexte, et non plus le premier de la liste.
+			setIdWorkspace(idEspaceParmi(espaces.donnees, idEspaceContexte))
 			const lus = await lireTracksAdministrables(client, inclureArchives)
 			if (rang !== courant.current) return
 			setTracks(lus)
 		})()
-	}, [client, inclureArchives, tentative])
+	}, [client, inclureArchives, tentative, idEspaceContexte])
 
 	/**
 	 * Recharge les channels d'UN track avec le filtre d'archives PASSÉ EN PARAMÈTRE, plutôt que lu

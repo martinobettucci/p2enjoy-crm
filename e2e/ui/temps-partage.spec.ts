@@ -7,6 +7,8 @@
 // Une affaire JETABLE de `refonte` (track « Studio web »), posée par la clé de service, que l'administratrice rattache à
 // `grands-comptes` (track « Conseil & IA ») par `attach_card`, puis à `maintenance` (même track que `refonte`). Les
 // saisies portent sur mai 2099, hors de toute fenêtre du seed ; tout est retiré après chaque scénario.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { randomUUID } from 'node:crypto'
 import { connecterAvecLeLabs, expect, test, type APIRequestContext } from './fixtures'
@@ -122,7 +124,7 @@ test('la lectrice, fermée à « Conseil & IA », lit sa saisie sous le seul cha
 test('la série « Personnel » du track : la mention quand la saisie paraît sous deux de ses channels', async ({ page, request }) => {
 	await poser(request, [MAINTENANCE])
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/tracks/studio-web/couts?mois=2099-05')
+	await page.goto('/p2enjoy/tracks/studio-web/couts?mois=2099-05')
 	const bloc = page.getByTestId('personnel-track')
 	await expect(bloc).toBeVisible()
 	// Camille 3 h 30 et Farida 1 h 45, chacune sous « Refonte de site » et sous « Maintenance » ; le total, une fois.

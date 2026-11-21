@@ -4,6 +4,8 @@
 //
 // L'écran peuplé et la relance du fil sont ceux du seed. « Aucune affaire figée » se montre dans un espace neuf ;
 // « Les affaires figées n'ont pas pu être chargées », par la lecture de la règle COUPÉE au niveau du réseau.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -26,7 +28,7 @@ test('l’écran, la barre latérale et une étape terminale', async ({ page }) 
 	await illustrer(page, { chapitre: CHAPITRE, section: 'ce-que-l-ecran-montre', nom: 'une-ligne', cibles: [page.getByTestId('ligne-figee').first()] })
 
 	// « Perdu », étape terminale du seed : elle n'a pas de seuil qui fige.
-	await page.goto('/tracks/conseil-ia/grands-comptes')
+	await page.goto('/p2enjoy/tracks/conseil-ia/grands-comptes')
 	const perdu = page.getByTestId('colonne').filter({ hasText: 'Perdu' }).first()
 	await expect(perdu).toBeVisible()
 	await illustrer(page, {

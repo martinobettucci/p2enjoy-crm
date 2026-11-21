@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le catalogue travaille dans l'espace de l'adresse (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-093 (docs/BACKLOG.md) tranche T3 — les commandes d'écriture du catalogue désactivées avec leur motif quand la
 //       base refuse l'administration (docs/SPEC-droits-interface.md §2.2, §3, §5 ; docs/DESIGN_SYSTEM.md §5.18, §5.59)
 // @spec CRM-030 (docs/BACKLOG.md) — administration du catalogue de nœuds : l'écran
@@ -60,6 +61,7 @@ import { useContexteEspace } from './ContexteEspace'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { FournisseurRefus, useRefus } from '../components/ui/RefusCommandes'
 import { motifVisible, proprietesCommande } from '../lib/capacites'
+import { idEspaceParmi } from '../lib/espace-onglet'
 
 /** Le motif du catalogue, cité par ses commandes d'écriture quand la base refuse l'administration (CRM-093). */
 const ID_MOTIF_CATALOGUE = 'catalogue-lecture-seule'
@@ -188,6 +190,8 @@ export function AdministrationCatalogue({
 	/** La commande qui a ouvert le formulaire, pour lui rendre le focus (`§5.13`). */
 	const origineFocus = useRef<HTMLButtonElement | null>(null)
 
+	// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) : l'espace de l'adresse, et non plus le premier de la liste.
+	const { idWorkspace: idEspaceContexte } = useContexteEspace()
 	useEffect(() => {
 		if (client === null) return
 		const rang = ++courant.current
@@ -200,12 +204,12 @@ export function AdministrationCatalogue({
 				return
 			}
 			if (espaces.statut !== 'pret') return
-			setIdWorkspace(espaces.donnees[0]?.id ?? null)
+			setIdWorkspace(idEspaceParmi(espaces.donnees, idEspaceContexte))
 			const lus = await lireCatalogueAdministrable(client)
 			if (rang !== courant.current) return
 			setEtat(lus.statut === 'pret' ? pret(lus.donnees) : lus)
 		})()
-	}, [client, tentative])
+	}, [client, tentative, idEspaceContexte])
 
 	const recharger = useCallback(() => setTentative((precedente) => precedente + 1), [])
 	// Le workflow de départ pose ses sept nœuds dans ce catalogue (§7 quater du moteur) : posé depuis le

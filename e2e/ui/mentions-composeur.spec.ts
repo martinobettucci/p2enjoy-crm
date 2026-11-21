@@ -27,6 +27,8 @@
 // LE SEED SORT INTACT : le seul scénario qui écrit publie un commentaire sonde, en mesure l'effet
 // jusque dans la cloche du destinataire, puis DÉTRUIT tout ce qu'il a produit avec la clé de
 // service. Une dernière assertion le constate.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	autoriserErreursConsole,
@@ -52,8 +54,8 @@ const BIZDEV = 'bizdev@p2enjoy.test'
 /** `…0c1` vit dans « Grands comptes », fermé à Farida ; `…0c5` dans « Maintenance », ouvert à tous. */
 const CARD_FERMEE_A_FARIDA = '5eed0000-0000-4000-8000-0000000000c1'
 const CARD_OUVERTE_A_TOUS = '5eed0000-0000-4000-8000-0000000000c5'
-const ADRESSE_FERMEE = `/tracks/conseil-ia/grands-comptes/cards/${CARD_FERMEE_A_FARIDA}`
-const ADRESSE_OUVERTE = `/tracks/studio-web/maintenance/cards/${CARD_OUVERTE_A_TOUS}`
+const ADRESSE_FERMEE = `/p2enjoy/tracks/conseil-ia/grands-comptes/cards/${CARD_FERMEE_A_FARIDA}`
+const ADRESSE_OUVERTE = `/p2enjoy/tracks/studio-web/maintenance/cards/${CARD_OUVERTE_A_TOUS}`
 
 const DRISS = '5eed0000-0000-4000-8000-000000000012'
 

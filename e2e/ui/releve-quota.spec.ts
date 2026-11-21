@@ -10,6 +10,8 @@
 // LA GARDE DE 30 SECONDES DU TEST DE CONNEXION (§23.3) est levée entre deux ouvertures du panneau en remettant
 // `last_checked_at` à son état d'avant par la clé de service : la preuve ne mesure pas la garde — `e2e/api/tester-connexion`
 // le fait —, elle mesure le panneau. Chaque réglage touché est rendu dans son état d'avant, même en cas d'échec.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { execFileSync } from 'node:child_process'
 import type { APIRequestContext, Page } from '@playwright/test'
@@ -74,7 +76,7 @@ test('à la souris : les vrais dossiers de la boîte, « Sent Items » coché, e
 		expect(releverDossiers(avant.id)).toBe(avant.watch_folders.length)
 		await remettre(request, avant, { last_checked_at: null })
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/reglages/comptes-mail')
+		await page.goto('/p2enjoy/reglages/comptes-mail')
 		const commande = ligneDe(page, avant.id).getByTestId('dossiers-compte')
 		await expect(commande).toHaveAccessibleName('Dossiers relevés de Boîte de Camille Aubert')
 		await commande.click()
@@ -107,7 +109,7 @@ test('au clavier : le panneau s’ouvre, l’espace coche, `Échap` referme sans
 	try {
 		await remettre(request, avant, { last_checked_at: null })
 		await connecterAvecLeLabs(page, BIZDEV)
-		await page.goto('/reglages/comptes-mail')
+		await page.goto('/p2enjoy/reglages/comptes-mail')
 		const commande = ligneDe(page, avant.id).getByTestId('dossiers-compte')
 		await commande.focus()
 		await page.keyboard.press('Enter')
@@ -128,7 +130,7 @@ test('le formulaire de la boîte règle l’historique', async ({ page, request 
 	const avant = await boiteDe(request, CAMILLE)
 	try {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/reglages/comptes-mail')
+		await page.goto('/p2enjoy/reglages/comptes-mail')
 		await ligneDe(page, avant.id).getByTestId('configurer-compte').click()
 		const champ = page.getByTestId('champ-historique')
 		await expect(champ).toHaveValue(String(avant.backfill_months))
@@ -171,7 +173,7 @@ test('une identité reçoit un plafond, puis revient à « aucun plafond »', as
 	const avant = await lire()
 	try {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/reglages/identites-mail')
+		await page.goto('/p2enjoy/reglages/identites-mail')
 		const ligne = page.getByTestId('ligne-identite-mail').filter({ hasText: 'admin@p2enjoy.test' })
 		await ligne.getByTestId('configurer-identite').click()
 		const champ = page.getByTestId('champ-quota-identite')
@@ -207,7 +209,7 @@ test.describe('les quatre paliers', () => {
 				await remettre(request, avant, { last_checked_at: null })
 				await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 				await connecterAvecLeLabs(page, ADMIN)
-				await page.goto('/reglages/comptes-mail')
+				await page.goto('/p2enjoy/reglages/comptes-mail')
 				await ligneDe(page, avant.id).getByTestId('dossiers-compte').click()
 				await expect(page.getByTestId('case-dossier')).toHaveCount(5)
 				await page.getByTestId('panneau-dossiers-releves').scrollIntoViewIfNeeded()

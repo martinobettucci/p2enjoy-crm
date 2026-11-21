@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — les liens mènent dans l'espace courant (§15.3) ; docs/SPEC-espace-courant.md
 // @spec CRM-086 (docs/BACKLOG.md) — écrans de coûts, TRANCHE 4 : le MONTAGE de l'écran du §4.3,
 //       le détail d'un budget, une paire de barres par occurrence et la liste de ses lignes
 // @spec docs/SPEC-costs.md §4.0 (adresse `/tracks/:slugTrack/couts/:idBudget`), §4.3 (contenu),
@@ -28,7 +29,10 @@
 // @spec CRM-099 (docs/BACKLOG.md) — tranche T2 : la pilule « Soldé » dans le détail d'un budget (docs/SPEC-costs.md §4.3)
 
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
+// l'espace courant.
+import { LienEspace as Link } from './LienEspace'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t, type CleTraduction } from '../i18n'

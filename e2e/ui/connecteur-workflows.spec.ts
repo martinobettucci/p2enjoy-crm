@@ -20,6 +20,8 @@
 // Un VRAI client MCP crée un workflow et lui ajoute une étape au nom de l'administratrice ; la webapp, sous le même
 // compte, montre le workflow et son étape dans l'éditeur. Les cases posées pour la preuve, et le workflow, sont retirés à
 // la fin (ses étapes en cascade).
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { Browser } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
@@ -138,7 +140,7 @@ test('une étape ajoutée par le connecteur paraît dans l’éditeur de workflo
 	expect(ajout.isError ?? false, JSON.stringify(ajout)).toBe(false)
 
 	await connecterAvecLeLabs(page, CAMILLE.adresse)
-	await page.goto('/reglages/workflows')
+	await page.goto('/p2enjoy/reglages/workflows')
 	await expect(page.getByRole('heading', { name: 'Éditeur de workflows' })).toBeVisible()
 	const choix = page.getByRole('button', { name: new RegExp(`^${NOM}`, 'u') })
 	await expect(choix).toBeVisible()
@@ -169,7 +171,7 @@ test('un champ exigé par le connecteur bloque le déplacement au board, et le b
 		expect(exigence.isError ?? false, JSON.stringify(exigence)).toBe(false)
 
 		await connecterAvecLeLabs(page, CAMILLE.adresse)
-		await page.goto('/tracks/conseil-ia/grands-comptes')
+		await page.goto('/p2enjoy/tracks/conseil-ia/grands-comptes')
 		const carte = page.locator(`[data-testid="carte-card"][data-card="${idCard}"]`)
 		await expect(carte).toContainText(titre)
 		await carte.getByRole('button', { name: `Actions ${titre}` }).click()
@@ -235,7 +237,7 @@ test('une restauration par le connecteur remappe une affaire, et le board la mon
 	await outil('crm_workflow_version_restore', { version_id: v1, step_overrides: [{ from_step_id: negociation, to_step_id: relance }] })
 
 	await connecterAvecLeLabs(page, CAMILLE.adresse)
-	await page.goto(`/tracks/conseil-ia/${SLUG_REMAP}`)
+	await page.goto(`/p2enjoy/tracks/conseil-ia/${SLUG_REMAP}`)
 	await expect(page.getByTestId('colonne')).toHaveCount(2)
 	await expect(page.locator(`[data-testid="colonne"][data-etape="${relance}"] [data-card="${idCard}"]`)).toHaveCount(1)
 	await expect(page.locator(`[data-testid="carte-card"][data-card="${idCard}"]`)).toContainText(titre)
@@ -251,7 +253,7 @@ test('un nœud créé par le connecteur paraît dans le catalogue, avec son type
 	expect(creation.isError ?? false, JSON.stringify(creation)).toBe(false)
 
 	await connecterAvecLeLabs(page, CAMILLE.adresse)
-	await page.goto('/reglages/catalogue')
+	await page.goto('/p2enjoy/reglages/catalogue')
 	await expect(page.getByTestId('liste-catalogue')).toBeVisible()
 	const ligne = page.locator(`[data-testid="ligne-noeud"][data-noeud="${CLE_NOEUD}"]`)
 	await expect(ligne).toContainText('E2E nœud MCP')
@@ -303,7 +305,7 @@ test('un channel dont le connecteur change le workflow montre son affaire à sa 
 	expect(change.placements_moved).toBe(1)
 
 	await connecterAvecLeLabs(page, CAMILLE.adresse)
-	await page.goto(`/tracks/conseil-ia/${SLUG_REMAP}`)
+	await page.goto(`/p2enjoy/tracks/conseil-ia/${SLUG_REMAP}`)
 	await expect(page.getByTestId('colonne')).toHaveCount(2)
 	await expect(page.locator(`[data-testid="colonne"][data-etape="${negociation}"] [data-card="${idCard}"]`)).toHaveCount(1)
 	await expect(page.locator(`[data-testid="carte-card"][data-card="${idCard}"]`)).toContainText(titre)
@@ -327,7 +329,7 @@ test('un point de checklist ajouté et exigé par le connecteur paraît dans l�
 	await outil('crm_transition_required_checklist_item_set', { transition_id: arete, item_id: point, required: true })
 
 	await connecterAvecLeLabs(page, CAMILLE.adresse)
-	await page.goto('/reglages/workflows')
+	await page.goto('/p2enjoy/reglages/workflows')
 	const choix = page.getByRole('button', { name: new RegExp(`^${NOM}`, 'u') })
 	await choix.click()
 	await expect(choix).toHaveAttribute('aria-current', 'true')

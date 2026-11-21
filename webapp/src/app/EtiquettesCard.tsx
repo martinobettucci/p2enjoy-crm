@@ -8,7 +8,9 @@
 
 import { Tags, TriangleAlert } from 'lucide-react'
 import { forwardRef, useEffect, useId, useRef, useState } from 'react'
-import { Link } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
+// l'espace courant.
+import { LienEspace as Link } from './LienEspace'
 import { Button } from '../components/ui/Button'
 import { PastilleEtiquette } from '../components/ui/PastilleEtiquette'
 import { useRefus } from '../components/ui/RefusCommandes'

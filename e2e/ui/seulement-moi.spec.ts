@@ -14,6 +14,8 @@
 // rangée du fil sans l'ouvrir, puisque l'ouvrir le marquerait lu (§18 bis).
 // RÉVISÉ par `CRM-160` (décision 51) : le seed §53 ajoute au fil de l'envoi la réponse de Driss, et le dossier de Vertuo
 // montre ce fil de deux messages ; la rangée unique, qui porte l'objet de l'envoi, ne change pas.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -41,7 +43,7 @@ async function caseLue(page: Page): Promise<void> {
 test.describe('« Seulement moi » (docs/DESIGN_SYSTEM.md §5.96)', () => {
 	test('cochée par défaut : seul son courrier est compté et listé, et le vide de « Non classés » porte son action', async ({ page }) => {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/inbox')
+		await page.goto('/p2enjoy/inbox')
 		await caseLue(page)
 		await expect(caseMoi(page)).toBeChecked()
 
@@ -71,7 +73,7 @@ test.describe('« Seulement moi » (docs/DESIGN_SYSTEM.md §5.96)', () => {
 
 	test('CRM-160 : la réponse reçue à la seule adresse de l’affaire paraît sous « Seulement moi », dans le fil de son envoi', async ({ page }) => {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/inbox')
+		await page.goto('/p2enjoy/inbox')
 		await caseLue(page)
 		await expect(caseMoi(page)).toBeChecked()
 		await dossiers(page).getByRole('button', { name: new RegExp(AFFAIRE_ENVOI) }).click()
@@ -87,7 +89,7 @@ test.describe('« Seulement moi » (docs/DESIGN_SYSTEM.md §5.96)', () => {
 
 	test('AU CLAVIER : la case se décoche et se recoche à l’Espace, et l’adresse la garde au rechargement', async ({ page }) => {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/inbox')
+		await page.goto('/p2enjoy/inbox')
 		await caseLue(page)
 		await caseMoi(page).focus()
 		await expect(caseMoi(page)).toBeFocused()
@@ -110,7 +112,7 @@ test.describe('« Seulement moi » (docs/DESIGN_SYSTEM.md §5.96)', () => {
 
 	test('SANS IDENTITÉ : la case est décochée, désactivée, explique, et son lien mène aux identités sortantes', async ({ page }) => {
 		await connecterAvecLeLabs(page, LECTRICE)
-		await page.goto('/inbox')
+		await page.goto('/p2enjoy/inbox')
 		const explication = page.getByTestId('inbox-seulement-moi-explication')
 		await expect(explication).toContainText('Aucune adresse d’expédition personnelle : tous les mails sont affichés.')
 		await expect(caseMoi(page)).toBeDisabled()
@@ -133,7 +135,7 @@ test.describe('« Seulement moi » (docs/DESIGN_SYSTEM.md §5.96)', () => {
 		)
 		const [ligne] = (await reponse.json()) as { id: string }[]
 		expect(ligne?.id, 'le seed porte « Candidature spontanée »').toBeTruthy()
-		await page.goto(`/inbox?message=${ligne?.id ?? ''}`)
+		await page.goto(`/p2enjoy/inbox?message=${ligne?.id ?? ''}`)
 		await expect(page.getByTestId('inbox-message-ouvert').getByRole('heading', { name: OBJET_NON_CLASSE })).toBeVisible()
 		await expect(page).toHaveURL(/courrier=tous/)
 		await expect(caseMoi(page)).not.toBeChecked()
@@ -144,7 +146,7 @@ test.describe('« Seulement moi » (docs/DESIGN_SYSTEM.md §5.96)', () => {
 		await connecterAvecLeLabs(page, ADMIN)
 		for (const palier of PALIERS) {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
-			await page.goto('/inbox')
+			await page.goto('/p2enjoy/inbox')
 			await caseLue(page)
 			await expect(caseMoi(page)).toBeVisible()
 			// Une seule ligne d'en-tête : la case et son libellé ne passent pas sous le titre.

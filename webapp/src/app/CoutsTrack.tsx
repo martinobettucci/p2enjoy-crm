@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — les liens mènent dans l'espace courant (§15.3) ; docs/SPEC-espace-courant.md
 // @spec CRM-086 (docs/BACKLOG.md) — écrans de coûts, TRANCHE 3 : le MONTAGE de l'écran du §4.2,
 //       première surface de l'unité réellement atteignable par un utilisateur
 // @spec CRM-086 (docs/BACKLOG.md) — TRANCHE 6b : l'écran devient à ONGLETS (§4.8), sa vue
@@ -29,7 +30,10 @@
 // @spec CRM-098 (docs/BACKLOG.md) — tranche T3 : le coût du personnel sous l'histogramme (docs/SPEC-temps.md §7.5)
 
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
+// l'espace courant.
+import { LienEspace as Link } from './LienEspace'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t, type CleTraduction } from '../i18n'

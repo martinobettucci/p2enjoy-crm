@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le pilotage suit l'espace courant de l'onglet, état intermédiaire jusqu'à T3 (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-066 (docs/BACKLOG.md) — analytique de conversion et prévisionnel pondéré,
 //       TRANCHE 3 a : l'écran `/pilotage`, à portée workspace
 // @spec docs/SPEC-analytique.md §7.1 (taux de conversion des affaires DÉCIDÉES, et l'INCONNU),
@@ -83,6 +84,7 @@ import {
 	type TrackPortee,
 } from '../lib/pilotage-portee'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
+import { useContexteEspace } from './ContexteEspace'
 
 /** L'en-tête d'une colonne (§5.9) : 13 px, texte secondaire, hauteur de cible. */
 const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3'
@@ -171,7 +173,13 @@ export function Pilotage({ client = clientCrm }: ProprietesPilotage = {}) {
 	// diverger, et c'est le mode de défaillance qu'INC-138 et la décision 560 ont déjà coûté.
 	// Aucune ligne ne rend aucun espace : il n'y a alors rien à découper, et l'écran rend son état
 	// vide sans sélecteur.
-	const idWorkspace = etat.statut === 'pret' ? (etat.donnees[0]?.workspace_id ?? null) : null
+	// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) — état intermédiaire jusqu'à T3 : l'espace du contexte, et non plus le premier de la liste. l'espace courant
+	// s'il est mesuré, sinon le premier mesuré.
+	const { idWorkspace: idEspaceContexte } = useContexteEspace()
+	const idWorkspace =
+		etat.statut === 'pret'
+			? (etat.donnees.find((l) => l.workspace_id === idEspaceContexte)?.workspace_id ?? etat.donnees[0]?.workspace_id ?? null)
+			: null
 
 	const [portees, setPortees] = useState<EtatAsync<readonly TrackPortee[]>>(enChargement)
 	const courantPortees = useRef(0)

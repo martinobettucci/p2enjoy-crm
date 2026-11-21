@@ -6,6 +6,8 @@
 //
 // Les champs de sonde portent le préfixe `sonde-112-rf`, les affaires le titre `tst-crm112-rf` ; la clé de service les pose
 // dans « Grands comptes » et les retire après chaque scénario — retrait CONSTATÉ.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { randomUUID } from 'node:crypto'
 import { connecterAvecLeLabs, expect, test, type APIRequestContext, type Page } from './fixtures'
@@ -21,7 +23,7 @@ const WORKFLOW = '5eed0000-0000-4000-8000-000000000051'
 const PROSPECTION = '5eed0000-0000-4000-8000-000000000061'
 const CAMILLE = '5eed0000-0000-4000-8000-000000000011'
 const DRISS = '5eed0000-0000-4000-8000-000000000012'
-const LISTE = '/tracks/conseil-ia/grands-comptes/liste'
+const LISTE = '/p2enjoy/tracks/conseil-ia/grands-comptes/liste'
 const PREFIXE = 'sonde-112-rf'
 const TITRE = 'tst-crm112-rf'
 

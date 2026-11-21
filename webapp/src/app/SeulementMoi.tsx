@@ -7,7 +7,9 @@
 // CE COMPOSANT NE FILTRE RIEN : la base le fait (`concerns_me`, `inbox_arborescence(p_only_me)`). Il rend la case et
 // rapporte le geste ; l'adresse garde l'état (`seulement-moi.ts`).
 
-import { Link } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
+// l'espace courant.
+import { LienEspace as Link } from './LienEspace'
 import { Button } from '../components/ui/Button'
 import { EtatVide } from '../components/ui/States'
 import { t } from '../i18n'

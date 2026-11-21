@@ -28,6 +28,8 @@
 // Les trois contacts exercés sont ceux du seed, et chacun porte un cas du §10.6 : Léo Marchand
 // avec son organisation et son email, Sophie Dupont sans organisation ni fonction, Élise Fabre
 // sans email. Le seed est rendu INTACT : cette suite ne fait que lire.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	autoriserErreursConsole,
@@ -764,7 +766,7 @@ const CARD_INTRANET_UI = '5eed0000-0000-4000-8000-0000000000c4'
 
 /** Retire le rattachement PAR LES GESTES DE L'ÉCRAN, depuis la fiche de l'affaire (§12.6). */
 async function detacherDepuisLAffaire(page: Page, nomContact: string): Promise<void> {
-	await page.goto(`/tracks/conseil-ia/grands-comptes/cards/${CARD_VITRINE_UI}`)
+	await page.goto(`/p2enjoy/tracks/conseil-ia/grands-comptes/cards/${CARD_VITRINE_UI}`)
 	const ligne = page.getByTestId('ligne-contact-card').filter({ hasText: nomContact })
 	await expect(ligne).toBeVisible()
 	await ligne.getByTestId('detacher-contact').click()
@@ -1347,7 +1349,7 @@ test.describe('le fil apprend les rattachements (docs/SPEC-contacts.md §19.5, c
 
 		// LE FIL DE L'AFFAIRE, LU À L'ÉCRAN. La ligne porte son LIBELLÉ — « Contact rattaché » — et
 		// non le générique « Événement » du repli, et son DÉTAIL nomme le contact et son rôle.
-		await page.goto(`/tracks/conseil-ia/grands-comptes/cards/${CARD_VITRINE_UI}`)
+		await page.goto(`/p2enjoy/tracks/conseil-ia/grands-comptes/cards/${CARD_VITRINE_UI}`)
 		const rattachement = page.getByText('Contact rattaché').first()
 		await expect(rattachement).toBeVisible()
 		// LE DÉTAIL NOMME LE CONTACT ET SON RÔLE, par une clé de traduction et jamais par
@@ -1407,7 +1409,7 @@ const NOM_SONDE_T6 = 'Sonde tranche 6 — à supprimer'
 
 /** L'affaire qui porte le champ `contact` du §13.5 — celle du seed, sur le workflow global. */
 const ID_CARD_VITRINE_T6 = CARD_VITRINE_UI
-const CHEMIN_AFFAIRE_VITRINE = `/tracks/conseil-ia/grands-comptes/cards/${ID_CARD_VITRINE_T6}`
+const CHEMIN_AFFAIRE_VITRINE = `/p2enjoy/tracks/conseil-ia/grands-comptes/cards/${ID_CARD_VITRINE_T6}`
 /** Le champ `contact-principal` du workflow global — type `contact`, résolu à l'écriture (§9.3). */
 const CLE_CHAMP_CONTACT = 'contact-principal'
 const ID_CHAMP_CONTACT_T6 = '5eed0000-0000-4000-8000-000000000088'

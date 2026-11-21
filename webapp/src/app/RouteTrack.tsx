@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — les liens et la navigation de la vue d'un track mènent dans l'espace courant (§15.3) ; docs/SPEC-espace-courant.md
 // @spec CRM-112 (docs/BACKLOG.md) tranche T4.a — les colonnes des champs de l'affaire de la vue liste (docs/DESIGN_SYSTEM.md §5.91)
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T6 : la vue liste monte « Importer un fichier » et son panneau, exclusif du
 //       formulaire de création, puis relit la liste sans chargement (docs/DESIGN_SYSTEM.md §5.78)
@@ -53,7 +54,10 @@ import { colonnesCommunes, lireChampsCommunsEspace, type ChampCommun } from '../
 import { champsFiltrables, filtresActifs } from '../lib/filtres-communs'
 import { useContexteEspace } from './ContexteEspace'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
+import { useLocation, useParams, useSearchParams } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
+// l'espace courant.
+import { LienEspace as Link, useNaviguerEspace as useNavigate } from './LienEspace'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import { SkeletonListe } from '../components/ui/Skeleton'

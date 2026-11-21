@@ -1,3 +1,4 @@
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T2.a : le refus `identifiant_reserve` dit en clair (docs/SPEC-espace-courant.md §15.1)
 // @verifies CRM-101 (docs/BACKLOG.md) — tranche T3 : l'écran de la plateforme
 // @verifies docs/SPEC-plateforme.md §7.1 (accès : refus sans le drapeau, aucune lecture métier), §7.2 à §7.5 ;
 //           docs/DESIGN_SYSTEM.md §5.56 (onglets-liens, tableaux, formulaires et confirmations dans le flux, suppression
@@ -114,6 +115,21 @@ describe('espaces (§5.56)', () => {
 		await utilisateur.click(screen.getByRole('button', { name: 'Créer' }))
 		expect((await screen.findByTestId('refus-espace')).textContent).toContain('déjà employé')
 		expect((screen.getByLabelText('Identifiant court') as HTMLInputElement).value).toBe('atelier')
+	})
+
+	it('CRM-161 T2.a (§15.1) : un identifiant réservé par l’application est dit en clair, la saisie conservée', async () => {
+		const utilisateur = userEvent.setup()
+		rendre(
+			'espaces',
+			'/plateforme/espaces',
+			client({ ...SUPERADMIN, plateforme_espaces: () => ok([ESPACE_ATELIER]), plateforme_creer_espace: () => refus('identifiant_reserve', 400) }),
+		)
+		await utilisateur.click(await screen.findByRole('button', { name: 'Nouvel espace' }))
+		await utilisateur.type(screen.getByLabelText('Nom'), 'Atelier bis')
+		await utilisateur.type(screen.getByLabelText('Identifiant court'), 'contacts')
+		await utilisateur.click(screen.getByRole('button', { name: 'Créer' }))
+		expect((await screen.findByTestId('refus-espace')).textContent).toContain('réservé par l’application')
+		expect((screen.getByLabelText('Identifiant court') as HTMLInputElement).value).toBe('contacts')
 	})
 
 	it('un succès ouvre la fiche du nouvel espace', async () => {

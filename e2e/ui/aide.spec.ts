@@ -8,6 +8,8 @@
 // Aucune réponse n'est substituée : le manuel est lu dans le bucket que le seed a publié, avec la session réelle. Les
 // titres attendus sont lus dans le manuel construit du dépôt — le même que celui qui est publié (e2e/api/manuel.spec.ts
 // M1 le prouve à l'octet).
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -37,7 +39,7 @@ test.describe('l’aide, pour une session', () => {
 	})
 
 	test('depuis un board, le panneau mène à la section qui le décrit', async ({ page }) => {
-		await page.goto('/tracks/conseil-ia/prospection')
+		await page.goto('/p2enjoy/tracks/conseil-ia/prospection')
 		await icone(page).click()
 		await expect(panneau(page)).toBeVisible()
 		const ecran = panneau(page).getByRole('link', { name: TITRE_KANBAN })
@@ -62,7 +64,7 @@ test.describe('l’aide, pour une session', () => {
 	})
 
 	test('au clavier : l’icône s’ouvre, le focus entre, Échap le rend à l’icône', async ({ page }) => {
-		await page.goto('/inbox')
+		await page.goto('/p2enjoy/inbox')
 		await icone(page).focus()
 		await page.keyboard.press('Enter')
 		// L'inbox a son chapitre depuis le plan public (docs/SPEC-manual.md §10 bis) : le titre est lu dans ce chapitre.
@@ -77,14 +79,14 @@ test.describe('l’aide, pour une session', () => {
 	})
 
 	test('un écran sans chapitre n’offre que le sommaire', async ({ page }) => {
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		await icone(page).click()
 		await expect(panneau(page).getByTestId('aide-ecran')).toHaveCount(0)
 		await expect(panneau(page).getByRole('link', { name: 'Sommaire du manuel' })).toBeFocused()
 	})
 
 	test('un seul panneau de l’en-tête à la fois', async ({ page }) => {
-		await page.goto('/inbox')
+		await page.goto('/p2enjoy/inbox')
 		await page.getByTestId('cloche-notifications').click()
 		await expect(page.getByTestId('panneau-notifications')).toBeVisible()
 		await icone(page).click()
@@ -149,7 +151,7 @@ test.describe('paliers (§7, §5.43)', () => {
 		test(`palier ${palier.nom} : le panneau tient dans la fenêtre, un chapitre ne fait pas défiler la page`, async ({ page }) => {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-			await page.goto('/tracks/conseil-ia/prospection')
+			await page.goto('/p2enjoy/tracks/conseil-ia/prospection')
 			await icone(page).click()
 			const cadre = await panneau(page).boundingBox()
 			expect(cadre, 'cadre du panneau').not.toBeNull()

@@ -7,6 +7,8 @@
 //           CLAUDE.md §16 (captures observées)
 //
 // CE FICHIER N'ÉCRIT RIEN : l'aperçu est une lecture (`render_mail_template_sample` est `STABLE`).
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -22,7 +24,7 @@ const SEQUENCE = 'Relance en trois temps'
 
 async function ouvrirFiche(page: Page, email: string) {
 	await connecterAvecLeLabs(page, email)
-	await page.goto('/reglages/sequences-relance')
+	await page.goto('/p2enjoy/reglages/sequences-relance')
 	await page.getByTestId('ligne-sequence').filter({ hasText: SEQUENCE }).getByTestId('modifier-sequence').click()
 	await expect(page.getByTestId('ligne-palier')).toHaveCount(3)
 }
@@ -95,7 +97,7 @@ test.describe('l’aperçu des paliers d’une séquence (§14.5, CRM-125)', () 
 	// pas offert à l'écran. La fonction lui reste lisible — prouvé par `e2e/api/apercu-modeles-emails.spec.ts`.
 	test('la lectrice n’atteint pas la fiche, donc pas l’aperçu', async ({ page }) => {
 		await connecterAvecLeLabs(page, VIEWER)
-		await page.goto('/reglages/sequences-relance')
+		await page.goto('/p2enjoy/reglages/sequences-relance')
 		const modifier = page.getByTestId('ligne-sequence').filter({ hasText: SEQUENCE }).getByTestId('modifier-sequence')
 		await expect(modifier).toBeDisabled()
 		await expect(page.getByTestId('apercu-palier')).toHaveCount(0)

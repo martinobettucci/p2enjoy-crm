@@ -23,6 +23,8 @@
 // La publication réelle d'une administratrice connectée et le refus du `viewer` sont désormais
 // prouvés sans substitution dans `e2e/ui/authentification.spec.ts`. Ce fichier conserve les états
 // fins du panneau et les réponses substituées qui les rendent déterministes.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	autoriserErreursConsole,
@@ -57,9 +59,9 @@ const CARD = '5eed0000-0000-4000-8000-0000000000c6'
 const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 const TRACK = { id: '5eed0000-0000-4000-8000-000000000023', slug: 'formation', nom: 'Formation' }
 const CHANNEL = { id: '5eed0000-0000-4000-8000-000000000036', slug: 'inter-entreprises' }
-const ADRESSE = `/tracks/${TRACK.slug}/${CHANNEL.slug}/cards/${CARD}`
+const ADRESSE = `/p2enjoy/tracks/${TRACK.slug}/${CHANNEL.slug}/cards/${CARD}`
 /** Une card qu'aucune ligne ne porte : la session l'obtient comme une card non consentie (`CRM-092` T9). */
-const ADRESSE_INEXISTANTE = `/tracks/${TRACK.slug}/${CHANNEL.slug}/cards/f0000000-0000-4000-8000-000000000404`
+const ADRESSE_INEXISTANTE = `/p2enjoy/tracks/${TRACK.slug}/${CHANNEL.slug}/cards/f0000000-0000-4000-8000-000000000404`
 
 const ETAPE = { id: 'etape-1', label: 'Prospection' }
 

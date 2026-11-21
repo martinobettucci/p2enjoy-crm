@@ -6,6 +6,8 @@
 //
 // La lectrice n'est pas abonnée dans le jeu (docs/SPEC-seed.md §31) : son consentement est posé puis retiré par l'écran, et
 // la clé de service s'assure à la fin qu'il ne reste rien.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { URL_API, enTetesService } from '../api/jetons'
 import { capturer } from './captures'
@@ -24,7 +26,7 @@ test('la lectrice coche le récapitulatif de l’espace, la base le retient ; d�
 	const lire = async () =>
 		(await (await request.get(rest(`digest_subscriptions?profile_id=eq.${FARIDA}&select=workspace_id`), { headers: enTetesService() })).json()) as unknown[]
 	await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
-	await page.goto('/reglages/notifications')
+	await page.goto('/p2enjoy/reglages/notifications')
 	const groupe = page.getByTestId('fieldset-digest')
 	await expect(groupe.getByRole('group', { name: 'Par email' }).or(groupe)).toBeVisible()
 	const caseDigest = page.getByRole('checkbox', { name: /Recevoir chaque matin le récapitulatif de P2Enjoy SAS/ })

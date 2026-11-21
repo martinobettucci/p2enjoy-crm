@@ -21,6 +21,8 @@
 // @verifies CRM-137 (docs/BACKLOG.md) — le classement passe par le sélecteur cherchable (docs/DESIGN_SYSTEM.md §5.94)
 // @verifies CRM-139 (docs/BACKLOG.md) — l'inbox s'ouvre ici case « Seulement moi » décochée, `courrier=tous` : le sujet de ces
 //           preuves est ailleurs (docs/SPEC-mail-subsystem.md §27.5)
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -64,7 +66,7 @@ async function connecter(page: Page): Promise<void> {
 test.describe('inbox globale (docs/SPEC-mail-subsystem.md §18)', () => {
 	test('les trois panneaux montrent le courrier reçu, et le corps reste du texte', async ({ page }) => {
 		await connecter(page)
-		await page.goto('/inbox?courrier=tous')
+		await page.goto('/p2enjoy/inbox?courrier=tous')
 
 		// Panneau 1 — les dossiers. « Non classés » est en tête, avec son compte.
 		const dossiers = page.getByTestId('inbox-panneau-dossiers')
@@ -93,7 +95,7 @@ test.describe('inbox globale (docs/SPEC-mail-subsystem.md §18)', () => {
 		page,
 	}) => {
 		await connecter(page)
-		await page.goto('/inbox?courrier=tous')
+		await page.goto('/p2enjoy/inbox?courrier=tous')
 
 		const dossiers = page.getByTestId('inbox-panneau-dossiers')
 		const nonClasses = dossiers.getByRole('button', { name: /Non classés/ })
@@ -111,7 +113,7 @@ test.describe('inbox globale (docs/SPEC-mail-subsystem.md §18)', () => {
 
 	test('tout le parcours se fait AU CLAVIER, du dossier au message', async ({ page }) => {
 		await connecter(page)
-		await page.goto('/inbox?courrier=tous')
+		await page.goto('/p2enjoy/inbox?courrier=tous')
 		await expect(page.getByTestId('inbox-panneau-dossiers')).toBeVisible()
 
 		// Depuis le haut du document, on avance jusqu'au dossier des non classés, et on l'ouvre par
@@ -146,7 +148,7 @@ test.describe('inbox globale (docs/SPEC-mail-subsystem.md §18)', () => {
 		await connecter(page)
 
 		// 1. Dans l'inbox, sous le dossier de la card.
-		await page.goto('/inbox?courrier=tous')
+		await page.goto('/p2enjoy/inbox?courrier=tous')
 		const dossiers = page.getByTestId('inbox-panneau-dossiers')
 		await dossiers.getByRole('button', { name: /Refonte du site vitrine/ }).click()
 		const liste = page.getByTestId('inbox-panneau-liste')
@@ -174,7 +176,7 @@ test.describe('inbox globale (docs/SPEC-mail-subsystem.md §18)', () => {
 
 	test('un non classé se trie depuis l’écran, et le fil de la card l’enregistre', async ({ page }) => {
 		await connecter(page)
-		await page.goto('/inbox?courrier=tous')
+		await page.goto('/p2enjoy/inbox?courrier=tous')
 
 		try {
 			await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }).click()
@@ -234,7 +236,7 @@ test.describe('inbox globale (docs/SPEC-mail-subsystem.md §18)', () => {
 		page,
 	}) => {
 		await connecter(page)
-		await page.goto('/inbox?courrier=tous')
+		await page.goto('/p2enjoy/inbox?courrier=tous')
 		await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }).click()
 
 		for (const palier of PALIERS) {
@@ -299,7 +301,7 @@ test.describe('l’inbox adressable (docs/SPEC-recherche.md §15)', () => {
 	}) => {
 		await connecter(page)
 		const id = await idDuMessage(page, MSGID_CLASSE)
-		await page.goto(`/inbox?message=${id}`)
+		await page.goto(`/p2enjoy/inbox?message=${id}`)
 
 		// LE MESSAGE EST OUVERT SANS AUCUN GESTE : c'est tout l'objet de la sous-tranche. Avant
 		// elle, cette même adresse menait à l'inbox sans sélection, et l'utilisateur devait
@@ -326,7 +328,7 @@ test.describe('l’inbox adressable (docs/SPEC-recherche.md §15)', () => {
 	test('MÈNE AUX « NON CLASSÉS » quand le message désigné n’a pas d’affaire', async ({ page }) => {
 		await connecter(page)
 		const id = await idDuMessage(page, MSGID_NON_CLASSE)
-		await page.goto(`/inbox?message=${id}`)
+		await page.goto(`/p2enjoy/inbox?message=${id}`)
 
 		// L'AUTRE MOITIÉ DE M16, et le seed porte réellement les deux cas : une amorce qui ne
 		// vaudrait que pour les messages classés laisserait la moitié de la famille `message` de la
@@ -348,7 +350,7 @@ test.describe('l’inbox adressable (docs/SPEC-recherche.md §15)', () => {
 		// que le §15 décrit. La lecture rend donc zéro ligne, ce qu'un refus de la RLS rend aussi.
 		// `courrier=tous` (`CRM-139`, §27.5) : sous « Seulement moi », le dossier que la preuve désigne n'existerait pas, et
 		// son absence de sélection ne prouverait rien.
-		await page.goto('/inbox?message=00000000-0000-4000-8000-000000000000&courrier=tous')
+		await page.goto('/p2enjoy/inbox?message=00000000-0000-4000-8000-000000000000&courrier=tous')
 
 		// AUCUN MESSAGE, AUCUN DOSSIER CHOISI, ET SURTOUT AUCUNE ALERTE : un refus ne se distingue
 		// pas d'une absence (docs/SPEC-permissions-rls.md §7). L'écran est celui d'une arrivée sans

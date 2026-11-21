@@ -8,6 +8,8 @@
 //
 // Le jeu n'est pas modifié : chaque geste est une lecture, ou un déplacement que la base refuse (la refonte du monitoring
 // de Vertuo n'a pas de SIRET). Les données sont celles de `supabase/seed/apply-seed.sh`, section « 8 tertricies ».
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, connecterAvecLeLabs, expect, test, type APIRequestContext, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -45,7 +47,7 @@ test.describe('Le jeu de démonstration des champs de l’affaire (docs/SPEC-see
 			await connecterAvecLeLabs(page, ADMIN)
 
 			// Réglages ▸ « Champs de l'affaire » : quatre actifs ; l'archivé paraît sous la case.
-			await page.goto('/reglages/champs')
+			await page.goto('/p2enjoy/reglages/champs')
 			for (const cle of ['siret', 'secteur', 'date-signature', 'budget-client']) {
 				await expect(page.locator(`[data-champ="${cle}"]`)).toBeVisible()
 			}
@@ -56,7 +58,7 @@ test.describe('Le jeu de démonstration des champs de l’affaire (docs/SPEC-see
 			await capturer(page, `seed-champs-reglages-${palier.nom}`, UNITE)
 
 			// La fiche de la billetterie : la partie commune, et la valeur gardée du champ archivé.
-			await page.goto(`/tracks/conseil-ia/grands-comptes/cards/${billetterie}`)
+			await page.goto(`/p2enjoy/tracks/conseil-ia/grands-comptes/cards/${billetterie}`)
 			const bloc = page.getByTestId('bloc-champs-communs')
 			await expect(bloc.getByRole('heading', { level: 2, name: 'Champs de l’affaire' })).toBeVisible()
 			await expect(page.locator('#commun-siret')).toHaveValue('81234567800012')
@@ -67,7 +69,7 @@ test.describe('Le jeu de démonstration des champs de l’affaire (docs/SPEC-see
 			await capturer(page, `seed-champs-fiche-${palier.nom}`, UNITE)
 
 			// La liste de « Grands comptes » : les colonnes SIRET et Secteur, et le filtre « Secteur public ».
-			await page.goto('/tracks/conseil-ia/grands-comptes/liste')
+			await page.goto('/p2enjoy/tracks/conseil-ia/grands-comptes/liste')
 			await expect(page.locator('[data-testid="entete-commun"][data-champ="siret"]')).toBeVisible()
 			await expect(page.locator('[data-testid="entete-commun"][data-champ="secteur"]')).toBeVisible()
 			await page.getByTestId('ouvrir-filtres-communs').click()
@@ -79,7 +81,7 @@ test.describe('Le jeu de démonstration des champs de l’affaire (docs/SPEC-see
 			await capturer(page, `seed-champs-liste-${palier.nom}`, UNITE)
 
 			// Le board de « Maintenance » : Vertuo, sans SIRET, est refusé vers Signature, et le refus nomme le champ.
-			await page.goto('/tracks/studio-web/maintenance')
+			await page.goto('/p2enjoy/tracks/studio-web/maintenance')
 			const carte = page.locator(`[data-testid="carte-card"][data-card="${VERTUO}"]`)
 			await carte.scrollIntoViewIfNeeded()
 			await carte.getByRole('button', { name: `Actions ${TITRE_VERTUO}` }).click()
@@ -110,7 +112,7 @@ test.describe('Le jeu de démonstration des champs de l’affaire (docs/SPEC-see
 
 		test('le modèle « SIRET pour la facturation » se prévisualise avec le SIRET de la billetterie', async ({ page }) => {
 			await connecterAvecLeLabs(page, ADMIN)
-			await page.goto('/reglages/modeles-emails')
+			await page.goto('/p2enjoy/reglages/modeles-emails')
 			await page.getByTestId('ligne-modele-email').filter({ hasText: 'SIRET pour la facturation' }).getByTestId('previsualiser-modele').click()
 			await page.getByTestId('champ-affaire-previsualisation').selectOption({ label: BILLETTERIE })
 			await page.getByTestId('lancer-previsualisation').click()
@@ -121,7 +123,7 @@ test.describe('Le jeu de démonstration des champs de l’affaire (docs/SPEC-see
 		test('la lectrice lit les champs de la billetterie sans pouvoir les écrire', async ({ page, request }) => {
 			const billetterie = await idBilletterie(request)
 			await connecterAvecLeLabs(page, LECTRICE)
-			await page.goto(`/tracks/studio-web/refonte/cards/${billetterie}`)
+			await page.goto(`/p2enjoy/tracks/studio-web/refonte/cards/${billetterie}`)
 			const bloc = page.getByTestId('bloc-champs-communs')
 			await expect(page.locator('#commun-siret')).toHaveValue('81234567800012')
 			await expect(page.locator('#commun-siret')).toBeDisabled()
@@ -131,7 +133,7 @@ test.describe('Le jeu de démonstration des champs de l’affaire (docs/SPEC-see
 
 		test('la suggestion de l’assistant qui doublonne le SIRET est en revue, son défaut nommé', async ({ page }) => {
 			await connecterAvecLeLabs(page, ADMIN)
-			await page.goto('/reglages/workflows')
+			await page.goto('/p2enjoy/reglages/workflows')
 			await page.getByTestId('ia-suggestions-en-revue').getByRole('button', { name: /Un cycle de vente aux entreprises/ }).click()
 			await expect(page.getByTestId('ia-defauts').getByRole('listitem')).toHaveText([
 				guillemets('Le champ « siret » reprend le champ de l’affaire « SIRET », déjà porté par toute affaire de l’espace : retirez-le ou renommez-le.'),

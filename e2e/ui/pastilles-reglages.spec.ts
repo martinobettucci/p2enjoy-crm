@@ -8,6 +8,8 @@
 //
 // Les gestes écrivent : les pastilles de la preuve portent le préfixe `ZZ 141` et sont retirées à la fin par la clé de
 // service. Aucune pastille du seed n'est modifiée.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { APIRequestContext } from '@playwright/test'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -16,7 +18,7 @@ import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, connecterAvecLeLabs, ex
 
 const UNITE = 'CRM-141'
 const PREFIXE = 'ZZ 141'
-const CHEMIN = '/reglages/pastilles-mails'
+const CHEMIN = '/p2enjoy/reglages/pastilles-mails'
 const rest = (chemin: string) => `${URL_API}/rest/v1/${chemin}`
 const ACTIVES_SEMEES = [
 	'Administratif',
@@ -44,7 +46,7 @@ test.afterEach(async ({ request }) => {
 test.describe('Réglages ▸ Pastilles des mails (docs/DESIGN_SYSTEM.md §5.103)', () => {
 	test('l’administratrice lit la liste semée, crée une pastille à la souris, et voit un nom d’archivée refusé', async ({ page, request }) => {
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		const entree = page.getByTestId('entree-pastilles-mail')
 		await expect(entree).toHaveAttribute('href', CHEMIN)
 		await entree.click()
@@ -154,7 +156,7 @@ test.describe('Réglages ▸ Pastilles des mails (docs/DESIGN_SYSTEM.md §5.103)
 
 	test('le business developer lit la liste ; ses commandes sont éteintes avec le motif', async ({ page }) => {
 		await connecterAvecLeLabs(page, 'bizdev@p2enjoy.test')
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		await expect(page.getByTestId('entree-pastilles-mail')).toHaveAttribute('href', CHEMIN)
 		await page.goto(CHEMIN)
 		await expect(page.getByTestId('ligne-pastille-mail').getByTestId('pastille-etiquette')).toHaveText(ACTIVES_SEMEES)

@@ -15,6 +15,8 @@
 // un seul channel, et un seul workflow affectable — le global par défaut —, mesuré le 2026-10-11. Les channels et
 // workflows créés portent un préfixe propre et sont retirés après chaque scénario par la clé de service (les étapes
 // et les versions d'un workflow suivent en cascade), retrait CONSTATÉ par une relecture.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	connecterAvecLeLabs,
@@ -26,12 +28,13 @@ import {
 import type { Locator } from '@playwright/test'
 import { PALIERS, capturer } from './captures'
 import { URL_API, enTetesService } from '../api/jetons'
+import { dansUnEspace } from '../espace'
 
 const UNITE = 'CRM-100'
 const ADMIN = 'admin@p2enjoy.test'
 const BIZDEV = 'bizdev@p2enjoy.test'
 const TRACK = { id: '5eed0000-0000-4000-8000-000000000023', slug: 'formation', nom: 'Formation' } as const
-const BOARD_EXISTANT = '/tracks/formation/inter-entreprises'
+const BOARD_EXISTANT = '/p2enjoy/tracks/formation/inter-entreprises'
 const WORKFLOW_DEFAUT = 'Cycle commercial standard (par défaut)'
 const PREFIXE_SLUG = 'sonde-100'
 const PREFIXE_NOM = 'Sonde 100'
@@ -126,7 +129,7 @@ test.describe('CRM-100 — « Nouveau channel » depuis la vue du track', () => 
 		await capturer(page, 'nouveau-channel-formulaire-xl-1440', UNITE)
 		await formulaire.getByRole('button', { name: 'Créer' }).click()
 
-		await expect(page).toHaveURL(`/tracks/${TRACK.slug}/${PREFIXE_SLUG}-souris`)
+		await expect(page).toHaveURL(dansUnEspace(`/tracks/${TRACK.slug}/${PREFIXE_SLUG}-souris`))
 		const onglet = page.getByTestId('onglet-channel').filter({ hasText: `${PREFIXE_NOM} souris` })
 		await expect(onglet).toHaveAttribute('aria-current', 'page')
 		await expect(onglet).toBeFocused()
@@ -148,7 +151,7 @@ test.describe('CRM-100 — « Nouveau channel » depuis la vue du track', () => 
 	}) => {
 		test.setTimeout(120_000)
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto(`/tracks/${TRACK.slug}`)
+		await page.goto(`/p2enjoy/tracks/${TRACK.slug}`)
 
 		// Ouvrir, puis refermer par `Échap` : le focus revient à la commande, différé d'un rendu.
 		await tabVers(page, commande(page))
@@ -158,7 +161,7 @@ test.describe('CRM-100 — « Nouveau channel » depuis la vue du track', () => 
 		await page.keyboard.type('Brouillon jeté')
 		await page.keyboard.press('Escape')
 		await expect(formulaire).toHaveCount(0)
-		await expect(page).toHaveURL(`/tracks/${TRACK.slug}`)
+		await expect(page).toHaveURL(dansUnEspace(`/tracks/${TRACK.slug}`))
 		await expect(commande(page)).toBeFocused()
 
 		// Rouvrir, saisir, et partir vers l'éditeur par « Nouveau workflow ».
@@ -205,7 +208,7 @@ test.describe('CRM-100 — « Nouveau channel » depuis la vue du track', () => 
 		await tabVers(page, formulaire.getByRole('button', { name: 'Créer' }))
 		await page.keyboard.press('Enter')
 
-		await expect(page).toHaveURL(`/tracks/${TRACK.slug}/${PREFIXE_SLUG}-clavier`)
+		await expect(page).toHaveURL(dansUnEspace(`/tracks/${TRACK.slug}/${PREFIXE_SLUG}-clavier`))
 		await expect(page.getByTestId('onglet-channel').filter({ hasText: `${PREFIXE_NOM} clavier` })).toBeFocused()
 		// Le board suit le workflow composé : une colonne, la seule étape.
 		await expect(page.getByTestId('colonne')).toHaveCount(1)
@@ -222,7 +225,7 @@ test.describe('CRM-100 — « Nouveau channel » depuis la vue du track', () => 
 	}) => {
 		test.setTimeout(120_000)
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/reglages/arborescence')
+		await page.goto('/p2enjoy/reglages/arborescence')
 		await page.getByRole('button', { name: `Déplier ${TRACK.nom}` }).click()
 		await page.getByRole('button', { name: 'Nouveau channel' }).click()
 		const formulaire = page.getByTestId('formulaire-channel')
@@ -246,7 +249,7 @@ test.describe('CRM-100 — « Nouveau channel » depuis la vue du track', () => 
 		await expect(formulaire.getByLabel('Workflow')).toHaveValue(workflow?.id ?? 'absent')
 		await formulaire.getByRole('button', { name: 'Créer' }).click()
 
-		await expect(page).toHaveURL('/reglages/arborescence')
+		await expect(page).toHaveURL(dansUnEspace('/reglages/arborescence'))
 		await expect(page.getByRole('list', { name: `Channels du track ${TRACK.nom}` })).toContainText(
 			`${PREFIXE_NOM} arborescence`,
 		)
@@ -262,7 +265,7 @@ test.describe('CRM-100 — « Nouveau channel » depuis la vue du track', () => 
 		request,
 	}) => {
 		await connecterAvecLeLabs(page, BIZDEV)
-		await page.goto(`/tracks/${TRACK.slug}`)
+		await page.goto(`/p2enjoy/tracks/${TRACK.slug}`)
 		// RÉVISÉ PAR `CRM-093` (docs/DESIGN_SYSTEM.md §5.59, écart borné de la barre d'onglets) : la capacité
 		// d'administrer est rendue par la base ; refusée, le lien devient un texte à la même place, qui porte son motif
 		// en description accessible et en infobulle native. Le `403` reste prouvé hors interface

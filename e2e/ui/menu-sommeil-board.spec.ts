@@ -26,6 +26,8 @@
 // `Socle analytique — Vertuo` est à l'étape `Livré` de `grands-comptes` et n'a AUCUNE transition
 // sortante. Son menu était donc éteint avant cette tranche, et elle n'avait aucun geste — alors
 // qu'une affaire livrée est précisément celle qu'on range.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	connecterAvecLeLabs,
@@ -40,9 +42,9 @@ const ADMIN = 'admin@p2enjoy.test'
 /** La lectrice : membre en LECTURE de `maintenance`, où elle voit les affaires sans y écrire. */
 const LECTRICE = 'viewer@p2enjoy.test'
 
-const BOARD_GRANDS_COMPTES = '/tracks/conseil-ia/grands-comptes'
+const BOARD_GRANDS_COMPTES = '/p2enjoy/tracks/conseil-ia/grands-comptes'
 /** `maintenance` est le channel que la lectrice lit sans y écrire (`e2e/api/snooze.spec.ts` n° 5). */
-const BOARD_MAINTENANCE = '/tracks/studio-web/maintenance'
+const BOARD_MAINTENANCE = '/p2enjoy/tracks/studio-web/maintenance'
 
 /** L'affaire d'étape terminale du seed : aucune transition sortante, donc aucun geste avant 2 d. */
 const TERMINALE = {

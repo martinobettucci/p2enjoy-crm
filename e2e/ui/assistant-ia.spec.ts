@@ -15,6 +15,8 @@
 // Les suggestions créées portent un préfixe ; après chaque scénario, la clé de service retire les workflows
 // qu'elles ont créés, les nœuds de catalogue ajoutés, puis les suggestions — retrait CONSTATÉ. La suggestion du
 // seed n'est jamais décidée.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	connecterAvecLeLabs,
@@ -29,7 +31,7 @@ import { URL_API, enTetesService } from '../api/jetons'
 const UNITE = 'CRM-097'
 const ADMIN = 'admin@p2enjoy.test'
 const BIZDEV = 'bizdev@p2enjoy.test'
-const EDITEUR = '/reglages/workflows'
+const EDITEUR = '/p2enjoy/reglages/workflows'
 const PREFIXE = 'Sonde 097 UI'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
 const NOEUDS_SIMULES = ['prise-de-contact', 'maquette', 'gagne-web', 'perdu-web']

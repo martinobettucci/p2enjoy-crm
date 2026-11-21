@@ -7,6 +7,8 @@
 // sont des refus du serveur. Le changement de workflow se montre sur un channel posé par la clé de service — deux
 // workflows, une affaire qui a répondu à une question — et s'arrête au décompte des réponses perdues, que le serveur
 // mesure sans rien changer ; tout est retiré après le test, et le rôle de l'administratrice rendu.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -61,21 +63,21 @@ test.afterEach(async ({ request }) => ranger(request))
 
 test('l’index des réglages et l’arborescence', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages')
+	await page.goto('/p2enjoy/reglages')
 	await illustrer(page, {
 		chapitre: CHAPITRE,
 		section: null,
 		nom: 'sections-de-reglages',
 		cibles: [page.getByRole('heading', { name: 'Sections de réglages' }), page.getByRole('link', { name: /^Arborescence : tracks et channels/ })],
 	})
-	await page.goto('/reglages/arborescence')
+	await page.goto('/p2enjoy/reglages/arborescence')
 	await expect(deplier(page, 'Conseil & IA')).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: null, nom: 'arborescence', cibles: [], pleinePage: true })
 })
 
 test('un rôle retiré pendant que la page est ouverte : le serveur refuse', async ({ page, request }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/arborescence')
+	await page.goto('/p2enjoy/reglages/arborescence')
 	await page.getByRole('button', { name: 'Nouveau track' }).click()
 	const formulaire = page.getByTestId('formulaire-track')
 	await formulaire.getByLabel('Nom').fill('Partenaires')
@@ -90,7 +92,7 @@ test('un rôle retiré pendant que la page est ouverte : le serveur refuse', asy
 
 test('un track : le slug pris, la couleur, les archivés, la restauration', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/arborescence')
+	await page.goto('/p2enjoy/reglages/arborescence')
 	await page.getByRole('button', { name: 'Nouveau track' }).click()
 	const formulaire = page.getByTestId('formulaire-track')
 	await formulaire.getByLabel('Nom').fill('Formation')
@@ -108,7 +110,7 @@ test('un track : le slug pris, la couleur, les archivés, la restauration', asyn
 	const ligne = page.locator('li').filter({ has: archive }).first()
 	await illustrer(page, { chapitre: CHAPITRE, section: TRACK, nom: 'afficher-les-archives', cibles: [afficher, ligne] })
 
-	await page.goto('/reglages/corbeille')
+	await page.goto('/p2enjoy/reglages/corbeille')
 	const restaurer = page.getByTestId('ligne-corbeille').first()
 	await expect(restaurer.getByTestId('bouton-restaurer')).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: TRACK, nom: 'restaurer', cibles: [restaurer] })
@@ -116,7 +118,7 @@ test('un track : le slug pris, la couleur, les archivés, la restauration', asyn
 
 test('un channel : le formulaire, le workflow à créer', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/arborescence')
+	await page.goto('/p2enjoy/reglages/arborescence')
 	await deplier(page, 'Formation').click()
 	await page.getByRole('button', { name: 'Nouveau channel' }).first().click()
 	const formulaire = page.getByTestId('formulaire-channel')
@@ -157,7 +159,7 @@ test('changer le workflow d’un channel qui porte une affaire', async ({ page, 
 	])
 
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/arborescence')
+	await page.goto('/p2enjoy/reglages/arborescence')
 	await deplier(page, 'Conseil & IA').click()
 	const commande = page.getByRole('button', { name: `Changer le workflow du channel ${NOM_CHANNEL}` })
 	await commande.click()

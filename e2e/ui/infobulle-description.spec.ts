@@ -13,6 +13,8 @@
 // Aucune réponse n'est substituée : la pile réelle et le seed rendent les descriptions. Le survol est celui
 // de la souris de Playwright, le clavier celui de `Tab` — la bulle ne s'ouvre qu'au focus CLAVIER, et un
 // focus posé par script ne prouverait rien.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { Locator } from '@playwright/test'
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
@@ -22,8 +24,8 @@ const UNITE = 'CRM-105'
 const ADMIN = 'admin@p2enjoy.test'
 const MARGE = 16
 
-const BOARD_GRANDS_COMPTES = '/tracks/conseil-ia/grands-comptes'
-const LISTE_MAINTENANCE = '/tracks/studio-web/maintenance/liste'
+const BOARD_GRANDS_COMPTES = '/p2enjoy/tracks/conseil-ia/grands-comptes'
+const LISTE_MAINTENANCE = '/p2enjoy/tracks/studio-web/maintenance/liste'
 const CARD_DECRITE = '5eed0000-0000-4000-8000-0000000000c2'
 const CARD_NUE = '5eed0000-0000-4000-8000-0000000000c1'
 const CARD_LONGUE = '5eed0000-0000-4000-8000-00000000d002'
@@ -115,7 +117,7 @@ test.describe('la pilule d’un track (barre latérale)', () => {
 	})
 
 	test('un clic navigue sans laisser de bulle sur l’écran d’arrivée', async ({ page }) => {
-		await page.goto('/tracks/studio-web')
+		await page.goto('/p2enjoy/tracks/studio-web')
 		await pilule(page, 'conseil-ia').click()
 		await expect(page).toHaveURL(/\/tracks\/conseil-ia/)
 		await page.waitForTimeout(900)
@@ -138,7 +140,7 @@ test.describe('l’onglet d’un channel', () => {
 		await capturer(page, 'infobulle-onglet-xl-1440', UNITE)
 
 		await eloignerLaSouris(page)
-		await page.goto('/tracks/studio-web/refonte')
+		await page.goto('/p2enjoy/tracks/studio-web/refonte')
 		const refonte = onglet(page, 'refonte')
 		await expect(refonte).toHaveAttribute('title', 'Refonte de site')
 		await refonte.hover()

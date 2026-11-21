@@ -29,9 +29,12 @@
 // `CRM-041`. C'est INC-062, et l'absence est nommée plutôt que maquillée.
 // @verifies CRM-134 (docs/BACKLOG.md) tranche T1 — la lecture des channels rapporte les archivés (docs/SPEC-channels.md §11.1 ;
 //           assertion révisée, décision 51)
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { autoriserErreursConsole, connecterAvecLeLabs, ERREUR_RESSOURCE_HTTP, expect, test } from './fixtures'
 import { PALIERS, capturer } from './captures'
+import { dansUnEspace } from '../espace'
 
 // RÉVISÉ PAR `CRM-092` T9 (docs/SPEC-session-sso.md §8.7, décision 601) : sans session, aucune page de
 // l'application n'est rendue. Ces scénarios, écrits pour un visiteur anonyme à réponses substituées, se
@@ -63,9 +66,9 @@ const ROUTE_CHANNELS = '**/rest/v1/channels*'
 const CARD = '5eed0000-0000-4000-8000-0000000000c6'
 const TRACK = { id: '5eed0000-0000-4000-8000-000000000023', slug: 'formation', nom: 'Formation' }
 const CHANNEL = { id: '5eed0000-0000-4000-8000-000000000036', slug: 'inter-entreprises' }
-const ADRESSE = `/tracks/${TRACK.slug}/${CHANNEL.slug}/cards/${CARD}`
+const ADRESSE = `/p2enjoy/tracks/${TRACK.slug}/${CHANNEL.slug}/cards/${CARD}`
 /** Une card qu'aucune ligne ne porte : la session l'obtient comme une card non consentie (`CRM-092` T9). */
-const ADRESSE_INEXISTANTE = `/tracks/${TRACK.slug}/${CHANNEL.slug}/cards/f0000000-0000-4000-8000-000000000404`
+const ADRESSE_INEXISTANTE = `/p2enjoy/tracks/${TRACK.slug}/${CHANNEL.slug}/cards/f0000000-0000-4000-8000-000000000404`
 /** Un track qu'aucune ligne ne porte, pour la même raison. */
 const SLUG_TRACK_INEXISTANT = 'ce-track-nexiste-pas'
 
@@ -558,13 +561,13 @@ test.describe('la coquille autour du formulaire (§4.6 bis)', () => {
 			const url = requete.url()
 			if (url.includes('/rest/v1/tracks') || url.includes('/rest/v1/channels')) urls.push(url)
 		})
-		await page.goto(`/tracks/${SLUG_TRACK_INEXISTANT}/${CHANNEL.slug}/cards/${CARD}`)
+		await page.goto(`/p2enjoy/tracks/${SLUG_TRACK_INEXISTANT}/${CHANNEL.slug}/cards/${CARD}`)
 		// RÉVISÉ le 2026-09-29 (INC-261, décision 613), puis par `CRM-111` T7.1 (décision 823, INC-065) : la lectrice LIT
 		// l'affaire `…0c6`, que l'adresse ne situe sous aucun de ses rattachements. L'écran le dit, et propose le seul
 		// rattachement qu'elle lit (docs/DESIGN_SYSTEM.md §5.81) ; la barre reste vide, ce que le titre promet.
 		const ailleurs = page.getByTestId('affaire-ailleurs')
 		await expect(ailleurs).toBeVisible()
-		await expect(ailleurs.getByRole('link')).toHaveAttribute('href', `/tracks/${TRACK.slug}/${CHANNEL.slug}/cards/${CARD}`)
+		await expect(ailleurs.getByRole('link')).toHaveAttribute('href', dansUnEspace(`/tracks/${TRACK.slug}/${CHANNEL.slug}/cards/${CARD}`))
 		await expect(page.getByTestId('onglets-vides')).toBeVisible()
 
 		const resolution = urls.find((url) => url.includes(`slug=eq.${SLUG_TRACK_INEXISTANT}`))

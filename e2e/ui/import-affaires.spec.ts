@@ -5,6 +5,8 @@
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du SSO
 //
 // Les affaires de la preuve portent le préfixe `ZZ 071` et sont retirées à la fin, par la clé de service.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { URL_API, enTetesService } from '../api/jetons'
 import { capturer } from './captures'
@@ -27,7 +29,7 @@ test.afterEach(async ({ request }) => {
 
 test('Driss importe un export retouché : vérification, import, rapport, liste relue, fil « par import »', async ({ page }) => {
 	await connecterAvecLeLabs(page, 'bizdev@p2enjoy.test')
-	await page.goto('/tracks/studio-web/refonte/liste')
+	await page.goto('/p2enjoy/tracks/studio-web/refonte/liste')
 	await page.getByTestId('importer-affaires').click()
 	const panneau = page.getByTestId('panneau-import')
 	await expect(panneau.getByLabel('Fichier CSV')).toBeFocused()
@@ -66,7 +68,7 @@ test('Driss importe un export retouché : vérification, import, rapport, liste 
 
 test('la lectrice : « Importer un fichier » est éteinte avec le motif du channel, sans débordement à 390 px', async ({ page }) => {
 	await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
-	await page.goto('/tracks/studio-web/refonte/liste')
+	await page.goto('/p2enjoy/tracks/studio-web/refonte/liste')
 	const commande = page.getByTestId('importer-affaires')
 	await expect(commande).toBeDisabled()
 	await expect(commande).toHaveAttribute('aria-describedby', /.+/)

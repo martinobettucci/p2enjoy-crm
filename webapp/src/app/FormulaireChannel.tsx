@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le lien vers l'éditeur mène dans l'espace courant (§15.3) ; docs/SPEC-espace-courant.md
 // @spec CRM-093 (docs/BACKLOG.md) tranche T3 — la validation lit le refus du bloc qui l'accueille (docs/DESIGN_SYSTEM.md
 //       §5.59) : atteint par son adresse sans le droit d'administrer, le formulaire ne s'envoie pas
 // @spec CRM-075 (docs/BACKLOG.md) — le formulaire d'un channel : créer et modifier
@@ -16,7 +17,9 @@
 // module, que les deux écrans importent. Ce qu'il demande, sa validation et ses refus sont ceux du §7, inchangés.
 
 import { useEffect, useId, useRef, useState } from 'react'
-import { Link } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
+// l'espace courant.
+import { LienEspace as Link } from './LienEspace'
 import { Plus } from 'lucide-react'
 import { useRefus } from '../components/ui/RefusCommandes'
 import { Button } from '../components/ui/Button'

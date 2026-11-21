@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'aide reconnaît une page d'un espace sous le slug de son espace
+//       (docs/SPEC-espace-courant.md §8.1)
 // @spec CRM-153 (docs/BACKLOG.md) — tranche T6 : Réglages ▸ Catégories d'organisations mène à la section 10.13 du manuel
 //       (docs/SPEC-organisations.md §9.3 ; docs/DESIGN_SYSTEM.md §5.107)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : Réglages ▸ Étiquettes mène à sa section (docs/DESIGN_SYSTEM.md §5.73)
@@ -51,6 +53,8 @@ import {
 	CHEMIN_RENTABILITE,
 	CHEMIN_TEMPS,
 	cheminAide,
+	enEspace,
+	estPageDEspace,
 } from './chemins'
 
 /** Où mène « Aide sur cet écran » : un chapitre, et une section s'il y a lieu. */
@@ -115,7 +119,9 @@ export const ECRANS_AIDE: ReadonlyArray<readonly [motif: string, cible: CibleAid
 /** Le chapitre qui décrit l'écran de cette adresse, ou `null` : l'index des réglages, l'aide elle-même, une adresse inconnue. */
 export function aideDeLecran(chemin: string): CibleAide | null {
 	for (const [motif, cible] of ECRANS_AIDE) {
-		if (matchPath({ path: motif, end: true }, chemin) !== null) return cible
+		// `CRM-161` T2.a (docs/SPEC-espace-courant.md §8.1) : une page d'un espace a son adresse sous le slug de l'espace.
+		const motifs = estPageDEspace(motif) ? [enEspace(motif), motif] : [motif]
+		if (motifs.some((m) => matchPath({ path: m, end: true }, chemin) !== null)) return cible
 	}
 	return null
 }

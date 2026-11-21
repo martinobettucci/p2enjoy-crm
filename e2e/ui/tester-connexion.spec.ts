@@ -13,6 +13,8 @@
 // et son `last_checked_at` d'avant, par la clé de service — la forme de `e2e/api/tester-connexion.spec.ts`. Avant chaque
 // test, `last_checked_at` est vidé par la même clé : un test d'une campagne précédente déclencherait la garde de 30 s, que
 // la preuve d'API éprouve déjà.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
@@ -71,7 +73,7 @@ test.describe('« Tester la connexion » (docs/SPEC-mail-subsystem.md §23.5)', 
 		test.setTimeout(90_000)
 		const systeme = await preparer(page, 'mail_inbound_accounts', 'owner_id=is.null')
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/reglages/comptes-mail')
+		await page.goto('/p2enjoy/reglages/comptes-mail')
 		const ligne = page.getByTestId('ligne-compte-configuration').filter({ hasText: LABEL_SYSTEME })
 		const commande = ligne.getByRole('button', { name: `Tester la connexion de ${LABEL_SYSTEME}` })
 		await expect(commande).toBeVisible()
@@ -96,13 +98,13 @@ test.describe('« Tester la connexion » (docs/SPEC-mail-subsystem.md §23.5)', 
 		const identite = await preparer(page, 'mail_outbound_identities', `owner_id=eq.${DRISS}`)
 		await connecterAvecLeLabs(page, BIZDEV)
 
-		await page.goto('/reglages/comptes-mail')
+		await page.goto('/p2enjoy/reglages/comptes-mail')
 		const boite = page.getByTestId('ligne-compte-configuration').filter({ hasText: LABEL_DRISS })
 		await boite.getByTestId('tester-connexion').click()
 		await expect(boite.getByTestId('verdict-test-connexion')).toHaveText('Connexion réussie.', { timeout: 60_000 })
 		await expect(boite.getByText('Connectée')).toBeVisible()
 
-		await page.goto('/reglages/identites-mail')
+		await page.goto('/p2enjoy/reglages/identites-mail')
 		const ligne = page.locator(`[data-identite="${identite.id}"]`)
 		await expect(ligne.getByRole('button', { name: `Tester la connexion de ${identite.from_address}` })).toBeVisible()
 		await ligne.getByTestId('tester-connexion').click()
@@ -118,7 +120,7 @@ test.describe('« Tester la connexion » (docs/SPEC-mail-subsystem.md §23.5)', 
 		test.setTimeout(150_000)
 		const boiteDriss = await preparer(page, 'mail_inbound_accounts', `owner_id=eq.${DRISS}`)
 		await connecterAvecLeLabs(page, BIZDEV)
-		await page.goto('/reglages/comptes-mail')
+		await page.goto('/p2enjoy/reglages/comptes-mail')
 		const ligne = page.getByTestId('ligne-compte-configuration').filter({ hasText: LABEL_DRISS })
 
 		const enregistrerMotDePasse = async (motDePasse: string) => {
@@ -152,7 +154,7 @@ test.describe('« Tester la connexion » (docs/SPEC-mail-subsystem.md §23.5)', 
 		test.setTimeout(90_000)
 		await preparer(page, 'mail_inbound_accounts', 'owner_id=is.null')
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/reglages/comptes-mail')
+		await page.goto('/p2enjoy/reglages/comptes-mail')
 		const ligne = page.getByTestId('ligne-compte-configuration').filter({ hasText: LABEL_SYSTEME })
 		await ligne.getByTestId('tester-connexion').click()
 		await expect(ligne.getByTestId('verdict-test-connexion')).toHaveText('Connexion réussie.', { timeout: 60_000 })
@@ -172,7 +174,7 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §5.93, §7)', () => {
 			await preparer(page, 'mail_inbound_accounts', 'owner_id=is.null')
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			await connecterAvecLeLabs(page, ADMIN)
-			await page.goto('/reglages/comptes-mail')
+			await page.goto('/p2enjoy/reglages/comptes-mail')
 			const ligne = page.getByTestId('ligne-compte-configuration').filter({ hasText: LABEL_SYSTEME })
 			await ligne.getByTestId('tester-connexion').click()
 			await expect(ligne.getByTestId('verdict-test-connexion')).toHaveText('Connexion réussie.', { timeout: 60_000 })

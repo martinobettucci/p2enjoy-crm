@@ -6,6 +6,8 @@
 // Le business developer reçoit les cases `affaires` (consulter, ajouter, modifier) ; son client MCP crée une affaire jetable
 // dans le channel « Checklists », lit sa checklist et coche « Besoin confirmé ». La webapp, sous le même compte, montre le
 // point coché à son nom. Les cases et l'affaire sont retirées à la fin.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { Browser } from '@playwright/test'
 import { connecterAvecLeLabs, expect, test, type APIRequestContext } from './fixtures'
@@ -83,7 +85,7 @@ test('un point coché par le connecteur paraît coché sur la fiche, au nom de l
 	expect(coche.item.checked).toBe(true)
 
 	await connecterAvecLeLabs(page, DRISS.adresse)
-	await page.goto(`/tracks/studio-web/checklists/cards/${carte.id}`)
+	await page.goto(`/p2enjoy/tracks/studio-web/checklists/cards/${carte.id}`)
 	const bloc = page.getByTestId('bloc-checklist-card')
 	await expect(bloc.getByTestId('checklist-compte')).toHaveText('1 sur 2')
 	await expect(bloc.getByRole('checkbox', { name: 'Besoin confirmé' })).toBeChecked()

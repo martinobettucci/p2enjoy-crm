@@ -9,6 +9,8 @@
 // « Prospection » et surchargera l'étape « Négociation ». La preuve écrit, par les écrans, la description du nœud
 // « Relance » et la surcharge de l'étape « Signature » du workflow par défaut, que le seed laisse vides — et les vide
 // avant et après elle, sous la clé de service, pour ne rien laisser derrière elle même en cas d'échec.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import type { APIRequestContext } from '@playwright/test'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -18,7 +20,7 @@ const UNITE = 'CRM-133'
 const ADMIN = 'admin@p2enjoy.test'
 const NOEUD_RELANCE = '5eed0000-0000-4000-8000-000000000042'
 const ETAPE_SIGNATURE = '5eed0000-0000-4000-8000-000000000064'
-const BOARD = '/tracks/conseil-ia/grands-comptes'
+const BOARD = '/p2enjoy/tracks/conseil-ia/grands-comptes'
 const AFFAIRE = 'Plateforme de billetterie — Musée des Confluences'
 const DESCRIPTION_NOEUD = 'Le client a été relancé : on attend son retour sur la proposition.'
 const DESCRIPTION_ETAPE = 'Le contrat est en relecture chez le client.\nSignature attendue sous huit jours.'
@@ -70,7 +72,7 @@ function nomPalier(page: Page): string {
 
 /** Écrit les deux descriptions par les écrans de Réglages, comme un administrateur. */
 async function ecrireParLesEcrans(page: Page, request: APIRequestContext): Promise<void> {
-	await page.goto('/reglages/catalogue')
+	await page.goto('/p2enjoy/reglages/catalogue')
 	await page.getByRole('button', { name: 'Modifier le nœud Relance' }).click()
 	const champNoeud = page.getByTestId('champ-description-noeud')
 	await expect(champNoeud).toHaveValue('')
@@ -80,7 +82,7 @@ async function ecrireParLesEcrans(page: Page, request: APIRequestContext): Promi
 	await page.getByTestId('valider-noeud').click()
 	await expect.poll(async () => (await lireEnBase(request)).noeud).toBe(DESCRIPTION_NOEUD)
 
-	await page.goto('/reglages/workflows')
+	await page.goto('/p2enjoy/reglages/workflows')
 	await page.getByRole('button', { name: 'Surcharger Signature' }).click()
 	const formulaire = page.getByTestId('formulaire-surcharge')
 	// Le nœud « Signature » ne porte aucune description : l'aide le dit (§5.15).
@@ -140,7 +142,7 @@ test.describe('la description d’une étape (CRM-133, §7 sexies)', () => {
 		await capturer(page, 'fiche-description-etape-xl-1440', UNITE)
 
 		// Vidée par l'écran, la description du nœud est retirée en base, et son bouton disparaît du board.
-		await page.goto('/reglages/catalogue')
+		await page.goto('/p2enjoy/reglages/catalogue')
 		await page.getByRole('button', { name: 'Modifier le nœud Relance' }).click()
 		await page.getByTestId('champ-description-noeud').fill('   ')
 		await page.getByTestId('valider-noeud').click()

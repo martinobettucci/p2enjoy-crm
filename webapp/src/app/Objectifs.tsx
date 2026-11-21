@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — les objectifs suivent l'espace courant de l'onglet, état intermédiaire jusqu'à T3 (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 1 : navigation, liste des
 //       tableaux, canevas rendu, flèches, équivalent textuel et ouverture du channel ;
 //       tranche 2a : poser, déplacer et redimensionner un bloc, à la souris et au clavier ;
@@ -178,6 +179,8 @@ import type { EtatAsync } from '../lib/async'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useWorkspaces } from '../lib/workspaces'
 import { CHEMIN_OBJECTIFS, cheminTableauObjectifs } from './chemins'
+import { useContexteEspace } from './ContexteEspace'
+import { idEspaceParmi } from '../lib/espace-onglet'
 
 /**
  * Couleur de jeton d'un bloc → classe du liseré gauche (§5.29 : liseré de 4 px).
@@ -231,8 +234,10 @@ export type ProprietesObjectifs = {
 export function Objectifs({ client = clientCrm }: ProprietesObjectifs = {}) {
 	const { etat: etatWorkspaces } = useWorkspaces(client)
 
+	// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) — état intermédiaire jusqu'à T3 : l'espace du contexte, et non plus le premier de la liste.
+	const { idWorkspace: idEspaceContexte } = useContexteEspace()
 	const idWorkspace =
-		etatWorkspaces.statut === 'pret' ? (etatWorkspaces.donnees[0]?.id ?? null) : null
+		etatWorkspaces.statut === 'pret' ? idEspaceParmi(etatWorkspaces.donnees, idEspaceContexte) : null
 
 	// @spec CRM-083 (docs/BACKLOG.md) — tranche 2 h, la reprise d'un tableau archivé
 	// @spec docs/SPEC-goals.md §5.6.2 lignes a et b ; docs/DESIGN_SYSTEM.md §5.29 bis
@@ -1124,7 +1129,8 @@ export function CanevasObjectifs({ client = clientCrm }: ProprietesCanevas = {})
 	// LA LISTE DES CHANNELS NE PART QU'À LA PREMIÈRE FICHE OUVERTE. Elle ne sert qu'au sélecteur de
 	// destination, et la charger à l'ouverture du tableau ferait payer une requête sur tous les
 	// channels du workspace à toutes les visites qui ne font que regarder le canevas.
-	const idWorkspace = etatWorkspaces.statut === 'pret' ? (etatWorkspaces.donnees[0]?.id ?? null) : null
+	const { idWorkspace: idEspaceDuContexte } = useContexteEspace()
+	const idWorkspace = etatWorkspaces.statut === 'pret' ? idEspaceParmi(etatWorkspaces.donnees, idEspaceDuContexte) : null
 	const { etat: etatChannels, recharger: rechargerChannels } = useChannelsLiables(
 		client,
 		idWorkspace,

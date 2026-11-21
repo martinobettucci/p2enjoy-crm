@@ -8,6 +8,8 @@
 // Meunier ». Rien n'écrit dans le seed : une vue est ouverte puis abandonnée, jamais enregistrée ; le panneau d'import est
 // refermé avant toute vérification ; la fiche d'étiquette est annulée. Ce qui écrit un fil — une étiquette posée, un
 // workflow changé — porte sur une affaire jetable, retirée avec son fil.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -35,9 +37,9 @@ const S = {
 	fiche: 'la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent',
 } as const
 
-const LISTE_REFONTE = '/tracks/studio-web/refonte/liste'
-const GRANDS_COMPTES = '/tracks/conseil-ia/grands-comptes'
-const SUPPORT_MEUNIER = '/tracks/studio-web/maintenance/cards/5eed0000-0000-4000-8000-0000000000c5'
+const LISTE_REFONTE = '/p2enjoy/tracks/studio-web/refonte/liste'
+const GRANDS_COMPTES = '/p2enjoy/tracks/conseil-ia/grands-comptes'
+const SUPPORT_MEUNIER = '/p2enjoy/tracks/studio-web/maintenance/cards/5eed0000-0000-4000-8000-0000000000c5'
 const JETABLE = { id: 'e1170000-0000-4000-8000-0000000009c2', titre: 'Audit de sécurité Pelletier' } as const
 const WORKFLOW_CHECKLISTS = '5eed0000-0000-4000-8000-0000000c6801'
 const ETAPE_CHECKLISTS = '5eed0000-0000-4000-8000-0000000c6811'
@@ -106,7 +108,7 @@ test('une affaire importée : la première ligne de son fil', async ({ page, req
 
 	const [importee] = await lireService<{ id: string }[]>(request, `cards?title=eq.${encodeURIComponent(JETABLE.titre)}&select=id`)
 	if (importee === undefined) throw new Error('l’affaire importée est introuvable')
-	await page.goto(`/tracks/studio-web/refonte/cards/${importee.id}`)
+	await page.goto(`/p2enjoy/tracks/studio-web/refonte/cards/${importee.id}`)
 	const creee = page.getByText('Affaire créée par import', { exact: true }).first()
 	await expect(creee).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: S.liste, nom: 'affaire-creee-par-import', cibles: [creee.locator('xpath=ancestor::li[1]')] })
@@ -143,7 +145,7 @@ test('les étiquettes : la fiche, le filtre, les réglages', async ({ page, requ
 	await illustrer(page, { chapitre: CHAPITRE, section: S.etiquettes, nom: 'filtre-pose', cibles: [filtre, effacer] })
 
 	// L'entrée des réglages, après « Modèles d'affaires », puis la page qu'elle ouvre.
-	await page.goto('/reglages')
+	await page.goto('/p2enjoy/reglages')
 	await expect(page.getByTestId('entree-etiquettes')).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: S.etiquettes, nom: 'entree-etiquettes', cibles: [page.getByTestId('entree-modeles-affaires'), page.getByTestId('entree-etiquettes')] })
 	await page.getByTestId('entree-etiquettes').click()
@@ -191,7 +193,7 @@ test('le fil : un dossier changé, un workflow modifié, des filtres qui ne lais
 			},
 		})
 		expect(reponse.status(), await reponse.text()).toBe(200)
-		await page.goto(`/tracks/studio-web/${CHANNEL_JETABLE.slug}/cards/${JETABLE.id}`)
+		await page.goto(`/p2enjoy/tracks/studio-web/${CHANNEL_JETABLE.slug}/cards/${JETABLE.id}`)
 		const workflow = page.getByText('Workflow modifié', { exact: true }).first()
 		await expect(workflow).toBeVisible()
 		await illustrer(page, { chapitre: CHAPITRE, section: S.fil, nom: 'workflow-modifie', cibles: [workflow.locator('xpath=ancestor::li[1]')] })

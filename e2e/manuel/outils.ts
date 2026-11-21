@@ -5,6 +5,8 @@
 // Les scénarios de `e2e/manuel/` PRODUISENT des images ; ils ne prouvent pas le produit, ce que font ceux de `e2e/ui/`.
 // Ils se connectent donc par la même porte — la vraie page du SSO de développement —, et rendent la base dans l'état du
 // seed : tout ce qu'un scénario pose pour faire paraître un écran, il le retire.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, type APIRequestContext, type Page } from '@playwright/test'
 import { lireEnv } from '../env'
@@ -19,7 +21,7 @@ export const VIEWER = 'viewer@p2enjoy.test'
 export const WORKSPACE_SEED = '5eed0000-0000-4000-8000-000000000001'
 
 /** L'affaire « Migration ERP Sogexia », du channel « Grands comptes » du track « Conseil & IA ». */
-export const AFFAIRE_SOGEXIA = '/tracks/conseil-ia/grands-comptes/cards/5eed0000-0000-4000-8000-0000000000c2'
+export const AFFAIRE_SOGEXIA = '/p2enjoy/tracks/conseil-ia/grands-comptes/cards/5eed0000-0000-4000-8000-0000000000c2'
 
 export const EMETTEUR_SSO = lireEnv('SSO_OIDC_ISSUER')
 

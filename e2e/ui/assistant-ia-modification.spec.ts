@@ -18,6 +18,8 @@
 // signature, une affaire sur la négociation —, que la clé de service retire ensuite, avec le nœud « qualification-ia »
 // qu'une acceptation ajoute au catalogue et les suggestions préfixées — retrait CONSTATÉ. La suggestion de
 // modification du seed (§16 bis) n'est que RELUE, aux paliers.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { randomUUID } from 'node:crypto'
 import {
@@ -36,7 +38,7 @@ import { posterAffaire } from '../affaire'
 const UNITE = 'CRM-097'
 const ADMIN = 'admin@p2enjoy.test'
 const BIZDEV = 'bizdev@p2enjoy.test'
-const EDITEUR = '/reglages/workflows'
+const EDITEUR = '/p2enjoy/reglages/workflows'
 const PREFIXE = 'Sonde 097 T3 UI'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
 const TRACK_SEED = '5eed0000-0000-4000-8000-000000000022'

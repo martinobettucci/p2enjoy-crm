@@ -6,6 +6,8 @@
 // Un VRAI client MCP — découverte, enregistrement, consentement, SSO, échange du code (`e2e/mcp/client.ts`) — crée une
 // affaire et la commente au nom du business developer ; la webapp, connectée sous le même compte, la montre au board et
 // nomme Driss dans son fil. Les cases de la matrice posées pour la preuve, et l'affaire, sont retirées à la fin.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { Browser } from '@playwright/test'
 import { connecterAvecLeLabs, expect, test, type APIRequestContext } from './fixtures'
@@ -17,7 +19,7 @@ const UNITE = 'CRM-104'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
 const DRISS = { adresse: 'bizdev@p2enjoy.test', sub: '5eed0000-0000-4000-8000-000000000012' }
 const GRANDS_COMPTES = '5eed0000-0000-4000-8000-000000000032'
-const BOARD = '/tracks/conseil-ia/grands-comptes'
+const BOARD = '/p2enjoy/tracks/conseil-ia/grands-comptes'
 const TITRE = 'E2E MCP — affaire créée par l’assistant'
 const CASES: readonly [string, string][] = [
 	['affaires', 'consulter'],

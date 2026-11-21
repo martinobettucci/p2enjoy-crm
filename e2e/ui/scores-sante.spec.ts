@@ -7,12 +7,14 @@
 // LE SEED SUFFIT, ET IL EST LU, PAS ÉCRIT : « Audit sécurité applicative » est en danger pour la dynamique (étape
 // figée, action en retard, dernier contact ancien de 40 jours — docs/SPEC-seed.md §24) ; « Socle analytique — Vertuo »
 // est gagnée, donc sans score. Aucun scénario n'écrit.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-066'
-const BOARD = '/tracks/conseil-ia/grands-comptes'
+const BOARD = '/p2enjoy/tracks/conseil-ia/grands-comptes'
 const FICHE_AUDIT = `${BOARD}/cards/5eed0000-0000-4000-8000-0000000000c3`
 
 /** La carte du board — l'élément qui porte `data-card`, non la colonne qui l'englobe. */

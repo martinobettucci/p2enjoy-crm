@@ -10,6 +10,8 @@
 // LES MAILS SONT PROPRES À LA PREUVE, NON CLASSÉS, dans la boîte de Camille (l'administratrice), posés par la clé de service ;
 // chaque expéditeur porte le suffixe de l'exécution. Tout ce que la preuve écrit — mails, transferts, notifications, blocage,
 // contact — est retiré à la fin, par la clé de service.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { type APIRequestContext, type Page } from '@playwright/test'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -94,7 +96,7 @@ test.describe('le filtre par expéditeur et le transfert (docs/DESIGN_SYSTEM.md 
 		request,
 	}) => {
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto(`/inbox?courrier=tous&message=${mails[0]}`)
+		await page.goto(`/p2enjoy/inbox?courrier=tous&message=${mails[0]}`)
 		await expect(page.getByTestId('inbox-message-ouvert')).toContainText(objet(0))
 
 		await page.getByTestId('inbox-filtrer-expediteur').click()
@@ -152,7 +154,7 @@ test.describe('bloquer un expéditeur et le débloquer (docs/DESIGN_SYSTEM.md §
 	}) => {
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
 		// Le message ouvert choisit le dossier (les non classés) : sans lui, aucune liste n'est montrée.
-		await page.goto(`/inbox?courrier=tous&expediteur=${encodeURIComponent(BLOQUE)}&message=${mails[1]}`)
+		await page.goto(`/p2enjoy/inbox?courrier=tous&expediteur=${encodeURIComponent(BLOQUE)}&message=${mails[1]}`)
 		await expect(ligne(page, 1)).toBeVisible()
 		const commande = page.getByTestId('inbox-bloquer-expediteur')
 		await commande.focus()
@@ -181,7 +183,7 @@ test.describe('bloquer un expéditeur et le débloquer (docs/DESIGN_SYSTEM.md §
 		).toHaveLength(1)
 
 		// Réglages ▸ Expéditeurs bloqués : l'entrée de l'index, la ligne, « Débloquer » au clavier.
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		await page.getByTestId('entree-expediteurs-bloques').click()
 		const ligneBloquee = page.getByTestId('ligne-expediteur-bloque').filter({ hasText: BLOQUE })
 		await expect(ligneBloquee).toContainText('Bloqué par Camille Aubert le')
@@ -207,7 +209,7 @@ test.describe('créer un contact depuis un expéditeur inconnu (docs/DESIGN_SYST
 		request,
 	}) => {
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto(`/inbox?courrier=tous&message=${mails[3]}`)
+		await page.goto(`/p2enjoy/inbox?courrier=tous&message=${mails[3]}`)
 		await expect(ligne(page, 3)).toBeVisible()
 		await ligne(page, 3).getByTestId('inbox-case-fil').check()
 		await page.getByTestId('inbox-action-groupee').selectOption('contacts')
@@ -232,7 +234,7 @@ test.describe('les quatre paliers (docs/DESIGN_SYSTEM.md §5.109 bis, §7)', () 
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
 		for (const palier of PALIERS) {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
-			await page.goto(`/inbox?courrier=tous&message=${mails[0]}`)
+			await page.goto(`/p2enjoy/inbox?courrier=tous&message=${mails[0]}`)
 			await expect(page.getByTestId('inbox-message-ouvert')).toBeVisible()
 			await page.getByTestId('inbox-transferer').click()
 			const bloc = page.getByTestId('inbox-transfert-bloc')
@@ -248,7 +250,7 @@ test.describe('les quatre paliers (docs/DESIGN_SYSTEM.md §5.109 bis, §7)', () 
 			).toBeLessThanOrEqual(0)
 			await capturer(page, `transfert-bloc-${palier.nom}`, UNITE)
 
-			await page.goto(`/inbox?courrier=tous&expediteur=${encodeURIComponent(TRANSFERT)}&message=${mails[0]}`)
+			await page.goto(`/p2enjoy/inbox?courrier=tous&expediteur=${encodeURIComponent(TRANSFERT)}&message=${mails[0]}`)
 			await expect(page.getByTestId('inbox-message-ouvert')).toBeVisible()
 			const retour = page.getByRole('button', { name: 'Retour aux messages' })
 			if (await retour.isVisible()) await retour.click()

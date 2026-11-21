@@ -19,6 +19,8 @@
 // workflow jetable que l'IA fait évoluer, les suggestions — porte un nom propre au scénario et est retiré par la clé de
 // service après chaque test. Les points de checklist et les modèles archivés le temps d'une image sont désarchivés par
 // l'écran. Le serveur d'IA n'est jamais appelé : l'en-tête `x-ia-simulateur` choisit le scénario du simulateur.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test, type APIRequestContext, type Locator, type Page } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -52,7 +54,7 @@ const S = {
 	communs: 'les-champs-communs-a-toute-affaire',
 } as const
 
-const EDITEUR = '/reglages/workflows'
+const EDITEUR = '/p2enjoy/reglages/workflows'
 const DEFAUT = 'Cycle commercial standard'
 const CHECKLISTS_WF = 'Cycle commercial — checklists'
 const NOM_VIDE = 'Accompagnement client'
@@ -85,8 +87,8 @@ const JETABLE = {
 const ETAPES_DEFAUT = { prospection: '5eed0000-0000-4000-8000-000000000061', negociation: '5eed0000-0000-4000-8000-000000000063' }
 const TRANSITION_RELANCER = '5eed0000-0000-4000-8000-000000000071'
 const TRANSITION_DOUBLON = 'e1180000-0000-4000-8000-0000000001e1'
-const CHECKLISTS = '/tracks/studio-web/checklists'
-const REFONTE = '/tracks/studio-web/refonte'
+const CHECKLISTS = '/p2enjoy/tracks/studio-web/checklists'
+const REFONTE = '/p2enjoy/tracks/studio-web/refonte'
 const ETAPE_NEGOCIATION_CHECKLISTS = '5eed0000-0000-4000-8000-0000000c6813'
 const ESPACE_VIDE = { id: 'e1180000-0000-4000-8000-0000000000f1', slug: 'atelier-manuel-18', nom: 'Atelier Morel' }
 
@@ -154,7 +156,7 @@ test.afterEach(async ({ request }) => ranger(request))
 
 test('l’éditeur, et un rôle retiré pendant que la page est ouverte', async ({ page, request }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages')
+	await page.goto('/p2enjoy/reglages')
 	await illustrer(page, { chapitre: CHAPITRE, section: null, nom: 'reglages', cibles: [page.getByRole('link', { name: /^Workflows : étapes et composition/ })] })
 	await ouvrir(page, DEFAUT)
 	await illustrer(page, { chapitre: CHAPITRE, section: null, nom: 'editeur', cibles: [], pleinePage: true })
@@ -206,7 +208,7 @@ test('créer un workflow vide, le renommer, l’archiver, et l’en-tête du dé
 	await illustrer(page, { chapitre: CHAPITRE, section: S.choisir, nom: 'afficher-les-archives', cibles: [liste(page).getByLabel('Afficher les archivés'), archive] })
 
 	// « Changer de workflow » vit sur la ligne d'un channel, dans l'arborescence : le panneau est ouvert, puis fermé.
-	await page.goto('/reglages/arborescence')
+	await page.goto('/p2enjoy/reglages/arborescence')
 	await page.getByRole('button', { name: 'Déplier Conseil & IA' }).click()
 	await page.getByRole('button', { name: 'Changer le workflow du channel Prospection' }).click()
 	const panneau = page.getByTestId('panneau-changement-workflow')
@@ -337,7 +339,7 @@ test('les champs communs à toute affaire : l’écran, et l’archivage d’un 
 	// La transition « Prospection → Relance » du workflow par défaut exige le numéro de TVA : son archivage sera refusé.
 	await service(request, 'post', 'workflow_transition_required_common_fields', { transition_id: TRANSITION_RELANCER, common_field_id: idActif })
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/champs')
+	await page.goto('/p2enjoy/reglages/champs')
 	const liste = page.getByTestId('liste-champs-communs')
 	// RÉVISÉ PAR `CRM-112` T8 (docs/SPEC-seed.md §38) : la liste porte aussi les champs du seed ; les deux de l'image y sont.
 	await expect(liste.locator(`[data-champ="${actif}"]`)).toBeVisible()
@@ -606,7 +608,7 @@ test('les checklists d’un workflow, les points qu’un chemin exige, et le ref
 
 test('les modèles d’affaires', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/modeles-affaires')
+	await page.goto('/p2enjoy/reglages/modeles-affaires')
 	const ligne = page.getByTestId('ligne-modele-affaire').first()
 	await expect(ligne).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: S.modeles, nom: 'modeles', cibles: [page.getByTestId('nouveau-modele-affaire'), ligne] })

@@ -14,12 +14,14 @@
 // Nowak lectrice. Chaque scénario qui écrit REND l'état du seed avant de finir : le rôle de Farida revient à « Lecteur »,
 // et le seul retrait tenté est celui que la base refuse — celui de la dernière administratrice. L'attente du seed,
 // `attendu@p2enjoy.test`, n'est jamais touchée : le scénario des attentes inscrit, remplace et retire sa propre adresse.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { capturer } from './captures'
 
 const UNITE = 'CRM-070'
-const MEMBRES = '/reglages/membres'
+const MEMBRES = '/p2enjoy/reglages/membres'
 
 const role = (page: Page, nom: string) => page.getByLabel(`Rôle de ${nom}`)
 const retirer = (page: Page, nom: string) => page.getByRole('button', { name: `Retirer ${nom} de l’espace` })
@@ -32,7 +34,7 @@ test.describe('l’administratrice — Camille Aubert', () => {
 	})
 
 	test('arrive par l’index des réglages, lit la liste, administrateurs d’abord', async ({ page }) => {
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		await page.getByRole('link', { name: /Membres : personnes et rôles/ }).click()
 		await expect(page).toHaveURL(MEMBRES)
 		const lignes = page.getByTestId('ligne-membre')
@@ -181,7 +183,7 @@ test.describe('la lectrice — Farida Nowak', () => {
 	test('consulte la liste ; chaque commande est éteinte, lisible, et cite le motif', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		await page.getByRole('link', { name: /Membres : personnes et rôles/ }).click()
 		const motif = page.getByTestId('motif-membres')
 		await expect(motif).toContainText('réservées aux administrateurs de l’espace')

@@ -12,6 +12,8 @@
 // posées ici prennent donc effet dans un futur LOINTAIN (2099) — une date proche finirait par entrer en vigueur et ne
 // se retirerait plus —, et le temps est saisi en mars 2099 : chaque scénario retire
 // ce qu'il a posé, et le seed est rendu intact.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type APIRequestContext } from './fixtures'
 import { capturer } from './captures'
@@ -156,7 +158,7 @@ test('un administrateur lit toute l’équipe : une section par personne, et le 
 test('la série « Personnel » du track, par channel, et le temps passé dans la fiche d’une affaire', async ({ page, request }) => {
 	await poserLeMois(request)
 	await connecterAvecLeLabs(page, BIZDEV)
-	await page.goto('/tracks/studio-web/couts?mois=2099-04')
+	await page.goto('/p2enjoy/tracks/studio-web/couts?mois=2099-04')
 	const serie = page.getByTestId('personnel-track')
 	await expect(serie).toBeVisible()
 	await expect(serie.getByTestId('personnel-portee')).toHaveText('Votre temps')
@@ -174,7 +176,7 @@ test('la série « Personnel » du track, par channel, et le temps passé dans l
 	await serie.scrollIntoViewIfNeeded()
 	await capturer(page, 'personnel-track-xl-1440', UNITE)
 
-	await page.goto(`/tracks/studio-web/refonte/cards/${MGEN}`)
+	await page.goto(`/p2enjoy/tracks/studio-web/refonte/cards/${MGEN}`)
 	const bloc = page.getByTestId('temps-card')
 	await expect(bloc.getByTestId('temps-card-duree')).toHaveText('3 h 30')
 	await expect(bloc).toContainText('240,00 EUR')
@@ -186,7 +188,7 @@ test('la série « Personnel » du track, par channel, et le temps passé dans l
 test('Réglages ▸ « Coût du personnel » : une version programmée s’ajoute, se lit dans l’historique et se retire après confirmation', async ({ page, request }) => {
 	await nettoyer(request)
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages')
+	await page.goto('/p2enjoy/reglages')
 	await page.getByRole('link', { name: /Coût du personnel/ }).click()
 	await expect(page).toHaveURL(/\/reglages\/cout-personnel$/)
 
@@ -217,7 +219,7 @@ test('Réglages ▸ « Coût du personnel » : une version programmée s’ajout
 
 test('un membre n’a pas accès aux réglages du coût du personnel', async ({ page }) => {
 	await connecterAvecLeLabs(page, BIZDEV)
-	await page.goto('/reglages/cout-personnel')
+	await page.goto('/p2enjoy/reglages/cout-personnel')
 	await expect(page.getByRole('heading', { name: 'Réservé aux administrateurs' })).toBeVisible()
 	await expect(page.getByTestId('cout-personnel')).toHaveCount(0)
 })

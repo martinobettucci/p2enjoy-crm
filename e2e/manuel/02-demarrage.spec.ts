@@ -12,6 +12,8 @@
 // Deux états ne paraissent qu'un instant ou qu'en panne. « Création… » : la vraie requête est RETENUE le temps de
 // l'image. « Cette étape n'a pas pu être vérifiée » : une mesure est coupée au niveau du réseau, sur le compte du seed,
 // comme `e2e/ui/demarrage.spec.ts` le fait — un état reproductible, et nommé ici.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test, type Page } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -126,7 +128,7 @@ test.describe('dans un espace neuf', () => {
 		})
 
 		// Le formulaire « Nouveau channel » propose désormais le workflow posé.
-		await page.goto('/reglages/arborescence')
+		await page.goto('/p2enjoy/reglages/arborescence')
 		await page.getByRole('button', { name: `Déplier ${TRACK}` }).click()
 		await page.getByRole('button', { name: 'Nouveau channel' }).click()
 		await expect(formChannel.getByLabel('Workflow')).toBeVisible()

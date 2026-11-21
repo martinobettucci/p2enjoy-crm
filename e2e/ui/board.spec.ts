@@ -25,6 +25,8 @@
 // Le déplacement de bout en bout par une administratrice connectée est désormais prouvé, sans
 // substitution, dans `e2e/ui/authentification.spec.ts` ; ce fichier conserve les variantes fines.
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : le board lit les rattachements du channel (docs/SPEC-rattachements.md §8)
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	autoriserErreursConsole,
@@ -63,7 +65,7 @@ const ROUTE_MOVE = '**/rest/v1/rpc/move_card'
 const TRACK = { id: '5eed0000-0000-4000-8000-000000000021', slug: 'conseil-ia', nom: 'Conseil IA' }
 const CHANNEL = { id: '5eed0000-0000-4000-8000-000000000032', slug: 'grands-comptes' }
 const WORKFLOW = '5eed0000-0000-4000-8000-000000000051'
-const ADRESSE = `/tracks/${TRACK.slug}/${CHANNEL.slug}`
+const ADRESSE = `/p2enjoy/tracks/${TRACK.slug}/${CHANNEL.slug}`
 
 const PROSPECTION = '5eed0000-0000-4000-8000-000000000061'
 const RELANCE = '5eed0000-0000-4000-8000-000000000062'
@@ -306,7 +308,7 @@ test.describe('la route d’un channel, sans aucune substitution', () => {
 			(requete) => requete.url().includes('/rest/v1/tracks?') && requete.url().includes('slug='),
 		)
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.goto(`/tracks/ce-track-nexiste-pas/${CHANNEL.slug}`)
+		await page.goto(`/p2enjoy/tracks/ce-track-nexiste-pas/${CHANNEL.slug}`)
 
 		const url = new URL((await attendue).url())
 		expect(url.searchParams.get('slug'), 'le track est résolu par son slug').toBe('eq.ce-track-nexiste-pas')

@@ -32,6 +32,8 @@
 //      375 réel. Sa présence ferait passer le total du track de 1000/880 à 1350/1255 : l'absence
 //      se mesure donc sur le total, et pas seulement sur l'absence d'une ligne.
 // @verifies CRM-098 (docs/BACKLOG.md) — S2 révisé : la série « Personnel » a son propre tableau (docs/SPEC-temps.md §7.5)
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { autoriserErreursConsole, connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -52,9 +54,9 @@ const ADMIN = 'admin@p2enjoy.test'
  */
 const VIEWER = 'viewer@p2enjoy.test'
 
-const COUTS_STUDIO = '/tracks/studio-web/couts'
-const COUTS_FORMATION = '/tracks/formation/couts'
-const COUTS_CONSEIL = '/tracks/conseil-ia/couts'
+const COUTS_STUDIO = '/p2enjoy/tracks/studio-web/couts'
+const COUTS_FORMATION = '/p2enjoy/tracks/formation/couts'
+const COUTS_CONSEIL = '/p2enjoy/tracks/conseil-ia/couts'
 
 const BUDGET_RECURRENT = 'Publicité 2026'
 const BUDGET_CLOTURE = 'Salon du web 2025'
@@ -117,7 +119,7 @@ test.describe('CRM-086 — écran de coûts du track (docs/SPEC-costs.md §4.2)'
 		page,
 	}) => {
 		await connecter(page)
-		await page.goto('/tracks/studio-web')
+		await page.goto('/p2enjoy/tracks/studio-web')
 
 		const couts = page.getByTestId('onglet-couts-track')
 		await expect(couts).toBeVisible()

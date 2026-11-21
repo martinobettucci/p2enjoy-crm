@@ -21,6 +21,8 @@
 // part — puis la DÉTACHE par le geste de l'écran. Le détachement n'est pas ici une commodité de
 // test : c'est le second geste que la sous-tranche livre, exercé par sa propre preuve. Un filet
 // de sécurité en fin de fichier retire le rattachement si un scénario s'est interrompu avant lui.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	connecterAvecLeLabs,
@@ -205,7 +207,7 @@ test.describe("contacts d'une affaire (docs/SPEC-contacts.md §12)", () => {
 	}) => {
 		await connecter(page, ADMIN)
 		// `Piste entrante à qualifier` : le seed ne lui rattache aucun contact.
-		await page.goto('/tracks/formation/inter-entreprises/cards/5eed0000-0000-4000-8000-0000000000c6')
+		await page.goto('/p2enjoy/tracks/formation/inter-entreprises/cards/5eed0000-0000-4000-8000-0000000000c6')
 		await expect(page.getByTestId('contacts-card-vide')).toBeVisible()
 		// C'est l'écart avec le §5.16 : ici le geste EXISTE, et il est ce qui comble le vide.
 		await expect(page.getByTestId('ouvrir-rattachement')).toBeVisible()

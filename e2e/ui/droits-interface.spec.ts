@@ -13,15 +13,17 @@
 // CE QUE CES SCÉNARIOS PROUVENT : l'écran OBÉIT à la capacité que la base rend — une commande refusée est désactivée
 // et cite son motif, une commande permise est offerte, un geste personnel reste offert à tous. Le refus serveur reste
 // prouvé hors interface par les suites existantes (CLAUDE.md §10) : ce fichier n'en est pas une.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { Locator } from '@playwright/test'
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { capturer } from './captures'
 
 const UNITE = 'CRM-093'
-const MAINTENANCE = '/tracks/studio-web/maintenance'
-const REFONTE = '/tracks/studio-web/refonte'
-const PROSPECTION = '/tracks/conseil-ia/prospection'
+const MAINTENANCE = '/p2enjoy/tracks/studio-web/maintenance'
+const REFONTE = '/p2enjoy/tracks/studio-web/refonte'
+const PROSPECTION = '/p2enjoy/tracks/conseil-ia/prospection'
 
 /** Une commande refusée : montée, désactivée, et son `aria-describedby` désigne un motif visible qui dit `texte`. */
 async function attendreEteinte(page: Page, commande: Locator, texte: RegExp): Promise<void> {
@@ -58,7 +60,7 @@ test.describe('la lectrice — Farida Nowak', () => {
 		await page.goto('/contacts')
 		await attendreEteinte(page, nouveauContact(page), /administrateurs et aux business developers/)
 
-		await page.goto('/reglages/arborescence')
+		await page.goto('/p2enjoy/reglages/arborescence')
 		await attendreEteinte(page, nouveauTrack(page), /réservées aux administrateurs/)
 		// Les icônes de ligne aussi : montées, désactivées, citant le même motif.
 		for (const nom of ['Modifier Studio web', 'Archiver Studio web']) {
@@ -95,7 +97,7 @@ test.describe('la lectrice — Farida Nowak', () => {
 	})
 
 	test('les réglages : « Coût du personnel » est un texte qui cite son motif ; ses préférences restent à elle', async ({ page }) => {
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		// Le motif n'est dit qu'une fois la capacité LUE : l'attendre, c'est attendre l'état stable (§4).
 		const motif = page.getByTestId('motif-reglages')
 		// Révisé par `CRM-068` T4b1 : le motif nomme désormais les trois entrées réservées (décision 51).
@@ -130,7 +132,7 @@ test.describe('le business developer — Driss Lemoine', () => {
 		await page.goto('/contacts')
 		await attendreOfferte(nouveauContact(page))
 
-		await page.goto('/reglages/arborescence')
+		await page.goto('/p2enjoy/reglages/arborescence')
 		await attendreEteinte(page, nouveauTrack(page), /réservées aux administrateurs/)
 		await capturer(page, 'droits-bizdev-arborescence-xl-1440', UNITE)
 
@@ -141,7 +143,7 @@ test.describe('le business developer — Driss Lemoine', () => {
 		await attendreEteinte(page, nouvelleAffaire(page), /Vos droits ne vous permettent pas d’en modifier les affaires/)
 		await capturer(page, 'droits-bizdev-maintenance-xl-1440', UNITE)
 
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		await expect(page.getByTestId('motif-reglages')).toBeVisible()
 		await expect(entreeCout(page)).toHaveAttribute('aria-disabled', 'true')
 	})
@@ -157,7 +159,7 @@ test.describe('l’administratrice — Camille Aubert', () => {
 		await page.goto('/contacts')
 		await attendreOfferte(nouveauContact(page))
 
-		await page.goto('/reglages/arborescence')
+		await page.goto('/p2enjoy/reglages/arborescence')
 		await attendreOfferte(nouveauTrack(page))
 		await expect(page.getByTestId('motif-lecture-seule')).toHaveCount(0)
 
@@ -166,7 +168,7 @@ test.describe('l’administratrice — Camille Aubert', () => {
 		await expect(page.getByTestId('motif-lecture-seule')).toHaveCount(0)
 		await capturer(page, 'droits-admin-maintenance-xl-1440', UNITE)
 
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		// Pendant la lecture de la capacité, l'entrée est un texte sans motif (§4) ; lue, elle redevient un lien.
 		await expect(page.locator('a[data-testid="entree-cout-personnel"]')).toBeVisible()
 		await expect(page.getByTestId('motif-reglages')).toHaveCount(0)

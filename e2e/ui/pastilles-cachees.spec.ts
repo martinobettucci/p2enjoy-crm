@@ -13,6 +13,8 @@
 // réglages, est rendu à sa valeur à la fin quoi qu'il arrive.
 // *Révisé le 2026-11-21 (`CRM-161` T1, docs/SPEC-mail-subsystem.md §35.8, décision 51)* : les fonctions de l'inbox prennent
 // l'espace (`p_workspace_id`, la portée `workspace_id`) ; la preuve passe celui du seed, sans changer ce qu'elle prouve.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { type APIRequestContext, type Page } from '@playwright/test'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
@@ -95,7 +97,7 @@ const valeursAdresse = (page: Page) => new URL(page.url()).searchParams.getAll('
 /** Le dossier « Refonte du site vitrine », ouvert par l'adresse du mail Lead : il y est visible. */
 async function ouvrirLeDossier(page: Page, pastilles: readonly string[] = []): Promise<void> {
 	const suite = pastilles.map((id) => `&pastille=${id}`).join('')
-	await page.goto(`/inbox?courrier=tous&message=${mails.lead}${suite}`)
+	await page.goto(`/p2enjoy/inbox?courrier=tous&message=${mails.lead}${suite}`)
 	await expect(ligne(page, OBJETS.lead)).toBeVisible()
 }
 
@@ -166,7 +168,7 @@ test.describe('les pastilles cachées dans l’inbox (docs/DESIGN_SYSTEM.md §5.
 
 	test('les réglages : Spam dit « Cachée » ; cocher la case de Lead masque son fil, la décocher le rend', async ({ page }) => {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/reglages/pastilles-mails')
+		await page.goto('/p2enjoy/reglages/pastilles-mails')
 		const lignes = page.getByTestId('ligne-pastille-mail')
 		await expect(lignes.filter({ hasText: 'Spam' }).getByTestId('pastille-cachee')).toHaveText('Cachée')
 		await expect(lignes.filter({ hasText: 'Lead' }).getByTestId('pastille-cachee')).toHaveCount(0)
@@ -183,7 +185,7 @@ test.describe('les pastilles cachées dans l’inbox (docs/DESIGN_SYSTEM.md §5.
 		await expect(lignes.filter({ hasText: 'Lead' }).getByTestId('pastille-cachee')).toHaveText('Cachée')
 
 		// Le message reste ouvert par son adresse (§31.13.3) ; son fil, lui, a quitté la liste.
-		await page.goto(`/inbox?courrier=tous&message=${mails.lead}`)
+		await page.goto(`/p2enjoy/inbox?courrier=tous&message=${mails.lead}`)
 		await expect(page.getByTestId('inbox-message-ouvert')).toContainText(OBJETS.lead)
 		await expect(ligne(page, OBJETS.lead)).toHaveCount(0)
 		// Le compte est celui de la base : nos deux fils Lead, et ceux du seed dans le même dossier (« Demande de devis —
@@ -194,7 +196,7 @@ test.describe('les pastilles cachées dans l’inbox (docs/DESIGN_SYSTEM.md §5.
 			`${attendus} fils masqués (Lead)`,
 		)
 
-		await page.goto('/reglages/pastilles-mails')
+		await page.goto('/p2enjoy/reglages/pastilles-mails')
 		await page.getByRole('button', { name: 'Modifier la pastille Lead' }).click()
 		await page.getByLabel('Cacher ses mails dans l’inbox').click()
 		await page.getByTestId('pastille-enregistrer').click()
@@ -222,7 +224,7 @@ test.describe('les pastilles cachées dans l’inbox (docs/DESIGN_SYSTEM.md §5.
 		await connecterAvecLeLabs(page, ADMIN)
 		for (const palier of PALIERS) {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
-			await page.goto(`/inbox?courrier=tous&message=${mails.lead}`)
+			await page.goto(`/p2enjoy/inbox?courrier=tous&message=${mails.lead}`)
 			// Sous 1024 px, l'inbox est une pile : on remonte du message à la liste (le patron de `CRM-155`).
 			await expect(page.getByTestId('inbox-message-ouvert')).toBeVisible()
 			const retour = page.getByRole('button', { name: 'Retour aux messages' })

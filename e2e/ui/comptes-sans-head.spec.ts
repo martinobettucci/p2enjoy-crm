@@ -9,6 +9,8 @@
 // avoir émis son compte sous la forme nouvelle — sans quoi l'absence de `HEAD` ne prouverait rien —,
 // et aucune requête `HEAD` ne doit avoir atteint `/rest/v1/`. Aucun scénario n'écrit : la clôture
 // d'un budget est ouverte puis annulée.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, estUnCompte, expect, test, type Page } from './fixtures'
 
@@ -54,13 +56,13 @@ test.describe('les comptes de la webapp sont des GET bornés, jamais des HEAD (d
 
 		// 2. La corbeille énumère ce que le track en corbeille rend inaccessible : un compte d'affaires.
 		depuis = vues.length
-		await page.goto('/reglages/corbeille')
+		await page.goto('/p2enjoy/reglages/corbeille')
 		await expect(page.getByRole('heading', { name: 'Corbeille' })).toBeVisible()
 		await expect.poll(() => tablesComptees(vues, depuis).has('cards')).toBe(true)
 
 		// 3. L'état de la messagerie compte la file sortante : en attente et échecs.
 		depuis = vues.length
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		await page.getByRole('link', { name: 'État de la messagerie' }).click()
 		await expect(page.getByRole('heading', { name: 'État de la messagerie' })).toBeVisible()
 		await expect
@@ -69,7 +71,7 @@ test.describe('les comptes de la webapp sont des GET bornés, jamais des HEAD (d
 
 		// 4. La confirmation de clôture d'un budget compte ses lignes sans coût réel ; elle est annulée.
 		depuis = vues.length
-		await page.goto('/reglages/arborescence')
+		await page.goto('/p2enjoy/reglages/arborescence')
 		await expect(page.getByRole('heading', { name: "Administration de l'arborescence" })).toBeVisible()
 		await page.getByRole('button', { name: 'Déplier Studio web' }).click()
 		const bloc = page.getByRole('region', { name: 'Budgets du track Studio web' })

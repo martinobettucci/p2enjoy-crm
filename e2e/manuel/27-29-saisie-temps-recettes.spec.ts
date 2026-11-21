@@ -15,6 +15,8 @@
 // Les écrans sont lus sur le seed — le track « Studio web », l'affaire « Refonte intranet Ville de Lyon », la semaine et
 // le mois que le seed remplit. Rien n'est saisi : les formulaires sont ouverts puis refermés, et une valeur hors borne
 // est montrée sans être envoyée.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -24,11 +26,11 @@ import { enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 const A_SAISIR = 'l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite'
 const TEMPS = 'le-temps-passe-et-le-cout-du-personnel'
 const RECETTES = 'les-recettes-d-une-affaire-et-sa-rentabilite'
-const FICHE = '/tracks/studio-web/refonte/cards/5eed0000-0000-4000-8000-0000000000c4'
+const FICHE = '/p2enjoy/tracks/studio-web/refonte/cards/5eed0000-0000-4000-8000-0000000000c4'
 
 test('l’onglet « À saisir » d’un track', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/tracks/studio-web/couts?onglet=saisir')
+	await page.goto('/p2enjoy/tracks/studio-web/couts?onglet=saisir')
 	const ligne = page.getByTestId('couts-a-saisir-ligne').first()
 	await expect(ligne).toBeVisible()
 	await illustrer(page, { chapitre: A_SAISIR, section: null, nom: 'a-saisir', cibles: [], pleinePage: true })
@@ -46,7 +48,7 @@ test('l’onglet « À saisir » d’un track', async ({ page }) => {
 // Un autre compte, une autre page : la session de l'administratrice ne se quitte pas au milieu d'un test.
 test('l’onglet « À saisir » vu par une lectrice', async ({ page }) => {
 	await connecterAvecLeLabs(page, VIEWER)
-	await page.goto('/tracks/studio-web/couts?onglet=saisir')
+	await page.goto('/p2enjoy/tracks/studio-web/couts?onglet=saisir')
 	await expect(page.getByTestId('onglet-couts-saisir')).toBeVisible()
 	const lecture = page.getByTestId('couts-a-saisir-lecture-seule')
 	if ((await lecture.count()) > 0) await illustrer(page, { chapitre: A_SAISIR, section: 'ce-que-vous-ne-pouvez-pas-modifier-reste-visible', nom: 'lecture-seule', cibles: [lecture] })
@@ -93,11 +95,11 @@ test('le temps : la semaine, le rapport, le coût du personnel', async ({ page }
 	await expect(rapport.getByRole('button', { name: 'Ce mois-ci' })).toBeVisible()
 	await expect(rapport.getByText('Chargement en cours')).toHaveCount(0)
 	await illustrer(page, { chapitre: TEMPS, section: 'le-rapport-mensuel', nom: 'rapport-mensuel', cibles: [rapport] })
-	await page.goto('/reglages/cout-personnel')
+	await page.goto('/p2enjoy/reglages/cout-personnel')
 	const cout = page.getByTestId('cout-personnel')
 	await expect(cout).toBeVisible()
 	await illustrer(page, { chapitre: TEMPS, section: 'regler-le-cout-du-personnel', nom: 'cout-du-personnel', cibles: [cout] })
-	await page.goto('/tracks/studio-web/couts')
+	await page.goto('/p2enjoy/tracks/studio-web/couts')
 	const personnel = page.getByTestId('personnel-track').or(page.getByTestId('personnel-portee')).first()
 	if ((await personnel.count()) > 0) await illustrer(page, { chapitre: TEMPS, section: 'le-cout-du-personnel-a-cote-des-couts', nom: 'cout-a-cote-des-couts', cibles: [personnel] })
 })

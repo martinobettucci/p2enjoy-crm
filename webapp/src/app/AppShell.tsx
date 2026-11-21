@@ -7,6 +7,8 @@
 //       (docs/SPEC-administration-arborescence.md §15.4)
 // @spec CRM-131 (docs/BACKLOG.md) — la mesure des channels lisibles, émise hors d'un track pour la barre d'onglets
 //       (docs/SPEC-channels.md §5.5 ; docs/DESIGN_SYSTEM.md §4 ; décision 868)
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'espace courant tiré de l'adresse ou de l'onglet, la barre latérale sur
+//       cet espace, « Espace introuvable » (docs/SPEC-espace-courant.md §8.3, §15.2)
 // @spec CRM-094 (docs/BACKLOG.md) tranches T2 et T3 — l'espace courant et son rôle rendus par un contexte,
 //       et le guide flottant monté au bas de la zone principale (docs/SPEC-onboarding.md §10.2,
 //       docs/DESIGN_SYSTEM.md §5.49)
@@ -25,6 +27,7 @@
 // oblige à traiter chaque cas, et le traiter une seule fois évite qu'une route en oublie un.
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Link, useParams } from 'react-router'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import { SkipLink } from '../components/ui/SkipLink'
 import { EtatConfiguration, EtatErreur, EtatRefus } from '../components/ui/States'
@@ -39,6 +42,8 @@ import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
 import { useCapacitesEspace } from '../lib/capacites'
 import { useApresTracksModifies, useTracks } from '../lib/tracks'
 import { useWorkspaces } from '../lib/workspaces'
+import { choisirEspace, retenirEspaceDeLOnglet } from '../lib/espace-onglet'
+import { cheminEspace } from './chemins'
 import { useAuthentification } from './Authentification'
 import { FournisseurEspace } from './ContexteEspace'
 import { GuideFlottant } from './GuideFlottant'
@@ -96,7 +101,23 @@ export function AppShell({
 	// l'en-tête, et les tracks, portés par la barre latérale. Ils échouent séparément, et la zone
 	// principale décide en les regardant **tous les deux** (voir `ZonePrincipale`).
 	const { etat, recharger } = useWorkspaces(clientCrm)
-	const { etat: etatTracks, recharger: rechargerTracks, relire: relireTracks } = useTracks(clientCrm)
+	// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) : l'espace courant est celui de l'ADRESSE sur une page d'un espace,
+	// le dernier de l'ONGLET sur une page globale, sinon le premier par nom. Un slug d'adresse qui ne nomme aucun espace lu
+	// rend « Espace introuvable » (§8.3).
+	const { slugEspace: slugAdresse } = useParams()
+	const espaceChoisi = etat.statut === 'pret' ? choisirEspace(etat.donnees, slugAdresse) : null
+	const espaceCourant = espaceChoisi?.genre === 'espace' ? espaceChoisi.espace : null
+	useEffect(() => {
+		if (slugAdresse !== undefined && espaceCourant !== null) retenirEspaceDeLOnglet(espaceCourant.slug)
+	}, [slugAdresse, espaceCourant])
+	// Les tracks attendent l'espace ; sans espace lisible (aucun, ou une lecture des espaces en échec), la barre lit sans
+	// filtre, et la RLS rend ce qu'elle rendait — l'état vide ou l'erreur restent dits comme avant.
+	const idEspaceDesTracks =
+		espaceCourant?.id ?? (espaceChoisi?.genre === 'introuvable' ? (espaceChoisi.premier?.id ?? undefined) : undefined)
+	const { etat: etatTracks, recharger: rechargerTracks, relire: relireTracks } = useTracks(
+		clientCrm,
+		etat.statut === 'chargement' ? null : idEspaceDesTracks,
+	)
 	// INC-254 (docs/SPEC-webapp.md §6.3 bis) : les routes de réglages rendent cette coquille au même
 	// endroit, et React la GARDE d'une page à l'autre ; ses tracks, lus au montage, ne suivraient pas un
 	// track créé sur l'arborescence. Le signal les fait relire, sans squelette.
@@ -107,7 +128,7 @@ export function AppShell({
 	// d'un droit.
 	const { etat: etatSession } = useAuthentification()
 	const idUtilisateur = etatSession.statut === 'authentifie' ? etatSession.utilisateur.id : null
-	const idWorkspace = etat.statut === 'pret' ? (etat.donnees[0]?.id ?? null) : null
+	const idWorkspace = espaceCourant?.id ?? null
 	const { etat: etatRole } = useRoleWorkspace(clientCrm, idWorkspace, idUtilisateur)
 	const estAdmin = estAdministrateur(etatRole)
 	// `CRM-093` — les capacités de l'espace, lues sur sa ligne (docs/SPEC-droits-interface.md §2.2) : une requête à
@@ -115,9 +136,11 @@ export function AppShell({
 	const capacites = useCapacitesEspace(clientCrm, idWorkspace)
 	// `CRM-157` : tant que les espaces se lisent, `idWorkspace` nul ne veut pas dire « aucun espace » — le guide attend.
 	const espaceLu = etat.statut !== 'chargement'
+	const espaces = etat.statut === 'pret' ? etat.donnees : undefined
+	const slugCourant = espaceCourant?.slug ?? null
 	const contexteEspace = useMemo(
-		() => ({ idWorkspace, estAdmin, capacites, espaceLu }),
-		[idWorkspace, estAdmin, capacites, espaceLu],
+		() => ({ idWorkspace, estAdmin, capacites, espaceLu, slugEspace: slugCourant, ...(espaces === undefined ? {} : { espaces }) }),
+		[idWorkspace, estAdmin, capacites, espaceLu, slugCourant, espaces],
 	)
 	// `CRM-101` — l'entrée « Plateforme » n'est rendue que si la base le dit (docs/DESIGN_SYSTEM.md §5.56) ;
 	// pendant la lecture et en cas d'échec, elle est absente.
@@ -219,6 +242,9 @@ export function AppShell({
 						{/* Le chargement des channels rejoint les deux autres : un échec ne doit pas
 						    être avalé par une barre d'onglets qui n'a pas la place de l'expliquer,
 						    exactement comme pour les tracks à `CRM-020`. */}
+						{espaceChoisi?.genre === 'introuvable' ? (
+							<EspaceIntrouvable premier={espaceChoisi.premier?.slug ?? null} />
+						) : (
 						<ZonePrincipale
 							etats={
 								etatChannels === undefined
@@ -228,6 +254,7 @@ export function AppShell({
 							recharger={toutRecharger}
 							contenu={children}
 						/>
+						)}
 						<GuideFlottant />
 					</main>
 				</div>
@@ -298,4 +325,22 @@ function ZonePrincipale({
 	// n'a pas à décider à sa place, et les squelettes de chargement vivent là où la donnée
 	// est attendue — barre latérale et en-tête.
 	return <>{contenu}</>
+}
+
+/**
+ * `CRM-161` T2.a (docs/SPEC-espace-courant.md §8.3) : le slug de l'adresse ne nomme aucun espace que la personne lit. L'écran
+ * ne dit jamais si l'espace existe ; il propose le premier espace par nom.
+ */
+function EspaceIntrouvable({ premier }: { readonly premier: string | null }) {
+	return (
+		<div data-testid="espace-introuvable" className="flex flex-col items-start gap-3 max-w-prose">
+			<h2 className="text-h3 font-bold text-ink">{t('espace.introuvable.titre')}</h2>
+			<p className="text-sm text-text-2">{t('espace.introuvable.corps')}</p>
+			{premier === null ? null : (
+				<Link to={cheminEspace(premier, '/inbox')} className="text-sm text-brand font-medium hover:underline">
+					{t('espace.introuvable.lien')}
+				</Link>
+			)}
+		</div>
+	)
 }

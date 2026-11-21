@@ -41550,3 +41550,44 @@ lourde pour la session.
 et le fil d'Ariane (§5.43, §5.62), la barre latérale, les menus et panneaux déroulants, les pastilles de compte, puis §6 à §12
 (états, paliers, accessibilité, icônes). Écartée : la lecture intégrale. La vérification du diff d'interface avant chaque commit
 se fait contre ces sections.
+
+### `CRM-161` T2.a — l'espace en tête du chemin (journal d'implémentation)
+
+*2026-11-21, session 4891a451 (p2enjoy-crm-5f).*
+**Le problème** : l'application n'avait pas d'espace courant (décision 967) ; la barre latérale lisait les tracks de tous les
+espaces ; une dizaine d'écrans prenaient le premier espace par nom.
+**Choix de réalisation** :
+- **les constantes `CHEMIN_*` restent le chemin DANS l'espace** ; la route est `enEspace(CHEMIN_*)`, et l'ancienne adresse
+  garde sa route, qui redirige. Un lien qu'on aurait oublié de convertir aboutit donc encore, dans l'espace de l'onglet, au
+  lieu de casser ;
+- **`LienEspace`, `NavLienEspace`, `useNaviguerEspace`** remplacent `Link`, `NavLink` et `useNavigate` dans les dix-neuf écrans
+  des pages d'un espace et dans l'index des réglages, par un changement d'import seul ; ils ne préfixent que les chemins
+  d'espace ;
+- **les lignes des pages globales gardent l'ancienne adresse** en T2.a : la redirection les mène dans l'espace de leur
+  ressource (l'affaire, le message), ce qui est la bascule voulue ; T3 les composera directement ;
+- **la mémoire de l'onglet** est une variable de module : un rechargement la perd (vérifié par la preuve E2E, qui recharge et
+  retrouve le premier espace) ;
+- **les slugs réservés** : contrainte `workspaces_slug_not_reserved` (`0196`), et `plateforme_creer_espace` lève
+  `identifiant_reserve`, dit en clair. *Choix de la spécification, à présenter au responsable.* Production : un espace,
+  `crm`, non réservé (lu par la session de livraison).
+**Une correction en cours de route** : la `0196` a d'abord été appliquée en développement sans la redéfinition de
+`plateforme_creer_espace` ; non poussée, elle a été défaite en développement (contrainte retirée, ligne du registre retirée),
+puis rejouée complète par le runner.
+**Constaté, hors de T2.a** : les écrans de réglages lisent leurs listes sans filtre d'espace — défaut antérieur, repris par une
+sous-tranche T2.c (`docs/SPEC-espace-courant.md` §15.4 bis), avant T2.b.
+**Les E2E** : 436 `goto` révisés vers `/p2enjoy/…` dans 117 fichiers ; une preuve qui pose son propre espace garde l'ancienne
+adresse ; `dansUnEspace` pour les attentes exactes. La suite d'écran complète a été refusée à cette session (décision 830 : la
+campagne complète revient à la session de livraison) ; un sous-ensemble de 24 specs, celles qui dépendent de l'adresse, de la
+barre latérale et des onglets, a été joué.
+**Deux défauts trouvés par ce sous-ensemble, et corrigés** :
+- `estVueTrack` (`lib/nouveau-channel.ts`) était ancré sur `^/tracks` : la commande « Nouveau channel » quittait le channel
+  ouvert ; le motif admet désormais le slug de l'espace ;
+- **un écran qui monte sa propre coquille** (la route d'un track, d'une affaire, des coûts) appelait `useNaviguerEspace` hors
+  du fournisseur d'espace : sans slug, sa navigation passait par l'ancienne adresse, la redirection remontait l'écran, et
+  l'annonce et le focus d'après le geste étaient perdus (archivage d'un channel, création d'un channel). `useVersEspace` lit
+  désormais le slug de l'adresse quand le contexte n'en a pas ; preuve unitaire `LienEspace.test.tsx`.
+**Un incident de la session, consigné pour ne pas le refaire** : un `npm run build` lancé PENDANT une course E2E a réécrit
+`webapp/dist` sous le serveur de prévisualisation du harnais ; la page de connexion a été servie depuis un build sans la
+configuration des preuves, et une course entière a échoué (90 échecs, tous de connexion ou de 503). La course a été rejouée
+sans construction parallèle. Le `timeout` qui l'enveloppait avait en outre laissé le `vite preview` orphelin sur le port 4173 :
+arrêté avant le rejeu.

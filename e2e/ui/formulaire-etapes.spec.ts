@@ -12,6 +12,8 @@
 // un écran faux et une attente fausse ne peuvent pas s'accorder par une même erreur de recopie (§4 quinquies, point 2).
 //
 // La preuve est en lecture seule : elle n'écrit rien et ne fabrique aucune affaire.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesAuthentifies, jetonDe } from '../api/jetons'
@@ -164,7 +166,7 @@ test.describe('le formulaire à chaque étape du workflow global, sans substitut
 			const attendu = composer(idEtape, champs, regles, valeursCard)
 			compositions.push(attendu)
 
-			await page.goto(`/tracks/${affaire.channel.track.slug}/${affaire.channel.slug}/cards/${card}`)
+			await page.goto(`/p2enjoy/tracks/${affaire.channel.track.slug}/${affaire.channel.slug}/cards/${card}`)
 			const formulaire = page.getByTestId('formulaire-card')
 			await expect(formulaire).toBeVisible()
 			await expect(formulaire.locator('header p')).toHaveText(`Étape courante : ${libelle}`)

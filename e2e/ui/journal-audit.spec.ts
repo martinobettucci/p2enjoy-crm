@@ -9,12 +9,14 @@
 // LE GESTE ÉPROUVÉ EST CELUI DE L'ÉCRAN DES MEMBRES : Camille pose à Farida un droit de lecture sur le track « Formation »,
 // puis le rend à « hérité ». Le seed n'en porte aucun, et la spec des membres ne touche pas ce track : l'état du seed est
 // rendu, et le journal, en ajout seul, garde les deux entrées.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test } from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-072'
-const JOURNAL = '/reglages/journal'
+const JOURNAL = '/p2enjoy/reglages/journal'
 const FARIDA = '5eed0000-0000-4000-8000-000000000013'
 
 test.describe('l’administratrice — Camille Aubert', () => {
@@ -24,7 +26,7 @@ test.describe('l’administratrice — Camille Aubert', () => {
 	})
 
 	test('l’index mène au journal, rendu en tableau à quatre colonnes', async ({ page }) => {
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		await page.getByTestId('entree-journal').click()
 		await expect(page).toHaveURL(/\/reglages\/journal$/)
 		await expect(page.getByRole('heading', { name: 'Journal d’audit', level: 2 })).toBeVisible()
@@ -35,7 +37,7 @@ test.describe('l’administratrice — Camille Aubert', () => {
 	})
 
 	test('un droit posé à l’écran des membres paraît au journal, avec Camille pour actrice, puis son retrait', async ({ page }) => {
-		await page.goto('/reglages/membres')
+		await page.goto('/p2enjoy/reglages/membres')
 		const droits = page.getByTestId('droits-fins')
 		await droits.getByLabel('Membre').selectOption(FARIDA)
 		const formation = droits.getByLabel('Droit posé sur Formation')
@@ -101,7 +103,7 @@ test.describe('la lectrice — Farida Nowak', () => {
 	test('l’entrée d’index est un texte, et l’adresse directe rend « Réservé aux administrateurs »', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		const entree = page.getByTestId('entree-journal')
 		await expect(entree).toHaveAttribute('aria-disabled', 'true')
 		await expect(page.getByRole('link', { name: /Journal d’audit/ })).toHaveCount(0)

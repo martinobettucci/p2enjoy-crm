@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'écran travaille dans l'espace de l'adresse (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-136 (docs/BACKLOG.md) — tranche T3 : l'historique au formulaire, la commande et le panneau « Dossiers relevés »,
 //       son ouverture d'elle-même après la création d'une boîte (docs/SPEC-mail-subsystem.md §25.4, §25.5 ;
 //       docs/DESIGN_SYSTEM.md §5.99)
@@ -59,6 +60,7 @@ import {
 import { lireWorkspaces } from '../lib/workspaces'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
+import { idEspaceParmi } from '../lib/espace-onglet'
 
 /** Les quatre états de `mail_inbound_accounts_statut`, chacun avec son mot et son ton (§5.34). */
 const ETATS: Readonly<Record<EtatCompteEntrant, { readonly cle: CleTraduction; readonly ton: TonBadge }>> = {
@@ -217,6 +219,8 @@ export function ReglagesComptesMail({
 	const [panneauAOuvrir, setPanneauAOuvrir] = useState<string | null>(null)
 	const commandesDossiers = useRef<Map<string, HTMLButtonElement | null>>(new Map())
 
+	// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) : l'espace de l'adresse, et non plus le premier de la liste.
+	const { idWorkspace: idEspaceContexte } = useContexteEspace()
 	useEffect(() => {
 		if (client === null) return
 		const rang = ++courant.current
@@ -229,12 +233,12 @@ export function ReglagesComptesMail({
 				return
 			}
 			if (espaces.statut !== 'pret') return
-			setIdWorkspace(espaces.donnees[0]?.id ?? null)
+			setIdWorkspace(idEspaceParmi(espaces.donnees, idEspaceContexte))
 			const lus = await lireComptesEntrants(client)
 			if (rang !== courant.current) return
 			setEtat(lus.statut === 'pret' ? pret(lus.donnees) : lus)
 		})()
-	}, [client, tentative])
+	}, [client, tentative, idEspaceContexte])
 
 	useEffect(() => {
 		if (saisie !== null || !focusARendre.current) return

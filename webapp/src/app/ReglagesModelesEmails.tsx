@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'écran travaille dans l'espace de l'adresse (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-093 (docs/BACKLOG.md) tranche T3 — « Nouveau modèle » et « Modifier » désactivés avec leur motif quand la
 //       base refuse l'édition de l'espace ; la prévisualisation, une lecture, reste offerte
 //       (docs/SPEC-droits-interface.md §2.2, §3, §5 ; docs/DESIGN_SYSTEM.md §5.59)
@@ -62,6 +63,7 @@ import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useContexteEspace } from './ContexteEspace'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { motifVisible, proprietesCommande, type ProprietesCommande } from '../lib/capacites'
+import { idEspaceParmi } from '../lib/espace-onglet'
 
 /** Le motif de la surface, cité par ses commandes d'écriture quand la base refuse l'édition (CRM-093). */
 const ID_MOTIF_MODELES = 'modeles-emails-lecture-seule'
@@ -143,6 +145,8 @@ export function ReglagesModelesEmails({
 	/** Le retour du focus est DIFFÉRÉ d'un tour de rendu : la commande est démontée (§5.25). */
 	const focusARendre = useRef(false)
 
+	// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) : l'espace de l'adresse, et non plus le premier de la liste.
+	const { idWorkspace: idEspaceContexte } = useContexteEspace()
 	useEffect(() => {
 		if (client === null) return
 		const rang = ++courant.current
@@ -155,12 +159,12 @@ export function ReglagesModelesEmails({
 				return
 			}
 			if (espaces.statut !== 'pret') return
-			setIdWorkspace(espaces.donnees[0]?.id ?? null)
+			setIdWorkspace(idEspaceParmi(espaces.donnees, idEspaceContexte))
 			const lus = await lireModelesEmails(client)
 			if (rang !== courant.current) return
 			setEtat(lus.statut === 'pret' ? pret(lus.donnees) : lus)
 		})()
-	}, [client, tentative])
+	}, [client, tentative, idEspaceContexte])
 
 	// LA PALETTE SE CHARGE UNE FOIS, ET SON ÉCHEC NE BLOQUE PAS L'ÉCRAN (§9.3). Une liste de
 	// variables illisible rend la palette muette et le dit ; elle n'empêche ni de lire, ni d'écrire

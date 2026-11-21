@@ -9,6 +9,8 @@
 //
 // Les gestes écrivent sur des MAILS PROPRES À LA PREUVE, posés par la clé de service et retirés à la fin. Les messages du
 // seed ne sont que lus.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { type APIRequestContext } from '@playwright/test'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -74,7 +76,7 @@ test.describe('les pastilles dans l’inbox (docs/DESIGN_SYSTEM.md §5.103)', ()
 	test('la correction du seed : la ligne et le message ouvert disent les pastilles et leur origine', async ({ page, request }) => {
 		const corrige = await idDe(request, `rfc822_message_id=eq.${encodeURIComponent(MSGID_CORRIGE)}`)
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto(`/inbox?courrier=tous&message=${corrige}`)
+		await page.goto(`/p2enjoy/inbox?courrier=tous&message=${corrige}`)
 		const ouvert = page.getByTestId('inbox-message-ouvert')
 		await expect(ouvert.getByRole('heading', { name: 'Demande de devis — refonte' })).toBeVisible()
 		const ligne = ouvert.getByTestId('inbox-pastilles-message')
@@ -105,7 +107,7 @@ test.describe('les pastilles dans l’inbox (docs/DESIGN_SYSTEM.md §5.103)', ()
 		const message = await poserMail(request, `ZZ 141 souris ${suffixe}`)
 		const spam = await pastille(request, 'Spam')
 		await connecterAvecLeLabs(page, 'bizdev@p2enjoy.test')
-		await page.goto(`/inbox?courrier=tous&message=${message}`)
+		await page.goto(`/p2enjoy/inbox?courrier=tous&message=${message}`)
 		const ouvert = page.getByTestId('inbox-message-ouvert')
 		await ouvert.getByTestId('inbox-pastilles').click()
 		const panneau = page.getByTestId('inbox-panneau-pastilles')
@@ -128,7 +130,7 @@ test.describe('les pastilles dans l’inbox (docs/DESIGN_SYSTEM.md §5.103)', ()
 	test('au clavier : « Réévaluer les pastilles », puis « Pastilles », Espace sur une case, Échap', async ({ page, request }) => {
 		const message = await poserMail(request, `ZZ 141 clavier ${suffixe}`)
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto(`/inbox?courrier=tous&message=${message}`)
+		await page.goto(`/p2enjoy/inbox?courrier=tous&message=${message}`)
 		const ouvert = page.getByTestId('inbox-message-ouvert')
 		await ouvert.getByTestId('inbox-reevaluer-pastilles').focus()
 		await page.keyboard.press('Enter')
@@ -160,7 +162,7 @@ test.describe('les pastilles dans l’inbox (docs/DESIGN_SYSTEM.md §5.103)', ()
 	}) => {
 		const corrige = await idDe(request, `rfc822_message_id=eq.${encodeURIComponent(MSGID_CORRIGE)}`)
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto(`/inbox?courrier=tous&message=${corrige}`)
+		await page.goto(`/p2enjoy/inbox?courrier=tous&message=${corrige}`)
 		const liste = page.getByTestId('inbox-panneau-liste')
 		const filtres = liste.getByRole('group', { name: 'Filtrer par pastille' })
 		await filtres.getByRole('button', { name: 'Devis / commande', exact: true }).click()
@@ -184,11 +186,11 @@ test.describe('les pastilles dans l’inbox (docs/DESIGN_SYSTEM.md §5.103)', ()
 		const echec = await idDe(request, `rfc822_message_id=eq.${encodeURIComponent(MSGID_ECHEC)}`)
 		const invitation = await idDe(request, `subject=like.${encodeURIComponent('Invitation — journée partenaires*')}`)
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto(`/inbox?courrier=tous&message=${echec}`)
+		await page.goto(`/p2enjoy/inbox?courrier=tous&message=${echec}`)
 		const ouvert = page.getByTestId('inbox-message-ouvert')
 		await expect(ouvert.getByTestId('inbox-pastilles-etat')).toHaveText("Les pastilles n'ont pas pu être évaluées")
 		await capturer(page, 'pastilles-inbox-echec-1440', UNITE)
-		await page.goto(`/inbox?courrier=tous&message=${invitation}`)
+		await page.goto(`/p2enjoy/inbox?courrier=tous&message=${invitation}`)
 		await expect(
 			ouvert.getByTestId('inbox-pastilles-message').getByRole('img', { name: 'Newsletter, pastille archivée, posée à la main' }),
 		).toBeVisible()
@@ -199,7 +201,7 @@ test.describe('les pastilles dans l’inbox (docs/DESIGN_SYSTEM.md §5.103)', ()
 	test('la lectrice : « Réévaluer » éteinte, le panneau s’ouvre avec le motif, ses cases éteintes', async ({ page, request }) => {
 		const message = await poserMail(request, `ZZ 141 lectrice ${suffixe}`, CARD_C7)
 		await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
-		await page.goto(`/inbox?courrier=tous&message=${message}`)
+		await page.goto(`/p2enjoy/inbox?courrier=tous&message=${message}`)
 		const ouvert = page.getByTestId('inbox-message-ouvert')
 		await expect(ouvert.getByTestId('inbox-reevaluer-pastilles')).toBeDisabled()
 		await ouvert.getByTestId('inbox-pastilles').click()
@@ -214,7 +216,7 @@ test.describe('les pastilles dans l’inbox (docs/DESIGN_SYSTEM.md §5.103)', ()
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
 		for (const palier of PALIERS) {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
-			await page.goto(`/inbox?courrier=tous&message=${corrige}`)
+			await page.goto(`/p2enjoy/inbox?courrier=tous&message=${corrige}`)
 			const ouvert = page.getByTestId('inbox-message-ouvert')
 			await expect(ouvert.getByTestId('inbox-pastilles-message')).toBeVisible()
 			await ouvert.getByTestId('inbox-pastilles').click()

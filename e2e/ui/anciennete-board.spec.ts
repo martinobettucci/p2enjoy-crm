@@ -21,12 +21,14 @@
 //
 // AUCUNE ÉCRITURE, AUCUNE FABRICATION. Le seed porte tout ce que ce fichier mesure ; il sort donc
 // intact, sans `finally` de nettoyage.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { capturer } from './captures'
 
 const ADMIN = 'admin@p2enjoy.test'
-const ROUTE_BOARD = '/tracks/conseil-ia/grands-comptes'
+const ROUTE_BOARD = '/p2enjoy/tracks/conseil-ia/grands-comptes'
 
 /** La seule card que le seed pose EN RETARD : 30 jours pour un seuil de 14 (§9.12.1). */
 const CARD_EN_RETARD = '5eed0000-0000-4000-8000-0000000000c3'

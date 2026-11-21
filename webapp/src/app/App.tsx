@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — les pages d'un espace sous `/:slugEspace`, les anciennes adresses redirigées (§8.1, §15.1, §15.4) ; docs/SPEC-espace-courant.md
 // @spec CRM-156 (docs/BACKLOG.md) — tranche T4 : la route de Réglages ▸ Expéditeurs bloqués (docs/DESIGN_SYSTEM.md §5.109 bis)
 // @spec CRM-141 (docs/BACKLOG.md) — tranche T3 : la route de Réglages ▸ Pastilles des mails (docs/SPEC-mail-subsystem.md §31.7)
 // @spec CRM-149 (docs/BACKLOG.md) — tranche T3 : la route de Réglages ▸ Prompts du connecteur (docs/SPEC-mcp.md §17.7)
@@ -19,6 +20,8 @@
 // @spec CRM-086 (docs/BACKLOG.md) — route de l'écran de coûts d'un track (docs/SPEC-costs.md §4.0)
 // @spec docs/SPEC-webapp.md §5.2 (routes), §6.2 (session), §12.3 (chargement différé)
 // @spec docs/SPEC-auth.md §9.1 ; docs/JOURNAL.md décision 248
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — les pages d'un espace sous `/:slugEspace`, les anciennes adresses redirigées
+//       (docs/SPEC-espace-courant.md §8.1, §15.1, §15.4)
 // @spec CRM-098 (docs/BACKLOG.md) — route de Réglages ▸ « Coût du personnel » (docs/SPEC-temps.md §7.4)
 // @spec CRM-101 (docs/BACKLOG.md) — routes de la plateforme (docs/SPEC-plateforme.md §7, docs/DESIGN_SYSTEM.md §5.56)
 //
@@ -49,7 +52,11 @@ import {
 	CHEMIN_ADMIN_PASTILLES_MAIL,
 	CHEMIN_ADMIN_EXPEDITEURS_BLOQUES,
 	CHEMIN_ADMIN_PROMPTS_CONNECTEUR,
+	ANCIENNES_ADRESSES,
+	enEspace,
+	estPageDEspace,
 } from './chemins'
+import { RedirectionAncienneAdresse } from './RedirectionAncienneAdresse'
 import type { VuePlateforme } from './Plateforme'
 import { GuideDemarrage } from './GuideDemarrage'
 import {
@@ -387,34 +394,34 @@ function RoutesPages() {
 				{ROUTES.map((route) => (
 					<Route
 						key={route.chemin}
-						path={route.chemin}
+						path={estPageDEspace(route.chemin) ? enEspace(route.chemin) : route.chemin}
 						element={<AppShell cleTitreRoute={route.cleTitre}>{route.rendu()}</AppShell>}
 					/>
 				))}
 				{/* Les routes d'un track portent leur propre coquille : leur titre est le nom du
 				    track — une donnée — et leur barre d'onglets dépend du chargement (`CRM-021`). */}
 				{CHEMINS_TRACK.map((chemin) => (
-					<Route key={chemin} path={chemin} element={<RouteTrack />} />
+					<Route key={chemin} path={enEspace(chemin)} element={<RouteTrack />} />
 				))}
 				{/* L'écran de coûts d'un track — `CRM-086`, docs/SPEC-costs.md §4.0 et §4.2. Hors de
 				    `ROUTES` : son titre est le nom du track — une donnée —, et son contenu dépend
 				    d'un paramètre d'adresse. Il ne dispute rien à `/tracks/:slugTrack/:slugChannel`,
 				    react-router classant ses routes par spécificité : un segment littéral l'emporte
 				    sur un segment dynamique de même rang, quel que soit l'ordre de déclaration. */}
-				<Route path={CHEMIN_COUTS_TRACK} element={<CoutsTrack />} />
+				<Route path={enEspace(CHEMIN_COUTS_TRACK)} element={<CoutsTrack />} />
 				{/* Le détail d'un budget — `CRM-086`, docs/SPEC-costs.md §4.0 et §4.3. Hors de `ROUTES` :
 				    son titre est le nom du budget — une donnée —, et son contenu dépend de deux paramètres
 				    d'adresse. Aucune collision avec la route ci-dessus, qui porte trois segments là où
 				    celle-ci en porte quatre. */}
-				<Route path={CHEMIN_COUTS_BUDGET} element={<CoutsBudget />} />
+				<Route path={enEspace(CHEMIN_COUTS_BUDGET)} element={<CoutsBudget />} />
 				{/* La vue liste d'un channel — `CRM-042`. Même coquille et même résolution de track
 				    que le board, dont elle n'est qu'une seconde lecture : ce qui change est la zone
 				    principale, pas la route de track (docs/SPEC-cards.md §12.2). */}
-				<Route path={CHEMIN_LISTE} element={<RouteTrack vue="liste" />} />
+				<Route path={enEspace(CHEMIN_LISTE)} element={<RouteTrack vue="liste" />} />
 				{/* Le détail d'une card porte lui aussi sa propre coquille : son titre est celui de
 				    la card, et son contenu dépend de son identifiant (`CRM-037`). Déclarée **après**
 				    les routes de track, dont elle prolonge le chemin. */}
-				<Route path={CHEMIN_CARD} element={<RouteCard />} />
+				<Route path={enEspace(CHEMIN_CARD)} element={<RouteCard />} />
 				{/* La fiche d'organisation — `CRM-060` tranche 4b, docs/SPEC-contacts.md §11.2. Une
 				    route de DÉTAIL sous le carnet, hors de `ROUTES` : son titre est le nom de
 				    l'organisation — une donnée —, et son contenu dépend d'un paramètre d'URL.
@@ -445,7 +452,7 @@ function RoutesPages() {
 				    latérale : on y arrive par l'index des réglages
 				    (docs/SPEC-administration-arborescence.md §3.1). */}
 				<Route
-					path={CHEMIN_ADMIN_ARBORESCENCE}
+					path={enEspace(CHEMIN_ADMIN_ARBORESCENCE)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_ADMIN_ARBORESCENCE}>
 							<AdministrationArborescence />
@@ -455,7 +462,7 @@ function RoutesPages() {
 				{/* Réglages ▸ Membres — `CRM-070`. Déclarée APRÈS l'arborescence, comme dans l'index des réglages
 				    (docs/SPEC-membres.md §3). */}
 				<Route
-					path={CHEMIN_ADMIN_MEMBRES}
+					path={enEspace(CHEMIN_ADMIN_MEMBRES)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_MEMBRES}>
 							<ReglagesMembres />
@@ -465,7 +472,7 @@ function RoutesPages() {
 				{/* Réglages ▸ Journal d'audit — `CRM-072` T2. Déclarée APRÈS les membres, comme dans l'index des réglages
 				    (docs/DESIGN_SYSTEM.md §5.66). */}
 				<Route
-					path={CHEMIN_ADMIN_JOURNAL}
+					path={enEspace(CHEMIN_ADMIN_JOURNAL)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_JOURNAL}>
 							<ReglagesJournal />
@@ -488,7 +495,7 @@ function RoutesPages() {
 				    l'arborescence : hors de la barre latérale, atteint depuis l'index des
 				    réglages (docs/SPEC-workflow-engine.md §7 bis.2). */}
 				<Route
-					path={CHEMIN_ADMIN_WORKFLOWS}
+					path={enEspace(CHEMIN_ADMIN_WORKFLOWS)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_ADMIN_WORKFLOWS}>
 							<AdministrationWorkflows />
@@ -497,7 +504,7 @@ function RoutesPages() {
 				/>
 				{/* Réglages ▸ Champs de l'affaire — `CRM-112` T3.a. Déclarée APRÈS les workflows, comme dans l'index (§5.86). */}
 				<Route
-					path={CHEMIN_ADMIN_CHAMPS_AFFAIRE}
+					path={enEspace(CHEMIN_ADMIN_CHAMPS_AFFAIRE)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_CHAMPS_AFFAIRE}>
 							<ReglagesChampsAffaire />
@@ -507,7 +514,7 @@ function RoutesPages() {
 				{/* Réglages ▸ Modèles d'affaires — `CRM-068` T4b1. Déclarée APRÈS les workflows, comme dans l'index des
 				    réglages (docs/DESIGN_SYSTEM.md §5.71). */}
 				<Route
-					path={CHEMIN_ADMIN_MODELES_AFFAIRES}
+					path={enEspace(CHEMIN_ADMIN_MODELES_AFFAIRES)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_MODELES_AFFAIRES}>
 							<ReglagesModelesAffaires />
@@ -516,7 +523,7 @@ function RoutesPages() {
 				/>
 				{/* Réglages ▸ Étiquettes — `CRM-069` T2. Déclarée APRÈS les modèles d'affaires, comme dans l'index (§5.73). */}
 				<Route
-					path={CHEMIN_ADMIN_ETIQUETTES}
+					path={enEspace(CHEMIN_ADMIN_ETIQUETTES)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_ETIQUETTES}>
 							<ReglagesEtiquettes />
@@ -525,7 +532,7 @@ function RoutesPages() {
 				/>
 				{/* Réglages ▸ Catégories d'organisations — `CRM-153` T2. Déclarée APRÈS les étiquettes, comme dans l'index (§5.107). */}
 				<Route
-					path={CHEMIN_ADMIN_CATEGORIES_ORGANISATIONS}
+					path={enEspace(CHEMIN_ADMIN_CATEGORIES_ORGANISATIONS)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_CATEGORIES_ORGANISATIONS}>
 							<ReglagesCategoriesOrganisations />
@@ -534,7 +541,7 @@ function RoutesPages() {
 				/>
 				{/* Réglages ▸ Webhooks — `CRM-073` T3. Déclarée APRÈS les étiquettes, comme dans l'index (§5.79). */}
 				<Route
-					path={CHEMIN_ADMIN_WEBHOOKS}
+					path={enEspace(CHEMIN_ADMIN_WEBHOOKS)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_WEBHOOKS}>
 							<ReglagesWebhooks />
@@ -543,7 +550,7 @@ function RoutesPages() {
 				/>
 				{/* Réglages ▸ Prompts du connecteur — `CRM-149` T3. Déclarée APRÈS les webhooks, comme dans l'index (§5.104). */}
 				<Route
-					path={CHEMIN_ADMIN_PROMPTS_CONNECTEUR}
+					path={enEspace(CHEMIN_ADMIN_PROMPTS_CONNECTEUR)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_PROMPTS_CONNECTEUR}>
 							<ReglagesPromptsConnecteur />
@@ -554,7 +561,7 @@ function RoutesPages() {
 				    autres surfaces d'administration : hors de la barre latérale, atteinte depuis
 				    l'index des réglages (docs/SPEC-workflow-engine.md §2 bis.2). */}
 				<Route
-					path={CHEMIN_ADMIN_CATALOGUE}
+					path={enEspace(CHEMIN_ADMIN_CATALOGUE)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_ADMIN_CATALOGUE}>
 							<AdministrationCatalogue />
@@ -566,7 +573,7 @@ function RoutesPages() {
 				    réglages, et déclarée AVANT l'état de la messagerie comme dans cet index
 				    (docs/SPEC-mail-subsystem.md §21.2). */}
 				<Route
-					path={CHEMIN_ADMIN_COMPTES_MAIL}
+					path={enEspace(CHEMIN_ADMIN_COMPTES_MAIL)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_COMPTES_MAIL}>
 							<ReglagesComptesMail />
@@ -577,7 +584,7 @@ function RoutesPages() {
 				    et AVANT l'état de la messagerie, comme dans l'index des réglages
 				    (docs/SPEC-mail-subsystem.md §22.2). */}
 				<Route
-					path={CHEMIN_ADMIN_IDENTITES_MAIL}
+					path={enEspace(CHEMIN_ADMIN_IDENTITES_MAIL)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_IDENTITES_MAIL}>
 							<ReglagesIdentitesMail />
@@ -588,7 +595,7 @@ function RoutesPages() {
 				    et AVANT l'état de la messagerie, comme dans l'index des réglages
 				    (docs/SPEC-modeles-emails.md §9.1). */}
 				<Route
-					path={CHEMIN_ADMIN_MODELES_MAIL}
+					path={enEspace(CHEMIN_ADMIN_MODELES_MAIL)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_MODELES_MAIL}>
 							<ReglagesModelesEmails />
@@ -599,7 +606,7 @@ function RoutesPages() {
 				    et AVANT l'état de la messagerie, comme dans l'index des réglages
 				    (docs/SPEC-modeles-emails.md §13.4). */}
 				<Route
-					path={CHEMIN_ADMIN_SEQUENCES_MAIL}
+					path={enEspace(CHEMIN_ADMIN_SEQUENCES_MAIL)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_SEQUENCES_MAIL}>
 							<ReglagesSequencesRelance />
@@ -609,7 +616,7 @@ function RoutesPages() {
 				{/* Les pastilles des mails — `CRM-141` T3. Après les séquences et avant l'état de la messagerie, comme dans
 				    l'index des réglages (docs/SPEC-mail-subsystem.md §31.7). */}
 				<Route
-					path={CHEMIN_ADMIN_PASTILLES_MAIL}
+					path={enEspace(CHEMIN_ADMIN_PASTILLES_MAIL)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_PASTILLES_MAIL}>
 							<ReglagesPastillesMail />
@@ -618,7 +625,7 @@ function RoutesPages() {
 				/>
 				{/* `CRM-156` T4 — Réglages ▸ Expéditeurs bloqués, après les pastilles des mails comme dans l'index (§5.109 bis). */}
 				<Route
-					path={CHEMIN_ADMIN_EXPEDITEURS_BLOQUES}
+					path={enEspace(CHEMIN_ADMIN_EXPEDITEURS_BLOQUES)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_EXPEDITEURS_BLOQUES}>
 							<ReglagesExpediteursBloques />
@@ -629,7 +636,7 @@ function RoutesPages() {
 				    de l'arborescence : hors de la barre latérale, atteint depuis l'index des
 				    réglages (docs/SPEC-mail-subsystem.md §20.11.1). */}
 				<Route
-					path={CHEMIN_ETAT_MESSAGERIE}
+					path={enEspace(CHEMIN_ETAT_MESSAGERIE)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_ETAT_MESSAGERIE}>
 							<EtatMessagerie />
@@ -642,7 +649,7 @@ function RoutesPages() {
 				{/* Le coût du personnel — `CRM-098`, docs/SPEC-temps.md §7.4 : hors de la barre latérale, atteint depuis
 				    l'index des réglages. */}
 				<Route
-					path={CHEMIN_ADMIN_COUT_PERSONNEL}
+					path={enEspace(CHEMIN_ADMIN_COUT_PERSONNEL)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_COUT_PERSONNEL}>
 							<ReglagesCoutPersonnel />
@@ -650,7 +657,7 @@ function RoutesPages() {
 					}
 				/>
 				<Route
-					path={CHEMIN_CORBEILLE}
+					path={enEspace(CHEMIN_CORBEILLE)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_CORBEILLE}>
 							<Corbeille />
@@ -662,7 +669,7 @@ function RoutesPages() {
 				    la seule que les trois profils ouvrent : aucun rôle n'est lu ici, la politique
 				    `notification_preferences_lecture` rendant à chacun sa propre ligne. */}
 				<Route
-					path={CHEMIN_REGLAGES_NOTIFICATIONS}
+					path={enEspace(CHEMIN_REGLAGES_NOTIFICATIONS)}
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_REGLAGES_NOTIFICATIONS}>
 							<ReglagesNotifications />
@@ -693,6 +700,12 @@ function RoutesPages() {
 							</AppShell>
 						}
 					/>
+				))}
+				{/* `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.4) : les ANCIENNES adresses, sans espace, résolues vers
+				    l'espace de leur ressource puis remplacées. Déclarées après les routes globales : à score égal,
+				    react-router départage par l'ordre. */}
+				{ANCIENNES_ADRESSES.map((chemin) => (
+					<Route key={`ancienne-${chemin}`} path={chemin} element={<RedirectionAncienneAdresse />} />
 				))}
 				<Route
 					path="*"

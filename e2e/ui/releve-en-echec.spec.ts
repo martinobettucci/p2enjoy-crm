@@ -6,6 +6,8 @@
 // À LA DIFFÉRENCE DE `etat-messagerie.spec.ts`, L'INCIDENT N'EST PAS POSÉ PAR LA CLÉ DE SERVICE : il naît d'une vraie
 // relève refusée par le Stalwart de développement, après un mauvais mot de passe posé par le vrai chemin d'écriture. Le
 // bon mot de passe est remis par le même chemin, et une vraie relève rend la boîte `ok`.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { MOT_DE_PASSE_SEED } from '../api/jetons'
 import { changerMotDePasse, lireBoite, relever, type BoiteEntrante } from '../releve'
@@ -34,7 +36,7 @@ async function rendre(boite: BoiteEntrante): Promise<void> {
 async function ouvrirEtat(page: Page): Promise<void> {
 	await connecterAvecLeLabs(page, BIZDEV)
 	// Depuis l'index des réglages, au clavier : le lien se prend au focus et s'active par Entrée.
-	await page.goto('/reglages')
+	await page.goto('/p2enjoy/reglages')
 	const lien = page.getByRole('link', { name: 'État de la messagerie' })
 	await lien.focus()
 	await page.keyboard.press('Enter')

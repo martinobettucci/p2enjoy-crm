@@ -8,6 +8,8 @@
 // LES DONNÉES DE LA PREUVE SONT POSÉES ET RETIRÉES PAR LA CLÉ DE SERVICE — workflows, channel, affaire et réponse,
 // préfixés « E2E T1.b » —, et tout ce que l'écran a écrit est rangé ou rendu dans `afterEach` : le défaut du seed
 // d'abord, que d'autres preuves attendent.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { randomUUID } from 'node:crypto'
 import { autoriserErreursConsole, connecterAvecLeLabs, ERREUR_RESSOURCE_HTTP, expect, test, type APIRequestContext } from './fixtures'
@@ -83,7 +85,7 @@ test.describe('l’en-tête du workflow choisi (§7 quinquies.2)', () => {
 	test('renommer, définir par défaut, archiver refusé puis accepté, rétablir, copier vers un track', async ({ page, request }) => {
 		await poser(request, 'workflows', [{ id: IDS.libre, workspace_id: ESPACE, name: NOM_LIBRE, scope: 'global' }])
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/reglages/workflows')
+		await page.goto('/p2enjoy/reglages/workflows')
 		const liste = page.getByRole('navigation', { name: 'Choisir un workflow' })
 		const entete = page.getByTestId('entete-workflow')
 
@@ -171,7 +173,7 @@ test.describe('l’en-tête du workflow choisi (§7 quinquies.2)', () => {
 		await connecterAvecLeLabs(page, ADMIN)
 		for (const palier of PALIERS) {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
-			await page.goto('/reglages/workflows')
+			await page.goto('/p2enjoy/reglages/workflows')
 			await expect(page.getByTestId('entete-workflow').getByRole('heading', { level: 2 })).toHaveText(NOM_DEFAUT_SEED)
 			await page.getByTestId('entete-workflow').scrollIntoViewIfNeeded()
 			const debordement = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
@@ -217,7 +219,7 @@ test.describe('changer le workflow d’un channel (§7 quinquies.3)', () => {
 	test('un channel occupé change de workflow, la perte consentie, et l’affaire paraît à sa destination au board', async ({ page, request }) => {
 		const { idCard, titre } = await poserChannelOccupe(request)
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/reglages/arborescence')
+		await page.goto('/p2enjoy/reglages/arborescence')
 		await page.getByRole('button', { name: 'Déplier Conseil & IA' }).click()
 		const commande = page.getByRole('button', { name: `Changer le workflow du channel ${NOM_CHANNEL}` })
 		await commande.click()
@@ -251,7 +253,7 @@ test.describe('changer le workflow d’un channel (§7 quinquies.3)', () => {
 		const relu = await request.get(rest(`channels?id=eq.${IDS.channel}&select=workflow_id`), { headers: service })
 		expect(await relu.json()).toEqual([{ workflow_id: IDS.nouveau }])
 
-		await page.goto(`/tracks/conseil-ia/${SLUG_CHANNEL}`)
+		await page.goto(`/p2enjoy/tracks/conseil-ia/${SLUG_CHANNEL}`)
 		await expect(page.locator(`[data-testid="colonne"][data-etape="${IDS.nouveauNegociation}"] [data-card="${idCard}"]`)).toHaveCount(1)
 		await expect(page.locator(`[data-testid="carte-card"][data-card="${idCard}"]`)).toContainText(titre)
 		await capturer(page, 'changement-workflow-board-1440', UNITE)
@@ -262,7 +264,7 @@ test.describe('changer le workflow d’un channel (§7 quinquies.3)', () => {
 		await connecterAvecLeLabs(page, ADMIN)
 		for (const palier of PALIERS) {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
-			await page.goto('/reglages/arborescence')
+			await page.goto('/p2enjoy/reglages/arborescence')
 			await page.getByRole('button', { name: 'Déplier Conseil & IA' }).click()
 			await page.getByRole('button', { name: `Changer le workflow du channel ${NOM_CHANNEL}` }).click()
 			const panneau = page.getByTestId('panneau-changement-workflow')
@@ -279,7 +281,7 @@ test.describe('changer le workflow d’un channel (§7 quinquies.3)', () => {
 
 test('la lectrice voit les commandes de l’en-tête et du channel éteintes, avec le motif', async ({ page }) => {
 	await connecterAvecLeLabs(page, LECTRICE)
-	await page.goto('/reglages/workflows')
+	await page.goto('/p2enjoy/reglages/workflows')
 	const entete = page.getByTestId('entete-workflow')
 	await expect(entete.getByRole('heading', { level: 2 })).toHaveText(NOM_DEFAUT_SEED)
 	for (const bouton of await entete.getByRole('button').all()) await expect(bouton).toBeDisabled()
@@ -288,7 +290,7 @@ test('la lectrice voit les commandes de l’en-tête et du channel éteintes, av
 		'workflows-lecture-seule',
 	)
 	await capturer(page, 'entete-workflow-lectrice-1440', UNITE)
-	await page.goto('/reglages/arborescence')
+	await page.goto('/p2enjoy/reglages/arborescence')
 	await page.getByRole('button', { name: 'Déplier Conseil & IA' }).click()
 	// Un channel que la lectrice lit — « Prospection », du seed : la commande est montée, éteinte, et cite le motif.
 	const commande = page.getByRole('button', { name: 'Changer le workflow du channel Prospection' })

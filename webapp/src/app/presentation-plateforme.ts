@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le refus `identifiant_reserve` (§15.1) ; docs/SPEC-espace-courant.md
 // @spec CRM-101 (docs/BACKLOG.md) — tranche T3 : ce que l'écran de la plateforme écrit, et comment
 // @spec CRM-103 tranche T2 — docs/DESIGN_SYSTEM.md §5.56 (onglet « Connecteur MCP » : familles, actions et issues en MOT,
 //       détail de `mcp_droits_poses` accordé par clé), docs/SPEC-mcp.md §8.1, §6.1, §7.1
@@ -28,6 +29,7 @@ const CLES_REFUS: Readonly<Record<RefusPlateforme, CleTraduction>> = {
 	adresse_invalide: 'platform.refus.adresse',
 	confirmation_incorrecte: 'platform.refus.confirmation',
 	identifiant_pris: 'platform.refus.identifiantPris',
+	identifiant_reserve: 'platform.refus.identifiantReserve',
 	last_workspace_admin: 'platform.refus.dernierAdministrateur',
 	dernier_superadministrateur: 'platform.refus.dernierSuperadmin',
 	droit_invalide: 'platform.refus.droit',

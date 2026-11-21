@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le premier niveau du fil nomme l'espace courant de l'onglet
+//       (docs/SPEC-espace-courant.md §15.2)
 // @spec CRM-110 (docs/BACKLOG.md) tranche T2 — le fil d'Ariane de l'en-tête, du workspace à l'objet ouvert
 // @spec docs/SPEC-webapp.md §5.1 bis (niveaux ; règles 2, 4 et 5)
 // @spec docs/DESIGN_SYSTEM.md §5.62 (liens, titre, troncature, ligne propre sous `lg`, repli, états), §12.2 (ordre de
@@ -19,7 +21,10 @@
 
 import { Ellipsis } from 'lucide-react'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { Link } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
+// l'espace courant.
+import { LienEspace as Link } from './LienEspace'
+import { useContexteEspace } from './ContexteEspace'
 import { t } from '../i18n'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import type { EtatAsync } from '../lib/async'
@@ -201,7 +206,7 @@ function Separateur() {
 }
 
 /**
- * Le workspace courant, premier niveau du fil : le premier rendu par `lireWorkspaces` (docs/SPEC-webapp.md §6.3).
+ * Le workspace courant, premier niveau du fil : l'espace courant de l'onglet (`CRM-161`, docs/SPEC-espace-courant.md §15.2).
  * Sans donnée, il le dit en texte, sans lien (règle 4) — le message que portait le contexte d'espace de fin de ligne.
  * Les identifiants de preuve sont ceux de ce contexte, `CRM-007` : c'est la même information, déplacée.
  */
@@ -224,7 +229,11 @@ function NiveauWorkspace({
 			/>
 		)
 	}
-	const workspace = etat.statut === 'pret' ? etat.donnees[0] : undefined
+	// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) : l'espace COURANT de l'onglet, celui de l'adresse ou le dernier
+	// ouvert, et non plus le premier de la liste.
+	const { idWorkspace } = useContexteEspace()
+	const workspace =
+		etat.statut === 'pret' ? (etat.donnees.find((w) => w.id === idWorkspace) ?? (idWorkspace === null ? etat.donnees[0] : undefined)) : undefined
 	if (workspace === undefined) {
 		return (
 			<span

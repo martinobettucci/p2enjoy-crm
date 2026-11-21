@@ -2,6 +2,8 @@
 //           encodage, son séparateur, ses lignes, celles que l'écran montre ; le carnet entier
 // @verifies docs/SPEC-vues-import-export.md §5.1, §5.3 ; docs/DESIGN_SYSTEM.md §5.76 ; CLAUDE.md §16 (captures)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du SSO
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { readFile } from 'node:fs/promises'
 import type { Download, Page } from '@playwright/test'
@@ -23,7 +25,7 @@ async function telecharger(page: Page, commande: string): Promise<{ telechargeme
 
 test('la vue liste filtrée s’exporte telle qu’elle est montrée, en UTF-8 avec BOM et point-virgule', async ({ page }) => {
 	await connecterAvecLeLabs(page, 'bizdev@p2enjoy.test')
-	await page.goto('/tracks/studio-web/refonte/liste')
+	await page.goto('/p2enjoy/tracks/studio-web/refonte/liste')
 	await page.getByRole('combobox', { name: 'Vue', exact: true }).selectOption({ label: 'Secteur public, par échéance' })
 	const lignes = page.getByTestId('ligne-card')
 	await expect(lignes.first()).toBeVisible()

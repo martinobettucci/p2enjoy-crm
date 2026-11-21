@@ -6,6 +6,8 @@
 // semaine » de la fiche, sous le même compte, les montre. Seule cette case est effacée à la fin — le seed ne pose du temps
 // que sur des jours ouvrés passés (docs/SPEC-seed.md §17.1) — ; les cases de matrice que le seed accorde à Driss
 // (docs/SPEC-seed.md §22) ne sont ni posées ni retirées.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { Browser } from '@playwright/test'
 import { connecterAvecLeLabs, expect, test, type APIRequestContext } from './fixtures'
@@ -17,7 +19,7 @@ const UNITE = 'CRM-104'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
 const DRISS = { adresse: 'bizdev@p2enjoy.test', sub: '5eed0000-0000-4000-8000-000000000012' }
 const SOGEXIA = '5eed0000-0000-4000-8000-0000000000c2'
-const FICHE = `/tracks/conseil-ia/grands-comptes/cards/${SOGEXIA}`
+const FICHE = `/p2enjoy/tracks/conseil-ia/grands-comptes/cards/${SOGEXIA}`
 const CASES: readonly [string, string][] = [
 	['temps', 'consulter'],
 	['temps', 'modifier'],

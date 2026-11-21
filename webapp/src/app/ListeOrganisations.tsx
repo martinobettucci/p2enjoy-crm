@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — la liste suit l'espace courant de l'onglet, état intermédiaire jusqu'à T3 (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-114 (docs/BACKLOG.md) — tranche T2 : l'onglet « Organisations » du carnet — la liste et la création
 // @spec docs/SPEC-organisations.md §2 (lister, créer, puis ouvrir la fiche), §3 (droits de la base, refus), §4 (de quoi il a
 //       l'air) ; docs/DESIGN_SYSTEM.md §5.64 (tableau, « Nouvelle organisation »), §5.59 (commande éteinte avec le motif
@@ -57,6 +58,7 @@ import { FormulaireOrganisation } from './FormulaireOrganisation'
 import { OngletsCarnet } from './OngletsCarnet'
 import { classesPastille } from './presentation-tracks'
 import { AUCUN_TOTAL, ReelSurPrevu } from './RecettesOrganisation'
+import { idEspaceParmi } from '../lib/espace-onglet'
 
 const ID_MOTIF = 'organisations-lecture-seule'
 /** Le titre de la route, nommé hors du JSX pour le contrôle des clés mortes, comme `CLE_TITRE_CARD`. */
@@ -97,10 +99,10 @@ type ListeLue = {
 type EtatPlus = 'repos' | 'chargement' | 'erreur'
 
 export function ListeOrganisations({ client = clientCrm }: { readonly client?: ClientCrm | null } = {}) {
-	const { capacites } = useContexteEspace()
+	const { capacites, idWorkspace: idEspaceContexte } = useContexteEspace()
 	const navigate = useNavigate()
 	const espaces = useWorkspaces(client)
-	const tracksEspace = useTracks(client)
+	const tracksEspace = useTracks(client, idEspaceContexte ?? undefined)
 	const [adresse, setAdresse] = useSearchParams()
 	const cleAdresse = adresse.toString()
 	// eslint-disable-next-line react-hooks/exhaustive-deps -- la clé textuelle de l'adresse dit seule quand relire
@@ -122,7 +124,8 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 	// Les totaux de recettes, lus une fois pour l'espace ; gardés d'une relecture des filtres à l'autre.
 	const totauxLus = useRef<TotauxParOrganisation | null>(null)
 
-	const idWorkspace = espaces.etat.statut === 'pret' ? (espaces.etat.donnees[0]?.id ?? null) : null
+	// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) — état intermédiaire jusqu'à T3 (§15.2) : l'espace du contexte, et non plus le premier de la liste.
+	const idWorkspace = espaces.etat.statut === 'pret' ? idEspaceParmi(espaces.etat.donnees, idEspaceContexte) : null
 	const cleParametres = JSON.stringify(parametres)
 
 	// `CRM-153` T4 — LE CATALOGUE DES CATÉGORIES, pour le filtre (§5.107) : lu une fois pour l'espace, et relu sur reprise.

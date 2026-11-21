@@ -40,6 +40,8 @@
 // Ce que cela ne dit pas : la suppression n'est pas ouverte au produit, et aucune assertion de ce
 // fichier ne l'exerce comme un geste d'utilisateur. C'est un geste d'exploitation de la preuve sur
 // ses PROPRES lignes, jamais sur une ligne seedée — les slugs sont préfixés pour cela.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import type { Locator } from '@playwright/test'
@@ -165,7 +167,7 @@ test.describe('les cinq gestes, à la souris (docs/SPEC-administration-arboresce
 		try {
 			await connecter(page)
 			// Depuis l'index des réglages, geste réel — pas une navigation directe.
-			await page.goto('/reglages')
+			await page.goto('/p2enjoy/reglages')
 			await page.getByRole('link', { name: /Arborescence : tracks et channels/ }).click()
 			await expect(page).toHaveURL(/\/reglages\/arborescence$/)
 			await expect(page.getByRole('heading', { name: "Administration de l'arborescence" })).toBeVisible()
@@ -247,7 +249,7 @@ test.describe('les cinq gestes, à la souris (docs/SPEC-administration-arboresce
 
 		try {
 			await connecter(page)
-			await page.goto('/reglages/arborescence')
+			await page.goto('/p2enjoy/reglages/arborescence')
 
 			await page.getByRole('button', { name: `Déplier ${TRACK_FORMATION_NOM}` }).click()
 			const channels = listeChannels(page, TRACK_FORMATION_NOM)
@@ -322,7 +324,7 @@ test.describe('les cinq gestes, au clavier (docs/DESIGN_SYSTEM.md §8, CLAUDE.md
 
 		try {
 			await connecter(page)
-			await page.goto('/reglages/arborescence')
+			await page.goto('/p2enjoy/reglages/arborescence')
 			await expect(page.getByRole('heading', { name: "Administration de l'arborescence" })).toBeVisible()
 
 			// --- Créer -------------------------------------------------------------------------
@@ -396,7 +398,7 @@ test.describe('les cinq gestes, au clavier (docs/DESIGN_SYSTEM.md §8, CLAUDE.md
 
 		try {
 			await connecter(page)
-			await page.goto('/reglages/arborescence')
+			await page.goto('/p2enjoy/reglages/arborescence')
 
 			await tabVers(page, page.getByRole('button', { name: `Déplier ${TRACK_FORMATION_NOM}` }))
 			await page.keyboard.press('Enter')
@@ -469,7 +471,7 @@ test.describe('les cinq gestes, au clavier (docs/DESIGN_SYSTEM.md §8, CLAUDE.md
 test.describe('CRM-154 : l’adresse `?track=` (docs/SPEC-administration-arborescence.md §15.3)', () => {
 	test('ouvre l’écran sur le track : déplié, focus sur son dépliage, le paramètre retiré', async ({ page }) => {
 		await connecter(page)
-		await page.goto(`/reglages/arborescence?track=${TRACK_FORMATION_ID}`)
+		await page.goto(`/p2enjoy/reglages/arborescence?track=${TRACK_FORMATION_ID}`)
 		const replier = page.getByRole('button', { name: `Replier ${TRACK_FORMATION_NOM}` })
 		await expect(replier).toHaveAttribute('aria-expanded', 'true')
 		await expect(listeChannels(page, TRACK_FORMATION_NOM)).toBeVisible()
@@ -479,7 +481,7 @@ test.describe('CRM-154 : l’adresse `?track=` (docs/SPEC-administration-arbores
 
 	test('un track inconnu : rien ne s’ouvre, le paramètre quitte l’adresse', async ({ page }) => {
 		await connecter(page)
-		await page.goto('/reglages/arborescence?track=5eed0000-0000-4000-8000-0000000000ff')
+		await page.goto('/p2enjoy/reglages/arborescence?track=5eed0000-0000-4000-8000-0000000000ff')
 		await expect(page.getByRole('button', { name: `Déplier ${TRACK_FORMATION_NOM}` })).toBeVisible()
 		await expect(page).toHaveURL(/\/reglages\/arborescence$/)
 		// Dans la région de l'arborescence : « Replier la barre latérale » n'est pas un track.
@@ -494,7 +496,7 @@ test.describe('paliers responsive', () => {
 		test(`${palier.nom} : l'arborescence reste lisible`, async ({ page }) => {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			await connecter(page)
-			await page.goto('/reglages/arborescence')
+			await page.goto('/p2enjoy/reglages/arborescence')
 			await expect(page.getByRole('heading', { name: "Administration de l'arborescence" })).toBeVisible()
 			await expect(listeTracks(page)).toBeVisible()
 

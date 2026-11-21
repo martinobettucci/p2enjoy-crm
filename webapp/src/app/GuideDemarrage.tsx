@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — les liens du guide mènent dans l'espace courant (§15.3) ; docs/SPEC-espace-courant.md
 // @spec CRM-129 (docs/BACKLOG.md) — `AccueilDemarrage` : l'état vide seulement sans channel lisible, sinon l'état
 //       neutre « Choisissez un channel » ; docs/SPEC-onboarding.md §4.2 (précision du 2026-11-06),
 //       docs/DESIGN_SYSTEM.md §5.17, décisions 858 et 859
@@ -32,7 +33,9 @@
 
 import { Circle, CircleCheck, CircleHelp, LayoutGrid } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { Link } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
+// l'espace courant.
+import { LienEspace as Link } from './LienEspace'
 import { useAuthentification } from './Authentification'
 import { Button } from '../components/ui/Button'
 import { SkeletonListe } from '../components/ui/Skeleton'

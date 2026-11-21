@@ -20526,9 +20526,20 @@ livraison (décision 830).
   - **ce que cette session n'a pas joué** : la campagne complète (décision 830).
   Reste la livraison : `docs/PROD_MIGRATIONS.md` §2.67 — la migration et la webapp **dans la même fenêtre**.
 - [ ] **T2 — L'adresse et le menu des espaces** (`docs/SPEC-espace-courant.md` §15 ; livrée avec T1 en un seul lot) :
-  - [ ] **T2.a — l'adresse** : `/:slugEspace/` pour l'inbox, les tracks et channels, les réglages ; les slugs réservés ;
+  - [P] **T2.a — l'adresse** : `/:slugEspace/` pour l'inbox, les tracks et channels, les réglages ; les slugs réservés ;
     l'espace courant tiré de l'adresse, ou de la mémoire vive de l'onglet sur une page globale ; les anciennes adresses
-    redirigées ; la barre latérale et les écrans sur l'espace courant ; `chemins.ts` seul compositeur ; les `goto` révisés ;
+    redirigées ; la barre latérale et les écrans sur l'espace courant ; `chemins.ts` seul compositeur ; les `goto` révisés.
+    **Implémentée et vérifiée en développement le 2026-11-21** (migration `0196`) : pgTAP `0183` rouge puis 7/7, pgTAP complet
+    171/171 ; unitaires 6 150/6 150 (dont `espace-onglet`, `ancienne-adresse`, `chemins`, `LienEspace`) ; quatre `tsc` ; build ;
+    E2E `e2e/ui/espace-adresse.spec.ts` 4/4 (anciennes adresses, slug inconnu, deux onglets sur deux espaces, clavier) et le
+    sous-ensemble de 25 specs qui dépendent de l'adresse, de la barre et des onglets, 263/263 après deux corrections
+    (`docs/JOURNAL.md`) ; captures `espace-introuvable-1440` et `deux-onglets-sonde-1440` observées. **Non joués par cette
+    session** : la campagne complète (décision 830 ; une tentative de suite d'écran complète a été refusée), les projets
+    `manuel` et `mail`, dont les `goto` ont été révisés mécaniquement — à la campagne de la session de livraison. Livraison :
+    contrat §2.68, avec le §2.67, après T2.c et T2.b. **Note pour T2.b** (session de livraison) : `e2e/ui/accueil-channels`
+    exige une base à un seul espace ; le seed §55 en ajoute un : la preuve ciblera son espace au lieu de compter les espaces ;
+  - [ ] **T2.c — les réglages ne lisent que l'espace de l'adresse** (§15.4 bis) : chaque lecture de liste d'un réglage porte
+    `workspace_id=eq.` ; défaut antérieur à `CRM-161`, à reprendre avant T2.b ;
   - [ ] **T2.b — le menu des espaces** : le menu et ses non-lus, la bascule annoncée, le seed §55, le design system, les E2E
     et captures sur un compte de deux espaces, le manuel.
 - [ ] **T3 — Les pages globales.** Espace de provenance et filtre « Espace » ; les écrans qui lisaient le premier espace

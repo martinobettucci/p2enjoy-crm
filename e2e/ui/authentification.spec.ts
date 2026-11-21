@@ -20,6 +20,8 @@
 // passe et son refus générique, la session d'onglet de GoTrue, et l'invitation par courriel de GoTrue
 // acceptée dans la webapp. La connexion, la restauration, le stockage et la déconnexion sont prouvés
 // par `e2e/ui/connexion.spec.ts` ; l'inscription d'une attente, par `e2e/api/session.spec.ts`.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	connecterAvecLeLabs,
@@ -43,10 +45,10 @@ const ETAPE_RELANCE = '5eed0000-0000-4000-8000-000000000062'
 const CARD_AUDIT = '5eed0000-0000-4000-8000-0000000000c3'
 const CARD_MAINTENANCE = '5eed0000-0000-4000-8000-0000000000c5'
 
-const ROUTE_AUDIT = `/tracks/conseil-ia/grands-comptes/cards/${CARD_AUDIT}`
-const ROUTE_MAINTENANCE = `/tracks/studio-web/maintenance/cards/${CARD_MAINTENANCE}`
-const ROUTE_BOARD_MAINTENANCE = '/tracks/studio-web/maintenance'
-const ROUTE_BOARD = '/tracks/conseil-ia/grands-comptes'
+const ROUTE_AUDIT = `/p2enjoy/tracks/conseil-ia/grands-comptes/cards/${CARD_AUDIT}`
+const ROUTE_MAINTENANCE = `/p2enjoy/tracks/studio-web/maintenance/cards/${CARD_MAINTENANCE}`
+const ROUTE_BOARD_MAINTENANCE = '/p2enjoy/tracks/studio-web/maintenance'
+const ROUTE_BOARD = '/p2enjoy/tracks/conseil-ia/grands-comptes'
 
 let jetonAdmin: string
 

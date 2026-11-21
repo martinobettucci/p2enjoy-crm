@@ -4,6 +4,8 @@
 //       docs/SPEC-seed.md §47
 //
 // Rien n'est écrit : la fiche est ouverte, photographiée, puis refermée par « Annuler ».
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -15,7 +17,7 @@ const SECTION = 'les-prompts-des-parcours-guides'
 test('Réglages ▸ Prompts du connecteur : la liste, puis la fiche d’un prompt', async ({ page }) => {
 	await page.setViewportSize({ width: 1280, height: 900 })
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/prompts-connecteur')
+	await page.goto('/p2enjoy/reglages/prompts-connecteur')
 	const ecran = page.getByTestId('reglages-prompts-connecteur')
 	const liste = ecran.getByTestId('liste-prompts')
 	await expect(liste.getByTestId('ligne-prompt').filter({ hasText: 'preparer-le-comite' })).toBeVisible()

@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — la vue d'un track reconnue sous le slug de son espace (§8.1) ; docs/SPEC-espace-courant.md
 // @spec CRM-100 (docs/BACKLOG.md) — tranche T1 : les adresses de « Nouveau channel » et de l'aller-retour vers
 //       l'éditeur de workflows
 // @spec docs/SPEC-administration-arborescence.md §13.3 (le formulaire ouvert est un état de l'adresse), §13.4
@@ -96,12 +97,14 @@ function ecrireBrouillon(parametres: URLSearchParams, saisie: SaisiePortee): voi
 const SLUG = MOTIF_SLUG.source.replace(/^\^/, '').replace(/\$$/, '')
 
 /**
- * Les adresses de la vue d'un track : `/tracks/<track>`, `/tracks/<track>/<channel>`, `/tracks/<track>/<channel>/liste`.
+ * Les adresses de la vue d'un track, sous le slug de l'espace (`CRM-161`) : `/tracks/<track>`, `/tracks/<track>/<channel>`, `/tracks/<track>/<channel>/liste`.
  *
  * `couts` est EXCLU comme second segment : `/tracks/<track>/couts` est l'écran des coûts du track (`CRM-086`), que le
  * routeur préfère à un channel de ce slug, et qui ne rend pas le formulaire.
  */
-const MOTIF_VUE_TRACK = new RegExp(`^/tracks/(${SLUG})(?:/(?!couts(?:/|$))(${SLUG})(?:/liste)?)?$`)
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §8.1) : la vue d'un track est sous le slug de son espace ; l'ancienne
+// adresse, sans lui, reste reconnue.
+const MOTIF_VUE_TRACK = new RegExp(`^(?:/${SLUG})?/tracks/(${SLUG})(?:/(?!couts(?:/|$))(${SLUG})(?:/liste)?)?$`)
 
 /** Vrai si le chemin est une vue de track, celle qui rend le formulaire de « Nouveau channel ». */
 export function estVueTrack(chemin: string): boolean {

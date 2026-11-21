@@ -262,6 +262,13 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
   **Compromis** : la RLS reste la règle d'accès, inchangée ; le cloisonnement est une restriction de la lecture, prouvée
   par requête directe (pgTAP `0182`, `e2e/api/inbox-espace.spec.ts`), non une politique nouvelle — une politique par
   espace courant exigerait que la base connaisse l'onglet, ce qu'elle ne peut pas ;
+- **L'espace en tête du chemin** (`CRM-161` T2.a, `docs/SPEC-espace-courant.md` §15) — les pages d'un espace sont routées
+  sous `/:slugEspace/` ; la coquille tire l'espace courant de l'adresse, ou, sur une page globale, d'une **variable de
+  module** (`src/lib/espace-onglet.ts`) propre à l'onglet et perdue au rechargement ; les écrans d'un espace importent
+  `LienEspace` et `useNaviguerEspace` (`src/app/LienEspace.tsx`), qui préfixent les seuls chemins d'espace ; les anciennes
+  adresses ont leurs routes (`RedirectionAncienneAdresse`), qui lisent l'espace de la ressource sous la RLS puis remplacent
+  l'adresse. **Compromis** : une redirection coûte une lecture et un rendu de plus, mais aucun lien déjà envoyé ne casse ; les
+  slugs réservés (`0196`) écartent toute ambiguïté entre un espace et une route globale ;
 - `src/app/ContexteEspace.tsx`, `src/app/GuideFlottant.tsx`, et le signal `p2enjoy:workflow-de-depart`
   de `src/lib/demarrage.ts` (`CRM-094`, `docs/SPEC-onboarding.md` §10) — la coquille lit **une fois**
   l'espace courant et le rôle que la base y rend (`mon_role_espace`), et les passe par un contexte au

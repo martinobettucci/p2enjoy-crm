@@ -8,6 +8,8 @@
 //
 // Le seed ne porte encore aucune catégorie (`CRM-153` T6) : la preuve pose les siennes, préfixées `ZZ 153`, et les retire à
 // la fin par la clé de service — la suppression emporte leurs poses. Aucune donnée du seed n'est modifiée.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { APIRequestContext } from '@playwright/test'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -16,7 +18,7 @@ import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, connecterAvecLeLabs, ex
 
 const UNITE = 'CRM-153'
 const PREFIXE = 'ZZ 153'
-const CHEMIN = '/reglages/categories-organisations'
+const CHEMIN = '/p2enjoy/reglages/categories-organisations'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
 const CAMILLE = '5eed0000-0000-4000-8000-000000000011'
 const rest = (chemin: string) => `${URL_API}/rest/v1/${chemin}`
@@ -52,7 +54,7 @@ test.describe('Réglages ▸ Catégories d’organisations (docs/DESIGN_SYSTEM.m
 	}) => {
 		await poser(request, `${PREFIXE} Ancien client`, 'neutral', true)
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		const entree = page.getByTestId('entree-categories-organisations')
 		await expect(entree).toHaveAttribute('href', CHEMIN)
 		await entree.click()
@@ -151,7 +153,7 @@ test.describe('Réglages ▸ Catégories d’organisations (docs/DESIGN_SYSTEM.m
 	test('la lectrice lit l’écran depuis l’index ; ses commandes sont éteintes, avec le motif', async ({ page, request }) => {
 		await poser(request, `${PREFIXE} Fournisseur`, 'accent')
 		await connecterAvecLeLabs(page, 'viewer@p2enjoy.test')
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		await expect(page.getByTestId('entree-categories-organisations')).toHaveAttribute('href', CHEMIN)
 		await page.goto(CHEMIN)
 		const ligne = page.getByTestId('ligne-categorie-organisation').filter({ hasText: `${PREFIXE} Fournisseur` })

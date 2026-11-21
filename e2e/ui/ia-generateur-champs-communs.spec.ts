@@ -10,6 +10,8 @@
 // l'en-tête `x-ia-simulateur: champ_commun`. Le champ de l'affaire `siret` est posé par la clé de service s'il manque à
 // l'espace, et retiré à la fin seulement s'il a été posé ici ; les suggestions de sonde et leurs workflows sont retirés
 // après chaque scénario — retrait CONSTATÉ.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type APIRequestContext, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -17,7 +19,7 @@ import { URL_API, enTetesService } from '../api/jetons'
 
 const UNITE = 'CRM-112'
 const ADMIN = 'admin@p2enjoy.test'
-const EDITEUR = '/reglages/workflows'
+const EDITEUR = '/p2enjoy/reglages/workflows'
 const PREFIXE = 'Sonde 112 T7'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
 const NBSP = ' '

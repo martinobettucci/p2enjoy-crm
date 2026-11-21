@@ -27,6 +27,8 @@
 // affirmation de restauration qui serait fausse.
 // @verifies CRM-139 (docs/BACKLOG.md) — l'inbox s'ouvre ici case « Seulement moi » décochée, `courrier=tous` : le sujet de ces
 //           preuves est ailleurs (docs/SPEC-mail-subsystem.md §27.5)
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -49,7 +51,7 @@ async function connecter(page: Page): Promise<void> {
 
 /** Ouvre le message suggéré du seed, par le chemin qu'un utilisateur emprunte. */
 async function ouvrirLeMessageSuggere(page: Page): Promise<void> {
-	await page.goto('/inbox?courrier=tous')
+	await page.goto('/p2enjoy/inbox?courrier=tous')
 	await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }).click()
 	await page
 		.getByTestId('inbox-panneau-liste')
@@ -86,7 +88,7 @@ test.describe('la suggestion de classement (docs/SPEC-contacts.md §8.8)', () =>
 
 	test('cas b — un message sans suggestion ne rend aucun bloc : le témoin', async ({ page }) => {
 		await connecter(page)
-		await page.goto('/inbox?courrier=tous')
+		await page.goto('/p2enjoy/inbox?courrier=tous')
 		await page.getByTestId('inbox-panneau-dossiers').getByRole('button', { name: /Non classés/ }).click()
 		await page
 			.getByTestId('inbox-panneau-liste')
@@ -148,7 +150,7 @@ test.describe('la suggestion de classement (docs/SPEC-contacts.md §8.8)', () =>
 			expect(ligne?.suggested_card_id).toBe(CARD_SUGGEREE)
 
 			// LE MESSAGE A QUITTÉ « NON CLASSÉS » — c'est le cas f, et il se lit à l'écran.
-			await page.goto('/inbox?courrier=tous')
+			await page.goto('/p2enjoy/inbox?courrier=tous')
 			await page
 				.getByTestId('inbox-panneau-dossiers')
 				.getByRole('button', { name: /Non classés/ })

@@ -13,6 +13,8 @@
 // LE SEED EST RENDU TEL QU'IL A ÉTÉ REÇU — leçon d'INC-061. Les deux scénarios qui écrivent
 // remettent la boîte système dans son état d'origine par le VÉRITABLE chemin d'écriture, celui-là
 // même que l'écran emprunte, et non par un `PATCH` direct que la base refuse de toute façon.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 // @verifies CRM-127 (docs/BACKLOG.md) — tranche T4 : `pending` se lit « Non testée » (docs/SPEC-mail-subsystem.md §23.5,
 //           docs/DESIGN_SYSTEM.md §5.93)
@@ -77,7 +79,7 @@ test.describe('configuration des comptes entrants (docs/SPEC-mail-subsystem.md �
 		page,
 	}) => {
 		await connecter(page, ADMIN)
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 
 		// L'entrée vit AVANT « État de la messagerie » (§21.2) : on configure une boîte avant d'en
 		// superviser la relève. L'ordre est une règle, il se vérifie.
@@ -138,7 +140,7 @@ test.describe('configuration des comptes entrants (docs/SPEC-mail-subsystem.md �
 	}) => {
 		try {
 			await connecter(page, ADMIN)
-			await page.goto('/reglages/comptes-mail')
+			await page.goto('/p2enjoy/reglages/comptes-mail')
 
 			const ligneSysteme = page
 				.getByTestId('ligne-compte-configuration')
@@ -186,7 +188,7 @@ test.describe('configuration des comptes entrants (docs/SPEC-mail-subsystem.md �
 	}) => {
 		try {
 			await connecter(page, ADMIN)
-			await page.goto('/reglages/comptes-mail')
+			await page.goto('/p2enjoy/reglages/comptes-mail')
 
 			await page
 				.getByTestId('ligne-compte-configuration')
@@ -221,7 +223,7 @@ test.describe('configuration des comptes entrants (docs/SPEC-mail-subsystem.md �
 
 	test('une lectrice sans boîte voit l’état vide, AVEC le geste qui le comble', async ({ page }) => {
 		await connecter(page, VIEWER)
-		await page.goto('/reglages/comptes-mail')
+		await page.goto('/p2enjoy/reglages/comptes-mail')
 
 		await expect(page.getByTestId('etat-vide')).toBeVisible()
 		await expect(page.getByText('Aucune boîte configurée')).toBeVisible()
@@ -261,7 +263,7 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §7)', () => {
 		test(`${palier.nom} : la liste et le formulaire restent lisibles`, async ({ page }) => {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			await connecter(page, ADMIN)
-			await page.goto('/reglages/comptes-mail')
+			await page.goto('/p2enjoy/reglages/comptes-mail')
 			await expect(page.getByTestId('liste-comptes-mail')).toBeVisible()
 
 			await page

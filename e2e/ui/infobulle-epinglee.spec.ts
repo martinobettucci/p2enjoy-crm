@@ -7,6 +7,8 @@
 //
 // UNE DESCRIPTION LONGUE EST POSÉE PAR LA CLÉ DE SERVICE sur le channel « Grands comptes », le temps de la preuve, et la
 // sienne lui est rendue à la fin : la plus longue du seed tient sans défiler (§5.58). Rien d'autre n'est écrit.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { APIRequestContext } from '@playwright/test'
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
@@ -16,7 +18,7 @@ import { URL_API, enTetesService } from '../api/jetons'
 const UNITE = 'CRM-148'
 const ADMIN = 'admin@p2enjoy.test'
 const MARGE = 16
-const BOARD = '/tracks/conseil-ia/grands-comptes'
+const BOARD = '/p2enjoy/tracks/conseil-ia/grands-comptes'
 const CHANNEL = '5eed0000-0000-4000-8000-000000000032'
 const LONGUE = Array.from(
 	{ length: 18 },

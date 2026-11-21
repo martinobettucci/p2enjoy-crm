@@ -21,6 +21,8 @@
 // **réponse réseau**. Ni l'un ni l'autre n'est une session, et aucun n'est présenté comme telle.
 // @verifies CRM-134 (docs/BACKLOG.md) tranche T1 — la lecture des channels rapporte les archivés, `archived_at` demandée, la
 //           corbeille écartée (docs/SPEC-channels.md §11.1 ; assertion révisée, décision 51)
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	autoriserErreursConsole,
@@ -30,6 +32,7 @@ import {
 	test,
 } from './fixtures'
 import { PALIERS, capturer } from './captures'
+import { dansUnEspace } from '../espace'
 
 // RÉVISÉ PAR `CRM-092` T9 (docs/SPEC-session-sso.md §8.7, décision 601) : sans session, aucune page de
 // l'application n'est rendue. Ces scénarios, écrits pour un visiteur anonyme à réponses substituées, se
@@ -98,7 +101,7 @@ test.describe('la route d’un track interroge réellement le backend', () => {
 			if (url.includes('/rest/v1/tracks') || url.includes('/rest/v1/channels')) urls.push(url)
 		})
 		await servirTrackCharge(page)
-		await page.goto('/tracks/conseil-ia')
+		await page.goto('/p2enjoy/tracks/conseil-ia')
 		await expect(page.getByTestId('onglet-channel').first()).toBeVisible()
 
 		const resolution = urls.find((u) => u.includes('slug=eq.conseil-ia'))
@@ -127,7 +130,7 @@ test.describe('la route d’un track interroge réellement le backend', () => {
 		page.on('request', (requete) => {
 			if (requete.url().includes('/rest/v1/channels')) channelsDemandes = true
 		})
-		await page.goto('/tracks/ce-track-nexiste-pas')
+		await page.goto('/p2enjoy/tracks/ce-track-nexiste-pas')
 		await expect(page.getByTestId('etat-vide')).toBeVisible()
 		expect(channelsDemandes).toBe(false)
 	})
@@ -141,7 +144,7 @@ test.describe('états de la route d’un track', () => {
 		page,
 	}) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.goto('/tracks/ce-track-nexiste-pas')
+		await page.goto('/p2enjoy/tracks/ce-track-nexiste-pas')
 		const vide = page.getByTestId('etat-vide')
 		await expect(vide).toBeVisible()
 		await expect(vide).toContainText('Track introuvable')
@@ -154,7 +157,7 @@ test.describe('états de la route d’un track', () => {
 	test('un slug inexistant produit le même écran qu’un slug refusé', async ({ page }) => {
 		// Délibéré : les distinguer renseignerait un appelant sans droit sur l'existence d'un
 		// track (docs/SPEC-permissions-rls.md §7).
-		await page.goto('/tracks/ce-track-nexiste-pas')
+		await page.goto('/p2enjoy/tracks/ce-track-nexiste-pas')
 		await expect(page.getByTestId('etat-vide')).toContainText('Track introuvable')
 	})
 
@@ -176,8 +179,11 @@ test.describe('états de la route d’un track', () => {
 				? route.abort('connectionrefused')
 				: route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
 		})
-		await page.goto('/tracks/conseil-ia')
+		await page.goto('/p2enjoy/tracks/conseil-ia')
 		await expect(page.getByTestId('etat-erreur')).toBeVisible({ timeout: 30_000 })
+		// Révisé le 2026-11-21 (`CRM-161` T2.a, décision 51) : la barre latérale ne lit ses tracks qu'une fois l'espace courant
+		// connu ; ses quatre tentatives peuvent donc finir APRÈS l'erreur de la vue. On attend les huit avant de les compter.
+		await expect.poll(() => appels, { timeout: 30_000 }).toBeGreaterThanOrEqual(8)
 		const appelsAvantReprise = appels
 		autoriserErreursConsole(page, Array(8).fill(ERREUR_CONNEXION_REFUSEE))
 
@@ -199,7 +205,7 @@ test.describe('états de la route d’un track', () => {
 				body: JSON.stringify(route.request().url().includes('slug=eq.') ? TRACK_SERVI : []),
 			}),
 		)
-		await page.goto('/tracks/conseil-ia')
+		await page.goto('/p2enjoy/tracks/conseil-ia')
 		await expect(page.getByTestId('onglets-vides')).toBeVisible()
 		await expect(page.getByTestId('etat-vide')).toContainText('Aucun channel dans ce track')
 	})
@@ -211,7 +217,7 @@ test.describe('onglets réels, servis par le réseau', () => {
 	}) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await servirTrackCharge(page)
-		await page.goto('/tracks/conseil-ia')
+		await page.goto('/p2enjoy/tracks/conseil-ia')
 
 		const onglets = page.getByTestId('onglet-channel')
 		await expect(onglets).toHaveCount(3)
@@ -224,7 +230,7 @@ test.describe('onglets réels, servis par le réseau', () => {
 	test('ouvrir un onglet change l’adresse et marque l’onglet courant', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await servirTrackCharge(page)
-		await page.goto('/tracks/conseil-ia')
+		await page.goto('/p2enjoy/tracks/conseil-ia')
 
 		await page.getByTestId('onglet-channel').nth(1).click()
 		await expect(page).toHaveURL(/\/tracks\/conseil-ia\/grands-comptes$/)
@@ -247,7 +253,7 @@ test.describe('onglets réels, servis par le réseau', () => {
 
 	test('les onglets sont atteignables au clavier, sans `tablist`', async ({ page }) => {
 		await servirTrackCharge(page)
-		await page.goto('/tracks/conseil-ia')
+		await page.goto('/p2enjoy/tracks/conseil-ia')
 		await expect(page.getByTestId('onglet-channel').first()).toBeVisible()
 
 		// Décision 62 : ce sont des liens, donc parcourus par `Tab` sans qu'aucun code ne
@@ -275,7 +281,7 @@ test.describe('onglets réels, servis par le réseau', () => {
 		await page.goto('/')
 
 		const pilule = page.getByTestId('entree-track').first()
-		await expect(pilule).toHaveAttribute('href', '/tracks/conseil-ia')
+		await expect(pilule).toHaveAttribute('href', dansUnEspace('/tracks/conseil-ia'))
 		await pilule.click()
 		await expect(page).toHaveURL(/\/tracks\/conseil-ia$/)
 		await expect(page.getByTestId('onglet-channel').first()).toBeVisible()
@@ -287,7 +293,7 @@ test.describe('paliers responsive de la route d’un track', () => {
 		test(`palier ${palier.nom} : la page ne défile jamais horizontalement`, async ({ page }) => {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			await servirTrackCharge(page)
-			await page.goto('/tracks/conseil-ia')
+			await page.goto('/p2enjoy/tracks/conseil-ia')
 			await expect(page.getByTestId('barre-onglets')).toBeVisible()
 
 			// docs/DESIGN_SYSTEM.md §7 : « les tableaux et les boards défilent dans leur propre

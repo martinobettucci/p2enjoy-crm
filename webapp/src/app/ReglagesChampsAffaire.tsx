@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le lien vers l'éditeur mène dans l'espace courant (§15.3) ; docs/SPEC-espace-courant.md
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T3.a : Réglages ▸ « Champs de l'affaire » — lire, déclarer, modifier,
 //       réordonner, archiver et restaurer les champs communs de l'espace
 // @spec docs/SPEC-champs-communs.md §3.2 (ni la clé ni le type ne se modifient), §4 (lecture par les membres, écriture par
@@ -12,7 +13,9 @@
 
 import { Plus } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
+// l'espace courant.
+import { LienEspace as Link } from './LienEspace'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'

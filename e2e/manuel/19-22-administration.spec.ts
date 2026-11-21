@@ -8,6 +8,8 @@
 // Les écrans sont lus sur le seed. Ce qui s'écrit est défait dans le même scénario : un nœud créé puis archivé est
 // retiré par la clé de service ; le rôle de Farida Nowak changé est rendu ; une attente inscrite est retirée par
 // l'écran ; chaque confirmation est montrée puis annulée.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -37,11 +39,11 @@ const message = (page: Page) => page.getByTestId('message-membres')
 // scénarios n'y laissent leurs lignes (le journal est en ajout seul).
 test('le journal d’audit : les entrées, le filtre, une période vide', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages')
+	await page.goto('/p2enjoy/reglages')
 	await illustrer(page, { chapitre: JOURNAL, section: 'ouvrir-le-journal', nom: 'reglages', cibles: [page.getByRole('link', { name: /^Journal d’audit/ }), page.getByRole('link', { name: /^Membres/ })] })
-	await page.goto('/reglages/membres')
+	await page.goto('/p2enjoy/reglages/membres')
 	await illustrer(page, { chapitre: JOURNAL, section: 'ouvrir-le-journal', nom: 'membres', cibles: [page.getByRole('heading', { name: 'Membres', exact: true })] })
-	await page.goto('/reglages/journal')
+	await page.goto('/p2enjoy/reglages/journal')
 	const tableau = page.getByTestId('tableau-audit')
 	await expect(page.getByTestId('ligne-audit').first()).toBeVisible()
 	await illustrer(page, { chapitre: JOURNAL, section: null, nom: 'journal', cibles: [], pleinePage: true })
@@ -51,7 +53,7 @@ test('le journal d’audit : les entrées, le filtre, une période vide', async 
 	if ((await suite.count()) > 0) {
 		await illustrer(page, { chapitre: JOURNAL, section: 'lire-une-entree', nom: 'entrees-plus-anciennes', cibles: [suite] })
 	}
-	await page.goto('/reglages/journal?du=2020-01-01&au=2020-01-31')
+	await page.goto('/p2enjoy/reglages/journal?du=2020-01-01&au=2020-01-31')
 	const vide = page.getByText('Aucun geste sur cette période').first()
 	await expect(vide).toBeVisible()
 	await page.getByLabel('Acteur').selectOption({ label: 'Système ou compte supprimé' })
@@ -60,7 +62,7 @@ test('le journal d’audit : les entrées, le filtre, une période vide', async 
 
 test('le journal d’audit : une entrée sans acteur', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/journal')
+	await page.goto('/p2enjoy/reglages/journal')
 	// Les gestes du seed lui-même n'ont pas d'acteur ; « Entrées plus anciennes » les fait paraître.
 	const systeme = page.getByTestId('ligne-audit').filter({ hasText: 'Système ou compte supprimé' }).first()
 	for (let page_ = 0; page_ < 4 && (await systeme.count()) === 0; page_ += 1) await page.getByRole('button', { name: 'Entrées plus anciennes' }).click()
@@ -72,7 +74,7 @@ test('le catalogue : la liste, un nœud créé puis archivé', async ({ page, re
 	const cle = 'demonstration'
 	try {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/reglages/catalogue')
+		await page.goto('/p2enjoy/reglages/catalogue')
 		const liste = page.getByTestId('liste-catalogue')
 		await expect(page.getByTestId('ligne-noeud').first()).toBeVisible()
 		await illustrer(page, { chapitre: CATALOGUE, section: null, nom: 'catalogue', cibles: [], pleinePage: true })
@@ -99,7 +101,7 @@ test('le catalogue : la liste, un nœud créé puis archivé', async ({ page, re
 
 test('la corbeille : la liste, un refus de restauration, une dépense qui bloque', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/corbeille')
+	await page.goto('/p2enjoy/reglages/corbeille')
 	const tableau = page.getByTestId('tableau-corbeille')
 	await expect(page.getByTestId('ligne-corbeille').first()).toBeVisible()
 	await illustrer(page, { chapitre: CORBEILLE, section: null, nom: 'corbeille', cibles: [], pleinePage: true })
@@ -128,7 +130,7 @@ test('la corbeille : la liste, un refus de restauration, une dépense qui bloque
 // Un autre compte, une autre page : la session de l'administratrice ne se quitte pas au milieu d'un test.
 test('la corbeille d’un membre qui n’administre pas l’espace', async ({ page }) => {
 	await connecterAvecLeLabs(page, BIZDEV)
-	await page.goto('/reglages/corbeille')
+	await page.goto('/p2enjoy/reglages/corbeille')
 	const personnelle = page.getByTestId('corbeille-personnelle')
 	await expect(personnelle).toBeVisible()
 	await illustrer(page, { chapitre: CORBEILLE, section: null, nom: 'corbeille-personnelle', cibles: [personnelle] })
@@ -136,7 +138,7 @@ test('la corbeille d’un membre qui n’administre pas l’espace', async ({ pa
 
 test('la corbeille : un rôle retiré pendant que la page est ouverte', async ({ page, request }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/corbeille')
+	await page.goto('/p2enjoy/reglages/corbeille')
 	const ligne = page.getByTestId('ligne-corbeille').filter({ hasText: 'Legacy 2023' })
 	await expect(ligne).toBeVisible()
 	// Farida Nowak administre le temps du test : l'espace ne peut pas rester sans administrateur.
@@ -150,12 +152,12 @@ test('la corbeille : un rôle retiré pendant que la page est ouverte', async ({
 
 test('les membres : la liste, un rôle changé puis rendu, le retrait annulé', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/membres')
+	await page.goto('/p2enjoy/reglages/membres')
 	await expect(page.getByTestId('ligne-membre')).toHaveCount(3)
 	await illustrer(page, { chapitre: MEMBRES, section: null, nom: 'membres', cibles: [], pleinePage: true })
-	await page.goto('/reglages')
+	await page.goto('/p2enjoy/reglages')
 	await illustrer(page, { chapitre: MEMBRES, section: 'ouvrir-l-ecran', nom: 'reglages', cibles: [page.getByRole('link', { name: /^Arborescence : tracks et channels/ }), page.getByRole('link', { name: /^Membres : personnes et rôles/ })] })
-	await page.goto('/reglages/membres')
+	await page.goto('/p2enjoy/reglages/membres')
 	await expect(page.getByTestId('ligne-membre')).toHaveCount(3)
 	try {
 		await role(page, 'Farida Nowak').selectOption('business_developer')
@@ -175,7 +177,7 @@ test('les membres : la liste, un rôle changé puis rendu, le retrait annulé', 
 test('les attentes : inscrire, remplacer, retirer', async ({ page }) => {
 	const adresse = 'jeanne.martin@p2enjoy.test'
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/membres')
+	await page.goto('/p2enjoy/reglages/membres')
 	const section = page.getByRole('region', { name: 'Attentes' })
 	const inscrire = async (valeur: string) => {
 		await section.getByTestId('inscrire-attente').click()
@@ -202,7 +204,7 @@ test('les attentes : inscrire, remplacer, retirer', async ({ page }) => {
 
 test('les droits fins de Farida Nowak', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/membres')
+	await page.goto('/p2enjoy/reglages/membres')
 	const droits = page.getByTestId('droits-fins')
 	await droits.getByLabel('Membre').selectOption({ label: 'Farida Nowak' })
 	await expect(droits.getByRole('row', { name: /^Grands comptes/ }).getByTestId('acces-effectif')).toHaveText('Aucun accès')
@@ -213,7 +215,7 @@ test('les droits fins de Farida Nowak', async ({ page }) => {
 
 test('le journal d’audit vu par une lectrice', async ({ page }) => {
 	await connecterAvecLeLabs(page, VIEWER)
-	await page.goto('/reglages/journal')
+	await page.goto('/p2enjoy/reglages/journal')
 	const refus = page.getByText('Réservé aux administrateurs', { exact: true }).first()
 	await expect(refus).toBeVisible()
 	await illustrer(page, { chapitre: JOURNAL, section: 'ouvrir-le-journal', nom: 'reserve-aux-administrateurs', cibles: [refus.locator('xpath=ancestor::*[.//p][1]')] })
@@ -221,7 +223,7 @@ test('le journal d’audit vu par une lectrice', async ({ page }) => {
 
 test('CRM-133 : la description d’un nœud, dans son formulaire', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/reglages/catalogue')
+	await page.goto('/p2enjoy/reglages/catalogue')
 	await page.getByRole('button', { name: 'Modifier le nœud Prospection' }).click()
 	const champ = page.getByTestId('champ-description-noeud')
 	await expect(champ).toHaveValue(/Premier contact établi/)

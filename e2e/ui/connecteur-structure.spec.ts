@@ -4,6 +4,8 @@
 //
 // Un VRAI client MCP crée un channel au nom de l'administratrice ; la webapp, sous le même compte, le montre dans la barre
 // d'onglets du track. Les cases posées pour la preuve, et le channel, sont retirés à la fin.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import type { Browser } from '@playwright/test'
 import { connecterAvecLeLabs, expect, test, type APIRequestContext } from './fixtures'
@@ -80,7 +82,7 @@ test('un channel créé par le connecteur paraît dans la barre d’onglets du t
 	expect(creation.isError ?? false, JSON.stringify(creation)).toBe(false)
 
 	await connecterAvecLeLabs(page, CAMILLE.adresse)
-	await page.goto('/tracks/conseil-ia')
+	await page.goto('/p2enjoy/tracks/conseil-ia')
 	const onglet = page.getByRole('link', { name: NOM })
 	await expect(onglet).toBeVisible()
 	await capturer(page, 'connecteur-channel-onglets-1440', UNITE)

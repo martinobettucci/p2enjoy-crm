@@ -337,6 +337,8 @@ T2 se découpe en deux sous-tranches, chacune laissant verte la suite de son pé
 - `ContexteEspace` gagne **`slugEspace`** et **`espaces`** (la liste lue, id, nom, slug), pour que chaque écran compose ses
   liens sans relire.
 - **Sur une page d'un espace**, l'espace courant est celui de l'adresse.
+- **Un slug inconnu** (§8.3) : la barre latérale et le fil montrent le premier espace par nom — celui où mène le lien
+  proposé —, la zone principale dit « Espace introuvable » (*précisé au code*).
 - **Sur une page globale**, c'est le dernier espace courant de l'onglet, tenu par un **module en mémoire vive**
   (`webapp/src/lib/espace-onglet.ts`) : une variable du module, vivante tant que la page n'est pas rechargée, propre à
   l'onglet par nature (chaque onglet a son propre contexte JavaScript), jamais écrite dans un stockage (`CLAUDE.md` §11) ;
@@ -359,6 +361,12 @@ T2 se découpe en deux sous-tranches, chacune laissant verte la suite de son pé
   pilotage, la rentabilité) compose son lien avec **le slug de l'espace de sa ressource**, lu dans `ContexteEspace.espaces`
   par son `workspace_id`. Un `workspace_id` absent de la liste (une donnée lue avant un changement de droits) rend la ligne
   sans lien, jamais un lien vers un autre espace.
+- *Précisé au code de T2.a, le 2026-11-21* : les écrans d'une page d'un espace importent `LienEspace` et
+  `useNaviguerEspace` (`webapp/src/app/LienEspace.tsx`) à la place de `Link` et de `useNavigate` : un chemin d'espace y est
+  mis dans l'espace courant, un chemin global reste tel quel. **Les lignes des pages globales** (la cloche, la recherche, Ma
+  journée, Affaires figées, la rentabilité, un contact, une organisation, les coûts, les objectifs) **gardent en T2.a
+  l'ancienne adresse** : la redirection (§15.4) la mène dans l'espace de la ressource — par l'identifiant de l'affaire ou du
+  message —, ce qui est la bascule voulue (§8.4) ; T3 les composera directement avec le slug de leur ressource.
 - Les liens sortants : le résumé quotidien (`0133`) compose `{site}/tracks/…/cards/…` en base ; il est **laissé tel quel**
   en T2 — la redirection des anciennes adresses (§8.2) le sert — et repris avec T3 ; le connecteur avec T4.
 
@@ -380,11 +388,24 @@ Paramètres et ancre sont recopiés. La redirection est `replace` : « Précéde
 `public.track_current_address(p_workspace_slug, p_track_slug)` **si elle existe** au moment du code (§8.2, accord avec la
 session f9) ; sinon la session f9 ajoute l'appel.
 
+### 15.4 bis Ce que T2.a ne fait pas encore : les listes des réglages
+
+*Constaté au code de T2.a, le 2026-11-21.* Les écrans de réglages **créent** désormais dans l'espace de l'adresse, mais
+plusieurs **lisent** leurs listes sans filtre d'espace (`lireComptesEntrants`, `lireIdentitesSortantes`, `lireModelesEmails`,
+`lireSequences`, `lireCatalogueAdministrable`, `lireTracksAdministrables`, …) : sous la RLS, un membre de deux espaces y verrait
+les lignes des deux. Défaut **antérieur** à `CRM-161`, sans effet tant qu'il n'y a qu'un espace. Il est repris par une
+sous-tranche **T2.c — les réglages ne lisent que l'espace de l'adresse**, avant T2.b (qui pose le second espace du seed) :
+chaque lecture de liste d'un réglage porte `workspace_id=eq.` ; preuve unitaire par écran et un E2E sur l'espace jetable.
+
 ### 15.5 Les E2E de T2.a
 
-- Les `goto` vers une page d'un espace (environ 435, dans `e2e/ui`, `e2e/manuel`, `e2e/mail`) sont révisés vers
-  `/p2enjoy/…`, par un remplacement mécanique relu, **dans le même commit** (demande de la session de livraison) ; les
-  `toHaveURL` aussi.
+- Les `goto` vers une page d'un espace (436, dans 117 fichiers de `e2e/ui`, `e2e/manuel`, `e2e/mail`) sont révisés vers
+  `/p2enjoy/…` (`ESPACE_SEED`, `e2e/espace.ts`), par un remplacement mécanique relu, **dans le même commit** (demande de la
+  session de livraison). *Précisé au code* : une preuve qui pose **son propre espace** (premier lancement, démarrage, guide,
+  accueil, chapitre 3 du manuel) garde l'ancienne adresse, que la redirection mène dans le bon espace ; les attentes exactes
+  sur l'adresse ou un `href` (`toHaveURL('/…')`, `toHaveAttribute('href', '/…')`) emploient `dansUnEspace`, qui accepte le
+  slug de n'importe quel espace. Aucun texte du manuel ne cite une adresse : rien n'y fige `/p2enjoy/` (l'espace de
+  production s'appelle `crm`).
 - **Preuves propres** (`e2e/ui/espace-adresse.spec.ts`) : chaque ancienne adresse redirigée (le tableau du §15.4), un slug
   inconnu, la barre latérale d'un espace, deux onglets sur deux espaces (une seconde page du même contexte de navigation, un
   espace jetable posé par la clé de service), et une page globale qui garde l'espace de l'onglet.

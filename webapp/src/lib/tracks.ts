@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — la barre latérale ne lit que les tracks de l'espace courant
+//       (docs/SPEC-espace-courant.md §15.2)
 // @spec CRM-020 (docs/BACKLOG.md) — lecture des tracks par la barre latérale
 // @spec docs/SPEC-tracks.md §7 (ce que la barre latérale lit), §4 (archivage), §3 (ordre)
 // @spec CRM-077 (docs/BACKLOG.md) — corbeille : docs/SPEC-corbeille.md §3.1 (les trois états),
@@ -57,11 +59,14 @@ export const COLONNES_TRACK = 'id, name, slug, color, icon, position, descriptio
  *     que deux tracks de même position ne s'échangent pas d'un chargement à l'autre
  *     (docs/SPEC-tracks.md §3).
  */
-export async function lireTracks(client: ClientCrm): Promise<EtatAsync<readonly Track[]>> {
+export async function lireTracks(
+	client: ClientCrm,
+	/** `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) : les tracks de cet espace seul ; omis, tous ceux qu'on lit. */
+	idWorkspace?: string,
+): Promise<EtatAsync<readonly Track[]>> {
 	try {
-		const reponse = await client
-			.from('tracks')
-			.select(COLONNES_TRACK)
+		const base = client.from('tracks').select(COLONNES_TRACK)
+		const reponse = await (idWorkspace === undefined ? base : base.eq('workspace_id', idWorkspace))
 			.is('archived_at', null)
 			.is('deleted_at', null)
 			.order('position')
@@ -87,7 +92,14 @@ export async function lireTracks(client: ClientCrm): Promise<EtatAsync<readonly 
  *   rechargement n'efface pas la liste qu'il relit (docs/DESIGN_SYSTEM.md §5.29 tranche 2 c). Son échec,
  *   lui, remplace la liste comme tout échec : la garder en silence serait une valeur trompeuse.
  */
-export function useTracks(client: ClientCrm | null): {
+export function useTracks(
+	client: ClientCrm | null,
+	/**
+	 * `CRM-161` T2.a (§15.2) : l'espace dont la barre latérale liste les tracks ; `null` tant qu'il n'est pas lu — la lecture
+	 * attend ; omis, tous les tracks lus.
+	 */
+	idWorkspace?: string | null,
+): {
 	readonly etat: EtatAsync<readonly Track[]>
 	readonly recharger: () => void
 	readonly relire: () => void
@@ -99,13 +111,13 @@ export function useTracks(client: ClientCrm | null): {
 	const courant = useRef(0)
 
 	useEffect(() => {
-		if (client === null) return
+		if (client === null || idWorkspace === null) return
 		const rang = ++courant.current
 		if (!demande.silencieuse) setEtat(enChargement)
-		void lireTracks(client).then((resultat) => {
+		void lireTracks(client, idWorkspace).then((resultat) => {
 			if (rang === courant.current) setEtat(resultat)
 		})
-	}, [client, demande])
+	}, [client, idWorkspace, demande])
 
 	const recharger = useCallback(() => {
 		setDemande((precedente) => ({ tentative: precedente.tentative + 1, silencieuse: false }))

@@ -13,6 +13,8 @@
 // @spec CRM-134 (docs/BACKLOG.md) — tranche T3 : les images « archiver-le-channel », « confirmer-l-archivage » et
 //       « channels-archives » de la section 9.10 (docs/SPEC-channels.md §11 ; docs/DESIGN_SYSTEM.md §5.101) ; rien n'est
 //       archivé : la confirmation est refermée par Échap, et le groupe montre l'archivé du seed, « Appels d'offres »
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
@@ -29,7 +31,7 @@ const S = {
 	corbeille: 'mettre-une-affaire-a-la-corbeille',
 } as const
 
-const GRANDS_COMPTES = '/tracks/conseil-ia/grands-comptes'
+const GRANDS_COMPTES = '/p2enjoy/tracks/conseil-ia/grands-comptes'
 const CHANNEL_GRANDS_COMPTES = '5eed0000-0000-4000-8000-000000000032'
 const WORKFLOW_GLOBAL = '5eed0000-0000-4000-8000-000000000051'
 const ETAPE_SIGNATURE = '5eed0000-0000-4000-8000-000000000064'
@@ -86,7 +88,7 @@ test('le tableau : sa barre, la création d’une affaire', async ({ page, reque
 		for (const { id } of creees) await detruireAffaire(request, id)
 	}
 
-	await page.goto('/tracks/ce-track-nexiste-pas/grands-comptes')
+	await page.goto('/p2enjoy/tracks/ce-track-nexiste-pas/grands-comptes')
 	const introuvable = page.getByText('Track introuvable', { exact: true }).first()
 	await expect(introuvable).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: S.board, nom: 'track-introuvable', cibles: [introuvable] })
@@ -129,7 +131,7 @@ async function retirerChampsFiltres(request: APIRequestContext): Promise<void> {
 
 test('le tableau : archiver le channel, et le retrouver dans « Archivés »', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/tracks/conseil-ia/prospection')
+	await page.goto('/p2enjoy/tracks/conseil-ia/prospection')
 	const commande = page.getByTestId('commande-archiver-channel')
 	await expect(commande).toBeEnabled()
 	await illustrer(page, { chapitre: CHAPITRE, section: S.board, nom: 'archiver-le-channel', cibles: [page.getByTestId('bascule-vue'), commande] })
@@ -200,7 +202,7 @@ test('la vue liste : le compte, la pagination, les vides', async ({ page, reques
 		{ id: CHANNEL_VIDE, workspace_id: WORKSPACE_SEED, track_id: TRACK_CONSEIL, workflow_id: WORKFLOW_GLOBAL, name: 'Partenariats', slug: 'partenariats', position: 90 },
 	])
 	try {
-		await page.goto('/tracks/conseil-ia/partenariats/liste')
+		await page.goto('/p2enjoy/tracks/conseil-ia/partenariats/liste')
 		const aucune = page.getByTestId('etat-vide')
 		// Les affaires en sommeil sont masquées par défaut : le channel vide le dit d'abord ainsi.
 		await expect(aucune).toContainText('Aucune affaire éveillée dans ce channel')
@@ -214,7 +216,7 @@ test('la vue liste : le compte, la pagination, les vides', async ({ page, reques
 		// Une seule affaire, endormie : le tableau le dit, et propose de la révéler.
 		await poserAffaire(request, { id: ENDORMIE.id, titre: ENDORMIE.titre, channel: CHANNEL_VIDE, workflow: WORKFLOW_GLOBAL, etape: ETAPE_SIGNATURE })
 		await service(request, 'patch', `card_placements?card_id=eq.${ENDORMIE.id}`, { snoozed_until: new Date(Date.now() + 7 * 86_400_000).toISOString() })
-		await page.goto('/tracks/conseil-ia/partenariats')
+		await page.goto('/p2enjoy/tracks/conseil-ia/partenariats')
 		const endormies = page.getByText('Toutes les affaires de ce channel sont en sommeil', { exact: true }).first()
 		await expect(endormies).toBeVisible()
 		await illustrer(page, { chapitre: CHAPITRE, section: S.board, nom: 'toutes-en-sommeil', cibles: [endormies.locator('xpath=ancestor::*[@data-testid][1]')] })
@@ -266,7 +268,7 @@ test('le sommeil, le fil et ses filtres', async ({ page, request }) => {
 	}
 
 	// Le fil d'une affaire riche, filtré.
-	await page.goto('/tracks/conseil-ia/grands-comptes/cards/5eed0000-0000-4000-8000-0000000000c2')
+	await page.goto('/p2enjoy/tracks/conseil-ia/grands-comptes/cards/5eed0000-0000-4000-8000-0000000000c2')
 	await page.getByRole('group', { name: 'Filtres du fil' }).getByRole('button', { name: /^Cycle de vie/ }).click()
 	await illustrer(page, { chapitre: CHAPITRE, section: S.corbeille, nom: 'cycle-de-vie', cibles: [page.getByRole('group', { name: 'Filtres du fil' }).getByRole('button', { name: /^Cycle de vie/ })] })
 	const aucun = page.getByText('Aucun élément pour ces filtres').first()

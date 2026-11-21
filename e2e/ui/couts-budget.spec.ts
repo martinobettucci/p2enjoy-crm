@@ -27,6 +27,8 @@
 //
 // LES ASSERTIONS PORTENT SUR LE TABLEAU ÉQUIVALENT, ET NON SUR LES BARRES — le §5.30 fait du
 // tableau la version accessible du graphique, lequel est `aria-hidden` à dessein.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { autoriserErreursConsole, connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -49,10 +51,10 @@ const ID_SANS_LIGNE = '5eed0000-0000-4000-8000-0000000000c4'
 const ID_FERME_A_LA_LECTRICE = '5eed0000-0000-4000-8000-0000000000c1'
 const ID_INCONNU = '5eed0000-0000-4000-8000-00000000ffff'
 
-const DETAIL_RECURRENT = `/tracks/studio-web/couts/${ID_RECURRENT}`
-const DETAIL_CLOTURE = `/tracks/studio-web/couts/${ID_CLOTURE}`
-const DETAIL_SANS_LIGNE = `/tracks/formation/couts/${ID_SANS_LIGNE}`
-const DETAIL_FERME = `/tracks/conseil-ia/couts/${ID_FERME_A_LA_LECTRICE}`
+const DETAIL_RECURRENT = `/p2enjoy/tracks/studio-web/couts/${ID_RECURRENT}`
+const DETAIL_CLOTURE = `/p2enjoy/tracks/studio-web/couts/${ID_CLOTURE}`
+const DETAIL_SANS_LIGNE = `/p2enjoy/tracks/formation/couts/${ID_SANS_LIGNE}`
+const DETAIL_FERME = `/p2enjoy/tracks/conseil-ia/couts/${ID_FERME_A_LA_LECTRICE}`
 
 async function connecter(page: Page, email = ADMIN): Promise<void> {
 	await connecterAvecLeLabs(page, email)
@@ -71,7 +73,7 @@ test.describe('CRM-086 — détail d’un budget (docs/SPEC-costs.md §4.3)', ()
 		await connecter(page)
 
 		// D'abord l'écran du §4.2, pour établir l'agrégat sur le MÊME jeu de données.
-		await page.goto('/tracks/studio-web/couts')
+		await page.goto('/p2enjoy/tracks/studio-web/couts')
 		const agregat = tableauBarres(page).getByRole('row', { name: /Publicité 2026/ })
 		await expect(agregat).toHaveCount(1)
 
@@ -212,10 +214,10 @@ test.describe('CRM-086 — détail d’un budget (docs/SPEC-costs.md §4.3)', ()
 		await expect(page.getByText('Prospection sortante')).toHaveCount(0)
 		await expect(page.getByText('12 000')).toHaveCount(0)
 
-		await page.goto(`/tracks/studio-web/couts/${ID_INCONNU}`)
+		await page.goto(`/p2enjoy/tracks/studio-web/couts/${ID_INCONNU}`)
 		await expect(page.getByText('Budget introuvable')).toBeVisible()
 
-		await page.goto('/tracks/studio-web/couts/salon-2025')
+		await page.goto('/p2enjoy/tracks/studio-web/couts/salon-2025')
 		await expect(page.getByText('Budget introuvable')).toBeVisible()
 
 		// Le retour mène aux coûts du track, jamais à la racine.

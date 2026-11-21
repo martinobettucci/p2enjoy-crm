@@ -10,6 +10,8 @@
 // le chemin d'une correction (`suggestions_ia_revisions`, origine `correction`, docs/SPEC-ia.md §12.2) — la base calcule
 // les défauts comme pour toute révision. Les champs communs sont posés de même. Après chaque scénario, la clé de service
 // retire le workflow créé, les nœuds ajoutés, les suggestions et les champs de sonde — retrait CONSTATÉ.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import { connecterAvecLeLabs, expect, test, type APIRequestContext, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -17,7 +19,7 @@ import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/je
 
 const UNITE = 'CRM-112'
 const ADMIN = 'admin@p2enjoy.test'
-const EDITEUR = '/reglages/workflows'
+const EDITEUR = '/p2enjoy/reglages/workflows'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
 const PREFIXE = 'Sonde 112 UI'
 const NOEUDS = ['sonde-112-depart', 'sonde-112-devis', 'sonde-112-gagne']

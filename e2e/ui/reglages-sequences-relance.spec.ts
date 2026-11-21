@@ -21,6 +21,8 @@
 // l'administratrice ; le compte des séquences du seed est relu à la fin de chacun, ET l'ordre de
 // ses trois paliers est reposé — une suite qui laisserait l'ordre inversé ferait rougir
 // `verify-seed-demo.sh` pour une raison sans rapport avec son objet.
+// *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
+// le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
 import {
 	autoriserErreursConsole,
@@ -100,7 +102,7 @@ test.describe('administration des séquences de relance (docs/SPEC-modeles-email
 		page,
 	}) => {
 		await connecter(page, ADMIN)
-		await page.goto('/reglages')
+		await page.goto('/p2enjoy/reglages')
 		// L'ÉCRAN EST ATTEINT PAR SON ENTRÉE D'INDEX, jamais par une navigation directe : c'est la
 		// place du §13.4 qui est mesurée ici, et non seulement l'existence de la route.
 		await page.getByRole('link', { name: 'Séquences de relance' }).click()
@@ -119,7 +121,7 @@ test.describe('administration des séquences de relance (docs/SPEC-modeles-email
 		page,
 	}) => {
 		await connecter(page, ADMIN)
-		await page.goto('/reglages/sequences-relance')
+		await page.goto('/p2enjoy/reglages/sequences-relance')
 		await page.getByTestId('modifier-sequence').click()
 
 		await expect(page.getByTestId('fiche-sequence')).toBeVisible()
@@ -147,7 +149,7 @@ test.describe('administration des séquences de relance (docs/SPEC-modeles-email
 		page,
 	}) => {
 		await connecter(page, ADMIN)
-		await page.goto('/reglages/sequences-relance')
+		await page.goto('/p2enjoy/reglages/sequences-relance')
 		await page.getByTestId('modifier-sequence').click()
 		const paliers = page.getByTestId('ligne-palier')
 		await expect(paliers).toHaveCount(3)
@@ -166,7 +168,7 @@ test.describe('administration des séquences de relance (docs/SPEC-modeles-email
 		page,
 	}) => {
 		await connecter(page, ADMIN)
-		await page.goto('/reglages/sequences-relance')
+		await page.goto('/p2enjoy/reglages/sequences-relance')
 		await page.getByTestId('modifier-sequence').click()
 		const paliers = page.getByTestId('ligne-palier')
 		await expect(paliers).toHaveCount(3)
@@ -203,7 +205,7 @@ test.describe('administration des séquences de relance (docs/SPEC-modeles-email
 		page,
 	}) => {
 		await connecter(page, ADMIN)
-		await page.goto('/reglages/sequences-relance')
+		await page.goto('/p2enjoy/reglages/sequences-relance')
 
 		await page.getByTestId('ouvrir-sequence').click()
 		await page.getByTestId('champ-nom-sequence').click()
@@ -248,7 +250,7 @@ test.describe('administration des séquences de relance (docs/SPEC-modeles-email
 		page,
 	}) => {
 		await connecter(page, ADMIN)
-		await page.goto('/reglages/sequences-relance')
+		await page.goto('/p2enjoy/reglages/sequences-relance')
 
 		await page.getByTestId('ouvrir-sequence').click()
 		await page.getByTestId('champ-nom-sequence').click()
@@ -274,7 +276,7 @@ test.describe('administration des séquences de relance (docs/SPEC-modeles-email
 		page,
 	}) => {
 		await connecter(page, ADMIN)
-		await page.goto('/reglages/sequences-relance')
+		await page.goto('/p2enjoy/reglages/sequences-relance')
 		await page.getByTestId('modifier-sequence').click()
 		await expect(page.getByTestId('ligne-palier')).toHaveCount(3)
 
@@ -296,7 +298,7 @@ test.describe('administration des séquences de relance (docs/SPEC-modeles-email
 
 	test('LA LECTRICE VOIT L’ÉCRAN ; « Modifier » est ÉTEINT, avec son motif (CRM-093)', async ({ page }) => {
 		await connecter(page, VIEWER)
-		await page.goto('/reglages/sequences-relance')
+		await page.goto('/p2enjoy/reglages/sequences-relance')
 
 		// RÉVISÉ PAR `CRM-093` (docs/SPEC-droits-interface.md §3, §5) : la capacité d'éditer est rendue par la base ; la
 		// lectrice voit la liste, et la commande refusée reste montée, désactivée, citant son motif. Le zéro-ligne de la
@@ -316,7 +318,7 @@ test.describe('administration des séquences de relance (docs/SPEC-modeles-email
 		page,
 	}) => {
 		await connecter(page, ADMIN)
-		await page.goto('/reglages/modeles-emails')
+		await page.goto('/p2enjoy/reglages/modeles-emails')
 
 		// LE MODÈLE CHOISI EST CELUI QUE DEUX PALIERS DU SEED EMPLOIENT (§11.9) : c'est celui sur
 		// lequel le `on delete restrict` de la migration 0059 mord réellement.
@@ -345,7 +347,7 @@ test.describe('administration des séquences de relance (docs/SPEC-modeles-email
 		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[409]])
 
 		// LE MODÈLE EST TOUJOURS LÀ.
-		await page.goto('/reglages/modeles-emails')
+		await page.goto('/p2enjoy/reglages/modeles-emails')
 		// RÉVISÉ PAR `CRM-112` T8 (docs/SPEC-seed.md §38) : trois modèles au seed, dont « SIRET pour la facturation ».
 		await expect(page.getByTestId('ligne-modele-email')).toHaveCount(3)
 	})
@@ -359,7 +361,7 @@ test.describe('administration des séquences de relance (docs/SPEC-modeles-email
 			// latérale devient un tiroir en restant OUVERTE — un état qu'un utilisateur arrivant à
 			// 390 px ne rencontre jamais. C'est le défaut mesuré par la sous-tranche 2b.
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
-			await page.goto('/reglages/sequences-relance')
+			await page.goto('/p2enjoy/reglages/sequences-relance')
 			await expect(page.getByTestId('ligne-sequence')).toHaveCount(SEQUENCES_DU_SEED)
 			await capturer(page, `sequences-liste-${palier.largeur}`, UNITE)
 		}

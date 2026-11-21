@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — les liens et la navigation mènent dans l'espace courant (§15.3) ; docs/SPEC-espace-courant.md
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les gestes d'écriture lisent le refus du channel (docs/DESIGN_SYSTEM.md
 //       §5.59)
 // @spec CRM-095 (docs/BACKLOG.md) — tranche T2 : « Nouvelle affaire », sur le board et dans la vue liste
@@ -18,7 +19,9 @@
 
 import { Plus, TriangleAlert } from 'lucide-react'
 import { useCallback, useEffect, useId, useRef, useState, type RefObject } from 'react'
-import { Link, useNavigate } from 'react-router'
+// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
+// l'espace courant.
+import { LienEspace as Link, useNaviguerEspace as useNavigate } from './LienEspace'
 import { Button } from '../components/ui/Button'
 import { t, type CleTraduction } from '../i18n'
 import { creerAffaire, type RefusCreationAffaire } from '../lib/creer-affaire'
