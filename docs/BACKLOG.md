@@ -20547,7 +20547,11 @@ livraison (décision 830).
     dont T2.a avait révisé les `goto` ont été jouées (124 cas sur 128 : deux specs à espace propre corrigées, puis 14/14 ;
     `34-webhooks` échoue sur la hauteur de l'historique des remises accumulées en développement, sans lien) ; leurs images,
     régénérées sur une base non fraîche, n'ont pas été committées ;
-  - [ ] **T2.b — le menu des espaces** : le menu et ses non-lus, la bascule annoncée, le seed §55, le design system, les E2E
+  - [~] **T2.b — le menu des espaces** — *le menu fait et vérifié le 2026-11-21* (design system §5.113 ; `MenuEspaces.tsx`,
+    `lib/menu-espaces.ts` ; la bascule annoncée par la coquille ; unitaires 17/17, unitaires complets 6 197/6 197 ; E2E
+    `e2e/ui/menu-espaces.spec.ts` 3/3 sur un espace jetable — pastille, comptes, clavier, choix qui garde la page, page globale,
+    quatre paliers et repli — ; captures observées) ; **reste le seed §55**, accordé avec la session f9 (`CRM-162` §54), la
+    révision de `accueil-channels` qu'il impose, et le manuel : le menu et ses non-lus, la bascule annoncée, le seed §55, le design system, les E2E
     et captures sur un compte de deux espaces, le manuel.
 - [ ] **T3 — Les pages globales.** Espace de provenance et filtre « Espace » ; les écrans qui lisaient le premier espace
   passent à tous ; les créations nomment l'espace courant de l'onglet.

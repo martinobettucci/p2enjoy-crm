@@ -41612,3 +41612,19 @@ de l'historique des remises, qui grandit avec les remises accumulées en dévelo
 diffèrent par l'état des données (dates, compteur de notifications, journal d'audit ; certaines images committées sont
 antérieures à `CRM-131`) et non par l'adresse, qu'aucune ne montre : **elles n'ont pas été committées** — la campagne de
 renouvellement de la session de livraison, sur base fraîche, les reprendra.
+
+### `CRM-161` T2.b — le menu des espaces (journal d'implémentation, première moitié)
+
+*2026-11-21, session 4891a451 (p2enjoy-crm-5f).*
+**Fait** : le design system §5.113 (écrit et poussé avant le code, 8b450256), le menu (`MenuEspaces`, `SectionEspacesDuRepli`), la
+lecture des non-lus de chaque espace (`inbox_unread_by_workspace` de T1), l'adresse d'un choix (`adresseApresChoix`), la bascule
+annoncée.
+**Un choix de réalisation** : la bascule est dite par un **constat** de l'espace montré, tenu par le module de l'onglet
+(`constaterEspace`) et non par la coquille : les routes d'un track, d'une affaire, des coûts montent CHACUNE leur coquille, si
+bien qu'un état de la coquille ne survivrait pas au passage d'une page globale à un track d'un autre espace — précisément la
+bascule du §8.4. Sur une page globale, le choix remplace l'adresse par elle-même pour que la coquille relise l'espace de
+l'onglet.
+**Trouvé par la preuve** : l'attente « sans pastille » après le passage dans la sonde était fausse — l'espace du seed garde ses
+non-lus, la pastille dit alors « ailleurs » ; l'attente est corrigée, le comportement est celui du §5.113.
+**Reste** : le seed §55 (en attente de l'accord avec la session f9 sur la création de « Studio Lumen » : identifiant figé ou
+fonction de la plateforme), la révision d'`accueil-channels` qu'il imposera, le manuel.

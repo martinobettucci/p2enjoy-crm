@@ -60,6 +60,14 @@ export const fr = {
 		"Cette adresse désigne un espace que vous ne pouvez pas ouvrir, ou qui n'existe pas. Vérifiez le lien, ou ouvrez l'un de vos espaces.",
 	'espace.introuvable.lien': 'Ouvrir mon premier espace',
 	'espace.redirection.chargement': "Ouverture de l'espace",
+	// CRM-161 T2.b (docs/DESIGN_SYSTEM.md §5.113) : le menu des espaces et la bascule annoncée.
+	'espace.bascule': 'Vous êtes passé dans l’espace {espace}.',
+	'espace.menu.bouton': 'Changer d’espace — {espace}',
+	'espace.menu.bouton.nonLus': 'Changer d’espace — {espace} — des messages non lus dans un autre espace',
+	'espace.menu.panneau': 'Vos espaces',
+	'espace.menu.ligne.nonLu': '{espace} — 1 message non lu',
+	'espace.menu.ligne.nonLus': '{espace} — {nombre} messages non lus',
+	'espace.menu.section': 'Espaces',
 	'header.auth.logout': 'Se déconnecter',
 	'header.auth.logout.error': "La déconnexion n'a pas abouti. Réessayez.",
 

@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.b — la bascule d'espace annoncée (docs/DESIGN_SYSTEM.md §5.113)
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — changer d'espace remonte le contenu de la page (clé sur l'espace) ; docs/SPEC-espace-courant.md §15.4 bis
 // @spec CRM-007 (docs/BACKLOG.md) — coquille de l'application
 // @spec docs/DESIGN_SYSTEM.md §4 (architecture des écrans), §5.8 (états), §7, §8
@@ -43,7 +44,7 @@ import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
 import { useCapacitesEspace } from '../lib/capacites'
 import { useApresTracksModifies, useTracks } from '../lib/tracks'
 import { useWorkspaces } from '../lib/workspaces'
-import { choisirEspace, retenirEspaceDeLOnglet } from '../lib/espace-onglet'
+import { choisirEspace, constaterEspace } from '../lib/espace-onglet'
 import { cheminEspace } from './chemins'
 import { useAuthentification } from './Authentification'
 import { FournisseurEspace } from './ContexteEspace'
@@ -108,9 +109,13 @@ export function AppShell({
 	const { slugEspace: slugAdresse } = useParams()
 	const espaceChoisi = etat.statut === 'pret' ? choisirEspace(etat.donnees, slugAdresse) : null
 	const espaceCourant = espaceChoisi?.genre === 'espace' ? espaceChoisi.espace : null
+	// `CRM-161` T2.b (docs/DESIGN_SYSTEM.md §5.113) : la coquille constate l'espace qu'elle montre ; une bascule — par le menu,
+	// ou par un lien d'un autre espace — est dite dans la région polie, sans bandeau.
+	const [annonceBascule, setAnnonceBascule] = useState('')
 	useEffect(() => {
-		if (slugAdresse !== undefined && espaceCourant !== null) retenirEspaceDeLOnglet(espaceCourant.slug)
-	}, [slugAdresse, espaceCourant])
+		if (espaceCourant === null) return
+		if (constaterEspace(espaceCourant.slug)) setAnnonceBascule(t('espace.bascule', { espace: espaceCourant.name }))
+	}, [espaceCourant])
 	// Les tracks attendent l'espace ; sans espace lisible (aucun, ou une lecture des espaces en échec), la barre lit sans
 	// filtre, et la RLS rend ce qu'elle rendait — l'état vide ou l'erreur restent dits comme avant.
 	const idEspaceDesTracks =
@@ -195,8 +200,9 @@ export function AppShell({
 		if (etatTracks.statut === 'erreur') parts.push(t('live.tracks.error'))
 		else if (etatTracks.statut === 'pret')
 			parts.push(etatTracks.donnees.length === 0 ? t('live.tracks.empty') : t('live.tracks.loaded'))
+		if (annonceBascule !== '') parts.push(annonceBascule)
 		return parts.join(' ')
-	}, [etat, etatTracks])
+	}, [etat, etatTracks, annonceBascule])
 
 	const coquille = (
 		<div className="min-h-dvh flex flex-col">

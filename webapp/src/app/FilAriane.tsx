@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.b — à deux espaces et plus, le premier niveau est le menu des espaces
+//       (docs/DESIGN_SYSTEM.md §5.113)
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le premier niveau du fil nomme l'espace courant de l'onglet
 //       (docs/SPEC-espace-courant.md §15.2)
 // @spec CRM-110 (docs/BACKLOG.md) tranche T2 — le fil d'Ariane de l'en-tête, du workspace à l'objet ouvert
@@ -25,6 +27,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 // l'espace courant.
 import { LienEspace as Link } from './LienEspace'
 import { useContexteEspace } from './ContexteEspace'
+import { MenuEspaces, SectionEspacesDuRepli } from './MenuEspaces'
 import { t } from '../i18n'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import type { EtatAsync } from '../lib/async'
@@ -231,7 +234,7 @@ function NiveauWorkspace({
 	}
 	// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) : l'espace COURANT de l'onglet, celui de l'adresse ou le dernier
 	// ouvert, et non plus le premier de la liste.
-	const { idWorkspace } = useContexteEspace()
+	const { idWorkspace, espaces } = useContexteEspace()
 	const workspace =
 		etat.statut === 'pret' ? (etat.donnees.find((w) => w.id === idWorkspace) ?? (idWorkspace === null ? etat.donnees[0] : undefined)) : undefined
 	if (workspace === undefined) {
@@ -242,6 +245,19 @@ function NiveauWorkspace({
 			>
 				{t('header.workspace.unknown')}
 			</span>
+		)
+	}
+	// `CRM-161` T2.b (docs/DESIGN_SYSTEM.md §5.113) : à deux espaces et plus, le premier niveau devient le menu des espaces ;
+	// dans le repli, le lien reste, suivi de la section « Espaces ».
+	if (espaces !== undefined && espaces.length >= 2) {
+		if (enLigne) return <MenuEspaces espaces={espaces} />
+		return (
+			<>
+				<Link to="/" data-testid="workspace-courant-repli" title={workspace.name} className={CLASSES_LIEN} {...(onSuivre === undefined ? {} : { onClick: onSuivre })}>
+					<span className="truncate">{workspace.name}</span>
+				</Link>
+				<SectionEspacesDuRepli espaces={espaces} onChoisi={onSuivre ?? (() => {})} />
+			</>
 		)
 	}
 	return (

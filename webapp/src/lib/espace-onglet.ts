@@ -1,4 +1,4 @@
-// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'espace courant de l'onglet : celui de l'adresse sur une page d'un espace,
+// @spec CRM-161 (docs/BACKLOG.md) tranches T2.a et T2.b (le constat qui annonce la bascule) — l'espace courant de l'onglet : celui de l'adresse sur une page d'un espace,
 //       le dernier de l'onglet sur une page globale, sinon le premier par nom (docs/SPEC-espace-courant.md §2, §15.2 ;
 //       docs/JOURNAL.md décision 967)
 //
@@ -21,9 +21,25 @@ export function retenirEspaceDeLOnglet(slug: string): void {
 	slugDeLOnglet = slug
 }
 
+/** Le dernier espace qu'une coquille a montré dans cet onglet — distinct du choix, pour annoncer la bascule (§8.4). */
+let slugMontre: string | null = null
+
+/**
+ * `CRM-161` T2.b (docs/DESIGN_SYSTEM.md §5.113) : la coquille constate l'espace qu'elle montre. Rend vrai quand l'onglet vient
+ * de PASSER d'un espace à un autre — par le menu, ou par un lien d'un autre espace —, pour l'annoncer ; faux au premier
+ * affichage et quand rien n'a changé. Le constat est aussi le choix de l'onglet.
+ */
+export function constaterEspace(slug: string): boolean {
+	const bascule = slugMontre !== null && slugMontre !== slug
+	slugMontre = slug
+	slugDeLOnglet = slug
+	return bascule
+}
+
 /** Pour les preuves : l'onglet neuf. */
 export function oublierEspaceDeLOnglet(): void {
 	slugDeLOnglet = null
+	slugMontre = null
 }
 
 export type EspaceChoisi =
