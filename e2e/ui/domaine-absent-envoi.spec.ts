@@ -85,7 +85,16 @@ test.describe('envoyer depuis un espace sans domaine (docs/DESIGN_SYSTEM.md §5.
 		if (montage === null) throw new Error('montage absent')
 		await connecterAvecLeLabs(page, CAMILLE.adresse)
 		await page.goto(ficheDe(montage))
-		await page.getByTestId('envoi-ouvrir').focus()
+		// Révisé le 2026-11-21 (campagne du lot `CRM-161`) : la commande est attendue ACTIVE avant le focus. Pendant la lecture
+		// des capacités de l'espace, elle est désactivée sans motif (`CRM-093`, docs/SPEC-droits-interface.md) ; un bouton
+		// désactivé refuse le focus, et l'Entrée tombait sur la page (mesuré : l'élément actif restait `BODY`, deux fois sur cinq
+		// rejoué seul). Le clic de la preuve à la souris attend de lui-même qu'elle soit active ; le focus, non. Il est constaté
+		// avant la touche.
+		await expect(page.getByTestId('entete-card').getByRole('heading', { name: montage.titreAffaire })).toBeVisible()
+		const ouvrir = page.getByTestId('envoi-ouvrir')
+		await expect(ouvrir).toBeEnabled()
+		await ouvrir.focus()
+		await expect(ouvrir).toBeFocused()
 		await page.keyboard.press('Enter')
 		await expect(page.getByTestId('envoi-domaine-absent')).toBeVisible()
 		// L'avertissement précède le premier champ dans l'ordre du document : il est lu avant qu'on rédige.

@@ -41871,3 +41871,16 @@ la vidéo d'échec) — des lignes que les clés composites `(track_id, workspac
 automatique » lisait les séquences et les identités de tous les espaces. Même règle, même correctif : `lireArbreTemps` et
 `lireIdentitesDisponibles` prennent l'espace, `BlocSequenceCard` reçoit celui de l'affaire. Vérifications : manuel 19/19, écran
 temps et séquences 49/49, unitaires des lectures étendus. Limite nommée au §15.4 bis : le formulaire d'envoi.
+
+### Seconde campagne du lot `CRM-161`… — les deux échecs de la part 5f (journal de correction)
+
+*2026-11-21, session 4891a451 (p2enjoy-crm-5f), à la demande de la session de livraison (campagne à 1540d953).*
+**`e2e/ui/domaine-absent-envoi.spec.ts` « au clavier »** — rouge deux fois sur cinq rejoué seul. Mesuré : après `focus()`,
+l'élément actif reste `BODY`, le bouton étant le même nœud — il était encore **désactivé**, comme toute commande pendant la
+lecture des capacités de l'espace (`CRM-093`, voulu) ; un bouton désactivé refuse le focus, et l'Entrée tombait sur la page.
+Le clic de la preuve à la souris attend de lui-même la commande active, le focus non. **Preuve corrigée, pas le produit** : la
+commande est attendue active, et le focus constaté avant la touche. Vert 10/10 en répétition, le fichier 7/7.
+**`e2e/manuel/14-16` « relance automatique »** — rouge seul (une boîte de 641 à 984 px pour 900). Le bloc garde ses 343 px :
+ce sont la bande de temps et la rentabilité, au-dessus, qui finissaient de se lire après le défilement du cadrage. Sans lien
+avec la décision 975. **Preuve corrigée** : leurs marqueurs de fin de lecture et l'état vide de la relance sont attendus avant
+le cadrage. Rouge puis vert sur la même base, 3/3 rejoué seul, le fichier 7/7, l'image observée.

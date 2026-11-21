@@ -202,6 +202,13 @@ test('armer puis interrompre une relance sur une affaire figée', async ({ page,
 		await page.goto(AFFAIRE_FIGEE.adresse)
 		const bloc = page.getByTestId('bloc-sequence-card')
 		await expect(bloc).toBeVisible()
+		// Révisé le 2026-11-21 (campagne du lot `CRM-161`) : la fiche est attendue CHARGÉE avant le cadrage. Les blocs au-dessus
+		// de la relance — la bande de temps, la rentabilité — finissaient de se lire après le défilement et poussaient le bloc
+		// hors de la fenêtre (mesuré : le bloc garde ses 343 px, son haut passe de 557 à 641 puis 685). Les marqueurs de leur
+		// fin de lecture, et l'état vide de la relance, sont attendus.
+		await expect(page.getByTestId('temps-card-tableau')).toBeVisible()
+		await expect(page.getByTestId('bloc-rentabilite-card').getByTestId('rentab-taux')).toBeVisible()
+		await expect(bloc.getByTestId('sequence-vide')).toBeVisible()
 		await illustrer(page, { chapitre: SEQUENCES, section: null, nom: 'relance-automatique', cibles: [bloc] })
 		await bloc.getByTestId('champ-sequence').selectOption({ label: 'Relance en trois temps' })
 		await bloc.getByTestId('champ-identite-sequence').selectOption({ index: 1 })
