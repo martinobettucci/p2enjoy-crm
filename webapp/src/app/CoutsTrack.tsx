@@ -66,8 +66,8 @@ const CLASSES_RETOUR = [
 const CLE_TITRE_COUTS: CleTraduction = 'tabs.track.costs'
 
 export function CoutsTrack() {
-	const { slugTrack } = useParams()
-	const { etat, recharger } = useContenuTrack(clientCrm, slugTrack)
+	const { slugTrack, slugEspace } = useParams()
+	const { etat, recharger } = useContenuTrack(clientCrm, slugTrack, slugEspace)
 
 	const track = etat.statut === 'pret' ? etat.donnees.track : null
 

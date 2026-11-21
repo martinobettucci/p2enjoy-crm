@@ -1,3 +1,4 @@
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T2.a : le track résolu dans l'espace de l'adresse (docs/SPEC-espace-courant.md §5)
 // @verifies CRM-021 (docs/BACKLOG.md) — lecture des channels et résolution d'un track par slug
 // @verifies CRM-116 (docs/BACKLOG.md) tranche T3 — `color` rejoint la lecture partagée (docs/SPEC-channels.md §5)
 // @verifies docs/SPEC-channels.md §5 (requête émise), §5.1 (route d'un track), §4 (archivage)
@@ -106,6 +107,19 @@ describe('lireTrackParSlug', () => {
 		// contraire.
 		expect(appel.nuls).toEqual(['archived_at', 'deleted_at'])
 		expect(appel.limite).toBe(1)
+	})
+
+	// `CRM-161` T2.a (docs/SPEC-espace-courant.md §5, §8.1) — trouvé par la session f9 (CRM-162) : le slug d'un track n'est unique
+	// que dans son espace ; sous `/:slugEspace/tracks/:slugTrack`, le track se cherche DANS l'espace de l'adresse.
+	it('CRM-161 : avec l’espace de l’adresse, le track est cherché dans cet espace seul, et rendu sans la jointure', async () => {
+		const { client, appel } = clientEspion({ data: [{ ...TRACK, espace: { slug: 'p2enjoy' } }], error: null, status: 200 })
+		const etat = await lireTrackParSlug(client, 'conseil-ia', 'p2enjoy')
+		expect(appel.colonnes).toBe(`${COLONNES_TRACK_OUVERT}, espace:workspaces!inner(slug)`)
+		expect(appel.egalites).toEqual([
+			['slug', 'conseil-ia'],
+			['espace.slug', 'p2enjoy'],
+		])
+		expect(etat).toEqual({ statut: 'pret', donnees: TRACK })
 	})
 
 	it('rend le track lorsque le backend en consent un', async () => {

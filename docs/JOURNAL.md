@@ -41688,3 +41688,18 @@ committées de la session f9 ; et le commit de5a10ab a emporté une entrée de c
 aussitôt ; la session f9 a rétabli le backlog depuis HEAD et réappliqué son changement depuis une copie, et gardé son entrée,
 son code poussé par-dessus (8f7284a8). Rien n'est perdu. Règles tenues depuis : lire un fichier partagé dans une variable avant
 toute ouverture en écriture ; ne jamais `git add` un fichier partagé sans en avoir relu le diff.
+
+### `CRM-161` T2.a — correctif : un track se résout dans l'espace de l'adresse (trouvé par la session f9)
+
+*2026-11-21, session 4891a451 (p2enjoy-crm-5f).*
+**Le défaut** : `lireTrackParSlug` cherchait le track par son seul slug (`tracks?slug=eq.X&limit=1`), dans tous les espaces
+lisibles. Or le slug d'un track n'est unique que dans son espace (§3 de `docs/SPEC-espace-courant.md`) : sous
+`/<espace>/tracks/<slug>`, un track d'un autre espace s'ouvrait, et deux homonymes tombaient au hasard ; l'état « introuvable »,
+où `CRM-162` place la redirection d'un track déplacé, n'arrivait jamais. Contraire au §5, qui résout un track par (espace, slug).
+**La preuve rouge** : `e2e/ui/espace-adresse.spec.ts`, un track homonyme de « Conseil & IA » dans un espace jetable — sous
+`/p2enjoy/tracks/conseil-ia`, la page ouvrait celui de la sonde.
+**La correction** : `lireTrackParSlug(client, slug, slugEspace)` joint l'espace (`workspaces!inner(slug)`) et le filtre ;
+`useContenuTrack` reçoit le slug de l'adresse, lu par `useParams` dans les quatre écrans qui montent leur coquille (la vue d'un
+track, la fiche d'une affaire, les coûts d'un track, le détail d'un budget). Aucune migration.
+**Vérifications** : unitaires 72/72 ; `espace-adresse` 5/5 ; quinze specs des pages d'un track, d'une affaire et des coûts —
+176 cas, puis les huit rouges rejoués sur une base stable (le seed de la session f9 tournait pendant la course) : 84/84.

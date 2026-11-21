@@ -74,8 +74,8 @@ const CLASSES_RETOUR = [
 const CLE_TITRE_BUDGET: CleTraduction = 'route.costs.budget.title'
 
 export function CoutsBudget() {
-	const { slugTrack, idBudget } = useParams()
-	const { etat, recharger } = useContenuTrack(clientCrm, slugTrack)
+	const { slugTrack, idBudget, slugEspace } = useParams()
+	const { etat, recharger } = useContenuTrack(clientCrm, slugTrack, slugEspace)
 	const [nomBudget, setNomBudget] = useState<string | null>(null)
 
 	return (

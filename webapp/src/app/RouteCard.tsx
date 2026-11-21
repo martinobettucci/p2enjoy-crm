@@ -167,7 +167,7 @@ const CLASSES_RETOUR_SECONDAIRE = [
 const CLE_TITRE_CARD: CleTraduction = 'route.card.title'
 
 export function RouteCard() {
-	const { slugTrack, slugChannel, idCard } = useParams()
+	const { slugTrack, slugChannel, idCard, slugEspace } = useParams()
 	// LES CHAMPS EXIGÉS PAR UN DÉPLACEMENT REFUSÉ — docs/SPEC-form-composer.md §4 ter.2. L'adresse
 	// est le seul transport : elle survit au rechargement, fait du bandeau du board un vrai lien,
 	// et rend inspectable ce que la fiche sait du refus. Aucune requête n'en dépend — les champs
@@ -176,7 +176,7 @@ export function RouteCard() {
 	const clesExigees = lireClesExigees(parametres.get('exiges'))
 	const adresse = slugTrack === undefined || slugChannel === undefined ? null : { slugTrack, slugChannel }
 	const { etat, recharger, relireEnPlace } = useContenuCard(clientCrm, idCard, clesExigees, adresse)
-	const { etat: etatTrack, recharger: rechargerTrack } = useContenuTrack(clientCrm, slugTrack)
+	const { etat: etatTrack, recharger: rechargerTrack } = useContenuTrack(clientCrm, slugTrack, slugEspace)
 
 	const card = etat.statut === 'pret' ? etat.donnees.card : null
 

@@ -131,6 +131,29 @@ test.describe('L’espace en tête du chemin (docs/SPEC-espace-courant.md §8, �
 		await second.close()
 	})
 
+	test('un track se résout dans l’espace de l’adresse : deux homonymes, chacun le sien ; un track d’un autre espace est introuvable', async ({
+		page,
+		request,
+	}) => {
+		// Trouvé par la session f9 (CRM-162) : le slug d'un track n'est unique que dans son espace (§3), et la route d'un track
+		// le cherchait dans tous les espaces lisibles.
+		await poserSonde(request)
+		const homonyme = await request.post(rest('tracks'), {
+			headers: JSON_SERVICE(),
+			data: { workspace_id: SONDE.id, name: 'Conseil de la sonde 161', slug: 'conseil-ia', position: 2 },
+		})
+		expect(homonyme.status(), await homonyme.text()).toBe(201)
+		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
+		const titre = page.getByRole('heading', { level: 1 })
+
+		await page.goto(`/${ESPACE_SEED}/tracks/conseil-ia`)
+		await expect(titre).toHaveText('Conseil & IA')
+		await page.goto(`/${SONDE.slug}/tracks/conseil-ia`)
+		await expect(titre).toHaveText('Conseil de la sonde 161')
+		await page.goto(`/${ESPACE_SEED}/tracks/${TRACK_SONDE.slug}`)
+		await expect(page.getByTestId('etat-vide')).toContainText('Track introuvable')
+	})
+
 	test('au clavier, l’entrée « Inbox » de la barre latérale mène dans l’espace courant', async ({ page }) => {
 		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
 		await page.goto(`/${ESPACE_SEED}/reglages`)

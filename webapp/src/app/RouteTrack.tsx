@@ -128,8 +128,8 @@ const CLASSES_RETOUR = [
 const CLE_TITRE_TRACK: CleTraduction = 'route.track.title'
 
 export function RouteTrack({ vue = 'board' }: { readonly vue?: VueChannel } = {}) {
-	const { slugTrack, slugChannel } = useParams()
-	const { etat, recharger } = useContenuTrack(clientCrm, slugTrack)
+	const { slugTrack, slugChannel, slugEspace } = useParams()
+	const { etat, recharger } = useContenuTrack(clientCrm, slugTrack, slugEspace)
 
 	const track = etat.statut === 'pret' ? etat.donnees.track : null
 	const channels = etat.statut === 'pret' ? etat.donnees.channels : AUCUN_CHANNEL

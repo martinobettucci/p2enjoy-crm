@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — un track se résout par le couple (espace de l'adresse, slug)
+//       (docs/SPEC-espace-courant.md §5, §8.1)
 // @spec CRM-021 (docs/BACKLOG.md) — lecture des channels et résolution d'un track par son slug
 // @spec docs/SPEC-channels.md §5 (ce que la barre d'onglets lit), §5.1 (route d'un track), §4
 // @spec CRM-077 (docs/BACKLOG.md) — corbeille : docs/SPEC-corbeille.md §3.1 (les trois états),
@@ -127,19 +129,29 @@ export function separerChannels(lignes: readonly (Channel & { readonly archived_
 export async function lireTrackParSlug(
 	client: ClientCrm,
 	slug: string,
+	/**
+	 * `CRM-161` T2.a (docs/SPEC-espace-courant.md §5, §8.1) : le slug de l'espace de l'adresse. Le slug d'un track n'est unique
+	 * que DANS son espace (`tracks_workspace_id_slug_key`) : le track se résout par le couple (espace, slug) ; un track d'un
+	 * autre espace rend `null`, l'état « introuvable ». Omis — une preuve qui monte l'écran seul —, tout espace lisible.
+	 */
+	slugEspace?: string,
 ): Promise<EtatAsync<TrackOuvert | null>> {
 	try {
-		const reponse = await client
+		const base = client
 			.from('tracks')
-			.select(COLONNES_TRACK_OUVERT)
+			.select(slugEspace === undefined ? COLONNES_TRACK_OUVERT : `${COLONNES_TRACK_OUVERT}, espace:workspaces!inner(slug)`)
 			.eq('slug', slug)
+		const reponse = await (slugEspace === undefined ? base : base.eq('espace.slug', slugEspace))
 			.is('archived_at', null)
 			.is('deleted_at', null)
 			.limit(1)
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}
-		return pret(reponse.data[0] ?? null)
+		const ligne = (reponse.data as unknown as readonly (TrackOuvert & { espace?: unknown })[])[0]
+		if (ligne === undefined) return pret(null)
+		const { espace: _espace, ...track } = ligne
+		return pret(track)
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}
@@ -232,6 +244,8 @@ const AUCUN_ARCHIVE: readonly Channel[] = []
 export function useContenuTrack(
 	client: ClientCrm | null,
 	slug: string | undefined,
+	/** `CRM-161` T2.a (§8.1) : le slug de l'espace de l'adresse, dont le track doit être. */
+	slugEspace?: string,
 ): {
 	readonly etat: EtatAsync<ContenuTrack>
 	readonly recharger: () => void
@@ -247,7 +261,7 @@ export function useContenuTrack(
 		const rang = ++courant.current
 		setEtat(enChargement)
 		void (async () => {
-			const resultatTrack = await lireTrackParSlug(client, slug)
+			const resultatTrack = await lireTrackParSlug(client, slug, slugEspace)
 			if (rang !== courant.current) return
 			if (resultatTrack.statut !== 'pret') {
 				setEtat(resultatTrack)
@@ -266,7 +280,7 @@ export function useContenuTrack(
 			}
 			setEtat(pret({ track, ...resultatChannels.donnees }))
 		})()
-	}, [client, slug, tentative])
+	}, [client, slug, slugEspace, tentative])
 
 	const recharger = useCallback(() => {
 		setTentative((precedente) => precedente + 1)
