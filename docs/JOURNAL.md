@@ -41536,7 +41536,9 @@ l'arrivée ; on corrige les saisies d'abord ; le plafond reste vrai partout. Éc
   le déplacement écrit son propre événement `track_moved` (§10). Écarté : `session_replication_role = replica`, qui couperait
   aussi le contrôle des clés étrangères.
 
-### décision 969 — `CRM-161` : le design system lu par sections ciblées, pour cette unité seule
+### décision 970 — `CRM-161` : le design system lu par sections ciblées, pour cette unité seule
+
+*Renumérotée : poussée d'abord sous le n° 969, déjà pris par la session f9 (`CRM-162`).*
 
 *2026-11-21, session 4891a451 (p2enjoy-crm-5f), arbitrage du responsable (`AskUserQuestion`).*
 **Le problème** : la tranche T2 de `CRM-161` (le menu des espaces dans le fil d'Ariane, l'espace en tête des adresses, la
