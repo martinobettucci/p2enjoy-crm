@@ -358,7 +358,24 @@
 							},
 							{
 								"type": "text",
-								"text": ". Il mène au Board."
+								"text": ". Si vous n'en avez qu'un, il mène au Board ; si vous en avez\nplusieurs, il ouvre le menu des espaces ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "naviguer-barre-laterale-onglets-etats",
+									"anchor": "changer-d-espace"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 3.2 bis"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}
@@ -740,6 +757,423 @@
 				{
 					"type": "text",
 					"text": " Un channel auquel vous n'avez pas accès n'y apparaît jamais, pas plus\nqu'un nom tapé dans l'adresse qui ne correspond à rien."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "changer-d-espace",
+			"content": [
+				{
+					"type": "text",
+					"text": "3.2 bis Changer d'espace"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Si vous êtes membre de "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "plusieurs espaces de travail"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", le premier niveau du fil d'Ariane devient un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "menu"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le nom\nde l'espace ouvert, suivi d'une petite double flèche. Cliquez-le pour voir vos espaces."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/menu-des-espaces.jpg",
+			"alt": "Le menu des espaces ouvert : l'espace courant coché, et le nombre de messages non lus de chaque espace",
+			"width": 238,
+			"height": 178
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "L'espace ouvert est "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "coché"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "À droite de chaque espace, un nombre dit combien de messages "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "non lus"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " attendent dans son inbox. Un espace sans\nmessage non lu n'a pas de nombre."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Quand un "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "autre"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " espace que le vôtre a des messages non lus, un "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "point bleu"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " s'allume sur le bouton du menu, pour\nque rien ne vous échappe ailleurs. Les non-lus de l'espace ouvert ne l'allument pas : l'inbox les montre déjà."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Choisir un espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " vous y emmène :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "depuis l'"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "inbox"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ou une page de "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "réglages"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", vous arrivez sur la même page dans l'autre espace ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "depuis un "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "track"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", un "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "channel"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ou une "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "affaire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", qui n'existent que dans leur espace, vous arrivez sur l'inbox de\nl'autre espace ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "depuis une page commune à vos espaces (Contacts, Objectifs, Ma journée…), la page reste ouverte, et c'est l'espace de\nl'onglet qui change : la barre latérale montre alors les tracks de l'espace choisi."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce qui appartient à un espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et ne se voit que dans lui : ses tracks et ses channels, son inbox (ses mails, ses\ndossiers, ses non-lus, sa corbeille) et ses réglages. Les autres pages rassemblent vos espaces."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'espace est dans l'adresse."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " L'adresse de l'inbox, d'un track ou d'une page de réglages commence par le nom court de\nl'espace : vous pouvez donc garder "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "deux onglets ouverts sur deux espaces"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", chacun le sien, et un lien copié emmène\ntoujours dans le bon espace. Un ancien lien, sans le nom de l'espace, mène encore à la bonne page : l'application retrouve\nl'espace de l'affaire ou du message qu'il désigne. Une adresse qui nomme un espace que vous ne pouvez pas ouvrir le dit,\net propose d'ouvrir votre premier espace."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Au clavier"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", atteignez le menu avec "
+				},
+				{
+					"type": "code",
+					"text": "Tab"
+				},
+				{
+					"type": "text",
+					"text": ", ouvrez-le avec "
+				},
+				{
+					"type": "code",
+					"text": "Entrée"
+				},
+				{
+					"type": "text",
+					"text": " ou "
+				},
+				{
+					"type": "code",
+					"text": "↓"
+				},
+				{
+					"type": "text",
+					"text": ", parcourez les espaces avec "
+				},
+				{
+					"type": "code",
+					"text": "↑"
+				},
+				{
+					"type": "text",
+					"text": " et "
+				},
+				{
+					"type": "code",
+					"text": "↓"
+				},
+				{
+					"type": "text",
+					"text": ",\nchoisissez avec "
+				},
+				{
+					"type": "code",
+					"text": "Entrée"
+				},
+				{
+					"type": "text",
+					"text": ", refermez avec "
+				},
+				{
+					"type": "code",
+					"text": "Échap"
+				},
+				{
+					"type": "text",
+					"text": ". "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Sur un téléphone"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", vos espaces sont dans le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "…"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " du fil\nd'Ariane, sous l'intitulé Espaces."
 				}
 			]
 		},
@@ -2854,7 +3288,7 @@
 			"type": "image",
 			"src": "naviguer-barre-laterale-onglets-etats/chapitre-introuvable.jpg",
 			"alt": "L'adresse d'un chapitre qui n'existe pas : « Chapitre introuvable »",
-			"width": 640,
+			"width": 622,
 			"height": 279
 		},
 		{

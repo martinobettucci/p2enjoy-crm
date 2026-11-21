@@ -18,6 +18,12 @@ d'exécuter le code attendu.
   des temps au départ et à l'arrivée, les mails déjà présents, les refus listés), puis le déplacement en une transaction,
   confirmé par le nom du track et journalisé. L'ancienne adresse d'une affaire continue d'aboutir ; l'ancienne adresse du
   track se résout en sa nouvelle ; le déplacement inverse rend l'état de départ.
+- **CRM-162 T2 — l'écran du déplacement d'un track** (migration 198). Plateforme ▸ Espaces ▸ la fiche d'un espace gagne un
+  bloc « Tracks » : chaque track, ses channels et ses affaires, et « Déplacer vers un autre espace ». Le choix de l'arrivée
+  montre l'aperçu chiffré ; s'il y a des refus, ils sont listés et la commande n'est pas offerte ; sinon, la saisie du nom
+  du track ouvre « Déplacer le track ». Le succès mène à la fiche de l'espace d'arrivée. Le journal de la plateforme dit
+  « Track déplacé », l'historique de chaque affaire « Déplacée avec son track » ; un bloc d'objectifs qui cite un channel
+  d'un autre espace nomme cet espace.
 - **`CRM-161` T1 — l'inbox d'un espace.** Un membre de plusieurs espaces voyait, dans « Non classés » et dans les compteurs de
   l'inbox, les mails de tous ses espaces. La base ne rend plus que l'espace demandé :
   - la liste, la mention des fils masqués et l'arborescence prennent l'espace, obligatoire (migration `0195`) ;

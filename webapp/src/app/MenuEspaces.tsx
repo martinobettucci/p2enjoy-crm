@@ -165,7 +165,9 @@ export function MenuEspaces({ espaces }: { readonly espaces: readonly Workspace[
 
 	if (courant === undefined) return null
 	return (
-		<div ref={ancre} className="min-w-0">
+		// `flex min-w-0` et le nom en `min-w-0 truncate` : dans le fil d'une affaire, le niveau cède sa place comme un ancêtre
+		// (§5.62) ; sans eux, le nom gardait sa largeur et le bouton débordait sur le niveau suivant (vu sur l'image du manuel).
+		<div ref={ancre} className="flex min-w-0">
 			<button
 				ref={bouton}
 				type="button"
@@ -179,7 +181,7 @@ export function MenuEspaces({ espaces }: { readonly espaces: readonly Workspace[
 				onKeyDown={surToucheBouton}
 				className={CLASSES_BOUTON}
 			>
-				<span className="truncate">{courant.name}</span>
+				<span className="min-w-0 truncate">{courant.name}</span>
 				<span aria-hidden="true" className="relative inline-flex shrink-0">
 					<ChevronsUpDown size={14} />
 					{pastille ? (

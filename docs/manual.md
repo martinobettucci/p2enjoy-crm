@@ -297,7 +297,8 @@ Sur une affaire, il se lit par exemple :
 
 ![Le fil d'Ariane d'une affaire : l'espace, le track, le channel, puis le titre de l'affaire en gras](manuel/images/naviguer-barre-laterale-onglets-etats/fil-d-ariane.jpg)
 
-- Le **premier niveau** est votre **espace de travail**. Il mène au Board.
+- Le **premier niveau** est votre **espace de travail**. Si vous n'en avez qu'un, il mène au Board ; si vous en avez
+  plusieurs, il ouvre le menu des espaces ([section 3.2 bis](#changer-d-espace)).
 - Viennent ensuite le **track**, puis le **channel**. Chacun est un lien : cliquez le channel pour revenir à son
   tableau, ou le track pour revenir à ses onglets.
 - Le **dernier niveau**, en gras, est le titre de la page : l'affaire, le channel, ou l'écran ouvert. Ce n'est pas un
@@ -326,6 +327,40 @@ le track —, chacun cliquable. Au clavier, atteignez-le avec `Tab`, ouvrez-le a
 
 **Le fil ne nomme que ce que vous pouvez lire.** Un channel auquel vous n'avez pas accès n'y apparaît jamais, pas plus
 qu'un nom tapé dans l'adresse qui ne correspond à rien.
+
+### 3.2 bis Changer d'espace
+
+Si vous êtes membre de **plusieurs espaces de travail**, le premier niveau du fil d'Ariane devient un **menu** : le nom
+de l'espace ouvert, suivi d'une petite double flèche. Cliquez-le pour voir vos espaces.
+
+![Le menu des espaces ouvert : l'espace courant coché, et le nombre de messages non lus de chaque espace](manuel/images/naviguer-barre-laterale-onglets-etats/menu-des-espaces.jpg)
+
+- L'espace ouvert est **coché**.
+- À droite de chaque espace, un nombre dit combien de messages **non lus** attendent dans son inbox. Un espace sans
+  message non lu n'a pas de nombre.
+- Quand un **autre** espace que le vôtre a des messages non lus, un **point bleu** s'allume sur le bouton du menu, pour
+  que rien ne vous échappe ailleurs. Les non-lus de l'espace ouvert ne l'allument pas : l'inbox les montre déjà.
+
+**Choisir un espace** vous y emmène :
+
+- depuis l'**inbox** ou une page de **réglages**, vous arrivez sur la même page dans l'autre espace ;
+- depuis un **track**, un **channel** ou une **affaire**, qui n'existent que dans leur espace, vous arrivez sur l'inbox de
+  l'autre espace ;
+- depuis une page commune à vos espaces (Contacts, Objectifs, Ma journée…), la page reste ouverte, et c'est l'espace de
+  l'onglet qui change : la barre latérale montre alors les tracks de l'espace choisi.
+
+**Ce qui appartient à un espace**, et ne se voit que dans lui : ses tracks et ses channels, son inbox (ses mails, ses
+dossiers, ses non-lus, sa corbeille) et ses réglages. Les autres pages rassemblent vos espaces.
+
+**L'espace est dans l'adresse.** L'adresse de l'inbox, d'un track ou d'une page de réglages commence par le nom court de
+l'espace : vous pouvez donc garder **deux onglets ouverts sur deux espaces**, chacun le sien, et un lien copié emmène
+toujours dans le bon espace. Un ancien lien, sans le nom de l'espace, mène encore à la bonne page : l'application retrouve
+l'espace de l'affaire ou du message qu'il désigne. Une adresse qui nomme un espace que vous ne pouvez pas ouvrir le dit,
+et propose d'ouvrir votre premier espace.
+
+**Au clavier**, atteignez le menu avec `Tab`, ouvrez-le avec `Entrée` ou `↓`, parcourez les espaces avec `↑` et `↓`,
+choisissez avec `Entrée`, refermez avec `Échap`. **Sur un téléphone**, vos espaces sont dans le bouton **…** du fil
+d'Ariane, sous l'intitulé Espaces.
 
 ### 3.3 La barre latérale et la section Tracks
 

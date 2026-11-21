@@ -1,3 +1,4 @@
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T2.b : l'image du menu des espaces (docs/manual.md §3.2 bis ; docs/DESIGN_SYSTEM.md §5.113)
 // @spec CRM-133 (docs/BACKLOG.md) — tranche T4 : l'image du bouton d'information d'une étape décrite par le seed (manuel §3.6 ;
 //       docs/SPEC-seed.md §39 ; docs/DESIGN_SYSTEM.md §5.58)
 // @spec CRM-148 (docs/BACKLOG.md) — l'image « infobulle-epinglee » du manuel §3.6 : la bulle du track épinglée, sa croix
@@ -18,6 +19,7 @@
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { illustrer } from './illustrer'
 import { ADMIN, AFFAIRE_SOGEXIA, VIEWER, WORKSPACE_SEED, connecterAvecLeLabs, immobile, service } from './outils'
+import { ESPACE_SEED as WORKSPACE_SLUG_SEED } from '../espace'
 
 const CHAPITRE = 'naviguer-barre-laterale-onglets-etats'
 const BOARD = '/tracks/conseil-ia/grands-comptes'
@@ -106,6 +108,20 @@ test('le fil d’Ariane, sur un ordinateur et sur un téléphone', async ({ page
 	await page.setViewportSize({ width: 390, height: 844 })
 	await expect(page.getByTestId('fil-ariane-repli')).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: 'le-fil-d-ariane-savoir-ou-vous-etes', nom: 'fil-d-ariane-telephone', cibles: [fil] })
+})
+
+// `CRM-161` T2.b (docs/DESIGN_SYSTEM.md §5.113 ; docs/SPEC-seed.md §55) : Camille est membre de deux espaces, « P2Enjoy SAS » et
+// « Studio Lumen » ; le premier niveau du fil est le menu des espaces, ouvert ici avec ses non-lus.
+test('le menu des espaces', async ({ page }) => {
+	await page.setViewportSize({ width: 1440, height: 900 })
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto(`/${WORKSPACE_SLUG_SEED}/inbox`)
+	const bouton = page.getByRole('button', { name: /^Changer d’espace — P2Enjoy SAS/ })
+	await bouton.click()
+	const menu = page.getByRole('menu', { name: 'Vos espaces' })
+	await expect(menu.getByRole('menuitemradio', { name: /Studio Lumen/ })).toBeVisible()
+	await expect(menu.getByTestId('non-lus-espace').first()).toBeVisible()
+	await illustrer(page, { chapitre: CHAPITRE, section: 'changer-d-espace', nom: 'menu-des-espaces', cibles: [bouton, menu] })
 })
 
 test('un track sans channel, un workflow sans étape, un track introuvable', async ({ page, request }) => {
