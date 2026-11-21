@@ -349,6 +349,12 @@ T2 se découpe en deux sous-tranches, chacune laissant verte la suite de son pé
   pages globales parmi eux (`Carnet`, `ListeOrganisations`, `Objectifs`, `Pilotage`), c'est **l'état intermédiaire entre
   les deux lots** : elles suivent l'espace courant de l'onglet jusqu'à ce que T3 les rende globales. Sans effet en
   production tant qu'elle n'a qu'un espace (accord de la session de livraison) ; consigné au contrat de T2.
+  *Écart trouvé par la campagne du lot (2026-11-21, décision 976)* : `ListeOrganisations` et `Objectifs` le tenaient ;
+  `Carnet` lisait sa **liste** sans espace, et `Pilotage` additionnait sous la portée « espace » les lignes de **tous** les
+  espaces (deux « Prospection », les affaires sans montant de « Studio Lumen » comptées). Les deux lisent désormais l'espace
+  courant de l'onglet — la liste du carnet par `lireContactsDuCarnet(client, espace)`, les lignes de l'entonnoir restreintes à
+  cet espace avant toute portée. Preuves : `e2e/ui/contacts.spec.ts` et `e2e/ui/pilotage.spec.ts`, rouges avant, leurs
+  assertions inchangées ; un unitaire de `restreindre` à la portée d'espace.
 - **La barre latérale** ne liste que les tracks de l'espace courant (`lireTracks` filtré par `workspace_id`), et ses
   entrées d'espace (Inbox, Réglages) mènent dans cet espace.
 

@@ -41852,3 +41852,13 @@ l'affaire (`lireMembresAffectables`).
 **Vérifications (décision 975)** : `e2e/ui/formulaire-selecteurs.spec.ts` rouge sans le correctif (quatorze options sur une
 affaire du seed), vert avec (6/6) ; unitaires `reglages-espace` étendus aux deux lectures, et les écrans touchés (formulaire,
 bloc « Contacts », modèles d'emails, carnet) : 286/286 ; `tsc` du dépôt.
+
+### décision 976 — `CRM-161` T2.a : le carnet et le pilotage tiennent enfin l'état intermédiaire du §15.2
+
+*2026-11-21, session 4891a451 (p2enjoy-crm-5f) ; la session de livraison prévenue.*
+**Le problème** : la campagne rougit `contacts` (le carnet de Camille, treize lignes pour onze) et `pilotage` S1, S2, S4, S6 (deux
+« Prospection », six affaires sans montant pour cinq). **L'observation** : le §15.2 fait suivre aux pages globales l'espace
+courant de l'onglet jusqu'à T3 ; `ListeOrganisations` et `Objectifs` le font, mais `Carnet` lit sa liste sans espace, et
+`Pilotage` choisit bien un espace pour son arbre de portées mais additionne, sous la portée « espace », les lignes de tous.
+**La décision** : appliquer le §15.2 tel qu'écrit — aucune règle nouvelle. Une révision des preuves à « onze plus deux »,
+essayée d'abord, contredisait la spécification : abandonnée. T3 rendra ces pages globales, l'espace de chaque ligne affiché.
