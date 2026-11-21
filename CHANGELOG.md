@@ -39,6 +39,11 @@ d'exécuter le code attendu.
 - **`CRM-161` T2.c — les réglages d'un espace ne montrent que lui.** Étiquettes, arborescence, workflows, catalogue, boîtes,
   identités, modèles d'affaires et d'emails, séquences de relance et corbeille ne listaient pas que l'espace ouvert : un
   membre de plusieurs espaces y voyait les éléments de tous. Changer d'espace recharge la page entière.
+- **`CRM-161` T2.b — le menu des espaces.** Pour qui est membre de plusieurs espaces, le premier niveau du fil d'Ariane
+  devient un menu : l'espace ouvert coché, les messages non lus de chaque espace, un point bleu quand un autre espace en a.
+  Choisir un espace mène à la même page dans l'autre espace (l'inbox depuis une affaire ou un track) ; le changement est
+  annoncé aux lecteurs d'écran. Le manuel le décrit (§3.2 bis). Les données de démonstration portent un second espace,
+  « Studio Lumen ». Sans effet visible pour qui n'a qu'un espace.
 
 ## [Publié]
 

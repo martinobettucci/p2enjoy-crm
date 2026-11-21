@@ -41674,3 +41674,17 @@ clé (vert), corrigé : la clé est une GÉNÉRATION qui ne change qu'au passage
 **La campagne** : la session de livraison avait demandé les projets api et ui entiers sur ce seed ; le classificateur de la
 session les a refusés (décision 830) ; la session de livraison a retiré sa demande et retenu le sous-ensemble des specs sensibles
 au second espace (API 62/62, écran 166/166).
+
+### `CRM-161` T2.b — le manuel du menu des espaces, et un incident sur l'arbre partagé (journal d'implémentation)
+
+*2026-11-21, session 4891a451 (p2enjoy-crm-5f).*
+**Fait** : `docs/manual.md` §3.2 bis « Changer d'espace » ; l'image `menu-des-espaces` (e2e/manuel/03-naviguer) ; les images du
+chapitre 3 renouvelées (l'en-tête de Camille porte le menu) ; `verify-manual.sh` 168/168.
+**Trouvé sur l'image** : dans le fil d'une affaire, le nom de l'espace ne se tronquait pas, et le bouton du menu débordait sur le
+niveau suivant ; corrigé (`MenuEspaces` en `flex min-w-0`, le nom en `min-w-0 truncate`), image reprise et observée.
+**Un incident, consigné pour ne pas le refaire** : un script de la session a ouvert `docs/BACKLOG.md` en écriture AVANT de le
+lire (`open(p, 'w').write(maj(open(p).read()))`) : le fichier de l'arbre partagé a été vidé, avec les modifications non
+committées de la session f9 ; et le commit de5a10ab a emporté une entrée de changelog non committée de cette session. Signalé
+aussitôt ; la session f9 a rétabli le backlog depuis HEAD et réappliqué son changement depuis une copie, et gardé son entrée,
+son code poussé par-dessus (8f7284a8). Rien n'est perdu. Règles tenues depuis : lire un fichier partagé dans une variable avant
+toute ouverture en écriture ; ne jamais `git add` un fichier partagé sans en avoir relu le diff.
