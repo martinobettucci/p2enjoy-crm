@@ -5616,3 +5616,83 @@ voir partir est annulé par son auteur depuis l'outbox (§28) avant la livraison
   n'en démarre qu'une.
 - **Une seule tranche** : le pilote, ses preuves, les preuves révisées, le seed, le vérificateur et les documents forment
   un seul changement cohérent.
+
+## 35. L'inbox d'un espace — `CRM-161` tranche T1
+
+*Écrit le 2026-11-21, avant le code (décisions 965 et 967 ; index : `docs/SPEC-espace-courant.md`).*
+
+### 35.1 Le défaut
+
+`public.inbox_messages`, `inbox_hidden_counts` et `inbox_arborescence` (`0193`) ne prennent aucun espace : sous la RLS, elles
+rendent les messages de **tous** les espaces dont la personne est membre. Un membre de deux espaces voit, dans « Non classés »
+de l'un, les mails non classés de l'autre, et ses compteurs les additionnent. La portée des actions groupées
+(`app.inbox_scope_messages`, reprise par `inbox_bulk_count`, `inbox_bulk_apply`, `inbox_bulk_unknown_senders`) a le même
+défaut pour un dossier ; l'outbox (`mail_outbox`), les mails préparés (`mail_drafts`) et les compteurs de la file sortante de
+Réglages ▸ Messagerie sont lus sans filtre d'espace.
+
+### 35.2 Les fonctions prennent l'espace
+
+- **`inbox_messages(p_workspace_id uuid, p_card_id, p_only_me, p_label_ids, p_sender, p_limit)`**,
+  **`inbox_hidden_counts(p_workspace_id uuid, p_card_id, p_only_me, p_label_ids, p_sender, p_snoozed_shown)`** et
+  **`inbox_arborescence(p_workspace_id uuid, p_only_me)`** : `p_workspace_id` vient **en tête**, **sans valeur par défaut**.
+  Nul, la fonction lève **`workspace_required`** (`22023`). Chaque message rendu ou compté vérifie `m.workspace_id =
+  p_workspace_id` ; le reste de la définition de `0193` est repris **sans autre changement** (masquage, « Seulement moi »,
+  pastilles, expéditeur, ordre, limite).
+- **L'ancienne signature est supprimée** (`drop function`), dans la même migration : un appel sans espace ne se résout plus
+  (PostgREST rend `404`, `PGRST202`), plutôt que de rendre tous les espaces.
+- **Un dossier d'affaire** (`p_card_id`) d'un autre espace rend **zéro ligne** : l'espace et l'affaire se conjuguent.
+- **Un espace dont la personne n'est pas membre** rend zéro ligne — la RLS de `mail_messages` le fait déjà — et jamais une
+  erreur qui en révélerait l'existence.
+
+### 35.3 La portée des actions groupées
+
+- La description de la portée (§32.2) porte **`workspace_id`, obligatoire** pour les trois dossiers ; absent ou mal formé :
+  `invalid_scope`.
+- `unclassified` et `card` ne retiennent que les messages de cet espace ; `trash` aussi (`message_ids` d'un autre espace :
+  écartés comme des messages invisibles, règle existante de la corbeille).
+- **Un fil nommé** (`threads`) dont `workspace_id` n'est pas celui de la portée lève **`thread_other_workspace`** (`22023`) :
+  un écran périmé ne doit pas croire avoir agi.
+- `inbox_bulk_count`, `inbox_bulk_apply`, `inbox_bulk_unknown_senders` ne changent pas de signature : la portée suffit.
+
+### 35.4 Les non-lus de chaque espace
+
+**`public.inbox_unread_by_workspace(p_only_me boolean default false)`** rend `(workspace_id uuid, unread_count integer)` pour
+**chaque espace dont la personne est membre**, dans l'ordre du nom : la somme des `unread_count` de
+`inbox_arborescence(workspace_id, p_only_me)` — **les mêmes règles**, appelées et non recopiées (fils masqués, « Seulement
+moi »). Un espace sans non-lu rend `0`. `SECURITY INVOKER` ; `authenticated` seul. C'est la lecture du menu des espaces
+(`docs/SPEC-espace-courant.md` §9), multi-espaces par nature.
+
+### 35.5 Les lectures de table de l'inbox
+
+`lireEnvois`, `lireComptesEnvois` (l'outbox), `lireMailsPrepares` (les mails préparés) et `lireCompteursFileSortante`
+(Réglages ▸ Messagerie) portent le filtre **`workspace_id=eq.<espace>`**. Aucune politique RLS n'est redéfinie.
+
+### 35.6 La webapp
+
+L'espace passé est **`ContexteEspace.idWorkspace`** — à cette tranche, toujours le premier espace par nom, comme l'écran
+l'affiche déjà : **aucun changement visible**. Sans espace lu, les lectures attendent (l'état de chargement), elles ne partent
+pas sans espace. La tranche T2 remplacera l'origine de cet espace (l'adresse), pas les appels.
+
+### 35.7 Ce qui ne change pas
+
+`trashed_messages(p_workspace_id)` (déjà cloisonnée) ; `search_hidden_mail_counts` (la recherche est globale) ; les lectures
+par identifiant d'un message ou d'une affaire (le message porte son espace) ; `app.card_par_adresse` et le classement d'un
+mail entrant (`CRM-162`, session f9, les reprendra) ; le connecteur, qui n'appelle aucune de ces fonctions (§6 de
+`docs/SPEC-espace-courant.md`).
+
+### 35.8 Les preuves
+
+- **pgTAP** `supabase/tests/0182_inbox_espace.test.sql` (numéro à prendre après synchronisation) : deux espaces posés dans la
+  transaction, une personne membre des deux, un mail non classé et un mail d'affaire dans chacun ; **rouge sur les
+  définitions de `0193`** (la liste d'un espace contient le mail de l'autre), puis vert : liste, mention des fils masqués,
+  arborescence et portée d'action groupée ne rendent que l'espace demandé ; `workspace_required` ; l'ancienne signature
+  absente ; `thread_other_workspace` ; un espace non membre → zéro ligne ; `inbox_unread_by_workspace` par espace, `0`
+  compris, et sous « Seulement moi ».
+- **API par requête directe** `e2e/api/inbox-espace.spec.ts` : avec le vrai jeton d'une personne membre de deux espaces,
+  `rpc/inbox_messages` sans espace est refusé, avec l'un ne rend que lui ; `rpc/inbox_unread_by_workspace` compte les deux.
+- **Révisées** : les preuves qui appellent ces fonctions (`supabase/tests/0029`, `0063`, `0095`, `0143`, `0164`, `0177`,
+  `0178`, `0180`, `0181` ; `e2e/api/actions-groupees-inbox`, `filtres-rapides-pastilles`, `inbox-lecture`, `inbox`,
+  `pastilles-cachees`, `pastilles-inbox`, `seulement-moi` ; `e2e/ui/pastilles-cachees` ; `scripts/verify-mail-inbox.sh`)
+  passent l'espace — sans changer ce qu'elles prouvent.
+- **Unitaires** : `lib/inbox.test.ts`, `lib/actions-groupees.test.ts`, `lib/outbox`, `lib/mail-etat`, `lib/mails-prepares` :
+  l'espace est passé à chaque lecture.

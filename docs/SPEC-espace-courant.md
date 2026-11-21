@@ -200,6 +200,13 @@ Une adresse sans slug d'espace est **redirigée** (`replace`, sans entrée d'his
 
 Une ressource introuvable dans tous les espaces garde l'état d'erreur de l'écran (introuvable), sans redirection.
 
+**Une ressource qui a changé d'espace** (un track déplacé par `CRM-162`) : une adresse **préfixée** de l'espace de départ
+(`/<départ>/tracks/<track>`) ne nomme plus rien. Une **affaire** se retrouve par son identifiant, présent dans l'adresse : elle
+est redirigée vers son espace et son rattachement actuels. Un **track** ou un **channel** ne porte qu'un slug, unique dans son
+seul espace : sa redirection demande la trace du déplacement que `CRM-162` tient. Accord avec la session f9 (2026-11-21) :
+`CRM-162` fournit une lecture qui résout `(slug de l'espace de départ, slug du track)` vers l'adresse actuelle ; la route d'un
+track l'appelle quand le track est introuvable dans l'espace de l'adresse, avant l'état « introuvable ».
+
 ### 8.3 Une adresse d'un espace dont la personne n'est pas membre
 
 Le slug est résolu parmi **les espaces lus** (`lireWorkspaces`, sous la RLS) : un slug inconnu rend l'état « Espace introuvable »,
