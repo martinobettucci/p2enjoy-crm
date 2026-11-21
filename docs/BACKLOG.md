@@ -20506,7 +20506,9 @@ pgTAP et API par requête directe ; E2E souris et clavier sur un compte membre d
 deux espaces, avec des mails dans chacun ; captures observées ; manuel ; contrat. La campagne complète revient à la session de
 livraison (décision 830).
 
-### CRM-162 — Déplacer un track entier d'un espace à un autre, par le super-administrateur `[ ]`
+### CRM-162 — Déplacer un track entier d'un espace à un autre, par le super-administrateur `[@]`
+
+*Prise en charge : f9 (152dd27d) depuis 2026-11-21 08:49 UTC — état avant : [ ]*
 
 **Origine** : demande du responsable, le 2026-11-21 (« on devrait pouvoir et depuis exclusivement le admin, bouger des tracks
 entiers entre workspaces (pose moi toutes les questions pour bien le faire) ») ; arbitrages le même jour (décisions 964 et 966).
