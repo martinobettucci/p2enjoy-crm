@@ -222,7 +222,10 @@ async def test_chaque_outil_est_ferme_par_la_matrice_puis_refuse_par_le_crm_malg
 
 
 async def _organisation(domaine: str) -> str:
-    lignes = (await _service("GET", "/organizations", params={"domain": f"eq.{domaine}", "select": "id"})).json()
+    # Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §54, décision 51) : « Studio Lumen » porte un homonyme de Vertigo
+    # Conseil, au même domaine ; l'organisation se lit dans l'espace du seed, que ces preuves décrivent.
+    lignes = (await _service("GET", "/organizations", params={
+        "domain": f"eq.{domaine}", "workspace_id": f"eq.{ESPACE_SEEDE}", "select": "id"})).json()
     assert len(lignes) == 1, f"l'organisation {domaine} du seed (§33, §41)"
     return lignes[0]["id"]
 

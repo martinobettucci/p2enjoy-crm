@@ -15,6 +15,8 @@ import uuid
 
 from fastmcp import Client
 
+from crm_mcp.prompts import SEPARATEUR
+
 from .parcours_oauth import CAMILLE, SABINE
 from .test_integration_oauth import MCP, _service, pytestmark  # noqa: F401
 from .test_integration_recettes import _dernier_journal, _jeton
@@ -35,16 +37,21 @@ async def _corps(cle: str) -> str:
 
 
 async def test_camille_liste_et_obtient_les_prompts_de_son_espace():
+    # Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : Camille administre aussi « Studio Lumen »,
+    # qui porte les mêmes prompts par défaut. Une clé portée par deux espaces prend le suffixe du slug, et son titre le nom de
+    # l'espace (docs/SPEC-mcp.md §17.5) : la preuve nomme l'espace du seed.
     slug, nom = await _espace()
+    dans_le_seed = lambda cle: f"{cle}{SEPARATEUR}{slug}"  # noqa: E731
     async with Client(f"{MCP}/mcp", auth=await _jeton(CAMILLE)) as client:
         assert client.server_capabilities is not None and client.server_capabilities.prompts is not None
         liste = {p.name: p for p in await client.list_prompts()}
-        assert DEFAUTS <= set(liste)
-        assert liste["faire-le-point"].title == "Faire le point sur une affaire"
-        assert liste["faire-le-point"].description.startswith("Résume une affaire")
-        assert not liste["faire-le-point"].arguments
+        assert {dans_le_seed(cle) for cle in DEFAUTS} <= set(liste)
+        point = liste[dans_le_seed("faire-le-point")]
+        assert point.title == f"Faire le point sur une affaire — {nom}"
+        assert point.description.startswith("Résume une affaire")
+        assert not point.arguments
 
-        resultat = await client.get_prompt("faire-le-point")
+        resultat = await client.get_prompt(dans_le_seed("faire-le-point"))
         [message] = resultat.messages
         assert message.role == "user"
         assert message.content.text == f"Espace : {nom} (workspace : {slug})\n\n{await _corps('faire-le-point')}"
