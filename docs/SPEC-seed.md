@@ -3387,3 +3387,21 @@ répond à un envoi d'une personne : ils ne montrent que la règle (ii).
   ses messages sont révisées avec le seed (décision 51) et nommées dans `docs/BACKLOG.md`. La règle (ii) change aussi
   « Seulement moi » pour les mails reçus déjà seedés dans des affaires : Driss les voit, et Camille celui de « Plateforme
   de billetterie », dont elle est coresponsable (`docs/SPEC-mail-subsystem.md` §27.7.5).
+
+## 54. Un second espace, « Studio Lumen », et ses homonymes — `CRM-162` T3 (`docs/SPEC-deplacement-track.md` §14)
+
+*Écrit le 2026-11-21, avant le code (décisions 964 et 968), accordé avec la session qui porte `CRM-161`, qui l'enrichit dans son
+§55.* Le seed n'a eu qu'un espace jusque-là (`CRM-005`) ; le déplacement d'un track et le cloisonnement (`CRM-161`) en exigent
+un second.
+
+- **L'espace** : « Studio Lumen », adresse `studio-lumen`, identifiant `5eed0000-0000-4000-8000-000000002001` — il trie après
+  « P2Enjoy SAS », l'espace par défaut ne change pas ; **créé par la fonction de la plateforme**, sous le jeton du
+  super-administrateur du seed, comme l'écran Plateforme ▸ Espaces ; `admin@p2enjoy.test` en est l'administratrice ; le
+  créateur de l'espace (§54 ou §55, le premier poussé) le crée, l'autre l'enrichit.
+- **Ses homonymes**, posés sous le jeton de l'administratrice par les vrais chemins : l'étiquette « Secteur public » ; le champ
+  commun du même nom et du même type qu'un champ du premier espace, et un autre du même nom et d'un type différent ; un contact
+  de même e-mail qu'un contact du premier espace ; une organisation de même domaine. Le reste n'a **pas** d'homonyme.
+- **Ce qu'il démontre** : l'aperçu du déplacement d'un track du premier espace vers « Studio Lumen » liste des référentiels
+  réutilisés et créés, et un refus (le champ d'un autre type) ; le seed ne déplace rien.
+- *Précisé au code* : les noms exacts des homonymes, et les preuves révisées (décision 51) — la barre latérale d'un membre des
+  deux espaces montre les tracks de l'un et de l'autre tant que `CRM-161` n'est pas livrée.

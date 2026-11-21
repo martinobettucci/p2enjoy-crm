@@ -9067,3 +9067,50 @@ Complète le §5.103 (les réglages) et le §5.108 (les filtres rapides), sans r
   flèches de la liste des résultats, et se joignent par `Tab`.
 - **RESPONSIVE** (§7) : les lignes passent à la ligne, jamais tronquées ; la page ne défile jamais horizontalement.
 - **Aucune couleur, aucun jeton nouveaux ; une icône nouvelle**, `EyeOff`, pour le seul sens dit plus haut.
+
+### 5.112 Déplacer un track vers un autre espace : le bloc « Tracks » de la fiche d'un espace, l'aperçu, la saisie — `CRM-162`
+
+*Écrit le 2026-11-21, avant le code, après lecture des sections ciblées par la décision 968, non intégrale : §1 à §4, §6 à
+§12, §5.7, §5.8, §5.9, §5.13, §5.20, §5.27, §5.40, §5.50, §5.51, §5.56.* Ce que l'aperçu rend et ce que la base refuse est
+spécifié par `docs/SPEC-deplacement-track.md` ; ces règles ne disent que de quoi il a l'air. Tout ce que le §5.56 pose pour la
+plateforme vaut ici — dans le flux, aucune modale, un seul bloc ouvert à la fois, le focus rendu à la commande.
+
+- **LE BLOC « TRACKS »**, dans la fiche d'un espace, **après les attentes et avant la zone de danger** : un tableau du §5.9 —
+  nom, channels, affaires (comptes alignés à droite, chiffres tabulaires), commandes. Absent si l'espace n'a aucun track :
+  l'état vide dit « Aucun track dans cet espace. » sans commande (rien à déplacer).
+- **« Déplacer vers un autre espace »**, discret compact, icône `ArrowRightLeft` — *icône nouvelle* (§9), pour ce seul sens.
+  Elle ouvre **sur une ligne à elle**, en `colSpan`, sous la ligne du track (§5.27), le bloc du déplacement ; la commande reste
+  montée et devient désactivée tant qu'il est ouvert (§5.40).
+- **LE BLOC DU DÉPLACEMENT**, dans cet ordre :
+  1. **« Espace d'arrivée »**, un `select` natif libellé (§5.7) : les autres espaces, par nom ; aucun choisi à l'ouverture ;
+  2. **l'aperçu**, lu dès qu'un espace est choisi — un squelette pendant la lecture (§5.8), une erreur avec « Réessayer » —
+     en **`dl`** (§5.20) puis en listes :
+     - **« Ce qui part »** : les comptes (channels, affaires, mails, pièces, commentaires, temps et leur durée, budgets,
+       coûts, recettes, webhooks), en chiffres tabulaires ;
+     - **« Référentiels »** : par famille, deux listes — « Réutilisés à l'arrivée » (le nom, et le nom d'arrivée s'il
+       diffère par la casse) et « Créés à l'arrivée » ; une famille vide ne s'affiche pas ;
+     - **« Temps et coûts »** : la valeur au départ, à l'arrivée, l'écart signé ; « Sans coût à l'arrivée : » suivie des
+       personnes, s'il y en a ;
+     - **« Adresses des affaires »** : « Elles passeront au domaine {domaine} ; l'ancienne adresse continue d'aboutir. »,
+       ou, sans domaine à l'arrivée, la même phrase que le bandeau du §5.110, en `role="note"` ;
+  3. **les refus**, s'il y en a : un bandeau `role="alert"` en `--color-danger-soft` / `--color-danger-on-soft`, icône
+     `TriangleAlert`, « Le track ne peut pas être déplacé : » puis **une liste par refus**, chacune titrée d'une phrase
+     (« Affaires rattachées aussi à un autre track », « Personnes qui ne sont pas membres de {espace} », « Relances
+     armées », « Envois en file », « Mails préparés en attente », « Champ commun d'un autre type à l'arrivée », « Un track
+     du même nom existe à l'arrivée »), ses éléments nommés ; **aucune commande de déplacement n'est rendue** : rien ne
+     s'arrange ici, chaque refus se règle à son écran ;
+  4. **sans refus**, **la saisie du nom du track** — le patron de « Supprimer l'espace » (§5.56) : un champ libellé
+     « Saisissez le nom du track pour confirmer », son aide qui cite le nom entre guillemets à espaces insécables (§5.51) ;
+     **« Déplacer le track »**, primaire — le geste se défait par un déplacement inverse, il n'est pas destructif —,
+     désactivé tant que la saisie diffère du nom (§5.50) ; « Annuler », secondaire.
+- **PENDANT L'ÉCRITURE**, « Déplacer le track » est `aria-busy` et désactivé ; **le succès** referme le bloc, un `role="status"`
+  dit « Track « {nom} » déplacé vers {espace}. » avec le lien vers la fiche de l'espace d'arrivée ; le tableau est relu. **Un
+  refus de la base** — un geste concurrent entre l'aperçu et l'écriture — remplace l'aperçu par ses listes, au même endroit.
+- **LE JOURNAL** (§5.56) traduit `track_moved` : « Track « {nom} » déplacé de {espace} vers {espace} ».
+- **LES OBJECTIFS** : un bloc qui cite un channel d'un autre espace que celui du tableau porte, après le nom du channel, le
+  nom de cet espace en 13 px `--color-text-2` (« Grands comptes · Studio Lumen ») — un mot, pas une teinte (§1).
+- **RESPONSIVE** (§7) : sous `md`, le tableau des tracks passe en liste empilée (§5.9) ; le bloc du déplacement prend la
+  largeur ; les listes passent à la ligne, jamais tronquées.
+- **AU CLAVIER** : toutes les commandes sont des boutons et des champs natifs ; `Échap` referme le bloc et rend le focus à
+  « Déplacer vers un autre espace » ; un refus ou un succès est annoncé par sa région.
+- **Aucune couleur, aucun jeton nouveaux ; une icône nouvelle**, `ArrowRightLeft`, pour le seul déplacement d'un track.

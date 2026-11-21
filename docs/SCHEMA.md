@@ -3428,6 +3428,22 @@ et les blocages sont perdus — les mails mis à la corbeille par un blocage y r
 - **Retour arrière** : rejouer la définition de `concerns_me` de `0190`.
 - **Preuves** : pgTAP `0181`, rouge avant la migration ; `0164` révisée (n° 15).
 
+### Migration — `CRM-162` T1 : déplacer un track entier d'un espace à un autre (spécifiée le 2026-11-21, avant le code ; numéro pris à la poussée, après celle de `CRM-161`)
+
+`docs/SPEC-deplacement-track.md` ; décisions 964, 966 et 968.
+
+- **`public.card_address_aliases`** `(workspace_id uuid, email_local_part text, card_id uuid, created_at timestamptz)` — PK
+  `(workspace_id, email_local_part)` ; l'ancienne adresse d'une affaire déplacée, qui continue d'aboutir (§8) ; écrite par la
+  seule fonction de déplacement ; aucune écriture accordée à l'API.
+- **`public.track_moves`** `(id, track_id, track_slug, from_workspace_id, to_workspace_id, moved_by, moved_at)` — la trace de
+  chaque déplacement, lue par la redirection des adresses (§12) ; lecture sous la RLS du track.
+- **Fonctions** : `public.track_move_preview(uuid, uuid) returns jsonb` (rien n'est écrit) ; `public.move_track(uuid, uuid,
+  text) returns jsonb` (une transaction) ; `public.track_current_address(text, text)` ; `app.move_message_to_workspace(uuid,
+  uuid)` ; `public.classer_message_automatiquement` redéfinie (règle 1 bis, filiation par alias). Super-administrateur seul
+  (`app.exiger_superadmin`) pour l'aperçu et le déplacement.
+- **Retour arrière** : supprimer les fonctions nouvelles et les deux tables, redéfinir `classer_message_automatiquement` depuis
+  `0190` ; un track déjà déplacé reste où il est (le déplacement inverse le ramène).
+
 ### Migration `0193` — les pastilles cachées : le drapeau, Spam cochée, la liste de l'inbox et la recherche masquées — `CRM-159` T1 (`0193_pastilles_cachees.sql` ; spécifiée le 2026-11-20, avant le code)
 
 `docs/SPEC-mail-subsystem.md` §31.13 ; décisions 957 et 958. *Renumérotée de `0194` en `0193` le 2026-11-20* : `CRM-160` (`concerns_me`) devait migrer en premier et prend `0194` ;

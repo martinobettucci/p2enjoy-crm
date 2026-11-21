@@ -20561,3 +20561,13 @@ valorisation des temps, le journal d'audit, le déplacement inverse ; `docs/SCHE
 super-administrateur par requête directe) ; API ; E2E souris et clavier (aperçu, saisie du nom, refus listés) ; seed (un
 second espace avec homonymes et sans homonymes) ; captures observées ; manuel ; contrat. La campagne complète revient à la
 session de livraison (décision 830).
+**Spécifiée le 2026-11-21** (décision 968, arbitrages du responsable sur le sort des tables non évidentes) :
+`docs/SPEC-deplacement-track.md` ; `docs/DESIGN_SYSTEM.md` §5.112 ; `docs/SCHEMA.md` « Migration — `CRM-162` T1 » ;
+`docs/SPEC-seed.md` §54 (« Studio Lumen », accordé avec `CRM-161`). Accordé avec `CRM-161` (5f) : elle migre en premier ;
+la redirection d'un track déplacé passe par `public.track_current_address` (§12), que sa route appelle.
+**Tranches** (`docs/SPEC-deplacement-track.md` §16) :
+- [ ] **T1** — migration (alias, `track_moves`, aperçu, déplacement, redirection, règle 1 bis) ; pgTAP ; API ; SCHEMA, DAT ;
+  contrat ;
+- [ ] **T2** — l'écran (le bloc « Tracks », l'aperçu, la saisie, les refus, le journal, les objectifs) ; unitaires ; E2E ;
+  captures ;
+- [ ] **T3** — le seed §54, le manuel, le contrat, l'adresse redirigée (après `CRM-161`) ; l'unité passe `[P]`.
