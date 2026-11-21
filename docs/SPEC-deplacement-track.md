@@ -100,6 +100,7 @@ par **`22023 track_move_refused`** et la même liste. Aucun refus ne s'arrange d
 | `queued_send` | un envoi est en file (`mail_outbox` en attente) sur une affaire (décision 966) | les affaires et l'objet du mail |
 | `pending_draft` | un mail préparé attend sa relecture sur une affaire (décision 968) | les affaires et l'objet du mail |
 | `field_type_conflict` | un champ commun utilisé a un homonyme d'un autre type à l'arrivée (décision 968) | le champ, ses deux types |
+| `daily_cap_exceeded` | des temps déplacés feraient dépasser 420 minutes, pour une personne et un jour, à l'arrivée (décision 969) | les personnes, les jours, le total à l'arrivée |
 
 **Une personne citée** (décision 968) : toute personne que nomme une ligne de l'ensemble déplacé (§3.1, §3.2) — membres du
 track et de ses channels, responsables d'affaires, auteurs (de l'affaire, d'un commentaire, d'une activité, d'une saisie de
@@ -133,13 +134,22 @@ Un compte supprimé (référence nulle) ne compte pas.
 3. **Les refus** recalculés (§4) ; s'il en reste, `22023 track_move_refused` avec la liste, et rien n'est écrit.
 4. **Les référentiels** appariés ou créés à l'arrivée (§7), dans l'ordre de leurs dépendances : nœuds, champs communs,
    étiquettes, organisations, contacts, pastilles, séquences, workflows d'espace.
-5. **Les lignes déplacées** (§3.1), des parents aux enfants : les contraintes de clés composites sont **différées** pour la
-   transaction, ou les lignes réécrites dans un ordre où chaque clé reste satisfaite ; le choix est précisé au code.
+5. **Les lignes déplacées** (§3.1) : `set constraints all deferred` — la migration a rendu les clés composites
+   `DEFERRABLE INITIALLY IMMEDIATE` (décision 969) —, puis les mises à jour, des parents aux enfants ; les clés sont
+   contrôlées à la fin de la transaction, une à une.
 6. **Les alias d'adresse** (§8), le **journal** et l'**événement** de chaque affaire (§10).
 7. Rend le compte de ce qui a été déplacé, réutilisé et créé (la forme de `counts` et de `referentials`).
 
-Les déclencheurs qui réagissent à un `UPDATE` (audit, recherche, évaluations, files) ne doivent rien émettre de faux : chacun
-est vérifié au code, et la spécification est précisée de ce qui est neutralisé pour la transaction et pourquoi.
+**Les déclencheurs** (décision 969) : le déplacement pose `app.track_move = 'on'` pour sa transaction (`set_config(…, true)`).
+Les gardes qui refusent un changement d'espace — `card_events_refuser_maj`, `workflow_versions_refuser_mutation`,
+`card_comments_avant_maj`, `card_activities_avant_maj`, `card_checklist_items_before`, `saisies_temps_auteur`,
+`saved_views_avant`, `notifications_avant_maj` — laissent passer, sous le drapeau, le seul changement d'espace et des
+références réappariées ; les déclencheurs qui écrivent un événement ou une ligne d'audit (`card_events_apres_*`,
+`card_placements_write_events`, `card_placements_add_step_items`, `audit_configuration`) se taisent sous le drapeau ; le
+plafond journalier (`saisies_temps_plafond`) est contrôlé en amont, par le refus `daily_cap_exceeded` ; les validations de
+valeurs (`card_field_values_valider`, `card_common_field_values_validate`, `card_templates_valider`) restent actives, et
+passent parce que les champs sont réappariés dans la même instruction. La liste exacte est vérifiée au code, déclencheur par
+déclencheur, et chaque cas reçoit sa preuve pgTAP.
 
 ## 7. Les référentiels — retrouvés, sinon créés (décisions 964 et 968)
 

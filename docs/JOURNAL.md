@@ -41513,3 +41513,25 @@ l'inbox 31/31 et `inbox-lecture` 9/9.
 de Driss sur tout l'espace ; neuf lectures de Camille posées par la campagne de la nuit (00:40 à 01:45) la font échouer. Mises
 de côté le temps d'une exécution (9/9 alors), puis restaurées à l'identique ; sans rapport avec la `0195`, le seed n'ayant
 qu'un espace. Signalée à la session de livraison.
+
+### décision 969 — `CRM-162` : le plafond de 7 h par jour refuse le déplacement ; les gardes traversées par un drapeau de transaction
+
+*2026-11-21, session 152dd27d (p2enjoy-crm-f9), arbitrage du responsable (`AskUserQuestion`) puis précision de la session, avant
+le code.*
+**Le problème** : le plafond de 420 minutes de temps saisis par personne et par jour (`saisies_temps_plafond`) vaut **par
+espace**. Des temps déplacés peuvent, à l'arrivée, s'ajouter à ceux du même jour et le dépasser.
+**Décision du responsable** : **refus et liste** — l'aperçu liste chaque personne et chaque jour qui dépasserait 7 h à
+l'arrivée ; on corrige les saisies d'abord ; le plafond reste vrai partout. Écarté : accepter le dépassement.
+**Précisions de la session, relevées à la lecture de la base, sans arbitrage nécessaire** :
+- **les clés étrangères composites** (`workspace_id` + identifiant) ne sont presque jamais différables, et leur `ON UPDATE` est
+  `NO ACTION` : changer l'espace d'un parent et de ses enfants les violerait à chaque instruction. La migration les rend
+  `DEFERRABLE INITIALLY IMMEDIATE` — rien ne change hors du déplacement, aucune revalidation — et le déplacement les diffère
+  pour sa seule transaction. Écartés : `ON UPDATE CASCADE` (une sémantique nouvelle partout) ; retirer et reposer les
+  contraintes ;
+- **les déclencheurs gardiens** — l'historique d'une affaire et les versions publiées immuables, l'identité d'un commentaire,
+  d'une activité, d'une case ou d'une saisie de temps, l'espace d'une vue — refusent tout changement d'espace. Le
+  déplacement pose, pour sa transaction, le drapeau **`app.track_move = 'on'`**, le patron des drapeaux `app.trash_purge` et
+  `app.common_value_tsv_recompute` : chaque garde le lit et laisse passer **le seul changement d'espace et des références
+  réappariées**, rien d'autre ; les déclencheurs qui écrivent un événement ou une ligne d'audit se taisent sous le drapeau, et
+  le déplacement écrit son propre événement `track_moved` (§10). Écarté : `session_replication_role = replica`, qui couperait
+  aussi le contrôle des clés étrangères.
