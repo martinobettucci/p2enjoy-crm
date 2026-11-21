@@ -20467,7 +20467,8 @@ campagne complète revient à la session de livraison (décision 830).
 - [P] **Livraison et constat** : `docs/PROD_MIGRATIONS.md` §2.66, soit la migration 194, la webapp, l'image `mcp` et le
   manuel. Il reste le constat du responsable dans « Seulement moi ».
 
-### CRM-161 — Tout est cloisonné à l'espace courant : l'inbox d'abord, puis chaque écran, appliqué en base `[ ]`
+### CRM-161 — Tout est cloisonné à l'espace courant : l'inbox d'abord, puis chaque écran, appliqué en base `[@]`
+*Prise en charge : session interactive 4891a451 (p2enjoy-crm-5f) depuis 2026-11-21 08:37 UTC — état avant : [ ] ; confiée par la session de livraison (d5)*
 
 **Origine** : demande du responsable, le 2026-11-21 ; arbitrée le même jour (décision 963).
 **Demande, verbatim** : « le inbox ne semble pas être contenu au workspace. en fait tout est contenu au workspace. d'ailleurs on
