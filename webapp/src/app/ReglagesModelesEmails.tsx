@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — un choix fait pour un objet d'un espace ne lit que cet espace
+//       (docs/SPEC-espace-courant.md §15.4 bis, « Les sélecteurs liés à un espace » ; décision 975)
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les listes de l'écran ne lisent que l'espace de l'adresse ; docs/SPEC-espace-courant.md §15.4 bis
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'écran travaille dans l'espace de l'adresse (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-093 (docs/BACKLOG.md) tranche T3 — « Nouveau modèle » et « Modifier » désactivés avec leur motif quand la
@@ -905,10 +907,11 @@ function Previsualisation({
 	useEffect(() => {
 		let vivant = true
 		void (async () => {
+			// `CRM-161` T2.c (décision 975) : l'aperçu choisit dans l'espace du modèle — l'affaire, le contact, l'identité.
 			const [lesAffaires, lesContacts, lesIdentites] = await Promise.all([
-				lireAffairesPrevisualisation(client),
-				lireContactsDuCarnet(client),
-				lireIdentitesSortantes(client),
+				lireAffairesPrevisualisation(client, modele.workspace_id),
+				lireContactsDuCarnet(client, modele.workspace_id),
+				lireIdentitesSortantes(client, modele.workspace_id),
 			])
 			if (!vivant) return
 			// UN ÉCHEC DE SÉLECTEUR NE BLOQUE PAS LE RENDU : les trois listes sont des commodités de
@@ -925,7 +928,7 @@ function Previsualisation({
 		return () => {
 			vivant = false
 		}
-	}, [client])
+	}, [client, modele.workspace_id])
 
 	const rendreMaintenant = useCallback(async () => {
 		if (enVol) return

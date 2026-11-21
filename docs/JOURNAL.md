@@ -41849,3 +41849,6 @@ d'emails (contacts, affaires, identités) lisent de même sans espace. Les membr
 l'affaire (`lireMembresAffectables`).
 **La décision** : le carnet reste global (décision 965) ; une liste de choix servant un objet d'un espace lit cet espace.
 `docs/SPEC-espace-courant.md` §15.4 bis, « Les sélecteurs liés à un espace ».
+**Vérifications (décision 975)** : `e2e/ui/formulaire-selecteurs.spec.ts` rouge sans le correctif (quatorze options sur une
+affaire du seed), vert avec (6/6) ; unitaires `reglages-espace` étendus aux deux lectures, et les écrans touchés (formulaire,
+bloc « Contacts », modèles d'emails, carnet) : 286/286 ; `tsc` du dépôt.

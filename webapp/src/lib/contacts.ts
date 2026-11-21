@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — un choix fait pour un objet d'un espace ne lit que cet espace
+//       (docs/SPEC-espace-courant.md §15.4 bis, « Les sélecteurs liés à un espace » ; décision 975)
 // @spec CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranches 4a, 4b
 //       et 4c : ce que le carnet lit, ce que la fiche d'organisation lit, et ce que le bloc des
 //       contacts d'une affaire lit ET ÉCRIT (le §12 porte ses propres commentaires plus bas)
@@ -99,12 +101,15 @@ type LigneBrute = Omit<ContactDuCarnet, 'organisation'> & {
  */
 export async function lireContactsDuCarnet(
 	client: ClientCrm,
+	/**
+	 * `CRM-161` T2.c (docs/SPEC-espace-courant.md §15.4 bis, décision 975) : les contacts de cet espace seul, pour un choix fait
+	 * pour un objet de l'espace ; omis — le carnet, page globale —, tout ce que la RLS rend.
+	 */
+	idWorkspace?: string,
 ): Promise<EtatAsync<readonly ContactDuCarnet[]>> {
 	try {
-		const reponse = await client
-			.from('contacts')
-			.select(COLONNES_CONTACT_CARNET)
-			.order(TRI_CARNET)
+		const tous = client.from('contacts').select(COLONNES_CONTACT_CARNET)
+		const reponse = await (idWorkspace === undefined ? tous : tous.eq('workspace_id', idWorkspace)).order(TRI_CARNET)
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}

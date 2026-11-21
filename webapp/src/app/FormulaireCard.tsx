@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — un choix fait pour un objet d'un espace ne lit que cet espace
+//       (docs/SPEC-espace-courant.md §15.4 bis, « Les sélecteurs liés à un espace » ; décision 975)
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T8 : l'arrivée sur un champ demandé attend que la partie commune ait fini sa
 //       lecture — le bloc, au-dessus, repoussait sinon le champ hors de la fenêtre (docs/DESIGN_SYSTEM.md §5.88, §5.7 quater ;
 //       docs/SPEC-form-composer.md §4 ter.6 ; décision 856)
@@ -322,7 +324,8 @@ export function useListesReference(
 		}
 		if (porteContact) {
 			void lire('contact', async () => {
-				const etat = await lireContactsDuCarnet(client)
+				// `CRM-161` T2.c (décision 975) : les contacts de l'espace de l'affaire, les seuls que la base accepte ici.
+				const etat = await lireContactsDuCarnet(client, idWorkspace)
 				if (etat.statut !== 'pret') return etat.statut === 'erreur' ? enErreur(etat.erreur) : enChargement()
 				return pret(
 					etat.donnees.map((contact) => ({

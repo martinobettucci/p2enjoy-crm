@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — un choix fait pour un objet d'un espace ne lit que cet espace
+//       (docs/SPEC-espace-courant.md §15.4 bis, « Les sélecteurs liés à un espace » ; décision 975)
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les commandes d'écriture lisent le refus de la fiche quand la base refuse
 //       l'écriture sur l'affaire (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranche 4c :
@@ -117,7 +119,8 @@ export function BlocContactsCard({
 			// enchaîner doublerait l'attente pour un affichage qui les exige toutes deux.
 			const [lus, carnet] = await Promise.all([
 				lireContactsDeLAffaire(client, idCard),
-				lireContactsDuCarnet(client),
+				// `CRM-161` T2.c (décision 975) : les contacts de l'espace de l'affaire, les seuls qu'elle peut rattacher.
+				lireContactsDuCarnet(client, idWorkspace),
 			])
 			if (rang !== courant.current) return
 			// La lecture du carnet en échec ne fait PAS échouer le bloc : la liste des rattachements
@@ -130,7 +133,7 @@ export function BlocContactsCard({
 			if (lus.statut !== 'pret') return
 			setEtat(pret({ rattaches: lus.donnees, carnet: carnet.statut === 'pret' ? carnet.donnees : [] }))
 		})()
-	}, [client, idCard, tentative])
+	}, [client, idCard, idWorkspace, tentative])
 
 	// LA LISTE EST RELUE APRÈS CHAQUE ÉCRITURE, jamais complétée localement (§5.21) : une insertion
 	// optimiste contredirait l'ordre du serveur le temps d'un rendu, et masquerait un rattachement

@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — un choix fait pour un objet d'un espace ne lit que cet espace
+//       (docs/SPEC-espace-courant.md §15.4 bis, « Les sélecteurs liés à un espace » ; décision 975)
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les modèles d'emails de l'espace de l'écran (docs/SPEC-espace-courant.md §15.4 bis)
 // @spec CRM-063 (docs/BACKLOG.md) — modèles d'emails, tranche 2, sous-tranche 2b : L'ÉCRAN
 // @spec docs/SPEC-modeles-emails.md §9.2 (ce que l'écran lit), §9.3 (le guichet des variables et
@@ -383,12 +385,12 @@ export const COLONNES_AFFAIRE_PREVISUALISATION = 'id, title' as const
  */
 export async function lireAffairesPrevisualisation(
 	client: ClientCrm,
+	/** `CRM-161` T2.c (docs/SPEC-espace-courant.md §15.4 bis, décision 975) : les affaires de l'espace du modèle seul. */
+	idWorkspace?: string,
 ): Promise<EtatAsync<readonly AffairePrevisualisation[]>> {
 	try {
-		const reponse = await client
-			.from('cards')
-			.select(COLONNES_AFFAIRE_PREVISUALISATION)
-			.order('title')
+		const toutes = client.from('cards').select(COLONNES_AFFAIRE_PREVISUALISATION)
+		const reponse = await (idWorkspace === undefined ? toutes : toutes.eq('workspace_id', idWorkspace)).order('title')
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}
