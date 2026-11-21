@@ -9114,3 +9114,43 @@ plateforme vaut ici — dans le flux, aucune modale, un seul bloc ouvert à la f
 - **AU CLAVIER** : toutes les commandes sont des boutons et des champs natifs ; `Échap` referme le bloc et rend le focus à
   « Déplacer vers un autre espace » ; un refus ou un succès est annoncé par sa région.
 - **Aucune couleur, aucun jeton nouveaux ; une icône nouvelle**, `ArrowRightLeft`, pour le seul déplacement d'un track.
+
+### 5.113 Le menu des espaces : le premier niveau du fil d'Ariane, ses non-lus, la bascule annoncée — `CRM-161` T2.b
+
+*Écrit le 2026-11-21, avant le code, après la lecture ciblée du présent document (décision 970 : §1 à §4, §5.43, §5.62, §6
+à §12) ; ce que le menu lit et où il mène est spécifié par `docs/SPEC-espace-courant.md` §9 et §15.6.*
+
+- **UN MENU, ET NON UN `select`** : le premier niveau du fil (§5.62) devient un **bouton** quand la personne lit **au moins
+  deux espaces** ; avec un seul, il reste le lien d'aujourd'hui, inchangé. Le bouton garde la classe de l'ancêtre (13 px
+  `--color-text-2`, cible de 40 px, nom borné à `24ch` et tronqué par `…`, nom complet en `title`), suivi de l'icône Lucide
+  **`ChevronsUpDown`** 14 px `aria-hidden` ; `aria-haspopup="menu"`, `aria-expanded`, `aria-controls`. Son nom accessible est
+  « Changer d'espace — {espace} ». Le lien vers l'accueil, que l'ancêtre portait, passe dans le menu (« Accueil de {espace} »
+  n'existe pas : l'accueil reste l'entrée « Board » de la barre latérale, §4).
+- **LA PASTILLE DU BOUTON** : quand un **autre** espace que le courant a des non-lus dans son inbox, un point de 8 px
+  `--color-brand`, `rounded-full`, posé en haut à droite de l'icône — le patron du compteur de la cloche (§5.43), **sans
+  chiffre** : le bouton ne dit pas combien, il dit « ailleurs, il y a du courrier » ; le nom accessible le dit en mots
+  (« Changer d'espace — {espace} — des messages non lus dans un autre espace »). Les non-lus de l'espace courant ne
+  l'allument pas : l'inbox les montre déjà.
+- **LE PANNEAU** : le patron du repli « … » du fil (§5.62) — ancré à l'en-tête, surface `--color-surface`, bordure
+  `--color-border`, `--radius-lg`, `--shadow-card-hover`, largeur bornée à `40ch` ; `role="menu"`, chaque espace un
+  `role="menuitemradio"` à `aria-checked`, l'espace courant coché (icône **`Check`** 16 px `--color-brand` en tête de ligne,
+  une réserve de même largeur sur les autres, pour que les noms s'alignent). Une ligne : le nom (`font-medium` pour le
+  courant), qui se replie et n'est jamais tronqué (§5.46 : il nomme l'objet), puis, à droite, **le compte de non-lus de son
+  inbox** dans une pastille `--color-brand-soft` / `--color-brand` en `--text-xs` `tabular-nums` — absente à zéro et pendant
+  la lecture (§5.43) ; « 99+ » au-delà, le compte exact dans le nom accessible de la ligne (« Studio Lumen — 3 messages non
+  lus »). Survol `--color-hover`, focus visible (§8), hauteur de ligne ≥ 40 px.
+- **CE QUE LE CHOIX FAIT** (`docs/SPEC-espace-courant.md` §9) : la même page dans l'espace choisi quand elle existe
+  (l'inbox, un réglage) ; l'inbox de cet espace depuis une page d'un objet (un track, une affaire) ; sur une page globale,
+  l'onglet change d'espace courant sans changer de page. Le panneau se referme et le focus va au titre de la page.
+- **LA BASCULE ANNONCÉE** : chaque changement d'espace de l'onglet — par le menu, ou par un lien d'un autre espace (§8.4 de la
+  spécification) — est dit dans la région `aria-live` polie de la coquille : « Vous êtes passé dans l'espace {espace}. » ;
+  **aucun bandeau visuel** : le fil nomme déjà l'espace, et un bandeau répéterait l'en-tête.
+- **AU CLAVIER** : `Entrée`, `Espace` ou `↓` ouvre et porte le focus sur l'espace courant ; `↑` et `↓` parcourent, `Début` et
+  `Fin` vont aux extrêmes ; `Entrée` ou `Espace` choisit ; `Échap` referme et rend le focus au bouton ; `Tab` referme et
+  laisse le focus suivre. Un clic hors du panneau le referme sans déplacer le focus (§5.62).
+- **RESPONSIVE** (§7, §12.2) : le bouton suit l'ordre de sacrifice du fil — sous `md`, s'il passe dans le repli « … », le menu
+  y devient une section « Espaces » avec les mêmes lignes ; le panneau ne dépasse jamais l'écran à 390 px (ancré à
+  l'en-tête, pleine largeur moins 16 px de chaque côté).
+- **ÉTATS** (§5.8) : pendant la lecture des non-lus, les lignes sont rendues sans pastille ; un échec de cette lecture ne rend
+  aucune pastille et n'empêche pas de changer d'espace — c'est une aide, non une condition.
+- **Aucune couleur, aucun jeton nouveaux** ; deux icônes Lucide de plus, `ChevronsUpDown` et `Check`.
