@@ -9326,3 +9326,26 @@ spécification de `CRM-160`.*
 
 **L'arbitrage.** Demandé au responsable et rendu le 2026-11-20 (décision 960) : les responsables de **tous les
 rattachements non archivés**. `docs/SPEC-mail-subsystem.md` §27.7.2 l'écrit, et l'unité est corrigée.
+
+### INC-364 — le secret du simulateur des pastilles n'est posé qu'au §46 du seed : avant lui, la passe vise le serveur réel
+**Ouverte le 2026-11-21.** *Relevée par la session de livraison (p2enjoy-crm-d5) pendant la campagne du lot `CRM-161` T1 et
+T2 et `CRM-162` ; confiée à la session d5b44a2d (p2enjoy-crm-6e).*
+
+**Le constat.** `./resetMe.sh --yes` à `c2670b30` échoue trois fois de suite au §8 *octodecies* : « le simulateur de
+l'assistant IA ne répond pas (raison lue : « ») ». `GET /functions/v1/ia/etat`, avec `x-ia-simulateur: cle_refusee`, rend
+`502 function_unavailable` en 10,0 s.
+
+**La cause.** Le secret de développement `p2enjoy-pastilles-simulateur` fait porter `x-ia-simulateur` à l'appel de
+`pg_cron` (migration `0184`, `app.pastilles_reveiller`). Le seed ne le pose qu'au §46 (`docs/SPEC-seed.md` §46,
+« d'abord » : d'abord dans la section, pas dans le seed). Or des mails existent dès le §2.19, et chaque mail reçu entre dans
+la file des pastilles. Avant le §46, la tâche `p2enjoy-pastilles-evaluation`, qui tourne chaque minute, appelle donc la
+passe **sans** l'en-tête, et la fonction vise le serveur réel de `OLLAMA_HOST` : le journal porte `passe_pastilles`,
+`simulee:false`, 119 s. Tant que la clé de développement était refusée, l'appel échouait en 0,1 s. Valide depuis le
+2026-11-20, elle occupe le worker `ia` pendant deux minutes, et tout autre appel à `ia` échoue alors à 10 s.
+
+**La correction** (`CRM-141`, correctif ; `docs/SPEC-seed.md` §46 révisé). Le secret est posé **en tête du seed**, juste
+après la vérification que l'API répond et avant la première section qui puisse créer un mail. Le §46 ne le crée plus : il
+vérifie qu'il est là. Le développement ne vise donc jamais le serveur réel. La clé de `.env` n'est pas touchée.
+
+**Hors de cette correction**, soumis au responsable par la session de livraison : en production, la même passe longue fait
+échouer à 10 s les autres appels à `ia` (11 échecs en 20 h).

@@ -3186,6 +3186,10 @@ les mails du seed existent alors.
 - **Le simulateur, et jamais le serveur réel** : le seed pose d'abord, dans Vault, le secret de développement
   `p2enjoy-pastilles-simulateur` (valeur `pastilles`), qui fait porter à l'appel de `pg_cron` l'en-tête `x-ia-simulateur`
   (migration `0184`). Sans lui, la cadence viserait le serveur de LeLabs que `OLLAMA_HOST` désigne en développement.
+  *Révisé le 2026-11-21 (INC-364)* : le secret est posé **en tête du seed**, avant toute section qui puisse créer un mail,
+  et non plus au début de cette section. Les mails du §2.19 entrent dans la file dès leur relève, et la tâche `pg_cron`
+  tourne chaque minute : posé ici, le secret laissait les premières passes viser le serveur réel. Le §46 vérifie seulement
+  qu'il est là.
 - **La file, évaluée par la vraie passe** : la base a inscrit chaque mail reçu ; le seed appelle la route `POST
   /ia/pastilles/evaluer` avec le secret d'appel et le scénario `pastilles`, jusqu'à ce que la file soit vide. **Aucune ligne
   `llm` n'est écrite à la main.** Mesuré : « Devis / commande » posée par l'IA sur trois mails.

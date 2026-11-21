@@ -19303,6 +19303,7 @@ nettoyage, `cid:` et la migration de `content_id`, le seed, les preuves, quatre 
 ## Demande du 2026-11-10 — le LLM pré-trie les mails en pastilles configurables (décision 883)
 
 ### CRM-141 — Pastilles de mail posées par le LLM, définies dans les réglages, réévaluables, corrigeables à la main `[P]`
+*Prise en charge (correctif INC-364, le seed seul ; l'unité reste [P]) : session interactive d5b44a2d (p2enjoy-crm-6e) depuis 2026-11-21 16:32 UTC — état avant : [P] ; confiée par la session de livraison (d5)*
 
 **Livrée le 2026-11-12** (décision 927, révision `1ccc1fbb`) ; la clé de la production, refusée depuis la mise en service (réémise à la passerelle), **remplacée le 2026-11-20** : la passe évalue sur le vrai modèle (`echecs: 0`) et rattrape le stock ; reste le constat du responsable.
 
