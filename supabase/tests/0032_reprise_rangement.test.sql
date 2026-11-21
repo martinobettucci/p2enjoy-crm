@@ -16,8 +16,9 @@ select plan(12);
 
 create temporary table pg_temp_ref (nom text primary key, valeur text);
 
+-- Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : la boîte système de l'ESPACE DU SEED — « Studio Lumen » (§55) a la sienne.
 insert into pg_temp_ref
-select 'compte', id::text from public.mail_inbound_accounts where owner_id is null;
+select 'compte', id::text from public.mail_inbound_accounts where owner_id is null and workspace_id = '5eed0000-0000-4000-8000-000000000001';
 insert into pg_temp_ref
 select 'card', c.id::text from public.cards c join public.card_placements cp on cp.card_id = c.id
  where cp.archived_at is null and c.deleted_at is null

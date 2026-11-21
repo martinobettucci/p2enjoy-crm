@@ -290,19 +290,20 @@ release savepoint p_insert;
 --
 -- RÉVISÉE PAR `CRM-111` T8 (décision 51) : les deux affaires à plusieurs rattachements (`docs/SPEC-seed.md` §36) —
 -- QUARANTE-SIX. Même raison, même objet.
+-- RÉVISÉE PAR `CRM-161` T2.b (décision 51) : les cards de l'ESPACE DU SEED — « Studio Lumen » (§55) a la sienne.
 select is(
-	(select count(*)::int from public.cards),
+	(select count(*)::int from public.cards where workspace_id = '5eed0000-0000-4000-8000-000000000001'),
 	46,
 	'les quarante-six cards du seed sont intactes : cette unité ne touche aucun contenu');
 
 select is(
 	(select count(*)::int from public.cards
-	  where email_local_part ~ '^c-[0-9abcdefghjkmnpqrstvwxyz]{8}$'),
+	  where workspace_id = '5eed0000-0000-4000-8000-000000000001' and email_local_part ~ '^c-[0-9abcdefghjkmnpqrstvwxyz]{8}$'),
 	46,
 	'et leurs quarante-six adresses ont toujours la forme générée : aucune n''a été réécrite');
 
 select is(
-	(select count(distinct email_local_part)::int from public.cards),
+	(select count(distinct email_local_part)::int from public.cards where workspace_id = '5eed0000-0000-4000-8000-000000000001'),
 	46,
 	'quarante-six adresses DISTINCTES : l''index unique tient, et le retrait du privilège ne '
 	'l''a pas relâché');

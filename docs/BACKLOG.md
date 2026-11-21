@@ -20550,8 +20550,12 @@ livraison (décision 830).
   - [~] **T2.b — le menu des espaces** — *le menu fait et vérifié le 2026-11-21* (design system §5.113 ; `MenuEspaces.tsx`,
     `lib/menu-espaces.ts` ; la bascule annoncée par la coquille ; unitaires 17/17, unitaires complets 6 197/6 197 ; E2E
     `e2e/ui/menu-espaces.spec.ts` 3/3 sur un espace jetable — pastille, comptes, clavier, choix qui garde la page, page globale,
-    quatre paliers et repli — ; captures observées) ; **reste le seed §55**, accordé avec la session f9 (`CRM-162` §54), la
-    révision de `accueil-channels` qu'il impose, et le manuel : le menu et ses non-lus, la bascule annoncée, le seed §55, le design system, les E2E
+    quatre paliers et repli — ; captures observées) ; *le seed §55 fait et vérifié le 2026-11-21* (« Studio Lumen » créé par la
+    plateforme, sa boîte Stalwart `lumen@`, un track, une affaire, deux mails relevés, un contact, une organisation, un tableau,
+    une saisie ; rejoué deux fois sans doublon ; neuf pgTAP, quatre specs API et cinq specs d'écran révisées pour un seed à deux
+    espaces, décision 51 ; pgTAP complet 172/172, unitaires 6 222/6 222, specs sensibles au second espace : API 62/62, écran
+    166/166) ; **un défaut de T2.c corrigé** (la clé d'espace remontait la page au premier affichage : l'inbox perdait son
+    `?message=`) ; **reste le manuel** : le menu et ses non-lus, la bascule annoncée, le seed §55, le design system, les E2E
     et captures sur un compte de deux espaces, le manuel.
 - [ ] **T3 — Les pages globales.** Espace de provenance et filtre « Espace » ; les écrans qui lisaient le premier espace
   passent à tous ; les créations nomment l'espace courant de l'onglet.

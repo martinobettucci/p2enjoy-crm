@@ -126,7 +126,9 @@ test.describe('Ouvrir, prolonger, fermer : les comptes du seed, et la pile de do
 			expect(interne.exp as number).toBeLessThanOrEqual((interne.iat as number) + 300)
 			expect(Object.keys(interne).sort()).toEqual(['aud', 'exp', 'iat', 'iss', 'role', 'sub'])
 
-			const appartenances = await fetch(`${URL_API}/rest/v1/workspace_members?select=user_id,role&user_id=eq.${sub}`, {
+			// Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : l'appartenance à l'espace du seed — Camille est aussi membre du
+			// second espace (docs/SPEC-seed.md §55).
+			const appartenances = await fetch(`${URL_API}/rest/v1/workspace_members?select=user_id,role&user_id=eq.${sub}&workspace_id=eq.5eed0000-0000-4000-8000-000000000001`, {
 				headers: enTetesAuthentifies(corps?.jeton as string),
 			})
 			expect(appartenances.status).toBe(200)

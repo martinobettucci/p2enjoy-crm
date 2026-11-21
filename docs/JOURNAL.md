@@ -41652,3 +41652,25 @@ liste.
 **Le seed** (accord avec la session qui porte `CRM-161`) : « Studio Lumen » est créé par la fonction de la plateforme — qui
 tire son propre identifiant — et **retrouvé par son adresse** `studio-lumen` ; l'identifiant figé est abandonné, et les preuves
 visent l'adresse. La première des deux sections du seed poussée (§54 ou §55) le crée, de façon idempotente ; l'autre l'enrichit.
+
+### `CRM-161` T2.b — le seed §55 et un seed à deux espaces (journal d'implémentation)
+
+*2026-11-21, session 4891a451 (p2enjoy-crm-5f).*
+**Fait** : `stalwart/provision.sh` gagne la boîte `lumen@` (cinq boîtes) ; le §55 du seed crée « Studio Lumen » par
+`plateforme_creer_espace` s'il manque (décision 972), y pose Camille administratrice, sa boîte, un track, un channel, une affaire,
+deux mails déposés par IMAP et relevés (l'un non classé et non lu, l'autre classé), un contact, une organisation, un tableau
+d'objectifs et une saisie de temps (le jour retenu respecte le plafond de sept heures). Rejoué deux fois : aucun doublon.
+**Ce qu'un second espace a révélé, et révisé (décision 51)** — des preuves qui comptaient sur toute la base : deux contrôles du
+seed (comptes entrants, contacts) ; neuf pgTAP (`0003`, `0015`, `0023`, `0028`, `0032`, `0040`, `0061` — committée par la session
+f9 avec sa propre révision —, `0068`, `0095`) ; quatre specs API (`plateforme`, `refus-par-defaut` — qui gagne une preuve :
+« Studio Lumen » n'est lu que de son administratrice —, `session`, `workflow-depart`) ; cinq specs d'écran (`accueil-channels`,
+`demarrage`, `guide-flottant`, `premier-lancement` : l'espace de la preuve est retiré, au lieu de compter les espaces ;
+`fil-ariane` : le fil d'un seul espace se prouve sur Driss, les paliers restent sur Camille et prouvent que le titre long tient à
+côté du menu).
+**Un défaut de T2.c, trouvé ici** : la clé d'espace autour du contenu de la page (`Fragment key={slugCourant}`) le remontait au
+premier affichage ; l'inbox, qui retire `?message=` dès sa lecture, perdait alors le message désigné (quatre preuves de l'inbox
+et de « Seulement moi » rouges, et des relectures d'espaces en double dans `coquille` et `tracks`). Isolé par un essai sans la
+clé (vert), corrigé : la clé est une GÉNÉRATION qui ne change qu'au passage d'un espace connu à un autre.
+**La campagne** : la session de livraison avait demandé les projets api et ui entiers sur ce seed ; le classificateur de la
+session les a refusés (décision 830) ; la session de livraison a retiré sa demande et retenu le sous-ensemble des specs sensibles
+au second espace (API 62/62, écran 166/166).

@@ -29,7 +29,7 @@
 // LE DÉMONTAGE SUPPRIME DANS L'ORDRE, et ce n'est pas une précaution : MESURÉ le 2026-09-28, `channels`
 // référence `workflows` et `workflow_steps` référence le catalogue en `ON DELETE RESTRICT`. Supprimer le
 // seul workspace laisserait la cascade buter sur l'une ou l'autre selon son ordre. Il CONSTATE ensuite
-// que la base est rendue à son unique workspace seedé, sans quoi `demarrage.spec.ts` et le contrôle
+// que l'espace de la preuve est retiré (révisé par `CRM-161` T2.b : le seed en porte deux), sans quoi `demarrage.spec.ts` et le contrôle
 // n° 1 de `scripts/verify-seed.sh` rougiraient ailleurs, là où plus rien ne dirait pourquoi.
 
 import type { Request } from '@playwright/test'
@@ -110,9 +110,11 @@ async function demonter(requete: APIRequestContext, compte: Compte | null): Prom
 		expect(profil.status(), 'le profil du compte jetable doit être supprimé').toBe(204)
 		await supprimerCompte(compte.sub)
 	}
+	// Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : le seed porte deux espaces (docs/SPEC-seed.md §55) ; la preuve vérifie
+	// qu'ELLE a retiré le sien et que l'espace du seed est intact, au lieu de compter les espaces.
 	expect(
-		await lireService<{ id: string }[]>(requete, 'workspaces?select=id'),
-		'la base doit être rendue à son unique workspace seedé (CRM-005)',
+		await lireService<{ id: string }[]>(requete, `workspaces?select=id&id=in.(${ESPACE.id},${WORKSPACE_SEED})`),
+		'l’espace de la preuve est retiré, celui du seed est intact',
 	).toEqual([{ id: WORKSPACE_SEED }])
 }
 

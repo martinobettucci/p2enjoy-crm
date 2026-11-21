@@ -97,16 +97,20 @@ test.describe('A5 — les profils authentifiés lisent exactement le socle de le
 				{ id: '5eed0000-0000-4000-8000-000000000013' },
 			],
 		},
+		// Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : le socle est lu DANS L'ESPACE DU SEED ; le second espace du seed
+		// (§55) a sa propre preuve, plus bas — seule Camille, qui en est membre, le lit.
 		{
 			table: 'workspaces',
 			select: 'id',
 			order: 'id',
+			filtre: '&id=eq.5eed0000-0000-4000-8000-000000000001',
 			attendu: [{ id: '5eed0000-0000-4000-8000-000000000001' }],
 		},
 		{
 			table: 'workspace_members',
 			select: 'workspace_id,user_id,role',
 			order: 'user_id',
+			filtre: '&workspace_id=eq.5eed0000-0000-4000-8000-000000000001',
 			attendu: [
 				{
 					workspace_id: '5eed0000-0000-4000-8000-000000000001',
@@ -134,7 +138,7 @@ test.describe('A5 — les profils authentifiés lisent exactement le socle de le
 			const jeton = await jetonDe(compte.adresse)
 			for (const contrat of contrats) {
 				const reponse = await request.get(
-					`/rest/v1/${contrat.table}?select=${contrat.select}&order=${contrat.order}`,
+					`/rest/v1/${contrat.table}?select=${contrat.select}&order=${contrat.order}${'filtre' in contrat ? contrat.filtre : ''}`,
 					{
 					headers: enTetesAuthentifies(jeton),
 					},
@@ -144,6 +148,18 @@ test.describe('A5 — les profils authentifiés lisent exactement le socle de le
 					contrat.attendu,
 				)
 			}
+		})
+	}
+
+	// `CRM-161` T2.b (docs/SPEC-seed.md §55) : le second espace du seed, « Studio Lumen », n'est lu que de qui en est membre.
+	for (const compte of COMPTES_SEED) {
+		test(`${compte.role} : « Studio Lumen » est lu par sa seule administratrice`, async ({ request }) => {
+			const jeton = await jetonDe(compte.adresse)
+			const reponse = await request.get('/rest/v1/workspaces?select=slug&slug=eq.studio-lumen', {
+				headers: enTetesAuthentifies(jeton),
+			})
+			expect(reponse.status()).toBe(200)
+			expect(await reponse.json()).toEqual(compte.role === 'admin' ? [{ slug: 'studio-lumen' }] : [])
 		})
 	}
 })

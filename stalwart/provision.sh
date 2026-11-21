@@ -4,6 +4,7 @@
 # @spec docs/JOURNAL.md décision 235 (le rôle `user` est obligatoire), décision 239 (pas de boîte
 #       pour le `viewer`)
 # @spec CLAUDE.md §8 (les données de développement sont créées par les vrais mécanismes)
+# @spec CRM-161 (docs/BACKLOG.md) tranche T2.b — la boîte système du second espace, « Studio Lumen » (docs/SPEC-seed.md §55)
 #
 # Exécuté par le service `stalwart-init` de `docker-compose.dev.yml`, dans une image qui ne porte
 # qu'un client HTTP : l'image de Stalwart n'embarque ni `curl` ni `wget`, et son `stalwart-cli`
@@ -249,6 +250,11 @@ boite "admin@$DOMAINE_PERSO" 'Camille Aubert' "[\"admin@$DOMAINE_PERSO\"]"
 boite "bizdev@$DOMAINE_PERSO" 'Driss Lemoine' \
 	"[\"bizdev@$DOMAINE_PERSO\",\"contact@$DOMAINE_PERSO\"]"
 
+# `CRM-161` T2.b (docs/SPEC-seed.md §55) : la boîte système du SECOND espace du seed, « Studio Lumen ». Une boîte propre, et
+# non un alias de la première : la relève range un message dans l'espace de la boîte qui le reçoit, et un membre de deux
+# espaces doit voir les mails de chacun dans le sien.
+boite "lumen@$DOMAINE_PERSO" 'Boite systeme de l espace Studio Lumen' "[\"lumen@$DOMAINE_PERSO\"]"
+
 # LA QUATRIÈME BOÎTE N'EST PAS UNE BOÎTE DU WORKSPACE — CRM-060 sous-tranche 2 bis. C'est celle du
 # correspondant de démonstration, et elle n'existe que pour ÉMETTRE : aucune ligne de
 # `mail_inbound_accounts` ne la désigne, et le produit ne relève jamais dedans (§11.4). L'y inscrire
@@ -262,7 +268,7 @@ boite "$CORRESPONDANT" 'Leo Marchand - correspondant de demonstration' "[\"$CORR
 # --- 5. Contrôle de sortie ----------------------------------------------------------------------
 # Le script ne se déclare pas réussi parce qu'il n'a pas échoué : il relit ce qu'il a écrit.
 
-for attendue in "systeme@$DOMAINE_CARDS" "admin@$DOMAINE_PERSO" "bizdev@$DOMAINE_PERSO" "$CORRESPONDANT"; do
+for attendue in "systeme@$DOMAINE_CARDS" "admin@$DOMAINE_PERSO" "bizdev@$DOMAINE_PERSO" "lumen@$DOMAINE_PERSO" "$CORRESPONDANT"; do
 	lue=$(appel GET "/api/principal/$attendue")
 	case "$lue" in
 		*'"roles":["user"]'*) : ;;
@@ -270,4 +276,4 @@ for attendue in "systeme@$DOMAINE_CARDS" "admin@$DOMAINE_PERSO" "bizdev@$DOMAINE
 	esac
 done
 
-printf 'Quatre boîtes provisionnées et relues, dont celle du correspondant %s.\n' "$CORRESPONDANT"
+printf 'Cinq boîtes provisionnées et relues, dont celle du correspondant %s.\n' "$CORRESPONDANT"

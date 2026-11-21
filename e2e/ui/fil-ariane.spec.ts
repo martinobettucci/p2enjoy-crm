@@ -19,7 +19,10 @@ import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-110'
-const ADMIN = 'admin@p2enjoy.test'
+// Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : Camille est membre de deux espaces depuis le seed §55, et son premier
+// niveau est désormais le MENU DES ESPACES (docs/DESIGN_SYSTEM.md §5.113), prouvé par `menu-espaces.spec.ts`. Le fil d'UN
+// espace — le lien de l'espace, les ancêtres, le repli — se prouve sur Driss, membre du seul espace du seed.
+const ADMIN = 'bizdev@p2enjoy.test'
 const LECTRICE = 'viewer@p2enjoy.test'
 
 const WORKSPACE = 'P2Enjoy SAS'
@@ -247,7 +250,9 @@ test.describe('paliers responsive (§7, §12.2)', () => {
 	for (const palier of PALIERS) {
 		test(`palier ${palier.nom} : le titre long tient, la page ne défile pas`, async ({ page }) => {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
-			await connecterAvecLeLabs(page, ADMIN)
+			// Camille, membre de deux espaces : le titre long tient aussi à côté du MENU des espaces (§5.113), plus large que le
+			// lien d'un seul espace.
+			await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
 			await page.goto(AFFAIRE_LONGUE)
 			await expect(titre(page)).toHaveText('Renouvellement TMA — Clinique Saint-Ambroise')
 			await attendreSansDebordement(page)

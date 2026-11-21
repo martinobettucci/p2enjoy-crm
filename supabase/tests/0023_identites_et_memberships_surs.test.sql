@@ -259,10 +259,13 @@ select is((select count(*) from public.profiles), 3::bigint,
 select pg_temp.redevenir_proprietaire();
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
-select is((select count(*) from public.workspaces), 1::bigint,
-	'49 — l''admin A ne lit que son workspace');
-select is((select count(*) from public.workspace_members), 3::bigint,
-	'50 — l''admin A lit les trois memberships de son workspace');
+-- Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : Camille est aussi administratrice de « Studio Lumen », le second espace
+-- du seed (docs/SPEC-seed.md §55) ; l'isolement se prouve hors de lui — elle ne lit rien d'un espace dont elle n'est pas membre.
+select is((select count(*) from public.workspaces w where w.slug <> 'studio-lumen'), 1::bigint,
+	'49 — l''admin A ne lit que son workspace, hors « Studio Lumen » dont elle est membre');
+select is((select count(*) from public.workspace_members m
+            where m.workspace_id <> (select id from public.workspaces where slug = 'studio-lumen')), 3::bigint,
+	'50 — l''admin A lit les trois memberships de son workspace, hors « Studio Lumen »');
 select pg_temp.redevenir_proprietaire();
 
 select pg_temp.endosser('02200000-0000-4000-8000-000000000001');

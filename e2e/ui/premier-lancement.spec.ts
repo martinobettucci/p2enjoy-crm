@@ -99,9 +99,11 @@ async function demonter(requete: APIRequestContext, compte: Compte | null): Prom
 		expect(profil.status(), 'le profil du compte jetable doit être supprimé').toBe(204)
 		await supprimerCompte(compte.sub)
 	}
+	// Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : le seed porte deux espaces (docs/SPEC-seed.md §55) ; la preuve vérifie
+	// qu'ELLE a retiré le sien et que l'espace du seed est intact, au lieu de compter les espaces.
 	expect(
-		await lireService<{ id: string }[]>(requete, 'workspaces?select=id'),
-		'la base doit être rendue à son unique workspace seedé (CRM-005)',
+		await lireService<{ id: string }[]>(requete, `workspaces?select=id&id=in.(${ESPACE.id},${WORKSPACE_SEED})`),
+		'l’espace de la preuve est retiré, celui du seed est intact',
 	).toEqual([{ id: WORKSPACE_SEED }])
 }
 

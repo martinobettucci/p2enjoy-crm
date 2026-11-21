@@ -394,7 +394,7 @@ else
 	fail "stalwart-init n'a pas abouti (code de sortie : $code_init)"
 fi
 
-if docker logs "$(conteneur stalwart-init)" 2>&1 | grep -q 'Quatre boîtes provisionnées et relues'; then
+if docker logs "$(conteneur stalwart-init)" 2>&1 | grep -q 'Cinq boîtes provisionnées et relues'; then
 	ok "le provisionnement a relu ce qu'il a écrit"
 else
 	fail "le provisionnement n'a pas relu ce qu'il a écrit"

@@ -28,7 +28,7 @@
 // Ce choix est centralisé parce qu'il doit être **exhaustif** : le type somme `EtatAsync`
 // oblige à traiter chaque cas, et le traiter une seule fois évite qu'une route en oublie un.
 
-import { Fragment, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import { SkipLink } from '../components/ui/SkipLink'
@@ -112,6 +112,9 @@ export function AppShell({
 	// `CRM-161` T2.b (docs/DESIGN_SYSTEM.md §5.113) : la coquille constate l'espace qu'elle montre ; une bascule — par le menu,
 	// ou par un lien d'un autre espace — est dite dans la région polie, sans bandeau.
 	const [annonceBascule, setAnnonceBascule] = useState('')
+	// `CRM-161` T2.c : la génération du contenu, qui ne change que d'un espace connu à un autre.
+	const [generationEspace, setGenerationEspace] = useState(0)
+	const slugPrecedent = useRef<string | null>(null)
 	useEffect(() => {
 		if (espaceCourant === null) return
 		if (constaterEspace(espaceCourant.slug)) setAnnonceBascule(t('espace.bascule', { espace: espaceCourant.name }))
@@ -144,6 +147,11 @@ export function AppShell({
 	const espaceLu = etat.statut !== 'chargement'
 	const espaces = etat.statut === 'pret' ? etat.donnees : undefined
 	const slugCourant = espaceCourant?.slug ?? null
+	useEffect(() => {
+		if (slugCourant === null) return
+		if (slugPrecedent.current !== null && slugPrecedent.current !== slugCourant) setGenerationEspace((g) => g + 1)
+		slugPrecedent.current = slugCourant
+	}, [slugCourant])
 	const contexteEspace = useMemo(
 		() => ({ idWorkspace, estAdmin, capacites, espaceLu, slugEspace: slugCourant, ...(espaces === undefined ? {} : { espaces }) }),
 		[idWorkspace, estAdmin, capacites, espaceLu, slugCourant, espaces],
@@ -260,8 +268,10 @@ export function AppShell({
 							}
 							recharger={toutRecharger}
 							// `CRM-161` T2.c (docs/SPEC-espace-courant.md §15.4 bis) : changer d'espace REMONTE le contenu de la page —
-							// aucun état, aucune liste lue d'un espace ne survit dans un autre.
-							contenu={<Fragment key={slugCourant ?? ''}>{children}</Fragment>}
+							// aucun état, aucune liste lue d'un espace ne survit dans un autre. La clé ne change qu'à un VRAI
+							// changement d'espace : un remontage au premier affichage perdait ce que la page avait déjà consommé
+							// de son adresse (l'inbox et son `?message=`, retiré dès la lecture).
+							contenu={<Fragment key={generationEspace}>{children}</Fragment>}
 						/>
 						)}
 						<GuideFlottant />

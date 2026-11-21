@@ -87,10 +87,11 @@ select is(
 
 create temporary table pg_temp_ref (nom text primary key, valeur text);
 
+-- Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : la boîte système de l'ESPACE DU SEED — « Studio Lumen » (§55) a la sienne.
 insert into pg_temp_ref
-select 'compte', id::text from public.mail_inbound_accounts where owner_id is null;
+select 'compte', id::text from public.mail_inbound_accounts where owner_id is null and workspace_id = '5eed0000-0000-4000-8000-000000000001';
 insert into pg_temp_ref
-select 'track', id::text from public.tracks order by name limit 1;
+select 'track', id::text from public.tracks where workspace_id = '5eed0000-0000-4000-8000-000000000001' order by name limit 1;
 
 insert into public.mail_folder_map (account_id, entity_type, entity_id, requested_path, actual_path)
 select (select valeur::uuid from pg_temp_ref where nom = 'compte'),

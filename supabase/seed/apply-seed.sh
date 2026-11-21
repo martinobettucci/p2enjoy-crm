@@ -2108,7 +2108,8 @@ organizations_count=$(curl -s "$API/rest/v1/organizations?select=id&id=in.($orga
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 # `…a9`, « Régis Anonyme », est le contact du volet RGPD (`CRM-072` T3, §26) : semé plus loin, il n'appartient pas au
 # carnet que ce compte vérifie, et le rejeu le trouverait déjà là.
-contacts_count=$(curl -s "$API/rest/v1/contacts?select=id&id=neq.5eed0000-0000-4000-8000-0000000000a9&source=neq.import" \
+# `CRM-161` T2.b (§55, décision 51) : les contacts de l'espace du seed — « Studio Lumen » a les siens.
+contacts_count=$(curl -s "$API/rest/v1/contacts?select=id&workspace_id=eq.$WS_ID&id=neq.5eed0000-0000-4000-8000-0000000000a9&source=neq.import" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 # RÉVISÉ par `CRM-146` T3 (docs/SPEC-seed.md §41) : le §41 rattache trois contacts du fichier de salon à deux affaires,
 # plus loin ; au rejeu, ils seraient déjà là. Ce compte porte sur les rattachements SEMÉS ICI, par leurs contacts.
@@ -2624,7 +2625,8 @@ for entree in "${COMPTES_ENTRANTS[@]}"; do
 	attendu "$code" "configuration du compte entrant « $mc_label »" 200
 done
 
-comptes_entrants=$(curl -s "$API/rest/v1/mail_inbound_accounts?select=id" \
+# `CRM-161` T2.b (§55, décision 51) : les comptes de l'espace du seed — « Studio Lumen » a les siens.
+comptes_entrants=$(curl -s "$API/rest/v1/mail_inbound_accounts?select=id&workspace_id=eq.$WS_ID" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 [ "$comptes_entrants" = "${#COMPTES_ENTRANTS[@]}" ] || die "comptes entrants : $comptes_entrants
         lignes au lieu de ${#COMPTES_ENTRANTS[@]} — le rejeu a dupliqué ou perdu une boîte."
@@ -6898,3 +6900,151 @@ fi
 [ "$(psql_seed -c "select status from public.mail_outbound_identities where id = '$ID_IDENTITE_CAMILLE'")" = "ok" ] \
 	|| die "l'adresse d'expédition de Camille n'est pas « Connectée » après son test (§51)."
 info "Adresse d'expédition de Camille testée par « Tester la connexion » : l'étape « identité » du guide est faite pour elle, à faire pour Driss — docs/SPEC-seed.md §51"
+
+# --- « Studio Lumen » habité : le second espace du seed — CRM-161 T2.b, docs/SPEC-seed.md §55 -------------------------
+# @spec CRM-161 (docs/BACKLOG.md) — tranche T2.b : un membre de deux espaces, Camille, voit dans chacun ses tracks, ses mails
+#       et ses non-lus ; les pages globales ont deux espaces de provenance (docs/SPEC-seed.md §55 ;
+#       docs/SPEC-espace-courant.md §12 ; décisions 965, 967 et 972 ; CLAUDE.md §8)
+#
+# L'ESPACE EST CRÉÉ PAR LA PLATEFORME, S'IL MANQUE, ET RETROUVÉ PAR SON SLUG (décision 972) : le §54 de `CRM-162` l'enrichit
+# sans le recréer. Tout le reste est posé sous le jeton de Camille, par les gestes de l'écran ; chaque objet est retrouvé par
+# son nom ou son `Message-ID` avant d'être posé : le rejeu ne duplique rien.
+echo
+say "55. « Studio Lumen » : le second espace, habité (CRM-161)"
+LUMEN_SLUG='studio-lumen'
+LUMEN_BOITE="lumen@$PERSONAL_DOMAIN"
+lumen_id() { psql_seed -c "select id from public.workspaces where slug = '$LUMEN_SLUG'"; }
+JETON_LUMEN_PLATEFORME=$(sso_jeton_interne "$API" "$ANON_KEY" 'plateforme@p2enjoy.test' || true)
+[ -n "$JETON_LUMEN_PLATEFORME" ] || die "connexion du super-administrateur impossible : le §55 crée « Studio Lumen » sous son jeton."
+LUMEN_ID=$(lumen_id)
+if [ -z "$LUMEN_ID" ]; then
+	attendu "$(api_jeton "$JETON_LUMEN_PLATEFORME" POST /rest/v1/rpc/plateforme_creer_espace \
+		-d "$(jq -nc --arg s "$LUMEN_SLUG" '{p_nom: "Studio Lumen", p_slug: $s, p_domaine_entrant: null}')")" \
+		"création de « Studio Lumen » par la plateforme (§55)" 200
+	LUMEN_ID=$(lumen_id)
+fi
+[ -n "$LUMEN_ID" ] || die "« Studio Lumen » est introuvable après sa création (§55)."
+if [ "$(psql_seed -c "select role from public.workspace_members where workspace_id = '$LUMEN_ID' and user_id = '$CAMILLE_ID'")" != "admin" ]; then
+	attendu "$(api_jeton "$JETON_LUMEN_PLATEFORME" POST /rest/v1/rpc/plateforme_poser_membre \
+		-d "$(jq -nc --arg w "$LUMEN_ID" --arg u "$CAMILLE_ID" '{p_ws: $w, p_user: $u, p_role: "admin"}')")" \
+		"Camille administratrice de « Studio Lumen » (§55)" 200 204
+fi
+
+JETON_LUMEN=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+[ -n "$JETON_LUMEN" ] || die "connexion de Camille impossible : le §55 habite « Studio Lumen » sous son jeton."
+
+# La boîte système de l'espace : la boîte Stalwart `lumen@` (stalwart/provision.sh), déclarée par le vrai chemin.
+if [ -z "$(psql_seed -c "select id from public.mail_inbound_accounts where workspace_id = '$LUMEN_ID' and imap_username = '$LUMEN_BOITE'")" ]; then
+	attendu "$(api_jeton "$JETON_LUMEN" POST /rest/v1/rpc/upsert_mail_inbound_account \
+		-d "$(jq -nc --arg ws "$LUMEN_ID" --arg u "$LUMEN_BOITE" --arg p "$MAILBOX_PASSWORD" \
+		      '{p_workspace_id: $ws, p_label: "Boîte système de Studio Lumen", p_imap_host: "stalwart", p_imap_port: 143,
+		        p_imap_security: "none", p_imap_username: $u, p_password: $p, p_owner_id: null,
+		        p_watch_folders: ["INBOX", "Junk Mail"], p_backfill_months: 0}')")" "boîte système de « Studio Lumen » (§55)" 200
+fi
+LUMEN_COMPTE=$(psql_seed -c "select id from public.mail_inbound_accounts where workspace_id = '$LUMEN_ID' and imap_username = '$LUMEN_BOITE'")
+
+# La structure : le workflow de départ, le track, le channel, l'affaire.
+if [ -z "$(psql_seed -c "select id from public.workflows where workspace_id = '$LUMEN_ID' limit 1")" ]; then
+	attendu "$(api_jeton "$JETON_LUMEN" POST /rest/v1/rpc/creer_workflow_de_depart -d "$(jq -nc --arg w "$LUMEN_ID" '{p_workspace: $w}')")" \
+		"workflow de départ de « Studio Lumen » (§55)" 200
+fi
+LUMEN_WORKFLOW=$(psql_seed -c "select id from public.workflows where workspace_id = '$LUMEN_ID' order by is_default desc, created_at limit 1")
+if [ -z "$(psql_seed -c "select id from public.tracks where workspace_id = '$LUMEN_ID' and slug = 'productions'")" ]; then
+	attendu "$(api_jeton "$JETON_LUMEN" POST /rest/v1/tracks -H 'Prefer: return=minimal' \
+		-d "$(jq -nc --arg w "$LUMEN_ID" '{workspace_id: $w, name: "Productions", slug: "productions", position: 1}')")" \
+		"track « Productions » (§55)" 201
+fi
+LUMEN_TRACK=$(psql_seed -c "select id from public.tracks where workspace_id = '$LUMEN_ID' and slug = 'productions'")
+if [ -z "$(psql_seed -c "select id from public.channels where track_id = '$LUMEN_TRACK' and slug = 'tournages'")" ]; then
+	attendu "$(api_jeton "$JETON_LUMEN" POST /rest/v1/channels -H 'Prefer: return=minimal' \
+		-d "$(jq -nc --arg w "$LUMEN_ID" --arg t "$LUMEN_TRACK" --arg f "$LUMEN_WORKFLOW" \
+		      '{workspace_id: $w, track_id: $t, name: "Tournages", slug: "tournages", workflow_id: $f, position: 1}')")" \
+		"channel « Tournages » (§55)" 201
+fi
+LUMEN_CHANNEL=$(psql_seed -c "select id from public.channels where track_id = '$LUMEN_TRACK' and slug = 'tournages'")
+if [ -z "$(psql_seed -c "select id from public.cards where workspace_id = '$LUMEN_ID' and title = 'Clip — Maison Arlo'")" ]; then
+	attendu "$(api_jeton "$JETON_LUMEN" POST /rest/v1/rpc/creer_affaire \
+		-d "$(jq -nc --arg c "$LUMEN_CHANNEL" '{p_channel: $c, p_titre: "Clip — Maison Arlo", p_template: null}')")" \
+		"affaire « Clip — Maison Arlo » (§55)" 200
+fi
+LUMEN_AFFAIRE=$(psql_seed -c "select id from public.cards where workspace_id = '$LUMEN_ID' and title = 'Clip — Maison Arlo'")
+
+# Les mails : déposés par IMAP dans `lumen@`, relevés par la vraie relève de `mail-sync` (patron du §49).
+lumen_message() { psql_seed -c "select id from public.mail_messages where workspace_id = '$LUMEN_ID' and rfc822_message_id = '<$1>'"; }
+lumen_deposer_puis_relever() { # $1 = Message-ID sans chevrons, $2 = objet, $3 = corps
+	if [ -z "$(lumen_message "$1")" ]; then
+		depot=$(docker compose exec -T -e ADRESSE="$LUMEN_BOITE" -e MOT="$MAILBOX_PASSWORD" \
+			-e MID="<$1>" -e OBJET="$2" -e CORPS_MAIL="$3" mail-sync python -c '
+import email.utils, imaplib, os, time
+from email.message import EmailMessage
+message = EmailMessage()
+message["From"] = "Inès Arlo <ines@maison-arlo.example>"
+message["To"] = os.environ["ADRESSE"]
+message["Subject"] = os.environ["OBJET"]
+message["Message-ID"] = os.environ["MID"]
+message["Date"] = email.utils.formatdate()
+message.set_content(os.environ["CORPS_MAIL"])
+m = imaplib.IMAP4("stalwart", 143)
+m.login(os.environ["ADRESSE"], os.environ["MOT"])
+m.append("INBOX", "", imaplib.Time2Internaldate(time.time()), message.as_bytes())
+m.logout()
+print("depose")
+' 2>&1) || die "le dépôt IMAP de « $2 » dans $LUMEN_BOITE a échoué : « $depot » (§55)"
+		[ "${depot##*$'\n'}" = "depose" ] || die "le dépôt IMAP de « $2 » n'a rien confirmé : « $depot » (§55)"
+		for _tentative in 1 2 3 4 5 6 7 8 9 10; do
+			compte_systeme="$LUMEN_COMPTE" relever_boite >/dev/null
+			[ -n "$(lumen_message "$1")" ] && break
+			sleep 3
+		done
+	fi
+	[ -n "$(lumen_message "$1")" ] || die "« $2 » n'est pas arrivé dans « Studio Lumen » par la relève : la boîte $LUMEN_BOITE
+        est-elle provisionnée (stalwart/provision.sh) ? (§55)"
+}
+lumen_deposer_puis_relever 'seed-lumen-devis@maison-arlo.example' "Demande de devis — tournage d'un clip" \
+	'Bonjour, nous préparons le clip de notre nouvelle collection. Pourriez-vous nous adresser un devis ? Inès'
+lumen_deposer_puis_relever 'seed-lumen-reperages@maison-arlo.example' 'Repérages : les lieux retenus' \
+	'Voici les trois lieux retenus pour le tournage, avec les horaires de passage. Inès'
+LUMEN_REPERAGES=$(lumen_message 'seed-lumen-reperages@maison-arlo.example')
+if [ "$(psql_seed -c "select coalesce(card_id::text, '') from public.mail_messages where id = '$LUMEN_REPERAGES'")" != "$LUMEN_AFFAIRE" ]; then
+	attendu "$(api_jeton "$JETON_LUMEN" POST /rest/v1/rpc/classify_message \
+		-d "$(jq -nc --arg m "$LUMEN_REPERAGES" --arg c "$LUMEN_AFFAIRE" '{p_message_id: $m, p_card_id: $c}')")" \
+		"classement de « Repérages » dans l'affaire (§55)" 200 204
+fi
+
+# Ce qui sert les pages globales (T3) : un contact, une organisation, un tableau d'objectifs, une saisie de temps.
+if [ -z "$(psql_seed -c "select id from public.organizations where workspace_id = '$LUMEN_ID' and name = 'Maison Arlo'")" ]; then
+	attendu "$(api_jeton "$JETON_LUMEN" POST /rest/v1/organizations -H 'Prefer: return=minimal' \
+		-d "$(jq -nc --arg w "$LUMEN_ID" '{workspace_id: $w, name: "Maison Arlo", domain: "maison-arlo.example"}')")" \
+		"organisation « Maison Arlo » (§55)" 201
+fi
+if [ -z "$(psql_seed -c "select id from public.contacts where workspace_id = '$LUMEN_ID' and email = 'ines@maison-arlo.example'")" ]; then
+	attendu "$(api_jeton "$JETON_LUMEN" POST /rest/v1/contacts -H 'Prefer: return=minimal' \
+		-d "$(jq -nc --arg w "$LUMEN_ID" '{workspace_id: $w, full_name: "Inès Arlo", email: "ines@maison-arlo.example"}')")" \
+		"contact « Inès Arlo » (§55)" 201
+fi
+if [ -z "$(psql_seed -c "select id from public.goal_boards where workspace_id = '$LUMEN_ID' and name = 'Saison 2027'")" ]; then
+	attendu "$(api_jeton "$JETON_LUMEN" POST /rest/v1/goal_boards -H 'Prefer: return=minimal' \
+		-d "$(jq -nc --arg w "$LUMEN_ID" '{workspace_id: $w, name: "Saison 2027", position: 1}')")" \
+		"tableau d'objectifs « Saison 2027 » (§55)" 201
+fi
+if [ -z "$(psql_seed -c "select id from public.saisies_temps where workspace_id = '$LUMEN_ID' and profile_id = '$CAMILLE_ID' and track_id = '$LUMEN_TRACK'")" ]; then
+	# Le plafond de sept heures par personne et par jour vaut tous espaces confondus : le jour retenu est le plus récent des
+	# trente derniers où Camille a encore une heure et demie de libre.
+	LUMEN_JOUR=$(psql_seed -c "select d::date from generate_series(current_date - 1, current_date - 30, '-1 day') d
+		where coalesce((select sum(minutes) from public.saisies_temps s where s.profile_id = '$CAMILLE_ID' and s.jour = d::date), 0) + 90 <= 420
+		  and extract(isodow from d) < 6 limit 1")
+	[ -n "$LUMEN_JOUR" ] || die "aucun jour des trente derniers n'a une heure et demie de libre pour Camille (§55)."
+	attendu "$(api_jeton "$JETON_LUMEN" POST /rest/v1/saisies_temps -H 'Prefer: return=minimal' \
+		-d "$(jq -nc --arg w "$LUMEN_ID" --arg p "$CAMILLE_ID" --arg j "$LUMEN_JOUR" --arg t "$LUMEN_TRACK" \
+		      '{workspace_id: $w, profile_id: $p, jour: $j, minutes: 90, track_id: $t}')")" "saisie de temps de Camille (§55)" 201
+fi
+
+CONSTAT_LUMEN=$(psql_seed -c "select
+	(select count(*) from public.tracks where workspace_id = '$LUMEN_ID') || '|' ||
+	(select count(*) from public.mail_messages where workspace_id = '$LUMEN_ID' and card_id is null) || '|' ||
+	(select count(*) from public.mail_messages where workspace_id = '$LUMEN_ID' and card_id = '$LUMEN_AFFAIRE') || '|' ||
+	(select count(*) from public.contacts where workspace_id = '$LUMEN_ID' and email = 'ines@maison-arlo.example')")
+IFS='|' read -r LUMEN_TRACKS LUMEN_NON_CLASSES LUMEN_CLASSES LUMEN_CONTACTS <<< "$CONSTAT_LUMEN"
+[ "$LUMEN_TRACKS" -ge 1 ] && [ "$LUMEN_NON_CLASSES" -ge 1 ] && [ "$LUMEN_CLASSES" = "1" ] && [ "$LUMEN_CONTACTS" = "1" ] \
+	|| die "« Studio Lumen » n'a pas sa forme (§55) — tracks $LUMEN_TRACKS, non classés $LUMEN_NON_CLASSES, classés $LUMEN_CLASSES, contacts $LUMEN_CONTACTS."
+info "« Studio Lumen » : l'espace créé par la plateforme, Camille administratrice, sa boîte, un track, une affaire, un mail non classé et un classé, un contact, une organisation, un tableau, une saisie — docs/SPEC-seed.md §55"

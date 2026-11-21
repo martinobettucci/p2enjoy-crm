@@ -166,7 +166,8 @@ select pg_temp.endosser(pg_temp.camille());
 -- RÉVISÉE PAR `CRM-111` T8 (décision 51) : les quatre rattachements actifs du §36 de `docs/SPEC-seed.md` — 46 pour
 -- l'administratrice et le business developer, 40 pour la lectrice, qui ne lit pas ceux de « Grands comptes ».
 select is(
-	(select sum(e.affaires)::integer from public.entonnoir_conversion() e),
+	-- Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : l'ESPACE DU SEED — « Studio Lumen » (§55) a son affaire.
+	(select sum(e.affaires)::integer from public.entonnoir_conversion() e where e.workspace_id = '5eed0000-0000-4000-8000-000000000001'),
 	46,
 	'CRM-066 : Camille, administratrice, totalise 46 affaires actives — un droit fin `none` sur '
 	'`conseil-ia` ne restreint JAMAIS un administrateur de workspace');
@@ -175,7 +176,8 @@ select pg_temp.redevenir_proprietaire();
 select pg_temp.endosser(pg_temp.driss());
 
 select is(
-	(select sum(e.affaires)::integer from public.entonnoir_conversion() e),
+	-- Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : l'ESPACE DU SEED — « Studio Lumen » (§55) a son affaire.
+	(select sum(e.affaires)::integer from public.entonnoir_conversion() e where e.workspace_id = '5eed0000-0000-4000-8000-000000000001'),
 	46,
 	'CRM-066 : Driss, business developer, totalise lui aussi 46 affaires');
 
@@ -183,7 +185,8 @@ select pg_temp.redevenir_proprietaire();
 select pg_temp.endosser(pg_temp.farida());
 
 select is(
-	(select sum(e.affaires)::integer from public.entonnoir_conversion() e),
+	-- Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : l'ESPACE DU SEED — « Studio Lumen » (§55) a son affaire.
+	(select sum(e.affaires)::integer from public.entonnoir_conversion() e where e.workspace_id = '5eed0000-0000-4000-8000-000000000001'),
 	40,
 	'CRM-066 : Farida, lectrice, totalise 40 affaires — SIX de moins. C''EST LA PREUVE que '
 	'l''agrégat s''exécute sous l''identité de l''appelant : en `definer` elle en verrait 46');
@@ -335,7 +338,9 @@ select is(
 
 select is(
 	(select array[
-		(select n.default_probability from public.workflow_nodes_catalog n where n.key = 'negociation'),
+		-- Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : le catalogue de l'ESPACE DU SEED — « Studio Lumen » (§55) a le sien.
+		(select n.default_probability from public.workflow_nodes_catalog n where n.key = 'negociation'
+		   and n.workspace_id = '5eed0000-0000-4000-8000-000000000001'),
 		(select s.probability_override from public.workflow_steps s
 		  where s.id = '5eed0000-0000-4000-8000-000000000063'::uuid),
 		(select c.probability_override from public.card_placements c where c.card_id = pg_temp.reprise_marchand())
@@ -362,7 +367,7 @@ select is(
 
 select is(
 	(select sum(e.montant_pondere) from public.entonnoir_conversion() e
-	  where e.node_key = 'negociation'),
+	  where e.node_key = 'negociation' and e.workspace_id = '5eed0000-0000-4000-8000-000000000001'),
 	-- RÉVISÉ PAR `CRM-111` T8 : + 31 200, la vente de la billetterie (48 000 × 65 %, docs/SPEC-seed.md §36).
 	261952.50::numeric,
 	'CRM-066 : le nœud entier rend 261 952,50 — et non le total qu''il vaudrait si le '

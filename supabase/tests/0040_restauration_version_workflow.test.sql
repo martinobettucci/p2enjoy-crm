@@ -51,8 +51,9 @@ $$;
 -- Les identités réelles du seed, retrouvées par leur RÔLE et jamais par un identifiant écrit ici.
 create temporary table t_ctx as
 select
-	(select w.id from public.workflows w where w.is_default limit 1)              as wf,
-	(select w.workspace_id from public.workflows w where w.is_default limit 1)    as ws,
+	-- Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : le workflow par défaut de l'ESPACE DU SEED — « Studio Lumen » (§55) a le sien.
+	(select w.id from public.workflows w where w.is_default and w.workspace_id = '5eed0000-0000-4000-8000-000000000001' limit 1) as wf,
+	(select w.workspace_id from public.workflows w where w.is_default and w.workspace_id = '5eed0000-0000-4000-8000-000000000001' limit 1) as ws,
 	(select m.user_id from public.workspace_members m where m.role = 'admin'
 	  limit 1)                                                                   as admin_id,
 	(select m.user_id from public.workspace_members m where m.role = 'viewer'

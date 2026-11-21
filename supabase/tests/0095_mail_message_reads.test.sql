@@ -110,7 +110,8 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');  -- Camille, ad
 -- RÉVISÉ par `CRM-160` (décision 51, 2026-11-20), non relâché : un douzième, « Re: Proposition de refonte du monitoring
 -- (pièce jointe) », la réponse reçue à la seule adresse de Vertuo (docs/SPEC-seed.md §53), CLASSÉE dans l'affaire et non
 -- lue pour Camille. « Non classés » ne change pas (n° 12 et 13).
-select is((select count(*) from public.mail_messages m where not public.is_read(m)), 12::bigint,
+-- Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : les messages de l'ESPACE DU SEED — « Studio Lumen » (§55) a les siens.
+select is((select count(*) from public.mail_messages m where m.workspace_id = '5eed0000-0000-4000-8000-000000000001' and not public.is_read(m)), 12::bigint,
 	'11 — au départ, les douze messages reçus sont non lus pour Camille : aucune lecture fabriquée');
 select is((select unread_count from public.inbox_arborescence('5eed0000-0000-4000-8000-000000000001') where card_id is null), 4::bigint,
 	'12 — « Non classés » : quatre non lus pour Camille, les deux fils Spam masqués');

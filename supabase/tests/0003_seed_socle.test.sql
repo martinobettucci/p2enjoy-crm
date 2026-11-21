@@ -28,6 +28,8 @@
 --
 -- Tout se joue dans une transaction annulée en fin de fichier : l'extension `pgtap` ne subsiste
 -- pas dans la base, et **aucune donnée du seed n'est modifiée** — la suite est en lecture seule.
+-- Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : le seed porte un second espace dont Camille est
+--   administratrice ; les comptes du socle portent sur l'espace du socle.
 
 begin;
 
@@ -39,10 +41,12 @@ select plan(34);
 -- 1. L'espace de travail — docs/SPEC-seed.md §2.1
 -- =============================================================================================
 
+-- Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : le seed porte un second espace, « Studio Lumen » (docs/SPEC-seed.md
+-- §55), créé par la plateforme ; le SOCLE en pose toujours un seul.
 select is(
-	(select count(*)::int from public.workspaces),
+	(select count(*)::int from public.workspaces where slug <> 'studio-lumen'),
 	1,
-	'le seed socle pose exactement un espace de travail (CRM-005 : « un workspace »)');
+	'le seed socle pose exactement un espace de travail (CRM-005 : « un workspace ») ; le §55 en ajoute un second');
 
 select is(
 	(select count(*)::int from public.workspaces
@@ -216,25 +220,25 @@ select is(
 -- =============================================================================================
 
 select is(
-	(select count(*)::int from public.workspace_members),
+	(select count(*)::int from public.workspace_members where workspace_id = '5eed0000-0000-4000-8000-000000000001'::uuid),
 	3,
-	'exactement trois appartenances, aucune de plus');
+	'exactement trois appartenances à l''espace du socle, aucune de plus');
 
 select is(
 	(select role from public.workspace_members
-	  where user_id = '5eed0000-0000-4000-8000-000000000011'::uuid),
+	  where user_id = '5eed0000-0000-4000-8000-000000000011'::uuid and workspace_id = '5eed0000-0000-4000-8000-000000000001'::uuid),
 	'admin',
 	'admin@p2enjoy.test est « admin »');
 
 select is(
 	(select role from public.workspace_members
-	  where user_id = '5eed0000-0000-4000-8000-000000000012'::uuid),
+	  where user_id = '5eed0000-0000-4000-8000-000000000012'::uuid and workspace_id = '5eed0000-0000-4000-8000-000000000001'::uuid),
 	'business_developer',
 	'bizdev@p2enjoy.test est « business_developer »');
 
 select is(
 	(select role from public.workspace_members
-	  where user_id = '5eed0000-0000-4000-8000-000000000013'::uuid),
+	  where user_id = '5eed0000-0000-4000-8000-000000000013'::uuid and workspace_id = '5eed0000-0000-4000-8000-000000000001'::uuid),
 	'viewer',
 	'viewer@p2enjoy.test est « viewer »');
 
@@ -244,10 +248,12 @@ select is(
 	'les trois rôles de docs/SPEC-permissions-rls.md §2.1 sont représentés');
 
 select is(
-	(select count(*)::int from public.workspace_members
-	  where workspace_id <> '5eed0000-0000-4000-8000-000000000001'::uuid),
+	(select count(*)::int from public.workspace_members m
+	  where m.workspace_id <> '5eed0000-0000-4000-8000-000000000001'::uuid
+	    and not (m.workspace_id = (select id from public.workspaces where slug = 'studio-lumen')
+	             and m.user_id = '5eed0000-0000-4000-8000-000000000011'::uuid and m.role = 'admin')),
 	0,
-	'toutes les appartenances visent l''unique espace de travail du seed');
+	'toutes les appartenances visent l''espace du socle, hors Camille administratrice de « Studio Lumen » (§55)');
 
 -- =============================================================================================
 -- 5. Ce que le seed ne pose PAS — docs/SPEC-seed.md §2.2 et §8

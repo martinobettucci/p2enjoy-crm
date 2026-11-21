@@ -32,10 +32,14 @@ async function demonter(requete: APIRequestContext, constater: boolean): Promise
 	}
 	await requete.delete(rest(`workspaces?id=eq.${ESPACE.workspace}`), { headers: enTetesService() })
 	if (!constater) return
-	const restants = await requete.get(rest('workspaces?select=id'), { headers: enTetesService() })
+	// Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : le seed porte deux espaces (§55) ; la preuve vérifie qu'ELLE a retiré
+	// le sien et que l'espace du seed est intact, au lieu de compter les espaces.
+	const restants = await requete.get(rest(`workspaces?select=id&id=in.(${ESPACE.workspace},${WORKSPACE_SEED})`), {
+		headers: enTetesService(),
+	})
 	expect(
 		(await restants.json()) as Array<{ id: string }>,
-		'la base doit être rendue à son unique workspace seedé — sans quoi e2e/ui/demarrage.spec.ts rougirait',
+		'l’espace de la preuve est retiré, celui du seed est intact',
 	).toEqual([{ id: WORKSPACE_SEED }])
 }
 

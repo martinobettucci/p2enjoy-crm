@@ -57,9 +57,13 @@ async function demonterEspaceSansChannel(requete: APIRequestContext, compte: Com
 		await requete.delete(`${URL_API}/rest/v1/profiles?id=eq.${compte.sub}`, { headers: enTetesService() })
 		await supprimerCompte(compte.sub)
 	}
-	const restants = await requete.get(`${URL_API}/rest/v1/workspaces?select=id`, { headers: enTetesService() })
+	// Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : le seed porte deux espaces (§55) ; la preuve vérifie qu'ELLE a
+	// retiré le sien, et que l'espace du seed est intact, au lieu de compter les espaces.
+	const restants = await requete.get(`${URL_API}/rest/v1/workspaces?select=id&id=in.(${ESPACE_SANS_CHANNEL.id},${WORKSPACE_SEED})`, {
+		headers: enTetesService(),
+	})
 	expect(restants.status()).toBe(200)
-	expect((await restants.json()) as { id: string }[], 'la base doit être rendue à son unique workspace seedé').toEqual([
+	expect((await restants.json()) as { id: string }[], 'l’espace de la preuve est retiré, celui du seed est intact').toEqual([
 		{ id: WORKSPACE_SEED },
 	])
 }

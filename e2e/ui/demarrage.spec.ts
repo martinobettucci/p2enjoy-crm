@@ -122,13 +122,15 @@ async function demonterEspaceNeuf(requete: APIRequestContext, compte: CompteNeuf
 		await supprimerCompte(compte.sub)
 	}
 
-	const restants = await requete.get(`${URL_API}/rest/v1/workspaces?select=id`, {
+	// Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : le seed porte deux espaces (docs/SPEC-seed.md §55) ; la preuve vérifie
+	// qu'ELLE a retiré le sien et que l'espace du seed est intact, au lieu de compter les espaces.
+	const restants = await requete.get(`${URL_API}/rest/v1/workspaces?select=id&id=in.(${ESPACE_NEUF.id},${WORKSPACE_SEED})`, {
 		headers: enTetesService(),
 	})
 	expect(restants.status()).toBe(200)
 	expect(
 		(await restants.json()) as { id: string }[],
-		'la base doit être rendue à son unique workspace seedé (CRM-005)',
+		'l’espace de la preuve est retiré, celui du seed est intact',
 	).toEqual([{ id: WORKSPACE_SEED }])
 }
 

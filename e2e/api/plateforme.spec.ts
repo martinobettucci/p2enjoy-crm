@@ -186,8 +186,13 @@ test.describe('La garde de chaque fonction, en requête directe (docs/SPEC-plate
 	}
 
 	test('rien n’a été écrit par ces refus : l’espace seedé, ses membres et ses attentes sont intacts', async () => {
-		const espaces = await (await fetch(`${URL_API}/rest/v1/workspaces?select=slug,name`, { headers: enTetesService() })).json()
-		expect(espaces).toEqual([{ slug: 'p2enjoy', name: expect.any(String) }])
+		// Révisé le 2026-11-21 (`CRM-161` T2.b, décision 51) : le seed porte deux espaces (docs/SPEC-seed.md §55) ; aucun autre n'a
+		// été créé par ces refus.
+		const espaces = await (await fetch(`${URL_API}/rest/v1/workspaces?select=slug,name&order=slug`, { headers: enTetesService() })).json()
+		expect(espaces).toEqual([
+			{ slug: 'p2enjoy', name: expect.any(String) },
+			{ slug: 'studio-lumen', name: expect.any(String) },
+		])
 		const attentes = await (
 			await fetch(`${URL_API}/rest/v1/workspace_invitations?select=email&order=email`, { headers: enTetesService() })
 		).json()
