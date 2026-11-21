@@ -41733,3 +41733,26 @@ longue fait échouer à 10 s l'assistant et la passe suivante — 11 échecs en 
 **Décisions** : **une unité correctrice, `CRM-163`, dans ce lot** — la campagne l'attend ; écartés : après ce lot ; ne rien faire.
 **Connecteur MCP** — question 1 : **non** ; question 2 : sans objet.
 **Conséquence** : le lot en cours devient `CRM-161` T1+T2, `CRM-162`, INC-364 (le seed) et `CRM-163`.
+
+### `CRM-163` — la concurrence du runtime, mesurée avant la spécification (journal d'investigation)
+
+*2026-11-21, session 152dd27d (p2enjoy-crm-f9).*
+**Le problème** (décision 973) : pendant une passe des pastilles, tout autre appel à `ia` échoue à 10 s (`502
+function_unavailable`), et la passe suivante aussi.
+**Hypothèses** : (1) la borne du worker ; (2) un délai d'attente du réservoir de workers du runtime ; (3) le simulateur.
+**Observations, sur un banc jetable** (la même image `edge-runtime:v1.74.2`, hors de la pile de développement, qu'une autre
+session occupait) :
+- `oneshot` : un second appel à la même fonction pendant un appel de 15 s rend 502 à 10,0 s (« InvalidWorkerCreation: worker
+  did not respond in time ») ; un appel à une autre fonction, 200 en 0,02 s. Le délai est le `--request-wait-timeout` par
+  défaut (10 000 ms) : hypothèse (2) ;
+- `oneshot --max-parallelism 4` : identique, le réglage est ignoré en `oneshot` ;
+- `per_request`, avec ou sans `--max-parallelism` : les deux appels passent — écarté, la décision 286 l'a rejeté pour le
+  bruit qu'il écrit sous concurrence ;
+- un répertoire distinct qui importe le code d'un autre (`_voie/index.ts` → `../lent/index.ts`) n'est pas retenu par lui,
+  et les journaux du runtime restent vides ; deux appels sur ce même répertoire se bloquent encore.
+**Solutions envisagées** : une passe raccourcie sous la minute (elle bloquerait encore l'assistant jusqu'à 55 s, et
+ralentirait le rattrapage, ce que verrait l'utilisateur) ; `per_request` (décision 286) ; **la passe sur sa propre voie, plus
+un bail qui empêche le réveil suivant de tomber sur la passe en cours** — retenue (`docs/SPEC-ia.md` §16).
+**Conséquences** : une migration (`0199`, le bail), un répertoire `_ia-pastilles`, le routage de `main`, la fonction `functions`
+à recréer en production. Rien de ce que voit l'utilisateur ne change. Reste, hors périmètre : deux générations de l'assistant à
+la fois se bloquent encore (§16.5), dit au responsable.

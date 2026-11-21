@@ -145,6 +145,11 @@ Pour chaque requête valide, le routeur :
 5. ne journalise que le nom de fonction, la méthode, le statut, la durée et l'identifiant de
    corrélation — jamais URL complète, corps, clé, jeton ni en-tête d'autorisation.
 
+**Une voie à part pour la passe des pastilles** (`CRM-163`, `docs/SPEC-ia.md` §16) : le runtime ne sert qu'un worker à
+la fois par répertoire en `oneshot` — un second appel attend 10 s (`--request-wait-timeout`), puis échoue. La route
+`ia/pastilles/…` est donc servie depuis `/home/deno/functions/_ia-pastilles`, avec l'environnement et la borne de `ia` ;
+un nom qui commence par `_` reste refusé au premier segment.
+
 Une fonction inconnue est un refus attendu, pas une erreur serveur. Une panne inattendue du
 worker rend 502 avec le seul contrat public `{ "error": "function_unavailable", "request_id":
 "…" }`. Le diagnostic structuré reste dans les journaux internes, sans recopier le message brut

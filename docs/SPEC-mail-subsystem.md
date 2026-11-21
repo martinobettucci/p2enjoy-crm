@@ -4673,6 +4673,9 @@ Le patron des webhooks (`docs/DAT.md` §3.7 quinquies), repris parce que la fonc
 - **Le débit**, mesuré à l'écriture du code et consigné : une évaluation courte prend quelques secondes au modèle ; une
   passe d'une minute en traite donc une dizaine à une vingtaine. Le rattrapage de tous les mails existants peut durer des
   heures, et c'est assumé (décision 923).
+- **Une passe à la fois, à part de l'assistant** (`CRM-163`, `docs/SPEC-ia.md` §16) : la passe a sa propre voie dans le
+  runtime, et `app.pastilles_reveiller` ne l'appelle que s'il prend le **bail de la passe** (`app.label_pass_lease`,
+  160 s), que la passe rend en finissant (`public.release_label_pass`).
 - **La mémoire de la cellule** (8 Go) : **aucun modèle n'y est chargé** — le serveur Ollama est celui de LeLabs
   (`docs/SPEC-ia.md` §3). La passe coûte un worker de la fonction `ia` par minute et des requêtes HTTP.
 - **En développement**, la cadence est la même ; un réglage de la base posé par le seed de développement seul fait porter

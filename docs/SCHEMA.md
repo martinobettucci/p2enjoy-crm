@@ -3466,6 +3466,19 @@ et les blocages sont perdus — les mails mis à la corbeille par un blocage y r
   `plateforme_creer_espace` de `0089`.
 - **Preuve** : pgTAP `0183`, rouge avant la migration ; `0084` inchangée et verte.
 
+### Migration `0199` — `CRM-163` : le bail de la passe des pastilles (`0199_bail_passe_pastilles.sql` ; spécifiée le 2026-11-21, avant le code)
+
+`docs/SPEC-ia.md` §16.3 ; `docs/SPEC-mail-subsystem.md` §31.5 ; décision 973.
+
+- **`app.label_pass_lease`** `(id boolean primary key default true check (id), leased_until timestamptz)` — une ligne,
+  posée par la migration, libre ; aucun privilège client.
+- **`app.pastilles_reveiller()`** redéfinie, reprise de `0184` : prend le bail (`leased_until = now() + 160 s`) s'il est libre
+  ou échu, sinon rend nul sans appeler.
+- **`public.release_label_pass()`** `returns void`, `SECURITY DEFINER`, `search_path` vide, `service_role` seul : libère le
+  bail.
+- **Preuves** : pgTAP (le bail pris, refusé, libéré, échu ; le refus à `authenticated`).
+- **Retour arrière** : redéfinir `app.pastilles_reveiller` depuis `0184`, supprimer la fonction et la table.
+
 ### Migration `0198` — `CRM-162` T2 : ce que l'écran du déplacement lit et ce que le journal nomme (`0198_deplacement_track_ecran.sql` ; écrite le 2026-11-21, avec le code de l'écran)
 
 `docs/SPEC-deplacement-track.md` §10, §13 ; `docs/DESIGN_SYSTEM.md` §5.112.

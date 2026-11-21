@@ -20643,6 +20643,11 @@ voit l'utilisateur est soumise au responsable.
 **Connecteur MCP** : **non** (décision 973) — correctif interne de la fonction `ia`.
 **Spécification** : à écrire avant le code — `docs/SPEC-ia.md` (la passe, la concurrence), `docs/SPEC-mail-subsystem.md` §31.5,
 `docs/SPEC-edge-functions.md` si le routeur change, le contrat.
+**Spécifiée le 2026-11-21** : `docs/SPEC-ia.md` §16 — la concurrence mesurée (un worker à la fois par répertoire en `oneshot`),
+la passe sur sa propre voie (`_ia-pastilles`, servie par `main` avec l'environnement de `ia`), le bail de la passe ;
+`docs/SPEC-edge-functions.md` §4 ; `docs/SPEC-mail-subsystem.md` §31.5 ; `docs/SCHEMA.md` « Migration `0199` ». Rien de ce
+que voit l'utilisateur ne change. Hors périmètre, constaté et dit au responsable : deux générations de l'assistant à la fois
+se bloquent encore (§16.5).
 **DoD** (`CLAUDE.md` §18) : une preuve rouge avant (un appel à `ia` pendant une passe longue échoue), verte après ; la passe
 qui ne chevauche pas la suivante ; Vitest, API ; le contrat (fonction `functions` à recréer en production) ; constat en
 production : aucun `edge_request_failed` de `ia` sur une journée. La campagne complète revient à la session de livraison

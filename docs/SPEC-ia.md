@@ -1047,3 +1047,74 @@ destinataire), le contrôle de la sortie (clé inconnue rejetée et comptée, do
 et le budget de 100 s par bornes injectées, le secret exigé, le journal sans contenu, l'en-tête du simulateur ignoré sans
 `IA_SIMULATEUR_HOST`. Intégration : la passe entière contre le simulateur sur la vraie base ; puis contre le vrai serveur
 quand il est joignable, sur un message de démonstration (`CLAUDE.md` §15).
+
+## 16. `CRM-163` — la passe des pastilles ne bloque plus l'assistant (écrit le 2026-11-21, avant son code)
+
+`docs/BACKLOG.md` « CRM-163 » ; décision 973. **Connecteur MCP : non** (décision 973) — correctif interne de la fonction `ia`.
+
+### 16.1 Mesuré d'abord : le runtime ne sert qu'un worker à la fois PAR RÉPERTOIRE de fonction
+
+Un banc jetable — la même image `edge-runtime:v1.74.2`, un service principal qui crée ses workers comme `main`, une
+fonction qui dort 15 s — mesure, le 2026-11-21 :
+
+| Politique | Un 2ᵉ appel à la MÊME fonction pendant le 1ᵉʳ | Un appel à une AUTRE fonction |
+|---|---|---|
+| `oneshot` (la nôtre) | **502 à 10,0 s** : « InvalidWorkerCreation: worker did not respond in time » | 200 aussitôt |
+| `oneshot --max-parallelism 4` | 502 à 10,0 s — le réglage est sans effet en `oneshot` | 200 aussitôt |
+| `per_request` | 200 aussitôt | 200 aussitôt |
+
+Les 10 s sont le `--request-wait-timeout` par défaut du runtime : un appel attend un worker libre de SON répertoire, puis
+échoue. **Un répertoire distinct qui importe le même code** (`_voie/index.ts` → `../lent/index.ts`) tourne à côté, sans
+une ligne de journal. `per_request` est écarté : la décision 286 l'a rejeté pour le bruit qu'il écrit sous concurrence.
+
+### 16.2 La passe a sa propre voie
+
+- **Un répertoire `supabase/functions/_ia-pastilles/`**, dont l'`index.ts` sert la même fonction que `ia/index.ts`, en
+  important ses modules (`../ia/dependances.ts`, `../ia/handler.ts`). Le runtime le compte à part : la passe n'occupe plus
+  le worker de l'assistant.
+- **`main` y envoie la seule route de la passe** : une requête dont le nom de fonction est `ia` et le deuxième segment
+  `pastilles` est servie depuis `_ia-pastilles`, avec **l'environnement et la borne de `ia`** (les `OLLAMA_*`, le
+  simulateur, 150 s). L'adresse ne change pas : `pg_cron` appelle toujours `http://functions:9000/ia/pastilles/evaluer`,
+  et Kong `/functions/v1/ia/pastilles/evaluer`. Le journal de `main` dit `function: "ia"`, et `voie: "pastilles"`.
+- **Le répertoire n'est pas une fonction publique** : son nom commence par `_`, que le routeur refuse (`404`) ; seul le
+  routage interne de `main` y mène.
+
+### 16.3 Une passe à la fois : le bail de la passe
+
+Deux passes ne se chevauchent plus. Elles ne le pouvaient pas sur un même répertoire, mais la seconde attendait 10 s puis
+échouait (`edge_request_failed`) : c'est ce que le rattrapage de production produisait à chaque minute.
+
+- **`app.label_pass_lease`** — une ligne unique (`id boolean primary key default true check (id)`, `leased_until
+  timestamptz`), aucun privilège client.
+- **`app.pastilles_reveiller()`** prend le bail avant d'appeler : `leased_until = now() + 160 s` si le bail est libre ou
+  échu ; **sinon il rend nul sans appeler** — une passe est en cours. 160 s couvrent la borne de 150 s du worker et ses
+  10 s d'attente.
+- **`public.release_label_pass()`** — clé de service seule ; la route de la passe l'appelle **à la fin de chaque passe**,
+  quelle qu'en soit l'issue (`finally`), y compris quand rien n'est pris (clé absente, serveur injoignable). Une passe
+  interrompue laisse le bail échoir.
+- Une passe appelée directement — une preuve, sans le bail — reste possible ; le bail ne garde que la cadence.
+
+### 16.4 Ce qui ne change pas
+
+Le budget de 100 s d'une passe, la borne de 30 s d'une évaluation, la cadence d'une minute, la file, les écrans. **Rien de
+ce que voit l'utilisateur ne change**, sinon que l'assistant répond pendant une passe, et que la passe suivante part dès la
+fin de la précédente au lieu d'échouer.
+
+### 16.5 Hors du périmètre, constaté
+
+Deux générations de l'assistant lancées en même temps — deux administrateurs, chacun jusqu'à 120 s — restent sur le même
+répertoire `ia` : la seconde attend 10 s puis échoue. Une génération ne bloque pas la passe, qui a sa voie. Ce cas
+n'appartient pas à `CRM-163`, qui le dit au responsable.
+
+### 16.6 Preuves
+
+- **Rouge avant, vert après** — API, `e2e/api/ia-pastilles-concurrence.spec.ts` : une passe longue (scénario
+  `pastilles_lentes` du simulateur, quelques secondes par évaluation, sur des mails posés par la preuve), puis, pendant
+  elle, `GET /functions/v1/ia/etat` rend `200` en moins de 5 s. Avant le correctif : `502` à 10 s.
+- **Le bail** — pgTAP : `pastilles_reveiller` prend le bail et appelle ; un second réveil rend nul et n'appelle pas ;
+  libéré, il appelle de nouveau ; échu, de même ; `release_label_pass` refusé à `authenticated`.
+- **La voie** — unitaires de `main` : la route de la passe est servie depuis `_ia-pastilles` avec l'environnement et la
+  borne de `ia` ; toute autre route de `ia` depuis `ia` ; `_ia-pastilles` refusé comme nom de fonction.
+- **La libération** — unitaires de la fonction : `release_label_pass` est appelée après une passe réussie, en échec, et
+  sans clé.
+- **Le simulateur** : `pastilles_lentes` — la réponse du scénario `pastilles`, après une attente ; le développement seul.
