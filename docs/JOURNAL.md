@@ -41454,3 +41454,38 @@ les espaces (`lireTracks`, sans filtre d'espace). Le seed n'a qu'un espace.
 `/tracks/:slugTrack` deviendra ambigu dès deux espaces portant le même slug, et le préfixe le lève ; 50 routes
 (`webapp/src/app/chemins.ts`), 725 `goto` dans 152 fichiers E2E, et les liens sortants (résumé quotidien `0133`, connecteur)
 mesurent le coût.
+
+### décision 968 — `CRM-162` : le sort des tables dont le sort n'était pas évident
+
+*2026-11-21, session 152dd27d (p2enjoy-crm-f9), arbitrages du responsable (`AskUserQuestion`), avant la spécification.*
+L'inventaire des tables (fermeture des clés étrangères depuis `tracks` et depuis `cards`) a soumis au responsable ce que les
+décisions 964 et 966 ne tranchaient pas.
+**Décisions** :
+- **les workflows** : un workflow **propre au track** le suit. Un workflow **commun à l'espace** qu'utilise un channel déplacé est
+  **réutilisé par nom s'il est identique** à l'arrivée — mêmes étapes et mêmes champs, par nom et par type ; **sinon il est
+  copié** à l'arrivée. Aucune affaire ne perd son étape ni ses valeurs. Écartés : toujours copier ; réutiliser par nom et
+  refuser à l'écart ;
+- **« personne du track »** (le refus si elle n'est pas membre de l'arrivée, décision 964) : **toute personne citée** — membres
+  du track et de ses channels, responsables d'affaires, et aussi les auteurs de commentaires, de temps saisis, de pièces et
+  d'envois. Écarté : les seuls accès et responsabilités ;
+- **les webhooks** limités à un channel déplacé (Réglages ▸ Webhooks, champ « Channel ») **le suivent**, avec leur historique de
+  livraisons ; écarté : refus et liste. *Le responsable ignorait qu'un webhook pouvait se limiter à un channel : le manuel §34.1
+  le dit* ;
+- **les mails préparés en attente de relecture** sur les affaires du track : **refus et liste**, comme les envois en file et
+  les relances armées (décision 966) ; écarté : ils suivent l'affaire ;
+- **contacts et organisations** : un contact est retrouvé à l'arrivée **par son e-mail, sinon par son nom** ; une organisation
+  **par son domaine, sinon par son nom** ; écarté : le nom seul ;
+- **un champ commun homonyme d'un autre type** à l'arrivée : **refus et liste**, aucune valeur convertie ; écarté : une copie
+  suffixée ;
+- **les relances terminées** (historique d'une séquence sur une affaire) : la séquence est **retrouvée par nom, sinon copiée**
+  avec ses paliers ; l'historique est gardé ; écarté : l'historique retiré ;
+- **les boîtes de réception et adresses d'expédition** citées par les mails et envois passés : **gardées**, c'est l'histoire ;
+  boîtes et identités ne bougent pas ; écarté : les remplacer à l'arrivée ;
+- **un track homonyme** (même nom ou même adresse) à l'arrivée : **refus et liste** ; les tracks ne sont jamais fusionnés ;
+  écarté : renommer d'office ;
+- **le design system** est lu par sections ciblées pour cette unité (décisions 948, 953, 958).
+**Relevé à la spécification, sans arbitrage nécessaire** : les pièces jointes ne bougent pas dans le stockage — leur clé est
+opaque et l'accès passe par la ligne `mail_attachments`, qui suit son message ; les temps sont valorisés à la lecture, au
+coût du personnel de l'espace de la saisie : changer l'espace d'une saisie la revalorise (décision 966). La décision 967
+(`CRM-161`) met l'espace en tête des adresses : un track déplacé change d'adresse, et la redirection des anciennes adresses
+est à vérifier avec la session qui porte `CRM-161`.
