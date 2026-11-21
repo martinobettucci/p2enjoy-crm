@@ -41535,3 +41535,16 @@ l'arrivée ; on corrige les saisies d'abord ; le plafond reste vrai partout. Éc
   réappariées**, rien d'autre ; les déclencheurs qui écrivent un événement ou une ligne d'audit se taisent sous le drapeau, et
   le déplacement écrit son propre événement `track_moved` (§10). Écarté : `session_replication_role = replica`, qui couperait
   aussi le contrôle des clés étrangères.
+
+### décision 969 — `CRM-161` : le design system lu par sections ciblées, pour cette unité seule
+
+*2026-11-21, session 4891a451 (p2enjoy-crm-5f), arbitrage du responsable (`AskUserQuestion`).*
+**Le problème** : la tranche T2 de `CRM-161` (le menu des espaces dans le fil d'Ariane, l'espace en tête des adresses, la
+barre latérale filtrée) touche l'interface ; `CLAUDE.md` exige la lecture intégrale de `docs/DESIGN_SYSTEM.md` (9 069 lignes),
+lourde pour la session.
+**Les options présentées** : une lecture par sections ciblées, comme pour `CRM-159` et `CRM-160` (décisions 948, 953, 958 et
+961) ; la lecture intégrale.
+**Décision** : **sections ciblées, pour `CRM-161` seule** — §1 à §4 (couleurs, tokens, typographie, espacements), l'en-tête
+et le fil d'Ariane (§5.43, §5.62), la barre latérale, les menus et panneaux déroulants, les pastilles de compte, puis §6 à §12
+(états, paliers, accessibilité, icônes). Écartée : la lecture intégrale. La vérification du diff d'interface avant chaque commit
+se fait contre ces sections.
