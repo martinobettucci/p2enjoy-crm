@@ -1,4 +1,6 @@
 // @verifies CRM-040 (docs/BACKLOG.md) — cards, hors interface
+// @verifies CRM-162 (docs/BACKLOG.md) — tranche T3, révision pour un seed à deux espaces (décision 51) : les nœuds de C8 sont
+//           ceux de l'espace du seed (docs/SPEC-seed.md §54, §55)
 // @verifies docs/SPEC-cards.md §8.1 (contrat d'API, lignes a à x), §2.4 (clés composites),
 //           §3 (adresse générée), §4 (archivage et corbeille), §6 (autorisations), §7 (garde
 //           d'archivage d'un nœud occupé), §9 (seed)
@@ -504,7 +506,9 @@ test.describe('C8 — la garde d’archivage d’un nœud occupé : lignes w et 
 	test('w — archiver un nœud qu’une card active occupe est refusé en 403 / node_occupied', async ({
 		request,
 	}) => {
-		const noeuds = await request.get(`${CATALOGUE}?key=eq.relance&select=id`, {
+		// `CRM-162` T3, décision 51 : le seed a deux espaces, et « Studio Lumen » a son propre nœud `relance`, que rien n'occupe —
+		// le nœud de la preuve est celui de l'espace du seed.
+		const noeuds = await request.get(`${CATALOGUE}?key=eq.relance&workspace_id=eq.${WORKSPACE_SEED}&select=id`, {
 			headers: enTetesService(),
 		})
 		const [noeud] = (await noeuds.json()) as { id: string }[]
@@ -540,7 +544,7 @@ test.describe('C8 — la garde d’archivage d’un nœud occupé : lignes w et 
 		const seuleCard = await relire(request, CARD_ARCHIVEE)
 		expect(seuleCard!.archived_at).not.toBeNull()
 
-		const noeuds = await request.get(`${CATALOGUE}?key=eq.livre&select=id`, {
+		const noeuds = await request.get(`${CATALOGUE}?key=eq.livre&workspace_id=eq.${WORKSPACE_SEED}&select=id`, {
 			headers: enTetesService(),
 		})
 		const [noeud] = (await noeuds.json()) as { id: string }[]

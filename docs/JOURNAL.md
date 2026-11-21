@@ -41773,3 +41773,17 @@ défaut et laissait ses mails : borne propre, mails retirés ; (4) `scripts/veri
 alors que 21 existaient déjà (`CRM-073` et `CRM-127` n'avaient pas révisé le compteur) : 24 désormais.
 **Vérifications** : pgTAP 173 fichiers / 5663 assertions ; `verify-functions.sh` 14/14, journaux du runtime sans
 avertissement ; API `ia` et pastilles 32/32.
+
+### Campagne du lot `CRM-161` T1+T2, `CRM-162`, INC-364, `CRM-163` — la part de la session f9 (journal de correction)
+
+*2026-11-21, session 152dd27d (p2enjoy-crm-f9) ; partage convenu avec la session 5f, qui prend le §55.*
+**0068 n° 31, « aucune étape sur un nœud archivé »** — pas `CRM-162`. `e2e/api/cards.spec.ts` C8 w cherchait le nœud `relance` par
+sa seule clé et prenait le premier : celui de « Studio Lumen » (§55), que rien n'y occupe. Il s'archivait (`204` au lieu du
+`403 node_occupied` attendu), et restait archivé au 2026-05-01 ; la pgTAP, jouée ensuite, constatait l'étape de Lumen sur un
+nœud archivé. **Corrigé** : C8 w et x lisent le nœud de l'espace du seed (décision 51) ; le reste, retiré de la base de
+développement ; `cards.spec` vert, 0068 31/31.
+**`colonnes-protegees` ligne j** : 47 affaires pour 46, la 47ᵉ étant celle de « Studio Lumen » ; le compte se fait dans
+l'espace du seed, l'assertion reste à 46.
+**`connecteur-organisations`** : « Unknown tool » sous la campagne parallèle, vert rejoué seul — l'interférence connue des
+campagnes, non corrigée (consigne de la session de livraison).
+**Vérifications** : API `cards` et `colonnes-protegees` 86/86 ; pgTAP 0068 31/31 ; `connecteur-organisations` 1/1 seul.

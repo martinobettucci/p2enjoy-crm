@@ -1,5 +1,7 @@
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T8 : les comptes mesurés sur le seed enrichi (docs/SPEC-seed.md §36)
 // @verifies CRM-013 (docs/BACKLOG.md) — colonnes protégées, hors interface
+// @verifies CRM-162 (docs/BACKLOG.md) — tranche T3, révision pour un seed à deux espaces (décision 51) : la ligne j compte les
+//           affaires de l'espace du seed (docs/SPEC-seed.md §55)
 // @verifies docs/SPEC-permissions-rls.md §4.4.4 (contrat d'API, lignes a à l), §4.3 (le
 //           mécanisme), §4.4.2 (le chemin d'insertion est déjà sûr), §4.4.3 (la forme retenue),
 //           §4.4.6 (preuves attendues), §7 (preuves de refus n° 4 et n° 11)
@@ -370,7 +372,9 @@ test.describe('CRM-013 — les refus de LECTURE restent zéro ligne, non une err
 		try {
 			// Sur une table vide, « l'API rend `[]` » serait vrai que la RLS refuse ou qu'elle
 			// autorise tout (décision 50). L'état est donc d'abord constaté avec la clé de service.
-			const peuplee = await service.get(`${CARDS}?select=id`)
+			// `CRM-162` T3, décision 51 : le seed a deux espaces ; le compte est celui de l'espace du seed, « Studio Lumen » a les
+			// siennes (docs/SPEC-seed.md §55).
+			const peuplee = await service.get(`${CARDS}?select=id&workspace_id=eq.${WORKSPACE_SEED}`)
 			// RÉVISÉ PAR `CRM-046` : neuf cards devenues QUATORZE (docs/SPEC-seed.md §9.3), puis
 			// QUINZE par la cinquième tranche de `CRM-077` (§10.4 bis), et QUARANTE ET UNE par la
 			// tranche 2 de `CRM-046` (§9.11). Le contrôle garde sa fonction — établir que la table
