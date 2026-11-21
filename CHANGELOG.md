@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-21 au soir — les migrations 195 à 199, la webapp, `functions` et le manuel
+
+Cellule Spark `crm`, révision `377ac6e5` (décision 977, un `pg_dump -Fc` avant). **Vérifié** : registre à 197 lignes, la
+dernière `0199_bail_passe_pastilles.sql` ; slug `crm` ; `functions` redémarré et sain ; la tâche des pastilles vise toujours
+la même adresse ; `/crm/inbox` servi ; `index-CYoKL-SE.js` ; `verifier.sh` 35/36 (INC-277) ; manuel publié (604 fichiers). Le
+constat du responsable reste à faire.
+
 - **CRM-162 T1 — déplacer un track entier d'un espace à un autre, en base** (migration 197, décisions 964, 966, 968, 969
   et 972). Au super-administrateur seul : un aperçu chiffré (ce qui part, les référentiels réutilisés ou créés, la valeur
   des temps au départ et à l'arrivée, les mails déjà présents, les refus listés), puis le déplacement en une transaction,
@@ -65,8 +76,6 @@ d'exécuter le code attendu.
   Choisir un espace mène à la même page dans l'autre espace (l'inbox depuis une affaire ou un track) ; le changement est
   annoncé aux lecteurs d'écran. Le manuel le décrit (§3.2 bis). Les données de démonstration portent un second espace,
   « Studio Lumen ». Sans effet visible pour qui n'a qu'un espace.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-21 — les migrations 193 et 194, la webapp, l'image `mcp` et le manuel
 

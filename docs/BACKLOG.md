@@ -20472,6 +20472,8 @@ campagne complète revient à la session de livraison (décision 830).
   manuel. Il reste le constat du responsable dans « Seulement moi ».
 
 ### CRM-161 — L'espace courant cloisonne les tracks, les channels et l'inbox ; tout le reste est global, l'espace de provenance affiché `[@]`
+
+**T1 et T2 livrées le 2026-11-21** (décision 977, révision `377ac6e5`) ; T3 à T5 restent à faire ; reste le constat du responsable.
 *Prise en charge : session interactive 4891a451 (p2enjoy-crm-5f) depuis 2026-11-21 08:37 UTC — état avant : [ ] ; confiée par la session de livraison (d5)*
 
 **Origine** : demande du responsable, le 2026-11-21 ; arbitrée le même jour (décision 963).
@@ -20589,6 +20591,8 @@ livraison (décision 830).
 
 ### CRM-162 — Déplacer un track entier d'un espace à un autre, par le super-administrateur `[P]`
 
+**Livrée le 2026-11-21** (décision 977, révision `377ac6e5`) ; reste le constat du responsable en production.
+
 **Origine** : demande du responsable, le 2026-11-21 (« on devrait pouvoir et depuis exclusivement le admin, bouger des tracks
 entiers entre workspaces (pose moi toutes les questions pour bien le faire) ») ; arbitrages le même jour (décisions 964 et 966).
 **Décidé** (décision 964) :
@@ -20643,6 +20647,8 @@ la redirection d'un track déplacé passe par `public.track_current_address` (§
 et sa commande ; le manuel §32.6 bis et ses images. Aucun déplacement n'y est joué.
 
 ### CRM-163 — La passe des pastilles bloque la fonction `ia` : l'assistant et la passe suivante échouent à 10 s `[P]`
+
+**Livrée le 2026-11-21** (décision 977, révision `377ac6e5`) ; reste le constat du responsable en production.
 
 **Origine** : défaut constaté le 2026-11-21 par la session de livraison en cherchant pourquoi la campagne bloquait (INC-364) ;
 arbitré le même jour (décision 973) : **une unité correctrice, dans le lot en cours** (CRM-161 T1+T2, CRM-162).

@@ -41905,3 +41905,6 @@ le menu des espaces ne montre pas les non-lus.
 anciennes redirigées ; slug `crm` relu, hors des réservés.
 **Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `377ac6e5` : migrations 195 à 199, webapp,
 redémarrage de `functions`, manuel.
+**Exécutée le 2026-11-21 au soir** : slug relu ; `pg_dump` relu (3 544 entrées) ; `livrer.sh --revision 377ac6e5…` (webapp bâtie dans la
+cellule, migrations 195 à 199), `functions` redémarré ; registre à 197, tâche des pastilles inchangée, bail libre ; `verifier.sh`
+35/36 (INC-277) ; manuel publié ; contrat §2.67 à §2.72 LIVRÉES, §3 et §8, changelog en [Publié], backlog ; verrou levé.
