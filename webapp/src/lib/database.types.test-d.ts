@@ -1345,9 +1345,12 @@ type _vueDerivationColonnes = Expect<
 // `confirmation_mismatch` et `track_move_refused` (sa liste dans `details`). Le compte s'accroît de trois.
 // `0198` de CRM-162, TRANCHE T2, ajoute `plateforme_tracks`, SECURITY DEFINER, au super-administrateur seul : les tracks d'un
 // espace dont il n'est pas membre (docs/SPEC-deplacement-track.md §13). Le compte s'accroît d'une.
+// `0199` de CRM-163 ajoute `release_label_pass`, réservée à la clé de service : la passe des pastilles rend son bail
+// (docs/SPEC-ia.md §16.3). Le compte s'accroît d'une.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'release_label_pass'
     | 'plateforme_tracks'
     | 'track_move_preview'
     | 'move_track'

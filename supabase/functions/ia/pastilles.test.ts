@@ -5,6 +5,8 @@
 //           borne de 30 s), §15.3 (clé inconnue rejetée et comptée, doublons, JSON hors schéma), §15.4 (le secret exigé ;
 //           le mode dégradé sans rien prendre ; la passe bornée à 100 s, arrêtée au premier échec ; des comptes seuls) ;
 //           docs/SPEC-mail-subsystem.md §31.5 ; CLAUDE.md §20 (aucun contenu au journal)
+// @verifies CRM-163 (docs/BACKLOG.md) — la route rend le bail de la passe après une passe réussie, en échec, sans clé ; un
+//           appel refusé n'y touche pas (docs/SPEC-ia.md §16.3)
 
 import { describe, expect, it } from 'vitest'
 import { lireConfiguration } from './configuration.ts'
@@ -110,6 +112,7 @@ type Banc = {
 	appels: { messages: readonly Message[]; schema: unknown }[]
 	journal: string[]
 	prises: number
+	liberations: number
 }
 
 function banc(options: {
@@ -124,7 +127,7 @@ function banc(options: {
 	const file = [...(options.file ?? [MESSAGE])]
 	const generations = [...(options.generations ?? [])]
 	let horloge = Date.parse('2026-11-11T12:00:00Z')
-	const b: Banc = { d: undefined as never, clotures: [], appels: [], journal: [], prises: 0 }
+	const b: Banc = { d: undefined as never, clotures: [], appels: [], journal: [], prises: 0, liberations: 0 }
 	const fournies: Pick<
 		DependancesIa,
 		| 'configuration'
@@ -135,6 +138,7 @@ function banc(options: {
 		| 'genererPastilles'
 		| 'maintenantMs'
 		| 'journaliser'
+		| 'libererPasse'
 	> = {
 		configuration: lireConfiguration((nom) =>
 			({ OLLAMA_HOST: 'https://llm.example.test', OLLAMA_API_KEY: options.cle === undefined ? 'sk-secret' : options.cle ?? undefined })[nom],
@@ -154,6 +158,7 @@ function banc(options: {
 		},
 		maintenantMs: () => (horloge += options.pasMs ?? 1_000),
 		journaliser: (e) => void b.journal.push(JSON.stringify(e)),
+		libererPasse: async () => void (b.liberations += 1),
 	}
 	// La passe et sa route n'appellent rien d'autre : le reste des dépendances est absent à dessein.
 	b.d = fournies as DependancesIa
@@ -251,6 +256,26 @@ describe('la route `POST /ia/pastilles/evaluer` (§15.4)', () => {
 		const reponse = await appel(b, { [EN_TETE_DISPATCH_PASTILLES]: 'secret-de-la-base' })
 		expect(reponse.status).toBe(200)
 		expect(await reponse.json()).toEqual({ evalues: 1, echecs: 0, rejetees: 0 })
+	})
+
+	it('`CRM-163` : la passe rend le bail en finissant — réussie, en échec, ou sans clé —, une fois', async () => {
+		const reussie = banc()
+		await appel(reussie, { [EN_TETE_DISPATCH_PASTILLES]: 'secret-de-la-base' })
+		expect(reussie.liberations).toBe(1)
+		const enEchec = banc({ generations: [{ ok: false, echec: 'delai_depasse' }] })
+		expect(await (await appel(enEchec, { [EN_TETE_DISPATCH_PASTILLES]: 'secret-de-la-base' })).json()).toMatchObject({ echecs: 1 })
+		expect(enEchec.liberations).toBe(1)
+		const sansCle = banc({ cle: null })
+		expect(await (await appel(sansCle, { [EN_TETE_DISPATCH_PASTILLES]: 'secret-de-la-base' })).json()).toMatchObject({ raison: 'cle_absente' })
+		expect(sansCle.liberations).toBe(1)
+	})
+
+	it('`CRM-163` : un appel refusé — sans secret, faux, ou d’une autre méthode — ne rend pas le bail', async () => {
+		for (const [entetes, methode] of [[{}, 'POST'], [{ [EN_TETE_DISPATCH_PASTILLES]: 'faux' }, 'POST'], [{}, 'GET']] as const) {
+			const b = banc()
+			await appel(b, entetes, methode)
+			expect(b.liberations).toBe(0)
+		}
 	})
 
 	it('toute autre méthode : `405`', async () => {

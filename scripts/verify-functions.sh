@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # @verifies CRM-016 (docs/BACKLOG.md) — runtime, route et fonction edge d'exemple
 # @verifies docs/SPEC-edge-functions.md §2, §2 bis (aucun `204`, décision 686), §4.1, §5, §6, §7
+# @verifies CRM-163 (docs/BACKLOG.md) — la voie de la passe des pastilles comptée parmi les tests du routeur
+#           (docs/SPEC-ia.md §16.2)
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §5.5 — `JWT_SECRET` au conteneur,
 #           remis au SEUL worker `session` (contrôle RÉVISÉ, décision 584)
 #
@@ -131,11 +133,14 @@ fi
 # 150 s — sans réviser ce compteur : dérive relevée le 2026-10-03 par T3.b, valeur COMPTÉE.
 # **17 depuis la décision 686** (INC-292) : `main/aucun-204.test.ts` ajoute trois preuves — les modules relus, aucun
 # statut `204` posé, les formes reconnues —, la règle « aucune fonction ne rend `204` » (SPEC-edge-functions §2 bis).
+# **24 depuis `CRM-163`** : 21 COMPTÉS avant lui — `CRM-073` et `CRM-127` avaient ajouté à l'environnement par fonction les deux
+# preuves de `webhooks` et les deux de `mail-connection-test` sans réviser ce compteur (dérive relevée le 2026-11-21) —, plus
+# les trois preuves de la voie de la passe des pastilles (`repertoireDe`, docs/SPEC-ia.md §16.2).
 if npm run --silent test:unit -- ../supabase/functions/main ../supabase/functions/example >"$WORK/unit.log" 2>&1 \
-	&& grep -qE 'Tests +17 passed' "$WORK/unit.log"; then
-	ok "17 tests unitaires du routeur, de l'environnement par fonction, du handler d'exemple et de la règle sans 204"
+	&& grep -qE 'Tests +24 passed' "$WORK/unit.log"; then
+	ok "24 tests unitaires du routeur et de sa voie, de l'environnement par fonction, du handler d'exemple et de la règle sans 204"
 else
-	fail "tests unitaires edge en échec ou compte différent de 17"
+	fail "tests unitaires edge en échec ou compte différent de 24"
 	sed 's/^/        /' "$WORK/unit.log" | tail -n 20
 fi
 

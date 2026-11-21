@@ -10,6 +10,8 @@
 #       l'affaire de l'espace (docs/SPEC-ia.md §14.11, décision 851)
 # @spec CRM-141 (docs/BACKLOG.md) — tranche T2 : les scénarios `pastilles` — déterministe, lu dans la demande, avec une clé
 #       inconnue que la fonction doit rejeter — et `panne` — un `500` à chaque génération (docs/SPEC-ia.md §15.5)
+# @spec CRM-163 (docs/BACKLOG.md) — le scénario `pastilles_lentes` : la réponse de `pastilles`, après une attente, pour une
+#       passe plus longue que les 10 s d'attente du runtime (docs/SPEC-ia.md §16.6)
 #
 # Bibliothèque standard seule. Le scénario voyage comme clé — `Bearer simule-<scénario>` —, là où le serveur
 # réel attend la sienne : la fonction `ia` n'a qu'un chemin d'appel, et ce sont les preuves qui choisissent.
@@ -18,6 +20,7 @@
 
 import json
 import re
+import time
 import unicodedata
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -151,7 +154,10 @@ def modification(messages):
 
 
 # `CRM-141` T2 : les scénarios dont la réponse se calcule, et celui qui tombe en panne.
-SCENARIOS_CALCULES = {"modification", "pastilles", "panne"}
+SCENARIOS_CALCULES = {"modification", "pastilles", "pastilles_lentes", "panne"}
+
+# `CRM-163` : l'attente de chaque génération du scénario `pastilles_lentes`, en secondes.
+ATTENTE_PASTILLES_LENTES = 4
 
 
 def _sans_accents(texte):
@@ -226,6 +232,10 @@ class Simulateur(BaseHTTPRequestHandler):
         if scenario == "modification":
             contenu = modification(corps.get("messages", []))
         elif scenario == "pastilles":
+            contenu = pastilles(corps.get("messages", []))
+        elif scenario == "pastilles_lentes":
+            # Le serveur est multi-fil : l'attente ne retient que cette requête.
+            time.sleep(ATTENTE_PASTILLES_LENTES)
             contenu = pastilles(corps.get("messages", []))
         else:
             contenu = CONTENUS[scenario]

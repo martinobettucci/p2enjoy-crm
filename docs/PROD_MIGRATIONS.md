@@ -1557,6 +1557,24 @@ le seed (« Studio Lumen » et ses homonymes, `docs/SPEC-seed.md` §54) ne vaut 
 
 **Retour arrière** : la webapp et le manuel précédents.
 
+### 2.72 `CRM-163`, décision 973 — la passe des pastilles ne bloque plus l'assistant (EN ATTENTE, dans le lot des §2.67 à §2.71)
+
+`docs/SPEC-ia.md` §16 ; `docs/SCHEMA.md` « Migration `0199` ». Une migration (le bail de la passe), les sources de `functions`
+(`main`, le répertoire nouveau `_ia-pastilles`, `ia`). **Aucune variable, aucun secret** ; le simulateur
+(`pastilles_lentes`) n'existe qu'en développement.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 199 | session de livraison, dans la fenêtre du lot (§3.1) | `./runProd.sh --migrate` ; **après la 198** |
+| 2 | Livrer les sources de `functions`, puis **redémarrer `functions`** dans la même fenêtre : ses sources sont montées et sa définition ne change pas, si bien que `./runProd.sh` ne le recrée pas et que `main` garderait l'ancien routage en mémoire | session de livraison | `scripts/spark/livrer.sh`, puis `docker restart p2enjoy-functions` (jamais un `docker compose` nu, `docs/CloudWorker.md` §2.2 *bis*) |
+| 3 | Constater, en lecture seule | session de livraison | le registre gagne la 199 ; `select command from cron.job where jobname = 'p2enjoy-pastilles-evaluation'` rend toujours `select app.pastilles_reveiller();`, et `pg_get_functiondef('app.pastilles_reveiller()'::regprocedure)` vise toujours `http://functions:9000/ia/pastilles/evaluer` ; `select leased_until from app.label_pass_lease` se pose puis se vide au fil des passes ; le journal de `functions` porte `"voie":"_ia-pastilles"` pour la passe |
+| 4 | Constater sur une journée | le responsable, avec la session de livraison | aucune ligne `edge_request_failed` de `ia` au journal de `functions` (`docker logs p2enjoy-functions 2>&1 \| grep edge_request_failed \| grep -c '"function":"ia"'`, `0` attendu) ; l'assistant répond pendant une passe |
+
+**Ce qui devient visible** : rien, sinon que l'assistant répond pendant une passe des pastilles. **Retour arrière** : les
+sources précédentes de `functions`, puis un redémarrage ; la migration comme le dit `docs/SCHEMA.md` « Migration `0199` » —
+sans elle, l'ancienne fonction de réveil revient, et la nouvelle passe appelle en vain `release_label_pass`, ce qu'elle dit
+au journal sans échouer.
+
 ## 3. Migrations en attente
 
 **La 195** (`CRM-161` T1, décisions 965 et 967), **en attente** : l'inbox d'un espace (§2.67, `docs/SCHEMA.md` « Migration `0195` »). Elle part avec la webapp, dans la même fenêtre.
@@ -1570,6 +1588,10 @@ responsable.
 **La 198** (`CRM-162` T2), **en attente** : l'écran du déplacement — la liste des tracks d'un espace pour le
 super-administrateur, les noms des espaces dans le journal (§2.70, `docs/SCHEMA.md` « Migration `0198` »). **Après la 197**,
 avec la webapp, dans la même fenêtre. Aucun geste préalable du responsable.
+
+**La 199** (`CRM-163`, décision 973), **en attente** : le bail de la passe des pastilles (§2.72, `docs/SCHEMA.md` « Migration
+`0199` »). **Après la 198**, avec les sources de `functions` et son redémarrage, dans la même fenêtre. Aucun geste préalable
+du responsable.
 
 **Aucune migration en attente depuis la fenêtre du 2026-11-21** : la 193 et la 194 ont été appliquées par elle (révision `dd9ac2c3`, décision 962) ; registre à **192** lignes. *Historique de l'attente* — les paragraphes qui suivent décrivent la 193 et la 194 telles qu'elles attendaient.
 

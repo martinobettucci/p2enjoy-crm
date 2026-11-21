@@ -32,6 +32,11 @@ d'exécuter le code attendu.
     d'un espace dont il n'est pas membre.
   - **Les données de démonstration** : « Studio Lumen » porte des homonymes, si bien que l'aperçu d'un track du seed
     montre des référentiels réutilisés et créés, et un refus.
+- **CRM-163 — l'assistant répond pendant une passe des pastilles** (migration 199, décision 973). Pendant qu'une passe
+  évaluait les pastilles des mails, tout autre appel à l'assistant échouait au bout de 10 s, et la passe suivante aussi :
+  11 échecs en 20 h en production. La passe a désormais sa propre voie dans le runtime des fonctions, et une passe n'est
+  plus réveillée tant que la précédente tourne. Reste une limite : deux générations de l'assistant lancées en même temps
+  se bloquent encore.
 - **`CRM-161` T1 — l'inbox d'un espace.** Un membre de plusieurs espaces voyait, dans « Non classés » et dans les compteurs de
   l'inbox, les mails de tous ses espaces. La base ne rend plus que l'espace demandé :
   - la liste, la mention des fils masqués et l'arborescence prennent l'espace, obligatoire (migration `0195`) ;

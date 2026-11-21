@@ -6481,6 +6481,7 @@ export type Database = {
         Args: { ligne: Database["public"]["Tables"]["card_costs"]["Row"] }
         Returns: boolean
       }
+      release_label_pass: { Args: never; Returns: undefined }
       remove_message_transfer: {
         Args: { p_message_id: string; p_recipient_id: string }
         Returns: boolean

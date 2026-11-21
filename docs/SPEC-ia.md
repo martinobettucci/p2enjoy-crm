@@ -1075,7 +1075,8 @@ une ligne de journal. `per_request` est écarté : la décision 286 l'a rejeté 
 - **`main` y envoie la seule route de la passe** : une requête dont le nom de fonction est `ia` et le deuxième segment
   `pastilles` est servie depuis `_ia-pastilles`, avec **l'environnement et la borne de `ia`** (les `OLLAMA_*`, le
   simulateur, 150 s). L'adresse ne change pas : `pg_cron` appelle toujours `http://functions:9000/ia/pastilles/evaluer`,
-  et Kong `/functions/v1/ia/pastilles/evaluer`. Le journal de `main` dit `function: "ia"`, et `voie: "pastilles"`.
+  et Kong `/functions/v1/ia/pastilles/evaluer`. Le journal de `main` dit `function: "ia"`, et `voie: "_ia-pastilles"`
+  (*précisé au code*, le nom du répertoire).
 - **Le répertoire n'est pas une fonction publique** : son nom commence par `_`, que le routeur refuse (`404`) ; seul le
   routage interne de `main` y mène.
 
@@ -1118,3 +1119,14 @@ n'appartient pas à `CRM-163`, qui le dit au responsable.
 - **La libération** — unitaires de la fonction : `release_label_pass` est appelée après une passe réussie, en échec, et
   sans clé.
 - **Le simulateur** : `pastilles_lentes` — la réponse du scénario `pastilles`, après une attente ; le développement seul.
+
+*Précisé au code* (2026-11-21) :
+- **la preuve rouge, puis verte** : la passe est rendue longue par le vrai chemin — le scénario que lit le réveil passe, le
+  temps de la preuve, à `pastilles_lentes` (4 s par évaluation, cinq mails), et `app.pastilles_reveiller` est appelée comme
+  `pg_cron` l'appelle, après que le bail est libre. Avant le correctif : `GET /ia/etat` rend `502` en 10 009 ms ; après :
+  `200` aussitôt, pendant une passe de 20,1 s, et le réveil suivant rend nul. Le scénario doit aussi figurer dans la liste
+  que la fonction admet (`SCENARIOS_SIMULATEUR`) : sans lui, l'en-tête est ignoré et la passe vise le serveur réel ;
+- **un réveil manqué garde le bail** : si `functions` ne répond pas (un redémarrage), `pg_net` échoue, et le bail échoit
+  après 160 s, comme pour une passe interrompue — mesuré en développement ;
+- `scripts/verify-functions.sh` compte 24 tests unitaires du service principal, et les journaux du runtime restent sans
+  avertissement avec la voie séparée.

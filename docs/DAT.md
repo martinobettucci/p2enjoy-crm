@@ -720,6 +720,13 @@ clé de service, le jeton interne (300 s au plus) pouvant expirer en route. **Le
 `docker-compose.dev.yml` seul) n'est visé que si `IA_SIMULATEUR_HOST` est posée — en développement — et que la
 requête porte l'en-tête `x-ia-simulateur`.
 
+**La passe des pastilles a sa propre voie** (`CRM-163`, `docs/SPEC-ia.md` §16) : en `oneshot`, le runtime ne sert qu'un
+worker à la fois par répertoire de fonction — un second appel attend 10 s, puis échoue. `main` sert donc la route
+`ia/pastilles/…` depuis `supabase/functions/_ia-pastilles` (le même code, l'environnement et la borne de `ia`), et
+l'assistant n'attend plus jamais une passe. `pg_cron` ne réveille une passe que s'il prend le **bail de la passe**
+(`app.label_pass_lease`, 160 s), que la passe rend en finissant. **Compromis connu** : deux générations de l'assistant lancées
+en même temps restent sur le répertoire `ia`, et la seconde échoue à 10 s (§16.5).
+
 **T2 — l'acceptation et le juge unique** (`docs/SPEC-ia.md` §12, décision 618). Les défauts d'une proposition
 sont calculés **par la base**, une seule fois, pour toute révision — du modèle comme de l'administrateur — et
 de nouveau à l'acceptation : trois copies des mêmes règles, dans la fonction, l'écran et la base, auraient

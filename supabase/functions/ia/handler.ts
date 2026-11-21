@@ -12,6 +12,8 @@
 //       vivante relue avec le jeton de l'appelant AVANT la création, l'occupation et la portée au modèle, le
 //       schéma d'une modification) ; docs/JOURNAL.md décision 620
 // @spec CLAUDE.md §10 (le refus d'un non-administrateur vient de la base), §20 (journaux sans contenu)
+// @spec CRM-163 (docs/BACKLOG.md) — la passe rend le bail de la passe en finissant, quelle qu'en soit l'issue
+//       (docs/SPEC-ia.md §16.3 ; docs/SPEC-mail-subsystem.md §31.5)
 // @spec CRM-141 (docs/BACKLOG.md) — tranche T2 : la route `POST /ia/pastilles/evaluer`, appelée par `pg_cron` avec le
 //       secret que la base fait vérifier ; la passe bornée à 100 s, une évaluation à la fois, arrêtée au premier échec ;
 //       le mode dégradé sans rien prendre (docs/SPEC-ia.md §15.4 ; docs/SPEC-mail-subsystem.md §31.5)
@@ -97,6 +99,11 @@ export type DependancesIa = {
 	journaliser(evenement: Record<string, unknown>): void
 	/** `CRM-141` T2 — la base dit si le secret d'appel de la passe est le bon (`verify_label_dispatch`). */
 	verifierDispatch(secret: string): Promise<boolean>
+	/**
+	 * `CRM-163` — la passe rend le bail que `pg_cron` a pris pour la réveiller (`release_label_pass`, docs/SPEC-ia.md §16.3).
+	 * Un échec se dit au journal, sans changer la réponse : le bail échoit de lui-même après 160 s.
+	 */
+	libererPasse(): Promise<void>
 	/** Prend une évaluation due, sous la clé de service (`claim_label_evaluations`), ou `null` s'il n'y en a pas. */
 	prendreEvaluation(): Promise<MessageAEvaluer | null>
 	/** Clôt une évaluation : les pastilles rendues, ou l'échec nommé (`record_label_evaluation`). */
@@ -324,7 +331,12 @@ export async function traiterIa(requete: Request, d: DependancesIa): Promise<Res
 		if (requete.method !== 'POST') return repondre(405, { erreur: 'methode_refusee' }, { allow: 'POST' })
 		const secret = requete.headers.get(EN_TETE_DISPATCH_PASTILLES)?.trim() ?? ''
 		if (secret === '' || !(await d.verifierDispatch(secret))) return repondre(401, { erreur: 'dispatch_refuse' })
-		return repondre(200, await passePastilles(d, cible))
+		// `CRM-163` (docs/SPEC-ia.md §16.3) : quelle qu'en soit l'issue, la passe rend le bail ; un appel refusé n'y touche pas.
+		try {
+			return repondre(200, await passePastilles(d, cible))
+		} finally {
+			await d.libererPasse()
+		}
 	}
 
 	if (route === 'etat' && id === undefined) {

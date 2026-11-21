@@ -1,5 +1,7 @@
 // @spec CRM-016 (docs/BACKLOG.md) — résolution sûre d'une fonction edge
 // @spec docs/SPEC-edge-functions.md §4 (routeur principal)
+// @spec CRM-163 (docs/BACKLOG.md) — `repertoireDe` : la passe des pastilles servie depuis sa propre voie, `_ia-pastilles`
+//       (docs/SPEC-ia.md §16.2 ; docs/SPEC-edge-functions.md §4)
 
 const FUNCTION_NAME = /^[a-z0-9](?:[a-z0-9-]{0,62})$/
 const RESERVED_NAMES = new Set(['main'])
@@ -18,6 +20,16 @@ export function resolveFunctionRoute(pathname: string): FunctionRoute {
 		return { ok: false, status: 404, error: 'function_not_found' }
 	}
 	return { ok: true, functionName }
+}
+
+/**
+ * Le répertoire qui sert une requête. Le runtime ne sert qu'un worker à la fois par répertoire (`oneshot`, docs/SPEC-ia.md
+ * §16.1) : la passe des pastilles — `ia/pastilles/…` — a le sien, pour ne jamais retenir l'assistant. Son nom commence par
+ * `_`, que `resolveFunctionRoute` refuse : seul ce routage y mène. L'environnement et la borne restent ceux de la fonction.
+ */
+export function repertoireDe(functionName: string, pathname: string): string {
+	const [, deuxieme] = pathname.split('/').filter(Boolean)
+	return functionName === 'ia' && deuxieme === 'pastilles' ? '_ia-pastilles' : functionName
 }
 
 /** Un identifiant entrant n'est repris que s'il reste court et sans caractère de contrôle. */

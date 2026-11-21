@@ -41756,3 +41756,20 @@ un bail qui empêche le réveil suivant de tomber sur la passe en cours** — re
 **Conséquences** : une migration (`0199`, le bail), un répertoire `_ia-pastilles`, le routage de `main`, la fonction `functions`
 à recréer en production. Rien de ce que voit l'utilisateur ne change. Reste, hors périmètre : deux générations de l'assistant à
 la fois se bloquent encore (§16.5), dit au responsable.
+
+### `CRM-163` — la passe sur sa voie et le bail : preuve rouge, puis verte (journal d'implémentation)
+
+*2026-11-21, session 152dd27d (p2enjoy-crm-f9).*
+**Fait** : migration `0199` (le bail de la passe) ; `main` sert `ia/pastilles/…` depuis `_ia-pastilles` (`repertoireDe`), avec
+l'environnement et la borne de `ia` ; la passe rend le bail en finissant (`libererPasse`, dans un `finally`) ; le scénario
+`pastilles_lentes` du simulateur.
+**La preuve rouge** : `e2e/api/ia-pastilles-concurrence.spec.ts`, contre le routage d'avant — `GET /ia/etat` rend `502` en
+10 009 ms pendant une passe. **Verte** après : `200` aussitôt, pendant une passe de 20,1 s ; le réveil suivant rend nul ; le
+bail est rendu à la fin.
+**Trouvé en route** : (1) un scénario du simulateur doit figurer dans `SCENARIOS_SIMULATEUR`, faute de quoi l'en-tête est
+ignoré et la passe vise le serveur réel — c'est ce qu'a fait le premier essai ; (2) un réveil tombé pendant le redémarrage de
+`functions` garde le bail 160 s, comme une passe interrompue ; (3) le crochet `afterAll` de la preuve dépassait sa borne par
+défaut et laissait ses mails : borne propre, mails retirés ; (4) `scripts/verify-functions.sh` attendait 17 tests unitaires
+alors que 21 existaient déjà (`CRM-073` et `CRM-127` n'avaient pas révisé le compteur) : 24 désormais.
+**Vérifications** : pgTAP 173 fichiers / 5663 assertions ; `verify-functions.sh` 14/14, journaux du runtime sans
+avertissement ; API `ia` et pastilles 32/32.

@@ -1,8 +1,10 @@
 // @verifies CRM-016 (docs/BACKLOG.md) — preuve unitaire du routeur edge
 // @verifies docs/SPEC-edge-functions.md §4, §7.1
+// @verifies CRM-163 (docs/BACKLOG.md) — la passe des pastilles servie depuis sa propre voie, que le premier segment ne peut
+//           atteindre (docs/SPEC-ia.md §16.2)
 
 import { describe, expect, it } from 'vitest'
-import { resolveFunctionRoute, safeRequestId } from './router.ts'
+import { repertoireDe, resolveFunctionRoute, safeRequestId } from './router.ts'
 
 describe('resolveFunctionRoute', () => {
 	it('résout une fonction et conserve la possibilité d’un sous-chemin', () => {
@@ -35,5 +37,22 @@ describe('safeRequestId', () => {
 		expect(safeRequestId('ligne\nforgee', 'generated')).toBe('generated')
 		expect(safeRequestId('a'.repeat(129), 'generated')).toBe('generated')
 		expect(safeRequestId(null, 'generated')).toBe('generated')
+	})
+})
+
+describe('repertoireDe (CRM-163, docs/SPEC-ia.md §16.2)', () => {
+	it('la passe des pastilles est servie depuis `_ia-pastilles`', () => {
+		expect(repertoireDe('ia', '/ia/pastilles/evaluer')).toBe('_ia-pastilles')
+	})
+
+	it('toute autre route de `ia`, et toute autre fonction, depuis son propre répertoire', () => {
+		expect(repertoireDe('ia', '/ia/etat')).toBe('ia')
+		expect(repertoireDe('ia', '/ia/suggestions/123/revue')).toBe('ia')
+		expect(repertoireDe('ia', '/ia')).toBe('ia')
+		expect(repertoireDe('webhooks', '/webhooks/pastilles')).toBe('webhooks')
+	})
+
+	it('la voie n’est pas une fonction : son nom est refusé au premier segment', () => {
+		expect(resolveFunctionRoute('/_ia-pastilles/pastilles/evaluer')).toEqual({ ok: false, status: 404, error: 'function_not_found' })
 	})
 })

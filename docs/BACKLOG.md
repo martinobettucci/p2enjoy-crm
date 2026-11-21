@@ -20625,9 +20625,7 @@ la redirection d'un track déplacé passe par `public.track_current_address` (§
 **À constater en production** (contrat §2.69 à §2.71) : sous le superadministrateur, le bloc « Tracks » de la fiche d'un espace,
 et sa commande ; le manuel §32.6 bis et ses images. Aucun déplacement n'y est joué.
 
-### CRM-163 — La passe des pastilles bloque la fonction `ia` : l'assistant et la passe suivante échouent à 10 s `[@]`
-
-*Prise en charge : f9 (152dd27d) depuis 2026-11-21 17:52 UTC — état avant : [ ]*
+### CRM-163 — La passe des pastilles bloque la fonction `ia` : l'assistant et la passe suivante échouent à 10 s `[P]`
 
 **Origine** : défaut constaté le 2026-11-21 par la session de livraison en cherchant pourquoi la campagne bloquait (INC-364) ;
 arbitré le même jour (décision 973) : **une unité correctrice, dans le lot en cours** (CRM-161 T1+T2, CRM-162).
@@ -20651,6 +20649,13 @@ la passe sur sa propre voie (`_ia-pastilles`, servie par `main` avec l'environne
 `docs/SPEC-edge-functions.md` §4 ; `docs/SPEC-mail-subsystem.md` §31.5 ; `docs/SCHEMA.md` « Migration `0199` ». Rien de ce
 que voit l'utilisateur ne change. Hors périmètre, constaté et dit au responsable : deux générations de l'assistant à la fois
 se bloquent encore (§16.5).
+**Fait le 2026-11-21** : migration `0199` (le bail) ; `main` sert `ia/pastilles/…` depuis `_ia-pastilles` (`repertoireDe`) ;
+la passe rend le bail en finissant ; le scénario `pastilles_lentes` du simulateur. **Preuves** : API
+`ia-pastilles-concurrence` ROUGE avant (`GET /ia/etat` `502` en 10 009 ms pendant une passe), VERTE après (`200` aussitôt,
+passe de 20,1 s, le réveil suivant nul) ; pgTAP `0185` 12/12 ; unitaires du routeur et de la fonction ; `verify-functions.sh`
+14/14 (son compteur révisé à 24, une dérive de `CRM-073` et `CRM-127` relevée) ; contrat §2.72.
+**À constater en production** (contrat §2.72, geste 4) : aucune ligne `edge_request_failed` de `ia` sur une journée ;
+l'assistant répond pendant une passe.
 **DoD** (`CLAUDE.md` §18) : une preuve rouge avant (un appel à `ia` pendant une passe longue échoue), verte après ; la passe
 qui ne chevauche pas la suivante ; Vitest, API ; le contrat (fonction `functions` à recréer en production) ; constat en
 production : aucun `edge_request_failed` de `ia` sur une journée. La campagne complète revient à la session de livraison

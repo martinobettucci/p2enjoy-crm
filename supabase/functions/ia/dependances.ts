@@ -1,5 +1,7 @@
 // @spec CRM-112 (docs/BACKLOG.md) — tranche T2.d.1 : les champs communs non archivés de l'espace, lus sous la RLS de
 //       l'appelant et envoyés au modèle avec le catalogue (docs/SPEC-ia.md §6.1, décision 825)
+// @spec CRM-163 (docs/BACKLOG.md) — `libererPasse` : la passe rend le bail de la passe (`release_label_pass`,
+//       docs/SPEC-ia.md §16.3)
 // @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : les dépendances réelles de la fonction `ia`
 // @spec docs/SPEC-ia.md §11.2 (le jeton de l'appelant pour décider, la clé de service pour écrire la fin
 //       d'une génération sur la suggestion autorisée), §11.4 (verrou, échec) ; docs/JOURNAL.md décision 617
@@ -203,6 +205,22 @@ export function creerDependances(
 				signal: signal(),
 			})
 			return reponse.ok && (await reponse.json()) === true
+		},
+
+		// `CRM-163` — la passe rend le bail de la passe (docs/SPEC-ia.md §16.3). Rien n'est masqué : un échec se dit au
+		// journal, et le bail échoit de lui-même.
+		async libererPasse() {
+			try {
+				const reponse = await requete(rest('rpc/release_label_pass'), {
+					method: 'POST',
+					headers: commeService({ prefer: 'return=minimal' }),
+					body: '{}',
+					signal: signal(),
+				})
+				if (!reponse.ok) ecrireJournal(JSON.stringify({ fonction: 'ia', evenement: 'bail_passe_non_rendu', statut: reponse.status }))
+			} catch {
+				ecrireJournal(JSON.stringify({ fonction: 'ia', evenement: 'bail_passe_non_rendu', statut: 0 }))
+			}
 		},
 
 		async prendreEvaluation() {

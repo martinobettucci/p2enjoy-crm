@@ -2,9 +2,11 @@
 // @spec docs/SPEC-edge-functions.md §2 (bornes), §4 (dispatch), §4.1 (santé), §5 (sécurité)
 // @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §5.5 — environnement par fonction
 // @spec docs/SPEC-edge-functions.md §2 bis, docs/JOURNAL.md décision 686 (INC-292) — un `204` de worker est signalé
+// @spec CRM-163 (docs/BACKLOG.md) — la passe des pastilles servie depuis sa propre voie, avec l'environnement et la borne
+//       de `ia` (docs/SPEC-ia.md §16.2 ; docs/SPEC-edge-functions.md §4)
 
 import { delaiDe, environnementDe } from './environnement.ts'
-import { resolveFunctionRoute, safeRequestId } from './router.ts'
+import { repertoireDe, resolveFunctionRoute, safeRequestId } from './router.ts'
 
 type Worker = { fetch(request: Request): Promise<Response> }
 
@@ -67,7 +69,10 @@ Deno.serve(async (request: Request) => {
 	const route = resolveFunctionRoute(pathname)
 	if (!route.ok) return json({ error: route.error, request_id: requestId }, route.status, requestId)
 
-	const servicePath = `${FUNCTION_ROOT}/${route.functionName}`
+	// `CRM-163` : le répertoire peut différer du nom — la voie de la passe des pastilles —, l'environnement et la borne non.
+	const repertoire = repertoireDe(route.functionName, pathname)
+	const voie = repertoire === route.functionName ? {} : { voie: repertoire }
+	const servicePath = `${FUNCTION_ROOT}/${repertoire}`
 	if (!(await directoryExists(servicePath))) {
 		return json({ error: 'function_not_found', request_id: requestId }, 404, requestId)
 	}
@@ -86,6 +91,7 @@ Deno.serve(async (request: Request) => {
 			event: 'edge_request_completed',
 			request_id: requestId,
 			function: route.functionName,
+			...voie,
 			method: request.method,
 			status: response.status,
 			duration_ms: Math.round(performance.now() - startedAt),
@@ -102,6 +108,7 @@ Deno.serve(async (request: Request) => {
 			event: 'edge_request_failed',
 			request_id: requestId,
 			function: route.functionName,
+			...voie,
 			method: request.method,
 			duration_ms: Math.round(performance.now() - startedAt),
 		}))
