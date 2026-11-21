@@ -41421,3 +41421,26 @@ coût de départ figé) ; les blocs d'objectifs qui citent un channel déplacé 
 (écarté : la référence retirée) ; les relances armées et envois en file : **refus et liste** (écarté : les arrêter d'office).
 **Conséquence** : la spécification de `CRM-162` peut s'écrire ; aucune question ouverte.
 
+
+### décision 967 — `CRM-161` : changer d'espace par le menu du fil d'Ariane ; l'espace porté par l'adresse, par onglet ; aucun stockage
+
+*2026-11-21, session 4891a451 (p2enjoy-crm-5f), arbitrages du responsable (`AskUserQuestion`), avant la spécification.*
+**Le problème** (inventaire de `CRM-161`) : la décision 965 suppose qu'« on change d'espace », mais l'application **n'a aucun
+sélecteur d'espace**. L'espace « courant » est toujours le premier rendu par `lireWorkspaces`, par ordre du nom
+(`AppShell.tsx`, `FilAriane.tsx`), et une dizaine d'écrans le recalculent chacun de la même façon (`Carnet`, `ListeOrganisations`,
+`Objectifs`, `ReglagesComptesMail`, `ReglagesIdentitesMail`, `ReglagesModelesEmails`, `ReglagesSequencesRelance`,
+`AdministrationCatalogue`, `AdministrationWorkflows`, `AdministrationArborescence`). La barre latérale lit les tracks de **tous**
+les espaces (`lireTracks`, sans filtre d'espace). Le seed n'a qu'un espace.
+**Décisions** :
+- **changer d'espace** : le premier niveau du fil d'Ariane, qui nomme déjà l'espace, devient un **menu des espaces** de la
+  personne (affiché dès qu'elle en a deux) ; écartés : l'espace choisi à la connexion seulement ; une page de choix ;
+- **mémoire du choix** : le responsable écarte tout stockage — « si on stocke je ne peux pas avoir plusieurs onglets ouverts qui
+  travaillent au même temps sur plusieurs espaces.. et je ne vois pas le workspace dans les url » : **l'espace est porté par
+  l'adresse, onglet par onglet** ; rien n'est stocké, ni sur l'appareil ni en base ; écartés : le profil en base,
+  `sessionStorage` ;
+- **une adresse sans espace** (ancien lien, accueil après connexion) : l'espace de la ressource quand elle en a un (une affaire,
+  un mail), sinon **le premier espace par nom** ; écarté : le dernier choisi retenu en base ;
+- **ouvrir depuis la cloche, la recherche ou un lien un élément d'un autre espace** : **l'application bascule** sur son espace,
+  et le dit par un message bref ; écartés : proposer de basculer ; refuser ;
+- **la forme de l'adresse** (en tête du chemin `/<slug>/…`, ou paramètre `?espace=<slug>`) : **ouverte** — le responsable a
+  demandé un SWOT des deux options avant de trancher.
