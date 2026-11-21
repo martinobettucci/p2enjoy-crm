@@ -3404,8 +3404,22 @@ un second.
   de même e-mail qu'un contact du premier espace ; une organisation de même domaine. Le reste n'a **pas** d'homonyme.
 - **Ce qu'il démontre** : l'aperçu du déplacement d'un track du premier espace vers « Studio Lumen » liste des référentiels
   réutilisés et créés, et un refus (le champ d'un autre type) ; le seed ne déplace rien.
-- *Précisé au code* : les noms exacts des homonymes, et les preuves révisées (décision 51) — la barre latérale d'un membre des
-  deux espaces montre les tracks de l'un et de l'autre tant que `CRM-161` n'est pas livrée.
+- *Précisé au code* (2026-11-21) :
+  - **l'ordre** : la section est jouée **après le §55**, qui crée l'espace ; elle meurt si l'espace manque ;
+  - **les homonymes**, sous le jeton de Camille, par l'API de l'écran, chacun retrouvé avant d'être posé :
+    - l'étiquette « Secteur public » ;
+    - le champ « Secteur » (`secteur`, une liste : « Culture », « Secteur public ») — même nom, même type ;
+    - le champ « Budget du client » (`budget-client`, un **texte** ; un montant au départ) ;
+    - le contact « Nadia Benali » (`nadia.benali@vertigo-conseil.example`) ;
+    - l'organisation « Vertigo Conseil » (`vertigo-conseil.example`) ;
+  - **le constat**, par l'aperçu réel du super-administrateur (`track_move_preview`), rien n'étant écrit :
+    - « Formation » réutilise « Secteur » et Nadia Benali, crée des champs, et refuse — « Budget du client » d'un autre type, et
+      Driss, qui n'est pas membre de « Studio Lumen » ;
+    - « Conseil & IA » réutilise Vertigo Conseil : une organisation n'est appariée que pour un contact **créé**
+      (`docs/SPEC-deplacement-track.md` §7.4), et Nadia Benali, réutilisée, n'en cite aucune dans « Formation » ;
+    - « Studio web » réutilise « Secteur public », que portent ses affaires ;
+  - **les preuves révisées** (décision 51) : `0174` et `0176` retrouvaient « Vertigo Conseil » par son seul nom ; elles la
+    cherchent dans l'espace du seed.
 
 ## 55. « Studio Lumen » habité : de quoi montrer le cloisonnement — `CRM-161` T2.b (`docs/SPEC-espace-courant.md` §12)
 

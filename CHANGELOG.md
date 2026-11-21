@@ -24,6 +24,14 @@ d'exécuter le code attendu.
   du track ouvre « Déplacer le track ». Le succès mène à la fiche de l'espace d'arrivée. Le journal de la plateforme dit
   « Track déplacé », l'historique de chaque affaire « Déplacée avec son track » ; un bloc d'objectifs qui cite un channel
   d'un autre espace nomme cet espace.
+- **CRM-162 T3 — l'ancienne adresse d'un track déplacé, et le manuel.**
+  - **L'ancienne adresse** : `/<départ>/tracks/<track>` mène à la nouvelle, channel et vue compris, sans entrée d'historique.
+    Une personne qui n'est pas membre de l'espace d'arrivée reste sur « Track introuvable ».
+  - **Le manuel** : la section 32.6 bis « Déplacer un track vers un autre espace », avec sept images. Le §32.1 dit l'exception
+    du superadministrateur : la fiche et l'aperçu d'un déplacement lui nomment des tracks, des affaires et des personnes
+    d'un espace dont il n'est pas membre.
+  - **Les données de démonstration** : « Studio Lumen » porte des homonymes, si bien que l'aperçu d'un track du seed
+    montre des référentiels réutilisés et créés, et un refus.
 - **`CRM-161` T1 — l'inbox d'un espace.** Un membre de plusieurs espaces voyait, dans « Non classés » et dans les compteurs de
   l'inbox, les mails de tous ses espaces. La base ne rend plus que l'espace demandé :
   - la liste, la mention des fils masqués et l'arborescence prennent l'espace, obligatoire (migration `0195`) ;

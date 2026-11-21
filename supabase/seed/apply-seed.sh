@@ -57,6 +57,9 @@
 # @spec INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — Camille reçoit une identité personnelle, et
 #       l'envoi de démonstration part d'elle : l'identité de service ne s'emprunte plus ; docs/SPEC-seed.md §2.18,
 #       docs/SPEC-mail-subsystem.md §14.2 et §22.14
+# @spec CRM-162 (docs/BACKLOG.md) — tranche T3 : les homonymes de « Studio Lumen », pour que l'aperçu du déplacement d'un
+#       track du seed liste des référentiels réutilisés, des créés, et un refus (docs/SPEC-seed.md §54 ;
+#       docs/SPEC-deplacement-track.md §7, §14)
 #
 # Applique le seed socle sur la pile de développement en cours d'exécution.
 #
@@ -7048,3 +7051,75 @@ IFS='|' read -r LUMEN_TRACKS LUMEN_NON_CLASSES LUMEN_CLASSES LUMEN_CONTACTS <<< 
 [ "$LUMEN_TRACKS" -ge 1 ] && [ "$LUMEN_NON_CLASSES" -ge 1 ] && [ "$LUMEN_CLASSES" = "1" ] && [ "$LUMEN_CONTACTS" = "1" ] \
 	|| die "« Studio Lumen » n'a pas sa forme (§55) — tracks $LUMEN_TRACKS, non classés $LUMEN_NON_CLASSES, classés $LUMEN_CLASSES, contacts $LUMEN_CONTACTS."
 info "« Studio Lumen » : l'espace créé par la plateforme, Camille administratrice, sa boîte, un track, une affaire, un mail non classé et un classé, un contact, une organisation, un tableau, une saisie — docs/SPEC-seed.md §55"
+
+# --- Les homonymes de « Studio Lumen » : de quoi montrer le déplacement d'un track — CRM-162 T3, docs/SPEC-seed.md §54 --
+# @spec CRM-162 (docs/BACKLOG.md) — tranche T3 : l'aperçu du déplacement du track « Formation » vers « Studio Lumen » réutilise
+#       un champ commun, un contact et une organisation, en crée d'autres, et refuse pour un champ d'un autre type
+#       (docs/SPEC-seed.md §54 ; docs/SPEC-deplacement-track.md §4, §7, §14 ; décisions 964, 968 et 972 ; CLAUDE.md §8)
+#
+# APRÈS LE §55, QUI CRÉE L'ESPACE : le §54 l'enrichit sans le recréer (décision 972). Chaque homonyme est posé sous le jeton de
+# Camille, administratrice de « Studio Lumen », par les gestes de l'écran, et retrouvé avant d'être posé. Le seed ne déplace
+# RIEN : il constate l'aperçu, rien n'est écrit par lui.
+echo
+say "54. « Studio Lumen » : les homonymes, pour l'aperçu d'un déplacement (CRM-162)"
+LUMEN_ID=$(lumen_id)
+[ -n "$LUMEN_ID" ] || die "« Studio Lumen » manque : le §55 le crée avant le §54."
+JETON_HOMONYMES=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+[ -n "$JETON_HOMONYMES" ] || die "connexion de Camille impossible : le §54 pose les homonymes sous son jeton."
+homonyme() { # $1 = table, $2 = filtre PostgREST qui le retrouve, $3 = corps JSON sans workspace_id, $4 = libellé
+	if [ -z "$(psql_seed -c "select 1 from public.$1 where workspace_id = '$LUMEN_ID' and $2 limit 1")" ]; then
+		attendu "$(api_jeton "$JETON_HOMONYMES" POST "/rest/v1/$1" -H 'Prefer: return=minimal' \
+			-d "$(jq -nc --arg w "$LUMEN_ID" --argjson c "$3" '{workspace_id: $w} + $c')")" "$4 (§54)" 201
+	fi
+}
+# L'étiquette du premier espace que portent des affaires de « Studio web ».
+homonyme labels "name = 'Secteur public'" '{"name": "Secteur public", "color": "brand"}' "étiquette « Secteur public »"
+# « Secteur » : même nom, même type (une liste) — réutilisé ; ses choix absents lui seront ajoutés par le déplacement (§7.1).
+homonyme card_common_fields "key = 'secteur'" \
+	'{"key": "secteur", "label": "Secteur", "type": "select", "is_listed": true, "position": 1,
+	  "options": {"choices": [{"key": "culture", "label": "Culture"}, {"key": "public", "label": "Secteur public"}]}}' \
+	"champ commun « Secteur », une liste"
+# « Budget du client » : même nom, un texte à l'arrivée, un montant au départ — le refus « champ commun d'un autre type ».
+homonyme card_common_fields "key = 'budget-client'" \
+	'{"key": "budget-client", "label": "Budget du client", "type": "text", "is_listed": false, "position": 2, "options": {}}' \
+	"champ commun « Budget du client », un texte"
+# Un contact de même e-mail, une organisation de même domaine que ceux de « Formation ».
+homonyme contacts "lower(email) = 'nadia.benali@vertigo-conseil.example'" \
+	'{"full_name": "Nadia Benali", "email": "nadia.benali@vertigo-conseil.example"}' "contact « Nadia Benali »"
+homonyme organizations "lower(domain) = 'vertigo-conseil.example'" \
+	'{"name": "Vertigo Conseil", "domain": "vertigo-conseil.example"}' "organisation « Vertigo Conseil »"
+
+# Le constat : les aperçus RÉELS, demandés par le super-administrateur — rien n'est écrit. Une organisation n'est appariée que
+# pour un contact CRÉÉ (docs/SPEC-deplacement-track.md §7.4) : Nadia Benali étant réutilisée, « Formation » ne cite pas son
+# organisation ; « Conseil & IA », dont des contacts de Vertigo Conseil sont créés, la réutilise. L'étiquette se lit dans
+# l'aperçu de « Studio web », dont des affaires la portent.
+JETON_APERCU=$(sso_jeton_interne "$API" "$ANON_KEY" 'plateforme@p2enjoy.test' || true)
+[ -n "$JETON_APERCU" ] || die "connexion du super-administrateur impossible : le §54 constate l'aperçu sous son jeton."
+apercu_54() { # $1 = slug du track de l'espace du seed, puis le filtre jq ; rend le résultat du filtre
+	local track
+	track=$(psql_seed -c "select id from public.tracks where workspace_id = '$WS_ID' and slug = '$1'")
+	[ -n "$track" ] || die "le track « $1 » manque à l'espace du seed (§54)."
+	attendu "$(api_jeton "$JETON_APERCU" POST /rest/v1/rpc/track_move_preview \
+		-d "$(jq -nc --arg t "$track" --arg w "$LUMEN_ID" '{p_track_id: $t, p_target_workspace_id: $w}')")" \
+		"aperçu du déplacement de « $1 » vers « Studio Lumen » (§54)" 200
+	jq -r "$2" "$CORPS"
+}
+APERCU_54=$(apercu_54 formation '[
+	([.referentials.common_field.reused[]?.source] | join(",")),
+	([.referentials.contact.reused[]?.source] | join(",")),
+	([.referentials.common_field.created[]?.source] | length | tostring),
+	([.refusals[]?.code] | sort | join(",")),
+	([.refusals[]? | select(.code == "field_type_conflict") | .items[].field] | join(","))
+	] | join("|")')
+IFS='|' read -r AP_CHAMPS AP_CONTACTS AP_CREES AP_REFUS AP_CONFLIT <<< "$APERCU_54"
+AP_ORGS=$(apercu_54 conseil-ia '[.referentials.organization.reused[]?.source] | join(",")')
+AP_ETIQUETTES=$(apercu_54 studio-web '[.referentials.label.reused[]?.source] | join(",")')
+[ "$AP_CHAMPS" = "Secteur" ] && [ "$AP_CONTACTS" = "Nadia Benali" ] && [ "$AP_ORGS" = "Vertigo Conseil" ] \
+	&& [[ ",$AP_ETIQUETTES," == *",Secteur public,"* ]] && [ "$AP_CREES" -ge 1 ] && [ "$AP_CONFLIT" = "Budget du client" ] \
+	&& [[ ",$AP_REFUS," == *",field_type_conflict,"* ]] \
+	|| die "les aperçus vers « Studio Lumen » n'ont pas leur forme (§54) — « Formation » : champs réutilisés « $AP_CHAMPS »,
+        contacts « $AP_CONTACTS », champs créés $AP_CREES, refus « $AP_REFUS », conflit « $AP_CONFLIT » ; « Conseil & IA » :
+        organisations « $AP_ORGS » ; « Studio web » : étiquettes « $AP_ETIQUETTES »."
+[ "$(psql_seed -c "select count(*) from public.tracks where workspace_id = '$LUMEN_ID' and slug in ('formation', 'conseil-ia', 'studio-web')")" = "0" ] \
+	|| die "un track de l'espace du seed est dans « Studio Lumen » : le §54 ne déplace rien."
+info "« Studio Lumen » : l'étiquette « Secteur public », les champs « Secteur » (une liste) et « Budget du client » (un texte), Nadia Benali, Vertigo Conseil ; l'aperçu de « Formation » réutilise « Secteur » et Nadia Benali, crée $AP_CREES champs et refuse ($AP_REFUS) ; « Conseil & IA » réutilise Vertigo Conseil, « Studio web » « Secteur public » — docs/SPEC-seed.md §54"

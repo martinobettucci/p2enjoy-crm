@@ -41703,3 +41703,23 @@ où `CRM-162` place la redirection d'un track déplacé, n'arrivait jamais. Cont
 track, la fiche d'une affaire, les coûts d'un track, le détail d'un budget). Aucune migration.
 **Vérifications** : unitaires 72/72 ; `espace-adresse` 5/5 ; quinze specs des pages d'un track, d'une affaire et des coûts —
 176 cas, puis les huit rouges rejoués sur une base stable (le seed de la session f9 tournait pendant la course) : 84/84.
+
+### `CRM-162` T3 — le seed §54, le manuel, l'ancienne adresse d'un track (journal d'implémentation)
+
+*2026-11-21, session 152dd27d (p2enjoy-crm-f9).*
+**Fait** : le §54 du seed, à la suite du §55 de `CRM-161` ; le manuel §32.6 bis et ses sept images ; la redirection de
+l'ancienne adresse d'un track dans `RouteTrack`, une fois le track résolu dans l'espace de l'adresse (correctif de `CRM-161`,
+21153c73, après le constat de cette session) ; le contrat §2.71.
+**Observé au seed** : une organisation n'est appariée que pour un contact CRÉÉ (§7.4 de la spécification). Nadia Benali étant
+réutilisée dans « Studio Lumen », l'aperçu de « Formation » ne cite pas Vertigo Conseil. Le constat lit donc trois aperçus :
+« Formation » (le champ, le contact, le refus), « Conseil & IA » (l'organisation), « Studio web » (l'étiquette).
+**Une régression de T2, trouvée en T3** : la pgTAP `0084` compte les fonctions `plateforme_*` et éprouve la garde de chacune ;
+la seizième, `plateforme_tracks` (0198), l'a fait échouer. Le commit de T2 n'avait joué que la `0184` ; la `0084` est révisée
+dans le commit de T3, et la session de livraison en est prévenue. Les homonymes ont aussi fait échouer `0174` et `0176`, qui
+retrouvaient « Vertigo Conseil » par son seul nom : elles la cherchent dans l'espace du seed (décision 51).
+**Une phrase du manuel n'était plus exacte** : le §32.1 disait qu'« être superadministrateur ne donne accès à aucune donnée
+commerciale ». Les arbitrages de la décision 964 (le superadministrateur seul, des refus listés) font que la fiche d'un espace
+et l'aperçu d'un déplacement lui nomment des tracks, des affaires, des personnes et des objets de mail, et chiffrent la valeur
+des temps. Le comportement ne change pas ; le §32.1 et le DAT disent désormais l'exception. Soumis au responsable avec le
+compte rendu de l'unité.
+**Vérifications** : seed rejoué deux fois, sans doublon ; E2E `deplacement-track` 8/8 ; images du manuel observées.

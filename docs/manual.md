@@ -6769,6 +6769,11 @@ s'amorce de cette façon : les suivants reçoivent le drapeau de la main d'un su
 les coûts d'un espace dont on n'est pas membre. Pour y travailler, un superadministrateur s'ajoute lui-même comme
 membre de cet espace, et ce geste est inscrit au journal.
 
+**Une seule exception : le déplacement d'un track** ([§32.6 bis](#deplacer-un-track-vers-un-autre-espace)). La fiche d'un
+espace montre au superadministrateur le nom de ses tracks, avec le nombre de leurs channels et de leurs affaires. L'aperçu
+d'un déplacement nomme ce que le track emploie et ce qui l'empêche de partir — des affaires, des personnes, des objets de
+mail —, et chiffre la valeur des temps saisis. Il n'ouvre ni les affaires, ni leurs mails.
+
 ### 32.2 Ouvrir la plateforme
 
 ![L'entrée « Plateforme » de la barre latérale, après « Réglages »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/entree.jpg)
@@ -6880,6 +6885,68 @@ les messages envoyés aux affaires n'arrivent nulle part.
   inactif tant que la saisie diffère.
 - **Ce qui ne se rattrape pas :** la suppression est définitive. Seule la restauration d'une sauvegarde la défait.
 
+### 32.6 bis Déplacer un track vers un autre espace
+
+![Le bloc « Tracks » de la fiche d'un espace : chaque track, ses channels, ses affaires, et « Déplacer vers un autre espace »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/tracks.jpg)
+
+![L'« Espace d’arrivée » choisi, puis l'aperçu : ce qui part, les référentiels, les temps, l'adresse des affaires](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/apercu-deplacement.jpg)
+
+![Le nom du track saisi pour confirmer, et « Déplacer le track »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/saisie-nom-track.jpg)
+
+![Un déplacement refusé : les raisons sont listées, et aucune commande n'est offerte](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/refus-deplacement.jpg)
+
+![Le déplacement fait : le message, et « Ouvrir la fiche de … »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/deplacement-fait.jpg)
+
+![Le journal de la plateforme : « Track déplacé », le track et les deux espaces](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/journal-deplacement.jpg)
+
+![L'historique de l'affaire : « Déplacée avec son track »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/historique-deplacement.jpg)
+
+La fiche d'un espace liste ses **« Tracks »**, avec le nombre de leurs channels et de leurs affaires. **« Déplacer vers un
+autre espace »** emporte un track **entier** dans un autre espace : ses channels, ses affaires, et tout ce qui leur est
+rattaché — commentaires, pièces jointes, historique, mails, budgets, coûts, recettes et temps saisis.
+
+1. **Choisissez l'« Espace d’arrivée ».** L'aperçu se calcule aussitôt. Rien n'est encore écrit.
+2. **Lisez l'aperçu.**
+   - **« Ce qui part »** : le nombre de channels, d'affaires, de mails, de pièces jointes, de commentaires, de temps saisis,
+     de budgets, de coûts, de recettes et de webhooks.
+   - **« Référentiels »** : ce que le track emploie — workflows, étapes, champs communs, étiquettes, contacts,
+     organisations, pastilles des mails, séquences de relance, modèles de mail. Chacun est **réutilisé** si l'espace
+     d'arrivée en a un du même nom (un contact du même e-mail, une organisation du même domaine), et **créé** sinon.
+     L'aperçu sépare « Réutilisés à l'arrivée » et « Créés à l'arrivée ».
+   - **« Temps et coûts »** : les temps saisis sont valorisés au coût du personnel de l'espace d'arrivée. L'aperçu donne
+     la valeur au départ, à l'arrivée, l'écart, et les personnes qui n'ont pas de coût à l'arrivée.
+   - **Les mails déjà présents à l'arrivée**, s'il y en a — le même mail relevé par les deux espaces : l'exemplaire de
+     l'arrivée est gardé, rangé dans l'affaire s'il ne l'était nulle part, et celui du départ est retiré.
+   - **« Adresses des affaires »** : les nouvelles adresses prendront le domaine de l'espace d'arrivée. L'ancienne adresse
+     d'une affaire continue d'aboutir à la même affaire.
+3. **Saisissez le nom du track**, puis **« Déplacer le track »**. Le bouton reste inactif tant que la saisie diffère. Le
+   déplacement se fait d'un bloc : tout part, ou rien.
+
+Le message dit où le track est parti, et **« Ouvrir la fiche de … »** mène à l'espace d'arrivée, qui le liste désormais.
+**« Annuler »**, ou la touche `Échap`, referme le bloc sans rien changer.
+
+**Quand le déplacement est refusé**, l'aperçu en liste les raisons, et n'offre aucune commande tant qu'il en reste une :
+
+- le track est déjà dans cet espace, ou il est à la corbeille ;
+- l'espace d'arrivée a un track du même nom ou de la même adresse ;
+- des affaires sont aussi rattachées à un autre track, qui reste au départ ;
+- des personnes que le track cite — ses membres, les responsables et les auteurs, les personnes mentionnées, celles qui ont
+  saisi du temps — ne sont pas membres de l'espace d'arrivée : ajoutez-les d'abord ([§32.4](#les-membres-d-un-espace)) ;
+- des relances sont armées, des envois attendent en file, ou des mails préparés attendent leur relecture ;
+- un champ commun du même nom existe à l'arrivée, avec un autre type ;
+- des temps saisis feraient dépasser 7 heures par jour à une personne, dans l'espace d'arrivée.
+
+Levez chaque raison, puis rouvrez le déplacement.
+
+**Ce qui reste au départ :** les boîtes mail et les adresses d'expédition, les tableaux d'objectifs, les coûts du personnel,
+les journaux. Un bloc d'objectifs qui cite un channel déplacé garde son lien, et nomme l'espace où vit désormais le channel.
+
+**Ce qui le dit :** le journal de la plateforme inscrit « Track déplacé », avec les deux espaces ([§32.8](#les-superadministrateurs-et-le-journal)). L'historique de chaque
+affaire porte « Déplacée avec son track ».
+
+**Pour défaire un déplacement**, déplacez le track en sens inverse : chacun retrouve ses référentiels d'origine. Ceux qui ont
+été créés à l'arrivée y restent.
+
 ### 32.7 Les utilisateurs
 
 ![L'onglet « Utilisateurs » : « Rechercher un utilisateur », leurs espaces, la pilule « Superadministrateur », « Droits du connecteur »](manuel/images/la-plateforme-espaces-membres-et-superadministrateurs/utilisateurs.jpg)
@@ -6938,6 +7005,7 @@ ne peut modifier ni supprimer une entrée de ces journaux ([chapitre 22](#le-jou
 - **Changer l'identifiant court d'un espace.**
 - **Choisir l'adresse d'une affaire en particulier** : elle est toujours tirée au hasard, après le préfixe.
 - **Annuler une suppression.**
+- **Déplacer une affaire ou un channel seul vers un autre espace** : le déplacement emporte toujours le track entier.
 
 ## 33. Le connecteur MCP : piloter le CRM depuis votre assistant
 

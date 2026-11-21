@@ -1,3 +1,5 @@
+// @spec CRM-162 (docs/BACKLOG.md) tranche T3 — un track introuvable dans l'espace de l'adresse, s'il a été déplacé, mène à
+//       son adresse actuelle, sans entrée d'historique (docs/SPEC-deplacement-track.md §12 ; docs/SPEC-espace-courant.md §8.2)
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — les liens et la navigation de la vue d'un track mènent dans l'espace courant (§15.3) ; docs/SPEC-espace-courant.md
 // @spec CRM-112 (docs/BACKLOG.md) tranche T4.a — les colonnes des champs de l'affaire de la vue liste (docs/DESIGN_SYSTEM.md §5.91)
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T6 : la vue liste monte « Importer un fichier » et son panneau, exclusif du
@@ -54,7 +56,8 @@ import { colonnesCommunes, lireChampsCommunsEspace, type ChampCommun } from '../
 import { champsFiltrables, filtresActifs } from '../lib/filtres-communs'
 import { useContexteEspace } from './ContexteEspace'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { useLocation, useParams, useSearchParams } from 'react-router'
+import { useLocation, useNavigate as useNavigateAbsolu, useParams, useSearchParams } from 'react-router'
+import { cheminApresDeplacement, useResolutionTrack } from '../lib/deplacement-track'
 // `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.3) : les liens et la navigation de cet écran d'un espace mènent dans
 // l'espace courant.
 import { LienEspace as Link, useNaviguerEspace as useNavigate } from './LienEspace'
@@ -130,6 +133,19 @@ const CLE_TITRE_TRACK: CleTraduction = 'route.track.title'
 export function RouteTrack({ vue = 'board' }: { readonly vue?: VueChannel } = {}) {
 	const { slugTrack, slugChannel, slugEspace } = useParams()
 	const { etat, recharger } = useContenuTrack(clientCrm, slugTrack, slugEspace)
+
+	// `CRM-162` T3 (§12) : un track introuvable dans l'espace de l'adresse a peut-être été déplacé. Tant que la trace n'est
+	// pas lue, l'écran reste en chargement plutôt que de dire « introuvable » trop tôt ; déplacé, l'adresse est remplacée
+	// par l'actuelle — channel, vue, paramètres et ancre gardés.
+	const resolution = useResolutionTrack(clientCrm, slugEspace, slugTrack, etat.statut === 'pret' && etat.donnees.track === null)
+	const naviguerAbsolu = useNavigateAbsolu()
+	const { pathname: cheminCourant, search: rechercheAdresse, hash: ancreAdresse } = useLocation()
+	useEffect(() => {
+		if (resolution.statut !== 'deplace' || slugEspace === undefined || slugTrack === undefined) return
+		const cible = cheminApresDeplacement(cheminCourant, { espace: slugEspace, track: slugTrack }, resolution.adresse)
+		if (cible !== null) void naviguerAbsolu(`${cible}${rechercheAdresse}${ancreAdresse}`, { replace: true })
+	}, [resolution, slugEspace, slugTrack, cheminCourant, rechercheAdresse, ancreAdresse, naviguerAbsolu])
+	const enResolution = resolution.statut === 'recherche' || resolution.statut === 'deplace'
 
 	const track = etat.statut === 'pret' ? etat.donnees.track : null
 	const channels = etat.statut === 'pret' ? etat.donnees.channels : AUCUN_CHANNEL
@@ -237,7 +253,7 @@ export function RouteTrack({ vue = 'board' }: { readonly vue?: VueChannel } = {}
 		>
 			<LiveRegion libelle={t('live.admin.aria')} message={annonce} />
 			<ContenuTrack
-				chargement={etat.statut === 'chargement'}
+				chargement={etat.statut === 'chargement' || enResolution}
 				track={track}
 				onChannelCree={apresCreation}
 				onFormulaireFerme={apresFermeture}

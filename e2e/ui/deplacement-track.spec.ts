@@ -3,6 +3,9 @@
 //           « Déplacer le track », l'issue, le track à l'arrivée, le journal de la plateforme, l'historique de l'affaire ; à
 //           la souris, au clavier, aux quatre paliers ; captures
 // @verifies docs/SPEC-deplacement-track.md §4, §5, §6, §10, §13 ; docs/DESIGN_SYSTEM.md §5.112 ; CLAUDE.md §16 (captures)
+// @verifies CRM-162 (docs/BACKLOG.md) — tranche T3 : l'ancienne adresse d'un track déplacé mène à l'actuelle, channel compris,
+//           sans entrée d'historique ; qui ne lit pas le track à l'arrivée reste sur « introuvable »
+//           (docs/SPEC-deplacement-track.md §12 ; docs/SPEC-espace-courant.md §8.2 ; CLAUDE.md §10)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du SSO
 //
 // TOUT EST PROPRE À LA PREUVE (le patron de `e2e/api/deplacement-track.spec.ts`) : un espace d'arrivée créé par la fonction de
@@ -18,6 +21,7 @@ const UNITE = 'CRM-162'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
 const CAMILLE = { adresse: 'admin@p2enjoy.test', id: '5eed0000-0000-4000-8000-000000000011' } as const
 const SABINE = 'plateforme@p2enjoy.test'
+const DRISS = 'bizdev@p2enjoy.test'
 const WORKFLOW_PAR_DEFAUT = '5eed0000-0000-4000-8000-000000000051'
 const SLUG_ARRIVEE = 'sonde-162-ecran'
 const NOM_ARRIVEE = 'Sonde 162 — écran'
@@ -139,6 +143,23 @@ test.describe('déplacer un track vers un autre espace (docs/DESIGN_SYSTEM.md §
 		await connecterAvecLeLabs(page, CAMILLE.adresse)
 		await page.goto(`/tracks/sonde-162-ecran/sonde-ecran/cards/${affaire}`)
 		await expect(page.getByText('Déplacée avec son track')).toBeVisible()
+	})
+
+	test('l’ancienne adresse du track mène à l’actuelle, channel compris, sans entrée d’historique', async ({ page }) => {
+		await connecterAvecLeLabs(page, CAMILLE.adresse)
+		const avant = await page.evaluate(() => window.history.length)
+		await page.goto('/p2enjoy/tracks/sonde-162-ecran/sonde-ecran?vue=board')
+		await expect(page).toHaveURL(new RegExp(`/${SLUG_ARRIVEE}/tracks/sonde-162-ecran/sonde-ecran\\?vue=board$`))
+		await expect(page.getByText('Sonde 162 — affaire écran')).toBeVisible()
+		// `replace` : la visite ajoute une entrée, la redirection aucune — « Précédent » ne ramène pas à l'ancienne adresse.
+		expect(await page.evaluate(() => window.history.length)).toBe(avant + 1)
+	})
+
+	test('qui n’est pas membre de l’arrivée reste sur « introuvable » : l’adresse actuelle ne lui est pas révélée', async ({ page }) => {
+		await connecterAvecLeLabs(page, DRISS)
+		await page.goto('/p2enjoy/tracks/sonde-162-ecran')
+		await expect(page.getByText('Track introuvable')).toBeVisible()
+		await expect(page).toHaveURL(/\/p2enjoy\/tracks\/sonde-162-ecran$/)
 	})
 
 	test('au clavier : Tab jusqu’à la commande, Entrée l’ouvre, Échap referme et rend le focus', async ({ page, request }) => {

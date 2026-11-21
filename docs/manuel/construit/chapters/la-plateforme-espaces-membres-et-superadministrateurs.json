@@ -160,6 +160,41 @@
 			]
 		},
 		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une seule exception : le déplacement d'un track"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "la-plateforme-espaces-membres-et-superadministrateurs",
+						"anchor": "deplacer-un-track-vers-un-autre-espace"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§32.6 bis"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). La fiche d'un\nespace montre au superadministrateur le nom de ses tracks, avec le nombre de leurs channels et de leurs affaires. L'aperçu\nd'un déplacement nomme ce que le track emploie et ce qui l'empêche de partir — des affaires, des personnes, des objets de\nmail —, et chiffre la valeur des temps saisis. Il n'ouvre ni les affaires, ni leurs mails."
+				}
+			]
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "ouvrir-la-plateforme",
@@ -1127,6 +1162,565 @@
 		{
 			"type": "heading",
 			"level": 3,
+			"anchor": "deplacer-un-track-vers-un-autre-espace",
+			"content": [
+				{
+					"type": "text",
+					"text": "32.6 bis Déplacer un track vers un autre espace"
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "la-plateforme-espaces-membres-et-superadministrateurs/tracks.jpg",
+			"alt": "Le bloc « Tracks » de la fiche d'un espace : chaque track, ses channels, ses affaires, et « Déplacer vers un autre espace »",
+			"width": 1192,
+			"height": 448
+		},
+		{
+			"type": "image",
+			"src": "la-plateforme-espaces-membres-et-superadministrateurs/apercu-deplacement.jpg",
+			"alt": "L'« Espace d’arrivée » choisi, puis l'aperçu : ce qui part, les référentiels, les temps, l'adresse des affaires",
+			"width": 1158,
+			"height": 712
+		},
+		{
+			"type": "image",
+			"src": "la-plateforme-espaces-membres-et-superadministrateurs/saisie-nom-track.jpg",
+			"alt": "Le nom du track saisi pour confirmer, et « Déplacer le track »",
+			"width": 1158,
+			"height": 177
+		},
+		{
+			"type": "image",
+			"src": "la-plateforme-espaces-membres-et-superadministrateurs/refus-deplacement.jpg",
+			"alt": "Un déplacement refusé : les raisons sont listées, et aucune commande n'est offerte",
+			"width": 1158,
+			"height": 174
+		},
+		{
+			"type": "image",
+			"src": "la-plateforme-espaces-membres-et-superadministrateurs/deplacement-fait.jpg",
+			"alt": "Le déplacement fait : le message, et « Ouvrir la fiche de … »",
+			"width": 1192,
+			"height": 69
+		},
+		{
+			"type": "image",
+			"src": "la-plateforme-espaces-membres-et-superadministrateurs/journal-deplacement.jpg",
+			"alt": "Le journal de la plateforme : « Track déplacé », le track et les deux espaces",
+			"width": 1192,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "la-plateforme-espaces-membres-et-superadministrateurs/historique-deplacement.jpg",
+			"alt": "L'historique de l'affaire : « Déplacée avec son track »",
+			"width": 479,
+			"height": 80
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "La fiche d'un espace liste ses "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Tracks »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", avec le nombre de leurs channels et de leurs affaires. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Déplacer vers un\nautre espace »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " emporte un track "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "entier"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " dans un autre espace : ses channels, ses affaires, et tout ce qui leur est\nrattaché — commentaires, pièces jointes, historique, mails, budgets, coûts, recettes et temps saisis."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": true,
+			"start": 1,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Choisissez l'« Espace d’arrivée »."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " L'aperçu se calcule aussitôt. Rien n'est encore écrit."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Lisez l'aperçu."
+									}
+								]
+							}
+						]
+					},
+					{
+						"type": "list",
+						"ordered": false,
+						"start": null,
+						"items": [
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "« Ce qui part »"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : le nombre de channels, d'affaires, de mails, de pièces jointes, de commentaires, de temps saisis,\nde budgets, de coûts, de recettes et de webhooks."
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "« Référentiels »"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : ce que le track emploie — workflows, étapes, champs communs, étiquettes, contacts,\norganisations, pastilles des mails, séquences de relance, modèles de mail. Chacun est "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "réutilisé"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " si l'espace\nd'arrivée en a un du même nom (un contact du même e-mail, une organisation du même domaine), et "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "créé"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " sinon.\nL'aperçu sépare « Réutilisés à l'arrivée » et « Créés à l'arrivée »."
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "« Temps et coûts »"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : les temps saisis sont valorisés au coût du personnel de l'espace d'arrivée. L'aperçu donne\nla valeur au départ, à l'arrivée, l'écart, et les personnes qui n'ont pas de coût à l'arrivée."
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "Les mails déjà présents à l'arrivée"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", s'il y en a — le même mail relevé par les deux espaces : l'exemplaire de\nl'arrivée est gardé, rangé dans l'affaire s'il ne l'était nulle part, et celui du départ est retiré."
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "« Adresses des affaires »"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : les nouvelles adresses prendront le domaine de l'espace d'arrivée. L'ancienne adresse\nd'une affaire continue d'aboutir à la même affaire."
+										}
+									]
+								}
+							]
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Saisissez le nom du track"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", puis "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Déplacer le track »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Le bouton reste inactif tant que la saisie diffère. Le\ndéplacement se fait d'un bloc : tout part, ou rien."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le message dit où le track est parti, et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Ouvrir la fiche de … »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " mène à l'espace d'arrivée, qui le liste désormais.\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Annuler »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", ou la touche "
+				},
+				{
+					"type": "code",
+					"text": "Échap"
+				},
+				{
+					"type": "text",
+					"text": ", referme le bloc sans rien changer."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Quand le déplacement est refusé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", l'aperçu en liste les raisons, et n'offre aucune commande tant qu'il en reste une :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "le track est déjà dans cet espace, ou il est à la corbeille ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "l'espace d'arrivée a un track du même nom ou de la même adresse ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "des affaires sont aussi rattachées à un autre track, qui reste au départ ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "des personnes que le track cite — ses membres, les responsables et les auteurs, les personnes mentionnées, celles qui ont\nsaisi du temps — ne sont pas membres de l'espace d'arrivée : ajoutez-les d'abord ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "la-plateforme-espaces-membres-et-superadministrateurs",
+									"anchor": "les-membres-d-un-espace"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "§32.4"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ") ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "des relances sont armées, des envois attendent en file, ou des mails préparés attendent leur relecture ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "un champ commun du même nom existe à l'arrivée, avec un autre type ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "des temps saisis feraient dépasser 7 heures par jour à une personne, dans l'espace d'arrivée."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Levez chaque raison, puis rouvrez le déplacement."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce qui reste au départ :"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " les boîtes mail et les adresses d'expédition, les tableaux d'objectifs, les coûts du personnel,\nles journaux. Un bloc d'objectifs qui cite un channel déplacé garde son lien, et nomme l'espace où vit désormais le channel."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce qui le dit :"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " le journal de la plateforme inscrit « Track déplacé », avec les deux espaces ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "la-plateforme-espaces-membres-et-superadministrateurs",
+						"anchor": "les-superadministrateurs-et-le-journal"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§32.8"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). L'historique de chaque\naffaire porte « Déplacée avec son track »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Pour défaire un déplacement"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", déplacez le track en sens inverse : chacun retrouve ses référentiels d'origine. Ceux qui ont\nété créés à l'arrivée y restent."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
 			"anchor": "les-utilisateurs",
 			"content": [
 				{
@@ -1743,6 +2337,26 @@
 										"text": "Annuler une suppression."
 									}
 								]
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Déplacer une affaire ou un channel seul vers un autre espace"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le déplacement emporte toujours le track entier."
 							}
 						]
 					}

@@ -1049,7 +1049,10 @@ restauration).
     vérifiée listée, tant qu'aucune ligne n'existe.
   - **Ce qu'il ouvre :** les fonctions `public.plateforme_*` (espaces, appartenances, attentes, superadministrateurs,
     journal) et l'administration du connecteur. Aucune politique RLS des données métier n'est élargie : un
-    superadministrateur en base sans appartenance ne lit aucune donnée commerciale.
+    superadministrateur en base sans appartenance ne lit aucune donnée commerciale — *une exception, par des fonctions
+    `SECURITY DEFINER` gardées par le drapeau* (`CRM-162`, décision 964) : `plateforme_tracks` nomme les tracks d'un espace et
+    compte leurs channels et leurs affaires, et `track_move_preview` nomme ce qu'un track emploie et ce qui l'empêche de
+    partir (affaires, personnes, objets de mail), avec la valeur des temps saisis (§7 quinquies).
   - **Admission :** il est admis à une session sans appartenance (`docs/SPEC-session-sso.md` §6.1, révisé).
   - Spécifié par `docs/SPEC-plateforme.md`.
 - **Connecteur MCP** — `CRM-102` à `CRM-104` : le rôle `verified` est contrôlé au retour du SSO, à l'échange et à
@@ -1287,7 +1290,11 @@ l'écran traduit alors le refus comme avant. Garde de source : `commandes-refuse
   quitté ; le classement (`classer_message_automatiquement`, règle 1 bis) y lit l'alias (`card_address_aliases`) et fait
   passer le mail dans l'espace de l'affaire (`app.move_message_to_workspace`).
 - **La redirection d'une adresse de l'application** (décision 967, `CRM-161`) lit `track_moves` par
-  `public.track_current_address`, sous la RLS du track.
+  `public.track_current_address`, sous la RLS du track. *Écrit avec T3* : la route d'un track (`RouteTrack`), quand le track
+  est introuvable dans l'espace de l'adresse (le filtre de `CRM-161`), lit cette adresse (`useResolutionTrack`,
+  `webapp/src/lib/deplacement-track.ts`) et remplace la sienne — le channel, la vue, les paramètres et l'ancre gardés ;
+  l'écran reste en chargement le temps de la lecture. Qui ne lit pas le track à l'arrivée n'obtient aucune ligne, et reste
+  sur « introuvable ».
 - **L'écran** (T2, *écrit le 2026-11-21*) : le bloc « Tracks » de la fiche d'un espace (`webapp/src/app/PlateformeTracks.tsx`)
   lit `public.plateforme_tracks` (migration `0198`), puis l'aperçu, puis envoie `move_track` ; il ne calcule aucun droit
   (`webapp/src/lib/deplacement-track.ts`) — la base tranche, et ses refus sont classés par un dictionnaire fermé. Le journal

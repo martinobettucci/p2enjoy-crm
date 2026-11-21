@@ -1,3 +1,5 @@
+// @spec CRM-162 (docs/BACKLOG.md) — tranche T3 : l'adresse d'un track déplacé, résolue par `track_current_address` et
+//       réécrite vers l'espace d'arrivée (docs/SPEC-deplacement-track.md §12 ; docs/SPEC-espace-courant.md §8.2)
 // @spec CRM-162 (docs/BACKLOG.md) — tranche T2 : ce que l'écran du déplacement d'un track lit et envoie — les tracks d'un
 //       espace (`plateforme_tracks`), l'aperçu chiffré (`track_move_preview`), le déplacement confirmé par le nom
 //       (`move_track`) et ses refus, classés par un dictionnaire fermé
@@ -7,6 +9,7 @@
 // Ce module ne rend rien : il lit, envoie et classe. La forme rendue par la base est lue défensivement — un champ absent
 // devient une valeur vide, jamais un `undefined` affiché (docs/SPEC-types.md §4).
 
+import { useEffect, useState } from 'react'
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { ClientCrm } from './supabase'
 
@@ -253,4 +256,77 @@ export async function deplacerTrack(
  */
 export function confirmationDeplacementValide(saisie: string, nom: string): boolean {
 	return nom.trim() !== '' && saisie.trim() === nom.trim()
+}
+
+/** L'adresse actuelle d'un track déplacé : le slug de son espace et le sien (§12). */
+export type AdresseTrack = { readonly espace: string; readonly track: string }
+
+/**
+ * Lit l'adresse actuelle du track que désignait `(slugEspace, slugTrack)` avant un déplacement (§12) — `null` s'il n'a pas
+ * été déplacé depuis cet espace, ou si l'appelant ne le lit plus : la RLS du track tranche, et la route dit alors
+ * « introuvable » sans rien révéler.
+ */
+export async function lireAdresseActuelleTrack(
+	client: ClientCrm,
+	slugEspace: string,
+	slugTrack: string,
+): Promise<EtatAsync<AdresseTrack | null>> {
+	try {
+		const reponse = await appeler(client, 'track_current_address', { p_workspace_slug: slugEspace, p_track_slug: slugTrack })
+		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
+		const ligne = objet(liste(reponse.data)[0])
+		const espace = texte(ligne['workspace_slug'])
+		const track = texte(ligne['track_slug'])
+		return pret(espace === '' || track === '' ? null : { espace, track })
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/**
+ * Réécrit un chemin `/<espace>/tracks/<track>[/…]` vers l'adresse actuelle du track ; la suite — le channel, la vue
+ * liste, les coûts — est gardée : un channel garde son adresse courte sous son track (§12). `null` si le chemin ne désigne
+ * pas ce track dans cet espace.
+ */
+export function cheminApresDeplacement(chemin: string, depart: AdresseTrack, arrivee: AdresseTrack): string | null {
+	const prefixe = `/${encodeURIComponent(depart.espace)}/tracks/${encodeURIComponent(depart.track)}`
+	if (chemin !== prefixe && !chemin.startsWith(`${prefixe}/`)) return null
+	return `/${encodeURIComponent(arrivee.espace)}/tracks/${encodeURIComponent(arrivee.track)}${chemin.slice(prefixe.length)}`
+}
+
+/** Où en est la résolution de l'adresse d'un track introuvable dans l'espace de l'adresse. */
+export type ResolutionTrack =
+	| { readonly statut: 'inactive' }
+	| { readonly statut: 'recherche' }
+	| { readonly statut: 'deplace'; readonly adresse: AdresseTrack }
+	| { readonly statut: 'introuvable' }
+
+/**
+ * Le track d'une adresse est introuvable dans son espace (`introuvable` vrai) : a-t-il été déplacé ? La lecture n'est faite
+ * que dans ce cas, une fois par adresse. Une erreur de lecture vaut « introuvable » : l'écran garde son état d'erreur
+ * d'adresse, et rien n'est inventé.
+ */
+export function useResolutionTrack(
+	client: ClientCrm | null,
+	slugEspace: string | undefined,
+	slugTrack: string | undefined,
+	introuvable: boolean,
+): ResolutionTrack {
+	const [resolution, setResolution] = useState<ResolutionTrack>({ statut: 'inactive' })
+	useEffect(() => {
+		if (!introuvable || client === null || slugEspace === undefined || slugTrack === undefined) {
+			setResolution({ statut: 'inactive' })
+			return
+		}
+		let vivant = true
+		setResolution({ statut: 'recherche' })
+		void lireAdresseActuelleTrack(client, slugEspace, slugTrack).then((etat) => {
+			if (!vivant) return
+			setResolution(etat.statut === 'pret' && etat.donnees !== null ? { statut: 'deplace', adresse: etat.donnees } : { statut: 'introuvable' })
+		})
+		return () => {
+			vivant = false
+		}
+	}, [client, slugEspace, slugTrack, introuvable])
+	return resolution
 }

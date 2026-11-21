@@ -6618,6 +6618,46 @@
 			]
 		},
 		{
+			"fichier": "la-plateforme-espaces-membres-et-superadministrateurs/apercu-deplacement.jpg",
+			"largeur": 1158,
+			"hauteur": 712,
+			"chapitre": "la-plateforme-espaces-membres-et-superadministrateurs",
+			"section": "deplacer-un-track-vers-un-autre-espace",
+			"pleinePage": false,
+			"libelles": [
+				"0",
+				"1",
+				"Adresses des affaires",
+				"Affaires",
+				"Aucun temps saisi ne part avec ce track.",
+				"Budgets",
+				"Ce qui part",
+				"Champs communs",
+				"Channels",
+				"Commentaires",
+				"Coûts",
+				"Créés à l'arrivée :",
+				"Créés à l'arrivée : Cycle commercial standard",
+				"Créés à l'arrivée : Livré, Négociation, Perdu, Prospection, Réalisation, Relance, Signature",
+				"Créés à l'arrivée : SIRET",
+				"Cycle commercial standard",
+				"Espace d'arrivée",
+				"Filiale Sud",
+				"L'espace d'arrivée n'a pas de domaine d'adresses d'affaire : les affaires n'y auront d'adresse qu'une fois le domaine réglé. L'ancienne adresse continue d'aboutir.",
+				"Livré, Négociation, Perdu, Prospection, Réalisation, Relance, Signature",
+				"Mails",
+				"Pièces jointes",
+				"Recettes",
+				"Référentiels",
+				"SIRET",
+				"Temps et coûts",
+				"Temps saisis",
+				"Webhooks",
+				"Workflows",
+				"Étapes de workflow"
+			]
+		},
+		{
 			"fichier": "la-plateforme-espaces-membres-et-superadministrateurs/attentes.jpg",
 			"largeur": 1192,
 			"hauteur": 137,
@@ -6667,6 +6707,19 @@
 				"Jamais connecté",
 				"Sabine Plateforme",
 				"Superadministrateur"
+			]
+		},
+		{
+			"fichier": "la-plateforme-espaces-membres-et-superadministrateurs/deplacement-fait.jpg",
+			"largeur": 1192,
+			"hauteur": 69,
+			"chapitre": "la-plateforme-espaces-membres-et-superadministrateurs",
+			"section": "deplacer-un-track-vers-un-autre-espace",
+			"pleinePage": false,
+			"libelles": [
+				"Ouvrir la fiche de Filiale Sud",
+				"Track « Événements » déplacé vers Filiale Sud.",
+				"Track « Événements » déplacé vers Filiale Sud. Ouvrir la fiche de Filiale Sud"
 			]
 		},
 		{
@@ -6731,6 +6784,33 @@
 				"Nom",
 				"atelier-lumiere",
 				"crm.atelier-lumiere.test"
+			]
+		},
+		{
+			"fichier": "la-plateforme-espaces-membres-et-superadministrateurs/historique-deplacement.jpg",
+			"largeur": 479,
+			"hauteur": 80,
+			"chapitre": "la-plateforme-espaces-membres-et-superadministrateurs",
+			"section": "deplacer-un-track-vers-un-autre-espace",
+			"pleinePage": false,
+			"libelles": [
+				"Déplacée avec son track",
+				"Déplacée avec son track« Événements » : P2Enjoy SAS → Filiale Sud",
+				"« Événements » : P2Enjoy SAS → Filiale Sud"
+			]
+		},
+		{
+			"fichier": "la-plateforme-espaces-membres-et-superadministrateurs/journal-deplacement.jpg",
+			"largeur": 1192,
+			"hauteur": 73,
+			"chapitre": "la-plateforme-espaces-membres-et-superadministrateurs",
+			"section": "deplacer-un-track-vers-un-autre-espace",
+			"pleinePage": false,
+			"libelles": [
+				"21/11/2026 17:16",
+				"Sabine Plateforme",
+				"Track déplacé",
+				"« Événements » : P2Enjoy SAS → Filiale Sud"
 			]
 		},
 		{
@@ -6919,6 +6999,22 @@
 			]
 		},
 		{
+			"fichier": "la-plateforme-espaces-membres-et-superadministrateurs/refus-deplacement.jpg",
+			"largeur": 1158,
+			"hauteur": 174,
+			"chapitre": "la-plateforme-espaces-membres-et-superadministrateurs",
+			"section": "deplacer-un-track-vers-un-autre-espace",
+			"pleinePage": false,
+			"libelles": [
+				"Budget du client (money → text)",
+				"Champ commun d'un autre type à l'arrivée :",
+				"Driss Lemoine",
+				"Le track ne peut pas être déplacé :",
+				"Le track ne peut pas être déplacé : Personnes qui ne sont pas membres de Studio Lumen : Driss Lemoine Champ commun d'un autre type à l'arrivée : Budget du client (money → text)",
+				"Personnes qui ne sont pas membres de Studio Lumen :"
+			]
+		},
+		{
 			"fichier": "la-plateforme-espaces-membres-et-superadministrateurs/regenerer.jpg",
 			"largeur": 1192,
 			"hauteur": 226,
@@ -6932,6 +7028,21 @@
 				"Régénérer les adresses de 2 affaires ?",
 				"Régénérer les adresses de 2 affaires ? Chacune reçoit une nouvelle adresse au préfixe « app- », y compris les affaires en corbeille. Les messages déjà classés ne changent pas d'affaire. Un message écrit à une ancienne adresse ne sera plus classé. Les réponses aux messages déjà classés le seront encore tant que votre serveur remet l'ancien motif à la boîte système : gardez l'ancien alias le temps que les échanges en cours se terminent. Régénérer Annuler",
 				"Un message écrit à une ancienne adresse ne sera plus classé. Les réponses aux messages déjà classés le seront encore tant que votre serveur remet l'ancien motif à la boîte système : gardez l'ancien alias le temps que les échanges en cours se terminent."
+			]
+		},
+		{
+			"fichier": "la-plateforme-espaces-membres-et-superadministrateurs/saisie-nom-track.jpg",
+			"largeur": 1158,
+			"hauteur": 177,
+			"chapitre": "la-plateforme-espaces-membres-et-superadministrateurs",
+			"section": "deplacer-un-track-vers-un-autre-espace",
+			"pleinePage": false,
+			"libelles": [
+				"Annuler",
+				"Déplacer le track",
+				"Nom à saisir : « Événements ».",
+				"Saisissez le nom du track pour confirmer",
+				"Événements"
 			]
 		},
 		{
@@ -6972,6 +7083,39 @@
 				"Annuler",
 				"Supprimer définitivement",
 				"atelier-lumiere"
+			]
+		},
+		{
+			"fichier": "la-plateforme-espaces-membres-et-superadministrateurs/tracks.jpg",
+			"largeur": 1192,
+			"hauteur": 448,
+			"chapitre": "la-plateforme-espaces-membres-et-superadministrateurs",
+			"section": "deplacer-un-track-vers-un-autre-espace",
+			"pleinePage": false,
+			"libelles": [
+				"0",
+				"1",
+				"10",
+				"3",
+				"34",
+				"Affaires",
+				"Channels",
+				"Commandes",
+				"Conseil & IA",
+				"Déplacer le track Conseil & IA vers un autre espace",
+				"Déplacer le track Formation vers un autre espace",
+				"Déplacer le track Legacy 2023 vers un autre espace",
+				"Déplacer le track Pipeline 2024 vers un autre espace",
+				"Déplacer le track Studio web vers un autre espace",
+				"Déplacer le track Événements vers un autre espace",
+				"Déplacer vers un autre espace",
+				"Formation",
+				"Legacy 2023",
+				"Pipeline 2024",
+				"Studio web",
+				"Track",
+				"Tracks",
+				"Événements"
 			]
 		},
 		{

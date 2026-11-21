@@ -20566,9 +20566,7 @@ livraison (décision 830).
 - [ ] **T4 — Le connecteur.** Audit outil par outil (`docs/SPEC-mcp.md` §9.2), lien préfixé de `crm_mail_prepare`.
 - [ ] **T5 — Le manuel et la livraison.** Chapitre « Changer d'espace », contrat, remise à la session de livraison.
 
-### CRM-162 — Déplacer un track entier d'un espace à un autre, par le super-administrateur `[@]`
-
-*Prise en charge : f9 (152dd27d) depuis 2026-11-21 08:49 UTC — état avant : [ ]*
+### CRM-162 — Déplacer un track entier d'un espace à un autre, par le super-administrateur `[P]`
 
 **Origine** : demande du responsable, le 2026-11-21 (« on devrait pouvoir et depuis exclusivement le admin, bouger des tracks
 entiers entre workspaces (pose moi toutes les questions pour bien le faire) ») ; arbitrages le même jour (décisions 964 et 966).
@@ -20615,4 +20613,10 @@ la redirection d'un track déplacé passe par `public.track_current_address` (§
   `0184` 40 assertions ; unitaires `deplacement-track`, `PlateformeTracks`, et le journal, l'historique, les objectifs
   révisés ; E2E `e2e/ui/deplacement-track.spec.ts` 6/6 — refus, souris, journal, historique, clavier, quatre paliers ;
   captures observées `docs/captures/CRM-162/` ; `docs/DESIGN_SYSTEM.md` §5.112 précisé ; contrat §2.70) ;
-- [ ] **T3** — le seed §54, le manuel, le contrat, l'adresse redirigée (après `CRM-161`) ; l'unité passe `[P]`.
+- [x] **T3** — le seed §54, le manuel, le contrat, l'adresse redirigée (après `CRM-161`) ; l'unité passe `[P]`. *Faite le
+  2026-11-21* (seed §54 constaté par trois aperçus réels ; manuel §32.6 bis, sept images observées, §32.1 et §32.9
+  complétés ; la redirection dans `RouteTrack`, sur le filtre par espace de `CRM-161` ; E2E `deplacement-track` 8/8 ; pgTAP
+  `0084` révisée — la seizième fonction de la plateforme, oubliée en T2 —, `0174` et `0176` révisées pour l'homonyme de
+  Vertigo Conseil ; contrat §2.71).
+**À constater en production** (contrat §2.69 à §2.71) : sous le superadministrateur, le bloc « Tracks » de la fiche d'un espace,
+et sa commande ; le manuel §32.6 bis et ses images. Aucun déplacement n'y est joué.

@@ -28,7 +28,9 @@ $$;
 
 create temp table pg_temp.ids (nom text primary key, id uuid);
 grant select, insert, update on pg_temp.ids to authenticated;
-insert into pg_temp.ids select 'vertigo', id from public.organizations where name = 'Vertigo Conseil';
+-- `CRM-162` T3 (docs/SPEC-seed.md §54, décision 51) : « Studio Lumen » a son homonyme, de même domaine ; celle de l'espace du seed.
+insert into pg_temp.ids select 'vertigo', id from public.organizations
+ where name = 'Vertigo Conseil' and workspace_id = '5eed0000-0000-4000-8000-000000000001';
 insert into pg_temp.ids values
 	('sogexia', '5eed0000-0000-4000-8000-000000000081'),
 	('camille', '5eed0000-0000-4000-8000-000000000011'),

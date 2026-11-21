@@ -254,6 +254,15 @@ lit (la RLS de `tracks`). Aucune ligne sinon : la route affiche alors « introuv
 l'appelle quand le track est introuvable dans l'espace de l'adresse ; le chemin d'un channel garde son adresse courte sous
 le track redirigé. Prouvé par un E2E après la livraison de `CRM-161`.
 
+*Précisé au code de T3* (2026-11-21) : la route d'un track ne résolvait pas le track dans l'espace de l'adresse ; `CRM-161` l'a
+corrigé (21153c73), et cette unité ajoute l'appel. `RouteTrack` lit l'adresse actuelle quand le track est introuvable, reste en
+chargement le temps de la lecture, puis **remplace** l'adresse (`replace`, aucune entrée d'historique), en gardant ce qui suit
+le track (channel, vue liste), les paramètres et l'ancre. Une erreur de lecture vaut « introuvable ». Seule la route d'un
+track redirige : la fiche d'une affaire se retrouve par son identifiant (`CRM-161`), et l'écran de coûts d'un track n'est pas
+couvert. Preuves : unitaires de `webapp/src/lib/deplacement-track.ts` ; E2E `e2e/ui/deplacement-track.spec.ts` — l'ancienne
+adresse mène à l'actuelle, channel compris, sans entrée d'historique ; un membre du départ qui ne l'est pas de l'arrivée reste
+sur « Track introuvable ».
+
 ## 13. L'écran — Plateforme ▸ Espaces ▸ la fiche d'un espace
 
 L'apparence : `docs/DESIGN_SYSTEM.md` §5.112.
@@ -280,7 +289,9 @@ identifiant figé (décision 972) ; il trie après « P2Enjoy SAS » : l'espace 
 du seed** (`admin@p2enjoy.test`) administratrice des deux. Il est **créé par le §54 de `docs/SPEC-seed.md`** (cette unité), avec ses **homonymes** — une
 étiquette, un champ commun du même type, un autre d'un type différent, un contact par son e-mail, une organisation par son
 domaine — et sans homonyme pour le reste, pour que l'aperçu d'un track du seed montre les deux listes, et un refus.
-**Aucun déplacement n'est joué par le seed** : il reste un geste à démontrer. Tant que `CRM-161` n'est pas livrée, la barre
+**Aucun déplacement n'est joué par le seed** : il reste un geste à démontrer. *Précisé au code de T3* : les homonymes exacts et
+ce que montre chaque aperçu sont au §54 de `docs/SPEC-seed.md` ; le manuel (§32.6 bis) illustre le refus sur le seed, et
+l'aperçu et le succès sur un espace et un track jetables, que sa préparation retire. Tant que `CRM-161` n'est pas livrée, la barre
 latérale d'un membre des deux espaces montre les tracks de l'un et de l'autre ; les preuves qui comptent les tracks de la
 barre latérale sous ce compte en tiennent compte.
 

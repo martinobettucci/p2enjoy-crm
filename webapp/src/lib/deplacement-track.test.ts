@@ -2,10 +2,14 @@
 //           des tracks d'un espace, la projection défensive de l'aperçu, les refus classés par un dictionnaire fermé (un code
 //           inconnu écarté), chaque issue du déplacement, la confirmation par le nom
 // @verifies docs/SPEC-deplacement-track.md §4, §5, §6, §13 ; docs/DESIGN_SYSTEM.md §5.112
+// @verifies CRM-162 (docs/BACKLOG.md) — tranche T3 : l'adresse actuelle d'un track déplacé, lue par `track_current_address`,
+//           et le chemin réécrit vers elle (docs/SPEC-deplacement-track.md §12 ; docs/SPEC-espace-courant.md §8.2)
 
 import { describe, expect, it } from 'vitest'
 import {
+	cheminApresDeplacement,
 	confirmationDeplacementValide,
+	lireAdresseActuelleTrack,
 	deplacerTrack,
 	lireRefus,
 	lireTracksEspace,
@@ -140,5 +144,41 @@ describe('la confirmation par le nom (§5.112)', () => {
 		expect(confirmationDeplacementValide(' Formation ', 'Formation')).toBe(true)
 		expect(confirmationDeplacementValide('formation', 'Formation')).toBe(false)
 		expect(confirmationDeplacementValide('', '')).toBe(false)
+	})
+})
+
+describe('l’adresse d’un track déplacé (§12)', () => {
+	it('lit l’adresse actuelle par le couple (espace de départ, track)', async () => {
+		const { c, appels } = client({ data: [{ workspace_slug: 'studio-lumen', track_slug: 'formation' }], error: null, status: 200 })
+		const etat = await lireAdresseActuelleTrack(c, 'p2enjoy', 'formation')
+		expect(appels).toEqual([{ nom: 'track_current_address', args: { p_workspace_slug: 'p2enjoy', p_track_slug: 'formation' } }])
+		expect(etat.statut === 'pret' && etat.donnees).toEqual({ espace: 'studio-lumen', track: 'formation' })
+	})
+
+	it('aucune ligne : le track n’a pas été déplacé depuis cet espace, ou l’appelant ne le lit plus — `null`', async () => {
+		const { c } = client({ data: [], error: null, status: 200 })
+		const etat = await lireAdresseActuelleTrack(c, 'p2enjoy', 'inconnu')
+		expect(etat.statut === 'pret' && etat.donnees).toBeNull()
+	})
+
+	it('une erreur de la base est un état d’erreur, jamais une adresse inventée', async () => {
+		const { c } = client({ data: null, error: { message: 'boum' }, status: 500 })
+		expect((await lireAdresseActuelleTrack(c, 'p2enjoy', 'formation')).statut).toBe('erreur')
+	})
+
+	it('réécrit le chemin du track, et garde ce qui suit : le channel, la vue liste, les coûts', () => {
+		const depart = { espace: 'p2enjoy', track: 'formation' }
+		const arrivee = { espace: 'studio-lumen', track: 'formation' }
+		expect(cheminApresDeplacement('/p2enjoy/tracks/formation', depart, arrivee)).toBe('/studio-lumen/tracks/formation')
+		expect(cheminApresDeplacement('/p2enjoy/tracks/formation/inter-entreprises/liste', depart, arrivee)).toBe(
+			'/studio-lumen/tracks/formation/inter-entreprises/liste',
+		)
+	})
+
+	it('un chemin qui ne désigne pas ce track dans cet espace n’est pas réécrit', () => {
+		const depart = { espace: 'p2enjoy', track: 'formation' }
+		const arrivee = { espace: 'studio-lumen', track: 'formation' }
+		expect(cheminApresDeplacement('/p2enjoy/tracks/formation-avancee', depart, arrivee)).toBeNull()
+		expect(cheminApresDeplacement('/autre/tracks/formation', depart, arrivee)).toBeNull()
 	})
 })

@@ -2,13 +2,15 @@
 -- @verifies CRM-101 tranche T6 — docs/SPEC-plateforme.md §6.5 (`plateforme_utilisateurs` : la garde, tous les profils
 --           dans la borne, recherche sans accent ni métacaractère, espaces et rôles, drapeau, dernière activité au
 --           connecteur, ordre des noms), arbitrage A6
+-- @verifies CRM-162 (docs/BACKLOG.md) tranche T2 — `plateforme_tracks` (docs/SPEC-deplacement-track.md §13 ; docs/SCHEMA.md
+--           « Migration `0198` ») : la seizième fonction de la plateforme, sous la même forme et la même garde
 -- @verifies docs/SPEC-plateforme.md §2 (le drapeau n'élargit aucune politique métier), §3 (amorçage unique), §4
 --           (admission révisée), §5 (tables fermées), §6 (garde, dictionnaire des refus, journal) ; docs/SCHEMA.md
 --           §1 bis ; docs/SPEC-session-sso.md §6.1 (condition 3 révisée) ; CLAUDE.md §10
 --
 -- CE QUE CETTE SUITE PROUVE, ET DANS QUEL ORDRE.
 --
--- 1. La forme : deux tables fermées (RLS sans politique, aucun privilège client), seize fonctions de la plateforme
+-- 1. La forme : deux tables fermées (RLS sans politique, aucun privilège client), dix-sept fonctions de la plateforme
 --    `SECURITY DEFINER` à `search_path` vide, exécutables par `authenticated` seul, et les fonctions de session
 --    toujours réservées à la clé de service.
 -- 2. La garde : CHAQUE fonction plateforme_* refusée en `42501` à l'anonyme, à la lectrice et à l'administratrice d'espace — un
@@ -54,7 +56,7 @@ begin
 end;
 $$;
 
--- Appelle les quinze fonctions de la plateforme avec des arguments plausibles, et compte celles qui refusent par la
+-- Appelle les seize fonctions de la plateforme avec des arguments plausibles, et compte celles qui refusent par la
 -- garde. Chaque appel est isolé dans son propre bloc : un refus n'arrête pas les suivants.
 create or replace function pg_temp.refus_de_la_garde()
 returns integer language plpgsql as $$
@@ -74,7 +76,8 @@ declare
 		'select public.plateforme_superadmins()',
 		'select public.plateforme_poser_superadmin(''5eed0000-0000-4000-8000-000000000013'', true)',
 		'select public.plateforme_journal_liste()',
-		'select public.plateforme_utilisateurs()'
+		'select public.plateforme_utilisateurs()',
+		'select public.plateforme_tracks(''5eed0000-0000-4000-8000-000000000001'')'
 	];
 	appel text;
 	refus integer := 0;
@@ -139,7 +142,7 @@ select is(
 	  join pg_catalog.pg_namespace n on n.oid = p.pronamespace
 	 where n.nspname = 'public' and p.proname like 'plateforme\_%'
 	   and p.prosecdef and p.proconfig @> array['search_path=""']),
-	15, 'les quinze fonctions plateforme_* sont SECURITY DEFINER à search_path vide');
+	16, 'les seize fonctions plateforme_* sont SECURITY DEFINER à search_path vide');
 
 select is(
 	(select pg_catalog.count(*)::integer from pg_catalog.pg_proc p
@@ -147,7 +150,7 @@ select is(
 	 where n.nspname = 'public' and (p.proname like 'plateforme\_%' or p.proname = 'est_superadmin')
 	   and has_function_privilege('authenticated', p.oid, 'execute')
 	   and not has_function_privilege('anon', p.oid, 'execute')),
-	16, 'les seize fonctions sont exécutables par authenticated, jamais par anon');
+	17, 'les dix-sept fonctions sont exécutables par authenticated, jamais par anon');
 
 select ok(
 	not has_function_privilege('authenticated',
@@ -174,17 +177,17 @@ select ok(
 -- =============================================================================================
 
 select pg_temp.anonyme();
-select is(pg_temp.refus_de_la_garde(), 15, 'l''anonyme est refusé par les quinze fonctions');
+select is(pg_temp.refus_de_la_garde(), 16, 'l''anonyme est refusé par les seize fonctions');
 select pg_temp.redevenir_proprietaire();
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013');
-select is(pg_temp.refus_de_la_garde(), 15, 'la lectrice est refusée par les quinze fonctions');
+select is(pg_temp.refus_de_la_garde(), 16, 'la lectrice est refusée par les seize fonctions');
 select is(public.est_superadmin(), false, 'est_superadmin() est faux pour la lectrice');
 select pg_temp.redevenir_proprietaire();
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
-select is(pg_temp.refus_de_la_garde(), 15,
-	'l''administratrice d''espace est refusée par les quinze fonctions : un pouvoir d''espace n''est pas de plateforme');
+select is(pg_temp.refus_de_la_garde(), 16,
+	'l''administratrice d''espace est refusée par les seize fonctions : un pouvoir d''espace n''est pas de plateforme');
 select pg_temp.redevenir_proprietaire();
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013', true);

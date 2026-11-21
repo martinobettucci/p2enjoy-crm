@@ -1542,6 +1542,19 @@ fonction nouvelle (`plateforme_tracks`), une reprise (`move_track`, qui écrit a
 Avec un seul espace en production, l'arrivée ne propose aucun choix. **Retour arrière** : la webapp précédente ; puis
 comme le dit `docs/SCHEMA.md` « Migration `0198` ».
 
+### 2.71 `CRM-162` T3 — l'ancienne adresse d'un track déplacé, le manuel (EN ATTENTE, avec les §2.69 et §2.70)
+
+`docs/SPEC-deplacement-track.md` §12, §14 ; `docs/manual.md` §32.6 bis. **Aucune migration, aucune variable, aucun secret** ;
+le seed (« Studio Lumen » et ses homonymes, `docs/SPEC-seed.md` §54) ne vaut que pour le développement.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer la webapp | session de livraison | la même que celle des §2.69 et §2.70 ; la redirection lit `track_current_address` (la 197) et suppose le filtre par espace de `CRM-161` (21153c73) |
+| 2 | Publier le manuel | session de livraison | `scripts/manuel/publier.sh --spark` : la section 32.6 bis et ses sept images |
+| 3 | Constater | le responsable | la fiche de l'espace, sous le superadministrateur : le bloc « Tracks » ; le manuel : §32.6 bis et ses images. **Aucun déplacement n'est joué en production pour constater** : avec un seul espace, l'arrivée ne propose aucun choix |
+
+**Retour arrière** : la webapp et le manuel précédents.
+
 ## 3. Migrations en attente
 
 **La 195** (`CRM-161` T1, décisions 965 et 967), **en attente** : l'inbox d'un espace (§2.67, `docs/SCHEMA.md` « Migration `0195` »). Elle part avec la webapp, dans la même fenêtre.
