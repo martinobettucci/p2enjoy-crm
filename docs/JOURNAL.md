@@ -41884,3 +41884,24 @@ commande est attendue active, et le focus constaté avant la touche. Vert 10/10 
 ce sont la bande de temps et la rentabilité, au-dessus, qui finissaient de se lire après le défilement du cadrage. Sans lien
 avec la décision 975. **Preuve corrigée** : leurs marqueurs de fin de lecture et l'état vide de la relance sont attendus avant
 le cadrage. Rouge puis vert sur la même base, 3/3 rejoué seul, le fichier 7/7, l'image observée.
+
+### décision 977 — livrer le lot CRM-161 T1 et T2, CRM-162, INC-364 et CRM-163 à la révision `377ac6e5`
+
+*2026-11-21, session 4522fa9c (p2enjoy-crm-d5, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : `CRM-161` T1 et T2 (l'inbox, les tracks, les channels et les réglages cloisonnés à l'espace de l'adresse, le menu
+des espaces ; `0195`, `0196`), `CRM-162` entière (déplacer un track entre espaces ; `0197`, `0198`), INC-364 (le seed) et
+`CRM-163` (la passe des pastilles sur sa propre voie, le bail ; `0199`, `functions`) ; contrat §2.67 à §2.72 ; verrou
+`c2670b30`, élargi par la décision 973.
+**Première campagne** (à `0b20e341`, base recréée) : ui 24, api 29, mail 6, manuel 15, mcp 2, pgTAP 1 en échec — cause
+dominante : le second espace du seed (§55) faisait compter « l'espace de Camille » sans le nommer ; **trois défauts produits** de
+`CRM-161` trouvés et corrigés avec preuve rouge (décisions 974, 975, 976) ; les preuves bornées à leur espace (5f, f9).
+**Seconde campagne** (à `3b144a53`, base recréée deux fois) : types, unitaires, mail 57/57, mcp 126/126, pgTAP 173/5663
+verts ; ui 1313/1317, api 1405/1410, manuel 166/168 — INC-342 (webhooks, `inbox-lecture:109`, manuel 34) ou verts rejoués
+seuls (`connecteur-etiquettes`, `connecteur-organisations`, `demarrage`, `pastilles-evaluation` P3 contre le vrai modèle) ;
+deux preuves corrigées par 5f (`c395835a`, produit inchangé), rejouées 7/7 et 7/7. Garde du manuel 169 ; API manuel 9/9.
+Captures : 470 changées, 11 ajoutées, observées (`377ac6e5`). **Relevé, sans effet en production** (un seul espace) : à 390 px,
+le menu des espaces ne montre pas les non-lus.
+**Présenté au responsable** : un seul espace en production, donc aucun menu visible ; les adresses passent sous `/crm/…`, les
+anciennes redirigées ; slug `crm` relu, hors des réservés.
+**Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `377ac6e5` : migrations 195 à 199, webapp,
+redémarrage de `functions`, manuel.
