@@ -3466,7 +3466,7 @@ et les blocages sont perdus — les mails mis à la corbeille par un blocage y r
   `plateforme_creer_espace` de `0089`.
 - **Preuve** : pgTAP `0183`, rouge avant la migration ; `0084` inchangée et verte.
 
-### Migration — `CRM-162` T1 : déplacer un track entier d'un espace à un autre (spécifiée le 2026-11-21, avant le code ; numéro pris à la poussée, après celle de `CRM-161`)
+### Migration `0197` — `CRM-162` T1 : déplacer un track entier d'un espace à un autre (`0197_deplacement_track.sql` ; spécifiée le 2026-11-21, avant le code ; écrite le 2026-11-21)
 
 `docs/SPEC-deplacement-track.md` ; décisions 964, 966 et 968.
 
@@ -3479,8 +3479,26 @@ et les blocages sont perdus — les mails mis à la corbeille par un blocage y r
   text) returns jsonb` (une transaction) ; `public.track_current_address(text, text)` ; `app.move_message_to_workspace(uuid,
   uuid)` ; `public.classer_message_automatiquement` redéfinie (règle 1 bis, filiation par alias). Super-administrateur seul
   (`app.exiger_superadmin`) pour l'aperçu et le déplacement.
+- *Précisé au code* :
+  - **toutes les clés étrangères composites** deviennent `DEFERRABLE INITIALLY IMMEDIATE`, et non les seules qui portent
+    `workspace_id` : l'appariement d'un workflow réécrit aussi des couples (rattachement, workflow) et (workflow, étape) ;
+    rien ne change hors du déplacement, qui seul les diffère ;
+  - **dix-huit fonctions de déclencheurs** reprises de leur définition vivante, avec une garde en tête : sous le drapeau
+    `app.track_move = 'on'`, que seule la fonction de déplacement pose pour sa transaction, elles laissent passer ;
+  - `card_events_type_check` et `plateforme_journal_geste_check` admettent `track_moved` ;
+  - **les fonctions internes** : `app.track_move_scope`, `app.track_move_shared_workflows`, `app.workflow_signature`,
+    `app.track_move_matches`, `app.track_move_people`, `app.track_move_refusals`, `app.track_move_copy_workflow`,
+    `app.track_move_map_workflow` ; aucune n'est accordée à l'API ;
+  - **les lignes déplacées s'écrivent sans identité de requête** : un déclencheur qui pose son auteur les attribuerait sinon
+    au super-administrateur — relevé au premier essai, qui bloquait le retour ; le journal nomme l'acteur ;
+  - la clé d'un champ commun créé, si elle est prise à l'arrivée, est suffixée de quatre caractères (`-xxxx`, le motif de
+    `card_common_fields_key_check`).
+- **Preuves** : pgTAP `0184` (36 assertions) ; `0016`, `0019`, `0061`, `0062`, `0098` et `0133` révisées (une politique, un
+  type d'événement, des clés différables, deux fonctions « introuvable ») ; API `e2e/api/deplacement-track.spec.ts`.
 - **Retour arrière** : supprimer les fonctions nouvelles et les deux tables, redéfinir `classer_message_automatiquement` depuis
-  `0190` ; un track déjà déplacé reste où il est (le déplacement inverse le ramène).
+  `0190` et les dix-huit gardes depuis leurs migrations d'origine, reposer les deux contraintes ; les clés différables
+  peuvent le rester (sans effet hors d'un `set constraints`) ; un track déjà déplacé reste où il est (le déplacement inverse
+  le ramène).
 
 ### Migration `0193` — les pastilles cachées : le drapeau, Spam cochée, la liste de l'inbox et la recherche masquées — `CRM-159` T1 (`0193_pastilles_cachees.sql` ; spécifiée le 2026-11-20, avant le code)
 

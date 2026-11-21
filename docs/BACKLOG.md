@@ -20599,8 +20599,9 @@ session de livraison (décision 830).
 `docs/SPEC-seed.md` §54 (« Studio Lumen », accordé avec `CRM-161`). Accordé avec `CRM-161` (5f) : elle migre en premier ;
 la redirection d'un track déplacé passe par `public.track_current_address` (§12), que sa route appelle.
 **Tranches** (`docs/SPEC-deplacement-track.md` §16) :
-- [ ] **T1** — migration (alias, `track_moves`, aperçu, déplacement, redirection, règle 1 bis) ; pgTAP ; API ; SCHEMA, DAT ;
-  contrat ;
+- [x] **T1** — migration (alias, `track_moves`, aperçu, déplacement, redirection, règle 1 bis) ; pgTAP ; API ; SCHEMA, DAT ;
+  contrat ; *faite le 2026-11-21* (migration `0197`, pgTAP `0184` 36 assertions, six pgTAP révisées, API `deplacement-track`
+  4/4, contrat §2.69) ;
 - [ ] **T2** — l'écran (le bloc « Tracks », l'aperçu, la saisie, les refus, le journal, les objectifs) ; unitaires ; E2E ;
   captures ;
 - [ ] **T3** — le seed §54, le manuel, le contrat, l'adresse redirigée (après `CRM-161`) ; l'unité passe `[P]`.

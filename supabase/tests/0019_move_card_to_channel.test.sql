@@ -256,6 +256,8 @@ select ok(
 -- RÉVISÉE LE 2026-11-11 PAR `CRM-138` TRANCHE T1 — TREIZIÈME ÉVOLUTION. `mail_deleted` et `mail_restored` portent
 -- l'énumération à VINGT-HUIT (docs/SPEC-mail-subsystem.md §29.3, §29.4, décision 917), dans la migration qui les écrit
 -- (0180), en queue. Aucune valeur retirée.
+-- RÉVISÉE LE 2026-11-21 PAR `CRM-162` T1 — QUATORZIÈME ÉVOLUTION. `track_moved` porte l'énumération à VINGT-NEUF
+-- (docs/SPEC-deplacement-track.md §10), dans la migration qui l'écrit (0197), en queue. Aucune valeur retirée.
 
 select is(
 	(select pg_get_constraintdef(c.oid) from pg_constraint c
@@ -268,10 +270,10 @@ select is(
 	'''stalled''::text, ''contact_linked''::text, ''contact_unlinked''::text, '
 	'''contact_role_changed''::text, ''checklist_checked''::text, ''checklist_unchecked''::text, '
 	'''label_added''::text, ''label_removed''::text, ''attached''::text, ''detached''::text, ''mail_cancelled''::text, '
-	'''mail_deleted''::text, ''mail_restored''::text])))',
-	'Le `CHECK` compte VINGT-HUIT valeurs : `CRM-138` tranche T1 ajoute l''effacement et la restauration d''un message sans '
-	'retirer aucune des vingt-six précédentes. Le garde-fou historique ÉVOLUE avec '
-	'le vocabulaire au lieu de figer un état périmé — et c''est la TREIZIÈME fois qu''il le fait');
+	'''mail_deleted''::text, ''mail_restored''::text, ''track_moved''::text])))',
+	'Le `CHECK` compte VINGT-NEUF valeurs : `CRM-162` T1 ajoute le déplacement d''un track (docs/SPEC-deplacement-track.md '
+	'§10) sans retirer aucune des vingt-huit précédentes. Le garde-fou historique ÉVOLUE avec '
+	'le vocabulaire au lieu de figer un état périmé — et c''est la QUATORZIÈME fois qu''il le fait');
 
 -- LE MÉCANISME A JOUÉ UNE FOIS DE PLUS. `CRM-058` a étendu l'énumération dans la même migration
 -- que son écriture, exactement comme l'assertion le lui demandait. Elle est donc RETOURNÉE : le

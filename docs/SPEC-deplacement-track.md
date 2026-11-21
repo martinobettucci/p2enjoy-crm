@@ -142,6 +142,12 @@ Un compte supprimé (référence nulle) ne compte pas.
 6. **Les alias d'adresse** (§8), le **journal** et l'**événement** de chaque affaire (§10).
 7. Rend le compte de ce qui a été déplacé, réutilisé et créé (la forme de `counts` et de `referentials`).
 
+*Précisé au code de T1* : **les lignes déplacées s'écrivent sans identité de requête** — la fonction garde l'acteur, puis
+vide `request.jwt.claims` pour la transaction : un déclencheur qui pose son auteur (`updated_by := auth.uid()`) aurait
+attribué les valeurs déplacées au super-administrateur, qui serait devenu une « personne citée » et aurait bloqué le retour
+(relevé au premier essai) ; le journal, la trace et les référentiels créés nomment l'acteur gardé. L'événement
+`track_moved` ne compte pas comme une citation (§4).
+
 **Les déclencheurs** (décision 969) : le déplacement pose `app.track_move = 'on'` pour sa transaction (`set_config(…, true)`).
 Les gardes qui refusent un changement d'espace — `card_events_refuser_maj`, `workflow_versions_refuser_mutation`,
 `card_comments_avant_maj`, `card_activities_avant_maj`, `card_checklist_items_before`, `saisies_temps_auteur`,
@@ -173,7 +179,10 @@ Une étape cite son nœud ; il est apparié par sa `key`, sinon créé.
 
 - **Propre au track** : il suit le track (§3.1).
 - **Commun à l'espace**, utilisé par un channel déplacé : **réutilisé** si l'arrivée a un workflow d'espace **du même nom
-  et identique** — mêmes étapes (par nom et par nœud apparié), mêmes champs de formulaire (par nom et par type) ; **sinon
+  et identique** — mêmes étapes (par nom et par nœud apparié), mêmes champs de formulaire (par nom et par type) ;
+  *précisé au code* : la signature compare, dans l'ordre des étapes, la clé du nœud, le libellé propre et les points de
+  checklist de chaque étape, puis les champs par clé et par type (`app.workflow_signature`) — un point de checklist d'une
+  affaire désigne un point de son étape ; **sinon
   copié** à l'arrivée, avec tout son graphe, sous son nom, ou suffixé du nom de l'espace de départ si le nom y est pris par
   un workflow différent (décision 968). Réutilisé, les étapes courantes et les valeurs des affaires sont réécrites vers les
   étapes et les champs homonymes ; copié, vers ceux de la copie. Aucune affaire ne perd son étape ni ses valeurs.

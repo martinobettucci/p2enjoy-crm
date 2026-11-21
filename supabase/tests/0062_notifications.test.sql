@@ -171,7 +171,9 @@ select is(
 	(select pg_catalog.pg_get_constraintdef(c.oid) from pg_catalog.pg_constraint c
 	  where c.conrelid = 'public.notifications'::regclass
 	    and c.conname  = 'notifications_subject_card_id_workspace_id_fkey'),
-	'FOREIGN KEY (subject_card_id, workspace_id) REFERENCES cards(id, workspace_id) ON DELETE CASCADE',
+	-- RÉVISÉ PAR `CRM-162` T1 (migration 0197, décision 969), non relâché : toute clé composite devient différable — rien
+	-- ne change hors du déplacement d'un track, qui seul la diffère (docs/SPEC-deplacement-track.md §6).
+	'FOREIGN KEY (subject_card_id, workspace_id) REFERENCES cards(id, workspace_id) ON DELETE CASCADE DEFERRABLE',
 	'CRM-064 §13.6 — clé COMPOSITE : une notification dont l''affaire vit dans un AUTRE espace '
 	'qu''elle est impossible, même par la clé de service, qui contourne la RLS mais pas les '
 	'contraintes');

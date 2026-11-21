@@ -175,9 +175,15 @@ type Expect<T extends true> = T
 // à un membre, et les expéditeurs bloqués d'un espace. CE QUI ÉCHAPPE AU GÉNÉRATEUR : `authenticated` ne les écrit pas — les
 // fonctions `transfer_message`, `remove_message_transfer`, `block_sender` et `unblock_sender` sont les seuls chemins ;
 // `address` est en minuscules, sans blancs (docs/SPEC-mail-subsystem.md §32.7, §32.8).
+// `card_address_aliases` et `track_moves`, LIVRÉES PAR `CRM-162` T1 (migration `0197`) : l'ancienne adresse d'une affaire
+// déplacée, et la trace de chaque déplacement d'un track. CE QUI ÉCHAPPE AU GÉNÉRATEUR : `authenticated` n'écrit ni l'une
+// ni l'autre — `move_track` est le seul chemin — et ne lit pas les alias ; il lit un déplacement s'il lit le track
+// (docs/SPEC-deplacement-track.md §8, §10).
 type _tables = Expect<
   Equal<
     keyof Database['public']['Tables'],
+    | 'card_address_aliases'
+    | 'track_moves'
     | 'mail_message_transfers'
     | 'mail_blocked_senders'
     | 'mcp_prompts'
@@ -1333,9 +1339,16 @@ type _vueDerivationColonnes = Expect<
 // ajoute `inbox_unread_by_workspace`, les non-lus de chaque espace (§35.4). CE QUI ÉCHAPPE AU GÉNÉRATEUR : le refus
 // `workspace_required` d'un espace nul ; la portée des actions groupées exige `workspace_id` (§35.3). Le compte s'accroît
 // d'une.
+// `0197` de CRM-162, TRANCHE T1, ajoute `track_move_preview` et `move_track`, SECURITY DEFINER, au super-administrateur
+// seul, et `track_current_address`, SECURITY INVOKER (docs/SPEC-deplacement-track.md §5, §6, §12). CE QUI ÉCHAPPE AU
+// GÉNÉRATEUR : la forme des `jsonb` rendus ; les refus `forbidden`, `track_not_found`, `workspace_not_found`,
+// `confirmation_mismatch` et `track_move_refused` (sa liste dans `details`). Le compte s'accroît de trois.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'track_move_preview'
+    | 'move_track'
+    | 'track_current_address'
     | 'inbox_messages'
     | 'inbox_hidden_counts'
     | 'inbox_unread_by_workspace'

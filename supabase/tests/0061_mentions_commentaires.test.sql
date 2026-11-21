@@ -111,7 +111,9 @@ select is(
 	(select pg_catalog.pg_get_constraintdef(c.oid) from pg_catalog.pg_constraint c
 	  where c.conrelid = 'public.card_comment_mentions'::regclass
 	    and c.conname  = 'card_comment_mentions_comment_id_workspace_id_fkey'),
-	'FOREIGN KEY (comment_id, workspace_id) REFERENCES card_comments(id, workspace_id) ON DELETE CASCADE',
+	-- RÉVISÉ PAR `CRM-162` T1 (migration 0197, décision 969), non relâché : toute clé composite devient différable — rien
+	-- ne change hors du déplacement d'un track, qui seul la diffère (docs/SPEC-deplacement-track.md §6).
+	'FOREIGN KEY (comment_id, workspace_id) REFERENCES card_comments(id, workspace_id) ON DELETE CASCADE DEFERRABLE',
 	'CRM-064 §4.2 — clé composite vers `card_comments (id, workspace_id)` : une mention dont le '
 	'workspace diffère de celui de son commentaire est impossible, même par la clé de service');
 
@@ -294,8 +296,10 @@ select is(
 -- profil et channel par channel.
 
 select is(
+	-- RÉVISÉE PAR `CRM-161` T2.b (décision 51) : les channels de l'ESPACE DU SEED — Camille lit aussi celui de « Studio Lumen »
+	-- (§55), dont elle est administratrice.
 	(select count(*) from public.channels ch
-	  where app.can_read_channel_pour(ch.id, pg_temp.p_admin())),
+	  where ch.workspace_id = '5eed0000-0000-4000-8000-000000000001' and app.can_read_channel_pour(ch.id, pg_temp.p_admin())),
 	-- RÉVISÉE PAR `CRM-068` T3a (décision 51) : le channel « Checklists » du track `studio-web` (`docs/SPEC-seed.md` §28)
 	-- porte le jeu à neuf channels, que la lectrice lit comme le reste de `studio-web`.
 	9::bigint,

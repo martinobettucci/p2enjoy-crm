@@ -99,8 +99,10 @@ select is(
 	-- RÉVISÉ PAR `CRM-156` T2 (migration 0190), non relâché : `app.transferer_message` (`message_not_found`) et
 	-- `remove_message_transfer` (`transfer_not_found`) lèvent par ce chemin (docs/SPEC-mail-subsystem.md §32.7) ;
 	-- `pgTAP 0178` les éprouve.
-	44,
-	'5 — les vingt-sept fonctions « introuvable » de CRM-120, les deux de CRM-127, celle de CRM-112, les deux de CRM-128 (`send_email_draft`, `discard_email_draft`), celle de CRM-135 (`mail_inbound_account_record_poll_failure`), celle de CRM-137 (`classification_candidates`) et celle de CRM-143 (`acknowledge_unscanned_attachment`) et les deux de CRM-144 (`cancel_outbound_email`, `retry_outbound_email`) et les deux de CRM-138 (`delete_message`, `restore_message`) et les trois de CRM-141 (`app.label_gesture_guard`, `set_message_label`, `record_label_evaluation`) et les deux de CRM-156 (`app.transferer_message`, `remove_message_transfer`) lèvent par `app.raise_http_error(404, …)`');
+	-- RÉVISÉ PAR `CRM-162` T1 (migration 0197, décision 51), non relâché : `track_move_preview` et `move_track` refusent un track ou un espace
+	-- inconnu par ce chemin (`track_not_found`, `workspace_not_found`, docs/SPEC-deplacement-track.md §5, §6) ; `pgTAP 0184`.
+	46,
+	'5 — les vingt-sept fonctions « introuvable » de CRM-120, les deux de CRM-127, celle de CRM-112, les deux de CRM-128 (`send_email_draft`, `discard_email_draft`), celle de CRM-135 (`mail_inbound_account_record_poll_failure`), celle de CRM-137 (`classification_candidates`) et celle de CRM-143 (`acknowledge_unscanned_attachment`) et les deux de CRM-144 (`cancel_outbound_email`, `retry_outbound_email`) et les deux de CRM-138 (`delete_message`, `restore_message`) et les trois de CRM-141 (`app.label_gesture_guard`, `set_message_label`, `record_label_evaluation`) et les deux de CRM-156 (`app.transferer_message`, `remove_message_transfer`) et les deux de CRM-162 (`track_move_preview`, `move_track`) lèvent par `app.raise_http_error(404, …)`');
 
 select ok(
 	(select p.prosrc ~ 'app\.raise_http_error\(404, ''account_not_found''\)'

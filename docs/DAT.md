@@ -1270,6 +1270,28 @@ reste la seule garantie (`CLAUDE.md` §10) : une capacité lue au chargement peu
 l'écran traduit alors le refus comme avant. Garde de source : `commandes-refusees.test.ts` (INC-279) interdit qu'un
 `disabled` posé après la capacité ne la rallume.
 
+## 7 quinquies. Déplacer un track d'un espace à un autre — composants et flux (`CRM-162`)
+
+*Écrit le 2026-11-21 avec le code de T1.* `docs/SPEC-deplacement-track.md` ; `docs/SCHEMA.md` « Migration `0197` ».
+
+- **Le geste est en base, en une transaction** : `public.move_track`, `SECURITY DEFINER`, au super-administrateur seul. Il
+  recalcule les refus de l'aperçu (`public.track_move_preview`), apparie ou crée les référentiels à l'arrivée, puis réécrit
+  l'espace de chaque ligne du périmètre, des parents aux enfants. Les clés composites sont **différées** pour la seule
+  transaction, puis contrôlées avant la fin (`set constraints all immediate`) : une violation est un refus lisible, pas un
+  échec au commit.
+- **Les gardes des déclencheurs** — l'immuabilité de l'historique, l'identité d'un commentaire ou d'une saisie — lisent le
+  drapeau de transaction `app.track_move` et laissent passer le seul déplacement. Le patron est celui des drapeaux
+  `app.trash_purge` et `app.common_value_tsv_recompute`. Le drapeau n'est posé que par des fonctions `SECURITY DEFINER`, pour
+  leur transaction.
+- **L'ancienne adresse d'une affaire** reste servie : le serveur de messagerie remet toujours ses mails à la boîte de l'espace
+  quitté ; le classement (`classer_message_automatiquement`, règle 1 bis) y lit l'alias (`card_address_aliases`) et fait
+  passer le mail dans l'espace de l'affaire (`app.move_message_to_workspace`).
+- **La redirection d'une adresse de l'application** (décision 967, `CRM-161`) lit `track_moves` par
+  `public.track_current_address`, sous la RLS du track.
+- **Compromis connus** : les référentiels créés à l'arrivée y restent après un retour ; un workflow commun non identique est
+  copié sans ses versions publiées, ses modèles ni ses suggestions ; le geste verrouille le track, ses channels et ses
+  affaires le temps de la transaction.
+
 ## 8. Chiffrement des secrets
 
 Les mots de passe IMAP/SMTP sont chiffrés via **Supabase Vault** : l'application ne stocke

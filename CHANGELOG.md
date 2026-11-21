@@ -13,6 +13,11 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+- **CRM-162 T1 — déplacer un track entier d'un espace à un autre, en base** (migration 197, décisions 964, 966, 968, 969
+  et 972). Au super-administrateur seul : un aperçu chiffré (ce qui part, les référentiels réutilisés ou créés, la valeur
+  des temps au départ et à l'arrivée, les mails déjà présents, les refus listés), puis le déplacement en une transaction,
+  confirmé par le nom du track et journalisé. L'ancienne adresse d'une affaire continue d'aboutir ; l'ancienne adresse du
+  track se résout en sa nouvelle ; le déplacement inverse rend l'état de départ.
 - **`CRM-161` T1 — l'inbox d'un espace.** Un membre de plusieurs espaces voyait, dans « Non classés » et dans les compteurs de
   l'inbox, les mails de tous ses espaces. La base ne rend plus que l'espace demandé :
   - la liste, la mention des fils masqués et l'arborescence prennent l'espace, obligatoire (migration `0195`) ;

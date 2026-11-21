@@ -59,7 +59,8 @@ select col_not_null('public', 'card_sequence_enrollments', 'placement_id',
 select is(
 	(select array_agg(conname::text order by conname) from pg_constraint
 	  where conname in ('card_field_values_placement_card_fk', 'card_sequence_enrollments_placement_fk')
-	    and pg_get_constraintdef(oid) like '%REFERENCES card_placements(id, card_id) ON DELETE CASCADE'),
+	    -- RÉVISÉ PAR `CRM-162` T1 (migration 0197, décision 969), non relâché : la clé composite est différable.
+	    and pg_get_constraintdef(oid) like '%REFERENCES card_placements(id, card_id) ON DELETE CASCADE DEFERRABLE'),
 	array['card_field_values_placement_card_fk', 'card_sequence_enrollments_placement_fk'],
 	'les deux clés `(placement_id, card_id)` : le rattachement désigné est un rattachement de LA MÊME affaire');
 select ok(not exists (select 1 from pg_constraint where conrelid = 'public.card_events'::regclass and contype = 'f'

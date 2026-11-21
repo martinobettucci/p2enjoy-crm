@@ -1509,11 +1509,31 @@ qu'elle n'a qu'un espace.
 (T4 la reprendra).
 **Retour arrière** : la webapp précédente ; la contrainte se retire sans perte (`docs/SCHEMA.md` « Migration `0196` »).
 
+### 2.69 `CRM-162` T1, décisions 964, 966, 968, 969 et 972 — déplacer un track entier d'un espace à un autre, en base (EN ATTENTE)
+
+`docs/SPEC-deplacement-track.md` ; `docs/SCHEMA.md` « Migration `0197` ». Deux tables, sept fonctions nouvelles, dix-neuf
+reprises (dix-huit gardes de déclencheurs, le classement d'un mail entrant), deux contraintes élargies, **toutes les clés
+étrangères composites rendues différables** (`DEFERRABLE INITIALLY IMMEDIATE`, sans revalidation) ; **aucune donnée,
+aucune variable, aucun secret**. Verrou bref sur les tables dont une contrainte change.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 197 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate` ; **après la 195 et la 196** (`CRM-161`) |
+| 2 | Constater | session de livraison, en lecture seule | le registre gagne une ligne, l'empreinte de la 197 égale celle du dépôt ; `select count(*) from pg_constraint where contype = 'f' and connamespace = 'public'::regnamespace and cardinality(conkey) > 1 and not condeferrable` vaut 0 ; `select to_regprocedure('public.move_track(uuid,uuid,text)') is not null` vrai |
+
+**Seule, elle ne change rien de visible** : le geste n'a pas encore d'écran (T2), et aucune donnée n'est déplacée. Le
+classement d'un mail entrant gagne la règle 1 bis, sans effet tant qu'aucun alias n'existe. **Avant ou avec la webapp de T2.**
+**Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0197` ».
+
 ## 3. Migrations en attente
 
 **La 195** (`CRM-161` T1, décisions 965 et 967), **en attente** : l'inbox d'un espace (§2.67, `docs/SCHEMA.md` « Migration `0195` »). Elle part avec la webapp, dans la même fenêtre.
 
 **La 196** (`CRM-161` T2.a, décision 967), **en attente** : les slugs d'espace réservés (§2.68). Elle part avec la 195 et la webapp.
+
+**La 197** (`CRM-162` T1, décisions 964, 966, 968, 969 et 972), **en attente** : le déplacement d'un track entre espaces (§2.69,
+`docs/SCHEMA.md` « Migration `0197` »). **Après la 196.** Avant ou avec la webapp de `CRM-162` T2. Aucun geste préalable du
+responsable.
 
 **Aucune migration en attente depuis la fenêtre du 2026-11-21** : la 193 et la 194 ont été appliquées par elle (révision `dd9ac2c3`, décision 962) ; registre à **192** lignes. *Historique de l'attente* — les paragraphes qui suivent décrivent la 193 et la 194 telles qu'elles attendaient.
 

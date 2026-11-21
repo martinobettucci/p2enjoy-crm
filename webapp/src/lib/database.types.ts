@@ -323,6 +323,42 @@ export type Database = {
           },
         ]
       }
+      card_address_aliases: {
+        Row: {
+          card_id: string
+          created_at: string
+          email_local_part: string
+          workspace_id: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          email_local_part: string
+          workspace_id: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          email_local_part?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_address_aliases_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_address_aliases_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_checklist_items: {
         Row: {
           card_id: string
@@ -4429,6 +4465,65 @@ export type Database = {
           },
         ]
       }
+      track_moves: {
+        Row: {
+          from_workspace_id: string
+          id: number
+          moved_at: string
+          moved_by: string | null
+          to_workspace_id: string
+          track_id: string
+          track_slug: string
+        }
+        Insert: {
+          from_workspace_id: string
+          id?: never
+          moved_at?: string
+          moved_by?: string | null
+          to_workspace_id: string
+          track_id: string
+          track_slug: string
+        }
+        Update: {
+          from_workspace_id?: string
+          id?: never
+          moved_at?: string
+          moved_by?: string | null
+          to_workspace_id?: string
+          track_id?: string
+          track_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "track_moves_from_workspace_id_fkey"
+            columns: ["from_workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "track_moves_moved_by_fkey"
+            columns: ["moved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "track_moves_to_workspace_id_fkey"
+            columns: ["to_workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "track_moves_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tracks: {
         Row: {
           archived_at: string | null
@@ -6057,6 +6152,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      move_track: {
+        Args: {
+          p_confirm_name: string
+          p_target_workspace_id: string
+          p_track_id: string
+        }
+        Returns: Json
+      }
       occupation_du_workflow: { Args: { p_workflow: string }; Returns: Json }
       organization_list: {
         Args: {
@@ -6604,6 +6707,17 @@ export type Database = {
           shared: boolean
           track_id: string
         }[]
+      }
+      track_current_address: {
+        Args: { p_track_slug: string; p_workspace_slug: string }
+        Returns: {
+          track_slug: string
+          workspace_slug: string
+        }[]
+      }
+      track_move_preview: {
+        Args: { p_target_workspace_id: string; p_track_id: string }
+        Returns: Json
       }
       transfer_message: {
         Args: { p_message_id: string; p_recipient_id: string }
