@@ -41367,3 +41367,30 @@ les réponses reçues dans une affaire paraissent dans « Seulement moi » de qu
 migrations 193 et 194, image `mcp` reconstruite dans la fenêtre) ; registre à 192, Spam cachée, `concerns_me` lit
 `card_placements` ; `verifier.sh` 35/36 (INC-277) ; manuel publié ; contrat §2.65 et §2.66 LIVRÉES, §3 et §8, changelog en
 [Publié], backlog ; verrou levé.
+
+### décision 963 — `CRM-161` : tout est cloisonné à l'espace courant, sauf la cloche et la recherche ; en base ; le connecteur audité
+
+*2026-11-21, session 4522fa9c (p2enjoy-crm-d5, session de livraison), arbitrages du responsable (`AskUserQuestion`), avant la
+spécification.*
+**Le problème** : l'inbox d'un membre de plusieurs espaces montre les mails de tous ses espaces ; d'autres écrans ne lisent pas
+l'espace courant (constat dans `CRM-161`).
+**Décisions** :
+- **tout est cloisonné à l'espace courant**, **sauf la cloche des notifications et la recherche globale**, qui couvrent tous
+  les espaces avec le nom de l'espace sur chaque élément ; écartés : tout cloisonné ; seule la cloche exceptée ;
+- **appliqué en base** : les lectures prennent l'espace et n'en rendent pas d'autre ; écarté : par les écrans seulement ;
+- **connecteur MCP** — question 1 : **oui, vérifier et aligner** ; écarté : non. Question 2 : d'abord répondue « sans objet »,
+  contradiction relevée et reposée : **familles existantes** ; écartée : une famille nouvelle.
+- La frontière global / espace pour le coût du personnel, les temps saisis et les objectifs reste ouverte (décision 964).
+
+### décision 964 — `CRM-162` : déplacer un track entre espaces, par le super-administrateur ; arbitrages partiels
+
+*2026-11-21, session 4522fa9c (p2enjoy-crm-d5, session de livraison), arbitrages du responsable (`AskUserQuestion`).*
+**Décisions** : le super-administrateur seul (écarté : l'administrateur des deux espaces) ; une affaire aussi rattachée à un
+track qui reste : refus et liste (écartés : l'affaire part et ses autres rattachements tombent ; l'affaire reste et perd le
+rattachement) ; les référentiels retrouvés par nom, sinon créés (écartés : toujours copier ; refuser s'il en manque) ; une
+personne non membre de l'arrivée : refus et liste (écartés : l'ajouter comme membre ; retirer ses rôles) ; les mails suivent,
+l'ancienne adresse continue d'aboutir (écartés : nouvelle adresse seule ; les mails restent au départ) ; confirmation par
+aperçu et saisie du nom du track (écarté : un bouton) ; **connecteur MCP — question 1 : non ; question 2 : sans objet**.
+**Ouvert** : le responsable veut réfléchir avec la session à **ce qui est global** — coût du personnel, objectifs, temps saisis,
+aujourd'hui propres à un espace — avant de dire ce qui suit le track ; les relances armées et envois en file : sans
+préférence. **La spécification de `CRM-162` attend ces réponses.**

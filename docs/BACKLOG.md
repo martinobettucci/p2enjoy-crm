@@ -20466,3 +20466,62 @@ campagne complète revient à la session de livraison (décision 830).
 - **Ce que cette session n'a pas joué** : la campagne complète, qui revient à la session de livraison (décision 830).
 - [P] **Livraison et constat** : `docs/PROD_MIGRATIONS.md` §2.66, soit la migration 194, la webapp, l'image `mcp` et le
   manuel. Il reste le constat du responsable dans « Seulement moi ».
+
+### CRM-161 — Tout est cloisonné à l'espace courant : l'inbox d'abord, puis chaque écran, appliqué en base `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-21 ; arbitrée le même jour (décision 963).
+**Demande, verbatim** : « le inbox ne semble pas être contenu au workspace. en fait tout est contenu au workspace. d'ailleurs on
+set un mail entrant par workspace donc lorsque je suis sur un workspace, je veux voir le mails reçue par ce workspace et pareille
+pour toute autre ressource. »
+**Constat** (session de livraison, lecture du code, 2026-11-21) : `public.inbox_messages`, `inbox_arborescence` et
+`inbox_hidden_counts` (`0193`) ne prennent **aucun espace** : seule la RLS filtre, et elle rend tous les espaces dont la
+personne est membre. La webapp ne lit l'espace courant (`ContexteEspace.idWorkspace`) dans l'inbox que pour les pastilles.
+Écrans relevés sans lecture de l'espace courant : l'inbox (liste, arborescence, corbeille de l'inbox), `Board`, `MaJournee`,
+`AffairesFigees`, les écrans de coûts (`CoutsASaisir`, `CoutsBudget`, `CoutsTrack`, `CoutsWorkspace`), `Notifications` — liste
+à confirmer par l'audit de l'unité.
+**Comportement attendu** (décision 963) :
+- (i) **sur un espace, on ne voit que ce qui appartient à cet espace** : l'inbox (ses mails, ses dossiers, ses compteurs, sa
+  corbeille), le board, Ma journée, les affaires figées, les coûts, et toute autre ressource ; pour voir un autre espace, on
+  change d'espace ;
+- (ii) **exceptions** : la **cloche des notifications** et la **recherche globale** couvrent tous les espaces de la personne,
+  **chaque élément portant le nom de son espace** ;
+- (iii) **appliqué en base** : les fonctions de lecture prennent l'espace en paramètre et n'en rendent pas d'autre ; une
+  requête directe le prouve (`CLAUDE.md` §10) ; ce n'est pas une règle d'accès nouvelle — la RLS reste la règle d'accès ;
+- (iv) **la frontière entre ce qui est d'un espace et ce qui est global** (coût du personnel, temps saisis, objectifs) est
+  **en réflexion avec le responsable** (voir `CRM-162`) : l'audit de l'unité ne tranche pas ces trois-là seul.
+**Connecteur MCP** : **oui, vérifier et aligner ; familles existantes** (décision 963) — l'audit couvre chaque outil ; un outil
+qui lirait plusieurs espaces sans le dire est aligné sur un espace ; la liste des espaces et la recherche globale restent
+multi-espaces ; aucune case ni famille nouvelle.
+**Spécification** : à écrire avant le code — un inventaire écran par écran et outil par outil (ce qui lit quoi, avec quel
+espace), puis le découpage en tranches ; `docs/DAT.md`, `docs/SPEC-mail-subsystem.md` (l'inbox), `docs/SPEC-mcp.md`, le
+manuel, le contrat.
+**DoD** : pour chaque lecture corrigée, une preuve rouge avant (un membre de deux espaces voit l'autre espace) puis verte ;
+pgTAP et API par requête directe ; E2E souris et clavier sur un compte membre de deux espaces ; seed : un compte membre de
+deux espaces, avec des mails dans chacun ; captures observées ; manuel ; contrat. La campagne complète revient à la session de
+livraison (décision 830).
+
+### CRM-162 — Déplacer un track entier d'un espace à un autre, par le super-administrateur `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-21 (« on devrait pouvoir et depuis exclusivement le admin, bouger des tracks
+entiers entre workspaces (pose moi toutes les questions pour bien le faire) ») ; arbitrages **partiels** le même jour (décision
+964). **Spécification bloquée** tant que les questions ouvertes ci-dessous ne sont pas tranchées.
+**Décidé** (décision 964) :
+- **le super-administrateur seul**, depuis Plateforme ▸ Espaces ;
+- une **affaire aussi rattachée à un track qui reste** au départ : **refus**, et l'aperçu liste ces affaires ;
+- les **référentiels** d'espace utilisés (étiquettes, champs personnalisés, workflows, contacts et organisations, pastilles) :
+  **retrouvés par nom** dans l'espace d'arrivée, **sinon créés** ; l'aperçu dit ce qui est réutilisé et ce qui est créé ;
+- une **personne du track non membre** de l'espace d'arrivée : **refus**, et l'aperçu la liste ; aucun accès ouvert
+  implicitement ;
+- les **mails** rattachés **suivent** leurs affaires ; l'affaire prend une adresse du domaine d'arrivée et **l'ancienne adresse
+  continue d'aboutir** à la même affaire ;
+- **confirmation** : un aperçu chiffré, puis la **saisie du nom du track** ; le geste est journalisé et se défait par un
+  déplacement inverse ;
+- **connecteur MCP : non** — geste rare de super-administrateur, dans l'interface seule.
+**Ouvert, à réfléchir avec le responsable** :
+- **ce qui est global et ce qui est d'un espace** : le responsable relève que le **coût du personnel**, les **objectifs** et
+  les **temps saisis** sont « effectivement globaux ». Aujourd'hui ils sont **propres à un espace** : `couts_personnel`
+  (`workspace_id`, `profile_id`), `saisies_temps` (`workspace_id`, sur un track, un channel ou une affaire), `goal_boards`
+  (`workspace_id`, des blocs qui peuvent citer un channel) ; les `budgets` sont portés par un track. La réponse décide ce qui
+  suit le track, et touche aussi `CRM-161` ;
+- les **relances armées et les envois en file** sur des affaires du track (identité d'envoi de l'espace de départ) : sans
+  préférence exprimée — refuser et lister, ou les arrêter d'office.
