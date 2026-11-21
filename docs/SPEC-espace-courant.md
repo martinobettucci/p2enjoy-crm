@@ -302,3 +302,116 @@ change** (demande de la session de livraison, 2026-11-21).
 
 Chaque tranche est spécifiée en détail (ses textes, ses refus, ses preuves nommées) **avant son code**, dans les chapitres cités,
 et signalée prête à la session de livraison.
+
+## 15. La tranche T2 en détail
+
+*Écrit le 2026-11-21, avant le code de T2, après la lecture ciblée du design system (décision 970 : §1 à §4, §5.43,
+§5.62, §6 à §12) et de la coquille (`AppShell.tsx`, `FilAriane.tsx`, `Sidebar.tsx`, `RouteTrack.tsx`, `chemins.ts`,
+`routes.tsx`). Livrée avec T1 en un seul lot (accord de la session de livraison, 2026-11-21) ; T3 à T5 forment le second lot.*
+
+T2 se découpe en deux sous-tranches, chacune laissant verte la suite de son périmètre :
+
+- **T2.a — l'adresse** : l'espace en tête du chemin, l'espace courant tiré de l'adresse, les anciennes adresses redirigées,
+  la barre latérale et les écrans d'un espace sur cet espace, les liens composés par un seul module, les slugs réservés, et
+  les `goto` des E2E révisés. **Aucun changement visible** pour une personne d'un seul espace, hors l'adresse.
+- **T2.b — le menu des espaces** : le menu et ses non-lus, la bascule annoncée, le seed (§55), le design system, les E2E et
+  captures sur un compte de deux espaces, le manuel.
+
+### 15.1 Les routes (T2.a)
+
+- Les routes des pages d'un espace (§8.1) sont déclarées sous **`/:slugEspace/`** : `inbox`, `tracks/:slugTrack`,
+  `tracks/:slugTrack/:slugChannel`, `…/liste`, `…/cards/:idCard`, `tracks/:slugTrack/couts`, `…/couts/:idBudget`, `reglages`
+  et chacune des routes `reglages/…`. Les routes globales et la plateforme ne changent pas.
+- **Les slugs réservés.** Un espace dont le slug serait un premier segment d'une route globale (`aide`, `plateforme`,
+  `contacts`, `objectifs`, `couts`, `pilotage`, `temps`, `rentabilite`, `ma-journee`, `affaires-figees`, `demarrage`,
+  `connexion`, `auth`, et les anciens premiers segments `inbox`, `tracks`, `reglages`) rendrait une adresse ambiguë. Une
+  migration ajoute à `workspaces` la contrainte **`workspaces_slug_not_reserved`** ; la création d'un espace sur
+  Plateforme ▸ Espaces dit le refus en clair (« Ce nom d'adresse est réservé par l'application. Choisissez-en un autre. »).
+  Le seed (`p2enjoy`) et « Studio Lumen » (`studio-lumen`) n'en sont pas. *La contrainte est un choix de la spécification,
+  signalé au responsable dans le compte rendu de T2.a.*
+- **Le slug de l'adresse** est résolu parmi les espaces lus (`lireWorkspaces`) : inconnu, l'écran rend « Espace
+  introuvable » (`data-testid="espace-introuvable"`) et un lien vers le premier espace par nom (§8.3).
+
+### 15.2 L'espace courant de l'onglet (T2.a)
+
+- `ContexteEspace` gagne **`slugEspace`** et **`espaces`** (la liste lue, id, nom, slug), pour que chaque écran compose ses
+  liens sans relire.
+- **Sur une page d'un espace**, l'espace courant est celui de l'adresse.
+- **Sur une page globale**, c'est le dernier espace courant de l'onglet, tenu par un **module en mémoire vive**
+  (`webapp/src/lib/espace-onglet.ts`) : une variable du module, vivante tant que la page n'est pas rechargée, propre à
+  l'onglet par nature (chaque onglet a son propre contexte JavaScript), jamais écrite dans un stockage (`CLAUDE.md` §11) ;
+  à défaut, le premier espace par nom.
+- **Les écrans qui recalculaient le premier espace** (§3 : `Carnet`, `ListeOrganisations`, `Objectifs`, `Pilotage`,
+  `ImportCsv`, `ReglagesComptesMail`, `ReglagesIdentitesMail`, `ReglagesModelesEmails`, `ReglagesSequencesRelance`,
+  `AdministrationCatalogue`, `AdministrationWorkflows`, `AdministrationArborescence`) lisent **l'espace du contexte**. Pour les
+  pages globales parmi eux (`Carnet`, `ListeOrganisations`, `Objectifs`, `Pilotage`), c'est **l'état intermédiaire entre
+  les deux lots** : elles suivent l'espace courant de l'onglet jusqu'à ce que T3 les rende globales. Sans effet en
+  production tant qu'elle n'a qu'un espace (accord de la session de livraison) ; consigné au contrat de T2.
+- **La barre latérale** ne liste que les tracks de l'espace courant (`lireTracks` filtré par `workspace_id`), et ses
+  entrées d'espace (Inbox, Réglages) mènent dans cet espace.
+
+### 15.3 Les liens (T2.a)
+
+- `webapp/src/app/chemins.ts` compose **toutes** les adresses des pages d'un espace à partir du slug de l'espace :
+  `cheminInbox(slug)`, `cheminTrack(slug, track)`, `cheminChannel(slug, track, channel)`, `cheminAffaire(slug, track,
+  channel, id)`, `cheminCoutsTrack(…)`, `cheminReglages(slug, sous)`. Les 33 compositions recensées (§3) passent par lui.
+- **Une ligne d'une page globale** (Ma journée, Affaires figées, la cloche, la recherche, un contact, une organisation, le
+  pilotage, la rentabilité) compose son lien avec **le slug de l'espace de sa ressource**, lu dans `ContexteEspace.espaces`
+  par son `workspace_id`. Un `workspace_id` absent de la liste (une donnée lue avant un changement de droits) rend la ligne
+  sans lien, jamais un lien vers un autre espace.
+- Les liens sortants : le résumé quotidien (`0133`) compose `{site}/tracks/…/cards/…` en base ; il est **laissé tel quel**
+  en T2 — la redirection des anciennes adresses (§8.2) le sert — et repris avec T3 ; le connecteur avec T4.
+
+### 15.4 Les anciennes adresses (T2.a)
+
+Une route d'**ancienne adresse** par famille, qui rend un écran de résolution bref (squelette), puis remplace l'adresse :
+
+| Ancienne adresse | Résolution |
+|---|---|
+| `/inbox[?message=…]` | l'espace du message (`mail_messages.workspace_id`) s'il est lisible ; sinon l'espace courant de l'onglet |
+| `/inbox?brouillon=…` | l'espace du mail préparé (`mail_drafts.workspace_id`) |
+| `/tracks/:t[/:c[/liste]]`, `/tracks/:t/couts[/:b]` | le premier espace par nom dont un track lisible a le slug `:t` ; sinon l'espace courant (l'écran dira « introuvable ») |
+| `/tracks/:t/:c/cards/:id` | l'espace de l'affaire `:id` (`cards.workspace_id`) |
+| `/reglages[/…]` | l'espace courant de l'onglet |
+
+Paramètres et ancre sont recopiés. La redirection est `replace` : « Précédent » ne ramène pas à l'ancienne adresse.
+
+**Un track déplacé** (`CRM-162`) : la route d'un track introuvable dans l'espace de l'adresse appelle
+`public.track_current_address(p_workspace_slug, p_track_slug)` **si elle existe** au moment du code (§8.2, accord avec la
+session f9) ; sinon la session f9 ajoute l'appel.
+
+### 15.5 Les E2E de T2.a
+
+- Les `goto` vers une page d'un espace (environ 435, dans `e2e/ui`, `e2e/manuel`, `e2e/mail`) sont révisés vers
+  `/p2enjoy/…`, par un remplacement mécanique relu, **dans le même commit** (demande de la session de livraison) ; les
+  `toHaveURL` aussi.
+- **Preuves propres** (`e2e/ui/espace-adresse.spec.ts`) : chaque ancienne adresse redirigée (le tableau du §15.4), un slug
+  inconnu, la barre latérale d'un espace, deux onglets sur deux espaces (une seconde page du même contexte de navigation, un
+  espace jetable posé par la clé de service), et une page globale qui garde l'espace de l'onglet.
+- **Unitaires** : la composition des adresses, la résolution, le module de l'onglet.
+- **pgTAP** : la contrainte des slugs réservés.
+
+### 15.6 Le menu des espaces (T2.b)
+
+Les règles du §9, et, de quoi il a l'air (section du design system écrite en T2.b, avant son code) :
+- le premier niveau du fil devient un **bouton** (même classe que l'ancêtre-lien, §5.62, borné à `24ch`, nom complet en
+  `title`), suivi de l'icône Lucide `ChevronsUpDown` 14 px, `aria-haspopup="menu"`, `aria-expanded` ;
+- **la pastille du bouton** quand un **autre** espace a des non-lus : le patron du compteur de la cloche (§5.43),
+  `--color-brand`, sans chiffre sur le bouton ; le nom accessible le dit (« Changer d'espace — des messages non lus dans un
+  autre espace ») ;
+- **le panneau** : le patron du repli « … » du fil (§5.62) — ancré à l'en-tête, surface, bordure, `--radius-lg`,
+  `--shadow-card-hover` ; une ligne par espace, son nom et, à droite, son compte de non-lus de l'inbox (pastille `--color-brand`,
+  `99+` au-delà, le compte exact dans le nom accessible) ; l'espace courant coché (`aria-current="true"`, icône `Check`) ;
+- clavier : `Entrée`, `Espace` ou `↓` ouvre ; `↑` `↓` parcourent ; `Échap` referme et rend le focus au bouton ; un clic
+  extérieur referme sans déplacer le focus ;
+- **aucune couleur, aucun jeton nouveaux** ; deux icônes Lucide de plus, `ChevronsUpDown` et `Check`.
+
+**La bascule annoncée** : un message bref dans la région `aria-live` polie de la coquille (§8), « Vous êtes passé dans
+l'espace X. », sans bandeau visuel persistant.
+
+### 15.7 Le seed de T2.b
+
+`docs/SPEC-seed.md` §55, écrit avec T2.b : « Studio Lumen » est créé par le §54 de `CRM-162` (accord, §12) ; le §55 y pose
+le track, le channel, l'affaire, les deux mails déposés par IMAP et relevés (au moins un non lu), le contact, l'organisation,
+le tableau d'objectifs et la saisie de temps du §12. Si le §54 n'est pas encore poussé au moment de T2.b, le §55 crée
+l'espace sous l'identité figée, et le §54 l'enrichit.

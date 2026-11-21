@@ -20525,9 +20525,12 @@ livraison (décision 830).
   - aucun changement visible : aucune capture nouvelle ;
   - **ce que cette session n'a pas joué** : la campagne complète (décision 830).
   Reste la livraison : `docs/PROD_MIGRATIONS.md` §2.67 — la migration et la webapp **dans la même fenêtre**.
-- [ ] **T2 — L'adresse et le menu des espaces.** `/:slugEspace/` pour l'inbox, les tracks et channels, les réglages ;
-  anciennes adresses redirigées ; bascule ; menu et non-lus ; barre latérale et réglages sur l'espace de l'adresse ; seed
-  (« Studio Lumen », un compte membre des deux) ; design system ; `goto` et images du manuel révisés dans la tranche.
+- [ ] **T2 — L'adresse et le menu des espaces** (`docs/SPEC-espace-courant.md` §15 ; livrée avec T1 en un seul lot) :
+  - [ ] **T2.a — l'adresse** : `/:slugEspace/` pour l'inbox, les tracks et channels, les réglages ; les slugs réservés ;
+    l'espace courant tiré de l'adresse, ou de la mémoire vive de l'onglet sur une page globale ; les anciennes adresses
+    redirigées ; la barre latérale et les écrans sur l'espace courant ; `chemins.ts` seul compositeur ; les `goto` révisés ;
+  - [ ] **T2.b — le menu des espaces** : le menu et ses non-lus, la bascule annoncée, le seed §55, le design system, les E2E
+    et captures sur un compte de deux espaces, le manuel.
 - [ ] **T3 — Les pages globales.** Espace de provenance et filtre « Espace » ; les écrans qui lisaient le premier espace
   passent à tous ; les créations nomment l'espace courant de l'onglet.
 - [ ] **T4 — Le connecteur.** Audit outil par outil (`docs/SPEC-mcp.md` §9.2), lien préfixé de `crm_mail_prepare`.
