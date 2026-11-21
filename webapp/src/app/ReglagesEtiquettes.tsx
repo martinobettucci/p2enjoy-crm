@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les listes de l'écran ne lisent que l'espace de l'adresse ; docs/SPEC-espace-courant.md §15.4 bis
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : Réglages ▸ Étiquettes — lire, poser, modifier, archiver le catalogue
 // @spec docs/SPEC-etiquettes-digest.md §2.1 (écriture administrateur, lecture membre ; nom unique parmi les non archivées),
 //       §3 ; docs/DESIGN_SYSTEM.md §5.73 (l'écran, la couleur en cinq radios nommées), §5.71 et §5.39 (la forme reprise),
@@ -73,7 +74,7 @@ export function ReglagesEtiquettes({ client = clientCrm }: ProprietesReglagesEti
 	useEffect(() => {
 		if (client === null || idWorkspace === null || administration === 'en-lecture' || administration === 'refusee') return
 		const r = ++rang.current
-		void lireEtiquettes(client, { archives: true }).then((lu) => {
+		void lireEtiquettes(client, { archives: true, ...(idWorkspace === null ? {} : { idWorkspace }) }).then((lu) => {
 			if (r !== rang.current) return
 			if (lu.statut === 'erreur') setLecture({ statut: 'erreur', nature: lu.erreur.nature })
 			else if (lu.statut === 'pret') setLecture({ statut: 'pret', etiquettes: lu.donnees })

@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — la corbeille de l'espace de l'écran (docs/SPEC-espace-courant.md §15.4 bis)
 // @spec CRM-077 (docs/BACKLOG.md) — corbeille et restauration : l'énumération des enfants rendus
 //       inaccessibles (cinquième tranche), ce que l'écran lit et écrit (sixième tranche), puis le
 //       GESTE de mise à la corbeille d'une AFFAIRE (huitième tranche)
@@ -254,10 +255,10 @@ type LigneCorbeille = {
 async function lireTable(
 	client: ClientCrm,
 	type: TypeObjetCorbeille,
+	idWorkspace?: string,
 ): Promise<EtatAsync<readonly EntreeCorbeille[]>> {
-	const reponse = await client
-		.from(TABLES_CORBEILLE[type])
-		.select(COLONNES_CORBEILLE[type])
+	const tous = client.from(TABLES_CORBEILLE[type]).select(COLONNES_CORBEILLE[type])
+	const reponse = await (idWorkspace === undefined ? tous : tous.eq('workspace_id', idWorkspace))
 		.not('deleted_at', 'is', null)
 		.order('deleted_at', { ascending: false })
 	if (reponse.error !== null) {
@@ -292,12 +293,14 @@ async function lireTable(
  */
 export async function lireCorbeille(
 	client: ClientCrm,
+	/** `CRM-161` T2.c (docs/SPEC-espace-courant.md §15.4 bis) : la corbeille de cet espace seul. */
+	idWorkspace?: string,
 ): Promise<EtatAsync<readonly EntreeCorbeille[]>> {
 	try {
 		const lectures = await Promise.all([
-			lireTable(client, 'track'),
-			lireTable(client, 'channel'),
-			lireTable(client, 'card'),
+			lireTable(client, 'track', idWorkspace),
+			lireTable(client, 'channel', idWorkspace),
+			lireTable(client, 'card', idWorkspace),
 		])
 		const entrees: EntreeCorbeille[] = []
 		for (const lecture of lectures) {

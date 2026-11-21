@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — changer d'espace remonte le contenu de la page (clé sur l'espace) ; docs/SPEC-espace-courant.md §15.4 bis
 // @spec CRM-007 (docs/BACKLOG.md) — coquille de l'application
 // @spec docs/DESIGN_SYSTEM.md §4 (architecture des écrans), §5.8 (états), §7, §8
 // @spec docs/SPEC-webapp.md §5.1 (coquille), §7 (états), §9 (accessibilité), §11 (stockage)
@@ -26,7 +27,7 @@
 // Ce choix est centralisé parce qu'il doit être **exhaustif** : le type somme `EtatAsync`
 // oblige à traiter chaque cas, et le traiter une seule fois évite qu'une route en oublie un.
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import { SkipLink } from '../components/ui/SkipLink'
@@ -252,7 +253,9 @@ export function AppShell({
 									: [etat, etatTracks, etatChannels]
 							}
 							recharger={toutRecharger}
-							contenu={children}
+							// `CRM-161` T2.c (docs/SPEC-espace-courant.md §15.4 bis) : changer d'espace REMONTE le contenu de la page —
+							// aucun état, aucune liste lue d'un espace ne survit dans un autre.
+							contenu={<Fragment key={slugCourant ?? ''}>{children}</Fragment>}
 						/>
 						)}
 						<GuideFlottant />

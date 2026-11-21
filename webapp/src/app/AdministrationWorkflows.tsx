@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les listes de l'écran ne lisent que l'espace de l'adresse ; docs/SPEC-espace-courant.md §15.4 bis
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'éditeur de workflows travaille dans l'espace de l'adresse ; ses liens y mènent (§15.2, §15.3) ; docs/SPEC-espace-courant.md
 // @spec CRM-112 (docs/BACKLOG.md) tranche T3.a — docs/DESIGN_SYSTEM.md §5.86 : la ligne d'un champ, son formulaire, l'éditeur de
 //       choix, le champ texte, l'alerte de refus et la confirmation de retrait vivent dans `ElementsChampAdmin.tsx`, partagés
@@ -2187,7 +2188,7 @@ export function AdministrationWorkflows({
 		const rang = ++courant.current
 		setWorkflows(enChargement)
 		void (async () => {
-			const lus = await lireWorkflowsAdministrables(client, inclureArchives)
+			const lus = await lireWorkflowsAdministrables(client, inclureArchives, espaceCourant ?? undefined)
 			if (rang !== courant.current) return
 			setWorkflows(lus)
 			// Le premier workflow — le défaut, par l'ordre de la requête — est choisi d'office :
@@ -2211,7 +2212,7 @@ export function AdministrationWorkflows({
 	useEffect(() => {
 		if (client === null || !tracksVoulus) return
 		let vivant = true
-		void lireTracksAffectables(client).then((lus) => {
+		void lireTracksAffectables(client, espaceCourant ?? undefined).then((lus) => {
 			if (vivant) setTracksEnTete(lus)
 		})
 		return () => {
@@ -2302,7 +2303,7 @@ export function AdministrationWorkflows({
 		let vivant = true
 		setTracks(enChargement)
 		void (async () => {
-			const lus = await lireTracksAffectables(client)
+			const lus = await lireTracksAffectables(client, espaceCourant ?? undefined)
 			if (!vivant) return
 			setTracks(lus)
 		})()
@@ -2372,7 +2373,7 @@ export function AdministrationWorkflows({
 		async (idWorkflow: string, nom: string) => {
 			if (client === null) return
 			setPanneauIa(null)
-			const lus = await lireWorkflowsAdministrables(client, false)
+			const lus = await lireWorkflowsAdministrables(client, false, espaceCourant ?? undefined)
 			setWorkflows(lus)
 			setIdChoisi(idWorkflow)
 			relireSuggestionsIa()
@@ -2555,7 +2556,7 @@ export function AdministrationWorkflows({
 				setRefusCreation(t('admin.workflows.refus.unknown'))
 				return
 			}
-			const lus = await lireWorkflowsAdministrables(client, false)
+			const lus = await lireWorkflowsAdministrables(client, false, espaceCourant ?? undefined)
 			setWorkflows(lus)
 			setIdChoisi(resultat.id)
 			setCreationOuverte(false)
@@ -2646,7 +2647,7 @@ export function AdministrationWorkflows({
 			if (client === null) return
 			setPanneauModification(null)
 			await rechargerGraphe(idWorkflow)
-			setWorkflows(await lireWorkflowsAdministrables(client, false))
+			setWorkflows(await lireWorkflowsAdministrables(client, false, espaceCourant ?? undefined))
 			setCleVersions((n) => n + 1)
 			relireSuggestionsIa()
 			setAnnonce(
@@ -2719,7 +2720,7 @@ export function AdministrationWorkflows({
 		if (client === null || ouverture.type !== 'ajout') return
 		setCatalogue(enChargement)
 		void (async () => {
-			setCatalogue(await lireCatalogueActif(client))
+			setCatalogue(await lireCatalogueActif(client, espaceCourant ?? undefined))
 		})()
 	}, [client, ouverture.type])
 

@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les modèles d'emails de l'espace de l'écran (docs/SPEC-espace-courant.md §15.4 bis)
 // @spec CRM-063 (docs/BACKLOG.md) — modèles d'emails, tranche 2, sous-tranche 2b : L'ÉCRAN
 // @spec docs/SPEC-modeles-emails.md §9.2 (ce que l'écran lit), §9.3 (le guichet des variables et
 //       l'insertion dans le champ), §9.5 (les trois sources de la prévisualisation), §9.6 (ce que
@@ -71,11 +72,12 @@ export const COLONNES_MODELE_EMAIL = 'id, workspace_id, name, subject, body_text
  */
 export async function lireModelesEmails(
 	client: ClientCrm,
+	/** `CRM-161` T2.c (docs/SPEC-espace-courant.md §15.4 bis) : la liste de cet espace seul ; omis, tout ce que la RLS rend. */
+	idWorkspace?: string,
 ): Promise<EtatAsync<readonly ModeleEmail[]>> {
 	try {
-		const reponse = await client
-			.from('mail_templates')
-			.select(COLONNES_MODELE_EMAIL)
+		const tous = client.from('mail_templates').select(COLONNES_MODELE_EMAIL)
+		const reponse = await (idWorkspace === undefined ? tous : tous.eq('workspace_id', idWorkspace))
 			.order('name')
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))

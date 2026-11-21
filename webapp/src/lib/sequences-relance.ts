@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les séquences de l'espace de l'écran (docs/SPEC-espace-courant.md §15.4 bis)
 // @spec CRM-063 (docs/BACKLOG.md) — modèles d'emails, signatures, séquences de relance,
 //       TRANCHE 4, SOUS-TRANCHE 4c : L'ÉCRAN
 // @spec docs/SPEC-modeles-emails.md §13.4 (où l'écran vit), §13.5 (la liste), §13.5 bis
@@ -98,9 +99,12 @@ export function compterPaliers(embarque: readonly { readonly count: number }[] |
  */
 export async function lireSequences(
 	client: ClientCrm,
+	/** `CRM-161` T2.c (docs/SPEC-espace-courant.md §15.4 bis) : la liste de cet espace seul ; omis, tout ce que la RLS rend. */
+	idWorkspace?: string,
 ): Promise<EtatAsync<readonly SequenceRelance[]>> {
 	try {
-		const reponse = await client.from('mail_sequences').select(COLONNES_SEQUENCE).order('name')
+		const tous = client.from('mail_sequences').select(COLONNES_SEQUENCE)
+		const reponse = await (idWorkspace === undefined ? tous : tous.eq('workspace_id', idWorkspace)).order('name')
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}

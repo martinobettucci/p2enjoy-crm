@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — le catalogue de l'espace de l'écran (docs/SPEC-espace-courant.md §15.4 bis)
 // @spec CRM-030 (docs/BACKLOG.md) — administration du catalogue de nœuds : ce que l'écran lit et
 //       écrit
 // @spec docs/SPEC-workflow-engine.md §2 bis.3 (la lecture unique, archivés compris), §2 bis.4 (les
@@ -78,11 +79,12 @@ export type CouleurNoeud = (typeof COULEURS_NOEUD)[number]
  */
 export async function lireCatalogueAdministrable(
 	client: ClientCrm,
+	/** `CRM-161` T2.c (docs/SPEC-espace-courant.md §15.4 bis) : la liste de cet espace seul ; omis, tout ce que la RLS rend. */
+	idWorkspace?: string,
 ): Promise<EtatAsync<readonly NoeudCatalogue[]>> {
 	try {
-		const reponse = await client
-			.from('workflow_nodes_catalog')
-			.select(COLONNES_NOEUD)
+		const tous = client.from('workflow_nodes_catalog').select(COLONNES_NOEUD)
+		const reponse = await (idWorkspace === undefined ? tous : tous.eq('workspace_id', idWorkspace))
 			.order('position', { ascending: true })
 			.order('label', { ascending: true })
 		if (reponse.error !== null) {

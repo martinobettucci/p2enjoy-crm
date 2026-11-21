@@ -1,3 +1,4 @@
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T2.c : la doublure du client connaît le filtre de l'espace (docs/SPEC-espace-courant.md §15.4 bis)
 // @verifies CRM-136 (docs/BACKLOG.md) — tranche T3 : le quota lu et toujours envoyé avec son drapeau (§25.6)
 // @verifies CRM-089 (docs/BACKLOG.md) — écran de configuration des identités sortantes SMTP
 // @verifies docs/SPEC-mail-subsystem.md §22.3 (ce que l'écran lit), §22.4 (la clé est un TRIPLET,
@@ -88,6 +89,8 @@ function client({
 			if (table === 'workspaces') {
 				return {
 					select: () => ({
+						// `CRM-161` T2.c : la liste est filtrée par l'espace du contexte.
+						eq() { return this },
 						order: () =>
 							Promise.resolve({
 								data: [{ id: WORKSPACE, name: 'P2Enjoy', slug: 'p2enjoy' }],
@@ -101,7 +104,8 @@ function client({
 				return {
 					select: (colonnes: string) => {
 						espionLecture?.(colonnes)
-						return { order: () => Promise.resolve(identites) }
+						// `CRM-161` T2.c : la liste est filtrée par l'espace du contexte.
+						return { eq() { return this }, order: () => Promise.resolve(identites) }
 					},
 				}
 			}
@@ -217,6 +221,8 @@ describe('ReglagesIdentitesMail — la liste', () => {
 				if (table === 'workspaces') {
 					return {
 						select: () => ({
+							// `CRM-161` T2.c : la liste est filtrée par l'espace du contexte.
+							eq() { return this },
 							order: () =>
 								Promise.resolve({
 									data: [{ id: WORKSPACE, name: 'P2Enjoy', slug: 'p2enjoy' }],
@@ -228,6 +234,8 @@ describe('ReglagesIdentitesMail — la liste', () => {
 				}
 				return {
 					select: () => ({
+						// `CRM-161` T2.c : la liste est filtrée par l'espace du contexte.
+						eq() { return this },
 						order: () => {
 							appels += 1
 							return Promise.resolve({ data: null, error: { message: 'boom' }, status: 500 })
@@ -414,6 +422,8 @@ describe('ReglagesIdentitesMail — l’enregistrement', () => {
 				if (table === 'workspaces') {
 					return {
 						select: () => ({
+							// `CRM-161` T2.c : la liste est filtrée par l'espace du contexte.
+							eq() { return this },
 							order: () =>
 								Promise.resolve({
 									data: [{ id: WORKSPACE, name: 'P2Enjoy', slug: 'p2enjoy' }],
@@ -425,6 +435,8 @@ describe('ReglagesIdentitesMail — l’enregistrement', () => {
 				}
 				return {
 					select: () => ({
+						// `CRM-161` T2.c : la liste est filtrée par l'espace du contexte.
+						eq() { return this },
 						order: () => {
 							lectures += 1
 							return Promise.resolve({ data: IDENTITES, error: null, status: 200 })
@@ -561,7 +573,7 @@ describe('ReglagesIdentitesMail — « Tester la connexion » (CRM-127 T4)', () 
 		const de = c.from.bind(c)
 		c.from = (table: string) =>
 			table === 'mail_outbound_identities'
-				? { select: () => ({ order: () => Promise.resolve({ data: lectures++ === 0 ? IDENTITES : relue, error: null, status: 200 }) }) }
+				? { select: () => ({ eq() { return this }, order: () => Promise.resolve({ data: lectures++ === 0 ? IDENTITES : relue, error: null, status: 200 }) }) }
 				: de(table)
 		const appels: unknown[] = []
 		const acces: AccesTest = {

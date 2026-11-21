@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les listes de l'écran ne lisent que l'espace de l'adresse ; docs/SPEC-espace-courant.md §15.4 bis
 // @spec CRM-068 (docs/BACKLOG.md) — tranche T4b1 : Réglages ▸ Modèles d'affaires — lire, poser, modifier, archiver
 // @spec docs/SPEC-checklists.md §3.5 (écriture administrateur, lecture membre ; nom unique parmi les non archivés), §4 ;
 //       docs/DESIGN_SYSTEM.md §5.71 (l'écran), §5.39 (la forme de l'écran des modèles d'emails, reprise sans être
@@ -83,8 +84,8 @@ export function ReglagesModelesAffaires({ client = clientCrm }: ProprietesReglag
 		const r = ++rang.current
 		void (async () => {
 			const [workflows, modeles] = await Promise.all([
-				lireWorkflowsAdministrables(client, true),
-				lireModeles(client, { archives: true }),
+				lireWorkflowsAdministrables(client, true, idWorkspace ?? undefined),
+				lireModeles(client, { archives: true, ...(idWorkspace === null ? {} : { idWorkspace }) }),
 			])
 			if (r !== rang.current) return
 			if (workflows.statut === 'erreur') return setLecture({ statut: 'erreur', nature: workflows.erreur.nature })

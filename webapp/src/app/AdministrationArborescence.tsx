@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les listes de l'écran ne lisent que l'espace de l'adresse ; docs/SPEC-espace-courant.md §15.4 bis
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'arborescence travaille dans l'espace de l'adresse (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-093 (docs/BACKLOG.md) tranche T3 — les commandes d'écriture désactivées avec leur motif quand la base refuse
 //       l'administration de l'espace ; déplier et consulter restent offerts (docs/SPEC-droits-interface.md §2.2, §3, §5 ;
@@ -621,7 +622,7 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 			if (espaces.statut !== 'pret') return
 			// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) : l'espace du contexte, et non plus le premier de la liste.
 			setIdWorkspace(idEspaceParmi(espaces.donnees, idEspaceContexte))
-			const lus = await lireTracksAdministrables(client, inclureArchives)
+			const lus = await lireTracksAdministrables(client, inclureArchives, idEspaceContexte ?? undefined)
 			if (rang !== courant.current) return
 			setTracks(lus)
 		})()

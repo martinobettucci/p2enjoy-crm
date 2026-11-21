@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les étiquettes de l'espace de l'écran (docs/SPEC-espace-courant.md §15.4 bis)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : lire le catalogue d'étiquettes, l'écrire (administrateur), poser et retirer
 //       une étiquette sur une affaire ; classer les refus
 // @spec docs/SPEC-etiquettes-digest.md §2.1 (le catalogue), §2.2 (la pose : `22023 label_archived`, zéro ligne = refus),
@@ -56,10 +57,12 @@ export function etiquettesDeLAffaire(
 /** Le catalogue de l'espace courant — la RLS le borne aux espaces dont on est membre —, archivées comprises si demandé. */
 export async function lireEtiquettes(
 	client: ClientCrm,
-	options: { readonly archives?: boolean } = {},
+	/** `CRM-161` T2.c (§15.4 bis) : `idWorkspace`, les étiquettes de cet espace seul ; omis, tout ce que la RLS rend. */
+	options: { readonly archives?: boolean; readonly idWorkspace?: string } = {},
 ): Promise<EtatAsync<readonly Etiquette[]>> {
 	try {
-		const base = client.from('labels').select(COLONNES_ETIQUETTE)
+		const toutes = client.from('labels').select(COLONNES_ETIQUETTE)
+		const base = options.idWorkspace === undefined ? toutes : toutes.eq('workspace_id', options.idWorkspace)
 		const reponse = await (options.archives === true ? base : base.is('archived_at', null))
 		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
 		return pret(projeterEtiquettes((reponse.data ?? []) as readonly EtiquetteLue[]))

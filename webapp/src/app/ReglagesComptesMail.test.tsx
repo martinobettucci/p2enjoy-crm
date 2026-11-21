@@ -1,3 +1,4 @@
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T2.c : la doublure du client connaît le filtre de l'espace (docs/SPEC-espace-courant.md §15.4 bis)
 // @verifies CRM-136 (docs/BACKLOG.md) — tranche T3 : « Dossiers relevés » avant « Tester la connexion » (§5.99)
 // @verifies CRM-088 (docs/BACKLOG.md) — écran de configuration des comptes entrants IMAP
 // @verifies docs/SPEC-mail-subsystem.md §21.3 (ce que l'écran lit), §21.4 (le formulaire et son
@@ -75,6 +76,8 @@ function client({
 			if (table === 'workspaces') {
 				return {
 					select: () => ({
+						// `CRM-161` T2.c : la liste est filtrée par l'espace du contexte.
+						eq() { return this },
 						order: () =>
 							Promise.resolve({
 								data: [{ id: WORKSPACE, name: 'P2Enjoy', slug: 'p2enjoy' }],
@@ -85,7 +88,7 @@ function client({
 				}
 			}
 			if (table === 'mail_inbound_accounts') {
-				return { select: () => ({ order: () => Promise.resolve(comptes) }) }
+				return { select: () => ({ eq() { return this }, order: () => Promise.resolve(comptes) }) }
 			}
 			throw new Error(`table inattendue : ${table}`)
 		},
@@ -142,6 +145,8 @@ describe('ReglagesComptesMail — la liste', () => {
 				if (table === 'workspaces') {
 					return {
 						select: () => ({
+							// `CRM-161` T2.c : la liste est filtrée par l'espace du contexte.
+							eq() { return this },
 							order: () =>
 								Promise.resolve({ data: [{ id: WORKSPACE, name: 'P', slug: 'p' }], error: null, status: 200 }),
 						}),
@@ -150,6 +155,8 @@ describe('ReglagesComptesMail — la liste', () => {
 				appels += 1
 				return {
 					select: () => ({
+						// `CRM-161` T2.c : la liste est filtrée par l'espace du contexte.
+						eq() { return this },
 						order: () =>
 							Promise.resolve(
 								appels === 1
@@ -257,6 +264,8 @@ describe('ReglagesComptesMail — le formulaire', () => {
 				if (table === 'workspaces') {
 					return {
 						select: () => ({
+							// `CRM-161` T2.c : la liste est filtrée par l'espace du contexte.
+							eq() { return this },
 							order: () =>
 								Promise.resolve({ data: [{ id: WORKSPACE, name: 'P', slug: 'p' }], error: null, status: 200 }),
 						}),
@@ -264,7 +273,7 @@ describe('ReglagesComptesMail — le formulaire', () => {
 				}
 				lectures += 1
 				return {
-					select: () => ({ order: () => Promise.resolve({ data: COMPTES, error: null, status: 200 }) }),
+					select: () => ({ eq() { return this }, order: () => Promise.resolve({ data: COMPTES, error: null, status: 200 }) }),
 				}
 			},
 			rpc: () => Promise.resolve({ data: 'c-1', error: null, status: 200 }),
@@ -439,12 +448,16 @@ describe('ReglagesComptesMail — « Tester la connexion » (CRM-127 T4)', () =>
 				if (table === 'workspaces') {
 					return {
 						select: () => ({
+							// `CRM-161` T2.c : la liste est filtrée par l'espace du contexte.
+							eq() { return this },
 							order: () => Promise.resolve({ data: [{ id: WORKSPACE, name: 'P2Enjoy', slug: 'p2enjoy' }], error: null, status: 200 }),
 						}),
 					}
 				}
 				return {
 					select: () => ({
+						// `CRM-161` T2.c : la liste est filtrée par l'espace du contexte.
+						eq() { return this },
 						order: () => {
 							compte.lectures += 1
 							const donnees = lectures[Math.min(rang++, lectures.length - 1)]

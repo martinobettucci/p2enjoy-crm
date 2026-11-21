@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les workflows, les tracks affectables et le catalogue actif de l'espace de l'écran (docs/SPEC-espace-courant.md §15.4 bis)
 // @spec CRM-112 (docs/BACKLOG.md) tranche T3.b — les champs communs exigés : lecture, écriture, retrait, aperçu
 //       (docs/SPEC-champs-communs.md §5 et §7, docs/DESIGN_SYSTEM.md §5.87)
 // @spec CRM-133 (docs/BACKLOG.md) — tranche T2 : la surcharge de description d'une étape, lue avec la description du
@@ -115,9 +116,12 @@ export const COLONNES_NOEUD_AJOUTABLE =
 export async function lireWorkflowsAdministrables(
 	client: ClientCrm,
 	inclureArchives: boolean,
+	/** `CRM-161` T2.c (docs/SPEC-espace-courant.md §15.4 bis) : la liste de cet espace seul ; omis, tout ce que la RLS rend. */
+	idWorkspace?: string,
 ): Promise<EtatAsync<readonly WorkflowAdministrable[]>> {
 	try {
-		const base = client.from('workflows').select(COLONNES_WORKFLOW_ADMIN)
+		const tous = client.from('workflows').select(COLONNES_WORKFLOW_ADMIN)
+		const base = idWorkspace === undefined ? tous : tous.eq('workspace_id', idWorkspace)
 		const filtre = inclureArchives ? base : base.is('archived_at', null)
 		const reponse = await filtre.order('is_default', { ascending: false }).order('name')
 		if (reponse.error !== null) {
@@ -159,11 +163,12 @@ export async function lireEtapes(
  */
 export async function lireCatalogueActif(
 	client: ClientCrm,
+	/** `CRM-161` T2.c (docs/SPEC-espace-courant.md §15.4 bis) : la liste de cet espace seul ; omis, tout ce que la RLS rend. */
+	idWorkspace?: string,
 ): Promise<EtatAsync<readonly NoeudAjoutable[]>> {
 	try {
-		const reponse = await client
-			.from('workflow_nodes_catalog')
-			.select(COLONNES_NOEUD_AJOUTABLE)
+		const tous = client.from('workflow_nodes_catalog').select(COLONNES_NOEUD_AJOUTABLE)
+		const reponse = await (idWorkspace === undefined ? tous : tous.eq('workspace_id', idWorkspace))
 			.is('archived_at', null)
 			.order('position')
 			.order('label')
@@ -1889,11 +1894,12 @@ export const COLONNES_TRACK_AFFECTABLE = 'id, name'
  */
 export async function lireTracksAffectables(
 	client: ClientCrm,
+	/** `CRM-161` T2.c (docs/SPEC-espace-courant.md §15.4 bis) : la liste de cet espace seul ; omis, tout ce que la RLS rend. */
+	idWorkspace?: string,
 ): Promise<EtatAsync<readonly TrackAffectable[]>> {
 	try {
-		const reponse = await client
-			.from('tracks')
-			.select(COLONNES_TRACK_AFFECTABLE)
+		const tous = client.from('tracks').select(COLONNES_TRACK_AFFECTABLE)
+		const reponse = await (idWorkspace === undefined ? tous : tous.eq('workspace_id', idWorkspace))
 			.is('archived_at', null)
 			.order('position')
 		if (reponse.error !== null) {

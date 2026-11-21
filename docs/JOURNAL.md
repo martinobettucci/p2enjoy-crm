@@ -41591,3 +41591,24 @@ barre latérale et des onglets, a été joué.
 configuration des preuves, et une course entière a échoué (90 échecs, tous de connexion ou de 503). La course a été rejouée
 sans construction parallèle. Le `timeout` qui l'enveloppait avait en outre laissé le `vite preview` orphelin sur le port 4173 :
 arrêté avant le rejeu.
+
+### `CRM-161` T2.c — les réglages ne lisent que l'espace de l'adresse (journal d'implémentation)
+
+*2026-11-21, session 4891a451 (p2enjoy-crm-5f).*
+**Le défaut** (§15.4 bis), antérieur à `CRM-161` : les lectures de premier niveau des réglages ne filtraient pas l'espace.
+**La preuve rouge** : `e2e/ui/reglages-espace.spec.ts`, jouée sur le code de T2.a (celui de T2.c mis de côté le temps d'une
+course, puis rétabli) : l'étiquette et le track d'un espace jetable paraissent dans les réglages de l'espace du seed ; verte
+après.
+**Choix** : un paramètre `idWorkspace` facultatif sur douze lectures (les autres appelants inchangés) ; et une **clé sur l'espace
+autour du contenu de la page** dans la coquille : changer d'espace remonte la page, si bien qu'aucun effet n'a besoin de l'espace
+dans ses dépendances, et qu'aucune liste d'un espace ne survit dans un autre.
+**Trouvé en jouant les réglages** : `corbeille.spec` ouvrait une affaire par une ancienne adresse composée dans une fonction, que
+la révision mécanique de T2.a n'avait pas vue ; au clavier, le focus posé par la preuve pendant la redirection était repris par
+l'effet de focus d'après navigation, qui s'exécute deux fois (deux adresses). Délai de quelques millisecondes, sans portée pour
+une personne ; la preuve ouvre désormais l'adresse préfixée.
+**Le projet `manuel`** (demande de la session de livraison) : les 20 specs dont T2.a avait révisé les `goto` ont été jouées :
+124/128 ; deux specs qui posent leur propre espace visaient `/p2enjoy/` — corrigées (14/14) ; `34-webhooks` échoue sur la hauteur
+de l'historique des remises, qui grandit avec les remises accumulées en développement (sans lien). Les 177 images régénérées
+diffèrent par l'état des données (dates, compteur de notifications, journal d'audit ; certaines images committées sont
+antérieures à `CRM-131`) et non par l'adresse, qu'aucune ne montre : **elles n'ont pas été committées** — la campagne de
+renouvellement de la session de livraison, sur base fraîche, les reprendra.

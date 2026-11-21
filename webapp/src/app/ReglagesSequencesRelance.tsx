@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les listes de l'écran ne lisent que l'espace de l'adresse ; docs/SPEC-espace-courant.md §15.4 bis
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'écran travaille dans l'espace de l'adresse (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-093 (docs/BACKLOG.md) tranche T3 — « Nouvelle séquence » et « Modifier » désactivés avec leur motif quand la
 //       base refuse l'édition de l'espace (docs/SPEC-droits-interface.md §2.2, §3, §5 ; docs/DESIGN_SYSTEM.md §5.59)
@@ -158,7 +159,7 @@ export function ReglagesSequencesRelance({
 			}
 			if (espaces.statut !== 'pret') return
 			setIdWorkspace(idEspaceParmi(espaces.donnees, idEspaceContexte))
-			const lues = await lireSequences(client)
+			const lues = await lireSequences(client, idEspaceContexte ?? undefined)
 			if (rang !== courant.current) return
 			setEtat(lues.statut === 'pret' ? pret(lues.donnees) : lues)
 		})()
@@ -171,7 +172,7 @@ export function ReglagesSequencesRelance({
 		if (client === null) return
 		let vivant = true
 		void (async () => {
-			const lus = await lireModelesEmails(client)
+			const lus = await lireModelesEmails(client, idEspaceContexte ?? undefined)
 			if (vivant) setModeles(lus)
 		})()
 		return () => {

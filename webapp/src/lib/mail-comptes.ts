@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les boîtes de l'espace de l'écran (docs/SPEC-espace-courant.md §15.4 bis)
 // @spec CRM-136 (docs/BACKLOG.md) — tranche T3 : l'historique au formulaire, les dossiers relevés lus et écrits, leurs refus
 //       (docs/SPEC-mail-subsystem.md §25.4, §25.5)
 // @spec CRM-088 (docs/BACKLOG.md) — configuration des comptes entrants IMAP
@@ -72,11 +73,12 @@ export const COLONNES_COMPTE_ENTRANT =
  */
 export async function lireComptesEntrants(
 	client: ClientCrm,
+	/** `CRM-161` T2.c (docs/SPEC-espace-courant.md §15.4 bis) : la liste de cet espace seul ; omis, tout ce que la RLS rend. */
+	idWorkspace?: string,
 ): Promise<EtatAsync<readonly CompteEntrant[]>> {
 	try {
-		const reponse = await client
-			.from('mail_inbound_accounts')
-			.select(COLONNES_COMPTE_ENTRANT)
+		const tous = client.from('mail_inbound_accounts').select(COLONNES_COMPTE_ENTRANT)
+		const reponse = await (idWorkspace === undefined ? tous : tous.eq('workspace_id', idWorkspace))
 			.order('label')
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))

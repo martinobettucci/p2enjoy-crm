@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les listes de l'écran ne lisent que l'espace de l'adresse ; docs/SPEC-espace-courant.md §15.4 bis
 // @spec CRM-077 (docs/BACKLOG.md) — corbeille et restauration : l'écran, sixième tranche
 // @spec docs/SPEC-corbeille.md §4.1 (l'adresse), §4.2 (les trois lectures), §4.3 (l'auteur inconnu),
 //       §4.4 (l'énumération d'une entrée parente), §4.5 (les trois issues de la restauration),
@@ -126,7 +127,7 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 	const [focusApres, setFocusApres] = useState<{ readonly cle: string; readonly cible: 'commande' | 'restaurer' } | null>(null)
 	const commandes = useRef(new Map<string, HTMLButtonElement>())
 	const restaurers = useRef(new Map<string, HTMLButtonElement>())
-	const { capacites } = useContexteEspace()
+	const { capacites, idWorkspace: idEspaceContexte } = useContexteEspace()
 	// Une réponse arrivée après le démontage, ou périmée par un rechargement, ne doit pas écraser un
 	// état plus récent — même garde que `AdministrationArborescence` et `EtatMessagerie`.
 	const courant = useRef(0)
@@ -145,7 +146,7 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 			if (rang === courant.current) setRetention(lue)
 		})
 		void (async () => {
-			const lecture = await lireCorbeille(client)
+			const lecture = await lireCorbeille(client, idEspaceContexte ?? undefined)
 			if (rang !== courant.current) return
 			// Le cas est traité par `statut === 'erreur'` puis `statut !== 'pret'`, jamais par la
 			// seule négation : `lireCorbeille` ne rend jamais `chargement`, mais `EtatAsync` le porte

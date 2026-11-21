@@ -1,3 +1,4 @@
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T2.c : la doublure du client connaît le filtre de l'espace (docs/SPEC-espace-courant.md §15.4 bis)
 // @verifies CRM-093 (docs/BACKLOG.md) tranche T3 — le catalogue sous une administration refusée (docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.3 : le catalogue de nœuds se
 //           relit au signal du workflow de départ, qui pose ses sept nœuds (docs/SPEC-workflow-engine.md
@@ -45,6 +46,8 @@ function clientFactice(noeuds: unknown[]): { client: ClientCrm; lectures: string
 	const lecture = (data: unknown[]) => {
 		const chaine: Record<string, unknown> = {}
 		chaine['order'] = () => chaine
+		// `CRM-161` T2.c : le catalogue est filtré par l'espace du contexte.
+		chaine['eq'] = () => chaine
 		chaine['then'] = (resoudre: (valeur: unknown) => unknown) =>
 			Promise.resolve({ data: [...data], error: null, status: 200 }).then(resoudre)
 		return chaine

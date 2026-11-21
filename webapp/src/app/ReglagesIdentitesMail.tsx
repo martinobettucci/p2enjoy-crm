@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les listes de l'écran ne lisent que l'espace de l'adresse ; docs/SPEC-espace-courant.md §15.4 bis
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'écran travaille dans l'espace de l'adresse (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-136 (docs/BACKLOG.md) — tranche T3 : « Envois par jour, au plus » au formulaire de l'identité, vide = aucun plafond
 //       (docs/SPEC-mail-subsystem.md §25.6 ; docs/DESIGN_SYSTEM.md §5.99)
@@ -256,7 +257,7 @@ export function ReglagesIdentitesMail({
 			}
 			if (espaces.statut !== 'pret') return
 			setIdWorkspace(idEspaceParmi(espaces.donnees, idEspaceContexte))
-			const lues = await lireIdentitesSortantes(client)
+			const lues = await lireIdentitesSortantes(client, idEspaceContexte ?? undefined)
 			if (rang !== courant.current) return
 			setEtat(lues.statut === 'pret' ? pret(lues.donnees) : lues)
 		})()
@@ -279,7 +280,7 @@ export function ReglagesIdentitesMail({
 		if (client === null) return
 		const rang = ++courant.current
 		void (async () => {
-			const lues = await lireIdentitesSortantes(client)
+			const lues = await lireIdentitesSortantes(client, idEspaceContexte ?? undefined)
 			if (rang !== courant.current) return
 			setEtat(lues.statut === 'pret' ? pret(lues.donnees) : lues)
 		})()

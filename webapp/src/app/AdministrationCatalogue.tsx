@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les listes de l'écran ne lisent que l'espace de l'adresse ; docs/SPEC-espace-courant.md §15.4 bis
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le catalogue travaille dans l'espace de l'adresse (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-093 (docs/BACKLOG.md) tranche T3 — les commandes d'écriture du catalogue désactivées avec leur motif quand la
 //       base refuse l'administration (docs/SPEC-droits-interface.md §2.2, §3, §5 ; docs/DESIGN_SYSTEM.md §5.18, §5.59)
@@ -205,7 +206,7 @@ export function AdministrationCatalogue({
 			}
 			if (espaces.statut !== 'pret') return
 			setIdWorkspace(idEspaceParmi(espaces.donnees, idEspaceContexte))
-			const lus = await lireCatalogueAdministrable(client)
+			const lus = await lireCatalogueAdministrable(client, idEspaceContexte ?? undefined)
 			if (rang !== courant.current) return
 			setEtat(lus.statut === 'pret' ? pret(lus.donnees) : lus)
 		})()

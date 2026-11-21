@@ -637,7 +637,7 @@ async function creerAffaireJetable(page: Page, suffixe: string): Promise<string>
 }
 
 function adresseAffaire(id: string): string {
-	return `/tracks/${TRACK_FORMATION}/${CANAL_INTER}/cards/${id}`
+	return `/p2enjoy/tracks/${TRACK_FORMATION}/${CANAL_INTER}/cards/${id}`
 }
 
 test.describe('le geste de mise à la corbeille d’une affaire (§4 ter)', () => {

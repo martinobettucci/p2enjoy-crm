@@ -237,7 +237,8 @@ test.describe('dans un espace sans workflow', () => {
 	test('aucun workflow', async ({ page }) => {
 		if (compte === null) throw new Error('montage absent')
 		await connecterAvecLeLabs(page, compte.adresse)
-		await page.goto(EDITEUR)
+		// `CRM-161` T2.a : l'éditeur de l'espace vide, non celui du seed.
+		await page.goto(`/${ESPACE_VIDE.slug}/reglages/workflows`)
 		const vide = page.getByText('Aucun workflow dans cet espace de travail').first()
 		await expect(vide).toBeVisible()
 		await illustrer(page, { chapitre: CHAPITRE, section: S.creer, nom: 'aucun-workflow', cibles: [vide.locator('xpath=ancestor::*[.//button][1]')] })

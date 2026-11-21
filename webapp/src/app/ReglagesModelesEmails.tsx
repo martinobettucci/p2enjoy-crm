@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les listes de l'écran ne lisent que l'espace de l'adresse ; docs/SPEC-espace-courant.md §15.4 bis
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'écran travaille dans l'espace de l'adresse (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-093 (docs/BACKLOG.md) tranche T3 — « Nouveau modèle » et « Modifier » désactivés avec leur motif quand la
 //       base refuse l'édition de l'espace ; la prévisualisation, une lecture, reste offerte
@@ -160,7 +161,7 @@ export function ReglagesModelesEmails({
 			}
 			if (espaces.statut !== 'pret') return
 			setIdWorkspace(idEspaceParmi(espaces.donnees, idEspaceContexte))
-			const lus = await lireModelesEmails(client)
+			const lus = await lireModelesEmails(client, idEspaceContexte ?? undefined)
 			if (rang !== courant.current) return
 			setEtat(lus.statut === 'pret' ? pret(lus.donnees) : lus)
 		})()

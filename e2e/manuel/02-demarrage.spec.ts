@@ -128,7 +128,8 @@ test.describe('dans un espace neuf', () => {
 		})
 
 		// Le formulaire « Nouveau channel » propose désormais le workflow posé.
-		await page.goto('/p2enjoy/reglages/arborescence')
+		// `CRM-161` T2.a : la preuve travaille dans SON espace, non dans celui du seed.
+		await page.goto(`/${ESPACE.slug}/reglages/arborescence`)
 		await page.getByRole('button', { name: `Déplier ${TRACK}` }).click()
 		await page.getByRole('button', { name: 'Nouveau channel' }).click()
 		await expect(formChannel.getByLabel('Workflow')).toBeVisible()

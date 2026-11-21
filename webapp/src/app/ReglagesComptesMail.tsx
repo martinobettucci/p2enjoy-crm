@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les listes de l'écran ne lisent que l'espace de l'adresse ; docs/SPEC-espace-courant.md §15.4 bis
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'écran travaille dans l'espace de l'adresse (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-136 (docs/BACKLOG.md) — tranche T3 : l'historique au formulaire, la commande et le panneau « Dossiers relevés »,
 //       son ouverture d'elle-même après la création d'une boîte (docs/SPEC-mail-subsystem.md §25.4, §25.5 ;
@@ -234,7 +235,7 @@ export function ReglagesComptesMail({
 			}
 			if (espaces.statut !== 'pret') return
 			setIdWorkspace(idEspaceParmi(espaces.donnees, idEspaceContexte))
-			const lus = await lireComptesEntrants(client)
+			const lus = await lireComptesEntrants(client, idEspaceContexte ?? undefined)
 			if (rang !== courant.current) return
 			setEtat(lus.statut === 'pret' ? pret(lus.donnees) : lus)
 		})()
@@ -254,7 +255,7 @@ export function ReglagesComptesMail({
 		if (client === null) return
 		const rang = ++courant.current
 		void (async () => {
-			const lus = await lireComptesEntrants(client)
+			const lus = await lireComptesEntrants(client, idEspaceContexte ?? undefined)
 			if (rang !== courant.current) return
 			setEtat(lus.statut === 'pret' ? pret(lus.donnees) : lus)
 		})()

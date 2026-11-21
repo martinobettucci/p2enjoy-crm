@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les modèles d'affaires de l'espace de l'écran (docs/SPEC-espace-courant.md §15.4 bis)
 // @spec CRM-068 (docs/BACKLOG.md) — tranche T4b1 : lire, poser, modifier et archiver les modèles d'affaires ; enregistrer une
 //       affaire comme modèle
 // @spec docs/SPEC-checklists.md §3.5 (la table, écriture administrateur, lecture membre), §3.6 (`save_card_as_template`),
@@ -76,10 +77,12 @@ export function projeterModeles(lignes: readonly ModeleLu[]): readonly ModeleAff
 /** Lit les modèles de l'espace — d'un seul workflow quand il est donné —, archivés compris si demandé. */
 export async function lireModeles(
 	client: ClientCrm,
-	options: { readonly idWorkflow?: string; readonly archives?: boolean } = {},
+	/** `CRM-161` T2.c (§15.4 bis) : `idWorkspace`, les modèles de cet espace seul. */
+	options: { readonly idWorkflow?: string; readonly archives?: boolean; readonly idWorkspace?: string } = {},
 ): Promise<EtatAsync<readonly ModeleAffaire[]>> {
 	try {
 		let requete = client.from('card_templates').select(COLONNES_MODELE)
+		if (options.idWorkspace !== undefined) requete = requete.eq('workspace_id', options.idWorkspace)
 		if (options.idWorkflow !== undefined) requete = requete.eq('workflow_id', options.idWorkflow)
 		if (options.archives !== true) requete = requete.is('archived_at', null)
 		const reponse = await requete

@@ -1,3 +1,4 @@
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T2.c : la doublure du client connaît le filtre de l'espace (docs/SPEC-espace-courant.md §15.4 bis)
 // @verifies CRM-077 (docs/BACKLOG.md) — corbeille et restauration : l'écran, sixième tranche
 // @verifies docs/SPEC-corbeille.md §4.3 (l'auteur inconnu est nommé), §4.4 (les trois états de
 //           l'énumération, et une énumération en échec n'invalide pas la liste), §4.5 (les trois
@@ -101,7 +102,8 @@ function client({
 				chaine['not'] = () => chaine
 				chaine['order'] = () => chaine
 				// Énumération : elle seule filtre par `eq`/`in` puis `is`.
-				chaine['eq'] = () => chaineEnumeration()
+				// `CRM-161` T2.c : la lecture de la corbeille filtre aussi l'espace (`eq('workspace_id', …)`), sans être une énumération.
+				chaine['eq'] = (colonne: string) => (colonne === 'workspace_id' ? chaine : chaineEnumeration())
 				chaine['in'] = () => chaineEnumeration()
 				chaine['then'] = (resoudre: (valeur: unknown) => unknown) =>
 					Promise.resolve(lectures[table] ?? VIDE).then(resoudre)

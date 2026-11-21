@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les tracks administrables de l'espace de l'écran (docs/SPEC-espace-courant.md §15.4 bis)
 // @spec CRM-075 (docs/BACKLOG.md) — administration des tracks et des channels
 // @spec CRM-154 (docs/BACKLOG.md) tranche T3 — le refus `ordre-perime` de `public.reorder_channels`
 //       (docs/SPEC-administration-arborescence.md §15.3) ; son calcul vit dans `reorganisation-channels.ts`
@@ -94,9 +95,12 @@ export const COLONNES_WORKFLOW_AFFECTABLE = 'id, name, scope, is_default'
 export async function lireTracksAdministrables(
 	client: ClientCrm,
 	inclureArchives: boolean,
+	/** `CRM-161` T2.c (docs/SPEC-espace-courant.md §15.4 bis) : la liste de cet espace seul ; omis, tout ce que la RLS rend. */
+	idWorkspace?: string,
 ): Promise<EtatAsync<readonly TrackAdministrable[]>> {
 	try {
-		const base = client.from('tracks').select(COLONNES_TRACK_ADMIN).is('deleted_at', null)
+		const tous = client.from('tracks').select(COLONNES_TRACK_ADMIN).is('deleted_at', null)
+		const base = idWorkspace === undefined ? tous : tous.eq('workspace_id', idWorkspace)
 		const filtre = inclureArchives ? base : base.is('archived_at', null)
 		const reponse = await filtre.order('position').order('name')
 		if (reponse.error !== null) {

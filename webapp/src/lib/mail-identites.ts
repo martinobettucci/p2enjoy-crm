@@ -1,3 +1,4 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les identités de l'espace de l'écran (docs/SPEC-espace-courant.md §15.4 bis)
 // @spec CRM-136 (docs/BACKLOG.md) — tranche T3 : le quota journalier lu, montré et écrit, « aucun plafond » compris
 //       (docs/SPEC-mail-subsystem.md §25.6 ; docs/DESIGN_SYSTEM.md §5.99)
 // @spec CRM-089 (docs/BACKLOG.md) — configuration des identités sortantes SMTP
@@ -118,11 +119,12 @@ export function signatureRenseignee(identite: IdentiteSortante): boolean {
  */
 export async function lireIdentitesSortantes(
 	client: ClientCrm,
+	/** `CRM-161` T2.c (docs/SPEC-espace-courant.md §15.4 bis) : la liste de cet espace seul ; omis, tout ce que la RLS rend. */
+	idWorkspace?: string,
 ): Promise<EtatAsync<readonly IdentiteSortante[]>> {
 	try {
-		const reponse = await client
-			.from('mail_outbound_identities')
-			.select(COLONNES_IDENTITE_SORTANTE)
+		const tous = client.from('mail_outbound_identities').select(COLONNES_IDENTITE_SORTANTE)
+		const reponse = await (idWorkspace === undefined ? tous : tous.eq('workspace_id', idWorkspace))
 			.order('from_address')
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
