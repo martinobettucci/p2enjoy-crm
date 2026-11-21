@@ -20503,14 +20503,27 @@ leur adresse ; les anciennes adresses sont redirigées.
 outils des tracks, des channels et de l'inbox agissent dans un espace ; les autres peuvent rester multi-espaces en rendant l'espace
 de chaque élément ; la liste des espaces et la recherche globale restent
 multi-espaces ; aucune case ni famille nouvelle.
-**Spécification** : à écrire avant le code — un inventaire écran par écran et outil par outil (ce qui lit quoi, avec quel
-espace), puis le découpage en tranches ; `docs/DAT.md`, `docs/SPEC-mail-subsystem.md` (l'inbox), `docs/SPEC-mcp.md`, le
-manuel, le contrat.
+**Spécification** : `docs/SPEC-espace-courant.md` (écrite le 2026-11-21, avant le code) — l'état de départ (§3), l'inventaire
+des pages (§4), des lectures de la base (§5) et du connecteur (§6), la règle de la base (§7), l'adresse (§8), le menu des
+espaces (§9), les pages globales (§10), le seed (§12), les preuves (§13) ; chaque tranche est détaillée dans les chapitres
+cités **avant son code**.
 **DoD** : pour chaque lecture cloisonnée (tracks, channels, inbox), une preuve rouge avant (un membre de deux espaces voit
 l'autre espace) puis verte ; pour chaque écran global, la preuve que l'espace de provenance est affiché et que le filtre isole ;
 pgTAP et API par requête directe ; E2E souris et clavier sur un compte membre de deux espaces ; seed : un compte membre de
 deux espaces, avec des mails dans chacun ; captures observées ; manuel ; contrat. La campagne complète revient à la session de
 livraison (décision 830).
+**Tranches** (`docs/SPEC-espace-courant.md` §14) :
+- [ ] **T1 — La base : l'inbox d'un espace.** `inbox_messages`, `inbox_hidden_counts`, `inbox_arborescence` prennent
+  `p_workspace_id` (obligatoire, `workspace_required`), l'ancienne signature supprimée ; la portée des actions groupées exige
+  l'espace (`thread_other_workspace`) ; `inbox_unread_by_workspace` ; l'outbox et l'état de la messagerie filtrés ; la webapp
+  passe l'espace du contexte, sans changement visible ; pgTAP et API, rouges avant ; `docs/SPEC-mail-subsystem.md` §35.
+- [ ] **T2 — L'adresse et le menu des espaces.** `/:slugEspace/` pour l'inbox, les tracks et channels, les réglages ;
+  anciennes adresses redirigées ; bascule ; menu et non-lus ; barre latérale et réglages sur l'espace de l'adresse ; seed
+  (« Studio Lumen », un compte membre des deux) ; design system ; `goto` et images du manuel révisés dans la tranche.
+- [ ] **T3 — Les pages globales.** Espace de provenance et filtre « Espace » ; les écrans qui lisaient le premier espace
+  passent à tous ; les créations nomment l'espace courant de l'onglet.
+- [ ] **T4 — Le connecteur.** Audit outil par outil (`docs/SPEC-mcp.md` §9.2), lien préfixé de `crm_mail_prepare`.
+- [ ] **T5 — Le manuel et la livraison.** Chapitre « Changer d'espace », contrat, remise à la session de livraison.
 
 ### CRM-162 — Déplacer un track entier d'un espace à un autre, par le super-administrateur `[@]`
 
