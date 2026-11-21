@@ -20542,7 +20542,11 @@ livraison (décision 830).
     `manuel` et `mail`, dont les `goto` ont été révisés mécaniquement — à la campagne de la session de livraison. Livraison :
     contrat §2.68, avec le §2.67, après T2.c et T2.b. **Note pour T2.b** (session de livraison) : `e2e/ui/accueil-channels`
     exige une base à un seul espace ; le seed §55 en ajoute un : la preuve ciblera son espace au lieu de compter les espaces ;
-  - [P] **T2.c — les réglages ne lisent que l'espace de l'adresse** (§15.4 bis) : chaque lecture de liste d'un réglage porte
+  - [@] **T2.c — les réglages ne lisent que l'espace de l'adresse** (§15.4 bis) : chaque lecture de liste d'un réglage porte
+    *Prise en charge : session 4891a451 (p2enjoy-crm-5f) depuis 2026-11-21 20:05 UTC — état avant : [P]*
+    **Défaut constaté par la campagne du lot (2026-11-21, décision 974)** : la coquille rendait la page pendant la lecture des
+    espaces ; un réglage lisait d'abord sans filtre, et Réglages ▸ Workflows ne relisait jamais (le défaut de « Studio Lumen »
+    choisi sur `/p2enjoy/reglages/workflows`). Correctif : la page ne se monte qu'une fois les espaces lus (§15.4 bis).
     `workspace_id=eq.` ; défaut antérieur à `CRM-161`, à reprendre avant T2.b. **Implémentée et vérifiée en développement le
     2026-11-21** : `e2e/ui/reglages-espace.spec.ts` rouge sur le code de T2.a (l'étiquette et le track d'un second espace dans
     les réglages du premier), puis vert ; unitaires `reglages-espace.test.ts` 24/24 et les écrans touchés ; E2E des réglages

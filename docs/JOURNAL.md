@@ -41813,3 +41813,20 @@ de livraison.
 **Vérifications** : API, quinze specs (les dix de la campagne, `workflow-depart`, `classement`, `envoi`,
 `identites-sortantes`) 313/315, les deux rouges étant `demarrage` dans la fenêtre ci-dessus, puis `demarrage` seul 6/6 ; mail,
 sept specs, 21/21 ; `tsc` du dépôt sans erreur.
+
+### décision 974 — `CRM-161` T2.c : la coquille ne monte la page qu'une fois les espaces lus
+
+*2026-11-21, session 4891a451 (p2enjoy-crm-5f) ; accord de la session de livraison (d5), dont le lot attend ce correctif.*
+**Le problème** : la campagne du lot rougit `workflow-entete-changement` — sur `/p2enjoy/reglages/workflows`, l'en-tête montre
+« Cycle commercial », le workflow par défaut de « Studio Lumen », au lieu de « Cycle commercial standard ».
+**L'observation** : `ZonePrincipale` rend le contenu pendant la lecture des espaces ; l'écran se monte avec `idWorkspace` nul, et
+`lireWorkflowsAdministrables(client, …, espaceCourant ?? undefined)` lit sans filtre. Son effet ne dépend pas de l'espace
+(`[client, tentative, inclureArchives]`) : il ne relit jamais. Les autres réglages relisent à l'arrivée de l'espace, après une
+première lecture des deux espaces.
+**Solutions envisagées** : (a) ajouter l'espace aux dépendances de chaque effet et attendre qu'il soit connu, écran par écran —
+quinze lectures dans neuf écrans, et le même oubli possible au prochain écran ; (b) **la coquille ne monte la page qu'une fois
+les espaces lus**, un squelette entre-temps — une règle en un seul lieu, qui vaut pour tout écran présent et futur.
+**La décision** : (b). Les deux tiennent ensemble avec la clé de génération de T2.c, qui remonte la page à un vrai changement
+d'espace : à chaque montage, l'espace est connu.
+**Les conséquences** : la première page d'un onglet attend la lecture des espaces (une requête), sous un squelette ; les
+suivantes non, la coquille restant montée. `docs/SPEC-espace-courant.md` §15.4 bis ; T2.c repasse `[~]` le temps du correctif.

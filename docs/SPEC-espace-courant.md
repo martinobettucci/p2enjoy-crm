@@ -423,6 +423,28 @@ pose sous la clé de service un espace jetable dont Camille est administratrice,
 que Réglages ▸ Étiquettes et ▸ Arborescence de chaque espace ne montrent que les siens — **rouge avant**, la liste mêlant les
 deux espaces.
 
+**Le défaut que la campagne du lot a trouvé** (*2026-11-21, décision 974 ; écrit avant son code*). Les lectures de T2.c
+portent bien `workspace_id=eq.`, mais **la coquille rendait le contenu de la page pendant qu'elle lisait les espaces**
+(`ZonePrincipale` : « `chargement` comme `pret` laissent la route rendre son propre contenu »). Un écran de réglages se
+montait donc d'abord avec `idWorkspace` **nul**, et son option `idWorkspace ?? undefined` lisait **sans filtre** : sous la
+RLS, les deux espaces de Camille. Les écrans qui relisent à l'arrivée de l'espace ne montraient qu'un éclair ; ceux dont
+l'effet ne dépend pas de l'espace ne relisaient jamais — Réglages ▸ Workflows choisissait d'office le défaut de « Studio
+Lumen » (« Cycle commercial ») sur `/p2enjoy/reglages/workflows`, et ses blocs suivants (étapes, suggestions de l'IA)
+suivaient ce choix.
+
+**La règle** : **la coquille ne monte le contenu de la page qu'une fois les espaces lus.** Pendant la lecture des espaces, la
+zone principale rend un **squelette** (`SkeletonListe`, nom accessible « Chargement en cours » — design system §5.8 : des
+squelettes, jamais un écran blanc ni un spinner plein écran) ; la barre latérale et l'en-tête gardent leurs propres
+squelettes. Une fois les espaces lus, la page se monte avec l'espace déjà connu : aucune de ses lectures ne part sans lui. La
+coquille restant montée d'une page à l'autre (INC-254), l'attente n'a lieu qu'à la première page de l'onglet. Un échec de
+lecture des espaces reste dit comme avant (refus ou erreur avec reprise), et « Espace introuvable » aussi.
+
+**Preuves** : un unitaire de la coquille (pendant la lecture des espaces, le contenu n'est pas monté et le squelette est rendu ;
+après, le contenu se monte une fois, avec l'espace) ; un E2E ajouté à `e2e/ui/reglages-espace.spec.ts`, **rouge avant** :
+l'espace jetable porte un workflow par défaut dont le nom le distingue, et Réglages ▸ Workflows de l'espace du seed montre le
+défaut du seed, jamais celui de la sonde ; puis les specs d'écran que le défaut explique (`workflow-entete-changement`,
+`description-etapes`, `assistant-ia-modification`, `tester-connexion`).
+
 ### 15.5 Les E2E de T2.a
 
 - Les `goto` vers une page d'un espace (436, dans 117 fichiers de `e2e/ui`, `e2e/manuel`, `e2e/mail`) sont révisés vers
