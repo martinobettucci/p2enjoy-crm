@@ -41394,3 +41394,30 @@ aperçu et saisie du nom du track (écarté : un bouton) ; **connecteur MCP — 
 **Ouvert** : le responsable veut réfléchir avec la session à **ce qui est global** — coût du personnel, objectifs, temps saisis,
 aujourd'hui propres à un espace — avant de dire ce qui suit le track ; les relances armées et envois en file : sans
 préférence. **La spécification de `CRM-162` attend ces réponses.**
+
+### décision 965 — `CRM-161`, révisant la 963 : l'espace courant ne cloisonne que les tracks, les channels et l'inbox ; le reste est global, l'espace affiché
+
+*2026-11-21, session 4522fa9c (p2enjoy-crm-d5, session de livraison), le responsable revient sur la décision 963.*
+**Le responsable** : « le modèle de fond est juste, une personne a un coût par espace […] la question est sur l'affichage […]
+cela me paraîtrait une erreur de cloisonner l'affichage des objectifs, de la saisie de temps, contacts, du pilotage […] bref en
+gros tout sauf les tracks et les channels. […] on affiche l'espace de provenance clairement dans ces écrans et reportings mais
+on reste sur la vision globale […] ces écrans servent au pilotage donc la big picture est nécessaire. »
+**Décisions** :
+- **cloisonnés** à l'espace courant : les **tracks et les channels** ; **l'inbox**, sur l'avis critique demandé à la session
+  (une file de travail dont le tri, les pastilles, les blocages et les identités sont propres à un espace), **avec les non-lus
+  de chaque espace dans le sélecteur d'espace** ; écartés : l'inbox globale avec l'espace affiché ; cloisonnée sans compteur ;
+- **globaux, l'espace de provenance affiché**, avec un **filtre « Espace » facultatif** : Board, Ma journée, Affaires figées
+  (écarté : les cloisonner), objectifs, temps, contacts, pilotage, coûts, rentabilité, reportings ; écarté : l'espace affiché
+  sans filtre ;
+- **le modèle ne change pas** : coût du personnel par personne et par espace ;
+- le cloisonnement retenu reste **appliqué en base** ; le connecteur reste audité, familles existantes.
+
+### décision 966 — `CRM-162` : les temps valorisés à l'arrivée, les objectifs gardent leur lien, les envois en cours refusent le déplacement
+
+*2026-11-21, session 4522fa9c (p2enjoy-crm-d5, session de livraison), arbitrages du responsable (`AskUserQuestion`), après la
+décision 965.*
+**Décisions** : les temps saisis suivent le track et sont **valorisés au coût du personnel de l'espace d'arrivée** (écarté : le
+coût de départ figé) ; les blocs d'objectifs qui citent un channel déplacé **gardent leur lien**, affiché avec l'espace d'arrivée
+(écarté : la référence retirée) ; les relances armées et envois en file : **refus et liste** (écarté : les arrêter d'office).
+**Conséquence** : la spécification de `CRM-162` peut s'écrire ; aucune question ouverte.
+
