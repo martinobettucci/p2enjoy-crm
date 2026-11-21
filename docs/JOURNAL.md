@@ -41331,3 +41331,19 @@ archivés compris ; un seul rattachement, par exemple le premier créé.
 rattachements archivés, et un responsable unique.
 **Conséquences** : `docs/SPEC-mail-subsystem.md` §27.7.2 (ii) ; INC-363 close ; la règle (ii) concerne aussi Camille pour le
 mail reçu de « Plateforme de billetterie » (§27.7.5).
+
+### décision 961 — `CRM-160` : le design system lu par sections ciblées, pour une phrase de l'état vide
+
+*2026-11-21, session d5b44a2d (p2enjoy-crm-6e), arbitrage du responsable (`AskUserQuestion`).*
+**Le problème** : avec la règle élargie de `concerns_me` (§27.7), le corps de l'état vide de « Seulement moi » (« Seuls les
+messages adressés à vos adresses d'expédition, ou envoyés par elles, sont affichés. ») devient inexact. Changer cette phrase
+touche l'interface, et `CLAUDE.md` exige alors la lecture intégrale de `docs/DESIGN_SYSTEM.md` (9 064 lignes).
+**Les options présentées** : une lecture par sections ciblées, comme pour `CRM-159` (décisions 948, 953 et 958) ; la lecture
+intégrale ; laisser la phrase inexacte et consigner l'écart.
+**Décision** : **sections ciblées, pour cette unité seule** — §1 à §4, §5.4, §5.8, §5.96, §6 à §11. Écartées : la lecture
+intégrale, et la phrase laissée inexacte.
+**Conséquences** : la phrase nomme les réponses reçues dans une affaire. Seul le texte change, et `docs/DESIGN_SYSTEM.md`
+§5.96 le consigne. L'état vide a été observé à 390, 1024 et 1440 px, sans débordement. *Observé au code* : à la lecture des
+sections, aucune autre règle n'est touchée ; le §5.96 dit déjà que l'arborescence ne change pas de forme, et la règle (ii)
+ne fait que lui ajouter des dossiers à compter.
+

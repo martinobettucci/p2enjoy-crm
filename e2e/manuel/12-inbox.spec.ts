@@ -14,6 +14,10 @@
 //       docs/SPEC-mails-prepares.md §6 ; docs/SPEC-seed.md §37)
 // @spec CRM-139 (docs/BACKLOG.md) — l'image « seulement-moi » de la section 12.2 : la case cochée et les dossiers qu'elle
 //       compte (docs/DESIGN_SYSTEM.md §5.96 ; docs/SPEC-mail-subsystem.md §27.4)
+// @spec CRM-160 (docs/BACKLOG.md) — la même image : le dossier de Vertuo porte la réponse reçue du seed §53, et celui de
+//       « Plateforme de billetterie », dont Camille est responsable, paraît (docs/SPEC-mail-subsystem.md §27.7)
+// @spec CRM-160 (docs/BACKLOG.md) — l'image « telecharger » : l'envoi choisi dans le sélecteur du fil, que la réponse du seed
+//       §53 rallonge ; la réponse rendue non lue à la fin (docs/SPEC-seed.md §53 ; docs/SPEC-mail-subsystem.md §18 bis.2)
 // @spec CRM-137 (docs/BACKLOG.md) — l'image « classer-expediteur-connu » de la section 12.1 : le sélecteur cherchable et
 //       la case « Expéditeur connu » (docs/DESIGN_SYSTEM.md §5.94 ; docs/SPEC-mail-subsystem.md §26.3)
 // @spec CRM-144 (docs/BACKLOG.md) — tranche T5 : les images de la section 12.5 — « Échecs » et « Réessayer » sur l'échec du
@@ -161,11 +165,32 @@ test('l’inbox : les dossiers, un fil, le classement', async ({ page }) => {
 	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'afficher-les-affaires-en-sommeil', cibles: [page.getByTestId('barre-sommeil-board')] })
 
 	// Une pièce déclarée saine : la seule du seed, jointe au message envoyé sur « Refonte du monitoring ».
+	// RÉVISÉ par `CRM-160` (seed §53) : le fil de cet envoi porte désormais la réponse de Driss, son message le plus récent,
+	// que l'ouverture du fil affiche (§16.16.4) et MARQUE LUE pour Camille (§18 bis.2). L'envoi est choisi dans le sélecteur
+	// du fil, et la réponse est rendue non lue à la fin, par la vraie fonction et sous le jeton de Camille : les preuves qui
+	// comptent ses non-lus (pgTAP `0095` n° 11) ne dépendent pas de ce parcours.
 	await ouvrir(page, /Refonte du monitoring/, 'Proposition de refonte du monitoring')
-	const piece = page.getByTestId('inbox-message-ouvert').getByText('proposition-monitoring.txt').first()
-	const telecharger = page.getByTestId('inbox-message-ouvert').getByRole('button', { name: /Télécharger/ }).first()
-	await expect(telecharger).toBeVisible()
-	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'telecharger', cibles: [piece, telecharger] })
+	try {
+		await page.getByTestId('inbox-message-ouvert').getByTestId('inbox-fil-message').filter({ hasNotText: 'Driss' }).first().click()
+		const piece = page.getByTestId('inbox-message-ouvert').getByText('proposition-monitoring.txt').first()
+		const telecharger = page.getByTestId('inbox-message-ouvert').getByRole('button', { name: /Télécharger/ }).first()
+		await expect(telecharger).toBeVisible()
+		await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'telecharger', cibles: [piece, telecharger] })
+	} finally {
+		const [reponse] = (await (
+			await page.request.get(
+				`${URL_API}/rest/v1/mail_messages?select=id&rfc822_message_id=eq.${encodeURIComponent('<seed-reponse-affaire@p2enjoy.test>')}`,
+				{ headers: enTetesService() },
+			)
+		).json()) as { id: string }[]
+		if (reponse !== undefined) {
+			const remise = await page.request.post(`${URL_API}/rest/v1/rpc/mark_message_unread`, {
+				headers: { ...enTetesAuthentifies(await jetonDe(ADMIN)), 'Content-Type': 'application/json' },
+				data: { p_message_id: reponse.id },
+			})
+			expect(remise.status(), await remise.text()).toBe(200)
+		}
+	}
 })
 
 // `CRM-138` T5 : la corbeille de l'inbox, avec le courrier que le seed efface avec sa boîte (docs/SPEC-seed.md §45) — son
@@ -302,7 +327,8 @@ test.describe('l’aperçu d’une pièce jointe', () => {
 })
 
 // `CRM-139` : la case « Seulement moi », cochée à l'ouverture, sans `courrier=tous` : seul le dossier de l'affaire où
-// Camille a écrit est compté (docs/SPEC-mail-subsystem.md §27.5).
+// Camille a écrit est compté (docs/SPEC-mail-subsystem.md §27.5). RÉVISÉ par `CRM-160` (§27.7) : celui d'une affaire dont
+// elle est responsable l'est aussi — « Plateforme de billetterie » —, et le manuel le dit.
 test('seulement moi : la case cochée, et le seul courrier qui vous concerne', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
 	await page.goto('/inbox')
@@ -310,6 +336,7 @@ test('seulement moi : la case cochée, et le seul courrier qui vous concerne', a
 	await expect(caseMoi).toBeEnabled()
 	await expect(caseMoi).toBeChecked()
 	await expect(dossiers(page).getByRole('button', { name: /Refonte du monitoring/ })).toBeVisible()
+	await expect(dossiers(page).getByRole('button', { name: /Plateforme de billetterie/ })).toBeVisible()
 	await illustrer(page, {
 		chapitre: CHAPITRE,
 		section: LIRE,

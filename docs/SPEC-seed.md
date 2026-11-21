@@ -3368,16 +3368,19 @@ répond à un envoi d'une personne : ils ne montrent que la règle (ii).
   démonstration, INC-087) **à la seule adresse `c-*`** de « Refonte du monitoring — Vertuo » (`…d012`). Ses en-têtes
   `In-Reply-To` et `References` portent le `Message-ID` **réel** de l'envoi du §2.19 *ter*, lu en base : ce message est donc
   dans le fil de la proposition de Camille.
-- **Le vrai chemin** : la soumission SMTP authentifiée sur Stalwart et la relève de la boîte système par `mail-sync`, la
-  même fonction que le §2.19. Le message est classé par la règle 1, l'adresse de l'affaire. Rien n'est écrit en table à la
-  main (`CLAUDE.md` §8).
+- **Le vrai chemin** : le message est **déposé par IMAP dans la boîte système**, comme au §49, puis **relevé** par la vraie
+  relève de `mail-sync`, la même fonction que le §2.19. La relève le classe par la règle 1, l'adresse de l'affaire. Rien
+  n'est écrit en table à la main (`CLAUDE.md` §8). *Précisé au code* : la soumission SMTP d'abord écrite n'apportait rien
+  de plus qu'un dépôt, et le §2.19 a mesuré que l'ordre de remise par SMTP n'est pas garanti (INC-267).
 - **La place** : avant le §46, comme le §49, pour que la passe des pastilles trouve ce mail.
 - **Ce qu'il démontre** :
   - **Camille** n'est ni destinataire ni responsable de Vertuo, mais **la réponse la concerne** : elle a écrit dans le fil,
     règle (i). Sous « Seulement moi », le dossier de Vertuo lui montre sa proposition et cette réponse ;
   - **Driss** est concerné comme seul responsable de l'affaire, règle (ii) ;
   - **la lectrice** n'est pas concernée.
-- **Rejouable** : le `Message-ID` est fixe, et un message déjà en base n'est pas redéposé.
+- **Rejouable** : le `Message-ID` est fixe, et un message déjà en base n'est pas redéposé. *Précisé au code* : l'état non
+  lu de la réponse pour Camille est **rétabli** à chaque passage par `mark_message_unread`, sous son jeton, comme au §2.19
+  *bis*. Ouvrir le fil de la proposition le marque lu tout entier, et le manuel l'ouvre pour montrer la pièce de l'envoi.
 - **Le constat**, sous les jetons des trois personnes, par la colonne calculée `concerns_me` : vraie pour Camille et
   pour Driss, et aucune ligne pour la lectrice.
 - **Ce que cela change ailleurs** : le dossier de Vertuo compte un message reçu de plus, pour tous. Les preuves qui comptent

@@ -436,20 +436,95 @@
 				},
 				{
 					"type": "text",
-					"text": " : les messages adressés à l'une de "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "vos adresses d'expédition"
-						}
-					]
-				},
+					"text": " :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "les messages adressés à l'une de "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "vos adresses d'expédition"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", en destinataire, en copie ou en copie cachée ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "ceux que vous avez envoyés depuis elles ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "les "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "réponses reçues dans une affaire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", quand vous avez écrit dans la conversation, ou quand vous êtes "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "responsable\nde l'affaire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " dans l'un de ses channels. Une réponse à un mail envoyé depuis une affaire est adressée à l'adresse de\nl'affaire, et non à la vôtre : c'est cette règle qui vous la montre. Elle arrive non lue, sans notification."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
 				{
 					"type": "text",
-					"text": " (en\ndestinataire, en copie ou en copie cachée), et ceux que vous avez envoyés depuis elles. Les nombres des dossiers suivent\nla case, et une affaire dont aucun message ne vous concerne n'apparaît pas. Une conversation n'y montre que ses messages\nqui vous concernent."
+					"text": "Les nombres des dossiers suivent la case, et une affaire dont aucun message ne vous concerne n'apparaît pas. Une\nconversation n'y montre que ses messages qui vous concernent."
 				}
 			]
 		},
@@ -591,16 +666,16 @@
 		{
 			"type": "image",
 			"src": "l-inbox-lire-trier-et-repondre/seulement-moi.jpg",
-			"alt": "La case « Seulement moi », cochée : seul le dossier de l'affaire où vous avez écrit est compté",
+			"alt": "La case « Seulement moi », cochée : seuls les dossiers des affaires où vous avez écrit, ou dont vous êtes responsable, sont comptés",
 			"width": 295,
-			"height": 372
+			"height": 412
 		},
 		{
 			"type": "image",
 			"src": "l-inbox-lire-trier-et-repondre/seulement-moi-vide.jpg",
 			"alt": "« Non classés » sous la case : « Aucun message de ce dossier ne vous concerne », et « Afficher tout le courrier »",
 			"width": 391,
-			"height": 331
+			"height": 377
 		},
 		{
 			"type": "paragraph",

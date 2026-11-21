@@ -51,6 +51,9 @@
 #       par la vraie relève et les RPC de l'écran (docs/SPEC-seed.md §49 ; docs/SPEC-mail-subsystem.md §32.12)
 # @spec CRM-159 (docs/BACKLOG.md) — tranche T4 : deux mails Spam, l'un aussi Lead, déposés et relevés, pastillés par la vraie
 #       passe (docs/SPEC-seed.md §52 ; docs/SPEC-mail-subsystem.md §31.13.8)
+# @spec CRM-160 (docs/BACKLOG.md) — une réponse reçue à la seule adresse d'une affaire, dans le fil de l'envoi de Camille,
+#       déposée et relevée ; « Seulement moi » la retient pour Camille et Driss (docs/SPEC-seed.md §53 ;
+#       docs/SPEC-mail-subsystem.md §27.7)
 # @spec INC-335 (docs/BACKLOG.md, correctif de la décision 805, T1) — Camille reçoit une identité personnelle, et
 #       l'envoi de démonstration part d'elle : l'identité de service ne s'emprunte plus ; docs/SPEC-seed.md §2.18,
 #       docs/SPEC-mail-subsystem.md §14.2 et §22.14
@@ -6562,6 +6565,76 @@ deposer_puis_relever 'LeadBoost <contact@leadboost.example>' "$MSGID_SPAM_LEAD" 
 	'10 000 leads qualifiés pour votre équipe' \
 	"Ce n'est pas du spam : nous vendons des fichiers de leads prêts à l'emploi, livrés sous 24 heures."
 info "Deux mails Spam déposés et relevés dans la boîte système, pastillés par la passe du §46 — docs/SPEC-seed.md §52"
+
+# --- Une réponse reçue à la seule adresse d'une affaire — CRM-160, docs/SPEC-seed.md §53 ---------------------------------
+# @spec CRM-160 (docs/BACKLOG.md) — la réponse de Driss, le correspondant de démonstration (INC-087), à la proposition que
+#       Camille a envoyée depuis Vertuo (§2.19 ter) : adressée à la SEULE adresse `c-*` de l'affaire, `References` portant le
+#       vrai `Message-ID` de l'envoi ; DÉPOSÉE par IMAP dans la boîte système, comme le §49, et RELEVÉE par la vraie relève,
+#       qui la classe par la règle 1 (docs/SPEC-mail-subsystem.md §27.7.5 ; docs/SPEC-seed.md §53 ; CLAUDE.md §8)
+#
+# AVANT LE §46, comme le §49 : la passe des pastilles doit trouver ce mail. Ses mots ne nomment aucune pastille (le simulateur
+# en pose une dont un mot du nom paraît dans l'objet ou le texte, `supabase/docker/ollama-simule/serveur.py`).
+# REJOUABLE : un `Message-ID` fixe ; un mail présent n'est pas redéposé.
+MSGID_REPONSE_AFFAIRE='seed-reponse-affaire@p2enjoy.test'
+CARD_REPONSE_AFFAIRE=5eed0000-0000-4000-8000-00000000d012   # Refonte du monitoring — Vertuo, Driss seul responsable
+echo
+say "8 tertricies quater. Une réponse reçue à la seule adresse d'une affaire (CRM-160)"
+ENVOI_CAMILLE=$(service_get "mail_messages?select=rfc822_message_id&direction=eq.outbound&card_id=eq.$CARD_REPONSE_AFFAIRE&subject=eq.$(jq -rn --arg s "$OBJET_ENVOI_SEED" '$s|@uri')" \
+	| jq -r '.[0].rfc822_message_id // empty')
+[ -n "$ENVOI_CAMILLE" ] || die "l'envoi de Camille « $OBJET_ENVOI_SEED » manque à Vertuo : le §2.19 ter le pose pourtant (§53)."
+ADRESSE_VERTUO=$(service_get "cards?select=email_local_part&id=eq.$CARD_REPONSE_AFFAIRE" | jq -r '.[0].email_local_part // empty')
+[ -n "$ADRESSE_VERTUO" ] || die "Vertuo n'a pas d'adresse : le trigger de la migration 11 aurait dû la frapper (§53)."
+if [ "$(message_corbeille "$MSGID_REPONSE_AFFAIRE" | jq -r 'length')" = 0 ]; then
+	depot=$(docker compose exec -T -e BOITE="systeme@$INBOUND_DOMAIN" -e MOT="$MAILBOX_PASSWORD" \
+		-e A="$ADRESSE_VERTUO@$INBOUND_DOMAIN" -e MID="<$MSGID_REPONSE_AFFAIRE>" -e PARENT="$ENVOI_CAMILLE" \
+		-e OBJET="Re: $OBJET_ENVOI_SEED" mail-sync python -c '
+import email.utils, imaplib, os, time
+from email.message import EmailMessage
+message = EmailMessage()
+message["From"] = "Driss Lemoine <bizdev@p2enjoy.test>"
+message["To"] = os.environ["A"]
+message["Subject"] = os.environ["OBJET"]
+message["Message-ID"] = os.environ["MID"]
+# LES DEUX EN-TÊTES : c est « References » que `app.cle_fil` lit ; la réponse est alors dans le fil de l envoi.
+message["In-Reply-To"] = os.environ["PARENT"]
+message["References"] = os.environ["PARENT"]
+message["Date"] = email.utils.formatdate()
+message.set_content("Bonjour Camille,\n\nMerci pour la proposition. Le chiffrage nous convient : pouvons-nous caler un point mardi pour lancer la refonte ?\n\nDriss")
+m = imaplib.IMAP4("stalwart", 143)
+m.login(os.environ["BOITE"], os.environ["MOT"])
+m.append("INBOX", "", imaplib.Time2Internaldate(time.time()), message.as_bytes())
+m.logout()
+print("depose")
+' 2>&1) || die "le dépôt IMAP de la réponse à « $OBJET_ENVOI_SEED » a échoué : « $depot »"
+	[ "${depot##*$'\n'}" = "depose" ] || die "le dépôt IMAP de la réponse n'a rien confirmé : « $depot »"
+	for _tentative in 1 2 3 4 5 6 7 8 9 10; do
+		relever_boite >/dev/null
+		[ "$(message_corbeille "$MSGID_REPONSE_AFFAIRE" | jq -r 'length')" = 1 ] && break
+		sleep 3
+	done
+fi
+[ "$(message_corbeille "$MSGID_REPONSE_AFFAIRE" | jq -r '.[0].card_id // empty')" = "$CARD_REPONSE_AFFAIRE" ] \
+	|| die "la réponse n'est pas relevée ni classée dans Vertuo par la règle 1 : mail-sync et Stalwart tournent-ils ? (§53)"
+
+# L'ÉTAT EST RÉTABLI, comme au §2.19 bis : ouvrir le fil de la proposition le marque lu tout entier, et les parcours qui
+# l'ouvrent laissent la réponse lue pour Camille. Rejouer le seed la remet non lue — par `mark_message_unread`, la vraie
+# fonction, sous le jeton du compte administrateur ; la fonction ignore un message déjà non lu.
+ID_REPONSE_AFFAIRE=$(message_corbeille "$MSGID_REPONSE_AFFAIRE" | jq -r '.[0].id')
+code=$(api_admin POST /rest/v1/rpc/mark_message_unread -d "{\"p_message_id\":\"$ID_REPONSE_AFFAIRE\"}")
+attendu "$code" "remise à non lu de la réponse du §53 pour le compte administrateur" 200
+
+# Le constat, SOUS LES JETONS des trois personnes, par la colonne calculée de l'écran.
+concerne_reponse() { # $1 = adresse de connexion ; rend le nombre de lignes où `concerns_me` est vraie
+	local jeton
+	jeton=$(sso_jeton_interne "$API" "$ANON_KEY" "$1" || true)
+	[ -n "$jeton" ] || die "connexion de $1 impossible : le §53 constate sous son jeton."
+	curl -s "$API/rest/v1/mail_messages?select=id&concerns_me=is.true&rfc822_message_id=eq.%3C$MSGID_REPONSE_AFFAIRE%3E" \
+		-H "apikey: $ANON_KEY" -H "Authorization: Bearer $jeton" | jq -r 'length'
+}
+[ "$(concerne_reponse admin@p2enjoy.test)" = 1 ] || die "la réponse doit concerner Camille, qui a écrit dans le fil (§53, règle i)."
+[ "$(concerne_reponse bizdev@p2enjoy.test)" = 1 ] || die "la réponse doit concerner Driss, responsable de Vertuo (§53, règle ii)."
+[ "$(concerne_reponse viewer@p2enjoy.test)" = 0 ] || die "la réponse ne doit pas concerner la lectrice (§53)."
+info "Réponse à « $OBJET_ENVOI_SEED », adressée à la seule adresse de Vertuo : elle concerne Camille (elle a écrit dans le fil) et Driss (responsable), pas la lectrice — docs/SPEC-seed.md §53"
 
 # --- Les pastilles d'un mail : évaluées par le vrai chemin, corrigées à la main, une en échec — CRM-141 T2, docs/SPEC-seed.md §46
 # @spec CRM-141 (docs/BACKLOG.md) — tranche T2 : les messages reçus du seed évalués par la VRAIE passe de la fonction `ia`,

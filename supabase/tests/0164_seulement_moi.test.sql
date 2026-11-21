@@ -1,6 +1,7 @@
 -- @verifies CRM-139 (docs/BACKLOG.md) — « Seulement moi » : `concerns_me` par À, Cc, Cci et l'expéditeur, sans casse ;
 --           jamais l'identité de service ni celle d'une autre personne, y compris sous un administrateur ; fausse sans
 --           identité ; `inbox_arborescence(p_only_me)` et ses compteurs, l'appel sans argument inchangé ; l'anonyme refusé
+-- @verifies CRM-160 (docs/BACKLOG.md) — n° 15 révisé et n° 17 : le responsable de l'affaire et le reçu (§27.7.6)
 -- @verifies docs/SPEC-mail-subsystem.md §27.2, §27.3, §27.6 ; docs/SCHEMA.md « Migration `0175` » ;
 --           docs/JOURNAL.md décisions 879 et 902 ; CLAUDE.md §10
 --
@@ -14,7 +15,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(16);
+select plan(17);
 
 create or replace function pg_temp.endosser(utilisateur uuid) returns void language plpgsql as $$
 begin
@@ -109,8 +110,14 @@ select pg_temp.endosser(:'driss');
 
 select ok((select public.concerns_me(m) from public.mail_messages m where rfc822_message_id = '<tst-139-driss@exemple.test>'),
 	'14 — Driss : le message adressé à son identité le concerne');
-select ok(not (select public.concerns_me(m) from public.mail_messages m where rfc822_message_id = '<tst-139-cci@exemple.test>'),
-	'15 — Driss : le message adressé à l''administratrice ne le concerne pas');
+-- RÉVISÉ par `CRM-160` (décision 51, décisions 959 et 960 ; docs/SPEC-mail-subsystem.md §27.7.6), non relâché : Driss est
+-- le responsable de `…00c1`, et un message REÇU dans l'affaire le concerne désormais, qu'il soit adressé à l'administratrice
+-- ou non. Ce que le n° 15 prouvait — le courrier d'une autre personne ne le concerne pas — passe au n° 17, sur l'envoi de
+-- l'administratrice, que la règle de l'affaire ne retient pas.
+select ok((select public.concerns_me(m) from public.mail_messages m where rfc822_message_id = '<tst-139-cci@exemple.test>'),
+	'15 — Driss : le message reçu dans `…00c1`, dont il est responsable, le concerne, bien qu''adressé à l''administratrice');
+select ok(not (select public.concerns_me(m) from public.mail_messages m where rfc822_message_id = '<tst-139-de@exemple.test>'),
+	'17 — Driss : l''envoi de l''administratrice depuis `…00c1` ne le concerne pas — la règle de l''affaire ne retient que le reçu');
 
 reset role;
 select pg_temp.endosser(:'lectrice');

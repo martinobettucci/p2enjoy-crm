@@ -19,6 +19,10 @@
 # @verifies CRM-139 (docs/BACKLOG.md) — `only_me` sur `crm_card_mail_list`, contre la vraie base : les seuls messages qui
 #           concernent Driss, égaux à un oracle lu par la clé de service ; la lectrice sans identité reçoit la note ;
 #           docs/SPEC-mcp.md §9.2 duodevicies ; docs/SPEC-mail-subsystem.md §27.2 ; décision 902
+# @verifies CRM-160 (docs/BACKLOG.md) — `only_me` suit la règle élargie : l'oracle de Driss ajoute (i) qui a écrit dans le
+#           fil et (ii) le responsable d'un rattachement actif ; Camille, sur Vertuo, reçoit la réponse du seed §53, adressée
+#           à la seule adresse de l'affaire ; docs/SPEC-mail-subsystem.md §27.7 ; docs/SPEC-mcp.md §9.2 duodevicies
+#           (révision) ; décisions 959 et 960
 # @verifies CRM-143 (docs/BACKLOG.md) — tranche T5 : une pièce non analysée refusée sans accusé, lue avec, la confirmation de
 #           Driss écrite en base sous son propre jeton ; un mail préparé avec deux pièces, déposées par le connecteur sous le
 #           jeton de Driss dans `<espace>/<Driss>/…`, que le mail préparé cite ; docs/SPEC-pieces-jointes.md §17.6, §17.9
@@ -44,7 +48,7 @@ from crm_mcp.jeton_interne import Identite, frapper
 
 from .test_integration_budgets import _manquantes
 from .test_integration_contacts import _poser, _retirer
-from .parcours_oauth import API, CLE_SERVICE
+from .parcours_oauth import API, CAMILLE, CLE_SERVICE
 from .test_integration_oauth import FARIDA, MCP, _service, pytestmark  # noqa: F401
 from .test_integration_recettes import DRISS, _attendre_outils, _attendre_visible, _dernier_journal, _jeton
 
@@ -491,16 +495,47 @@ async def test_driss_prepare_un_mail_avec_deux_pieces_deposees_sous_son_jeton_et
 
 
 
+#: `CRM-160`, seed §53 : « Refonte du monitoring — Vertuo », dont Driss est le seul responsable, et la réponse de Driss,
+#: adressée à la seule adresse de l'affaire, dans le fil de l'envoi de Camille.
+CARD_VERTUO = "5eed0000-0000-4000-8000-00000000d012"
+REPONSE_AFFAIRE = "<seed-reponse-affaire@p2enjoy.test>"
+COLONNES = "id,workspace_id,direction,rfc822_message_id,references_ids,from_address,to_addresses,cc_addresses,bcc_addresses"
+
+
+def _cle_fil(m: dict) -> str:
+    """La clé de fil d'`app.cle_fil` : le premier `References`, ou le `Message-ID` propre."""
+    return (m["references_ids"] or [m["rfc822_message_id"]])[0]
+
+
+async def _attendus(personne: tuple[str, str], card_id: str, tous: list[dict]) -> list[str]:
+    """L'ORACLE de `concerns_me` (§27.2, §27.7.2), lu par la clé de service et jamais par `concerns_me`, que la preuve
+    éprouve : les adresses personnelles, et, pour un message reçu, (ii) un rattachement actif dont la personne est
+    responsable, ou (i) un message du même fil, hors corbeille, expédié par l'une de ses adresses."""
+    adresses = {i["from_address"].strip().lower() for i in (await _service("GET", "/mail_outbound_identities", params={
+        "owner_id": f"eq.{personne[1]}", "select": "from_address"})).json()}
+    assert adresses, "le seed donne une identité personnelle à la personne"
+    responsable = bool((await _service("GET", "/card_placements", params={
+        "card_id": f"eq.{card_id}", "owner_id": f"eq.{personne[1]}", "archived_at": "is.null", "select": "id"})).json())
+    ecrits = {_cle_fil(m) for m in (await _service("GET", "/mail_messages", params={
+        "workspace_id": f"eq.{ESPACE}", "deleted_at": "is.null", "select": COLONNES})).json()
+        if m["from_address"].strip().lower() in adresses}
+
+    def concerne(m: dict) -> bool:
+        if adresses & {a.strip().lower() for a in (
+                (m["to_addresses"] or []) + (m["cc_addresses"] or []) + (m["bcc_addresses"] or []) + [m["from_address"]])}:
+            return True
+        return m["direction"] == "inbound" and (responsable or _cle_fil(m) in ecrits)
+
+    return sorted(m["id"] for m in tous if concerne(m))
+
+
 async def test_only_me_rend_les_seuls_messages_qui_concernent_driss():
     """`CRM-139` : l'oracle est lu par la clé de service, sur les adresses en clair des identités PERSONNELLES de Driss —
-    jamais par `concerns_me`, que la preuve éprouve."""
-    adresses = {i["from_address"].strip().lower() for i in (await _service("GET", "/mail_outbound_identities", params={
-        "owner_id": f"eq.{DRISS[1]}", "select": "from_address"})).json()}
-    assert adresses, "le seed donne une identité personnelle à Driss"
-    tous = (await _service("GET", "/mail_messages", params={
-        "card_id": f"eq.{CARD}", "select": "id,from_address,to_addresses,cc_addresses,bcc_addresses"})).json()
-    attendus = sorted(m["id"] for m in tous if adresses & {a.lower() for a in (
-        (m["to_addresses"] or []) + (m["cc_addresses"] or []) + (m["bcc_addresses"] or []) + [m["from_address"]])})
+    jamais par `concerns_me`, que la preuve éprouve. RÉVISÉ par `CRM-160` (décision 51), non relâché : Driss est le
+    responsable de `c1`, et l'oracle ajoute les règles (i) et (ii) du §27.7.2 — le courrier reçu de l'affaire le concerne."""
+    tous = (await _service("GET", "/mail_messages", params={"card_id": f"eq.{CARD}", "select": COLONNES})).json()
+    attendus = await _attendus(DRISS, CARD, tous)
+    assert any(m["direction"] == "inbound" for m in tous), "le seed porte du courrier reçu dans `c1`"
     posees = await _manquantes(DRISS, [("messagerie", "consulter")])
     await _poser(DRISS, posees)
     try:
@@ -514,6 +549,28 @@ async def test_only_me_rend_les_seuls_messages_qui_concernent_driss():
             assert await _dernier_journal(DRISS[1]) == ("crm_card_mail_list", "ok")
     finally:
         await _retirer(DRISS, posees)
+
+
+async def test_only_me_de_camille_rend_la_reponse_recue_a_la_seule_adresse_de_l_affaire():
+    """`CRM-160` (§27.7) : Camille n'est ni destinataire de la réponse du seed §53 ni responsable de Vertuo ; elle a écrit
+    dans le fil. `only_me` la lui rend, avec son envoi, et rien d'autre que l'oracle."""
+    tous = (await _service("GET", "/mail_messages", params={"card_id": f"eq.{CARD_VERTUO}", "select": COLONNES})).json()
+    reponse = next((m for m in tous if m["rfc822_message_id"] == REPONSE_AFFAIRE), None)
+    assert reponse is not None, "le seed §53 pose la réponse dans Vertuo"
+    assert all(a.startswith("c-") for a in reponse["to_addresses"]), "adressée à la seule adresse de l'affaire"
+    attendus = await _attendus(CAMILLE, CARD_VERTUO, tous)
+    assert reponse["id"] in attendus
+    posees = await _manquantes(CAMILLE, [("messagerie", "consulter")])
+    await _poser(CAMILLE, posees)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(CAMILLE)) as client:
+            await _attendre_visible(client, "crm_card_mail_list")
+            moi = (await client.call_tool("crm_card_mail_list", {
+                "card_id": CARD_VERTUO, "limit": 100, "only_me": True})).structured_content
+            assert sorted(m["id"] for m in moi["messages"]) == attendus
+            assert await _dernier_journal(CAMILLE[1]) == ("crm_card_mail_list", "ok")
+    finally:
+        await _retirer(CAMILLE, posees)
 
 
 async def test_only_me_dit_a_la_lectrice_qu_elle_n_a_aucune_adresse():

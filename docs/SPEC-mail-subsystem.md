@@ -3884,8 +3884,9 @@ Les preuves qui comptent ces dossiers sont révisées avec la migration (décisi
   - la forme : `stable`, `security invoker`, l'anonyme refusé ;
   - `inbox_arborescence(true)` compte la réponse dans le dossier de l'affaire.
 - **pgTAP `0164` révisée** : son n° 15 attendait qu'un message reçu dans `…00c1` ne concerne pas Driss, qui en est le
-  responsable. Il attend désormais l'inverse, et une sonde non rattachée garde ce qu'il prouvait (« le message adressé à
-  une autre personne ne le concerne pas »).
+  responsable. Il attend désormais l'inverse. *Précisé au code* : un n° 17 garde ce qu'il prouvait (« le courrier d'une
+  autre personne ne le concerne pas ») sur l'**envoi** de l'administratrice depuis `…00c1`, que la règle (ii) ne retient
+  pas. Une sonde non rattachée ne servait pas : Driss ne lit pas la boîte système.
 - **API**, par jetons réels (`e2e/api/seulement-moi.spec.ts`) : la liste et les compteurs « Seulement moi » de Camille, qui
   a écrit, de Driss, responsable, et de la lectrice ; la réponse seedée du §53 en est le sujet.
 - **E2E de l'interface** (`e2e/ui/seulement-moi.spec.ts`) : Camille, case cochée, voit la réponse du §53 dans le dossier

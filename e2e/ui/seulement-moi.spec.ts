@@ -2,12 +2,18 @@
 //           cochée par défaut et les compteurs qui la suivent ; le vide sous le filtre et son action ; la case décochée
 //           dans l'adresse ; la personne sans identité (case désactivée, explication, lien) ; l'adresse d'un message caché
 //           qui décoche la case ; les quatre paliers
+// @verifies CRM-160 (docs/BACKLOG.md) — la réponse reçue à la seule adresse de Vertuo (seed §53) paraît sous « Seulement
+//           moi » pour Camille, qui a écrit dans le fil : la rangée du fil porte la réponse, non lue, et compte deux messages
+//           (docs/SPEC-mail-subsystem.md §27.7 ; docs/SPEC-seed.md §53 ; décisions 959 et 960)
 // @verifies docs/SPEC-mail-subsystem.md §27.4, §27.5, §27.6 ; docs/DESIGN_SYSTEM.md §5.96, §7 (paliers), §8 (clavier) ;
 //           docs/JOURNAL.md décisions 879 et 902 ; CLAUDE.md §16 (vérification visuelle)
 //
 // LE SEED DÉMONTRE L'UNITÉ SANS CHANGEMENT (§27.5) : Camille (admin) a une identité, `admin@p2enjoy.test`, d'où est parti
 // l'envoi de démonstration classé dans « Refonte du monitoring — Vertuo » ; « Candidature spontanée », adressée à la seule
-// boîte système, ne la concerne pas. La lectrice n'a aucune identité. CE FICHIER N'ÉCRIT RIEN.
+// boîte système, ne la concerne pas. La lectrice n'a aucune identité. CE FICHIER N'ÉCRIT RIEN : la preuve de `CRM-160` lit la
+// rangée du fil sans l'ouvrir, puisque l'ouvrir le marquerait lu (§18 bis).
+// RÉVISÉ par `CRM-160` (décision 51) : le seed §53 ajoute au fil de l'envoi la réponse de Driss, et le dossier de Vertuo
+// montre ce fil de deux messages ; la rangée unique, qui porte l'objet de l'envoi, ne change pas.
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -20,6 +26,8 @@ const AFFAIRE_ENVOI = 'Refonte du monitoring — Vertuo'
 const OBJET_ENVOI = 'Proposition de refonte du monitoring'
 const OBJET_NON_CLASSE = 'Candidature spontanée'
 const MSGID_NON_CLASSE = '<seed-inbox-non-classe@p2enjoy.test>'
+/** `CRM-160`, seed §53 : la réponse de Driss, adressée à la seule adresse de Vertuo. */
+const OBJET_REPONSE = 'Re: Proposition de refonte du monitoring (pièce jointe)'
 
 const dossiers = (page: Page) => page.getByTestId('inbox-panneau-dossiers')
 const liste = (page: Page) => page.getByTestId('inbox-panneau-liste')
@@ -37,7 +45,7 @@ test.describe('« Seulement moi » (docs/DESIGN_SYSTEM.md §5.96)', () => {
 		await caseLue(page)
 		await expect(caseMoi(page)).toBeChecked()
 
-		// LES COMPTEURS SUIVENT : son affaire porte son seul envoi ; « Non classés » est rendu, à zéro.
+		// LES COMPTEURS SUIVENT : son affaire porte le seul fil de son envoi ; « Non classés » est rendu, à zéro.
 		const affaire = dossiers(page).getByRole('button', { name: new RegExp(AFFAIRE_ENVOI) })
 		await expect(affaire).toBeVisible()
 		await expect(dossiers(page).getByRole('button', { name: /Refonte du site vitrine/ })).toHaveCount(0)
@@ -59,6 +67,22 @@ test.describe('« Seulement moi » (docs/DESIGN_SYSTEM.md §5.96)', () => {
 		await expect(page).toHaveURL(/courrier=tous/)
 		await expect(liste(page).getByText(OBJET_NON_CLASSE)).toBeVisible()
 		await expect(dossiers(page).getByRole('button', { name: /Refonte du site vitrine/ })).toBeVisible()
+	})
+
+	test('CRM-160 : la réponse reçue à la seule adresse de l’affaire paraît sous « Seulement moi », dans le fil de son envoi', async ({ page }) => {
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto('/inbox')
+		await caseLue(page)
+		await expect(caseMoi(page)).toBeChecked()
+		await dossiers(page).getByRole('button', { name: new RegExp(AFFAIRE_ENVOI) }).click()
+		// LA RANGÉE DU FIL porte son message le plus récent (§16.16.4) : la réponse, de Driss, non lue, et le fil compte deux
+		// messages — l'envoi de Camille et cette réponse, qui ne nomme pourtant que l'adresse de l'affaire.
+		const fil = liste(page).getByTestId('inbox-message').filter({ hasText: OBJET_REPONSE })
+		await expect(fil).toHaveCount(1)
+		await expect(fil).toHaveAttribute('data-non-lu', 'true')
+		await expect(fil).toContainText('Driss')
+		await expect(fil.getByTestId('inbox-fil-compte')).toHaveText('2')
+		await capturer(page, 'seulement-moi-reponse-affaire-1440', 'CRM-160')
 	})
 
 	test('AU CLAVIER : la case se décoche et se recoche à l’Espace, et l’adresse la garde au rechargement', async ({ page }) => {

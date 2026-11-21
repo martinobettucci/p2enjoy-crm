@@ -13,6 +13,13 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+- **CRM-160 — « Seulement moi » montre les réponses reçues dans une affaire** (migration 194, décisions 959 et 960). La
+  réponse à un mail envoyé depuis une affaire n'est adressée qu'à l'adresse de l'affaire : elle ne concernait personne, et
+  la case cochée la cachait à tous. Un message reçu et rattaché à une affaire concerne désormais aussi qui a écrit dans sa
+  conversation et le responsable de chaque rattachement non archivé de l'affaire ; jamais les abonnés, et aucune
+  notification. Les compteurs, la portée des actions groupées et `only_me` du connecteur suivent. L'état vide de la case
+  le dit ; le manuel (§12.2) aussi. Données : seed §53, une réponse reçue à la seule adresse de Vertuo.
+
 - **CRM-159 T1 — les pastilles cachées, en base** (migration 193, décisions 957 et 958). Une pastille de mail porte un
   drapeau « cachée » (`mail_labels.hidden`), réglé par qui administre l'espace ; « Spam » est cachée d'office dans chaque
   espace existant et créé. Un fil dont un message porte une pastille cachée n'est rendu par la liste de l'inbox

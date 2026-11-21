@@ -20396,8 +20396,7 @@ corbeille de l'inbox, le message ouvert et les notifications ne masquent pas (§
 **À constater en production** (contrat §2.65, geste 7) : les fils Spam masqués et la mention ; « Spam » activée qui les
 montre ; « Cachée » et la case dans Réglages ▸ Pastilles des mails ; la palette qui dit les mails masqués.
 
-### CRM-160 — « Seulement moi » cache les réponses reçues à l'adresse d'une affaire : elles concernent qui a écrit dans le fil et le responsable de l'affaire `[@]`
-*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-6e) depuis 2026-11-20 20:06 UTC — état avant : [ ] ; confiée par la session de livraison (d5)*
+### CRM-160 — « Seulement moi » cache les réponses reçues à l'adresse d'une affaire : elles concernent qui a écrit dans le fil et le responsable de l'affaire `[P]`
 
 **Origine** : question du responsable, le 2026-11-20 (« on risque pas de louper les emails qu'on reçoit en réponse ? ») ;
 défaut constaté et arbitré le même jour (décision 959).
@@ -20432,3 +20431,34 @@ personne), vert après, avec les cas (i), (ii), un tiers non concerné et un mes
 et les compteurs « Seulement moi » d'Ali qui a écrit, du responsable, d'un tiers) ; E2E UI (la réponse visible dans
 « Seulement moi ») ; MCP (`only_me`) ; seed (une réponse reçue à l'adresse d'une affaire seule) ; manuel ; contrat. La
 campagne complète revient à la session de livraison (décision 830).
+- [x] **Implémentée et vérifiée en développement, le 2026-11-21** (session 6e) :
+  - **migration `0194`**, qui redéfinit `concerns_me` seule, sous la même signature. Elle est appliquée en dev par le
+    runner ;
+  - **pgTAP `0181`**, 15 assertions. Elle est **rouge avant la migration** : les n° 3, 9, 10, 12 et 14, ceux que la
+    spécification attendait. Elle est verte après ;
+  - **trois pgTAP révisées** (décision 51, non relâchées) :
+    - `0164` : le n° 15 est révisé, et un n° 17 garde ce qu'il prouvait ;
+    - `0095` : le n° 11 passe de 11 à 12, pour la réponse du seed §53 ;
+  - **la pgTAP complète** : 169 fichiers, 5 574 assertions, aucune anomalie ;
+  - **API** `e2e/api/seulement-moi.spec.ts`, 7/7 : l'oracle entier, (i) et (ii) compris, et la réponse du §53 pour
+    Camille, Driss et la lectrice. `pastilles-cachees` 6/6 ;
+  - **E2E de l'interface** : `seulement-moi`, 6/6, avec la rangée du fil, la réponse non lue et le badge 2. Les seize autres
+    fichiers de l'inbox, de la souris au clavier, passent aussi : **105/105** ;
+  - **manuel** : `e2e/manuel/12-inbox`, 15/15. La preuve de l'image « telecharger » choisit l'envoi dans le sélecteur du
+    fil, puis rend la réponse non lue. Le manuel est construit et vérifié : 34 chapitres ;
+  - **projet `mail`** : `extraction-texte`, 2/2 ;
+  - **connecteur** : pytest unitaires, 436 passés ; intégration de la messagerie, **15/15**, dont `only_me` de Driss
+    (l'oracle révisé) et celui de Camille sur Vertuo (la réponse du §53) ;
+  - **webapp** : vitest, 726 tests sur les trois fichiers touchés ; typage `tsconfig.tools.json` ;
+  - **seed** : le §53 est rejoué deux fois, son constat est vert sous les trois jetons, et l'état non lu est rétabli ;
+  - **vérification visuelle** : la capture `docs/captures/CRM-160/seulement-moi-reponse-affaire-1440.jpg`, les images du
+    manuel `seulement-moi` et `seulement-moi-vide`, et l'état vide à 390, 1024 et 1440 px, sans débordement. Toutes ont
+    été observées.
+- **Révisé au code** :
+  - le texte de l'état vide (`inbox.mine.empty.body`), lu par sections ciblées du design system (décision 961), et
+    consigné au §5.96 ;
+  - le seed §53 dépose par IMAP, et non par SMTP ;
+  - la description de `crm_card_mail_list`.
+- **Ce que cette session n'a pas joué** : la campagne complète, qui revient à la session de livraison (décision 830).
+- [P] **Livraison et constat** : `docs/PROD_MIGRATIONS.md` §2.66, soit la migration 194, la webapp, l'image `mcp` et le
+  manuel. Il reste le constat du responsable dans « Seulement moi ».

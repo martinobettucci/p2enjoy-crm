@@ -3327,10 +3327,15 @@ nombre, juste avant ce total, et le nom du dossier passe en gras.
 ![L'entrée Inbox de la barre latérale et le dossier « Non classés », en tête du courrier reçu](manuel/images/l-inbox-lire-trier-et-repondre/dossiers.jpg)
 
 **Seulement moi.** Au-dessus des dossiers, la case « **Seulement moi** » est cochée quand vous ouvrez l'inbox. Elle ne
-montre alors que le courrier qui **vous concerne** : les messages adressés à l'une de **vos adresses d'expédition** (en
-destinataire, en copie ou en copie cachée), et ceux que vous avez envoyés depuis elles. Les nombres des dossiers suivent
-la case, et une affaire dont aucun message ne vous concerne n'apparaît pas. Une conversation n'y montre que ses messages
-qui vous concernent.
+montre alors que le courrier qui **vous concerne** :
+- les messages adressés à l'une de **vos adresses d'expédition**, en destinataire, en copie ou en copie cachée ;
+- ceux que vous avez envoyés depuis elles ;
+- les **réponses reçues dans une affaire**, quand vous avez écrit dans la conversation, ou quand vous êtes **responsable
+  de l'affaire** dans l'un de ses channels. Une réponse à un mail envoyé depuis une affaire est adressée à l'adresse de
+  l'affaire, et non à la vôtre : c'est cette règle qui vous la montre. Elle arrive non lue, sans notification.
+
+Les nombres des dossiers suivent la case, et une affaire dont aucun message ne vous concerne n'apparaît pas. Une
+conversation n'y montre que ses messages qui vous concernent.
 
 - **Décochez-la** pour voir tout le courrier que vous pouvez lire, comme avant. La case garde son état si vous rechargez
   la page, et un lien vers l'inbox le garde aussi.
@@ -3344,7 +3349,7 @@ qui vous concernent.
 La case ne change pas ce que vous avez le **droit** de lire : elle choisit seulement ce qui s'affiche. La fiche d'une
 affaire, elle, montre toujours son courrier entier.
 
-![La case « Seulement moi », cochée : seul le dossier de l'affaire où vous avez écrit est compté](manuel/images/l-inbox-lire-trier-et-repondre/seulement-moi.jpg)
+![La case « Seulement moi », cochée : seuls les dossiers des affaires où vous avez écrit, ou dont vous êtes responsable, sont comptés](manuel/images/l-inbox-lire-trier-et-repondre/seulement-moi.jpg)
 
 ![« Non classés » sous la case : « Aucun message de ce dossier ne vous concerne », et « Afficher tout le courrier »](manuel/images/l-inbox-lire-trier-et-repondre/seulement-moi-vide.jpg)
 

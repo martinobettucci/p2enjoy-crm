@@ -1,3 +1,7 @@
+// @verifies CRM-160 (docs/BACKLOG.md) — l'oracle ajoute les deux règles d'une réponse reçue dans une affaire : qui a écrit
+//           dans le fil (i), le responsable d'un rattachement non archivé (ii) ; la réponse seedée du §53 concerne Camille
+//           et Driss, pas la lectrice, et le dossier de Vertuo la compte (docs/SPEC-mail-subsystem.md §27.7 ;
+//           docs/SPEC-seed.md §53 ; décisions 959 et 960)
 // @verifies CRM-156 (docs/BACKLOG.md) — tranche T5 : l'oracle de « Seulement moi » ajoute la voie du transfert (décision 51 ;
 //           docs/SPEC-mail-subsystem.md §32.7 ; docs/SPEC-seed.md §49)
 // @verifies CRM-144 (docs/BACKLOG.md) — tranche T5 : les deux identités de démonstration de Camille comptées
@@ -27,12 +31,21 @@ const LIBELLE = 'Preuve CRM-139'
 
 type Message = {
 	id: string
+	workspace_id: string
 	card_id: string | null
+	direction: string
+	rfc822_message_id: string
+	references_ids: string[] | null
 	from_address: string
 	to_addresses: string[] | null
 	cc_addresses: string[] | null
 	bcc_addresses: string[] | null
 }
+
+const COLONNES = 'id,workspace_id,card_id,direction,rfc822_message_id,references_ids,from_address,to_addresses,cc_addresses,bcc_addresses'
+/** La réponse du seed §53, adressée à la seule adresse de Vertuo, dans le fil de l'envoi de Camille. */
+const REPONSE_AFFAIRE = '<seed-reponse-affaire@p2enjoy.test>'
+const VERTUO = '5eed0000-0000-4000-8000-00000000d012'
 
 async function service<T>(request: APIRequestContext, chemin: string): Promise<T> {
 	const reponse = await request.get(`${URL_API}/rest/v1/${chemin}`, { headers: enTetesService() })
@@ -55,10 +68,46 @@ function concerne(m: Message, adresses: Set<string>): boolean {
 	)
 }
 
+/** La clé de fil de `app.cle_fil` : le premier `References`, ou le `Message-ID` propre. */
+const cleFil = (m: Message) => m.references_ids?.[0] ?? m.rfc822_message_id
+
+/** Ce que l'oracle sait d'une personne, lu par la clé de service. */
+type Personne = { adresses: Set<string>; responsable: Set<string>; transferes: Set<string> }
+
+async function personne(request: APIRequestContext, idPersonne: string): Promise<Personne> {
+	const rattachements = await service<{ card_id: string }[]>(
+		request,
+		`card_placements?select=card_id&owner_id=eq.${idPersonne}&archived_at=is.null`,
+	)
+	const transferts = await service<{ message_id: string }[]>(
+		request,
+		`mail_message_transfers?select=message_id&recipient_id=eq.${idPersonne}`,
+	)
+	return {
+		adresses: await adressesDe(request, idPersonne),
+		responsable: new Set(rattachements.map((r) => r.card_id)),
+		transferes: new Set(transferts.map((t) => t.message_id)),
+	}
+}
+
+/**
+ * L'ORACLE ENTIER de `concerns_me` (§27.2, §27.7.2), calculé sur ce que la personne LIT (`tout`) : ses adresses, ses
+ * transferts, et, pour un message reçu et rattaché, (i) un message lu du même fil expédié par l'une de ses adresses, ou
+ * (ii) un rattachement actif de l'affaire dont elle est responsable.
+ */
+function concerneSelon(m: Message, tout: Message[], qui: Personne): boolean {
+	if (concerne(m, qui.adresses) || qui.transferes.has(m.id)) return true
+	if (m.direction !== 'inbound' || m.card_id === null) return false
+	if (qui.responsable.has(m.card_id)) return true
+	return tout.some(
+		(o) => o.workspace_id === m.workspace_id && cleFil(o) === cleFil(m) && qui.adresses.has(o.from_address.trim().toLowerCase()),
+	)
+}
+
 /** Ce que la personne LIT, sous son jeton, avec ou sans le filtre. */
 async function lus(request: APIRequestContext, jeton: string, filtre: boolean): Promise<Message[]> {
 	const reponse = await request.get(
-		`${URL_API}/rest/v1/mail_messages?select=id,card_id,from_address,to_addresses,cc_addresses,bcc_addresses${filtre ? '&concerns_me=is.true' : ''}`,
+		`${URL_API}/rest/v1/mail_messages?select=${COLONNES}${filtre ? '&concerns_me=is.true' : ''}`,
 		{ headers: enTetesAuthentifies(jeton) },
 	)
 	expect(reponse.status()).toBe(200)
@@ -107,11 +156,12 @@ test.describe('« Seulement moi » : `concerns_me` et `inbox_arborescence(p_only
 	// démonstration de l'outbox (docs/SPEC-seed.md §42) — et le filtre compte chacune de ses adresses, comme l'oracle.
 	test('Camille, trois identités : le filtre rend exactement son courrier, que l’oracle trouve par ses adresses', async ({ request }) => {
 		const jeton = await jetonDe(CAMILLE.adresse)
-		const adresses = await adressesDe(request, CAMILLE.id)
-		expect(adresses.size).toBe(3)
+		const qui = await personne(request, CAMILLE.id)
+		expect(qui.adresses.size).toBe(3)
 		const tout = await lus(request, jeton, false)
 		const filtre = await lus(request, jeton, true)
-		expect(tries(filtre)).toEqual(tries(tout.filter((m) => concerne(m, adresses))))
+		// RÉVISÉ par `CRM-160` (décision 51), non relâché : l'oracle ajoute les règles (i) et (ii) du §27.7.2.
+		expect(tries(filtre)).toEqual(tries(tout.filter((m) => concerneSelon(m, tout, qui))))
 		// TÉMOIN : le seed porte du courrier qui la concerne (son envoi de démonstration) et du courrier qui ne la concerne
 		// pas (« Candidature spontanée », adressée à la seule boîte système) ; sans les deux, l'égalité ne prouverait rien.
 		expect(filtre.length).toBeGreaterThan(0)
@@ -120,8 +170,10 @@ test.describe('« Seulement moi » : `concerns_me` et `inbox_arborescence(p_only
 
 	test('les compteurs suivent : « Non classés » et chaque affaire ne comptent que son courrier', async ({ request }) => {
 		const jeton = await jetonDe(CAMILLE.adresse)
-		const adresses = await adressesDe(request, CAMILLE.id)
-		const siens = (await lus(request, jeton, false)).filter((m) => concerne(m, adresses))
+		const qui = await personne(request, CAMILLE.id)
+		const tout = await lus(request, jeton, false)
+		// RÉVISÉ par `CRM-160` (décision 51), non relâché : l'oracle entier, règles (i) et (ii) comprises.
+		const siens = tout.filter((m) => concerneSelon(m, tout, qui))
 		const lignes = await arbre(request, jeton, true)
 		for (const ligne of lignes) {
 			expect(ligne.nombre, `dossier ${ligne.card_id ?? 'non classés'}`).toBe(
@@ -136,16 +188,33 @@ test.describe('« Seulement moi » : `concerns_me` et `inbox_arborescence(p_only
 		expect(await avant.json()).toEqual(await arbre(request, jeton, false))
 	})
 
+	// `CRM-160` (§27.7) : la réponse du seed §53, adressée à la seule adresse de Vertuo. Elle est jouée AVANT tout prêt d'identité : la
+	// réponse est expédiée par `bizdev@`, et l'adresse prêtée (`BizDev@`) concernerait alors Camille ou la lectrice par l'adresse.
+	test('la réponse reçue à la seule adresse d’une affaire : Camille qui a écrit, Driss responsable, pas la lectrice', async ({ request }) => {
+		const [reponse] = await service<Message[]>(request, `mail_messages?select=${COLONNES}&rfc822_message_id=eq.${encodeURIComponent(REPONSE_AFFAIRE)}`)
+		expect(reponse, 'la réponse du seed §53').toBeDefined()
+		expect(reponse!.card_id).toBe(VERTUO)
+		expect(reponse!.to_addresses?.every((a) => a.startsWith('c-')), 'adressée à la seule adresse de l’affaire').toBe(true)
+		const filtrePar = async (adresse: string) =>
+			(await lus(request, await jetonDe(adresse), true)).some((m) => m.id === reponse!.id)
+		expect(await filtrePar(CAMILLE.adresse), 'Camille, règle (i) : elle a écrit dans le fil').toBe(true)
+		expect(await filtrePar(DRISS.adresse), 'Driss, règle (ii) : il est responsable de Vertuo').toBe(true)
+		expect(await filtrePar(LECTRICE.adresse), 'la lectrice n’est pas concernée').toBe(false)
+		// Le dossier de Vertuo, filtre posé, la compte pour Camille : son envoi et cette réponse au moins.
+		const vertuo = (await arbre(request, await jetonDe(CAMILLE.adresse), true)).find((l) => l.card_id === VERTUO)
+		expect(vertuo?.nombre ?? 0).toBeGreaterThanOrEqual(2)
+	})
+
 	// RÉVISÉE PAR `CRM-144` T5 (décision 913), non relâchée : l'identité prêtée s'ajoute aux TROIS de Camille (la sienne et
 	// les deux de démonstration de l'outbox, docs/SPEC-seed.md §42) ; le filtre réunit toujours le courrier de toutes.
 	test('Camille, une identité de plus : le filtre réunit le courrier de toutes', async ({ request }) => {
 		await preterIdentite(request, CAMILLE.id)
 		const jeton = await jetonDe(CAMILLE.adresse)
-		const adresses = await adressesDe(request, CAMILLE.id)
-		expect(adresses.size).toBe(4)
+		const qui = await personne(request, CAMILLE.id)
+		expect(qui.adresses.size).toBe(4)
 		const tout = await lus(request, jeton, false)
 		const filtre = await lus(request, jeton, true)
-		expect(tries(filtre)).toEqual(tries(tout.filter((m) => concerne(m, adresses))))
+		expect(tries(filtre)).toEqual(tries(tout.filter((m) => concerneSelon(m, tout, qui))))
 		// Les deux adresses comptent : la seconde, écrite avec des majuscules, ajoute le courrier qu'elle a expédié.
 		const parLaSeule = tout.filter((m) => concerne(m, new Set([CAMILLE.adresse])))
 		expect(filtre.length).toBeGreaterThan(parLaSeule.length)
@@ -153,18 +222,15 @@ test.describe('« Seulement moi » : `concerns_me` et `inbox_arborescence(p_only
 
 	test('Driss : jamais le courrier de Camille, qu’il lit pourtant', async ({ request }) => {
 		const jeton = await jetonDe(DRISS.adresse)
-		const adresses = await adressesDe(request, DRISS.id)
+		const qui = await personne(request, DRISS.id)
 		const tout = await lus(request, jeton, false)
 		const filtre = await lus(request, jeton, true)
 		// RÉVISÉ par `CRM-156` T5 (décision 51, 2026-11-19) : un mail TRANSFÉRÉ le concerne aussi (§32.7) — le seed §49 lui
-		// en transfère un. L'oracle ajoute cette voie, lue sous la clé de service.
-		const transferes = new Set(
-			(await service<{ message_id: string }[]>(request, `mail_message_transfers?select=message_id&recipient_id=eq.${DRISS.id}`)).map(
-				(t) => t.message_id,
-			),
-		)
-		expect(transferes.size, 'le seed §49 transfère un mail à Driss').toBeGreaterThan(0)
-		expect(tries(filtre)).toEqual(tries(tout.filter((m) => concerne(m, adresses) || transferes.has(m.id))))
+		// en transfère un. RÉVISÉ par `CRM-160` (décision 51), non relâché : il est responsable de Vertuo, de `…00c1` et de
+		// « Plateforme de billetterie », et leur courrier reçu le concerne (§27.7.2 ii). L'oracle entier, lu par la clé de service.
+		expect(qui.transferes.size, 'le seed §49 transfère un mail à Driss').toBeGreaterThan(0)
+		expect(qui.responsable.size, 'le seed le fait responsable d’affaires').toBeGreaterThan(0)
+		expect(tries(filtre)).toEqual(tries(tout.filter((m) => concerneSelon(m, tout, qui))))
 		const deCamille = tout.filter((m) => m.from_address === CAMILLE.adresse)
 		expect(deCamille.length, 'il lit au moins un envoi de Camille').toBeGreaterThan(0)
 		expect(filtre.some((m) => m.from_address === CAMILLE.adresse)).toBe(false)
@@ -180,7 +246,7 @@ test.describe('« Seulement moi » : `concerns_me` et `inbox_arborescence(p_only
 		expect(tries(filtre).every((id) => tout.some((m) => m.id === id))).toBe(true)
 		const illisibles = await service<Message[]>(
 			request,
-			`mail_messages?select=id,card_id,from_address,to_addresses,cc_addresses,bcc_addresses&from_address=eq.bizdev@p2enjoy.test`,
+			`mail_messages?select=${COLONNES}&from_address=eq.bizdev@p2enjoy.test`,
 		)
 		const nonLus = illisibles.filter((m) => !tout.some((l) => l.id === m.id))
 		expect(nonLus.length, 'du courrier de cette adresse lui reste illisible').toBeGreaterThan(0)

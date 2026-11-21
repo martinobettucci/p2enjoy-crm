@@ -1,3 +1,5 @@
+-- @verifies CRM-160 (docs/BACKLOG.md) — le compte de départ suit la réponse reçue dans Vertuo du seed (docs/SPEC-seed.md §53 ;
+--           révision du n° 11, décision 51)
 -- @verifies CRM-159 (docs/BACKLOG.md) — tranche T4 : les comptes de départ suivent les deux mails Spam du seed (§52), masqués
 --           dans « Non classés » (docs/SPEC-mail-subsystem.md §31.13.3)
 -- @verifies CRM-156 (docs/BACKLOG.md) — tranche T5 : les comptes de départ suivent le mail de Nora Nouveau du seed
@@ -103,8 +105,11 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');  -- Camille, ad
 -- (docs/SPEC-seed.md §52), NON CLASSÉS dans la boîte système, non lus pour Camille. La table en compte donc onze ; mais
 -- leurs fils sont MASQUÉS par la pastille cachée Spam (docs/SPEC-mail-subsystem.md §31.13.3) : « Non classés » reste à
 -- quatre (n° 12 et 13) — les compteurs comptent ce que la liste montre sans filtre.
-select is((select count(*) from public.mail_messages m where not public.is_read(m)), 11::bigint,
-	'11 — au départ, les onze messages reçus sont non lus pour Camille : aucune lecture fabriquée');
+-- RÉVISÉ par `CRM-160` (décision 51, 2026-11-20), non relâché : un douzième, « Re: Proposition de refonte du monitoring
+-- (pièce jointe) », la réponse reçue à la seule adresse de Vertuo (docs/SPEC-seed.md §53), CLASSÉE dans l'affaire et non
+-- lue pour Camille. « Non classés » ne change pas (n° 12 et 13).
+select is((select count(*) from public.mail_messages m where not public.is_read(m)), 12::bigint,
+	'11 — au départ, les douze messages reçus sont non lus pour Camille : aucune lecture fabriquée');
 select is((select unread_count from public.inbox_arborescence() where card_id is null), 4::bigint,
 	'12 — « Non classés » : quatre non lus pour Camille, les deux fils Spam masqués');
 select is((select nombre from public.inbox_arborescence() where card_id is null), 4::bigint,

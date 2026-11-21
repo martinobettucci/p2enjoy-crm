@@ -8139,6 +8139,11 @@ spécifié par `docs/SPEC-mail-subsystem.md` §27 ; ces règles ne disent que de
   (§5.4 quinquies), et elle ne porte aucune mention de plus. La case est à côté, et elle dit déjà ce qui est compté.
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.** La case n'a pas d'icône : `User` désignerait le profil, et une
   icône qui sert deux objets contredit le §9.
+- *Révisé le 2026-11-21 par `CRM-160` (`docs/SPEC-mail-subsystem.md` §27.7 ; lecture ciblée décidée par le responsable,
+  décision 961 : §1 à §4, §5.4, §5.8, §5.96, §6 à §11).* **Le corps de l'état vide** dit aussi la règle des réponses reçues
+  dans une affaire : « Seuls sont affichés les messages adressés à vos adresses d'expédition ou envoyés par elles, et les
+  réponses reçues dans une affaire dont vous êtes responsable ou où vous avez écrit. » Il ne change que de texte : même
+  place, même forme, et aucune couleur, aucun jeton ni aucune icône nouvelle.
 
 ### 5.97 Le prévisionnel et le réel d'une organisation : la barre de la liste, le bloc de la fiche — `CRM-146`
 

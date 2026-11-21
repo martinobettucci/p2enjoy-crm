@@ -24,6 +24,9 @@
 #       décisions 877, 891 et 893
 # @spec CRM-139 (docs/BACKLOG.md) — « Seulement moi » : `only_me` sur `crm_card_mail_list`, faux par défaut, par la colonne
 #       calculée `concerns_me` ; docs/SPEC-mcp.md §9.2 duodevicies ; docs/SPEC-mail-subsystem.md §27 ; décisions 879 et 902
+# @spec CRM-160 (docs/BACKLOG.md) — `only_me` suit la règle élargie de `concerns_me` (les réponses reçues dans un fil où la
+#       personne a écrit, ou dans une affaire dont elle est responsable) ; seule la description change ; docs/SPEC-mcp.md
+#       §9.2 duodevicies (révision) ; docs/SPEC-mail-subsystem.md §27.7.4 ; décisions 959 et 960
 # @spec CRM-141 (docs/BACKLOG.md) — tranche T5 : `crm_mail_get` rend `labels` et `labels_state` (docs/SPEC-mcp.md §9.2
 #       duovicies, révisée ; décision 924)
 # @spec CRM-143 (docs/BACKLOG.md) — tranche T5 : les pièces non analysées dans le connecteur — trois statuts précis
@@ -408,7 +411,8 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_w
             "Lists the emails filed in an affaire (card), oldest first: direction, dates, sender, recipients, subject, a "
             "short excerpt, its attachments (id, file name, type, size and status — never their content) and whether the "
             "person has read it in the inbox (read; reading here does not mark it). only_me keeps the emails addressed to "
-            "or sent by one of the person's personal sending addresses. labels keeps the emails that carry any of the given "
+            "or sent by one of the person's personal sending addresses, and the replies received in a thread the person "
+            "wrote in or in an affaire the person is responsible for. labels keeps the emails that carry any of the given "
             "labels (pastilles); each email returns the labels it carries. Read one in full with crm_mail_get, and an "
             "available attachment with crm_mail_attachment_get."
         ),

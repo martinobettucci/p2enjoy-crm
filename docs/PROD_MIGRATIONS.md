@@ -1454,12 +1454,36 @@ la 193 et la webapp de T2 dans la même fenêtre. **Indépendante de la 194** (`
 l'appelle.
 **Retour arrière** : comme le dit `docs/SCHEMA.md` « Migration `0193` ».
 
+### 2.66 `CRM-160`, décisions 959 et 960 — « Seulement moi » retient les réponses reçues dans une affaire (en attente)
+
+`docs/SPEC-mail-subsystem.md` §27.7 ; `docs/SCHEMA.md` « Migration `0194` ». Une seule fonction redéfinie
+(`public.concerns_me`, même signature) ; **aucune table, aucune donnée, aucune variable, aucun secret**.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 194 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate` |
+| 2 | Constater | session de livraison, en lecture seule | le registre gagne une ligne, l'empreinte de la 194 égale celle du dépôt ; `select pg_get_functiondef('public.concerns_me(public.mail_messages)'::regprocedure) like '%card_placements%'` vrai |
+| 3 | Lire l'effet attendu | session de livraison, en lecture seule | `select count(*) from public.mail_messages m where m.direction = 'inbound' and m.card_id is not null and m.deleted_at is null and exists (select 1 from public.card_placements p where p.card_id = m.card_id and p.archived_at is null and p.owner_id is not null)` : les mails reçus rattachés qui concerneront au moins leur responsable (mesuré le 2026-11-20 : 5 des 12 reçus rattachés ne concernaient personne) |
+| 4 | Livrer la webapp | session de livraison, dans la même fenêtre | la webapp bâtie à la révision du lot : le corps de l'état vide de « Seulement moi » nomme les réponses reçues dans une affaire |
+| 5 | Livrer l'image `mcp` | session de livraison | l'image reconstruite à la révision du lot : la description de `crm_card_mail_list` dit la règle élargie de `only_me` (le comportement suit la 194 sans elle) |
+| 6 | Publier le manuel | session de livraison | §12.2 « Seulement moi », et ses images `seulement-moi` et `seulement-moi-vide` |
+| 7 | Constater | le responsable | dans l'inbox, « Seulement moi » cochée : une réponse reçue à l'adresse d'une affaire dont il est responsable, ou d'un fil où il a écrit, paraît dans le dossier de l'affaire, non lue |
+
+**Indépendante de la 193** (`CRM-159`), qui appelle `concerns_me` : l'ordre des deux est indifférent. La 194 seule suffit au
+comportement ; la webapp, l'image `mcp` et le manuel n'en changent que les textes.
+**Retour arrière** : rejouer la définition de `concerns_me` de la 190 (`docs/SCHEMA.md` « Migration `0194` »).
+
 ## 3. Migrations en attente
 
 **La 193** (`CRM-159` T1, décisions 957 et 958) : les pastilles cachées (`docs/SCHEMA.md` « Migration `0193` ») — une
 colonne, Spam cochée, cinq fonctions nouvelles, cinq redéfinies. §2.65. **Avec la webapp de T2 et l'image `mcp` de T3**,
 dans la même fenêtre.
 Indépendante de la 194. Aucun geste préalable du responsable.
+
+**La 194** (`CRM-160`, décisions 959 et 960) : « Seulement moi » retient les réponses reçues dans une affaire
+(`docs/SCHEMA.md` « Migration `0194` ») — `concerns_me` redéfinie, même signature, aucune donnée. §2.66. Indépendante de la
+193. **Avec la webapp, l'image `mcp` et le manuel du lot**, dont seuls les textes changent. Aucun geste préalable du
+responsable.
 
 **Aucune migration en attente depuis la fenêtre du 2026-11-20** : la 192 a été appliquée par elle (révision `3df3bd7e`, décision 956) ; registre à **190** lignes. *Historique de l'attente* — le paragraphe qui suit décrit la 192 telle qu'elle attendait.
 

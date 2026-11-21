@@ -522,7 +522,10 @@ export const fr = {
 	'inbox.mine.error': 'Vos adresses d’expédition n’ont pas pu être lues : tous les mails sont affichés.',
 	'inbox.mine.retry': 'Réessayer',
 	'inbox.mine.empty.title': 'Aucun message de ce dossier ne vous concerne',
-	'inbox.mine.empty.body': 'Seuls les messages adressés à vos adresses d’expédition, ou envoyés par elles, sont affichés.',
+	// CRM-160 (docs/SPEC-mail-subsystem.md §27.7, docs/DESIGN_SYSTEM.md §5.96 révisé) : la phrase nomme aussi les réponses
+	// reçues dans une affaire, que la règle élargie de `concerns_me` retient.
+	'inbox.mine.empty.body':
+		'Seuls sont affichés les messages adressés à vos adresses d’expédition ou envoyés par elles, et les réponses reçues dans une affaire dont vous êtes responsable ou où vous avez écrit.',
 	'inbox.mine.empty.action': 'Afficher tout le courrier',
 	'inbox.classify.refus.forbidden': 'Vous ne pouvez pas classer ce message dans cette affaire.',
 	'inbox.classify.refus.card_indisponible': 'Cette affaire est archivée ou en corbeille : elle ne reçoit pas de courrier.',
