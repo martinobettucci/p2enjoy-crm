@@ -20496,7 +20496,9 @@ personne est membre. La webapp ne lit l'espace courant (`ContexteEspace.idWorksp
 **Changer d'espace** (décision 967) : l'application n'avait aucun sélecteur ; le premier niveau du fil d'Ariane devient le menu
 des espaces ; **l'espace est porté par l'adresse, onglet par onglet**, rien n'est stocké ; sans espace dans l'adresse,
 l'espace de la ressource, sinon le premier par nom ; un élément d'un autre espace ouvert depuis la cloche, la recherche ou un
-lien fait basculer l'onglet sur son espace, en le disant. **Ouvert** : la forme de l'adresse (chemin ou paramètre).
+lien fait basculer l'onglet sur son espace, en le disant. **L'adresse** : l'espace **en tête du chemin** (`/<slug>/…`) pour
+les **seules pages d'un espace** — l'inbox, les tracks et les channels, les réglages de l'espace ; les pages globales gardent
+leur adresse ; les anciennes adresses sont redirigées.
 **Connecteur MCP** : **oui, vérifier et aligner ; familles existantes** (décisions 963 et 965) — l'audit couvre chaque outil ; les
 outils des tracks, des channels et de l'inbox agissent dans un espace ; les autres peuvent rester multi-espaces en rendant l'espace
 de chaque élément ; la liste des espaces et la recherche globale restent

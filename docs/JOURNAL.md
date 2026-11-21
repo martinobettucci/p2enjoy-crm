@@ -41422,7 +41422,7 @@ coût de départ figé) ; les blocs d'objectifs qui citent un channel déplacé 
 **Conséquence** : la spécification de `CRM-162` peut s'écrire ; aucune question ouverte.
 
 
-### décision 967 — `CRM-161` : changer d'espace par le menu du fil d'Ariane ; l'espace porté par l'adresse, par onglet ; aucun stockage
+### décision 967 — `CRM-161` : changer d'espace par le menu du fil d'Ariane ; l'espace en tête du chemin des seules pages d'un espace ; aucun stockage
 
 *2026-11-21, session 4891a451 (p2enjoy-crm-5f), arbitrages du responsable (`AskUserQuestion`), avant la spécification.*
 **Le problème** (inventaire de `CRM-161`) : la décision 965 suppose qu'« on change d'espace », mais l'application **n'a aucun
@@ -41442,5 +41442,15 @@ les espaces (`lireTracks`, sans filtre d'espace). Le seed n'a qu'un espace.
   un mail), sinon **le premier espace par nom** ; écarté : le dernier choisi retenu en base ;
 - **ouvrir depuis la cloche, la recherche ou un lien un élément d'un autre espace** : **l'application bascule** sur son espace,
   et le dit par un message bref ; écartés : proposer de basculer ; refuser ;
-- **la forme de l'adresse** (en tête du chemin `/<slug>/…`, ou paramètre `?espace=<slug>`) : **ouverte** — le responsable a
-  demandé un SWOT des deux options avant de trancher.
+- **la forme de l'adresse** : le responsable a demandé un SWOT des deux options (en tête du chemin `/<slug>/…`, ou paramètre
+  `?espace=<slug>`), puis tranché : **« A limité aux pages concernées évidemment »** — **l'espace en tête du chemin, pour les
+  seules pages qui appartiennent à un espace** : l'inbox, les tracks et les channels, et les réglages de l'espace. Les pages
+  globales de la décision 965 (Board, Ma journée, Affaires figées, objectifs, temps, contacts et organisations, pilotage,
+  coûts, rentabilité, aide, plateforme) **gardent leur adresse** ; l'onglet garde en mémoire vive, sans rien stocker, son
+  dernier espace pendant la navigation ; les anciennes adresses sont redirigées vers l'espace de la ressource, sinon le premier
+  par nom. Écartés : le préfixe sur toutes les pages (les pages globales sous un espace qui ne les filtre pas) ; le paramètre
+  `?espace=` (un lien qui l'oublie fait retomber l'onglet en silence sur le premier espace).
+**Raisons consignées du SWOT** : le slug d'un track n'est unique que dans son espace (`tracks_workspace_id_slug_key`) ;
+`/tracks/:slugTrack` deviendra ambigu dès deux espaces portant le même slug, et le préfixe le lève ; 50 routes
+(`webapp/src/app/chemins.ts`), 725 `goto` dans 152 fichiers E2E, et les liens sortants (résumé quotidien `0133`, connecteur)
+mesurent le coût.
