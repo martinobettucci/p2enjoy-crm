@@ -41837,3 +41837,15 @@ sous squelette observée en retenant la lecture des espaces (capture `coquille-a
 coquille rouge sans le correctif, vert avec ; unitaires complets ; les quatre `tsc`. Specs d'écran que le défaut expliquait,
 vertes en sous-ensemble : `workflow-entete-changement`, `description-etapes`, `assistant-ia-modification` (quatre paliers),
 `mentions-composeur`, `seulement-moi`, `menu-espaces`.
+
+### décision 975 — `CRM-161` T2.c : un choix fait pour un objet d'un espace ne propose que cet espace
+
+*2026-11-21, session 4891a451 (p2enjoy-crm-5f) ; la session de livraison prévenue, son lot attend.*
+**Le problème** : `formulaire-selecteurs` rougit dans la campagne — quatorze options de contact sur une affaire du seed, pour
+douze. **L'observation** : `FormulaireCard` lit `lireContactsDuCarnet(client)`, le carnet entier ; Camille, administratrice de
+« Studio Lumen », y reçoit Inès Arlo et l'homonyme Nadia Benali. La base refuse ensuite ce choix (migration 47 : « ne désigne
+aucun contact de ce workspace ») : l'écran offre ce que la base rejette. `BlocContactsCard` et l'aperçu de Réglages ▸ Modèles
+d'emails (contacts, affaires, identités) lisent de même sans espace. Les membres, eux, sont déjà lus dans l'espace de
+l'affaire (`lireMembresAffectables`).
+**La décision** : le carnet reste global (décision 965) ; une liste de choix servant un objet d'un espace lit cet espace.
+`docs/SPEC-espace-courant.md` §15.4 bis, « Les sélecteurs liés à un espace ».

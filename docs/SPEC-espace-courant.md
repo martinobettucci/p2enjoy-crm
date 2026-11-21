@@ -446,6 +446,23 @@ l'espace jetable porte un workflow par défaut dont le nom le distingue, et Rég
 défaut du seed, jamais celui de la sonde ; puis les specs d'écran que le défaut explique (`workflow-entete-changement`,
 `description-etapes`, `assistant-ia-modification`, `tester-connexion`).
 
+**Les sélecteurs liés à un espace** (*2026-11-21, décision 975 ; écrit avant son code*). La même campagne a trouvé un second
+défaut de la même famille : **une liste de choix qui sert un objet d'un espace lit le carnet entier de la personne**. Sur une
+affaire du seed, le formulaire offrait les contacts de « Studio Lumen », que la base refuse ensuite à l'écriture (« ne désigne
+aucun contact de ce workspace », migration 47). **La règle** : le carnet est global (décision 965), mais **un choix fait pour
+un objet d'un espace ne propose que les lignes de cet espace**. `lireContactsDuCarnet` prend un espace facultatif, et le
+reçoivent :
+
+| Écran | Lecture | Espace |
+|---|---|---|
+| Formulaire d'une affaire (`FormulaireCard`) | `lireContactsDuCarnet` | celui de l'affaire |
+| Bloc « Contacts » d'une affaire (`BlocContactsCard`) | `lireContactsDuCarnet` | celui de l'affaire |
+| Réglages ▸ Modèles d'emails, l'aperçu | `lireContactsDuCarnet`, `lireAffairesPrevisualisation`, `lireIdentitesSortantes` | celui de l'écran |
+
+Le carnet (`Carnet`, page globale) garde sa lecture entière. **Preuves** : un unitaire par lecture (le filtre émis quand
+l'espace est donné, aucun quand il est omis) ; `e2e/ui/formulaire-selecteurs.spec.ts` rouge avant (quatorze options sur une
+affaire du seed, deux de Lumen), vert après (douze) ; le bloc « Contacts » et l'aperçu, en unitaires d'écran.
+
 ### 15.5 Les E2E de T2.a
 
 - Les `goto` vers une page d'un espace (436, dans 117 fichiers de `e2e/ui`, `e2e/manuel`, `e2e/mail`) sont révisés vers
