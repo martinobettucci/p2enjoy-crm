@@ -327,8 +327,8 @@ T2 se découpe en deux sous-tranches, chacune laissant verte la suite de son pé
   `connexion`, `auth`, et les anciens premiers segments `inbox`, `tracks`, `reglages`) rendrait une adresse ambiguë. Une
   migration ajoute à `workspaces` la contrainte **`workspaces_slug_not_reserved`** ; la création d'un espace sur
   Plateforme ▸ Espaces dit le refus en clair (« Ce nom d'adresse est réservé par l'application. Choisissez-en un autre. »).
-  Le seed (`p2enjoy`) et « Studio Lumen » (`studio-lumen`) n'en sont pas. *La contrainte est un choix de la spécification,
-  signalé au responsable dans le compte rendu de T2.a.*
+  Le seed (`p2enjoy`) et « Studio Lumen » (`studio-lumen`) n'en sont pas. *Choix de la spécification, validé par le responsable
+  (décision 971).*
 - **Le slug de l'adresse** est résolu parmi les espaces lus (`lireWorkspaces`) : inconnu, l'écran rend « Espace
   introuvable » (`data-testid="espace-introuvable"`) et un lien vers le premier espace par nom (§8.3).
 

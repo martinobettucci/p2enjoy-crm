@@ -41628,3 +41628,13 @@ l'onglet.
 non-lus, la pastille dit alors « ailleurs » ; l'attente est corrigée, le comportement est celui du §5.113.
 **Reste** : le seed §55 (en attente de l'accord avec la session f9 sur la création de « Studio Lumen » : identifiant figé ou
 fonction de la plateforme), la révision d'`accueil-channels` qu'il imposera, le manuel.
+
+### décision 971 — `CRM-161` : les slugs d'espace réservés, validés
+
+*2026-11-21, session 4891a451 (p2enjoy-crm-5f), constat du responsable (« oui »).*
+**Le problème** : choix de la spécification de T2.a (`docs/SPEC-espace-courant.md` §15.1), présenté au responsable dans le
+compte rendu : l'espace étant en tête du chemin des pages d'un espace, un espace dont le slug serait un premier segment d'une
+route globale (`contacts`, `aide`, `inbox`…) rendrait une adresse ambiguë.
+**Décision** : **validé** — la contrainte `workspaces_slug_not_reserved` (migration `0196`) et le refus `identifiant_reserve`
+de Plateforme ▸ Espaces restent tels que livrés en développement ; écarté : laisser tout slug et départager les adresses par
+l'ordre des routes.
