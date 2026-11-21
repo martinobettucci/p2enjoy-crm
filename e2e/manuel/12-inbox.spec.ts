@@ -64,6 +64,9 @@ import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/je
 import { attendreLeSort } from '../sort-envoi'
 import { demonterEspaceSansDomaine, monterEspaceSansDomaine } from '../api/espace-sans-domaine'
 
+// Révisé le 2026-11-21 (`CRM-161` T2.b, DS §5.113) : `getByLabel('Message', { exact: true })` — le bouton du menu des espaces porte
+// « … des messages non lus … » dans son nom, et un libellé partiel l'attrapait aussi.
+
 // LE CHROMIUM COMPLET, et non le « headless shell » : seul le premier porte le lecteur PDF du navigateur, que l'image de
 // l'aperçu d'un PDF montre (`CRM-074` T3). Le choix vaut pour le fichier entier : Playwright ne le permet pas par groupe.
 test.use({ channel: 'chromium' })
@@ -390,7 +393,7 @@ test('écrire depuis une affaire : la copie cachée, les pièces jointes', async
 		const formulaire = page.getByTestId('envoi-formulaire')
 		await page.getByLabel('Destinataires').fill('dsi@sogexia.example')
 		await page.getByLabel('Objet').fill('Proposition pour le lot 2')
-		await page.getByLabel('Message').fill('Bonjour,\n\nVous trouverez notre proposition jointe.')
+		await page.getByLabel('Message', { exact: true }).fill('Bonjour,\n\nVous trouverez notre proposition jointe.')
 		await page.getByRole('button', { name: 'Ajouter Cci' }).click()
 		await page.getByLabel('Copie cachée (Cci)').fill('direction@p2enjoy.test')
 

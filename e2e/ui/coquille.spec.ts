@@ -396,21 +396,26 @@ test.describe('états provoqués sur le réseau (docs/DESIGN_SYSTEM.md §5.8)', 
 
 	test('un refus du backend donne l’état d’accès refusé, distinct de l’erreur', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
-		await page.route(ROUTE_WORKSPACES, (route) =>
-			route.fulfill({
+		let refusRendus = 0
+		await page.route(ROUTE_WORKSPACES, (route) => {
+			refusRendus += 1
+			return route.fulfill({
 				status: 403,
 				contentType: 'application/json',
 				body: JSON.stringify({ message: 'permission denied for table workspaces' }),
-			}),
-		)
+			})
+		})
 		await page.goto('/')
 
 		await expect(page.getByTestId('etat-refus')).toBeVisible()
 		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
-		// DEUX REFUS, ET NON UN, RÉVISÉ PAR `CRM-092` T9 : avec une session, l'accueil lit aussi
-		// `workspaces` pour le guide de démarrage (`webapp/src/lib/demarrage.ts`), que l'anonyme ne
-		// chargeait pas. Le compte reste FIGÉ, pour qu'une lecture de plus se voie ici.
-		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403], ERREUR_RESSOURCE_HTTP[403]])
+		// UN SEUL REFUS. `CRM-092` T9 en comptait deux : avec une session, l'accueil lisait aussi `workspaces` pour le guide de
+		// démarrage (`webapp/src/lib/demarrage.ts`). RÉVISÉ le 2026-11-21 (`CRM-161` T2.c, décision 974) : la page ne se monte
+		// qu'une fois les espaces lus, et une lecture des espaces refusée rend l'état refusé À SA PLACE — l'accueil n'est jamais
+		// monté, sa lecture ne part pas. Le compte reste FIGÉ, mesuré deux fois — la route et la console —, pour qu'une
+		// lecture de plus se voie ici.
+		await expect.poll(() => refusRendus).toBe(1)
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
 		await capturer(page, 'etat-refus-1440')
 	})
 })

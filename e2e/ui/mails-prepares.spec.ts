@@ -21,6 +21,9 @@ import { capturer } from './captures'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { libererLaBoucle, retenirLaBoucle } from '../sort-envoi'
 
+// Révisé le 2026-11-21 (`CRM-161` T2.b, DS §5.113) : `getByLabel('Message', { exact: true })` — le bouton du menu des espaces porte
+// « … des messages non lus … » dans son nom, et un libellé partiel l'attrapait aussi.
+
 // `CRM-158` (docs/SPEC-mail-subsystem.md §34.7 bis) : ces preuves mettent en file des envois dus SANS vouloir qu'ils
 // partent ; la boucle d'envoi est retenue le temps du fichier, renouvelée avant chaque preuve, levée à la fin.
 test.beforeEach(() => retenirLaBoucle())
@@ -86,7 +89,7 @@ test('l’entrée « Mails préparés » mène à la relecture, et le contenu RE
 	await expect(relecture.getByLabel('Objet')).toHaveValue('Proposition à relire')
 	await capturer(page, 'inbox-relecture-xl-1440', UNITE)
 
-	await relecture.getByLabel('Message').fill(`${MARQUE} — corps relu par la personne.`)
+	await relecture.getByLabel('Message', { exact: true }).fill(`${MARQUE} — corps relu par la personne.`)
 	await relecture.getByTestId('envoi-valider').click()
 	await expect(page.getByTestId(`inbox-mail-prepare`).filter({ hasText: 'Proposition à relire' })).toHaveCount(0)
 

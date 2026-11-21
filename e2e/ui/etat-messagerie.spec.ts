@@ -22,6 +22,9 @@ import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
+// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : « Studio Lumen », second espace du seed, a sa propre
+// boîte système ; « la » boîte système se lit dans l'espace du seed, nommé par chaque filtre `owner_id=is.null`.
+
 const UNITE = 'CRM-059'
 const ADMIN = 'admin@p2enjoy.test'
 const VIEWER = 'viewer@p2enjoy.test'
@@ -63,7 +66,7 @@ async function mettreDrissEnIncident(page: Page): Promise<void> {
  * celle qu'elle a posée, jamais une valeur écrite par la clé de service.
  */
 async function releverBoiteSysteme(page: Page): Promise<void> {
-	const reponse = await page.request.get(`${URL_API}/rest/v1/mail_inbound_accounts?select=id&owner_id=is.null`, {
+	const reponse = await page.request.get(`${URL_API}/rest/v1/mail_inbound_accounts?select=id&owner_id=is.null&workspace_id=eq.5eed0000-0000-4000-8000-000000000001`, {
 		headers: enTetesService(),
 	})
 	const [systeme] = (await reponse.json()) as { id: string }[]

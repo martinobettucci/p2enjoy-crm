@@ -20,6 +20,9 @@ import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, connecterAvecLeLabs, ex
 import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
+// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : « Studio Lumen », second espace du seed, a sa propre
+// boîte système ; « la » boîte système se lit dans l'espace du seed, nommé par chaque filtre `owner_id=is.null`.
+
 const UNITE = 'CRM-127'
 const ADMIN = 'admin@p2enjoy.test'
 const BIZDEV = 'bizdev@p2enjoy.test'
@@ -71,7 +74,7 @@ test.afterAll(async ({ request }) => {
 test.describe('« Tester la connexion » (docs/SPEC-mail-subsystem.md §23.5)', () => {
 	test('l’administratrice teste la boîte système au clavier : « Connectée » relue en base, le focus rendu', async ({ page }) => {
 		test.setTimeout(90_000)
-		const systeme = await preparer(page, 'mail_inbound_accounts', 'owner_id=is.null')
+		const systeme = await preparer(page, 'mail_inbound_accounts', 'owner_id=is.null&workspace_id=eq.5eed0000-0000-4000-8000-000000000001')
 		await connecterAvecLeLabs(page, ADMIN)
 		await page.goto('/p2enjoy/reglages/comptes-mail')
 		const ligne = page.getByTestId('ligne-compte-configuration').filter({ hasText: LABEL_SYSTEME })
@@ -152,7 +155,7 @@ test.describe('« Tester la connexion » (docs/SPEC-mail-subsystem.md §23.5)', 
 
 	test('deux tests rapprochés : le second est refusé, et la phrase le dit sous la ligne', async ({ page }) => {
 		test.setTimeout(90_000)
-		await preparer(page, 'mail_inbound_accounts', 'owner_id=is.null')
+		await preparer(page, 'mail_inbound_accounts', 'owner_id=is.null&workspace_id=eq.5eed0000-0000-4000-8000-000000000001')
 		await connecterAvecLeLabs(page, ADMIN)
 		await page.goto('/p2enjoy/reglages/comptes-mail')
 		const ligne = page.getByTestId('ligne-compte-configuration').filter({ hasText: LABEL_SYSTEME })
@@ -171,7 +174,7 @@ test.describe('paliers responsive (docs/DESIGN_SYSTEM.md §5.93, §7)', () => {
 	for (const palier of PALIERS) {
 		test(`${palier.nom} : la commande, son verdict et la ligne restent lisibles`, async ({ page }) => {
 			test.setTimeout(90_000)
-			await preparer(page, 'mail_inbound_accounts', 'owner_id=is.null')
+			await preparer(page, 'mail_inbound_accounts', 'owner_id=is.null&workspace_id=eq.5eed0000-0000-4000-8000-000000000001')
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			await connecterAvecLeLabs(page, ADMIN)
 			await page.goto('/p2enjoy/reglages/comptes-mail')

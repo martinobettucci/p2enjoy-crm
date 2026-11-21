@@ -26,6 +26,9 @@ import {
 import { PALIERS, capturer } from './captures'
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, connecterAvecLeLabs, expect, test } from './fixtures'
 
+// Révisé le 2026-11-21 (`CRM-161` T2.b, DS §5.113) : `getByLabel('Message', { exact: true })` — le bouton du menu des espaces porte
+// « … des messages non lus … » dans son nom, et un libellé partiel l'attrapait aussi.
+
 const UNITE = 'CRM-157'
 const SABINE = { adresse: 'plateforme@p2enjoy.test', id: '5eed0000-0000-4000-8000-000000000018' } as const
 const rest = (chemin: string) => `${URL_API}/rest/v1/${chemin}`
@@ -71,8 +74,8 @@ test.describe('envoyer depuis un espace sans domaine (docs/DESIGN_SYSTEM.md §5.
 		const valider = page.getByTestId('envoi-valider')
 		await expect(valider).toBeDisabled()
 		await expect(valider).toHaveAttribute('aria-describedby', /envoi-domaine-absent/)
-		await page.getByLabel('Message').fill('Bonjour, voici notre proposition.')
-		await expect(page.getByLabel('Message')).toHaveValue('Bonjour, voici notre proposition.')
+		await page.getByLabel('Message', { exact: true }).fill('Bonjour, voici notre proposition.')
+		await expect(page.getByLabel('Message', { exact: true })).toHaveValue('Bonjour, voici notre proposition.')
 		await capturer(page, 'envoi-sans-domaine-1440', UNITE)
 	})
 
@@ -92,9 +95,9 @@ test.describe('envoyer depuis un espace sans domaine (docs/DESIGN_SYSTEM.md §5.
 			return note !== null && champ !== null && (note.compareDocumentPosition(champ) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
 		})
 		expect(avant, 'l’avertissement vient avant « Expédier depuis »').toBe(true)
-		await page.getByLabel('Message').focus()
+		await page.getByLabel('Message', { exact: true }).focus()
 		await page.keyboard.type('Rédigé au clavier.')
-		await expect(page.getByLabel('Message')).toHaveValue('Rédigé au clavier.')
+		await expect(page.getByLabel('Message', { exact: true })).toHaveValue('Rédigé au clavier.')
 		await expect(page.getByTestId('envoi-valider')).toBeDisabled()
 	})
 
@@ -119,10 +122,10 @@ test.describe('envoyer depuis un espace sans domaine (docs/DESIGN_SYSTEM.md §5.
 		await ouvrirFormulaire(page)
 		await expect(page.getByTestId('envoi-domaine-absent')).toHaveCount(0)
 		await page.getByLabel('Destinataires').fill('client@exterieur.test')
-		await page.getByLabel('Message').fill('Bonjour.')
+		await page.getByLabel('Message', { exact: true }).fill('Bonjour.')
 		await page.getByTestId('envoi-valider').click()
 		await expect(page.getByTestId('envoi-formulaire').getByRole('alert')).toHaveText(TEXTE_REFUS)
-		await expect(page.getByLabel('Message')).toHaveValue('Bonjour.')
+		await expect(page.getByLabel('Message', { exact: true })).toHaveValue('Bonjour.')
 		await capturer(page, 'envoi-refus-domaine-1440', UNITE)
 		// La panne simulée de la lecture et le refus de la base sont les erreurs que ce scénario vient de vérifier. La lecture
 		// part QUATRE fois : le client PostgREST relance d'office une lecture qui rend `503` (trois relances, mesuré).
@@ -140,7 +143,11 @@ test.describe('envoyer depuis un espace sans domaine (docs/DESIGN_SYSTEM.md §5.
 		expect(prepare.status(), await prepare.text()).toBe(200)
 		const idBrouillon = (await prepare.json()) as string
 		await connecterAvecLeLabs(page, CAMILLE.adresse)
-		await page.goto(`/p2enjoy/inbox?brouillon=${idBrouillon}`)
+		// Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.4 et §15.5, décision 974) : le brouillon est de
+		// l'espace jetable ; l'ANCIENNE adresse le mène dans son espace (la redirection du §15.4). `/p2enjoy/inbox?brouillon=`
+		// — l'inbox du seed — ne passait qu'à la faveur du défaut 974, la page montée avant que l'espace ne soit lu.
+		await page.goto(`/inbox?brouillon=${idBrouillon}`)
+		await expect(page).toHaveURL(new RegExp(`/${ESPACE_SANS_DOMAINE.slug}/inbox`))
 		await expect(page.getByTestId('envoi-domaine-absent')).toBeVisible()
 		await expect(page.getByTestId('envoi-valider')).toBeDisabled()
 		await capturer(page, 'relecture-sans-domaine-1440', UNITE)

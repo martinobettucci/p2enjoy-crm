@@ -29,6 +29,12 @@ import { illustrer } from './illustrer'
 import { ADMIN, AFFAIRE_SOGEXIA, WORKSPACE_SEED, connecterAvecLeLabs, lireService, service } from './outils'
 import { libererLaBoucle, retenirLaBoucle } from '../sort-envoi'
 
+// Révisé le 2026-11-21 (`CRM-161` T2.b, DS §5.113) : `getByLabel('Message', { exact: true })` — le bouton du menu des espaces porte
+// « … des messages non lus … » dans son nom, et un libellé partiel l'attrapait aussi.
+
+// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : « Studio Lumen », second espace du seed, a sa propre
+// boîte système ; « la » boîte système se lit dans l'espace du seed, nommé par chaque filtre `owner_id=is.null`.
+
 // `CRM-158` (docs/SPEC-mail-subsystem.md §34.7 bis) : ces preuves mettent en file des envois dus SANS vouloir qu'ils
 // partent ; la boucle d'envoi est retenue le temps du fichier, renouvelée avant chaque preuve, levée à la fin.
 test.beforeEach(() => retenirLaBoucle())
@@ -38,7 +44,7 @@ const CHAPITRE = 'les-boites-de-reception-et-les-adresses-d-expedition'
 const BOITES = 'les-boites-de-reception-declarees'
 const ADRESSES = 'les-adresses-d-expedition'
 const BOITE_DRISS = `mail_inbound_accounts?label=eq.${encodeURIComponent('Boîte de Driss Lemoine')}`
-const BOITE_SYSTEME = 'mail_inbound_accounts?owner_id=is.null'
+const BOITE_SYSTEME = 'mail_inbound_accounts?owner_id=is.null&workspace_id=eq.5eed0000-0000-4000-8000-000000000001'
 const BOITE_CAMILLE = `mail_inbound_accounts?label=eq.${encodeURIComponent('Boîte de Camille Aubert')}`
 
 test('les réglages de la messagerie, dans leur ordre', async ({ page }) => {
@@ -188,7 +194,7 @@ test('une adresse qui a atteint son plafond du jour', async ({ page, request }) 
 	// L'adresse proposée d'office : la seule que l'administratrice peut employer dans le seed.
 	await page.getByLabel('Destinataires').fill('dsi@sogexia.example')
 	await page.getByLabel('Objet').fill(OBJET_PLAFOND)
-	await page.getByLabel('Message').fill('Bonjour,\n\nVoici notre proposition pour le lot 2.')
+	await page.getByLabel('Message', { exact: true }).fill('Bonjour,\n\nVoici notre proposition pour le lot 2.')
 	await page.getByTestId('envoi-valider').click()
 	const refus = formulaire.getByRole('alert')
 	await expect(refus).toContainText("Cette adresse d'expédition a atteint son plafond du jour.")

@@ -22,6 +22,9 @@ import { URL_API, enTetesService } from '../api/jetons'
 import { capturer } from './captures'
 import { libererLaBoucle, retenirLaBoucle } from '../sort-envoi'
 
+// Révisé le 2026-11-21 (`CRM-161` T2.b, DS §5.113) : `getByLabel('Message', { exact: true })` — le bouton du menu des espaces porte
+// « … des messages non lus … » dans son nom, et un libellé partiel l'attrapait aussi.
+
 // `CRM-158` (docs/SPEC-mail-subsystem.md §34.7 bis) : ces preuves mettent en file des envois dus SANS vouloir qu'ils
 // partent ; la boucle d'envoi est retenue le temps du fichier, renouvelée avant chaque preuve, levée à la fin.
 test.beforeEach(() => retenirLaBoucle())
@@ -77,7 +80,7 @@ test.describe('composer et répondre (docs/SPEC-mail-subsystem.md §19.6)', () =
 
 			await page.getByLabel('Destinataires').fill('client@exterieur.test, copie@exterieur.test')
 			await page.getByLabel('Objet').fill(objet)
-			await page.getByLabel('Message').fill('Bonjour,\n\nVoici notre proposition.')
+			await page.getByLabel('Message', { exact: true }).fill('Bonjour,\n\nVoici notre proposition.')
 			await capturer(page, 'envoi-depuis-la-card-1440', UNITE)
 			await page.getByTestId('envoi-valider').click()
 
@@ -140,7 +143,7 @@ test.describe('composer et répondre (docs/SPEC-mail-subsystem.md §19.6)', () =
 			// ressemblance de mots plutôt que sur le produit.
 			await page
 				.getByTestId('envoi-formulaire')
-				.getByLabel('Message')
+				.getByLabel('Message', { exact: true })
 				.fill('Bien reçu, nous revenons vers vous.')
 			await capturer(page, 'envoi-reponse-depuis-inbox-1440', UNITE)
 			await page.getByTestId('envoi-valider').click()

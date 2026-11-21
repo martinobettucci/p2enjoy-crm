@@ -30,6 +30,9 @@ import {
 import { MOT_DE_PASSE_SEED, URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
+// Révisé le 2026-11-21 (`CRM-161` T2.b, docs/SPEC-seed.md §55, décision 51) : « Studio Lumen », second espace du seed, a sa propre
+// boîte système ; « la » boîte système se lit dans l'espace du seed, nommé par chaque filtre `owner_id=is.null`.
+
 const UNITE = 'CRM-088'
 const ADMIN = 'admin@p2enjoy.test'
 const VIEWER = 'viewer@p2enjoy.test'
@@ -244,7 +247,7 @@ test.describe('configuration des comptes entrants (docs/SPEC-mail-subsystem.md �
 /** L'identifiant de la boîte système, lu par la clé de service — jamais recopié d'une exécution. */
 async function identifiantBoiteSysteme(page: Page): Promise<string> {
 	const reponse = await page.request.get(
-		`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&select=id`,
+		`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=is.null&workspace_id=eq.5eed0000-0000-4000-8000-000000000001&select=id`,
 		{ headers: enTetesService() },
 	)
 	const [ligne] = (await reponse.json()) as { id: string }[]

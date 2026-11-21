@@ -17,6 +17,9 @@ import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 import { libererLaBoucle, retenirLaBoucle } from '../sort-envoi'
 
+// Révisé le 2026-11-21 (`CRM-161` T2.b, DS §5.113) : `getByLabel('Message', { exact: true })` — le bouton du menu des espaces porte
+// « … des messages non lus … » dans son nom, et un libellé partiel l'attrapait aussi.
+
 // `CRM-158` (docs/SPEC-mail-subsystem.md §34.7 bis) : ces preuves mettent en file des envois dus SANS vouloir qu'ils
 // partent ; la boucle d'envoi est retenue le temps du fichier, renouvelée avant chaque preuve, levée à la fin.
 test.beforeEach(() => retenirLaBoucle())
@@ -77,7 +80,7 @@ test.describe('copie cachée et pièces jointes (docs/SPEC-mail-subsystem.md §1
 		try {
 			await page.getByLabel('Destinataires').fill('client@exterieur.test')
 			await page.getByLabel('Objet').fill(objet)
-			await page.getByLabel('Message').fill('Bonjour,\n\nVous trouverez notre proposition jointe.')
+			await page.getByLabel('Message', { exact: true }).fill('Bonjour,\n\nVous trouverez notre proposition jointe.')
 
 			await page.getByRole('button', { name: 'Ajouter Cci' }).click()
 			await expect(page.getByLabel('Copie cachée (Cci)')).toBeFocused()
