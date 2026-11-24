@@ -7459,6 +7459,39 @@ Un texte modifié vaut dès le prompt suivant que vous choisissez ; la **liste**
 met à jour à sa prochaine connexion au connecteur. Si vous êtes membre de plusieurs espaces dont les prompts portent le
 même identifiant, l'assistant les distingue par le nom de l'espace, ajouté à leur titre.
 
+### 33.8 Les consignes de la plateforme
+
+![Plateforme ▸ Connecteur MCP : le bloc « Consignes aux assistants », son texte, son compteur et « Enregistrer »](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/consignes-de-la-plateforme.jpg)
+
+À sa connexion, chaque assistant reçoit du connecteur des **consignes** : comment s'y prendre dans le CRM, quels outils
+appeler d'abord, ce qu'il ne doit jamais faire. Une partie est **fixe** : elle fait partie du connecteur. Un
+superadministrateur peut la **compléter** par un texte propre à votre plateforme — vos usages, vos conventions.
+
+**Où.** **Plateforme** ▸ onglet « Connecteur MCP » ▸ bloc « Consignes aux assistants », avant le journal des appels.
+**Qui.** Les superadministrateurs seuls, comme le reste de la plateforme.
+
+Écrivez dans le champ « Consignes de la plateforme », puis **« Enregistrer »**. Le texte tient en **4 000 caractères** ;
+un compteur, sous le champ, dit où vous en êtes. Une fois enregistré, il vaut à la **prochaine connexion** d'un assistant :
+une conversation déjà ouverte garde les consignes qu'elle a reçues. Sous le bouton, le bloc dit qui l'a modifié en dernier
+et quand, ou qu'il ne l'a jamais été.
+
+- **Le texte s'ajoute, il ne remplace rien.** L'assistant reçoit toujours les consignes fixes d'abord, puis votre texte,
+  annoncé comme un complément. Un texte vide n'ajoute rien.
+- **Il n'ouvre aucun droit.** Une consigne ne fait rien que la grille du connecteur (§33.3) et vos droits dans le CRM
+  n'autorisent pas.
+- **N'y écrivez ni donnée personnelle ni secret** : tout assistant connecté le lit.
+- **Chaque modification est inscrite** au journal de la plateforme, avec la longueur du texte avant et après — jamais le
+  texte lui-même.
+
+Par exemple : « Avant de créer une affaire, cherchez-la avec crm_search pour éviter un doublon. », « Donnez toujours les
+montants avec leur devise. »
+
+**Les consignes fixes, pour les lire.** Le résumé « Consignes fixes du connecteur », sous le champ, se déplie : il montre le
+texte exact que le connecteur envoie, en anglais, et la date à laquelle le connecteur l'a publié. Il ne se modifie pas
+ici : il change avec le connecteur.
+
+![Les consignes fixes du connecteur, dépliées, et leur date de publication](manuel/images/le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/consignes-fixes.jpg)
+
 ## 34. Les webhooks : prévenir vos autres outils
 
 Un **webhook** prévient un autre outil — un automate, un tableur, votre comptabilité — dès qu'un événement choisi survient

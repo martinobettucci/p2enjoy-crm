@@ -60,6 +60,9 @@
 # @spec CRM-162 (docs/BACKLOG.md) — tranche T3 : les homonymes de « Studio Lumen », pour que l'aperçu du déplacement d'un
 #       track du seed liste des référentiels réutilisés, des créés, et un refus (docs/SPEC-seed.md §54 ;
 #       docs/SPEC-deplacement-track.md §7, §14)
+# @spec CRM-165 (docs/BACKLOG.md) — tranche T3 : les consignes de la plateforme, écrites par Sabine par la vraie fonction et
+#       sous son jeton, pour que l'onglet « Connecteur MCP » montre un texte, son auteur et sa date (docs/SPEC-seed.md §56 ;
+#       docs/SPEC-mcp.md §18.6)
 #
 # Applique le seed socle sur la pile de développement en cours d'exécution.
 #
@@ -7136,3 +7139,20 @@ AP_ETIQUETTES=$(apercu_54 studio-web '[.referentials.label.reused[]?.source] | j
 [ "$(psql_seed -c "select count(*) from public.tracks where workspace_id = '$LUMEN_ID' and slug in ('formation', 'conseil-ia', 'studio-web')")" = "0" ] \
 	|| die "un track de l'espace du seed est dans « Studio Lumen » : le §54 ne déplace rien."
 info "« Studio Lumen » : l'étiquette « Secteur public », les champs « Secteur » (une liste) et « Budget du client » (un texte), Nadia Benali, Vertigo Conseil ; l'aperçu de « Formation » réutilise « Secteur » et Nadia Benali, crée $AP_CREES champs et refuse ($AP_REFUS) ; « Conseil & IA » réutilise Vertigo Conseil, « Studio web » « Secteur public » — docs/SPEC-seed.md §54"
+
+# --- §56. Les consignes de la plateforme — CRM-165, docs/SPEC-seed.md §56 ----------------------------------------------
+# Par la VRAIE fonction, sous le jeton de Sabine (super-administratrice du seed). Rejouable : le même texte réécrit n'écrit
+# rien, et ne laisse aucune ligne au journal de la plateforme (docs/SPEC-mcp.md §18.3). Le socle n'est pas posé ici : le
+# service `mcp` le publie à son démarrage.
+CONSIGNES_56='Avant de créer une affaire, cherchez-la avec crm_search pour éviter un doublon.
+Donnez toujours les montants avec leur devise.
+Pour tout envoi de mail, préparez-le avec crm_mail_prepare et laissez la personne le relire.'
+JETON_CONSIGNES=$(sso_jeton_interne "$API" "$ANON_KEY" 'plateforme@p2enjoy.test' || true)
+[ -n "$JETON_CONSIGNES" ] || die "connexion de Sabine impossible : le §56 écrit les consignes de la plateforme sous son jeton."
+attendu "$(api_jeton "$JETON_CONSIGNES" POST /rest/v1/rpc/platform_set_connector_instructions \
+	-d "$(jq -nc --arg b "$CONSIGNES_56" '{p_body: $b}')")" "consignes de la plateforme (§56)" 200 204
+# Le constat : le texte exact, et son auteur.
+[ "$(psql_seed -c "select body = \$consignes\$$CONSIGNES_56\$consignes\$ and updated_by = '5eed0000-0000-4000-8000-000000000018'
+	from public.connector_instructions")" = "t" ] \
+	|| die "les consignes de la plateforme n'ont pas leur texte ou leur auteur (§56)."
+info "Consignes de la plateforme : trois consignes d'usage, écrites par Sabine — docs/SPEC-seed.md §56"

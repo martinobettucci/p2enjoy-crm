@@ -683,7 +683,7 @@
 			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/droits-enregistres.jpg",
 			"alt": "« Droits enregistrés. »",
 			"width": 169,
-			"height": 69
+			"height": 70
 		},
 		{
 			"type": "image",
@@ -1056,7 +1056,7 @@
 			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/journal-des-appels.jpg",
 			"alt": "Le journal des appels : le filtre des issues, et un appel « Réussi »",
 			"width": 1192,
-			"height": 165
+			"height": 170
 		},
 		{
 			"type": "image",
@@ -4722,6 +4722,285 @@
 					"text": " des prompts de votre assistant, elle, se\nmet à jour à sa prochaine connexion au connecteur. Si vous êtes membre de plusieurs espaces dont les prompts portent le\nmême identifiant, l'assistant les distingue par le nom de l'espace, ajouté à leur titre."
 				}
 			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-consignes-de-la-plateforme",
+			"content": [
+				{
+					"type": "text",
+					"text": "33.8 Les consignes de la plateforme"
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/consignes-de-la-plateforme.jpg",
+			"alt": "Plateforme ▸ Connecteur MCP : le bloc « Consignes aux assistants », son texte, son compteur et « Enregistrer »",
+			"width": 1032,
+			"height": 443
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "À sa connexion, chaque assistant reçoit du connecteur des "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "consignes"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : comment s'y prendre dans le CRM, quels outils\nappeler d'abord, ce qu'il ne doit jamais faire. Une partie est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "fixe"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : elle fait partie du connecteur. Un\nsuperadministrateur peut la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "compléter"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " par un texte propre à votre plateforme — vos usages, vos conventions."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Plateforme"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ▸ onglet « Connecteur MCP » ▸ bloc « Consignes aux assistants », avant le journal des appels.\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Les superadministrateurs seuls, comme le reste de la plateforme."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Écrivez dans le champ « Consignes de la plateforme », puis "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Enregistrer »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Le texte tient en "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "4 000 caractères"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ;\nun compteur, sous le champ, dit où vous en êtes. Une fois enregistré, il vaut à la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "prochaine connexion"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " d'un assistant :\nune conversation déjà ouverte garde les consignes qu'elle a reçues. Sous le bouton, le bloc dit qui l'a modifié en dernier\net quand, ou qu'il ne l'a jamais été."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Le texte s'ajoute, il ne remplace rien."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " L'assistant reçoit toujours les consignes fixes d'abord, puis votre texte,\nannoncé comme un complément. Un texte vide n'ajoute rien."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Il n'ouvre aucun droit."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Une consigne ne fait rien que la grille du connecteur (§33.3) et vos droits dans le CRM\nn'autorisent pas."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "N'y écrivez ni donnée personnelle ni secret"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : tout assistant connecté le lit."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Chaque modification est inscrite"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " au journal de la plateforme, avec la longueur du texte avant et après — jamais le\ntexte lui-même."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Par exemple : « Avant de créer une affaire, cherchez-la avec crm_search pour éviter un doublon. », « Donnez toujours les\nmontants avec leur devise. »"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les consignes fixes, pour les lire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le résumé « Consignes fixes du connecteur », sous le champ, se déplie : il montre le\ntexte exact que le connecteur envoie, en anglais, et la date à laquelle le connecteur l'a publié. Il ne se modifie pas\nici : il change avec le connecteur."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant/consignes-fixes.jpg",
+			"alt": "Les consignes fixes du connecteur, dépliées, et leur date de publication",
+			"width": 650,
+			"height": 1480
 		}
 	]
 }

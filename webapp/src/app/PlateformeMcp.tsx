@@ -3,6 +3,8 @@
 //       des appels), §8.2 (`mcp_comptes_liste`) ; docs/DESIGN_SYSTEM.md §5.56 (onglet « Connecteur MCP » : trois blocs
 //       dans l'ordre, nom en lien, « Sans profil dans le CRM » en pilule `accent`, recherche reprise de l'onglet
 //       « Utilisateurs »), §5.9, §5.8, §5.46 ; arbitrages A3 et A5
+// @spec CRM-165 (docs/BACKLOG.md) tranche T3 — un quatrième bloc, « Consignes aux assistants », avant le journal des appels
+//       (docs/DESIGN_SYSTEM.md §5.114 ; docs/SPEC-mcp.md §18.5)
 // @spec CLAUDE.md §10 — l'écran ne décide aucun droit : chaque lecture est gardée en base par le drapeau
 
 import { Search } from 'lucide-react'
@@ -18,6 +20,7 @@ import { DELAI_FRAPPE_MS } from '../lib/recherche'
 import type { ClientCrm } from '../lib/supabase'
 import { cheminFicheMcp } from './chemins'
 import { JournalAppelsMcp } from './JournalAppelsMcp'
+import { PlateformeMcpConsignes } from './PlateformeMcpConsignes'
 import { formaterDate } from './presentation-plateforme'
 
 const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3 text-left whitespace-nowrap'
@@ -30,6 +33,7 @@ export function PlateformeMcp({ client }: { readonly client: ClientCrm }) {
 		<div className="flex flex-col gap-8" data-testid="plateforme-mcp">
 			<ComptesMcp client={client} />
 			<AccorderDroits client={client} />
+			<PlateformeMcpConsignes client={client} />
 			<JournalAppelsMcp client={client} titre={t('platform.mcp.journal.titre')} />
 		</div>
 	)

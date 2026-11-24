@@ -1,3 +1,5 @@
+// @spec CRM-165 (docs/BACKLOG.md) tranche T3 — les consignes de la plateforme : lues et écrites par les deux fonctions du
+//       super-administrateur, leurs deux refus, le geste `connector_instructions_set` ; docs/SPEC-mcp.md §18.3, §18.5
 // @spec CRM-162 (docs/BACKLOG.md) tranche T2 — le geste `track_moved` du journal ; docs/SPEC-deplacement-track.md §10
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le refus `identifiant_reserve` dans le dictionnaire fermé (§15.1) ; docs/SPEC-espace-courant.md
 // @spec CRM-101 (docs/BACKLOG.md) — tranche T3 : les appels de l'écran de la plateforme et leurs refus
@@ -55,6 +57,9 @@ export const CODES_REFUS_PLATEFORME = [
 	'issue_invalide',
 	// `CRM-123` (docs/SPEC-cards.md §3.6 point 2) : un préfixe d'adresse d'affaire hors forme.
 	'invalid_card_address_prefix',
+	// `CRM-165` (docs/SPEC-mcp.md §18.3) : les consignes de la plateforme, trop longues ou absentes.
+	'connector_instructions_too_long',
+	'connector_instructions_invalid',
 ] as const
 export type CodeRefusPlateforme = (typeof CODES_REFUS_PLATEFORME)[number]
 
@@ -410,6 +415,8 @@ export const GESTES_JOURNAL = [
 	'card_addresses_regenerated',
 	// `CRM-162` (migrations 0197, 0198) : le déplacement d'un track d'un espace à un autre (docs/SPEC-deplacement-track.md §10).
 	'track_moved',
+	// `CRM-165` (migration 0200) : les consignes de la plateforme modifiées (docs/SPEC-mcp.md §18.3).
+	'connector_instructions_set',
 ] as const
 export type GesteJournal = (typeof GESTES_JOURNAL)[number]
 
@@ -440,6 +447,41 @@ export async function lireJournal(client: ClientCrm, avant: number | null): Prom
 export function curseurSuivant(page: readonly EntreeJournal[]): number | null {
 	if (page.length < PAGE_JOURNAL) return null
 	return page.reduce((plusAncien, entree) => Math.min(plusAncien, entree.id), Number.POSITIVE_INFINITY)
+}
+
+// --- Les consignes de la plateforme (`CRM-165`, docs/SPEC-mcp.md §18) --------------------------------------------
+
+/** La borne de la base (`connector_instructions.body`, migration 0200) : le champ la reprend, sans garde de plus (§5.34). */
+export const LONGUEUR_CONSIGNES = 4000
+
+export type ConsignesConnecteur = {
+	/** Le texte que le super-administrateur ajoute au socle ; vide, rien ne s'ajoute. */
+	readonly texte: string
+	/** `null` tant que personne ne l'a modifié. */
+	readonly modifieesLe: string | null
+	/** Le nom de l'auteur ; `null` s'il est parti ou si personne n'a modifié le texte. */
+	readonly modifieesPar: string | null
+	/** Le socle tel que le service `mcp` l'a publié ; vide tant qu'il ne l'a pas fait. */
+	readonly socle: string
+	readonly soclePublieLe: string | null
+}
+
+export async function lireConsignesConnecteur(client: ClientCrm): Promise<EtatAsync<ConsignesConnecteur>> {
+	return await lire(client, 'platform_connector_instructions', {}, (data) => {
+		const ligne = tableau(data)[0] ?? {}
+		return {
+			texte: texte(ligne['body']),
+			modifieesLe: texteOuNul(ligne['updated_at']),
+			modifieesPar: texteOuNul(ligne['updated_by_name']),
+			socle: texte(ligne['base']),
+			soclePublieLe: texteOuNul(ligne['base_published_at']),
+		}
+	})
+}
+
+/** La base normalise (fins de ligne, blancs des bords) et ne journalise qu'un texte changé (§18.3). */
+export async function poserConsignesConnecteur(client: ClientCrm, corps: string): Promise<Issue<unknown>> {
+	return await ecrire(client, 'platform_set_connector_instructions', { p_body: corps })
 }
 
 // --- Le connecteur MCP (`CRM-103`, docs/SPEC-mcp.md §8) ---------------------------------------------------------

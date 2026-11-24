@@ -1,3 +1,6 @@
+// @spec CRM-165 (docs/BACKLOG.md) tranche T3 — le geste `connector_instructions_set`, « Consignes du connecteur modifiées »,
+//       son détail (les longueurs avant et après, jamais le texte) et les deux refus des consignes ; docs/SPEC-mcp.md §18.3 ;
+//       docs/DESIGN_SYSTEM.md §5.114
 // @spec CRM-162 (docs/BACKLOG.md) tranche T2 — le geste `track_moved`, « Track déplacé », et son détail accordé par clé ;
 //       docs/SPEC-deplacement-track.md §10 ; docs/DESIGN_SYSTEM.md §5.112
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le refus `identifiant_reserve` (§15.1) ; docs/SPEC-espace-courant.md
@@ -37,6 +40,8 @@ const CLES_REFUS: Readonly<Record<RefusPlateforme, CleTraduction>> = {
 	droit_invalide: 'platform.refus.droit',
 	issue_invalide: 'platform.refus.issue',
 	invalid_card_address_prefix: 'platform.refus.prefixeAdresses',
+	connector_instructions_too_long: 'platform.refus.consignesTropLongues',
+	connector_instructions_invalid: 'platform.refus.consignesInvalides',
 	network: 'platform.refus.reseau',
 	unknown: 'platform.refus.inconnu',
 }
@@ -81,6 +86,7 @@ const CLES_GESTE: Readonly<Record<GesteJournal, CleTraduction>> = {
 	logs_purged: 'platform.journal.geste.logs_purged',
 	card_addresses_regenerated: 'platform.journal.geste.card_addresses_regenerated',
 	track_moved: 'platform.journal.geste.track_moved',
+	connector_instructions_set: 'platform.journal.geste.connector_instructions_set',
 }
 
 /** Le geste en MOT ; un geste inconnu laisse la cellule vide (§5.56). */
@@ -168,10 +174,23 @@ export function detailJournal(entree: EntreeJournal): string {
 				depart: chaine(c['from_name']),
 				arrivee: chaine(c['to_name']),
 			})
+		// `CRM-165` (migration 0200) : les longueurs avant et après, jamais le texte (docs/SPEC-mcp.md §18.3).
+		case 'connector_instructions_set':
+			return t('platform.journal.detail.consignes', {
+				avant: compter(typeof c['length_before'] === 'number' ? c['length_before'] : 0, CLES_CARACTERES),
+				apres: compter(typeof c['length_after'] === 'number' ? c['length_after'] : 0, CLES_CARACTERES),
+			})
 		case null:
 			return ''
 	}
 }
+
+/** Un compte de caractères, accordé par clé (`CRM-165`, §10). */
+export const CLES_CARACTERES = {
+	zero: 'platform.compte.caracteres.zero',
+	un: 'platform.compte.caracteres.un',
+	plusieurs: 'platform.compte.caracteres.plusieurs',
+} as const satisfies Record<'zero' | 'un' | 'plusieurs', CleTraduction>
 
 /** Un compte d'entrées de journal, accordé par clé (`CRM-072`, §5.66). */
 export const CLES_ENTREES = {

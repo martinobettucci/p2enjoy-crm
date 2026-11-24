@@ -1633,6 +1633,22 @@ rendait déjà `workspace_id`. Le manuel construit (chapitres 3 et 7) part avec 
 **Ce qui devient visible** : rien pour une personne d'un seul espace, ce qui est le cas de toute la production aujourd'hui.
 **Retour arrière** : la webapp de la révision d'avant.
 
+### 2.76 `CRM-165` T3, décisions 980 et 983 — l'écran des consignes, le journal traduit, le manuel (EN ATTENTE)
+
+`docs/SPEC-mcp.md` §18.5, §18.6 ; `docs/DESIGN_SYSTEM.md` §5.114. La webapp et le manuel : le bloc « Consignes aux
+assistants » de Plateforme ▸ Connecteur MCP, le geste `connector_instructions_set` traduit au journal de la plateforme, le
+§33.8 du manuel. **Aucune variable, aucun secret.** **Après la 200 et avec l'image `mcp` de T2** (§2.74, §2.75) : sans la
+200, le bloc rend son erreur de lecture ; sans l'image, le socle s'affiche « pas encore publié ».
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer la webapp et le manuel | session de livraison, dans la fenêtre du lot | comme toute livraison de la webapp (§4) |
+| 2 | Constater, en lecture seule | session de livraison | Plateforme ▸ Connecteur MCP montre le bloc, « Jamais modifiées. », et le socle déplié avec sa date de publication |
+| 3 | Constater | le responsable | écrire un texte, « Enregistrer » ; le journal de la plateforme porte « Consignes du connecteur modifiées » sans le texte ; un assistant **reconnecté** reçoit le texte après les consignes fixes |
+
+**Retour arrière** : la webapp de la révision d'avant ; un texte déjà écrit reste en base, et l'image `mcp` continue de
+l'envoyer : le vider avant, si l'on revient en arrière.
+
 ## 3. Migrations en attente
 
 **La 200** (`CRM-165` T1, décisions 980 et 983), **en attente** : les consignes de la plateforme (§2.74, `docs/SCHEMA.md`

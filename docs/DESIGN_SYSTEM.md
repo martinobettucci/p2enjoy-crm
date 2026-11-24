@@ -9185,8 +9185,9 @@ porte déjà ses pastilles. Hors coquille seulement (un écran monté seul), cha
 §18 de `docs/SPEC-mcp.md` ; ces règles ne disent que de quoi il a l'air.
 
 - **LA PLACE** : un quatrième bloc de l'onglet, **avant le journal des appels**. L'ordre devient : qui se sert du connecteur,
-  comment lui ouvrir l'accès, **ce que les assistants s'entendent dire**, ce qui s'est passé. Le bloc a son titre `text-h3`,
-  « Consignes aux assistants ».
+  comment lui ouvrir l'accès, **ce que les assistants s'entendent dire**, ce qui s'est passé. Le bloc a son titre `h2`
+  `text-h2`, comme ses trois voisins, « Consignes aux assistants ». *Corrigé à l'écriture du code (T3) : le premier jet disait
+  `text-h3`, d'un niveau sous les autres blocs de l'onglet.*
 - **LA PHRASE D'EN-TÊTE**, 13 px `--color-text-2`, `max-w-[72ch]` : « Ce texte s'ajoute aux consignes fixes du connecteur,
   que chaque assistant reçoit à sa connexion. Il vaut à la prochaine connexion d'un assistant. »
 - **LA ZONE DE TEXTE** « Consignes de la plateforme », libellé visible, 12 lignes, `max-w-[72ch]`, `maxLength` de 4 000 (la
@@ -9198,7 +9199,9 @@ porte déjà ses pastilles. Hors coquille seulement (un écran monté seul), cha
   région vivante du bloc : « Consignes enregistrées. Elles valent à la prochaine connexion d'un assistant. »
 - **L'AUTEUR ET LA DATE**, sous la commande, 13 px `--color-text-2` : « Modifiées par {nom} le {date} », ou « Jamais
   modifiées. » ; un auteur parti : « Modifiées le {date} ».
-- **LE SOCLE, REPLIÉ** (décision 983) : un `details` / `summary` « Consignes fixes du connecteur », fermé par défaut ; ouvert,
+- **LE SOCLE, REPLIÉ** (décision 983) : un `details` / `summary` « Consignes fixes du connecteur », fermé par défaut, précédé
+  d'un chevron 16 px `aria-hidden` — `ChevronRight` replié, `ChevronDown` déplié —, qui remplace le marqueur natif que la mise
+  en `flex` du résumé ôte (*ajouté à T3, défaut vu sur la capture : rien ne disait que le résumé se dépliait*) ; ouvert,
   le texte exact en `pre` monospace 13 px, `whitespace-pre-wrap`, sur `--color-hover` aux coins arrondis, bordure `--color-border`, puis
   « Publiées par le connecteur le {date}. » Jamais publiées : « Le connecteur ne les a pas encore publiées : il le fait à son
   démarrage. »

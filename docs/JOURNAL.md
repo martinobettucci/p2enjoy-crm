@@ -42099,3 +42099,16 @@ l'inscription — tant que la liste des séquences et celle des identités se li
 « Aucune adresse ». **Options** : attendre les trois lectures, ou s'en tenir à l'inscription et ouvrir une incohérence.
 **Décision** : **le squelette attend les trois lectures** (recommandé, retenu) ; DS §5.42 et SPEC-modeles-emails §13.8
 précisés. **Connecteur MCP** : sans objet, comme la décision 985. **Conséquence** : un seul correctif, sous INC-365.
+
+### `CRM-165` T3 — l'écran des consignes : deux corrections du §5.114 vues au code et à la capture
+
+*2026-11-24, session dd (ex-67), 152dd27d.* **Observations** : (1) le §5.114 donnait au bloc un titre `text-h3` ; ses trois
+voisins de l'onglet portent un `h2` en `text-h2` — un niveau en dessous les aurait faits paraître inégaux, et la hiérarchie
+des titres aurait sauté. (2) Sur la capture `consignes-xl-1440`, le résumé « Consignes fixes du connecteur » ne montrait aucun
+marqueur : la mise en `flex` du `summary` ôte le triangle natif, et rien ne disait que la ligne se dépliait. **Décision**
+(sans arbitrage, conformes au design system) : le titre en `h2` `text-h2` ; un chevron 16 px `aria-hidden` — `ChevronRight`
+replié, `ChevronDown` déplié, la convention déjà employée — devant le résumé. Le §5.114 dit les deux, et la correction.
+**Le manuel** : la preuve du manuel exige une image pour chaque libellé cité ; « Jamais modifiées. » et le geste du journal y
+sont décrits sans être cités, et l'image du socle déplié est prise dans une fenêtre de 1 600 px, où « Enregistrer », le
+résumé et tout le texte tiennent. **Vérifications** : vitest 10/10 puis 6290/6290 ; E2E 4/4 ; `verify-manual.sh` 170
+contrôles sans anomalie ; captures observées.

@@ -24,6 +24,12 @@ d'exécuter le code attendu.
   n'ajoute rien, et un texte changé vaut à la connexion suivante. Si le texte ne peut pas être lu, les consignes fixes
   partent seules et le journal du service le dit, sans contenu. Le service publie ses consignes fixes en base au démarrage,
   pour que l'écran les montre. Image `mcp` à reconstruire, après la migration 200.
+- **`CRM-165` T3 — les consignes de la plateforme se règlent dans l'écran.** Plateforme ▸ Connecteur MCP gagne un bloc
+  « Consignes aux assistants », avant le journal des appels : le texte (4 000 caractères au plus, avec un compteur), le
+  rappel de n'y écrire ni donnée personnelle ni secret, « Enregistrer », l'auteur et la date de la dernière modification, et
+  les consignes fixes du connecteur, repliées. Le journal de la plateforme dit « Consignes du connecteur modifiées », avec
+  les longueurs avant et après, jamais le texte. Le manuel gagne le §33.8. Le jeu de démonstration écrit trois consignes
+  d'usage.
 - **`CRM-161` T3.a — le filtre « Espace » et la provenance, sur « Affaires figées »** (`docs/DESIGN_SYSTEM.md` §5.115). Pour
   une personne de plusieurs espaces, chaque groupe de la page « Affaires figées » nomme son espace, et un bouton
   « Espace » au-dessus de la liste n'en garde que certains ; le choix vit dans l'adresse (`?espaces=`), et un choix sans

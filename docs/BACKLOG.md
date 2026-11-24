@@ -20778,9 +20778,7 @@ reconnexion. La campagne complète revient à la session de livraison (décision
 **Reprise de l'import** : par **« Importer un fichier »** du CRM (CSV des affaires restantes produit par ChatGPT), sur décision du
 responsable — hors de cette unité.
 
-### CRM-165 — Les consignes du connecteur, complétées par un texte que le super-administrateur règle dans le CRM `[@]`
-
-*Prise en charge : 67 (152dd27d) depuis 2026-11-24 06:50 UTC — état avant : [ ]*
+### CRM-165 — Les consignes du connecteur, complétées par un texte que le super-administrateur règle dans le CRM `[P]`
 
 **Origine** : demande du responsable, le 2026-11-24 — il voulait, par les prompts du connecteur (`CRM-149`), « injecter les bons
 usages du MCP aux assistants ». Un prompt n'est lu que si la personne le choisit ; le dispositif qui convient est le champ
@@ -20813,7 +20811,14 @@ de la plateforme, sans le texte ; rappel « ni donnée personnelle ni secret ».
 - [x] **T2** — le service `mcp` (assemblage, middleware, publication du socle) ; pytest ; intégration ; l'image au contrat ;
   *faite le 2026-11-24* (pytest `test_consignes` 16/16, intégration `test_integration_consignes`, `verify-mcp.sh --rapide`,
   contrat §2.75) ;
-- [ ] **T3** — l'écran, le journal traduit, le seed §56, le manuel, le contrat ; l'unité passe `[P]`.
+- [x] **T3** — l'écran, le journal traduit, le seed §56, le manuel, le contrat ; l'unité passe `[P]` ; *faite le 2026-11-24*
+  (vitest du bloc 10/10, unitaires complets 6290/6290, E2E `consignes-connecteur` 4/4 — souris, clavier, quatre paliers,
+  refus à l'administratrice d'espace —, seed §56 rejoué, scénarios du manuel 33c et « connecteur MCP », `verify-manual.sh`
+  170 contrôles, captures observées ; contrat §2.76).
+**Reste, en production** (`[P]`) : la livraison par la session de livraison — la 200 (§2.74), l'image `mcp` reconstruite
+explicitement (§2.75), la webapp et le manuel (§2.76) —, puis le constat du responsable : écrire un texte dans Plateforme ▸
+Connecteur MCP, et vérifier qu'un assistant reconnecté le reçoit après les consignes fixes. La campagne complète (dont
+`verify-mcp.sh` complet) revient à la session de livraison (décision 830).
 **DoD** : pgTAP (seul le super-administrateur écrit ; borne de longueur) ; API par requête directe (refus aux autres profils) ;
 pytest unitaire (assemblage socle + texte, texte vide) et intégration (un vrai client MCP reçoit les consignes complétées à
 l'initialisation) ; E2E souris et clavier ; seed (un texte de démonstration) ; captures observées ; manuel ; contrat. La campagne

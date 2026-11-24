@@ -612,6 +612,7 @@ chapitre. La preuve du §16 vérifie que chaque identifiant de cette table exist
 | `CRM-102` | le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant | — |
 | `CRM-103` | le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant | accorder-des-droits-du-connecteur |
 | `CRM-104` | le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant | ce-que-l-assistant-sait-faire |
+| `CRM-165` | le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant | les-consignes-de-la-plateforme |
 | `CRM-073` | les-webhooks-prevenir-vos-autres-outils | — |
 | `CRM-074` | l-inbox-lire-trier-et-repondre | l-inbox-lire-et-trier-le-courrier-recu |
 | `CRM-162` | la-plateforme-espaces-membres-et-superadministrateurs | deplacer-un-track-vers-un-autre-espace |
