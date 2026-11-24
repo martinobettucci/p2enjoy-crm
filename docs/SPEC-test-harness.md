@@ -344,6 +344,41 @@ sentinelle dans son différentiel, et l'empreinte de sortie redevient celle d'ou
 
 **Connecteur MCP : sans objet** (décision 701) — outillage de développement.
 
+### 3.9 Le verrou de campagne — `test:sql`, `e2e:*`, le seed et le build ne se disputent plus l'état (INC-177, décision 990)
+
+**Mesuré** (INC-177, décision 476) : `npm run test:sql` lancé pendant `npm run e2e:ui` rend cinq fichiers rouges, et un
+`npm run build` nu écrase le `webapp/dist` que la campagne sert (« Configuration incomplète »). Aucun de ces verdicts ne
+parle du produit, et rien dans le dépôt ne signalait la collision.
+
+**Le verrou.** `scripts/lib/campagne.sh` pose un verrou **hors de l'arbre de travail** :
+`${XDG_RUNTIME_DIR:-/tmp}/p2enjoy-crm-campagne/<empreinte du chemin du dépôt>/verrou` — jamais committé, jamais dans
+`git clean`. Il porte un PID, l'instant de début, la commande et le nom de la session (`CAMPAGNE_NOM`, sinon l'utilisateur
+et le terminal).
+
+**L'ouverture en une fois.** `scripts/lib/campagne.sh ouvrir [--nom <nom>] -- <commande…>` prend le verrou, exporte
+`CAMPAGNE_JETON=<identifiant>`, exécute la commande, rend son code de sortie et libère le verrou à la sortie (`trap`, y
+compris sur un signal). Tout enfant qui présente le jeton **traverse** le verrou : c'est ainsi qu'une campagne complète
+enchaîne `test:sql`, `e2e:api`, `e2e:ui`, `e2e:mail`, le seed et le build sans jamais se refuser à elle-même.
+
+**Les commandes gardées** appellent `campagne_garde <nom>` (fonction du même fichier) en tête : `scripts/run-sql-tests.sh`,
+le `globalSetup` de Playwright (`e2e/`), `supabase/seed/apply-seed.sh`, `scripts/lib/reconstruction.sh` et
+`npm run build` **quand le port 4173 écoute**. Sans jeton :
+- aucun verrou vivant : la commande prend le verrou pour sa propre durée, et le libère à sa fin ;
+- un verrou vivant — le PID répond **et** son instant de début est celui du processus — : elle **refuse d'emblée** (code
+  75), en nommant le détenteur, sa commande et son ancienneté ;
+- un verrou mort (PID absent ou réutilisé) : il est repris, et le dit.
+
+**Ce qui n'est pas gardé** : les lectures (`psql` en lecture seule, `git`), `npm run test:unit` (Vitest sans base) et
+`scripts/verifier.sh`, qui ne touche que la production — la pile de développement n'y est pour rien.
+
+**Sorties de secours.** `CAMPAGNE_ATTENDRE=<secondes>` attend le verrou au lieu de refuser ; `CAMPAGNE_FORCER=1` passe outre
+et l'écrit en rouge dans la sortie ; `campagne.sh statut` nomme le détenteur ; `campagne.sh liberer` ne retire qu'un verrou
+mort (`--forcer` pour un vivant).
+
+**Preuve.** `scripts/verify-campagne.sh` : deux commandes gardées lancées de front — la seconde est **refusée avec le
+détenteur nommé**, puis passe une fois le verrou libéré ; un enfant avec jeton traverse ; un verrou mort est repris ; le
+verrou est hors de l'arbre (`git status` propre). Connecteur MCP : sans objet (outillage de développement).
+
 ## 4. Projets Playwright
 
 ### 4.1 Une seule configuration

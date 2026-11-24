@@ -42282,3 +42282,23 @@ espace ; le total pour soi seulement. **La réponse** : « Accepter ». **Les co
 de T3.d remplace `app.saisies_temps_plafond` — verrou et somme par personne et par jour, sans l'espace ; le message
 `plafond journalier` gardé, son détail sans minutes.
 
+### décision 990 — `INC-177` : un verrou de campagne, hors de l'arbre, ouvert en une fois
+
+*2026-11-25, session `p2enjoy-crm-dd`, sur la consigne de la session de livraison (« faire avancer le backlog et résoudre le
+journal des incohérences »).*
+
+**Le problème.** `npm run test:sql`, `e2e:ui`, `e2e:api`, `e2e:mail`, le seed et un `npm run build` nu partagent la base et le
+`webapp/dist` ; lancés de front ils rendent des verdicts qui ne disent rien du produit (INC-177, décision 476). Le gel que la
+session de livraison pose par message est une convention, pas une garde.
+
+**Les options.** Une consigne seule (README, `CloudWorker.md` §4.3) ; un verrou consultatif PostgreSQL (il ne couvre ni le
+`dist` ni le port 4173) ; un verrou de fichier hors de l'arbre, ré-entrant par jeton héritable. **Retenu : le troisième, avec la
+consigne écrite** — il couvre toutes les ressources partagées, ne se commite jamais, et ne gêne pas la campagne qui le possède.
+
+**Les réglages de la session de livraison.** Refus d'emblée ; `scripts/verifier.sh` non gardé (production seule) ; le verrou hors
+de l'arbre de travail ; l'ouverture en une commande, `scripts/lib/campagne.sh ouvrir -- <commande>`.
+
+**Les conséquences.** Spécification : `docs/SPEC-test-harness.md` §3.9. Backlog : « Correctif arbitré le 2026-11-25 — INC-177 ».
+Le code est écrit après la levée du gel, avec sa preuve rouge (deux commandes gardées de front). Connecteur MCP : question 1 =
+non (outillage de développement), question 2 = sans objet.
+

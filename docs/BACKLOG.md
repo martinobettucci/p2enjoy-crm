@@ -20907,3 +20907,16 @@ complète revient à la session de livraison (décision 830).
   campagne du lot `CRM-164` (`docs/JOURNAL.md`, 2026-11-24) ; antérieur à ce lot. **Rien n'est codé** : la session de
   livraison l'a exclu de `CRM-161`. Une unité sera ouverte si le responsable retient la correction, avec les deux
   questions du connecteur MCP posées à sa spécification.
+
+## Correctif arbitré le 2026-11-25 — INC-177 (décision 990)
+
+*Les preuves de base, d'interface, de messagerie, le seed et le build partagent une pile, et le piège est silencieux.
+Spécification : décision 990 ; `docs/SPEC-test-harness.md` §3.9. Connecteur MCP : sans objet (outillage de développement).*
+
+- [ ] **INC-177 — le verrou de campagne.** `scripts/lib/campagne.sh` (ouvrir, garde, statut, libérer), le verrou hors de
+      l'arbre, `scripts/verify-campagne.sh`. Gardes posées dans `scripts/run-sql-tests.sh`, `globalSetup` de Playwright,
+      `supabase/seed/apply-seed.sh`, `scripts/lib/reconstruction.sh` et `npm run build` quand 4173 écoute. Preuve rouge avant :
+      deux commandes gardées lancées de front, que rien ne distingue aujourd'hui. Livrables : harnais, `README.md` §7 et
+      `docs/CloudWorker.md` §4.3 (les preuves de base et d'interface ne se lancent jamais de front), `docs/DAT.md` §13.
+      **La session de livraison adapte son script de campagne** sur `campagne.sh ouvrir -- …`.
+

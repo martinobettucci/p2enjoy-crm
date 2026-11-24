@@ -3374,6 +3374,13 @@ tourne, on ne touche ni à la base, ni à `webapp/dist`, ni au port 4173. Une se
 quoi que ce soit « pendant que ça tourne » n'accélère rien : elle invalide la campagne entière et
 la fait recommencer.
 
+**ARBITRÉE le 2026-11-25 (décision 990) — les deux issues sont retenues, et la seconde s'écrit comme un verrou de campagne.** Proposée par la
+session `p2enjoy-crm-dd`, acceptée par la session de livraison avec trois réglages : refus d'emblée ; `scripts/verifier.sh`
+n'est pas gardé (il ne touche que la production) ; le verrou vit **hors de l'arbre de travail**. Mécanisme : `docs/SPEC-test-harness.md`
+§3.9. **Une campagne l'ouvre en une fois** : `scripts/lib/campagne.sh ouvrir -- <commande>` (jeton `CAMPAGNE_JETON` hérité par tous les
+enfants) ; une commande gardée sans jeton refuse (code 75) tant qu'un verrou vivant existe. Mise en œuvre : `docs/BACKLOG.md`
+« Correctif arbitré le 2026-11-25 — INC-177 ».
+
 ## Consigné le 2026-08-19 — un constat de rendu, étranger à `CRM-086`
 
 ### INC-178 — trois classes citées par des composants n'existent pas dans le CSS produit, et leur effet est perdu en silence
