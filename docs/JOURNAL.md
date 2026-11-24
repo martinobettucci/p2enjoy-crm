@@ -41908,3 +41908,18 @@ redémarrage de `functions`, manuel.
 **Exécutée le 2026-11-21 au soir** : slug relu ; `pg_dump` relu (3 544 entrées) ; `livrer.sh --revision 377ac6e5…` (webapp bâtie dans la
 cellule, migrations 195 à 199), `functions` redémarré ; registre à 197, tâche des pastilles inchangée, bail libre ; `verifier.sh`
 35/36 (INC-277) ; manuel publié ; contrat §2.67 à §2.72 LIVRÉES, §3 et §8, changelog en [Publié], backlog ; verrou levé.
+
+### décision 978 — `CRM-164` : un renouvellement répété ne coupe plus la session du connecteur ; les erreurs de protocole journalisées ; l'import repris par fichier
+
+*2026-11-24, session 4522fa9c (p2enjoy-crm-d5, session de livraison), arbitrage du responsable (`AskUserQuestion`), après le
+diagnostic en lecture seule d'un long import depuis ChatGPT interrompu et d'une erreur `-32603`.*
+**Constat** : ChatGPT renouvelle son jeton à chaque appel ; le mandataire invalide aussitôt le jeton remplacé ; un renouvellement
+répété (2026-11-23 18:23:24) a été rejeté en `invalid_grant`, forçant la reconnexion et arrêtant l'import (1 016 affaires
+actives sur 2 500+). Le `-32603` du 2026-11-24 n'a laissé aucune trace.
+**Décisions** :
+- **une unité correctrice, `CRM-164`** : une courte fenêtre où le jeton tout juste remplacé rend la même paire ; écarté : laisser
+  en l'état et découper les travaux ;
+- **journaliser les erreurs de protocole** du connecteur, sans donnée personnelle ; écarté : laisser ;
+- **reprendre l'import par « Importer un fichier »** (CSV) ; écarté : relancer le travail par le connecteur.
+**Connecteur MCP** : correctif interne, aucun outil ni case — questions sans objet (relevé par la session : à reposer si le
+responsable le souhaite).

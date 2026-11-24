@@ -20692,3 +20692,36 @@ l'assistant répond pendant une passe.
 qui ne chevauche pas la suivante ; Vitest, API ; le contrat (fonction `functions` à recréer en production) ; constat en
 production : aucun `edge_request_failed` de `ia` sur une journée. La campagne complète revient à la session de livraison
 (décision 830).
+
+### CRM-164 — Le connecteur coupe la session d'un assistant qui renouvelle deux fois le même jeton ; les erreurs de protocole ne laissent aucune trace `[ ]`
+
+**Origine** : signalement du responsable, le 2026-11-24 — un long import de prospection depuis ChatGPT (2 500+ affaires) ne s'est
+pas terminé, et Claude a rapporté une erreur interne `-32603` du connecteur sur la liste des organisations. Diagnostic de la
+session de livraison, en lecture seule ; arbitré le même jour (décision 978).
+**Constat** (journal du service `mcp` de production, 72 h, et base) :
+- **le renouvellement** : le jeton d'accès LeLabs vit 300 s (§3.3) et ChatGPT renouvelle à chaque appel — **2 555 renouvellements
+  « rotated refresh »** en 72 h pour ~2 500 appels d'outils. Le mandataire fait tourner le jeton de renouvellement et invalide
+  l'ancien aussitôt. Le **2026-11-23 à 18:23:19** il a émis un jeton (`refresh_jti=NftF6f7R`) ; à **18:23:24**, un
+  renouvellement présentant le jeton précédent a été rejeté (« Refresh token not found … already rotated … Rejecting with
+  invalid_grant, which forces the client to re-authenticate ») ; puis deux fois à 18:34. Le travail s'est arrêté là ;
+- **l'import** : 1 024 affaires en base (1 016 actives), créées par vagues — 241 le 17/11, 241 le 19/11, 169 le 20/11, 104 le
+  23/11 — et 715 organisations ; peu de doublons (une organisation, 20 titres d'affaires répétés, aucun email de contact) ;
+- **le `-32603`** du 2026-11-24 vers 06:26 : **aucune trace** — le journal ne porte que l'appel réussi de `crm_organization_list`
+  (873 ms, 14 725 octets) ; aucun `WARNING` ni `ERROR` ; le relais Caddy ne journalise pas les requêtes.
+**Comportement attendu** (décision 978) :
+- (i) **un renouvellement répété ne coupe plus la session** : pendant une courte fenêtre (à fixer par la spécification, de
+  l'ordre de quelques dizaines de secondes), le jeton de renouvellement tout juste remplacé est encore accepté et rend la
+  **même** paire que le premier renouvellement ; hors de la fenêtre, ou après révocation, le refus reste ; aucune durée de
+  session n'est allongée ;
+- (ii) **toute erreur de protocole est journalisée** par le connecteur — échec avant l'outil, réponse refusée, session inconnue,
+  exception non rattrapée — avec l'outil, la durée, la taille et le code, **sans donnée personnelle ni jeton** (`CLAUDE.md` §20).
+**Connecteur MCP** : correctif **interne** au mandataire OAuth et au journal du connecteur ; aucun outil, aucune famille ni case
+de la matrice ne change — les deux questions sont sans objet (décision 978).
+**Spécification** : à écrire avant le code — `docs/SPEC-mcp.md` §3.3 et §3.4 (la fenêtre de renouvellement, sa sécurité : rejeu
+borné, même paire, pas d'extension), §12 ou l'équivalent du journal ; le contrat (image `mcp` à reconstruire).
+**DoD** (`CLAUDE.md` §18) : une preuve rouge avant (deux renouvellements rapprochés avec le même jeton : le second rend
+`invalid_grant`), verte après ; la fenêtre dépassée refuse encore ; pytest unitaires et intégration contre le vrai Keycloak ;
+une erreur de protocole provoquée apparaît au journal ; contrat ; constat en production : un long travail ChatGPT sans
+reconnexion. La campagne complète revient à la session de livraison (décision 830).
+**Reprise de l'import** : par **« Importer un fichier »** du CRM (CSV des affaires restantes produit par ChatGPT), sur décision du
+responsable — hors de cette unité.
