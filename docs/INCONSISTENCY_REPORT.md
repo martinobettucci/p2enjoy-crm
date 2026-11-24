@@ -717,6 +717,8 @@ base pendant que l'autre mesure. `verify-seed-demo.sh` a rendu « 2 anomalies »
 `verify-harness.sh` tournait, puis **69 contrôles, aucune anomalie** exécuté seul. Un verdict rendu
 dans ces conditions ne dit rien du produit.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** `scripts/verify-cards.sh` (lignes 532-537) : voir INC-132 — le contrôle est retourné par la **décision 497** (INC-191), et le seed peut grandir sans le rougir.
+
 ### INC-161 — `e2e:mail` rougit sur un `WARNING` que la veille de `mail-sync` émet en fonctionnement NORMAL
 
 **Nature :** le scénario `S3` de `e2e/mail/mail-sync.spec.ts` (ligne 231) exige que **chaque** ligne
@@ -755,6 +757,8 @@ appartiennent à l'unité qui porte la messagerie, pas à celle-ci :
 n'ont été modifiés. Le contourner en assouplissant l'assertion serait précisément le « contournement
 destiné uniquement à rendre une preuve verte » que `docs/CloudWorker.md` §3.1 interdit.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** La preuve S3 de `e2e/mail/mail-sync.spec.ts` juge le passage qu'elle ouvre, avec au moins un tour complet de la veille de fond (ligne 228) ; les scénarios de `e2e/mail/` ne partagent plus d'état avec la veille et prouvent leur contrat sur l'état final (INC-271, **décision 624**, `8d7ee182`, **RÉSOLUE le 2026-10-12**). Un `WARNING` de veille sur un compte injoignable n'est plus entendu par la preuve. Famille : INC-124, INC-128, INC-135, INC-161, INC-172, INC-181, INC-205.
+
 ### INC-160 — `verify-champs-formulaire.sh` laisse en base un `move_card` d'AVANT les migrations qui lui ont fait écrire son commentaire
 
 **Nature :** exactement le mécanisme d'INC-129, sur un autre harnais. Pour se restaurer après ses
@@ -791,6 +795,8 @@ l'unité autorisée. Conséquence d'exploitation à connaître : **toute campagn
 de ce harnais doit repartir d'une base rafraîchie** (`./resetMe.sh`), sans quoi elle mesure la
 dégradation du harnais et non le produit.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Mesuré par INC-304 (close le 2026-11-01, `CRM-111` T1 ter) : `verify-champs-formulaire.sh` « ne laisse **aucun** résidu » à l'empreinte `pg_dump -s`. La migration `0009` ne définit d'ailleurs plus `move_card` (elle ne la cite qu'en commentaire).
+
 ### INC-159 — « Six types distincts » annoncé pour sept champs qui en couvraient sept — écart de commentaire, CORRIGÉ
 
 **Nature :** `supabase/seed/apply-seed.sh` et `docs/SPEC-seed.md` §2.10 écrivaient tous deux « Six
@@ -809,6 +815,8 @@ que parce qu'elle déplace le nombre lui-même (sept champs → neuf, sept types
 dans une phrase qu'on réécrit n'est pas défendable. Les deux paragraphes portent désormais le compte
 exact, et cette entrée existe pour que la correction soit **traçable** et ne se confonde pas avec la
 livraison de 4d.
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Corrigée (`7452bc17`) : l'écart de commentaire est réécrit avec le seed.
 
 ### INC-158 — Trois classes citées par des composants ne sont PAS engendrées, et n'ont donc aucun effet
 
@@ -846,6 +854,8 @@ de design system, pas une retouche de composant. Trois pistes, dans l'ordre de v
 `h-10` → `h-[var(--size-target)]`, la forme déjà employée partout ailleurs ; `py-0.5` → `py-1`, seul
 pas existant sous `py-2` ; `text-text-1` → `text-ink`, le jeton d'encre du §1.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Ses trois classes (`h-10`, `py-0.5`, `text-text-1`) sont traitées : `text-text-1` par INC-130 (close), `h-10` et `py-0.5` par INC-204 (close, `dd51551c`, réécrites en valeur arbitraire assumée). La confirmation mécanique est celle de `scripts/lib/classes-css.mjs`, jouée par `verify-webapp.sh`, `verify-board.sh`, `verify-liste.sh` et `verify-formulaire.sh`.
+
 ### INC-157 — La barre d'onglets écrit « Aucun channel » sur les routes transverses, qui n'en ont pas
 
 **Nature :** un état vide rendu là où il n'y a rien à vider. La barre d'onglets de la coquille
@@ -874,6 +884,8 @@ appartient à la coquille (`CRM-007`) et demande une décision qui n'est pas d'�
 doit-elle être **absente** hors d'un track — ce que le §4 laisse entendre en la disant « du track
 courant » —, ou son état vide doit-il être reformulé ? Le premier semble juste, mais toucher la
 coquille depuis une unité de carnet ferait exactement le contraire de ce que le §1 demande.
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Corrigée par `CRM-131` (`fbbb0a6f`) : hors d'un track, `webapp/src/app/TabBar.tsx` (lignes 206-221) ne prétend plus une absence — il écrit « Ouvrez un channel… » (`tabs.pick`) quand des channels sont lisibles, et « Aucun channel » seulement quand il n'y en a aucun (`TabBar.test.tsx:104-114`). Mêmes constats : INC-180, INC-208.
 
 ### INC-156 — `verify-harness.sh` appelait une fonction inexistante et mourait au milieu — CORRIGÉ le 2026-08-18
 
@@ -913,6 +925,8 @@ diagnostic dépasse cette session : elles sont **laissées inchangées** et nomm
 une régression — c'est la mesure d'un harnais qui, jusqu'au 2026-08-18, s'arrêtait avant de les
 rendre.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Corrigée le 2026-08-18 (`91232661`). Les compteurs de `scripts/verify-harness.sh` (lignes 647, 823, 1264, 1841, 1889) restent des littéraux entretenus à la main : c'est INC-125, hors de cette fiche.
+
 ### INC-155 — INC-141 a un SECOND porteur : `verify-move-card.sh` fige lui aussi « quinze cards seedées »
 
 **Nature :** compteur périmé dans un harnais — **exactement le défaut d'INC-141**, consignée le
@@ -938,6 +952,8 @@ rien : il rend un verdict faux, il ne dégrade pas la base — c'est pourquoi il
 corrigé au passage (`CLAUDE.md` §1, §3.1), là où INC-154 l'a été. La correction consiste à comparer
 au préfixe des seules cards de parcours ou à porter le compte à 41 en nommant les deux familles —
 choix qui appartient au porteur d'INC-141.
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** `scripts/verify-move-card.sh` (lignes 678-690) ne fige plus « quinze cards » : l'assertion est RETOURNÉE (INC-191, **décision 497**) — elle compare le compte à l'instantané relevé à l'OUVERTURE du harnais (`$CARDS_A_L_OUVERTURE`) et ne porte aucune valeur littérale.
 
 ### INC-154 — Trois harnais restauraient `move_card` depuis la migration 0019, effaçant le lot G — CORRIGÉ le 2026-08-18
 
@@ -969,6 +985,8 @@ correction, `verify-valeurs-champs.sh` rend **41 contrôles, aucune anomalie**, 
 et laisse en base un `move_card` porteur de `btrim_blancs` comme un validateur porteur de la
 résolution.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Corrigée le 2026-08-18 (`fa3498d8`) dans les trois chaînes de restauration ; la quatrième occurrence (INC-195) est close.
+
 ### INC-153 — `verify-mail-classement.sh` restaurait `classify_message` depuis la migration 0025, effaçant la garde §18.2 — CORRIGÉ le 2026-08-18
 
 **Nature :** un harnais laissait le produit DÉGRADÉ en sortant — même classe que la décision 135 et
@@ -997,6 +1015,8 @@ campagne. Le laisser aurait maintenu une mine qui corrompt la base partagée à 
 `classify_message` de `supabase/migrations/0028_inbox_visibilite.sql`, source autoritaire courante.
 Après correction, le harnais rejoué laisse `classify_message` porteur de sa garde, et
 `0029_inbox_globale.test.sql` repasse **22/22**.
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Corrigée le 2026-08-18 (`b8a320de`) : la restauration extrait `classify_message` de la migration qui la porte, `MIGRATION_LOT_G` derrière `MIGRATION_FINALE`.
 
 ### INC-152 — Un scénario au clavier de `commentaires-gestes.spec.ts` rend un verdict intermittent
 
@@ -1047,6 +1067,8 @@ ou attente d'un événement DOM) plutôt que `toBeFocused()` seul.
 
 **Portée honnête.** L'intermittence n'a jamais été observée sur d'autres scénarios de cette suite ;
 les deux autres files du même dossier passent en 24/24 sur ce même rejeu isolé (§ décision 443).
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Le scénario nommé (« les deux actions sont atteignables AU CLAVIER, sans jamais survoler », `e2e/ui/commentaires-gestes.spec.ts:280`) est stabilisé par INC-189 b (**décision 594**, `18904605`) : il attend la carte et « Modifier » avant de tabuler (ligne 316), 24/24 en trois répétitions. INC-189 close (`e670a74f`).
 
 ### INC-151 — Le projet `mail` était INLISTABLE sans Docker — CORRIGÉ le 2026-08-18
 
@@ -1112,6 +1134,8 @@ s'explique **exactement** : `infrastructure.spec.ts` déclare un test **dans une
 boîtes — la boîte système et les deux boîtes personnelles —, si bien qu'une déclaration produit
 trois scénarios. **39 + 3 = 42.** Le compteur du harnais est donc juste, et les **trois** projets
 sont désormais vérifiés sans Docker.
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Corrigée le 2026-08-18 (`c6a6f1b0` ; dénombrement des scénarios sans exécution, `6a707d13`).
 
 ### INC-150 — Un harnais sur cinquante et un a reçu une façade `npm`, contre la règle du README
 
@@ -1179,6 +1203,8 @@ recherche littérale qui ne la voit pas, non le document qui manque.
 **Ce que la dérive apprend.** Une documentation peut être exacte et pourtant manquer à son office.
 Le contrôle utile n'est pas « le document dit-il vrai ? » mais « répond-il à la question qu'on lui
 pose ? ». Ici la question est « que vaut `--spacing-3` ? », et elle restait sans réponse.
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Corrigée le 2026-08-18 (`f92df93c`), sans toucher à une décision de conception.
 
 ### INC-148 — Quatorze unités n'ont aucun test unitaire dédié, là où `CLAUDE.md` §15 en exige un
 
@@ -1309,6 +1335,8 @@ constant : **l'assertion réussit pour une raison qui n'est pas celle qu'elle no
 constant lui aussi : écrire l'assertion de façon qu'elle ne puisse réussir QUE pour la raison
 annoncée, et lui adjoindre un témoin positif quand un refus est en jeu.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Corrigée le 2026-08-18 sur les deux points (`7fa90a68`, `b4437abf`) : le refus des pièces jointes est prouvé, mais là où l'entrée ne le cherchait pas ; soldée par la **décision 443** (`2d87b126`).
+
 ### INC-146 — Une assertion qui fige une absence est restée VERTE après la naissance de son objet
 
 **Nature :** fausse preuve ; le mécanisme de la décision 51 a échoué sans le dire.
@@ -1432,6 +1460,8 @@ l'objet et de rien d'autre.
 réussir QUE si l'objet est absent. Ici, le choix d'appeler la fonction sans argument rendait le
 succès insensible à ce qu'elle prétendait mesurer. Une preuve qui ne peut pas échouer n'est pas une
 preuve.
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Corrigée le 2026-08-18 (`7fa90a68`, `51dbd01a`) et soldée par la **décision 443** (`2d87b126`). Le reste dû — appeler les RPC avec leur signature réelle — est sans urgence de sécurité, ses refus étant tenus en base.
 
 ### INC-145 — Un harnais rendait « aucune anomalie » en sautant quatre contrôles
 
@@ -1596,6 +1626,8 @@ Desktop.exe`, `wsl --terminate docker-desktop`, relance à froid — et cette fo
 « backend already running » des tentatives précédentes. Le moteur n'est pas revenu pour autant. Tant que le poste n'est pas rétabli,
 **aucune vérification de cette session ne peut être rejouée**, et rien ne doit être déclaré vérifié
 sur cette base.
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** La sonde est corrigée (`2b4b40ba`, « un verdict ne peut pas annoncer un succès incomplet ») et le défaut est localisé (un seul harnais, `verify-scripts.sh`). La CAUSE RACINE de la panne d'environnement était le poste Docker Desktop/WSL, hors dépôt ; le poste est aujourd'hui Linux natif, et la pile y tourne.
 
 ### INC-144 — Les migrations 17 et 20 ne se rejouent plus sur une base peuplée — CLOSE le 2026-08-17
 
@@ -1783,6 +1815,8 @@ n'avait encore constaté. Deux conditions, et elles sont toutes les deux extéri
 navigateur, comme `npm run e2e:ui` le fait, plutôt que de dépendre de l'environnement de
 l'appelant.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Le chemin du navigateur fourni est lu par `e2e/playwright.config.ts` (ligne 80, `PLAYWRIGHT_CHROMIUM_PATH`, facultatif) et appliqué aux projets `mail`, `ui` et `manuel` (lignes 136-174) : aucun harnais n'a plus à le poser. L'hôte d'origine (`/opt/pw-browsers`) n'existe plus ; le poste est Linux natif, et `e2e:mail` y tourne (44 scénarios verts à `5bf3ee77`).
+
 ### INC-124 — `mail-sync` journalise un `WARNING` légitime que la preuve S3 interdit
 
 *Porteur : `CRM-054` (console opérationnelle de `mail-sync`). Mesuré le 2026-08-16.*
@@ -1804,6 +1838,8 @@ survenu », alors qu'un renommage refusé est un fait d'exploitation que la cons
 **Ce qui reste à trancher appartient à `CRM-054`**, et non à cette session : soit la preuve admet
 `WARNING` en nommant les événements attendus, soit le service cesse de renommer un dossier déjà
 présent. Le comportement est laissé **strictement inchangé** en attendant.
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** La preuve S3 de `e2e/mail/mail-sync.spec.ts` juge le passage qu'elle ouvre, avec au moins un tour complet de la veille de fond (ligne 228) ; les scénarios de `e2e/mail/` ne partagent plus d'état avec la veille et prouvent leur contrat sur l'état final (INC-271, **décision 624**, `8d7ee182`, **RÉSOLUE le 2026-10-12**). Les avertissements légitimes d'autres scénarios (renommage de dossier refusé, compte jetable) n'y entrent plus. Famille : INC-124, INC-128, INC-135, INC-161, INC-172, INC-181, INC-205.
 
 ### INC-125 — les trois garde-fous globaux de `verify-harness.sh` ont de nouveau dérivé, et INC-101 l'avait déjà dit
 
@@ -1903,6 +1939,8 @@ mesure sans réparer le mécanisme qui la laisse dériver.
 les comptes vivent dans un harnais qui les recalcule, ou qu'une unité les inscrive à sa Definition
 of Done. Il se décide une fois, pour les trois supports à la fois.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** `README.md` ne porte plus « 40 » : le compte est DATÉ (ligne 528, « 289 le 2026-11-05 ») et le service `mail-sync` compte 28 fichiers de tests. Le mécanisme de dérive des compteurs de harnais reste suivi avec INC-125.
+
 ### INC-128 — `e2e/mail/dossiers.spec.ts` échoue dans sa suite complète et passe seul
 
 *Porteur : `CRM-056` (l'arborescence IMAP). Mesuré le 2026-08-16 par la session `CRM-030`, dans la
@@ -1933,6 +1971,8 @@ ajoutant une purge à ce seul scénario masquerait la cause au lieu de la lever.
 **Conséquence à connaître** : `scripts/verify-harness.sh` compte cet échec parmi ses anomalies, en
 plus des trois compteurs figés d'INC-125. Un verdict à quatre anomalies sur ce harnais s'explique
 donc entièrement par deux entrées ouvertes, et non par l'unité en cours.
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** La preuve S3 de `e2e/mail/mail-sync.spec.ts` juge le passage qu'elle ouvre, avec au moins un tour complet de la veille de fond (ligne 228) ; les scénarios de `e2e/mail/` ne partagent plus d'état avec la veille et prouvent leur contrat sur l'état final (INC-271, **décision 624**, `8d7ee182`, **RÉSOLUE le 2026-10-12**). Le scénario « renommer un TRACK renomme son dossier » n'existe plus sous cette forme : `e2e/mail/dossiers.spec.ts` (lignes 286-387) est jugé sur l'état et rend ses boîtes intactes. Famille : INC-124, INC-128, INC-135, INC-161, INC-172, INC-181, INC-205.
 
 ### INC-129 — `verify-copie-workflow.sh` REJOUE la migration 19 et RAMÈNE `move_card` à son état d'avant la migration 35
 
@@ -2002,6 +2042,8 @@ cassée**. Son propre bilan ne peut donc pas servir d'indice, et seule une suite
 révèle le dégât. Toute session qui lance `verify-copie-workflow.sh` doit rejouer `0035` derrière,
 ou rejouer `test:sql` pour constater. L'arbitrage reste demandé, et le comportement inchangé.
 
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** `scripts/verify-copie-workflow.sh` (lignes 68-89) rejoue la migration 19 SEULE, privée de son bloc `move_card` (INC-304), puis RESTAURE par la reconstruction de la base et le seed (`scripts/lib/reconstruction.sh`, `docs/SPEC-test-harness.md` §3.6, décision 682, INC-289 et INC-195 closes). Mesure du résidu par empreinte `pg_dump -s` : INC-304, close le 2026-11-01.
 ---
 
 ## Consignée le 2026-08-16 — un constat étranger à `CRM-037`
@@ -2089,6 +2131,8 @@ rouge comme après le vert.
 une classe. Les deux sont corrigés à la cause, le second en nommant les deux graduations hors du
 JSX.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Corrigée et close : les jetons sont nommés au lieu de recopier leurs valeurs (`5bee503a`), la teinte du document de comparaison est tranchée par la mesure et la règle posée (`40fe6093`), INC-130 close (`be2b8022`) et levée au harnais de `CRM-061` (`46ab0cc7`, 79 contrôles, aucune anomalie).
+
 ### INC-131 — le gabarit du contrôle d'échéance suit la locale du NAVIGATEUR, jamais celle du produit
 
 **Constaté le 2026-08-16**, en regardant `docs/captures/CRM-040/entete-card-edition-xl-1440.jpg`
@@ -2163,6 +2207,8 @@ un **contrat de seed** que `docs/SPEC-seed.md` porte, et le relever au passage r
 ajuster un garde-fou pour le verdir sans que personne n'ait vérifié que quinze est bien le compte
 dû. Arbitrage attendu : porter le compteur à quinze, ou nommer la quinzième card comme un écart.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** `scripts/verify-cards.sh` (lignes 532-537) ne fige plus « 14/1/1/14 » : l'assertion est RETOURNÉE (INC-191, **décision 497**, 2026-08-21) et chacun des quatre nombres mesure ce qu'il prétend mesurer ; l'unicité des adresses, seul invariant de produit, s'écrit en comparaison de deux comptes, sans littéral.
+
 ### INC-133 — `npm run e2e:api` échoue DANS `verify-cards.sh` et passe seul, deux fois de suite
 
 **Mesuré le 2026-08-16**, dans l'ordre :
@@ -2231,6 +2277,8 @@ garde le nom de l'étape, donc la raison de l'obligation (§4.4). Écartés : «
 (décrit un geste déjà accompli). Les preuves qui figeaient l'ancien texte sont révisées dans le
 changement qui livre le nouveau, avec leur motif.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** **Décision 688** (2026-10-25), mise en œuvre par `CRM-037` : la mention devient « Requis à l'étape {etape} » (`webapp/src/i18n/fr.ts:1713`, clé `form.required.reason`, `851b6a18`, `5474bb45`) ; captures renouvelées et observées (`d544cb55`).
+
 ## Consigné le 2026-08-16 — un constat de preuve, étranger à `CRM-037`
 
 ### INC-135 — la preuve S3 de `mail-sync` juge l'HISTORIQUE COMPLET du conteneur, et un seul avertissement transitoire la condamne jusqu'à recréation
@@ -2296,6 +2344,8 @@ confirme l'intermittence dans les deux sens. **Cela renforce l'arbitrage demand�
 juge l'historique, elle transforme toute intermittence voisine en second rouge, et masque laquelle
 des deux preuves a réellement quelque chose à dire.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** La preuve S3 de `e2e/mail/mail-sync.spec.ts` juge le passage qu'elle ouvre, avec au moins un tour complet de la veille de fond (ligne 228) ; les scénarios de `e2e/mail/` ne partagent plus d'état avec la veille et prouvent leur contrat sur l'état final (INC-271, **décision 624**, `8d7ee182`, **RÉSOLUE le 2026-10-12**). Un avertissement transitoire ne condamne plus la preuve jusqu'à la recréation du conteneur ; le verrou par compte (INC-266) sérialise les relèves. Famille : INC-124, INC-128, INC-135, INC-161, INC-172, INC-181, INC-205.
+
 ## Consigné le 2026-08-16 — un constat d'environnement, étranger à `CRM-081`
 
 ### INC-136 — le dépôt d'un objet par l'API Storage rend `InvalidAccessKeyId` sur un cluster fraîchement créé
@@ -2325,6 +2375,8 @@ création du cluster — auquel cas c'est un défaut d'amorçage que `CRM-001` p
 preuve suppose un état de MinIO que ni `runDev.sh` ni le seed n'établissent, auquel cas c'est la
 preuve qui doit poser son préalable. Le responsable tranche.
 
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** La cause est établie par INC-197 (close, **décision 497**) : un `docker compose up` NU recrée `storage` avec la seule configuration de base, qui perd `AWS_ACCESS_KEY_ID` — MinIO rend alors `InvalidAccessKeyId`. Les deux harnais fautifs portent désormais la commande complète (`scripts/verify-colonnes-protegees.sh` lignes 222-234, `scripts/verify-move-card-to-channel.sh`). Non reproduit sur piles reconstruites ensuite (`docs/JOURNAL.md` lignes 17705, 17793, 20147).
 ---
 
 ## Consigné le 2026-08-17 — un motif de spécification que la mesure contredit, `CRM-081` tranche 2 b
@@ -2409,6 +2461,20 @@ appartient à `CRM-052`, qui porte l'écriture de ces secrets.
 d'accuser une unité de messagerie ou de sommeil de ses propres preuves rouges. À rapprocher
 d'INC-139, relevée le même jour : deux preuves rouges, deux causes étrangères à l'unité accusée.
 
+**CLOSE LE 2026-08-14 — et la correction a révélé une SECONDE panne, plus traîtresse que la
+première.** `upsert_mail_inbound_account` et `upsert_mail_outbound_identity` recréent désormais un
+secret devenu illisible. Mais en éprouvant cette reprise, un autre cas est apparu : lorsque le
+secret n'existe **plus du tout** alors que la ligne du compte garde son identifiant,
+`vault.update_secret` ne lève **rien** — elle met à jour zéro ligne et rend la main. MESURÉ : après
+une purge de `vault.secrets`, le seed se déclarait **réussi** tandis que les trois comptes portaient
+un `secret_id` pendant ; la relève aurait échoué en `credentials_missing` sans que rien n'explique
+pourquoi. **Un succès silencieux est pire qu'une erreur.**
+
+La garde est donc **positive** : on ne se fie pas à l'absence d'exception, on constate que le secret
+existe. Vérifié de bout en bout — seed rejoué sur une base sans aucun secret : **3 secrets recréés,
+0 identifiant pendant**, et la relève ouvre une **vraie session IMAP** avec le secret recréé
+(`folders: 2`, aucune erreur).
+
 ### INC-141 — `verify-colonnes-protegees.sh` compte QUINZE cards seedées ; le seed en porte quarante et une
 
 **Mesuré le 2026-08-17**, `scripts/verify-colonnes-protegees.sh` : **50 contrôles, 8 en échec**.
@@ -2474,19 +2540,6 @@ seules, non sur une comparaison avant/après.
 **Arbitrage demandé** : les trois compteurs figés doivent-ils être portés à 41, ou remplacés par
 une propriété qui ne dépend pas du volume du seed — la leçon que la tranche 2 a avait déjà tirée
 pour ses suites pgTAP ?
-**CLOSE LE 2026-08-14 — et la correction a révélé une SECONDE panne, plus traîtresse que la
-première.** `upsert_mail_inbound_account` et `upsert_mail_outbound_identity` recréent désormais un
-secret devenu illisible. Mais en éprouvant cette reprise, un autre cas est apparu : lorsque le
-secret n'existe **plus du tout** alors que la ligne du compte garde son identifiant,
-`vault.update_secret` ne lève **rien** — elle met à jour zéro ligne et rend la main. MESURÉ : après
-une purge de `vault.secrets`, le seed se déclarait **réussi** tandis que les trois comptes portaient
-un `secret_id` pendant ; la relève aurait échoué en `credentials_missing` sans que rien n'explique
-pourquoi. **Un succès silencieux est pire qu'une erreur.**
-
-La garde est donc **positive** : on ne se fie pas à l'absence d'exception, on constate que le secret
-existe. Vérifié de bout en bout — seed rejoué sur une base sans aucun secret : **3 secrets recréés,
-0 identifiant pendant**, et la relève ouvre une **vraie session IMAP** avec le secret recréé
-(`folders: 2`, aucune erreur).
 
 ### INC-139 — `verify-board.sh` complet : trois contrôles de plus rendent rouge, tous préexistants
 
@@ -2659,6 +2712,8 @@ ce que la preuve prouve, et ce choix appartient à l'unité qui possède ces sui
 passage serait corriger un défaut étranger à l'unité autorisée (`CLAUDE.md` §5,
 `docs/CloudWorker.md` §3.1).
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Les deux suites ont été révisées avec chaque enrichissement du seed (mécanisme de la décision 51) : `supabase/tests/0015_colonnes_protegees.test.sql` compte quarante-six cards de l'espace du seed (`CRM-111` T8, `CRM-161` T2.b), `0012_cards.test.sql:608` en compte quarante et une adresses distinctes, et `test:sql` rend vert sur la pile courante. **Le compteur littéral reste le mode de défaillance** ; son remède général (compteur relatif à l'instantané) est le lot « compteurs figés » de la session `dd`, avec INC-141 et INC-125.
+
 ### INC-164 — l'annexe A du manuel fige deux comptes d'un seed qui a grandi depuis qu'elle a été écrite
 
 **Nature :** troisième porteur de la famille d'INC-162 et d'INC-163, sur une **troisième** surface.
@@ -2695,6 +2750,8 @@ défendables, comme pour INC-162 et INC-163 — porter l'annexe au nouvel état 
 dériver ces deux lignes de la base au lieu de les figer, ce qui change ce que le manuel *est*. Ce
 choix appartient à l'unité qui possède l'annexe et le seed. Le trancher au passage serait corriger
 un défaut étranger à l'unité autorisée (`CLAUDE.md` §5, `docs/CloudWorker.md` §3.1).
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** L'annexe A n'existe plus : `CRM-117` T3.0 (`docs/SPEC-manual.md` §10 bis, 2026-10-27) a RETIRÉ les contrôles qui comparaient l'annexe à la base, et `scripts/verify-manual.sh` ne lit plus la base (lignes 43-46).
 
 ### INC-165 — la tranche 2 c de `CRM-081` a livré trois objets de base SANS régénérer le contrat de types
 
@@ -2813,6 +2870,8 @@ de six, ce qui retire à l'option « porter le budget » le peu qu'il lui restai
 de `purgerChamps` comme la seule réponse tenable. L'arbitrage reste dû, et le comportement
 **inchangé** : le fichier appartient à `CRM-076`.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Même scénario qu'INC-174 : **décision 698** (2026-10-25), `test.setTimeout(120_000)` sur les trois scénarios de saisie au clavier de `e2e/ui/administration-workflows.spec.ts` (lignes 305, 550, 886) ; le délai est celui du serveur de la configuration, aucune assertion n'est relâchée.
+
 ## Consigné le 2026-08-24 — une intermittence de campagne, étrangère à `CRM-062` tranche 1
 
 ### INC-205 — le classement automatique d'`ingestion.spec.ts` rend un verdict intermittent en campagne
@@ -2900,6 +2959,8 @@ de `mail-sync`, aucun dossier IMAP, aucun renommage de track** n'y figure.
 **Non corrigé par cette session non plus** : l'unité était `CRM-084` tranche 4, et corriger
 l'ordonnancement de `e2e/mail/` reviendrait à solder une autre unité (`CLAUDE.md` §13).
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** La preuve S3 de `e2e/mail/mail-sync.spec.ts` juge le passage qu'elle ouvre, avec au moins un tour complet de la veille de fond (ligne 228) ; les scénarios de `e2e/mail/` ne partagent plus d'état avec la veille et prouvent leur contrat sur l'état final (INC-271, **décision 624**, `8d7ee182`, **RÉSOLUE le 2026-10-12**). Le scénario nommé (`dossiers.spec.ts` « renommer un TRACK ») n'existe plus ; `ingestion.spec.ts` est jugé sur l'état (ligne 176). Famille : INC-124, INC-128, INC-135, INC-161, INC-172, INC-181, INC-205.
+
 
 ## Consigné le 2026-08-19 — un constat d'environnement, étranger à `CRM-081` tranche 2 f
 
@@ -2933,6 +2994,8 @@ sont donc des **conséquences** de la première, non trois défauts distincts.
 **La ligne de base, EXÉCUTÉE et non supposée** (`docs/CloudWorker.md` §2.4) :
 
 ```
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Même cause qu'INC-136 : INC-197 (close, **décision 497**). Les trois preuves de pièces jointes ont rendu vert aux campagnes suivantes (`docs/JOURNAL.md` ligne 20147, « 42 passés, aucun échec »).
 # mail-sync reconstruit SANS la ligne du §16.16.2, puis :
 npx playwright test --config e2e/playwright.config.ts --project=mail ingestion
   => 1 failed, 2 passed   (le MÊME échec, au MÊME endroit, au MÊME message)
@@ -2986,6 +3049,8 @@ comportement livré devient la règle — « lien perdu » pour un channel mis �
 définitive, le bloc redevient libre, sans mention. `docs/SPEC-goals.md` §5.4 est réécrit en ce sens ; aucun code ni
 migration ne change. Le comportement reste écrit dans `webapp/src/lib/objectifs.ts` et éprouvé par `objectifs.test.ts`.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Arbitrée par le responsable : **décision 510** (`docs/ARBITRAGES.md:208`) puis **décision 709** (`8f490322`) — « lien perdu » vaut pour un channel à la corbeille, et l'écran ne prétend plus un lien jamais posé.
+
 ## Consigné le 2026-08-19 — une contradiction entre deux documents, relevée par `CRM-083` tranche 2a
 
 ### INC-171 — `goals.block.resize` est une clé morte, et `i18n.test.ts` est rouge
@@ -3025,6 +3090,8 @@ libellé à traduire. La clé était donc morte pour de bon. MESURÉ après retr
 Cette entrée est conservée plutôt qu'effacée : elle documente un croisement réel entre deux sessions
 travaillant la même unité, et le fait que la ligne de base a été correctement établie de part et
 d'autre.
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** La clé `goals.block.resize` n'existe plus dans `webapp/src/i18n/fr.ts` : retirée par la tranche 2a (`9192caa4`).
 
 ### INC-172 — `dossiers.spec.ts` échoue APRÈS une campagne d'interface complète, et passe seule
 
@@ -3091,6 +3158,8 @@ réel entre l'envoi et le classement sur une exécution où l'échec se produit.
 
 **Non corrigé par cette session** : le scénario relève de la messagerie, et l'unité de la session
 était `CRM-080` tranche 3 (`CLAUDE.md` §13).
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** La preuve S3 de `e2e/mail/mail-sync.spec.ts` juge le passage qu'elle ouvre, avec au moins un tour complet de la veille de fond (ligne 228) ; les scénarios de `e2e/mail/` ne partagent plus d'état avec la veille et prouvent leur contrat sur l'état final (INC-271, **décision 624**, `8d7ee182`, **RÉSOLUE le 2026-10-12**). L'hypothèse de l'entrée (l'interface renomme des tracks) n'était pas la cause : l'observation de `CRM-080` la corrigeait déjà, et la cause était une relève qui n'avait pas encore vu le message. Famille : INC-124, INC-128, INC-135, INC-161, INC-172, INC-181, INC-205.
 
 ## Consigné le 2026-08-19 — un manque de spécification relevé par `CRM-084` tranche 2
 
@@ -3414,6 +3483,8 @@ finit par être lue comme du bruit, et c'est ainsi qu'un vrai défaut passe.
 avec une attente explicite sur l'acquittement du serveur, ou s'il est laissé tel quel jusqu'à ce
 qu'il devienne reproductible.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** L'état laissé par une exécution interrompue et les locators sans portée sont corrigés par INC-209 (close le 2026-08-25, **décision 508**, `1fb4ae5c`, `8a25702c`) : `commentaires-gestes.spec.ts` porte ses locators sur leur carte et un `beforeEach` reprend ce qu'une exécution interrompue laisse ; rejoué deux fois de suite, 8 passés puis 8 passés. Le parcours clavier est stabilisé par INC-189 b (`18904605`).
+
 ### INC-180 — la barre d'onglets écrit « Aucun channel » sur toutes les routes transverses
 
 *Relevé pendant `CRM-086` tranche 5, décision 478. Étranger à cette unité : le défaut est celui de
@@ -3443,6 +3514,8 @@ quatre unités différentes.
 **Arbitrage attendu.** Le responsable tranche si `TabBar` doit ne **rien** rendre hors d'une route de
 track — ce qui retirerait la bande des six écrans et ferait remonter leur contenu d'une ligne —, ou
 si l'état vide reste rendu partout pour que la coquille garde la même hauteur d'un écran à l'autre.
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Corrigée par `CRM-131` (`fbbb0a6f`) : voir INC-157.
 
 ### INC-181 — `npm run e2e:mail` lancé DERRIÈRE `npm run e2e:ui` rend deux échecs qui disparaissent seuls
 
@@ -3532,6 +3605,8 @@ touche ni `mail-sync`, ni la messagerie, ni aucun de leurs journaux — le diff 
 `supabase/migrations`, `supabase/tests`, `supabase/seed`, `webapp/src/lib`, `scripts` et `docs`.
 Rien n'a été corrigé (§3.1).
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** La preuve S3 de `e2e/mail/mail-sync.spec.ts` juge le passage qu'elle ouvre, avec au moins un tour complet de la veille de fond (ligne 228) ; les scénarios de `e2e/mail/` ne partagent plus d'état avec la veille et prouvent leur contrat sur l'état final (INC-271, **décision 624**, `8d7ee182`, **RÉSOLUE le 2026-10-12**). Les deux scénarios nommés (`ingestion.spec.ts:159`, `backfill.spec.ts:268`) sont dans les neuf fichiers rendus indépendants de la veille ; la preuve du premier contact s'exécute sur un exemplaire jetable du service, veille désactivée. Famille : INC-124, INC-128, INC-135, INC-161, INC-172, INC-181, INC-205.
+
 ## Consigné le 2026-08-20 — le mécanisme d'INC-179 est ÉTABLI, et il est AUTO-ENTRETENU
 
 ### INC-179 (complément) — un échec de `commentaires-gestes.spec.ts` laisse sa fixture, et se rend alors DÉTERMINISTE
@@ -3583,6 +3658,8 @@ mesurer.
 mieux, préfixer sa fixture d'un marqueur et purger tout ce qui le porte **avant** de commencer,
 comme `card-costs.spec.ts` le fait déjà avec sa fonction `purger`. La cause de l'intermittence de
 départ reste, elle, à établir.
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** L'état laissé par une exécution interrompue et les locators sans portée sont corrigés par INC-209 (close le 2026-08-25, **décision 508**, `1fb4ae5c`, `8a25702c`) : `commentaires-gestes.spec.ts` porte ses locators sur leur carte et un `beforeEach` reprend ce qu'une exécution interrompue laisse ; rejoué deux fois de suite, 8 passés puis 8 passés. Le parcours clavier est stabilisé par INC-189 b (`18904605`).
 
 ## Consignés le 2026-08-20 — deux manques de SPÉCIFICATION relevés par `CRM-086` tranche 6
 
@@ -3815,6 +3892,8 @@ les siens.
 **Ce qui reste à observer, et ce n'est pas cette entrée** : la campagne complète de fin de session
 dira si `npm run e2e:ui` est désormais entièrement verte. Ces trois lignes-ci le sont.
 
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** **RÉSOLUE le 2026-08-20** par le commit `c72142e` (« CRM-081 : trois preuves d'inbox révisées »).
 ---
 
 ## Consigné le 2026-08-20 — un scénario d'interface au bord du budget de 30 s, étranger à `CRM-080`
@@ -3886,6 +3965,8 @@ et en le disant.
 **Non corrigé par la session `CRM-080` tranche 2** : le scénario relève de `CRM-076` quatrième
 tranche, et le corriger sous une autre unité reviendrait à en solder une seconde (`CLAUDE.md` §13).
 
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Même scénario qu'INC-174 : **décision 698**, `test.setTimeout(120_000)` (`e2e/ui/administration-workflows.spec.ts:305, 550, 886`). La lenteur du parcours est un contrat long (356 pressions, 27,8 s à vide) mesuré, non une régression ; aucune assertion n'est relâchée.
 ---
 
 ### INC-189 — « Alt et flèche REDIMENSIONNENT » échoue par INTERMITTENCE en campagne, et passe seul
@@ -3970,6 +4051,8 @@ Mesuré : `e2e:api` 1080/1080, `e2e:ui` 756/756, `verify-harness` 32 contrôles 
 entrée, n'était pas dû à la charge : le harnais exporte `VITE_SUPABASE_*` pour son build, et les tests
 lancés ensuite en héritaient. Le journal conservé l'a nommé ; `webapp/vitest.config.ts` vide désormais
 ces variables pour les tests (reproduit rouge, puis 15/15 et 3281 variables posées).
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Close (`e670a74f`, **décision 594**) : trois corrections (`1def50e3` les tests unitaires n'héritent plus de la configuration du shell ; `18904605`, `58ec3754` deux preuves attendent un signal observable ; `5555dacd` le journal d'une exécution rouge est conservé) ; `e2e:api` 1080/1080 et `e2e:ui` 756/756 rejoués, `verify-harness` 32 contrôles, aucune anomalie.
 
 ## Consignées le 2026-08-20 — méthode et harnais, relevées par le rejeu complet de la série
 
@@ -4103,6 +4186,8 @@ provoquer, et non d'une synchronisation « prétendue ». La ligne à retourner 
 ici : `CRM-088` ne touche ni `mail-sync`, ni les migrations, ni le seed, et cette colonne est fermée
 en écriture à `authenticated`.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Close (**décision 498**) : les dix harnais sont retournés, comme l'inscrit l'index « Retirées » du registre (`INC-191`, `bd76299d`, `5b234712`, `e587b09e`).
+
 ### INC-192 — `scripts/verify-corbeille.sh` cherche `@spec CRM-077` dans les TROIS premières lignes de `webapp/src/app/RouteCard.tsx`, qui en cumule dix
 
 **Mesuré.** Le contrôle `verify-corbeille` §1 emploie `head -3 "$fichier" | grep -q '@spec CRM-077'`.
@@ -4136,6 +4221,8 @@ citent leur unité dans les trois premières lignes. Le défaut y est donc **lat
 réveillera exactement comme ici — le jour où un fichier pivot accueillera une unité de plus. Chaque
 correction appartient à l'unité que son harnais éprouve (`CLAUDE.md` §13), et les grouper ici
 reviendrait à solder vingt-cinq unités sous une seule. L'entrée reste **ouverte pour ce reste**.
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Close : `scripts/verify-corbeille.sh` lit l'en-tête COMPLET d'un fichier et non ses trois premières lignes (`752d3b48`) ; `verify-formulaire.sh` de même (`fed1de7f`) ; vérifiée (`57826aa6`).
 
 ## Consigné le 2026-08-20 — une colonne révoquée qui ressort par le corps d'un refus
 
@@ -4193,6 +4280,8 @@ issues, aucune tranchée ici :
 3. **le secret ne vit plus dans une colonne de la ligne** — une table de liaison `(account_id,
    secret_id)` hors du schéma exposé, ce qui est une évolution de schéma qu'aucune unité n'a
    demandée et qui rouvrirait `CRM-052`.
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Arbitrée par la **décision 514** (`docs/ARBITRAGES.md:212`) : la divulgation de `secret_id` par le `details` de PostgREST est acceptée en développement et fermée en production par la règle d'écran — aucun corps d'erreur du serveur n'est jamais rendu à l'utilisateur (`CRM-088`, `CRM-089`, dictionnaire fermé).
 
 ## Consigné le 2026-08-21 — un focus rendu à un élément détaché, étranger à `CRM-089`
 
@@ -4359,6 +4448,8 @@ rangeait sous « ordre de série » sans en nommer la cause.
 
 **Statut : ouverte** — correction dans la même session, sous `CRM-019`.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Close (`0dd4e5ae`) : voir l'index « Retirées » (ligne `INC-198`, correction par la décision 499).
+
 ### INC-199 — `verify-transition-required-fields.sh` rejoue la migration 19 et ramène `move_card` avant le lot G
 
 **Ouverte le 2026-08-21 (décision 499).**
@@ -4414,6 +4505,8 @@ geste : **non vérifié dans cette session**, faute de budget — ce harnais est
 décision 495 a vus atteindre le plafond de 20 min.
 
 **Statut : ouverte** — correction dans la même session, sous `CRM-021`.
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Close (`0dd4e5ae`) : voir l'index « Retirées » (ligne `INC-200`) ; `verify-channels.sh` et `verify-tracks.sh` restituent l'état courant.
 
 ### INC-201 — la preuve n° 14 de `verify-auth.sh` figeait une absence que `CRM-022` a comblée
 
@@ -4580,6 +4673,8 @@ fichiers relèvent donc de `CRM-040` (`EnTeteCard.tsx`), `CRM-081` (`Sommeil.tsx
 
 **Statut : close.** Voisine d'INC-130, qu'elle ne remplace pas et qui reste ouverte.
 
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Close (`6227371f`, `dd51551c`) : `h-10` et `py-0.5` sont réécrites en valeur arbitraire assumée ; le relevé des classes absentes tombe de trois à une, puis à zéro avec INC-130.
+
 ## Consignées le 2026-08-24 — deux références fausses trouvées en spécifiant la tranche 3 de `CRM-062`
 
 ### INC-206 — `docs/SPEC-relances.md` renvoyait à un « chapitre 30 » que le manuel ne peut pas avoir
@@ -4605,6 +4700,8 @@ corrigées dans le même changement que cette entrée.
 **Ce qui n'est PAS corrigé, et c'est délibéré** : les deux entrées de `docs/JOURNAL.md` gardent leur
 texte. Le journal est une trace chronologique, et réécrire ce qu'une session a réellement écrit
 ferait perdre le fait que la référence a vécu fausse pendant deux tranches.
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Close : voir l'index « Retirées » (ligne `INC-206`) — la référence au « chapitre 30 » est corrigée dans `docs/SPEC-relances.md`.
 
 ### INC-207 — la relance de la tranche 2 est écrite en base et se lit « Événement »
 
@@ -4637,6 +4734,8 @@ deux clés de son `payload` par une clé de traduction, jamais par concaténatio
 
 **Leçon de méthode, et elle vaut au-delà de cette unité** : « cette tranche ne livre aucun écran »
 ne dispense pas de demander ce que les écrans **déjà livrés** feront de la donnée qu'elle ajoute.
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Close par livraison (`c48b64a7`, `CRM-062` tranche 3b) : la relance n'est plus un « Événement » anonyme dans le fil ; nom, rangement et traduction du type `stalled` posés, départ d'un message nommé (`afe31159`).
 
 ### INC-208 — les SIX routes transverses écrivent « Aucun channel » là où aucun track n'est ouvert
 
@@ -4674,6 +4773,8 @@ on consigne un faux constat.
 `TabBar`, qui appartiennent à `CRM-007` et `CRM-021`, et dépasserait l'unité autorisée
 (`CLAUDE.md` §13). L'arbitrage attendu du responsable : la barre doit-elle être **absente** hors
 d'une route de track, ou dire autre chose ?
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Corrigée par `CRM-131` (`fbbb0a6f`) : voir INC-157.
 
 ### INC-209 — deux preuves d'interface accumulent leurs propres écritures et ne sont pas rejouables
 
@@ -4766,6 +4867,8 @@ delete from public.card_comments where id::text not like '5eed%';
 delete from public.tracks         where id::text not like '5eed%';
 ```
 
+
+**CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** Close le 2026-08-25 (**décision 508**, `8a25702c`) : voir la section « INC-209 — CLOSE » plus bas dans ce registre.
 ---
 
 ### INC-210 — la migration 44 n'a pas la seconde garde d'INC-144, et `stalled` la rend bloquante
