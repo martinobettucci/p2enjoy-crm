@@ -42023,3 +42023,25 @@ sonde 157 » offerte sur une affaire du seed) ; sous-ensemble d'envoi 22/22.
 avant d'être lu), emportant l'entrée non committée de `CRM-164` ; reconstruit aussitôt depuis HEAD et la dernière lecture de
 cette entrée, et la session qui la porte prévenue. La règle — lire un fichier partagé dans une variable AVANT de l'ouvrir en
 écriture — n'avait pas été suivie dans une expression où l'ouverture précédait la lecture.
+
+### `CRM-161` — deux preuves rouges de la campagne du lot `CRM-164`, corrigées dans la preuve
+
+*2026-11-24, session 4891a451, à la demande de la session de livraison.* La campagne complète du lot arrêté à `d7e33501`
+rendait deux échecs qui se reproduisent joués seuls ; le seul code d'interface du lot étant `ef535024` et `d8cc8323`, ils
+m'étaient renvoyés.
+
+1. **`e2e/ui/armement-sequence.spec.ts` « un second armement… est refusé »** — 4 échecs sur 8 joué seul. La trace montre la
+   lecture de l'inscription active du bloc partie dans la file des ~30 requêtes de la fiche, et l'armement par la route
+   (hors de cette file) passé avant elle : le bloc rendait l'inscription armée, à juste titre, et le sélecteur attendu
+   n'existait plus. L'attente de `sequence-vide` ne prouvait pas la lecture : le bloc rend son geste tant que la lecture
+   est en cours (`active === null`). Ce n'est pas `d8cc8323` (le bloc lisait déjà ses identités par espace) ; le lot n'a
+   fait qu'ajouter une lecture au chargement (`inbox_unread_by_workspace`, `ef535024`), ce qui élargit la fenêtre.
+   **Correction** : la preuve attend la réponse de cette lecture avant d'armer. **Vérification** : 12/12 répété.
+   **Observation, non traitée** : pendant ce chargement, le bloc affiche « Aucune relance n'est armée sur cette affaire » —
+   un état affirmé avant d'être lu, antérieur au lot (`docs/DESIGN_SYSTEM.md` §5.42 ne connaît que deux états).
+2. **`e2e/manuel/23-33-complements.spec.ts` « le temps… »** — dépendance à la date. Le seed saisit les jours ouvrés des
+   quatre semaines qui finissent hier ; la preuve allait toujours au mois précédent (INC-333, écrite le 1er novembre), vide
+   le 24 (la plus ancienne saisie est le 2). **Correction** : `moisPrecedentRempliParLeSeed` applique la règle du seed et
+   choisit le mois précédent seulement s'il est rempli ; l'image du rapport attend sa première section, l'attente du
+   squelette passant avant qu'il paraisse (image du squelette mesurée). **Vérification** : la spec 12/12, les deux images
+   observées (novembre, données lues).

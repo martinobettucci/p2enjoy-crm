@@ -279,8 +279,23 @@ test.describe('armer une relance depuis l’affaire (docs/SPEC-modeles-emails.md
 		)
 		expect(service, 'l’identité de Camille dans le seed').toBeDefined()
 
+		// LE BLOC DOIT AVOIR LU L'INSCRIPTION AVANT QUE L'AUTRE ONGLET N'ARME — relevé de la campagne
+		// du lot CRM-164 (2026-11-24), 4 échecs sur 8 joué seul. `sequence-vide` ne le prouve pas :
+		// le bloc rend son geste tant que la lecture est EN CHARGEMENT (`active === null`), et la
+		// lecture part dans la file des ~30 requêtes de la fiche, tandis que l'armement par la route
+		// passe hors de cette file. Arrivée après l'armement, elle voyait l'inscription active — le
+		// bloc rendait alors l'état, à juste titre, et le scénario « un autre onglet a armé
+		// entre-temps » n'était plus celui qu'on jouait. On attend donc la RÉPONSE de cette lecture.
+		const inscriptionLue = page.waitForResponse(
+			(reponse) =>
+				reponse.request().method() === 'GET' &&
+				reponse.url().includes('/rest/v1/card_sequence_enrollments') &&
+				reponse.url().includes(`card_id=eq.${AFFAIRE_FIGEE.id}`) &&
+				reponse.url().includes('status=eq.active'),
+		)
 		await page.goto(AFFAIRE_FIGEE.adresse)
 		const bloc = page.getByTestId('bloc-sequence-card')
+		expect((await inscriptionLue).ok(), 'la lecture de l’inscription active').toBe(true)
 		await expect(bloc.getByTestId('sequence-vide')).toBeVisible()
 
 		const sequences = await page.request.get(`${URL_API}/rest/v1/mail_sequences?select=id,name`, {

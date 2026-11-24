@@ -4,6 +4,8 @@
 //       états vides, les commandes photographiées avant leur clic, les issues du journal des appels
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitres 23 à 33 ; docs/SPEC-costs.md, docs/SPEC-temps.md,
 //       docs/SPEC-recettes.md, docs/SPEC-plateforme.md §7, docs/SPEC-mcp.md §9
+// @verifies CRM-161 (docs/BACKLOG.md) — relevé de la campagne du lot CRM-164 : le mois des images du temps suit la règle
+//           du seed (docs/SPEC-temps.md §7.3, §7.5 ; docs/SPEC-seed.md)
 // @spec CRM-126 (docs/BACKLOG.md) — tranche T2 : l'image « plusieurs-devises » montre la balance par devise de …0c7
 //       (docs/SPEC-recettes.md §4.4 et §6.3 révisés)
 //
@@ -46,6 +48,23 @@ const TRACK_VIDE = { id: 'e1230000-0000-4000-8000-0000000000a1', slug: 'partenar
 const BUDGET_VIDE = 'e1230000-0000-4000-8000-0000000000b1'
 const ESPACE_VIDE = { id: 'e1230000-0000-4000-8000-0000000000f1', slug: 'atelier-manuel-26', nom: 'Atelier Morel' }
 const SABINE = 'plateforme@p2enjoy.test'
+
+/**
+ * LE MOIS QUE LE SEED REMPLIT, choisi par la règle du seed et non par la date de rédaction — relevé de la campagne du lot
+ * CRM-164 (2026-11-24). Le seed saisit les jours ouvrés des QUATRE SEMAINES qui finissent hier, à partir du lundi de la
+ * semaine du jour (`supabase/seed/apply-seed.sh`, « Temps de démonstration ») : le plus ancien est le lundi d'il y a
+ * trois semaines. Le mois précédent n'a donc du temps que si ce lundi y tombe — vrai le 1er novembre, quand INC-333 a
+ * choisi « Mois précédent », faux le 24 (le plus ancien était le 2). Le mois précédent reste préféré quand il est rempli :
+ * l'image y montre aussi « Ce mois-ci ».
+ */
+function moisPrecedentRempliParLeSeed(aujourdhui = new Date()): boolean {
+	const jour = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), aujourdhui.getDate())
+	const lundi = new Date(jour)
+	lundi.setDate(jour.getDate() - ((jour.getDay() + 6) % 7))
+	const plusAncien = new Date(lundi)
+	plusAncien.setDate(lundi.getDate() - 21)
+	return plusAncien < new Date(jour.getFullYear(), jour.getMonth(), 1)
+}
 
 /** Une image qui ne se prend que si l'état existe : l'absence se lit dans `verify-manual`, qui la nomme. */
 async function si(cible: Locator, faire: () => Promise<unknown>): Promise<void> {
@@ -266,9 +285,17 @@ test('le temps : ajouter une affaire, une journée trop longue, le rapport de l�
 	const personne = page.getByTestId('temps-rapport-personne')
 	await personne.selectOption({ label: 'Toute l’équipe' }).catch(() => personne.selectOption({ index: 1 }))
 	const rapport = page.getByTestId('temps-rapport')
-	// Le mois précédent, que le seed remplit : en début de mois, le mois du jour n'a encore aucun temps (INC-333).
-	await rapport.getByRole('button', { name: 'Mois précédent' }).click()
-	await expect(rapport.getByRole('button', { name: 'Ce mois-ci' })).toBeVisible()
+	// Le mois que le seed remplit : en début de mois, le mois du jour n'a encore aucun temps (INC-333) ; en fin de mois,
+	// c'est le mois précédent qui n'en a plus (`moisPrecedentRempliParLeSeed`).
+	const moisPrecedent = moisPrecedentRempliParLeSeed()
+	if (moisPrecedent) {
+		await rapport.getByRole('button', { name: 'Mois précédent' }).click()
+		await expect(rapport.getByRole('button', { name: 'Ce mois-ci' })).toBeVisible()
+	}
+	// LE RAPPORT EST LU AVANT L'IMAGE : le squelette porte « Chargement en cours » en étiquette, non en texte, et l'attente
+	// de sa disparition passait avant même qu'il paraisse (image du squelette, mesurée au mois du jour). Le mois choisi
+	// a du temps : la première section de personne est le marqueur.
+	await expect(rapport.getByTestId('temps-rapport-section').first()).toBeVisible()
 	await expect(rapport.getByText('Chargement en cours')).toHaveCount(0)
 	await illustrer(page, { chapitre: TEMPS, section: 'le-rapport-mensuel', nom: 'toute-l-equipe', cibles: [personne, rapport] })
 
@@ -286,14 +313,18 @@ test('le temps : ajouter une affaire, une journée trop longue, le rapport de l�
 
 	await page.goto('/p2enjoy/tracks/studio-web/couts')
 	const personnel = page.getByText('Coût du personnel', { exact: true }).first()
-	// Le mois précédent, que le seed remplit : l'image montre les trois commandes de la navigation de mois (INC-333).
+	// Le mois que le seed remplit (`moisPrecedentRempliParLeSeed`) : au mois précédent, l'image montre les trois commandes
+	// de la navigation de mois (INC-333) ; au mois du jour, « Mois précédent » seul, « Ce mois-ci » n'y étant pas offert.
 	const serie = page.getByTestId('personnel-track')
-	await serie.getByRole('button', { name: 'Mois précédent' }).click()
-	const ceMois = serie.getByRole('button', { name: 'Ce mois-ci' })
-	await expect(ceMois).toBeVisible()
+	let navigation = serie.getByRole('button', { name: 'Mois précédent' })
+	if (moisPrecedent) {
+		await navigation.click()
+		navigation = serie.getByRole('button', { name: 'Ce mois-ci' })
+	}
+	await expect(navigation).toBeVisible()
 	await expect(page.getByTestId('personnel-ligne').first()).toBeVisible()
 	await personnel.scrollIntoViewIfNeeded()
-	await illustrer(page, { chapitre: TEMPS, section: 'le-cout-du-personnel-a-cote-des-couts', nom: 'personnel-du-track', cibles: [personnel, ceMois, page.getByTestId('personnel-ligne').first()] })
+	await illustrer(page, { chapitre: TEMPS, section: 'le-cout-du-personnel-a-cote-des-couts', nom: 'personnel-du-track', cibles: [personnel, navigation, page.getByTestId('personnel-ligne').first()] })
 	await page.goto(FICHE)
 	// `CRM-112` T8 (docs/SPEC-seed.md §38) : la partie commune, au-dessus, se lit à part et décale la fiche en paraissant ;
 	// l'image attend sa mise en page.
