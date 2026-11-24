@@ -1,3 +1,5 @@
+// @verifies CRM-161 (docs/BACKLOG.md) tranche T3.a — les identités d'expédition offertes sont celles de l'espace de l'affaire
+//           (docs/SPEC-espace-courant.md §16.4, la limite de la décision 975 levée)
 // @verifies CRM-157 (docs/BACKLOG.md) — tranche T2 : l'espace sans domaine annoncé avant qu'on rédige — l'avertissement,
 //           « Mettre en file » éteint et décrit, le lien du seul super-administrateur, la lecture illisible qui n'éteint
 //           rien — et les refus de la file dits un par cause (docs/SPEC-mail-subsystem.md §33.3, §33.4 ;
@@ -38,20 +40,31 @@ const IDENTITES_ADMINISTRATRICE = [
 	{ id: 'id-2', label: 'Envoi B', from_address: 'admin@p2enjoy.test', owner_id: 'personne-1', is_default: true },
 ]
 
+/** Les `eq` émis, par table (`CRM-161` T3.a) — à part des appels, que d'autres preuves comparent en entier. */
+const filtres: Array<[string, string, unknown]> = []
+
 const client = {
-	from: (table: string) => ({
-		select: () => ({
-			eq: () => ({
-				limit: () =>
-					Promise.resolve({ data: [{ workspace_id: 'espace-1', workspaces: injecte.espace }], error: null }),
+	from: (table: string) => {
+		const lignes = () =>
+			Promise.resolve({
+				data: table === 'mail_outbound_identities' ? injecte.identites : [],
+				error: null,
+			})
+		return {
+			select: () => ({
+				// `CRM-161` T3.a (§16.4) : la lecture des identités filtre sur l'espace de l'affaire — chaque `eq` est noté.
+				eq: (colonne: string, valeur: unknown) => {
+					filtres.push([table, colonne, valeur])
+					return {
+						limit: () =>
+							Promise.resolve({ data: [{ workspace_id: 'espace-1', workspaces: injecte.espace }], error: null }),
+						order: lignes,
+					}
+				},
+				order: lignes,
 			}),
-			order: () =>
-				Promise.resolve({
-					data: table === 'mail_outbound_identities' ? injecte.identites : [],
-					error: null,
-				}),
-		}),
-	}),
+		}
+	},
 	rpc: (nom: string, args: unknown) => {
 		if (nom === 'est_superadmin') return Promise.resolve({ data: injecte.superadmin, error: null, status: 200 })
 		injecte.appels.push(['rpc', nom, args])
@@ -83,6 +96,7 @@ vi.mock('./Authentification', () => ({
 const { FormulaireEnvoi } = await import('./FormulaireEnvoi')
 
 beforeEach(() => {
+	filtres.length = 0
 	injecte.appels = []
 	injecte.identites = IDENTITES_ADMINISTRATRICE
 	injecte.espace = { slug: 'p2enjoy', inbound_domain: 'crm.p2enjoy.test' }
@@ -357,3 +371,14 @@ describe('FormulaireEnvoi — l’espace sans domaine (CRM-157, §33.4)', () => 
 	})
 })
 
+describe('les identités offertes sont celles de l’espace de l’affaire (CRM-161 T3.a, §16.4)', () => {
+	it('la lecture des identités porte le filtre de l’espace lu avec le domaine', async () => {
+		injecte.identites = IDENTITES_ADMINISTRATRICE
+		injecte.espace = { slug: 'atelier', inbound_domain: 'crm.p2enjoy.test' }
+		render(<FormulaireEnvoi idCard="card-1" />)
+		await userEvent.click(screen.getByTestId('envoi-ouvrir'))
+		await waitFor(() =>
+			expect(filtres).toContainEqual(['mail_outbound_identities', 'workspace_id', 'espace-1']),
+		)
+	})
+})

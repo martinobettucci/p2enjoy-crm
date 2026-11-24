@@ -20594,6 +20594,9 @@ livraison (décision 830).
   **T3.a, premier relevé fait le 2026-11-24** : les non-lus de chaque espace lus une fois par la coquille et partagés par le menu
   et le repli (§16.4) — E2E `menu-espaces` rouge avant (le repli sans pastille sous une lecture retenue), 18/18 avec
   `fil-ariane` ; unitaires de la coquille 19/19, complets 6 250/6 250 ; quatre `tsc` ; capture du repli observée.
+  **T3.a, second relevé fait le 2026-11-24** : « Expédier depuis » lit les identités de l'espace de l'affaire (§16.4) — unitaire
+  rouge avant puis vert (18/18), E2E `domaine-absent-envoi` rouge avant (l'identité de l'espace jetable offerte sur une
+  affaire du seed), sous-ensemble d'envoi 22/22 ; `tsc`.
   **Relevés à reprendre dans T3** (*2026-11-21, session de livraison au constat du lot de T1 et T2 ; consignés par 5f*) :
   - **Les non-lus de chaque espace sous `md`.** À 390 px, la section « Espaces » du repli du fil d'Ariane ne montre aucune
     pastille de non-lus (capture `docs/captures/CRM-161/menu-espaces-sm-390.jpg`), alors que la décision 965 les veut au

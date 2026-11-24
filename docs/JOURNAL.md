@@ -42011,3 +42011,15 @@ la preuve attend celle de la coquille puis exige la pastille de la sonde sous 50
 code (le repli relit). **Correctif** : la coquille lit `inbox_unread_by_workspace` une fois par adresse, pour une personne de
 deux espaces, et le porte dans `ContexteEspace.nonLus` ; le menu et le repli le prennent là. **Vérifications** : E2E
 `menu-espaces` et `fil-ariane` 18/18, unitaires 6 250/6 250, quatre `tsc`, capture `menu-espaces-repli-non-lus-sm-390`.
+
+### `CRM-161` T3.a — les identités de « Expédier depuis » (limite de la décision 975, relevé de la livraison)
+
+*2026-11-24, session 4891a451.* `FormulaireEnvoi` lisait les identités de la personne dans tous ses espaces. Il lit déjà
+l'espace de l'affaire avec son domaine (`lireDomaineDeLAffaire`, `CRM-157`) : les identités attendent cette lecture et la
+filtrent (`lireIdentitesDisponibles(…, idEspace)`) ; un espace illisible ne filtre rien. **Preuves** : l'unitaire du filtre,
+rouge avant ; `e2e/ui/domaine-absent-envoi.spec.ts` « sur une affaire d'un AUTRE espace », rouge avant (« Envoi de Camille —
+sonde 157 » offerte sur une affaire du seed) ; sous-ensemble d'envoi 22/22.
+**Incident consigné** : en préparant ce commit, un script a vidé le `CHANGELOG.md` de l'arbre partagé (ouvert en écriture
+avant d'être lu), emportant l'entrée non committée de `CRM-164` ; reconstruit aussitôt depuis HEAD et la dernière lecture de
+cette entrée, et la session qui la porte prévenue. La règle — lire un fichier partagé dans une variable AVANT de l'ouvrir en
+écriture — n'avait pas été suivie dans une expression où l'ouverture précédait la lecture.

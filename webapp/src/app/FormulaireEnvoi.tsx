@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T3.a — les identités d'expédition offertes sont celles de l'espace de l'affaire
+//       (docs/SPEC-espace-courant.md §16.4, la limite de la décision 975 levée)
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les commandes d'écriture lisent le refus de la fiche quand la base refuse
 //       l'écriture sur l'affaire (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-058 (docs/BACKLOG.md) — composer et répondre, par le même chemin
@@ -240,11 +242,14 @@ export function FormulaireEnvoi({
 		setOuvert(false)
 	}, [pieces])
 
+	// `CRM-161` T3.a (docs/SPEC-espace-courant.md §16.4) : les identités offertes sont celles de L'ESPACE DE L'AFFAIRE, lu avec
+	// son domaine ; elles attendent cette lecture. Un espace illisible ne filtre rien : la base refusera, et le dira.
+	const espaceDeLAffaire = domaine === null ? undefined : (domaine.idEspace ?? null)
 	useEffect(() => {
-		if (!ouvert) return
+		if (!ouvert || espaceDeLAffaire === undefined) return
 		let vivant = true
 		void (async () => {
-			const lues = await lireIdentitesDisponibles(clientCrm, idUtilisateur)
+			const lues = await lireIdentitesDisponibles(clientCrm, idUtilisateur, espaceDeLAffaire ?? undefined)
 			if (!vivant) return
 			setIdentites(lues)
 			// LE DÉFAUT DE LA PERSONNE, non la première identité venue (décision 805, INC-335). Un mail préparé propose la
@@ -255,7 +260,7 @@ export function FormulaireEnvoi({
 		return () => {
 			vivant = false
 		}
-	}, [idUtilisateur, ouvert, mailPrepare?.idIdentite])
+	}, [idUtilisateur, ouvert, mailPrepare?.idIdentite, espaceDeLAffaire])
 
 	// LE FOCUS SUIT L'OUVERTURE : sans cela, le clavier resterait sur un bouton qui vient de
 	// disparaître et repartirait du début du document (docs/DESIGN_SYSTEM.md §10).

@@ -467,9 +467,8 @@ reçoivent :
 | Temps ▸ Saisie, les lignes de la grille (*ajoutée le 2026-11-21, vue sur une image du manuel*) | `lireArbreTemps` | celui des saisies (l'espace courant) — clés composites `(track_id, workspace_id)` |
 | Bloc « Relance automatique » d'une affaire (*idem*) | `lireSequences`, `lireIdentitesDisponibles` | celui de l'affaire |
 
-Le carnet (`Carnet`, page globale) garde sa lecture entière. **Limite connue** : le formulaire d'envoi (`FormulaireEnvoi`) lit encore les identités
-d'expédition de la personne dans tous ses espaces — il ne reçoit que l'affaire ; sans effet tant qu'une personne n'a
-d'identité que dans un espace (le cas du seed), il est repris avec T3. **Preuves** : un unitaire par lecture (le filtre émis quand
+Le carnet (`Carnet`, page globale) garde sa lecture entière. **Limite levée par T3.a** (§16.4, le 2026-11-24) : le formulaire d'envoi lisait les identités
+d'expédition de tous les espaces de la personne ; il les lit désormais dans l'espace de l'affaire, lu avec son domaine. **Preuves** : un unitaire par lecture (le filtre émis quand
 l'espace est donné, aucun quand il est omis) ; `e2e/ui/formulaire-selecteurs.spec.ts` rouge avant (quatorze options sur une
 affaire du seed, deux de Lumen), vert après (douze) ; le bloc « Contacts » et l'aperçu, en unitaires d'écran.
 

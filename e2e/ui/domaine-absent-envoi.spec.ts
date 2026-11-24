@@ -1,3 +1,5 @@
+// @verifies CRM-161 (docs/BACKLOG.md) tranche T3.a — sur une affaire du seed, « Expédier depuis » n'offre pas l'identité que Camille
+//           porte dans l'espace jetable (docs/SPEC-espace-courant.md §16.4)
 // @verifies CRM-157 (docs/BACKLOG.md) — tranche T2 : l'espace sans domaine sur la vraie pile — le formulaire d'envoi prévient
 //           avant qu'on rédige (l'avertissement, « Mettre en file » éteint et décrit), le super-administrateur y trouve le
 //           lien vers la fiche de l'espace, le refus de la base dit sa cause quand la lecture a été contournée, la
@@ -30,6 +32,8 @@ import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, connecterAvecLeLabs, ex
 // « … des messages non lus … » dans son nom, et un libellé partiel l'attrapait aussi.
 
 const UNITE = 'CRM-157'
+/** Une affaire du seed, dans l'espace du seed — celle de `e2e/ui/envoi.spec.ts`. */
+const AFFAIRE_DU_SEED = '5eed0000-0000-4000-8000-0000000000c1'
 const SABINE = { adresse: 'plateforme@p2enjoy.test', id: '5eed0000-0000-4000-8000-000000000018' } as const
 const rest = (chemin: string) => `${URL_API}/rest/v1/${chemin}`
 const TEXTE_REFUS =
@@ -189,5 +193,21 @@ test.describe('envoyer depuis un espace sans domaine (docs/DESIGN_SYSTEM.md §5.
 			expect(debordement, `aucun défilement horizontal à ${palier.largeur} px`).toBeLessThanOrEqual(0)
 			await capturer(page, `envoi-sans-domaine-${palier.nom}`, UNITE)
 		}
+	})
+
+	test('sur une affaire d’un AUTRE espace, l’identité de l’espace jetable n’est pas offerte (CRM-161 T3.a, §16.4)', async ({
+		page,
+	}) => {
+		if (montage === null) throw new Error('montage absent')
+		// Une affaire du seed (la même que `envoi.spec.ts`) : Camille y a ses identités du seed, et celle de la sonde — par
+		// défaut dans son espace — ne s'y emploierait pas.
+		await connecterAvecLeLabs(page, CAMILLE.adresse)
+		await page.goto(`/p2enjoy/tracks/conseil-ia/grands-comptes/cards/${AFFAIRE_DU_SEED}`)
+		const ouvrir = page.getByTestId('envoi-ouvrir')
+		await expect(ouvrir).toBeEnabled()
+		await ouvrir.click()
+		const choix = page.getByLabel('Expédier depuis')
+		await expect(choix.locator('option', { hasText: 'Envoi de Camille Aubert' })).toHaveCount(1)
+		await expect(choix.locator('option', { hasText: 'sonde 157' })).toHaveCount(0)
 	})
 })
