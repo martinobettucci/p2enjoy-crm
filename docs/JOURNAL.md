@@ -42302,3 +42302,12 @@ de l'arbre de travail ; l'ouverture en une commande, `scripts/lib/campagne.sh ou
 Le code est écrit après la levée du gel, avec sa preuve rouge (deux commandes gardées de front). Connecteur MCP : question 1 =
 non (outillage de développement), question 2 = sans objet.
 
+### décision 991 — `INC-137` : le motif du §16.12.2 est corrigé, le comportement est gardé
+
+*2026-11-25, session `p2enjoy-crm-dd`.* **Le problème.** `docs/SPEC-cards.md` §16.12.2 écartait `now()` en affirmant que PostgREST ne
+l'évalue pas ; la mesure du 2026-08-17 montre que Postgres l'évalue (INC-137). **Les lectures.** (1) Corriger le seul motif et garder
+l'instant du client ; (2) basculer sur `now` et retirer la conséquence sur les horloges décalées ; (3) garder les deux chemins.
+**Décision : la lecture 1** — l'instant du client est un horodatage explicite, lisible et prouvable ; `now` est une valeur spéciale de
+l'analyseur de dates qu'aucun type généré ne documente. **Conséquences** : texte du §16.12.2 corrigé, aucune ligne de code. Connecteur
+MCP : question 1 = non (correction de spécification), question 2 = sans objet.
+

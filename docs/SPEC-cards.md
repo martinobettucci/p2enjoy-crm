@@ -2965,9 +2965,14 @@ Le total suit le filtre, et c'est la propriété que la vue liste exige (§12.5)
 
 ##### 16.12.2 L'instant de comparaison est celui du client, et il est envoyé au serveur
 
-PostgREST n'évalue aucune fonction dans un filtre de requête : `snoozed_until=lte.now()` compare à
-la chaîne « now() », pas à l'heure du serveur. Deux chemins existaient, et le second est écarté avec
-son motif :
+**Motif corrigé le 2026-11-25 (INC-137, décision 991).** Le texte d'origine affirmait que PostgREST n'évalue aucune
+fonction dans un filtre, si bien que `snoozed_until=lte.now()` compare à la chaîne « now() ». **La mesure du 2026-08-17 le
+contredit** : PostgREST transmet la chaîne à Postgres, dont l'analyseur de `timestamptz` accepte `now()` et `now` comme valeurs
+spéciales et les évalue — `snoozed_until=lte.now()` se comporte comme l'horloge du **serveur**. Le comportement du produit,
+lui, n'a pas changé et reste correct : le filtre envoie l'instant du client comme valeur. Ce qui justifie ce choix est donc
+autre : `now` est une valeur spéciale de l'analyseur de dates de Postgres, qu'aucun type généré ne documente et qu'un
+changement de version pourrait retirer sans bruit, là où un horodatage explicite se lit et se prouve. Deux chemins existaient, et le
+second est écarté avec son motif :
 
 1. **l'instant du client, envoyé comme valeur** — un `toISOString()`, MESURÉ accepté par PostgREST
    avec ses millisecondes (`2026-08-16T17:23:59.000Z`) comme sans elles ;

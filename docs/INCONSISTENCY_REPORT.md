@@ -2427,6 +2427,11 @@ en documentant lequel s'applique où. Le responsable tranche. La preuve
 
 ---
 
+**ARBITRÉE ET MISE EN ŒUVRE le 2026-11-25 (décision 991), par la lecture n° 1 : le seul motif est corrigé.** L'instant du client est gardé
+comme valeur du filtre ; `docs/SPEC-cards.md` §16.12.2 dit désormais que PostgREST transmet `now()` à Postgres, qui l'évalue, et
+fonde le choix sur la valeur spéciale non documentée par les types générés. Aucun code ne change ; `e2e/api/filtre-sommeil.spec.ts`
+constate la mesure sans affirmer le motif contesté. **CLOSE.**
+
 ## Consigné le 2026-08-17 — un contrôle de harnais dépassé par le produit, étranger à `CRM-081`
 
 ### INC-140 — Un changement de clé Vault rend le seed impossible, et fait échouer sept preuves pour un motif trompeur — **CLOSE**
