@@ -42178,3 +42178,21 @@ publié ; contrat §2.74 à §2.78 LIVRÉES, §3 et §8, changelog en [Publié],
   contact modifié (§16.4).
 - **Vérifications.** E2E rouge avant sur l'ancienne lecture, au carnet (« Maison Arlo » offerte) et sur la fiche (deux
   « Vertigo Conseil »), vertes après ; voir l'entrée du backlog.
+
+### `CRM-161` T3.c — la spécification des deux migrations, écrite pendant le gel du lot T3.b
+
+*2026-11-24, session 4891a451 (p2enjoy-crm-7a) ; documents seuls, avec l'accord de la session de livraison (11), qui gèle
+la base et livre T3.b seule (T3.c estimée à plus de 3 ou 4 heures).*
+- **Le problème.** La liste des organisations est paginée : son filtre « Espace » doit se faire par la lecture, et
+  `organization_list` n'accepte qu'un espace. Le rapport de temps lit déjà tous les espaces sans dire lequel.
+- **Les choix (de l'agent, dans le cadre du §16 et des décisions 963, 965 et 981).**
+  - `organization_list` **garde `p_workspace_id`** (facultatif) et gagne `p_workspace_ids` : la webapp d'avant continue de
+    fonctionner entre la migration et sa propre livraison.
+  - `workspace_id` rendu par les deux fonctions ; `temps_valorise` l'ajoute en dernière colonne, `rentabilite_affaires`
+    lisant ses colonnes par leur nom.
+  - Les cases « Tracks » et « Catégories » des organisations, propres à un espace, se groupent sous une sous-légende par
+    espace (§5.115).
+  - Le rapport de temps : la provenance sur la ligne du track, le filtre en mémoire ; le choix de la personne reste celui
+    des membres de l'espace de l'onglet, limite nommée renvoyée à T3.d.
+- **Ce qui attend.** Les numéros des migrations et leur code, après l'annonce de fin de 11 ; le backlog et le contrat
+  suivent avec eux.

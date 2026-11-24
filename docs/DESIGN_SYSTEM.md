@@ -9265,6 +9265,10 @@ la spécification réservait, a été prise par `CRM-165` avant l'écriture de c
   commandes de création, d'export et d'import se termine par « Dans l'espace X » (`text-sm` `--color-text-2`, centré sur la
   rangée), et le formulaire de création commence par la même phrase. Ces commandes agissent dans l'espace de l'onglet,
   quel que soit le filtre. *Précisé le 2026-11-24 au code de T3.b.2 (le carnet).*
+- **UN FILTRE DONT LES CASES SONT PROPRES À UN ESPACE** (« Tracks » et « Catégories » des organisations, `CRM-161` T3.c) :
+  ses cases sont celles des espaces de la portée — ceux du filtre « Espace », sinon tous —, **groupées sous une
+  sous-légende par espace** (`text-sm` `--color-text-2`, le nom de l'espace) dès que la portée en couvre deux ; deux
+  homonymes de deux espaces restent deux cases distinctes. *Spécifié le 2026-11-24, avant le code de T3.c.*
 - **LE VIDE SOUS LE FILTRE** n'est pas le vide de la page (§5.8, même règle qu'au §5.105) : « Rien dans les espaces choisis »,
   avec le bouton secondaire « Afficher tous les espaces », qui vide le filtre et rend le focus au bouton « Espace ». Le vide
   sain d'une page (« Affaires figées », §5.37) reste le sien quand aucun filtre n'est posé.

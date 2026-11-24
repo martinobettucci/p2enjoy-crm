@@ -632,3 +632,63 @@ Lumen » porte déjà de quoi montrer chaque page), le contrat de livraison et l
 Par sous-tranche : un unitaire par lecture et par composant ; l'E2E de chaque page touchée sur un espace jetable dont Camille est
 membre, à la souris et au clavier, aux quatre paliers, captures observées ; une preuve d'API ou pgTAP par migration, avec le
 refus d'un espace non lu (la RLS reste la règle) ; une page d'un seul espace constatée **inchangée** (ni colonne ni filtre).
+
+### 16.8 T3.c en détail — les deux migrations et leurs écrans
+
+*Écrit le 2026-11-24 par la session 7a, avant le code, pendant le gel du lot T3.b (aucune migration n'est committée avant
+l'annonce de fin de la session de livraison). Les réponses du connecteur restent celles du §16 (décisions 963 et 965) :
+T3.c n'ajoute ni famille ni case, et **ni `organization_list` ni `temps_valorise` n'est appelée par le connecteur**
+(`mcp/src`) — aucune image `mcp` à reconstruire.*
+
+#### 16.8.1 Migration A — `organization_list` lit plusieurs espaces
+
+- **Supprimée puis recréée** (son type de retour change), dans une transaction : `drop function
+  public.organization_list(uuid, text, uuid[], text, text, boolean, integer, integer, uuid[])`, puis la nouvelle
+  définition et ses droits (`revoke all … from public, anon` ; `grant execute … to authenticated`).
+- **Paramètres** : ceux d'aujourd'hui, `p_workspace_id uuid` devenant **facultatif** (`default null`), plus
+  **`p_workspace_ids uuid[] default null`**. La portée est, dans cet ordre : `p_workspace_ids` s'il est non vide ;
+  sinon `array[p_workspace_id]` s'il est donné ; sinon **tous les espaces que la RLS laisse lire**. *Garder
+  `p_workspace_id` est un choix de compatibilité* : la webapp livrée avant la migration l'appelle encore, et la fenêtre
+  de maintenance ne la remplace qu'après ; elle continue donc de fonctionner entre les deux gestes.
+- **Retour** : celui d'aujourd'hui, plus **`workspace_id uuid`**, placé avant `total_count`. `total_count` compte toutes
+  les lignes de la portée, tous espaces confondus.
+- **Rien d'autre ne change** : la recherche, les filtres de tracks, de recettes et de catégories, le tri (`lower(name)`,
+  puis `id`) et les bornes de pagination. `SECURITY INVOKER` : la RLS d'`organizations` reste la règle. **Un espace non lu
+  passé dans `p_workspace_ids` ne rend aucune ligne, sans erreur** — c'est le refus, comme partout (`docs/SPEC-permissions-rls.md`
+  §7).
+- **pgTAP** : la signature et le type de retour ; la portée « tous » de Camille couvre ses deux espaces, chaque ligne
+  portant le sien ; `p_workspace_ids` restreint ; `p_workspace_id` seul donne le résultat d'avant ; un espace non lu (la
+  lectrice et « Studio Lumen ») ne rend rien ; `total_count` sur deux espaces ; les deux refus `22023` inchangés.
+- **Retour arrière** : rétablir la définition de la `0188` (supprimer la nouvelle signature, recréer l'ancienne et ses
+  droits). La webapp de T3.c l'appelle avec `p_workspace_ids` : elle se retire avec elle.
+
+#### 16.8.2 Migration B — `temps_valorise` rend l'espace de chaque ligne
+
+- **Supprimée puis recréée** (son type de retour change), dans une transaction, comme la `0150` l'a déjà fait :
+  `rentabilite_affaires` l'appelle depuis un corps `plpgsql`, qui ne crée aucune dépendance et lit ses colonnes **par leur
+  nom** ; elle n'est pas réécrite.
+- **Retour** : les huit colonnes d'aujourd'hui, plus **`workspace_id uuid` en dernière position** (celui de la saisie). Le
+  regroupement l'ajoute ; il ne scinde rien, une cible n'appartenant qu'à un espace.
+- **Rien d'autre ne change** : paramètres, valorisation, `shared`, ordre, RLS (`security invoker`), droits (re-posés).
+- **pgTAP** : la colonne et sa valeur sur une saisie de chaque espace ; une saisie d'un espace non lu reste absente ;
+  `rentabilite_affaires` rend les mêmes sommes qu'avant sur le seed.
+- **Retour arrière** : rétablir la définition de la `0150`.
+
+#### 16.8.3 Les écrans
+
+- **Organisations** (l'onglet du carnet) : à partir de deux espaces lus, la liste lit **tous les espaces** — ou ceux du
+  filtre, passés en `p_workspace_ids` : **le filtre se fait par la lecture**, la liste étant paginée (§16.2). Colonne
+  **« Espace »**, la dernière avant les actions (§5.115). Le bouton **« Espace »** entre dans la barre de filtres existante,
+  avec « Tracks » et « Catégories », son panneau sous elle comme les leurs (§5.105) ; changer le choix revient à la
+  première page. **Les cases « Tracks » et « Catégories »** listent celles des espaces de la portée (choisis, sinon tous),
+  **groupées sous une sous-légende par espace** dès que la portée en couvre deux — deux tracks homonymes de deux espaces
+  restent distincts. La création d'une organisation se fait dans l'espace de l'onglet et le dit (« Dans l'espace X »,
+  §5.115). D'un seul espace : la liste d'aujourd'hui.
+- **Temps ▸ Rapport** : la lecture est déjà celle de tous les espaces ; à partir de deux espaces, la ligne de chaque
+  **track** nomme son espace (la forme de « Rentabilité », un tableau arborescent, §5.115), et le bouton **« Espace »**
+  filtre **en mémoire** (la lecture n'est pas paginée), placé après la navigation de mois. **Limite nommée** : le choix de
+  la personne (« Toute l'équipe », un membre) reste celui des membres de l'espace de l'onglet ; l'étendre relève de T3.d
+  (Temps ▸ Saisie, décision 981).
+- **Les numéros des deux migrations** sont pris à leur commit, après synchronisation et après l'annonce de fin de la
+  session de livraison (CLAUDE.md §5) ; le contrat de livraison les consigne alors, avec l'ordre « migrations, puis
+  webapp » et leur retour arrière.

@@ -3466,6 +3466,21 @@ et les blocages sont perdus — les mails mis à la corbeille par un blocage y r
   `plateforme_creer_espace` de `0089`.
 - **Preuve** : pgTAP `0183`, rouge avant la migration ; `0084` inchangée et verte.
 
+### Migrations de `CRM-161` T3.c — `organization_list` et `temps_valorise` lisent et rendent l'espace (numéros pris à leur commit ; spécifiées le 2026-11-24, avant le code)
+
+`docs/SPEC-espace-courant.md` §16.8. *Pas encore écrites ni appliquées.*
+
+- **A — `public.organization_list`** supprimée puis recréée : `p_workspace_id uuid default null` (gardé pour la
+  compatibilité), **`p_workspace_ids uuid[] default null`** ; portée : `p_workspace_ids` non vide, sinon
+  `array[p_workspace_id]`, sinon tous les espaces que la RLS laisse lire. Retour : (`id`, `name`, `domain`, `website`,
+  `contacts`, `has_revenues`, **`workspace_id`**, `total_count`). `SECURITY INVOKER`, `stable` ; refus `22023`
+  inchangés ; un espace non lu ne rend aucune ligne. `execute` à `authenticated` seulement.
+  **Retour arrière** : la définition de la `0188`.
+- **B — `public.temps_valorise`** supprimée puis recréée : retour (`profile_id`, `track_id`, `channel_id`, `card_id`,
+  `minutes`, `montant`, `devise`, `shared`, **`workspace_id`**) ; le reste inchangé ; `rentabilite_affaires` non réécrite
+  (corps `plpgsql`, colonnes lues par leur nom). **Retour arrière** : la définition de la `0150`.
+- Aucune table, colonne ni politique nouvelle ; aucun appel du connecteur.
+
 ### Migration `0200` — `CRM-165` : les consignes de la plateforme (`0200_consignes_connecteur.sql` ; spécifiée le 2026-11-24, avant le code)
 
 `docs/SPEC-mcp.md` §18 ; décisions 980 et 983.
