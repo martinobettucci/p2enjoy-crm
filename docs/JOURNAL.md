@@ -41970,7 +41970,7 @@ existe déjà mais figé dans le code.
 **Par défaut, sans arbitrage** (à confirmer par la spécification) : l'onglet « Connecteur MCP » de la plateforme, une borne de
 longueur, l'auteur et la date affichés, une ligne au journal d'audit.
 
-### décision 980 — `CRM-161` T3 : la saisie du temps devient une grille de tous les espaces
+### décision 981 — `CRM-161` T3 : la saisie du temps devient une grille de tous les espaces
 
 *2026-11-24, réponse du responsable à la question Q2 (`docs/SPEC-espace-courant.md` §16.6) ; session ef (ex-5f).*
 **La question** : la grille de Temps ▸ Saisie reste-t-elle dans l'espace de l'onglet (recommandé), ou couvre-t-elle tous les
