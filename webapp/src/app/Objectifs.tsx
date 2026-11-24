@@ -1,6 +1,10 @@
 // @spec CRM-162 (docs/BACKLOG.md) tranche T2 — un bloc qui cite un channel d'un autre espace le nomme (décision 966) ;
 //       docs/SPEC-deplacement-track.md §13 ; docs/DESIGN_SYSTEM.md §5.112
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — les objectifs suivent l'espace courant de l'onglet, état intermédiaire jusqu'à T3 (§15.2) ; docs/SPEC-espace-courant.md
+// @spec CRM-161 (docs/BACKLOG.md) tranche T3.b.2 — la liste montre les tableaux de tous les espaces, une section par espace
+//       titrée de son nom (l'ordre `position` n'a de sens que dans un espace : le réordonnancement reste dans sa section),
+//       le filtre « Espace », le vide sous le filtre ; la création dans l'espace de l'onglet, dite (« Dans l'espace X ») ;
+//       rien pour une personne d'un seul espace (docs/SPEC-espace-courant.md §16.2, §16.3 ; docs/DESIGN_SYSTEM.md §5.115)
 // @spec CRM-083 (docs/BACKLOG.md) — canevas d'objectifs, tranche 1 : navigation, liste des
 //       tableaux, canevas rendu, flèches, équivalent textuel et ouverture du channel ;
 //       tranche 2a : poser, déplacer et redimensionner un bloc, à la souris et au clavier ;
@@ -182,6 +186,8 @@ import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useWorkspaces } from '../lib/workspaces'
 import { CHEMIN_OBJECTIFS, cheminTableauObjectifs } from './chemins'
 import { useContexteEspace } from './ContexteEspace'
+import { FiltreEspaces, useFiltreEspaces, VideSousFiltreEspaces, type FiltreEspacesDePage } from './FiltreEspaces'
+import { filtrerParEspace, nomEspace } from '../lib/provenance'
 import { idEspaceParmi } from '../lib/espace-onglet'
 
 /**
@@ -250,7 +256,10 @@ export function Objectifs({ client = clientCrm }: ProprietesObjectifs = {}) {
 	// filtrer localement — et un filtre local montrerait des archivés que le serveur n'a jamais
 	// rendus, ce que le compte de blocs LISIBLES du §5.1 ne pardonne pas.
 	const [inclureArchives, setInclureArchives] = useState(false)
-	const { etat, recharger } = useTableaux(client, idWorkspace, inclureArchives)
+	// `CRM-161` T3.b.2 (§16.3) : la liste lit tous les espaces dès que la personne en lit deux ; d'un seul, l'espace de l'onglet,
+	// comme avant.
+	const filtre = useFiltreEspaces()
+	const { etat, recharger } = useTableaux(client, idWorkspace, inclureArchives, filtre.visible)
 
 	// PAS DE CLIENT — l'application est montée sans configuration Supabase, cas ordinaire des
 	// preuves de routage. Même patron et même texte que le carnet : sans cette sortie, les deux
@@ -294,6 +303,7 @@ export function Objectifs({ client = clientCrm }: ProprietesObjectifs = {}) {
 		<ListeTableaux
 			client={client}
 			idWorkspace={idWorkspace as string}
+			filtre={filtre}
 			tableaux={etat.donnees}
 			recharger={recharger}
 			inclureArchives={inclureArchives}
@@ -319,18 +329,25 @@ export function Objectifs({ client = clientCrm }: ProprietesObjectifs = {}) {
 function ListeTableaux({
 	client,
 	idWorkspace,
-	tableaux,
+	filtre,
+	tableaux: tableauxLus,
 	recharger,
 	inclureArchives,
 	onBasculerArchives,
 }: {
 	readonly client: ClientCrm
 	readonly idWorkspace: string
+	readonly filtre: FiltreEspacesDePage
 	readonly tableaux: readonly TableauListe[]
 	readonly recharger: () => void
 	readonly inclureArchives: boolean
 	readonly onBasculerArchives: (inclure: boolean) => void
 }) {
+	// `CRM-161` T3.b.2 : le filtre « Espace », en mémoire (la liste n'est pas paginée, §16.2).
+	const tableaux = useMemo(
+		() => filtrerParEspace(tableauxLus, filtre.choisis, (tableau) => tableau.workspace_id),
+		[tableauxLus, filtre.choisis],
+	)
 	const [formulaire, setFormulaire] = useState<FormulaireTableau>(null)
 	const [message, setMessage] = useState<MessageEcriture | null>(null)
 	// Le retour du focus emprunte le remède du §5.25 — un drapeau, puis un effet — pour la cause du
@@ -423,7 +440,10 @@ function ListeTableaux({
 			// de deux voisines. Un `impossible` n'est pas une erreur, c'est le refus motivé du §6.2 de
 			// `docs/SPEC-administration-arborescence.md`, et l'écran le nomme au lieu d'écrire une
 			// valeur qui ne changerait rien (`CLAUDE.md` §18).
-			const deplacement = calculerDeplacement(tableaux.map(ordonnableDe), id, sens)
+			// `CRM-161` T3.b.2 : la position n'a de sens que dans un espace — le voisinage est celui de la section du tableau.
+			const espaceDuTableau = tableaux.find((tableau) => tableau.id === id)?.workspace_id
+			const voisins = tableaux.filter((tableau) => tableau.workspace_id === espaceDuTableau)
+			const deplacement = calculerDeplacement(voisins.map(ordonnableDe), id, sens)
 			if (deplacement.statut === 'impossible') {
 				setMessage({ ton: 'refus', texte: t('goals.board.move.impossible') })
 				return
@@ -473,7 +493,21 @@ function ListeTableaux({
 		[client, traiter],
 	)
 
-	const ordonnables = tableaux.map(ordonnableDe)
+	// LES SECTIONS (§16.3) : une par espace qui a des tableaux, dans l'ordre du menu des espaces, titrée de son nom ; d'un seul
+	// espace, une section sans titre — la liste d'avant T3.
+	const espacesNommes = filtre.visible ? filtre.espaces : undefined
+	const sections =
+		espacesNommes === undefined
+			? [{ idEspace: null as string | null, nom: null as string | null, tableaux }]
+			: espacesNommes
+					.map((espace) => ({
+						idEspace: espace.id as string | null,
+						nom: espace.name as string | null,
+						tableaux: tableaux.filter((tableau) => tableau.workspace_id === espace.id),
+					}))
+					.filter((section) => section.tableaux.length > 0)
+	const videSousFiltre = tableaux.length === 0 && tableauxLus.length > 0
+	const nomEspaceCreation = nomEspace(espacesNommes, idWorkspace)
 
 	return (
 		<section aria-label={t('goals.aria')} className="flex flex-col gap-4">
@@ -521,9 +555,12 @@ function ListeTableaux({
 
 			{/* Le formulaire vit DANS LE FLUX du document, sous l'en-tête, jamais dans une modale
 			    (§5.13, tranché trois fois). */}
+			<FiltreEspaces filtre={filtre} />
+
 			{formulaire?.mode === 'creation' ? (
 				<FormulaireNomTableau
 					testid="formulaire-creation-tableau"
+					espace={nomEspaceCreation}
 					titre={t('goals.board.create.title')}
 					nomInitial=""
 					descriptionInitiale=""
@@ -534,43 +571,65 @@ function ListeTableaux({
 				/>
 			) : null}
 
-			{tableaux.length === 0 ? (
+			{videSousFiltre ? (
+				<VideSousFiltreEspaces filtre={filtre} />
+			) : tableaux.length === 0 ? (
 				<EtatVide titre={t('goals.list.empty.title')} corps={t('goals.list.empty.body')} />
 			) : (
-				<ul className="flex flex-col rounded-lg border border-border bg-surface">
-					{tableaux.map((tableau) => (
-						<li key={tableau.id} className="border-b border-border last:border-b-0">
-							{formulaire?.mode === 'renommage' && formulaire.id === tableau.id ? (
-								<FormulaireNomTableau
-									testid="formulaire-renommage-tableau"
-									titre={t('goals.board.rename.title', { nom: tableau.name })}
-									nomInitial={tableau.name}
-									descriptionInitiale={tableau.description ?? ''}
-									libelleValider={t('goals.board.rename.submit')}
-									message={message}
-									onValider={(nom, description) => renommer(tableau.id, nom, description)}
-									onAnnuler={() => fermer(`renommer-${tableau.id}`)}
-								/>
-							) : formulaire?.mode === 'archivage' && formulaire.id === tableau.id ? (
-								<ConfirmationArchivageTableau
-									nom={tableau.name}
-									message={message}
-									onConfirmer={() => archiver(tableau.id)}
-									onAnnuler={() => fermer(`archiver-${tableau.id}`)}
-								/>
-							) : (
-								<LigneTableau
-									tableau={tableau}
-									ordonnables={ordonnables}
-									onRenommer={() => ouvrir({ mode: 'renommage', id: tableau.id })}
-									onArchiver={() => ouvrir({ mode: 'archivage', id: tableau.id })}
-									onDesarchiver={() => desarchiver(tableau.id)}
-									onDeplacer={(sens) => deplacer(tableau.id, sens)}
-								/>
-							)}
-						</li>
-					))}
-				</ul>
+				sections.map((section) => {
+					const ordonnables = section.tableaux.map(ordonnableDe)
+					const liste = (
+						<ul className="flex flex-col rounded-lg border border-border bg-surface">
+							{section.tableaux.map((tableau) => (
+								<li key={tableau.id} className="border-b border-border last:border-b-0">
+									{formulaire?.mode === 'renommage' && formulaire.id === tableau.id ? (
+										<FormulaireNomTableau
+											testid="formulaire-renommage-tableau"
+											titre={t('goals.board.rename.title', { nom: tableau.name })}
+											nomInitial={tableau.name}
+											descriptionInitiale={tableau.description ?? ''}
+											libelleValider={t('goals.board.rename.submit')}
+											message={message}
+											onValider={(nom, description) => renommer(tableau.id, nom, description)}
+											onAnnuler={() => fermer(`renommer-${tableau.id}`)}
+										/>
+									) : formulaire?.mode === 'archivage' && formulaire.id === tableau.id ? (
+										<ConfirmationArchivageTableau
+											nom={tableau.name}
+											message={message}
+											onConfirmer={() => archiver(tableau.id)}
+											onAnnuler={() => fermer(`archiver-${tableau.id}`)}
+										/>
+									) : (
+										<LigneTableau
+											tableau={tableau}
+											ordonnables={ordonnables}
+											onRenommer={() => ouvrir({ mode: 'renommage', id: tableau.id })}
+											onArchiver={() => ouvrir({ mode: 'archivage', id: tableau.id })}
+											onDesarchiver={() => desarchiver(tableau.id)}
+											onDeplacer={(sens) => deplacer(tableau.id, sens)}
+										/>
+									)}
+								</li>
+							))}
+						</ul>
+					)
+					return section.nom === null ? (
+						<div key="unique">{liste}</div>
+					) : (
+						<section
+							key={section.idEspace}
+							data-testid="section-espace-tableaux"
+							aria-labelledby={`espace-tableaux-${section.idEspace}`}
+							className="flex flex-col gap-2"
+						>
+							<h3 id={`espace-tableaux-${section.idEspace}`} className="text-sm font-medium text-text-2">
+								{section.nom}
+							</h3>
+							{liste}
+						</section>
+					)
+				})
 			)}
 
 			{/* La mention d'écriture de la LISTE est celle des gestes qui n'ouvrent aucun formulaire —
@@ -782,6 +841,7 @@ function LigneTableau({
  */
 function FormulaireNomTableau({
 	testid,
+	espace = null,
 	titre,
 	nomInitial,
 	descriptionInitiale,
@@ -791,6 +851,8 @@ function FormulaireNomTableau({
 	onAnnuler,
 }: {
 	readonly testid: string
+	/** `CRM-161` T3.b.2 (§16.2) : l'espace d'une création, à partir de deux espaces lus ; sinon `null`. */
+	readonly espace?: string | null
 	readonly titre: string
 	readonly nomInitial: string
 	readonly descriptionInitiale: string
@@ -827,6 +889,11 @@ function FormulaireNomTableau({
 			}}
 		>
 			<p className="font-medium">{titre}</p>
+			{espace === null ? null : (
+				<p data-testid="espace-creation-tableau" className="text-sm text-text-2">
+					{t('spaces.creation.in', { nom: espace })}
+				</p>
+			)}
 			<label className="flex flex-col gap-1 text-sm">
 				{t('goals.board.field.name')}
 				<input

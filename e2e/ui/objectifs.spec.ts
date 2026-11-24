@@ -25,6 +25,9 @@
 //
 // AUCUNE RÉPONSE N'EST SUBSTITUÉE et aucune fonction interne n'est appelée : ce que la preuve
 // mesure est ce que le backend a consenti.
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : la liste de tous les espaces — une section par espace, le filtre à
+//           la souris et au clavier, « Dans l'espace X » à la création, la lectrice d'un seul espace, les quatre paliers
+//           (docs/SPEC-espace-courant.md §16.3 ; docs/DESIGN_SYSTEM.md §5.115)
 
 // @verifies INC-262, décision 614 — poser un bloc sans chercher où il est : repère parti d'une place
 //           libre visible et qui suit la souris, bloc posé désigné, premier plan, un clic un seul effet
@@ -2062,5 +2065,77 @@ test.describe('poser un bloc sans chercher où il est — INC-262 (SPEC-goals §
 		)
 		expect(auPoint).toContain('Nouvel objectif')
 		await capturer(page, 'pose-chevauchement-premier-plan-1440', UNITE)
+	})
+})
+
+// `CRM-161` T3.b.2 — Camille lit « P2Enjoy SAS » (« Objectifs du trimestre », et « Objectifs 2025 (clos) » archivé) et
+// « Studio Lumen » (« Saison 2027 », docs/SPEC-seed.md §55). Rien n'est écrit : le formulaire est ouvert puis annulé.
+test.describe('`CRM-161` T3.b.2 — les tableaux de tous les espaces (docs/DESIGN_SYSTEM.md §5.115)', () => {
+	const UNITE_T3 = 'CRM-161'
+
+	test('à la souris : une section par espace, isoler un espace, « Dans l’espace » à la création', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await page.goto('/objectifs')
+		const sections = page.getByTestId('section-espace-tableaux')
+		await expect(sections).toHaveCount(2)
+		await expect(sections.locator('h3')).toHaveText(['P2Enjoy SAS', 'Studio Lumen'])
+		await expect(sections.nth(1)).toContainText('Saison 2027')
+		await expect(sections.nth(0)).toContainText('Objectifs du trimestre')
+		await capturer(page, 'objectifs-espaces-1440', UNITE_T3)
+
+		await page.getByRole('button', { name: 'Espace', exact: true }).click()
+		await page.getByTestId('panneau-filtre-espaces').getByRole('checkbox', { name: 'Studio Lumen' }).check()
+		await expect(page).toHaveURL(/[?&]espaces=studio-lumen/)
+		await expect(sections).toHaveCount(1)
+		await expect(sections.locator('h3')).toHaveText('Studio Lumen')
+		await page.reload()
+		await expect(sections).toHaveCount(1)
+
+		// LA CRÉATION SE FAIT DANS L'ESPACE DE L'ONGLET, quel que soit le filtre, et le formulaire le dit.
+		await page.getByTestId('creer-tableau').click()
+		await expect(page.getByTestId('espace-creation-tableau')).toHaveText('Dans l’espace P2Enjoy SAS')
+		await capturer(page, 'objectifs-creation-espace-1440', UNITE_T3)
+		await page.keyboard.press('Escape')
+		await expect(page.getByTestId('formulaire-creation-tableau')).toHaveCount(0)
+	})
+
+	test('au clavier : ouvrir, cocher à l’espace, replier par Échap, le focus rendu au bouton', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await page.goto('/objectifs')
+		await expect(page.getByTestId('section-espace-tableaux')).toHaveCount(2)
+		const bouton = page.getByRole('button', { name: 'Espace', exact: true })
+		await bouton.focus()
+		await page.keyboard.press('Enter')
+		await page.keyboard.press('Tab')
+		await expect(page.getByRole('checkbox', { name: 'P2Enjoy SAS' })).toBeFocused()
+		await page.keyboard.press('Space')
+		await expect(page).toHaveURL(/[?&]espaces=p2enjoy/)
+		await expect(page.getByTestId('section-espace-tableaux')).toHaveCount(1)
+		await page.keyboard.press('Escape')
+		await expect(page.getByRole('button', { name: 'Espace (1)' })).toBeFocused()
+	})
+
+	test('la lectrice, d’un seul espace : ni section titrée, ni filtre — la liste d’avant T3', async ({ page }) => {
+		await connecter(page, LECTRICE)
+		await page.goto('/objectifs?espaces=studio-lumen')
+		await expect(page.getByText('Objectifs du trimestre')).toBeVisible()
+		await expect(page.getByTestId('section-espace-tableaux')).toHaveCount(0)
+		await expect(page.getByTestId('filtre-espaces')).toHaveCount(0)
+	})
+
+	test('les quatre paliers, filtre ouvert : captures produites, et aucun débordement horizontal', async ({ page }) => {
+		await connecter(page, ADMIN)
+		for (const palier of PALIERS) {
+			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await page.goto('/objectifs')
+			await expect(page.getByTestId('section-espace-tableaux')).toHaveCount(2)
+			await page.getByRole('button', { name: 'Espace', exact: true }).click()
+			await expect(page.getByTestId('panneau-filtre-espaces')).toBeVisible()
+			const deborde = await page.evaluate(
+				() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+			)
+			expect(deborde, `débordement horizontal à ${palier.nom}`).toBe(false)
+			await capturer(page, `objectifs-filtre-${palier.nom}`, UNITE_T3)
+		}
 	})
 })

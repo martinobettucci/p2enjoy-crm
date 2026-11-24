@@ -16,6 +16,8 @@
 // flèches, elles, ne dépendent que du tableau — l'appelant en reçoit QUATRE, dont une dont
 // l'origine ne lui est pas rendue. C'est cette asymétrie, voulue par le §4.1, qui produit l'état
 // « pointillés vers le vide » du §5.4, et c'est `composerDiagramme` qui la matérialise.
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : la liste des tableaux de tous les espaces, chacun portant le sien
+//       (docs/SPEC-espace-courant.md §16.3)
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
@@ -34,8 +36,14 @@ export type TableauObjectifs = Pick<
 	'id' | 'name' | 'description' | 'position' | 'archived_at'
 >
 
-/** Un tableau tel que la liste le rend : ses attributs, et le nombre de blocs LISIBLES (§5.1). */
-export type TableauListe = TableauObjectifs & { readonly blocsLisibles: number }
+/**
+ * Un tableau tel que la liste le rend : ses attributs, et le nombre de blocs LISIBLES (§5.1). `workspace_id` depuis
+ * `CRM-161` T3.b.2 : la liste de tous les espaces se groupe par espace (docs/SPEC-espace-courant.md §16.3).
+ */
+export type TableauListe = TableauObjectifs & {
+	readonly blocsLisibles: number
+	readonly workspace_id: string
+}
 
 /**
  * La destination d'un bloc lié, telle que la pilule l'affiche : « Track › Channel » (§5.2).
@@ -94,6 +102,9 @@ export type ContenuTableau = {
 }
 
 export const COLONNES_TABLEAU = 'id, name, description, position, archived_at'
+
+/** Colonnes de la LISTE (`CRM-161` T3.b.2) : celles du tableau, et son espace, pour grouper par espace (§16.3). */
+export const COLONNES_TABLEAU_LISTE = `${COLONNES_TABLEAU}, workspace_id`
 
 /**
  * Colonnes du tableau vues par le CANEVAS : celles de la liste, plus la capacité.
@@ -214,14 +225,16 @@ export function lienPerdu(bloc: BlocObjectif): boolean {
  */
 export async function lireTableaux(
 	client: ClientCrm,
-	idWorkspace: string,
+	/**
+	 * `CRM-161` T3.b.2 (docs/SPEC-espace-courant.md §16.3) : les tableaux de cet espace seul ; omis, ceux de tous les espaces
+	 * que la RLS rend — la liste globale, groupée par espace par l'écran.
+	 */
+	idWorkspace: string | undefined,
 	inclureArchives = false,
 ): Promise<EtatAsync<readonly TableauListe[]>> {
 	try {
-		const filtre = client
-			.from('goal_boards')
-			.select(COLONNES_TABLEAU)
-			.eq('workspace_id', idWorkspace)
+		const tous = client.from('goal_boards').select(COLONNES_TABLEAU_LISTE)
+		const filtre = idWorkspace === undefined ? tous : tous.eq('workspace_id', idWorkspace)
 		const reponse = await (inclureArchives ? filtre : filtre.is('archived_at', null))
 			.order('position')
 			.order('name')
@@ -523,6 +536,8 @@ export function useTableaux(
 	client: ClientCrm | null,
 	idWorkspace: string | null,
 	inclureArchives = false,
+	/** `CRM-161` T3.b.2 : lire les tableaux de tous les espaces, une fois l'espace de l'onglet connu (§16.3). */
+	tousLesEspaces = false,
 ): { readonly etat: EtatAsync<readonly TableauListe[]>; readonly recharger: () => void } {
 	const [etat, setEtat] = useState<EtatAsync<readonly TableauListe[]>>(enChargement)
 	const [tentative, setTentative] = useState(0)
@@ -538,10 +553,10 @@ export function useTableaux(
 		setEtat((precedent) =>
 			precedent.statut === 'pret' ? precedent : enChargement<readonly TableauListe[]>(),
 		)
-		void lireTableaux(client, idWorkspace, inclureArchives).then((resultat) => {
+		void lireTableaux(client, tousLesEspaces ? undefined : idWorkspace, inclureArchives).then((resultat) => {
 			if (rang === courant.current) setEtat(resultat)
 		})
-	}, [client, idWorkspace, inclureArchives, tentative])
+	}, [client, idWorkspace, inclureArchives, tentative, tousLesEspaces])
 
 	const recharger = useCallback(() => setTentative((precedente) => precedente + 1), [])
 	return { etat, recharger }

@@ -1161,6 +1161,36 @@
 				},
 				{
 					"type": "text",
+					"text": "), les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Objectifs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-objectifs-le-tableau-blanc-de-l-equipe",
+						"anchor": "la-liste-des-tableaux"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§8.1"
+						}
+					]
+				},
+				{
+					"type": "text",
 					"text": "), le "
 				},
 				{

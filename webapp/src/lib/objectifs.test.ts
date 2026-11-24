@@ -7,6 +7,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.29 (flèche pointillée sans libellé quand une extrémité manque)
 // @verifies CRM-162 (docs/BACKLOG.md) — tranche T2 : la destination d'un bloc porte l'espace de son channel — un channel
 //           déplacé garde le lien, et la pilule nomme son espace (docs/SPEC-deplacement-track.md §3.2 ; décision 966)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : la liste lit l'espace de chaque tableau, et tous les espaces quand
+//           aucun n'est demandé (docs/SPEC-espace-courant.md §16.3)
 //
 // CE FICHIER ÉPROUVE LA RÈGLE, PAS L'IMPLÉMENTATION. Le cas central est celui que la RLS produit
 // et que rien d'autre ne produit : une flèche dont l'un des deux blocs n'a PAS été rendu à
@@ -14,11 +16,14 @@
 // flèches passerait tous les autres tests de ce fichier.
 
 import { describe, expect, it } from 'vitest'
+import type { ClientCrm } from './supabase'
 import {
+	COLONNES_TABLEAU_LISTE,
 	composerDiagramme,
 	destinationDepuisEmbarque,
 	ecritureConsentie,
 	etendueCanevas,
+	lireTableaux,
 	lienOuvrable,
 	lienPerdu,
 	listeTextuelleDiagramme,
@@ -329,5 +334,51 @@ describe('ecritureConsentie — la capacité vient de la BASE, et son absence FE
 		// `!!valeur` : PostgREST rendrait la chaîne « true » sur une lecture mal typée, et
 		// `Boolean('false')` vaut `true` — un défaut qui ouvrirait l'écriture à qui ne l'a pas.
 		expect(ecritureConsentie(tableau('true' as unknown as boolean))).toBe(false)
+	})
+})
+
+describe('lireTableaux — `CRM-161` T3.b.2 : la liste de tous les espaces (§16.3)', () => {
+	function espion() {
+		const filtres: string[] = []
+		let colonnes = ''
+		const client = {
+			from: (table: string) => {
+				const chaine: Record<string, unknown> = {}
+				for (const methode of ['is', 'in', 'order']) chaine[methode] = () => chaine
+				chaine.eq = (colonne: string, valeur: string) => {
+					filtres.push(`${table}.${colonne}=${valeur}`)
+					return chaine
+				}
+				chaine.select = (demandees: string) => {
+					if (table === 'goal_boards') colonnes = demandees
+					return chaine
+				}
+				chaine.then = (resoudre: (valeur: unknown) => unknown) =>
+					Promise.resolve({
+						data: table === 'goal_boards' ? [{ id: 'b1', workspace_id: 'ws-l' }] : [],
+						error: null,
+						status: 200,
+					}).then(resoudre)
+				return chaine
+			},
+		} as unknown as ClientCrm
+		return { client, filtres, colonnes: () => colonnes }
+	}
+
+	it('demande l’espace de chaque tableau, et le rend', async () => {
+		const { client, colonnes } = espion()
+		const lu = await lireTableaux(client, undefined)
+		expect(COLONNES_TABLEAU_LISTE).toContain('workspace_id')
+		expect(colonnes()).toBe(COLONNES_TABLEAU_LISTE)
+		expect(lu.statut === 'pret' ? lu.donnees[0]?.workspace_id : null).toBe('ws-l')
+	})
+
+	it('sans espace demandé, aucun filtre d’espace ; avec un espace, ce seul espace', async () => {
+		const sans = espion()
+		await lireTableaux(sans.client, undefined)
+		expect(sans.filtres).toEqual([])
+		const avec = espion()
+		await lireTableaux(avec.client, 'ws-p')
+		expect(avec.filtres).toEqual(['goal_boards.workspace_id=ws-p'])
 	})
 })

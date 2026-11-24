@@ -9226,7 +9226,8 @@ la spécification réservait, a été prise par `CRM-165` avant l'écriture de c
 - **LE FILTRE « Espace » EST LE PATRON DU §5.105** (« Tracks »), sans écart :
   - un **bouton secondaire** « Espace » dans la barre de filtres de la page (« Rentabilité » : après « Réel » et « Prévu »,
     son panneau sous la barre) ; une page qui n'a pas de barre en reçoit une (« Coûts » : au-dessus des histogrammes ; « Ma journée » : sous ses onglets
-    de portée ; le carnet : entre la rangée de ses commandes et le tableau),
+    de portée ; le carnet : entre la rangée de ses commandes et le tableau ; les objectifs : sous « Afficher les
+    archivés »),
     `role="group"` nommée « Filtres », au-dessus de sa liste (§5.9 : `flex-wrap`, cibles de 40 px). Le bouton dit le nombre
     coché, « Espace (1) », porte `aria-expanded` et `aria-controls` ;
   - il déplie, **dans le flux, sous la barre**, un panneau de cases (§5.92) : une `fieldset` de légende « Espaces
@@ -9246,6 +9247,9 @@ la spécification réservait, a été prise par `CRM-165` avant l'écriture de c
   - **dans l'en-tête d'un groupe** (une liste groupée, comme « Affaires figées », §5.37), la mention suit le titre et son
     compte, dans le même `h2`, en `text-sm` `--color-text-2`, séparée par « · » dans son propre élément (§5.36 : un nœud de
     texte accolé ne se sépare pas). Un groupe appartient à un seul espace : la mention n'est jamais répétée sur ses lignes.
+  - **par section** (la liste des objectifs, dont l'ordre n'a de sens que dans un espace) : une section par espace qui a des
+    lignes, dans l'ordre du menu, titrée de son nom en `h3` `text-sm` `font-medium` `--color-text-2`. *Précisé le
+    2026-11-24 au code de T3.b.2.*
   - **sur la ligne de groupe d'un tableau arborescent** (« Rentabilité », §5.60 : track, channels, affaires), la même mention
     que dans un en-tête de groupe, dans le `th` de la ligne du track, après son nom, en `text-sm` `--color-text-2`
     `font-normal`, « · » dans son propre élément. Pas de colonne : un track n'a qu'un espace, et une colonne répéterait son

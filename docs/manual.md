@@ -358,7 +358,7 @@ bouton dit combien d'espaces sont cochés, par exemple **Espace (1)**. Rien de c
 l'adresse de la page, et survit donc à un rechargement ou à un lien copié. Si les espaces cochés n'ont rien à montrer, la
 page le dit et propose **Afficher tous les espaces**. Au clavier, ouvrez le bouton avec `Entrée`, passez d'une case à
 l'autre avec `Tab`, cochez avec `Espace`, refermez avec `Échap`. Si vous n'êtes membre que d'un espace, ni le bouton ni la
-mention de l'espace n'apparaissent. Les pages qui le font : **Ma journée** ([§6.2](#ce-qu-une-ligne-montre)), le **carnet de contacts** ([chapitre 10](#le-carnet-de-contacts)), **Affaires figées** ([chapitre 7](#les-affaires-figees-ce-qui-dort-depuis-trop-longtemps)), **Coûts**
+mention de l'espace n'apparaissent. Les pages qui le font : **Ma journée** ([§6.2](#ce-qu-une-ligne-montre)), les **Objectifs** ([§8.1](#la-liste-des-tableaux)), le **carnet de contacts** ([chapitre 10](#le-carnet-de-contacts)), **Affaires figées** ([chapitre 7](#les-affaires-figees-ce-qui-dort-depuis-trop-longtemps)), **Coûts**
 ([chapitre 26](#les-couts-de-tout-l-espace-de-travail-un-cumul-par-track)) et **Rentabilité** ([§29.3](#l-ecran-rentabilite)).
 
 **L'espace est dans l'adresse.** L'adresse de l'inbox, d'un track ou d'une page de réglages commence par le nom court de
@@ -1153,6 +1153,11 @@ tenez à jour. La fiche du bloc le rappelle sous son remplissage.
 
 L'écran **« Tableaux d'objectifs »** liste les tableaux de l'espace dans leur ordre, chacun avec sa description et son
 nombre de blocs. Cliquer sur le nom d'un tableau ouvre son canevas.
+
+**Si vous êtes membre de plusieurs espaces**, la liste rassemble les tableaux de tous, en une section par espace, titrée
+de son nom ; chaque section garde son propre ordre, et monter ou descendre un tableau le déplace dans sa section. Le
+bouton **Espace** n'en garde que certains (« Changer d'espace », [chapitre 3](#naviguer-barre-laterale-onglets-etats)). Un
+tableau se crée dans l'espace où vous vous trouvez, que le formulaire nomme.
 
 Un **administrateur** ou un **business developer** de l'espace administre les tableaux depuis cette liste :
 

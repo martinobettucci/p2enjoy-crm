@@ -20630,7 +20630,13 @@ livraison (décision 830).
   `contacts` et `carnet-creation` 65/65 (souris, clavier, homonymes, fiche, lectrice d'un seul espace, quatre paliers ;
   les comptes de l'administratrice passés de 11 à 13, décision 51) ; captures observées (`carnet-*`) ; manuel chapitre 10 et
   §3.2 bis, construit, `verify-manual.sh` 170/170 ; scénario du manuel 10 9/9. Contrat §2.79 étendu ; changelog.
-  **Reste de T3.b.2** : Objectifs, cloche, recherche, et les onglets « À saisir » de « Coûts » et « Rentabilité ».
+  **T3.b.2, les objectifs, faits le 2026-11-24** : la liste lit tous les espaces (`lireTableaux` sans espace,
+  `workspace_id` lu), une section par espace titrée de son nom, monter et descendre dans la section, le filtre, « Dans
+  l'espace X » à la création (§5.115 précisé). Preuves : unitaires `objectifs` et `Objectifs` 144/144 ; E2E `objectifs` et
+  `premier-lancement` 61/61 (sections, souris, clavier, lectrice d'un seul espace, quatre paliers) ; captures observées
+  (`objectifs-*`) ; manuel §8.1 et §3.2 bis, construit, `verify-manual.sh` 170/170 ; scénario du manuel 08 9/9. Contrat
+  §2.79 étendu ; changelog.
+  **Reste de T3.b.2** : cloche, recherche, et les onglets « À saisir » de « Coûts » et « Rentabilité ».
   **Relevés à reprendre dans T3** (*2026-11-21, session de livraison au constat du lot de T1 et T2 ; consignés par 5f*) :
   - **Les non-lus de chaque espace sous `md`.** À 390 px, la section « Espaces » du repli du fil d'Ariane ne montre aucune
     pastille de non-lus (capture `docs/captures/CRM-161/menu-espaces-sm-390.jpg`), alors que la décision 965 les veut au

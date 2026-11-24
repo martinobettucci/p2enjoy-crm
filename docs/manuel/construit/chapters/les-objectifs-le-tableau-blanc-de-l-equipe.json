@@ -159,6 +159,53 @@
 			"type": "paragraph",
 			"content": [
 				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Si vous êtes membre de plusieurs espaces"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", la liste rassemble les tableaux de tous, en une section par espace, titrée\nde son nom ; chaque section garde son propre ordre, et monter ou descendre un tableau le déplace dans sa section. Le\nbouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " n'en garde que certains (« Changer d'espace », "
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 3"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Un\ntableau se crée dans l'espace où vous vous trouvez, que le formulaire nomme."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
 					"type": "text",
 					"text": "Un "
 				},

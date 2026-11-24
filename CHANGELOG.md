@@ -15,6 +15,9 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **La liste des objectifs montre les tableaux de tous vos espaces** (`CRM-161` T3.b.2) : à partir de deux espaces, une
+  section par espace, titrée de son nom, chacune avec son ordre ; le bouton « Espace » ; un tableau se crée dans l'espace
+  où vous vous trouvez, que le formulaire nomme. Manuel §8.1.
 - **Le carnet de contacts montre tous vos espaces** (`CRM-161` T3.b.2) : à partir de deux espaces, une colonne « Espace »
   (deux homonymes s'y distinguent) et le bouton « Espace » ; « Nouveau contact », l'export et l'import restent dans
   l'espace où vous vous trouvez et le disent (« Dans l'espace X »). Manuel chapitre 10.

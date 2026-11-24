@@ -19,6 +19,9 @@
 // L'ASSERTION LA PLUS IMPORTANTE EST UNE ABSENCE : le titre du bloc masqué par la RLS
 // n'apparaît NULLE PART, ni dans le dessin, ni dans l'équivalent textuel, ni dans une infobulle.
 // L'écran ne nomme jamais ce qu'il cache (§4.1), et une régression sur ce point est une FUITE.
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : la liste de tous les espaces — une section par espace titrée de
+//           son nom, le filtre, « Dans l'espace X » à la création, le réordonnancement dans sa section ; rien d'un seul
+//           espace (docs/SPEC-espace-courant.md §16.3 ; docs/DESIGN_SYSTEM.md §5.115)
 
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
@@ -26,6 +29,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { CanevasObjectifs, Objectifs, corpsSuppressionBloc, libelleCompteBlocs } from './Objectifs'
 import { fr } from '../i18n/fr'
 import type { ClientCrm } from '../lib/supabase'
+import { FournisseurEspace } from './ContexteEspace'
 
 afterEach(cleanup)
 
@@ -2239,5 +2243,62 @@ describe('INC-262 — poser un bloc sans chercher où il est (§5.5 ter)', () =>
 		} finally {
 			restaurer()
 		}
+	})
+})
+
+describe('`CRM-161` T3.b.2 — la liste des tableaux de tous les espaces (§16.3, §5.115)', () => {
+	const P2ENJOY = { id: 'w1', name: 'P2Enjoy', slug: 'p2enjoy' }
+	const LUMEN = { id: 'w2', name: 'Studio Lumen', slug: 'studio-lumen' }
+	const LISTE = [
+		{ ...TABLEAU, workspace_id: 'w1' },
+		{ ...TABLEAU_SECOND, workspace_id: 'w1' },
+		{ ...TABLEAU_TIERS, id: 'b9', name: 'Saison 2027', position: 1, workspace_id: 'w2' },
+	]
+	const monterDans = (espaces: readonly (typeof P2ENJOY)[], adresse = '/objectifs', client = clientListe(LISTE)) =>
+		render(
+			<MemoryRouter initialEntries={[adresse]}>
+				<FournisseurEspace valeur={{ idWorkspace: 'w1', estAdmin: true, espaces }}>
+					<Objectifs client={client} />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+
+	it('à deux espaces : une section par espace, titrée de son nom, dans l’ordre des espaces', async () => {
+		monterDans([P2ENJOY, LUMEN])
+		const sections = await screen.findAllByTestId('section-espace-tableaux')
+		expect(sections.map((section) => section.querySelector('h3')?.textContent)).toEqual(['P2Enjoy', 'Studio Lumen'])
+		expect(sections[1]?.textContent).toContain('Saison 2027')
+		expect(screen.getByRole('button', { name: 'Espace' })).toBeTruthy()
+	})
+
+	it('le réordonnancement reste dans sa section : le seul tableau d’un espace ne monte ni ne descend', async () => {
+		monterDans([P2ENJOY, LUMEN])
+		const sections = await screen.findAllByTestId('section-espace-tableaux')
+		const boutons = Array.from(sections[1]?.querySelectorAll('button') ?? []).filter((bouton) =>
+			/monter|descendre/i.test(bouton.getAttribute('aria-label') ?? bouton.textContent ?? ''),
+		)
+		expect(boutons.length).toBeGreaterThan(0)
+		expect(boutons.every((bouton) => bouton.hasAttribute('disabled'))).toBe(true)
+	})
+
+	it('la création dit l’espace où elle se fait', async () => {
+		monterDans([P2ENJOY, LUMEN])
+		fireEvent.click(await screen.findByTestId('creer-tableau'))
+		expect(screen.getByTestId('espace-creation-tableau').textContent).toBe('Dans l’espace P2Enjoy')
+	})
+
+	it('le filtre ne garde que l’espace choisi ; vidé par lui, le vide est celui du filtre', async () => {
+		monterDans([P2ENJOY, LUMEN], '/objectifs?espaces=studio-lumen')
+		await waitFor(() => expect(screen.getAllByTestId('section-espace-tableaux')).toHaveLength(1))
+		cleanup()
+		monterDans([P2ENJOY, LUMEN], '/objectifs?espaces=studio-lumen', clientListe([{ ...TABLEAU, workspace_id: 'w1' }]))
+		expect(await screen.findByText(fr['spaces.filter.empty.title'])).toBeTruthy()
+	})
+
+	it('d’un seul espace : aucune section titrée, ni bouton, ni mention — la liste d’avant', async () => {
+		monterDans([P2ENJOY])
+		expect(await screen.findByText(TABLEAU.name)).toBeTruthy()
+		expect(screen.queryByTestId('section-espace-tableaux')).toBeNull()
+		expect(screen.queryByTestId('filtre-espaces')).toBeNull()
 	})
 })
