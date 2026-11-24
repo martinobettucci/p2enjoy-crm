@@ -9261,6 +9261,11 @@ la spécification réservait, a été prise par `CRM-165` avant l'écriture de c
   - **dans le tableau équivalent d'un graphique** (« Coûts », §5.30, §5.33), la **précision** existante du §5.30, sous le
     libellé de chaque ligne : le graphique, `aria-hidden`, ne la montre pas. Pas de colonne nouvelle. *Précisé le 2026-11-24
     au code de `CRM-161` T3.b.*
+  - **dans le rapport de temps** (Temps ▸ Rapport, §5.54) : la colonne « Espace » par défaut, la dernière, sur chaque ligne
+    de chaque section. Le rapport n'est pas un tableau arborescent — une ligne y est une cible qui porte du temps direct, et
+    une affaire paraît sans la ligne de son track —, la règle de « Rentabilité » n'y a donc pas de ligne où se poser. Son
+    bouton « Espace » suit la navigation de mois et le choix de la personne, dans la même rangée ; son panneau sous elle.
+    *Précisé le 2026-11-24 au code de `CRM-161` T3.c.*
 - **UNE PAGE GLOBALE QUI CRÉE DIT OÙ** (§16.2 de la spécification) : à partir de deux espaces lus, la rangée de ses
   commandes de création, d'export et d'import se termine par « Dans l'espace X » (`text-sm` `--color-text-2`, centré sur la
   rangée), et le formulaire de création commence par la même phrase. Ces commandes agissent dans l'espace de l'onglet,

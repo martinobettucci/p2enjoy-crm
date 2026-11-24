@@ -697,6 +697,13 @@ reconstruire ; **la preuve est leur intégration sur la base migrée** (`test_in
   filtre **en mémoire** (la lecture n'est pas paginée), placé après la navigation de mois. **Limite nommée** : le choix de
   la personne (« Toute l'équipe », un membre) reste celui des membres de l'espace de l'onglet ; l'étendre relève de T3.d
   (Temps ▸ Saisie, décision 981).
+  *Précisé au code le 2026-11-24 (7a), avant l'écriture de l'écran* : **le rapport n'est pas un tableau arborescent**. Une
+  ligne y est une cible qui porte du temps DIRECT (`composerRapport`) : un track n'a sa ligne que si l'on a saisi sur le
+  track lui-même, et une affaire paraît sans la ligne de son track ; deux tracks homonymes de deux espaces peuvent même
+  entremêler leurs lignes, triées par nom. La mention « sur la ligne du track » n'aurait donc pas de ligne où se poser.
+  **Le rapport prend la règle par défaut d'un tableau** (`docs/DESIGN_SYSTEM.md` §5.115) : une colonne **« Espace »**, la
+  dernière, sur chaque ligne de chaque section, à partir de deux espaces lus. Le filtre en mémoire, son placement et la
+  limite du choix de la personne ne changent pas ; le vide sous le filtre est celui du §5.115.
 - **Les numéros des deux migrations** sont pris à leur commit, après synchronisation et après l'annonce de fin de la
   session de livraison (CLAUDE.md §5) ; le contrat de livraison les consigne alors, avec l'ordre « migrations, puis
   webapp » et leur retour arrière.

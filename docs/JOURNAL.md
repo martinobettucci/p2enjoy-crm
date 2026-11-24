@@ -42227,3 +42227,17 @@ levé.
   connecteur sur ces deux outils, joués sur la base migrée, par `scripts/verify-mcp.sh`, après avoir prévenu 11.
 - **La vérification.** `grep` de `organization_list` et de `temps_valorise` dans `mcp/` ; lecture des deux outils.
 
+### `CRM-161` T3.c — le rapport de temps prend la colonne « Espace », pas la mention sur la ligne du track
+
+*2026-11-24, session 4891a451 (p2enjoy-crm-7a), avant l'écriture de l'écran Temps ▸ Rapport.*
+- **Le problème.** Le §16.8.3 voulait la provenance « sur la ligne du track », la forme de « Rentabilité ». À la lecture de
+  `composerRapport` : une ligne du rapport est une cible qui porte du temps direct ; un track n'a sa ligne que si l'on a
+  saisi sur lui, une affaire paraît sans celle de son track, et deux tracks homonymes de deux espaces peuvent entremêler
+  leurs lignes, triées par nom.
+- **Les solutions envisagées.** Une mention sur la première ligne de chaque track : elle tomberait sur une ligne d'affaire,
+  et ne dirait rien des suivantes. Une mention sous le libellé de chaque ligne, comme les onglets « À saisir » : leur
+  exception vaut pour un tableau de saisie déjà dense, ce que ce tableau de trois colonnes n'est pas. **La colonne
+  « Espace »**, la règle par défaut d'un tableau (§5.115).
+- **La décision (de l'agent, dans le cadre de la décision 965 et du §5.115).** La colonne, la dernière, sur chaque ligne ;
+  le reste du §16.8.3 inchangé. Consignée au §16.8.3 (« Précisé au code ») et au §5.115.
+
