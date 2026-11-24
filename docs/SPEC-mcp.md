@@ -1904,7 +1904,7 @@ un prompt propre à l'espace par PostgREST, sous le jeton de l'administratrice :
 | **T3** | l'écran (§17.7, `docs/DESIGN_SYSTEM.md` §5.104), son entrée dans l'index, les textes ; Vitest, E2E UI à la souris et au clavier, captures |
 | **T4** | le seed (§17.8), le manuel (§33.7 et l'index des réglages), ses images ; la clôture en `[P]` |
 
-## 18. Les consignes de la plateforme — `CRM-165` (décisions 980 et 982)
+## 18. Les consignes de la plateforme — `CRM-165` (décisions 980 et 983)
 
 *Écrit le 2026-11-24, avant le code.* Le connecteur envoie à l'assistant, à chaque connexion, des **consignes** — le champ
 `instructions` de la réponse à `initialize` (§2). Elles étaient figées dans le code (`INSTRUCTIONS`). Le responsable veut y
@@ -1919,7 +1919,7 @@ un prompt propre à l'espace par PostgREST, sous le jeton de l'administratrice :
   pour octet.
 - **Il vaut à la prochaine connexion** d'un assistant : les consignes partent à l'initialisation de la session, une
   conversation déjà ouverte garde les siennes. L'écran le dit.
-- **Le socle est visible, replié** (décision 982) : le service `mcp` le publie en base ; l'écran le montre en lecture seule.
+- **Le socle est visible, replié** (décision 983) : le service `mcp` le publie en base ; l'écran le montre en lecture seule.
 - **Connecteur MCP : non** (décision 980) — aucun outil ne lit ni n'écrit ces consignes ; le connecteur les envoie.
 
 ### 18.2 Le modèle — `public.connector_instructions` (migration `0200` ; `docs/SCHEMA.md`)

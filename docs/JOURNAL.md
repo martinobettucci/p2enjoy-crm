@@ -41992,7 +41992,7 @@ complet par espace. **La réponse** : « Tête globale, détail par espace ».
 **Les conséquences**, écrites au §16.6 : prévisionnel, taux et mentions sur tous les espaces lus, par devise ; un entonnoir
 détaillé par espace ; la portée par track ou channel offerte quand le filtre isole un espace.
 
-### décision 982 — `CRM-165` : le design system lu par sections ciblées ; le socle du connecteur visible, replié, publié par le service
+### décision 983 — `CRM-165` : le design system lu par sections ciblées ; le socle du connecteur visible, replié, publié par le service
 
 *2026-11-24, session 152dd27d (p2enjoy-crm-67), arbitrages du responsable (`AskUserQuestion`).*
 **Les questions** : (1) pour le bloc de l'onglet « Connecteur MCP », lire le design system en entier ou par sections ciblées ;

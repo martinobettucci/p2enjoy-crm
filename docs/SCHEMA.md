@@ -3468,7 +3468,7 @@ et les blocages sont perdus — les mails mis à la corbeille par un blocage y r
 
 ### Migration `0200` — `CRM-165` : les consignes de la plateforme (`0200_consignes_connecteur.sql` ; spécifiée le 2026-11-24, avant le code)
 
-`docs/SPEC-mcp.md` §18 ; décisions 980 et 982.
+`docs/SPEC-mcp.md` §18 ; décisions 980 et 983.
 
 - **`public.connector_instructions`** `(id boolean primary key default true check (id), body text not null default '' check
   (char_length(body) <= 4000), updated_at timestamptz, updated_by uuid references profiles on delete set null, base text,

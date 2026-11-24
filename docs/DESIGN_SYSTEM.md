@@ -9170,7 +9170,7 @@ plateforme vaut ici — dans le flux, aucune modale, un seul bloc ouvert à la f
 
 ### 5.114 Les consignes aux assistants : un bloc de l'onglet « Connecteur MCP » de la plateforme — `CRM-165`
 
-*Écrit le 2026-11-24, avant le code, après lecture des sections ciblées par la décision 982 : §5.56 (la plateforme, l'onglet
+*Écrit le 2026-11-24, avant le code, après lecture des sections ciblées par la décision 983 : §5.56 (la plateforme, l'onglet
 « Connecteur MCP »), §5.104 (l'éditeur des prompts, le patron le plus proche).* Ce que le bloc lit, écrit et refuse est au
 §18 de `docs/SPEC-mcp.md` ; ces règles ne disent que de quoi il a l'air.
 
@@ -9188,7 +9188,7 @@ plateforme vaut ici — dans le flux, aucune modale, un seul bloc ouvert à la f
   région vivante du bloc : « Consignes enregistrées. Elles valent à la prochaine connexion d'un assistant. »
 - **L'AUTEUR ET LA DATE**, sous la commande, 13 px `--color-text-2` : « Modifiées par {nom} le {date} », ou « Jamais
   modifiées. » ; un auteur parti : « Modifiées le {date} ».
-- **LE SOCLE, REPLIÉ** (décision 982) : un `details` / `summary` « Consignes fixes du connecteur », fermé par défaut ; ouvert,
+- **LE SOCLE, REPLIÉ** (décision 983) : un `details` / `summary` « Consignes fixes du connecteur », fermé par défaut ; ouvert,
   le texte exact en `pre` monospace 13 px, `whitespace-pre-wrap`, sur `--color-hover` aux coins arrondis, bordure `--color-border`, puis
   « Publiées par le connecteur le {date}. » Jamais publiées : « Le connecteur ne les a pas encore publiées : il le fait à son
   démarrage. »
