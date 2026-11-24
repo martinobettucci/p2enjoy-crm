@@ -13,6 +13,9 @@
 -- un fil sur Vertigo Conseil. La preuve nomme ses catégories « … 0176 » et ne compte plus que ce qu'elle pose elle-même —
 -- ses catégories, ses poses, son commentaire —, au lieu de supposer un catalogue et un fil vides.
 
+-- Révisé le 2026-11-24 (CRM-161 T3.c, migration 0201) : la signature gagne `p_workspace_ids uuid[]`, en dernier ;
+-- les assertions 1 et 4 la nomment. Le contrat prouvé ici ne change pas.
+
 begin;
 
 create extension if not exists pgtap with schema extensions;
@@ -58,7 +61,7 @@ insert into auth.users (id, email) values (pg_temp.id('etranger'), 'etranger-017
 -- La forme
 -- ------------------------------------------------------------------------------------------------------------------
 select is((select prosecdef from pg_proc
-            where oid = 'public.organization_list(uuid, text, uuid[], text, text, boolean, integer, integer, uuid[])'::regprocedure),
+            where oid = 'public.organization_list(uuid, text, uuid[], text, text, boolean, integer, integer, uuid[], uuid[])'::regprocedure),
 	false, '1 — la liste, qui gagne p_category_ids, reste SECURITY INVOKER');
 select is((select count(*)::int from pg_proc p join pg_namespace n on n.oid = p.pronamespace
             where n.nspname = 'public' and p.proname = 'organization_list'),
@@ -68,7 +71,7 @@ select is((select count(*)::int from pg_class
                               'organization_comment_mentions')
               and relrowsecurity),
 	4, '3 — la RLS est active sur les quatre tables');
-select ok(not has_function_privilege('anon', 'public.organization_list(uuid, text, uuid[], text, text, boolean, integer, integer, uuid[])', 'execute'),
+select ok(not has_function_privilege('anon', 'public.organization_list(uuid, text, uuid[], text, text, boolean, integer, integer, uuid[], uuid[])', 'execute'),
 	'4 — l''anonyme n''appelle pas la liste');
 
 -- ------------------------------------------------------------------------------------------------------------------

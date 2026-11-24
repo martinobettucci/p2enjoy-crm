@@ -1,4 +1,5 @@
 // @verifies CRM-153 (docs/BACKLOG.md) — tranche T1 : les quatre tables d'une organisation au témoin des tables, `organization_list` remplacée sans changer le compte (docs/SPEC-organisations.md §9.1, §9.2)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.c : `organization_list` remplacée (`p_workspace_ids`, `workspace_id` rendu, `p_workspace_id` facultatif) et `temps_valorise` qui rend `workspace_id`, sans changer le compte (docs/SPEC-espace-courant.md §16.8.1, §16.8.2 ; docs/SCHEMA.md « Migrations `0201` et `0202` »)
 // @verifies CRM-154 (docs/BACKLOG.md) — tranche T2 : `reorder_channels` au témoin des fonctions (docs/SPEC-administration-arborescence.md §15.2)
 // @verifies CRM-149 (docs/BACKLOG.md) — tranche T1 : la table `mcp_prompts` au témoin des types générés (docs/SPEC-mcp.md §17.2)
 // @verifies CRM-141 (docs/BACKLOG.md) — tranches T1 et T2 : les trois tables et les cinq fonctions des pastilles d'un mail dans
@@ -736,6 +737,22 @@ type _tempsValorisePorteLePartage = Expect<
 type _rentabilitePorteLePartage = Expect<
   Equal<Database['public']['Functions']['rentabilite_affaires']['Returns'][number]['shared'], boolean>
 >
+// `CRM-161` T3.c : la liste des organisations lit plusieurs espaces et dit l'espace de chaque ligne ; `p_workspace_id`,
+// gardé pour la webapp d'avant et le connecteur, devient facultatif (docs/SPEC-espace-courant.md §16.8.1).
+type _organisationsPlusieursEspaces = Expect<
+  Equal<Database['public']['Functions']['organization_list']['Args']['p_workspace_ids'], string[] | undefined>
+>
+type _organisationsUnEspaceFacultatif = Expect<
+  Equal<Database['public']['Functions']['organization_list']['Args']['p_workspace_id'], string | undefined>
+>
+type _organisationPorteSonEspace = Expect<
+  Equal<Database['public']['Functions']['organization_list']['Returns'][number]['workspace_id'], string>
+>
+// `CRM-161` T3.c : une ligne de `temps_valorise` dit l'espace de sa saisie — la provenance et le filtre « Espace » de
+// Temps ▸ Rapport (§16.8.2).
+type _tempsValorisePorteSonEspace = Expect<
+  Equal<Database['public']['Functions']['temps_valorise']['Returns'][number]['workspace_id'], string>
+>
 
 // Les deux clés étrangères COMPOSITES sont visibles dans les types : c'est ce qui rend structurelle
 // la garantie « une valeur ne répond pas à la question d'un autre workflow » (§6.3, décision 124).
@@ -1356,6 +1373,9 @@ type _vueDerivationColonnes = Expect<
 // super-administrateur seul, puis `connector_instructions_text` et `connector_instructions_publish_base`, à la clé de service
 // seule (docs/SPEC-mcp.md §18.3). CE QUI ÉCHAPPE AU GÉNÉRATEUR : les refus `reserve_aux_superadministrateurs` (42501),
 // `connector_instructions_invalid` et `connector_instructions_too_long` (22023). Le compte s'accroît de quatre.
+// `0201` de CRM-161, TRANCHE T3.c, REMPLACE `organization_list` : `p_workspace_ids` en dernier, `workspace_id` rendu,
+// `p_workspace_id` facultatif (docs/SPEC-espace-courant.md §16.8.1) ; `0202` REMPLACE `temps_valorise`, qui rend
+// `workspace_id` (§16.8.2). Les anciennes signatures sont retirées. Le compte ne change pas.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1815,6 +1835,10 @@ export type AssertionsDuContratDeTypes = [
   _valeurDuRattachement,
   _tempsValorisePorteLePartage,
   _rentabilitePorteLePartage,
+  _organisationsPlusieursEspaces,
+  _organisationsUnEspaceFacultatif,
+  _organisationPorteSonEspace,
+  _tempsValorisePorteSonEspace,
   _signatureChangementWorkflowChannel,
   _retourChangementWorkflowEstUnLot,
   _retourChangementWorkflowPorteLEtape,

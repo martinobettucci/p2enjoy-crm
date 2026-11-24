@@ -17,6 +17,9 @@
 --
 -- Tout se joue dans une transaction annulée.
 
+-- Révisé le 2026-11-24 (CRM-161 T3.c, migration 0202) : `temps_valorise` gagne `workspace_id` après `shared` ; l'assertion
+-- de la forme ne fixe plus la fin du retour. Le contrat prouvé ici ne change pas.
+
 begin;
 
 create extension if not exists pgtap with schema extensions;
@@ -66,7 +69,7 @@ select max(d)::date as jour_lectrice
 -- =============================================================================================
 
 select ok(pg_get_function_result('public.temps_valorise(date, date, uuid, uuid, uuid)'::regprocedure)
-            like '%devise text, shared boolean)',
+            like '%devise text, shared boolean%',
 	'`temps_valorise` rend `shared` après `devise`');
 select ok(not (select bool_or(p.prosecdef) from pg_proc p
                 where p.oid in ('public.temps_valorise(date, date, uuid, uuid, uuid)'::regprocedure,

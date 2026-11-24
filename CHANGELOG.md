@@ -13,7 +13,10 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+- **CRM-161 T3.c, les migrations 201 et 202** : la liste des organisations peut lire plusieurs espaces à la fois et dit
+  l'espace de chaque organisation, et le temps valorisé dit l'espace de chaque ligne. Rien ne change encore à l'écran : les
+  écrans Organisations et Temps ▸ Rapport, qui s'en serviront, suivent. La webapp et le connecteur livrés continuent de
+  fonctionner sans changement.
 
 ## [Publié]
 

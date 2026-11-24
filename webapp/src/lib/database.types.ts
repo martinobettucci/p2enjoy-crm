@@ -6211,7 +6211,8 @@ export type Database = {
           p_search?: string
           p_sort?: string
           p_track_ids?: string[]
-          p_workspace_id: string
+          p_workspace_id?: string
+          p_workspace_ids?: string[]
         }
         Returns: {
           contacts: number
@@ -6221,6 +6222,7 @@ export type Database = {
           name: string
           total_count: number
           website: string
+          workspace_id: string
         }[]
       }
       organization_revenue_totals: {
@@ -6772,6 +6774,7 @@ export type Database = {
           profile_id: string
           shared: boolean
           track_id: string
+          workspace_id: string
         }[]
       }
       track_current_address: {

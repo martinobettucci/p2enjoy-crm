@@ -1682,7 +1682,34 @@ déjà. Le manuel construit (chapitres 3, 4, 5, 6, 8, 10, 26 et 29) part avec el
 **Ce qui devient visible** : rien pour une personne d'un seul espace, ce qui est le cas de toute la production aujourd'hui.
 **Retour arrière** : la webapp de la révision d'avant.
 
+### 2.80 `CRM-161` T3.c — `organization_list` lit plusieurs espaces et `temps_valorise` rend l'espace de chaque ligne (les migrations 201 et 202 ; leurs écrans suivent) (EN ATTENTE)
+
+`docs/SPEC-espace-courant.md` §16.8 ; `docs/SCHEMA.md` « Migrations `0201` et `0202` ». **Deux fonctions remplacées, aucune
+table, aucune variable, aucun secret.** La 201 : `organization_list` gagne `p_workspace_ids uuid[]`, en dernier, et rend
+`workspace_id` avant `total_count` ; `p_workspace_id` devient facultatif. La 202 : `temps_valorise` rend `workspace_id` en
+dernière colonne. **Compatibles avec la webapp livrée et avec le connecteur** : tous deux appellent ces fonctions par le nom
+de leurs paramètres, avec `p_workspace_id`, et ne lisent que les colonnes qu'ils nomment ; l'appel positionnel d'avant garde
+son sens. Elles peuvent donc partir **seules, avant la webapp de T3.c**, qui les appelle avec `p_workspace_ids` et lit
+`workspace_id` et ne part qu'avec elles ou après elles. Aucune image `mcp` à reconstruire. *Écrites et prouvées en
+développement le 2026-11-24 (7a) : pgTAP `0187` et `0188`, et les suites des deux fonctions ; empreintes identiques avant
+et après.* Les écrans (Organisations, Temps ▸ Rapport) compléteront cette section.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la 201 puis la 202 | session de livraison, dans la fenêtre du lot | `runProd.sh --migrate` (§3), après la 200 ; registre à 200 lignes |
+| 2 | Relire | session de livraison | une seule `organization_list`, à dix arguments, rendant `workspace_id` ; `temps_valorise` rendant `workspace_id` en dernière colonne ; la liste des organisations de la webapp et `crm_organization_list` rendent ce qu'elles rendaient |
+| 3 | Constater | le responsable | rien ne change à l'écran tant que la webapp de T3.c n'est pas livrée |
+
+**Retour arrière** : pour la 201, supprimer la signature à dix arguments puis rejouer la section 7 de la `0188` ; pour la
+202, supprimer la fonction puis rejouer sa section 2 de la `0150`. La webapp de T3.c, si elle est livrée, se retire avec
+elles.
+
 ## 3. Migrations en attente
+
+**La 201 et la 202** (`CRM-161` T3.c, décisions 963 et 965), *en attente* : `organization_list` lit plusieurs espaces, et
+`temps_valorise` rend l'espace de chaque ligne (§2.80, `docs/SCHEMA.md` « Migrations `0201` et `0202` »). **Après la 200**,
+la 201 avant la 202, indépendantes l'une de l'autre. Compatibles avec la webapp et l'image `mcp` livrées : elles peuvent partir
+seules, ou avec la webapp de T3.c, jamais après elle. Aucun geste préalable du responsable.
 
 **Aucune migration en attente depuis la fenêtre du 2026-11-24 au soir** : la 200 a été appliquée par elle (révision `3e0bdc47`, décision 987) ; registre à **198** lignes. *Historique de l'attente* — le paragraphe qui suit décrit la 200 telle qu'elle attendait.
 

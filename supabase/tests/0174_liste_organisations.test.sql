@@ -9,6 +9,9 @@
 -- Révisé le 2026-11-18 (CRM-153 T1, migration 0188) : la signature de la liste gagne `p_category_ids uuid[]`, en dernier ;
 -- l'assertion 1 la nomme. Le contrat prouvé ici ne change pas.
 
+-- Révisé le 2026-11-24 (CRM-161 T3.c, migration 0201) : la signature gagne `p_workspace_ids uuid[]`, en dernier ;
+-- l'assertion 1 la nomme. Le contrat prouvé ici, sur un espace donné, ne change pas.
+
 begin;
 
 create extension if not exists pgtap with schema extensions;
@@ -44,7 +47,7 @@ $$;
 -- ------------------------------------------------------------------------------------------------------------------
 -- La forme
 -- ------------------------------------------------------------------------------------------------------------------
-select is((select prosecdef from pg_proc where oid = 'public.organization_list(uuid, text, uuid[], text, text, boolean, integer, integer, uuid[])'::regprocedure),
+select is((select prosecdef from pg_proc where oid = 'public.organization_list(uuid, text, uuid[], text, text, boolean, integer, integer, uuid[], uuid[])'::regprocedure),
 	false, '1 — la liste est SECURITY INVOKER : elle rend ce que la RLS laisse lire');
 select ok(not has_function_privilege('anon', 'public.organization_tracks(uuid[])', 'execute'), '2 — l''anonyme n''appelle pas les tracks');
 

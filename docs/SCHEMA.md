@@ -3466,9 +3466,10 @@ et les blocages sont perdus — les mails mis à la corbeille par un blocage y r
   `plateforme_creer_espace` de `0089`.
 - **Preuve** : pgTAP `0183`, rouge avant la migration ; `0084` inchangée et verte.
 
-### Migrations de `CRM-161` T3.c — `organization_list` et `temps_valorise` lisent et rendent l'espace (numéros pris à leur commit ; spécifiées le 2026-11-24, avant le code)
+### Migrations `0201` et `0202` — `CRM-161` T3.c : `organization_list` et `temps_valorise` lisent et rendent l'espace (`0201_organisations_plusieurs_espaces.sql`, `0202_temps_valorise_espace.sql` ; spécifiées le 2026-11-24, avant le code)
 
-`docs/SPEC-espace-courant.md` §16.8. *Pas encore écrites ni appliquées.*
+`docs/SPEC-espace-courant.md` §16.8. *Écrites et appliquées en développement le 2026-11-24 ; numéros pris après la
+livraison de T3.b et une synchronisation.* A est la `0201`, B la `0202`.
 
 - **A — `public.organization_list`** supprimée puis recréée : `p_workspace_id uuid default null` (gardé pour la
   compatibilité), **`p_workspace_ids uuid[] default null`** ; portée : `p_workspace_ids` non vide, sinon
@@ -3479,7 +3480,15 @@ et les blocages sont perdus — les mails mis à la corbeille par un blocage y r
 - **B — `public.temps_valorise`** supprimée puis recréée : retour (`profile_id`, `track_id`, `channel_id`, `card_id`,
   `minutes`, `montant`, `devise`, `shared`, **`workspace_id`**) ; le reste inchangé ; `rentabilite_affaires` non réécrite
   (corps `plpgsql`, colonnes lues par leur nom). **Retour arrière** : la définition de la `0150`.
-- Aucune table, colonne ni politique nouvelle ; aucun appel du connecteur.
+- Aucune table, colonne ni politique nouvelle. *Corrigé avant le code* : le connecteur appelle les deux fonctions
+  (`crm_organization_list`, `crm_time_report`), par le nom de leurs paramètres, et ne recopie que les colonnes qu'il
+  nomme ; il n'en est pas changé.
+- *Précisé au code* : `p_workspace_ids` vient **en dernier**, après `p_category_ids`, si bien que l'appel positionnel à huit
+  arguments d'avant garde son sens ; le regroupement de `temps_valorise` gagne `workspace_id` sans rien scinder (une saisie
+  porte l'espace de sa cible, et un déplacement de track réécrit celui de ses saisies). Preuves : pgTAP `0187` (20
+  assertions) et `0188` (10) ; `0140`, `0174` et `0176` révisées (la signature, la fin du retour) ; `0082`, `0087`, `0142`
+  rejouées ; empreintes de `rentabilite_affaires`, `temps_valorise` (huit premières colonnes) et `organization_list` sur un
+  espace, identiques avant et après, pour l'administratrice et la lectrice.
 
 ### Migration `0200` — `CRM-165` : les consignes de la plateforme (`0200_consignes_connecteur.sql` ; spécifiée le 2026-11-24, avant le code)
 
