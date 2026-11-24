@@ -20693,7 +20693,8 @@ qui ne chevauche pas la suivante ; Vitest, API ; le contrat (fonction `functions
 production : aucun `edge_request_failed` de `ia` sur une journée. La campagne complète revient à la session de livraison
 (décision 830).
 
-### CRM-164 — Le connecteur coupe la session d'un assistant qui renouvelle deux fois le même jeton ; les erreurs de protocole ne laissent aucune trace `[ ]`
+### CRM-164 — Le connecteur coupe la session d'un assistant qui renouvelle deux fois le même jeton ; les erreurs de protocole ne laissent aucune trace `[@]`
+*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-39) depuis 2026-11-24 06:41 UTC — état avant : [ ] ; confiée par la session de livraison (96)*
 
 **Origine** : signalement du responsable, le 2026-11-24 — un long import de prospection depuis ChatGPT (2 500+ affaires) ne s'est
 pas terminé, et Claude a rapporté une erreur interne `-32603` du connecteur sur la liste des organisations. Diagnostic de la
