@@ -20824,10 +20824,10 @@ pytest unitaire (assemblage socle + texte, texte vide) et intégration (un vrai 
 l'initialisation) ; E2E souris et clavier ; seed (un texte de démonstration) ; captures observées ; manuel ; contrat. La campagne
 complète revient à la session de livraison (décision 830).
 
-## Relevé du 2026-11-24 — le bloc de relance affirme « aucune relance » avant d'avoir lu (INC-365), à arbitrer
+## Relevé du 2026-11-24 — le bloc de relance affirme « aucune relance » avant d'avoir lu (INC-365), arbitré et corrigé
 
-- [@] **INC-365 — arbitré (décision 985) : le bloc reçoit un état de chargement** (`docs/INCONSISTENCY_REPORT.md`).
-  *Prise en charge : session interactive d5b44a2d (p2enjoy-crm-30) depuis 2026-11-24 14:04 UTC — état avant : [ ] ; confiée par la session de livraison (11)*
+- [P] **INC-365 — arbitré (décisions 985 et 986) : le bloc reçoit un état de chargement** (`docs/INCONSISTENCY_REPORT.md`).
+  *Faite le 2026-11-24* : Vitest `BlocSequenceCard.test.tsx` 5/6 rouges avant (aucun squelette), 6/6 verts après ; E2E `armement-sequence` rouge avant sur l'ancien composant (le squelette introuvable), 9/9 verts après, dont le squelette (lecture retenue) et le parcours au clavier seul ; manuel 14-16 7/7 ; unitaires 6297/6297 ; typecheck propre ; captures observées. Reste le constat en production (`docs/PROD_MIGRATIONS.md` §2.78).
   **Le correctif** (décisions 985 et 986 ; `docs/DESIGN_SYSTEM.md` §5.42, `docs/SPEC-modeles-emails.md` §13.8) : un
   squelette tant que l'inscription active, les séquences et les adresses proposées ne sont pas lues ; l'état ou le geste
   ensuite. Connecteur MCP : non (décision 985). **DoD** : preuve rouge avant (le bloc affirme « Aucune relance n'est

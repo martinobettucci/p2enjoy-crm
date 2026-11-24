@@ -35,6 +35,10 @@ d'exécuter le code attendu.
   « Espace » au-dessus de la liste n'en garde que certains ; le choix vit dans l'adresse (`?espaces=`), et un choix sans
   résultat le dit, avec « Afficher tous les espaces ». Une personne d'un seul espace ne voit aucun changement. Premier
   composant partagé des pages globales, que les suivantes reprendront. Aucune migration ; webapp à livrer.
+- **`INC-365` — le bloc « Relance automatique » n'affirme plus rien avant d'avoir lu** (décisions 985 et 986). Sur la fiche
+  d'une affaire, le bloc rendait « Aucune relance n'est armée » et offrait d'armer pendant la lecture de l'inscription, puis
+  basculait sur une relance armée ; ses deux listes affirmaient de même « aucune séquence » ou « aucune adresse ». Il rend
+  désormais un squelette tant que les trois lectures sont en cours (`docs/DESIGN_SYSTEM.md` §5.42). Contrat §2.78.
 
 ## [Publié]
 

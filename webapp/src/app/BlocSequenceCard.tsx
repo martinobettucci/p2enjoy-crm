@@ -1,3 +1,6 @@
+// @spec INC-365 (docs/BACKLOG.md, relevé du 2026-11-24 ; décisions 985 et 986) — le chargement avant les deux états : un
+//       squelette tant que l'inscription active, les séquences et les adresses proposées ne sont pas lues, et ni l'état ni
+//       le geste (docs/DESIGN_SYSTEM.md §5.42, §5.8 ; docs/SPEC-modeles-emails.md §13.8)
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — un choix fait pour un objet d'un espace ne lit que cet espace
 //       (docs/SPEC-espace-courant.md §15.4 bis, « Les sélecteurs liés à un espace » ; décision 975)
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les commandes d'écriture lisent le refus de la fiche quand la base refuse
@@ -33,6 +36,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { CalendarClock, Play, Square } from 'lucide-react'
 import { Button } from '../components/ui/Button'
+import { SkeletonListe } from '../components/ui/Skeleton'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import { t, type CleTraduction } from '../i18n'
 import { enChargement, type EtatAsync } from '../lib/async'
@@ -110,6 +114,8 @@ export function BlocSequenceCard({
 	const [arreteeSansDomaine, setArreteeSansDomaine] = useState(false)
 	const [sequences, setSequences] = useState<readonly SequenceRelance[]>([])
 	const [identites, setIdentites] = useState<readonly IdentiteEnvoi[]>([])
+	// `INC-365` (décision 986) : une liste vide qui n'est pas encore lue ne dit pas « aucune séquence » ni « aucune adresse ».
+	const [listesLues, setListesLues] = useState(false)
 	const [idSequence, setIdSequence] = useState('')
 	const [idIdentite, setIdIdentite] = useState('')
 	const [refus, setRefus] = useState<CleTraduction | null>(null)
@@ -163,6 +169,7 @@ export function BlocSequenceCard({
 	useEffect(() => {
 		if (client === null || idUtilisateur === null) return
 		let vivant = true
+		setListesLues(false)
 		void (async () => {
 			const lues = await lireSequences(client, idWorkspace)
 			if (vivant && lues.statut === 'pret') setSequences(lues.donnees)
@@ -174,6 +181,7 @@ export function BlocSequenceCard({
 			const disponibles = await lireIdentitesDisponibles(client, idUtilisateur, idWorkspace)
 			if (!vivant) return
 			setIdentites(disponibles)
+			setListesLues(true)
 			// LE RESPONSABLE QUI ARME VOIT SON IDENTITÉ PAR DÉFAUT PRÉSÉLECTIONNÉE (décisions 803 et 805) ; une autre
 			// personne choisit. Un choix déjà fait n'est jamais écrasé.
 			const presselection = identiteArmementAPreselectionner(disponibles, idUtilisateur, idResponsable)
@@ -242,6 +250,9 @@ export function BlocSequenceCard({
 	if (client === null || idUtilisateur === null) return null
 
 	const active = inscription.statut === 'pret' ? inscription.donnees : null
+	// `INC-365` (décisions 985 et 986, §5.42) : tant que l'une des trois lectures est en cours, le bloc ne sait pas encore s'il
+	// porte l'état ou le geste ; il ne rend ni l'un ni l'autre. Une lecture en échec n'est pas un chargement : elle le termine.
+	const chargement = inscription.statut === 'chargement' || !listesLues
 
 	return (
 		<section
@@ -261,7 +272,9 @@ export function BlocSequenceCard({
 				</p>
 			)}
 
-			{active !== null ? (
+			{chargement ? (
+				<SkeletonListe lignes={3} libelle={t('state.loading.aria')} />
+			) : active !== null ? (
 				<div data-testid="sequence-active" className="flex flex-col gap-2">
 					{/* L'ÉTAT DIT OÙ EN EST LA CADENCE, ET RIEN DE PLUS (§5.42). Le nom de la séquence et
 					    l'adresse expéditrice viennent d'un SEUL appel, par jointure — mesuré. */}

@@ -42112,3 +42112,18 @@ replié, `ChevronDown` déplié, la convention déjà employée — devant le r�
 sont décrits sans être cités, et l'image du socle déplié est prise dans une fenêtre de 1 600 px, où « Enregistrer », le
 résumé et tout le texte tiennent. **Vérifications** : vitest 10/10 puis 6290/6290 ; E2E 4/4 ; `verify-manual.sh` 170
 contrôles sans anomalie ; captures observées.
+
+### `INC-365` — le squelette du bloc « Relance automatique », corrigé
+
+*2026-11-24, session d5b44a2d (p2enjoy-crm-30), décisions 985 et 986.*
+- **La cause.** `BlocSequenceCard` ne rendait que deux branches, `active !== null` ou le geste : l'état `chargement` de
+  l'inscription tombait dans la seconde, et les deux listes, initialisées vides, disaient « aucune » avant d'être lues.
+- **Le correctif.** Un drapeau `listesLues`, posé après la lecture des identités (qui suit celle des séquences), et une
+  troisième branche en tête : un squelette tant que l'inscription est en chargement ou que les listes ne sont pas lues. Une
+  lecture en échec rend un état `erreur` ou une liste vide : elle termine le chargement, comme le §5.8 le veut.
+- **Les preuves.** Vitest rouge 5/6 avant (le sixième, l'échec de lecture, prouve un comportement gardé), 6/6 après ; une
+  preuve E2E qui **retient** la lecture de l'inscription par `page.route` puis la laisse passer à la vraie base, rouge sur
+  l'ancien composant, verte après ; le parcours au clavier seul ; la capture des paliers attend désormais le geste. Le
+  manuel 14-16 rejoué (7/7) : les images du bloc n'ont pas changé, les huit images réécrites étaient du bruit et ont été
+  rendues.
+

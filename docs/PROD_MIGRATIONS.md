@@ -1649,6 +1649,18 @@ assistants » de Plateforme ▸ Connecteur MCP, le geste `connector_instructions
 **Retour arrière** : la webapp de la révision d'avant ; un texte déjà écrit reste en base, et l'image `mcp` continue de
 l'envoyer : le vider avant, si l'on revient en arrière.
 
+### 2.78 `INC-365`, décisions 985 et 986 — le bloc « Relance automatique » attend ses lectures (EN ATTENTE)
+
+`docs/DESIGN_SYSTEM.md` §5.42 ; `docs/SPEC-modeles-emails.md` §13.8. La webapp seule : `BlocSequenceCard`. **Aucune migration,
+aucune variable, aucun secret.**
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer la webapp | session de livraison, dans la fenêtre du lot | comme toute livraison de la webapp (§4) |
+| 2 | Constater | le responsable | à l'ouverture d'une fiche d'affaire, le bloc « Relance automatique » montre un bref squelette, puis « Aucune relance n'est armée » et le geste, ou l'état d'une relance armée — jamais l'un puis l'autre |
+
+**Ce qui devient visible** : le squelette, le temps des trois lectures. **Retour arrière** : la webapp de la révision d'avant.
+
 ## 3. Migrations en attente
 
 **La 200** (`CRM-165` T1, décisions 980 et 983), **en attente** : les consignes de la plateforme (§2.74, `docs/SCHEMA.md`

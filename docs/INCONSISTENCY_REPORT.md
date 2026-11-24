@@ -9385,3 +9385,5 @@ offert seulement après la lecture), ce qui précise §5.42 — ou garder l'affi
 
 **Étendu le 2026-11-24 (décision 986)** : les deux sélecteurs du bloc portent le même défaut — « Aucune séquence » et
 « Aucune adresse » sont affirmés tant que leurs listes ne sont pas lues ; le squelette attend donc les trois lectures.
+
+**Corrigée le 2026-11-24** (session 30) : `BlocSequenceCard` rend un squelette (`SkeletonListe`, trois lignes) tant que l'une des trois lectures est en cours, et ni l'état ni le geste ; une lecture en échec termine le chargement. Vitest `BlocSequenceCard.test.tsx` 5/6 rouges avant (aucun squelette), 6/6 verts après ; E2E `armement-sequence` rouge avant sur l'ancien composant (le squelette introuvable), 9/9 verts après, dont le squelette (lecture retenue) et le parcours au clavier seul ; manuel 14-16 7/7 ; unitaires 6297/6297 ; typecheck propre ; captures observées. Livrée avec la webapp (`docs/PROD_MIGRATIONS.md` §2.78).

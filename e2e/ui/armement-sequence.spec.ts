@@ -14,6 +14,9 @@
 // @verifies INC-335 (docs/BACKLOG.md, correctif de la décision 805, T2) — la présélection de la décision 803 : le
 //           responsable du rattachement voit son identité par défaut, une autre personne un sélecteur vide ; l'identité de
 //           service n'est jamais proposée (docs/SPEC-rattachements.md §7 ; docs/DESIGN_SYSTEM.md §5.42)
+// @verifies INC-365 (docs/BACKLOG.md, relevé du 2026-11-24 ; décisions 985 et 986) — tant que l'inscription n'est pas lue,
+//           un squelette et ni l'état ni le geste ; l'armement et l'interruption au clavier seul
+//           (docs/DESIGN_SYSTEM.md §5.42, §5.8 ; docs/SPEC-modeles-emails.md §13.8)
 //
 // TOUTE INSCRIPTION ARMÉE EST REFERMÉE, ET C'EST UNE EXIGENCE DE SÛRETÉ, pas de style. Le §12.12
 // l'écrit : une inscription active est exécutée par le job DIX SECONDES après le démarrage de la
@@ -36,6 +39,7 @@ import { corpsParRattachement } from '../api/rattachements'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-063'
+const UNITE_CHARGEMENT = 'INC-365'
 const ADMIN = 'admin@p2enjoy.test'
 /** Driss, responsable du rattachement de l'affaire figée du seed : la présélection de la décision 803 le concerne. */
 const RESPONSABLE = 'bizdev@p2enjoy.test'
@@ -162,6 +166,79 @@ test.describe('armer une relance depuis l’affaire (docs/SPEC-modeles-emails.md
 		await capturer(page, 'armement-geste-1440', UNITE)
 	})
 
+	test('tant que l’inscription n’est pas lue, un squelette : ni « aucune relance », ni le geste (INC-365)', async ({
+		page,
+	}) => {
+		await connecter(page)
+		// LA LECTURE DE L'INSCRIPTION EST RETENUE jusqu'à ce que l'écran ait été constaté : c'est l'ordre d'arrivée des
+		// réponses qui faisait le défaut (la lecture part dans la file d'une trentaine de requêtes de la fiche), et seule une
+		// preuve qui le tient en main le montre. La réponse est ensuite celle de la vraie base, non une substitution.
+		let liberer!: () => void
+		const retenue = new Promise<void>((resoudre) => {
+			liberer = resoudre
+		})
+		let retenues = 0
+		await page.route(
+			(adresse) =>
+				adresse.pathname.endsWith('/rest/v1/card_sequence_enrollments') &&
+				adresse.search.includes(`card_id=eq.${AFFAIRE_FIGEE.id}`) &&
+				adresse.search.includes('status=eq.active'),
+			async (route) => {
+				retenues += 1
+				await retenue
+				await route.continue()
+			},
+		)
+		await page.goto(AFFAIRE_FIGEE.adresse)
+		const bloc = page.getByTestId('bloc-sequence-card')
+		await expect(bloc).toBeVisible()
+		await expect.poll(() => retenues, 'la lecture de l’inscription a bien été émise, et retenue').toBeGreaterThan(0)
+
+		const squelette = bloc.getByRole('status', { name: 'Chargement en cours' })
+		await expect(squelette).toBeVisible()
+		// RIEN N'EST AFFIRMÉ AVANT D'ÊTRE SU : ni l'absence de relance, ni le geste qui en arme une.
+		await expect(bloc.getByTestId('sequence-vide')).toHaveCount(0)
+		await expect(bloc.getByTestId('armer-sequence')).toHaveCount(0)
+		await expect(bloc.getByTestId('sequence-active')).toHaveCount(0)
+		await bloc.scrollIntoViewIfNeeded()
+		await capturer(page, 'armement-chargement-1440', UNITE_CHARGEMENT)
+
+		liberer()
+		await expect(bloc.getByTestId('sequence-vide')).toHaveText('Aucune relance n’est armée sur cette affaire.')
+		await expect(squelette).toHaveCount(0)
+		await expect(bloc.getByTestId('armer-sequence')).toBeEnabled()
+	})
+
+	test('au clavier seul : choisir, armer, puis interrompre (INC-365)', async ({ page }) => {
+		await connecter(page)
+		await page.goto(AFFAIRE_FIGEE.adresse)
+		const bloc = page.getByTestId('bloc-sequence-card')
+		await expect(bloc.getByTestId('sequence-vide')).toBeVisible()
+
+		// LE SÉLECTEUR DE SÉQUENCE REÇOIT LE FOCUS, puis tout se fait au clavier : la recherche par frappe choisit la
+		// séquence, `Tab` mène à l'adresse, la flèche choisit la première identité proposée, `Tab` mène au geste, `Entrée` arme.
+		const champSequence = bloc.getByTestId('champ-sequence')
+		await champSequence.focus()
+		await page.keyboard.type(SEQUENCE_SEED)
+		await expect(champSequence.locator('option:checked')).toHaveText(SEQUENCE_SEED)
+		await page.keyboard.press('Tab')
+		const champIdentite = bloc.getByTestId('champ-identite-sequence')
+		await expect(champIdentite).toBeFocused()
+		await page.keyboard.press('ArrowDown')
+		await expect(champIdentite).not.toHaveValue('')
+		await page.keyboard.press('Tab')
+		await expect(bloc.getByTestId('armer-sequence')).toBeFocused()
+		await page.keyboard.press('Enter')
+
+		await expect(bloc.getByTestId('sequence-active-nom')).toContainText(SEQUENCE_SEED)
+		const interrompre = bloc.getByTestId('interrompre-sequence')
+		await interrompre.focus()
+		await expect(interrompre).toBeFocused()
+		await page.keyboard.press('Enter')
+		await expect(bloc.getByTestId('sequence-vide')).toBeVisible()
+		await expect(bloc.getByTestId('sequence-active')).toHaveCount(0)
+	})
+
 	test('le responsable du rattachement voit son identité par défaut présélectionnée (décisions 803 et 805)', async ({
 		page,
 	}) => {
@@ -280,12 +357,13 @@ test.describe('armer une relance depuis l’affaire (docs/SPEC-modeles-emails.md
 		expect(service, 'l’identité de Camille dans le seed').toBeDefined()
 
 		// LE BLOC DOIT AVOIR LU L'INSCRIPTION AVANT QUE L'AUTRE ONGLET N'ARME — relevé de la campagne
-		// du lot CRM-164 (2026-11-24), 4 échecs sur 8 joué seul. `sequence-vide` ne le prouve pas :
-		// le bloc rend son geste tant que la lecture est EN CHARGEMENT (`active === null`), et la
-		// lecture part dans la file des ~30 requêtes de la fiche, tandis que l'armement par la route
-		// passe hors de cette file. Arrivée après l'armement, elle voyait l'inscription active — le
-		// bloc rendait alors l'état, à juste titre, et le scénario « un autre onglet a armé
-		// entre-temps » n'était plus celui qu'on jouait. On attend donc la RÉPONSE de cette lecture.
+		// du lot CRM-164 (2026-11-24), 4 échecs sur 8 joué seul. La lecture part dans la file des ~30
+		// requêtes de la fiche, tandis que l'armement par la route passe hors de cette file. Arrivée
+		// après l'armement, elle voyait l'inscription active — le bloc rendait alors l'état, à juste
+		// titre, et le scénario « un autre onglet a armé entre-temps » n'était plus celui qu'on jouait.
+		// Le bloc rendait aussi son geste PENDANT la lecture (INC-365) ; il rend désormais un squelette,
+		// et `sequence-vide` le prouve à son tour. La RÉPONSE de cette lecture reste attendue : c'est elle
+		// qui place l'armement par la route après.
 		const inscriptionLue = page.waitForResponse(
 			(reponse) =>
 				reponse.request().method() === 'GET' &&
@@ -336,6 +414,8 @@ test.describe('armer une relance depuis l’affaire (docs/SPEC-modeles-emails.md
 			await page.goto(AFFAIRE_FIGEE.adresse)
 			const bloc = page.getByTestId('bloc-sequence-card')
 			await expect(bloc).toBeVisible()
+			// INC-365 : le bloc rend un squelette tant qu'il lit ; la capture attend le geste, son état ouvert.
+			await expect(bloc.getByTestId('sequence-vide')).toBeVisible()
 			// LE BLOC EST AMENÉ DANS LE CHAMP VISIBLE : il vit en bas de la colonne gauche, et une
 			// capture cadrée sur l'en-tête de la fiche ne prouverait rien de lui.
 			await bloc.scrollIntoViewIfNeeded()
