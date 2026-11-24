@@ -4312,6 +4312,12 @@ contacts.
 - **DEUX ÉTATS, ET DEUX SEULEMENT**, parce que la donnée n'en porte que deux : aucune inscription
   active — le bloc porte le **geste** — ou une inscription active — le bloc porte l'**état** et
   « Interrompre ».
+  **Avant eux, le chargement** (INC-365, décisions 985 et 986) : tant que le bloc n'a pas lu l'inscription active, les
+  séquences et les adresses expéditrices proposées, il rend sous son titre un **squelette** (`SkeletonListe`, trois lignes,
+  « Chargement en cours », §5.8), et **ni l'état, ni le geste** : il n'affirme pas « aucune relance armée », « aucune
+  séquence » ni « aucune adresse » avant de le savoir, et n'offre pas d'armer une affaire qui en porte peut-être déjà une.
+  Le squelette revient le temps de la relecture qui suit un armement. Une lecture en échec ne le prolonge pas : le bloc
+  rend alors ce que le §5.8 prévoit pour l'erreur.
 
 - **LES DEUX SÉLECTEURS OUVRENT SUR UNE OPTION VIDE**, séquence et adresse expéditrice, et aucun ne
   présélectionne : c'est la règle du §5.39, et le motif y est le même — le workspace porte deux

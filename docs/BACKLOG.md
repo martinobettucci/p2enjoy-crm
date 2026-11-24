@@ -20823,6 +20823,11 @@ complète revient à la session de livraison (décision 830).
 
 - [@] **INC-365 — arbitré (décision 985) : le bloc reçoit un état de chargement** (`docs/INCONSISTENCY_REPORT.md`).
   *Prise en charge : session interactive d5b44a2d (p2enjoy-crm-30) depuis 2026-11-24 14:04 UTC — état avant : [ ] ; confiée par la session de livraison (11)*
+  **Le correctif** (décisions 985 et 986 ; `docs/DESIGN_SYSTEM.md` §5.42, `docs/SPEC-modeles-emails.md` §13.8) : un
+  squelette tant que l'inscription active, les séquences et les adresses proposées ne sont pas lues ; l'état ou le geste
+  ensuite. Connecteur MCP : non (décision 985). **DoD** : preuve rouge avant (le bloc affirme « Aucune relance n'est
+  armée » pendant la lecture), verte après ; Vitest ; E2E souris et clavier (`armement-sequence` et voisines) ; capture de
+  l'état de chargement observée ; DS ; changelog.
   Constat d'origine : Le bloc « Relance automatique » de la
   fiche d'une affaire (`CRM-063`, `docs/DESIGN_SYSTEM.md` §5.42) affiche « Aucune relance n'est armée sur cette affaire »
   et offre son geste **pendant** la lecture de l'inscription active, avant d'en connaître le résultat : son état de

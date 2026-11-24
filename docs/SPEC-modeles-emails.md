@@ -2252,6 +2252,14 @@ existe pour empêcher. Le rédacteur arme, et la base refuse en `card_not_stalle
   (§12.10), mais le bloc porte un **geste**, pas une histoire ; l'histoire de l'affaire est le fil
   de la timeline, et l'y verser est un travail que personne n'a spécifié. L'écart est **nommé**
   plutôt que comblé au passage.
+- **Avant les deux états, le chargement** (INC-365, décisions 985 et 986). Le bloc lit trois choses : l'inscription
+  active (avec la relance arrêtée faute de domaine, §33.2 bis de `docs/SPEC-mail-subsystem.md`), les séquences et les
+  identités proposées. **Tant que l'une des trois est en cours, il rend un squelette, et ni l'état ni le geste** : un
+  `null` qui n'est pas encore une réponse ne dit pas « aucune relance », et une liste vide qui n'est pas encore lue ne
+  dit pas « aucune séquence » ni « aucune adresse ». Mesuré : la lecture de l'inscription part dans la file d'une
+  trentaine de requêtes de la fiche, et une relance armée entre-temps par un autre onglet apparaissait après que l'écran
+  avait affirmé le contraire. Une lecture en échec termine le chargement : l'erreur est dite (§13.7), et le geste reste
+  offert comme avant.
 
 **Le dictionnaire fermé des refus de l'armement**, chaque ligne mesurée le 2026-08-26 :
 

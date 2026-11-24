@@ -42090,3 +42090,12 @@ question 2 : sans objet. **Conséquence** : correctif confié à la session libr
 - **Le seed n'est pas étendu.** « Studio Lumen » n'a pas d'affaire figée ; en ajouter une briserait la suite exacte des
   quatre retards (35, 18, 16, 7) que le seed et plusieurs preuves assèrent (`docs/SPEC-relances.md` §10.2.1). La preuve
   isole « Studio Lumen » et constate le vide sous le filtre ; elle isole « P2Enjoy SAS » et retrouve les quatre.
+
+### décision 986 — INC-365 : le squelette du bloc « Relance automatique » attend aussi ses deux listes
+
+*2026-11-24, session d5b44a2d (p2enjoy-crm-30), arbitrage du responsable (`AskUserQuestion`).*
+**Le problème** : en lisant `BlocSequenceCard` pour la décision 985, les deux sélecteurs se révèlent porter le même défaut que
+l'inscription — tant que la liste des séquences et celle des identités se lisent, le bloc affirme « Aucune séquence » ou
+« Aucune adresse ». **Options** : attendre les trois lectures, ou s'en tenir à l'inscription et ouvrir une incohérence.
+**Décision** : **le squelette attend les trois lectures** (recommandé, retenu) ; DS §5.42 et SPEC-modeles-emails §13.8
+précisés. **Connecteur MCP** : sans objet, comme la décision 985. **Conséquence** : un seul correctif, sous INC-365.

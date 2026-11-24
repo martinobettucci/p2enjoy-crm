@@ -9382,3 +9382,6 @@ traité explicitement. Antérieur au lot ; aucun refus n'est contourné (une rel
 offert seulement après la lecture), ce qui précise §5.42 — ou garder l'affichage actuel ?
 
 **Arbitré le 2026-11-24 (décision 985)** : un état de chargement ; correctif confié à la session 30.
+
+**Étendu le 2026-11-24 (décision 986)** : les deux sélecteurs du bloc portent le même défaut — « Aucune séquence » et
+« Aucune adresse » sont affirmés tant que leurs listes ne sont pas lues ; le squelette attend donc les trois lectures.
