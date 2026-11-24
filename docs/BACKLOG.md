@@ -20476,6 +20476,7 @@ campagne complète revient à la session de livraison (décision 830).
 **T1 et T2 livrées le 2026-11-21** (décision 977, révision `377ac6e5`) ; T3 à T5 restent à faire ; reste le constat du responsable.
 **Les deux relevés de T3.a livrés le 2026-11-24** (`ef535024`, `d8cc8323` ; décision 984, révision `4d836b4e`).
 **Le socle de T3.a livré le 2026-11-24 au soir** (le filtre « Espace » et la provenance sur « Affaires figées », `3aad259d` ; décision 987, révision `3e0bdc47`).
+**T3.b livrée le 2026-11-24, tard** (Rentabilité, Coûts, Ma journée, le carnet, les objectifs, la cloche, la recherche ; le formulaire d'un contact borné à son espace ; décision 988, révision `ff2804ee`).
 *Prise en charge : session interactive 4891a451 (p2enjoy-crm-ef, ex-5f) depuis 2026-11-24 06:41 UTC — état avant : [~] ; T3 à T5,
 confiées par la session de livraison (96)*
 

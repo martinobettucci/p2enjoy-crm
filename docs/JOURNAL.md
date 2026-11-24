@@ -42210,3 +42210,7 @@ rejoués seuls (`envoi-pieces-jointes`, `temps-fiche-affaire`, `connecteur-etiqu
 `demarrage`, `webhooks-remise`). **Aucun défaut du lot.** Garde du manuel 170 ; API manuel 9/9 ; captures 161 changées, 35
 ajoutées, observées (`ff2804ee`).
 **Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `ff2804ee`.
+**Exécutée le 2026-11-24, tard** : `pg_dump` relu (3 627 entrées) ; `livrer.sh --revision ff2804ee…` (webapp bâtie dans la cellule, aucune
+migration) ; `verifier.sh` 35/36 (INC-277) ; manuel publié ; contrat §2.79 LIVRÉE et §8, changelog en [Publié], backlog ; verrou
+levé.
+

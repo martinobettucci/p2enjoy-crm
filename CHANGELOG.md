@@ -13,6 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-24, tard — la webapp et le manuel
+
+Cellule Spark `crm`, révision `ff2804ee` (décision 988, un `pg_dump -Fc` avant ; aucune migration). **Vérifié** : registre à 198
+lignes ; `index-DaTXuXtw.js` servi ; `verifier.sh` 35/36 (INC-277) ; manuel publié (606 fichiers). Le constat du responsable
+reste à faire (visible à partir de deux espaces).
+
 ### Ajouté
 
 - **Les onglets « À saisir » des coûts et de la rentabilité nomment l'espace de chaque affaire** (`CRM-161` T3.b.2) : à
@@ -42,8 +52,6 @@ d'exécuter le code attendu.
 - **Le formulaire d'un contact n'offre plus que les organisations de son espace** (`CRM-161` T3.b.2,
   `docs/SPEC-espace-courant.md` §16.4) : à la création comme à la modification, le sélecteur proposait les organisations de
   tous vos espaces, et choisir celle d'un autre espace finissait sur un refus de la base.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-24 au soir — la migration 200, l'image `mcp`, la webapp et le manuel
 
