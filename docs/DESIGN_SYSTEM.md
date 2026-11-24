@@ -9203,3 +9203,39 @@ porte déjà ses pastilles. Hors coquille seulement (un écran monté seul), cha
 - **RESPONSIVE** : le champ prend la largeur sous `md` ; le `pre` du socle passe à la ligne ; la page ne défile jamais de
   côté.
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.**
+
+### 5.115 Le filtre « Espace » et la provenance des pages globales — `CRM-161` T3
+
+*Écrit le 2026-11-24, avant le code, après lecture des sections ciblées (décision 983) : §1 (jetons), §5.8 (états), §5.9 et
+§5.92 (barre de filtres, panneau de cases), §5.28 (un seul panneau), §5.37 (« Affaires figées »), §5.105 (le filtre
+« Tracks » des organisations, patron le plus proche), §5.113 (le menu des espaces).* Ce que les pages lisent et filtrent est au
+§16 de `docs/SPEC-espace-courant.md` ; ces règles ne disent que de quoi elles ont l'air. *Numéroté §5.115 : la §5.114, que
+la spécification réservait, a été prise par `CRM-165` avant l'écriture de celle-ci.*
+
+- **RIEN POUR UNE PERSONNE D'UN SEUL ESPACE.** Le filtre et la provenance n'existent qu'à partir de **deux** espaces lus
+  (`ContexteEspace.espaces`) ; en deçà, la page est celle d'avant `CRM-161` T3, au pixel près.
+- **LE FILTRE « Espace » EST LE PATRON DU §5.105** (« Tracks »), sans écart :
+  - un **bouton secondaire** « Espace » dans la barre de filtres de la page ; une page qui n'a pas de barre en reçoit une,
+    `role="group"` nommée « Filtres », au-dessus de sa liste (§5.9 : `flex-wrap`, cibles de 40 px). Le bouton dit le nombre
+    coché, « Espace (1) », porte `aria-expanded` et `aria-controls` ;
+  - il déplie, **dans le flux, sous la barre**, un panneau de cases (§5.92) : une `fieldset` de légende « Espaces
+    affichés », une case de 24 px par espace lu, son nom pour libellé, dans l'ordre du menu des espaces (par nom, §5.113) ;
+  - cocher filtre **aussitôt**, sans « Appliquer » ; aucune case cochée vaut **tous les espaces** — l'état de départ ;
+  - `Échap` replie et rend le focus au bouton ; **un seul panneau ouvert à la fois** sur la page (§5.28) ;
+  - le choix vit dans l'adresse, `?espaces=<slug>,<slug>`, écrit **sans entrée d'historique** (`replace`, comme les filtres
+    des organisations) ; un slug inconnu de l'adresse est ignoré, et la case correspondante n'existe pas.
+- **LA PROVENANCE NOMME L'ESPACE, ET RIEN D'AUTRE** : son nom, jamais son slug ni une pastille de couleur (un espace n'a pas
+  de couleur, §1).
+  - **dans un tableau**, une colonne « Espace », la dernière avant les actions, texte `--color-text-2` en ellipse, le nom
+    entier en `title` (§5.9) ;
+  - **sous le titre d'une ligne de liste ou d'une carte**, une mention en `text-xs` `--color-text-3` (le texte tertiaire du
+    §1, déjà employé ainsi par la barre de filtres du §5.9) ;
+  - **dans l'en-tête d'un groupe** (une liste groupée, comme « Affaires figées », §5.37), la mention suit le titre et son
+    compte, dans le même `h2`, en `text-sm` `--color-text-2`, séparée par « · » dans son propre élément (§5.36 : un nœud de
+    texte accolé ne se sépare pas). Un groupe appartient à un seul espace : la mention n'est jamais répétée sur ses lignes.
+- **LE VIDE SOUS LE FILTRE** n'est pas le vide de la page (§5.8, même règle qu'au §5.105) : « Rien dans les espaces choisis »,
+  avec le bouton secondaire « Afficher tous les espaces », qui vide le filtre et rend le focus au bouton « Espace ». Le vide
+  sain d'une page (« Affaires figées », §5.37) reste le sien quand aucun filtre n'est posé.
+- **LA RÉGION VIVANTE DE LA PAGE** annonce le compte après un changement de filtre, comme après une lecture : aucune région
+  nouvelle.
+- **Aucune couleur, aucun jeton, aucune icône nouvelle.**

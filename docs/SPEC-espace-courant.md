@@ -532,7 +532,7 @@ l'onglet ; décision 976) prend fin écran par écran, chacun dans sa sous-tranc
 - **La provenance** (§10) : une colonne « Espace » dans un tableau, en dernière colonne avant les actions ; une mention « nom de
   l'espace » en `text-xs text-text-3` sous le titre d'une ligne de liste ou d'une carte. Elle n'apparaît que si la personne lit
   au moins **deux** espaces (`ContexteEspace.espaces.length >= 2`).
-- **Le filtre « Espace »** : un composant nouveau du design system (§5.114, à écrire avec T3.a), une liste de cases à cocher
+- **Le filtre « Espace »** : un composant nouveau du design system (§5.115 — la §5.114 réservée a été prise par `CRM-165` —, écrit avec T3.a), une liste de cases à cocher
   repliée dans un bouton « Espace » de la barre de filtres de la page, aux mêmes règles que les filtres existants (clavier,
   `aria-expanded`, compteur de cases cochées dans le libellé). Il vit dans l'adresse : `?espaces=<slug>,<slug>` ; un slug
   inconnu est ignoré ; vide ou absent, tous les espaces. Absent de l'écran pour une personne d'un seul espace.
@@ -549,7 +549,7 @@ l'onglet ; décision 976) prend fin écran par écran, chacun dans sa sous-tranc
 |---|---|---|---|---|---|
 | Tableau de bord (`/`) | guide de l'espace courant | inchangé : le guide reste celui de l'espace de l'onglet (§4) | — | — | — |
 | Ma journée | `card_placements`, tous les espaces | inchangée | mention sous chaque affaire | oui | aucun (`card_placements.workspace_id`) |
-| Affaires figées | `cards_figees()`, tous | inchangée | colonne | oui | aucun (rend `workspace_id`) |
+| Affaires figées | `cards_figees()`, tous | inchangée | dans l'en-tête de chaque groupe (la liste est groupée par dossier, §5.37 ; un dossier n'a qu'un espace) | oui | aucun (rend `workspace_id`) |
 | Objectifs (liste) | `goal_boards` de l'espace de l'onglet | tous les espaces ; **groupés par espace**, une section par espace (l'ordre `position` n'a de sens que dans un espace) | titre de section | oui | aucun |
 | Objectifs (un tableau) | un tableau | inchangée ; le fil d'Ariane nomme son espace | — | — | — |
 | Contacts (carnet) | l'espace de l'onglet (976) | tous | colonne | oui | aucun (`contacts.workspace_id`) |
@@ -575,10 +575,14 @@ l'onglet ; décision 976) prend fin écran par écran, chacun dans sa sous-tranc
 
 ### 16.5 Le découpage
 
-- **T3.a — le socle** : le composant « Espace » du design system (§5.114), la provenance (`lib/provenance.ts` : le nom d'un
-  espace depuis `ContexteEspace.espaces`), l'adresse `?espaces=` ; les deux relevés du §16.4. Unitaires, E2E du filtre au
-  clavier et à la souris sur un espace jetable.
-- **T3.b — les listes sans backend** : Ma journée, Affaires figées, Objectifs, Contacts, Coûts, Rentabilité, cloche, recherche.
+- **T3.a — le socle** : le composant « Espace » du design system (§5.115), la provenance (`lib/provenance.ts` : le nom d'un
+  espace depuis `ContexteEspace.espaces`), l'adresse `?espaces=` ; les deux relevés du §16.4. Le socle est prouvé sur une
+  page réelle : **« Affaires figées » est sa première page** (*précisé le 2026-11-24 au début du code* : un composant sans
+  page ne se prouve pas en E2E). Unitaires ; E2E du filtre au clavier et à la souris avec Camille, qui lit « P2Enjoy SAS »
+  et « Studio Lumen » dans le seed : ses quatre affaires figées sont toutes dans le premier, et isoler « Studio Lumen » rend
+  le vide sous le filtre. Aucune affaire figée n'est ajoutée à « Studio Lumen » : le seed tient la suite exacte des quatre
+  retards (`docs/SPEC-relances.md` §10.2.1), que plusieurs preuves assèrent entière.
+- **T3.b — les listes sans backend** : Ma journée, Objectifs, Contacts, Coûts, Rentabilité, cloche, recherche.
 - **T3.c — les deux migrations** (`organization_list`, `temps_valorise`), leurs pgTAP, puis Organisations et le rapport de Temps.
 - **T3.d — Pilotage et Temps ▸ Saisie**, selon les réponses à Q1 et Q2.
 

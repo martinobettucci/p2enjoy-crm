@@ -42073,3 +42073,20 @@ l'inscription.
 **Décision** : **un état de chargement** — un squelette tant que la lecture est en cours, le geste offert seulement après ; le
 design system §5.42 est précisé en conséquence ; écarté : garder l'affichage actuel. **Connecteur MCP** — question 1 : non ;
 question 2 : sans objet. **Conséquence** : correctif confié à la session libre (30), preuve rouge avant.
+
+### `CRM-161` T3.a — le socle du filtre « Espace » spécifié avant son code
+
+*2026-11-24, session 4891a451 (p2enjoy-crm-7a), à la reprise demandée par la session de livraison.*
+- **Le numéro.** La spécification réservait `docs/DESIGN_SYSTEM.md` §5.114 au filtre ; `CRM-165` l'a prise depuis (décision
+  983). La règle des numéros partagés — le dernier poussé renumérote — fait de celle-ci la **§5.115** ; la spécification §16.2
+  et §16.5 suit.
+- **Le patron.** Aucun composant générique n'existait : chaque page code son panneau de cases (« Tracks » et « Catégories »
+  des organisations, §5.105). Le filtre « Espace » reprend ce patron sans écart (bouton secondaire, compte, panneau dans le
+  flux, `Échap`, un seul panneau, l'adresse écrite en `replace`), et en devient le premier composant partagé
+  (`FiltreEspaces`).
+- **La première page.** Un composant sans page ne se prouve pas en E2E : « Affaires figées » passe de T3.b à T3.a. C'est une
+  liste **groupée par dossier**, non un tableau : la provenance y est dans l'en-tête de groupe (un dossier n'a qu'un espace),
+  ce que le §16.3 disait « colonne » par erreur.
+- **Le seed n'est pas étendu.** « Studio Lumen » n'a pas d'affaire figée ; en ajouter une briserait la suite exacte des
+  quatre retards (35, 18, 16, 7) que le seed et plusieurs preuves assèrent (`docs/SPEC-relances.md` §10.2.1). La preuve
+  isole « Studio Lumen » et constate le vide sous le filtre ; elle isole « P2Enjoy SAS » et retrouve les quatre.
