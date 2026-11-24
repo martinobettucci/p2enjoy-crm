@@ -3466,6 +3466,23 @@ et les blocages sont perdus — les mails mis à la corbeille par un blocage y r
   `plateforme_creer_espace` de `0089`.
 - **Preuve** : pgTAP `0183`, rouge avant la migration ; `0084` inchangée et verte.
 
+### Migration `0200` — `CRM-165` : les consignes de la plateforme (`0200_consignes_connecteur.sql` ; spécifiée le 2026-11-24, avant le code)
+
+`docs/SPEC-mcp.md` §18 ; décisions 980 et 982.
+
+- **`public.connector_instructions`** `(id boolean primary key default true check (id), body text not null default '' check
+  (char_length(body) <= 4000), updated_at timestamptz, updated_by uuid references profiles on delete set null, base text,
+  base_published_at timestamptz)` — une ligne, posée par la migration ; RLS activée sans politique ; aucun privilège client.
+- **Fonctions**, `SECURITY DEFINER`, `search_path` vide : `public.platform_connector_instructions()` et
+  `public.platform_set_connector_instructions(text)`, super-administrateur seul (`app.exiger_superadmin`), accordées à
+  `authenticated` ; `public.connector_instructions_text()` et `public.connector_instructions_publish_base(text)`,
+  `service_role` seul.
+- **`plateforme_journal_geste_check`** admet `connector_instructions_set`.
+- **Preuves** : pgTAP (la forme, la garde, la normalisation, la borne, l'écriture identique sans journal, le geste sans le
+  texte) ; API par requête directe.
+- **Retour arrière** : supprimer les quatre fonctions et la table ; reposer la contrainte sans le geste. Le service `mcp`
+  sans la table rend le socle seul (son mode dégradé).
+
 ### Migration `0199` — `CRM-163` : le bail de la passe des pastilles (`0199_bail_passe_pastilles.sql` ; spécifiée le 2026-11-21, avant le code)
 
 `docs/SPEC-ia.md` §16.3 ; `docs/SPEC-mail-subsystem.md` §31.5 ; décision 973.

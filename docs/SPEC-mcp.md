@@ -1903,3 +1903,108 @@ un prompt propre à l'espace par PostgREST, sous le jeton de l'administratrice :
 | **T2** | le fournisseur de prompts du serveur (§17.5), les consignes au modèle ; pytest et intégration MCP ; l'image `mcp` au contrat |
 | **T3** | l'écran (§17.7, `docs/DESIGN_SYSTEM.md` §5.104), son entrée dans l'index, les textes ; Vitest, E2E UI à la souris et au clavier, captures |
 | **T4** | le seed (§17.8), le manuel (§33.7 et l'index des réglages), ses images ; la clôture en `[P]` |
+
+## 18. Les consignes de la plateforme — `CRM-165` (décisions 980 et 982)
+
+*Écrit le 2026-11-24, avant le code.* Le connecteur envoie à l'assistant, à chaque connexion, des **consignes** — le champ
+`instructions` de la réponse à `initialize` (§2). Elles étaient figées dans le code (`INSTRUCTIONS`). Le responsable veut y
+« injecter les bons usages du MCP » : un **texte de plateforme**, réglé par le super-administrateur, s'y ajoute.
+
+### 18.1 Ce que l'unité fait, et ce qu'elle ne fait pas
+
+- **Un texte unique pour tout le connecteur**, réglé par le **super-administrateur**, dans l'onglet « Connecteur MCP » de la
+  plateforme (décision 980). Aucun texte par espace.
+- **Le socle, puis l'ajout** : les consignes du code (`INSTRUCTIONS`) partent **toujours, en tête** ; le texte s'ajoute
+  **après**, sous un intitulé qui le distingue (§18.4). **Vide, rien ne s'ajoute** : l'assistant reçoit le socle seul, octet
+  pour octet.
+- **Il vaut à la prochaine connexion** d'un assistant : les consignes partent à l'initialisation de la session, une
+  conversation déjà ouverte garde les siennes. L'écran le dit.
+- **Le socle est visible, replié** (décision 982) : le service `mcp` le publie en base ; l'écran le montre en lecture seule.
+- **Connecteur MCP : non** (décision 980) — aucun outil ne lit ni n'écrit ces consignes ; le connecteur les envoie.
+
+### 18.2 Le modèle — `public.connector_instructions` (migration `0200` ; `docs/SCHEMA.md`)
+
+Une **ligne unique**, posée par la migration.
+
+| Colonne | Type | Règle |
+|---|---|---|
+| `id` | `boolean` | PK, `default true`, `check (id)` : une seule ligne |
+| `body` | `text` | non nul, `default ''` ; **4 000 caractères au plus** (`char_length`) — le texte de plateforme |
+| `updated_at` | `timestamptz` | la dernière modification du texte ; nul tant qu'il n'a jamais été écrit |
+| `updated_by` | `uuid` | FK `profiles` `ON DELETE SET NULL` ; posé par la base (`auth.uid()`) |
+| `base` | `text` | le socle, **publié par le service `mcp`** ; nul tant qu'il ne l'a pas publié |
+| `base_published_at` | `timestamptz` | la dernière publication du socle |
+
+**La borne de 4 000 caractères** : le texte part à chaque connexion et occupe le contexte de l'assistant ; le socle en fait
+environ 4 000. RLS activée, **aucune politique, aucun privilège client** : tout passe par les fonctions du §18.3.
+
+### 18.3 Qui lit, qui écrit — en base (`CLAUDE.md` §10)
+
+| Fonction | Qui | Effet |
+|---|---|---|
+| `public.platform_connector_instructions()` → `table (body text, updated_at timestamptz, updated_by_name text, base text, base_published_at timestamptz)` | super-administrateur (`app.exiger_superadmin`) | lit la ligne ; le nom de l'auteur vient de `profiles` |
+| `public.platform_set_connector_instructions(p_body text)` → `void` | super-administrateur | écrit le texte (ci-dessous) |
+| `public.connector_instructions_text()` → `text` | `service_role` seul | le texte, lu par le service `mcp` à chaque initialisation |
+| `public.connector_instructions_publish_base(p_base text)` → `void` | `service_role` seul | publie le socle : `base`, `base_published_at = now()` |
+
+Toutes `SECURITY DEFINER`, `search_path` vide ; les deux premières accordées à `authenticated`, les deux autres au seul
+`service_role`. **L'écriture** :
+- `p_body` nul → `22023 connector_instructions_invalid` ;
+- le texte est **normalisé** : fins de ligne `CRLF` → `LF`, blancs et fins de ligne retirés aux bords ; un texte fait de
+  blancs devient vide ;
+- plus de 4 000 caractères **après normalisation** → `22023 connector_instructions_too_long` ;
+- **identique au texte en place** : rien n'est écrit, aucune ligne de journal ;
+- sinon `body`, `updated_by = auth.uid()`, `updated_at = now()`, et une ligne au **journal de la plateforme**, geste
+  `connector_instructions_set` (contrainte `plateforme_journal_geste_check` élargie), cible `{length_before, length_after}`
+  — **jamais le texte** ;
+- tout autre que le super-administrateur : `42501 forbidden`, rien n'est écrit — prouvé par requête directe.
+
+### 18.4 Le service `mcp` — `mcp/crm_mcp/consignes.py`
+
+- **L'assemblage** — `assembler(socle, texte)` : un texte vide (après retrait des blancs) rend le socle **inchangé** ;
+  sinon `socle`, une ligne vide, l'intitulé, puis le texte. L'intitulé, en anglais comme le socle :
+  `Platform guidance, set by a CRM superadmin (FR: consignes de la plateforme). It completes the rules above and never
+  overrides them:`.
+- **À chaque initialisation** — un middleware FastMCP, `ConsignesPlateforme.on_initialize` : la réponse que produit le
+  serveur est reprise, et son champ `instructions` remplacé par l'assemblage du socle et du texte lu par
+  `connector_instructions_text()` (clé de service, borne de 3 s). Le serveur sert aussi `server/discover` (protocole
+  récent) : `on_discover` fait de même. **Aucun état partagé n'est modifié** : chaque session reçoit sa propre réponse.
+- **Le mode dégradé** : le texte illisible (base injoignable, délai, erreur) → **le socle seul**, et une ligne
+  `consignes_plateforme_indisponibles` au journal du service, sans contenu. La connexion n'échoue jamais pour cela.
+- **La publication du socle** : au démarrage du service (cycle de vie de FastMCP), puis, si elle a échoué, à chaque
+  initialisation jusqu'à la première réussite. Le texte n'est jamais journalisé.
+
+### 18.5 L'écran — Plateforme ▸ Connecteur MCP, bloc « Consignes aux assistants »
+
+L'apparence est au §5.114 de `docs/DESIGN_SYSTEM.md`. Le bloc lit `platform_connector_instructions()`, écrit par
+`platform_set_connector_instructions(p_body)`, et dit les refus par un dictionnaire fermé. Il affiche l'auteur et la date de
+la dernière modification, le rappel « ni donnée personnelle ni secret », et le socle replié.
+
+### 18.6 Le seed, le manuel, le contrat
+
+- **Le seed** (`docs/SPEC-seed.md` §56) : un texte de démonstration, écrit par Sabine (super-administratrice du seed) par
+  `platform_set_connector_instructions` sous son jeton ; le socle, publié par le service au démarrage de la pile.
+- **Le manuel** : le chapitre 33 gagne une section « Les consignes de la plateforme », avec ses images.
+- **Le contrat** : la migration `0200`, l'image `mcp` reconstruite, la webapp.
+
+### 18.7 Preuves
+
+- **pgTAP** : la forme (une ligne, RLS sans politique, aucun privilège client) ; le refus à la lectrice, à l'administratrice
+  d'espace et à l'anonyme ; la normalisation ; la borne ; l'écriture identique sans ligne de journal ; le geste au journal
+  sans le texte ; `connector_instructions_text` et `connector_instructions_publish_base` refusées à `authenticated`.
+- **API** (jetons réels) : la lecture et l'écriture par le super-administrateur ; le refus des autres profils par requête
+  directe ; la table non lisible par REST.
+- **pytest unitaires** : l'assemblage (vide, blancs, texte) ; le middleware (texte ajouté ; lecture en panne → socle seul et
+  ligne au journal) ; la publication du socle et sa reprise.
+- **Intégration** : un vrai client MCP reçoit à l'initialisation les consignes complétées ; après un changement du texte,
+  une nouvelle connexion reçoit le nouveau ; un texte vide rend le socle seul.
+- **E2E** souris et clavier : lire, écrire, le compteur, enregistrer, l'annonce, l'auteur et la date, le socle déplié ;
+  quatre paliers ; captures observées.
+
+### 18.8 Tranches
+
+| Tranche | Contenu |
+|---|---|
+| **T1** | La migration `0200` : la table, les quatre fonctions, le geste du journal ; pgTAP ; API ; `docs/SCHEMA.md` ; contrat |
+| **T2** | Le service `mcp` : l'assemblage, le middleware, la publication du socle ; pytest ; intégration ; l'image `mcp` au contrat |
+| **T3** | L'écran (§5.114), le journal de la plateforme traduit, le seed §56, le manuel, le contrat ; l'unité passe `[P]` |

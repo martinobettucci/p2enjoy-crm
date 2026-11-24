@@ -41991,3 +41991,14 @@ les grandeurs de tête du pilotage n'emploient que lui. Seul le détail par éta
 complet par espace. **La réponse** : « Tête globale, détail par espace ».
 **Les conséquences**, écrites au §16.6 : prévisionnel, taux et mentions sur tous les espaces lus, par devise ; un entonnoir
 détaillé par espace ; la portée par track ou channel offerte quand le filtre isole un espace.
+
+### décision 982 — `CRM-165` : le design system lu par sections ciblées ; le socle du connecteur visible, replié, publié par le service
+
+*2026-11-24, session 152dd27d (p2enjoy-crm-67), arbitrages du responsable (`AskUserQuestion`).*
+**Les questions** : (1) pour le bloc de l'onglet « Connecteur MCP », lire le design system en entier ou par sections ciblées ;
+(2) l'écran du texte de plateforme montre-t-il aussi les consignes fixes du connecteur (le socle du code), en lecture seule.
+**Décisions** : (1) **sections ciblées** — §5.56 (la plateforme, l'onglet « Connecteur MCP »), §5.104 (l'éditeur des prompts,
+le patron le plus proche) ; écartée : la lecture intégrale. (2) **oui, repliées** : un dépliant « Consignes fixes du
+connecteur » montre le socle exact ; écarté : ne rien montrer, le manuel résumant.
+**Conséquence** (`docs/SPEC-mcp.md` §18.4) : la webapp ne recopie jamais le socle. Le service `mcp` le **publie en base** sous la
+clé de service, au démarrage, et la plateforme le lit de là.

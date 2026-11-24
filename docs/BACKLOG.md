@@ -20759,6 +20759,14 @@ de les envoyer ; question 2 : sans objet.
 **Spécification** : à écrire avant le code — `docs/SPEC-mcp.md` (les consignes, leur assemblage, leur lecture par le service
 `mcp`), `docs/SCHEMA.md` (la table ou le réglage de plateforme, sa migration), `docs/DESIGN_SYSTEM.md` (l'écran), le manuel
 (super-administration), le contrat (migration, image `mcp`, webapp).
+**Spécifiée le 2026-11-24** (décision 982 : design system par sections ciblées ; le socle visible, replié, publié en base par
+le service) : `docs/SPEC-mcp.md` §18 ; `docs/SCHEMA.md` « Migration `0200` » ; `docs/DESIGN_SYSTEM.md` §5.114 ;
+`docs/SPEC-seed.md` §56. Borne de 4 000 caractères ; auteur et date affichés ; geste `connector_instructions_set` au journal
+de la plateforme, sans le texte ; rappel « ni donnée personnelle ni secret ».
+**Tranches** (`docs/SPEC-mcp.md` §18.8) :
+- [ ] **T1** — la migration `0200` (table, quatre fonctions, geste du journal) ; pgTAP ; API ; SCHEMA ; contrat ;
+- [ ] **T2** — le service `mcp` (assemblage, middleware, publication du socle) ; pytest ; intégration ; l'image au contrat ;
+- [ ] **T3** — l'écran, le journal traduit, le seed §56, le manuel, le contrat ; l'unité passe `[P]`.
 **DoD** : pgTAP (seul le super-administrateur écrit ; borne de longueur) ; API par requête directe (refus aux autres profils) ;
 pytest unitaire (assemblage socle + texte, texte vide) et intégration (un vrai client MCP reçoit les consignes complétées à
 l'initialisation) ; E2E souris et clavier ; seed (un texte de démonstration) ; captures observées ; manuel ; contrat. La campagne

@@ -9167,3 +9167,35 @@ plateforme vaut ici — dans le flux, aucune modale, un seul bloc ouvert à la f
 - **ÉTATS** (§5.8) : pendant la lecture des non-lus, les lignes sont rendues sans pastille ; un échec de cette lecture ne rend
   aucune pastille et n'empêche pas de changer d'espace — c'est une aide, non une condition.
 - **Aucune couleur, aucun jeton nouveaux** ; deux icônes Lucide de plus, `ChevronsUpDown` et `Check`.
+
+### 5.114 Les consignes aux assistants : un bloc de l'onglet « Connecteur MCP » de la plateforme — `CRM-165`
+
+*Écrit le 2026-11-24, avant le code, après lecture des sections ciblées par la décision 982 : §5.56 (la plateforme, l'onglet
+« Connecteur MCP »), §5.104 (l'éditeur des prompts, le patron le plus proche).* Ce que le bloc lit, écrit et refuse est au
+§18 de `docs/SPEC-mcp.md` ; ces règles ne disent que de quoi il a l'air.
+
+- **LA PLACE** : un quatrième bloc de l'onglet, **avant le journal des appels**. L'ordre devient : qui se sert du connecteur,
+  comment lui ouvrir l'accès, **ce que les assistants s'entendent dire**, ce qui s'est passé. Le bloc a son titre `text-h3`,
+  « Consignes aux assistants ».
+- **LA PHRASE D'EN-TÊTE**, 13 px `--color-text-2`, `max-w-[72ch]` : « Ce texte s'ajoute aux consignes fixes du connecteur,
+  que chaque assistant reçoit à sa connexion. Il vaut à la prochaine connexion d'un assistant. »
+- **LA ZONE DE TEXTE** « Consignes de la plateforme », libellé visible, 12 lignes, `max-w-[72ch]`, `maxLength` de 4 000 (la
+  borne de la base, §5.34 : aucune garde de plus). Dessous, en 13 px `--color-text-3` :
+  - l'aide, liée par `aria-describedby` : « N'y écrivez ni donnée personnelle ni secret : tout assistant connecté le lit. » ;
+  - le **compteur**, « {n} / 4 000 caractères », chiffres tabulaires ; il n'est pas une région vivante (il parlerait à chaque
+    frappe) : sa valeur est dans la description du champ.
+- **« ENREGISTRER »**, primaire, sous le champ ; pendant l'écriture `aria-busy` et désactivé. Le succès est annoncé dans la
+  région vivante du bloc : « Consignes enregistrées. Elles valent à la prochaine connexion d'un assistant. »
+- **L'AUTEUR ET LA DATE**, sous la commande, 13 px `--color-text-2` : « Modifiées par {nom} le {date} », ou « Jamais
+  modifiées. » ; un auteur parti : « Modifiées le {date} ».
+- **LE SOCLE, REPLIÉ** (décision 982) : un `details` / `summary` « Consignes fixes du connecteur », fermé par défaut ; ouvert,
+  le texte exact en `pre` monospace 13 px, `whitespace-pre-wrap`, sur `--color-hover` aux coins arrondis, bordure `--color-border`, puis
+  « Publiées par le connecteur le {date}. » Jamais publiées : « Le connecteur ne les a pas encore publiées : il le fait à son
+  démarrage. »
+- **LES REFUS**, sous le champ, `role="alert"`, aux jetons de danger doux, par un dictionnaire fermé : « Le texte dépasse
+  4 000 caractères. », « Réservé aux superadministrateurs. », « Le texte n'a pas pu être enregistré. Réessayez. ». La
+  saisie est gardée, le focus revient au champ.
+- **ÉTATS** (§5.8) : squelette ; erreur de lecture avec « Réessayer ».
+- **RESPONSIVE** : le champ prend la largeur sous `md` ; le `pre` du socle passe à la ligne ; la page ne défile jamais de
+  côté.
+- **Aucune couleur, aucun jeton, aucune icône nouvelle.**

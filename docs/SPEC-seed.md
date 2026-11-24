@@ -3453,3 +3453,15 @@ et sur les pages globales deux espaces de provenance.
   du seed** dans le même changement : un second espace les ferait échouer au rejeu (décision 51).
 - **Les preuves révisées** : `e2e/ui/accueil-channels.spec.ts` exigeait une base à un seul espace ; elle cible désormais son
   espace (demande de la session de livraison).
+
+## 56. Les consignes de la plateforme — `CRM-165` (`docs/SPEC-mcp.md` §18.6)
+
+*Écrit le 2026-11-24, avant le code.* Pour que l'onglet « Connecteur MCP » montre un texte, son auteur et sa date, et qu'un
+assistant de démonstration le reçoive :
+- **le texte**, écrit par **Sabine** (`plateforme@p2enjoy.test`, super-administratrice du seed) par
+  `platform_set_connector_instructions`, sous son jeton : trois consignes d'usage, en français — « Avant de créer une affaire,
+  cherchez-la avec crm_search pour éviter un doublon. », « Donnez toujours les montants avec leur devise. », « Pour tout
+  envoi de mail, préparez-le avec crm_mail_prepare et laissez la personne le relire. » ;
+- **rejouable** : le même texte réécrit n'écrit rien, et ne laisse aucune ligne de journal (§18.3) ;
+- **le socle** n'est pas posé par le seed : le service `mcp` le publie à son démarrage ; le contrôle du seed constate le texte,
+  pas le socle.
