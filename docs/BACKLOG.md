@@ -20732,3 +20732,31 @@ une erreur de protocole provoquée apparaît au journal ; contrat ; constat en p
 reconnexion. La campagne complète revient à la session de livraison (décision 830).
 **Reprise de l'import** : par **« Importer un fichier »** du CRM (CSV des affaires restantes produit par ChatGPT), sur décision du
 responsable — hors de cette unité.
+
+### CRM-165 — Les consignes du connecteur, complétées par un texte que le super-administrateur règle dans le CRM `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-24 — il voulait, par les prompts du connecteur (`CRM-149`), « injecter les bons
+usages du MCP aux assistants ». Un prompt n'est lu que si la personne le choisit ; le dispositif qui convient est le champ
+`instructions` du protocole, envoyé à l'assistant à chaque connexion. Il existe déjà (`INSTRUCTIONS`,
+`mcp/crm_mcp/application.py`), mais figé dans le code. Arbitré le même jour (décision 980).
+**Comportement attendu** (décision 980) :
+- (i) **un texte de plateforme**, unique pour tout le connecteur, **réglé par le super-administrateur** dans le CRM — écran de la
+  plateforme, onglet « Connecteur MCP » par défaut (`CRM-103`) ;
+- (ii) **socle fixe, puis ajout** : les consignes du code restent toujours envoyées, en tête (règles de sécurité, confirmations,
+  pagination) ; le texte du super-administrateur s'ajoute **après** elles, sous un intitulé qui le distingue ; vide, rien ne
+  s'ajoute ;
+- (iii) il vaut **à la prochaine connexion** d'un assistant (les consignes partent à l'initialisation) ; l'écran le dit ;
+- (iv) **par défaut, sans arbitrage** (à confirmer par la spécification) : une longueur bornée (de l'ordre de 4 000 caractères) ;
+  l'auteur et la date de la dernière modification affichés ; une ligne au journal d'audit de la plateforme ; aucune donnée
+  personnelle ni secret à y écrire (l'écran le rappelle) ;
+- (v) la règle d'écriture est **appliquée en base** : seul un super-administrateur écrit le texte ; requête directe refusée
+  pour tout autre (`CLAUDE.md` §10).
+**Connecteur MCP** (décision 980) — question 1 : **non**, aucun outil ne lit ni n'écrit ces consignes ; le connecteur se contente
+de les envoyer ; question 2 : sans objet.
+**Spécification** : à écrire avant le code — `docs/SPEC-mcp.md` (les consignes, leur assemblage, leur lecture par le service
+`mcp`), `docs/SCHEMA.md` (la table ou le réglage de plateforme, sa migration), `docs/DESIGN_SYSTEM.md` (l'écran), le manuel
+(super-administration), le contrat (migration, image `mcp`, webapp).
+**DoD** : pgTAP (seul le super-administrateur écrit ; borne de longueur) ; API par requête directe (refus aux autres profils) ;
+pytest unitaire (assemblage socle + texte, texte vide) et intégration (un vrai client MCP reçoit les consignes complétées à
+l'initialisation) ; E2E souris et clavier ; seed (un texte de démonstration) ; captures observées ; manuel ; contrat. La campagne
+complète revient à la session de livraison (décision 830).

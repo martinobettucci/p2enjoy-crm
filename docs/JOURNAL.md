@@ -41956,3 +41956,16 @@ ne prend qu'un espace ; coûts, recettes et budgets n'ont pas la colonne et se r
 créations dans l'espace de l'onglet), le tableau écran par écran, deux migrations (T3.c), les deux relevés de la livraison
 (non-lus lus une fois par la coquille et partagés par le menu et le repli ; l'espace de l'objet passé à `FormulaireEnvoi`), le
 découpage T3.a à T3.d, les preuves. **Soumis au responsable** (§16.6) : Q1, la forme du pilotage ; Q2, la saisie du temps.
+
+### décision 980 — `CRM-165` : des consignes du connecteur réglées par le super-administrateur, ajoutées au socle du code
+
+*2026-11-24, session 4522fa9c (p2enjoy-crm-96, ex-d5, session de livraison), arbitrages du responsable (`AskUserQuestion`).*
+**Le besoin** : « injecter les bons usages du MCP aux assistants ». Les prompts (`CRM-149`) n'y répondent pas : ils ne sont lus
+que si la personne les choisit. Le champ `instructions` du protocole, envoyé à chaque connexion, est le bon dispositif ; il
+existe déjà mais figé dans le code.
+**Décisions** :
+- **un texte de plateforme, réglé par le super-administrateur** ; écartés : par espace (administrateurs) ; les deux ;
+- **socle fixe du code, puis le texte ajouté après** ; écarté : tout le texte modifiable, socle compris ;
+- **connecteur MCP** — question 1 : **non**, aucun outil ne lit ni n'écrit ces consignes ; question 2 : sans objet.
+**Par défaut, sans arbitrage** (à confirmer par la spécification) : l'onglet « Connecteur MCP » de la plateforme, une borne de
+longueur, l'auteur et la date affichés, une ligne au journal d'audit.
