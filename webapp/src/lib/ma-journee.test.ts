@@ -5,6 +5,8 @@
 //           §17.5 (les trois sections, les deux bornes, l'horizon de sept jours),
 //           §17.6 (une prochaine action absente ne rend rien), §17.7 lignes f, g et h
 // @verifies docs/SPEC-webapp.md §6.4 (contrat asynchrone : l'erreur est classée sur le code HTTP)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : la lecture demande l'espace du rattachement, chaque affaire le
+//           porte (docs/SPEC-espace-courant.md §16.3)
 //
 // Comme `contacts.test.ts` et `mail-etat.test.ts`, ce fichier éprouve la requête RÉELLEMENT ÉMISE
 // et pas seulement la valeur rendue : les colonnes demandées, la borne d'horizon, l'exclusion du
@@ -190,6 +192,11 @@ describe('projeterAffaire — ce que chaque ligne rend (§17.6)', () => {
 		expect(affaire?.adresse?.startsWith(affaire.adresseChannel ?? 'x')).toBe(true)
 	})
 
+	it('porte l’espace du rattachement, ou `null` pour une ligne qui ne le lit pas (`CRM-161` T3.b.2)', () => {
+		expect(projeterAffaire({ ...AUDIT, workspace_id: 'ws-p' })?.idEspace).toBe('ws-p')
+		expect(projeterAffaire(AUDIT)?.idEspace).toBeNull()
+	})
+
 	it('garde une affaire SANS prochaine action : l’échéance seule est une information', () => {
 		const affaire = projeterAffaire({ ...AUDIT, next_action: null })
 		expect(affaire).not.toBeNull()
@@ -228,6 +235,7 @@ describe('decouperEnSections — le découpage se fait à la COMPOSITION (§17.5
 		adresseChannel: null,
 		nomTrack: null,
 		nomChannel: null,
+		idEspace: null,
 	})
 
 	it('rend les trois sections dans l’ordre de l’écran, même vides', () => {
@@ -272,6 +280,8 @@ describe('lireJournee — la requête réellement émise (§17.4)', () => {
 		// Les deux slugs sont EXIGÉS par l'adresse d'une affaire, et les deux noms par la pilule.
 		expect(COLONNES_RATTACHEMENT_JOURNEE).toContain('channels!card_placements_channel_fk')
 		expect(COLONNES_RATTACHEMENT_JOURNEE).toContain('tracks(slug, name)')
+		// `CRM-161` T3.b.2 : l'espace du rattachement, pour la provenance et le filtre.
+		expect(COLONNES_RATTACHEMENT_JOURNEE).toContain('workspace_id')
 		// Ce qui n'est PAS demandé est aussi une décision : cette vue range par le temps.
 		expect(COLONNES_RATTACHEMENT_JOURNEE).not.toContain('amount')
 		expect(COLONNES_RATTACHEMENT_JOURNEE).not.toContain('current_step_id')

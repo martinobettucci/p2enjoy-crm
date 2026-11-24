@@ -9225,7 +9225,8 @@ la spécification réservait, a été prise par `CRM-165` avant l'écriture de c
   (`ContexteEspace.espaces`) ; en deçà, la page est celle d'avant `CRM-161` T3, au pixel près.
 - **LE FILTRE « Espace » EST LE PATRON DU §5.105** (« Tracks »), sans écart :
   - un **bouton secondaire** « Espace » dans la barre de filtres de la page (« Rentabilité » : après « Réel » et « Prévu »,
-    son panneau sous la barre) ; une page qui n'a pas de barre en reçoit une (« Coûts » : au-dessus des histogrammes),
+    son panneau sous la barre) ; une page qui n'a pas de barre en reçoit une (« Coûts » : au-dessus des histogrammes ; « Ma journée » : sous ses onglets
+    de portée),
     `role="group"` nommée « Filtres », au-dessus de sa liste (§5.9 : `flex-wrap`, cibles de 40 px). Le bouton dit le nombre
     coché, « Espace (1) », porte `aria-expanded` et `aria-controls` ;
   - il déplie, **dans le flux, sous la barre**, un panneau de cases (§5.92) : une `fieldset` de légende « Espaces
@@ -9233,7 +9234,9 @@ la spécification réservait, a été prise par `CRM-165` avant l'écriture de c
   - cocher filtre **aussitôt**, sans « Appliquer » ; aucune case cochée vaut **tous les espaces** — l'état de départ ;
   - `Échap` replie et rend le focus au bouton ; **un seul panneau ouvert à la fois** sur la page (§5.28) ;
   - le choix vit dans l'adresse, `?espaces=<slug>,<slug>`, écrit **sans entrée d'historique** (`replace`, comme les filtres
-    des organisations) ; un slug inconnu de l'adresse est ignoré, et la case correspondante n'existe pas.
+    des organisations) ; un slug inconnu de l'adresse est ignoré, et la case correspondante n'existe pas ;
+  - un lien de la même page qui change **une autre dimension** (la portée de « Ma journée ») **garde** le filtre
+    (`avecEspaces`) : changer de portée ne défait pas le choix des espaces. *Précisé le 2026-11-24 au code de T3.b.2.*
 - **LA PROVENANCE NOMME L'ESPACE, ET RIEN D'AUTRE** : son nom, jamais son slug ni une pastille de couleur (un espace n'a pas
   de couleur, §1).
   - **dans un tableau**, une colonne « Espace », la dernière avant les actions, texte `--color-text-2` en ellipse, le nom

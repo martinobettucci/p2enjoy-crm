@@ -6,6 +6,10 @@
 //       §5.8 (états), §2 (données techniques), §12.1 (ce qui change d'adresse est un lien)
 // @spec docs/BACKLOG.md « Correctifs arbitrés », INC-189 a ; docs/JOURNAL.md décision 594 — les
 //       données portent la portée qu'elles décrivent
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : le nom de l'espace sous le titre de chaque affaire, le filtre
+//       « Espace » sous la bascule de portée, en mémoire (la lecture est bornée par l'horizon, non paginée), le vide sous
+//       le filtre, la portée qui garde le filtre ; rien pour une personne d'un seul espace (docs/SPEC-espace-courant.md
+//       §16.2, §16.3 ; docs/DESIGN_SYSTEM.md §5.115)
 //
 // L'ADRESSE `/ma-journee` RENDAIT UN ÉTAT VIDE INCONDITIONNEL DEPUIS `CRM-007` : une entrée de barre
 // latérale qui ne menait nulle part, alors que le modèle — `next_action`, `next_action_at` et leur
@@ -19,7 +23,7 @@
 // de ces deux colonnes est l'en-tête de la fiche (§15 bis), et un second geste ici en ferait une
 // seconde définition du même geste.
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { SquareArrowOutUpRight } from 'lucide-react'
 import { EtatErreur, EtatVide } from '../components/ui/States'
@@ -42,6 +46,8 @@ import {
 } from '../lib/ma-journee'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
+import { FiltreEspaces, useFiltreEspaces, VideSousFiltreEspaces } from './FiltreEspaces'
+import { avecEspaces, filtrerParEspace, nomEspace } from '../lib/provenance'
 
 /** Les libellés des trois sections, déclarés une fois — l'ordre vient du module de composition. */
 const TITRES_SECTION: Record<SectionJournee, CleTraduction> = {
@@ -126,6 +132,15 @@ export function MaJournee({ client = clientCrm, maintenant }: ProprietesMaJourne
 
 	const reprendre = useCallback(() => setTentative((precedente) => precedente + 1), [])
 
+	// `CRM-161` T3.b.2 : le filtre « Espace », en mémoire sur les lignes lues (§16.2).
+	const filtre = useFiltreEspaces()
+	const affairesLues = etat.statut === 'pret' ? etat.donnees.affaires : null
+	const affairesAffichees = useMemo(
+		() => (affairesLues === null ? [] : filtrerParEspace(affairesLues, filtre.choisis, (affaire) => affaire.idEspace)),
+		[affairesLues, filtre.choisis],
+	)
+	const espacesNommes = filtre.visible ? filtre.espaces : undefined
+
 	// LA BASCULE DE PORTÉE EST UNE PAIRE DE LIENS (§5.36, §12.1) : les deux portées changent
 	// d'adresse, et ce qui change d'adresse est un lien — en faire un contrôle de formulaire
 	// retirerait le clic du milieu, le nouvel onglet et la copie de l'adresse.
@@ -137,11 +152,12 @@ export function MaJournee({ client = clientCrm, maintenant }: ProprietesMaJourne
 			<ul className="flex items-center gap-1 border-b border-border">
 				{(
 					[
-						{ portee: 'moi' as const, cle: 'today.scope.mine' as CleTraduction, adresse: '/ma-journee' },
+						// `CRM-161` T3.b.2 : changer de portée GARDE le filtre « Espace » (§5.115).
+						{ portee: 'moi' as const, cle: 'today.scope.mine' as CleTraduction, adresse: avecEspaces('/ma-journee', parametres) },
 						{
 							portee: 'tous' as const,
 							cle: 'today.scope.all' as CleTraduction,
-							adresse: `/ma-journee?${CLE_URL_PORTEE}=${VALEUR_URL_PORTEE_TOUS}`,
+							adresse: avecEspaces(`/ma-journee?${CLE_URL_PORTEE}=${VALEUR_URL_PORTEE_TOUS}`, parametres),
 						},
 					] as const
 				).map((entree) => (
@@ -199,12 +215,15 @@ export function MaJournee({ client = clientCrm, maintenant }: ProprietesMaJourne
 		)
 	}
 
-	const sections = decouperEnSections(etat.donnees.affaires, bornesJournee(etat.donnees.instant))
-	const total = etat.donnees.affaires.length
+	const sections = decouperEnSections(affairesAffichees, bornesJournee(etat.donnees.instant))
+	const total = affairesAffichees.length
+	// LE VIDE SOUS LE FILTRE (§5.115) : la journée a des affaires, le filtre les a toutes retirées.
+	const videSousFiltre = total === 0 && etat.donnees.affaires.length > 0
 
 	return (
 		<section aria-label={t('today.aria')} className="flex flex-col gap-4">
 			{bascule}
+			<FiltreEspaces filtre={filtre} />
 			{/* Le changement de portée est ANNONCÉ (§17.9) : une liste qui se recompose sans un mot
 			    est un changement invisible pour qui ne voit pas l'écran. */}
 			<LiveRegion
@@ -214,7 +233,9 @@ export function MaJournee({ client = clientCrm, maintenant }: ProprietesMaJourne
 					total: String(total),
 				})}
 			/>
-			{total === 0 ? (
+			{videSousFiltre ? (
+				<VideSousFiltreEspaces filtre={filtre} />
+			) : total === 0 ? (
 				/*
 				  DEUX VIDES DISTINCTS, ET AUCUN NE SE CONFOND AVEC L'AUTRE (§17.8, §5.36).
 				  « Rien pour moi » PORTE l'action qui élargit la portée — le patron du §5.8, un état
@@ -227,7 +248,7 @@ export function MaJournee({ client = clientCrm, maintenant }: ProprietesMaJourne
 						corps={t('today.empty.mine.body', { jours: String(HORIZON_JOURS) })}
 						action={
 							<Link
-								to={`/ma-journee?${CLE_URL_PORTEE}=${VALEUR_URL_PORTEE_TOUS}`}
+								to={avecEspaces(`/ma-journee?${CLE_URL_PORTEE}=${VALEUR_URL_PORTEE_TOUS}`, parametres)}
 								data-testid="elargir-portee"
 								className="inline-flex items-center min-h-[var(--size-target)] rounded-md bg-brand px-4 text-surface"
 							>
@@ -275,122 +296,132 @@ export function MaJournee({ client = clientCrm, maintenant }: ProprietesMaJourne
 							  contrôle est aussi coûteux qu'un vrai : il apprend à ne plus le lire.
 							*/}
 							<ul className="flex flex-col rounded-lg border border-border bg-surface">
-								{affaires.map((affaire) => (
-									<li
-										key={affaire.id}
-										data-testid="ligne-journee"
-										data-affaire={affaire.id}
-										// SOUS LE PALIER `md`, LA LIGNE SE REPLIE ET GAGNE DE LA HAUTEUR
-										// (§5.36) : quatre éléments ne tiennent pas sur 390 px, et la réponse
-										// d'une liste plate au manque de place est de se replier, non de
-										// tronquer une donnée. `md` et jamais `sm` (§11, §5.20).
-										className="flex flex-wrap md:flex-nowrap items-center gap-2 md:gap-3 px-3 py-2 md:py-0 md:min-h-[var(--size-target)] border-b border-border last:border-b-0 hover:bg-hover"
-									>
-										{/*
-										  L'ÉCHÉANCE EST EN TÊTE DE LIGNE (§5.36), contrairement à toutes les
-										  autres listes du produit : c'est elle qui range cet écran, et une
-										  colonne de dates alignées se lit d'un regard.
+								{affaires.map((affaire) => {
+									const espace = nomEspace(espacesNommes, affaire.idEspace)
+									return (
+										<li
+											key={affaire.id}
+											data-testid="ligne-journee"
+											data-affaire={affaire.id}
+											// SOUS LE PALIER `md`, LA LIGNE SE REPLIE ET GAGNE DE LA HAUTEUR
+											// (§5.36) : quatre éléments ne tiennent pas sur 390 px, et la réponse
+											// d'une liste plate au manque de place est de se replier, non de
+											// tronquer une donnée. `md` et jamais `sm` (§11, §5.20).
+											className="flex flex-wrap md:flex-nowrap items-center gap-2 md:gap-3 px-3 py-2 md:py-0 md:min-h-[var(--size-target)] border-b border-border last:border-b-0 hover:bg-hover"
+										>
+											{/*
+											  L'ÉCHÉANCE EST EN TÊTE DE LIGNE (§5.36), contrairement à toutes les
+											  autres listes du produit : c'est elle qui range cet écran, et une
+											  colonne de dates alignées se lit d'un regard.
 
-										  LA TEINTE DE DANGER PORTE SUR L'ÉCHÉANCE, PAS SUR LA LIGNE : une
-										  affaire en retard est un travail à faire, pas une erreur. Le §1 est
-										  tenu par le titre de la section, qui écrit « En retard » en toutes
-										  lettres.
-										*/}
-										<code
-											data-testid="echeance-journee"
-											className={[
-												'shrink-0 tabular-nums text-sm px-2 py-1 rounded-full',
-												enRetard ? 'bg-danger-soft text-danger-on-soft' : 'text-text-2',
-											].join(' ')}
-										>
-											{echeanceEnClair(affaire.echeance)}
-										</code>
-										{/*
-										  Le titre EST le libellé du lien, sans `aria-label` qui le
-										  remplacerait : deux liens portant le même libellé générique seraient
-										  indiscernables au lecteur d'écran (§17.9, §5.19).
-
-										  Une affaire dont les slugs manquent reste LISTÉE, mais sans lien : un
-										  lien vers une adresse incomplète mènerait à un écran que
-										  l'utilisateur croirait cassé (§5.32).
-										*/}
-										<span
-											// SOUS LE PALIER `md`, LE TITRE PREND SA PROPRE LIGNE, et c'est un
-											// défaut trouvé EN REGARDANT UNE CAPTURE (`CLAUDE.md` §16, 390 px) :
-											// avec `grow` seul, il se rangeait tantôt à côté de la date, tantôt
-											// en dessous, selon sa longueur — quatre lignes voisines n'avaient
-											// pas la même forme sans qu'aucune donnée ne le justifie. `basis-full`
-											// rend le repli RÉGULIER, ce que le §5.36 exige de la ligne repliée.
-											className="basis-full md:basis-auto min-w-0 grow truncate font-medium"
-											title={affaire.titre}
-										>
-											{affaire.adresse === null ? (
-												affaire.titre
-											) : (
-												<Link
-													to={affaire.adresse}
-													data-testid="lien-affaire-journee"
-													className="text-brand hover:underline"
-												>
-													{affaire.titre}
-												</Link>
-											)}
-										</span>
-										{/*
-										  UNE PROCHAINE ACTION ABSENTE NE REND RIEN — ni tiret, ni « non
-										  renseigné » (§5.9, §17.6). Les deux colonnes sont indépendantes en
-										  base, et l'échéance seule reste une information.
-										*/}
-										<span
-											data-testid="action-journee"
-											className="basis-full md:basis-auto min-w-0 grow truncate text-sm text-text-2"
-											{...(affaire.prochaineAction === null
-												? {}
-												: { title: affaire.prochaineAction })}
-										>
-											{affaire.prochaineAction ?? ''}
-										</span>
-										{/*
-										  LA PILULE « Track › Channel » EST CELLE DU §5.29, réemployée sans
-										  copie — c'est la même donnée, elle doit se reconnaître d'un écran à
-										  l'autre. Elle FERME la ligne : elle situe l'affaire, elle ne la nomme
-										  pas. Sans destination lisible, aucune pilule n'est rendue : l'écran
-										  ne nomme jamais ce qu'il ne peut pas ouvrir (§5.29).
-										*/}
-										{affaire.nomTrack === null ||
-										affaire.nomChannel === null ||
-										affaire.adresseChannel === null ? null : (
-											<Link
-												to={affaire.adresseChannel}
-												data-testid="pilule-situation"
-												// LA PILULE EST UN LIEN, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE
-												// CAPTURE (`CLAUDE.md` §16). Écrite d'abord en `span`, elle portait
-												// l'icône de sortie du §5.29 sans mener nulle part : l'icône
-												// promettait une navigation qui n'existe pas — la commande morte que
-												// le §5.10 proscrit. Le §5.29 définit cette pilule comme
-												// « l'ouverture du channel au clic », et la réemployer « sans copie »
-												// (§17.6) veut dire l'employer ENTIÈRE, destination comprise.
-												//
-												// Son nom accessible NOMME sa destination : « Conseil & IA › Grands
-												// comptes » répété sur quatre lignes ne dirait pas ce que chacune
-												// ouvre (§5.29, §5.36).
-												aria-label={t('today.pill.open', {
-													track: affaire.nomTrack,
-													channel: affaire.nomChannel,
-												})}
-												className="shrink-0 inline-flex items-center gap-1 max-w-full px-2 py-1 rounded-full bg-brand-soft text-brand text-xs truncate hover:bg-brand-soft-strong"
+											  LA TEINTE DE DANGER PORTE SUR L'ÉCHÉANCE, PAS SUR LA LIGNE : une
+											  affaire en retard est un travail à faire, pas une erreur. Le §1 est
+											  tenu par le titre de la section, qui écrit « En retard » en toutes
+											  lettres.
+											*/}
+											<code
+												data-testid="echeance-journee"
+												className={[
+													'shrink-0 tabular-nums text-sm px-2 py-1 rounded-full',
+													enRetard ? 'bg-danger-soft text-danger-on-soft' : 'text-text-2',
+												].join(' ')}
 											>
-												<SquareArrowOutUpRight aria-hidden="true" size={12} strokeWidth={2} />
-												<span className="truncate">
-													{t('goals.block.pill', {
+												{echeanceEnClair(affaire.echeance)}
+											</code>
+											{/*
+											  Le titre EST le libellé du lien, sans `aria-label` qui le
+											  remplacerait : deux liens portant le même libellé générique seraient
+											  indiscernables au lecteur d'écran (§17.9, §5.19).
+
+											  Une affaire dont les slugs manquent reste LISTÉE, mais sans lien : un
+											  lien vers une adresse incomplète mènerait à un écran que
+											  l'utilisateur croirait cassé (§5.32).
+											*/}
+											<span
+												// SOUS LE PALIER `md`, LE TITRE PREND SA PROPRE LIGNE, et c'est un
+												// défaut trouvé EN REGARDANT UNE CAPTURE (`CLAUDE.md` §16, 390 px) :
+												// avec `grow` seul, il se rangeait tantôt à côté de la date, tantôt
+												// en dessous, selon sa longueur — quatre lignes voisines n'avaient
+												// pas la même forme sans qu'aucune donnée ne le justifie. `basis-full`
+												// rend le repli RÉGULIER, ce que le §5.36 exige de la ligne repliée.
+												className="basis-full md:basis-auto min-w-0 grow flex flex-col"
+											>
+												<span className="truncate font-medium" title={affaire.titre}>
+													{affaire.adresse === null ? (
+														affaire.titre
+													) : (
+														<Link
+															to={affaire.adresse}
+															data-testid="lien-affaire-journee"
+															className="text-brand hover:underline"
+														>
+															{affaire.titre}
+														</Link>
+													)}
+												</span>
+												{/* `CRM-161` T3.b.2 — la provenance, sous le titre (§5.115). */}
+												{espace === null ? null : (
+													<span data-testid="espace-journee" className="truncate text-xs text-text-3">
+														{espace}
+													</span>
+												)}
+											</span>
+											{/*
+											  UNE PROCHAINE ACTION ABSENTE NE REND RIEN — ni tiret, ni « non
+											  renseigné » (§5.9, §17.6). Les deux colonnes sont indépendantes en
+											  base, et l'échéance seule reste une information.
+											*/}
+											<span
+												data-testid="action-journee"
+												className="basis-full md:basis-auto min-w-0 grow truncate text-sm text-text-2"
+												{...(affaire.prochaineAction === null
+													? {}
+													: { title: affaire.prochaineAction })}
+											>
+												{affaire.prochaineAction ?? ''}
+											</span>
+											{/*
+											  LA PILULE « Track › Channel » EST CELLE DU §5.29, réemployée sans
+											  copie — c'est la même donnée, elle doit se reconnaître d'un écran à
+											  l'autre. Elle FERME la ligne : elle situe l'affaire, elle ne la nomme
+											  pas. Sans destination lisible, aucune pilule n'est rendue : l'écran
+											  ne nomme jamais ce qu'il ne peut pas ouvrir (§5.29).
+											*/}
+											{affaire.nomTrack === null ||
+											affaire.nomChannel === null ||
+											affaire.adresseChannel === null ? null : (
+												<Link
+													to={affaire.adresseChannel}
+													data-testid="pilule-situation"
+													// LA PILULE EST UN LIEN, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE
+													// CAPTURE (`CLAUDE.md` §16). Écrite d'abord en `span`, elle portait
+													// l'icône de sortie du §5.29 sans mener nulle part : l'icône
+													// promettait une navigation qui n'existe pas — la commande morte que
+													// le §5.10 proscrit. Le §5.29 définit cette pilule comme
+													// « l'ouverture du channel au clic », et la réemployer « sans copie »
+													// (§17.6) veut dire l'employer ENTIÈRE, destination comprise.
+													//
+													// Son nom accessible NOMME sa destination : « Conseil & IA › Grands
+													// comptes » répété sur quatre lignes ne dirait pas ce que chacune
+													// ouvre (§5.29, §5.36).
+													aria-label={t('today.pill.open', {
 														track: affaire.nomTrack,
 														channel: affaire.nomChannel,
 													})}
-												</span>
-											</Link>
-										)}
-									</li>
-								))}
+													className="shrink-0 inline-flex items-center gap-1 max-w-full px-2 py-1 rounded-full bg-brand-soft text-brand text-xs truncate hover:bg-brand-soft-strong"
+												>
+													<SquareArrowOutUpRight aria-hidden="true" size={12} strokeWidth={2} />
+													<span className="truncate">
+														{t('goals.block.pill', {
+															track: affaire.nomTrack,
+															channel: affaire.nomChannel,
+														})}
+													</span>
+												</Link>
+											)}
+										</li>
+									)
+								})}
 							</ul>
 						</section>
 					)

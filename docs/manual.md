@@ -358,7 +358,7 @@ bouton dit combien d'espaces sont cochés, par exemple **Espace (1)**. Rien de c
 l'adresse de la page, et survit donc à un rechargement ou à un lien copié. Si les espaces cochés n'ont rien à montrer, la
 page le dit et propose **Afficher tous les espaces**. Au clavier, ouvrez le bouton avec `Entrée`, passez d'une case à
 l'autre avec `Tab`, cochez avec `Espace`, refermez avec `Échap`. Si vous n'êtes membre que d'un espace, ni le bouton ni la
-mention de l'espace n'apparaissent. Les pages qui le font : **Affaires figées** ([chapitre 7](#les-affaires-figees-ce-qui-dort-depuis-trop-longtemps)), **Coûts**
+mention de l'espace n'apparaissent. Les pages qui le font : **Ma journée** ([§6.2](#ce-qu-une-ligne-montre)), **Affaires figées** ([chapitre 7](#les-affaires-figees-ce-qui-dort-depuis-trop-longtemps)), **Coûts**
 ([chapitre 26](#les-couts-de-tout-l-espace-de-travail-un-cumul-par-track)) et **Rentabilité** ([§29.3](#l-ecran-rentabilite)).
 
 **L'espace est dans l'adresse.** L'adresse de l'inbox, d'un track ou d'une page de réglages commence par le nom court de
@@ -960,6 +960,10 @@ erreur.
 
 **Une affaire peut porter une échéance sans prochaine action écrite.** La colonne reste alors vide —
 ni tiret, ni « non renseigné ». L'échéance seule est déjà une information.
+
+**Si vous êtes membre de plusieurs espaces**, la journée rassemble les affaires de tous, et le nom de l'espace de chacune
+s'écrit sous son titre. Le bouton **Espace**, sous les onglets de portée, n'en garde que certains ; changer de portée
+garde ce choix (« Changer d'espace », [chapitre 3](#naviguer-barre-laterale-onglets-etats)).
 
 ### 6.3 « Mes affaires » ou tout l'espace de travail
 

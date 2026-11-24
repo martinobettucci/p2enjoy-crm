@@ -15,6 +15,9 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **« Ma journée » nomme l'espace de chaque affaire** (`CRM-161` T3.b.2) : à partir de deux espaces, le nom de l'espace
+  sous le titre de chaque affaire, le bouton « Espace » sous les onglets de portée ; changer de portée garde le filtre.
+  Manuel §6.2.
 - **« Rentabilité » et « Coûts » montrent tous vos espaces et disent de quel espace vient chaque track** (`CRM-161` T3.b.1,
   `docs/SPEC-espace-courant.md` §16.3, `docs/DESIGN_SYSTEM.md` §5.115). À partir de deux espaces : la ligne de chaque track
   de « Rentabilité » porte le nom de son espace, le tableau de « Coûts » l'écrit sous chaque track ; le bouton « Espace »

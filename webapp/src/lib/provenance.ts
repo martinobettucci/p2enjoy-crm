@@ -6,6 +6,8 @@
 // CE MODULE NE LIT RIEN : il compose ce que la coquille a déjà lu (`ContexteEspace.espaces`) avec l'adresse de la page. Le
 // filtre n'est PAS un droit (`CLAUDE.md` §10) : il restreint ce que la personne a déjà le droit de lire, et la RLS reste la
 // seule règle de ce qu'elle lit.
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : `avecEspaces`, le filtre gardé par un lien de la même page
+//       (docs/DESIGN_SYSTEM.md §5.115)
 
 import type { Workspace } from './workspaces'
 
@@ -77,4 +79,18 @@ export function filtrerParEspace<T>(
 		const idEspace = espaceDe(ligne)
 		return idEspace !== null && choisis.has(idEspace)
 	})
+}
+
+/**
+ * Un chemin de la même page qui GARDE le filtre « Espace » de l'adresse courante (`CRM-161` T3.b.2, §5.115) : un lien qui
+ * change une autre dimension de la page (la portée de « Ma journée ») ne défait pas le choix des espaces. Sans filtre posé,
+ * le chemin est rendu tel quel.
+ */
+export function avecEspaces(chemin: string, parametres: URLSearchParams): string {
+	const valeur = parametres.get(PARAMETRE_ESPACES)
+	if (valeur === null || valeur === '') return chemin
+	const [base = '', requete = ''] = chemin.split('?', 2)
+	const suite = new URLSearchParams(requete)
+	suite.set(PARAMETRE_ESPACES, valeur)
+	return `${base}?${suite.toString()}`
 }

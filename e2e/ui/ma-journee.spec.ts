@@ -14,6 +14,9 @@
 // @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : les scénarios anonymes
 //           se connectent ou sont convertis, aucune page n'étant rendue sans session (décision 601)
 // @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — Ma journée lit les rattachements (docs/SPEC-rattachements.md §5)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : le nom de l'espace sous chaque affaire, le filtre « Espace » à la
+//           souris et au clavier, la portée qui le garde, le vide sous le filtre, la lectrice d'un seul espace, les quatre
+//           paliers (docs/SPEC-espace-courant.md §16.2, §16.3 ; docs/DESIGN_SYSTEM.md §5.115)
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, aucune réponse n'est substituée, et la navigation passe par la BARRE
@@ -347,3 +350,93 @@ test.describe('« Ma journée » (docs/SPEC-cards.md §17)', () => {
 		await capturer(page, 'ma-journee-vide-tous-1440', UNITE)
 	})
 })
+
+// `CRM-161` T3.b.2 — Camille lit « P2Enjoy SAS » et « Studio Lumen » (docs/SPEC-seed.md §55) ; toutes les échéances du seed
+// sont dans le premier : isoler le second rend le vide sous le filtre. Rien n'est écrit.
+test.describe('`CRM-161` T3.b.2 — la journée de tous les espaces (docs/DESIGN_SYSTEM.md §5.115)', () => {
+	const UNITE_T3 = 'CRM-161'
+	const TOUS = '/ma-journee?qui=tous'
+
+	test('à la souris : chaque affaire nomme son espace ; isoler un espace, changer de portée, tout réafficher', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await page.goto(TOUS)
+		const lignes = page.getByTestId('ligne-journee')
+		await expect(lignes.first()).toBeVisible()
+		const nombre = await lignes.count()
+		// LA PROVENANCE : une mention sous le titre de chaque affaire.
+		await expect(page.getByTestId('espace-journee')).toHaveCount(nombre)
+		for (const texte of await page.getByTestId('espace-journee').allTextContents()) expect(texte).toBe('P2Enjoy SAS')
+
+		const bouton = page.getByRole('button', { name: 'Espace', exact: true })
+		await expect(bouton).toHaveAttribute('aria-expanded', 'false')
+		await bouton.click()
+		await page.getByTestId('panneau-filtre-espaces').getByRole('checkbox', { name: 'Studio Lumen' }).check()
+		await expect(page).toHaveURL(/[?&]espaces=studio-lumen/)
+		await expect(page.getByTestId('vide-filtre-espaces')).toBeVisible()
+		await expect(lignes).toHaveCount(0)
+		await capturer(page, 'journee-filtre-vide-1440', UNITE_T3)
+
+		// CHANGER DE PORTÉE GARDE LE FILTRE.
+		await page.getByTestId('lien-portee').and(page.locator('[data-portee="moi"]')).click()
+		await expect(page).toHaveURL(/\/ma-journee\?espaces=studio-lumen$/)
+		await expect(page.getByTestId('vide-filtre-espaces')).toBeVisible()
+
+		await page.getByRole('button', { name: 'Afficher tous les espaces' }).click()
+		await expect(page).not.toHaveURL(/espaces=/)
+		await expect(lignes.first()).toBeVisible()
+		await expect(page.getByRole('button', { name: 'Espace', exact: true })).toBeFocused()
+
+		await page.goto(`${TOUS}&espaces=p2enjoy`)
+		await expect(lignes).toHaveCount(nombre)
+		await capturer(page, 'journee-espaces-1440', UNITE_T3)
+	})
+
+	test('au clavier : ouvrir, cocher à l’espace, replier par Échap, le focus rendu au bouton', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await page.goto(TOUS)
+		await expect(page.getByTestId('ligne-journee').first()).toBeVisible()
+		const bouton = page.getByRole('button', { name: 'Espace', exact: true })
+		await bouton.focus()
+		await page.keyboard.press('Enter')
+		await expect(bouton).toHaveAttribute('aria-expanded', 'true')
+		await page.keyboard.press('Tab')
+		await expect(page.getByRole('checkbox', { name: 'P2Enjoy SAS' })).toBeFocused()
+		await page.keyboard.press('Tab')
+		await expect(page.getByRole('checkbox', { name: 'Studio Lumen' })).toBeFocused()
+		await page.keyboard.press('Space')
+		await expect(page).toHaveURL(/[?&]espaces=studio-lumen/)
+		await expect(page.getByTestId('vide-filtre-espaces')).toBeVisible()
+		await page.keyboard.press('Escape')
+		await expect(page.getByTestId('panneau-filtre-espaces')).toHaveCount(0)
+		await expect(page.getByRole('button', { name: 'Espace (1)' })).toBeFocused()
+		await page.getByRole('button', { name: 'Afficher tous les espaces' }).focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('ligne-journee').first()).toBeVisible()
+		await expect(page.getByRole('button', { name: 'Espace', exact: true })).toBeFocused()
+	})
+
+	test('la lectrice, d’un seul espace : ni filtre, ni mention — la page d’avant T3', async ({ page }) => {
+		await connecter(page, VIEWER)
+		await page.goto(`${TOUS}&espaces=studio-lumen`)
+		await expect(page.getByTestId('ligne-journee').first()).toBeVisible()
+		await expect(page.getByTestId('filtre-espaces')).toHaveCount(0)
+		await expect(page.getByTestId('espace-journee')).toHaveCount(0)
+	})
+
+	test('les quatre paliers, filtre ouvert : captures produites, et aucun débordement horizontal', async ({ page }) => {
+		await connecter(page, ADMIN)
+		for (const palier of PALIERS) {
+			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await page.goto(TOUS)
+			await expect(page.getByTestId('ligne-journee').first()).toBeVisible()
+			await page.getByRole('button', { name: 'Espace', exact: true }).click()
+			await expect(page.getByTestId('panneau-filtre-espaces')).toBeVisible()
+			const deborde = await page.evaluate(
+				() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+			)
+			expect(deborde, `débordement horizontal à ${palier.nom}`).toBe(false)
+			await capturer(page, `journee-filtre-${palier.nom}`, UNITE_T3)
+		}
+	})
+})
+

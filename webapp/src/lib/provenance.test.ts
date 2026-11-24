@@ -1,9 +1,11 @@
 // @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.a : la provenance et le filtre « Espace » dans l'adresse
 //           (docs/SPEC-espace-courant.md §16.1, §16.2 ; docs/DESIGN_SYSTEM.md §5.115)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : `avecEspaces`, un lien de la même page garde le filtre (§5.115)
 
 import { describe, expect, it } from 'vitest'
 import {
 	PARAMETRE_ESPACES,
+	avecEspaces,
 	ecrireEspacesChoisis,
 	filtrerParEspace,
 	lireEspacesChoisis,
@@ -79,3 +81,24 @@ describe('le filtrage en mémoire (§16.2)', () => {
 		expect(filtrerParEspace(lignes, ['ws-p', 'ws-l'], espaceDe).map((ligne) => ligne.id)).toEqual(['a', 'b'])
 	})
 })
+
+describe('un lien de la même page garde le filtre (§5.115, T3.b.2)', () => {
+	it('sans filtre posé, le chemin est rendu tel quel', () => {
+		expect(avecEspaces('/ma-journee', new URLSearchParams('qui=tous'))).toBe('/ma-journee')
+		expect(avecEspaces('/ma-journee?qui=tous', new URLSearchParams(''))).toBe('/ma-journee?qui=tous')
+		expect(avecEspaces('/ma-journee', new URLSearchParams(`${PARAMETRE_ESPACES}=`))).toBe('/ma-journee')
+	})
+
+	it('avec un filtre, il l’ajoute au chemin, après la requête du lien', () => {
+		const adresse = new URLSearchParams('qui=tous&espaces=studio-lumen,p2enjoy')
+		expect(avecEspaces('/ma-journee', adresse)).toBe('/ma-journee?espaces=studio-lumen%2Cp2enjoy')
+		expect(avecEspaces('/ma-journee?qui=tous', adresse)).toBe('/ma-journee?qui=tous&espaces=studio-lumen%2Cp2enjoy')
+	})
+
+	it('le filtre de l’adresse courante remplace celui qu’un chemin porterait déjà', () => {
+		expect(avecEspaces('/ma-journee?espaces=p2enjoy', new URLSearchParams('espaces=studio-lumen'))).toBe(
+			'/ma-journee?espaces=studio-lumen',
+		)
+	})
+})
+

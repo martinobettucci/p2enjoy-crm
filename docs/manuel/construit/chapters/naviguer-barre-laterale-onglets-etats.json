@@ -1138,6 +1138,36 @@
 					"content": [
 						{
 							"type": "text",
+							"text": "Ma journée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui",
+						"anchor": "ce-qu-une-ligne-montre"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§6.2"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
 							"text": "Affaires figées"
 						}
 					]

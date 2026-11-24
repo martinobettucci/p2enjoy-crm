@@ -497,6 +497,53 @@
 			]
 		},
 		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Si vous êtes membre de plusieurs espaces"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", la journée rassemble les affaires de tous, et le nom de l'espace de chacune\ns'écrit sous son titre. Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sous les onglets de portée, n'en garde que certains ; changer de portée\ngarde ce choix (« Changer d'espace », "
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 3"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "mes-affaires-ou-tout-l-espace-de-travail",

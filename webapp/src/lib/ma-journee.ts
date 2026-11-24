@@ -6,6 +6,8 @@
 // @spec docs/SPEC-cards.md §5 (« active »), §16.12.1 (le prédicat d'exclusion du sommeil)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone) ; docs/DESIGN_SYSTEM.md §5.36 (l'écran)
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la journée lit les rattachements (docs/SPEC-rattachements.md §6)
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : chaque affaire porte l'espace de son rattachement
+//       (docs/SPEC-espace-courant.md §16.3)
 //
 // Ce module ne rend rien : il **compose**, et il lit. La séparation est ce qui rend les règles du
 // §17 vérifiables sans navigateur — la clôture de la portée, le calcul des bornes dans le fuseau du
@@ -51,6 +53,8 @@ export {
 type LigneJournee = {
 	readonly id: string
 	readonly title: string
+	/** `CRM-161` T3.b.2 : l'espace du rattachement — absent d'une ligne d'avant, qui ne le lisait pas. */
+	readonly workspace_id?: string | null
 	readonly next_action: string | null
 	readonly next_action_at: string | null
 	readonly channels: {
@@ -71,6 +75,7 @@ export function ligneDepuisRattachement(ligne: RattachementJournee): LigneJourne
 	return {
 		id: ligne.affaire.id,
 		title: ligne.affaire.title,
+		workspace_id: ligne.workspace_id ?? null,
 		next_action: ligne.next_action,
 		next_action_at: ligne.next_action_at,
 		channels: ligne.channels,
@@ -97,6 +102,8 @@ export type AffaireDuJour = {
 	readonly adresseChannel: string | null
 	readonly nomTrack: string | null
 	readonly nomChannel: string | null
+	/** `CRM-161` T3.b.2 : l'espace de la ligne, pour la provenance et le filtre « Espace » (§16.3). */
+	readonly idEspace: string | null
 }
 
 /** Les trois groupes, dans l'ordre de rendu. */
@@ -152,6 +159,7 @@ export function projeterAffaire(ligne: LigneJournee): AffaireDuJour | null {
 		adresseChannel: adresseChannel(ligne),
 		nomTrack: ligne.channels?.tracks?.name ?? null,
 		nomChannel: ligne.channels?.name ?? null,
+		idEspace: ligne.workspace_id ?? null,
 	}
 }
 

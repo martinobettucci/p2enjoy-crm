@@ -8,6 +8,9 @@
 // @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-189 a ; docs/JOURNAL.md décision 594 —
 //           aucune image ne rend la portée nouvelle avec les données de l'ancienne (§17.9)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : l'écran rend la même journée, lue sur les rattachements
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : le nom de l'espace sous chaque affaire à partir de deux espaces,
+//           le filtre « Espace », le vide sous le filtre, la portée qui garde le filtre ; rien d'un seul espace
+//           (docs/SPEC-espace-courant.md §16.1, §16.3 ; docs/DESIGN_SYSTEM.md §5.115)
 //
 // Les données injectées sont celles du SEED, à l'identique — « Audit sécurité applicative » en
 // retard, « Formation Data & IA » aujourd'hui, « Hébergement infogéré » à venir. Ce n'est pas une
@@ -20,6 +23,7 @@ import { MemoryRouter, useSearchParams } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import { MaJournee } from './MaJournee'
 import { FournisseurAuthentification } from './Authentification'
+import { FournisseurEspace } from './ContexteEspace'
 import { fr } from '../i18n/fr'
 import type { ClientCrm } from '../lib/supabase'
 
@@ -397,3 +401,74 @@ describe('MaJournee — une portée n’est jamais annoncée avec les données d
 		expect(annoncesTous.filter((image) => image !== annonceTous)).toEqual([])
 	})
 })
+
+describe('MaJournee — `CRM-161` T3.b.2 : la provenance et le filtre « Espace » (§16.3, §5.115)', () => {
+	const P2ENJOY = { id: 'ws-p', name: 'P2Enjoy SAS', slug: 'p2enjoy' }
+	const LUMEN = { id: 'ws-l', name: 'Studio Lumen', slug: 'studio-lumen' }
+	const lignes = [
+		{ ...AUDIT, workspace_id: 'ws-p' },
+		{ ...FORMATION, workspace_id: 'ws-l' },
+		{ ...HEBERGEMENT, workspace_id: 'ws-p' },
+	]
+	const rendreDans = (espaces: readonly (typeof P2ENJOY)[], adresse = '/ma-journee?qui=tous') =>
+		render(
+			<MemoryRouter initialEntries={[adresse]}>
+				<FournisseurAuthentification client={null}>
+					<FournisseurEspace valeur={{ idWorkspace: 'ws-p', estAdmin: true, espaces }}>
+						<MaJournee client={clientQuiRend({ data: lignes, error: null, status: 200 })} maintenant={MIDI} />
+					</FournisseurEspace>
+				</FournisseurAuthentification>
+			</MemoryRouter>,
+		)
+
+	it('à deux espaces, chaque affaire nomme le sien sous son titre, et le bouton « Espace » est rendu', async () => {
+		rendreDans([P2ENJOY, LUMEN])
+		const mentions = await screen.findAllByTestId('espace-journee')
+		expect(mentions.map((mention) => mention.textContent)).toEqual(['P2Enjoy SAS', 'Studio Lumen', 'P2Enjoy SAS'])
+		expect(screen.getByRole('button', { name: 'Espace' })).toBeTruthy()
+	})
+
+	it('d’un seul espace, ni mention ni bouton : l’écran d’avant T3', async () => {
+		rendreDans([P2ENJOY])
+		expect(await screen.findAllByTestId('ligne-journee')).toHaveLength(3)
+		expect(screen.queryByTestId('espace-journee')).toBeNull()
+		expect(screen.queryByTestId('filtre-espaces')).toBeNull()
+	})
+
+	it('le filtre de l’adresse ne garde que les affaires de l’espace choisi, et l’annonce compte celles-là', async () => {
+		rendreDans([P2ENJOY, LUMEN], '/ma-journee?qui=tous&espaces=studio-lumen')
+		await waitFor(() => expect(screen.getAllByTestId('ligne-journee')).toHaveLength(1))
+		expect(screen.getByText('Formation Data & IA — promo 2026')).toBeTruthy()
+		expect(screen.getByRole('button', { name: 'Espace (1)' })).toBeTruthy()
+		expect(screen.getByText(fr['today.live.message'].replace('{portee}', fr['today.scope.all']).replace('{total}', '1'))).toBeTruthy()
+	})
+
+	it('changer de portée garde le filtre « Espace »', async () => {
+		rendreDans([P2ENJOY, LUMEN], '/ma-journee?qui=tous&espaces=studio-lumen')
+		await screen.findAllByTestId('ligne-journee')
+		const liens = screen.getAllByTestId('lien-portee')
+		expect(liens.map((lien) => lien.getAttribute('href'))).toEqual([
+			'/ma-journee?espaces=studio-lumen',
+			'/ma-journee?qui=tous&espaces=studio-lumen',
+		])
+	})
+
+	it('sous un filtre qui retire tout, le vide est celui du filtre, et non « rien pour personne »', async () => {
+		const vide = render(
+			<MemoryRouter initialEntries={['/ma-journee?qui=tous&espaces=studio-lumen']}>
+				<FournisseurAuthentification client={null}>
+					<FournisseurEspace valeur={{ idWorkspace: 'ws-p', estAdmin: true, espaces: [P2ENJOY, LUMEN] }}>
+						<MaJournee
+							client={clientQuiRend({ data: [{ ...AUDIT, workspace_id: 'ws-p' }], error: null, status: 200 })}
+							maintenant={MIDI}
+						/>
+					</FournisseurEspace>
+				</FournisseurAuthentification>
+			</MemoryRouter>,
+		)
+		expect(await vide.findByText(fr['spaces.filter.empty.title'])).toBeTruthy()
+		expect(vide.queryByText(fr['today.empty.all.title'].replace('{jours}', '7'))).toBeNull()
+		expect(vide.getByRole('button', { name: fr['spaces.filter.empty.all'] })).toBeTruthy()
+	})
+})
+
