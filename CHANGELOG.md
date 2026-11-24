@@ -13,6 +13,12 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+- **CRM-164 — le connecteur ne coupe plus la session d'un assistant qui renouvelle deux fois le même jeton** (décisions 978
+  et 979). Pendant 30 s, un jeton de renouvellement tout juste remplacé rend, pour le même client, la même paire que le
+  premier renouvellement. Rien n'est émis ni allongé, et la fenêtre se ferme dès que la paire rendue n'est plus vivante.
+  Deux renouvellements simultanés n'en font qu'un. Hors de la fenêtre, le refus reste. Toute erreur de protocole (statut
+  HTTP en erreur, `error` JSON-RPC, exception) laisse au journal une ligne `protocole_erreur` ou `protocole_exception` :
+  méthode, outil, code, durée, taille, et jamais le message, un argument ni un jeton. Image `mcp` à reconstruire.
 - **`CRM-161` T3.a — les non-lus de chaque espace, aussi sur un petit écran.** Sur un téléphone, la section « Espaces » du
   repli du fil d'Ariane montre désormais les messages non lus de chaque espace dès son ouverture : ils sont lus une fois par
   page, et le menu des espaces comme le repli les partagent.

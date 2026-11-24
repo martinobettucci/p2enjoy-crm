@@ -26,6 +26,7 @@
 #       docs/SPEC-mail-subsystem.md §29.8)
 # @spec CRM-149 (docs/BACKLOG.md) — tranche T2 : le fournisseur des prompts de l'espace inscrit, et sa ligne dans les
 #       consignes au modèle (docs/SPEC-mcp.md §17.5 ; décision 930)
+# @spec CRM-164 (docs/BACKLOG.md) — le journal des erreurs de protocole enveloppe toute l'application (docs/SPEC-mcp.md §11)
 # @spec docs/SPEC-mcp.md §2 (un service, un hôte, `/mcp`), §3 (mandataire OAuth, état chiffré), §6.2 (audit puis
 #       politique, avant l'outil), §11 (`/sante`, `/pret`) ; docs/JOURNAL.md décision 627 (D1, D5, D8)
 # @spec Modèle : `evoliz_mcp/application.py` (p2enjoy-evoliz, révision 80a3e27). Écarts : aucune administration
@@ -49,6 +50,7 @@ from crm_mcp.audit import AuditOutils
 from crm_mcp.autorisation import MandataireLelabs, construire_stockage
 from crm_mcp.crm import ClientCrm, CrmIndisponible
 from crm_mcp.garde import GardeEntree
+from crm_mcp.journal_protocole import JournalProtocole
 from crm_mcp.outils import (
     affaires,
     affaires_checklists,
@@ -263,11 +265,15 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
     return Serveur(mcp=serveur, crm=crm, moteur=moteur, purger=purger)
 
 
-def application_asgi(reglages: Reglages, **options) -> GardeEntree:
+def application_asgi(reglages: Reglages, **options) -> JournalProtocole:
     serveur = construire(reglages, **options)
-    return GardeEntree(
-        serveur.mcp.http_app(path="/mcp"),
-        purger=serveur.purger,
-        debit_par_minute=reglages.debit_oauth_minute,
-        enregistrements_par_heure=reglages.enregistrements_heure,
+    # `CRM-164` (docs/SPEC-mcp.md §11) : le journal des erreurs de protocole enveloppe TOUT, garde comprise — un corps refusé
+    # (`413`), un débit dépassé (`429`) ou un `invalid_grant` de `/token` y laissent leur ligne comme un `-32603`.
+    return JournalProtocole(
+        GardeEntree(
+            serveur.mcp.http_app(path="/mcp"),
+            purger=serveur.purger,
+            debit_par_minute=reglages.debit_oauth_minute,
+            enregistrements_par_heure=reglages.enregistrements_heure,
+        )
     )

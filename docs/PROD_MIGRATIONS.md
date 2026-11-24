@@ -1573,6 +1573,22 @@ sources précédentes de `functions`, puis un redémarrage ; la migration comme 
 sans elle, l'ancienne fonction de réveil revient, et la nouvelle passe appelle en vain `release_label_pass`, ce qu'elle dit
 au journal sans échouer.
 
+### 2.73 `CRM-164`, décisions 978 et 979 — un renouvellement répété ne coupe plus la session du connecteur ; les erreurs de protocole journalisées (en attente)
+
+`docs/SPEC-mcp.md` §3.3 bis et §11. L'image `mcp` seule : la fenêtre de renouvellement (`crm_mcp/autorisation.py`) et
+l'enveloppe du journal (`crm_mcp/journal_protocole.py`). **Aucune migration, aucune variable, aucun secret**. Le volume
+`mcp-etat` n'est pas touché : les connexions en cours survivent à la reconstruction.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Reconstruire l'image `mcp` | session de livraison, dans la fenêtre du lot | `up -d --build --no-deps --wait mcp`, par `compose_prod` (§4) |
+| 2 | Constater, en lecture seule | session de livraison | `/sante` et `/pret` à `200` ; au journal du service, `docker logs p2enjoy-mcp 2>&1 \| grep -c '"evenement": "protocole_erreur"'` compte des lignes dès les premières connexions (le `401` de découverte, en `info`) ; aucune ligne ne porte de jeton, de message ni d'adresse |
+| 3 | Constater sur un long travail | le responsable | un long travail ChatGPT (plus d'une heure, des centaines d'appels) va au bout sans reconnexion ; au journal, des `renouvellement_rejoue` peuvent paraître, et aucun `invalid_grant` ne suit une rotation de quelques secondes |
+
+**Ce qui devient visible** : rien à l'écran ; un assistant qui renouvelle deux fois le même jeton n'est plus déconnecté. Un
+redémarrage du service ferme les fenêtres ouvertes (elles vivent en mémoire), ce qui ne fait que rendre le refus d'avant.
+**Retour arrière** : l'image précédente du connecteur, reconstruite à la révision d'avant.
+
 ## 3. Migrations en attente
 
 **Aucune migration en attente depuis la seconde fenêtre du 2026-11-21** : la 195 à la 199 ont été appliquées par elle (révision `377ac6e5`, décision 977) ; registre à **197** lignes. *Historique de l'attente* — les paragraphes qui suivent décrivent la 195 à la 199 telles qu'elles attendaient.

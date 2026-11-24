@@ -20704,8 +20704,7 @@ qui ne chevauche pas la suivante ; Vitest, API ; le contrat (fonction `functions
 production : aucun `edge_request_failed` de `ia` sur une journée. La campagne complète revient à la session de livraison
 (décision 830).
 
-### CRM-164 — Le connecteur coupe la session d'un assistant qui renouvelle deux fois le même jeton ; les erreurs de protocole ne laissent aucune trace `[@]`
-*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-39) depuis 2026-11-24 06:41 UTC — état avant : [ ] ; confiée par la session de livraison (96)*
+### CRM-164 — Le connecteur coupe la session d'un assistant qui renouvelle deux fois le même jeton ; les erreurs de protocole ne laissent aucune trace `[P]`
 
 **Origine** : signalement du responsable, le 2026-11-24 — un long import de prospection depuis ChatGPT (2 500+ affaires) ne s'est
 pas terminé, et Claude a rapporté une erreur interne `-32603` du connecteur sur la liste des organisations. Diagnostic de la
@@ -20737,6 +20736,34 @@ compromis) ; le contrat suit avec le code.
 `invalid_grant`), verte après ; la fenêtre dépassée refuse encore ; pytest unitaires et intégration contre le vrai Keycloak ;
 une erreur de protocole provoquée apparaît au journal ; contrat ; constat en production : un long travail ChatGPT sans
 reconnexion. La campagne complète revient à la session de livraison (décision 830).
+- [x] **Implémentée et vérifiée en développement, le 2026-11-24** (session 39, devenue 30 au redémarrage de la machine) :
+  - **la preuve rouge, avant le code**, contre le vrai Keycloak et l'ancien service : deux renouvellements rapprochés
+    avec le même jeton, le second rendait `401 invalid_grant` (« refresh token does not exist ») ;
+  - **verte après** : `test_integration_oauth.py`, 16/16. La même paire est rendue au caractère près, et elle ouvre les
+    outils. Passé la fenêtre, le jeton remplacé est refusé (`401 invalid_grant`), et la session continue par la paire
+    rendue ;
+  - **pytest unitaires** : 453 passés. Dont 7 pour la fenêtre : même paire sans appel au SSO ; deux renouvellements
+    simultanés qui n'en font qu'un ; hors fenêtre, autre client, paire révoquée ou renouvelée refusés ; mémoire bornée ;
+    FastMCP non interrogé pour un rejeu. Et 10 pour l'enveloppe : `-32603` en JSON et en SSE, session inconnue,
+    `invalid_grant` de `/token`, exception relevée, `401` en `info`, rien sans erreur, aucun nom libre repris ;
+  - **intégration complète du connecteur** : 22 fichiers, **117/117**, contre le service reconstruit ;
+  - **`scripts/verify-mcp.sh --rapide`** : 127 contrôles, dont 3 contrôles de traçabilité rouges au premier passage. La
+    garde ne connaissait pas `CRM-164` ; elle l'accepte désormais, et la règle passe sur les 109 fichiers du connecteur.
+    Le dernier passage a eu **1 échec passager**, `test_superadministratrice_entre_et_la_rls_reste_juge`, survenu pendant
+    l'application de la 0200 (`CRM-165`), qui recharge PostgREST. Le test est vert seul, deux fois, et l'intégration
+    complète rejouée ensuite est 117/117 ;
+  - **le journal du service de dev**, lu par `docker logs`, porte trois sortes de lignes :
+    - `renouvellement_rejoue` (8 à 10 ms), sans le faux « Rejecting with invalid_grant » de FastMCP ;
+    - `protocole_erreur` d'un `invalid_grant` de `/token`, d'un `/register` refusé et des `/auth/callback` en `403` ;
+    - le `401` de découverte, en `info`.
+    Aucune de ces lignes ne porte de jeton, de message ou d'adresse.
+- **Limite observée, hors unité** : les avertissements propres à FastMCP (« Refresh token not found… ») sortent encore
+  au format Rich, et non en JSON : `journalisation.configurer` ne capte pas leurs gestionnaires. Les lignes de
+  l'enveloppe, elles, sont en JSON.
+- **Ce que cette session n'a pas joué** : la campagne complète et `verify-mcp.sh` sans `--rapide` (la preuve
+  Playwright) reviennent à la session de livraison (décision 830).
+- [P] **Livraison et constat** : `docs/PROD_MIGRATIONS.md` §2.73 — l'image `mcp` reconstruite. Il reste le constat du
+  responsable : un long travail ChatGPT sans reconnexion.
 **Reprise de l'import** : par **« Importer un fichier »** du CRM (CSV des affaires restantes produit par ChatGPT), sur décision du
 responsable — hors de cette unité.
 

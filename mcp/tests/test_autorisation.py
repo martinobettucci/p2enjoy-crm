@@ -2,6 +2,9 @@
 # @verifies CRM-102 T2 — docs/SPEC-mcp.md §3.3 (case « Stay signed in » décochée, `offline_access` ajoutée une fois),
 #           §4 (signature, émetteur, `azp`, RS256, portée, `verified` ; adresse vérifiée ; « Droits en attente » ;
 #           registre injoignable = refus ; `admin` lu) ; docs/SSO.md (les deux règles du domaine)
+# @verifies CRM-164 (docs/BACKLOG.md) — la fenêtre de renouvellement : dans la fenêtre, le jeton remplacé rend la même paire sans
+#           rien renouveler ; deux renouvellements simultanés n'en font qu'un ; hors de la fenêtre, pour un autre client, ou
+#           si la paire rendue est morte, le refus reste ; la mémoire bornée (docs/SPEC-mcp.md §3.3 bis ; décision 979)
 # @verifies Repris des preuves d'Evoliz (p2enjoy-evoliz, `tests/test_autorisation.py`, révision 80a3e27), adaptées au
 #           registre PostgreSQL du CRM.
 from __future__ import annotations
@@ -17,7 +20,16 @@ from urllib.parse import parse_qs, urlsplit
 import pytest
 from fastmcp.server.auth.providers.jwt import RSAKeyPair
 
-from crm_mcp.autorisation import VerificateurRole, Verdict, admettre, identite_de, roles_de
+from crm_mcp.autorisation import (
+    Fenetres,
+    MandataireLelabs,
+    VerificateurRole,
+    Verdict,
+    admettre,
+    empreinte,
+    identite_de,
+    roles_de,
+)
 from crm_mcp.crm import ClientCrm
 from crm_mcp.registre import Registre
 
@@ -212,3 +224,133 @@ def test_portee_hors_ligne_ajoutee_une_fois():
     assert parametres["scope"] == ["openid profile email offline_access"]
     assert parametres["state"] == ["s"] and parametres["client_id"] == ["c"]
     assert parse_qs(urlsplit(demander_hors_ligne(une)).query)["scope"] == ["openid profile email offline_access"]
+
+
+# --- La fenêtre de renouvellement (docs/SPEC-mcp.md §3.3 bis, `CRM-164`) ---------------------------------------------------
+
+import asyncio  # noqa: E402
+import logging  # noqa: E402
+import weakref  # noqa: E402
+from types import SimpleNamespace  # noqa: E402
+
+from fastmcp.server.auth.oauth_proxy import OAuthProxy  # noqa: E402
+from mcp.server.auth.provider import RefreshToken  # noqa: E402
+from mcp.shared.auth import OAuthToken  # noqa: E402
+
+
+class _Horloge:
+    def __init__(self) -> None:
+        self.t = 1000.0
+
+    def __call__(self) -> float:
+        return self.t
+
+
+class _Magasin:
+    """Le magasin des jetons de renouvellement de FastMCP, réduit à ce que la fenêtre lit : vivant ou non, par empreinte."""
+
+    def __init__(self) -> None:
+        self.vivants: set[str] = set()
+
+    async def get(self, key: str):
+        return object() if key in self.vivants else None
+
+
+@pytest.fixture
+def proxy(monkeypatch):
+    """Le mandataire sans découverte OIDC, et un FastMCP simulé qui fait tourner le jeton comme le vrai : la paire neuve vit,
+    l'ancien jeton meurt, et chaque renouvellement est compté."""
+    horloge = _Horloge()
+    magasin = _Magasin()
+    mandataire = MandataireLelabs.__new__(MandataireLelabs)
+    mandataire.fenetres = Fenetres(horloge=horloge)
+    mandataire._verrous = weakref.WeakValueDictionary()
+    mandataire._refresh_token_store = magasin
+    compte = {"renouvellements": 0, "chargements_fastmcp": 0}
+
+    async def charger(self, client, jeton):
+        compte["chargements_fastmcp"] += 1
+        if empreinte(jeton) not in magasin.vivants:
+            return None
+        return RefreshToken(token=jeton, client_id="client-a", scopes=["openid"], expires_at=int(time.time()) + 600)
+
+    async def renouveler(self, client, jeton, portees):
+        compte["renouvellements"] += 1
+        await asyncio.sleep(0.01)  # le SSO répond : un second appel concurrent a le temps d'arriver
+        n = compte["renouvellements"]
+        paire = OAuthToken(access_token=f"acces-{n}", token_type="Bearer", expires_in=300, refresh_token=f"renouv-{n}")
+        magasin.vivants.discard(empreinte(jeton.token))
+        magasin.vivants.add(empreinte(paire.refresh_token))
+        return paire
+
+    monkeypatch.setattr(OAuthProxy, "load_refresh_token", charger)
+    monkeypatch.setattr(OAuthProxy, "exchange_refresh_token", renouveler)
+    magasin.vivants.add(empreinte("renouv-0"))
+    return SimpleNamespace(mandataire=mandataire, horloge=horloge, magasin=magasin, compte=compte)
+
+
+CLIENT_A = SimpleNamespace(client_id="client-a")
+
+
+async def _renouveler(proxy, jeton: str, client=CLIENT_A) -> OAuthToken | None:
+    """Ce que fait le gestionnaire `/token` du SDK : charger, puis échanger ; None pour `invalid_grant`."""
+    charge = await proxy.mandataire.load_refresh_token(client, jeton)
+    if charge is None:
+        return None
+    return await proxy.mandataire.exchange_refresh_token(client, charge, charge.scopes)
+
+
+async def test_dans_la_fenetre_le_jeton_remplace_rend_la_meme_paire_sans_rien_renouveler(proxy, caplog):
+    caplog.set_level(logging.INFO)
+    premier = await _renouveler(proxy, "renouv-0")
+    proxy.horloge.t += 5  # le rejeu mesuré le 2026-11-23 : 5 s après la rotation
+    second = await _renouveler(proxy, "renouv-0")
+    assert second == premier, "la même paire, au caractère près"
+    assert proxy.compte["renouvellements"] == 1, "rien n'est demandé au SSO"
+    [ligne] = [r for r in caplog.records if r.getMessage() == "renouvellement_rejoue"]
+    assert ligne.delai_ms == 5000
+    assert proxy.compte["chargements_fastmcp"] == 1, "FastMCP n'est pas interrogé pour un rejeu : il écrirait un faux refus"
+    assert "renouv-" not in json.dumps(ligne.__dict__, default=str), "ni jeton ni empreinte au journal"
+
+
+async def test_deux_renouvellements_simultanes_n_en_font_qu_un(proxy):
+    a, b = await asyncio.gather(_renouveler(proxy, "renouv-0"), _renouveler(proxy, "renouv-0"))
+    assert a == b and a is not None
+    assert proxy.compte["renouvellements"] == 1
+
+
+async def test_hors_de_la_fenetre_le_refus_reste(proxy):
+    await _renouveler(proxy, "renouv-0")
+    proxy.horloge.t += 30
+    assert await _renouveler(proxy, "renouv-0") is None
+    assert len(proxy.mandataire.fenetres) == 0, "la fenêtre échue est oubliée"
+
+
+async def test_un_autre_client_ne_rejoue_pas(proxy):
+    await _renouveler(proxy, "renouv-0")
+    assert await _renouveler(proxy, "renouv-0", client=SimpleNamespace(client_id="client-b")) is None
+
+
+async def test_la_fenetre_se_ferme_quand_la_paire_rendue_meurt(proxy, caplog):
+    caplog.set_level(logging.INFO)
+    premier = await _renouveler(proxy, "renouv-0")
+    # Révoquée, ou renouvelée à son tour : la paire rendue n'est plus vivante.
+    proxy.magasin.vivants.discard(empreinte(premier.refresh_token))
+    assert await _renouveler(proxy, "renouv-0") is None
+    assert any(r.getMessage() == "renouvellement_rejeu_refuse" for r in caplog.records)
+
+
+async def test_la_paire_renouvelee_ferme_la_fenetre_du_jeton_d_avant(proxy):
+    premier = await _renouveler(proxy, "renouv-0")
+    suivant = await _renouveler(proxy, premier.refresh_token)
+    assert suivant is not None and suivant != premier
+    assert await _renouveler(proxy, "renouv-0") is None
+
+
+def test_la_memoire_des_fenetres_est_bornee():
+    fenetres = Fenetres(taille_max=3)
+    paire = OAuthToken(access_token="a", token_type="Bearer", refresh_token="r")
+    for n in range(5):
+        fenetres.ouvrir(f"jeton-{n}", "client-a", ["openid"], None, paire)
+    assert len(fenetres) == 3
+    assert fenetres.lire("jeton-0") is None and fenetres.lire("jeton-4") is not None

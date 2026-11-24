@@ -3,6 +3,9 @@
 # @verifies CRM-071 (docs/BACKLOG.md) — tranche T3 : `crm_view_list` dans les consultations de la famille `affaires` (révision)
 # @verifies CRM-112 (docs/BACKLOG.md) — tranche T9 : `crm_common_field_list` dans les consultations de la famille `affaires`
 #           (docs/SPEC-mcp.md §9.2 sexdecies)
+# @verifies CRM-164 (docs/BACKLOG.md) — le renouvellement répété, contre le vrai Keycloak : deux renouvellements rapprochés
+#           avec le même jeton rendent la même paire (rouge avant : le second rendait `invalid_grant`) ; la fenêtre dépassée
+#           refuse encore, et la session continue par la paire rendue (docs/SPEC-mcp.md §3.3 bis ; décisions 978 et 979)
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T3 : le parcours OAuth complet, contre la vraie pile de développement
 # @verifies CRM-102 T3 — docs/SPEC-mcp.md §3.1 (flux : 401, métadonnées, enregistrement, consentement, SSO, retour,
 #           échange), §3.3 (connexion longue : `offline_access` si et seulement si la case est cochée, et le
@@ -307,3 +310,42 @@ async def test_connexion_longue_survit_a_la_fin_de_la_session_sso(longue):
         assert (await _espaces(renouvele.json()["access_token"]))["total"] == 0
     else:
         assert renouvele.status_code in (400, 401), "sans connexion longue, la fin de la session du SSO l'emporte"
+
+
+# --- Renouvellement répété (§3.3 bis, `CRM-164`) ---------------------------------------------------------------------------
+
+
+async def _renouveler(contexte: dict[str, str], jeton: str) -> httpx2.Response:
+    async with httpx2.AsyncClient() as http:
+        return await http.post(
+            f"{MCP}/token",
+            data={"grant_type": "refresh_token", "refresh_token": jeton, "client_id": contexte["client_id"]},
+        )
+
+
+async def test_renouvellement_repete_rend_la_meme_paire():
+    """Ce que fait ChatGPT (le 2026-11-23 à 18:23:24) : le même jeton présenté deux fois, à quelques secondes. Le second
+    renouvellement rend la paire du premier, au caractère près, et elle ouvre les outils."""
+    reponse, contexte = await _parcours(SABINE)
+    jetons = await _jetons(contexte, reponse)
+    premier = await _renouveler(contexte, jetons["refresh_token"])
+    assert premier.status_code == 200, premier.text
+    second = await _renouveler(contexte, jetons["refresh_token"])
+    assert second.status_code == 200, f"le jeton tout juste remplacé est refusé : {second.text}"
+    assert second.json()["access_token"] == premier.json()["access_token"]
+    assert second.json()["refresh_token"] == premier.json()["refresh_token"]
+    assert (await _espaces(second.json()["access_token"]))["total"] == 0
+
+
+async def test_hors_de_la_fenetre_le_jeton_remplace_est_refuse():
+    """Passé la fenêtre de 30 s, le refus d'avant reste ; la session continue par la paire rendue."""
+    reponse, contexte = await _parcours(SABINE)
+    jetons = await _jetons(contexte, reponse)
+    premier = await _renouveler(contexte, jetons["refresh_token"])
+    assert premier.status_code == 200, premier.text
+    await asyncio.sleep(31)
+    tardif = await _renouveler(contexte, jetons["refresh_token"])
+    # `401` : le gestionnaire du SDK rend `invalid_grant` sous ce statut (mesuré avant le correctif).
+    assert tardif.status_code == 401 and tardif.json()["error"] == "invalid_grant", tardif.text
+    suivant = await _renouveler(contexte, premier.json()["refresh_token"])
+    assert suivant.status_code == 200, suivant.text

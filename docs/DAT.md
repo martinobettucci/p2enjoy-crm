@@ -760,7 +760,11 @@ piloter le CRM au nom d'une personne connectée par le SSO LeLabs. Il porte :
 - **un mandataire OAuth**, repris par copie tracée du connecteur Evoliz du même responsable, avec la case « Stay
   signed in » qui demande `offline_access` ;
 - **une garde d'entrée** ;
-- **un état chiffré** sur le volume `mcp-etat`.
+- **un état chiffré** sur le volume `mcp-etat` ;
+- *depuis `CRM-164`* : **une fenêtre de renouvellement** de 30 s, en mémoire, où un jeton tout juste remplacé rend la
+  même paire (`docs/SPEC-mcp.md` §3.3 bis). Elle suppose le processus unique du service. S'y ajoute **un journal des
+  erreurs de protocole**, une enveloppe ASGI autour de toute l'application (§11), qui n'écrit jamais un message, un
+  argument ni un jeton.
 
 **Il agit sous l'identité de la personne.** Pour chaque requête, il frappe un **jeton interne**
 (`iss = p2enjoy-crm/mcp`, 300 s au plus) et passe par Kong vers PostgREST et les RPC existantes : la RLS reste juge.

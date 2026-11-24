@@ -6,6 +6,9 @@
 #       le 2026-10-06) : vérificateur, magasin chiffré, case « Stay signed in », contrôles au retour et à l'échange. Écarts :
 #       registre asynchrone (PostgreSQL derrière la clé de service), adresse vérifiée exigée, rôle `admin` lu (il vaut
 #       superadministrateur, arbitrage A1, là où Evoliz l'ignore).
+# @spec CRM-164 (docs/BACKLOG.md) — la fenêtre de renouvellement : un jeton tout juste remplacé rend, pendant 30 s et pour le
+#       même client, la même paire que le premier renouvellement ; rien d'émis ni d'allongé ; fermée dès que la paire meurt ;
+#       un verrou par jeton ; en mémoire seulement (docs/SPEC-mcp.md §3.3 bis, §14 ; décisions 978 et 979)
 # @spec CRM-102 tranche T3 — docs/DESIGN_SYSTEM.md §5.57 : la page de consentement de FastMCP porte la charte (accord
 #       primaire, refus secondaire, focus) et la case « Stay signed in »
 """Serveur d'autorisation MCP adossé au realm ``lelabs`` : plancher ``verified``.
@@ -24,8 +27,13 @@ version dont ces points ont été lus (docs/SPEC-mcp.md §14), et les tests d'in
 
 from __future__ import annotations
 
+import asyncio
+import hashlib
 import logging
-from dataclasses import dataclass
+import time
+import weakref
+from collections import OrderedDict
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
@@ -42,7 +50,8 @@ from key_value.aio.stores.filetree import (
     FileTreeV1KeySanitizationStrategy,
 )
 from key_value.aio.wrappers.encryption import FernetEncryptionWrapper
-from mcp.server.auth.provider import AuthorizationCode, TokenError
+from mcp.server.auth.provider import AuthorizationCode, RefreshToken, TokenError
+from mcp.shared.auth import OAuthToken
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, RedirectResponse, Response
 
@@ -212,6 +221,73 @@ class VerificateurRole(JWTVerifier):
         return verdict.jeton
 
 
+#: La fenêtre de renouvellement (docs/SPEC-mcp.md §3.3 bis) : le rejeu mesuré est venu 5 s après la rotation (décision 979).
+FENETRE_RENOUVELLEMENT_S = 30.0
+#: Au-delà, les fenêtres les plus anciennes sont oubliées (mémoire bornée).
+FENETRES_MAX = 10_000
+
+
+def empreinte(jeton: str) -> str:
+    """L'empreinte d'un jeton, celle de FastMCP (``oauth_proxy.models._hash_token``) : SHA-256 en hexadécimal."""
+    return hashlib.sha256(jeton.encode()).hexdigest()
+
+
+@dataclass(frozen=True)
+class Fenetre:
+    """Ce que le premier renouvellement a rendu pour un jeton remplacé : rejoué tel quel jusqu'à ``fin``."""
+
+    client_id: str
+    portees: list[str]
+    expire_a: int | None
+    paire: OAuthToken
+    #: L'empreinte du jeton de renouvellement rendu : la fenêtre se ferme dès qu'il n'est plus vivant.
+    empreinte_rendue: str
+    ouverte_a: float
+    fin: float
+
+
+@dataclass
+class Fenetres:
+    """Les fenêtres ouvertes, en mémoire, indexées par l'empreinte du jeton remplacé (docs/SPEC-mcp.md §3.3 bis)."""
+
+    duree_s: float = FENETRE_RENOUVELLEMENT_S
+    taille_max: int = FENETRES_MAX
+    horloge: Any = time.monotonic
+    _ouvertes: OrderedDict[str, Fenetre] = field(default_factory=OrderedDict)
+
+    def ouvrir(self, remplace: str, client_id: str, portees: list[str], expire_a: int | None, paire: OAuthToken) -> None:
+        maintenant = self.horloge()
+        self._ouvertes[empreinte(remplace)] = Fenetre(
+            client_id=client_id,
+            portees=list(portees),
+            expire_a=expire_a,
+            paire=paire,
+            empreinte_rendue=empreinte(paire.refresh_token or ""),
+            ouverte_a=maintenant,
+            fin=maintenant + self.duree_s,
+        )
+        self._ouvertes.move_to_end(empreinte(remplace))
+        while len(self._ouvertes) > self.taille_max:
+            self._ouvertes.popitem(last=False)
+
+    def lire(self, jeton: str) -> Fenetre | None:
+        """La fenêtre ouverte pour ce jeton, ou None ; une fenêtre échue est oubliée."""
+        cle = empreinte(jeton)
+        fenetre = self._ouvertes.get(cle)
+        if fenetre is None:
+            return None
+        if self.horloge() >= fenetre.fin:
+            del self._ouvertes[cle]
+            return None
+        return fenetre
+
+    def fermer(self, jeton: str) -> None:
+        self._ouvertes.pop(empreinte(jeton), None)
+
+    def __len__(self) -> int:
+        return len(self._ouvertes)
+
+
 @dataclass(frozen=True)
 class Stockage:
     """État du mandataire : magasin chiffré, et son arbre de fichiers à purger."""
@@ -306,6 +382,9 @@ class MandataireLelabs(OIDCProxy):
         )
         #: Transactions dont le consentement a coché la connexion longue ; lues dans la même requête, puis oubliées.
         self._connexions_longues: set[str] = set()
+        #: `CRM-164` (§3.3 bis) : les fenêtres de renouvellement, et un verrou par jeton présenté.
+        self.fenetres = Fenetres()
+        self._verrous: weakref.WeakValueDictionary[str, asyncio.Lock] = weakref.WeakValueDictionary()
 
     # --- Connexion longue (docs/SPEC-mcp.md §3.3) -------------------------------------------------------------------
 
@@ -339,6 +418,56 @@ class MandataireLelabs(OIDCProxy):
             return adresse
         journal.info("connexion_longue_demandee")
         return demander_hors_ligne(adresse)
+
+    # --- Renouvellement répété (docs/SPEC-mcp.md §3.3 bis, `CRM-164`) ------------------------------------------------
+
+    def _verrou(self, jeton: str) -> asyncio.Lock:
+        """Le verrou propre à un jeton présenté : deux renouvellements simultanés avec lui sont sérialisés."""
+        cle = empreinte(jeton)
+        verrou = self._verrous.get(cle)
+        if verrou is None:
+            verrou = asyncio.Lock()
+            self._verrous[cle] = verrou
+        return verrou
+
+    async def _fenetre_vivante(self, jeton: str, client_id: str | None) -> Fenetre | None:
+        """La fenêtre de ce jeton, si elle sert ce client et si la paire qu'elle rendrait est encore vivante."""
+        fenetre = self.fenetres.lire(jeton)
+        if fenetre is None or fenetre.client_id != client_id:
+            return None
+        if await self._refresh_token_store.get(key=fenetre.empreinte_rendue) is None:
+            # Le jeton rendu a été révoqué ou renouvelé à son tour : la fenêtre se ferme, le refus d'avant reste.
+            self.fenetres.fermer(jeton)
+            journal.info("renouvellement_rejeu_refuse")
+            return None
+        return fenetre
+
+    async def load_refresh_token(self, client, refresh_token: str) -> RefreshToken | None:  # type: ignore[override]
+        async with self._verrou(refresh_token):
+            # LA FENÊTRE D'ABORD : elle n'existe que pour un jeton déjà remplacé, que FastMCP ne connaît plus. L'interroger
+            # en premier lui ferait écrire « Rejecting with invalid_grant » pour un rejeu qui va être accepté.
+            fenetre = await self._fenetre_vivante(refresh_token, client.client_id)
+            if fenetre is not None:
+                return RefreshToken(
+                    token=refresh_token, client_id=fenetre.client_id, scopes=fenetre.portees, expires_at=fenetre.expire_a
+                )
+            return await super().load_refresh_token(client, refresh_token)
+
+    async def exchange_refresh_token(self, client, refresh_token: RefreshToken, scopes: list[str]) -> OAuthToken:  # type: ignore[override]
+        async with self._verrou(refresh_token.token):
+            fenetre = await self._fenetre_vivante(refresh_token.token, client.client_id)
+            if fenetre is not None:
+                # LA MÊME PAIRE, AU CARACTÈRE PRÈS : rien n'est émis, rien n'est demandé au SSO, aucune échéance ne bouge.
+                journal.info(
+                    "renouvellement_rejoue",
+                    extra={"delai_ms": round((self.fenetres.horloge() - fenetre.ouverte_a) * 1000)},
+                )
+                return fenetre.paire
+            paire = await super().exchange_refresh_token(client, refresh_token, scopes)
+            self.fenetres.ouvrir(
+                refresh_token.token, refresh_token.client_id, refresh_token.scopes, refresh_token.expires_at, paire
+            )
+            return paire
 
     # --- Retour du SSO et échange du code (docs/SPEC-mcp.md §4) ---------------------------------------------------
 
