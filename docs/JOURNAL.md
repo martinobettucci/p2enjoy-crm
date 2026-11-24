@@ -42064,3 +42064,12 @@ chapitre temps), rejouées 21/21 et 12/12 ; garde du manuel 169 ; API manuel 9/9
 migration) ; l'image `mcp`, non reconstruite par la fenêtre, reconstruite ensuite (`mcp-etat` conservé), saine, `/sante` et
 `/pret` à 200 ; `verifier.sh` 35/36 (INC-277) ; manuel publié ; contrat §2.73 LIVRÉE et §8, changelog en [Publié], backlog ;
 verrou levé.
+
+### décision 985 — INC-365 : le bloc « Relance automatique » reçoit un état de chargement
+
+*2026-11-24, session 4522fa9c (p2enjoy-crm-11, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le problème** (INC-365) : `BlocSequenceCard` affirme « Aucune relance n'est armée » et offre le geste d'armer avant d'avoir lu
+l'inscription.
+**Décision** : **un état de chargement** — un squelette tant que la lecture est en cours, le geste offert seulement après ; le
+design system §5.42 est précisé en conséquence ; écarté : garder l'affichage actuel. **Connecteur MCP** — question 1 : non ;
+question 2 : sans objet. **Conséquence** : correctif confié à la session libre (30), preuve rouge avant.

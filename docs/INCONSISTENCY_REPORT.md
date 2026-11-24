@@ -9380,3 +9380,5 @@ traité explicitement. Antérieur au lot ; aucun refus n'est contourné (une rel
 
 **L'arbitrage demandé au responsable.** Donner au bloc un état de chargement (un squelette ou « Chargement… », le geste
 offert seulement après la lecture), ce qui précise §5.42 — ou garder l'affichage actuel ?
+
+**Arbitré le 2026-11-24 (décision 985)** : un état de chargement ; correctif confié à la session 30.
