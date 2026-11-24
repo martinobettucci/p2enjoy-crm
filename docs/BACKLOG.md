@@ -20471,11 +20471,11 @@ campagne complète revient à la session de livraison (décision 830).
 - [P] **Livraison et constat** : `docs/PROD_MIGRATIONS.md` §2.66, soit la migration 194, la webapp, l'image `mcp` et le
   manuel. Il reste le constat du responsable dans « Seulement moi ».
 
-### CRM-161 — L'espace courant cloisonne les tracks, les channels et l'inbox ; tout le reste est global, l'espace de provenance affiché `[~]`
+### CRM-161 — L'espace courant cloisonne les tracks, les channels et l'inbox ; tout le reste est global, l'espace de provenance affiché `[@]`
 
 **T1 et T2 livrées le 2026-11-21** (décision 977, révision `377ac6e5`) ; T3 à T5 restent à faire ; reste le constat du responsable.
-*Prise libérée le 2026-11-24 par la session 4891a451 (p2enjoy-crm-5f) : T1 et T2 livrées, T3 à T5 non commencées — les relevés
-consignés sous T3 attendent la prochaine prise.*
+*Prise en charge : session interactive 4891a451 (p2enjoy-crm-ef, ex-5f) depuis 2026-11-24 06:41 UTC — état avant : [~] ; T3 à T5,
+confiées par la session de livraison (96)*
 
 **Origine** : demande du responsable, le 2026-11-21 ; arbitrée le même jour (décision 963).
 **Demande, verbatim** : « le inbox ne semble pas être contenu au workspace. en fait tout est contenu au workspace. d'ailleurs on
