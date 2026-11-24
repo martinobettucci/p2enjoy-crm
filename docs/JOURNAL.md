@@ -42196,3 +42196,17 @@ la base et livre T3.b seule (T3.c estimée à plus de 3 ou 4 heures).*
     des membres de l'espace de l'onglet, limite nommée renvoyée à T3.d.
 - **Ce qui attend.** Les numéros des migrations et leur code, après l'annonce de fin de 11 ; le backlog et le contrat
   suivent avec eux.
+
+### décision 988 — livrer le lot CRM-161 T3.b à la révision `ff2804ee`
+
+*2026-11-24, session 4522fa9c (p2enjoy-crm-11, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : `CRM-161` T3.b — T3.b.1 (`3bfaef77`) et T3.b.2 (`98c608ee` à `797802d2`) : Rentabilité, Coûts et leurs onglets
+« À saisir », Ma journée, le carnet, les objectifs, la cloche et la recherche montrent tous les espaces et nomment celui de
+chaque élément, avec le filtre « Espace » ; le formulaire d'un contact n'offre que les organisations de son espace ; webapp
+et manuel ; aucune migration ; contrat §2.79 ; verrou `d3809b6b`.
+**La campagne** : complète à `797802d2`, base recréée (198 migrations) : types, unitaires, mail 57/57, mcp 131/131, pgTAP
+174/5685 verts ; ui 1356/1361, api 1411/1415, manuel 168/169 — INC-342 (webhooks, `inbox-lecture:109`, manuel 34) ou verts
+rejoués seuls (`envoi-pieces-jointes`, `temps-fiche-affaire`, `connecteur-etiquettes`, `connecteur-organisations`,
+`demarrage`, `webhooks-remise`). **Aucun défaut du lot.** Garde du manuel 170 ; API manuel 9/9 ; captures 161 changées, 35
+ajoutées, observées (`ff2804ee`).
+**Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `ff2804ee`.
