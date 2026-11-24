@@ -714,3 +714,100 @@ reconstruire ; **la preuve est leur intégration sur la base migrée** (`test_in
 - **Les numéros des deux migrations** sont pris à leur commit, après synchronisation et après l'annonce de fin de la
   session de livraison (CLAUDE.md §5) ; le contrat de livraison les consigne alors, avec l'ordre « migrations, puis
   webapp » et leur retour arrière.
+
+### 16.9 T3.d en détail — le Pilotage et Temps ▸ Saisie
+
+*Écrit le 2026-11-25 par la session 7a, avant le code, pendant le gel du lot T3.c (documents seuls, avec l'accord de la session
+de livraison ; le numéro de la migration est pris à son commit, après l'annonce de fin). Les formes sont celles du
+responsable : décision 982 (le Pilotage), décision 981 (la saisie). **Connecteur MCP** : les réponses du §16 tiennent
+(décisions 963 et 965) — ni famille ni case nouvelle, aucun outil nouveau. `crm_time_set` hérite du plafond tous espaces par
+la base (§16.9.3), sans changement de code : il reconnaît le refus par son message, `plafond journalier`, qui ne change pas.*
+
+#### 16.9.1 Le Pilotage — la tête globale, le détail par espace (décision 982)
+
+- **La lecture ne change pas** : `entonnoir_conversion()` rend déjà toutes les lignes que la personne lit, chacune avec son
+  `workspace_id` ; **aucune migration**. Le catalogue (`lireNoeudsCatalogue`) et les portées offrables
+  (`lirePorteesOffrables`) sont lus **par espace**, pour les espaces affichés.
+- **D'un seul espace : l'écran d'aujourd'hui**, au pixel près.
+- **À partir de deux espaces lus** :
+  - **le filtre « Espace »** (§16.2, §5.115), en mémoire (la lecture n'est pas paginée), son bouton en tête de l'écran,
+    avant le sélecteur de portée ;
+  - **la tête** — les grandeurs du prévisionnel par devise et du taux de conversion des affaires décidées — est calculée sur
+    les lignes **de tous les espaces affichés** : elles ne reposent que sur le genre (`node_kind`), universel ; jamais
+    entre devises ;
+  - **suit une section par espace affiché qui a des lignes**, dans l'ordre du menu (§5.113), titrée de son nom en `h2`
+    (§5.115, « par section ») ; elle porte **ses entonnoirs par devise**, ses étapes dans l'ordre de **son** catalogue, et
+    sa mention des étapes sans affaire (§8 bis.5 de `docs/SPEC-analytique.md`), nommées dans son catalogue ;
+  - **les mentions de tête** (les affaires sans montant, sans probabilité) restent sous la tête, sur tous les espaces
+    affichés ;
+  - **la portée (track, channel) ne s'offre que lorsque le filtre isole un espace** : le sélecteur paraît alors, avec les
+    tracks et channels de cet espace ; sinon il est absent, et une portée de l'adresse (`track=`, `channel=`) ne s'applique
+    pas — elle se résout sur l'espace entier, comme un slug inconnu aujourd'hui (§8 bis.2). **Choisir une portée garde le
+    filtre** : l'adresse est reconstruite avec `espaces=` (précision de T3.d : aujourd'hui, les paramètres sont reconstruits
+    sans fusion, ce qui perdrait le filtre) ;
+  - **le vide** : aucune ligne dans les espaces choisis est le vide sous le filtre (§5.115) ; aucune ligne du tout reste le
+    vide de l'écran.
+
+#### 16.9.2 Temps ▸ Saisie — une grille de tous les espaces (décision 981)
+
+- **D'un seul espace : la grille d'aujourd'hui.**
+- **À partir de deux espaces lus, pour soi-même** :
+  - la grille lit **les tracks et channels de tous les espaces lus** (`lireArbreTemps` sans espace, `workspace_id` ajouté
+    aux colonnes), **les saisies de la personne dans tous ses espaces** (`lireSaisies` sans espace), et les affaires avec
+    leur espace (`cards.workspace_id`) ; une affaire trouvée par « Ajouter une affaire » se range dans le groupe de son
+    espace ;
+  - **les lignes sont groupées par espace**, dans l'ordre du menu, chaque groupe ouvert par une ligne de groupe à son nom
+    (`th scope="rowgroup"` sur toute la largeur, §5.115) ;
+  - **une cellule écrit dans l'espace de sa ligne** : `workspace_id` de l'insertion est celui du track, du channel ou de
+    l'affaire de la ligne — les clés composites `(cible, workspace_id)` refusent toute autre combinaison ;
+  - **les totaux par jour sont ceux de la personne, tous espaces confondus**, et l'annonce de la journée trop longue
+    s'applique à ce total, comme le plafond en base (§16.9.3) ;
+  - **pas de filtre « Espace »** sur la saisie (*choix de l'agent*) : masquer un espace laisserait ses minutes dans des
+    totaux qui ne les montreraient plus, et la page est un écran de saisie, comme les onglets « À saisir » (§5.115).
+- **« Saisir pour »** (administrateurs) : la liste offre **« Moi-même »** — la grille de tous les espaces —, puis, **pour
+  chaque espace dont la personne est administratrice** (`mon_role_espace`, lu par espace), un groupe d'options (`optgroup`)
+  titré du nom de l'espace, avec ses membres (`lireMembresAffectables`). Choisir un collègue **restreint la grille à cet
+  espace** (l'arbre et les saisies de cet espace seul) ; ses totaux par jour restent ceux que la personne connectée **lit**
+  de ce collègue, la base tenant seule le plafond sur son total réel (§16.9.3). D'un seul espace, la liste d'aujourd'hui.
+- **Temps ▸ Rapport, la limite nommée de T3.c levée** : le choix de la personne offre « Moi-même », les membres **des espaces
+  dont la personne est administratrice**, dédoublonnés et rangés par nom, puis « Toute l'équipe » ; la lecture reste
+  `temps_valorise` sous la RLS, qui ne rend à un administrateur que le temps des espaces qu'il administre.
+
+#### 16.9.3 La migration — le plafond journalier compte tous les espaces de la personne
+
+- **`app.saisies_temps_plafond`** (redéfinie en dernier par la `0197`) est **remplacée** (`create or replace`, même
+  signature, même déclencheur) :
+  - le verrou consultatif sérialise **une personne et un jour, tous espaces confondus** :
+    `hashtextextended('saisies_temps:' || profile_id || ':' || jour, 0)` — l'espace sort de la clé ;
+  - la somme compte **les saisies de la personne ce jour-là dans tous les espaces** (`SECURITY DEFINER` : elle voit celles
+    d'un espace que l'auteur de l'écriture ne lit pas) ;
+  - **le refus garde son message**, `plafond journalier` (le contrat de la webapp et du connecteur) ; **son détail ne dit
+    plus les minutes déjà saisies** — elles compteraient désormais celles d'espaces que l'auteur ne lit pas peut-être (un
+    administrateur qui saisit pour un collègue) : `la journée de cette personne dépasserait 420 minutes` ;
+  - le drapeau du déplacement d'un track (`app.track_move`, décision 969) laisse toujours passer.
+- **Ce qui reste visible, et c'est la conséquence de la décision 981** : un refus du plafond apprend à un administrateur d'un
+  espace que son collègue a du temps saisi ailleurs ce jour-là, sans en dire la quantité ni l'espace. *À confirmer par le
+  responsable* (§16.9.5).
+- **pgTAP** : deux saisies d'une même personne, un même jour, dans deux espaces, qui dépassent ensemble 420 minutes — la
+  seconde refusée ; ensemble sous 420 — acceptées ; un seul espace — inchangé ; le détail sans minutes ; le drapeau du
+  déplacement respecté. **API** : la même preuve avec le jeton réel de Camille (« P2Enjoy SAS » puis « Studio Lumen »).
+- **Avant la livraison** : une lecture de la production compte les couples personne × jour dont le total tous espaces dépasse
+  420 minutes — la production n'a qu'un espace aujourd'hui, le compte attendu est zéro ; un couple au-delà rendrait toute
+  écriture de ce jour refusée jusqu'à correction.
+- **Retour arrière** : rétablir la définition de la `0197`.
+
+#### 16.9.4 Les preuves
+
+Celles du §16.7 : unitaires des lectures (l'arbre et les saisies de tous les espaces, le groupement, la tête sur plusieurs
+espaces, la portée offerte sur un seul) et des composants ; pgTAP et API de la migration ; E2E du Pilotage et de la saisie
+pour Camille (deux espaces) et la lectrice (un), souris et clavier, quatre paliers, captures observées ; une page d'un seul
+espace constatée inchangée ; `verify-mcp.sh --rapide` sur la base migrée (`crm_time_set`). Le seed porte déjà de quoi les
+montrer : l'affaire « Clip — Maison Arlo » de « Studio Lumen » (le Pilotage), son track « Productions » et la saisie de
+Camille (la grille).
+
+#### 16.9.5 Ce qui attend le responsable
+
+- **Q3 — le refus du plafond entre espaces** (§16.9.3) : la décision 981 applique le plafond au total de la personne ; un
+  refus dit donc à un administrateur qui saisit pour un collègue qu'il a du temps ailleurs ce jour-là (ni combien, ni où).
+  Recommandation : l'accepter, le détail du refus étant sans minutes. Le code n'est pas écrit avant la réponse.
+

@@ -42257,3 +42257,17 @@ levé.
   est prouvé à l'unité. Le vide sous le filtre de l'onglet est inatteignable sur le seed (chaque espace a des
   organisations) et celui du rapport n'y a pas de mois stable : tous deux sont prouvés à l'unité.
 
+### `CRM-161` T3.d — la spécification du Pilotage et de la saisie, écrite pendant le gel du lot T3.c
+
+*2026-11-25, session 4891a451 (p2enjoy-crm-7a) ; documents seuls, avec l'accord de la session de livraison, qui livre T3.c
+seule (T3.d estimée à plus de 3 ou 4 heures).*
+- **Les observations.** Le Pilotage n'a besoin d'aucune migration : `entonnoir_conversion()` rend déjà `workspace_id`. La
+  saisie en a besoin d'une : `app.saisies_temps_plafond` (redéfinie par la `0197`) verrouille et somme **par espace**, alors
+  que la décision 981 applique le plafond au total de la personne.
+- **Les choix (de l'agent, dans le cadre des décisions 981 et 982).** La tête du Pilotage sous la tête, les étapes vides
+  nommées par section ; la portée gardant le filtre dans l'adresse ; aucun filtre « Espace » sur la saisie (des totaux tous
+  espaces resteraient sous un filtre) ; « Saisir pour » groupé par espace administré ; la limite du rapport de T3.c levée de
+  même ; le détail du refus du plafond sans minutes.
+- **La question au responsable (Q3).** Le plafond sur le total révèle à un administrateur qu'un collègue a du temps saisi
+  dans un autre espace ce jour-là. Recommandation : l'accepter. Le code attend la réponse.
+

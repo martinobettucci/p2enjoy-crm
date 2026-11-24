@@ -9279,4 +9279,14 @@ la spécification réservait, a été prise par `CRM-165` avant l'écriture de c
   sain d'une page (« Affaires figées », §5.37) reste le sien quand aucun filtre n'est posé.
 - **LA RÉGION VIVANTE DE LA PAGE** annonce le compte après un changement de filtre, comme après une lecture : aucune région
   nouvelle.
+- **LE PILOTAGE À PLUSIEURS ESPACES** (§5.48, `CRM-161` T3.d) : le bouton « Espace » en tête, avant le sélecteur de
+  portée ; la tête (prévisionnel, taux, mentions des affaires sans montant ou sans probabilité) sur tous les espaces
+  affichés ; puis **une section par espace**, titrée de son nom en `h2`, qui porte ses entonnoirs par devise et la mention de
+  ses étapes sans affaire. Le sélecteur de portée ne paraît que lorsque le filtre isole un espace. *Spécifié le 2026-11-25,
+  avant le code.*
+- **LA GRILLE DE SAISIE À PLUSIEURS ESPACES** (§5.54, `CRM-161` T3.d) : une **ligne de groupe** par espace, `th
+  scope="rowgroup"` sur toute la largeur, son nom en `text-sm` `font-medium` `--color-text-2`, avant les lignes de cet
+  espace ; les totaux par jour restent ceux de la personne, tous espaces confondus ; **pas de bouton « Espace »** (un écran
+  de saisie, comme les onglets « À saisir »). « Saisir pour » groupe les membres par espace administré (`optgroup` au nom
+  de l'espace), « Moi-même » en tête. *Spécifié le 2026-11-25, avant le code.*
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.**
