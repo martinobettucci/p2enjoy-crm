@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-24 au soir — la migration 200, l'image `mcp`, la webapp et le manuel
+
+Cellule Spark `crm`, révision `3e0bdc47` (décision 987, un `pg_dump -Fc` avant). **Vérifié** : registre à 198 lignes, la dernière
+`0200_consignes_connecteur.sql` ; `mcp` reconstruit après la 200, socle des consignes publié (3 369 caractères) ;
+`index-fIR2mR_o.js` servi ; `verifier.sh` 35/36 (INC-277) ; manuel publié (606 fichiers). Le constat du responsable reste à
+faire.
+
 - **`CRM-165` T1 — les consignes de la plateforme, en base** (migration 200, décisions 980 et 983). Une table d'une ligne
   garde un texte que le super-administrateur écrit pour compléter les consignes fixes que le connecteur MCP donne aux
   assistants. Seul le super-administrateur le lit et l'écrit, par `platform_set_connector_instructions` ; le service `mcp`
@@ -39,8 +50,6 @@ d'exécuter le code attendu.
   d'une affaire, le bloc rendait « Aucune relance n'est armée » et offrait d'armer pendant la lecture de l'inscription, puis
   basculait sur une relance armée ; ses deux listes affirmaient de même « aucune séquence » ou « aucune adresse ». Il rend
   désormais un squelette tant que les trois lectures sont en cours (`docs/DESIGN_SYSTEM.md` §5.42). Contrat §2.78.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-24 — l'image `mcp` et la webapp
 

@@ -20475,6 +20475,7 @@ campagne complète revient à la session de livraison (décision 830).
 
 **T1 et T2 livrées le 2026-11-21** (décision 977, révision `377ac6e5`) ; T3 à T5 restent à faire ; reste le constat du responsable.
 **Les deux relevés de T3.a livrés le 2026-11-24** (`ef535024`, `d8cc8323` ; décision 984, révision `4d836b4e`).
+**Le socle de T3.a livré le 2026-11-24 au soir** (le filtre « Espace » et la provenance sur « Affaires figées », `3aad259d` ; décision 987, révision `3e0bdc47`).
 *Prise en charge : session interactive 4891a451 (p2enjoy-crm-ef, ex-5f) depuis 2026-11-24 06:41 UTC — état avant : [~] ; T3 à T5,
 confiées par la session de livraison (96)*
 
@@ -20780,6 +20781,8 @@ responsable — hors de cette unité.
 
 ### CRM-165 — Les consignes du connecteur, complétées par un texte que le super-administrateur règle dans le CRM `[P]`
 
+**Livrée le 2026-11-24** (décision 987, révision `3e0bdc47`) ; reste le constat du responsable en production.
+
 **Origine** : demande du responsable, le 2026-11-24 — il voulait, par les prompts du connecteur (`CRM-149`), « injecter les bons
 usages du MCP aux assistants ». Un prompt n'est lu que si la personne le choisit ; le dispositif qui convient est le champ
 `instructions` du protocole, envoyé à l'assistant à chaque connexion. Il existe déjà (`INSTRUCTIONS`,
@@ -20826,7 +20829,7 @@ complète revient à la session de livraison (décision 830).
 
 ## Relevé du 2026-11-24 — le bloc de relance affirme « aucune relance » avant d'avoir lu (INC-365), arbitré et corrigé
 
-- [P] **INC-365 — arbitré (décisions 985 et 986) : le bloc reçoit un état de chargement** (`docs/INCONSISTENCY_REPORT.md`).
+- [P] **INC-365 — livrée le 2026-11-24 (décision 987, `3e0bdc47`) ; — arbitré (décisions 985 et 986) : le bloc reçoit un état de chargement** (`docs/INCONSISTENCY_REPORT.md`).
   *Faite le 2026-11-24* : Vitest `BlocSequenceCard.test.tsx` 5/6 rouges avant (aucun squelette), 6/6 verts après ; E2E `armement-sequence` rouge avant sur l'ancien composant (le squelette introuvable), 9/9 verts après, dont le squelette (lecture retenue) et le parcours au clavier seul ; manuel 14-16 7/7 ; unitaires 6297/6297 ; typecheck propre ; captures observées. Reste le constat en production (`docs/PROD_MIGRATIONS.md` §2.78).
   **Le correctif** (décisions 985 et 986 ; `docs/DESIGN_SYSTEM.md` §5.42, `docs/SPEC-modeles-emails.md` §13.8) : un
   squelette tant que l'inscription active, les séquences et les adresses proposées ne sont pas lues ; l'état ou le geste

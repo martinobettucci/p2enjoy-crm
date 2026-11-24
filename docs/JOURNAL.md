@@ -42141,3 +42141,6 @@ seuls (`mails-prepares`, `connecteur-etiquettes`, `connecteur-organisations`, `c
 observées (`3e0bdc47`).
 **Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `3e0bdc47`, l'image `mcp` reconstruite
 explicitement après la 200.
+**Exécutée le 2026-11-24 au soir** : `pg_dump` relu (3 608 entrées) ; `livrer.sh --revision 3e0bdc47…` (webapp bâtie dans la cellule,
+migration 200) ; `mcp` reconstruit après la 200, `socle_publie` (3 369 caractères) ; `verifier.sh` 35/36 (INC-277) ; manuel
+publié ; contrat §2.74 à §2.78 LIVRÉES, §3 et §8, changelog en [Publié], backlog ; verrou levé.
