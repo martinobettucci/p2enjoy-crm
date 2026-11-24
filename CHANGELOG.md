@@ -15,6 +15,9 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **La cloche et la recherche nomment l'espace de chaque élément** (`CRM-161` T3.b.2) : à partir de deux espaces, sous
+  chaque notification et chaque résultat ; deux homonymes de deux espaces s'y distinguent. Sans filtre (décision 963).
+  Manuel §4.6 et §5.2.
 - **La liste des objectifs montre les tableaux de tous vos espaces** (`CRM-161` T3.b.2) : à partir de deux espaces, une
   section par espace, titrée de son nom, chacune avec son ordre ; le bouton « Espace » ; un tableau se crée dans l'espace
   où vous vous trouvez, que le formulaire nomme. Manuel §8.1.

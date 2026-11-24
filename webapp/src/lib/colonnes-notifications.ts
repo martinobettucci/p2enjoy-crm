@@ -19,6 +19,8 @@
 // C'est le procédé de `colonnes-board.ts`, de `colonnes-liste.ts`, de `colonnes-ma-journee.ts` et
 // de `colonnes-affaires-figees.ts` (décision 177), repris ici plutôt que réinventé : une seule
 // déclaration, atteignable des deux côtés.
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : `workspace_id` d'une notification, pour nommer son espace
+//       (docs/SPEC-espace-courant.md §16.3)
 
 /**
  * Colonnes d'une notification, avec son affaire embarquée — la requête 1 du §24.1.
@@ -36,10 +38,11 @@
  * `42703 column cards_1.slug does not exist`. Une affaire est désignée par son identifiant ; ce
  * sont son channel et son track qui portent des slugs.
  *
- * CE QUI N'EST PAS DEMANDÉ EST AUSSI UNE DÉCISION (§24.2) : ni `workspace_id`, que l'écran
- * n'affiche pas, ni `recipient_id` — la politique garantit déjà que c'est moi, et le redemander
- * laisserait croire qu'on pourrait lire celui d'un autre. Une requête ne rapporte que ce que
- * l'écran montre, règle que `COLONNES_COMMENTAIRE` tient depuis `CRM-043`.
+ * CE QUI N'EST PAS DEMANDÉ EST AUSSI UNE DÉCISION (§24.2) : ni `recipient_id` — la politique garantit déjà que c'est
+ * moi, et le redemander laisserait croire qu'on pourrait lire celui d'un autre. Une requête ne rapporte que ce que
+ * l'écran montre, règle que `COLONNES_COMMENTAIRE` tient depuis `CRM-043`. `workspace_id` n'était pas demandé tant que
+ * l'écran ne l'affichait pas ; il l'est depuis `CRM-161` T3.b.2 : la cloche nomme l'espace de chaque notification dès
+ * que la personne en lit deux (docs/SPEC-espace-courant.md §16.3).
  */
 //
 // `CRM-111` T2.4.1 : le channel de l'affaire est celui de son PLUS ANCIEN rattachement, plongé par la clé du rattachement
@@ -47,7 +50,7 @@
 // `CRM-153` T3 — le sujet ORGANISATION (docs/SPEC-organisations.md §9.2) : l'organisation s'embarque par la clé composite
 // `notifications_subject_organization_fkey (subject_organization_id, workspace_id)`, son nom suffit à la ligne.
 export const COLONNES_NOTIFICATION =
-	'id, type, read_at, created_at, subject_card_id, subject_organization_id, payload, organizations(id, name), ' +
+	'id, type, read_at, created_at, subject_card_id, workspace_id, subject_organization_id, payload, organizations(id, name), ' +
 	'cards(id, title, card_placements!card_placements_card_fk(id, created_at, channels!card_placements_channel_fk(slug, name, tracks(slug, name))))'
 
 /**

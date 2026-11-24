@@ -20636,7 +20636,14 @@ livraison (décision 830).
   `premier-lancement` 61/61 (sections, souris, clavier, lectrice d'un seul espace, quatre paliers) ; captures observées
   (`objectifs-*`) ; manuel §8.1 et §3.2 bis, construit, `verify-manual.sh` 170/170 ; scénario du manuel 08 9/9. Contrat
   §2.79 étendu ; changelog.
-  **Reste de T3.b.2** : cloche, recherche, et les onglets « À saisir » de « Coûts » et « Rentabilité ».
+  **T3.b.2, la cloche et la recherche, faites le 2026-11-24** : `workspace_id` lu par la boîte de notifications
+  (`docs/SPEC-notifications.md` §24.2 révisé, et son unitaire, décision 51) et porté par chaque résultat de recherche (la
+  RPC le rendait) ; le nom de l'espace sous chaque élément, sans filtre (décision 963). Preuves : unitaires notifications
+  43/43, `Notifications` 25/25, `recherche` et `PaletteRecherche` 31/31 ; E2E `notifications`, `recherche` et
+  `pastilles-cachees` 45/45 (deux « Vertigo Conseil » de deux espaces, la lectrice sans mention) ; captures observées
+  (`cloche-*`, `recherche-*`) ; manuel §4.6, §5.2 et §3.2 bis, construit, `verify-manual.sh` 170/170 ; scénarios du manuel
+  04 et 05 8/8. Contrat §2.79 étendu ; changelog.
+  **Reste de T3.b.2** : les onglets « À saisir » de « Coûts » et « Rentabilité ».
   **Relevés à reprendre dans T3** (*2026-11-21, session de livraison au constat du lot de T1 et T2 ; consignés par 5f*) :
   - **Les non-lus de chaque espace sous `md`.** À 390 px, la section « Espaces » du repli du fil d'Ariane ne montre aucune
     pastille de non-lus (capture `docs/captures/CRM-161/menu-espaces-sm-390.jpg`), alors que la décision 965 les veut au

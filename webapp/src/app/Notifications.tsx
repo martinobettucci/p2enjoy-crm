@@ -22,6 +22,9 @@
 //
 // AUCUNE ROUTE NON PLUS, et c'est l'écart avec le carnet (§5.19) et « Ma journée » (§5.36) : une
 // route ferait perdre l'écran courant à chaque coup d'œil, et obligerait à revenir.
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : la cloche nomme l'espace de chaque notification à partir de deux
+//       espaces lus ; aucun filtre, exception maintenue (décision 963 ; docs/SPEC-espace-courant.md §16.3 ;
+//       docs/DESIGN_SYSTEM.md §5.115)
 
 import { Bell, Mail, MailOpen, SquareArrowOutUpRight } from 'lucide-react'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
@@ -39,6 +42,8 @@ import {
 import { clientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
 import { fermerLesAutresPanneaux, useFermetureParUnAutrePanneau } from './panneaux-entete'
+import { useContexteEspace } from './ContexteEspace'
+import { nomEspace, provenanceVisible } from '../lib/provenance'
 
 /**
  * Le nombre de caractères d'extrait rendus sur une ligne.
@@ -367,6 +372,8 @@ function LigneNotification({
 	readonly onMarquer: () => void
 }) {
 	const auteur = notification.auteur
+	const { espaces } = useContexteEspace()
+	const espace = provenanceVisible(espaces) ? nomEspace(espaces, notification.idEspace) : null
 	return (
 		<li
 			data-testid="notification"
@@ -491,6 +498,12 @@ function LigneNotification({
 				>
 					{notification.titreAffaire}
 				</Link>
+			)}
+			{/* `CRM-161` T3.b.2 — la provenance, sous l'objet de la notification (§5.115) ; aucun filtre (décision 963). */}
+			{espace === null ? null : (
+				<span data-testid="notification-espace" className="block truncate text-xs text-text-3">
+					{espace}
+				</span>
 			)}
 
 			<div className="flex items-center gap-2 min-w-0">

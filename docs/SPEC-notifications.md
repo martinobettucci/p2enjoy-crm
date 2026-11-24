@@ -1516,10 +1516,13 @@ des lignes rendues. Le `HEAD` de M4 sert la cloche **fermée**, où il n'y a rie
 
 ### 24.2 Ce qui n'est PAS demandé, et c'est une décision
 
-Ni `workspace_id` — l'écran ne l'affiche pas —, ni `recipient_id` — la politique garantit déjà que
-c'est moi, et le redemander laisserait croire qu'on pourrait lire celui d'un autre. Une requête ne
-rapporte que ce que l'écran montre : c'est la règle que `COLONNES_COMMENTAIRE` tient depuis
-`CRM-043`.
+Ni `recipient_id` — la politique garantit déjà que c'est moi, et le redemander laisserait croire
+qu'on pourrait lire celui d'un autre. Une requête ne rapporte que ce que l'écran montre : c'est la
+règle que `COLONNES_COMMENTAIRE` tient depuis `CRM-043`.
+
+*Révisé le 2026-11-24 (`CRM-161` T3.b.2, `docs/SPEC-espace-courant.md` §16.3) :* `workspace_id` n'était
+pas demandé parce que l'écran ne l'affichait pas. Il l'est désormais, par la même règle : la cloche
+nomme l'espace de chaque notification dès que la personne en lit deux.
 
 ### 24.3 Trois lignes possibles, et l'écran les distingue
 

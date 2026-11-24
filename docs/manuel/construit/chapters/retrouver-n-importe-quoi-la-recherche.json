@@ -1020,6 +1020,39 @@
 								"content": [
 									{
 										"type": "text",
+										"text": "Si vous êtes membre de plusieurs espaces"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", la recherche les parcourt tous, et chaque résultat nomme son espace sous\nson titre : deux homonymes de deux espaces s'y distinguent. Elle n'a pas de bouton "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Espace"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
 										"text": "Aucune action sur un résultat"
 									}
 								]

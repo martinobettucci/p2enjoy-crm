@@ -22,6 +22,8 @@
 //
 // LE SEED SORT INTACT : le seul geste d'écriture de cette suite — marquer lu — est DÉFAIT dans le
 // même scénario, et une dernière assertion le constate.
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : la cloche nomme l'espace de chaque notification à partir de deux
+//           espaces lus, sans filtre (décision 963) ; rien pour la lectrice d'un seul espace (docs/SPEC-espace-courant.md §16.3)
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -230,4 +232,28 @@ test.describe('Vérification visuelle aux quatre paliers (docs/DESIGN_SYSTEM.md 
 			).toBeLessThanOrEqual(palier.largeur)
 		})
 	}
+})
+
+// `CRM-161` T3.b.2 — les deux notifications de Camille sont dans « P2Enjoy SAS » ; elle lit deux espaces, la lectrice un seul.
+test.describe('`CRM-161` T3.b.2 — l’espace de chaque notification (docs/SPEC-espace-courant.md §16.3)', () => {
+	test('Camille, de deux espaces : chaque notification nomme son espace, et la cloche n’a pas de filtre', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await page.goto('/')
+		await page.getByTestId('cloche-notifications').click()
+		const panneau = page.getByTestId('panneau-notifications')
+		const lignes = panneau.getByTestId('notification')
+		await expect(lignes.first()).toBeVisible()
+		await expect(panneau.getByTestId('notification-espace')).toHaveCount(await lignes.count())
+		for (const texte of await panneau.getByTestId('notification-espace').allTextContents()) expect(texte).toBe('P2Enjoy SAS')
+		await expect(panneau.getByTestId('filtre-espaces')).toHaveCount(0)
+		await capturer(page, 'cloche-espaces-1440', 'CRM-161')
+	})
+
+	test('la lectrice, d’un seul espace : aucune mention', async ({ page }) => {
+		await connecter(page, VIEWER)
+		await page.goto('/')
+		await page.getByTestId('cloche-notifications').click()
+		await expect(page.getByTestId('panneau-notifications')).toBeVisible()
+		await expect(page.getByTestId('notification-espace')).toHaveCount(0)
+	})
 })

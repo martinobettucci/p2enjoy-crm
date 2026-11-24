@@ -29,6 +29,7 @@
 // celle de l'appelant : `notifications_lecture` exige `recipient_id = auth.uid()`. Sans session, la
 // lecture rend `200` et zéro ligne — l'état vide ordinaire du §5.8, jamais un refus à mettre en
 // scène.
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : chaque notification porte son espace (docs/SPEC-espace-courant.md §16.3)
 
 // @spec CRM-156 (docs/BACKLOG.md) — tranche T4 : la notification `mail_transfer` — l'auteur lu par `payload.author_id`, le
 //       nombre de mails, l'objet du premier et son adresse `/inbox?message=` ; ni affaire ni organisation
@@ -79,6 +80,8 @@ export type LigneNotificationLue = {
 	readonly read_at: string | null
 	readonly created_at: string
 	readonly subject_card_id: string | null
+	/** `CRM-161` T3.b.2 : l'espace de la notification — absent d'une ligne qui ne le lit pas. */
+	readonly workspace_id?: string | null
 	/** `CRM-153` T3 : le sujet d'une mention dans le fil d'une organisation ; jamais posé avec `subject_card_id`. */
 	readonly subject_organization_id?: string | null
 	readonly organizations?: { readonly id: string; readonly name: string } | null
@@ -129,6 +132,8 @@ export type NotificationAffichee = {
 	readonly nomOrganisation: string | null
 	/** `CRM-156` T4 : un transfert de mails — leur nombre et l'objet du premier ; absent pour une mention. */
 	readonly transfert?: { readonly nombre: number; readonly objet: string | null }
+	/** `CRM-161` T3.b.2 : l'espace de la notification, que la cloche nomme dès deux espaces lus (§16.3). */
+	readonly idEspace: string | null
 }
 
 /** `CRM-156` T4 : l'auteur d'un transfert, lu dans la charge utile ; `null` s'il manque ou est mal formé. */
@@ -213,6 +218,7 @@ export function apparier(
 			extrait: null,
 			nomOrganisation: null,
 			transfert: { nombre, objet },
+			idEspace: ligne.workspace_id ?? null,
 		}
 	}
 	const base = adresseChannelNotification(ligne.cards)
@@ -244,6 +250,7 @@ export function apparier(
 			auteur: lisible ? commentaire.auteur : null,
 			extrait: corps.length > 0 ? corps : null,
 			nomOrganisation,
+			idEspace: ligne.workspace_id ?? null,
 		}
 	}
 	return {
@@ -261,6 +268,7 @@ export function apparier(
 		auteur: lisible ? commentaire.auteur : null,
 		extrait: corps.length > 0 ? corps : null,
 		nomOrganisation: null,
+		idEspace: ligne.workspace_id ?? null,
 	}
 }
 

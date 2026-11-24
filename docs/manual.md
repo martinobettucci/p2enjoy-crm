@@ -358,7 +358,9 @@ bouton dit combien d'espaces sont cochés, par exemple **Espace (1)**. Rien de c
 l'adresse de la page, et survit donc à un rechargement ou à un lien copié. Si les espaces cochés n'ont rien à montrer, la
 page le dit et propose **Afficher tous les espaces**. Au clavier, ouvrez le bouton avec `Entrée`, passez d'une case à
 l'autre avec `Tab`, cochez avec `Espace`, refermez avec `Échap`. Si vous n'êtes membre que d'un espace, ni le bouton ni la
-mention de l'espace n'apparaissent. Les pages qui le font : **Ma journée** ([§6.2](#ce-qu-une-ligne-montre)), les **Objectifs** ([§8.1](#la-liste-des-tableaux)), le **carnet de contacts** ([chapitre 10](#le-carnet-de-contacts)), **Affaires figées** ([chapitre 7](#les-affaires-figees-ce-qui-dort-depuis-trop-longtemps)), **Coûts**
+mention de l'espace n'apparaissent. La recherche ([§4.6](#ce-que-la-recherche-affiche-et-ce-qu-elle-ne-fait-pas)) et la cloche
+([§5.2](#ce-que-le-panneau-montre)) nomment aussi l'espace de chaque élément, sans bouton **Espace**. Les pages qui ont ce
+bouton : **Ma journée** ([§6.2](#ce-qu-une-ligne-montre)), les **Objectifs** ([§8.1](#la-liste-des-tableaux)), le **carnet de contacts** ([chapitre 10](#le-carnet-de-contacts)), **Affaires figées** ([chapitre 7](#les-affaires-figees-ce-qui-dort-depuis-trop-longtemps)), **Coûts**
 ([chapitre 26](#les-couts-de-tout-l-espace-de-travail-un-cumul-par-track)) et **Rentabilité** ([§29.3](#l-ecran-rentabilite)).
 
 **L'espace est dans l'adresse.** L'adresse de l'inbox, d'un track ou d'une page de réglages commence par le nom court de
@@ -717,6 +719,8 @@ nécessairement la même liste, et c'est voulu.
 - **Rien n'est enregistré** : ni ce que vous cherchez, ni quand, ni combien de résultats. Il n'y a
   pas d'historique de recherche.
 - **Aucun filtre par famille**, aucune suggestion, aucune correction de frappe.
+- **Si vous êtes membre de plusieurs espaces**, la recherche les parcourt tous, et chaque résultat nomme son espace sous
+  son titre : deux homonymes de deux espaces s'y distinguent. Elle n'a pas de bouton **Espace**.
 - **Aucune action sur un résultat** : la recherche mène, elle n'agit pas.
 - **Les mails d'une pastille cachée** — « Spam » par défaut ([section 12.6](#definir-les-pastilles-des-mails)) — ne
   sortent pas parmi les résultats. Une ligne sous la liste les compte, par exemple « 1 mail masqué (Spam) », et mène
@@ -769,7 +773,9 @@ Chaque ligne porte :
 - **ce qui a été écrit**, en extrait ;
 - **l'affaire concernée**, dont le titre est un lien vers sa fiche ;
 - **le dossier**, en pastille « Track › Channel », qui mène au channel ;
-- **la date et l'heure**, absolues.
+- **la date et l'heure**, absolues ;
+- **l'espace** dont elle vient, sous l'objet, si vous êtes membre de plusieurs espaces. La cloche rassemble les
+  notifications de tous vos espaces, et n'a pas de bouton **Espace**.
 
 **Une mention sur une organisation** se lit autrement : « Driss Lemoine vous a mentionné à propos de Vertigo Conseil ».
 La ligne porte le nom de l'organisation, en lien vers sa fiche, qui s'ouvre **sur le commentaire** ; elle n'a pas de

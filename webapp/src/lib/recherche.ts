@@ -27,6 +27,8 @@
 // sept colonnes donnent un `objet` et un `id` ; `CHEMIN_CARD` demande trois segments variables, et
 // l'`id` d'un commentaire est celui du commentaire. Deux familles sur cinq exigent donc une seconde
 // lecture, **groupée** par `id=in.(…)` et jamais `N + 1` (M15).
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : chaque résultat porte l'espace que la RPC rend (docs/SPEC-espace-courant.md
+//       §16.3)
 
 import {
 	cheminContact,
@@ -100,6 +102,8 @@ export type ResultatRecherche = {
 	 * cassé — la règle du §5.37 et du §5.32 du design system.
 	 */
 	readonly adresse: string | null
+	/** `CRM-161` T3.b.2 : l'espace de l'objet, rendu par la RPC, que la palette nomme dès deux espaces lus (§16.3). */
+	readonly idEspace: string | null
 }
 
 /** Ce qu'une recherche aboutie rend à l'écran. */
@@ -358,6 +362,7 @@ export function composerResultat(
 		sousTitre: ligne.sous_titre ?? null,
 		extrait: ligne.extrait ?? null,
 		adresse,
+		idEspace: ligne.workspace_id ?? null,
 	}
 }
 

@@ -1131,7 +1131,54 @@
 				},
 				{
 					"type": "text",
-					"text": ". Si vous n'êtes membre que d'un espace, ni le bouton ni la\nmention de l'espace n'apparaissent. Les pages qui le font : "
+					"text": ". Si vous n'êtes membre que d'un espace, ni le bouton ni la\nmention de l'espace n'apparaissent. La recherche ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "retrouver-n-importe-quoi-la-recherche",
+						"anchor": "ce-que-la-recherche-affiche-et-ce-qu-elle-ne-fait-pas"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§4.6"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") et la cloche\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "vos-notifications-savoir-qu-on-vous-a-nomme",
+						"anchor": "ce-que-le-panneau-montre"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§5.2"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") nomment aussi l'espace de chaque élément, sans bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Les pages qui ont ce\nbouton : "
 				},
 				{
 					"type": "strong",

@@ -336,7 +336,40 @@
 							},
 							{
 								"type": "text",
-								"text": ", absolues."
+								"text": ", absolues ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "l'espace"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " dont elle vient, sous l'objet, si vous êtes membre de plusieurs espaces. La cloche rassemble les\nnotifications de tous vos espaces, et n'a pas de bouton "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Espace"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
 							}
 						]
 					}

@@ -20,6 +20,8 @@
 // le geste même d'une palette, et un focus descendu dans la liste ferait perdre la frappe suivante.
 // D'où `role="combobox"` et `aria-activedescendant`, le premier du produit — employé parce
 // qu'aucun autre patron ne tient les deux exigences à la fois.
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : la palette nomme l'espace de chaque résultat à partir de deux espaces
+//       lus ; aucun filtre, exception maintenue (décision 963 ; docs/SPEC-espace-courant.md §16.3 ; docs/DESIGN_SYSTEM.md §5.115)
 
 // @spec CRM-159 (docs/BACKLOG.md) — tranche T2 : sous les résultats, les mails masqués par une pastille cachée — un lien vers
 //       l'inbox, la pastille activée, pour une pastille de l'espace courant ; un texte qui nomme l'espace sinon
@@ -44,6 +46,7 @@ import {
 import { clientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
 import { useContexteEspace } from './ContexteEspace'
+import { nomEspace, provenanceVisible } from '../lib/provenance'
 
 /** Le libellé d'une famille, par clé de traduction — jamais le discriminant brut (§10). */
 const CLE_FAMILLE: Readonly<Record<FamilleRecherche, CleTraduction>> = {
@@ -617,8 +620,10 @@ export function MentionMailsMasques({
  * natures. Elle est une `option` de `listbox` et NON un lien : le focus ne descend jamais dans la
  * liste (§14.3), et un `<a>` que l'on n'atteint jamais par tabulation serait un lien en trompe-l'œil.
  * Le clic est porté par la ligne elle-même, et le clavier par `Entrée` sur le champ.
+ *
+ * Exportée pour la preuve unitaire de sa provenance (`CRM-161` T3.b.2).
  */
-function LigneResultat({
+export function LigneResultat({
 	resultat,
 	id,
 	actif,
@@ -632,6 +637,8 @@ function LigneResultat({
 	readonly onSuivre: () => void
 }) {
 	const atteignable = resultat.adresse !== null
+	const { espaces } = useContexteEspace()
+	const espace = provenanceVisible(espaces) ? nomEspace(espaces, resultat.idEspace) : null
 	return (
 		<li
 			id={id}
@@ -677,6 +684,12 @@ function LigneResultat({
 			    la troncature perdrait quelque chose. */}
 			{resultat.extrait === null ? null : (
 				<span className="text-sm text-text-2 truncate">{resultat.extrait}</span>
+			)}
+			{/* `CRM-161` T3.b.2 — la provenance, sous le résultat (§5.115) ; aucun filtre (décision 963). */}
+			{espace === null ? null : (
+				<span data-testid="resultat-espace" className="text-xs text-text-3 truncate">
+					{espace}
+				</span>
 			)}
 			{atteignable ? null : (
 				<span className="text-xs text-text-3">{t('search.result.unreachable')}</span>

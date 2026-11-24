@@ -3,6 +3,9 @@
 //           l'espace, sans lien, pour une autre ; rien sans mail masqué
 // @verifies docs/SPEC-mail-subsystem.md §31.13.6 ; docs/DESIGN_SYSTEM.md §5.111 ; docs/JOURNAL.md décision 958
 //
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : une ligne de résultat nomme l'espace de l'objet à partir de deux
+//           espaces lus, et rien d'un seul (docs/SPEC-espace-courant.md §16.3 ; décision 963)
+//
 // La palette entière est éprouvée sur la vraie pile par `e2e/ui/pastilles-cachees.spec.ts` ; ici, la seule mention.
 
 import { cleanup, render, screen } from '@testing-library/react'
@@ -11,7 +14,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { MailsMasques } from '../lib/recherche'
 
 vi.mock('../lib/supabase', () => ({ clientCrm: null }))
-const { MentionMailsMasques } = await import('./PaletteRecherche')
+const { LigneResultat, MentionMailsMasques } = await import('./PaletteRecherche')
+const { FournisseurEspace } = await import('./ContexteEspace')
 
 afterEach(cleanup)
 
@@ -55,5 +59,37 @@ describe('la mention des mails masqués dans la palette (§5.111)', () => {
 	it('rien sans mail masqué', () => {
 		render(<MentionMailsMasques masques={[]} idEspace="ws-1" onAller={vi.fn()} />)
 		expect(screen.queryByTestId('recherche-mails-masques')).toBeNull()
+	})
+})
+
+describe('`CRM-161` T3.b.2 — l’espace de chaque résultat (§16.3)', () => {
+	const P2ENJOY = { id: 'ws-p', name: 'P2Enjoy SAS', slug: 'p2enjoy' }
+	const LUMEN = { id: 'ws-l', name: 'Studio Lumen', slug: 'studio-lumen' }
+	const RESULTAT = {
+		id: 'c1',
+		famille: 'affaire' as const,
+		titre: 'Saison 2027 — captation',
+		sousTitre: null,
+		extrait: null,
+		adresse: '/tracks/productions/plateaux/cards/c1',
+		idEspace: 'ws-l',
+	}
+	const monterDans = (espaces: readonly (typeof P2ENJOY)[]) =>
+		render(
+			<FournisseurEspace valeur={{ idWorkspace: 'ws-p', estAdmin: true, espaces }}>
+				<ul role="listbox">
+					<LigneResultat resultat={RESULTAT} id="r1" actif={false} onSurvol={vi.fn()} onSuivre={vi.fn()} />
+				</ul>
+			</FournisseurEspace>,
+		)
+
+	it('à deux espaces, la ligne nomme l’espace de l’objet', () => {
+		monterDans([P2ENJOY, LUMEN])
+		expect(screen.getByTestId('resultat-espace').textContent).toBe('Studio Lumen')
+	})
+
+	it('d’un seul espace, aucune mention', () => {
+		monterDans([P2ENJOY])
+		expect(screen.queryByTestId('resultat-espace')).toBeNull()
 	})
 })

@@ -26,6 +26,9 @@
 // L'ASYMÉTRIE DU SEED EST ÉPROUVÉE PAR SON COMPTE, JAMAIS PAR UNE SEULE ABSENCE (M19). Sans les
 // deux comptes, un écran qui n'afficherait RIEN passerait le refus : c'est le défaut que la
 // contre-épreuve interne évite.
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : la palette nomme l'espace de chaque résultat à partir de deux espaces
+//           lus, sans filtre (décision 963) ; deux homonymes de deux espaces s'y distinguent ; rien pour la lectrice
+//           (docs/SPEC-espace-courant.md §16.3)
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -470,5 +473,30 @@ test.describe('Vérification visuelle (CLAUDE.md §16, docs/DESIGN_SYSTEM.md §7
 		await page.getByTestId('champ-recherche').fill('zzzintrouvablezzz')
 		await expect(page.getByTestId('recherche-vide')).toBeVisible()
 		await capturer(page, 'recherche-vide-xl-1440', UNITE)
+	})
+})
+
+// `CRM-161` T3.b.2 — « Vertigo Conseil » existe dans « P2Enjoy SAS » et dans « Studio Lumen » (docs/SPEC-seed.md §55) : la
+// palette de Camille rend les deux, chacun nommant son espace. La lectrice ne lit que le premier.
+test.describe('`CRM-161` T3.b.2 — l’espace de chaque résultat (docs/SPEC-espace-courant.md §16.3)', () => {
+	test('Camille, de deux espaces : deux homonymes, chacun nommant son espace ; aucun filtre', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await chercherAuClavier(page, 'Vertigo Conseil')
+		const organisations = page.getByTestId('resultat-recherche').and(page.locator('[data-famille="organisation"]'))
+		await expect(organisations).toHaveCount(2)
+		// L'ordre des résultats est celui du rang de la base, pas celui des espaces : seul l'ensemble est garanti.
+		await expect(organisations.getByTestId('resultat-espace')).toHaveCount(2)
+		const textes = (await organisations.getByTestId('resultat-espace').allTextContents()).sort()
+		expect(textes).toEqual(['P2Enjoy SAS', 'Studio Lumen'])
+		await expect(page.getByTestId('filtre-espaces')).toHaveCount(0)
+		await capturer(page, 'recherche-espaces-1440', 'CRM-161')
+	})
+
+	test('la lectrice, d’un seul espace : un seul résultat, sans mention', async ({ page }) => {
+		await connecter(page, VIEWER)
+		await chercherAuClavier(page, 'Vertigo Conseil')
+		const organisations = page.getByTestId('resultat-recherche').and(page.locator('[data-famille="organisation"]'))
+		await expect(organisations).toHaveCount(1)
+		await expect(page.getByTestId('resultat-espace')).toHaveCount(0)
 	})
 })

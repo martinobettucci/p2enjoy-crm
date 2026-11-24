@@ -13,12 +13,15 @@
 // un test qui n'interrogerait que des classes CSS validerait une apparence sans rien dire de
 // l'utilisabilité.
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la notification situe l'affaire par son rattachement
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : la cloche nomme l'espace de chaque notification à partir de deux
+//           espaces lus, et rien d'un seul ; aucun filtre (docs/SPEC-espace-courant.md §16.3 ; décision 963)
 
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ClientCrm } from '../lib/supabase'
+import { FournisseurEspace } from './ContexteEspace'
 
 const injecte = vi.hoisted(() => ({
 	client: null as ClientCrm | null,
@@ -464,5 +467,35 @@ describe('le marquage (docs/SPEC-notifications.md §26.4)', () => {
 		const utilisateur = await ouvrir()
 		await utilisateur.click(await screen.findByRole('button', { name: 'Marquer comme lue' }))
 		await waitFor(() => expect(screen.queryByTestId('message-marquage')).toBeNull())
+	})
+})
+
+describe('`CRM-161` T3.b.2 — l’espace de chaque notification (§16.3)', () => {
+	const P2ENJOY = { id: 'ws-p', name: 'P2Enjoy SAS', slug: 'p2enjoy' }
+	const LUMEN = { id: 'ws-l', name: 'Studio Lumen', slug: 'studio-lumen' }
+	const monterDans = (espaces: readonly (typeof P2ENJOY)[]) => {
+		injecte.client = client({ notifications: [{ ...N1, workspace_id: 'ws-l' }], commentaires: [D1], compte: 1 })
+		injecte.session = { statut: 'authentifie', utilisateur: { id: 'p12' } }
+		return render(
+			<MemoryRouter>
+				<FournisseurEspace valeur={{ idWorkspace: 'ws-p', estAdmin: true, espaces }}>
+					<ClocheNotifications />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+	}
+
+	it('à deux espaces, la ligne nomme l’espace de la notification, et aucun filtre n’est offert', async () => {
+		monterDans([P2ENJOY, LUMEN])
+		await userEvent.click(await screen.findByTestId('cloche-notifications'))
+		expect((await screen.findByTestId('notification-espace')).textContent).toBe('Studio Lumen')
+		expect(screen.queryByTestId('filtre-espaces')).toBeNull()
+	})
+
+	it('d’un seul espace, aucune mention', async () => {
+		monterDans([P2ENJOY])
+		await userEvent.click(await screen.findByTestId('cloche-notifications'))
+		await screen.findByTestId('notification')
+		expect(screen.queryByTestId('notification-espace')).toBeNull()
 	})
 })

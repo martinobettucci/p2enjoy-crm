@@ -13,6 +13,8 @@
 // `e2e/api/notifications-surface.spec.ts`.
 // @verifies CRM-001 tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : l'affaire d'une notification, située par son plus ancien rattachement
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : la boîte demande l'espace de chaque notification, et chaque
+//           notification le porte (docs/SPEC-espace-courant.md §16.3 ; docs/SPEC-notifications.md §24.2 révisé)
 
 import { describe, expect, it, vi } from 'vitest'
 import {
@@ -88,8 +90,10 @@ describe('ce que la boîte demande (docs/SPEC-notifications.md §24.1, §24.2)',
 
 	// CE QUI N'EST PAS DEMANDÉ EST AUSSI UNE DÉCISION (§24.2) : `recipient_id` est garanti par la
 	// politique, et le redemander laisserait croire qu'on pourrait lire celui d'un autre.
-	it('ne demande NI workspace_id NI recipient_id', () => {
-		expect(COLONNES_NOTIFICATION).not.toContain('workspace_id,')
+	// RÉVISÉ PAR `CRM-161` T3.b.2 (décision 51 ; docs/SPEC-notifications.md §24.2 révisé) : `workspace_id` n'était pas
+	// demandé tant que l'écran ne l'affichait pas ; la cloche nomme désormais l'espace de chaque notification.
+	it('demande workspace_id, que la cloche affiche, et toujours pas recipient_id', () => {
+		expect(COLONNES_NOTIFICATION).toContain('workspace_id,')
 		expect(COLONNES_NOTIFICATION).not.toContain('recipient_id')
 	})
 
@@ -188,6 +192,20 @@ describe('l’appariement des deux lectures (docs/SPEC-notifications.md §24.3)'
 		expect(vue.nomTrack).toBe('Conseil & IA')
 		expect(vue.nomChannel).toBe('Grands comptes')
 		expect(vue.lue).toBe(false)
+	})
+
+	// `CRM-161` T3.b.2 — L'ESPACE DE LA NOTIFICATION, sur les trois formes : affaire, organisation, transfert.
+	it('porte l’espace de la notification, ou `null` pour une ligne qui ne le lit pas', () => {
+		expect(apparier(ligne({ id: 'n1', workspace_id: 'ws-l' }), new Map()).idEspace).toBe('ws-l')
+		expect(apparier(ligne({ id: 'n1' }), new Map()).idEspace).toBeNull()
+		expect(
+			apparier(ligne({ id: 'n2', workspace_id: 'ws-p', subject_card_id: null, subject_organization_id: 'o1' }), new Map())
+				.idEspace,
+		).toBe('ws-p')
+		expect(
+			apparier(ligne({ id: 'n3', workspace_id: 'ws-l', type: 'mail_transfer', subject_card_id: null, payload: {} }), new Map())
+				.idEspace,
+		).toBe('ws-l')
 	})
 
 	// CAS 2 — LE COMMENTAIRE N'EST PLUS LISIBLE. Il ARRIVE RÉELLEMENT : le §14.4 conserve la

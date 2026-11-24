@@ -17,6 +17,8 @@
 // Ces tests portent sur la LOGIQUE, sans navigateur : c'est ce que la séparation du module rend
 // possible (§10.2). La pile réelle est éprouvée par `e2e/api/recherche-palette.spec.ts`, et la
 // surface par `e2e/ui/recherche.spec.ts`.
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : chaque résultat porte l'espace de son objet (docs/SPEC-espace-courant.md
+//           §16.3)
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -231,6 +233,12 @@ describe('les résolutions d’adresse (§13.1, M15)', () => {
 describe('la destination, famille par famille (§13.4, §13.5)', () => {
 	const adressesAffaires = new Map([['a-1', '/tracks/conseil-ia/grands-comptes/cards/a-1']])
 	const adressesCommentaires = new Map([['k-1', '/tracks/conseil-ia/grands-comptes/cards/a-1']])
+
+	// `CRM-161` T3.b.2 : l'espace que la RPC rend est porté par le résultat, pour que la palette le nomme (§16.3).
+	it('porte l’espace de l’objet, tel que la RPC le rend', () => {
+		const resultat = composerResultat(ligne({ objet: 'affaire', id: 'a-1', workspace_id: 'ws-l' }), adressesAffaires, adressesCommentaires)
+		expect(resultat.idEspace).toBe('ws-l')
+	})
 
 	it('mène une AFFAIRE à sa fiche, par l’adresse résolue', () => {
 		const resultat = composerResultat(
