@@ -20733,7 +20733,9 @@ reconnexion. La campagne complète revient à la session de livraison (décision
 **Reprise de l'import** : par **« Importer un fichier »** du CRM (CSV des affaires restantes produit par ChatGPT), sur décision du
 responsable — hors de cette unité.
 
-### CRM-165 — Les consignes du connecteur, complétées par un texte que le super-administrateur règle dans le CRM `[ ]`
+### CRM-165 — Les consignes du connecteur, complétées par un texte que le super-administrateur règle dans le CRM `[@]`
+
+*Prise en charge : 67 (152dd27d) depuis 2026-11-24 06:50 UTC — état avant : [ ]*
 
 **Origine** : demande du responsable, le 2026-11-24 — il voulait, par les prompts du connecteur (`CRM-149`), « injecter les bons
 usages du MCP aux assistants ». Un prompt n'est lu que si la personne le choisit ; le dispositif qui convient est le champ
