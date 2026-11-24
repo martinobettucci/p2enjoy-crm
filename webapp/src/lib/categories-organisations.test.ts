@@ -2,6 +2,8 @@
 //           espace demandés, actives avant archivées), les écritures nettoyées (trois colonnes à la création, l'heure
 //           d'archivage envoyée ou retirée), et le dictionnaire fermé des refus
 // @verifies docs/SPEC-organisations.md §9.1, §9.3 ; docs/DESIGN_SYSTEM.md §5.107
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.c : le catalogue des espaces de la portée, chaque catégorie avec son
+//           espace, dans l'ordre du catalogue (docs/SPEC-espace-courant.md §16.8.3 ; docs/DESIGN_SYSTEM.md §5.115)
 //
 // Les droits réels sont éprouvés contre la vraie base par `supabase/tests/0176_commentaires_categories_organisations.test.sql`
 // et `e2e/api/commentaires-categories-organisations.spec.ts` (CLAUDE.md §10).
@@ -10,8 +12,10 @@ import { describe, expect, it } from 'vitest'
 import {
 	archiverCategorieOrganisation,
 	classerRefusCategorie,
+	COLONNES_CATEGORIE_FILTRE,
 	COLONNES_CATEGORIE_ORGANISATION,
 	creerCategorieOrganisation,
+	lireCategoriesDesEspaces,
 	lireCategoriesOrganisations,
 	modifierCategorieOrganisation,
 	projeterCategoriesOrganisations,
@@ -26,7 +30,7 @@ function espion(reponse: unknown | (() => never)) {
 		from: (table: string) => {
 			appels.push({ methode: 'from', args: [table] })
 			const maillon: Record<string, unknown> = {}
-			for (const methode of ['select', 'eq', 'insert', 'update']) {
+			for (const methode of ['select', 'eq', 'in', 'insert', 'update']) {
 				maillon[methode] = (...args: unknown[]) => {
 					appels.push({ methode, args })
 					return maillon
@@ -93,6 +97,41 @@ describe('lireCategoriesOrganisations', () => {
 			throw new Error('boom')
 		})
 		expect((await lireCategoriesOrganisations(leve.client, 'ws-1')).statut).toBe('erreur')
+	})
+})
+
+describe('lireCategoriesDesEspaces (`CRM-161` T3.c)', () => {
+	it('demande le catalogue et l’espace de chaque catégorie, pour les espaces donnés', async () => {
+		const { client, appels } = espion({
+			data: [
+				{ ...ligne('b', 'Client'), workspace_id: 'ws-b' },
+				{ ...ligne('a', 'Client'), workspace_id: 'ws-a' },
+				{ ...ligne('c', 'Ancien', '2026-11-18T00:00:00Z'), workspace_id: 'ws-a' },
+			],
+			error: null,
+			status: 200,
+		})
+		const lu = await lireCategoriesDesEspaces(client, ['ws-a', 'ws-b'])
+		expect(appels).toEqual([
+			{ methode: 'from', args: ['organization_categories'] },
+			{ methode: 'select', args: [COLONNES_CATEGORIE_FILTRE] },
+			{ methode: 'in', args: ['workspace_id', ['ws-a', 'ws-b']] },
+		])
+		if (lu.statut !== 'pret') throw new Error('catalogue attendu')
+		// Deux homonymes de deux espaces restent deux catégories, chacune avec le sien ; l'archivée vient après.
+		expect(lu.donnees.map((c) => [c.nom, c.idEspace, c.archivee])).toEqual([
+			['Client', 'ws-a', false],
+			['Client', 'ws-b', false],
+			['Ancien', 'ws-a', true],
+		])
+	})
+
+	it('aucun espace : aucune lecture ; un refus : une erreur classée, jamais un catalogue vide', async () => {
+		const vide = espion({ data: [], error: null, status: 200 })
+		expect(await lireCategoriesDesEspaces(vide.client, [])).toEqual({ statut: 'pret', donnees: [] })
+		expect(vide.appels).toEqual([])
+		const refus = espion({ data: null, error: { message: 'refus' }, status: 403 })
+		expect((await lireCategoriesDesEspaces(refus.client, ['ws-a'])).statut).toBe('erreur')
 	})
 })
 

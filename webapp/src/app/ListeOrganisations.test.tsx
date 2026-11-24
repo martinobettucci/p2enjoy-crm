@@ -16,6 +16,12 @@
 //           dans l'adresse, l'archivée suffixée, une catégorie inconnue retirée) ; un seul panneau à la fois
 //           (docs/SPEC-organisations.md §9.3 ; docs/DESIGN_SYSTEM.md §5.107 ; décision 942). Le double est RÉVISÉ le
 //           2026-11-18 : il sert les poses (`.in()`) et le catalogue des catégories.
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.c : rien pour une personne d'un seul espace (la liste d'avant, son
+//           espace en `p_workspace_id`) ; à partir de deux, tous les espaces lus, la colonne « Espace » la dernière, la
+//           création dite ; le filtre « Espace » par la lecture (`p_workspace_ids`, la première page relue) ; un seul des
+//           trois panneaux ouvert ; les cases « Tracks » et « Catégories » des espaces de la portée, groupées par espace ;
+//           le vide sous le filtre (docs/SPEC-espace-courant.md §16.8.3 ; docs/DESIGN_SYSTEM.md §5.115, §5.28). Le double
+//           est RÉVISÉ le 2026-11-24 : il note les `.in()` de chaque table et rend des tracks donnés.
 
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -62,15 +68,18 @@ function double({
 	insertion = { data: [{ id: 'neuve' }], status: 201 } as Reponse,
 	totaux = [{ data: [TOTAL_SOGEXIA] }] as (Reponse | 'jamais')[],
 	tracksDe = { o2: [CONSEIL], o3: [CONSEIL, FORMATION] } as Record<string, string[]>,
-	catalogue = [] as readonly { id: string; name: string; color: string; archived_at: string | null }[],
+	catalogue = [] as readonly { id: string; name: string; color: string; archived_at: string | null; workspace_id?: string }[],
 	categoriesDe = {} as Record<string, string[]>,
+	tracks = TRACKS as readonly object[],
 } = {}) {
 	const ecritures: unknown[] = []
 	const appelsTotaux: unknown[] = []
 	const appelsListe: Args[] = []
-	const chaine = (r: Reponse) => {
+	const appelsIn: [string, string, unknown][] = []
+	const chaine = (r: Reponse, table = '') => {
 		const c: Record<string, unknown> = {
-			select: () => c, order: () => c, eq: () => c, is: () => c, in: () => c,
+			select: () => c, order: () => c, eq: () => c, is: () => c,
+			in: (colonne: string, valeurs: unknown) => { appelsIn.push([table, colonne, valeurs]); return c },
 			then: (resoudre: (v: unknown) => unknown) =>
 				Promise.resolve({ data: r.data ?? null, error: r.error ?? null, status: r.status ?? 200 }).then(resoudre),
 		}
@@ -86,7 +95,7 @@ function double({
 				table === 'workspaces'
 					? { data: [{ id: 'ws', name: 'P2Enjoy', slug: 'p2enjoy' }] }
 					: table === 'tracks'
-						? { data: TRACKS }
+						? { data: tracks }
 						: table === 'organization_categories'
 							? { data: catalogue }
 							: table === 'organization_category_links'
@@ -96,6 +105,7 @@ function double({
 										),
 									}
 								: { data: [] },
+				table,
 			),
 			insert: (charge: unknown) => { ecritures.push(charge); return chaine(insertion) },
 		}),
@@ -116,7 +126,7 @@ function double({
 			return repondre(totaux[Math.min(appelsTotaux.length - 1, totaux.length - 1)])
 		},
 	} as unknown as ClientCrm
-	return { client, ecritures, appelsTotaux, appelsListe }
+	return { client, ecritures, appelsTotaux, appelsListe, appelsIn }
 }
 
 /** L'adresse courante, rendue pour que le test la lise. */
@@ -125,10 +135,20 @@ function Adresse() {
 	return <output data-testid="adresse">{search}</output>
 }
 
-function monter(client: ClientCrm, { edition = 'permise' as Capacite, adresse = '/contacts/organisations' } = {}) {
+// `CRM-161` T3.c : une personne de deux espaces, par nom (l'ordre du menu, §5.113) ; « ws » est l'espace de l'onglet.
+const P2ENJOY = { id: 'ws', name: 'P2Enjoy', slug: 'p2enjoy' }
+const LUMEN = { id: 'ws-l', name: 'Studio Lumen', slug: 'studio-lumen' }
+type Espace = { readonly id: string; readonly name: string; readonly slug: string }
+
+function monter(
+	client: ClientCrm,
+	{ edition = 'permise' as Capacite, adresse = '/contacts/organisations', espaces = undefined as readonly Espace[] | undefined } = {},
+) {
 	render(
 		<MemoryRouter initialEntries={[adresse]}>
-			<FournisseurEspace valeur={{ idWorkspace: 'ws', estAdmin: false, capacites: { administration: 'refusee', edition } }}>
+			<FournisseurEspace
+				valeur={{ idWorkspace: 'ws', estAdmin: false, capacites: { administration: 'refusee', edition }, ...(espaces === undefined ? {} : { espaces }) }}
+			>
 				<Routes>
 					<Route path="/contacts/organisations" element={<><ListeOrganisations client={client} /><Adresse /></>} />
 					<Route path="/contacts/organisations/:id" element={<p data-testid="fiche-ouverte">fiche</p>} />
@@ -436,3 +456,130 @@ describe('les catégories dans la liste (`CRM-153` T4, docs/DESIGN_SYSTEM.md §5
 		expect(screen.getByTestId('ouvrir-filtre-categories').textContent).toBe('Catégories (1)')
 	})
 })
+
+describe('les organisations de tous les espaces (`CRM-161` T3.c, docs/DESIGN_SYSTEM.md §5.115)', () => {
+	const MAISON: Ligne & { workspace_id: string } = { id: 'o9', name: 'Maison Arlo', domain: null, website: null, contacts: 1, has_revenues: false, workspace_id: 'ws-l' }
+	const DES_DEUX = [{ ...COMPTOIR, workspace_id: 'ws' }, MAISON, { ...SOGEXIA, workspace_id: 'ws' }]
+	// Deux homonymes, « Productions », un par espace : deux cases distinctes.
+	const TRACKS_DES_DEUX = [
+		{ ...TRACKS[0], workspace_id: 'ws' },
+		{ id: 'tp', name: 'Productions', slug: 'productions', color: 'warning', icon: 'Film', position: 3, description: null, workspace_id: 'ws' },
+		{ id: 'tl', name: 'Productions', slug: 'productions', color: 'brand', icon: 'Film', position: 1, description: null, workspace_id: 'ws-l' },
+	]
+	/** La base filtre par espace comme `organization_list` : `p_workspace_ids` restreint, sinon tous. */
+	const parEspace = (toutes: readonly (Ligne & { workspace_id: string })[]): Liste => (args) => {
+		const ids = args['p_workspace_ids'] as string[] | undefined
+		const gardees = ids === undefined ? toutes : toutes.filter((l) => ids.includes(l.workspace_id))
+		return { data: gardees.map((l) => ({ ...l, total_count: gardees.length })) }
+	}
+
+	it('d’un seul espace, la liste d’avant : son espace en `p_workspace_id`, ni bouton « Espace », ni colonne, ni mention', async () => {
+		const { client, appelsListe } = double()
+		monter(client, { espaces: [P2ENJOY] })
+		await screen.findAllByTestId('ligne-organisation')
+		expect(derniers(appelsListe)['p_workspace_id']).toBe('ws')
+		expect(derniers(appelsListe)).not.toHaveProperty('p_workspace_ids')
+		expect(screen.queryByTestId('ouvrir-filtre-espaces')).toBeNull()
+		expect(screen.queryByTestId('espace-organisation')).toBeNull()
+		expect(screen.queryByTestId('espace-des-gestes')).toBeNull()
+		expect(screen.getAllByRole('columnheader')).toHaveLength(5)
+	})
+
+	it('de deux espaces : tous lus, la colonne « Espace » la dernière, la création dite dans l’espace de l’onglet', async () => {
+		const { client, appelsListe } = double({ liste: parEspace(DES_DEUX) })
+		monter(client, { espaces: [P2ENJOY, LUMEN] })
+		const lignes = await screen.findAllByTestId('ligne-organisation')
+		expect(derniers(appelsListe)).not.toHaveProperty('p_workspace_id')
+		expect(derniers(appelsListe)).not.toHaveProperty('p_workspace_ids')
+		const entetes = screen.getAllByRole('columnheader').map((c) => c.textContent)
+		expect(entetes).toHaveLength(6)
+		expect(entetes[5]).toBe(fr['spaces.column'])
+		expect(lignes.map((l) => within(l).getByTestId('espace-organisation').textContent)).toEqual(['P2Enjoy', 'Studio Lumen', 'P2Enjoy'])
+		expect(within(lignes[1] as HTMLElement).getByTestId('espace-organisation').getAttribute('title')).toBe('Studio Lumen')
+		expect(screen.getByTestId('espace-des-gestes').textContent).toBe('Dans l’espace P2Enjoy')
+		await userEvent.click(screen.getByTestId('ouvrir-creation-organisation'))
+		expect(screen.getByTestId('espace-creation-organisation').textContent).toBe('Dans l’espace P2Enjoy')
+	})
+
+	it('le filtre « Espace » se fait par la lecture : `p_workspace_ids`, l’adresse, la première page relue', async () => {
+		const { client, appelsListe } = double({ liste: parEspace(DES_DEUX) })
+		monter(client, { espaces: [P2ENJOY, LUMEN] })
+		await screen.findAllByTestId('ligne-organisation')
+		const bouton = screen.getByTestId('ouvrir-filtre-espaces')
+		await userEvent.click(bouton)
+		const panneau = screen.getByTestId('panneau-filtre-espaces')
+		await userEvent.click(within(panneau).getByRole('checkbox', { name: 'Studio Lumen' }))
+		await waitFor(() => expect(derniers(appelsListe)['p_workspace_ids']).toEqual(['ws-l']))
+		expect(derniers(appelsListe)['p_offset']).toBe(0)
+		expect(adresse().get('espaces')).toBe('studio-lumen')
+		await waitFor(() => expect(screen.getAllByTestId('ligne-organisation').map((l) => l.dataset['organisation'])).toEqual(['o9']))
+		expect(bouton.textContent).toBe('Espace (1)')
+	})
+
+	it('l’adresse chargée pose le filtre ; un seul des trois panneaux ouvert à la fois', async () => {
+		const { client, appelsListe } = double({ liste: parEspace(DES_DEUX), catalogue: [{ id: 'c1', name: 'Client', color: 'brand', archived_at: null, workspace_id: 'ws' }] })
+		monter(client, { espaces: [P2ENJOY, LUMEN], adresse: '/contacts/organisations?espaces=p2enjoy' })
+		await screen.findAllByTestId('ligne-organisation')
+		await waitFor(() => expect(derniers(appelsListe)['p_workspace_ids']).toEqual(['ws']))
+		await userEvent.click(screen.getByTestId('ouvrir-filtre-tracks'))
+		await userEvent.click(screen.getByTestId('ouvrir-filtre-espaces'))
+		expect(screen.queryByTestId('panneau-filtre-tracks')).toBeNull()
+		expect(screen.getByTestId('panneau-filtre-espaces')).toBeTruthy()
+		await userEvent.click(await screen.findByTestId('ouvrir-filtre-categories'))
+		expect(screen.queryByTestId('panneau-filtre-espaces')).toBeNull()
+		expect(screen.getByTestId('panneau-filtre-categories')).toBeTruthy()
+		await userEvent.click(screen.getByTestId('ouvrir-filtre-espaces'))
+		expect(screen.queryByTestId('panneau-filtre-categories')).toBeNull()
+	})
+
+	it('les cases « Tracks » : celles des espaces de la portée, groupées par espace à partir de deux ; les homonymes distincts', async () => {
+		const { client, appelsIn } = double({ liste: parEspace(DES_DEUX), tracks: TRACKS_DES_DEUX })
+		monter(client, { espaces: [P2ENJOY, LUMEN] })
+		await screen.findAllByTestId('ligne-organisation')
+		await waitFor(() => expect(appelsIn).toContainEqual(['tracks', 'workspace_id', ['ws', 'ws-l']]))
+		await userEvent.click(screen.getByTestId('ouvrir-filtre-tracks'))
+		const groupes = within(screen.getByTestId('panneau-filtre-tracks')).getAllByTestId('groupe-cases-espace')
+		expect(groupes.map((g) => [g.querySelector('legend')?.textContent, within(g).getAllByRole('checkbox').length])).toEqual([
+			['P2Enjoy', 2],
+			['Studio Lumen', 1],
+		])
+		expect(within(groupes[1] as HTMLElement).getByRole('checkbox', { name: 'Productions' })).toBeTruthy()
+	})
+
+	it('une portée d’un espace : ses seules cases, sans groupe', async () => {
+		const { client, appelsIn } = double({ liste: parEspace(DES_DEUX), tracks: TRACKS_DES_DEUX.filter((t) => t.workspace_id === 'ws-l') })
+		monter(client, { espaces: [P2ENJOY, LUMEN], adresse: '/contacts/organisations?espaces=studio-lumen' })
+		await screen.findAllByTestId('ligne-organisation')
+		await waitFor(() => expect(appelsIn).toContainEqual(['tracks', 'workspace_id', ['ws-l']]))
+		await userEvent.click(screen.getByTestId('ouvrir-filtre-tracks'))
+		const panneau = screen.getByTestId('panneau-filtre-tracks')
+		expect(within(panneau).queryAllByTestId('groupe-cases-espace')).toHaveLength(0)
+		expect(within(panneau).getAllByRole('checkbox').map((c) => c.closest('label')!.textContent)).toEqual(['Productions'])
+	})
+
+	it('les cases « Catégories » se groupent de même par espace', async () => {
+		const catalogue = [
+			{ id: 'c1', name: 'Client', color: 'brand', archived_at: null, workspace_id: 'ws' },
+			{ id: 'c2', name: 'Client', color: 'success', archived_at: null, workspace_id: 'ws-l' },
+		]
+		const { client } = double({ liste: parEspace(DES_DEUX), catalogue })
+		monter(client, { espaces: [P2ENJOY, LUMEN] })
+		await userEvent.click(await screen.findByTestId('ouvrir-filtre-categories'))
+		const groupes = within(screen.getByTestId('panneau-filtre-categories')).getAllByTestId('groupe-cases-espace')
+		expect(groupes.map((g) => g.dataset['slug'])).toEqual(['p2enjoy', 'studio-lumen'])
+	})
+
+	it('le vide sous le filtre « Espace » : la barre reste, « Afficher tous les espaces » vide le filtre et rend le focus', async () => {
+		const { client, appelsListe } = double({ liste: parEspace([{ ...COMPTOIR, workspace_id: 'ws' }]) })
+		monter(client, { espaces: [P2ENJOY, LUMEN], adresse: '/contacts/organisations?espaces=studio-lumen' })
+		expect(await screen.findByTestId('vide-filtre-espaces')).toBeTruthy()
+		expect(screen.getByTestId('filtres-organisations')).toBeTruthy()
+		expect(screen.queryByTestId('effacer-filtres-organisations-vide')).toBeNull()
+		await userEvent.click(screen.getByTestId('afficher-tous-les-espaces'))
+		await waitFor(() => expect(adresse().get('espaces')).toBeNull())
+		await waitFor(() => expect(derniers(appelsListe)).not.toHaveProperty('p_workspace_ids'))
+		expect(await screen.findAllByTestId('ligne-organisation')).toHaveLength(1)
+		expect(document.activeElement).toBe(screen.getByTestId('ouvrir-filtre-espaces'))
+	})
+})
+

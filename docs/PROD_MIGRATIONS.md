@@ -1682,7 +1682,7 @@ déjà. Le manuel construit (chapitres 3, 4, 5, 6, 8, 10, 26 et 29) part avec el
 **Ce qui devient visible** : rien pour une personne d'un seul espace, ce qui est le cas de toute la production aujourd'hui.
 **Retour arrière** : la webapp de la révision d'avant.
 
-### 2.80 `CRM-161` T3.c — `organization_list` lit plusieurs espaces et `temps_valorise` rend l'espace de chaque ligne (les migrations 201 et 202 ; leurs écrans suivent) (EN ATTENTE)
+### 2.80 `CRM-161` T3.c — `organization_list` lit plusieurs espaces et `temps_valorise` rend l'espace de chaque ligne (les migrations 201 et 202) ; les organisations et Temps ▸ Rapport de tous les espaces (webapp et manuel) (EN ATTENTE)
 
 `docs/SPEC-espace-courant.md` §16.8 ; `docs/SCHEMA.md` « Migrations `0201` et `0202` ». **Deux fonctions remplacées, aucune
 table, aucune variable, aucun secret.** La 201 : `organization_list` gagne `p_workspace_ids uuid[]`, en dernier, et rend
@@ -1692,13 +1692,21 @@ de leurs paramètres, avec `p_workspace_id`, et ne lisent que les colonnes qu'il
 son sens. Elles peuvent donc partir **seules, avant la webapp de T3.c**, qui les appelle avec `p_workspace_ids` et lit
 `workspace_id` et ne part qu'avec elles ou après elles. Aucune image `mcp` à reconstruire. *Écrites et prouvées en
 développement le 2026-11-24 (7a) : pgTAP `0187` et `0188`, et les suites des deux fonctions ; empreintes identiques avant
-et après.* Les écrans (Organisations, Temps ▸ Rapport) compléteront cette section.
+et après.*
+
+**La webapp et le manuel de T3.c** (`docs/SPEC-espace-courant.md` §16.8.3 ; `docs/DESIGN_SYSTEM.md` §5.115) : l'onglet
+« Organisations » de tous les espaces lus — la colonne « Espace », la dernière ; le bouton « Espace » dans la barre, le filtre
+par la lecture (`p_workspace_ids`) ; les cases « Tracks » et « Catégories » des espaces affichés, groupées par espace ; « Dans
+l'espace X » sur la création — et Temps ▸ Rapport — la colonne « Espace », le filtre en mémoire. Le manuel construit
+(chapitres 10 et 28) part avec elle. **La webapp exige les migrations 201 et 202** : elle part avec elles ou après elles,
+jamais avant. *Complète en développement le 2026-11-25 (7a).*
 
 | # | Geste | Qui | Comment |
 |---|---|---|---|
 | 1 | Appliquer la 201 puis la 202 | session de livraison, dans la fenêtre du lot | `runProd.sh --migrate` (§3), après la 200 ; registre à 200 lignes |
 | 2 | Relire | session de livraison | une seule `organization_list`, à dix arguments, rendant `workspace_id` ; `temps_valorise` rendant `workspace_id` en dernière colonne ; la liste des organisations de la webapp et `crm_organization_list` rendent ce qu'elles rendaient |
-| 3 | Constater | le responsable | rien ne change à l'écran tant que la webapp de T3.c n'est pas livrée |
+| 3 | Livrer la webapp et le manuel construit | session de livraison, dans la même fenêtre ou une suivante | comme toute livraison de la webapp (§4), après les gestes 1 et 2 |
+| 4 | Constater | le responsable | une personne d'un seul espace voit l'onglet « Organisations » et le rapport de temps inchangés : ni bouton « Espace », ni colonne ; une personne de deux espaces y voit la dernière colonne « Espace », le bouton « Espace » qui isole un espace (`?espaces=`), les cases « Tracks » et « Catégories » groupées sous le nom de chaque espace, et « Dans l'espace X » à côté de « Nouvelle organisation » |
 
 **Retour arrière** : pour la 201, supprimer la signature à dix arguments puis rejouer la section 7 de la `0188` ; pour la
 202, supprimer la fonction puis rejouer sa section 2 de la `0150`. La webapp de T3.c, si elle est livrée, se retire avec

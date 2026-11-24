@@ -9,6 +9,12 @@
 // @verifies CRM-153 (docs/BACKLOG.md) — tranche T4 : le bouton « Catégories » se place entre « Tracks » et « Recettes »
 //           dans l'ordre de tabulation (docs/DESIGN_SYSTEM.md §5.107) ; révisé le 2026-11-19
 //
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.c : RÉVISÉ le 2026-11-24 — Camille lit aussi « Studio Lumen » (deux
+//           organisations, dont un homonyme de Vertigo Conseil, docs/SPEC-seed.md §54) : ses parcours ouvrent l'onglet
+//           sur l'espace du seed, `?espaces=p2enjoy`, comme une personne de deux espaces isole le sien ; l'adresse écrite
+//           garde ce paramètre en tête (docs/SPEC-espace-courant.md §16.8.3 ; docs/DESIGN_SYSTEM.md §5.115). Le contrat
+//           prouvé ici, dans un espace, ne change pas ; la lectrice n'en lit qu'un et reste sans paramètre.
+//
 // LE SEED EST LU : Vertigo Conseil (Conseil & IA, Formation ; des recettes), Atelier Lumen et Sogexia (Conseil & IA), trois
 // organisations à deux contacts, Comptoir Vasseur sans contact. « Afficher plus » demande plus de cinquante organisations :
 // ce fichier en pose 55, préfixées, par la clé de service, et les retire avant et après.
@@ -23,6 +29,8 @@ const VIEWER = 'viewer@p2enjoy.test'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
 const FORMATION = '5eed0000-0000-4000-8000-000000000023'
 const PREFIXE = 'E2E Afficher plus'
+/** `CRM-161` T3.c : l'onglet sur l'espace du seed, pour Camille qui en lit deux. */
+const ORGANISATIONS = '/contacts/organisations?espaces=p2enjoy'
 const SERVICE = { apikey: CLE_SERVICE, Authorization: `Bearer ${CLE_SERVICE}`, 'Content-Type': 'application/json' }
 
 async function nettoyer(): Promise<void> {
@@ -51,7 +59,7 @@ async function sansDefilementHorizontal(page: Page): Promise<void> {
 test.describe('Contacts ▸ Organisations : rechercher, filtrer, trier (docs/DESIGN_SYSTEM.md §5.105)', () => {
 	test('à la souris : la colonne « Tracks », la recherche, un track, les recettes, effacer ; l’adresse rechargée', async ({ page }) => {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/contacts/organisations')
+		await page.goto(ORGANISATIONS)
 		await expect(noms(page)).toHaveCount(7)
 		await expect(page.getByTestId('compte-organisations')).toHaveText('7 sur 7')
 		await expect(page.getByTestId('afficher-plus-organisations')).toHaveCount(0)
@@ -62,7 +70,7 @@ test.describe('Contacts ▸ Organisations : rechercher, filtrer, trier (docs/DES
 
 		await recherche(page).fill('vert')
 		await expect(noms(page)).toHaveText(['Vertigo Conseil'])
-		await expect(page).toHaveURL(/\?q=vert$/u)
+		await expect(page).toHaveURL(/\?espaces=p2enjoy&q=vert$/u)
 		await page.getByTestId('effacer-filtres-organisations').click()
 		await expect(noms(page)).toHaveCount(7)
 		await expect(recherche(page)).toHaveValue('')
@@ -90,13 +98,13 @@ test.describe('Contacts ▸ Organisations : rechercher, filtrer, trier (docs/DES
 		await expect(recettes(page)).toHaveValue('sans')
 
 		await page.getByTestId('effacer-filtres-organisations').click()
-		await expect(page).toHaveURL(/\/contacts\/organisations$/u)
+		await expect(page).toHaveURL(/\/contacts\/organisations\?espaces=p2enjoy$/u)
 		await expect(noms(page)).toHaveCount(7)
 	})
 
 	test('le tri par « Contacts » : ascendant, puis descendant ; à égalité, le nom départage', async ({ page }) => {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/contacts/organisations')
+		await page.goto(ORGANISATIONS)
 		const entete = page.getByRole('columnheader', { name: /Contacts/u })
 		await expect(page.getByRole('columnheader', { name: /Nom/u })).toHaveAttribute('aria-sort', 'ascending')
 		await entete.getByRole('button').click()
@@ -107,17 +115,17 @@ test.describe('Contacts ▸ Organisations : rechercher, filtrer, trier (docs/DES
 		await expect(noms(page)).toHaveText([
 			'Atelier Lumen', 'Sogexia', 'Vertigo Conseil', 'Studio Meunier', 'Ville d’Annecy', 'Comptoir Vasseur', 'Imprimerie Duval',
 		].map((n) => n.replace('’', "'")))
-		await expect(page).toHaveURL(/\?tri=contacts&sens=desc$/u)
+		await expect(page).toHaveURL(/\?espaces=p2enjoy&tri=contacts&sens=desc$/u)
 		await expect(page.getByRole('columnheader', { name: 'Réel sur prévu' }).getByRole('button')).toHaveCount(0)
 	})
 
 	test('au clavier : chercher, déplier « Tracks », cocher à l’espace, `Échap` rend le focus, choisir les recettes', async ({ page }) => {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/contacts/organisations')
+		await page.goto(ORGANISATIONS)
 		await expect(noms(page)).toHaveCount(7)
 		await recherche(page).focus()
 		await page.keyboard.type('o')
-		await expect(page).toHaveURL(/\?q=o$/u)
+		await expect(page).toHaveURL(/\?espaces=p2enjoy&q=o$/u)
 		await page.keyboard.press('Tab')
 		await expect(boutonTracks(page)).toBeFocused()
 		await page.keyboard.press('Enter')
@@ -134,6 +142,9 @@ test.describe('Contacts ▸ Organisations : rechercher, filtrer, trier (docs/DES
 		// « Catégories » paraît donc, après « Tracks » et avant « Recettes » (docs/DESIGN_SYSTEM.md §5.107).
 		await page.keyboard.press('Tab')
 		await expect(page.getByTestId('ouvrir-filtre-categories')).toBeFocused()
+		// Révisé le 2026-11-24 (CRM-161 T3.c) : à deux espaces lus, le bouton « Espace » suit « Catégories » (§5.115).
+		await page.keyboard.press('Tab')
+		await expect(page.getByTestId('ouvrir-filtre-espaces')).toBeFocused()
 		await page.keyboard.press('Tab')
 		await expect(recettes(page)).toBeFocused()
 		await recettes(page).selectOption('avec')
@@ -154,7 +165,7 @@ test.describe('Contacts ▸ Organisations : rechercher, filtrer, trier (docs/DES
 		})
 		expect(r.status).toBe(201)
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto(`/contacts/organisations?q=${encodeURIComponent(PREFIXE)}`)
+		await page.goto(`${ORGANISATIONS}&q=${encodeURIComponent(PREFIXE)}`)
 		await expect(noms(page)).toHaveCount(50)
 		await expect(page.getByTestId('compte-organisations')).toHaveText('50 sur 55')
 		const plus = page.getByTestId('afficher-plus-organisations')
@@ -170,7 +181,7 @@ test.describe('Contacts ▸ Organisations : rechercher, filtrer, trier (docs/DES
 
 	test('la fiche porte « Tracks » : des pilules vers leur vue ; aucun, « Aucun track »', async ({ page }) => {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/contacts/organisations')
+		await page.goto(ORGANISATIONS)
 		await noms(page).filter({ hasText: 'Vertigo Conseil' }).click()
 		const ligne = page.getByTestId('tracks-organisation')
 		await expect(ligne.getByTestId('pilule-track-organisation')).toHaveText(['Conseil & IA', 'Formation'])
@@ -195,7 +206,7 @@ test.describe('Contacts ▸ Organisations : rechercher, filtrer, trier (docs/DES
 			test(`palier ${palier.nom} : la barre, le panneau et le tableau tiennent sans défilement horizontal`, async ({ page }) => {
 				await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 				await connecterAvecLeLabs(page, ADMIN)
-				await page.goto('/contacts/organisations')
+				await page.goto(ORGANISATIONS)
 				await expect(noms(page)).toHaveCount(7)
 				const { cadre, tableau } = await page.getByTestId('tableau-organisations').evaluate((t) => ({
 					cadre: (t.parentElement as HTMLElement).clientWidth,
@@ -205,7 +216,7 @@ test.describe('Contacts ▸ Organisations : rechercher, filtrer, trier (docs/DES
 				else expect(tableau, 'à 390 px, le cadre défile').toBeGreaterThan(cadre)
 				await sansDefilementHorizontal(page)
 				await capturer(page, `organisations-liste-${palier.nom}`, UNITE)
-				await page.goto(`/contacts/organisations?tracks=${FORMATION}`)
+				await page.goto(`${ORGANISATIONS}&tracks=${FORMATION}`)
 				await expect(noms(page)).toHaveText(['Vertigo Conseil'])
 				await boutonTracks(page).click()
 				await expect(page.getByTestId('panneau-filtre-tracks')).toBeVisible()

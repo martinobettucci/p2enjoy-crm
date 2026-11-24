@@ -8,6 +8,11 @@
 // @verifies CRM-152 (docs/BACKLOG.md) — tranche T2 : les index de cellule révisés, « Tracks » après « Nom »
 //           (docs/SPEC-organisations.md §8.3)
 //
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.c : RÉVISÉ le 2026-11-24 — Camille lit aussi « Studio Lumen », où vit un
+//           homonyme de Vertigo Conseil (docs/SPEC-seed.md §54) : ses parcours ouvrent l'onglet sur l'espace du seed,
+//           `?espaces=p2enjoy`, comme une personne de deux espaces isole le sien (docs/SPEC-espace-courant.md §16.8.3).
+//           Le contrat prouvé ici ne change pas ; la lectrice n'en lit qu'un et reste sans paramètre.
+//
 // LE SEED EST LU, JAMAIS ÉCRIT : Vertigo Conseil porte « Socle analytique — Vertuo » (EUR, par Marc Lefort) et « Formation
 // Data & IA » (CHF, par Nadia Benali) ; « Socle analytique » compte aussi pour Atelier Lumen (par Thomas Garnier) ; Sogexia
 // a une affaire sans recette ; Comptoir Vasseur n'a aucun contact.
@@ -18,6 +23,9 @@ import { PALIERS, capturer } from './captures'
 const UNITE = 'CRM-146'
 const ADMIN = 'admin@p2enjoy.test'
 const VIEWER = 'viewer@p2enjoy.test'
+
+/** `CRM-161` T3.c : l'onglet sur l'espace du seed, pour Camille qui en lit deux. */
+const ORGANISATIONS = '/contacts/organisations?espaces=p2enjoy'
 
 const ligne = (page: Page, nom: string) => page.getByTestId('ligne-organisation').filter({ hasText: nom })
 // RÉVISÉE par `CRM-152` T2 : « Tracks » suit « Nom », « Réel sur prévu » passe à la sixième cellule. RÉVISÉE par la
@@ -41,7 +49,7 @@ async function tabulerJusquauLien(page: Page, nom: string, maximum = 80): Promis
 test.describe('la colonne « Réel sur prévu » (docs/SPEC-recettes.md §12.4)', () => {
 	test('deux devises pour Vertigo Conseil, la cellule vide pour Sogexia et Comptoir Vasseur ; la fiche s’ouvre au clavier', async ({ page }) => {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/contacts/organisations')
+		await page.goto(ORGANISATIONS)
 		await expect(page.getByRole('columnheader', { name: 'Réel sur prévu' })).toBeVisible()
 
 		const vertigo = cellule(page, 'Vertigo Conseil').getByTestId('reel-sur-prevu')
@@ -65,7 +73,7 @@ test.describe('la colonne « Réel sur prévu » (docs/SPEC-recettes.md §12.4)'
 test.describe('le bloc « Recettes avec cette organisation » (docs/SPEC-recettes.md §12.5)', () => {
 	test('Vertigo Conseil : un tableau par devise, les mentions et la portée', async ({ page }) => {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/contacts/organisations')
+		await page.goto(ORGANISATIONS)
 		await ligne(page, 'Vertigo Conseil').getByRole('link', { name: 'Vertigo Conseil' }).click()
 		const bloc = page.getByTestId('recettes-organisation')
 		const lignes = bloc.getByTestId('ligne-recettes-organisation')
@@ -86,13 +94,13 @@ test.describe('le bloc « Recettes avec cette organisation » (docs/SPEC-recette
 
 	test('Atelier Lumen : l’affaire partagée le dit ; Sogexia : le vide sans action', async ({ page }) => {
 		await connecterAvecLeLabs(page, ADMIN)
-		await page.goto('/contacts/organisations')
+		await page.goto(ORGANISATIONS)
 		await ligne(page, 'Atelier Lumen').getByRole('link', { name: 'Atelier Lumen' }).click()
 		const bloc = page.getByTestId('recettes-organisation')
 		await expect(bloc.getByTestId('ligne-recettes-organisation')).toHaveCount(1)
 		await expect(bloc.getByTestId('mention-recettes-partagees')).toHaveText('Dont 1 compte aussi pour une autre organisation.')
 
-		await page.goto('/contacts/organisations')
+		await page.goto(ORGANISATIONS)
 		await ligne(page, 'Sogexia').getByRole('link', { name: 'Sogexia' }).click()
 		const vide = page.getByTestId('recettes-organisation').getByTestId('etat-vide')
 		await expect(vide).toContainText('Aucune recette prévue avec cette organisation.')
@@ -121,7 +129,7 @@ test.describe('les paliers (docs/DESIGN_SYSTEM.md §7)', () => {
 		test(`aucun défilement horizontal, liste et fiche — ${palier.nom}`, async ({ page }) => {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			await connecterAvecLeLabs(page, ADMIN)
-			await page.goto('/contacts/organisations')
+			await page.goto(ORGANISATIONS)
 			await expect(cellule(page, 'Vertigo Conseil').getByTestId('reel-sur-prevu')).toHaveCount(2)
 			await capturer(page, `recettes-organisation-liste-${palier.nom}`, UNITE)
 			expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0)

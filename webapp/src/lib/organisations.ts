@@ -18,6 +18,7 @@ import {
 	type CategorieOrganisationLue,
 } from './categories-organisations'
 import type { ClientCrm } from './supabase'
+import type { Track } from './tracks'
 
 // @spec CRM-152 (docs/BACKLOG.md) — tranche T2 : la liste lue en base, page par page (`organization_list`), et les tracks de
 //       chaque organisation (`organization_tracks`) ; les filtres et le tri lus et écrits dans l'adresse, le défaut jamais
@@ -43,6 +44,8 @@ export type OrganisationListee = {
 	readonly tracks: readonly TrackDOrganisation[]
 	/** `CRM-153` T4 : ses catégories, actives puis archivées, chacune dans l'ordre du nom. */
 	readonly categories: readonly CategorieOrganisation[]
+	/** `CRM-161` T3.c : l'espace de l'organisation, que la colonne « Espace » nomme (§16.8.3). */
+	readonly workspace_id: string
 }
 
 export type FiltreRecettes = 'toutes' | 'avec' | 'sans'
@@ -145,16 +148,33 @@ export function sansFiltresOrganisations(parametres: ParametresOrganisations): P
 const VALEUR_RECETTES: Record<FiltreRecettes, 'all' | 'with' | 'without'> = { toutes: 'all', avec: 'with', sans: 'without' }
 const VALEUR_TRI: Record<TriOrganisations, 'name' | 'contacts'> = { nom: 'name', contacts: 'contacts' }
 
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.c : la liste lit la portée de l'onglet — un espace pour une personne d'un
+//       seul espace, sinon ceux du filtre « Espace », sinon tous ceux que la RLS laisse lire ; LE FILTRE SE FAIT PAR LA
+//       LECTURE, la liste étant paginée (docs/SPEC-espace-courant.md §16.2, §16.8.1, §16.8.3 ; docs/SCHEMA.md « Migrations
+//       `0201` et `0202` »)
+
+/**
+ * Ce que la liste lit : un espace — la liste d'avant T3, pour une personne d'un seul espace —, ou plusieurs ; une liste
+ * vide vaut tous ceux que la RLS laisse lire. Le filtre n'est pas un droit : la base ne rend jamais un espace non lu.
+ */
+export type PorteeOrganisations = { readonly espace: string } | { readonly espaces: readonly string[] }
+
+/** Les arguments de portée de `organization_list` : `p_workspace_id`, `p_workspace_ids`, ou aucun (tous). */
+function argumentsPortee(portee: PorteeOrganisations) {
+	if ('espace' in portee) return { p_workspace_id: portee.espace }
+	return portee.espaces.length === 0 ? {} : { p_workspace_ids: [...portee.espaces] }
+}
+
 /** Les arguments de `organization_list` (docs/SPEC-organisations.md §8.2). Exportée pour que le test vérifie l'appel. */
 export function argumentsListeOrganisations(
-	idWorkspace: string,
+	portee: PorteeOrganisations,
 	parametres: ParametresOrganisations,
 	decalage: number,
 	limite: number = TAILLE_PAGE_ORGANISATIONS,
 ) {
 	const recherche = parametres.recherche.trim()
 	return {
-		p_workspace_id: idWorkspace,
+		...argumentsPortee(portee),
 		p_search: recherche === '' ? undefined : recherche,
 		p_track_ids: parametres.tracks.length === 0 ? undefined : [...parametres.tracks],
 		p_category_ids: parametres.categories.length === 0 ? undefined : [...parametres.categories],
@@ -176,6 +196,7 @@ type LigneListe = {
 	readonly website: string | null
 	readonly contacts: number
 	readonly has_revenues: boolean
+	readonly workspace_id: string
 	readonly total_count: number
 }
 type LigneTrack = { readonly organization_id: string; readonly track_id: string } & Omit<TrackDOrganisation, 'id'>
@@ -233,12 +254,12 @@ async function lireCategoriesParOrganisation(
  */
 export async function lirePageOrganisations(
 	client: ClientCrm,
-	idWorkspace: string,
+	portee: PorteeOrganisations,
 	parametres: ParametresOrganisations,
 	decalage: number,
 ): Promise<EtatAsync<PageOrganisations>> {
 	try {
-		const reponse = await client.rpc('organization_list', argumentsListeOrganisations(idWorkspace, parametres, decalage))
+		const reponse = await client.rpc('organization_list', argumentsListeOrganisations(portee, parametres, decalage))
 		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
 		const lignes = (reponse.data ?? []) as readonly LigneListe[]
 		const tracks = await lireTracksParOrganisation(client, lignes.map((ligne) => ligne.id))
@@ -258,9 +279,42 @@ export async function lirePageOrganisations(
 				aRecettes: ligne.has_revenues,
 				tracks: tracks.donnees.get(ligne.id) ?? [],
 				categories: categories.donnees.get(ligne.id) ?? [],
+				workspace_id: ligne.workspace_id,
 			})),
 			total: lignes[0]?.total_count ?? 0,
 		})
+	} catch (cause) {
+		return erreurDeCause(cause)
+	}
+}
+
+/** `CRM-161` T3.c : un track des cases « Tracks », avec son espace, pour les grouper par espace (§5.115). */
+export type TrackDuFiltre = Track & { readonly workspace_id: string }
+
+/** Les colonnes des cases « Tracks » : celles de la barre latérale, et l'espace. Exportée pour le test. */
+export const COLONNES_TRACK_FILTRE = 'id, name, slug, color, icon, position, description, workspace_id'
+
+/**
+ * `CRM-161` T3.c — les tracks des espaces de la portée, pour les cases « Tracks » (§16.8.3) : actifs, hors corbeille, dans
+ * l'ordre de la barre latérale (`position`, puis le nom), comme `lireTracks`. Les espaces sont toujours donnés : la portée
+ * des cases est celle du filtre « Espace », sinon tous les espaces lus.
+ */
+export async function lireTracksDesEspaces(
+	client: ClientCrm,
+	idsEspaces: readonly string[],
+): Promise<EtatAsync<readonly TrackDuFiltre[]>> {
+	if (idsEspaces.length === 0) return pret([])
+	try {
+		const reponse = await client
+			.from('tracks')
+			.select(COLONNES_TRACK_FILTRE)
+			.in('workspace_id', [...idsEspaces])
+			.is('archived_at', null)
+			.is('deleted_at', null)
+			.order('position')
+			.order('name')
+		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
+		return pret((reponse.data ?? []) as readonly TrackDuFiltre[])
 	} catch (cause) {
 		return erreurDeCause(cause)
 	}

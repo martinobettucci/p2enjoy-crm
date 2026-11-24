@@ -17,6 +17,11 @@ d'exécuter le code attendu.
   l'espace de chaque organisation, et le temps valorisé dit l'espace de chaque ligne. Rien ne change encore à l'écran : les
   écrans Organisations et Temps ▸ Rapport, qui s'en serviront, suivent. La webapp et le connecteur livrés continuent de
   fonctionner sans changement.
+- **CRM-161 T3.c, les organisations et le rapport de temps de tous les espaces** : pour une personne de plusieurs espaces,
+  l'onglet « Organisations » rassemble les organisations de tous, avec une colonne « Espace » et un bouton « Espace » qui
+  en isole certains ; les cases « Tracks » et « Catégories » se rangent sous le nom de chaque espace ; la création dit dans
+  quel espace elle se fait. Le rapport de temps nomme l'espace de chaque ligne et se filtre de même. Rien ne change pour une
+  personne d'un seul espace. Le manuel (chapitres 10 et 28) le décrit.
 
 ## [Publié]
 

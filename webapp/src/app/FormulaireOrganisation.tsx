@@ -5,6 +5,9 @@
 //       formulaire, saisie conservée), §5.7 (contrôles)
 //
 // `noValidate` : un refus se dit par le dictionnaire, dans le formulaire, jamais par la bulle du navigateur (§5.63).
+//
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.c : la création, à partir de deux espaces lus, commence par « Dans l'espace
+//       X », l'espace de l'onglet où elle se fait (docs/SPEC-espace-courant.md §16.2, §16.8.3 ; docs/DESIGN_SYSTEM.md §5.115)
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { t, type CleTraduction } from '../i18n'
@@ -35,6 +38,8 @@ export type ProprietesFormulaireOrganisation = {
 	/** Rend `null` quand l'écriture a porté — le formulaire est alors démonté —, ou la nature du refus. */
 	readonly onEnvoyer: (saisie: SaisieOrganisation) => Promise<NatureRefusOrganisation | null>
 	readonly onAnnuler: () => void
+	/** `CRM-161` T3.c : le nom de l'espace où la création se fait, dit en tête ; `null` ou omis : rien (un seul espace). */
+	readonly nomEspace?: string | null
 }
 
 export function FormulaireOrganisation({
@@ -45,6 +50,7 @@ export function FormulaireOrganisation({
 	libelleEnvoiEnCours,
 	onEnvoyer,
 	onAnnuler,
+	nomEspace = null,
 }: ProprietesFormulaireOrganisation) {
 	const [saisie, setSaisie] = useState<SaisieOrganisation>(saisieInitiale)
 	const [enVol, setEnVol] = useState(false)
@@ -88,6 +94,11 @@ export function FormulaireOrganisation({
 			onKeyDown={echap}
 			onSubmit={(evenement) => void envoyer(evenement)}
 		>
+			{nomEspace === null ? null : (
+				<p data-testid="espace-creation-organisation" className="text-sm text-text-2">
+					{t('spaces.creation.in', { nom: nomEspace })}
+				</p>
+			)}
 			<div className="flex flex-col gap-1">
 				<label htmlFor={`${prefixe}-nom`} className="text-sm text-text-2">
 					{t('organizations.form.name')}

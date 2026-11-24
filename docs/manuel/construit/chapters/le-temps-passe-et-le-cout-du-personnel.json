@@ -441,6 +441,50 @@
 			]
 		},
 		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Si vous êtes membre de plusieurs espaces"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", le rapport rassemble le temps passé dans tous, et une dernière colonne,\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", dit celui de chaque track, channel ou affaire. Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", après le choix de la personne, n'en garde\nque certains : les lignes et le total ne comptent plus que ces espaces. Si le mois n'a du temps que dans d'autres espaces,\nle rapport le dit, et propose d'afficher tous les espaces. Le choix de la personne, lui, reste celui des membres de\nl'espace où vous vous trouvez."
+				}
+			]
+		},
+		{
 			"type": "image",
 			"src": "le-temps-passe-et-le-cout-du-personnel/rapport-partage.jpg",
 			"alt": "Une saisie sur une affaire rattachée à deux channels : la ligne de chacun, marquée « partagée », et le total qui la compte une fois",

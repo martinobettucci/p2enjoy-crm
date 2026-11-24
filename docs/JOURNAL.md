@@ -42241,3 +42241,19 @@ levé.
 - **La décision (de l'agent, dans le cadre de la décision 965 et du §5.115).** La colonne, la dernière, sur chaque ligne ;
   le reste du §16.8.3 inchangé. Consignée au §16.8.3 (« Précisé au code ») et au §5.115.
 
+### `CRM-161` T3.c — les écrans : un vide jugé sur la portée lue, et des preuves qui isolent l'espace du seed
+
+*2026-11-25, session 4891a451 (p2enjoy-crm-7a).*
+- **Un défaut trouvé par le test unitaire.** Sous le filtre « Espace » sans résultat, « Afficher tous les espaces » vidait
+  l'adresse avant la relecture : l'onglet se jugeait alors « vide » (aucune ligne, aucun filtre), rendait le vide de
+  l'espace sans barre, et le focus, rendu au bouton « Espace », tombait sur la page. **Correction** : le vide se juge sur la
+  portée des lignes montrées (`sousFiltreEspaces`, posé à la lecture). Test rouge avant, vert après.
+- **Les preuves existantes qui lisent l'espace du seed** (`organisations-recherche`, `recettes-organisation`, le scénario 10
+  du manuel) tombaient sur les deux organisations de « Studio Lumen », dont un homonyme de Vertigo Conseil. **Décision** :
+  elles ouvrent l'onglet sous `?espaces=p2enjoy`, le geste d'une personne de deux espaces qui isole le sien ; leurs
+  adresses attendues portent ce paramètre en tête, et l'ordre de tabulation gagne l'arrêt du bouton « Espace ». Leur
+  contrat ne change pas.
+- **Ce qui n'est pas montré par le seed** : aucune catégorie dans « Studio Lumen » ; le groupement des cases « Catégories »
+  est prouvé à l'unité. Le vide sous le filtre de l'onglet est inatteignable sur le seed (chaque espace a des
+  organisations) et celui du rapport n'y a pas de mois stable : tous deux sont prouvés à l'unité.
+

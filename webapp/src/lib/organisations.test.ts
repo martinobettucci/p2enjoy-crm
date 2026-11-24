@@ -8,6 +8,10 @@
 // @verifies CRM-153 (docs/BACKLOG.md) — tranche T4 : la clé `categories` de l'adresse, l'argument `p_category_ids`, et les
 //           catégories de la page en un troisième appel, groupées et projetées (docs/SPEC-organisations.md §9.1, §9.3).
 //           Les objets de paramètres et les comptes d'appels ci-dessous sont RÉVISÉS le 2026-11-18 pour la clé nouvelle.
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.c : la portée de la liste — un espace (`p_workspace_id`, la liste
+//           d'avant), plusieurs (`p_workspace_ids`), ou tous (aucun des deux) ; l'espace de chaque ligne rendu ; les tracks
+//           des cases lus pour les espaces de la portée, avec le leur (docs/SPEC-espace-courant.md §16.8.1, §16.8.3).
+//           Les appels ci-dessous passent `{ espace: 'ws' }` depuis T3.c, la portée d'avant.
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -20,6 +24,8 @@ import {
 	lireParametresOrganisations,
 	lirePageOrganisations,
 	lireTracksDOrganisation,
+	lireTracksDesEspaces,
+	COLONNES_TRACK_FILTRE,
 	modifierOrganisation,
 	normaliserSaisieOrganisation,
 	sansFiltresOrganisations,
@@ -115,15 +121,32 @@ describe('l’adresse de l’onglet (§8.3)', () => {
 
 describe('les arguments de `organization_list` (§8.2)', () => {
 	it('le défaut : tout, par nom ascendant, cinquante à partir du décalage', () => {
-		expect(argumentsListeOrganisations('ws', PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 50)).toEqual({
+		expect(argumentsListeOrganisations({ espace: 'ws' }, PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 50)).toEqual({
 			p_workspace_id: 'ws', p_search: undefined, p_track_ids: undefined, p_category_ids: undefined, p_revenues: 'all', p_sort: 'name',
 			p_descending: false, p_limit: 50, p_offset: 50,
 		})
 	})
 	it('chaque filtre et le tri traduits dans les valeurs de la base', () => {
-		expect(argumentsListeOrganisations('ws', { recherche: ' 100% ', tracks: [T1], categories: [T2], recettes: 'sans', tri: 'contacts', sens: 'desc' }, 0))
+		expect(argumentsListeOrganisations({ espace: 'ws' }, { recherche: ' 100% ', tracks: [T1], categories: [T2], recettes: 'sans', tri: 'contacts', sens: 'desc' }, 0))
 			.toMatchObject({ p_search: '100%', p_track_ids: [T1], p_category_ids: [T2], p_revenues: 'without', p_sort: 'contacts', p_descending: true })
-		expect(argumentsListeOrganisations('ws', { ...PARAMETRES_ORGANISATIONS_PAR_DEFAUT, recettes: 'avec' }, 0).p_revenues).toBe('with')
+		expect(argumentsListeOrganisations({ espace: 'ws' }, { ...PARAMETRES_ORGANISATIONS_PAR_DEFAUT, recettes: 'avec' }, 0).p_revenues).toBe('with')
+	})
+	it('`CRM-161` T3.c : plusieurs espaces passent par `p_workspace_ids`, sans `p_workspace_id`', () => {
+		const args = argumentsListeOrganisations({ espaces: ['ws-a', 'ws-b'] }, PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)
+		expect(args).toMatchObject({ p_workspace_ids: ['ws-a', 'ws-b'] })
+		expect(args).not.toHaveProperty('p_workspace_id')
+	})
+	it('`CRM-161` T3.c : aucun espace choisi, aucun des deux — la base rend tous ceux que la RLS laisse lire', () => {
+		const args = argumentsListeOrganisations({ espaces: [] }, PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)
+		expect(args).not.toHaveProperty('p_workspace_id')
+		expect(args).not.toHaveProperty('p_workspace_ids')
+		expect(args).toMatchObject({ p_revenues: 'all', p_limit: 50, p_offset: 0 })
+	})
+	it('`CRM-161` T3.c : la liste d’espaces passée est une copie, jamais le tableau de l’appelant', () => {
+		const choisis = ['ws-a']
+		const args = argumentsListeOrganisations({ espaces: choisis }, PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0) as { p_workspace_ids: string[] }
+		expect(args.p_workspace_ids).toEqual(choisis)
+		expect(args.p_workspace_ids).not.toBe(choisis)
 	})
 })
 
@@ -153,7 +176,7 @@ function doubleRpc(reponses: Record<string, Reponse>) {
 }
 
 const LIGNE = (id: string, name: string, extra: object = {}) => ({
-	id, name, domain: null, website: null, contacts: 2, has_revenues: false, total_count: 132, ...extra,
+	id, name, domain: null, website: null, contacts: 2, has_revenues: false, workspace_id: 'ws', total_count: 132, ...extra,
 })
 
 describe('lirePageOrganisations', () => {
@@ -165,7 +188,7 @@ describe('lirePageOrganisations', () => {
 				{ organization_id: 'o1', track_id: T2, name: 'Formation', slug: 'formation', color: 'success', icon: 'GraduationCap' },
 			] },
 		})
-		const etat = await lirePageOrganisations(client, 'ws', PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)
+		const etat = await lirePageOrganisations(client, { espace: 'ws' }, PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)
 		expect(appels.map(([nom]) => nom)).toEqual(['organization_list', 'organization_tracks', 'organization_category_links'])
 		expect(appels[1]?.[1]).toEqual({ p_organization_ids: ['o1', 'o2'] })
 		expect(appels[2]?.[1]).toEqual(['o1', 'o2'])
@@ -186,7 +209,7 @@ describe('lirePageOrganisations', () => {
 				{ organization_id: 'o1', categorie: { id: 'c1', name: 'Client', color: 'brand', archived_at: null } },
 			] },
 		})
-		const etat = await lirePageOrganisations(client, 'ws', PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)
+		const etat = await lirePageOrganisations(client, { espace: 'ws' }, PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)
 		if (etat.statut !== 'pret') throw new Error('page attendue')
 		expect(etat.donnees.organisations.map((o) => o.categories.map((c) => c.nom))).toEqual([
 			['Client', 'Partenaire', 'Ancien client'],
@@ -194,20 +217,66 @@ describe('lirePageOrganisations', () => {
 		])
 	})
 
+	it('`CRM-161` T3.c : chaque organisation porte l’espace que la base rend, pour la colonne « Espace »', async () => {
+		const { client, appels } = doubleRpc({
+			organization_list: { data: [LIGNE('o1', 'Maison Arlo', { workspace_id: 'ws-b' }), LIGNE('o2', 'Sogexia', { workspace_id: 'ws-a' })] },
+		})
+		const etat = await lirePageOrganisations(client, { espaces: [] }, PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)
+		if (etat.statut !== 'pret') throw new Error('page attendue')
+		expect(etat.donnees.organisations.map((o) => [o.name, o.workspace_id])).toEqual([['Maison Arlo', 'ws-b'], ['Sogexia', 'ws-a']])
+		expect(appels[0]?.[1]).not.toHaveProperty('p_workspace_id')
+	})
+
 	it('une page vide : total nul, et aucun appel des tracks', async () => {
 		const { client, appels } = doubleRpc({ organization_list: { data: [] } })
-		expect(await lirePageOrganisations(client, 'ws', PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)).toEqual({
+		expect(await lirePageOrganisations(client, { espace: 'ws' }, PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)).toEqual({
 			statut: 'pret', donnees: { organisations: [], total: 0 } })
 		expect(appels).toHaveLength(1)
 	})
 
 	it('un échec de l’un ou l’autre appel rend une erreur classée, jamais une liste vide trompeuse', async () => {
 		expect(await lirePageOrganisations(doubleRpc({ organization_list: { error: { message: 'refus' }, status: 403 } }).client,
-			'ws', PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)).toMatchObject({ statut: 'erreur', erreur: { nature: 'forbidden' } })
+			{ espace: 'ws' }, PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)).toMatchObject({ statut: 'erreur', erreur: { nature: 'forbidden' } })
 		expect(await lirePageOrganisations(doubleRpc({
 			organization_list: { data: [LIGNE('o1', 'Atelier Lumen')] },
 			organization_tracks: { error: { message: 'boum' }, status: 500 },
-		}).client, 'ws', PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)).toMatchObject({ statut: 'erreur', erreur: { nature: 'unknown' } })
+		}).client, { espace: 'ws' }, PARAMETRES_ORGANISATIONS_PAR_DEFAUT, 0)).toMatchObject({ statut: 'erreur', erreur: { nature: 'unknown' } })
+	})
+})
+
+describe('lireTracksDesEspaces (les cases « Tracks », `CRM-161` T3.c)', () => {
+	function doubleTracks(reponse: Reponse) {
+		const appels: unknown[][] = []
+		const chaine: Record<string, unknown> = {}
+		for (const methode of ['select', 'in', 'is', 'order']) {
+			chaine[methode] = (...args: unknown[]) => {
+				appels.push([methode, ...args])
+				return chaine
+			}
+		}
+		chaine['then'] = (resoudre: (v: unknown) => unknown) =>
+			Promise.resolve({ data: reponse.data ?? null, error: reponse.error ?? null, status: reponse.status ?? 200 }).then(resoudre)
+		const client = { from: (table: string) => { appels.push(['from', table]); return chaine } } as unknown as ClientCrm
+		return { client, appels }
+	}
+	it('lit les tracks actifs des espaces donnés, avec leur espace, dans l’ordre de la barre latérale', async () => {
+		const lignes = [{ id: T1, name: 'Conseil IA', slug: 'conseil-ia', color: 'brand', icon: 'Brain', position: 1, description: null, workspace_id: 'ws-a' }]
+		const { client, appels } = doubleTracks({ data: lignes })
+		expect(await lireTracksDesEspaces(client, ['ws-a', 'ws-b'])).toEqual({ statut: 'pret', donnees: lignes })
+		expect(appels).toEqual([
+			['from', 'tracks'], ['select', COLONNES_TRACK_FILTRE], ['in', 'workspace_id', ['ws-a', 'ws-b']],
+			['is', 'archived_at', null], ['is', 'deleted_at', null], ['order', 'position'], ['order', 'name'],
+		])
+		expect(COLONNES_TRACK_FILTRE).toContain('workspace_id')
+	})
+	it('aucun espace : aucune lecture, aucune case', async () => {
+		const { client, appels } = doubleTracks({ data: [] })
+		expect(await lireTracksDesEspaces(client, [])).toEqual({ statut: 'pret', donnees: [] })
+		expect(appels).toEqual([])
+	})
+	it('un refus rend une erreur classée, jamais une liste vide', async () => {
+		const { client } = doubleTracks({ error: { message: 'refus' }, status: 403 })
+		expect(await lireTracksDesEspaces(client, ['ws-a'])).toMatchObject({ statut: 'erreur', erreur: { nature: 'forbidden' } })
 	})
 })
 

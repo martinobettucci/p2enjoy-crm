@@ -1,12 +1,16 @@
 // @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.a : la provenance et le filtre « Espace » dans l'adresse
 //           (docs/SPEC-espace-courant.md §16.1, §16.2 ; docs/DESIGN_SYSTEM.md §5.115)
 // @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : `avecEspaces`, un lien de la même page garde le filtre (§5.115)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.c : la portée des cases propres à un espace et leur groupement par
+//           espace (docs/SPEC-espace-courant.md §16.8.3 ; docs/DESIGN_SYSTEM.md §5.115)
 
 import { describe, expect, it } from 'vitest'
 import {
 	PARAMETRE_ESPACES,
 	avecEspaces,
 	ecrireEspacesChoisis,
+	espacesDeLaPortee,
+	grouperParEspace,
 	filtrerParEspace,
 	lireEspacesChoisis,
 	nomEspace,
@@ -99,5 +103,32 @@ describe('un lien de la même page garde le filtre (§5.115, T3.b.2)', () => {
 		expect(avecEspaces('/ma-journee?espaces=p2enjoy', new URLSearchParams('espaces=studio-lumen'))).toBe(
 			'/ma-journee?espaces=studio-lumen',
 		)
+	})
+})
+
+describe('les cases propres à un espace (`CRM-161` T3.c, §5.115)', () => {
+	it('la portée des cases : les espaces choisis, sinon tous, dans l’ordre du menu', () => {
+		expect(espacesDeLaPortee(ESPACES, [])).toEqual(ESPACES)
+		expect(espacesDeLaPortee(ESPACES, ['ws-l'])).toEqual([LUMEN])
+		expect(espacesDeLaPortee(ESPACES, ['ws-l', 'ws-p'])).toEqual(ESPACES)
+		expect(espacesDeLaPortee(ESPACES, ['inconnu'])).toEqual([])
+	})
+
+	it('grouper : un groupe par espace qui a des éléments, dans l’ordre des espaces ; les homonymes restent distincts', () => {
+		const tracks = [
+			{ id: 't1', nom: 'Productions', espace: 'ws-l' },
+			{ id: 't2', nom: 'Conseil IA', espace: 'ws-p' },
+			{ id: 't3', nom: 'Productions', espace: 'ws-p' },
+		]
+		expect(grouperParEspace(tracks, ESPACES, (t) => t.espace).map((g) => [g.espace.slug, g.elements.map((t) => t.id)])).toEqual([
+			['p2enjoy', ['t2', 't3']],
+			['studio-lumen', ['t1']],
+		])
+	})
+
+	it('un espace sans élément n’a pas de groupe ; un élément d’un espace absent n’est rendu nulle part', () => {
+		const elements = [{ espace: 'ws-p' }, { espace: 'ailleurs' }, { espace: null }]
+		const groupes = grouperParEspace(elements, ESPACES, (e) => e.espace)
+		expect(groupes.map((g) => [g.espace.slug, g.elements.length])).toEqual([['p2enjoy', 1]])
 	})
 })

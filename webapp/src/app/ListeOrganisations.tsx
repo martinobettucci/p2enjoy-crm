@@ -1,4 +1,10 @@
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — la liste suit l'espace courant de l'onglet, état intermédiaire jusqu'à T3 (§15.2) ; docs/SPEC-espace-courant.md
+// @spec CRM-161 (docs/BACKLOG.md) tranche T3.c — fin de l'état intermédiaire : à partir de deux espaces lus, la liste lit
+//       tous les espaces, ou ceux du filtre « Espace », PAR LA LECTURE (`p_workspace_ids`, la liste est paginée) ; la colonne
+//       « Espace », la dernière ; le bouton « Espace » dans la barre, son panneau sous elle, un seul panneau ouvert ; les
+//       cases « Tracks » et « Catégories » des espaces de la portée, groupées sous une sous-légende par espace ; le vide sous
+//       le filtre ; la création dans l'espace de l'onglet, dite ; rien pour une personne d'un seul espace
+//       (docs/SPEC-espace-courant.md §16.2, §16.8.3 ; docs/DESIGN_SYSTEM.md §5.115, §5.105, §5.28 ; docs/manual.md §4)
 // @spec CRM-114 (docs/BACKLOG.md) — tranche T2 : l'onglet « Organisations » du carnet — la liste et la création
 // @spec docs/SPEC-organisations.md §2 (lister, créer, puis ouvrir la fiche), §3 (droits de la base, refus), §4 (de quoi il a
 //       l'air) ; docs/DESIGN_SYSTEM.md §5.64 (tableau, « Nouvelle organisation »), §5.59 (commande éteinte avec le motif
@@ -22,7 +28,7 @@
 //       (docs/SPEC-organisations.md §9.3 ; docs/DESIGN_SYSTEM.md §5.107 ; décision 942). Aucune colonne de plus : le
 //       tableau tient toujours dans son cadre (décision 940).
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
@@ -40,17 +46,20 @@ import {
 	filtresOrganisationsPoses,
 	lireParametresOrganisations,
 	lirePageOrganisations,
+	lireTracksDesEspaces,
 	sansFiltresOrganisations,
 	type FiltreRecettes,
 	type OrganisationListee,
 	type ParametresOrganisations,
+	type PorteeOrganisations,
+	type TrackDuFiltre,
 	type TriOrganisations,
 } from '../lib/organisations'
-import { lireCategoriesOrganisations, type CategorieOrganisation } from '../lib/categories-organisations'
+import { lireCategoriesDesEspaces, type CategorieDEspace, type CategorieOrganisation } from '../lib/categories-organisations'
 import { lireTotauxOrganisations, type TotauxParOrganisation } from '../lib/recettes-organisation'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
-import { useTracks, type Track } from '../lib/tracks'
-import { useWorkspaces } from '../lib/workspaces'
+import { useWorkspaces, type Workspace } from '../lib/workspaces'
+import { espacesDeLaPortee, grouperParEspace, nomEspace, type GroupeDEspace } from '../lib/provenance'
 import { cheminOrganisation } from './chemins'
 import { AppShell } from './AppShell'
 import { useContexteEspace } from './ContexteEspace'
@@ -59,6 +68,13 @@ import { OngletsCarnet } from './OngletsCarnet'
 import { classesPastille } from './presentation-tracks'
 import { AUCUN_TOTAL, ReelSurPrevu } from './RecettesOrganisation'
 import { idEspaceParmi } from '../lib/espace-onglet'
+import {
+	BoutonFiltreEspaces,
+	PanneauFiltreEspaces,
+	VideSousFiltreEspaces,
+	useFiltreEspaces,
+	type FiltreEspacesDePage,
+} from './FiltreEspaces'
 
 const ID_MOTIF = 'organisations-lecture-seule'
 /** Le titre de la route, nommé hors du JSX pour le contrôle des clés mortes, comme `CLE_TITRE_CARD`. */
@@ -93,16 +109,24 @@ type ListeLue = {
 	readonly organisations: readonly OrganisationListee[]
 	readonly total: number
 	readonly totaux: TotauxParOrganisation
+	/**
+	 * `CRM-161` T3.c : la page a été lue sous un filtre « Espace ». Le vide se juge sur la portée DES LIGNES MONTRÉES, non
+	 * sur l'adresse : sitôt le filtre vidé, et avant la relecture, la page n'est pas « vide », et la barre — où
+	 * « Afficher tous les espaces » rend le focus — reste montée. *Trouvé par le test unitaire de T3.c.*
+	 */
+	readonly sousFiltreEspaces: boolean
 }
 
 /** L'état de « Afficher plus » : au repos, en lecture, ou en échec (écrit sous lui, avec « Réessayer »). */
 type EtatPlus = 'repos' | 'chargement' | 'erreur'
 
+/** Une lecture des cases, marquée des espaces qu'elle couvre : une réponse d'une autre portée n'en replie aucune. */
+type CasesLues<T> = { readonly cle: string; readonly etat: EtatAsync<readonly T[]> }
+
 export function ListeOrganisations({ client = clientCrm }: { readonly client?: ClientCrm | null } = {}) {
 	const { capacites, idWorkspace: idEspaceContexte } = useContexteEspace()
 	const navigate = useNavigate()
 	const espaces = useWorkspaces(client)
-	const tracksEspace = useTracks(client, idEspaceContexte ?? undefined)
 	const [adresse, setAdresse] = useSearchParams()
 	const cleAdresse = adresse.toString()
 	// eslint-disable-next-line react-hooks/exhaustive-deps -- la clé textuelle de l'adresse dit seule quand relire
@@ -124,24 +148,66 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 	// Les totaux de recettes, lus une fois pour l'espace ; gardés d'une relecture des filtres à l'autre.
 	const totauxLus = useRef<TotauxParOrganisation | null>(null)
 
-	// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) — état intermédiaire jusqu'à T3 (§15.2) : l'espace du contexte, et non plus le premier de la liste.
+	// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) : l'espace de l'onglet — celui où la création se fait (T3.c, §16.2).
 	const idWorkspace = espaces.etat.statut === 'pret' ? idEspaceParmi(espaces.etat.donnees, idEspaceContexte) : null
 	const cleParametres = JSON.stringify(parametres)
 
-	// `CRM-153` T4 — LE CATALOGUE DES CATÉGORIES, pour le filtre (§5.107) : lu une fois pour l'espace, et relu sur reprise.
-	const [catalogue, setCatalogue] = useState<EtatAsync<readonly CategorieOrganisation[]>>(enChargement)
-	const [tentativeCatalogue, setTentativeCatalogue] = useState(0)
+	// `CRM-161` T3.c (§16.8.3) — LA PORTÉE : d'un seul espace, l'espace de l'onglet, la liste d'avant ; à partir de deux, les
+	// espaces du filtre « Espace », sinon tous. Les cases « Tracks » et « Catégories » couvrent les mêmes espaces.
+	const filtreEspaces = useFiltreEspaces()
+	const cleChoisis = filtreEspaces.choisis.join(',')
+	const portee: PorteeOrganisations | null = filtreEspaces.visible
+		? { espaces: filtreEspaces.choisis }
+		: idWorkspace === null
+			? null
+			: { espace: idWorkspace }
+	const porteeCourante = useRef(portee)
+	porteeCourante.current = portee
+	const espacesDesCases = filtreEspaces.visible ? espacesDeLaPortee(filtreEspaces.espaces, filtreEspaces.choisis) : null
+	const idsDesCases = espacesDesCases === null ? (idWorkspace === null ? [] : [idWorkspace]) : espacesDesCases.map((e) => e.id)
+	const cleCases = idsDesCases.join(',')
+	// Deux espaces dans la portée des cases : elles se groupent sous le nom de chacun (§5.115).
+	const groupesDesCases = espacesDesCases !== null && espacesDesCases.length >= 2 ? espacesDesCases : null
+
+	// `CRM-152` puis T3.c — LES TRACKS DES CASES, lus pour les espaces de la portée, et relus sur reprise.
+	const [tracksLus, setTracksLus] = useState<CasesLues<TrackDuFiltre>>({ cle: '', etat: enChargement() })
+	const [tentativeTracks, setTentativeTracks] = useState(0)
 	useEffect(() => {
-		if (client === null || idWorkspace === null) return
+		if (client === null || cleCases === '') return
 		let actuel = true
-		setCatalogue(enChargement())
-		void lireCategoriesOrganisations(client, idWorkspace).then((lu) => {
-			if (actuel) setCatalogue(lu)
+		setTracksLus({ cle: cleCases, etat: enChargement() })
+		void lireTracksDesEspaces(client, cleCases.split(',')).then((lu) => {
+			if (actuel) setTracksLus({ cle: cleCases, etat: lu })
 		})
 		return () => {
 			actuel = false
 		}
-	}, [client, idWorkspace, tentativeCatalogue])
+	}, [client, cleCases, tentativeTracks])
+
+	// `CRM-153` T4 puis T3.c — LE CATALOGUE DES CATÉGORIES, pour le filtre (§5.107) : celui des espaces de la portée, relu
+	// sur reprise.
+	const [catalogueLu, setCatalogueLu] = useState<CasesLues<CategorieDEspace>>({ cle: '', etat: enChargement() })
+	const [tentativeCatalogue, setTentativeCatalogue] = useState(0)
+	useEffect(() => {
+		if (client === null || cleCases === '') return
+		let actuel = true
+		setCatalogueLu({ cle: cleCases, etat: enChargement() })
+		void lireCategoriesDesEspaces(client, cleCases.split(',')).then((lu) => {
+			if (actuel) setCatalogueLu({ cle: cleCases, etat: lu })
+		})
+		return () => {
+			actuel = false
+		}
+	}, [client, cleCases, tentativeCatalogue])
+	// Une lecture d'une autre portée attend la sienne : rien n'en est montré, rien n'en est replié.
+	const tracksDesCases = useMemo<EtatAsync<readonly TrackDuFiltre[]>>(
+		() => (tracksLus.cle === cleCases ? tracksLus.etat : enChargement()),
+		[tracksLus, cleCases],
+	)
+	const catalogue = useMemo<EtatAsync<readonly CategorieDEspace[]>>(
+		() => (catalogueLu.cle === cleCases ? catalogueLu.etat : enChargement()),
+		[catalogueLu, cleCases],
+	)
 
 	const changer = useCallback(
 		(suivants: ParametresOrganisations) => {
@@ -154,7 +220,8 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 	// chargement, les totaux sont lus avec elle et attendus ensemble ; ensuite, une relecture GARDE les lignes affichées,
 	// atténuées (`aria-busy`), jusqu'à la réponse — aucun squelette au-delà du premier chargement (§5.105).
 	useEffect(() => {
-		if (client === null || idWorkspace === null) return
+		const lue = porteeCourante.current
+		if (client === null || lue === null) return
 		const rang = ++courant.current
 		const premiere = totauxLus.current === null
 		if (premiere) setEtat(enChargement())
@@ -162,7 +229,7 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 		setPlus('repos')
 		void (async () => {
 			const [page, totaux] = await Promise.all([
-				lirePageOrganisations(client, idWorkspace, parametresCourants.current, 0),
+				lirePageOrganisations(client, lue, parametresCourants.current, 0),
 				totauxLus.current === null ? lireTotauxOrganisations(client) : Promise.resolve(pret(totauxLus.current)),
 			])
 			if (rang !== courant.current) return
@@ -171,18 +238,27 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 			if (totaux.statut === 'erreur') return setEtat(enErreur(totaux.erreur))
 			if (page.statut !== 'pret' || totaux.statut !== 'pret') return
 			totauxLus.current = totaux.donnees
-			setEtat(pret({ organisations: page.donnees.organisations, total: page.donnees.total, totaux: totaux.donnees }))
+			setEtat(
+				pret({
+					organisations: page.donnees.organisations,
+					total: page.donnees.total,
+					totaux: totaux.donnees,
+					sousFiltreEspaces: 'espaces' in lue && lue.espaces.length > 0,
+				}),
+			)
 		})()
-	}, [client, idWorkspace, cleParametres, tentative])
+		// `CRM-161` T3.c : changer le choix des espaces relit la première page, comme un filtre (§16.8.3) ; la portée est lue
+		// par sa clé, `cleChoisis`, par `filtreEspaces.visible` et par `idWorkspace`.
+	}, [client, idWorkspace, cleParametres, cleChoisis, filtreEspaces.visible, tentative])
 
-	// UN TRACK INCONNU DE L'ADRESSE EST REPLIÉ (§8.3) : une fois les tracks de l'espace lus, un identifiant qui n'en est pas
+	// UN TRACK INCONNU DE L'ADRESSE EST REPLIÉ (§8.3) : une fois les tracks de la portée lus, un identifiant qui n'en est pas
 	// un quitte l'adresse plutôt que de vider la liste sans raison visible.
 	useEffect(() => {
-		if (tracksEspace.etat.statut !== 'pret' || parametres.tracks.length === 0) return
-		const connus = new Set(tracksEspace.etat.donnees.map((track) => track.id))
+		if (tracksDesCases.statut !== 'pret' || parametres.tracks.length === 0) return
+		const connus = new Set(tracksDesCases.donnees.map((track) => track.id))
 		const gardes = parametres.tracks.filter((id) => connus.has(id))
 		if (gardes.length !== parametres.tracks.length) changer({ ...parametres, tracks: gardes })
-	}, [tracksEspace.etat, parametres, changer])
+	}, [tracksDesCases, parametres, changer])
 
 	// UNE CATÉGORIE INCONNUE DE L'ADRESSE EST REPLIÉE de même (`CRM-153` T4) ; une archivée reste connue, et filtre (§9.1).
 	useEffect(() => {
@@ -204,11 +280,12 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 	}, [])
 
 	const afficherPlus = useCallback(async () => {
-		if (client === null || idWorkspace === null || etat.statut !== 'pret') return
+		const lue = porteeCourante.current
+		if (client === null || lue === null || etat.statut !== 'pret') return
 		const rang = courant.current
 		const deja = etat.donnees.organisations.length
 		setPlus('chargement')
-		const page = await lirePageOrganisations(client, idWorkspace, parametresCourants.current, deja)
+		const page = await lirePageOrganisations(client, lue, parametresCourants.current, deja)
 		// Une relecture des filtres partie entre-temps rend cette page caduque.
 		if (rang !== courant.current) return
 		if (page.statut !== 'pret') {
@@ -234,7 +311,7 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 					?.focus()
 			})
 		}
-	}, [client, idWorkspace, etat])
+	}, [client, etat])
 
 	if (client === null || (espaces.etat.statut === 'pret' && idWorkspace === null)) {
 		return <EtatVide titre={t('contacts.noWorkspace.title')} corps={t('contacts.noWorkspace.body')} />
@@ -257,6 +334,20 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 	if (etat.statut === 'chargement') return <SkeletonListe lignes={4} libelle={t('state.loading.aria')} />
 
 	const droit = proprietesCommande(capacites.edition, ID_MOTIF)
+	// `CRM-161` T3.c (§16.2, §5.115) : à partir de deux espaces lus, la création dit l'espace de l'onglet, où elle se fait.
+	const nomEspaceDeCreation = filtreEspaces.visible ? nomEspace(filtreEspaces.espaces, idWorkspace) : null
+	const commandeCreation = (
+		<button
+			type="button"
+			ref={commande}
+			data-testid="ouvrir-creation-organisation"
+			className="self-start min-h-[var(--size-target)] rounded-md bg-brand px-4 text-surface disabled:cursor-not-allowed disabled:opacity-70"
+			{...droit}
+			onClick={() => setOuvert(true)}
+		>
+			{t('organizations.creation.open')}
+		</button>
+	)
 	const geste =
 		idWorkspace === null ? null : ouvert ? (
 			<FormulaireOrganisation
@@ -265,6 +356,7 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 				saisieInitiale={SAISIE_ORGANISATION_VIDE}
 				libelleEnvoi={t('organizations.creation.submit')}
 				libelleEnvoiEnCours={t('organizations.creation.pending')}
+				nomEspace={nomEspaceDeCreation}
 				onAnnuler={fermer}
 				onEnvoyer={async (saisie) => {
 					const issue = await creerOrganisation(client, idWorkspace, saisie)
@@ -279,25 +371,29 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 				{motifVisible(capacites.edition) ? (
 					<MotifLectureSeule id={ID_MOTIF}>{t('rights.readonly.edition')}</MotifLectureSeule>
 				) : null}
-				<button
-					type="button"
-					ref={commande}
-					data-testid="ouvrir-creation-organisation"
-					className="self-start min-h-[var(--size-target)] rounded-md bg-brand px-4 text-surface disabled:cursor-not-allowed disabled:opacity-70"
-					{...droit}
-					onClick={() => setOuvert(true)}
-				>
-					{t('organizations.creation.open')}
-				</button>
+				{nomEspaceDeCreation === null ? (
+					commandeCreation
+				) : (
+					<div className="flex flex-wrap items-center gap-3">
+						{commandeCreation}
+						<span data-testid="espace-des-gestes" className="text-sm text-text-2">
+							{t('spaces.creation.in', { nom: nomEspaceDeCreation })}
+						</span>
+					</div>
+				)}
 			</>
 		)
 
-	const { organisations, total, totaux } = etat.donnees
+	const { organisations, total, totaux, sousFiltreEspaces } = etat.donnees
 	const filtre = filtresOrganisationsPoses(parametres)
 	// LE VIDE DE L'ESPACE (§5.64) N'EST PAS LE VIDE SOUS LES FILTRES : le premier n'a ni barre ni tableau ; le second garde
 	// la barre, cause de l'état, et porte « Effacer les filtres » — jamais en double avec celui de la barre.
-	const videEspace = total === 0 && !filtre
+	// `CRM-161` T3.c (§5.115) : le filtre « Espace » seul a son propre vide, « Rien dans les espaces choisis ».
+	const videEspace = total === 0 && !filtre && !sousFiltreEspaces
 	const videFiltre = total === 0 && filtre
+	const videEspaces = total === 0 && !filtre && sousFiltreEspaces
+	// La colonne « Espace » (§5.115), la dernière : à partir de deux espaces lus.
+	const espacesNommes: readonly Workspace[] | undefined = filtreEspaces.visible ? filtreEspaces.espaces : undefined
 	const effacer = () => changer(sansFiltresOrganisations(parametres))
 
 	return (
@@ -310,15 +406,19 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 				<>
 					<BarreFiltresOrganisations
 						parametres={parametres}
-						tracks={tracksEspace.etat}
-						onRechargerTracks={tracksEspace.recharger}
+						tracks={tracksDesCases}
+						onRechargerTracks={() => setTentativeTracks((n) => n + 1)}
 						categories={catalogue}
 						onRechargerCategories={() => setTentativeCatalogue((n) => n + 1)}
+						filtreEspaces={filtreEspaces}
+						groupes={groupesDesCases}
 						offrirEffacement={filtre && !videFiltre}
 						onParametres={changer}
 						onEffacer={effacer}
 					/>
-					{videFiltre ? (
+					{videEspaces ? (
+						<VideSousFiltreEspaces filtre={filtreEspaces} />
+					) : videFiltre ? (
 						<EtatVide
 							titre={t('organizations.empty.filtered.title')}
 							corps=""
@@ -338,13 +438,26 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 									className={['w-full min-w-[54rem] table-fixed border-collapse text-left', relecture ? 'opacity-60' : ''].join(' ')}
 								>
 									<caption className="sr-only">{t('organizations.table.aria')}</caption>
-									<colgroup>
-										<col className="w-[17%]" />
-										<col className="w-[17%]" />
-										<col className="w-[25%]" />
-										<col className="w-[12%]" />
-										<col className="w-[29%]" />
-									</colgroup>
+									{espacesNommes === undefined ? (
+										<colgroup>
+											<col className="w-[17%]" />
+											<col className="w-[17%]" />
+											<col className="w-[25%]" />
+											<col className="w-[12%]" />
+											<col className="w-[29%]" />
+										</colgroup>
+									) : (
+										// `CRM-161` T3.c : la colonne « Espace » prend sa part aux autres ; le tableau tient dans son cadre
+										// (décision 940).
+										<colgroup>
+											<col className="w-[15%]" />
+											<col className="w-[15%]" />
+											<col className="w-[22%]" />
+											<col className="w-[10%]" />
+											<col className="w-[25%]" />
+											<col className="w-[13%]" />
+										</colgroup>
+									)}
 									<thead>
 										<tr className="border-b border-border">
 											<EnTeteTriable cle="nom" libelle={t('organizations.table.name')} parametres={parametres} onParametres={changer} />
@@ -358,6 +471,9 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 												alignementDroite
 											/>
 											<th scope="col" className={`${CLASSES_ENTETE} text-right`}>{t('organizations.table.revenues')}</th>
+											{espacesNommes === undefined ? null : (
+												<th scope="col" className={CLASSES_ENTETE}>{t('spaces.column')}</th>
+											)}
 										</tr>
 									</thead>
 									<tbody>
@@ -398,6 +514,15 @@ export function ListeOrganisations({ client = clientCrm }: { readonly client?: C
 													<td className={CLASSES_CELLULE_RECETTES}>
 														<ReelSurPrevu totaux={totaux.get(organisation.id) ?? AUCUN_TOTAL} />
 													</td>
+													{espacesNommes === undefined ? null : (
+														<td
+															data-testid="espace-organisation"
+															className={`${CLASSES_CELLULE} text-text-2`}
+															title={nomEspace(espacesNommes, organisation.workspace_id) ?? undefined}
+														>
+															{nomEspace(espacesNommes, organisation.workspace_id) ?? ''}
+														</td>
+													)}
 												</tr>
 											)
 										})}
@@ -487,6 +612,8 @@ function EnTeteTriable({
 /**
  * La barre (docs/DESIGN_SYSTEM.md §5.105) : « Rechercher » à la frappe, « Tracks » et son panneau dans le flux,
  * « Recettes », « Effacer les filtres ». Rien n'y attend un « Appliquer » : chaque requête est légère et paginée.
+ * `CRM-161` T3.c (§5.115) : le bouton « Espace » après « Catégories », son panneau sous la barre comme les leurs ; un seul
+ * des trois panneaux ouvert à la fois (§5.28) ; à partir de deux espaces dans la portée, les cases groupées par espace.
  */
 function BarreFiltresOrganisations({
 	parametres,
@@ -497,15 +624,21 @@ function BarreFiltresOrganisations({
 	offrirEffacement,
 	onParametres,
 	onEffacer,
+	filtreEspaces,
+	groupes,
 }: {
 	readonly parametres: ParametresOrganisations
-	readonly tracks: EtatAsync<readonly Track[]>
+	readonly tracks: EtatAsync<readonly TrackDuFiltre[]>
 	readonly onRechargerTracks: () => void
-	readonly categories: EtatAsync<readonly CategorieOrganisation[]>
+	readonly categories: EtatAsync<readonly CategorieDEspace[]>
 	readonly onRechargerCategories: () => void
 	readonly offrirEffacement: boolean
 	readonly onParametres: (parametres: ParametresOrganisations) => void
 	readonly onEffacer: () => void
+	/** `CRM-161` T3.c : le filtre « Espace » de la page ; son bouton ne paraît qu'à partir de deux espaces lus. */
+	readonly filtreEspaces: FiltreEspacesDePage
+	/** Les espaces sous lesquels grouper les cases, à partir de deux dans la portée ; `null` : une seule grille. */
+	readonly groupes: readonly Workspace[] | null
 }) {
 	const idRecherche = useId()
 	const idAideRecherche = useId()
@@ -514,9 +647,18 @@ function BarreFiltresOrganisations({
 	const idPanneauCategories = useId()
 	const boutonTracks = useRef<HTMLButtonElement>(null)
 	const boutonCategories = useRef<HTMLButtonElement>(null)
-	// UN SEUL PANNEAU OUVERT À LA FOIS (§5.28) : « Tracks » ou « Catégories » (`CRM-153` T4).
+	// UN SEUL PANNEAU OUVERT À LA FOIS (§5.28) : « Tracks » ou « Catégories » (`CRM-153` T4), ou « Espace » (`CRM-161` T3.c),
+	// dont l'état est celui du filtre de la page. Ouvrir l'un replie les autres.
 	const [panneau, setPanneau] = useState<'tracks' | 'categories' | null>(null)
 	const panneauOuvert = panneau === 'tracks'
+	const { ouvert: espacesOuvert, ouvrir: ouvrirEspaces } = filtreEspaces
+	useEffect(() => {
+		if (espacesOuvert) setPanneau(null)
+	}, [espacesOuvert])
+	const basculerPanneau = (voulu: 'tracks' | 'categories') => {
+		ouvrirEspaces(false)
+		setPanneau((ouvert) => (ouvert === voulu ? null : voulu))
+	}
 	const [saisie, setSaisie] = useState(parametres.recherche)
 	const parametresCourants = useRef(parametres)
 	parametresCourants.current = parametres
@@ -620,7 +762,7 @@ function BarreFiltresOrganisations({
 					data-testid="ouvrir-filtre-tracks"
 					aria-expanded={panneauOuvert}
 					aria-controls={idPanneau}
-					onClick={() => setPanneau((ouvert) => (ouvert === 'tracks' ? null : 'tracks'))}
+					onClick={() => basculerPanneau('tracks')}
 					onKeyDown={(evenement) => {
 						if (evenement.key === 'Escape' && panneauOuvert) replier()
 					}}
@@ -634,7 +776,7 @@ function BarreFiltresOrganisations({
 						data-testid="ouvrir-filtre-categories"
 						aria-expanded={panneau === 'categories'}
 						aria-controls={idPanneauCategories}
-						onClick={() => setPanneau((ouvert) => (ouvert === 'categories' ? null : 'categories'))}
+						onClick={() => basculerPanneau('categories')}
 						onKeyDown={(evenement) => {
 							if (evenement.key === 'Escape' && panneau === 'categories') replier()
 						}}
@@ -644,6 +786,8 @@ function BarreFiltresOrganisations({
 							: t('organizations.filter.categories.count', { nombre: String(cochees) })}
 					</Button>
 				) : null}
+
+				<BoutonFiltreEspaces filtre={filtreEspaces} />
 
 				<div className="flex flex-col gap-1">
 					<label htmlFor={idRecettes} className="text-sm text-text-2">
@@ -694,8 +838,11 @@ function BarreFiltresOrganisations({
 						) : tracks.donnees.length === 0 ? (
 							<p className="text-sm text-text-2">{t('organizations.filter.tracks.empty')}</p>
 						) : (
-							<div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(16rem,1fr))]">
-								{tracks.donnees.map((track) => (
+							<CasesParEspace
+								elements={tracks.donnees}
+								groupes={groupes}
+								espaceDe={(track) => track.workspace_id}
+								rendre={(track) => (
 									<label key={track.id} className="flex items-center gap-3 min-h-[var(--size-target)] cursor-pointer">
 										<input
 											type="checkbox"
@@ -708,8 +855,8 @@ function BarreFiltresOrganisations({
 										<span aria-hidden="true" className={`size-3 rounded-full shrink-0 ${classesPastille(track.color)}`} />
 										<span className="truncate">{track.name}</span>
 									</label>
-								))}
-							</div>
+								)}
+							/>
 						)}
 					</fieldset>
 				</div>
@@ -736,8 +883,11 @@ function BarreFiltresOrganisations({
 						) : (
 							// Les actives d'abord, puis les archivées, suffixées « (archivée) » : on retrouve les organisations d'une
 							// catégorie qu'on vient d'archiver (§9.1). Le catalogue est déjà dans cet ordre.
-							<div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(16rem,1fr))]">
-								{categories.donnees.map((categorie) => (
+							<CasesParEspace
+								elements={categories.donnees}
+								groupes={groupes}
+								espaceDe={(categorie) => categorie.idEspace}
+								rendre={(categorie) => (
 									<label key={categorie.id} className="flex items-center gap-3 min-h-[var(--size-target)] cursor-pointer">
 										<input
 											type="checkbox"
@@ -754,12 +904,47 @@ function BarreFiltresOrganisations({
 												: categorie.nom}
 										</span>
 									</label>
-								))}
-							</div>
+								)}
+							/>
 						)}
 					</fieldset>
 				</div>
 			) : null}
+
+			<PanneauFiltreEspaces filtre={filtreEspaces} />
+		</div>
+	)
+}
+
+/** La grille des cases d'un panneau (§5.92). */
+const CLASSES_GRILLE_CASES = 'grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(16rem,1fr))]'
+
+/**
+ * `CRM-161` T3.c — les cases d'un filtre propre à un espace (§5.115) : une seule grille, ou, à partir de deux espaces dans
+ * la portée, une `fieldset` par espace qui a des cases, sous une sous-légende à son nom (`text-sm` `--color-text-2`), dans
+ * l'ordre du menu. Deux homonymes de deux espaces restent deux cases.
+ */
+function CasesParEspace<T>({
+	elements,
+	groupes,
+	espaceDe,
+	rendre,
+}: {
+	readonly elements: readonly T[]
+	readonly groupes: readonly Workspace[] | null
+	readonly espaceDe: (element: T) => string
+	readonly rendre: (element: T) => ReactNode
+}) {
+	if (groupes === null) return <div className={CLASSES_GRILLE_CASES}>{elements.map(rendre)}</div>
+	const parEspace: readonly GroupeDEspace<T>[] = grouperParEspace(elements, groupes, espaceDe)
+	return (
+		<div className="flex flex-col gap-3">
+			{parEspace.map((groupe) => (
+				<fieldset key={groupe.espace.id} data-testid="groupe-cases-espace" data-slug={groupe.espace.slug} className="flex flex-col gap-2">
+					<legend className="text-sm text-text-2 mb-1">{groupe.espace.name}</legend>
+					<div className={CLASSES_GRILLE_CASES}>{groupe.elements.map(rendre)}</div>
+				</fieldset>
+			))}
 		</div>
 	)
 }

@@ -9,9 +9,15 @@
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T4.2 : la pilule « partagée » d'une ligne d'affaire et la mention sous le
 //       tableau ; docs/DESIGN_SYSTEM.md §5.54 (« La saisie partagée »), §5.60 ; docs/SPEC-temps.md §7.3 ; manual.md §28.4
 //
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.c : à partir de deux espaces lus, la colonne « Espace », la dernière, sur
+//       chaque ligne ; le bouton « Espace » après la navigation de mois et le choix de la personne, son panneau sous la
+//       rangée ; le filtre EN MÉMOIRE (la lecture n'est pas paginée) ; le vide sous le filtre. Le choix de la personne
+//       reste celui des membres de l'espace de l'onglet, limite nommée renvoyée à T3.d (docs/SPEC-espace-courant.md
+//       §16.2, §16.8.3 ; docs/DESIGN_SYSTEM.md §5.115, §5.54 ; docs/manual.md §28.4)
+//
 // La base valorise et filtre : l'écran nomme, regroupe et affiche.
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { EtatErreur, EtatVide } from '../components/ui/States'
 import { t } from '../i18n'
@@ -25,11 +31,15 @@ import {
 	lireTempsValorise,
 	type Cumul,
 	type LigneRapport,
+	type LigneValorisee,
 	type Noms,
 	type SectionRapport,
 } from '../lib/rapport-temps'
 import type { ClientCrm } from '../lib/supabase'
 import { enHeures, enJours } from '../lib/temps'
+import { filtrerParEspace, nomEspace } from '../lib/provenance'
+import type { Workspace } from '../lib/workspaces'
+import { BoutonFiltreEspaces, PanneauFiltreEspaces, VideSousFiltreEspaces, useFiltreEspaces } from './FiltreEspaces'
 import { NavigationMois, libelleMois, useMoisDeLAdresse } from './NavigationMois'
 import { formaterDuree } from './SaisieTemps'
 
@@ -103,7 +113,8 @@ export type ProprietesRapportTemps = {
 	readonly aujourdhui: string
 }
 
-type Donnees = { readonly sections: readonly SectionRapport[]; readonly noms: Noms }
+/** Les lignes lues et leurs noms ; le rapport se compose après le filtre « Espace », en mémoire. */
+type Donnees = { readonly lignes: readonly LigneValorisee[]; readonly noms: Noms }
 
 export function RapportTemps({ client, idWorkspace, idUtilisateur, estAdmin, aujourdhui }: ProprietesRapportTemps) {
 	const { mois, moisCourant, allerA } = useMoisDeLAdresse(aujourdhui)
@@ -134,14 +145,24 @@ export function RapportTemps({ client, idWorkspace, idUtilisateur, estAdmin, auj
 			const noms = await lireNoms(client, idsANommer(lignes.donnees))
 			if (!courant) return
 			if (noms.statut !== 'pret') return setEtat(noms)
-			const nommer = (genre: 'track' | 'channel' | 'card', id: string) =>
-				(genre === 'track' ? noms.donnees.tracks : genre === 'channel' ? noms.donnees.channels : noms.donnees.cards).get(id) ?? ''
-			setEtat({ statut: 'pret', donnees: { sections: composerRapport(lignes.donnees, nommer), noms: noms.donnees } })
+			setEtat({ statut: 'pret', donnees: { lignes: lignes.donnees, noms: noms.donnees } })
 		})()
 		return () => {
 			courant = false
 		}
 	}, [client, mois, personne, tentative])
+
+	// `CRM-161` T3.c (§16.8.3) : le filtre « Espace » garde les lignes des espaces choisis, puis le rapport se compose — ses
+	// sections et ses totaux sont ceux des espaces affichés.
+	const filtre = useFiltreEspaces()
+	const sections = useMemo<readonly SectionRapport[]>(() => {
+		if (etat.statut !== 'pret') return []
+		const { tracks, channels, cards } = etat.donnees.noms
+		const nommer = (genre: 'track' | 'channel' | 'card', id: string) =>
+			(genre === 'track' ? tracks : genre === 'channel' ? channels : cards).get(id) ?? ''
+		return composerRapport(filtrerParEspace(etat.donnees.lignes, filtre.choisis, (l) => l.workspace_id), nommer)
+	}, [etat, filtre.choisis])
+	const espacesNommes = filtre.visible ? filtre.espaces : undefined
 
 	return (
 		<div className="flex flex-col gap-4" data-testid="temps-rapport">
@@ -168,7 +189,9 @@ export function RapportTemps({ client, idWorkspace, idUtilisateur, estAdmin, auj
 						</select>
 					</label>
 				) : null}
+				<BoutonFiltreEspaces filtre={filtre} />
 			</div>
+			<PanneauFiltreEspaces filtre={filtre} />
 
 			{etat.statut === 'chargement' ? (
 				<SkeletonListe lignes={5} libelle={t('state.loading.aria')} />
@@ -179,15 +202,18 @@ export function RapportTemps({ client, idWorkspace, idUtilisateur, estAdmin, auj
 					libelleReprise={t('state.error.retry')}
 					onReprise={() => setTentative((n) => n + 1)}
 				/>
-			) : etat.donnees.sections.length === 0 ? (
+			) : etat.donnees.lignes.length === 0 ? (
 				<EtatVide titre={t('time.report.empty.title', { mois: libelleMois(mois) })} corps={t('time.report.empty.body')} />
+			) : sections.length === 0 ? (
+				// Du temps ce mois-là, mais aucun dans les espaces choisis : le vide sous le filtre, pas celui du mois (§5.115).
+				<VideSousFiltreEspaces filtre={filtre} />
 			) : (
-				etat.donnees.sections.map((section) => (
+				sections.map((section) => (
 					<section key={section.profil} className="flex flex-col gap-2" data-testid="temps-rapport-section">
 						{personne === EQUIPE ? (
 							<h3 className="text-h3">{etat.donnees.noms.profils.get(section.profil) ?? t('time.report.unnamedPerson')}</h3>
 						) : null}
-						<TableauRapport section={section} noms={etat.donnees.noms} />
+						<TableauRapport section={section} noms={etat.donnees.noms} espaces={espacesNommes} />
 						{section.partagee ? <MentionPartagee /> : null}
 					</section>
 				))
@@ -214,7 +240,16 @@ function cheminLigne(ligne: LigneRapport, noms: Noms): string {
 	return t('time.report.shared.path', { track: nom(noms.tracks, ligne.track_id), channel: nom(noms.channels, ligne.channel_id) })
 }
 
-function TableauRapport({ section, noms }: { readonly section: SectionRapport; readonly noms: Noms }) {
+function TableauRapport({
+	section,
+	noms,
+	espaces,
+}: {
+	readonly section: SectionRapport
+	readonly noms: Noms
+	/** `CRM-161` T3.c : les espaces lus, à partir de deux — la colonne « Espace » ; sinon, rien. */
+	readonly espaces?: readonly Workspace[] | undefined
+}) {
 	return (
 		<div className="overflow-x-auto rounded-lg border border-border indique-debordement-x">
 			<table className="w-full min-w-[40rem] table-fixed border-collapse text-sm">
@@ -224,6 +259,7 @@ function TableauRapport({ section, noms }: { readonly section: SectionRapport; r
 							<col />
 							<col className="w-[14ch]" />
 							<col className="w-[28ch]" />
+							{espaces === undefined ? null : <col className="w-[18ch]" />}
 						</colgroup>
 				<thead className="bg-surface">
 					<tr className="border-b border-border">
@@ -236,6 +272,11 @@ function TableauRapport({ section, noms }: { readonly section: SectionRapport; r
 						<th scope="col" className="px-3 py-2 text-right font-medium">
 							{t('time.report.cost')}
 						</th>
+						{espaces === undefined ? null : (
+							<th scope="col" className="px-3 py-2 text-left font-medium">
+								{t('spaces.column')}
+							</th>
+						)}
 					</tr>
 				</thead>
 				<tbody>
@@ -258,6 +299,15 @@ function TableauRapport({ section, noms }: { readonly section: SectionRapport; r
 							<td className="px-3 py-2 text-right tabular-nums">
 								<CelluleCout cumul={ligne.cumul} />
 							</td>
+							{espaces === undefined ? null : (
+								<td
+									className="truncate px-3 py-2 text-text-2"
+									data-testid="temps-rapport-espace"
+									title={nomEspace(espaces, ligne.workspace_id) ?? undefined}
+								>
+									{nomEspace(espaces, ligne.workspace_id) ?? ''}
+								</td>
+							)}
 						</tr>
 					))}
 				</tbody>
@@ -272,6 +322,7 @@ function TableauRapport({ section, noms }: { readonly section: SectionRapport; r
 						<td className="px-3 py-2 text-right font-medium tabular-nums">
 							<CelluleCout cumul={section.total} />
 						</td>
+						{espaces === undefined ? null : <td />}
 					</tr>
 				</tfoot>
 			</table>

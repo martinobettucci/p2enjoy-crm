@@ -20661,6 +20661,16 @@ livraison (décision 830).
   intégration 119/119 en direct et à travers Caddy, dont `test_integration_organisations` et `test_integration_temps` ;
   Playwright omise, `--rapide` — le complet reste à la campagne de la session de livraison). Contrat §2.80 ; changelog.
   Restent les écrans Organisations et Temps ▸ Rapport.
+  **T3.c, les écrans, faits le 2026-11-25** : l'onglet « Organisations » de tous les espaces (la portée `p_workspace_ids`,
+  la colonne « Espace », le bouton dans la barre, un seul des trois panneaux ouvert, les cases « Tracks » et « Catégories »
+  des espaces affichés groupées par espace, « Dans l'espace X » sur la création, le vide sous le filtre jugé sur la portée
+  lue) ; Temps ▸ Rapport (la colonne « Espace », §16.8.3 précisé au code ; le filtre en mémoire). Preuves : unitaires
+  6 363/6 363 (dont `organisations`, `categories-organisations`, `provenance`, `ListeOrganisations`, `rapport-temps`,
+  `RapportTemps`) ; API `organisations-espaces` 5/5, et les API des deux fonctions 26/26 ; E2E `organisations-espaces` 7/7
+  (souris, clavier, lectrice, quatre paliers), `organisations-recherche` et `recettes-organisation` révisées
+  (`?espaces=p2enjoy`, l'arrêt du bouton « Espace » au clavier) et vertes, avec les specs voisines 123/123 ; captures
+  observées ; manuel §10.9 et §28.4, construit, `verify-manual.sh` 170/170, scénarios du manuel 10, 27-29 et 23-33 verts
+  (10 révisé). Contrat §2.80 ; changelog. **T3.c est complète en développement** ; reste à livrer (migrations, puis webapp).
   **Relevés à reprendre dans T3** (*2026-11-21, session de livraison au constat du lot de T1 et T2 ; consignés par 5f*) :
   - **Les non-lus de chaque espace sous `md`.** À 390 px, la section « Espaces » du repli du fil d'Ariane ne montre aucune
     pastille de non-lus (capture `docs/captures/CRM-161/menu-espaces-sm-390.jpg`), alors que la décision 965 les veut au

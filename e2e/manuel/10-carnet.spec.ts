@@ -11,6 +11,9 @@
 //       Réglages ▸ Catégories d'organisations, la fiche d'une nouvelle catégorie (refermée sans rien écrire), l'archivée
 //       (docs/manual.md §10.9, §10.10, §10.13, §10.14 ; docs/SPEC-organisations.md §9 ; docs/DESIGN_SYSTEM.md §5.107 ;
 //       docs/SPEC-seed.md §50)
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.c : RÉVISÉ le 2026-11-25 — l'onglet des organisations de Camille porte les
+//       deux espaces et la colonne « Espace » ; la fiche de Vertigo Conseil est atteinte sous `?espaces=p2enjoy`, son
+//       homonyme vivant dans « Studio Lumen » (docs/manual.md §10.9 ; docs/SPEC-espace-courant.md §16.8.3)
 //
 // Les contacts et les organisations sont ceux du seed : Léo Marchand, Sogexia, le contact déjà anonymisé. Les gestes qui
 // ne se défont pas — supprimer, anonymiser — portent sur un contact posé par la clé de service et retiré ensuite ; la
@@ -272,7 +275,9 @@ test('les organisations : la liste, la fiche, la modification', async ({ page })
 		nom: 'filtrer-organisations',
 		cibles: [page.getByTestId('ouvrir-filtre-tracks'), page.getByTestId('panneau-filtre-tracks'), page.getByTestId('tableau-organisations')],
 	})
-	await page.goto('/contacts/organisations')
+	// `CRM-161` T3.c : Camille lit aussi « Studio Lumen », où vit un homonyme de Vertigo Conseil (seed §54) ; l'onglet est
+	// ouvert sur l'espace du seed, comme une personne de deux espaces isole le sien.
+	await page.goto('/contacts/organisations?espaces=p2enjoy')
 	// `CRM-146` T3 : le bloc des recettes, sur l'organisation que le seed §41 dote de deux devises et d'une affaire partagée.
 	await page.getByTestId('ligne-organisation').filter({ hasText: 'Vertigo Conseil' }).getByRole('link', { name: 'Vertigo Conseil' }).click()
 	await expect(page.getByTestId('tableau-recettes-organisation')).toBeVisible()

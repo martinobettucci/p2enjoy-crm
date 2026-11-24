@@ -7,6 +7,9 @@
 //       (`shared`), et un total ne la compte qu'une fois ; docs/SPEC-rattachements.md §6 ; docs/JOURNAL.md décision 814
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T4.2 : la ligne et la section disent qu'elles portent une saisie partagée
 //       (`partagee`) ; docs/DESIGN_SYSTEM.md §5.54 (« La saisie partagée ») ; docs/SPEC-temps.md §7.3
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.c : chaque ligne porte l'espace de sa saisie (`temps_valorise` le rend,
+//       migration `0202`), et chaque cible du rapport le sien, pour la colonne « Espace » et le filtre en mémoire
+//       (docs/SPEC-espace-courant.md §16.8.2, §16.8.3 ; docs/DESIGN_SYSTEM.md §5.115)
 //
 // La base calcule et filtre (RLS, versions lisibles) ; ce module regroupe ce qu'elle rend. Aucun montant n'est déduit,
 // aucun `null` n'est changé en zéro.
@@ -29,6 +32,8 @@ export type LigneValorisee = {
 	readonly montant: number | null
 	readonly devise: string | null
 	readonly shared: boolean
+	/** `CRM-161` T3.c : l'espace de la saisie — une cible n'appartient qu'à un espace. */
+	readonly workspace_id: string
 }
 
 export type Filtre = { readonly profil?: string; readonly track?: string; readonly affaire?: string }
@@ -110,6 +115,8 @@ export type LigneRapport = {
 	readonly channel_id: string | null
 	readonly card_id: string | null
 	readonly niveau: 0 | 1 | 2
+	/** `CRM-161` T3.c : l'espace de la cible, que la colonne « Espace » nomme. */
+	readonly workspace_id: string
 	readonly cumul: Cumul
 	/** `CRM-111` T4.2 : la cible est une affaire dont la saisie paraît aussi sous un autre channel (§5.54). */
 	readonly partagee: boolean
@@ -148,6 +155,7 @@ export function composerRapport(
 				channel_id: premiere.channel_id,
 				card_id: premiere.card_id,
 				niveau: premiere.card_id !== null ? 2 : premiere.channel_id !== null ? 1 : 0,
+				workspace_id: premiere.workspace_id,
 				cumul: cumuler(groupe),
 				partagee: groupe.some((l) => l.shared),
 			}

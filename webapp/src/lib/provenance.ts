@@ -94,3 +94,32 @@ export function avecEspaces(chemin: string, parametres: URLSearchParams): string
 	suite.set(PARAMETRE_ESPACES, valeur)
 	return `${base}?${suite.toString()}`
 }
+
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.c : la portée des cases propres à un espace, et leur groupement par espace
+//       (docs/SPEC-espace-courant.md §16.8.3 ; docs/DESIGN_SYSTEM.md §5.115, « Un filtre dont les cases sont propres à un
+//       espace »)
+
+/** Les espaces que couvre une page filtrée : ceux du filtre, sinon tous les espaces lus, dans l'ordre du menu. */
+export function espacesDeLaPortee(espaces: readonly Workspace[], idsChoisis: readonly string[]): readonly Workspace[] {
+	if (idsChoisis.length === 0) return espaces
+	const choisis = new Set(idsChoisis)
+	return espaces.filter((espace) => choisis.has(espace.id))
+}
+
+/** Un groupe de cases : un espace, et ses éléments, dans l'ordre reçu. */
+export type GroupeDEspace<T> = { readonly espace: Workspace; readonly elements: readonly T[] }
+
+/**
+ * Groupe des éléments par espace, dans l'ordre des espaces donnés (celui du menu, §5.113) ; un espace sans élément n'a pas
+ * de groupe, et un élément d'un espace absent n'est rendu dans aucun — l'écran ne nomme jamais ce qu'il ne connaît pas.
+ */
+export function grouperParEspace<T>(
+	elements: readonly T[],
+	espaces: readonly Workspace[],
+	espaceDe: (element: T) => string | null | undefined,
+): readonly GroupeDEspace<T>[] {
+	return espaces
+		.map((espace) => ({ espace, elements: elements.filter((element) => espaceDe(element) === espace.id) }))
+		.filter((groupe) => groupe.elements.length > 0)
+}
+

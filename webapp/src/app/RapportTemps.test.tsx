@@ -5,8 +5,12 @@
 //           docs/DESIGN_SYSTEM.md §5.54
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T4.2 : la pilule « partagée » et sa mention, dans le rapport et sous la
 //           série du track ; docs/DESIGN_SYSTEM.md §5.54 (« La saisie partagée »), §5.60 ; docs/SPEC-temps.md §7.3, §7.5
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.c : rien pour une personne d'un seul espace ; à partir de deux, la
+//           colonne « Espace », la dernière ; le filtre « Espace » en mémoire, les totaux recomposés ; le vide sous le filtre
+//           (docs/SPEC-espace-courant.md §16.8.3 ; docs/DESIGN_SYSTEM.md §5.115, §5.54)
 
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FournisseurEspace } from './ContexteEspace'
@@ -241,3 +245,63 @@ describe('les réglages du coût du personnel', () => {
 		expect(screen.getByTestId('cout-prochain').textContent).toBe('135,00 EUR par quart à partir du 1 janvier 2027')
 	})
 })
+
+describe('le rapport de tous les espaces (`CRM-161` T3.c, docs/DESIGN_SYSTEM.md §5.115)', () => {
+	const P2ENJOY = { id: 'w', name: 'P2Enjoy', slug: 'p2enjoy' }
+	const LUMEN = { id: 'w2', name: 'Studio Lumen', slug: 'studio-lumen' }
+	const lignes = [
+		{ profile_id: 'p1', track_id: 't1', channel_id: null, card_id: null, minutes: 60, montant: 68.57, devise: 'EUR', shared: false, workspace_id: 'w' },
+		{ profile_id: 'p1', track_id: 't2', channel_id: null, card_id: null, minutes: 90, montant: null, devise: null, shared: false, workspace_id: 'w2' },
+	]
+	const noms = { ...NOMS, tracks: [{ id: 't1', nom: 'Studio web' }, { id: 't2', nom: 'Productions' }] }
+	function monter(espaces: readonly (typeof P2ENJOY)[], donnees: unknown[] = lignes, adresse = '/temps?onglet=rapport&mois=2027-03') {
+		render(
+			<MemoryRouter initialEntries={[adresse]}>
+				<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: false, espaces }}>
+					<RapportTemps client={clientFactice(donnees, noms)} idWorkspace="w" idUtilisateur="p1" estAdmin={false} aujourdhui="2026-10-11" />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+	}
+
+	it('d’un seul espace : ni colonne « Espace », ni bouton', async () => {
+		monter([P2ENJOY], [lignes[0]])
+		await screen.findAllByTestId('temps-rapport-ligne')
+		expect(screen.getAllByRole('columnheader')).toHaveLength(3)
+		expect(screen.queryByTestId('temps-rapport-espace')).toBeNull()
+		expect(screen.queryByTestId('ouvrir-filtre-espaces')).toBeNull()
+	})
+
+	it('de deux espaces : la colonne « Espace », la dernière, nomme l’espace de chaque ligne', async () => {
+		monter([P2ENJOY, LUMEN])
+		const rangees = await screen.findAllByTestId('temps-rapport-ligne')
+		const entetes = screen.getAllByRole('columnheader').map((c) => c.textContent)
+		expect(entetes).toHaveLength(4)
+		expect(entetes[3]).toBe('Espace')
+		expect(rangees.map((r) => [within(r).getByRole('rowheader').textContent, within(r).getByTestId('temps-rapport-espace').textContent])).toEqual([
+			['Productions', 'Studio Lumen'],
+			['Studio web', 'P2Enjoy'],
+		])
+		expect(screen.getByTestId('temps-rapport-total').textContent).toBe('2 h 30')
+	})
+
+	it('le filtre « Espace » garde, en mémoire, les lignes des espaces choisis, et le total les siennes', async () => {
+		monter([P2ENJOY, LUMEN])
+		await screen.findAllByTestId('temps-rapport-ligne')
+		await userEvent.click(screen.getByTestId('ouvrir-filtre-espaces'))
+		await userEvent.click(within(screen.getByTestId('panneau-filtre-espaces')).getByRole('checkbox', { name: 'P2Enjoy' }))
+		await waitFor(() => expect(screen.getAllByTestId('temps-rapport-ligne')).toHaveLength(1))
+		expect(within(screen.getByTestId('temps-rapport-ligne')).getByRole('rowheader').textContent).toBe('Studio web')
+		expect(screen.getByTestId('temps-rapport-total').textContent).toBe('1 h')
+		expect(screen.getByTestId('ouvrir-filtre-espaces').textContent).toBe('Espace (1)')
+	})
+
+	it('du temps hors des espaces choisis : le vide sous le filtre, pas celui du mois ; « Afficher tous les espaces » le défait', async () => {
+		monter([P2ENJOY, LUMEN], [lignes[0]], '/temps?onglet=rapport&mois=2027-03&espaces=studio-lumen')
+		expect(await screen.findByTestId('vide-filtre-espaces')).toBeTruthy()
+		await userEvent.click(screen.getByTestId('afficher-tous-les-espaces'))
+		expect(await screen.findAllByTestId('temps-rapport-ligne')).toHaveLength(1)
+		expect(document.activeElement).toBe(screen.getByTestId('ouvrir-filtre-espaces'))
+	})
+})
+

@@ -704,6 +704,13 @@ reconstruire ; **la preuve est leur intégration sur la base migrée** (`test_in
   **Le rapport prend la règle par défaut d'un tableau** (`docs/DESIGN_SYSTEM.md` §5.115) : une colonne **« Espace »**, la
   dernière, sur chaque ligne de chaque section, à partir de deux espaces lus. Le filtre en mémoire, son placement et la
   limite du choix de la personne ne changent pas ; le vide sous le filtre est celui du §5.115.
+  *Précisé au code le 2026-11-25 (7a)* : **le vide de l'onglet « Organisations » se juge sur la portée des lignes montrées**,
+  non sur l'adresse : sitôt « Afficher tous les espaces » pressé, et avant la relecture, l'onglet n'est pas « vide », et la
+  barre — où le focus revient au bouton « Espace » — reste montée (trouvé par le test unitaire, rouge avant la correction).
+  **Les preuves qui lisent l'espace du seed** (`organisations-recherche`, `recettes-organisation`, le scénario 10 du
+  manuel) ouvrent l'onglet sous `?espaces=p2enjoy` : Camille lit aussi « Studio Lumen », où vit un homonyme de Vertigo
+  Conseil (seed §54). Le seed n'a pas de catégorie dans « Studio Lumen » : le groupement des cases « Catégories » y montre
+  le seul groupe de « P2Enjoy SAS » ; il est prouvé à l'unité sur deux catalogues.
 - **Les numéros des deux migrations** sont pris à leur commit, après synchronisation et après l'annonce de fin de la
   session de livraison (CLAUDE.md §5) ; le contrat de livraison les consigne alors, avec l'ordre « migrations, puis
   webapp » et leur retour arrière.

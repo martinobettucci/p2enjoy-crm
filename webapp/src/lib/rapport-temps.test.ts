@@ -3,6 +3,8 @@
 //           × devise), §7.3 (une section par personne, une ligne par cible dans l'ordre du chemin), §7.5 (par channel)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T4.1 : une saisie partagée paraît sous chaque channel et un total ne la
 //           compte qu'une fois ; docs/SPEC-rattachements.md §6 ; décision 814
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.c : chaque cible du rapport porte l'espace de ses saisies
+//           (docs/SPEC-espace-courant.md §16.8.2, §16.8.3). La fabrique ci-dessous pose l'espace « w1 » par défaut.
 
 import { describe, expect, it } from 'vitest'
 import { bornesDuMois, composerRapport, cumuler, idsANommer, parChannel, uneFoisChacune, type LigneValorisee } from './rapport-temps'
@@ -16,6 +18,7 @@ const l = (partiel: Partial<LigneValorisee>): LigneValorisee => ({
 	montant: 120,
 	devise: 'EUR',
 	shared: false,
+	workspace_id: 'w1',
 	...partiel,
 })
 
@@ -134,3 +137,17 @@ describe('les identifiants à nommer', () => {
 		})
 	})
 })
+
+describe('l’espace de chaque cible (`CRM-161` T3.c)', () => {
+	it('une cible porte l’espace de ses saisies ; deux tracks homonymes de deux espaces restent deux lignes', () => {
+		const [section] = composerRapport(
+			[l({ track_id: 't1', workspace_id: 'w1' }), l({ track_id: 't3', workspace_id: 'w2' }), l({ track_id: 't1', montant: null, devise: null, workspace_id: 'w1' })],
+			(_genre, id) => (id === 't3' ? 'Studio web' : (NOMS[id] ?? id)),
+		)
+		expect(section?.lignes.map((ligne) => [ligne.track_id, ligne.workspace_id])).toEqual([
+			['t1', 'w1'],
+			['t3', 'w2'],
+		])
+	})
+})
+

@@ -63,6 +63,44 @@ export async function lireCategoriesOrganisations(
 	}
 }
 
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.c : le catalogue des espaces de la portée, chaque catégorie avec son espace,
+//       pour les cases « Catégories » de la liste des organisations, groupées par espace (docs/SPEC-espace-courant.md
+//       §16.8.3 ; docs/DESIGN_SYSTEM.md §5.115)
+
+/** Une catégorie des cases « Catégories », et l'espace de son catalogue. */
+export type CategorieDEspace = CategorieOrganisation & { readonly idEspace: string }
+
+/** Les colonnes du catalogue des cases : celles du catalogue, et l'espace. Exportée pour le test. */
+export const COLONNES_CATEGORIE_FILTRE = `${COLONNES_CATEGORIE_ORGANISATION}, workspace_id`
+
+/**
+ * Le catalogue des espaces donnés, archivées comprises, chaque catégorie avec son espace, dans l'ordre du catalogue
+ * (actives puis archivées, par nom). La RLS le borne aux membres de chaque espace.
+ */
+export async function lireCategoriesDesEspaces(
+	client: ClientCrm,
+	idsEspaces: readonly string[],
+): Promise<EtatAsync<readonly CategorieDEspace[]>> {
+	if (idsEspaces.length === 0) return pret([])
+	try {
+		const reponse = await client
+			.from('organization_categories')
+			.select(COLONNES_CATEGORIE_FILTRE)
+			.in('workspace_id', [...idsEspaces])
+		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
+		const lignes = (reponse.data ?? []) as readonly (CategorieOrganisationLue & { readonly workspace_id: string })[]
+		const espaceDe = new Map(lignes.map((ligne) => [ligne.id, ligne.workspace_id]))
+		return pret(
+			projeterCategoriesOrganisations(lignes).map((categorie) => ({
+				...categorie,
+				idEspace: espaceDe.get(categorie.id) ?? '',
+			})),
+		)
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
 // ---------------------------------------------------------------------------------------------
 // Les écritures, et leurs refus — dictionnaire fermé
 // ---------------------------------------------------------------------------------------------

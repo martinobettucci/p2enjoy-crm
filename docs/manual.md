@@ -2975,6 +2975,16 @@ validation :
 
 Lorsqu'aucune organisation ne répond aux filtres, l'onglet le dit en toutes lettres, et propose d'effacer les filtres.
 
+**Si vous êtes membre de plusieurs espaces**, l'onglet rassemble les organisations de tous, et une dernière colonne,
+**Espace**, dit celui de chacune : deux homonymes de deux espaces s'y distinguent. La barre gagne, après **Catégories**,
+un bouton **Espace**, qui n'en garde que certains (« Changer d'espace », [chapitre 3](#naviguer-barre-laterale-onglets-etats)) :
+la liste repart alors des cinquante premières, et le compte sous le tableau ne compte plus que ces espaces. Les cases des
+panneaux **Tracks** et **Catégories** sont celles des espaces affichés, rangées sous le nom de chacun dès qu'il y en a
+deux : un track de même nom dans deux espaces y a deux cases. Un seul des trois panneaux est ouvert à la fois. Lorsque les
+espaces choisis n'ont aucune organisation, l'onglet le dit, et propose d'afficher tous les espaces. La création d'une
+organisation se fait, elle, dans l'espace où vous vous trouvez : la rangée de la commande écrit son nom à sa suite, comme
+le formulaire. Pour une personne d'un seul espace, rien de cela ne paraît.
+
 **Les catégories sous le nom.** Sous le nom de chaque organisation, ses catégories, chacune en pastille de sa couleur :
 trois au plus, puis une pastille *+1*, *+2*… qui nomme les autres au survol. Une organisation sans catégorie n'a
 qu'une ligne.
@@ -6364,6 +6374,12 @@ compté, et dit **« non valorisé »** — jamais zéro.
 
 Un membre ne voit que **son** temps et **son** coût. Un administrateur choisit une personne, ou **« Toute l’équipe »**,
 qui rend une section par personne.
+
+**Si vous êtes membre de plusieurs espaces**, le rapport rassemble le temps passé dans tous, et une dernière colonne,
+**Espace**, dit celui de chaque track, channel ou affaire. Le bouton **Espace**, après le choix de la personne, n'en garde
+que certains : les lignes et le total ne comptent plus que ces espaces. Si le mois n'a du temps que dans d'autres espaces,
+le rapport le dit, et propose d'afficher tous les espaces. Le choix de la personne, lui, reste celui des membres de
+l'espace où vous vous trouvez.
 
 ![Une saisie sur une affaire rattachée à deux channels : la ligne de chacun, marquée « partagée », et le total qui la compte une fois](manuel/images/le-temps-passe-et-le-cout-du-personnel/rapport-partage.jpg)
 

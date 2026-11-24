@@ -3805,6 +3805,105 @@
 					"content": [
 						{
 							"type": "text",
+							"text": "Si vous êtes membre de plusieurs espaces"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", l'onglet rassemble les organisations de tous, et une dernière colonne,\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", dit celui de chacune : deux homonymes de deux espaces s'y distinguent. La barre gagne, après "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Catégories"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ",\nun bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", qui n'en garde que certains (« Changer d'espace », "
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 3"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") :\nla liste repart alors des cinquante premières, et le compte sous le tableau ne compte plus que ces espaces. Les cases des\npanneaux "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Tracks"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Catégories"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " sont celles des espaces affichés, rangées sous le nom de chacun dès qu'il y en a\ndeux : un track de même nom dans deux espaces y a deux cases. Un seul des trois panneaux est ouvert à la fois. Lorsque les\nespaces choisis n'ont aucune organisation, l'onglet le dit, et propose d'afficher tous les espaces. La création d'une\norganisation se fait, elle, dans l'espace où vous vous trouvez : la rangée de la commande écrit son nom à sa suite, comme\nle formulaire. Pour une personne d'un seul espace, rien de cela ne paraît."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
 							"text": "Les catégories sous le nom."
 						}
 					]
