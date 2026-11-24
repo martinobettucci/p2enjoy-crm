@@ -1161,6 +1161,35 @@
 				},
 				{
 					"type": "text",
+					"text": "), le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "carnet de contacts"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-carnet-de-contacts"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 10"
+						}
+					]
+				},
+				{
+					"type": "text",
 					"text": "), "
 				},
 				{

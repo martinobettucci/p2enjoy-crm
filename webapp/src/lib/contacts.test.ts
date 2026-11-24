@@ -14,6 +14,8 @@
 //           §15.4 (trois absences rendent le même `null`), §15.9 cas a, b, e, f, g
 // @verifies docs/SPEC-webapp.md §6.4 (contrat asynchrone : l'erreur est classée sur le code HTTP)
 // @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — la fiche contact lit l'archivage et le channel sur les rattachements (docs/SPEC-rattachements.md §5)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : le carnet lit l'espace de chaque contact ; le sélecteur
+//           d'organisations ne lit que l'espace demandé (docs/SPEC-espace-courant.md §16.3, §16.4)
 //
 // Comme `mail-etat.test.ts`, ce fichier éprouve la requête RÉELLEMENT émise et pas seulement la
 // valeur rendue : les colonnes demandées, l'organisation embarquée et le tri côté serveur sont
@@ -57,6 +59,7 @@ import {
 	normaliserFacultatif,
 	lireContactsDeLAffaire,
 	lireContactsDuCarnet,
+	lireOrganisationsDuWorkspace,
 	lireFicheContact,
 	lireFicheOrganisation,
 	rattacherContact,
@@ -1791,5 +1794,28 @@ describe('supprimerContact (§20.2)', () => {
 		} as unknown as ClientCrm
 		await supprimerContact(client, ID_SONDE)
 		expect(tables).toEqual(['contacts'])
+	})
+})
+
+describe('`CRM-161` T3.b.2 — l’espace de chaque contact, et les organisations d’un seul espace (§16.3, §16.4)', () => {
+	it('le carnet demande l’espace de chaque contact, et ne filtre par aucun espace sans qu’on le lui demande', async () => {
+		expect(COLONNES_CONTACT_CARNET).toContain('workspace_id')
+		const { client, appel } = espion({ data: [], error: null, status: 200 })
+		await lireContactsDuCarnet(client)
+		expect(appel.filtres).toEqual([])
+	})
+
+	it('le sélecteur d’organisations ne lit que l’espace de la création ou du contact', async () => {
+		const { client, appel } = espion({ data: [], error: null, status: 200 })
+		await lireOrganisationsDuWorkspace(client, 'ws-l')
+		expect(appel.table).toBe('organizations')
+		expect(appel.filtres).toEqual(['eq(workspace_id,ws-l)'])
+		expect(appel.tris).toEqual(['name'])
+	})
+
+	it('sans espace, il lit ce que la RLS rend, comme avant', async () => {
+		const { client, appel } = espion({ data: [], error: null, status: 200 })
+		await lireOrganisationsDuWorkspace(client)
+		expect(appel.filtres).toEqual([])
 	})
 })

@@ -228,6 +228,66 @@
 					"content": [
 						{
 							"type": "text",
+							"text": "Si vous êtes membre de plusieurs espaces"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", le carnet rassemble les contacts de tous, et une dernière colonne, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ",\ndit celui de chaque personne : deux homonymes de deux espaces s'y distinguent. Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", au-dessus du tableau,\nn'en garde que certains (« Changer d'espace », "
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 3"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Les commandes de\ncréation, d'export et d'import agissent, elles, dans l'espace où vous vous trouvez, et la rangée des commandes écrit son\nnom à leur suite, comme le formulaire de création."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
 							"text": "Une cellule vide veut dire « pas renseigné », et rien d'autre."
 						}
 					]
@@ -786,7 +846,7 @@
 							},
 							{
 								"type": "text",
-								"text": " — au choix parmi celles de l'espace de travail, ou aucune. Le formulaire ne crée\npas d'organisation : créez-la d'abord dans l'onglet "
+								"text": " — au choix parmi celles de l'espace de travail où le contact est créé, ou aucune. Le formulaire ne crée\npas d'organisation : créez-la d'abord dans l'onglet "
 							},
 							{
 								"type": "strong",
@@ -1500,7 +1560,7 @@
 				},
 				{
 					"type": "text",
-					"text": " détache la personne de son organisation, sans la supprimer."
+					"text": " détache la personne de son organisation, sans la supprimer. La liste des organisations\nest celle de l'espace du contact."
 				}
 			]
 		},

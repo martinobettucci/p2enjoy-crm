@@ -358,7 +358,7 @@ bouton dit combien d'espaces sont cochés, par exemple **Espace (1)**. Rien de c
 l'adresse de la page, et survit donc à un rechargement ou à un lien copié. Si les espaces cochés n'ont rien à montrer, la
 page le dit et propose **Afficher tous les espaces**. Au clavier, ouvrez le bouton avec `Entrée`, passez d'une case à
 l'autre avec `Tab`, cochez avec `Espace`, refermez avec `Échap`. Si vous n'êtes membre que d'un espace, ni le bouton ni la
-mention de l'espace n'apparaissent. Les pages qui le font : **Ma journée** ([§6.2](#ce-qu-une-ligne-montre)), **Affaires figées** ([chapitre 7](#les-affaires-figees-ce-qui-dort-depuis-trop-longtemps)), **Coûts**
+mention de l'espace n'apparaissent. Les pages qui le font : **Ma journée** ([§6.2](#ce-qu-une-ligne-montre)), le **carnet de contacts** ([chapitre 10](#le-carnet-de-contacts)), **Affaires figées** ([chapitre 7](#les-affaires-figees-ce-qui-dort-depuis-trop-longtemps)), **Coûts**
 ([chapitre 26](#les-couts-de-tout-l-espace-de-travail-un-cumul-par-track)) et **Rentabilité** ([§29.3](#l-ecran-rentabilite)).
 
 **L'espace est dans l'adresse.** L'adresse de l'inbox, d'un track ou d'une page de réglages commence par le nom court de
@@ -2552,6 +2552,12 @@ Le carnet se présente en tableau, une ligne par contact, rangé par nom :
 | Email | Son adresse, lorsqu'elle est connue |
 | Téléphone | Son numéro, lorsqu'il est connu |
 
+**Si vous êtes membre de plusieurs espaces**, le carnet rassemble les contacts de tous, et une dernière colonne, **Espace**,
+dit celui de chaque personne : deux homonymes de deux espaces s'y distinguent. Le bouton **Espace**, au-dessus du tableau,
+n'en garde que certains (« Changer d'espace », [chapitre 3](#naviguer-barre-laterale-onglets-etats)). Les commandes de
+création, d'export et d'import agissent, elles, dans l'espace où vous vous trouvez, et la rangée des commandes écrit son
+nom à leur suite, comme le formulaire de création.
+
 **Une cellule vide veut dire « pas renseigné », et rien d'autre.** Le carnet n'écrit ni tiret ni
 « non renseigné » : un contact peut n'être qu'un nom et un téléphone, et c'est un cas ordinaire, pas
 une donnée manquante à corriger.
@@ -2637,7 +2643,7 @@ déjà.
 Cinq champs, et un seul est obligatoire :
 
 - **Nom** — obligatoire. Un nom vide est refusé avant même l'envoi.
-- **Organisation** — au choix parmi celles de l'espace de travail, ou aucune. Le formulaire ne crée
+- **Organisation** — au choix parmi celles de l'espace de travail où le contact est créé, ou aucune. Le formulaire ne crée
   pas d'organisation : créez-la d'abord dans l'onglet **Organisations**.
 - **Fonction**, **Email**, **Téléphone** — facultatifs. Laissés vides, ils restent vides : le carnet
   n'écrit ni tiret ni « non renseigné ».
@@ -2707,7 +2713,8 @@ vous corrigez.
 
 Les cinq champs sont ceux de la création, **déjà remplis** avec les valeurs actuelles. Le **nom**
 reste obligatoire ; les autres peuvent être vidés, et ils redeviennent alors vides sur la fiche.
-Vider le champ **Organisation** détache la personne de son organisation, sans la supprimer.
+Vider le champ **Organisation** détache la personne de son organisation, sans la supprimer. La liste des organisations
+est celle de l'espace du contact.
 
 Une fois enregistrée, la modification apparaît **immédiatement** dans le bloc du haut, et le titre
 de la page suit le nouveau nom. Le tableau des affaires, lui, ne bouge pas : modifier une personne

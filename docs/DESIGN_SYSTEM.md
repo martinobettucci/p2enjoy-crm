@@ -9226,7 +9226,7 @@ la spécification réservait, a été prise par `CRM-165` avant l'écriture de c
 - **LE FILTRE « Espace » EST LE PATRON DU §5.105** (« Tracks »), sans écart :
   - un **bouton secondaire** « Espace » dans la barre de filtres de la page (« Rentabilité » : après « Réel » et « Prévu »,
     son panneau sous la barre) ; une page qui n'a pas de barre en reçoit une (« Coûts » : au-dessus des histogrammes ; « Ma journée » : sous ses onglets
-    de portée),
+    de portée ; le carnet : entre la rangée de ses commandes et le tableau),
     `role="group"` nommée « Filtres », au-dessus de sa liste (§5.9 : `flex-wrap`, cibles de 40 px). Le bouton dit le nombre
     coché, « Espace (1) », porte `aria-expanded` et `aria-controls` ;
   - il déplie, **dans le flux, sous la barre**, un panneau de cases (§5.92) : une `fieldset` de légende « Espaces
@@ -9253,6 +9253,10 @@ la spécification réservait, a été prise par `CRM-165` avant l'écriture de c
   - **dans le tableau équivalent d'un graphique** (« Coûts », §5.30, §5.33), la **précision** existante du §5.30, sous le
     libellé de chaque ligne : le graphique, `aria-hidden`, ne la montre pas. Pas de colonne nouvelle. *Précisé le 2026-11-24
     au code de `CRM-161` T3.b.*
+- **UNE PAGE GLOBALE QUI CRÉE DIT OÙ** (§16.2 de la spécification) : à partir de deux espaces lus, la rangée de ses
+  commandes de création, d'export et d'import se termine par « Dans l'espace X » (`text-sm` `--color-text-2`, centré sur la
+  rangée), et le formulaire de création commence par la même phrase. Ces commandes agissent dans l'espace de l'onglet,
+  quel que soit le filtre. *Précisé le 2026-11-24 au code de T3.b.2 (le carnet).*
 - **LE VIDE SOUS LE FILTRE** n'est pas le vide de la page (§5.8, même règle qu'au §5.105) : « Rien dans les espaces choisis »,
   avec le bouton secondaire « Afficher tous les espaces », qui vide le filtre et rend le focus au bouton « Espace ». Le vide
   sain d'une page (« Affaires figées », §5.37) reste le sien quand aucun filtre n'est posé.

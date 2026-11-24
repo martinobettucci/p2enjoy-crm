@@ -18,6 +18,8 @@
 // modification de la sous-tranche 4g. Le comportement de ce formulaire est INCHANGÉ, et la preuve
 // en est que `Carnet.test.tsx` reste vert sans être modifié. Ce qui reste ici est ce que la
 // création seule décide : ce qu'elle envoie, et les cinq refus qu'elle traduit.
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : « Dans l'espace X » à partir de deux espaces lus
+//       (docs/SPEC-espace-courant.md §16.2)
 
 import { useEffect, useRef, useState } from 'react'
 import { t } from '../i18n'
@@ -59,6 +61,8 @@ const CLES_REFUS: Record<RefusCreationContact['nature'], CleTraduction> = {
 export type ProprietesFormulaireCreationContact = {
 	readonly client: ClientCrm
 	readonly idWorkspace: string
+	/** `CRM-161` T3.b.2 (§16.2) : le nom de l'espace de la création, à partir de deux espaces lus ; sinon `null`. */
+	readonly nomEspace?: string | null
 	readonly organisations: EtatAsync<readonly OrganisationChoisissable[]>
 	readonly onRelireOrganisations: () => void
 	readonly onCree: (contact: ContactDuCarnet) => void
@@ -75,6 +79,7 @@ export type ProprietesFormulaireCreationContact = {
 export function FormulaireCreationContact({
 	client,
 	idWorkspace,
+	nomEspace = null,
 	organisations,
 	onRelireOrganisations,
 	onCree,
@@ -131,6 +136,12 @@ export function FormulaireCreationContact({
 				void envoyer(evenement)
 			}}
 		>
+			{/* `CRM-161` T3.b.2 — la création se fait dans l'espace de l'onglet, et le formulaire le dit (§16.2). */}
+			{nomEspace === null ? null : (
+				<p data-testid="espace-creation-contact" className="text-sm text-text-2">
+					{t('spaces.creation.in', { nom: nomEspace })}
+				</p>
+			)}
 			<ChampsContact
 				saisie={saisie}
 				onModifier={modifier}

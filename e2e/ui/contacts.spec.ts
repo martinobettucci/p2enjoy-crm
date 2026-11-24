@@ -10,6 +10,10 @@
 //           destination), §15.9 (cas a, b, c, e, h, i, m, n, o)
 // @verifies docs/DESIGN_SYSTEM.md §5.19 (le carnet), §5.20 (la fiche), §5.9 (tableau),
 //           §7 (paliers) ; CLAUDE.md §16 (vérification visuelle)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : le carnet de tous les espaces — colonne « Espace », filtre à la
+//           souris et au clavier, vide jamais atteint pour Camille (Lumen a deux contacts), « Dans l'espace X », les
+//           organisations de l'espace de la création, la lectrice d'un seul espace, les quatre paliers filtre ouvert
+//           (docs/SPEC-espace-courant.md §16.2, §16.3, §16.4 ; docs/DESIGN_SYSTEM.md §5.115)
 // @verifies CRM-146 (docs/BACKLOG.md) — tranche T2 : la fiche d'organisation porte aussi le vide de son bloc de recettes ;
 //           le vide des contacts est désigné par son titre (docs/SPEC-recettes.md §12.5)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
@@ -63,16 +67,20 @@ test.describe('carnet de contacts (docs/SPEC-contacts.md §10)', () => {
 		const tableau = page.getByTestId('tableau-contacts')
 		await expect(tableau).toBeVisible()
 		// Quatre depuis `CRM-072` T3 (décision 51) : le contact anonymisé du seed (docs/SPEC-seed.md §26). Onze depuis
-		// `CRM-071` T5 (décision 51) : les sept contacts que le seed crée en important son fichier de salon (§33).
-		await expect(page.getByTestId('ligne-contact')).toHaveCount(11)
+		// `CRM-071` T5 (décision 51) : les sept contacts que le seed crée en important son fichier de salon (§33). Treize
+		// depuis `CRM-161` T3.b.2 (décision 51 ; docs/SPEC-espace-courant.md §16.3) : le carnet est global, et
+		// l'administratrice lit aussi les deux contacts de « Studio Lumen » (docs/SPEC-seed.md §55).
+		await expect(page.getByTestId('ligne-contact')).toHaveCount(13)
 
-		// Les cinq colonnes du §10.5, dans leur ordre.
+		// Les cinq colonnes du §10.5, dans leur ordre ; la sixième, « Espace », depuis `CRM-161` T3.b.2 : l'administratrice
+		// lit deux espaces (docs/DESIGN_SYSTEM.md §5.115).
 		await expect(tableau.getByRole('columnheader')).toHaveText([
 			'Nom',
 			'Organisation',
 			'Fonction',
 			'Email',
 			'Téléphone',
+			'Espace',
 		])
 
 		// Cas a : Léo Marchand, son organisation et son email.
@@ -148,8 +156,11 @@ test.describe('carnet de contacts (docs/SPEC-contacts.md §10)', () => {
 		await connecter(page, VIEWER)
 		await page.goto('/contacts')
 		// Quatre depuis `CRM-072` T3 (décision 51) : le contact anonymisé du seed (docs/SPEC-seed.md §26). Onze depuis
-		// `CRM-071` T5 (décision 51) : les sept contacts que le seed crée en important son fichier de salon (§33).
+		// `CRM-071` T5 (décision 51) : les sept contacts que le seed crée en important son fichier de salon (§33). Toujours
+		// onze après `CRM-161` T3.b.2 : la lectrice ne lit qu'un espace, et son carnet n'a ni colonne ni filtre « Espace ».
 		await expect(page.getByTestId('ligne-contact')).toHaveCount(11)
+		await expect(page.getByTestId('filtre-espaces')).toHaveCount(0)
+		await expect(page.getByTestId('espace-contact')).toHaveCount(0)
 		// RÉVISÉE PAR LA SOUS-TRANCHE 4e, NON RETIRÉE (mécanisme de la décision 51). Cette assertion
 		// exigeait qu'AUCUN geste d'écriture ne soit offert, « à personne » : c'était vrai tant que
 		// le §10.7 nommait cette absence comme une limite de 4a. La limite est levée — le carnet
@@ -176,6 +187,103 @@ test.describe('carnet de contacts (docs/SPEC-contacts.md §10)', () => {
 			'page',
 		)
 		await expect(page.getByTestId('tableau-contacts')).toBeVisible()
+	})
+})
+
+// `CRM-161` T3.b.2 — Camille lit « P2Enjoy SAS » (onze contacts) et « Studio Lumen » (deux : Inès Arlo, Nadia Benali,
+// docs/SPEC-seed.md §55). Rien n'est écrit : le formulaire est ouvert puis annulé.
+test.describe('`CRM-161` T3.b.2 — le carnet de tous les espaces (docs/DESIGN_SYSTEM.md §5.115)', () => {
+	const UNITE_T3 = 'CRM-161'
+
+	test('à la souris : la colonne « Espace », isoler un espace, « Dans l’espace », les organisations de cet espace', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await page.goto('/contacts')
+		const lignes = page.getByTestId('ligne-contact')
+		await expect(lignes).toHaveCount(13)
+		await expect(lignes.filter({ hasText: 'Inès Arlo' }).getByTestId('espace-contact')).toHaveText('Studio Lumen')
+		await expect(lignes.filter({ hasText: 'Léo Marchand' }).getByTestId('espace-contact')).toHaveText('P2Enjoy SAS')
+		// DEUX HOMONYMES, UN PAR ESPACE : la colonne est ce qui les distingue.
+		await expect(lignes.filter({ hasText: 'Nadia Benali' }).getByTestId('espace-contact')).toHaveText([
+			'P2Enjoy SAS',
+			'Studio Lumen',
+		])
+
+		const bouton = page.getByRole('button', { name: 'Espace', exact: true })
+		await bouton.click()
+		await expect(bouton).toHaveAttribute('aria-expanded', 'true')
+		await page.getByTestId('panneau-filtre-espaces').getByRole('checkbox', { name: 'Studio Lumen' }).check()
+		await expect(page).toHaveURL(/[?&]espaces=studio-lumen/)
+		await expect(lignes).toHaveCount(2)
+		await capturer(page, 'carnet-filtre-lumen-1440', UNITE_T3)
+		await page.reload()
+		await expect(lignes).toHaveCount(2)
+
+		// LES GESTES AGISSENT DANS L'ESPACE DE L'ONGLET, et le disent — quel que soit le filtre.
+		await expect(page.getByTestId('espace-des-gestes')).toHaveText('Dans l’espace P2Enjoy SAS')
+		await page.getByTestId('ouvrir-creation-contact').click()
+		await expect(page.getByTestId('espace-creation-contact')).toHaveText('Dans l’espace P2Enjoy SAS')
+		// Le sélecteur n'offre que les organisations de cet espace : aucune de « Studio Lumen » (« Maison Arlo »).
+		const formulaire = page.getByTestId('formulaire-creation-contact')
+		await expect(formulaire.getByRole('option', { name: 'Sogexia' })).toHaveCount(1)
+		await expect(formulaire.getByRole('option', { name: 'Maison Arlo' })).toHaveCount(0)
+		// « Vertigo Conseil » existe dans les deux espaces (homonymes du seed) : une seule est offerte, celle de cet espace.
+		await expect(formulaire.getByRole('option', { name: 'Vertigo Conseil' })).toHaveCount(1)
+		await capturer(page, 'carnet-creation-espace-1440', UNITE_T3)
+		await page.getByTestId('annuler-creation-contact').click()
+
+		await page.getByRole('button', { name: 'Espace (1)' }).click()
+		await page.getByTestId('panneau-filtre-espaces').getByRole('checkbox', { name: 'Studio Lumen' }).uncheck()
+		await expect(page).not.toHaveURL(/espaces=/)
+		await expect(lignes).toHaveCount(13)
+		await capturer(page, 'carnet-espaces-1440', UNITE_T3)
+	})
+
+	test('« Modifier » un contact de « Studio Lumen » n’offre que les organisations de son espace (§16.4)', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await page.goto('/contacts')
+		// L'identifiant de ce contact du seed §55 n'est pas fixe : la fiche s'atteint par le lien du carnet.
+		await page.getByTestId('ligne-contact').filter({ hasText: 'Inès Arlo' }).getByTestId('lien-contact').click()
+		await expect(page.getByRole('heading', { name: 'Inès Arlo' })).toBeVisible()
+		await page.getByTestId('ouvrir-modification-contact').click()
+		const formulaire = page.getByTestId('formulaire-modification-contact')
+		await expect(formulaire.getByRole('option', { name: 'Maison Arlo' })).toHaveCount(1)
+		await expect(formulaire.getByRole('option', { name: 'Vertigo Conseil' })).toHaveCount(1)
+		await expect(formulaire.getByRole('option', { name: 'Sogexia' })).toHaveCount(0)
+		await page.getByTestId('annuler-modification-contact').click()
+	})
+
+	test('au clavier : ouvrir, cocher à l’espace, replier par Échap, le focus rendu au bouton', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await page.goto('/contacts')
+		await expect(page.getByTestId('ligne-contact')).toHaveCount(13)
+		const bouton = page.getByRole('button', { name: 'Espace', exact: true })
+		await bouton.focus()
+		await page.keyboard.press('Enter')
+		await expect(bouton).toHaveAttribute('aria-expanded', 'true')
+		await page.keyboard.press('Tab')
+		await expect(page.getByRole('checkbox', { name: 'P2Enjoy SAS' })).toBeFocused()
+		await page.keyboard.press('Space')
+		await expect(page).toHaveURL(/[?&]espaces=p2enjoy/)
+		await expect(page.getByTestId('ligne-contact')).toHaveCount(11)
+		await page.keyboard.press('Escape')
+		await expect(page.getByTestId('panneau-filtre-espaces')).toHaveCount(0)
+		await expect(page.getByRole('button', { name: 'Espace (1)' })).toBeFocused()
+	})
+
+	test('les quatre paliers, filtre ouvert : captures produites, et aucun débordement horizontal', async ({ page }) => {
+		await connecter(page, ADMIN)
+		for (const palier of PALIERS) {
+			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await page.goto('/contacts')
+			await expect(page.getByTestId('ligne-contact')).toHaveCount(13)
+			await page.getByRole('button', { name: 'Espace', exact: true }).click()
+			await expect(page.getByTestId('panneau-filtre-espaces')).toBeVisible()
+			const deborde = await page.evaluate(
+				() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+			)
+			expect(deborde, `débordement horizontal à ${palier.nom}`).toBe(false)
+			await capturer(page, `carnet-filtre-${palier.nom}`, UNITE_T3)
+		}
 	})
 })
 
@@ -1644,7 +1752,7 @@ test.describe('suppression d’un contact (docs/SPEC-contacts.md §20.7)', () =>
 		await expect(page.getByRole('heading', { name: 'Élise Fabre' })).toBeVisible()
 	})
 
-	test('le seed est rendu INTACT : le carnet porte exactement les onze contacts d’origine', async ({
+	test('le seed est rendu INTACT : le carnet porte exactement les treize contacts d’origine', async ({
 		page,
 	}) => {
 		// GARDE DE CLÔTURE. Une sonde oubliée ferait dériver les compteurs d'autres harnais, et le
@@ -1652,8 +1760,9 @@ test.describe('suppression d’un contact (docs/SPEC-contacts.md §20.7)', () =>
 		await connecter(page, ADMIN)
 		await page.goto('/contacts')
 		// Quatre depuis `CRM-072` T3 (décision 51) : le contact anonymisé du seed (docs/SPEC-seed.md §26). Onze depuis
-		// `CRM-071` T5 (décision 51) : les sept contacts que le seed crée en important son fichier de salon (§33).
-		await expect(page.getByTestId('ligne-contact')).toHaveCount(11)
+		// `CRM-071` T5 (décision 51) : les sept contacts que le seed crée en important son fichier de salon (§33). Treize
+		// depuis `CRM-161` T3.b.2 (décision 51) : le carnet est global, avec les deux contacts de « Studio Lumen » (§55).
+		await expect(page.getByTestId('ligne-contact')).toHaveCount(13)
 		await expect(page.getByTestId('ligne-contact').filter({ hasText: 'Sonde tranche 6' })).toHaveCount(
 			0,
 		)

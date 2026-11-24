@@ -1476,6 +1476,8 @@ export const fr = {
 	'spaces.filter.empty.title': 'Rien dans les espaces choisis',
 	'spaces.filter.empty.body': 'Les autres espaces que vous lisez en ont peut-être : affichez-les tous.',
 	'spaces.filter.empty.all': 'Afficher tous les espaces',
+	'spaces.creation.in': 'Dans l’espace {nom}',
+	'spaces.column': 'Espace',
 	// ---------------------------------------------------------------------------------------
 	// Affaires figées — `CRM-062` tranche 3c, docs/SPEC-relances.md §10
 	// ---------------------------------------------------------------------------------------

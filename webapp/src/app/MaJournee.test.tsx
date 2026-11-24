@@ -471,4 +471,3 @@ describe('MaJournee — `CRM-161` T3.b.2 : la provenance et le filtre « Espace 
 		expect(vide.getByRole('button', { name: fr['spaces.filter.empty.all'] })).toBeTruthy()
 	})
 })
-

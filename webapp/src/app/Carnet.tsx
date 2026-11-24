@@ -1,6 +1,8 @@
-// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — jusqu'à T3, la page suit l'espace courant de l'onglet
-//       (docs/SPEC-espace-courant.md §15.2 ; décision 976)
-// @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le carnet suit l'espace courant de l'onglet, état intermédiaire jusqu'à T3 (§15.2) ; docs/SPEC-espace-courant.md
+// @spec CRM-161 (docs/BACKLOG.md) tranche T3.b.2 — le carnet montre les contacts de tous les espaces lus (fin de l'état
+//       intermédiaire de T2.a, décision 976) : la colonne « Espace », la dernière, le filtre « Espace » en mémoire entre les
+//       gestes et le tableau, le vide sous le filtre ; « Nouveau contact », l'export et l'import restent dans l'espace de
+//       l'onglet, que la rangée des gestes nomme, et le sélecteur d'organisations ne lit que cet espace ; rien pour une
+//       personne d'un seul espace (docs/SPEC-espace-courant.md §16.2, §16.3, §16.4 ; docs/DESIGN_SYSTEM.md §5.115)
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T4 : « Exporter en CSV » le carnet, après « Nouveau contact » (docs/DESIGN_SYSTEM.md §5.76)
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T5 : « Importer un fichier » et son panneau, puis le carnet relu (docs/DESIGN_SYSTEM.md §5.77)
 // @spec CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranche 4a :
@@ -54,6 +56,8 @@ import { CommandeImport, PanneauImport } from './ImportCsv'
 import { csvContacts, dateDuJour, exporterContacts } from '../lib/export-csv'
 import { motifVisible, proprietesCommande } from '../lib/capacites'
 import { idEspaceParmi } from '../lib/espace-onglet'
+import { FiltreEspaces, useFiltreEspaces, VideSousFiltreEspaces } from './FiltreEspaces'
+import { filtrerParEspace, nomEspace } from '../lib/provenance'
 
 /** Le motif du carnet, cité par sa commande de création quand la base refuse l'édition de l'espace. */
 const ID_MOTIF_CARNET = 'carnet-lecture-seule'
@@ -107,8 +111,8 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 		if (relectureDiscrete.current) relectureDiscrete.current = false
 		else setEtat(enChargement())
 		void (async () => {
-			// `CRM-161` T2.a (§15.2, décision 976) : jusqu'à T3, le carnet suit l'espace courant de l'onglet.
-			const lu = await lireContactsDuCarnet(client, idEspaceContexte ?? undefined)
+			// `CRM-161` T3.b.2 (§16.3) : le carnet est global — tous les contacts que la RLS rend, chacun nommant son espace.
+			const lu = await lireContactsDuCarnet(client)
 			if (rang !== courant.current) return
 			// La double garde est celle d'`EtatMessagerie` : la fonction de lecture ne rend jamais
 			// `chargement`, mais le type `EtatAsync` le porte structurellement, et seule cette
@@ -120,7 +124,7 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 			if (lu.statut !== 'pret') return
 			setEtat(pret(lu.donnees))
 		})()
-	}, [client, tentative, idEspaceContexte])
+	}, [client, tentative])
 
 	const reprendre = useCallback(() => setTentative((precedente) => precedente + 1), [])
 
@@ -150,13 +154,17 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 		if (client === null || !ouvert) return
 		let vivant = true
 		setOrganisations(enChargement())
-		void lireOrganisationsDuWorkspace(client).then((lues) => {
+		// `CRM-161` T3.b.2 (§16.4) : les organisations de l'espace de la création seulement — la base refuserait les autres.
+		void lireOrganisationsDuWorkspace(client, idEspaceContexte ?? undefined).then((lues) => {
 			if (vivant) setOrganisations(lues)
 		})
 		return () => {
 			vivant = false
 		}
-	}, [client, ouvert, tentativeOrganisations])
+	}, [client, ouvert, tentativeOrganisations, idEspaceContexte])
+
+	// `CRM-161` T3.b.2 : le filtre « Espace » (§16.2).
+	const filtre = useFiltreEspaces()
 
 	/**
 	 * LE FOCUS EST RENDU à la commande qui a ouvert le formulaire (§14.5 cas c,
@@ -221,8 +229,12 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 	const contacts = [...etat.donnees, ...ajoutes].sort((gauche, droite) =>
 		gauche.full_name.localeCompare(droite.full_name, 'fr'),
 	)
-	// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) — état intermédiaire jusqu'à T3 (§15.2) : l'espace du contexte, et non plus le premier de la liste.
+	// `CRM-161` T2.a (§15.2) puis T3.b.2 (§16.2) : les gestes — création, export, import — agissent dans l'espace de l'onglet.
 	const idWorkspace = espaces.etat.statut === 'pret' ? idEspaceParmi(espaces.etat.donnees, idEspaceContexte) : null
+	const espacesNommes = filtre.visible ? filtre.espaces : undefined
+	// « Dans l'espace X » : à partir de deux espaces lus, la rangée des gestes et le formulaire nomment l'espace où ils agissent.
+	const nomEspaceDesGestes = nomEspace(espacesNommes, idWorkspace)
+	const contactsAffiches = filtrerParEspace(contacts, filtre.choisis, (contact) => contact.workspace_id)
 	// `CRM-093` — la capacité d'éditer l'espace, rendue par la base sur sa ligne (§5.59) : refusée, la commande reste
 	// montée, désactivée, et cite le motif dit une fois en tête du carnet.
 	const commande = proprietesCommande(capacites.edition, ID_MOTIF_CARNET)
@@ -237,6 +249,7 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 			<FormulaireCreationContact
 				client={client}
 				idWorkspace={idWorkspace}
+				nomEspace={nomEspaceDesGestes}
 				organisations={organisations}
 				onRelireOrganisations={() => setTentativeOrganisations((precedente) => precedente + 1)}
 				onCree={surCree}
@@ -266,6 +279,11 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 					/>
 					{importOuvert ? null : (
 						<CommandeImport ref={commandeImport} idMotif={ID_MOTIF_CARNET} onOuvrir={() => setImportOuvert(true)} />
+					)}
+					{nomEspaceDesGestes === null ? null : (
+						<span data-testid="espace-des-gestes" className="self-center text-sm text-text-2">
+							{t('spaces.creation.in', { nom: nomEspaceDesGestes })}
+						</span>
 					)}
 				</div>
 				{importOuvert ? (
@@ -298,106 +316,126 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 	return (
 		<section aria-label={t('contacts.aria')} className="flex flex-col gap-4">
 			{geste}
-			<div className="overflow-x-auto indique-debordement-x">
-				<table data-testid="tableau-contacts" className="w-full border-collapse text-left">
-					<caption className="sr-only">{t('contacts.table.aria')}</caption>
-					<thead>
-						<tr className="border-b border-border">
-							<th scope="col" className={CLASSES_ENTETE}>
-								{t('contacts.table.name')}
-							</th>
-							<th scope="col" className={CLASSES_ENTETE}>
-								{t('contacts.table.organization')}
-							</th>
-							<th scope="col" className={CLASSES_ENTETE}>
-								{t('contacts.table.role')}
-							</th>
-							<th scope="col" className={`${CLASSES_ENTETE} text-right`}>
-								{t('contacts.table.email')}
-							</th>
-							<th scope="col" className={`${CLASSES_ENTETE} text-right`}>
-								{t('contacts.table.phone')}
-							</th>
-						</tr>
-					</thead>
-					<tbody>
-						{contacts.map((contact) => (
-							<tr
-								key={contact.id}
-								data-testid="ligne-contact"
-								data-contact={contact.id}
-								className="border-b border-border hover:bg-hover"
-							>
-								{/*
-								  LE NOM DU CONTACT EST UN LIEN VERS SA FICHE — §15.6, révision du
-								  2026-08-19. Il était un TEXTE tant que la fiche n'existait pas :
-								  un lien sans destination aurait été mort (§11.8, §5.10). La
-								  sous-tranche 4f livre cette destination, et la règle change donc
-								  par LIVRAISON, exactement comme le §11.6 l'avait fait pour
-								  l'organisation — non par contournement.
-
-								  Le nom est TOUJOURS présent : `contacts_full_name_check` refuse
-								  un nom blanc en base. Il n'existe donc ici aucune cellule sans
-								  lien, contrairement à celle de l'organisation juste dessous.
-								*/}
-								<td className={CLASSES_CELLULE} title={contact.full_name}>
-									<Link
-										to={cheminContact(contact.id)}
-										data-testid="lien-contact"
-										className="text-brand hover:underline"
-									>
-										{contact.full_name}
-									</Link>
-								</td>
-								{/*
-								  LE NOM DE L'ORGANISATION EST UN LIEN VERS SA FICHE — §11.6, révision
-								  du 2026-08-18. Il était un TEXTE tant que la fiche n'existait pas :
-								  un lien sans destination aurait été mort (§10.7, §5.10). La
-								  sous-tranche 4b livre cette destination, et la règle change donc par
-								  LIVRAISON, non par contournement.
-
-								  Une cellule sans organisation reste VIDE et SANS LIEN — ni tiret, ni
-								  « non renseigné » (§5.9) : un lien n'apparaît que là où il a une
-								  destination.
-
-								  AUCUN `aria-label` sur le lien, et c'est délibéré : il remplacerait
-								  le nom de l'organisation par un libellé identique sur chaque ligne,
-								  rendant les liens indistinguables pour un lecteur d'écran (§8). Le
-								  nom EST le libellé du lien.
-								*/}
-								<td
-									className={CLASSES_CELLULE}
-									title={contact.organisation === null ? undefined : contact.organisation.name}
-								>
-									{contact.organisation === null ? (
-										''
-									) : (
-										<Link
-											to={cheminOrganisation(contact.organisation.id)}
-											data-testid="lien-organisation"
-											className="inline-flex items-center min-h-[var(--size-target)] text-brand hover:underline"
-										>
-											{contact.organisation.name}
-										</Link>
-									)}
-								</td>
-								<td
-									className={CLASSES_CELLULE}
-									title={contact.role_title === null ? undefined : contact.role_title}
-								>
-									{contact.role_title ?? ''}
-								</td>
-								<td className={CLASSES_CELLULE_TECHNIQUE}>
-									{contact.email === null ? '' : <code className="text-text-2">{contact.email}</code>}
-								</td>
-								<td className={CLASSES_CELLULE_TECHNIQUE}>
-									{contact.phone === null ? '' : <code className="text-text-2">{contact.phone}</code>}
-								</td>
+			<FiltreEspaces filtre={filtre} />
+			{contactsAffiches.length === 0 ? (
+				<VideSousFiltreEspaces filtre={filtre} />
+			) : (
+				<div className="overflow-x-auto indique-debordement-x">
+					<table data-testid="tableau-contacts" className="w-full border-collapse text-left">
+						<caption className="sr-only">{t('contacts.table.aria')}</caption>
+						<thead>
+							<tr className="border-b border-border">
+								<th scope="col" className={CLASSES_ENTETE}>
+									{t('contacts.table.name')}
+								</th>
+								<th scope="col" className={CLASSES_ENTETE}>
+									{t('contacts.table.organization')}
+								</th>
+								<th scope="col" className={CLASSES_ENTETE}>
+									{t('contacts.table.role')}
+								</th>
+								<th scope="col" className={`${CLASSES_ENTETE} text-right`}>
+									{t('contacts.table.email')}
+								</th>
+								<th scope="col" className={`${CLASSES_ENTETE} text-right`}>
+									{t('contacts.table.phone')}
+								</th>
+								{/* `CRM-161` T3.b.2 — la provenance, dernière colonne : le carnet n'a pas de colonne d'actions (§5.115). */}
+								{espacesNommes === undefined ? null : (
+									<th scope="col" className={CLASSES_ENTETE}>
+										{t('spaces.column')}
+									</th>
+								)}
 							</tr>
-						))}
-					</tbody>
-				</table>
-			</div>
+						</thead>
+						<tbody>
+							{contactsAffiches.map((contact) => (
+								<tr
+									key={contact.id}
+									data-testid="ligne-contact"
+									data-contact={contact.id}
+									className="border-b border-border hover:bg-hover"
+								>
+									{/*
+									  LE NOM DU CONTACT EST UN LIEN VERS SA FICHE — §15.6, révision du
+									  2026-08-19. Il était un TEXTE tant que la fiche n'existait pas :
+									  un lien sans destination aurait été mort (§11.8, §5.10). La
+									  sous-tranche 4f livre cette destination, et la règle change donc
+									  par LIVRAISON, exactement comme le §11.6 l'avait fait pour
+									  l'organisation — non par contournement.
+
+									  Le nom est TOUJOURS présent : `contacts_full_name_check` refuse
+									  un nom blanc en base. Il n'existe donc ici aucune cellule sans
+									  lien, contrairement à celle de l'organisation juste dessous.
+									*/}
+									<td className={CLASSES_CELLULE} title={contact.full_name}>
+										<Link
+											to={cheminContact(contact.id)}
+											data-testid="lien-contact"
+											className="text-brand hover:underline"
+										>
+											{contact.full_name}
+										</Link>
+									</td>
+									{/*
+									  LE NOM DE L'ORGANISATION EST UN LIEN VERS SA FICHE — §11.6, révision
+									  du 2026-08-18. Il était un TEXTE tant que la fiche n'existait pas :
+									  un lien sans destination aurait été mort (§10.7, §5.10). La
+									  sous-tranche 4b livre cette destination, et la règle change donc par
+									  LIVRAISON, non par contournement.
+
+									  Une cellule sans organisation reste VIDE et SANS LIEN — ni tiret, ni
+									  « non renseigné » (§5.9) : un lien n'apparaît que là où il a une
+									  destination.
+
+									  AUCUN `aria-label` sur le lien, et c'est délibéré : il remplacerait
+									  le nom de l'organisation par un libellé identique sur chaque ligne,
+									  rendant les liens indistinguables pour un lecteur d'écran (§8). Le
+									  nom EST le libellé du lien.
+									*/}
+									<td
+										className={CLASSES_CELLULE}
+										title={contact.organisation === null ? undefined : contact.organisation.name}
+									>
+										{contact.organisation === null ? (
+											''
+										) : (
+											<Link
+												to={cheminOrganisation(contact.organisation.id)}
+												data-testid="lien-organisation"
+												className="inline-flex items-center min-h-[var(--size-target)] text-brand hover:underline"
+											>
+												{contact.organisation.name}
+											</Link>
+										)}
+									</td>
+									<td
+										className={CLASSES_CELLULE}
+										title={contact.role_title === null ? undefined : contact.role_title}
+									>
+										{contact.role_title ?? ''}
+									</td>
+									<td className={CLASSES_CELLULE_TECHNIQUE}>
+										{contact.email === null ? '' : <code className="text-text-2">{contact.email}</code>}
+									</td>
+									<td className={CLASSES_CELLULE_TECHNIQUE}>
+										{contact.phone === null ? '' : <code className="text-text-2">{contact.phone}</code>}
+									</td>
+									{espacesNommes === undefined ? null : (
+										<td
+											data-testid="espace-contact"
+											className={`${CLASSES_CELLULE} text-text-2`}
+											title={nomEspace(espacesNommes, contact.workspace_id) ?? undefined}
+										>
+											{nomEspace(espacesNommes, contact.workspace_id) ?? ''}
+										</td>
+									)}
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
+			)}
 		</section>
 	)
 }

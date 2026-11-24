@@ -101,4 +101,3 @@ describe('un lien de la même page garde le filtre (§5.115, T3.b.2)', () => {
 		)
 	})
 })
-

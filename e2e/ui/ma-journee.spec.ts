@@ -439,4 +439,3 @@ test.describe('`CRM-161` T3.b.2 — la journée de tous les espaces (docs/DESIGN
 		}
 	})
 })
-

@@ -15,6 +15,10 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Le carnet de contacts montre tous vos espaces** (`CRM-161` T3.b.2) : à partir de deux espaces, une colonne « Espace »
+  (deux homonymes s'y distinguent) et le bouton « Espace » ; « Nouveau contact », l'export et l'import restent dans
+  l'espace où vous vous trouvez et le disent (« Dans l'espace X »). Manuel chapitre 10.
+
 - **« Ma journée » nomme l'espace de chaque affaire** (`CRM-161` T3.b.2) : à partir de deux espaces, le nom de l'espace
   sous le titre de chaque affaire, le bouton « Espace » sous les onglets de portée ; changer de portée garde le filtre.
   Manuel §6.2.
@@ -24,6 +28,12 @@ d'exécuter le code attendu.
   (dans la barre de filtres de « Rentabilité », au-dessus des graphiques de « Coûts ») isole des espaces, le choix vit dans
   l'adresse (`?espaces=`), et les totaux de « Coûts » suivent. Pour une personne d'un seul espace, rien ne change. Manuel
   §3.2 bis, §26.1 et §29.3. Aucune migration.
+
+### Corrigé
+
+- **Le formulaire d'un contact n'offre plus que les organisations de son espace** (`CRM-161` T3.b.2,
+  `docs/SPEC-espace-courant.md` §16.4) : à la création comme à la modification, le sélecteur proposait les organisations de
+  tous vos espaces, et choisir celle d'un autre espace finissait sur un refus de la base.
 
 ## [Publié]
 

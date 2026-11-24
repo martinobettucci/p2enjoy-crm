@@ -1,5 +1,8 @@
 // @verifies CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranches 4a et 4b
 // @verifies CRM-093 (docs/BACKLOG.md) tranche T3 — « Nouveau contact » selon la capacité d'éditer l'espace
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : le carnet de tous les espaces — colonne « Espace », filtre, vide
+//           sous le filtre, « Dans l'espace X » sur les gestes et le formulaire, organisations de l'espace de la création ;
+//           rien d'un seul espace (docs/SPEC-espace-courant.md §16.2, §16.3, §16.4 ; docs/DESIGN_SYSTEM.md §5.115)
 //           (docs/SPEC-droits-interface.md §3, §4 ; docs/DESIGN_SYSTEM.md §5.59)
 // @verifies docs/SPEC-contacts.md §10.5 (de quoi l'écran a l'air), §10.6 (cas a à f du contrat
 //           de comportement), §10.7 (aucun geste)
@@ -594,5 +597,87 @@ describe('Carnet — « Nouveau contact » selon la capacité d’éditer (CRM-0
 			expect(screen.queryByTestId('motif-lecture-seule')).toBeNull()
 			cleanup()
 		}
+	})
+})
+
+describe('`CRM-161` T3.b.2 — le carnet de tous les espaces (§16.3, §5.115)', () => {
+	const P2ENJOY = { id: 'ws-p', name: 'P2Enjoy SAS', slug: 'p2enjoy' }
+	const LUMEN = { id: 'ws-l', name: 'Studio Lumen', slug: 'studio-lumen' }
+	const CONTACTS = [
+		{ ...LEO, workspace_id: 'ws-p' },
+		{ ...SOPHIE, workspace_id: 'ws-l' },
+	]
+
+	/** Une réponse par table, et le relevé des filtres posés sur chacune. */
+	function clientParTable(reponses: Record<string, unknown[]>) {
+		const filtres: Record<string, string[]> = {}
+		const client = {
+			from: (table: string) => ({
+				select: () => {
+					const chaine: Record<string, unknown> = {
+						order: () => chaine,
+						eq: (colonne: string, valeur: string) => {
+							;(filtres[table] ??= []).push(`${colonne}=${valeur}`)
+							return chaine
+						},
+						then: (resoudre: (valeur: Reponse) => unknown) =>
+							Promise.resolve({ data: reponses[table] ?? [], error: null, status: 200 }).then(resoudre),
+					}
+					return chaine
+				},
+			}),
+		} as unknown as ClientCrm
+		return { client, filtres }
+	}
+
+	const monterDans = (espaces: readonly (typeof P2ENJOY)[], adresse = '/contacts') => {
+		const { client, filtres } = clientParTable({ contacts: CONTACTS, workspaces: [...espaces], organizations: [] })
+		render(
+			<MemoryRouter initialEntries={[adresse]}>
+				<FournisseurEspace valeur={{ idWorkspace: 'ws-p', estAdmin: true, espaces }}>
+					<Carnet client={client} />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+		return filtres
+	}
+
+	it('lit les contacts de tous les espaces, sans filtre par l’espace de l’onglet', async () => {
+		const filtres = monterDans([P2ENJOY, LUMEN])
+		expect(await screen.findAllByTestId('ligne-contact')).toHaveLength(2)
+		expect(filtres.contacts).toBeUndefined()
+	})
+
+	it('à deux espaces : la colonne « Espace », la dernière, nomme l’espace de chaque contact', async () => {
+		monterDans([P2ENJOY, LUMEN])
+		await screen.findAllByTestId('ligne-contact')
+		const entetes = screen.getAllByRole('columnheader').map((entete) => entete.textContent)
+		expect(entetes.at(-1)).toBe('Espace')
+		expect(screen.getAllByTestId('espace-contact').map((cellule) => cellule.textContent)).toEqual(['P2Enjoy SAS', 'Studio Lumen'])
+		expect(screen.getByRole('button', { name: 'Espace' })).toBeTruthy()
+	})
+
+	it('les gestes disent l’espace où ils agissent, et le formulaire aussi ; ses organisations sont celles de cet espace', async () => {
+		const filtres = monterDans([P2ENJOY, LUMEN])
+		expect(await screen.findByTestId('espace-des-gestes')).toBeTruthy()
+		expect(screen.getByTestId('espace-des-gestes').textContent).toBe('Dans l’espace P2Enjoy SAS')
+		await userEvent.click(screen.getByTestId('ouvrir-creation-contact'))
+		expect(screen.getByTestId('espace-creation-contact').textContent).toBe('Dans l’espace P2Enjoy SAS')
+		await waitFor(() => expect(filtres.organizations).toEqual(['workspace_id=ws-p']))
+	})
+
+	it('le filtre de l’adresse ne garde que les contacts de l’espace choisi', async () => {
+		monterDans([P2ENJOY, LUMEN], '/contacts?espaces=studio-lumen')
+		await waitFor(() => expect(screen.getAllByTestId('ligne-contact')).toHaveLength(1))
+		expect(screen.getByText('Sophie Dupont')).toBeTruthy()
+		expect(screen.getByRole('button', { name: 'Espace (1)' })).toBeTruthy()
+	})
+
+	it('d’un seul espace : ni colonne, ni bouton, ni « Dans l’espace » — le carnet d’avant', async () => {
+		monterDans([P2ENJOY])
+		await screen.findAllByTestId('ligne-contact')
+		expect(screen.queryByTestId('espace-contact')).toBeNull()
+		expect(screen.queryByTestId('filtre-espaces')).toBeNull()
+		expect(screen.queryByTestId('espace-des-gestes')).toBeNull()
 	})
 })

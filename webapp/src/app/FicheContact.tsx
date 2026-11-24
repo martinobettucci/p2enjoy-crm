@@ -71,6 +71,8 @@
 // « Conseil IA » est fermé, reçoit zéro rattachement sur la fiche de Léo, et l'affaire de Sophie
 // sur la sienne. La zone vide d'un lecteur restreint est l'état vide ordinaire du §5.8, jamais un
 // refus mis en scène.
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : le sélecteur d'organisations de « Modifier » ne lit que l'espace du
+//       contact (docs/SPEC-espace-courant.md §16.4)
 
 import { Archive } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -243,6 +245,7 @@ export function ContenuFicheContact({
 	const reprendre = useCallback(() => setTentative((precedente) => precedente + 1), [])
 
 	const contact = etat.statut === 'pret' ? etat.donnees : null
+	const idEspaceDuContact = contact?.workspace_id ?? null
 
 	// --- SOUS-TRANCHE 4g : LE GESTE DE MODIFICATION (§16.2) -------------------------------------
 	// Le formulaire est REPLIÉ PAR DÉFAUT : la fiche est d'abord une surface de lecture, et ce
@@ -260,13 +263,15 @@ export function ContenuFicheContact({
 		if (client === null || !ouvert) return
 		let vivant = true
 		setOrganisations(enChargement())
-		void lireOrganisationsDuWorkspace(client).then((lues) => {
+		// `CRM-161` T3.b.2 (docs/SPEC-espace-courant.md §16.4) : les organisations de l'espace du contact seulement — la base
+		// refuse un contact rattaché à l'organisation d'un autre espace.
+		void lireOrganisationsDuWorkspace(client, idEspaceDuContact ?? undefined).then((lues) => {
 			if (vivant) setOrganisations(lues)
 		})
 		return () => {
 			vivant = false
 		}
-	}, [client, ouvert, tentativeOrganisations])
+	}, [client, ouvert, tentativeOrganisations, idEspaceDuContact])
 
 	/**
 	 * LE FOCUS EST RENDU à la commande d'ouverture APRÈS LE RENDU (§16.5, §16.9 cas c).

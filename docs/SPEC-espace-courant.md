@@ -552,7 +552,7 @@ l'onglet ; décision 976) prend fin écran par écran, chacun dans sa sous-tranc
 | Affaires figées | `cards_figees()`, tous | inchangée | dans l'en-tête de chaque groupe (la liste est groupée par dossier, §5.37 ; un dossier n'a qu'un espace) | oui | aucun (rend `workspace_id`) |
 | Objectifs (liste) | `goal_boards` de l'espace de l'onglet | tous les espaces ; **groupés par espace**, une section par espace (l'ordre `position` n'a de sens que dans un espace) | titre de section | oui | aucun |
 | Objectifs (un tableau) | un tableau | inchangée ; le fil d'Ariane nomme son espace | — | — | — |
-| Contacts (carnet) | l'espace de l'onglet (976) | tous | colonne | oui | aucun (`contacts.workspace_id`) |
+| Contacts (carnet) | l'espace de l'onglet (976) | tous ; filtre en mémoire (lecture non paginée, `docs/SPEC-contacts.md` §10.7) | colonne, la dernière | oui, entre les gestes et le tableau | aucun (`contacts.workspace_id`) ; *précisé au code de T3.b.2* : « Nouveau contact », l'export et l'import agissent dans l'espace de l'onglet, et la rangée des gestes le dit (« Dans l'espace X ») |
 | Organisations | `organization_list(p_workspace_id …)`, un espace | tous, paginée | colonne | oui, **par la lecture** | **migration** : `p_workspace_ids uuid[]` facultatif (absent : tous les espaces lus), `workspace_id` rendu |
 | Pilotage | l'espace de l'onglet (976) | **question Q1** (§16.6) | — | — | aucun (`entonnoir_conversion()` rend `workspace_id`) |
 | Temps ▸ Saisie | l'espace de l'onglet | **question Q2** (§16.6) | — | — | — |
@@ -572,6 +572,13 @@ l'onglet ; décision 976) prend fin écran par écran, chacun dans sa sous-tranc
 - **Les identités d'expédition du formulaire d'envoi** (limite de la décision 975) : `FormulaireEnvoi` reçoit l'espace de son
   objet — l'affaire (`RouteCard`), le message auquel il répond (`RouteInbox`) — et lit les identités de cet espace seul
   (`lireIdentitesDisponibles(client, idUtilisateur, idWorkspace)`, déjà prête).
+
+- **Les organisations offertes à un contact** (*relevé le 2026-11-24 au code de T3.b.2*) : le sélecteur du formulaire de
+  création (carnet) et de modification (fiche de contact) lisait toutes les organisations que la RLS rend, tous espaces
+  confondus, alors que la base refuse un contact rattaché à l'organisation d'un autre espace
+  (`contacts_organization_id_workspace_id_fkey`, clé composite) : choisir une organisation de « Studio Lumen » pour un
+  contact de « P2Enjoy SAS » finissait sur un refus. **Règle** : `lireOrganisationsDuWorkspace(client, idWorkspace)` lit les
+  organisations de l'espace de la création (l'onglet) ou du contact modifié (`contact.workspace_id`) seulement.
 
 ### 16.5 Le découpage
 

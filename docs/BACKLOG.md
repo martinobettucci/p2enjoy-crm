@@ -20622,7 +20622,15 @@ livraison (décision 830).
   Preuves : unitaires `provenance` 11/11, `ma-journee` 30/30, `MaJournee` 28/28 ; E2E `ma-journee` 17/17 (souris,
   clavier, portée, lectrice d'un seul espace, quatre paliers), API `ma-journee` 11/11 ; captures observées (`journee-*`) ; manuel §6.2 et §3.2 bis,
   construit, `verify-manual.sh` 170/170 ; scénario du manuel 06 2/2. Contrat §2.79 étendu ; changelog.
-  **Reste de T3.b.2** : Objectifs, Contacts, cloche, recherche, et les onglets « À saisir » de « Coûts » et « Rentabilité ».
+  **T3.b.2, le carnet de contacts, fait le 2026-11-24** : le carnet global (fin de l'état intermédiaire de la décision
+  976), la colonne « Espace » en dernier, le filtre en mémoire, « Dans l'espace X » sur la rangée des commandes et le
+  formulaire (§5.115 précisé). **Relevé corrigé** (§16.4) : le sélecteur d'organisations de la création et de la
+  modification lisait tous les espaces — E2E rouge avant sur les deux (« Maison Arlo » offerte au carnet, deux « Vertigo
+  Conseil » sur la fiche), vert après. Preuves : unitaires `contacts` 90/90, `Carnet` 28/28, `FicheContact` 81/81 ; E2E
+  `contacts` et `carnet-creation` 65/65 (souris, clavier, homonymes, fiche, lectrice d'un seul espace, quatre paliers ;
+  les comptes de l'administratrice passés de 11 à 13, décision 51) ; captures observées (`carnet-*`) ; manuel chapitre 10 et
+  §3.2 bis, construit, `verify-manual.sh` 170/170 ; scénario du manuel 10 9/9. Contrat §2.79 étendu ; changelog.
+  **Reste de T3.b.2** : Objectifs, cloche, recherche, et les onglets « À saisir » de « Coûts » et « Rentabilité ».
   **Relevés à reprendre dans T3** (*2026-11-21, session de livraison au constat du lot de T1 et T2 ; consignés par 5f*) :
   - **Les non-lus de chaque espace sous `md`.** À 390 px, la section « Espaces » du repli du fil d'Ariane ne montre aucune
     pastille de non-lus (capture `docs/captures/CRM-161/menu-espaces-sm-390.jpg`), alors que la décision 965 les veut au

@@ -54,7 +54,7 @@ export type OrganisationDuContact = Pick<
  */
 export type ContactDuCarnet = Pick<
 	Database['public']['Tables']['contacts']['Row'],
-	'id' | 'full_name' | 'email' | 'phone' | 'role_title' | 'organization_id'
+	'id' | 'full_name' | 'email' | 'phone' | 'role_title' | 'organization_id' | 'workspace_id'
 > & {
 	readonly organisation: OrganisationDuContact | null
 }
@@ -68,8 +68,9 @@ export type ContactDuCarnet = Pick<
  * `compterEnfantsInaccessibles` (`corbeille.ts`) et à `lireCardsClassables` (`inbox.ts`). Une
  * seconde requête serait ici un coût gratuit.
  */
+// `CRM-161` T3.b.2 : `workspace_id`, pour la colonne « Espace » du carnet et son filtre (docs/SPEC-espace-courant.md §16.3).
 export const COLONNES_CONTACT_CARNET =
-	'id, full_name, email, phone, role_title, organization_id, organizations(id, name, domain)'
+	'id, full_name, email, phone, role_title, organization_id, workspace_id, organizations(id, name, domain)'
 
 /** Colonne de tri : un carnet se parcourt par le nom affiché (§10.3). */
 export const TRI_CARNET = 'full_name'
@@ -679,9 +680,17 @@ export async function creerContact(
  */
 export async function lireOrganisationsDuWorkspace(
 	client: ClientCrm,
+	/**
+	 * `CRM-161` T3.b.2 (docs/SPEC-espace-courant.md §16.4, relevé du 2026-11-24) : l'espace de la création ou du contact
+	 * modifié. La base refuse un contact rattaché à l'organisation d'un autre espace (clé composite
+	 * `contacts_organization_id_workspace_id_fkey`) : le sélecteur n'offre donc que celles de cet espace. Omis : tout ce que
+	 * la RLS rend, la lecture d'avant.
+	 */
+	idWorkspace?: string,
 ): Promise<EtatAsync<readonly OrganisationChoisissable[]>> {
 	try {
-		const reponse = await client.from('organizations').select(COLONNES_ORGANISATION_CHOIX).order('name')
+		const toutes = client.from('organizations').select(COLONNES_ORGANISATION_CHOIX)
+		const reponse = await (idWorkspace === undefined ? toutes : toutes.eq('workspace_id', idWorkspace)).order('name')
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}

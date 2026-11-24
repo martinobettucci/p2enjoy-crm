@@ -42163,3 +42163,18 @@ publié ; contrat §2.74 à §2.78 LIVRÉES, §3 et §8, changelog en [Publié],
   personne arrivent (pour ranger les tracks par espace), ce qui élargit la fenêtre. Le scénario attend désormais les deux
   tableaux ; deux passages suivants rendent l'écran entier.
 - **Vérifications.** Voir l'entrée du backlog (`CRM-161`, T3.b.1).
+
+### `CRM-161` T3.b.2 — le carnet global, et les organisations d'un autre espace offertes à un contact
+
+*2026-11-24, session 4891a451 (p2enjoy-crm-7a).*
+- **Le problème.** En rendant le carnet global, les commandes de création, d'export et d'import restent attachées à
+  l'espace de l'onglet (l'export appelle `export_contacts(p_workspace)`, l'import et la création écrivent `workspace_id`) :
+  sur une liste de tous les espaces, rien ne disait où elles agissent. Et le sélecteur d'organisations de la création
+  comme de la modification lisait toutes les organisations que la RLS rend, alors que la clé composite
+  `contacts_organization_id_workspace_id_fkey` refuse un contact rattaché à l'organisation d'un autre espace.
+- **Observation.** Le seed le montre : « Vertigo Conseil » et « Nadia Benali » existent dans les deux espaces.
+- **Décision (de l'agent, dans le cadre du §16.2).** La rangée des commandes se termine par « Dans l'espace X », et le
+  formulaire commence par la même phrase (§5.115) ; le sélecteur ne lit que l'espace de la création (l'onglet) ou du
+  contact modifié (§16.4).
+- **Vérifications.** E2E rouge avant sur l'ancienne lecture, au carnet (« Maison Arlo » offerte) et sur la fiche (deux
+  « Vertigo Conseil »), vertes après ; voir l'entrée du backlog.
