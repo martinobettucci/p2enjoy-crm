@@ -9,6 +9,8 @@
 // CE MODULE N'INVENTE AUCUNE RÈGLE, comme `card-costs.ts` : la base tient le réel dérivé, la ligne soldée figée, la
 // devise verrouillée et le droit d'écrire. Rien n'est anticipé pour décider si une requête part ; le refus reçu est
 // traduit (`CLAUDE.md` §10). Les réels d'une ligne s'écrivent par `lib/reels-ligne.ts`, sorte « recette ».
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : l'espace de l'affaire de chaque recette en attente
+//       (docs/SPEC-espace-courant.md §16.3)
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { Database } from './database.types'
@@ -171,6 +173,8 @@ export function supprimerLigneRecette(client: ClientCrm, id: string): Promise<Re
 export type AffaireDeLaRecette = {
 	readonly id: string
 	readonly title: string
+	/** `CRM-161` T3.b.2 : l'espace de l'affaire — la ligne de recette n'en porte pas, il se lit par l'affaire (§16.3). */
+	readonly workspace_id?: string
 	readonly currency: string
 	readonly archived_at: string | null
 	readonly channels: {
@@ -192,7 +196,7 @@ export type RecetteASaisir = Pick<
 // `CRM-111` T2.4.1 : l'archivage et le channel de l'affaire se lisent sur son plus ancien rattachement
 // (docs/SPEC-rattachements.md §5), ramenés à la forme d'avant par `situerLigne`.
 export const COLONNES_RECETTE_A_SAISIR =
-	'id, label, estimated_amount, actual_amount, created_at, recette_saisissable, cards!inner(id, title, currency, card_placements!card_placements_card_fk(id, created_at, archived_at, channels!card_placements_channel_fk(slug, tracks(slug, name))))'
+	'id, label, estimated_amount, actual_amount, created_at, recette_saisissable, cards!inner(id, title, workspace_id, currency, card_placements!card_placements_card_fk(id, created_at, archived_at, channels!card_placements_channel_fk(slug, tracks(slug, name))))'
 
 /** Une ligne telle que `COLONNES_RECETTE_A_SAISIR` la rend, avant `situerLigne`. */
 type RecetteASaisirLue = Omit<RecetteASaisir, 'cards'> & {

@@ -22,12 +22,17 @@
 // LE CLAVIER EST ÉPROUVÉ AU CLAVIER, jamais par un appel de fonction : `Entrée` est la raison
 // d'être de cet écran (§5.31), et une preuve qui appellerait le gestionnaire directement ne dirait
 // rien du focus, qui est précisément ce que la règle promet.
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : dans la portée de tous les espaces, l'espace de chaque affaire sous
+//           son titre à partir de deux espaces lus ; rien d'un seul espace, ni dans la portée d'un track
+//           (docs/SPEC-espace-courant.md §16.3 ; docs/DESIGN_SYSTEM.md §5.115)
 
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
-import { ZoneCoutsAOnglets } from './CoutsASaisir'
+import { TableASaisir, ZoneCoutsAOnglets } from './CoutsASaisir'
+import { FournisseurEspace } from './ContexteEspace'
+import type { LigneASaisir } from '../lib/couts-a-saisir'
 import { fr } from '../i18n/fr'
 import type { ClientCrm } from '../lib/supabase'
 
@@ -547,5 +552,47 @@ describe('La saisie, au clavier et pour elle-même (§4.8, §4.8.1, §5.7 ter)',
 		await clavier.type(champ, '42{Enter}')
 		expect(champ.value).toBe('')
 		expect(envois).toHaveLength(0)
+	})
+})
+
+describe('`CRM-161` T3.b.2 — l’espace de chaque affaire en attente (§16.3)', () => {
+	const P2ENJOY = { id: 'ws-p', name: 'P2Enjoy SAS', slug: 'p2enjoy' }
+	const LUMEN = { id: 'ws-l', name: 'Studio Lumen', slug: 'studio-lumen' }
+	const situee = (id: string, espace: string): LigneASaisir => {
+		const brute = ligneEnAttente(id, `Ligne ${id}`)
+		return {
+			...brute,
+			cards: {
+				id: `c-${id}`,
+				title: `Affaire ${id}`,
+				workspace_id: espace,
+				archived_at: null,
+				channels: { slug: 'nouvelles', tracks: { id: 't1', slug: 'conseil-ia', name: 'Conseil' } },
+			},
+		} as unknown as LigneASaisir
+	}
+	const monterTable = (espaces: readonly (typeof P2ENJOY)[], nommerEspace: boolean) =>
+		render(
+			<MemoryRouter>
+				<FournisseurEspace valeur={{ idWorkspace: 'ws-p', estAdmin: true, espaces }}>
+					<TableASaisir lignes={[situee('1', 'ws-p'), situee('2', 'ws-l')]} client={null} nommerEspace={nommerEspace} />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+
+	it('portée de tous les espaces, deux espaces lus : chaque affaire nomme le sien sous son titre', () => {
+		monterTable([P2ENJOY, LUMEN], true)
+		expect(screen.getAllByTestId('espace-a-saisir').map((mention) => mention.textContent)).toEqual([
+			'P2Enjoy SAS',
+			'Studio Lumen',
+		])
+	})
+
+	it('d’un seul espace, ou dans la portée d’un track : aucune mention', () => {
+		monterTable([P2ENJOY], true)
+		expect(screen.queryByTestId('espace-a-saisir')).toBeNull()
+		cleanup()
+		monterTable([P2ENJOY, LUMEN], false)
+		expect(screen.queryByTestId('espace-a-saisir')).toBeNull()
 	})
 })

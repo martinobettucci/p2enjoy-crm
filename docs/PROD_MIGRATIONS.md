@@ -1660,7 +1660,7 @@ aucune variable, aucun secret.**
 | 2 | Constater | le responsable | à l'ouverture d'une fiche d'affaire, le bloc « Relance automatique » montre un bref squelette, puis « Aucune relance n'est armée » et le geste, ou l'état d'une relance armée — jamais l'un puis l'autre |
 
 **Ce qui devient visible** : le squelette, le temps des trois lectures. **Retour arrière** : la webapp de la révision d'avant.
-### 2.79 `CRM-161` T3.b — le filtre « Espace » et la provenance, sur « Rentabilité », « Coûts », « Ma journée », le carnet, les objectifs, la cloche et la recherche
+### 2.79 `CRM-161` T3.b — le filtre « Espace » et la provenance des listes sans backend (« Rentabilité », « Coûts » et leurs onglets « À saisir », « Ma journée », le carnet, les objectifs, la cloche, la recherche)
 
 `docs/SPEC-espace-courant.md` §16.3 et §16.5 ; `docs/DESIGN_SYSTEM.md` §5.115. La webapp seule : `FiltreEspaces` scindé
 (bouton et panneau), « Rentabilité » (filtre en mémoire, la ligne de chaque track nomme son espace), « Coûts » (la lecture des
@@ -1668,10 +1668,11 @@ tracks restreinte au filtre, le nom de l'espace sous chaque track du tableau), �
 lu, le nom de l'espace sous chaque affaire, filtre en mémoire, la portée qui garde le filtre), le carnet (global : la
 colonne « Espace », le filtre, « Dans l'espace X » sur les commandes ; le sélecteur d'organisations de la création et de
 la modification ne lit que l'espace concerné), la liste des objectifs (une section par espace, la création dite), la cloche et la recherche (le nom de l'espace sous
-chaque élément, sans filtre, décision 963). **Aucune migration, aucune variable, aucun secret** :
+chaque élément, sans filtre, décision 963), les onglets « À saisir » (le nom de l'espace sous l'affaire, lu par la relation
+`cards.workspace_id`). **Aucune migration, aucune variable, aucun secret** :
 `rentabilite_affaires` rendait déjà `workspace_id`, et `tracks`, `card_placements`, `contacts`, `organizations` et
 `goal_boards` et `notifications` portent leur `workspace_id`, lu sous la RLS existante ; `recherche_globale` le rendait
-déjà. Le manuel construit (chapitres 3, 4, 5, 6, 8, 10, 26 et 29) part avec elle. *Section tenue par 7a pendant T3.b : les écrans suivants s'y ajoutent ; la session de livraison groupe le lot.*
+déjà. Le manuel construit (chapitres 3, 4, 5, 6, 8, 10, 26 et 29) part avec elle. *T3.b complète en développement le 2026-11-24 (7a) ; la session de livraison groupe le lot.*
 
 | # | Geste | Qui | Comment |
 |---|---|---|---|

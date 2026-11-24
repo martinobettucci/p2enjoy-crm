@@ -49,6 +49,8 @@
 //     `conseil-ia`.
 // *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
 // le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : l'onglet de tous les espaces nomme l'espace de chaque affaire ;
+//           celui d'un track, ni la lectrice d'un seul espace, ne le nomment (docs/SPEC-espace-courant.md §16.3)
 
 import {
 	autoriserErreursConsole,
@@ -416,5 +418,30 @@ test.describe('CRM-086 — onglet « À saisir » (docs/SPEC-costs.md §4.8)', (
 
 		// Aucune erreur console n'est attendue : la liste vide est le verdict.
 		autoriserErreursConsole(page, [])
+	})
+})
+
+// `CRM-161` T3.b.2 — les lignes en attente du seed sont toutes dans « P2Enjoy SAS » ; Camille lit deux espaces. Rien n'est
+// écrit.
+test.describe('`CRM-161` T3.b.2 — l’espace de chaque affaire en attente (docs/SPEC-espace-courant.md §16.3)', () => {
+	test('la portée de tous les espaces nomme l’espace sous chaque affaire ; celle d’un track, non', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await page.goto(CUMUL_A_SAISIR)
+		const lignes = page.getByTestId('couts-a-saisir-ligne')
+		await expect(lignes.first()).toBeVisible()
+		await expect(page.getByTestId('espace-a-saisir')).toHaveCount(await lignes.count())
+		for (const texte of await page.getByTestId('espace-a-saisir').allTextContents()) expect(texte).toBe('P2Enjoy SAS')
+		await capturer(page, 'couts-a-saisir-espaces-1440', 'CRM-161')
+
+		await page.goto(TRACK_A_SAISIR)
+		await expect(lignes.first()).toBeVisible()
+		await expect(page.getByTestId('espace-a-saisir')).toHaveCount(0)
+	})
+
+	test('la lectrice, d’un seul espace : aucune mention', async ({ page }) => {
+		await connecter(page, VIEWER)
+		await page.goto(CUMUL_A_SAISIR)
+		await expect(page.getByTestId('couts-a-saisir-ligne').first()).toBeVisible()
+		await expect(page.getByTestId('espace-a-saisir')).toHaveCount(0)
 	})
 })

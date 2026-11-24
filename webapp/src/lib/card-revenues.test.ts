@@ -5,9 +5,12 @@
 // @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — les noms de la rentabilité se lisent sur les rattachements (docs/SPEC-rattachements.md §5)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T5.1 : le montant comparé est celui de chaque rattachement, par channel
 //           (docs/SPEC-rattachements.md §6, décision 643)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : la lecture des recettes à saisir demande l'espace de l'affaire
+//           (docs/SPEC-espace-courant.md §16.3)
 
 import { describe, expect, it } from 'vitest'
 import {
+	COLONNES_RECETTE_A_SAISIR,
 	ancienneteRecette,
 	classerRefusRecette,
 	creerLigneRecette,
@@ -179,5 +182,11 @@ describe('la lecture de la rentabilité', () => {
 		await lireNomsRentabilite(client, ids)
 		expect(appels).toHaveLength(2)
 		expect((appels[0]?.filtres[0]?.[2] as string[]).length).toBe(TAILLE_LOT_NOMS)
+	})
+})
+
+describe('`CRM-161` T3.b.2 — l’espace de l’affaire d’une recette à saisir (§16.3)', () => {
+	it('la lecture demande l’espace de l’affaire, que l’onglet nomme à partir de deux espaces lus', () => {
+		expect(COLONNES_RECETTE_A_SAISIR).toContain('cards!inner(id, title, workspace_id,')
 	})
 })

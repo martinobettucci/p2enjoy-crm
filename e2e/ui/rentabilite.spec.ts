@@ -15,6 +15,8 @@
 //           (docs/SPEC-espace-courant.md §16.2, §16.3 ; docs/DESIGN_SYSTEM.md §5.115)
 // *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
 // le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : l'onglet « À saisir » nomme l'espace de chaque affaire
+//           (docs/SPEC-espace-courant.md §16.3)
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
@@ -291,4 +293,14 @@ test.describe('`CRM-161` T3.b — la rentabilité de tous les espaces (docs/DESI
 			await capturer(page, `rentabilite-filtre-${palier.nom}`, UNITE_T3)
 		}
 	})
+})
+
+test('`CRM-161` T3.b.2 — l’onglet « À saisir » nomme l’espace de l’affaire de chaque recette (§16.3)', async ({ page }) => {
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto('/rentabilite?onglet=saisir')
+	const lignes = page.getByTestId('tableau-recettes-a-saisir').locator('tbody tr')
+	await expect(lignes.first()).toBeVisible()
+	await expect(page.getByTestId('espace-a-saisir')).toHaveCount(await lignes.count())
+	for (const texte of await page.getByTestId('espace-a-saisir').allTextContents()) expect(texte).toBe('P2Enjoy SAS')
+	await capturer(page, 'rentabilite-a-saisir-espaces-1440', 'CRM-161')
 })

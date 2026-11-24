@@ -589,7 +589,9 @@ l'onglet ; décision 976) prend fin écran par écran, chacun dans sa sous-tranc
   et « Studio Lumen » dans le seed : ses quatre affaires figées sont toutes dans le premier, et isoler « Studio Lumen » rend
   le vide sous le filtre. Aucune affaire figée n'est ajoutée à « Studio Lumen » : le seed tient la suite exacte des quatre
   retards (`docs/SPEC-relances.md` §10.2.1), que plusieurs preuves assèrent entière.
-- **T3.b — les listes sans backend** : Ma journée, Objectifs, Contacts, Coûts, Rentabilité, cloche, recherche. *Ordonné le
+- **T3.b — les listes sans backend** : Ma journée, Objectifs, Contacts, Coûts, Rentabilité, cloche, recherche. *Faite en
+  développement le 2026-11-24* (T3.b.1 puis T3.b.2 ; les onglets « À saisir » nomment l'espace sous l'affaire, sans
+  filtre, `docs/DESIGN_SYSTEM.md` §5.115). *Ordonné le
   2026-11-24 au code* : **T3.b.1** Rentabilité et Coûts (« Vue d'ensemble » ; l'onglet « À saisir » des deux écrans liste
   des lignes de tous les espaces et recevra sa provenance avec les listes) ; **T3.b.2** Ma journée, Objectifs, Contacts,
   cloche, recherche, et les deux onglets « À saisir ». Le composant du filtre se scinde pour une page qui a déjà sa barre :

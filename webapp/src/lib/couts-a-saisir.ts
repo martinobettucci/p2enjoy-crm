@@ -35,6 +35,8 @@
 // spécifié.
 // @spec CRM-099 (docs/BACKLOG.md) — tranche T2 : l'onglet liste les lignes non soldées ; saisir ajoute un réel, la
 //       base tient la somme (docs/SPEC-costs.md §2.3 bis, docs/DESIGN_SYSTEM.md §5.31 bis)
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : l'espace de l'affaire de chaque ligne en attente (docs/SPEC-espace-courant.md
+//       §16.3)
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { Database } from './database.types'
@@ -84,6 +86,8 @@ export type OccurrenceDeLaLigne = Pick<
 export type AffaireDeLaLigne = {
 	readonly id: string
 	readonly title: string
+	/** `CRM-161` T3.b.2 : l'espace de l'affaire — la ligne de coût n'en porte pas, il se lit par l'affaire (§16.3). */
+	readonly workspace_id?: string
 	readonly archived_at: string | null
 	readonly channels: {
 		readonly slug: string
@@ -136,7 +140,7 @@ export type LigneASaisir = Pick<
  * (mesuré par `card-costs.ts`) : la clé retenue est `card_placements_channel_fk`, celle du channel seul.
  */
 export const COLONNES_LIGNE_A_SAISIR =
-	'id, label, estimated_cost, created_at, actual_cost, reel_saisissable, budgets!inner(id, name, currency, is_recurrent, closed_at, stale_after_days), budget_occurrences(id, label, closed_at), cards!inner(id, title, card_placements!card_placements_card_fk(id, created_at, archived_at, channels!card_placements_channel_fk(slug, tracks(id, slug, name)))))'
+	'id, label, estimated_cost, created_at, actual_cost, reel_saisissable, budgets!inner(id, name, currency, is_recurrent, closed_at, stale_after_days), budget_occurrences(id, label, closed_at), cards!inner(id, title, workspace_id, card_placements!card_placements_card_fk(id, created_at, archived_at, channels!card_placements_channel_fk(slug, tracks(id, slug, name)))))'
 
 /** Une ligne telle que `COLONNES_LIGNE_A_SAISIR` la rend, avant `situerLigne`. */
 type LigneASaisirLue = Omit<LigneASaisir, 'cards'> & { readonly cards: AffaireParRattachements<AffaireDeLaLigne> | null }

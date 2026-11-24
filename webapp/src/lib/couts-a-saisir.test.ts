@@ -25,6 +25,8 @@
 // de la RÉPONSE, pas un champ calculé ici : une réponse amputée, un cache de schéma PostgREST périmé
 // ou une jointure malformée la rendent absente, et le repli doit alors être le REFUS. Un module qui
 // replierait vers « saisissable » afficherait des champs dont chaque envoi serait refusé.
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : la lecture demande l'espace de l'affaire de chaque ligne
+//           (docs/SPEC-espace-courant.md §16.3)
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -180,6 +182,8 @@ describe('lireLignesASaisir — la requête émise', () => {
 		// Sans cette colonne, le §4.8 serait inapplicable : l'écran ne saurait pas quelles lignes
 		// rendre en lecture seule AVANT de rendre le champ (§4.8.1).
 		expect(COLONNES_LIGNE_A_SAISIR).toContain('reel_saisissable')
+		// `CRM-161` T3.b.2 : l'espace de l'affaire, que l'onglet de tous les espaces nomme (§16.3).
+		expect(COLONNES_LIGNE_A_SAISIR).toContain('cards!inner(id, title, workspace_id,')
 		// `budgets!inner` : PostgREST n'applique un filtre sur une ressource embarquée que si la
 		// jointure est déclarée `inner`. En jointure externe, la portée « track » ne filtrerait rien.
 		expect(COLONNES_LIGNE_A_SAISIR).toContain('budgets!inner(')

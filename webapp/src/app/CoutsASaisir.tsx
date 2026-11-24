@@ -35,6 +35,9 @@
 // dire à tenir une seconde source pour un nombre que la vue d'ensemble possède déjà.
 // @spec CRM-099 (docs/BACKLOG.md) — tranche T2 : un réel de plus par ligne, le réel déjà saisi, les détails à la
 //       demande, la case « Soldé » (docs/SPEC-costs.md §2.3 bis, docs/DESIGN_SYSTEM.md §5.31 bis)
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : dans la portée de tous les espaces, l'espace de chaque affaire sous son
+//       titre, à partir de deux espaces lus ; aucun filtre sur cet onglet (docs/SPEC-espace-courant.md §16.3 ;
+//       docs/DESIGN_SYSTEM.md §5.115)
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Pencil } from 'lucide-react'
@@ -62,6 +65,8 @@ import { solderLigne } from '../lib/reels-ligne'
 import type { ClientCrm } from '../lib/supabase'
 import { formaterMontant } from './HistogrammeCouts'
 import { lireOngletCouts, OngletsCouts } from './OngletsCouts'
+import { useContexteEspace } from './ContexteEspace'
+import { nomEspace, provenanceVisible } from '../lib/provenance'
 
 /**
  * Les deux écrans à onglets, montés autour de leur vue d'ensemble.
@@ -99,7 +104,7 @@ export function ZoneCoutsAOnglets({
 			{onglet === 'ensemble' ? (
 				ensemble
 			) : (
-				<PanneauASaisir etat={etat} client={client} onReprise={recharger} />
+				<PanneauASaisir etat={etat} client={client} onReprise={recharger} nommerEspace={portee.genre === 'workspace'} />
 			)}
 		</div>
 	)
@@ -146,10 +151,13 @@ function PanneauASaisir({
 	etat,
 	client,
 	onReprise,
+	nommerEspace = false,
 }: {
 	readonly etat: EtatAsync<readonly LigneASaisir[]>
 	readonly client: ClientCrm | null
 	readonly onReprise: () => void
+	/** `CRM-161` T3.b.2 : la portée « workspace » rassemble tous les espaces ; celle d'un track, un seul. */
+	readonly nommerEspace?: boolean
 }) {
 	if (etat.statut === 'chargement') {
 		return (
@@ -180,7 +188,7 @@ function PanneauASaisir({
 		return <EtatVide titre={t('costs.pending.empty.title')} corps={t('costs.pending.empty.body')} />
 	}
 
-	return <TableASaisir lignes={etat.donnees} client={client} />
+	return <TableASaisir lignes={etat.donnees} client={client} nommerEspace={nommerEspace} />
 }
 
 /**
@@ -198,11 +206,16 @@ function PanneauASaisir({
 export function TableASaisir({
 	lignes,
 	client,
+	nommerEspace = false,
 }: {
 	readonly lignes: readonly LigneASaisir[]
 	readonly client: ClientCrm | null
+	/** `CRM-161` T3.b.2 : nommer l'espace de chaque affaire, à partir de deux espaces lus (§16.3). */
+	readonly nommerEspace?: boolean
 }) {
 	const [maintenant] = useState(() => new Date())
+	const { espaces } = useContexteEspace()
+	const espacesNommes = nommerEspace && provenanceVisible(espaces) ? espaces : undefined
 	// LES CHAMPS SONT REGISTRÉS POUR LE GESTE CLAVIER, et pour lui seul : `Entrée` porte le focus sur
 	// le champ de la ligne SUIVANTE (§5.31), ce qu'aucun ordre de tabulation naturel ne fait. La
 	// carte est indexée par identifiant de ligne plutôt que par rang : un rang deviendrait faux si la
@@ -268,6 +281,7 @@ export function TableASaisir({
 							<LigneSaisie
 								key={ligne.id}
 								ligne={ligne}
+								espace={nomEspace(espacesNommes, ligne.cards?.workspace_id)}
 								maintenant={maintenant}
 								client={client}
 								onEnregistrerChamp={(element) => champs.current.set(ligne.id, element)}
@@ -333,12 +347,15 @@ type EtatSaisie =
  */
 function LigneSaisie({
 	ligne,
+	espace = null,
 	maintenant,
 	client,
 	onEnregistrerChamp,
 	onSuivant,
 }: {
 	readonly ligne: LigneASaisir
+	/** `CRM-161` T3.b.2 : le nom de l'espace de l'affaire, ou `null` (§16.3). */
+	readonly espace?: string | null
 	readonly maintenant: Date
 	readonly client: ClientCrm | null
 	readonly onEnregistrerChamp: (element: HTMLInputElement | null) => void
@@ -520,6 +537,12 @@ function LigneSaisie({
 					<Link to={adresse} className="text-brand hover:underline" title={titreAffaire}>
 						{titreAffaire}
 					</Link>
+				)}
+				{/* `CRM-161` T3.b.2 — la provenance sous le titre de l'affaire : le tableau a déjà neuf colonnes (§5.115). */}
+				{espace === null ? null : (
+					<span data-testid="espace-a-saisir" className="block truncate text-xs text-text-3">
+						{espace}
+					</span>
 				)}
 			</th>
 			<td className="py-2 px-4 max-w-[20ch] truncate" title={ligne.label}>

@@ -6176,7 +6176,9 @@ depuis le plus longtemps est celle qu'on oublie. Une ligne reçoit autant de co�
 faut — une facture, puis une autre — et reste dans la table tant qu'on ne l'a pas **soldée**. Chaque
 ligne porte son **ancienneté**, son **budget**, son **occurrence** le cas échéant, son **affaire** (le
 titre est un lien vers la fiche), la **nature** de la dépense, son **coût estimé**, et ce qui est
-**« Déjà saisi »** — la somme de ses réels.
+**« Déjà saisi »** — la somme de ses réels. Sur l'écran de l'espace de travail, si vous êtes membre de plusieurs espaces,
+la table rassemble les lignes de tous, et le nom de l'espace s'écrit sous le titre de chaque affaire ; l'onglet n'a pas
+de bouton **Espace**.
 
 **Les budgets clôturés y figurent, et c'est voulu :** c'est précisément après la clôture que les
 factures arrivent. La ligne d'un budget clos porte une pastille **« clôturé »** — une indication
@@ -6523,7 +6525,8 @@ seuls eux peuvent lire. Un autre membre lit « Réservé aux administrateurs » 
 
 ![L'onglet « À saisir » de l'écran Rentabilité](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/onglet-a-saisir.jpg)
 
-Il liste les lignes de recette **non soldées**, de la plus ancienne à la plus récente, pour tout membre. Tapez un montant
+Il liste les lignes de recette **non soldées**, de la plus ancienne à la plus récente, pour tout membre ; si vous êtes
+membre de plusieurs espaces, celles de tous, le nom de l'espace sous le titre de chaque affaire. Tapez un montant
 dans **« Une recette de plus »** : `Entrée` l'enregistre, à la date du jour, et passe à la ligne suivante. Saisir 0
 enregistre une recette nulle ; laisser le champ vide ne change rien. Cochez « Soldé » quand la ligne est encaissée. Une
 ligne que vous ne pouvez pas modifier reste visible, son champ éteint, avec le motif.

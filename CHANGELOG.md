@@ -15,6 +15,8 @@ d'exécuter le code attendu.
 
 ### Ajouté
 
+- **Les onglets « À saisir » des coûts et de la rentabilité nomment l'espace de chaque affaire** (`CRM-161` T3.b.2) : à
+  partir de deux espaces, sous le titre de l'affaire ; pas sur l'écran de coûts d'un track. Manuel §27 et §29.4.
 - **La cloche et la recherche nomment l'espace de chaque élément** (`CRM-161` T3.b.2) : à partir de deux espaces, sous
   chaque notification et chaque résultat ; deux homonymes de deux espaces s'y distinguent. Sans filtre (décision 963).
   Manuel §4.6 et §5.2.

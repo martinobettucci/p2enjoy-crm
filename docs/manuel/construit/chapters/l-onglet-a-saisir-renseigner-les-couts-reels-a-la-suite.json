@@ -281,7 +281,20 @@
 				},
 				{
 					"type": "text",
-					"text": " — la somme de ses réels."
+					"text": " — la somme de ses réels. Sur l'écran de l'espace de travail, si vous êtes membre de plusieurs espaces,\nla table rassemble les lignes de tous, et le nom de l'espace s'écrit sous le titre de chaque affaire ; l'onglet n'a pas\nde bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
 				}
 			]
 		},

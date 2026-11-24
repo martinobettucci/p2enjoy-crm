@@ -4,6 +4,8 @@
 //       zéro est une valeur, vide n'en est pas une ; ancienneté neutre ; « Toutes les recettes réelles sont saisies. »)
 // @spec docs/DESIGN_SYSTEM.md §5.60 (la table du §5.31 bis sans budget ni occurrence), §5.31 (clavier, ligne en place,
 //       lecture seule lisible avec son motif), §5.7 ter (mentions sous le champ), §8
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b.2 : l'espace de chaque affaire sous son titre, à partir de deux espaces
+//       lus ; aucun filtre sur cet onglet (docs/SPEC-espace-courant.md §16.3 ; docs/DESIGN_SYSTEM.md §5.115)
 
 import { useRef, useState } from 'react'
 import { Link } from 'react-router'
@@ -22,6 +24,8 @@ import {
 } from '../lib/card-revenues'
 import { solderLigne } from '../lib/reels-ligne'
 import type { ClientCrm } from '../lib/supabase'
+import { useContexteEspace } from './ContexteEspace'
+import { nomEspace, provenanceVisible } from '../lib/provenance'
 import { texteRefusRecette } from './BlocRecettesCard'
 import { montantEnClair } from './BlocRentabiliteCard'
 
@@ -130,6 +134,8 @@ function LigneASaisir({
 	const [etat, setEtat] = useState<EtatLigne>({ statut: 'repos' })
 	const [soldee, setSoldee] = useState(false)
 	const saisissable = recetteSaisissable(ligne)
+	const { espaces } = useContexteEspace()
+	const espace = provenanceVisible(espaces) ? nomEspace(espaces, ligne.cards?.workspace_id) : null
 	const idMention = `recette-saisir-${ligne.id}-mention`
 	const devise = ligne.cards?.currency ?? ''
 	const jours = ancienneteRecette(ligne, maintenant)
@@ -170,6 +176,12 @@ function LigneASaisir({
 					<Link to={adresse} className="text-brand hover:underline">
 						{ligne.cards?.title}
 					</Link>
+				)}
+				{/* `CRM-161` T3.b.2 — la provenance sous le titre de l'affaire (§5.115). */}
+				{espace === null ? null : (
+					<span data-testid="espace-a-saisir" className="block truncate text-xs text-text-3">
+						{espace}
+					</span>
 				)}
 			</th>
 			<td className="py-2 px-3 max-w-[20ch] truncate" title={ligne.label}>{ligne.label}</td>

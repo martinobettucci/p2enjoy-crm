@@ -9254,6 +9254,10 @@ la spécification réservait, a été prise par `CRM-165` avant l'écriture de c
     que dans un en-tête de groupe, dans le `th` de la ligne du track, après son nom, en `text-sm` `--color-text-2`
     `font-normal`, « · » dans son propre élément. Pas de colonne : un track n'a qu'un espace, et une colonne répéterait son
     nom sur chaque channel et chaque affaire. *Précisé le 2026-11-24 au code de `CRM-161` T3.b.*
+  - **dans un tableau de saisie déjà dense** (les onglets « À saisir » des coûts et de la rentabilité, neuf et sept
+    colonnes), la mention sous le titre de l'affaire, dans sa cellule, en `text-xs` `--color-text-3` ; pas de colonne, et
+    pas de filtre sur ces onglets, qui listent ce qui reste à faire. Rien sur l'écran de coûts d'un track, dont toutes les
+    lignes sont d'un espace. *Précisé le 2026-11-24 au code de T3.b.2.*
   - **dans le tableau équivalent d'un graphique** (« Coûts », §5.30, §5.33), la **précision** existante du §5.30, sous le
     libellé de chaque ligne : le graphique, `aria-hidden`, ne la montre pas. Pas de colonne nouvelle. *Précisé le 2026-11-24
     au code de `CRM-161` T3.b.*
