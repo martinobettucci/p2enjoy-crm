@@ -20650,6 +20650,10 @@ livraison (décision 830).
   `rentabilite` et `couts-track` 25/25 (portée de tous les espaces, portée d'un track, lectrice) ; captures observées ;
   manuel §27 et §29.4, construit, `verify-manual.sh` 170/170, scénarios du manuel 23-26 et 27-29 12/12 ; complets 6 338/6 338.
   **T3.b est complète en développement** : contrat §2.79 ; reste à livrer (webapp).
+  **T3.c en cours** (session 7a, depuis le 2026-11-24, après la livraison de T3.b) : spécifiée avant son code
+  (`docs/SPEC-espace-courant.md` §16.8, `19748901`) ; numéros pris après synchronisation : **`0201`** (`organization_list`
+  lit plusieurs espaces) et **`0202`** (`temps_valorise` rend l'espace de chaque ligne) ; écrans Organisations et
+  Temps ▸ Rapport.
   **Relevés à reprendre dans T3** (*2026-11-21, session de livraison au constat du lot de T1 et T2 ; consignés par 5f*) :
   - **Les non-lus de chaque espace sous `md`.** À 390 px, la section « Espaces » du repli du fil d'Ariane ne montre aucune
     pastille de non-lus (capture `docs/captures/CRM-161/menu-espaces-sm-390.jpg`), alors que la décision 965 les veut au
