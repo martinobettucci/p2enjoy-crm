@@ -1633,7 +1633,7 @@ rendait déjà `workspace_id`. Le manuel construit (chapitres 3 et 7) part avec 
 **Ce qui devient visible** : rien pour une personne d'un seul espace, ce qui est le cas de toute la production aujourd'hui.
 **Retour arrière** : la webapp de la révision d'avant.
 
-### 2.76 `CRM-165` T3, décisions 980 et 983 — l'écran des consignes, le journal traduit, le manuel (EN ATTENTE)
+### 2.77 `CRM-165` T3, décisions 980 et 983 — l'écran des consignes, le journal traduit, le manuel (EN ATTENTE)
 
 `docs/SPEC-mcp.md` §18.5, §18.6 ; `docs/DESIGN_SYSTEM.md` §5.114. La webapp et le manuel : le bloc « Consignes aux
 assistants » de Plateforme ▸ Connecteur MCP, le geste `connector_instructions_set` traduit au journal de la plateforme, le
