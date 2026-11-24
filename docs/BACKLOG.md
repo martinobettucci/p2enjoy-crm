@@ -20807,3 +20807,13 @@ de la plateforme, sans le texte ; rappel « ni donnée personnelle ni secret ».
 pytest unitaire (assemblage socle + texte, texte vide) et intégration (un vrai client MCP reçoit les consignes complétées à
 l'initialisation) ; E2E souris et clavier ; seed (un texte de démonstration) ; captures observées ; manuel ; contrat. La campagne
 complète revient à la session de livraison (décision 830).
+
+## Relevé du 2026-11-24 — le bloc de relance affirme « aucune relance » avant d'avoir lu (INC-365), à arbitrer
+
+- [ ] **À arbitrer par le responsable — INC-365** (`docs/INCONSISTENCY_REPORT.md`). Le bloc « Relance automatique » de la
+  fiche d'une affaire (`CRM-063`, `docs/DESIGN_SYSTEM.md` §5.42) affiche « Aucune relance n'est armée sur cette affaire »
+  et offre son geste **pendant** la lecture de l'inscription active, avant d'en connaître le résultat : son état de
+  chargement manque. Relevé par la session 4891a451 (p2enjoy-crm-7a) en corrigeant la preuve `armement-sequence` de la
+  campagne du lot `CRM-164` (`docs/JOURNAL.md`, 2026-11-24) ; antérieur à ce lot. **Rien n'est codé** : la session de
+  livraison l'a exclu de `CRM-161`. Une unité sera ouverte si le responsable retient la correction, avec les deux
+  questions du connecteur MCP posées à sa spécification.

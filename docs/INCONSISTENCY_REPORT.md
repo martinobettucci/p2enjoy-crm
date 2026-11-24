@@ -9359,3 +9359,24 @@ en 20 h). Le responsable fait entrer ce correctif dans le même lot ; la session
 **de suite**, avec le correctif, à `8dc60ef1` : code 0 les deux fois, de 17:51 à 17:55 puis de 17:55 à 17:59 UTC. Le §8
 *octodecies* passe. Toutes les passes des pastilles du journal de `functions` visent le simulateur : 8, puis 7, toutes
 `simulee:true`, en quelques dizaines de millisecondes ; aucune `simulee:false`. La clé de `.env` n'a pas été touchée.
+
+### INC-365 — le bloc « Relance automatique » affirme « aucune relance armée » avant d'avoir lu l'inscription
+**Ouverte le 2026-11-24.** *Relevée par la session 4891a451 (p2enjoy-crm-7a) en corrigeant la preuve
+`e2e/ui/armement-sequence.spec.ts` « un second armement… est refusé », rouge à la campagne du lot `CRM-164` ; consignée
+à la demande de la session de livraison (p2enjoy-crm-11), sans être codée dans `CRM-161`.*
+
+**Le constat.** `BlocSequenceCard` (`CRM-063`) range l'inscription lue dans un état asynchrone, mais ne rend que deux
+branches : une inscription active (l'état de la cadence) ou **aucune** (le geste d'armer). Tant que la lecture est en
+cours, `active` vaut `null` : le bloc affiche donc « Aucune relance n'est armée sur cette affaire » et offre ses
+sélecteurs et « Armer la relance » **avant** de savoir. Mesuré sur la trace de la preuve : la lecture part dans la file
+d'une trentaine de requêtes de la fiche ; une relance armée entre-temps par un autre onglet apparaît ensuite, après que
+l'écran a affirmé le contraire. `docs/DESIGN_SYSTEM.md` §5.42 dit « deux états, et deux seulement, parce que la donnée
+n'en porte que deux » — vrai de la donnée, muet sur le chargement ; `CLAUDE.md` §4 demande que l'état de chargement soit
+traité explicitement. Antérieur au lot ; aucun refus n'est contourné (une relance déjà armée est refusée par la base,
+`enrollment_exists`, et l'écran traduit ce refus).
+
+**Ce qui est fait.** Rien dans le produit. La preuve attend désormais la réponse de la lecture avant d'armer par la route
+(`b1946607`).
+
+**L'arbitrage demandé au responsable.** Donner au bloc un état de chargement (un squelette ou « Chargement… », le geste
+offert seulement après la lecture), ce qui précise §5.42 — ou garder l'affichage actuel ?
