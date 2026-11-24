@@ -20813,7 +20813,9 @@ complète revient à la session de livraison (décision 830).
 
 ## Relevé du 2026-11-24 — le bloc de relance affirme « aucune relance » avant d'avoir lu (INC-365), à arbitrer
 
-- [ ] **À arbitrer par le responsable — INC-365** (`docs/INCONSISTENCY_REPORT.md`). Le bloc « Relance automatique » de la
+- [@] **INC-365 — arbitré (décision 985) : le bloc reçoit un état de chargement** (`docs/INCONSISTENCY_REPORT.md`).
+  *Prise en charge : session interactive d5b44a2d (p2enjoy-crm-30) depuis 2026-11-24 14:04 UTC — état avant : [ ] ; confiée par la session de livraison (11)*
+  Constat d'origine : Le bloc « Relance automatique » de la
   fiche d'une affaire (`CRM-063`, `docs/DESIGN_SYSTEM.md` §5.42) affiche « Aucune relance n'est armée sur cette affaire »
   et offre son geste **pendant** la lecture de l'inscription active, avant d'en connaître le résultat : son état de
   chargement manque. Relevé par la session 4891a451 (p2enjoy-crm-7a) en corrigeant la preuve `armement-sequence` de la
