@@ -27,6 +27,8 @@
 # @spec CRM-149 (docs/BACKLOG.md) — tranche T2 : le fournisseur des prompts de l'espace inscrit, et sa ligne dans les
 #       consignes au modèle (docs/SPEC-mcp.md §17.5 ; décision 930)
 # @spec CRM-164 (docs/BACKLOG.md) — le journal des erreurs de protocole enveloppe toute l'application (docs/SPEC-mcp.md §11)
+# @spec CRM-165 (docs/BACKLOG.md) — tranche T2 : les consignes de la plateforme complètent le socle à chaque initialisation,
+#       et le socle est publié en base au démarrage (docs/SPEC-mcp.md §18.4 ; décisions 980 et 983)
 # @spec docs/SPEC-mcp.md §2 (un service, un hôte, `/mcp`), §3 (mandataire OAuth, état chiffré), §6.2 (audit puis
 #       politique, avant l'outil), §11 (`/sante`, `/pret`) ; docs/JOURNAL.md décision 627 (D1, D5, D8)
 # @spec Modèle : `evoliz_mcp/application.py` (p2enjoy-evoliz, révision 80a3e27). Écarts : aucune administration
@@ -36,7 +38,10 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from typing import Any
 
 import fastmcp
 import httpx2
@@ -48,6 +53,7 @@ from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse
 from crm_mcp import pages, prompts
 from crm_mcp.audit import AuditOutils
 from crm_mcp.autorisation import MandataireLelabs, construire_stockage
+from crm_mcp.consignes import ConsignesPlateforme
 from crm_mcp.crm import ClientCrm, CrmIndisponible
 from crm_mcp.garde import GardeEntree
 from crm_mcp.journal_protocole import JournalProtocole
@@ -179,6 +185,15 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
         registre=registre,
         stockage=stockage.chiffre,
     )
+    # `CRM-165` (docs/SPEC-mcp.md §18.4) : le socle, complété à chaque initialisation par le texte de la plateforme ; publié
+    # en base au démarrage, puis à chaque initialisation tant que la publication n'a pas réussi.
+    consignes = ConsignesPlateforme(INSTRUCTIONS, crm)
+
+    @asynccontextmanager
+    async def cycle_de_vie(_: FastMCP) -> AsyncIterator[dict[str, Any]]:
+        await consignes.publier_socle()
+        yield {}
+
     # L'icône du serveur est le monogramme du CRM : les clients MCP l'affichent, et la page de consentement aussi, au lieu
     # du logo de FastMCP chargé depuis un domaine tiers (docs/DESIGN_SYSTEM.md §5.57 ; CLAUDE.md §11).
     serveur = FastMCP(
@@ -186,6 +201,7 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
         instructions=INSTRUCTIONS,
         auth=mandataire,
         icons=[Icon(src=pages.FAVICON, mime_type="image/svg+xml", sizes=["any"])],
+        lifespan=cycle_de_vie,
     )
     moteur = MoteurPolitique(registre=registre, crm=crm, jwt_secret=reglages.jwt_secret)
     reference.ajouter(serveur, moteur, crm)
@@ -241,6 +257,7 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
     # L'ordre compte : l'audit enveloppe la politique, qui précède l'outil (docs/SPEC-mcp.md §6.2).
     serveur.add_middleware(AuditOutils(registre, reglages.taille_max_reponse))
     serveur.add_middleware(PolitiqueOutils(moteur))
+    serveur.add_middleware(consignes)
 
     @serveur.custom_route("/", methods=["GET"])
     async def accueil(_: Request) -> HTMLResponse:

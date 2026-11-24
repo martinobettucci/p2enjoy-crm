@@ -19,6 +19,8 @@
 #           se mesure sur ses trois tables nommées, `mcp_prompts` ayant ses politiques (docs/SPEC-mcp.md §17.5, §17.9)
 # @verifies CRM-150 (docs/BACKLOG.md) — tranche T1 : l'intégration rejoue l'issue d'audit de chaque refus d'un déplacement
 #           (docs/SPEC-mcp.md §9.3, décision 933)
+# @verifies CRM-165 (docs/BACKLOG.md) — tranche T2 : la traçabilité accepte les modules des consignes de la plateforme, et
+#           l'intégration rejoue leur assemblage au socle (docs/SPEC-mcp.md §18.4, décisions 980 et 983)
 #
 # Rejoue les preuves du connecteur sur la pile de développement, puis DÉGRADE réellement le code, la base et l'aiguillage,
 # et exige que les preuves rougissent, avant de restaurer et de CONSTATER la restauration.
@@ -121,7 +123,7 @@ integration() { # integration <url du connecteur> [arguments pytest…]
 	local url=$1
 	shift
 	docker run --rm --network "$RESEAU" --env-file "$ENV_INTEGRATION" -e CRM_MCP_URL="$url" "$IMAGE" \
-		python -m pytest -q -p no:cacheprovider tests/test_integration_oauth.py tests/test_integration_recettes.py tests/test_integration_affaires.py tests/test_integration_affaires_ecriture.py tests/test_integration_affaires_checklists.py tests/test_integration_affaires_etiquettes.py tests/test_integration_champs_communs.py tests/test_integration_vues.py tests/test_integration_structure.py tests/test_integration_contacts.py tests/test_integration_organisations.py tests/test_integration_budgets.py tests/test_integration_temps.py tests/test_integration_objectifs.py tests/test_integration_messagerie.py tests/test_integration_workflows.py tests/test_integration_droits_fins.py tests/test_integration_outbox.py tests/test_integration_messagerie_corbeille.py tests/test_integration_messagerie_pastilles.py tests/test_integration_prompts.py tests/test_integration_affaires_deplacement.py "$@" >"$TRAVAIL/integration.log" 2>&1
+		python -m pytest -q -p no:cacheprovider tests/test_integration_oauth.py tests/test_integration_recettes.py tests/test_integration_affaires.py tests/test_integration_affaires_ecriture.py tests/test_integration_affaires_checklists.py tests/test_integration_affaires_etiquettes.py tests/test_integration_champs_communs.py tests/test_integration_vues.py tests/test_integration_structure.py tests/test_integration_contacts.py tests/test_integration_organisations.py tests/test_integration_budgets.py tests/test_integration_temps.py tests/test_integration_objectifs.py tests/test_integration_messagerie.py tests/test_integration_workflows.py tests/test_integration_droits_fins.py tests/test_integration_outbox.py tests/test_integration_messagerie_corbeille.py tests/test_integration_messagerie_pastilles.py tests/test_integration_prompts.py tests/test_integration_affaires_deplacement.py tests/test_integration_consignes.py "$@" >"$TRAVAIL/integration.log" 2>&1
 }
 caddy_de_la_cellule() { # caddy_de_la_cellule [hôte du connecteur]
 	docker rm -f "$CADDY" >/dev/null 2>&1 || true
@@ -148,7 +150,8 @@ while IFS= read -r fichier; do
 	# (docs/SPEC-seed.md §22), `CRM-108` pour la famille `recettes` (docs/SPEC-recettes.md §7), `CRM-104` pour les familles
 	# de son catalogue (docs/SPEC-mcp.md §9.2 bis), qui y ajoutent leurs propres modules sans les rattacher au socle.
 	# `CRM-164` (docs/SPEC-mcp.md §3.3 bis, §11) : la fenêtre de renouvellement et le journal des erreurs de protocole.
-	if head -8 "$fichier" | grep -Eq '@(spec|verifies) CRM-(10[2348]|11[489]|164)'; then ok "$fichier cite son unité (CRM-102, CRM-103, CRM-104, CRM-108, CRM-114, CRM-118, CRM-119 ou CRM-164)"; else fail "$fichier ne cite ni CRM-102, ni CRM-103, ni CRM-104, ni CRM-108, ni CRM-114, ni CRM-118, ni CRM-119, ni CRM-164"; fi
+	# `CRM-165` (docs/SPEC-mcp.md §18.4) : les consignes de la plateforme, assemblées au socle à chaque initialisation.
+	if head -8 "$fichier" | grep -Eq '@(spec|verifies) CRM-(10[2348]|11[489]|16[45])'; then ok "$fichier cite son unité (CRM-102, CRM-103, CRM-104, CRM-108, CRM-114, CRM-118, CRM-119, CRM-164 ou CRM-165)"; else fail "$fichier ne cite ni CRM-102, ni CRM-103, ni CRM-104, ni CRM-108, ni CRM-114, ni CRM-118, ni CRM-119, ni CRM-164, ni CRM-165"; fi
 done < <(
 	find mcp -type f \( -name '*.py' -o -name 'Dockerfile' -o -name '*.toml' -o -name '*.lock' \) | sort
 	printf '%s\n' supabase/migrations/0090_connecteur_mcp.sql supabase/tests/0085_connecteur_mcp.test.sql \

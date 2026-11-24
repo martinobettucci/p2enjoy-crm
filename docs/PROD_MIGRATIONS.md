@@ -1604,6 +1604,21 @@ sur `plateforme_journal` (sa contrainte est reposée).
 ou avec l'image `mcp` de T2.** Sans elle, le service de T2 rend le socle seul (son mode dégradé). **Retour arrière** : comme le dit
 `docs/SCHEMA.md` « Migration `0200` ».
 
+### 2.75 `CRM-165` T2, décisions 980 et 983 — le connecteur envoie les consignes de la plateforme (EN ATTENTE)
+
+`docs/SPEC-mcp.md` §18.4. L'image `mcp` seule : le middleware des consignes (`crm_mcp/consignes.py`) et son inscription
+(`crm_mcp/application.py`). **Aucune variable, aucun secret** ; le volume `mcp-etat` n'est pas touché. **Après la 200**
+(§2.74) : sans elle, le service part en mode dégradé (le socle seul) et le journal le dit à chaque connexion.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Reconstruire l'image `mcp`, **explicitement** | session de livraison, dans la fenêtre du lot, après la 200 | `up -d --build --no-deps --wait mcp`, par `compose_prod` (§4) : la livraison ne reconstruit pas cette image d'elle-même |
+| 2 | Constater, en lecture seule | session de livraison | `/sante` et `/pret` à `200` ; au journal du service, une ligne `"evenement": "socle_publie"` au démarrage ; `select length(base) > 0 and base_published_at is not null from public.connector_instructions` vrai ; aucune ligne `consignes_plateforme_indisponibles` après une connexion |
+
+**Ce qui devient visible** : rien à l'écran tant que T3 n'est pas livrée ; le texte de la plateforme est vide en production,
+et un texte vide n'ajoute rien : les assistants reçoivent les mêmes consignes qu'avant. **Retour arrière** : l'image
+précédente du connecteur, reconstruite à la révision d'avant.
+
 ## 3. Migrations en attente
 
 **La 200** (`CRM-165` T1, décisions 980 et 983), **en attente** : les consignes de la plateforme (§2.74, `docs/SCHEMA.md`

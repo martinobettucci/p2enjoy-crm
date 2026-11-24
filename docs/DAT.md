@@ -805,6 +805,18 @@ administrateurs de l'espace éditent ces textes dans Réglages ▸ Prompts du co
 création d'un espace. Un prompt n'ouvre rien : il n'a aucune case dans la matrice, et chaque outil qu'il fait appeler
 reste soumis à la sienne. Chaque `prompts/get` est inscrit au journal du connecteur (`prompt:<identifiant>`).
 
+**Ses consignes se complètent par un texte de la plateforme** (`CRM-165`, décisions 980 et 983, `docs/SPEC-mcp.md` §18).
+Le socle, `INSTRUCTIONS` dans `mcp/crm_mcp/application.py`, part toujours en premier. Un middleware FastMCP
+(`mcp/crm_mcp/consignes.py`, `ConsignesPlateforme`) reprend chaque réponse à `initialize` et à `server/discover`, et
+en remplace le champ `instructions` par le socle suivi, sous un intitulé, du texte que le super-administrateur règle dans
+Plateforme ▸ Connecteur MCP. Ce texte est lu par `connector_instructions_text()` à la clé de service, borné à 3 s. Aucun état
+partagé n'est modifié : chaque session reçoit sa propre réponse, et un texte changé vaut à la connexion suivante. **Mode
+dégradé** : un texte illisible laisse partir le socle seul, avec une ligne `consignes_plateforme_indisponibles` au
+journal, sans contenu ; la connexion n'échoue jamais pour cela. **Le socle est publié en base** par le service, au
+démarrage (cycle de vie de FastMCP), puis à chaque initialisation tant que la publication n'a pas réussi
+(`connector_instructions_publish_base`) : l'écran l'affiche sans en garder de copie. **Compromis** : une initialisation
+attend la lecture du texte, jusqu'à 3 s quand la base ne répond pas, et 3 s de plus tant que le socle n'est pas publié.
+
 ### 3.7 quater Le manuel — bucket `manual` (`CRM-117` ; spécifié le 2026-10-26 avant le code, révisé à l'écriture, décision 751)
 
 *Décisions 736, 740, 750 et 751 ; `docs/SPEC-manual.md` partie II.* Le manuel utilisateur est lu dans la webapp, et

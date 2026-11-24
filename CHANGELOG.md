@@ -19,6 +19,11 @@ d'exécuter le code attendu.
   le lit et publie ses consignes fixes à la clé de service seule. Le texte est borné à 4 000 caractères ; chaque
   modification laisse au journal de la plateforme le geste `connector_instructions_set` avec les longueurs avant et après,
   jamais le texte. Rien n'est encore visible : le service `mcp` (T2) et l'écran (T3) suivent. Migration 200 à appliquer.
+- **`CRM-165` T2 — le connecteur envoie les consignes de la plateforme** (décisions 980 et 983). À chaque connexion d'un
+  assistant, le connecteur envoie ses consignes fixes, puis, sous un intitulé, le texte de la plateforme ; un texte vide
+  n'ajoute rien, et un texte changé vaut à la connexion suivante. Si le texte ne peut pas être lu, les consignes fixes
+  partent seules et le journal du service le dit, sans contenu. Le service publie ses consignes fixes en base au démarrage,
+  pour que l'écran les montre. Image `mcp` à reconstruire, après la migration 200.
 
 ## [Publié]
 

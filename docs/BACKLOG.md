@@ -20802,7 +20802,9 @@ de la plateforme, sans le texte ; rappel « ni donnée personnelle ni secret ».
 **Tranches** (`docs/SPEC-mcp.md` §18.8) :
 - [x] **T1** — la migration `0200` (table, quatre fonctions, geste du journal) ; pgTAP ; API ; SCHEMA ; contrat ; *faite le
   2026-11-24* (pgTAP `0186` 22/22, API `consignes-connecteur` 6/6, types régénérés, contrat §2.74) ;
-- [ ] **T2** — le service `mcp` (assemblage, middleware, publication du socle) ; pytest ; intégration ; l'image au contrat ;
+- [x] **T2** — le service `mcp` (assemblage, middleware, publication du socle) ; pytest ; intégration ; l'image au contrat ;
+  *faite le 2026-11-24* (pytest `test_consignes` 16/16, intégration `test_integration_consignes`, `verify-mcp.sh --rapide`,
+  contrat §2.75) ;
 - [ ] **T3** — l'écran, le journal traduit, le seed §56, le manuel, le contrat ; l'unité passe `[P]`.
 **DoD** : pgTAP (seul le super-administrateur écrit ; borne de longueur) ; API par requête directe (refus aux autres profils) ;
 pytest unitaire (assemblage socle + texte, texte vide) et intégration (un vrai client MCP reçoit les consignes complétées à
