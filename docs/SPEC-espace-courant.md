@@ -514,3 +514,91 @@ l'espace X. », sans bandeau visuel persistant.
 le track, le channel, l'affaire, les deux mails déposés par IMAP et relevés (au moins un non lu), le contact, l'organisation,
 le tableau d'objectifs et la saisie de temps du §12. Si le §54 n'est pas encore poussé au moment de T2.b, le §55 crée
 l'espace sous l'identité figée, et le §54 l'enrichit.
+
+## 16. La tranche T3 en détail — les pages globales
+
+*Écrit le 2026-11-24 par la session ef (ex-5f), avant son code. Les réponses du connecteur valent pour toute l'unité (§1, §11,
+décisions 963 et 965) : T3 n'ajoute ni famille ni case. Les choix que les décisions 963 à 976 ne tranchent pas sont nommés au
+§16.6 et soumis au responsable ; rien de ce qui en dépend n'est codé avant sa réponse.*
+
+### 16.1 Ce que T3 change, et pour qui
+
+Les pages globales du §4 (marquées **G**) montrent **tous les espaces de la personne**, chaque ligne nommant le sien (§10). Pour
+une personne d'**un seul espace** — la production aujourd'hui —, **rien ne change à l'écran** : ni colonne, ni mention, ni
+filtre. L'état intermédiaire de T2 (§15.2 : `Carnet`, `ListeOrganisations`, `Objectifs`, `Pilotage` suivent l'espace courant de
+l'onglet ; décision 976) prend fin écran par écran, chacun dans sa sous-tranche.
+
+### 16.2 Les règles communes
+
+- **La provenance** (§10) : une colonne « Espace » dans un tableau, en dernière colonne avant les actions ; une mention « nom de
+  l'espace » en `text-xs text-text-3` sous le titre d'une ligne de liste ou d'une carte. Elle n'apparaît que si la personne lit
+  au moins **deux** espaces (`ContexteEspace.espaces.length >= 2`).
+- **Le filtre « Espace »** : un composant nouveau du design system (§5.114, à écrire avec T3.a), une liste de cases à cocher
+  repliée dans un bouton « Espace » de la barre de filtres de la page, aux mêmes règles que les filtres existants (clavier,
+  `aria-expanded`, compteur de cases cochées dans le libellé). Il vit dans l'adresse : `?espaces=<slug>,<slug>` ; un slug
+  inconnu est ignoré ; vide ou absent, tous les espaces. Absent de l'écran pour une personne d'un seul espace.
+- **Le filtrage est fait par la lecture**, jamais en mémoire sur une liste entière, dès qu'une lecture est paginée
+  (`organization_list`) ; une lecture non paginée peut filtrer en mémoire sur `workspace_id`.
+- **Les créations** depuis une page globale (un contact, une organisation, un tableau d'objectifs, une saisie de temps) se font
+  dans **l'espace courant de l'onglet** (§2), et le formulaire le **dit** (« Dans l'espace X ») dès que la personne en lit deux.
+- **Les liens** d'une ligne mènent dans l'espace de sa ressource (§8.4, déjà fait en T2.a).
+- **Les montants ne se somment jamais entre devises** (inchangé) ; un total multi-espaces reste par devise.
+
+### 16.3 Écran par écran (mesures du 2026-11-24 sur la base de développement)
+
+| Écran | Aujourd'hui | Lecture en T3 | Provenance | Filtre | Backend |
+|---|---|---|---|---|---|
+| Tableau de bord (`/`) | guide de l'espace courant | inchangé : le guide reste celui de l'espace de l'onglet (§4) | — | — | — |
+| Ma journée | `card_placements`, tous les espaces | inchangée | mention sous chaque affaire | oui | aucun (`card_placements.workspace_id`) |
+| Affaires figées | `cards_figees()`, tous | inchangée | colonne | oui | aucun (rend `workspace_id`) |
+| Objectifs (liste) | `goal_boards` de l'espace de l'onglet | tous les espaces ; **groupés par espace**, une section par espace (l'ordre `position` n'a de sens que dans un espace) | titre de section | oui | aucun |
+| Objectifs (un tableau) | un tableau | inchangée ; le fil d'Ariane nomme son espace | — | — | — |
+| Contacts (carnet) | l'espace de l'onglet (976) | tous | colonne | oui | aucun (`contacts.workspace_id`) |
+| Organisations | `organization_list(p_workspace_id …)`, un espace | tous, paginée | colonne | oui, **par la lecture** | **migration** : `p_workspace_ids uuid[]` facultatif (absent : tous les espaces lus), `workspace_id` rendu |
+| Pilotage | l'espace de l'onglet (976) | **question Q1** (§16.6) | — | — | aucun (`entonnoir_conversion()` rend `workspace_id`) |
+| Temps ▸ Saisie | l'espace de l'onglet | **question Q2** (§16.6) | — | — | — |
+| Temps ▸ Rapport | `temps_valorise()`, **déjà tous les espaces, sans le dire** | tous | colonne | oui | **migration** : `temps_valorise` rend `workspace_id` |
+| Coûts | budgets, coûts, recettes, tous | inchangées | colonne | oui | aucun : l'espace se lit par la relation (`tracks`, `cards`), sans colonne nouvelle |
+| Rentabilité | `rentabilite_affaires()`, tous | inchangée | colonne | oui | aucun (rend `workspace_id`) |
+| Cloche | `notifications`, tous | inchangée | mention sous chaque notification | non (exception maintenue, décision 963) | aucun |
+| Recherche globale | `recherche_globale()`, tous | inchangée | mention sous chaque résultat | non (idem) | aucun (rend `workspace_id`) |
+
+### 16.4 Les deux relevés de la livraison de T1 et T2
+
+- **Les non-lus de chaque espace sous `md`** (capture `docs/captures/CRM-161/menu-espaces-sm-390.jpg`) : `SectionEspacesDuRepli`
+  ne lit `inbox_unread_by_workspace` qu'**à l'ouverture du repli**, et le menu en ligne fait de même à son montage ; la capture
+  précède la fin de cette lecture. **Règle** : les non-lus par espace sont lus **une fois par la coquille**, relus à chaque
+  changement d'adresse comme aujourd'hui, et **partagés** par le menu et le repli : ouvert, le repli les montre déjà. Preuve
+  rouge avant : l'E2E du repli constate la pastille de la sonde **sans attente** après l'ouverture.
+- **Les identités d'expédition du formulaire d'envoi** (limite de la décision 975) : `FormulaireEnvoi` reçoit l'espace de son
+  objet — l'affaire (`RouteCard`), le message auquel il répond (`RouteInbox`) — et lit les identités de cet espace seul
+  (`lireIdentitesDisponibles(client, idUtilisateur, idWorkspace)`, déjà prête).
+
+### 16.5 Le découpage
+
+- **T3.a — le socle** : le composant « Espace » du design system (§5.114), la provenance (`lib/provenance.ts` : le nom d'un
+  espace depuis `ContexteEspace.espaces`), l'adresse `?espaces=` ; les deux relevés du §16.4. Unitaires, E2E du filtre au
+  clavier et à la souris sur un espace jetable.
+- **T3.b — les listes sans backend** : Ma journée, Affaires figées, Objectifs, Contacts, Coûts, Rentabilité, cloche, recherche.
+- **T3.c — les deux migrations** (`organization_list`, `temps_valorise`), leurs pgTAP, puis Organisations et le rapport de Temps.
+- **T3.d — Pilotage et Temps ▸ Saisie**, selon les réponses à Q1 et Q2.
+
+Chaque sous-tranche met à jour le manuel des pages touchées (« Les pages qui montrent tous vos espaces »), le seed (« Studio
+Lumen » porte déjà de quoi montrer chaque page), le contrat de livraison et le changelog.
+
+### 16.6 Les questions au responsable
+
+- **Q1 — Pilotage.** Chaque espace a **son propre catalogue** d'étapes (« Prospection » de l'un n'est pas celle de l'autre) et
+  ses propres tracks et channels de portée. Deux formes : (a) **un entonnoir par espace**, l'un sous l'autre, chacun avec son
+  prévisionnel par devise, le filtre « Espace » en isolant un ; (b) **un seul entonnoir**, une ligne par étape **et** par
+  espace, colonne « Espace » — les étapes homonymes y apparaissent deux fois. Recommandation : (a).
+- **Q2 — Temps ▸ Saisie.** Une saisie appartient à un espace (clés composites), et « Saisir pour » liste les membres d'un
+  espace. Deux formes : (a) **la grille reste dans l'espace courant de l'onglet** — seul le rapport devient global —, l'en-tête
+  nommant l'espace et le menu des espaces en changeant ; (b) **une grille de tous les espaces**, groupée par espace, « Saisir
+  pour » limité à soi-même dès que la grille couvre deux espaces. Recommandation : (a).
+
+### 16.7 Les preuves
+
+Par sous-tranche : un unitaire par lecture et par composant ; l'E2E de chaque page touchée sur un espace jetable dont Camille est
+membre, à la souris et au clavier, aux quatre paliers, captures observées ; une preuve d'API ou pgTAP par migration, avec le
+refus d'un espace non lu (la RLS reste la règle) ; une page d'un seul espace constatée **inchangée** (ni colonne ni filtre).

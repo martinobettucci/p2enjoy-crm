@@ -20587,6 +20587,9 @@ livraison (décision 830).
     et captures sur un compte de deux espaces, le manuel.
 - [ ] **T3 — Les pages globales.** Espace de provenance et filtre « Espace » ; les écrans qui lisaient le premier espace
   passent à tous ; les créations nomment l'espace courant de l'onglet.
+  **Détaillée le 2026-11-24** (`docs/SPEC-espace-courant.md` §16) : T3.a le socle (composant « Espace », provenance, adresse,
+  les deux relevés) ; T3.b les listes sans backend ; T3.c deux migrations (`organization_list`, `temps_valorise`) et leurs
+  écrans ; T3.d Pilotage et Temps ▸ Saisie, **en attente des réponses du responsable à Q1 et Q2** (§16.6).
   **Relevés à reprendre dans T3** (*2026-11-21, session de livraison au constat du lot de T1 et T2 ; consignés par 5f*) :
   - **Les non-lus de chaque espace sous `md`.** À 390 px, la section « Espaces » du repli du fil d'Ariane ne montre aucune
     pastille de non-lus (capture `docs/captures/CRM-161/menu-espaces-sm-390.jpg`), alors que la décision 965 les veut au

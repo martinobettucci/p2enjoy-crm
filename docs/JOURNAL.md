@@ -41944,3 +41944,15 @@ connecteur n'écrit que l'audit des outils : une réponse JSON-RPC en erreur, ou
   d'erreur dans la ligne, qui peut citer une valeur saisie (`CLAUDE.md` §20).
 **Conséquences** : `docs/SPEC-mcp.md` §3.3 bis, §11, §13 et §14 ; contrat : l'image `mcp` à reconstruire.
 
+
+### `CRM-161` T3 — la spécification des pages globales, avant le code
+
+*2026-11-24, session 4891a451 (p2enjoy-crm-ef, ex-5f) ; T3 à T5 confiées par la session de livraison (96).*
+**Mesuré sur la base de développement** : `cards_figees`, `entonnoir_conversion`, `rentabilite_affaires`, `recherche_globale` et
+`inbox_unread_by_workspace` rendent `workspace_id` ; `card_placements`, `contacts`, `goal_boards`, `notifications`,
+`organizations`, `saisies_temps` le portent ; `temps_valorise` **lit déjà tous les espaces sans le rendre** ; `organization_list`
+ne prend qu'un espace ; coûts, recettes et budgets n'ont pas la colonne et se rattachent par `tracks` ou `cards`.
+**Écrit** : `docs/SPEC-espace-courant.md` §16 — règles communes (provenance dès deux espaces, filtre « Espace » dans l'adresse,
+créations dans l'espace de l'onglet), le tableau écran par écran, deux migrations (T3.c), les deux relevés de la livraison
+(non-lus lus une fois par la coquille et partagés par le menu et le repli ; l'espace de l'objet passé à `FormulaireEnvoi`), le
+découpage T3.a à T3.d, les preuves. **Soumis au responsable** (§16.6) : Q1, la forme du pilotage ; Q2, la saisie du temps.
