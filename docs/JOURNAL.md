@@ -42060,3 +42060,7 @@ rouges seules, corrigées par 7a sans code produit (`b1946607` : une course de l
 chapitre temps), rejouées 21/21 et 12/12 ; garde du manuel 169 ; API manuel 9/9 ; captures 159 changées, 1 ajoutée, observées
 (`4d836b4e`). **Relevé, hors du lot** : le bloc de relance affiche « Aucune relance n'est armée » avant d'avoir lu.
 **Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `4d836b4e`, image `mcp` reconstruite.
+**Exécutée le 2026-11-24** : `pg_dump` relu (3 608 entrées) ; `livrer.sh --revision 4d836b4e…` (webapp bâtie dans la cellule, aucune
+migration) ; l'image `mcp`, non reconstruite par la fenêtre, reconstruite ensuite (`mcp-etat` conservé), saine, `/sante` et
+`/pret` à 200 ; `verifier.sh` 35/36 (INC-277) ; manuel publié ; contrat §2.73 LIVRÉE et §8, changelog en [Publié], backlog ;
+verrou levé.

@@ -13,6 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-24 — l'image `mcp` et la webapp
+
+Cellule Spark `crm`, révision `4d836b4e` (décision 984, un `pg_dump -Fc` avant ; aucune migration). **Vérifié** : registre à 197
+lignes ; `mcp` reconstruit, sain, portant la fenêtre de renouvellement ; `/sante` et `/pret` à 200 ; `index-5oYLKvU3.js` servi ;
+`verifier.sh` 35/36 (INC-277) ; manuel publié (604 fichiers). Le constat du responsable reste à faire.
+
 - **CRM-164 — le connecteur ne coupe plus la session d'un assistant qui renouvelle deux fois le même jeton** (décisions 978
   et 979). Pendant 30 s, un jeton de renouvellement tout juste remplacé rend, pour le même client, la même paire que le
   premier renouvellement. Rien n'est émis ni allongé, et la fenêtre se ferme dès que la paire rendue n'est plus vivante.
@@ -25,8 +35,6 @@ d'exécuter le code attendu.
 - **`CRM-161` T3.a — « Expédier depuis » n'offre que les identités de l'espace de l'affaire.** Une personne qui a une identité
   d'expédition dans un autre espace ne la voit plus proposée dans le formulaire d'envoi d'une affaire, où elle ne pouvait pas
   servir.
-
-## [Publié]
 
 ### Déployé en production, 2026-11-21 au soir — les migrations 195 à 199, la webapp, `functions` et le manuel
 

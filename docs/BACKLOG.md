@@ -20474,6 +20474,7 @@ campagne complète revient à la session de livraison (décision 830).
 ### CRM-161 — L'espace courant cloisonne les tracks, les channels et l'inbox ; tout le reste est global, l'espace de provenance affiché `[@]`
 
 **T1 et T2 livrées le 2026-11-21** (décision 977, révision `377ac6e5`) ; T3 à T5 restent à faire ; reste le constat du responsable.
+**Les deux relevés de T3.a livrés le 2026-11-24** (`ef535024`, `d8cc8323` ; décision 984, révision `4d836b4e`).
 *Prise en charge : session interactive 4891a451 (p2enjoy-crm-ef, ex-5f) depuis 2026-11-24 06:41 UTC — état avant : [~] ; T3 à T5,
 confiées par la session de livraison (96)*
 
@@ -20705,6 +20706,8 @@ production : aucun `edge_request_failed` de `ia` sur une journée. La campagne c
 (décision 830).
 
 ### CRM-164 — Le connecteur coupe la session d'un assistant qui renouvelle deux fois le même jeton ; les erreurs de protocole ne laissent aucune trace `[P]`
+
+**Livrée le 2026-11-24** (décision 984, révision `4d836b4e`) ; reste le constat du responsable en production.
 
 **Origine** : signalement du responsable, le 2026-11-24 — un long import de prospection depuis ChatGPT (2 500+ affaires) ne s'est
 pas terminé, et Claude a rapporté une erreur interne `-32603` du connecteur sur la liste des organisations. Diagnostic de la
