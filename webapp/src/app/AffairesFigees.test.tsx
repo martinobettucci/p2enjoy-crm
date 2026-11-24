@@ -4,6 +4,9 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.37 (cette surface), §5.8 (états), §5.9 (cellule sans valeur
 //           VIDE), §5.32 (aucun lien vers une adresse incomplète), §5.29 (pilule de channel)
 // @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — la seconde lecture rend des rattachements (docs/SPEC-rattachements.md §5)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.a : l'espace dans l'en-tête de chaque groupe, le filtre « Espace » lu
+//           dans l'adresse, le vide sous le filtre ; rien pour une personne d'un seul espace
+//           (docs/SPEC-espace-courant.md §16.1, §16.3, §16.5 ; docs/DESIGN_SYSTEM.md §5.115)
 //
 // LES DONNÉES INJECTÉES SONT CELLES DU SEED, À L'IDENTIQUE — les quatre affaires du §10.2.1, avec
 // leurs retards 35, 18, 16 et 7, leurs quatre dossiers et leurs trois tracks. Ce n'est pas une
@@ -14,6 +17,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import { AffairesFigees } from './AffairesFigees'
+import { FournisseurEspace } from './ContexteEspace'
 import { fr } from '../i18n/fr'
 import type { ClientCrm } from '../lib/supabase'
 
@@ -28,6 +32,7 @@ type LigneRegle = {
 	seuil_jours: number
 	jours_dans_etape: number
 	retard_jours: number
+	workspace_id: string
 }
 
 /** Les quatre affaires du §10.2.1, dans l'ordre du §3.4. */
@@ -40,6 +45,7 @@ const REGLE: LigneRegle[] = [
 		seuil_jours: 5,
 		jours_dans_etape: 40,
 		retard_jours: 35,
+		workspace_id: 'ws-p',
 	},
 	{
 		card_id: 'd007',
@@ -49,6 +55,7 @@ const REGLE: LigneRegle[] = [
 		seuil_jours: 7,
 		jours_dans_etape: 25,
 		retard_jours: 18,
+		workspace_id: 'ws-p',
 	},
 	{
 		card_id: 'c3',
@@ -58,6 +65,7 @@ const REGLE: LigneRegle[] = [
 		seuil_jours: 14,
 		jours_dans_etape: 30,
 		retard_jours: 16,
+		workspace_id: 'ws-p',
 	},
 	{
 		card_id: 'cf',
@@ -67,6 +75,7 @@ const REGLE: LigneRegle[] = [
 		seuil_jours: 5,
 		jours_dans_etape: 12,
 		retard_jours: 7,
+		workspace_id: 'ws-p',
 	},
 ]
 
@@ -250,5 +259,67 @@ describe('l’écran des affaires figées (docs/SPEC-relances.md §10)', () => {
 		expect(screen.getByLabelText(fr['stalled.live.aria']).textContent).toBe(
 			fr['stalled.live.message'].replace('{total}', '4'),
 		)
+	})
+})
+
+describe('`CRM-161` T3.a — la provenance et le filtre « Espace » (docs/DESIGN_SYSTEM.md §5.115)', () => {
+	const P2ENJOY = { id: 'ws-p', name: 'P2Enjoy SAS', slug: 'p2enjoy' }
+	const LUMEN = { id: 'ws-l', name: 'Studio Lumen', slug: 'studio-lumen' }
+	// Une affaire figée de « Studio Lumen », pour que les deux espaces aient chacun un groupe.
+	const REGLE_DEUX_ESPACES = [
+		...REGLE,
+		{ card_id: 'l1', channel_id: 'ch-tournages', title: 'Clip — Maison Arlo', step_id: 'st9', seuil_jours: 5, jours_dans_etape: 6, retard_jours: 1, workspace_id: 'ws-l' },
+	]
+	const CARTES_DEUX_ESPACES = [...CARTES, carte('l1', 'tournages', 'Tournages', 'productions', 'Productions', 'Prospection')]
+
+	const monterDans = (espaces: readonly { id: string; name: string; slug: string }[], adresse = '/affaires-figees') =>
+		render(
+			<MemoryRouter initialEntries={[adresse]}>
+				<FournisseurEspace valeur={{ idWorkspace: 'ws-p', estAdmin: true, espaces }}>
+					<AffairesFigees client={clientQuiRend({ regle: { data: REGLE_DEUX_ESPACES }, cards: { data: CARTES_DEUX_ESPACES } })} />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+
+	it('à deux espaces, chaque groupe nomme son espace, une fois, dans son en-tête', async () => {
+		monterDans([P2ENJOY, LUMEN])
+		await waitFor(() => expect(screen.getAllByTestId('groupe-figees')).toHaveLength(5))
+		expect(screen.getAllByTestId('espace-groupe').map((mention) => mention.textContent)).toEqual([
+			' · P2Enjoy SAS',
+			' · P2Enjoy SAS',
+			' · P2Enjoy SAS',
+			' · P2Enjoy SAS',
+			' · Studio Lumen',
+		])
+		// Jamais répétée sur les lignes : le groupe la porte.
+		for (const ligne of screen.getAllByTestId('ligne-figee')) expect(ligne.textContent).not.toContain('Studio Lumen')
+		expect(screen.getByRole('button', { name: 'Espace' })).toBeTruthy()
+	})
+
+	it('le filtre de l’adresse ne garde que l’espace choisi, et la région vivante dit le compte filtré', async () => {
+		monterDans([P2ENJOY, LUMEN], '/affaires-figees?espaces=studio-lumen')
+		await waitFor(() => expect(screen.getAllByTestId('groupe-figees')).toHaveLength(1))
+		expect(screen.getByTestId('ligne-figee').textContent).toContain('Clip — Maison Arlo')
+		expect(screen.getByText(fr['stalled.live.message'].replace('{total}', '1'))).toBeTruthy()
+	})
+
+	it('un filtre qui retire toutes les lignes rend le vide SOUS LE FILTRE, jamais le vide sain', async () => {
+		render(
+			<MemoryRouter initialEntries={['/affaires-figees?espaces=studio-lumen']}>
+				<FournisseurEspace valeur={{ idWorkspace: 'ws-p', estAdmin: true, espaces: [P2ENJOY, LUMEN] }}>
+					<AffairesFigees client={clientQuiRend({ regle: { data: REGLE }, cards: { data: CARTES } })} />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+		await waitFor(() => expect(screen.getByTestId('vide-filtre-espaces')).toBeTruthy())
+		expect(screen.queryByText(fr['stalled.empty.title'])).toBeNull()
+		expect(screen.getByRole('button', { name: 'Afficher tous les espaces' })).toBeTruthy()
+	})
+
+	it('pour une personne d’un seul espace : ni filtre, ni mention, et l’adresse ne filtre rien', async () => {
+		monterDans([P2ENJOY], '/affaires-figees?espaces=studio-lumen')
+		await waitFor(() => expect(screen.getAllByTestId('groupe-figees')).toHaveLength(5))
+		expect(screen.queryByTestId('filtre-espaces')).toBeNull()
+		expect(screen.queryByTestId('espace-groupe')).toBeNull()
 	})
 })

@@ -1619,6 +1619,20 @@ ou avec l'image `mcp` de T2.** Sans elle, le service de T2 rend le socle seul (s
 et un texte vide n'ajoute rien : les assistants reçoivent les mêmes consignes qu'avant. **Retour arrière** : l'image
 précédente du connecteur, reconstruite à la révision d'avant.
 
+### 2.76 `CRM-161` T3.a — le filtre « Espace » et la provenance, sur « Affaires figées » (EN ATTENTE)
+
+`docs/SPEC-espace-courant.md` §16.2 et §16.5 ; `docs/DESIGN_SYSTEM.md` §5.115. La webapp seule : `lib/provenance.ts`,
+`FiltreEspaces`, la page « Affaires figées ». **Aucune migration, aucune variable, aucun secret** ; la règle `cards_figees`
+rendait déjà `workspace_id`. Le manuel construit (chapitres 3 et 7) part avec elle.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer la webapp et le manuel construit | session de livraison, dans la fenêtre du lot | comme toute livraison de la webapp (§4) |
+| 2 | Constater | le responsable | une personne d'un seul espace voit « Affaires figées » inchangée : ni bouton « Espace », ni nom d'espace ; une personne de deux espaces voit le nom de l'espace après le compte de chaque groupe, et le bouton « Espace » isole un espace, l'adresse portant `?espaces=` |
+
+**Ce qui devient visible** : rien pour une personne d'un seul espace, ce qui est le cas de toute la production aujourd'hui.
+**Retour arrière** : la webapp de la révision d'avant.
+
 ## 3. Migrations en attente
 
 **La 200** (`CRM-165` T1, décisions 980 et 983), **en attente** : les consignes de la plateforme (§2.74, `docs/SCHEMA.md`

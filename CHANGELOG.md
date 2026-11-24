@@ -24,6 +24,11 @@ d'exécuter le code attendu.
   n'ajoute rien, et un texte changé vaut à la connexion suivante. Si le texte ne peut pas être lu, les consignes fixes
   partent seules et le journal du service le dit, sans contenu. Le service publie ses consignes fixes en base au démarrage,
   pour que l'écran les montre. Image `mcp` à reconstruire, après la migration 200.
+- **`CRM-161` T3.a — le filtre « Espace » et la provenance, sur « Affaires figées »** (`docs/DESIGN_SYSTEM.md` §5.115). Pour
+  une personne de plusieurs espaces, chaque groupe de la page « Affaires figées » nomme son espace, et un bouton
+  « Espace » au-dessus de la liste n'en garde que certains ; le choix vit dans l'adresse (`?espaces=`), et un choix sans
+  résultat le dit, avec « Afficher tous les espaces ». Une personne d'un seul espace ne voit aucun changement. Premier
+  composant partagé des pages globales, que les suivantes reprendront. Aucune migration ; webapp à livrer.
 
 ## [Publié]
 

@@ -352,6 +352,14 @@ de l'espace ouvert, suivi d'une petite double flèche. Cliquez-le pour voir vos 
 **Ce qui appartient à un espace**, et ne se voit que dans lui : ses tracks et ses channels, son inbox (ses mails, ses
 dossiers, ses non-lus, sa corbeille) et ses réglages. Les autres pages rassemblent vos espaces.
 
+**Sur une page qui rassemble vos espaces**, chaque élément dit de quel espace il vient, et un bouton **Espace**, au-dessus
+de la liste, permet de n'en garder que certains : cliquez-le, cochez les espaces à afficher ; la liste suit aussitôt, et le
+bouton dit combien d'espaces sont cochés, par exemple **Espace (1)**. Rien de coché : tous vos espaces. Le choix reste dans
+l'adresse de la page, et survit donc à un rechargement ou à un lien copié. Si les espaces cochés n'ont rien à montrer, la
+page le dit et propose **Afficher tous les espaces**. Au clavier, ouvrez le bouton avec `Entrée`, passez d'une case à
+l'autre avec `Tab`, cochez avec `Espace`, refermez avec `Échap`. Si vous n'êtes membre que d'un espace, ni le bouton ni la
+mention de l'espace n'apparaissent. Cette page est la première à le faire : **Affaires figées** ([chapitre 7](#les-affaires-figees-ce-qui-dort-depuis-trop-longtemps)).
+
 **L'espace est dans l'adresse.** L'adresse de l'inbox, d'un track ou d'une page de réglages commence par le nom court de
 l'espace : vous pouvez donc garder **deux onglets ouverts sur deux espaces**, chacun le sien, et un lien copié emmène
 toujours dans le bon espace. Un ancien lien, sans le nom de l'espace, mène encore à la bonne page : l'application retrouve
@@ -1065,6 +1073,10 @@ Une ligne se lit de gauche à droite :
 
 Le rouge porte sur le **retard seul**, jamais sur la ligne entière : une affaire figée est un
 travail à faire, pas une erreur.
+
+**Si vous êtes membre de plusieurs espaces**, l'écran montre les affaires figées de tous, et chaque titre de groupe nomme
+son espace après le compte, par exemple « Refonte de site (1) · P2Enjoy SAS ». Le bouton **Espace**, au-dessus de la liste,
+n'en garde que certains (« Changer d'espace », [chapitre 3](#naviguer-barre-laterale-onglets-etats)).
 
 ### 7.3 Deux personnes n'y lisent pas la même chose
 

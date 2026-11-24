@@ -1054,6 +1054,124 @@
 					"content": [
 						{
 							"type": "text",
+							"text": "Sur une page qui rassemble vos espaces"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", chaque élément dit de quel espace il vient, et un bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", au-dessus\nde la liste, permet de n'en garder que certains : cliquez-le, cochez les espaces à afficher ; la liste suit aussitôt, et le\nbouton dit combien d'espaces sont cochés, par exemple "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace (1)"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Rien de coché : tous vos espaces. Le choix reste dans\nl'adresse de la page, et survit donc à un rechargement ou à un lien copié. Si les espaces cochés n'ont rien à montrer, la\npage le dit et propose "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Afficher tous les espaces"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Au clavier, ouvrez le bouton avec "
+				},
+				{
+					"type": "code",
+					"text": "Entrée"
+				},
+				{
+					"type": "text",
+					"text": ", passez d'une case à\nl'autre avec "
+				},
+				{
+					"type": "code",
+					"text": "Tab"
+				},
+				{
+					"type": "text",
+					"text": ", cochez avec "
+				},
+				{
+					"type": "code",
+					"text": "Espace"
+				},
+				{
+					"type": "text",
+					"text": ", refermez avec "
+				},
+				{
+					"type": "code",
+					"text": "Échap"
+				},
+				{
+					"type": "text",
+					"text": ". Si vous n'êtes membre que d'un espace, ni le bouton ni la\nmention de l'espace n'apparaissent. Cette page est la première à le faire : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Affaires figées"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-affaires-figees-ce-qui-dort-depuis-trop-longtemps"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 7"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
 							"text": "L'espace est dans l'adresse."
 						}
 					]

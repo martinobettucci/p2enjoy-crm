@@ -5,6 +5,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.32 (aucun lien vers une adresse incomplète)
 // @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — la seconde lecture porte sur les rattachements
 //           (docs/SPEC-rattachements.md §5 et §6)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.a : l'affaire et son groupe portent l'espace que la règle rend
+//           (docs/SPEC-espace-courant.md §16.3, §16.5 ; docs/DESIGN_SYSTEM.md §5.115)
 //
 // Ces tests portent sur la LOGIQUE, sans navigateur : c'est ce que la séparation du module rend
 // possible. Le rendu est éprouvé par `webapp/src/app/AffairesFigees.test.tsx`, et la pile réelle
@@ -32,6 +34,7 @@ const figee = (partiel: Partial<LigneFigeeLue> & { card_id: string }): LigneFige
 	seuil_jours: 14,
 	jours_dans_etape: 30,
 	retard_jours: 16,
+	workspace_id: 'ws1',
 	...partiel,
 })
 
@@ -129,6 +132,14 @@ describe('l’appariement des deux lectures (docs/SPEC-relances.md §10.5)', () 
 		expect(affaire.etape).toBe('Prospection')
 	})
 
+	// `CRM-161` T3.a : l'espace vient de la RÈGLE, et il reste quand la seconde lecture n'a rien rapporté.
+	it('porte l’espace de la règle, même sans la seconde lecture', () => {
+		expect(apparier(figee({ card_id: 'c1', workspace_id: 'ws-lumen' }), indexerRattachements([complete('c1')])).idEspace).toBe(
+			'ws-lumen',
+		)
+		expect(apparier(figee({ card_id: 'c9', workspace_id: 'ws-lumen' }), new Map()).idEspace).toBe('ws-lumen')
+	})
+
 	// `CRM-111` T2.4.1 : une affaire rattachée à deux channels figure DEUX fois dans la règle, une par
 	// rattachement ; chaque ligne prend le dossier et l'étape de SON rattachement.
 	it('apparie chaque ligne à SON rattachement, une affaire figée dans deux channels', () => {
@@ -173,6 +184,7 @@ describe('le regroupement par dossier (docs/SPEC-relances.md §10.7)', () => {
 	const affaire = (id: string, idChannel: string, retard: number): AffaireFigee => ({
 		id,
 		titre: id,
+		idEspace: 'ws1',
 		retardJours: retard,
 		seuilJours: 5,
 		idChannel,
@@ -222,6 +234,20 @@ describe('le regroupement par dossier (docs/SPEC-relances.md §10.7)', () => {
 
 	// UN GROUPE NAÎT D'AU MOINS UNE LIGNE : il n'y a donc rien à écrire sur l'absence, contrairement
 	// aux sections fixes de « Ma journée ».
+	// `CRM-161` T3.a : un dossier n'a qu'un espace ; le groupe porte celui de ses affaires, et la provenance s'écrit une
+	// fois, dans son en-tête (§5.115).
+	it('porte l’espace de ses affaires, et deux dossiers de deux espaces restent deux groupes', () => {
+		const groupes = regrouperParDossier([
+			{ ...affaire('a', 'ch-un', 35), idEspace: 'ws-lumen' },
+			{ ...affaire('b', 'ch-deux', 18), idEspace: 'ws-p2enjoy' },
+			{ ...affaire('c', 'ch-un', 7), idEspace: 'ws-lumen' },
+		])
+		expect(groupes.map((groupe) => [groupe.idChannel, groupe.idEspace])).toEqual([
+			['ch-un', 'ws-lumen'],
+			['ch-deux', 'ws-p2enjoy'],
+		])
+	})
+
 	it('ne fabrique AUCUN groupe sur une liste vide', () => {
 		expect(regrouperParDossier([])).toEqual([])
 	})

@@ -1466,6 +1466,17 @@ export const fr = {
 		'La liste des échéances n’a pas pu être lue. Vérifiez votre connexion, puis réessayez.',
 	'today.error.retry': 'Réessayer',
 	// ---------------------------------------------------------------------------------------
+	// Le filtre « Espace » des pages globales — `CRM-161` T3.a, docs/DESIGN_SYSTEM.md §5.115
+	// ---------------------------------------------------------------------------------------
+	'spaces.filter.aria': 'Filtres',
+	'spaces.filter.button': 'Espace',
+	'spaces.filter.button.count': 'Espace ({nombre})',
+	'spaces.filter.legend': 'Espaces affichés',
+	// LE VIDE SOUS LE FILTRE N'EST PAS LE VIDE DE LA PAGE (§5.115, §5.8) : il dit sa cause et offre de la défaire.
+	'spaces.filter.empty.title': 'Rien dans les espaces choisis',
+	'spaces.filter.empty.body': 'Les autres espaces que vous lisez en ont peut-être : affichez-les tous.',
+	'spaces.filter.empty.all': 'Afficher tous les espaces',
+	// ---------------------------------------------------------------------------------------
 	// Affaires figées — `CRM-062` tranche 3c, docs/SPEC-relances.md §10
 	// ---------------------------------------------------------------------------------------
 	'stalled.aria': 'Affaires figées',

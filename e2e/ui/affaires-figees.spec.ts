@@ -7,6 +7,9 @@
 //           CLAUDE.md §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.a : le filtre « Espace » à la souris et au clavier, l'adresse
+//           `?espaces=`, l'espace dans l'en-tête de groupe, le vide sous le filtre, et rien pour une personne d'un seul
+//           espace (docs/SPEC-espace-courant.md §16.1, §16.2, §16.5, §16.7 ; docs/DESIGN_SYSTEM.md §5.115)
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, aucune réponse n'est substituée, et la navigation passe par la BARRE
@@ -230,5 +233,109 @@ test.describe('« Affaires figées » (docs/SPEC-relances.md §10)', () => {
 		await expect(page.getByTestId('etat-vide').getByRole('button')).toHaveCount(0)
 		await expect(page.getByTestId('etat-vide').getByRole('link')).toHaveCount(0)
 		await capturer(page, 'affaires-figees-vide-1440', UNITE)
+	})
+})
+
+// `CRM-161` T3.a — CAMILLE LIT DEUX ESPACES DANS LE SEED, « P2Enjoy SAS » et « Studio Lumen » (`docs/SPEC-seed.md` §55), et
+// ses quatre affaires figées sont toutes dans le premier : isoler le second rend le vide SOUS LE FILTRE, isoler le premier
+// rend les quatre. Aucune affaire figée n'est ajoutée à « Studio Lumen » — la suite exacte des quatre retards est un contrat
+// du seed (§10.2.1). La lectrice ne lit qu'un espace : sa page est celle d'avant T3. Rien n'est écrit : le seed sort intact.
+test.describe('`CRM-161` T3.a — le filtre « Espace » (docs/DESIGN_SYSTEM.md §5.115)', () => {
+	const UNITE_T3 = 'CRM-161'
+
+	test('à la souris : isoler un espace, voir le vide sous le filtre, tout réafficher', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await page.goto('/affaires-figees')
+		await expect(page.getByTestId('ligne-figee')).toHaveCount(AFFAIRES.length)
+		// LA PROVENANCE : chaque groupe nomme son espace, une fois, dans son en-tête.
+		await expect(page.getByTestId('espace-groupe')).toHaveCount(4)
+		await expect(page.getByTestId('espace-groupe').first()).toHaveText('· P2Enjoy SAS')
+
+		const bouton = page.getByRole('button', { name: 'Espace', exact: true })
+		await expect(bouton).toHaveAttribute('aria-expanded', 'false')
+		await bouton.click()
+		await expect(bouton).toHaveAttribute('aria-expanded', 'true')
+		const panneau = page.getByTestId('panneau-filtre-espaces')
+		await expect(panneau.getByRole('checkbox')).toHaveCount(2)
+		await capturer(page, 'filtre-espaces-ouvert-1440', UNITE_T3)
+
+		await panneau.getByRole('checkbox', { name: 'Studio Lumen' }).check()
+		await expect(page).toHaveURL(/[?&]espaces=studio-lumen$/)
+		await expect(page.getByRole('button', { name: 'Espace (1)' })).toBeVisible()
+		await expect(page.getByTestId('vide-filtre-espaces')).toBeVisible()
+		await expect(page.getByText('Rien dans les espaces choisis')).toBeVisible()
+		await expect(page.getByText('Aucune affaire figée')).toHaveCount(0)
+		await capturer(page, 'filtre-espaces-vide-1440', UNITE_T3)
+
+		// L'ADRESSE SE RELIT : un rechargement garde le filtre.
+		await page.reload()
+		await expect(page.getByTestId('vide-filtre-espaces')).toBeVisible()
+
+		await page.getByRole('button', { name: 'Afficher tous les espaces' }).click()
+		await expect(page).toHaveURL(/\/affaires-figees$/)
+		await expect(page.getByTestId('ligne-figee')).toHaveCount(AFFAIRES.length)
+		await expect(page.getByRole('button', { name: 'Espace', exact: true })).toBeFocused()
+
+		await page.getByRole('button', { name: 'Espace', exact: true }).click()
+		await page.getByTestId('panneau-filtre-espaces').getByRole('checkbox', { name: 'P2Enjoy SAS' }).check()
+		await expect(page).toHaveURL(/[?&]espaces=p2enjoy$/)
+		await expect(page.getByTestId('ligne-figee')).toHaveCount(AFFAIRES.length)
+	})
+
+	test('au clavier : ouvrir, cocher à l’espace, replier par Échap, le focus rendu au bouton', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await page.goto('/affaires-figees')
+		await expect(page.getByTestId('ligne-figee')).toHaveCount(AFFAIRES.length)
+		const bouton = page.getByRole('button', { name: 'Espace', exact: true })
+		await bouton.focus()
+		await page.keyboard.press('Enter')
+		await expect(bouton).toHaveAttribute('aria-expanded', 'true')
+		// LE PANNEAU SUIT LE BOUTON DANS L'ORDRE DU FOCUS : Tab y entre, sur la première case.
+		await page.keyboard.press('Tab')
+		await expect(page.getByRole('checkbox', { name: 'P2Enjoy SAS' })).toBeFocused()
+		await page.keyboard.press('Tab')
+		await expect(page.getByRole('checkbox', { name: 'Studio Lumen' })).toBeFocused()
+		await page.keyboard.press('Space')
+		await expect(page).toHaveURL(/[?&]espaces=studio-lumen$/)
+		await expect(page.getByTestId('vide-filtre-espaces')).toBeVisible()
+		await page.keyboard.press('Escape')
+		await expect(page.getByTestId('panneau-filtre-espaces')).toHaveCount(0)
+		await expect(page.getByRole('button', { name: 'Espace (1)' })).toBeFocused()
+		// Le vide sous le filtre se défait au clavier, et le focus revient au bouton.
+		await page.getByRole('button', { name: 'Afficher tous les espaces' }).focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('ligne-figee')).toHaveCount(AFFAIRES.length)
+		await expect(page.getByRole('button', { name: 'Espace', exact: true })).toBeFocused()
+	})
+
+	test('un slug inconnu de l’adresse est ignoré : rien n’est filtré', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await page.goto('/affaires-figees?espaces=espace-inconnu')
+		await expect(page.getByTestId('ligne-figee')).toHaveCount(AFFAIRES.length)
+		await expect(page.getByRole('button', { name: 'Espace', exact: true })).toBeVisible()
+	})
+
+	test('la lectrice, d’un seul espace : ni filtre, ni mention — la page d’avant T3', async ({ page }) => {
+		await connecter(page, VIEWER)
+		await page.goto('/affaires-figees?espaces=studio-lumen')
+		await expect(page.getByTestId('ligne-figee')).toHaveCount(AFFAIRES.length - 1)
+		await expect(page.getByTestId('filtre-espaces')).toHaveCount(0)
+		await expect(page.getByTestId('espace-groupe')).toHaveCount(0)
+	})
+
+	test('les quatre paliers, filtre ouvert : captures produites, et aucun débordement horizontal', async ({ page }) => {
+		await connecter(page, ADMIN)
+		for (const palier of PALIERS) {
+			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await page.goto('/affaires-figees')
+			await expect(page.getByTestId('ligne-figee')).toHaveCount(AFFAIRES.length)
+			await page.getByRole('button', { name: 'Espace', exact: true }).click()
+			await expect(page.getByTestId('panneau-filtre-espaces')).toBeVisible()
+			const deborde = await page.evaluate(
+				() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+			)
+			expect(deborde, `débordement horizontal à ${palier.nom}`).toBe(false)
+			await capturer(page, `filtre-espaces-${palier.nom}`, UNITE_T3)
+		}
 	})
 })

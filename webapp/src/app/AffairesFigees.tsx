@@ -4,6 +4,9 @@
 //       §10.8 (ce que chaque ligne rend), §10.9 (les états), §10.10 (accessibilité)
 // @spec docs/DESIGN_SYSTEM.md §5.37 (cette surface), §5.18 (liste plate), §5.29 (pilule de
 //       channel), §5.8 (états), §5.6 (pilule neutre), §2 (données techniques), §7 (paliers)
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.a : la première page du socle — le filtre « Espace » au-dessus de la liste,
+//       l'espace dans l'en-tête de chaque groupe, le vide sous le filtre ; rien pour une personne d'un seul espace
+//       (docs/SPEC-espace-courant.md §16.2, §16.3, §16.5 ; docs/DESIGN_SYSTEM.md §5.115, §5.36)
 //
 // L'ÉCRAN NE CALCULE AUCUN DROIT (`CLAUDE.md` §10) : il rend ce que le backend consent. Un appelant
 // sans session, ou sans droit sur un dossier, reçoit `200` et zéro ligne — mesuré —, ce qui est
@@ -27,7 +30,9 @@ import {
 	regrouperParDossier,
 	type AffaireFigee,
 } from '../lib/affaires-figees'
+import { filtrerParEspace, nomEspace } from '../lib/provenance'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
+import { FiltreEspaces, useFiltreEspaces, VideSousFiltreEspaces } from './FiltreEspaces'
 
 export type ProprietesAffairesFigees = {
 	readonly client?: ClientCrm | null
@@ -36,6 +41,9 @@ export type ProprietesAffairesFigees = {
 export function AffairesFigees({ client = clientCrm }: ProprietesAffairesFigees = {}) {
 	const [etat, setEtat] = useState<EtatAsync<readonly AffaireFigee[]>>(enChargement)
 	const [tentative, setTentative] = useState(0)
+	// `CRM-161` T3.a : le filtre « Espace » (§5.115). La lecture ne change pas — la règle rend déjà tous les espaces et leur
+	// `workspace_id`, sans pagination — : le filtre s'applique en mémoire (§16.2).
+	const filtre = useFiltreEspaces()
 	// Une réponse arrivée après le démontage ne doit pas écraser un état plus récent — même garde
 	// que `MaJournee`, `Carnet` et `EtatMessagerie`.
 	const courant = useRef(0)
@@ -83,8 +91,11 @@ export function AffairesFigees({ client = clientCrm }: ProprietesAffairesFigees 
 		)
 	}
 
-	const groupes = regrouperParDossier(etat.donnees)
-	const total = etat.donnees.length
+	const affichees = filtrerParEspace(etat.donnees, filtre.choisis, (affaire) => affaire.idEspace)
+	const groupes = regrouperParDossier(affichees)
+	const total = affichees.length
+	// LE VIDE SOUS LE FILTRE n'est pas le vide sain de l'écran (§5.115) : il n'existe que si le filtre a retiré des lignes.
+	const videSousFiltre = total === 0 && etat.donnees.length > 0
 
 	return (
 		<section aria-label={t('stalled.aria')} className="flex flex-col gap-4">
@@ -94,7 +105,10 @@ export function AffairesFigees({ client = clientCrm }: ProprietesAffairesFigees 
 				libelle={t('stalled.live.aria')}
 				message={t('stalled.live.message', { total: String(total) })}
 			/>
-			{total === 0 ? (
+			<FiltreEspaces filtre={filtre} />
+			{videSousFiltre ? (
+				<VideSousFiltreEspaces filtre={filtre} />
+			) : total === 0 ? (
 				/*
 				  UN SEUL VIDE, ET IL N'OFFRE AUCUNE ACTION (§10.9). C'est l'écart assumé au §5.8 que
 				  la corbeille (§5.16) et le carnet (§5.19) prennent déjà : il n'y a rien à faire
@@ -121,6 +135,14 @@ export function AffairesFigees({ client = clientCrm }: ProprietesAffairesFigees 
 							<span data-testid="compte-groupe" className="text-text-2 tabular-nums">
 								({groupe.affaires.length})
 							</span>
+							{/* `CRM-161` T3.a — LA PROVENANCE DU GROUPE (§5.115) : un dossier n'a qu'un espace, nommé une fois ici,
+							    jamais sur ses lignes ; dans son propre élément (§5.36). Rien pour une personne d'un seul espace. */}
+							{filtre.visible && nomEspace(filtre.espaces, groupe.idEspace) !== null ? (
+								<span data-testid="espace-groupe" className="text-sm font-normal text-text-2">
+									<span aria-hidden="true"> · </span>
+									{nomEspace(filtre.espaces, groupe.idEspace)}
+								</span>
+							) : null}
 						</h2>
 						<ul className="flex flex-col rounded-lg border border-border bg-surface">
 							{groupe.affaires.map((affaire) => (

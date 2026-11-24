@@ -634,6 +634,53 @@
 			]
 		},
 		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Si vous êtes membre de plusieurs espaces"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", l'écran montre les affaires figées de tous, et chaque titre de groupe nomme\nson espace après le compte, par exemple « Refonte de site (1) · P2Enjoy SAS ». Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", au-dessus de la liste,\nn'en garde que certains (« Changer d'espace », "
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 3"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "deux-personnes-n-y-lisent-pas-la-meme-chose",

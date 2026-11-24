@@ -20601,6 +20601,11 @@ livraison (décision 830).
   **T3.a, le socle, spécifié le 2026-11-24 avant son code** : `docs/DESIGN_SYSTEM.md` §5.115 (le filtre « Espace », la
   provenance, le vide sous le filtre ; la §5.114 réservée était prise par `CRM-165`) ; `docs/SPEC-espace-courant.md` §16.5
   précisé — « Affaires figées » est la première page du socle, passée de T3.b à T3.a, sa provenance dans l'en-tête de groupe.
+  **T3.a, le socle, fait le 2026-11-24** : `lib/provenance.ts`, `FiltreEspaces` (et `useFiltreEspaces`, `VideSousFiltreEspaces`),
+  « Affaires figées » filtrée et nommant l'espace de chaque groupe. Preuves : unitaires `provenance` 8/8, `FiltreEspaces` 7/7,
+  `affaires-figees` 20/20, `AffairesFigees` 15/15, complets 6 290/6 290 ; quatre `tsc` ; E2E `affaires-figees` 14/14 (souris,
+  clavier, slug inconnu, lectrice d'un seul espace, quatre paliers) ; captures observées (`filtre-espaces-*`) ; manuel §3.2 bis
+  et §7.2, manuel construit ; changelog. Reste à livrer (webapp) ; la campagne complète revient à la session de livraison.
   **Relevés à reprendre dans T3** (*2026-11-21, session de livraison au constat du lot de T1 et T2 ; consignés par 5f*) :
   - **Les non-lus de chaque espace sous `md`.** À 390 px, la section « Espaces » du repli du fil d'Ariane ne montre aucune
     pastille de non-lus (capture `docs/captures/CRM-161/menu-espaces-sm-390.jpg`), alors que la décision 965 les veut au

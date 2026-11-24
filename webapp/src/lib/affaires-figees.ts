@@ -6,6 +6,9 @@
 //       §3.1 (les dix colonnes rendues), §3.4 (l'ordre)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone) ; docs/DESIGN_SYSTEM.md §5.37 (l'écran)
 // @spec CRM-111 T2.4.1 (docs/BACKLOG.md) — la seconde lecture porte sur les rattachements, appariés par affaire et channel (docs/SPEC-rattachements.md §5)
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.a : chaque affaire et chaque groupe portent leur espace, que la règle rend
+//       déjà (`workspace_id`), pour la provenance et le filtre « Espace » (docs/SPEC-espace-courant.md §16.3, §16.5 ;
+//       docs/DESIGN_SYSTEM.md §5.115)
 //
 // Ce module ne rend rien : il **compose**, et il lit. La séparation est ce qui rend les règles du
 // §10 vérifiables sans navigateur — le regroupement par dossier, l'ordre des groupes, la
@@ -43,6 +46,8 @@ export type LigneFigeeLue = {
 	readonly seuil_jours: number
 	readonly jours_dans_etape: number
 	readonly retard_jours: number
+	/** `CRM-161` T3.a : l'espace de l'affaire, rendu par la règle (mesuré le 2026-11-24, §16.3). */
+	readonly workspace_id: string
 }
 
 /** Une ligne de la seconde lecture — un rattachement (`CRM-111` T2.4.1) —, telle que PostgREST la rend. */
@@ -64,6 +69,8 @@ type LigneCardLue = {
 export type AffaireFigee = {
 	readonly id: string
 	readonly titre: string
+	/** `CRM-161` T3.a : l'espace de l'affaire, celui de la règle — jamais déduit de la seconde lecture. */
+	readonly idEspace: string
 	readonly retardJours: number
 	readonly seuilJours: number
 	/** L'identifiant du dossier : c'est lui qui groupe (§10.7), jamais son nom, qui peut se répéter. */
@@ -80,6 +87,8 @@ export type AffaireFigee = {
 /** Un groupe de l'écran : un dossier, et ses affaires dans l'ordre du serveur. */
 export type GroupeFigees = {
 	readonly idChannel: string
+	/** `CRM-161` T3.a : un dossier n'a qu'un espace — celui de sa première affaire, donc de toutes. */
+	readonly idEspace: string
 	readonly nomTrack: string | null
 	readonly nomChannel: string | null
 	readonly adresseChannel: string | null
@@ -146,6 +155,7 @@ export function apparier(
 	return {
 		id: figee.card_id,
 		titre: figee.title,
+		idEspace: figee.workspace_id,
 		retardJours: figee.retard_jours,
 		seuilJours: figee.seuil_jours,
 		idChannel: figee.channel_id,
@@ -183,6 +193,7 @@ export function regrouperParDossier(affaires: readonly AffaireFigee[]): readonly
 			rangs.set(affaire.idChannel, groupes.length)
 			groupes.push({
 				idChannel: affaire.idChannel,
+				idEspace: affaire.idEspace,
 				nomTrack: affaire.nomTrack,
 				nomChannel: affaire.nomChannel,
 				adresseChannel: affaire.adresseChannel,
