@@ -41969,3 +41969,13 @@ existe déjà mais figé dans le code.
 - **connecteur MCP** — question 1 : **non**, aucun outil ne lit ni n'écrit ces consignes ; question 2 : sans objet.
 **Par défaut, sans arbitrage** (à confirmer par la spécification) : l'onglet « Connecteur MCP » de la plateforme, une borne de
 longueur, l'auteur et la date affichés, une ligne au journal d'audit.
+
+### décision 980 — `CRM-161` T3 : la saisie du temps devient une grille de tous les espaces
+
+*2026-11-24, réponse du responsable à la question Q2 (`docs/SPEC-espace-courant.md` §16.6) ; session ef (ex-5f).*
+**La question** : la grille de Temps ▸ Saisie reste-t-elle dans l'espace de l'onglet (recommandé), ou couvre-t-elle tous les
+espaces ? **La réponse** : « Grille de tous les espaces ». **Les conséquences**, écrites au §16.6 : lignes groupées par espace,
+saisie dans l'espace de sa ligne, totaux par jour de la personne tous espaces confondus, « Saisir pour » limité à soi-même
+sur deux espaces, et restreint à un espace choisi quand un administrateur saisit pour un collègue.
+**Q1 (le pilotage)** : le responsable a d'abord demandé si le genre des étapes (ouvert, gagné, perdu) n'est pas universel —
+il l'est ; la question lui est reposée avec une forme qui en tient compte.

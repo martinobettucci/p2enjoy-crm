@@ -596,6 +596,12 @@ Lumen » porte déjà de quoi montrer chaque page), le contrat de livraison et l
   espace. Deux formes : (a) **la grille reste dans l'espace courant de l'onglet** — seul le rapport devient global —, l'en-tête
   nommant l'espace et le menu des espaces en changeant ; (b) **une grille de tous les espaces**, groupée par espace, « Saisir
   pour » limité à soi-même dès que la grille couvre deux espaces. Recommandation : (a).
+  **Tranché par le responsable le 2026-11-24 (décision 980) : (b), une grille de tous les espaces.** Les lignes (tracks,
+  channels, affaires) sont groupées par espace, chaque groupe titré du nom de l'espace ; une saisie s'écrit dans l'espace de sa
+  ligne (clés composites inchangées) ; les totaux par jour restent ceux de la personne, tous espaces confondus, et le seuil de
+  la journée trop longue s'applique à ce total. « Saisir pour » : soi-même dès que la grille couvre deux espaces ; un
+  administrateur qui saisit pour un collègue le fait **dans un espace choisi** — la grille se restreint alors à cet espace, les
+  membres de la liste étant ceux de cet espace.
 
 ### 16.7 Les preuves
 
