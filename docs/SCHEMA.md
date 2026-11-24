@@ -3468,7 +3468,7 @@ et les blocages sont perdus — les mails mis à la corbeille par un blocage y r
 
 ### Migration de `CRM-161` T3.d — le plafond journalier compte tous les espaces de la personne (numéro pris à son commit ; spécifiée le 2026-11-25, avant le code)
 
-`docs/SPEC-espace-courant.md` §16.9.3 ; décision 981. *Pas encore écrite ni appliquée ; attend la réponse à Q3 (§16.9.5).*
+`docs/SPEC-espace-courant.md` §16.9.3 ; décision 981. *Pas encore écrite ni appliquée ; Q3 tranchée par la décision 989 (le refus sans minutes, accepté).*
 
 - **`app.saisies_temps_plafond()`** remplacée (`create or replace`, même déclencheur) : le verrou consultatif sur
   `profile_id` et `jour`, sans l'espace ; la somme des saisies de la personne ce jour-là dans **tous** les espaces

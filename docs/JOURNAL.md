@@ -42271,3 +42271,14 @@ seule (T3.d estimée à plus de 3 ou 4 heures).*
 - **La question au responsable (Q3).** Le plafond sur le total révèle à un administrateur qu'un collègue a du temps saisi
   dans un autre espace ce jour-là. Recommandation : l'accepter. Le code attend la réponse.
 
+### décision 989 — `CRM-161` T3.d : le plafond journalier sur le total tous espaces, refus sans minutes ni espace
+
+*2026-11-25, réponse du responsable à la question Q3 (`docs/SPEC-espace-courant.md` §16.9.5) ; session 4891a451
+(p2enjoy-crm-7a), `AskUserQuestion`.*
+**La question** : la décision 981 applique le plafond de 420 minutes au total d'une personne, tous espaces confondus ; un
+administrateur qui saisit pour un collègue apprend donc, par un refus, que celui-ci a du temps ailleurs ce jour-là (ni
+combien, ni où). Trois formes : l'accepter, le détail du refus étant sans minutes (recommandée) ; garder le plafond par
+espace ; le total pour soi seulement. **La réponse** : « Accepter ». **Les conséquences**, écrites au §16.9.3 : la migration
+de T3.d remplace `app.saisies_temps_plafond` — verrou et somme par personne et par jour, sans l'espace ; le message
+`plafond journalier` gardé, son détail sans minutes.
+

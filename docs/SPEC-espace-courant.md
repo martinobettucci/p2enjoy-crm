@@ -786,8 +786,8 @@ la base (§16.9.3), sans changement de code : il reconnaît le refus par son mes
     administrateur qui saisit pour un collègue) : `la journée de cette personne dépasserait 420 minutes` ;
   - le drapeau du déplacement d'un track (`app.track_move`, décision 969) laisse toujours passer.
 - **Ce qui reste visible, et c'est la conséquence de la décision 981** : un refus du plafond apprend à un administrateur d'un
-  espace que son collègue a du temps saisi ailleurs ce jour-là, sans en dire la quantité ni l'espace. *À confirmer par le
-  responsable* (§16.9.5).
+  espace que son collègue a du temps saisi ailleurs ce jour-là, sans en dire la quantité ni l'espace. **Acceptée par le
+  responsable le 2026-11-25 (décision 989)** (§16.9.5).
 - **pgTAP** : deux saisies d'une même personne, un même jour, dans deux espaces, qui dépassent ensemble 420 minutes — la
   seconde refusée ; ensemble sous 420 — acceptées ; un seul espace — inchangé ; le détail sans minutes ; le drapeau du
   déplacement respecté. **API** : la même preuve avec le jeton réel de Camille (« P2Enjoy SAS » puis « Studio Lumen »).
@@ -809,5 +809,6 @@ Camille (la grille).
 
 - **Q3 — le refus du plafond entre espaces** (§16.9.3) : la décision 981 applique le plafond au total de la personne ; un
   refus dit donc à un administrateur qui saisit pour un collègue qu'il a du temps ailleurs ce jour-là (ni combien, ni où).
-  Recommandation : l'accepter, le détail du refus étant sans minutes. Le code n'est pas écrit avant la réponse.
+  Recommandation : l'accepter, le détail du refus étant sans minutes. **Tranché le 2026-11-25 (décision 989) : accepté** —
+  le plafond sur le total tous espaces, le refus sans minutes ni espace.
 
