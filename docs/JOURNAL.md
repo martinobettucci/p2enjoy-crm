@@ -42045,3 +42045,18 @@ m'étaient renvoyés.
    choisit le mois précédent seulement s'il est rempli ; l'image du rapport attend sa première section, l'attente du
    squelette passant avant qu'il paraisse (image du squelette mesurée). **Vérification** : la spec 12/12, les deux images
    observées (novembre, données lues).
+
+### décision 984 — livrer le lot CRM-164 et les deux relevés de CRM-161 T3.a à la révision `4d836b4e`
+
+*2026-11-24, session 4522fa9c (p2enjoy-crm-11, ex-96, ex-d5, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : `CRM-164` (la fenêtre de 30 s du renouvellement, le journal des erreurs de protocole ; image `mcp`) et les deux
+relevés de la livraison de `CRM-161` T1/T2 (`ef535024` : les non-lus de chaque espace dans le repli à 390 px ; `d8cc8323` :
+« Expédier depuis » borné à l'espace de l'affaire ; webapp) ; aucune migration ; contrat §2.73 ; verrou `c39bd5cd`. Le travail
+non committé de `CRM-165` (dd) mis de côté dans un stash le temps de la campagne.
+**La campagne** : complète à `c39bd5cd` (contenu `d7e33501`), base recréée (197 migrations, sans la 0200) : types, unitaires,
+mail, mcp 128/128, pgTAP verts ; ui 1320/1324, api 1405/1409, manuel 166/168 — INC-342 (webhooks, `inbox-lecture:109`, manuel
+34) ou verts rejoués seuls (`connecteur-etiquettes`, `connecteur-organisations`, `demarrage`, `webhooks-remise`) ; deux preuves
+rouges seules, corrigées par 7a sans code produit (`b1946607` : une course de la preuve d'armement, une dépendance à la date du
+chapitre temps), rejouées 21/21 et 12/12 ; garde du manuel 169 ; API manuel 9/9 ; captures 159 changées, 1 ajoutée, observées
+(`4d836b4e`). **Relevé, hors du lot** : le bloc de relance affiche « Aucune relance n'est armée » avant d'avoir lu.
+**Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `4d836b4e`, image `mcp` reconstruite.
