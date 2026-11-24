@@ -42144,3 +42144,22 @@ explicitement après la 200.
 **Exécutée le 2026-11-24 au soir** : `pg_dump` relu (3 608 entrées) ; `livrer.sh --revision 3e0bdc47…` (webapp bâtie dans la cellule,
 migration 200) ; `mcp` reconstruit après la 200, `socle_publie` (3 369 caractères) ; `verifier.sh` 35/36 (INC-277) ; manuel
 publié ; contrat §2.74 à §2.78 LIVRÉES, §3 et §8, changelog en [Publié], backlog ; verrou levé.
+
+### `CRM-161` T3.b.1 — « Rentabilité » et « Coûts » : la forme de la provenance, et une image du manuel qui attendait trop peu
+
+*2026-11-24, session 4891a451 (p2enjoy-crm-7a).*
+- **Le problème.** Le tableau du §16.3 demandait une **colonne** « Espace » sur « Rentabilité » et « Coûts ». Au code, ni
+  l'un ni l'autre n'est un tableau à plat : « Rentabilité » est un arbre (track, channels, affaires, §5.60), « Coûts » un
+  graphique dont le tableau équivalent a déjà sa **précision** sous le libellé (§5.30).
+- **La décision (de l'agent, dans le cadre des décisions 963 et 965).** Un track n'a qu'un espace : sur « Rentabilité », la
+  mention de l'en-tête de groupe du §5.115 (« · Nom »), sur la ligne du track, jamais répétée sur les channels ni les
+  affaires ; sur « Coûts », la précision existante du §5.30. Aucune colonne, aucun jeton nouveau. Consigné au §5.115 et au
+  §16.3. Le découpage de T3.b en T3.b.1 (ces deux écrans) et T3.b.2 (le reste, et les onglets « À saisir ») est au §16.5.
+- **Le filtre.** Sur « Rentabilité », en mémoire (lecture non paginée) ; sur « Coûts », par la lecture des tracks
+  (`workspace_id`), pour que les totaux suivent sans recalcul en mémoire. Une relecture garde les histogrammes affichés.
+  `FiltreEspaces` se scinde : le bouton entre dans la barre de « Rentabilité », le panneau se place sous elle.
+- **Une observation.** Le premier passage du scénario du manuel des chapitres 23 à 26 a produit une image pleine page du
+  cumul en **squelette** : il n'attendait que le titre de la page. La lecture des coûts se refait quand les espaces de la
+  personne arrivent (pour ranger les tracks par espace), ce qui élargit la fenêtre. Le scénario attend désormais les deux
+  tableaux ; deux passages suivants rendent l'écran entier.
+- **Vérifications.** Voir l'entrée du backlog (`CRM-161`, T3.b.1).

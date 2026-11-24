@@ -503,7 +503,47 @@
 							},
 							{
 								"type": "text",
-								"text": " changent de vue."
+								"text": " changent de vue ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "le bouton "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Espace"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", si vous êtes membre de plusieurs espaces, n'en garde que certains (« Changer d'espace »,\n"
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "naviguer-barre-laterale-onglets-etats"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 3"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ") ; chaque ligne de track nomme alors son espace après son nom,\npar exemple « Studio web · P2Enjoy SAS »."
 							}
 						]
 					}

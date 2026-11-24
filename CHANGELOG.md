@@ -13,7 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+### Ajouté
+
+- **« Rentabilité » et « Coûts » montrent tous vos espaces et disent de quel espace vient chaque track** (`CRM-161` T3.b.1,
+  `docs/SPEC-espace-courant.md` §16.3, `docs/DESIGN_SYSTEM.md` §5.115). À partir de deux espaces : la ligne de chaque track
+  de « Rentabilité » porte le nom de son espace, le tableau de « Coûts » l'écrit sous chaque track ; le bouton « Espace »
+  (dans la barre de filtres de « Rentabilité », au-dessus des graphiques de « Coûts ») isole des espaces, le choix vit dans
+  l'adresse (`?espaces=`), et les totaux de « Coûts » suivent. Pour une personne d'un seul espace, rien ne change. Manuel
+  §3.2 bis, §26.1 et §29.3. Aucune migration.
 
 ## [Publié]
 

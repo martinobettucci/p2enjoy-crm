@@ -10,6 +10,9 @@
 //           seul tableau, …0c7 « Formation Data & IA » (CHF et EUR, docs/SPEC-seed.md §21.1) sur une ligne, une balance
 //           par devise, taux vide, sous-totaux et total en balance par devise ; la fiche de …0c7 ; docs/DESIGN_SYSTEM.md §5.60
 // @verifies CLAUDE.md §16 (captures aux quatre paliers, page jamais défilante horizontalement)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b : la ligne de chaque track nomme son espace, le bouton « Espace » de la
+//           barre de filtres, à la souris et au clavier, le vide sous le filtre, et rien pour une personne d'un seul espace
+//           (docs/SPEC-espace-courant.md §16.2, §16.3 ; docs/DESIGN_SYSTEM.md §5.115)
 // *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
 // le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
@@ -200,4 +203,92 @@ test('une ligne et un réel écrits par le connecteur MCP du commercial se lisen
 	await expect(ligne.getByTestId('recette-cellule-reel')).toContainText('300.00')
 	await ligne.scrollIntoViewIfNeeded()
 	await capturer(page, 'fiche-recette-par-le-connecteur-1440', UNITE)
+})
+
+// `CRM-161` T3.b — Camille lit « P2Enjoy SAS » et « Studio Lumen » (docs/SPEC-seed.md §55) ; seul le premier porte des recettes
+// et des coûts : isoler le second rend le vide sous le filtre. Rien n'est écrit. La rentabilité est réservée aux
+// administrateurs, tous de deux espaces dans le seed : la page d'un seul espace est prouvée par l'unitaire de
+// `provenanceVisible` et, en E2E, sur « Coûts » et « Affaires figées ».
+test.describe('`CRM-161` T3.b — la rentabilité de tous les espaces (docs/DESIGN_SYSTEM.md §5.115)', () => {
+	const UNITE_T3 = 'CRM-161'
+
+	test('à la souris : chaque track nomme son espace ; isoler un espace, le vide sous le filtre, tout réafficher', async ({ page }) => {
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto('/rentabilite')
+		await expect(page.getByTestId('rentab-tableau')).toBeVisible()
+		// LA PROVENANCE : sur la ligne de chaque track, une fois — jamais sur celles des channels ni des affaires.
+		const mentions = page.getByTestId('espace-track-rentab')
+		await expect(mentions.first()).toHaveText('· P2Enjoy SAS')
+		for (const texte of await mentions.allTextContents()) expect(texte.trim()).toBe('· P2Enjoy SAS')
+		await expect(page.getByTestId('rentab-ligne-affaire').getByTestId('espace-track-rentab')).toHaveCount(0)
+
+		// Le bouton vit dans la barre de filtres de la page, son panneau sous elle.
+		const bouton = page.getByTestId('rentab-filtres').getByRole('button', { name: 'Espace', exact: true })
+		await expect(bouton).toHaveAttribute('aria-expanded', 'false')
+		await bouton.click()
+		await expect(bouton).toHaveAttribute('aria-expanded', 'true')
+		const panneau = page.getByTestId('panneau-filtre-espaces')
+		await expect(panneau.getByRole('checkbox')).toHaveCount(2)
+		await panneau.getByRole('checkbox', { name: 'Studio Lumen' }).check()
+		await expect(page).toHaveURL(/[?&]espaces=studio-lumen/)
+		await expect(page.getByRole('button', { name: 'Espace (1)' })).toBeVisible()
+		await expect(page.getByTestId('vide-filtre-espaces')).toBeVisible()
+		await expect(page.getByTestId('rentab-tableau')).toHaveCount(0)
+		await expect(page.getByTestId('rentab-vide')).toHaveCount(0)
+		await capturer(page, 'rentabilite-filtre-vide-1440', UNITE_T3)
+
+		// L'ADRESSE SE RELIT : un rechargement garde le filtre.
+		await page.reload()
+		await expect(page.getByTestId('vide-filtre-espaces')).toBeVisible()
+		await page.getByRole('button', { name: 'Afficher tous les espaces' }).click()
+		await expect(page.getByTestId('rentab-tableau')).toBeVisible()
+		await expect(page).not.toHaveURL(/espaces=/)
+		await expect(page.getByRole('button', { name: 'Espace', exact: true })).toBeFocused()
+
+		// Isoler l'espace qui porte tout : le tableau reste entier.
+		const nombre = await page.getByTestId('rentab-ligne-affaire').count()
+		await page.getByRole('button', { name: 'Espace', exact: true }).click()
+		await page.getByTestId('panneau-filtre-espaces').getByRole('checkbox', { name: 'P2Enjoy SAS' }).check()
+		await expect(page).toHaveURL(/[?&]espaces=p2enjoy/)
+		await expect(page.getByTestId('rentab-ligne-affaire')).toHaveCount(nombre)
+		await capturer(page, 'rentabilite-espaces-1440', UNITE_T3)
+	})
+
+	test('au clavier : ouvrir, cocher à l’espace, replier par Échap, le focus rendu au bouton', async ({ page }) => {
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto('/rentabilite')
+		await expect(page.getByTestId('rentab-tableau')).toBeVisible()
+		const bouton = page.getByRole('button', { name: 'Espace', exact: true })
+		await bouton.focus()
+		await page.keyboard.press('Enter')
+		await expect(bouton).toHaveAttribute('aria-expanded', 'true')
+		// LE PANNEAU SUIT LA BARRE DANS L'ORDRE DU FOCUS : Tab y entre, sur la première case.
+		await page.keyboard.press('Tab')
+		await expect(page.getByRole('checkbox', { name: 'P2Enjoy SAS' })).toBeFocused()
+		await page.keyboard.press('Tab')
+		await expect(page.getByRole('checkbox', { name: 'Studio Lumen' })).toBeFocused()
+		await page.keyboard.press('Space')
+		await expect(page).toHaveURL(/[?&]espaces=studio-lumen/)
+		await expect(page.getByTestId('vide-filtre-espaces')).toBeVisible()
+		await page.keyboard.press('Escape')
+		await expect(page.getByTestId('panneau-filtre-espaces')).toHaveCount(0)
+		await expect(page.getByRole('button', { name: 'Espace (1)' })).toBeFocused()
+		await page.getByRole('button', { name: 'Afficher tous les espaces' }).focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('rentab-tableau')).toBeVisible()
+		await expect(page.getByRole('button', { name: 'Espace', exact: true })).toBeFocused()
+	})
+
+	test('les quatre paliers, filtre ouvert : captures produites, et aucun débordement horizontal', async ({ page }) => {
+		await connecterAvecLeLabs(page, ADMIN)
+		for (const palier of PALIERS) {
+			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await page.goto('/rentabilite')
+			await expect(page.getByTestId('rentab-tableau')).toBeVisible()
+			await page.getByRole('button', { name: 'Espace', exact: true }).click()
+			await expect(page.getByTestId('panneau-filtre-espaces')).toBeVisible()
+			await sansDefilementHorizontal(page)
+			await capturer(page, `rentabilite-filtre-${palier.nom}`, UNITE_T3)
+		}
+	})
 })

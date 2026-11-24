@@ -8,6 +8,8 @@
 // annulés.
 // *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
 // le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
+// *Révisé le 2026-11-24 (`CRM-161` T3.b, docs/SPEC-espace-courant.md §16.3)* : l'image pleine page du cumul attend ses
+// deux tableaux ; ce que la preuve prouve ne change pas.
 
 import { expect, test, type Page } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -92,6 +94,10 @@ test('les coûts de tout l’espace', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
 	await page.goto('/couts')
 	await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+	// L'IMAGE PLEINE PAGE N'A PAS DE CIBLE QUI L'ATTENDE : elle attend les deux tableaux (EUR et CHF), sinon elle peut
+	// saisir le squelette de la lecture (constaté le 2026-11-24, `CRM-161` T3.b : la lecture se refait quand les espaces
+	// de la personne arrivent, pour ranger les tracks par espace).
+	await expect(page.getByRole('table')).toHaveCount(2)
 	await illustrer(page, { chapitre: CUMUL, section: null, nom: 'cumul', cibles: [], pleinePage: true })
 	await illustrer(page, {
 		chapitre: CUMUL,

@@ -20607,6 +20607,18 @@ livraison (décision 830).
   `affaires-figees` 20/20, `AffairesFigees` 15/15, complets 6 290/6 290 ; quatre `tsc` ; E2E `affaires-figees` 14/14 (souris,
   clavier, slug inconnu, lectrice d'un seul espace, quatre paliers) ; captures observées (`filtre-espaces-*`) ; manuel §3.2 bis
   et §7.2, manuel construit ; changelog. Reste à livrer (webapp) ; la campagne complète revient à la session de livraison.
+  **T3.b.1, Rentabilité et Coûts, faite le 2026-11-24** (`docs/SPEC-espace-courant.md` §16.3, §16.5 précisés ;
+  `docs/DESIGN_SYSTEM.md` §5.115 : la provenance sur la ligne de groupe d'un tableau arborescent, et la précision du §5.30
+  dans le tableau équivalent d'un graphique). `FiltreEspaces` scindé en `BoutonFiltreEspaces` et `PanneauFiltreEspaces` pour
+  une page qui a sa barre ; « Rentabilité » filtrée en mémoire, ses tracks rangés par espace ; « Coûts » relu par la lecture
+  (`tracks.workspace_id`), les totaux suivent. Preuves : unitaires `rentabilite` 27/27, `couts-ecrans` 59/59,
+  `CoutsWorkspace` 22/22, `FiltreEspaces` 7/7, complets 6 305/6 305 ; quatre `tsc` ; E2E `rentabilite` 8/8 et
+  `couts-workspace` 11/11 (souris, clavier, lectrice d'un seul espace sur « Coûts », quatre paliers), `affaires-figees` 14/14
+  rejoué ; captures observées (`rentabilite-*`, `couts-*`) ; manuel §3.2 bis, §26.1, §29.3, construit, `verify-manual.sh`
+  170/170 ; scénarios du manuel 23-26 et 27-29 12/12 — l'image pleine page du cumul attendait trop peu (un squelette
+  constaté au premier passage), elle attend désormais ses tableaux. Contrat §2.79 ; changelog. Reste à livrer (webapp).
+  **Reste de T3.b (T3.b.2)** : Ma journée, Objectifs, Contacts, cloche, recherche, et les onglets « À saisir » de
+  « Coûts » et « Rentabilité ».
   **Relevés à reprendre dans T3** (*2026-11-21, session de livraison au constat du lot de T1 et T2 ; consignés par 5f*) :
   - **Les non-lus de chaque espace sous `md`.** À 390 px, la section « Espaces » du repli du fil d'Ariane ne montre aucune
     pastille de non-lus (capture `docs/captures/CRM-161/menu-espaces-sm-390.jpg`), alors que la décision 965 les veut au

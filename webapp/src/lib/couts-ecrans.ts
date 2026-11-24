@@ -8,6 +8,9 @@
 // @spec docs/SCHEMA.md §9 bis.6 (card_costs), §9 bis.7 (politiques)
 // @spec docs/DESIGN_SYSTEM.md §5.30 (histogramme prévisionnel / réel)
 // @spec CRM-111 T2.4.1 (docs/BACKLOG.md) — les lignes d'un budget situent leur affaire par son plus ancien rattachement (docs/SPEC-rattachements.md §5)
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b : le cumul de tous les espaces lus — chaque track porte son espace, se
+//       range par espace avant sa position, et le filtre « Espace » restreint la lecture des tracks
+//       (docs/SPEC-espace-courant.md §16.2, §16.3 ; docs/DESIGN_SYSTEM.md §5.115)
 //
 // CE MODULE N'AGRÈGE QUE CE QUE LA RLS A DÉJÀ CONSENTI, et c'est sa règle de conception centrale.
 // Le §4.5 l'écrit sans ambiguïté : « le cumul est calculé APRÈS application de la RLS, jamais
@@ -599,7 +602,10 @@ export type TrackDeLEcran = Pick<
 >
 
 /** Colonnes réellement demandées pour un track du cumul. Exportée pour éprouver la requête émise. */
-export const COLONNES_TRACK_COUTS = 'id, name, slug'
+export const COLONNES_TRACK_COUTS = 'id, name, slug, workspace_id'
+
+/** `CRM-161` T3.b : un track du cumul, avec son espace — que le cumul de tous les espaces nomme et range. */
+export type TrackDuCumul = TrackDeLEcran & Partial<Pick<Database['public']['Tables']['tracks']['Row'], 'workspace_id'>>
 
 /**
  * Un budget du cumul : celui du §4.2, plus le track auquel il se rattache.
@@ -618,7 +624,7 @@ export const COLONNES_BUDGET_CUMUL =
 
 /** Une paire de barres du §4.5 : le track qui la nomme, et ce que ses budgets ouverts valent. */
 export type BarresTrack = {
-	readonly track: TrackDeLEcran
+	readonly track: TrackDuCumul
 	readonly agregat: AgregatCouts
 }
 
@@ -658,7 +664,7 @@ export type HistogrammeDeviseTracks = {
  * track. Même convention que `grouperParDevise` et que `calculerTotaux` de `card-costs.ts`.
  */
 export function grouperTracksParDevise(
-	tracks: readonly TrackDeLEcran[],
+	tracks: readonly TrackDuCumul[],
 	budgets: readonly BudgetDeTrack[],
 	lignesParBudget: ReadonlyMap<string, readonly LigneAgregeable[]>,
 ): readonly HistogrammeDeviseTracks[] {
@@ -725,26 +731,40 @@ export function grouperTracksParDevise(
  */
 export async function lireCumulWorkspace(
 	client: ClientCrm,
+	/**
+	 * `CRM-161` T3.b : `espaces`, les espaces choisis par le filtre « Espace » — la lecture des tracks s'y restreint, et
+	 * les totaux suivent ; vide, tous les espaces lus. `ordreEspaces`, l'ordre des espaces lus : les tracks s'y rangent
+	 * avant leur position, une position n'ayant de sens que dans un espace ; vide, l'ordre d'avant.
+	 */
+	options: { readonly espaces?: readonly string[]; readonly ordreEspaces?: readonly string[] } = {},
 ): Promise<EtatAsync<readonly HistogrammeDeviseTracks[]>> {
+	const espaces = options.espaces ?? []
+	const ordre = options.ordreEspaces ?? []
 	try {
-		const tracks = await client
+		let requete = client
 			.from('tracks')
 			.select(COLONNES_TRACK_COUTS)
 			.is('archived_at', null)
 			.is('deleted_at', null)
-			.order('position')
-			.order('name')
+		if (espaces.length > 0) requete = requete.in('workspace_id', [...espaces])
+		const tracks = await requete.order('position').order('name')
 		if (tracks.error !== null) {
 			return enErreur(classerErreur(tracks.status, tracks.error.message))
 		}
 		if (tracks.data.length === 0) return pret([])
+		const rang = (idEspace: string | undefined): number => {
+			const position = idEspace === undefined ? -1 : ordre.indexOf(idEspace)
+			return position === -1 ? ordre.length : position
+		}
+		// UN TRI STABLE : dans un espace, l'ordre du serveur (position, puis nom) est gardé.
+		const tracksRanges = ordre.length === 0 ? tracks.data : [...tracks.data].sort((a, b) => rang(a.workspace_id) - rang(b.workspace_id))
 
 		const budgets = await client
 			.from('budgets')
 			.select(COLONNES_BUDGET_CUMUL)
 			.in(
 				'track_id',
-				tracks.data.map((track) => track.id),
+				tracksRanges.map((track) => track.id),
 			)
 			.is('closed_at', null)
 			// L'ordre est celui de l'administration des budgets (§4.1), comme dans
@@ -764,7 +784,7 @@ export async function lireCumulWorkspace(
 		)
 		if (parBudget.statut !== 'pret') return parBudget
 
-		return pret(grouperTracksParDevise(tracks.data, budgets.data, parBudget.donnees))
+		return pret(grouperTracksParDevise(tracksRanges, budgets.data, parBudget.donnees))
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}

@@ -5,6 +5,9 @@
 //           §4.0 (l'adresse de l'écran de coûts d'un track, vers laquelle le tableau renvoie)
 // @verifies docs/DESIGN_SYSTEM.md §5.33 (cet écran), §5.8 (les quatre états systématiques),
 //           §5.30 (tableau équivalent, et le lien y vit — jamais sur la barre `aria-hidden`)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b : le nom de l'espace en précision de chaque track à partir de deux
+//           espaces lus, le filtre « Espace » au-dessus des histogrammes et le vide sous le filtre ; rien pour une personne
+//           d'un seul espace (docs/SPEC-espace-courant.md §16.1, §16.2, §16.3 ; docs/DESIGN_SYSTEM.md §5.115, §5.30)
 //
 // CE FICHIER ÉPROUVE L'ÉCRAN, PAS L'AGRÉGATION. `couts-ecrans.test.ts` couvre déjà le cumul par
 // track, le groupement par devise et la forme des trois requêtes ; les répéter ici les ferait
@@ -21,6 +24,7 @@ import { cleanup, render, screen, waitFor, within } from '@testing-library/react
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import { ContenuCoutsWorkspace, enGroupesDeTracks } from './CoutsWorkspace'
+import { FournisseurEspace } from './ContexteEspace'
 import { fr } from '../i18n/fr'
 import type { ClientCrm } from '../lib/supabase'
 import type { HistogrammeDeviseTracks } from '../lib/couts-ecrans'
@@ -329,5 +333,69 @@ describe('enGroupesDeTracks — le lien vers les coûts d’un track (§4.0, §5
 		// au clavier comme au lecteur d'écran, ce que le §8 interdit sans exception.
 		expect(lien.closest('[aria-hidden="true"]')).toBeNull()
 		expect(lien.closest('table')).toBeTruthy()
+	})
+})
+
+// ---------------------------------------------------------------------------------------------
+
+const P2ENJOY = { id: 'ws-p', name: 'P2Enjoy SAS', slug: 'p2enjoy' }
+const LUMEN = { id: 'ws-l', name: 'Studio Lumen', slug: 'studio-lumen' }
+
+describe('CRM-161 T3.b — la provenance et le filtre « Espace » (§16.3, §5.115)', () => {
+	const histogramme: HistogrammeDeviseTracks = {
+		devise: 'EUR',
+		barres: [
+			{
+				track: { id: 't1', name: 'Conseil & IA', slug: 'conseil-ia', workspace_id: 'ws-p' },
+				agregat: { estime: 800, reel: 700, sansReel: 0, estimeSansReel: 0, lignes: 1 },
+			},
+		],
+		total: { estime: 800, reel: 700, sansReel: 0, estimeSansReel: 0, lignes: 1 },
+	}
+
+	it('à deux espaces lus, la précision du track est le nom de son espace', () => {
+		expect(enGroupesDeTracks(histogramme, [P2ENJOY, LUMEN])[0]?.precision).toBe('P2Enjoy SAS')
+	})
+
+	it('sans les espaces (un seul lu), ou pour un espace inconnu, aucune précision', () => {
+		expect(enGroupesDeTracks(histogramme, undefined)[0]?.precision).toBeUndefined()
+		expect(enGroupesDeTracks(histogramme, [LUMEN])[0]?.precision).toBeUndefined()
+	})
+
+	const monterDans = (espaces: readonly (typeof P2ENJOY)[], adresse: string, client: ClientCrm) =>
+		render(
+			<MemoryRouter initialEntries={[adresse]}>
+				<FournisseurEspace valeur={{ idWorkspace: 'ws-p', estAdmin: true, espaces }}>
+					<ContenuCoutsWorkspace client={client} />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+
+	const unTrack = () =>
+		clientQuiRend([
+			ok([{ ...track('t1', 'Conseil & IA', 'conseil-ia'), workspace_id: 'ws-p' }]),
+			ok([budget('b1', 'Prospection', 't1')]),
+			ok([ligne('b1', 800, 700)]),
+		])
+
+	it('à deux espaces, le bouton « Espace » est rendu et le tableau nomme l’espace du track', async () => {
+		monterDans([P2ENJOY, LUMEN], '/couts', unTrack())
+		expect(await screen.findByRole('table')).toBeTruthy()
+		expect(screen.getByRole('button', { name: 'Espace' })).toBeTruthy()
+		expect(within(ligneDuTableau('Conseil & IA')).getByText('P2Enjoy SAS')).toBeTruthy()
+	})
+
+	it('d’un seul espace, ni bouton ni précision : l’écran d’avant T3', async () => {
+		monterDans([P2ENJOY], '/couts', unTrack())
+		expect(await screen.findByRole('table')).toBeTruthy()
+		expect(screen.queryByTestId('filtre-espaces')).toBeNull()
+		expect(screen.queryByText('P2Enjoy SAS')).toBeNull()
+	})
+
+	it('sous un filtre qui ne garde aucun track, le vide est celui du filtre, et il offre de le défaire', async () => {
+		monterDans([P2ENJOY, LUMEN], '/couts?espaces=studio-lumen', clientQuiRend([ok([])]))
+		expect(await screen.findByText(fr['spaces.filter.empty.title'])).toBeTruthy()
+		expect(screen.queryByText(fr['costs.workspace.empty.title'])).toBeNull()
+		expect(screen.getByRole('button', { name: fr['spaces.filter.empty.all'] })).toBeTruthy()
 	})
 })

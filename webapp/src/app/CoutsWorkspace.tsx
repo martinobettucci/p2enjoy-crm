@@ -10,6 +10,10 @@
 //       §4 (barre latérale et entrées transverses), §7 (responsive), §8 (accessibilité),
 //       §10 (aucun texte en dur)
 // @spec docs/SPEC-webapp.md §5.2 (routes), §6.4 (contrat asynchrone)
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b : le cumul de tous les espaces lus — le nom de l'espace sous le libellé de
+//       chaque track (la précision du §5.30, la mention du §5.115), le filtre « Espace » au-dessus des histogrammes, relu
+//       par la lecture, le vide sous le filtre ; rien pour une personne d'un seul espace (docs/SPEC-espace-courant.md
+//       §16.2, §16.3 ; docs/DESIGN_SYSTEM.md §5.115)
 //
 // CET ÉCRAN NE CALCULE RIEN LUI-MÊME, comme les deux autres. La lecture, le cumul par track et le
 // groupement par devise vivent dans `webapp/src/lib/couts-ecrans.ts` ; le rendu des barres, du
@@ -28,7 +32,7 @@
 // par soustraction l'existence d'un budget fermé serait un défaut d'autorisation. Sans la phrase,
 // l'écart se lirait comme une erreur de calcul, et quelqu'un finirait par « corriger » la lecture.
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
@@ -39,6 +43,9 @@ import type { ClientCrm } from '../lib/supabase'
 import { cheminCoutsTrack } from './chemins'
 import { ZoneCoutsAOnglets } from './CoutsASaisir'
 import { HistogrammeCouts, type GroupeHistogramme } from './HistogrammeCouts'
+import { FiltreEspaces, useFiltreEspaces, VideSousFiltreEspaces, type FiltreEspacesDePage } from './FiltreEspaces'
+import { nomEspace } from '../lib/provenance'
+import type { Workspace } from '../lib/workspaces'
 
 export function CoutsWorkspace() {
 	return <ContenuCoutsWorkspace client={clientCrm} />
@@ -54,6 +61,11 @@ export function CoutsWorkspace() {
 export function ContenuCoutsWorkspace({ client }: { readonly client: ClientCrm | null }) {
 	const [etat, setEtat] = useState<EtatAsync<readonly HistogrammeDeviseTracks[]>>(enChargement)
 	const [tentative, setTentative] = useState(0)
+	// `CRM-161` T3.b : le filtre « Espace » restreint la lecture des tracks (les totaux suivent) ; l'ordre des espaces range
+	// les tracks. Les deux tiennent dans une clé, pour que l'effet relise sur un changement de choix, et seulement alors.
+	const filtre = useFiltreEspaces()
+	const cleChoix = filtre.choisis.join(',')
+	const cleOrdre = useMemo(() => filtre.espaces.map((espace) => espace.id).join(','), [filtre.espaces])
 
 	useEffect(() => {
 		if (client === null) return
@@ -61,15 +73,20 @@ export function ContenuCoutsWorkspace({ client }: { readonly client: ClientCrm |
 		// drapeau est capturé par la fermeture, et le nettoyage de l'effet le baisse. Même garde que
 		// `ContenuCoutsTrack`, qui n'a lui aussi qu'une lecture à protéger.
 		let courant = true
-		setEtat(enChargement)
+		// UNE RELECTURE DU FILTRE GARDE LES HISTOGRAMMES AFFICHÉS jusqu'à la réponse (la règle du §5.105) ; seul le premier
+		// chargement montre le squelette.
+		setEtat((precedent) => (precedent.statut === 'pret' ? precedent : enChargement()))
 		void (async () => {
-			const resultat = await lireCumulWorkspace(client)
+			const resultat = await lireCumulWorkspace(client, {
+				espaces: cleChoix === '' ? [] : cleChoix.split(','),
+				ordreEspaces: cleOrdre === '' ? [] : cleOrdre.split(','),
+			})
 			if (courant) setEtat(resultat)
 		})()
 		return () => {
 			courant = false
 		}
-	}, [client, tentative])
+	}, [client, tentative, cleChoix, cleOrdre])
 
 	// AUCUN CLIENT N'EST UN ÉTAT, PAS UNE ATTENTE. La configuration d'API absente ou la session
 	// perdue rendent `clientCrm` nul ; laisser l'écran sur son squelette ferait attendre
@@ -89,10 +106,14 @@ export function ContenuCoutsWorkspace({ client }: { readonly client: ClientCrm |
 			client={client}
 			portee={{ genre: 'workspace' }}
 			ensemble={
-				<VueEnsembleWorkspace
-					etat={etat}
-					onReprise={() => setTentative((precedente) => precedente + 1)}
-				/>
+				<div className="flex flex-col gap-4">
+					<FiltreEspaces filtre={filtre} />
+					<VueEnsembleWorkspace
+						etat={etat}
+						filtre={filtre}
+						onReprise={() => setTentative((precedente) => precedente + 1)}
+					/>
+				</div>
 			}
 		/>
 	)
@@ -107,9 +128,11 @@ export function ContenuCoutsWorkspace({ client }: { readonly client: ClientCrm |
  */
 function VueEnsembleWorkspace({
 	etat,
+	filtre,
 	onReprise,
 }: {
 	readonly etat: EtatAsync<readonly HistogrammeDeviseTracks[]>
+	readonly filtre: FiltreEspacesDePage
 	readonly onReprise: () => void
 }) {
 	if (etat.statut === 'chargement') {
@@ -144,6 +167,10 @@ function VueEnsembleWorkspace({
 	// dont aucun ne porte de budget ouvert. Les distinguer renseignerait un appelant sans droit sur
 	// l'existence de tracks qu'il ne lit pas (`docs/SPEC-permissions-rls.md` §7), et c'est la règle
 	// que les fiches de contact et d'organisation tiennent déjà.
+	// `CRM-161` T3.b : sous un filtre « Espace », le vide est celui du filtre (§5.115), qui offre de le défaire.
+	if (etat.donnees.length === 0 && filtre.choisis.length > 0) {
+		return <VideSousFiltreEspaces filtre={filtre} />
+	}
 	if (etat.donnees.length === 0) {
 		return (
 			<EtatVide titre={t('costs.workspace.empty.title')} corps={t('costs.workspace.empty.body')} />
@@ -174,7 +201,7 @@ function VueEnsembleWorkspace({
 					)}
 					<HistogrammeCouts
 						devise={histogramme.devise}
-						groupes={enGroupesDeTracks(histogramme)}
+						groupes={enGroupesDeTracks(histogramme, filtre.visible ? filtre.espaces : undefined)}
 						total={histogramme.total}
 						legendeColonne={t('costs.workspace.column')}
 					/>
@@ -208,14 +235,23 @@ function VueEnsembleWorkspace({
  */
 export function enGroupesDeTracks(
 	histogramme: HistogrammeDeviseTracks,
+	/**
+	 * `CRM-161` T3.b : les espaces lus, seulement à partir de deux. Le nom de l'espace du track devient alors la précision
+	 * du groupe, sous son libellé (§5.30, §5.115) — seul usage de la précision sur cet écran.
+	 */
+	espaces?: readonly Workspace[],
 ): readonly GroupeHistogramme[] {
-	return histogramme.barres.map((barre) => ({
-		cle: barre.track.id,
-		libelle: barre.track.name,
-		lien: {
-			adresse: cheminCoutsTrack(barre.track.slug),
-			nomAccessible: t('costs.workspace.detail.aria', { nom: barre.track.name }),
-		},
-		agregat: barre.agregat,
-	}))
+	return histogramme.barres.map((barre) => {
+		const espace = nomEspace(espaces, barre.track.workspace_id)
+		return {
+			...(espace === null ? {} : { precision: espace }),
+			cle: barre.track.id,
+			libelle: barre.track.name,
+			lien: {
+				adresse: cheminCoutsTrack(barre.track.slug),
+				nomAccessible: t('costs.workspace.detail.aria', { nom: barre.track.name }),
+			},
+			agregat: barre.agregat,
+		}
+	})
 }

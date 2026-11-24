@@ -7,6 +7,8 @@
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T5.1 : une ligne par rattachement, `shared` ; une affaire partagée comptée
 //           sous chaque channel, une fois au sous-total d'un track qui la porte deux fois et au total ; le montant et
 //           l'état du rattachement (docs/SPEC-rattachements.md §6, décision 643)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b : chaque track porte son espace, et les tracks se rangent par espace
+//           avant leur position (docs/SPEC-espace-courant.md §16.3 ; docs/DESIGN_SYSTEM.md §5.115)
 //
 // Les cas de la règle sont lus dans `mcp/tests/rentabilite_cas.json`, que le connecteur rejoue aussi : une divergence
 // entre les deux implémentations fait rougir l'une des deux suites.
@@ -221,6 +223,24 @@ describe('construireRapport', () => {
 		const r = construireRapport([ligne({ trackId: 'inconnu', channelId: 'c9' })], 'toutes', 'reel', NOMS)
 		expect(r.tracks[0]?.nom).toBe('')
 		expect(r.affaires).toBe(1)
+	})
+
+	// `CRM-161` T3.b : une position n'a de sens que dans un espace. « Studio web » (position 2) de l'espace `w-a` passe
+	// avant « Conseil & IA » (position 1) de l'espace `w-b`, parce que `w-a` vient d'abord dans l'ordre des espaces.
+	it('porte l’espace de chaque track, et range les tracks par espace avant leur position', () => {
+		const lignes = [
+			ligne({ workspaceId: 'w-b', trackId: 't2', channelId: 'c3', cardId: 'a3' }),
+			ligne({ workspaceId: 'w-a', trackId: 't1', channelId: 'c1', cardId: 'a1' }),
+		]
+		const parEspace = construireRapport(lignes, 'toutes', 'reel', NOMS, ['w-a', 'w-b'])
+		expect(parEspace.tracks.map((tr) => [tr.nom, tr.idEspace])).toEqual([
+			['Studio web', 'w-a'],
+			['Conseil & IA', 'w-b'],
+		])
+		// Sans ordre des espaces, l'ordre d'avant : la position seule.
+		expect(construireRapport(lignes, 'toutes', 'reel', NOMS).tracks.map((tr) => tr.nom)).toEqual(['Conseil & IA', 'Studio web'])
+		// Un espace absent de l'ordre passe après.
+		expect(construireRapport(lignes, 'toutes', 'reel', NOMS, ['w-b']).tracks.map((tr) => tr.idEspace)).toEqual(['w-b', 'w-a'])
 	})
 })
 

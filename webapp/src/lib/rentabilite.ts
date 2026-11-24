@@ -9,6 +9,9 @@
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T5.1 : une ligne par RATTACHEMENT × devise, `shared` ; un sous-total de
 //       channel compte l'affaire sous chacun de ses channels, un sous-total de track et le total ne la comptent qu'une
 //       fois ; le montant et l'état sont ceux du rattachement (docs/SPEC-rattachements.md §6, décision 643)
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b : chaque track du rapport porte son espace, et les tracks se rangent par
+//       espace avant leur position — une position n'a de sens que dans un espace (docs/SPEC-espace-courant.md §16.3 ;
+//       docs/DESIGN_SYSTEM.md §5.115)
 //
 // MODULE SANS RENDU ET SANS REQUÊTE. La base rend des sommes et des comptes (§5) ; ce module en tire la marge, le taux et
 // le caractère partiel, et range les affaires. Le connecteur applique la même règle en Python
@@ -307,6 +310,8 @@ export type ChannelDuRapport = {
 
 export type TrackDuRapport = {
 	readonly trackId: string
+	/** `CRM-161` T3.b : l'espace du track, que la base rend sur chaque ligne (`workspace_id`). */
+	readonly idEspace: string
 	readonly nom: string
 	readonly slug: string
 	readonly channels: readonly ChannelDuRapport[]
@@ -352,7 +357,16 @@ export function construireRapport(
 	etat: EtatRapport,
 	vue: VueRentabilite,
 	noms: Noms,
+	/**
+	 * `CRM-161` T3.b : l'ordre des espaces lus (celui du menu). Les tracks se rangent d'abord par espace, puis par position ;
+	 * un espace absent de la liste passe après. Absent : l'ordre d'avant, par position seule.
+	 */
+	ordreEspaces: readonly string[] = [],
 ): Rapport {
+	const rangEspace = (idEspace: string): number => {
+		const rang = ordreEspaces.indexOf(idEspace)
+		return rang === -1 ? ordreEspaces.length : rang
+	}
 	const lignes = retenirEtat(toutes, etat)
 	// Une affaire par chemin : la base rend une ligne par affaire et par devise, toutes sous le même chemin.
 	const parAffaire = new Map<string, LigneRentabilite[]>()
@@ -366,6 +380,7 @@ export function construireRapport(
 		const montants: MontantsParDevise = new Map(ls.map((x) => [x.devise, x]))
 		return {
 			trackId: l.trackId,
+			idEspace: l.workspaceId,
 			channelId: l.channelId,
 			affaire: {
 				cardId: l.cardId,
@@ -407,6 +422,7 @@ export function construireRapport(
 				.map(({ position: _p, ...c }): ChannelDuRapport => c)
 			return {
 				trackId,
+				idEspace: duTrack[0]?.idEspace ?? '',
 				nom: nommeT?.nom ?? '',
 				slug: nommeT?.slug ?? '',
 				position: nommeT?.position ?? Number.MAX_SAFE_INTEGER,
@@ -414,7 +430,7 @@ export function construireRapport(
 				sousTotal: regrouper(channels.flatMap((c) => c.affaires), vue),
 			}
 		})
-		.sort(parRang)
+		.sort((a, b) => rangEspace(a.idEspace) - rangEspace(b.idEspace) || parRang(a, b))
 		.map(({ position: _p, ...t }): TrackDuRapport => t)
 
 	// Les mentions comptent des lignes de recette et de coût, et des minutes : une affaire partagée une fois (`CRM-111`).

@@ -13,6 +13,10 @@
 // Deux lectures sous le jeton de l'appelant : les sommes (`rentabilite_affaires`) puis les noms. La règle est dans
 // `lib/rentabilite.ts`. Un changement de période ou d'état relit ; un changement de vue ne relit rien.
 
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.b : la provenance sur la ligne de chaque track (un track n'a qu'un espace ;
+//       l'en-tête de groupe du §5.115 plutôt qu'une colonne répétée sur chaque ligne de l'arbre), les tracks rangés par
+//       espace, le bouton « Espace » dans la barre de filtres, son panneau sous elle, le vide sous le filtre ; le filtre en
+//       mémoire, la lecture n'étant pas paginée (docs/SPEC-espace-courant.md §16.2, §16.3 ; docs/DESIGN_SYSTEM.md §5.115)
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { SkeletonListe } from '../components/ui/Skeleton'
@@ -41,6 +45,9 @@ import { RecettesASaisir } from './RecettesASaisir'
 import { PilulePartagee } from './RapportTemps'
 import { CHEMIN_RENTABILITE } from './chemins'
 import { useContexteEspace } from './ContexteEspace'
+import { BoutonFiltreEspaces, PanneauFiltreEspaces, useFiltreEspaces, VideSousFiltreEspaces } from './FiltreEspaces'
+import { filtrerParEspace, nomEspace } from '../lib/provenance'
+import type { Workspace } from '../lib/workspaces'
 import type { Capacite } from '../lib/capacites'
 
 const CLE_ONGLET = 'onglet'
@@ -196,10 +203,19 @@ function VueEnsemble({
 		setParametres(p, { replace: true })
 	}
 
-	const rapport = useMemo(
-		() => (lecture.statut === 'pret' ? construireRapport(lecture.lignes, etat, vue, lecture.noms) : null),
-		[lecture, etat, vue],
+	// `CRM-161` T3.b : le filtre « Espace » s'applique aux lignes lues, en mémoire (§16.2) ; les tracks se rangent par espace.
+	const filtre = useFiltreEspaces()
+	const ordreEspaces = useMemo(() => filtre.espaces.map((espace) => espace.id), [filtre.espaces])
+	const lignesAffichees = useMemo(
+		() => (lecture.statut === 'pret' ? filtrerParEspace(lecture.lignes, filtre.choisis, (l) => l.workspaceId) : []),
+		[lecture, filtre.choisis],
 	)
+	const rapport = useMemo(
+		() => (lecture.statut === 'pret' ? construireRapport(lignesAffichees, etat, vue, lecture.noms, ordreEspaces) : null),
+		[lecture, lignesAffichees, etat, vue, ordreEspaces],
+	)
+	// LE VIDE SOUS LE FILTRE « Espace » (§5.115) : les lignes lues existent, le filtre les a toutes retirées.
+	const videSousFiltre = lecture.statut === 'pret' && lecture.lignes.length > 0 && lignesAffichees.length === 0
 
 	if (lecture.statut === 'refusee' || administration === 'refusee') {
 		return (
@@ -281,17 +297,21 @@ function VueEnsemble({
 						</Link>
 					))}
 				</nav>
+				<BoutonFiltreEspaces filtre={filtre} />
 			</div>
+			<PanneauFiltreEspaces filtre={filtre} />
 
 			{lecture.statut === 'chargement' || rapport === null ? (
 				<SkeletonListe lignes={6} libelle={t('state.loading.aria')} />
+			) : videSousFiltre ? (
+				<VideSousFiltreEspaces filtre={filtre} />
 			) : rapport.tracks.length === 0 ? (
 				<p data-testid="rentab-vide" className="text-text-2">
 					{du !== null || au !== null || etat !== 'toutes' ? t('rentab.empty.filtered') : t('rentab.empty')}
 				</p>
 			) : (
 				<div aria-busy={lecture.cle !== cle} className="flex flex-col gap-6">
-					<TableauRentabilite rapport={rapport} vue={vue} />
+					<TableauRentabilite rapport={rapport} vue={vue} espaces={filtre.visible ? filtre.espaces : undefined} />
 					<div className="flex flex-col gap-1 text-sm text-text-2" data-testid="rentab-mentions">
 						{rapport.mentions.recettesSansReel > 0 ? (
 							<p>{t(rapport.mentions.recettesSansReel === 1 ? 'rentab.mention.revenues.one' : 'rentab.mention.revenues.many', { n: String(rapport.mentions.recettesSansReel) })}</p>
@@ -320,7 +340,16 @@ const CELLULE = 'h-[var(--size-target)] px-3 py-1 text-right'
 // Les largeurs fixes laissent aux quatre colonnes de montant la place d'un « 210 000,00 EUR » à 1440 px : depuis que chaque
 // valeur porte son code (CRM-126), Affaire, État et Marge sont resserrées, et le tableau défile dans son conteneur
 // en deçà de 60rem (constaté sur la capture du 2026-11-01).
-function TableauRentabilite({ rapport, vue }: { readonly rapport: Rapport; readonly vue: VueRentabilite }) {
+function TableauRentabilite({
+	rapport,
+	vue,
+	espaces,
+}: {
+	readonly rapport: Rapport
+	readonly vue: VueRentabilite
+	/** `CRM-161` T3.b : les espaces lus, seulement à partir de deux — la ligne du track nomme alors le sien (§5.115). */
+	readonly espaces?: readonly Workspace[] | undefined
+}) {
 	const reel = vue === 'reel'
 	return (
 		<section aria-label={t('rentab.table.aria')} data-testid="rentab-tableau" className="flex flex-col gap-2 min-w-0">
@@ -342,7 +371,7 @@ function TableauRentabilite({ rapport, vue }: { readonly rapport: Rapport; reado
 					</thead>
 					<tbody>
 						{rapport.tracks.map((tr) => (
-							<GroupeTrack key={tr.trackId} nom={tr.nom} sousTotal={tr.sousTotal} reel={reel}>
+							<GroupeTrack key={tr.trackId} nom={tr.nom} espace={nomEspace(espaces, tr.idEspace)} sousTotal={tr.sousTotal} reel={reel}>
 								{tr.channels.map((ch) => (
 									<GroupeChannel key={ch.channelId} nom={ch.nom} sousTotal={ch.sousTotal} reel={reel}>
 										{ch.affaires.map((a) => (
@@ -362,10 +391,23 @@ function TableauRentabilite({ rapport, vue }: { readonly rapport: Rapport; reado
 	)
 }
 
-function GroupeTrack({ nom, sousTotal, reel, children }: { readonly nom: string; readonly sousTotal: R; readonly reel: boolean; readonly children: ReactNode }) {
+function GroupeTrack({
+	nom,
+	espace,
+	sousTotal,
+	reel,
+	children,
+}: {
+	readonly nom: string
+	/** `CRM-161` T3.b : le nom de l'espace du track, ou `null` (un seul espace, ou un espace inconnu). */
+	readonly espace: string | null
+	readonly sousTotal: R
+	readonly reel: boolean
+	readonly children: ReactNode
+}) {
 	return (
 		<>
-			<LigneMontants titre={nom} r={sousTotal} reel={reel} classe="border-b border-border font-medium" retrait="pl-3 text-[15px]" sousTotal />
+			<LigneMontants titre={nom} espace={espace} r={sousTotal} reel={reel} classe="border-b border-border font-medium" retrait="pl-3 text-[15px]" sousTotal />
 			{children}
 		</>
 	)
@@ -407,6 +449,7 @@ function CellulesMontants({ r, reel }: { readonly r: R; readonly reel: boolean }
 
 function LigneMontants({
 	titre,
+	espace = null,
 	r,
 	reel,
 	classe,
@@ -414,6 +457,7 @@ function LigneMontants({
 	sousTotal = false,
 }: {
 	readonly titre: string
+	readonly espace?: string | null
 	readonly r: R
 	readonly reel: boolean
 	readonly classe: string
@@ -425,6 +469,13 @@ function LigneMontants({
 			<th scope="row" colSpan={3} className={`sticky left-0 bg-surface h-[var(--size-target)] text-left ${retrait}`}>
 				{sousTotal ? <span className="sr-only">{t('rentab.subtotal')} </span> : null}
 				{titre}
+				{/* `CRM-161` T3.b — la provenance du track, dans son propre élément (§5.115, §5.36). */}
+				{espace === null ? null : (
+					<span data-testid="espace-track-rentab" className="text-sm font-normal text-text-2">
+						<span aria-hidden="true"> · </span>
+						{espace}
+					</span>
+				)}
 			</th>
 			<CellulesMontants r={r} reel={reel} />
 		</tr>

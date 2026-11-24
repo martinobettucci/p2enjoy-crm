@@ -8,6 +8,10 @@
 //           écran), §5.30 (le graphique est `aria-hidden`, le tableau est sa version accessible ;
 //           le lien vit dans le tableau), §5.8 (états), §7 (les quatre paliers), §8 (clavier)
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b : le nom de l'espace sous chaque track du tableau équivalent, le filtre
+//           « Espace » relu par la lecture, à la souris et au clavier, le vide sous le filtre, la lectrice d'un seul espace
+//           sans filtre ni nom, les quatre paliers (docs/SPEC-espace-courant.md §16.2, §16.3 ; docs/DESIGN_SYSTEM.md §5.115,
+//           §5.30)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
@@ -241,5 +245,95 @@ test.describe('CRM-086 — cumul des coûts du workspace (docs/SPEC-costs.md §4
 		}
 		// Aucune erreur console n'est attendue : la liste vide est le verdict (§3 du prompt).
 		autoriserErreursConsole(page, [])
+	})
+})
+
+// `CRM-161` T3.b — Camille lit « P2Enjoy SAS » et « Studio Lumen » (docs/SPEC-seed.md §55) ; seul le premier porte des budgets :
+// le track « Productions » de « Studio Lumen » n'en a aucun, et isoler cet espace rend le vide sous le filtre. Rien n'est écrit.
+test.describe('`CRM-161` T3.b — les coûts de tous les espaces (docs/DESIGN_SYSTEM.md §5.115)', () => {
+	const UNITE_T3 = 'CRM-161'
+
+	test('à la souris : chaque track nomme son espace ; isoler un espace, le vide sous le filtre, tout réafficher', async ({ page }) => {
+		await connecter(page)
+		await page.goto(CUMUL)
+		// LA PROVENANCE : la précision du §5.30, sous le libellé de chaque track du tableau équivalent.
+		await expect(ligneTrack(page, TRACK_OUVERT).getByText('P2Enjoy SAS', { exact: true })).toBeVisible()
+		await expect(ligneTrack(page, TRACK_EN_FRANCS).getByText('P2Enjoy SAS', { exact: true })).toBeVisible()
+
+		const bouton = page.getByRole('button', { name: 'Espace', exact: true })
+		await expect(bouton).toHaveAttribute('aria-expanded', 'false')
+		await bouton.click()
+		await expect(bouton).toHaveAttribute('aria-expanded', 'true')
+		const panneau = page.getByTestId('panneau-filtre-espaces')
+		await expect(panneau.getByRole('checkbox')).toHaveCount(2)
+		await panneau.getByRole('checkbox', { name: 'Studio Lumen' }).check()
+		await expect(page).toHaveURL(/[?&]espaces=studio-lumen/)
+		await expect(page.getByRole('button', { name: 'Espace (1)' })).toBeVisible()
+		await expect(page.getByTestId('vide-filtre-espaces')).toBeVisible()
+		await expect(page.getByRole('table')).toHaveCount(0)
+		await capturer(page, 'couts-filtre-vide-1440', UNITE_T3)
+
+		await page.reload()
+		await expect(page.getByTestId('vide-filtre-espaces')).toBeVisible()
+		await page.getByRole('button', { name: 'Afficher tous les espaces' }).click()
+		await expect(page.getByRole('table')).toHaveCount(2)
+		await expect(page).not.toHaveURL(/espaces=/)
+		await expect(page.getByRole('button', { name: 'Espace', exact: true })).toBeFocused()
+
+		// Isoler l'espace qui porte tout : les deux histogrammes et le même total.
+		await page.getByRole('button', { name: 'Espace', exact: true }).click()
+		await page.getByTestId('panneau-filtre-espaces').getByRole('checkbox', { name: 'P2Enjoy SAS' }).check()
+		await expect(page).toHaveURL(/[?&]espaces=p2enjoy/)
+		await expect(page.getByRole('table')).toHaveCount(2)
+		await expect(totalDe(page, 'EUR').getByRole('cell').nth(1)).toContainText('880')
+		await capturer(page, 'couts-espaces-1440', UNITE_T3)
+	})
+
+	test('au clavier : ouvrir, cocher à l’espace, replier par Échap, le focus rendu au bouton', async ({ page }) => {
+		await connecter(page)
+		await page.goto(CUMUL)
+		await expect(page.getByRole('table')).toHaveCount(2)
+		const bouton = page.getByRole('button', { name: 'Espace', exact: true })
+		await bouton.focus()
+		await page.keyboard.press('Enter')
+		await expect(bouton).toHaveAttribute('aria-expanded', 'true')
+		await page.keyboard.press('Tab')
+		await expect(page.getByRole('checkbox', { name: 'P2Enjoy SAS' })).toBeFocused()
+		await page.keyboard.press('Tab')
+		await expect(page.getByRole('checkbox', { name: 'Studio Lumen' })).toBeFocused()
+		await page.keyboard.press('Space')
+		await expect(page).toHaveURL(/[?&]espaces=studio-lumen/)
+		await expect(page.getByTestId('vide-filtre-espaces')).toBeVisible()
+		await page.keyboard.press('Escape')
+		await expect(page.getByTestId('panneau-filtre-espaces')).toHaveCount(0)
+		await expect(page.getByRole('button', { name: 'Espace (1)' })).toBeFocused()
+		await page.getByRole('button', { name: 'Afficher tous les espaces' }).focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByRole('table')).toHaveCount(2)
+		await expect(page.getByRole('button', { name: 'Espace', exact: true })).toBeFocused()
+	})
+
+	test('la lectrice, d’un seul espace : ni filtre, ni nom d’espace — la page d’avant T3', async ({ page }) => {
+		await connecter(page, VIEWER)
+		await page.goto(`${CUMUL}?espaces=studio-lumen`)
+		await expect(ligneTrack(page, TRACK_OUVERT)).toHaveCount(1)
+		await expect(page.getByTestId('filtre-espaces')).toHaveCount(0)
+		await expect(page.getByRole('table').getByText('P2Enjoy SAS', { exact: true })).toHaveCount(0)
+	})
+
+	test('les quatre paliers, filtre ouvert : captures produites, et aucun débordement horizontal', async ({ page }) => {
+		await connecter(page)
+		for (const palier of PALIERS) {
+			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await page.goto(CUMUL)
+			await expect(page.getByRole('table')).toHaveCount(2)
+			await page.getByRole('button', { name: 'Espace', exact: true }).click()
+			await expect(page.getByTestId('panneau-filtre-espaces')).toBeVisible()
+			const deborde = await page.evaluate(
+				() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+			)
+			expect(deborde, `débordement horizontal à ${palier.nom}`).toBe(false)
+			await capturer(page, `couts-filtre-${palier.nom}`, UNITE_T3)
+		}
 	})
 })

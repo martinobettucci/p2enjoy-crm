@@ -19,6 +19,8 @@
 // serveur qui contournerait la politique. Une réponse amputée rend donc un total amputé, ce qui est
 // exactement le comportement voulu — et le contraire divulguerait par soustraction l'existence d'un
 // budget interdit.
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.b : le cumul de tous les espaces — l'espace de chaque track lu, les tracks
+//           rangés par espace, le filtre « Espace » dans la lecture (docs/SPEC-espace-courant.md §16.3 ; DESIGN_SYSTEM §5.115)
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -963,11 +965,50 @@ describe('lireCumulWorkspace — §4.5', () => {
 			{ data: [], error: null, status: 200 },
 		])
 		await lireCumulWorkspace(client)
-		expect(appels[0]?.colonnes).toBe('id, name, slug')
+		// `CRM-161` T3.b : l'espace du track est lu, pour le nommer et le ranger.
+		expect(appels[0]?.colonnes).toBe('id, name, slug, workspace_id')
 		expect(appels[1]?.colonnes).toContain('track_id')
 		for (const appel of appels) {
 			expect(appel.colonnes).not.toMatch(/sum\(|count|avg\(/)
 		}
+	})
+
+	// `CRM-161` T3.b : le filtre « Espace » restreint la LECTURE des tracks — les totaux suivent, sans rien retrancher après.
+	it('restreint la lecture des tracks aux espaces choisis, et n’ajoute aucun filtre sans choix', async () => {
+		const sans = espion([{ data: [], error: null, status: 200 }])
+		await lireCumulWorkspace(sans.client)
+		expect(sans.appels[0]?.filtres).not.toContainEqual(['in:workspace_id', expect.anything()])
+		const avec = espion([{ data: [], error: null, status: 200 }])
+		await lireCumulWorkspace(avec.client, { espaces: ['ws-l'] })
+		expect(avec.appels[0]?.filtres).toContainEqual(['in:workspace_id', ['ws-l']])
+	})
+
+	it('range les tracks par espace avant leur position, l’ordre du serveur gardé dans un espace', async () => {
+		const { client } = espion([
+			{
+				data: [
+					{ id: 't1', name: 'Conseil & IA', slug: 'conseil-ia', workspace_id: 'ws-p' },
+					{ id: 't9', name: 'Productions', slug: 'productions', workspace_id: 'ws-l' },
+					{ id: 't2', name: 'Studio web', slug: 'studio-web', workspace_id: 'ws-p' },
+				],
+				error: null,
+				status: 200,
+			},
+			{
+				data: [budgetDeTrack('b1', 'A', 't1'), budgetDeTrack('b9', 'B', 't9'), budgetDeTrack('b2', 'C', 't2')],
+				error: null,
+				status: 200,
+			},
+			{ data: [], error: null, status: 200 },
+		])
+		const etat = await lireCumulWorkspace(client, { ordreEspaces: ['ws-l', 'ws-p'] })
+		expect(etat.statut).toBe('pret')
+		if (etat.statut !== 'pret') return
+		expect(etat.donnees[0]?.barres.map((barre) => [barre.track.id, barre.track.workspace_id])).toEqual([
+			['t9', 'ws-l'],
+			['t1', 'ws-p'],
+			['t2', 'ws-p'],
+		])
 	})
 
 	it('une réponse AMPUTÉE rend un total amputé, et c’est le comportement voulu', async () => {

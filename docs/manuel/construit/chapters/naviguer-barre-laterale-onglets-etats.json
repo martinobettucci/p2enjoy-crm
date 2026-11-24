@@ -1131,7 +1131,7 @@
 				},
 				{
 					"type": "text",
-					"text": ". Si vous n'êtes membre que d'un espace, ni le bouton ni la\nmention de l'espace n'apparaissent. Cette page est la première à le faire : "
+					"text": ". Si vous n'êtes membre que d'un espace, ni le bouton ni la\nmention de l'espace n'apparaissent. Les pages qui le font : "
 				},
 				{
 					"type": "strong",
@@ -1155,6 +1155,65 @@
 						{
 							"type": "text",
 							"text": "chapitre 7"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Coûts"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-couts-de-tout-l-espace-de-travail-un-cumul-par-track"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 26"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Rentabilité"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-recettes-d-une-affaire-et-sa-rentabilite",
+						"anchor": "l-ecran-rentabilite"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§29.3"
 						}
 					]
 				},

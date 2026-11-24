@@ -358,7 +358,8 @@ bouton dit combien d'espaces sont cochés, par exemple **Espace (1)**. Rien de c
 l'adresse de la page, et survit donc à un rechargement ou à un lien copié. Si les espaces cochés n'ont rien à montrer, la
 page le dit et propose **Afficher tous les espaces**. Au clavier, ouvrez le bouton avec `Entrée`, passez d'une case à
 l'autre avec `Tab`, cochez avec `Espace`, refermez avec `Échap`. Si vous n'êtes membre que d'un espace, ni le bouton ni la
-mention de l'espace n'apparaissent. Cette page est la première à le faire : **Affaires figées** ([chapitre 7](#les-affaires-figees-ce-qui-dort-depuis-trop-longtemps)).
+mention de l'espace n'apparaissent. Les pages qui le font : **Affaires figées** ([chapitre 7](#les-affaires-figees-ce-qui-dort-depuis-trop-longtemps)), **Coûts**
+([chapitre 26](#les-couts-de-tout-l-espace-de-travail-un-cumul-par-track)) et **Rentabilité** ([§29.3](#l-ecran-rentabilite)).
 
 **L'espace est dans l'adresse.** L'adresse de l'inbox, d'un track ou d'une page de réglages commence par le nom court de
 l'espace : vous pouvez donc garder **deux onglets ouverts sur deux espaces**, chacun le sien, et un lien copié emmène
@@ -6057,6 +6058,10 @@ lecteur d'écran.
 **Le nom d'un track est un lien** vers ses propres coûts, budget par budget ([§24](#les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense)). C'est le
 chemin normal : on lit d'abord quels tracks dépensent, puis on ouvre celui qu'on veut détailler.
 
+**Si vous êtes membre de plusieurs espaces**, l'écran cumule les tracks de tous, et le tableau écrit sous le nom de chaque
+track celui de son espace. Le bouton **Espace**, au-dessus des graphiques, n'en garde que certains ; les totaux suivent
+(« Changer d'espace », [chapitre 3](#naviguer-barre-laterale-onglets-etats)).
+
 **Un budget clôturé n'entre dans aucun cumul.** Il ne disparaît pas pour autant : ses lignes restent
 lisibles depuis sa propre fiche ([§25](#le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne)).
 
@@ -6475,7 +6480,10 @@ pas de taux de marge. Les filtres :
 - **« Du »** et **« Au »** retiennent les recettes réelles, les coûts réels et le temps par leur date ; les montants
   prévus portent toujours sur toute l'affaire ;
 - **« État »** : toutes les affaires, les gagnées, les en cours ou les perdues ;
-- **« Réel »** et **« Prévu »** changent de vue.
+- **« Réel »** et **« Prévu »** changent de vue ;
+- le bouton **Espace**, si vous êtes membre de plusieurs espaces, n'en garde que certains (« Changer d'espace »,
+  [chapitre 3](#naviguer-barre-laterale-onglets-etats)) ; chaque ligne de track nomme alors son espace après son nom,
+  par exemple « Studio web · P2Enjoy SAS ».
 
 ![Une affaire rattachée à deux channels : sa ligne sous chacun, marquée « partagée », et le sous-total du track qui la compte une fois](manuel/images/les-recettes-d-une-affaire-et-sa-rentabilite/affaire-partagee.jpg)
 

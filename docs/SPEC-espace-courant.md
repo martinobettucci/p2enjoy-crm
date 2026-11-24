@@ -557,8 +557,8 @@ l'onglet ; décision 976) prend fin écran par écran, chacun dans sa sous-tranc
 | Pilotage | l'espace de l'onglet (976) | **question Q1** (§16.6) | — | — | aucun (`entonnoir_conversion()` rend `workspace_id`) |
 | Temps ▸ Saisie | l'espace de l'onglet | **question Q2** (§16.6) | — | — | — |
 | Temps ▸ Rapport | `temps_valorise()`, **déjà tous les espaces, sans le dire** | tous | colonne | oui | **migration** : `temps_valorise` rend `workspace_id` |
-| Coûts | budgets, coûts, recettes, tous | inchangées | colonne | oui | aucun : l'espace se lit par la relation (`tracks`, `cards`), sans colonne nouvelle |
-| Rentabilité | `rentabilite_affaires()`, tous | inchangée | colonne | oui | aucun (rend `workspace_id`) |
+| Coûts | budgets, coûts, recettes, tous | inchangées ; sous le filtre, les tracks lus sont restreints par la lecture (`workspace_id`), les totaux suivent ; les tracks rangés par espace | la précision du §5.30 sous chaque track du tableau équivalent (*précisé au code de T3.b*) | oui, au-dessus des histogrammes de « Vue d'ensemble » | aucun : l'espace se lit par la relation (`tracks`, `cards`), sans colonne nouvelle |
+| Rentabilité | `rentabilite_affaires()`, tous | inchangée ; filtrée en mémoire ; les tracks rangés par espace | sur la ligne de chaque track, après son nom (*précisé au code de T3.b* : un track n'a qu'un espace) | oui | aucun (rend `workspace_id`) |
 | Cloche | `notifications`, tous | inchangée | mention sous chaque notification | non (exception maintenue, décision 963) | aucun |
 | Recherche globale | `recherche_globale()`, tous | inchangée | mention sous chaque résultat | non (idem) | aucun (rend `workspace_id`) |
 
@@ -582,7 +582,12 @@ l'onglet ; décision 976) prend fin écran par écran, chacun dans sa sous-tranc
   et « Studio Lumen » dans le seed : ses quatre affaires figées sont toutes dans le premier, et isoler « Studio Lumen » rend
   le vide sous le filtre. Aucune affaire figée n'est ajoutée à « Studio Lumen » : le seed tient la suite exacte des quatre
   retards (`docs/SPEC-relances.md` §10.2.1), que plusieurs preuves assèrent entière.
-- **T3.b — les listes sans backend** : Ma journée, Objectifs, Contacts, Coûts, Rentabilité, cloche, recherche.
+- **T3.b — les listes sans backend** : Ma journée, Objectifs, Contacts, Coûts, Rentabilité, cloche, recherche. *Ordonné le
+  2026-11-24 au code* : **T3.b.1** Rentabilité et Coûts (« Vue d'ensemble » ; l'onglet « À saisir » des deux écrans liste
+  des lignes de tous les espaces et recevra sa provenance avec les listes) ; **T3.b.2** Ma journée, Objectifs, Contacts,
+  cloche, recherche, et les deux onglets « À saisir ». Le composant du filtre se scinde pour une page qui a déjà sa barre :
+  `BoutonFiltreEspaces` entre dans la barre, `PanneauFiltreEspaces` se place sous elle ; `FiltreEspaces` les assemble pour
+  une page qui n'en a pas.
 - **T3.c — les deux migrations** (`organization_list`, `temps_valorise`), leurs pgTAP, puis Organisations et le rapport de Temps.
 - **T3.d — Pilotage et Temps ▸ Saisie**, selon les réponses à Q1 et Q2.
 

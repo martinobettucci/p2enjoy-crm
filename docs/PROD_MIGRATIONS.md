@@ -1660,6 +1660,21 @@ aucune variable, aucun secret.**
 | 2 | Constater | le responsable | à l'ouverture d'une fiche d'affaire, le bloc « Relance automatique » montre un bref squelette, puis « Aucune relance n'est armée » et le geste, ou l'état d'une relance armée — jamais l'un puis l'autre |
 
 **Ce qui devient visible** : le squelette, le temps des trois lectures. **Retour arrière** : la webapp de la révision d'avant.
+### 2.79 `CRM-161` T3.b.1 — le filtre « Espace » et la provenance, sur « Rentabilité » et « Coûts »
+
+`docs/SPEC-espace-courant.md` §16.3 et §16.5 ; `docs/DESIGN_SYSTEM.md` §5.115. La webapp seule : `FiltreEspaces` scindé
+(bouton et panneau), « Rentabilité » (filtre en mémoire, la ligne de chaque track nomme son espace), « Coûts » (la lecture des
+tracks restreinte au filtre, le nom de l'espace sous chaque track du tableau). **Aucune migration, aucune variable, aucun
+secret** : `rentabilite_affaires` rendait déjà `workspace_id`, et `tracks.workspace_id` se lit sous la RLS existante. Le
+manuel construit (chapitres 3, 26 et 29) part avec elle.
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer la webapp et le manuel construit | session de livraison, dans la fenêtre du lot | comme toute livraison de la webapp (§4) |
+| 2 | Constater | le responsable | une personne d'un seul espace voit « Rentabilité » et « Coûts » inchangés : ni bouton « Espace », ni nom d'espace ; une personne de deux espaces voit le nom de l'espace sur la ligne de chaque track (« Rentabilité ») et sous chaque track du tableau (« Coûts »), et le bouton « Espace » isole un espace, l'adresse portant `?espaces=` |
+
+**Ce qui devient visible** : rien pour une personne d'un seul espace, ce qui est le cas de toute la production aujourd'hui.
+**Retour arrière** : la webapp de la révision d'avant.
 
 ## 3. Migrations en attente
 

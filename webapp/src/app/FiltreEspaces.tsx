@@ -1,5 +1,6 @@
 // @spec CRM-161 (docs/BACKLOG.md) — tranche T3.a : le filtre « Espace » des pages globales, son état dans l'adresse, et
-//       le vide sous le filtre (docs/SPEC-espace-courant.md §16.2, §16.5)
+//       le vide sous le filtre (docs/SPEC-espace-courant.md §16.2, §16.5) ; tranche T3.b.1 : le bouton et le panneau
+//       séparés, pour une page qui a déjà sa barre de filtres (« Rentabilité », §16.5)
 // @spec docs/DESIGN_SYSTEM.md §5.115 (le patron du §5.105 sans écart : bouton secondaire et son compte, `aria-expanded`,
 //       `aria-controls`, panneau de cases dans le flux, `Échap`, `?espaces=` en `replace` ; « Rien dans les espaces
 //       choisis » et « Afficher tous les espaces »), §5.92 (le panneau de cases), §5.8 (états)
@@ -25,8 +26,12 @@ export type FiltreEspacesDePage = {
 	/** Les espaces choisis par l'adresse, en identifiants ; vide : tous. */
 	readonly choisis: readonly string[]
 	readonly choisir: (ids: readonly string[]) => void
-	/** Le bouton « Espace », auquel le vide sous le filtre rend le focus (§5.115). */
+	/** Le bouton « Espace », auquel le vide sous le filtre et `Échap` rendent le focus (§5.115). */
 	readonly refBouton: RefObject<HTMLButtonElement | null>
+	/** Le panneau est déplié ; le bouton et le panneau, posés séparément dans la page, partagent cet état. */
+	readonly ouvert: boolean
+	readonly ouvrir: (ouvert: boolean) => void
+	readonly idPanneau: string
 }
 
 /** Le filtre « Espace » d'une page globale : ses espaces, son choix lu dans l'adresse, et son écriture. */
@@ -34,6 +39,8 @@ export function useFiltreEspaces(): FiltreEspacesDePage {
 	const { espaces } = useContexteEspace()
 	const [adresse, setAdresse] = useSearchParams()
 	const refBouton = useRef<HTMLButtonElement | null>(null)
+	const idPanneau = useId()
+	const [ouvert, ouvrir] = useState(false)
 	const visible = provenanceVisible(espaces)
 	const lus = useMemo(() => espaces ?? [], [espaces])
 	// Pour une personne d'un seul espace, l'adresse ne filtre rien : il n'y a ni case pour le dire, ni rien à défaire.
@@ -45,16 +52,44 @@ export function useFiltreEspaces(): FiltreEspacesDePage {
 		},
 		[lus, setAdresse],
 	)
-	return { visible, espaces: lus, choisis, choisir, refBouton }
+	return { visible, espaces: lus, choisis, choisir, refBouton, ouvert, ouvrir, idPanneau }
+}
+
+/** `Échap`, depuis le bouton ou le panneau : replie, et rend le focus au bouton (§5.115). */
+function useReplierParEchap(filtre: FiltreEspacesDePage): (evenement: KeyboardEvent<HTMLElement>) => void {
+	return (evenement) => {
+		if (evenement.key !== 'Escape' || !filtre.ouvert) return
+		evenement.stopPropagation()
+		filtre.ouvrir(false)
+		filtre.refBouton.current?.focus()
+	}
 }
 
 /**
- * La barre du filtre « Espace » d'une page qui n'en a pas (§5.115) : le bouton, puis son panneau dans le flux. Rien
- * pour une personne d'un seul espace.
+ * Le bouton « Espace », pour une page qui a déjà sa barre de filtres (§5.115) : il s'y pose, et le panneau se pose sous la
+ * barre (`PanneauFiltreEspaces`). Rien pour une personne d'un seul espace.
  */
-export function FiltreEspaces({ filtre }: { readonly filtre: FiltreEspacesDePage }) {
-	const idPanneau = useId()
-	const [ouvert, setOuvert] = useState(false)
+export function BoutonFiltreEspaces({ filtre }: { readonly filtre: FiltreEspacesDePage }) {
+	const surTouche = useReplierParEchap(filtre)
+	if (!filtre.visible) return null
+	const nombre = filtre.choisis.length
+	return (
+		<Button
+			ref={filtre.refBouton}
+			data-testid="ouvrir-filtre-espaces"
+			aria-expanded={filtre.ouvert}
+			aria-controls={filtre.idPanneau}
+			onClick={() => filtre.ouvrir(!filtre.ouvert)}
+			onKeyDown={surTouche}
+		>
+			{nombre === 0 ? t('spaces.filter.button') : t('spaces.filter.button.count', { nombre: String(nombre) })}
+		</Button>
+	)
+}
+
+/** Le panneau de cases du filtre, dans le flux, sous la barre (§5.115, §5.92). Rien tant qu'il est replié. */
+export function PanneauFiltreEspaces({ filtre }: { readonly filtre: FiltreEspacesDePage }) {
+	const surTouche = useReplierParEchap(filtre)
 	// LES CASES PORTENT UN ÉTAT LOCAL, qui suit l'adresse — la leçon des organisations (§5.105, trouvée par leur preuve
 	// E2E) : le routeur applique un changement d'adresse dans une transition, et une case tenue par l'adresse seule se
 	// décochait sous la souris le temps qu'elle aboutisse.
@@ -64,17 +99,8 @@ export function FiltreEspaces({ filtre }: { readonly filtre: FiltreEspacesDePage
 		setCochees(cle === '' ? [] : cle.split(','))
 	}, [cle])
 
-	if (!filtre.visible) return null
+	if (!filtre.visible || !filtre.ouvert) return null
 
-	const replier = () => {
-		setOuvert(false)
-		filtre.refBouton.current?.focus()
-	}
-	const surTouche = (evenement: KeyboardEvent<HTMLElement>) => {
-		if (evenement.key !== 'Escape' || !ouvert) return
-		evenement.stopPropagation()
-		replier()
-	}
 	const basculer = (id: string, cochee: boolean) => {
 		const autres = cochees.filter((autre) => autre !== id)
 		// L'ORDRE ÉCRIT EST CELUI DES ESPACES, jamais celui des clics : deux choix égaux font la même adresse.
@@ -84,8 +110,42 @@ export function FiltreEspaces({ filtre }: { readonly filtre: FiltreEspacesDePage
 		setCochees(suivantes)
 		filtre.choisir(suivantes)
 	}
-	const nombre = cochees.length
 
+	return (
+		<div
+			id={filtre.idPanneau}
+			data-testid="panneau-filtre-espaces"
+			onKeyDown={surTouche}
+			className="rounded-md border border-border bg-surface p-4"
+		>
+			<fieldset className="flex flex-col gap-2">
+				<legend className="text-sm text-text-2 mb-2">{t('spaces.filter.legend')}</legend>
+				<div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(16rem,1fr))]">
+					{filtre.espaces.map((espace) => (
+						<label key={espace.id} className="flex items-center gap-3 min-h-[var(--size-target)] cursor-pointer">
+							<input
+								type="checkbox"
+								data-testid="case-filtre-espace"
+								data-slug={espace.slug}
+								checked={cochees.includes(espace.id)}
+								onChange={(evenement) => basculer(espace.id, evenement.target.checked)}
+								className="size-6 shrink-0 accent-brand"
+							/>
+							<span className="truncate">{espace.name}</span>
+						</label>
+					))}
+				</div>
+			</fieldset>
+		</div>
+	)
+}
+
+/**
+ * La barre du filtre « Espace » d'une page qui n'en a pas (§5.115) : le bouton, puis son panneau dans le flux. Rien
+ * pour une personne d'un seul espace.
+ */
+export function FiltreEspaces({ filtre }: { readonly filtre: FiltreEspacesDePage }) {
+	if (!filtre.visible) return null
 	return (
 		<div className="flex flex-col gap-3">
 			<div
@@ -94,44 +154,9 @@ export function FiltreEspaces({ filtre }: { readonly filtre: FiltreEspacesDePage
 				data-testid="filtre-espaces"
 				className="flex flex-col md:flex-row md:flex-wrap md:items-end gap-3 min-w-0"
 			>
-				<Button
-					ref={filtre.refBouton}
-					data-testid="ouvrir-filtre-espaces"
-					aria-expanded={ouvert}
-					aria-controls={idPanneau}
-					onClick={() => setOuvert((precedent) => !precedent)}
-					onKeyDown={surTouche}
-				>
-					{nombre === 0 ? t('spaces.filter.button') : t('spaces.filter.button.count', { nombre: String(nombre) })}
-				</Button>
+				<BoutonFiltreEspaces filtre={filtre} />
 			</div>
-			{ouvert ? (
-				<div
-					id={idPanneau}
-					data-testid="panneau-filtre-espaces"
-					onKeyDown={surTouche}
-					className="rounded-md border border-border bg-surface p-4"
-				>
-					<fieldset className="flex flex-col gap-2">
-						<legend className="text-sm text-text-2 mb-2">{t('spaces.filter.legend')}</legend>
-						<div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(16rem,1fr))]">
-							{filtre.espaces.map((espace) => (
-								<label key={espace.id} className="flex items-center gap-3 min-h-[var(--size-target)] cursor-pointer">
-									<input
-										type="checkbox"
-										data-testid="case-filtre-espace"
-										data-slug={espace.slug}
-										checked={cochees.includes(espace.id)}
-										onChange={(evenement) => basculer(espace.id, evenement.target.checked)}
-										className="size-6 shrink-0 accent-brand"
-									/>
-									<span className="truncate">{espace.name}</span>
-								</label>
-							))}
-						</div>
-					</fieldset>
-				</div>
-			) : null}
+			<PanneauFiltreEspaces filtre={filtre} />
 		</div>
 	)
 }
