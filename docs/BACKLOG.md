@@ -20657,8 +20657,10 @@ livraison (décision 830).
   **T3.c, les migrations, faites le 2026-11-24** : `0201` et `0202` appliquées en développement ; pgTAP `0187` (20) et
   `0188` (10) ; `0140`, `0174` et `0176` révisées, `0082`, `0087` et `0142` rejouées (8 suites, 245 assertions) ; empreintes
   identiques avant et après ; types régénérés et leurs témoins. Le connecteur les appelle (§16.8 corrigé avant le code) sans
-  changer. Contrat §2.80 ; changelog. Restent les écrans Organisations et Temps ▸ Rapport, et la preuve du connecteur sur la
-  base migrée.
+  changer : `scripts/verify-mcp.sh --rapide` sur la base migrée, 130 contrôles sans anomalie (pytest unitaires 469 ;
+  intégration 119/119 en direct et à travers Caddy, dont `test_integration_organisations` et `test_integration_temps` ;
+  Playwright omise, `--rapide` — le complet reste à la campagne de la session de livraison). Contrat §2.80 ; changelog.
+  Restent les écrans Organisations et Temps ▸ Rapport.
   **Relevés à reprendre dans T3** (*2026-11-21, session de livraison au constat du lot de T1 et T2 ; consignés par 5f*) :
   - **Les non-lus de chaque espace sous `md`.** À 390 px, la section « Espaces » du repli du fil d'Ariane ne montre aucune
     pastille de non-lus (capture `docs/captures/CRM-161/menu-espaces-sm-390.jpg`), alors que la décision 965 les veut au
