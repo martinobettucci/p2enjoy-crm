@@ -216,6 +216,35 @@ documenté au design system, comme dans Evoliz). Elle est **décochée par défa
 - **Dans les deux cas,** le jeton d'accès LeLabs vit 300 s, et **chaque renouvellement relit**
   `verified`, `admin` et l'admission (§4). Un rôle retiré ferme l'accès en 300 s au plus.
 
+### 3.3 bis Le renouvellement répété — `CRM-164` (décisions 978 et 979)
+
+*Écrit le 2026-11-24, avant le code.* **Le défaut.** FastMCP fait tourner le jeton de renouvellement à chaque usage et
+supprime aussitôt l'ancien. ChatGPT renouvelle à chaque appel, et il lui arrive de présenter deux fois le même jeton : le
+second envoi, qu'il soit concurrent ou une reprise après une réponse perdue, reçoit `invalid_grant`. Ce refus force la
+reconnexion et arrête le travail : un import le 2026-11-23 à 18:23:24, 5 s après la rotation.
+
+**La règle.**
+- **Une fenêtre de 30 s** (`FENETRE_RENOUVELLEMENT_S`) suit chaque renouvellement réussi. Pendant cette fenêtre, le jeton
+  tout juste remplacé est encore accepté par `/token`, **pour le même client** (`client_id`). Il rend **la même paire** que
+  le premier renouvellement, au caractère près : le même jeton d'accès et le même jeton de renouvellement.
+- **Aucun jeton n'est émis**, aucun renouvellement n'est demandé au SSO, et **aucune durée n'est allongée** : les deux jetons
+  gardent leur échéance. Le rejeu ne fait que redire une réponse déjà donnée.
+- **Hors de la fenêtre, le refus reste**, en `invalid_grant`, comme avant.
+- **La fenêtre se ferme plus tôt** dès que le jeton qu'elle rendrait n'est plus vivant : s'il a été révoqué, ou s'il a
+  lui-même été renouvelé. La paire rendue n'est jamais une paire morte, et un jeton révoqué ne revient pas par la fenêtre.
+- **Deux renouvellements simultanés avec le même jeton sont sérialisés** par un verrou propre à ce jeton. Le premier
+  renouvelle, et le second, servi après lui, reçoit la même paire. Sans verrou, les deux renouvelleraient auprès du SSO.
+- **La paire vit en mémoire seulement**, dans le processus du service, qui est unique (§2.1). Elle n'est indexée que par
+  l'empreinte SHA-256 du jeton remplacé, comme le magasin de FastMCP, et elle est oubliée à l'échéance de la fenêtre. Aucun
+  jeton entier n'est écrit sur le disque. Un redémarrage ferme les fenêtres ouvertes : c'est le comportement d'avant.
+  La mémoire est bornée à 10 000 fenêtres, les plus anciennes oubliées d'abord.
+- **Le journal** porte `renouvellement_rejoue`, avec le délai depuis la rotation en millisecondes, et jamais un jeton ni une
+  empreinte. Un rejeu refusé parce que le jeton rendu est mort porte `renouvellement_rejeu_refuse`.
+
+**Pourquoi 30 s.** Le rejeu mesuré est arrivé 5 s après la rotation, et un client qui reprend après une réponse perdue le
+fait en quelques secondes. Trente secondes couvrent ces cas sans faire de la fenêtre une seconde vie du jeton : elle ne
+rend que ce qui a déjà été rendu.
+
 ### 3.4 Clients MCP acceptés et état du mandataire — décision D8
 
 **Clients acceptés.**
@@ -1440,6 +1469,21 @@ commit que le code qui la lit.
   pour FastMCP, qui y écrirait les arguments. On n'y trouve jamais de jeton, de code, d'adresse ni
   d'argument d'outil.
 - **Audit.** Une ligne par appel, à la sortie standard **et** à `mcp_journal` (§7.1).
+- **Les erreurs de protocole** — `CRM-164`, *écrit le 2026-11-24, avant le code*. Une enveloppe ASGI
+  (`crm_mcp/journal_protocole.py`) entoure **toute** l'application, garde d'entrée comprise. Elle écrit une ligne pour chaque
+  réponse en erreur sur `/mcp` et sur les points OAuth (§3.5) :
+  - **`protocole_erreur`**, au niveau `warning` : un statut HTTP de 400 ou plus, ou une réponse JSON-RPC qui porte une
+    `error`, dans un corps JSON ou dans un événement SSE. C'est le cas d'un `-32603` rendu à un client, d'une session
+    inconnue ou d'un corps refusé. Un `401` sans jeton, la première étape normale d'une connexion (§3.1), est écrit au
+    niveau `info` ;
+  - **`protocole_exception`**, au niveau `error` : une exception qui remonte jusqu'à l'enveloppe, puis relevée à
+    l'identique.
+  - **Les champs** de ces lignes : `chemin` (`/mcp` ou le point OAuth), `methode_http`, `statut`, `methode` (la méthode
+    JSON-RPC demandée), `outil` (le nom de l'outil d'un `tools/call`), `code` (le code JSON-RPC), `erreur_oauth` (le
+    champ `error` d'une réponse OAuth, par exemple `invalid_grant`), `duree_ms`, `octets` (la taille du corps rendu) et,
+    pour une exception, `type` (le nom de sa classe).
+  - **Jamais** le message d'erreur, un argument, un résultat, un jeton, un code, une adresse ni un en-tête : un message peut
+    citer une valeur saisie. Le corps n'est lu que pour en tirer ces champs, jusqu'à 1 Mio. Au-delà, il n'est que compté.
 - **`GET /sante`** rend `200` tant que le processus répond.
 - **`GET /pret`** rend `200` si la découverte OIDC répond et si `rest` répond à travers Kong ; sinon
   `503`, avec le contrôle en défaut nommé.
@@ -1480,6 +1524,7 @@ commit que le code qui la lit.
 | `CRM-102` | **pytest unitaires** : jeton interne (revendications, échéance bornée, `lelabs_admin`), garde, réglages, déclaration des outils. **Intégration** contre le vrai Keycloak et la vraie base : parcours OAuth complet en requêtes directes ; refus sans `verified` et sans adresse vérifiée ; « Droits en attente » ; `offline_access` demandé **seulement** case cochée ; jeton forgé, d'un autre client ou HS256 refusé ; amorçage par la première connexion ; `crm_workspace_list` sous la RLS. **pgTAP** `0085_connecteur_mcp.test.sql` : fermeture, privilèges, `mcp_autorise` (superadministrateur, porteur de `lelabs_admin`, matrice, famille invalide en `22023`), cascade d'un espace supprimé, mutations. **E2E** : un vrai client MCP connecté dans le navigateur, case cochée. `scripts/verify-mcp.sh` |
 | `CRM-102` T6 | **pytest unitaires** : `SITE_URL` obligatoire et nommée quand elle manque ; l'accueil porte le lien vers `${SITE_URL}/plateforme`, échappé ; `/plateforme` et `/admin` en `302` vers cette adresse, sans chaîne de requête, et `/plateforme/autre` non redirigé. **Intégration** contre la vraie pile : le service en route rend ce `302`. **E2E** : depuis l'accueil, le lien mène à l'écran Plateforme de la webapp, à la souris et au clavier ; captures de l'accueil renouvelées aux quatre paliers, observées. **Assemblage** : `scripts/verify-spark.sh` mesure que `SITE_URL` atteint `mcp` allumé |
 | `CRM-102` T5 | **Contrôles de production** portés dans `scripts/spark/verifier.sh` par `scripts/lib/connecteur-mcp.sh` (`docs/SPEC-deploiement-spark.md` §7, point 7 ; décision 683). **Harnais** `scripts/verify-controles-connecteur.sh` : les quatre contrôles publics contre le vrai service de développement ; contre-épreuves — origine et `SITE_URL` fausses, serveur qui rend `200` à tout, port fermé ; cellule simulée devant un vrai Caddy de la cellule, webapp montée pour que l'hôte non aiguillé reçoive `200` comme en production |
+| `CRM-164` | **pytest unitaires** : un second renouvellement avec le même jeton, dans la fenêtre, rend la même paire, sans appel au SSO ; deux renouvellements simultanés n'en font qu'un ; hors de la fenêtre, un autre client, un jeton rendu révoqué ou renouvelé : `invalid_grant` ; la mémoire bornée. Pour l'enveloppe : un `-32603` dans un corps JSON et dans un événement SSE, un `404` de session inconnue, un `invalid_grant` de `/token`, une exception non rattrapée — chacun journalisé avec ses champs et sans le message ; une réponse sans erreur n'écrit rien. **Intégration** contre le vrai Keycloak (`test_integration_oauth.py`) : deux renouvellements rapprochés avec le même jeton — **rouge avant** (le second rend `invalid_grant`), même paire après ; la fenêtre dépassée refuse encore ; la ligne `protocole_erreur` d'un `invalid_grant` lue dans le journal du service |
 | `CRM-103` | **pgTAP** et **API** : chaque RPC refusée à l'anonyme, à la lectrice et à l'administrateur d'espace. **E2E UI** : matrice posée à la souris et au clavier, avertissement « pas membre », effet constaté par un appel MCP réel ; captures aux quatre paliers, observées ; manuel (chapitre 11) |
 | `CRM-108` T4 | Pour **chaque** outil de la famille `recettes`, contre la vraie base : succès ; **refus par la matrice** (case `recettes` décochée ; pour le rapport, case `budgets:consulter` ou `temps:consulter` décochée) ; **refus par le CRM** malgré la matrice ouverte (la lectrice qui ajoute une ligne, le business developer qui demande le rapport en `42501`) ; journal écrit. Déclarations des genres `revenue` et `revenue_actual` vérifiées au démarrage. La marge Python prouvée sur les mêmes cas que `webapp/src/lib/rentabilite.ts`. **E2E** : une ligne ajoutée par le connecteur paraît dans le bloc « Recettes » de la fiche |
 | `CRM-104` | Par tranche et pour **chaque** outil, contre la vraie base et un vrai client MCP : succès ; **refus par la matrice** (case décochée) ; **refus par le CRM** malgré la matrice ouverte (lectrice, objet d'un autre espace) ; journal écrit. **E2E** : l'effet est constaté dans la webapp (une affaire créée par le connecteur apparaît au board, et sa timeline nomme la personne) |
@@ -1487,6 +1532,12 @@ commit que le code qui la lit.
 ## 14. Compromis connus
 
 - **`JWT_SECRET` partagé avec un second processus** (§5).
+- **La fenêtre de renouvellement** (§3.3 bis) accepte pendant 30 s un jeton remplacé. Un jeton de renouvellement volé et
+  rejoué dans ces 30 s rendrait la paire du titulaire, au lieu d'être refusé. Le risque est borné : la fenêtre ne
+  sert que le même client, elle n'émet rien, et elle se ferme dès que la paire rendue n'est plus vivante. L'arbitrage du
+  responsable (décision 978) le préfère aux sessions coupées.
+- **La fenêtre vit en mémoire** : elle suppose le processus unique du §2.1. Un service mis à l'échelle sur plusieurs
+  processus la perdrait d'un processus à l'autre.
 - **La matrice est appliquée par le service**, non par la RLS. Un défaut de déclaration d'un outil
   ouvrirait l'outil sans la matrice, **jamais** sans la RLS. La vérification de démarrage et le
   test de complétude le bornent.

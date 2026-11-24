@@ -41923,3 +41923,24 @@ actives sur 2 500+). Le `-32603` du 2026-11-24 n'a laissé aucune trace.
 - **reprendre l'import par « Importer un fichier »** (CSV) ; écarté : relancer le travail par le connecteur.
 **Connecteur MCP** : correctif interne, aucun outil ni case — questions sans objet (relevé par la session : à reposer si le
 responsable le souhaite).
+
+### décision 979 — `CRM-164` : la fenêtre de renouvellement à 30 s, en mémoire, sous verrou ; le journal des erreurs de protocole par une enveloppe ASGI
+
+*2026-11-24, session d5b44a2d (p2enjoy-crm-39), à la spécification, dans le cadre de la décision 978.*
+**Le problème** : la décision 978 demande une « courte fenêtre », à fixer par la spécification, et le journal de toute
+erreur de protocole.
+**Observations** : FastMCP 4.0.11 (`OAuthProxy.exchange_refresh_token`) émet une paire neuve et supprime l'empreinte de
+l'ancien jeton (`_refresh_token_store`). `load_refresh_token` journalise ensuite « Refresh token not found » et le
+gestionnaire du SDK rend `invalid_grant`. Le service tourne en un seul processus uvicorn (`__main__.py`). Le journal du
+connecteur n'écrit que l'audit des outils : une réponse JSON-RPC en erreur, ou un refus d'un point OAuth, ne laisse rien.
+**Décisions** :
+- **30 s**, une constante documentée (`docs/SPEC-mcp.md` §3.3 bis) : le rejeu mesuré est venu à 5 s. Écarté : une
+  variable d'environnement, réglage que personne n'a demandé ;
+- **la même paire, gardée en mémoire** et indexée par l'empreinte du jeton remplacé. Écartés : le magasin chiffré sur disque,
+  qui écrirait des jetons entiers jusqu'à la purge horaire ; une paire neuve à chaque rejeu, qui allongerait la session ;
+- **un verrou par jeton** pour sérialiser deux renouvellements simultanés ;
+- **une enveloppe ASGI autour de toute l'application**, qui lit le statut et le corps rendu. Écartés : un middleware
+  FastMCP, qui ne voit ni les points OAuth, ni une session inconnue, ni un `-32603` produit après l'outil ; le message
+  d'erreur dans la ligne, qui peut citer une valeur saisie (`CLAUDE.md` §20).
+**Conséquences** : `docs/SPEC-mcp.md` §3.3 bis, §11, §13 et §14 ; contrat : l'image `mcp` à reconstruire.
+

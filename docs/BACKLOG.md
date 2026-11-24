@@ -20719,8 +20719,10 @@ session de livraison, en lecture seule ; arbitré le même jour (décision 978).
   exception non rattrapée — avec l'outil, la durée, la taille et le code, **sans donnée personnelle ni jeton** (`CLAUDE.md` §20).
 **Connecteur MCP** : correctif **interne** au mandataire OAuth et au journal du connecteur ; aucun outil, aucune famille ni case
 de la matrice ne change — les deux questions sont sans objet (décision 978).
-**Spécification** : à écrire avant le code — `docs/SPEC-mcp.md` §3.3 et §3.4 (la fenêtre de renouvellement, sa sécurité : rejeu
-borné, même paire, pas d'extension), §12 ou l'équivalent du journal ; le contrat (image `mcp` à reconstruire).
+**Spécification** : écrite le 2026-11-24, avant le code (décision 979) — `docs/SPEC-mcp.md` §3.3 bis (la fenêtre de 30 s :
+même paire, même client, rien d'émis ni d'allongé, fermée dès que la paire meurt, verrou par jeton, en mémoire), §11 (le
+journal des erreurs de protocole par une enveloppe ASGI, sans message ni donnée personnelle), §13 (les preuves), §14 (les
+compromis) ; le contrat suit avec le code.
 **DoD** (`CLAUDE.md` §18) : une preuve rouge avant (deux renouvellements rapprochés avec le même jeton : le second rend
 `invalid_grant`), verte après ; la fenêtre dépassée refuse encore ; pytest unitaires et intégration contre le vrai Keycloak ;
 une erreur de protocole provoquée apparaît au journal ; contrat ; constat en production : un long travail ChatGPT sans
