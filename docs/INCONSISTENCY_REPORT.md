@@ -5342,6 +5342,8 @@ moteur a lancé la commande et elle a ÉCHOUÉ : passage failed », verdict dist
 en 60 s ». Le harnais passe de 89 à **92 contrôles, aucune anomalie** ; `npm run test:sql` rend
 **57 fichiers, 2760 assertions, aucune anomalie**.
 
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). La fermeture du 2026-08-25 (CRM-062, décision 508) est en place : la section « 7 quater » de `scripts/verify-relances.sh` arme la preuve du moteur par un job jetable, et l'assertion pgTAP est révisée, non relâchée.
+
 
 ### INC-218 — le harnais de la tranche 1 lit la liste des variables dans TOUS les tableaux de la spécification
 
@@ -5408,6 +5410,8 @@ ligne de base.
 > doit lire la source **exactement** au périmètre qu'il annonce. Trop étroit, il ne voit pas une
 > dérive ; trop large, il en invente une. Le quatrième défaut du harnais trouvé par le harnais, et
 > le second faux verdict.
+
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). La borne de section est en place (`scripts/verify-modeles-emails.sh:290`, `sed -n '/^### 2\.4 …/,/^### [^2]/p'`), comme la fiche l'a clos le 2026-08-25.
 
 ## Consigné le 2026-08-25 — un scénario de `e2e/mail` qui échoue en série et passe seul
 
@@ -5804,6 +5808,8 @@ l'identité n'est modifiée par cette session.
 remèdes se présentent, et la mesure ci-dessus suffit à les départager : appliquer le §5.12 tel qu'il
 est écrit (le nom en `sr-only` sous `md`) rend une centaine de pixels ; le §12.2 en désigne
 d'ailleurs le contexte d'espace de travail comme premier sacrifié, ce qui est **déjà** le cas.
+
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Le défaut ne se reproduit plus : le nom de la session passe en `sr-only` sous `md` (`webapp/src/app/Header.tsx`, INC-332) ; la capture `docs/captures/CRM-030/catalogue-liste-sm-390.jpg`, observée ce jour, montre le titre « Catalogue de nœuds » lisible à 390 px.
 
 ### INC-232 — un avertissement WebSocket fait rougir `demarrage.spec.ts` dans la série, jamais isolé
 
@@ -6317,6 +6323,8 @@ mesurée à chaque exécution du harnais.
 posée, les trois harnais nommés verts. L'état final du schéma est **inchangé** : aucune opération
 manuelle de déploiement n'est due.
 
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Close le 2026-08-29 (décision 558) comme la fiche le dit : le garde-fou de restauration, le contrôle §7 ter de `scripts/verify-relances.sh` et la reconstruction à neuf de la décision 675 (INC-289) tiennent.
+
 ### INC-240 — `0021` et `0035` référencent encore `card_comments.mentions`, colonne que `0063` a SUPPRIMÉE
 
 **Ouverte le 2026-08-29 par la session qui a rejoué la série entière** — décision 553. Comportement
@@ -6408,6 +6416,8 @@ quoi le motif du retrait ne pourrait plus être écrit là où il doit l'être.
 **CE QUE LA CORRECTION NE CHANGE PAS**, et c'est ce qui la rend sûre sur une base déjà migrée :
 l'état final du schéma est identique, `0063` restant la dernière autorité. Aucune opération manuelle
 de déploiement n'est due ; `docs/PROD_MIGRATIONS.md` le dit dans ces termes.
+
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Aucune migration ne référence plus `new.mentions` ni `old.mentions` hors commentaire (`0021`, `0035`) ; le contrôle de répertoire de `scripts/verify-migrations.sh` (section 6) est en place.
 
 ### INC-243 — l'empreinte de `verify-authz.sh` compare `proacl` DANS SON ORDRE, et rougit sur une permutation
 
@@ -6602,6 +6612,8 @@ main dérive, un inventaire mesuré ne dérive pas. C'est la leçon d'INC-175, d
 et c'est aussi ce que la décision 560 a fait du recensement des routes.
 
 **Statut :** ouverte — porteur `CRM-060` pour l'état réel, `CRM-008` pour la garde du harnais.
+
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). `docs/BACKLOG.md` donne désormais `CRM-060` à `[x]` dans la table du chunk 5 comme dans le titre de sa section : les deux états ne se contredisent plus.
 
 
 ### INC-247 — `administration-workflows.ts` porte DEUX octets NUL, ce qui en fait un fichier BINAIRE pour git et pour `grep`
@@ -6949,6 +6961,8 @@ la première » dans une colonne vide du board (§5.2), et le lien de l'étape m
 ne mène à un board. **ARBITRÉE le 2026-09-28 — décision 609** : créer depuis le board du channel, le titre
 seul, puis ouvrir la fiche. Suivi : unité `CRM-095`.
 
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Livrée par `CRM-095` `[x]` (décision 609) : « Nouvelle affaire » au-dessus des colonnes du board.
+
 ### INC-257 — la preuve « aucune card archivée n'est vieillie par le seed » échoue dès que la base de développement a plus de 24 heures
 
 *Relevée le 2026-09-29 par `scripts/verify-harness.sh`, pendant la vérification de `CRM-095` T1 ; sans
@@ -7000,6 +7014,8 @@ l'arborescence, l'éditeur de workflows — ; le parcours `e2e/ui/premier-lancem
 l'écran. Spécification : `docs/SPEC-cards.md` §18.4 bis, `docs/DESIGN_SYSTEM.md` §5.51. Suivi :
 `docs/BACKLOG.md`, `CRM-095` T2 bis.
 
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Livrée par `CRM-095` T2 bis (décision 611) : `route.track.nochannel.body` et `route.channel.nostep.body` nomment « Nouveau channel » et l'éditeur de workflows ; `route.channel.empty.body` et `liste.empty.body` nomment « Nouvelle affaire » (`webapp/src/i18n/fr.ts`).
+
 ### INC-259 — deux autres textes décrivent un produit disparu : le carnet « que le produit ne livre pas », le motif « pas encore conservé »
 
 *Relevée le 2026-09-29 en regardant les captures du parcours de premier lancement (`CRM-095`).* Même nature
@@ -7017,6 +7033,8 @@ qu'INC-258, sur deux chemins quotidiens :
 `docs/SPEC-cards.md` §18.4 bis, `docs/SPEC-workflow-engine.md` §7.8 (révisé), `docs/DESIGN_SYSTEM.md`
 §5.21, §5.22, §5.51. Suivi : `docs/BACKLOG.md`, `CRM-095` T2 ter.
 
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Livrée par `CRM-095` T2 ter (décision 612) : `cardContacts.attach.noContact` nomme « Nouveau contact » ; `board.comment.notstored` n'existe plus dans `webapp/src`.
+
 ### INC-260 — la palette de recherche de l'en-tête reste ouverte quand le clavier la quitte par `Tab`
 
 *Relevée le 2026-09-29 en regardant la capture du parcours au clavier seul (`CRM-095`).* Traverser l'en-tête
@@ -7028,6 +7046,8 @@ traversée de l'en-tête laisse un panneau ouvert sur l'écran qu'il atteint. Ho
 
 **ARBITRÉE le 2026-09-29 — décision 612** : corrigée dans `CRM-095`. Spécification :
 `docs/SPEC-recherche.md` §14.3, `docs/DESIGN_SYSTEM.md` §5.46. Suivi : `docs/BACKLOG.md`, `CRM-095` T2 ter.
+
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Livrée par `CRM-095` T2 ter (décision 612) : `PaletteRecherche.tsx` ferme le panneau quand le focus le quitte (`onBlur`, `Tab`).
 
 ### INC-261 — « track non consenti » attend un état vide qu'une base neuve ne produit pas
 
@@ -7046,6 +7066,8 @@ aucune lecture de channels, la barre vide — ne dépend pas de la fiche.
 **ARBITRÉE le 2026-09-29 — décision 613 : corriger le test.** Le scénario attend la fiche rendue et la barre
 d'onglets vide au lieu d'un état vide absent ; ses trois autres vérifications sont inchangées. INC-065 —
 la route d'une card ne confronte pas les slugs de l'adresse — reste ouverte, ce correctif n'y touche pas.
+
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Livrée (décision 613) : `e2e/ui/formulaire.spec.ts` attend la fiche rendue et la barre vide (`@verifies INC-261`).
 
 ### INC-262 — poser un bloc d'objectif : la fiche reste sur l'ancien bloc, le repère part d'un point fixe, le nouveau bloc peut passer derrière un autre
 
@@ -7526,6 +7548,8 @@ de l'unité qui l'a relevé. **Résolution proposée** : que le script accepte `
 `condeferrable` et `not condeferred`, en le disant (INC-268), et qu'il prouve le refus par une suppression réelle plutôt
 que par le seul type de la clé.
 
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). `scripts/verify-armement-sequences.sh` (lignes 243 à 255) attend désormais `a` (no action), différable et immédiate pour les deux clés, et `c` pour la clé de l'affaire : le contrôle suit la migration 0085.
+
 
 ### INC-286 — la langue des noms : la règle écrite dit « anglais », les objets récents sont en français
 
@@ -7645,6 +7669,8 @@ reconstruisant la base de développement (base vidée, répertoire dans l'ordre,
 neuve, et chaque fichier se rejoue sur l'état qu'il vient de produire. `docs/DAT.md` §3.2 et
 `docs/SPEC-test-harness.md` §3.5 sont révisés ; la mise en œuvre — seize harnais et `verify-migrations.sh` — est
 `CRM-111` T1 bis.
+
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Arbitrée (décision 675) et livrée : `CRM-111` T1 bis `[x]` — un harnais qui dégrade la structure restaure par reconstruction à neuf (`reconstruire_base_dev`).
 
 ### INC-290 — les images MinIO de la pile ne se tirent plus de `quay.io` : `./runDev.sh` échoue sur un poste neuf
 
@@ -7808,6 +7834,8 @@ touche MinIO : chacune est **mesurée à l'identique sans le changement** (`git 
 exempter `CRM_MCP_ORIGINE_PUBLIQUE` et documente les trois variables au gabarit ; `CRM-090` reprend la garde JWT de
 `verify-spark.sh`. **Statut : ouverte.**
 
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Les deux anomalies ont disparu. Rejoués le 2026-11-25 : `scripts/verify-spark.sh` 141 vérifications, aucune anomalie ; `scripts/verify-scripts.sh` 115 vérifications, aucune anomalie.
+
 ### INC-295 — un test unitaire de focus de l'éditeur de workflows rougit sous la charge d'un harnais, vert seul
 
 *Relevé le 2026-10-24 par la session planifiée de `CRM-111` T1 bis, étranger à l'unité (aucun fichier de `webapp/` n'est
@@ -7829,6 +7857,8 @@ de backlog ». Le contrôle lit `head -3` ; l'en-tête de `CRM-093` T4, ajouté 
 fichier de la webapp n'est touché par `CRM-111` T1 bis : l'anomalie est identique des deux côtés. **Issue retenue**
 (`docs/CloudWorker.md` §4.1 bis) : le contrôle lira le bloc de commentaires d'en-tête entier, comme les autres harnais
 de traçabilité, plutôt qu'un nombre fixe de lignes ; correction imputée à `CRM-043` (le harnais), hors de cette tranche.
+
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). `scripts/verify-commentaires.sh` lit le bloc d'en-tête entier (`entete_fichier`, `scripts/lib/entete.sh`) au lieu de `head -3` : décision 704.
 
 ### INC-297 — `verify-session-sso.sh` fige 134 tests unitaires de `supabase/functions/session`, qui en porte 141
 
@@ -8014,6 +8044,8 @@ pas vu : l'image était en cache. Construite une fois avec
 `pip_ca` de `PIP_CA_FILE` lorsqu'il est posé, comme `runDev.sh`, et ne jette plus la sortie d'une construction
 manquée. **Statut : ouverte.**
 
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). `scripts/verify-mcp.sh` (lignes 191 à 195) transmet le secret de construction `pip_ca` (`PIP_CA_FILE`, ou `.env`) quand il est posé : décision 704.
+
 ### INC-308 — Après un recyclage de la VM, le premier `./runDev.sh` échoue sur une pile revenue à moitié
 
 *Relevé le même jour, même session, VM recyclée deux fois (09:58 et 10:21 UTC), système de fichiers conservé.*
@@ -8071,6 +8103,8 @@ motif en place et rejouée :
 - **reste, et ne se corrige pas ici** : la branche **sans CA** de `verify-scripts` (`SELF_SIGNED_CERT_IN_CHAIN` : l'hôte
   intercepte TLS, `CRM-001`, autorité externe) ; les scénarios E2E instables sous la charge d'une campagne d'une heure,
   verts rejoués seuls (quatre de `verify-harness`, sept de `verify-webapp`) et sans cause reproductible isolée.
+
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Traitée le 2026-10-25 (décision 704), une famille à la fois, comme la fiche le détaille. Ce qui reste n'est plus une anomalie de cette série : les scénarios instables sous charge sont suivis par INC-310 ; la branche « sans CA » de `verify-scripts.sh` dépend de l'autorité externe de `CRM-001`.
 
 ### INC-310 — Seize scénarios d'interface rougissent sous la charge d'une campagne complète, et passent seuls des deux côtés de `CRM-115` T2
 
@@ -8384,6 +8418,8 @@ refuse toute modale dans le produit (§5.10, §5.13, §5.23, §5.43, §5.46 et s
 jour (décision 791) : « Panneau dans le flux ». La spécification est révisée, le §5.80 du design system décrit le panneau.
 Connecteur MCP : sans objet.
 
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Arbitrée (décision 791) et livrée : `docs/SPEC-pieces-jointes.md` §5.2 est révisée (panneau dans le flux) et `docs/DESIGN_SYSTEM.md` §5.80 le décrit.
+
 
 ### INC-326 — Une pièce reçue garde `mail_attachments.card_id` nul quand son message est classé par la règle 1
 
@@ -8431,6 +8467,8 @@ développement est inchangé : 518 fichiers publiés sur la pile, et `e2e/api/ma
 attendu passe de 514 à 518** : `CRM-074` T3 a ajouté quatre images au chapitre 12, si bien que le manuel compte
 483 images. Connecteur MCP : sans objet.
 
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Corrigé le 2026-11-01, comme la fiche le dit. `scripts/verify-spark.sh` §9 (la cellule sans `jq`) passe : le harnais entier rendu 141 vérifications, aucune anomalie, le 2026-11-25.
+
 ### INC-328 — La dégradation « SITE_URL retirée du connecteur » de `verify-spark.sh` ne retirait plus rien au connecteur
 
 *Constaté le 2026-11-01, en rejouant `scripts/verify-spark.sh` pour INC-327.* Le contrôle retirait la **première**
@@ -8439,6 +8477,8 @@ ligne `SITE_URL: ${SITE_URL}` de `docker-compose.yml`. Depuis `CRM-069` T4 (`ea8
 et le contrôle rougissait (« dégradation non détectée ») sans qu'aucun défaut ne soit présent. **Corrigé** : la ligne est
 cherchée à partir du bloc `mcp` (garde révisée, décision 51). `verify-spark.sh` passe à 112/112. Connecteur MCP : sans
 objet.
+
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Corrigé le 2026-11-01, comme la fiche le dit ; `scripts/verify-spark.sh` rendu 141 vérifications, aucune anomalie, le 2026-11-25.
 
 ### INC-329 — L'image MinIO de Chainguard ne s'extrait pas dans la cellule : un fichier à l'UID 65532, hors de la plage du démon rootless
 
@@ -8552,6 +8592,8 @@ toujours annoncé, l'avatar reste et l'adresse reste en infobulle. **Preuve** : 
 `e2e/ui/fil-ariane.spec.ts` exige le nom en `sr-only` et la fin de ligne au niveau du tiroir. Rouge avant la
 correction, vert après ; `fil-ariane`, `identites` et `connexion` 32/32 ; capture observée. Connecteur MCP : sans objet.
 
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). En place : `webapp/src/app/Header.tsx` rend le nom de la session en `sr-only` sous `md` ; le palier 390 de `e2e/ui/fil-ariane.spec.ts` l'exige.
+
 ### INC-333 — Dans Firefox, le mois du rapport de temps ne se choisit pas
 
 *Signalé par le responsable le 2026-11-01 : « impossible de choisir le mois du rapport de temps du personnel ».*
@@ -8572,6 +8614,8 @@ bloc du track porte désormais son mois dans l'adresse (`?mois=AAAA-MM`), comme 
 lointain ne s'atteindrait, et le rechargement le perdait. Les spécifications sont révisées dans le même changement
 (`docs/SPEC-temps.md` §7.3 et §7.5, `docs/DESIGN_SYSTEM.md` §5.54). Connecteur MCP : sans objet, puisque
 `crm_time_report` prend déjà sa période en paramètre.
+
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Corrigé (décision 801) : le mois se choisit par « Mois précédent », le mois en clair, « Mois suivant », « Ce mois-ci » (`webapp/src/i18n/fr.ts`, `time.month.previous`). Non rejoué dans Firefox : les preuves E2E tournent dans Chromium.
 
 ### INC-334 — Le contrôle des classes prend une chaîne de comparaison pour une classe
 
@@ -8658,6 +8702,8 @@ l'application, centré, au lieu de celui des tracks dans la barre latérale. Le 
 coquille et ses trois squelettes de tracks dans la barre latérale. Les dix-sept images nommées par cette entrée montrent
 désormais leur sujet ou l'état qu'elles nomment. La question du fil non collant reste ouverte pour
 `docs/DESIGN_SYSTEM.md`.
+
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Close le 2026-11-02, comme la fiche le dit. La question du fil non collant reste au design system, hors de ce registre.
 
 ### INC-337 — À 390 et 900 px, plusieurs pages se capturent décalées vers la gauche, leur texte coupé au bord
 
@@ -8841,6 +8887,8 @@ d'observabilité (`CLAUDE.md` §20), et dépasse la livraison en cours.
 d'exception, ni secret ni donnée personnelle —, avec un test du formateur qui lise la ligne d'un échec de veille ; puis
 reconstruire l'image `mail-sync`.
 
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Corrigée : `account_id` et `panne` figurent dans `SAFE_FIELDS` (`mail-sync/src/mail_sync/structured_logging.py`), avec `mail-sync/tests/test_veille_echecs.py`. L'image `mail-sync` part avec la prochaine livraison qui la reconstruit.
+
 ### INC-344 — `compare_workflow_versions` ignore les champs communs exigés : « différentes », et rien de listé
 
 *Relevé le 2026-11-03 par la session 3a en préparant `CRM-112` T2.c.2 ; livré en production avec la migration 157 le même
@@ -8861,6 +8909,8 @@ l'acceptation d'une suggestion de l'assistant qui en porte une (`0160`) peut la 
 **Correction** : la collection `required_common_fields` dans les deux comparaisons et dans le document naturalisé
 (`app.workflow_composition_naturel`), identité `(transition_id, common_field_id)` pour les versions et `(from_node_id,
 to_node_id, common_field_key)` pour la copie ; la liste fermée de la webapp et son titre. Migration `0161`, avec T3.b.
+
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Close le 2026-11-03 (décision 828), migration `0161`, livrée en production comme la fiche le dit.
 
 
 ### INC-345 — six harnais de la messagerie et le README supposent un pytest de l'hôte ; une dégradation s'y dit « vue » sans test
@@ -9133,6 +9183,8 @@ réglage serait une commande sans effet (`docs/DESIGN_SYSTEM.md` §5.10).
 **Arbitrée le 2026-11-10 (décision 885)** : le réglage **n'est pas exposé**. L'incohérence reste ouverte, sans correction dans
 `CRM-136` : la colonne demeure stockée et non lue.
 
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Arbitrée (décision 885) : le réglage n'est pas exposé. La colonne `folder_style` reste stockée et non lue, dette assumée et nommée ici ; aucune correction n'est due.
+
 
 ### INC-352 — en production, le board d'un channel chargé tombe en délai dépassé ; sa vue liste s'ouvre
 **Ouverte le 2026-11-10.** Cause mesurée : non, à faire (décision 886 : en développement, puis en production en lecture
@@ -9275,6 +9327,8 @@ file et l'envoi.
 ligne dans les journaux de `p2enjoy-mail-sync`. **Le défaut est LATENT, non actif** : aucun envoi n'est bloqué
 aujourd'hui, et il frappera au premier quota atteint entre la mise en file et l'envoi. La `0176` part avec le prochain
 lot, en avance de `CRM-144` (session de livraison). L'incohérence reste ouverte jusqu'à sa livraison constatée.
+
+**Clôture constatée le 2026-11-25** (tri des fiches 211 à 362 par la session 30, à la demande de la session de livraison). Livrée le 2026-11-11 (`docs/PROD_MIGRATIONS.md` §2.39) : la migration `0176` qualifie la mise à jour du quota (`attempts = o.attempts + 1`).
 
 ### INC-355 — `scripts/verify-mail-inbox.sh` attend une seule politique sur `storage.objects`, la base en porte cinq
 **Ouverte le 2026-11-11.** *Relevée par la session d5b44a2d (p2enjoy-crm-c2), en rejouant le harnais pour `CRM-140` T3.*
