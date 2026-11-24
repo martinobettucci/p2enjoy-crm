@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T3.a — les non-lus de chaque espace lus une fois par la coquille, partagés par le menu
+//       et le repli (docs/SPEC-espace-courant.md §16.4)
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le slug de l'espace courant, la liste des espaces lus, et le crochet qui met
 //       un chemin dans l'espace courant (docs/SPEC-espace-courant.md §15.2, §15.3)
 // @spec CRM-157 (docs/BACKLOG.md) tranche T3 — `espaceLu` (docs/SPEC-onboarding.md §11.1)
@@ -18,6 +20,8 @@ import { useParams } from 'react-router'
 import { CAPACITES_INCONNUES, type CapacitesEspace } from '../lib/capacites'
 import type { Workspace } from '../lib/workspaces'
 import { cheminEspace, estPageDEspace } from './chemins'
+import type { EtatAsync } from '../lib/async'
+import type { NonLusParEspace } from '../lib/menu-espaces'
 
 export type ContexteEspace = {
 	/** L'espace courant, `null` tant qu'il n'est pas lu ou qu'il n'y en a aucun. */
@@ -41,6 +45,11 @@ export type ContexteEspace = {
 	readonly slugEspace?: string | null
 	/** `CRM-161` T2.a (§15.3) : les espaces lus, par nom — le slug de l'espace d'une ressource se lit ici. */
 	readonly espaces?: readonly Workspace[]
+	/**
+	 * `CRM-161` T3.a (§16.4) : les non-lus de l'inbox de chaque espace, lus UNE fois par la coquille (relus à chaque adresse)
+	 * et partagés par le menu des espaces et le repli. Absent hors coquille, ou pour une personne d'un seul espace.
+	 */
+	readonly nonLus?: EtatAsync<NonLusParEspace>
 }
 
 /** Hors coquille — une preuve qui monte un composant seul —, aucun espace et aucun rôle. */

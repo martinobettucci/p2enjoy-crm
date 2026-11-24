@@ -3,6 +3,8 @@
 // @verifies docs/SPEC-webapp.md §5.1 (coquille), §7 (états), §9 (accessibilité), §11 (stockage)
 // @verifies CRM-161 (docs/BACKLOG.md) tranche T2.c — la page ne se monte qu'une fois les espaces lus, avec l'espace connu ;
 //           un squelette entre-temps (docs/SPEC-espace-courant.md §15.4 bis, décision 974 ; docs/DESIGN_SYSTEM.md §5.8)
+// @verifies CRM-161 (docs/BACKLOG.md) tranche T3.a — les non-lus de chaque espace lus une fois par la coquille, mis au contexte
+//           pour le menu et le repli, et seulement pour une personne de deux espaces (docs/SPEC-espace-courant.md §16.4)
 // @verifies INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : la coquille relit ses tracks au signal
 //           `p2enjoy:tracks-modifies`, sans squelette ni remontage de la page ; docs/DESIGN_SYSTEM.md §5.13
 //
@@ -320,5 +322,61 @@ describe('la page attend les espaces (CRM-161 T2.c, décision 974)', () => {
 		await waitFor(() => expect(screen.getByText('page montée')).toBeTruthy())
 		expect(montages).toEqual(['w-1'])
 		expect(within(principal).queryByLabelText('Chargement en cours')).toBeNull()
+	})
+})
+
+describe('les non-lus de chaque espace, lus par la coquille (CRM-161 T3.a, §16.4)', () => {
+	function PageQuiMontreLesNonLus() {
+		const { nonLus } = useContexteEspace()
+		if (nonLus === undefined) return <p>{'aucun non-lu partagé'}</p>
+		if (nonLus.statut !== 'pret') return <p>{'non-lus en lecture'}</p>
+		return <p>{`non-lus : ${[...nonLus.donnees.entries()].map(([id, n]) => `${id}=${n}`).join(',')}`}</p>
+	}
+
+	function clientAvecNonLus(espaces: Reponse, appels: { rpc: number }): ClientCrm {
+		const base = client([espaces])
+		return {
+			from: (table: string) => base.from(table as never),
+			rpc: (nom: string) => {
+				appels.rpc += nom === 'inbox_unread_by_workspace' ? 1 : 0
+				return Promise.resolve({ data: [{ workspace_id: 'w-2', unread_count: 3 }], error: null, status: 200 })
+			},
+		} as unknown as ClientCrm
+	}
+
+	it('deux espaces : une seule lecture, et le contexte porte les non-lus', async () => {
+		const appels = { rpc: 0 }
+		const DEUX: Reponse = {
+			data: [
+				{ id: 'w-1', name: 'Atelier P2Enjoy', slug: 'atelier' },
+				{ id: 'w-2', name: 'Studio', slug: 'studio' },
+			],
+			error: null,
+			status: 200,
+		}
+		injecte.client = clientAvecNonLus(DEUX, appels)
+		render(
+			<MemoryRouter>
+				<AppShell cleTitreRoute="route.board.title">
+					<PageQuiMontreLesNonLus />
+				</AppShell>
+			</MemoryRouter>,
+		)
+		await waitFor(() => expect(screen.getByText('non-lus : w-2=3')).toBeTruthy())
+		expect(appels.rpc).toBe(1)
+	})
+
+	it('un seul espace : aucune lecture, rien au contexte', async () => {
+		const appels = { rpc: 0 }
+		injecte.client = clientAvecNonLus(UNE_LIGNE, appels)
+		render(
+			<MemoryRouter>
+				<AppShell cleTitreRoute="route.board.title">
+					<PageQuiMontreLesNonLus />
+				</AppShell>
+			</MemoryRouter>,
+		)
+		await waitFor(() => expect(screen.getByText('aucun non-lu partagé')).toBeTruthy())
+		expect(appels.rpc).toBe(0)
 	})
 })

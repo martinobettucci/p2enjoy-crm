@@ -13,7 +13,9 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+- **`CRM-161` T3.a — les non-lus de chaque espace, aussi sur un petit écran.** Sur un téléphone, la section « Espaces » du
+  repli du fil d'Ariane montre désormais les messages non lus de chaque espace dès son ouverture : ils sont lus une fois par
+  page, et le menu des espaces comme le repli les partagent.
 
 ## [Publié]
 

@@ -9168,6 +9168,10 @@ plateforme vaut ici — dans le flux, aucune modale, un seul bloc ouvert à la f
   aucune pastille et n'empêche pas de changer d'espace — c'est une aide, non une condition.
 - **Aucune couleur, aucun jeton nouveaux** ; deux icônes Lucide de plus, `ChevronsUpDown` et `Check`.
 
+*`CRM-161` T3.a (docs/SPEC-espace-courant.md §16.4).* **Les non-lus par espace sont lus par la coquille**, une fois par adresse,
+et partagés : le menu en ligne et la section « Espaces » du repli les montrent sans lecture propre — ouvert sous `md`, le repli
+porte déjà ses pastilles. Hors coquille seulement (un écran monté seul), chacun les lit lui-même.
+
 ### 5.114 Les consignes aux assistants : un bloc de l'onglet « Connecteur MCP » de la plateforme — `CRM-165`
 
 *Écrit le 2026-11-24, avant le code, après lecture des sections ciblées par la décision 983 : §5.56 (la plateforme, l'onglet

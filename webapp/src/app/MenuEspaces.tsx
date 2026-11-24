@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T3.a — les non-lus de chaque espace lus une fois par la coquille, partagés par le menu
+//       et le repli (docs/SPEC-espace-courant.md §16.4)
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.b — le menu des espaces au premier niveau du fil d'Ariane : le bouton et sa
 //       pastille, le panneau, ses lignes et leurs non-lus, le clavier, ce que le choix fait (docs/DESIGN_SYSTEM.md §5.113 ;
 //       docs/SPEC-espace-courant.md §9, §15.6)
@@ -20,6 +22,17 @@ const CLASSES_BOUTON = [
 	'relative flex items-center gap-1 min-w-0 min-h-[var(--size-target)] rounded-sm',
 	'text-sm text-text-2 hover:underline',
 ].join(' ')
+
+/**
+ * `CRM-161` T3.a (§16.4) : les non-lus de la coquille quand elle les porte — lus une fois, partagés par le menu et le repli ;
+ * hors coquille seulement, une lecture propre.
+ */
+function useNonLusPartages(): EtatAsync<NonLusParEspace> {
+	const { nonLus } = useContexteEspace()
+	const { key } = useLocation()
+	const propres = useNonLusParEspace(clientCrm, nonLus === undefined, key)
+	return nonLus ?? propres
+}
 
 /** Le texte d'une pastille : le compte, « 99+ » au-delà (§5.43). */
 const affiche = (nombre: number): string => (nombre > 99 ? '99+' : String(nombre))
@@ -106,8 +119,7 @@ function LigneEspace({
 /** Le menu, en ligne dans le fil, à partir de `md` (§5.113). */
 export function MenuEspaces({ espaces }: { readonly espaces: readonly Workspace[] }) {
 	const { idWorkspace } = useContexteEspace()
-	const { key } = useLocation()
-	const nonLus = useNonLusParEspace(clientCrm, true, key)
+	const nonLus = useNonLusPartages()
 	const choisir = useChoisirEspace()
 	const [ouvert, setOuvert] = useState(false)
 	const idPanneau = useId()
@@ -235,8 +247,7 @@ export function SectionEspacesDuRepli({
 	readonly onChoisi: () => void
 }) {
 	const { idWorkspace } = useContexteEspace()
-	const { key } = useLocation()
-	const nonLus = useNonLusParEspace(clientCrm, true, key)
+	const nonLus = useNonLusPartages()
 	const choisir = useChoisirEspace()
 	return (
 		<section aria-label={t('espace.menu.section')} data-testid="section-espaces-repli">

@@ -20591,6 +20591,9 @@ livraison (décision 830).
   les deux relevés) ; T3.b les listes sans backend ; T3.c deux migrations (`organization_list`, `temps_valorise`) et leurs
   écrans ; T3.d Pilotage et Temps ▸ Saisie — **tranchés le 2026-11-24** : le pilotage, tête globale et détail par espace
   (décision 982) ; la saisie, une grille de tous les espaces (décision 981).
+  **T3.a, premier relevé fait le 2026-11-24** : les non-lus de chaque espace lus une fois par la coquille et partagés par le menu
+  et le repli (§16.4) — E2E `menu-espaces` rouge avant (le repli sans pastille sous une lecture retenue), 18/18 avec
+  `fil-ariane` ; unitaires de la coquille 19/19, complets 6 250/6 250 ; quatre `tsc` ; capture du repli observée.
   **Relevés à reprendre dans T3** (*2026-11-21, session de livraison au constat du lot de T1 et T2 ; consignés par 5f*) :
   - **Les non-lus de chaque espace sous `md`.** À 390 px, la section « Espaces » du repli du fil d'Ariane ne montre aucune
     pastille de non-lus (capture `docs/captures/CRM-161/menu-espaces-sm-390.jpg`), alors que la décision 965 les veut au

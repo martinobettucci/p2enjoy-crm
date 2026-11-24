@@ -4,6 +4,8 @@
 //           la souris depuis une page globale, l'onglet change d'espace sans changer de page ; sous `md`, la section
 //           « Espaces » du repli ; aux quatre paliers
 // @verifies docs/DESIGN_SYSTEM.md §5.113, §5.62, §7 ; docs/SPEC-espace-courant.md §9, §15.6 ; CLAUDE.md §16 (captures)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.a : sous `md`, le repli montre les non-lus de chaque espace dès son ouverture —
+//           ils sont lus une fois par la coquille et partagés (docs/SPEC-espace-courant.md §16.4, relevé de la livraison)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du SSO
 //
 // La preuve pose, sous la clé de service, un espace jetable (« Sonde 161 menu ») dont Camille est administratrice, sa boîte
@@ -129,5 +131,25 @@ test.describe('Le menu des espaces (docs/DESIGN_SYSTEM.md §5.113)', () => {
 			await capturer(page, `menu-espaces-${palier.nom}`, UNITE)
 			await page.keyboard.press('Escape')
 		}
+	})
+
+	test('sous `md`, le repli montre les non-lus de chaque espace dès son ouverture (§16.4)', async ({ page }) => {
+		await page.setViewportSize({ width: 390, height: 844 })
+		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
+		// Chaque lecture des non-lus est RETENUE une seconde et demie : une lecture faite à l'ouverture du repli ne peut alors
+		// pas tenir la demi-seconde que la preuve lui laisse ; celle de la coquille, faite au chargement, si.
+		await page.route(/\/rest\/v1\/rpc\/inbox_unread_by_workspace/, async (route) => {
+			await new Promise((fin) => setTimeout(fin, 1500))
+			await route.continue()
+		})
+		const luParLaCoquille = page.waitForResponse(/\/rest\/v1\/rpc\/inbox_unread_by_workspace/, { timeout: 10_000 })
+		await page.goto(`/${ESPACE_SEED}/inbox`)
+		await luParLaCoquille
+		await page.getByTestId('fil-ariane-repli').click()
+		const section = page.getByTestId('section-espaces-repli')
+		await expect(section).toBeVisible()
+		await expect(section.getByRole('button', { name: `${SONDE.nom} — 1 message non lu` })).toBeVisible({ timeout: 500 })
+		await expect(section.locator(`[data-slug="${SONDE.slug}"]`).getByTestId('non-lus-espace')).toHaveText('1', { timeout: 500 })
+		await capturer(page, 'menu-espaces-repli-non-lus-sm-390', UNITE)
 	})
 })

@@ -1,3 +1,5 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T3.a — les non-lus de chaque espace lus une fois par la coquille, partagés par le menu
+//       et le repli (docs/SPEC-espace-courant.md §16.4)
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.b — la bascule d'espace annoncée (docs/DESIGN_SYSTEM.md §5.113)
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — changer d'espace remonte le contenu de la page (clé sur l'espace) ; docs/SPEC-espace-courant.md §15.4 bis
 // @spec CRM-007 (docs/BACKLOG.md) — coquille de l'application
@@ -31,10 +33,11 @@
 // oblige à traiter chaque cas, et le traiter une seule fois évite qu'une route en oublie un.
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useLocation, useParams } from 'react-router'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import { SkipLink } from '../components/ui/SkipLink'
 import { SkeletonListe } from '../components/ui/Skeleton'
+import { useNonLusParEspace } from '../lib/menu-espaces'
 import { EtatConfiguration, EtatErreur, EtatRefus } from '../components/ui/States'
 import { t, type CleTraduction } from '../i18n'
 import type { EtatAsync } from '../lib/async'
@@ -150,14 +153,27 @@ export function AppShell({
 	const espaceLu = etat.statut !== 'chargement'
 	const espaces = etat.statut === 'pret' ? etat.donnees : undefined
 	const slugCourant = espaceCourant?.slug ?? null
+	// `CRM-161` T3.a (docs/SPEC-espace-courant.md §16.4) : les non-lus de chaque espace sont lus ICI, une fois par adresse, et
+	// partagés : le repli du fil, sous `md`, les montre dès son ouverture au lieu de lancer sa propre lecture. Seulement pour
+	// une personne d'au moins deux espaces — avec un seul, ni menu ni repli d'espaces.
+	const { key: cleAdresse } = useLocation()
+	const nonLus = useNonLusParEspace(clientCrm, espaces !== undefined && espaces.length >= 2, cleAdresse)
 	useEffect(() => {
 		if (slugCourant === null) return
 		if (slugPrecedent.current !== null && slugPrecedent.current !== slugCourant) setGenerationEspace((g) => g + 1)
 		slugPrecedent.current = slugCourant
 	}, [slugCourant])
 	const contexteEspace = useMemo(
-		() => ({ idWorkspace, estAdmin, capacites, espaceLu, slugEspace: slugCourant, ...(espaces === undefined ? {} : { espaces }) }),
-		[idWorkspace, estAdmin, capacites, espaceLu, slugCourant, espaces],
+		() => ({
+			idWorkspace,
+			estAdmin,
+			capacites,
+			espaceLu,
+			slugEspace: slugCourant,
+			...(espaces === undefined ? {} : { espaces }),
+			...(espaces !== undefined && espaces.length >= 2 ? { nonLus } : {}),
+		}),
+		[idWorkspace, estAdmin, capacites, espaceLu, slugCourant, espaces, nonLus],
 	)
 	// `CRM-101` — l'entrée « Plateforme » n'est rendue que si la base le dit (docs/DESIGN_SYSTEM.md §5.56) ;
 	// pendant la lecture et en cas d'échec, elle est absente.

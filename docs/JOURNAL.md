@@ -42002,3 +42002,12 @@ le patron le plus proche) ; écartée : la lecture intégrale. (2) **oui, repli�
 connecteur » montre le socle exact ; écarté : ne rien montrer, le manuel résumant.
 **Conséquence** (`docs/SPEC-mcp.md` §18.4) : la webapp ne recopie jamais le socle. Le service `mcp` le **publie en base** sous la
 clé de service, au démarrage, et la plateforme le lit de là.
+
+### `CRM-161` T3.a — les non-lus du repli à 390 px (relevé de la livraison)
+
+*2026-11-24, session 4891a451 (ex-5f, ex-ef).* **Observé** : la section « Espaces » du repli ne lisait les non-lus qu'à son
+ouverture ; la capture de la livraison la prenait avant la fin de cette lecture. **Preuve rouge** : la lecture retenue 1,5 s,
+la preuve attend celle de la coquille puis exige la pastille de la sonde sous 500 ms après l'ouverture — rouge sur l'ancien
+code (le repli relit). **Correctif** : la coquille lit `inbox_unread_by_workspace` une fois par adresse, pour une personne de
+deux espaces, et le porte dans `ContexteEspace.nonLus` ; le menu et le repli le prennent là. **Vérifications** : E2E
+`menu-espaces` et `fil-ariane` 18/18, unitaires 6 250/6 250, quatre `tsc`, capture `menu-espaces-repli-non-lus-sm-390`.
