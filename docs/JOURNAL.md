@@ -42214,3 +42214,16 @@ ajoutées, observées (`ff2804ee`).
 migration) ; `verifier.sh` 35/36 (INC-277) ; manuel publié ; contrat §2.79 LIVRÉE et §8, changelog en [Publié], backlog ; verrou
 levé.
 
+### `CRM-161` T3.c — une erreur de la spécification, corrigée avant le code : le connecteur appelle les deux fonctions
+
+*2026-11-24, session 4891a451 (p2enjoy-crm-7a), après la livraison de T3.b.*
+- **Le problème.** Le §16.8 disait qu'aucune des deux fonctions n'était appelée par le connecteur. La recherche avait porté
+  sur `mcp/src`, un dossier qui n'existe pas : le connecteur est en Python, sous `mcp/crm_mcp`.
+- **L'observation.** `crm_organization_list` appelle `organization_list` avec `p_workspace_id`, et `crm_time_report` appelle
+  `temps_valorise`. Tous deux nomment leurs arguments et recopient les colonnes qu'ils connaissent, une à une.
+- **La conséquence.** Le plan tient sans changer : `p_workspace_id`, que la migration A garde, n'est plus seulement un
+  choix de compatibilité pour la webapp d'avant, il sert aussi au connecteur ; la colonne `workspace_id` ajoutée ne paraît
+  pas dans ses réponses. Aucun code du connecteur ne change. La preuve devient une exigence : les tests d'intégration du
+  connecteur sur ces deux outils, joués sur la base migrée, par `scripts/verify-mcp.sh`, après avoir prévenu 11.
+- **La vérification.** `grep` de `organization_list` et de `temps_valorise` dans `mcp/` ; lecture des deux outils.
+

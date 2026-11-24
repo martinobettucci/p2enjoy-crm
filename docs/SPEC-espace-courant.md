@@ -637,8 +637,16 @@ refus d'un espace non lu (la RLS reste la règle) ; une page d'un seul espace co
 
 *Écrit le 2026-11-24 par la session 7a, avant le code, pendant le gel du lot T3.b (aucune migration n'est committée avant
 l'annonce de fin de la session de livraison). Les réponses du connecteur restent celles du §16 (décisions 963 et 965) :
-T3.c n'ajoute ni famille ni case, et **ni `organization_list` ni `temps_valorise` n'est appelée par le connecteur**
-(`mcp/src`) — aucune image `mcp` à reconstruire.*
+T3.c n'ajoute ni famille ni case.*
+
+*Corrigé le 2026-11-24 par 7a, avant le code : la première rédaction disait qu'aucune des deux fonctions n'était appelée
+par le connecteur, sur une recherche faite dans un dossier `mcp/src` qui n'existe pas. **Le connecteur appelle les deux**
+(`mcp/crm_mcp/outils/organisations.py`, `crm_organization_list` ; `mcp/crm_mcp/outils/temps.py`, `crm_time_report`). Il
+n'en est pas changé : il appelle `organization_list` par ses noms de paramètres avec `p_workspace_id`, que la migration A
+garde, et il ne recopie que les colonnes qu'il nomme (`organisation_lue`, la ligne du rapport), si bien que la colonne
+`workspace_id` ajoutée ne paraît pas dans ses réponses. Aucun code du connecteur ne change, aucune image `mcp` n'est à
+reconstruire ; **la preuve est leur intégration sur la base migrée** (`test_integration_organisations.py`,
+`test_integration_temps.py`), jouée par `scripts/verify-mcp.sh` après avoir prévenu la session de livraison.*
 
 #### 16.8.1 Migration A — `organization_list` lit plusieurs espaces
 
