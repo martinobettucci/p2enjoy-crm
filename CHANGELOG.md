@@ -13,7 +13,12 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+- **`CRM-165` T1 — les consignes de la plateforme, en base** (migration 200, décisions 980 et 983). Une table d'une ligne
+  garde un texte que le super-administrateur écrit pour compléter les consignes fixes que le connecteur MCP donne aux
+  assistants. Seul le super-administrateur le lit et l'écrit, par `platform_set_connector_instructions` ; le service `mcp`
+  le lit et publie ses consignes fixes à la clé de service seule. Le texte est borné à 4 000 caractères ; chaque
+  modification laisse au journal de la plateforme le geste `connector_instructions_set` avec les longueurs avant et après,
+  jamais le texte. Rien n'est encore visible : le service `mcp` (T2) et l'écran (T3) suivent. Migration 200 à appliquer.
 
 ## [Publié]
 

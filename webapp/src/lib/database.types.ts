@@ -1613,6 +1613,41 @@ export type Database = {
           },
         ]
       }
+      connector_instructions: {
+        Row: {
+          base: string | null
+          base_published_at: string | null
+          body: string
+          id: boolean
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          base?: string | null
+          base_published_at?: string | null
+          body?: string
+          id?: boolean
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          base?: string | null
+          base_published_at?: string | null
+          body?: string
+          id?: boolean
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connector_instructions_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           anonymized_at: string | null
@@ -5585,6 +5620,11 @@ export type Database = {
           error: true
         } & "the function public.concerns_me with parameter or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache"
       }
+      connector_instructions_publish_base: {
+        Args: { p_base: string }
+        Returns: undefined
+      }
+      connector_instructions_text: { Args: never; Returns: string }
       copy_workflow_to_track: {
         Args: { new_name?: string; track_id: string; workflow_id: string }
         Returns: string
@@ -6368,9 +6408,23 @@ export type Database = {
           superadmin: boolean
         }[]
       }
+      platform_connector_instructions: {
+        Args: never
+        Returns: {
+          base: string
+          base_published_at: string
+          body: string
+          updated_at: string
+          updated_by_name: string
+        }[]
+      }
       platform_regenerate_card_addresses: {
         Args: { p_workspace_id: string }
         Returns: number
+      }
+      platform_set_connector_instructions: {
+        Args: { p_body: string }
+        Returns: undefined
       }
       prepare_email: {
         Args: {

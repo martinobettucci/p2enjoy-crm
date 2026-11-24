@@ -1957,7 +1957,9 @@ Toutes `SECURITY DEFINER`, `search_path` vide ; les deux premières accordées �
 - sinon `body`, `updated_by = auth.uid()`, `updated_at = now()`, et une ligne au **journal de la plateforme**, geste
   `connector_instructions_set` (contrainte `plateforme_journal_geste_check` élargie), cible `{length_before, length_after}`
   — **jamais le texte** ;
-- tout autre que le super-administrateur : `42501 forbidden`, rien n'est écrit — prouvé par requête directe.
+- tout autre que le super-administrateur : refusé, rien n'est écrit — prouvé par requête directe. *Précisé au code de T1* : le
+  refus est celui de la garde commune, `42501 reserve_aux_superadministrateurs` (`403` par l'API), pour la lecture comme pour
+  l'écriture ; la table elle-même rend `403` à tout jeton, super-administrateur compris : tout passe par les fonctions.
 
 ### 18.4 Le service `mcp` — `mcp/crm_mcp/consignes.py`
 

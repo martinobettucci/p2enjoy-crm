@@ -179,11 +179,16 @@ type Expect<T extends true> = T
 // déplacée, et la trace de chaque déplacement d'un track. CE QUI ÉCHAPPE AU GÉNÉRATEUR : `authenticated` n'écrit ni l'une
 // ni l'autre — `move_track` est le seul chemin — et ne lit pas les alias ; il lit un déplacement s'il lit le track
 // (docs/SPEC-deplacement-track.md §8, §10).
+// `connector_instructions`, LIVRÉE PAR `CRM-165` T1 (migration `0200`) : les consignes de la plateforme, une ligne. CE QUI
+// ÉCHAPPE AU GÉNÉRATEUR : aucun client ne la lit ni ne l'écrit — les fonctions `platform_connector_instructions`,
+// `platform_set_connector_instructions`, `connector_instructions_text` et `connector_instructions_publish_base` sont les
+// seuls chemins ; `body` tient en 4 000 caractères (docs/SPEC-mcp.md §18.2, §18.3).
 type _tables = Expect<
   Equal<
     keyof Database['public']['Tables'],
     | 'card_address_aliases'
     | 'track_moves'
+    | 'connector_instructions'
     | 'mail_message_transfers'
     | 'mail_blocked_senders'
     | 'mcp_prompts'
@@ -1347,9 +1352,17 @@ type _vueDerivationColonnes = Expect<
 // espace dont il n'est pas membre (docs/SPEC-deplacement-track.md §13). Le compte s'accroît d'une.
 // `0199` de CRM-163 ajoute `release_label_pass`, réservée à la clé de service : la passe des pastilles rend son bail
 // (docs/SPEC-ia.md §16.3). Le compte s'accroît d'une.
+// `0200` de CRM-165, TRANCHE T1, ajoute `platform_connector_instructions` et `platform_set_connector_instructions`, au
+// super-administrateur seul, puis `connector_instructions_text` et `connector_instructions_publish_base`, à la clé de service
+// seule (docs/SPEC-mcp.md §18.3). CE QUI ÉCHAPPE AU GÉNÉRATEUR : les refus `reserve_aux_superadministrateurs` (42501),
+// `connector_instructions_invalid` et `connector_instructions_too_long` (22023). Le compte s'accroît de quatre.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'platform_connector_instructions'
+    | 'platform_set_connector_instructions'
+    | 'connector_instructions_text'
+    | 'connector_instructions_publish_base'
     | 'release_label_pass'
     | 'plateforme_tracks'
     | 'track_move_preview'

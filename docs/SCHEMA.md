@@ -3480,6 +3480,10 @@ et les blocages sont perdus — les mails mis à la corbeille par un blocage y r
 - **`plateforme_journal_geste_check`** admet `connector_instructions_set`.
 - **Preuves** : pgTAP (la forme, la garde, la normalisation, la borne, l'écriture identique sans journal, le geste sans le
   texte) ; API par requête directe.
+- *Précisé au code* : le refus de la garde est `42501 reserve_aux_superadministrateurs` ; la normalisation retire les blancs
+  et fins de ligne des bords par `regexp_replace(…, '^\s+|\s+$', '')` après `CRLF` → `LF` ; la ligne est verrouillée
+  (`for update`) le temps d'une écriture. Preuves : pgTAP `0186` (22 assertions) ; API `e2e/api/consignes-connecteur.spec.ts`
+  (6 cas).
 - **Retour arrière** : supprimer les quatre fonctions et la table ; reposer la contrainte sans le geste. Le service `mcp`
   sans la table rend le socle seul (son mode dégradé).
 

@@ -1589,9 +1589,27 @@ l'enveloppe du journal (`crm_mcp/journal_protocole.py`). **Aucune migration, auc
 redémarrage du service ferme les fenêtres ouvertes (elles vivent en mémoire), ce qui ne fait que rendre le refus d'avant.
 **Retour arrière** : l'image précédente du connecteur, reconstruite à la révision d'avant.
 
+### 2.74 `CRM-165` T1, décisions 980 et 983 — les consignes de la plateforme, en base (EN ATTENTE)
+
+`docs/SPEC-mcp.md` §18 ; `docs/SCHEMA.md` « Migration `0200` ». Une table d'une ligne, quatre fonctions, le geste
+`connector_instructions_set` ajouté au journal de la plateforme ; **aucune donnée, aucune variable, aucun secret**. Verrou bref
+sur `plateforme_journal` (sa contrainte est reposée).
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la migration 200 | session de livraison, dans une fenêtre (§3.1) | `./runProd.sh --migrate` ; **après la 199** |
+| 2 | Constater | session de livraison, en lecture seule | le registre gagne une ligne, l'empreinte de la 200 égale celle du dépôt ; `select count(*) from public.connector_instructions` vaut 1 ; `select to_regprocedure('public.platform_set_connector_instructions(text)') is not null` vrai |
+
+**Seule, elle ne change rien de visible** : l'image `mcp` qui envoie le texte (T2) et l'écran qui l'écrit (T3) suivent. **Avant
+ou avec l'image `mcp` de T2.** Sans elle, le service de T2 rend le socle seul (son mode dégradé). **Retour arrière** : comme le dit
+`docs/SCHEMA.md` « Migration `0200` ».
+
 ## 3. Migrations en attente
 
-**Aucune migration en attente depuis la seconde fenêtre du 2026-11-21** : la 195 à la 199 ont été appliquées par elle (révision `377ac6e5`, décision 977) ; registre à **197** lignes. *Historique de l'attente* — les paragraphes qui suivent décrivent la 195 à la 199 telles qu'elles attendaient.
+**La 200** (`CRM-165` T1, décisions 980 et 983), **en attente** : les consignes de la plateforme (§2.74, `docs/SCHEMA.md`
+« Migration `0200` »). Après la 199. Avant ou avec l'image `mcp` de `CRM-165` T2. Aucun geste préalable du responsable.
+
+**Avant la 200, aucune migration n'attendait depuis la seconde fenêtre du 2026-11-21** : la 195 à la 199 ont été appliquées par elle (révision `377ac6e5`, décision 977) ; registre à **197** lignes. *Historique de l'attente* — les paragraphes qui suivent décrivent la 195 à la 199 telles qu'elles attendaient.
 
 **La 195** (`CRM-161` T1, décisions 965 et 967), *appliquée le 2026-11-21* : l'inbox d'un espace (§2.67, `docs/SCHEMA.md` « Migration `0195` »). Elle part avec la webapp, dans la même fenêtre.
 
