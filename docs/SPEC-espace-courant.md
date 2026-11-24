@@ -592,6 +592,13 @@ Lumen » porte déjà de quoi montrer chaque page), le contrat de livraison et l
   ses propres tracks et channels de portée. Deux formes : (a) **un entonnoir par espace**, l'un sous l'autre, chacun avec son
   prévisionnel par devise, le filtre « Espace » en isolant un ; (b) **un seul entonnoir**, une ligne par étape **et** par
   espace, colonne « Espace » — les étapes homonymes y apparaissent deux fois. Recommandation : (a).
+  Le responsable a fait remarquer que **le genre d'une étape (ouvert, gagné, perdu) est universel** ; la question lui a été
+  reposée avec une troisième forme. **Tranché le 2026-11-24 (décision 982) : la tête globale, le détail par espace.** Les
+  grandeurs de tête — prévisionnel par devise, taux de conversion des affaires décidées, affaires sans montant ou sans
+  probabilité — ne reposent que sur le genre (`node_kind`) : elles sont calculées sur **tous les espaces** lus (après le filtre
+  « Espace »), par devise, jamais entre devises. Suit **un entonnoir détaillé par espace**, chacun titré du nom de l'espace,
+  avec ses propres étapes dans l'ordre de son catalogue ; la portée (track, channel) reste celle d'un espace et ne s'offre que
+  lorsque le filtre en isole un. Une personne d'un seul espace voit l'écran d'aujourd'hui.
 - **Q2 — Temps ▸ Saisie.** Une saisie appartient à un espace (clés composites), et « Saisir pour » liste les membres d'un
   espace. Deux formes : (a) **la grille reste dans l'espace courant de l'onglet** — seul le rapport devient global —, l'en-tête
   nommant l'espace et le menu des espaces en changeant ; (b) **une grille de tous les espaces**, groupée par espace, « Saisir

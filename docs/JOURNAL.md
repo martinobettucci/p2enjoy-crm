@@ -41979,3 +41979,15 @@ saisie dans l'espace de sa ligne, totaux par jour de la personne tous espaces co
 sur deux espaces, et restreint à un espace choisi quand un administrateur saisit pour un collègue.
 **Q1 (le pilotage)** : le responsable a d'abord demandé si le genre des étapes (ouvert, gagné, perdu) n'est pas universel —
 il l'est ; la question lui est reposée avec une forme qui en tient compte.
+
+### décision 982 — `CRM-161` T3 : le pilotage — la tête globale, le détail par espace
+
+*2026-11-24, réponse du responsable à la question Q1 reposée (`docs/SPEC-espace-courant.md` §16.6) ; session ef (ex-5f).*
+**Le cheminement** : à la première forme de Q1 (un entonnoir par espace, ou un entonnoir mêlé), le responsable a répondu par une
+question : « ok c'est global mais on a quand même les types de nœuds qui eux sont généraux : la notion de open, closes, … cela
+c'est universel non ? ». Il l'est : `workflow_nodes_catalog.kind` (`open`, `won`, `lost`) a le même sens dans tout espace, et
+les grandeurs de tête du pilotage n'emploient que lui. Seul le détail par étape dépend du catalogue de chaque espace.
+**La question reposée**, trois formes : la tête globale et le détail par espace (recommandée) ; tout par genre ; un pilotage
+complet par espace. **La réponse** : « Tête globale, détail par espace ».
+**Les conséquences**, écrites au §16.6 : prévisionnel, taux et mentions sur tous les espaces lus, par devise ; un entonnoir
+détaillé par espace ; la portée par track ou channel offerte quand le filtre isole un espace.
