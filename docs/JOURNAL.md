@@ -42127,3 +42127,17 @@ contrôles sans anomalie ; captures observées.
   manuel 14-16 rejoué (7/7) : les images du bloc n'ont pas changé, les huit images réécrites étaient du bruit et ont été
   rendues.
 
+
+### décision 987 — livrer le lot CRM-165, CRM-161 T3.a et INC-365 à la révision `3e0bdc47`
+
+*2026-11-24, session 4522fa9c (p2enjoy-crm-11, session de livraison), arbitrage du responsable (`AskUserQuestion`).*
+**Le lot** : `CRM-165` entière (`0200`, l'image `mcp`, l'écran, le manuel), `CRM-161` T3.a (le socle du filtre « Espace » et
+la provenance sur « Affaires figées » ; webapp) et INC-365 (le squelette du bloc « Relance automatique » ; webapp) ; contrat
+§2.74 à §2.78 ; verrou `6507c86b`, lot arrêté à `a50c3e43` (le travail en cours de T3.b mis de côté par 7a).
+**La campagne** : complète à `a50c3e43`, base recréée (198 migrations) : types, unitaires, mail, mcp 131/131, pgTAP 174/5685
+verts ; ui 1331/1335, api 1410/1415, manuel 168/169 — INC-342 (webhooks, `inbox-lecture:109`, manuel 34) ou verts rejoués
+seuls (`mails-prepares`, `connecteur-etiquettes`, `connecteur-organisations`, `commentaires` temps réel, `demarrage`,
+`webhooks-remise`). **Aucun défaut du lot.** Garde du manuel 170 ; API manuel 9/9 ; captures 122 changées, 7 ajoutées,
+observées (`3e0bdc47`).
+**Décision : oui, maintenant**, un `pg_dump` avant, livraison par condensé à `3e0bdc47`, l'image `mcp` reconstruite
+explicitement après la 200.
