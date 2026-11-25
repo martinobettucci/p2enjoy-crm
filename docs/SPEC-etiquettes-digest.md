@@ -136,7 +136,7 @@ dans le fil d'une organisation porte `subject_organization_id` et un `subject_ca
   membre d'un autre espace n'y lit rien ; une organisation d'un autre espace de la personne n'entre pas dans ce digest ; une
   personne qui ne peut plus lire l'organisation n'a pas la ligne ; seule mention → un digest est produit) ; E2E de bout en bout
   `e2e/mail/digest.spec.ts` étendu (la ligne et le lien dans le mail reçu dans la boîte de développement, jamais substitués) ; le
-  seed (§58 de `docs/SPEC-seed.md`) : Driss est mentionné dans le fil d'« Imprimerie Duval » **avant** le digest du seed.
+  seed (§58 de `docs/SPEC-seed.md`) : Driss est mentionné dans le fil d'« Imprimerie Duval », créée par l'import du carnet — après le digest du seed, donc cité par le prochain.
 - **Le manuel** (`docs/manual.md` §5.6) : le contenu du récapitulatif dit « les commentaires où l'on vous a mentionné, sur une
   affaire ou sur une organisation ».
 

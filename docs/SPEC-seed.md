@@ -3482,8 +3482,10 @@ mentionne Driss** dans le fil d'**Imprimerie Duval** — une organisation qu'auc
 - **le commentaire** de Camille, « Voir avec Driss leur devis de brochures. », posé par le vrai geste (`organization_comments`,
   sous le jeton de Camille) ; **la mention** de Driss par `organization_comment_mentions`, sous le même jeton — le vrai
   déclencheur de la `0188` notifie Driss (`subject_organization_id`, non lue) ;
-- **l'ordre** : la section est jouée **avant** le §31 (le digest du seed), dont le corps cite alors « Imprimerie Duval
-  (organisation) » et sa fiche ;
+- **l'ordre** : « Imprimerie Duval » naît de l'**import du carnet** (§8 tricies, `contacts-salon.csv`) ; la section est donc jouée
+  **après** lui, donc **après** le digest du seed (§31), déjà parti : *corrigé le 2026-11-25, la première version la plaçait avant le §31, sur
+  une base neuve où l'organisation n'existe pas encore*. Le digest du seed ne cite donc pas cette mention ; **le prochain digest de Driss la
+  cite** (celui de l'E2E `e2e/mail/digest.spec.ts`, ou le job du matin) ;
 - **rejouable** : le commentaire est retrouvé par son texte avant d'être posé ; rien n'est dupliqué ;
 - **ce que cela change ailleurs** : la cloche de Driss compte une notification d'organisation de plus ; le fil d'Imprimerie Duval
   porte un commentaire.
