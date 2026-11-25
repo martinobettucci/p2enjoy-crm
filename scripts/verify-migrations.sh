@@ -40,6 +40,7 @@
 #
 # Usage :
 #   scripts/verify-migrations.sh
+#   scripts/verify-migrations.sh --runner-seul    la seule section 0 (INC-318), sans base ni pile
 
 set -euo pipefail
 
@@ -119,6 +120,112 @@ decoder_jwt() {
 echo
 echo "Preuves de CRM-003 — migrations d'amorçage"
 echo
+
+# --- 0. Le runner refuse une migration qui porte sa propre transaction (INC-318) --------------------
+
+# @spec INC-318 (docs/BACKLOG.md « Correctif — INC-318 »), docs/DAT.md §3.2 bis — SANS BASE : le VRAI script du runner est joué avec un `psql` factice qui ne fait
+# que noter qu'il a été appelé. Le garde porte sur TOUS les fichiers du passage, avant toute application : un fichier refusé ne laisse donc aucun appel à `psql`.
+section_runner_transactions() {
+	local travail runner psql_factice sortie code
+	runner="$PWD/supabase/docker/migrations-runner/apply-migrations.sh"
+	travail=$(mktemp -d)
+	psql_factice="$travail/bin"
+	mkdir -p "$psql_factice"
+	printf '#!/bin/sh\necho appel >> "%s/appels"\nexit 0\n' "$travail" > "$psql_factice/psql"
+	chmod +x "$psql_factice/psql"
+
+	lancer() { # $1 : le répertoire de migrations ; rend le code, écrit la sortie dans $travail/sortie
+		: > "$travail/appels"
+		PATH="$psql_factice:$PATH" PGUSER=postgres APPLY_MIGRATIONS=true MIGRATIONS_DIR="$1" sh "$runner" >"$travail/sortie" 2>&1
+	}
+
+	# 1. Un NOUVEAU fichier avec begin; / commit; est refusé, nommé, et rien n'est appliqué.
+	mkdir -p "$travail/neuf"
+	printf 'create table public.zz_a(i int);\n' > "$travail/neuf/0001_ordinaire.sql"
+	printf 'begin;\ncreate table public.zz_b(i int);\ncommit;\n' > "$travail/neuf/9999_transaction_propre.sql"
+	code=0; lancer "$travail/neuf" || code=$?
+	if [ "$code" -ne 0 ] && grep -q 'REFUS' "$travail/sortie" && grep -q '9999_transaction_propre.sql' "$travail/sortie" && [ ! -s "$travail/appels" ]; then
+		ok "un nouveau fichier avec begin; / commit; est refusé, nommé, et rien n'est appliqué (aucun appel à psql)"
+	else
+		fail "le fichier 9999_transaction_propre.sql n'est pas refusé proprement (code $code) : $(tail -n 2 "$travail/sortie" | tr '\n' ' ')"
+	fi
+
+	# 2. Chaque forme de l'instruction : rollback;, start transaction;, begin transaction;, majuscules et retraits.
+	local forme index=0
+	for forme in 'rollback;' 'START TRANSACTION;' '   Begin Transaction ;' '	COMMIT;'; do
+		index=$((index + 1))
+		mkdir -p "$travail/forme$index"
+		printf 'select 1;\n%s\n' "$forme" > "$travail/forme$index/9999_forme.sql"
+		code=0; lancer "$travail/forme$index" || code=$?
+		if [ "$code" -ne 0 ] && grep -q 'REFUS' "$travail/sortie" && [ ! -s "$travail/appels" ]; then
+			ok "la forme « $(printf '%s' "$forme" | sed 's/^[[:space:]]*//') » est refusée"
+		else
+			fail "la forme « $forme » n'est pas refusée (code $code)"
+		fi
+	done
+
+	# 3. Ce qui n'est PAS une transaction de premier niveau passe : un bloc PL/pgSQL (begin sans point-virgule, end;), un commentaire, une chaîne sur une ligne.
+	mkdir -p "$travail/innocent"
+	cat > "$travail/innocent/0001_innocent.sql" <<'SQL'
+-- begin;  commit;  (un commentaire qui explique le mécanisme)
+create or replace function public.zz_f() returns void language plpgsql as $$
+begin
+	perform 1;
+end;
+$$;
+comment on function public.zz_f() is 'ne ferme pas de commit; sur sa ligne';
+SQL
+	code=0; lancer "$travail/innocent" || code=$?
+	if [ "$code" -eq 0 ] && [ -s "$travail/appels" ]; then
+		ok "un bloc PL/pgSQL (begin, end;), un commentaire et une chaîne ne sont pas pris pour une transaction"
+	else
+		fail "un fichier sans transaction de premier niveau est refusé à tort (code $code) : $(tail -n 2 "$travail/sortie" | tr '\n' ' ')"
+	fi
+
+	# 4. Un fichier de la liste fermée — inscrit, avec sa transaction propre — passe, comme avant.
+	mkdir -p "$travail/liste"
+	cp supabase/migrations/0034_lecture_track_transitive.sql supabase/migrations/0116_couleur_channels.sql "$travail/liste/"
+	code=0; lancer "$travail/liste" || code=$?
+	if [ "$code" -eq 0 ] && grep -Eiq '^[[:space:]]*begin;' "$travail/liste/0034_lecture_track_transitive.sql" && grep -q '2 fichier(s) appliqué(s)' "$travail/sortie"; then
+		ok "0034 et 0116, de la liste fermée et porteurs de begin;, passent comme avant"
+	else
+		fail "un fichier de la liste fermée est refusé (code $code) : $(tail -n 2 "$travail/sortie" | tr '\n' ' ')"
+	fi
+
+	# 5. Le même contenu sous un NOM hors de la liste est refusé : la liste porte des noms, jamais un motif.
+	mkdir -p "$travail/renomme"
+	cp supabase/migrations/0034_lecture_track_transitive.sql "$travail/renomme/0999_lecture_track_transitive.sql"
+	code=0; lancer "$travail/renomme" || code=$?
+	if [ "$code" -ne 0 ] && grep -q 'REFUS' "$travail/sortie"; then
+		ok "le contenu de 0034 sous un autre nom est refusé : la liste est fermée"
+	else
+		fail "un fichier hors de la liste mais de même contenu passe (code $code)"
+	fi
+
+	# 6. Le répertoire RÉEL passe tout entier : aucun fichier du dépôt n'est refusé à tort.
+	nombre_reel=$(find supabase/migrations -maxdepth 1 -name '*.sql' | wc -l | tr -d ' ')
+	code=0; lancer "$PWD/supabase/migrations" || code=$?
+	if [ "$code" -eq 0 ] && grep -q "$nombre_reel fichier(s) appliqué(s) avec succès" "$travail/sortie"; then
+		ok "les $nombre_reel migrations du dépôt passent le garde : seuls les onze fichiers de la liste portent une transaction propre"
+	else
+		fail "le répertoire réel est refusé (code $code) : $(grep REFUS "$travail/sortie" | head -n 1)"
+	fi
+
+	rm -rf "$travail"
+}
+
+echo "0. Le runner refuse une migration qui ouvre ou ferme sa propre transaction (INC-318)"
+section_runner_transactions
+
+if [ "${1:-}" = --runner-seul ]; then
+	echo
+	if [ "$failures" -eq 0 ]; then
+		printf '\033[32m%s contrôles, aucune anomalie.\033[0m\n' "$checks"
+		exit 0
+	fi
+	printf '\033[31m%s contrôles, %s anomalie(s).\033[0m\n' "$checks" "$failures"
+	exit 1
+fi
 
 # --- 1. Suite pgTAP ----------------------------------------------------------------------------
 

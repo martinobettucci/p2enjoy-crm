@@ -8391,6 +8391,9 @@ serait une migration nouvelle sans objet. **Issue proposée** : que le runner re
 un `commit;` de premier niveau, avec une liste d'exceptions pour les onze déjà inscrits, et que
 `docs/DAT.md` §3.2 bis écrive la règle. À arbitrer par le responsable.
 
+**CLOSE le 2026-11-25 — INC-318, session `p2enjoy-crm-dd`, reprise d'un lot de la session `p2enjoy-crm-30`, accord de la session de livraison sur la spécification.** `apply-migrations.sh` refuse, avant toute application, un fichier qui porte `begin;` / `commit;` / `rollback;` / `start transaction;` de premier niveau, sauf la liste fermée des onze fichiers inscrits ; `docs/DAT.md` §3.2 bis écrit la règle (la fiche le demandait).
+**Preuves** : `verify-migrations.sh --runner-seul`, 9 contrôles sans base — un nouveau fichier refusé et rien d'appliqué, les cinq formes, un bloc PL/pgSQL qui passe, les fichiers de la liste qui passent, le même contenu sous un autre nom refusé, les 204 migrations qui passent — **rouge sans le garde (6 anomalies)**, vert avec ; rejoué sous `postgres:17-alpine`, l'interpréteur réel. Contrat §2.86 : le garde part avec le script du runner, sans geste du responsable.
+
 ### INC-319 — `test_integration_oauth.py` dépend de l'ordre : joué après la messagerie, il voit encore ses outils
 
 *Constaté le 2026-10-27 par `CRM-119` T3, en jouant l'intégration du connecteur dans l'ordre alphabétique des fichiers.*

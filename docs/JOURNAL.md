@@ -42603,3 +42603,8 @@ ce que le disque n'a pas à décider. **Vérifié** : tests de composant rouges 
 
 *2026-11-25, session `p2enjoy-crm-dd`, lot repris de la session 30 ; le code attend l'accord de la session de livraison, le runner étant celui de la production.* **Mesuré** : le motif `^\s*(begin(\s+transaction)?|commit|start\s+transaction|rollback)\s*;` nomme exactement les onze fichiers de la fiche (`0034` à `0043`, `0116`) sur les 204 du dépôt, et aucun autre — son premier jet, qui comptait `end;`, en nommait 170. **La décision** : refuser, sauf une liste FERMÉE de noms ; la liste n'est pas un
 mécanisme d'exception ouvert. **Pourquoi un refus et non une correction** : un fichier inscrit ne se modifie plus (empreinte), et la migration de réécriture n'aurait aucun objet. **Risque** : le garde est dans l'image du runner de production — il ne s'exerce que sur un fichier à appliquer, jamais sur un fichier déjà inscrit.
+
+### `INC-318` — le garde est écrit et prouvé
+
+*2026-11-25, session `p2enjoy-crm-dd`, après l'accord de la session de livraison sur la spécification.* **Fait** : le garde dans `apply-migrations.sh`, avant toute application — sur TOUS les fichiers du passage, pour qu'un refus ne laisse rien d'appliqué à moitié —, la liste fermée de onze noms, le message qui nomme le fichier et le remède.
+**Ce que la mesure a appris** : le script est MONTÉ dans l'image `postgres:17-alpine` (busybox), pas copié dans une image construite : « part avec l'image du runner » se lit « part avec le script livré » ; le garde est rejoué sous cet interpréteur. **Preuve sans base** : le vrai script, un `psql` factice qui note ses appels — un fichier refusé ne laisse aucun appel — ; rouge sans le garde (6 anomalies).

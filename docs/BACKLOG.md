@@ -21112,4 +21112,4 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 
 *Onze migrations portent leur propre `commit`, qui ferme la transaction du runner avant l'inscription au registre. Spécification : `docs/DAT.md` §3.2 bis ; fiche INC-318. Connecteur MCP : sans objet.*
 
-- [ ] **INC-318 — le runner refuse un `begin;` / `commit;` de premier niveau**, sauf les onze fichiers inscrits (liste fermée) ; preuve dans `scripts/verify-migrations.sh` ; image du runner à livrer avec le lot. *Spécifié ; code à venir après l'accord de la session de livraison.*
+- [x] **INC-318 — le runner refuse un `begin;` / `commit;` de premier niveau**, sauf les onze fichiers inscrits (liste fermée) ; `scripts/verify-migrations.sh --runner-seul` : 9 contrôles, rouge sans le garde (6 anomalies), les 204 migrations passent, rejoué sous `postgres:17-alpine`. Part avec le script du runner au prochain lot, sans geste du responsable (contrat §2.86).

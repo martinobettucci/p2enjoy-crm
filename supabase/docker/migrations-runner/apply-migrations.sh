@@ -85,6 +85,40 @@ for migration in "$@"; do
 		|| refuser "nom de fichier hors de la forme NNNN_nom.sql : $nom"
 done
 
+# @spec INC-318 (docs/BACKLOG.md « Correctif — INC-318 »), docs/DAT.md §3.2 bis — UNE MIGRATION N'OUVRE NI NE FERME DE TRANSACTION.
+# Le runner applique un fichier ET son inscription dans UNE transaction (`psql --single-transaction`). Un `begin;` ou un `commit;`
+# de premier niveau dans le fichier ferme cette transaction avant l'inscription : « appliquée » ne veut plus dire « inscrite »,
+# et un échec de l'inscription laisserait une migration appliquée que le passage suivant rejouerait. Onze fichiers, déjà
+# inscrits, sont dans ce cas ; la liste ci-dessous est FERMÉE : aucun fichier nouveau n'y entre. Le contrôle porte sur TOUS les
+# fichiers du passage, AVANT toute application : un refus ne laisse rien d'appliqué à moitié. Le motif ne prend que la ligne qui
+# est, à elle seule, l'instruction — un `begin` de bloc PL/pgSQL n'a pas de point-virgule, et le `end;` qui le ferme n'est pas
+# cherché. Mesuré sur les 204 migrations du dépôt : il nomme exactement ces onze.
+MIGRATIONS_AVEC_TRANSACTION_PROPRE="
+0034_lecture_track_transitive.sql
+0035_commentaires_lot_g.sql
+0036_previsualisation_exigence.sql
+0037_corbeille.sql
+0038_corbeille_restauration.sql
+0039_versionnement_workflows.sql
+0040_comparaison_versions_workflow.sql
+0041_plan_remappage_cards.sql
+0042_restauration_version_workflow.sql
+0043_comparaison_copie_source.sql
+0116_couleur_channels.sql
+"
+for migration in "$@"; do
+	nom=$(basename "$migration")
+	if grep -Eiq '^[[:space:]]*(begin([[:space:]]+transaction)?|commit|start[[:space:]]+transaction|rollback)[[:space:]]*;' "$migration"; then
+		case "
+$MIGRATIONS_AVEC_TRANSACTION_PROPRE" in
+		*"
+$nom
+"*) continue ;;
+		esac
+		refuser "le fichier $nom ouvre ou ferme sa propre transaction (begin; / commit; / rollback;) : il fermerait celle du runner avant l'inscription au registre — retirez l'instruction, le runner enveloppe déjà chaque fichier (docs/DAT.md §3.2 bis, INC-318)"
+	fi
+done
+
 existe=$(lire "select to_regclass('app.migrations_appliquees') is not null")
 inscrits=
 if [ "$existe" = t ]; then

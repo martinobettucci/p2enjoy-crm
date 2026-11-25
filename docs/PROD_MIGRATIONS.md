@@ -1816,6 +1816,13 @@ reçoit son résumé. *Écrite et prouvée en développement le 2026-11-25 (7a) 
 
 **Retour arrière** : rejouer la définition de la `0133` (`create or replace function app.digest_corps`). **Risque connu** : aucun sur les données.
 
+### 2.86 `INC-318` — le runner refuse une migration qui porte sa propre transaction (le script du runner, sans migration) (EN ATTENTE)
+
+`docs/DAT.md` §3.2 bis « Une migration n'ouvre ni ne ferme de transaction » ; fiche INC-318. **Le script `supabase/docker/migrations-runner/apply-migrations.sh`** (monté dans le service `migrations-runner` de la cellule) **refuse**, avant d'appliquer quoi que ce soit, tout fichier dont une ligne est à elle seule
+`begin;`, `begin transaction;`, `start transaction;`, `commit;` ou `rollback;`, **sauf** les onze fichiers déjà inscrits (`0034` à `0043`, `0116`) d'une liste fermée de noms. Aucune migration, aucune table, aucune variable, aucun secret. **Il part avec le script du runner, au prochain lot, SANS GESTE DU RESPONSABLE** : `livrer.sh` dépose le script comme le reste du dépôt ;
+le garde ne s'exerce que sur un fichier à appliquer. **Effet en production : nul** — les onze fichiers sont inscrits, aucun fichier du dépôt (204) n'est refusé, et le garde ne change rien à un passage sans fichier nouveau. **Il refusera, à la fenêtre où il paraîtrait, une migration future qui porterait sa propre transaction** : le refus nomme le fichier, et la correction est de retirer l'instruction (le runner enveloppe déjà chaque fichier).
+**Vérification** (`scripts/verify-migrations.sh --runner-seul`, 9 contrôles, sans base) : un nouveau fichier avec `begin;` / `commit;` est refusé et rien n'est appliqué ; chacune des formes (`rollback;`, `start transaction;`, majuscules, retraits) l'est ; un bloc PL/pgSQL n'est pas pris ; `0034` et `0116`, de la liste, passent ; le contenu de `0034` sous un autre nom est refusé ; les 204 migrations du dépôt passent. Rejoué aussi sous l'interpréteur réel du runner (`postgres:17-alpine`, busybox). **Retour arrière** : redéposer l'ancien script.
+
 ## 3. Migrations en attente
 
 **La 206** (`INC-361`, décisions 992 et 1000), *en attente* : le résumé quotidien cite les mentions non lues du fil d'une organisation (§2.85,

@@ -13,6 +13,8 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+- **INC-318, le runner refuse une migration qui porte sa propre transaction** : `apply-migrations.sh` refuse, avant d'appliquer, un fichier qui contient `begin;`, `commit;`, `rollback;` ou `start transaction;` de premier niveau, sauf les onze fichiers déjà inscrits
+  (`0034` à `0043`, `0116`). Sans effet sur la production tant qu'aucun fichier nouveau ne porte de transaction ; part avec le script du runner, sans geste du responsable.
 - **INC-361, le récapitulatif du matin cite aussi les mentions du fil d'une organisation** (migration 206, décisions 992 et 1000) : sous « On vous a mentionné », une mention non lue
   dans le fil d'une organisation paraît avec son nom suivi de « (organisation) » et le lien de sa fiche, à l'ancre du commentaire, mêlée aux mentions d'affaires par ordre de
   création ; l'objet du mail la compte, et elle suffit à produire un récapitulatif. Une organisation que la personne ne peut pas lire n'y figure jamais. Seed §58 ; manuel §5.6.
