@@ -715,6 +715,39 @@ quatre compilations et le rapport HTTP 200. La nouvelle unité apporte 59 assert
 scénarios API ; son changement de timeline révise des parcours existants sans augmenter le compte
 UI. Le harnais ciblé `verify-change-channel-workflow.sh` ajoute son verdict autonome **23/23**.
 
+### 7.3 Une unité d'infrastructure : son harnais dédié tient lieu de test unitaire — INC-148, décision 992
+
+`CLAUDE.md` §15 exige, pour toute unité du backlog, un test unitaire spécifique et un test E2E spécifique. **Arbitrage du
+responsable (2026-11-25, décision 992)** : pour une **unité d'infrastructure** — un script de lancement, une pile Compose, un
+gabarit d'e-mail, des types générés, un socle documentaire : une unité dont le contrat est le comportement de scripts ou de
+services, non une logique de code testable à l'échelle d'une fonction —, **le harnais dédié qui l'éprouve réellement tient lieu
+de test unitaire**. Écarté : rouvrir les quatorze unités pour y ajouter des tests de complaisance (INC-146, INC-147).
+La règle est bornée, pour ne pas devenir une échappatoire :
+- le harnais est **nommé** ci-dessous et dans la fiche de l'unité, et cite l'unité en `@verifies` ;
+- il rend un verdict **chiffré** (« N contrôles, M anomalies ») et ne saute aucun contrôle sans le dire (INC-145) ;
+- ses contrôles **mordent** : une dégradation réelle le fait rougir, puis la restauration est constatée ;
+- une unité qui porte de la **logique applicative** — fonctions TypeScript, SQL ou Python — garde l'obligation d'un test
+  unitaire, sans exception ; le E2E propre à l'unité reste dû comme partout.
+
+Les quatorze unités relevées par INC-148, et le harnais qui tient lieu de test unitaire de chacune :
+
+| Unité | Objet | Harnais dédié |
+|---|---|---|
+| `CRM-000` | socle documentaire | pas de code : preuve par le démarrage reproductible — `scripts/verify-stack.sh`, `scripts/verify-scripts.sh` |
+| `CRM-001` | pile Supabase self-hosted | `scripts/verify-stack.sh` |
+| `CRM-002` | scripts de lancement et environnement | `scripts/verify-scripts.sh` |
+| `CRM-004` | chiffrement des secrets | `scripts/verify-vault.sh` |
+| `CRM-006` | types TypeScript générés | `scripts/verify-types.sh` (plus `webapp/src/lib/database.types.test-d.ts`) |
+| `CRM-008` | harnais de tests | `scripts/verify-harness.sh`, `scripts/verify-node-toolchain.sh` |
+| `CRM-011` | authentification | `scripts/verify-session-sso.sh` (`CRM-092`) et `scripts/verify-authz.sh` (`CRM-010`) ; l'ancien `verify-auth.sh` n'existe plus |
+| `CRM-015` | secret de build du registre npm | `scripts/verify-scripts.sh` |
+| `CRM-016` | fonctions edge | `scripts/verify-functions.sh`, `scripts/verify-stack.sh` |
+| `CRM-046` | seed de démonstration complet | `scripts/verify-seed-demo.sh` |
+| `CRM-047` | manuel utilisateur du chunk 3 | `scripts/verify-manual.sh` |
+| `CRM-050` | infrastructure mail de développement | `scripts/verify-mail-infra.sh` |
+| `CRM-070` | précision d'arbitrage : l'invitation d'un membre | **plus un écart** : `webapp/src/lib/membres-espace.test.ts` et `webapp/src/app/IndexReglages.test.tsx` la citent désormais |
+| `CRM-080` | sauvegardes chiffrées et restauration prouvée | `scripts/verify-sauvegardes.sh`, `scripts/verify-restauration.sh`, `scripts/verify-exploitation.sh` |
+
 ## 8. Ce qui est dû, et par qui
 
 | Commande | Bloquée par | Ce qui manque exactement |
