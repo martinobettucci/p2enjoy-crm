@@ -21113,3 +21113,10 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 *Onze migrations portent leur propre `commit`, qui ferme la transaction du runner avant l'inscription au registre. Spécification : `docs/DAT.md` §3.2 bis ; fiche INC-318. Connecteur MCP : sans objet.*
 
 - [x] **INC-318 — le runner refuse un `begin;` / `commit;` de premier niveau**, sauf les onze fichiers inscrits (liste fermée) ; `scripts/verify-migrations.sh --runner-seul` : 9 contrôles, rouge sans le garde (6 anomalies), les 204 migrations passent, rejoué sous `postgres:17-alpine`. Part avec le script du runner au prochain lot, sans geste du responsable (contrat §2.86).
+
+## Correctif — INC-367 (demandé par la session de livraison, 2026-11-25)
+
+*Un harnais est resté 13 h 24 dans une construction d'image, avec le verrou de campagne. Spécification : `docs/SPEC-test-harness.md` §3.16 ; fiche INC-367. Connecteur MCP : sans objet.*
+
+- [ ] **INC-367 a — les constructions et tirages d'images des harnais passent par `borner`** (`scripts/lib/borne.sh`), échec nommé ; contrôle de sources `scripts-bornes.test.ts`.
+- [ ] **INC-367 b — le verrou de campagne a une durée maximale** (`CAMPAGNE_DUREE_MAX`, `--duree-max`) : arrêt de l'arbre, message, verrou libéré, code 124 ; preuve dans `scripts/verify-campagne.sh`.
