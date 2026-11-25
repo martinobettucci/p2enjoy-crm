@@ -21121,3 +21121,9 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 
 - [x] **INC-367 a — les constructions et tirages d'images des harnais passent par `borner`** (`scripts/lib/borne.sh`), échec nommé ; contrôle de sources `scripts-bornes.test.ts` (rouge sur six sites, vert) ; construction réelle bornée à 4 s prouvée ; `verify-scripts.sh` entier rejoué sous verrou : 118 vérifications, aucune anomalie.
 - [x] **INC-367 b — le verrou de campagne a une durée maximale** (`CAMPAGNE_DUREE_MAX`, `--duree-max`) : arrêt de l'arbre, message, verrou libéré, code 124 ; `scripts/verify-campagne.sh` 44/44, dont la section 9 (rouge avant, vert après).
+
+## Correctif — INC-139 b (repris de la session de livraison, 2026-11-25)
+
+*`verify-board.sh` rend six anomalies en fin de campagne : un recensement de routes qui ignore `enEspace(…)`, une dégradation qui ne dégradait rien (motif multiligne cherché par `grep -F`), une capture périmée, deux comptes à instruire sur base fraîche. Fiche INC-139 b. Connecteur MCP : sans objet.*
+
+- [~] **INC-139 b — `verify-board.sh` au contrat actuel** : recensement des routes enveloppées (mutation M5), `degradation()` qui exige son motif en entier (sept dégradations unitaires prouvées sur copie), liste des captures. **Reste** : les deux comptes (cards, étapes) et le harnais entier sur base fraîche.

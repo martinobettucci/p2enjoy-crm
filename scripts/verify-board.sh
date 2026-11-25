@@ -310,6 +310,17 @@ for declaration in re.finditer(r"<Route\b", source):
     # Le composant d'écran est le plus interne : `<AppShell …><Corbeille /></AppShell>`.
     composant = composants[-1]
     expression = expression.strip()
+    # RÉVISÉ LE 2026-11-25 (INC-139 b, CRM-161) : les routes d'un espace sont déclarées `path={enEspace(CHEMIN_…)}` — le préfixe
+    # `/:slugEspace` s'ajoute au chemin, il ne change pas ce que la route porte. Le recensement lit le chemin SANS son enveloppe,
+    # y compris dans la forme conditionnelle des `ROUTES` (`estPageDEspace(x) ? enEspace(x) : x`).
+    conditionnelle = re.fullmatch(
+        r"estPageDEspace\(\s*([A-Za-z0-9_.]+)\s*\)\s*\?\s*enEspace\(\s*\1\s*\)\s*:\s*\1", expression
+    )
+    if conditionnelle is not None:
+        expression = conditionnelle.group(1)
+    enveloppe = re.fullmatch(r"enEspace\(\s*([A-Za-z0-9_.]+|'[^']*')\s*\)", expression)
+    if enveloppe is not None:
+        expression = enveloppe.group(1)
     if expression.startswith("'"):
         routes.append((litteraux(expression)[0], composant))
         continue
@@ -608,7 +619,9 @@ else
 		tail -30 "$TRAVAIL/ui.log" || true
 	fi
 
-	for capture in board-anonyme-1440 board-charge-1440 board-menu-ouvert-1440 \
+	# RÉVISÉ LE 2026-11-25 (INC-139 b) : `board-anonyme-1440` n'est plus produite — le scénario de l'anonyme est devenu « un track non
+	# consenti » (CRM-092 T9, `board-track-introuvable-1440`) ; la capture « transition sans libellé » s'y ajoute (e2e/ui/board.spec.ts).
+	for capture in board-track-introuvable-1440 board-transition-sans-libelle-1440 board-charge-1440 board-menu-ouvert-1440 \
 		board-apres-depot-1440 board-refus-1440 board-champs-manquants-1440 \
 		board-motif-exige-1440 board-xl-1440 board-lg-1152 board-md-900 board-sm-390; do
 		if [ -s "$CAPTURES/$capture.jpg" ]; then
@@ -677,16 +690,16 @@ export function RoutesApplication() {
 			{ROUTES.map((route) => (
 				<Route
 					key={route.chemin}
-					path={route.chemin}
+					path={estPageDEspace(route.chemin) ? enEspace(route.chemin) : route.chemin}
 					element={
 						<AppShell cleTitreRoute={route.cleTitre}>{route.rendu()}</AppShell>
 					}
 				/>
 			))}
 			{CHEMINS_FACTICE.map((chemin) => (
-				<Route key={chemin} path={chemin} element={<EcranTrackFactice />} />
+				<Route key={chemin} path={enEspace(chemin)} element={<EcranTrackFactice />} />
 			))}
-			<Route path={CHEMIN_FACTICE_TRACK} element={<EcranTrackFactice />} />
+			<Route path={enEspace(CHEMIN_FACTICE_TRACK)} element={<EcranTrackFactice />} />
 		</Routes>
 	)
 }
@@ -747,6 +760,12 @@ muter_routeur "une seconde lecture dans le chargeur partagé (§5.4.1 d nié)" D
 sed -i 's|:slugTrack|:idAutre|g' "$ROUTEUR_FACTICE/app/chemins.ts"
 muter_routeur "un routeur sans route porteuse de « :slugTrack »" A
 
+# M5 — INC-139 b : une route ENVELOPPÉE (`enEspace(…)`) dont la constante est inconnue doit rester NON RÉSOLUE : lire l'enveloppe ne
+# doit pas faire passer pour résolu un chemin que le recensement ne sait pas lire.
+cp -r "$TRAVAIL/routeur-intact/." "$ROUTEUR_FACTICE/"
+sed -i 's|enEspace(CHEMIN_FACTICE_TRACK)|enEspace(CHEMIN_INCONNU)|' "$ROUTEUR_FACTICE/app/App.tsx"
+muter_routeur "une route enveloppée par enEspace dont le chemin est inconnu" A
+
 # L'arborescence jetable est rendue intacte : le recensement doit la déclarer conforme, sans quoi
 # les quatre refus ci-dessus ne prouveraient qu'un contrôle rouge en permanence.
 auditer_routeur "$ROUTEUR_FACTICE" > "$TRAVAIL/routeur-rendu.txt" 2>&1 || true
@@ -759,16 +778,22 @@ fi
 degradation() {
 	local libelle=$1 fichier=$2 avant=$3 apres=$4 cible=$5
 	sauvegarder "$fichier"
-	if ! grep -qF "$avant" "$fichier"; then
-		fail "dégradation « $libelle » impossible : motif introuvable dans $fichier"
-		return
-	fi
-	python3 - "$fichier" "$avant" "$apres" <<'PY'
+	# RÉVISÉ LE 2026-11-25 (INC-139 b) : le motif est cherché EN ENTIER, sur plusieurs lignes. `grep -F` traite chaque ligne d'un motif
+	# multiligne comme un motif distinct (OU) : un motif dont une seule ligne subsistait passait pour présent, la dégradation ne
+	# changeait rien, et le harnais criait « COMPLAISANT » à tort — sans jamais avoir dégradé le fichier.
+	if ! python3 - "$fichier" "$avant" "$apres" <<'PY'
 import sys
 chemin, avant, apres = sys.argv[1:4]
 source = open(chemin, encoding='utf-8').read()
+if source.count(avant) != 1:
+    sys.exit(1)
 open(chemin, 'w', encoding='utf-8').write(source.replace(avant, apres, 1))
 PY
+	then
+		fail "dégradation « $libelle » impossible : motif introuvable (ou ambigu) dans $fichier"
+		rendre "$fichier"
+		return
+	fi
 	if [ "$cible" = unit ]; then
 		if npm run test:unit --silent > "$TRAVAIL/degr.log" 2>&1; then
 			fail "COMPLAISANT : « $libelle » et les tests unitaires restent verts"
@@ -823,15 +848,15 @@ else
 	# D4 — un refus inconnu est absorbé dans un jeton connu. C'est exactement la valeur par défaut
 	# trompeuse que CLAUDE.md §18 proscrit : l'écran annoncerait une raison fausse.
 	degradation "un refus inconnu est absorbé (CLAUDE.md §18 nié)" "$MODULE" \
-		"	return { cle: null, champsManquants: [], brut: message }" \
-		"	return { cle: 'forbidden', champsManquants: [], brut: message }" unit
+		"	return { cle: null, champsManquants: [], clesManquantes: [], brut: message, pointsManquants: [] }" \
+		"	return { cle: 'forbidden', champsManquants: [], clesManquantes: [], brut: message, pointsManquants: [] }" unit
 
 	# D5 — le déplacement optimiste n'est plus annulé après un refus : la card resterait dans la
 	# colonne d'arrivée alors que la base ne l'y a jamais mise (§7.9, docs/DESIGN_SYSTEM.md §6).
 	degradation "le retour arrière disparaît après un refus (§7.9 nié)" "$COMPOSANT" \
 		'			onCards(avant)
-			setRefus(resultat.refus)' \
-		'			setRefus(resultat.refus)' unit
+			setRefus({ idCard, refus: resultat.refus })' \
+		'			setRefus({ idCard, refus: resultat.refus })' unit
 
 	# D6 — une transition à motif redevient optimiste et appelle sans demander le motif. Le §7.8
 	# l'interdit, et le contrat de la garde le refuserait de toute façon : l'utilisateur verrait
@@ -855,8 +880,9 @@ else
 	# que `move_card` refuserait de déplacer.
 	degradation "les cards rangées reviennent sur le board (§7.3 nié)" "$MODULE" \
 		"			.is('archived_at', null)
-			.is('deleted_at', null)" \
-		"			.order('position')" unit
+			.is('affaire.deleted_at', null)
+" \
+		"" unit
 
 	# D9 — CONTRE-ÉPREUVE DU CONTRÔLE RETOURNÉ (docs/SPEC-seed.md §9.12.4, révisé par
 	# docs/SPEC-relances.md §10.2.2). Elle ne touche aucun fichier : elle vieillit une CINQUIÈME
