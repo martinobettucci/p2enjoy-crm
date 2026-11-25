@@ -20977,7 +20977,8 @@ corriger sans arbitrage l'est par lots cohérents, preuve rouge avant et verte a
   *Prise en charge : p2enjoy-crm-7a (4891a451) depuis 2026-11-25 03:57 UTC — état avant : [ ] ; confiée par la session de livraison (11), reprise de la liste de 30. Périmètre demandé : `e2e/ui/webhooks.spec.ts`, `e2e/api/inbox-lecture.spec.ts`, `e2e/manuel/34-webhooks.spec.ts` (et `webhooks-remise` si même cause)*
   **Tranche faite en développement (2026-11-25)** : `e2e/ui/webhooks.spec.ts`, `e2e/manuel/34-webhooks.spec.ts`, `e2e/api/inbox-lecture.spec.ts` ciblent leur état et ne retirent que ce qu'elles écrivent (rouges avant sur l'état accumulé réel, vertes après et après 60 remises ajoutées) ; `webhooks-remise` verte, autre cause. **Reste du lot** : `etat-messagerie.spec.ts:62`, `plateforme-mcp.spec.ts:195`, `premier-lancement.spec.ts:182`.
 - [ ] **Lot E — `INC-286` lot 1** : le connecteur MCP en anglais (tables `mcp_*`, familles, colonnes) ; spécification avant le code (décision 992).
-- [ ] **Lot F — `INC-361`** : le résumé quotidien cite les mentions non lues d'une organisation, avec le lien vers sa fiche (tranche de `CRM-153`, décision 992).
+- [@] **Lot F — `INC-361`** : le résumé quotidien cite les mentions non lues d'une organisation, avec le lien vers sa fiche (tranche de `CRM-153`, décision 992).
+  *Prise en charge : p2enjoy-crm-7a (4891a451) depuis 2026-11-25 UTC — état avant : [ ] ; confiée par la session de livraison (11) ; spécification avant le code (décision 992)*
 
 ### CRM-166 — Un assistant IA dans l'inbox : il propose un plan d'actions sur les mails sélectionnés, que l'on accepte ou refuse mail par mail `[@]`
 *Prise en charge : session interactive d5b44a2d (p2enjoy-crm-30) depuis 2026-11-25 00:53 UTC — état avant : [ ] ; confiée par la session de livraison (11), décision 994*
