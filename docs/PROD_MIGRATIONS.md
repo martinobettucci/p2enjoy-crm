@@ -1,6 +1,6 @@
 # Contrat de déploiement — P2Enjoy CRM
 
-*Session de livraison : session interactive 4522fa9c (p2enjoy-crm-11, poste du responsable) depuis 2026-11-25 (lot arrêté à `95e2b0f0` — 71f801a1 et le correctif du seed §58 —) ; le lot T3.c (`e550be2d`) a été livré le 2026-11-25 au soir, décision 993) — lot : les migrations 0201 à 0204 et 0206, la webapp, l'image `mcp`, le runner et le manuel (`CRM-161` T3.c à T5, INC-216, INC-361, INC-342, INC-318 et l'outillage) ; puis recréer `rest` (INC-277).*
+*Session de livraison : session interactive 4522fa9c (p2enjoy-crm-11, poste du responsable) depuis 2026-11-25 (lot arrêté à `411cfe37` ; le lot T3.c, `e550be2d`, livré le 2026-11-25 au soir, décision 993) — lot : les migrations 0203, 0204 et 0206, la webapp, l'image `mcp`, le runner et le manuel (`CRM-161` T3.d à T5, INC-216, INC-361, INC-342, INC-318, INC-139 b et l'outillage).*
 
 Ce document décrit **ce qu'un humain doit appliquer** pour déployer ou mettre à jour la
 production. Il ne dérive jamais de l'état réel du projet : toute modification du schéma, des
