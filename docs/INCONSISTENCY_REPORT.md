@@ -8964,8 +8964,12 @@ cessent de dépendre de l'état accumulé, **sans relâcher une assertion** —
   affaires comptait des lectures laissées ailleurs : attendu 4, reçu 3), l'état de lecture de **chaque message de l'affaire** étant posé puis rendu.
 **Preuves** : rouges avant sur l'état accumulé réel ; vertes après, puis vertes sur 60 remises ajoutées de force avant chaque passage (le
 scénario manuel ancien, rejoué dans les mêmes conditions, est rouge), puis `inbox-lecture` verte après `pieces-jointes` (qui lit le message
-du seed). `webhooks-remise` (API) est verte, sans changement : ce n'était pas la même cause. **Reste ouvert** : `etat-messagerie.spec.ts:62`,
-`plateforme-mcp.spec.ts:195`, `premier-lancement.spec.ts:182` (et l'ordre des preuves de connecteur et « Ma journée » à minuit).
+du seed). `webhooks-remise` (API) est verte, sans changement : ce n'était pas la même cause. **Les deux dernières, le 2026-11-25 (7a)** : `e2e/ui/plateforme-mcp.spec.ts:195` — le journal des appels, paginé par 50 du plus récent au plus ancien, ne montrait
+plus le refus du seed (le plus ancien) dès que les campagnes avaient ajouté des refus du CRM (494 mesurés) ; la preuve tourne les pages par le bouton de l'écran
+jusqu'à le trouver, sans retirer une ligne du journal ni relâcher une assertion (rouge avant, 6/6 vert après). `etat-messagerie.spec.ts:62` : déjà corrigée par
+`CRM-127` T2 / INC-340 (la boîte système est relevée, la preuve n'exige plus « Jamais relevée ») ; `premier-lancement.spec.ts:182` : verte sur quatre passages de suite
+(l'instabilité clavier n'est pas reproduite ; aucune dépendance de l'état accumulé). **Les cinq preuves de la fiche sont vertes. Reste ouvert, hors des cinq** : l'ordre des preuves
+de connecteur (`connecteur-organisations.spec.ts:70`) et « Ma journée » après minuit, relevés le 2026-11-04.
 
 ### INC-343 — la veille de `mail-sync` écrit `panne` et `account_id`, que le formateur du journal écarte
 

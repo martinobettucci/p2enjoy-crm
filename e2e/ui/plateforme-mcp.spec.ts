@@ -1,3 +1,4 @@
+// @verifies INC-342 (docs/INCONSISTENCY_REPORT.md, lot D du backlog) — le journal des appels est tourné page par page jusqu'au refus du seed, que les refus ajoutés par les campagnes repoussent hors de la première page
 // @verifies CRM-103 (docs/BACKLOG.md) — tranche T3.c : l'onglet « Connecteur MCP » et la fiche d'un utilisateur, sur la
 //           pile réelle, à la souris et au clavier, avec l'EFFET constaté par un vrai client MCP
 // @verifies docs/SPEC-mcp.md §8.1 (comptes, « Accorder des droits à un utilisateur » cherché par nom, fiche, rôle ou « pas
@@ -199,8 +200,18 @@ test.describe('L’administration du connecteur (docs/SPEC-mcp.md §8.1, docs/DE
 		await filtre.selectOption({ label: 'Refusé par le CRM' })
 		const lignes = page.getByTestId('ligne-appel')
 		await expect(lignes.first()).toBeVisible()
+		// `INC-342` : le journal est paginé par 50, du plus récent au plus ancien, et les campagnes y ajoutent des refus du CRM à
+		// chaque passage : le refus du seed (le plus ancien) sort de la première page. La preuve tourne les pages, par le bouton de
+		// l'écran, jusqu'à le trouver — au lieu de supposer son rang —, sans retirer une ligne du journal, ni relâcher aucune assertion.
+		const refusDuSeed = lignes.filter({ hasText: 'crm_profitability_report' }).filter({ hasText: 'Driss Lemoine' })
+		const suite = page.getByTestId('appels-suite')
+		for (let page_ = 0; page_ < 60 && (await refusDuSeed.count()) === 0 && (await suite.isVisible()); page_++) {
+			const avant = await lignes.count()
+			await suite.click()
+			await expect.poll(() => lignes.count(), { message: 'la page suivante du journal arrive' }).toBeGreaterThan(avant)
+		}
 		for (const ligne of await lignes.all()) await expect(ligne).toHaveAttribute('data-issue', 'refus_crm')
-		await expect(lignes.filter({ hasText: 'crm_profitability_report' }).filter({ hasText: 'Driss Lemoine' }).first()).toBeVisible()
+		await expect(refusDuSeed.first()).toBeVisible()
 		await capturer(page, 'journal-refus-crm-xl-1440', UNITE)
 
 		// Un seul espace au seed : aucun refus de la matrice n'est possible (docs/SPEC-seed.md §22.1).
