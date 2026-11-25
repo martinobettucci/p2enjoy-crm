@@ -487,11 +487,35 @@ pas, et leur rendu est une décision.
   que la base ne porte pas pour un workspace ; le symbole doublerait `card.currency`, qui est une
   variable **distincte** que le rédacteur du modèle place où il veut.
 
-- **L'HORODATAGE EST RENDU EN UTC, ET C'EST UNE LIMITE NOMMÉE.** MESURÉ : aucune colonne de fuseau
+- **RÉVISÉ LE 2026-11-25 — INC-216, décision 996 : L'HORODATAGE EST RENDU AU FUSEAU DE L'ESPACE** de l'affaire (§8.6 bis). Ce qui suit
+  décrit la limite d'origine, que cette révision referme ; elle est conservée pour son motif.
+- **L'HORODATAGE ÉTAIT RENDU EN UTC, ET C'ÉTAIT UNE LIMITE NOMMÉE.** MESURÉ : aucune colonne de fuseau
   n'existe dans le schéma — la seule colonne de préférence est `profiles.locale`, qui est une
   **langue**. UTC est donc le seul choix qui ne soit pas arbitraire, et il est écrit **ici** plutôt
   que découvert par un destinataire à qui l'on donnerait rendez-vous à la mauvaise heure. L'écart est
   consigné au registre (§8.10), et il se referme le jour où le produit portera un fuseau.
+
+### 8.6 bis Le fuseau de l'espace — INC-216, décision 996 (arbitrage du responsable, décision 992)
+
+**Le problème** : un horodatage rendu dans un e-mail était en UTC faute de fuseau dans le schéma ; un destinataire français lisait 09:00
+là où le rendez-vous était à 11:00 en heure d'été, et rien ne le signalait. **L'arbitrage (décision 992)** : le fuseau d'un e-mail
+sortant est celui de l'**ESPACE** de l'affaire ; une colonne de fuseau par espace, **`Europe/Paris` par défaut**, réglable par
+l'administrateur de l'espace. Écartés : le fuseau de l'expéditeur ; UTC documenté.
+
+**La règle.**
+- `workspaces.timezone` (`text`, non nul, défaut `'Europe/Paris'`) est un nom de fuseau IANA, **validé en base** contre `pg_timezone_names`
+  (`app.is_valid_timezone`), jamais deviné d'une langue (`profiles.locale` reste une langue).
+- Les deux variables horodatées d'un modèle se rendent dans ce fuseau, au format `JJ/MM/AAAA HH:MM` : `card.next_action_at`, et les champs
+  communs de l'affaire de type `datetime` (`card.field.<clé>`). Un champ de type `date` n'a pas d'heure : inchangé.
+- **Ce qui ne change pas** : `card_common_field_texte` à trois paramètres (l'index de recherche des champs) reste en UTC — un index ne dépend
+  pas d'un fuseau d'espace ; le digest quotidien garde son `Europe/Paris` (sa règle d'heure d'envoi est celle de la personne, non de
+  l'espace — hors de cette unité) ; aucune mention du fuseau n'est ajoutée au texte rendu.
+- **Qui règle** : `public.workspace_set_timezone(p_workspace_id, p_timezone)` — l'administrateur de l'espace (`app.is_workspace_admin`) ou
+  un superadministrateur ; tout autre appelant est refusé EN BASE (`forbidden`), un fuseau inconnu est refusé (`invalid_timezone`, 22023).
+  Le changement est inscrit au journal d'audit de l'espace.
+- **Tranches** : T1, la base (colonne, validation, fonction, rendu, seed, preuves) ; T2, l'écran « Réglages » de l'espace, qui nomme le fuseau
+  et le règle — spécifié avant son code, avec la lecture intégrale du design system.
+- Connecteur MCP : question 1 = non ; question 2 = sans objet (décision 992).
 
 ### 8.7 Autorisations et privilèges
 

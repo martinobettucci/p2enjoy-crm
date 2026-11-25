@@ -20994,3 +20994,15 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
       « 177 fichiers, 5732 assertions » égal aux valeurs dérivées. **Reste** : le rejeu complet de `verify-harness.sh` et de
       `verify-colonnes-protegees.sh` sur la pile (ils reconstruisent la base : fenêtre de la session de livraison).
 
+## Correctif arbitré le 2026-11-25 — INC-216 (décision 996)
+
+*Le fuseau d'un e-mail sortant est celui de l'espace. Spécification : décisions 992 et 996 ; `docs/SPEC-modeles-emails.md` §8.6 bis ;
+`docs/SCHEMA.md` `workspaces`. Connecteur MCP : question 1 = non ; question 2 = sans objet.*
+
+- [@] **T1 — la base** : migration (colonne `workspaces.timezone`, `app.is_valid_timezone`, `workspace_set_timezone`, `rendre_modele_email` rend les deux
+      variables horodatées au fuseau de l'espace), seed (un espace au fuseau différent, par la vraie fonction), pgTAP, preuves d'API (refus de l'espace
+      voisin et du lecteur, fuseau inconnu), `0054` révisée, contrat de déploiement, SCHEMA, DAT, changelog.
+      *Prise en charge : p2enjoy-crm-dd depuis 2026-11-25 00:55 UTC — état avant : [ ]*
+- [ ] **T2 — l'écran** : le fuseau de l'espace se lit et se règle dans les Réglages de l'espace (administrateur seulement), avec ses états, ses refus,
+      son annonce ; design system lu en entier, manuel et captures. Spécifié avant son code.
+

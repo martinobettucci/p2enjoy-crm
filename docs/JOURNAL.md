@@ -42429,3 +42429,15 @@ poussé, une migration ajoutée ou modifiée exige `database.types.ts` dans le m
 fonctions sans effet de types, qui devront porter le marqueur, ou des types régénérés à part. Éprouvé par `scripts/verify-crochets-git.sh` §6 bis
 (rouge avant, 27 vérifications vertes après). `types:check` reste le contrôle exact. Connecteur MCP : sans objet.
 
+### décision 996 — `INC-216` : le fuseau d'un e-mail est celui de l'espace — spécification avant le code
+
+*2026-11-25, session `p2enjoy-crm-dd`, suite de l'arbitrage du responsable (décision 992).* **Le problème** : les horodatages d'un e-mail se rendent en UTC
+(`SPEC-modeles-emails` §8.6) ; un destinataire français lit une heure fausse. **L'arbitrage (992)** : l'espace porte le fuseau, `Europe/Paris` par défaut,
+réglable par l'administrateur ; écartés : celui de l'expéditeur, UTC documenté.
+**Les choix de mise en œuvre, miens** : (1) une colonne `workspaces.timezone` validée par `pg_timezone_names` plutôt qu'une liste figée ; (2) deux variables
+changent — `card.next_action_at` et les champs communs `datetime` —, l'index de recherche et le digest gardent leur fuseau (un index n'a pas de fuseau
+d'espace ; la règle d'heure du digest est celle de la personne) ; (3) un réglage par une fonction réservée à l'administrateur de l'espace et au
+superadministrateur, refusée en base, journalisée ; (4) deux tranches — la base d'abord, l'écran ensuite, celui-ci exigeant la lecture intégrale du design
+system. Connecteur MCP : question 1 = non, question 2 = sans objet (décision 992). **Le code suit** ; le test qui fige l'UTC
+(`0054_rendu_modeles_emails.test.sql`, `CRM-063 §8.6`) est révisé avec lui, non retiré (décision 51).
+

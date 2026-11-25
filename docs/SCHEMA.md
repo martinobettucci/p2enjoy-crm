@@ -69,6 +69,7 @@ Cloisonnement de premier niveau.
 | `slug` | `text` | unique, non nul |
 | `inbound_domain` | `text` | domaine des adresses de card, ex. `crm.p2enjoy.studio` |
 | `card_address_prefix` | `text` | non nul, défaut `'c-'` ; `check` : 1 à 24 caractères parmi `a-z 0-9 . _ + -`, commence par une lettre ou un chiffre, sans `..` — préfixe des adresses d'affaire, `CRM-123` (`docs/SPEC-cards.md` §3.6), migration `0144` |
+| `timezone` | `text` | non nul, défaut `'Europe/Paris'` ; `check` : un nom de fuseau IANA connu de `pg_timezone_names` (`app.is_valid_timezone`) — le fuseau des horodatages rendus dans les e-mails (`INC-216`, `docs/SPEC-modeles-emails.md` §8.6 bis) |
 | `settings` | `jsonb` | défaut `'{}'` |
 | `created_at`, `updated_at` | `timestamptz` | |
 
