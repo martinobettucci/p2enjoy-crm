@@ -42311,3 +42311,21 @@ l'instant du client ; (2) basculer sur `now` et retirer la conséquence sur les 
 l'analyseur de dates qu'aucun type généré ne documente. **Conséquences** : texte du §16.12.2 corrigé, aucune ligne de code. Connecteur
 MCP : question 1 = non (correction de spécification), question 2 = sans objet.
 
+### décision 992 — neuf arbitrages du journal des incohérences (INC-131, 148, 165, 216, 277, 286, 330, 361, 362)
+
+*2026-11-25, session 4522fa9c (p2enjoy-crm-11, session de livraison), arbitrages du responsable (`AskUserQuestion`), sur les
+questions remontées par le tri des sessions dd (INC-123 à 209) et 30 (INC-211 à 362), sous l'objectif qu'il a fixé : faire
+avancer le backlog et résoudre le journal des incohérences, livrer chaque lot stable sans demander.*
+- **INC-216** : le fuseau d'un e-mail sortant est celui de l'ESPACE (une colonne de fuseau par espace, Europe/Paris par défaut, réglable par l'administrateur) ; écartés : celui de l'expéditeur ; UTC documenté. Connecteur MCP — question 1 : non ; question 2 : sans objet ;
+- **INC-277** : recréer le service rest au prochain créneau de livraison (compteur remis à zéro), puis surveiller ; écartés : relever les limites ; laisser rouge ;
+- **INC-286** : lancer le lot 1 du plan maintenant (le connecteur MCP : tables mcp_*, familles, colonnes) ; les autres lots plus tard ; écarté : tout différer ;
+- **INC-330** : faux positif : le responsable ferme lui-même les deux alertes GitHub ; aucune réécriture de l'historique ; le manifeste ne recopie plus le secret ; écarté : réécrire l'historique ;
+- **INC-361** : oui : le résumé quotidien cite aussi les mentions non lues du fil d'une organisation, avec un lien vers sa fiche (une tranche de CRM-153) ; écarté : documenter seulement. Connecteur MCP — question 1 : non ; question 2 : sans objet ;
+- **INC-362** : garder le repli de la colonne « Nom » ; écarté : l'élargir (la décision 940 reste) ;
+- **INC-131** : garder le champ de date natif du navigateur ; écarté : un composant de date maison ;
+- **INC-148** : pour une unité d'infrastructure, son harnais dédié tient lieu de test unitaire ; la règle est précisée et le harnais de chacune des quatorze unités est nommé ; écarté : rouvrir les quatorze unités ;
+- **INC-165** : oui : un contrôle avant le push refuse une migration modifiée sans database.types.ts modifié dans le même commit, sauf marqueur « sans effet de types » dans la migration ; écarté : rien imposer ;
+**Conséquences** : chaque fiche porte son arbitrage ; les corrections sont confiées aux sessions (INC-131, 148, 165, 216 chez dd ;
+INC-286 lot 1, 361, 362 chez 30) ; INC-277 est un geste de la session de livraison au prochain créneau ; INC-330 attend le geste
+du responsable sur GitHub.
+

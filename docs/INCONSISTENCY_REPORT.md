@@ -1208,6 +1208,8 @@ pose ? ». Ici la question est « que vaut `--spacing-3` ? », et elle restait s
 
 ### INC-148 — Quatorze unités n'ont aucun test unitaire dédié, là où `CLAUDE.md` §15 en exige un
 
+**Arbitrée le 2026-11-25 (décision 992)** : pour une unité d'infrastructure, son harnais dédié tient lieu de test unitaire ; la règle est précisée et le harnais de chacune des quatorze unités est nommé ; écarté : rouvrir les quatorze unités.
+
 **Nature :** exigence générale non tenue, arbitrage dû au responsable.
 **Relevé le :** 2026-08-18, par audit statique — le poste Docker étant tombé, la mesure ne repose
 sur aucune exécution et reste donc valable quel qu'en soit l'état.
@@ -2135,6 +2137,8 @@ JSX.
 
 ### INC-131 — le gabarit du contrôle d'échéance suit la locale du NAVIGATEUR, jamais celle du produit
 
+**Arbitrée le 2026-11-25 (décision 992)** : garder le champ de date natif du navigateur ; écarté : un composant de date maison.
+
 **Constaté le 2026-08-16**, en regardant `docs/captures/CRM-040/entete-card-edition-xl-1440.jpg`
 (`CLAUDE.md` §16) — pas en lisant un test : aucune assertion ne pouvait le voir.
 
@@ -2759,6 +2763,8 @@ un défaut étranger à l'unité autorisée (`CLAUDE.md` §5, `docs/CloudWorker.
 **CLOSE le 2026-11-25 — tri des fiches INC-123 à INC-209 (session `p2enjoy-crm-dd`, par lecture du code, des commits et des décisions ; aucune pile, aucun code touché).** L'annexe A n'existe plus : `CRM-117` T3.0 (`docs/SPEC-manual.md` §10 bis, 2026-10-27) a RETIRÉ les contrôles qui comparaient l'annexe à la base, et `scripts/verify-manual.sh` ne lit plus la base (lignes 43-46).
 
 ### INC-165 — la tranche 2 c de `CRM-081` a livré trois objets de base SANS régénérer le contrat de types
+
+**Arbitrée le 2026-11-25 (décision 992)** : oui : un contrôle avant le push refuse une migration modifiée sans database.types.ts modifié dans le même commit, sauf marqueur « sans effet de types » dans la migration ; écarté : rien imposer.
 
 **Nature :** défaut de **procédure**, découvert par la tranche 2 e et corrigé par elle parce qu'il
 la **bloquait** (`docs/CloudWorker.md` §4.2, second cas : « elle bloque concrètement l'unité produit
@@ -5228,6 +5234,8 @@ déjà tranché la question du type pour tout le reste du produit.
 
 ### INC-216 — un horodatage rendu dans un email est en UTC, faute de fuseau dans le schéma
 
+**Arbitrée le 2026-11-25 (décision 992)** : le fuseau d'un e-mail sortant est celui de l'ESPACE (une colonne de fuseau par espace, Europe/Paris par défaut, réglable par l'administrateur) ; écartés : celui de l'expéditeur ; UTC documenté. Connecteur MCP — question 1 : non ; question 2 : sans objet.
+
 **Ouverte le 2026-08-25 par `CRM-063` tranche 2a, comportement ASSUMÉ et figé par une assertion** —
 ce n'est pas un défaut trouvé au passage, c'est une **limite de la sous-tranche**, nommée dans sa
 spécification (`docs/SPEC-modeles-emails.md` §8.6) plutôt que découverte par un destinataire.
@@ -7469,6 +7477,8 @@ geste est fait ; reste à choisir la forme du contrat pour une prochaine cellule
 
 ### INC-277 — en production, `verifier.sh` reste rouge sur un redémarrage de PostgREST antérieur à la livraison, et Kong frôle sa limite de mémoire
 
+**Arbitrée le 2026-11-25 (décision 992)** : recréer le service rest au prochain créneau de livraison (compteur remis à zéro), puis surveiller ; écartés : relever les limites ; laisser rouge.
+
 *Relevée le 2026-10-21 pendant la livraison de `CRM-101` T5 et `CRM-102` T5 ; ouverte : l'arbitrage touche la
 production.*
 
@@ -7564,6 +7574,8 @@ que par le seul type de la clé.
 
 
 ### INC-286 — la langue des noms : la règle écrite dit « anglais », les objets récents sont en français
+
+**Arbitrée le 2026-11-25 (décision 992)** : lancer le lot 1 du plan maintenant (le connecteur MCP : tables mcp_*, familles, colonnes) ; les autres lots plus tard ; écarté : tout différer.
 
 *Relevé le 2026-10-24 par la session des rattachements multiples, à la demande du responsable (décision 657, arbitrage
 4), en inventoriant le catalogue de la base locale.* **Règle écrite.** `docs/SCHEMA.md`, « Conventions générales » :
@@ -8521,6 +8533,8 @@ deux fois ; la livraison simulée compare aussi cette image à celle de la cellu
 
 ### INC-330 — Le manifeste des images du manuel recopie le secret de signature d'un webhook de développement
 
+**Arbitrée le 2026-11-25 (décision 992)** : faux positif : le responsable ferme lui-même les deux alertes GitHub ; aucune réécriture de l'historique ; le manifeste ne recopie plus le secret ; écarté : réécrire l'historique.
+
 *Constaté le 2026-11-01, sur deux alertes du secret scanning de GitHub (dépôt public), envoyées le 2026-10-31. L'alerte 1
 porte sur le commit `ae9d20f6` (`CRM-073` T3), l'alerte 2 sur le commit `f60aaf87` (`CRM-117` T5).* GitHub classe la valeur
 comme un secret de signature de webhook Stripe. Ce n'en est pas un. C'est le secret que le **module webhooks du CRM**
@@ -9453,6 +9467,8 @@ Le comportement est inchangé : ni code, ni seed, ni test. Le passage historique
 Done de `CRM-052`) n'est pas réécrit, car il date l'état d'alors.
 
 ### INC-361 — le résumé quotidien ne compte que les mentions d'une affaire ; celles d'une organisation lui échappent
+
+**Arbitrée le 2026-11-25 (décision 992)** : oui : le résumé quotidien cite aussi les mentions non lues du fil d'une organisation, avec un lien vers sa fiche (une tranche de CRM-153) ; écarté : documenter seulement. Connecteur MCP — question 1 : non ; question 2 : sans objet.
 **Ouverte le 2026-11-18.** *Relevée par la session 4891a451 (p2enjoy-crm-ed) en écrivant la migration `0188` (`CRM-153`
 T1).*
 
@@ -9469,6 +9485,8 @@ organisation, avec un lien vers sa fiche ? Si oui, une tranche de `CRM-153`, ou 
 résumé et ses preuves.
 
 ### INC-362 — la cellule « Nom » de la liste devait porter deux lignes ; à 17 %, trois catégories en font jusqu'à quatre
+
+**Arbitrée le 2026-11-25 (décision 992)** : garder le repli de la colonne « Nom » ; écarté : l'élargir (la décision 940 reste).
 **Ouverte le 2026-11-18.** *Relevée par la session 4891a451 (p2enjoy-crm-ed) en regardant les captures de `CRM-153` T4
 (`docs/captures/CRM-153/liste-categories-1280.jpg`, `liste-filtre-categories-1440.jpg`).*
 
