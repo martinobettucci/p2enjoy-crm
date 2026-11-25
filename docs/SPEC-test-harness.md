@@ -431,6 +431,13 @@ désormais faite. **Preuve de l'outil** : `scripts/verify-residus.sh` (8 contrô
 rend un échec pour une commande qui échoue, et ne relève pas les cinq tables exclues. **Ce que cela ne prouve pas** : que chacune des 322 suites est propre — cela se joue à la campagne complète de la session de livraison, `autour -- <campagne>`, qui nomme alors chaque table et chaque ligne
 laissée. Connecteur MCP : sans objet.
 
+### 3.12 Les sources restent du texte — aucun octet NUL (INC-247)
+
+*Écrite le 2026-11-25, avant le code.* Un octet NUL littéral dans un fichier source le rend **binaire** pour l'outillage : `git diff` rend « Binary files differ » et la revue est aveugle ; `grep` et `ripgrep` le sautent, si bien qu'une recherche de symbole à
+travers le dépôt ne le trouve jamais. **Mesuré** (2026-11-25) sur les fichiers suivis : trois octets NUL, dans `webapp/src/lib/administration-workflows.ts` (deux : le séparateur d'une clé composite, et le commentaire qui le nomme) et `webapp/src/lib/sommeil-fil.ts` (un : le même séparateur).
+**La règle.** Un NUL voulu s'écrit `\0`, l'échappement de U+0000 : la valeur d'exécution est identique, le fichier redevient du texte. **Le contrôle** — `webapp/src/lib/sources-sans-octet-nul.test.ts`, joué par `npm run test:unit` — parcourt les sources suivies
+(`webapp`, `e2e`, `scripts`, `supabase`, `docs`, `mcp`, `.githooks`) et refuse tout octet NUL, en nommant le fichier : il ferme la classe, pas les seuls cas connus. Rouge avant la correction (les deux fichiers nommés), vert après. Connecteur MCP : sans objet.
+
 ## 4. Projets Playwright
 
 ### 4.1 Une seule configuration

@@ -6735,6 +6735,9 @@ d'un contrôle de traçabilité, et fermerait la classe entière plutôt que ce 
 **Imputation** : `CRM-031` / `CRM-076`, qui portent ce module. Aucune ligne de `CRM-066` tranche 3 b
 ne touche ce fichier.
 
+**CLOSE le 2026-11-25 — INC-247, session `p2enjoy-crm-dd`, reprise d'un lot de la session `p2enjoy-crm-30`.** Les octets NUL sont écrits `\0` : trois, dans `administration-workflows.ts` (deux) et `sommeil-fil.ts` (un, que la fiche ne
+nommait pas), la valeur d'exécution inchangée (les 2 917 tests de `webapp/src/lib` verts). **Le garde-fou demandé par la fiche existe** : `sources-sans-octet-nul.test.ts` refuse tout NUL dans les sources suivies — rouge avant (les deux fichiers nommés), vert après ; `docs/SPEC-test-harness.md` §3.12.
+
 ### INC-246 — la campagne d'interface INTERNE du harnais rend des échecs que la campagne directe ne rend pas, et la CIBLE se déplace
 
 **Ouverte le 2026-08-30 par `CRM-066` tranche 3 a, comportement inchangé** — constat **étranger à la

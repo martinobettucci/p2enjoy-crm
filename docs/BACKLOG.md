@@ -21071,3 +21071,9 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 
 - [x] **INC-142 b — l'instrument** : `scripts/mesurer-residus.sh` (`relever`, `comparer`, `autour`), `scripts/verify-residus.sh` (8 contrôles verts). Mesuré : `administration-arborescence.spec.ts` ne laisse aucune ligne.
 - [ ] **INC-142 c — l'audit à la campagne complète** : jouer `scripts/mesurer-residus.sh autour -- <campagne>` à la prochaine campagne de la session de livraison, et corriger chaque suite nommée (purge par la clé de service dans son `finally`).
+
+## Correctif — INC-247 (repris de la session 30, 2026-11-25)
+
+*Deux octets NUL dans `administration-workflows.ts` rendaient le fichier binaire pour git et grep. Spécification : `docs/SPEC-test-harness.md` §3.12 ; fiche INC-247. Connecteur MCP : sans objet.*
+
+- [x] **INC-247** — les NUL écrits `\0` (trois, dont un dans `sommeil-fil.ts`) ; le garde-fou `sources-sans-octet-nul.test.ts` (rouge avant, vert après) ferme la classe ; 2 917 tests de la couche verts.

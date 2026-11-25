@@ -42570,3 +42570,7 @@ le fuseau qui écrit les heures de ses e-mails. **Les choix**, tous du ressort d
 **Ce que la mesure a appris** : (1) `Intl.supportedValuesOf('timeZone')` ne liste que les noms canoniques — `America/Toronto`, jamais l'alias `America/Montreal` que le seed donne à Studio Lumen : le fuseau courant est donc toujours une option, sans quoi le champ afficherait un autre fuseau comme choisi ;
 (2) la preuve de composant (jsdom) restait verte alors que, dans un vrai navigateur, le bouton désactivé pendant l'envoi perdait le focus — le piège que le §5.63 du design system décrit : le scénario d'interface l'a trouvé, le focus est rendu au bouton une fois réactivé ; (3) le manuel disait encore « Les dates sont rendues en UTC » depuis la tranche T1 : la tranche
 avait changé le comportement sans mettre le manuel à jour — corrigé ici, avec la section de l'écran. **Reste** : la livraison avec le lot.
+
+### `INC-247` — les sources restent du texte
+
+*2026-11-25, session `p2enjoy-crm-dd`, lot repris de la session 30 sur consigne de la session de livraison.* **Mesuré** : trois octets NUL dans les sources suivies — deux dans `administration-workflows.ts`, un dans `sommeil-fil.ts`, que la fiche ne connaissait pas : le séparateur d'une clé composite. **Décision** : écrire `\0` (même valeur d'exécution) et fermer la classe par un contrôle unitaire sur toutes les sources suivies, plutôt que de ne corriger que les cas nommés. **Vérifié** : rouge avant, vert après ; couche `webapp/src/lib` 2 917 tests verts.

@@ -1207,8 +1207,8 @@ export type LigneGrille = {
 	readonly cases: readonly CaseGrille[]
 }
 
-/** La clé d'indexation d'un couple. Les identifiants sont des `uuid` : aucun ne contient ` `. */
-const cleCouple = (idChamp: string, idEtape: string): string => `${idChamp} ${idEtape}`
+/** La clé d'indexation d'un couple. Les identifiants sont des `uuid` : aucun ne contient `\0`. */
+const cleCouple = (idChamp: string, idEtape: string): string => `${idChamp}\0${idEtape}`
 
 /**
  * Compose la grille champ × étape — §7 bis.11.2.
