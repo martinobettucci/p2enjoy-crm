@@ -20948,7 +20948,8 @@ corriger sans arbitrage l'est par lots cohérents, preuve rouge avant et verte a
 - [ ] **Lot E — `INC-286` lot 1** : le connecteur MCP en anglais (tables `mcp_*`, familles, colonnes) ; spécification avant le code (décision 992).
 - [ ] **Lot F — `INC-361`** : le résumé quotidien cite les mentions non lues d'une organisation, avec le lien vers sa fiche (tranche de `CRM-153`, décision 992).
 
-### CRM-166 — Un assistant IA dans l'inbox : il propose un plan d'actions sur les mails sélectionnés, que l'on accepte ou refuse mail par mail `[ ]`
+### CRM-166 — Un assistant IA dans l'inbox : il propose un plan d'actions sur les mails sélectionnés, que l'on accepte ou refuse mail par mail `[@]`
+*Prise en charge : session interactive d5b44a2d (p2enjoy-crm-30) depuis 2026-11-25 00:53 UTC — état avant : [ ] ; confiée par la session de livraison (11), décision 994*
 
 **Origine** : demande du responsable, le 2026-11-25 ; arbitrée le même jour (décision 994).
 **Demande, verbatim** : « je veux aussi ajouter un assistant IA (genre une bulle en bas à droite) disponible uniquement en inbox.
