@@ -3011,6 +3011,16 @@ cette distinction, et celle qui tenait ce rôle comptait la queue d'un ternaire 
 — pour un texte (INC-070, `docs/JOURNAL.md` décisions 296 et 381). **Aucune forme d'écriture n'est
 donc proscrite pour accommoder le contrôle**, ce qui était la contrepartie de l'ancienne version.
 
+**Dates et heures : le contrôle natif du navigateur, et c'est voulu (INC-131, décision 992).** Un champ de date ou de date-heure
+(`input type="date"`, `input type="datetime-local"`) est le contrôle NATIF : son gabarit (« jj/mm/aaaa » ou « mm/dd/yyyy »), son
+sélecteur et ses champs suivent la langue du navigateur de la personne, non celle du produit — c'est le comportement attendu
+d'un contrôle natif, accessible au clavier et au lecteur d'écran sans une ligne de code. Le produit ne le remplace par aucun
+composant de date maison. Les valeurs, elles, se composent et se relisent en `fr-FR` par `Intl.DateTimeFormat`, et la valeur
+d'un `datetime-local` se compose des composantes LOCALES de `Date`, jamais d'un `slice` de la chaîne ISO (le fuseau). **Les
+captures** du projet `manuel` sont prises avec le Chromium complet en français (`e2e/playwright.config.ts`, projet `manuel`,
+`docs/SPEC-manual.md` §11.4) pour montrer « jj/mm/aaaa » ; celles des autres projets montrent le gabarit du navigateur du
+harnais, et une capture qui le montre n'est pas fausse.
+
 ## 11. Implémentation
 
 - Les jetons sont déclarés une seule fois, en variables CSS sur `:root`, et exposés à Tailwind
