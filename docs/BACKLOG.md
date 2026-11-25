@@ -21128,3 +21128,9 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 *`verify-board.sh` rend six anomalies en fin de campagne : un recensement de routes qui ignore `enEspace(…)`, une dégradation qui ne dégradait rien (motif multiligne cherché par `grep -F`), une capture périmée, deux comptes à instruire sur base fraîche. Fiche INC-139 b. Connecteur MCP : sans objet.*
 
 - [x] **INC-139 b — `verify-board.sh` au contrat actuel** : recensement des routes enveloppées (mutation M5), `degradation()` qui exige son motif en entier, liste des captures, comptes limités aux cards du seed ; harnais entier rejoué sur base remise à zéro : 73 contrôles, aucune anomalie.
+
+## Correctif — INC-368 (suite d'INC-246, demandé par la session de livraison, 2026-11-25)
+
+*`verify-cards.sh` et `verify-colonnes-protegees.sh` rejouent à leur fin les suites entières : 63 et 27 minutes. Spécification : `docs/SPEC-test-harness.md` §3.17 ; fiche INC-368. Connecteur MCP : sans objet.*
+
+- [ ] **INC-368 — les deux harnais ne rejouent que les specs de leur unité** ; `--suites-completes` rétablit les suites entières ; preuve sur base fraîche sous verrou. `verify-harness.sh` reste joué seul sur base fraîche (décision de la session de livraison).
