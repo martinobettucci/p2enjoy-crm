@@ -24,7 +24,7 @@ select plan(15);
 
 create temp table pg_temp.instants as select ((current_date + time '07:15') at time zone 'Europe/Paris') as sept;
 
--- Une base propre pour Driss : le jeu lui donne des notifications (docs/SPEC-seed.md §58), la preuve compte les siennes.
+-- Une base propre pour Driss : le jeu lui donne des notifications (docs/SPEC-seed.md §31), la preuve compte les siennes.
 delete from public.notifications where recipient_id = :driss;
 
 create temp table pg_temp.duval as

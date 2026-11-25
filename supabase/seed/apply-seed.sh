@@ -5735,34 +5735,6 @@ fi
 IMP_COMPTE=$(psql_seed -c "select count(*) from public.contacts where workspace_id = '$CK_ESPACE' and source = 'import'")
 info "Import du carnet : $IMP_COMPTE contacts de source « import », depuis fichiers/contacts-salon.csv — docs/SPEC-seed.md §33"
 
-# --- 8 tricies ter. Une mention d'organisation que le digest cite — INC-361, docs/SPEC-seed.md §58 --------------------------
-# @spec INC-361 (docs/INCONSISTENCY_REPORT.md ; lot F du backlog, décisions 992 et 1000) : Camille mentionne Driss dans le fil
-#       d'Imprimerie Duval, créée par l'import du carnet (§8 tricies) — d'où la place de cette section, APRÈS lui
-#       (docs/SPEC-etiquettes-digest.md §5.2 bis ; docs/SPEC-seed.md §58)
-#
-# LE VRAI CHEMIN : le commentaire et la mention sous le jeton de Camille, par PostgREST ; le vrai déclencheur de la `0188`
-# notifie Driss. Rejouable : le commentaire est retrouvé par son texte.
-echo
-say "8 tricies ter. Une mention d'organisation pour le digest"
-ORG_DUVAL_DG=$(psql_seed -c "select id from public.organizations where workspace_id = '$CK_ESPACE' and name = 'Imprimerie Duval'")
-[ -n "$ORG_DUVAL_DG" ] || die "Imprimerie Duval manque : la mention d'organisation du digest s'y pose (§58)."
-JETON_CAMILLE_DG=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
-[ -n "$JETON_CAMILLE_DG" ] || die "connexion de Camille impossible : son commentaire s'écrit sous son jeton (§58)."
-TEXTE_DUVAL='Voir avec Driss leur devis de brochures.'
-if [ "$(psql_seed -c "select count(*) from public.organization_comments where organization_id = '$ORG_DUVAL_DG' and body = '$TEXTE_DUVAL'")" = "0" ]; then
-	attendu "$(api_jeton "$JETON_CAMILLE_DG" POST '/rest/v1/organization_comments?select=id' -H 'Prefer: return=representation' \
-		-d "$(jq -nc --arg o "$ORG_DUVAL_DG" --arg b "$TEXTE_DUVAL" '{organization_id: $o, body: $b}')")" \
-		"commentaire de Camille sur Imprimerie Duval (§58)" 201
-	COM_DUVAL=$(jq -r '.[0].id' "$CORPS")
-	attendu "$(api_jeton "$JETON_CAMILLE_DG" POST /rest/v1/organization_comment_mentions -H 'Prefer: return=minimal' \
-		-d "$(jq -nc --arg c "$COM_DUVAL" '{comment_id: $c, profile_id: "5eed0000-0000-4000-8000-000000000012"}')")" \
-		"mention de Driss sur Imprimerie Duval (§58)" 201
-fi
-DUVAL_NOTIFIEE=$(psql_seed -c "select count(*) from public.notifications where recipient_id = '5eed0000-0000-4000-8000-000000000012' and subject_organization_id = '$ORG_DUVAL_DG'")
-[ "$DUVAL_NOTIFIEE" -ge 1 ] || die "Driss n'a pas de notification sur Imprimerie Duval (§58) : le déclencheur de la 0188 est-il appliqué ?"
-printf '  %-36s Driss mentionné sur Imprimerie Duval (%s notification(s))\n' 'Mention d organisation' "$DUVAL_NOTIFIEE"
-info "Mention d'organisation : Driss mentionné dans le fil d'Imprimerie Duval — le prochain digest la cite (docs/SPEC-seed.md §58)"
-
 # --- 8 tricies bis. Le prévisionnel et le réel d'une organisation — CRM-146 T3, docs/SPEC-seed.md §41 -------------------
 # @spec CRM-146 (docs/BACKLOG.md) — tranche T3 : trois rattachements contact–affaire, posés par la vraie route
 #       (`POST /rest/v1/card_contacts`) sous le jeton de l'administratrice, qui écrit les deux affaires, puis le constat
