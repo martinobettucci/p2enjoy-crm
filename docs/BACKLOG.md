@@ -20973,7 +20973,8 @@ corriger sans arbitrage l'est par lots cohérents, preuve rouge avant et verte a
   `INC-313` disque « Gris » des objectifs).
   *Prise en charge : session interactive d5b44a2d (p2enjoy-crm-30) depuis 2026-11-25 UTC — état avant : [ ] ; confiée par la session de livraison (11), décision 992 pour les arbitrages*
 - [ ] **Lot C — le runner de migrations** (`INC-318`) : refuser un `begin;`/`commit;` de premier niveau, exceptions nommées ; à livrer par la session de livraison.
-- [ ] **Lot D — `INC-342`** : cinq preuves qui dépendent de l'état accumulé de la base de développement. Pile requise.
+- [@] **Lot D — `INC-342`** : cinq preuves qui dépendent de l'état accumulé de la base de développement. Pile requise.
+  *Prise en charge : p2enjoy-crm-7a (4891a451) depuis 2026-11-25 03:57 UTC — état avant : [ ] ; confiée par la session de livraison (11), reprise de la liste de 30. Périmètre demandé : `e2e/ui/webhooks.spec.ts`, `e2e/api/inbox-lecture.spec.ts`, `e2e/manuel/34-webhooks.spec.ts` (et `webhooks-remise` si même cause)*
 - [ ] **Lot E — `INC-286` lot 1** : le connecteur MCP en anglais (tables `mcp_*`, familles, colonnes) ; spécification avant le code (décision 992).
 - [ ] **Lot F — `INC-361`** : le résumé quotidien cite les mentions non lues d'une organisation, avec le lien vers sa fiche (tranche de `CRM-153`, décision 992).
 
