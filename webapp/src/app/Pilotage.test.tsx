@@ -9,6 +9,11 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.48 (cet écran), §5.9 (le tableau et son `th scope="row"`),
 //           §5.20 (la liste de définitions), §5.33 (le titre de devise conditionnel),
 //           §5.8 (les états), §10 (aucun texte en dur, accord par clé)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.d : le Pilotage de plusieurs espaces — rien d'un seul espace ; à partir de
+//           deux, le bouton « Espace » en tête, la TÊTE (prévisionnel par devise, taux, mentions) sur tous les espaces
+//           affichés, une section par espace (ses entonnoirs, ses étapes sans affaire dans SON catalogue), la portée offerte
+//           quand le filtre en isole un seul et gardant le filtre dans l'adresse, le vide sous le filtre (décision 982 ;
+//           docs/SPEC-espace-courant.md §16.9.1 ; docs/DESIGN_SYSTEM.md §5.115, §5.48 bis)
 //
 // CE FICHIER ÉPROUVE L'ÉCRAN, PAS LE REPLI. `analytique.test.ts` couvre déjà la restriction de
 // portée, le repli par nœud et par devise, les deux grandeurs dérivées et les deux compteurs
@@ -30,6 +35,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Pilotage } from './Pilotage'
 import { fr } from '../i18n/fr'
 import type { LigneEntonnoirLue } from '../lib/analytique'
+import { valeurOption } from '../lib/pilotage-portee'
+import { FournisseurEspace } from './ContexteEspace'
 import type { ClientCrm } from '../lib/supabase'
 
 afterEach(cleanup)
@@ -875,3 +882,182 @@ describe('Pilotage — les nœuds sans affaire (§8 bis.5, §5.48 bis)', () => {
 		expect(screen.queryByTestId('etat-erreur')).toBeNull()
 	})
 })
+
+describe('Pilotage — de tous les espaces (`CRM-161` T3.d, décision 982, §16.9.1)', () => {
+	const P2ENJOY = { id: 'ws1', name: 'P2Enjoy SAS', slug: 'p2enjoy' }
+	const LUMEN = { id: 'ws2', name: 'Studio Lumen', slug: 'studio-lumen' }
+	// Deux espaces, chacun avec SON catalogue : « Prospection » existe dans les deux, sous deux identifiants.
+	const ligneP = (partiel: Partial<LigneEntonnoirLue>) => ligne({ workspace_id: 'ws1', ...partiel })
+	const ligneL = (partiel: Partial<LigneEntonnoirLue>) =>
+		ligne({
+			workspace_id: 'ws2',
+			track_id: 'trL',
+			channel_id: 'chL',
+			node_id: 'm1',
+			node_key: 'prospection',
+			node_label: 'Prospection',
+			node_position: 1,
+			...partiel,
+		})
+	const DES_DEUX: readonly LigneEntonnoirLue[] = [
+		ligneP({ affaires: 2, montant: 1000, montant_pondere: 100 }),
+		ligneP({ node_id: 'n6', node_key: 'livre', node_label: 'Livré', node_kind: 'won', node_position: 6, affaires: 1, montant: 500, montant_pondere: 500 }),
+		ligneL({ affaires: 3, montant: 2000, montant_pondere: 400 }),
+		ligneL({ node_id: 'm2', node_key: 'perdu', node_label: 'Perdu', node_kind: 'lost', node_position: 2, affaires: 1, montant: 100, montant_pondere: 0 }),
+	]
+	const CATALOGUES: Record<string, readonly unknown[]> = {
+		ws1: [
+			{ id: 'n1', key: 'prospection', label: 'Prospection', kind: 'open', position: 1 },
+			{ id: 'n2', key: 'relance', label: 'Relance', kind: 'open', position: 2 },
+			{ id: 'n6', key: 'livre', label: 'Livré', kind: 'won', position: 6 },
+		],
+		ws2: [
+			{ id: 'm1', key: 'prospection', label: 'Prospection', kind: 'open', position: 1 },
+			{ id: 'm2', key: 'perdu', label: 'Perdu', kind: 'lost', position: 2 },
+		],
+	}
+	const CHANNELS: Record<string, readonly unknown[]> = {
+		ws1: CHANNELS_SEED,
+		ws2: [{ id: 'chL', slug: 'tournages', name: 'Tournages', tracks: { id: 'trL', slug: 'productions', name: 'Productions', position: 1 } }],
+	}
+
+	/** La base filtre par espace comme `eq('workspace_id', …)` : le catalogue et les channels sont ceux de l'espace lu. */
+	function client(lignes: readonly LigneEntonnoirLue[] = DES_DEUX) {
+		const lecturesEspaces: [string, unknown][] = []
+		const from = vi.fn((table: string) => {
+			let espace = ''
+			const requete: Record<string, unknown> = {
+				select: () => requete,
+				is: () => requete,
+				order: () => requete,
+				eq: (colonne: string, valeur: unknown) => {
+					if (colonne === 'workspace_id') {
+						espace = String(valeur)
+						lecturesEspaces.push([table, valeur])
+					}
+					return requete
+				},
+				then: (resoudre: (valeur: unknown) => unknown) =>
+					Promise.resolve({
+						data: (table === 'channels' ? CHANNELS : CATALOGUES)[espace] ?? [],
+						error: null,
+						status: 200,
+					}).then(resoudre),
+			}
+			return requete
+		})
+		const rpc = vi.fn(() => Promise.resolve({ data: lignes, error: null, status: 200 }))
+		return { client: { rpc, from } as unknown as ClientCrm, lecturesEspaces }
+	}
+
+	function monter(espaces: readonly (typeof P2ENJOY)[], c: ClientCrm, adresse = '/pilotage') {
+		return rendre(
+			<FournisseurEspace valeur={{ idWorkspace: 'ws1', estAdmin: false, espaces }}>
+				<Pilotage client={c} />
+			</FournisseurEspace>,
+			adresse,
+		)
+	}
+
+	it('d’un seul espace : l’écran d’avant — ni bouton « Espace », ni section, la phrase de portée d’avant', async () => {
+		monter([P2ENJOY], client([ligneP({})]).client)
+		await screen.findByTestId('pilotage-grandeurs')
+		expect(screen.queryByTestId('ouvrir-filtre-espaces')).toBeNull()
+		expect(screen.queryByTestId('pilotage-espace')).toBeNull()
+		expect(screen.getByTestId('pilotage-selecteur-portee')).toBeTruthy()
+		expect(screen.getByTestId('pilotage-portee').textContent).toBe(fr['pilotage.scope'])
+	})
+
+	it('de deux espaces : le bouton « Espace » en tête, avant les grandeurs ; aucun sélecteur de portée', async () => {
+		monter([P2ENJOY, LUMEN], client().client)
+		const grandeurs = await screen.findByTestId('pilotage-grandeurs')
+		const bouton = screen.getByTestId('ouvrir-filtre-espaces')
+		expect(bouton.compareDocumentPosition(grandeurs) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+		expect(screen.queryByTestId('pilotage-selecteur-portee')).toBeNull()
+		expect(screen.getByTestId('pilotage-portee').textContent).toBe(fr['pilotage.scope.spaces'])
+	})
+
+	it('la TÊTE porte sur tous les espaces affichés : prévisionnel par devise et taux sur les deux', async () => {
+		monter([P2ENJOY, LUMEN], client().client)
+		const devises = await screen.findAllByTestId('pilotage-previsionnel-devise')
+		// Prévisionnel des ouvertes : 100 (« P2Enjoy SAS ») + 400 (« Studio Lumen »), en EUR ; les terminales en sont exclues.
+		expect(devises.map((d) => d.getAttribute('data-devise'))).toEqual(['EUR'])
+		expect(devises[0]?.textContent).toContain(montantAttendu(500))
+		// Un « Livré » (1 gagnée) et un « Perdu » (1 perdue) : 1 sur 2 décidées.
+		expect(screen.getByTestId('pilotage-taux').textContent).toContain('50')
+		expect(screen.getByTestId('pilotage-taux-detail').textContent).toBe('1 gagnée sur 2 décidées')
+	})
+
+	it('une section par espace, dans l’ordre du menu, chacune avec SES lignes — deux « Prospection » homonymes', async () => {
+		monter([P2ENJOY, LUMEN], client().client)
+		const sections = await screen.findAllByTestId('pilotage-espace')
+		expect(sections.map((s) => s.querySelector('h2')?.textContent)).toEqual(['P2Enjoy SAS', 'Studio Lumen'])
+		const lignes = (s: HTMLElement) => within(s).getAllByTestId('pilotage-ligne').map((l) => l.getAttribute('data-noeud'))
+		expect(lignes(sections[0] as HTMLElement)).toEqual(['prospection', 'livre'])
+		expect(lignes(sections[1] as HTMLElement)).toEqual(['prospection', 'perdu'])
+		expect(within(sections[1] as HTMLElement).getAllByTestId('pilotage-affaires')[0]?.textContent).toBe('3')
+	})
+
+	it('les étapes sans affaire sont nommées dans le catalogue de CHAQUE espace', async () => {
+		monter([P2ENJOY, LUMEN], client().client)
+		const sections = await screen.findAllByTestId('pilotage-espace')
+		// « Relance » est au catalogue de « P2Enjoy SAS » sans affaire ; celui de « Studio Lumen » est entièrement peuplé.
+		await waitFor(() => expect(within(sections[0] as HTMLElement).getByTestId('pilotage-noeuds-vides').textContent).toBe('Aucune affaire active à l’étape Relance.'))
+		expect(within(sections[1] as HTMLElement).queryByTestId('pilotage-noeuds-vides')).toBeNull()
+	})
+
+	it('un espace sans ligne n’a pas de section', async () => {
+		monter([P2ENJOY, LUMEN], client([ligneP({})]).client)
+		const sections = await screen.findAllByTestId('pilotage-espace')
+		expect(sections.map((s) => s.getAttribute('data-slug'))).toEqual(['p2enjoy'])
+	})
+
+	it('le filtre isole un espace : la tête et la section suivent, l’adresse porte `espaces=`, la portée s’offre', async () => {
+		const { client: c, lecturesEspaces } = client()
+		monter([P2ENJOY, LUMEN], c)
+		await screen.findAllByTestId('pilotage-espace')
+		await userEvent.click(screen.getByTestId('ouvrir-filtre-espaces'))
+		await userEvent.click(within(screen.getByTestId('panneau-filtre-espaces')).getByRole('checkbox', { name: 'Studio Lumen' }))
+		await waitFor(() => expect(screen.getAllByTestId('pilotage-espace')).toHaveLength(1))
+		expect(screen.getByTestId('pilotage-espace').getAttribute('data-slug')).toBe('studio-lumen')
+		// La tête ne porte plus que « Studio Lumen » : 400 de prévisionnel, aucune gagnée et une perdue.
+		expect(screen.getByTestId('pilotage-previsionnel-devise').textContent).toContain(montantAttendu(400))
+		expect(screen.getByTestId('pilotage-taux-detail').textContent).toBe('0 gagnée sur 1 décidées')
+		// La portée s'offre, et ses tracks sont ceux de l'espace isolé.
+		const selecteur = await screen.findByTestId('pilotage-selecteur-portee')
+		await waitFor(() => expect(within(selecteur).getAllByRole('group').map((g) => g.getAttribute('label'))).toEqual(['Productions']))
+		expect(lecturesEspaces).toContainEqual(['channels', 'ws2'])
+	})
+
+	it('choisir une portée GARDE le filtre « Espace » dans l’adresse', async () => {
+		monter([P2ENJOY, LUMEN], client().client, '/pilotage?espaces=studio-lumen')
+		const selecteur = await screen.findByTestId('pilotage-selecteur-portee')
+		await waitFor(() => expect(within(selecteur).getAllByRole('group')).toHaveLength(1))
+		await userEvent.selectOptions(selecteur, valeurOption({ type: 'track', track: 'productions' }))
+		await waitFor(() => expect(screen.getByTestId('pilotage-portee').textContent ?? '').toContain('Productions'))
+		expect(screen.getByTestId('ouvrir-filtre-espaces').textContent).toBe('Espace (1)')
+		expect(screen.getByTestId('pilotage-espace').getAttribute('data-slug')).toBe('studio-lumen')
+	})
+
+	it('une portée de l’adresse ne s’applique pas sans espace isolé : l’espace entier, sans erreur', async () => {
+		monter([P2ENJOY, LUMEN], client().client, '/pilotage?track=productions&channel=tournages')
+		expect(await screen.findAllByTestId('pilotage-espace')).toHaveLength(2)
+		expect(screen.getByTestId('pilotage-portee').textContent).toBe(fr['pilotage.scope.spaces'])
+	})
+
+	it('du pilotage lu, mais aucun dans l’espace choisi : le vide sous le filtre, « Afficher tous les espaces » le défait', async () => {
+		monter([P2ENJOY, LUMEN], client([ligneP({})]).client, '/pilotage?espaces=studio-lumen')
+		expect(await screen.findByTestId('vide-filtre-espaces')).toBeTruthy()
+		expect(screen.getByTestId('ouvrir-filtre-espaces')).toBeTruthy()
+		await userEvent.click(screen.getByTestId('afficher-tous-les-espaces'))
+		expect(await screen.findAllByTestId('pilotage-espace')).toHaveLength(1)
+		expect(document.activeElement).toBe(screen.getByTestId('ouvrir-filtre-espaces'))
+	})
+
+	it('aucune ligne lue du tout : le vide de l’écran, sans bouton « Espace »', async () => {
+		monter([P2ENJOY, LUMEN], client([]).client)
+		expect(await screen.findByText(fr['pilotage.empty.title'])).toBeTruthy()
+		expect(screen.queryByTestId('ouvrir-filtre-espaces')).toBeNull()
+	})
+})
+

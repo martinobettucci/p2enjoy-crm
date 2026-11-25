@@ -126,10 +126,18 @@ export const cleCible = (cible: Cible) => `${cible.genre}:${cible.id}`
 export type ArbreTrack = {
 	readonly id: string
 	readonly name: string
+	/** `CRM-161` T3.d : l'espace du track — la ligne écrit dans cet espace (docs/SPEC-espace-courant.md §16.9.2). */
+	readonly workspace_id?: string
 	readonly channels: readonly { readonly id: string; readonly name: string }[]
 }
 
-export type Affaire = { readonly id: string; readonly title: string; readonly channel_id: string }
+export type Affaire = {
+	readonly id: string
+	readonly title: string
+	readonly channel_id: string
+	/** `CRM-161` T3.d : l'espace de l'affaire ; une saisie sur elle s'écrit dans cet espace. */
+	readonly workspace_id?: string
+}
 
 export type LigneMatrice = {
 	readonly cle: string
@@ -137,6 +145,8 @@ export type LigneMatrice = {
 	readonly libelle: string
 	/** 0 : track ; 1 : channel ; 2 : affaire (§5.54, retraits). */
 	readonly niveau: 0 | 1 | 2
+	/** `CRM-161` T3.d : l'espace de la cible, où la saisie s'écrit ; absent d'un écran d'un seul espace. */
+	readonly workspaceId?: string
 }
 
 /**
@@ -157,24 +167,62 @@ export function lignesMatrice(
 	const lignes: LigneMatrice[] = []
 	const placees = new Set<string>()
 	for (const track of arbre) {
-		lignes.push({ cle: cleCible({ genre: 'track', id: track.id }), cible: { genre: 'track', id: track.id }, libelle: track.name, niveau: 0 })
+		const espace = track.workspace_id === undefined ? {} : { workspaceId: track.workspace_id }
+		lignes.push({ cle: cleCible({ genre: 'track', id: track.id }), cible: { genre: 'track', id: track.id }, libelle: track.name, niveau: 0, ...espace })
 		for (const channel of track.channels) {
 			lignes.push({
 				cle: cleCible({ genre: 'channel', id: channel.id }),
 				cible: { genre: 'channel', id: channel.id },
 				libelle: channel.name,
 				niveau: 1,
+				...espace,
 			})
 			for (const affaire of montrees.filter((a) => a.channel_id === channel.id)) {
-				lignes.push({ cle: cleCible({ genre: 'card', id: affaire.id }), cible: { genre: 'card', id: affaire.id }, libelle: affaire.title, niveau: 2 })
+				lignes.push({
+					cle: cleCible({ genre: 'card', id: affaire.id }),
+					cible: { genre: 'card', id: affaire.id },
+					libelle: affaire.title,
+					niveau: 2,
+					...(affaire.workspace_id === undefined ? espace : { workspaceId: affaire.workspace_id }),
+				})
 				placees.add(affaire.id)
 			}
 		}
 	}
 	for (const affaire of montrees.filter((a) => !placees.has(a.id))) {
-		lignes.push({ cle: cleCible({ genre: 'card', id: affaire.id }), cible: { genre: 'card', id: affaire.id }, libelle: affaire.title, niveau: 2 })
+		lignes.push({
+			cle: cleCible({ genre: 'card', id: affaire.id }),
+			cible: { genre: 'card', id: affaire.id },
+			libelle: affaire.title,
+			niveau: 2,
+			...(affaire.workspace_id === undefined ? {} : { workspaceId: affaire.workspace_id }),
+		})
 	}
 	return lignes
+}
+
+/** Un groupe de lignes de la grille : l'espace qui les porte (`null` : celles dont l'espace n'est pas connu), et ses lignes. */
+export type GroupeMatrice = {
+	readonly espace: { readonly id: string; readonly name: string; readonly slug: string } | null
+	readonly lignes: readonly LigneMatrice[]
+}
+
+/**
+ * `CRM-161` T3.d (§16.9.2) — les lignes de la grille GROUPÉES PAR ESPACE, dans l'ordre des espaces donnés (celui du menu,
+ * §5.113), l'ordre des lignes d'un espace restant celui de la matrice. Un espace sans ligne n'a pas de groupe. **Une ligne dont
+ * l'espace n'est pas dans la liste n'est jamais perdue** : elle vient en un dernier groupe sans espace, pour que son temps
+ * reste visible et corrigeable, comme l'affaire dont le channel n'est plus lisible.
+ */
+export function grouperLignesParEspace(
+	lignes: readonly LigneMatrice[],
+	espaces: readonly { readonly id: string; readonly name: string; readonly slug: string }[],
+): readonly GroupeMatrice[] {
+	const connus = new Set(espaces.map((e) => e.id))
+	const groupes: GroupeMatrice[] = espaces
+		.map((espace) => ({ espace, lignes: lignes.filter((l) => l.workspaceId === espace.id) }))
+		.filter((g) => g.lignes.length > 0)
+	const sansEspace = lignes.filter((l) => l.workspaceId === undefined || !connus.has(l.workspaceId))
+	return sansEspace.length === 0 ? groupes : [...groupes, { espace: null, lignes: sansEspace }]
 }
 
 /** Les affaires reprises d'office : celles qui portent du temps dans les saisies données (§7.2, point 6). */

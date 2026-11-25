@@ -2,11 +2,15 @@
 // @verifies docs/SPEC-temps.md §3.2 (zéro supprime la ligne, seules les minutes changent), §5 (refus de la base :
 //           plafond, droit), §6.1 (la semaine et la précédente ; recherche d'affaire) ; docs/DESIGN_SYSTEM.md §5.7 ter
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : l'affaire située par son plus ancien rattachement
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.d : les saisies lues sans espace (la grille de tous les espaces), l'espace
+//           porté par chaque track et chaque affaire (docs/SPEC-espace-courant.md §16.9.2 ; décision 981)
 
 import { describe, expect, it } from 'vitest'
 import {
 	BORNE_RECHERCHE_AFFAIRE,
 	affairesSituees,
+	COLONNES_AFFAIRE,
+	COLONNES_ARBRE,
 	COLONNES_SAISIE,
 	chercherAffaires,
 	classerRefusTemps,
@@ -171,3 +175,39 @@ describe('classer un refus', () => {
 		expect(classerRefusTemps(500, 'XX000', 'boom')).toBe('inconnu')
 	})
 })
+
+describe('la grille de tous les espaces (`CRM-161` T3.d, §16.9.2)', () => {
+	it('les saisies sans espace donné ne bornent aucun espace ; avec un espace, elles le bornent comme avant', async () => {
+		const toutes = espion([{ data: [SAISIE], error: null, status: 200 }])
+		expect((await lireSaisies(toutes.client, undefined, 'p', '2026-10-05', '2026-10-18')).statut).toBe('pret')
+		expect(toutes.appels[0]?.filtres.map(([f]) => f)).not.toContain('eq:workspace_id')
+		expect(toutes.appels[0]?.filtres).toContainEqual(['eq:profile_id', 'p'])
+		const une = espion([{ data: [SAISIE], error: null, status: 200 }])
+		await lireSaisies(une.client, 'w', 'p', '2026-10-05', '2026-10-18')
+		expect(une.appels[0]?.filtres).toContainEqual(['eq:workspace_id', 'w'])
+	})
+
+	it('l’arbre lit et rend l’espace de chaque track', async () => {
+		expect(COLONNES_ARBRE).toContain('workspace_id')
+		const { client } = espion([
+			{ data: [{ id: 't1', name: 'Productions', position: 1, workspace_id: 'ws2', channels: [] }], error: null, status: 200 },
+		])
+		expect(await lireArbreTemps(client)).toEqual({
+			statut: 'pret',
+			donnees: [{ id: 't1', name: 'Productions', workspace_id: 'ws2', channels: [] }],
+		})
+	})
+
+	it('l’affaire porte son espace, que les colonnes demandent', () => {
+		expect(COLONNES_AFFAIRE).toContain('workspace_id')
+		const situees = affairesSituees([
+			{ id: 'k1', title: 'Clip', workspace_id: 'ws2', card_placements: [{ id: 'p1', channel_id: 'c2', created_at: '2026-01-01T00:00:00Z' }] },
+			{ id: 'k2', title: 'Sans espace lu', card_placements: [{ id: 'p2', channel_id: 'c1', created_at: '2026-01-01T00:00:00Z' }] },
+		])
+		expect(situees).toEqual([
+			{ id: 'k1', title: 'Clip', channel_id: 'c2', workspace_id: 'ws2' },
+			{ id: 'k2', title: 'Sans espace lu', channel_id: 'c1' },
+		])
+	})
+})
+

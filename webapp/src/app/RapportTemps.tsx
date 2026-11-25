@@ -38,6 +38,7 @@ import {
 import type { ClientCrm } from '../lib/supabase'
 import { enHeures, enJours } from '../lib/temps'
 import { filtrerParEspace, nomEspace } from '../lib/provenance'
+import { membresDesEspaces, useEspacesAdministres } from '../lib/temps-espaces'
 import type { Workspace } from '../lib/workspaces'
 import { BoutonFiltreEspaces, PanneauFiltreEspaces, VideSousFiltreEspaces, useFiltreEspaces } from './FiltreEspaces'
 import { NavigationMois, libelleMois, useMoisDeLAdresse } from './NavigationMois'
@@ -123,8 +124,19 @@ export function RapportTemps({ client, idWorkspace, idUtilisateur, estAdmin, auj
 	const [etat, setEtat] = useState<EtatAsync<Donnees>>(enChargement)
 	const [tentative, setTentative] = useState(0)
 
+	// `CRM-161` T3.d (§16.9.2) : à plusieurs espaces, le choix de la personne offre les membres de TOUS les espaces que la
+	// personne administre (la limite nommée de T3.c levée) ; d'un seul, ceux de l'espace de l'onglet, comme avant.
+	const filtre = useFiltreEspaces()
+	const administres = useEspacesAdministres(client, filtre.espaces, idUtilisateur, filtre.visible)
+	const membresMulti = useMemo(
+		() => (administres.statut === 'pret' ? membresDesEspaces(administres.donnees, idUtilisateur) : []),
+		[administres, idUtilisateur],
+	)
+	const adminQuelquePart = filtre.visible ? administres.statut === 'pret' && administres.donnees.length > 0 : estAdmin
+	const membresOfferts = filtre.visible ? membresMulti : membres
+
 	useEffect(() => {
-		if (!estAdmin) return
+		if (!estAdmin || filtre.visible) return
 		let courant = true
 		void lireMembresAffectables(client, idWorkspace).then((resultat) => {
 			if (courant && resultat.statut === 'pret') setMembres(resultat.donnees)
@@ -132,7 +144,7 @@ export function RapportTemps({ client, idWorkspace, idUtilisateur, estAdmin, auj
 		return () => {
 			courant = false
 		}
-	}, [client, idWorkspace, estAdmin])
+	}, [client, idWorkspace, estAdmin, filtre.visible])
 
 	useEffect(() => {
 		let courant = true
@@ -154,7 +166,7 @@ export function RapportTemps({ client, idWorkspace, idUtilisateur, estAdmin, auj
 
 	// `CRM-161` T3.c (§16.8.3) : le filtre « Espace » garde les lignes des espaces choisis, puis le rapport se compose — ses
 	// sections et ses totaux sont ceux des espaces affichés.
-	const filtre = useFiltreEspaces()
+	// Le filtre « Espace » est lu plus haut, avec le choix de la personne (`CRM-161` T3.d).
 	const sections = useMemo<readonly SectionRapport[]>(() => {
 		if (etat.statut !== 'pret') return []
 		const { tracks, channels, cards } = etat.donnees.noms
@@ -168,7 +180,7 @@ export function RapportTemps({ client, idWorkspace, idUtilisateur, estAdmin, auj
 		<div className="flex flex-col gap-4" data-testid="temps-rapport">
 			<div className="flex flex-wrap items-end gap-4">
 				<NavigationMois mois={mois} moisCourant={moisCourant} allerA={allerA} titre testId="temps-rapport-mois" />
-				{estAdmin ? (
+				{adminQuelquePart ? (
 					<label className="flex flex-col gap-1 text-sm text-text-2">
 						{t('time.report.person')}
 						<select
@@ -178,7 +190,7 @@ export function RapportTemps({ client, idWorkspace, idUtilisateur, estAdmin, auj
 							className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3 text-text"
 						>
 							<option value={idUtilisateur}>{t('time.for.me')}</option>
-							{membres
+							{membresOfferts
 								.filter((m) => m.id !== idUtilisateur)
 								.map((m) => (
 									<option key={m.id} value={m.id}>

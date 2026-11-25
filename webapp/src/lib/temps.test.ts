@@ -3,6 +3,9 @@
 //           lundi), §6.3 (mode d'une journée), §7.2 (lignes, reprise, pied) ; docs/DESIGN_SYSTEM.md §5.54 (cellule)
 // @verifies CRM-106 (docs/BACKLOG.md) — tranche T2 : `modesDesJours` et `remplacerDansSaisies` ; docs/SPEC-temps.md
 //           §7.6 (2 : une valeur remplace, zéro retire ; 4 : le mode d'un jour se lit sur toutes ses saisies)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.d : chaque ligne porte l'espace de sa cible ; les lignes se groupent par
+//           espace, dans l'ordre du menu, et une ligne d'un espace inconnu n'est jamais perdue (docs/SPEC-espace-courant.md
+//           §16.9.2 ; décision 981)
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -11,6 +14,7 @@ import {
 	depasseLaJournee,
 	enHeures,
 	enJours,
+	grouperLignesParEspace,
 	jourLocal,
 	joursDeLaSemaine,
 	lignesMatrice,
@@ -198,3 +202,46 @@ describe('CRM-106 — le mode des jours et le remplacement d’une saisie', () =
 		expect(remplacerDansSaisies([ancienne], null, premiere, 'card:a', '2026-10-21')).toEqual([ancienne, premiere])
 	})
 })
+
+describe('les lignes de tous les espaces (`CRM-161` T3.d, §16.9.2)', () => {
+	const P = { id: 'ws1', name: 'P2Enjoy SAS', slug: 'p2enjoy' }
+	const L = { id: 'ws2', name: 'Studio Lumen', slug: 'studio-lumen' }
+	const ARBRE2 = [
+		{ id: 'tl', name: 'Productions', workspace_id: 'ws2', channels: [{ id: 'cl', name: 'Tournages' }] },
+		{ id: 'tp', name: 'Studio web', workspace_id: 'ws1', channels: [{ id: 'cp', name: 'Refonte' }] },
+	]
+	const AFFAIRES2 = [
+		{ id: 'ap', title: 'Audit', channel_id: 'cp', workspace_id: 'ws1' },
+		{ id: 'ahors', title: 'Hors arbre', channel_id: 'c9', workspace_id: 'ws2' },
+	]
+
+	it('chaque ligne porte l’espace de son track, et celui de son affaire, y compris hors de l’arbre', () => {
+		const lignes = lignesMatrice(ARBRE2, AFFAIRES2, new Set(['ap', 'ahors']))
+		expect(lignes.map((l) => [l.libelle, l.workspaceId])).toEqual([
+			['Productions', 'ws2'], ['Tournages', 'ws2'], ['Studio web', 'ws1'], ['Refonte', 'ws1'], ['Audit', 'ws1'], ['Hors arbre', 'ws2'],
+		])
+	})
+
+	it('d’un seul espace, aucune ligne ne porte d’espace : la matrice d’avant', () => {
+		const lignes = lignesMatrice(ARBRE, AFFAIRES, new Set(['a1']))
+		expect(lignes.every((l) => l.workspaceId === undefined)).toBe(true)
+	})
+
+	it('grouper : l’ordre des espaces donnés, l’ordre des lignes d’un espace conservé, l’orpheline dans son espace', () => {
+		const lignes = lignesMatrice(ARBRE2, AFFAIRES2, new Set(['ap', 'ahors']))
+		const groupes = grouperLignesParEspace(lignes, [P, L])
+		expect(groupes.map((g) => g.espace?.slug)).toEqual(['p2enjoy', 'studio-lumen'])
+		expect(groupes[0]?.lignes.map((l) => l.libelle)).toEqual(['Studio web', 'Refonte', 'Audit'])
+		expect(groupes[1]?.lignes.map((l) => l.libelle)).toEqual(['Productions', 'Tournages', 'Hors arbre'])
+	})
+
+	it('un espace sans ligne n’a pas de groupe ; une ligne d’un espace inconnu vient en un dernier groupe sans espace', () => {
+		const lignes = lignesMatrice(ARBRE2, AFFAIRES2, new Set(['ap']))
+		expect(grouperLignesParEspace(lignes, [P]).map((g) => g.espace?.slug ?? null)).toEqual(['p2enjoy', null])
+		const dernier = grouperLignesParEspace(lignes, [P]).at(-1)
+		expect(dernier?.lignes.map((l) => l.libelle)).toEqual(['Productions', 'Tournages'])
+		// Une ligne sans espace du tout n'est pas perdue non plus.
+		expect(grouperLignesParEspace(lignesMatrice(ARBRE, AFFAIRES, new Set()), [P, L]).map((g) => g.espace)).toEqual([null])
+	})
+})
+

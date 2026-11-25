@@ -8,6 +8,9 @@
 // @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.c : rien pour une personne d'un seul espace ; à partir de deux, la
 //           colonne « Espace », la dernière ; le filtre « Espace » en mémoire, les totaux recomposés ; le vide sous le filtre
 //           (docs/SPEC-espace-courant.md §16.8.3 ; docs/DESIGN_SYSTEM.md §5.115, §5.54)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.d : le choix de la personne offre les membres de TOUS les espaces que la
+//           personne administre, dédoublonnés et par nom, puis « Toute l'équipe » (la limite de T3.c levée) ; rien d'offert
+//           sans espace administré (docs/SPEC-espace-courant.md §16.9.2 ; docs/SPEC-temps.md §7.3)
 
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -302,6 +305,69 @@ describe('le rapport de tous les espaces (`CRM-161` T3.c, docs/DESIGN_SYSTEM.md 
 		await userEvent.click(screen.getByTestId('afficher-tous-les-espaces'))
 		expect(await screen.findAllByTestId('temps-rapport-ligne')).toHaveLength(1)
 		expect(document.activeElement).toBe(screen.getByTestId('ouvrir-filtre-espaces'))
+	})
+})
+
+describe('le choix de la personne du rapport, à plusieurs espaces (`CRM-161` T3.d, §16.9.2)', () => {
+	const P2ENJOY = { id: 'w', name: 'P2Enjoy', slug: 'p2enjoy' }
+	const LUMEN = { id: 'w2', name: 'Studio Lumen', slug: 'studio-lumen' }
+	const MEMBRES: Record<string, unknown[]> = {
+		w: [
+			{ user_id: 'p1', workspace_id: 'w', profiles: { id: 'p1', full_name: 'Camille Aubert' } },
+			{ user_id: 'p2', workspace_id: 'w', profiles: { id: 'p2', full_name: 'Driss Lemoine' } },
+		],
+		w2: [
+			{ user_id: 'p1', workspace_id: 'w2', profiles: { id: 'p1', full_name: 'Camille Aubert' } },
+			{ user_id: 'p2', workspace_id: 'w2', profiles: { id: 'p2', full_name: 'Driss Lemoine' } },
+			{ user_id: 'p3', workspace_id: 'w2', profiles: { id: 'p3', full_name: 'Inès Arlo' } },
+		],
+	}
+	function monter(roles: Record<string, string>) {
+		const client = {
+			rpc: (nom: string, args: { ws?: string }) =>
+				Promise.resolve({ data: nom === 'mon_role_espace' ? (roles[args.ws ?? ''] ?? null) : [], error: null, status: 200 }),
+			from: () => {
+				let espace = ''
+				const c: Record<string, unknown> = {
+					select: () => c,
+					in: () => c,
+					eq: (_col: string, valeur: string) => {
+						espace = valeur
+						return c
+					},
+					then: (ok: (r: unknown) => unknown) => Promise.resolve({ data: MEMBRES[espace] ?? [], error: null, status: 200 }).then(ok),
+				}
+				return c
+			},
+		} as unknown as ClientCrm
+		render(
+			<MemoryRouter initialEntries={['/temps?onglet=rapport&mois=2027-03']}>
+				<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: roles['w'] === 'admin', espaces: [P2ENJOY, LUMEN] }}>
+					<RapportTemps client={client} idWorkspace="w" idUtilisateur="p1" estAdmin={roles['w'] === 'admin'} aujourdhui="2026-10-11" />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+	}
+
+	it('les membres des deux espaces administrés, sans doublon ni soi-même, puis « Toute l’équipe »', async () => {
+		monter({ w: 'admin', w2: 'admin' })
+		const select = await screen.findByTestId('temps-rapport-personne')
+		await waitFor(() => expect(within(select).getAllByRole('option').length).toBe(4))
+		expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual(['Moi-même', 'Driss Lemoine', 'Inès Arlo', 'Toute l’équipe'])
+	})
+
+	it('administratrice d’un seul des deux espaces : seuls les membres de celui-là', async () => {
+		monter({ w: 'viewer', w2: 'admin' })
+		const select = await screen.findByTestId('temps-rapport-personne')
+		await waitFor(() => expect(within(select).getAllByRole('option').length).toBe(4))
+		expect(within(select).getAllByRole('option').map((o) => o.textContent)).toContain('Inès Arlo')
+	})
+
+	it('aucun espace administré : aucun choix de personne', async () => {
+		monter({ w: 'business_developer', w2: 'viewer' })
+		await screen.findByTestId('temps-rapport')
+		await new Promise((ok) => setTimeout(ok, 30))
+		expect(screen.queryByTestId('temps-rapport-personne')).toBeNull()
 	})
 })
 

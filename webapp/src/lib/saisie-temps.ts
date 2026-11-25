@@ -1,3 +1,6 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T3.d — la grille de tous les espaces : l'arbre, les saisies et les affaires se lisent
+//       SANS espace donné (tout ce que la RLS rend), chaque track et chaque affaire portant son `workspace_id` pour que la ligne
+//       écrive dans l'espace de sa cible (docs/SPEC-espace-courant.md §16.9.2 ; décision 981)
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — un choix fait pour un objet d'un espace ne lit que cet espace
 //       (docs/SPEC-espace-courant.md §15.4 bis, « Les sélecteurs liés à un espace » ; décision 975)
 // @spec CRM-098 (docs/BACKLOG.md) — tranche T2 : lire et écrire le temps de la semaine
@@ -17,9 +20,9 @@ import type { ClientCrm } from './supabase'
 import type { Affaire, ArbreTrack, Cible, Saisie } from './temps'
 
 export const COLONNES_SAISIE = 'id, jour, minutes, track_id, channel_id, card_id'
-export const COLONNES_ARBRE = 'id, name, position, channels(id, name, position)'
+export const COLONNES_ARBRE = 'id, name, position, workspace_id, channels(id, name, position)'
 // `CRM-111` T2.4.1 : le channel est celui du rattachement ; la recherche emploie `!inner` pour filtrer sur lui.
-export const COLONNES_AFFAIRE = 'id, title, card_placements!card_placements_card_fk!inner(id, channel_id, created_at)'
+export const COLONNES_AFFAIRE = 'id, title, workspace_id, card_placements!card_placements_card_fk!inner(id, channel_id, created_at)'
 /** La recherche d'affaire rend au plus ce nombre de propositions : une liste plus longue ne se parcourt pas. */
 export const BORNE_RECHERCHE_AFFAIRE = 10
 
@@ -46,6 +49,7 @@ export async function lireArbreTemps(
 			reponse.data.map((track) => ({
 				id: track.id,
 				name: track.name,
+				workspace_id: track.workspace_id,
 				channels: [...(track.channels ?? [])]
 					.sort((a, b) => a.position - b.position || a.name.localeCompare(b.name, 'fr'))
 					.map((c) => ({ id: c.id, name: c.name })),
@@ -62,16 +66,15 @@ export async function lireArbreTemps(
  */
 export async function lireSaisies(
 	client: ClientCrm,
-	idWorkspace: string,
+	/** `CRM-161` T3.d (§16.9.2) : l'espace des saisies lues ; `undefined`, tous ceux que la RLS rend — la grille de tous les espaces. */
+	idWorkspace: string | undefined,
 	idPersonne: string,
 	debut: string,
 	fin: string,
 ): Promise<EtatAsync<readonly Saisie[]>> {
 	try {
-		const reponse = await client
-			.from('saisies_temps')
-			.select(COLONNES_SAISIE)
-			.eq('workspace_id', idWorkspace)
+		const toutes = client.from('saisies_temps').select(COLONNES_SAISIE)
+		const reponse = await (idWorkspace === undefined ? toutes : toutes.eq('workspace_id', idWorkspace))
 			.eq('profile_id', idPersonne)
 			.gte('jour', debut)
 			.lte('jour', fin)
@@ -92,13 +95,21 @@ export function affairesSituees(
 	lignes: readonly {
 		readonly id: string
 		readonly title: string
+		readonly workspace_id?: string
 		readonly card_placements: readonly { readonly id: string; readonly channel_id: string; readonly created_at: string }[]
 	}[],
 ): readonly Affaire[] {
 	const situees: Affaire[] = []
 	for (const ligne of lignes) {
 		const rattachement = premierRattachement(ligne.card_placements)
-		if (rattachement !== null) situees.push({ id: ligne.id, title: ligne.title, channel_id: rattachement.channel_id })
+		if (rattachement !== null) {
+			situees.push({
+				id: ligne.id,
+				title: ligne.title,
+				channel_id: rattachement.channel_id,
+				...(ligne.workspace_id === undefined ? {} : { workspace_id: ligne.workspace_id }),
+			})
+		}
 	}
 	return situees
 }

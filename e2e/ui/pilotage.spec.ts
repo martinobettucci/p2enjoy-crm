@@ -16,6 +16,9 @@
 //           écran), §5.9 (le tableau), §5.33 (le titre de devise conditionnel), §5.8 (les états),
 //           §7 (les quatre paliers), §8 (clavier)
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranche T3.d : RÉVISÉ le 2026-11-25 — les parcours de Camille isolent « P2Enjoy SAS »
+//           par `?espaces=p2enjoy` (elle lit aussi « Studio Lumen »), et les adresses écrites gardent ce paramètre ; le contrat
+//           prouvé ici, dans un espace, ne change pas (docs/SPEC-espace-courant.md §16.9.1)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
@@ -52,6 +55,10 @@ const ADMIN = 'admin@p2enjoy.test'
 const VIEWER = 'viewer@p2enjoy.test'
 
 const PILOTAGE = '/pilotage'
+// `CRM-161` T3.d (RÉVISÉ le 2026-11-25) : Camille lit aussi « Studio Lumen » (seed §54) ; ses parcours isolent l'espace du seed,
+// comme une personne de deux espaces isole le sien — les nombres de M6 sont ceux de « P2Enjoy SAS ». L'adresse écrite garde
+// `espaces=` à la fin ; la lectrice d'un seul espace n'en porte pas (docs/SPEC-espace-courant.md §16.9.1).
+const PILOTAGE_ADMIN = `${PILOTAGE}?espaces=p2enjoy`
 
 async function connecter(page: Page, email = ADMIN): Promise<void> {
 	await connecterAvecLeLabs(page, email)
@@ -77,7 +84,7 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		page,
 	}) => {
 		await connecter(page)
-		await page.goto(PILOTAGE)
+		await page.goto(PILOTAGE_ADMIN)
 
 		// Les six nœuds peuplés en euros, dans l'ordre du catalogue et non par montant : un entonnoir
 		// est un CHEMIN (§5.48), et trié par montant « Livré » — 311 000 — remonterait au-dessus de
@@ -115,7 +122,7 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		page,
 	}) => {
 		await connecter(page)
-		await page.goto(PILOTAGE)
+		await page.goto(PILOTAGE_ADMIN)
 
 		// Les mots EXACTS du §5.18 — c'est la même donnée, `workflow_nodes_catalog.kind`, et deux
 		// écrans qui la rendent ne peuvent pas la nommer de deux façons.
@@ -138,7 +145,7 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		page,
 	}) => {
 		await connecter(page)
-		await page.goto(PILOTAGE)
+		await page.goto(PILOTAGE_ADMIN)
 
 		// Deux régions étiquetées, deux tableaux. Un total « toutes devises » serait un nombre que
 		// personne n'a arbitré, et il se lirait comme un chiffre d'affaires.
@@ -173,7 +180,7 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		page,
 	}) => {
 		await connecter(page)
-		await page.goto(PILOTAGE)
+		await page.goto(PILOTAGE_ADMIN)
 
 		// « Taux de conversion des affaires DÉCIDÉES », jamais « taux de conversion » tout court : ce
 		// nombre mesure la part gagnée parmi les affaires ACTUELLEMENT à un nœud terminal (§7.1).
@@ -238,7 +245,7 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		// Sans elle, `S5` ne prouverait rien : 344 892,50 serait indistinguable d'un portefeuille qui
 		// ne vaut que cela. Le même écran, les mêmes données, un autre profil.
 		await connecter(page)
-		await page.goto(PILOTAGE)
+		await page.goto(PILOTAGE_ADMIN)
 
 		const eur = chiffresDe(await previsionnelDe(page, 'EUR').innerText())
 		expect(eur, 'le prévisionnel de l’administratrice vaut 421 362,50 EUR').toBe(42136250)
@@ -287,7 +294,7 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		await connecter(page)
 		for (const palier of PALIERS) {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
-			await page.goto(PILOTAGE)
+			await page.goto(PILOTAGE_ADMIN)
 			await expect(ligneNoeud(page, 'EUR', 'Négociation')).toHaveCount(1)
 			// « La page ne défile jamais horizontalement » (§7) : les tableaux débordent dans LEUR
 			// conteneur, qui porte `.indique-debordement-x` (§12.6).
@@ -311,7 +318,7 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		page,
 	}) => {
 		await connecter(page)
-		await page.goto(PILOTAGE)
+		await page.goto(PILOTAGE_ADMIN)
 		const selecteur = page.getByTestId('pilotage-selecteur-portee')
 		await expect(selecteur).toBeEnabled()
 
@@ -350,7 +357,7 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		).toHaveCount(1)
 		// Le défaut est l'espace de travail, et il ne s'écrit pas dans l'adresse.
 		await expect(selecteur).toHaveValue('')
-		await expect(page).toHaveURL(new RegExp(`${PILOTAGE}$`))
+		await expect(page).toHaveURL(new RegExp(`${PILOTAGE}\\?espaces=p2enjoy$`))
 		autoriserErreursConsole(page, [])
 	})
 
@@ -358,7 +365,7 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		page,
 	}) => {
 		await connecter(page)
-		await page.goto(PILOTAGE)
+		await page.goto(PILOTAGE_ADMIN)
 		const selecteur = page.getByTestId('pilotage-selecteur-portee')
 		await expect(selecteur).toBeEnabled()
 
@@ -374,7 +381,7 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 
 		// L'ADRESSE PORTE LES DEUX CLÉS, ET C'EST M8 : un slug de channel n'est unique que dans son
 		// track, et `?channel=` seul ne désignerait rien.
-		await expect(page).toHaveURL(/\?track=legacy-2023&channel=dossiers-2023$/)
+		await expect(page).toHaveURL(/\?track=legacy-2023&channel=dossiers-2023&espaces=p2enjoy$/)
 		// La phrase de portée NOMME la portée, et le nom est une donnée.
 		await expect(page.getByTestId('pilotage-portee')).toContainText('Dossiers 2023')
 		autoriserErreursConsole(page, [])
@@ -386,7 +393,7 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		await connecter(page)
 		// UNE ADRESSE PARTAGÉE OUVRE DIRECTEMENT SA PORTÉE : c'est le point d'une portée qui vit
 		// dans la chaîne de requête plutôt que dans un état d'écran.
-		await page.goto(`${PILOTAGE}?track=legacy-2023&channel=dossiers-2023`)
+		await page.goto(`${PILOTAGE_ADMIN}&track=legacy-2023&channel=dossiers-2023`)
 		const selecteur = page.getByTestId('pilotage-selecteur-portee')
 		await expect(selecteur).toHaveValue('legacy-2023/dossiers-2023')
 		await expect(entonnoirDe(page, 'EUR').getByRole('row')).toHaveCount(2)
@@ -394,9 +401,9 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		// LE CHOIX REMPLACE L'ENTRÉE D'HISTORIQUE (§5.48 bis) : trois essais de portée ne doivent
 		// pas coûter trois retours arrière pour quitter l'écran.
 		await selecteur.selectOption('studio-web')
-		await expect(page).toHaveURL(/\?track=studio-web$/)
+		await expect(page).toHaveURL(/\?track=studio-web&espaces=p2enjoy$/)
 		await selecteur.selectOption('')
-		await expect(page).toHaveURL(new RegExp(`${PILOTAGE}$`))
+		await expect(page).toHaveURL(new RegExp(`${PILOTAGE}\\?espaces=p2enjoy$`))
 		await page.goBack()
 		// Le retour arrière quitte l'écran plutôt que de rejouer les portées essayées.
 		await expect(page).not.toHaveURL(new RegExp(PILOTAGE))
@@ -410,20 +417,20 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 
 		// `?channel=` SEUL ne désigne rien — M8. L'écran rend l'espace de travail entier, et le
 		// sélecteur affiche la portée RÉELLEMENT appliquée.
-		await page.goto(`${PILOTAGE}?channel=dossiers-2023`)
+		await page.goto(`${PILOTAGE_ADMIN}&channel=dossiers-2023`)
 		const selecteur = page.getByTestId('pilotage-selecteur-portee')
 		await expect(selecteur).toHaveValue('')
 		await expect(ligneNoeud(page, 'EUR', 'Livré')).toHaveCount(1)
 
 		// Un track inconnu replie de même, et l'écran n'écrit AUCUNE erreur : « ce track n'existe
 		// pas » renseignerait par la bande sur ce que la RLS ferme (§5.48).
-		await page.goto(`${PILOTAGE}?track=inexistant-2026`)
+		await page.goto(`${PILOTAGE_ADMIN}&track=inexistant-2026`)
 		await expect(selecteur).toHaveValue('')
 		await expect(page.getByTestId('etat-erreur')).toHaveCount(0)
 
 		// Un channel cherché dans le MAUVAIS track replie sur ce track, jamais sur l'homonyme d'un
 		// autre : `prospection` existe, mais dans `conseil-ia`.
-		await page.goto(`${PILOTAGE}?track=studio-web&channel=prospection`)
+		await page.goto(`${PILOTAGE_ADMIN}&track=studio-web&channel=prospection`)
 		await expect(selecteur).toHaveValue('studio-web')
 		autoriserErreursConsole(page, [])
 	})
@@ -467,7 +474,7 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
 			// La portée `studio-web` est choisie pour que la capture porte AUSSI la mention des nœuds
 			// vides de la tranche 3 c : deux nœuds actifs y sont sans affaire.
-			await page.goto(`${PILOTAGE}?track=studio-web`)
+			await page.goto(`${PILOTAGE_ADMIN}&track=studio-web`)
 			await expect(page.getByTestId('pilotage-selecteur-portee')).toHaveValue('studio-web')
 			await expect(ligneNoeud(page, 'EUR', 'Négociation')).toHaveCount(1)
 			await expect(page.getByTestId('pilotage-noeuds-vides')).toHaveCount(1)
@@ -489,7 +496,7 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		page,
 	}) => {
 		await connecter(page)
-		await page.goto(PILOTAGE)
+		await page.goto(PILOTAGE_ADMIN)
 		await expect(ligneNoeud(page, 'EUR', 'Négociation')).toHaveCount(1)
 
 		// M10, MESURÉ, ET CETTE PREUVE L'A CORRIGÉ. Le catalogue porte HUIT nœuds ; l'entonnoir de
@@ -511,7 +518,7 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		// `negociation`. Les SIX autres nœuds ACTIFS y sont vides, et l'ordre du catalogue dit OÙ
 		// est le trou. C'est la lecture qu'on vient faire sur cet écran : de quelles étapes ce
 		// channel est-il absent ?
-		await page.goto(`${PILOTAGE}?track=legacy-2023&channel=dossiers-2023`)
+		await page.goto(`${PILOTAGE_ADMIN}&track=legacy-2023&channel=dossiers-2023`)
 		const mention = page.getByTestId('pilotage-noeuds-vides')
 		await expect(mention).toHaveText(
 			'Aucune affaire active aux étapes Prospection, Relance, Signature, Réalisation, Livré et Perdu.',

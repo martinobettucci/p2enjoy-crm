@@ -221,6 +221,76 @@
 			]
 		},
 		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Si vous êtes membre de plusieurs espaces"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", la grille les couvre tous : les lignes sont rangées "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "par espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", chaque\ngroupe s'ouvrant sur le nom de l'espace, dans l'ordre du menu des espaces. Chaque cellule s'enregistre dans "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "l'espace de sa\nligne"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — le temps passé sur un track de Studio Lumen est saisi dans Studio Lumen. Le total de chaque jour, au pied de la\ngrille, compte "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tous vos espaces"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " à la fois, et la limite de 7 heures aussi : une note sous la grille le rappelle. Cet écran\nde saisie n'a pas de bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : masquer un espace laisserait ses heures dans des totaux qui ne les montreraient plus."
+				}
+			]
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "saisir-une-journee-en-heures",
@@ -290,6 +360,50 @@
 				{
 					"type": "text",
 					"text": " : il choisit une personne, et un bandeau rappelle « Vous saisissez le\ntemps de… ». Le produit garde la trace de qui a saisi. Un membre ne saisit que son propre temps, et seulement sur ce\nqu'il peut lire."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Si vous êtes membre de plusieurs espaces"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", la liste groupe les collègues "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "par espace que vous administrez"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", chaque\ngroupe portant le nom de l'espace ; un espace que vous n'administrez pas n'y figure pas. Choisir un collègue "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "restreint la\ngrille à son espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : la saisie s'écrit dans cet espace, et la recherche d'affaire n'y propose que les affaires de cet\nespace. Revenir à votre propre nom rend la grille de tous vos espaces. La limite de 7 heures porte sur la journée entière de la\npersonne, tous espaces confondus : si elle est atteinte par du temps saisi dans un autre espace, le refus le dit sans\npréciser ni les heures ni l'espace."
 				}
 			]
 		},
@@ -480,7 +594,33 @@
 				},
 				{
 					"type": "text",
-					"text": ", après le choix de la personne, n'en garde\nque certains : les lignes et le total ne comptent plus que ces espaces. Si le mois n'a du temps que dans d'autres espaces,\nle rapport le dit, et propose d'afficher tous les espaces. Le choix de la personne, lui, reste celui des membres de\nl'espace où vous vous trouvez."
+					"text": ", après le choix de la personne, n'en garde\nque certains : les lignes et le total ne comptent plus que ces espaces. Si le mois n'a du temps que dans d'autres espaces,\nle rapport le dit, et propose d'afficher tous les espaces. Le choix de la personne offre les membres de "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tous les espaces\nque vous administrez"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sans doublon, puis "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Toute l'équipe"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ; un espace que vous n'administrez pas n'y figure pas."
 				}
 			]
 		},

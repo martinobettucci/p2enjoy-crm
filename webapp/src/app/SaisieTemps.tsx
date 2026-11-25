@@ -1,3 +1,8 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T3.d — à partir de deux espaces lus, la grille couvre TOUS les espaces : les lignes
+//       groupées par espace (une ligne de groupe à son nom), chaque cellule écrite dans l'espace de sa ligne, les totaux par jour
+//       ceux de la personne tous espaces confondus ; « Saisir pour » groupe les membres par espace administré, et choisir un
+//       collègue restreint la grille à cet espace ; pas de filtre « Espace » sur cet écran de saisie ; d'un seul espace, la
+//       grille d'avant (docs/SPEC-espace-courant.md §16.9.2, décision 981 ; docs/DESIGN_SYSTEM.md §5.54, §5.115 ; docs/manual.md §28)
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — un choix fait pour un objet d'un espace ne lit que cet espace
 //       (docs/SPEC-espace-courant.md §15.4 bis, « Les sélecteurs liés à un espace » ; décision 975)
 // @spec CRM-098 (docs/BACKLOG.md) — tranche T2 : l'onglet « Saisie » de l'écran « Temps »
@@ -17,7 +22,7 @@
 // base rend. Le plafond, la cible lisible et qui saisit pour qui sont tenus en base (migration `0087`).
 
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import { SkeletonListe } from '../components/ui/Skeleton'
@@ -26,6 +31,8 @@ import { t } from '../i18n'
 import type { CleTraduction } from '../i18n'
 import { enChargement, type EtatAsync } from '../lib/async'
 import { lireMembresAffectables, type MembreAffectable } from '../lib/entete-card'
+import { provenanceVisible } from '../lib/provenance'
+import { useEspacesAdministres } from '../lib/temps-espaces'
 import {
 	chercherAffaires,
 	ecrireCellule,
@@ -35,6 +42,7 @@ import {
 	type MotifRefusTemps,
 } from '../lib/saisie-temps'
 import type { ClientCrm } from '../lib/supabase'
+import { useContexteEspace } from './ContexteEspace'
 import {
 	MINUTES_JOURNEE,
 	MINUTES_QUART,
@@ -45,6 +53,7 @@ import {
 	depasseLaJournee,
 	enHeures,
 	enJours,
+	grouperLignesParEspace,
 	joursDeLaSemaine,
 	lignesMatrice,
 	lireSaisie,
@@ -179,6 +188,13 @@ export function SaisieTemps({ client, idWorkspace, idUtilisateur, estAdmin, aujo
 	const lundi = lireSemaine(parametres.get(CLE_URL_SEMAINE), aujourdhui)
 	const jours = useMemo(() => joursDeLaSemaine(lundi), [lundi])
 	const [personne, setPersonne] = useState(idUtilisateur)
+	// `CRM-161` T3.d (§16.9.2) : à partir de deux espaces lus, la grille couvre tous les espaces pour soi-même ; pour un
+	// collègue, elle se restreint à l'espace choisi dans « Saisir pour » (`espaceDeLaPersonne`).
+	const { espaces: espacesLus } = useContexteEspace()
+	const multi = provenanceVisible(espacesLus)
+	const espaces = useMemo(() => (multi ? (espacesLus ?? []) : []), [multi, espacesLus])
+	const [espaceDeLaPersonne, setEspaceDeLaPersonne] = useState<string | null>(null)
+	const administres = useEspacesAdministres(client, espaces, idUtilisateur, multi)
 	const [membres, setMembres] = useState<readonly MembreAffectable[]>([])
 	const [etat, setEtat] = useState<EtatAsync<Donnees>>(enChargement)
 	const [tentative, setTentative] = useState(0)
@@ -188,7 +204,7 @@ export function SaisieTemps({ client, idWorkspace, idUtilisateur, estAdmin, aujo
 	const { reinitialiser: reinitialiserCases } = cases
 
 	useEffect(() => {
-		if (!estAdmin) return
+		if (!estAdmin || multi) return
 		let courant = true
 		void lireMembresAffectables(client, idWorkspace).then((resultat) => {
 			if (courant && resultat.statut === 'pret') setMembres(resultat.donnees)
@@ -196,16 +212,20 @@ export function SaisieTemps({ client, idWorkspace, idUtilisateur, estAdmin, aujo
 		return () => {
 			courant = false
 		}
-	}, [client, idWorkspace, estAdmin])
+	}, [client, idWorkspace, estAdmin, multi])
+
+	// L'espace des lectures : celui de l'onglet d'un écran d'un seul espace (`CRM-161` T2.c, décision 975) ; à plusieurs espaces,
+	// aucun — tous ceux que la RLS rend — pour soi-même, l'espace choisi pour un collègue (les seules lignes qu'il accepte).
+	const pourSoi = personne === idUtilisateur
+	const espaceLu: string | undefined = !multi ? idWorkspace : pourSoi ? undefined : (espaceDeLaPersonne ?? idWorkspace)
 
 	useEffect(() => {
 		let courant = true
 		setEtat(enChargement)
 		void (async () => {
 			const [arbre, saisies] = await Promise.all([
-				// `CRM-161` T2.c (décision 975) : les lignes de l'espace des saisies, les seules que la base accepte.
-				lireArbreTemps(client, idWorkspace),
-				lireSaisies(client, idWorkspace, personne, decalerJours(lundi, -7), decalerJours(lundi, 6)),
+				lireArbreTemps(client, espaceLu),
+				lireSaisies(client, espaceLu, personne, decalerJours(lundi, -7), decalerJours(lundi, 6)),
 			])
 			if (!courant) return
 			if (arbre.statut === 'erreur') return setEtat(arbre)
@@ -220,7 +240,7 @@ export function SaisieTemps({ client, idWorkspace, idUtilisateur, estAdmin, aujo
 		return () => {
 			courant = false
 		}
-	}, [client, idWorkspace, personne, lundi, tentative])
+	}, [client, espaceLu, personne, lundi, tentative])
 
 	// Changer de semaine ou de personne repart d'une matrice sans case forcée ni affaire ajoutée.
 	useEffect(() => {
@@ -242,27 +262,55 @@ export function SaisieTemps({ client, idWorkspace, idUtilisateur, estAdmin, aujo
 		})
 	}, [])
 
-	const nomPersonne = membres.find((m) => m.id === personne)?.nom ?? null
+	// Les options de « Saisir pour » : les membres de l'espace de l'onglet (un seul espace), ou, par espace administré, ceux de
+	// cet espace — la valeur d'une option d'un collègue porte son espace, `espace|personne`.
+	const groupesMembres = administres.statut === 'pret' ? administres.donnees.filter((g) => g.membres.some((m) => m.id !== idUtilisateur)) : []
+	const afficherSaisirPour = multi ? groupesMembres.length > 0 : estAdmin
+	const valeurSaisirPour = personne === idUtilisateur || !multi ? personne : `${espaceDeLaPersonne ?? ''}|${personne}`
+	const choisirPersonne = (valeur: string) => {
+		const [espace, id] = valeur.includes('|') ? (valeur.split('|') as [string, string]) : [null, valeur]
+		setPersonne(id)
+		setEspaceDeLaPersonne(espace)
+	}
+	const nomPersonne = multi
+		? (administres.statut === 'pret' ? administres.donnees.flatMap((g) => g.membres).find((m) => m.id === personne)?.nom : undefined) ?? null
+		: (membres.find((m) => m.id === personne)?.nom ?? null)
+	// La grille nomme les espaces qu'elle couvre : tous pour soi-même, l'espace choisi pour un collègue (§16.9.2).
+	const espacesDeLaGrille = multi ? (pourSoi ? espaces : espaces.filter((e) => e.id === espaceDeLaPersonne)) : undefined
 
 	return (
 		<div className="flex flex-col gap-4" data-testid="temps-saisie">
-			{estAdmin ? (
+			{afficherSaisirPour ? (
 				<label className="inline-flex flex-wrap items-center gap-2 text-sm text-text-2">
 					{t('time.for.label')}
 					<select
 						data-testid="temps-saisir-pour"
-						value={personne}
-						onChange={(e) => setPersonne(e.target.value)}
+						value={valeurSaisirPour}
+						onChange={(e) => choisirPersonne(e.target.value)}
 						className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3 text-text"
 					>
 						<option value={idUtilisateur}>{t('time.for.me')}</option>
-						{membres
-							.filter((m) => m.id !== idUtilisateur)
-							.map((m) => (
-								<option key={m.id} value={m.id}>
-									{m.nom}
-								</option>
-							))}
+						{multi
+							? groupesMembres.map((groupe) => (
+									// `CRM-161` T3.d : un groupe par espace administré, nommé de l'espace (une donnée, §10) ; l'option dit
+									// l'espace où la saisie s'écrira.
+									<optgroup key={groupe.espace.id} label={groupe.espace.name}>
+										{groupe.membres
+											.filter((m) => m.id !== idUtilisateur)
+											.map((m) => (
+												<option key={`${groupe.espace.id}|${m.id}`} value={`${groupe.espace.id}|${m.id}`}>
+													{m.nom}
+												</option>
+											))}
+									</optgroup>
+								))
+							: membres
+									.filter((m) => m.id !== idUtilisateur)
+									.map((m) => (
+										<option key={m.id} value={m.id}>
+											{m.nom}
+										</option>
+									))}
 					</select>
 				</label>
 			) : null}
@@ -318,6 +366,7 @@ export function SaisieTemps({ client, idWorkspace, idUtilisateur, estAdmin, aujo
 				<Matrice
 					client={client}
 					idWorkspace={idWorkspace}
+					espaces={espacesDeLaGrille}
 					personne={personne}
 					jours={jours}
 					aujourdhui={aujourdhui}
@@ -334,6 +383,7 @@ export function SaisieTemps({ client, idWorkspace, idUtilisateur, estAdmin, aujo
 			{etat.statut === 'pret' ? (
 				<AjoutAffaire
 					client={client}
+					espaceUnique={multi && !pourSoi ? (espaceDeLaPersonne ?? idWorkspace) : undefined}
 					dejaPresentes={new Set([...affairesDesSaisies(etat.donnees.saisies), ...ajoutees.map((a) => a.id)])}
 					onAjouter={(affaire) => {
 						setAjoutees((precedent) => [...precedent, affaire])
@@ -349,6 +399,7 @@ export function SaisieTemps({ client, idWorkspace, idUtilisateur, estAdmin, aujo
 function Matrice({
 	client,
 	idWorkspace,
+	espaces,
 	personne,
 	jours,
 	aujourdhui,
@@ -362,6 +413,8 @@ function Matrice({
 }: {
 	readonly client: ClientCrm
 	readonly idWorkspace: string
+	/** `CRM-161` T3.d : les espaces que la grille couvre, pour la grouper ; `undefined` : un seul espace, la grille d'avant. */
+	readonly espaces: readonly { readonly id: string; readonly name: string; readonly slug: string }[] | undefined
 	readonly personne: string
 	readonly jours: readonly string[]
 	readonly aujourdhui: string
@@ -383,6 +436,13 @@ function Matrice({
 		() => lignesMatrice(donnees.arbre, affaires, new Set([...affairesDesSaisies(donnees.saisies), ...ajoutees.map((a) => a.id)])),
 		[donnees.arbre, affaires, donnees.saisies, ajoutees],
 	)
+	// `CRM-161` T3.d (§16.9.2) : à plusieurs espaces, les lignes se groupent par espace, et le RANG d'une ligne — l'index de
+	// `data-ligne`, que les flèches suivent — est celui de l'ordre AFFICHÉ, jamais celui de la matrice.
+	const groupes = useMemo(
+		() => (espaces === undefined ? null : grouperLignesParEspace(lignes, espaces)),
+		[espaces, lignes],
+	)
+	const lignesAffichees = useMemo(() => (groupes === null ? lignes : groupes.flatMap((g) => g.lignes)), [groupes, lignes])
 	const modes = modesDesJours(donnees.saisies, jours, heuresForcees)
 
 	/** Les flèches vont de cellule en cellule quand le champ est vide ou sa valeur entièrement sélectionnée (§5.54). */
@@ -412,22 +472,34 @@ function Matrice({
 						</tr>
 					</thead>
 					<tbody>
-						{lignes.map((ligne, rang) => (
-							<LigneTemps
-								key={ligne.cle}
-								ligne={ligne}
-								rang={rang}
-								nombreLignes={lignes.length}
-								client={client}
-								idWorkspace={idWorkspace}
-								personne={personne}
-								jours={jours}
-								modes={modes}
-								saisies={donnees.saisies}
-								deplacer={deplacer}
-								onEnregistre={onEnregistre}
-								onAnnonce={onAnnonce}
-							/>
+						{(groupes === null ? [{ espace: undefined, lignes }] : groupes).map((groupe, i) => (
+							<GroupeLignes
+								key={groupe.espace?.id ?? `sans-espace-${i}`}
+								titre={groupe.espace === undefined ? null : (groupe.espace?.name ?? t('time.matrix.noSpace'))}
+								colonnes={jours.length + 2}
+								slug={groupe.espace?.slug}
+							>
+								{groupe.lignes.map((ligne) => {
+									const rang = lignesAffichees.indexOf(ligne)
+									return (
+										<LigneTemps
+											key={ligne.cle}
+											ligne={ligne}
+											rang={rang}
+											nombreLignes={lignesAffichees.length}
+											client={client}
+											idWorkspace={idWorkspace}
+											personne={personne}
+											jours={jours}
+											modes={modes}
+											saisies={donnees.saisies}
+											deplacer={deplacer}
+											onEnregistre={onEnregistre}
+											onAnnonce={onAnnonce}
+										/>
+									)
+								})}
+							</GroupeLignes>
 						))}
 					</tbody>
 					<tfoot>
@@ -445,6 +517,11 @@ function Matrice({
 					</tfoot>
 				</table>
 			</div>
+			{espaces === undefined ? null : (
+				<p data-testid="temps-note-espaces" className="text-sm text-text-2">
+					{t('time.matrix.spacesNote')}
+				</p>
+			)}
 		</div>
 	)
 }
@@ -504,6 +581,35 @@ export function PiedJour({ jour, total, mode }: { readonly jour: string; readonl
 // l'échelle close n'ayant pas de 36 px — la classe `pl-9` ne serait pas engendrée (leçon d'INC-231).
 const RETRAITS = ['pl-3 text-[15px] font-medium', 'pl-6', 'pl-[36px]'] as const
 
+/**
+ * `CRM-161` T3.d (§5.54, §5.115) — un groupe de lignes de la grille : une ligne de groupe à son nom, `th scope="rowgroup"` sur
+ * toute la largeur, puis ses lignes. Sans titre (un seul espace), les lignes seules : la grille d'avant.
+ */
+function GroupeLignes({
+	titre,
+	colonnes,
+	slug,
+	children,
+}: {
+	readonly titre: string | null
+	readonly colonnes: number
+	readonly slug?: string | undefined
+	readonly children: ReactNode
+}) {
+	return (
+		<>
+			{titre === null ? null : (
+				<tr className="border-b border-border bg-bg" data-testid="temps-groupe-espace" {...(slug === undefined ? {} : { 'data-slug': slug })}>
+					<th scope="rowgroup" colSpan={colonnes} className="sticky left-0 px-3 py-2 text-left text-sm font-medium text-text-2">
+						{titre}
+					</th>
+				</tr>
+			)}
+			{children}
+		</>
+	)
+}
+
 function LigneTemps({
 	ligne,
 	rang,
@@ -540,7 +646,8 @@ function LigneTemps({
 				<td key={jour} className="px-1 py-1 text-center">
 					<CelluleTemps
 						client={client}
-						idWorkspace={idWorkspace}
+						// `CRM-161` T3.d : la saisie s'écrit dans l'espace de la ligne — celui de son track ou de son affaire.
+						idWorkspace={ligne.workspaceId ?? idWorkspace}
 						personne={personne}
 						ligne={ligne}
 						jour={jour}
@@ -754,10 +861,13 @@ export function CelluleTemps({
 /** « Ajouter une affaire » : une combobox de recherche par titre (§5.21), qui ajoute la ligne sous son channel. */
 function AjoutAffaire({
 	client,
+	espaceUnique,
 	dejaPresentes,
 	onAjouter,
 }: {
 	readonly client: ClientCrm
+	/** `CRM-161` T3.d : l'espace des seules affaires offertes — celui où une saisie pour un collègue s'écrit ; `undefined`, tous. */
+	readonly espaceUnique?: string | undefined
 	readonly dejaPresentes: ReadonlySet<string>
 	readonly onAjouter: (affaire: Affaire) => void
 }) {
@@ -771,7 +881,13 @@ function AjoutAffaire({
 		const minuterie = setTimeout(() => {
 			void chercherAffaires(client, terme).then((etat) => {
 				if (courant) {
-					setResultats(etat.statut === 'pret' ? etat.donnees.filter((a) => !dejaPresentes.has(a.id)) : [])
+					setResultats(
+						etat.statut === 'pret'
+							? etat.donnees.filter(
+									(a) => !dejaPresentes.has(a.id) && (espaceUnique === undefined || a.workspace_id === espaceUnique),
+								)
+							: [],
+					)
 					setActif(-1)
 				}
 			})
@@ -782,7 +898,7 @@ function AjoutAffaire({
 		}
 		// `dejaPresentes` est recalculé à chaque rendu : la recherche ne repart que sur le terme.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [client, terme])
+	}, [client, terme, espaceUnique])
 
 	const choisir = (affaire: Affaire) => {
 		onAjouter(affaire)

@@ -20678,6 +20678,13 @@ livraison (décision 830).
   temps du second espace posé la veille) et `0184` (l'état d'avant, déclencheurs suspendus) révisées ; 8 suites des saisies et du
   temps, 309 assertions ; API `plafond-tous-espaces` 3/3, avec `saisie-temps` (le verrou concurrent). Contrat §2.81. Restent le
   Pilotage, Temps ▸ Saisie et le choix de la personne du rapport.
+  **T3.d, les écrans, faits le 2026-11-25** : le Pilotage (bouton « Espace », tête sur tous les espaces affichés, une section par
+  espace et son catalogue, portée offerte sur un espace isolé et gardant le filtre) ; Temps ▸ Saisie (grille groupée par espace,
+  cellule écrite dans l'espace de sa ligne, totaux tous espaces, « Saisir pour » groupé par espace administré, recherche d'affaire
+  bornée à l'espace d'un collègue) ; le choix de la personne du rapport (limite de T3.c levée). Preuves : unitaires — Pilotage 55,
+  Saisie des espaces 9, bibliothèques 51, rapport 19 ; manuel §28 et §30 construit, `verify-manual.sh` 170/170. Reste : E2E des
+  écrans, scénarios et images du manuel, `verify-mcp --rapide`, puis le compte rendu. **T3.d n'est pas complète** tant que les
+  preuves d'interface ne sont pas rejouées.
   **Relevés à reprendre dans T3** (*2026-11-21, session de livraison au constat du lot de T1 et T2 ; consignés par 5f*) :
   - **Les non-lus de chaque espace sous `md`.** À 390 px, la section « Espaces » du repli du fil d'Ariane ne montre aucune
     pastille de non-lus (capture `docs/captures/CRM-161/menu-espaces-sm-390.jpg`), alors que la décision 965 les veut au
@@ -20975,7 +20982,7 @@ refuse mail par mail. »
   s'annule.
 **Connecteur MCP** (décision 994) — question 1 : **non** (un assistant connecté par le MCP a déjà les outils de la messagerie et
 juge lui-même) ; question 2 : sans objet.
-**Spécifiée le 2026-11-25** (décision 997) : `docs/SPEC-ia.md` §17 (le fil comme unité, les lots de 5, ce qui part au modèle, la sortie contrôlée,
+**Spécifiée le 2026-11-25** (décision 996) : `docs/SPEC-ia.md` §17 (le fil comme unité, les lots de 5, ce qui part au modèle, la sortie contrôlée,
 la voie `_ia-inbox` — CRM-163 —, le simulateur), `docs/SPEC-mail-subsystem.md` §36 (la bulle, le plan, l'application par les gestes de la page,
 « Tout accepter »), `docs/DESIGN_SYSTEM.md` §5.116. Le manuel (inbox) et le contrat suivent le code.
 **Tranches** :

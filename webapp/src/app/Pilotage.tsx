@@ -1,3 +1,9 @@
+// @spec CRM-161 (docs/BACKLOG.md) tranche T3.d — à partir de deux espaces lus : le bouton « Espace » en tête, la TÊTE (le
+//       prévisionnel par devise, le taux, les mentions sans montant et sans probabilité) calculée sur tous les espaces affichés,
+//       puis UNE SECTION PAR ESPACE (ses entonnoirs par devise, ses étapes sans affaire, dans l'ordre de son catalogue) ; le
+//       sélecteur de portée ne s'offre que lorsque le filtre isole un espace, et choisir une portée garde le filtre ; d'un
+//       seul espace, l'écran d'avant (docs/SPEC-espace-courant.md §16.9.1, décision 982 ; docs/DESIGN_SYSTEM.md §5.115, §5.48,
+//       §5.48 bis ; docs/manual.md §30)
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — jusqu'à T3, la page suit l'espace courant de l'onglet
 //       (docs/SPEC-espace-courant.md §15.2 ; décision 976)
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — le pilotage suit l'espace courant de l'onglet, état intermédiaire jusqu'à T3 (§15.2) ; docs/SPEC-espace-courant.md
@@ -86,8 +92,10 @@ import {
 	type PorteeUrl,
 	type TrackPortee,
 } from '../lib/pilotage-portee'
+import { PARAMETRE_ESPACES, espacesDeLaPortee, filtrerParEspace } from '../lib/provenance'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useContexteEspace } from './ContexteEspace'
+import { FiltreEspaces, VideSousFiltreEspaces, useFiltreEspaces } from './FiltreEspaces'
 
 /** L'en-tête d'une colonne (§5.9) : 13 px, texte secondaire, hauteur de cible. */
 const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3'
@@ -179,10 +187,26 @@ export function Pilotage({ client = clientCrm }: ProprietesPilotage = {}) {
 	// `CRM-161` T2.a (docs/SPEC-espace-courant.md §15.2) — état intermédiaire jusqu'à T3 : l'espace du contexte, et non plus le premier de la liste. l'espace courant
 	// s'il est mesuré, sinon le premier mesuré.
 	const { idWorkspace: idEspaceContexte } = useContexteEspace()
-	const idWorkspace =
+	const idWorkspaceMesure =
 		etat.statut === 'pret'
 			? (etat.donnees.find((l) => l.workspace_id === idEspaceContexte)?.workspace_id ?? etat.donnees[0]?.workspace_id ?? null)
 			: null
+
+	// `CRM-161` T3.d (docs/SPEC-espace-courant.md §16.9.1, décision 982) — LE FILTRE « Espace » ET LES ESPACES AFFICHÉS. D'un seul
+	// espace lu, rien ne change : l'espace mesuré ci-dessus, comme avant. À partir de deux, les espaces affichés sont ceux du
+	// filtre (tous, sans choix), et la portée (track, channel) n'existe que lorsque le filtre en isole UN.
+	const filtre = useFiltreEspaces()
+	const espacesAffiches = useMemo(
+		() => (filtre.visible ? espacesDeLaPortee(filtre.espaces, filtre.choisis) : []),
+		[filtre.visible, filtre.espaces, filtre.choisis],
+	)
+	const idsAffiches = useMemo(
+		() => (filtre.visible ? espacesAffiches.map((e) => e.id) : idWorkspaceMesure === null ? [] : [idWorkspaceMesure]),
+		[filtre.visible, espacesAffiches, idWorkspaceMesure],
+	)
+	const cleAffiches = idsAffiches.join(',')
+	// L'espace dont la portée s'offre : l'espace d'un écran d'un seul espace, ou l'unique espace que le filtre isole.
+	const idWorkspace = filtre.visible ? (idsAffiches.length === 1 ? (idsAffiches[0] ?? null) : null) : idWorkspaceMesure
 
 	const [portees, setPortees] = useState<EtatAsync<readonly TrackPortee[]>>(enChargement)
 	const courantPortees = useRef(0)
@@ -198,29 +222,38 @@ export function Pilotage({ client = clientCrm }: ProprietesPilotage = {}) {
 		})()
 	}, [client, idWorkspace, tentative])
 
-	const arbre = useMemo(() => (portees.statut === 'pret' ? portees.donnees : []), [portees])
+	// Sans espace isolé, aucune portée ne s'offre : l'arbre est vide, et la portée résolue est l'espace entier.
+	const arbre = useMemo(
+		() => (idWorkspace !== null && portees.statut === 'pret' ? portees.donnees : []),
+		[idWorkspace, portees],
+	)
 
 	// LA TROISIÈME LECTURE — le catalogue, pour NOMMER les nœuds vides (§8 bis.5). Elle est traitée
 	// comme la seconde : son échec ne casse pas l'écran, et la mention n'est simplement pas écrite.
 	// Nommer un nœud vide enrichit la lecture, il n'en est pas la condition.
-	const [catalogue, setCatalogue] = useState<EtatAsync<readonly NoeudCatalogue[]>>(enChargement)
+	// `CRM-161` T3.d : le catalogue de CHAQUE espace affiché — chacun a le sien —, lu à la clé de ses espaces ; une lecture qui
+	// échoue n'écrit simplement pas la mention de cet espace.
+	const [catalogues, setCatalogues] = useState<ReadonlyMap<string, readonly NoeudCatalogue[]>>(new Map())
 	const courantCatalogue = useRef(0)
 
 	useEffect(() => {
-		if (client === null || idWorkspace === null) return
+		if (client === null || cleAffiches === '') return
 		const rang = ++courantCatalogue.current
-		setCatalogue(enChargement())
+		setCatalogues(new Map())
 		void (async () => {
-			const lu = await lireNoeudsCatalogue(client, idWorkspace)
+			const ids = cleAffiches.split(',')
+			const lus = await Promise.all(ids.map((id) => lireNoeudsCatalogue(client, id)))
 			if (rang !== courantCatalogue.current) return
-			setCatalogue(lu)
+			setCatalogues(
+				new Map(
+					ids.flatMap((id, i): [string, readonly NoeudCatalogue[]][] => {
+						const lu = lus[i]
+						return lu !== undefined && lu.statut === 'pret' ? [[id, lu.donnees]] : []
+					}),
+				),
+			)
 		})()
-	}, [client, idWorkspace, tentative])
-
-	const noeudsCatalogue = useMemo(
-		() => (catalogue.statut === 'pret' ? catalogue.donnees : []),
-		[catalogue],
-	)
+	}, [client, cleAffiches, tentative])
 
 	// LA PORTÉE APPLIQUÉE EST CELLE QUE L'ARBRE RÉSOUT, jamais celle que l'adresse demande
 	// (§8 bis.2). Un slug inconnu ou fermé replie sur l'espace de travail, sans aucune erreur — et
@@ -240,9 +273,15 @@ export function Pilotage({ client = clientCrm }: ProprietesPilotage = {}) {
 			// (`docs/SPEC-analytique.md` §8), et fusionner laisserait derrière un `channel` orphelin
 			// au passage d'une portée de channel à une portée de track — c'est-à-dire l'adresse
 			// exacte que M8 rend inexploitable.
-			setParametres(ecrirePorteeUrl(choisie), { replace: true })
+			//
+			// `CRM-161` T3.d (§16.9.1) : la portée GARDE le filtre « Espace » — le seul paramètre que cette route porte
+			// désormais en plus des deux clés de portée, et que la reconstruction perdrait.
+			const suivants = new URLSearchParams(ecrirePorteeUrl(choisie))
+			const espaces = parametres.get(PARAMETRE_ESPACES)
+			if (espaces !== null && espaces !== '') suivants.set(PARAMETRE_ESPACES, espaces)
+			setParametres(suivants, { replace: true })
 		},
-		[setParametres],
+		[parametres, setParametres],
 	)
 
 	// AUCUN CLIENT N'EST UN ÉTAT, PAS UNE ATTENTE (§5.33, §5.48). La configuration d'API absente ou
@@ -296,20 +335,39 @@ export function Pilotage({ client = clientCrm }: ProprietesPilotage = {}) {
 	// écran qui ment sur ce qu'il montre.
 	// `CRM-161` T2.a (§15.2, décision 976) : l'espace d'abord, la portée ensuite — sans quoi la portée « espace » additionnait
 	// les lignes de tous les espaces de la personne.
-	const lignes = restreindre(dansLEspace(etat.donnees, idWorkspace), porteeAnalytique(portee, arbre))
+	//
+	// `CRM-161` T3.d (décision 982) : à partir de deux espaces, la TÊTE — le prévisionnel, le taux, les deux compteurs — est
+	// calculée sur les lignes de tous les espaces affichés (le filtre « Espace » d'abord, la portée ensuite), et ne repose que
+	// sur le genre des nœuds, universel ; les entonnoirs, eux, se détaillent espace par espace (`sections`).
+	const lignesAffichees = filtre.visible
+		? filtrerParEspace(etat.donnees, filtre.choisis, (l) => l.workspace_id)
+		: dansLEspace(etat.donnees, idWorkspace)
+	const lignes = restreindre(lignesAffichees, porteeAnalytique(portee, arbre))
 	const noeuds = replier(lignes)
 	const groupes = grouperParDevise(noeuds)
 	const previsions = previsionnel(lignes)
 	const taux = tauxConversion(lignes)
 	const manques = absences(lignes)
 	const nomPortee = nommerPortee(portee, arbre)
-	const vides = noeudsSansAffaire(noeudsCatalogue, lignes)
+	const videsDe = (idEspace: string, lignesDeLEspace: readonly LigneEntonnoirLue[]) =>
+		noeudsSansAffaire(catalogues.get(idEspace) ?? [], lignesDeLEspace)
+	const vides = idsAffiches.length === 1 && idsAffiches[0] !== undefined ? videsDe(idsAffiches[0], lignes) : []
+	// Les sections, une par espace affiché qui a des lignes, dans l'ordre du menu (§5.113) : vides d'un espace sans ligne.
+	const sections = filtre.visible
+		? espacesAffiches.flatMap((espace) => {
+				const lignesEspace = lignes.filter((l) => l.workspace_id === espace.id)
+				return lignesEspace.length === 0
+					? []
+					: [{ espace, groupes: grouperParDevise(replier(lignesEspace)), vides: videsDe(espace.id, lignesEspace) }]
+			})
+		: []
 
 	// LE SÉLECTEUR N'EST RENDU QUE S'IL Y A QUELQUE CHOSE À DÉCOUPER. Aucune ligne dans l'espace de
 	// travail entier ne laisse aucune portion à isoler — et aucune lecture d'arborescence n'a même
 	// pu partir, faute d'espace de travail à nommer.
+	// `CRM-161` T3.d : sans espace isolé (deux espaces ou plus, aucun choix), aucune portée ne s'offre (§16.9.1).
 	const selecteur =
-		etat.donnees.length === 0 ? null : (
+		etat.donnees.length === 0 || idWorkspace === null ? null : (
 			<SelecteurPortee
 				arbre={arbre}
 				portee={portee}
@@ -323,6 +381,10 @@ export function Pilotage({ client = clientCrm }: ProprietesPilotage = {}) {
 				onChoix={choisirPortee}
 			/>
 		)
+
+	// `CRM-161` T3.d (§5.115) : le bouton « Espace » en tête, avant le sélecteur de portée ; rien d'un seul espace, ni sans aucune
+	// ligne lue (il n'y a alors rien à filtrer).
+	const barreEspaces = filtre.visible && etat.donnees.length > 0 ? <FiltreEspaces filtre={filtre} /> : null
 
 	// L'ÉTAT VIDE N'OFFRE AUCUNE ACTION (§5.48), et c'est l'écart au §5.8 que la corbeille, le
 	// carnet, les affaires figées et le panneau de notifications prennent déjà : une affaire se crée
@@ -343,8 +405,19 @@ export function Pilotage({ client = clientCrm }: ProprietesPilotage = {}) {
 	// la portée CHOISIE ne divulgue rien — c'est le lecteur qui vient de la choisir.
 	if (groupes.length === 0) {
 		const videDePortee = portee.type !== 'workspace'
+		// Du pilotage lu, mais aucun dans les espaces choisis : le vide sous le filtre, pas celui de l'écran (§5.115).
+		if (filtre.visible && filtre.choisis.length > 0 && !videDePortee) {
+			return (
+				<section aria-label={t('pilotage.aria')} className="flex flex-col gap-6">
+					{barreEspaces}
+					{selecteur}
+					<VideSousFiltreEspaces filtre={filtre} />
+				</section>
+			)
+		}
 		return (
 			<section aria-label={t('pilotage.aria')} className="flex flex-col gap-6">
+				{barreEspaces}
 				{selecteur}
 				<EtatVide
 					titre={t(videDePortee ? 'pilotage.empty.scope.title' : 'pilotage.empty.title')}
@@ -367,16 +440,29 @@ export function Pilotage({ client = clientCrm }: ProprietesPilotage = {}) {
 			  qui suit, et ce qui qualifie se lit avant ce qu'il qualifie — l'ordre que le §5.32 tient
 			  déjà pour l'identité d'un budget devant son histogramme.
 			*/}
+			{barreEspaces}
 			{selecteur}
 			<Grandeurs previsions={previsions} taux={taux} />
-			{groupes.map((groupe) => (
-				<Entonnoir
-					key={groupe.devise}
-					groupe={groupe}
-					titreVisible={plusieursDevises}
-				/>
-			))}
-			<Mentions manques={manques} portee={portee} nomPortee={nomPortee} vides={vides} />
+			{filtre.visible ? (
+				sections.map((section) => (
+					<SectionEspace key={section.espace.id} section={section} />
+				))
+			) : (
+				groupes.map((groupe) => (
+					<Entonnoir
+						key={groupe.devise}
+						groupe={groupe}
+						titreVisible={plusieursDevises}
+					/>
+				))
+			)}
+			<Mentions
+				manques={manques}
+				portee={portee}
+				nomPortee={nomPortee}
+				vides={filtre.visible ? [] : vides}
+				surEspaces={filtre.visible}
+			/>
 		</section>
 	)
 }
@@ -581,9 +667,12 @@ function Grandeurs({
 function Entonnoir({
 	groupe,
 	titreVisible,
+	Titre = 'h2',
 }: {
 	readonly groupe: GroupeDevise
 	readonly titreVisible: boolean
+	/** `CRM-161` T3.d : le niveau du titre de devise — `h3` sous le `h2` d'une section d'espace (§5.115). */
+	readonly Titre?: 'h2' | 'h3'
 }) {
 	const titre = t('pilotage.funnel.currency', { devise: groupe.devise })
 	return (
@@ -593,7 +682,9 @@ function Entonnoir({
 			aria-label={titre}
 			className="flex flex-col gap-2"
 		>
-			{titreVisible && <h2 className="text-h3 text-ink">{titre}</h2>}
+			{titreVisible && (
+				<Titre className={Titre === 'h2' ? 'text-h3 text-ink' : 'text-base font-medium text-text-2'}>{titre}</Titre>
+			)}
 			{/*
 			  Le conteneur porte `.indique-debordement-x` (§12.6) : à 390 px les cinq colonnes ne
 			  tiennent pas, et le tableau défile DANS SON CONTENEUR pendant que la page ne défile
@@ -678,6 +769,50 @@ function LigneNoeud({ noeud }: { readonly noeud: NoeudEntonnoir }) {
 }
 
 /**
+ * `CRM-161` T3.d (décision 982, §16.9.1) — UN ESPACE DU PILOTAGE : son nom en `h2`, ses entonnoirs par devise (l'ordre de SON
+ * catalogue, §5.48) sous des titres de devise de niveau `h3`, puis ses étapes sans affaire, nommées dans SON catalogue. La tête
+ * de l'écran, au-dessus, est celle de tous les espaces affichés.
+ */
+function SectionEspace({
+	section,
+}: {
+	readonly section: {
+		readonly espace: { readonly id: string; readonly name: string; readonly slug: string }
+		readonly groupes: readonly GroupeDevise[]
+		readonly vides: readonly NoeudCatalogue[]
+	}
+}) {
+	return (
+		<section
+			data-testid="pilotage-espace"
+			data-slug={section.espace.slug}
+			aria-label={section.espace.name}
+			className="flex flex-col gap-4"
+		>
+			<h2 className="text-h3 text-ink">{section.espace.name}</h2>
+			{section.groupes.map((groupe) => (
+				<Entonnoir key={groupe.devise} groupe={groupe} titreVisible={section.groupes.length > 1} Titre="h3" />
+			))}
+			<NoeudsVides vides={section.vides} />
+		</section>
+	)
+}
+
+/** La mention des étapes sans affaire, sans devise ni montant (§8 bis.5) ; rien si aucune. */
+function NoeudsVides({ vides }: { readonly vides: readonly NoeudCatalogue[] }) {
+	if (vides.length === 0) return null
+	return (
+		<p data-testid="pilotage-noeuds-vides" className="text-[13px] text-text-2">
+			{t(vides.length > 1 ? 'pilotage.empty.nodes' : 'pilotage.empty.nodes.one', {
+				noeuds: new Intl.ListFormat('fr-FR', { style: 'long', type: 'conjunction' }).format(
+					vides.map((noeud) => noeud.libelle),
+				),
+			})}
+		</p>
+	)
+}
+
+/**
  * Les deux mentions obligatoires du §7.3, puis la phrase de portée — §5.48.
  *
  * ELLES TRAVERSENT LES DEVISES, ET C'EST LICITE : ce sont des AFFAIRES, pas de l'argent. C'est le
@@ -692,11 +827,14 @@ function Mentions({
 	portee,
 	nomPortee,
 	vides,
+	surEspaces = false,
 }: {
 	readonly manques: { readonly sansMontant: number; readonly sansProbabilite: number }
 	readonly portee: PorteeUrl
 	readonly nomPortee: string | null
 	readonly vides: readonly NoeudCatalogue[]
+	/** `CRM-161` T3.d : l'écran porte sur plusieurs espaces lus — la phrase de portée le dit (§16.9.1). */
+	readonly surEspaces?: boolean
 }) {
 	return (
 		<div className="flex flex-col gap-1">
@@ -730,15 +868,7 @@ function Mentions({
 			  une concaténation : « a, b et c » n'est pas la même phrase dans deux langues, et le
 			  §23 de `CLAUDE.md` interdit de construire une phrase par concaténation.
 			*/}
-			{vides.length > 0 && (
-				<p data-testid="pilotage-noeuds-vides" className="text-[13px] text-text-2">
-					{t(vides.length > 1 ? 'pilotage.empty.nodes' : 'pilotage.empty.nodes.one', {
-						noeuds: new Intl.ListFormat('fr-FR', { style: 'long', type: 'conjunction' }).format(
-							vides.map((noeud) => noeud.libelle),
-						),
-					})}
-				</p>
-			)}
+			<NoeudsVides vides={vides} />
 			{/*
 			  LA PORTÉE DU CALCUL EST ÉCRITE, jamais supposée comprise — même place, même graduation
 			  et même motif qu'au §5.33 : l'entonnoir est calculé APRÈS la RLS (§5.3), et deux
@@ -754,7 +884,7 @@ function Mentions({
 			*/}
 			<p data-testid="pilotage-portee" className="text-[13px] text-text-2">
 				{portee.type === 'workspace' || nomPortee === null
-					? t('pilotage.scope')
+					? t(surEspaces ? 'pilotage.scope.spaces' : 'pilotage.scope')
 					: t(portee.type === 'track' ? 'pilotage.scope.track' : 'pilotage.scope.channel', {
 							nom: nomPortee,
 						})}

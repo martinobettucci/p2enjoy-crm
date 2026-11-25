@@ -4423,6 +4423,9 @@ export const fr = {
 	// portée workspace de la tranche 3 a, qui ne livre aucun sélecteur (§8).
 	'pilotage.scope':
 		'Ces nombres portent sur toutes les affaires actives que vous pouvez lire, tous tracks et tous channels confondus. Un collègue dont les droits diffèrent des vôtres lit d’autres totaux sur les mêmes données.',
+	// `CRM-161` T3.d (§16.9.1) — à partir de deux espaces lus : les nombres de tête portent sur les espaces affichés.
+	'pilotage.scope.spaces':
+		'Ces nombres portent sur toutes les affaires actives que vous pouvez lire dans les espaces affichés, tous tracks et tous channels confondus. Un collègue dont les droits diffèrent des vôtres lit d’autres totaux sur les mêmes données.',
 	// TRANCHE 3 b — la phrase NOMME la portée courante (§5.48 bis), là où la tranche 3 a déclarait
 	// l'espace de travail en dur. Le nom du track ou du channel est une DONNÉE, jamais une
 	// traduction (§10).
@@ -5339,6 +5342,9 @@ export const fr = {
 	'time.matrix.target': 'Track, channel ou affaire',
 	'time.matrix.total': 'Total',
 	'time.matrix.dayTotal': 'Total du jour',
+	// `CRM-161` T3.d (§16.9.2) — la grille de tous les espaces : la note des totaux, et le groupe d'une ligne sans espace connu.
+	'time.matrix.spacesNote': 'Le total de chaque jour compte tous vos espaces : la journée est de 7 heures au plus, espaces confondus.',
+	'time.matrix.noSpace': 'Autres lignes',
 	'time.hours.short': 'En heures',
 	'time.hours.toggle': 'Saisir le {jour} en heures',
 	'time.hours.locked': 'Le {jour} reste en heures : des saisies de ce jour ne tombent pas sur un quart.',

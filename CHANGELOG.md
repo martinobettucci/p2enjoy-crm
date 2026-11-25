@@ -40,6 +40,15 @@ d'exécuter le code attendu.
   Corrigé, il a révélé trois classes jamais engendrées, désormais remplacées : le retrait des listes à puces de « Plateforme ▸ Tracks » (`pl-6`), l'alignement de leur
   icône (`mt-[2px]`) et la largeur du champ de délai d'un palier de séquence (`w-[128px]`). Contrat §2.82.
 
+- **CRM-161 T3.d, le Pilotage et la saisie du temps de tous les espaces** : pour une personne de plusieurs espaces, le Pilotage
+  rassemble les affaires de tous — les deux nombres de tête sur tous les espaces affichés, puis une section par espace avec ses
+  propres étapes, un bouton « Espace » pour n'en garder que certains, la portée (track, channel) offerte quand un seul est gardé ;
+  la saisie du temps devient une grille de tous les espaces, groupée par espace, chaque case s'enregistrant dans l'espace de sa
+  ligne, les totaux du jour comptant tous les espaces ; « Saisir pour » range les collègues par espace administré ; le rapport de
+  temps propose les membres de tous les espaces administrés. **Le plafond de 7 heures par jour compte désormais tous les
+  espaces de la personne** (migration 203) : un refus ne dit ni les heures déjà saisies ni l'espace. Rien ne change pour une
+  personne d'un seul espace. Le manuel (chapitres 28 et 30) le décrit.
+
 ## [Publié]
 
 ### Déployé en production, 2026-11-24, tard — la webapp et le manuel

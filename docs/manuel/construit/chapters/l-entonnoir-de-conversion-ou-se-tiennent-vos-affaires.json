@@ -189,6 +189,105 @@
 					"content": [
 						{
 							"type": "text",
+							"text": "Si vous êtes membre de plusieurs espaces"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", l'écran les rassemble. Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", en tête, n'en garde que certains\n(« Changer d'espace », "
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 3"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Les deux nombres de tête — le prévisionnel\npondéré par devise et le taux de conversion — portent sur "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tous les espaces affichés"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : ils ne reposent que sur le genre des\nétapes (ouvert, gagné, perdu), le même dans chaque espace, et ne mélangent jamais deux devises. Suit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "une section par\nespace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", titrée de son nom : chacun a son propre catalogue d'étapes, ses entonnoirs par devise dans l'ordre de ce catalogue,\net ses étapes sans affaire. La "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "portée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — un track, un channel — appartient à un espace : le champ ne paraît que lorsque le\nbouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " n'en garde qu'un seul, avec les tracks et les channels de cet espace ; la choisir garde le filtre dans\nl'adresse. Pour une personne d'un seul espace, rien de cela ne paraît."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
 							"text": "Changer de portée ne recharge rien."
 						}
 					]

@@ -42472,3 +42472,23 @@ régression lancée pendant qu'une autre session recréait la base a rendu un ve
 l'appellent, et la reconstruction d'une autre session n'en faisait pas partie à ce moment ; la mesure a été rejouée une fois la base remontée ; (3) le journal
 d'audit de l'espace nomme la colonne `timezone` mais n'en recopie pas la valeur (`app.audit_configuration` ne le fait que pour sa liste courte) : acceptable pour T1,
 à reprendre si T2 veut afficher « de X à Y ». **Reste** : la livraison de la 204 et l'écran de T2.
+
+### `CRM-161` T3.d — les écrans : ce que le code a précisé, et les preuves qui lisaient un seul espace
+
+*2026-11-25, session 4891a451 (p2enjoy-crm-7a).*
+- **Ce que le code a précisé** (`docs/SPEC-espace-courant.md` §16.9, « Précisé au code »). Au Pilotage : la section d'un espace
+  reste rendue quand le filtre n'en garde qu'un, la phrase de portée de la tête nomme « les espaces affichés », les étapes sans
+  affaire se lisent par espace, une portée de l'adresse ne s'applique pas sans espace isolé. À la saisie : « Saisir pour » lit le
+  rôle de la personne dans chaque espace lu (`mon_role_espace`) puis les membres des seuls espaces administrés, la valeur d'une
+  option de collègue porte son espace (`espace|personne`), une ligne d'espace inconnu n'est jamais perdue, les flèches suivent
+  l'ordre affiché.
+- **Un choix qui reste à l'agent** : aucun filtre « Espace » sur la saisie (des totaux tous espaces resteraient sous un filtre).
+- **Les preuves qui lisaient un seul espace.** `pilotage.spec` et le scénario 30-31 du manuel supposaient que Camille ne lit
+  qu'un espace : ils ouvrent l'écran sous `?espaces=p2enjoy` (la portée n'existe que sur un espace isolé), et les adresses écrites
+  portent ce paramètre en dernier — sauf l'entrée par la barre latérale, qui n'en porte pas (S7, trouvé en l'exécutant).
+- **Un défaut de ma preuve, trouvé en l'exécutant** : une cellule remplie par `click` puis frappe ajoute à son contenu (la sélection
+  du champ part à l'image suivante) ; la preuve du dépassement remplit par `fill`.
+- **Un incident d'environnement, sans rapport avec le code** : la base de développement a été recréée à vide pendant mes preuves
+  (aucune commande de ma session n'en est la cause, voir le message à la session de livraison) ; le scénario 30-31 du manuel,
+  corrigé, attend le seed rejoué.
+

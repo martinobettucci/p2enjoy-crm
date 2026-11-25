@@ -773,6 +773,20 @@ la base (§16.9.3), sans changement de code : il reconnaît le refus par son mes
   dont la personne est administratrice**, dédoublonnés et rangés par nom, puis « Toute l'équipe » ; la lecture reste
   `temps_valorise` sous la RLS, qui ne rend à un administrateur que le temps des espaces qu'il administre.
 
+*Précisé au code le 2026-11-25 (7a)* :
+- **Pilotage** : la section d'un espace est rendue même quand le filtre n'en garde qu'un (son nom en `h2`, le niveau des titres de
+  devise passant à `h3`) ; la phrase de portée de la tête dit « dans les espaces affichés » à partir de deux espaces
+  (`pilotage.scope.spaces`) ; les étapes sans affaire sont lues **par espace affiché** (le catalogue de chacun), jamais sur les
+  lignes d'un autre ; sans espace isolé, la portée de l'adresse (`track=`, `channel=`) se résout sur l'espace entier, sans
+  erreur ; le vide sous le filtre ne s'applique qu'à une portée « espace entier » (une portée vide garde le sien).
+- **Temps ▸ Saisie** : la liste « Saisir pour » lit le rôle de la personne **dans chaque espace lu** (`mon_role_espace`, un
+  appel par espace), puis les membres des seuls espaces administrés ; la valeur d'une option de collègue est
+  `espace|personne` ; **une ligne dont l'espace n'est pas connu n'est jamais perdue** (un dernier groupe, « Autres lignes »,
+  comme l'affaire dont le channel n'est plus lisible) ; une note sous la grille dit que le total du jour compte tous les
+  espaces ; un déplacement aux flèches suit **l'ordre affiché**, d'un groupe au suivant.
+- **Les preuves qui lisaient l'espace du seed** (`pilotage.spec`) ouvrent l'écran sous `?espaces=p2enjoy` ; leurs adresses
+  attendues portent ce paramètre en dernier.
+
 #### 16.9.3 La migration — le plafond journalier compte tous les espaces de la personne
 
 - **`app.saisies_temps_plafond`** (redéfinie en dernier par la `0197`) est **remplacée** (`create or replace`, même

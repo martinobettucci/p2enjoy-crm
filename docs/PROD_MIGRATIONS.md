@@ -1730,7 +1730,19 @@ API `plafond-tous-espaces`.*
 | 3 | Relire | session de livraison | `app.saisies_temps_plafond()` sans filtre d'espace dans sa somme ; le message de refus `plafond journalier` |
 
 **Retour arrière** : rejouer la définition de la `0197` (`create or replace function app.saisies_temps_plafond()`).
-*Le Pilotage et Temps ▸ Saisie (webapp, manuel) compléteront cette section.*
+**La webapp et le manuel de T3.d** (`docs/SPEC-espace-courant.md` §16.9.1 et §16.9.2 ; `docs/DESIGN_SYSTEM.md` §5.115) : le Pilotage
+de tous les espaces — le bouton « Espace » en tête, la tête (prévisionnel, taux, mentions) sur tous les espaces affichés, une
+section par espace avec son catalogue, la portée offerte quand le filtre en isole un et gardant le filtre — ; Temps ▸ Saisie —
+la grille de tous les espaces, groupée par espace, chaque cellule écrite dans l'espace de sa ligne, les totaux tous espaces, « Saisir
+pour » groupé par espace administré — ; le choix de la personne du rapport de temps sur les membres de tous les espaces administrés.
+Le manuel construit (chapitres 28 et 30) part avec elle. **La webapp exige la 203** pour que le plafond de la grille tienne en
+base ; elle part avec elle ou après, jamais avant. Aucune autre migration, variable ni secret. *Complète en développement le
+2026-11-25 (7a).*
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 4 | Livrer la webapp et le manuel construit | session de livraison, après les gestes 1 à 3 | comme toute livraison de la webapp (§4) |
+| 5 | Constater | le responsable | une personne d'un seul espace voit le Pilotage et la saisie du temps inchangés ; une personne de deux espaces voit, au Pilotage, le bouton « Espace », une section par espace et la portée quand un seul est gardé ; à la saisie, les lignes groupées par espace, la note sous la grille, et « Saisir pour » groupé par espace administré |
 
 ### 2.82 `INC-314` et `INC-334`, lot A du tri des incohérences — trois classes d'interface retrouvées (EN ATTENTE)
 

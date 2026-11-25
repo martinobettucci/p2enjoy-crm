@@ -7,6 +7,8 @@
 // vide et son administratrice (montés puis démontés, comme au chapitre 7), un channel sans affaire (posé puis retiré
 // par la clé de service), et les deux réponses d'échec de la lecture — refus et panne —, que la page reçoit à la place
 // de celle du serveur pour la seule requête de l'entonnoir.
+// @spec CRM-161 (docs/BACKLOG.md) — tranche T3.d : RÉVISÉ le 2026-11-25 — Camille lit aussi « Studio Lumen » : les portées s'ouvrent sous
+//       `?espaces=p2enjoy` (la portée n'existe que sur un espace isolé, docs/SPEC-espace-courant.md §16.9.1 ; docs/manual.md §30.1)
 
 import { expect, test } from '@playwright/test'
 import { illustrer } from './illustrer'
@@ -62,7 +64,7 @@ test('l’entonnoir de tout l’espace : deux devises, le genre, le prévisionne
 
 test('la portée d’un track : le sélecteur, la phrase qui la nomme, les étapes sans affaire', async ({ page, request }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/pilotage?track=studio-web')
+	await page.goto('/pilotage?espaces=p2enjoy&track=studio-web')
 	const selecteur = page.getByTestId('pilotage-selecteur-portee')
 	await expect(selecteur).toBeVisible()
 	await illustrer(page, { chapitre: ENTONNOIR, section: S.portee, nom: 'portee', cibles: [selecteur] })
@@ -75,7 +77,7 @@ test('la portée d’un track : le sélecteur, la phrase qui la nomme, les étap
 	await service(request, 'post', 'channels', [
 		{ id: CHANNEL_VIDE, workspace_id: WORKSPACE_SEED, track_id: TRACK_FORMATION, workflow_id: WORKFLOW_GLOBAL, name: 'Ateliers', slug: 'ateliers-manuel' },
 	])
-	await page.goto('/pilotage?track=formation&channel=ateliers-manuel')
+	await page.goto('/pilotage?espaces=p2enjoy&track=formation&channel=ateliers-manuel')
 	const vide = page.getByText('Aucune affaire active dans cette portée').first()
 	await expect(vide).toBeVisible()
 	await illustrer(page, { chapitre: ENTONNOIR, section: S.portee, nom: 'portee-sans-affaire', cibles: [page.getByTestId('pilotage-selecteur-portee'), vide] })
@@ -83,7 +85,7 @@ test('la portée d’un track : le sélecteur, la phrase qui la nomme, les étap
 
 test('une portée sans affaire décidée, puis une portée sans affaire ouverte', async ({ page, request }) => {
 	await connecterAvecLeLabs(page, ADMIN)
-	await page.goto('/pilotage?track=conseil-ia&channel=prospection')
+	await page.goto('/pilotage?espaces=p2enjoy&track=conseil-ia&channel=prospection')
 	const decidee = page.getByText('Aucune affaire décidée à ce jour.')
 	await expect(decidee).toBeVisible()
 	await illustrer(page, { chapitre: PREVISIONNEL, section: S.taux, nom: 'aucune-affaire-decidee', cibles: [page.getByText('Taux de conversion des affaires décidées', { exact: true }), decidee] })
@@ -93,7 +95,7 @@ test('une portée sans affaire décidée, puis une portée sans affaire ouverte'
 		{ id: CHANNEL_VIDE, workspace_id: WORKSPACE_SEED, track_id: TRACK_FORMATION, workflow_id: WORKFLOW_GLOBAL, name: 'Ateliers', slug: 'ateliers-manuel' },
 	])
 	await poserAffaire(request, { id: AFFAIRE_LIVREE, titre: 'Atelier IA — Lycée Lumière', channel: CHANNEL_VIDE, workflow: WORKFLOW_GLOBAL, etape: ETAPE_LIVRE })
-	await page.goto('/pilotage?track=formation&channel=ateliers-manuel')
+	await page.goto('/pilotage?espaces=p2enjoy&track=formation&channel=ateliers-manuel')
 	const ouverte = page.getByText('Aucune affaire ouverte à ce jour.')
 	await expect(ouverte).toBeVisible()
 	await illustrer(page, { chapitre: PREVISIONNEL, section: S.pondere, nom: 'aucune-affaire-ouverte', cibles: [page.getByText('Prévisionnel pondéré', { exact: true }), ouverte] })

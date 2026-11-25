@@ -6345,6 +6345,12 @@ dépasserait la journée de 7 heures. »
 « Semaine précédente », « Semaine suivante » et « Cette semaine » changent de semaine ; l'adresse de l'écran garde la
 semaine affichée.
 
+**Si vous êtes membre de plusieurs espaces**, la grille les couvre tous : les lignes sont rangées **par espace**, chaque
+groupe s'ouvrant sur le nom de l'espace, dans l'ordre du menu des espaces. Chaque cellule s'enregistre dans **l'espace de sa
+ligne** — le temps passé sur un track de Studio Lumen est saisi dans Studio Lumen. Le total de chaque jour, au pied de la
+grille, compte **tous vos espaces** à la fois, et la limite de 7 heures aussi : une note sous la grille le rappelle. Cet écran
+de saisie n'a pas de bouton **Espace** : masquer un espace laisserait ses heures dans des totaux qui ne les montreraient plus.
+
 ### 28.2 Saisir une journée en heures
 
 Plus de quatre affaires dans la journée : cochez **« En heures »** sous le jour. Ses cellules se saisissent alors en
@@ -6358,6 +6364,13 @@ heures, au quart d'heure — « 1,5 » pour une heure et demie, « 0,25 » pour 
 Un administrateur dispose de **« Saisir pour »** : il choisit une personne, et un bandeau rappelle « Vous saisissez le
 temps de… ». Le produit garde la trace de qui a saisi. Un membre ne saisit que son propre temps, et seulement sur ce
 qu'il peut lire.
+
+**Si vous êtes membre de plusieurs espaces**, la liste groupe les collègues **par espace que vous administrez**, chaque
+groupe portant le nom de l'espace ; un espace que vous n'administrez pas n'y figure pas. Choisir un collègue **restreint la
+grille à son espace** : la saisie s'écrit dans cet espace, et la recherche d'affaire n'y propose que les affaires de cet
+espace. Revenir à votre propre nom rend la grille de tous vos espaces. La limite de 7 heures porte sur la journée entière de la
+personne, tous espaces confondus : si elle est atteinte par du temps saisi dans un autre espace, le refus le dit sans
+préciser ni les heures ni l'espace.
 
 ### 28.4 Le rapport mensuel
 
@@ -6378,8 +6391,8 @@ qui rend une section par personne.
 **Si vous êtes membre de plusieurs espaces**, le rapport rassemble le temps passé dans tous, et une dernière colonne,
 **Espace**, dit celui de chaque track, channel ou affaire. Le bouton **Espace**, après le choix de la personne, n'en garde
 que certains : les lignes et le total ne comptent plus que ces espaces. Si le mois n'a du temps que dans d'autres espaces,
-le rapport le dit, et propose d'afficher tous les espaces. Le choix de la personne, lui, reste celui des membres de
-l'espace où vous vous trouvez.
+le rapport le dit, et propose d'afficher tous les espaces. Le choix de la personne offre les membres de **tous les espaces
+que vous administrez**, sans doublon, puis **Toute l'équipe** ; un espace que vous n'administrez pas n'y figure pas.
 
 ![Une saisie sur une affaire rattachée à deux channels : la ligne de chacun, marquée « partagée », et le total qui la compte une fois](manuel/images/le-temps-passe-et-le-cout-du-personnel/rapport-partage.jpg)
 
@@ -6575,6 +6588,15 @@ reste de la page mesure : **tout l'espace de travail** — le défaut —, **un 
 channel**. Les options sont groupées par track, et chacune nomme son track : « Studio web — tout le
 track », « Studio web — Refonte de site ». Vous ne voyez que les tracks et les channels que vous
 avez le droit de lire.
+
+**Si vous êtes membre de plusieurs espaces**, l'écran les rassemble. Le bouton **Espace**, en tête, n'en garde que certains
+(« Changer d'espace », [chapitre 3](#naviguer-barre-laterale-onglets-etats)). Les deux nombres de tête — le prévisionnel
+pondéré par devise et le taux de conversion — portent sur **tous les espaces affichés** : ils ne reposent que sur le genre des
+étapes (ouvert, gagné, perdu), le même dans chaque espace, et ne mélangent jamais deux devises. Suit **une section par
+espace**, titrée de son nom : chacun a son propre catalogue d'étapes, ses entonnoirs par devise dans l'ordre de ce catalogue,
+et ses étapes sans affaire. La **portée** — un track, un channel — appartient à un espace : le champ ne paraît que lorsque le
+bouton **Espace** n'en garde qu'un seul, avec les tracks et les channels de cet espace ; la choisir garde le filtre dans
+l'adresse. Pour une personne d'un seul espace, rien de cela ne paraît.
 
 **Changer de portée ne recharge rien.** Les nombres se replient instantanément : l'écran a lu une
 seule fois, et la portée ne fait que choisir ce qu'il additionne. Les **deux nombres** du [chapitre 31](#le-previsionnel-pondere-et-le-taux-de-conversion)
