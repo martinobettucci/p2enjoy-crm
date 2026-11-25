@@ -5783,3 +5783,38 @@ peut pas faire est **refusée par la base** et dite sur la ligne du mail ; la fo
   observées aux quatre paliers.
 - **Seed** : aucun mail ajouté — les fils du seed, que le simulateur plane de façon déterministe, couvrent le parcours ; la preuve ne dépend pas
   d'un mail qu'elle n'a pas posé.
+
+### 36.9 La mise en œuvre de l'écran — tranche T2 (écrit le 2026-11-26, avant son code)
+
+*Décision 997.* Ce qui suit fixe la forme du code, pas le comportement (§36.1 à §36.8, `docs/SPEC-ia.md` §17).
+
+- **Un composant, `AssistantInbox`** (`webapp/src/app/AssistantInbox.tsx`), rendu **par `RouteInbox` seulement**, au même étage que les panneaux de la page ;
+  son état vit dans un hook, `useAssistantInbox`, que `RouteInbox` ne connaît pas. La lib sans rendu est `webapp/src/lib/assistant-inbox.ts` (T2, déjà écrite) :
+  lots, flux, états d'un fil, application, « Tout accepter ».
+- **Ce que `RouteInbox` lui passe** — rien de plus que ce qu'il passe déjà à `ActionsGroupees` (§5.109) : la **portée** de la sélection (`PorteeGroupee`,
+  dont `fils` : les fils cochés, ou `null` pour « tout le filtre »), l'**espace** courant, la personne (`idMoi`), la capacité d'**administrer** (qui rend « Bloquer
+  l'expéditeur » à la page) et un `onTermine` qui **relit la liste, ses compteurs et l'arborescence** après une action appliquée (§36.5). Il ne passe **aucun contenu
+  de mail** : l'assistant ne lit pas la liste, il envoie des clés de fil et la fonction `ia` lit (`docs/SPEC-ia.md` §17.3).
+- **« Tout le filtre »** (`fils: null`) : la bulle lit les clés par `inbox_assistant_threads` (51 au plus) ; **plus de 50**, elle le dit — « Ce filtre compte plus de
+  50 fils : cochez-en moins » — et n'offre pas de partir.
+- **La demande se suit par un état, pas par des effets** : `idle` → `en_cours` (lot *k* sur *n*, lots rendus, lots en échec, occupation) → `fini` ; **Annuler**
+  coupe le lot courant (`AbortController`) et n'envoie pas les suivants. **Changer de dossier, de filtre ou de sélection pendant une demande l'annule**, et fermer
+  la bulle aussi : le plan est un état d'écran (`docs/SPEC-ia.md` §17.8) — aucune copie dans `sessionStorage` ni `localStorage` (`CLAUDE.md` §11).
+- **La sélection change, le plan reste lisible** tant que la bulle est ouverte et qu'aucune nouvelle demande ne part : les lignes appliquées ou refusées gardent leur
+  place (§5.116). Une nouvelle demande **remplace** le plan ; elle est refusée tant que des actions sont en cours d'application.
+- **L'application** : `executeur.appliquer` appelle `inbox_bulk_apply` (`appelDeLAction`) avec la portée `{espace, dossier courant, threads: [le fil], snoozed: 'shown'}` ;
+  `bloque_expediteur` appelle `blocked_sender_impact` puis `block_sender` (`transferts-inbox.ts`). Les **refus** sont dits sur la ligne avec les phrases des actions
+  groupées (`inbox.bulk.refus.*`), les refus inconnus par « Cette action n'a pas pu être appliquée ».
+- **Les confirmations** (supprimer partout ; bloquer, avec son nombre de messages puis sa seconde confirmation) **réemploient les textes** de la page
+  (`CRM-151`, `CRM-156` T4) **et les mêmes fonctions de base**, dans un petit composant propre à l'assistant, sous la ligne du fil : le composant de la page n'est pas
+  extrait de ses 1 359 lignes pour cette unité. Les clés de traduction sont **`inbox.assistant.*`** pour tout ce qui est propre à la bulle (titre, états, lots, motifs
+  d'échec, annonces) ; aucune phrase n'est construite par concaténation (`CLAUDE.md` §23), les comptes s'accordent par clé (§10 du design system).
+- **Les identifiants de test** : `assistant-bulle`, `assistant-panneau`, `assistant-demande`, `assistant-envoyer`, `assistant-annuler`, `assistant-progression`,
+  `assistant-fil` (un par ligne, `data-fil` = la clé du fil), `assistant-accepter`, `assistant-refuser`, `assistant-tout-accepter`, `assistant-confirmation`,
+  `assistant-etat-indisponible`, `assistant-sans-selection`.
+- **Le clavier** : la bulle se joint par `Tab` en dernier de la page (après la liste) ; `Entrée` ou `Espace` l'ouvre, le focus entre sur le champ de demande ; `Échap`
+  ferme et rend le focus à la bulle ; dans le plan, `Tab` parcourt « Accepter » puis « Refuser » de chaque fil, puis « Tout accepter » ; après « Accepter », le focus
+  reste sur la ligne (jamais perdu quand le fil quitte la liste derrière).
+- **L'état de la fonction** : la bulle lit `GET /ia/etat` **à son ouverture** (`lireEtatAssistant`) ; il n'est pas relu en boucle.
+- **Les captures** (`docs/SPEC-captures.md`) : le panneau fermé (la bulle), ouvert sans sélection, prêt, un plan arrivé, un fil appliqué, une confirmation, l'état
+  dégradé, aux quatre paliers (§7 du design system) ; observées une à une (`CLAUDE.md` §16).
