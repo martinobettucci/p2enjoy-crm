@@ -13,6 +13,8 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+- **INC-142, le relevé des résidus de données** : `scripts/mesurer-residus.sh` relève les lignes de chaque table avant et après une exécution et nomme celles qu'une preuve laisse derrière elle ; `scripts/verify-residus.sh` le prouve (8 contrôles).
+  Outillage de développement : rien ne change dans le produit livré.
 - **CRM-161 T5, le manuel : « Changer d'espace » complète la liste des pages à bouton « Espace »** (décision 999) : les organisations, le rapport
   mensuel du temps et le Pilotage y entrent ; une capture du panneau du filtre ; créer depuis une page qui rassemble plusieurs espaces nomme
   l'espace de création ; la journée de 7 heures compte tous les espaces ; le chapitre du connecteur dit qu'un outil agit dans un seul espace et que

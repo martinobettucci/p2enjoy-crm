@@ -21053,3 +21053,10 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
       constatée sur le vrai Kong. Aucune reconstruction réelle rejouée pour cette preuve : elle est destructive, et la session de livraison la joue à sa campagne.
 - [x] **INC-366 b — `verify-rendu-modeles-emails.sh` ne dépose plus de résidu** : il dégrade depuis la définition en base (§3.7) au lieu de rejouer la `0056`.
       Rouge avant mesuré (2 surcharges), 32 contrôles verts après, la garde d'empreinte muette ; deux défauts latents corrigés (signature à quatre paramètres, compteur de modèles).
+
+## Correctif — INC-142 (2026-11-25, arbitré par la session de livraison)
+
+*Les preuves d'interface laissent des résidus de données ; rien ne les mesurait. Spécification : `docs/SPEC-test-harness.md` §3.11 ; fiche INC-142. Connecteur MCP : sans objet.*
+
+- [x] **INC-142 b — l'instrument** : `scripts/mesurer-residus.sh` (`relever`, `comparer`, `autour`), `scripts/verify-residus.sh` (8 contrôles verts). Mesuré : `administration-arborescence.spec.ts` ne laisse aucune ligne.
+- [ ] **INC-142 c — l'audit à la campagne complète** : jouer `scripts/mesurer-residus.sh autour -- <campagne>` à la prochaine campagne de la session de livraison, et corriger chaque suite nommée (purge par la clé de service dans son `finally`).

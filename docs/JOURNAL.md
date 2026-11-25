@@ -42542,3 +42542,9 @@ sections §5.13, §5.25 et §5.34 ont été relues (la règle de focus ne change
 **Fait** : lecture complète du fichier (9 347 lignes, §1 à §5.116 et §12), le diff d'`INC-194` vérifié contre lui. **Verdict : aucun écart.** Le diff applique §5.13 (le focus entre dans le premier champ et revient à la commande qui a ouvert),
 §5.25 (retour différé d'un tour de rendu, aucune temporisation), §5.34 (formulaire replié, commande et formulaire s'excluent) et §5.35, dont il transpose le patron ; il n'ajoute ni jeton, ni icône, ni texte, ni changement visuel (§1, §9, §10), et la règle des deux commandes est écrite au §5.34.
 **Ce que la lecture a aussi relevé, hors du périmètre d'`INC-194`** : le §5.116 (`CRM-166`, session `7a`, écrit avant le code) parle de « la teinte `warning-soft` de l'avertissement du §5.110 » ; le §1 ne déclare aucun jeton `warning` — l'avertissement du §5.110 emploie `--color-accent-soft` / `--color-accent-on-soft`. Signalé à `7a` avant l'écriture de l'écran.
+
+### `INC-142` b — le relevé des résidus de données
+
+*2026-11-25, session `p2enjoy-crm-dd`.* **Le problème** : la fiche demandait de purger les résidus des preuves d'interface, sans moyen de dire lesquelles en laissent. **Observations** : la base de dev porte 40 tables avec des lignes hors `5eed…`, mais ce sont des lignes
+que le seed crée par les vraies fonctions (identifiants tirés au hasard) et des tables que l'application remplit d'elle-même — aucune signature de preuve (`E2E`, `sonde`) dans les tables structurantes ; la preuve citée par la fiche ne laisse plus rien. **La décision** : mesurer avant de corriger — un relevé des identifiants par table, avant et après,
+sur le modèle de la garde d'empreinte, et le jouer à la campagne complète plutôt que de relancer 322 suites une à une sur une pile partagée. **Vérifié** : `verify-residus.sh` 8 contrôles ; l'outil muet à vide ; la preuve d'arborescence propre. **Reste** : l'audit à la campagne (INC-142 c).

@@ -416,6 +416,21 @@ auraient été refusés — des migrations de fonctions sans effet sur les types
 seule refusée (message nommant la migration, les types et le marqueur) ; les types dans un commit distinct ne suffisent pas ; la
 migration et ses types acceptées ; le marqueur accepté ; un commit sans migration et un retrait libres. Connecteur MCP : sans objet.
 
+### 3.11 Les résidus de DONNÉES se mesurent — le relevé avant et après (INC-142, décision 992)
+
+*Écrite le 2026-11-25, avant le code.* La garde d'empreinte (§3.8) mesure la **structure** de la base ; rien ne mesurait ses **données**. Or une preuve qui crée une ligne qu'aucun `DELETE` client ne retire — un track, un channel, une carte,
+un contact — la laisse derrière elle, et toute assertion à compteur d'une autre suite devient rouge sans que la preuve fautive soit nommée (INC-142, mesuré le 2026-08-14 : `public.tracks` portait 7 lignes pour 5 attendues).
+
+**L'outil.** `scripts/mesurer-residus.sh` relève, pour chaque table de `public` portant un `id` uuid, les identifiants de ses lignes (`relever <fichier>`), puis compare l'état courant à un relevé (`comparer <fichier>`) : les lignes AJOUTÉES et
+RETIRÉES, table par table, avec un aperçu des trois premières lignes ajoutées (la ligne en JSON, tronquée) — de quoi nommer la preuve fautive. `autour -- <commande…>` relève, joue la commande et compare ; il rend 1 si la commande échoue
+OU si elle laisse un écart. **Les tables exclues** sont celles que l'application remplit d'elle-même, sans qu'une preuve en soit responsable : `card_events`, `notifications`, `sessions_sso`, `webhook_deliveries`, `profiles`.
+**La règle de purge** que la fiche posait reste : une preuve qui crée une ligne inaccessible au `DELETE` client la purge par la clé de service dans son `finally`.
+
+**Mesuré à l'écriture** (2026-11-25) : sur la base de développement, 543 lignes relevées ; `e2e/ui/administration-arborescence.spec.ts`, la preuve même que la fiche citait (10 scénarios), joué sous l'outil **ne laisse aucune ligne** — la purge par la clé de service y est
+désormais faite. **Preuve de l'outil** : `scripts/verify-residus.sh` (8 contrôles) — il se tait à vide, nomme la table, le compte et la ligne d'un résidu déposé, se tait de nouveau une fois la ligne retirée, rend 1 pour une commande qui réussit en laissant une ligne,
+rend un échec pour une commande qui échoue, et ne relève pas les cinq tables exclues. **Ce que cela ne prouve pas** : que chacune des 322 suites est propre — cela se joue à la campagne complète de la session de livraison, `autour -- <campagne>`, qui nomme alors chaque table et chaque ligne
+laissée. Connecteur MCP : sans objet.
+
 ## 4. Projets Playwright
 
 ### 4.1 Une seule configuration

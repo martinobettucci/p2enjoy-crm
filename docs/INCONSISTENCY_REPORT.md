@@ -1754,6 +1754,10 @@ les commentaires : c'est le seul chemin qui le peut, et il existe. À défaut, l
 tous filtrer sur `id like '5eed%'` — ce qui les rendrait aveugles aux résidus au lieu de les dénoncer.
 La première voie est la bonne ; la seconde renoncerait à ce que ces compteurs servent.
 
+**Instrument livré le 2026-11-25 — INC-142 b, session `p2enjoy-crm-dd`.** Ce qui restait dû — « généraliser la purge », sans moyen de dire quelles suites laissent quoi — a maintenant son instrument : `scripts/mesurer-residus.sh` (`relever`, `comparer`,
+`autour -- <commande>`), prouvé par `scripts/verify-residus.sh` (8 contrôles) ; `docs/SPEC-test-harness.md` §3.11. **Mesuré** : la preuve d'interface que la fiche citait, `administration-arborescence.spec.ts`, ne laisse plus aucune ligne. **Reste** : jouer l'instrument
+autour de la **campagne complète** (`scripts/mesurer-residus.sh autour -- <la campagne>`), qui nomme chaque table et chaque ligne laissée ; chaque suite nommée se corrige alors par la purge de la clé de service. **Statut : instrument livré, audit à jouer à la campagne de la session de livraison.**
+
 ### INC-123 — l'hôte de vérification ne porte pas le navigateur qu'exige `@playwright/test` 1.62.1
 
 *Porteur : `CRM-008` (harnais de preuves). Mesuré le 2026-08-16, campagne complète.*
