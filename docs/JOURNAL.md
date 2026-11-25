@@ -42386,6 +42386,21 @@ que la structure des scripts ne garantit pas ; (2) la garde Playwright ne peut p
 configuration est chargée par le processus principal avant tout scénario, et c'est là qu'elle se pose ; (3) `INC-184` (comparaisons
 dans `className`) est déjà en cours chez une autre session (`classes-css.mjs`, lot A de 2026-11-25) : non reprise ici.
 
+### décision 995 — `INC-125` et `INC-141` : les compteurs de harnais se dérivent, ils ne se retiennent plus
+
+*2026-11-25, session `p2enjoy-crm-dd`, sur la consigne de la session de livraison (priorité : les preuves à compteur figé).*
+**Le problème.** `verify-harness.sh` portait cinq littéraux (123 fichiers, 4619 assertions, 1288, 1037 et 49 scénarios), et
+`verify-colonnes-protegees.sh` en comptait 41 cards seedées : chaque unité qui ajoutait une suite ou une card les rendait faux, et
+les harnais rougissaient de leur propre succès (INC-101, INC-125, INC-141, INC-155, INC-162, INC-163). Mesure du jour : 177
+fichiers et 5732 assertions réels contre 123 et 4619 écrits.
+**Les options.** (1) Réviser les littéraux, encore une fois — la dérive revient à la prochaine unité ; (2) les retirer — la garde
+« tout ce qui est déclaré s'exécute » disparaît ; (3) les DÉRIVER de sources indépendantes de l'exécution jugée : fichiers sur le
+disque, somme des `plan(N)` déclarés, énumération `--list` ; pour les cards, l'instantané relevé à l'ouverture. **Retenu : (3).**
+**Ce qui est perdu** : le harnais ne refuse plus qu'une unité ajoute ou retire une suite ; cela se voit au diff.
+**Vérifié** : section 6 de `verify-colonnes-protegees.sh` rejouée sur un seed simulé (3 ECHEC avant, 3 OK après, et ECHEC si une
+card apparaît) ; `npm run test:sql` rend 177 / 5732, égal aux valeurs dérivées. **Reste** : le rejeu complet des deux harnais sur la
+pile, en fenêtre. Connecteur MCP : question 1 = non (outillage), question 2 = sans objet.
+
 ### `INC-314`, `INC-334` — le contrôle des classes, corrigé (lot A du tri)
 
 *2026-11-25, session d5b44a2d (p2enjoy-crm-30), décision 992 et consigne de la session de livraison.*
@@ -42397,12 +42412,4 @@ dans `className`) est déjà en cours chez une autre session (`classes-css.mjs`,
   déplacement) et `w-32` (champ de délai d'un palier). L'échelle d'espacement est close (§3) : `pl-6`, `mt-[2px]` (précédent `OutboxInbox`) et `w-[128px]`.
 - **Les preuves.** Quatre des huit tests rouges sur l'ancien script ; le contrôle rejoué sur un build neuf ; deux E2E d'interface ; captures observées.
 - **La lecture du design system** : sections ciblées (§3, §11, §5.29 et les passages sur ces écrans), sur arbitrage du responsable.
-
-### décision 992, suite — `INC-131` et `INC-148` mises en œuvre
-
-*2026-11-25, session `p2enjoy-crm-dd`.* **INC-131** : le contrôle de date natif est écrit au design system (`docs/DESIGN_SYSTEM.md` §10, « Dates
-et heures »), la fiche est close. **INC-148** : la règle « pour une unité d'infrastructure, son harnais dédié tient lieu de test unitaire »
-est écrite à `docs/SPEC-test-harness.md` §7.3, avec ses quatre bornes (harnais nommé, verdict chiffré, contrôles qui mordent, logique
-applicative exclue) et le harnais de chacune des quatorze unités ; `CRM-070` n'est plus un écart, `CRM-011` pointe `verify-session-sso.sh`
-et `verify-authz.sh`. `CLAUDE.md` n'est pas modifié : la règle vit dans la spécification des tests. Connecteur MCP : sans objet.
 

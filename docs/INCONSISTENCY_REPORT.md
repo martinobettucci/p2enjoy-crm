@@ -1272,11 +1272,6 @@ tomber le compteur à zéro. Un test qui affirmerait qu'un script existe, ou qu'
 compile, serait exactement l'assertion qui ne peut pas échouer décrite en INC-146 et INC-147. Le
 défaut est nommé ; il n'est pas maquillé.
 
-**ARBITRÉE par le responsable le 2026-11-25 (décision 992) et MISE EN ŒUVRE : pour une unité d'infrastructure, son harnais dédié tient lieu de test
-unitaire ; écarté : rouvrir les quatorze unités. CLOSE.** La règle, ses bornes et le harnais de chacune des quatorze unités sont écrits à
-`docs/SPEC-test-harness.md` §7.3. Au passage, `CRM-070` n'est plus un écart (deux tests unitaires la citent), et `CRM-011` pointe désormais
-`verify-session-sso.sh` et `verify-authz.sh` — `verify-auth.sh` n'existe plus.
-
 ### INC-147 — La preuve de refus n° 9 mesure une absence, pas un refus
 
 **Nature :** assertion trop large sur un objet jamais créé ; la preuve ne peut pas échouer.
@@ -1889,6 +1884,14 @@ passage. Les remettre à jour sans traiter la cause — la révision qui n'est d
 reviendrait à repousser la même dérive d'une poignée d'unités. Le porteur est `CRM-008`, l'unité du
 harnais de tests.
 
+**ARBITRÉE ET MISE EN ŒUVRE le 2026-11-25 (décision 995), session `p2enjoy-crm-dd`.** Les cinq compteurs de `scripts/verify-harness.sh` ne sont plus
+des littéraux : les fichiers sont comptés sur le disque, les assertions sont la somme des `select plan(N)` que les suites déclarent
+(chaque suite en porte exactement un, sinon le harnais s'arrête), les scénarios sont ce que `playwright test --list` énumère
+(section 2 bis). La garde garde son objet — tout ce qui est déclaré s'exécute —, et ne demande plus à personne de réviser un
+nombre. **Mesuré** : sur disque 177 fichiers et 5732 assertions déclarées ; `npm run test:sql` rend « 177 fichiers, 5732 assertions,
+aucune anomalie » ; les anciens littéraux (123 et 4619) étaient faux de 54 fichiers et 1113 assertions. **Reste** : le rejeu complet du harnais
+sur la pile, en fenêtre de la session de livraison.
+
 ---
 
 ### INC-126 — la proposition de clé est inutilisable pour tout libellé portant « œ »
@@ -2181,11 +2184,6 @@ cette tranche — porte exactement le même gabarit `mm/dd/yyyy`. Le contrôle d
 n'a donc rien introduit : il a rendu visible un comportement que le produit portait déjà partout où
 il emploie un contrôle de date natif. L'arbitrage attendu porte en conséquence sur **tous** ces
 contrôles, non sur le seul champ de `CRM-040`.
-
-**ARBITRÉE par le responsable le 2026-11-25 (décision 992) : garder le contrôle de date natif ; écarté : un composant de date maison. CLOSE.** La règle est écrite
-au `docs/DESIGN_SYSTEM.md` §10 (« Dates et heures ») : le gabarit suit la langue du navigateur de la personne ; les captures du
-projet `manuel` sont prises en français (`e2e/playwright.config.ts`, `docs/SPEC-manual.md` §11.4), celles des autres projets montrent le gabarit du
-navigateur du harnais.
 
 ## Consignés le 2026-08-16 — deux constats du harnais, étrangers à `CRM-040`
 
@@ -2559,6 +2557,13 @@ seules, non sur une comparaison avant/après.
 **Arbitrage demandé** : les trois compteurs figés doivent-ils être portés à 41, ou remplacés par
 une propriété qui ne dépend pas du volume du seed — la leçon que la tranche 2 a avait déjà tirée
 pour ses suites pgTAP ?
+
+**ARBITRÉE ET MISE EN ŒUVRE le 2026-11-25 (décision 995), session `p2enjoy-crm-dd` — la propriété, non le volume.** Les trois assertions de la section 6 de
+`scripts/verify-colonnes-protegees.sh` comparent désormais à l'instantané `CARDS_A_L_OUVERTURE`, relevé avant que le harnais ne
+touche quoi que ce soit (mécanisme d'INC-155 et de la décision 497) : plus aucun littéral, donc plus de dérive. **Preuve** : la
+section 6 rejouée sur un seed simulé à 46 cards — l'ancienne rend 3 ECHEC, la nouvelle 3 OK — et elle ROUGIT encore quand une
+card apparaît (47 contre 46). **Reste** : le rejeu complet du harnais sur la pile (il reconstruit la base), en fenêtre de la session de
+livraison.
 
 ### INC-139 — `verify-board.sh` complet : trois contrôles de plus rendent rouge, tous préexistants
 
