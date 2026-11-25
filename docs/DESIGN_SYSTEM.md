@@ -3690,6 +3690,10 @@ modale**, focus entrant dans le premier champ et rendu à la commande qui l'a ou
   surface est d'abord une lecture, et un formulaire toujours déployé pousserait la liste sous la
   ligne de flottaison à chaque visite. Le retour du focus est **différé d'un tour de rendu** — la
   commande est démontée pendant l'ouverture, le remède du §5.25, **aucune temporisation**.
+  **Deux commandes ouvrent ce formulaire, et une seule survit à l'ouverture** (INC-194) : celle d'une ligne reste montée, celle du bas
+  — ou celle de l'état vide, qui occupe la même place — est détruite. Garder la référence capturée au clic rendrait le focus à un nœud détaché,
+  donc au document. La commande du bas porte sa **propre** référence, que React réassigne au nœud neuf quand elle remonte, et l'origine retient
+  **laquelle** des deux a ouvert ; même patron que `ReglagesIdentitesMail` (§5.35).
 
 - **UNE SEULE COMMANDE D'ENREGISTREMENT, contrairement au §5.7 ter.** L'écart est écrit pour qu'on
   ne recopie pas un patron sans son motif : la fonction d'écriture prend **six paramètres à la
@@ -7889,7 +7893,7 @@ ce qu'on ne le croie jamais envoyé.
     `draft_not_found`, que l'écran ne distingue pas) ; la liste est relue.
   - **Les commandes suivent la capacité d'écrire l'affaire** (§5.59) : refusée, le formulaire est rendu inactif avec le
     motif de la fiche, et « Écarter » reste offert — écarter son propre brouillon n'écrit rien sur l'affaire.
-- **L'ADRESSE `/inbox?brouillon=<id>`** ouvre directement la relecture — c'est le lien que l'assistant donne. Le paramètre
+- **L'ADRESSE `/<slug-de-l'espace>/inbox?brouillon=<id>`** (`CRM-161` ; l'ancienne `/inbox?brouillon=<id>` est redirigée vers l'espace du mail) ouvre directement la relecture — c'est le lien que l'assistant donne (`CRM-161` T4 : le connecteur le rend préfixé du slug). Le paramètre
   se lit au montage et se retire aussitôt, comme `message` (§15 de `docs/SPEC-recherche.md`) ; sous 1024 px, on arrive sur
   la relecture, pas sur les dossiers. Un mail introuvable, écarté, envoyé ou à autrui rend, dans le troisième panneau,
   l'état vide « Ce mail préparé n'est plus en attente. » avec, s'il en reste, l'entrée qui mène aux autres : rien ne

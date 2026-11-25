@@ -39,6 +39,10 @@
 # @spec CRM-155 (docs/BACKLOG.md) — tranche T2 : `labels` sur `crm_card_mail_list` — les messages qui portent l'une des
 #       pastilles, posée (OU) — et les pastilles posées de chaque message rendu (docs/SPEC-mcp.md §9.2 duovicies, révisé ;
 #       docs/SPEC-mail-subsystem.md §31.12.5 ; décisions 943 et 948)
+# @spec CRM-161 (docs/BACKLOG.md) — tranche T4 : `lien_de_relecture` porte le slug de l'espace du mail préparé
+#       (`{origine}/<slug>/inbox?brouillon=…`), lu sous le jeton de la personne AVANT toute écriture (`slug_de_l_espace`) ;
+#       docs/SPEC-espace-courant.md §17.3 ; docs/SPEC-mcp.md §9.2 « L'espace courant » ; docs/SPEC-mails-prepares.md §6.1 ;
+#       décision 998
 """La messagerie d'une affaire, sous l'identité de la personne : lire son fil, lire un message, PRÉPARER un email.
 
 Le connecteur n'envoie jamais (`CRM-128`, décision 829) : `public.prepare_email` écrit un mail préparé, que seule la
@@ -307,12 +311,26 @@ def _refus_envoi(reponse: Reponse, valeur: str, genre: str = "card") -> ToolErro
     return traduire_refus(reponse, genre, valeur)
 
 
-def lien_de_relecture(origine_webapp: str, brouillon: str) -> str:
-    """L'adresse qui ouvre la relecture d'un mail préparé dans l'inbox (docs/SPEC-mails-prepares.md §6.1)."""
-    return f"{origine_webapp}/inbox?brouillon={quote(brouillon, safe='')}"
+def lien_de_relecture(origine_webapp: str, slug_espace: str, brouillon: str) -> str:
+    """L'adresse qui ouvre la relecture d'un mail préparé dans l'inbox de son espace (docs/SPEC-mails-prepares.md §6.1 ;
+    docs/SPEC-espace-courant.md §17.3 : le slug de l'espace précède `/inbox` depuis `CRM-161` T4, décision 998)."""
+    return f"{origine_webapp}/{quote(slug_espace, safe='')}/inbox?brouillon={quote(brouillon, safe='')}"
 
 
-def brouillon_lu(b: dict[str, Any], origine_webapp: str) -> dict[str, Any]:
+async def slug_de_l_espace(crm: ClientCrm, appel: Any) -> str:
+    """Le slug de l'espace de l'appel, lu SOUS LE JETON DE LA PERSONNE (la RLS répond : docs/SPEC-espace-courant.md §17.3).
+
+    Une lecture qui échoue, ou qui ne rend pas exactement un slug, est un refus : jamais un retour à l'ancienne adresse
+    `/inbox`, qui dissimulerait l'écart. Appelée AVANT toute écriture : un mail préparé ne doit pas exister sans son lien."""
+    reponse = await crm.lire(appel.jeton, "workspaces", {"id": f"eq.{appel.espace}", "select": "slug"})
+    ligne = _une_ligne(reponse, "workspace", appel.espace)
+    slug = ligne.get("slug")
+    if not isinstance(slug, str) or not slug:
+        raise RefusCrm(introuvable("workspace", appel.espace))
+    return slug
+
+
+def brouillon_lu(b: dict[str, Any], origine_webapp: str, slug_espace: str) -> dict[str, Any]:
     affaire = b.get("card") if isinstance(b.get("card"), dict) else {}
     return {
         "id": b["id"],
@@ -324,7 +342,7 @@ def brouillon_lu(b: dict[str, Any], origine_webapp: str) -> dict[str, Any]:
         "excerpt": extrait(b.get("body_text") or ""),
         "origin": b.get("origin"),
         "created_at": b.get("created_at"),
-        "review_url": lien_de_relecture(origine_webapp, b["id"]),
+        "review_url": lien_de_relecture(origine_webapp, slug_espace, b["id"]),
     }
 
 
@@ -663,6 +681,8 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_w
                 subject = objet_de_reponse(origine.get("subject"))
         if subject is None or not subject.strip():
             raise RefusArgument("Give a subject.")
+        # `CRM-161` T4 : le slug de l'espace, AVANT toute écriture — un mail préparé ne doit pas exister sans son lien.
+        slug_espace = await slug_de_l_espace(crm, appel)
         identites = _lignes(
             await crm.lire(
                 appel.jeton,
@@ -713,7 +733,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_w
             "bcc": copies_cachees,
             "subject": subject.strip(),
             "attachments": [{"filename": nom, "size_bytes": len(contenu)} for nom, contenu, _ in fichiers],
-            "review_url": lien_de_relecture(origine_webapp, str(reponse.corps)),
+            "review_url": lien_de_relecture(origine_webapp, slug_espace, str(reponse.corps)),
             "note": NOTE_RELECTURE,
         }
 
@@ -754,11 +774,12 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm, origine_w
         }
         if card_id is not None:
             parametres["card_id"] = f"eq.{card_id}"
+        slug_espace = await slug_de_l_espace(crm, appel)
         lignes = _lignes(await crm.lire(appel.jeton, "mail_drafts", parametres), "workspace", workspace)
         return {
             "offset": offset,
             "has_more": len(lignes) > limit,
-            "drafts": [brouillon_lu(b, origine_webapp) for b in lignes[:limit]],
+            "drafts": [brouillon_lu(b, origine_webapp, slug_espace) for b in lignes[:limit]],
         }
 
     moteur.enregistrer(

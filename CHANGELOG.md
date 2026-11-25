@@ -13,6 +13,13 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+- **INC-194, le focus revient à la commande du bas** : sur l'écran des comptes entrants, annuler le formulaire ouvert depuis la commande du bas (ou celle de l'état vide) rend le focus à cette commande,
+  au lieu de le perdre sur la page. Accessibilité clavier ; aucun changement visuel.
+- **CRM-161 T4, le connecteur : le lien de relecture d'un mail préparé porte le slug de l'espace** (décision 998) : `crm_mail_prepare` et
+  `crm_mail_draft_list` rendent `<site>/<slug de l'espace>/inbox?brouillon=<id>` — l'adresse définitive, qui ouvre la relecture dans l'espace du
+  mail sans passer par la redirection ; le slug est lu sous le jeton de la personne avant de préparer quoi que ce soit, et un slug illisible refuse
+  au lieu de retomber sur l'ancienne adresse. L'audit des 135 outils du catalogue (29 ancrés sur un espace nommé, 104 sur un objet, 2 multi-espaces)
+  devient une garde automatique. Aucune famille, aucune case, aucun outil nouveau ; image `mcp` à redéployer (contrat §2.84).
 - **INC-126, la proposition de clé translittère les ligatures** : « Nœud de preuve » propose `noeud-de-preuve` (et non plus `n-ud-de-preuve`) ; `œ`, `æ` et `ß` deviennent `oe`, `ae` et `ss` dans la clé proposée d'un nœud,
   d'un track ou d'un channel. La proposition reste modifiable ; aucun slug existant ne change.
 - **INC-366, une reconstruction ne laisse plus une base vide en silence** : `reconstruire_base_dev` attend qu'une route REST réponde en JSON avant de seeder,

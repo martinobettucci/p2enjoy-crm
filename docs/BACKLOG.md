@@ -20699,12 +20699,18 @@ livraison (décision 830).
   - **Les identités d'expédition du formulaire d'envoi** : `FormulaireEnvoi` lit encore celles de la personne dans tous ses
     espaces — limite nommée par la décision 975 (`docs/SPEC-espace-courant.md` §15.4 bis), sans effet tant qu'une personne
     n'a d'identité que dans un espace.
-- [@] **T4 — Le connecteur.** Audit outil par outil (`docs/SPEC-mcp.md` §9.2), lien préfixé de `crm_mail_prepare`.
+- [~] **T4 — Le connecteur.** Audit outil par outil (`docs/SPEC-mcp.md` §9.2), lien préfixé de `crm_mail_prepare`.
   *Spécifiée le 2026-11-25 avant le code* (`docs/SPEC-espace-courant.md` §17 ; `docs/SPEC-mcp.md` §9.2 « L'espace courant » ;
   décision 998) : aucun outil, aucune famille, aucune case ; le lien de `crm_mail_prepare` et de `crm_mail_draft_list` devient
   `{SITE_URL}/<slug>/inbox?brouillon=…` (slug lu sous le jeton de la personne, avant `prepare_email`, refus sinon) ; l'audit des
   135 outils (29 / 104 / 2) devient une garde automatique ; intégration sur les deux espaces du seed. Image `mcp` à redéployer.
-  *Prise en charge : p2enjoy-crm-7a (4891a451) depuis 2026-11-25 — état avant : [ ]*
+  **T4 est complète en développement (2026-11-25, 7a)** : `slug_de_l_espace` et `lien_de_relecture` préfixé (`mcp/crm_mcp/outils/messagerie.py`) ;
+  unitaires du connecteur 477 verts dont les 3 de T4 (rouges avant), la garde d'audit `test_espace_courant.py` (6, mutation vérifiée :
+  un outil ancré sur un espace qui ignore `appel.espace` la rougit) ; intégration `test_integration_espace_courant.py` (2) et
+  `test_integration_messagerie.py` / `test_integration_structure.py` rejouées (22 verts) contre la vraie base, le vrai Keycloak et le
+  service `mcp` reconstruit, sous le jeton de Camille, deux espaces du seed ; la webapp ouvre l'adresse préfixée (E2E `mails-prepares`
+  existant, non rejoué : rien n'a changé côté webapp). **Reste** : la livraison de l'image `mcp` (contrat §2.84) et le constat du responsable ;
+  la campagne complète `verify-mcp.sh` est celle de la session de livraison.
 - [ ] **T5 — Le manuel et la livraison.** Chapitre « Changer d'espace », contrat, remise à la session de livraison.
 
 ### CRM-162 — Déplacer un track entier d'un espace à un autre, par le super-administrateur `[P]`

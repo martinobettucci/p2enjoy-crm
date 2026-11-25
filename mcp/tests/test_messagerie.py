@@ -29,6 +29,10 @@
 # @verifies CRM-139 (docs/BACKLOG.md) — `only_me` sur `crm_card_mail_list` : faux par défaut, vrai il demande la
 #           colonne calculée `concerns_me` à la base, et sans identité personnelle la réponse vide le dit ;
 #           docs/SPEC-mcp.md §9.2 duodevicies ; docs/SPEC-mail-subsystem.md §27.2 ; décision 902
+# @verifies CRM-161 (docs/BACKLOG.md) — tranche T4 : le lien de relecture porte le slug de l'espace
+#           (`{origine}/<slug>/inbox?brouillon=…`), lu sous le jeton de la personne AVANT `prepare_email` ; un slug illisible
+#           refuse sans rien préparer ; docs/SPEC-espace-courant.md §17.3 ; docs/SPEC-mcp.md §9.2 « L'espace courant » ;
+#           docs/SPEC-mails-prepares.md §6.1 ; décision 998
 """Le CRM simulé rend le fil d'une affaire (un message texte, un message HTML seul, une pièce jointe), un message d'une
 autre affaire, et trois identités dont celle d'une collègue ; la vraie base est éprouvée par
 `tests/test_integration_messagerie.py`."""
@@ -55,7 +59,7 @@ from crm_mcp.outils.messagerie import corps_affichable, extrait, objet_de_repons
 from crm_mcp.politique import MoteurPolitique, PolitiqueOutils
 from crm_mcp.registre import Registre
 
-from .conftest import CLE_ANONYME, CLE_SERVICE, ESPACE_A, SECRET, CrmSimule
+from .conftest import CLE_ANONYME, CLE_SERVICE, ESPACE_A, ESPACE_B, SECRET, CrmSimule
 
 THOMAS = Identite("sujet-thomas", "thomas@exemple.test", "Thomas", True, False, 4_000_000_000)
 CARD = "a0000000-0000-4000-8000-0000000000c1"
@@ -407,7 +411,7 @@ async def test_la_preparation_passe_par_prepare_email_avec_l_identite_designee(m
                                        "p_bcc": []}
     assert (rendu["draft_id"], rendu["status"], rendu["from_address"]) == ("draft-1", "pending_review", "Thomas@Atelier.test")
     # LE LIEN DE RELECTURE, et la phrase qui dit que rien n'est parti (docs/SPEC-mails-prepares.md §5).
-    assert rendu["review_url"] == "https://crm.exemple.test/inbox?brouillon=draft-1"
+    assert rendu["review_url"] == "https://crm.exemple.test/atelier/inbox?brouillon=draft-1"
     assert rendu["note"].startswith("This email is NOT sent.")
     # JAMAIS LA FILE D'ENVOI.
     assert monde.simule.fonctions == ["prepare_email"]
@@ -571,13 +575,36 @@ async def test_la_liste_rend_ses_mails_en_attente_avec_leur_lien(monde: Monde) -
         BROUILLON, CARD, "Refonte", ["a@b.test"], "mcp"
     )
     assert brouillon["excerpt"].startswith("Bonjour, voici yyy") and len(brouillon["excerpt"]) == 280
-    assert brouillon["review_url"] == f"https://crm.exemple.test/inbox?brouillon={BROUILLON}"
+    assert brouillon["review_url"] == f"https://crm.exemple.test/atelier/inbox?brouillon={BROUILLON}"
     lecture = next(p for n, p in monde.simule.lectures if n == "mail_drafts")
     # SEULS LES MAILS EN ATTENTE, de l'espace résolu, de l'affaire demandée, du plus ancien au plus récent ; la RLS fait
     # le reste (la personne seule).
     assert (lecture["workspace_id"], lecture["status"], lecture["card_id"], lecture["order"], lecture["limit"]) == (
         f"eq.{ESPACE_A}", "eq.pending", f"eq.{CARD}", "created_at.asc,id.asc", "6"
     )
+
+
+async def test_le_lien_de_relecture_porte_le_slug_de_l_espace_du_mail(monde: Monde) -> None:
+    """`CRM-161` T4 : la liste de l'espace « bureau » rend un lien `/bureau/inbox`, jamais `/atelier/` ni l'ancienne adresse."""
+    monde.simule.membres["sujet-thomas"][ESPACE_B] = "editor"
+    monde.simule.droits |= {("sujet-thomas", ESPACE_B, "messagerie", "consulter")}
+    monde.simule.brouillons = lambda: [{
+        "id": BROUILLON, "workspace_id": ESPACE_B, "card_id": CARD, "status": "pending", "to_addrs": ["a@b.test"],
+        "cc_addrs": [], "subject": "Proposition", "body_text": "Bonjour", "origin": "mcp",
+        "created_at": "2026-11-03T10:00:00Z", "card": {"title": "Refonte"},
+    }]
+    rendu = await monde.appel("crm_mail_draft_list", {"workspace": "bureau"})
+    assert [d["review_url"] for d in rendu["drafts"]] == [f"https://crm.exemple.test/bureau/inbox?brouillon={BROUILLON}"]
+
+
+async def test_un_slug_illisible_refuse_avant_de_preparer_quoi_que_ce_soit(monde: Monde) -> None:
+    """Un mail préparé ne doit pas exister sans son lien : le slug se lit AVANT `prepare_email` et avant tout dépôt ; une
+    lecture qui ne rend pas de slug refuse, sans retour silencieux à l'ancienne adresse."""
+    monde.simule.espaces = [{"id": ESPACE_A, "name": "Atelier"}, {"id": ESPACE_B, "name": "Bureau"}]
+    with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
+        await monde.appel("crm_mail_prepare", {"card_id": CARD, "to": ["client@exemple.test"], "subject": "Suite", "body": "Bonjour",
+                                               "attachments": [{"filename": "a.txt", "content_base64": "YQ=="}]})
+    assert monde.simule.envois == [] and monde.simule.fonctions == [] and monde.simule.depots == []
 
 
 async def test_ecarter_un_mail_prepare(monde: Monde) -> None:

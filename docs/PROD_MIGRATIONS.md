@@ -1508,7 +1508,7 @@ table, aucune donnée, aucune variable, aucun secret**.
 Organisations, Objectifs et Pilotage suivent l'espace courant de l'onglet au lieu d'être globaux. Sans effet en production tant
 qu'elle n'a qu'un espace.
 **L'image `mcp` n'est pas concernée en T2.a** : `crm_mail_prepare` rend encore `/inbox?brouillon=…`, que la redirection sert
-(T4 la reprendra).
+(T4 la reprendra). *Reprise par T4 : §2.84.*
 **Retour arrière** : la webapp précédente ; la contrainte se retire sans perte (`docs/SCHEMA.md` « Migration `0196` »).
 
 ### 2.69 `CRM-162` T1, décisions 964, 966, 968, 969 et 972 — déplacer un track entier d'un espace à un autre, en base (LIVRÉE le 2026-11-21, révision `377ac6e5`, décision 977 ; constat du responsable à faire)
@@ -1781,6 +1781,23 @@ d'un modèle (relances, séquences, envois) écrivent leurs heures à Paris et n
 `drop function public.workspace_set_timezone(uuid, text)`, `alter table public.workspaces drop constraint workspaces_timezone_valide`, rejouer le
 déclencheur de la `0144` (`workspaces_audit` sans `timezone`), `drop function app.is_valid_timezone(text)`, puis
 `alter table public.workspaces drop column timezone`. **Risque connu** : aucun sur les données ; un espace réglé entre-temps perd son réglage.
+
+### 2.84 `CRM-161` T4 — le connecteur : le lien de relecture d'un mail préparé porte le slug de l'espace (l'image `mcp`) (EN ATTENTE)
+
+`docs/SPEC-espace-courant.md` §17 ; `docs/SPEC-mcp.md` §9.2 « L'espace courant » ; `docs/SPEC-mails-prepares.md` §6.1 ; décision 998.
+**Une image `mcp` à reconstruire et redéployer** ; **aucune migration, aucune variable, aucun secret** (`SITE_URL` existe). `crm_mail_prepare` et
+`crm_mail_draft_list` rendent `{SITE_URL}/<slug>/inbox?brouillon=<id>` au lieu de `{SITE_URL}/inbox?brouillon=<id>` ; le slug est lu sous le jeton de
+la personne, avant `prepare_email`. **Aucune famille, aucune case, aucun outil nouveau** : le catalogue est inchangé (135 outils, audités par
+`mcp/tests/test_espace_courant.py`). **Compatible dans les deux sens** : l'ancienne adresse reste servie par la redirection de la webapp
+(`CRM-161` T2.a), et l'ancienne image rend l'ancienne adresse, que la webapp redirige — l'ordre de livraison avec la webapp est indifférent.
+*Écrit et prouvé en développement le 2026-11-25 (7a) : unitaires du connecteur, garde d'audit, intégration contre les deux espaces du seed.*
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer l'image `mcp` | session de livraison, dans la fenêtre du lot | comme toute livraison de l'image `mcp` (§4) |
+| 2 | Constater | le responsable | demander à l'assistant de préparer un mail depuis une affaire de chaque espace : le lien rendu commence par `<site>/<slug de l'espace>/inbox?brouillon=` et ouvre la relecture dans l'espace de l'affaire |
+
+**Retour arrière** : l'image `mcp` précédente (le lien redevient `/inbox?brouillon=…`, redirigé par la webapp).
 
 ## 3. Migrations en attente
 
