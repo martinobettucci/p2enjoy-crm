@@ -241,6 +241,26 @@ test.describe('configuration des comptes entrants (docs/SPEC-mail-subsystem.md �
 		expect(options.some((option) => option.includes('Boîte système'))).toBe(true)
 
 		await capturer(page, 'comptes-mail-vide-1440', UNITE)
+
+		// INC-194 (docs/DESIGN_SYSTEM.md §5.13, §5.25) : la commande de l'état vide est démontée à l'ouverture ; « Annuler » rend le
+		// focus à son SUCCESSEUR, monté à la fermeture, jamais à `<body>`. Constaté au clavier, dans le vrai navigateur.
+		await page.getByTestId('annuler-compte-mail').focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('ouvrir-configuration')).toBeFocused()
+	})
+
+	test('la commande du BAS rend le focus à la fermeture, annulée au clavier (INC-194)', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await page.goto('/p2enjoy/reglages/comptes-mail')
+
+		await page.getByTestId('ouvrir-configuration').click()
+		await expect(page.getByTestId('formulaire-compte-mail')).toBeVisible()
+		// La commande du bas a quitté le document pendant l'ouverture : la cause structurelle de l'incohérence.
+		await expect(page.getByTestId('ouvrir-configuration')).toHaveCount(0)
+
+		await page.getByTestId('annuler-compte-mail').focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('ouvrir-configuration')).toBeFocused()
 	})
 })
 

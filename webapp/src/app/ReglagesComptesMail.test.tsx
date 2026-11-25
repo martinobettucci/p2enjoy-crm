@@ -394,6 +394,30 @@ describe('ReglagesComptesMail — le clavier', () => {
 			expect(document.activeElement).toBe(screen.getAllByTestId('configurer-compte')[0]),
 		)
 	})
+
+	// @verifies INC-194 (docs/INCONSISTENCY_REPORT.md) — la commande du BAS s'exclut du formulaire (§5.23) : son nœud est DÉTRUIT à
+	// l'ouverture, et une référence capturée au clic pointerait un élément détaché ; le focus retombait sur `<body>`. §5.13, §5.25.
+	it('rend le focus à la commande du BAS quand le formulaire s’en est ouvert, puis se referme (INC-194)', async () => {
+		monter(client())
+		await screen.findByTestId('liste-comptes-mail')
+		await userEvent.click(screen.getByTestId('ouvrir-configuration'))
+		await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('champ-boite')))
+		// La commande du bas a disparu pendant l'ouverture : c'est la cause structurelle.
+		expect(screen.queryByTestId('ouvrir-configuration')).toBeNull()
+
+		await userEvent.click(screen.getByTestId('annuler-compte-mail'))
+		await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('ouvrir-configuration')))
+	})
+
+	it('rend le focus à la commande de l’ÉTAT VIDE, qui occupe la même place et le même rôle (INC-194)', async () => {
+		monter(client({ comptes: { data: [], error: null, status: 200 } }))
+		await screen.findByText('Aucune boîte configurée')
+		await userEvent.click(screen.getByTestId('ouvrir-configuration'))
+		await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('champ-boite')))
+
+		await userEvent.click(screen.getByTestId('annuler-compte-mail'))
+		await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('ouvrir-configuration')))
+	})
 })
 
 describe('ReglagesComptesMail — la capacité d’administration rendue par la base (CRM-093 T4)', () => {

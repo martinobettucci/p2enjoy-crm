@@ -42525,3 +42525,9 @@ rougit pour six tests qui lisent les migrations par un chemin relatif — elle s
 *2026-11-25, session `p2enjoy-crm-dd`.* **Le problème** : `e2e/ui/inbox.spec.ts` écrivait que l'événement de timeline était « retiré » alors que `card_events` n'accorde d'écriture à personne. **La décision** :
 l'issue 1 de la fiche — corriger le commentaire, assumer la dérive —, sans ouvrir de porte d'écriture sur une table qui n'en a aucune. **Vérifié** : relecture des occurrences de la formulation dans `e2e/` ; seul ce fichier
 l'affirmait encore.
+
+### `INC-194` — le focus revient à la commande du bas
+
+*2026-11-25, session `p2enjoy-crm-dd`.* **Le problème** : la commande du bas s'exclut du formulaire (§5.23) ; sa référence capturée au clic pointait un nœud détaché, `focus()` ne faisait rien. **La décision** : le patron déjà
+appliqué à `ReglagesIdentitesMail` — référence propre, origine = laquelle des deux. **Vérifié** : tests de composant rouges avant (2) / 36 verts ; E2E au clavier 9/9 ; typecheck. **Lecture du design system** : seules les
+sections §5.13, §5.25 et §5.34 ont été relues (la règle de focus ne change pas) et le fichier de 9 300 lignes n'a pas été relu en entier ; à ne pas prendre pour la lecture intégrale que `CLAUDE.md` §4 demande.

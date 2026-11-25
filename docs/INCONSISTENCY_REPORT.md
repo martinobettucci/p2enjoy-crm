@@ -4387,7 +4387,12 @@ Aucune temporisation n'est employée. La correction de `CRM-088` consiste à tra
 appartient à `CRM-088`, close depuis la décision 495, et le corriger au passage sortirait du
 périmètre de la session. Il n'est ni masqué, ni contourné.
 
-**Statut : ouvert.**
+**CLOSE le 2026-11-25 — INC-194, session `p2enjoy-crm-dd`.** `ReglagesComptesMail` transpose le patron de `ReglagesIdentitesMail` : la commande du bas (et celle de l'état vide) porte sa propre
+référence, l'origine retient laquelle des deux a ouvert, et le nœud est relu après le rendu qui l'a remonté. **Preuves** : deux tests de composant ajoutés — commande du bas, commande de l'état vide —,
+**rouges avant** (2 échecs, `document.activeElement` = `<body>`), 36/36 verts après ; deux scénarios E2E au clavier dans le vrai navigateur (`reglages-comptes-mail.spec.ts`, 9/9 verts) ;
+`typecheck` sans erreur ; `docs/DESIGN_SYSTEM.md` §5.34 écrit la règle des deux commandes. Aucun changement visuel.
+
+**Statut : clos.**
 
 ### INC-195 — `scripts/verify-copie-workflow.sh` laissait `move_card` amputée du lot G
 

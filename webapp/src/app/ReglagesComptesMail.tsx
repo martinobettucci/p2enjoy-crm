@@ -210,8 +210,19 @@ export function ReglagesComptesMail({
 	// Une réponse arrivée après le démontage, ou périmée par un rechargement, ne doit pas écraser un
 	// état plus récent — même garde que les cinq autres surfaces de réglages.
 	const courant = useRef(0)
-	/** La commande qui a ouvert le formulaire, pour lui rendre le focus (§5.13). */
+	/**
+	 * La commande qui a ouvert le formulaire, pour lui rendre le focus (§5.13).
+	 *
+	 * DEUX COMMANDES PEUVENT L'OUVRIR, ET UNE SEULE SURVIT À L'OUVERTURE (INC-194). Celle d'une ligne reste montée — la liste ne
+	 * disparaît pas —, si bien que son nœud est encore là à la fermeture. Celle du bas s'EXCLUT du formulaire (§5.23) : son nœud est
+	 * DÉTRUIT à l'ouverture, et lui garder une référence rendrait le focus à un élément détaché du document, c'est-à-dire nulle part.
+	 * Le remède n'est pas une temporisation : la commande du bas porte sa PROPRE référence, que React réassigne au nœud neuf quand
+	 * elle remonte, et l'origine ne retient que LAQUELLE des deux a ouvert (même patron que `ReglagesIdentitesMail`).
+	 */
 	const origineFocus = useRef<HTMLButtonElement | null>(null)
+	const origineEstCommandeDuBas = useRef(false)
+	/** La commande du bas — ou celle de l'état vide, qui occupe la même place et le même rôle. */
+	const commandeDuBas = useRef<HTMLButtonElement | null>(null)
 	/** Le retour du focus est DIFFÉRÉ d'un tour de rendu : la commande est démontée (§5.25). */
 	const focusARendre = useRef(false)
 	// `CRM-136` (§25.5) : le panneau « Dossiers relevés » ouvert, par l'identifiant de sa boîte ; celle à ouvrir d'elle-même
@@ -244,7 +255,10 @@ export function ReglagesComptesMail({
 	useEffect(() => {
 		if (saisie !== null || !focusARendre.current) return
 		focusARendre.current = false
-		origineFocus.current?.focus()
+		// Le nœud est relu MAINTENANT, après le rendu qui a remonté la commande du bas — jamais celui qui a été capturé à
+		// l'ouverture, et que le démontage a détaché.
+		const cible = origineEstCommandeDuBas.current ? commandeDuBas.current : origineFocus.current
+		cible?.focus()
 	}, [saisie])
 
 	const recharger = useCallback(() => setTentative((precedente) => precedente + 1), [])
@@ -279,9 +293,10 @@ export function ReglagesComptesMail({
 	}, [])
 
 	const ouvrir = useCallback(
-		(idProprietaire: string | null, depuis: HTMLButtonElement | null) => {
+		(idProprietaire: string | null, depuis: HTMLButtonElement | null, estCommandeDuBas = false) => {
 			if (idWorkspace === null) return
 			origineFocus.current = depuis
+			origineEstCommandeDuBas.current = estCommandeDuBas
 			setRefus(null)
 			setSaisie(saisieDepuisCompte(idWorkspace, idProprietaire, compteDe(comptes, idProprietaire)))
 		},
@@ -384,8 +399,9 @@ export function ReglagesComptesMail({
 						saisie === null ? (
 							<button
 								type="button"
+								ref={commandeDuBas}
 								data-testid="ouvrir-configuration"
-								onClick={(evenement) => ouvrir(idSession, evenement.currentTarget)}
+								onClick={(evenement) => ouvrir(idSession, evenement.currentTarget, true)}
 								className={CLASSES_BOUTON_PRIMAIRE}
 							>
 								<Plus aria-hidden="true" className="size-4" />
@@ -437,8 +453,9 @@ export function ReglagesComptesMail({
 					<div>
 						<button
 							type="button"
+							ref={commandeDuBas}
 							data-testid="ouvrir-configuration"
-							onClick={(evenement) => ouvrir(idSession, evenement.currentTarget)}
+							onClick={(evenement) => ouvrir(idSession, evenement.currentTarget, true)}
 							className={CLASSES_BOUTON_PRIMAIRE}
 						>
 							<Plus aria-hidden="true" className="size-4" />
