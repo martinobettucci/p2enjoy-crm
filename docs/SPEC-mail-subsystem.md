@@ -5707,7 +5707,7 @@ mail entrant (`CRM-162`, session f9, les reprendra) ; le connecteur, qui n'appel
 
 ## 36. L'assistant de l'inbox : la bulle, le plan, l'acceptation — `CRM-166`
 
-*Écrit le 2026-11-25, avant le code (décisions 994 et 996). Ce que la fonction lit, envoie et accepte : `docs/SPEC-ia.md` §17. La forme :
+*Écrit le 2026-11-25, avant le code (décisions 994 et 997). Ce que la fonction lit, envoie et accepte : `docs/SPEC-ia.md` §17. La forme :
 `docs/DESIGN_SYSTEM.md` §5.116. **Connecteur MCP : non** (décision 994).*
 
 ### 36.1 La bulle, et d'où vient la sélection

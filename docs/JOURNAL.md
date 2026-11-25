@@ -42441,9 +42441,9 @@ superadministrateur, refusée en base, journalisée ; (4) deux tranches — la b
 system. Connecteur MCP : question 1 = non, question 2 = sans objet (décision 992). **Le code suit** ; le test qui fige l'UTC
 (`0054_rendu_modeles_emails.test.sql`, `CRM-063 §8.6`) est révisé avec lui, non retiré (décision 51).
 
-### décision 996 — `CRM-166` : la spécification de l'assistant de l'inbox, et les choix qu'elle fait
+### décision 997 — `CRM-166` : la spécification de l'assistant de l'inbox, et les choix qu'elle fait
 
-*2026-11-25, session d5b44a2d (p2enjoy-crm-30), sous la décision 994 du responsable. Spécification : `docs/SPEC-ia.md` §17,
+*2026-11-25, session d5b44a2d (p2enjoy-crm-30), sous la décision 994 du responsable (numérotée 997 : la 996 est celle d'INC-216, poussée la première). Spécification : `docs/SPEC-ia.md` §17,
 `docs/SPEC-mail-subsystem.md` §36, `docs/DESIGN_SYSTEM.md` §5.116.* Ce que la décision 994 laissait ouvert, et ce que la mesure et le
 code existants ont imposé :
 - **L'unité du plan est le fil**, comme celle de la liste et des actions groupées (`CRM-156`) ; le modèle reçoit le message reçu le plus récent

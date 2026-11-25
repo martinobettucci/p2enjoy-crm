@@ -1133,7 +1133,7 @@ n'appartient pas à `CRM-163`, qui le dit au responsable.
 
 ## 17. `CRM-166` — l'assistant de l'inbox : un plan d'actions que l'on accepte ou refuse (écrit le 2026-11-25, avant son code)
 
-*Décisions 994 et 996.* L'écran et l'application des actions : `docs/SPEC-mail-subsystem.md` §36 ; la bulle : `docs/DESIGN_SYSTEM.md`
+*Décisions 994 et 997.* L'écran et l'application des actions : `docs/SPEC-mail-subsystem.md` §36 ; la bulle : `docs/DESIGN_SYSTEM.md`
 §5.116. Ce chapitre dit ce que la fonction `ia` lit, envoie au modèle, accepte en retour et rend à l'écran. **Connecteur MCP : non**
 (décision 994 : un assistant branché par le connecteur a déjà les outils de la messagerie et juge lui-même) ; question 2 : sans objet.
 

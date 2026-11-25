@@ -9305,7 +9305,7 @@ la spécification réservait, a été prise par `CRM-165` avant l'écriture de c
 
 ### 5.116 La bulle de l'assistant de l'inbox : le plan que l'on accepte ou refuse — `CRM-166`
 
-*Écrit le 2026-11-25, avant le code (décisions 994 et 996), après lecture des sections ciblées — §1 à §3, §5.8, §5.42, §5.43, §5.109 et la tête du §5.110 —, non intégrale : à confirmer par le responsable avant le code de l'écran. Le comportement : `docs/SPEC-mail-subsystem.md` §36 ; ce que la fonction lit et rend :
+*Écrit le 2026-11-25, avant le code (décisions 994 et 997), après lecture des sections ciblées — §1 à §3, §5.8, §5.42, §5.43, §5.109 et la tête du §5.110 —, non intégrale : à confirmer par le responsable avant le code de l'écran. Le comportement : `docs/SPEC-mail-subsystem.md` §36 ; ce que la fonction lit et rend :
 `docs/SPEC-ia.md` §17. Le patron est celui du panneau de notifications (§5.43), du panneau dans le flux (§5.80) et des actions groupées (§5.109).*
 
 - **La bulle est un bouton, en bas à droite de l'inbox seulement.** Icône Lucide `Sparkles` sur un disque `--color-brand`, `--color-white` sur
