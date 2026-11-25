@@ -20944,3 +20944,37 @@ corriger sans arbitrage l'est par lots cohérents, preuve rouge avant et verte a
 - [ ] **Lot D — `INC-342`** : cinq preuves qui dépendent de l'état accumulé de la base de développement. Pile requise.
 - [ ] **Lot E — `INC-286` lot 1** : le connecteur MCP en anglais (tables `mcp_*`, familles, colonnes) ; spécification avant le code (décision 992).
 - [ ] **Lot F — `INC-361`** : le résumé quotidien cite les mentions non lues d'une organisation, avec le lien vers sa fiche (tranche de `CRM-153`, décision 992).
+
+### CRM-166 — Un assistant IA dans l'inbox : il propose un plan d'actions sur les mails sélectionnés, que l'on accepte ou refuse mail par mail `[ ]`
+
+**Origine** : demande du responsable, le 2026-11-25 ; arbitrée le même jour (décision 994).
+**Demande, verbatim** : « je veux aussi ajouter un assistant IA (genre une bulle en bas à droite) disponible uniquement en inbox.
+cet assistant passe au LLM du crm les mails sélectionnées et peux appliquer les actions de la page (agir sur les étiquettes,
+archiver, supprimer, classer dans des affaires, ...) mais n'agit pas directement, il propose un plan que l'on accepte ou l'on
+refuse mail par mail. »
+**Comportement attendu** (décision 994) :
+- (i) **une bulle en bas à droite de l'inbox, et de l'inbox seulement** ; elle prend une demande écrite et les **mails sélectionnés**
+  (la sélection des opérations groupées, `CRM-156`), au plus 50 par demande ;
+- (ii) **ce qui part au LLM du CRM** (la fonction `ia`, `CRM-097` ; le modèle et la passerelle existants) : pour chaque mail, l'objet,
+  l'expéditeur, la date et les 2 000 premiers caractères du texte, comme la passe des pastilles (`CRM-141`) ; plus les pastilles de
+  l'espace et les affaires où l'on peut classer ; **jamais les pièces jointes** ;
+- (iii) **le plan** : par mail, les actions proposées et leur motif, choisies parmi **toutes les actions de la page** — poser ou
+  retirer une pastille, classer ou déclasser dans une affaire, mettre en sommeil (archiver), marquer lu ou non lu, supprimer ici,
+  supprimer partout, transférer à un membre, bloquer l'expéditeur ; la sortie du modèle est contrôlée contre ce que l'espace et la
+  personne permettent (une pastille, une affaire, un membre qui n'existent pas sont écartés et le plan le dit) ;
+- (iv) **l'assistant n'agit jamais seul** : chaque mail du plan s'**accepte ou se refuse** ; un bouton **« Tout accepter »** applique
+  ce qui reste, après une confirmation qui dit le nombre d'actions ; les gestes irréversibles gardent leurs confirmations propres
+  (« supprimer partout », le blocage de l'expéditeur avec sa double confirmation, `CRM-156`) ;
+- (v) **chaque action acceptée passe par le même chemin que le geste de la page**, sous l'identité de la personne : la base garde le
+  dernier mot (RLS, rôles) ; un refus est dit sur la ligne du mail ;
+- (vi) l'état dégradé : sans IA disponible (clé refusée, panne), la bulle le dit et n'offre rien ; une demande en cours se suit et
+  s'annule.
+**Connecteur MCP** (décision 994) — question 1 : **non** (un assistant connecté par le MCP a déjà les outils de la messagerie et
+juge lui-même) ; question 2 : sans objet.
+**Spécification** : à écrire avant le code — `docs/SPEC-ia.md` (la route, la demande, la sortie contrôlée, les bornes, le
+simulateur), `docs/SPEC-mail-subsystem.md` (la bulle dans l'inbox, l'application des actions), `docs/DESIGN_SYSTEM.md` (la bulle,
+le plan, l'acceptation), le manuel (inbox), le contrat ; l'impact sur la fonction `ia` d'une demande longue (CRM-163 : une
+génération bloque la suivante).
+**DoD** : Vitest (le contrôle de la sortie, chaque action) ; API (la route, le refus d'une action que la personne ne peut pas
+faire, par requête directe) ; E2E souris et clavier (demander, lire le plan, accepter, refuser, tout accepter, état dégradé) contre
+le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne complète revient à la session de livraison (décision 830).

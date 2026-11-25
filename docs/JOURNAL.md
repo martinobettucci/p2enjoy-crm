@@ -42358,3 +42358,16 @@ manuel 170 ; API manuel 9/9 ; captures 133 changées, 14 ajoutées, observées.
   que sur des données d'avant ; la garde reste (décision 969), sa preuve aussi.
 - **La production.** Un compte à zéro est attendu avant la livraison (contrat §2.81, geste 1).
 
+
+### décision 994 — `CRM-166` : un assistant IA dans l'inbox, qui propose un plan sur les mails sélectionnés ; on accepte mail par mail
+
+*2026-11-25, session 4522fa9c (p2enjoy-crm-11, session de livraison), arbitrages du responsable (`AskUserQuestion`).*
+**Décisions** :
+- **toutes les actions de la page** peuvent être proposées, irréversibles comprises (supprimer partout, bloquer l'expéditeur,
+  transférer), chacune soumise à l'acceptation et à ses confirmations propres ; écarté : les seules actions réversibles ;
+- **validation mail par mail, plus « Tout accepter »** avec une confirmation qui dit le nombre d'actions ; écarté : mail par mail
+  seulement ;
+- **ce qui part au modèle, comme les pastilles** : objet, expéditeur, date, 2 000 premiers caractères, les pastilles de l'espace et
+  les affaires classables ; pas les pièces jointes ; au plus 50 mails ; écarté : le mail entier ;
+- **connecteur MCP** — question 1 : **non** ; question 2 : sans objet.
+**Conséquence** : unité `CRM-166`, à confier à une session libre ; la spécification s'écrit avant le code.
