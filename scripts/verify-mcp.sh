@@ -55,6 +55,7 @@ cd "$(dirname "$0")/.."
 #           jamais ceux de l'emplacement 0 écrits en dur (docs/SPEC-pile-par-session.md §9)
 # shellcheck source=scripts/lib/conteneur.sh
 source scripts/lib/conteneur.sh
+source scripts/lib/borne.sh # INC-367 : la construction de l'image est bornée
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
@@ -193,7 +194,7 @@ scripts/run-sql-tests.sh supabase/tests/0085_connecteur_mcp.test.sql >/dev/null 
 ca_pip=${PIP_CA_FILE:-$(sed -n 's/^PIP_CA_FILE=//p' .env 2>/dev/null | tail -n 1 | tr -d "\"'\r")}
 secret_ca=()
 [ -n "$ca_pip" ] && [ -s "$ca_pip" ] && secret_ca=(--secret "id=pip_ca,src=$ca_pip")
-if docker build -q "${secret_ca[@]}" --target dev -t "$IMAGE" mcp >/dev/null 2>&1; then
+if borner "${VERIFY_BUILD_DELAI:-1200}" docker build -q "${secret_ca[@]}" --target dev -t "$IMAGE" mcp >/dev/null 2>&1; then
 	docker run --rm "$IMAGE" python -m pytest -q -p no:cacheprovider >"$TRAVAIL/unitaires.log" 2>&1 \
 		&& ok "pytest unitaires : $(tail -n 1 "$TRAVAIL/unitaires.log")" || fail "pytest unitaires rouges : $(tail -n 1 "$TRAVAIL/unitaires.log")"
 else

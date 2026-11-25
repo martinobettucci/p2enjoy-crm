@@ -7,7 +7,7 @@
 # UNE pile. Lancés de front, ils rendent des verdicts qui ne disent rien du produit (INC-177, décision 476). Ce fichier est
 # à la fois une bibliothèque (`source scripts/lib/campagne.sh` puis `campagne_garde <nom> || exit $?`) et une commande :
 #
-#   scripts/lib/campagne.sh ouvrir [--nom <nom>] -- <commande…>   ouvre le verrou, exécute, rend le code, libère
+#   scripts/lib/campagne.sh ouvrir [--nom <nom>] [--duree-max <s>] -- <commande…>   ouvre le verrou, exécute, rend le code, libère
 #   scripts/lib/campagne.sh statut                                 nomme le détenteur (code 1 s'il est vivant)
 #   scripts/lib/campagne.sh liberer [--forcer]                     retire un verrou MORT (--forcer : même vivant)
 #   scripts/lib/campagne.sh garde <nom> [--pid <pid>] [--commande <texte>]   la garde, pour un appelant qui n'est pas en bash
@@ -19,6 +19,10 @@
 # détenteur), la commande, un nom et un jeton. Le jeton (`CAMPAGNE_JETON`) est hérité par tous les enfants de l'ouvreur : ils
 # traversent le verrou. Une commande gardée SANS jeton refuse (code 75) tant qu'un verrou vivant existe ; un verrou mort est
 # repris. Sorties de secours : `CAMPAGNE_ATTENDRE=<secondes>` attend ; `CAMPAGNE_FORCER=1` passe outre et l'écrit.
+# DURÉE MAXIMALE (INC-367) : `ouvrir` arrête la commande et tous ses descendants au bout de `CAMPAGNE_DUREE_MAX` secondes (21 600, six
+# heures, par défaut ; `--duree-max <s>` à l'ouverture), le dit (« durée maximale dépassée »), libère le verrou et rend 124 : un harnais
+# qui pend ne gèle plus les autres sessions (mesuré : 13 h 24 dans une construction d'image). La borne se relève, ne s'ôte pas : seul un
+# entier positif est accepté (sinon code 64).
 # `CAMPAGNE_REPERTOIRE` déplace le verrou (le harnais `scripts/verify-campagne.sh` l'isole ainsi des vraies campagnes).
 
 CAMPAGNE_RACINE=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
@@ -168,16 +172,28 @@ campagne_garde_build() {
 	return 0
 }
 
-campagne_ouvrir() { # [--nom N] -- commande…
-	local nom=${CAMPAGNE_NOM:-} enfant code
+# Tue un processus et tous ses descendants (le plus profond d'abord, pour qu'aucun fils ne soit adopté par init avant d'être tué).
+_campagne_tuer_arbre() { # <pid> [signal]
+	local pid=$1 signal=${2:-TERM} fils
+	for fils in $(pgrep -P "$pid" 2>/dev/null); do _campagne_tuer_arbre "$fils" "$signal"; done
+	kill -"$signal" "$pid" 2>/dev/null
+	return 0
+}
+
+campagne_ouvrir() { # [--nom N] [--duree-max S] -- commande…
+	local nom=${CAMPAGNE_NOM:-} duree=${CAMPAGNE_DUREE_MAX:-21600} enfant code veilleur depassement
 	while [ $# -gt 0 ]; do
 		case "$1" in
 			--nom) nom=$2; shift 2 ;;
+			--duree-max) duree=${2-}; shift $(( $# > 1 ? 2 : 1 )) ;;
 			--) shift; break ;;
 			*) break ;;
 		esac
 	done
-	[ $# -gt 0 ] || { printf 'usage : campagne.sh ouvrir [--nom <nom>] -- <commande…>\n' >&2; return 64; }
+	case "$duree" in
+		'' | *[!0-9]* | 0) printf 'campagne : la durée maximale doit être un entier positif de secondes, reçu « %s ».\n' "$duree" >&2; return 64 ;;
+	esac
+	[ $# -gt 0 ] || { printf 'usage : campagne.sh ouvrir [--nom <nom>] [--duree-max <s>] -- <commande…>\n' >&2; return 64; }
 	if _campagne_traverse && [ "${CAMPAGNE_FORCER:-}" != 1 ]; then
 		"$@"
 		return $?
@@ -189,8 +205,13 @@ campagne_ouvrir() { # [--nom N] -- commande…
 	fi
 	CAMPAGNE_COMMANDE="$*" campagne_garde "${nom:-ouvrir}" $$ || return $?
 	local jeton=$CAMPAGNE_JETON
+	depassement=$(mktemp)
+	rm -f "$depassement"
 	"$@" <&0 &
 	enfant=$!
+	# Le veilleur : à l'échéance, il pose un témoin, arrête l'arbre de la commande (TERM, puis KILL 15 s plus tard).
+	( sleep "$duree"; : >"$depassement"; _campagne_tuer_arbre "$enfant" TERM; sleep 15; _campagne_tuer_arbre "$enfant" KILL ) &
+	veilleur=$!
 	trap 'kill -TERM "$enfant" 2>/dev/null' TERM INT
 	code=0
 	while kill -0 "$enfant" 2>/dev/null; do
@@ -198,6 +219,14 @@ campagne_ouvrir() { # [--nom N] -- commande…
 		code=$?
 	done
 	trap - TERM INT
+	pkill -P "$veilleur" 2>/dev/null
+	kill "$veilleur" 2>/dev/null
+	wait "$veilleur" 2>/dev/null
+	if [ -e "$depassement" ]; then
+		rm -f "$depassement"
+		printf 'CAMPAGNE : durée maximale dépassée (%s s) — « %s » arrêtée par « %s », verrou libéré.\n' "$duree" "$nom" "$*" >&2
+		code=124
+	fi
 	_campagne_liberer_jeton "$jeton"
 	return "$code"
 }

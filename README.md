@@ -515,7 +515,10 @@ ils rendent des verdicts qui ne disent rien du produit. Un **verrou de campagne*
 commande gardée refuse (code 75, détenteur nommé) tant qu'une autre campagne tient la pile. Une campagne s'ouvre en une fois :
 `scripts/lib/campagne.sh ouvrir -- <commande>` (ses enfants traversent par `CAMPAGNE_JETON`) ; `scripts/lib/campagne.sh statut` nomme
 le détenteur ; `CAMPAGNE_ATTENDRE=<secondes>` attend, `CAMPAGNE_FORCER=1` passe outre (et invalide la mesure de l'autre).
-Mécanisme : `docs/SPEC-test-harness.md` §3.9.
+**Une durée maximale (INC-367)** : `ouvrir` arrête la commande et ses descendants au bout de `CAMPAGNE_DUREE_MAX` secondes (entier positif, 21 600 par défaut ;
+`--duree-max <s>` à l'ouverture), le dit, libère le verrou et rend 124 — un harnais qui pend ne gèle plus les autres sessions. Les constructions d'image des
+harnais sont bornées à part (`scripts/lib/borne.sh`, `VERIFY_BUILD_DELAI`, 1200 s par défaut) : un dépassement est nommé.
+Mécanisme : `docs/SPEC-test-harness.md` §3.9 et §3.16.
 
 Sur un poste NVM, exécuter d'abord `nvm use` comme indiqué au §3. Les commandes `npm run …`
 directes utilisent toujours la chaîne Node du shell courant. `scripts/verify-harness.sh`, lui,

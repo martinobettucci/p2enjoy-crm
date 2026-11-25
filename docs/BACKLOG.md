@@ -21118,5 +21118,5 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 
 *Un harnais est resté 13 h 24 dans une construction d'image, avec le verrou de campagne. Spécification : `docs/SPEC-test-harness.md` §3.16 ; fiche INC-367. Connecteur MCP : sans objet.*
 
-- [ ] **INC-367 a — les constructions et tirages d'images des harnais passent par `borner`** (`scripts/lib/borne.sh`), échec nommé ; contrôle de sources `scripts-bornes.test.ts`.
-- [ ] **INC-367 b — le verrou de campagne a une durée maximale** (`CAMPAGNE_DUREE_MAX`, `--duree-max`) : arrêt de l'arbre, message, verrou libéré, code 124 ; preuve dans `scripts/verify-campagne.sh`.
+- [~] **INC-367 a — les constructions et tirages d'images des harnais passent par `borner`** (`scripts/lib/borne.sh`), échec nommé ; contrôle de sources `scripts-bornes.test.ts` (rouge sur six sites, vert) ; construction réelle bornée à 4 s prouvée. **Reste** : rejouer `verify-scripts.sh` en entier, quand le verrou de campagne est libre.
+- [x] **INC-367 b — le verrou de campagne a une durée maximale** (`CAMPAGNE_DUREE_MAX`, `--duree-max`) : arrêt de l'arbre, message, verrou libéré, code 124 ; `scripts/verify-campagne.sh` 44/44, dont la section 9 (rouge avant, vert après).

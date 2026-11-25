@@ -1607,7 +1607,9 @@ recopie dans `docs/captures/` que sur demande — `CAPTURES_UNITES=<unité>[,<un
 `e2e/output/captures-rapport.md`, le bruit rendu à sa version committée).
 **Verrou de campagne (INC-177, `docs/SPEC-test-harness.md` §3.9)** : `scripts/lib/campagne.sh` sépare, par un verrou hors de l'arbre
 de travail et un jeton hérité, les commandes qui partagent la pile (`test:sql`, `e2e:*`, le seed, la reconstruction, le build servi) ;
-`scripts/lib/campagne.sh ouvrir -- <commande>` ouvre une campagne en une fois.
+`scripts/lib/campagne.sh ouvrir -- <commande>` ouvre une campagne en une fois. **Elle a une durée maximale** (INC-367, `docs/SPEC-test-harness.md` §3.16) :
+`CAMPAGNE_DUREE_MAX` (21 600 s par défaut, `--duree-max`), au-delà de laquelle l'arbre de la commande est arrêté, le verrou libéré, le code 124 rendu ; les
+constructions d'image des harnais passent par `borner` (`scripts/lib/borne.sh`, `VERIFY_BUILD_DELAI`).
 Le harnais consolidé valide avant toute mutation un couple Node Linux conforme à `.nvmrc` ; si le
 `PATH` hérité de WSL ne présente que `npm.exe`, il sélectionne une installation NVM locale sans
 modifier le shell parent, ou refuse l'exécution avec une consigne explicite (décision 278).

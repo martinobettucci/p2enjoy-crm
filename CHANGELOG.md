@@ -13,6 +13,9 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+- **INC-367, aucun harnais sans borne de temps** : le verrou de campagne a une durée maximale (`CAMPAGNE_DUREE_MAX`, six heures par défaut : l'arbre de la
+  commande est arrêté, le verrou libéré, code 124) et les constructions d'image des harnais sont bornées (`borner`, `VERIFY_BUILD_DELAI`, 1200 s), le
+  dépassement étant nommé. Outillage de développement : rien ne change dans le produit livré.
 - **INC-318, le runner refuse une migration qui porte sa propre transaction** : `apply-migrations.sh` refuse, avant d'appliquer, un fichier qui contient `begin;`, `commit;`, `rollback;` ou `start transaction;` de premier niveau, sauf les onze fichiers déjà inscrits
   (`0034` à `0043`, `0116`). Sans effet sur la production tant qu'aucun fichier nouveau ne porte de transaction ; part avec le script du runner, sans geste du responsable.
 - **INC-361, le récapitulatif du matin cite aussi les mentions du fil d'une organisation** (migration 206, décisions 992 et 1000) : sous « On vous a mentionné », une mention non lue

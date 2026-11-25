@@ -42,6 +42,10 @@ set -uo pipefail
 
 REPO_ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$REPO_ROOT"
+# INC-367 : une construction d'image a tenu 48 245 s et gardé le verrou de campagne ; toute construction est bornée (VERIFY_BUILD_DELAI, 1200 s).
+# shellcheck source=scripts/lib/borne.sh
+. "$REPO_ROOT/scripts/lib/borne.sh"
+DELAI_BUILD=${VERIFY_BUILD_DELAI:-1200}
 # INC-291 (décision 679), révisé le 2026-10-25 (décision 704, INC-309) : la section 7 construit la webapp HORS de
 # `./runDev.sh`. Sous Compose 5, `bake` refuse alors de lire le paquet CA du secret de construction sans le droit
 # `fs.read` (mesuré : « additional privileges requested: pass --allow=fs.read=/dev/null »), et les deux branches,
@@ -1094,23 +1098,23 @@ assert c["services"]["webapp"]["build"]["secrets"] == [{"source":"npm_ca"}]' \
 		fail "Compose ne transporte pas le chemin NPM_CA_FILE explicite"
 	fi
 
-	if NPM_CA_FILE= docker compose --env-file "$BOOT1" -f docker-compose.yml \
+	if NPM_CA_FILE= borner "$DELAI_BUILD" docker compose --env-file "$BOOT1" -f docker-compose.yml \
 		-f docker-compose.dev.yml build --no-cache --progress plain webapp \
 		>"$WORK/build-webapp-no-ca.log" 2>&1 \
 		&& grep -q 'npm_ca: inactif' "$WORK/build-webapp-no-ca.log"; then
 		ok "build sans cache et sans CA : branche inactive, npm ci réussi"
 	else
-		fail "la reconstruction sans CA n'emprunte pas sa branche inactive"
+		fail "la reconstruction sans CA n'emprunte pas sa branche inactive$(grep -q 'DÉLAI DÉPASSÉ' "$WORK/build-webapp-no-ca.log" && printf ' — DÉLAI DÉPASSÉ après %s s' "$DELAI_BUILD")"
 		tail -n 12 "$WORK/build-webapp-no-ca.log" | sed 's/^/        /'
 	fi
 
-	if NPM_CA_FILE="$HOST_CA" docker compose --env-file "$BOOT1" -f docker-compose.yml \
+	if NPM_CA_FILE="$HOST_CA" borner "$DELAI_BUILD" docker compose --env-file "$BOOT1" -f docker-compose.yml \
 		-f docker-compose.dev.yml build --no-cache --progress plain webapp \
 		>"$WORK/build-webapp-with-ca.log" 2>&1 \
 		&& grep -q 'npm_ca: actif' "$WORK/build-webapp-with-ca.log"; then
 		ok "build sans cache avec CA : branche active, npm ci réussi"
 	else
-		fail "la reconstruction avec CA n'emprunte pas sa branche active"
+		fail "la reconstruction avec CA n'emprunte pas sa branche active$(grep -q 'DÉLAI DÉPASSÉ' "$WORK/build-webapp-with-ca.log" && printf ' — DÉLAI DÉPASSÉ après %s s' "$DELAI_BUILD")"
 		tail -n 12 "$WORK/build-webapp-with-ca.log" | sed 's/^/        /'
 	fi
 

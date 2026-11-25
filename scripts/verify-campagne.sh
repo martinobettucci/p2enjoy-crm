@@ -4,6 +4,8 @@
 #           traverse ; le verrou mort repris ; l'attente ; la sortie de secours ; le verrou hors de l'arbre ; les gardes
 #           posées aux cinq sites
 # @verifies docs/SPEC-test-harness.md §3.9 ; docs/INCONSISTENCY_REPORT.md INC-177 ; docs/JOURNAL.md décision 990
+# @verifies INC-367 (docs/BACKLOG.md « Correctif — INC-367 ») — le verrou a une durée maximale (a) et `borner` nomme un dépassement (b) :
+#           docs/SPEC-test-harness.md §3.16 ; docs/INCONSISTENCY_REPORT.md INC-367
 #
 # Éprouve `scripts/lib/campagne.sh` sans pile : le verrou de CE harnais vit dans un répertoire jetable
 # (`CAMPAGNE_REPERTOIRE`), jamais dans celui d'une vraie campagne qu'il ne doit pas gêner. Les commandes réelles gardées
@@ -91,7 +93,7 @@ else
 fi
 
 if grep -q 'campagne.sh' e2e/playwright.config.ts; then
-	sortie=$(E2E_PROJETS=api npx --no-install playwright test --config e2e/playwright.config.ts --project=api --list 2>&1); code=$?
+	sortie=$(E2E_PROJETS=api npx --no-install playwright test --config e2e/playwright.config.ts --project=api --grep '^aucun-test-inexistant$' 2>&1); code=$?
 	[ "$code" != 0 ] && printf '%s' "$sortie" | grep -q 'campagne-A' \
 		&& ok "Playwright refuse de charger sa configuration sous un verrou tenu, et nomme le détenteur" \
 		|| fail "Playwright n'est pas gardé (code $code) : « $(printf '%s' "$sortie" | head -2 | tr '\n' ' ') »"
@@ -176,6 +178,44 @@ grep -q 'campagne_garde' scripts/lib/reconstruction.sh && ok "scripts/lib/recons
 grep -q 'campagne.sh' e2e/playwright.config.ts && ok "e2e/playwright.config.ts appelle la garde" || fail "e2e/playwright.config.ts n'appelle pas la garde"
 grep -q '"prebuild": *"[^"]*campagne.sh garde-build' package.json && ok "package.json garde « npm run build » (prebuild)" || fail "package.json ne garde pas « npm run build »"
 grep -q 'verify-campagne' docs/SPEC-test-harness.md && ok "docs/SPEC-test-harness.md §3.9 nomme ce harnais" || fail "§3.9 ne nomme pas ce harnais"
+
+titre "9. Aucun harnais sans borne de temps — INC-367"
+# a) la durée maximale du verrou : une commande qui ne finit pas est arrêtée, nommée, et le verrou est libéré.
+debut=$(date +%s)
+sortie=$("$CAMPAGNE" ouvrir --nom bornee --duree-max 2 -- bash -c 'sleep 60 & wait' 2>&1); code=$?
+duree=$(( $(date +%s) - debut ))
+[ "$code" = 124 ] && [ "$duree" -lt 20 ] && ok "une commande qui dépasse la durée maximale est arrêtée (code 124, ${duree} s)" \
+	|| fail "la durée maximale n'arrête pas la commande (code $code, ${duree} s)"
+printf '%s' "$sortie" | grep -q 'durée maximale dépassée' && printf '%s' "$sortie" | grep -q 'bornee' \
+	&& ok "…et le dit, en nommant la campagne" || fail "le dépassement n'est pas nommé : « $sortie »"
+"$CAMPAGNE" statut >/dev/null 2>&1 && ok "…et libère le verrou" || fail "le verrou reste après un dépassement"
+sleep 1
+pgrep -f 'sleep 60' >/dev/null && fail "un descendant de la commande est resté vivant" || ok "…et aucun descendant de la commande ne reste vivant"
+"$CAMPAGNE" ouvrir --nom rapide --duree-max 30 -- bash -c 'exit 5'
+[ "$?" = 5 ] && ok "sous la borne, le code de sortie de la commande est rendu tel quel" || fail "la borne altère le code de sortie"
+CAMPAGNE_DUREE_MAX=2 "$CAMPAGNE" ouvrir --nom par-variable -- sleep 30 >/dev/null 2>&1
+[ "$?" = 124 ] && ok "CAMPAGNE_DUREE_MAX règle la même borne" || fail "CAMPAGNE_DUREE_MAX n'est pas lue"
+refus_attendus=1
+for invalide in 0 -3 abc ''; do
+	"$CAMPAGNE" ouvrir --duree-max "$invalide" -- true >/dev/null 2>&1
+	[ "$?" = 64 ] || { fail "une durée maximale « $invalide » n'est pas refusée"; refus_attendus=0; }
+done
+[ "$refus_attendus" = 1 ] && ok "une durée maximale nulle, négative, vide ou non numérique est refusée (code 64)"
+
+# b) `borner` : la borne d'une commande qui peut bloquer, l'échec nommé.
+source "$REPO_ROOT/scripts/lib/borne.sh" 2>/dev/null || fail "scripts/lib/borne.sh est absent"
+if declare -F borner >/dev/null; then
+	debut=$(date +%s)
+	sortie=$(borner 2 sleep 60 2>&1); code=$?
+	duree=$(( $(date +%s) - debut ))
+	[ "$code" = 124 ] && [ "$duree" -lt 15 ] && ok "borner arrête une commande qui bloque (code 124, ${duree} s)" || fail "borner n'arrête pas la commande (code $code, ${duree} s)"
+	printf '%s' "$sortie" | grep -q 'DÉLAI DÉPASSÉ' && printf '%s' "$sortie" | grep -q 'sleep 60' \
+		&& ok "…et nomme le délai et la commande" || fail "borner ne nomme pas le dépassement : « $sortie »"
+	borner 30 bash -c 'exit 3'; [ "$?" = 3 ] && ok "borner rend le code de la commande quand elle finit à temps" || fail "borner altère le code"
+	sortie=$(borner 30 printf 'a b') ; [ "$sortie" = 'a b' ] && ok "borner transmet la sortie de la commande" || fail "borner altère la sortie"
+else
+	fail "borner n'existe pas"
+fi
 
 printf '\n  Bilan : %s contrôles, %s anomalie(s)\n\n' "$checks" "$failures"
 [ "$failures" -eq 0 ]

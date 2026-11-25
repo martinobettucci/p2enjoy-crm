@@ -66,6 +66,7 @@ skip() { skips=$((skips + 1)); printf '  \033[33mIGNORE\033[0m %s\n' "$1"; }
 
 # shellcheck source=lib/env.sh
 source "$REPO_ROOT/scripts/lib/env.sh"
+source "$REPO_ROOT/scripts/lib/borne.sh" # INC-367 : toute construction d'image est bornée
 # `env.sh` pose `set -e` ; un harnais doit survivre à ses propres échecs.
 set +e
 
@@ -462,7 +463,7 @@ etiquette_overlay=$(sed -n '/^  realtime:/,/^  [a-z]/s/^    image: //p' docker-c
 # en boucle dans la cellule, alors que le poste, qui a tous ses UID, le démarrait sain.
 BORNE_UID_CELLULE=64534
 if docker info >/dev/null 2>&1; then
-	if docker build -q -t "$etiquette_livrer" supabase/docker/realtime-spark >"$WORK/rt-build.out" 2>&1; then
+	if borner "${VERIFY_BUILD_DELAI:-1200}" docker build -q -t "$etiquette_livrer" supabase/docker/realtime-spark >"$WORK/rt-build.out" 2>&1; then
 		docker save "$etiquette_livrer" > "$WORK/rt.tar"
 		releve=$(python3 - "$WORK/rt.tar" "$BORNE_UID_CELLULE" <<'PY'
 import json, sys, tarfile
@@ -517,7 +518,7 @@ etiquettes_minio_overlay=$(sed -n '/^  minio\(-createbucket\)\?:/,/^  [a-z]/s/^ 
 	&& ok "même étiquette MinIO dérivée pour les deux services de l'overlay et dans livrer.sh ($etiquette_minio_livrer)" \
 	|| fail "étiquette MinIO dérivée : overlay « $(printf '%s' "$etiquettes_minio_overlay" | tr '\n' ' ') », livrer.sh « $etiquette_minio_livrer »"
 if docker info >/dev/null 2>&1; then
-	if docker build -q -t "$etiquette_minio_livrer" supabase/docker/minio-spark >"$WORK/minio-build.out" 2>&1; then
+	if borner "${VERIFY_BUILD_DELAI:-1200}" docker build -q -t "$etiquette_minio_livrer" supabase/docker/minio-spark >"$WORK/minio-build.out" 2>&1; then
 		docker save "$etiquette_minio_livrer" > "$WORK/minio.tar"
 		releve=$(python3 - "$WORK/minio.tar" "$BORNE_UID_CELLULE" <<'PY'
 import json, sys, tarfile
@@ -1034,7 +1035,7 @@ fi
 # L'image Realtime n'est transférée que si son CONTENU diffère de celui de la cellule (décision 577) :
 # une reconstruction change l'identifiant, jamais les couches ni la configuration.
 if docker info >/dev/null 2>&1; then
-	docker build -q -t "$etiquette_livrer" supabase/docker/realtime-spark >/dev/null
+	borner "${VERIFY_BUILD_DELAI:-1200}" docker build -q -t "$etiquette_livrer" supabase/docker/realtime-spark >/dev/null
 	docker tag "$etiquette_livrer" verify-spark/realtime-cellule:simulee
 	echo verify-spark/realtime-cellule:simulee > "$L/image-cellule"
 	id_cellule=$(docker image inspect --format '{{.Id}}' verify-spark/realtime-cellule:simulee)
