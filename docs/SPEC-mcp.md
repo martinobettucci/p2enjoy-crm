@@ -1707,6 +1707,15 @@ la personne.
   expéditeur, affaire, date et auteur de l'effacement, date d'effacement définitif, `can_restore`, l'état du déplacement
   IMAP (`none`, `pending`, `done`, `failed`, avec le motif en code et en phrase). Jamais le corps.
 
+### 9.2 L'espace courant — `CRM-161` T4 (`docs/SPEC-espace-courant.md` §17 ; décision 998)
+
+*Écrit le 2026-11-25, avant le code.* **Aucune famille, aucune case, aucun outil nouveau** (décision 965) ; **famille
+`messagerie` inchangée** pour le seul rendu qui change : le lien de relecture de `crm_mail_prepare` et de
+`crm_mail_draft_list` devient **`{SITE_URL}/<slug-de-l'espace>/inbox?brouillon=<id>`**, le slug de l'espace de l'ancre lu
+sous le jeton de la personne, **avant** `prepare_email` ; une lecture du slug qui échoue est un refus, jamais un retour à
+l'ancienne adresse. L'audit outil par outil (29 outils ancrés sur un espace nommé, 104 sur un objet, 2 multi-espaces) est
+consigné au §17.2 de la spécification de l'espace courant et rendu **automatique** par `mcp/tests/test_espace_courant.py`.
+
 ## 17. Les prompts du connecteur — `CRM-149` (décision 930)
 
 *Écrit le 2026-11-17, avant le code.* Un **prompt** MCP est un texte que l'assistant propose à la personne — dans Claude,

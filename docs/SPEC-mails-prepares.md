@@ -184,7 +184,7 @@ déjà armée, y compris par l'écran au nom d'une personne qui emploie aussi le
   `from_address`, `in_reply_to_message_id`) et garde ses règles : identité désignée par son adresse, défaut de la
   personne, objet de réponse préfixé une fois, `reply_outside_card` vérifié avant l'appel. **Il n'a plus
   `destructiveHint`** : préparer ne sort rien du CRM. Il rend `draft_id`, `status: pending_review`, l'adresse d'expédition
-  proposée, et **le lien de relecture** (`<SITE_URL>/inbox?brouillon=<draft_id>`), avec une phrase : « Ce mail n'est pas
+  proposée, et **le lien de relecture** (`<SITE_URL>/<slug-de-l'espace>/inbox?brouillon=<draft_id>` depuis `CRM-161` T4, décision 998 ; l'ancienne adresse `<SITE_URL>/inbox?brouillon=…` reste servie par la redirection), avec une phrase : « Ce mail n'est pas
   envoyé. Il attend votre relecture dans le CRM. »
 - **`crm_mail_draft_list`** rend les mails préparés **en attente** de la personne dans l'espace, du plus ancien au plus
   récent, paginés (25, borné à 100) : `id`, `card_id`, le titre de l'affaire, `to`, `cc`, `subject`, un extrait du corps
@@ -218,7 +218,7 @@ déjà armée, y compris par l'écran au nom d'une personne qui emploie aussi le
   appelle `send_email_draft` avec le contenu du formulaire, et **« Écarter »**, qui
   appelle `discard_email_draft` après une confirmation. Après l'un ou l'autre, la ligne quitte la liste et l'annonce le
   dit (« Message envoyé », « Mail préparé écarté »).
-- **L'adresse** `/inbox?brouillon=<id>` ouvre directement la relecture : c'est le lien que rend `crm_mail_prepare`. Un
+- **L'adresse** `/<slug-de-l'espace>/inbox?brouillon=<id>` ouvre directement la relecture : c'est le lien que rend `crm_mail_prepare` (`CRM-161` T4 ; avant T4 : `/inbox?brouillon=<id>`, toujours redirigée vers l'espace du brouillon). Un
   identifiant absent, écarté, envoyé ou à autrui ouvre l'état « Ce mail préparé n'est plus en attente », sans rien
   révéler de plus.
 - Sous 1024 px, la pile du §5.4 du design system : entrée → liste → relecture.

@@ -826,3 +826,75 @@ Camille (la grille).
   Recommandation : l'accepter, le détail du refus étant sans minutes. **Tranché le 2026-11-25 (décision 989) : accepté** —
   le plafond sur le total tous espaces, le refus sans minutes ni espace.
 
+
+## 17. La tranche T4 en détail — le connecteur
+
+*Écrit le 2026-11-25, avant le code de T4 (décision 998), après la lecture du catalogue du connecteur (`mcp/crm_mcp/outils/`,
+135 outils relevés par leur déclaration) et de la politique (`mcp/crm_mcp/politique.py`, `resoudre`). Accord avec la session
+de livraison (p2enjoy-crm-11, 2026-11-25 : « T4 puis T5 »).*
+
+### 17.1 Les deux questions du connecteur (`CLAUDE.md`, « Spécificités du projet »)
+
+- **Question 1 — la fonctionnalité existe-t-elle aussi dans le connecteur ?** Oui, **au sens étroit déjà décidé** (décision
+  965, §11) : les outils agissent déjà dans un espace ; T4 vérifie ce fait et corrige **un seul rendu**, le lien de relecture
+  d'`crm_mail_prepare`. **Aucun outil nouveau.**
+- **Question 2 — famille nouvelle ou existante ?** **Aucune famille, aucune case.** Le lien rendu reste de la famille
+  `messagerie` (action `ajouter`, `crm_mail_prepare` ; `consulter`, `crm_mail_draft_list`) ; la matrice, la migration de la
+  liste fermée et l'onglet « Connecteur MCP » ne changent pas. Réponses déjà consignées par la décision 965 et par §11 ; la
+  décision 998 les reprend sans les rouvrir.
+
+### 17.2 L'audit outil par outil — la règle, et ce que l'on constate
+
+La règle (§6) : **chaque outil se déclare avec une ancre**, et la matrice se contrôle dans l'espace que l'ancre désigne ; **un
+outil ne rend que des éléments de cet espace**, sauf les deux outils multi-espaces par nature, qui rendent l'espace de chaque
+élément. Le relevé du 2026-11-25 sur les 135 outils :
+
+| Classe | Outils | L'espace est… | Ce qui l'impose |
+|---|---|---|---|
+| **A. Ancre `workspace:workspace`** | 29 — les listes (`crm_track_list`, `crm_channel_list`, `crm_card_list`, `crm_stale_card_list`, `crm_card_mine`, `crm_contact_list`, `crm_organization_list`, `crm_organization_category_list`, `crm_goal_board_list`, `crm_budget_list`, `crm_costs_to_enter`, `crm_revenues_to_enter`, `crm_profitability_report`, `crm_time_entry_list`, `crm_time_report`, `crm_workflow_list`, `crm_workflow_node_list`, `crm_common_field_list`, `crm_mail_draft_list`, `crm_mail_outbox_list`, `crm_mail_trash_list`, `crm_mail_label_list`) et les créations d'un espace (`crm_track_create`, `crm_contact_create`, `crm_organization_create`, `crm_time_entry_set`, `crm_workflow_create`, `crm_workflow_starter_create`, `crm_workflow_node_create`) | **celui que l'argument `workspace` nomme** (slug ou identifiant) | chaque lecture ou écriture passe `appel.espace`, l'identifiant résolu par la politique : `workspace_id=eq.<espace>` ou `p_workspace_id` |
+| **B. Ancre sur un objet** (`card`, `message`, `track`, `channel`, `workflow`, `organisation`, `contact`, `board`, `outbox`, `draft`, …) | 104 | **celui de l'objet**, résolu par la politique (`RESOLUTIONS`, `RESOLUTIONS_RPC`) avant l'outil | l'outil lit et écrit **par l'identifiant de l'objet** ; ce qui y est lié se lit sous la RLS de la personne |
+| **C. Multi-espaces par nature** | 2 — `crm_workspace_list`, `crm_search` | **tous ceux que la personne lit** | `crm_search` rend le `workspace_id` de chaque résultat ; `crm_workspace_list` rend les espaces eux-mêmes |
+
+- **Aucun outil ne liste l'inbox** (pas d'équivalent de `inbox_messages`) : rien à aligner pour l'inbox. Les outils de
+  messagerie lisent un message **par son identifiant** (classe B), et l'outbox, les mails préparés et la corbeille **par un
+  espace nommé** (classe A).
+- **Les outils des pages globales** (`crm_contact_list`, `crm_organization_list`, `crm_goal_board_list`, `crm_time_report`,
+  `crm_costs_to_enter`, `crm_revenues_to_enter`, `crm_profitability_report`, …) **restent à un espace par appel** : l'assistant
+  lit un espace après l'autre, et `crm_workspace_list` lui donne la liste. La webapp, elle, lit plusieurs espaces d'un coup
+  (§10, T3.c, T3.d) ; **les migrations `0201` à `0203` ne changent pas le connecteur** — `organization_list` garde sa forme
+  d'appel (`p_workspace_id`), `temps_valorise` gagne une colonne que le connecteur ne rend pas, le plafond journalier de
+  `0203` compte tous les espaces **et le connecteur en subit le refus tel quel** (`plafond journalier`, sans minutes ni
+  espace : décision 989).
+- **Le seul lien que le connecteur compose** est `review_url` (`crm_mail_prepare`, `crm_mail_draft_list`).
+
+### 17.3 Ce que T4 change : le lien de relecture
+
+- **Avant** : `{SITE_URL}/inbox?brouillon=<id>` — une ancienne adresse (§8.4) : la webapp la redirige vers l'espace du mail
+  préparé (`mail_drafts.workspace_id`), au prix d'un écran de résolution.
+- **Après** : **`{SITE_URL}/<slug-de-l'espace>/inbox?brouillon=<id>`**, l'adresse définitive : elle ouvre directement la
+  relecture dans l'espace du brouillon. Le slug est celui de **l'espace de l'ancre** (`appel.espace`), lu **sous le jeton de la
+  personne** (`workspaces`, `id=eq.<espace>`, `select=slug`) : la RLS, la seule règle d'accès, répond.
+- **L'ordre** : dans `crm_mail_prepare`, **le slug est lu avant tout dépôt de fichier et avant `prepare_email`** — un mail
+  préparé ne doit pas exister sans pouvoir rendre son lien. Dans `crm_mail_draft_list`, il est lu une fois pour la page.
+- **Une lecture qui échoue ou ne rend pas exactement une ligne est un refus** (`Introuvable ou hors de votre périmètre : …`) :
+  **aucun retour silencieux à l'ancienne adresse**, qui dissimulerait l'écart (`CLAUDE.md` §18).
+- **L'ancienne adresse reste servie** par la redirection (§8.4) : un lien déjà donné à la personne continue d'ouvrir le bon
+  espace. La webapp ne change pas.
+
+### 17.4 Les preuves nommées de T4
+
+| Niveau | Ce qui est prouvé |
+|---|---|
+| **Unitaires du connecteur** (`mcp/tests/test_messagerie.py`) | `crm_mail_prepare` rend `{origine}/atelier/inbox?brouillon=…` pour l'espace A et `{origine}/bureau/…` pour l'espace B ; `crm_mail_draft_list` de même ; **le slug est lu avant `prepare_email`** (l'ordre des appels) ; une lecture du slug qui échoue : refus, **aucun appel à `prepare_email`**, aucun dépôt |
+| **Garde d'audit** (`mcp/tests/test_espace_courant.py`) | pour **chaque** outil du catalogue (lu par sa déclaration) : une ancre est déclarée ; la classe A n'écrit ni ne lit qu'avec `appel.espace` ; la classe C est **exactement** `crm_workspace_list` et `crm_search` ; **aucun outil ne compose une adresse de la webapp sauf `lien_de_relecture`**, et celui-ci porte le slug |
+| **Intégration** (`mcp/tests/test_integration_espace_courant.py`, contre la vraie base, Keycloak et le vrai service `mcp`) | la personne membre des deux espaces du seed (§12) : un mail préparé dans « Studio Lumen » rend `/studio-lumen/inbox?brouillon=…`, un dans « P2Enjoy SAS » `/p2enjoy/inbox?brouillon=…` ; la liste des mails préparés de chaque espace ne rend que les siens ; les listes de la classe A d'un espace ne rendent **aucune ligne de l'autre** ; `crm_search` rend le `workspace_id` des deux |
+| **Webapp** | une adresse rendue par le connecteur **s'ouvre sur la relecture** (E2E existant `mails-prepares`, adresse préfixée) |
+
+**Le manuel ne change pas pour T4** : le chapitre 33 (« Le connecteur MCP ») ne cite l'adresse d'aucun lien rendu (vérifié
+par recherche de `brouillon=` dans `docs/manual.md`) ; la personne ne voit que le lien, qui ouvre la relecture comme avant.
+
+### 17.5 Livraison de T4
+
+**L'image `mcp` est à reconstruire et à redéployer** (le code du connecteur change) — après la webapp, ou avant : l'ancien
+lien reste servi par la redirection ; **aucune migration, aucune variable** (`SITE_URL` existe). Au contrat
+(`docs/PROD_MIGRATIONS.md` §2.84).
