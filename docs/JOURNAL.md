@@ -42624,3 +42624,10 @@ mécanisme d'exception ouvert. **Pourquoi un refus et non une correction** : un 
 ### `INC-367` — clos : `verify-scripts.sh` rejoué en entier
 
 *2026-11-25, session `p2enjoy-crm-dd`.* Rejoué sous un verrou de campagne que la session a ouvert elle-même (`ouvrir --duree-max 5400`), le verrou étant libre à la demande de la session de livraison : 118 vérifications, aucune anomalie, les deux constructions sans cache terminées dans la borne. Le blocage de 13 h ne s'est pas reproduit ; sa cause n'est donc toujours pas établie.
+
+**Décision 993, exécutée le 2026-11-25 au soir** : la livraison attendait l'accès SSH à la Forge, refusé de 00:50 à 21:21 UTC
+(maintenance de la Forge) ; `pg_dump` relu (3 627 entrées) ; `livrer.sh --revision e550be2d…` (webapp bâtie dans la cellule, migrations
+201 et 202) ; `rest` recréé (INC-277) ; `verifier.sh` 35/36 (`realtime`) ; manuel publié ; contrat §2.80 LIVRÉE et §8, changelog
+(les deux entrées de T3.c seules) en [Publié], backlog. Le verrou de livraison reste posé pour le lot suivant (`95e2b0f0` et ses
+correctifs).
+

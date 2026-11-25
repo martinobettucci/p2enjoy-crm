@@ -16,60 +16,66 @@ d'exécuter le code attendu.
 - **INC-367, aucun harnais sans borne de temps** : le verrou de campagne a une durée maximale (`CAMPAGNE_DUREE_MAX`, six heures par défaut : l'arbre de la
   commande est arrêté, le verrou libéré, code 124) et les constructions d'image des harnais sont bornées (`borner`, `VERIFY_BUILD_DELAI`, 1200 s), le
   dépassement étant nommé. Outillage de développement : rien ne change dans le produit livré.
+
 - **INC-318, le runner refuse une migration qui porte sa propre transaction** : `apply-migrations.sh` refuse, avant d'appliquer, un fichier qui contient `begin;`, `commit;`, `rollback;` ou `start transaction;` de premier niveau, sauf les onze fichiers déjà inscrits
   (`0034` à `0043`, `0116`). Sans effet sur la production tant qu'aucun fichier nouveau ne porte de transaction ; part avec le script du runner, sans geste du responsable.
+
 - **INC-361, le récapitulatif du matin cite aussi les mentions du fil d'une organisation** (migration 206, décisions 992 et 1000) : sous « On vous a mentionné », une mention non lue
   dans le fil d'une organisation paraît avec son nom suivi de « (organisation) » et le lien de sa fiche, à l'ancre du commentaire, mêlée aux mentions d'affaires par ordre de
   création ; l'objet du mail la compte, et elle suffit à produire un récapitulatif. Une organisation que la personne ne peut pas lire n'y figure jamais. Le jeu ne pose pas de mention d'organisation (docs/SPEC-seed.md §58) ; manuel §5.6.
+
 - **INC-342 (lot D), trois preuves ne dépendent plus de l'état accumulé de la base de développement** : l'historique des webhooks (E2E et manuel 34) et le compte des
   non lus de `inbox-lecture` ciblent leurs propres lignes et ne retirent que ce qu'ils écrivent, sans relâcher d'assertion. Outillage de test : rien ne change dans le produit livré.
+
 - **INC-142, le relevé des résidus de données** : `scripts/mesurer-residus.sh` relève les lignes de chaque table avant et après une exécution et nomme celles qu'une preuve laisse derrière elle ; `scripts/verify-residus.sh` le prouve (8 contrôles).
   Outillage de développement : rien ne change dans le produit livré.
+
 - **CRM-161 T5, le manuel : « Changer d'espace » complète la liste des pages à bouton « Espace »** (décision 999) : les organisations, le rapport
   mensuel du temps et le Pilotage y entrent ; une capture du panneau du filtre ; créer depuis une page qui rassemble plusieurs espaces nomme
   l'espace de création ; la journée de 7 heures compte tous les espaces ; le chapitre du connecteur dit qu'un outil agit dans un seul espace et que
   le lien de relecture d'un mail préparé ouvre l'espace du mail.
+
 - **INC-194, le focus revient à la commande du bas** : sur l'écran des comptes entrants, annuler le formulaire ouvert depuis la commande du bas (ou celle de l'état vide) rend le focus à cette commande,
   au lieu de le perdre sur la page. Accessibilité clavier ; aucun changement visuel.
+
 - **CRM-161 T4, le connecteur : le lien de relecture d'un mail préparé porte le slug de l'espace** (décision 998) : `crm_mail_prepare` et
   `crm_mail_draft_list` rendent `<site>/<slug de l'espace>/inbox?brouillon=<id>` — l'adresse définitive, qui ouvre la relecture dans l'espace du
   mail sans passer par la redirection ; le slug est lu sous le jeton de la personne avant de préparer quoi que ce soit, et un slug illisible refuse
   au lieu de retomber sur l'ancienne adresse. L'audit des 135 outils du catalogue (29 ancrés sur un espace nommé, 104 sur un objet, 2 multi-espaces)
   devient une garde automatique. Aucune famille, aucune case, aucun outil nouveau ; image `mcp` à redéployer (contrat §2.84).
+
 - **INC-126, la proposition de clé translittère les ligatures** : « Nœud de preuve » propose `noeud-de-preuve` (et non plus `n-ud-de-preuve`) ; `œ`, `æ` et `ß` deviennent `oe`, `ae` et `ss` dans la clé proposée d'un nœud,
   d'un track ou d'un channel. La proposition reste modifiable ; aucun slug existant ne change.
+
 - **INC-366, une reconstruction ne laisse plus une base vide en silence** : `reconstruire_base_dev` attend qu'une route REST réponde en JSON avant de seeder,
   rejoue le seed une fois s'il échoue, et écrit « BASE NON SEEDÉE » si les deux essais échouent. Outillage de développement : rien ne change dans le produit livré.
   **Partie b** : `verify-rendu-modeles-emails.sh` dégrade depuis la définition en base au lieu de rejouer la `0056` — il ne laisse plus de seconde surcharge de `rendre_modele_email`.
+
 - **INC-216 T1, le fuseau de l'espace : les horodatages d'un e-mail se rendent à l'heure de l'espace** (migration 204, décisions 992 et
   996) : `workspaces.timezone` (`Europe/Paris` par défaut, validé), réglé par l'administrateur de l'espace ou un superadministrateur
   (`workspace_set_timezone`, refus en base) ; `card.next_action_at` et les champs communs « date et heure » d'un modèle d'e-mail se
   rendent à ce fuseau, et non plus en UTC. « Studio Lumen »
   est seedé à `America/Montreal`.
+
 - **INC-216 T2, l'écran « Fuseau horaire » des Réglages** (décision 1000) : un administrateur lit et règle le fuseau de son espace sans passer par l'API ; la liste est celle du navigateur, rangée
   par région (le fuseau déjà réglé y figure toujours), l'heure qu'il est dans le fuseau choisi et l'écart avec l'appareil s'écrivent sous le champ, tout membre lit, les autres voient champ et commande
   grisés avec le motif. Le journal d'audit nomme « fuseau horaire ». **Le manuel** (§14.4) dit désormais que les heures des messages suivent le fuseau de l'espace — il disait encore « UTC ».
+
 - **INC-165, une migration ne se pousse plus sans ses types** (décision 992) : le crochet `pre-push` refuse un commit qui ajoute ou modifie
   une migration de `supabase/migrations/` sans modifier `webapp/src/lib/database.types.ts` dans le même commit, sauf si la migration porte le
   commentaire `-- sans effet de types : <motif>`. Outillage de développement : rien ne change dans le produit livré.
+
 - **INC-177, un verrou de campagne entre les preuves qui partagent la pile** (décision 990) : `npm run test:sql`, `e2e:api|ui|mail`,
   le seed, la reconstruction de la base et un `npm run build` pendant que l'aperçu sert `webapp/dist` refusent désormais de se
   lancer de front avec une autre campagne (code 75, détenteur nommé). Une campagne s'ouvre en une fois par
   `scripts/lib/campagne.sh ouvrir -- <commande>` ; `CAMPAGNE_ATTENDRE` attend, `CAMPAGNE_FORCER=1` passe outre. Outillage de
   développement : rien ne change dans le produit livré.
-- **CRM-161 T3.c, les migrations 201 et 202** : la liste des organisations peut lire plusieurs espaces à la fois et dit
-  l'espace de chaque organisation, et le temps valorisé dit l'espace de chaque ligne. Rien ne change encore à l'écran : les
-  écrans Organisations et Temps ▸ Rapport, qui s'en serviront, suivent. La webapp et le connecteur livrés continuent de
-  fonctionner sans changement.
-- **CRM-161 T3.c, les organisations et le rapport de temps de tous les espaces** : pour une personne de plusieurs espaces,
-  l'onglet « Organisations » rassemble les organisations de tous, avec une colonne « Espace » et un bouton « Espace » qui
-  en isole certains ; les cases « Tracks » et « Catégories » se rangent sous le nom de chaque espace ; la création dit dans
-  quel espace elle se fait. Le rapport de temps nomme l'espace de chaque ligne et se filtre de même. Rien ne change pour une
-  personne d'un seul espace. Le manuel (chapitres 10 et 28) le décrit.
+
 - **Le contrôle des classes voit les gabarits et ne confond plus une comparaison** (`INC-314`, `INC-334`, `INC-184` ; décision 992). Le contrôle qui
   vérifie que chaque classe citée existe dans le CSS produit ne lisait pas les gabarits à interpolation et prenait `role === 'alert'` pour une classe.
   Corrigé, il a révélé trois classes jamais engendrées, désormais remplacées : le retrait des listes à puces de « Plateforme ▸ Tracks » (`pl-6`), l'alignement de leur
   icône (`mt-[2px]`) et la largeur du champ de délai d'un palier de séquence (`w-[128px]`). Contrat §2.82.
+
 
 - **CRM-161 T3.d, le Pilotage et la saisie du temps de tous les espaces** : pour une personne de plusieurs espaces, le Pilotage
   rassemble les affaires de tous — les deux nombres de tête sur tous les espaces affichés, puis une section par espace avec ses
@@ -81,6 +87,23 @@ d'exécuter le code attendu.
   personne d'un seul espace. Le manuel (chapitres 28 et 30) le décrit.
 
 ## [Publié]
+
+### Déployé en production, 2026-11-25 au soir — les migrations 201 et 202, la webapp et le manuel
+
+Cellule Spark `crm`, révision `e550be2d` (décision 993, un `pg_dump -Fc` avant). **Vérifié** : registre à 200 lignes ;
+`index-DUE75ltc.js` servi ; `rest` recréé (INC-277), sain ; `verifier.sh` 35/36 (`realtime`, un redémarrage) ; manuel publié
+(606 fichiers). Le constat du responsable reste à faire (visible à partir de deux espaces).
+
+- **CRM-161 T3.c, les migrations 201 et 202** : la liste des organisations peut lire plusieurs espaces à la fois et dit
+  l'espace de chaque organisation, et le temps valorisé dit l'espace de chaque ligne. Rien ne change encore à l'écran : les
+  écrans Organisations et Temps ▸ Rapport, qui s'en serviront, suivent. La webapp et le connecteur livrés continuent de
+  fonctionner sans changement.
+
+- **CRM-161 T3.c, les organisations et le rapport de temps de tous les espaces** : pour une personne de plusieurs espaces,
+  l'onglet « Organisations » rassemble les organisations de tous, avec une colonne « Espace » et un bouton « Espace » qui
+  en isole certains ; les cases « Tracks » et « Catégories » se rangent sous le nom de chaque espace ; la création dit dans
+  quel espace elle se fait. Le rapport de temps nomme l'espace de chaque ligne et se filtre de même. Rien ne change pour une
+  personne d'un seul espace. Le manuel (chapitres 10 et 28) le décrit.
 
 ### Déployé en production, 2026-11-24, tard — la webapp et le manuel
 

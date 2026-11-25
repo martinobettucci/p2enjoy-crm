@@ -7543,6 +7543,8 @@ geste est fait ; reste à choisir la forme du contrat pour une prochaine cellule
 
 ### INC-277 — en production, `verifier.sh` reste rouge sur un redémarrage de PostgREST antérieur à la livraison, et Kong frôle sa limite de mémoire
 
+**Exécutée le 2026-11-25 (décision 992)** : `rest` recréé dans la fenêtre de la décision 993, compteur de redémarrages à 0, sain. Le contrôle reste rouge sur `realtime` (1 redémarrage, consécutif à la recréation) : à constater à la prochaine fenêtre ; Kong non mesuré ici.
+
 **Arbitrée le 2026-11-25 (décision 992)** : recréer le service rest au prochain créneau de livraison (compteur remis à zéro), puis surveiller ; écartés : relever les limites ; laisser rouge.
 
 *Relevée le 2026-10-21 pendant la livraison de `CRM-101` T5 et `CRM-102` T5 ; ouverte : l'arbitrage touche la
