@@ -42584,3 +42584,8 @@ le simuler. **Décision** : lire dans une variable (la forme d'INC-106) et ferme
 
 *2026-11-25, session `p2enjoy-crm-dd`, lot repris de la session 30.* **Le problème** : deux constantes (141 tests, 24 scénarios) que le produit dépasse à chaque test ajouté. **La décision** : l'issue de la fiche — lire le compte plutôt que le figer —, avec la forme qu'INC-125 avait donnée à `verify-harness.sh` : énumérer sans exécuter, puis confronter à l'exécution, et échouer si l'énumération est vide.
 **Ce que la mesure a appris** : `playwright --list` passait par la garde de campagne et se faisait refuser sous un verrou vivant — le décompte venait alors vide ; la garde ignore désormais un `--list`, qui n'exécute rien. **Vérifié** : `verify-decomptes.sh` 6 contrôles, dont le rouge sans la garde. **Non fait** : le harnais complet, qui reconstruit la base.
+
+### `INC-274` — une valeur devenue fausse se refuse
+
+*2026-11-25, session `p2enjoy-crm-dd`, lot repris de la session 30.* **Le problème** : trois mécanismes de `.env` — jamais réécrit, présence seule contrôlée, complétion des seules variables absentes — laissaient passer une valeur périmée. **Les options de la fiche** : (1) une liste de valeurs exigées comparées, (2) une migration de valeur, (3) documenter. **Retenue** : la 1, la plus simple et la seule qui refuse avant le dégât ;
+la valeur attendue est lue dans `.env.example`, pas recopiée. **Ce qui reste volontairement étroit** : la liste ne porte que la variable mesurée. **Vérifié** : rouge sans la garde, vert avec ; `verify-scripts.sh` entier, 118 vérifications.

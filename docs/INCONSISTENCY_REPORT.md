@@ -7492,6 +7492,9 @@ et `DEV_VARIABLES_AJOUTEES` ne complète que les variables ABSENTES : une valeur
 (2) une migration de valeur dans `env_ensure_dev_completions` (ancienne valeur connue → nouvelle) ; (3) ne rien changer
 et documenter la relecture de `.env.example` à chaque mise à jour du dépôt.
 
+**CLOSE le 2026-11-25 — INC-274, session `p2enjoy-crm-dd`, reprise d'un lot de la session `p2enjoy-crm-30`, issue 1 (arbitrage de la session de livraison).** `scripts/lib/env.sh` porte `DEV_VALEURS_EXIGEES` (la variable de la fiche, `PGRST_DB_EXTRA_SEARCH_PATH`) et `env_require_dev_valeurs_exigees`, qui compare à `.env.example` et refuse en nommant la valeur du contrat ; `runDev.sh` et `resetMe.sh` l'appellent, avant Docker et avant toute
+destruction. **Preuve** : trois contrôles ajoutés à `verify-scripts.sh` — rouge sans la garde (le `.env` périmé était accepté, code 0), vert avec ; le harnais entier rejoué : 118 vérifications, aucune anomalie. `docs/SPEC-test-harness.md` §3.15.
+
 ### INC-275 — le scénario Temps réel §13.9 de `commentaires.spec.ts` peut conclure sur un canari tardif
 
 *Relevée le 2026-10-20 pendant la campagne d'API de `CRM-102` T1 ; ouverte, à arbitrer. Unité concernée : `CRM-043`

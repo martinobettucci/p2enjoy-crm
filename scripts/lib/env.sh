@@ -491,6 +491,35 @@ env_require_dev_sso_issuer() {
 	fi
 }
 
+# @spec INC-274 (docs/BACKLOG.md « Correctif — INC-274 »), docs/SPEC-test-harness.md §3.15 — les valeurs EXIGÉES en développement
+# Un `.env` existant n'est jamais réécrit, `env_validate` ne contrôle que la PRÉSENCE et `CHANGE_ME_*`, et `DEV_VARIABLES_AJOUTEES`
+# ne complète que les variables ABSENTES : une valeur DEVENUE FAUSSE passait en silence (INC-274, mesuré le 2026-10-20 : un
+# `.env` à `PGRST_DB_EXTRA_SEARCH_PATH=public,extensions`, valeur d'avant `538525c6`, alors que le contrat exige
+# `public,extensions,app` — cinq scénarios de recherche plein texte répondaient 400, sans rien qui désigne la cause).
+# Les variables ci-dessous sont celles dont le contrat est une valeur EXACTE : leur valeur attendue est celle de `.env.example`,
+# jamais recopiée ici — une copie de plus divergerait à son tour. Cette liste est explicite, comme `DEV_VARIABLES_AJOUTEES` :
+# exiger toute valeur du gabarit refuserait les ports et les secrets que le développeur règle légitimement.
+DEV_VALEURS_EXIGEES="
+PGRST_DB_EXTRA_SEARCH_PATH
+"
+
+env_require_dev_valeurs_exigees() {
+	local name attendu actual problems=0
+	for name in $DEV_VALEURS_EXIGEES; do
+		attendu=$(env_get "$ENV_EXAMPLE" "$name")
+		[ -n "$attendu" ] || die "DEV_VALEURS_EXIGEES nomme $name, que $(basename "$ENV_EXAMPLE") ne définit pas : la liste a vieilli."
+		actual=$(env_get "$ENV_FILE" "$name")
+		if [ "$actual" != "$attendu" ]; then
+			printf '\033[31m  périmée\033[0m  %s vaut « %s », or le contrat (%s) exige « %s »\n' \
+				"$name" "${actual:-<vide>}" "$(basename "$ENV_EXAMPLE")" "$attendu" >&2
+			problems=$((problems + 1))
+		fi
+	done
+	if [ "$problems" -gt 0 ]; then
+		die "$problems variable(s) à aligner sur le contrat dans $ENV_FILE. Corrigez la ligne, puis recréez la pile (./runDev.sh) : les services ne relisent pas un .env modifié sous eux."
+	fi
+}
+
 # La connexion LeLabs revient vers `SITE_URL/auth/retour`, l'URL de retour que le realm de
 # développement déclare (docs/SPEC-session-sso.md §10). En développement, cette origine doit donc
 # désigner exactement le Vite publié par l'overlay. La garde est indépendante de Docker afin que

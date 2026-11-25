@@ -600,6 +600,34 @@ else
 	fail "resetMe.sh refuse le mauvais domaine sans expliquer la valeur attendue"
 fi
 
+# INC-274 — une valeur DEVENUE FAUSSE : un `.env` existant n'est jamais réécrit, et `env_validate` ne contrôle que la présence. La valeur exigée est celle
+# de `.env.example` (scripts/lib/env.sh, `DEV_VALEURS_EXIGEES`) : le harnais l'altère et exige le refus, avant Docker et avant toute destruction.
+VALEUR_PERIMEE="$WORK/env.valeur-perimee"
+sed 's/^PGRST_DB_EXTRA_SEARCH_PATH=.*/PGRST_DB_EXTRA_SEARCH_PATH=public,extensions/' "$BOOT1" > "$VALEUR_PERIMEE"
+if P2ENJOY_ENV_FILE="$VALEUR_PERIMEE" ./runDev.sh --bootstrap >"$WORK/valeur-dev.log" 2>&1; then
+	fail "runDev.sh accepte une valeur périmée de PGRST_DB_EXTRA_SEARCH_PATH"
+elif grep -q 'PGRST_DB_EXTRA_SEARCH_PATH.*public,extensions,app' "$WORK/valeur-dev.log"; then
+	ok "runDev.sh refuse une valeur périmée avant Docker et nomme la valeur du contrat"
+else
+	fail "runDev.sh refuse la valeur périmée sans nommer la valeur attendue"
+fi
+
+if P2ENJOY_ENV_FILE="$VALEUR_PERIMEE" ./resetMe.sh --yes >"$WORK/valeur-reset.log" 2>&1; then
+	fail "resetMe.sh accepte de détruire avec une valeur périmée"
+elif grep -q 'PGRST_DB_EXTRA_SEARCH_PATH.*public,extensions,app' "$WORK/valeur-reset.log"; then
+	ok "resetMe.sh refuse une valeur périmée avant toute destruction"
+else
+	fail "resetMe.sh refuse la valeur périmée sans nommer la valeur attendue"
+fi
+
+VALEUR_VIDE="$WORK/env.valeur-vide"
+sed 's/^PGRST_DB_EXTRA_SEARCH_PATH=.*/PGRST_DB_EXTRA_SEARCH_PATH=/' "$BOOT1" > "$VALEUR_VIDE"
+if P2ENJOY_ENV_FILE="$VALEUR_VIDE" ./runDev.sh --bootstrap >/dev/null 2>&1; then
+	fail "runDev.sh accepte une valeur exigée laissée vide"
+else
+	ok "runDev.sh refuse une valeur exigée laissée vide"
+fi
+
 if P2ENJOY_ENV_FILE="$BOOT1" ./runDev.sh --bootstrap >"$WORK/origine-ok.log" 2>&1; then
 	ok "runDev.sh accepte l'origine webapp qui correspond exactement au port publié"
 else

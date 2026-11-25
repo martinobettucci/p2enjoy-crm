@@ -21089,3 +21089,9 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 *`verify-session-sso.sh` figeait le nombre de tests qu'il attend ; il l'énumère désormais. Spécification : `docs/SPEC-test-harness.md` §3.14 ; fiche INC-297. Connecteur MCP : sans objet.*
 
 - [x] **INC-297** — `scripts/lib/decomptes.sh` (`decompte_unites`, `decompte_scenarios`), `verify-session-sso.sh` qui lit ses comptes, la configuration Playwright qui ne verrouille plus un `--list` ; `scripts/verify-decomptes.sh` : 6 contrôles verts, rouge sans la garde du `--list`. *Le harnais complet est à rejouer à la campagne de la session de livraison.*
+
+## Correctif — INC-274 (repris de la session 30, 2026-11-25)
+
+*Un `.env` existant gardait en silence la valeur périmée d'une variable dont le contrat avait changé. Spécification : `docs/SPEC-test-harness.md` §3.15 ; fiche INC-274. Connecteur MCP : sans objet.*
+
+- [x] **INC-274** — `DEV_VALEURS_EXIGEES` et `env_require_dev_valeurs_exigees` (`scripts/lib/env.sh`), appelés par `runDev.sh` et `resetMe.sh` ; trois preuves dans `verify-scripts.sh`, rouge sans la garde ; harnais entier : 118 vérifications, aucune anomalie.

@@ -453,6 +453,14 @@ travers le dépôt ne le trouve jamais. **Mesuré** (2026-11-25) sur les fichier
 **Preuve** : `scripts/verify-decomptes.sh` (6 contrôles, sans pile) — le compte énuméré égale celui de l'exécution (141) ; **un test ajouté** (un fichier jetable, retiré dans un `trap`) fait passer 141 à 142 des deux côtés, là où une constante aurait rougi ; un répertoire sans test et un fichier de scénarios inexistant échouent ; l'énumération passe sous un verrou vivant
 — **rouge sans la garde du `--list`** (« rend 'rien' au lieu de '24' »), vert avec. Connecteur MCP : sans objet.
 
+### 3.15 Une valeur devenue fausse se refuse — les valeurs exigées de `.env` (INC-274)
+
+*Écrite le 2026-11-25, avant le code.* Un `.env` existant n'est jamais réécrit ; `env_validate` ne contrôle que la **présence** et les marqueurs `CHANGE_ME_*` ; `DEV_VARIABLES_AJOUTEES` ne complète que les variables **absentes**. Une valeur **devenue fausse** passait donc en silence : mesuré le 2026-10-20, un `.env` à
+`PGRST_DB_EXTRA_SEARCH_PATH=public,extensions` — valeur d'avant le commit `538525c6` — alors que le contrat exige `public,extensions,app` faisait répondre 400 cinq scénarios de recherche plein texte, sans que rien ne désigne la cause.
+**La règle** (issue 1 de la fiche, tranchée par la session de livraison). `scripts/lib/env.sh` porte une liste explicite, `DEV_VALEURS_EXIGEES`, des variables dont le contrat est une valeur EXACTE ; `env_require_dev_valeurs_exigees` compare la valeur du `.env` à celle de **`.env.example`** — jamais recopiée dans la liste, une copie de plus divergerait à son tour — et refuse, en nommant la variable, la valeur trouvée et
+la valeur du contrat, avant Docker (`runDev.sh`) et avant toute destruction (`resetMe.sh`). Une variable de la liste que le gabarit ne définit pas est une erreur : la liste a vieilli. **Ce que la liste n'est pas** : exiger toute valeur du gabarit refuserait les ports et les secrets que le développeur règle légitimement ; la liste commence à la seule variable mesurée, et chaque unité qui change une valeur de contrat l'y inscrit.
+**Preuve** : `scripts/verify-scripts.sh` (trois contrôles : `runDev.sh` refuse la valeur périmée et nomme celle du contrat ; `resetMe.sh` la refuse avant toute destruction ; une valeur exigée laissée vide est refusée) — **rouge sans la garde** (le même `.env` périmé était accepté, code 0), vert avec ; le harnais entier : 118 vérifications, aucune anomalie. Connecteur MCP : sans objet.
+
 ## 4. Projets Playwright
 
 ### 4.1 Une seule configuration

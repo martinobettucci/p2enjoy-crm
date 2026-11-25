@@ -53,6 +53,7 @@ env_require_profile dev
 env_require_dev_ca_file NPM_CA_FILE
 env_require_dev_ca_file PIP_CA_FILE
 env_require_dev_inbound_domain
+env_require_dev_valeurs_exigees
 
 DB_DATA="$REPO_ROOT/supabase/docker/volumes/db/data"
 
