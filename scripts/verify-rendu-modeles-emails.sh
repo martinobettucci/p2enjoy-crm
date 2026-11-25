@@ -11,11 +11,13 @@
 #           (docs/SPEC-test-harness.md §3.7 ; docs/SPEC-rattachements.md §3.2)
 #           (docs/SPEC-rattachements.md §3.2, §5)
 # @verifies CRM-111 (docs/BACKLOG.md) — tranche T1 ter.3, INC-304 : la garde d'empreinte (docs/SPEC-test-harness.md §3.8)
+# @verifies INC-366 b (docs/BACKLOG.md « Correctif — INC-366 ») — aucune migration n'est rejouée pour dégrader ni pour restaurer :
+#           les dégradations partent de la définition EN BASE (docs/SPEC-test-harness.md §3.7, §3.6 bis)
 #
 # Le script ne démarre ni n'arrête la pile. Il exige la base locale de développement migrée et
 # seedée. Il rejoue les preuves de la sous-tranche, puis DÉGRADE RÉELLEMENT la migration — une
 # dégradation par règle qu'elle porte — et exige que la suite pgTAP rougisse. Aucun état dégradé ne
-# subsiste, même en cas d'échec : la migration est rejouée par un `trap`.
+# subsiste, même en cas d'échec : les définitions d'origine, lues EN BASE, sont réappliquées par un `trap`.
 #
 # CE QU'UNE DÉGRADATION PROUVE, ET CE QU'ELLE NE PROUVE PAS. Qu'une suite soit verte ne dit rien
 # tant qu'on n'a pas vu qu'elle sait rougir. Chaque dégradation retire UNE règle du produit et
@@ -53,7 +55,6 @@ AFFAIRE_SANS_MONTANT=5eed0000-0000-4000-8000-0000000000c6
 # Léo Marchand, avec organisation et email.
 CONTACT_LEO=5eed0000-0000-4000-8000-000000000091
 WORKSPACE=5eed0000-0000-4000-8000-000000000001
-MODELES_DU_SEED=2
 VARIABLES_ATTENDUES=12
 
 RAPIDE=false
@@ -62,45 +63,33 @@ RAPIDE=false
 controles=0
 anomalies=0
 TRAVAIL=$(mktemp -d)
-restauration_due=false
 
-# LA SOURCE DES DÉGRADATIONS — `CRM-111` T2.4.5, de la famille d'INC-304 (docs/SPEC-test-harness.md §3.7). La 56 n'est plus
-# la dernière autorité sur `public.rendre_modele_email` : la 109 (`CRM-111` T2.2) l'a réécrite pour lire le premier
-# rattachement. Rejouer la 56 rétablissait donc en silence une définition antérieure à T2.2, et depuis la 134, qui
-# retire de `cards` les colonnes qu'elle lit, elle ne s'applique plus du tout. La source est la 56 dont le CORPS du
-# rendu est celui de la 109 : l'en-tête, les privilèges et `app.mail_template_substituer`, que les dégradations
-# visent, restent ceux de la 56, seule autorité à leur sujet.
-AUTORITE_RENDU=supabase/migrations/0109_card_placements_lectures.sql
-SOURCE=$TRAVAIL/source.sql
-python3 - "$MIGRATION" "$AUTORITE_RENDU" "$SOURCE" <<'PY'
-import io, sys
-migration, autorite, cible = sys.argv[1:4]
-texte = io.open(migration, encoding='utf-8').read()
-debut = texte.index('create or replace function public.rendre_modele_email(')
-corps_debut = texte.index('\nas $$\n', debut) + len('\nas $$\n')
-corps_fin = texte.index('\n$$;', corps_debut)
-recente = io.open(autorite, encoding='utf-8').read()
-r_debut = recente.index('CREATE OR REPLACE FUNCTION public.rendre_modele_email(')
-r_corps = recente.index('AS $function$\n', r_debut) + len('AS $function$\n')
-r_fin = recente.index('$function$;', r_corps)
-corps = recente[r_corps:r_fin].rstrip()
-io.open(cible, 'w', encoding='utf-8').write(texte[:corps_debut] + corps + texte[corps_fin:])
-PY
+# LES DÉGRADATIONS PARTENT DE LA DÉFINITION EN BASE — INC-366 b (docs/SPEC-test-harness.md §3.7). Ce harnais composait une
+# « source » en rejouant la `0056` (dont le corps du rendu était celui de la `0109`) : la fonction courante a depuis changé de
+# signature (cinq paramètres, `0158`), si bien que ce rejeu DÉPOSAIT une seconde surcharge à quatre paramètres — mesuré le
+# 2026-11-25 : la garde d'empreinte a vu la différence, reconstruit la base, et le seed qui suivait a échoué. Aucune migration
+# n'est plus rejouée : `degradation_fonction` lit la définition courante par `pg_get_functiondef`, remplace UN fragment, et
+# `degradations_restaurer` réapplique les définitions d'origine.
+# shellcheck source=scripts/lib/degradation.sh
+source scripts/lib/degradation.sh
+RENDU='public.rendre_modele_email(uuid,uuid,uuid,uuid,uuid)'
+SUBSTITUER='app.mail_template_substituer(text,jsonb)'
+privilege_anon_du=false
 
 nettoyer() {
 	local statut=$?
 	trap - EXIT
 	set +e
-	if [ "$restauration_due" = true ]; then
-		if ! psql_db -f - < "$SOURCE" >/dev/null 2>&1; then
-			printf 'ERREUR : la restauration de secours de %s a échoué.\n' "$SOURCE" >&2
-			statut=1
-		fi
+	degradations_restaurer
+	if [ "$privilege_anon_du" = true ]; then
+		psql_db -c "revoke execute on function $RENDU from anon;" >/dev/null 2>&1 \
+			|| { printf 'ERREUR : le privilège rendu à anon n a pas pu être retiré.\n' >&2; statut=1; }
 	fi
 	# `CRM-111` T1 ter.3 (INC-304, décision 701) : la structure de public et app est-elle celle d'ouverture ? Sinon,
 	# la base est reconstruite (docs/SPEC-test-harness.md §3.8).
 	empreinte_garantir || statut=1
 	rm -rf -- "$TRAVAIL"
+	[ -z "${DEGRADATIONS_DOSSIER:-}" ] || rm -rf -- "$DEGRADATIONS_DOSSIER"
 	exit "$statut"
 }
 trap nettoyer EXIT
@@ -120,60 +109,22 @@ suite_sql_verte() {
 		&& grep -q 'aucune anomalie' "$TRAVAIL/tap.log"
 }
 
-# Substitue dans une COPIE de la migration, puis l'applique. La copie précédente est DÉTRUITE
-# d'abord, et l'échec du substituteur est TESTÉ : c'est le défaut que le harnais jumeau a trouvé
-# dans son propre code le 2026-08-25 (§2.11) — `degrader` appelée dans un `||` suspend `set -e`,
-# si bien qu'un motif ambigu laissait réappliquer la dégradation PRÉCÉDENTE en annonçant la
-# nouvelle comme mordante. Le remède est repris ici tel quel plutôt que redécouvert.
-degrader() {
-	local avant=$1 apres=$2 nom=$3
-	rm -f -- "$TRAVAIL/degrade.sql"
-	if ! python3 - "$SOURCE" "$TRAVAIL/degrade.sql" "$avant" "$apres" <<-'PY'
-		import io, sys
-		source, cible, avant, apres = sys.argv[1:5]
-		texte = io.open(source, encoding='utf-8').read()
-		if texte.count(avant) != 1:
-		    sys.exit(f"motif absent ou ambigu ({texte.count(avant)} occurrence(s))")
-		io.open(cible, 'w', encoding='utf-8').write(texte.replace(avant, apres))
-	PY
-	then
-		fail "dégradation « $nom » IMPOSSIBLE : motif absent ou ambigu dans $SOURCE"
-		return 1
-	fi
-	if cmp -s "$SOURCE" "$TRAVAIL/degrade.sql"; then
-		fail "dégradation « $nom » IMPOSSIBLE : la substitution n'a rien changé"
-		return 1
-	fi
-	# LA DÉGRADATION DOIT S'APPLIQUER, ET C'EST UN DÉFAUT TROUVÉ PAR CE HARNAIS DANS CE HARNAIS,
-	# le 2026-08-25. Une dégradation dont le SQL ne compile pas — un `trou[1]` posé sur un `text`,
-	# par exemple — laisse la base INCHANGÉE : la suite pgTAP reste alors verte, et le harnais
-	# conclut « COMPLAISANT » alors que rien n'a été dégradé. C'est la même famille de mensonge
-	# tranquille que le §2.11 a corrigée sur le substituteur, sous une forme nouvelle — là c'était
-	# la SUBSTITUTION qui échouait sans arrêter, ici c'est l'APPLICATION. Le code de retour de
-	# `psql` est donc TESTÉ, et un échec est nommé « IMPOSSIBLE » plutôt que compté pour une preuve.
-	restauration_due=true
-	if ! psql_db -f - < "$TRAVAIL/degrade.sql" >"$TRAVAIL/degrade.log" 2>&1; then
-		fail "dégradation « $nom » IMPOSSIBLE : le SQL dégradé ne s'applique pas — $(tail -n 1 "$TRAVAIL/degrade.log")"
-		restaurer
-		return 1
-	fi
-	return 0
-}
-
-restaurer() {
-	psql_db -f - < "$SOURCE" >/dev/null 2>&1
-	restauration_due=false
-}
-
+# Dégrade UNE fonction depuis sa définition en base, constate que la suite pgTAP rougit, puis restaure. `degradation_fonction`
+# rend 1 si le fragment est absent ou ambigu, ou si le SQL dégradé est refusé : le contrôle est alors déclaré IMPOSSIBLE plutôt
+# que compté pour une preuve (le défaut trouvé par ce harnais dans ce harnais, le 2026-08-25, §2.11).
 eprouver_degradation() {
-	local nom=$1 avant=$2 apres=$3
-	degrader "$avant" "$apres" "$nom" || return 0
+	local nom=$1 signature=$2 avant=$3 apres=$4
+	if ! degradation_fonction "$signature" "$avant" "$apres"; then
+		fail "dégradation « $nom » IMPOSSIBLE : fragment absent ou ambigu dans la définition de $signature, ou SQL dégradé refusé"
+		degradations_restaurer
+		return 0
+	fi
 	if suite_sql_verte; then
 		fail "COMPLAISANT — « $nom » retirée, la suite pgTAP reste VERTE"
 	else
 		ok "dégradation « $nom » : la suite pgTAP rougit, comme elle doit"
 	fi
-	restaurer
+	degradations_restaurer
 }
 
 # Un appel du rendu, réduit à une colonne. Il s'exécute en PROPRIÉTAIRE — la RLS n'est pas ce que
@@ -201,8 +152,19 @@ fi
 
 # L'INSTANTANÉ EST PRIS AVANT LA PREMIÈRE DÉGRADATION, et non contre `HEAD` : le harnais doit
 # fonctionner dans un arbre portant une évolution légitime non encore committée
-# (`docs/SPEC-test-harness.md` §7.2 point 9).
-cp "$MIGRATION" "$TRAVAIL/migration.origine"
+# (`docs/SPEC-test-harness.md` §7.2 point 9). Il porte les DEUX définitions et les droits d'exécution du rendu, tels que la
+# base les a à l'ouverture — la restauration (§6) s'y compare à l'octet près.
+instantane() {
+	psql_db -c "select md5(pg_get_functiondef('$RENDU'::regprocedure)) || ' ' ||
+		md5(pg_get_functiondef('$SUBSTITUER'::regprocedure)) || ' ' ||
+		coalesce((select proacl::text from pg_proc where oid = '$RENDU'::regprocedure), '-') || ' ' ||
+		(select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+		  where n.nspname = 'public' and p.proname = 'rendre_modele_email');"
+}
+INSTANTANE_OUVERTURE=$(instantane)
+# Le nombre de modèles du seed est MESURÉ à l'ouverture, non écrit en dur : le seed en porte désormais trois (`docs/SPEC-seed.md`
+# §14 puis `CRM-112` T8) et le littéral « 2 » ne l'était plus — le contrôle final échouait, sans que personne ne le lise.
+MODELES_A_L_OUVERTURE=$(psql_db -c "select count(*) from public.mail_templates where workspace_id = '$WORKSPACE';")
 
 # =================================================================================================
 echo "1. Traçabilité : aucun fichier de la sous-tranche n'est orphelin de sa spécification"
@@ -279,9 +241,9 @@ fi
 # `anon` DOIT ÊTRE EXCLU (§8.7). Le contrôle NÉGATIF est ici aussi important que les positifs :
 # c'est lui qui fige le `401` de la ligne 1 du contrat d'API.
 if [ "$(psql_db -c "select has_function_privilege('anon',
-	'public.rendre_modele_email(uuid, uuid, uuid, uuid)', 'execute');")" = f ] \
+	'$RENDU', 'execute');")" = f ] \
 	&& [ "$(psql_db -c "select has_function_privilege('authenticated',
-		'public.rendre_modele_email(uuid, uuid, uuid, uuid)', 'execute');")" = t ]; then
+		'$RENDU', 'execute');")" = t ]; then
 	ok "privilèges : authenticated exécute, anon N'EXÉCUTE PAS"
 else
 	fail "privilèges du rendu inattendus — le 401 de l'anonyme n'est plus garanti"
@@ -465,65 +427,61 @@ echo "5. Dégradations RÉELLES : la suite pgTAP sait-elle rougir ?"
 
 # D-A — la volatilité passe de `stable` à `volatile`. La suite doit dénoncer la forme, faute de quoi
 # une fonction de lecture pourrait devenir écrivante sans que rien ne le signale.
-eprouver_degradation "le rendu devient VOLATILE" \
-	'language sql
-stable
-security invoker' \
-	'language sql
-volatile
-security invoker'
+eprouver_degradation "le rendu devient VOLATILE" "$RENDU" \
+	$' STABLE\n SET search_path' \
+	$' VOLATILE\n SET search_path'
 
 # D-B — la fonction passe en `security definer`. C'EST LA DÉGRADATION LA PLUS GRAVE DU HARNAIS :
 # elle ferait lire à tout le monde ce que la RLS ferme, et les refus mesurés ailleurs deviendraient
 # des refus imaginaires.
-eprouver_degradation "le rendu devient SECURITY DEFINER" \
-	'stable
-security invoker' \
-	'stable
-security definer'
+eprouver_degradation "le rendu devient SECURITY DEFINER" "$RENDU" \
+	$' STABLE\n SET search_path' \
+	$' STABLE\n SECURITY DEFINER\n SET search_path'
 
 # D-C — LA DÉCISION DU §8.4 EST RETIRÉE : un trou nul rend un TIRET au lieu de la chaîne vide. C'est
 # l'une des trois branches que le §7.1 posait et que le §8.4 a écartée, et c'est la dégradation qui
 # dit si cette décision est éprouvée quelque part. Si la suite restait verte, un futur rendu
 # pourrait inventer une valeur sans que rien ne bronche.
-eprouver_degradation "un trou nul rend un TIRET au lieu de la chaîne vide" \
+eprouver_degradation "un trou nul rend un TIRET au lieu de la chaîne vide" "$SUBSTITUER" \
 	"coalesce(valeurs ->> btrim(trou[1]), '') as morceau" \
 	"coalesce(valeurs ->> btrim(trou[1]), '—') as morceau"
 
 # D-D — l'inventaire des trous nuls disparaît. La chaîne vide sans l'inventaire est exactement le
 # « mensonge tranquille » que le §8.4 refuse : le défaut n'apparaîtrait qu'à l'envoi.
-eprouver_degradation "l'inventaire des trous nuls est toujours VIDE" \
-	'		coalesce(
-			(
-				select array_agg(distinct nom order by nom)' \
-	'		coalesce(
-			(
-				select array_agg(distinct nom order by nom) filter (where false)'
+eprouver_degradation "l'inventaire des trous nuls est toujours VIDE" "$RENDU" \
+	'select array_agg(distinct nom order by nom)' \
+	'select array_agg(distinct nom order by nom) filter (where false)'
 
 # D-E — l'inventaire cesse d'être BORNÉ aux variables que le modèle emploie : il liste tout ce qui
 # est nul, y compris ce que le texte ne cite pas. L'écran de 2b avertirait alors pour un texte qui
 # n'en porte pas la trace.
-eprouver_degradation "l'inventaire n'est plus borné aux variables du modèle" \
-	"					select btrim(trou[1]) as nom
-					  from regexp_matches(m.subject || ' ' || m.body_text,
-					                      '\\{\\{([^{}]*)\\}\\}', 'g') as trou" \
-	"					select v as nom
-					  from unnest(app.mail_template_variables()) as v"
+eprouver_degradation "l'inventaire n'est plus borné aux variables du modèle" "$RENDU" \
+	'select btrim(trou[1]) as nom' \
+	'select v2 as nom from unnest(app.mail_template_variables()) as v2
+					union all
+					select btrim(trou[1]) as nom'
 
 # D-F — les blancs de bord cessent d'être tolérés à l'intérieur des accolades. `{{ card.title }}`
 # est ACCEPTÉ à l'écriture par la migration 55 ; s'il cessait d'être substitué ici, un modèle
 # valide partirait avec un trou vide — la divergence entre refus et rendu que le §8.4 combat.
-eprouver_degradation "les blancs de bord ne sont plus tolérés dans un trou" \
+eprouver_degradation "les blancs de bord ne sont plus tolérés dans un trou" "$SUBSTITUER" \
 	"coalesce(valeurs ->> btrim(trou[1]), '') as morceau" \
 	"coalesce(valeurs ->> trou[1], '') as morceau"
 
 # D-G — le privilège d'exécution est rendu à `anon`. C'est le point de sûreté des `alter default
 # privileges`, et la suite le mesure par `has_function_privilege`.
-eprouver_degradation "le privilège d'exécution est rendu à anon" \
-	'grant execute on function public.rendre_modele_email(uuid, uuid, uuid, uuid)
-	to authenticated, service_role;' \
-	'grant execute on function public.rendre_modele_email(uuid, uuid, uuid, uuid)
-	to anon, authenticated, service_role;'
+# Un privilège ne se dégrade pas par une définition de fonction : l'instruction seule, puis son contraire, CONSTATÉ (§6).
+privilege_anon_du=true
+if psql_db -c "grant execute on function $RENDU to anon;" >/dev/null 2>&1; then
+	if suite_sql_verte; then
+		fail "COMPLAISANT — « le privilège d'exécution est rendu à anon », la suite pgTAP reste VERTE"
+	else
+		ok "dégradation « le privilège d'exécution est rendu à anon » : la suite pgTAP rougit, comme elle doit"
+	fi
+else
+	fail "dégradation « le privilège d'exécution est rendu à anon » IMPOSSIBLE : le grant est refusé"
+fi
+psql_db -c "revoke execute on function $RENDU from anon;" >/dev/null 2>&1 && privilege_anon_du=false
 
 # =================================================================================================
 echo
@@ -532,18 +490,15 @@ echo "6. La restauration est CONSTATÉE, octet à octet, et la base avec elle"
 # Constatée contre l'instantané pris au début, jamais contre `HEAD` : le harnais doit fonctionner
 # dans un arbre portant une évolution légitime non encore committée.
 
-if cmp -s "$MIGRATION" "$TRAVAIL/migration.origine"; then
-	ok "le fichier de migration est restauré à l'octet près"
+if [ "$(instantane)" = "$INSTANTANE_OUVERTURE" ]; then
+	ok "la base est restaurée à l'identique : mêmes définitions (md5), mêmes droits, une seule surcharge du rendu"
 else
-	fail "le fichier de migration DIFFÈRE de son état initial"
+	fail "la base DIFFÈRE de son état d'ouverture : $(instantane) au lieu de $INSTANTANE_OUVERTURE"
 fi
 
-if [ "$(psql_db -c "select has_function_privilege('anon',
-		'public.rendre_modele_email(uuid, uuid, uuid, uuid)', 'execute');")" = f ] \
-	&& [ "$(psql_db -c "select prosecdef from pg_proc p
-		join pg_namespace n on n.oid = p.pronamespace
-		where n.nspname = 'public' and p.proname = 'rendre_modele_email';")" = f ]; then
-	ok "la base est restaurée : anon n'exécute pas, et le rendu est de nouveau SECURITY INVOKER"
+if [ "$(psql_db -c "select has_function_privilege('anon', '$RENDU', 'execute');")" = f ] \
+	&& [ "$(psql_db -c "select prosecdef from pg_proc where oid = '$RENDU'::regprocedure;")" = f ]; then
+	ok "anon n'exécute pas, et le rendu est de nouveau SECURITY INVOKER"
 else
 	fail "la base est restée DÉGRADÉE — un état dégradé ne doit jamais survivre au harnais"
 fi
@@ -555,10 +510,10 @@ else
 fi
 
 compte_final=$(psql_db -c "select count(*) from public.mail_templates where workspace_id = '$WORKSPACE';")
-if [ "$compte_final" = "$MODELES_DU_SEED" ]; then
-	ok "le seed est rendu INTACT : $MODELES_DU_SEED modèles, comme à l'entrée"
+if [ "$compte_final" = "$MODELES_A_L_OUVERTURE" ] && [ "$compte_final" -ge 1 ]; then
+	ok "le seed est rendu INTACT : $compte_final modèles, comme à l'entrée"
 else
-	fail "le seed porte $compte_final modèles au lieu de $MODELES_DU_SEED"
+	fail "le seed porte $compte_final modèles au lieu de $MODELES_A_L_OUVERTURE"
 fi
 
 echo

@@ -9637,5 +9637,12 @@ et avec le verrou de campagne libre, pour toutes les sessions. La trace est dans
   essais échouent. Preuve : `scripts/verify-reconstruction.sh --seed-seul` (5 contrôles, sans rien reconstruire : une fausse API HTML refusée, une fausse API JSON
   acceptée, un seed qui échoue deux fois, un seed qui réussit au second essai, un seed qui réussit d'emblée) — rouge avant (les fonctions n'existaient pas), vert après.
   **CLOSE le 2026-11-25** pour cette part.
-- **b — `verify-rendu-modeles-emails.sh` ne doit plus laisser de résidu.** Il rejoue la migration `0056` : à remplacer par la dégradation depuis la base
-  (`docs/SPEC-test-harness.md` §3.7), qui ne dépose aucune surcharge. **Ouverte.**
+- **b — `verify-rendu-modeles-emails.sh` ne laisse plus de résidu.** Il composait sa « source » en rejouant la migration `0056` (corps du rendu repris de la `0109`) :
+  la fonction courante a cinq paramètres depuis la `0158`, si bien que ce rejeu déposait une SECONDE surcharge à quatre paramètres. **Mesuré avant** (rejeu de l'ancienne
+  source dans une transaction annulée) : 2 surcharges de `rendre_modele_email`. Le harnais dégrade désormais depuis la définition EN BASE (`scripts/lib/degradation.sh`,
+  `docs/SPEC-test-harness.md` §3.7) : sept dégradations, dont le privilège rendu à `anon` par l'instruction seule puis retiré ; aucune migration n'est rejouée. La §6
+  compare désormais l'état de sortie à celui d'ouverture — les deux définitions (md5), les droits et le NOMBRE de surcharges.
+  **Deux défauts latents trouvés au passage** : (1) le contrôle des privilèges de la §2 nommait la signature à QUATRE paramètres — il ne passait que grâce à la surcharge
+  résiduelle, et rendait une erreur dès qu'elle disparaissait ; (2) le contrôle final comptait `2` modèles du seed en dur, alors que le seed en porte trois depuis `CRM-112` T8 ;
+  il compte maintenant ceux de l'ouverture. **Preuve après** : 32 contrôles, aucune anomalie, la garde d'empreinte muette, une seule surcharge en base.
+  **CLOSE le 2026-11-25** pour cette part : INC-366 est close.

@@ -21038,4 +21038,5 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 - [x] **INC-366 a — la reconstruction attend l'API, retente le seed, et dit « BASE NON SEEDÉE ».** `scripts/lib/reconstruction.sh`
       (`reconstruction_attendre_api`, `reconstruction_seeder`), `scripts/verify-reconstruction.sh --seed-seul` : rouge avant, **5 contrôles verts après**. L'attente est
       constatée sur le vrai Kong. Aucune reconstruction réelle rejouée pour cette preuve : elle est destructive, et la session de livraison la joue à sa campagne.
-- [ ] **INC-366 b — `verify-rendu-modeles-emails.sh` ne dépose plus de résidu** : dégrader depuis la base (§3.7) au lieu de rejouer la `0056`.
+- [x] **INC-366 b — `verify-rendu-modeles-emails.sh` ne dépose plus de résidu** : il dégrade depuis la définition en base (§3.7) au lieu de rejouer la `0056`.
+      Rouge avant mesuré (2 surcharges), 32 contrôles verts après, la garde d'empreinte muette ; deux défauts latents corrigés (signature à quatre paramètres, compteur de modèles).
