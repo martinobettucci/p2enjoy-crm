@@ -3474,3 +3474,16 @@ assistant de démonstration le reçoive :
 - **l'espace principal** garde le défaut, `Europe/Paris` : il n'est ni réglé ni compté parmi les écarts ;
 - **rejouable** : le même fuseau réécrit ne change aucune colonne, donc le déclencheur d'audit n'écrit aucune ligne ;
 - **ordre** : la section est jouée après le §56, donc après la création de l'espace par le §54/§55.
+
+## 58. Une mention d'organisation que le digest cite — `INC-361` (`docs/SPEC-etiquettes-digest.md` §5.2 bis)
+
+*Écrit le 2026-11-25, avant le code (décision 1000).* Pour que le digest du seed (§31) montre sa ligne d'organisation, **Camille
+mentionne Driss** dans le fil d'**Imprimerie Duval** — une organisation qu'aucune preuve ne fige (§50) :
+- **le commentaire** de Camille, « Voir avec Driss leur devis de brochures. », posé par le vrai geste (`organization_comments`,
+  sous le jeton de Camille) ; **la mention** de Driss par `organization_comment_mentions`, sous le même jeton — le vrai
+  déclencheur de la `0188` notifie Driss (`subject_organization_id`, non lue) ;
+- **l'ordre** : la section est jouée **avant** le §31 (le digest du seed), dont le corps cite alors « Imprimerie Duval
+  (organisation) » et sa fiche ;
+- **rejouable** : le commentaire est retrouvé par son texte avant d'être posé ; rien n'est dupliqué ;
+- **ce que cela change ailleurs** : la cloche de Driss compte une notification d'organisation de plus ; le fil d'Imprimerie Duval
+  porte un commentaire.

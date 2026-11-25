@@ -108,6 +108,38 @@ du digest. Chaque ligne porte le titre de l'affaire, son channel et le lien de s
 aucun email.** Le corps est en texte brut, comme tout envoi du produit (`mail_outbox.body_text`). L'objet :
 « Votre journée dans {espace} — {n} action(s), {m} mention(s) ».
 
+### 5.2 bis Les mentions du fil d'une organisation — `INC-361` (décision 1000 ; `docs/SPEC-notifications.md` §51, `docs/SPEC-organisations.md` §9.2)
+
+*Écrit le 2026-11-25, avant le code. Arbitré par le responsable le 2026-11-25 (décision 992) : oui, le digest cite aussi les
+mentions non lues du fil d'une organisation, avec un lien vers sa fiche ; écarté : documenter seulement. Une tranche de
+`CRM-153`.* **Le constat de départ** : la fonction du digest joignait `notifications` à `cards` par `subject_card_id` ; une mention
+dans le fil d'une organisation porte `subject_organization_id` et un `subject_card_id` nul (`CRM-153`) — la jointure l'écartait.
+
+- **Ce qui entre** : les notifications **non lues** de la personne, **dans l'espace du digest**, dont le sujet est une
+  **organisation** (`subject_organization_id` non nul), **que la personne peut lire** — `app.can_read_organization_for(
+  organisation, personne)` : un droit retiré la veille retire la ligne, comme pour une affaire.
+- **La rubrique** reste « On vous a mentionné » : les mentions d'affaires et d'organisations y sont **mêlées, dans l'ordre de leur
+  création**. **Le compteur** de l'objet (« {m} mention(s) ») les compte toutes ; **« rien à dire, aucun email »** les compte
+  aussi : une personne dont la seule nouveauté est une mention d'organisation reçoit son digest.
+- **La ligne** : `- {nom de l'organisation} (organisation)`, puis, sur la ligne suivante, le lien
+  `{site}/contacts/organisations/{id}#commentaire-{id du commentaire}` — la fiche de l'organisation, à l'ancre du commentaire
+  (la même adresse que la cloche, `webapp/src/lib/notifications.ts`). **Le commentaire n'est pas cité** : le digest nomme l'objet,
+  la fiche dit le reste ; le lien est celui d'une page globale (`CRM-161` : il n'a pas de slug d'espace). Sans `comment_id` dans la
+  charge utile, le lien est celui de la fiche seule.
+- **Ce qui ne change pas** : la rubrique des affaires (lien `{site}/tracks/…`, laissé tel quel par `CRM-161` T2), « En retard »,
+  « Aujourd'hui », « Affaires figées », l'envoi, l'idempotence, l'heure de Paris, les consentements.
+- **Le connecteur** : question 1 — **non** ; question 2 — sans objet (décision 992). Aucun outil, aucune famille, aucune case.
+- **Migration `0206`** : `create or replace function app.digest_corps(uuid, uuid, timestamptz)` ; aucune table, aucune colonne,
+  aucune variable ; la signature et les droits sont ceux de la `0133`. **Retour arrière** : rejouer la définition de la `0133`.
+- **Les preuves** : pgTAP `supabase/tests/0191_digest_mentions_organisation.test.sql` (rouge sur la définition de la `0133`, puis
+  vert : la mention d'organisation citée avec son lien et son ancre, comptée dans l'objet ; ordre mêlé ; non lue seulement ; un
+  membre d'un autre espace n'y lit rien ; une organisation d'un autre espace de la personne n'entre pas dans ce digest ; une
+  personne qui ne peut plus lire l'organisation n'a pas la ligne ; seule mention → un digest est produit) ; E2E de bout en bout
+  `e2e/mail/digest.spec.ts` étendu (la ligne et le lien dans le mail reçu dans la boîte de développement, jamais substitués) ; le
+  seed (§58 de `docs/SPEC-seed.md`) : Driss est mentionné dans le fil d'« Imprimerie Duval » **avant** le digest du seed.
+- **Le manuel** (`docs/manual.md` §5.6) : le contenu du récapitulatif dit « les commentaires où l'on vous a mentionné, sur une
+  affaire ou sur une organisation ».
+
 ### 5.3 L'envoi — une branche de la file sans affaire
 
 `mail_outbox.card_id` est aujourd'hui obligatoire : c'est l'affaire qui porte le `Reply-To` (migration `0030`). Le digest

@@ -20979,6 +20979,8 @@ corriger sans arbitrage l'est par lots cohérents, preuve rouge avant et verte a
 - [ ] **Lot E — `INC-286` lot 1** : le connecteur MCP en anglais (tables `mcp_*`, familles, colonnes) ; spécification avant le code (décision 992).
 - [@] **Lot F — `INC-361`** : le résumé quotidien cite les mentions non lues d'une organisation, avec le lien vers sa fiche (tranche de `CRM-153`, décision 992).
   *Prise en charge : p2enjoy-crm-7a (4891a451) depuis 2026-11-25 UTC — état avant : [ ] ; confiée par la session de livraison (11) ; spécification avant le code (décision 992)*
+  *Spécifiée le 2026-11-25 avant le code* (`docs/SPEC-etiquettes-digest.md` §5.2 bis ; seed §58 ; décision 1000) : migration `0206` (`create or replace
+  function app.digest_corps`), pgTAP `0191`, E2E `e2e/mail/digest.spec.ts` étendu, seed, manuel §5.6, contrat, changelog. Connecteur : non.
 
 ### CRM-166 — Un assistant IA dans l'inbox : il propose un plan d'actions sur les mails sélectionnés, que l'on accepte ou refuse mail par mail `[@]`
 *Prise en charge : session interactive d5b44a2d (p2enjoy-crm-30) depuis 2026-11-25 00:53 UTC — état avant : [ ] ; confiée par la session de livraison (11), décision 994*
