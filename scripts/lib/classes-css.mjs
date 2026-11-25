@@ -21,6 +21,14 @@
 // la variable n'est déclarée nulle part ; chaque `var(--…)` citée doit donc être DÉCLARÉE dans le
 // CSS produit (`--nom:`), sans quoi la propriété retombe en silence sur sa valeur initiale.
 //
+// @spec INC-314 et INC-334 (docs/BACKLOG.md « Relevé du 2026-11-25 », lot A ; docs/INCONSISTENCY_REPORT.md ; décision 992) —
+// DEUX AUTRES ANGLES MORTS FERMÉS le 2026-11-25. (1) Les gabarits à interpolation : `className={`mr-1.5 size-2 ${x}`}` n'était
+// pas lu — l'accolade fermante de `${x}` terminait l'expression —, si bien qu'une classe absente du CSS y passait inaperçue ;
+// l'expression est désormais lue jusqu'à son accolade appariée, et chaque morceau littéral d'un gabarit, comme chaque chaîne
+// d'une interpolation, est une classe candidate. (2) Les chaînes de comparaison : `role === 'alert'` n'est pas une classe ;
+// une chaîne qu'un `===`, `!==`, `==` ou `!=` touche est un opérande, jamais une classe.
+// Preuve : scripts/lib/classes-css.test.ts.
+//
 // Usage : node scripts/lib/classes-css.mjs <racine-src> <repertoire-dist>
 
 import { readdirSync, readFileSync } from 'node:fs'
@@ -42,18 +50,105 @@ function fichiers(racine, filtre) {
 	return trouves
 }
 
+// Le premier caractère après `debut` qui ferme l'accolade ouverte juste avant, les chaînes, les gabarits et leurs
+// interpolations étant SAUTÉS : `{`a ${b ? '}' : ''}`}` se ferme à la dernière accolade, non à celle de `${b}`.
+function finAccolade(source, debut) {
+	let profondeur = 1
+	let i = debut
+	while (i < source.length) {
+		const c = source[i]
+		if (c === "'" || c === '"') {
+			i = finChaine(source, i) + 1
+			continue
+		}
+		if (c === '`') {
+			i = finGabarit(source, i) + 1
+			continue
+		}
+		if (c === '{') profondeur += 1
+		else if (c === '}') {
+			profondeur -= 1
+			if (profondeur === 0) return i
+		}
+		i += 1
+	}
+	return source.length
+}
+
+/** L'index de la citation qui ferme la chaîne ouverte à `debut` (`'` ou `"`), à défaut la fin de la ligne. */
+function finChaine(source, debut) {
+	const citation = source[debut]
+	let i = debut + 1
+	while (i < source.length && source[i] !== citation && source[i] !== '\n') {
+		i += source[i] === '\\' ? 2 : 1
+	}
+	return Math.min(i, source.length - 1)
+}
+
+/** L'index du `` ` `` qui ferme le gabarit ouvert à `debut`, ses interpolations `${…}` sautées. */
+function finGabarit(source, debut) {
+	let i = debut + 1
+	while (i < source.length && source[i] !== '`') {
+		if (source[i] === '\\') i += 2
+		else if (source[i] === '$' && source[i + 1] === '{') i = finAccolade(source, i + 2) + 1
+		else i += 1
+	}
+	return Math.min(i, source.length - 1)
+}
+
+const COMPARAISON_AVANT = /(?:===|!==|==|!=)\s*$/
+const COMPARAISON_APRES = /^\s*(?:===|!==|==|!=)/
+
+/**
+ * Les chaînes qui peuvent être des classes dans une expression : les chaînes simples, les morceaux littéraux d'un gabarit,
+ * et — récursivement — les chaînes de ses interpolations. Une chaîne qu'un opérateur de comparaison touche est un opérande
+ * (`role === 'alert'`), jamais une classe (INC-334).
+ */
+function litteraux(expression, sortie = []) {
+	let i = 0
+	while (i < expression.length) {
+		const c = expression[i]
+		if (c === "'" || c === '"') {
+			const fin = finChaine(expression, i)
+			const operande =
+				COMPARAISON_AVANT.test(expression.slice(0, i)) || COMPARAISON_APRES.test(expression.slice(fin + 1))
+			if (!operande) sortie.push(expression.slice(i + 1, fin))
+			i = fin + 1
+		} else if (c === '`') {
+			const fin = finGabarit(expression, i)
+			let morceau = ''
+			let j = i + 1
+			while (j < fin) {
+				if (expression[j] === '$' && expression[j + 1] === '{') {
+					const ferme = finAccolade(expression, j + 2)
+					sortie.push(morceau)
+					morceau = ''
+					litteraux(expression.slice(j + 2, ferme), sortie)
+					j = ferme + 1
+				} else {
+					morceau += expression[j]
+					j += 1
+				}
+			}
+			sortie.push(morceau)
+			i = fin + 1
+		} else i += 1
+	}
+	return sortie
+}
+
 // Toutes les chaînes littérales situées dans une expression `className=...`, que celle-ci soit
-// une chaîne simple ou un tableau joint.
+// une chaîne simple, un tableau joint ou un gabarit à interpolation.
 //
 // Les commentaires sont retirés d'abord : ils sont rédigés en français, et une apostrophe y
 // ouvrirait une fausse chaîne littérale — « l'opacité » deviendrait une classe.
 function classesDuFichier(sourceBrute) {
 	const source = sourceBrute.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
 	const classes = new Set()
-	for (const occurrence of source.matchAll(/className\s*=\s*(\{[\s\S]*?\}|"[^"]*")/g)) {
-		const expression = occurrence[1] ?? ''
-		for (const litteral of expression.matchAll(/'([^'\n]*)'|"([^"\n]*)"/g)) {
-			const chaine = litteral[1] ?? litteral[2] ?? ''
+	for (const occurrence of source.matchAll(/className\s*=\s*(\{|"[^"]*")/g)) {
+		const debut = (occurrence.index ?? 0) + occurrence[0].length
+		const expression = occurrence[1] === '{' ? source.slice(debut, finAccolade(source, debut)) : occurrence[1]
+		for (const chaine of litteraux(expression)) {
 			for (const jeton of chaine.split(/\s+/)) {
 				if (jeton !== '') classes.add(jeton)
 			}
@@ -98,8 +193,7 @@ function initialiseur(source, debut) {
 }
 
 function jetonsDesLitteraux(expression, classes) {
-	for (const litteral of expression.matchAll(/'([^'\n]*)'|"([^"\n]*)"|`([^`$]*)`/g)) {
-		const chaine = litteral[1] ?? litteral[2] ?? litteral[3] ?? ''
+	for (const chaine of litteraux(expression)) {
 		for (const jeton of chaine.split(/\s+/)) {
 			if (jeton !== '') classes.add(jeton)
 		}

@@ -1732,6 +1732,19 @@ API `plafond-tous-espaces`.*
 **Retour arrière** : rejouer la définition de la `0197` (`create or replace function app.saisies_temps_plafond()`).
 *Le Pilotage et Temps ▸ Saisie (webapp, manuel) compléteront cette section.*
 
+### 2.82 `INC-314` et `INC-334`, lot A du tri des incohérences — trois classes d'interface retrouvées (EN ATTENTE)
+
+`docs/DESIGN_SYSTEM.md` §3, §11. La webapp seule : `PlateformeTracks` (retrait et alignement des listes de refus), `ReglagesSequencesRelance`
+(largeur du champ de délai). Le contrôle des classes (`scripts/lib/classes-css.mjs`) est un outil de développement. **Aucune migration, aucune variable,
+aucun secret.**
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Livrer la webapp | session de livraison, dans la fenêtre du lot | comme toute livraison de la webapp (§4) |
+| 2 | Constater | le responsable | dans « Plateforme ▸ Tracks », le refus d'un déplacement liste ses personnes en puces retirées du bord, et l'icône est alignée sur la première ligne ; le champ « Délai (jours) » d'un palier de séquence est large d'une quinzaine de caractères |
+
+**Ce qui devient visible** : un retrait et une largeur qui manquaient. **Retour arrière** : la webapp de la révision d'avant.
+
 ## 3. Migrations en attente
 
 **La 201 et la 202** (`CRM-161` T3.c, décisions 963 et 965), *en attente* : `organization_list` lit plusieurs espaces, et

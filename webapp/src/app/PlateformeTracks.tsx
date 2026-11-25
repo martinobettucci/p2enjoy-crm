@@ -1,3 +1,4 @@
+// @spec INC-314 (docs/BACKLOG.md « Relevé du 2026-11-25 », lot A ; docs/DESIGN_SYSTEM.md §3) — `pl-5` et `mt-0.5`, absente du CSS produit sur l'échelle close, remplacée par sa forme assumée
 // @spec CRM-162 (docs/BACKLOG.md) — tranche T2 : le bloc « Tracks » de la fiche d'un espace, et le déplacement d'un track
 //       vers un autre espace — le choix de l'arrivée, l'aperçu chiffré, les refus listés, la saisie du nom, l'issue
 // @spec docs/SPEC-deplacement-track.md §4, §5, §6, §13 ; docs/DESIGN_SYSTEM.md §5.112, §5.56, §5.9 (tableaux), §5.27
@@ -325,14 +326,14 @@ function Deplacement({
 			{apercu?.statut === 'pret' && refus.length > 0 ? (
 				<div role="alert" data-testid="refus-deplacement" className="flex flex-col gap-2 rounded-sm bg-danger-soft text-danger-on-soft p-3 text-sm">
 					<p className="flex items-start gap-2 font-medium">
-						<TriangleAlert aria-hidden="true" size={16} className="shrink-0 mt-0.5" />
+						<TriangleAlert aria-hidden="true" size={16} className="shrink-0 mt-[2px]" />
 						{t('platform.tracks.refus.titre')}
 					</p>
 					{refus.map((r) => (
 						<div key={r.code} data-testid="refus" data-code={r.code}>
 							<p>{t(CLES_REFUS[r.code], { espace: apercu.donnees.arrivee.nom })}</p>
 							{r.elements.length > 0 ? (
-								<ul className="list-disc pl-5">
+								<ul className="list-disc pl-6">
 									{r.elements.map((e, rang) => (
 										<li key={rang} className="break-words">
 											{e}
@@ -476,7 +477,7 @@ function ApercuDeplacement({ apercu }: { readonly apercu: Apercu }) {
 				<section className="flex flex-col gap-1" data-testid="apercu-doublons">
 					<h3 className="font-medium">{t('platform.tracks.doublons')}</h3>
 					<p className="text-text-2">{t('platform.tracks.doublons.regle')}</p>
-					<ul className="list-disc pl-5">
+					<ul className="list-disc pl-6">
 						{apercu.doublons.map((d, rang) => (
 							<li key={rang} className="break-words">
 								{d}

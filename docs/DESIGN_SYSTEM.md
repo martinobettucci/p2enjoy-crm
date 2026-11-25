@@ -3024,6 +3024,8 @@ donc proscrite pour accommoder le contrôle**, ce qui était la contrepartie de 
   et en silence. C'est ainsi que `min-w-0` a disparu, avec la garde qui empêche une colonne de
   flex de déborder. Un contrôle du harnais (`scripts/lib/classes-css.mjs`) vérifie donc que
   **chaque classe citée par un composant existe dans le CSS produit**.
+  Il lit aussi les gabarits à interpolation (`` `mr-1.5 ${x}` ``, chaînes des interpolations comprises) et ignore les chaînes de
+  comparaison (`role === 'alert'`) : INC-314 et INC-334, qui ont révélé `pl-5`, `mt-0.5` et `w-32`, absentes depuis leur écriture.
 - L'échelle d'espacement comprend le **zéro** (`--spacing-0`), qui n'est pas une valeur
   d'espacement mais son absence, et sans lequel `min-w-0`, `min-h-0` et `gap-0` n'existent pas.
 - Les composants du design system vivent dans `webapp/src/components/ui` et sont les seuls à

@@ -35,6 +35,8 @@ export default defineConfig({
 			// (docs/SPEC-manual.md §15).
 			'../scripts/manuel/**/*.test.ts',
 			'../scripts/captures/**/*.test.ts',
+			// `INC-314` : le contrôle des classes est un script Node, éprouvé à côté de lui.
+			'../scripts/lib/**/*.test.ts',
 			// Le rapporteur ci-dessous vit à côté de cette configuration, hors de `src/` : c'est un
 			// outil Node, que la compilation de l'application refuserait (`node:fs`).
 			'vitest.rapporteur-echecs.test.ts',

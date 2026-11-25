@@ -27,6 +27,10 @@ d'exécuter le code attendu.
   en isole certains ; les cases « Tracks » et « Catégories » se rangent sous le nom de chaque espace ; la création dit dans
   quel espace elle se fait. Le rapport de temps nomme l'espace de chaque ligne et se filtre de même. Rien ne change pour une
   personne d'un seul espace. Le manuel (chapitres 10 et 28) le décrit.
+- **Le contrôle des classes voit les gabarits et ne confond plus une comparaison** (`INC-314`, `INC-334`, `INC-184` ; décision 992). Le contrôle qui
+  vérifie que chaque classe citée existe dans le CSS produit ne lisait pas les gabarits à interpolation et prenait `role === 'alert'` pour une classe.
+  Corrigé, il a révélé trois classes jamais engendrées, désormais remplacées : le retrait des listes à puces de « Plateforme ▸ Tracks » (`pl-6`), l'alignement de leur
+  icône (`mt-[2px]`) et la largeur du champ de délai d'un palier de séquence (`w-[128px]`). Contrat §2.82.
 
 ## [Publié]
 

@@ -1,3 +1,4 @@
+// @spec INC-314 (docs/BACKLOG.md « Relevé du 2026-11-25 », lot A ; docs/DESIGN_SYSTEM.md §3) — `w-32`, absente du CSS produit sur l'échelle close, remplacée par sa forme assumée
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.c — les listes de l'écran ne lisent que l'espace de l'adresse ; docs/SPEC-espace-courant.md §15.4 bis
 // @spec CRM-161 (docs/BACKLOG.md) tranche T2.a — l'écran travaille dans l'espace de l'adresse (§15.2) ; docs/SPEC-espace-courant.md
 // @spec CRM-093 (docs/BACKLOG.md) tranche T3 — « Nouvelle séquence » et « Modifier » désactivés avec leur motif quand la
@@ -984,7 +985,7 @@ function ZonePaliers({
 						data-testid="champ-delai-palier"
 						value={delai}
 						onChange={(evenement) => setDelai(evenement.target.value)}
-						className={`${CLASSES_CHAMP} w-32`}
+						className={`${CLASSES_CHAMP} w-[128px]`}
 					/>
 				</label>
 				<Button

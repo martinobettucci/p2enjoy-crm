@@ -1884,14 +1884,6 @@ passage. Les remettre à jour sans traiter la cause — la révision qui n'est d
 reviendrait à repousser la même dérive d'une poignée d'unités. Le porteur est `CRM-008`, l'unité du
 harnais de tests.
 
-**ARBITRÉE ET MISE EN ŒUVRE le 2026-11-25 (décision 995), session `p2enjoy-crm-dd`.** Les cinq compteurs de `scripts/verify-harness.sh` ne sont plus
-des littéraux : les fichiers sont comptés sur le disque, les assertions sont la somme des `select plan(N)` que les suites déclarent
-(chaque suite en porte exactement un, sinon le harnais s'arrête), les scénarios sont ce que `playwright test --list` énumère
-(section 2 bis). La garde garde son objet — tout ce qui est déclaré s'exécute —, et ne demande plus à personne de réviser un
-nombre. **Mesuré** : sur disque 177 fichiers et 5732 assertions déclarées ; `npm run test:sql` rend « 177 fichiers, 5732 assertions,
-aucune anomalie » ; les anciens littéraux (123 et 4619) étaient faux de 54 fichiers et 1113 assertions. **Reste** : le rejeu complet du harnais
-sur la pile, en fenêtre de la session de livraison.
-
 ---
 
 ### INC-126 — la proposition de clé est inutilisable pour tout libellé portant « œ »
@@ -2557,13 +2549,6 @@ seules, non sur une comparaison avant/après.
 **Arbitrage demandé** : les trois compteurs figés doivent-ils être portés à 41, ou remplacés par
 une propriété qui ne dépend pas du volume du seed — la leçon que la tranche 2 a avait déjà tirée
 pour ses suites pgTAP ?
-
-**ARBITRÉE ET MISE EN ŒUVRE le 2026-11-25 (décision 995), session `p2enjoy-crm-dd` — la propriété, non le volume.** Les trois assertions de la section 6 de
-`scripts/verify-colonnes-protegees.sh` comparent désormais à l'instantané `CARDS_A_L_OUVERTURE`, relevé avant que le harnais ne
-touche quoi que ce soit (mécanisme d'INC-155 et de la décision 497) : plus aucun littéral, donc plus de dérive. **Preuve** : la
-section 6 rejouée sur un seed simulé à 46 cards — l'ancienne rend 3 ECHEC, la nouvelle 3 OK — et elle ROUGIT encore quand une
-card apparaît (47 contre 46). **Reste** : le rejeu complet du harnais sur la pile (il reconstruit la base), en fenêtre de la session de
-livraison.
 
 ### INC-139 — `verify-board.sh` complet : trois contrôles de plus rendent rouge, tous préexistants
 
@@ -8252,6 +8237,8 @@ contrôle. Corrigé pour ce cas en `mr-[6px]`, forme que le §5.29 prescrit, et 
 gabarit interpolé — le texte entre deux `${…}` —, ce que les autres formes du script font déjà. À arbitrer par le
 responsable.
 
+**Corrigée le 2026-11-25** (lot A du tri, session 30). `scripts/lib/classes-css.mjs` lit l'expression `className` jusqu'à son accolade appariée et chaque morceau littéral d'un gabarit, chaînes des interpolations comprises ; `scripts/lib/classes-css.test.ts`. Il a révélé trois classes jamais engendrées (`pl-5`, `mt-0.5`, `w-32`), remplacées par `pl-6`, `mt-[2px]` et `w-[128px]`. Vitest `scripts/lib/classes-css.test.ts` 4/8 rouges avant (gabarits à interpolation, comparaisons), 8/8 verts après ; le contrôle rejoué sur un build neuf (521 classes) : aucune classe manquante ; E2E `deplacement-track` et `reglages-sequences-relance` 18/18 ; unitaires 6382/6382 ; typecheck propre ; captures observées (`CRM-162/deplacement-refus-1440`, `CRM-063/sequences-fiche-1440`). Contrat §2.82.
+
 ### INC-315 — « Le rattachement donne son responsable comme expéditeur par défaut » : aucune forme n'est arrêtée
 
 *Relevé le 2026-10-26 par la session de `CRM-111` (T2.3.5), en remplaçant la signature d'`armer_sequence_relance`.*
@@ -8671,6 +8658,8 @@ lui fait lire `alert` comme une classe, qu'il déclare « absente du CSS produit
 Aucun rendu n'est faux, et le défaut ne touche que la preuve. **Non corrigé** : il sort de la tâche. Deux remèdes
 possibles, à arbitrer : que le contrôle ne retienne que les branches d'un ternaire, ou que la comparaison sorte de
 l'attribut.
+
+**Corrigée le 2026-11-25** (lot A du tri, session 30). Une chaîne que `===`, `!==`, `==` ou `!=` touche est un opérande, jamais une classe ; l'opérande de gauche est couvert (`INC-184`). Même lot, mêmes preuves. Contrat §2.82.
 
 ### INC-335 — L'identité « par défaut » n'est lue par aucun envoi, et l'identité de service se mêle à celles de la personne
 
