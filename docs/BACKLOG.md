@@ -21083,3 +21083,9 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 *Quatre lectures `docker logs | grep -q` de `verify-mail-infra.sh` rendaient un faux verdict sous `pipefail`. Spécification : `docs/SPEC-test-harness.md` §3.13 ; fiche INC-306. Connecteur MCP : sans objet.*
 
 - [x] **INC-306** — le journal lu dans une variable avant d'être filtré (quatre lectures, dont le contrôle « sans WARN ni ERROR » qui rendait « ok » à tort) ; `scripts-sans-sigpipe.test.ts` ferme la classe (rouge avant, vert après) ; contrôles rejoués dix fois sur la pile réelle. *Le harnais complet est à rejouer à la campagne de la session de livraison.*
+
+## Correctif — INC-297 (repris de la session 30, 2026-11-25)
+
+*`verify-session-sso.sh` figeait le nombre de tests qu'il attend ; il l'énumère désormais. Spécification : `docs/SPEC-test-harness.md` §3.14 ; fiche INC-297. Connecteur MCP : sans objet.*
+
+- [x] **INC-297** — `scripts/lib/decomptes.sh` (`decompte_unites`, `decompte_scenarios`), `verify-session-sso.sh` qui lit ses comptes, la configuration Playwright qui ne verrouille plus un `--list` ; `scripts/verify-decomptes.sh` : 6 contrôles verts, rouge sans la garde du `--list`. *Le harnais complet est à rejouer à la campagne de la session de livraison.*

@@ -614,6 +614,7 @@ scripts/verify-types.sh        # types générés : déterminisme, garde anti-d�
 scripts/verify-webapp.sh       # webapp : build/chunks, jetons, états, clavier, console (CRM-007)
 scripts/verify-node-toolchain.sh # résolution Linux de Node/npm, sans pile             (CRM-008)
 scripts/verify-campagne.sh     # verrou de campagne : refus de front, jeton, reprise, sans pile  (INC-177)
+scripts/verify-decomptes.sh    # comptes dérivés de verify-session-sso.sh : énumérés puis confrontés, sans pile  (INC-297)
 scripts/verify-residus.sh       # relevé des résidus de données : voit une ligne laissée, se tait sinon  (INC-142)
 scripts/verify-harness.sh      # harnais de tests : exécuteurs, projets, non-complaisance (CRM-008)
 scripts/verify-tracks.sh       # tracks : modèle, ordre, archivage, politiques RLS       (CRM-020)

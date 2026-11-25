@@ -42579,3 +42579,8 @@ avait changé le comportement sans mettre le manuel à jour — corrigé ici, av
 
 *2026-11-25, session `p2enjoy-crm-dd`, lot repris de la session 30.* **Mesuré** : le défaut n'est pas aléatoire par nature mais par la taille du journal — un producteur de 3 Mo dont la première ligne correspond rend 141 à chaque fois ; il y avait quatre occurrences, pas deux, et l'une, le contrôle « sans WARN ni ERROR » de Stalwart, **cachait** un avertissement au lieu de
 le simuler. **Décision** : lire dans une variable (la forme d'INC-106) et fermer la classe par un contrôle unitaire sur tous les scripts. **Vérifié** : rouge avant sur quatre lignes, vert après ; dix rejeux des contrôles sur la pile réelle. **Non fait** : le harnais complet, qui écrit dans la boîte système.
+
+### `INC-297` — un harnais énumère ce qu'il attend
+
+*2026-11-25, session `p2enjoy-crm-dd`, lot repris de la session 30.* **Le problème** : deux constantes (141 tests, 24 scénarios) que le produit dépasse à chaque test ajouté. **La décision** : l'issue de la fiche — lire le compte plutôt que le figer —, avec la forme qu'INC-125 avait donnée à `verify-harness.sh` : énumérer sans exécuter, puis confronter à l'exécution, et échouer si l'énumération est vide.
+**Ce que la mesure a appris** : `playwright --list` passait par la garde de campagne et se faisait refuser sous un verrou vivant — le décompte venait alors vide ; la garde ignore désormais un `--list`, qui n'exécute rien. **Vérifié** : `verify-decomptes.sh` 6 contrôles, dont le rouge sans la garde. **Non fait** : le harnais complet, qui reconstruit la base.

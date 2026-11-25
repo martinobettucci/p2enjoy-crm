@@ -33,6 +33,9 @@ import { RACINE, cleAnonyme, lireEnv, portPrevisualisation, urlApi } from './env
 // traverse ; sous un verrou vivant d'une autre campagne, elle refuse et nomme le détenteur. Les workers rechargent ce fichier
 // et héritent du jeton posé ici : ils traversent.
 function garderLaCampagne(): void {
+	// `--list` ÉNUMÈRE sans exécuter : il ne mesure ni la base ni `webapp/dist`, et un harnais qui dérive ses comptes de cette liste (`scripts/lib/decomptes.sh`,
+	// INC-297) le lance PENDANT une campagne — le refuser rendrait un décompte vide, donc un verdict faux.
+	if (process.argv.includes('--list')) return
 	const script = join(RACINE, 'scripts', 'lib', 'campagne.sh')
 	let sortie: string
 	try {

@@ -445,6 +445,14 @@ travers le dépôt ne le trouve jamais. **Mesuré** (2026-11-25) sur les fichier
 échoue, c'est-à-dire qu'un SIGPIPE y **cache** un avertissement. **La règle.** Le journal se lit dans une variable (`JOURNAL=$(docker logs … 2>&1 || true)`), puis `grep -q … <<<"$JOURNAL"` — ou une substitution de processus. **Le contrôle** —
 `webapp/src/lib/scripts-sans-sigpipe.test.ts`, joué par `npm run test:unit` — refuse la forme `docker logs … | grep -q` (continuations `\` comprises) dans tout `scripts/*.sh` ; rouge avant (les quatre lignes nommées), vert après. Connecteur MCP : sans objet.
 
+### 3.14 Un harnais énumère le compte qu'il attend — `verify-session-sso.sh` (INC-297)
+
+*Écrite le 2026-11-25, avant le code.* `verify-session-sso.sh` exigeait « Tests 134 passed », puis 141, puis `24 passed` côté API : à chaque test ajouté à `supabase/functions/session`, il rougissait sans défaut du produit (INC-297, famille d'INC-125, INC-141 et INC-191, dont §7.2 pose la règle).
+**La règle.** Un compte attendu s'ÉNUME sans rien exécuter, puis se CONFRONTE à ce que l'exécution rapporte : `scripts/lib/decomptes.sh` — `decompte_unites` (la liste de vitest) et `decompte_scenarios` (le `--list` de Playwright) — rend le compte, ou **échoue** si l'énumération ne trouve rien : un compte vide serait le « 0 passed » qu'un `grep` laisse passer.
+`verify-session-sso.sh` le lit au début des sections 8 et 9. **Ce que cela change à la garde de campagne (§3.9)** : `--list` n'exécute rien et ne mesure ni la base ni `webapp/dist` ; la configuration Playwright ne pose donc plus le verrou pour lui — sinon une énumération lancée PENDANT une campagne était refusée et rendait un décompte vide.
+**Preuve** : `scripts/verify-decomptes.sh` (6 contrôles, sans pile) — le compte énuméré égale celui de l'exécution (141) ; **un test ajouté** (un fichier jetable, retiré dans un `trap`) fait passer 141 à 142 des deux côtés, là où une constante aurait rougi ; un répertoire sans test et un fichier de scénarios inexistant échouent ; l'énumération passe sous un verrou vivant
+— **rouge sans la garde du `--list`** (« rend 'rien' au lieu de '24' »), vert avec. Connecteur MCP : sans objet.
+
 ## 4. Projets Playwright
 
 ### 4.1 Une seule configuration

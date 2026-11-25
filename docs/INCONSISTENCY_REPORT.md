@@ -7954,6 +7954,9 @@ de traçabilité, plutôt qu'un nombre fixe de lignes ; correction imputée à `
 attendu lu dans le répertoire des tests au lieu d'une constante —, par `CRM-114`, qui a fait bouger le compte.
 Comportement laissé inchangé ici.
 
+**CLOSE le 2026-11-25 — INC-297, session `p2enjoy-crm-dd`, reprise d'un lot de la session `p2enjoy-crm-30`.** L'issue retenue est faite : `UNITES_SESSION` et `SCENARIOS_SESSION` ne sont plus des constantes (141 depuis `CRM-114` T3, déjà remise à jour une fois à la main) ; `verify-session-sso.sh` les ÉNUME (`scripts/lib/decomptes.sh`) au début de ses sections 8 et 9, puis les confronte à l'exécution.
+**Preuve** : `scripts/verify-decomptes.sh`, 6 contrôles — un test ajouté fait passer 141 à 142 des deux côtés ; l'énumération qui échoue échoue ; **rouge sans** la garde du `--list` dans la configuration Playwright, vert avec. Le harnais complet n'a pas été rejoué : il reconstruit la base, et la session de livraison le joue à sa campagne. `docs/SPEC-test-harness.md` §3.14.
+
 ### INC-298 — `reconstruire_base_dev` : le seed échoue une fois sur douze reconstructions enchaînées, et son message est jeté
 
 *Relevé le 2026-10-25 par la session planifiée d'INC-292 (décision 686), en rejouant `scripts/verify-session-sso.sh`.*

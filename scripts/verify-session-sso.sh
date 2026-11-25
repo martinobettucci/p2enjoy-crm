@@ -131,11 +131,13 @@ appliquer_migrations_dev() {
 
 role_a_rendre=false
 fichier_mute=''
-# 126 jusqu'à `CRM-101` T2 (décision 627) : huit preuves de plus, la liste d'amorçage normalisée et transmise.
-# 141 depuis `9f83599` (`CRM-114` T3), qui ajoute `supabase/functions/session/verification.test.ts` : constaté le
-# 2026-10-25 (INC-297, décision 704).
-UNITES_SESSION=141
-SCENARIOS_SESSION=24
+# LES DEUX COMPTES SONT DÉRIVÉS, JAMAIS FIGÉS — INC-297 (famille d'INC-125, INC-141 et INC-191). Ils valaient 126, puis 134, puis 141 tests unitaires : chaque test
+# ajouté à `supabase/functions/session` rougissait le harnais sans défaut du produit. Le compte est ÉNUMÉRÉ sans rien exécuter (`scripts/lib/decomptes.sh` : la liste
+# de vitest, le `--list` de Playwright) au début de chaque section, puis CONFRONTÉ à ce que l'exécution rapporte.
+# shellcheck source=scripts/lib/decomptes.sh
+source scripts/lib/decomptes.sh
+UNITES_SESSION=''
+SCENARIOS_SESSION=''
 
 cleanup() {
 	local status=$?
@@ -544,6 +546,10 @@ fi
 echo
 echo "8. Tests unitaires de supabase/functions/session"
 
+if ! UNITES_SESSION=$(decompte_unites ../supabase/functions/session); then
+	fail "le décompte des tests unitaires de supabase/functions/session n'a pas pu être énuméré"
+	UNITES_SESSION=0
+fi
 unites_session() {
 	npm run --silent test:unit -- ../supabase/functions/session >"$WORK/unites.log" 2>&1
 }
@@ -559,6 +565,10 @@ fi
 echo
 echo "9. Preuves d'API : e2e/api/session.spec.ts"
 
+if ! SCENARIOS_SESSION=$(decompte_scenarios api e2e/api/session.spec.ts); then
+	fail "le décompte des scénarios de e2e/api/session.spec.ts n'a pas pu être énuméré"
+	SCENARIOS_SESSION=0
+fi
 if E2E_PROJETS=api npx playwright test --config e2e/playwright.config.ts --project=api \
 	e2e/api/session.spec.ts --workers=1 >"$WORK/session-api.log" 2>&1 \
 	&& grep -qE "$SCENARIOS_SESSION passed" "$WORK/session-api.log"; then
