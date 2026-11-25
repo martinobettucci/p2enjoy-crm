@@ -208,6 +208,17 @@ const LISERES: Readonly<Record<string, string>> = {
 const liseréDe = (couleur: string) => LISERES[couleur] ?? LISERES.neutral
 
 /**
+ * Couleur de jeton → classe du DISQUE d'une option du choix de couleur (§5.29, §5.68) — INC-313.
+ *
+ * Le disque « Gris » ne peut pas être `bg-border`, comme le liseré : le §5.2 bis a mesuré ce jeton INVISIBLE sur une surface blanche, et a fixé pour un neutre
+ * `--color-text-3`, « discret, mais lisible » ; le sélecteur de couleur des tracks et des channels (§5.68) l'emploie, et la même option « Gris » avait deux disques
+ * dans le produit. Le LISERÉ du bloc, lui, est inchangé : le modifier changerait le rendu des blocs neutres, que la fiche ne tranche pas.
+ */
+const DISQUES: Readonly<Record<string, string>> = { ...LISERES, neutral: 'bg-text-3' }
+
+const disqueDe = (couleur: string) => DISQUES[couleur] ?? DISQUES.neutral
+
+/**
  * Couleur de jeton → clé de son nom en clair, ÉCRITE LITTÉRALEMENT.
  *
  * La table existe parce qu'une clé construite — `` t(`goals.edit.color.${couleur}`) `` — est une
@@ -2385,7 +2396,7 @@ function FicheEditionBloc({
 									void ecrire('couleur', { couleur: option })
 								}}
 							/>
-							<span aria-hidden="true" className={['size-3 rounded-full', liseréDe(option)].join(' ')} />
+							<span aria-hidden="true" className={['size-3 rounded-full', disqueDe(option)].join(' ')} />
 							<span className="text-sm">{t(NOMS_COULEUR[option])}</span>
 						</label>
 					))}

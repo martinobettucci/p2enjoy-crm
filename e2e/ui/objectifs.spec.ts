@@ -686,6 +686,32 @@ test.describe('canevas d’objectifs — CRM-083', () => {
 		expect(remise.status).toBe(204)
 	})
 
+	// @verifies INC-313 (docs/INCONSISTENCY_REPORT.md) ; docs/DESIGN_SYSTEM.md §5.2 bis, §5.29, §5.68 — le disque « Gris » du choix de couleur est VISIBLE sur la surface
+	test('INC-313 : le disque « Gris » du choix est visible sur le fond blanc, et n’a plus la couleur de la bordure', async ({ page }) => {
+		await connecter(page, ADMIN)
+		await ouvrirLeTableau(page)
+		const bloc = page.getByTestId('bloc-objectif').filter({ hasText: BLOC_LIBRE }).first()
+		await bloc.focus()
+		await page.keyboard.press('Enter')
+		await expect(page.getByTestId('fiche-bloc')).toBeVisible()
+
+		const couleurs = await page.evaluate(() => {
+			const fond = (e: Element | null) => (e === null ? '' : getComputedStyle(e).backgroundColor)
+			const disque = document.querySelector('[data-testid="couleur-neutral"] span[aria-hidden="true"]')
+			const surface = fond(document.querySelector('[data-testid="fiche-bloc"]'))
+			const probe = document.createElement('div')
+			probe.style.backgroundColor = 'var(--color-border)'
+			document.body.appendChild(probe)
+			const bordure = getComputedStyle(probe).backgroundColor
+			probe.remove()
+			return { disque: fond(disque), surface, bordure }
+		})
+		expect(couleurs.disque, 'le disque Gris existe et porte une couleur').not.toBe('')
+		expect(couleurs.disque, 'le disque Gris n’est pas la couleur de la bordure, invisible sur le blanc (§5.2 bis)').not.toBe(couleurs.bordure)
+		expect(couleurs.disque, 'le disque Gris se détache de la surface de la fiche').not.toBe(couleurs.surface)
+		await capturer(page, 'objectifs-choix-couleur-gris-1440', 'INC-313')
+	})
+
 	test('la LECTRICE ouvre la fiche, la LIT ENTIÈREMENT, et n’y saisit rien — §5.7', async ({ page }) => {
 		// PREUVE RÉVISÉE LE 2026-08-28, ET SON MOTIF EST ÉCRIT ICI (`docs/CloudWorker.md` §3.1).
 		// Elle figeait la règle « l'écran envoie, la politique décide » POUR LA LECTRICE, en

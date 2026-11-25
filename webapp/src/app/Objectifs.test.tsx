@@ -706,6 +706,30 @@ describe('canevas — la fiche d’édition, §3 et §5.5', () => {
 		expect(option.checked).toBe(true)
 	})
 
+	// @verifies INC-313 (docs/INCONSISTENCY_REPORT.md) ; docs/DESIGN_SYSTEM.md §5.2 bis (le jeton `--color-border` est INVISIBLE sur une surface blanche), §5.68
+	// (le disque « Gris » est `--color-text-3`) : le choix de couleur dessine chaque option par un disque, et le disque « Gris » ne doit plus être `bg-border`.
+	it('INC-313 : le disque « Gris » du choix est `--color-text-3`, visible sur le blanc, comme celui des tracks et des channels', async () => {
+		const { client } = clientEcrivant(LECTURES_UN_BLOC, ok([BLOC_LIBRE]))
+		rendreCanevas(client)
+		fireEvent.keyDown((await screen.findAllByTestId('bloc-objectif'))[0] as HTMLElement, { key: 'Enter' })
+		await screen.findByTestId('fiche-bloc')
+
+		const disque = (option: string) => screen.getByTestId(`couleur-${option}`).querySelector('span[aria-hidden="true"]') as HTMLElement
+		expect(disque('neutral').className).toContain('bg-text-3')
+		expect(disque('neutral').className).not.toContain('bg-border')
+		// Les quatre autres disques gardent leur jeton plein : seul le neutre était invisible.
+		expect(disque('brand').className).toContain('bg-brand')
+		expect(disque('danger').className).toContain('bg-danger')
+	})
+
+	it('INC-313 : le LISERÉ du bloc neutre est inchangé — la correction ne touche que le disque du choix', async () => {
+		const { client } = clientEcrivant({ ...LECTURES_UN_BLOC, goal_blocks: ok([{ ...BLOC_LIBRE, color: 'neutral' }]) }, ok([]))
+		rendreCanevas(client)
+		const blocs = await screen.findAllByTestId('bloc-objectif')
+		const filet = blocs[0]!.querySelector('span.w-1') as HTMLElement
+		expect(filet.className).toContain('bg-border')
+	})
+
 	it('LE CURSEUR ET LE CHAMP ÉCRIVENT LA MÊME VALEUR, et le curseur n’écrit qu’au relâchement', async () => {
 		const { client, ecritures } = clientEcrivant(LECTURES_UN_BLOC, ok([{ ...BLOC_LIBRE, fill_percent: 80 }]))
 		rendreCanevas(client)

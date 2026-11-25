@@ -6953,8 +6953,9 @@ quoi ils ont l'air.
   **pleine** du jeton, puis le nom en 13 px. Les noms sont les clés du §5.29, `goals.edit.color.*`, **réemployées et non
   dupliquées** (§5.61) : la même couleur porte le même nom partout où on la choisit.
 - **LE DISQUE « Gris » EST `--color-text-3`**, le neutre discret mais lisible que le §5.2 bis a mesuré : `--color-border`
-  y est invisible sur une surface blanche. Le canevas d'objectifs emploie `--color-border` pour ce même disque ; l'écart
-  est consigné (INC-313), et le canevas n'est pas modifié ici.
+  y est invisible sur une surface blanche. Le canevas d'objectifs employait `--color-border` pour ce même
+  disque (INC-313) ; **corrigé le 2026-11-25** : le disque du choix de couleur d'un bloc d'objectif est `--color-text-3` comme ici, et seul le **liseré** du bloc neutre
+  garde `--color-border` — le modifier changerait le rendu des blocs neutres du canevas, que la correction du disque ne tranche pas.
 - **LE CHOIX NE REPOSE PAS SUR LA COULEUR SEULE** (§1) : le radio coché le dit, et l'option choisie porte en plus la
   bordure `--color-brand` sur fond `--color-brand-soft` du §5.29 ; les autres, la bordure `--color-border`, au survol
   `--color-hover`.

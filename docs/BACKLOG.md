@@ -21095,3 +21095,9 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 *Un `.env` existant gardait en silence la valeur périmée d'une variable dont le contrat avait changé. Spécification : `docs/SPEC-test-harness.md` §3.15 ; fiche INC-274. Connecteur MCP : sans objet.*
 
 - [x] **INC-274** — `DEV_VALEURS_EXIGEES` et `env_require_dev_valeurs_exigees` (`scripts/lib/env.sh`), appelés par `runDev.sh` et `resetMe.sh` ; trois preuves dans `verify-scripts.sh`, rouge sans la garde ; harnais entier : 118 vérifications, aucune anomalie.
+
+## Correctif — INC-313 (repris de la session 30, 2026-11-25)
+
+*Le disque « Gris » du choix de couleur des objectifs, `--color-border`, était invisible sur le blanc. Design : `docs/DESIGN_SYSTEM.md` §5.2 bis, §5.68 ; fiche INC-313. Connecteur MCP : sans objet.*
+
+- [x] **INC-313** — le disque du choix passe à `--color-text-3` (table `DISQUES` d'`Objectifs.tsx`), le liseré du bloc est inchangé ; deux tests de composant (rouge avant), un scénario d'interface sur les couleurs calculées, la capture observée ; design system §5.68 mis à jour.

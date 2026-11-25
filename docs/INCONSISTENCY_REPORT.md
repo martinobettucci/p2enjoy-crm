@@ -8291,6 +8291,9 @@ disque du choix (`--color-text-3`) du liseré du bloc, ou passer les deux à `--
 de board. À arbitrer par le responsable.
 
 
+**CLOSE le 2026-11-25 — INC-313, session `p2enjoy-crm-dd`, reprise d'un lot de la session `p2enjoy-crm-30`, première issue (séparer le disque du liseré).** `Objectifs.tsx` : une table `DISQUES`, dont `neutral` est `bg-text-3`, dessine le disque du choix de couleur ; la table `LISERES` — le liseré du bloc sur le canevas — est inchangée.
+**Preuves** : deux tests de composant (le disque « Gris » est `bg-text-3`, rouge avant ; le liseré neutre reste `bg-border`) ; un scénario d'interface qui lit les couleurs calculées (le disque n'est ni la couleur de la bordure ni celle de la surface) ; la capture observée — le disque Gris se lit aussi bien que ses quatre voisins ; 112 tests de `Objectifs.test.tsx` verts. `docs/DESIGN_SYSTEM.md` §5.68 mis à jour.
+
 ### INC-314 — le contrôle des classes ignore les gabarits interpolés : une classe absente du CSS y passe inaperçue
 
 *Mesuré le 2026-10-26 par `CRM-116`.* La pastille de l'onglet d'un channel portait `mr-1.5` dans un gabarit interpolé

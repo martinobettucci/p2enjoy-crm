@@ -42589,3 +42589,8 @@ le simuler. **Décision** : lire dans une variable (la forme d'INC-106) et ferme
 
 *2026-11-25, session `p2enjoy-crm-dd`, lot repris de la session 30.* **Le problème** : trois mécanismes de `.env` — jamais réécrit, présence seule contrôlée, complétion des seules variables absentes — laissaient passer une valeur périmée. **Les options de la fiche** : (1) une liste de valeurs exigées comparées, (2) une migration de valeur, (3) documenter. **Retenue** : la 1, la plus simple et la seule qui refuse avant le dégât ;
 la valeur attendue est lue dans `.env.example`, pas recopiée. **Ce qui reste volontairement étroit** : la liste ne porte que la variable mesurée. **Vérifié** : rouge sans la garde, vert avec ; `verify-scripts.sh` entier, 118 vérifications.
+
+### `INC-313` — le disque « Gris » se voit
+
+*2026-11-25, session `p2enjoy-crm-dd`, lot repris de la session 30 ; design system lu en entier le même jour.* **Le problème** : la même option « Gris » avait deux disques — `--color-text-3` pour les tracks et les channels, `--color-border`, invisible sur le blanc (§5.2 bis), pour les objectifs. **La décision** : la première issue de la fiche, séparer le disque du liseré, plutôt que de changer le rendu de tous les blocs neutres du canevas,
+ce que le disque n'a pas à décider. **Vérifié** : tests de composant rouges avant, scénario d'interface sur les couleurs calculées, capture observée (`e2e/output/INC-313/`).
