@@ -3466,15 +3466,23 @@ et les blocages sont perdus — les mails mis à la corbeille par un blocage y r
   `plateforme_creer_espace` de `0089`.
 - **Preuve** : pgTAP `0183`, rouge avant la migration ; `0084` inchangée et verte.
 
-### Migration de `CRM-161` T3.d — le plafond journalier compte tous les espaces de la personne (numéro pris à son commit ; spécifiée le 2026-11-25, avant le code)
+### Migration `0203` — `CRM-161` T3.d : le plafond journalier compte tous les espaces de la personne (`0203_plafond_journalier_tous_espaces.sql` ; spécifiée le 2026-11-25, avant le code)
 
-`docs/SPEC-espace-courant.md` §16.9.3 ; décision 981. *Pas encore écrite ni appliquée ; Q3 tranchée par la décision 989 (le refus sans minutes, accepté).*
+`docs/SPEC-espace-courant.md` §16.9.3 ; décision 981. *Écrite et appliquée en développement le 2026-11-25 ; Q3 tranchée par la décision 989 (le refus sans minutes, accepté).*
 
 - **`app.saisies_temps_plafond()`** remplacée (`create or replace`, même déclencheur) : le verrou consultatif sur
   `profile_id` et `jour`, sans l'espace ; la somme des saisies de la personne ce jour-là dans **tous** les espaces
   (`SECURITY DEFINER`) ; le refus `P0001` garde son message `plafond journalier`, son détail ne dit plus de minutes ; le
   drapeau `app.track_move` respecté.
-- Aucune table, colonne, politique ni fonction publique nouvelle. **Retour arrière** : la définition de la `0197`.
+- Aucune table, colonne, politique ni fonction publique nouvelle ; les types générés ne changent pas. **Retour arrière** : la
+  définition de la `0197`.
+- *Précisé au code* : le déclencheur garde son entrée du drapeau `app.track_move`. **Les preuves révisées** : la `0082`
+  (l'assertion 16, qui prouvait le plafond par espace, prouve le contraire ; le temps du second espace dont la suite se sert plus
+  bas est posé la veille) et la `0184` (la garde du déplacement défend l'état des données d'avant — 300 + 300 minutes le même
+  jour dans deux espaces —, posé déclencheurs suspendus). Preuves : pgTAP `0189` (17 assertions) ; API
+  `e2e/api/plafond-tous-espaces.spec.ts` (le refus avec le jeton réel de Camille, deux écritures concurrentes une par espace).
+- *Conséquence nommée* : un refus du plafond ne dit ni les minutes ni l'espace (décision 989) ; un administrateur qui saisit pour
+  un collègue apprend seulement que sa journée est pleine.
 
 ### Migrations `0201` et `0202` — `CRM-161` T3.c : `organization_list` et `temps_valorise` lisent et rendent l'espace (`0201_organisations_plusieurs_espaces.sql`, `0202_temps_valorise_espace.sql` ; spécifiées le 2026-11-24, avant le code)
 

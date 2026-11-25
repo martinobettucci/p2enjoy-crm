@@ -9,7 +9,7 @@
 -- CE QUE CETTE SUITE PROUVE, ET DANS QUEL ORDRE.
 --
 -- 1. La forme : les deux tables, la RLS, la personne tenue par `NO ACTION` (INC-268 : aucune clé `RESTRICT`).
--- 2. Les contraintes des saisies, chacune contre le succès qui l'encadre, et le plafond — compté par espace.
+-- 2. Les contraintes des saisies, chacune contre le succès qui l'encadre, et le plafond — compté tous espaces (0203).
 -- 3. Les règles des versions : la première peut porter toute date, les suivantes jamais une date passée ; aucune ne se
 --    modifie ; seule une version programmée se retire ; la personne doit appartenir à l'espace ou y avoir du temps.
 -- 4. La valorisation, sur des montants calculés à la main : la version en vigueur le JOUR TRAVAILLÉ, le prorata d'une
@@ -185,11 +185,20 @@ select throws_ok(
 	   where profile_id = '5eed0000-0000-4000-8000-000000000012' and jour = current_date - 30
 	     and channel_id = '5eed0000-0000-4000-8000-000000000034'$$,
 	'P0001', 'plafond journalier', '15 — augmenter une saisie au-delà de la journée est refusé aussi');
-select lives_ok(
+-- RÉVISÉE le 2026-11-25 (CRM-161 T3.d, migration 0203, décision 981) : le plafond se compte TOUS ESPACES CONFONDUS. Avant
+-- elle, cette assertion prouvait le contraire (`lives_ok` : 420 minutes de plus dans un autre espace) ; la journée de la
+-- personne étant pleine dans le premier, la saisie du même jour dans un autre est refusée. `0189` prouve le reste.
+select throws_ok(
 	$$insert into public.saisies_temps (workspace_id, profile_id, jour, minutes, track_id)
 	  values ('a0870000-0000-4000-8000-000000000001', '5eed0000-0000-4000-8000-000000000012', current_date - 30, 420,
 	          'a0870000-0000-4000-8000-000000000002')$$,
-	'16 — le plafond se compte par espace : la même personne, le même jour, dans un autre espace');
+	'P0001', 'plafond journalier',
+	'16 — le plafond se compte tous espaces : la même personne, le même jour, dans un autre espace, est refusée');
+-- Le temps du second espace, que la suite lit plus bas (« dans ses deux espaces »), se pose la VEILLE : le même jour que la
+-- journée pleine du premier, il serait refusé (assertion 16). RÉVISÉ le 2026-11-25 (CRM-161 T3.d) ; il se posait le même jour.
+insert into public.saisies_temps (workspace_id, profile_id, jour, minutes, track_id)
+values ('a0870000-0000-4000-8000-000000000001', '5eed0000-0000-4000-8000-000000000012', current_date - 31, 420,
+        'a0870000-0000-4000-8000-000000000002');
 select throws_ok(
 	$$update public.saisies_temps set jour = current_date - 29
 	   where profile_id = '5eed0000-0000-4000-8000-000000000012' and jour = current_date - 30
@@ -251,11 +260,12 @@ select lives_ok(
 -- =============================================================================================
 -- Driss, le jour J-30 : 105 min sur « Refonte de site » (…034 de …022), 210 sur l'affaire …0c3 (« Grands comptes »
 -- …032 de …021), 105 sur le track …022 ; version de 120 € en vigueur → 120, 240, 120. Dans le second espace : 420
--- minutes, aucune version → non valorisé.
+-- minutes la veille (J-31, le plafond comptant tous les espaces, 0203), aucune version → non valorisé ; la valorisation
+-- ci-dessous est celle de J-30, qui ne le contient plus, et la suivante celle de J-31.
 
 select is(
 	pg_temp.valorise(current_date - 30, current_date - 30, '5eed0000-0000-4000-8000-000000000012'),
-	'002/-/-:420:null:null 021/032/0c3:210:240.00:EUR 022/-/-:105:120.00:EUR 022/034/-:105:120.00:EUR',
+	'021/032/0c3:210:240.00:EUR 022/-/-:105:120.00:EUR 022/034/-:105:120.00:EUR',
 	'28 — la version en vigueur le jour travaillé valorise chaque cible ; sans version, montant et devise nuls');
 
 select lives_ok(
@@ -322,7 +332,7 @@ select is(pg_temp.lignes_touchees(
 	0::bigint, '41 — Driss ne retire pas sa version programmée');
 select is(
 	pg_temp.valorise(current_date - 30, current_date - 30, null),
-	'002/-/-:420:null:null 021/032/0c3:210:240.00:EUR 022/-/-:105:120.00:EUR 022/034/-:105:120.00:EUR',
+	'021/032/0c3:210:240.00:EUR 022/-/-:105:120.00:EUR 022/034/-:105:120.00:EUR',
 	'42 — pour Driss, le rapport ne contient que son temps');
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013');

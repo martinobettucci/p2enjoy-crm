@@ -20674,6 +20674,10 @@ livraison (décision 830).
   **T3.d en cours** (session 7a, depuis le 2026-11-25) : spécifiée avant son code (`docs/SPEC-espace-courant.md` §16.9,
   `c5fe90cd` ; décision 989) ; numéro pris après synchronisation : **`0203`** (le plafond journalier compte tous les espaces
   de la personne) ; le Pilotage (aucune migration) et Temps ▸ Saisie ; le choix de la personne du rapport de temps.
+  **T3.d, la migration, faite le 2026-11-25** : `0203` appliquée en développement ; pgTAP `0189` (17) ; `0082` (assertion 16, le
+  temps du second espace posé la veille) et `0184` (l'état d'avant, déclencheurs suspendus) révisées ; 8 suites des saisies et du
+  temps, 309 assertions ; API `plafond-tous-espaces` 3/3, avec `saisie-temps` (le verrou concurrent). Contrat §2.81. Restent le
+  Pilotage, Temps ▸ Saisie et le choix de la personne du rapport.
   **Relevés à reprendre dans T3** (*2026-11-21, session de livraison au constat du lot de T1 et T2 ; consignés par 5f*) :
   - **Les non-lus de chaque espace sous `md`.** À 390 px, la section « Espaces » du repli du fil d'Ariane ne montre aucune
     pastille de non-lus (capture `docs/captures/CRM-161/menu-espaces-sm-390.jpg`), alors que la décision 965 les veut au

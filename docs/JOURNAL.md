@@ -42343,3 +42343,18 @@ rejoués seuls (`aide`, `corbeille-inbox`, `formulaire:589` deux fois — interm
 `connecteur-etiquettes`, `connecteur-organisations`, `demarrage`, `webhooks-remise`). **Aucun défaut du lot.** Garde du
 manuel 170 ; API manuel 9/9 ; captures 133 changées, 14 ajoutées, observées.
 **Dans la même fenêtre** : le service `rest` recréé (décision 992, INC-277).
+
+### `CRM-161` T3.d — la migration du plafond : deux suites écrites sur l'ancienne règle, révisées
+
+*2026-11-25, session 4891a451 (p2enjoy-crm-7a), après la levée du gel par la session de livraison.*
+- **Rouge avant, vert après.** La suite `0189` et l'assertion 16 révisée de `0082` échouent sur l'ancien déclencheur, passent sur
+  la `0203` : 17 et 66 assertions.
+- **Deux suites écrites sur la règle d'avant.** `0082` s'appuyait, plus bas, sur 420 minutes que Driss avait saisies le même jour
+  dans le second espace : elles se posent la veille (J-31), et les deux valorisations de J-30 ne les contiennent plus. `0184`
+  posait 300 + 300 minutes le même jour dans deux espaces pour montrer la garde du déplacement d'un track : cet état n'est plus
+  atteignable par une écriture, mais reste celui des données d'avant la migration, que la garde défend — posé déclencheurs
+  suspendus, comme le seed de `0082`.
+- **Ce que la garde du déplacement devient.** Avec le plafond tous espaces, un déplacement ne peut plus créer de dépassement
+  que sur des données d'avant ; la garde reste (décision 969), sa preuve aussi.
+- **La production.** Un compte à zéro est attendu avant la livraison (contrat §2.81, geste 1).
+

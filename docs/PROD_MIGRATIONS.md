@@ -1714,6 +1714,24 @@ jamais avant. *Complète en développement le 2026-11-25 (7a).*
 202, supprimer la fonction puis rejouer sa section 2 de la `0150`. La webapp de T3.c, si elle est livrée, se retire avec
 elles.
 
+### 2.81 `CRM-161` T3.d — le plafond journalier de la saisie du temps compte tous les espaces de la personne (la migration 203 ; le Pilotage et Temps ▸ Saisie suivent) (EN ATTENTE)
+
+`docs/SPEC-espace-courant.md` §16.9.3 ; `docs/SCHEMA.md` « Migration `0203` » ; décisions 981 et 989. **Une fonction de déclencheur
+remplacée** (`app.saisies_temps_plafond`), aucune table, aucune variable, aucun secret : le verrou et la somme portent la
+personne et le jour, sans l'espace ; le message `plafond journalier` est gardé, son détail ne dit plus de minutes. **Compatible
+avec la webapp et le connecteur livrés** (`crm_time_set` reconnaît le refus par son message). **Après la 202.** Elle peut partir
+seule, avant la webapp de T3.d. *Écrite et prouvée en développement le 2026-11-25 (7a) : pgTAP `0189`, `0082` et `0184` révisées ;
+API `plafond-tous-espaces`.*
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | **Lire la production avant** | session de livraison | compter les couples personne × jour dont le total des saisies, tous espaces confondus, dépasse 420 minutes : `select count(*) from (select profile_id, jour from public.saisies_temps group by 1, 2 having sum(minutes) > 420) t` — lecture seule. Attendu : **0** (la production n'a qu'un espace, et le plafond par espace tenait) ; un compte au-delà de zéro rend toute écriture de ces jours refusée jusqu'à correction : à signaler au responsable avant la fenêtre |
+| 2 | Appliquer la 203 | session de livraison, dans la fenêtre du lot | `runProd.sh --migrate` (§3), après la 202 |
+| 3 | Relire | session de livraison | `app.saisies_temps_plafond()` sans filtre d'espace dans sa somme ; le message de refus `plafond journalier` |
+
+**Retour arrière** : rejouer la définition de la `0197` (`create or replace function app.saisies_temps_plafond()`).
+*Le Pilotage et Temps ▸ Saisie (webapp, manuel) compléteront cette section.*
+
 ## 3. Migrations en attente
 
 **La 201 et la 202** (`CRM-161` T3.c, décisions 963 et 965), *en attente* : `organization_list` lit plusieurs espaces, et

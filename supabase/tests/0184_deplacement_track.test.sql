@@ -142,11 +142,16 @@ select ok('field_type_conflict' = any (pg_temp.refus()), '13 — un champ commun
 delete from public.card_common_fields where workspace_id = pg_temp.id('arrivee') and key like 'sonde-%';
 
 -- Le plafond de 7 h par jour, à l'arrivée (décision 969).
+-- RÉVISÉ le 2026-11-25 (CRM-161 T3.d, migration 0203, décision 981) : le plafond compte désormais tous les espaces de la
+-- personne ; deux saisies de 300 minutes le même jour dans deux espaces ne se posent plus normalement. L'état que la garde du
+-- déplacement défend est celui des DONNÉES D'AVANT : il est posé ici déclencheurs suspendus, comme la suite 0082 le fait.
 insert into public.saisies_temps (workspace_id, profile_id, jour, minutes, card_id, created_by)
 values (pg_temp.id('depart'), pg_temp.id('camille'), current_date - 400, 300, pg_temp.id('c7'), pg_temp.id('camille'));
 insert into public.tracks (id, workspace_id, name, slug, position) values ('e1620000-0000-4000-8000-0000000000a2', pg_temp.id('arrivee'), 'Sonde piste', 'sonde-piste', 1);
+set local session_replication_role = replica;
 insert into public.saisies_temps (workspace_id, profile_id, jour, minutes, track_id, created_by)
 values (pg_temp.id('arrivee'), pg_temp.id('camille'), current_date - 400, 300, 'e1620000-0000-4000-8000-0000000000a2', pg_temp.id('camille'));
+set local session_replication_role = origin;
 select ok('daily_cap_exceeded' = any (pg_temp.refus()), '14 — 300 minutes déplacées et 300 à l''arrivée le même jour : plus de 7 h, refusé');
 delete from public.saisies_temps where track_id = 'e1620000-0000-4000-8000-0000000000a2';
 delete from public.tracks where id = 'e1620000-0000-4000-8000-0000000000a2';
