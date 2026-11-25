@@ -898,3 +898,44 @@ par recherche de `brouillon=` dans `docs/manual.md`) ; la personne ne voit que l
 **L'image `mcp` est à reconstruire et à redéployer** (le code du connecteur change) — après la webapp, ou avant : l'ancien
 lien reste servi par la redirection ; **aucune migration, aucune variable** (`SITE_URL` existe). Au contrat
 (`docs/PROD_MIGRATIONS.md` §2.84).
+
+## 18. La tranche T5 en détail — le manuel et la remise
+
+*Écrit le 2026-11-25, avant le code et le texte de T5 (décision 999), après la relecture de `docs/manual.md` §3.2 bis, des
+chapitres 10, 26, 28, 30 et 33, et de `docs/SPEC-manual.md`. Le plan du manuel est `docs/SPEC-manual.md` (le « `MANUAL_PLAN.md` »
+du §14 n'existe pas : écart de nom, consigné à `docs/INCONSISTENCY_REPORT.md`).*
+
+### 18.1 Ce que le manuel dit déjà, et ce qui manque
+
+La section **3.2 bis « Changer d'espace »** (T2.b, complétée par T3.a et T3.b) dit déjà : le menu des espaces et ses non-lus ; ce
+qui appartient à un espace ; le bouton **Espace** et son panneau ; l'espace dans l'adresse ; le clavier. Les chapitres 10, 28 et 30
+disent, page par page, la colonne, le bouton et les règles de leur écran (T3.c, T3.d). **Il manque** :
+
+1. **La liste des pages qui ont le bouton « Espace »**, arrêtée à T3.b : y entrent les **organisations** (chapitre 10), le **rapport
+   de temps** et la **saisie du temps** (chapitre 28), le **Pilotage** (chapitre 30) ;
+2. **Créer depuis une page qui rassemble vos espaces** : le formulaire nomme l'espace où l'élément sera créé (« Dans l'espace … ») ;
+   sans filtre et avec plusieurs espaces, c'est l'espace de l'onglet ;
+3. **Le plafond de la journée** compte tous les espaces (chapitre 28 le dit ; §3.2 bis y renvoie) ;
+4. **L'assistant (chapitre 33)** : chaque outil agit dans **un** espace (celui qu'on lui nomme, ou celui de l'élément qu'il touche), un
+   assistant lit donc vos espaces l'un après l'autre ; seules la liste des espaces et la recherche rendent tous vos espaces, chaque
+   résultat nommant le sien ; **le lien de relecture** d'un mail préparé ouvre la relecture dans l'espace du mail (T4) ;
+5. **Une image du bouton « Espace » ouvert** sur une page à deux espaces (aucune image n'existe pour le panneau).
+
+### 18.2 Ce que T5 écrit
+
+- `docs/manual.md` : §3.2 bis complétée (points 1, 2, 3, une image) ; chapitre 33, un court paragraphe (point 4) ; **aucune capture
+  nouvelle sauf le panneau du filtre** (`filtre-des-espaces.jpg`, scénario `e2e/manuel/03-naviguer.spec.ts`, sous la section
+  `changer-d-espace`) ; `scripts/manuel/construire.mjs`, puis `scripts/verify-manual.sh`.
+- `docs/INCONSISTENCY_REPORT.md` : l'écart `MANUAL_PLAN.md` / `SPEC-manual.md`, **sans le résoudre** (le §14 est corrigé à la ligne
+  près dans la même tranche : c'est une référence de nom, non une règle).
+- **La remise à la session de livraison** : un message qui dit le lot de `CRM-161` T3.c à T4 dans l'ordre de livraison (migrations
+  201, 202, 203 ; webapp, manuel ; image `mcp`), les gestes préalables du contrat (§2.80, §2.81, §2.84), et ce qui reste au constat
+  du responsable. L'unité reste `[~]` jusqu'à ce constat, puis `[P]` à la livraison (`CLAUDE.md` §5).
+
+### 18.3 Les preuves de T5
+
+| Niveau | Ce qui est prouvé |
+|---|---|
+| **Le manuel** | `scripts/verify-manual.sh` vert (liens, images, citations du texte de l'interface) ; la liste des pages de §3.2 bis **égale** celle des pages qui montrent le bouton (relevée dans le code : `BoutonFiltreEspaces` / `FiltreEspaces`) |
+| **Le scénario** | `e2e/manuel/03-naviguer.spec.ts` rejoué : la capture du panneau, prise sur Camille (deux espaces) ; `git checkout -- docs/manuel/images` pour les images que la campagne de la session de livraison renouvelle |
+| **Visuel** | la capture est observée |
