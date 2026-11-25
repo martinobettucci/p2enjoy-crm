@@ -20978,13 +20978,14 @@ corriger sans arbitrage l'est par lots cohérents, preuve rouge avant et verte a
   *Prise de p2enjoy-crm-7a (4891a451) libérée le 2026-11-25 : état réel [x] — `plateforme-mcp.spec.ts:195` rendue indépendante de l'accumulation (journal tourné page par page ; rouge avant, 6/6 après), `etat-messagerie` corrigée par INC-340, `premier-lancement` verte sur 4 passages. Restent ouverts, hors des cinq, dans `INC-342` : l'ordre des preuves de connecteur et « Ma journée » après minuit.*
   **Tranche faite en développement (2026-11-25)** : `e2e/ui/webhooks.spec.ts`, `e2e/manuel/34-webhooks.spec.ts`, `e2e/api/inbox-lecture.spec.ts` ciblent leur état et ne retirent que ce qu'elles écrivent (rouges avant sur l'état accumulé réel, vertes après et après 60 remises ajoutées) ; `webhooks-remise` verte, autre cause. **Reste du lot** : `etat-messagerie.spec.ts:62`, `plateforme-mcp.spec.ts:195`, `premier-lancement.spec.ts:182`.
 - [ ] **Lot E — `INC-286` lot 1** : le connecteur MCP en anglais (tables `mcp_*`, familles, colonnes) ; spécification avant le code (décision 992).
-- [@] **Lot F — `INC-361`** : le résumé quotidien cite les mentions non lues d'une organisation, avec le lien vers sa fiche (tranche de `CRM-153`, décision 992).
-  *Prise en charge : p2enjoy-crm-7a (4891a451) depuis 2026-11-25 UTC — état avant : [ ] ; confiée par la session de livraison (11) ; spécification avant le code (décision 992)*
-  *Spécifiée le 2026-11-25 avant le code* (`docs/SPEC-etiquettes-digest.md` §5.2 bis ; seed §58, retiré par la décision 1001 ; décision 1000) : migration `0206` (`create or replace
-  function app.digest_corps`), pgTAP `0191`, E2E `e2e/mail/digest.spec.ts` étendu, seed, manuel §5.6, contrat, changelog. Connecteur : non.
-  **Écrit (2026-11-25, 7a) ; reste à appliquer et à rejouer** : migration `0206`, pgTAP `0191` (rouge sur la `0133`, 7 assertions ; verte, 15/15, dans une transaction annulée portant la
-  `0206`), E2E `digest` étendu (rouge avant sur la ligne attendue) ; le seed §58 est retiré (décision 1001 : la campagne de 11 l'a vu rougir neuf points de preuve de notifications), manuel §5.6, contrat §2.85, SCHEMA, changelog. **Bloqué** : le runner refuse tout lot tant que la `0205` de
-  `CRM-166` (modifiée après son application) n'est pas réglée — la `0206` n'est donc pas appliquée à la base de développement, et l'E2E vert attend.
+- [P] **Lot F — `INC-361`** : le résumé quotidien cite les mentions non lues d'une organisation, avec le lien vers sa fiche (tranche de `CRM-153`, décision 992).
+  *Spécifiée le 2026-11-25 avant le code* (`docs/SPEC-etiquettes-digest.md` §5.2 bis ; décisions 1000 et 1001) : migration `0206` (`create or replace function app.digest_corps`), pgTAP `0191`,
+  E2E `e2e/mail/digest.spec.ts` étendu, manuel §5.6, contrat §2.85, SCHEMA, changelog. Connecteur : non. **Le jeu ne pose aucune mention d'organisation** (décision 1001, `docs/SPEC-seed.md` §58) :
+  la preuve la crée et la retire.
+  **Implémenté et vérifié en développement (2026-11-25, 7a), sur une base recréée à `3b52266a` (203 migrations, `0206` comprise)** : pgTAP `0191` 15/15 ; E2E `digest` vert (la ligne « Imprimerie Duval (organisation) » et le lien à l'ancre
+  du commentaire, dans le mail reçu) — **une exécution rouge sur la relève de la boîte de Driss (`messages_skipped` à 0, assertion de `CRM-069` T6 que cette unité n'a pas touchée), puis deux vertes de suite** ; les 37 scénarios d'interface de
+  `notifications`, `preferences-notifications` et `mentions-composeur` verts (les comptes de Driss à 2 et 3 sont intacts) ; manuel `05-notifications` 5/5. Sous-ensemble du périmètre, pas une campagne complète.
+  **Reste, pour le responsable en production** : le geste de la `0206` (contrat `docs/PROD_MIGRATIONS.md` §2.85), puis le constat que le résumé du matin cite une mention d'organisation non lue.
 
 ### CRM-166 — Un assistant IA dans l'inbox : il propose un plan d'actions sur les mails sélectionnés, que l'on accepte ou refuse mail par mail `[@]`
 *Prise en charge : session interactive d5b44a2d (p2enjoy-crm-30) depuis 2026-11-25 00:53 UTC — état avant : [ ] ; confiée par la session de livraison (11), décision 994*
