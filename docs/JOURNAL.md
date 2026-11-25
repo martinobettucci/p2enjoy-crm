@@ -42421,3 +42421,11 @@ est écrite à `docs/SPEC-test-harness.md` §7.3, avec ses quatre bornes (harnai
 applicative exclue) et le harnais de chacune des quatorze unités ; `CRM-070` n'est plus un écart, `CRM-011` pointe `verify-session-sso.sh`
 et `verify-authz.sh`. `CLAUDE.md` n'est pas modifié : la règle vit dans la spécification des tests. Connecteur MCP : sans objet.
 
+### décision 992, suite — `INC-165` : le contrôle des types au `pre-push`
+
+*2026-11-25, session `p2enjoy-crm-dd`.* Mis en œuvre tel qu'arbitré : `.githooks/lib/types-a-jour.sh` (heuristique sans pile : pour chaque commit
+poussé, une migration ajoutée ou modifiée exige `database.types.ts` dans le même commit, sauf marqueur « sans effet de types »), appelée par
+`.githooks/pre-push`. **Mesuré sur l'historique, et à annoncer** : 19 des 40 derniers commits à migration auraient été refusés — des migrations de
+fonctions sans effet de types, qui devront porter le marqueur, ou des types régénérés à part. Éprouvé par `scripts/verify-crochets-git.sh` §6 bis
+(rouge avant, 27 vérifications vertes après). `types:check` reste le contrôle exact. Connecteur MCP : sans objet.
+

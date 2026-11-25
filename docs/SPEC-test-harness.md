@@ -387,6 +387,26 @@ l'erreur standard et ne bloque pas la preuve.
 détenteur nommé**, puis passe une fois le verrou libéré ; un enfant avec jeton traverse ; un verrou mort est repris ; le
 verrou est hors de l'arbre (`git status` propre). Connecteur MCP : sans objet (outillage de développement).
 
+### 3.10 Une migration ne se pousse pas sans ses types — le contrôle du `pre-push` (INC-165, décision 992)
+
+**Mesuré** (INC-165) : la tranche 2 c de `CRM-081` a livré trois objets de base sans régénérer `webapp/src/lib/database.types.ts` ;
+`npm run typecheck` rougissait pour tout le monde, et rien ne l'avait signalé : `types:check` n'est joué que par quelques harnais, et la
+campagne de fin de session « les exécute lorsqu'elle en a le temps ». **Arbitrage du responsable (2026-11-25)** : un contrôle avant
+le push, plutôt que rien.
+
+**La règle.** Pour chaque commit poussé (hors fusions) : si une migration de `supabase/migrations/` est AJOUTÉE ou MODIFIÉE, alors
+`webapp/src/lib/database.types.ts` l'est aussi **dans le même commit** — sinon le push est refusé, le message nomme le commit et la
+migration. **Le marqueur** : une migration sans effet sur les types (une fonction interne, une donnée, un index) le dit dans un
+commentaire : `-- sans effet de types : <motif>`. Un commit qui ne fait que supprimer une migration n'est pas jugé.
+
+**Ce que c'est, et ce que ce n'est pas.** Une heuristique SANS PILE — `.githooks/lib/types-a-jour.sh`, appelée par `.githooks/pre-push`
+— : elle n'attrape pas une régénération oubliée dans un commit qui touche les types pour une autre raison. Le contrôle exact reste
+`npm run types:check` (il exige la base). **Mesuré sur l'historique** : sur les 40 derniers commits qui touchent une migration, 19
+auraient été refusés — des migrations de fonctions sans effet sur les types, qui devront dire leur marqueur.
+**Preuve** : `scripts/verify-crochets-git.sh` (section 6 bis), qui joue les crochets réels dans des dépôts jetables : la migration
+seule refusée (message nommant la migration, les types et le marqueur) ; les types dans un commit distinct ne suffisent pas ; la
+migration et ses types acceptées ; le marqueur accepté ; un commit sans migration et un retrait libres. Connecteur MCP : sans objet.
+
 ## 4. Projets Playwright
 
 ### 4.1 Une seule configuration

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # @spec CLAUDE.md §13 (Gestion Git — Branche courante ; Commits : pousser systématiquement après
 #       chaque commit validé, sur la branche courante du dépôt)
+# @spec INC-165 (docs/INCONSISTENCY_REPORT.md), docs/JOURNAL.md décision 992 — le contrôle des types : `lib/types-a-jour.sh`
 # @spec docs/JOURNAL.md décision 358 — un commit conforme peut encore être poussé vers une
 #       référence distante qui n'est pas `main`, et y rester invisible. Le `pre-commit` seul ne
 #       couvre donc pas la règle : ce crochet en tient l'autre bout.
@@ -17,10 +18,12 @@ set -euo pipefail
 
 # shellcheck source=lib/exige-main.sh
 . "$(dirname "$0")/lib/exige-main.sh"
+# shellcheck source=lib/types-a-jour.sh
+. "$(dirname "$0")/lib/types-a-jour.sh"
 
 exige_branche_main "push"
 
-while read -r _ref_locale _sha_local ref_distante _sha_distant; do
+while read -r _ref_locale sha_local ref_distante sha_distant; do
 	[ -n "${ref_distante:-}" ] || continue
 
 	if [ "$ref_distante" != "refs/heads/$BRANCHE_ATTENDUE" ]; then
@@ -31,4 +34,7 @@ while read -r _ref_locale _sha_local ref_distante _sha_distant; do
 		echo "          git push -u origin $BRANCHE_ATTENDUE" >&2
 		exit 1
 	fi
+
+	# @spec INC-165, décision 992 : une migration ne se pousse pas sans son contrat de types dans le même commit.
+	exiger_types_a_jour "$sha_local" "$sha_distant" || exit 1
 done

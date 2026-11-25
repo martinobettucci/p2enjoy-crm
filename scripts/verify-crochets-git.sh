@@ -4,6 +4,8 @@
 # @verifies docs/JOURNAL.md décisions 340, 344 et 345 — non-régression du contrôle d'identité déjà
 #           porté par `.githooks/pre-commit`, que la décision 358 ne relâche pas
 # @verifies CLAUDE.md §13 (Gestion Git — Branche courante ; Attribution des commits)
+# @verifies INC-165 (docs/INCONSISTENCY_REPORT.md, décision 992) — « une migration modifiée sans `database.types.ts` modifié dans
+#           le même commit est refusée au push, sauf marqueur « sans effet de types » dans la migration »
 #
 # Éprouve `.githooks/pre-commit`, `.githooks/pre-push` et `.githooks/lib/exige-main.sh` en les
 # EXÉCUTANT réellement, dans des dépôts jetables créés sous `mktemp -d`. Aucun scénario ne commite,
@@ -221,12 +223,74 @@ else
 	fail "le distant ne porte pas exactement « refs/heads/main »"
 fi
 
+# --- 6 bis. Une migration sans ses types est refusée — INC-165, décision 992 --------------------------
+
+echo
+echo "6 bis. pre-push : une migration modifiée exige database.types.ts dans le MÊME commit"
+
+TYPES=webapp/src/lib/database.types.ts
+mkdir -p "${depot:?}/supabase/migrations" "${depot:?}/webapp/src/lib"
+
+pousser() { git -C "${depot:?}" push origin main 2>&1; }
+
+# a) la migration seule : refusée, le message nomme la migration, le fichier et le marqueur.
+printf 'create table t_inc165 (id int);\n' > "${depot:?}/supabase/migrations/0999_inc165.sql"
+git -C "${depot:?}" add supabase/migrations/0999_inc165.sql
+git -C "${depot:?}" commit --quiet -m "Une migration sans ses types"
+sortie=$(pousser); code=$?
+if [ "$code" -ne 0 ] && printf '%s' "$sortie" | grep -q '0999_inc165.sql' \
+	&& printf '%s' "$sortie" | grep -q 'database.types.ts' && printf '%s' "$sortie" | grep -q 'sans effet de types'; then
+	ok "une migration seule est refusée, et le refus nomme la migration, les types et le marqueur"
+else
+	fail "une migration sans ses types n'est pas refusée (code $code) : « $sortie »"
+fi
+
+# b) les types dans un commit DISTINCT ne suffisent pas : la règle porte sur le même commit.
+printf 'export type Database = {}\n// regénéré\n' > "${depot:?}/$TYPES"
+git -C "${depot:?}" add "$TYPES"
+git -C "${depot:?}" commit --quiet -m "Les types, à part"
+sortie=$(pousser); code=$?
+if [ "$code" -ne 0 ]; then
+	ok "les types dans un commit distinct ne suffisent pas : la règle est « dans le même commit »"
+else
+	fail "des types dans un commit distinct ont fait accepter la migration : « $sortie »"
+fi
+
+# c) la migration ET les types dans le même commit : acceptée.
+git -C "${depot:?}" reset --quiet --hard HEAD~2
+printf 'create table t_inc165 (id int);\n' > "${depot:?}/supabase/migrations/0999_inc165.sql"
+printf 'export type Database = {}\n// avec la table\n' > "${depot:?}/$TYPES"
+git -C "${depot:?}" add supabase/migrations/0999_inc165.sql "$TYPES"
+git -C "${depot:?}" commit --quiet -m "La migration et ses types"
+sortie=$(pousser); code=$?
+[ "$code" -eq 0 ] && ok "la migration et ses types dans le même commit sont acceptées" || fail "refus à tort : « $sortie »"
+
+# d) une migration sans effet de types, portant le marqueur : acceptée.
+printf -- '-- sans effet de types : une fonction interne, aucun objet du schéma exposé\nselect 1;\n' > "${depot:?}/supabase/migrations/1000_inc165_marqueur.sql"
+git -C "${depot:?}" add supabase/migrations/1000_inc165_marqueur.sql
+git -C "${depot:?}" commit --quiet -m "Une migration sans effet de types"
+sortie=$(pousser); code=$?
+[ "$code" -eq 0 ] && ok "une migration portant « sans effet de types » est acceptée sans types" || fail "refus à tort malgré le marqueur : « $sortie »"
+
+# e) un commit sans migration reste libre.
+echo "autre" > "${depot:?}/autre.txt"
+git -C "${depot:?}" add autre.txt
+git -C "${depot:?}" commit --quiet -m "Un fichier sans rapport"
+sortie=$(pousser); code=$?
+[ "$code" -eq 0 ] && ok "un commit sans migration n'est pas concerné" || fail "refus à tort d'un commit sans migration : « $sortie »"
+
+# f) un commit qui ne fait que SUPPRIMER une migration n'exige pas les types de la suppression (le contrôle porte sur A et M).
+git -C "${depot:?}" rm --quiet supabase/migrations/1000_inc165_marqueur.sql
+git -C "${depot:?}" commit --quiet -m "Retire une migration"
+sortie=$(pousser); code=$?
+[ "$code" -eq 0 ] && ok "le retrait d'une migration n'est pas jugé comme une modification" || fail "refus à tort d'un retrait : « $sortie »"
+
 # --- 7. Les crochets sont installables et exécutables --------------------------------------------
 
 echo
 echo "7. Les crochets sont réellement montés par l'amorçage"
 
-for crochet in pre-commit pre-push lib/exige-main.sh; do
+for crochet in pre-commit pre-push lib/exige-main.sh lib/types-a-jour.sh; do
 	if [ -x "$HOOKS_DIR/$crochet" ]; then
 		ok ".githooks/$crochet est exécutable"
 	else

@@ -2830,6 +2830,12 @@ les a pas exécutés. Deux réponses sont défendables — porter `types:check` 
 mécaniquement vérifiée de toute unité livrant une migration, ou l'ajouter à un contrôle de
 pré-commit —, et le choix appartient au responsable.
 
+**ARBITRÉE par le responsable le 2026-11-25 (décision 992) et MISE EN ŒUVRE : un contrôle avant le push refuse une migration modifiée sans `database.types.ts` modifié dans le
+même commit, sauf marqueur « sans effet de types » dans la migration ; écarté : ne rien imposer. CLOSE.** `.githooks/lib/types-a-jour.sh`, appelée par
+`.githooks/pre-push` ; règle et mesure à `docs/SPEC-test-harness.md` §3.10 ; preuve : `scripts/verify-crochets-git.sh` §6 bis (rouge avant : 7 anomalies sur 27 ;
+vert après : 27 vérifications, aucune anomalie). Sur les 40 derniers commits à migration, 19 auraient été refusés : les migrations de fonctions sans effet de types
+devront porter le marqueur.
+
 ### INC-166 — `administration-workflows.spec.ts` expire dans sa purge de champs, et c'est PRÉEXISTANT
 
 **Nature :** anomalie de **harnais**, étrangère à `CRM-081` tranche 2 e, et établie comme telle par

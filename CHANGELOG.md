@@ -13,6 +13,9 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+- **INC-165, une migration ne se pousse plus sans ses types** (décision 992) : le crochet `pre-push` refuse un commit qui ajoute ou modifie
+  une migration de `supabase/migrations/` sans modifier `webapp/src/lib/database.types.ts` dans le même commit, sauf si la migration porte le
+  commentaire `-- sans effet de types : <motif>`. Outillage de développement : rien ne change dans le produit livré.
 - **INC-177, un verrou de campagne entre les preuves qui partagent la pile** (décision 990) : `npm run test:sql`, `e2e:api|ui|mail`,
   le seed, la reconstruction de la base et un `npm run build` pendant que l'aperçu sert `webapp/dist` refusent désormais de se
   lancer de front avec une autre campagne (code 75, détenteur nommé). Une campagne s'ouvre en une fois par
