@@ -1,4 +1,6 @@
 // @verifies CRM-057 (docs/BACKLOG.md) — tranche 2 : lu / non lu, contrat d'API hors interface
+// @verifies INC-342 (docs/INCONSISTENCY_REPORT.md, lot D du backlog) — le compte des non lus se mesure sur l'affaire du message classé,
+//           dont l'état de lecture de chaque message est posé puis rendu : il ne dépend plus des lectures laissées ailleurs
 // @verifies docs/SPEC-mail-subsystem.md §18 bis.2 (l'état est personnel, le total gardé), §18 bis.3 (la table fermée à
 //           l'écriture directe, `mark_messages_read` et sa discrétion, `mark_message_unread`, `is_read`, `unread_count`) ;
 //           docs/SPEC-permissions-rls.md §7 ; CLAUDE.md §10 ; docs/JOURNAL.md décisions 715 et 716
@@ -59,14 +61,24 @@ async function marquer(request: APIRequestContext, entetes: Record<string, strin
 
 test.describe.serial('lu / non lu — hors interface (§18 bis)', () => {
 	let ids: Record<keyof typeof MSGID, string>
+	// `INC-342` : l'affaire du message classé, et TOUS ses messages — la preuve du compte lit cette affaire seule, et pose
+	// puis rend l'état de lecture de chacun de ses messages, non des seuls trois du seed qu'elle nomme.
+	let carte = ''
+	let messagesDeLaCarte: string[] = []
 	let avant: Lecture[] = []
 	let admin: Record<string, string>
 	let driss: Record<string, string>
 	const filtre = () =>
-		`user_id=in.(${ADMIN},${DRISS})&message_id=in.(${Object.values(ids).join(',')})`
+		`user_id=in.(${ADMIN},${DRISS})&message_id=in.(${[...new Set([...Object.values(ids), ...messagesDeLaCarte])].join(',')})`
 
 	test.beforeAll(async ({ request }) => {
 		ids = await identifiants(request)
+		const classe = await request.get(`${URL_API}/rest/v1/mail_messages?select=card_id&id=eq.${ids.classe}`, { headers: enTetesService() })
+		const [ligneClasse] = (await classe.json()) as { card_id: string | null }[]
+		expect(ligneClasse?.card_id, 'le message classé du seed est dans une affaire').toBeTruthy()
+		carte = ligneClasse?.card_id ?? ''
+		const deLaCarte = await request.get(`${URL_API}/rest/v1/mail_messages?select=id&card_id=eq.${carte}`, { headers: enTetesService() })
+		messagesDeLaCarte = ((await deLaCarte.json()) as { id: string }[]).map((m) => m.id)
 		admin = enTetesAuthentifies(await jetonDe('admin@p2enjoy.test'))
 		driss = enTetesAuthentifies(await jetonDe('bizdev@p2enjoy.test'))
 		const releve = await request.get(`${URL_API}/rest/v1/mail_message_reads?select=*&${filtre()}`, {
@@ -114,10 +126,14 @@ test.describe.serial('lu / non lu — hors interface (§18 bis)', () => {
 				data: { p_workspace_id: ESPACE },
 			})
 			expect(reponse.status(), await reponse.text()).toBe(200)
-			return ((await reponse.json()) as Ligne[]).filter((ligne) => ligne.card_id !== null)
+			// `INC-342` : l'affaire du message classé SEULE, dont la preuve a posé l'état de lecture de chaque message ; la somme de
+			// toutes les affaires comptait des lectures que les campagnes, ou une session d'écran, ont laissées ailleurs.
+			return ((await reponse.json()) as Ligne[]).filter((ligne) => ligne.card_id === carte)
 		}
 		const deCamille = await lire(admin)
 		const deDriss = await lire(driss)
+		expect(deCamille.length, 'l’affaire du message classé figure dans l’arborescence de Camille').toBe(1)
+		expect(deDriss.length, 'et dans celle de Driss').toBe(1)
 		const somme = (lignes: Ligne[], cle: 'nombre' | 'unread_count') => lignes.reduce((s, l) => s + Number(l[cle]), 0)
 		expect(somme(deCamille, 'nombre')).toBe(somme(deDriss, 'nombre'))
 		expect(somme(deCamille, 'unread_count')).toBe(somme(deDriss, 'unread_count') - 2)

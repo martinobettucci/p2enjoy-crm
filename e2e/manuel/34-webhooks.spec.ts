@@ -4,6 +4,8 @@
 // @spec INC-358 (docs/INCONSISTENCY_REPORT.md) — sur une base remise à zéro, l'historique de « Tableur commercial » porte
 //       aussi les remises des affaires du §36 : la ligne dont on montre le corps est amenée en haut de la fenêtre
 //       (docs/SPEC-manual.md §11.2 ; docs/SPEC-seed.md §34, §36)
+// @spec INC-342 (docs/INCONSISTENCY_REPORT.md, lot D du backlog) — l'historique de « Tableur commercial » est ramené à ses deux
+//       remises semées avant d'être lu : la fenêtre de 50 remises ne perd plus la ligne dont on montre le corps
 //
 // Les webhooks jetables du scénario portent le préfixe `tst-crm073` et sont retirés après chaque test. L'échec d'une remise
 // — cinq essais épuisés — ne se rencontre qu'après deux heures et demie de refus réels : le scénario le POSE sur la remise
@@ -14,7 +16,7 @@
 
 import { expect, test, type Page } from '@playwright/test'
 import { illustrer } from './illustrer'
-import { ADMIN, connecterAvecLeLabs, lireService, service } from './outils'
+import { ADMIN, connecterAvecLeLabs, lireService, ramenerAuxRemisesSemees, service } from './outils'
 
 const CHAPITRE = 'les-webhooks-prevenir-vos-autres-outils'
 const ECRAN = '/p2enjoy/reglages/webhooks'
@@ -113,6 +115,9 @@ test('le secret de signature, et sa régénération', async ({ page }) => {
 test('l’historique des remises : réussies, en attente, échouée, et le corps d’une remise', async ({ page, request }) => {
 	const avant = await remiseAncienne(request)
 	const section = 'l-historique-des-remises'
+	// `INC-342` : l'historique de « Tableur commercial » revient à ses deux remises semées, que la fenêtre de 50 lignes ne
+	// doit pas perdre — le corps montré est celui de la plus ancienne, la création du contact.
+	await ramenerAuxRemisesSemees(request, 'Tableur commercial', ['contact.created', 'contact.deleted'])
 	try {
 		await ouvrir(page)
 		await page.setViewportSize({ width: 1440, height: 1300 })

@@ -13,6 +13,8 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+- **INC-342 (lot D), trois preuves ne dépendent plus de l'état accumulé de la base de développement** : l'historique des webhooks (E2E et manuel 34) et le compte des
+  non lus de `inbox-lecture` ciblent leurs propres lignes et ne retirent que ce qu'ils écrivent, sans relâcher d'assertion. Outillage de test : rien ne change dans le produit livré.
 - **INC-142, le relevé des résidus de données** : `scripts/mesurer-residus.sh` relève les lignes de chaque table avant et après une exécution et nomme celles qu'une preuve laisse derrière elle ; `scripts/verify-residus.sh` le prouve (8 contrôles).
   Outillage de développement : rien ne change dans le produit livré.
 - **CRM-161 T5, le manuel : « Changer d'espace » complète la liste des pages à bouton « Espace »** (décision 999) : les organisations, le rapport

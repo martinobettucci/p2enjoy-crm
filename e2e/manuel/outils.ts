@@ -41,6 +41,23 @@ export async function service(
 	expect(reponse.status(), `${methode} ${chemin} : ${await reponse.text()}`).toBeLessThan(300)
 }
 
+/**
+ * `INC-342` : ramène l'historique d'un webhook à ses remises SEMÉES, qui sont les plus anciennes (leur nature est vérifiée), en
+ * retirant celles que les campagnes ont accumulées depuis. L'historique n'affiche que les 50 plus récentes : sans cela, les
+ * remises semées sortent de la fenêtre et la preuve rougit à chaque campagne, jamais sur une base neuve.
+ */
+export async function ramenerAuxRemisesSemees(requete: APIRequestContext, nomWebhook: string, semees: string[]): Promise<void> {
+	const [webhook] = await lireService<{ id: string }[]>(requete, `webhook_endpoints?select=id&name=eq.${encodeURIComponent(nomWebhook)}`)
+	if (webhook === undefined) throw new Error(`le webhook « ${nomWebhook} » est absent du seed`)
+	const plusAnciennes = await lireService<{ event: string; created_at: string }[]>(
+		requete,
+		`webhook_deliveries?endpoint_id=eq.${webhook.id}&select=event,created_at&order=created_at.asc&limit=${semees.length}`,
+	)
+	expect(plusAnciennes.map((r) => r.event), `le seed porte les remises de « ${nomWebhook} », les plus anciennes`).toEqual(semees)
+	const derniere = plusAnciennes[plusAnciennes.length - 1]?.created_at ?? ''
+	await service(requete, 'delete', `webhook_deliveries?endpoint_id=eq.${webhook.id}&created_at=gt.${encodeURIComponent(derniere)}`)
+}
+
 export async function lireService<T>(requete: APIRequestContext, chemin: string): Promise<T> {
 	const reponse = await requete.get(rest(chemin), { headers: enTetesService() })
 	expect(reponse.status(), `lecture de service ${chemin}`).toBe(200)

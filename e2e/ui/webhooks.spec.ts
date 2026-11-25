@@ -1,3 +1,4 @@
+// @verifies INC-342 (docs/INCONSISTENCY_REPORT.md, lot D du backlog) — l’historique de « Tableur commercial » est ramené à ses deux remises semées avant d’être lu (la fenêtre de 50 remises) ; la remise renvoyée est retirée par son origine
 // @verifies INC-331 (docs/INCONSISTENCY_REPORT.md) — le scénario rend ou désigne l'état qu'il lit, quel que soit l'ordre de la campagne
 // @verifies CRM-073 (docs/BACKLOG.md) — tranche T3 : Réglages ▸ Webhooks sur la vraie pile — la liste semée et ses états,
 //           l'historique et le renvoi, la création (événements de contact éteints sous un channel, le secret montré une
@@ -10,6 +11,7 @@
 // *Révisé le 2026-11-21 (`CRM-161` T2.a, docs/SPEC-espace-courant.md §15.5, décision 51)* : les pages d'un espace sont sous
 // le slug de l'espace (`/p2enjoy/…`) ; les adresses et leurs attentes suivent, sans changer ce que la preuve prouve.
 
+import type { APIRequestContext } from '@playwright/test'
 import { URL_API, enTetesService } from '../api/jetons'
 import { capturer, PALIERS } from './captures'
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, connecterAvecLeLabs, expect, test } from './fixtures'
@@ -24,6 +26,36 @@ test.afterEach(async ({ request }) => {
 	await request.delete(rest(`webhook_endpoints?name=like.${encodeURIComponent('tst-crm073*')}`), { headers: enTetesService() })
 })
 
+/**
+ * `INC-342` : l'historique d'un webhook n'affiche que les 50 remises les plus récentes, et chaque campagne en ajoute
+ * (« Tableur commercial » écoute tout l'espace) : au bout de quelques-unes, les deux remises SEMÉES sortent de la fenêtre et la
+ * preuve rougit — à chaque campagne, jamais sur une base neuve. La preuve ramène donc l'historique de CE webhook à ses remises
+ * semées, qui sont les deux plus anciennes (leur nature est vérifiée : le seed, non l'ordre de la campagne, est ce qu'elle lit),
+ * par la clé de service, avant de le lire. Aucune assertion n'est relâchée.
+ */
+async function ramenerAuxRemisesSemees(request: APIRequestContext, idEndpoint: string, semees: string[]): Promise<void> {
+	const plusAnciennes = (await (
+		await request.get(
+			rest(`webhook_deliveries?endpoint_id=eq.${idEndpoint}&select=event,created_at&order=created_at.asc&limit=${semees.length}`),
+			{ headers: enTetesService() },
+		)
+	).json()) as { event: string; created_at: string }[]
+	expect(plusAnciennes.map((r) => r.event), 'le seed porte les remises du webhook, les plus anciennes').toEqual(semees)
+	const derniere = plusAnciennes[plusAnciennes.length - 1]?.created_at ?? ''
+	const retrait = await request.delete(
+		rest(`webhook_deliveries?endpoint_id=eq.${idEndpoint}&created_at=gt.${encodeURIComponent(derniere)}`),
+		{ headers: enTetesService() },
+	)
+	expect(retrait.status()).toBe(204)
+}
+
+async function idDuWebhook(request: APIRequestContext, nom: string): Promise<string> {
+	const reponse = await request.get(rest(`webhook_endpoints?name=eq.${encodeURIComponent(nom)}&select=id`), { headers: enTetesService() })
+	const [{ id } = { id: '' }] = (await reponse.json()) as { id: string }[]
+	expect(id, `le seed porte « ${nom} »`).not.toBe('')
+	return id
+}
+
 test('Camille lit les webhooks semés, leur historique, et renvoie une remise', async ({ page, request }) => {
 	// INC-331 : « Automate Refonte » écoute le channel « Refonte de site », que d'autres scénarios de la campagne font
 	// bouger. Le seed ne lui donne aucune remise (docs/SPEC-seed.md) : cet état est RENDU avant d'être lu, par la clé de
@@ -34,6 +66,8 @@ test('Camille lit les webhooks semés, leur historique, et renvoie une remise', 
 	const [{ id: idAutomate } = { id: '' }] = (await automate.json()) as { id: string }[]
 	expect(idAutomate, 'le seed porte « Automate Refonte »').not.toBe('')
 	await request.delete(rest(`webhook_deliveries?endpoint_id=eq.${idAutomate}`), { headers: enTetesService() })
+	// `INC-342` : l'historique de « Tableur commercial » revient à ses deux remises semées (voir la fonction).
+	await ramenerAuxRemisesSemees(request, await idDuWebhook(request, 'Tableur commercial'), ['contact.created', 'contact.deleted'])
 	await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
 	await page.goto(ECRAN)
 	const lignes = page.getByTestId('ligne-webhook')
@@ -63,6 +97,8 @@ test('Camille lit les webhooks semés, leur historique, et renvoie une remise', 
 	await expect(anonymisation).toContainText('Contact supprimé ou anonymisé')
 	await expect(anonymisation.getByTestId('resultat-remise')).toHaveText('200')
 	await expect(creation).toContainText('Contact créé')
+	const idCreation = (await creation.getAttribute('data-remise')) ?? ''
+	expect(idCreation).not.toBe('')
 	await creation.getByRole('button', { name: /Voir le corps/ }).click()
 	await expect(historique.getByTestId('corps-remise')).toContainText('"event": "contact.created"')
 	await capturer(page, 'webhooks-historique-1440', UNITE)
@@ -72,10 +108,11 @@ test('Camille lit les webhooks semés, leur historique, et renvoie une remise', 
 	await expect(remises).toHaveCount(Math.min(avant + 1, 50))
 	// L'effet en base : une nouvelle remise du même événement, qui renvoie à celle d'origine.
 	const relues = (await (
-		await request.get(rest('webhook_deliveries?select=redelivery_of&redelivery_of=not.is.null'), { headers: enTetesService() })
+		await request.get(rest(`webhook_deliveries?select=redelivery_of&redelivery_of=eq.${idCreation}`), { headers: enTetesService() })
 	).json()) as unknown[]
-	expect(relues.length).toBeGreaterThanOrEqual(1)
-	await request.delete(rest('webhook_deliveries?redelivery_of=not.is.null'), { headers: enTetesService() })
+	expect(relues.length).toBe(1)
+	// Elle ne retire que ce qu'elle a écrit : la remise renvoyée de CETTE remise, non toute remise renvoyée de la base.
+	await request.delete(rest(`webhook_deliveries?redelivery_of=eq.${idCreation}`), { headers: enTetesService() })
 })
 
 test('Camille crée un webhook — le secret une seule fois —, le modifie, régénère son secret puis le supprime', async ({

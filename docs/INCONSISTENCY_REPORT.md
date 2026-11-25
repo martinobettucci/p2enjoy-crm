@@ -8953,6 +8953,20 @@ campagne de constat.
   `e2e/api/ma-journee.spec.ts:363`) rougit dès que la campagne passe minuit après le seed : la section « Aujourd'hui » du
   seed est celle de son jour.
 
+**Corrigée en partie le 2026-11-25** (session `p2enjoy-crm-7a`, lot D du backlog, à la demande de la session de livraison) : trois des preuves
+cessent de dépendre de l'état accumulé, **sans relâcher une assertion** —
+- `e2e/ui/webhooks.spec.ts` : l'historique de « Tableur commercial » n'affiche que les 50 remises les plus récentes, et les deux remises
+  semées sortaient de la fenêtre (mesuré : 109 remises accumulées, le test rouge sur `nth(48)`) ; la preuve ramène l'historique de ce
+  webhook à ses deux remises semées (les plus anciennes, dont la nature est vérifiée) avant de le lire, et ne retire plus que la remise
+  qu'elle a renvoyée (par `redelivery_of`), non toute remise renvoyée de la base ;
+- `e2e/manuel/34-webhooks.spec.ts` (le même état, helper `ramenerAuxRemisesSemees` de `e2e/manuel/outils.ts`) ;
+- `e2e/api/inbox-lecture.spec.ts` : le compte des non lus se mesure sur l'affaire du message classé seule (la somme de toutes les
+  affaires comptait des lectures laissées ailleurs : attendu 4, reçu 3), l'état de lecture de **chaque message de l'affaire** étant posé puis rendu.
+**Preuves** : rouges avant sur l'état accumulé réel ; vertes après, puis vertes sur 60 remises ajoutées de force avant chaque passage (le
+scénario manuel ancien, rejoué dans les mêmes conditions, est rouge), puis `inbox-lecture` verte après `pieces-jointes` (qui lit le message
+du seed). `webhooks-remise` (API) est verte, sans changement : ce n'était pas la même cause. **Reste ouvert** : `etat-messagerie.spec.ts:62`,
+`plateforme-mcp.spec.ts:195`, `premier-lancement.spec.ts:182` (et l'ordre des preuves de connecteur et « Ma journée » à minuit).
+
 ### INC-343 — la veille de `mail-sync` écrit `panne` et `account_id`, que le formateur du journal écarte
 
 *Relevé le 2026-11-03 pendant la livraison des migrations 150 à 160 ; ouverte : comportement inchangé.*
