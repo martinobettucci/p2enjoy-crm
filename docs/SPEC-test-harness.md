@@ -438,6 +438,13 @@ travers le dépôt ne le trouve jamais. **Mesuré** (2026-11-25) sur les fichier
 **La règle.** Un NUL voulu s'écrit `\0`, l'échappement de U+0000 : la valeur d'exécution est identique, le fichier redevient du texte. **Le contrôle** — `webapp/src/lib/sources-sans-octet-nul.test.ts`, joué par `npm run test:unit` — parcourt les sources suivies
 (`webapp`, `e2e`, `scripts`, `supabase`, `docs`, `mcp`, `.githooks`) et refuse tout octet NUL, en nommant le fichier : il ferme la classe, pas les seuls cas connus. Rouge avant la correction (les deux fichiers nommés), vert après. Connecteur MCP : sans objet.
 
+### 3.13 Lire un journal dans une variable avant de le filtrer (INC-306)
+
+*Écrite le 2026-11-25, avant le code.* `docker logs … | grep -q …`, sous `set -o pipefail`, est un faux verdict aléatoire : `grep -q` sort à la première correspondance, `docker logs` reçoit `SIGPIPE` (code 141) et le tube rend un échec alors que la chaîne est présente. **Reproduit**
+(2026-11-25) : un producteur de 3 Mo dont la première ligne correspond rend **141 cinq fois sur cinq**. Le défaut avait été corrigé dans `verify-mail-sync.sh` (INC-106) et est revenu dans `verify-mail-infra.sh` — **quatre occurrences**, dont une plus grave que le faux échec : le contrôle « le journal Stalwart reste sans WARN ni ERROR » écrit « ok » quand le tube
+échoue, c'est-à-dire qu'un SIGPIPE y **cache** un avertissement. **La règle.** Le journal se lit dans une variable (`JOURNAL=$(docker logs … 2>&1 || true)`), puis `grep -q … <<<"$JOURNAL"` — ou une substitution de processus. **Le contrôle** —
+`webapp/src/lib/scripts-sans-sigpipe.test.ts`, joué par `npm run test:unit` — refuse la forme `docker logs … | grep -q` (continuations `\` comprises) dans tout `scripts/*.sh` ; rouge avant (les quatre lignes nommées), vert après. Connecteur MCP : sans objet.
+
 ## 4. Projets Playwright
 
 ### 4.1 Une seule configuration

@@ -394,7 +394,12 @@ else
 	fail "stalwart-init n'a pas abouti (code de sortie : $code_init)"
 fi
 
-if docker logs "$(conteneur stalwart-init)" 2>&1 | grep -q 'Cinq boîtes provisionnées et relues'; then
+# LE JOURNAL EST LU DANS UNE VARIABLE AVANT D'ÊTRE FILTRÉ — INC-306, la même correction qu'INC-106 dans `verify-mail-sync.sh`. `docker logs … | grep -q`,
+# sous `pipefail`, rendait un échec quand `grep -q` sortait à la première correspondance et que `docker logs` recevait `SIGPIPE` (code 141) : un faux verdict,
+# aléatoire — et, pour le contrôle du journal Stalwart plus bas, un « sans WARN ni ERROR » faux. `webapp/src/lib/scripts-sans-sigpipe.test.ts` ferme la classe.
+JOURNAL_INIT=$(docker logs "$(conteneur stalwart-init)" 2>&1 || true)
+
+if grep -q 'Cinq boîtes provisionnées et relues' <<<"$JOURNAL_INIT"; then
 	ok "le provisionnement a relu ce qu'il a écrit"
 else
 	fail "le provisionnement n'a pas relu ce qu'il a écrit"
@@ -403,14 +408,13 @@ fi
 # RÉVISÉ LE 2026-10-25 (décision 704, INC-309) : `stalwart/provision.sh` relit désormais aussi la limite d'envoi et
 # l'exemption de la pile, et sa ligne les énumère (« réglages IMAP/SMTP, ressource webadmin, limite d'envoi et
 # exemption de la pile — relus »). Le contrôle exige toujours que réglages ET ressource soient nommés relus.
-if docker logs "$(conteneur stalwart-init)" 2>&1 \
-	| grep -qE 'réglages IMAP/SMTP, ressource webadmin(,| et)[^—]*— relus'; then
+if grep -qE 'réglages IMAP/SMTP, ressource webadmin(,| et)[^—]*— relus' <<<"$JOURNAL_INIT"; then
 	ok "le provisionnement a écrit et relu les réglages et la ressource modifiables"
 else
 	fail "le provisionnement n'a pas relu les réglages IMAP/SMTP et la ressource webadmin"
 fi
 
-if docker logs "$(conteneur stalwart-init)" 2>&1 | grep -q 'bundle webadmin local — chargé'; then
+if grep -q 'bundle webadmin local — chargé' <<<"$JOURNAL_INIT"; then
 	ok "le provisionnement a rendu le bundle webadmin convergent sans supprimer les mails"
 else
 	fail "le provisionnement n'a pas chargé le bundle webadmin local"
@@ -612,7 +616,8 @@ fi
 
 # Ce contrôle vient APRÈS les gestes IMAP et SMTP : placé au démarrage, il ne voyait pas les
 # avertissements de signature que la première soumission authentifiée faisait apparaître.
-if docker logs "$(conteneur stalwart)" 2>&1 | grep -qE '(^|[[:space:]])(WARN|ERROR)([[:space:]]|$)'; then
+JOURNAL_STALWART=$(docker logs "$(conteneur stalwart)" 2>&1 || true)
+if grep -qE '(^|[[:space:]])(WARN|ERROR)([[:space:]]|$)' <<<"$JOURNAL_STALWART"; then
 	fail "le journal Stalwart contient au moins un WARN ou ERROR après les protocoles"
 else
 	ok "le journal Stalwart reste sans WARN ni ERROR après les protocoles"

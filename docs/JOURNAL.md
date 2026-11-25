@@ -42574,3 +42574,8 @@ avait changé le comportement sans mettre le manuel à jour — corrigé ici, av
 ### `INC-247` — les sources restent du texte
 
 *2026-11-25, session `p2enjoy-crm-dd`, lot repris de la session 30 sur consigne de la session de livraison.* **Mesuré** : trois octets NUL dans les sources suivies — deux dans `administration-workflows.ts`, un dans `sommeil-fil.ts`, que la fiche ne connaissait pas : le séparateur d'une clé composite. **Décision** : écrire `\0` (même valeur d'exécution) et fermer la classe par un contrôle unitaire sur toutes les sources suivies, plutôt que de ne corriger que les cas nommés. **Vérifié** : rouge avant, vert après ; couche `webapp/src/lib` 2 917 tests verts.
+
+### `INC-306` — le journal se lit avant d'être filtré
+
+*2026-11-25, session `p2enjoy-crm-dd`, lot repris de la session 30.* **Mesuré** : le défaut n'est pas aléatoire par nature mais par la taille du journal — un producteur de 3 Mo dont la première ligne correspond rend 141 à chaque fois ; il y avait quatre occurrences, pas deux, et l'une, le contrôle « sans WARN ni ERROR » de Stalwart, **cachait** un avertissement au lieu de
+le simuler. **Décision** : lire dans une variable (la forme d'INC-106) et fermer la classe par un contrôle unitaire sur tous les scripts. **Vérifié** : rouge avant sur quatre lignes, vert après ; dix rejeux des contrôles sur la pile réelle. **Non fait** : le harnais complet, qui écrit dans la boîte système.

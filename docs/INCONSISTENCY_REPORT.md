@@ -8116,6 +8116,10 @@ qu'INC-106 a corrigé dans `verify-mail-sync.sh`. **Comportement laissé inchang
 (`docs/CloudWorker.md` §4.1 bis) : le premier contrôle cherche le texte que `stalwart/provision.sh` écrit réellement ; le
 second lit le journal dans une variable avant de le filtrer, comme INC-106. **Statut : ouverte.**
 
+**CLOSE le 2026-11-25 — INC-306, session `p2enjoy-crm-dd`, reprise d'un lot de la session `p2enjoy-crm-30`.** Le constat 1 était déjà résolu (le contrôle accepte le texte réel du journal). Le constat 2 : les **quatre** lectures `docker logs … | grep -q` de `verify-mail-infra.sh` — la fiche n'en nommait que deux — lisent désormais le
+journal dans une variable, avant de le filtrer. **Plus grave que le faux échec, mesuré** : le contrôle « sans WARN ni ERROR » du journal Stalwart rendait « ok » quand le tube échouait, un SIGPIPE y cachait donc un avertissement. **Preuves** : le SIGPIPE reproduit (141, cinq fois sur cinq, sur un producteur de 3 Mo) ; `scripts-sans-sigpipe.test.ts` (rouge sur les quatre lignes, vert après) ferme la classe sur tous les scripts ;
+les trois contrôles du journal d'initialisation rejoués dix fois de suite sur la pile réelle, dix verts ; le journal Stalwart (767 lignes) sans WARN ni ERROR. Le harnais complet `verify-mail-infra.sh` n'a pas été rejoué : il écrit dans la boîte système, et la session de livraison le joue à sa campagne. `docs/SPEC-test-harness.md` §3.13.
+
 ### INC-307 — `verify-mcp.sh` construit l'image `crm-mcp:dev` sans le paquet CA, et échoue derrière le proxy TLS
 
 *Relevé le même jour, même session.* **Constat** : la section des unitaires lance

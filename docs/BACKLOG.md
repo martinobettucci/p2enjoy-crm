@@ -21077,3 +21077,9 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 *Deux octets NUL dans `administration-workflows.ts` rendaient le fichier binaire pour git et grep. Spécification : `docs/SPEC-test-harness.md` §3.12 ; fiche INC-247. Connecteur MCP : sans objet.*
 
 - [x] **INC-247** — les NUL écrits `\0` (trois, dont un dans `sommeil-fil.ts`) ; le garde-fou `sources-sans-octet-nul.test.ts` (rouge avant, vert après) ferme la classe ; 2 917 tests de la couche verts.
+
+## Correctif — INC-306 (repris de la session 30, 2026-11-25)
+
+*Quatre lectures `docker logs | grep -q` de `verify-mail-infra.sh` rendaient un faux verdict sous `pipefail`. Spécification : `docs/SPEC-test-harness.md` §3.13 ; fiche INC-306. Connecteur MCP : sans objet.*
+
+- [x] **INC-306** — le journal lu dans une variable avant d'être filtré (quatre lectures, dont le contrôle « sans WARN ni ERROR » qui rendait « ok » à tort) ; `scripts-sans-sigpipe.test.ts` ferme la classe (rouge avant, vert après) ; contrôles rejoués dix fois sur la pile réelle. *Le harnais complet est à rejouer à la campagne de la session de livraison.*
