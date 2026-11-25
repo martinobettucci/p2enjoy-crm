@@ -31,6 +31,9 @@
 source "$(dirname "${BASH_SOURCE[0]}")/conteneur.sh"
 # shellcheck source=scripts/lib/emplacement.sh
 source "$(dirname "${BASH_SOURCE[0]}")/emplacement.sh"
+# @spec INC-177 (docs/BACKLOG.md), docs/SPEC-test-harness.md §3.9 : la reconstruction détruit la base que mesure une campagne.
+# shellcheck source=scripts/lib/campagne.sh
+source "$(dirname "${BASH_SOURCE[0]}")/campagne.sh"
 
 RECONSTRUCTION_SERVICES=(db migrations-runner storage realtime rest meta studio mail-sync stalwart stalwart-init roundcube)
 # Les volumes nommés qui ne sont qu'un dérivé de la base (docs/SPEC-test-harness.md §3.6).
@@ -58,6 +61,7 @@ reconstruire_base_dev() {
 			repertoire=$(cd "$repertoire" && pwd) ;;
 		*) echo "reconstruire_base_dev : option inconnue « $1 »." >&2; return 2 ;;
 	esac
+	campagne_garde reconstruction || return $?
 	profil=$(sed -n 's/^P2ENJOY_ENV_PROFILE=//p' "$fichier" 2>/dev/null | tail -n 1 | tr -d "\"'\r")
 	if [ "$profil" != dev ]; then
 		echo "reconstruire_base_dev : profil « ${profil:-<vide>} » dans $fichier, « dev » exigé — refus, rien n'est arrêté." >&2

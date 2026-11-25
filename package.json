@@ -17,6 +17,7 @@
     "verify:identites": "./scripts/verify-identites.sh",
     "typecheck": "tsc -p tsconfig.json && tsc -p webapp/tsconfig.json && tsc -p webapp/tsconfig.test.json && tsc -p tsconfig.tools.json",
     "dev": "vite --config webapp/vite.config.ts",
+    "prebuild": "scripts/lib/campagne.sh garde-build",
     "build": "vite build --config webapp/vite.config.ts",
     "preview": "vite preview --config webapp/vite.config.ts",
     "test:sql": "scripts/run-sql-tests.sh",

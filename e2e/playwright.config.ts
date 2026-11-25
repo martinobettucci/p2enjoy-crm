@@ -21,8 +21,47 @@
 // prouverait rien.
 
 import { defineConfig, devices } from '@playwright/test'
+import { execFileSync } from 'node:child_process'
 import { join } from 'node:path'
 import { RACINE, cleAnonyme, lireEnv, portPrevisualisation, urlApi } from './env'
+
+// @spec INC-177 (docs/BACKLOG.md « Correctif arbitré le 2026-11-25 — INC-177 »), docs/SPEC-test-harness.md §3.9
+// LE VERROU DE CAMPAGNE. Une exécution Playwright mesure la base et le `webapp/dist` qu'une autre campagne mesure peut-être :
+// lancées de front, elles rendent des verdicts qui ne disent rien du produit. La configuration est chargée par le processus
+// principal AVANT tout scénario, et c'est là que la garde se pose : sans jeton, elle prend le verrou pour la durée de ce
+// processus et le rend à sa sortie ; avec le jeton d'une campagne qui l'a ouvert (`scripts/lib/campagne.sh ouvrir -- …`), elle
+// traverse ; sous un verrou vivant d'une autre campagne, elle refuse et nomme le détenteur. Les workers rechargent ce fichier
+// et héritent du jeton posé ici : ils traversent.
+function garderLaCampagne(): void {
+	const script = join(RACINE, 'scripts', 'lib', 'campagne.sh')
+	let sortie: string
+	try {
+		sortie = execFileSync(
+			script,
+			['garde', 'playwright', '--pid', String(process.pid), '--commande', `playwright ${process.argv.slice(2).join(' ')}`.trim()],
+			{ encoding: 'utf8', env: { ...process.env, CAMPAGNE_PORT_APERCU: String(portPrevisualisation()) }, stdio: ['ignore', 'pipe', 'pipe'] },
+		)
+	} catch (erreur) {
+		const echec = erreur as { status?: number | null; stderr?: Buffer | string; message: string }
+		if (echec.status === 75) throw new Error(String(echec.stderr ?? echec.message))
+		// Un échec d'infrastructure (script absent, hôte sans bash) ne se tait pas, mais ne bloque pas une preuve légitime.
+		process.stderr.write(`campagne : la garde n'a pas pu être posée (${echec.message}) ; les preuves continuent sans verrou.\n`)
+		return
+	}
+	const jeton = /^CAMPAGNE_JETON=(.+)$/m.exec(sortie)?.[1]
+	if (jeton === undefined) return
+	process.env['CAMPAGNE_JETON'] = jeton
+	if (/^CAMPAGNE_OUVERT=1$/m.test(sortie)) {
+		process.once('exit', () => {
+			try {
+				execFileSync(script, ['liberer-jeton', jeton], { stdio: 'ignore' })
+			} catch (erreur) {
+				process.stderr.write(`campagne : le verrou n'a pas pu être rendu (${(erreur as Error).message}) ; il sera repris au prochain passage.\n`)
+			}
+		})
+	}
+}
+garderLaCampagne()
 
 // @spec CRM-008 (docs/BACKLOG.md) — INC-084, décision 282
 // Playwright force la couleur de ses sous-processus. L'environnement de l'appelant peut demander

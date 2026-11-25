@@ -1219,6 +1219,11 @@ avec `up migrations-runner`), le seed (`supabase/seed/apply-seed.sh`), leurs dé
 a changé). Puis lance la campagne. Une campagne lancée sur une copie que `main` a déjà dépassée prouve un état qui
 n'existera jamais en production.
 
+**Les preuves de base et les preuves d'interface ne se lancent JAMAIS de front** (INC-177) : elles partagent la base, le
+`webapp/dist` et le port 4173. Un verrou de campagne le fait respecter (`docs/SPEC-test-harness.md` §3.9) : ouvre ta campagne en
+une fois avec `scripts/lib/campagne.sh ouvrir -- <commande>` ; une commande gardée lancée pendant celle d'un autre est refusée
+avec le détenteur nommé.
+
 **1. Lance la campagne complète, une fois :**
 
 ```

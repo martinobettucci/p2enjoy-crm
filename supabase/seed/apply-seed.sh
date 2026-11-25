@@ -103,6 +103,11 @@ done
 
 # --- Gardes ------------------------------------------------------------------------------------
 
+# @spec INC-177 (docs/BACKLOG.md), docs/SPEC-test-harness.md §3.9 : le seed écrit dans la base que mesure une campagne.
+# shellcheck source=scripts/lib/campagne.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts/lib/campagne.sh"
+campagne_garde seed || exit $?
+
 env_validate
 env_require_profile dev
 

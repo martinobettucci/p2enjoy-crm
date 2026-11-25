@@ -13,6 +13,11 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+- **INC-177, un verrou de campagne entre les preuves qui partagent la pile** (décision 990) : `npm run test:sql`, `e2e:api|ui|mail`,
+  le seed, la reconstruction de la base et un `npm run build` pendant que l'aperçu sert `webapp/dist` refusent désormais de se
+  lancer de front avec une autre campagne (code 75, détenteur nommé). Une campagne s'ouvre en une fois par
+  `scripts/lib/campagne.sh ouvrir -- <commande>` ; `CAMPAGNE_ATTENDRE` attend, `CAMPAGNE_FORCER=1` passe outre. Outillage de
+  développement : rien ne change dans le produit livré.
 - **CRM-161 T3.c, les migrations 201 et 202** : la liste des organisations peut lire plusieurs espaces à la fois et dit
   l'espace de chaque organisation, et le temps valorisé dit l'espace de chaque ligne. Rien ne change encore à l'écran : les
   écrans Organisations et Temps ▸ Rapport, qui s'en serviront, suivent. La webapp et le connecteur livrés continuent de

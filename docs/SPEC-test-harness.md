@@ -362,8 +362,11 @@ enchaîne `test:sql`, `e2e:api`, `e2e:ui`, `e2e:mail`, le seed et le build sans 
 
 **Les commandes gardées** appellent `campagne_garde <nom>` (fonction du même fichier) en tête : `scripts/run-sql-tests.sh`,
 le `globalSetup` de Playwright (`e2e/`), `supabase/seed/apply-seed.sh`, `scripts/lib/reconstruction.sh` et
-`npm run build` **quand le port 4173 écoute**. Sans jeton :
-- aucun verrou vivant : la commande prend le verrou pour sa propre durée, et le libère à sa fin ;
+`npm run build` **quand le port 4173 écoute** (`prebuild`, `campagne.sh garde-build` ; le port se règle par
+`CAMPAGNE_PORT_APERCU`). Sans jeton :
+- aucun verrou vivant : la commande prend le verrou pour sa propre durée. Un script le rend à sa sortie lorsqu'aucun trap
+  ne le supplante ; sinon son processus terminé laisse un verrou **mort**, que la commande suivante reprend en le disant
+  (`statut` le dit aussi) ;
 - un verrou vivant — le PID répond **et** son instant de début est celui du processus — : elle **refuse d'emblée** (code
   75), en nommant le détenteur, sa commande et son ancienneté ;
 - un verrou mort (PID absent ou réutilisé) : il est repris, et le dit.
@@ -375,7 +378,12 @@ le `globalSetup` de Playwright (`e2e/`), `supabase/seed/apply-seed.sh`, `scripts
 et l'écrit en rouge dans la sortie ; `campagne.sh statut` nomme le détenteur ; `campagne.sh liberer` ne retire qu'un verrou
 mort (`--forcer` pour un vivant).
 
-**Preuve.** `scripts/verify-campagne.sh` : deux commandes gardées lancées de front — la seconde est **refusée avec le
+**Playwright.** `e2e/playwright.config.ts` pose la garde au chargement de la configuration (processus principal) : il appelle
+`campagne.sh garde playwright --pid <pid>`, exporte le jeton reçu — les workers, qui rechargent le fichier, le présentent et
+traversent —, et rend le verrou à sa sortie s'il l'a pris. Une panne d'infrastructure de la garde (script absent) est écrite sur
+l'erreur standard et ne bloque pas la preuve.
+
+**Preuve.** `scripts/verify-campagne.sh` (33 contrôles, sans pile ; le verrou du harnais vit dans un répertoire jetable) : deux commandes gardées lancées de front — la seconde est **refusée avec le
 détenteur nommé**, puis passe une fois le verrou libéré ; un enfant avec jeton traverse ; un verrou mort est repris ; le
 verrou est hors de l'arbre (`git status` propre). Connecteur MCP : sans objet (outillage de développement).
 

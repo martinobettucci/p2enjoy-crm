@@ -1595,6 +1595,9 @@ commandes de test livrées par `CRM-008` — `npm run test:sql`, `test:unit`, `e
 recopie dans `docs/captures/` que sur demande — `CAPTURES_UNITES=<unité>[,<unité>…]` pour l'unité qui livre,
 `CAPTURES_RENOUVELLEMENT=1` pour un renouvellement, que trie `npm run captures:rapport` (rapport dans
 `e2e/output/captures-rapport.md`, le bruit rendu à sa version committée).
+**Verrou de campagne (INC-177, `docs/SPEC-test-harness.md` §3.9)** : `scripts/lib/campagne.sh` sépare, par un verrou hors de l'arbre
+de travail et un jeton hérité, les commandes qui partagent la pile (`test:sql`, `e2e:*`, le seed, la reconstruction, le build servi) ;
+`scripts/lib/campagne.sh ouvrir -- <commande>` ouvre une campagne en une fois.
 Le harnais consolidé valide avant toute mutation un couple Node Linux conforme à `.nvmrc` ; si le
 `PATH` hérité de WSL ne présente que `npm.exe`, il sélectionne une installation NVM locale sans
 modifier le shell parent, ou refuse l'exécution avec une consigne explicite (décision 278).

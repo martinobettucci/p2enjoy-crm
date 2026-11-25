@@ -3391,6 +3391,8 @@ n'est pas gardé (il ne touche que la production) ; le verrou vit **hors de l'ar
 §3.9. **Une campagne l'ouvre en une fois** : `scripts/lib/campagne.sh ouvrir -- <commande>` (jeton `CAMPAGNE_JETON` hérité par tous les
 enfants) ; une commande gardée sans jeton refuse (code 75) tant qu'un verrou vivant existe. Mise en œuvre : `docs/BACKLOG.md`
 « Correctif arbitré le 2026-11-25 — INC-177 ».
+**MISE EN ŒUVRE LE 2026-11-25 : CLOSE.** `scripts/lib/campagne.sh`, gardes aux cinq sites, `scripts/verify-campagne.sh` (rouge avant : mécanisme absent ;
+vert après : 33 contrôles, aucune anomalie, dont deux commandes gardées de front).
 
 ## Consigné le 2026-08-19 — un constat de rendu, étranger à `CRM-086`
 

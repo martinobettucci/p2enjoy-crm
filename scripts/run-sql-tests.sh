@@ -69,6 +69,12 @@ for argument in "$@"; do
 	esac
 done
 
+# @spec INC-177 (docs/BACKLOG.md), docs/SPEC-test-harness.md §3.9 : une preuve de base ne se lance pas de front avec une
+# campagne d'interface (verdict nul, INC-177). La garde vient APRÈS l'aide et le contrôle des arguments : ils ne mesurent rien.
+# shellcheck source=scripts/lib/campagne.sh
+source scripts/lib/campagne.sh
+campagne_garde test:sql || exit $?
+
 if [ "${#FICHIERS[@]}" -eq 0 ]; then
 	# L'ordre lexicographique est celui des migrations que ces suites accompagnent.
 	while IFS= read -r fichier; do

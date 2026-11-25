@@ -509,6 +509,14 @@ Le contrat complet — mécanismes employés, convention d'identifiants, preuves
 
 ## 7. Tests
 
+**Une pile, une campagne à la fois (INC-177).** `npm run test:sql`, `npm run e2e:api|ui|mail`, le seed, la reconstruction de la
+base et un `npm run build` pendant que l'aperçu sert `webapp/dist` se disputent la même base et le même `dist` : lancés de front,
+ils rendent des verdicts qui ne disent rien du produit. Un **verrou de campagne**, hors de l'arbre de travail, les sépare : une
+commande gardée refuse (code 75, détenteur nommé) tant qu'une autre campagne tient la pile. Une campagne s'ouvre en une fois :
+`scripts/lib/campagne.sh ouvrir -- <commande>` (ses enfants traversent par `CAMPAGNE_JETON`) ; `scripts/lib/campagne.sh statut` nomme
+le détenteur ; `CAMPAGNE_ATTENDRE=<secondes>` attend, `CAMPAGNE_FORCER=1` passe outre (et invalide la mesure de l'autre).
+Mécanisme : `docs/SPEC-test-harness.md` §3.9.
+
 Sur un poste NVM, exécuter d'abord `nvm use` comme indiqué au §3. Les commandes `npm run …`
 directes utilisent toujours la chaîne Node du shell courant. `scripts/verify-harness.sh`, lui,
 valide sa chaîne avant toute dégradation et peut sélectionner une version compatible déjà
@@ -605,6 +613,7 @@ scripts/verify-seed.sh         # seed socle : contrat, identifiants stables, con
 scripts/verify-types.sh        # types générés : déterminisme, garde anti-dérive        (CRM-006)
 scripts/verify-webapp.sh       # webapp : build/chunks, jetons, états, clavier, console (CRM-007)
 scripts/verify-node-toolchain.sh # résolution Linux de Node/npm, sans pile             (CRM-008)
+scripts/verify-campagne.sh     # verrou de campagne : refus de front, jeton, reprise, sans pile  (INC-177)
 scripts/verify-harness.sh      # harnais de tests : exécuteurs, projets, non-complaisance (CRM-008)
 scripts/verify-tracks.sh       # tracks : modèle, ordre, archivage, politiques RLS       (CRM-020)
 scripts/verify-channels.sh     # channels : cloisonnement composite, onglets, RLS       (CRM-021)

@@ -42371,3 +42371,18 @@ manuel 170 ; API manuel 9/9 ; captures 133 changées, 14 ajoutées, observées.
   les affaires classables ; pas les pièces jointes ; au plus 50 mails ; écarté : le mail entier ;
 - **connecteur MCP** — question 1 : **non** ; question 2 : sans objet.
 **Conséquence** : unité `CRM-166`, à confier à une session libre ; la spécification s'écrit avant le code.
+
+### `INC-177` — le verrou de campagne est écrit, éprouvé, et ce que la mesure a appris
+
+*2026-11-25, session `p2enjoy-crm-dd`, suite de la décision 990.* **Fait** : `scripts/lib/campagne.sh` (verrou hors de l'arbre, jeton hérité,
+reprise d'un verrou mort par PID et instant de début de processus), gardes dans `run-sql-tests.sh`, `apply-seed.sh`,
+`reconstruction.sh`, `e2e/playwright.config.ts` (processus principal ; les workers présentent le jeton) et `prebuild`.
+**Preuve** : `scripts/verify-campagne.sh`, rouge avant (mécanisme absent), 33 contrôles verts après ; les commandes réelles ne sont
+lancées que sous un verrou TENU, et seulement après avoir vérifié statiquement que leur garde est posée — un harnais qui lancerait un
+seed pour prouver qu'il refuse le lancerait pour de bon s'il se trompait.
+**Ce que la mesure a appris** : (1) un script qui pose son propre trap de sortie après la garde écrase celui de la garde — le verrou
+d'un script terminé reste donc MORT, repris par la commande suivante ; la spécification le dit plutôt que de promettre une libération
+que la structure des scripts ne garantit pas ; (2) la garde Playwright ne peut pas viser le `globalSetup` (il n'y en a pas) : la
+configuration est chargée par le processus principal avant tout scénario, et c'est là qu'elle se pose ; (3) `INC-184` (comparaisons
+dans `className`) est déjà en cours chez une autre session (`classes-css.mjs`, lot A de 2026-11-25) : non reprise ici.
+
