@@ -314,6 +314,18 @@ describe('proposerSlug — commodité, jamais garantie (§5.1)', () => {
 		expect(proposerSlug('Pipeline 2024')).toBe('pipeline-2024')
 	})
 
+	// @verifies INC-126 (docs/INCONSISTENCY_REPORT.md) — les ligatures ne sont pas décomposables en NFD : sans table, « œ » tombait dans le
+	// remplacement générique (« Nœud de preuve » → `n-ud-de-preuve`). docs/SPEC-administration-arborescence.md §5.1.
+	it('translittère les ligatures œ, æ et ß, qui ne se décomposent pas', () => {
+		expect(proposerSlug('Nœud de preuve')).toBe('noeud-de-preuve')
+		expect(proposerSlug('Cœur de cible')).toBe('coeur-de-cible')
+		expect(proposerSlug('Œuvre')).toBe('oeuvre')
+		expect(proposerSlug('Manœuvre')).toBe('manoeuvre')
+		expect(proposerSlug('Æsir')).toBe('aesir')
+		expect(proposerSlug('Straße')).toBe('strasse')
+		expect(proposerSlug('SŒUR')).toBe('soeur')
+	})
+
 	it('réduit toute suite de séparateurs à un tiret unique et élague les bords', () => {
 		expect(proposerSlug('  --  Grands   comptes !! ')).toBe('grands-comptes')
 	})

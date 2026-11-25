@@ -42512,3 +42512,10 @@ la `0056` ne pouvait pas remplacer une fonction qui en a cinq depuis la `0158`. 
 se dégrade par l'instruction et se retire par son contraire. **Ce que la réécriture a révélé** : deux contrôles du harnais étaient faux depuis des mois sans que personne le lise —
 la signature à quatre paramètres (vraie seulement grâce au résidu) et le « 2 modèles » du seed (il y en a trois). **Vérifié** : 32 contrôles verts en entier (avec le contrat d'API),
 la garde d'empreinte muette, une seule surcharge, 2 espaces en base. INC-366 est close.
+
+### `INC-126` — la proposition de clé translittère les ligatures
+
+*2026-11-25, session `p2enjoy-crm-dd`.* **Le problème** : « Nœud de preuve » proposait `n-ud-de-preuve` — `normalize('NFD')` ne décompose pas la ligature. **La décision** : la fiche
+la disait déjà tranchée par la mesure (aucun arbitrage) ; une table `œ→oe`, `æ→ae`, `ß→ss`, appliquée avant NFD. **Vérifié** : test unitaire rouge avant / vert après ; 6451 unitaires ;
+preuve d'interface `administration-catalogue` 9/9 après mise à jour de l'assertion qui constatait l'ancien défaut. **Mesuré au passage** : une suite unitaire lancée depuis `webapp/`
+rougit pour six tests qui lisent les migrations par un chemin relatif — elle se lance depuis la racine (`npm run test:unit`).

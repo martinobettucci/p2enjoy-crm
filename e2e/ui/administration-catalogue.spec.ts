@@ -188,16 +188,10 @@ test.describe('Administration du catalogue de nœuds — CRM-030', () => {
 			await formulaire.getByTestId('champ-libelle').fill('Nœud de preuve')
 			// La clé est PROPOSÉE depuis le libellé, puis corrigée à la main : commodité, jamais
 			// garantie (§2 bis.6).
-			// MESURÉ, et ce n'est pas ce qu'on attendrait : la proposition rend `n-ud-de-preuve`.
-			// `proposerSlug` décompose en NFD et retire les diacritiques ; la LIGATURE « œ » n'est pas
-			// décomposable, elle n'est donc pas translittérée et tombe dans le remplacement générique.
-			// C'est le comportement écrit au §5.1 de `docs/SPEC-administration-arborescence.md` — « ce
-			// qui n'est pas décomposable n'est pas translittéré » —, et la conséquence est que la
-			// proposition est inutilisable pour tout libellé français portant « œ », à commencer par
-			// « nœud ». La preuve le CONSTATE plutôt que de choisir un libellé qui l'éviterait ; le
-			// champ reste modifiable, ce qui est précisément pourquoi la proposition n'est qu'une
-			// commodité. Consigné en INC-126.
-			await expect(formulaire.getByTestId('champ-cle')).toHaveValue('n-ud-de-preuve')
+			// La ligature « œ » est translittérée (`oe`) : la proposition d'un libellé français comme « nœud » est utilisable
+			// (INC-126, docs/SPEC-administration-arborescence.md §5.1). Avant, `normalize('NFD')` ne la décomposait pas et la
+			// proposition rendait `n-ud-de-preuve` ; la preuve le CONSTATAIT pour qu'elle rougisse le jour du correctif.
+			await expect(formulaire.getByTestId('champ-cle')).toHaveValue('noeud-de-preuve')
 			await formulaire.getByTestId('champ-cle').fill(CLE_PREUVE)
 			await formulaire.getByTestId('champ-type').selectOption('open')
 			await formulaire.getByTestId('champ-couleur').selectOption('accent')

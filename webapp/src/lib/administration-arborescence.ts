@@ -204,11 +204,16 @@ export const slugConforme = (slug: string): boolean => MOTIF_SLUG.test(slug)
 /** `btrim(name) <> ''`, la contrainte de la base, lue depuis l'interface. */
 export const nomConforme = (nom: string): boolean => nom.trim() !== ''
 
+/** Les ligatures latines que `normalize('NFD')` ne décompose pas, et leur translittération usuelle (INC-126, §5.1). */
+const LIGATURES: Readonly<Record<string, string>> = { œ: 'oe', Œ: 'oe', æ: 'ae', Æ: 'ae', ß: 'ss' }
+
 /**
  * Propose un slug à partir d'un nom. **Commodité, jamais garantie** (§5.1).
  *
  * `normalize('NFD')` sépare les diacritiques latines de leur lettre, que la plage `̀-ͯ`
- * retire ensuite : « Conseil & IA » donne `conseil-ia`, « Réseau » donne `reseau`. Ce qui n'est pas
+ * retire ensuite : « Conseil & IA » donne `conseil-ia`, « Réseau » donne `reseau`. Les trois
+ * LIGATURES latines que NFD ne décompose pas — « œ », « æ », « ß » — sont translittérées par une
+ * table (`LIGATURES`), faute de quoi « Nœud » donnait `n-ud` (INC-126). Ce qui reste non
  * décomposable — une écriture non latine — n'est pas translittéré, et c'est assumé : inventer une
  * romanisation produirait un identifiant que personne ne reconnaîtrait.
  *
@@ -218,6 +223,7 @@ export const nomConforme = (nom: string): boolean => nom.trim() !== ''
  */
 export function proposerSlug(nom: string): string {
 	return nom
+		.replace(/[œŒæÆß]/g, (lettre) => LIGATURES[lettre] ?? lettre)
 		.normalize('NFD')
 		.replace(/[̀-ͯ]/g, '')
 		.toLowerCase()

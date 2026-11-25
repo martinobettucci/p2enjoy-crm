@@ -13,6 +13,8 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+- **INC-126, la proposition de clé translittère les ligatures** : « Nœud de preuve » propose `noeud-de-preuve` (et non plus `n-ud-de-preuve`) ; `œ`, `æ` et `ß` deviennent `oe`, `ae` et `ss` dans la clé proposée d'un nœud,
+  d'un track ou d'un channel. La proposition reste modifiable ; aucun slug existant ne change.
 - **INC-366, une reconstruction ne laisse plus une base vide en silence** : `reconstruire_base_dev` attend qu'une route REST réponde en JSON avant de seeder,
   rejoue le seed une fois s'il échoue, et écrit « BASE NON SEEDÉE » si les deux essais échouent. Outillage de développement : rien ne change dans le produit livré.
   **Partie b** : `verify-rendu-modeles-emails.sh` dégrade depuis la définition en base au lieu de rejouer la `0056` — il ne laisse plus de seconde surcharge de `rendre_modele_email`.

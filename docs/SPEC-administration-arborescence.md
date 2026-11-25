@@ -166,7 +166,8 @@ client. Le cas où l'appelant est membre de plusieurs workspaces n'existe pas en
 anticipé ici (§11, limite 4).
 
 **Le slug est proposé à partir du nom, et reste modifiable.** La proposition minuscule, translittère
-les diacritiques latines, remplace toute suite de caractères non alphanumériques par un tiret unique
+les diacritiques latines **et les trois ligatures que la décomposition NFD ne sépare pas — « œ » en `oe`, « æ » en `ae`, « ß » en `ss`**
+(« Nœud de preuve » donne `noeud-de-preuve` ; sans cette table, `n-ud-de-preuve` — INC-126), remplace toute suite de caractères non alphanumériques par un tiret unique
 et élague les tirés de bord. Elle est **une commodité, jamais une garantie** : lorsque le nom ne
 contient aucun caractère exploitable — « ??? » —, la proposition est vide et le champ reste à
 remplir par l'utilisateur, l'écran ne fabriquant pas un slug de son cru. La proposition cesse dès

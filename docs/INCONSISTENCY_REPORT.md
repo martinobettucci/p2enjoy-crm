@@ -1930,6 +1930,12 @@ assertion rougira et désignera l'endroit à mettre à jour.
 **Ce que ce n'est pas** : une demande d'arbitrage. Ajouter `œ → oe`, `æ → ae` et `ß → ss` à la
 normalisation est un choix que la mesure tranche seule ; il reste à faire, sous son unité porteuse.
 
+**CLOSE le 2026-11-25 — session `p2enjoy-crm-dd`, sur consigne de la session de livraison.** `proposerSlug` translittère désormais `œ`/`Œ` en `oe`, `æ`/`Æ` en `ae` et
+`ß` en `ss` AVANT la décomposition NFD (une table `LIGATURES`) ; « Nœud de preuve » propose `noeud-de-preuve`. **Preuve** : le test unitaire `translittère les ligatures œ,
+æ et ß` — **rouge avant** (`n-ud-de-preuve`), vert après, 6451 unitaires verts à la racine ; l'assertion de la preuve d'interface de `CRM-030`, qui constatait `n-ud-de-preuve`,
+est mise à jour et rougissait comme prévu, 9/9 verts. `docs/SPEC-administration-arborescence.md` §5.1 écrit la table. **Portée** : la même fonction propose les slugs des tracks
+et des channels, mais la proposition reste modifiable et le slug d'un objet existant ne change jamais.
+
 ### INC-127 — le `README.md` annonce « 40 cas » de `pytest` là où la suite en compte 242
 
 *Porteur : `CRM-008` (documentation des preuves) et `CRM-051` (le sujet de la suite). Mesuré le
