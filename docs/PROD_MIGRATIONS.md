@@ -385,7 +385,7 @@ Le geste 1 a été écrit à la main dans la proposition de la cellule, faute d'
 
 | # | Geste | Qui | Commande ou lieu |
 |---|---|---|---|
-| 1 | Poser `CRM_SUPERADMINS_INITIAUX` (l'adresse LeLabs du responsable) dans `/etc/spark/env`, à partir de la proposition | propriétaire du Spark | console ; proposition par `scripts/spark/proposer.sh` |
+| 1 | Poser `CRM_SUPERADMINS_INITIAUX` (l'adresse LeLabs du responsable) dans `/etc/spark/env`, **par saisie directe** : aucune option de `scripts/spark/proposer.sh` ne la propose — une adresse ne se devine pas (INC-276, tranché le 2026-11-25) | propriétaire du Spark | console, éditeur de la variable de la cellule |
 | 2 | Instantané de VM, avant la fenêtre de migration (§3.1) | propriétaire de la cellule | console de l'hébergeur |
 | 3 | Livrer et migrer : la 89, la fonction `session` et la webapp | poste, par les IP | `scripts/spark/livrer.sh -- --migrate --instantane-verifie`, **puis** `./runProd.sh --spark` dans la cellule |
 | 4 | Vérifier : registre à 89 lignes, refus anonyme de `plateforme_espaces` | poste, lecture seule | `scripts/spark/verifier.sh` |

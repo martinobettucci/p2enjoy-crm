@@ -7538,6 +7538,9 @@ proposition.
 la cellule, importée par le propriétaire du Spark, et le drapeau s'est amorcé à la première connexion du responsable. Le
 geste est fait ; reste à choisir la forme du contrat pour une prochaine cellule.
 
+**CLOSE le 2026-11-25 — INC-276, session `p2enjoy-crm-dd`, reprise d'un lot de la session `p2enjoy-crm-30`, issue 2.** Le geste 1 du §2.13 de `docs/PROD_MIGRATIONS.md` ne renvoie plus à une proposition de `proposer.sh` qui n'existe pas : il dit la **saisie directe** à la console, et pourquoi (une adresse ne se devine pas). La variable est posée en production depuis le
+2026-10-21 ; la même forme vaut pour une prochaine cellule. L'issue 1 — une option `--superadmin` — n'est pas retenue : un mode de plus à maintenir pour une saisie unique par cellule. Document seul : aucun script, aucun test.
+
 ### INC-277 — en production, `verifier.sh` reste rouge sur un redémarrage de PostgREST antérieur à la livraison, et Kong frôle sa limite de mémoire
 
 **Arbitrée le 2026-11-25 (décision 992)** : recréer le service rest au prochain créneau de livraison (compteur remis à zéro), puis surveiller ; écartés : relever les limites ; laisser rouge.

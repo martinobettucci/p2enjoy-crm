@@ -21101,3 +21101,9 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 *Le disque « Gris » du choix de couleur des objectifs, `--color-border`, était invisible sur le blanc. Design : `docs/DESIGN_SYSTEM.md` §5.2 bis, §5.68 ; fiche INC-313. Connecteur MCP : sans objet.*
 
 - [x] **INC-313** — le disque du choix passe à `--color-text-3` (table `DISQUES` d'`Objectifs.tsx`), le liseré du bloc est inchangé ; deux tests de composant (rouge avant), un scénario d'interface sur les couleurs calculées, la capture observée ; design system §5.68 mis à jour.
+
+## Correctif — INC-276 (repris de la session 30, 2026-11-25)
+
+*Le contrat de déploiement annonçait une proposition de `CRM_SUPERADMINS_INITIAUX` que `proposer.sh` ne fait pas. Fiche INC-276. Connecteur MCP : sans objet.*
+
+- [x] **INC-276** — le geste 1 du §2.13 de `docs/PROD_MIGRATIONS.md` dit la saisie directe à la console (issue 2 de la fiche) ; document seul.

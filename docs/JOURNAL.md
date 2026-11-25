@@ -42594,3 +42594,7 @@ la valeur attendue est lue dans `.env.example`, pas recopiée. **Ce qui reste vo
 
 *2026-11-25, session `p2enjoy-crm-dd`, lot repris de la session 30 ; design system lu en entier le même jour.* **Le problème** : la même option « Gris » avait deux disques — `--color-text-3` pour les tracks et les channels, `--color-border`, invisible sur le blanc (§5.2 bis), pour les objectifs. **La décision** : la première issue de la fiche, séparer le disque du liseré, plutôt que de changer le rendu de tous les blocs neutres du canevas,
 ce que le disque n'a pas à décider. **Vérifié** : tests de composant rouges avant, scénario d'interface sur les couleurs calculées, capture observée (`e2e/output/INC-313/`).
+
+### `INC-276` — le contrat dit la saisie directe
+
+*2026-11-25, session `p2enjoy-crm-dd`, lot repris de la session 30.* **Le problème** : un geste du contrat renvoyait à une proposition qu'aucun mode de `proposer.sh` ne fait. **La décision** : réécrire le geste (issue 2) plutôt qu'ajouter une option (issue 1) — la variable ne se règle qu'une fois par cellule, avec une adresse qui ne se devine pas, et elle est déjà posée en production. **Vérifié** : relecture des autres mentions de la variable (`SPEC-mcp`, `SPEC-plateforme`, `DAT`) : aucune ne promet de proposition.
