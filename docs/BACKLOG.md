@@ -20916,7 +20916,8 @@ complète revient à la session de livraison (décision 830).
 *Les preuves de base, d'interface, de messagerie, le seed et le build partagent une pile, et le piège est silencieux.
 Spécification : décision 990 ; `docs/SPEC-test-harness.md` §3.9. Connecteur MCP : sans objet (outillage de développement).*
 
-- [ ] **INC-177 — le verrou de campagne.** `scripts/lib/campagne.sh` (ouvrir, garde, statut, libérer), le verrou hors de
+- [@] **INC-177 — le verrou de campagne.**
+      *Prise en charge : p2enjoy-crm-dd depuis 2026-11-25 00:39 UTC — état avant : [ ]* `scripts/lib/campagne.sh` (ouvrir, garde, statut, libérer), le verrou hors de
       l'arbre, `scripts/verify-campagne.sh`. Gardes posées dans `scripts/run-sql-tests.sh`, `globalSetup` de Playwright,
       `supabase/seed/apply-seed.sh`, `scripts/lib/reconstruction.sh` et `npm run build` quand 4173 écoute. Preuve rouge avant :
       deux commandes gardées lancées de front, que rien ne distingue aujourd'hui. Livrables : harnais, `README.md` §7 et
