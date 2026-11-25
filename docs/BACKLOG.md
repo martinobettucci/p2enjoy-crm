@@ -21041,8 +21041,11 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
       `fuseau-espace` (5/5 : refus de la lectrice, du non-membre, de l'anonyme et de l'espace inconnu — le même refus ; fuseau inconnu refusé par la
       fonction et par la contrainte ; journal d'audit, réécriture sans trace), `scripts/verify-rendu-modeles-emails.sh` qui lit la vraie sortie du
       rendu, `database.types.ts` régénéré (`types:check` vert), contrat §2.83. **Reste, en production** : la livraison de la 204 et le constat du §2.83.
-- [ ] **T2 — l'écran** : le fuseau de l'espace se lit et se règle dans les Réglages de l'espace (administrateur seulement), avec ses états, ses refus,
-      son annonce ; design system lu en entier, manuel et captures. Spécifié avant son code.
+- [~] **T2 — l'écran** : *spécifié le 2026-11-25 avant le code (décision 1000), `docs/SPEC-modeles-emails.md` §8.6 ter, `docs/DESIGN_SYSTEM.md` §5.117, après lecture intégrale du design system* — le fuseau de l'espace se lit et se règle dans Réglages ▸ « Fuseau horaire »
+      (lisible par tout membre, commande de l'administrateur, motif générique en lecture seule). Tranches :
+      - [ ] **T2.a — la couche** `webapp/src/lib/fuseau-espace.ts` : lecture de `workspaces.timezone`, écriture par `workspace_set_timezone`, classement des refus (dictionnaire fermé), regroupement des fuseaux du navigateur par région, heure d'un fuseau — tests unitaires.
+      - [ ] **T2.b — l'écran** `ReglagesFuseauEspace` : la route `/reglages/fuseau-horaire`, l'entrée de l'index, les clés de traduction, la colonne `timezone` du journal d'audit — tests de composant.
+      - [ ] **T2.c — les preuves de bout en bout** : le scénario d'interface (Camille règle et rétablit Studio Lumen par l'écran, Farida lit sans régler, quatre paliers, clavier), les captures observées, le manuel, la verification visuelle.
 
 ## Correctif — INC-366 (2026-11-25, arbitré par la session de livraison)
 

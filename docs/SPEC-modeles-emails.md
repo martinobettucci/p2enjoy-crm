@@ -517,6 +517,27 @@ l'administrateur de l'espace. Écartés : le fuseau de l'expéditeur ; UTC docum
   et le règle — spécifié avant son code, avec la lecture intégrale du design system.
 - Connecteur MCP : question 1 = non ; question 2 = sans objet (décision 992).
 
+### 8.6 ter L'écran du fuseau de l'espace — INC-216 T2, décision 1000
+
+*Écrit le 2026-11-25, avant le code (décision 1000), après lecture intégrale de `docs/DESIGN_SYSTEM.md` le même jour. Le design : `docs/DESIGN_SYSTEM.md` §5.117 ; ce paragraphe dit ce que l'écran lit, envoie et refuse.*
+
+- **Où.** Réglages ▸ « Fuseau horaire », `/<espace>/reglages/fuseau-horaire`, une entrée de l'index après « Prompts du connecteur » : un lien pour tout membre — l'écran se
+  lit —, dont les commandes suivent la capacité d'**administrer l'espace** rendue par la base (`docs/DESIGN_SYSTEM.md` §5.59). Ce n'est pas une garde : la règle est celle de
+  `public.workspace_set_timezone` (§8.6 bis), qui refuse en base tout autre appelant, et dont le refus est traduit.
+- **Ce qu'il lit.** `workspaces.timezone` de l'espace de l'adresse, une requête (`select id, timezone`), sous la RLS.
+- **Ce qu'il écrit.** `rpc workspace_set_timezone(p_workspace_id, p_timezone)` ; il ne fait jamais d'`update` direct. Une écriture identique ne laisse aucune trace au journal d'audit (T1) : l'écran le laisse faire, il n'ajoute aucune garde.
+- **Le choix.** Un `select` natif groupé par région (`optgroup` : Afrique, Amérique, Asie, Atlantique, Australie, Europe, Indien, Pacifique, puis UTC), peuplé par `Intl.supportedValuesOf('timeZone')` — jamais
+  recopié dans l'écran. **La base reste seule juge** : un nom que le navigateur propose et que la base ignore est refusé (`invalid_timezone`) et dit ; le fuseau actuel est toujours une option, même absent de la liste du navigateur.
+- **Ce qu'il montre en plus.** L'heure qu'il est dans le fuseau retenu, et l'**écart avec le navigateur** de la personne — de quoi vérifier d'un regard qu'« Europe/Paris » est bien ce qu'on croit —, et une phrase qui dit ce que le réglage change :
+  la prochaine action et les champs « date et heure » rendus dans les e-mails ; **et ce qu'il ne change pas** — les dates affichées à l'écran restent celles du navigateur, le récapitulatif quotidien garde son heure (§8.6 bis).
+- **Les refus** (dictionnaire fermé, jamais le message du serveur) : `forbidden` (42501) « Seul un administrateur de cet espace règle le fuseau. », `invalid_timezone` (22023) « Ce fuseau n'est pas reconnu. », réseau et inconnu : phrase générique. La saisie est conservée.
+- **Les états** : chargement (squelette), erreur de lecture avec « Réessayer », espace introuvable. Pas d'état vide : un espace a toujours un fuseau (défaut `Europe/Paris`).
+- **Le journal d'audit** (`docs/DESIGN_SYSTEM.md` §5.66) nomme désormais la colonne : « Modifié : fuseau horaire » ; sans cette clé de traduction, la colonne paraîtrait sous sa clé brute, en `code`.
+- **Preuves** : tests unitaires de la couche (lecture, écriture, classement des refus, regroupement par région) et du composant ; un scénario E2E d'interface (Camille règle puis rétablit Studio Lumen, par l'écran ; Farida lit et ne règle pas ; les quatre paliers ; le clavier) ;
+  le refus par requête directe est celui de T1 (`e2e/api/fuseau-espace.spec.ts`).
+- **Le manuel** gagne une section « Régler le fuseau horaire de l'espace » avec sa capture ; le seed n'a rien à ajouter (§57 : Studio Lumen à `America/Montreal`, l'espace principal à `Europe/Paris`).
+- Connecteur MCP : question 1 = non ; question 2 = sans objet (décision 992).
+
 ### 8.7 Autorisations et privilèges
 
 - `grant execute` à **`authenticated`** et **`service_role`**, jamais à `anon` — les privilèges

@@ -9345,3 +9345,27 @@ la spécification réservait, a été prise par `CRM-165` avant l'écriture de c
 - **Annonces** : un `LiveRegion` poli dit chaque lot arrivé, chaque fil appliqué ou refusé, et la fin (« Plan prêt : 14 actions sur 9 mails »).
 - **Aucune couleur, aucune icône hors Lucide, aucun emoji.** Un seul jeton nouveau : `--size-assistant` (440 px), déclaré avec les tokens de
   dimension du §3.
+
+### 5.117 Réglages ▸ Fuseau horaire de l'espace — `INC-216` T2
+
+*Écrit le 2026-11-25, avant le code (décision 1000), après lecture intégrale de ce document le même jour.* Ce que l'écran lit, écrit et refuse est spécifié par `docs/SPEC-modeles-emails.md` §8.6 ter ; ces règles ne disent que de quoi il a l'air. **Il reprend la forme de Réglages ▸ Prompts du connecteur
+(§5.104)** — un écran lisible par tout membre, administré par l'administrateur —, réduite à **un seul réglage**.
+
+- **L'ENTRÉE DE L'INDEX** vient **après « Prompts du connecteur »** : un **lien pour tout membre**, titre « Fuseau horaire », corps « L'heure écrite dans les e-mails de cet espace. ».
+- **L'EN-TÊTE** : le titre `h2` au style `text-h3`, « Fuseau horaire de l'espace », puis une phrase en 13 px `--color-text-2`, `max-w-[72ch]` : « Les dates et heures écrites dans les e-mails de cet espace — la prochaine action, les champs « date et heure » — suivent ce fuseau.
+  Les dates affichées à l'écran restent celles de votre navigateur. » Largeur de l'écran `max-w-[104ch]`, celle des autres réglages.
+- **UN SEUL CHAMP, UN `select` NATIF** à libellé visible « Fuseau horaire » (§5.7, §5.22), 40 px de haut, `max-w-[48ch]`. **Groupé par région dans des `optgroup`** (§5.22, §5.48 bis) : le nom de la région est un **mot traduit**, les options sont des **données** — le nom IANA tel que le navigateur le donne, jamais traduit (§10) —,
+  « UTC » en dernier, hors de tout groupe. Le fuseau actuel est **toujours** une option, même absent de la liste du navigateur. **Aucune option vide** : l'espace a toujours un fuseau, et il n'existe aucun « aucun » à choisir (l'écart du §5.34 avec le §5.22).
+  Pendant la lecture et après son échec, le champ est désactivé et l'état le dit (la dérogation bornée du §5.22) ; hors de ces deux cas, **il n'est jamais désactivé par la capacité sans son motif** (§5.59).
+- **L'HEURE DU FUSEAU RETENU** sous le champ, en 13 px `--color-text-2`, **donnée technique** (§2, monospace, chiffres tabulaires) dans son propre élément : « Il est 14:32 dans ce fuseau », puis, si le navigateur est ailleurs, « (votre navigateur : 13:32, une heure de moins) ». Elle suit le choix **avant l'enregistrement**, de quoi vérifier ;
+  elle n'est **pas une région vivante** (§5.7 ter : elle parlerait à chaque changement) — sa valeur est dans la description du champ. Calculée par `Intl.DateTimeFormat` ; une valeur que le navigateur ne sait pas formater ne rend rien, jamais une heure inventée.
+- **« ENREGISTRER »**, primaire, sous le champ — **la seule commande** : une fonction d'écriture, deux paramètres (§5.34). Jamais désactivée par l'état du champ (§5.3 ter) ; pendant l'écriture, `aria-busy` et désactivée, son libellé dit « Enregistrement… ». Le succès s'annonce dans la région vivante de l'écran : « Fuseau enregistré : {fuseau}. » ;
+  **le focus reste sur la commande** : elle n'est jamais démontée.
+- **LES REFUS** sous le champ, `role="alert"`, `--color-danger-soft` / `--color-danger-on-soft` (§5.13), par un dictionnaire fermé : « Seul un administrateur de cet espace règle le fuseau. », « Ce fuseau n'est pas reconnu. Choisissez-en un autre dans la liste. », et la panne générique « Le fuseau n'a pas pu être enregistré. Réessayez. ».
+  La saisie est conservée et le focus revient au champ (§5.71).
+- **QUI N'ADMINISTRE PAS** voit l'écran, le champ **désactivé et lisible**, la commande montée et désactivée, et le motif générique de l'administration, `rights.readonly.administration`, posé en tête (§5.59) et cité par les deux. Pendant la lecture de la capacité, ils sont désactivés sans motif ; sur un défaut de lecture, offerts.
+- **ÉTATS** (§5.8) : squelette de deux lignes au premier chargement ; erreur de lecture avec « Réessayer » ; aucun espace ouvert, l'état commun du §5.104. Pas d'état vide.
+- **LE JOURNAL D'AUDIT** (§5.66) : le changement se lit « Espace modifié : … », détail « Modifié : fuseau horaire ».
+- **AU CLAVIER** : le champ et la commande sont des contrôles natifs, atteints par `Tab` ; la saisie au clavier d'un `select` natif choisit par préfixe, ce que la liste groupée permet ; `Entrée` sur le champ n'envoie rien (un `select` n'a pas de soumission implicite) ; le focus entre sur le champ à l'arrivée sur la page, comme un écran à un seul champ (§5.13).
+- **RESPONSIVE** (§7) : le champ prend toute la largeur sous `md`, la commande passe dessous, cibles conservées ; `md` et jamais `sm` (§11). La page ne défile jamais horizontalement.
+- **Aucune couleur, aucun jeton, aucune icône nouveaux.**
