@@ -20923,3 +20923,19 @@ Spécification : décision 990 ; `docs/SPEC-test-harness.md` §3.9. Connecteur M
       `docs/CloudWorker.md` §4.3 (les preuves de base et d'interface ne se lancent jamais de front), `docs/DAT.md` §13.
       **La session de livraison adapte son script de campagne** sur `campagne.sh ouvrir -- …`.
 
+## Relevé du 2026-11-25 — tri du journal des incohérences (INC-211 à 362) : les lots de correction
+
+Le tri de la session 30 a classé 69 fiches (vingt-sept closes, `docs/INCONSISTENCY_REPORT.md`, commit `32213878`) ; ce qui reste à
+corriger sans arbitrage l'est par lots cohérents, preuve rouge avant et verte après. Les arbitrages sont ceux de la décision 992.
+
+- [@] **Lot A — le contrôle des classes** (`INC-314`, `INC-334`, `scripts/lib/classes-css.mjs`) : lire les morceaux littéraux d'un
+  gabarit interpolé ; ne plus prendre une comparaison de ternaire pour une classe. Sans pile.
+  *Prise en charge : session interactive d5b44a2d (p2enjoy-crm-30) depuis 2026-11-25 UTC — état avant : [ ] ; confiée par la session de livraison (11), décision 992 pour les arbitrages*
+- [@] **Lot B — petits harnais et fichiers** (`INC-247` octets NUL de `administration-workflows.ts` ; `INC-306` SIGPIPE du second
+  contrôle de `verify-mail-infra.sh` ; `INC-297` compteur de `verify-session-sso.sh` ; `INC-274` valeurs exigées de `.env` ;
+  `INC-313` disque « Gris » des objectifs).
+  *Prise en charge : session interactive d5b44a2d (p2enjoy-crm-30) depuis 2026-11-25 UTC — état avant : [ ] ; confiée par la session de livraison (11), décision 992 pour les arbitrages*
+- [ ] **Lot C — le runner de migrations** (`INC-318`) : refuser un `begin;`/`commit;` de premier niveau, exceptions nommées ; à livrer par la session de livraison.
+- [ ] **Lot D — `INC-342`** : cinq preuves qui dépendent de l'état accumulé de la base de développement. Pile requise.
+- [ ] **Lot E — `INC-286` lot 1** : le connecteur MCP en anglais (tables `mcp_*`, familles, colonnes) ; spécification avant le code (décision 992).
+- [ ] **Lot F — `INC-361`** : le résumé quotidien cite les mentions non lues d'une organisation, avec le lien vers sa fiche (tranche de `CRM-153`, décision 992).

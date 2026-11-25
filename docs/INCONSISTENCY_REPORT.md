@@ -8565,6 +8565,8 @@ navigateur, le scénario relève le champ du secret, et le manifeste ne le retie
 
 Connecteur MCP : sans objet.
 
+**Arbitrée (décision 992), côté dépôt close le 2026-11-25** (tri de la session 30) : le manifeste des images ne porte plus aucune valeur `whsec_…` (`docs/manuel/images/manifeste.json`, 0 occurrence) et le contrôle 5 de `scripts/verify-manual.sh` le garde. **Reste, et c'est un geste du responsable seul** : fermer les deux alertes du secret scanning de GitHub en « faux positif » ; l'historique n'est pas réécrit.
+
 ### INC-331 — Trois scénarios d'interface supposent un état de base que le rejeu du seed et les campagnes déplacent
 
 *Constaté le 2026-11-01 par la campagne d'interface complète de `CRM-122` T2 (1033/1037), puis en rejouant seuls les
@@ -9502,6 +9504,8 @@ L'écart est nommé au §5.107.
 **L'arbitrage demandé au responsable.** Garder ce repli (la rangée grandit), ou élargir « Nom » au détriment d'une autre
 colonne — par exemple « Domaine et site web », dont les valeurs se tronquent avec leur `title` — ce qui révise le partage
 de la décision 940 ?
+
+**Clôture constatée le 2026-11-25** (tri de la session 30). Arbitrée (décision 992) : le repli de la colonne « Nom » est gardé, la rangée grandit ; la décision 940 reste. Aucune correction n'est due, l'écart reste nommé au `docs/DESIGN_SYSTEM.md` §5.107.
 
 ### INC-363 — `CRM-160` nomme `cards.owner_id`, une colonne retirée par `CRM-111`
 **Ouverte et close le 2026-11-20.** *Relevée par la session d5b44a2d (p2enjoy-crm-6e) en lisant le schéma avant la
