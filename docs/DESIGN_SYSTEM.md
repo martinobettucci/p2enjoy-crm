@@ -9334,7 +9334,7 @@ la spécification réservait, a été prise par `CRM-165` avant l'écriture de c
 - **Une ligne de plan par fil**, dans une liste (`ul`) : l'objet (une ligne, `truncate`, la valeur entière en `title`), l'expéditeur en
   `--color-text-2`, puis ses **actions** — une pilule par action, au patron des pastilles de mail (§5.103), icône Lucide de son geste + libellé —, et sous chacune son **motif** en
   `--text-sm` `--color-text-2`. Une action **à confirmation** (supprimer partout, bloquer) porte `TriangleAlert` et le mot « irréversible » : la
-  teinte `warning-soft` de l'avertissement du §5.110, **pas** le danger, réservé à ce qui échoue.
+  teinte de l'avertissement du §5.110 — `--color-accent-soft` en fond, `--color-accent-on-soft` en texte, deux jetons du §1 —, **pas** le danger, réservé à ce qui échoue.
 - **Les deux gestes d'un fil** : « Accepter » (bouton primaire §5.5, **cible 40 px**) et « Refuser » (secondaire), l'un et l'autre **annonçant leur
   fil** par leur nom accessible (« Accepter le plan pour Facture mars »). **« Tout accepter »** est un bouton secondaire, en pied, avec la confirmation
   qui dit le nombre d'actions et de mails (§36.4) — la confirmation est **dans le panneau**, non une fenêtre.
