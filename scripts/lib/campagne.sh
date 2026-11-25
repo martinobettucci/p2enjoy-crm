@@ -181,7 +181,7 @@ _campagne_tuer_arbre() { # <pid> [signal]
 }
 
 campagne_ouvrir() { # [--nom N] [--duree-max S] -- commande…
-	local nom=${CAMPAGNE_NOM:-} duree=${CAMPAGNE_DUREE_MAX:-21600} enfant code veilleur depassement
+	local nom=${CAMPAGNE_NOM:-} duree=${CAMPAGNE_DUREE_MAX:-21600} enfant code veilleur depassement sommeils
 	while [ $# -gt 0 ]; do
 		case "$1" in
 			--nom) nom=$2; shift 2 ;;
@@ -210,7 +210,8 @@ campagne_ouvrir() { # [--nom N] [--duree-max S] -- commande…
 	"$@" <&0 &
 	enfant=$!
 	# Le veilleur : à l'échéance, il pose un témoin, arrête l'arbre de la commande (TERM, puis KILL 15 s plus tard).
-	( sleep "$duree"; : >"$depassement"; _campagne_tuer_arbre "$enfant" TERM; sleep 15; _campagne_tuer_arbre "$enfant" KILL ) &
+	# `kill -0` : une commande déjà finie n'est jamais « arrêtée » (le sommeil tué à la fin de la commande rendait la main au veilleur).
+	( sleep "$duree" || exit 0; kill -0 "$enfant" 2>/dev/null || exit 0; : >"$depassement"; _campagne_tuer_arbre "$enfant" TERM; sleep 15; _campagne_tuer_arbre "$enfant" KILL ) &
 	veilleur=$!
 	trap 'kill -TERM "$enfant" 2>/dev/null' TERM INT
 	code=0
@@ -219,8 +220,10 @@ campagne_ouvrir() { # [--nom N] [--duree-max S] -- commande…
 		code=$?
 	done
 	trap - TERM INT
-	pkill -P "$veilleur" 2>/dev/null
+	# Le veilleur d'abord, son sommeil ensuite : tuer le sommeil seul le ferait passer à l'étape suivante, et il déclarerait un dépassement.
+	sommeils=$(pgrep -P "$veilleur" 2>/dev/null)
 	kill "$veilleur" 2>/dev/null
+	[ -z "$sommeils" ] || kill $sommeils 2>/dev/null
 	wait "$veilleur" 2>/dev/null
 	if [ -e "$depassement" ]; then
 		rm -f "$depassement"

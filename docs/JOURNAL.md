@@ -42631,3 +42631,6 @@ mécanisme d'exception ouvert. **Pourquoi un refus et non une correction** : un 
 (les deux entrées de T3.c seules) en [Publié], backlog. Le verrou de livraison reste posé pour le lot suivant (`95e2b0f0` et ses
 correctifs).
 
+### `INC-367` — le veilleur ne déclare plus un dépassement à la fin d'une commande
+
+*2026-11-25, session `p2enjoy-crm-dd`, signalé par la session de livraison.* **Mesuré** : 3 commandes sur 15, sorties en échec avant la borne, rendaient 124 et « durée maximale dépassée » (le message `Terminated sleep "$duree"` précédait). **Cause** : `pkill -P $veilleur` tuait le `sleep`, et le sous-shell continuait vers l'étape suivante. **Décision** : tuer le veilleur d'abord, son sommeil ensuite, et ne déclarer le dépassement que si la commande vit encore. Ma première preuve n'avait qu'une commande de ce genre : la course ne se voyait pas ; elle en joue désormais quarante.

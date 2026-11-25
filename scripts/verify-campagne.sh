@@ -202,6 +202,18 @@ for invalide in 0 -3 abc ''; do
 done
 [ "$refus_attendus" = 1 ] && ok "une durée maximale nulle, négative, vide ou non numérique est refusée (code 64)"
 
+# a bis) une commande qui finit AVANT la durée maximale (en échec ou non) garde son code et son silence : le veilleur arrêté avec elle ne déclare
+#        jamais un dépassement (défaut relevé par la session de livraison : « durée maximale dépassée » et 124 pour une commande en échec).
+anomalies_veilleur=0
+for i in $(seq 1 40); do
+	sortie=$("$CAMPAGNE" ouvrir --nom courte -- bash -c 'sleep 0.2; exit 7' 2>&1); code=$?
+	[ "$code" = 7 ] && [ -z "$sortie" ] || { anomalies_veilleur=$((anomalies_veilleur + 1)); dernier="code $code, « $sortie »"; }
+done
+[ "$anomalies_veilleur" = 0 ] && ok "40 commandes en échec avant la borne : code 7 rendu, aucun message de dépassement" \
+	|| fail "$anomalies_veilleur commande(s) sur 40 rapportent un dépassement ou un autre code : $dernier"
+sortie=$("$CAMPAGNE" ouvrir --nom courte-ok -- bash -c 'sleep 0.2' 2>&1); code=$?
+[ "$code" = 0 ] && [ -z "$sortie" ] && ok "une commande réussie avant la borne rend 0, sans message" || fail "commande réussie : code $code, « $sortie »"
+
 # b) `borner` : la borne d'une commande qui peut bloquer, l'échec nommé.
 source "$REPO_ROOT/scripts/lib/borne.sh" 2>/dev/null || fail "scripts/lib/borne.sh est absent"
 if declare -F borner >/dev/null; then
