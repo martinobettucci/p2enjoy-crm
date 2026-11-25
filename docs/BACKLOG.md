@@ -21107,3 +21107,9 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 *Le contrat de déploiement annonçait une proposition de `CRM_SUPERADMINS_INITIAUX` que `proposer.sh` ne fait pas. Fiche INC-276. Connecteur MCP : sans objet.*
 
 - [x] **INC-276** — le geste 1 du §2.13 de `docs/PROD_MIGRATIONS.md` dit la saisie directe à la console (issue 2 de la fiche) ; document seul.
+
+## Correctif — INC-318 (repris de la session 30, 2026-11-25 ; touche le runner de production, annoncé à la session de livraison avant le code)
+
+*Onze migrations portent leur propre `commit`, qui ferme la transaction du runner avant l'inscription au registre. Spécification : `docs/DAT.md` §3.2 bis ; fiche INC-318. Connecteur MCP : sans objet.*
+
+- [ ] **INC-318 — le runner refuse un `begin;` / `commit;` de premier niveau**, sauf les onze fichiers inscrits (liste fermée) ; preuve dans `scripts/verify-migrations.sh` ; image du runner à livrer avec le lot. *Spécifié ; code à venir après l'accord de la session de livraison.*

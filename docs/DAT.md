@@ -424,6 +424,12 @@ fichier rend sûr, puis, le rejeu réussi, inscrit **d'un seul geste**, en mode 
 rejoués. Un échec pendant le rejeu n'inscrit rien : le passage suivant recommence l'adoption. Le passage
 d'après n'applique plus que les fichiers absents du registre.
 
+**Une migration n'ouvre ni ne ferme de transaction — INC-318, spécifié le 2026-11-25 avant le code.** Le runner applique un fichier **et** son inscription dans UNE transaction (`psql --single-transaction`). Un fichier qui porte son propre `begin;` … `commit;` de premier niveau ferme cette
+transaction avant l'inscription : psql dit « there is already a transaction in progress » puis « there is no transaction in progress », et l'inscription se fait dans une transaction à elle — la garantie « appliquée, donc inscrite » ne tient plus, et un échec de l'inscription laisserait une migration appliquée que le passage suivant rejouerait.
+**Onze fichiers** sont dans ce cas, tous inscrits : `0034` à `0043` et `0116`. **La règle.** Le runner **refuse** (code non nul, le fichier et le motif nommés, rien d'appliqué) tout fichier dont une ligne est, à elle seule, un `begin;`, un `begin transaction;`, un `start transaction;`, un `commit;` ou un `rollback;`, **sauf** les onze de la liste fermée `MIGRATIONS_AVEC_TRANSACTION_PROPRE` ;
+aucun nouveau fichier n'y entre. La liste porte des NOMS : les onze fichiers sont inscrits en production et ne se rejouent que dans une adoption, où ils passent comme avant. Le motif ne cherche que la ligne qui est, à elle seule, l'instruction (`^\s*(begin(\s+transaction)?|commit|start\s+transaction|rollback)\s*;`) : un `begin` de bloc PL/pgSQL n'a pas de point-virgule, et le `end;` qui le ferme n'est pas dans la liste — la première version du motif, qui l'incluait, nommait 170 fichiers.
+**Mesuré** : sur les 204 fichiers du dépôt, ce motif nomme exactement les onze. **Effet sur la production** : aucun tant qu'aucun fichier nouveau ne porte de transaction ; le garde est dans l'image du runner, livrée avec le lot, et ne s'exerce que sur un fichier à appliquer. Preuve : `scripts/verify-migrations.sh`.
+
 **Ce qui change pour qui écrit une migration.** Une migration appliquée n'est plus jamais modifiée : sa
 correction est une migration nouvelle. En développement, modifier un fichier déjà appliqué à la base
 locale — pendant la mise au point d'une migration, par exemple — est refusé comme en production ; le
