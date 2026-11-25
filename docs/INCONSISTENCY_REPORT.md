@@ -1272,6 +1272,11 @@ tomber le compteur à zéro. Un test qui affirmerait qu'un script existe, ou qu'
 compile, serait exactement l'assertion qui ne peut pas échouer décrite en INC-146 et INC-147. Le
 défaut est nommé ; il n'est pas maquillé.
 
+**ARBITRÉE par le responsable le 2026-11-25 (décision 992) et MISE EN ŒUVRE : pour une unité d'infrastructure, son harnais dédié tient lieu de test
+unitaire ; écarté : rouvrir les quatorze unités. CLOSE.** La règle, ses bornes et le harnais de chacune des quatorze unités sont écrits à
+`docs/SPEC-test-harness.md` §7.3. Au passage, `CRM-070` n'est plus un écart (deux tests unitaires la citent), et `CRM-011` pointe désormais
+`verify-session-sso.sh` et `verify-authz.sh` — `verify-auth.sh` n'existe plus.
+
 ### INC-147 — La preuve de refus n° 9 mesure une absence, pas un refus
 
 **Nature :** assertion trop large sur un objet jamais créé ; la preuve ne peut pas échouer.
@@ -2184,6 +2189,11 @@ cette tranche — porte exactement le même gabarit `mm/dd/yyyy`. Le contrôle d
 n'a donc rien introduit : il a rendu visible un comportement que le produit portait déjà partout où
 il emploie un contrôle de date natif. L'arbitrage attendu porte en conséquence sur **tous** ces
 contrôles, non sur le seul champ de `CRM-040`.
+
+**ARBITRÉE par le responsable le 2026-11-25 (décision 992) : garder le contrôle de date natif ; écarté : un composant de date maison. CLOSE.** La règle est écrite
+au `docs/DESIGN_SYSTEM.md` §10 (« Dates et heures ») : le gabarit suit la langue du navigateur de la personne ; les captures du
+projet `manuel` sont prises en français (`e2e/playwright.config.ts`, `docs/SPEC-manual.md` §11.4), celles des autres projets montrent le gabarit du
+navigateur du harnais.
 
 ## Consignés le 2026-08-16 — deux constats du harnais, étrangers à `CRM-040`
 

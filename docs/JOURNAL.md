@@ -42413,3 +42413,11 @@ pile, en fenêtre. Connecteur MCP : question 1 = non (outillage), question 2 = s
 - **Les preuves.** Quatre des huit tests rouges sur l'ancien script ; le contrôle rejoué sur un build neuf ; deux E2E d'interface ; captures observées.
 - **La lecture du design system** : sections ciblées (§3, §11, §5.29 et les passages sur ces écrans), sur arbitrage du responsable.
 
+### décision 992, suite — `INC-131` et `INC-148` mises en œuvre
+
+*2026-11-25, session `p2enjoy-crm-dd`.* **INC-131** : le contrôle de date natif est écrit au design system (`docs/DESIGN_SYSTEM.md` §10, « Dates
+et heures »), la fiche est close. **INC-148** : la règle « pour une unité d'infrastructure, son harnais dédié tient lieu de test unitaire »
+est écrite à `docs/SPEC-test-harness.md` §7.3, avec ses quatre bornes (harnais nommé, verdict chiffré, contrôles qui mordent, logique
+applicative exclue) et le harnais de chacune des quatorze unités ; `CRM-070` n'est plus un écart, `CRM-011` pointe `verify-session-sso.sh`
+et `verify-authz.sh`. `CLAUDE.md` n'est pas modifié : la règle vit dans la spécification des tests. Connecteur MCP : sans objet.
+
