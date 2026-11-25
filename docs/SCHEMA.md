@@ -3467,6 +3467,14 @@ et les blocages sont perdus — les mails mis à la corbeille par un blocage y r
   `plateforme_creer_espace` de `0089`.
 - **Preuve** : pgTAP `0183`, rouge avant la migration ; `0084` inchangée et verte.
 
+### Migration `0206` — `INC-361` : le digest quotidien cite les mentions du fil d'une organisation (`0206_digest_mentions_organisation.sql` ; spécifiée le 2026-11-25, avant le code, décisions 992 et 1000)
+
+`docs/SPEC-etiquettes-digest.md` §5.2 bis. **Une fonction redéfinie, aucune table, aucune colonne** : `app.digest_corps(uuid, uuid, timestamptz)` — son bloc des mentions
+est une union des mentions d'affaires (`subject_card_id`, l'existant) et de celles du fil d'une organisation (`subject_organization_id`), par ordre de création, filtrées
+par `app.can_read_card_pour` et `app.can_read_organization_for` ; le compteur de l'objet et la règle « rien à dire » les comptent. La ligne d'une organisation :
+`- {nom} (organisation)`, puis `{site}/contacts/organisations/{id}#commentaire-{commentaire}`. Signature et droits inchangés. **Retour arrière** : rejouer la définition de la `0133`.
+**Preuve** : pgTAP `0191`, rouge avant la migration (7 assertions en échec) ; E2E `e2e/mail/digest.spec.ts`.
+
 ### Migration `0204` — `INC-216` T1 : le fuseau de l'espace (`0204_fuseau_espace.sql` ; spécifiée le 2026-11-25, décisions 992 et 996)
 
 `docs/SPEC-modeles-emails.md` §8.6 bis. `workspaces.timezone text not null default 'Europe/Paris'`, contrainte `workspaces_timezone_valide` (`app.is_valid_timezone`,

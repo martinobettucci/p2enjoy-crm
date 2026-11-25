@@ -1172,7 +1172,7 @@
 							},
 							{
 								"type": "text",
-								"text": " et\nque vous n'avez pas encore lus, et les "
+								"text": " et\nque vous n'avez pas encore lus — sur une affaire, ou dans le fil d'une organisation, que le récapitulatif désigne alors\npar son nom suivi de « (organisation) » —, et les "
 							},
 							{
 								"type": "strong",
@@ -1185,7 +1185,7 @@
 							},
 							{
 								"type": "text",
-								"text": " dont vous êtes responsable. Chaque ligne porte le lien de\nsa fiche. Une affaire que vous ne pouvez pas lire n'y figure jamais."
+								"text": " dont vous êtes responsable. Chaque ligne porte le\nlien de sa fiche ; pour une mention dans le fil d'une organisation, c'est la fiche de l'organisation, au commentaire. Une\naffaire ou une organisation que vous ne pouvez pas lire n'y figure jamais."
 							}
 						]
 					}

@@ -20981,6 +20981,9 @@ corriger sans arbitrage l'est par lots cohérents, preuve rouge avant et verte a
   *Prise en charge : p2enjoy-crm-7a (4891a451) depuis 2026-11-25 UTC — état avant : [ ] ; confiée par la session de livraison (11) ; spécification avant le code (décision 992)*
   *Spécifiée le 2026-11-25 avant le code* (`docs/SPEC-etiquettes-digest.md` §5.2 bis ; seed §58 ; décision 1000) : migration `0206` (`create or replace
   function app.digest_corps`), pgTAP `0191`, E2E `e2e/mail/digest.spec.ts` étendu, seed, manuel §5.6, contrat, changelog. Connecteur : non.
+  **Écrit (2026-11-25, 7a) ; reste à appliquer et à rejouer** : migration `0206`, pgTAP `0191` (rouge sur la `0133`, 7 assertions ; verte, 15/15, dans une transaction annulée portant la
+  `0206`), seed §58, E2E `digest` étendu (rouge avant sur la ligne attendue), manuel §5.6, contrat §2.85, SCHEMA, changelog. **Bloqué** : le runner refuse tout lot tant que la `0205` de
+  `CRM-166` (modifiée après son application) n'est pas réglée — la `0206` n'est donc pas appliquée à la base de développement, et l'E2E vert attend.
 
 ### CRM-166 — Un assistant IA dans l'inbox : il propose un plan d'actions sur les mails sélectionnés, que l'on accepte ou refuse mail par mail `[@]`
 *Prise en charge : session interactive d5b44a2d (p2enjoy-crm-30) depuis 2026-11-25 00:53 UTC — état avant : [ ] ; confiée par la session de livraison (11), décision 994*

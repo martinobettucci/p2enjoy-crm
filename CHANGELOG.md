@@ -13,6 +13,9 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+- **INC-361, le récapitulatif du matin cite aussi les mentions du fil d'une organisation** (migration 206, décisions 992 et 1000) : sous « On vous a mentionné », une mention non lue
+  dans le fil d'une organisation paraît avec son nom suivi de « (organisation) » et le lien de sa fiche, à l'ancre du commentaire, mêlée aux mentions d'affaires par ordre de
+  création ; l'objet du mail la compte, et elle suffit à produire un récapitulatif. Une organisation que la personne ne peut pas lire n'y figure jamais. Seed §58 ; manuel §5.6.
 - **INC-342 (lot D), trois preuves ne dépendent plus de l'état accumulé de la base de développement** : l'historique des webhooks (E2E et manuel 34) et le compte des
   non lus de `inbox-lecture` ciblent leurs propres lignes et ne retirent que ce qu'ils écrivent, sans relâcher d'assertion. Outillage de test : rien ne change dans le produit livré.
 - **INC-142, le relevé des résidus de données** : `scripts/mesurer-residus.sh` relève les lignes de chaque table avant et après une exécution et nomme celles qu'une preuve laisse derrière elle ; `scripts/verify-residus.sh` le prouve (8 contrôles).

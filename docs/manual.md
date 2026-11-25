@@ -896,8 +896,10 @@ s'enregistre dès que vous la basculez, et une phrase sous elle confirme votre c
 
 - **Ce qu'il contient.** Vers **7 h**, heure de Paris, un email intitulé « Votre journée dans… » réunit, pour cet
   espace : vos actions **en retard** et celles **dues aujourd'hui**, les commentaires où **l'on vous a mentionné** et
-  que vous n'avez pas encore lus, et les **affaires figées** dont vous êtes responsable. Chaque ligne porte le lien de
-  sa fiche. Une affaire que vous ne pouvez pas lire n'y figure jamais.
+  que vous n'avez pas encore lus — sur une affaire, ou dans le fil d'une organisation, que le récapitulatif désigne alors
+  par son nom suivi de « (organisation) » —, et les **affaires figées** dont vous êtes responsable. Chaque ligne porte le
+  lien de sa fiche ; pour une mention dans le fil d'une organisation, c'est la fiche de l'organisation, au commentaire. Une
+  affaire ou une organisation que vous ne pouvez pas lire n'y figure jamais.
 - **Les jours où il n'y a rien**, aucun email ne part.
 - **Qui l'envoie.** L'adresse d'envoi commune de l'espace, celle que l'administrateur a désignée pour les envois
   automatiques. Si l'espace n'en a pas, aucun récapitulatif ne part.

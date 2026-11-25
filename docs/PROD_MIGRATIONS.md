@@ -1799,7 +1799,27 @@ la personne, avant `prepare_email`. **Aucune famille, aucune case, aucun outil n
 
 **Retour arrière** : l'image `mcp` précédente (le lien redevient `/inbox?brouillon=…`, redirigé par la webapp).
 
+### 2.85 `INC-361` — le résumé quotidien cite les mentions non lues du fil d'une organisation (la migration 206) (EN ATTENTE)
+
+`docs/SPEC-etiquettes-digest.md` §5.2 bis ; `docs/SCHEMA.md` « Migration `0206` » ; décisions 992 et 1000. **Une fonction redéfinie** (`app.digest_corps`), aucune
+table, aucune colonne, aucune variable, aucun secret ; signature et droits inchangés. **Compatible avec la webapp, le connecteur et `mail-sync` livrés** (le corps
+du résumé reste du texte brut, ses liens au jeton `{site}`). **Après la 205** (l'ordre numérique) ; elle peut partir seule. **Changement de comportement
+VOULU, à annoncer** : dès la 206, le résumé du matin cite aussi les mentions non lues du fil d'une organisation, et une personne dont c'est la seule nouveauté
+reçoit son résumé. *Écrite et prouvée en développement le 2026-11-25 (7a) : pgTAP `0191`, E2E `digest` jusqu'à la boîte de développement, seed §58.*
+
+| # | Geste | Qui | Comment |
+|---|---|---|---|
+| 1 | Appliquer la 206 | session de livraison, dans la fenêtre du lot | `runProd.sh --migrate` (§3), après la 205 |
+| 2 | Relire | session de livraison | `select position('(organisation)' in pg_get_functiondef('app.digest_corps(uuid,uuid,timestamptz)'::regprocedure))` rend un nombre positif |
+| 3 | Constater | le responsable | le lendemain matin, une personne abonnée au résumé, mentionnée sur une organisation et non lue, voit « Nom (organisation) » et le lien de la fiche dans son email |
+
+**Retour arrière** : rejouer la définition de la `0133` (`create or replace function app.digest_corps`). **Risque connu** : aucun sur les données.
+
 ## 3. Migrations en attente
+
+**La 206** (`INC-361`, décisions 992 et 1000), *en attente* : le résumé quotidien cite les mentions non lues du fil d'une organisation (§2.85,
+`docs/SCHEMA.md` « Migration `0206` »). **Après la 205.** Compatible avec la webapp, l'image `mcp` et `mail-sync` livrées ; elle peut partir seule. Aucun geste préalable du
+responsable ; **changement de comportement voulu à annoncer** (le résumé cite aussi les mentions d'organisation).
 
 **La 204** (`INC-216` T1, décisions 992 et 996), *en attente* : le fuseau de l'espace — les horodatages d'un e-mail se rendent à l'heure de l'espace
 (§2.83, `docs/SCHEMA.md` « Migration `0204` »). **Après la 203.** Compatible avec la webapp et l'image `mcp` livrées ; elle peut partir seule, avant l'écran de

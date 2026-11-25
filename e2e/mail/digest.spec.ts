@@ -7,6 +7,9 @@
 //           CLAUDE.md §8 (aucune trace fabriquée), §15 (un chemin déterministe : le job appelé pour 7 h 15)
 // @verifies CRM-069 (docs/BACKLOG.md) — tranche T6 : le digest se déclare automatique, et la relève de la boîte de Driss,
 //           synchronisée, ne le réingère pas (docs/SPEC-etiquettes-digest.md §5.3 bis, INC-321, décision 780)
+// @verifies INC-361 (docs/INCONSISTENCY_REPORT.md ; lot F du backlog, décisions 992 et 1000) : le digest reçu cite la mention
+//           non lue du fil d'une organisation, avec le lien de sa fiche à l'ancre du commentaire — posée par Camille par les vrais
+//           gestes (le commentaire et la mention, sous son jeton), retirée à la fin (docs/SPEC-etiquettes-digest.md §5.2 bis)
 //
 // LE JOB EST APPELÉ PAR SA FONCTION, POUR UN INSTANT DE 7 H 15 À PARIS — le chemin déterministe que `CLAUDE.md` §15 permet :
 // attendre 7 h ne prouverait rien de plus, et `pg_cron` est prouvé par la pgTAP `0124`. Tout le reste est le vrai chemin.
@@ -15,7 +18,7 @@ import { conteneur } from '../conteneur'
 import { execFileSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
 import { lireEnv, urlApi } from '../env'
-import { enTetesService } from '../api/jetons'
+import { enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { instantaneDesBoites, rendreLesBoites, type Boite } from './menage'
 import { attendreLeSort } from '../sort-envoi'
 
@@ -126,7 +129,27 @@ test.describe('le récapitulatif quotidien — du job à la boîte', () => {
 		const dossiersAvant = await instantaneDesBoites(BOITES)
 		const service = { ...enTetesService(), 'Content-Type': 'application/json' }
 		let file: string | undefined
+		let commentaire: string | undefined
 		try {
+			// `INC-361` : Camille mentionne Driss dans le fil d'« Imprimerie Duval », par les vrais gestes de l'écran, sous son
+			// jeton — la preuve pose SA mention (texte distinctif), elle ne dépend pas de celle du seed.
+			const camille = { ...enTetesAuthentifies(await jetonDe('admin@p2enjoy.test')), 'Content-Type': 'application/json' }
+			const [duval] = (await (
+				await request.get(`${URL_API}/rest/v1/organizations?workspace_id=eq.${ESPACE}&name=eq.Imprimerie%20Duval&select=id`, { headers: service })
+			).json()) as { id: string }[]
+			expect(duval, 'le seed porte « Imprimerie Duval »').toBeDefined()
+			const pose = await request.post(`${URL_API}/rest/v1/organization_comments?select=id`, {
+				headers: { ...camille, Prefer: 'return=representation' },
+				data: { organization_id: duval!.id, body: 'Preuve INC-361 : le digest cite cette mention.' },
+			})
+			expect(pose.status(), await pose.text()).toBe(201)
+			commentaire = ((await pose.json()) as { id: string }[])[0]!.id
+			const mention = await request.post(`${URL_API}/rest/v1/organization_comment_mentions`, {
+				headers: { ...camille, Prefer: 'return=minimal' },
+				data: { comment_id: commentaire, profile_id: DRISS },
+			})
+			expect(mention.status(), await mention.text()).toBe(201)
+
 			// Le consentement de Driss, et aucune issue pour aujourd'hui : le job doit produire son digest.
 			await request.post(`${URL_API}/rest/v1/digest_subscriptions`, {
 				headers: { ...service, Prefer: 'resolution=ignore-duplicates' },
@@ -157,6 +180,9 @@ test.describe('le récapitulatif quotidien — du job à la boîte', () => {
 			const site = lireEnv('SITE_URL').replace(/\/$/, '')
 			expect(corps).toContain(`${site}/tracks/`)
 			expect(corps).not.toContain('{site}')
+			// `INC-361` : la mention du fil de l'organisation, citée avec la fiche à l'ancre de SON commentaire, dans le mail reçu.
+			expect(corps).toContain('- Imprimerie Duval (organisation)')
+			expect(corps).toContain(`${site}/contacts/organisations/${duval!.id}#commentaire-${commentaire}`)
 
 			// `CRM-069` T6 (§5.3 bis) : le digest se déclare automatique, et la relève de la boîte de Driss — synchronisée —
 			// le tient pour relevé sans l'ingérer : aucun message de l'espace ne naît de lui.
@@ -171,6 +197,11 @@ test.describe('le récapitulatif quotidien — du job à la boîte', () => {
 			)
 			expect(await ingeres.json()).toEqual([])
 		} finally {
+			// Elle ne retire que ce qu'elle a posé : son commentaire (la mention suit en cascade), et la notification de Driss qu'il a fait naître.
+			if (commentaire !== undefined) {
+				await request.delete(`${URL_API}/rest/v1/notifications?payload->>comment_id=eq.${commentaire}`, { headers: service })
+				await request.delete(`${URL_API}/rest/v1/organization_comments?id=eq.${commentaire}`, { headers: service })
+			}
 			if (file !== undefined) await request.delete(`${URL_API}/rest/v1/mail_outbox?id=eq.${file}`, { headers: service })
 			await rendreLesBoites(request, { boites: BOITES, motif: MOTIF, avant: dossiersAvant, debut })
 		}
