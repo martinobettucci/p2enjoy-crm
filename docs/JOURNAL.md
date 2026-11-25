@@ -42519,3 +42519,9 @@ la garde d'empreinte muette, une seule surcharge, 2 espaces en base. INC-366 est
 la disait déjà tranchée par la mesure (aucun arbitrage) ; une table `œ→oe`, `æ→ae`, `ß→ss`, appliquée avant NFD. **Vérifié** : test unitaire rouge avant / vert après ; 6451 unitaires ;
 preuve d'interface `administration-catalogue` 9/9 après mise à jour de l'assertion qui constatait l'ancien défaut. **Mesuré au passage** : une suite unitaire lancée depuis `webapp/`
 rougit pour six tests qui lisent les migrations par un chemin relatif — elle se lance depuis la racine (`npm run test:unit`).
+
+### `INC-185` — un commentaire d'E2E n'affirme plus un retrait impossible
+
+*2026-11-25, session `p2enjoy-crm-dd`.* **Le problème** : `e2e/ui/inbox.spec.ts` écrivait que l'événement de timeline était « retiré » alors que `card_events` n'accorde d'écriture à personne. **La décision** :
+l'issue 1 de la fiche — corriger le commentaire, assumer la dérive —, sans ouvrir de porte d'écriture sur une table qui n'en a aucune. **Vérifié** : relecture des occurrences de la formulation dans `e2e/` ; seul ce fichier
+l'affirmait encore.

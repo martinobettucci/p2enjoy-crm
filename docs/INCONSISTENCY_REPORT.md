@@ -3821,6 +3821,11 @@ nomme la dérive, et `docs/SPEC-contacts.md` §8.8.10 la porte comme une limite.
    l'environnement de test, qui remettrait une affaire dans son état d'événements. C'est une porte
    d'écriture sur une table qui n'en a aucune, donc un arbitrage de sécurité et non une commodité.
 
+**CLOSE le 2026-11-25 — INC-185, session `p2enjoy-crm-dd`, issue 1 (arbitrage de la session de livraison).** Le commentaire de `e2e/ui/inbox.spec.ts` dit désormais ce que le code fait : le
+message redevient non classé, l'événement de timeline RESTE (`card_events` ne s'écrit pour personne, 403 mesuré). L'autre scénario cité, `e2e/ui/classement-candidats.spec.ts`, le disait déjà
+(vérifié) ; `e2e/ui/suggestion-classement.spec.ts` aussi. Aucune porte d'écriture n'est ouverte sur `card_events` (issue 2 écartée). **Preuve** : un commentaire ne rougit pas ; la preuve est la
+relecture — `grep` des formulations « événement de timeline » dans `e2e/` : plus aucune n'affirme un retrait.
+
 ## Consigné le 2026-08-20 — un constat de harnais, étranger à `CRM-080`
 
 ### INC-186 — `scripts/verify-scripts.sh` : « la reconstruction sans CA n'emprunte pas sa branche inactive »

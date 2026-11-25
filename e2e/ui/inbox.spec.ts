@@ -220,8 +220,10 @@ test.describe('inbox globale (docs/SPEC-mail-subsystem.md §18)', () => {
 			expect(ligne?.card_id).toBe(CARD_COURRIER)
 			expect(ligne?.classified_by).not.toBeNull()
 		} finally {
-			// LE SEED EST RENDU INTACT : le message redevient non classé, et l'événement de timeline
-			// qu'il a produit est retiré. `card_events` n'accorde d'écriture à personne d'autre.
+			// LE MESSAGE REDEVIENT NON CLASSÉ. L'événement de timeline qu'il a produit, lui, RESTE : `card_events`
+			// n'accorde d'écriture à PERSONNE, pas même à la clé de service (`DELETE` → 403, mesuré), et prétendre
+			// le retirer serait la simulation que `CLAUDE.md` §18 interdit. La dérive est bornée et tolérée :
+			// voir `e2e/ui/suggestion-classement.spec.ts` et `docs/SPEC-contacts.md` §8.8.10 (INC-185).
 			await page.request.patch(
 				`${URL_API}/rest/v1/mail_messages?rfc822_message_id=eq.${encodeURIComponent(MSGID_NON_CLASSE)}`,
 				{
