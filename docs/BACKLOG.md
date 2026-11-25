@@ -20711,7 +20711,13 @@ livraison (décision 830).
   service `mcp` reconstruit, sous le jeton de Camille, deux espaces du seed ; la webapp ouvre l'adresse préfixée (E2E `mails-prepares`
   existant, non rejoué : rien n'a changé côté webapp). **Reste** : la livraison de l'image `mcp` (contrat §2.84) et le constat du responsable ;
   la campagne complète `verify-mcp.sh` est celle de la session de livraison.
-- [ ] **T5 — Le manuel et la livraison.** Chapitre « Changer d'espace », contrat, remise à la session de livraison.
+- [~] **T5 — Le manuel et la livraison.** Section « Changer d'espace » du manuel, contrat, remise à la session de livraison.
+  *Spécifiée le 2026-11-25 avant le texte* (`docs/SPEC-espace-courant.md` §18 ; décision 999). **Le manuel est complété en développement
+  (2026-11-25, 7a)** : §3.2 bis (la liste des pages qui ont le bouton « Espace » — organisations, rapport de temps et Pilotage
+  inclus —, créer dans l'espace nommé, la journée de 7 h tous espaces confondus, une capture du panneau `filtre-des-espaces.jpg`) ;
+  chapitre 33 (un outil agit dans un seul espace ; le lien de relecture) ; `verify-manual.sh` 170 contrôles sans anomalie ; scénario
+  `03-naviguer` rejoué. **Reste** : la remise (message à la session de livraison), la livraison du lot T3.c à T4 (contrat §2.80,
+  §2.81, §2.84) et le constat du responsable — puis l'unité passe `[P]`, puis `[x]` à son constat.
 
 ### CRM-162 — Déplacer un track entier d'un espace à un autre, par le super-administrateur `[P]`
 

@@ -297,7 +297,7 @@ change** (demande de la session de livraison, 2026-11-21).
   qui lisaient le premier espace passent à tous ; les créations nomment l'espace courant de l'onglet. Peut se découper par
   écran.
 - **T4 — Le connecteur.** L'audit outil par outil dans `docs/SPEC-mcp.md` §9.2 ; le lien de `crm_mail_prepare` ; intégration.
-- **T5 — Le manuel et la livraison.** Le chapitre « Changer d'espace » (`docs/MANUAL_PLAN.md`), le contrat
+- **T5 — Le manuel et la livraison.** La section « Changer d'espace » du manuel (`docs/SPEC-manual.md` ; décision 999), le contrat
   (`docs/PROD_MIGRATIONS.md`), la remise à la session de livraison.
 
 Chaque tranche est spécifiée en détail (ses textes, ses refus, ses preuves nommées) **avant son code**, dans les chapitres cités,
@@ -903,7 +903,7 @@ lien reste servi par la redirection ; **aucune migration, aucune variable** (`SI
 
 *Écrit le 2026-11-25, avant le code et le texte de T5 (décision 999), après la relecture de `docs/manual.md` §3.2 bis, des
 chapitres 10, 26, 28, 30 et 33, et de `docs/SPEC-manual.md`. Le plan du manuel est `docs/SPEC-manual.md` (le « `MANUAL_PLAN.md` »
-du §14 n'existe pas : écart de nom, consigné à `docs/INCONSISTENCY_REPORT.md`).*
+du §14 n'existe pas : référence de nom corrigée au §14).*
 
 ### 18.1 Ce que le manuel dit déjà, et ce qui manque
 
@@ -926,8 +926,8 @@ disent, page par page, la colonne, le bouton et les règles de leur écran (T3.c
 - `docs/manual.md` : §3.2 bis complétée (points 1, 2, 3, une image) ; chapitre 33, un court paragraphe (point 4) ; **aucune capture
   nouvelle sauf le panneau du filtre** (`filtre-des-espaces.jpg`, scénario `e2e/manuel/03-naviguer.spec.ts`, sous la section
   `changer-d-espace`) ; `scripts/manuel/construire.mjs`, puis `scripts/verify-manual.sh`.
-- `docs/INCONSISTENCY_REPORT.md` : l'écart `MANUAL_PLAN.md` / `SPEC-manual.md`, **sans le résoudre** (le §14 est corrigé à la ligne
-  près dans la même tranche : c'est une référence de nom, non une règle).
+- **Une référence de nom corrigée, sans entrée au registre** (doctrine du `docs/INCONSISTENCY_REPORT.md` : trancher soi-même ce que la
+  mesure tranche) : le §14 nomme `docs/SPEC-manual.md` au lieu du `docs/MANUAL_PLAN.md` qui n'existe pas (décision 999).
 - **La remise à la session de livraison** : un message qui dit le lot de `CRM-161` T3.c à T4 dans l'ordre de livraison (migrations
   201, 202, 203 ; webapp, manuel ; image `mcp`), les gestes préalables du contrat (§2.80, §2.81, §2.84), et ce qui reste au constat
   du responsable. L'unité reste `[~]` jusqu'à ce constat, puis `[P]` à la livraison (`CLAUDE.md` §5).

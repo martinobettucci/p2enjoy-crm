@@ -360,8 +360,18 @@ page le dit et propose **Afficher tous les espaces**. Au clavier, ouvrez le bout
 l'autre avec `Tab`, cochez avec `Espace`, refermez avec `Échap`. Si vous n'êtes membre que d'un espace, ni le bouton ni la
 mention de l'espace n'apparaissent. La recherche ([§4.6](#ce-que-la-recherche-affiche-et-ce-qu-elle-ne-fait-pas)) et la cloche
 ([§5.2](#ce-que-le-panneau-montre)) nomment aussi l'espace de chaque élément, sans bouton **Espace**. Les pages qui ont ce
-bouton : **Ma journée** ([§6.2](#ce-qu-une-ligne-montre)), les **Objectifs** ([§8.1](#la-liste-des-tableaux)), le **carnet de contacts** ([chapitre 10](#le-carnet-de-contacts)), **Affaires figées** ([chapitre 7](#les-affaires-figees-ce-qui-dort-depuis-trop-longtemps)), **Coûts**
-([chapitre 26](#les-couts-de-tout-l-espace-de-travail-un-cumul-par-track)) et **Rentabilité** ([§29.3](#l-ecran-rentabilite)).
+bouton : **Ma journée** ([§6.2](#ce-qu-une-ligne-montre)), les **Objectifs** ([§8.1](#la-liste-des-tableaux)), le **carnet de contacts** et ses **organisations** ([chapitre 10](#le-carnet-de-contacts), [§10.9](#l-onglet-organisations)), **Affaires figées** ([chapitre 7](#les-affaires-figees-ce-qui-dort-depuis-trop-longtemps)), **Coûts**
+([chapitre 26](#les-couts-de-tout-l-espace-de-travail-un-cumul-par-track)), **Rentabilité** ([§29.3](#l-ecran-rentabilite)), le **Pilotage** ([chapitre 30](#l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires)) et le **rapport mensuel** de **Temps** ([§28.4](#le-rapport-mensuel)).
+
+![Le bouton Espace ouvert sur le carnet d'organisations : une case par espace, l'un des deux coché](manuel/images/naviguer-barre-laterale-onglets-etats/filtre-des-espaces.jpg)
+
+**Créer depuis une de ces pages.** Quand vous êtes membre de plusieurs espaces et que vous créez un élément — une organisation, par
+exemple —, le formulaire dit **dans quel espace** il sera créé, sous la forme **Dans l'espace** suivi du nom. Si le bouton **Espace**
+n'en garde qu'un, c'est celui-là ; sinon, c'est l'espace de l'onglet, celui que le fil d'Ariane nomme.
+
+**La journée de travail compte tous vos espaces.** Dans **Temps**, la grille de saisie réunit les lignes de tous vos espaces,
+groupées par espace, et le total de chaque jour les additionne : une journée ne dépasse pas **7 heures**, tous espaces confondus.
+Cet écran de saisie n'a pas de bouton **Espace**, pour que le total du jour ne cache aucune heure ([§28.1](#saisir-sa-semaine)).
 
 **L'espace est dans l'adresse.** L'adresse de l'inbox, d'un track ou d'une page de réglages commence par le nom court de
 l'espace : vous pouvez donc garder **deux onglets ouverts sur deux espaces**, chacun le sien, et un lien copié emmène
@@ -7109,6 +7119,13 @@ Deux règles se cumulent :
 
 L'assistant ne peut faire que ce que **les deux** permettent. Un droit du connecteur dans un espace dont vous n'êtes pas
 membre reste sans effet.
+
+**Un outil agit dans un seul espace.** Chaque outil de l'assistant travaille dans l'espace qu'on lui nomme, ou dans celui de
+l'élément qu'il touche (une affaire, un message, un track) ; un assistant lit donc vos espaces l'un après l'autre. Deux outils
+font exception : la **liste de vos espaces** et la **recherche**, qui rendent tous les espaces que vous lisez, chaque résultat
+nommant le sien. Quand l'assistant **prépare un mail**, le lien de relecture qu'il vous donne commence par le nom court de
+l'espace du mail : il ouvre la relecture dans le bon espace, même si vous en avez ouvert un autre dans votre navigateur
+([section 3.2 bis](#changer-d-espace)).
 
 Les dix familles, et ce que chacune couvre :
 

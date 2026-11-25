@@ -1251,6 +1251,19 @@
 				},
 				{
 					"type": "text",
+					"text": " et ses "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "organisations"
+						}
+					]
+				},
+				{
+					"type": "text",
 					"text": " ("
 				},
 				{
@@ -1262,6 +1275,23 @@
 						{
 							"type": "text",
 							"text": "chapitre 10"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-carnet-de-contacts",
+						"anchor": "l-onglet-organisations"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§10.9"
 						}
 					]
 				},
@@ -1325,7 +1355,7 @@
 				},
 				{
 					"type": "text",
-					"text": ") et "
+					"text": "), "
 				},
 				{
 					"type": "strong",
@@ -1350,6 +1380,216 @@
 						{
 							"type": "text",
 							"text": "§29.3"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Pilotage"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 30"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") et le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "rapport mensuel"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Temps"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-temps-passe-et-le-cout-du-personnel",
+						"anchor": "le-rapport-mensuel"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§28.4"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/filtre-des-espaces.jpg",
+			"alt": "Le bouton Espace ouvert sur le carnet d'organisations : une case par espace, l'un des deux coché",
+			"width": 1192,
+			"height": 187
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Créer depuis une de ces pages."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Quand vous êtes membre de plusieurs espaces et que vous créez un élément — une organisation, par\nexemple —, le formulaire dit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "dans quel espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " il sera créé, sous la forme "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Dans l'espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " suivi du nom. Si le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\nn'en garde qu'un, c'est celui-là ; sinon, c'est l'espace de l'onglet, celui que le fil d'Ariane nomme."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "La journée de travail compte tous vos espaces."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Dans "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Temps"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", la grille de saisie réunit les lignes de tous vos espaces,\ngroupées par espace, et le total de chaque jour les additionne : une journée ne dépasse pas "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "7 heures"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", tous espaces confondus.\nCet écran de saisie n'a pas de bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", pour que le total du jour ne cache aucune heure ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-temps-passe-et-le-cout-du-personnel",
+						"anchor": "saisir-sa-semaine"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§28.1"
 						}
 					]
 				},

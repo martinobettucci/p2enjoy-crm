@@ -170,6 +170,80 @@
 			"type": "paragraph",
 			"content": [
 				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un outil agit dans un seul espace."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Chaque outil de l'assistant travaille dans l'espace qu'on lui nomme, ou dans celui de\nl'élément qu'il touche (une affaire, un message, un track) ; un assistant lit donc vos espaces l'un après l'autre. Deux outils\nfont exception : la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "liste de vos espaces"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "recherche"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", qui rendent tous les espaces que vous lisez, chaque résultat\nnommant le sien. Quand l'assistant "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "prépare un mail"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", le lien de relecture qu'il vous donne commence par le nom court de\nl'espace du mail : il ouvre la relecture dans le bon espace, même si vous en avez ouvert un autre dans votre navigateur\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "changer-d-espace"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 3.2 bis"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
 					"type": "text",
 					"text": "Les dix familles, et ce que chacune couvre :"
 				}

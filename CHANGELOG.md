@@ -13,6 +13,10 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+- **CRM-161 T5, le manuel : « Changer d'espace » complète la liste des pages à bouton « Espace »** (décision 999) : les organisations, le rapport
+  mensuel du temps et le Pilotage y entrent ; une capture du panneau du filtre ; créer depuis une page qui rassemble plusieurs espaces nomme
+  l'espace de création ; la journée de 7 heures compte tous les espaces ; le chapitre du connecteur dit qu'un outil agit dans un seul espace et que
+  le lien de relecture d'un mail préparé ouvre l'espace du mail.
 - **INC-194, le focus revient à la commande du bas** : sur l'écran des comptes entrants, annuler le formulaire ouvert depuis la commande du bas (ou celle de l'état vide) rend le focus à cette commande,
   au lieu de le perdre sur la page. Accessibilité clavier ; aucun changement visuel.
 - **CRM-161 T4, le connecteur : le lien de relecture d'un mail préparé porte le slug de l'espace** (décision 998) : `crm_mail_prepare` et

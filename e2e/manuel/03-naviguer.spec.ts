@@ -1,4 +1,4 @@
-// @verifies CRM-161 (docs/BACKLOG.md) — tranche T2.b : l'image du menu des espaces (docs/manual.md §3.2 bis ; docs/DESIGN_SYSTEM.md §5.113)
+// @verifies CRM-161 (docs/BACKLOG.md) — tranches T2.b et T5 : les images du menu des espaces et du bouton « Espace » ouvert (docs/manual.md §3.2 bis ; docs/SPEC-espace-courant.md §18 ; docs/DESIGN_SYSTEM.md §5.113, §5.115)
 // @spec CRM-133 (docs/BACKLOG.md) — tranche T4 : l'image du bouton d'information d'une étape décrite par le seed (manuel §3.6 ;
 //       docs/SPEC-seed.md §39 ; docs/DESIGN_SYSTEM.md §5.58)
 // @spec CRM-148 (docs/BACKLOG.md) — l'image « infobulle-epinglee » du manuel §3.6 : la bulle du track épinglée, sa croix
@@ -122,6 +122,21 @@ test('le menu des espaces', async ({ page }) => {
 	await expect(menu.getByRole('menuitemradio', { name: /Studio Lumen/ })).toBeVisible()
 	await expect(menu.getByTestId('non-lus-espace').first()).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: 'changer-d-espace', nom: 'menu-des-espaces', cibles: [bouton, menu] })
+})
+
+// `CRM-161` T5 (docs/SPEC-espace-courant.md §18 ; docs/DESIGN_SYSTEM.md §5.115) : le bouton « Espace » ouvert sur une page qui
+// rassemble les espaces de Camille, ici le carnet d'organisations (« Maison Arlo » vit dans « Studio Lumen »).
+test('le bouton Espace d’une page qui rassemble vos espaces', async ({ page }) => {
+	await page.setViewportSize({ width: 1440, height: 900 })
+	await connecterAvecLeLabs(page, ADMIN)
+	await page.goto('/contacts/organisations')
+	const bouton = page.getByRole('button', { name: 'Espace', exact: true })
+	await bouton.click()
+	const panneau = page.getByTestId('panneau-filtre-espaces')
+	await expect(panneau.getByTestId('case-filtre-espace')).toHaveCount(2)
+	await panneau.getByTestId('case-filtre-espace').last().check()
+	await expect(page.getByRole('button', { name: 'Espace (1)' })).toBeVisible()
+	await illustrer(page, { chapitre: CHAPITRE, section: 'changer-d-espace', nom: 'filtre-des-espaces', cibles: [page.getByRole('button', { name: 'Espace (1)' }), panneau] })
 })
 
 test('un track sans channel, un workflow sans étape, un track introuvable', async ({ page, request }) => {
