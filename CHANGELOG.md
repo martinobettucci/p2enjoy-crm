@@ -13,6 +13,8 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+- **INC-366, une reconstruction ne laisse plus une base vide en silence** : `reconstruire_base_dev` attend qu'une route REST réponde en JSON avant de seeder,
+  rejoue le seed une fois s'il échoue, et écrit « BASE NON SEEDÉE » si les deux essais échouent. Outillage de développement : rien ne change dans le produit livré.
 - **INC-216 T1, le fuseau de l'espace : les horodatages d'un e-mail se rendent à l'heure de l'espace** (migration 204, décisions 992 et
   996) : `workspaces.timezone` (`Europe/Paris` par défaut, validé), réglé par l'administrateur de l'espace ou un superadministrateur
   (`workspace_set_timezone`, refus en base) ; `card.next_action_at` et les champs communs « date et heure » d'un modèle d'e-mail se

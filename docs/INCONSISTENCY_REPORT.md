@@ -9615,3 +9615,27 @@ offert seulement après la lecture), ce qui précise §5.42 — ou garder l'affi
 « Aucune adresse » sont affirmés tant que leurs listes ne sont pas lues ; le squelette attend donc les trois lectures.
 
 **Corrigée le 2026-11-24** (session 30) : `BlocSequenceCard` rend un squelette (`SkeletonListe`, trois lignes) tant que l'une des trois lectures est en cours, et ni l'état ni le geste ; une lecture en échec termine le chargement. Vitest `BlocSequenceCard.test.tsx` 5/6 rouges avant (aucun squelette), 6/6 verts après ; E2E `armement-sequence` rouge avant sur l'ancien composant (le squelette introuvable), 9/9 verts après, dont le squelette (lecture retenue) et le parcours au clavier seul ; manuel 14-16 7/7 ; unitaires 6297/6297 ; typecheck propre ; captures observées. Livrée avec la webapp (`docs/PROD_MIGRATIONS.md` §2.78).
+
+### INC-366 — une reconstruction dont le seed échoue laisse une base migrée mais VIDE, sans le dire ni retenter ; et `verify-rendu-modeles-emails.sh` en déclenche une à chaque passage
+
+*Relevé le 2026-11-25 par la session `p2enjoy-crm-dd`, en rejouant la régression de `INC-216` T1 ; suite des mesures de `CRM-111` T1 ter (INC-304).*
+**Mesuré** : la base de dev est restée VIDE (0 espace, 0 profil, schéma migré jusqu'à la `0204`) pendant plus de dix minutes, sans reconstruction ni seed en cours
+et avec le verrou de campagne libre, pour toutes les sessions. La trace est dans `/tmp/p2enjoy-empreinte.*/difference.diff` et dans `reconstruction.log` :
+1. `scripts/verify-rendu-modeles-emails.sh` a **dégradé** la base en rejouant la migration `0056` : elle y a laissé l'**ancienne surcharge**
+   `rendre_modele_email(uuid, uuid, uuid, uuid)` à quatre paramètres (la fonction courante en a cinq). C'est l'un des harnais « non mesurés » d'INC-304.
+2. La garde d'empreinte (INC-304, décision 701) l'a vu — « la structure de public et app a changé (107 lignes) — reconstruction » — et a appelé
+   `reconstruire_base_dev`, qui reconstruit puis seede.
+3. **Le seed a échoué dès l'étape 1** : « création de l'espace de travail p2enjoy : code HTTP 404 », avec une **page HTML** Next.js. Le port 8000 est bien le Kong
+   de ce checkout (`KONG_HTTP_PORT=8000`, conteneur `p2enjoy-crm-kong-1`) — ce n'est PAS un autre projet qui répond ; la page est le **catch-all de Kong**, qui sert
+   Supabase Studio : juste après la remontée, `/rest/v1/` n'était pas encore servi, alors que la pile se disait saine (`docker compose up --wait`). Le seed, rejoué
+   quelques minutes plus tard sur la même pile, a réussi.
+4. `reconstruire_base_dev` a rendu un échec, que le harnais a rendu à son appelant, qui l'a ignoré : **personne ne l'a lu**, et la base est restée vide.
+
+**Deux défauts, deux corrections, dans cet ordre (décision de la session de livraison, 2026-11-25)** :
+- **a — la reconstruction attend l'API, retente, et le dit.** `scripts/lib/reconstruction.sh` attend désormais (90 s au plus) qu'une route REST réponde EN JSON sous un
+  statut 2xx — une page HTML 404 n'est pas une API prête —, joue le seed, le rejoue UNE fois après 20 s s'il échoue, et écrit « BASE NON SEEDÉE » en rouge si les deux
+  essais échouent. Preuve : `scripts/verify-reconstruction.sh --seed-seul` (5 contrôles, sans rien reconstruire : une fausse API HTML refusée, une fausse API JSON
+  acceptée, un seed qui échoue deux fois, un seed qui réussit au second essai, un seed qui réussit d'emblée) — rouge avant (les fonctions n'existaient pas), vert après.
+  **CLOSE le 2026-11-25** pour cette part.
+- **b — `verify-rendu-modeles-emails.sh` ne doit plus laisser de résidu.** Il rejoue la migration `0056` : à remplacer par la dégradation depuis la base
+  (`docs/SPEC-test-harness.md` §3.7), qui ne dépose aucune surcharge. **Ouverte.**

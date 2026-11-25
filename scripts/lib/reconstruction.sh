@@ -48,6 +48,38 @@ RECONSTRUCTION_ATTENTE=${RECONSTRUCTION_ATTENTE:-1800}
 # intermittent dont l'étape fautive est jetée ne se diagnostique pas. Réécrit à chaque reconstruction.
 RECONSTRUCTION_JOURNAL=${RECONSTRUCTION_JOURNAL:-$_RECONSTRUCTION_TMP/reconstruction.log}
 
+# @spec INC-366 (docs/INCONSISTENCY_REPORT.md), docs/SPEC-test-harness.md §3.6 bis — une reconstruction dont le seed échoue laissait une base
+# migrée mais VIDE, sans le dire ni retenter : mesuré le 2026-11-25, le seed a rencontré, juste après la remontée de la pile « saine »,
+# une page HTML 404 (le catch-all de Kong, Supabase Studio) là où il attendait la route REST — Kong ne servait pas encore `/rest/v1/`.
+
+# Attend qu'une route REST réponde EN JSON sous un statut 2xx — pas seulement que la pile se dise saine. `<url> <clé de service> <délai en s>`.
+reconstruction_attendre_api() {
+	local url=$1 cle=$2 delai=${3:-60} limite entete
+	limite=$(( $(date +%s) + delai ))
+	while :; do
+		entete=$(curl -s -o /dev/null -D - --max-time 5 -H "apikey: $cle" -H "Authorization: Bearer $cle" \
+			"$url/rest/v1/workspaces?select=id&limit=1" 2>/dev/null || true)
+		if printf '%s' "$entete" | head -n 1 | grep -qE ' 2[0-9][0-9]' && printf '%s' "$entete" | grep -qi '^content-type: *application/json'; then
+			return 0
+		fi
+		[ "$(date +%s)" -lt "$limite" ] || return 1
+		sleep 2
+	done
+}
+
+# Joue le seed (`<journal> <pause en s> <commande…>`), le rejoue UNE fois après la pause s'il échoue, et dit à voix haute que la base est vide si
+# les deux essais échouent : rien ne doit laisser une base migrée sans seed sans que l'appelant ne le lise.
+reconstruction_seeder() {
+	local journal=$1 pause=$2
+	shift 2
+	if "$@" >>"$journal" 2>&1; then return 0; fi
+	echo "reconstruire_base_dev : le seed a échoué ; nouvel essai dans ${pause} s (la pile vient de remonter)." >&2
+	sleep "$pause"
+	if "$@" >>"$journal" 2>&1; then return 0; fi
+	printf '\033[31mreconstruire_base_dev : BASE NON SEEDÉE — la base est migrée et VIDE ; rejouez supabase/seed/apply-seed.sh.\033[0m\n' >&2
+	return 1
+}
+
 reconstruire_base_dev() {
 	local racine fichier profil seed=true repertoire=''
 	racine=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
@@ -107,7 +139,11 @@ reconstruire_base_dev() {
 		compose up -d --wait >"$RECONSTRUCTION_JOURNAL" 2>&1 \
 			|| { echo "reconstruire_base_dev : la pile ne remonte pas (docker compose up --wait) — $RECONSTRUCTION_JOURNAL :" >&2; citer_journal; exit 1; }
 		if [ "$seed" = true ]; then
-			P2ENJOY_ENV_FILE="$fichier" supabase/seed/apply-seed.sh >>"$RECONSTRUCTION_JOURNAL" 2>&1 \
+			# INC-366 : l'API doit servir une route REST en JSON AVANT le seed ; puis un seul nouvel essai s'il échoue quand même.
+			reconstruction_attendre_api "http://127.0.0.1:$(sed -n 's/^KONG_HTTP_PORT=//p' "$fichier" | tail -n 1 | tr -d "\"'\r")" \
+				"$(sed -n 's/^SERVICE_ROLE_KEY=//p' "$fichier" | tail -n 1 | tr -d "\"'\r")" 90 >>"$RECONSTRUCTION_JOURNAL" 2>&1 \
+				|| echo "reconstruire_base_dev : l'API ne sert pas encore /rest/v1/ en JSON après 90 s ; le seed est tenté quand même." >&2
+			P2ENJOY_ENV_FILE="$fichier" reconstruction_seeder "$RECONSTRUCTION_JOURNAL" 20 supabase/seed/apply-seed.sh \
 				|| { echo "reconstruire_base_dev : le seed échoue sur la base reconstruite — $RECONSTRUCTION_JOURNAL :" >&2; citer_journal; exit 1; }
 		fi
 

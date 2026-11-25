@@ -21026,3 +21026,11 @@ le simulateur ; seed ; captures observées ; manuel ; contrat. La campagne compl
 - [ ] **T2 — l'écran** : le fuseau de l'espace se lit et se règle dans les Réglages de l'espace (administrateur seulement), avec ses états, ses refus,
       son annonce ; design system lu en entier, manuel et captures. Spécifié avant son code.
 
+## Correctif — INC-366 (2026-11-25, arbitré par la session de livraison)
+
+*Une reconstruction dont le seed échoue laissait une base vide. Spécification : `docs/SPEC-test-harness.md` §3.6 bis ; fiche INC-366. Connecteur MCP : sans objet.*
+
+- [x] **INC-366 a — la reconstruction attend l'API, retente le seed, et dit « BASE NON SEEDÉE ».** `scripts/lib/reconstruction.sh`
+      (`reconstruction_attendre_api`, `reconstruction_seeder`), `scripts/verify-reconstruction.sh --seed-seul` : rouge avant, **5 contrôles verts après**. L'attente est
+      constatée sur le vrai Kong. Aucune reconstruction réelle rejouée pour cette preuve : elle est destructive, et la session de livraison la joue à sa campagne.
+- [ ] **INC-366 b — `verify-rendu-modeles-emails.sh` ne dépose plus de résidu** : dégrader depuis la base (§3.7) au lieu de rejouer la `0056`.

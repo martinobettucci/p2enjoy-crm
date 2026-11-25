@@ -300,6 +300,15 @@ après).
 
 **Connecteur MCP : sans objet** — c'est de l'outillage de développement, pas une fonctionnalité du produit.
 
+### 3.6 bis Une reconstruction ne laisse jamais une base vide en silence — INC-366
+
+**Mesuré** (2026-11-25) : un harnais qui avait laissé un résidu a déclenché la reconstruction de garde (§3.8) ; le seed a reçu, juste après la remontée « saine » de la pile,
+une page HTML 404 — le catch-all de Kong — là où il attendait la route REST, et la base est restée migrée mais vide, sans que personne le lise.
+**La règle.** Avant le seed, `reconstruire_base_dev` attend (90 s au plus) qu'une route REST (`/rest/v1/workspaces`) réponde **en JSON sous un statut 2xx** — « healthy »
+dit que le conteneur tourne, non que Kong sert la route. Le seed est joué ; s'il échoue, il est rejoué **une fois** après 20 s ; si les deux essais échouent, la
+reconstruction écrit « **BASE NON SEEDÉE** — la base est migrée et VIDE » en rouge et rend un échec. **Preuve** : `scripts/verify-reconstruction.sh --seed-seul`, sans rien
+reconstruire (une fausse API HTML refusée, une fausse API JSON acceptée, le seed qui échoue deux fois, qui réussit au second essai, qui réussit d'emblée).
+
 ### 3.7 Dégrader le seul bloc visé, depuis sa définition en base (`CRM-111` T2.3.3, INC-304, décision 704)
 
 *Mesuré le 2026-10-26.* Un harnais qui dégradait une fonction en **rejouant une migration ancienne** la ramenait à une

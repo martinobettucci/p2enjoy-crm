@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # @verifies CRM-111 (docs/BACKLOG.md) — tranche T1 bis : restaurer par reconstruction (INC-289)
 # @verifies docs/SPEC-test-harness.md §3.6 (le mode opératoire et sa preuve) ; docs/DAT.md §3.2 (invariant
+# @verifies INC-366 (docs/INCONSISTENCY_REPORT.md) — une reconstruction dont le seed échoue attend l'API, retente une fois, et dit « BASE NON
+#           SEEDÉE » au lieu de laisser une base vide en silence (docs/SPEC-test-harness.md §3.6 bis)
 # @verifies CRM-115 (docs/BACKLOG.md) tranche T4 — le contrôle des fichiers Compose ne juge que les conteneurs du projet de
 #           la pile (docs/SPEC-pile-par-session.md §3)
 #           révisé : une base neuve se construit dans l'ordre), §3.2 bis ; docs/JOURNAL.md décisions 675 et 682
@@ -22,6 +24,7 @@
 #
 # Usage :
 #   scripts/verify-reconstruction.sh
+#   scripts/verify-reconstruction.sh --seed-seul   # la seule section 0 (INC-366) : rien n'est reconstruit
 
 set -euo pipefail
 
@@ -60,6 +63,75 @@ cree_le() { docker volume inspect -f '{{.CreatedAt}}' "${projet}_$1" 2>/dev/null
 
 echo
 echo "Preuves de CRM-111 T1 bis — reconstruire la base de développement"
+
+# --- 0. INC-366 : le seed d'une reconstruction attend l'API et retente, SANS TOUCHER À LA PILE -----------------------------------
+# Éprouvé avec de faux serveurs et de fausses commandes : rien de destructif, et aucune dépendance à l'état de la base.
+
+echo
+echo "0. Le seed d'une reconstruction ne laisse pas une base vide en silence (INC-366, docs/SPEC-test-harness.md §3.6 bis)"
+
+serveur_faux() { # <corps> <statut> <type> — écoute sur un port libre, rend le port dans $port_faux
+	port_faux=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1])')
+	python3 - "$port_faux" "$1" "$2" "$3" <<'PY' &
+import sys, http.server
+port, corps, statut, type_ = int(sys.argv[1]), sys.argv[2].encode(), int(sys.argv[3]), sys.argv[4]
+class H(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(statut); self.send_header('Content-Type', type_); self.send_header('Content-Length', str(len(corps))); self.end_headers(); self.wfile.write(corps)
+    def log_message(self, *a): pass
+http.server.HTTPServer(('127.0.0.1', port), H).serve_forever()
+PY
+	serveur_pid=$!
+	for _ in $(seq 1 30); do (exec 3<>"/dev/tcp/127.0.0.1/$port_faux") 2>/dev/null && break; sleep 0.1; done
+}
+
+if declare -F reconstruction_attendre_api >/dev/null && declare -F reconstruction_seeder >/dev/null; then
+	serveur_faux '<!DOCTYPE html><html>404 Next.js</html>' 404 'text/html'; html=$serveur_pid; port_html=$port_faux
+	debut=$(date +%s)
+	if reconstruction_attendre_api "http://127.0.0.1:$port_html" cle 3 >/dev/null 2>&1; then
+		fail "une page HTML 404 a été prise pour une API prête"
+	else
+		ok "une page HTML 404 (le cas mesuré : la route REST n'est pas encore servie) n'est PAS une API prête — attente bornée (3 s)"
+	fi
+	kill "$html" 2>/dev/null || true
+
+	serveur_faux '[]' 200 'application/json; charset=utf-8'; json=$serveur_pid; port_json=$port_faux
+	reconstruction_attendre_api "http://127.0.0.1:$port_json" cle 5 >/dev/null 2>&1 \
+		&& ok "une réponse JSON 200 sur une route REST est une API prête" || fail "une API qui répond en JSON n'est pas reconnue prête"
+	kill "$json" 2>/dev/null || true
+
+	journal_faux="$TRAVAIL/seed-faux.log"; : > "$journal_faux"
+	sortie=$(reconstruction_seeder "$journal_faux" 0 false 2>&1) && code=0 || code=$?
+	if [ "$code" != 0 ] && printf '%s' "$sortie" | grep -q 'BASE NON SEEDÉE' && printf '%s' "$sortie" | grep -q 'nouvel essai'; then
+		ok "un seed qui échoue deux fois : un nouvel essai, puis « BASE NON SEEDÉE » et un code d'échec"
+	else
+		fail "un seed qui échoue deux fois ne le dit pas (code $code) : « $sortie »"
+	fi
+
+	essais="$TRAVAIL/essais"; : > "$essais"
+	seed_capricieux() { echo x >> "$essais"; [ "$(wc -l < "$essais")" -ge 2 ]; }
+	sortie=$(reconstruction_seeder "$journal_faux" 0 seed_capricieux 2>&1) && code=0 || code=$?
+	if [ "$code" = 0 ] && [ "$(wc -l < "$essais")" = 2 ] && ! printf '%s' "$sortie" | grep -q 'BASE NON SEEDÉE'; then
+		ok "un seed qui réussit au second essai : deux essais exactement, succès, rien d'alarmant"
+	else
+		fail "le second essai n'est pas fait ou mal rendu (code $code, $(wc -l < "$essais") essai(s)) : « $sortie »"
+	fi
+
+	: > "$essais"
+	seed_bon() { echo x >> "$essais"; true; }
+	reconstruction_seeder "$journal_faux" 0 seed_bon >/dev/null 2>&1 \
+		&& [ "$(wc -l < "$essais")" = 1 ] && ok "un seed qui réussit d'emblée n'est joué qu'une fois" || fail "un seed réussi est rejoué"
+else
+	fail "reconstruction_attendre_api et reconstruction_seeder n'existent pas : une reconstruction dont le seed échoue laisse une base vide en silence"
+fi
+
+# `--seed-seul` : ne joue que la section 0, qui ne touche à rien (ni base, ni pile) — la preuve d'INC-366 sans reconstruire.
+if [ "${1:-}" = "--seed-seul" ]; then
+	echo
+	if [ "$failures" -eq 0 ]; then printf '\033[32m%d contrôles, aucune anomalie.\033[0m\n' "$checks"; exit 0; fi
+	printf '\033[31m%d contrôles, %d en échec.\033[0m\n' "$checks" "$failures"
+	exit 1
+fi
 
 # --- 1. Les refus ne touchent à rien ---------------------------------------------------------------
 

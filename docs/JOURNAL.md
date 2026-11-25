@@ -42492,3 +42492,10 @@ d'audit de l'espace nomme la colonne `timezone` mais n'en recopie pas la valeur 
   (aucune commande de ma session n'en est la cause, voir le message à la session de livraison) ; le scénario 30-31 du manuel,
   corrigé, attend le seed rejoué.
 
+### `INC-366` a — la reconstruction attend l'API, retente le seed, et le dit
+
+*2026-11-25, session `p2enjoy-crm-dd`.* **Le problème** : une base laissée migrée mais VIDE par une reconstruction de garde dont le seed avait échoué (fiche INC-366).
+**L'hypothèse de la session de livraison** : un AUTRE projet répond sur 127.0.0.1:8000. **Mesuré, et écartée** : 8000 est le Kong de ce checkout (`KONG_HTTP_PORT=8000`) ;
+la page HTML est le catch-all de Kong, qui sert Supabase Studio, parce que `/rest/v1/` n'était pas encore servi. **La décision** : attendre une route REST en JSON, puis
+un seul nouvel essai, puis un message rouge — pas de boucle sans fin, pas de seed silencieux. **Vérifié** : `verify-reconstruction.sh --seed-seul` (rouge avant, 5 verts après) ;
+l'attente rend « prête » sur le vrai Kong. **Reste** : la part b (le harnais qui laisse un résidu).
